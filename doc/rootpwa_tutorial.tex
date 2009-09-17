@@ -1,0 +1,281 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage{graphicx}
+%\usepackage{german}
+\usepackage{amsmath}
+\PassOptionsToPackage{righttag}{amsmath}
+\usepackage{epsfig,multicol,latexsym,amsfonts,amssymb}
+\usepackage{alltt,dcolumn}
+\usepackage{listings}
+%%\usepackage{pwa}
+
+%\usepackage{palatino}
+
+\pagenumbering{arabic}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setlength{\evensidemargin}{-10mm}
+\setlength{\oddsidemargin}{0mm}
+\setlength{\topmargin}{10mm}
+\setlength{\headheight}{0pt}
+\setlength{\headsep}{0pt}
+\setlength{\marginparsep}{0pt}
+\setlength{\marginparwidth}{0pt}
+\setlength{\marginparpush}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\setlength{\hoffset}{-30mm}
+\setlength{\voffset}{-15mm}
+\setlength{\textwidth}{170mm}
+\setlength{\textheight}{250mm}
+\setlength{\footskip}{10mm}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setlength{\parindent}{0em}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\setlength{\columnseprule}{0.5pt}
+\setlength{\columnsep}{1cm}
+
+%% \input{CHUNG/myown1}
+
+\newcommand{\pim}{\pi^-}
+\newcommand{\pipm}{\pi^\mp}
+\newcommand{\pit}{\pi^-(1300)}
+\newcommand{\pitpm}{\pi^\pm(1300)}
+\newcommand{\sg}{\sigma}
+\newcommand{\rh}{\rho^0(770)}
+\newcommand{\fz}{f_0(1370)}
+\newcommand{\fone}{f_1(1285)}
+\newcommand{\ftwo}{f_2(1270)}
+\newcommand{\aone}{a_1^-(1260)}
+\newcommand{\aonepm}{a_1^\pm(1260)}
+\newcommand{\atwo}{a_2^-(1320)}
+\newcommand{\atwopm}{a_2^\pm(1320)}
+\newcommand{\pitwo}{\pi_2^-(1670)}
+\newcommand{\pitwopm}{\pi_2^\pm(1670)}
+\newcommand{\rhP}{\rho^0({1700 \atop 1450})}
+
+\newcommand{\bu}{$\bullet$}
+\newcommand{\rootdir} {{\tt \$ROOTDIR}~}
+
+
+\newcommand{\ma}[4]{\begin{pmatrix}
+ #1& #2 \\
+ #3 & #4
+\end{pmatrix}}
+
+\begin{document}
+\lstset{language=C++}
+% \lstset{% general command to set parameter(s)
+% basicstyle=\scriptsize, % print whole listing small
+% keywordstyle=\color{black}\bfseries\underbar,
+% % underlined bold black keywords
+% identifierstyle=, % nothing happens
+% stringstyle=\ttfamily, % typewriter type for strings
+% showstringspaces=false} % no special string spaces
+
+
+%%%%##########################################################################
+
+\title{ROOTPWA Tutorial}
+\author{Sebastian Neubert}
+
+\maketitle
+\titlepage
+
+\abstract{This tutorial will guide you through all the necessary steps to perfrom a partial wave analysis with ROOTPWA. You will learn how to set up the workspace on your filesystem. How to code partial wave amplitudes and how to run the scripts to calculate the amplitudes from the input events. Several tools that are useful to monitor the data production are explained. Next you will perform a partial wave fit with the calculated amplitudes and use the ROOT interface to plot and analyse the fit results. The analysis described here is the binned (mass independent) part. Mass dependent fitting will be added to ROOTPWA in the future.
+{\bfseries Warning: This tutorial will not teach you the theoretical background of partial wave analysis. It is assumed that you already are familiar with the formalism. Here only the technical details of the workflow of a ROOTPWA analysis are described.}
+
+
+\section{Installing ROOTPWA}
+
+See the INSTALL file that is included in the distribution.
+
+\section{Setting up the Working Directory Structures}
+
+Before you can start analyzing you are strongly advised to setup a directory structure to organize your data. Although the main components of ROOTPWA can be used quite flexibly all the scripts that have been developed to automate common analysis steps require the following directory structure. The directory structure reflects the data structure needed for a mass-binned fit. It can easily be adapted for a t-binned analysis.
+
+\subsection{Amplitude Directories}
+One directory-tree is used to store the amplitude data for an analysis. Amplitudes are calculated once and can then be used for fitting. They need not be recalculated for each fit. Since (for complex final state) this is the most time consuming part of the analysis the individual bins should be handled in parallel.
+\begin{enumerate}
+\item For the data set you want to analyze create a root-directory {\tt <mydirectory>}. You can choose any name you like. We will in the following refer to this directory as \rootdir.
+\item In \rootdir create one subdir for each mass bin\footnote{By dividing the data into several independent directories further steps can easily be parallelized be having one job working on each directory.} with the following naming convention\footnote{The naming of the directoy will be used in later steps to extract the boundaries of the mass bin. This is the reason why the convention must be followed.}: {\tt lowerBound.upperBound}. Masses are specified in MeV. An example could look like this:
+\begin{verbatim}
+> ls $ROOTDIR
+1000.1120  1840.1960  2680.2800  3520.3640
+1120.1240  1960.2080  2800.2920  3640.3760
+1240.1360  2080.2200  2920.3040  3760.3880
+1360.1480  2200.2320  3040.3160  3880.4000
+1480.1600  2320.2440  3160.3280
+1600.1720  2440.2560  3280.3400
+1720.1840  2560.2680  3400.3520
+\end{verbatim}
+\item Each mass bin directory must (at least) contain the following subdirectories:
+\begin{verbatim}
+> ls 1000.1120/
+AMPS PSPAMPS ACCAMPS
+\end{verbatim}
+These will contain the amplitudes from the data events, phase space amplitudes and accepted monte carlo event amplitudes respectively.
+\item The files containing the event data and the phase space data have to be copied into the mass bin directory:
+\begin{verbatim}
+> ls 1000.1120/
+1000.1120.evt 1000.1120.genbod.evt AMPS PSPAMPS ACCAMPS
+\end{verbatim}
+Please note the naming convention! The {\tt .evt} file is a text file containing the data events in {\tt GAMP} format and the {\tt .genbod.evt} file contains the phase space events. Example of this format:
+\begin{verbatim}
+6
+9 -1 0.0699437766 -0.0328912579 189.987991 189.988058
+9 -1 0.0545997615 0.10439788 16.5443528 16.545361
+9 -1 -0.0984166831 -0.00972499132 24.8303005 24.8308897
+8 1 0.0124859534 -0.0435714854 31.361979 31.3623223
+8 1 -0.0344428873 0.211798487 69.0432216 69.0436961
+9 -1 -0.140638076 -0.125185119 45.3860284 45.3866336
+\end{verbatim}
+This has to be read as:
+\begin{verbatim}
+<Total number of particles in event (including beam)>
+<geant3ID of beam> <charge> <px> <py> <pz> <E>
+<geant3ID of final state particle 1> <charge> <px> <py> <pz> <E>
+<geant3ID of final state particle 2> <charge> <px> <py> <pz> <E>
+<geant3ID of final state particle 3> <charge> <px> <py> <pz> <E>
+....
+....
+\end{verbatim}
+There are no blank lines between the events. Usually these files are written from a ROOT-tree which contains a more complete event summary \footnote{Any cuts on the data have to be performed before this step. At the moment it is not possible to make any kinematic cuts at a later stage. Certainly this would be a very useful feature. It will become available as soon as the complete data handling is based on ROOT-trees. For this the amplitude generator {\tt GAMP} has to be replaced or at least modified.}.
+
+\end{enumerate}
+\subsection{Batch Directories}
+For later convenience several mass bins are combined into a batch. This allows to run over several bins with one fitting job while ensuring some kind of load balancing between the fitting jobs.
+\begin{enumerate}
+\item Create a directory to hold your batches and inside this directory a set of batch-directories:
+\begin{verbatim}
+>ls 5PiBatches/
+1000.1360  1600.1840  2080.2320  2560.3040  3520.4000
+1360.1600  1840.2080  2320.2560  3040.3520
+\end{verbatim}
+Note that the bounds of the batches coincide with the bounds of the mass bins. Also note that while the individual mass bins are usually choosen to be of equal width the batches are have a width that is adapted such that ideally each batch contains the same number of events. In a batch directory simply create links to the corresponding bin directories. Example:
+\begin{verbatim}
+>ls -l 5PiBatches/1000.1360/
+1000.1120 -> /afs/e18/compass/analysis/sneubert/5PiData/1000.1120/
+1120.1240 -> /afs/e18/compass/analysis/sneubert/5PiData/1120.1240/
+1240.1360 -> /afs/e18/compass/analysis/sneubert/5PiData/1240.1360/
+\end{verbatim}
+\end{enumerate}
+
+\subsection{Waveset Directories}
+The keyfiles describing the partial waves are stored in the {\tt keyfiles/} directory of the ROOTPWA repository. In order to share your wave definitions with other people you can add a new subdirectory there to store your wave collection.
+\begin{verbatim}
+> ls keyfiles/
+key3pi  key5pi
+\end{verbatim}
+Inside your collection it makes sense to divide your waves into several sets. This makes parallel processing easier\footnote{Each waveset can be built with one cluster job.}. For example:
+\begin{verbatim}
+ls keyfiles/key5pi/
+pdgTable.txt
+3-+SET       A1SET
+A2SET        B11500SET
+B11800SET    B1SET
+ETA1440SET   ETA2SET
+F01500SET    F0SET
+F11420SET    F1SET
+F21270SET    F21565SET
+F2_1950SET   F2SET
+PI11600SET   PI1300SET
+PI1800SET    Pi2SET
+RHO3SET      RHOPrimeSET
+\end{verbatim}
+Note the file {\tt pdgTable.txt}! The amplitude building scripts will uses this file to look up the available isobar states. It has to be at this location!
+
+\section{Building Amplitudes and Normalization Integrals}
+In the following we assume that you have set up your working directories as described in the preceeding section.
+
+\subsection{Define your Partial Waves: Generating Keyfiles with keygen}
+The partial wave amplitudes are calculated by the {\tt GAMP} program which is part of the BNL software package {\tt PWA2000} that you should have installed with all the patches applied. See the INSTALL file.
+
+{\tt GAMP} requires a so called {\it keyfile} to specify a partial wave amplitude. The keyfile scripting language is described in the {\tt PWA2000} documentation. {\tt GAMP} calculates the amplitudes in the canonical basis where states are described by the spin parity quantum numbers $J^{PC}M$ where the spin projection $M$ takes the range $-J \leq M \leq J$. For the partial wave analysis we want to represent the decay amplitudes in the reflectivity base which is defined in terms of canonical states as follows:
+\[\psi_{JM}^\epsilon = c(M)[\psi_{JM}(\tau)-\epsilon P(-1)^{J-M}\psi_{J-M}(\tau)]\quad\quad \epsilon=\pm1, M\geq0\]
+So the range of $M$ is reduced to the positive numbers only at the cost of introducing the reflectivity quantum number $\epsilon$. This basis is choosen because for parity conserving processes the resulting spin-density matrix becomes block diagonal. Waves with different reflectivity do not interfere (see Chung paper).
+
+Another thing that has to be taken care of is the bose symmetrization of the amplitudes. The full partial wave amplitude is a sum of several similar terms which differ only in permutations of the bosonic final state particles.
+
+Since it would be quite tedious to code these amplitudes by hand ROOTPWA contains a small ROOT-tool -- {\tt keygen} -- which offers a comfortable way to define partial wave amplitudes and generate corresponding keyfiles. For pionic final states (both charged and neutral pions) bose symmetrization and reflectivity basis are taken care of.
+
+In order to create a new partial wave you can use the {\tt makekey.C} ROOT-script:
+\begin{enumerate}
+\item Edit {\tt makekey.C} to define your wave. An example is shown below:
+\begin{lstlisting}
+  // Define final state particles
+  partkey p1("pi+");
+  partkey p2("pi-");
+  partkey p3("pi+");
+  partkey p4("pi-");
+  partkey p5("pi-");
+
+  // Define Isobar states and their decays
+  // each of these objects corresponds to one node
+  // in an isobar decay tree
+  
+  //              name   iso1 iso2 l
+  partkey sigma1("sigma",&p1,&p2,0);
+  partkey rho1("rho(770)",&p3,&p4,1);
+  partkey pi13("pi(1300)",&p5,&rho1,1);
+
+  // define quantum numbers of resonance X 
+  // and its decay into the first isobar pair
+  int l=2;  // angular momentum 
+  int s=0;  // spin
+
+  int j=2;  // total spin of X
+  int m=0;  // spin projection
+  int eps=1; // reflectivity
+  int p=-1; // parity
+
+  // the isobar decay of X
+  partkey X("X",&sigma1,&pi13,l,s);
+
+  // final partial wave with all quantum numbers
+  wavekey mykey(j,p,m,eps,&X);
+
+  // write the key-file:
+  mykey.write();
+\end{lstlisting}
+
+\item Execute the script from CINT. The {\tt makekey.C} script as it comes with ROOTPWA tries to verify your amplitude by running {\tt GAMP} on some example files. For this you need to supply an event file with some sample events. If everything goes well you will get a proper keyfile that can be used with {\tt GAMP}. The naming convention of the key-files is important! Do not rename the key-files!
+\item You need to generate a keyfile for each amplitude that you want to use in your fit. When finished with a bunch of them copy them into a waveset directory. \end{enumerate}
+
+{\bfseries NOTE: Since all the main physics constraints of the partial wave analysis enter at this point it makes sense to spend some time playing with the tools until you feel comfortable before you continue. It is easy to make mistakes so you need to think about what you are doing!}
+
+
+\subsection{Generate the Amplitudes from Data and Phase Space Events}
+Amplitude generation is best done on a computing cluster such as to exploit the parallelizability. Each mass bin can be treated independently. In the {\tt scrips} folder of the ROOTPWA disctribution there are several scripts which can be used to automatize and monitor this procedure:
+\begin{itemize}
+\item {\tt buildBinsCluster.sge} is a shell script that has been developed for the SUN Grid Engine batch farm system. It should be easily adaptable to any batch system.
+\item {\tt checkBins.sh} is a script to monitor the data processing. It can be used to control that for each mass bins all amplitudes have been calculated.
+\item {\tt checkWaves.sh} can be used to compare a set of mass bins to control if for each mass bin the same waveset has been produced.
+\item {\tt checkSet.sh} checks which wavesets have already been calculated.
+\item {\tt combineAmps.sh} is a template script which shows how to run the addamp program to add waves together. This can be used to implement isospin symmetry constraints into the waveset.
+\end{itemize}
+
+
+
+\section{Mass Independet Fit}
+
+
+\section{Using TFitBin to View the Fit Results}
+
+
+\section{Appendix: Useful Linux Bash Commands}
+
+\begin{lstlisting}
+for i in *; do
+      # do something with the content of the current directroy
+      ...
+done;
+\end{lstlisting}  
+
+\begin{lstlisting}
+cat <file> | while read a; do
+      # do something with the entries in the file
+      ...
+done;
+\end{lstlisting}  
+
+
+
+\end{document}

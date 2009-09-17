@@ -1,0 +1,146 @@
+--- integral.nw	2004-05-18 17:52:21.000000000 +0200
++++ integral.nw	2009-08-13 14:10:26.000000000 +0200
+@@ -149,10 +149,10 @@ integration, this time in the form of a 
+ Calling [[files(...)]] {\em overwrites } any values from previous calls
+ or the constructor.  It returns a reference to itself.
+ <<mutators>>=
+-        integral& files(list<string>);
++        integral& files(const list<string>&);
+ 
+ @
+-\meth{integral::renormalize(int n)}
++\meth{integral::renormalize(const int n)}
+ It is sometimes useful to lie about how many monte-carlo events were
+ used in the integration.  Since we do not use the statistical error of
+ the integrals anywhere in the likelihood or observables calculations,
+@@ -172,14 +172,14 @@ the integrals, {\em i.e.}, lie about how
+ [[renormalize(n)]] forces the integral to believe that [[n]] events were
+ used in the integration.  It returns a reference to itself.
+ <<mutators>>=
+-        integral& renormalize(int n);
++        integral& renormalize(const int n);
+ 
+ @
+ \meth{integral::max(int m)}
+ Sets the maximum number of amplitudes to read from the amplitude files
+ in the integration.  It returns a reference to itself.
+ <<mutators>>=
+-        integral& max(int m);
++        integral& max(const int m);
+ 
+ @
+ \meth{integral::events(int n)}
+@@ -187,7 +187,7 @@ Sets the [[integral]]s idea of the numbe
+ integration.  This does {\sc not} set the number of events actually used,
+ only the assumed number.  It returns a reference to itself.
+ <<mutators>>=
+-        integral& events(int n);
++        integral& events(const int n);
+ 
+ @
+ \meth{integral::el(string, string)}
+@@ -236,7 +236,7 @@ is responsible for freeing it.
+ number is is the ``normalized'' integral for these waves, {\em i.e.},
+ $\frac{1}{N} \sum_i \psi_{s1}\psi_{s2}^\ast$.
+ <<inspectors>>=
+-        complex<double> val(string, string);
++        complex<double> val(const string&, const string&);
+ 
+ @
+ \meth{integral::get(char** flist)}
+@@ -256,7 +256,7 @@ This means the ordering of the waves in 
+ by giving an [[flist]] with the same waves as the original, but in a
+ new order.
+ <<inspectors>>=
+-        integral get(list<string> flist);
++        integral get(const list<string>& flist);
+ 
+ @
+ \meth{integral::index(string s)}
+@@ -273,7 +273,7 @@ corresponds to the wave specified by [[s
+         int index(char* s);
+ 
+ @
+-\meth integral::mat()
++\meth integral::mat() const
+ [[mat()]] returns the normalization integral as a matrix of complex
+ numbers.  The elements may be accessed by using the [[index(s)]]
+ methods above. This matrix is normalized, {\em i.e.}, $M_{\alpha
+@@ -282,7 +282,7 @@ The ordering of the waves in the [[matri
+ returned by the [[files()]] method, or can be determined using the above
+ [[index(...)]] methods.
+ <<inspectors>>=
+-        matrix<complex<double> > mat();
++        matrix<complex<double> > mat() const;
+ 
+ 
+ @
+@@ -550,8 +550,8 @@ If [[files(...)]] is called with an arra
+ they are just pushed onto a list and [[files(list<string>)]] is called.
+ 
+ <<mutator code>>=
+-integral& integral::files(list<string> files) {
+-    list<string>::iterator file = files.begin();
++integral& integral::files(const list<string>& files) {
++    list<string>::const_iterator file = files.begin();
+     while(file != files.end()) {
+         this->_index[*file] = this->_nwaves++;
+         file++;
+@@ -578,7 +578,7 @@ The values stored in [[_sum]] are ``unno
+ \end{eqnarray}
+ and therefore, to renormalize, [[_nevents]] $\rightarrow$ [[n]] and $\Sigma \rightarrow {[[n]]\over[[_nevents]]}\Sigma$.
+ <<mutator code>>=
+-    integral& integral::renormalize(int n) {
++    integral& integral::renormalize(const int n) {
+         _sum = ((complex<double>) ((double) n/ (double) _nevents))*_sum;
+         _nevents = n;
+         return *this;
+@@ -588,12 +588,12 @@ and therefore, to renormalize, [[_nevent
+ [[max(m)]] and [[events(n)]] are trivial methods--simply set the
+ corresponding data members and return [[*this]].
+ <<mutator code>>=
+-    integral& integral::max(int m) { 
++    integral& integral::max(const int m) { 
+         this->_maxEvents = m; 
+         return *this; 
+     }
+ 
+-    integral& integral::events(int n) { 
++    integral& integral::events(const int n) { 
+         this->_nevents = n; 
+         return *this; 
+     }
+@@ -666,7 +666,7 @@ We check that [[iname]] and [[jname]] ar
+ more times by member functions.
+ 
+ <<inspector code>>=
+-complex<double> integral::val(string iname, string jname) {
++complex<double> integral::val(const string& iname, const string& jname) {
+ 
+     if( _index.find(iname) == _index.end() ) {
+         cerr << "error: " << iname << " not in integral" << endl;
+@@ -694,10 +694,10 @@ Again, we also provide a wrapper method 
+ strings into a list of strings before calling [[get(list<string> flist)]].
+ 
+ <<inspector code>>=
+-integral integral::get(list<string> flist) {
++integral integral::get(const list<string>& flist) {
+     // need to check that all requested files are in list
+-    list<string>::iterator iname;
+-    list<string>::iterator jname;
++    list<string>::const_iterator iname;
++    list<string>::const_iterator jname;
+     integral ret;
+ 
+     iname = flist.begin();
+@@ -747,8 +747,8 @@ associated with the string [[s]].
+ @
+ [[mat()]] must ``normalize'' the matrix [[_sum]] before returning it.
+ <<inspector code>>=
+-    matrix<complex<double> > integral::mat() {
+-        return ((complex<double>) (1.0/((double) _nevents)))*_sum;
++    matrix<complex<double> > integral::mat() const {
++        return _sum*complex<double>(1.0/((double) _nevents));
+     }
+ 
+ @

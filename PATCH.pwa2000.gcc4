@@ -1,0 +1,12 @@
+diff -dpu --strip-trailing-cr -ru pwa2000-orig/keyfile.nw pwa2000/keyfile.nw
+--- keyfile.nw	2004-05-18 17:52:21.000000000 +0200
++++ keyfile.nw	2009-02-27 19:40:05.000000000 +0100
+@@ -137,7 +137,7 @@ int keyfile::nWaves() const {
+ 
+ <<keyParse.yy>>=
+ %{
+-#include <stream.h>
++#include <iostream>
+ #include <particle.h>
+ #include <wave.h>
+ #include <keyfile.h>

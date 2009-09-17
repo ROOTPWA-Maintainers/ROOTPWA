@@ -1,0 +1,74 @@
+diff -dpu --strip-trailing-cr -ru libpp-orig/event.nw libpp/event.nw
+--- event.nw	2004-02-10 22:20:36.000000000 +0100
++++ event.nw	2009-02-09 16:54:41.000000000 +0100
+@@ -55,13 +55,13 @@ The default constructor creates and init
+ \meth{event::event(const event\&)}
+ The copy constructor creates an event which is a copy of its argument.
+ <<constructors>>=
+-	event::event(const event&);
++	event(const event&);
+ 
+ @
+ \meth{event::\~{}event()}
+ The [[event]] destructor frees all resources which have been allocated for an [[event]].
+ <<constructors>>=
+-	event::~event();
++	~event();
+ 
+ @
+ \meth{event::operator=(const event\& e)}
+diff -dpu --strip-trailing-cr -ru libpp-orig/particle.nw libpp/particle.nw
+--- particle.nw	2004-02-10 22:20:36.000000000 +0100
++++ particle.nw	2009-02-09 16:55:54.000000000 +0100
+@@ -598,7 +598,7 @@ children of the decay.
+ 		std::complex<double> amp(int,int,int debug=0) const;
+ 		std::complex<double> expt_amp(double b, double t, int debug=0) const;
+ 		
+-		decay& decay::operator*=(const lorentzTransform& L);
++		decay& operator*=(const lorentzTransform& L);
+ 		decay& operator=(const decay&);
+ 		
+ 		void print() const;
+diff -dpu --strip-trailing-cr -ru libpp-orig/Vec.nw libpp/Vec.nw
+--- Vec.nw	2004-02-10 22:20:35.000000000 +0100
++++ Vec.nw	2009-02-09 16:53:58.000000000 +0100
+@@ -262,7 +262,7 @@ obvious meaning as division for vectors 
+ for a cross product.  This operator returns the cross product of the
+ [[threeVec]] components.
+ <<fourVec public definitions>>=
+-	threeVec fourVec::operator/(const fourVec&) const;
++	threeVec operator/(const fourVec&) const;
+ @
+ Scalar multiplication is defined as friend functions so that the order
+ of the operands is not important.
+@@ -294,7 +294,7 @@ The [[read()]] and [[write()]] methods p
+ @
+ [[fourVec]] has only one mutator for now, [[mass(m)]] assumes [[this]] is a four-momentum and sets the energy given the [[threeVec]] component and the argument [[m]].
+ <<fourVec public definitions>>=
+-	fourVec fourVec::mass(double);
++	fourVec mass(double);
+ 
+ @
+ The subscripting operator defines a way to inspect and set the
+diff -dpu --strip-trailing-cr -ru libpp-orig/particleData.nw libpp/particleData.nw
+--- particleData.nw  2004-02-10 22:20:36.000000000 +0100
++++ particleData.nw  2009-02-23 14:02:12.000000000 +0100
+@@ -21,6 +21,7 @@ appropriate arguments.
+ #include <string>
+ #include <iostream>
+ #include <fstream>
++#include <cstring>
+ #include <cstdlib>
+ #include <pputil.h>
+ #define getsign(x) (((x)>0)?"+":"-")
+diff -dpu --strip-trailing-cr -ru libpp-orig/pputil.nw libpp/pputil.nw
+--- pputil.nw     2004-07-02 22:35:46.000000000 +0200
++++ pputil.nw     2009-02-23 13:57:43.000000000 +0100
+@@ -15,6 +15,7 @@
+ #include <string>
+ #include <complex>
+ #include <cstdio>
++#include <cstdlib>
+
+ @
+ These constants are defined to be

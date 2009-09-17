@@ -1,0 +1,18 @@
+--- particle.nw	2009-02-11 10:17:02.000000000 +0100
++++ particle.nw	2009-02-11 14:01:40.000000000 +0100
+@@ -387,13 +387,13 @@
+ 	    // make z_new parallel to p
+ 	    T.set (R.set (0, signof (tempP.x ()) * tempP.theta (), 0));
+ 	    X = T * L;
+-	    L = *((lorentzTransform *) & X);
++	    L = lorentzTransform(X);
+ 	    tempP *= T;
+ 
+ 	    // boost into p rest frame
+ 	    T.set (tempP);
+ 	    X = T * L;
+-	    L = *((lorentzTransform *) & X);
++	    L = lorentzTransform(X);
+ 	    tempP *= T;
+ 
+ 	    this->_decay->setupFrames (L, debug);

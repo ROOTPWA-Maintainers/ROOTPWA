@@ -1,0 +1,56 @@
+#!/bin/bash
+# Select queue
+#$ -l long=TRUE,h_vmem=100M
+# Divert output
+#$ -o /lustre/e18/user/sneubert/logs
+# Write error in same file
+#$ -j y
+
+# this script requires KEY to be set to the keydirectory!
+# and BIN to be set to the mass bin directory
+
+export DIARYFILE=$HOME/scratch/COMPASS/rootpwa/trunk/scripts/bindiary.txt
+
+export SET=A1SET
+export KEY=$HOME/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/$SET
+echo "---- STARTING AMPLITUDE CALCULATIONS"; 
+echo "---- WAVESET: $KEY";
+echo;
+
+test -s $KEY || exit
+ls $KEY
+
+#export DATADIR=/nfs/data/user/sneubert/5PiData2
+cd ~/scratch/COMPASS/rootpwa/trunk
+source setup.sh
+cd scripts/
+
+# find bin
+TEMPLIST=`mktemp -t dirlist.XXXXXX`
+#ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiData
+ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiLTData
+#ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiMTData
+#ROOTDIR=/lustre/e18/user/sneubert/2008/5PiBins
+#ROOTDIR=/lustre/e18/user/sneubert/5PiMC/ACC_HT
+echo ROOTDIR=$ROOTDIR
+ls $ROOTDIR
+ls $ROOTDIR > $TEMPLIST
+
+echo SGE_TASK_ID=$SGE_TASK_ID
+
+MYBIN=`./SetWorkdir.sh $TEMPLIST $SGE_TASK_ID`
+
+echo "Starting $SET for bin $MYBIN"
+# logbook entries:
+echo -e "Start: \c" >> $DIARYFILE
+date >> $DIARYFILE
+echo $ROOTDIR/$MYBIN >> $DIARYFILE
+echo $SET >> $DIARYFILE
+echo "--------------------------------" >> $DIARYFILE
+
+export KEYDIR=$KEY
+./buildBin.sh $ROOTDIR/$MYBIN
+
+
+
+cd 

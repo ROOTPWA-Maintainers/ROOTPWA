@@ -1,0 +1,481 @@
+??? int main(int, char**) [/afs/e18/user/bgrube/compass/pwa/rootpwa/src/pwafit.cc:152]: warning: Using default normalization integral file 'norm.int'.
+??? int main(int, char**) [/afs/e18/user/bgrube/compass/pwa/rootpwa/src/pwafit.cc:156]: warning: Using default acceptance normalization integral file 'norm.int'.
+>>> main(): info: Creating and setting up likelihood function
+>>> TPWALikelihood::SetWavelist(): info: Reading amplitude names from wave list file '/afs/e18/user/bgrube/compass/pwa/rootpwa/src/pwaFitTest/keyfiles/wavelist'.
+>>> TPWALikelihood::SetWavelist(): info: Read 41 lines from wave list file '/afs/e18/user/bgrube/compass/pwa/rootpwa/src/pwaFitTest/keyfiles/wavelist'.
+>>> TPWALikelihood::SetRank(): info: Dimension of likelihood function is 157.
+>>> TPWALikelihood::LoadIntegrals(): info: Loading normalization integral from 'norm.int'.
+>>> TPWALikelihood::LoadIntegrals(): info: Loading acceptance integral from 'norm.int'.
+>>> TPWALikelihood::LoadAmplitudes(): info: Loading amplitude data.
+>>> TPWALikelihood::LoadAmplitudes(): info: Loaded 2000 events into memory.
+>>> TPWALikelihood::LoadAmplitudes(): info: Rescaling integrals.
+>>> main(): info: Creating and setting up minimizer Minuit2 Migrad
+>>> main(): info: Reading start values from ''.
+>>> main(): info: Setting start values for 157 parameters.
+    Parameter naming scheme is: V[rank index]_[IGJPCME][isobar spec]
+    Setting parameter [  0]   V0_1-1++0+rho770_01_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [  1]   V0_1-1++1+rho770_01_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [  2]   V0_1-1++1+rho770_01_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [  3]   V0_1-2++1+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [  4]   V0_1-2++1+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [  5]   V0_1-0-+0+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [  6]   V0_1-0-+0+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [  7]    V0_1-0-+0+sigma_00_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [  8]    V0_1-0-+0+sigma_00_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [  9]   V0_1-2-+0+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 10]   V0_1-2-+0+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 11]    V0_1-1++0+sigma_10_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 12]    V0_1-1++0+sigma_10_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 13]   V0_1-2-+1+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 14]   V0_1-2-+1+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 15]   V0_1-2-+0+f21270_02_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 16]   V0_1-2-+0+f21270_02_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 17]    V0_1-2-+0+sigma_20_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 18]    V0_1-2-+0+sigma_20_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 19]   V0_1-1-+1+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 20]   V0_1-1-+1+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 21]   V0_1-3++0+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 22]   V0_1-3++0+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 23]   V0_1-2-+1+f21270_02_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 24]   V0_1-2-+1+f21270_02_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 25]   V0_1-1++0+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 26]   V0_1-1++0+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 27]   V0_1-4-+0+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 28]   V0_1-4-+0+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 29]   V0_1-2-+0+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 30]   V0_1-2-+0+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 31]    V0_1-2-+1+sigma_20_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 32]    V0_1-2-+1+sigma_20_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 33]   V0_1-4-+1+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 34]   V0_1-4-+1+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 35]   V0_1-2-+1+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 36]   V0_1-2-+1+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 37]   V0_1-3++1+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 38]   V0_1-3++1+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 39]   V0_1-1++0+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 40]   V0_1-1++0+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 41]   V0_1-4++1+rho770_41_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 42]   V0_1-4++1+rho770_41_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 43]   V0_1-1++1+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 44]   V0_1-1++1+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 45]   V0_1-1++1+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 46]   V0_1-1++1+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 47]    V0_1-1++1+sigma_10_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 48]    V0_1-1++1+sigma_10_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 49]   V0_1-2-+0+f21270_22_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 50]   V0_1-2-+0+f21270_22_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 51]   V0_1-2++1+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 52]   V0_1-2++1+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 53]   V0_1-2-+1+f21270_22_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 54]   V0_1-2-+1+f21270_22_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 55]    V0_1-0-+0+f0980_00_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 56]    V0_1-0-+0+f0980_00_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 57] V0_1-3++0+rho31690_03_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 58] V0_1-3++0+rho31690_03_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 59]   V0_1-3++0+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 60]   V0_1-3++0+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 61] V0_1-3++1+rho31690_03_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 62] V0_1-3++1+rho31690_03_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 63]   V0_1-3++1+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 64]   V0_1-3++1+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 65]   V0_1-4++1+f21270_32_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 66]   V0_1-4++1+f21270_32_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 67]   V0_1-1++1-rho770_01_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 68]   V0_1-2++0-rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 69]   V0_1-2++0-rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 70]   V0_1-1-+0-rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 71]   V0_1-1-+0-rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 72]   V0_1-1-+1-rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 73]   V0_1-1-+1-rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 74]   V0_1-2++1-f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 75]   V0_1-2++1-f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 76]   V0_1-2-+1-f21270_02_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 77]   V0_1-2-+1-f21270_02_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 78]   V0_1-2++0-f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 79]   V0_1-2++0-f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 80]   V1_1-1++1+rho770_01_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 81]   V1_1-2++1+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 82]   V1_1-2++1+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 83]   V1_1-0-+0+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 84]   V1_1-0-+0+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 85]    V1_1-0-+0+sigma_00_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 86]    V1_1-0-+0+sigma_00_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 87]   V1_1-2-+0+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 88]   V1_1-2-+0+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 89]    V1_1-1++0+sigma_10_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 90]    V1_1-1++0+sigma_10_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 91]   V1_1-2-+1+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 92]   V1_1-2-+1+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 93]   V1_1-2-+0+f21270_02_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 94]   V1_1-2-+0+f21270_02_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 95]    V1_1-2-+0+sigma_20_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 96]    V1_1-2-+0+sigma_20_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 97]   V1_1-1-+1+rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [ 98]   V1_1-1-+1+rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [ 99]   V1_1-3++0+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [100]   V1_1-3++0+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [101]   V1_1-2-+1+f21270_02_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [102]   V1_1-2-+1+f21270_02_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [103]   V1_1-1++0+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [104]   V1_1-1++0+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [105]   V1_1-4-+0+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [106]   V1_1-4-+0+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [107]   V1_1-2-+0+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [108]   V1_1-2-+0+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [109]    V1_1-2-+1+sigma_20_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [110]    V1_1-2-+1+sigma_20_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [111]   V1_1-4-+1+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [112]   V1_1-4-+1+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [113]   V1_1-2-+1+rho770_31_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [114]   V1_1-2-+1+rho770_31_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [115]   V1_1-3++1+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [116]   V1_1-3++1+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [117]   V1_1-1++0+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [118]   V1_1-1++0+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [119]   V1_1-4++1+rho770_41_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [120]   V1_1-4++1+rho770_41_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [121]   V1_1-1++1+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [122]   V1_1-1++1+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [123]   V1_1-1++1+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [124]   V1_1-1++1+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [125]    V1_1-1++1+sigma_10_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [126]    V1_1-1++1+sigma_10_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [127]   V1_1-2-+0+f21270_22_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [128]   V1_1-2-+0+f21270_22_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [129]   V1_1-2++1+f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [130]   V1_1-2++1+f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [131]   V1_1-2-+1+f21270_22_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [132]   V1_1-2-+1+f21270_22_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [133]    V1_1-0-+0+f0980_00_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [134]    V1_1-0-+0+f0980_00_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [135] V1_1-3++0+rho31690_03_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [136] V1_1-3++0+rho31690_03_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [137]   V1_1-3++0+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [138]   V1_1-3++0+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [139] V1_1-3++1+rho31690_03_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [140] V1_1-3++1+rho31690_03_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [141]   V1_1-3++1+rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [142]   V1_1-3++1+rho770_21_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [143]   V1_1-4++1+f21270_32_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [144]   V1_1-4++1+f21270_32_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [145]   V1_1-2++0-rho770_21_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [146]   V1_1-1-+0-rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [147]   V1_1-1-+0-rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [148]   V1_1-1-+1-rho770_11_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [149]   V1_1-1-+1-rho770_11_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [150]   V1_1-2++1-f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [151]   V1_1-2++1-f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [152]   V1_1-2-+1-f21270_02_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [153]   V1_1-2-+1-f21270_02_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [154]   V1_1-2++0-f21270_12_pi-.amp_RE =  1.0000000000000000e-02
+    Setting parameter [155]   V1_1-2++0-f21270_12_pi-.amp_IM =  1.0000000000000000e-02
+    Setting parameter [156]                           V_flat =  1.0000000000000000e-02
+>>> main(): info: Performing minimization.
+Minimization stopped after 31022 function calls.
+    Total number of mimimzer parameters ................. 157
+    Number of free minimzer parameters .................. 157
+    Maximum allowed number of iterations ................ 20000
+    Maximum allowed number of function calls ............ 0
+    Minimizer status .................................... 0
+    Minimizer provides error and error matrix ........... 1
+    Minimizer has performed detailed error validation ... 0
+    Estimated Distance to Minimum ....................... 5.91413e-10
+    Statistical scale used for error calculation ........ 1
+    Minimizer strategy .................................. 1
+    Absolute tolerance .................................. 1e-06
+>>> main(): info: Minimization result:
+    Parameter [  0]   V0_1-1++0+rho770_01_pi-.amp_RE = -1.6616304765038135e-03 +-  6.3812114638543416e-01
+    Parameter [  1]   V0_1-1++1+rho770_01_pi-.amp_RE = -5.5655626806086897e-03 +-  6.3720844902104934e-01
+    Parameter [  2]   V0_1-1++1+rho770_01_pi-.amp_IM =  2.4044968813586472e-02 +-  6.3727928361020914e-01
+    Parameter [  3]   V0_1-2++1+rho770_21_pi-.amp_RE =  1.2899536424702866e-02 +-  6.4706215021429914e-01
+    Parameter [  4]   V0_1-2++1+rho770_21_pi-.amp_IM =  4.6622643010941845e-03 +-  6.4701777784190229e-01
+    Parameter [  5]   V0_1-0-+0+rho770_11_pi-.amp_RE = -6.8823092460968023e-03 +-  6.4821239245790530e-01
+    Parameter [  6]   V0_1-0-+0+rho770_11_pi-.amp_IM =  6.8325713296172935e-03 +-  6.4865056259652942e-01
+    Parameter [  7]    V0_1-0-+0+sigma_00_pi-.amp_RE = -6.9641157399896545e-03 +-  7.1751598883632584e-01
+    Parameter [  8]    V0_1-0-+0+sigma_00_pi-.amp_IM =  2.6089078116456041e-02 +-  7.1842875170405207e-01
+    Parameter [  9]   V0_1-2-+0+rho770_11_pi-.amp_RE =  1.5126914897454567e-02 +-  6.5247885209647494e-01
+    Parameter [ 10]   V0_1-2-+0+rho770_11_pi-.amp_IM = -1.3743821591178809e-02 +-  6.5201509329917950e-01
+    Parameter [ 11]    V0_1-1++0+sigma_10_pi-.amp_RE = -1.1346465320598111e-02 +-  6.2610780737933014e-01
+    Parameter [ 12]    V0_1-1++0+sigma_10_pi-.amp_IM = -2.2767834013998088e-02 +-  6.2622636011687460e-01
+    Parameter [ 13]   V0_1-2-+1+rho770_11_pi-.amp_RE =  1.5459082166462078e-03 +-  6.5593700714930459e-01
+    Parameter [ 14]   V0_1-2-+1+rho770_11_pi-.amp_IM = -1.1108066293731981e-02 +-  6.5508583019002053e-01
+    Parameter [ 15]   V0_1-2-+0+f21270_02_pi-.amp_RE = -2.5786320337143421e-03 +-  6.5824159485078693e-01
+    Parameter [ 16]   V0_1-2-+0+f21270_02_pi-.amp_IM = -1.7080980054654759e-02 +-  6.5827179261314461e-01
+    Parameter [ 17]    V0_1-2-+0+sigma_20_pi-.amp_RE =  5.7145687022210449e-03 +-  6.5752530602904269e-01
+    Parameter [ 18]    V0_1-2-+0+sigma_20_pi-.amp_IM =  8.3761965064922846e-03 +-  6.5777129207669760e-01
+    Parameter [ 19]   V0_1-1-+1+rho770_11_pi-.amp_RE =  1.8887877610883907e-03 +-  6.3354051383090892e-01
+    Parameter [ 20]   V0_1-1-+1+rho770_11_pi-.amp_IM =  4.1833569078866112e-04 +-  6.3290712850203756e-01
+    Parameter [ 21]   V0_1-3++0+f21270_12_pi-.amp_RE = -1.3217707931070804e-02 +-  6.6651080154530151e-01
+    Parameter [ 22]   V0_1-3++0+f21270_12_pi-.amp_IM = -8.8565335381641120e-03 +-  6.6691280538024211e-01
+    Parameter [ 23]   V0_1-2-+1+f21270_02_pi-.amp_RE =  1.2397681861778984e-02 +-  6.4302930776677780e-01
+    Parameter [ 24]   V0_1-2-+1+f21270_02_pi-.amp_IM = -1.0058590967734181e-03 +-  6.4321649521839719e-01
+    Parameter [ 25]   V0_1-1++0+f21270_12_pi-.amp_RE =  4.4218697382398114e-03 +-  6.4834422501780742e-01
+    Parameter [ 26]   V0_1-1++0+f21270_12_pi-.amp_IM = -2.3610720904189017e-02 +-  6.4758135475703382e-01
+    Parameter [ 27]   V0_1-4-+0+rho770_31_pi-.amp_RE =  9.0253198846503013e-03 +-  6.8411498251413161e-01
+    Parameter [ 28]   V0_1-4-+0+rho770_31_pi-.amp_IM =  3.9625247482716472e-03 +-  6.8365122446279247e-01
+    Parameter [ 29]   V0_1-2-+0+rho770_31_pi-.amp_RE =  2.0037965617849878e-03 +-  6.5540192678914588e-01
+    Parameter [ 30]   V0_1-2-+0+rho770_31_pi-.amp_IM =  1.4187200405198067e-02 +-  6.5552573854888985e-01
+    Parameter [ 31]    V0_1-2-+1+sigma_20_pi-.amp_RE =  7.6873792169008491e-03 +-  6.3947016122880029e-01
+    Parameter [ 32]    V0_1-2-+1+sigma_20_pi-.amp_IM =  5.7232618056246767e-03 +-  6.3963061983916347e-01
+    Parameter [ 33]   V0_1-4-+1+rho770_31_pi-.amp_RE =  1.4597381036996007e-03 +-  6.5876351582230919e-01
+    Parameter [ 34]   V0_1-4-+1+rho770_31_pi-.amp_IM = -4.4516160400975583e-03 +-  6.5879773344006076e-01
+    Parameter [ 35]   V0_1-2-+1+rho770_31_pi-.amp_RE = -3.4519010663361482e-03 +-  6.6345085475950771e-01
+    Parameter [ 36]   V0_1-2-+1+rho770_31_pi-.amp_IM =  1.4529659640290288e-02 +-  6.6353467874516381e-01
+    Parameter [ 37]   V0_1-3++1+f21270_12_pi-.amp_RE = -8.1518837740924156e-03 +-  6.9034245423062335e-01
+    Parameter [ 38]   V0_1-3++1+f21270_12_pi-.amp_IM = -1.2199899005170187e-02 +-  6.9116781467161270e-01
+    Parameter [ 39]   V0_1-1++0+rho770_21_pi-.amp_RE = -2.4089442922696509e-03 +-  6.4424674462618148e-01
+    Parameter [ 40]   V0_1-1++0+rho770_21_pi-.amp_IM = -1.3320995812404392e-02 +-  6.4378166140165627e-01
+    Parameter [ 41]   V0_1-4++1+rho770_41_pi-.amp_RE = -6.8926182560491477e-03 +-  6.5466456604855261e-01
+    Parameter [ 42]   V0_1-4++1+rho770_41_pi-.amp_IM =  5.2645611344752617e-03 +-  6.5445984272847202e-01
+    Parameter [ 43]   V0_1-1++1+f21270_12_pi-.amp_RE = -1.3997742714217469e-02 +-  6.4253375427026849e-01
+    Parameter [ 44]   V0_1-1++1+f21270_12_pi-.amp_IM = -2.1205284258878042e-03 +-  6.4192992218783618e-01
+    Parameter [ 45]   V0_1-1++1+rho770_21_pi-.amp_RE =  2.8686551818464302e-03 +-  6.5447080105796129e-01
+    Parameter [ 46]   V0_1-1++1+rho770_21_pi-.amp_IM =  8.4390479778984652e-03 +-  6.5414695466525974e-01
+    Parameter [ 47]    V0_1-1++1+sigma_10_pi-.amp_RE =  4.7510751407564139e-03 +-  6.4244428806632858e-01
+    Parameter [ 48]    V0_1-1++1+sigma_10_pi-.amp_IM =  4.6124228061634508e-03 +-  6.4174525038072117e-01
+    Parameter [ 49]   V0_1-2-+0+f21270_22_pi-.amp_RE = -1.4616747137670999e-02 +-  6.6962344418920061e-01
+    Parameter [ 50]   V0_1-2-+0+f21270_22_pi-.amp_IM =  1.3426140869356848e-02 +-  6.6968155489236059e-01
+    Parameter [ 51]   V0_1-2++1+f21270_12_pi-.amp_RE = -1.6965522810465261e-02 +-  6.4440627222053681e-01
+    Parameter [ 52]   V0_1-2++1+f21270_12_pi-.amp_IM = -5.6433324774786825e-03 +-  6.4442103914932269e-01
+    Parameter [ 53]   V0_1-2-+1+f21270_22_pi-.amp_RE = -4.2606149401471808e-03 +-  6.6818576971761423e-01
+    Parameter [ 54]   V0_1-2-+1+f21270_22_pi-.amp_IM = -5.0729721183410091e-04 +-  6.6836751343235223e-01
+    Parameter [ 55]    V0_1-0-+0+f0980_00_pi-.amp_RE = -2.7069771574183563e-03 +-  6.2922238988697388e-01
+    Parameter [ 56]    V0_1-0-+0+f0980_00_pi-.amp_IM =  1.1880273172335682e-02 +-  6.2837420714435033e-01
+    Parameter [ 57] V0_1-3++0+rho31690_03_pi-.amp_RE = -1.1564280495850567e-02 +-  6.5530630799543488e-01
+    Parameter [ 58] V0_1-3++0+rho31690_03_pi-.amp_IM = -2.2933808226844574e-02 +-  6.5543871093470929e-01
+    Parameter [ 59]   V0_1-3++0+rho770_21_pi-.amp_RE = -1.1963887656174519e-02 +-  6.6846912288433902e-01
+    Parameter [ 60]   V0_1-3++0+rho770_21_pi-.amp_IM = -1.0048128174608146e-02 +-  6.6850451474398564e-01
+    Parameter [ 61] V0_1-3++1+rho31690_03_pi-.amp_RE =  1.5970495341519109e-02 +-  6.4491007346679785e-01
+    Parameter [ 62] V0_1-3++1+rho31690_03_pi-.amp_IM =  4.8049955736430084e-03 +-  6.4504747700812071e-01
+    Parameter [ 63]   V0_1-3++1+rho770_21_pi-.amp_RE = -9.9718477840438097e-03 +-  6.4477693999635532e-01
+    Parameter [ 64]   V0_1-3++1+rho770_21_pi-.amp_IM = -1.4128871536000702e-02 +-  6.4459150639124607e-01
+    Parameter [ 65]   V0_1-4++1+f21270_32_pi-.amp_RE =  8.9562742308395751e-03 +-  6.5398978546292297e-01
+    Parameter [ 66]   V0_1-4++1+f21270_32_pi-.amp_IM = -1.0886193805601334e-03 +-  6.5412187765887508e-01
+    Parameter [ 67]   V0_1-1++1-rho770_01_pi-.amp_RE =  2.2459697954992351e-03 +-  6.3351664362642524e-01
+    Parameter [ 68]   V0_1-2++0-rho770_21_pi-.amp_RE =  2.3240001110961354e-03 +-  6.3610198643229110e-01
+    Parameter [ 69]   V0_1-2++0-rho770_21_pi-.amp_IM =  7.8961924859135657e-04 +-  6.3551190439176675e-01
+    Parameter [ 70]   V0_1-1-+0-rho770_11_pi-.amp_RE =  2.0726587768410266e-03 +-  6.2890802308552596e-01
+    Parameter [ 71]   V0_1-1-+0-rho770_11_pi-.amp_IM =  9.8403346034277635e-03 +-  6.2841611596189262e-01
+    Parameter [ 72]   V0_1-1-+1-rho770_11_pi-.amp_RE =  3.3016983003800442e-03 +-  6.3032686805751648e-01
+    Parameter [ 73]   V0_1-1-+1-rho770_11_pi-.amp_IM =  2.2191224462219456e-02 +-  6.2958218609999828e-01
+    Parameter [ 74]   V0_1-2++1-f21270_12_pi-.amp_RE =  2.9013465839222975e-02 +-  6.4220231658743276e-01
+    Parameter [ 75]   V0_1-2++1-f21270_12_pi-.amp_IM =  4.6454198304383222e-02 +-  6.4254645479193162e-01
+    Parameter [ 76]   V0_1-2-+1-f21270_02_pi-.amp_RE = -4.8944683616850013e-03 +-  6.3279203927262595e-01
+    Parameter [ 77]   V0_1-2-+1-f21270_02_pi-.amp_IM =  4.3003139389864262e-02 +-  6.3287188199017108e-01
+    Parameter [ 78]   V0_1-2++0-f21270_12_pi-.amp_RE =  3.1707369501495920e-02 +-  6.3094001129124311e-01
+    Parameter [ 79]   V0_1-2++0-f21270_12_pi-.amp_IM =  1.2814084420674767e-02 +-  6.3126999328018130e-01
+    Parameter [ 80]   V1_1-1++1+rho770_01_pi-.amp_RE =  1.0097002977367944e-02 +-  8.4512159859127223e-01
+    Parameter [ 81]   V1_1-2++1+rho770_21_pi-.amp_RE =  4.9649714164209839e-03 +-  7.3735578057702533e-01
+    Parameter [ 82]   V1_1-2++1+rho770_21_pi-.amp_IM =  4.3206852257993552e-03 +-  6.8677452020224139e-01
+    Parameter [ 83]   V1_1-0-+0+rho770_11_pi-.amp_RE =  3.0575638697803380e-02 +-  6.5621961765248560e-01
+    Parameter [ 84]   V1_1-0-+0+rho770_11_pi-.amp_IM =  9.5986431395427788e-03 +-  6.4876421065002909e-01
+    Parameter [ 85]    V1_1-0-+0+sigma_00_pi-.amp_RE =  1.0348281728805246e-02 +-  1.0554943678627986e+00
+    Parameter [ 86]    V1_1-0-+0+sigma_00_pi-.amp_IM =  2.9334120150913454e-02 +-  9.6997201181372894e-01
+    Parameter [ 87]   V1_1-2-+0+rho770_11_pi-.amp_RE =  7.4481061170908226e-03 +-  8.5019171429638529e-01
+    Parameter [ 88]   V1_1-2-+0+rho770_11_pi-.amp_IM = -3.5371313465465842e-03 +-  9.9348571218122617e-01
+    Parameter [ 89]    V1_1-1++0+sigma_10_pi-.amp_RE =  3.5678686613117984e-03 +-  6.7757517696411840e-01
+    Parameter [ 90]    V1_1-1++0+sigma_10_pi-.amp_IM =  3.2231552528644167e-02 +-  1.8759485103254294e+00
+    Parameter [ 91]   V1_1-2-+1+rho770_11_pi-.amp_RE =  1.2508305762490769e-02 +-  7.2508433631243641e-01
+    Parameter [ 92]   V1_1-2-+1+rho770_11_pi-.amp_IM = -1.3201346502274352e-03 +-  7.5115371231597416e-01
+    Parameter [ 93]   V1_1-2-+0+f21270_02_pi-.amp_RE = -1.4580022133056101e-02 +-  7.8625052679995922e-01
+    Parameter [ 94]   V1_1-2-+0+f21270_02_pi-.amp_IM =  1.5512087881771150e-02 +-  1.5517430945825992e+00
+    Parameter [ 95]    V1_1-2-+0+sigma_20_pi-.amp_RE = -1.6989075531743902e-02 +-  1.4292785857909049e+00
+    Parameter [ 96]    V1_1-2-+0+sigma_20_pi-.amp_IM =  7.3603337521567797e-03 +-  1.4527526385799094e+00
+    Parameter [ 97]   V1_1-1-+1+rho770_11_pi-.amp_RE =  3.1651961044656890e-03 +-  6.3878563804030686e-01
+    Parameter [ 98]   V1_1-1-+1+rho770_11_pi-.amp_IM = -1.6853429044314389e-03 +-  6.7713130359689822e-01
+    Parameter [ 99]   V1_1-3++0+f21270_12_pi-.amp_RE =  5.5126838384495259e-03 +-  6.8677007793002254e-01
+    Parameter [100]   V1_1-3++0+f21270_12_pi-.amp_IM = -1.1244208685311497e-03 +-  4.1573537785300454e+00
+    Parameter [101]   V1_1-2-+1+f21270_02_pi-.amp_RE =  1.0634461592941907e-02 +-  6.3825713459587519e-01
+    Parameter [102]   V1_1-2-+1+f21270_02_pi-.amp_IM =  6.3958740661618080e-03 +-  6.7199611118313007e-01
+    Parameter [103]   V1_1-1++0+f21270_12_pi-.amp_RE =  4.2502888820246587e-03 +-  6.4554309559900214e-01
+    Parameter [104]   V1_1-1++0+f21270_12_pi-.amp_IM = -3.8745083208716188e-04 +-  2.3739770831948692e+00
+    Parameter [105]   V1_1-4-+0+rho770_31_pi-.amp_RE =  6.4964787320082105e-04 +-  1.3121015924708328e+00
+    Parameter [106]   V1_1-4-+0+rho770_31_pi-.amp_IM =  3.0031019678755889e-03 +-  7.7682788740101383e-01
+    Parameter [107]   V1_1-2-+0+rho770_31_pi-.amp_RE = -3.2383212356280384e-04 +-  8.6684145235444077e-01
+    Parameter [108]   V1_1-2-+0+rho770_31_pi-.amp_IM =  1.2593873637994409e-03 +-  7.8333862762495854e-01
+    Parameter [109]    V1_1-2-+1+sigma_20_pi-.amp_RE = -1.0020273492786594e-02 +-  9.5698126153030783e-01
+    Parameter [110]    V1_1-2-+1+sigma_20_pi-.amp_IM = -2.4822840526169960e-05 +-  7.3696489200945448e-01
+    Parameter [111]   V1_1-4-+1+rho770_31_pi-.amp_RE =  8.9337893210867832e-03 +-  7.8094425626374087e-01
+    Parameter [112]   V1_1-4-+1+rho770_31_pi-.amp_IM = -1.3333593545044483e-02 +-  6.9507777990891417e-01
+    Parameter [113]   V1_1-2-+1+rho770_31_pi-.amp_RE = -1.8616391210102892e-03 +-  8.7376874016177908e-01
+    Parameter [114]   V1_1-2-+1+rho770_31_pi-.amp_IM = -8.9203364087547081e-03 +-  8.1463184421396961e-01
+    Parameter [115]   V1_1-3++1+f21270_12_pi-.amp_RE =  6.4257360160360861e-03 +-  6.8990728291842240e-01
+    Parameter [116]   V1_1-3++1+f21270_12_pi-.amp_IM = -7.6641135533395272e-03 +-  2.9350982681656052e+02
+    Parameter [117]   V1_1-1++0+rho770_21_pi-.amp_RE = -5.3405940386427040e-04 +-  6.7447506614946739e-01
+    Parameter [118]   V1_1-1++0+rho770_21_pi-.amp_IM =  1.6581614712018251e-02 +-  6.9175278195490919e-01
+    Parameter [119]   V1_1-4++1+rho770_41_pi-.amp_RE = -1.1066250820585552e-03 +-  8.3536884302013537e-01
+    Parameter [120]   V1_1-4++1+rho770_41_pi-.amp_IM =  1.4830319564299674e-02 +-  6.6244319790809136e-01
+    Parameter [121]   V1_1-1++1+f21270_12_pi-.amp_RE =  5.9642368607307657e-03 +-  8.8766695708486776e-01
+    Parameter [122]   V1_1-1++1+f21270_12_pi-.amp_IM =  9.2505106222319337e-04 +-  7.4183628713261451e-01
+    Parameter [123]   V1_1-1++1+rho770_21_pi-.amp_RE =  9.3101363178048901e-03 +-  6.7105277206961367e-01
+    Parameter [124]   V1_1-1++1+rho770_21_pi-.amp_IM =  1.6606127666462200e-02 +-  9.1394390053048535e-01
+    Parameter [125]    V1_1-1++1+sigma_10_pi-.amp_RE = -4.5009469977807517e-03 +-  2.2565768756191895e+00
+    Parameter [126]    V1_1-1++1+sigma_10_pi-.amp_IM = -1.7536371826555996e-02 +-  3.1480659347034550e+00
+    Parameter [127]   V1_1-2-+0+f21270_22_pi-.amp_RE =  5.5455204002454475e-02 +-  6.7674357564388610e-01
+    Parameter [128]   V1_1-2-+0+f21270_22_pi-.amp_IM =  3.5974524378426791e-04 +-  1.5726880380071460e+00
+    Parameter [129]   V1_1-2++1+f21270_12_pi-.amp_RE = -5.7880503407948362e-03 +-  8.5472428652755439e-01
+    Parameter [130]   V1_1-2++1+f21270_12_pi-.amp_IM =  6.9472635111750168e-03 +-  1.4641399099159449e+00
+    Parameter [131]   V1_1-2-+1+f21270_22_pi-.amp_RE = -1.9113243517800515e-03 +-  8.6004721607547419e-01
+    Parameter [132]   V1_1-2-+1+f21270_22_pi-.amp_IM = -1.4859049020345650e-03 +-  1.8086358460042078e+00
+    Parameter [133]    V1_1-0-+0+f0980_00_pi-.amp_RE =  1.5384552320145777e-02 +-  6.2952002777952132e-01
+    Parameter [134]    V1_1-0-+0+f0980_00_pi-.amp_IM =  1.7417413258996716e-03 +-  6.4532915947622072e-01
+    Parameter [135] V1_1-3++0+rho31690_03_pi-.amp_RE =  9.0590778502213261e-03 +-  9.0694796025998170e-01
+    Parameter [136] V1_1-3++0+rho31690_03_pi-.amp_IM =  3.4440995954923330e-02 +-  6.5503147689066221e-01
+    Parameter [137]   V1_1-3++0+rho770_21_pi-.amp_RE = -1.4712469965738032e-02 +-  9.4795715331156027e-01
+    Parameter [138]   V1_1-3++0+rho770_21_pi-.amp_IM =  2.6092320173364842e-02 +-  7.9029640512927180e-01
+    Parameter [139] V1_1-3++1+rho31690_03_pi-.amp_RE = -2.0909532985813564e-02 +-  7.8308264087277757e-01
+    Parameter [140] V1_1-3++1+rho31690_03_pi-.amp_IM =  9.9649725381650307e-03 +-  1.9869689966020680e+00
+    Parameter [141]   V1_1-3++1+rho770_21_pi-.amp_RE = -1.0287181369951659e-02 +-  7.9583579773513280e-01
+    Parameter [142]   V1_1-3++1+rho770_21_pi-.amp_IM = -1.9901950271126807e-03 +-  1.6418157388256311e+00
+    Parameter [143]   V1_1-4++1+f21270_32_pi-.amp_RE =  7.8131878524870003e-03 +-  7.8834162372711591e-01
+    Parameter [144]   V1_1-4++1+f21270_32_pi-.amp_IM = -1.4189966698724091e-03 +-  1.2721827506904084e+00
+    Parameter [145]   V1_1-2++0-rho770_21_pi-.amp_RE =  5.8225465542248618e-03 +-  6.3583854298890397e-01
+    Parameter [146]   V1_1-1-+0-rho770_11_pi-.amp_RE =  7.0484187204864369e-03 +-  6.2838874651085941e-01
+    Parameter [147]   V1_1-1-+0-rho770_11_pi-.amp_IM =  1.7478984347572595e-02 +-  6.2810057928921514e-01
+    Parameter [148]   V1_1-1-+1-rho770_11_pi-.amp_RE =  1.9713759433361087e-02 +-  6.2953388436855906e-01
+    Parameter [149]   V1_1-1-+1-rho770_11_pi-.amp_IM = -7.1218444450008968e-03 +-  6.2916659564645483e-01
+    Parameter [150]   V1_1-2++1-f21270_12_pi-.amp_RE =  8.1213782159329385e-03 +-  6.4202700140628954e-01
+    Parameter [151]   V1_1-2++1-f21270_12_pi-.amp_IM = -1.6698481755957232e-02 +-  6.4223360857861034e-01
+    Parameter [152]   V1_1-2-+1-f21270_02_pi-.amp_RE =  6.4624085362555723e-03 +-  6.3268562535227602e-01
+    Parameter [153]   V1_1-2-+1-f21270_02_pi-.amp_IM =  1.0084810114015449e-02 +-  6.3261070774387040e-01
+    Parameter [154]   V1_1-2++0-f21270_12_pi-.amp_RE =  3.8301117783303066e-03 +-  6.3070825450051915e-01
+    Parameter [155]   V1_1-2++0-f21270_12_pi-.amp_IM =  3.9879282082495179e-02 +-  6.3091656646266758e-01
+    Parameter [156]                           V_flat =  4.4721018913784313e+01 +-  1.8722918987150025e-01
+Number of calls to likelihood function FdF() ... 31066
+Total time spent for likelihood calculation .... 906.897
+Total time spent for normalization ............. 1.29667
+>>> main(): info: Writing result to '/afs/e18/user/bgrube/compass/pwa/rootpwa/src/pwaFitTest/result.root'.
+>>> main(): info: File '/afs/e18/user/bgrube/compass/pwa/rootpwa/src/pwaFitTest/result.root' is empty. Creating new tree for PWA result.
+ Setup integrals
+Filling TFitBin:
+    Number of fit parameters ........... 157
+    Number of production amplitudes .... 81
+    Number of indices .................. 81
+    Number of wave names (with rank) ... 81
+    Number of wave titles (w/o rank) ... 42
+    Dimension of error matrix .......... 157
+    Dimension of integral matrix ....... 42
+    Dimension of acceptance matrix ..... 42
+title==1-1++0+rho770_01_pi-.amp
+Wave: 1-1++0+rho770_01_pi-.amp
+title==1-1++1+rho770_01_pi-.amp
+Wave: 1-1++1+rho770_01_pi-.amp
+title==1-2++1+rho770_21_pi-.amp
+Wave: 1-2++1+rho770_21_pi-.amp
+title==1-0-+0+rho770_11_pi-.amp
+Wave: 1-0-+0+rho770_11_pi-.amp
+title==1-0-+0+sigma_00_pi-.amp
+Wave: 1-0-+0+sigma_00_pi-.amp
+title==1-2-+0+rho770_11_pi-.amp
+Wave: 1-2-+0+rho770_11_pi-.amp
+title==1-1++0+sigma_10_pi-.amp
+Wave: 1-1++0+sigma_10_pi-.amp
+title==1-2-+1+rho770_11_pi-.amp
+Wave: 1-2-+1+rho770_11_pi-.amp
+title==1-2-+0+f21270_02_pi-.amp
+Wave: 1-2-+0+f21270_02_pi-.amp
+title==1-2-+0+sigma_20_pi-.amp
+Wave: 1-2-+0+sigma_20_pi-.amp
+title==1-1-+1+rho770_11_pi-.amp
+Wave: 1-1-+1+rho770_11_pi-.amp
+title==1-3++0+f21270_12_pi-.amp
+Wave: 1-3++0+f21270_12_pi-.amp
+title==1-2-+1+f21270_02_pi-.amp
+Wave: 1-2-+1+f21270_02_pi-.amp
+title==1-1++0+f21270_12_pi-.amp
+Wave: 1-1++0+f21270_12_pi-.amp
+title==1-4-+0+rho770_31_pi-.amp
+Wave: 1-4-+0+rho770_31_pi-.amp
+title==1-2-+0+rho770_31_pi-.amp
+Wave: 1-2-+0+rho770_31_pi-.amp
+title==1-2-+1+sigma_20_pi-.amp
+Wave: 1-2-+1+sigma_20_pi-.amp
+title==1-4-+1+rho770_31_pi-.amp
+Wave: 1-4-+1+rho770_31_pi-.amp
+title==1-2-+1+rho770_31_pi-.amp
+Wave: 1-2-+1+rho770_31_pi-.amp
+title==1-3++1+f21270_12_pi-.amp
+Wave: 1-3++1+f21270_12_pi-.amp
+title==1-1++0+rho770_21_pi-.amp
+Wave: 1-1++0+rho770_21_pi-.amp
+title==1-4++1+rho770_41_pi-.amp
+Wave: 1-4++1+rho770_41_pi-.amp
+title==1-1++1+f21270_12_pi-.amp
+Wave: 1-1++1+f21270_12_pi-.amp
+title==1-1++1+rho770_21_pi-.amp
+Wave: 1-1++1+rho770_21_pi-.amp
+title==1-1++1+sigma_10_pi-.amp
+Wave: 1-1++1+sigma_10_pi-.amp
+title==1-2-+0+f21270_22_pi-.amp
+Wave: 1-2-+0+f21270_22_pi-.amp
+title==1-2++1+f21270_12_pi-.amp
+Wave: 1-2++1+f21270_12_pi-.amp
+title==1-2-+1+f21270_22_pi-.amp
+Wave: 1-2-+1+f21270_22_pi-.amp
+title==1-0-+0+f0980_00_pi-.amp
+Wave: 1-0-+0+f0980_00_pi-.amp
+title==1-3++0+rho31690_03_pi-.amp
+Wave: 1-3++0+rho31690_03_pi-.amp
+title==1-3++0+rho770_21_pi-.amp
+Wave: 1-3++0+rho770_21_pi-.amp
+title==1-3++1+rho31690_03_pi-.amp
+Wave: 1-3++1+rho31690_03_pi-.amp
+title==1-3++1+rho770_21_pi-.amp
+Wave: 1-3++1+rho770_21_pi-.amp
+title==1-4++1+f21270_32_pi-.amp
+Wave: 1-4++1+f21270_32_pi-.amp
+title==1-1++1-rho770_01_pi-.amp
+Wave: 1-1++1-rho770_01_pi-.amp
+title==1-2++0-rho770_21_pi-.amp
+Wave: 1-2++0-rho770_21_pi-.amp
+title==1-1-+0-rho770_11_pi-.amp
+Wave: 1-1-+0-rho770_11_pi-.amp
+title==1-1-+1-rho770_11_pi-.amp
+Wave: 1-1-+1-rho770_11_pi-.amp
+title==1-2++1-f21270_12_pi-.amp
+Wave: 1-2++1-f21270_12_pi-.amp
+title==1-2-+1-f21270_02_pi-.amp
+Wave: 1-2-+1-f21270_02_pi-.amp
+title==1-2++0-f21270_12_pi-.amp
+Wave: 1-2++0-f21270_12_pi-.amp
+title==1-1++1+rho770_01_pi-.amp
+title==1-2++1+rho770_21_pi-.amp
+title==1-0-+0+rho770_11_pi-.amp
+title==1-0-+0+sigma_00_pi-.amp
+title==1-2-+0+rho770_11_pi-.amp
+title==1-1++0+sigma_10_pi-.amp
+title==1-2-+1+rho770_11_pi-.amp
+title==1-2-+0+f21270_02_pi-.amp
+title==1-2-+0+sigma_20_pi-.amp
+title==1-1-+1+rho770_11_pi-.amp
+title==1-3++0+f21270_12_pi-.amp
+title==1-2-+1+f21270_02_pi-.amp
+title==1-1++0+f21270_12_pi-.amp
+title==1-4-+0+rho770_31_pi-.amp
+title==1-2-+0+rho770_31_pi-.amp
+title==1-2-+1+sigma_20_pi-.amp
+title==1-4-+1+rho770_31_pi-.amp
+title==1-2-+1+rho770_31_pi-.amp
+title==1-3++1+f21270_12_pi-.amp
+title==1-1++0+rho770_21_pi-.amp
+title==1-4++1+rho770_41_pi-.amp
+title==1-1++1+f21270_12_pi-.amp
+title==1-1++1+rho770_21_pi-.amp
+title==1-1++1+sigma_10_pi-.amp
+title==1-2-+0+f21270_22_pi-.amp
+title==1-2++1+f21270_12_pi-.amp
+title==1-2-+1+f21270_22_pi-.amp
+title==1-0-+0+f0980_00_pi-.amp
+title==1-3++0+rho31690_03_pi-.amp
+title==1-3++0+rho770_21_pi-.amp
+title==1-3++1+rho31690_03_pi-.amp
+title==1-3++1+rho770_21_pi-.amp
+title==1-4++1+f21270_32_pi-.amp
+title==1-2++0-rho770_21_pi-.amp
+title==1-1-+0-rho770_11_pi-.amp
+title==1-1-+1-rho770_11_pi-.amp
+title==1-2++1-f21270_12_pi-.amp
+title==1-2-+1-f21270_02_pi-.amp
+title==1-2++0-f21270_12_pi-.amp
+title==flat
+Wave: flat

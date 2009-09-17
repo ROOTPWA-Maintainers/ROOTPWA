@@ -1,0 +1,28 @@
+###  README 
+##
+## Copyright 2009 Sebastian Neubert
+##
+## Author: sneubert@e18.physik.tu-muenchen.de
+## Keywords: ROOTPWA
+
+rootpwa is distributed under the GPL. 
+For details see the file LICENSE contained in this package.
+
+For installation instructions refer to the INSTALL file.
+
+
+
+### Workflow and data management instructions ###
+
+Organization of Data:
+		* There is one subdirectory for each mass bin
+		  with naming convention:
+			LowerBound.Upperbound (in MeV)
+			e.g.: 1000.1080
+		* The substructure then is
+			1000.1080
+				1000.1080.evt (event data in gamp format)
+				MC            (monte carlo data)
+				AMPS          (Amplitude files for real data)
+				PSPAMPS       (Phase Space Amps from MC)
+		* With pruning this will become more complicated!

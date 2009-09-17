@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+
+export PWA2000=$HOME/COMPASS/BNL
+export ROOTPWA=$HOME/COMPASS/rootpwa
+
+
+
+#. prepare_root 5.24.
+export ROOTSYS=/opt/sw/ROOT/root_v5.24.00.gcc412/
+export LD_LIBRARY_PATH=$PWA2000/lib:$ROOTPWA/lib:$ROOTSYS/lib:LD_LIBRARY_PATH
+export PATH=$ROOTPWA/bin:$PWA2000/bin:$PATH:$ROOTSYS/bin
+
+
