@@ -129,3 +129,15 @@ There is a setup.sh script template. You can modify this for future usage.
 
 4) You can use ccmake to define installation paths lib/ bin/. 
    For details see cmake documentation
+
+
+--- Building the html documentation:
+
+Do the following:
+   &> doxygen rootpwaDoxyfile.conf
+	
+The doxygen documentation will be built into the directory
+   html-doc/html/
+
+and can be viewed with any browser, e.g.
+   &> mozilla html-doc/html/index.html
