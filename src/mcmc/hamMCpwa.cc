@@ -79,11 +79,11 @@ int main(int argc, char** argv){
   unsigned int Nit=5000; // number of iterations
   double low_mass=0;
   double high_mass=0;
-  TString wavefile_name; // wavelist filename
+  string wavefile_name; // wavelist filename
   TString ofile_name="MCMCresult.root"; // output filename
   TString start_file_name; // file with starting values
   double step=0.1;
-  TString norm_file_name; // file with normalization integrals
+  string norm_file_name; // file with normalization integrals
   bool quiet=false;
   unsigned int rank=1; // rank
   double Ttotal=14000; // max runtime <4 hours
@@ -145,14 +145,14 @@ int main(int argc, char** argv){
     }
   
 
-  if(norm_file_name.Length()<=1)norm_file_name="norm.int";
-  if(wavefile_name.Length()<=1){
+  if(norm_file_name.length()<=1)norm_file_name="norm.int";
+  if(wavefile_name.length()<=1){
     cerr << "No wavelist specified! Aborting!" << endl;
     return 1;
   }
   
   
-  TPWALikelihood L;
+  TPWALikelihood<double> L;
   if(quiet)L.SetQuiet();
   L.SetWavelist(wavefile_name);
   L.SetRank(rank);

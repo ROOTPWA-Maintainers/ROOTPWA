@@ -1,4 +1,0 @@
-../lib/librootpwa.so
-../bin/pwafit
-../bin/pwaConstraintFit
-../bin/selector

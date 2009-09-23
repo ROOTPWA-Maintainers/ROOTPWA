@@ -30,7 +30,7 @@ INCLUDE_DIRECTORIES($ENV{ROOTSYS}/include
 
 SET(SOURCES TFitBin.cc
 	    TCMatrix.cc
-	    TPWALikelihood.cc
+	    TPWALikelihood.h
 	    TPWALikelihoodC.cc
 	    TPWAAmp.cc
 	    TPWAPhaseConstraint.cc
@@ -59,14 +59,12 @@ SET(ROOT_LIBS ${ROOT_LIB}/libCore.so
 	      ${ROOT_LIB}/libGraf3d.so 
 	      ${ROOT_LIB}/libGpad.so
 	      ${ROOT_LIB}/libTree.so
-	      ${ROOT_LIB}/libThread.so
-	      ${ROOT_LIB}/libMinuit2.so
 	      ${ROOT_LIB}/libRint.so
 	      ${ROOT_LIB}/libPostscript.so
 	      ${ROOT_LIB}/libMatrix.so 
 	      ${ROOT_LIB}/libPhysics.so
 	      ${ROOT_LIB}/libMathCore.so
-	      ${ROOT_LIB}/libMinuit.so
+	      ${ROOT_LIB}/libMinuit2.so
 	      libdl.so
 	      libm.so)
 

@@ -32,6 +32,7 @@
 //
 //-----------------------------------------------------------
 
+
 #ifndef TPWALIKELIHOOD_HH
 #define TPWALIKELIHOOD_HH
 
@@ -51,9 +52,7 @@ class TString;
 class TCMatrix;
 
 
-//typedef matrix<complex<double> > intmat;
-
-
+template <typename T = double>  // template for type of internal variables used for intermediate results
 class TPWALikelihood : public ROOT::Math::IGradientFunctionMultiDim {
 
 public:
@@ -64,7 +63,6 @@ public:
 			 DOEVAL       = 2,
 			 DODERIVATIVE = 3};
 
-  // Constructors/Destructors ---------
   TPWALikelihood();
   ~TPWALikelihood();
 
@@ -77,7 +75,7 @@ public:
  			double*       gradient) const;
   virtual unsigned int NDim() const;
 
-  // Accessors ------------------------
+  // accessors
   std::string parname(const unsigned int i) const { return _parNames[i]; }
   const std::vector<std::string>& wavetitles() const { return _waveNames; }
   double parthreshold(const unsigned int i) const { return _parThresholds[i]; }
@@ -88,22 +86,22 @@ public:
   unsigned int nevents() const { return _nmbEvents; }
   const integral& normInt() const { return _normInt; }
 
-  // Modifiers -----------------------
+  // modifiers
   void UseNormalizedAmps(const bool useNorm = true) { _useNorm = useNorm; }
-  void SetWavelist(const TString& wavelist);
+  void SetWavelist(const std::string& wavelist);
   void SetRank(const unsigned int rank);
   void SetQuiet(const bool flag = false) { _debug = !flag; }
   void SetMaxSampDL(const unsigned int samp);
 
-  // Operations ----------------------
-  // load Amplitudes into memory
-  void LoadIntegrals(const TString& norm,
-		     const TString& acceptance);
+  // pperations
+  // load amplitudes into memory
+  void LoadIntegrals(const std::string& norm,
+		     const std::string& acceptance);
   void LoadAmplitudes();
   void getIntCMatrix(TCMatrix& integr,
 		     TCMatrix& acceptance);
 
-  // note: amps which do not exist in higher ranks are NOT built!
+  // note: amplitudes which do not exist in higher ranks are NOT built!
   void buildCAmps(const double*                       x,
 		  std::vector<std::complex<double> >& V,
 		  std::vector<std::pair<int,int> >&   indices,
@@ -121,11 +119,11 @@ private:
   int getReflectivity(const TString& waveName) const;
 
   matrix<complex<double> > reorderedIntegralMatrix(integral& integral) const;
-  vector<vector<complex<double> > > copyFromParArray(const double* inPar,              // input parameter array
-						     double&       outFlatVal) const;  // output value corresponding to flat wave
-  void copyToParArray(const vector<vector<complex<double> > >& inVal,          // values corresponding to production amplitudes
-		      const double                             inFlatVal,      // value corresponding to flat wave
-		      double*                                  outPar) const;  // output parameter array
+  vector<vector<complex<T> > > copyFromParArray(const double* inPar,              // input parameter array
+						T&            outFlatVal) const;  // output value corresponding to flat wave
+  void copyToParArray(const vector<vector<complex<T> > >& inVal,          // values corresponding to production amplitudes
+		      const T                             inFlatVal,      // value corresponding to flat wave
+		      double*                             outPar) const;  // output parameter array
 
   unsigned int         _rank;             // rank of the spin density matrix
   unsigned int         _dim;              // number of function parameters
@@ -161,6 +159,9 @@ private:
 
 
 #endif  // TPWALIKELIHOOD_HH
+
+
+#include "TPWALikelihood.cc"
 
 
 //--------------------------------------------------------------

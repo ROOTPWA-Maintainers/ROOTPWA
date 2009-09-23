@@ -18,7 +18,21 @@
 //    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
-//fitting program for rootpwa
+//-----------------------------------------------------------
+// File and Version Information:
+// $Id$
+//
+// Description:
+//      fitting program for rootpwa
+//      minimizes TPWALikelihood function
+//
+//
+// Author List:
+//      Sebastian Neubert    TUM            (original author)
+//
+//
+//-----------------------------------------------------------
+
 
 #include <iostream>
 #include <iomanip>
@@ -43,83 +57,82 @@ using namespace std;
 using namespace ROOT::Math;
 
 
-//int lineno = 1; // global variables needed for lex (not understood)
-//char *progname;
-
-
-void usage(const char* progName,
-	   const int   errCode = 0)
+void
+usage(const string& progName,
+      const int     errCode = 0)
 {
   cerr << "usage:" << endl
-       << progName << " -l # -u # [-i -h -q -N] [-n normfile -s start values -r rank] -w wavelist [-o outfile] " << endl
+       << progName
+       << " -l # -u # -w wavelist [-o outfile -S start value file -N -n normfile [-a normfile]"
+       << "-r rank -M minimizer [-m algorithm] -q -h]" << endl
        << "    where:" << endl
        << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
        << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
        << "        -w file    path to wavelist file" << endl
        << "        -o file    path to output file (default: 'fitresult.root')" << endl
-       << "        -a file    path to acceptance file" << endl
-       << "        -n file    path to normalization file" << endl
+       << "        -S file    path to file with start values (default: none)" << endl
        << "        -N         use normalization of decay amplitudes (default: false)" << endl
-       << "        -S file    path to file with start values" <<endl
-       << "        -r #       rank of spin density matrix (default: 1)" <<endl
-       << "        -q         run quietly" << endl
+       << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
+       << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
+       << "        -r #       rank of spin density matrix (default: 1)" << endl
+       << "        -M name    minimizer (default: Minuit2)" << endl
+       << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
+       << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
+       << "                                         Minuit2:     Migrad, Simplex, Combined, Scan Fumili" << endl
+       << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
+       << "                                         GSLMultiFit: -" << endl
+       << "                                         GSLSimAn:    -" << endl
+       << "                                         Linear:      Robust" << endl
+       << "                                         Fumili:      -" << endl
+       << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
   exit(errCode);
 }
 
 
-int main(int argc, char** argv)
+int
+main(int    argc,
+     char** argv)
 {
   // ---------------------------------------------------------------------------
   // internal parameters
-  const TString      valTreeName        = "pwa";
-  const TString      valBranchName      = "fitbin";
+  const string       valTreeName        = "pwa";
+  const string       valBranchName      = "fitbin";
   const double       defaultStartValue  = 0.01;
   double             defaultMinStep     = 0.0005;
   const unsigned int maxNmbOfIterations = 20000;
   const bool         runHesse           = false;
   const bool         runMinos           = false;
-  const string       minimizerType[2]   = {"Minuit2", "Migrad"};
-//   const string       minimizerType[2]   = {"Minuit2", "Simplex"};
-//   const string       minimizerType[2]   = {"Minuit2", "Combined"};
-//   const string       minimizerType[2]   = {"Minuit2", "Scan"};
-//   const string       minimizerType[2]   = {"Minuit2", "Fumili"};
-//   const string       minimizerType[2]   = {"GSLMultiMin", "ConjugateFR"};
-//   const string       minimizerType[2]   = {"GSLMultiMin", "ConjugatePR"};
-//   const string       minimizerType[2]   = {"GSLMultiMin", "BFGS"};
-//   const string       minimizerType[2]   = {"GSLMultiMin", "BFGS2"};
-//   const string       minimizerType[2]   = {"GSLMultiMin", "SteepestDescent"};
-//   const string       minimizerType[2]   = {"GSLMultiFit", ""};
-//   const string       minimizerType[2]   = {"GSLSimAn", ""};
 
   // ---------------------------------------------------------------------------
   // parse command line options
-  char* progName = argv[0];
-  double binLowMass = 0;
-  double binHighMass = 0;
-  TString waveListFileName; // wavelist filename
-  TString outFileName = "fitresult.root"; // output filename
-  TString startValFileName; // file with start values
-  TString normFileName; // file with normalization integrals
-  TString accFileName;  // file with acceptance integrals
-  bool quiet = false;
-  bool useStartVal = false; // are there start values?
-  bool useNorm = false;
-  unsigned int rank = 1; // rank
+  const string progName         = argv[0];
+  double       binLowMass       = 0;                      // [MeV/c^2]
+  double       binHighMass      = 0;                      // [MeV/c^2]
+  string       waveListFileName = "";                     // wavelist filename
+  string       outFileName      = "fitresult.root";       // output filename
+  string       startValFileName = "";                     // file with start values
+  bool         useStartVal      = false;                  // are there start values?
+  bool         useNorm          = false;
+  string       normIntFileName  = "";                     // file with normalization integrals
+  string       accIntFileName   = "";                     // file with acceptance integrals
+  unsigned int rank             = 1;                      // rank
+  string       minimizerType[2] = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+  bool         quiet            = false;
   extern char* optarg;
   // extern int optind;
   int c;
-  while ((c = getopt(argc, argv, "l:u:iw:o:a:S:n:Nr:qh")) != -1)
+  while ((c = getopt(argc, argv, "l:u:w:o:S:Nn:a:r:M:m:qh")) != -1)
     switch (c) {
-    case 'N':
-      useNorm = true;
-      break;
     case 'l':
       binLowMass = atof(optarg);
       break;
     case 'u':
       binHighMass = atof(optarg);
+      break;
+    case 'w':
+      waveListFileName = optarg;
       break;
     case 'o':
       outFileName = optarg;
@@ -128,17 +141,23 @@ int main(int argc, char** argv)
       startValFileName = optarg;
       useStartVal = 1;
       break;
+    case 'N':
+      useNorm = true;
+      break;
     case 'n':
-      normFileName = optarg;
+      normIntFileName = optarg;
       break;
     case 'a':
-      accFileName = optarg;
-      break;
-    case 'w':
-      waveListFileName = optarg;
+      accIntFileName = optarg;
       break;
     case 'r':
       rank = atoi(optarg);
+      break;
+    case 'M':
+      minimizerType[0] = optarg;
+      break;
+    case 'm':
+      minimizerType[1] = optarg;
       break;
     case 'q':
       quiet = true;
@@ -147,42 +166,47 @@ int main(int argc, char** argv)
       usage(progName);
       break;
     }
-  if (normFileName.Length() <= 1) {
-    normFileName="norm.int";
-    printWarn << "Using default normalization integral file '" << normFileName << "'." << endl;
+  if (normIntFileName.length() <= 1) {
+    normIntFileName="norm.int";
+    printWarn << "Using default normalization integral file '" << normIntFileName << "'." << endl;
   }
-  if (accFileName.Length() <= 1) {
-    accFileName="norm.int";
-    printWarn << "Using default acceptance normalization integral file '" << accFileName << "'." << endl;
+  if (accIntFileName.length() <= 1) {
+    accIntFileName="norm.int";
+    printWarn << "Using default acceptance normalization integral file '" << accIntFileName << "'." << endl;
   }
-  if (waveListFileName.Length() <= 1) {
+  if (waveListFileName.length() <= 1) {
     printErr << "No wavelist file specified! Aborting!" << endl;
     usage(progName, 1);
   }
+  // report parameters
+  printInfo << "Running " << progName << " with the following parameters:" << endl;
+  cout << "    mass bin [" <<  binLowMass << ", " <<  binHighMass << "] MeV/c^2" << endl
+       << "    wave list file ......................... '" << waveListFileName << "'" << endl
+       << "    output file ............................ '" << outFileName      << "'" << endl
+       << "    file with start values ................. '" << startValFileName << "'" << endl
+       << "    use normalization ...................... "  << useNorm          << endl
+       << "        file with normalization integral ... '" << normIntFileName  << "'" << endl
+       << "        file with acceptance integral ...... '" << accIntFileName   << "'" << endl
+       << "    rank ................................... "  << rank             << endl
+       << "    minimizer .............................. "  << minimizerType[0] << ", " << minimizerType[1] << endl
+       << "    quiet .................................. "  << quiet            << endl;
 
   // ---------------------------------------------------------------------------
   // setup likelihood function
   printInfo << "Creating and setting up likelihood function" << endl;
-  TPWALikelihood L;
+  TPWALikelihood<double> L;
   if (!quiet)
     L.SetQuiet();
   L.UseNormalizedAmps(useNorm);
   L.SetWavelist(waveListFileName);
   L.SetRank(rank);
-  L.LoadIntegrals(normFileName, accFileName);
+  L.LoadIntegrals(normIntFileName, accIntFileName);
   L.LoadAmplitudes();
   const unsigned int nmbPar = L.NDim();
   
-  // 12 parameters + flat
-  //double x[13]={0.52707,0.21068,-0.604365,0.17596,-0.216668,-0.0990815,-0.348459,0.208961,0,0,0,0,0};
-  //double x[13]; for(int i=0;i<13;++i)x[i]=0.001;
-  //string a[13]={"a","b","c","d","e","f","g","h","i","j","k","l","flat"};
-  //cout << L.DoEval(x) << endl;
-  //return 0;
-
   // ---------------------------------------------------------------------------
   // setup minimizer
-  printInfo << "Creating and setting up minimizer " << minimizerType[0] << " " << minimizerType[1] << endl;
+  printInfo << "Creating and setting up minimizer " << minimizerType[0] << " using algorithm " << minimizerType[1] << endl;
   Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
   if (!minimizer) { 
     printErr << "Error creating minimizer. Exiting." << endl;
@@ -198,20 +222,20 @@ int main(int argc, char** argv)
   bool     hasStartVal  = false;
   TFile*   startValFile = NULL;
   TFitBin* startBin     = NULL;
-  if (startValFileName.Length() > 2) {
+  if (startValFileName.length() > 2) {
     // open root file
-    startValFile = TFile::Open(startValFileName, "READ");
+    startValFile = TFile::Open(startValFileName.c_str(), "READ");
     if (!startValFile || startValFile->IsZombie())
       printWarn << "Cannot open start value file '" << startValFileName << "'. Using default start values." << endl;
     else {
       // get tree with start values
       TTree* tree;
-      startValFile->GetObject(valTreeName, tree);
+      startValFile->GetObject(valTreeName.c_str(), tree);
       if (!tree)
 	printWarn << "Cannot find start value tree '"<< valTreeName << "' in file '" << startValFileName << "'." << endl;
       else {
 	startBin = new TFitBin();
-	tree->SetBranchAddress(valBranchName, &startBin);
+	tree->SetBranchAddress(valBranchName.c_str(), &startBin);
 	// find entry which is closest to mass bin center
 	unsigned int iBest = 0;
 	double mBest = 0;
@@ -361,20 +385,20 @@ int main(int argc, char** argv)
   printInfo << "Writing result to '" << outFileName << "'." << endl;
   {
     // open output file and create tree for writing
-    TFile* outFile = new TFile(outFileName, "UPDATE");
+    TFile* outFile = new TFile(outFileName.c_str(), "UPDATE");
     if (!outFile || outFile->IsZombie())
       printWarn << "Cannot open output file '" << outFileName << "'. No results will be written." << endl;
     else {
       // check whether output tree already exists
       TTree* tree;
       TFitBin* result = new TFitBin();
-      outFile->GetObject(valTreeName, tree);
+      outFile->GetObject(valTreeName.c_str(), tree);
       if (!tree) {
 	printInfo << "File '" << outFileName << "' is empty. Creating new tree for PWA result." << endl;
-	tree = new TTree(valTreeName, valTreeName);
-	tree->Branch(valBranchName, &result);
+	tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
+	tree->Branch(valBranchName.c_str(), &result);
       } else
-	tree->SetBranchAddress(valBranchName, &result);
+	tree->SetBranchAddress(valBranchName.c_str(), &result);
 
       // get data structures to construct result TFitBin
       vector<TComplex> prodAmplitudes;  // production amplitudes
@@ -439,7 +463,7 @@ int main(int argc, char** argv)
       //result->PrintParameters();
 
       // write result to file
-      TString binName = valBranchName;
+      TString binName = valBranchName.c_str();
       binName += binLowMass;
       binName += "_";
       binName += binHighMass;
@@ -456,10 +480,10 @@ int main(int argc, char** argv)
 }
   
 
-// dummy function needed since we link to but do not use minuit.o
-int mnparm(int, string, double, double, double, double)
-{
-  printErr << "this is impossible" << endl;
-  throw "aFit";
-  return 0;
-}
+// // dummy function needed since we link to but do not use minuit.o
+// int mnparm(int, string, double, double, double, double)
+// {
+//   printErr << "this is impossible" << endl;
+//   throw "aFit";
+//   return 0;
+// }

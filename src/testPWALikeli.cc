@@ -46,7 +46,7 @@ char *progname;
 
 int main(int argc, char** argv){
   
-  TPWALikelihood L;
+  TPWALikelihood<double> L;
   TPWALikelihoodC LC;
 
   L.UseNormalizedAmps(true);
