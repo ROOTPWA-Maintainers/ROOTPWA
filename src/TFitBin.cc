@@ -23,8 +23,7 @@
 // $Id$
 //
 // Description:
-//      Implementation of class TFitBin
-//      see TFitBin.hh for details
+//      Data storage class for PWA fit result of one mass bin
 //
 // Environment:
 //      Software developed for the COMPASS experiment at CERN
@@ -36,19 +35,19 @@
 //-----------------------------------------------------------
 
 
-// This Class' Header ------------------
-#include "TFitBin.h"
-
-// C/C++ Headers ----------------------
+#include <iomanip>
 #include <complex>
-#include <map>
 #include <algorithm>
 
-// Collaborating Class Headers --------
+// PWA2000 classes
 #include "integral.h"
-#include "TComplex.h"
-#include "TClonesArray.h"
-#include "TString.h"
+
+#include "utilities.h"
+#include "TFitBin.h"
+
+
+using namespace std;
+
 
 // Class Member definitions -----------
 
@@ -98,13 +97,13 @@ TFitBin::fill(const vector<TComplex>& amps,
 
 
 void
-TFitBin::buildWaveMap(){
+TFitBin::buildWaveMap() {
   int n=_wavenames.size();
   for(int i=0;i<n;++i){
     // strip rank
     TString title=wavetitle(i);
     cout << "title=="<<title<<endl;
-    if(std::find(_wavetitles.begin(),_wavetitles.end(),title)==_wavetitles.end()){
+    if(find(_wavetitles.begin(),_wavetitles.end(),title)==_wavetitles.end()){
       cout<<"Wave: "<<title<<endl;
       _wavetitles.push_back(title);
     }
@@ -120,17 +119,25 @@ TFitBin::buildWaveMap(){
 
 // take care of flat wave which has no integral!
 TComplex
-TFitBin::getInt(int i, int j){
+TFitBin::getInt(int i, int j) const {
   // TODO: idea - prestore index of flat wave!
   bool flat1=_wavenames[i].Contains("flat");
   bool flat2=_wavenames[j].Contains("flat");
   if(flat1 && flat2) return 1;
   else if(flat1 || flat2) return 0;
-  else return _int(_wavemap[i],_wavemap[j]);
+  else {
+    map<int, int>::const_iterator indexA = _wavemap.find(i);
+    map<int, int>::const_iterator indexB = _wavemap.find(j);
+    if ((indexA == _wavemap.end()) || (indexB == _wavemap.end())) {
+      printWarn << "Amplitude index " << i << " or " << j << " is out of bound." << endl;
+      return 0;
+    }
+    return _int(indexA->second, indexB->second);
+  }
 }
 
 Int_t
-TFitBin::rankofwave(int i){
+TFitBin::rankofwave(int i) const {
   if(!_wavenames[i].Contains("flat")){
     return TString(_wavenames[i](1,1)).Atoi();
   }
@@ -140,17 +147,17 @@ TFitBin::rankofwave(int i){
 //// OBSERVABLES CALCULATIONS:
 
 double 
-TFitBin::intens(){  // total intensity
+TFitBin::intens() const {  // total intensity
   return intens("");
 }
 
 double
-TFitBin::intens(const char* tag){
+TFitBin::intens(const char* tag) const {
   return norm(tag)*_nevt;
 }
 
 double 
-TFitBin::norm(const char* tag) // added intensity of waves containing tag
+TFitBin::norm(const char* tag) const // added intensity of waves containing tag
 {
   TComplex c(0,0);
   int n=_wavenames.size();
@@ -162,7 +169,7 @@ TFitBin::norm(const char* tag) // added intensity of waves containing tag
       for(int j=0;j<n;++j){
 	if(!(_wavenames[j].Contains(tag) && rankofwave(j)==r))continue;
 	c+=_amps[i]*TComplex::Conjugate(_amps[j])*getInt(i,j);
-	//std::cout<< _wavenames[i] << " | " << _wavenames[j] << std::endl;
+	//cout<< _wavenames[i] << " | " << _wavenames[j] << endl;
       }
     }
   }
@@ -170,7 +177,7 @@ TFitBin::norm(const char* tag) // added intensity of waves containing tag
 }
 
 double
-TFitBin::getParameter(const char* name){
+TFitBin::getParameter(const char* name) const {
   // check if real or imag
   TString na(name);
   bool re=false;
@@ -195,14 +202,14 @@ TFitBin::getParameter(const char* name){
 
 
 double
-TFitBin::intens(int i){
-  //std::cout<<wavename(i)<<"    r="<<rankofwave(i)<<std::endl;
-  //std::cout<<wavetitle(i)<<std::endl;
+TFitBin::intens(int i) const {
+  //cout<<wavename(i)<<"    r="<<rankofwave(i)<<endl;
+  //cout<<wavetitle(i)<<endl;
   return norm(wavetitle(i).Data())*_nevt;
 }
 
 TComplex
-TFitBin::spinDens(int i, int j){
+TFitBin::spinDens(int i, int j) const {
   // account for find all waves with same title
   TString w1=wavetitle(i);
   TString w2=wavetitle(j);
@@ -224,12 +231,12 @@ TFitBin::spinDens(int i, int j){
 
 
 double 
-TFitBin::err(const char* tag){
+TFitBin::err(const char* tag) const {
   if(!_hasErrors)return 0;
 
   // double loop
   TMatrixD C;
-  std::vector<int> cpar;
+  vector<int> cpar;
   getCov(tag,C,cpar);
   if(cpar.size()==0)return 0;
   //C.Print();
@@ -249,7 +256,7 @@ TFitBin::err(const char* tag){
 	//cout << " exclude this rank from Ji" << endl;
 	continue;
       }
-      //std::cout << "vpsi"<<cpar[j]<<" , "<<cpar[i]<<std::endl;
+      //cout << "vpsi"<<cpar[j]<<" , "<<cpar[i]<<endl;
       TComplex vpsi=_amps[cpar[j]]*getInt(j,i);
       Ji[0][0]+=vpsi.Re();
       Ji[0][1]+=vpsi.Im();
@@ -267,20 +274,20 @@ TFitBin::err(const char* tag){
 }
 
 double 
-TFitBin::err(int i){
+TFitBin::err(int i) const {
   //cout<<_wavenames[i]<<endl;
   return err(wavetitle(i).Data());
 }
 
 
 double
-TFitBin::phase(int i, int j) // phase difference between wave i and j
+TFitBin::phase(int i, int j) const // phase difference between wave i and j
 { 
   return spinDens(i,j).Theta()/TMath::Pi()*180.;
 }
 
 double
-TFitBin::phaseErr(int i, int j)
+TFitBin::phaseErr(int i, int j) const 
 {
   if(!_hasErrors)return 0;
   TMatrixD C=spinDensErr(i,j);
@@ -295,7 +302,7 @@ TFitBin::phaseErr(int i, int j)
 }
 
 TMatrixD
-TFitBin::spinDensErr(int i, int j){
+TFitBin::spinDensErr(int i, int j) const {
   TMatrixD C;
   getCov(i,j,C);
   TMatrixD J(2,4);
@@ -312,7 +319,7 @@ TFitBin::spinDensErr(int i, int j){
 }
 
 TMatrixD
-TFitBin::M(const TComplex& c){
+TFitBin::M(const TComplex& c) const {
   TMatrixD m(2,2);
   m[0][0]=c.Re();
   m[0][1]=-c.Im();
@@ -323,18 +330,18 @@ TFitBin::M(const TComplex& c){
 
 
 double
-TFitBin::coh(int i, int j) // coherence between wave i and j
+TFitBin::coh(int i, int j) const // coherence between wave i and j
 { return 0;}
 
 
 void
-TFitBin::listwaves(){
-  for(unsigned int i=0; i<_wavenames.size();++i)std::cout<<i<<"  "<<_wavenames[i]<<std::endl;
+TFitBin::listwaves() const {
+  for(unsigned int i=0; i<_wavenames.size();++i)cout<<i<<"  "<<_wavenames[i]<<endl;
 }
 
 
 TMatrixD 
-TFitBin::getErr(pair<int,int> k){
+TFitBin::getErr(pair<int,int> k) const {
   TMatrixD m(2,2);
   m[0][0]=_errm[k.first][k.first];
   m[0][1]=_errm[k.first][k.second];
@@ -345,11 +352,11 @@ TFitBin::getErr(pair<int,int> k){
 
 
 void
-TFitBin::getCov(const char* tag, TMatrixD& C, std::vector<int>& cpar){
+TFitBin::getCov(const char* tag, TMatrixD& C, vector<int>& cpar) const {
   // loop over wavenames to get list of paramters
   cpar.clear();
   int n=_wavenames.size();
-  std::vector<int> par; // vector of (real parameters)
+  vector<int> par; // vector of (real parameters)
   for(int i=0;i<n;++i){// outer loop
     if(_wavenames[i].Contains(tag)){
       par.push_back(_indices[i].first);
@@ -363,7 +370,7 @@ TFitBin::getCov(const char* tag, TMatrixD& C, std::vector<int>& cpar){
   C.ResizeTo(n2,n2);
   for(int i=0;i<n2;++i){
     for(int j=0;j<n2;++j){
-      //std::cout<<"par="<<par[i]<<"   "<<par[j]<<std::endl;
+      //cout<<"par="<<par[i]<<"   "<<par[j]<<endl;
       if(par[i]<0 || par[j]<0)C[i][j]=0;
       else C[i][j]=_errm[par[i]][par[j]];
     }
@@ -373,18 +380,18 @@ TFitBin::getCov(const char* tag, TMatrixD& C, std::vector<int>& cpar){
 
 
 void
-TFitBin::getCov(int i, int j, TMatrixD& C){
+TFitBin::getCov(int i, int j, TMatrixD& C) const {
   // now build up matrix:
   int n2=4;
   C.ResizeTo(n2,n2);
-  std::vector<int> par; // vector of (real parameters)
+  vector<int> par; // vector of (real parameters)
   par.push_back(_indices[i].first);
   par.push_back(_indices[i].second);
   par.push_back(_indices[j].first);
   par.push_back(_indices[j].second);
   for(int i=0;i<n2;++i){
     for(int j=0;j<n2;++j){
-      //std::cout<<"par="<<par[i]<<"   "<<par[j]<<std::endl;
+      //cout<<"par="<<par[i]<<"   "<<par[j]<<endl;
       if(par[i]<0 || par[j]<0)C[i][j]=0;
       else C[i][j]=_errm[par[i]][par[j]];
     }
@@ -393,17 +400,17 @@ TFitBin::getCov(int i, int j, TMatrixD& C){
 
 
 void
-TFitBin::PrintParameters(){
+TFitBin::PrintParameters() const {
   for(unsigned int i=0;i<_amps.size();++i){
-    std::cout << _wavenames[i] << "  "  << _amps[i] << " +- (" 
-	      << sqrt( _errm[_indices[i].first][_indices[i].first]  )
-	      << "," ;
+    cout << _wavenames[i] << "  "  << _amps[i] << " +- (" 
+	 << sqrt( _errm[_indices[i].first][_indices[i].first]  )
+	 << "," ;
     if(_indices[i].second>=0){
-      std::cout << sqrt( _errm[_indices[i].second][_indices[i].second]  )
-		<< ")" << endl;
+      cout << sqrt( _errm[_indices[i].second][_indices[i].second]  )
+	   << ")" << endl;
     }
     else {
-      std::cout << "0)" << endl;
+      cout << "0)" << endl;
     }
   } 
 
@@ -411,7 +418,7 @@ TFitBin::PrintParameters(){
 
 
 void 
-TFitBin::getParameters(double* par){
+TFitBin::getParameters(double* par) const {
   unsigned int c=0;
   for(unsigned int i=0;i<_amps.size();++i){
     par[c++]=_amps[i].Re();

@@ -18,26 +18,29 @@
 //    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
+
+
 #include "TCMatrix.h"
+
+
+using namespace std;
+
 
 ClassImp(TCMatrix)
 
-TCMatrix::TCMatrix(int i, int j): _re(i,j), _im(i,j)
-{}
+
+TCMatrix::TCMatrix(const int i,
+		   const int j)
+: _re(i, j),
+  _im(i, j)
+{ }
+
 
 void
-TCMatrix::set(int i, int j, complex<double> c){
-  _re[i][j]=c.real();
-  _im[i][j]=c.imag();
-}
-
-TComplex
-TCMatrix::get(int i, int j){
-  TComplex c(_re[i][j],_im[i][j]);
-  return c;
-}
-
-TComplex
-TCMatrix::operator() (int i, int j){
-  return this->get(i,j);
+TCMatrix::set(const int              i,
+	      const int              j,
+	      const complex<double>& c)
+{
+  _re[i][j] = c.real();
+  _im[i][j] = c.imag();
 }

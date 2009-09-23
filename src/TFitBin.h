@@ -87,15 +87,15 @@ public:
   TString waveName    (const unsigned int waveIndex)    const { return _wavetitles[waveIndex];   }
   TString prodAmpName (const unsigned int prodAmpIndex) const { return _wavenames[prodAmpIndex]; }
 
-  double intensity   (const unsigned int waveIndex)       { return intens(waveIndex);       }  // intensity of single wave
-  double intensityErr(const unsigned int waveIndex)       { return err(waveIndex);          }  // corresponding error
-  double intensity   (const char*        waveNamePattern) { return intens(waveNamePattern); }  // intensity sum of waves matching name pattern
-  double intensityErr(const char*        waveNamePattern) { return err(waveNamePattern);    }  // corresponding error
-  double intensity   ()                                   { return intens("");              }  // total intensity
-  double intensityErr()                                   { return err("");                 }  // corresponding error
+  double intensity   (const unsigned int waveIndex)       const { return intens(waveIndex);       }  // intensity of single wave
+  double intensityErr(const unsigned int waveIndex)       const { return err(waveIndex);          }  // corresponding error
+  double intensity   (const char*        waveNamePattern) const { return intens(waveNamePattern); }  // intensity sum of waves matching name pattern
+  double intensityErr(const char*        waveNamePattern) const { return err(waveNamePattern);    }  // corresponding error
+  double intensity   ()                                   const { return intens("");              }  // total intensity
+  double intensityErr()                                   const { return err("");                 }  // corresponding error
 
   double coherence   (const unsigned int waveIndexA,  // coherence of wave A and wave B
-		      const unsigned int waveIndexB) { return coh(waveIndexA, waveIndexB); }
+		      const unsigned int waveIndexB) const { return coh(waveIndexA, waveIndexB); }
   double coherenceErr(const unsigned int waveIndexA,  // corresponding error
 		      const unsigned int waveIndexB) const { return 0; }
   double overlap     (const unsigned int waveIndexA,  // overlap between wave A and wave B
@@ -104,33 +104,33 @@ public:
 		      const unsigned int waveIndexB) const { return 0; }
 
   // Operations ----------------------
-  Double_t norm(const char* tag);
-  Double_t normI(Int_t i){return norm(_wavenames[i].Data());}
-  Double_t intens();  // total intensity
-  Double_t intens(const char* tag); // added intensity of waves containing tag
-  Double_t intens(Int_t i);
-  Double_t phase(Int_t i, Int_t j); // phase difference between wave i and j
-  Double_t phaseErr(Int_t i, Int_t j); 
-  Double_t coh(Int_t i, Int_t j); // coherence between wave i and j
+  Double_t norm(const char* tag) const;
+  Double_t normI(Int_t i) const {return norm(_wavenames[i].Data());}
+  Double_t intens() const;  // total intensity
+  Double_t intens(const char* tag) const; // added intensity of waves containing tag
+  Double_t intens(Int_t i) const;
+  Double_t phase(Int_t i, Int_t j) const; // phase difference between wave i and j
+  Double_t phaseErr(Int_t i, Int_t j) const; 
+  Double_t coh(Int_t i, Int_t j) const; // coherence between wave i and j
   Double_t mass() const {return _mass;}
   Double_t logli() const {return _logli;}
-  Double_t getInt(Int_t i, Int_t j, bool re){if(re)return getInt(i,j).Re();else return getInt(i,j).Im();}
-  UInt_t rawEvents()const {return _rawevents;}
+  Double_t getInt(Int_t i, Int_t j, bool re) const {if(re)return getInt(i,j).Re();else return getInt(i,j).Im();}
+  UInt_t rawEvents() const {return _rawevents;}
 
-  Int_t nwaves(){return _wavetitles.size();}
-  TString wavename(unsigned int i)const {return _wavenames[i];}
-  TString waveDesignator(unsigned int i)const {return _wavetitles[i];}
+  Int_t nwaves() const {return _wavetitles.size();}
+  TString wavename(unsigned int i) const {return _wavenames[i];}
+  TString waveDesignator(unsigned int i) const {return _wavetitles[i];}
   unsigned int namps() const { return _amps.size();}
-  TComplex amp(unsigned int i) { return _amps.at(i);}
-  void getParameters(double* par); // returns by filling the par array
-  double getParameter(const char* name);
+  TComplex amp(unsigned int i)  const { return _amps.at(i);}
+  void getParameters(double* par) const; // returns by filling the par array
+  double getParameter(const char* name) const;
 
-  Double_t err(const char* tag);
-  Double_t err(Int_t i);
+  Double_t err(const char* tag) const;
+  Double_t err(Int_t i) const;
 
-  void listwaves();
+  void listwaves() const;
   void Reset();
-  void PrintParameters();
+  void PrintParameters() const;
 
 private:
 
@@ -153,21 +153,21 @@ private:
   Bool_t _hasErrors;
 
   // Private Methods -----------------
-  TMatrixD getErr(unsigned int i){return getErr(_indices[i]);}
-  TMatrixD getErr(std::pair<int,int>); // returns cov matrix for complex parameter i
-  void getCov(const char* tag, TMatrixD& C, std::vector<int>& cpar);
-  void getCov(int i, int j, TMatrixD& C);
+  TMatrixD getErr(unsigned int i) const {return getErr(_indices[i]);}
+  TMatrixD getErr(std::pair<int,int>) const; // returns cov matrix for complex parameter i
+  void getCov(const char* tag, TMatrixD& C, std::vector<int>& cpar) const;
+  void getCov(int i, int j, TMatrixD& C) const;
 
   // Waves indices run over all ranks. In the integral each wave appears only
   // once (without notion of rank). So we have to map this:
-  TComplex getInt(int i, int j); 
+  TComplex getInt(int i, int j) const;
 
-  TComplex spinDens(int i, int j);
-  TMatrixD spinDensErr(int i, int j);
-  TMatrixD M(const TComplex& c);
+  TComplex spinDens(int i, int j) const;
+  TMatrixD spinDensErr(int i, int j) const;
+  TMatrixD M(const TComplex& c) const;
   // the rank should be encoded into the second parameter of the wave
-  int rankofwave(int i);
-  TString wavetitle(int i){if(_wavenames[i].Contains("V_"))return _wavenames[i](2,1000); else return _wavenames[i](3,1000);}
+  int rankofwave(int i) const ;
+  TString wavetitle(int i) const {if(_wavenames[i].Contains("V_"))return _wavenames[i](2,1000); else return _wavenames[i](3,1000);}
 
   void buildWaveMap();
 

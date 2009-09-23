@@ -19,40 +19,45 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 // a matrix with complex elements
+
+
 #ifndef TCMATRIX_HH
 #define TCMATRIX_HH
 
+#include <complex>
 
 #include "TObject.h"
-#include <complex>
 #include "TComplex.h"
 #include "TMatrixD.h"
 
-using std::complex;
 
 class TCMatrix : public TObject {
+
 public:
+
   TCMatrix(){}
-  TCMatrix(int i, int j);
+  TCMatrix(const int i, const int j);
   ~TCMatrix(){};
 
-  void ResizeTo(int i, int j) { _re.ResizeTo(i,j); _im.ResizeTo(i,j);}
-  void set(int i, int j, complex<double> c);
-  TComplex get(int i, int j);
-  TComplex operator() (int i, int j);
-  int nrows() const {return _re.GetNrows();}
-  int ncols() const {return _re.GetNcols();}
-  void Print(){_re.Print(),_im.Print();}
+  void ResizeTo(const int i, const int j) { _re.ResizeTo(i,j); _im.ResizeTo(i,j); }
+  void set(const int i, const int j, const std::complex<double>& c);
+  TComplex get(const int i, const int j) const { return TComplex(_re[i][j], _im[i][j]); }
+  TComplex operator() (const int i, const int j) const { return this->get(i, j); }
+  int nrows() const { return _re.GetNrows(); }
+  int ncols() const { return _re.GetNcols(); }
+  virtual void Print(const Option_t* = "") const { _re.Print(); _im.Print(); }
 
 private:
+
   TMatrixD _re;
   TMatrixD _im;
 
 
 public:
-  ClassDef(TCMatrix,2);
 
+  ClassDef(TCMatrix,2);
 
 };
 
-#endif
+
+#endif  // TCMATRIX_HH
