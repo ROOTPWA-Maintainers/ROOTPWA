@@ -18,32 +18,68 @@
 //    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
-void plot4(int i,int j,double mlow=1, double mup=4){
-  gROOT->Reset();
-  gROOT->ProcessLine(".L ./plotwave.C");
-  gROOT->ProcessLine(".L ./plotphase.C");
-  
-  mlow*=1000;
-  mup*=1000;
+//-----------------------------------------------------------
+// File and Version Information:
+// $Id$
+//
+// Description:
+//      Creates overview plot with intensities, phase, and coherence
+//      for waves A and B from tree.
+//      layout:
+//              intensity A | phase A - B
+//              ------------+----------------
+//              intensity B | coherence A - B
+//
+//
+// Author List:
+//      Sebastian Neubert    TUM            (original author)
+//
+//
+//-----------------------------------------------------------
 
-  TString sel=",\"_mass>=";sel+=mlow;sel+=" && ";sel+="_mass<=";sel+=mup;
-  sel+="\")";
 
-  TCanvas* c=new TCanvas("c","c",10,10,600,800);
-  c->Divide(1,3);
+#include <sstream>
+#include <string>
+
+#include "TTree.h"
+#include "TCanvas.h"
+
+#include "plotIntensity.h"
+#include "plotPhase.h"
+#include "plotCoherence.h"
+
+
+using namespace std;
+
+
+void
+plot4(TTree*       tree,         // TFitBin tree
+      const int    waveIndexA,   // index of first wave
+      const int    waveIndexB,   // index of second wave
+      const double massMin = 1,  // [GeV/c^2]
+      const double massMax = 4)  // [GeV/c^2]
+{
+  // select mass range; convert from GeV/c^2 to MeV/c^2
+  stringstream selectExpr;
+  selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") && (massBinCenter() <= " << massMax * 1000 << ")";
+
+  TCanvas* canv = new TCanvas("c", "c", 10, 10, 1000, 800);
+  canv->Divide(2, 2);
  
-  c->cd(1);
-  TString com="plotwave(\"";com+=i;com+="\"";com+=sel;
-  gROOT->ProcessLine(com);
+  // wave A intensity
+  canv->cd(1);
+  plotIntensity(tree, waveIndexA, selectExpr.str());
 
-  c->cd(2);
-  com="plotwave(\"";com+=j;com+="\"";com+=sel;
-  gROOT->ProcessLine(com);
+  // wave A - wave B phase angle
+  canv->cd(2);
+  plotPhase(tree, waveIndexA, waveIndexB, selectExpr.str());
 
-  c->cd(3);
-  com="plotphase(";com+=i;com+=",";com+=j;com+=sel;
-  gROOT->ProcessLine(com);
+  // wave B intensity
+  canv->cd(3);
+  plotIntensity(tree, waveIndexB, selectExpr.str());
 
-  return;
+  // wave A - wave B coherence
+  canv->cd(4);
+  plotCoherence(tree, waveIndexA, waveIndexB, selectExpr.str());
 }
  

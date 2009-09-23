@@ -23,7 +23,7 @@
 // $Id$
 //
 // Description:
-//      Fit summary for one mass bin
+//      Data storage class for PWA fit result of one mass bin
 //
 //
 // Environment:
@@ -35,25 +35,24 @@
 //
 //-----------------------------------------------------------
 
+
 #ifndef TFITBIN_HH
 #define TFITBIN_HH
 
-// Base Class Headers ----------------
-#include "TObject.h"
 
-// Collaborating Class Headers -------
-#include <ostream> // remove if you do not need streaming op
-#include "TCMatrix.h"
+#include <iostream>
 #include <vector>
 #include <map>
+#include <string>
+#include <complex>
+
+#include "TObject.h"
 #include "TComplex.h"
+#include "TMatrixT.h"
 #include "TString.h"
 
-// Collaborating Class Declarations --
+#include "TCMatrix.h"
 
-using std::vector;
-using std::map;
-using std::pair;
 
 class TFitBin : public TObject{
 public:
@@ -66,9 +65,9 @@ public:
 
 
   // Modifiers -----------------------
-  void fill(const vector<TComplex>& amps,
-	    const vector<pair<int,int> >& indices,
-	    const vector<TString>& wavenames,
+  void fill(const std::vector<TComplex>& amps,
+	    const std::vector<std::pair<int,int> >& indices,
+	    const std::vector<TString>& wavenames,
 	    int nevt,
 	    unsigned int rawnevt,
 	    Double_t mass,
@@ -77,8 +76,34 @@ public:
 	    Double_t logli,
 	    Int_t rank);
 
-  // Operations ----------------------
+  // proposed new interface
+  double       massBinCenter() const { return _mass;              }
+  double       logLikelihood() const { return _logli;             }
+  unsigned int rank         () const { return _rank;              }
+  unsigned int nmbEvents    () const { return _rawevents;         }
+  unsigned int nmbWaves     () const { return _wavetitles.size(); }
+  unsigned int nmbProdAmps  () const { return _amps.size();       }
 
+  TString waveName    (const unsigned int waveIndex)    const { return _wavetitles[waveIndex];   }
+  TString prodAmpName (const unsigned int prodAmpIndex) const { return _wavenames[prodAmpIndex]; }
+
+  double intensity   (const unsigned int waveIndex)       { return intens(waveIndex);       }  // intensity of single wave
+  double intensityErr(const unsigned int waveIndex)       { return err(waveIndex);          }  // corresponding error
+  double intensity   (const char*        waveNamePattern) { return intens(waveNamePattern); }  // intensity sum of waves matching name pattern
+  double intensityErr(const char*        waveNamePattern) { return err(waveNamePattern);    }  // corresponding error
+  double intensity   ()                                   { return intens("");              }  // total intensity
+  double intensityErr()                                   { return err("");                 }  // corresponding error
+
+  double coherence   (const unsigned int waveIndexA,  // coherence of wave A and wave B
+		      const unsigned int waveIndexB) { return coh(waveIndexA, waveIndexB); }
+  double coherenceErr(const unsigned int waveIndexA,  // corresponding error
+		      const unsigned int waveIndexB) const { return 0; }
+  double overlap     (const unsigned int waveIndexA,  // overlap between wave A and wave B
+		      const unsigned int waveIndexB) const { return 0; }
+  double overlapErr  (const unsigned int waveIndexA,  // corresponding error
+		      const unsigned int waveIndexB) const { return 0; }
+
+  // Operations ----------------------
   Double_t norm(const char* tag);
   Double_t normI(Int_t i){return norm(_wavenames[i].Data());}
   Double_t intens();  // total intensity
@@ -110,11 +135,11 @@ public:
 private:
 
   // Private Data Members ------------
-  vector<TComplex> _amps; // Fitted amplitudes
-  vector<pair<int,int> > _indices; // indices of parameters in error matrix;
-  vector<TString> _wavenames; // rank included!!!
-  vector<TString> _wavetitles; // without rank
-  map<int,int> _wavemap; // maps wave indices to indices in integral
+  std::vector<TComplex> _amps; // Fitted amplitudes
+  std::vector<std::pair<int,int> > _indices; // indices of parameters in error matrix;
+  std::vector<TString> _wavenames; // rank included!!!
+  std::vector<TString> _wavetitles; // without rank
+  std::map<int,int> _wavemap; // maps wave indices to indices in integral
   
   
   int _nevt; // number of events normalized;
@@ -129,7 +154,7 @@ private:
 
   // Private Methods -----------------
   TMatrixD getErr(unsigned int i){return getErr(_indices[i]);}
-  TMatrixD getErr(pair<int,int>); // returns cov matrix for complex parameter i
+  TMatrixD getErr(std::pair<int,int>); // returns cov matrix for complex parameter i
   void getCov(const char* tag, TMatrixD& C, std::vector<int>& cpar);
   void getCov(int i, int j, TMatrixD& C);
 

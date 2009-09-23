@@ -23,8 +23,8 @@
 // $Id$
 //
 // Description:
-//      Loads basic libraries and functions needed for analyzing fit
-//      results
+//      Adds trees in file list specified by name pattern to chain.
+//      The chain is created in case it does not exist.
 //
 //
 // Author List:
@@ -34,24 +34,32 @@
 //-----------------------------------------------------------
 
 
+#include <iostream>
+#include <string>
+
+#include "TFileCollection.h"
+#include "TChain.h"
+#include "THashList.h"
+
+
+using namespace std;
+
+
+TChain*
+loadFitResult(const string& fileNamePattern,
+	      TChain*       chain    = 0,
+	      const string& treeName = "pwa")
 {
-  gSystem->Load("libGX11TTF.so");
-  gSystem->Load("librootpwa.so");
-
-  gSystem->AddIncludePath("-I$ROOTPWA/tools");
-
-  gROOT->ProcessLine(".L loadFitResult.C+");
-  gROOT->ProcessLine(".L plotIntensity.C+");
-  gROOT->ProcessLine(".L plotAllIntensities.C+");
-  gROOT->ProcessLine(".L plotSpinTotals.C+");
-  gROOT->ProcessLine(".L plotPhase.C+");
-  gROOT->ProcessLine(".L plotCoherence.C+");
-  gROOT->ProcessLine(".L plot4.C+");
-
-  gROOT->ProcessLine(".L loadFit.C+");
-  gROOT->ProcessLine(".L plotwaves.C+");
-
-  gStyle->SetPadColor(0);
-  gStyle->SetCanvasColor(0);
-  gStyle->SetPalette(1);
+  // use TFileCollection to expand file name pattern into file list,
+  // because TChain::Add() does support wildcards only for the root
+  // files themselves (not in directories)
+  cout << "Constructing chain for '" << fileNamePattern << "' ..." << endl;
+  TFileCollection fileList("fitresults", "fitresults");
+  fileList.Add(fileNamePattern.c_str());
+  cout << "    File list contains " << fileList.GetNFiles() << " files." << endl;
+  if (!chain)
+    chain = new TChain(treeName.c_str(), treeName.c_str());
+  chain->AddFileInfoList(fileList.GetList());
+  cout << "    Chain '" << chain->GetName() << "'contains " << chain->GetEntries() << " entries." << endl;
+  return chain;
 }
