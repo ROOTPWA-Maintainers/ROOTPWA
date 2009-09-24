@@ -49,49 +49,198 @@
 using namespace std;
 
 
-// Class Member definitions -----------
-
 ClassImp(TFitBin);
 
-TFitBin::TFitBin() : _hasErrors(true){}
 
-TFitBin::~TFitBin(){
+TFitBin::TFitBin()
+  : _hasErrors(true)
+{ }
+
+
+TFitBin::~TFitBin()
+{
   Reset();
 }
 
+
+// calculates spin density matrix element for waves A and B
+// rho_AB = sum_r V_Ar V_Br^*
+complex<double>
+TFitBin::spinDensityMatrixElem(const unsigned int waveIndexA,
+			       const unsigned int waveIndexB) const
+{
+  // get pairs of amplitude indices with the same rank for waves A and B
+  const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
+  if (prodAmpIndexPairs.size() == 0)
+    return 0;
+  // sum up amplitude products
+  complex<double> spinDens = 0;
+  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
+    const TComplex rho = _amps[prodAmpIndexPairs[i].first] * TComplex::Conjugate(_amps[prodAmpIndexPairs[i].second]);
+    spinDens += complex<double>(rho.Re(), rho.Im());
+  }
+  return spinDens;
+}
+
+
+// returns fit parameter value by parameter name
+double
+TFitBin::fitParameter(const string& parName) const
+{
+  // check if parameter corresponds to real or imaginary part of production amplitude
+  TString name(parName);
+  bool    realPart = false;
+  if (name.Contains("flat")) {
+    name     = "flat";
+    realPart = true;
+  } else
+    realPart = name.Contains("RE");
+  // find corresponding production amplitude
+  if (realPart)
+    name.ReplaceAll("_RE", "");
+  else
+    name.ReplaceAll("_IM", "");
+  for (unsigned int i = 0; i < nmbProdAmps(); ++i)
+    if (name == prodAmpName(i)) {
+      if (realPart)
+	return _amps[i].Re();
+      else
+	return _amps[i].Im();
+    }
+  // not found
+  printWarn << "Could not find any parameter named '" << parName << "'." << endl;
+  return 0;
+}
+
+
+// constructs 2n x 2n covariance matrix of production amplitudes specified by index list
+// where n is the number of amplitudes
+// layout:
+//         cov(A0.re, A0.re)        cov(A0.re, A0.im)        ...  cov(A0.re, A(n - 1).re)        cov(A0.re, A(n - 1).im)
+//         cov(A0.im, A0.re)        cov(A0.im, A0.im)        ...  cov(A0.im, A(n - 1).re)        cov(A0.im, A(n - 1).im)
+//                  .                        .                             .                              .
+//                  .                        .                             .                              .
+//                  .                        .                             .                              .
+//         cov(A(n - 1).re, A0.re)  cov(A(n - 1).re, A0.im)  ...  cov(A(n - 1).re, A(n - 1).re)  cov(A(n - 1).re, A(n - 1).im)
+//         cov(A(n - 1).im, A0.re)  cov(A(n - 1).im, A0.im)  ...  cov(A(n - 1).im, A(n - 1).re)  cov(A(n - 1).im, A(n - 1).im)
+//!!! possible optimization: exploit symmetry of cov matrix
+TMatrixT<double>
+TFitBin::prodAmpCovariance(const vector<unsigned int>& prodAmpIndices) const
+{
+  const unsigned int dim = 2 * prodAmpIndices.size();
+  TMatrixT<double>   prodAmpCov(dim, dim);
+  if (!_hasErrors) {
+    printWarn << "TFitBin does not have a valid error matrix. Returning zero covariance matrix." << endl;
+    for (unsigned int row = 0; row < dim; ++row)
+      for (unsigned int col = 0; col < dim; ++col)
+	prodAmpCov[row][col] = 0;
+    return prodAmpCov;
+  }
+  // get corresponding indices for parameter covariances
+  vector<int> parCovIndices;
+  for (unsigned int i = 0; i < prodAmpIndices.size(); ++i) {
+    parCovIndices.push_back(_indices[prodAmpIndices[i]].first);   // real part
+    parCovIndices.push_back(_indices[prodAmpIndices[i]].second);  // imaginary part
+  }
+  // build covariance matrix
+  for (unsigned int row = 0; row < dim; ++row)
+    for (unsigned int col = 0; col < dim; ++col) {
+      if ((parCovIndices[row] < 0) || (parCovIndices[col] < 0))
+	prodAmpCov[row][col] = 0;
+      else
+	prodAmpCov[row][col] = fitParameterCov(parCovIndices[row], parCovIndices[col]);
+    }
+  return prodAmpCov;
+}
+
+
+// calculates covariance matrix of spin density matrix element for waves A and B
+// rho_AB = sum_r V_Ar V_Br^*
+//!!! possible optimization: make special case for waveIndexA == waveIndexB
+TMatrixT<double>
+TFitBin::spinDensityMatrixElemCov(const unsigned int waveIndexA,
+				  const unsigned int waveIndexB) const
+{
+  // get pairs of amplitude indices with the same rank for waves A and B
+  const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
+  if (!_hasErrors || (prodAmpIndexPairs.size() == 0)) {
+    TMatrixT<double> spinDensCov(2, 2);
+    spinDensCov[0][0] = spinDensCov[0][1] = spinDensCov[1][0] = spinDensCov[1][1] = 0;
+    return spinDensCov;
+  }
+  // build covariance matrix for amplitudes
+  const TMatrixT<double> prodAmpCov = prodAmpCovariance(prodAmpIndexPairs);
+  // build Jacobian for rho_AB, which is a 2 x 4m matrix composed of 2m sub-Jacobians:
+  // J = (JA0, ..., JA(m - 1), JB0, ..., JB(m - 1))
+  // m is the number of production amplitudes for waves A and B that have the same rank
+  const unsigned int dim = prodAmpCov.GetNcols();
+  TMatrixT<double>   jacobian(2, dim);
+  // first build m sub-Jacobians for d rho_AB / d V_Ar = M(V_Br^*)
+  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
+    const unsigned int     ampIndexB    = prodAmpIndexPairs[i].second;
+    const TMatrixT<double> subJacobianA = matrixRepr(TComplex::Conjugate(_amps[ampIndexB]));
+    jacobian.SetSub(0, 2 * i, subJacobianA);
+  }
+  // then build m sub-Jacobian for d rho_AB / d V_Br = M(V_Ar) {{1,  0},
+  //                                                            {0, -1}}
+  TMatrixT<double> M(2, 2);  // complex conjugation of V_Br is non-analytic operation
+  M[0][0] =  1;
+  M[1][1] = -1;
+  M[0][1] = M[1][0] = 0;
+  const unsigned int colOffset = 2 * prodAmpIndexPairs.size();
+  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
+    const unsigned int ampIndexA    = prodAmpIndexPairs[i].first;
+    TMatrixT<double>   subJacobianB = matrixRepr(_amps[ampIndexA]);
+    subJacobianB *= M;
+    jacobian.SetSub(0, colOffset + 2 * i, subJacobianB);
+  }
+  // calculate spin density covariance matrix cov(rho_AB) = J cov(V_A0, ..., V_A(m - 1), V_B0, ..., V_B(m - 1)) J^T
+  const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);
+  // binary operations are unavoidable, since matrices are not squared
+  //!!! possible optimaztion: use special TMatrixT constructors to perform the multiplication
+  const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;
+  const TMatrixT<double> spinDensCov  = jacobian   * prodAmpCovJT;
+  return spinDensCov;
+}
+
+
+
+
 void
-TFitBin::Reset(){
+TFitBin::Reset()
+{
   _amps.clear();
   _wavenames.clear();
 }
 
 
 void 
-TFitBin::fill(const vector<TComplex>& amps,
-	      const vector<pair<int,int> >& indices,
-	      const vector<TString>& wavenames,
-	      int nevt,
-	      unsigned int rawevents,
-	      Double_t mass,
-	      const TCMatrix& integr,
-	      const TMatrixD& errm,
-	      Double_t logli,
-	      Int_t rank)
+TFitBin::fill(const std::vector<TComplex>&             prodAmps,
+	      const std::vector<std::pair<int, int> >& indices,
+	      const std::vector<TString>&              prodAmpNames,
+	      const int                                nevt,
+	      const unsigned int                       nmbEvents,
+	      const double                             massBinCenter,
+	      const TCMatrix&                          normIntegral,
+	      const TMatrixD&                          fitParCovMatrix,
+	      const double                             logLikelihood,
+	      const int                                rank)
 {
-  _amps=amps;
-  _indices=indices;
-  _wavenames=wavenames;
-  _nevt=nevt;
-  _rawevents=rawevents;
-  _mass=mass;
-  _int.ResizeTo(integr.nrows(),integr.ncols());
-  _int=integr;
-  _errm.ResizeTo(errm.GetNrows(),errm.GetNcols());
-  // check if there really is an error matrix:
-  if(_errm.GetNrows()==0)_hasErrors=false;
-  _errm=errm;
-  _logli=logli;
-  _rank=rank;
+//!!! add some consistency checks
+  _int.ResizeTo (normIntegral.nrows(),       normIntegral.ncols());
+  _errm.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
+  _amps      = prodAmps;
+  _indices   = indices;
+  _wavenames = prodAmpNames;
+  _nevt      = nevt;
+  _rawevents = nmbEvents;
+  _mass      = massBinCenter;
+  _int       = normIntegral;
+  if (_errm.GetNrows() == 0)  // check whether there really is an error matrix
+    _hasErrors = false;
+  _errm  = fitParCovMatrix;
+  _logli = logLikelihood;
+  _rank  = rank;
   buildWaveMap();
 }
 
