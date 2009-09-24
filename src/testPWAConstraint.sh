@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd TEST
-../testPWAConstraint wavelist2
+cd $ROOTPWA/src/TEST
+   $ROOTPWA/build/bin/testPWAConstraint wavelist2

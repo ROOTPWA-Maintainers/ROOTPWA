@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd pwafitTest
+cd $ROOTPWA/src/pwafitTest
 
 ./runGamp.sh
 

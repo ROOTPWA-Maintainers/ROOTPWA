@@ -1,4 +1,4 @@
 #!/bin/bash
 
-cd TEST
-../testPWALikeli wavelist2
+cd $ROOTPWA/src/TEST
+   $ROOTPWA/build/bin/testPWALikeli wavelist2

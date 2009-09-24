@@ -1,5 +1,5 @@
 {
-  gSystem->Load("../librootpwa.so");
+  gSystem->Load("librootpwa.so");
 
   gROOT->ProcessLine(".x compareTFitBins.C+");
 }

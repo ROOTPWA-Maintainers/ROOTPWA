@@ -23,13 +23,18 @@ PROJECT(rootpwa)
 
 ENABLE_TESTING()
 
-INCLUDE_DIRECTORIES($ENV{ROOTSYS}/include
-                    $ENV{PWA2000}/include
-                    .)
+
+
+SET(INCLUDE_DIRECTORIES
+  $ENV{ROOTSYS}/include
+  $ENV{PWA2000}/include
+  ${CMAKE_SOURCE_DIR}/tools
+)
+
+include_directories(${INCLUDE_DIRECTORIES})
 
 SET(SOURCES TPDGEntry.cc
-            TPDGDB.cc
-	    rootpwatoolsDict.cc)
+            TPDGDB.cc)
    
 #SET(MYFLAGS "-g")
 
@@ -67,9 +72,6 @@ SET(PWA_LIBS ${PWA_LIB}/libpp.a
 SET(ROOTPWA_LIB $ENV{ROOTPWA}/lib)
 SET(ROOTPWA_LIBS ${ROOTPWA_LIB}/librootpwa.so)
 
-ADD_LIBRARY(rootpwatools SHARED ${SOURCES})
-
-TARGET_LINK_LIBRARIES(rootpwatools ${ROOT_LIBS})
 
 #-------------------------------------------------
 #------ Root Dictionary --------------------------
@@ -81,13 +83,20 @@ FIND_PROGRAM(ROOT_CINT_EXECUTABLE
   NO_DEFAULT_PATH
  )
 
-ADD_CUSTOM_COMMAND(OUTPUT rootpwatoolsDict.h rootpwatoolsDict.cc
+ADD_CUSTOM_COMMAND(OUTPUT rootpwatoolsDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwatoolsDict.cc
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwatoolsDict.cc -c -DHAVE_CONFIG_H ${INCLUDE_DIRECTORIES} TPDGEntry.h TPDGDB.h rootpwatoolsLinkDef.h)
+      ARGS -f rootpwatoolsDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/tools TPDGEntry.h TPDGDB.h rootpwatoolsLinkDef.h)
 
 
+set(TOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwatoolsDict.cc)
 
+#-------------------------------------------------
+#------- The library ---- ------------------------
+#-------------------------------------------------
 
+SET(SOURCES ${SOURCES} ${TOOLS_DICTIONARY})
+ADD_LIBRARY(rootpwatools SHARED ${SOURCES})
+TARGET_LINK_LIBRARIES(rootpwatools ${ROOT_LIBS})
 
 #-------------------------------------------------
 #------- Main executables ------------------------

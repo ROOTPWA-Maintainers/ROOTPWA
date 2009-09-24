@@ -14,8 +14,13 @@ ROOT:
 
 CMAKE:
   CMake is a cross platform build system available from http://cmake.org/
+  Some help can also be found here: http://www.vtk.org/Wiki/CMake_FAQ
 
 BNL PWA software PWA2000:
+
+  There is a now a tarball of the code available which greatly simplifies
+  the installation procedure described below. Contact sebastian for this.
+
   (this code should eventually be distributed with rootpwa)
   Available from http://ignatz.phys.rpi.edu/~jpc/john/Physics/PWA/pwa.html
   Download libpp and pwa2000 tarballs (CVS access does not work)
@@ -99,37 +104,30 @@ BNL PWA software PWA2000:
 	 fail to link against it on the wrong architecture
 
 2) Set $PWA2000 environment variable to PWA2000 base dir (if not done already)
+3) Set $ROOTPWA environment variable to the rootpwa toplevel directory 
+   (usually trunk)
+4) Set
+	PATH=$ROOTPWA/build/bin:$PATH
+	LD_LIBRARY_PATH=$PWA2000/lib:$ROOTPWA/build/lib:$ROOTSYS/lib:LD_LIBRARY_PATH
 
-There is a setup.sh script template. You can modify this for future usage.
+We use an out-of-source build strategy. This means that 
+the binary files will be created outside of the directories that contain
+the source code. CMake is supporting this:
 
-3) Build tools:
+4) create the build-directory: 
+	&> cd $ROOTPWA
+        &> mkdir build
 
-   The file CMakeLists.txt is your "user-Makefile" do not delete it.
-   It can be useful to delete CMakeCache and CMakeFiles/ 
-	if there appear problems.
+5) do the build:
+	&> cd build
+	&> cmake ..   
+	&> make 
+	&> make test
 
-   &> cd tools
-   &> ccmake .
-     Specify your prefix directory. For example: ../
-	(for how this is done see CMake docu www.cmake.org)
-     You will have to press (c)onfigure and then (g)enerate in order
-     to configure the project and save the configuration. This will
-     also generate the Makefile. (see cmake docu).
-   &> make
-   &> make install
+There is no make install needed anymore.
 
-
-3) Build main project:
-   &> cd src
-   &> ccmake .
-     Specify your prefix (for how this is done see CMake docu www.cmake.org)
-   &> make
-   &> make test     # this runs some unit tests
-   &> make install
-
-4) You can use ccmake to define installation paths lib/ bin/. 
-   For details see cmake documentation
-
+There is a setup.sh script template. You can modify this for future usage
+in order to quickly set all the above mentioned variables.
 
 --- Building the html documentation:
 

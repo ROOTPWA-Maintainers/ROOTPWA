@@ -31,7 +31,7 @@ fi
 echo ">>> ${0} started on $(date)"
 echo ">>> fitting amplitude data in ${AMP_DIR} using wave list ${WAVE_LIST}"
 cd ${AMP_DIR}
-COMMAND="$ROOTPWA/src/pwafit -q -w ${WAVE_LIST} -o ${OUT_FILE} -r 2 -l ${BIN_MASS_MIN} -u ${BIN_MASS_MAX} -N &> ${LOG_FILE}"
+COMMAND="pwafit -q -w ${WAVE_LIST} -o ${OUT_FILE} -r 2 -l ${BIN_MASS_MIN} -u ${BIN_MASS_MAX} -N &> ${LOG_FILE}"
 echo "${COMMAND}"
 time eval ${COMMAND}
 cd ${CURRENT_DIR}

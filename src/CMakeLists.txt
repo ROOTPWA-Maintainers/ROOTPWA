@@ -24,9 +24,13 @@ PROJECT(rootpwa)
 
 ENABLE_TESTING()
 
-INCLUDE_DIRECTORIES($ENV{ROOTSYS}/include
-	            $ENV{PWA2000}/include
-		    .)
+SET(INCLUDE_DIRECTORIES
+  $ENV{ROOTSYS}/include
+  $ENV{PWA2000}/include
+  ${CMAKE_SOURCE_DIR}/src
+)
+
+include_directories(${INCLUDE_DIRECTORIES})
 
 SET(SOURCES TFitBin.cc
 	    TCMatrix.cc
@@ -37,15 +41,12 @@ SET(SOURCES TFitBin.cc
 	    TLogMultiGaus.cc
 	    TCovEllipse.cc
 	    mcmc/TMCMCMeta.cc
-	    utilities.cc
-	    rootpwaDict.cc)
+	    utilities.cc)
 	    
-SET(MYFLAGS "-g -O3 -Wall -Werror")
+SET(MYFLAGS "-O3 -Wall -Werror")
 
 SET(CMAKE_CXX_FLAGS ${MYFLAGS})
 #SET(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g")
-
-ADD_LIBRARY(rootpwa SHARED ${SOURCES})
 
 #add ROOT lib
 SET(ROOT_LIB $ENV{ROOTSYS}/lib)
@@ -59,6 +60,7 @@ SET(ROOT_LIBS ${ROOT_LIB}/libCore.so
 	      ${ROOT_LIB}/libGraf3d.so 
 	      ${ROOT_LIB}/libGpad.so
 	      ${ROOT_LIB}/libTree.so
+	       ${ROOT_LIB}/libThread.so
 	      ${ROOT_LIB}/libRint.so
 	      ${ROOT_LIB}/libPostscript.so
 	      ${ROOT_LIB}/libMatrix.so 
@@ -68,7 +70,7 @@ SET(ROOT_LIBS ${ROOT_LIB}/libCore.so
 	      libdl.so
 	      libm.so)
 
-TARGET_LINK_LIBRARIES(rootpwa ${ROOT_LIBS})
+
 
 
 
@@ -88,10 +90,19 @@ FIND_PROGRAM(ROOT_CINT_EXECUTABLE
   NO_DEFAULT_PATH
  )
 
-ADD_CUSTOM_COMMAND(OUTPUT rootpwaDict.h rootpwaDict.cc
+ADD_CUSTOM_COMMAND(OUTPUT rootpwaDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H ${INCLUDE_DIRECTORIES} TFitBin.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
+      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src TFitBin.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
 
+set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc)
+
+#-------------------------------------------------
+#------- The library ---- ------------------------
+#-------------------------------------------------
+
+SET(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
+ADD_LIBRARY(rootpwa SHARED ${SOURCES})
+TARGET_LINK_LIBRARIES(rootpwa ${ROOT_LIBS})
 
 #-------------------------------------------------
 #------- Main executables ------------------------
@@ -162,6 +173,6 @@ INSTALL(FILES pwafit pwaConstraintFit selector DESTINATION bin PERMISSIONS OWNER
 
 ADD_TEST(testBuild     ${CMAKE_BUILD_TOOL})
 ADD_TEST(testPWAAmp    ${EXECUTABLE_OUTPUT_PATH}/testPWAAmp)
-ADD_TEST(testPWALikeli ${EXECUTABLE_OUTPUT_PATH}/testPWALikeli.sh)
-ADD_TEST(testPWAConstrain ${EXECUTABLE_OUTPUT_PATH}/testPWAConstraint.sh)
-ADD_TEST(testPWAFit    ${EXECUTABLE_OUTPUT_PATH}/testPWAFit.sh)
+ADD_TEST(testPWALikeli ${CMAKE_CURRENT_SOURCE_DIR}/testPWALikeli.sh)
+ADD_TEST(testPWAConstrain ${CMAKE_CURRENT_SOURCE_DIR}/testPWAConstraint.sh)
+ADD_TEST(testPWAFit    ${CMAKE_CURRENT_SOURCE_DIR}/testPWAFit.sh)
