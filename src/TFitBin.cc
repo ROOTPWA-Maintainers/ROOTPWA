@@ -204,6 +204,43 @@ TFitBin::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 }
 
 
+// calculates phase difference between wave A and wave B
+double
+TFitBin::phaseNew(const unsigned int waveIndexA,
+		  const unsigned int waveIndexB) const
+{ 
+  if (waveIndexA == waveIndexB)
+    return 0;
+  return arg(spinDensityMatrixElem(waveIndexA, waveIndexB)) * TMath::RadToDeg();
+}
+
+
+// calculates error of phase difference between wave A and wave B
+double
+TFitBin::phaseErrNew(const unsigned int waveIndexA,
+		     const unsigned int waveIndexB) const
+{
+  if ((!_hasErrors) || (waveIndexA == waveIndexB))
+    return 0;
+  // construct Jacobian for phi_AB = +- arctan(Im[rho_AB] / Re[rho_AB])
+  const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
+  TMatrixT<double>      jacobian(1, 2);  // phase is real valued function, so J has only one row
+  {
+    const double x = spinDens.real();
+    const double y = spinDens.imag();
+    if ((x == 0) && (y == 0))
+      jacobian[0][0] = jacobian[0][1] = 0;
+    else {
+      jacobian[0][0] = 1 / (x + y * y / x);
+      jacobian[0][1] = -y / (x * x + y * y);
+    }
+  }
+  // calculate variance
+  const double phaseVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
+  return sqrt(phaseVariance) * TMath::RadToDeg();
+}
+
+
 
 
 void
@@ -447,7 +484,7 @@ TFitBin::phaseErr(int i, int j) const
   TMatrixD JT(TMatrixD::kTransposed,J);
   TMatrixD CJT=C*JT;
   TMatrixD x=J*CJT;
-  return x[0][0]/TMath::Pi()*180.;
+  return sqrt(x[0][0])/TMath::Pi()*180.;
 }
 
 TMatrixD

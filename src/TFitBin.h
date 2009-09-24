@@ -99,6 +99,10 @@ public:
   double intensity   ()                                   const { return intens("");              }  // total intensity
   double intensityErr()                                   const { return err("");                 }  // corresponding error
 
+  double phaseNew    (const unsigned int waveIndexA,  // phase difference between wave A and wave B
+		      const unsigned int waveIndexB) const;
+  double phaseErrNew (const unsigned int waveIndexA,  // corresponding error
+		      const unsigned int waveIndexB) const;
   double coherence   (const unsigned int waveIndexA,  // coherence of wave A and wave B
 		      const unsigned int waveIndexB) const { return coh(waveIndexA, waveIndexB); }
   double coherenceErr(const unsigned int waveIndexA,  // corresponding error
@@ -155,6 +159,10 @@ private:
 
   TMatrixT<double>        prodAmpCovariance(const std::vector<unsigned int>& prodAmpIndices) const;
   inline TMatrixT<double> prodAmpCovariance(const std::vector<std::pair<unsigned int, unsigned int> >& prodAmpIndexPairs) const;
+
+  inline double realValVariance(const unsigned int      waveIndexA,
+				const unsigned int      waveIndexB,
+				const TMatrixT<double>& jacobian) const;
 
 
   // Private Data Members ------------
@@ -297,6 +305,23 @@ TFitBin::prodAmpCovariance(const std::vector<std::pair<unsigned int, unsigned in
   for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i)
     prodAmpIndices.push_back(prodAmpIndexPairs[i].second);
   return prodAmpCovariance(prodAmpIndices);
+}
+
+
+// calculates variance of a real-valued function of a spin density matrix element for wave A and wave B
+inline
+double
+TFitBin::realValVariance(const unsigned int      waveIndexA,
+			 const unsigned int      waveIndexB,
+			 const TMatrixT<double>& jacobian) const  // Jacobian of real valued function (d f/ d Re[rho]   d f / d Im[rho])
+{
+  if (!_hasErrors)
+    return 0;
+  const TMatrixT<double> spinDensCov = spinDensityMatrixElemCov(waveIndexA, waveIndexB);  // 2 x 2 matrix
+  const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);              // 2 x 1 matrix
+  const TMatrixT<double> spinDensCovJT = spinDensCov * jacobianT;                         // 2 x 1 matrix
+  const TMatrixT<double> cov           = jacobian * spinDensCovJT;                        // 1 x 1 matrix
+  return cov[0][0];
 }
 
 

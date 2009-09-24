@@ -51,7 +51,7 @@ operator << (ostream&           o,
 void
 testNewTFitBinInterface(TTree* tree)
 {
-  const bool verbose = true;
+  const bool verbose = false;
   TFitBin*   massBin = new TFitBin();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(30);
@@ -131,4 +131,19 @@ testNewTFitBinInterface(TTree* tree)
     }
     cout << "intensityErr() max. deviation = " << maxDelta << endl << endl;
   }
+
+  if (1) {
+    double maxDelta = 0;
+    for (unsigned int i = 0; i < n; ++i)
+      for (unsigned int j = 0; j < n; ++j) {
+	const double oldVal = massBin->phase(i, j);
+	const double newVal = massBin->phaseNew(i, j);
+	const double delta  = oldVal - newVal;
+	maxDelta = (maxDelta < delta) ? delta : maxDelta;
+	cout << "phaseNew(" << massBin->waveName(i) << ", "  << massBin->waveName(j) << "): "
+	     << setprecision(12) << newVal << " vs. " << oldVal << ", delta = " << delta << endl;
+      }
+    cout << "phaseNew() max. deviation = " << maxDelta << endl << endl;
+  }
+
 }

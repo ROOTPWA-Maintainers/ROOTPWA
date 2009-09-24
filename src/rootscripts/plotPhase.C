@@ -112,8 +112,8 @@ plotPhase(TTree*        tree,        // TFitBin tree
 
   // build and run TTree::Draw() expression
   stringstream drawExpr;
-  drawExpr << "phase("     << waveIndexA << "," << waveIndexB << ")"
-	   << ":phaseErr(" << waveIndexA << "," << waveIndexB << ")"
+  drawExpr << "phaseNew("     << waveIndexA << "," << waveIndexB << ")"
+	   << ":phaseErrNew(" << waveIndexA << "," << waveIndexB << ")"
 	   << ":massBinCenter() >> h" << waveIndexA << "_" << waveIndexB;
   cout << "    Running TTree::Draw() expression '" << drawExpr.str() << "' "
        << "on tree '" << tree->GetName() << "'" << endl;
