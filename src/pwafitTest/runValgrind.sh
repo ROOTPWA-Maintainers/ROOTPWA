@@ -59,7 +59,7 @@ echo
 case ${VALGRIND_TOOL} in
     "memcheck")  # run memcheck tool 
 	#VALGRIND_OPT="--leak-check=full --freelist-vol=500000000 --show-reachable=yes --verbose"
-	VALGRIND_OPT="--leak-check=full --freelist-vol=500000000 --verbose"
+	VALGRIND_OPT="--leak-check=full --suppressions=$ROOTSYS/etc/valgrind-root.supp --freelist-vol=500000000 --verbose"
 	;;
     "callgrind")  # run callgrind tool
 	VALGRIND_OPT="--tool=callgrind --simulate-cache=yes --verbose"

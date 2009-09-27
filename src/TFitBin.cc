@@ -35,14 +35,11 @@
 //-----------------------------------------------------------
 
 
-#include <iomanip>
-#include <complex>
 #include <algorithm>
 
 // PWA2000 classes
 #include "integral.h"
 
-#include "utilities.h"
 #include "TFitBin.h"
 
 
@@ -241,11 +238,41 @@ TFitBin::phaseErrNew(const unsigned int waveIndexA,
 }
 
 
+// calculates overlap of wave A and wave B
+double
+TFitBin::overlap(const unsigned int waveIndexA,
+		 const unsigned int waveIndexB) const
+{
+  const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
+  const complex<double> normInt  = normIntegral         (waveIndexA, waveIndexB);
+  return 2 * (spinDens * normInt).real();
+}
+
+
+// overlap of wave A and wave B
+double
+TFitBin::overlapErr(const unsigned int waveIndexA,
+		    const unsigned int waveIndexB) const
+{
+   if (!_hasErrors)
+    return 0;
+  const complex<double> normInt = normIntegral(waveIndexA, waveIndexB);
+  TMatrixT<double> jacobian(1, 2);  // overlap is real valued function, so J has only one row
+  jacobian[0][0] = 2 * normInt.real();
+  jacobian[0][1] = 2 * normInt.imag();
+  const double overlapVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
+  return sqrt(overlapVariance);
+}
+
+
+
+
 
 
 void
 TFitBin::Reset()
 {
+//!!! set also other member variables into defined state
   _amps.clear();
   _wavenames.clear();
 }

@@ -41,6 +41,7 @@
 
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <map>
 #include <string>
@@ -51,6 +52,7 @@
 #include "TMatrixT.h"
 #include "TString.h"
 
+#include "utilities.h"
 #include "TCMatrix.h"
 
 
@@ -87,13 +89,19 @@ public:
   double      fitParameterCov(const unsigned int parIndexA,
 			      const unsigned int parIndexB) const { return _errm[parIndexA][parIndexB]; }
 
-  std::complex<double> spinDensityMatrixElem   (const unsigned int waveIndexA,
+  std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return std::complex<double>(_amps[prodAmpIndex].Re(), _amps[prodAmpIndex].Im()); }  // production amplitude
+  inline TMatrixT<double> prodAmpCov(const unsigned int prodAmpIndex) const;                                 // corresponding 2 x 2 covariance matrix
+
+  inline std::complex<double> normIntegral(const unsigned int waveIndexA,
+					   const unsigned int waveIndexB) const;
+
+  std::complex<double> spinDensityMatrixElem   (const unsigned int waveIndexA,  // spin density matrix element for waves A and B
 						const unsigned int waveIndexB) const;
-  TMatrixT<double>     spinDensityMatrixElemCov(const unsigned int waveIndexA,
+  TMatrixT<double>     spinDensityMatrixElemCov(const unsigned int waveIndexA,  // corresponding 2 x 2 covariance matrix
  						const unsigned int waveIndexB) const;
 
-  double intensity   (const unsigned int waveIndex)       const { return intens(waveIndex);       }  // intensity of single wave
-  double intensityErr(const unsigned int waveIndex)       const { return err(waveIndex);          }  // corresponding error
+  double intensity   (const unsigned int waveIndex)       const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }  // intensity of single wave
+  double intensityErr(const unsigned int waveIndex)       const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]); }  // corresponding error
   double intensity   (const char*        waveNamePattern) const { return intens(waveNamePattern); }  // intensity sum of waves matching name pattern
   double intensityErr(const char*        waveNamePattern) const { return err(waveNamePattern);    }  // corresponding error
   double intensity   ()                                   const { return intens("");              }  // total intensity
@@ -108,9 +116,14 @@ public:
   double coherenceErr(const unsigned int waveIndexA,  // corresponding error
 		      const unsigned int waveIndexB) const { return 0; }
   double overlap     (const unsigned int waveIndexA,  // overlap between wave A and wave B
-		      const unsigned int waveIndexB) const { return 0; }
+		      const unsigned int waveIndexB) const;
   double overlapErr  (const unsigned int waveIndexA,  // corresponding error
-		      const unsigned int waveIndexB) const { return 0; }
+		      const unsigned int waveIndexB) const;
+
+  inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;
+  inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;
+  inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;
+
 
   // Operations ----------------------
   Double_t norm(const char* tag) const;
@@ -220,6 +233,75 @@ TFitBin::fitParameters(double* parArray) const
     if (_indices[i].second >= 0)
       parArray[countPar++] = _amps[i].Im();
   }
+}
+
+
+// returns covariance matrix for production amplitude
+inline
+TMatrixT<double>
+TFitBin::prodAmpCov(const unsigned int prodAmpIndex) const {
+  // get parameter indices
+  const int i = _indices[prodAmpIndex].first;
+  const int j = _indices[prodAmpIndex].second;
+  TMatrixT<double> cov(2, 2);
+  cov[0][0] = _errm[i][i];
+  if (j < 0)
+    cov[0][1] = cov[1][0] = cov[1][1] = 0;
+  else {
+    cov[0][1] = _errm[i][j];
+    cov[1][0] = _errm[j][i];
+    cov[1][1] = _errm[j][j];
+  }
+  return cov;
+}
+
+
+// returns normalization integral for waves A and B
+inline
+std::complex<double>
+TFitBin::normIntegral(const unsigned int waveIndexA,
+		      const unsigned int waveIndexB) const
+{
+  const TComplex norm = _int(waveIndexA, waveIndexB);
+  return std::complex<double>(norm.Re(), norm.Im());
+}
+
+
+// prints names of all production amplitudes
+inline
+std::ostream&
+TFitBin::printProdAmpNames(std::ostream& out) const
+{
+  out << "Production amplitude names:" << std::endl;
+  for (unsigned int i = 0; i < nmbProdAmps(); ++i)
+    out << "    " << std::setw(3) << i << " " << prodAmpName(i) << std::endl;
+  return out;
+}
+
+
+// prints names of all production amplitudes
+inline
+std::ostream&
+TFitBin::printWaveNames(std::ostream& out) const
+{
+  out << "Wave names:" << std::endl;
+  for (unsigned int i = 0; i < nmbWaves(); ++i)
+    out << "    " << std::setw(3) << i << " " << waveName(i) << std::endl;
+  return out;
+}
+
+
+// prints all production amplitudes
+inline
+std::ostream&
+TFitBin::printProdAmps(std::ostream& out) const
+{
+  out << "Production amplitudes:" << std::endl;
+  for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
+    out << "    " << std::setw(3) << i << " " << prodAmpName(i) << " = "  << prodAmp(i)
+	<< ", cov = " << prodAmpCov(i) << std::endl;
+  }
+  return out;
 }
 
 

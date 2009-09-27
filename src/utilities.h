@@ -12,6 +12,11 @@
 #include <iomanip>
 #include <limits>
 
+#include "TVector3.h"
+#include "TLorentzVector.h"
+#include "TComplex.h"
+#include "TMatrixT.h"
+
 
 //////////////////////////////////////////////////////////////////////////////////
 // macros and functions for printout and formatting
@@ -90,6 +95,57 @@ inline
 std::ostream& operator << (std::ostream&                 out,
 			   const maxPrecisionValue__<T>& value)
 { return value.print(out); }
+
+
+// simple stream operators for some common ROOT classes
+inline
+std::ostream&
+operator << (std::ostream&   o,
+             const TVector3& vec)
+{
+  o << "(" << vec.X() << ", " << vec.Y() << ", " << vec.Z() << ")";
+  return o;
+}
+
+inline
+std::ostream&
+operator << (std::ostream&         o,
+             const TLorentzVector& vec)
+{
+  o << "(" << vec.X() << ", " << vec.Y() << ", " << vec.Z() << "; " << vec.T() << ")";
+  return o;
+}
+
+inline
+std::ostream&
+operator << (std::ostream&   o,
+             const TComplex& c)
+{
+  o << "(" << c.Re() << ", " << c.Im() << ")";
+  return o;
+}
+
+template <typename T>
+std::ostream&
+operator << (std::ostream&      o,
+             const TMatrixT<T>& A)
+{
+  o << "(";
+  for (int row = 0; row < A.GetNrows(); ++row) {
+    o << "(";
+    for (int col = 0; col < A.GetNcols(); ++col) {
+      o << A[row][col];
+      if (col < A.GetNcols() - 1)
+        o << ", ";
+    }
+    if (row < A.GetNrows() - 1)
+      o << "), ";
+    else
+      o << ")";
+  }
+  o << ")";
+  return o;
+}
 
 
 #endif  // utilities_h
