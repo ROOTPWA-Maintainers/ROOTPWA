@@ -55,7 +55,7 @@ TPDGDB::read(const TString& filename, int num){
   _tree->Branch("TPDGEntry",&entry);
 
   
-  unsigned int counter=0;
+  int counter=0;
   char line[500];
   while(infile.good()){
     

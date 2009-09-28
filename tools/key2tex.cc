@@ -76,7 +76,7 @@ int main(int argc, char** argv){
   cout<<"\\begin{aligned}"<<endl;
   char line[300];
   int count=0;
-  bool wasthr=false;
+  //bool wasthr=false;
   while(!(cin>>line).eof()) { // begin event loop
 
     TString ls(line);

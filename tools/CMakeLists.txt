@@ -36,11 +36,6 @@ include_directories(${INCLUDE_DIRECTORIES})
 SET(SOURCES TPDGEntry.cc
             TPDGDB.cc)
    
-#SET(MYFLAGS "-g")
-
-#SET(CMAKE_CXX_FLAGS ${MYFLAGS})
-#SET(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g")
-
 #add ROOT lib
 SET(ROOT_LIB $ENV{ROOTSYS}/lib)
 SET(ROOT_BIN $ENV{ROOTSYS}/bin)

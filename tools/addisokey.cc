@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
   TObjArray* key1tokens=key1.Tokenize("_=.");
   TObjArray* key2tokens=key2.Tokenize("_=.");
 
-  unsigned int l=key1tokens->GetEntries();
+  int l=key1tokens->GetEntries();
   if(l!=key2tokens->GetEntries()){
     delete key1tokens;
     delete key2tokens;
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
   TString rest(key1);
 
   // loop through tokens, check if everything agrees except pi+ pi- 
-  for(unsigned int i=0;i<l;++i){
+  for(int i=0;i<l;++i){
     TObjString* objtok1=(TObjString*)key1tokens->At(i);
     TObjString* objtok2=(TObjString*)key2tokens->At(i);
     TString tok1=objtok1->GetString();

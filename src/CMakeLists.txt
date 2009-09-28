@@ -43,10 +43,6 @@ SET(SOURCES TFitBin.cc
 	    mcmc/TMCMCMeta.cc
 	    utilities.cc)
 	    
-SET(MYFLAGS "-O3 -Wall -Werror")
-
-SET(CMAKE_CXX_FLAGS ${MYFLAGS})
-#SET(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -g")
 
 #add ROOT lib
 SET(ROOT_LIB $ENV{ROOTSYS}/lib)

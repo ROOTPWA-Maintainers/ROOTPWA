@@ -67,7 +67,7 @@ main(int argc, char** argv){
   }
 
   list<string> waves=integrals[0].files();
-  unsigned int nwaves=waves.size();
+  //unsigned int nwaves=waves.size();
   list<string>::iterator it=waves.begin();
   // wavemap: contains one entry per wave
   // each entry records mass and maximum integral value
@@ -93,7 +93,7 @@ main(int argc, char** argv){
     map<TString,pair<double,double> >::iterator it3=wavemap.begin(); 
 
   // loop over mass bins
-    unsigned int k=0;
+    // unsigned int k=0;
   for(unsigned int i=0; i<masses.size(); ++i){
     cerr << "Processing mass bin "<< masses[i] << endl;
     it2=wavemap.begin(); 

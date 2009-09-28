@@ -124,6 +124,14 @@ the source code. CMake is supporting this:
 	&> make 
 	&> make test
 
+   The default built option is NONE. The compiler flags which are used are
+   defined in the to-level CMakeLists.txt.
+   You can choose a different built option with:
+
+	&> cmake -D MAKE_BUILD_TYPE=DEBUG ..
+
+
+
 There is no make install needed anymore.
 
 There is a setup.sh script template. You can modify this for future usage

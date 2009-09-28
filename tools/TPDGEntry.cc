@@ -61,7 +61,7 @@ bool operator== (const TPDGEntry& lhs, const TPDGEntry& rhs)
 std::istream& operator>> (std::istream& s, TPDGEntry& me){
   char delim;
   char buffer[20];
-  char** mark;
+  
   s >> me._mass >>delim>>me. _mass_ep>> delim>> me._mass_en 
     >> delim>> me._width >> delim>> me._width_ep >>delim>>  me._width_en>>delim;
   // read I

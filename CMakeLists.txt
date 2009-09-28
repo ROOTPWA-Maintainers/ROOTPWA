@@ -5,15 +5,15 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3 FATAL_ERROR)
 project(ROOTPWA)
 ENABLE_TESTING()
 
-#Check the compiler and set the compile and link flags
-set(CMAKE_BUILD_TYPE Debug)
+# Build types
+set(CMAKE_BUILD_TYPE None)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Werror")
+set(CMAKE_CXX_FLAGS_NONE "-O3 -Wall -Werror")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -Werror")
 
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
-# Set the build type. Possibilities are None, Debug, Release, 
-# RelWithDebInfo and MinSizeRel 
-#SET(CMAKE_BUILD_TYPE Debug)
 
 # Recurse into the given subdirectories.  This does not actually
 # cause another cmake executable to run.  The same process will walk through
