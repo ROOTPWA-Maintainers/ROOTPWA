@@ -31,7 +31,6 @@
 
 #export FITDIR=/lustre/e18/user/sneubert/Q3PiData/FITS/fit10
 export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/3Pi/fit11
-#export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/2008/fit1
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/MEDT/fit1
 export MYBATCH=1000.1360 # will be used of no array job is started
@@ -55,8 +54,9 @@ export BINS=/lustre/e18/user/sneubert/Q3PiData/BATCHES/$BATCH
 #export BINS=/afs/e18/compass/analysis/sneubert/5PiMTBatches/$BATCH
 #export BINS=/afs/e18/compass/analysis/sneubert/5PiLTBatches/$BATCH
 #export BINS=/lustre/e18/user/sneubert/2008/5PiBatches/$BATCH
-export OUTFILE=$BATCH.result.old.root
+export OUTFILE=$BATCH.result.root
 export WLIST=wavelist42_2
+export CONSTRFILE=
 export RANK=1
 export RENORM=-N
 export NORM=norm.int
@@ -66,4 +66,4 @@ cd ~/scratch/COMPASS/rootpwa/trunk/
 source setup.sh
 cd scripts/
 
-./rootfitBatch.sh $BINS
+./rootfitCBatch.sh $BINS
