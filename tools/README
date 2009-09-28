@@ -6,4 +6,8 @@
 This package contains a few small tools to handle amplitude files
 
 
+key2tex:
+	Formats a wavelist file as a tex file
+	usage:
 
+	&> cat wavelist | key2tex > wavelist.tex
