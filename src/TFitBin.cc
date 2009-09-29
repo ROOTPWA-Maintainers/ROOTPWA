@@ -60,8 +60,10 @@ TFitBin::~TFitBin()
 }
 
 
-// calculates spin density matrix element for waves A and B
-// rho_AB = sum_r V_Ar V_Br^*
+
+/// \brief calculates spin density matrix element for waves A and B
+///
+/// rho_AB = sum_r V_Ar V_Br^*
 complex<double>
 TFitBin::spinDensityMatrixElem(const unsigned int waveIndexA,
 			       const unsigned int waveIndexB) const
@@ -80,7 +82,7 @@ TFitBin::spinDensityMatrixElem(const unsigned int waveIndexA,
 }
 
 
-// returns fit parameter value by parameter name
+/// returns fit parameter value by parameter name
 double
 TFitBin::fitParameter(const string& parName) const
 {
@@ -110,7 +112,7 @@ TFitBin::fitParameter(const string& parName) const
 }
 
 
-// constructs 2n x 2n covariance matrix of production amplitudes specified by index list
+/// \brief constructs 2n x 2n covariance matrix of production amplitudes specified by index list
 // where n is the number of amplitudes
 // layout:
 //         cov(A0.re, A0.re)        cov(A0.re, A0.im)        ...  cov(A0.re, A(n - 1).re)        cov(A0.re, A(n - 1).im)
@@ -120,7 +122,7 @@ TFitBin::fitParameter(const string& parName) const
 //                  .                        .                             .                              .
 //         cov(A(n - 1).re, A0.re)  cov(A(n - 1).re, A0.im)  ...  cov(A(n - 1).re, A(n - 1).re)  cov(A(n - 1).re, A(n - 1).im)
 //         cov(A(n - 1).im, A0.re)  cov(A(n - 1).im, A0.im)  ...  cov(A(n - 1).im, A(n - 1).re)  cov(A(n - 1).im, A(n - 1).im)
-//!!! possible optimization: exploit symmetry of cov matrix
+// !!! possible optimization: exploit symmetry of cov matrix
 TMatrixT<double>
 TFitBin::prodAmpCov(const vector<unsigned int>& prodAmpIndices) const
 {
@@ -148,9 +150,10 @@ TFitBin::prodAmpCov(const vector<unsigned int>& prodAmpIndices) const
 }
 
 
-// calculates covariance matrix of spin density matrix element for waves A and B
-// rho_AB = sum_r V_Ar V_Br^*
-//!!! possible optimization: make special case for waveIndexA == waveIndexB
+/// \brief calculates covariance matrix of spin density matrix element for waves A and B
+///
+/// rho_AB = sum_r V_Ar V_Br^*
+// !!! possible optimization: make special case for waveIndexA == waveIndexB
 TMatrixT<double>
 TFitBin::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 				  const unsigned int waveIndexB) const
@@ -189,15 +192,16 @@ TFitBin::spinDensityMatrixElemCov(const unsigned int waveIndexA,
   // calculate spin density covariance matrix cov(rho_AB) = J cov(V_A0, ..., V_A(m - 1), V_B0, ..., V_B(m - 1)) J^T
   const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);
   // binary operations are unavoidable, since matrices are not squared
-  //!!! possible optimaztion: use special TMatrixT constructors to perform the multiplication
+  // !!! possible optimaztion: use special TMatrixT constructors to perform the multiplication
   const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;
   const TMatrixT<double> spinDensCov  = jacobian   * prodAmpCovJT;
   return spinDensCov;
 }
 
 
-// calculates intensity for set of waves matching name pattern
-// int = sum_i int(i) + sum_i sum_{j < i} overlap(i, j)
+/// \brief calculates intensity for set of waves matching name pattern
+///
+/// int = sum_i int(i) + sum_i sum_{j < i} overlap(i, j)
 double
 TFitBin::intensity(const char* waveNamePattern) const
 {
@@ -212,7 +216,7 @@ TFitBin::intensity(const char* waveNamePattern) const
 }
 
 
-// finds wave indices for production amplitues A and B and returns the normalization integral of the two waves
+/// finds wave indices for production amplitues A and B and returns the normalization integral of the two waves
 complex<double>
 TFitBin::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 				const unsigned int prodAmpIndexB) const
@@ -236,8 +240,9 @@ TFitBin::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 }
 
 
-// calculates error of intensity of a set of waves matching name pattern
-// error calculation is done on amplitude level using: int = sum_ij Norm_ij sum_r A_ir A_jr*
+/// \brief calculates error of intensity of a set of waves matching name pattern
+///
+/// error calculation is performed on amplitude level using: int = sum_ij Norm_ij sum_r A_ir A_jr*
 double 
 TFitBin::intensityErr(const char* waveNamePattern) const
 {
@@ -272,7 +277,7 @@ TFitBin::intensityErr(const char* waveNamePattern) const
 }
 
 
-// calculates phase difference between wave A and wave B
+/// calculates phase difference between wave A and wave B
 double
 TFitBin::phaseNew(const unsigned int waveIndexA,
 		  const unsigned int waveIndexB) const
@@ -283,7 +288,7 @@ TFitBin::phaseNew(const unsigned int waveIndexA,
 }
 
 
-// calculates error of phase difference between wave A and wave B
+/// calculates error of phase difference between wave A and wave B
 double
 TFitBin::phaseErrNew(const unsigned int waveIndexA,
 		     const unsigned int waveIndexB) const
@@ -307,7 +312,7 @@ TFitBin::phaseErrNew(const unsigned int waveIndexA,
 }
 
 
-// coherence of wave A and wave B
+/// calculates coherence of wave A and wave B
 double
 TFitBin::coherence(const unsigned int waveIndexA,
 		   const unsigned int waveIndexB) const
@@ -319,7 +324,7 @@ TFitBin::coherence(const unsigned int waveIndexA,
 }
 
 
-// error of coherence of wave A and wave B
+/// calculates error of coherence of wave A and wave B
 double
 TFitBin::coherenceErr(const unsigned int waveIndexA,
 		      const unsigned int waveIndexB) const
@@ -360,7 +365,7 @@ TFitBin::coherenceErr(const unsigned int waveIndexA,
     jacobian[0][2 * i    ] = rhoABRe * prodAmpB.real() - rhoABIm * prodAmpB.imag() - (rhoABNorm / rhoAA) * prodAmpA.real();
     jacobian[0][2 * i + 1] = rhoABRe * prodAmpB.imag() + rhoABIm * prodAmpB.real() - (rhoABNorm / rhoAA) * prodAmpA.imag();
   }
-//!!! possible optimization: join the loops for JA_r and JB_r
+// !!! possible optimization: join the loops for JA_r and JB_r
   // build m sub-Jacobian for JB_r = d coh_AB / d V_Br
   const unsigned int colOffset = 2 * prodAmpIndices[0].size();
   for (unsigned int i = 0; i < prodAmpIndices[1].size(); ++i) {
@@ -389,7 +394,7 @@ TFitBin::coherenceErr(const unsigned int waveIndexA,
 }
 
 
-// calculates overlap of wave A and wave B
+/// calculates overlap of wave A and wave B
 double
 TFitBin::overlap(const unsigned int waveIndexA,
 		 const unsigned int waveIndexB) const
@@ -400,7 +405,7 @@ TFitBin::overlap(const unsigned int waveIndexA,
 }
 
 
-// overlap of wave A and wave B
+/// calculates error of overlap of wave A and wave B
 double
 TFitBin::overlapErr(const unsigned int waveIndexA,
 		    const unsigned int waveIndexB) const
@@ -423,7 +428,7 @@ TFitBin::overlapErr(const unsigned int waveIndexA,
 void
 TFitBin::Reset()
 {
-//!!! set also other member variables into defined state
+// !!! set also other member variables into defined state
   _amps.clear();
   _wavenames.clear();
 }
@@ -441,7 +446,7 @@ TFitBin::fill(const std::vector<TComplex>&             prodAmps,
 	      const double                             logLikelihood,
 	      const int                                rank)
 {
-//!!! add some consistency checks
+// !!! add some consistency checks
   _int.ResizeTo (normIntegral.nrows(),       normIntegral.ncols());
   _errm.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
   _amps      = prodAmps;
@@ -508,7 +513,7 @@ TFitBin::rankofwave(int i) const {
   else return -1;
 }
 
-//// OBSERVABLES CALCULATIONS:
+// OBSERVABLES CALCULATIONS:
 
 double 
 TFitBin::intens() const {  // total intensity
