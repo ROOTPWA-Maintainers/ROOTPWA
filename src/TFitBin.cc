@@ -63,7 +63,7 @@ TFitBin::~TFitBin()
 
 /// \brief calculates spin density matrix element for waves A and B
 ///
-/// rho_AB = sum_r V_Ar V_Br^*
+/// \f[ \rho_{AB} = \sum_r V_{Ar} V_{Br}^* \f]
 complex<double>
 TFitBin::spinDensityMatrixElem(const unsigned int waveIndexA,
 			       const unsigned int waveIndexB) const
