@@ -50,7 +50,7 @@ testNewTFitBinInterface(TTree* tree)
     cout << "spinDensityMatrixElem() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (1) {
+  if (0) {
     double maxDelta = 0;
     for (unsigned int i = 0; i < n; ++i) {
       const double oldVal = massBin->intens(i);
@@ -64,7 +64,7 @@ testNewTFitBinInterface(TTree* tree)
     cout << "intensity() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (1) {
+  if (0) {
     double maxDelta = 0;
     for (unsigned int i = 0; i < n; ++i) {
       const double oldVal = massBin->err(i);
@@ -78,7 +78,7 @@ testNewTFitBinInterface(TTree* tree)
     cout << "intensityErr() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (1) {
+  if (0) {
     double maxDelta = 0;
     const string waveNamePatterns[] = {"",  // total intensity
 				       "flat",
@@ -97,7 +97,7 @@ testNewTFitBinInterface(TTree* tree)
 				       "3-+0-"};
     for (unsigned int i = 0; i < sizeof(waveNamePatterns) / sizeof(string); ++i) {
       const double oldVal = massBin->intens(waveNamePatterns[i].c_str());
-      const double newVal = massBin->intensity(waveNamePatterns[i]);
+      const double newVal = massBin->intensity(waveNamePatterns[i].c_str());
       const double delta  = oldVal - newVal;
       maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
       if (verbose)
@@ -107,7 +107,7 @@ testNewTFitBinInterface(TTree* tree)
     cout << "intensity() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (1) {
+  if (0) {
     double maxDelta = 0;
     const string waveNamePatterns[] = {"",  // total intensity
 				       "flat",
@@ -126,7 +126,7 @@ testNewTFitBinInterface(TTree* tree)
 				       "3-+0-"};
     for (unsigned int i = 0; i < sizeof(waveNamePatterns) / sizeof(string); ++i) {
       const double oldVal = massBin->err(waveNamePatterns[i].c_str());
-      const double newVal = massBin->intensityErr(waveNamePatterns[i]);
+      const double newVal = massBin->intensityErr(waveNamePatterns[i].c_str());
       const double delta  = oldVal - newVal;
       maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
       if (verbose)
@@ -149,6 +149,16 @@ testNewTFitBinInterface(TTree* tree)
 	       << setprecision(12) << newVal << " vs. " << oldVal << ", delta = " << delta << endl;
       }
     cout << "phaseNew() max. deviation = " << maxDelta << endl << endl;
+  }
+
+  if (1) {
+    for (unsigned int i = 0; i < n; ++i)
+      for (unsigned int j = 0; j < n; ++j) {
+	const double coh    = massBin->coherence(i, j);
+	const double cohErr = massBin->coherenceErr(i, j);
+	cout << "coh(" << massBin->waveName(i) << ", "  << massBin->waveName(j) << "): "
+	       << setprecision(12) << coh << " +- " << cohErr << endl;
+      }
   }
 
 }

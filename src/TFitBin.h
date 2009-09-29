@@ -93,6 +93,8 @@ public:
   inline TMatrixT<double> prodAmpCov(const unsigned int prodAmpIndex) const;  // corresponding 2 x 2 covariance matrix
   TMatrixT<double>        prodAmpCov(const std::vector<unsigned int>&                           prodAmpIndices)    const;  // covariance matrix for set of production amplitudes
   inline TMatrixT<double> prodAmpCov(const std::vector<std::pair<unsigned int, unsigned int> >& prodAmpIndexPairs) const;
+  inline TMatrixT<double> prodAmpCov(const std::vector<unsigned int>& prodAmpIndicesA,
+				     const std::vector<unsigned int>& prodAmpIndicesB) const;
 
   inline std::complex<double> normIntegral(const unsigned int waveIndexA,
 					   const unsigned int waveIndexB) const;
@@ -104,8 +106,8 @@ public:
 
   double intensity   (const unsigned int waveIndex)       const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }  // intensity of single wave
   double intensityErr(const unsigned int waveIndex)       const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]); }  // corresponding error
-  double intensity   (const std::string& waveNamePattern) const;  // intensity sum of waves matching name pattern
-  double intensityErr(const std::string& waveNamePattern) const;  // corresponding error
+  double intensity   (const char*        waveNamePattern) const;  // intensity sum of waves matching name pattern
+  double intensityErr(const char*        waveNamePattern) const;  // corresponding error
   double intensity   ()                                   const { return intens("");              }  // total intensity
   double intensityErr()                                   const { return err("");                 }  // corresponding error
 
@@ -114,9 +116,9 @@ public:
   double phaseErrNew (const unsigned int waveIndexA,  // corresponding error
 		      const unsigned int waveIndexB) const;
   double coherence   (const unsigned int waveIndexA,  // coherence of wave A and wave B
-		      const unsigned int waveIndexB) const { return coh(waveIndexA, waveIndexB); }
+		      const unsigned int waveIndexB) const;
   double coherenceErr(const unsigned int waveIndexA,  // corresponding error
-		      const unsigned int waveIndexB) const { return 0; }
+		      const unsigned int waveIndexB) const;
   double overlap     (const unsigned int waveIndexA,  // overlap between wave A and wave B
 		      const unsigned int waveIndexB) const;
   double overlapErr  (const unsigned int waveIndexA,  // corresponding error
@@ -266,6 +268,24 @@ TFitBin::prodAmpCov(const std::vector<std::pair<unsigned int, unsigned int> >& p
   // copy second production amplitude indices
   for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i)
     prodAmpIndices.push_back(prodAmpIndexPairs[i].second);
+  return prodAmpCov(prodAmpIndices);
+}
+
+
+// constructs covariance matrix of production amplitudes specified by two index lists
+// layout:
+//         cov(A, A)        cov(A, B)
+//         cov(B, A)        cov(B, B)
+inline
+TMatrixT<double>
+TFitBin::prodAmpCov(const std::vector<unsigned int>& prodAmpIndicesA,
+		    const std::vector<unsigned int>& prodAmpIndicesB) const
+{
+  std::vector<unsigned int> prodAmpIndices;
+  // copy wave A production amplitude indices
+  prodAmpIndices.assign(prodAmpIndicesA.begin(), prodAmpIndicesA.end());
+  // copy wave B production amplitude indices
+  prodAmpIndices.insert(prodAmpIndices.end(), prodAmpIndicesB.begin(), prodAmpIndicesB.end());
   return prodAmpCov(prodAmpIndices);
 }
 

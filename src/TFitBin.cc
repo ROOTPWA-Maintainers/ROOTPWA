@@ -168,14 +168,14 @@ TFitBin::spinDensityMatrixElemCov(const unsigned int waveIndexA,
   // m is the number of production amplitudes for waves A and B that have the same rank
   const unsigned int dim = prodAmpCov.GetNcols();
   TMatrixT<double>   jacobian(2, dim);
-  // first build m sub-Jacobians for d rho_AB / d V_Ar = M(V_Br^*)
+  // build m sub-Jacobians for d rho_AB / d V_Ar = M(V_Br^*)
   for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
     const unsigned int     ampIndexB    = prodAmpIndexPairs[i].second;
     const TMatrixT<double> subJacobianA = matrixRepr(TComplex::Conjugate(_amps[ampIndexB]));
     jacobian.SetSub(0, 2 * i, subJacobianA);
   }
-  // then build m sub-Jacobian for d rho_AB / d V_Br = M(V_Ar) {{1,  0},
-  //                                                            {0, -1}}
+  // build m sub-Jacobian for d rho_AB / d V_Br = M(V_Ar) {{1,  0},
+  //                                                       {0, -1}}
   TMatrixT<double> M(2, 2);  // complex conjugation of V_Br is non-analytic operation
   M[0][0] =  1;
   M[1][1] = -1;
@@ -199,7 +199,7 @@ TFitBin::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 // calculates intensity for set of waves matching name pattern
 // int = sum_i int(i) + sum_i sum_{j < i} overlap(i, j)
 double
-TFitBin::intensity(const string& waveNamePattern) const
+TFitBin::intensity(const char* waveNamePattern) const
 {
   vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
   double intensity = 0;
@@ -239,7 +239,7 @@ TFitBin::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 // calculates error of intensity of a set of waves matching name pattern
 // error calculation is done on amplitude level using: int = sum_ij Norm_ij sum_r A_ir A_jr*
 double 
-TFitBin::intensityErr(const string& waveNamePattern) const
+TFitBin::intensityErr(const char* waveNamePattern) const
 {
   // get amplitudes that correspond to wave name pattern
   const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);
@@ -304,6 +304,88 @@ TFitBin::phaseErrNew(const unsigned int waveIndexA,
   // calculate variance
   const double phaseVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
   return sqrt(phaseVariance) * TMath::RadToDeg();
+}
+
+
+// coherence of wave A and wave B
+double
+TFitBin::coherence(const unsigned int waveIndexA,
+		   const unsigned int waveIndexB) const
+{
+  const double          rhoAA = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
+  const double          rhoBB = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
+  const complex<double> rhoAB = spinDensityMatrixElem(waveIndexA, waveIndexB);
+  return sqrt(std::norm(rhoAB) / (rhoAA * rhoBB));
+}
+
+
+// error of coherence of wave A and wave B
+double
+TFitBin::coherenceErr(const unsigned int waveIndexA,
+		      const unsigned int waveIndexB) const
+{
+  // get amplitude indices for waves A and B
+  const vector<unsigned int> prodAmpIndices[2] = {prodAmpIndicesForWave(waveIndexA),
+						  prodAmpIndicesForWave(waveIndexB)};
+  if (!_hasErrors || (prodAmpIndices[0].size() == 0) || (prodAmpIndices[1].size() == 0))
+    return 0;
+  // build Jacobian for coherence, which is a 1 x 2(n + m) matrix composed of (n + m) sub-Jacobians:
+  // J = (JA_0, ..., JA_{n - 1}, JB_0, ..., JB_{m - 1})
+  const unsigned int nmbAmps = prodAmpIndices[0].size() + prodAmpIndices[1].size();
+  TMatrixT<double>   jacobian(1, 2 * nmbAmps);
+  // precalculate some variables
+  const double          rhoAA     = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
+  const double          rhoBB     = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
+  const complex<double> rhoAB     = spinDensityMatrixElem(waveIndexA, waveIndexB);
+  const double          rhoABRe   = rhoAB.real();
+  const double          rhoABIm   = rhoAB.imag();
+  const double          rhoABNorm = std::norm(rhoAB);
+  const double          coh       = sqrt(rhoABNorm / (rhoAA * rhoBB));
+  if (coh == 0)
+    return 0;
+  // build m sub-Jacobians for JA_r = coh_AB / d V_Ar
+  for (unsigned int i = 0; i < prodAmpIndices[0].size(); ++i) {
+    const unsigned int    prodAmpIndexA = prodAmpIndices[0][i];
+    const complex<double> prodAmpA      = complex<double>(_amps[prodAmpIndexA].Re(), _amps[prodAmpIndexA].Im());
+    const int             prodAmpRankA  = rankOfProdAmp(prodAmpIndexA);
+    // find production amplitude of wave B with same rank
+    complex<double> prodAmpB = 0;
+    for (unsigned int j = 0; j < prodAmpIndices[1].size(); ++j) {
+      const unsigned int prodAmpIndexB = prodAmpIndices[1][j];
+      if (rankOfProdAmp(prodAmpIndexB) == prodAmpRankA) {
+	prodAmpB = complex<double>(_amps[prodAmpIndexB].Re(), _amps[prodAmpIndexB].Im());
+	break;
+      }
+    }
+    jacobian[0][2 * i    ] = rhoABRe * prodAmpB.real() - rhoABIm * prodAmpB.imag() - (rhoABNorm / rhoAA) * prodAmpA.real();
+    jacobian[0][2 * i + 1] = rhoABRe * prodAmpB.imag() + rhoABIm * prodAmpB.real() - (rhoABNorm / rhoAA) * prodAmpA.imag();
+  }
+//!!! possible optimization: join the loops for JA_r and JB_r
+  // build m sub-Jacobian for JB_r = d coh_AB / d V_Br
+  const unsigned int colOffset = 2 * prodAmpIndices[0].size();
+  for (unsigned int i = 0; i < prodAmpIndices[1].size(); ++i) {
+    const unsigned int    prodAmpIndexB = prodAmpIndices[1][i];
+    const complex<double> prodAmpB      = complex<double>(_amps[prodAmpIndexB].Re(), _amps[prodAmpIndexB].Im());
+    const int             prodAmpRankB  = rankOfProdAmp(prodAmpIndexB);
+    // find production amplitude of wave A with same rank
+    complex<double> prodAmpA = 0;
+    for (unsigned int j = 0; j < prodAmpIndices[0].size(); ++j) {
+      const unsigned int prodAmpIndexA = prodAmpIndices[0][j];
+      if (rankOfProdAmp(prodAmpIndexA) == prodAmpRankB) {
+	prodAmpA = complex<double>(_amps[prodAmpIndexA].Re(), _amps[prodAmpIndexA].Im());
+	break;
+      }
+    }
+    jacobian[0][colOffset + 2 * i    ] = rhoABRe * prodAmpA.real() + rhoABIm * prodAmpA.imag() - (rhoABNorm / rhoBB) * prodAmpB.real();
+    jacobian[0][colOffset + 2 * i + 1] = rhoABRe * prodAmpA.imag() - rhoABIm * prodAmpA.real() - (rhoABNorm / rhoBB) * prodAmpB.imag();
+  }
+  jacobian *= 1 / (coh * rhoAA * rhoBB);
+  // build covariance matrix for amplitudes and calculate coherence covariance matrix
+  const TMatrixT<double> prodAmpCov   = this->prodAmpCov(prodAmpIndices[0], prodAmpIndices[1]);  // 2(n + m) x 2(n + m) matrix
+  const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);                     // 2(n + m) x        1 matrix
+  const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;                                  // 2(n + m) x        1 matrix
+  const TMatrixT<double> cohCov       = jacobian   * prodAmpCovJT;                               //        1 x        1 matrix
+  return sqrt(cohCov[0][0]);
 }
 
 
