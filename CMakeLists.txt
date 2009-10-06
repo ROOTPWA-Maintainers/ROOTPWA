@@ -20,7 +20,7 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 # the project's entire directory structure.
 add_subdirectory (tools)
 add_subdirectory (src)
-
+add_subdirectory (generators)
  
  
 
