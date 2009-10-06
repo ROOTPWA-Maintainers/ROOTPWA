@@ -32,7 +32,8 @@ SET(INCLUDE_DIRECTORIES
 
 include_directories(${INCLUDE_DIRECTORIES})
 
-SET(SOURCES TPWWeight.cc)
+SET(SOURCES TPWWeight.cc
+            TDiffractivePhaseSpace.cc)
    
 #add ROOT lib
 SET(ROOT_LIB $ENV{ROOTSYS}/lib)

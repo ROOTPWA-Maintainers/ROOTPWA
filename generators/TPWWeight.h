@@ -3,11 +3,6 @@
  */
 
 
-/** @brief Calculates the partial wave weight for a given event  
- *  @author Sebastian Neubert TUM (original author)
- *
- */
-
 #ifndef TPWWEIGHT_HH
 #define TPWWEIGHT_HH
 
@@ -25,7 +20,10 @@
 // Collaborating Class Declarations --
 
 
-
+/** @brief Calculates the partial wave weight for a given event  
+ *  @author Sebastian Neubert TUM (original author)
+ *
+ */
 class TPWWeight {
 public:
 

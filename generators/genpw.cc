@@ -35,6 +35,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include "TPWWeight.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TDiffractivePhaseSpace.h"
 #include <event.h>
 
 using namespace std;
@@ -52,33 +55,44 @@ int main(int argc, char** argv) {
   TPWWeight weighter;
   weighter.addWave("keyfiles/key3pi/SET1/1-1++0+rho770_01_pi-.key",
 		   std::complex<double>(15.23,0),0);
-   weighter.addWave("keyfiles/key3pi/SET1/1-2++1+rho770_21_pi-.key",
+  weighter.addWave("keyfiles/key3pi/SET1/1-2++1+rho770_21_pi-.key",
 		   std::complex<double>(12.23,3.4),0);
   weighter.loadIntegrals("src/pwafitTest/amplitudes/norm.int");
 
+  TDiffractivePhaseSpace difPS;
+  difPS.SetBeam();
+  difPS.SetTarget(-300,0.2,2);
+  difPS.SetMassRange(1.2,1.4);			
+  TFile* infile=TFile::Open(argv[1]);
+  difPS.SetThetaDistribution((TH1*)infile->Get("h1"));
+  const double mpi=0.13957018;
+  difPS.AddDecayProduct(particleinfo(9,-1,mpi));  
+  difPS.AddDecayProduct(particleinfo(8,1,mpi)); 
+  difPS.AddDecayProduct(particleinfo(9,-1,mpi));
 
-  event e;
-  e.setIOVersion(1);
 
-  ofstream str("/tmp/event.evt");
-  str << "4\n"
-      << "9 -1 0. 0. 191.0323749689385 191.0324259546224 \n"  
-      << "8 1 0.1776415401059793 -0.9281616207073099 100.6615453374411 100.6660778518155\n"
-      << "9 -1 -0.2910619303999746 0.5354572747041667 44.8237555788041 44.82811590468507\n"
-      << "9 -1 0.1670942931439715 0.4716546614904428 45.53027444487987 45.53323785416246\n";
-
-  str.close();
-  ifstream istr("/tmp/event.evt");
-  istr >> e;
-
-  //e.print();
-
-  double val=weighter.weight(e);
-  
-  
-  cerr << val << endl;
-
-  val+=1;
+  for(unsigned int i=0;i<100;++i)
+    {
+      ofstream str("/tmp/event.evt");
+      difPS.event(str);
+      
+      
+      event e;
+      e.setIOVersion(1);
+      //str.close();
+      
+      ifstream istr("/tmp/event.evt");
+      istr >> e;
+      
+      //e.print();
+      
+      double val=weighter.weight(e);
+      
+      
+      cerr << val << endl;
+      
+      val+=1;
+    }
 
   return 0;
 
