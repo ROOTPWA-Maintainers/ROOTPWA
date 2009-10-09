@@ -103,6 +103,9 @@ public:
   void SetMassRange(double min, double max){xMassMin=min;xMassMax=max;}
   void SetDecayProducts(const std::vector<particleinfo>& info);
   void AddDecayProduct(const particleinfo& info);
+  void SetSeed(int seed);
+  
+
   // Operations ----------------------
 
   /** @brief generates on event

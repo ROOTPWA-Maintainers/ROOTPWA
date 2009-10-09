@@ -79,6 +79,7 @@ TPWWeight::weight(event& e){
     unsigned int nwaves=m_waves[ivec].size();
     for(unsigned int iwaves=0;iwaves<nwaves;++iwaves){
       string w1=m_waves[ivec][iwaves];
+      //std::cerr << w1 << std::endl;
       w1.erase(0,w1.find_last_of("/")+1);
       w1.replace(w1.find(".key"),4,".amp");
       double nrm=sqrt(m_normInt.val(w1,w1).real()*m_normInt.val(w1,w1).real());

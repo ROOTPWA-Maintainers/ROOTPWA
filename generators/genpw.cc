@@ -37,6 +37,8 @@
 #include "TPWWeight.h"
 #include "TFile.h"
 #include "TH1.h"
+#include "TH1D.h"
+#include "TRandom3.h"
 #include "TDiffractivePhaseSpace.h"
 #include <event.h>
 
@@ -44,12 +46,42 @@ using namespace std;
 
 extern particleDataTable PDGtable;
 
-void printUsage(char* prog) {
-
+void printUsage(char* prog, int errCode=0) {
+cerr << "usage:" << endl
+       << prog
+       << " -n # -t <theta distribution>"
+       << "    where:" << endl
+       << "        -n #       number of events to generate" << endl
+     << "        -t <file>  ROOT file containing histogram with theta distribution "<< endl
+       << endl;
+  exit(errCode);
 }
 
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv, const int     errCode = 0)
+{
+
+  unsigned int nevents=100;
+  string theta_file;
+
+  int c;
+  while ((c = getopt(argc, argv, "n:t:h")) != -1)
+    switch (c) {
+    case 'n':
+      nevents = atoi(optarg);
+      break;
+    case 't':
+      theta_file = optarg;
+      break;
+    case 'h':
+      printUsage(argv[0]);
+      break;
+    }
+
+ 
+  TFile* outfile=TFile::Open("genhisto.root","RECREATE");
+  TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
+
 
   PDGtable.initialize();
   TPWWeight weighter;
@@ -60,39 +92,58 @@ int main(int argc, char** argv) {
   weighter.loadIntegrals("src/pwafitTest/amplitudes/norm.int");
 
   TDiffractivePhaseSpace difPS;
+  difPS.SetSeed(1236735);
   difPS.SetBeam();
   difPS.SetTarget(-300,0.2,2);
   difPS.SetMassRange(1.2,1.4);			
-  TFile* infile=TFile::Open(argv[1]);
+  TFile* infile=TFile::Open(theta_file.c_str());
   difPS.SetThetaDistribution((TH1*)infile->Get("h1"));
   const double mpi=0.13957018;
   difPS.AddDecayProduct(particleinfo(9,-1,mpi));  
   difPS.AddDecayProduct(particleinfo(8,1,mpi)); 
   difPS.AddDecayProduct(particleinfo(9,-1,mpi));
 
+  double maxweight=-1;
+  unsigned int acc=0;
 
-  for(unsigned int i=0;i<100;++i)
+  for(unsigned int i=0;i<nevents;++i)
     {
+
+
+
       ofstream str("/tmp/event.evt");
       difPS.event(str);
-      
+      str.close();
       
       event e;
       e.setIOVersion(1);
-      //str.close();
+      
       
       ifstream istr("/tmp/event.evt");
       istr >> e;
-      
-      //e.print();
+      istr.close();
+
+      // cerr << e <<endl;
       
       double val=weighter.weight(e);
+      if(val>maxweight)maxweight=val;
+
+      hWeights->Fill(val);
+      //cerr << i << endl;
       
-      
-      cerr << val << endl;
-      
-      val+=1;
+      //val+=1;
+      if(val/170>gRandom->Uniform(1))acc++;
+
     }
+
+  cerr << "Maxweight: " << maxweight << endl;
+  cerr << "Accepted Events: " << acc << endl;
+  
+
+  outfile->cd();
+  hWeights->Write();
+  outfile->Close();
+  infile->Close();
 
   return 0;
 

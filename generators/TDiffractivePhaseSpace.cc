@@ -65,7 +65,7 @@ using namespace std;
 
 
 TDiffractivePhaseSpace::TDiffractivePhaseSpace() :
-  daughterMasses(NULL),gProtonMass(0.938272013),gPionMass(0.13957018),gPionMass2(gPionMass * gPionMass)
+  tMin(0.001), daughterMasses(NULL),gProtonMass(0.938272013),gPionMass(0.13957018),gPionMass2(gPionMass * gPionMass)
 {}
 
 
@@ -134,6 +134,12 @@ TDiffractivePhaseSpace::progressIndicator(const long currentPos,
     out << "    " << setw(3) << (int)(currentPos / step) * nmbSteps << " %" << endl;
   return out;
 }
+
+void 
+TDiffractivePhaseSpace::SetSeed(int seed){
+  gRandom->SetSeed(seed);
+}
+
 
 void 
 TDiffractivePhaseSpace::SetDecayProducts(const std::vector<particleinfo>& info)
