@@ -39,6 +39,9 @@
 #include "TH1.h"
 #include "TH1D.h"
 #include "TRandom3.h"
+#include "TTree.h"
+#include "TLorentzVector.h"
+#include "TClonesArray.h"
 #include "TDiffractivePhaseSpace.h"
 #include <event.h>
 
@@ -81,7 +84,13 @@ int main(int argc, char** argv, const int     errCode = 0)
  
   TFile* outfile=TFile::Open("genhisto.root","RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
-
+  TTree* outtree=new TTree("pwevents","pwevents");
+  double weight;
+  TClonesArray* p=new TClonesArray("TLorentzVector");
+  TLorentzVector beam;
+  outtree->Branch("weight",&weight,"weight/d");
+  outtree->Branch("p",&p);
+  outtree->Branch("beam",&beam);
 
   PDGtable.initialize();
   TPWWeight weighter;
@@ -109,12 +118,19 @@ int main(int argc, char** argv, const int     errCode = 0)
   for(unsigned int i=0;i<nevents;++i)
     {
 
-
+      p->Delete(); // clear output array
 
       ofstream str("/tmp/event.evt");
       difPS.event(str);
       str.close();
       
+      for(unsigned int ip=0; ip<3;++ip){
+	new((*p)[ip]) TLorentzVector(*difPS.GetDecay(ip));
+      }
+
+      beam=*difPS.GetBeam();
+
+      // calculate weight
       event e;
       e.setIOVersion(1);
       
@@ -125,14 +141,15 @@ int main(int argc, char** argv, const int     errCode = 0)
 
       // cerr << e <<endl;
       
-      double val=weighter.weight(e);
-      if(val>maxweight)maxweight=val;
+      weight=weighter.weight(e);
+      if(weight>maxweight)maxweight=weight;
 
-      hWeights->Fill(val);
+      hWeights->Fill(weight);
       //cerr << i << endl;
       
-      //val+=1;
-      if(val/170>gRandom->Uniform(1))acc++;
+      outtree->Fill();
+      
+      
 
     }
 
@@ -142,6 +159,7 @@ int main(int argc, char** argv, const int     errCode = 0)
 
   outfile->cd();
   hWeights->Write();
+outtree->Write();
   outfile->Close();
   infile->Close();
 

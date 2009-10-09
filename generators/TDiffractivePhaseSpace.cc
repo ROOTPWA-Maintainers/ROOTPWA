@@ -240,7 +240,7 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
   const TVector3 vertexPos(0, 0, 
 			   gTargetZPos+gRandom->Uniform(-gTargetZLength*0.5,
 							gTargetZLength*0.5));
-  const TLorentzVector beam = makeBeam();
+  gbeam = makeBeam();
   
   bool done=false;
   unsigned int attempts=0;
@@ -250,7 +250,7 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     const double xMass  = gRandom->Uniform(xMassMin, xMassMax);
     const double xMass2 = xMass * xMass;
     
-    const double Ea = beam.E();
+    const double Ea = gbeam.E();
     // account for recoil assume proton recoil
     const double eps  = (xMass2 - gPionMass2) / (2 * gProtonMass * Ea);
     const double epso = 1 - eps;
@@ -264,11 +264,11 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     TVector3 p3(1, 0, 0);
     p3.SetMagThetaPhi(pw, theta, phi);
     // rotate to beamdirection:
-    p3.RotateUz(beam.Vect().Unit());
+    p3.RotateUz(gbeam.Vect().Unit());
     
     // build resonance
     TLorentzVector X(p3, e);
-    const TLorentzVector q = beam - X;
+    const TLorentzVector q = gbeam - X;
     
     // apply t cut
     const double tGen = -q.M2();
@@ -287,7 +287,7 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
       continue;
     
     done=true;
-    beamresult=beam;
+    beamresult=gbeam;
   }
   // event is accepted
   //writePwa2000Ascii(outFile, beam, phaseSpace);
@@ -296,9 +296,8 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
 
 unsigned int 
 TDiffractivePhaseSpace::event(ostream& stream){
-  TLorentzVector beam;
-  unsigned int attempts=event(beam);
-  writePwa2000Ascii(stream, beam, phaseSpace);
+  unsigned int attempts=event(gbeam);
+  writePwa2000Ascii(stream, gbeam, phaseSpace);
   return attempts;
 }
 

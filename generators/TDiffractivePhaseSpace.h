@@ -66,7 +66,7 @@ public:
 
  // Accessors -----------------------
   TLorentzVector* GetDecay(unsigned int i){return phaseSpace.GetDecay(i);}
-
+  TLorentzVector* GetBeam(){return &gbeam;}
   // Modifiers -----------------------
   /** @brief Set beam parameters
    * 
@@ -123,6 +123,8 @@ public:
    */
   unsigned int event(ostream&);
 
+
+
 private:
 
   // Private Data Members ------------
@@ -141,6 +143,8 @@ private:
   double gBeamDxDzSigma;
   double gBeamDyDz;
   double gBeamDyDzSigma;
+
+  TLorentzVector gbeam; // cache for last generated beam
 
   TH1* thetaDistribution;
   // cut on t-distribution
