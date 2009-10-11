@@ -25,6 +25,7 @@
 #pragma link off all functions;
 
 #pragma link C++ class TFitBin+;
+#pragma link C++ class TFitResult+;
 #pragma link C++ class TCMatrix+;
 #pragma link C++ class TCovEllipse+;
 #pragma link C++ class TMCMCMeta+;

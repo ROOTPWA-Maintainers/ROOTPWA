@@ -40,7 +40,7 @@
 #include "TLine.h"
 #include "TPad.h"
 
-#include "../TFitBin.h"
+#include "../TFitResult.h"
 #include "plotIntensity.h"
 
 
@@ -49,7 +49,7 @@ using namespace std;
 
 // signature with wave name
 TGraphErrors*
-plotIntensity(TTree*        tree,           // TFitBin tree
+plotIntensity(TTree*        tree,           // TFitResult tree
 	      const string& waveName,       // wave name
 	      const string& selectExpr,     // TTree::Draw() selection expression
 	      const string& graphTitle,     // name and title of graph (default is waveId)
@@ -64,7 +64,7 @@ plotIntensity(TTree*        tree,           // TFitBin tree
   }
 
   // call plotIntensity with wave index
-  TFitBin* massBin = new TFitBin();
+  TFitResult* massBin = new TFitResult();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(0);
   for (unsigned int i = 0; i < massBin->nmbWaves(); ++i)
@@ -77,7 +77,7 @@ plotIntensity(TTree*        tree,           // TFitBin tree
 
 // signature with wave index
 TGraphErrors*
-plotIntensity(TTree*        tree,           // TFitBin tree
+plotIntensity(TTree*        tree,           // TFitResult tree
 	      const int     waveIndex,      // wave index
 	      const string& selectExpr,     // TTree::Draw() selection expression
 	      const string& graphTitle,     // name and title of graph (default is waveId)
@@ -91,7 +91,7 @@ plotIntensity(TTree*        tree,           // TFitBin tree
     return 0;
   }
   // get wave name
-  TFitBin* massBin = new TFitBin();
+  TFitResult* massBin = new TFitResult();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(0);
   const string waveName = massBin->waveName(waveIndex).Data();

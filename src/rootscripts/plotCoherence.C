@@ -40,7 +40,7 @@
 #include "TLine.h"
 #include "TPad.h"
 
-#include "../TFitBin.h"
+#include "../TFitResult.h"
 #include "plotCoherence.h"
 
 
@@ -49,7 +49,7 @@ using namespace std;
 
 // signature with wave names
 TGraphErrors*
-plotCoherence(TTree*        tree,        // TFitBin tree
+plotCoherence(TTree*        tree,        // TFitResult tree
 	      const string& waveNameA,   // name of first wave
 	      const string& waveNameB,   // name of second wave
 	      const string& selectExpr,  // TTree::Draw() selection expression
@@ -64,7 +64,7 @@ plotCoherence(TTree*        tree,        // TFitBin tree
   }
 
   // call plotCoherence with wave indices
-  TFitBin* massBin = new TFitBin();
+  TFitResult* massBin = new TFitResult();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(0);
   const string waveNames[2]   = {waveNameA, waveNameB};
@@ -86,7 +86,7 @@ plotCoherence(TTree*        tree,        // TFitBin tree
 
 // signature with wave indices
 TGraphErrors*
-plotCoherence(TTree*        tree,        // TFitBin tree
+plotCoherence(TTree*        tree,        // TFitResult tree
 	      const int     waveIndexA,  // index of first wave
 	      const int     waveIndexB,  // index of second wave
 	      const string& selectExpr,  // TTree::Draw() selection expression
@@ -100,7 +100,7 @@ plotCoherence(TTree*        tree,        // TFitBin tree
     return 0;
   }
   // get wave names
-  TFitBin* massBin = new TFitBin();
+  TFitResult* massBin = new TFitResult();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(0);
   const string waveNameA = massBin->waveName(waveIndexA).Data();

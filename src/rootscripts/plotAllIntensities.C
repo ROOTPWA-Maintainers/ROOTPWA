@@ -51,7 +51,7 @@
 #include "TPostScript.h"
 #include "TSystem.h"
 
-#include "../TFitBin.h"
+#include "../TFitResult.h"
 
 #include "plotIntensity.h"
 //#include "plotmcmc.h"
@@ -90,7 +90,7 @@ compareIntensities(const pair<string, double>& a,
 
 
 void
-plotAllIntensities(TTree*        tree,                  // TFitBin tree
+plotAllIntensities(TTree*        tree,                  // TFitResult tree
 		   const bool    createPsFile = false,  // if true, plots are written to waves.ps
 		   const string& outPath      = "./",   // path for output files
 		   const bool    mcmc         = false)
@@ -102,7 +102,7 @@ plotAllIntensities(TTree*        tree,                  // TFitBin tree
     cerr << "plotAllIntensities() error: Null pointer to tree. Exiting." << endl;
     return;
   }
-  TFitBin* massBin = new TFitBin();
+  TFitResult* massBin = new TFitResult();
   tree->SetBranchAddress("fitbin", &massBin);
   const int nmbMassBins = tree->GetEntries();
   tree->GetEntry(0);

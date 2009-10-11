@@ -39,7 +39,7 @@
 #include "TAxis.h"
 #include "TPad.h"
 
-#include "../TFitBin.h"
+#include "../TFitResult.h"
 #include "plotPhase.h"
 
 
@@ -48,7 +48,7 @@ using namespace std;
 
 // signature with wave names
 TGraphErrors*
-plotPhase(TTree*        tree,        // TFitBin tree
+plotPhase(TTree*        tree,        // TFitResult tree
 	  const string& waveNameA,   // name of first wave
 	  const string& waveNameB,   // name of second wave
 	  const string& selectExpr,  // TTree::Draw() selection expression
@@ -63,7 +63,7 @@ plotPhase(TTree*        tree,        // TFitBin tree
   }
 
   // call plotPhase with wave indices
-  TFitBin* massBin = new TFitBin();
+  TFitResult* massBin = new TFitResult();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(0);
   const string waveNames[2]   = {waveNameA, waveNameB};
@@ -85,7 +85,7 @@ plotPhase(TTree*        tree,        // TFitBin tree
 
 // signature with wave names
 TGraphErrors*
-plotPhase(TTree*        tree,        // TFitBin tree
+plotPhase(TTree*        tree,        // TFitResult tree
 	  const int     waveIndexA,  // index of first wave
 	  const int     waveIndexB,  // index of second wave
 	  const string& selectExpr,  // TTree::Draw() selection expression
@@ -99,7 +99,7 @@ plotPhase(TTree*        tree,        // TFitBin tree
     return 0;
   }
   // get wave names
-  TFitBin* massBin = new TFitBin();
+  TFitResult* massBin = new TFitResult();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(0);
   const string waveNameA = massBin->waveName(waveIndexA).Data();

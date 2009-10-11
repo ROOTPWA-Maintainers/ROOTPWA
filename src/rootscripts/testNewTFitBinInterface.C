@@ -8,6 +8,7 @@
 #include "TComplex.h"
 
 #include "../TFitBin.h"
+#include "../TFitResult.h"
 #include "../utilities.h"
 
 
@@ -22,14 +23,16 @@ testNewTFitBinInterface(TTree* tree)
   TFitBin*   massBin = new TFitBin();
   tree->SetBranchAddress("fitbin", &massBin);
   tree->GetEntry(30);
-  const unsigned int n = massBin->nmbWaves();
 
-  if (0) {
-    massBin->printWaveNames();
+  const TFitResult*  newMassBin = new TFitResult(*massBin);
+  const unsigned int n          = newMassBin->nmbWaves();
+
+  if (1) {
+    newMassBin->printWaveNames();
     cout << endl;
-    massBin->printProdAmpNames();
-    cout << endl;
-    massBin->printProdAmps();
+    //newMassBin->printProdAmpNames();
+    //cout << endl;
+    newMassBin->printProdAmps();
     cout << endl;
   }
   
@@ -39,46 +42,46 @@ testNewTFitBinInterface(TTree* tree)
       for (unsigned int j = 0; j < n; ++j) {
 	const TComplex        temp   = massBin->spinDens(i, j);
 	const complex<double> oldVal = complex<double>(temp.Re(), temp.Im());
-	const complex<double> newVal = massBin->spinDensityMatrixElem(i, j);
+	const complex<double> newVal = newMassBin->spinDensityMatrixElem(i, j);
 	const complex<double> delta  = oldVal - newVal;
 	maxDelta.real() = (fabs(maxDelta.real()) < fabs(delta.real())) ? delta.real() : maxDelta.real();
 	maxDelta.imag() = (fabs(maxDelta.imag()) < fabs(delta.imag())) ? delta.imag() : maxDelta.imag();
 	if (verbose)
-	  cout << "spinDensityMatrixElem(" << massBin->waveName(i) << ", "  << massBin->waveName(j) << "): "
+	  cout << "spinDensityMatrixElem(" << newMassBin->waveName(i) << ", "  << newMassBin->waveName(j) << "): "
 	       << setprecision(12) << newVal << " vs. " << oldVal << ", delta = " << delta << endl;
       }
     cout << "spinDensityMatrixElem() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (0) {
+  if (1) {
     double maxDelta = 0;
     for (unsigned int i = 0; i < n; ++i) {
       const double oldVal = massBin->intens(i);
-      const double newVal = massBin->intensity(i);
+      const double newVal = newMassBin->intensity(i);
       const double delta  = oldVal - newVal;
       maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
       if (verbose)
-	cout << "intensity(" << massBin->waveName(i) << "): "
+	cout << "intensity(" << newMassBin->waveName(i) << "): "
 	     << setprecision(12) << newVal << " vs. " << oldVal << ", delta = " << oldVal - newVal << endl;
     }
     cout << "intensity() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (0) {
+  if (1) {
     double maxDelta = 0;
     for (unsigned int i = 0; i < n; ++i) {
       const double oldVal = massBin->err(i);
-      const double newVal = massBin->intensityErr(i);
+      const double newVal = newMassBin->intensityErr(i);
       const double delta  = oldVal - newVal;
       maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
       if (verbose)
-	cout << "intensityErr(" << massBin->waveName(i) << "): "
+	cout << "intensityErr(" << newMassBin->waveName(i) << "): "
 	     << setprecision(12) << newVal << " vs. " << oldVal << ", delta = " << oldVal - newVal << endl;
     }
     cout << "intensityErr() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (0) {
+  if (1) {
     double maxDelta = 0;
     const string waveNamePatterns[] = {"",  // total intensity
 				       "flat",
@@ -97,7 +100,7 @@ testNewTFitBinInterface(TTree* tree)
 				       "3-+0-"};
     for (unsigned int i = 0; i < sizeof(waveNamePatterns) / sizeof(string); ++i) {
       const double oldVal = massBin->intens(waveNamePatterns[i].c_str());
-      const double newVal = massBin->intensity(waveNamePatterns[i].c_str());
+      const double newVal = newMassBin->intensity(waveNamePatterns[i].c_str());
       const double delta  = oldVal - newVal;
       maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
       if (verbose)
@@ -107,7 +110,7 @@ testNewTFitBinInterface(TTree* tree)
     cout << "intensity() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (0) {
+  if (1) {
     double maxDelta = 0;
     const string waveNamePatterns[] = {"",  // total intensity
 				       "flat",
@@ -126,7 +129,7 @@ testNewTFitBinInterface(TTree* tree)
 				       "3-+0-"};
     for (unsigned int i = 0; i < sizeof(waveNamePatterns) / sizeof(string); ++i) {
       const double oldVal = massBin->err(waveNamePatterns[i].c_str());
-      const double newVal = massBin->intensityErr(waveNamePatterns[i].c_str());
+      const double newVal = newMassBin->intensityErr(waveNamePatterns[i].c_str());
       const double delta  = oldVal - newVal;
       maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
       if (verbose)
@@ -136,27 +139,27 @@ testNewTFitBinInterface(TTree* tree)
     cout << "intensityErr() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (0) {
+  if (1) {
     double maxDelta = 0;
     for (unsigned int i = 0; i < n; ++i)
       for (unsigned int j = 0; j < n; ++j) {
 	const double oldVal = massBin->phase(i, j);
-	const double newVal = massBin->phaseNew(i, j);
+	const double newVal = newMassBin->phase(i, j);
 	const double delta  = oldVal - newVal;
 	maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
 	if (verbose)
-	  cout << "phaseNew(" << massBin->waveName(i) << ", "  << massBin->waveName(j) << "): "
+	  cout << "phaseNew(" << newMassBin->waveName(i) << ", "  << newMassBin->waveName(j) << "): "
 	       << setprecision(12) << newVal << " vs. " << oldVal << ", delta = " << delta << endl;
       }
     cout << "phaseNew() max. deviation = " << maxDelta << endl << endl;
   }
 
-  if (1) {
+  if (0) {
     for (unsigned int i = 0; i < n; ++i)
       for (unsigned int j = 0; j < n; ++j) {
-	const double coh    = massBin->coherence(i, j);
-	const double cohErr = massBin->coherenceErr(i, j);
-	cout << "coh(" << massBin->waveName(i) << ", "  << massBin->waveName(j) << "): "
+	const double coh    = newMassBin->coherence(i, j);
+	const double cohErr = newMassBin->coherenceErr(i, j);
+	cout << "coh(" << newMassBin->waveName(i) << ", "  << newMassBin->waveName(j) << "): "
 	       << setprecision(12) << coh << " +- " << cohErr << endl;
       }
   }

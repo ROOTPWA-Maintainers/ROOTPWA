@@ -25,7 +25,6 @@
 // Description:
 //      Data storage class for PWA fit result of one mass bin
 //
-//
 // Environment:
 //      Software developed for the COMPASS experiment at CERN
 //
@@ -74,66 +73,6 @@ public:
 	    const double                             logLikelihood,
 	    const int                                rank);
 
-  // proposed new interface
-  double       massBinCenter() const { return _mass;              }  ///< returns center value of mass bin
-  double       logLikelihood() const { return _logli;             }  ///< returns log(likelihood) at minimum
-  unsigned int rank         () const { return _rank;              }  ///< returns rank of fit
-  unsigned int nmbEvents    () const { return _rawevents;         }  ///< returns number of events in bin
-  unsigned int nmbWaves     () const { return _wavetitles.size(); }  ///< returns number of waves in fit
-  unsigned int nmbProdAmps  () const { return _amps.size();       }  ///< returns number of production amplitudes
-
-  TString waveName    (const unsigned int waveIndex)    const { return _wavetitles[waveIndex];   }  ///< returns name of wave at index
-  TString prodAmpName (const unsigned int prodAmpIndex) const { return _wavenames[prodAmpIndex]; }  ///< returns name of production amplitude at index
-
-  double      fitParameter   (const std::string& parName)   const;
-  /// returns covariance of fit parameters at index A and B
-  double      fitParameterCov(const unsigned int parIndexA,
-			      const unsigned int parIndexB) const { return _errm[parIndexA][parIndexB]; }
-  inline void fitParameters  (double*            parArray)  const;
-
-  /// returns production amplitude value at index
-  std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return std::complex<double>(_amps[prodAmpIndex].Re(), _amps[prodAmpIndex].Im()); }
-  inline TMatrixT<double> prodAmpCov(const unsigned int prodAmpIndex) const;
-  TMatrixT<double>        prodAmpCov(const std::vector<unsigned int>&                           prodAmpIndices)    const;
-  inline TMatrixT<double> prodAmpCov(const std::vector<std::pair<unsigned int, unsigned int> >& prodAmpIndexPairs) const;
-  inline TMatrixT<double> prodAmpCov(const std::vector<unsigned int>& prodAmpIndicesA,
-				     const std::vector<unsigned int>& prodAmpIndicesB) const;
-
-  inline std::complex<double> normIntegral(const unsigned int waveIndexA,
-					   const unsigned int waveIndexB) const;
-
-  std::complex<double> spinDensityMatrixElem   (const unsigned int waveIndexA,
-						const unsigned int waveIndexB) const;
-  TMatrixT<double>     spinDensityMatrixElemCov(const unsigned int waveIndexA,
- 						const unsigned int waveIndexB) const;
-
-  /// returns intensity of single wave at index
-  double intensity   (const unsigned int waveIndex)       const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }
-  /// returns error of intensity of single wave at index
-  double intensityErr(const unsigned int waveIndex)       const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]); }
-  double intensity   (const char*        waveNamePattern) const;
-  double intensityErr(const char*        waveNamePattern) const;
-  double intensity   ()                                   const { return intens(""); }  ///< returns total intensity
-  double intensityErr()                                   const { return err("");    }  ///< returns error of total intensity
-
-  double phaseNew    (const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const;
-  double phaseErrNew (const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const;
-  double coherence   (const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const;
-  double coherenceErr(const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const;
-  double overlap     (const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const;
-  double overlapErr  (const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const;
-
-  inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;
-  inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;
-  inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;
-
-
   // Operations ----------------------
   Double_t norm(const char* tag) const;
   Double_t normI(Int_t i) const {return norm(_wavenames[i].Data());}
@@ -163,26 +102,23 @@ public:
   void Reset();
   void PrintParameters() const;
 
+  // accessors that allow copying of TFitBin
+  const std::vector<TComplex>&             prodAmps()         const { return _amps;       }
+  const std::vector<std::pair<int, int> >& fitParCovIndices() const { return _indices;    }
+  const std::vector<TString>&              prodAmpNames()     const { return _wavenames;  }
+  const std::vector<TString>&              waveNames()        const { return _wavetitles; }
+  const std::map<int,int>&                 prodAmpIndexMap()  const { return _wavemap;    }
+
+  int             normNmbEvents()        const { return _nevt;      }
+  unsigned int    nmbEvents()            const { return _rawevents; }
+  Double_t        massBinCenter()        const { return _mass;      }
+  const TCMatrix& normIntegral()         const { return _int;       }
+  const TMatrixD& fitParCovMatrix()      const { return _errm;      }
+  Double_t        logLikelihood()        const { return _logli;     }
+  Int_t           rank()                 const { return _rank;      }
+  Bool_t          fitParCovMatrixValid() const { return _hasErrors; }
+
 private:
-
-  // helper functions for proposed new interface
-  inline static TMatrixT<double> matrixRepr(const TComplex& c);
-
-  inline int rankOfProdAmp(const unsigned int prodAmpIndex) const;
-
-  std::complex<double> normIntegralForProdAmp(const unsigned int prodAmpIndexA,
-					      const unsigned int prodAmpIndexB) const;
-
-  inline std::vector<unsigned int> waveIndicesMatchingPattern   (const std::string& waveNamePattern) const;
-  inline std::vector<unsigned int> prodAmpIndicesMatchingPattern(const std::string& ampNamePattern ) const;
-  std::vector<unsigned int>        prodAmpIndicesForWave        (const unsigned int waveIndex)       const
-  { return prodAmpIndicesMatchingPattern(waveName(waveIndex).Data()); }  ///< returns indices of production amplitudes that belong to wave at index
-  inline std::vector<std::pair<unsigned int, unsigned int> > prodAmpIndexPairsForWaves(const unsigned int waveIndexA,
-										       const unsigned int waveIndexB) const;
-
-  inline double realValVariance(const unsigned int      waveIndexA,
-				const unsigned int      waveIndexB,
-				const TMatrixT<double>& jacobian) const;
 
   std::vector<TComplex>             _amps;        ///< production amplitudes
   std::vector<std::pair<int, int> > _indices;     ///< indices of fit parameters in error matrix;
@@ -223,227 +159,6 @@ public:
   ClassDef(TFitBin,8)
 
 };
-
-
-/// copies fit parameters into array; assumes that array has sufficient size
-inline
-void
-TFitBin::fitParameters(double* parArray) const
-{
-  unsigned int countPar = 0;
-  for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
-    parArray[countPar++] = _amps[i].Re();
-    // check if amplitude has imaginary part
-    if (_indices[i].second >= 0)
-      parArray[countPar++] = _amps[i].Im();
-  }
-}
-
-
-/// returns covariance matrix for a single production amplitude
-inline
-TMatrixT<double>
-TFitBin::prodAmpCov(const unsigned int prodAmpIndex) const {
-  // get parameter indices
-  const int i = _indices[prodAmpIndex].first;
-  const int j = _indices[prodAmpIndex].second;
-  TMatrixT<double> cov(2, 2);
-  cov[0][0] = _errm[i][i];
-  if (j >= 0) {
-    cov[0][1] = _errm[i][j];
-    cov[1][0] = _errm[j][i];
-    cov[1][1] = _errm[j][j];
-  }
-  return cov;
-}
-
-
-/// \brief constructs covariance matrix for production amplitudes specified by index pair list
-///
-/// layout:
-///         cov(first,  first)        cov(first,  second)
-///         cov(second, first)        cov(second, second)
-inline
-TMatrixT<double>
-TFitBin::prodAmpCov(const std::vector<std::pair<unsigned int, unsigned int> >& prodAmpIndexPairs) const
-{
-  std::vector<unsigned int> prodAmpIndices;
-  // copy first production amplitude indices
-  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i)
-    prodAmpIndices.push_back(prodAmpIndexPairs[i].first);
-  // copy second production amplitude indices
-  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i)
-    prodAmpIndices.push_back(prodAmpIndexPairs[i].second);
-  return prodAmpCov(prodAmpIndices);
-}
-
-
-/// \brief constructs covariance matrix of production amplitudes specified by two index lists
-///
-/// layout:
-///         cov(A, A)        cov(A, B)
-///         cov(B, A)        cov(B, B)
-inline
-TMatrixT<double>
-TFitBin::prodAmpCov(const std::vector<unsigned int>& prodAmpIndicesA,
-		    const std::vector<unsigned int>& prodAmpIndicesB) const
-{
-  std::vector<unsigned int> prodAmpIndices;
-  // copy wave A production amplitude indices
-  prodAmpIndices.assign(prodAmpIndicesA.begin(), prodAmpIndicesA.end());
-  // copy wave B production amplitude indices
-  prodAmpIndices.insert(prodAmpIndices.end(), prodAmpIndicesB.begin(), prodAmpIndicesB.end());
-  return prodAmpCov(prodAmpIndices);
-}
-
-
-/// returns normalization integral of wave A and wave B
-inline
-std::complex<double>
-TFitBin::normIntegral(const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const
-{
-  const TComplex norm = _int(waveIndexA, waveIndexB);
-  return std::complex<double>(norm.Re(), norm.Im());
-}
-
-
-/// prints list of all production amplitudes
-inline
-std::ostream&
-TFitBin::printProdAmpNames(std::ostream& out) const
-{
-  out << "Production amplitude names:" << std::endl;
-  for (unsigned int i = 0; i < nmbProdAmps(); ++i)
-    out << "    " << std::setw(3) << i << " " << prodAmpName(i) << std::endl;
-  return out;
-}
-
-
-/// prints list of all production amplitudes
-inline
-std::ostream&
-TFitBin::printWaveNames(std::ostream& out) const
-{
-  out << "Wave names:" << std::endl;
-  for (unsigned int i = 0; i < nmbWaves(); ++i)
-    out << "    " << std::setw(3) << i << " " << waveName(i) << std::endl;
-  return out;
-}
-
-
-/// prints values and covariance matrices of all production amplitudes
-inline
-std::ostream&
-TFitBin::printProdAmps(std::ostream& out) const
-{
-  out << "Production amplitudes:" << std::endl;
-  for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
-    out << "    " << std::setw(3) << i << " " << prodAmpName(i) << " = "  << prodAmp(i)
-	<< ", cov = " << prodAmpCov(i) << std::endl;
-  }
-  return out;
-}
-
-
-/// \brief returns matrix representation of complex number
-///
-///   c.re  -c.im
-///   c.im   c.re
-// !!! possible optimization: return TMatrixTLazy
-inline
-TMatrixT<double>
-TFitBin::matrixRepr(const TComplex& c)
-{
-  TMatrixT<double> m(2, 2);
-  m[0][0] = m[1][1] = c.Re();
-  m[0][1] = -c.Im();
-  m[1][0] =  c.Im();
-  return m;
-}
-
-
-/// extracts rank of production amplitude from its name
-inline
-int
-TFitBin::rankOfProdAmp(const unsigned int prodAmpIndex) const
-{
-  const TString ampName = prodAmpName(prodAmpIndex);
-  if (ampName.Contains("flat"))
-    return -1;
-  else
-    // the rank is encoded in second character of parameter name
-    return TString(ampName(1, 1)).Atoi();
-}
-
-
-/// generates list of wave indices that match name pattern
-inline
-std::vector<unsigned int>
-TFitBin::waveIndicesMatchingPattern(const std::string& waveNamePattern) const
-{
-  std::vector<unsigned int> waveIndices;
-  for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex)
-    if (waveName(waveIndex).Contains(waveNamePattern))
-      waveIndices.push_back(waveIndex);
-  return waveIndices;
-}
-
-
-/// generates list of production amplitude indices that match name pattern
-inline
-std::vector<unsigned int>
-TFitBin::prodAmpIndicesMatchingPattern(const std::string& ampNamePattern) const
-{
-  std::vector<unsigned int> prodAmpIndices;
-  for (unsigned int prodAmpIndex = 0; prodAmpIndex < nmbProdAmps(); ++prodAmpIndex)
-    if (prodAmpName(prodAmpIndex).Contains(ampNamePattern))
-      prodAmpIndices.push_back(prodAmpIndex);
-  return prodAmpIndices;
-}
-
-
-/// generates list of pairs of production amplitude indices of same rank for a pair of waves
-inline
-std::vector<std::pair<unsigned int, unsigned int> >
-TFitBin::prodAmpIndexPairsForWaves(const unsigned int waveIndexA,
-				   const unsigned int waveIndexB) const
-{
-  std::vector<std::pair<unsigned int, unsigned int> > prodAmpIndexPairs;
-  const std::vector<unsigned int> prodAmpIndicesA = prodAmpIndicesForWave(waveIndexA);
-  const std::vector<unsigned int> prodAmpIndicesB = prodAmpIndicesForWave(waveIndexB);
-  for (unsigned int countAmpA = 0; countAmpA < prodAmpIndicesA.size(); ++countAmpA) {
-    const unsigned int ampIndexA = prodAmpIndicesA[countAmpA];
-    const int          ampRankA  = rankOfProdAmp(ampIndexA);
-    // find production amplitude of wave B with same rank
-    int ampIndexB = -1;
-    for (unsigned int countAmpB = 0; countAmpB < prodAmpIndicesB.size(); ++countAmpB)
-      if (rankOfProdAmp(prodAmpIndicesB[countAmpB]) == ampRankA) {
-	ampIndexB = prodAmpIndicesB[countAmpB];
-	break;
-      }
-    if (ampIndexB >=0)
-      prodAmpIndexPairs.push_back(std::make_pair(ampIndexA, (unsigned int)ampIndexB));
-  }
-  return prodAmpIndexPairs;
-}
-
-
-/// calculates variance of a real-valued function of a spin density matrix element for wave A and wave B
-inline
-double
-TFitBin::realValVariance(const unsigned int      waveIndexA,
-			 const unsigned int      waveIndexB,
-			 const TMatrixT<double>& jacobian) const  // Jacobian of real valued function (d f/ d Re[rho]   d f / d Im[rho])
-{
-  if (!_hasErrors)
-    return 0;
-  const TMatrixT<double> spinDensCov = spinDensityMatrixElemCov(waveIndexA, waveIndexB);  // 2 x 2 matrix
-  const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);              // 2 x 1 matrix
-  const TMatrixT<double> spinDensCovJT = spinDensCov * jacobianT;                         // 2 x 1 matrix
-  const TMatrixT<double> cov           = jacobian * spinDensCovJT;                        // 1 x 1 matrix
-  return cov[0][0];
-}
 
 
 #endif  // TFITBIN_HH
