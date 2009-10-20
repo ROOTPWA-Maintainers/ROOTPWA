@@ -36,6 +36,7 @@
 #include <stdlib.h>
 #include "TPWWeight.h"
 #include "TFile.h"
+#include "TString.h"
 #include "TH1.h"
 #include "TH1D.h"
 #include "TRandom3.h"
@@ -66,9 +67,12 @@ int main(int argc, char** argv, const int     errCode = 0)
 
   unsigned int nevents=100;
   string theta_file;
+  string integrals_file;
+  string wavelist_file; // format: name Re Im
+  string path_to_keyfiles("./");
 
   int c;
-  while ((c = getopt(argc, argv, "n:t:h")) != -1)
+  while ((c = getopt(argc, argv, "n:t:w:k:i:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
@@ -76,10 +80,21 @@ int main(int argc, char** argv, const int     errCode = 0)
     case 't':
       theta_file = optarg;
       break;
+   case 'w':
+      wavelist_file = optarg;
+      break;
+   case 'i':
+      integrals_file = optarg;
+      break;
+   case 'k':
+      path_to_keyfiles = optarg;
+      break;
     case 'h':
       printUsage(argv[0]);
       break;
     }
+
+ 
 
  
   TFile* outfile=TFile::Open("genhisto.root","RECREATE");
@@ -94,17 +109,34 @@ int main(int argc, char** argv, const int     errCode = 0)
 
   PDGtable.initialize();
   TPWWeight weighter;
-  weighter.addWave("keyfiles/key3pi/SET1/1-1++0+rho770_01_pi-.key",
-		   std::complex<double>(15.23,0),0);
-  weighter.addWave("keyfiles/key3pi/SET1/1-2++1+rho770_21_pi-.key",
-		   std::complex<double>(12.23,3.4),0);
-  weighter.loadIntegrals("src/pwafitTest/amplitudes/norm.int");
+
+  // read input wavelist and amplitudes
+  ifstream wavefile(wavelist_file.c_str());
+  while(wavefile.good()){
+    TString wavename;
+    double RE, IM;
+    wavefile >> wavename >> RE >> IM;
+
+    wavename.ReplaceAll(".amp",".key");
+    wavename.Prepend(path_to_keyfiles.c_str());
+
+    std::complex<double> amp(RE,IM);
+    cout << wavename << " " << amp << endl;
+    wavefile.ignore(256,'\n');
+
+    weighter.addWave(wavename.Data(),amp,0);
+    
+  }
+
+
+
+  weighter.loadIntegrals(integrals_file);
 
   TDiffractivePhaseSpace difPS;
   difPS.SetSeed(1236735);
   difPS.SetBeam();
   difPS.SetTarget(-300,0.2,2);
-  difPS.SetMassRange(1.2,1.4);			
+  difPS.SetMassRange(1.3,1.4);			
   TFile* infile=TFile::Open(theta_file.c_str());
   difPS.SetThetaDistribution((TH1*)infile->Get("h1"));
   const double mpi=0.13957018;
