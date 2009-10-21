@@ -1,3 +1,4 @@
+
 Installation instructions for rootpwa:
 
 --- Before you can build rootpwa you need to install the following software:
@@ -92,6 +93,15 @@ BNL PWA software PWA2000:
 	&> rm *.cc *.h *.yy *.ll
 	before you try again. 
 
+--- libconfig:
+	We use the config file parser written by Mark A. Lindner available from
+	http://www.hyperrealm.com/libconfig/
+	Version 1.4
+	The installation is straight forward and should work without
+	any problems.
+
+
+
 --- Building rootpwa:
 
 1) Set ROOTSYS environment variable to the location 
@@ -104,21 +114,22 @@ BNL PWA software PWA2000:
 	 fail to link against it on the wrong architecture
 
 2) Set $PWA2000 environment variable to PWA2000 base dir (if not done already)
-3) Set $ROOTPWA environment variable to the rootpwa toplevel directory 
+3) Set $LIBCONFIG to libconfig toplevel directory
+4) Set $ROOTPWA environment variable to the rootpwa toplevel directory 
    (usually trunk)
-4) Set
+5) Set
 	PATH=$ROOTPWA/build/bin:$PATH
-	LD_LIBRARY_PATH=$PWA2000/lib:$ROOTPWA/build/lib:$ROOTSYS/lib:LD_LIBRARY_PATH
+	LD_LIBRARY_PATH=$PWA2000/lib:$LIBCONFIG/lib:$ROOTPWA/build/lib:$ROOTSYS/lib:LD_LIBRARY_PATH
 
 We use an out-of-source build strategy. This means that 
 the binary files will be created outside of the directories that contain
 the source code. CMake is supporting this:
 
-4) create the build-directory: 
+5) create the build-directory: 
 	&> cd $ROOTPWA
         &> mkdir build
 
-5) do the build:
+6) do the build:
 	&> cd build
 	&> cmake ..   
 	&> make 
