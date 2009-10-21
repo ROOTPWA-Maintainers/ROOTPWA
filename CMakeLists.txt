@@ -8,6 +8,8 @@ ENABLE_TESTING()
 # Build types
 set(CMAKE_BUILD_TYPE None)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Werror")
+set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
+
 set(CMAKE_CXX_FLAGS_NONE "-O3 -Wall -Werror")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -Werror")
 
