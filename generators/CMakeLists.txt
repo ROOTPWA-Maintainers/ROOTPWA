@@ -26,6 +26,7 @@ ENABLE_TESTING()
 SET(INCLUDE_DIRECTORIES
   $ENV{ROOTSYS}/include
   $ENV{PWA2000}/include
+  $ENV{LIBCONFIG}/include
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/generators
 )
@@ -66,6 +67,9 @@ SET(PWA_LIBS ${PWA_LIB}/libpp.a
 SET(ROOTPWA_LIB ${LIBRARY_OUTPUT_PATH})
 SET(ROOTPWA_LIBS ${ROOTPWA_LIB}/librootpwa.so)
 
+SET(LIBCONFIG_LIB $ENV{LIBCONFIG}/lib)
+SET(LIBCONFIG ${LIBCONFIG_LIB}/libconfig++.so)
+
 
 #-------------------------------------------------
 #------ Root Dictionary --------------------------
@@ -101,6 +105,7 @@ TARGET_LINK_LIBRARIES(rootpwagen ${ROOTPWA_LIBS})
 ADD_EXECUTABLE(genpw genpw.cc)
 TARGET_LINK_LIBRARIES(genpw ${ROOT_LIBS})
 TARGET_LINK_LIBRARIES(genpw ${PWA_LIBS})
+TARGET_LINK_LIBRARIES(genpw ${LIBCONFIG})
 TARGET_LINK_LIBRARIES(genpw rootpwagen)
 
 #-------------------------------------------------

@@ -102,14 +102,13 @@ TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
     return false;
   }
     
-  const int geantIds[3] = { 8,  9,  9};
-  const int charges[3]  = {+1, -1, -1};
-  // total number of particles
-  out << 4 << endl;
+   // total number of particles
+  unsigned int nfspart=decayProducts.size();
+  out << nfspart + 1 << endl;
   // beam particle: geant ID, charge, p_x, p_y, p_z, E
   out << setprecision(numeric_limits<double>::digits10 + 1)
       << "9 -1 " << beam.Px() << " " << beam.Py() << " " << beam.Pz() << " " << beam.E() << endl;
-  for (unsigned int i = 0; i < 3; ++i) {
+  for (unsigned int i = 0; i < nfspart; ++i) {
     TLorentzVector* hadron = event.GetDecay(i);
     if (!hadron) {
       cerr << "genbod returns NULL pointer to Lorentz vector for daughter " << i << "." << endl;
@@ -117,7 +116,7 @@ TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
     }
     // hadron: geant ID, charge, p_x, p_y, p_z, E
     out << setprecision(numeric_limits<double>::digits10 + 1)
-	<< geantIds[i] << " " << charges[i] << " " << hadron->Px() << " " << hadron->Py() << " " << hadron->Pz() << " " << hadron->E() << endl;
+	<< decayProducts[i].gid << " " << decayProducts[i].charge << " " << hadron->Px() << " " << hadron->Py() << " " << hadron->Pz() << " " << hadron->E() << endl;
     }
   return true;
 }

@@ -19,7 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-
 /** @brief Simple partial wave event generator (homogeneous in m)
  */
 
@@ -45,8 +44,10 @@
 #include "TClonesArray.h"
 #include "TDiffractivePhaseSpace.h"
 #include <event.h>
+#include "libconfig.h++"
 
 using namespace std;
+using namespace libconfig;
 
 extern particleDataTable PDGtable;
 
@@ -66,20 +67,21 @@ int main(int argc, char** argv, const int     errCode = 0)
 {
 
   unsigned int nevents=100;
-  string theta_file;
+  //string theta_file;
   string integrals_file;
   string wavelist_file; // format: name Re Im
   string path_to_keyfiles("./");
+  string reactionFile;
 
   int c;
-  while ((c = getopt(argc, argv, "n:t:w:k:i:h")) != -1)
+  while ((c = getopt(argc, argv, "n:t:w:k:i:r:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
       break;
-    case 't':
-      theta_file = optarg;
-      break;
+//     case 't':
+//       theta_file = optarg;
+//       break;
    case 'w':
       wavelist_file = optarg;
       break;
@@ -89,6 +91,9 @@ int main(int argc, char** argv, const int     errCode = 0)
    case 'k':
       path_to_keyfiles = optarg;
       break;
+   case 'r':
+      reactionFile = optarg;
+      break;
     case 'h':
       printUsage(argv[0]);
       break;
@@ -96,7 +101,6 @@ int main(int argc, char** argv, const int     errCode = 0)
 
  
 
- 
   TFile* outfile=TFile::Open("genhisto.root","RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
   TTree* outtree=new TTree("pwevents","pwevents");
@@ -132,17 +136,49 @@ int main(int argc, char** argv, const int     errCode = 0)
 
   weighter.loadIntegrals(integrals_file);
 
+
+  Config reactConf;
+  reactConf.readFile(reactionFile.c_str());
+
+  double Mom=reactConf.lookup("beam.momentum");
+  double MomSigma=reactConf.lookup("beam.sigma_momentum");
+  double DxDz=reactConf.lookup("beam.DxDz");
+  double DxDzSigma=reactConf.lookup("beam.sigma_DxDz");
+  double DyDz=reactConf.lookup("beam.DyDz");
+  double DyDzSigma=reactConf.lookup("beam.sigma_DyDz");
+
+  double targetz=reactConf.lookup("target.pos.z");
+  double targetd=reactConf.lookup("target.length");
+  double targetr=reactConf.lookup("target.radius");
+
+  double mmin= reactConf.lookup("finalstate.mass_min");
+  double mmax= reactConf.lookup("finalstate.mass_max");
+
+  string theta_file= reactConf.lookup("finalstate.theta_file");
+
   TDiffractivePhaseSpace difPS;
   difPS.SetSeed(1236735);
-  difPS.SetBeam();
-  difPS.SetTarget(-300,0.2,2);
-  difPS.SetMassRange(1.3,1.4);			
+  difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
+  difPS.SetTarget(targetz,targetd,targetr);
+  difPS.SetMassRange(mmin,mmax);			
   TFile* infile=TFile::Open(theta_file.c_str());
   difPS.SetThetaDistribution((TH1*)infile->Get("h1"));
-  const double mpi=0.13957018;
-  difPS.AddDecayProduct(particleinfo(9,-1,mpi));  
-  difPS.AddDecayProduct(particleinfo(8,1,mpi)); 
-  difPS.AddDecayProduct(particleinfo(9,-1,mpi));
+  
+
+  const Setting& root = reactConf.getRoot();
+  const Setting &fspart = root["finalstate"]["particles"];
+  int nparticles = fspart.getLength();
+
+  for(int ifs=0;ifs<nparticles;++ifs){
+    const Setting &part = fspart[ifs];
+    int id;part.lookupValue("g3id",id);
+    int q;part.lookupValue("charge",q);
+    double m;part.lookupValue("mass",m);
+    difPS.AddDecayProduct(particleinfo(id,q,m));
+  }
+  
+  //difPS.AddDecayProduct(particleinfo(8,1,mpi)); 
+  //difPS.AddDecayProduct(particleinfo(9,-1,mpi));
 
   double maxweight=-1;
   unsigned int acc=0;
@@ -156,7 +192,7 @@ int main(int argc, char** argv, const int     errCode = 0)
       difPS.event(str);
       str.close();
       
-      for(unsigned int ip=0; ip<3;++ip){
+      for(int ip=0; ip<nparticles;++ip){
 	new((*p)[ip]) TLorentzVector(*difPS.GetDecay(ip));
       }
 
