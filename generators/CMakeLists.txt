@@ -26,6 +26,7 @@ ENABLE_TESTING()
 SET(INCLUDE_DIRECTORIES
   $ENV{ROOTSYS}/include
   $ENV{PWA2000}/include
+  $ENV{ROOTPWA}/src
   $ENV{LIBCONFIG}/include
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/generators
@@ -107,7 +108,7 @@ TARGET_LINK_LIBRARIES(genpw ${ROOT_LIBS})
 TARGET_LINK_LIBRARIES(genpw ${PWA_LIBS})
 TARGET_LINK_LIBRARIES(genpw ${LIBCONFIG})
 TARGET_LINK_LIBRARIES(genpw rootpwagen)
-
+TARGET_LINK_LIBRARIES(genpw ${ROOTPWA_LIBS})
 #-------------------------------------------------
 #------- Install options -------------------------
 #-------------------------------------------------

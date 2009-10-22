@@ -36,6 +36,7 @@
 #include "TPWWeight.h"
 #include "TFile.h"
 #include "TString.h"
+#include "TFitBin.h"
 #include "TH1.h"
 #include "TH1D.h"
 #include "TRandom3.h"
@@ -53,13 +54,18 @@ extern particleDataTable PDGtable;
 
 void printUsage(char* prog, int errCode=0) {
 cerr << "usage:" << endl
-       << prog
-       << " -n # -t <theta distribution>"
-       << "    where:" << endl
-       << "        -n #       number of events to generate" << endl
-     << "        -t <file>  ROOT file containing histogram with theta distribution "<< endl
-       << endl;
-  exit(errCode);
+     << prog
+     << " -n # -o <file> -w <file> -k <path> -i <file> -r <file>"
+     << "    where:" << endl
+     << "        -n #       number of events to generate" << endl
+     << "        -o <file>  ROOT output file"<< endl
+     << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
+     << "        -w <file.root>  to use TFitBin tree as input"<< endl 
+     << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
+     << "        -i <file>  integral file"<< endl 
+     << "        -r <file>  reaction config file"<< endl   
+     << endl;
+ exit(errCode);
 }
 
 
@@ -67,21 +73,21 @@ int main(int argc, char** argv, const int     errCode = 0)
 {
 
   unsigned int nevents=100;
-  //string theta_file;
+  string output_file("genpw.root");
   string integrals_file;
   string wavelist_file; // format: name Re Im
   string path_to_keyfiles("./");
   string reactionFile;
 
   int c;
-  while ((c = getopt(argc, argv, "n:t:w:k:i:r:h")) != -1)
+  while ((c = getopt(argc, argv, "n:o:w:k:i:r:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
       break;
-//     case 't':
-//       theta_file = optarg;
-//       break;
+    case 'o':
+      output_file = optarg;
+      break;
    case 'w':
       wavelist_file = optarg;
       break;
@@ -101,7 +107,7 @@ int main(int argc, char** argv, const int     errCode = 0)
 
  
 
-  TFile* outfile=TFile::Open("genhisto.root","RECREATE");
+  TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
   TTree* outtree=new TTree("pwevents","pwevents");
   double weight;
@@ -112,31 +118,8 @@ int main(int argc, char** argv, const int     errCode = 0)
   outtree->Branch("beam",&beam);
 
   PDGtable.initialize();
+
   TPWWeight weighter;
-
-  // read input wavelist and amplitudes
-  ifstream wavefile(wavelist_file.c_str());
-  while(wavefile.good()){
-    TString wavename;
-    double RE, IM;
-    wavefile >> wavename >> RE >> IM;
-
-    wavename.ReplaceAll(".amp",".key");
-    wavename.Prepend(path_to_keyfiles.c_str());
-
-    std::complex<double> amp(RE,IM);
-    cout << wavename << " " << amp << endl;
-    wavefile.ignore(256,'\n');
-
-    weighter.addWave(wavename.Data(),amp,0);
-    
-  }
-
-
-
-  weighter.loadIntegrals(integrals_file);
-
-
   Config reactConf;
   reactConf.readFile(reactionFile.c_str());
 
@@ -153,6 +136,7 @@ int main(int argc, char** argv, const int     errCode = 0)
 
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
+  double   binCenter    = 500 * (mmin + mmax);
 
   string theta_file= reactConf.lookup("finalstate.theta_file");
 
@@ -176,10 +160,81 @@ int main(int argc, char** argv, const int     errCode = 0)
     double m;part.lookupValue("mass",m);
     difPS.AddDecayProduct(particleinfo(id,q,m));
   }
-  
-  //difPS.AddDecayProduct(particleinfo(8,1,mpi)); 
-  //difPS.AddDecayProduct(particleinfo(9,-1,mpi));
 
+
+
+  // check if TFitBin is used as input
+  if(wavelist_file.find(".root")!=string::npos){
+    cerr << "Using TFitBin as input!" << endl;
+    TFile* fitresults=TFile::Open(wavelist_file.c_str(),"READ");
+    TFitBin* Bin     = NULL;
+    if (!fitresults || fitresults->IsZombie()){
+      cerr << "Cannot open start fit results file " << wavelist_file << endl;
+      return 1;
+    }
+    // get tree with start values
+    TTree* tree;
+    fitresults->GetObject("pwa", tree);
+      if (!tree)
+        cerr << "Cannot find fitbin tree '"<< "pwa" << "' "<< endl;
+      else {
+        Bin = new TFitBin();
+        tree->SetBranchAddress("fitbin", &Bin);
+	// find entry which is closest to mass bin center
+        unsigned int iBest = 0;
+        double mBest = 0;
+        for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
+          tree->GetEntry(i);
+          if (fabs(binCenter - Bin->mass()) <= fabs(binCenter - mBest)) {
+            iBest = i;
+            mBest = Bin->mass();
+          }
+        }  // end loop over TFitBins
+	cerr << "Using data from Mass bin m=" << mBest << endl;
+        tree->GetEntry(iBest); 
+	// write wavelist file for generator
+	string tmpname("/tmp/genamps.txt");
+	ofstream tmpfile(tmpname.c_str());
+	Bin->printAmpsGenPW(tmpfile);
+	tmpfile.close();
+	wavelist_file=tmpname;
+      }
+  } // end root file given
+
+
+  // read input wavelist and amplitudes
+  ifstream wavefile(wavelist_file.c_str());
+  while(wavefile.good()){
+    TString wavename;
+    double RE, IM;
+    int rank=0;
+    wavefile >> wavename >> RE >> IM;
+    
+    if(wavename.Contains("flat") || wavename.Length()<2)continue;
+    // check if there is rank information
+    if(wavename(0)=='V'){
+      rank=atoi(wavename(1,1).Data());
+      wavename=wavename(3,wavename.Length());
+    }
+
+    wavename.ReplaceAll(".amp",".key");
+    wavename.Prepend(path_to_keyfiles.c_str());
+
+    std::complex<double> amp(RE,IM);
+    cout << wavename << " " << amp << " r=" << rank << endl;
+    wavefile.ignore(256,'\n');
+
+    weighter.addWave(wavename.Data(),amp,rank);
+    
+  }
+
+
+
+  weighter.loadIntegrals(integrals_file);
+
+
+
+  
   double maxweight=-1;
   unsigned int acc=0;
 
@@ -216,8 +271,6 @@ int main(int argc, char** argv, const int     errCode = 0)
       //cerr << i << endl;
       
       outtree->Fill();
-      
-      
 
     }
 
