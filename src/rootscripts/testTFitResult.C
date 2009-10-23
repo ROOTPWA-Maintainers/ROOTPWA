@@ -16,25 +16,28 @@ using namespace std;
 
 
 void
-testNewTFitBinInterface(TTree* tree)
+testTFitResult(TTree* tree)
 {
   const bool verbose = true;
   //const bool verbose = false;
-  TFitBin*   massBin = new TFitBin();
+  const bool copyBin = false;
+
+  TFitBin* massBin = new TFitBin();
   tree->SetBranchAddress("fitbin", &massBin);
-  tree->GetEntry(30);
-
-  const TFitResult*  newMassBin = new TFitResult(*massBin);
-  const unsigned int n          = newMassBin->nmbWaves();
-
-  if (1) {
-    newMassBin->printWaveNames();
-    cout << endl;
-    //newMassBin->printProdAmpNames();
-    //cout << endl;
-    newMassBin->printProdAmps();
-    cout << endl;
+  TFitResult* newMassBin = 0;
+  if (!copyBin) {
+    newMassBin = new TFitResult();
+    tree->SetBranchAddress("fitResult", &newMassBin);
   }
+  //tree->GetEntry(30);
+  tree->GetEntry(0);
+  
+  if (copyBin)
+    newMassBin = new TFitResult(*massBin);
+  const unsigned int n = newMassBin->nmbWaves();
+
+  if (1)
+    cout << *newMassBin << endl;
   
   if (0) {
     complex<double> maxDelta = 0;
@@ -148,10 +151,10 @@ testNewTFitBinInterface(TTree* tree)
 	const double delta  = oldVal - newVal;
 	maxDelta = (fabs(maxDelta) < fabs(delta)) ? delta : maxDelta;
 	if (verbose)
-	  cout << "phaseNew(" << newMassBin->waveName(i) << ", "  << newMassBin->waveName(j) << "): "
+	  cout << "phase(" << newMassBin->waveName(i) << ", "  << newMassBin->waveName(j) << "): "
 	       << setprecision(12) << newVal << " vs. " << oldVal << ", delta = " << delta << endl;
       }
-    cout << "phaseNew() max. deviation = " << maxDelta << endl << endl;
+    cout << "phase() max. deviation = " << maxDelta << endl << endl;
   }
 
   if (0) {

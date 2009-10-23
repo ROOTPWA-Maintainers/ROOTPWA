@@ -65,16 +65,16 @@ public:
   virtual ~TFitResult();
 
   void reset();
-  void fill(const std::vector<TComplex>&                 prodAmps,
-	    const std::vector<std::pair<Int_t, Int_t> >& fitParCovMatrixIndices,
-	    const std::vector<TString>&                  prodAmpNames,
-	    const Int_t                                  nevt,
-	    const UInt_t                                 nmbEvents,
-	    const Double_t                               massBinCenter,
-	    const TCMatrix&                              normIntegral,
-	    const TMatrixT<Double_t>&                    fitParCovMatrix,
-	    const Double_t                               logLikelihood,
-	    const Int_t                                  rank);
+  void fill(const unsigned int                        nmbEvents,               // number of events in bin			 
+	    const unsigned int                        normNmbEvents,	       // number of events to normalize to		 
+	    const double                              massBinCenter,	       // center value of mass bin			 
+	    const double                              logLikelihood,	       // log(likelihood) at maximum		 
+	    const int                                 rank,		       // rank of fit				 
+	    const std::vector<std::complex<double> >& prodAmps,	               // production amplitudes			 
+	    const std::vector<std::string>&           prodAmpNames,	       // names of production amplitudes used in fit
+	    const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
+	    const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+	    const TCMatrix&                           normIntegral);           // normalization integral over full phase space without acceptance
 
   double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
   double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
@@ -93,7 +93,7 @@ public:
   inline void fitParameters  (double*            parArray)  const;  ///< copies fit parameters into array
 
   /// returns production amplitude value at index
-  std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return _prodAmps[prodAmpIndex]; }
+  std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return std::complex<double>(_prodAmps[prodAmpIndex].Re(), _prodAmps[prodAmpIndex].Im()); }
   inline TMatrixT<double> prodAmpCov(const unsigned int prodAmpIndex) const;   ///< returns covariance matrix of production amplitude value at index
   ///< returns covariance matrix for a set of production amplitudes given by index list
   TMatrixT<double>        prodAmpCov(const std::vector<unsigned int>&                           prodAmpIndices)    const;
@@ -139,20 +139,25 @@ public:
   inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;  ///< prints all production amplitude names
   inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;  ///< prints all wave names
   inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
+  inline std::ostream& printWaves       (std::ostream& out = std::cout) const;  ///< prints all wave intensities and their errors
+
+  virtual inline std::ostream& print(std::ostream& out = std::cout) const;
+  friend std::ostream& operator << (std::ostream&     out,
+				    const TFitResult& fitResult) { return fitResult.print(out); }
 
 private:
 
-  Int_t                                 _nevt;                    ///< number of events normalized (?)
-  UInt_t                                _nmbEvents;               ///< number of events in bin
-  Double_t                              _massBinCenter;           ///< center value of mass bin
-  Double_t                              _logLikelihood;           ///< log(likelihood) at maximum
-  Int_t                                 _rank;                    ///< rank of fit
-  std::vector<std::complex<Double_t> >  _prodAmps;                ///< production amplitudes
+  UInt_t                                _nmbEvents;               ///< number of events in bin			 
+  UInt_t                                _normNmbEvents;           ///< number of events to normalize to		 
+  Double_t                              _massBinCenter;           ///< center value of mass bin			 
+  Double_t                              _logLikelihood;           ///< log(likelihood) at maximum		 
+  Int_t                                 _rank;                    ///< rank of fit				 
+  std::vector<TComplex>                 _prodAmps;                ///< production amplitudes			 
   std::vector<std::string>              _prodAmpNames;            ///< names of production amplitudes used in fit
   std::vector<std::string>              _waveNames;               ///< names of waves used in fit
   Bool_t                                _hasErrors;               ///< indicates whether bin has a valid covariance matrix
   TMatrixT<Double_t>                    _fitParCovMatrix;         ///< covariance matrix of fit parameters
-  std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;  ///< indices of fit parameters for real and imaginary part in covariance matrix matrix;
+  std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;  ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
   TCMatrix                              _normIntegral;            ///< normalization integral over full phase space without acceptance
   std::map<Int_t, Int_t>                _normIntIndexMap;         ///< maps production amplitude indices to indices in normalization integral
 
@@ -202,10 +207,10 @@ TFitResult::fitParameters(double* parArray) const
 {
   unsigned int countPar = 0;
   for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
-    parArray[countPar++] = _prodAmps[i].real();
+    parArray[countPar++] = prodAmp(i).real();
     // check if amplitude has imaginary part
     if (_fitParCovMatrixIndices[i].second >= 0)
-      parArray[countPar++] = _prodAmps[i].imag();
+      parArray[countPar++] = prodAmp(i).imag();
   }
 }
 
@@ -267,7 +272,7 @@ TFitResult::prodAmpCov(const std::vector<unsigned int>& prodAmpIndicesA,
 }
 
 
-/// returns normalization integral of wave A and wave B
+// returns normalization integral for pair of waves at index A and B
 inline
 std::complex<double>
 TFitResult::normIntegral(const unsigned int waveIndexA,
@@ -278,40 +283,82 @@ TFitResult::normIntegral(const unsigned int waveIndexA,
 }
 
 
-/// prints list of all production amplitudes
+// prints all production amplitude names
 inline
 std::ostream&
 TFitResult::printProdAmpNames(std::ostream& out) const
 {
-  out << "Production amplitude names:" << std::endl;
+  out << "    Production amplitude names:" << std::endl;
   for (unsigned int i = 0; i < nmbProdAmps(); ++i)
-    out << "    " << std::setw(3) << i << " " << _prodAmpNames[i] << std::endl;
+    out << "        " << std::setw(3) << i << " " << _prodAmpNames[i] << std::endl;
   return out;
 }
 
 
-/// prints list of all production amplitudes
+// prints all wave names
 inline
 std::ostream&
 TFitResult::printWaveNames(std::ostream& out) const
 {
-  out << "Wave names:" << std::endl;
+  out << "    Wave names:" << std::endl;
   for (unsigned int i = 0; i < nmbWaves(); ++i)
-    out << "    " << std::setw(3) << i << " " << _waveNames[i] << std::endl;
+    out << "        " << std::setw(3) << i << " " << _waveNames[i] << std::endl;
   return out;
 }
 
 
-/// prints values and covariance matrices of all production amplitudes
+// prints all production amplitudes and their covariance matrix
 inline
 std::ostream&
 TFitResult::printProdAmps(std::ostream& out) const
 {
   out << "Production amplitudes:" << std::endl;
   for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
-    out << "    " << std::setw(3) << i << " " << _prodAmpNames[i] << " = "  << _prodAmps[i]
+    out << "    " << std::setw(3) << i << " " << _prodAmpNames[i] << " = "  << prodAmp(i)
 	<< ", cov = " << prodAmpCov(i) << std::endl;
   }
+  return out;
+}
+
+
+// prints all wave intensities and their errors
+inline
+std::ostream&
+TFitResult::printWaves(std::ostream& out) const
+{
+  out << "Waves:" << std::endl;
+  for (unsigned int i = 0; i < nmbWaves(); ++i) {
+    out << "    " << std::setw(3) << i << " " << _waveNames[i] << " = "  << intensity(i)
+	<< " +- " << intensityErr(i) << std::endl;
+  }
+  return out;
+}
+
+
+/// dumps all raw data stored in object
+inline
+std::ostream&
+TFitResult::print(std::ostream& out) const
+{
+  out << "TFitResult dump:" << std::endl
+      << "    number of events .................... " << _nmbEvents     << std::endl
+      << "    number of events to normalize to .... " << _normNmbEvents << std::endl
+      << "    center value of mass bin ............ " << _massBinCenter << std::endl
+      << "    log(likelihood) at maximum .......... " << _logLikelihood << std::endl
+      << "    rank of fit ......................... " << _rank          << std::endl
+      << "    bin has a valid covariance matrix ... " << _hasErrors     << std::endl;
+  printProdAmpNames(out);
+  printWaveNames(out);
+  out << "    covariance matrix:" << std::endl << _fitParCovMatrix << std::endl;
+  out << "    covariance matrix indices:" << std::endl;
+  for (unsigned int i = 0; i < _fitParCovMatrixIndices.size(); ++i)
+    out << "        index " << std::setw(3) << i << " = (" << std::setw(3) << _fitParCovMatrixIndices[i].first
+	<< ", " << std::setw(3) << _fitParCovMatrixIndices[i].second << ")" << std::endl;
+  out << "    normalization integral (w/o acceptance):" << std::endl << _normIntegral << std::endl;
+  out << "    map of production amplitude indices to indices in normalization integral:" << std::endl;
+  for (std::map<Int_t, Int_t>::const_iterator i = _normIntIndexMap.begin(); i != _normIntIndexMap.end(); ++i)
+    out << "        prod. amp [" << std::setw(3) << i->first << "] "
+	<< "-> norm. int. [" << std::setw(3) << i->second << "]" << std::endl;
   return out;
 }
 

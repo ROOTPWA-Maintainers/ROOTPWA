@@ -50,6 +50,7 @@
 
 #include "utilities.h"
 #include "TFitBin.h"
+#include "TFitResult.h"
 #include "TPWALikelihood.h"
 
 
@@ -98,7 +99,7 @@ main(int    argc,
   // ---------------------------------------------------------------------------
   // internal parameters
   const string       valTreeName        = "pwa";
-  const string       valBranchName      = "fitbin";
+  const string       valBranchName      = "fitResult";
   const double       defaultStartValue  = 0.01;
   double             defaultMinStep     = 0.0005;
   const unsigned int maxNmbOfIterations = 20000;
@@ -235,7 +236,8 @@ main(int    argc,
 	printWarn << "Cannot find start value tree '"<< valTreeName << "' in file '" << startValFileName << "'." << endl;
       else {
 	startBin = new TFitBin();
-	tree->SetBranchAddress(valBranchName.c_str(), &startBin);
+	tree->SetBranchAddress("fitbin", &startBin);
+	//tree->SetBranchAddress(valBranchName.c_str(), &startBin);
 	// find entry which is closest to mass bin center
 	unsigned int iBest = 0;
 	double mBest = 0;
@@ -302,12 +304,6 @@ main(int    argc,
   // ---------------------------------------------------------------------------
   // find minimum of likelihood function
   printInfo << "Performing minimization." << endl;
-  //L.SetMaxSampDL(1000);
-  // Pre-Minimizaton:
-  //minimizer->SetMaxIterations(10);
-  //minimizer->Minimize();
-  //L.SetMaxSampDL(20000);
-  // Minimizaton:
   minimizer->SetMaxIterations(maxNmbOfIterations);
   success = minimizer->Minimize();
   if (!success)
@@ -358,28 +354,6 @@ main(int    argc,
        << "Total time spent for likelihood calculation .... " << L.Ltime()  << endl
        << "Total time spent for normalization ............. " << L.Ntime()  << endl;
 
-  // check derivatives:
-  // first numerical:
-  /*
-    double h=1E-8;
-    double dxNum[nmbPar];
-    double dxAna[nmbPar];
-    for(unsigned int i=0; i<nmbPar;++i){
-    x[i]+=h;
-    double L2=L.DoEval(x);
-    x[i]-=2*h;
-    double L1=L.DoEval(x);
-    dxNum[i]=0.5*(L2-L1)/h;
-    x[i]+=h;
-    }
-    double F;
-    L.FdF(x,F,dxAna);
-    for(unsigned int i=0; i<nmbPar;++i){
-    cout<< "dL/d"<<i<<"(num)="<<dxNum[i]<<endl;
-    cout<< "dL/d"<<i<<"(ana)="<<dxAna[i]<<endl;
-    }
-  */
-
   // ---------------------------------------------------------------------------
   // write out result
   printInfo << "Writing result to '" << outFileName << "'." << endl;
@@ -390,84 +364,122 @@ main(int    argc,
       printWarn << "Cannot open output file '" << outFileName << "'. No results will be written." << endl;
     else {
       // check whether output tree already exists
-      TTree* tree;
-      TFitBin* result = new TFitBin();
+      TTree*      tree;
+      TFitBin*    result    = new TFitBin();
+      TFitResult* fitResult = new TFitResult();
       outFile->GetObject(valTreeName.c_str(), tree);
       if (!tree) {
-	printInfo << "File '" << outFileName << "' is empty. Creating new tree for PWA result." << endl;
+	printInfo << "File '" << outFileName << "' is empty. Creating new tree '" << valTreeName << "' for PWA result." << endl;
 	tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
-	tree->Branch(valBranchName.c_str(), &result);
-      } else
-	tree->SetBranchAddress(valBranchName.c_str(), &result);
+	tree->Branch("fitbin",              &result);  // depricated legacy branch
+	tree->Branch(valBranchName.c_str(), &fitResult);
+      } else {
+	tree->SetBranchAddress("fitbin",              &result);
+	tree->SetBranchAddress(valBranchName.c_str(), &fitResult);
+      }
 
-      // get data structures to construct result TFitBin
-      vector<TComplex> prodAmplitudes;  // production amplitudes
-      vector<pair<int,int> > indices;  // indices for error matrix access
-      vector<TString> waveNames;  // contains rank information 
-      {
-	vector<complex<double> > V;
-	vector<string> names;
-	L.buildCAmps(minimizer->X(), V, indices, names, true);
-	// convert to TComplex;
-	for (unsigned int i = 0; i < V.size(); ++i)
-	  prodAmplitudes.push_back(TComplex(V[i].real(), V[i].imag()));
-	assert(indices.size() == prodAmplitudes.size());
-	for(unsigned int i = 0; i < names.size(); ++i)
-	  waveNames.push_back(TString(names[i].c_str()));
+      { 
+	// get data structures to construct TFitResult
+	vector<complex<double> > prodAmps;                // production amplitudes
+	vector<string>           prodAmpNames;            // names of production amplitudes used in fit
+	vector<pair<int,int> >   fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+	L.buildCAmps(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+	vector<string> waveNames = L.wavetitles();  // names of waves used in fit
+	waveNames.push_back("flat");
+	TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
+	for(unsigned int i = 0; i < nmbPar; ++i)
+	  for(unsigned int j = 0; j < nmbPar; ++j)
+	    fitParCovMatrix[i][j] = minimizer->CovMatrix(i,j);
+	const unsigned int nmbWaves = waveNames.size();
+	TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
+	TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
+	L.getIntCMatrix(normIntegral, accIntegral);
+	const int normNmbEvents = useNorm ? 1 : L.nevents();  // number of events to normalize to
+
+	cout << "Filling TFitResult:" << endl
+	     << "    Number of fit parameters ............... " << nmbPar                        << endl
+	     << "    Number of production amplitudes ........ " << prodAmps.size()               << endl
+	     << "    Number of production amplitude names ... " << prodAmpNames.size()           << endl
+	     << "    Number of wave names ................... " << waveNames.size()              << endl
+	     << "    Number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << endl
+	     << "    Dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows()    << endl
+	     << "    Dimension of normalization matrix ...... " << normIntegral.nrows()          << endl
+	     << "    Dimension of acceptance matrix ......... " << accIntegral.nrows()           << endl;
+	fitResult->fill(L.nevents(),
+			normNmbEvents,
+			binCenter,
+			minimizer->MinValue(),
+			rank,
+			prodAmps,
+			prodAmpNames,
+			fitParCovMatrix,
+			fitParCovMatrixIndices,
+			normIntegral);
       }
-      vector<TString> waveTitles;  // without rank
-      {
-	const vector<string>& titles = L.wavetitles();
-	for(unsigned int i = 0; i < titles.size(); ++i)
-	  waveTitles.push_back(TString(titles[i].c_str()));
-	waveTitles.push_back("flat");
-      }
-      // error matrix
-      TMatrixD errMatrix(nmbPar, nmbPar);
-      for(unsigned int i = 0; i < nmbPar; ++i)
-	for(unsigned int j = 0; j < nmbPar; ++j) {
-	  errMatrix[i][j] = minimizer->CovMatrix(i,j);
-	  //if(i==j)cout << "Sig"<< i << "=" << sqrt(errMatrix[i][i]) << endl;
+
+      if (1) { 
+	// get data structures to construct TFitBin
+	vector<TComplex>       prodAmplitudes;  // production amplitudes
+	vector<pair<int,int> > indices;         // indices for error matrix access
+	vector<TString>        waveNames;       // contains rank information 
+	{
+	  vector<complex<double> > V;
+	  vector<string> names;
+	  L.buildCAmps(minimizer->X(), V, indices, names, true);
+	  // convert to TComplex;
+	  for (unsigned int i = 0; i < V.size(); ++i)
+	    prodAmplitudes.push_back(TComplex(V[i].real(), V[i].imag()));
+	  assert(indices.size() == prodAmplitudes.size());
+	  for(unsigned int i = 0; i < names.size(); ++i)
+	    waveNames.push_back(TString(names[i].c_str()));
 	}
-//       // normalization integral
-//       integral norm = L.normInt();
-      // integral and acceptance Matrix
-      cout << " Setup integrals" << endl;
-      unsigned int n = waveTitles.size();
-      TCMatrix integralMatrix(n, n);
-      TCMatrix accMatrix(n, n);
-      L.getIntCMatrix(integralMatrix, accMatrix);
-      //integralMatrix.Print();
-      // representation of number of events depends on whether normalization was done
-      int nmbEvt = useNorm ? 1 : L.nevents();
-      
-      cout << "Filling TFitBin:" << endl;
-      cout << "    Number of fit parameters ........... " << nmbPar                 << endl;
-      cout << "    Number of production amplitudes .... " << prodAmplitudes.size()  << endl;
-      cout << "    Number of indices .................. " << indices.size()         << endl;
-      cout << "    Number of wave names (with rank) ... " << waveNames.size()       << endl;
-      cout << "    Number of wave titles (w/o rank) ... " << waveTitles.size()      << endl;
-      cout << "    Dimension of error matrix .......... " << errMatrix.GetNrows()   << endl;
-      cout << "    Dimension of integral matrix ....... " << integralMatrix.nrows() << endl;
-      cout << "    Dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
-      result->fill(prodAmplitudes,
-		   indices,
-		   waveNames,
-		   nmbEvt,
-		   L.nevents(), // raw number of data events
-		   binCenter,
-		   integralMatrix,
-		   errMatrix,
-		   minimizer->MinValue(),
-		   rank);
-      //result->PrintParameters();
+	vector<TString> waveTitles;  // without rank
+	{
+	  const vector<string>& titles = L.wavetitles();
+	  for(unsigned int i = 0; i < titles.size(); ++i)
+	    waveTitles.push_back(TString(titles[i].c_str()));
+	  waveTitles.push_back("flat");
+	}
+	// error matrix
+	TMatrixD errMatrix(nmbPar, nmbPar);
+	for(unsigned int i = 0; i < nmbPar; ++i)
+	  for(unsigned int j = 0; j < nmbPar; ++j) {
+	    errMatrix[i][j] = minimizer->CovMatrix(i,j);
+	    //if(i==j)cout << "Sig"<< i << "=" << sqrt(errMatrix[i][i]) << endl;
+	  }
+	// normalixation integral and acceptance Matrix
+	cout << " Setup integrals" << endl;
+	unsigned int n = waveTitles.size();
+	TCMatrix integralMatrix(n, n);
+	TCMatrix accMatrix(n, n);
+	L.getIntCMatrix(integralMatrix, accMatrix);
+	//integralMatrix.Print();
+	// representation of number of events depends on whether normalization was done
+	int nmbEvt = useNorm ? 1 : L.nevents();
+	
+	cout << "Filling TFitBin:" << endl;
+	cout << "    Number of fit parameters ........... " << nmbPar                 << endl;
+	cout << "    Number of production amplitudes .... " << prodAmplitudes.size()  << endl;
+	cout << "    Number of indices .................. " << indices.size()         << endl;
+	cout << "    Number of wave names (with rank) ... " << waveNames.size()       << endl;
+	cout << "    Number of wave titles (w/o rank) ... " << waveTitles.size()      << endl;
+	cout << "    Dimension of error matrix .......... " << errMatrix.GetNrows()   << endl;
+	cout << "    Dimension of integral matrix ....... " << integralMatrix.nrows() << endl;
+	cout << "    Dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
+	result->fill(prodAmplitudes,
+		     indices,
+		     waveNames,
+		     nmbEvt,
+		     L.nevents(), // raw number of data events
+		     binCenter,
+		     integralMatrix,
+		     errMatrix,
+		     minimizer->MinValue(),
+		     rank);
+	//result->PrintParameters();
+      }
 
       // write result to file
-      TString binName = valBranchName.c_str();
-      binName += binLowMass;
-      binName += "_";
-      binName += binHighMass;
-      binName.ReplaceAll(" ","");
       tree->Fill();
       tree->Write("", TObject::kOverwrite);
       outFile->Close();
@@ -478,12 +490,3 @@ main(int    argc,
     delete minimizer;
   return 0;
 }
-  
-
-// // dummy function needed since we link to but do not use minuit.o
-// int mnparm(int, string, double, double, double, double)
-// {
-//   printErr << "this is impossible" << endl;
-//   throw "aFit";
-//   return 0;
-// }

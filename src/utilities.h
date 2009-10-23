@@ -17,6 +17,8 @@
 #include "TComplex.h"
 #include "TMatrixT.h"
 
+#include "TCMatrix.h"
+
 
 //////////////////////////////////////////////////////////////////////////////////
 // macros and functions for printout and formatting
@@ -100,51 +102,70 @@ std::ostream& operator << (std::ostream&                 out,
 // simple stream operators for some common ROOT classes
 inline
 std::ostream&
-operator << (std::ostream&   o,
+operator << (std::ostream&   out,
              const TVector3& vec)
 {
-  o << "(" << vec.X() << ", " << vec.Y() << ", " << vec.Z() << ")";
-  return o;
+  out << "(" << vec.X() << ", " << vec.Y() << ", " << vec.Z() << ")";
+  return out;
 }
 
 inline
 std::ostream&
-operator << (std::ostream&         o,
+operator << (std::ostream&         out,
              const TLorentzVector& vec)
 {
-  o << "(" << vec.X() << ", " << vec.Y() << ", " << vec.Z() << "; " << vec.T() << ")";
-  return o;
+  out << "(" << vec.X() << ", " << vec.Y() << ", " << vec.Z() << "; " << vec.T() << ")";
+  return out;
 }
 
 inline
 std::ostream&
-operator << (std::ostream&   o,
+operator << (std::ostream&   out,
              const TComplex& c)
 {
-  o << "(" << c.Re() << ", " << c.Im() << ")";
-  return o;
+  out << "(" << c.Re() << ", " << c.Im() << ")";
+  return out;
 }
 
 template <typename T>
 std::ostream&
-operator << (std::ostream&      o,
+operator << (std::ostream&      out,
              const TMatrixT<T>& A)
 {
-  o << "(";
   for (int row = 0; row < A.GetNrows(); ++row) {
-    o << "(";
+    out << "row " << row << " = (";
     for (int col = 0; col < A.GetNcols(); ++col) {
-      o << A[row][col];
+      out << A[row][col];
       if (col < A.GetNcols() - 1)
-        o << ", ";
+        out << ", ";
     }
     if (row < A.GetNrows() - 1)
-      o << "), ";
+      out << "), " << std::endl;
     else
-      o << ")";
+      out << ")";
   }
-  o << ")";
-  return o;
+  return out;
+}
+
+
+inline
+std::ostream&
+operator << (std::ostream&   out,
+             const TCMatrix& A)
+{
+  for (int row = 0; row < A.nrows(); ++row) {
+    out << "row " << row << " = (";
+    for (int col = 0; col < A.ncols(); ++col) {
+      out << A(row, col);
+      if (col < A.ncols() - 1)
+        out << ", ";
+    }
+    if (row < A.nrows() - 1)
+      out << "), " << std::endl;
+    else
+      out << ")";
+  }
+  return out;
 }
 
 
