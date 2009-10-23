@@ -208,12 +208,17 @@ int main(int argc, char** argv, const int     errCode = 0)
     TString wavename;
     double RE, IM;
     int rank=0;
+    int refl=0;
     wavefile >> wavename >> RE >> IM;
     
     if(wavename.Contains("flat") || wavename.Length()<2)continue;
+    if(RE==0 && IM==0)continue;
     // check if there is rank information
     if(wavename(0)=='V'){
-      rank=atoi(wavename(1,1).Data());
+      // we multiply rank by to to make space for refl+- production vectors
+      rank=2*atoi(wavename(1,1).Data());
+      // check reflecitivity to sort into correct production vector
+      refl = wavename(9)=='+' ? 0 : 1;
       wavename=wavename(3,wavename.Length());
     }
 
@@ -221,10 +226,12 @@ int main(int argc, char** argv, const int     errCode = 0)
     wavename.Prepend(path_to_keyfiles.c_str());
 
     std::complex<double> amp(RE,IM);
-    cout << wavename << " " << amp << " r=" << rank << endl;
+    cerr << wavename << " " << amp << " r=" << rank/2 
+	 << " eps=" << refl << endl;
     wavefile.ignore(256,'\n');
 
-    weighter.addWave(wavename.Data(),amp,rank);
+    // production vector index: rank+refl
+    weighter.addWave(wavename.Data(),amp,rank+refl);
     
   }
 
@@ -238,9 +245,12 @@ int main(int argc, char** argv, const int     errCode = 0)
   double maxweight=-1;
   unsigned int acc=0;
 
+  unsigned int tenpercent=(unsigned int)(nevents/10);
+
   for(unsigned int i=0;i<nevents;++i)
     {
-
+      if(i>0 && ( i % tenpercent==0) )cerr << "[" << (double)i/(double)nevents*100. << "%]";
+					       
       p->Delete(); // clear output array
 
       ofstream str("/tmp/event.evt");
@@ -272,8 +282,9 @@ int main(int argc, char** argv, const int     errCode = 0)
       
       outtree->Fill();
 
-    }
+    } // end event loop
 
+  cerr << endl;
   cerr << "Maxweight: " << maxweight << endl;
   cerr << "Accepted Events: " << acc << endl;
   

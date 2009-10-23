@@ -7,7 +7,9 @@
 #include "TROOT.h"
 #include "TMath.h"
 #include "TCanvas.h"
+#include <iostream>
 
+using namespace std; 
 
 /*@brief Transform collection of final state momenta into Gottfried Jackson Frame
  */
@@ -66,7 +68,7 @@ toGJ(TLorentzVector* beam, TClonesArray* particles, unsigned int n){
 }
 
 
-void plotWeightedEvents(TTree* tr){
+void plotWeightedEvents(TTree* tr, double maxw=1){
 
 gROOT->SetStyle("Plain");
 
@@ -77,6 +79,7 @@ TH1D* hGJ=new TH1D("hGJ","Cos Gottfried-Jackson Theta",80,-1,1);
 TH1D* hTY=new TH1D("hTY","Treiman-Yang Phi",80,-TMath::Pi(),TMath::Pi());
 
 double weight;
+ double maxweight=0; 
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector* beam=NULL;
   tr->SetBranchAddress("weight",&weight);
@@ -90,23 +93,46 @@ unsigned int nevt=tr->GetEntries();
 for(unsigned int i=0;i<nevt;++i){
 	tr->GetEntry(i);
 	
+	if(weight>maxweight)maxweight=weight;
+	weight/=maxw;
 	// transform into GJ F
 	toGJ(beam,p,p->GetEntries());
 	
 	TLorentzVector pi2;
+
+	TLorentzVector pi3;
+
 	TLorentzVector* pi=(TLorentzVector*)p->At(0);
 	pi2=*pi;
+	pi3+= *pi;
 	pi=(TLorentzVector*)p->At(1);
+	pi3+= *pi;
 	pi2+=*pi;
-
 	h2pi->Fill(pi2.M(),weight);
 
-	hGJ->Fill(pi2.CosTheta(),weight);
-	hTY->Fill(pi2.Phi(),weight);
+	pi=(TLorentzVector*)p->At(1);
+	pi2=*pi;
+	pi=(TLorentzVector*)p->At(2);
+	pi3+= *pi;
+	pi2+=*pi;
+	h2pi->Fill(pi2.M(),weight);
 
+
+
+	cout << pi3.P() << endl;
+	
+	pi=(TLorentzVector*)p->At(0);
+	hGJ->Fill(pi->CosTheta(),weight);
+	hTY->Fill(pi->Phi(),weight);
+
+	pi=(TLorentzVector*)p->At(2);
+	hGJ->Fill(pi->CosTheta(),weight);
+	hTY->Fill(pi->Phi(),weight);
+	
+	
 }// end loop over events
-
-
+ cout << "Maxweight=" << maxweight << endl; 
+   
  TCanvas* c=new TCanvas("Predict","Weighted Events",10,10,500,500);
  c->Divide(2,2);
  c->cd(1);
