@@ -34,7 +34,10 @@ SET(INCLUDE_DIRECTORIES
 include_directories(${INCLUDE_DIRECTORIES})
 
 SET(SOURCES TPDGEntry.cc
-            TPDGDB.cc)
+            TPDGDB.cc
+	    FSParticle.cc
+	    NParticleState.cc
+	    NParticleEvent.cc)
    
 #add ROOT lib
 SET(ROOT_LIB $ENV{ROOTSYS}/lib)
