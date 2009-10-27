@@ -8,6 +8,8 @@
 #include "TMath.h"
 #include "TCanvas.h"
 #include <iostream>
+#include "NParticleEvent.h"
+
 
 using namespace std; 
 
@@ -73,31 +75,57 @@ void plotWeightedEvents(TTree* tr, double maxw=1){
 gROOT->SetStyle("Plain");
 
 TH1D* h2pi=new TH1D("h2pi","2 pion mass",200,0,1.4);
+TH1D* h4pi=new TH1D("h4pi","4 pion mass",200,0.8,2.0);
 
 
 TH1D* hGJ=new TH1D("hGJ","Cos Gottfried-Jackson Theta",80,-1,1);
+TH1D* hGJ2=new TH1D("hGJ2","Cos Gottfried-Jackson Theta",80,-1,1);
 TH1D* hTY=new TH1D("hTY","Treiman-Yang Phi",80,-TMath::Pi(),TMath::Pi());
 
 double weight;
  double maxweight=0; 
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector* beam=NULL;
+  int qbeam;
+  std::vector<int>* q=NULL; 
   tr->SetBranchAddress("weight",&weight);
   tr->SetBranchAddress("p",&p);
   tr->SetBranchAddress("beam",&beam);
+  tr->SetBranchAddress("qbeam",&qbeam);
+  tr->SetBranchAddress("q",&q);
+
+ 
+  TVector3 vertex;
+
+  NParticleEvent event(p,q,beam,&qbeam,&vertex);
 
 
 unsigned int nevt=tr->GetEntries();	
-
-
 for(unsigned int i=0;i<nevt;++i){
 	tr->GetEntry(i);
 	
+	event.refresh();
+
 	if(weight>maxweight)maxweight=weight;
 	weight/=maxw;
 	// transform into GJ F
 	toGJ(beam,p,p->GetEntries());
-	
+	event.toGJ();
+
+	// loop over all states that contain n-1 final state particles
+	// and plot GJ angles
+	unsigned int npart=event.nParticles();
+	unsigned int nstates=event.nStates();
+	for(unsigned int is=0;is<nstates;++is){
+	  const NParticleState& state=event.getState(is);
+	  if(state.n()==npart-1 && state.q()==0){
+	   
+	    hGJ2->Fill(state.p().CosTheta(),weight);
+	    h4pi->Fill(state.p().M(),weight);
+	  }
+	}
+
+
 	TLorentzVector pi2;
 
 	TLorentzVector pi3;
@@ -108,18 +136,18 @@ for(unsigned int i=0;i<nevt;++i){
 	pi=(TLorentzVector*)p->At(1);
 	pi3+= *pi;
 	pi2+=*pi;
-	h2pi->Fill(pi2.M(),weight);
+
 
 	pi=(TLorentzVector*)p->At(1);
 	pi2=*pi;
 	pi=(TLorentzVector*)p->At(2);
 	pi3+= *pi;
 	pi2+=*pi;
-	h2pi->Fill(pi2.M(),weight);
+	//h2pi->Fill(pi2.M(),weight);
 
 
 
-	cout << pi3.P() << endl;
+	
 	
 	pi=(TLorentzVector*)p->At(0);
 	hGJ->Fill(pi->CosTheta(),weight);
@@ -136,7 +164,10 @@ for(unsigned int i=0;i<nevt;++i){
  TCanvas* c=new TCanvas("Predict","Weighted Events",10,10,500,500);
  c->Divide(2,2);
  c->cd(1);
- h2pi->Draw();
+ h4pi->Draw();
+
+  c->cd(2);
+ hGJ2->Draw();
  c->cd(3);
  hGJ->Draw();
   c->cd(4);

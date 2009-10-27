@@ -113,9 +113,14 @@ int main(int argc, char** argv, const int     errCode = 0)
   double weight;
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector beam;
+  double qbeam;
+  std::vector<int> q; // array of charges
+
   outtree->Branch("weight",&weight,"weight/d");
   outtree->Branch("p",&p);
   outtree->Branch("beam",&beam);
+  outtree->Branch("q",&q);
+  outtree->Branch("qbeam",&qbeam,"qbeam/i");
 
   PDGtable.initialize();
 
@@ -138,6 +143,8 @@ int main(int argc, char** argv, const int     errCode = 0)
   double mmax= reactConf.lookup("finalstate.mass_max");
   double   binCenter    = 500 * (mmin + mmax);
 
+  if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
+
   string theta_file= reactConf.lookup("finalstate.theta_file");
 
   TDiffractivePhaseSpace difPS;
@@ -156,9 +163,10 @@ int main(int argc, char** argv, const int     errCode = 0)
   for(int ifs=0;ifs<nparticles;++ifs){
     const Setting &part = fspart[ifs];
     int id;part.lookupValue("g3id",id);
-    int q;part.lookupValue("charge",q);
+    int myq;part.lookupValue("charge",myq);
     double m;part.lookupValue("mass",m);
-    difPS.AddDecayProduct(particleinfo(id,q,m));
+    q.push_back(myq);
+    difPS.AddDecayProduct(particleinfo(id,myq,m));
   }
 
 
