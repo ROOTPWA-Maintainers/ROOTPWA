@@ -23,9 +23,9 @@
 
 // Class Member definitions -----------
 NParticleEvent::NParticleEvent(TClonesArray* fs_momenta, 
-			       double* fs_charges,
+			       std::vector<int>* fs_charges,
 			       TLorentzVector* beam,
-			       double* beam_charge,
+			       int* beam_charge,
 			       TVector3* vertex)
   : _fsmomenta(fs_momenta), _fs_charges(fs_charges),
     _beam(beam),_qbeam(beam_charge),_vertex(vertex)
@@ -44,7 +44,7 @@ NParticleEvent::refresh(){
   for(unsigned int ifs=0;ifs<nfs;++ifs){
     _fsparticles.push_back(FSParticle(*(TLorentzVector*)_fsmomenta->At(ifs),
 				      *_vertex,
-				      _fs_charges[ifs]));
+				      _fs_charges->at(ifs)));
 
   }
 

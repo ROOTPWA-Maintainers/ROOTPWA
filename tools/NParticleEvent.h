@@ -34,19 +34,19 @@
 #include "NParticleState.h"
 #include "TClonesArray.h"
 #include <vector>
+#include "FSParticle.h"
 
-class FSParticle;
 class TVector3;
 
 class NParticleEvent {
 public:
   NParticleEvent(TClonesArray* fs_momenta, 
-		 double* fs_charges,
+		 std::vector<int>* fs_charges,
 		 TLorentzVector* beam,
-		 double* beam_charge,
+		 int* beam_charge,
 		 TVector3* vertex);
   
-  ~NParticleEvent();
+  ~NParticleEvent(){}
 
 
 
@@ -70,6 +70,10 @@ public:
   void toGJ();
 
 
+  unsigned int nStates() const {return _NPStates.size();} //< returns number of states
+  unsigned int nParticles() const {return _fsparticles.size();} //< returns number of final state particles
+  
+
   /*** @brief returns NParticle(Sub)State
    */
   const NParticleState& getState(unsigned int i) const {return _NPStates[i];}
@@ -80,9 +84,9 @@ private:
   /*** @brief Final state particle momenta
    */
   TClonesArray* _fsmomenta; 
-  double* _fs_charges;
+  std::vector<int>* _fs_charges;
   TLorentzVector* _beam;
-  double* _qbeam;
+  int* _qbeam;
   TVector3* _vertex;
 
   /*** @brief vector to hold all the substates

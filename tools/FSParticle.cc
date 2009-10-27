@@ -58,7 +58,7 @@ FSParticle::FSParticle()
   
 FSParticle::FSParticle(const TLorentzVector& p,
 		       const TVector3& v,
-		       double q)
+		       int q)
 : _p(p), _v(v), _q(q)
 {}
 

@@ -53,7 +53,7 @@ public:
   FSParticle();
   FSParticle(const TLorentzVector& p,
 	     const TVector3& v,
-	     double q);
+	     int q);
 
   virtual ~FSParticle(){}
 
@@ -63,7 +63,7 @@ public:
   // Accessors -----------------------
   const TLorentzVector& p() const {return _p;}
   const TVector3& v() const {return _v;}
-  double q() const {return _q;}
+  int q() const {return _q;}
 
   bool IsEqual(FSParticle* pi) {return (*this)==(*pi);}
   
@@ -75,7 +75,7 @@ private:
   // Private Data Members ------------
   TLorentzVector _p; // 4-momentum
   TVector3 _v; // vertex
-  double _q; // charge
+  int _q; // charge
 
 
   // Private Methods -----------------

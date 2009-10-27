@@ -46,8 +46,6 @@
 
 // Class Member definitions -----------
 
-ClassImp(NParticleState)
-
 
 NParticleState::NParticleState()
   : _n(0), _q(0), _p(0,0,0,0), _beam(0,0,0,0)
@@ -77,7 +75,7 @@ NParticleState::p() const
 {
   TLorentzVector result;
   //std::cout<<_fspart.GetEntriesFast()<<"   "<<_n<<std::endl;
-  for(int i=0;i<_n;++i){
+  for(unsigned int i=0;i<_n;++i){
     FSParticle* pa=_fspart.at(i);
     if(pa!=NULL)result+=pa->p();
     else std::cout<<"pion not found!"<<std::endl;
@@ -106,19 +104,19 @@ NParticleState::rapidity()
 }
 
 TLorentzVector 
-NParticleState::pfs(int i) const 
+NParticleState::pfs(unsigned int i) const 
 {
   if(i<_n)return _fspart.at(i)->p();
   else return TLorentzVector();
 }
 
-double
+int
 NParticleState::qabs() const 
 {
-  double result=0;
-  for(int i=0;i<_n;++i){
+  int result=0;
+  for(unsigned int i=0;i<_n;++i){
     FSParticle* pa=_fspart.at(i);
-    if(pa!=NULL)result+=fabs(pa->q());
+    if(pa!=NULL)result+=abs(pa->q());
     else std::cout<<"pion not found!"<<std::endl;
   }
   return result;
@@ -128,7 +126,7 @@ TVector3
 NParticleState::vertex() const
 {
   TVector3 result;
-  for(int i=0;i<_n;++i){
+  for(unsigned int i=0;i<_n;++i){
     FSParticle* pa=_fspart.at(i);
     if(pa!=NULL)result+=pa->v();
   }
@@ -147,12 +145,12 @@ NParticleState::Exclusive(double d){
 bool 
 NParticleState::isSubstate(NParticleState* motherstate){
   // check if all fspart in this state are also part of the mother
-  for(int i=0;i<_n;++i){//loop over fspart
+  for(unsigned int i=0;i<_n;++i){//loop over fspart
     FSParticle* myp=getParticle(i);
     //loop over fspart in mother
-    int nm=motherstate->n();
+    unsigned int nm=motherstate->n();
     bool found=false;
-    for(int j=0;j<nm;++j){ // loop mother fspart
+    for(unsigned int j=0;j<nm;++j){ // loop mother fspart
       if(myp->IsEqual(motherstate->getParticle(j))){
 	found=true;
 	//std::cout<<"found pion "<<i<<" as pion "<<j<<" in mother"<<std::endl;
@@ -172,11 +170,11 @@ NParticleState::isSubstate(NParticleState* motherstate){
 bool 
 NParticleState::isDisjunctFrom(NParticleState* isobar){
   // check if all fspart in this state are not equal from partner
-  for(int i=0;i<_n;++i){//loop over fspart
+  for(unsigned int i=0;i<_n;++i){//loop over fspart
     FSParticle* myp=getParticle(i);
     //loop over fspart in mother
-    int nm=isobar->n();
-    for(int j=0;j<nm;++j){ // loop mother fspart
+    unsigned int nm=isobar->n();
+    for(unsigned int j=0;j<nm;++j){ // loop mother fspart
       if(myp->IsEqual(isobar->getParticle(j))){
 	return false;
       }

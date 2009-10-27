@@ -57,12 +57,12 @@ public:
   // Operators
 
   // Accessors -----------------------
-  int n() const {return _n;}
-  double q() const {return _q;} // total charge
-  double qabs() const; // summed abs charge 
+  unsigned int n() const {return _n;}
+  int q() const {return _q;} // total charge
+  int qabs() const; // summed abs charge 
   TLorentzVector p() const; // Momentum of NParticleState
-  TLorentzVector pfs(int i) const; // Momentum of ith daughter particle;
-  FSParticle* getParticle(int i) const {return _fspart.at(i);}
+  TLorentzVector pfs(unsigned int i) const; // Momentum of ith daughter particle;
+  FSParticle* getParticle(unsigned int i) const {return _fspart.at(i);}
   double Q2(); // momentum transfer to target
   double t(){return -Q2();}  // momentum transfer to target
   TVector3 vertex() const;  // Vertex
@@ -82,8 +82,8 @@ public:
 private:
 
   // Private Data Members ------------
-  int _n; // number of pions
-  double _q; // total charge
+  unsigned int _n; // number of particles
+  int _q; // total charge
   TLorentzVector _p; // total momentum
   TLorentzVector _beam; 
   std::vector<FSParticle*> _fspart; // 4-vectors final state particles
