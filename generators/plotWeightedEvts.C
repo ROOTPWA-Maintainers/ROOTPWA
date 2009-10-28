@@ -6,170 +6,246 @@
 #include "TClonesArray.h"
 #include "TROOT.h"
 #include "TMath.h"
+#include "TPad.h"
 #include "TCanvas.h"
 #include <iostream>
+#include <vector>
 #include "NParticleEvent.h"
 
 
 using namespace std; 
 
-/*@brief Transform collection of final state momenta into Gottfried Jackson Frame
- */
-void
-toGJ(TLorentzVector* beam, TClonesArray* particles, unsigned int n){
-  // calculate center of mass vector
-  TLorentzVector p(0,0,0,0);
-  for(unsigned int i=0;i<n;++i){
-    TLorentzVector* pa=(TLorentzVector*)particles->At(i);
-    p+=*pa;
-  }
 
-  TLorentzVector tempX=p;
-  // rotate event into scattering plane
-  // get normal vector
-  TVector3 y(0,1,0);
-  TVector3 N=beam->Vect().Cross(tempX.Vect());
-  TVector3 rot=N.Cross(y);
-  TRotation t;
-  double a=N.Angle(y);
-  t.Rotate(a,rot);
-  //t.SetXEulerAngles(N.Phi(),N.Theta()-TMath::Pi()*0.5,-TMath::Pi()*0.5);
-  TLorentzRotation T(t);
-  TLorentzRotation L1(T);
-  tempX*=T;
-  //tempX.Vect().Print();
-  beam->Transform(T);
-  //_beamPi.p().Vect().Print();
-
-  // boost to X rest frame
-  TVector3 boost=-tempX.BoostVector();
-  TLorentzRotation b;
-  b.Boost(boost);
-  tempX*=b;
-  //tempX.Vect().Print();
-  beam->Transform(b);
-
-  // put beam along z-axis
-  TVector3 beamdir=beam->Vect();
-  //std::cout<<"beamDir before rotation:";beamdir.Print();
-  a=beamdir.Angle(TVector3(0,0,1));
-  //std::cout<<"angle="<<a<<std::endl;
-  TRotation t2;
-  t2.Rotate(a,TVector3(0,1,0));
-  T=TLorentzRotation(t2);
-  beam->Transform(T);
-
- 
-  for(unsigned int i=0;i<n;++i){
-    TLorentzVector* pa=(TLorentzVector*)particles->At(i);
-     pa->Transform(L1);
-     pa->Transform(b);
-     pa->Transform(T);
-  }
-
-}
-
-
-void plotWeightedEvents(TTree* tr, double maxw=1){
+void plotWeightedEvents(TTree* mctr, TTree* datatr){
 
 gROOT->SetStyle("Plain");
 
-TH1D* h2pi=new TH1D("h2pi","2 pion mass",200,0,1.4);
-TH1D* h4pi=new TH1D("h4pi","4 pion mass",200,0.8,2.0);
+ vector<TH1D*> hMIsobar;
+ TH1D* hMIsobarMC=new TH1D("hMIsobarMC","Isobar Mass (MC)",100,0.8,2.0);
+ hMIsobar.push_back(hMIsobarMC);
+ TH1D* hMIsobarData=new TH1D("hMIsobarData","Isobar mass (DATA)",100,0.8,2.0);
+ hMIsobar.push_back(hMIsobarData);
+
+ vector<TH1D*> hMIsobar2;
+ TH1D* hMIsobar2MC=new TH1D("hMIsobar2MC","Isobar Mass (MC)",100,0.4,2.0);
+ hMIsobar2.push_back(hMIsobar2MC);
+ TH1D* hMIsobar2Data=new TH1D("hMIsobar2Data","Isobar mass (DATA)",100,0.4,2.0);
+ hMIsobar2.push_back(hMIsobar2Data);
 
 
-TH1D* hGJ=new TH1D("hGJ","Cos Gottfried-Jackson Theta",80,-1,1);
-TH1D* hGJ2=new TH1D("hGJ2","Cos Gottfried-Jackson Theta",80,-1,1);
-TH1D* hTY=new TH1D("hTY","Treiman-Yang Phi",80,-TMath::Pi(),TMath::Pi());
+vector<TH1D*> hMIsobar3;
+ TH1D* hMIsobar3MC=new TH1D("hMIsobar3MC","Isobar Mass (MC)",100,0.2,1.8);
+ hMIsobar3.push_back(hMIsobar3MC);
+ TH1D* hMIsobar3Data=new TH1D("hMIsobar3Data","Isobar mass (DATA)",100,0.2,1.8);
+ hMIsobar3.push_back(hMIsobar3Data);
 
-double weight;
- double maxweight=0; 
-  TClonesArray* p=new TClonesArray("TLorentzVector");
-  TLorentzVector* beam=NULL;
-  int qbeam;
-  std::vector<int>* q=NULL; 
-  tr->SetBranchAddress("weight",&weight);
-  tr->SetBranchAddress("p",&p);
-  tr->SetBranchAddress("beam",&beam);
-  tr->SetBranchAddress("qbeam",&qbeam);
-  tr->SetBranchAddress("q",&q);
+
+  vector<TH1D*> hGJ;
+ TH1D* hGJMC=new TH1D("hGJMC","Cos Gottfried-Jackson Theta (MC)",40,-1,1);
+ hGJ.push_back(hGJMC);
+ TH1D* hGJData=new TH1D("hGJData","Cos Gottfried-Jackson Theta (DATA)",40,-1,1); hGJ.push_back(hGJData);
+
+  vector<TH1D*> hGJ2;
+ TH1D* hGJ2MC=new TH1D("hGJ2MC","Cos Gottfried-Jackson Theta (MC)",40,-1,1);
+ hGJ2.push_back(hGJ2MC);
+ TH1D* hGJ2Data=new TH1D("hGJ2Data","Cos Gottfried-Jackson Theta (DATA)",40,-1,1); hGJ2.push_back(hGJ2Data);
+
+  vector<TH1D*> hGJ3;
+ TH1D* hGJ3MC=new TH1D("hGJ3MC","Cos Gottfried-Jackson Theta (MC)",40,-1,1);
+ hGJ3.push_back(hGJ3MC);
+ TH1D* hGJ3Data=new TH1D("hGJ3Data","Cos Gottfried-Jackson Theta (DATA)",40,-1,1); hGJ3.push_back(hGJ3Data);
 
  
-  TVector3 vertex;
-
-  NParticleEvent event(p,q,beam,&qbeam,&vertex);
-
-
-unsigned int nevt=tr->GetEntries();	
-for(unsigned int i=0;i<nevt;++i){
-	tr->GetEntry(i);
-	
-	event.refresh();
-
-	if(weight>maxweight)maxweight=weight;
-	weight/=maxw;
-	// transform into GJ F
-	toGJ(beam,p,p->GetEntries());
-	event.toGJ();
-
-	// loop over all states that contain n-1 final state particles
-	// and plot GJ angles
-	unsigned int npart=event.nParticles();
-	unsigned int nstates=event.nStates();
-	for(unsigned int is=0;is<nstates;++is){
-	  const NParticleState& state=event.getState(is);
-	  if(state.n()==npart-1 && state.q()==0){
-	   
-	    hGJ2->Fill(state.p().CosTheta(),weight);
-	    h4pi->Fill(state.p().M(),weight);
-	  }
-	}
+ vector<TH1D*> hTY;
+ TH1D* hTYMC=new TH1D("hTYMC","Treiman-Yang Phi (MC)",80,-TMath::Pi(),TMath::Pi());
+ TH1D* hTYData=new TH1D("hTYMC","Treiman-Yang Phi (DATA)",80,-TMath::Pi(),TMath::Pi());
+ hTY.push_back(hTYMC);
+ hTY.push_back(hTYData);
 
 
-	TLorentzVector pi2;
+vector<TH1D*> hTY2;
+ TH1D* hTY2MC=new TH1D("hTY2MC","Treiman-Yang Phi (MC)",80,-TMath::Pi(),TMath::Pi());
+ TH1D* hTY2Data=new TH1D("hTY2MC","Treiman-Yang Phi (DATA)",80,-TMath::Pi(),TMath::Pi());
+ hTY2.push_back(hTY2MC);
+ hTY2.push_back(hTY2Data);
 
-	TLorentzVector pi3;
-
-	TLorentzVector* pi=(TLorentzVector*)p->At(0);
-	pi2=*pi;
-	pi3+= *pi;
-	pi=(TLorentzVector*)p->At(1);
-	pi3+= *pi;
-	pi2+=*pi;
-
-
-	pi=(TLorentzVector*)p->At(1);
-	pi2=*pi;
-	pi=(TLorentzVector*)p->At(2);
-	pi3+= *pi;
-	pi2+=*pi;
-	//h2pi->Fill(pi2.M(),weight);
+vector<TH1D*> hTY3;
+ TH1D* hTY3MC=new TH1D("hTY3MC","Treiman-Yang Phi (MC)",80,-TMath::Pi(),TMath::Pi());
+ TH1D* hTY3Data=new TH1D("hTY3MC","Treiman-Yang Phi (DATA)",80,-TMath::Pi(),TMath::Pi());
+ hTY3.push_back(hTY3MC);
+ hTY3.push_back(hTY3Data);
 
 
+ double avweight=1; 
 
-	
-	
-	pi=(TLorentzVector*)p->At(0);
-	hGJ->Fill(pi->CosTheta(),weight);
-	hTY->Fill(pi->Phi(),weight);
+//Loop both over data and mc tree.
+ for(unsigned int itree=0;itree<2;++itree){
+   TTree* tr= itree==0 ? mctr : datatr;
+   if(tr==NULL)continue;
 
-	pi=(TLorentzVector*)p->At(2);
-	hGJ->Fill(pi->CosTheta(),weight);
-	hTY->Fill(pi->Phi(),weight);
-	
-	
-}// end loop over events
- cout << "Maxweight=" << maxweight << endl; 
-   
- TCanvas* c=new TCanvas("Predict","Weighted Events",10,10,500,500);
- c->Divide(2,2);
+   double weight=1;
+   double maxweight=0; 
+   TClonesArray* p=new TClonesArray("TLorentzVector");
+   TLorentzVector* beam=NULL;
+   int qbeam;
+   std::vector<int>* q=NULL; 
+   if (itree==0)tr->SetBranchAddress("weight",&weight);
+   tr->SetBranchAddress("p",&p);
+   tr->SetBranchAddress("beam",&beam);
+   tr->SetBranchAddress("qbeam",&qbeam);
+   tr->SetBranchAddress("q",&q);
+
+ 
+   TVector3 vertex;
+
+   NParticleEvent event(p,q,beam,&qbeam,&vertex);
+
+
+   unsigned int nevt=tr->GetEntries();	
+   for(unsigned int i=0;i<nevt;++i){
+     tr->GetEntry(i);
+     
+     event.refresh();
+     
+     if(weight>maxweight)maxweight=weight;
+     if(itree==0)avweight+=weight;
+     // transform into GJ 
+     event.toGJ();
+     
+     // loop over all states that contain n-1 final state particles
+     // and plot GJ angles
+     unsigned int npart=event.nParticles();
+     unsigned int nstates=event.nStates();
+     for(unsigned int is=0;is<nstates;++is){
+       const NParticleState& state=event.getState(is);
+       if(state.n()==npart-1 && state.q()==0){
+	 
+	 hGJ[itree]->Fill(state.p().CosTheta(),weight);
+	 hTY[itree]->Fill(state.p().Phi(),weight);
+	 hMIsobar[itree]->Fill(state.p().M(),weight);
+	 
+       }
+       else if(state.n()==npart-2 && state.q()==-1){
+	 hGJ2[itree]->Fill(state.p().CosTheta(),weight);
+	 hTY2[itree]->Fill(state.p().Phi(),weight);
+	 hMIsobar2[itree]->Fill(state.p().M(),weight);
+       }
+       else if(state.n()==npart-3 && state.q()==0){
+	 hGJ3[itree]->Fill(state.p().CosTheta(),weight);
+	 hTY3[itree]->Fill(state.p().Phi(),weight);
+	 hMIsobar3[itree]->Fill(state.p().M(),weight);
+       }
+     }
+     
+     
+     
+   }// end loop over events
+   if(itree==0)avweight/=(double)nevt;
+   cout << "Maxweight=" << maxweight << endl; 
+   cout << "Average weight=" << avweight << endl; 
+ }
+ TCanvas* c=new TCanvas("Predict","Weighted Events",10,10,600,800);
+ c->Divide(3,3);
  c->cd(1);
- h4pi->Draw();
+ hMIsobar[0]->SetLineColor(kRed);
+ hMIsobar[0]->Draw();
+ double totMC=hMIsobar[0]->Integral();
+ double totDATA=hMIsobar[1]->Integral();
+ hMIsobar[1]->Scale(totMC/totDATA);
+ hMIsobar[1]->Draw("same");
+ hMIsobar[0]->GetYaxis()->SetRangeUser(0,hMIsobar[0]->GetMaximum()*1.1);
+ gPad->Update();
 
-  c->cd(2);
- hGJ2->Draw();
+ c->cd(2);
+ hMIsobar2[0]->SetLineColor(kRed);
+ hMIsobar2[0]->Draw();
+ totMC=hMIsobar2[0]->Integral();
+ totDATA=hMIsobar2[1]->Integral();
+ hMIsobar2[1]->Scale(totMC/totDATA);
+ hMIsobar2[1]->Draw("same");
+ hMIsobar2[0]->GetYaxis()->SetRangeUser(0,hMIsobar2[0]->GetMaximum()*1.1);
+ gPad->Update();
+ 
  c->cd(3);
- hGJ->Draw();
-  c->cd(4);
- hTY->Draw();
+ hMIsobar3[0]->SetLineColor(kRed);
+ hMIsobar3[0]->Draw();
+ totMC=hMIsobar3[0]->Integral();
+ totDATA=hMIsobar3[1]->Integral();
+ hMIsobar3[1]->Scale(totMC/totDATA);
+ hMIsobar3[1]->Draw("same");
+ hMIsobar3[0]->GetYaxis()->SetRangeUser(0,hMIsobar3[0]->GetMaximum()*1.1);
+ gPad->Update();
+ 
+
+
+ c->cd(4);
+ hGJ[0]->SetLineColor(kRed);
+ hGJ[0]->Draw();
+ 
+ totMC=hGJ[0]->Integral();
+ totDATA=hGJ[1]->Integral();
+ hGJ[1]->Scale(totMC/totDATA);
+ hGJ[1]->Draw("same");
+ hGJ[0]->GetYaxis()->SetRangeUser(0,hGJ[0]->GetMaximum()*1.1);
+ gPad->Update();
+
+ c->cd(5);
+ hGJ2[0]->SetLineColor(kRed);
+ hGJ2[0]->Draw();
+ 
+ totMC=hGJ2[0]->Integral();
+ totDATA=hGJ2[1]->Integral();
+ hGJ2[1]->Scale(totMC/totDATA);
+ hGJ2[1]->Draw("same");
+ hGJ2[0]->GetYaxis()->SetRangeUser(0,hGJ2[0]->GetMaximum()*1.1);
+ gPad->Update();
+
+c->cd(6);
+ hGJ3[0]->SetLineColor(kRed);
+ hGJ3[0]->Draw();
+ 
+ totMC=hGJ3[0]->Integral();
+ totDATA=hGJ3[1]->Integral();
+ hGJ3[1]->Scale(totMC/totDATA);
+ hGJ3[1]->Draw("same");
+ hGJ3[0]->GetYaxis()->SetRangeUser(0,hGJ3[0]->GetMaximum()*1.1);
+ gPad->Update();
+
+
+ c->cd(7);
+ hTY[0]->SetLineColor(kRed);
+ hTY[0]->Draw();
+ 
+ totMC=hTY[0]->Integral();
+ totDATA=hTY[1]->Integral();
+ hTY[1]->Scale(totMC/totDATA);
+ hTY[1]->Draw("same");
+ hTY[0]->GetYaxis()->SetRangeUser(0,hTY[0]->GetMaximum()*1.1);
+ gPad->Update();
+
+ c->cd(8);
+ hTY2[0]->SetLineColor(kRed);
+ hTY2[0]->Draw();
+ 
+ totMC=hTY2[0]->Integral();
+ totDATA=hTY2[1]->Integral();
+ hTY2[1]->Scale(totMC/totDATA);
+ hTY2[1]->Draw("same");
+ hTY2[0]->GetYaxis()->SetRangeUser(0,hTY2[0]->GetMaximum()*1.1);
+ gPad->Update();
+
+
+c->cd(9);
+ hTY3[0]->SetLineColor(kRed);
+ hTY3[0]->Draw();
+ 
+ totMC=hTY3[0]->Integral();
+ totDATA=hTY3[1]->Integral();
+ hTY3[1]->Scale(totMC/totDATA);
+ hTY3[1]->Draw("same");
+ hTY3[0]->GetYaxis()->SetRangeUser(0,hTY3[0]->GetMaximum()*1.1);
+ gPad->Update();
+
+ 
+ 
 }
