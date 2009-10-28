@@ -103,10 +103,10 @@ plotAllIntensities(TTree*        tree,                  // TFitResult tree
     return;
   }
   TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitbin", &massBin);
+  tree->SetBranchAddress("fitResult", &massBin);
   const int nmbMassBins = tree->GetEntries();
   tree->GetEntry(0);
-  const int nmbWaves = massBin->nmbWaves();  // assumes that number of waves is the same for all bins
+  const int nmbWaves = massBin->nmbWaves() -1;  // assumes that number of waves is the same for all bins
   cout << "Drawing wave intensities from tree '" << tree->GetName() << "' for "
        << nmbWaves << " waves in " << nmbMassBins << " mass bins." << endl;
 
@@ -125,6 +125,9 @@ plotAllIntensities(TTree*        tree,                  // TFitResult tree
     }
   }
  
+  cout << "Calculated total intensities" << endl;
+
+
   // sort waves by intensities (normalized to total intensity) in descending order
   vector<pair<string, double> > waveIntensities(nmbWaves, pair<string, double>("", 0));
   for (int i = 0; i < nmbWaves; ++i) {
@@ -132,15 +135,24 @@ plotAllIntensities(TTree*        tree,                  // TFitResult tree
     const string waveName     = massBin->waveName(i).Data();
     waveIntensities[i] = make_pair(waveName, relIntensity);
   }
+
+  cout << "Sorting acording to intensity" << endl;
   sort(waveIntensities.begin(), waveIntensities.end(), compareIntensities);
 
   // group waves according to their JPC
+  cout << "Grouping to JPC" << endl;
   map<string, int> nmbWavesPerJpc;  // number of waves for each JPC
   for (int i = 0; i < nmbWaves; ++i) {
+    cout << i << "/" << nmbWaves << endl;
     const string waveName = massBin->waveName(i).Data();
+    cout << waveName;
     const string jpc      = (waveName != "flat") ? string(waveName, 2, 3) : waveName;
+    cout << "   " << jpc << endl;
     ++nmbWavesPerJpc[jpc];
   }
+
+  cout << "finished" << endl;
+  
 
   // calculate optimum canvas subdivision
   const int nmbPadsHor     = (int)ceil(sqrt(nmbPadsPerCanvMin));
@@ -148,6 +160,9 @@ plotAllIntensities(TTree*        tree,                  // TFitResult tree
   const int nmbPadsPerCanv = nmbPadsHor * nmbPadsVert;
 
   cout << "    Creating canvases for all JPCs ..." << endl;
+  cout.flush();
+
+
   map<string, TCanvas*> canvases;
   for (map<string, int>::const_iterator i = nmbWavesPerJpc.begin(); i != nmbWavesPerJpc.end(); ++i) {
     const string jpc     = i->first;

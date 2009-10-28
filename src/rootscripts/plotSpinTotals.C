@@ -36,9 +36,10 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
-
+#include "TFile.h"
 #include "TTree.h"
 #include "TStyle.h"
+#include "TString.h"
 #include "TCanvas.h"
 #include "TROOT.h"
 #include "TGraphErrors.h"
@@ -51,8 +52,11 @@ using namespace std;
 
 void
 plotSpinTotals(TTree*    tree,  // TFitBin tree
-	       const int color = kBlack)
+	       const int color = kBlack,
+	       const string histofile = "spintotals.root")
 {
+  TFile* outfile=TFile::Open(histofile.c_str(),"RECREATE");
+
   const unsigned int nmbPadsPerCanvMin = 6;  // minimum number of pads each canvas is subdivided into
   // define set of spin totals
   const string waves[] = {"",  // total intensity
@@ -60,7 +64,9 @@ plotSpinTotals(TTree*    tree,  // TFitBin tree
 			  "0++0-",
 			  "0-+0+",
 			  "1++0+",
+			  "1++1+",
 			  "2-+0+",
+			  "2-+1+",
 			  "2++0-",
 			  "2++1+",
 			  "1-+0-",
@@ -126,10 +132,18 @@ plotSpinTotals(TTree*    tree,  // TFitBin tree
 				       tree->GetV2());   // intensity error
     // plot graph
     canv->cd(++countPad);
-    if (waves[i] != "")
+    if (waves[i] != ""){
       g->SetTitle(waves[i].c_str());
-    else
+      TString gname="g";
+      gname.Append(waves[i]);
+      gname.ReplaceAll("+","p");
+      gname.ReplaceAll("-","m");
+      g->SetName(gname);
+    }
+    else { 
       g->SetTitle("total");
+      g->SetName("total");
+    }
     g->GetXaxis()->SetTitle("Mass [GeV]");
     g->GetYaxis()->SetTitle("Intensity");
     // compute maximum for y-axis
@@ -143,6 +157,8 @@ plotSpinTotals(TTree*    tree,  // TFitBin tree
     TLine line;
     line.SetLineStyle(3);
     line.DrawLine(g->GetXaxis()->GetXmin(), 0, g->GetXaxis()->GetXmax(), 0);
+    
+    g->Write();
 
     if (countPad == nmbPadsPerCanv) {
       canv->Update();
@@ -150,4 +166,6 @@ plotSpinTotals(TTree*    tree,  // TFitBin tree
       ++countCanv;
     }
   }
+
+  outfile->Close();
 }

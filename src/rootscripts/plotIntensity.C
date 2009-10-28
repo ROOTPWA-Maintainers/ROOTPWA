@@ -65,7 +65,7 @@ plotIntensity(TTree*        tree,           // TFitResult tree
 
   // call plotIntensity with wave index
   TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitbin", &massBin);
+  tree->SetBranchAddress("fitResult", &massBin);
   tree->GetEntry(0);
   for (unsigned int i = 0; i < massBin->nmbWaves(); ++i)
     if (massBin->waveName(i) == waveName)
@@ -92,7 +92,7 @@ plotIntensity(TTree*        tree,           // TFitResult tree
   }
   // get wave name
   TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitbin", &massBin);
+  tree->SetBranchAddress("fitResult", &massBin);
   tree->GetEntry(0);
   const string waveName = massBin->waveName(waveIndex).Data();
   cout << "Plotting wave intensity for wave '" << waveName << "' [" << waveIndex << "]";
