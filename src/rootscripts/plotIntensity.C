@@ -56,7 +56,7 @@ plotIntensity(TTree*        tree,           // TFitResult tree
 	      const char*   drawOption,     // draw option for graph
 	      const double  normalization,  // scale factor for intensities
 	      const int     graphColor,     // color of line and marker
-	      const bool    saveEps)        // if set, EPS file with name waveId is created
+	      const bool    saveEps)        // if set, EPS file with name of wave is created
 {
   if (!tree) {
     cerr << "plotIntensity() error: Null pointer to tree. Exiting." << endl;
@@ -84,7 +84,7 @@ plotIntensity(TTree*        tree,           // TFitResult tree
 	      const char*   drawOption,     // draw option for graph
 	      const double  normalization,  // scale factor for intensities
 	      const int     graphColor,     // color of line and marker
-	      const bool    saveEps)        // if set, EPS file with name waveId is created
+	      const bool    saveEps)        // if set, EPS file with name of wave is created
 {
   if (!tree) {
     cerr << "plotIntensity() error: Null pointer to tree. Exiting." << endl;

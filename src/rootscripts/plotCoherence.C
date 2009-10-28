@@ -65,7 +65,7 @@ plotCoherence(TTree*        tree,        // TFitResult tree
 
   // call plotCoherence with wave indices
   TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitbin", &massBin);
+  tree->SetBranchAddress("fitResult", &massBin);
   tree->GetEntry(0);
   const string waveNames[2]   = {waveNameA, waveNameB};
   int          waveIndices[2] = {-1, -1};
@@ -101,7 +101,7 @@ plotCoherence(TTree*        tree,        // TFitResult tree
   }
   // get wave names
   TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitbin", &massBin);
+  tree->SetBranchAddress("fitResult", &massBin);
   tree->GetEntry(0);
   const string waveNameA = massBin->waveName(waveIndexA).Data();
   const string waveNameB = massBin->waveName(waveIndexB).Data();

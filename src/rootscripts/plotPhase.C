@@ -64,7 +64,7 @@ plotPhase(TTree*        tree,        // TFitResult tree
 
   // call plotPhase with wave indices
   TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitbin", &massBin);
+  tree->SetBranchAddress("fitResult", &massBin);
   tree->GetEntry(0);
   const string waveNames[2]   = {waveNameA, waveNameB};
   int          waveIndices[2] = {-1, -1};
@@ -100,7 +100,7 @@ plotPhase(TTree*        tree,        // TFitResult tree
   }
   // get wave names
   TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitbin", &massBin);
+  tree->SetBranchAddress("fitResult", &massBin);
   tree->GetEntry(0);
   const string waveNameA = massBin->waveName(waveIndexA).Data();
   const string waveNameB = massBin->waveName(waveIndexB).Data();
@@ -112,8 +112,8 @@ plotPhase(TTree*        tree,        // TFitResult tree
 
   // build and run TTree::Draw() expression
   stringstream drawExpr;
-  drawExpr << "phaseNew("     << waveIndexA << "," << waveIndexB << ")"
-	   << ":phaseErrNew(" << waveIndexA << "," << waveIndexB << ")"
+  drawExpr << "phase("     << waveIndexA << "," << waveIndexB << ")"
+	   << ":phaseErr(" << waveIndexA << "," << waveIndexB << ")"
 	   << ":massBinCenter() >> h" << waveIndexA << "_" << waveIndexB;
   cout << "    Running TTree::Draw() expression '" << drawExpr.str() << "' "
        << "on tree '" << tree->GetName() << "'" << endl;
