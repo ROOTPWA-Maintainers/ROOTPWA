@@ -33,7 +33,7 @@ SET(CMAKE_CXX_FLAGS "-g -O3 -Wall -Werror")
 SET(INCLUDE_DIRECTORIES
   $ENV{ROOTSYS}/include
   $ENV{PWA2000}/include
-  ${CMAKE_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/src
 )
 
 include_directories(${INCLUDE_DIRECTORIES})
@@ -97,7 +97,7 @@ FIND_PROGRAM(ROOT_CINT_EXECUTABLE
 
 ADD_CUSTOM_COMMAND(OUTPUT rootpwaDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR} TFitBin.h TFitResult.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
+      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src TFitBin.h TFitResult.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
 
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc)
 
