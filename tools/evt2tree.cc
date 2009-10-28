@@ -72,13 +72,13 @@ int main(int argc, char** argv) {
   TTree* outtree=new TTree("events","events");
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector beam;
-  double qbeam;
+  int qbeam;
   std::vector<int> q; // array of charges
 
   outtree->Branch("p",&p);
   outtree->Branch("beam",&beam);
   outtree->Branch("q",&q);
-  outtree->Branch("qbeam",&qbeam,"qbeam/i");
+  outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
 
   while(!(cin>>e).eof()) { // begin event loop
