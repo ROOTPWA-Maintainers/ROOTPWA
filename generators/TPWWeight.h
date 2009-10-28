@@ -12,6 +12,7 @@
 // Collaborating Class Headers -------
 #include <string>
 #include <vector>
+#include <map>
 #include <complex>
 #include <event.h>
 #include <Tgamp.h>
@@ -63,7 +64,7 @@ private:
   std::vector<std::vector<std::complex<double> > > m_amps;
 
   std::vector<Tgamp> m_gamp;
-
+  std::map<string,double> m_relphase;
   integral m_normInt;
 
   // Private Methods -----------------

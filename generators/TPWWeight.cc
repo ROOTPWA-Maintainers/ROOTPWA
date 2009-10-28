@@ -27,9 +27,27 @@ TPWWeight::addWave(const std::string& keyfilename,
   // check if this is a double amplitude (by isospin symmetry)
   if(keyfilename.find("+-",7)!=string::npos){
     cerr << "Decomposing " << keyfilename << endl;
-	// deccompose into components:
-    TString w1a=keyfilename;w1a.ReplaceAll("+-","+");w1a.ReplaceAll("-+","-");
-    TString w1b=keyfilename;w1b.ReplaceAll("+-","-");w1b.ReplaceAll("-+","+");
+    cerr << "What is the relative phase (0/pi):";
+    string select;
+    cin >> select;
+    if(select=="pi")m_relphase[keyfilename]=-1;
+    else m_relphase[keyfilename]=1;
+
+    // deccompose into components:
+    TString name(keyfilename.c_str());
+    int pos=name.Last('/');
+    TString w1a=name(pos+8,name.Length()-pos-8);
+   
+    w1a.ReplaceAll("+-","+");w1a.ReplaceAll("-+","-");
+    w1a.Prepend(name(0,pos+8));
+
+    TString w1b=name(pos+8,name.Length()-pos-8);
+    w1b.ReplaceAll("+-","-");w1b.ReplaceAll("-+","+");
+    w1b.Prepend(name(0,pos+8));
+
+    cerr << w1a << endl;
+    cerr << m_relphase[keyfilename] << endl;
+    cerr << w1b << endl;
 
     m_gamp[vectori].addWave(w1a.Data());
     m_waves[vectori].push_back(keyfilename);
@@ -99,6 +117,7 @@ TPWWeight::weight(event& e){
     unsigned int nwaves=m_waves[ivec].size();
     for(unsigned int iwaves=0;iwaves<nwaves;++iwaves){
       string w1=m_waves[ivec][iwaves];
+      
       //std::cerr << w1 << std::endl;
       //std::cerr.flush();
       w1.erase(0,w1.find_last_of("/")+1);
@@ -107,10 +126,11 @@ TPWWeight::weight(event& e){
       decayamp=m_gamp[ivec].Amp(iwaves,e);
      
       if(w1.find("+-",7)!=string::npos){ // brute force treatment of composed amplitudes!
+
 	// see addWave to understand bookkeeping!
 	// Here an isospin clebsch factor is missing
 	++iwaves;
-	decayamp+=m_gamp[ivec].Amp(iwaves,e);
+	decayamp+=m_relphase[m_waves[ivec][iwaves]]*m_gamp[ivec].Amp(iwaves,e);
       }
       //std::cerr << "..done"  << std::endl;
       double nrm=sqrt(m_normInt.val(w1,w1).real());
