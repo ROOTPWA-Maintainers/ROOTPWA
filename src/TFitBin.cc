@@ -418,6 +418,17 @@ TFitBin::PrintParameters() const {
 
 }
 
+void 
+TFitBin::printAmpsGenPW(ostream& s) const {
+ for(unsigned int i=0;i<_amps.size();++i){
+    s << _wavenames[i] << " "  
+      << _amps[i].Re() << " "
+      << _amps[i].Im() << endl;
+ }
+}
+
+
+
 
 void 
 TFitBin::getParameters(double* par) const {
