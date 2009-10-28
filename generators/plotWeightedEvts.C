@@ -41,37 +41,37 @@ vector<TH1D*> hMIsobar3;
 
 
   vector<TH1D*> hGJ;
- TH1D* hGJMC=new TH1D("hGJMC","Cos Gottfried-Jackson Theta (MC)",40,-1,1);
+ TH1D* hGJMC=new TH1D("hGJMC","Cos Gottfried-Jackson Theta (MC)",20,-1,1);
  hGJ.push_back(hGJMC);
- TH1D* hGJData=new TH1D("hGJData","Cos Gottfried-Jackson Theta (DATA)",40,-1,1); hGJ.push_back(hGJData);
+ TH1D* hGJData=new TH1D("hGJData","Cos Gottfried-Jackson Theta (DATA)",20,-1,1); hGJ.push_back(hGJData);
 
   vector<TH1D*> hGJ2;
- TH1D* hGJ2MC=new TH1D("hGJ2MC","Cos Gottfried-Jackson Theta (MC)",40,-1,1);
+ TH1D* hGJ2MC=new TH1D("hGJ2MC","Cos Gottfried-Jackson Theta (MC)",20,-1,1);
  hGJ2.push_back(hGJ2MC);
- TH1D* hGJ2Data=new TH1D("hGJ2Data","Cos Gottfried-Jackson Theta (DATA)",40,-1,1); hGJ2.push_back(hGJ2Data);
+ TH1D* hGJ2Data=new TH1D("hGJ2Data","Cos Gottfried-Jackson Theta (DATA)",20,-1,1); hGJ2.push_back(hGJ2Data);
 
   vector<TH1D*> hGJ3;
- TH1D* hGJ3MC=new TH1D("hGJ3MC","Cos Gottfried-Jackson Theta (MC)",40,-1,1);
+ TH1D* hGJ3MC=new TH1D("hGJ3MC","Cos Gottfried-Jackson Theta (MC)",20,-1,1);
  hGJ3.push_back(hGJ3MC);
- TH1D* hGJ3Data=new TH1D("hGJ3Data","Cos Gottfried-Jackson Theta (DATA)",40,-1,1); hGJ3.push_back(hGJ3Data);
+ TH1D* hGJ3Data=new TH1D("hGJ3Data","Cos Gottfried-Jackson Theta (DATA)",20,-1,1); hGJ3.push_back(hGJ3Data);
 
  
  vector<TH1D*> hTY;
- TH1D* hTYMC=new TH1D("hTYMC","Treiman-Yang Phi (MC)",80,-TMath::Pi(),TMath::Pi());
- TH1D* hTYData=new TH1D("hTYMC","Treiman-Yang Phi (DATA)",80,-TMath::Pi(),TMath::Pi());
+ TH1D* hTYMC=new TH1D("hTYMC","Treiman-Yang Phi (MC)",20,-TMath::Pi(),TMath::Pi());
+ TH1D* hTYData=new TH1D("hTYMC","Treiman-Yang Phi (DATA)",20,-TMath::Pi(),TMath::Pi());
  hTY.push_back(hTYMC);
  hTY.push_back(hTYData);
 
 
 vector<TH1D*> hTY2;
- TH1D* hTY2MC=new TH1D("hTY2MC","Treiman-Yang Phi (MC)",80,-TMath::Pi(),TMath::Pi());
- TH1D* hTY2Data=new TH1D("hTY2MC","Treiman-Yang Phi (DATA)",80,-TMath::Pi(),TMath::Pi());
+ TH1D* hTY2MC=new TH1D("hTY2MC","Treiman-Yang Phi (MC)",20,-TMath::Pi(),TMath::Pi());
+ TH1D* hTY2Data=new TH1D("hTY2MC","Treiman-Yang Phi (DATA)",20,-TMath::Pi(),TMath::Pi());
  hTY2.push_back(hTY2MC);
  hTY2.push_back(hTY2Data);
 
 vector<TH1D*> hTY3;
- TH1D* hTY3MC=new TH1D("hTY3MC","Treiman-Yang Phi (MC)",80,-TMath::Pi(),TMath::Pi());
- TH1D* hTY3Data=new TH1D("hTY3MC","Treiman-Yang Phi (DATA)",80,-TMath::Pi(),TMath::Pi());
+ TH1D* hTY3MC=new TH1D("hTY3MC","Treiman-Yang Phi (MC)",20,-TMath::Pi(),TMath::Pi());
+ TH1D* hTY3Data=new TH1D("hTY3MC","Treiman-Yang Phi (DATA)",20,-TMath::Pi(),TMath::Pi());
  hTY3.push_back(hTY3MC);
  hTY3.push_back(hTY3Data);
 
@@ -184,30 +184,31 @@ vector<TH1D*> hTY3;
  
  totMC=hGJ[0]->Integral();
  totDATA=hGJ[1]->Integral();
+ hGJ[1]->Sumw2();
  hGJ[1]->Scale(totMC/totDATA);
- hGJ[1]->Draw("same");
+ hGJ[1]->Draw("same E");
  hGJ[0]->GetYaxis()->SetRangeUser(0,hGJ[0]->GetMaximum()*1.1);
  gPad->Update();
 
  c->cd(5);
  hGJ2[0]->SetLineColor(kRed);
  hGJ2[0]->Draw();
- 
  totMC=hGJ2[0]->Integral();
  totDATA=hGJ2[1]->Integral();
+ hGJ2[1]->Sumw2();
  hGJ2[1]->Scale(totMC/totDATA);
- hGJ2[1]->Draw("same");
+ hGJ2[1]->Draw("same E");
  hGJ2[0]->GetYaxis()->SetRangeUser(0,hGJ2[0]->GetMaximum()*1.1);
  gPad->Update();
 
-c->cd(6);
+ c->cd(6);
  hGJ3[0]->SetLineColor(kRed);
  hGJ3[0]->Draw();
- 
  totMC=hGJ3[0]->Integral();
  totDATA=hGJ3[1]->Integral();
+ hGJ3[1]->Sumw2();
  hGJ3[1]->Scale(totMC/totDATA);
- hGJ3[1]->Draw("same");
+ hGJ3[1]->Draw("same E");
  hGJ3[0]->GetYaxis()->SetRangeUser(0,hGJ3[0]->GetMaximum()*1.1);
  gPad->Update();
 
@@ -218,19 +219,20 @@ c->cd(6);
  
  totMC=hTY[0]->Integral();
  totDATA=hTY[1]->Integral();
+ hTY[1]->Sumw2();
  hTY[1]->Scale(totMC/totDATA);
- hTY[1]->Draw("same");
+ hTY[1]->Draw("same E");
  hTY[0]->GetYaxis()->SetRangeUser(0,hTY[0]->GetMaximum()*1.1);
  gPad->Update();
 
  c->cd(8);
  hTY2[0]->SetLineColor(kRed);
  hTY2[0]->Draw();
- 
  totMC=hTY2[0]->Integral();
  totDATA=hTY2[1]->Integral();
+ hTY2[1]->Sumw2();
  hTY2[1]->Scale(totMC/totDATA);
- hTY2[1]->Draw("same");
+ hTY2[1]->Draw("same E");
  hTY2[0]->GetYaxis()->SetRangeUser(0,hTY2[0]->GetMaximum()*1.1);
  gPad->Update();
 
@@ -238,11 +240,11 @@ c->cd(6);
 c->cd(9);
  hTY3[0]->SetLineColor(kRed);
  hTY3[0]->Draw();
- 
  totMC=hTY3[0]->Integral();
  totDATA=hTY3[1]->Integral();
+ hTY3[1]->Sumw2();
  hTY3[1]->Scale(totMC/totDATA);
- hTY3[1]->Draw("same");
+ hTY3[1]->Draw("same E");
  hTY3[0]->GetYaxis()->SetRangeUser(0,hTY3[0]->GetMaximum()*1.1);
  gPad->Update();
 
