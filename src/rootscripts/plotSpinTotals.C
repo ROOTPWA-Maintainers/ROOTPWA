@@ -51,11 +51,11 @@ using namespace std;
 
 
 void
-plotSpinTotals(TTree*    tree,  // TFitBin tree
-	       const int color = kBlack,
-	       const string histofile = "spintotals.root")
+plotSpinTotals(TTree*        tree,  // TFitBin tree
+	       const int     color       = kBlack,
+	       const string& outFileName = "spintotals.root")
 {
-  TFile* outfile=TFile::Open(histofile.c_str(),"RECREATE");
+  TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 
   const unsigned int nmbPadsPerCanvMin = 6;  // minimum number of pads each canvas is subdivided into
   // define set of spin totals
@@ -134,15 +134,15 @@ plotSpinTotals(TTree*    tree,  // TFitBin tree
     canv->cd(++countPad);
     if (waves[i] != ""){
       g->SetTitle(waves[i].c_str());
-      TString gname="g";
-      gname.Append(waves[i]);
-      gname.ReplaceAll("+","p");
-      gname.ReplaceAll("-","m");
-      g->SetName(gname);
+      TString gName = "g";
+      gName.Append(waves[i]);
+      gName.ReplaceAll("+", "p");
+      gName.ReplaceAll("-", "m");
+      g->SetName(gName);
     }
     else { 
       g->SetTitle("total");
-      g->SetName("total");
+      g->SetName ("total");
     }
     g->GetXaxis()->SetTitle("Mass [GeV]");
     g->GetYaxis()->SetTitle("Intensity");
@@ -167,5 +167,5 @@ plotSpinTotals(TTree*    tree,  // TFitBin tree
     }
   }
 
-  outfile->Close();
+  outFile->Close();
 }

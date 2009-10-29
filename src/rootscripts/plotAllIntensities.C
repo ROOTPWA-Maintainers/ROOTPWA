@@ -35,13 +35,10 @@
 
 #include <iostream>
 #include <sstream>
-#include <string>
-#include <vector>
 #include <map>
 #include <algorithm>
 #include <cmath>
 
-#include "TTree.h"
 #include "TCanvas.h"
 #include "TROOT.h"
 #include "TFile.h"
@@ -55,6 +52,7 @@
 
 #include "plotIntensity.h"
 //#include "plotmcmc.h"
+#include "plotAllIntensities.h"
 
 
 using namespace std;
@@ -92,10 +90,10 @@ compareIntensities(const pair<string, double>& a,
 // plots all waves sorted by JPC and returns a list of wave names and
 // pointers to the pads they were drawn into
 vector<pair<string, TVirtualPad*> >
-plotAllIntensities(TTree*        tree,                  // TFitResult tree
-		   const bool    createPsFile = false,  // if true, plots are written to waves.ps
-		   const string& outPath      = "./",   // path for output files
-		   const bool    mcmc         = false)
+plotAllIntensities(TTree*        tree,          // TFitResult tree
+		   const bool    createPsFile,  // if true, plots are written to waves.ps
+		   const string& outPath,       // path for output files
+		   const bool    mcmc)
 {
   const double intensityThr      = 500;          // threshold for total intensity in mass bin
   const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
