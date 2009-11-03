@@ -8,13 +8,14 @@ SET=$2
 
 # build list
 cd $SET
+echo $PWD
 
 ls -1 $DATA/*.amp > $DATA/amplist
 ls -1 $DATA/OLD/*.amp >> $DATA/amplist
 
 for j in *SET ; do
 cd $j;
-#echo "Checking Set $j"
+echo "Checking Set $j"
   FOUND=0;
   for i in *.key ; do
       THISFOUND=0;
@@ -27,5 +28,5 @@ cd $j;
   if [ $FOUND -gt 0 ]; then echo "+++ Waveset $j incomplete!"; 
   else echo "Waveset $j fine!"; 
   fi
-cd - > /tmp/bla
+cd - 
 done

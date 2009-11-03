@@ -10,17 +10,17 @@
   partkey p5("pi-");
   
   //            name     iso1 iso2 l
-  partkey rh1("rho(770)",&p1,&p2,1);
+  partkey rh1("sigma",&p1,&p2,0);
   
-  partkey pi1("pi1(1600)",&p3,&rh1,1);
-  partkey rh2("rho(770)",&p4,&p5,1);
+  partkey a1("a1(1269)",&p4,&rh1,1);
+  partkey f1("f1(1285)",&p3,&a1,1,1);
   
  
-  int l=1; 
-  int s=2;
+  int l=2; 
+  int s=1;
 
-  int j=3;
-  int m=1;
+  int j=2;
+  int m=0;
   int eps=1; // reflectivity
   int p=-1;
   
@@ -29,7 +29,7 @@
     return;
   }
   
-  partkey X("X",&rh2,&pi1,l,s);
+  partkey X("X",&p5,&f1,l,s);
   wavekey mykey(j,p,m,eps,&X);
   
   std::cout<<mykey.wavename(false)<<std::endl;

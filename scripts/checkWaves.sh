@@ -11,7 +11,7 @@ cat /tmp/refamps
 
 cd $1
 for i in $1/*; do
-    cd $i/ACCAMPS/
+    cd $i/AMPS/
     ls *.amp > /tmp/diffamps
     echo "Diffing bin $i to bin $2: "
     diff /tmp/diffamps /tmp/refamps

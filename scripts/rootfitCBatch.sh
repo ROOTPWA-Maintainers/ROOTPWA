@@ -17,8 +17,9 @@ do
   UPPER=`echo $BIN | gawk -F"." '{ print $2 }' `;
   echo "$LOWER...$UPPER"
   cd $i/AMPS;
-  time pwaConstraintFit -q -w $FITDIR/$WLIST -c $FITDIR/$CONSTRFILE -o $FITDIR/$OUTFILE -S $FITDIR/$OUTFILE -r $RANK -l $LOWER -u $UPPER $RENORM -a $ACC -n $NORM
+  time pwaConstraintFit -q -w $FITDIR/$WLIST -c $FITDIR/$CONSTRFILE -o $FITDIR/$OUTFILE -r $RANK -l $LOWER -u $UPPER $RENORM -a $ACC -n $NORM
 
   #cd -;
 done ;
 
+#-S $FITDIR/$OUTFILE

@@ -301,7 +301,7 @@ int main(int argc, char** argv)
   minimizer->SetMaxIterations(maxNmbOfIterations);
   success = minimizer->Minimize();
   if (!success)
-    printWarn << "Minimization failed." << endl;
+    printWarn << "Minimization failed for mass bin " << binCenter << endl;
   if (runHesse) {
     printInfo << "Calculating Hessian matrix." << endl;
     //success = minimizer->Hesse();  // comes only with ROOT 5.24+

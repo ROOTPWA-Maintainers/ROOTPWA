@@ -27,13 +27,14 @@
 #include <string>
 #include <map>
 #include <complex>
+#include <time.h>
 #include "utilities.h"
 #include "TBranch.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TComplex.h"
-#include "TRandom.h"
+#include "TRandom3.h"
 #include "TFitBin.h"
 #include "TPWALikelihood.h"
 #include "TPWALikelihoodC.h"
@@ -46,6 +47,13 @@ char *progname;
 
 int main(int argc, char** argv){
   
+  time_t seed=1254410383;
+  //uint seed=1254410383;
+  time(&seed);
+  gRandom->SetSeed(seed);
+
+  cout << "Seed=" << (uint)seed << endl;
+
   TPWALikelihood<double> L;
   TPWALikelihoodC LC;
 
@@ -62,7 +70,7 @@ int main(int argc, char** argv){
   cout<<"L.NDIM()="<<L.NDim()<<"   LC.NDim()="<<LC.NDim()<<endl;
   if(L.NDim()!=LC.NDim())return 1;
 
-
+  
 
   LC.LoadAmplitudes();
 
@@ -87,15 +95,15 @@ int main(int argc, char** argv){
 
 
   // 12 parameters + flat
-  double x[13]={0.52707,0.21068,-0.604365,0.17596,-0.216668,-0.0990815,-0.348459,0.208961,0.02,0.03,0.44,0,0};
-  //double x[13]; for(int i=0;i<13;++i)x[i]=0.001;
+  //double x[13]={0.52707,0.21068,-0.604365,0.17596,-0.216668,-0.0990815,-0.348459,0.208961,0.02,0.03,0.44,0,0};
+  double x[L.NDim()]; for(unsigned int i=0;i<L.NDim();++i)x[i]=gRandom->Uniform(-5,5);
   //string a[13]={"a","b","c","d","e","f","g","h","i","j","k","l","flat"};
   double LL=L(x);
   double LLC=LC(x);
     
   std::cout<<"L(x)="<< maxPrecision(LL)<<std::endl;
   std::cout<<"LC(x)="<< maxPrecision(LLC)<<std::endl;
-  for(int i=0;i<13;++i) cout << x[i] << endl;
+  for(unsigned int i=0;i<L.NDim();++i) cout << x[i] << endl;
   if(fabs(LL-LLC)>1E-8) return 10;
 
   
@@ -104,11 +112,11 @@ int main(int argc, char** argv){
   // first numerical:
   double L1=L(x);
   double LC1=LC(x);
-  double h=1E-8;
-  double dxNum[13];
-  double dxAna[13];
-  double dxNumC[13];
-  double dxAnaC[13];
+  double h=1E-4;
+  double dxNum[L.NDim()];
+  double dxAna[L.NDim()];
+  double dxNumC[L.NDim()];
+  double dxAnaC[L.NDim()];
   bool problem=false;
   std::cout << " *** Check Numerical Gradient Old/New Likelihood" << std::endl;
   for(unsigned int i=0; i<L.NDim();++i){
@@ -117,9 +125,9 @@ int main(int argc, char** argv){
     double LC2=LC(x);
     dxNum[i]=(L2-L1)/h;
     dxNumC[i]=(LC2-LC1)/h;
-    if(2*fabs(dxNum[i]-dxNumC[i])/(fabs(dxNum[i])+fabs(dxNumC[i]))>0.0001){
-      cout << "dL/d" << i << "=" << maxPrecision(dxNum[i])
-	   << " NOT EQUAL TO (Threshold 0.01%) "
+    if(2*fabs(dxNum[i]-dxNumC[i])/(fabs(dxNum[i])+fabs(dxNumC[i]))>0.01){
+      cout << "Numerical dL/d" << i << "=" << maxPrecision(dxNum[i])
+	   << " NOT EQUAL TO (Threshold 1%) "
            << "dLC/d" << i << "=" << maxPrecision(dxNumC[i]) << endl;
       //problem=true;
     }
@@ -134,19 +142,24 @@ int main(int argc, char** argv){
   LC.FdF(x,FC,dxAnaC);
   for(unsigned int i=0; i<L.NDim();++i){
     if(2*fabs(dxNum[i]-dxAna[i])/(fabs(dxNum[i])+fabs(dxAna[i]))>0.0001){
-      problem=true;
+      //problem=true;
       cout << "ERR>>>" << endl;
     }
-    cout<< "dL/d"<<i<<"(num)="<<dxNum[i]<<endl;
-    cout<< "dL/d"<<i<<"(ana)="<<dxAna[i]<<endl;
+    cout<< "dL/d"<<i<<"(num)="<<maxPrecision(dxNum[i])<<endl;
+    cout<< "dL/d"<<i<<"(ana)="<<maxPrecision(dxAna[i])<<endl;
 
     if(2*fabs(dxNumC[i]-dxAnaC[i])/(fabs(dxNumC[i])+fabs(dxAnaC[i]))>0.0001){
-      problem=true;  
+      //problem=true;  
       cout << "ERR>>>" << endl;
     }
-    cout<< "dLC/d"<<i<<"(num)="<<dxNumC[i]<<endl;
-    cout<< "dLC/d"<<i<<"(ana)="<<dxAnaC[i]<<endl;
-    
+    cout<< "dLC/d"<<i<<"(num)="<<maxPrecision(dxNumC[i])<<endl;
+    cout<< "dLC/d"<<i<<"(ana)="<<maxPrecision(dxAnaC[i])<<endl;
+    if(2*fabs(dxAna[i]-dxAnaC[i])/(fabs(dxAna[i])+fabs(dxAnaC[i]))>0.0001){
+      cout << "Analytical dL/d" << i << "=" << maxPrecision(dxNum[i])
+	   << " NOT EQUAL TO (Threshold 0.01%) "
+           << "dLC/d" << i << "=" << maxPrecision(dxNumC[i]) << endl;
+      problem=true;
+    }
   }
   if(problem)return 12;
     

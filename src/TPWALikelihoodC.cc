@@ -839,9 +839,9 @@ TPWALikelihoodC::addConstraints(TString ConstraintsFile){
 	  cout << "Constraint wave " << slavewave << " not in waveset. Skipping phase constraint to " << masterwave << endl;
 	}
 	else { // checks succeed
-	  if(!_quiet) cout << "Constraining " << slavewave 
-			   << " to " << masterwave 
-			   << " with relative phase dPhi=" << phase << endl;
+	  cout << "Constraining " << slavewave 
+	       << " to " << masterwave 
+	       << " with relative phase dPhi=" << phase << endl;
 	  // INSTALL CONSTRAINT IN ALL RENKS
 	  for(unsigned int ir=0; ir<_rank; ++ir){
 	    (*_V[ir])[islave].setConstraint(new TPWAPhaseConstraint(phase,&(*_V[0])[imaster]));
@@ -857,6 +857,6 @@ TPWALikelihoodC::addConstraints(TString ConstraintsFile){
     } // end constraint block
   } // end loop through constraint config file
   cfile.close();
-  if(!_quiet)cout << "Installed "<<ccounter<< " contraints."<<endl;
+  cout << "Installed "<<ccounter<< " contraints."<<endl;
   return ccounter;
 }

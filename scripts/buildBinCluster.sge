@@ -11,7 +11,7 @@
 
 export DIARYFILE=$HOME/scratch/COMPASS/rootpwa/trunk/scripts/bindiary.txt
 
-export SET=A1SET
+export SET=F21565SET
 export KEY=$HOME/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/$SET
 echo "---- STARTING AMPLITUDE CALCULATIONS"; 
 echo "---- WAVESET: $KEY";
@@ -28,7 +28,7 @@ cd scripts/
 # find bin
 TEMPLIST=`mktemp -t dirlist.XXXXXX`
 #ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiData
-ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiLTData
+ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiLTData2
 #ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiMTData
 #ROOTDIR=/lustre/e18/user/sneubert/2008/5PiBins
 #ROOTDIR=/lustre/e18/user/sneubert/5PiMC/ACC_HT

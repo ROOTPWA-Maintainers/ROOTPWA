@@ -22,6 +22,10 @@ rm /tmp/unfinAmps
 rm /tmp/unfinPAmps
 rm /tmp/unfinAAmps
 
+rm /tmp/zeroAmps
+rm /tmp/zeroPAmps
+rm /tmp/zeroAAmps
+
 #cd $1;
 
 echo -e "Mass-Bin \t Num \t NumPSP  NumAcc \t FileSize \t PSPFileSize \t AccFileSize \tt NAN"
@@ -45,10 +49,12 @@ for i in $1*; do
     if [ $NUMAMP -gt 0 ]; then
     for j in $i/AMPS/*.amp; do
 	N=$(stat -c%s "$j"); # use filesize as proxy
+	#cat $j | vamp | wc
 	#echo $j $N;
         if [ $N -gt $MAXN ]; then MAXN=$N; fi;
 	if [ $N -lt $MINN ]; then MINN=$N; fi;
 	if [ $N -lt $MAXN -a $N -gt 0 ] ; then ls $j >> /tmp/unfinAmps; fi
+	if [ $N -lt $MAXN -a $N -eq 0 ] ; then ls $j >> /tmp/zeroAmps; fi
     done
     fi
     if [ $NUMPSPAMP -gt 0 ]; then
@@ -58,6 +64,7 @@ for i in $1*; do
         if [ $NMC -gt $MAXNMC ]; then MAXNMC=$NMC; fi;
 	if [ $NMC -lt $MINNMC ]; then MINNMC=$NMC; fi;
 	if [ $NMC -lt $MAXNMC -a $NMC -gt 0 ]; then ls $j >> /tmp/unfinPAmps; fi
+	if [ $NMC -lt $MAXNMC -a $NMC -eq 0 ]; then ls $j >> /tmp/zeroPAmps; fi
     done
     fi
     if [ $NUMACCAMP -gt 0 ]; then
@@ -67,6 +74,7 @@ for i in $1*; do
         if [ $NACC -gt $MAXNACC ]; then MAXNACC=$NACC; fi;
 	if [ $NACC -lt $MINNACC ]; then MINNACC=$NACC; fi;
 	if [ $NACC -lt $MAXNACC -a $NACC -gt 0 ]; then ls $j >> /tmp/unfinAAmps; fi
+	if [ $NACC -lt $MAXNACC -a $NACC -eq 0 ]; then ls $j >> /tmp/zeroAAmps; fi
     done
 fi
 
@@ -99,4 +107,10 @@ cat /tmp/unfinAmps
 cat /tmp/unfinPAmps
 cat /tmp/unfinAAmps
    
+echo "Zero size Files" 
+cat /tmp/zeroAmps
+cat /tmp/zeroPAmps
+cat /tmp/zeroAAmps
+   
+
 cd -;

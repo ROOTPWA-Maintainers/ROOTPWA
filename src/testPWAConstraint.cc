@@ -121,10 +121,10 @@ int main(int argc, char** argv){
   TMatrixD cov(LC.NDim(),LC.NDim());
   for(unsigned int i=0;i<LC.NDim();++i){
     cov[i][i]=1.2;
- //    if(i<LC.NDim()-1){
-//       cov[i][i+1]=0.5;
-//       cov[i+1][i]=0.5;
-//     }
+     if(i<LC.NDim()-1){
+       cov[i][i+1]=0.5;
+       cov[i+1][i]=0.5;
+     }
   }
   cout << "Assume Covariance Matrix:" << endl;
   cov.Print();

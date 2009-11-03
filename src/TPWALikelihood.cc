@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2009 Sebastian Neubert
+//    Copyright 2009 Sebastian Neubert, Boris Grube
 //
 //    This file is part of rootpwa
 //
@@ -29,6 +29,7 @@
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
+//      Boris Grube          Universe Cluster Munich
 //
 //
 //-----------------------------------------------------------
