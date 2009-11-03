@@ -10,19 +10,8 @@ For details see the file LICENSE contained in this package.
 
 For installation instructions refer to the INSTALL file.
 
+Documentation to the code can be found at
+http://rootpwa.sourceforge.net/
 
-
-### Workflow and data management instructions ###
-
-Organization of Data:
-		* There is one subdirectory for each mass bin
-		  with naming convention:
-			LowerBound.Upperbound (in MeV)
-			e.g.: 1000.1080
-		* The substructure then is
-			1000.1080
-				1000.1080.evt (event data in gamp format)
-				MC            (monte carlo data)
-				AMPS          (Amplitude files for real data)
-				PSPAMPS       (Phase Space Amps from MC)
-		* With pruning this will become more complicated!
+To join the project and get more information see also
+http://sourceforge.net/projects/rootpwa/

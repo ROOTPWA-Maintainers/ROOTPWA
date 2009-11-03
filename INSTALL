@@ -18,87 +18,18 @@ CMAKE:
   Some help can also be found here: http://www.vtk.org/Wiki/CMake_FAQ
 
 BNL PWA software PWA2000:
+  pwa2000 is now part of the rootpwa repository. 
+  It will be build automatically together with the rest of the code.
 
-  There is a now a tarball of the code available which greatly simplifies
-  the installation procedure described below. Contact sebastian for this.
-
-  (this code should eventually be distributed with rootpwa)
-  Available from http://ignatz.phys.rpi.edu/~jpc/john/Physics/PWA/pwa.html
-  Download libpp and pwa2000 tarballs (CVS access does not work)
- 
-  Extract the tarballs into a common directory $PWA2000
-  Set the shell variable $PWA2000 to this directory
-
-  In order to install PWA2000 you will need 
-  b) NOWEB code documentation system 
-     You will need a texinfo path where you can write 
-     for example: $HOME/texmf/tex
-     Make sure that this is correctly installed otherwise
-     any of the following steps must be repeated!
-  c) YACC or BISON parser generator (installed on most systems)
-
---- Building PWA2000:libpp
-	before you can build lipp you might have to apply 
-	some patches to account for changes in the C++ standard and
-	some bugfixes.
-	The neccessary modifications are available in the files
-	PATCH.libpp.gcc4 
-	PATCH.libpp.event
-	PATCH.libpp.particle
- 	PATCH.libpp.lorentz
- 	PATCH.libpp.matrix
-	The configure script of libpp does the rest. 
-	You want to choose $PWA2000 as the prefix directory.
-
-	Do:
-	&> cd $PWA2000/libpp
-	&> patch -p0 </path_to/PATCH.libpp.gcc4
-	&> patch -p0 </path_to/PATCH.libpp.event
-	&> patch -p0 </path_to/PATCH.libpp.particle
-	&> patch -p0 </path_to/PATCH.libpp.lorentz
-	&> patch -p0 </path_to/PATCH.libpp.matrix
-	
-	&> ./configure --prefix=$PWA2000
-	&> make
-    	&> make install
-
-	Make sure that you have valid header files (NOT EMPTY!) 
-        in $PWA2000/include and the library libpp.a in $PWA2000/lib
-
-
---- Building PWA2000:pwa2000
-	before you can build pwa2000 you might have to apply 
-	some patches to account for changes in the C++ standard and
-	some bugfixes.
-	The neccessary modifications are available in the files
-	PATCH.pwa2000.gcc4 
-	PATCH.pwa2000.integral
-	The configure script of pwa2000 does the rest. 
-	You have to provide the paths to the libpp includes anbd libs.
-	You might want to choose $PWA2000 as the prefix directory.
-
-	Do:
-	&> cd $PWA2000/pwa2000
-	&> patch -p0 </path_to/PATCH.pwa2000.gcc4
-	&> patch -p0 </path_to/PATCH.pwa2000.integral
-
-	&> ./configure CPPFLAGS=-I$PWA2000/include LDFLAGS=-L$PWA2000/lib --prefix=$PWA2000
-	&> make
-	&> make install
-
-	For more details see PWA2000 installation instructions
-	If there are problems, check if your NOWEB installation is working!
-	In case there are problems do
-	&> make distclear
-	&> rm *.cc *.h *.yy *.ll
-	before you try again. 
-
---- libconfig:
+  
+libconfig:
 	We use the config file parser written by Mark A. Lindner available from
 	http://www.hyperrealm.com/libconfig/
 	Version 1.4
 	The installation is straight forward and should work without
 	any problems.
+	We will provide a copy of the package from 
+	http://sourceforge.net/projects/rootpwa/files/
 
 
 
@@ -113,13 +44,12 @@ BNL PWA software PWA2000:
 	Beware: A 32bit root will run on a 64bit machine BUT you will
 	 fail to link against it on the wrong architecture
 
-2) Set $PWA2000 environment variable to PWA2000 base dir (if not done already)
-3) Set $LIBCONFIG to libconfig toplevel directory
-4) Set $ROOTPWA environment variable to the rootpwa toplevel directory 
+2) Set $LIBCONFIG to libconfig toplevel directory
+3) Set $ROOTPWA environment variable to the rootpwa toplevel directory 
    (usually trunk)
-5) Set
+4) Set
 	PATH=$ROOTPWA/build/bin:$PATH
-	LD_LIBRARY_PATH=$PWA2000/lib:$LIBCONFIG/lib:$ROOTPWA/build/lib:$ROOTSYS/lib:LD_LIBRARY_PATH
+	LD_LIBRARY_PATH=$LIBCONFIG/lib:$ROOTPWA/build/lib:$ROOTSYS/lib:LD_LIBRARY_PATH
 
 We use an out-of-source build strategy. This means that 
 the binary files will be created outside of the directories that contain
@@ -141,8 +71,6 @@ the source code. CMake is supporting this:
 
 	&> cmake -D MAKE_BUILD_TYPE=DEBUG ..
 
-
-
 There is no make install needed anymore.
 
 There is a setup.sh script template. You can modify this for future usage
@@ -158,3 +86,8 @@ The doxygen documentation will be built into the directory
 
 and can be viewed with any browser, e.g.
    &> mozilla html-doc/html/index.html
+
+A recent version of these files will be uploaded regularily on
+http://rootpwa.sourceforge.net/
+
+As registered user (with the right permissions) you can upload the documentation as is explained on https://sourceforge.net/apps/trac/sourceforge/wiki/Project%20web
