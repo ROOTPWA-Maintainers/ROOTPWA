@@ -90,4 +90,10 @@ and can be viewed with any browser, e.g.
 A recent version of these files will be uploaded regularily on
 http://rootpwa.sourceforge.net/
 
-As registered user (with the right permissions) you can upload the documentation as is explained on https://sourceforge.net/apps/trac/sourceforge/wiki/Project%20web
+As registered user (with the right permissions) you can upload the documentation as is explained on https://sourceforge.net/apps/trac/sourceforge/wiki/Project%20web:
+
+&> cd html-doc
+&> sftp <user>,rootpwa@web.sourceforge.net
+sftp> cd htdocs
+sftp> put html/*
+sftp> exit

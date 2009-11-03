@@ -105,6 +105,10 @@ ADD_EXECUTABLE(addamp addamp.cc)
 ADD_EXECUTABLE(reflect reflect.cc)
 TARGET_LINK_LIBRARIES(reflect ${PWA_LIBS})
 
+ADD_EXECUTABLE(plotGampMassDep plotGampMassDep.cc)
+TARGET_LINK_LIBRARIES(plotGampMassDep ${PWA_LIBS})
+TARGET_LINK_LIBRARIES(plotGampMassDep ${ROOT_LIBS})
+
 ADD_EXECUTABLE(key2tex key2tex.cc)
 TARGET_LINK_LIBRARIES(key2tex ${ROOT_LIBS})
 

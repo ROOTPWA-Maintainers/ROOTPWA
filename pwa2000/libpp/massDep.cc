@@ -1,5 +1,6 @@
 #line 59 "massDep.nw"
 #include <massDep.h>
+#include <iostream>
 	using std::complex;
 	using std::vector;
 
@@ -76,6 +77,12 @@ complex<double> AMP_M::val(particle& p)
 {
 	extern particleDataTable PDGtable;
 
+	_M.el(0,0)=0;
+	_M.el(0,1)=0;
+	_M.el(1,0)=0;
+	_M.el(0,1)=0;
+
+
     complex <double> ret;
     complex <double> i(0,1);
 
@@ -98,6 +105,9 @@ complex<double> AMP_M::val(particle& p)
 	complex<double> q_KmKm = q( My_mass, Kmean_mass, Kmean_mass );
 	_rho.el(0,0) = 0.5*( (2.0*q_pipi)/My_mass + (2.0*q_pi0pi0)/My_mass );
 	_rho.el(1,1) = 0.5*( (2.0*q_KK)/My_mass + (2.0*q_K0K0)/My_mass );
+
+	//_rho.print();
+
 	if(ves_sheet) {
 		if ( q_KmKm.imag() > 0.0 ) {
 			q_KmKm *= -1;
@@ -108,14 +118,26 @@ complex<double> AMP_M::val(particle& p)
 
 	double scale = (s/(4.0*Kmean_mass*Kmean_mass)) - 1;
 
+	//std::cout << "scale=" << scale << std::endl;
+
 	for( int p = 0; p < _Pmax; p++) {
-		_M += ( (complex<double>) 1/(s-_sP.el(0,p)))*_a[p];
+	  complex<double> fa=1./(s-_sP.el(0,p));
+	  
+	  //std::cout << "fa" << p <<"="<< fa << std::endl;
+	  _M +=  fa * _a[p];
 	}
 	for( int n = 0; n < _Nmax; n++) {
-		_M += ( (complex<double>) pow(scale,n))*_c[n];
+	  
+	  complex<double> sc=pow(scale,n);
+	  //std::cout << "sc" << n <<"="<< sc << std::endl;
+		_M += sc *_c[n];
 	}
 
+	//_M.print();
+
 	_T = (_M - i*_rho).inv();
+
+	//_T.print();
 
 	ret = _T.el(0,0);
 

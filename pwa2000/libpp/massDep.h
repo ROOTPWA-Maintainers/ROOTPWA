@@ -1,4 +1,3 @@
-#line 6 "massDep.nw"
 #ifndef MASSDEP_H
 #define MASSDEP_H
 
@@ -22,7 +21,7 @@ class massDep {
 
 };
 
-#line 30 "massDep.nw"
+
 class breitWigner:public massDep {
 	public:
 		breitWigner() {;}
@@ -51,7 +50,7 @@ class flat:public massDep {
 
 };
 
-#line 87 "massDep.nw"
+
 class AMP_M:public massDep {
 
 	private:
@@ -93,6 +92,35 @@ class AMP_ves:public AMP_M {
 		virtual void print() { std::cout << "AMP_ves"; }
 		std::complex<double> val(particle&);
 };
+
+// class AMP_sigma:public massDep {
+
+// 	private:
+// 		int _Pmax;
+// 		int _Nmax;
+// 		matrix<std::complex<double> > _rho;
+// 		matrix<std::complex<double> > _M;
+// 		matrix<std::complex<double> > _T;
+// 		matrix<std::complex<double> > _f;
+// 		std::vector<matrix<std::complex<double> > > _a;
+// 		std::vector<matrix<std::complex<double> > > _c;
+// 		matrix<double> _sP;
+
+// 	public:
+// 		int ves_sheet;
+
+// 		AMP_M();
+// 		~AMP_M() {;}
+// 		AMP_M(const AMP_M&) {;}
+// 		// AMP_M& operator=(const AMP_M) {;}
+// 		virtual massDep* create() const {return new AMP_M();}
+// 		virtual massDep* clone() const {return new AMP_M(*this);}
+
+// 		virtual void print() { std::cout << "AMP_M"; }
+// 		std::complex<double> val(particle&);
+
+
+// };
 
 #endif
 
