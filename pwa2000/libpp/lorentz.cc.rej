@@ -1,0 +1,18 @@
+***************
+*** 43,49 ****
+  		double _gamma;
+  
+  	public:
+- 		lorentzTransform():matrix<double>(4,4) { _beta=0; _gamma=1; }
+  		lorentzTransform(double,double,double);
+  		lorentzTransform(const threeVec& beta);
+  		lorentzTransform(const fourVec&);
+--- 43,50 ----
+  		double _gamma;
+  
+  	public:
++ 		lorentzTransform():matrix<double>(4,4),_beta(0.),_gamma(1.){}
++ 		lorentzTransform(const matrix<double>& m):matrix<double>(m),_beta(0.), _gamma(1.){}	
+  		lorentzTransform(double,double,double);
+  		lorentzTransform(const threeVec& beta);
+  		lorentzTransform(const fourVec&);

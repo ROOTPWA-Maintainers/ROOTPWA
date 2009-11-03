@@ -32,7 +32,8 @@ SET(CMAKE_CXX_FLAGS "-g -O3 -Wall -Werror")
 
 SET(INCLUDE_DIRECTORIES
   $ENV{ROOTSYS}/include
-  $ENV{PWA2000}/include
+  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
+  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
   ${CMAKE_SOURCE_DIR}/src
 )
 
@@ -78,10 +79,10 @@ SET(ROOT_LIBS
 )
 
 # define PWA libraries
-SET(PWA_LIB $ENV{PWA2000}/lib)
+SET(PWA_LIB ${LIBRARY_OUTPUT_PATH})
 SET(PWA_LIBS
-  ${PWA_LIB}/libpp.a
-  ${PWA_LIB}/libpwa.a
+  ${PWA_LIB}/libpp.so
+  ${PWA_LIB}/libpwa.so
 )
 
 

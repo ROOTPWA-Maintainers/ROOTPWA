@@ -1,0 +1,17 @@
+The code in this package pwa2000 has been developed by John Cummings at the Rensselaer Polytechnic Institute. It was originally used for partial wave analyses at the Brookhaven National Laboratory (BNL), US.
+
+The original sources have been distributed from the website:
+
+http://ignatz.phys.rpi.edu/~jpc/john/Physics/PWA/pwa.html
+
+We include the original code archives
+	libpp-src.7jul2005.tgz
+	pwa2000-src.7jul2005.tgz
+in this repository for future reference.
+
+During the adaption of the code to ROOTPWA several patches have been created which we also provide for future reference.
+
+libpp-src.7jul2005.tgz has been extracted to libpp/ for further development.
+The pwa2000-src.7jul2005.tgz package has been extracted to gamp/. 
+
+For installation instructions see the ROOTPWA INSTALL instructions.

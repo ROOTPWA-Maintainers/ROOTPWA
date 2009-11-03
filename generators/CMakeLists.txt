@@ -25,9 +25,9 @@ ENABLE_TESTING()
 
 SET(INCLUDE_DIRECTORIES
   $ENV{ROOTSYS}/include
-  $ENV{PWA2000}/include
-  $ENV{ROOTPWA}/src
   $ENV{LIBCONFIG}/include
+  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
+  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
   ${CMAKE_SOURCE_DIR}/src
   ${CMAKE_SOURCE_DIR}/generators
 )
@@ -60,9 +60,9 @@ SET(ROOT_LIBS ${ROOT_LIB}/libCore.so
               libm.so)
 #              ${ROOT_LIB}/libMinuit2.so
 #add PWA lib
-SET(PWA_LIB $ENV{PWA2000}/lib)
-SET(PWA_LIBS ${PWA_LIB}/libpp.a
-             ${PWA_LIB}/libpwa.a)
+SET(PWA_LIB ${LIBRARY_OUTPUT_PATH})
+SET(PWA_LIBS ${PWA_LIB}/libpp.so
+             ${PWA_LIB}/libpwa.so)
 
 #add rootpwalib
 SET(ROOTPWA_LIB ${LIBRARY_OUTPUT_PATH})
