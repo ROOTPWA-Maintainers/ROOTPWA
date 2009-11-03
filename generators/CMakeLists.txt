@@ -109,6 +109,12 @@ TARGET_LINK_LIBRARIES(genpw ${PWA_LIBS})
 TARGET_LINK_LIBRARIES(genpw ${LIBCONFIG})
 TARGET_LINK_LIBRARIES(genpw rootpwagen)
 TARGET_LINK_LIBRARIES(genpw ${ROOTPWA_LIBS})
+
+ADD_EXECUTABLE(evtweight evtweight.cc)
+TARGET_LINK_LIBRARIES(evtweight ${ROOT_LIBS})
+TARGET_LINK_LIBRARIES(evtweight ${PWA_LIBS})
+TARGET_LINK_LIBRARIES(evtweight ${ROOTPWA_LIBS})
+
 #-------------------------------------------------
 #------- Install options -------------------------
 #-------------------------------------------------

@@ -27,7 +27,7 @@ TPWWeight::addWave(const std::string& keyfilename,
   // check if this is a double amplitude (by isospin symmetry)
   if(keyfilename.find("+-",7)!=string::npos){
     cerr << "Decomposing " << keyfilename << endl;
-    cerr << "What is the relative phase (0/pi):";
+    cerr << "What is the relative phase (0 or pi)?:";
     string select;
     cin >> select;
     if(select=="pi")m_relphase[keyfilename]=-1;
@@ -137,7 +137,7 @@ TPWWeight::weight(event& e){
       amp+=decayamp/nrm*m_amps[ivec][iwaves];
     }
     w+=std::norm(amp);
-  } // end loop
+  } // end loop over production vectors
 
   return w;
 
