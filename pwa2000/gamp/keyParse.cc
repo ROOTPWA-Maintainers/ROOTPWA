@@ -1454,6 +1454,9 @@ yyreduce:
                 else if (!strcmp(yyvsp[0].string,"amp_ves")) {
                         md = new AMP_ves();
                 }
+		else if (!strcmp(yyvsp[0].string,"amp_kach")) {
+                        md = new AMP_kach();
+                }
                 else if (!strcmp(yyvsp[0].string,"flat")) {
                         md = new flat();
                 }

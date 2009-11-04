@@ -42,21 +42,22 @@ AMP_M::AMP_M() {
 	_f.el(0,1) = -0.0154;
 
 	_a = vector<matrix<complex<double> > >(2,matrix<complex<double> >(2,2) );
-	_a[0].el(0,0) = 0.1131;
-	_a[0].el(0,1) = 0.0150;
-	_a[0].el(1,0) = 0.0150;
-	_a[0].el(1,1) = -0.3216;
-	_a[1].el(0,0) = _f.el(0,0)*_f.el(0,0);
-	_a[1].el(0,1) = _f.el(0,0)*_f.el(0,1);
-	_a[1].el(1,0) = _f.el(0,1)*_f.el(0,0);
-	_a[1].el(1,1) = _f.el(0,1)*_f.el(0,1);
+ 	_a[0].el(0,0) = 0.1131;
+ 	_a[0].el(0,1) = 0.0150;
+ 	_a[0].el(1,0) = 0.0150;
+ 	_a[0].el(1,1) = -0.3216;
+ 	_a[1].el(0,0) = _f.el(0,0)*_f.el(0,0);
+ 	_a[1].el(0,1) = _f.el(0,0)*_f.el(0,1);
+ 	_a[1].el(1,0) = _f.el(0,1)*_f.el(0,0);
+ 	_a[1].el(1,1) = _f.el(0,1)*_f.el(0,1);
 
+	
 	_c = vector<matrix<complex<double> > >(5,matrix<complex<double> >(2,2) );
 	_c[0].el(0,0) = 0.0337;
 	_c[1].el(0,0) = -0.3185;
 	_c[2].el(0,0) = -0.0942;
 	_c[3].el(0,0) = -0.5927;
-	_c[4].el(0,0) = 0.1957;
+	_c[4].el(0,0) = 0.1957; 
 	_c[0].el(0,1) = _c[0].el(1,0) = -0.2826;
 	_c[1].el(0,1) = _c[1].el(1,0) = 0.0918;
 	_c[2].el(0,1) = _c[2].el(1,0) = 0.1669;
@@ -66,7 +67,7 @@ AMP_M::AMP_M() {
 	_c[1].el(1,1) = -0.5140;
 	_c[2].el(1,1) = 0.1176;
 	_c[3].el(1,1) = 0.5204;
-	_c[4].el(1,1) = -0.3977;
+	_c[4].el(1,1) = -0.3977; 
 
 	_sP = matrix<double>(1,2);
 	_sP.el(0,0) = -0.0074;
@@ -132,7 +133,9 @@ complex<double> AMP_M::val(particle& p)
 	  //std::cout << "sc" << n <<"="<< sc << std::endl;
 		_M += sc *_c[n];
 	}
-
+	
+	// Modification: Here we set off-diagonal terms to 0
+	_M.el(0,1)=0;_M.el(1,0)=0;
 	//_M.print();
 
 	_T = (_M - i*_rho).inv();
@@ -168,4 +171,22 @@ complex<double> AMP_ves::val(particle& p) {
 	}
 
 	return amp_m-coupling*bw;
+}
+
+
+AMP_kach::AMP_kach(): AMP_M()
+{
+  // Change parameters according to Kachaev's prescription
+  _c[4].el(0,0) = 0; // was 0.1957;
+  _c[4].el(1,1) = 0; // was -0.3977;
+
+  _a[0].el(0,1) = 0; // setting off-diagonal values to 0
+  _a[0].el(1,0) = 0; // 
+ 
+  // _a[1] are the f's from the AMP paper! Setting to 0!
+  _a[1].el(0,0) = 0;
+  _a[1].el(0,1) = 0;
+  _a[1].el(1,0) = 0;
+  _a[1].el(1,1) = 0;
+
 }

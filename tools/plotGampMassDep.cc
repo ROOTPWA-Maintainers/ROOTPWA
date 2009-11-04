@@ -42,6 +42,7 @@ int main(int argc, char** argv){
   if(argc>1)opt=(argv[1]);
   if(opt=="AMP")dep=new AMP_M();
   else if(opt=="VES")dep=new AMP_ves();
+  else if(opt=="KACH")dep=new AMP_kach();
   else dep=new breitWigner();
   dep->print();
 
