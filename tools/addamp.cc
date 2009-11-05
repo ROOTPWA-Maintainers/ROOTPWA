@@ -167,13 +167,17 @@ int main(int argc, char** argv) {
   com.append(file1v[i].c_str());
   com.append(" ");
   com.append(archive);
-  system(com.c_str());
+  int ret = system(com.c_str());
+  if (ret != 0)
+    cerr << "command '" << com << "' was not successful." << endl;
 
   com=("mv ");
   com.append(file2v[i].c_str());
   com.append(" ");
   com.append(archive);
-  system(com.c_str());
+  ret = system(com.c_str());
+  if (ret != 0)
+    cerr << "command '" << com << "' was not successful." << endl;
 
   } // end loop over files
 

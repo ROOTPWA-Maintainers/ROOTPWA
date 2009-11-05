@@ -93,7 +93,7 @@ h|(helicity)    {
 %%
 
 
-void keyerror(char* s) {
+void keyerror(const char* s) {
         cerr << fname << ":" << lineno << " " << s << " at " << keytext << endl;
 }
 

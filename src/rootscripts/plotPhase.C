@@ -147,8 +147,8 @@ plotPhase(TTree*        tree,        // TFitResult tree
   g->SetMarkerSize(0.5);
   g->SetMarkerColor(graphColor);
   g->SetLineColor(graphColor);
-  g->SetMinimum(-200);
-  g->SetMaximum(200);
+  g->SetMinimum(-180);
+  g->SetMaximum(180);
   g->GetXaxis()->SetTitle("Mass [GeV]");
   g->GetYaxis()->SetTitle("Phase Angle [deg]");
   TGraphErrors* clone = (TGraphErrors*)g->DrawClone(drawOption);

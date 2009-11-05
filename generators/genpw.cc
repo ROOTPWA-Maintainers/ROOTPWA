@@ -69,7 +69,7 @@ cerr << "usage:" << endl
 }
 
 
-int main(int argc, char** argv, const int     errCode = 0)
+int main(int argc, char** argv)
 {
 
   unsigned int nevents=100;

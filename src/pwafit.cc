@@ -273,7 +273,7 @@ main(int    argc,
       startVal = startBin->getParameter(parName.c_str());
     }
     // check if parameter needs to be fixed because of threshold
-    if ((L.parthreshold(i) == 0) || (L.parthreshold(i) < binHighMass)) {
+    if ((L.parthreshold(i) == 0) || (L.parthreshold(i) < binCenter)) {
       if (!minimizer->SetVariable(i, parName, startVal, defaultMinStep))
 	success = false;
       if (startVal == 0) {

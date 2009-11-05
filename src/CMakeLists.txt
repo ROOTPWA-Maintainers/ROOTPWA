@@ -26,10 +26,6 @@ PROJECT(rootpwa)
 ENABLE_TESTING()
 
 
-# add compiler options
-SET(CMAKE_CXX_FLAGS "-g -O3 -Wall -Werror")
-
-
 SET(INCLUDE_DIRECTORIES
   $ENV{ROOTSYS}/include
   ${CMAKE_SOURCE_DIR}/pwa2000/libpp

@@ -559,7 +559,7 @@ static int input (void );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO (void) fwrite( keytext, keyleng, 1, keyout )
+#define ECHO if (fwrite(keytext, keyleng, 1, keyout) != 1) YY_FATAL_ERROR("could not write to file.");
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -1778,7 +1778,7 @@ void keyfree (void * ptr )
 
 
 
-void keyerror(char* s) {
+void keyerror(const char* s) {
         cerr << fname << ":" << lineno << " " << s << " at " << keytext << endl;
 }
 

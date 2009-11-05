@@ -132,7 +132,7 @@ void parseWaveList(const string& waveListFileName,
 
 
 
-int main(int argc, char** argv, const int     errCode = 0)
+int main(int argc, char** argv)
 {
 
   if(argc<3)printUsage(argv[0],1);
@@ -141,7 +141,7 @@ int main(int argc, char** argv, const int     errCode = 0)
   string integrals_file;
   string waveListFileName("wavelist");
   string evtfilename;
-  double binCenter;
+  double binCenter = 0;
 
   int c;
   while ((c = getopt(argc, argv, "e:o:w:i:m:h")) != -1)
