@@ -23,7 +23,7 @@
 // $Id$
 //
 // Description:
-//      Draws intensity graph for single wave from tree.
+//      Creates summary plots with intensities of spin totals
 //
 //
 // Author List:
@@ -33,8 +33,8 @@
 //-----------------------------------------------------------
 
 
-#ifndef plotAllIntensities_hh
-#define plotAllIntensities_hh
+#ifndef plotSpinTotals_hh
+#define plotSpinTotals_hh
 
 
 #include <string>
@@ -44,13 +44,10 @@
 #include "TTree.h"
 
 
-// plots all waves sorted by JPC and returns a list of wave names and
-// pointers to the pads they were drawn into
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotAllIntensities(TTree*             tree,                  // TFitResult tree
-		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
-		   const std::string& outPath      = "./",   // path for output files
-		   const bool         mcmc         = false);
+plotSpinTotals(TTree*        tree,  // TFitBin tree
+	       const int     color       = kBlack,
+	       const string& outFileName = "spintotals.root");
 
 
-#endif  // plotAllIntensities_hh
+#endif  // plotSpinTotals_hh

@@ -36,8 +36,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+
 #include "TFile.h"
-#include "TTree.h"
 #include "TStyle.h"
 #include "TString.h"
 #include "TCanvas.h"
@@ -46,16 +46,20 @@
 #include "TAxis.h"
 #include "TLine.h"
 
+#include "plotSpinTotals.h"
+
 
 using namespace std;
 
 
-void
+vector<pair<string, TVirtualPad*> >
 plotSpinTotals(TTree*        tree,  // TFitBin tree
-	       const int     color       = kBlack,
-	       const string& outFileName = "spintotals.root")
+	       const int     color,
+	       const string& outFileName)
 {
-  TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
+  TFile* outFile = NULL;
+  if (outFileName != "")
+    outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 
   const unsigned int nmbPadsPerCanvMin = 6;  // minimum number of pads each canvas is subdivided into
   // define set of spin totals
@@ -96,6 +100,7 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
   const unsigned int nmbPadsPerCanv = nmbPadsHor * nmbPadsVert;
 
   // plot spin totals
+  vector<pair<string, TVirtualPad*> > wavePads(nmbWaves, pair<string, TVirtualPad*>("", NULL));
   unsigned int countPad  = 0;
   unsigned int countCanv = 0;
   TCanvas*     canv      = 0;
@@ -132,7 +137,7 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
 				       tree->GetV2());   // intensity error
     // plot graph
     canv->cd(++countPad);
-    if (waves[i] != ""){
+    if (waves[i] != "") {
       g->SetTitle(waves[i].c_str());
       TString gName = "g";
       gName.Append(waves[i]);
@@ -148,9 +153,9 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
     g->GetYaxis()->SetTitle("Intensity");
     // compute maximum for y-axis
     double maxY = 0;
-    for (int i = 0; i < nmbBins; ++i)
-      if(maxY < g->GetY()[i])
-	maxY = g->GetY()[i];
+    for (int j = 0; j < nmbBins; ++j)
+      if(maxY < g->GetY()[j])
+	maxY = g->GetY()[j];
     g->SetMinimum(-maxY * 0.1);
     g->SetMaximum( maxY * 1.1);
     g->Draw(drawOpt.c_str());
@@ -158,7 +163,12 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
     line.SetLineStyle(3);
     line.DrawLine(g->GetXaxis()->GetXmin(), 0, g->GetXaxis()->GetXmax(), 0);
     
-    g->Write();
+    // memorize pad
+    wavePads[i].first  = waves[i];
+    wavePads[i].second = gPad;
+
+    if (outFile)
+      g->Write();
 
     if (countPad == nmbPadsPerCanv) {
       canv->Update();
@@ -167,5 +177,8 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
     }
   }
 
-  outFile->Close();
+  if (outFile)
+    outFile->Close();
+  
+  return wavePads;
 }
