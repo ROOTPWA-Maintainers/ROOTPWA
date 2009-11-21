@@ -273,23 +273,32 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     const double tGen = -q.M2();
     if (tGen < tMin)
       continue;
-  
+    
     // generate phase space distribution
-    bool           allowed = phaseSpace.SetDecay(X, decayProducts.size(), daughterMasses);
+    bool           allowed = phaseSpace.SetDecay(X, decayProducts.size(), daughterMasses,"");
     if (!allowed) {
-      cerr << "Decay of M = " << X.M() << " into 3 pions is not allowed!" << endl;
+      cerr << "Decay of M = " << X.M() << " into this final state is kinematically not allowed!" << endl;
       continue;
     }
-    double maxWeight = phaseSpace.GetWtMax();
+    
     double weight    = phaseSpace.Generate();
-    if (weight / maxWeight < gRandom->Uniform())  // recjection sampling
+    double maxWeight = phaseSpace.GetWtMax();
+    //cerr << "wMax=" << maxWeight << endl;
+    //cerr << "w=" << weight << endl;
+    double d=gRandom->Uniform();
+    //cerr << "d="  << d << endl;
+    ++attempts;
+    if ( (weight/maxWeight) < d){  // recjection sampling
       continue;
+    }
     
     done=true;
     beamresult=gbeam;
   }
   // event is accepted
   //writePwa2000Ascii(outFile, beam, phaseSpace);
+  //cerr << attempts << " attempts needed for Phase Space" << endl;
+ 
   return attempts;
 }
 

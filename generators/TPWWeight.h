@@ -16,6 +16,7 @@
 #include <complex>
 #include <event.h>
 #include <Tgamp.h>
+#include "TProductionAmp.h"
 
 #include <integral.h>
 // Collaborating Class Declarations --
@@ -45,8 +46,11 @@ public:
    *                (different indices are added incoherently)
    */
   void addWave(const std::string& keyfilename, 
-	       const std::complex<double>& amp,
+	       TProductionAmp* amp,
 	       unsigned int vectori=0);
+
+
+  
 
   void loadIntegrals(const std::string& filename);
   
@@ -54,14 +58,24 @@ public:
   /** @brief Calculate weight for an event
    */ 
   double weight(event& e);
-
+  
+  /** @brief get production amplitude
+   *
+   *  iv: production vector
+   *  iw: wave
+   */
+  std::complex<double> prodAmp(unsigned int iv, 
+			       unsigned int iw,
+			       event& e);
 
 
 private:
 
   // Private Data Members ------------
   std::vector<std::vector<std::string> > m_waves;
-  std::vector<std::vector<std::complex<double> > > m_amps;
+  
+  // Production amplitudes
+  std::vector<std::vector<TProductionAmp*> > m_amps;
 
   std::vector<Tgamp> m_gamp;
   std::map<string,double> m_relphase;

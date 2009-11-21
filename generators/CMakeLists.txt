@@ -34,8 +34,10 @@ SET(INCLUDE_DIRECTORIES
 
 include_directories(${INCLUDE_DIRECTORIES})
 
-SET(SOURCES TPWWeight.cc
-            TDiffractivePhaseSpace.cc)
+SET(SOURCES  TProductionAmp.cc
+             TBWProductionAmp.cc
+             TPWWeight.cc
+             TDiffractivePhaseSpace.cc)
    
 #add ROOT lib
 SET(ROOT_LIB $ENV{ROOTSYS}/lib)
@@ -115,6 +117,9 @@ TARGET_LINK_LIBRARIES(evtweight ${ROOT_LIBS})
 TARGET_LINK_LIBRARIES(evtweight ${PWA_LIBS})
 TARGET_LINK_LIBRARIES(evtweight ${ROOTPWA_LIBS})
 
+ADD_EXECUTABLE(plotBWAmp plotBWAmp.cc)
+TARGET_LINK_LIBRARIES(plotBWAmp ${ROOT_LIBS})
+TARGET_LINK_LIBRARIES(plotBWAmp rootpwagen)
 #-------------------------------------------------
 #------- Install options -------------------------
 #-------------------------------------------------

@@ -8,6 +8,7 @@
 
 // Collaborating Class Headers --------
 #include <utilities.h>
+#include <particle.h>
 
 // Class Member definitions -----------
 
@@ -15,7 +16,7 @@
 
 void 
 TPWWeight::addWave(const std::string& keyfilename, 
-		   const std::complex<double>& amp,
+		   TProductionAmp* amp,
 		   unsigned int vectori){
   
   if(vectori<=m_waves.size()){
@@ -104,13 +105,26 @@ TPWWeight::loadIntegrals(const std::string& normIntFileName){
 
 
 
+std::complex<double> 
+TPWWeight::prodAmp(unsigned int iv, 
+		   unsigned int iw,
+		   event& e){
+  // get mass
+  std::list<particle> part=e.f_particles();
+  fourVec p;
+  std::list<particle>::iterator it=part.begin();
+  while(it!=part.end())p+=(it++)->get4P();
+  double m=p.len();
+  return m_amps[iv][iw]->amp(m);
+}
+
+
+
 
 
 double
 TPWWeight::weight(event& e){
-
-  
-  unsigned int nvec=m_waves.size();
+   unsigned int nvec=m_waves.size();
   double w=0;
   for(unsigned int ivec=0;ivec<nvec;++ivec){ // loop over production vectors
     std::complex<double> amp(0,0);
@@ -118,13 +132,13 @@ TPWWeight::weight(event& e){
     for(unsigned int iwaves=0;iwaves<nwaves;++iwaves){
       string w1=m_waves[ivec][iwaves];
       
-      //std::cerr << w1 << std::endl;
+      // std::cerr << w1 << std::endl;
       //std::cerr.flush();
       w1.erase(0,w1.find_last_of("/")+1);
       w1.replace(w1.find(".key"),4,".amp");
       std::complex<double> decayamp;
       decayamp=m_gamp[ivec].Amp(iwaves,e);
-     
+      //std::cerr << "..first component ..."  << std::endl;
       if(w1.find("+-",7)!=string::npos){ // brute force treatment of composed amplitudes!
 
 	// see addWave to understand bookkeeping!
@@ -132,9 +146,9 @@ TPWWeight::weight(event& e){
 	++iwaves;
 	decayamp+=m_relphase[m_waves[ivec][iwaves]]*m_gamp[ivec].Amp(iwaves,e);
       }
-      //std::cerr << "..done"  << std::endl;
+      // std::cerr << "..done"  << std::endl;
       double nrm=sqrt(m_normInt.val(w1,w1).real());
-      amp+=decayamp/nrm*m_amps[ivec][iwaves];
+      amp+=decayamp/nrm*prodAmp(ivec,iwaves,e);
     }
     w+=std::norm(amp);
   } // end loop over production vectors

@@ -21,9 +21,9 @@ void plotWeightedEvents(TTree* mctr, TTree* datatr){
 gROOT->SetStyle("Plain");
 
  vector<TH1D*> hMIsobar;
- TH1D* hMIsobarMC=new TH1D("hMIsobarMC","Isobar Mass (MC)",100,0.8,2.0);
+ TH1D* hMIsobarMC=new TH1D("hMIsobarMC","Isobar Mass (MC)",100,0.2,2.0);
  hMIsobar.push_back(hMIsobarMC);
- TH1D* hMIsobarData=new TH1D("hMIsobarData","Isobar mass (DATA)",100,0.8,2.0);
+ TH1D* hMIsobarData=new TH1D("hMIsobarData","Isobar mass (DATA)",100,0.2,2.0);
  hMIsobar.push_back(hMIsobarData);
 
  vector<TH1D*> hMIsobar2;
@@ -104,7 +104,7 @@ vector<TH1D*> hTY3;
    unsigned int nevt=tr->GetEntries();	
    for(unsigned int i=0;i<nevt;++i){
      tr->GetEntry(i);
-     
+     if(itree==1)weight=1;
      event.refresh();
      
      if(weight>maxweight)maxweight=weight;

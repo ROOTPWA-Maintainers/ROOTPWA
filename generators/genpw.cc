@@ -43,6 +43,7 @@
 #include "TTree.h"
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
+#include "TProductionAmp.h"
 #include "TDiffractivePhaseSpace.h"
 #include <event.h>
 #include "libconfig.h++"
@@ -239,7 +240,7 @@ int main(int argc, char** argv)
     wavefile.ignore(256,'\n');
 
     // production vector index: rank+refl
-    weighter.addWave(wavename.Data(),amp,rank+refl);
+    weighter.addWave(wavename.Data(),new TProductionAmp(amp),rank+refl);
     
   }
 
