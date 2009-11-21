@@ -18,7 +18,7 @@ using namespace std;
 int main(int argc, char** argv){
 
   TBWProductionAmp bw(atof(argv[1]),atof(argv[2])); 
-  TBWProductionAmp bw2(atof(argv[3]),atof(argv[4])); 
+  TBWProductionAmp bw2(atof(argv[3]),atof(argv[4]),std::complex<double>(-0.85,-0.1)); 
 
   TApplication app("", 0, 0);
   gROOT->SetStyle("Plain");
@@ -36,7 +36,7 @@ int main(int argc, char** argv){
     
     double mass=mstart+i*mstep;
    
-    complex<double> amp=bw.amp(mass)+std::complex<double>(-0.85,-0.1)*bw2.amp(mass);
+    complex<double> amp=bw.amp(mass)+bw2.amp(mass);
     //cout << amp << endl;
     intens->SetPoint(i,mass,norm(amp));
     double rho=1;

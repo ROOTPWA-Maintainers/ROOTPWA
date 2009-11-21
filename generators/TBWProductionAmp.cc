@@ -25,8 +25,9 @@
 // Class Member definitions -----------
 
 
-TBWProductionAmp::TBWProductionAmp(double mass, double width)
-  : _mass(mass),_m2(mass*mass), _width(width),_mw(mass*width)
+TBWProductionAmp::TBWProductionAmp(double mass, double width,
+				   std::complex<double> coupling)
+  : _mass(mass),_m2(mass*mass), _width(width),_mw(mass*width), _coupling(coupling)
 {}
 
 
@@ -36,5 +37,5 @@ TBWProductionAmp::amp(double mass){
   std::complex<double> denom(_m2-mass*mass,-_mw);
   std::complex<double> nom(_mw);
   
-  return nom/denom;
+  return _coupling*nom/denom;
 }

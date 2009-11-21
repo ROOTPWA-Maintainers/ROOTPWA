@@ -20,6 +20,12 @@ void plotWeightedEvents(TTree* mctr, TTree* datatr){
 
 gROOT->SetStyle("Plain");
 
+ vector<TH1D*> hM;
+ TH1D* hMMC=new TH1D("hMMC","Mass (MC)",100,0.5,2.5);
+ hM.push_back(hMMC);
+ TH1D* hMData=new TH1D("hMData","Mass (DATA)",100,0.5,2.5);
+ hM.push_back(hMData);
+
  vector<TH1D*> hMIsobar;
  TH1D* hMIsobarMC=new TH1D("hMIsobarMC","Isobar Mass (MC)",100,0.2,2.0);
  hMIsobar.push_back(hMIsobarMC);
@@ -118,6 +124,13 @@ vector<TH1D*> hTY3;
      unsigned int nstates=event.nStates();
      for(unsigned int is=0;is<nstates;++is){
        const NParticleState& state=event.getState(is);
+       if(state.n()==npart){
+	 
+	 
+	 hM[itree]->Fill(state.p().M(),weight);
+	 
+       }
+
        if(state.n()==npart-1 && state.q()==0){
 	 
 	 hGJ[itree]->Fill(state.p().CosTheta(),weight);
@@ -144,6 +157,12 @@ vector<TH1D*> hTY3;
    cout << "Maxweight=" << maxweight << endl; 
    cout << "Average weight=" << avweight << endl; 
  }
+ TCanvas* cm=new TCanvas("PredictM","Weighted Events",20,20,600,800);
+ hM[0]->SetLineColor(kRed);
+ hM[0]->Draw();
+ hM[1]->Draw("same");
+ 
+
  TCanvas* c=new TCanvas("Predict","Weighted Events",10,10,600,800);
  c->Divide(3,3);
  c->cd(1);

@@ -44,6 +44,7 @@
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
 #include "TProductionAmp.h"
+#include "TBWProductionAmp.h"
 #include "TDiffractivePhaseSpace.h"
 #include <event.h>
 #include "libconfig.h++"
@@ -79,9 +80,10 @@ int main(int argc, char** argv)
   string wavelist_file; // format: name Re Im
   string path_to_keyfiles("./");
   string reactionFile;
+  double maxWeight=0;
 
   int c;
-  while ((c = getopt(argc, argv, "n:o:w:k:i:r:h")) != -1)
+  while ((c = getopt(argc, argv, "n:o:w:k:i:r:m:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
@@ -100,6 +102,9 @@ int main(int argc, char** argv)
       break;
    case 'r':
       reactionFile = optarg;
+      break;
+   case 'm':
+      maxWeight = atof(optarg);
       break;
     case 'h':
       printUsage(argv[0]);
@@ -169,8 +174,24 @@ int main(int argc, char** argv)
     q.push_back(myq);
     difPS.AddDecayProduct(particleinfo(id,myq,m));
   }
-
-
+   // see if we have a resonance in this wave
+  const Setting &bws = root["resonances"]["breitwigners"];
+  // loop through breitwigners
+  int nbw=bws.getLength();
+  cerr << "Found " << nbw << " BreitWigners in Config" << endl;
+  map<string,TBWProductionAmp*> bwAmps;
+  for(int ibw=0;ibw<nbw;++ibw){
+    const Setting &bw=bws[ibw];
+    string jpcme;bw.lookupValue("jpcme",jpcme);
+    double mass;bw.lookupValue("mass",mass);
+    double width;bw.lookupValue("width",width);
+    double cRe;bw.lookupValue("coupling_Re",cRe);
+    double cIm;bw.lookupValue("coupling_Im",cIm);
+    std::complex<double> coupl(cRe,cIm);
+    cerr << jpcme << " m="<< mass << " w="<<width<<" c="<< coupl << endl;
+    bwAmps[jpcme]=new TBWProductionAmp(mass,width,coupl);
+  }
+    
 
   // check if TFitBin is used as input
   if(wavelist_file.find(".root")!=string::npos){
@@ -209,8 +230,8 @@ int main(int argc, char** argv)
 	wavelist_file=tmpname;
       }
   } // end root file given
-
-
+  
+ 
   // read input wavelist and amplitudes
   ifstream wavefile(wavelist_file.c_str());
   while(wavefile.good()){
@@ -231,16 +252,25 @@ int main(int argc, char** argv)
       wavename=wavename(3,wavename.Length());
     }
 
+    TString jpcme=wavename(2,5);
+
     wavename.ReplaceAll(".amp",".key");
     wavename.Prepend(path_to_keyfiles.c_str());
 
     std::complex<double> amp(RE,IM);
     cerr << wavename << " " << amp << " r=" << rank/2 
-	 << " eps=" << refl << endl;
+	 << " eps=" << refl << " qn=" << jpcme << endl;
     wavefile.ignore(256,'\n');
+    
+    TProductionAmp* pamp;
+    if(bwAmps[jpcme.Data()]!=NULL){
+      pamp=bwAmps[jpcme.Data()];
+      cerr << "Using BW for " << jpcme << endl;
+    }
+    else pamp=new TProductionAmp(amp);
 
     // production vector index: rank+refl
-    weighter.addWave(wavename.Data(),new TProductionAmp(amp),rank+refl);
+    weighter.addWave(wavename.Data(),pamp,rank+refl);
     
   }
 
@@ -252,13 +282,16 @@ int main(int argc, char** argv)
 
   
   double maxweight=-1;
-  unsigned int acc=0;
+  unsigned int attempts=0;
+
 
   unsigned int tenpercent=(unsigned int)(nevents/10);
-
-  for(unsigned int i=0;i<nevents;++i)
+  unsigned int i=0;
+  while(i<nevents)
     {
-      if(i>0 && ( i % tenpercent==0) )cerr << "[" << (double)i/(double)nevents*100. << "%]";
+
+      ++attempts;
+      
 					       
       p->Delete(); // clear output array
 
@@ -285,17 +318,24 @@ int main(int argc, char** argv)
       
       weight=weighter.weight(e);
       if(weight>maxweight)maxweight=weight;
-
       hWeights->Fill(weight);
+
+      if(maxWeight>0){ // do weighting
+	//if(weight>maxWeight)maxWeight=weight;
+	if(gRandom->Uniform()>weight/maxWeight)continue;
+      }
       //cerr << i << endl;
       
       outtree->Fill();
+      if(i>0 && ( i % tenpercent==0) )cerr << "[" << (double)i/(double)nevents*100. << "%]";
 
+      ++i;
     } // end event loop
 
   cerr << endl;
   cerr << "Maxweight: " << maxweight << endl;
-  cerr << "Accepted Events: " << acc << endl;
+  cerr << "Attempts: " << attempts << endl;
+  cerr << "Efficiency: " << (double)nevents/(double)attempts << endl;
   
 
   outfile->cd();

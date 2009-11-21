@@ -28,7 +28,8 @@ class TBWProductionAmp : public TProductionAmp {
 public:
 
   // Constructors/Destructors ---------
-  TBWProductionAmp(double mass, double width);
+  TBWProductionAmp(double mass, double width,
+		   std::complex<double> coupling=std::complex<double>(1,0));
   virtual ~TBWProductionAmp(){;}
 
   // Accessors -----------------------
@@ -41,6 +42,7 @@ private:
   double _m2;
   double _width;
   double _mw;
+  std::complex<double> _coupling;
 
   // Private Methods -----------------
 
