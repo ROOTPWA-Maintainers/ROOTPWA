@@ -32,10 +32,10 @@ SET(SOURCES event.cc
 	    Vec.cc
 )
 	    
-SET(MYFLAGS "-g -Wall -Werror")
+SET(MYFLAGS "-O2 -Wall -Werror")
 
 SET(CMAKE_CXX_FLAGS ${MYFLAGS})
-SET(CMAKE_LDCXX_FLAGS "-g")
+SET(CMAKE_LDCXX_FLAGS "-O2")
 
 ADD_LIBRARY(pp SHARED ${SOURCES})
 

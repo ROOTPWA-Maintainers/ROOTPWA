@@ -1,5 +1,6 @@
 #line 353 "event.nw"
 #include <event.h>
+#include <iomanip>
 	using std::list;
 	using std::string;
 	using std::cout;
@@ -410,6 +411,7 @@
 #line 797 "event.nw"
 	ostream& event::write2(ostream& os) {
 		fourVec v = this->beam().get4P();
+		os << std::setprecision(9);
 		os << "B " << name2id(this->_beam->Name(),this->_beam->Charge()) << " " 
 			<< this->_beam->Charge() << " " 
 			<< v.t() << " "
@@ -486,8 +488,10 @@
 
 #line 874 "event.nw"
 	ostream& event::write1(ostream& os) {
+	  
 		os << this->_final.size()+1 << endl;
 		fourVec v = this->beam().get4P();
+		os << std::setprecision(9);
 		os << name2id(this->_beam->Name(),this->_beam->Charge()) << " " 
 			<< this->_beam->Charge() << " " 
 			<< v.x() << " " << v.y() << " " << v.z() << " " 
