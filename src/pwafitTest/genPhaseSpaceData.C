@@ -133,19 +133,20 @@ writeComGeantAscii(ostream&         out,
   // total number of particles
   out << 4 << endl;
   // vertex position in cm
-  out << vertexpos.X() << " " << vertexpos.Y() << " " << vertexpos.Z() << endl;
-  // beam particle: geant ID , -p_x, -p_y, -p_z must go the opposite direction upstream!
+  // note that Comgeant's coordinate system is different
+  out << vertexpos.Z() << " " << vertexpos.X() << " " << vertexpos.Y() << endl;
+  // beam particle: geant ID , -p_z, -p_x, -p_y must go the opposite direction upstream and should be geontino (PID 44 with no interaction)
   out << setprecision(numeric_limits<double>::digits10 + 1)
-      << "9 " << -beam.Px() << " " << -beam.Py() << " " << -beam.Pz() << endl;// << " " << beam.E() << endl;
+      << "44 " << -beam.Pz() << " " << -beam.Px() << " " << -beam.Py() << endl;// << " " << beam.E() << endl;
   for (unsigned int i = 0; i < 3; ++i) {
     TLorentzVector* hadron = event.GetDecay(i);
     if (!hadron) {
       cerr << "genbod returns NULL pointer to Lorentz vector for daughter " << i << "." << endl;
       continue;
     }
-    // hadron: geant ID, p_x, p_y, p_z
+    // hadron: geant ID, p_z, p_x, p_y
     out << setprecision(numeric_limits<double>::digits10 + 1)
-	<< geantIds[i] /*<< " " << charges[i]*/ << " " << hadron->Px() << " " << hadron->Py() << " " << hadron->Pz() << endl;// << " " << hadron->E() << endl;
+	<< geantIds[i] /*<< " " << charges[i]*/ << " " << hadron->Pz() << " " << hadron->Px() << " " << hadron->Py() << endl;// << " " << hadron->E() << endl;
     }
   return true;
 }
