@@ -47,7 +47,7 @@
 #include "utilities.h"
 
 
-#define USE_FDF
+//#define USE_FDF
 
 
 using namespace std;
@@ -61,7 +61,6 @@ TPWALikelihood<T>::TPWALikelihood()
     _nmbWavesPosRefl(0),
     _nmbWavesNegRefl(0),
     _nmbPars(0),
-    _nmbEventsGrad(1000000),
     _Ltime(0),
     _Ntime(0),
     _debug(false),
@@ -127,47 +126,34 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 	else
 	  ampPos += amp;
 	// compute derivatives
-	if (iEvt < _nmbEventsGrad)
-	  for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave)  // inner loop over waves
-	    // sum up amplitudes for current rank and only for waves with same reflectivity
-	    if (refl == _waveRefl[jWave])
-	      d[r][jWave] += amp;
+	for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave)  // inner loop over waves
+	  // sum up amplitudes for current rank and only for waves with same reflectivity
+	  if (refl == _waveRefl[jWave])
+	    d[r][jWave] += amp;
       } // end outer loop over waves
       l += norm(ampPos);
       l += norm(ampNeg);
       assert(l >= 0);
       // loop again over waves for current rank
-      if (iEvt < _nmbEventsGrad)
-	for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-	  d[r][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
+      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
+	d[r][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
     }  // end loop over rank
     l             += prodAmpFlat2;
     logLikelihood -= TMath::Log(l);  // accumulate log likelihood
     // incorporate factor 2 / sigma
-    if (iEvt < _nmbEventsGrad) {
-      const T factor = 2. / l;
-      for (unsigned int r = 0; r < _rank; ++r)
-	for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-	  derivatives[r][iWave] -= factor * d[r][iWave];
-      derivativeFlat -= factor * prodAmpFlat;
-    }
-  }  // end loop over events
- 
-  // rescale derivatives
-  if (_nmbEventsGrad != _nmbEvents) {
-    const T scale = (T)_nmbEvents / (T)_nmbEventsGrad;
+    const T factor = 2. / l;
     for (unsigned int r = 0; r < _rank; ++r)
       for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-	derivatives[r][iWave] *= scale;
-    derivativeFlat *= scale;
-  }
-  
+	derivatives[r][iWave] -= factor * d[r][iWave];
+    derivativeFlat -= factor * prodAmpFlat;
+  }  // end loop over events
+ 
   // log consumed time
   const double t1 = timer.RealTime();
   timer.Start(true);
 
   // compute normalization term of log likelihood and its derivatives with respect to parameters
-  complex<T> normFactor = 0;
+  complex<T> normFactor  = 0;
   const T    nmbEvt      = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
   const T    twiceNmbEvt = 2 * nmbEvt;
   for (unsigned int r = 0; r < _rank; ++r) {                      // loop over rank
@@ -207,8 +193,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
     printInfo << "Log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
 	      << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
 	      << "normalized likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
-	      << "    Time for likelihood = " << t1 << ", time for normalization = " << t2 << endl
-	      << "    Number of events used to calculate gradient = " << _nmbEventsGrad << endl;
+	      << "    Time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
 
   // return likelihood value
   funcVal = logLikelihood + nmbEvt * normFactor.real();
@@ -277,40 +262,27 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	  ampNeg += amp;
 	else
 	  ampPos += amp;
-	if (iEvt < _nmbEventsGrad)
-	  for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave)  // inner loop over waves
-	    // sum up amplitudes for current rank and only for waves with same reflectivity
-	    if (refl == _waveRefl[jWave])
-	      d[r][jWave] += amp;
+	for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave)  // inner loop over waves
+	  // sum up amplitudes for current rank and only for waves with same reflectivity
+	  if (refl == _waveRefl[jWave])
+	    d[r][jWave] += amp;
       }  // end outer loop over waves
       l += norm(ampPos);
       l += norm(ampNeg);
       assert(l >= 0);
       // loop again over waves for current rank
-      if (iEvt < _nmbEventsGrad)
-	for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-	  d[r][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
+      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
+	d[r][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
     }  // end loop over rank
     l += prodAmpFlat * prodAmpFlat;
     // incorporate factor 2 / sigma
-    if (iEvt < _nmbEventsGrad) {
-      const T factor = 2. / l;
-      for (unsigned int r = 0; r < _rank; ++r)
-	for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-	  derivatives[r][iWave] -= factor * d[r][iWave];
-      derivativeFlat -= factor * prodAmpFlat;
-    }
-  }  // end loop over events
- 
-  // rescale derivatives
-  if (_nmbEventsGrad != _nmbEvents) {
-    const T scale = (T)_nmbEvents / (T)_nmbEventsGrad;
+    const T factor = 2. / l;
     for (unsigned int r = 0; r < _rank; ++r)
       for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-	derivatives[r][iWave] *= scale;
-    derivativeFlat *= scale;
-  }
-  
+	derivatives[r][iWave] -= factor * d[r][iWave];
+    derivativeFlat -= factor * prodAmpFlat;
+  }  // end loop over events
+ 
   // log consumed time
   const double t1 = timer.RealTime();
   timer.Start(true);
@@ -347,7 +319,7 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
   _Ltime += t1;
   _Ntime += t2;
 
-  if (0) {  // compare to FdF
+  if (1) {  // compare to FdF
     double f;
     double df[_nmbPars];
     FdF(par, f, df);
@@ -357,8 +329,7 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
       if (delta > maxDelta)
 	maxDelta = delta;
     }
-    if (maxDelta > 1e-12)
-      cout << "!!! max delta df = " << maxPrecision(maxDelta) << endl;
+    printInfo << "max delta df = " << maxPrecision(maxDelta) << endl;
   }
 
 #endif  // USE_FDF
@@ -498,17 +469,6 @@ TPWALikelihood<T>::SetRank(const unsigned int rank)
 
 template <typename T>
 void
-TPWALikelihood<T>::SetMaxSampDL(const unsigned int nmb)
-{
-  if ((_nmbEvents > 0) && (_nmbEvents < nmb))
-    _nmbEventsGrad = _nmbEvents;
-  else
-    _nmbEventsGrad = nmb;
-}
-
-
-template <typename T>
-void
 TPWALikelihood<T>::LoadIntegrals(const string& normIntFileName,
 				 const string& accIntFileName)
 {
@@ -596,9 +556,6 @@ TPWALikelihood<T>::LoadAmplitudes(){
   if ((!allWavesHaveSameNmbEvent) || (_decayAmps.back().size() != _nmbEvents))
     printWarn << "Amplitude files do not contain the same number of events for all waves." << endl;
   printInfo << "Loaded " << _nmbEvents << " events into memory." << endl;
-
-  if (_nmbEvents < _nmbEventsGrad)
-    _nmbEventsGrad = _nmbEvents;
 
   // monitor memory usage
   if (_debug) {
@@ -754,6 +711,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
   T            prodAmpFlat;
   complex<T>** prodAmps = NULL;
   copyFromParArray(par, prodAmps, prodAmpFlat);
+  const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
   // compute first term of log likelihood: sum over data
   T logLikelihood = 0;
@@ -764,8 +722,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
       complex<T> ampNeg = 0;  // negative reflectivity amplitude for this rank
       for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave) {  // loop over waves
 	const complex<T> amp  = prodAmps[r][iWave] * complex<T>(_decayAmps[iWave][iEvt]);
-	const int        refl = _waveRefl[iWave];
-	if (refl == -1)
+	if (_waveRefl[iWave] == -1)
 	  ampNeg += amp;
 	else
 	  ampPos += amp;
@@ -774,7 +731,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
       l += norm(ampNeg);
       assert(l >= 0);
     }  // end loop over rank
-    l             += prodAmpFlat * prodAmpFlat;
+    l             += prodAmpFlat2;
     logLikelihood -= TMath::Log(l);  // accumulate log likelihood
   }  // end loop over events for calculation of intensity term
  
@@ -784,14 +741,16 @@ TPWALikelihood<T>::DoEval(const double* par) const
 
   // compute second term of log likelihood: normalization
   complex<T> normFactor = 0;
+  const T    nmbEvt     = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
   for (unsigned int r = 0; r < _rank; ++r)                        // loop over rank
     for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave)      // outer loop
       for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave) {  // inner loop
 	if (_waveRefl[iWave] != _waveRefl[jWave])  // make sure that waves i and j have the same reflectivity
 	  continue;
-	normFactor += prodAmps[r][iWave] * conj(prodAmps[r][jWave]) * complex<T>(_accMatrix.element(iWave, jWave));
+ 	const complex<T> I = complex<T>(_accMatrix.element(iWave, jWave));
+	normFactor += (prodAmps[r][iWave] * conj(prodAmps[r][jWave])) * I;
       }
-  normFactor.real() += prodAmpFlat * prodAmpFlat;
+  normFactor.real() += prodAmpFlat2;
 
   // cleanup memory
   unsigned int prodAmpsDim[2];
@@ -805,21 +764,18 @@ TPWALikelihood<T>::DoEval(const double* par) const
   _Ltime += t1;
   _Ntime += t2;
   
-  const T nmbEvt = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
   if (_debug)
     printInfo << "Log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
-	      << "normalization =  (" << maxPrecisionAlign(normFactor.real()) << ", " << maxPrecisionAlign(normFactor.imag()) << "), "
+	      << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
 	      << "normalized log likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
 	      << "    Time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
 
-  if (0) {  // compare to FdF
+  if (1) {  // compare to FdF
     double f;
     double df[_nmbPars];
     FdF(par, f, df);
     const double funcVal = logLikelihood + nmbEvt * normFactor.real();
-    const double delta   = f - funcVal;
-    if (delta > 1e-12)
-      cout << "!!! delta f = " << maxPrecision(delta) << endl;
+    printInfo << "delta f = " << maxPrecision(f - funcVal) << endl;
   }
 
   // return log likelihood value
