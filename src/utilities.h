@@ -169,4 +169,97 @@ operator << (std::ostream&   out,
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////
+// functions for dynamic allocation of n-dimensional arrays
+
+#ifndef protect__  // macro that converts arguments containing commas into single string; useful for more complex types T
+#define protect__(x...) x
+#endif
+#define vector2(T) std::vector<std::vector<T> >
+#define vector3(T) std::vector<std::vector<std::vector<T> > >
+#define vector4(T) std::vector<std::vector<std::vector<std::vector<T> > > >
+
+
+// arrays based on pointer^n variables that can be passed to
+// functions without knowing the array size at compile time
+// elements can be accessed in the canonical way using []^n operators
+// this implementation is, due to the levels of indirection,
+// potentially less peformant than quasi-arrays, which on the other
+// hand make element access cumbersome
+// 
+// array dimensions are passed as unsigned int arrays, where the order
+// reflects the order of the indices:
+//
+// array[x_0][x_1] ... [x_(n - 1)]
+//        |    |            |
+//     dim[0]  |            |
+//          dim[1] ...   dim[n - 1]
+//
+// array memory has to be freed in reverser order of its allocation
+
+template<typename T>
+void
+delete2DArray(T**&               array,
+	      const unsigned int dim[2])
+{
+  for (int i = dim[0] - 1; i >= 0; --i)
+    if (array[i])
+      delete[] array[i];
+  delete[] array;
+  array = NULL;
+}
+
+template<typename T>
+void
+allocate2DArray(T**&               array,
+		const unsigned int dim[2],
+		const T&           defaultVal)
+{
+  if (array)
+    delete2DArray<T>(array, dim);
+  array = new T*[dim[0]];
+  for (unsigned int i = 0; i < dim[0]; ++i) {
+    array[i] = new T[dim[1]];
+    for (unsigned int j = 0; j < dim[1]; ++j)
+      array[i][j] = defaultVal;
+  }
+}
+
+
+template<typename T>
+void
+delete3DArray(T***&              array,
+	      const unsigned int dim[3])
+{
+  for (int i = dim[0] - 1; i >= 0; --i)
+    for (int j = dim[1] - 1; j >= 0; --j)
+      if (array[i][j])
+	delete[] array[i][j];
+  delete2DArray<T>(*array, dim);      
+//     for (int i = dim[0] - 1; i >= 0; --i)
+//       if (array[i])
+// 	delete[] array[i];
+//     delete[] array;
+}
+
+template<typename T>
+void
+allocate3DArray(T***&              array,
+		const unsigned int dim[3],
+		const T&           defaultVal)
+{
+  if (array)
+    delete3DArray<T>(array, dim);
+  array = new T**[dim[0]];
+  for (unsigned int i = 0; i < dim[0]; ++i) {
+    allocate2DArray<T>(array[i], &dim[1]);
+//     array[i] = new T*[dim[1]];
+//     for (unsigned int j = 0; j < dim[1]; ++j) {
+//       array[i][j] = new T[dim[2]];
+//       for (unsigned int k = 0; k < dim[2]; ++k)
+// 	array[i][j][k] = defaultVal;
+  }
+}
+
+
 #endif  // utilities_h

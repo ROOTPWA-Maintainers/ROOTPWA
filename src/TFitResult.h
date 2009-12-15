@@ -76,12 +76,12 @@ public:
 	    const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 	    const TCMatrix&                           normIntegral);           // normalization integral over full phase space without acceptance
 
-  double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
-  double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
-  unsigned int rank         () const { return _rank;              }  ///< returns rank of fit
-  unsigned int nmbEvents    () const { return _nmbEvents;         }  ///< returns number of events in bin
-  unsigned int nmbWaves     () const { return _waveNames.size();  }  ///< returns number of waves in fit
-  unsigned int nmbProdAmps  () const { return _prodAmps.size();   }  ///< returns number of production amplitudes
+  double       massBinCenter() const { return _massBinCenter;    }  ///< returns center value of mass bin
+  double       logLikelihood() const { return _logLikelihood;    }  ///< returns log(likelihood) at maximum
+  unsigned int rank         () const { return _rank;             }  ///< returns rank of fit
+  unsigned int nmbEvents    () const { return _nmbEvents;        }  ///< returns number of events in bin
+  unsigned int nmbWaves     () const { return _waveNames.size(); }  ///< returns number of waves in fit
+  unsigned int nmbProdAmps  () const { return _prodAmps.size();  }  ///< returns number of production amplitudes
 
   TString waveName    (const unsigned int waveIndex)    const { return _waveNames[waveIndex];       }  ///< returns name of wave at index
   TString prodAmpName (const unsigned int prodAmpIndex) const { return _prodAmpNames[prodAmpIndex]; }  ///< returns name of production amplitude at index

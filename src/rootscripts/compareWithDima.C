@@ -313,8 +313,8 @@ compareWithDima(TTree*        tree,  // TFitResult tree
     return;
   }
   
-  //compareIntensitiesWithDima(tree, dimaFile);
-  compareSpinTotalsWithDima(tree, dimaFile);
+  compareIntensitiesWithDima(tree, dimaFile);
+  //compareSpinTotalsWithDima(tree, dimaFile);
   //comparePhasesWithDima(tree, dimaFile);
   
 }
