@@ -57,14 +57,13 @@ int main(int argc, char** argv){
   TPWALikelihood<double> L;
   TPWALikelihoodC LC;
 
-  L.UseNormalizedAmps(true);
+  L.useNormalizedAmps(true);
   LC.UseNormalizedAmps(true);
 
 
   //if(quiet)L.SetQuiet();
-  L.SetWavelist(argv[1]);
   int rank=2; // TODO: make this an option
-  L.SetRank(rank);
+  L.init(rank, argv[1], "norm.int", "norm.int");
   LC.Init(argv[1],rank,"norm.int","norm.int",20000);
 
   cout<<"L.NDIM()="<<L.NDim()<<"   LC.NDim()="<<LC.NDim()<<endl;
@@ -86,12 +85,6 @@ int main(int argc, char** argv){
   for(unsigned int i=0;i<LC.NDim();++i){
     if(par[i]!=par2[i])return 5;
   }
-
-
-  //L.SetMaxSampDL(1000);
-  L.LoadIntegrals("norm.int","norm.int");
-  L.LoadAmplitudes();
- 
 
 
   // 12 parameters + flat

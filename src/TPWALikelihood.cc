@@ -196,7 +196,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
   // return likelihood value
   funcVal = logLikelihood + nmbEvt * normFactor.real();
 
-  if (0) {  // compare to FdFX
+  if (1) {  // compare to FdFX
     double fX;
     double dfX[_nmbPars];
     FdFX(par, fX, dfX);
@@ -208,8 +208,8 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
     }
 //     printInfo << "delta f        = " << maxPrecision(fX - logLikelihood) << endl;
 //     printInfo << "delta f        = " << maxPrecision(fX - normFactor.real()) << endl;
-     printInfo << "delta f        = " << maxPrecision(fX - funcVal) << endl
-	       << "max delta grad = " << maxPrecision(maxDelta)     << endl;
+     printInfo << "delta f = " << maxPrecisionAlign(fX - funcVal)
+	       << ", max delta grad f = " << maxPrecisionAlign(maxDelta) << endl;
   }
 }
 
@@ -697,7 +697,7 @@ TPWALikelihood<T>::buildParDataStruct(const unsigned int rank)
   for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
     _prodAmpToFuncParMapX[iRank][0].resize(_nmbWavesRefl[0], make_pair(0, 0));
     _prodAmpToFuncParMapX[iRank][1].resize(_nmbWavesRefl[1], make_pair(0, 0));
-    unsigned int iWaveRefl[2] = {0, 0};  // counter for negative and positive reflectivity waves
+    unsigned int iWaveRefl[2] = {0, 0};  // indices for negative and positive reflectivity waves
     for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {
       _waveRefl[iWave] = getReflectivity(_waveNames[iWave]);
       const unsigned int refl = (_waveRefl[iWave] > 0) ? 1 : 0;
@@ -1075,34 +1075,30 @@ TPWALikelihood<T>::buildCAmps(const double*             x,
   //unsigned int namp=_rank*_nmbWaves;
   //if (withFlat)namp+=1;
   unsigned int parIndex = 0;
-  for (unsigned int r = 0; r < _rank; ++r) {
-    unsigned int posCount = 0; // counter for positive reflectivity waves
-    unsigned int negCount = 0; // counter for negative reflectivity waves
-    for (unsigned int i = 0; i < _nmbWaves; ++i) {
-      int refl = getReflectivity(_waveNames[i]);
+  for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
+    unsigned int iWaveRefl[2] = {0, 0};  // indices for negative and positive reflectivity waves
+    for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {
+      int refl = (getReflectivity(_waveNames[iWave]) > 0 ? 1 : 0);
       double re, im;
-      if (((refl > 0) && (posCount == r)) || ((refl < 0) && (negCount == r))) {  // real production amplitude
+      if (iWaveRefl[refl] == iRank) {  // real production amplitude
 	indices.push_back(make_pair(parIndex, -1));
 	re = x[parIndex++];
 	im = 0;
 	V.push_back(complex<double>(re, im));
 	stringstream name;
-	name << "V" << r << "_" << _waveNames[i];
+	name << "V" << iRank << "_" << _waveNames[iWave];
 	names.push_back(name.str());
-      } else if (((refl > 0) && (posCount > r)) || ((refl < 0) && (negCount > r))) {  // complex production amplitude
+      } else if (iWaveRefl[refl] > iRank) {  // complex production amplitude
 	indices.push_back(make_pair(parIndex, parIndex + 1));
 	re = x[parIndex++];
 	im = x[parIndex++];
 	V.push_back(complex<double>(re, im));
 	stringstream name;
-	name << "V" << r << "_" << _waveNames[i];
+	name << "V" << iRank << "_" << _waveNames[iWave];
 	names.push_back(name.str());
       }
-      if (refl > 0)
-	++posCount;
-      else
-	++negCount;
-      //cout << "Wave" << i << "=" << V[r * _nmbWaves + i] << endl;
+      ++iWaveRefl[refl];
+      //cout << "Wave" << iWave << "=" << V[iRank * _nmbWaves + iWave] << endl;
     }
   }
   if (withFlat){
@@ -1161,25 +1157,21 @@ TPWALikelihood<T>::copyFromParArray(const double*        inPar,             // i
   outVal.resize(_rank, vector<complex<T> >(_nmbWaves, 0));
   unsigned int parIndex = 0;
   for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
-    unsigned int posCount = 0;  // counter for positive reflectivity waves
-    unsigned int negCount = 0;  // counter for negative reflectivity waves
+    unsigned int iWaveRefl[2] = {0, 0};  // indices for negative and positive reflectivity waves
     for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {
-      const int refl = _waveRefl[iWave];
+      const unsigned int refl = (_waveRefl[iWave] > 0) ? 1 : 0;
       T re, im;
-      if (((refl > 0) && (posCount < iRank)) || ((refl < 0) && (negCount < iRank)))  // production amplitude is zero
+      if (iWaveRefl[refl] < iRank)          // production amplitude is zero
 	re = im = 0;
-      else if (((refl > 0) && (posCount == iRank)) || ((refl < 0) && (negCount == iRank))) {  // production amplitude is real
+      else if (iWaveRefl[refl] == iRank) {  // production amplitude is real
 	re = inPar[parIndex++];
 	im = 0;
-      } else {  // production amplitude is complex
+      } else {                              // production amplitude is complex
 	re = inPar[parIndex++];
 	im = inPar[parIndex++];
       }
       outVal[iRank][iWave] = complex<T>(re, im);
-      if (refl > 0)
-	++posCount;
-      else
-	++negCount;
+      ++iWaveRefl[refl];
     }
   }
   outFlatVal = inPar[parIndex];
@@ -1196,7 +1188,7 @@ TPWALikelihood<T>::copyFromParArray(const double* inPar,             // input pa
   allocate2DArray<complex<T> >(outVal, outValDim, 0);
   unsigned int parIndex = 0;
   for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
-    unsigned int iWaveRefl[2] = {0, 0};  // counter for negative and positive reflectivity waves
+    unsigned int iWaveRefl[2] = {0, 0};  // indices for negative and positive reflectivity waves
     for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {
       const unsigned int refl = (_waveRefl[iWave] > 0) ? 1 : 0;
       T re, im;
@@ -1205,7 +1197,7 @@ TPWALikelihood<T>::copyFromParArray(const double* inPar,             // input pa
       else if (iWaveRefl[refl] == iRank) {  // production amplitude is real
 	re = inPar[parIndex++];
 	im = 0;
-      } else {  // production amplitude is complex
+      } else {                              // production amplitude is complex
 	re = inPar[parIndex++];
 	im = inPar[parIndex++];
       }
@@ -1230,7 +1222,7 @@ TPWALikelihood<T>::copyFromParArrayX(const double*        inPar,             // 
   for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
     outVal[iRank][0].resize(_nmbWavesRefl[0], 0);
     outVal[iRank][1].resize(_nmbWavesRefl[1], 0);
-    unsigned int iWaveRefl[2] = {0, 0};  // counter for negative and positive reflectivity waves
+    unsigned int iWaveRefl[2] = {0, 0};  // indices for negative and positive reflectivity waves
     for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {  // loop over all waves regardless of reflectivity
 	const unsigned int refl = (_waveRefl[iWave] > 0) ? 1 : 0;
 	T re, im;
@@ -1300,7 +1292,7 @@ TPWALikelihood<T>::copyToParArray(const vector2(complex<T>)& inVal,         // v
 {
   unsigned int parIndex = 0;
   for (unsigned int iRank = 0; iRank < _rank; ++iRank) {
-    unsigned int iWaveRefl[2] = {0, 0};  // counter for negative and positive reflectivity waves
+    unsigned int iWaveRefl[2] = {0, 0};  // indices for negative and positive reflectivity waves
     for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {
       const unsigned int refl = (_waveRefl[iWave] > 0) ? 1 : 0;
       if (iWaveRefl[refl] == iRank)  // production amplitude is real
