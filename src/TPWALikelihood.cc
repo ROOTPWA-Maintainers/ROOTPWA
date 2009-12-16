@@ -84,6 +84,11 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 		       double&       funcVal,         // function value
 		       double*       gradient) const  // array of derivatives
 {
+  if (1) {  // run FdFX
+    FdFX(par, funcVal, gradient);
+    return;
+  }
+
   ++(_nmbCalls[FDF]);
 
   // log consumed time
@@ -116,7 +121,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
     for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks and reflectivities
       complex<T> ampPos = 0;  // positive reflectivity amplitude for this rank
       complex<T> ampNeg = 0;  // negative reflectivity amplitude for this rank
-      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave) {  // outer loop over waves
+      for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {  // outer loop over waves
 	// compute likelihood term
 	const complex<T> amp  = prodAmps[iRank][iWave] * complex<T>(_decayAmps[iWave][iEvt]);
 	const int        refl = _waveRefl[iWave];
@@ -134,7 +139,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
       l += norm(ampNeg);
       assert(l >= 0);
       // loop again over waves for current rank
-      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
+      for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave)
 	d[iRank][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
     }  // end loop over rank
     l             += prodAmpFlat2;
@@ -142,8 +147,8 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
     // incorporate factor 2 / sigma
     const T factor = 2. / l;
     for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-	derivatives[iRank][iWave] -= factor * d[iRank][iWave];
+      for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave)
+ 	derivatives[iRank][iWave] -= factor * d[iRank][iWave];
     derivativeFlat -= factor * prodAmpFlat;
   }  // end loop over events
  
@@ -196,20 +201,23 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
   // return likelihood value
   funcVal = logLikelihood + nmbEvt * normFactor.real();
 
-  if (1) {  // compare to FdFX
+  if (0) {  // compare to FdFX
     double fX;
     double dfX[_nmbPars];
     FdFX(par, fX, dfX);
     double maxDelta = 0;
     for (unsigned int i = 0; i < _nmbPars; ++i) {
-      const double delta = dfX[i] - gradient[i];
-      if (delta > maxDelta)
+      const double delta = (dfX[i] - gradient[i]) / gradient[i];
+//       printInfo << "dfX[" << i << "] = " << maxPrecisionAlign(dfX[i])
+// 		<< ", gradient[" << i << "] = " << maxPrecisionAlign(gradient[i])
+// 		<< ", delta grad f[" << i << "] = " << maxPrecisionAlign(delta) << endl;
+      if (fabs(delta) > fabs(maxDelta))
 	maxDelta = delta;
     }
 //     printInfo << "delta f        = " << maxPrecision(fX - logLikelihood) << endl;
 //     printInfo << "delta f        = " << maxPrecision(fX - normFactor.real()) << endl;
-     printInfo << "delta f = " << maxPrecisionAlign(fX - funcVal)
-	       << ", max delta grad f = " << maxPrecisionAlign(maxDelta) << endl;
+    printInfo << "delta f = " << maxPrecisionAlign((fX - funcVal) / funcVal)
+	       << ", !max delta grad f = " << maxPrecisionAlign(maxDelta) << endl;
   }
 }
 
@@ -220,15 +228,15 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
 			double&       funcVal,         // function value
 			double*       gradient) const  // array of derivatives
 {
-//   ++(_nmbCalls[FDF]);
-
-//   // log consumed time
-//   TStopwatch timer;
-//   timer.Start(true);
-
-//   // copy arguments into parameter cache
-//   for (unsigned int i = 0; i < _nmbPars; ++i)
-//     _parCache[i] = par[i];
+  ++(_nmbCalls[FDF]);
+  
+  // log consumed time
+  TStopwatch timer;
+  timer.Start(true);
+  
+  // copy arguments into parameter cache
+  for (unsigned int i = 0; i < _nmbPars; ++i)
+    _parCache[i] = par[i];
 
   // build complex production amplitudes from function parameters taking into account rank restrictions
   T                   prodAmpFlat;
@@ -245,6 +253,7 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
      derivatives[iRank][0].resize(_nmbWavesRefl[0], 0);
      derivatives[iRank][1].resize(_nmbWavesRefl[1], 0);
    }
+  //!!! possible optimization: dL/dIm[Par_i] = 0 for all i
 
   // loop over events and calculate first term of log likelihood and derivatives with respect to parameters
   T logLikelihood = 0;
@@ -255,25 +264,25 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
       d[iRank][0].resize(_nmbWavesRefl[0], 0);
       d[iRank][1].resize(_nmbWavesRefl[1], 0);
     }
-    for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
-      complex<T> ampSum[2] = {0, 0};  // amplitude sum for negative/positive reflectivity for this rank
-      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {    // incoherent sum over reflectivities
-	for (unsigned int iWave = 0; iWave <_nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+    for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                    // incoherent sum over ranks
+      complex<T> ampProdSum[2] = {0, 0};  // amplitude sum for negative/positive reflectivity for this rank
+      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                      // incoherent sum over reflectivities
+	for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 	  // compute likelihood term
 	  const complex<T> amp = prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmpsX[iRefl][iWave][iEvt]);
-	  ampSum[iRefl] += amp;
+	  ampProdSum[iRefl] += amp;
 	  // compute derivatives
 	  for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)  // inner loop over waves
 	    // sum up amplitudes for current rank and only for waves with same reflectivity
 	    d[iRank][iRefl][jWave] += amp;
 	}
       }
-      l += norm(ampSum[1]);
-      l += norm(ampSum[0]);
+      l += norm(ampProdSum[1]);
+      l += norm(ampProdSum[0]);
       assert(l >= 0);
       // loop again over waves for current rank
       for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-	for (unsigned int iWave = 0; iWave <_nmbWavesRefl[iRefl]; ++iWave)
+	for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 	  d[iRank][iRefl][iWave] *= conj(complex<T>(_decayAmpsX[iRefl][iWave][iEvt]));
     }  // end loop over rank
     l             += prodAmpFlat2;
@@ -282,14 +291,14 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
     const T factor = 2. / l;
     for (unsigned int iRank = 0; iRank < _rank; ++iRank)
       for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-	for (unsigned int iWave = 0; iWave <_nmbWavesRefl[iRefl]; ++iWave)
-	  derivatives[iRank][iRefl][iWave] -= factor * d[iRank][iRefl][iWave];
+	for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+  	  derivatives[iRank][iRefl][iWave] -= factor * d[iRank][iRefl][iWave];
     derivativeFlat -= factor * prodAmpFlat;
   }  // end loop over events
  
-//   // log consumed time
-//   const double t1 = timer.RealTime();
-//   timer.Start(true);
+  // log consumed time
+  const double t1 = timer.RealTime();
+  timer.Start(true);
 
   // compute normalization term of log likelihood and its derivatives with respect to parameters
   complex<T> normFactor  = 0;
@@ -297,7 +306,7 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
   const T    twiceNmbEvt = 2 * nmbEvt;
   for (unsigned int iRank = 0; iRank < _rank; ++iRank)
     for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-      for (unsigned int iWave = 0; iWave <_nmbWavesRefl[iRefl]; ++iWave) {
+      for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 	complex<T> normFactorDeriv = 0;
 	for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) { // inner loop over waves
 	  const complex<T> I = complex<T>(_accMatrixX[iRefl][iWave][iRefl][jWave]);
@@ -312,19 +321,19 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
 
   // sort derivative results into output array and cache
   copyToParArrayX(derivatives, derivativeFlat, gradient);
-//   copyToParArrayX(derivatives, derivativeFlat, &(*(_derivCache.begin())));
+  copyToParArrayX(derivatives, derivativeFlat, &(*(_derivCache.begin())));
 
-//   // log consumed time
-//   const double t2 = timer.RealTime();
-//   timer.Stop();
-//   _Ltime += t1;
-//   _Ntime += t2;
+  // log consumed time
+  const double t2 = timer.RealTime();
+  timer.Stop();
+  _Ltime += t1;
+  _Ntime += t2;
   
-//   if (_debug)
-//     printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
-// 	      << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
-// 	      << "normalized likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
-// 	      << "    Time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
+  if (_debug)
+    printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
+	      << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
+	      << "normalized likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
+	      << "    Time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
 
   // return likelihood value
   funcVal = logLikelihood + nmbEvt * normFactor.real();
@@ -364,7 +373,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
     for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks and reflectivities
       complex<T> ampPos = 0;  // positive reflectivity amplitude for this rank
       complex<T> ampNeg = 0;  // negative reflectivity amplitude for this rank
-      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave) {  // loop over waves
+      for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {  // loop over waves
 	const complex<T> amp  = prodAmps[iRank][iWave] * complex<T>(_decayAmps[iWave][iEvt]);
 	if (_waveRefl[iWave] == -1)
 	  ampNeg += amp;
@@ -422,7 +431,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
     double df[_nmbPars];
     FdF(par, f, df);
     const double funcVal = logLikelihood + nmbEvt * normFactor.real();
-    printInfo << "delta f = " << maxPrecision(f - funcVal) << endl;
+    printInfo << "delta f = " << maxPrecision((f - funcVal) / funcVal) << endl;
   }
 
   // return log likelihood value
@@ -513,7 +522,7 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
     for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks and reflectivities
       complex<T> ampPos = 0;  // positive reflectivity amplitude for this rank
       complex<T> ampNeg = 0;  // negative reflectivity amplitude for this rank
-      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave) {  // outer loop over waves
+      for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {  // outer loop over waves
 	const complex<T> amp  = prodAmps[iRank][iWave] * complex<T>(_decayAmps[iWave][iEvt]);
 	const int        refl = _waveRefl[iWave];
 	if (refl == -1)
@@ -529,14 +538,14 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
       l += norm(ampNeg);
       assert(l >= 0);
       // loop again over waves for current rank
-      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
+      for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave)
 	d[iRank][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
     }  // end loop over rank
     l += prodAmpFlat2;
     // incorporate factor 2 / sigma
     const T factor = 2. / l;
     for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
+      for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave)
 	derivatives[r][iWave] -= factor * d[iRank][iWave];
     derivativeFlat -= factor * prodAmpFlat;
   }  // end loop over events
@@ -585,8 +594,8 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
     FdF(par, f, df);
     double maxDelta = 0;
     for (unsigned int i = 0; i < _nmbPars; ++i) {
-      const double delta = df[i] - gradient[i];
-      if (delta > maxDelta)
+      const double delta = (df[i] - gradient[i]) / gradient[i];
+      if (fabs(delta) > fabs(maxDelta))
 	maxDelta = delta;
     }
     printInfo << "max delta df = " << maxPrecision(maxDelta) << endl;
@@ -702,8 +711,11 @@ TPWALikelihood<T>::buildParDataStruct(const unsigned int rank)
       _waveRefl[iWave] = getReflectivity(_waveNames[iWave]);
       const unsigned int refl = (_waveRefl[iWave] > 0) ? 1 : 0;
       if (iWaveRefl[refl] < iRank) {  // production amplitude is zero
-	++iWaveRefl[refl];
 	_prodAmpToFuncParMapX[iRank][refl][iWaveRefl[refl]] = make_pair(-1, -1);
+// 	cout << _waveNames[iWave] << " [" << iRank << ", " << iWave << "] -> "
+// 	     << " [" << iRank << ", " << refl << ", " << iWaveRefl[refl] << "] -> "
+// 	     << _prodAmpToFuncParMapX[iRank][refl][iWaveRefl[refl]] << endl;
+	++iWaveRefl[refl];
 	continue;
       } else if (iWaveRefl[refl] == iRank) {  // production amplitude is real
 	ostringstream parName;
@@ -723,6 +735,9 @@ TPWALikelihood<T>::buildParDataStruct(const unsigned int rank)
 	_prodAmpToFuncParMapX[iRank][refl][iWaveRefl[refl]] = make_pair(parIndex - 1, parIndex);
 	++parIndex;
       }
+//       cout << _waveNames[iWave] << " [" << iRank << ", " << iWave << "] -> "
+// 	   << " [" << iRank << ", " << refl << ", " << iWaveRefl[refl] << "] -> "
+// 	   << _prodAmpToFuncParMapX[iRank][refl][iWaveRefl[refl]] << endl;
       ++iWaveRefl[refl];
     }  // end loop over waves
   }  // end loop over rank
@@ -1316,14 +1331,22 @@ TPWALikelihood<T>::copyToParArrayX(const vector3(complex<T>)& inVal,         // 
 {
   for (unsigned int iRank = 0; iRank < _rank; ++iRank)
     for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-      for (unsigned int iWave = 0; iWave <_nmbWavesRefl[iRefl]; ++iWave) {
-	pair<int, int> parIndex = _prodAmpToFuncParMapX[iRank][iRefl][iWave];
-	if (parIndex.first > 0)   // real part
-	  outPar[parIndex.first]  = inVal[iRank][iRefl][iWave].real();
-	if (parIndex.second > 0)  // imaginary part
-	  outPar[parIndex.second] = inVal[iRank][iRefl][iWave].imag();
+      for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+	pair<int, int> parIndices = _prodAmpToFuncParMapX[iRank][iRefl][iWave];
+// 	cout << " [" << iRank << ", " << iRefl << ", " << iWave << "] -> " << parIndices
+// 	     << ": " << inVal[iRank][iRefl][iWave] << endl;
+	if (parIndices.first >= 0) {   // real part
+	  outPar[parIndices.first]  = inVal[iRank][iRefl][iWave].real();
+// 	  cout << "!!! HERE: " << parIndices.first << ", " << inVal[iRank][iRefl][iWave].real() 
+// 	       << " vs. " << outPar[parIndices.first] << endl;
+	}
+	if (parIndices.second >= 0)  // imaginary part
+	  outPar[parIndices.second] = inVal[iRank][iRefl][iWave].imag();
       }
   outPar[_nmbPars - 1] = inFlatVal;
+//   cout << "!!! outPar[0] = " << outPar[0] << " vs. " << inVal[0][1][0] << endl;
+//   outPar[0] = inVal[0][1][0].real();
+//   cout << "!!! outPar[0] = " << outPar[0] << " vs. " << inVal[0][1][0] << endl;
 }
 
 

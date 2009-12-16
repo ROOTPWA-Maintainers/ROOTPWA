@@ -99,6 +99,18 @@ std::ostream& operator << (std::ostream&                 out,
 { return value.print(out); }
 
 
+// simple stream operators for some STL classes
+template <typename T1, typename T2>
+inline
+std::ostream&
+operator << (std::ostream&            out,
+             const std::pair<T1, T2>& pair)
+{
+  out << "(" << pair.first << ", " << pair.second << ")";
+  return out;
+}
+
+
 // simple stream operators for some common ROOT classes
 inline
 std::ostream&
