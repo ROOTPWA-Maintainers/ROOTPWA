@@ -99,7 +99,7 @@ std::ostream& operator << (std::ostream&                 out,
 { return value.print(out); }
 
 
-// simple stream operators for some STL classes
+// simple stream operators for some SLT classes
 template <typename T1, typename T2>
 inline
 std::ostream&
@@ -107,6 +107,20 @@ operator << (std::ostream&            out,
              const std::pair<T1, T2>& pair)
 {
   out << "(" << pair.first << ", " << pair.second << ")";
+  return out;
+}
+
+
+template<typename T>
+inline
+std::ostream&
+operator << (std::ostream&         out,
+	     const std::vector<T>& vec)
+{
+  out << "{";
+  for (unsigned int i = 0; i < (vec.size() - 1); ++i)
+    out << vec[i] << ", ";
+  out << vec[vec.size() - 1] << "}";
   return out;
 }
 
@@ -121,6 +135,7 @@ operator << (std::ostream&   out,
   return out;
 }
 
+
 inline
 std::ostream&
 operator << (std::ostream&         out,
@@ -130,6 +145,7 @@ operator << (std::ostream&         out,
   return out;
 }
 
+
 inline
 std::ostream&
 operator << (std::ostream&   out,
@@ -138,6 +154,7 @@ operator << (std::ostream&   out,
   out << "(" << c.Re() << ", " << c.Im() << ")";
   return out;
 }
+
 
 template <typename T>
 std::ostream&
@@ -271,6 +288,98 @@ allocate3DArray(T***&              array,
 //       for (unsigned int k = 0; k < dim[2]; ++k)
 // 	array[i][j][k] = defaultVal;
   }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// conversion functions
+
+// converts any class that supports << into a string
+template<typename T>
+inline
+std::string
+toString(const T& fromValue)
+{
+  std::ostringstream to;
+  to << fromValue;
+  return to.str();
+
+  // much cleaner with BOOST
+  // #include <boost/lexical_cast.hpp>
+  // double d = 453.23;
+  // string str = boost::lexical_cast<string>(d);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// math helper functions and constants
+
+// mathematical constants
+const double pi     = 2 * asin((double)1);
+const double piHalf = pi / 2;
+const double twoPi  = 2 * pi;
+const double fourPi = 4 * pi;
+
+
+// computes n!
+inline
+unsigned int
+factorial(const unsigned int n)
+{
+ unsigned int fac = 1;
+ for (unsigned int i = 1; i <= n; ++i)
+   fac *= i;
+ return fac;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// physics helper functions
+
+// computes breakup momentum of 2-body decay
+inline
+double
+breakupMomentum(const double M,   // mass of mother particle
+		const double m1,  // mass of daughter particle 1
+		const double m2)  // mass of daughter particle 2
+{
+  if (M < m1 + m2)
+    return 0;
+  return sqrt((M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2)) / (2 * M);
+}
+
+
+// kinematic border in Dalitz plot; PDG 2008 eq. 38.22a, b
+// for decay M -> m0 m1 m2
+inline
+double
+dalitzKinematicBorder(const double  mass_2,      // 2-body mass squared on x-axis
+		      const double  M,           // 3-body mass
+		      const double* m,           // array with the 3 daughter masses
+		      const bool    min = true)  // switches between curves for minimum and maximum mass squared on y-axis
+{
+  if (mass_2 < 0)
+    return 0;
+  const double  mass   = sqrt(mass_2);
+  const double  M_2    = M * M;                                    // 3-body mass squared
+  const double  m_2[3] = {m[0] * m[0], m[1] * m[1], m[2] * m[2]};  // daughter masses squared
+
+  // calculate energies of particles 1 and 2 in m01 RF
+  const double E1 = (mass_2 - m_2[0] + m_2[1]) / (2 * mass);
+  const double E2 = (M_2    - mass_2 - m_2[2]) / (2 * mass);
+  const double E1_2  = E1 * E1;
+  const double E2_2  = E2 * E2;
+  if ((E1_2 < m_2[1]) || (E2_2 < m_2[2]))
+    return 0;
+
+  // calculate m12^2
+  const double p1     = sqrt(E1_2 - m_2[1]);
+  const double p2     = sqrt(E2_2 - m_2[2]);
+  const double Esum_2 = (E1 + E2) * (E1 + E2);
+  if (min)
+    return Esum_2 - (p1 + p2) * (p1 + p2);
+  else
+    return Esum_2 - (p1 - p2) * (p1 - p2);
 }
 
 

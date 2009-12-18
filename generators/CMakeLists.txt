@@ -34,37 +34,45 @@ SET(INCLUDE_DIRECTORIES
 
 include_directories(${INCLUDE_DIRECTORIES})
 
-SET(SOURCES  TProductionAmp.cc
-             TBWProductionAmp.cc
-             TPWWeight.cc
-             TDiffractivePhaseSpace.cc)
+SET(SOURCES
+  nBodyPhaseSpaceGen.cc
+  TProductionAmp.cc
+  TBWProductionAmp.cc
+  TPWWeight.cc
+  TDiffractivePhaseSpace.cc
+)
    
 #add ROOT lib
 SET(ROOT_LIB $ENV{ROOTSYS}/lib)
 SET(ROOT_BIN $ENV{ROOTSYS}/bin)
-SET(ROOT_LIBS ${ROOT_LIB}/libCore.so
-              ${ROOT_LIB}/libCint.so
-              ${ROOT_LIB}/libRIO.so
-              ${ROOT_LIB}/libNet.so
-              ${ROOT_LIB}/libHist.so
-              ${ROOT_LIB}/libGraf.so
-              ${ROOT_LIB}/libGraf3d.so
-              ${ROOT_LIB}/libGpad.so
-              ${ROOT_LIB}/libTree.so
-	      ${ROOT_LIB}/libThread.so
-              ${ROOT_LIB}/libRint.so
-              ${ROOT_LIB}/libPostscript.so
-              ${ROOT_LIB}/libMatrix.so
-              ${ROOT_LIB}/libPhysics.so
-              ${ROOT_LIB}/libMathCore.so
-              ${ROOT_LIB}/libMinuit.so
-              libdl.so
-              libm.so)
-#              ${ROOT_LIB}/libMinuit2.so
+SET(ROOT_LIBS
+  ${ROOT_LIB}/libCore.so
+  ${ROOT_LIB}/libCint.so
+  ${ROOT_LIB}/libRIO.so
+  ${ROOT_LIB}/libNet.so
+  ${ROOT_LIB}/libHist.so
+  ${ROOT_LIB}/libGraf.so
+  ${ROOT_LIB}/libGraf3d.so
+  ${ROOT_LIB}/libGpad.so
+  ${ROOT_LIB}/libTree.so
+  ${ROOT_LIB}/libThread.so
+  ${ROOT_LIB}/libRint.so
+  ${ROOT_LIB}/libPostscript.so
+  ${ROOT_LIB}/libMatrix.so
+  ${ROOT_LIB}/libPhysics.so
+  ${ROOT_LIB}/libMathCore.so
+  ${ROOT_LIB}/libMinuit.so
+#  ${ROOT_LIB}/libMinuit2.so
+  libdl.so
+  libm.so
+)
+
 #add PWA lib
 SET(PWA_LIB ${LIBRARY_OUTPUT_PATH})
-SET(PWA_LIBS ${PWA_LIB}/libpp.so
-             ${PWA_LIB}/libpwa.so)
+SET(PWA_LIBS
+  ${PWA_LIB}/libpp.so
+  ${PWA_LIB}/libpwa.so
+)
 
 #add rootpwalib
 SET(ROOTPWA_LIB ${LIBRARY_OUTPUT_PATH})
@@ -82,24 +90,31 @@ FIND_PROGRAM(ROOT_CINT_EXECUTABLE
   NAMES rootcint
   PATHS ${ROOT_BIN}
   NO_DEFAULT_PATH
- )
+)
 
 ADD_CUSTOM_COMMAND(OUTPUT rootpwagenDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwagenDict.cc
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwagenDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/generators rootpwatoolsLinkDef.h)
+      ARGS -f rootpwagenDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src -I${CMAKE_SOURCE_DIR}/generators nBodyPhaseSpaceGen.h rootpwagenLinkDef.h)
 
 
 set(GEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwagenDict.cc)
+
 
 #-------------------------------------------------
 #------- The library ---- ------------------------
 #-------------------------------------------------
 
-SET(SOURCES ${SOURCES} ${TOOLS_DICTIONARY})
+SET(SOURCES
+  ${SOURCES}
+  ${GEN_DICTIONARY}
+)
+
 ADD_LIBRARY(rootpwagen SHARED ${SOURCES})
+
 TARGET_LINK_LIBRARIES(rootpwagen ${ROOT_LIBS})
 TARGET_LINK_LIBRARIES(rootpwagen ${PWA_LIBS})
 TARGET_LINK_LIBRARIES(rootpwagen ${ROOTPWA_LIBS})
+
 
 #-------------------------------------------------
 #------- Main executables ------------------------
@@ -120,8 +135,18 @@ TARGET_LINK_LIBRARIES(evtweight ${ROOTPWA_LIBS})
 ADD_EXECUTABLE(plotBWAmp plotBWAmp.cc)
 TARGET_LINK_LIBRARIES(plotBWAmp ${ROOT_LIBS})
 TARGET_LINK_LIBRARIES(plotBWAmp rootpwagen)
+
+
 #-------------------------------------------------
 #------- Install options -------------------------
 #-------------------------------------------------
 
 #INSTALL(FILES DESTINATION bin PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+
+
+#-------------------------------------------------
+#------- Test Executables ------------------------
+#-------------------------------------------------
+
+#ADD_TEST(testBuild  ${CMAKE_BUILD_TOOL})
+#ADD_TEST(testPWAFit root ${CMAKE_CURRENT_SOURCE_DIR}/runTestNBodyPhaseSpaceGen.C)
