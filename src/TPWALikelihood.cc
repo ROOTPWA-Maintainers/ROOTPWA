@@ -47,7 +47,7 @@
 #include "utilities.h"
 
 
-#define USE_FDF
+//#define USE_FDF
 
 
 using namespace std;
@@ -68,6 +68,7 @@ TPWALikelihood<T>::TPWALikelihood()
   _nmbWavesRefl[1] = 0;
   for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i)
     _nmbCalls[i] = 0;
+  printInfo << "using DoEval()!!!" << endl;
 }
 
 
@@ -84,7 +85,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 		       double&       funcVal,         // function value
 		       double*       gradient) const  // array of derivatives
 {
-  if (1) {  // run FdFX
+  if (0) {  // run FdFX
     FdFX(par, funcVal, gradient);
     return;
   }
@@ -546,7 +547,7 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
     const T factor = 2. / l;
     for (unsigned int iRank = 0; iRank < _rank; ++iRank)
       for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave)
-	derivatives[r][iWave] -= factor * d[iRank][iWave];
+	derivatives[iRank][iWave] -= factor * d[iRank][iWave];
     derivativeFlat -= factor * prodAmpFlat;
   }  // end loop over events
  
