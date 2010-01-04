@@ -10,7 +10,7 @@ ROOT:
 	--enable-mathmore 
 	--enable-minuit2 
 	options
-  If you do not find libMinuit2.so or libMathmore.so in $ROOTSYS/lib then
+  If you do not find libMinuit2.so or libMathMore.so in $ROOTSYS/lib then
   you probably need to re-configure ROOT with these options
 
 CMAKE:
@@ -27,7 +27,11 @@ libconfig:
 	http://www.hyperrealm.com/libconfig/
 	Version 1.4
 	The installation is straight forward and should work without
-	any problems.
+	any problems but you should use the prefix pointing to 
+	the lib files in the topfolder instead of /bin/local:
+	./configure --prefix=$LIBCONFIG
+	See ./configure --help for details.
+
 	We will provide a copy of the package from 
 	http://sourceforge.net/projects/rootpwa/files/
 
