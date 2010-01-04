@@ -9,6 +9,7 @@
 #include "TH2D.h"
 #include "TH3D.h"
 #include "TGenPhaseSpace.h"
+//#include "../../generators/nBodyPhaseSpaceGen.h"
 #include "TCanvas.h"
 #include "TRandom3.h"
 #include "TFile.h"
@@ -355,6 +356,7 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
 
     // generate phase space distribution with root's simple generator
     TGenPhaseSpace phaseSpace;
+
     bool           allowed = phaseSpace.SetDecay(X, 3, daughterMasses);
     if (!allowed) {
       cerr << "Decay of M = " << X.M() << " into 3 particles is not allowed!" << endl;
@@ -371,15 +373,15 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
 
     t 		= tGen;
     tprime 	= 0;
-    M123 	= ( *(phaseSpace.GetDecay(1)) +
-				*(phaseSpace.GetDecay(2)) +
-				*(phaseSpace.GetDecay(3))).M();
-    M12 	= ( *(phaseSpace.GetDecay(1)) +
+    M123 	= ( *(phaseSpace.GetDecay(0)) +
+				*(phaseSpace.GetDecay(1)) +
 				*(phaseSpace.GetDecay(2))).M();
-    M13 	= ( *(phaseSpace.GetDecay(1)) +
-				*(phaseSpace.GetDecay(3))).M();
-    M23 	= ( *(phaseSpace.GetDecay(2)) +
-				*(phaseSpace.GetDecay(3))).M();
+    M12 	= ( *(phaseSpace.GetDecay(0)) +
+				*(phaseSpace.GetDecay(1))).M();
+    M13 	= ( *(phaseSpace.GetDecay(0)) +
+				*(phaseSpace.GetDecay(2))).M();
+    M23 	= ( *(phaseSpace.GetDecay(1)) +
+				*(phaseSpace.GetDecay(2))).M();
     //theta 	= 0;
     dphi	= GetPhi(beam, phaseSpace, q);
     Vx 		= vertexPos.X();
