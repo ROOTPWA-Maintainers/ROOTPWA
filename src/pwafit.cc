@@ -305,6 +305,7 @@ main(int    argc,
   // find minimum of likelihood function
   printInfo << "Performing minimization." << endl;
   minimizer->SetMaxIterations(maxNmbOfIterations);
+  minimizer->SetTolerance(1.e-12);
   success = minimizer->Minimize();
   if (!success)
     printWarn << "Minimization failed." << endl;

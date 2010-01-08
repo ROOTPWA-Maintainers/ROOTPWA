@@ -42,6 +42,7 @@ SET(SOURCES
   TCMatrix.cc
   TPWALikelihood.h
   TPWALikelihoodC.cc
+  TPWALikelihoodO.cc
   TPWAAmp.cc
   TPWAPhaseConstraint.cc
   TLogMultiGaus.cc
@@ -126,6 +127,11 @@ ADD_EXECUTABLE(pwafit pwafit.cc)
 TARGET_LINK_LIBRARIES(pwafit rootpwa)
 TARGET_LINK_LIBRARIES(pwafit ${PWA_LIBS})
 TARGET_LINK_LIBRARIES(pwafit ${ROOT_LIBS})
+
+#ADD_EXECUTABLE(pwafitO pwafitO.cc)
+#TARGET_LINK_LIBRARIES(pwafitO rootpwa)
+#TARGET_LINK_LIBRARIES(pwafitO ${PWA_LIBS})
+#TARGET_LINK_LIBRARIES(pwafitO ${ROOT_LIBS})
 
 ADD_EXECUTABLE(pwaConstraintFit pwaConstraintFit.cc)
 TARGET_LINK_LIBRARIES(pwaConstraintFit rootpwa)

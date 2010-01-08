@@ -63,12 +63,12 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
 
   const unsigned int nmbPadsPerCanvMin = 6;  // minimum number of pads each canvas is subdivided into
   // define set of spin totals
-  const string waves[] = {"",  // total intensity
+  const string waves[] = {"logLikelihood",
+                          "",  // total intensity
 			  "flat",
-			  "0++0-",
 			  "0-+0+",
 			  "1++0+",
-			  "1++1+",
+			  //"1++1+",
 			  "2-+0+",
 			  "2-+1+",
 			  "2++0-",
@@ -79,7 +79,8 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
 			  "4++1+",
 			  "3-+1+",
 			  "3-+1-",
-			  "3-+0-"};
+			  "3-+0-",
+			  "0++0-"};
   const unsigned int nmbWaves = sizeof(waves) / sizeof(string);
   cout << "Plotting spin totals for:" << endl;
   for (unsigned int i = 0; i < nmbWaves; ++i)
@@ -120,21 +121,37 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
     }
     
     // build and run TTree::Draw() expression
-    const string drawExpr = "intensity(\"" + waves[i] + "\"):intensityErr(\"" + waves[i] + "\"):massBinCenter()";
-    tree->Draw(drawExpr.c_str(), "", "goff");
-
-    // extract data from TTree::Draw() result and build graph
+    if(i==0){ // draw likelihood
+      tree->Draw("-logLikelihood()/nmbEvents():massBinCenter():massBinCenter()", "", "goff");
+    }
+    else {
+      
+      const string drawExpr = "intensity(\"" + waves[i] + "\"):intensityErr(\"" + waves[i] + "\"):massBinCenter()";
+      tree->Draw(drawExpr.c_str(), "", "goff");
+      
+    }
+      // extract data from TTree::Draw() result and build graph
     const int nmbBins = tree->GetSelectedRows();
     vector<double> x(nmbBins), xErr(nmbBins);
     for (int j = 0; j < nmbBins; ++j) {
       x[j]    = tree->GetV3()[j] * 0.001;  // convert mass to GeV
       xErr[j] = 0;
     }
-    TGraphErrors* g = new TGraphErrors(nmbBins,
-				       &(*(x.begin())),  // mass
-				       tree->GetV1(),    // intensity
-				       0,                // mass error
-				       tree->GetV2());   // intensity error
+    TGraphErrors* g;
+    if(i==0){
+        g = new TGraphErrors(nmbBins,
+					   &(*(x.begin())),  // mass
+					   tree->GetV1(),    // logLikelihood
+					   0,                // mass error
+					   0);   // no error
+    }
+    else{
+      g = new TGraphErrors(nmbBins,
+			   &(*(x.begin())),  // mass
+			   tree->GetV1(),    // intensity
+			   0,                // mass error
+			   tree->GetV2());   // intensity error
+    }
     // plot graph
     canv->cd(++countPad);
     if (waves[i] != "") {
@@ -176,6 +193,9 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
       ++countCanv;
     }
   }
+
+  
+
 
   if (outFile)
     outFile->Close();

@@ -533,7 +533,7 @@ TPWALikelihood<T>::LoadIntegrals(const string& normIntFileName,
 //   if (_debug)
 //     _accInt.print(cout);
   intFile.close();
-  //_accInt.events(100000); TODO: add possibility to rescale here!
+  //_accInt.events(100000); //TODO: add possibility to rescale here!
   _accMatrix = reorderedIntegralMatrix(_accInt);
 }
 

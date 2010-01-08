@@ -108,12 +108,12 @@ public:
 		  std::vector<std::string>&           names,
 		  const bool                          withFlat = false);
 
-private:
 
   // overload private IGradientFunctionMultiDim member functions
   virtual double DoEval(const double* par) const;
   virtual double DoDerivative(const double* par,
 			      unsigned int  derivativeIndex) const;
+private:
 
   void clearCache();
   int getReflectivity(const TString& waveName) const;

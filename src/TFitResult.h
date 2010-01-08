@@ -78,6 +78,7 @@ public:
 
   double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
   double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
+  double       evidence() const ; ///< return the model evidence (OccamFactorMethod)
   unsigned int rank         () const { return _rank;              }  ///< returns rank of fit
   unsigned int nmbEvents    () const { return _nmbEvents;         }  ///< returns number of events in bin
   unsigned int nmbWaves     () const { return _waveNames.size();  }  ///< returns number of waves in fit

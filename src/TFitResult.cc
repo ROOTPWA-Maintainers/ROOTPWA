@@ -91,6 +91,30 @@ TFitResult::~TFitResult()
 { }
 
 
+/// \brief calculates the model evidence using Rafters occam factor method
+///
+/// \f[  \ln P(\mathrm{Data}|M_k)\approx \ln P(\mathrm{Data}|A_{\mathrm{ML}}^k,M_k) + \ln{\frac{\sqrt{(2\pi)^d|\mathbf{C}_{A|D}|}}{\sum_i\frac{\pi}{\Psi_{ii}}}} \f]
+/// This uses a flat prior in each parameter (see note on Model Selection) such
+/// that no single wave can have more than the total intensity measured
+double
+TFitResult::evidence() const {
+  double l=-logLikelihood();
+  double det=_fitParCovMatrix.Determinant();
+  double d=(double)_fitParCovMatrix.GetNcols();
+  double sum=0;
+  unsigned int ni=_normIntegral.ncols();
+  for(unsigned int i=0;i<ni;++i){
+    sum+=1./_normIntegral(i,i).Re();
+  }
+  double occ=TMath::Power(TMath::Pi(),d*0.5-1.)*TMath::Sqrt(2*det)/sum;
+  double locc=TMath::Log(occ);
+  cout << "TFitResult::evidence" << endl;
+  cout << "    LogLikeli: " << l;
+  cout << "  Occamfactor: " << locc;
+  return l+locc;
+}
+
+
 /// \brief calculates spin density matrix element for waves A and B
 ///
 /// \f[ \rho_{AB} = \sum_r V_{Ar} V_{Br}^* \f]
