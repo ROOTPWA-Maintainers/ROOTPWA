@@ -245,19 +245,47 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
   unsigned int attempts=0;
   while(!done){
     // sample theta directly:
-    const double theta  = thetaDistribution->GetRandom();
+    //const double theta  = thetaDistribution->GetRandom();
+
+    const double tprime=gRandom->Exp(gBT);
     const double xMass  = gRandom->Uniform(xMassMin, xMassMax);
     const double xMass2 = xMass * xMass;
-    
+    const double xMass4 = xMass2 * xMass2;
+    const double m0  = gRecoilMass;
+    const double ma = gbeam.M();
+    const double pa= gbeam.Vect().Mag();
+    const double ma2 = ma * ma;
+    const double ma4 = ma2 * ma2;
+
     const double Ea = gbeam.E();
-    // account for recoil assume proton recoil
-    const double eps  = (xMass2 - gPionMass2) / (2 * gProtonMass * Ea);
-    const double epso = 1 - eps;
-    const double eat  = Ea * theta;
-    //eat *= eat;
-    const double mpeps = gProtonMass * eps;
-    const double e = Ea - 1 / (2 * gProtonMass * epso) * (eat * eat + mpeps * mpeps);
-    const double pw = sqrt(e * e - xMass2); // three momentum magnitude
+    const double Ea2 = Ea*Ea;
+    const double g=2*Ea*m0 + ma2 - xMass2;
+    const double EcN=4*Ea2*(g - tprime)
+                     - ma4 + 2*ma2*xMass2 - xMass4 ;
+    const double EcD=2*Ea*g;
+    const double Ec=EcN/EcD;
+
+
+    // // account for recoil assume proton recoil
+//     const double eps  = (xMass2 - gPionMass2) / (2 * gProtonMass * Ea);
+//     const double epso = 1 - eps;
+//     const double eat  = Ea * theta;
+//     //eat *= eat;
+//     const double mpeps = gProtonMass * eps;
+//     const double e = Ea - 1 / (2 * gProtonMass * epso) * (eat * eat + mpeps * mpeps);
+
+
+    const double pw = sqrt(Ec * Ec - xMass2); // three momentum magnitude
+    const double t=tprime-(pw*pw+pa*pa-2.*pw*pa);
+    // calculate theta following suh-urks paper (formulas 20 and 21)
+    const double term1=(xMass2-ma2)/(2*Ec);
+    const double term=t-term1*term1;
+    if(term<0) {
+      //cout << "neg" << endl;
+      continue;
+     }
+
+    const double theta=1/Ec*sqrt(term);
     const double phi= gRandom->Uniform(0., TMath::TwoPi());
     
     TVector3 p3(1, 0, 0);
@@ -266,7 +294,7 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     p3.RotateUz(gbeam.Vect().Unit());
     
     // build resonance
-    TLorentzVector X(p3, e);
+    TLorentzVector X(p3, Ec);
     const TLorentzVector q = gbeam - X;
     
     // apply t cut

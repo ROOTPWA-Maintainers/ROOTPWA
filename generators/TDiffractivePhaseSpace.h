@@ -90,16 +90,23 @@ public:
    *           Defines a target cell with 4cm diameter extending 
    *           from z=-40cm to z=0cm
    */
-  void SetTarget(double zPos,double length, double r)
-  {gTargetZPos=zPos;gTargetZLength=length;gTargetR=r;}
+  void SetTarget(double zPos,double length, double r, double mass)
+  {gTargetZPos=zPos;gTargetZLength=length;gTargetR=r;gRecoilMass=mass;}
 
-  void SetThetaDistribution(TH1* distr){thetaDistribution=distr;}
+  //void SetThetaDistribution(TH1* distr){thetaDistribution=distr;}
+
+
+  /** @brief Set the slope b of the t-prime distribution
+   *
+   *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
+   */
+  void SetTPrimeSlope(double b){gBT=b;}
+  
 
   /** @brief Set mass range of produced system X
    * 
    *  Events will be generated uniformly in mass
    */
-
   void SetMassRange(double min, double max){xMassMin=min;xMassMax=max;}
   void SetDecayProducts(const std::vector<particleinfo>& info);
   void AddDecayProduct(const particleinfo& info);
@@ -134,6 +141,7 @@ private:
   double gTargetZPos;
   double gTargetZLength;
   double gTargetR;
+  double gRecoilMass;
 
   // beam parameters:
   double gBeamMomSigma;  // [GeV/c]
@@ -147,6 +155,9 @@ private:
   TLorentzVector gbeam; // cache for last generated beam
 
   TH1* thetaDistribution;
+
+  double gBT;
+
   // cut on t-distribution
   double tMin; // [(GeV/c)^2]
 
