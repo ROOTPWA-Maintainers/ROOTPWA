@@ -66,7 +66,7 @@ public:
   ~TDiffractivePhaseSpace(){}
 
  // Accessors -----------------------
-  TLorentzVector* GetDecay(unsigned int i){return phaseSpace.GetDecay(i);}
+  const TLorentzVector* const GetDecay(unsigned int i){return &nbody.daughter(i);}
   TLorentzVector* GetBeam(){return &gbeam;}
   // Modifiers -----------------------
   /** @brief Set beam parameters
