@@ -51,9 +51,11 @@ public:
 	       unsigned int vectori=0);
 
 
-  
-
-  void loadIntegrals(const std::string& filename);
+  /** @brief Load normalization integrals for a mass bin
+   * 
+   *  several integrals can be loaded to cover a larger range in mass
+   */
+  void loadIntegrals(const std::string& filename, double mass);
   
   // Operations ----------------------
   /** @brief Calculate weight for an event
@@ -81,7 +83,7 @@ private:
 
   std::vector<Tgamp> m_gamp;
   std::map<string,double> m_relphase;
-  integral m_normInt;
+  std::map<double,integral> m_normInt;
 
   bool m_hasInt;
 

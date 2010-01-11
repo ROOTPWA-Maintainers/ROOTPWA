@@ -57,9 +57,12 @@ extern particleDataTable PDGtable;
 void printUsage(char* prog, int errCode=0) {
 cerr << "usage:" << endl
      << prog
-     << " -n # -o <file> -w <file> -k <path> -i <file> -r <file>"
+     << " -n # [-a # -m #] -o <file> -w <file> -k <path> -i <file> -r <file>"
      << "    where:" << endl
-     << "        -n #       number of events to generate" << endl
+     << "        -n #       (max) number of events to generate (default: 100)" << endl
+     << "        -a #       (max) number of attempts to do (default: infty)" \
+     << endl
+     << "        -m #       maxWeight" << endl
      << "        -o <file>  ROOT output file"<< endl
      << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
      << "        -w <file.root>  to use TFitBin tree as input"<< endl 
@@ -75,6 +78,7 @@ int main(int argc, char** argv)
 {
 
   unsigned int nevents=100;
+  unsigned int max_attempts=0;
   string output_file("genpw.root");
   string integrals_file;
   bool hasint=false;
@@ -85,10 +89,13 @@ int main(int argc, char** argv)
   int seed=123456;
 
   int c;
-  while ((c = getopt(argc, argv, "n:o:w:k:i:r:m:s:h")) != -1)
+  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
+      break;
+    case 'a':
+      max_attempts = atoi(optarg);
       break;
     case 's':
       seed = atoi(optarg);
@@ -284,11 +291,17 @@ int main(int argc, char** argv)
     }   
   }
 
-
-
-  if(hasint)weighter.loadIntegrals(integrals_file);
-
-
+  if(hasint){
+    // read integral files
+    ifstream intfile(integrals_file.c_str());
+    while(intfile.good()){
+      std::string filename;
+      double mass;
+      intfile >> filename >> mass;
+      weighter.loadIntegrals(filename,mass);
+      intfile.ignore(256,'\n');
+    } // loop over integralfile
+  }// endif hasint
 
   
   double maxweight=-1;
@@ -297,7 +310,7 @@ int main(int argc, char** argv)
 
   unsigned int tenpercent=(unsigned int)(nevents/10);
   unsigned int i=0;
-  while(i<nevents)
+  while(i<nevents && ((max_attempts>0 && attempts<max_attempts) || max_attempts==0))
     {
 
       ++attempts;
@@ -345,7 +358,8 @@ int main(int argc, char** argv)
   cerr << endl;
   cerr << "Maxweight: " << maxweight << endl;
   cerr << "Attempts: " << attempts << endl;
-  cerr << "Efficiency: " << (double)nevents/(double)attempts << endl;
+  cerr << "Created Events: " << i << endl;
+  cerr << "Efficiency: " << (double)i/(double)attempts << endl;
   
 
   outfile->cd();

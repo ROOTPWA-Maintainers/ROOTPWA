@@ -67,7 +67,7 @@ using namespace std;
 
 
 TDiffractivePhaseSpace::TDiffractivePhaseSpace() :
-  tMin(0.001), daughterMasses(NULL),gProtonMass(0.938272013),gPionMass(0.13957018),gPionMass2(gPionMass * gPionMass)
+  tMin(0.001),xMassMin(0),xMassMax(0), daughterMasses(NULL),gProtonMass(0.938272013),gPionMass(0.13957018),gPionMass2(gPionMass * gPionMass)
 {
   nbody.setWeightType(nBodyPhaseSpaceGen::S_U_CHUNG);
   nbody.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
@@ -170,7 +170,18 @@ TDiffractivePhaseSpace::BuildDaughterList(){
   for(unsigned int i=0;i<n;++i){
     daughterMasses[i]=decayProducts[i].mass;
   }
-  if(n>1)nbody.setDecay((int)n, daughterMasses);
+  if(n>1){
+    nbody.setDecay((int)n, daughterMasses);
+    if(xMassMax==0){
+      cerr << "TDiffractivePhaseSpace::Please set Mass Range before Decay Products!" << endl;
+      throw;
+    }
+    else {
+      cerr << "Calculating max wheight ("<<n<<" fs particles) for m="<<xMassMax<< endl;
+      nbody.setMaxWeight(1.01 * nbody.estimateMaxWeight(xMassMax,100000));
+      cerr << "Max weight:" << nbody.maxWeight() << endl;
+    }
+  }
 }
 
 
@@ -275,9 +286,9 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     const double EcD=4*Ea*g;
     const double Ec=EcN/EcD;
 
-    cerr << xMass << endl;
-    cerr << tprime << endl;
-    cerr << "Ea=" << Ea << "    Ec=" << Ec << endl;
+    // cerr << xMass << endl;
+    //cerr << tprime << endl;
+    //cerr << "Ea=" << Ea << "    Ec=" << Ec << endl;
 
 
     // // account for recoil assume proton recoil
@@ -295,7 +306,7 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     const double term1=(xMass2-ma2)/(2*Ec);
     const double term=t-term1*term1;
     if(term<0) {
-      cout << "neg" << endl;
+      //cout << "neg" << endl;
       continue;
      }
 
@@ -314,7 +325,7 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     // apply t cut
     const double tGen = -q.M2();
     if (tGen < tMin){
-      cerr << "tGen < tMin " << endl;
+      //cerr << "tGen < tMin " << endl;
       continue;
     }
     
@@ -325,9 +336,6 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
 //       continue;
 //     }
     
-    cerr << "Calculating max wheight... " << endl;
-    nbody.setMaxWeight(1.01 * nbody.estimateMaxWeight(xMass));
-    cerr << "Max weight:" << nbody.maxWeight() << endl;
     ++attempts;
     if(!nbody.generateDecayAccepted(X)) continue;
 //     double weight    = phaseSpace.Generate();

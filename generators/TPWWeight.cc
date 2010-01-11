@@ -74,7 +74,7 @@ TPWWeight::addWave(const std::string& keyfilename,
 
 
 void 
-TPWWeight::loadIntegrals(const std::string& normIntFileName){
+TPWWeight::loadIntegrals(const std::string& normIntFileName, double mass){
   //printInfo << "Loading normalization integral from '" 
   //	    << normIntFileName << "'." << endl;
   ifstream intFile(normIntFileName.c_str());
@@ -84,7 +84,9 @@ TPWWeight::loadIntegrals(const std::string& normIntFileName){
     throw;
   }
   // !!! integral.scan() performs no error checks!
-  m_normInt.scan(intFile);
+  // check units:
+  if(mass>10)mass/=1000; //(MeV/GeV)
+  m_normInt[mass].scan(intFile);
   intFile.close();
   // renomalize
   // list<string> waves=m_normInt.files();
@@ -129,8 +131,27 @@ TPWWeight::prodAmp(unsigned int iv,
 
 double
 TPWWeight::weight(event& e){
-   unsigned int nvec=m_waves.size();
+  unsigned int nvec=m_waves.size();
   double w=0;
+  integral* close_int=0;
+  if(m_hasInt){
+    // get closest mass bin
+    double mass=e.f_mass();
+    // loop through available integrals;
+    std::map<double,integral>::iterator it=m_normInt.begin();
+    //cerr << m_normInt.size() << " Integrals available" << endl;
+    double closemass=0;
+    while(it!=m_normInt.end()){
+      double m=it->first;
+      if(fabs(m - mass)< fabs(m - closemass)){
+	closemass=m;
+      };
+      ++it;
+    }
+    //cerr << mass << " -> closemass=" << closemass << endl;
+    close_int=&(m_normInt[closemass]);
+  } // endif has int
+  
   for(unsigned int ivec=0;ivec<nvec;++ivec){ // loop over production vectors
     std::complex<double> amp(0,0);
     unsigned int nwaves=m_waves[ivec].size();
@@ -145,7 +166,7 @@ TPWWeight::weight(event& e){
       decayamp=m_gamp[ivec].Amp(iwaves,e);
       //std::cerr << "..first component ..."  << std::endl;
       if(w1.find("+-",7)!=string::npos){ // brute force treatment of composed amplitudes!
-
+	
 	// see addWave to understand bookkeeping!
 	// Here an isospin clebsch factor is missing
 	++iwaves;
@@ -153,14 +174,16 @@ TPWWeight::weight(event& e){
       }
       // std::cerr << "..done"  << std::endl;
       double nrm=1;
-      if(m_hasInt)nrm=sqrt(m_normInt.val(w1,w1).real());
+      if(m_hasInt){
+	nrm=sqrt(close_int->val(w1,w1).real());
+      }
       amp+=decayamp/nrm*prodAmp(ivec,iwaves,e);
     }
     w+=std::norm(amp);
   } // end loop over production vectors
-
+  
   return w;
-
+  
 }
 
 
