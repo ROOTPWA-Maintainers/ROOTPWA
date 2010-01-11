@@ -24,6 +24,8 @@
 #include <iomanip>
 #include <fstream>
 
+#include "nBodyPhaseSpaceGen.h"
+
 #include "TVector3.h"
 #include "TLorentzVector.h"
 #include "TH1D.h"
@@ -66,7 +68,10 @@ using namespace std;
 
 TDiffractivePhaseSpace::TDiffractivePhaseSpace() :
   tMin(0.001), daughterMasses(NULL),gProtonMass(0.938272013),gPionMass(0.13957018),gPionMass2(gPionMass * gPionMass)
-{}
+{
+  nbody.setWeightType(nBodyPhaseSpaceGen::S_U_CHUNG);
+  nbody.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
+}
 
 
 
@@ -95,7 +100,7 @@ TDiffractivePhaseSpace::makeBeam()
 bool
 TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
 					  const TLorentzVector& beam,
-					  TGenPhaseSpace&       event)
+					  nBodyPhaseSpaceGen&       event)
 {
   if (!out) {
     cerr << "Output stream is not writable." << endl;
@@ -109,14 +114,14 @@ TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
   out << setprecision(numeric_limits<double>::digits10 + 1)
       << "9 -1 " << beam.Px() << " " << beam.Py() << " " << beam.Pz() << " " << beam.E() << endl;
   for (unsigned int i = 0; i < nfspart; ++i) {
-    TLorentzVector* hadron = event.GetDecay(i);
-    if (!hadron) {
-      cerr << "genbod returns NULL pointer to Lorentz vector for daughter " << i << "." << endl;
-      continue;
-    }
+    const TLorentzVector& hadron = event.daughter(i);
+    // if (!hadron) {
+//       cerr << "genbod returns NULL pointer to Lorentz vector for daughter " << i << "." << endl;
+//       continue;
+//     }
     // hadron: geant ID, charge, p_x, p_y, p_z, E
     out << setprecision(numeric_limits<double>::digits10 + 1)
-	<< decayProducts[i].gid << " " << decayProducts[i].charge << " " << hadron->Px() << " " << hadron->Py() << " " << hadron->Pz() << " " << hadron->E() << endl;
+	<< decayProducts[i].gid << " " << decayProducts[i].charge << " " << hadron.Px() << " " << hadron.Py() << " " << hadron.Pz() << " " << hadron.E() << endl;
     }
   return true;
 }
@@ -137,6 +142,7 @@ TDiffractivePhaseSpace::progressIndicator(const long currentPos,
 void 
 TDiffractivePhaseSpace::SetSeed(int seed){
   gRandom->SetSeed(seed);
+  nbody.setSeed(seed);
 }
 
 
@@ -146,6 +152,8 @@ TDiffractivePhaseSpace::SetDecayProducts(const std::vector<particleinfo>& info)
   decayProducts.clear();
   decayProducts=info;
   BuildDaughterList();
+
+
 }
 
 void
@@ -158,9 +166,11 @@ void
 TDiffractivePhaseSpace::BuildDaughterList(){
   if(daughterMasses!=NULL)delete[] daughterMasses;
   daughterMasses=new double[decayProducts.size()];
-  for(unsigned int i=0;i<decayProducts.size();++i){
+  const unsigned int n   = decayProducts.size();          
+  for(unsigned int i=0;i<n;++i){
     daughterMasses[i]=decayProducts[i].mass;
   }
+  if(n>1)nbody.setDecay((int)n, daughterMasses);
 }
 
 
@@ -262,8 +272,12 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     const double g=2*Ea*m0 + ma2 - xMass2;
     const double EcN=4*Ea2*(g - tprime)
                      - ma4 + 2*ma2*xMass2 - xMass4 ;
-    const double EcD=2*Ea*g;
+    const double EcD=4*Ea*g;
     const double Ec=EcN/EcD;
+
+    cerr << xMass << endl;
+    cerr << tprime << endl;
+    cerr << "Ea=" << Ea << "    Ec=" << Ec << endl;
 
 
     // // account for recoil assume proton recoil
@@ -281,7 +295,7 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     const double term1=(xMass2-ma2)/(2*Ec);
     const double term=t-term1*term1;
     if(term<0) {
-      //cout << "neg" << endl;
+      cout << "neg" << endl;
       continue;
      }
 
@@ -299,41 +313,43 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     
     // apply t cut
     const double tGen = -q.M2();
-    if (tGen < tMin)
-      continue;
-    
-    // generate phase space distribution
-    bool           allowed = phaseSpace.SetDecay(X, decayProducts.size(), daughterMasses,"");
-    if (!allowed) {
-      cerr << "Decay of M = " << X.M() << " into this final state is kinematically not allowed!" << endl;
+    if (tGen < tMin){
+      cerr << "tGen < tMin " << endl;
       continue;
     }
     
-    double weight    = phaseSpace.Generate();
-    double maxWeight = phaseSpace.GetWtMax();
-    //cerr << "wMax=" << maxWeight << endl;
-    //cerr << "w=" << weight << endl;
-    double d=gRandom->Uniform();
-    //cerr << "d="  << d << endl;
+//     // generate phase space distribution
+//     bool           allowed = phaseSpace.SetDecay(X, decayProducts.size(), daughterMasses,"");
+//     if (!allowed) {
+//       cerr << "Decay of M = " << X.M() << " into this final state is kinematically not allowed!" << endl;
+//       continue;
+//     }
+    
+    cerr << "Calculating max wheight... " << endl;
+    nbody.setMaxWeight(1.01 * nbody.estimateMaxWeight(xMass));
+    cerr << "Max weight:" << nbody.maxWeight() << endl;
     ++attempts;
-    if ( (weight/maxWeight) < d){  // recjection sampling
-      continue;
-    }
-    
+    if(!nbody.generateDecayAccepted(X)) continue;
+//     double weight    = phaseSpace.Generate();
+//     double maxWeight = phaseSpace.GetWtMax();
+//     //cerr << "wMax=" << maxWeight << endl;
+//     //cerr << "w=" << weight << endl;
+//     double d=gRandom->Uniform();
+//     //cerr << "d="  << d << endl;
+//     ++attempts;
+//     if ( (weight/maxWeight) < d){  // recjection sampling
     done=true;
     beamresult=gbeam;
-  }
+  } // end while !done
   // event is accepted
-  //writePwa2000Ascii(outFile, beam, phaseSpace);
-  //cerr << attempts << " attempts needed for Phase Space" << endl;
- 
+   
   return attempts;
 }
 
 unsigned int 
 TDiffractivePhaseSpace::event(ostream& stream){
   unsigned int attempts=event(gbeam);
-  writePwa2000Ascii(stream, gbeam, phaseSpace);
+  writePwa2000Ascii(stream, gbeam, nbody);
   return attempts;
 }
 
