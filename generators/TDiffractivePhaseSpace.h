@@ -100,7 +100,7 @@ public:
    *
    *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
    */
-  void SetTPrimeSlope(double b){gBT=b;}
+  void SetTPrimeSlope(double b){gBT=1./b;} // inverse for simple usage with TRandom
   
 
   /** @brief Set mass range of produced system X
@@ -154,7 +154,7 @@ private:
 
   TLorentzVector gbeam; // cache for last generated beam
 
-  TH1* thetaDistribution;
+  //TH1* thetaDistribution;
 
   double gBT;
 

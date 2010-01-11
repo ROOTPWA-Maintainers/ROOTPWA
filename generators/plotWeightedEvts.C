@@ -21,28 +21,28 @@ void plotWeightedEvents(TTree* mctr, TTree* datatr){
 gROOT->SetStyle("Plain");
 
  vector<TH1D*> hM;
- TH1D* hMMC=new TH1D("hMMC","Mass (MC)",100,0.5,2.5);
+ TH1D* hMMC=new TH1D("hMMC","Mass (MC)",60,1.0,3.0);
  hM.push_back(hMMC);
- TH1D* hMData=new TH1D("hMData","Mass (DATA)",100,0.5,2.5);
+ TH1D* hMData=new TH1D("hMData","Mass (DATA)",60,1.0,3.0);
  hM.push_back(hMData);
 
  vector<TH1D*> hMIsobar;
- TH1D* hMIsobarMC=new TH1D("hMIsobarMC","Isobar Mass (MC)",100,0.2,2.0);
+ TH1D* hMIsobarMC=new TH1D("hMIsobarMC","Isobar Mass (MC)",40,0.2,2.2);
  hMIsobar.push_back(hMIsobarMC);
- TH1D* hMIsobarData=new TH1D("hMIsobarData","Isobar mass (DATA)",100,0.2,2.0);
+ TH1D* hMIsobarData=new TH1D("hMIsobarData","Isobar mass (DATA)",40,0.2,2.2);
  hMIsobar.push_back(hMIsobarData);
 
  vector<TH1D*> hMIsobar2;
- TH1D* hMIsobar2MC=new TH1D("hMIsobar2MC","Isobar Mass (MC)",100,0.4,2.0);
+ TH1D* hMIsobar2MC=new TH1D("hMIsobar2MC","Isobar Mass (MC)",40,0.4,2.0);
  hMIsobar2.push_back(hMIsobar2MC);
- TH1D* hMIsobar2Data=new TH1D("hMIsobar2Data","Isobar mass (DATA)",100,0.4,2.0);
+ TH1D* hMIsobar2Data=new TH1D("hMIsobar2Data","Isobar mass (DATA)",40,0.4,2.0);
  hMIsobar2.push_back(hMIsobar2Data);
 
 
 vector<TH1D*> hMIsobar3;
- TH1D* hMIsobar3MC=new TH1D("hMIsobar3MC","Isobar Mass (MC)",100,0.2,1.8);
+ TH1D* hMIsobar3MC=new TH1D("hMIsobar3MC","Isobar Mass (MC)",40,0.2,1.8);
  hMIsobar3.push_back(hMIsobar3MC);
- TH1D* hMIsobar3Data=new TH1D("hMIsobar3Data","Isobar mass (DATA)",100,0.2,1.8);
+ TH1D* hMIsobar3Data=new TH1D("hMIsobar3Data","Isobar mass (DATA)",40,0.2,1.8);
  hMIsobar3.push_back(hMIsobar3Data);
 
 

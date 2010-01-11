@@ -77,16 +77,21 @@ int main(int argc, char** argv)
   unsigned int nevents=100;
   string output_file("genpw.root");
   string integrals_file;
+  bool hasint=false;
   string wavelist_file; // format: name Re Im
   string path_to_keyfiles("./");
   string reactionFile;
   double maxWeight=0;
+  int seed=123456;
 
   int c;
-  while ((c = getopt(argc, argv, "n:o:w:k:i:r:m:h")) != -1)
+  while ((c = getopt(argc, argv, "n:o:w:k:i:r:m:s:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
+      break;
+    case 's':
+      seed = atoi(optarg);
       break;
     case 'o':
       output_file = optarg;
@@ -96,6 +101,7 @@ int main(int argc, char** argv)
       break;
    case 'i':
       integrals_file = optarg;
+      hasint=true;
       break;
    case 'k':
       path_to_keyfiles = optarg;
@@ -112,6 +118,8 @@ int main(int argc, char** argv)
     }
 
  
+
+  gRandom->SetSeed(seed);
 
   TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
@@ -144,23 +152,24 @@ int main(int argc, char** argv)
   double targetz=reactConf.lookup("target.pos.z");
   double targetd=reactConf.lookup("target.length");
   double targetr=reactConf.lookup("target.radius");
+  double mrecoil=reactConf.lookup("target.mrecoil");
 
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
+  double tslope=reactConf.lookup("finalstate.t_slope");
   double   binCenter    = 500 * (mmin + mmax);
 
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
 
-  string theta_file= reactConf.lookup("finalstate.theta_file");
+  //string theta_file= reactConf.lookup("finalstate.theta_file");
 
   TDiffractivePhaseSpace difPS;
   difPS.SetSeed(1236735);
   difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
-  difPS.SetTarget(targetz,targetd,targetr);
+  difPS.SetTarget(targetz,targetd,targetr,mrecoil);
+  difPS.SetTPrimeSlope(tslope);
   difPS.SetMassRange(mmin,mmax);			
-  TFile* infile=TFile::Open(theta_file.c_str());
-  difPS.SetThetaDistribution((TH1*)infile->Get("h1"));
-  
+    
 
   const Setting& root = reactConf.getRoot();
   const Setting &fspart = root["finalstate"]["particles"];
@@ -266,17 +275,18 @@ int main(int argc, char** argv)
     if(bwAmps[jpcme.Data()]!=NULL){
       pamp=bwAmps[jpcme.Data()];
       cerr << "Using BW for " << jpcme << endl;
+      // production vector index: rank+refl
+      weighter.addWave(wavename.Data(),pamp,amp,rank+refl);
     }
-    else pamp=new TProductionAmp(amp);
-
-    // production vector index: rank+refl
-    weighter.addWave(wavename.Data(),pamp,rank+refl);
-    
+    else {
+      pamp=new TProductionAmp(amp);
+      weighter.addWave(wavename.Data(),pamp,std::complex<double>(1,0),rank+refl);
+    }   
   }
 
 
 
-  weighter.loadIntegrals(integrals_file);
+  if(hasint)weighter.loadIntegrals(integrals_file);
 
 
 
@@ -340,11 +350,9 @@ int main(int argc, char** argv)
 
   outfile->cd();
   hWeights->Write();
-outtree->Write();
+  outtree->Write();
   outfile->Close();
-  infile->Close();
-
+ 
   return 0;
-
 }
 

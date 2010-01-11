@@ -17,11 +17,13 @@
 void 
 TPWWeight::addWave(const std::string& keyfilename, 
 		   TProductionAmp* amp,
+		   const std::complex<double>& branching,
 		   unsigned int vectori){
   
   if(vectori<=m_waves.size()){
     m_waves.resize(vectori+1);
     m_amps.resize(vectori+1);
+    m_branchings.resize(vectori+1);
     m_gamp.resize(vectori+1);
   }
 
@@ -29,9 +31,9 @@ TPWWeight::addWave(const std::string& keyfilename,
   if(keyfilename.find("+-",7)!=string::npos){
     cerr << "Decomposing " << keyfilename << endl;
     cerr << "What is the relative phase (0 or pi)?:";
-    string select;
-    cin >> select;
-    if(select=="pi")m_relphase[keyfilename]=-1;
+    //string select;
+    //cin >> select;
+    if(keyfilename.find("f11285",7)!=string::npos)m_relphase[keyfilename]=-1;
     else m_relphase[keyfilename]=1;
 
     // deccompose into components:
@@ -52,15 +54,18 @@ TPWWeight::addWave(const std::string& keyfilename,
 
     m_gamp[vectori].addWave(w1a.Data());
     m_waves[vectori].push_back(keyfilename);
+    m_branchings[vectori].push_back(branching);
     m_amps[vectori].push_back(amp);
     m_gamp[vectori].addWave(w1b.Data());
     m_waves[vectori].push_back(keyfilename);
+    m_branchings[vectori].push_back(branching);
     m_amps[vectori].push_back(amp);
 
   }
   else {
     m_gamp[vectori].addWave(keyfilename);
     m_waves[vectori].push_back(keyfilename);
+    m_branchings[vectori].push_back(branching);
     m_amps[vectori].push_back(amp);
   }
   
@@ -100,7 +105,7 @@ TPWWeight::loadIntegrals(const std::string& normIntFileName){
 //     m_normInt.el(w1,w1)=m_normInt.nevents();
 //     ++it1;
 //   }
-  
+  m_hasInt=true;
 }
 
 
@@ -115,7 +120,7 @@ TPWWeight::prodAmp(unsigned int iv,
   std::list<particle>::iterator it=part.begin();
   while(it!=part.end())p+=(it++)->get4P();
   double m=p.len();
-  return m_amps[iv][iw]->amp(m);
+  return m_amps[iv][iw]->amp(m)*m_branchings[iv][iv];
 }
 
 
@@ -147,7 +152,8 @@ TPWWeight::weight(event& e){
 	decayamp+=m_relphase[m_waves[ivec][iwaves]]*m_gamp[ivec].Amp(iwaves,e);
       }
       // std::cerr << "..done"  << std::endl;
-      double nrm=sqrt(m_normInt.val(w1,w1).real());
+      double nrm=1;
+      if(m_hasInt)nrm=sqrt(m_normInt.val(w1,w1).real());
       amp+=decayamp/nrm*prodAmp(ivec,iwaves,e);
     }
     w+=std::norm(amp);

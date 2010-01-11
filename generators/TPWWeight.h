@@ -30,7 +30,7 @@ class TPWWeight {
 public:
 
   // Constructors/Destructors ---------
-  TPWWeight(){}
+  TPWWeight(): m_hasInt(false){}
   ~TPWWeight(){}
 
 
@@ -47,6 +47,7 @@ public:
    */
   void addWave(const std::string& keyfilename, 
 	       TProductionAmp* amp,
+	       const std::complex<double>& branching,
 	       unsigned int vectori=0);
 
 
@@ -75,11 +76,14 @@ private:
   std::vector<std::vector<std::string> > m_waves;
   
   // Production amplitudes
+  std::vector<std::vector<std::complex<double> > > m_branchings;
   std::vector<std::vector<TProductionAmp*> > m_amps;
 
   std::vector<Tgamp> m_gamp;
   std::map<string,double> m_relphase;
   integral m_normInt;
+
+  bool m_hasInt;
 
   // Private Methods -----------------
 
