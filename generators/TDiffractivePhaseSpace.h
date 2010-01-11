@@ -33,6 +33,7 @@
 // Collaborating Class Headers -------
 #include "TLorentzVector.h"
 #include "TGenPhaseSpace.h"
+#include "nBodyPhaseSpaceGen.h"
 #include <iostream>
 #include <vector>
 
@@ -136,6 +137,7 @@ private:
 
   // Private Data Members ------------
   TGenPhaseSpace phaseSpace;
+  nBodyPhaseSpaceGen nbody;
 
   // target position
   double gTargetZPos;
@@ -172,7 +174,7 @@ private:
   TLorentzVector makeBeam();
   bool writePwa2000Ascii(std::ostream&              out,
 			 const TLorentzVector& beam,
-			 TGenPhaseSpace&       event);
+			 nBodyPhaseSpaceGen&       event);
   
   std::ostream& progressIndicator(const long currentPos,
 				  const long nmbTotal,
