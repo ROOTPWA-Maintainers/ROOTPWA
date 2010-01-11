@@ -185,6 +185,31 @@
 		return ( q );
 	}
 
+
+
+	double event::f_mass() const{
+		
+	  list<particle>::const_iterator it = _final.begin();
+	  fourVec pX;
+	  fourVec p;
+	  
+	  while (it != _final.end() ) {
+	    pX=it->get4P();
+	    p+=pX;
+	    ++it;
+	  }
+	  // sort by mass
+	  double m=p.len();
+	  return m;
+	}
+
+
+
+
+
+
+
+
 #line 564 "event.nw"
 	list<particle> event::f_mesons() const{
 		list<particle> l;

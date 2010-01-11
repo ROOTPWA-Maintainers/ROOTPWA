@@ -74,6 +74,9 @@
 #line 153 "event.nw"
 	int f_charge() const;
 
+	  double f_mass() const;
+
+
 #line 159 "event.nw"
 	std::list<particle> f_mesons() const;
 
