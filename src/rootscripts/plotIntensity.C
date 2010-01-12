@@ -40,6 +40,7 @@
 #include "TLine.h"
 #include "TPad.h"
 
+#include "../utilities.h"
 #include "../TFitResult.h"
 #include "plotIntensity.h"
 
@@ -112,9 +113,9 @@ plotIntensity(TTree*        tree,           // TFitResult tree
   vector<double> x(nmbBins), xErr(nmbBins);
   vector<double> y(nmbBins), yErr(nmbBins);
   for (int i = 0; i < nmbBins; ++i) {
-    x[i]    = tree->GetV3()[i] * 0.001;  // convert mass to GeV
+    x   [i] = tree->GetV3()[i] * 0.001;  // convert mass to GeV
     xErr[i] = 0;
-    y[i]    = tree->GetV1()[i] * normalization;  // scale intensities
+    y   [i] = tree->GetV1()[i] * normalization;  // scale intensities
     yErr[i] = tree->GetV2()[i] * normalization;  // scale intensity errors
   }
   TGraphErrors* g = new TGraphErrors(nmbBins,
@@ -157,4 +158,133 @@ plotIntensity(TTree*        tree,           // TFitResult tree
     gPad->SaveAs((waveName + ".eps").c_str());
 
   return g;
+}
+
+
+// signature with wave name
+TMultiGraph*
+plotIntensity(const unsigned int nmbTrees,       // number of TFitResult trees
+	      TTree**            trees,          // array of TFitResult trees
+	      const string&      waveName,       // wave name
+	      const string&      selectExpr,     // TTree::Draw() selection expression
+	      const string&      graphTitle,     // name and title of graph (default is waveId)
+	      const char*        drawOption,     // draw option for graph
+	      const double       normalization,  // scale factor for intensities
+	      const int*         graphColors,    // array of colors for graph line and marker
+	      const bool         saveEps)        // if set, EPS file with name waveId{
+{
+  for (unsigned int i = 0; i < nmbTrees; ++i)
+    if (!trees[i]) {
+      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      return 0;
+    }
+
+  // call plotIntensity with wave index (assumes same wave set in all trees)
+  TFitResult* massBin = new TFitResult();
+  trees[0]->SetBranchAddress("fitResult", &massBin);
+  trees[0]->GetEntry(0);
+  for (unsigned int i = 0; i < massBin->nmbWaves(); ++i)
+    if (massBin->waveName(i) == waveName)
+      return plotIntensity(nmbTrees, trees, i, selectExpr, graphTitle,
+			   drawOption, normalization, graphColors, saveEps);
+  printErr << "cannot find wave '" << waveName << "' in tree '"
+	   << trees[0]->GetName() << "'. exiting." << endl;
+  return 0;
+}
+
+
+// signature with wave index
+TMultiGraph*
+plotIntensity(const unsigned int nmbTrees,       // number of TFitResult trees
+	      TTree**            trees,          // array of TFitResult trees
+	      const int          waveIndex,      // wave index
+	      const string&      selectExpr,     // TTree::Draw() selection expression
+	      const string&      graphTitle,     // name and title of graph (default is waveId)
+	      const char*        drawOption,     // draw option for graph
+	      const double       normalization,  // scale factor for intensities
+	      const int*         graphColors,    // array of colors for graph line and marker
+	      const bool         saveEps)        // if set, EPS file with name waveId{
+{
+  for (unsigned int i = 0; i < nmbTrees; ++i)
+    if (!trees[i]) {
+      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      return 0;
+    }
+  // get wave name (assumes same wave set in all trees)
+  TFitResult* massBin = new TFitResult();
+  trees[0]->SetBranchAddress("fitResult", &massBin);
+  trees[0]->GetEntry(0);
+  const string waveName = massBin->waveName(waveIndex).Data();
+  printInfo << "plotting wave intensity for wave '" << waveName << "' [" << waveIndex << "]";
+  if (selectExpr != "")
+    cout << " using selection criterion '" << selectExpr << "'";
+  cout << endl;
+
+  
+  // build multiGraph
+  TMultiGraph* graph = new TMultiGraph();
+  graph->SetName (waveName.c_str());
+  graph->SetTitle(waveName.c_str());
+  if (graphTitle != "") {
+    graph->SetName (graphTitle.c_str());
+    graph->SetTitle(graphTitle.c_str());
+  }
+  double       maxY  = 0;
+  for (unsigned int i = 0; i < nmbTrees; ++i) {
+    // build and run TTree::Draw() expression
+    stringstream drawExpr;
+    drawExpr << "intensity(\"" << waveName << "\"):intensityErr(\"" << waveName << "\")"
+	     << ":massBinCenter() >> h" << waveName << "_" << i;
+    cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
+	 << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
+    trees[i]->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
+
+    // extract data from TTree::Draw() result and build graph
+    const int nmbBins = trees[i]->GetSelectedRows();
+    vector<double> x(nmbBins), xErr(nmbBins);
+    vector<double> y(nmbBins), yErr(nmbBins);
+    for (int j = 0; j < nmbBins; ++j) {
+      x   [j] = trees[i]->GetV3()[j] * 0.001;  // convert mass to GeV
+      xErr[j] = 0;
+      y   [j] = trees[i]->GetV1()[j] * normalization;  // scale intensities
+      yErr[j] = trees[i]->GetV2()[j] * normalization;  // scale intensity errors
+    }
+    TGraphErrors* g = new TGraphErrors(nmbBins,
+				       &(*(x.begin())),      // mass
+				       &(*(y.begin())),      // intensity
+				       &(*(xErr.begin())),   // mass error
+				       &(*(yErr.begin())));  // intensity error
+    stringstream graphName;
+    graphName << ((graphTitle == "") ? waveName : graphTitle) << "_" << i;
+    g->SetName (graphName.str().c_str());
+    g->SetTitle(graphName.str().c_str());
+    g->SetMarkerStyle(21);
+    g->SetMarkerSize(0.5);
+    if (graphColors) {
+      g->SetMarkerColor(graphColors[i]);
+      g->SetLineColor  (graphColors[i]);
+    }
+    graph->Add(g);
+    
+    // compute maximum for y-axis
+    for (int j = 0; j < nmbBins; ++j)
+      if(maxY < (g->GetY()[j] + g->GetEY()[j]))
+	maxY = g->GetY()[j] + g->GetEY()[j];
+  }
+  cout << "    maximum intensity for graph " << graph->GetName() << " is " << maxY << "." << endl;
+    
+  // draw graph
+  graph->Draw(drawOption);
+  graph->GetXaxis()->SetTitle("Mass [GeV]");
+  graph->GetYaxis()->SetTitle("Intensity");
+  graph->GetYaxis()->SetRangeUser(-maxY * 0.1, maxY * 1.1);
+  TLine line;
+  line.SetLineStyle(3);
+  line.DrawLine(graph->GetXaxis()->GetXmin(), 0, graph->GetXaxis()->GetXmax(), 0);
+
+  // create EPS file
+  if (saveEps)
+    gPad->SaveAs((waveName + ".eps").c_str());
+
+  return graph;
 }

@@ -42,7 +42,7 @@ SET(SOURCES
   TCMatrix.cc
   TPWALikelihood.h
   TPWALikelihoodC.cc
-  TPWALikelihoodO.cc
+#  TPWALikelihoodO.cc
   TPWAAmp.cc
   TPWAPhaseConstraint.cc
   TLogMultiGaus.cc

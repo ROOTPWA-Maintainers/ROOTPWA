@@ -139,13 +139,8 @@ double
 TFitResult::fitParameter(const string& parName) const
 {
   // check if parameter corresponds to real or imaginary part of production amplitude
-  TString name(parName);
-  bool    realPart = false;
-  if (name.Contains("flat")) {
-    name     = "flat";
-    realPart = true;
-  } else
-    realPart = name.Contains("RE");
+  TString    name(parName);
+  const bool realPart = (name.Contains("RE") || name.Contains("flat"));
   // find corresponding production amplitude
   if (realPart)
     name.ReplaceAll("_RE", "");

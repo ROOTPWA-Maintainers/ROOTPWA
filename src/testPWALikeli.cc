@@ -45,15 +45,11 @@ char *progname;
 int main(int argc, char** argv){
   
   TPWALikelihood<double> L;
-  L.UseNormalizedAmps();
+  L.useNormalizedAmps();
   //if(quiet)L.SetQuiet();
-  L.SetWavelist(argv[1]);
   int rank=2; // TODO: make this an option
-  L.SetRank(rank);
-  //L.SetMaxSampDL(1000);
+  L.init(rank, argv[1], "norm.int", "norm.int");
   cout<<L.NDim()<<endl;
-  L.LoadIntegrals("norm.int","norm.int");
-  L.LoadAmplitudes();
 
   // 12 parameters + flat
   double x[13]={0.52707,0.21068,-0.604365,0.17596,-0.216668,-0.0990815,-0.348459,0.208961,0,0,0,0,0};

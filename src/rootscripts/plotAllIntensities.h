@@ -53,4 +53,26 @@ plotAllIntensities(TTree*             tree,                  // TFitResult tree
 		   const bool         mcmc         = false);
 
 
+std::vector<std::pair<std::string, TVirtualPad*> >
+plotAllIntensities(const unsigned int nmbTrees,              // number of TFitResult trees
+		   TTree**            trees,                 // array of TFitResult trees
+		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
+		   const std::string& outPath      = "./",   // path for output files
+		   const int*         graphColors  = NULL,   // array of colors for graph line and marker
+		   const bool         drawLegend   = true);  // if set legend is drawn
+
+
+inline
+std::vector<std::pair<std::string, TVirtualPad*> >
+plotAllIntensities(std::vector<TTree*>&    trees,                 // array of TFitResult trees
+		   const bool              createPsFile = false,  // if true, plots are written to waves.ps
+		   const std::string&      outPath      = "./",   // path for output files
+		   const std::vector<int>& graphColors  = std::vector<int>(),  // array of colors for graph line and marker
+		   const bool              drawLegend   = true)   // if set legend is drawn
+{
+  return plotAllIntensities(trees.size(), &(*(trees.begin())), createPsFile,
+			    outPath, &(*(graphColors.begin())), drawLegend);
+}
+
+
 #endif  // plotAllIntensities_hh

@@ -38,14 +38,16 @@
 
 
 #include <string>
+#include <vector>
 
-#include "TGraphErrors.h"
 #include "TTree.h"
+#include "TGraphErrors.h"
+#include "TMultiGraph.h"
 
 
-// signature with wave name
+// signatures with wave name
 TGraphErrors*
-plotIntensity(TTree*             tree,                    // TFitBin tree
+plotIntensity(TTree*             tree,                    // TFitResult tree
 	      const std::string& waveName,                // wave name
 	      const std::string& selectExpr    = "",      // TTree::Draw() selection expression
 	      const std::string& graphTitle    = "",      // name and title of graph (default is waveId)
@@ -54,9 +56,36 @@ plotIntensity(TTree*             tree,                    // TFitBin tree
 	      const int          graphColor    = kBlack,  // color of line and marker
 	      const bool         saveEps       = false);  // if set, EPS file with name waveId is created
 
-// signature with wave index
+TMultiGraph*
+plotIntensity(const unsigned int      nmbTrees,                // number of TFitResult trees
+	      TTree**                 trees,                   // array of TFitResult trees
+	      const std::string&      waveName,                // wave name
+	      const std::string&      selectExpr    = "",      // TTree::Draw() selection expression
+	      const std::string&      graphTitle    = "",      // name and title of graph (default is waveId)
+	      const char*             drawOption    = "APZ",   // draw option for graph
+	      const double            normalization = 1,       // scale factor for intensities
+	      const int*              graphColors   = NULL,    // array of colors for graph line and marker
+	      const bool              saveEps       = false);  // if set, EPS file with name waveId is created
+
+inline
+TMultiGraph*
+plotIntensity(std::vector<TTree*>&    trees,                  // array of TFitResult trees
+	      const std::string&      waveName,               // wave name
+	      const std::string&      selectExpr    = "",     // TTree::Draw() selection expression
+	      const std::string&      graphTitle    = "",     // name and title of graph (default is waveId)
+	      const char*             drawOption    = "APZ",  // draw option for graph
+	      const double            normalization = 1,      // scale factor for intensities
+	      const std::vector<int>& graphColors   = std::vector<int>(),  // array of colors for graph line and marker
+	      const bool              saveEps       = false)  // if set, EPS file with name waveId{
+{
+  return plotIntensity(trees.size(), &(*(trees.begin())), waveName, selectExpr, graphTitle,
+		       drawOption, normalization, &(*(graphColors.begin())), saveEps);
+}
+
+
+// signatures with wave index
 TGraphErrors*
-plotIntensity(TTree*             tree,                    // TFitBin tree
+plotIntensity(TTree*             tree,                    // TFitResult tree
 	      const int          waveIndex,               // wave index
 	      const std::string& selectExpr    = "",      // TTree::Draw() selection expression
 	      const std::string& graphTitle    = "",      // name and title of graph (default is waveId)
@@ -64,6 +93,33 @@ plotIntensity(TTree*             tree,                    // TFitBin tree
 	      const double       normalization = 1,       // scale factor for intensities
 	      const int          graphColor    = kBlack,  // color of line and marker
 	      const bool         saveEps       = false);  // if set, EPS file with name waveId is created
+
+TMultiGraph*
+plotIntensity(const unsigned int nmbTrees,                // number of TFitResult trees
+	      TTree**            trees,                   // array of TFitResult trees
+	      const int          waveIndex,               // wave index
+	      const std::string& selectExpr    = "",      // TTree::Draw() selection expression
+	      const std::string& graphTitle    = "",      // name and title of graph (default is waveId)
+	      const char*        drawOption    = "APZ",   // draw option for graph
+	      const double       normalization = 1,       // scale factor for intensities
+	      const int*         graphColors   = NULL,    // array of colors for graph line and marker
+	      const bool         saveEps       = false);  // if set, EPS file with name waveId is created
+
+
+inline
+TMultiGraph*
+plotIntensity(std::vector<TTree*>&    trees,                  // array of TFitResult trees
+	      const int               waveIndex,              // wave index
+	      const std::string&      selectExpr    = "",     // TTree::Draw() selection expression
+	      const std::string&      graphTitle    = "",     // name and title of graph (default is waveId)
+	      const char*             drawOption    = "APZ",  // draw option for graph
+	      const double            normalization = 1,      // scale factor for intensities
+	      const std::vector<int>& graphColors   = std::vector<int>(),  // array of colors for graph line and marker
+	      const bool              saveEps       = false)  // if set, EPS file with name waveId is created
+{
+  return plotIntensity(trees.size(), &(*(trees.begin())), waveIndex, selectExpr,
+		       graphTitle, drawOption, normalization, &(*(graphColors.begin())), saveEps);
+}
 
 
 #endif  //PLOTINTENSITY_HH
