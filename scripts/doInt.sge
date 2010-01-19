@@ -1,0 +1,88 @@
+#!/bin/bash
+# Iospin symmetrizing
+# Integration
+# Select queue
+#$ -l short=TRUE,h_vmem=100M
+# Divert output
+#$ -o /afs/e18/compass/analysis/sneubert/LOGS
+# Write error in same file
+#$ -j y
+
+cd ~/scratch/COMPASS/rootpwa/trunk
+source setup.sh
+cd scripts/
+
+#DATADIR=/afs/e18/compass/analysis/sneubert/5PiLTData3/
+DATADIR=/afs/e18/compass/analysis/sneubert/5PiModels/Model4c/
+
+WAVESETDIR=$ROOTPWA/keyfiles/key5pi/
+
+# choose which amplitudes to do
+DOAMPS=1
+DOPSP=1
+#DOACC=1
+
+cd $DATADIR
+
+# get bin for this TaskID
+BINS=*
+echo $BINS
+# get the correct entry for this task
+echo SGE_TASK_ID=$SGE_TASK_ID
+if [ "$SGE_TASK_ID" == "undefined" ]; then
+    SGE_TASK_ID=1;
+elif [ ! -n "$SGE_TASK_ID" ]; then
+    SGE_TASK_ID=1;
+fi
+echo SGE_TASK_ID=$SGE_TASK_ID
+# start counting at 0 !!!
+let "INDEX = SGE_TASK_ID -1"
+echo INDEX=$INDEX
+
+MYBIN=`echo $BINS | gawk -F " " '{ print $'${INDEX}"}";`
+
+echo MYBIN=$MYBIN
+
+if [ ! -d $DATADIR/$MYBIN ]; then
+    echo "$BINDIR not found";
+    exit;
+fi
+
+if [ -n "$DOPSP" ]; then
+  echo "--- Doing PSPAMPS ----------------";
+  cd $DATADIR/$MYBIN/PSPAMPS;
+  
+  for i in $WAVESETDIR/*list.dat; do
+  	addamp $i OLD/;
+  done;
+
+  int *.amp > norm.int;
+  cp norm.int $DATADIR/$MYBIN/AMPS;
+fi;
+
+if [ -n "$DOACC" ]; then
+  echo "--- Doing ACCAMPS ----------------";
+  cd $DATADIR/$MYBIN/ACCAMPS;
+  
+  for i in $WAVESETDIR/*list.dat; do
+  	addamp $i OLD/;
+  done;
+
+  int *.amp > accnorm.int;
+  cp accnorm.int $DATADIR/$MYBIN/AMPS;
+fi;
+
+
+if [ -n "$DOAMPS" ]; then
+  echo "--- Doing AMPS ----------------";
+  cd $DATADIR/$MYBIN/AMPS;
+  
+  for i in $WAVESETDIR/*list.dat; do
+  	addamp $i OLD/;
+  done;
+ 
+fi;
+
+echo "------------------"
+
+
