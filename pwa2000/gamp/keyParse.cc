@@ -59,21 +59,21 @@
 /* Tokens.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     INT = 258,
-     FLOAT = 259,
-     COMPLEX = 260,
-     SIGN = 261,
-     STRING = 262,
-     PARTICLENAME = 263,
-     DEBUG = 264,
-     CHANNEL = 265,
-     MODE = 266,
-     MASSDEP = 267,
-     HELICITY = 268
-   };
+/* Put the tokens into the symbol table, so that GDB and other debuggers
+   know about them.  */
+enum yytokentype {
+  INT = 258,
+  FLOAT = 259,
+  COMPLEX = 260,
+  SIGN = 261,
+  STRING = 262,
+  PARTICLENAME = 263,
+  DEBUG = 264,
+  CHANNEL = 265,
+  MODE = 266,
+  MASSDEP = 267,
+  HELICITY = 268
+};
 #endif
 #define INT 258
 #define FLOAT 259
@@ -91,8 +91,6 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "keyParse.yy"
-
 #include <iostream>
 #include <particle.h>
 #include <wave.h>
@@ -134,17 +132,14 @@ particle* t_part_final;
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 29 "keyParse.yy"
 typedef union YYSTYPE {
-        int num;
-        std::complex<double>* Cnum;
-        double Fnum;
-        char string[100];
-        decay* Decay;
-        particle* Particle;
+  int num;
+  std::complex<double>* Cnum;
+  double Fnum;
+  char string[100];
+  decay* Decay;
+  particle* Particle;
 } YYSTYPE;
-/* Line 191 of yacc.c.  */
-#line 148 "keyParse.cc"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -153,11 +148,6 @@ typedef union YYSTYPE {
 
 
 /* Copy the second part of user declarations.  */
-
-
-/* Line 214 of yacc.c.  */
-#line 160 "keyParse.cc"
-
 #if ! defined (yyoverflow) || YYERROR_VERBOSE
 
 # ifndef YYFREE
@@ -184,7 +174,7 @@ typedef union YYSTYPE {
 # endif
 
 # ifdef YYSTACK_ALLOC
-   /* Pacify GCC's `empty if-body' warning. */
+/* Pacify GCC's `empty if-body' warning. */
 #  define YYSTACK_FREE(Ptr) do { /* empty */; } while (0)
 # else
 #  if defined (__STDC__) || defined (__cplusplus)
@@ -197,8 +187,8 @@ typedef union YYSTYPE {
 #endif /* ! defined (yyoverflow) || YYERROR_VERBOSE */
 
 
-#if (! defined (yyoverflow) \
-     && (! defined (__cplusplus) \
+#if (! defined (yyoverflow)						\
+     && (! defined (__cplusplus)					\
 	 || (defined (YYSTYPE_IS_TRIVIAL) && YYSTYPE_IS_TRIVIAL)))
 
 /* A type that is properly aligned for any stack member.  */
@@ -206,32 +196,32 @@ union yyalloc
 {
   short int yyss;
   YYSTYPE yyvs;
-  };
+};
 
 /* The size of the maximum gap between one aligned stack and the next.  */
 # define YYSTACK_GAP_MAXIMUM (sizeof (union yyalloc) - 1)
 
 /* The size of an array large to enough to hold all stacks, each with
    N elements.  */
-# define YYSTACK_BYTES(N) \
-     ((N) * (sizeof (short int) + sizeof (YYSTYPE))			\
-      + YYSTACK_GAP_MAXIMUM)
+# define YYSTACK_BYTES(N)				\
+  ((N) * (sizeof (short int) + sizeof (YYSTYPE))	\
+   + YYSTACK_GAP_MAXIMUM)
 
 /* Copy COUNT objects from FROM to TO.  The source and destination do
    not overlap.  */
 # ifndef YYCOPY
 #  if defined (__GNUC__) && 1 < __GNUC__
-#   define YYCOPY(To, From, Count) \
-      __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
+#   define YYCOPY(To, From, Count)				\
+  __builtin_memcpy (To, From, (Count) * sizeof (*(From)))
 #  else
 #   define YYCOPY(To, From, Count)		\
-      do					\
-	{					\
-	  register YYSIZE_T yyi;		\
-	  for (yyi = 0; yyi < (Count); yyi++)	\
-	    (To)[yyi] = (From)[yyi];		\
-	}					\
-      while (0)
+  do						\
+    {						\
+      register YYSIZE_T yyi;			\
+      for (yyi = 0; yyi < (Count); yyi++)	\
+	(To)[yyi] = (From)[yyi];		\
+    }						\
+  while (0)
 #  endif
 # endif
 
@@ -241,22 +231,22 @@ union yyalloc
    stack.  Advance YYPTR to a properly aligned location for the next
    stack.  */
 # define YYSTACK_RELOCATE(Stack)					\
-    do									\
-      {									\
-	YYSIZE_T yynewbytes;						\
-	YYCOPY (&yyptr->Stack, Stack, yysize);				\
-	Stack = &yyptr->Stack;						\
-	yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
-	yyptr += yynewbytes / sizeof (*yyptr);				\
-      }									\
-    while (0)
+  do									\
+    {									\
+      YYSIZE_T yynewbytes;						\
+      YYCOPY (&yyptr->Stack, Stack, yysize);				\
+      Stack = &yyptr->Stack;						\
+      yynewbytes = yystacksize * sizeof (*Stack) + YYSTACK_GAP_MAXIMUM; \
+      yyptr += yynewbytes / sizeof (*yyptr);				\
+    }									\
+  while (0)
 
 #endif
 
 #if defined (__STDC__) || defined (__cplusplus)
-   typedef signed char yysigned_char;
+typedef signed char yysigned_char;
 #else
-   typedef short int yysigned_char;
+typedef short int yysigned_char;
 #endif
 
 /* YYFINAL -- State number of the termination state. */
@@ -282,166 +272,166 @@ union yyalloc
 
 /* YYTRANSLATE[YYLEX] -- Bison symbol number corresponding to YYLEX.  */
 static const unsigned char yytranslate[] =
-{
-       0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+  {
+    0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
       20,    21,    16,    14,    19,    15,     2,     2,    26,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,    18,
-       2,    17,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    24,     2,    25,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    22,     2,    23,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13
-};
+      2,     2,     2,     2,     2,     2,     2,     2,     2,    18,
+      2,    17,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,    24,     2,    25,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,    22,     2,    23,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+      2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
+      5,     6,     7,     8,     9,    10,    11,    12,    13
+      };
 
 #if YYDEBUG
 /* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
    YYRHS.  */
 static const unsigned char yyprhs[] =
-{
-       0,     0,     3,     4,     7,    12,    17,    22,    29,    32,
-      34,    38,    42,    46,    50,    54,    57,    59,    61,    65,
-      69,    75,    83,    91,   102,   109,   116,   118,   121,   127,
-     129,   134,   136,   141,   143,   146,   149,   152
-};
+  {
+    0,     0,     3,     4,     7,    12,    17,    22,    29,    32,
+    34,    38,    42,    46,    50,    54,    57,    59,    61,    65,
+    69,    75,    83,    91,   102,   109,   116,   118,   121,   127,
+    129,   134,   136,   141,   143,   146,   149,   152
+  };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS. */
 static const yysigned_char yyrhs[] =
-{
-      28,     0,    -1,    -1,    28,    29,    -1,     9,    17,     3,
-      18,    -1,    10,    17,     7,    18,    -1,    11,    17,     7,
-      18,    -1,     7,    17,     7,    19,    38,    18,    -1,    30,
-      18,    -1,    31,    -1,    20,    30,    21,    -1,    30,    14,
-      30,    -1,    30,    15,    30,    -1,     4,    16,    30,    -1,
-      40,    16,    30,    -1,    32,    35,    -1,    35,    -1,    33,
-      -1,    34,    34,    34,    -1,     7,    17,     3,    -1,    22,
-      36,    36,     3,    23,    -1,    22,    36,    36,     7,    17,
-       3,    23,    -1,    22,    36,    36,     7,    17,     4,    23,
-      -1,    22,    36,    36,     7,    17,     3,     7,    17,     3,
-      23,    -1,    22,    36,    36,     3,     3,    23,    -1,    22,
-      36,    36,    36,     3,    23,    -1,    37,    -1,    37,    35,
-      -1,    37,    35,    12,    17,     7,    -1,    38,    -1,    38,
-      13,    17,     3,    -1,    39,    -1,    39,    24,     3,    25,
-      -1,     8,    -1,     8,    14,    -1,     8,    15,    -1,     8,
-      26,    -1,    20,     4,    19,     4,    21,    -1
-};
+  {
+    28,     0,    -1,    -1,    28,    29,    -1,     9,    17,     3,
+    18,    -1,    10,    17,     7,    18,    -1,    11,    17,     7,
+    18,    -1,     7,    17,     7,    19,    38,    18,    -1,    30,
+    18,    -1,    31,    -1,    20,    30,    21,    -1,    30,    14,
+    30,    -1,    30,    15,    30,    -1,     4,    16,    30,    -1,
+    40,    16,    30,    -1,    32,    35,    -1,    35,    -1,    33,
+    -1,    34,    34,    34,    -1,     7,    17,     3,    -1,    22,
+    36,    36,     3,    23,    -1,    22,    36,    36,     7,    17,
+    3,    23,    -1,    22,    36,    36,     7,    17,     4,    23,
+    -1,    22,    36,    36,     7,    17,     3,     7,    17,     3,
+    23,    -1,    22,    36,    36,     3,     3,    23,    -1,    22,
+    36,    36,    36,     3,    23,    -1,    37,    -1,    37,    35,
+    -1,    37,    35,    12,    17,     7,    -1,    38,    -1,    38,
+    13,    17,     3,    -1,    39,    -1,    39,    24,     3,    25,
+    -1,     8,    -1,     8,    14,    -1,     8,    15,    -1,     8,
+    26,    -1,    20,     4,    19,     4,    21,    -1
+  };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const unsigned short int yyrline[] =
-{
-       0,    62,    62,    63,    66,    69,    72,    75,    79,    94,
-      98,   106,   115,   124,   132,   142,   164,   210,   214,   218,
-     225,   235,   253,   270,   294,   304,   318,   321,   328,   354,
-     357,   363,   366,   372,   376,   380,   384,   390
-};
+  {
+    0,    62,    62,    63,    66,    69,    72,    75,    79,    94,
+    98,   106,   115,   124,   132,   142,   164,   210,   214,   218,
+    225,   235,   253,   270,   294,   304,   318,   321,   328,   354,
+    357,   363,   366,   372,   376,   380,   384,   390
+  };
 #endif
 
 #if YYDEBUG || YYERROR_VERBOSE
 /* YYTNME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
    First, the terminals, then, starting at YYNTOKENS, nonterminals. */
 static const char *const yytname[] =
-{
-  "$end", "error", "$undefined", "INT", "FLOAT", "COMPLEX", "SIGN",
-  "STRING", "PARTICLENAME", "DEBUG", "CHANNEL", "MODE", "MASSDEP",
-  "HELICITY", "'+'", "'-'", "'*'", "'='", "';'", "','", "'('", "')'",
-  "'{'", "'}'", "'['", "']'", "'0'", "$accept", "input", "statement",
-  "waveexp", "wave", "resonance", "quantum_nums", "quantum_num", "decay",
-  "particle", "pstate", "particleID", "particleCharge", "complex", 0
-};
+  {
+    "$end", "error", "$undefined", "INT", "FLOAT", "COMPLEX", "SIGN",
+    "STRING", "PARTICLENAME", "DEBUG", "CHANNEL", "MODE", "MASSDEP",
+    "HELICITY", "'+'", "'-'", "'*'", "'='", "';'", "','", "'('", "')'",
+    "'{'", "'}'", "'['", "']'", "'0'", "$accept", "input", "statement",
+    "waveexp", "wave", "resonance", "quantum_nums", "quantum_num", "decay",
+    "particle", "pstate", "particleID", "particleCharge", "complex", 0
+  };
 #endif
 
 # ifdef YYPRINT
 /* YYTOKNUM[YYLEX-NUM] -- Internal token number corresponding to
    token YYLEX-NUM.  */
 static const unsigned short int yytoknum[] =
-{
-       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
-     265,   266,   267,   268,    43,    45,    42,    61,    59,    44,
-      40,    41,   123,   125,    91,    93,    48
-};
+  {
+    0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+    265,   266,   267,   268,    43,    45,    42,    61,    59,    44,
+    40,    41,   123,   125,    91,    93,    48
+  };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const unsigned char yyr1[] =
-{
-       0,    27,    28,    28,    29,    29,    29,    29,    29,    30,
-      30,    30,    30,    30,    30,    31,    31,    32,    33,    34,
-      35,    35,    35,    35,    35,    35,    36,    36,    36,    37,
-      37,    38,    38,    39,    39,    39,    39,    40
-};
+  {
+    0,    27,    28,    28,    29,    29,    29,    29,    29,    30,
+    30,    30,    30,    30,    30,    31,    31,    32,    33,    34,
+    35,    35,    35,    35,    35,    35,    36,    36,    36,    37,
+    37,    38,    38,    39,    39,    39,    39,    40
+  };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const unsigned char yyr2[] =
-{
-       0,     2,     0,     2,     4,     4,     4,     6,     2,     1,
-       3,     3,     3,     3,     3,     2,     1,     1,     3,     3,
-       5,     7,     7,    10,     6,     6,     1,     2,     5,     1,
-       4,     1,     4,     1,     2,     2,     2,     5
-};
+  {
+    0,     2,     0,     2,     4,     4,     4,     6,     2,     1,
+    3,     3,     3,     3,     3,     2,     1,     1,     3,     3,
+    5,     7,     7,    10,     6,     6,     1,     2,     5,     1,
+    4,     1,     4,     1,     2,     2,     2,     5
+  };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
    STATE-NUM when YYTABLE doesn't specify something else to do.  Zero
    means the default is an error.  */
 static const unsigned char yydefact[] =
-{
-       2,     0,     1,     0,     0,     0,     0,     0,     0,     0,
-       3,     0,     9,     0,    17,     0,    16,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,    33,     0,    26,    29,
-      31,     0,     0,     8,    15,     0,     0,    13,    19,     0,
-       0,     0,     0,     0,     0,    10,    34,    35,    36,     0,
-      27,     0,     0,    11,    12,    18,    14,     0,     4,     5,
-       6,     0,     0,     0,     0,     0,     0,     0,     0,    37,
-       0,    20,     0,     0,     0,    30,    32,     7,    24,     0,
-       0,    25,    28,     0,    21,    22,     0,     0,    23
-};
+  {
+    2,     0,     1,     0,     0,     0,     0,     0,     0,     0,
+    3,     0,     9,     0,    17,     0,    16,     0,     0,     0,
+    0,     0,     0,     0,     0,     0,    33,     0,    26,    29,
+    31,     0,     0,     8,    15,     0,     0,    13,    19,     0,
+    0,     0,     0,     0,     0,    10,    34,    35,    36,     0,
+    27,     0,     0,    11,    12,    18,    14,     0,     4,     5,
+    6,     0,     0,     0,     0,     0,     0,     0,     0,    37,
+    0,    20,     0,     0,     0,    30,    32,     7,    24,     0,
+    0,    25,    28,     0,    21,    22,     0,     0,    23
+  };
 
 /* YYDEFGOTO[NTERM-NUM]. */
 static const yysigned_char yydefgoto[] =
-{
-      -1,     1,    10,    11,    12,    13,    14,    15,    16,    27,
-      28,    29,    30,    17
-};
+  {
+    -1,     1,    10,    11,    12,    13,    14,    15,    16,    27,
+    28,    29,    30,    17
+  };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
    STATE-NUM.  */
 #define YYPACT_NINF -24
 static const yysigned_char yypact[] =
-{
-     -24,     5,   -24,   -10,     1,    24,    38,    39,    13,    46,
-     -24,    -7,   -24,    -9,   -24,    23,   -24,    41,    25,    37,
-      55,    52,    53,    34,    44,    28,    22,    46,    -9,    49,
-      40,    25,    25,   -24,   -24,    23,    25,   -24,   -24,    47,
-      45,    50,    51,    61,    64,   -24,   -24,   -24,   -24,    31,
-      58,    54,    69,   -24,   -24,   -24,   -24,    46,   -24,   -24,
-     -24,    56,    -2,    57,    70,    59,    72,    60,    62,   -24,
-      63,   -24,    48,    65,    71,   -24,   -24,   -24,   -24,    -4,
-      66,   -24,   -24,    67,   -24,   -24,    76,    68,   -24
-};
+  {
+    -24,     5,   -24,   -10,     1,    24,    38,    39,    13,    46,
+    -24,    -7,   -24,    -9,   -24,    23,   -24,    41,    25,    37,
+    55,    52,    53,    34,    44,    28,    22,    46,    -9,    49,
+    40,    25,    25,   -24,   -24,    23,    25,   -24,   -24,    47,
+    45,    50,    51,    61,    64,   -24,   -24,   -24,   -24,    31,
+    58,    54,    69,   -24,   -24,   -24,   -24,    46,   -24,   -24,
+    -24,    56,    -2,    57,    70,    59,    72,    60,    62,   -24,
+    63,   -24,    48,    65,    71,   -24,   -24,   -24,   -24,    -4,
+    66,   -24,   -24,    67,   -24,   -24,    76,    68,   -24
+  };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yysigned_char yypgoto[] =
-{
-     -24,   -24,   -24,    -8,   -24,   -24,   -24,   -13,    18,   -23,
-     -24,    26,   -24,   -24
-};
+  {
+    -24,   -24,   -24,    -8,   -24,   -24,   -24,   -13,    18,   -23,
+    -24,    26,   -24,   -24
+  };
 
 /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
    positive, shift that token.  If negative, reduce the rule which
@@ -449,47 +439,47 @@ static const yysigned_char yypgoto[] =
    If YYTABLE_NINF, syntax error.  */
 #define YYTABLE_NINF -1
 static const unsigned char yytable[] =
-{
-      25,    70,    35,    83,    49,     2,    18,    31,    32,     3,
-      37,    33,     4,     9,     5,     6,     7,    23,    19,    84,
-      24,    71,    55,    53,    54,     8,    64,     9,    56,     3,
-      24,    34,    24,     8,    62,     9,    46,    47,    63,    26,
-      38,    20,    31,    32,    39,     8,    50,     9,    48,    45,
-      18,    79,    80,    43,    26,    21,    22,    36,    40,    41,
-      42,    44,    51,    58,    52,    61,    57,    38,    59,    60,
-      65,    66,    67,    73,    72,    75,    74,    69,    82,    87,
-      77,     0,     0,    68,    86,    76,    78,     0,    81,    85,
-       0,    88
-};
+  {
+    25,    70,    35,    83,    49,     2,    18,    31,    32,     3,
+    37,    33,     4,     9,     5,     6,     7,    23,    19,    84,
+    24,    71,    55,    53,    54,     8,    64,     9,    56,     3,
+    24,    34,    24,     8,    62,     9,    46,    47,    63,    26,
+    38,    20,    31,    32,    39,     8,    50,     9,    48,    45,
+    18,    79,    80,    43,    26,    21,    22,    36,    40,    41,
+    42,    44,    51,    58,    52,    61,    57,    38,    59,    60,
+    65,    66,    67,    73,    72,    75,    74,    69,    82,    87,
+    77,     0,     0,    68,    86,    76,    78,     0,    81,    85,
+    0,    88
+  };
 
 static const yysigned_char yycheck[] =
-{
-       8,     3,    15,     7,    27,     0,    16,    14,    15,     4,
-      18,    18,     7,    22,     9,    10,    11,     4,    17,    23,
-       7,    23,    35,    31,    32,    20,    49,    22,    36,     4,
-       7,    13,     7,    20,     3,    22,    14,    15,     7,     8,
-       3,    17,    14,    15,     7,    20,    28,    22,    26,    21,
-      16,     3,     4,    19,     8,    17,    17,    16,     3,     7,
-       7,    17,    13,    18,    24,     4,    19,     3,    18,    18,
-      12,    17,     3,     3,    17,     3,    17,    21,     7,     3,
-      18,    -1,    -1,    57,    17,    25,    23,    -1,    23,    23,
-      -1,    23
-};
+  {
+    8,     3,    15,     7,    27,     0,    16,    14,    15,     4,
+    18,    18,     7,    22,     9,    10,    11,     4,    17,    23,
+    7,    23,    35,    31,    32,    20,    49,    22,    36,     4,
+    7,    13,     7,    20,     3,    22,    14,    15,     7,     8,
+    3,    17,    14,    15,     7,    20,    28,    22,    26,    21,
+    16,     3,     4,    19,     8,    17,    17,    16,     3,     7,
+    7,    17,    13,    18,    24,     4,    19,     3,    18,    18,
+    12,    17,     3,     3,    17,     3,    17,    21,     7,     3,
+    18,    -1,    -1,    57,    17,    25,    23,    -1,    23,    23,
+    -1,    23
+  };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const unsigned char yystos[] =
-{
-       0,    28,     0,     4,     7,     9,    10,    11,    20,    22,
-      29,    30,    31,    32,    33,    34,    35,    40,    16,    17,
-      17,    17,    17,     4,     7,    30,     8,    36,    37,    38,
-      39,    14,    15,    18,    35,    34,    16,    30,     3,     7,
-       3,     7,     7,    19,    17,    21,    14,    15,    26,    36,
-      35,    13,    24,    30,    30,    34,    30,    19,    18,    18,
-      18,     4,     3,     7,    36,    12,    17,     3,    38,    21,
-       3,    23,    17,     3,    17,     3,    25,    18,    23,     3,
-       4,    23,     7,     7,    23,    23,    17,     3,    23
-};
+  {
+    0,    28,     0,     4,     7,     9,    10,    11,    20,    22,
+    29,    30,    31,    32,    33,    34,    35,    40,    16,    17,
+    17,    17,    17,     4,     7,    30,     8,    36,    37,    38,
+    39,    14,    15,    18,    35,    34,    16,    30,     3,     7,
+    3,     7,     7,    19,    17,    21,    14,    15,    26,    36,
+    35,    13,    24,    30,    30,    34,    30,    19,    18,    18,
+    18,     4,     3,     7,    36,    12,    17,     3,    38,    21,
+    3,    23,    17,     3,    17,     3,    25,    18,    23,     3,
+    4,    23,     7,     7,    23,    23,    17,     3,    23
+  };
 
 #if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
 # define YYSIZE_T __SIZE_TYPE__
@@ -525,22 +515,22 @@ static const unsigned char yystos[] =
 
 #define YYRECOVERING()  (!!yyerrstatus)
 
-#define YYBACKUP(Token, Value)					\
-do								\
-  if (yychar == YYEMPTY && yylen == 1)				\
-    {								\
-      yychar = (Token);						\
-      yylval = (Value);						\
-      yytoken = YYTRANSLATE (yychar);				\
-      YYPOPSTACK;						\
-      goto yybackup;						\
-    }								\
-  else								\
-    { 								\
-      yyerror ("syntax error: cannot back up");\
-      YYERROR;							\
-    }								\
-while (0)
+#define YYBACKUP(Token, Value)				\
+  do							\
+    if (yychar == YYEMPTY && yylen == 1)		\
+      {							\
+	yychar = (Token);				\
+	yylval = (Value);				\
+	yytoken = YYTRANSLATE (yychar);			\
+	YYPOPSTACK;					\
+	goto yybackup;					\
+      }							\
+    else						\
+      {							\
+	yyerror ("syntax error: cannot back up");	\
+	YYERROR;					\
+      }							\
+  while (0)
 
 #define YYTERROR	1
 #define YYERRCODE	256
@@ -550,10 +540,10 @@ while (0)
 
 #ifndef YYLLOC_DEFAULT
 # define YYLLOC_DEFAULT(Current, Rhs, N)		\
-   ((Current).first_line   = (Rhs)[1].first_line,	\
-    (Current).first_column = (Rhs)[1].first_column,	\
-    (Current).last_line    = (Rhs)[N].last_line,	\
-    (Current).last_column  = (Rhs)[N].last_column)
+  ((Current).first_line   = (Rhs)[1].first_line,	\
+   (Current).first_column = (Rhs)[1].first_column,	\
+   (Current).last_line    = (Rhs)[N].last_line,		\
+   (Current).last_column  = (Rhs)[N].last_column)
 #endif
 
 /* YYLEX -- calling `yylex' with the right arguments.  */
@@ -573,41 +563,41 @@ while (0)
 # endif
 
 # define YYDPRINTF(Args)			\
-do {						\
-  if (yydebug)					\
-    YYFPRINTF Args;				\
-} while (0)
+  do {						\
+    if (yydebug)				\
+      YYFPRINTF Args;				\
+  } while (0)
 
 # define YYDSYMPRINT(Args)			\
-do {						\
-  if (yydebug)					\
-    yysymprint Args;				\
-} while (0)
+  do {						\
+    if (yydebug)				\
+      yysymprint Args;				\
+  } while (0)
 
-# define YYDSYMPRINTF(Title, Token, Value, Location)		\
-do {								\
-  if (yydebug)							\
-    {								\
-      YYFPRINTF (stderr, "%s ", Title);				\
-      yysymprint (stderr, 					\
-                  Token, Value);	\
-      YYFPRINTF (stderr, "\n");					\
-    }								\
-} while (0)
+# define YYDSYMPRINTF(Title, Token, Value, Location)	\
+  do {							\
+    if (yydebug)					\
+      {							\
+	YYFPRINTF (stderr, "%s ", Title);		\
+	yysymprint (stderr,				\
+		    Token, Value);			\
+	YYFPRINTF (stderr, "\n");			\
+      }							\
+  } while (0)
 
 /*------------------------------------------------------------------.
-| yy_stack_print -- Print the state stack from its BOTTOM up to its |
-| TOP (included).                                                   |
-`------------------------------------------------------------------*/
+  | yy_stack_print -- Print the state stack from its BOTTOM up to its |
+  | TOP (included).                                                   |
+  `------------------------------------------------------------------*/
 
 #if defined (__STDC__) || defined (__cplusplus)
 static void
 yy_stack_print (short int *bottom, short int *top)
 #else
-static void
-yy_stack_print (bottom, top)
-    short int *bottom;
-    short int *top;
+  static void
+  yy_stack_print (bottom, top)
+  short int *bottom;
+short int *top;
 #endif
 {
   YYFPRINTF (stderr, "Stack now");
@@ -616,24 +606,24 @@ yy_stack_print (bottom, top)
   YYFPRINTF (stderr, "\n");
 }
 
-# define YY_STACK_PRINT(Bottom, Top)				\
-do {								\
-  if (yydebug)							\
-    yy_stack_print ((Bottom), (Top));				\
-} while (0)
+# define YY_STACK_PRINT(Bottom, Top)		\
+  do {						\
+    if (yydebug)				\
+      yy_stack_print ((Bottom), (Top));		\
+  } while (0)
 
 
 /*------------------------------------------------.
-| Report that the YYRULE is going to be reduced.  |
-`------------------------------------------------*/
+  | Report that the YYRULE is going to be reduced.  |
+  `------------------------------------------------*/
 
 #if defined (__STDC__) || defined (__cplusplus)
 static void
 yy_reduce_print (int yyrule)
 #else
-static void
-yy_reduce_print (yyrule)
-    int yyrule;
+  static void
+  yy_reduce_print (yyrule)
+  int yyrule;
 #endif
 {
   int yyi;
@@ -646,11 +636,11 @@ yy_reduce_print (yyrule)
   YYFPRINTF (stderr, "-> %s\n", yytname [yyr1[yyrule]]);
 }
 
-# define YY_REDUCE_PRINT(Rule)		\
-do {					\
-  if (yydebug)				\
-    yy_reduce_print (Rule);		\
-} while (0)
+# define YY_REDUCE_PRINT(Rule)			\
+  do {						\
+    if (yydebug)				\
+      yy_reduce_print (Rule);			\
+  } while (0)
 
 /* Nonzero means print parse trace.  It is left uninitialized so that
    multiple parsers can coexist.  */
@@ -697,8 +687,8 @@ static YYSIZE_T
 #   if defined (__STDC__) || defined (__cplusplus)
 yystrlen (const char *yystr)
 #   else
-yystrlen (yystr)
-     const char *yystr;
+  yystrlen (yystr)
+  const char *yystr;
 #   endif
 {
   register const char *yys = yystr;
@@ -721,9 +711,9 @@ static char *
 #   if defined (__STDC__) || defined (__cplusplus)
 yystpcpy (char *yydest, const char *yysrc)
 #   else
-yystpcpy (yydest, yysrc)
-     char *yydest;
-     const char *yysrc;
+  yystpcpy (yydest, yysrc)
+  char *yydest;
+const char *yysrc;
 #   endif
 {
   register char *yyd = yydest;
@@ -743,18 +733,18 @@ yystpcpy (yydest, yysrc)
 
 #if YYDEBUG
 /*--------------------------------.
-| Print this symbol on YYOUTPUT.  |
-`--------------------------------*/
+  | Print this symbol on YYOUTPUT.  |
+  `--------------------------------*/
 
 #if defined (__STDC__) || defined (__cplusplus)
 static void
 yysymprint (FILE *yyoutput, int yytype, YYSTYPE *yyvaluep)
 #else
-static void
-yysymprint (yyoutput, yytype, yyvaluep)
-    FILE *yyoutput;
-    int yytype;
-    YYSTYPE *yyvaluep;
+  static void
+  yysymprint (yyoutput, yytype, yyvaluep)
+  FILE *yyoutput;
+int yytype;
+YYSTYPE *yyvaluep;
 #endif
 {
   /* Pacify ``unused variable'' warnings.  */
@@ -772,25 +762,25 @@ yysymprint (yyoutput, yytype, yyvaluep)
 
   switch (yytype)
     {
-      default:
-        break;
+    default:
+      break;
     }
   YYFPRINTF (yyoutput, ")");
 }
 
 #endif /* ! YYDEBUG */
 /*-----------------------------------------------.
-| Release the memory associated to this symbol.  |
-`-----------------------------------------------*/
+  | Release the memory associated to this symbol.  |
+  `-----------------------------------------------*/
 
 #if defined (__STDC__) || defined (__cplusplus)
 static void
 yydestruct (int yytype, YYSTYPE *yyvaluep)
 #else
-static void
-yydestruct (yytype, yyvaluep)
-    int yytype;
-    YYSTYPE *yyvaluep;
+  static void
+  yydestruct (yytype, yyvaluep)
+  int yytype;
+YYSTYPE *yyvaluep;
 #endif
 {
   /* Pacify ``unused variable'' warnings.  */
@@ -799,8 +789,8 @@ yydestruct (yytype, yyvaluep)
   switch (yytype)
     {
 
-      default:
-        break;
+    default:
+      break;
     }
 }
 
@@ -835,14 +825,14 @@ int yynerrs;
 
 
 /*----------.
-| yyparse.  |
-`----------*/
+  | yyparse.  |
+  `----------*/
 
 #ifdef YYPARSE_PARAM
 # if defined (__STDC__) || defined (__cplusplus)
 int yyparse (void *YYPARSE_PARAM)
 # else
-int yyparse (YYPARSE_PARAM)
+  int yyparse (YYPARSE_PARAM)
   void *YYPARSE_PARAM;
 # endif
 #else /* ! YYPARSE_PARAM */
@@ -850,8 +840,8 @@ int yyparse (YYPARSE_PARAM)
 int
 yyparse (std::complex<double>& result)
 #else
-int
-yyparse (std::complex<double>& result)
+  int
+  yyparse (std::complex<double>& result)
 
 #endif
 #endif
@@ -916,13 +906,13 @@ yyparse (std::complex<double>& result)
 
   goto yysetstate;
 
-/*------------------------------------------------------------.
-| yynewstate -- Push a new state, which is found in yystate.  |
-`------------------------------------------------------------*/
+  /*------------------------------------------------------------.
+    | yynewstate -- Push a new state, which is found in yystate.  |
+    `------------------------------------------------------------*/
  yynewstate:
   /* In all cases, when you get here, the value and location stacks
      have just been pushed. so pushing a state here evens the stacks.
-     */
+  */
   yyssp++;
 
  yysetstate:
@@ -997,14 +987,14 @@ yyparse (std::complex<double>& result)
 
   goto yybackup;
 
-/*-----------.
-| yybackup.  |
-`-----------*/
-yybackup:
+  /*-----------.
+    | yybackup.  |
+    `-----------*/
+ yybackup:
 
-/* Do appropriate processing given the current state.  */
-/* Read a lookahead token if we need one and don't already have one.  */
-/* yyresume: */
+  /* Do appropriate processing given the current state.  */
+  /* Read a lookahead token if we need one and don't already have one.  */
+  /* yyresume: */
 
   /* First try to decide what to do without reference to lookahead token.  */
 
@@ -1068,20 +1058,20 @@ yybackup:
   goto yynewstate;
 
 
-/*-----------------------------------------------------------.
-| yydefault -- do the default action for the current state.  |
-`-----------------------------------------------------------*/
-yydefault:
+  /*-----------------------------------------------------------.
+    | yydefault -- do the default action for the current state.  |
+    `-----------------------------------------------------------*/
+ yydefault:
   yyn = yydefact[yystate];
   if (yyn == 0)
     goto yyerrlab;
   goto yyreduce;
 
 
-/*-----------------------------.
-| yyreduce -- Do a reduction.  |
-`-----------------------------*/
-yyreduce:
+  /*-----------------------------.
+    | yyreduce -- Do a reduction.  |
+    `-----------------------------*/
+ yyreduce:
   /* yyn is the number of a rule to reduce with.  */
   yylen = yyr2[yyn];
 
@@ -1099,452 +1089,416 @@ yyreduce:
   YY_REDUCE_PRINT (yyn);
   switch (yyn)
     {
-        case 4:
-#line 66 "keyParse.yy"
-    {
-                debug = yyvsp[-1].num;
-        }
-    break;
+    case 4:
+      {
+	debug = yyvsp[-1].num;
+      }
+      break;
 
-  case 5:
-#line 69 "keyParse.yy"
-    {
-                wv.channel(yyvsp[-1].string);
-        }
-    break;
+    case 5:
+      {
+	wv.channel(yyvsp[-1].string);
+      }
+      break;
 
-  case 6:
-#line 72 "keyParse.yy"
-    {
-                mode = yyvsp[-1].string;
-        }
-    break;
+    case 6:
+      {
+	mode = yyvsp[-1].string;
+      }
+      break;
 
-  case 7:
-#line 75 "keyParse.yy"
-    {
-                t_part_init = yyvsp[-3].string;
-                t_part_final = yyvsp[-1].Particle;
-        }
-    break;
+    case 7:
+      {
+	t_part_init = yyvsp[-3].string;
+	t_part_final = yyvsp[-1].Particle;
+      }
+      break;
 
-  case 8:
-#line 79 "keyParse.yy"
-    {
-      result=*yyvsp[-1].Cnum;
+    case 8:
+      {
+	result=*yyvsp[-1].Cnum;
 	if (mode == "binary") {
-                        cout.write((char*) yyvsp[-1].Cnum,sizeof(complex<double>));
-		}
-                else {
-                        cout << "Mass = " << ~(wv.get4P()) << "\t";
-                        if ( wv.channel() == "t" ) {
-                                cout << "t = " << (e.beam().get4P()-wv.get4P()).lenSq() << "\t";
-                        }
-                        cout << "Amp = " <<  *yyvsp[-1].Cnum << endl;
-                }
-                delete yyvsp[-1].Cnum;
-        }
-    break;
+	  cout.write((char*) yyvsp[-1].Cnum,sizeof(complex<double>));
+	}
+	else {
+	  cout << "Mass = " << ~(wv.get4P()) << "\t";
+	  if ( wv.channel() == "t" ) {
+	    cout << "t = " << (e.beam().get4P()-wv.get4P()).lenSq() << "\t";
+	  }
+	  cout << "Amp = " <<  *yyvsp[-1].Cnum << endl;
+	}
+	delete yyvsp[-1].Cnum;
+      }
+      break;
 
-  case 9:
-#line 94 "keyParse.yy"
-    {
-                yyval.Cnum = new complex<double>(*yyvsp[0].Cnum);
-                delete(yyvsp[0].Cnum);
-        }
-    break;
+    case 9:
+      {
+	yyval.Cnum = new complex<double>(*yyvsp[0].Cnum);
+	delete(yyvsp[0].Cnum);
+      }
+      break;
 
-  case 10:
-#line 98 "keyParse.yy"
-    {
-                yyval.Cnum = new complex<double>(*yyvsp[-1].Cnum);
-                if (debug) {
-                        cout << " ( " << *yyvsp[-1].Cnum << " ) = " << *yyval.Cnum << endl;
-                }
-                delete(yyvsp[-1].Cnum);
-        }
-    break;
+    case 10:
+      {
+	yyval.Cnum = new complex<double>(*yyvsp[-1].Cnum);
+	if (debug) {
+	  cout << " ( " << *yyvsp[-1].Cnum << " ) = " << *yyval.Cnum << endl;
+	}
+	delete(yyvsp[-1].Cnum);
+      }
+      break;
 
-  case 11:
-#line 106 "keyParse.yy"
-    {
-                yyval.Cnum = new complex<double>(*yyvsp[-2].Cnum + *yyvsp[0].Cnum);
-                if (debug) {
-                        cout << *yyvsp[-2].Cnum << " + " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
-                }
-                delete(yyvsp[-2].Cnum);
-                delete(yyvsp[0].Cnum);
-        }
-    break;
+    case 11:
+      {
+	yyval.Cnum = new complex<double>(*yyvsp[-2].Cnum + *yyvsp[0].Cnum);
+	if (debug) {
+	  cout << *yyvsp[-2].Cnum << " + " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
+	}
+	delete(yyvsp[-2].Cnum);
+	delete(yyvsp[0].Cnum);
+      }
+      break;
 
-  case 12:
-#line 115 "keyParse.yy"
-    {
-                yyval.Cnum = new complex<double>(*yyvsp[-2].Cnum - *yyvsp[0].Cnum);
-                if (debug) {
-                        cout << *yyvsp[-2].Cnum << " - " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
-                }
-                delete(yyvsp[-2].Cnum);
-                delete(yyvsp[0].Cnum);
-        }
-    break;
+    case 12:
+      {
+	yyval.Cnum = new complex<double>(*yyvsp[-2].Cnum - *yyvsp[0].Cnum);
+	if (debug) {
+	  cout << *yyvsp[-2].Cnum << " - " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
+	}
+	delete(yyvsp[-2].Cnum);
+	delete(yyvsp[0].Cnum);
+      }
+      break;
 
-  case 13:
-#line 124 "keyParse.yy"
-    {
-                yyval.Cnum = new complex<double>(yyvsp[-2].Fnum * *yyvsp[0].Cnum);
-                if (debug) {
-                        cout << yyvsp[-2].Fnum << " * " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
-                }
-                delete(yyvsp[0].Cnum);
-        }
-    break;
+    case 13:
+      {
+	yyval.Cnum = new complex<double>(yyvsp[-2].Fnum * *yyvsp[0].Cnum);
+	if (debug) {
+	  cout << yyvsp[-2].Fnum << " * " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
+	}
+	delete(yyvsp[0].Cnum);
+      }
+      break;
 
-  case 14:
-#line 132 "keyParse.yy"
-    {
-                yyval.Cnum = new complex<double>(*yyvsp[-2].Cnum * *yyvsp[0].Cnum);
-                if (debug) {
-                        cout << *yyvsp[-2].Cnum << " * " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
-                }
-                delete(yyvsp[-2].Cnum);
-                delete(yyvsp[0].Cnum);
-        }
-    break;
+    case 14:
+      {
+	yyval.Cnum = new complex<double>(*yyvsp[-2].Cnum * *yyvsp[0].Cnum);
+	if (debug) {
+	  cout << *yyvsp[-2].Cnum << " * " << *yyvsp[0].Cnum << " = " << *yyval.Cnum << endl;
+	}
+	delete(yyvsp[-2].Cnum);
+	delete(yyvsp[0].Cnum);
+      }
+      break;
 
-  case 15:
-#line 142 "keyParse.yy"
-    {
-                wv.setDecay(*yyvsp[0].Decay);
-                delete yyvsp[0].Decay;
-                if (debug) {
-                        cout << "@@Found a wave" << endl;
-                        wv.print();
-                        cout << "@@Filling wave" << endl;
-                }
-                wv.fill(e,debug);
-                if (debug) {
-                        cout << "@@Wave before boosts" << endl;
-                        wv.print();
-                }
-                wv.setupFrames(debug);
-                if (debug) {
-                        cout << "@@Wave after boosts" << endl;
-                        wv.print();
-                }
-                amp  = wv.decayAmp(debug);
-                yyval.Cnum = new complex<double>(amp);
-                nwave++;
-        }
-    break;
+    case 15:
+      {
+	wv.setDecay(*yyvsp[0].Decay);
+	delete yyvsp[0].Decay;
+	if (debug) {
+	  cout << "@@Found a wave" << endl;
+	  wv.print();
+	  cout << "@@Filling wave" << endl;
+	}
+	wv.fill(e,debug);
+	if (debug) {
+	  cout << "@@Wave before boosts" << endl;
+	  wv.print();
+	}
+	wv.setupFrames(debug);
+	if (debug) {
+	  cout << "@@Wave after boosts" << endl;
+	  wv.print();
+	}
+	amp  = wv.decayAmp(debug);
+	yyval.Cnum = new complex<double>(amp);
+	nwave++;
+      }
+      break;
 
-  case 16:
-#line 164 "keyParse.yy"
-    {
-                wv.setDecay(*yyvsp[0].Decay);
-                delete yyvsp[0].Decay;
-                if (debug) {
-                        cout << "@@Found a wave" << endl;
-                        wv.print();
-                        cout << "@@Filling wave" << endl;
-                }
-                wv.fill(e,debug);
-                if (debug) {
-                        cout << "@@Wave before boosts" << endl;
-                        wv.print();
-                }
-                wv.setupFrames(debug);
-                if (debug) {
-                        cout << "@@Wave after boosts" << endl;
-                        wv.print();
-                }
-                if (debug) {
-                        cout << "This should compute decay amplitude expt wave" << endl;
-                }
-                double t = 0.0;
-                fourVec t_init(0.0,threeVec(0.0,0.0,0.0));
-                if (t_part_init == "beam") {
-                        t_init = wv.getBeam();
-                }
-                else if (t_part_init == "target") {
-                        t_init = wv.getTarget();
-                }
-                else {
-                        cerr << "unknown initial t specifier: " << t_part_init << endl;
-                        abort();
-                }
-                t = (t_init - *wv.get4P(t_part_final, debug)).lenSq();
-                if (debug) {
-                        cout << "calulating amplitude with t = " << t << endl;
-                }
-                delete t_part_final;
+    case 16:
+      {
+	wv.setDecay(*yyvsp[0].Decay);
+	delete yyvsp[0].Decay;
+	if (debug) {
+	  cout << "@@Found a wave" << endl;
+	  wv.print();
+	  cout << "@@Filling wave" << endl;
+	}
+	wv.fill(e,debug);
+	if (debug) {
+	  cout << "@@Wave before boosts" << endl;
+	  wv.print();
+	}
+	wv.setupFrames(debug);
+	if (debug) {
+	  cout << "@@Wave after boosts" << endl;
+	  wv.print();
+	}
+	if (debug) {
+	  cout << "This should compute decay amplitude expt wave" << endl;
+	}
+	double t = 0.0;
+	fourVec t_init(0.0,threeVec(0.0,0.0,0.0));
+	if (t_part_init == "beam") {
+	  t_init = wv.getBeam();
+	}
+	else if (t_part_init == "target") {
+	  t_init = wv.getTarget();
+	}
+	else {
+	  cerr << "unknown initial t specifier: " << t_part_init << endl;
+	  abort();
+	}
+	t = (t_init - *wv.get4P(t_part_final, debug)).lenSq();
+	if (debug) {
+	  cout << "calulating amplitude with t = " << t << endl;
+	}
+	delete t_part_final;
 
-                wv.setT(t);
-                amp  = wv.decayAmp(debug);
-                yyval.Cnum = new complex<double>(amp);
-                nwave++;
-        }
-    break;
+	wv.setT(t);
+	amp  = wv.decayAmp(debug);
+	yyval.Cnum = new complex<double>(amp);
+	nwave++;
+      }
+      break;
 
-  case 17:
-#line 210 "keyParse.yy"
-    {
-            }
-    break;
+    case 17:
+      {
+      }
+      break;
 
-  case 18:
-#line 214 "keyParse.yy"
-    {
-        }
-    break;
+    case 18:
+      {
+      }
+      break;
 
-  case 19:
-#line 218 "keyParse.yy"
-    {
-                if(!strcmp(yyvsp[-2].string,"J")) wv.setJ(yyvsp[0].num);
-                if(!strcmp(yyvsp[-2].string,"M")) wv.setM(yyvsp[0].num);
-                if(!strcmp(yyvsp[-2].string,"P")) wv.setP(yyvsp[0].num);
-        }
-    break;
+    case 19:
+      {
+	if(!strcmp(yyvsp[-2].string,"J")) wv.setJ(yyvsp[0].num);
+	if(!strcmp(yyvsp[-2].string,"M")) wv.setM(yyvsp[0].num);
+	if(!strcmp(yyvsp[-2].string,"P")) wv.setP(yyvsp[0].num);
+      }
+      break;
 
-  case 20:
-#line 225 "keyParse.yy"
-    {
-                decay* d = new decay;
-                d->addChild(*yyvsp[-3].Particle);
-                d->addChild(*yyvsp[-2].Particle);
-                delete yyvsp[-3].Particle;
-                delete yyvsp[-2].Particle;
-                d->setL(yyvsp[-1].num);
-                d->calculateS();
-                yyval.Decay = d;
-        }
-    break;
+    case 20:
+      {
+	decay* d = new decay;
+	d->addChild(*yyvsp[-3].Particle);
+	d->addChild(*yyvsp[-2].Particle);
+	delete yyvsp[-3].Particle;
+	delete yyvsp[-2].Particle;
+	d->setL(yyvsp[-1].num);
+	d->calculateS();
+	yyval.Decay = d;
+      }
+      break;
 
-  case 21:
-#line 235 "keyParse.yy"
-    {
-                decay* d = new decay;
-                d->addChild(*yyvsp[-5].Particle);
-                d->addChild(*yyvsp[-4].Particle);
-                delete yyvsp[-5].Particle;
-                delete yyvsp[-4].Particle;
-                if(!strcmp(yyvsp[-3].string,"l")) {
-                        d->setL(yyvsp[-1].num);
-                        d->calculateS();
-                }
-                else {
-                        cerr << "unexpected field at line " << lineno << endl;
-                        cerr << "found \'" << yyvsp[-3].string << "\'" << endl;
-                        cerr << "expected \'l\'" << endl;
-                        exit(1);
-                }
-                yyval.Decay = d;
-        }
-    break;
+    case 21:
+      {
+	decay* d = new decay;
+	d->addChild(*yyvsp[-5].Particle);
+	d->addChild(*yyvsp[-4].Particle);
+	delete yyvsp[-5].Particle;
+	delete yyvsp[-4].Particle;
+	if(!strcmp(yyvsp[-3].string,"l")) {
+	  d->setL(yyvsp[-1].num);
+	  d->calculateS();
+	}
+	else {
+	  cerr << "unexpected field at line " << lineno << endl;
+	  cerr << "found \'" << yyvsp[-3].string << "\'" << endl;
+	  cerr << "expected \'l\'" << endl;
+	  exit(1);
+	}
+	yyval.Decay = d;
+      }
+      break;
 
-  case 22:
-#line 253 "keyParse.yy"
-    {
-                decay* d = new decay;
-                d->addChild(*yyvsp[-5].Particle);
-                d->addChild(*yyvsp[-4].Particle);
-                delete yyvsp[-5].Particle;
-                delete yyvsp[-4].Particle;
-                if(!strcmp(yyvsp[-3].string,"b")) {
-                        wv.setSlope(yyvsp[-1].Fnum);
-                }
-                else {
-                        cerr << "unexpected field at line " << lineno << endl;
-                        cerr << "found \'" << yyvsp[-3].string << "\'" << endl;
-                        cerr << "expected \'b\'" << endl;
-                        exit(1);
-                }
-                yyval.Decay = d;
-        }
-    break;
+    case 22:
+      {
+	decay* d = new decay;
+	d->addChild(*yyvsp[-5].Particle);
+	d->addChild(*yyvsp[-4].Particle);
+	delete yyvsp[-5].Particle;
+	delete yyvsp[-4].Particle;
+	if(!strcmp(yyvsp[-3].string,"b")) {
+	  wv.setSlope(yyvsp[-1].Fnum);
+	}
+	else {
+	  cerr << "unexpected field at line " << lineno << endl;
+	  cerr << "found \'" << yyvsp[-3].string << "\'" << endl;
+	  cerr << "expected \'b\'" << endl;
+	  exit(1);
+	}
+	yyval.Decay = d;
+      }
+      break;
 
-  case 23:
-#line 270 "keyParse.yy"
-    {
-                decay* d = new decay;
-                d->addChild(*yyvsp[-8].Particle);
-                d->addChild(*yyvsp[-7].Particle);
-                delete yyvsp[-8].Particle;
-                delete yyvsp[-7].Particle;
-                if(!strcmp(yyvsp[-6].string,"l")) {
-                        d->setL(yyvsp[-4].num);
-                }
-                else {
-                        cerr << "expecting \'l\' at line " << lineno << endl;
-                        cerr << "found \'" << yyvsp[-6].string << "\'" << endl;
-                        exit(1);
-                }
-                if(!strcmp(yyvsp[-3].string,"s")) {
-                        d->setS(yyvsp[-1].num);
-                }
-                else {
-                        cerr << "expecting \'l\' at line " << lineno << endl;
-                        cerr << "found \'" << yyvsp[-3].string << "\'" << endl;
-                        exit(1);
-                }
-                yyval.Decay = d;
-        }
-    break;
+    case 23:
+      {
+	decay* d = new decay;
+	d->addChild(*yyvsp[-8].Particle);
+	d->addChild(*yyvsp[-7].Particle);
+	delete yyvsp[-8].Particle;
+	delete yyvsp[-7].Particle;
+	if(!strcmp(yyvsp[-6].string,"l")) {
+	  d->setL(yyvsp[-4].num);
+	}
+	else {
+	  cerr << "expecting \'l\' at line " << lineno << endl;
+	  cerr << "found \'" << yyvsp[-6].string << "\'" << endl;
+	  exit(1);
+	}
+	if(!strcmp(yyvsp[-3].string,"s")) {
+	  d->setS(yyvsp[-1].num);
+	}
+	else {
+	  cerr << "expecting \'l\' at line " << lineno << endl;
+	  cerr << "found \'" << yyvsp[-3].string << "\'" << endl;
+	  exit(1);
+	}
+	yyval.Decay = d;
+      }
+      break;
 
-  case 24:
-#line 294 "keyParse.yy"
-    {
-                decay* d = new decay;
-                d->addChild(*yyvsp[-4].Particle);
-                d->addChild(*yyvsp[-3].Particle);
-                delete yyvsp[-4].Particle;
-                delete yyvsp[-3].Particle;
-                d->setL(yyvsp[-2].num);
-                d->setS(yyvsp[-1].num);
-                yyval.Decay = d;
-        }
-    break;
+    case 24:
+      {
+	decay* d = new decay;
+	d->addChild(*yyvsp[-4].Particle);
+	d->addChild(*yyvsp[-3].Particle);
+	delete yyvsp[-4].Particle;
+	delete yyvsp[-3].Particle;
+	d->setL(yyvsp[-2].num);
+	d->setS(yyvsp[-1].num);
+	yyval.Decay = d;
+      }
+      break;
 
-  case 25:
-#line 304 "keyParse.yy"
-    {
-                decay* d = new decay;
-                d->addChild(*yyvsp[-4].Particle);
-                d->addChild(*yyvsp[-3].Particle);
-                d->addChild(*yyvsp[-2].Particle);
-                delete yyvsp[-4].Particle;
-                delete yyvsp[-3].Particle;
-                delete yyvsp[-2].Particle;
-                d->setL(yyvsp[-1].num);
-                d->calculateS();
-                yyval.Decay = d;
-        }
-    break;
+    case 25:
+      {
+	decay* d = new decay;
+	d->addChild(*yyvsp[-4].Particle);
+	d->addChild(*yyvsp[-3].Particle);
+	d->addChild(*yyvsp[-2].Particle);
+	delete yyvsp[-4].Particle;
+	delete yyvsp[-3].Particle;
+	delete yyvsp[-2].Particle;
+	d->setL(yyvsp[-1].num);
+	d->calculateS();
+	yyval.Decay = d;
+      }
+      break;
 
-  case 26:
-#line 318 "keyParse.yy"
-    {
-                yyval.Particle = yyvsp[0].Particle;
-        }
-    break;
+    case 26:
+      {
+	yyval.Particle = yyvsp[0].Particle;
+      }
+      break;
 
-  case 27:
-#line 321 "keyParse.yy"
-    {
-                yyvsp[-1].Particle->setDecay(*yyvsp[0].Decay);
-                massDep* bw = new breitWigner();
-                yyvsp[-1].Particle->setMassDep(bw);
-                delete yyvsp[0].Decay;
-                yyval.Particle = yyvsp[-1].Particle;
-        }
-    break;
+    case 27:
+      {
+	yyvsp[-1].Particle->setDecay(*yyvsp[0].Decay);
+	massDep* bw = new breitWigner();
+	yyvsp[-1].Particle->setMassDep(bw);
+	delete yyvsp[0].Decay;
+	yyval.Particle = yyvsp[-1].Particle;
+      }
+      break;
 
-  case 28:
-#line 328 "keyParse.yy"
-    {
-                yyvsp[-4].Particle->setDecay(*yyvsp[-3].Decay);
-                massDep* md;
-                if (!strcmp(yyvsp[0].string,"bw")) {
-                        md = new breitWigner();
-                }
-                else if (!strcmp(yyvsp[0].string,"amp")) {
-                        md = new AMP_M();
-                }
-                else if (!strcmp(yyvsp[0].string,"amp_ves")) {
-                        md = new AMP_ves();
-                }
-		else if (!strcmp(yyvsp[0].string,"amp_kach")) {
-                        md = new AMP_kach();
-                }
-                else if (!strcmp(yyvsp[0].string,"flat")) {
-                        md = new flat();
-                }
-                else {
-                        cerr << "unknown mass dependence: " << yyvsp[0].string;
-                        cerr << " at line " << lineno << endl;
-                        exit(1);
-                }
-                yyvsp[-4].Particle->setMassDep(md);
-                delete yyvsp[-3].Decay;
-                yyval.Particle = yyvsp[-4].Particle;
-        }
-    break;
+    case 28:
+      {
+	yyvsp[-4].Particle->setDecay(*yyvsp[-3].Decay);
+	massDep* md;
+	if (!strcmp(yyvsp[0].string,"bw")) {
+	  md = new breitWigner();
+	}
+	else if (!strcmp(yyvsp[0].string,"amp")) {
+	  md = new AMP_M();
+	}
+	else if (!strcmp(yyvsp[0].string,"amp_ves")) {
+	  md = new AMP_ves();
+	}
+	else if (!strcmp(yyvsp[0].string,"amp_kach")) {
+	  md = new AMP_kach();
+	}
+	else if (!strcmp(yyvsp[0].string,"flat")) {
+	  md = new flat();
+	}
+	else {
+	  cerr << "unknown mass dependence: " << yyvsp[0].string;
+	  cerr << " at line " << lineno << endl;
+	  exit(1);
+	}
+	yyvsp[-4].Particle->setMassDep(md);
+	delete yyvsp[-3].Decay;
+	yyval.Particle = yyvsp[-4].Particle;
+      }
+      break;
 
-  case 29:
-#line 354 "keyParse.yy"
-    {
-                yyval.Particle = yyvsp[0].Particle;
-        }
-    break;
+    case 29:
+      {
+	yyval.Particle = yyvsp[0].Particle;
+      }
+      break;
 
-  case 30:
-#line 357 "keyParse.yy"
-    {
-                yyvsp[-3].Particle->addHelicity(yyvsp[0].num);
-                yyval.Particle = yyvsp[-3].Particle;
-        }
-    break;
+    case 30:
+      {
+	yyvsp[-3].Particle->addHelicity(yyvsp[0].num);
+	yyval.Particle = yyvsp[-3].Particle;
+      }
+      break;
 
-  case 31:
-#line 363 "keyParse.yy"
-    {
-                yyval.Particle = yyvsp[0].Particle;
-        }
-    break;
+    case 31:
+      {
+	yyval.Particle = yyvsp[0].Particle;
+      }
+      break;
 
-  case 32:
-#line 366 "keyParse.yy"
-    {
-                yyvsp[-3].Particle->Index(yyvsp[-1].num);
-                yyval.Particle = yyvsp[-3].Particle;
-        }
-    break;
+    case 32:
+      {
+	yyvsp[-3].Particle->Index(yyvsp[-1].num);
+	yyval.Particle = yyvsp[-3].Particle;
+      }
+      break;
 
-  case 33:
-#line 372 "keyParse.yy"
-    {
-                particle* p = new particle(PDGtable.get(yyvsp[0].string),0);
-                yyval.Particle = p;
-        }
-    break;
+    case 33:
+      {
+	particle* p = new particle(PDGtable.get(yyvsp[0].string),0);
+	yyval.Particle = p;
+      }
+      break;
 
-  case 34:
-#line 376 "keyParse.yy"
-    {
-                particle* p = new particle(PDGtable.get(yyvsp[-1].string),+1);
-                yyval.Particle = p;
-        }
-    break;
+    case 34:
+      {
+	particle* p = new particle(PDGtable.get(yyvsp[-1].string),+1);
+	yyval.Particle = p;
+      }
+      break;
 
-  case 35:
-#line 380 "keyParse.yy"
-    {
-                particle* p = new particle(PDGtable.get(yyvsp[-1].string),-1);
-                yyval.Particle = p;
-        }
-    break;
+    case 35:
+      {
+	particle* p = new particle(PDGtable.get(yyvsp[-1].string),-1);
+	yyval.Particle = p;
+      }
+      break;
 
-  case 36:
-#line 384 "keyParse.yy"
-    {
-                particle* p = new particle(PDGtable.get(yyvsp[-1].string),0);
-                yyval.Particle = p;
-        }
-    break;
+    case 36:
+      {
+	particle* p = new particle(PDGtable.get(yyvsp[-1].string),0);
+	yyval.Particle = p;
+      }
+      break;
 
-  case 37:
-#line 390 "keyParse.yy"
-    {
-                yyval.Cnum = new complex<double>(yyvsp[-3].Fnum,yyvsp[-1].Fnum);
-        }
-    break;
+    case 37:
+      {
+	yyval.Cnum = new complex<double>(yyvsp[-3].Fnum,yyvsp[-1].Fnum);
+      }
+      break;
 
 
     }
 
-/* Line 1010 of yacc.c.  */
-#line 1544 "keyParse.cc"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -1570,10 +1524,10 @@ yyreduce:
   goto yynewstate;
 
 
-/*------------------------------------.
-| yyerrlab -- here on detecting error |
-`------------------------------------*/
-yyerrlab:
+  /*------------------------------------.
+    | yyerrlab -- here on detecting error |
+    `------------------------------------*/
+ yyerrlab:
   /* If not already recovering from an error, report this error.  */
   if (!yyerrstatus)
     {
@@ -1652,14 +1606,14 @@ yyerrlab:
           /* If at end of input, pop the error token,
 	     then the rest of the stack, then return failure.  */
 	  if (yychar == YYEOF)
-	     for (;;)
-	       {
-		 YYPOPSTACK;
-		 if (yyssp == yyss)
-		   YYABORT;
-		 YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
-		 yydestruct (yystos[*yyssp], yyvsp);
-	       }
+	    for (;;)
+	      {
+		YYPOPSTACK;
+		if (yyssp == yyss)
+		  YYABORT;
+		YYDSYMPRINTF ("Error: popping", yystos[*yyssp], yyvsp, yylsp);
+		yydestruct (yystos[*yyssp], yyvsp);
+	      }
         }
       else
 	{
@@ -1675,16 +1629,16 @@ yyerrlab:
   goto yyerrlab1;
 
 
-/*---------------------------------------------------.
-| yyerrorlab -- error raised explicitly by YYERROR.  |
-`---------------------------------------------------*/
-yyerrorlab:
+  /*---------------------------------------------------.
+    | yyerrorlab -- error raised explicitly by YYERROR.  |
+    `---------------------------------------------------*/
+ yyerrorlab:
 
 #ifdef __GNUC__
   /* Pacify GCC when the user code never invokes YYERROR and the label
      yyerrorlab therefore never appears in user code.  */
   if (0)
-     goto yyerrorlab;
+    goto yyerrorlab;
 #endif
 
   yyvsp -= yylen;
@@ -1693,10 +1647,10 @@ yyerrorlab:
   goto yyerrlab1;
 
 
-/*-------------------------------------------------------------.
-| yyerrlab1 -- common code for both syntax error and YYERROR.  |
-`-------------------------------------------------------------*/
-yyerrlab1:
+  /*-------------------------------------------------------------.
+    | yyerrlab1 -- common code for both syntax error and YYERROR.  |
+    `-------------------------------------------------------------*/
+ yyerrlab1:
   yyerrstatus = 3;	/* Each real token shifted decrements this.  */
 
   for (;;)
@@ -1736,40 +1690,34 @@ yyerrlab1:
   goto yynewstate;
 
 
-/*-------------------------------------.
-| yyacceptlab -- YYACCEPT comes here.  |
-`-------------------------------------*/
-yyacceptlab:
+  /*-------------------------------------.
+    | yyacceptlab -- YYACCEPT comes here.  |
+    `-------------------------------------*/
+ yyacceptlab:
   yyresult = 0;
   goto yyreturn;
 
-/*-----------------------------------.
-| yyabortlab -- YYABORT comes here.  |
-`-----------------------------------*/
-yyabortlab:
+  /*-----------------------------------.
+    | yyabortlab -- YYABORT comes here.  |
+    `-----------------------------------*/
+ yyabortlab:
   yyresult = 1;
   goto yyreturn;
 
 #ifndef yyoverflow
-/*----------------------------------------------.
-| yyoverflowlab -- parser overflow comes here.  |
-`----------------------------------------------*/
-yyoverflowlab:
+  /*----------------------------------------------.
+    | yyoverflowlab -- parser overflow comes here.  |
+    `----------------------------------------------*/
+ yyoverflowlab:
   yyerror ("parser stack overflow");
   yyresult = 2;
   /* Fall through.  */
 #endif
 
-yyreturn:
+ yyreturn:
 #ifndef yyoverflow
   if (yyss != yyssa)
     YYSTACK_FREE (yyss);
 #endif
   return yyresult;
 }
-
-
-#line 394 "keyParse.yy"
-
-
-

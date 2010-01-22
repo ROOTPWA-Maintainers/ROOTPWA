@@ -55,10 +55,7 @@
 #define HELICITY 268
 
 
-
-
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 29 "keyParse.yy"
 typedef union YYSTYPE {
         int num;
         std::complex<double>* Cnum;
@@ -67,14 +64,10 @@ typedef union YYSTYPE {
         decay* Decay;
         particle* Particle;
 } YYSTYPE;
-/* Line 1285 of yacc.c.  */
-#line 72 "y.tab.h"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
 #endif
 
+
 extern YYSTYPE keylval;
-
-
-
