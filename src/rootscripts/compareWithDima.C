@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include "TFile.h"
+#include "TMultiGraph.h"
 #include "TRegexp.h"
 #include "TPRegexp.h"
 #include "TH1.h"
@@ -18,10 +19,11 @@
 #include "TCanvas.h"
 #include "TPad.h"
 
+#include "utilities.h"
+#include "TFitResult.h"
 #include "plotAllIntensities.h"
 #include "plotSpinTotals.h"
 #include "plotPhase.h"
-#include "TFitResult.h"
 
 
 using namespace std;
@@ -36,12 +38,12 @@ readDimaHists(TFile*   dimaFile,
   TIterator*        keys = dimaFile->GetListOfKeys()->MakeIterator();
   while (TKey* k = static_cast<TKey*>(keys->Next())) {
     if (!k) {
-      cerr << "    error: null pointer to TKey." << endl;
+      printWarn << "NULL pointer to TKey. skipping." << endl;
       continue;
     }
     TObject* o = k->ReadObj();
     if (!o) {
-      cerr << "    error: cannot read object from TKey '" << k->GetName() << "'." << endl;
+      printWarn << "cannot read object from TKey '" << k->GetName() << "'. skipping." << endl;
       continue;
     }
     const string type = o->IsA()->GetName();
@@ -111,13 +113,15 @@ void
 compareIntensitiesWithDima(TTree* tree,  // TFitResult tree
 			   TFile* dimaFile)
 {
+  printInfo << "comparing intensities with Dima's result." << endl;
+
   // get Dima's intensity histograms from file
   map<string, TH1*> dimaIntensityHists;  // intensity histograms w/o acceptance correction (see histgroups.txt)
   {
     map<string, TH1*> dimaHists = readDimaHists(dimaFile, TString("^h10\\d{2}$"));
     // transform map with histogram titles as keys to map with wave names as keys
     for (map<string, TH1*>::iterator i = dimaHists.begin(); i != dimaHists.end(); ++i) {
-      cout << "        found intensity histogram '"<< i->first << "' " << flush;
+      cout << "    found intensity histogram '"<< i->first << "' " << flush;
       TString waveName = i->first;
       waveName         = waveName.Strip(TString::kTrailing, ' ');
       dimaIntensityHists[waveName.Data()] = i->second;
@@ -126,10 +130,11 @@ compareIntensitiesWithDima(TTree* tree,  // TFitResult tree
   }
 
   // get ROOTpwa intensity histograms
-  vector<pair<string, TVirtualPad*> > wavePads = plotAllIntensities(tree, false, "./", false);
+  vector<pair<string, TVirtualPad*> > wavePads = plotAllIntensities(tree, false, "./");
 
   // draw Dima's histograms on top of ROOTpwa's
-  cout << endl << "drawing Dima's histograms" << endl;
+  cout << endl;
+  printInfo << "drawing Dima's histograms" << endl;
   for (unsigned int i = 0; i < wavePads.size(); ++i) {
     const string waveName = wavePads[i].first;
     const string dimaName = translateWaveName(waveName);
@@ -140,7 +145,7 @@ compareIntensitiesWithDima(TTree* tree,  // TFitResult tree
     pad->cd();
     TH1* hDima = dimaIntensityHists[dimaName];
     if (!hDima) {
-      cerr << "    no histogram with name '" << dimaName << "'" << endl;
+      printWarn << "cannot find histogram with name '" << dimaName << "'. skipping." << endl;
       continue;
     }
     hDima->Scale(3);
@@ -152,7 +157,7 @@ compareIntensitiesWithDima(TTree* tree,  // TFitResult tree
     pad->Update();
     
     // readjust y-axis range
-    TGraphErrors* graph = static_cast<TGraphErrors*>(pad->GetPrimitive(waveName.c_str()));
+    TMultiGraph* graph = static_cast<TMultiGraph*>(pad->GetPrimitive(waveName.c_str()));
     if (graph) {
       const double max = std::max(hDima->GetMaximum(), graph->GetHistogram()->GetMaximum());
       graph->SetMaximum(1.1 * max);
@@ -167,6 +172,8 @@ void
 compareSpinTotalsWithDima(TTree* tree,  // TFitResult tree
 			  TFile* dimaFile)
 {
+  printInfo << "comparing spin totals with Dima's result." << endl;
+
   // get Dima's spin total histograms from file
   map<string, TH1*> dimaSpinTotalHists;
   {
@@ -188,7 +195,7 @@ compareSpinTotalsWithDima(TTree* tree,  // TFitResult tree
       } else
 	waveMatch = false;
       if (waveMatch) {
-	cout << "        found intensity histogram '"<< i->first << "' " << flush;
+	cout << "    found spin total histogram '"<< i->first << "' " << flush;
 	dimaSpinTotalHists[waveName.Data()] = i->second;
 	cout << "for wave '" << waveName << "'" << endl;
       }
@@ -199,7 +206,8 @@ compareSpinTotalsWithDima(TTree* tree,  // TFitResult tree
   vector<pair<string, TVirtualPad*> > wavePads = plotSpinTotals(tree, kBlack, "");
 
   // draw Dima's histograms on top of ROOTpwa's
-  cout << endl << "drawing Dima's histograms" << endl;
+  cout << endl;
+  printInfo<< "drawing Dima's histograms" << endl;
   for (unsigned int i = 0; i < wavePads.size(); ++i) {
     const string waveName = wavePads[i].first;
     cout << "    drawing spinTotal for wave '" << waveName << "'" << endl;
@@ -209,7 +217,7 @@ compareSpinTotalsWithDima(TTree* tree,  // TFitResult tree
     pad->cd();
     TH1* hDima = dimaSpinTotalHists[waveName];
     if (!hDima) {
-      cerr << "    no histogram with name '" << waveName << "'" << endl;
+      printWarn << "cannot find histogram with name '" << waveName << "'. skipping." << endl;
       continue;
     }
     hDima->Scale(3);
@@ -243,13 +251,15 @@ void
 comparePhasesWithDima(TTree* tree,  // TFitResult tree
 		      TFile* dimaFile)
 {
+  printInfo << "comparing phases with Dima's result." << endl;
+
   // get Dima's phase histograms from file
   map<string, TH1*> dimaPhaseHists;  // relative phases (see histgroups.txt)
   {
     map<string, TH1*> dimaHists = readDimaHists(dimaFile, TString("^h4\\d{4}$"));
     // transform map with histogram titles as keys to map with wave names as keys
     for (map<string, TH1*>::iterator i = dimaHists.begin(); i != dimaHists.end(); ++i) {
-      cout << "        found intensity histogram '"<< i->first << "' " << flush;
+      cout << "    found phase histogram '"<< i->first << "' " << flush;
       TString   hTitle       = i->first;
       hTitle                 = hTitle(4, hTitle.Length() - 5);
       const int pos          = hTitle.Index(" - ");
@@ -277,13 +287,13 @@ comparePhasesWithDima(TTree* tree,  // TFitResult tree
       const string histName = dimaNames[0] + "|" + dimaNames[1];
       TH1* h = dimaPhaseHists[histName];
       if (!h) {
-	cerr << "    no histogram with name '" << histName << "'" << endl;
+	printWarn << "cannot find histogram with name '" << histName << "'. skipping." << endl;
 	continue;
       }
 
       // draw ROOTpwa phase histograms
-      TCanvas*      canv  = new TCanvas();
-      TGraphErrors* graph = plotPhase(tree, i, j);
+      new TCanvas();
+      plotPhase(tree, i, j);
       
       // draw Dima's plot on top of it
       h->SetMarkerStyle(21);
@@ -299,22 +309,22 @@ comparePhasesWithDima(TTree* tree,  // TFitResult tree
 
 void
 compareWithDima(TTree*        tree,  // TFitResult tree
-		const string& dimaFileName = "/afs/e18.ph.tum.de/user/bgrube/compass/pwa/compassPWA/work/hfit.root")
+		const string& dimaFileName = "/afs/e18.ph.tum.de/data/compass/bgrube/lambda/pwa/compassPWA/work/hfit.root")
 {
   if (!tree) {
-    cerr << "compareWithDima() error: NULL pointer to tree." << endl;
+    printErr << "NULL pointer to tree. exiting." << endl;
     return;
   }
 
-  cout << "    opening Dima's file '" << dimaFileName << "'" << endl;
+  printInfo << "opening Dima's file '" << dimaFileName << "'" << endl;
   TFile* dimaFile = TFile::Open(dimaFileName.c_str(), "READ");
   if (!dimaFile || dimaFile->IsZombie()) {
-    cerr << "    error opening file '" << dimaFileName << "'" << endl;
+    printErr << "cannot open file '" << dimaFileName << "'. exiting." << endl;
     return;
   }
   
-  //compareIntensitiesWithDima(tree, dimaFile);
-  compareSpinTotalsWithDima(tree, dimaFile);
+  compareIntensitiesWithDima(tree, dimaFile);
+  //compareSpinTotalsWithDima(tree, dimaFile);
   //comparePhasesWithDima(tree, dimaFile);
   
 }

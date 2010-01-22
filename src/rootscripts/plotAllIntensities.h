@@ -33,6 +33,14 @@
 //-----------------------------------------------------------
 
 
+//
+// plots all waves of all trees sorted by JPC and intensity and
+// returns a list of wave names and pointers to the pads they were
+// drawn into
+// the intensity sorting is performed w.r.t. the first tree
+//
+
+
 #ifndef plotAllIntensities_hh
 #define plotAllIntensities_hh
 
@@ -44,15 +52,6 @@
 #include "TTree.h"
 
 
-// plots all waves sorted by JPC and returns a list of wave names and
-// pointers to the pads they were drawn into
-std::vector<std::pair<std::string, TVirtualPad*> >
-plotAllIntensities(TTree*             tree,                  // TFitResult tree
-		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
-		   const std::string& outPath      = "./",   // path for output files
-		   const bool         mcmc         = false);
-
-
 std::vector<std::pair<std::string, TVirtualPad*> >
 plotAllIntensities(const unsigned int nmbTrees,              // number of TFitResult trees
 		   TTree**            trees,                 // array of TFitResult trees
@@ -60,6 +59,15 @@ plotAllIntensities(const unsigned int nmbTrees,              // number of TFitRe
 		   const std::string& outPath      = "./",   // path for output files
 		   const int*         graphColors  = NULL,   // array of colors for graph line and marker
 		   const bool         drawLegend   = true);  // if set legend is drawn
+
+inline
+std::vector<std::pair<std::string, TVirtualPad*> >
+plotAllIntensities(TTree*             tree,                  // TFitResult tree
+		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
+		   const std::string& outPath      = "./")   // path for output files
+{
+  return plotAllIntensities(1, &tree, createPsFile, outPath, NULL, false);
+}
 
 
 inline
