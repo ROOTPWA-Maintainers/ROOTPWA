@@ -53,33 +53,36 @@
 
 
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotAllIntensities(const unsigned int nmbTrees,              // number of TFitResult trees
-		   TTree**            trees,                 // array of TFitResult trees
+plotAllIntensities(const unsigned int nmbTrees,              // number of fitResult trees
+		   TTree**            trees,                 // array of fitResult trees
 		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
 		   const std::string& outPath      = "./",   // path for output files
 		   const int*         graphColors  = NULL,   // array of colors for graph line and marker
-		   const bool         drawLegend   = true);  // if set legend is drawn
+		   const bool         drawLegend   = true,   // if set legend is drawn
+		   const string&      branchName   = "fitResult_v2");
 
 inline
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotAllIntensities(TTree*             tree,                  // TFitResult tree
+plotAllIntensities(TTree*             tree,                  // fitResult tree
 		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
-		   const std::string& outPath      = "./")   // path for output files
+		   const std::string& outPath      = "./",   // path for output files
+		   const string&      branchName   = "fitResult_v2")
 {
-  return plotAllIntensities(1, &tree, createPsFile, outPath, NULL, false);
+  return plotAllIntensities(1, &tree, createPsFile, outPath, NULL, false, branchName);
 }
 
 
 inline
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotAllIntensities(std::vector<TTree*>&    trees,                 // array of TFitResult trees
+plotAllIntensities(std::vector<TTree*>&    trees,                 // array of fitResult trees
 		   const bool              createPsFile = false,  // if true, plots are written to waves.ps
 		   const std::string&      outPath      = "./",   // path for output files
 		   const std::vector<int>& graphColors  = std::vector<int>(),  // array of colors for graph line and marker
-		   const bool              drawLegend   = true)   // if set legend is drawn
+		   const bool              drawLegend   = true,   // if set legend is drawn
+		   const string&           branchName   = "fitResult_v2")
 {
   return plotAllIntensities(trees.size(), &(*(trees.begin())), createPsFile,
-			    outPath, &(*(graphColors.begin())), drawLegend);
+			    outPath, &(*(graphColors.begin())), drawLegend, branchName);
 }
 
 

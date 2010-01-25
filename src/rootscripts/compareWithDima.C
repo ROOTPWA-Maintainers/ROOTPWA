@@ -20,13 +20,14 @@
 #include "TPad.h"
 
 #include "utilities.h"
-#include "TFitResult.h"
+#include "fitResult.h"
 #include "plotAllIntensities.h"
 #include "plotSpinTotals.h"
 #include "plotPhase.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 // reads Dima's histograms from file into map (histogram title, histogram pointer)
@@ -110,7 +111,7 @@ string translateWaveName(const string& waveName)
 
 
 void
-compareIntensitiesWithDima(TTree* tree,  // TFitResult tree
+compareIntensitiesWithDima(TTree* tree,  // fitResult tree
 			   TFile* dimaFile)
 {
   printInfo << "comparing intensities with Dima's result." << endl;
@@ -169,7 +170,7 @@ compareIntensitiesWithDima(TTree* tree,  // TFitResult tree
 
 
 void
-compareSpinTotalsWithDima(TTree* tree,  // TFitResult tree
+compareSpinTotalsWithDima(TTree* tree,  // fitResult tree
 			  TFile* dimaFile)
 {
   printInfo << "comparing spin totals with Dima's result." << endl;
@@ -248,8 +249,9 @@ compareSpinTotalsWithDima(TTree* tree,  // TFitResult tree
 
 
 void
-comparePhasesWithDima(TTree* tree,  // TFitResult tree
-		      TFile* dimaFile)
+comparePhasesWithDima(TTree*        tree,  // fitResult tree
+		      TFile*        dimaFile,
+		      const string& branchName = "fitResult_v2")
 {
   printInfo << "comparing phases with Dima's result." << endl;
 
@@ -272,8 +274,8 @@ comparePhasesWithDima(TTree* tree,  // TFitResult tree
   }
 
   // get ROOTpwa phase histograms
-  TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitResult", &massBin);
+  fitResult* massBin = new fitResult();
+  tree->SetBranchAddress(branchName.c_str(), &massBin);
   tree->GetEntry(0);
   //for (unsigned int i = 0; i < massBin->nmbWaves(); ++i) {
   for (unsigned int i = 0; i < 5; ++i) {
@@ -308,7 +310,7 @@ comparePhasesWithDima(TTree* tree,  // TFitResult tree
 
 
 void
-compareWithDima(TTree*        tree,  // TFitResult tree
+compareWithDima(TTree*        tree,  // fitResult tree
 		const string& dimaFileName = "/afs/e18.ph.tum.de/data/compass/bgrube/lambda/pwa/compassPWA/work/hfit.root")
 {
   if (!tree) {

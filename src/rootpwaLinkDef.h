@@ -20,14 +20,25 @@
 ///////////////////////////////////////////////////////////////////////////
 #ifdef __CINT__
 
-#pragma linkoff all globals;
+
+#pragma link off all globals;
 #pragma link off all classes;
 #pragma link off all functions;
 
+
 #pragma link C++ class TFitBin+;
-#pragma link C++ class TFitResult+;
+#pragma link C++ class rpwa::fitResult+;
 #pragma link C++ class TCMatrix+;
 #pragma link C++ class TCovEllipse+;
 #pragma link C++ class TMCMCMeta+;
+
+
+// TFitResult produces a name clash for ROOT versions from 5.25.0 on
+#include "RVersion.h"
+// rootcint has problems with this: #if ROOT_VERSION_CODE < ROOT_VERSION(5,25,0)
+#if ROOT_VERSION_CODE < 334080  // make sure ROOT version is below 5.25.0
+#pragma link C++ class TFitResult+;
+#endif 
+
 
 #endif

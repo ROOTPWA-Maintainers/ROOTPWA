@@ -46,6 +46,7 @@
 #include "TAxis.h"
 #include "TLine.h"
 
+#include "utilities.h"
 #include "plotSpinTotals.h"
 
 
@@ -53,9 +54,10 @@ using namespace std;
 
 
 vector<pair<string, TVirtualPad*> >
-plotSpinTotals(TTree*        tree,  // TFitBin tree
-	       const int     color,
-	       const string& outFileName)
+plotSpinTotals(TTree*        tree,   // fitResult tree
+	       const int     color,  // color of line and marker
+	       const string& outFileName,
+	       const string& branchName)
 {
   TFile* outFile = NULL;
   if (outFileName != "")
@@ -82,7 +84,7 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
 			  "3-+0-",
 			  "0++0-"};
   const unsigned int nmbWaves = sizeof(waves) / sizeof(string);
-  cout << "Plotting spin totals for:" << endl;
+  printInfo << "plotting spin totals for:" << endl;
   for (unsigned int i = 0; i < nmbWaves; ++i)
     cout << "    " << ((waves[i] != "") ? waves[i] : "total") << endl;
 
@@ -121,37 +123,30 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
     }
     
     // build and run TTree::Draw() expression
-    if(i==0){ // draw likelihood
-      tree->Draw("-logLikelihood()/nmbEvents():massBinCenter():massBinCenter()", "", "goff");
-    }
-    else {
-      
-      const string drawExpr = "intensity(\"" + waves[i] + "\"):intensityErr(\"" + waves[i] + "\"):massBinCenter()";
-      tree->Draw(drawExpr.c_str(), "", "goff");
-      
-    }
-      // extract data from TTree::Draw() result and build graph
+    string drawExpr;
+    if (waves[i] == "logLikelihood")  // draw likelihood
+      drawExpr = "-" + branchName + ".logLikelihood() / " + branchName + ".nmbEvents():0:"
+	         + branchName + ".massBinCenter()";
+    else
+      drawExpr = branchName + ".intensity(\"" + waves[i] + "\"):"
+	         + branchName + ".intensityErr(\"" + waves[i] + "\"):"
+	         + branchName + ".massBinCenter()";
+    cout << "    running TTree::Draw() expression '" << drawExpr << "' "
+	 << "on tree '" << tree->GetName() << "', '" << tree->GetTitle() << "'" << endl;
+    tree->Draw(drawExpr.c_str(), "", "goff");
+
+    // extract data from TTree::Draw() result and build graph
     const int nmbBins = tree->GetSelectedRows();
     vector<double> x(nmbBins), xErr(nmbBins);
     for (int j = 0; j < nmbBins; ++j) {
       x[j]    = tree->GetV3()[j] * 0.001;  // convert mass to GeV
       xErr[j] = 0;
     }
-    TGraphErrors* g;
-    if(i==0){
-        g = new TGraphErrors(nmbBins,
-					   &(*(x.begin())),  // mass
-					   tree->GetV1(),    // logLikelihood
-					   0,                // mass error
-					   0);   // no error
-    }
-    else{
-      g = new TGraphErrors(nmbBins,
-			   &(*(x.begin())),  // mass
-			   tree->GetV1(),    // intensity
-			   0,                // mass error
-			   tree->GetV2());   // intensity error
-    }
+    TGraphErrors* g = new TGraphErrors(nmbBins,
+				       &(*(x.begin())),  // mass
+				       tree->GetV1(),    // intensity
+				       0,                // mass error
+				       (waves[i] == "logLikelihood") ? 0 : tree->GetV2());  // intensity error
     // plot graph
     canv->cd(++countPad);
     if (waves[i] != "") {
@@ -161,8 +156,7 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
       gName.ReplaceAll("+", "p");
       gName.ReplaceAll("-", "m");
       g->SetName(gName);
-    }
-    else { 
+    } else { 
       g->SetTitle("total");
       g->SetName ("total");
     }
@@ -193,9 +187,6 @@ plotSpinTotals(TTree*        tree,  // TFitBin tree
       ++countCanv;
     }
   }
-
-  
-
 
   if (outFile)
     outFile->Close();

@@ -39,6 +39,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 SET(SOURCES
   TFitBin.cc
   TFitResult.cc
+  fitResult.cc
   TCMatrix.cc
   TPWALikelihood.h
   TPWALikelihoodC.cc
@@ -95,7 +96,7 @@ FIND_PROGRAM(ROOT_CINT_EXECUTABLE
 
 ADD_CUSTOM_COMMAND(OUTPUT rootpwaDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src TFitBin.h TFitResult.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
+      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src TFitBin.h TFitResult.h fitResult.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
 
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc)
 

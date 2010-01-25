@@ -53,7 +53,7 @@ using namespace std;
 
 
 void
-plot4(TTree*       tree,         // TFitBin tree
+plot4(TTree*       tree,         // fitResult tree
       const int    waveIndexA,   // index of first wave
       const int    waveIndexB,   // index of second wave
       const double massMin = 1,  // [GeV/c^2]
@@ -63,7 +63,9 @@ plot4(TTree*       tree,         // TFitBin tree
   stringstream selectExpr;
   selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") && (massBinCenter() <= " << massMax * 1000 << ")";
 
-  TCanvas* canv = new TCanvas("c", "c", 10, 10, 1000, 800);
+  stringstream canvName;
+  canvName << "4plot_" << waveIndexA << "_" << waveIndexB;
+  TCanvas* canv = new TCanvas(canvName.str().c_str(), canvName.str().c_str(), 10, 10, 1000, 800);
   canv->Divide(2, 2);
  
   // wave A intensity

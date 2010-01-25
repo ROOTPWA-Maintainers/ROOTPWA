@@ -46,19 +46,21 @@
 
 
 using namespace std;
+using namespace rpwa;
 
 
 // signature with wave index
 TMultiGraph*
-plotIntensity(const unsigned int nmbTrees,       // number of TFitResult trees
-	      TTree**            trees,          // array of TFitResult trees
+plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
+	      TTree**            trees,          // array of fitResult trees
 	      const int          waveIndex,      // wave index
 	      const string&      selectExpr,     // TTree::Draw() selection expression
 	      const string&      graphTitle,     // name and title of graph (default is waveId)
 	      const char*        drawOption,     // draw option for graph
 	      const double       normalization,  // scale factor for intensities
 	      const int*         graphColors,    // array of colors for graph line and marker
-	      const bool         saveEps)        // if set, EPS file with name waveId{
+	      const bool         saveEps,        // if set, EPS file with name waveId{
+	      const string&      branchName)
 {
   for (unsigned int i = 0; i < nmbTrees; ++i)
     if (!trees[i]) {
@@ -66,8 +68,8 @@ plotIntensity(const unsigned int nmbTrees,       // number of TFitResult trees
       return 0;
     }
   // get wave name (assumes same wave set in all trees)
-  TFitResult* massBin = new TFitResult();
-  trees[0]->SetBranchAddress("fitResult", &massBin);
+  fitResult* massBin = new fitResult();
+  trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
   trees[0]->GetEntry(0);
   const string waveName = massBin->waveName(waveIndex).Data();
   printInfo << "plotting wave intensity for wave '" << waveName << "' [" << waveIndex << "]";
@@ -93,8 +95,9 @@ plotIntensity(const unsigned int nmbTrees,       // number of TFitResult trees
   for (unsigned int i = 0; i < nmbTrees; ++i) {
     // build and run TTree::Draw() expression
     stringstream drawExpr;
-    drawExpr << "intensity(\"" << waveName << "\"):intensityErr(\"" << waveName << "\")"
-	     << ":massBinCenter() >> h" << waveName << "_" << i;
+    drawExpr << branchName << ".intensity(\"" << waveName << "\"):"
+	     << branchName << ".intensityErr(\"" << waveName << "\"):"
+	     << branchName << ".massBinCenter() >> h" << waveName << "_" << i;
     cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
 	 << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
     trees[i]->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");

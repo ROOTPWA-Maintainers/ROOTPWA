@@ -45,9 +45,10 @@
 
 
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotSpinTotals(TTree*        tree,  // TFitBin tree
-	       const int     color       = kBlack,
-	       const string& outFileName = "spintotals.root");
+plotSpinTotals(TTree*        tree,                  // fitResult tree
+	       const int     color       = kBlack,  // color of line and marker
+	       const string& outFileName = "spintotals.root",
+	       const string& branchName  = "fitResult_v2");
 
 
 #endif  // plotSpinTotals_hh

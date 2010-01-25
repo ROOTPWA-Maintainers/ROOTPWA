@@ -50,12 +50,13 @@
 
 #include "utilities.h"
 #include "TFitBin.h"
-#include "TFitResult.h"
+#include "fitResult.h"
 #include "TPWALikelihood.h"
 
 
 using namespace std;
 using namespace ROOT::Math;
+using namespace rpwa;
 
 
 void
@@ -65,7 +66,7 @@ usage(const string& progName,
   cerr << "usage:" << endl
        << progName
        << " -l # -u # -w wavelist [-d amplitude directory -o outfile -S start value file -N -n normfile"
-       << " [-a normfile] -r rank -M minimizer [-m algorithm] -q -h]" << endl
+       << " [-a normfile] -r rank -M minimizer [-m algorithm] -t # -q -h]" << endl
        << "    where:" << endl
        << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
        << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -80,7 +81,7 @@ usage(const string& progName,
        << "        -M name    minimizer (default: Minuit2)" << endl
        << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
        << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
-       << "                                         Minuit2:     Migrad, Simplex, Combined, Scan Fumili" << endl
+       << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
        << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
        << "                                         GSLMultiFit: -" << endl
        << "                                         GSLSimAn:    -" << endl
@@ -101,7 +102,7 @@ main(int    argc,
   // ---------------------------------------------------------------------------
   // internal parameters
   const string       valTreeName        = "pwa";
-  const string       valBranchName      = "fitResult";
+  const string       valBranchName      = "fitResult_v2";
   const double       defaultStartValue  = 0.01;
   double             startValStep       = 0.0005;
   const unsigned int maxNmbOfIterations = 20000;
@@ -226,10 +227,10 @@ main(int    argc,
   minimizer->SetPrintLevel((quiet) ? 0 : 3);
 
   // ---------------------------------------------------------------------------
-  // read in TFitResult with start values
+  // read in fitResult with start values
   printInfo << "reading start values from '" << startValFileName << "'." << endl;
   const double massBinCenter  = (massBinMin + massBinMax) / 2;
-  TFitResult*  startFitResult = NULL;
+  fitResult*   startFitResult = NULL;
   bool         hasStartVal    = false;
   TFile*       startValFile   = NULL;
   if (startValFileName.length() <= 2)
@@ -248,7 +249,7 @@ main(int    argc,
       else {
 	//startBin = new TFitBin();
 	//tree->SetBranchAddress("fitbin", &startBin);
-	startFitResult = new TFitResult();
+	startFitResult = new fitResult();
 	tree->SetBranchAddress(valBranchName.c_str(), &startFitResult);
 	// find tree entry which is closest to mass bin center
 	unsigned int bestIndex = 0;
@@ -281,7 +282,7 @@ main(int    argc,
       double startVal      = defaultStartValue;
       const string parName = L.parName(i);
       if (hasStartVal) {
-	// get parameter value from TFitResult
+	// get parameter value from fitResult
 	assert(startFitResult);
 	startVal = startFitResult->fitParameter(parName.c_str());
       }
@@ -381,22 +382,22 @@ main(int    argc,
       printWarn << "cannot open output file '" << outFileName << "'. no results will be written." << endl;
     else {
       // check whether output tree already exists
-      TTree*      tree;
-      TFitBin*    result    = new TFitBin();
-      TFitResult* fitResult = new TFitResult();
+      TTree*     tree;
+      TFitBin*   fitBinResult = new TFitBin();
+      fitResult* result       = new fitResult();
       outFile->GetObject(valTreeName.c_str(), tree);
       if (!tree) {
 	printInfo << "file '" << outFileName << "' is empty. creating new tree '" << valTreeName << "' for PWA result." << endl;
 	tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
-	tree->Branch("fitbin",              &result);  // depricated legacy branch
-	tree->Branch(valBranchName.c_str(), &fitResult);
+	tree->Branch("fitbin",              &fitBinResult);  // depricated legacy branch
+	tree->Branch(valBranchName.c_str(), &result);
       } else {
-	tree->SetBranchAddress("fitbin",              &result);
-	tree->SetBranchAddress(valBranchName.c_str(), &fitResult);
+	tree->SetBranchAddress("fitbin",              &fitBinResult);
+	tree->SetBranchAddress(valBranchName.c_str(), &result);
       }
 
       { 
-	// get data structures to construct TFitResult
+	// get data structures to construct fitResult
 	vector<complex<double> > prodAmps;                // production amplitudes
 	vector<string>           prodAmpNames;            // names of production amplitudes used in fit
 	vector<pair<int,int> >   fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
@@ -411,7 +412,7 @@ main(int    argc,
 	L.getIntCMatrix(normIntegral, accIntegral);
 	const int normNmbEvents = useNormalizedAmps ? 1 : L.nmbEvents();  // number of events to normalize to
 
-	cout << "filling TFitResult:" << endl
+	cout << "filling fitResult:" << endl
 	     << "    number of fit parameters ............... " << nmbPar                        << endl
 	     << "    number of production amplitudes ........ " << prodAmps.size()               << endl
 	     << "    number of production amplitude names ... " << prodAmpNames.size()           << endl
@@ -420,16 +421,16 @@ main(int    argc,
 	     << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
 	     << "    dimension of normalization matrix ...... " << normIntegral.nrows()       << " x " << normIntegral.ncols()       << endl
 	     << "    dimension of acceptance matrix ......... " << accIntegral.nrows()        << " x " << accIntegral.ncols()        << endl;
-	fitResult->fill(L.nmbEvents(),
-			normNmbEvents,
-			massBinCenter,
-			minimizer->MinValue(),
-			rank,
-			prodAmps,
-			prodAmpNames,
-			fitParCovMatrix,
-			fitParCovMatrixIndices,
-			normIntegral);
+	result->fill(L.nmbEvents(),
+		     normNmbEvents,
+		     massBinCenter,
+		     minimizer->MinValue(),
+		     rank,
+		     prodAmps,
+		     prodAmpNames,
+		     fitParCovMatrix,
+		     fitParCovMatrixIndices,
+		     normIntegral);
       }
 
       if (1) { 
@@ -480,17 +481,17 @@ main(int    argc,
 	cout << "    dimension of error matrix .......... " << errMatrix.GetNrows()   << endl;
 	cout << "    dimension of integral matrix ....... " << integralMatrix.nrows() << endl;
 	cout << "    dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
-	result->fill(prodAmplitudes,
-		     indices,
-		     waveNames,
-		     nmbEvt,
-		     L.nmbEvents(), // raw number of data events
-		     massBinCenter,
-		     integralMatrix,
-		     errMatrix,
-		     minimizer->MinValue(),
-		     rank);
-	//result->PrintParameters();
+	fitBinResult->fill(prodAmplitudes,
+			   indices,
+			   waveNames,
+			   nmbEvt,
+			   L.nmbEvents(), // raw number of data events
+			   massBinCenter,
+			   integralMatrix,
+			   errMatrix,
+			   minimizer->MinValue(),
+			   rank);
+	//fitBinResult->PrintParameters();
       }
 
       // write result to file

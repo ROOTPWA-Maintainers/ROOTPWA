@@ -12,6 +12,18 @@
 #include <iomanip>
 #include <limits>
 
+// cint has problems parsing glob.h
+#ifndef __CINT__
+#include <glob.h>
+#else
+struct glob_t;
+int glob(const char *,
+	 int,
+	 int(*)(const char*, int),
+	 glob_t*);
+void globfree(glob_t *);
+#endif
+
 #include "TVector3.h"
 #include "TLorentzVector.h"
 #include "TComplex.h"
@@ -198,6 +210,21 @@ operator << (std::ostream&   out,
 }
 
 
+// indicates progess by printing percentage complete
+inline
+std::ostream&
+progressIndicator(const long    currentPos,
+                  const long    nmbTotal,
+                  const int     nmbSteps = 10,
+                  std::ostream& out      = std::cout)
+{
+  const double step = nmbTotal / (double)nmbSteps;
+  if ((nmbTotal >= 0) && ((int)(currentPos / step) - (int)((currentPos - 1) / step) != 0))
+    out << "    " << std::setw(3) << (int)(currentPos / step) * nmbSteps << " %" << std::endl;
+  return out;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////////
 // functions for dynamic allocation of n-dimensional arrays
 
@@ -380,6 +407,24 @@ dalitzKinematicBorder(const double  mass_2,      // 2-body mass squared on x-axi
     return Esum_2 - (p1 + p2) * (p1 + p2);
   else
     return Esum_2 - (p1 - p2) * (p1 - p2);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// file system helper functions
+
+// expands glob pattern into list of file names
+inline
+std::vector<std::string>
+globFileList(const std::string& globPattern)
+{
+  std::vector<std::string> fileList;
+  glob_t globBuffer;
+  glob(globPattern.c_str(), GLOB_NOSORT, NULL, &globBuffer);
+  for (unsigned int i = 0; i < globBuffer.gl_pathc; ++i)
+    fileList.push_back(globBuffer.gl_pathv[i]);
+  globfree(&globBuffer);
+  return fileList;
 }
 
 

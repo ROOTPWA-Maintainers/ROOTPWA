@@ -35,8 +35,26 @@
 //-----------------------------------------------------------
 
 
+//
+//  !!! deprecated class --- use fitResult instead !!!
+//
+
+
 #ifndef TFITRESULT_HH
 #define TFITRESULT_HH
+
+
+// TFitResult produces a name clash for ROOT versions from 5.25.0 on
+#include "RVersion.h"
+// rootcint has problems with this: #if ROOT_VERSION_CODE < ROOT_VERSION(5,25,0)
+#if ROOT_VERSION_CODE < 334080  // make sure ROOT version is below 5.25.0
+#define TFITRESULT_ENABLED 1
+#else
+#define TFITRESULT_ENABLED 0
+#endif
+
+
+#if TFITRESULT_ENABLED
 
 
 #include <iostream>
@@ -58,32 +76,35 @@
 
 /// \brief data storage class for PWA fit result of one kinematic bin
 class TFitResult : public TObject {
+
 public:
-
+    
   TFitResult();
-  TFitResult(const TFitBin& fitBin);
+  TFitResult(const TFitResult& result);
+  TFitResult(const TFitBin&    fitBin);
   virtual ~TFitResult();
-
+  
   void reset();
-  void fill(const unsigned int                        nmbEvents,               // number of events in bin			 
-	    const unsigned int                        normNmbEvents,	       // number of events to normalize to		 
-	    const double                              massBinCenter,	       // center value of mass bin			 
-	    const double                              logLikelihood,	       // log(likelihood) at maximum		 
-	    const int                                 rank,		       // rank of fit				 
-	    const std::vector<std::complex<double> >& prodAmps,	               // production amplitudes			 
-	    const std::vector<std::string>&           prodAmpNames,	       // names of production amplitudes used in fit
+  void fill(const unsigned int                        nmbEvents,               // number of events in bin                      
+	    const unsigned int                        normNmbEvents,	         // number of events to normalize to		 
+	    const double                              massBinCenter,	         // center value of mass bin			 
+	    const double                              logLikelihood,	         // log(likelihood) at maximum		 
+	    const int                                 rank,		         // rank of fit				 
+	    const std::vector<std::complex<double> >& prodAmps,	         // production amplitudes			 
+	    const std::vector<std::string>&           prodAmpNames,	         // names of production amplitudes used in fit
 	    const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 	    const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 	    const TCMatrix&                           normIntegral);           // normalization integral over full phase space without acceptance
 
   double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
   double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
-  double       evidence() const ; ///< return the model evidence (OccamFactorMethod)
+  double       evidence     () const ;                               ///< return the model evidence (OccamFactorMethod)
   unsigned int rank         () const { return _rank;              }  ///< returns rank of fit
   unsigned int nmbEvents    () const { return _nmbEvents;         }  ///< returns number of events in bin
+  unsigned int normNmbEvents() const { return _normNmbEvents;     }  ///< returns number of events to normalize to
   unsigned int nmbWaves     () const { return _waveNames.size();  }  ///< returns number of waves in fit
   unsigned int nmbProdAmps  () const { return _prodAmps.size();   }  ///< returns number of production amplitudes
-
+  
   TString waveName    (const unsigned int waveIndex)    const { return _waveNames[waveIndex];       }  ///< returns name of wave at index
   TString prodAmpName (const unsigned int prodAmpIndex) const { return _prodAmpNames[prodAmpIndex]; }  ///< returns name of production amplitude at index
 
@@ -103,6 +124,7 @@ public:
   ///< returns covariance matrix for a set of production amplitudes given by index lists A and B
   inline TMatrixT<double> prodAmpCov(const std::vector<unsigned int>& prodAmpIndicesA,
 				     const std::vector<unsigned int>& prodAmpIndicesB) const;
+  bool                    covMatrixValid() const { return _hasErrors; }
 
   /// returns normalization integral for pair of waves at index A and B
   inline std::complex<double> normIntegral(const unsigned int waveIndexA,
@@ -113,7 +135,7 @@ public:
 						const unsigned int waveIndexB) const;
   /// returns covariance matrix of spin density matrix element for pair of waves at index A and B
   TMatrixT<double>     spinDensityMatrixElemCov(const unsigned int waveIndexA,
- 						const unsigned int waveIndexB) const;
+						const unsigned int waveIndexB) const;
 
   /// returns intensity of single wave at index
   double intensity   (const unsigned int waveIndex)       const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }
@@ -137,6 +159,15 @@ public:
   double overlapErr  (const unsigned int waveIndexA,
 		      const unsigned int waveIndexB) const;  ///< returns error of overlap of two waves at index A and B
 
+  // low level interface to make copying easier
+  const std::vector<TComplex>&                 prodAmps          () const { return _prodAmps;               }
+  const std::vector<std::string>&              prodAmpNames      () const { return _prodAmpNames;           }
+  const std::vector<std::string>&              waveNames         () const { return _waveNames;              }
+  const TMatrixT<Double_t>&                    fitParCovMatrix   () const { return _fitParCovMatrix;        }
+  const std::vector<std::pair<Int_t, Int_t> >& fitParCovIndices  () const { return _fitParCovMatrixIndices; }
+  const TCMatrix&                              normIntegralMatrix() const { return _normIntegral;           }
+  const std::map<Int_t, Int_t>&                normIntIndexMap   () const { return _normIntIndexMap;        }
+
   inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;  ///< prints all production amplitude names
   inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;  ///< prints all wave names
   inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
@@ -153,7 +184,7 @@ private:
   Double_t                              _massBinCenter;           ///< center value of mass bin			 
   Double_t                              _logLikelihood;           ///< log(likelihood) at maximum		 
   Int_t                                 _rank;                    ///< rank of fit				 
-  std::vector<TComplex>                 _prodAmps;                ///< production amplitudes			 
+  std::vector<TComplex>                 _prodAmps;                ///< production amplitudes                   
   std::vector<std::string>              _prodAmpNames;            ///< names of production amplitudes used in fit
   std::vector<std::string>              _waveNames;               ///< names of waves used in fit
   Bool_t                                _hasErrors;               ///< indicates whether bin has a valid covariance matrix
@@ -197,9 +228,9 @@ private:
 public:
 
   ClassDef(TFitResult,1)
-
+  
 };
-
+  
 
 /// copies fit parameters into array; assumes that array has sufficient size
 inline
@@ -462,6 +493,9 @@ TFitResult::realValVariance(const unsigned int      waveIndexA,
   const TMatrixT<double> cov           = jacobian * spinDensCovJT;                        // 1 x 1 matrix
   return cov[0][0];
 }
+
+
+#endif // TFITRESULT_ENABLED
 
 
 #endif  // TFITRESULT_HH

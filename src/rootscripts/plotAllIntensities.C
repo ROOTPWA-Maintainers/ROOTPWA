@@ -50,12 +50,13 @@
 #include "TSystem.h"
 #include "TLegend.h"
 
-#include "TFitResult.h"
+#include "fitResult.h"
 #include "plotIntensity.h"
 #include "plotAllIntensities.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 string
@@ -88,12 +89,13 @@ compareIntensities(const pair<string, double>& a,
 
 
 vector<pair<string, TVirtualPad*> >
-plotAllIntensities(const unsigned int nmbTrees,      // number of TFitResult trees
-		   TTree**            trees,         // array of TFitResult trees
+plotAllIntensities(const unsigned int nmbTrees,      // number of fitResult trees
+		   TTree**            trees,         // array of fitResult trees
 		   const bool         createPsFile,  // if true, plots are written to waves.ps
 		   const string&      outPath,       // path for output files
 		   const int*         graphColors,   // array of colors for graph line and marker
-		   const bool         drawLegend)    // if set legend is drawn
+		   const bool         drawLegend,    // if set legend is drawn
+		   const string&      branchName)
 {
   const double intensityThr      = 500;          // threshold for total intensity in mass bin
   const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
@@ -105,8 +107,8 @@ plotAllIntensities(const unsigned int nmbTrees,      // number of TFitResult tre
       return wavePads;
     }
   // asssume that all mass trees have same wave set
-  TFitResult* massBin = new TFitResult();
-  trees[0]->SetBranchAddress("fitResult", &massBin);
+  fitResult* massBin = new fitResult();
+  trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
   const int nmbMassBins = trees[0]->GetEntries();
   trees[0]->GetEntry(0);
   const int nmbWaves = massBin->nmbWaves();  // assumes that number of waves is the same for all bins
@@ -193,7 +195,7 @@ plotAllIntensities(const unsigned int nmbTrees,      // number of TFitResult tre
 
     // draw intensity graph
     TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, "",
-				       waveName, "AP", 1, graphColors, false);
+				       "", "AP", 1, graphColors, false, branchName);
     if (!graph)
       continue;
 
