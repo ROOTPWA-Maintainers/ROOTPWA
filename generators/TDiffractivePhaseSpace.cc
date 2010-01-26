@@ -20,14 +20,10 @@
 ///////////////////////////////////////////////////////////////////////////
 
 
-#include "TDiffractivePhaseSpace.h"
 #include <iomanip>
 #include <fstream>
 
-#include "nBodyPhaseSpaceGen.h"
-
 #include "TVector3.h"
-#include "TLorentzVector.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TH3D.h"
@@ -36,8 +32,11 @@
 #include "TRandom3.h"
 #include "TFile.h"
 
+#include "TDiffractivePhaseSpace.h"
+
 
 using namespace std;
+using namespace rpwa;
 
 
 // /////////////////////////////////////////////////////////////////////////////////
@@ -45,34 +44,38 @@ using namespace std;
 
 
 // // target position
-// const double gTargetZPos = -300.0; // [cm]
+// const double _targetZPos = -300.0; // [cm]
 
 // // beam parameters:
-// const double gBeamMomSigma = 1.2;  // [GeV/c]
-// const double gBeamMom      = 189;  // [GeV/c]
+// const double _beamMomSigma = 1.2;  // [GeV/c]
+// const double _beamMom      = 189;  // [GeV/c]
 // // 2004 beam:
-// // const double gBeamDxDz      = 0.00026; // tilt from Quirin was in mrad
-// // const double gBeamDxDzSigma = 0.00010;
-// // const double gBeamDyDz      = 0.00001; // tilt from Quirin was in mrad
-// // const double gBeamDyDzSigma = 0.00018;
+// // const double _beamDxDz      = 0.00026; // tilt from Quirin was in mrad
+// // const double _beamDxDzSigma = 0.00010;
+// // const double _beamDyDz      = 0.00001; // tilt from Quirin was in mrad
+// // const double _beamDyDzSigma = 0.00018;
 // // ideal beam:
-// const double gBeamDxDz      = 0.0;
-// const double gBeamDxDzSigma = 0.0;
-// const double gBeamDyDz      = 0.0;
-// const double gBeamDyDzSigma = 0.0;
+// const double _beamDxDz      = 0.0;
+// const double _beamDxDzSigma = 0.0;
+// const double _beamDyDz      = 0.0;
+// const double _beamDyDzSigma = 0.0;
 
 // // cut on t-distribution
-// const double tMin = 0.001;  // [(GeV/c)^2]
+// const double _tMin = 0.001;  // [(GeV/c)^2]
 
 
-
-TDiffractivePhaseSpace::TDiffractivePhaseSpace() :
-  tMin(0.001),xMassMin(0),xMassMax(0), daughterMasses(NULL),gProtonMass(0.938272013),gPionMass(0.13957018),gPionMass2(gPionMass * gPionMass)
+TDiffractivePhaseSpace::TDiffractivePhaseSpace()
+  : _tMin(0.001),
+    _xMassMin(0),
+    _xMassMax(0),
+    _daughterMasses(NULL),
+    _protonMass(0.938272013),
+    _pionMass(0.13957018),
+    _pionMass2(_pionMass * _pionMass)
 {
-  nbody.setWeightType(nBodyPhaseSpaceGen::S_U_CHUNG);
-  nbody.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
+  _phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
+  _phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
 }
-
 
 
 // /////////////////////////////////////////////////////////////////////////////////
@@ -83,15 +86,15 @@ TLorentzVector
 TDiffractivePhaseSpace::makeBeam()
 {
   // throw magnituide of beam momentum
-  const double pBeam = gRandom->Gaus(gBeamMom, gBeamMomSigma);
+  const double pBeam = gRandom->Gaus(_beamMom, _beamMomSigma);
   // throw beam inclination
-  const double dxdz = gRandom->Gaus(gBeamDxDz, gBeamDxDzSigma);
-  const double dydz = gRandom->Gaus(gBeamDyDz, gBeamDyDzSigma);
+  const double dxdz = gRandom->Gaus(_beamDxDz, _beamDxDzSigma);
+  const double dydz = gRandom->Gaus(_beamDyDz, _beamDyDzSigma);
   // construct tilted beam momentum Lorentz vector
   const double pz    = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
   const double px    = dxdz * pz;
   const double py    = dydz * pz;
-  const double EBeam = sqrt(pBeam * pBeam + gPionMass2);
+  const double EBeam = sqrt(pBeam * pBeam + _pionMass2);
   return TLorentzVector(px, py, pz, EBeam);
 }
 
@@ -100,7 +103,7 @@ TDiffractivePhaseSpace::makeBeam()
 bool
 TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
 					  const TLorentzVector& beam,
-					  nBodyPhaseSpaceGen&       event)
+					  nBodyPhaseSpaceGen&   event)
 {
   if (!out) {
     cerr << "Output stream is not writable." << endl;
@@ -108,7 +111,7 @@ TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
   }
     
    // total number of particles
-  unsigned int nfspart=decayProducts.size();
+  unsigned int nfspart=_decayProducts.size();
   out << nfspart + 1 << endl;
   // beam particle: geant ID, charge, p_x, p_y, p_z, E
   out << setprecision(numeric_limits<double>::digits10 + 1)
@@ -121,7 +124,7 @@ TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
 //     }
     // hadron: geant ID, charge, p_x, p_y, p_z, E
     out << setprecision(numeric_limits<double>::digits10 + 1)
-	<< decayProducts[i].gid << " " << decayProducts[i].charge << " " << hadron.Px() << " " << hadron.Py() << " " << hadron.Pz() << " " << hadron.E() << endl;
+	<< _decayProducts[i].gid << " " << _decayProducts[i].charge << " " << hadron.Px() << " " << hadron.Py() << " " << hadron.Pz() << " " << hadron.E() << endl;
     }
   return true;
 }
@@ -139,47 +142,51 @@ TDiffractivePhaseSpace::progressIndicator(const long currentPos,
   return out;
 }
 
-void 
-TDiffractivePhaseSpace::SetSeed(int seed){
-  gRandom->SetSeed(seed);
-  nbody.setSeed(seed);
-}
-
 
 void 
-TDiffractivePhaseSpace::SetDecayProducts(const std::vector<particleinfo>& info)
+TDiffractivePhaseSpace::SetSeed(int seed)
 {
-  decayProducts.clear();
-  decayProducts=info;
-  BuildDaughterList();
-
-
+  gRandom->SetSeed(seed);
+  _phaseSpace.setSeed(seed);
 }
 
-void
-TDiffractivePhaseSpace::AddDecayProduct(const particleinfo& info){
-  decayProducts.push_back(info);
+
+void 
+TDiffractivePhaseSpace::SetDecayProducts(const vector<particleinfo>& info)
+{
+  _decayProducts.clear();
+  _decayProducts=info;
   BuildDaughterList();
 }
 
+
 void
-TDiffractivePhaseSpace::BuildDaughterList(){
-  if(daughterMasses!=NULL)delete[] daughterMasses;
-  daughterMasses=new double[decayProducts.size()];
-  const unsigned int n   = decayProducts.size();          
+TDiffractivePhaseSpace::AddDecayProduct(const particleinfo& info)
+{
+  _decayProducts.push_back(info);
+  BuildDaughterList();
+}
+
+
+void
+TDiffractivePhaseSpace::BuildDaughterList()
+{
+  if(_daughterMasses!=NULL)delete[] _daughterMasses;
+  _daughterMasses=new double[_decayProducts.size()];
+  const unsigned int n   = _decayProducts.size();          
   for(unsigned int i=0;i<n;++i){
-    daughterMasses[i]=decayProducts[i].mass;
+    _daughterMasses[i]=_decayProducts[i].mass;
   }
   if(n>1){
-    nbody.setDecay((int)n, daughterMasses);
-    if(xMassMax==0){
+    _phaseSpace.setDecay((int)n, _daughterMasses);
+    if(_xMassMax==0){
       cerr << "TDiffractivePhaseSpace::Please set Mass Range before Decay Products!" << endl;
       throw;
     }
     else {
-      cerr << "Calculating max wheight ("<<n<<" fs particles) for m="<<xMassMax<< endl;
-      nbody.setMaxWeight(1.01 * nbody.estimateMaxWeight(xMassMax,100000));
-      cerr << "Max weight:" << nbody.maxWeight() << endl;
+      cout << "Calculating max weight ("<<n<<" fs particles) for m="<<_xMassMax<< endl;
+      _phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(_xMassMax,100000));
+      cout << "Max weight:" << _phaseSpace.maxWeight() << endl;
     }
   }
 }
@@ -195,7 +202,7 @@ TDiffractivePhaseSpace::BuildDaughterList(){
 // 		  const int      nmbEvent          = 2000,
 // 		  const bool     plot              = false)
 // {
-//   Double_t daughterMasses[3] = {gPionMass, gPionMass, gPionMass};
+//   Double_t daughterMasses[3] = {_pionMass, _pionMass, _pionMass};
 
 //   gRandom->SetSeed(12345);
 
@@ -212,9 +219,9 @@ TDiffractivePhaseSpace::BuildDaughterList(){
 //     ht        = new TH1D("ht", "t", 10000, -0.1, 1);
 //     hm        = new TH1D("hm", "3pi mass", 1000, 0.5, 2.5);
 //     hTheta    = new TH1D("hThetaGen", "cos theta", 100, 0.99985, 1);
-//     hVertex3D = new TH3D("hVertex3D", "Vertex xyz", 100, -2, 2, 100, -2, 2, 200, gTargetZPos - 5, gTargetZPos + 40);
+//     hVertex3D = new TH3D("hVertex3D", "Vertex xyz", 100, -2, 2, 100, -2, 2, 200, _targetZPos - 5, _targetZPos + 40);
 //     hVertex   = new TH2D("hVertex", "Vertex xy", 100, -2, 2, 100, -2, 2);
-//     hVz       = new TH1D("hVz","Vertex z", 1000, gTargetZPos - 40, gTargetZPos + 40);
+//     hVz       = new TH1D("hVz","Vertex z", 1000, _targetZPos - 40, _targetZPos + 40);
 //     hE        = new TH1D("hE", "E", 100, 180, 200);
 //   }
 
@@ -248,19 +255,14 @@ TDiffractivePhaseSpace::BuildDaughterList(){
 // }
 
 
-
-
-
-
 unsigned int 
-TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
-  
-  
-    // construct primary vertex and beam
+TDiffractivePhaseSpace::event(TLorentzVector& beamresult)
+{
+  // construct primary vertex and beam
   const TVector3 vertexPos(0, 0, 
-			   gTargetZPos+gRandom->Uniform(-gTargetZLength*0.5,
-							gTargetZLength*0.5));
-  gbeam = makeBeam();
+			   _targetZPos+gRandom->Uniform(-_targetZLength*0.5,
+				 			 _targetZLength*0.5));
+  _beam = makeBeam();
   
   bool done=false;
   unsigned int attempts=0;
@@ -268,17 +270,17 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     // sample theta directly:
     //const double theta  = thetaDistribution->GetRandom();
 
-    const double tprime=gRandom->Exp(gBT);
-    const double xMass  = gRandom->Uniform(xMassMin, xMassMax);
+    const double tprime = gRandom->Exp(_invSlopePar);
+    const double xMass  = gRandom->Uniform(_xMassMin, _xMassMax);
     const double xMass2 = xMass * xMass;
     const double xMass4 = xMass2 * xMass2;
-    const double m0  = gRecoilMass;
-    const double ma = gbeam.M();
-    const double pa= gbeam.Vect().Mag();
+    const double m0  = _recoilMass;
+    const double ma = _beam.M();
+    const double pa= _beam.Vect().Mag();
     const double ma2 = ma * ma;
     const double ma4 = ma2 * ma2;
 
-    const double Ea = gbeam.E();
+    const double Ea = _beam.E();
     const double Ea2 = Ea*Ea;
     const double g=2*Ea*m0 + ma2 - xMass2;
     const double EcN=4*Ea2*(g - tprime)
@@ -292,12 +294,12 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
 
 
     // // account for recoil assume proton recoil
-//     const double eps  = (xMass2 - gPionMass2) / (2 * gProtonMass * Ea);
+//     const double eps  = (xMass2 - _pionMass2) / (2 * _protonMass * Ea);
 //     const double epso = 1 - eps;
 //     const double eat  = Ea * theta;
 //     //eat *= eat;
-//     const double mpeps = gProtonMass * eps;
-//     const double e = Ea - 1 / (2 * gProtonMass * epso) * (eat * eat + mpeps * mpeps);
+//     const double mpeps = _protonMass * eps;
+//     const double e = Ea - 1 / (2 * _protonMass * epso) * (eat * eat + mpeps * mpeps);
 
 
     const double pw = sqrt(Ec * Ec - xMass2); // three momentum magnitude
@@ -316,62 +318,61 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult){
     TVector3 p3(1, 0, 0);
     p3.SetMagThetaPhi(pw, theta, phi);
     // rotate to beamdirection:
-    p3.RotateUz(gbeam.Vect().Unit());
+    p3.RotateUz(_beam.Vect().Unit());
     
     // build resonance
     TLorentzVector X(p3, Ec);
-    const TLorentzVector q = gbeam - X;
+    const TLorentzVector q = _beam - X;
     
     // apply t cut
     const double tGen = -q.M2();
-    if (tGen < tMin){
-      //cerr << "tGen < tMin " << endl;
+    if (tGen < _tMin){
+      //cerr << "tGen < _tMin " << endl;
       continue;
     }
     
-//     // generate phase space distribution
-//     bool           allowed = phaseSpace.SetDecay(X, decayProducts.size(), daughterMasses,"");
-//     if (!allowed) {
-//       cerr << "Decay of M = " << X.M() << " into this final state is kinematically not allowed!" << endl;
-//       continue;
-//     }
-    
+    // generate n-body phase space for X system
     ++attempts;
-    if(!nbody.generateDecayAccepted(X)) continue;
-//     double weight    = phaseSpace.Generate();
-//     double maxWeight = phaseSpace.GetWtMax();
-//     //cerr << "wMax=" << maxWeight << endl;
-//     //cerr << "w=" << weight << endl;
-//     double d=gRandom->Uniform();
-//     //cerr << "d="  << d << endl;
-//     ++attempts;
-//     if ( (weight/maxWeight) < d){  // recjection sampling
+    {
+      const double xMass = X.M();
+      _phaseSpace.pickMasses(xMass);
+      // correct weight for phase space splitting
+      const double maxPsWeight = _phaseSpace.maxWeight()  * _xMassMax;
+      const double psWeight    = _phaseSpace.calcWeight() * xMass;
+      if ((psWeight / maxPsWeight) < _phaseSpace.random())
+    	continue;
+      _phaseSpace.pickAngles();
+      _phaseSpace.calcEventKinematics(X);
+    }
+
     done=true;
-    beamresult=gbeam;
+    beamresult=_beam;
   } // end while !done
   // event is accepted
    
   return attempts;
 }
 
+
 unsigned int 
-TDiffractivePhaseSpace::event(ostream& stream){
-  unsigned int attempts=event(gbeam);
-  writePwa2000Ascii(stream, gbeam, nbody);
+TDiffractivePhaseSpace::event(ostream& stream)
+{
+  unsigned int attempts=event(_beam);
+  writePwa2000Ascii(stream, _beam, _phaseSpace);
   return attempts;
 }
 
 
 void 
-TDiffractivePhaseSpace::SetBeam(double Mom, double MomSigma,
-	double DxDz, double DxDzSigma,
-	double DyDz, double DyDzSigma){
-  
-  gBeamMomSigma=MomSigma;
-  gBeamMom=Mom;
-  gBeamDxDz=DxDz;
-  gBeamDxDzSigma=DxDzSigma;
-  gBeamDyDz=DyDz;
-  gBeamDyDzSigma=DyDzSigma;
+TDiffractivePhaseSpace::SetBeam(double Mom,  double MomSigma,
+				double DxDz, double DxDzSigma,
+				double DyDz, double DyDzSigma)
+{
+  _beamMomSigma=MomSigma;
+  _beamMom=Mom;
+  _beamDxDz=DxDz;
+  _beamDxDzSigma=DxDzSigma;
+  _beamDyDz=DyDz;
+  _beamDyDzSigma=DyDzSigma;
 }
 

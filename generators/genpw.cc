@@ -51,13 +51,14 @@
 
 using namespace std;
 using namespace libconfig;
+using namespace rpwa;
 
 extern particleDataTable PDGtable;
 
 void printUsage(char* prog, int errCode=0) {
 cerr << "usage:" << endl
      << prog
-     << " -n # [-a # -m #] -o <file> -w <file> -k <path> -i <file> -r <file>"
+     << " -n # [-a # -m #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
      << "    where:" << endl
      << "        -n #       (max) number of events to generate (default: 100)" << endl
      << "        -a #       (max) number of attempts to do (default: infty)" \
@@ -123,7 +124,6 @@ int main(int argc, char** argv)
       printUsage(argv[0]);
       break;
     }
-
  
 
   gRandom->SetSeed(seed);
@@ -164,7 +164,7 @@ int main(int argc, char** argv)
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
   double tslope=reactConf.lookup("finalstate.t_slope");
-  double   binCenter    = 500 * (mmin + mmax);
+  double binCenter=500 * (mmin + mmax);
 
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
 
@@ -176,10 +176,9 @@ int main(int argc, char** argv)
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
   difPS.SetTPrimeSlope(tslope);
   difPS.SetMassRange(mmin,mmax);			
-    
 
   const Setting& root = reactConf.getRoot();
-  const Setting &fspart = root["finalstate"]["particles"];
+  const Setting& fspart = root["finalstate"]["particles"];
   int nparticles = fspart.getLength();
 
   for(int ifs=0;ifs<nparticles;++ifs){

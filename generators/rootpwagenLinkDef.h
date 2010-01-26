@@ -24,6 +24,6 @@
 #pragma link off all classes;
 #pragma link off all functions;
 
-#pragma link C++ class nBodyPhaseSpaceGen+;
+#pragma link C++ class rpwa::nBodyPhaseSpaceGen+;
 
 #endif

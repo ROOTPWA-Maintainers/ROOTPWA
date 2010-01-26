@@ -44,6 +44,7 @@
 
 
 using namespace std;
+using namespace rpwa;
 
 
 ClassImp(nBodyPhaseSpaceGen);

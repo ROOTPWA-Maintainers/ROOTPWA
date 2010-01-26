@@ -31,163 +31,181 @@
 
 
 // Collaborating Class Headers -------
-#include "TLorentzVector.h"
-#include "TGenPhaseSpace.h"
-#include "nBodyPhaseSpaceGen.h"
 #include <iostream>
 #include <vector>
 
+#include "TLorentzVector.h"
+
+#include "nBodyPhaseSpaceGen.h"
+
+
 // Collaborating Class Declarations --
 class TH1;
-class TGenPhaseSpace;
-
-/** @brief Small helper class for bookkeeping
- */
-class particleinfo {
-public:
-  particleinfo(int id,int q,double m):gid(id),charge(q),mass(m){}
-  int gid;
-  int charge;
-  double mass;
-};
 
 
+namespace rpwa {
 
-/** @brief Phase Space generator for diffractive pion dissociation
- *  @author Sebastian Neubert TUM (original author)
- *  Based on TGenPhaseSpace
- *
- */
-class TDiffractivePhaseSpace {
-public:
 
-  // Constructors/Destructors ---------
-  TDiffractivePhaseSpace();
-  ~TDiffractivePhaseSpace(){}
-
- // Accessors -----------------------
-  const TLorentzVector* const GetDecay(unsigned int i){return &nbody.daughter(i);}
-  TLorentzVector* GetBeam(){return &gbeam;}
-  // Modifiers -----------------------
-  /** @brief Set beam parameters
-   * 
-   * 2004 COMPASS beam:
-   * gBeamDxDz      = 0.00026; // tilt from Quirin was in mrad
-   * gBeamDxDzSigma = 0.00010;
-   * gBeamDyDz      = 0.00001; // tilt from Quirin was in mrad
-   * gBeamDyDzSigma = 0.00018;
-   * gBeamMom       = 189 [GeV/c]
-   * gBeamMomsigma  = 1.2
+  /** @brief Small helper class for bookkeeping
    */
-  void SetBeam(double Mom=190, double MomSigma=1.2,
-	       double DxDz=0, double DxDzSigma=0,
-	       double DyDz=0, double DyDzSigma=0);
-
-  /** @brief Set beam parameters
-   *  The target is assumed to be a single cylinder
-   *  centered at zPos and r=0;
-   *
-   *  Example: SetTarget(-20,40,2)
-   *           Defines a target cell with 4cm diameter extending 
-   *           from z=-40cm to z=0cm
-   */
-  void SetTarget(double zPos,double length, double r, double mass)
-  {gTargetZPos=zPos;gTargetZLength=length;gTargetR=r;gRecoilMass=mass;}
-
-  //void SetThetaDistribution(TH1* distr){thetaDistribution=distr;}
+  class particleinfo {
+  public:
+    particleinfo(int id,int q,double m):gid(id),charge(q),mass(m){}
+    int gid;
+    int charge;
+    double mass;
+  };
 
 
-  /** @brief Set the slope b of the t-prime distribution
-   *
-   *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
-   */
-  void SetTPrimeSlope(double b){gBT=1./b;} // inverse for simple usage with TRandom
-  
-
-  /** @brief Set mass range of produced system X
-   * 
-   *  Events will be generated uniformly in mass
-   */
-  void SetMassRange(double min, double max){xMassMin=min;xMassMax=max;}
-  void SetDecayProducts(const std::vector<particleinfo>& info);
-  void AddDecayProduct(const particleinfo& info);
-  void SetSeed(int seed);
-  
-
-  // Operations ----------------------
-
-  /** @brief generates on event
-   * 
-   * returns number of attempts to generate this event and beam
-   * the decay products can be fetched with GetDecay(i)
-   */
-  unsigned int event(TLorentzVector& beam);
-
-/** @brief generates on event
-   * 
-   * returns number of attempts to generate this event;
-   * writes event to stream
+  /** @brief Phase Space generator for diffractive pion dissociation
+   *  @author Sebastian Neubert TUM (original author)
    *
    */
-  unsigned int event(ostream&);
+  class TDiffractivePhaseSpace {
+  public:
+
+    // Constructors/Destructors ---------
+    TDiffractivePhaseSpace();
+    ~TDiffractivePhaseSpace(){}
+
+    // Accessors -----------------------
+    const TLorentzVector* const GetDecay(unsigned int i){return &_phaseSpace.daughter(i);}
+    TLorentzVector* GetBeam(){return &_beam;}
+    // Modifiers -----------------------
+    /** @brief Set beam parameters
+     * 
+     * 2004 COMPASS beam:
+     * _beamDxDz      = 0.00026; // tilt from Quirin was in mrad
+     * _beamDxDzSigma = 0.00010;
+     * _beamDyDz      = 0.00001; // tilt from Quirin was in mrad
+     * _beamDyDzSigma = 0.00018;
+     * _beamMom       = 189 [GeV/c]
+     * _beamMomSigma  = 1.2
+     */
+    void SetBeam(double Mom=190, double MomSigma=1.2,
+		 double DxDz=0, double DxDzSigma=0,
+		 double DyDz=0, double DyDzSigma=0);
+
+    /** @brief Set beam parameters
+     *  The target is assumed to be a single cylinder
+     *  centered at zPos and r=0;
+     *
+     *  Example: SetTarget(-20,40,2)
+     *           Defines a target cell with 4cm diameter extending 
+     *           from z=-40cm to z=0cm
+     */
+    void SetTarget(double zPos,
+		   double length,
+		   double r,
+		   double mass)
+    {
+      _targetZPos=zPos;
+      _targetZLength=length;
+      _targetR=r;
+      _recoilMass=mass;
+    }
+
+    //void SetThetaDistribution(TH1* distr){thetaDistribution=distr;}
 
 
-
-private:
-
-  // Private Data Members ------------
-  TGenPhaseSpace phaseSpace;
-  nBodyPhaseSpaceGen nbody;
-
-  // target position
-  double gTargetZPos;
-  double gTargetZLength;
-  double gTargetR;
-  double gRecoilMass;
-
-  // beam parameters:
-  double gBeamMomSigma;  // [GeV/c]
-  double gBeamMom;  // [GeV/c]
-
-  double gBeamDxDz;
-  double gBeamDxDzSigma;
-  double gBeamDyDz;
-  double gBeamDyDzSigma;
-
-  TLorentzVector gbeam; // cache for last generated beam
-
-  //TH1* thetaDistribution;
-
-  double gBT;
-
-  // cut on t-distribution
-  double tMin; // [(GeV/c)^2]
-
-  double xMassMin;
-  double xMassMax;
+    /** @brief Set the slope b of the t-prime distribution
+     *
+     *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
+     */
+    void SetTPrimeSlope(double b){_invSlopePar=1./b;} // inverse for simple usage with TRandom
   
-  double* daughterMasses;
-  std::vector<particleinfo> decayProducts;
+
+    /** @brief Set mass range of produced system X
+     * 
+     *  Events will be generated uniformly in mass
+     */
+    void SetMassRange(double min,
+		      double max)
+    {
+      _xMassMin=min;
+      _xMassMax=max;
+    }
+    void SetDecayProducts(const std::vector<particleinfo>& info);
+    void AddDecayProduct(const particleinfo& info);
+    void SetSeed(int seed);
   
-  // Private Methods -----------------
 
-  TLorentzVector makeBeam();
-  bool writePwa2000Ascii(std::ostream&              out,
-			 const TLorentzVector& beam,
-			 nBodyPhaseSpaceGen&       event);
+    // Operations ----------------------
+
+    /** @brief generates on event
+     * 
+     * returns number of attempts to generate this event and beam
+     * the decay products can be fetched with GetDecay(i)
+     */
+    unsigned int event(TLorentzVector& beam);
+
+    /** @brief generates on event
+     * 
+     * returns number of attempts to generate this event;
+     * writes event to stream
+     *
+     */
+    unsigned int event(ostream&);
+
+
+
+  private:
+
+    // Private Data Members ------------
+    rpwa::nBodyPhaseSpaceGen _phaseSpace;
+
+    // target position
+    double _targetZPos;
+    double _targetZLength;
+    double _targetR;
+
+    double _recoilMass;  // [GeV/c^2]
+
+    // beam parameters:
+    double _beamMomSigma;  // [GeV/c]
+    double _beamMom;       // [GeV/c]
+
+    double _beamDxDz;
+    double _beamDxDzSigma;
+    double _beamDyDz;
+    double _beamDyDzSigma;
+
+    TLorentzVector _beam; // cache for last generated beam
+
+    //TH1* thetaDistribution;
+
+    double _invSlopePar;  // inverse slope parameter 1 / b of t' distribution
+
+    // cut on t-distribution
+    double _tMin; // [(GeV/c)^2]
+
+    double _xMassMin;
+    double _xMassMax;
   
-  std::ostream& progressIndicator(const long currentPos,
-				  const long nmbTotal,
-				  const int  nmbSteps = 10,
-				  std::ostream& out   = std::cout);
-  void  BuildDaughterList();
- // particle masses
-  double gProtonMass;
-  double gPionMass;
-  double gPionMass2;
+    double* _daughterMasses;
+    std::vector<particleinfo> _decayProducts;
+  
+    // Private Methods -----------------
+
+    TLorentzVector makeBeam();
+    bool writePwa2000Ascii(std::ostream&             out,
+			   const TLorentzVector&     beam,
+			   rpwa::nBodyPhaseSpaceGen& event);
+  
+    std::ostream& progressIndicator(const long    currentPos,
+				    const long    nmbTotal,
+				    const int     nmbSteps = 10,
+				    std::ostream& out   = std::cout);
+    void  BuildDaughterList();
+    // particle masses
+    double _protonMass;
+    double _pionMass;
+    double _pionMass2;
+
+  };
+
+}  // namespace rpwa
 
 
-};
-
-#endif
+#endif  // TDIFFRACTIVEPHASESPACE_HH
 /* @} **/
