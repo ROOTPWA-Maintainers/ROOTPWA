@@ -131,17 +131,18 @@ int main(int argc, char** argv)
   TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
   TTree* outtree=new TTree("pwevents","pwevents");
-  double weight;
+  double weight, impweight;
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector beam;
   double qbeam;
   std::vector<int> q; // array of charges
 
   outtree->Branch("weight",&weight,"weight/d");
+  outtree->Branch("impweight",&impweight,"impweight/d");
   outtree->Branch("p",&p);
   outtree->Branch("beam",&beam);
   outtree->Branch("q",&q);
-  outtree->Branch("qbeam",&qbeam,"qbeam/i");
+  outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
   PDGtable.initialize();
 
@@ -166,6 +167,7 @@ int main(int argc, char** argv)
   double tslope=reactConf.lookup("finalstate.t_slope");
   double binCenter=500 * (mmin + mmax);
 
+ 
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
 
   //string theta_file= reactConf.lookup("finalstate.theta_file");
@@ -176,6 +178,18 @@ int main(int argc, char** argv)
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
   difPS.SetTPrimeSlope(tslope);
   difPS.SetMassRange(mmin,mmax);			
+
+
+  double impMass;
+  double impWidth;
+ 
+  if(reactConf.lookupValue("importance.mass",impMass) && reactConf.lookupValue("importance.width",impWidth)){
+    int act=reactConf.lookup("importance.active");
+      if(act==1){
+      difPS.SetImportanceBW(impMass,impWidth);
+    }
+  }
+  
 
   const Setting& root = reactConf.getRoot();
   const Setting& fspart = root["finalstate"]["particles"];
@@ -207,7 +221,6 @@ int main(int argc, char** argv)
     bwAmps[jpcme]=new TBWProductionAmp(mass,width,coupl);
   }
     
-
   // check if TFitBin is used as input
   if(wavelist_file.find(".root")!=string::npos){
     cerr << "Using TFitBin as input!" << endl;
@@ -309,6 +322,7 @@ int main(int argc, char** argv)
 
   unsigned int tenpercent=(unsigned int)(nevents/10);
   unsigned int i=0;
+  //difPS.setVerbose(true);
   while(i<nevents && ((max_attempts>0 && attempts<max_attempts) || max_attempts==0))
     {
 
@@ -319,6 +333,7 @@ int main(int argc, char** argv)
 
       ofstream str("/tmp/event.evt");
       difPS.event(str);
+      impweight=difPS.impWeight();
       str.close();
       
       for(int ip=0; ip<nparticles;++ip){

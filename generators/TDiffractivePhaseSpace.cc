@@ -177,16 +177,18 @@ TDiffractivePhaseSpace::BuildDaughterList()
   for(unsigned int i=0;i<n;++i){
     _daughterMasses[i]=_decayProducts[i].mass;
   }
-  if(n>1){
+  if(n>2){
     _phaseSpace.setDecay((int)n, _daughterMasses);
     if(_xMassMax==0){
       cerr << "TDiffractivePhaseSpace::Please set Mass Range before Decay Products!" << endl;
       throw;
     }
     else {
-      cout << "Calculating max weight ("<<n<<" fs particles) for m="<<_xMassMax<< endl;
-      _phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(_xMassMax,100000));
-      cout << "Max weight:" << _phaseSpace.maxWeight() << endl;
+
+      cerr << "Calculating max wheight ("<<n<<" fs particles) for m="<<_xMassMax<< endl;
+      nbody.setMaxWeight(1.01 * nbody.estimateMaxWeight(_xMassMax,1000000));
+      cerr << "Max weight:" << nbody.maxWeight() << endl;
+
     }
   }
 }

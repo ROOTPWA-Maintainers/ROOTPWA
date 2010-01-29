@@ -181,7 +181,7 @@ TPWWeight::weight(event& e){
     }
     w+=std::norm(amp);
   } // end loop over production vectors
-  
+  if(w==0)w=1;
   return w;
   
 }

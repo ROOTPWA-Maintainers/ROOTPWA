@@ -31,6 +31,9 @@ gROOT->SetStyle("Plain");
  hMIsobar.push_back(hMIsobarMC);
  TH1D* hMIsobarData=new TH1D("hMIsobarData","Isobar mass (DATA)",40,0.2,2.2);
  hMIsobar.push_back(hMIsobarData);
+ TH1D* hDiffMIsobar; //=new TH1D("hDiffMIsobarData","Isobar mass (DATA) Diff",40,0.2,2.2);
+
+
 
  vector<TH1D*> hMIsobar2;
  TH1D* hMIsobar2MC=new TH1D("hMIsobar2MC","Isobar Mass (MC)",40,0.4,2.0);
@@ -89,13 +92,14 @@ vector<TH1D*> hTY3;
    TTree* tr= itree==0 ? mctr : datatr;
    if(tr==NULL)continue;
 
-   double weight=1;
+   double weight=1;double impweight=1;
    double maxweight=0; 
    TClonesArray* p=new TClonesArray("TLorentzVector");
    TLorentzVector* beam=NULL;
    int qbeam;
    std::vector<int>* q=NULL; 
    if (itree==0)tr->SetBranchAddress("weight",&weight);
+   if (itree==0)tr->SetBranchAddress("impweight",&impweight);
    tr->SetBranchAddress("p",&p);
    tr->SetBranchAddress("beam",&beam);
    tr->SetBranchAddress("qbeam",&qbeam);
@@ -110,9 +114,11 @@ vector<TH1D*> hTY3;
    unsigned int nevt=tr->GetEntries();	
    for(unsigned int i=0;i<nevt;++i){
      tr->GetEntry(i);
-     if(itree==1)weight=1;
+     if(itree==1){weight=1;impweight=1;}
      event.refresh();
      
+     if(impweight!=0)weight/=impweight;
+
      if(weight>maxweight)maxweight=weight;
      if(itree==0)avweight+=weight;
      // transform into GJ 
@@ -135,8 +141,7 @@ vector<TH1D*> hTY3;
 	 
 	 hGJ[itree]->Fill(state.p().CosTheta(),weight);
 	 hTY[itree]->Fill(state.p().Phi(),weight);
-	 hMIsobar[itree]->Fill(state.p().M(),weight);
-	 
+	 hMIsobar[itree]->Fill(state.p().M(),weight); 
        }
        else if(state.n()==npart-2 && state.q()==-1){
 	 hGJ2[itree]->Fill(state.p().CosTheta(),weight);
@@ -157,6 +162,10 @@ vector<TH1D*> hTY3;
    cout << "Maxweight=" << maxweight << endl; 
    cout << "Average weight=" << avweight << endl; 
  }
+
+
+
+
  TCanvas* cm=new TCanvas("PredictM","Weighted Events",20,20,600,800);
  hM[0]->SetLineColor(kRed);
  hM[0]->Draw();
@@ -171,7 +180,10 @@ vector<TH1D*> hTY3;
  double totMC=hMIsobar[0]->Integral();
  double totDATA=hMIsobar[1]->Integral();
  hMIsobar[1]->Scale(totMC/totDATA);
+ hDiffMIsobar=new TH1D(*hMIsobar[0]);
+ hDiffMIsobar->Add(hMIsobar[1],-1.);
  hMIsobar[1]->Draw("same");
+ hDiffMIsobar->Draw("same");
  hMIsobar[0]->GetYaxis()->SetRangeUser(0,hMIsobar[0]->GetMaximum()*1.1);
  gPad->Update();
 

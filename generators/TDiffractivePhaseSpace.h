@@ -115,6 +115,7 @@ namespace rpwa {
     void SetTPrimeSlope(double b){_invSlopePar=1./b;} // inverse for simple usage with TRandom
   
 
+
     /** @brief Set mass range of produced system X
      * 
      *  Events will be generated uniformly in mass
@@ -128,9 +129,14 @@ namespace rpwa {
     void SetDecayProducts(const std::vector<particleinfo>& info);
     void AddDecayProduct(const particleinfo& info);
     void SetSeed(int seed);
-  
 
-    // Operations ----------------------
+  void setVerbose(bool flag){nbody.setVerbose(flag);}
+  void SetImportanceBW(double mass, double width){
+    nbody.setProposalBW(mass,width);
+    nbody.setWeightType(nBodyPhaseSpaceGen::IMPORTANCE);
+  }
+
+
 
     /** @brief generates on event
      * 
@@ -147,12 +153,14 @@ namespace rpwa {
      */
     unsigned int event(ostream&);
 
-
+  double impWeight() const {return nbody.impWeight();}
 
   private:
 
     // Private Data Members ------------
     rpwa::nBodyPhaseSpaceGen _phaseSpace;
+    rpwa::nBodyPhaseSpaceGen nbody;
+
 
     // target position
     double _targetZPos;
