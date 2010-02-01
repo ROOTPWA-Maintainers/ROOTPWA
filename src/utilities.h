@@ -11,6 +11,7 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <vector>
 
 // cint has problems parsing glob.h
 #ifndef __CINT__

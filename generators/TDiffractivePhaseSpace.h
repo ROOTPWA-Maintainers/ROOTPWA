@@ -27,10 +27,7 @@
 #ifndef TDIFFRACTIVEPHASESPACE_HH
 #define TDIFFRACTIVEPHASESPACE_HH
 
-// Base Class Headers ----------------
 
-
-// Collaborating Class Headers -------
 #include <iostream>
 #include <vector>
 
@@ -39,7 +36,6 @@
 #include "nBodyPhaseSpaceGen.h"
 
 
-// Collaborating Class Declarations --
 class TH1;
 
 
@@ -48,12 +44,18 @@ namespace rpwa {
 
   /** @brief Small helper class for bookkeeping
    */
-  class particleinfo {
+  class particleInfo {
   public:
-    particleinfo(int id,int q,double m):gid(id),charge(q),mass(m){}
-    int gid;
-    int charge;
-    double mass;
+    particleInfo(int    gId,
+		 int    charge,
+		 double mass)
+      : _gId   (gId),
+	_charge(charge),
+	_mass  (mass)
+    { }
+    int    _gId;     // GEANT ID
+    int    _charge;  // charge
+    double _mass;    // mass [GeV/c^2]
   };
 
 
@@ -70,7 +72,7 @@ namespace rpwa {
 
     // Accessors -----------------------
     const TLorentzVector* const GetDecay(unsigned int i){return &_phaseSpace.daughter(i);}
-    TLorentzVector* GetBeam(){return &_beam;}
+    TLorentzVector* GetBeam(){return &_beamLab;}
     // Modifiers -----------------------
     /** @brief Set beam parameters
      * 
@@ -102,6 +104,7 @@ namespace rpwa {
       _targetZPos=zPos;
       _targetZLength=length;
       _targetR=r;
+      _targetMass=mass;
       _recoilMass=mass;
     }
 
@@ -112,7 +115,7 @@ namespace rpwa {
      *
      *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
      */
-    void SetTPrimeSlope(double b){_invSlopePar=1./b;} // inverse for simple usage with TRandom
+    void SetTPrimeSlope(double slopePar) { _invSlopePar = 1. / slopePar;}  // inverse for simple usage with TRandom
   
 
 
@@ -126,8 +129,8 @@ namespace rpwa {
       _xMassMin=min;
       _xMassMax=max;
     }
-    void SetDecayProducts(const std::vector<particleinfo>& info);
-    void AddDecayProduct(const particleinfo& info);
+    void SetDecayProducts(const std::vector<particleInfo>& info);
+    void AddDecayProduct(const particleInfo& info);
     void SetSeed(int seed);
 
   void setVerbose(bool flag){_phaseSpace.setVerbose(flag);}
@@ -143,7 +146,7 @@ namespace rpwa {
      * returns number of attempts to generate this event and beam
      * the decay products can be fetched with GetDecay(i)
      */
-    unsigned int event(TLorentzVector& beam);
+    unsigned int event();
 
     /** @brief generates on event
      * 
@@ -162,10 +165,11 @@ namespace rpwa {
 
 
     // target position
-    double _targetZPos;
-    double _targetZLength;
-    double _targetR;
+    double _targetZPos;     // [cm]
+    double _targetZLength;  // [cm]
+    double _targetR;        // [cm]
 
+    double _targetMass;  // [GeV/c^2]
     double _recoilMass;  // [GeV/c^2]
 
     // beam parameters:
@@ -177,32 +181,27 @@ namespace rpwa {
     double _beamDyDz;
     double _beamDyDzSigma;
 
-    TLorentzVector _beam; // cache for last generated beam
+    TLorentzVector _beamLab; // cache for last generated beam (in lab frame)
 
     //TH1* thetaDistribution;
 
-    double _invSlopePar;  // inverse slope parameter 1 / b of t' distribution
+    double _invSlopePar;  // inverse slope parameter 1 / b of t' distribution [(GeV/c)^{-2}]
 
     // cut on t-distribution
-    double _tMin; // [(GeV/c)^2]
+    double _tMin;  // [(GeV/c)^2]
 
-    double _xMassMin;
-    double _xMassMax;
+    double _xMassMin;  // [GeV/c^2]
+    double _xMassMax;  // [GeV/c^2]
   
-    double* _daughterMasses;
-    std::vector<particleinfo> _decayProducts;
+    std::vector<particleInfo> _decayProducts;
   
     // Private Methods -----------------
 
     TLorentzVector makeBeam();
-    bool writePwa2000Ascii(std::ostream&             out,
-			   const TLorentzVector&     beam,
-			   rpwa::nBodyPhaseSpaceGen& event);
+    bool writePwa2000Ascii(std::ostream& out,
+			   const int     beamGeantId,
+			   const int     beamCharge);
   
-    std::ostream& progressIndicator(const long    currentPos,
-				    const long    nmbTotal,
-				    const int     nmbSteps = 10,
-				    std::ostream& out   = std::cout);
     void  BuildDaughterList();
     // particle masses
     double _protonMass;

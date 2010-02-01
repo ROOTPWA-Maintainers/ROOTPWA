@@ -32,6 +32,7 @@
 #include "TRandom3.h"
 #include "TFile.h"
 
+#include "utilities.h"
 #include "TDiffractivePhaseSpace.h"
 
 
@@ -68,7 +69,6 @@ TDiffractivePhaseSpace::TDiffractivePhaseSpace()
   : _tMin(0.001),
     _xMassMin(0),
     _xMassMax(0),
-    _daughterMasses(NULL),
     _protonMass(0.938272013),
     _pionMass(0.13957018),
     _pionMass2(_pionMass * _pionMass)
@@ -101,45 +101,30 @@ TDiffractivePhaseSpace::makeBeam()
 
 // writes event to ascii file read by gamp
 bool
-TDiffractivePhaseSpace::writePwa2000Ascii(ostream&              out,
-					  const TLorentzVector& beam,
-					  nBodyPhaseSpaceGen&   event)
+TDiffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
+					  const int beamGeantId,
+					  const int beamCharge)
 {
   if (!out) {
-    cerr << "Output stream is not writable." << endl;
+    printErr << "output stream is not writable." << endl;
     return false;
   }
-    
-   // total number of particles
-  unsigned int nfspart=_decayProducts.size();
-  out << nfspart + 1 << endl;
+  unsigned int nmbDaughters = _decayProducts.size();
+  out << nmbDaughters + 1 << endl;
   // beam particle: geant ID, charge, p_x, p_y, p_z, E
-  out << setprecision(numeric_limits<double>::digits10 + 1)
-      << "9 -1 " << beam.Px() << " " << beam.Py() << " " << beam.Pz() << " " << beam.E() << endl;
-  for (unsigned int i = 0; i < nfspart; ++i) {
-    const TLorentzVector& hadron = event.daughter(i);
-    // if (!hadron) {
-//       cerr << "genbod returns NULL pointer to Lorentz vector for daughter " << i << "." << endl;
-//       continue;
-//     }
+  out << beamGeantId << " " << beamCharge
+      << setprecision(numeric_limits<double>::digits10 + 1)
+      << " " << _beamLab.Px() << " " << _beamLab.Py() << " " << _beamLab.Pz()
+      << " " << _beamLab.E() << endl;
+  for (unsigned int i = 0; i < nmbDaughters; ++i) {
+    const TLorentzVector& hadron = _phaseSpace.daughter(i);
     // hadron: geant ID, charge, p_x, p_y, p_z, E
-    out << setprecision(numeric_limits<double>::digits10 + 1)
-	<< _decayProducts[i].gid << " " << _decayProducts[i].charge << " " << hadron.Px() << " " << hadron.Py() << " " << hadron.Pz() << " " << hadron.E() << endl;
-    }
+    out << _decayProducts[i]._gId << " " << _decayProducts[i]._charge
+	<< setprecision(numeric_limits<double>::digits10 + 1)
+	<< " " << hadron.Px() << " " << hadron.Py() << " " << hadron.Pz()
+	<< " " << hadron.E() << endl;
+  }
   return true;
-}
-
-
-ostream&
-TDiffractivePhaseSpace::progressIndicator(const long currentPos,
-					  const long nmbTotal,
-					  const int  nmbSteps,
-					  ostream&   out)
-{
-  const double step = nmbTotal / (double)nmbSteps;
-  if ((nmbTotal >= 0) && ((int)(currentPos / step) - (int)((currentPos - 1) / step) != 0))
-    out << "    " << setw(3) << (int)(currentPos / step) * nmbSteps << " %" << endl;
-  return out;
 }
 
 
@@ -152,16 +137,16 @@ TDiffractivePhaseSpace::SetSeed(int seed)
 
 
 void 
-TDiffractivePhaseSpace::SetDecayProducts(const vector<particleinfo>& info)
+TDiffractivePhaseSpace::SetDecayProducts(const vector<particleInfo>& info)
 {
   _decayProducts.clear();
-  _decayProducts=info;
+  _decayProducts = info;
   BuildDaughterList();
 }
 
 
 void
-TDiffractivePhaseSpace::AddDecayProduct(const particleinfo& info)
+TDiffractivePhaseSpace::AddDecayProduct(const particleInfo& info)
 {
   _decayProducts.push_back(info);
   BuildDaughterList();
@@ -171,24 +156,22 @@ TDiffractivePhaseSpace::AddDecayProduct(const particleinfo& info)
 void
 TDiffractivePhaseSpace::BuildDaughterList()
 {
-  if(_daughterMasses!=NULL)delete[] _daughterMasses;
-  _daughterMasses=new double[_decayProducts.size()];
-  const unsigned int n   = _decayProducts.size();          
-  for(unsigned int i=0;i<n;++i){
-    _daughterMasses[i]=_decayProducts[i].mass;
-  }
-  if(n>2){
-    _phaseSpace.setDecay((int)n, _daughterMasses);
-    if(_xMassMax==0){
-      cerr << "TDiffractivePhaseSpace::Please set Mass Range before Decay Products!" << endl;
+  const unsigned int nmbDaughters = _decayProducts.size();
+  vector<double> daughterMasses(nmbDaughters, 0);
+  for(unsigned int i = 0;i < nmbDaughters; ++i)
+    daughterMasses[i] = _decayProducts[i]._mass;
+  if (nmbDaughters > 1) {
+    _phaseSpace.setDecay(daughterMasses);
+    if (_xMassMax == 0) {
+      printErr << "mass range [" << _xMassMin << ", " << _xMassMin << "] GeV/c^2 "
+	       << "does mot make sense. exiting." << endl;
       throw;
     }
     else {
-
-      cerr << "Calculating max wheight ("<<n<<" fs particles) for m="<<_xMassMax<< endl;
-      _phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(_xMassMax,1000000));
-      cerr << "Max weight:" << _phaseSpace.maxWeight() << endl;
-
+      printInfo << "calculating max weight (" << nmbDaughters <<" FS particles) "
+		<< "for m = " << _xMassMax << " GeV/c^2" << endl;
+      _phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(_xMassMax, 1000000));
+      cout << "    max weight = " << _phaseSpace.maxWeight() << endl;
     }
   }
 }
@@ -257,86 +240,72 @@ TDiffractivePhaseSpace::BuildDaughterList()
 // }
 
 
+// based on Dima's prod_decay_split.f
 unsigned int 
-TDiffractivePhaseSpace::event(TLorentzVector& beamresult)
+TDiffractivePhaseSpace::event()
 {
   // construct primary vertex and beam
   const TVector3 vertexPos(0, 0, 
-			   _targetZPos+gRandom->Uniform(-_targetZLength*0.5,
-				 			 _targetZLength*0.5));
-  _beam = makeBeam();
+			   _targetZPos+gRandom->Uniform(-_targetZLength * 0.5,
+				 			 _targetZLength * 0.5));
+  _beamLab = makeBeam();
+  const TLorentzVector targetLab(0, 0, 0, _targetMass);
+  const TLorentzVector overallCm = _beamLab + targetLab;  // beam-target center-of-mass system
   
-  bool done=false;
-  unsigned int attempts=0;
-  while(!done){
-    // sample theta directly:
-    //const double theta  = thetaDistribution->GetRandom();
-
-    const double tprime = gRandom->Exp(_invSlopePar);
-    const double xMass  = gRandom->Uniform(_xMassMin, _xMassMax);
-    const double xMass2 = xMass * xMass;
-    const double xMass4 = xMass2 * xMass2;
-    const double m0  = _recoilMass;
-    const double ma = _beam.M();
-    const double pa= _beam.Vect().Mag();
-    const double ma2 = ma * ma;
-    const double ma4 = ma2 * ma2;
-
-    const double Ea = _beam.E();
-    const double Ea2 = Ea*Ea;
-    const double g=2*Ea*m0 + ma2 - xMass2;
-    const double EcN=4*Ea2*(g - tprime)
-                     - ma4 + 2*ma2*xMass2 - xMass4 ;
-    const double EcD=4*Ea*g;
-    const double Ec=EcN/EcD;
-
-    // cerr << xMass << endl;
-    //cerr << tprime << endl;
-    //cerr << "Ea=" << Ea << "    Ec=" << Ec << endl;
-
-
-    // // account for recoil assume proton recoil
-//     const double eps  = (xMass2 - _pionMass2) / (2 * _protonMass * Ea);
-//     const double epso = 1 - eps;
-//     const double eat  = Ea * theta;
-//     //eat *= eat;
-//     const double mpeps = _protonMass * eps;
-//     const double e = Ea - 1 / (2 * _protonMass * epso) * (eat * eat + mpeps * mpeps);
-
-
-    const double pw = sqrt(Ec * Ec - xMass2); // three momentum magnitude
-    const double t=tprime-(pw*pw+pa*pa-2.*pw*pa);
-    // calculate theta following suh-urks paper (formulas 20 and 21)
-    const double term1=(xMass2-ma2)/(2*Ec);
-    const double term=t-term1*term1;
-    if(term<0) {
-      //cout << "neg" << endl;
+  bool              done     = false;
+  unsigned long int attempts = 0;
+  while (!done) {
+    
+    const double tPrime = -gRandom->Exp(_invSlopePar);             // pick random t'
+    const double xMass  = gRandom->Uniform(_xMassMin, _xMassMax);  // pick random X mass
+    // make sure that X mass is not larger than maximum allowed mass
+    if (xMass + _recoilMass > overallCm.M())
       continue;
-     }
 
-    const double theta=1/Ec*sqrt(term);
-    const double phi= gRandom->Uniform(0., TMath::TwoPi());
-    
-    TVector3 p3(1, 0, 0);
-    p3.SetMagThetaPhi(pw, theta, phi);
-    // rotate to beamdirection:
-    p3.RotateUz(_beam.Vect().Unit());
-    
-    // build resonance
-    TLorentzVector X(p3, Ec);
-    const TLorentzVector q = _beam - X;
+    // calculate t from t' in center-of-mass system of collision
+    const double s            = overallCm.Mag2();
+    const double sqrtS        = sqrt(s);
+    const double recoilMass2  = _recoilMass * _recoilMass;
+    const double xMass2       = xMass * xMass;
+    const double xEnergyCM    = (s - recoilMass2 + xMass2) / (2 * sqrtS);  // breakup energy
+    const double xMomCM       = sqrt(xEnergyCM * xEnergyCM - xMass2);      // breakup momentum
+    const double beamMass2    = _beamLab.M2();
+    const double targetMass2  = _targetMass * _targetMass;
+    const double beamEnergyCM = (s - targetMass2 + beamMass2) / (2 * sqrtS);    // breakup energy
+    const double beamMomCM    = sqrt(beamEnergyCM * beamEnergyCM - beamMass2);  // breakup momentum
+    const double t0           = (xEnergyCM - beamEnergyCM) * (xEnergyCM - beamEnergyCM)
+                                - (xMomCM - beamMomCM) * (xMomCM - beamMomCM);
+    const double t            = t0 + tPrime;
+    // reject events outside of allowed kinematic region
+    if (t > t0)
+      continue;
+
+    // construct X Lorentz-vector in lab frame (= target RF)
+    // convention used here: Reggeon = X - beam = target - recoil (momentum transfer from target to beam vertex)
+    const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * _targetMass);  // breakup energy
+    const double xEnergyLab       = _beamLab.E() + reggeonEnergyLab;
+    const double xMomLab          = sqrt(xEnergyLab * xEnergyLab - xMass2);
+    const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * _beamLab.E() * xEnergyLab) / (2 * _beamLab.P() * xMomLab);
+    const double xSinThetaLab     = sqrt(1 - xCosThetaLab * xCosThetaLab);
+    const double xPtLab           = xMomLab * xSinThetaLab;
+    const double xPhiLab          = gRandom->Uniform(0., TMath::TwoPi());
+
+    // xSystemLab is defined w.r.t. beam direction
+    TLorentzVector xSystemLab = TLorentzVector(xPtLab  * cos(xPhiLab),
+					       xPtLab  * sin(xPhiLab),
+					       xMomLab * xCosThetaLab,
+					       xEnergyLab);
+    // rotate according to beam tilt
+    TVector3 beamDir = _beamLab.Vect().Unit();
+    xSystemLab.RotateUz(beamDir);
     
     // apply t cut
-    const double tGen = -q.M2();
-    if (tGen < _tMin){
-      //cerr << "tGen < _tMin " << endl;
+    if (t > -_tMin)
       continue;
-    }
     
     // generate n-body phase space for X system
     ++attempts;
     {
-      const double xMass = X.M();
       _phaseSpace.pickMasses(xMass);
       // correct weight for phase space splitting
       const double maxPsWeight = _phaseSpace.maxWeight()  * _xMassMax;
@@ -344,13 +313,12 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult)
       if ((psWeight / maxPsWeight) < _phaseSpace.random())
     	continue;
       _phaseSpace.pickAngles();
-      _phaseSpace.calcEventKinematics(X);
+      _phaseSpace.calcEventKinematics(xSystemLab);
     }
 
-    done=true;
-    beamresult=_beam;
-  } // end while !done
-  // event is accepted
+    done = true;
+  }
+  // event was accepted
    
   return attempts;
 }
@@ -359,8 +327,8 @@ TDiffractivePhaseSpace::event(TLorentzVector& beamresult)
 unsigned int 
 TDiffractivePhaseSpace::event(ostream& stream)
 {
-  unsigned int attempts=event(_beam);
-  writePwa2000Ascii(stream, _beam, _phaseSpace);
+  unsigned int attempts = event();
+  writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
   return attempts;
 }
 

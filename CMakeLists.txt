@@ -21,7 +21,7 @@ SET(ROOT_CONFIG_SEARCHPATH $ENV{ROOTSYS}/bin)
 
 FIND_PROGRAM(ROOT_CONFIG_EXECUTABLE NAMES root-config PATHS
  	   ${ROOT_CONFIG_SEARCHPATH}
- 	   NO_SYSTEM_ENVIRONMENT_PATH)
+ 	   NO_DEFAULT_PATH)
 	    	   
 	IF(${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
  	  MESSAGE(FATAL_ERROR "ROOT not installed in the searchpath and ROOTSYS is not set. Please set ROOTSYS or add the path to your ROOT installation in the Macro FindROOT.cmake in th subdirectory cmake/modules.")

@@ -23,39 +23,46 @@
  */
 
 
-#include <complex>
 #include <iostream>
-//#include <stringstream>
-
 #include <fstream>
+#include <complex>
 #include <cstdlib>
 #include <string>
 #include <vector>
 #include <unistd.h>
 #include <stdlib.h>
-#include "TPWWeight.h"
+#include <event.h>
+
 #include "TFile.h"
-#include "TString.h"
-#include "TFitBin.h"
-#include "TH1.h"
-#include "TH1D.h"
-#include "TRandom3.h"
 #include "TTree.h"
+#include "TString.h"
+#include "TH1.h"
+//#include "TH1D.h"
+#include "TRandom3.h"
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
+
+#include "libconfig.h++"
+
+#include "utilities.h"
+#include "TDiffractivePhaseSpace.h"
+#include "TPWWeight.h"
 #include "TProductionAmp.h"
 #include "TBWProductionAmp.h"
-#include "TDiffractivePhaseSpace.h"
-#include <event.h>
-#include "libconfig.h++"
+#include "TFitBin.h"
+
 
 using namespace std;
 using namespace libconfig;
 using namespace rpwa;
 
+
 extern particleDataTable PDGtable;
 
-void printUsage(char* prog, int errCode=0) {
+
+void printUsage(char* prog,
+		int   errCode = 0)
+{
 cerr << "usage:" << endl
      << prog
      << " -n # [-a # -m #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
@@ -135,7 +142,7 @@ int main(int argc, char** argv)
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector beam;
   double qbeam;
-  std::vector<int> q; // array of charges
+  vector<int> q; // array of charges
 
   outtree->Branch("weight",&weight,"weight/d");
   outtree->Branch("impweight",&impweight,"impweight/d");
@@ -201,26 +208,30 @@ int main(int argc, char** argv)
     int myq;part.lookupValue("charge",myq);
     double m;part.lookupValue("mass",m);
     q.push_back(myq);
-    difPS.AddDecayProduct(particleinfo(id,myq,m));
+    difPS.AddDecayProduct(particleInfo(id,myq,m));
   }
-   // see if we have a resonance in this wave
+
+  // see if we have a resonance in this wave
   const Setting &bws = root["resonances"]["breitwigners"];
   // loop through breitwigners
   int nbw=bws.getLength();
-  cerr << "Found " << nbw << " BreitWigners in Config" << endl;
-  map<string,TBWProductionAmp*> bwAmps;
-  for(int ibw=0;ibw<nbw;++ibw){
-    const Setting &bw=bws[ibw];
-    string jpcme;bw.lookupValue("jpcme",jpcme);
-    double mass;bw.lookupValue("mass",mass);
-    double width;bw.lookupValue("width",width);
-    double cRe;bw.lookupValue("coupling_Re",cRe);
-    double cIm;bw.lookupValue("coupling_Im",cIm);
-    std::complex<double> coupl(cRe,cIm);
-    cerr << jpcme << " m="<< mass << " w="<<width<<" c="<< coupl << endl;
-    bwAmps[jpcme]=new TBWProductionAmp(mass,width,coupl);
+  printInfo << "found " << nbw << " Breit-Wigners in config" << endl;
+  map<string, TBWProductionAmp*> bwAmps;
+  for(int ibw = 0; ibw < nbw; ++ibw) {
+    const Setting &bw = bws[ibw];
+    string jpcme;
+    double mass, width;
+    double cRe, cIm;
+    bw.lookupValue("jpcme",       jpcme);
+    bw.lookupValue("mass",        mass);
+    bw.lookupValue("width",       width);
+    bw.lookupValue("coupling_Re", cRe);
+    bw.lookupValue("coupling_Im", cIm);
+    complex<double> coupl(cRe, cIm);
+    cout << "    JPCME = " << jpcme << ", mass = " << mass << " GeV/c^2, "
+	 << "width = " << width << " GeV/c^2, coupling = " << coupl << endl;
+    bwAmps[jpcme] = new TBWProductionAmp(mass, width, coupl);
   }
-    
   // check if TFitBin is used as input
   if(wavelist_file.find(".root")!=string::npos){
     cerr << "Using TFitBin as input!" << endl;
@@ -285,7 +296,7 @@ int main(int argc, char** argv)
     wavename.ReplaceAll(".amp",".key");
     wavename.Prepend(path_to_keyfiles.c_str());
 
-    std::complex<double> amp(RE,IM);
+    complex<double> amp(RE,IM);
     cerr << wavename << " " << amp << " r=" << rank/2 
 	 << " eps=" << refl << " qn=" << jpcme << endl;
     wavefile.ignore(256,'\n');
@@ -299,7 +310,7 @@ int main(int argc, char** argv)
     }
     else {
       pamp=new TProductionAmp(amp);
-      weighter.addWave(wavename.Data(),pamp,std::complex<double>(1,0),rank+refl);
+      weighter.addWave(wavename.Data(),pamp,complex<double>(1,0),rank+refl);
     }   
   }
 
@@ -307,7 +318,7 @@ int main(int argc, char** argv)
     // read integral files
     ifstream intfile(integrals_file.c_str());
     while(intfile.good()){
-      std::string filename;
+      string filename;
       double mass;
       intfile >> filename >> mass;
       weighter.loadIntegrals(filename,mass);
@@ -327,8 +338,8 @@ int main(int argc, char** argv)
     {
 
       ++attempts;
+
       
-					       
       p->Delete(); // clear output array
 
       ofstream str("/tmp/event.evt");
