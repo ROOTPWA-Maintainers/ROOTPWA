@@ -25,7 +25,7 @@ ENABLE_TESTING()
 
 
 SET(INCLUDE_DIRECTORIES
-  $ENV{ROOTSYS}/include
+  ${ROOT_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR}/pwa2000/libpp
   ${CMAKE_SOURCE_DIR}/pwa2000/gamp
   ${CMAKE_SOURCE_DIR}/tools
@@ -40,7 +40,7 @@ SET(SOURCES TPDGEntry.cc
 	    NParticleEvent.cc)
    
 #add ROOT lib
-SET(ROOT_LIB $ENV{ROOTSYS}/lib)
+#SET(ROOT_LIB $ENV{ROOTSYS}/lib)
 SET(ROOT_BIN $ENV{ROOTSYS}/bin)
 SET(ROOT_LIBS ${ROOT_LIB}/libCore.so
               ${ROOT_LIB}/libCint.so
@@ -83,7 +83,7 @@ FIND_PROGRAM(ROOT_CINT_EXECUTABLE
 
 ADD_CUSTOM_COMMAND(OUTPUT rootpwatoolsDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwatoolsDict.cc
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwatoolsDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/tools TPDGEntry.h TPDGDB.h rootpwatoolsLinkDef.h)
+      ARGS -f rootpwatoolsDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/tools -I$ENV{ROOTSYS}/include TPDGEntry.h TPDGDB.h rootpwatoolsLinkDef.h)
 
 
 set(TOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwatoolsDict.cc)

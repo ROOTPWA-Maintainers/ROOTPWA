@@ -16,6 +16,33 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -Werror")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
+# Get ROOT Variables
+SET(ROOT_CONFIG_SEARCHPATH $ENV{ROOTSYS}/bin)
+
+FIND_PROGRAM(ROOT_CONFIG_EXECUTABLE NAMES root-config PATHS
+ 	   ${ROOT_CONFIG_SEARCHPATH}
+ 	   NO_SYSTEM_ENVIRONMENT_PATH)
+	    	   
+	IF(${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
+ 	  MESSAGE(FATAL_ERROR "ROOT not installed in the searchpath and ROOTSYS is not set. Please set ROOTSYS or add the path to your ROOT installation in the Macro FindROOT.cmake in th subdirectory cmake/modules.")
+ 	ELSE (${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
+ 	  STRING(REGEX REPLACE "(^.*)/bin/root-config" "\\1" test ${ROOT_CONFIG_EXECUTABLE})
+ 	  SET( ENV{ROOTSYS} ${test})
+ 	ENDIF (${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND") 
+ 	
+EXEC_PROGRAM( ${ROOT_CONFIG_EXECUTABLE}
+ 	        ARGS "--incdir"
+ 	        OUTPUT_VARIABLE root_headers )
+ 	      SET(ROOT_INCLUDE_DIR ${root_headers})
+ 	      # CACHE INTERNAL "")
+ 		
+EXEC_PROGRAM( ${ROOT_CONFIG_EXECUTABLE}
+ 	        ARGS "--libdir"
+ 	        OUTPUT_VARIABLE root_libs )
+ 	      SET(ROOT_LIB ${root_libs})
+ 	      # CACHE INTERNAL "")
+
+
 
 # Recurse into the given subdirectories.  This does not actually
 # cause another cmake executable to run.  The same process will walk through
