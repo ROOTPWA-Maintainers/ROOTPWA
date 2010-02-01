@@ -40,11 +40,13 @@
 #include <string>
 #include <complex>
 #include <cassert>
+#include <time.h>
 
 #include "TTree.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TComplex.h"
+#include "TRandom3.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 
@@ -88,6 +90,7 @@ usage(const string& progName,
        << "                                         Linear:      Robust" << endl
        << "                                         Fumili:      -" << endl
        << "        -t #       minimizer tolerance (default: 1e-10)" << endl
+       << "        -s #       seed for starting values (default: 1234567)" << endl
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
@@ -108,6 +111,7 @@ main(int    argc,
   const unsigned int maxNmbOfIterations = 20000;
   const bool         runHesse           = false;
   const bool         runMinos           = false;
+  int                seed               = 1234567;
 
   // ---------------------------------------------------------------------------
   // parse command line options
@@ -171,6 +175,9 @@ main(int    argc,
     case 't':
       minimizerTolerance = atof(optarg);
       break;
+   case 's':
+      seed = atoi(optarg);
+      break;
     case 'q':
       quiet = true;
       break;
@@ -196,6 +203,7 @@ main(int    argc,
        << "    wave list file ......................... '" << waveListFileName << "'" << endl
        << "    output file ............................ '" << outFileName      << "'" << endl
        << "    file with start values ................. '" << startValFileName << "'" << endl
+       << "    seed for random start values ........... '" << seed << "'" << endl
        << "    use normalization ...................... "  << useNormalizedAmps       << endl
        << "        file with normalization integral ... '" << normIntFileName  << "'" << endl
        << "        file with acceptance integral ...... '" << accIntFileName   << "'" << endl
@@ -204,6 +212,9 @@ main(int    argc,
        << "    quiet .................................. "  << quiet << endl;
 
   // ---------------------------------------------------------------------------
+
+  gRandom->SetSeed(seed);
+
   // setup likelihood function
   printInfo << "creating and setting up likelihood function" << endl;
   TPWALikelihood<double> L;
@@ -214,7 +225,8 @@ main(int    argc,
   if (!quiet)
     cout << L << endl;
   const unsigned int nmbPar = L.NDim();
-  
+  const unsigned int nmbEvts = L.nmbEvents();
+  const double snmbEvts = sqrt((double)nmbEvts);
   // ---------------------------------------------------------------------------
   // setup minimizer
   printInfo << "creating and setting up minimizer " << minimizerType[0] << " using algorithm " << minimizerType[1] << endl;
@@ -273,18 +285,23 @@ main(int    argc,
 	    << "    parameter naming scheme is: V[rank index]_[IGJPCME][isobar spec]" << endl;
   unsigned int maxParNameLength = 0;       // maximum length of parameter names
   vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
-  {
-    bool success = true;
-    for (unsigned int i = 0; i < nmbPar; ++i)
-      if (L.parName(i).length() > maxParNameLength)
-	maxParNameLength = L.parName(i).length();
-    for (unsigned int i = 0; i < nmbPar; ++i) {
-      double startVal      = defaultStartValue;
-      const string parName = L.parName(i);
-      if (hasStartVal) {
-	// get parameter value from fitResult
-	assert(startFitResult);
-	startVal = startFitResult->fitParameter(parName.c_str());
+  bool success=true;
+  for (unsigned int i = 0; i < nmbPar; ++i) {
+    double startVal = gRandom->Uniform(defaultStartValue,snmbEvts);//defaultStartValue;
+    string parName = L.parName(i);
+    if (hasStartVal){
+      // look into start FitBin if we find a suitable parameter
+      assert(startFitResult);
+      startVal = startFitResult->fitParameter(parName.c_str());
+    }
+    // check if parameter needs to be fixed because of threshold
+    if ((L.parThreshold(i) == 0) || (L.parThreshold(i) < massBinCenter)) {
+      if (!minimizer->SetVariable(i, parName, startVal, startValStep))
+	success = false;
+      if (startVal == 0) {
+	cout << "    Read start value 0 for parameter " << parName << ". Setting default start value." << endl;
+	startVal = gRandom->Uniform(defaultStartValue,snmbEvts);
+
       }
       // check if parameter needs to be fixed because of threshold
       if ((L.parThreshold(i) == 0) || (L.parThreshold(i) < massBinCenter)) {
