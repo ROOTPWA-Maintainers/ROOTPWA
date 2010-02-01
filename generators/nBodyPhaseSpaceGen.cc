@@ -198,6 +198,7 @@ nBodyPhaseSpaceGen::generateDecayAccepted(const TLorentzVector& nBody,      // L
 void
 nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the system in its RF
 {
+
   _M[_n - 1] = nBodyMass;
   switch (_weightType) {
   case NUPHAZ: 
@@ -233,7 +234,7 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
       }
     }
     break;
-  case IMPORTANCE:
+    /*  case IMPORTANCE:
     {
       
       // set effective masses of (intermediate) two-body decays
@@ -271,9 +272,10 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
     }// end if importance sampling
     
     
-    break;
+    break;*/
   default:
     {
+      
       // create vector of sorted random values
       vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
       for (unsigned int i = 0; i < (_n - 2); ++i)
@@ -283,8 +285,11 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
       const double massInterval = nBodyMass - _mSum[_n - 1];  // kinematically allowed mass interval
       for (unsigned int i = 1; i < (_n - 1); ++i)             // loop over intermediate 2- to (n - 1)-bodies
 	  _M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
-      
-      
+
+      //cerr << _M[1] << endl;
+      if(_weightType==IMPORTANCE)
+      _impweight=TMath::BreitWigner(_M[_n-2],_isoBWMass,_isoBWWidth);
+      //cerr << _impweight << endl;
     } // end default mass picking
     break;
   }

@@ -186,8 +186,8 @@ TDiffractivePhaseSpace::BuildDaughterList()
     else {
 
       cerr << "Calculating max wheight ("<<n<<" fs particles) for m="<<_xMassMax<< endl;
-      nbody.setMaxWeight(1.01 * nbody.estimateMaxWeight(_xMassMax,1000000));
-      cerr << "Max weight:" << nbody.maxWeight() << endl;
+      _phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(_xMassMax,1000000));
+      cerr << "Max weight:" << _phaseSpace.maxWeight() << endl;
 
     }
   }

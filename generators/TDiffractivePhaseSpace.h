@@ -130,10 +130,10 @@ namespace rpwa {
     void AddDecayProduct(const particleinfo& info);
     void SetSeed(int seed);
 
-  void setVerbose(bool flag){nbody.setVerbose(flag);}
+  void setVerbose(bool flag){_phaseSpace.setVerbose(flag);}
   void SetImportanceBW(double mass, double width){
-    nbody.setProposalBW(mass,width);
-    nbody.setWeightType(nBodyPhaseSpaceGen::IMPORTANCE);
+    _phaseSpace.setProposalBW(mass,width);
+    _phaseSpace.setWeightType(nBodyPhaseSpaceGen::IMPORTANCE);
   }
 
 
@@ -153,13 +153,12 @@ namespace rpwa {
      */
     unsigned int event(ostream&);
 
-  double impWeight() const {return nbody.impWeight();}
+  double impWeight() const {return _phaseSpace.impWeight();}
 
   private:
 
     // Private Data Members ------------
     rpwa::nBodyPhaseSpaceGen _phaseSpace;
-    rpwa::nBodyPhaseSpaceGen nbody;
 
 
     // target position
