@@ -88,6 +88,7 @@ int main(int argc, char** argv)
   unsigned int nevents=100;
   unsigned int max_attempts=0;
   string output_file("genpw.root");
+  string output_evt("genpw.evt");
   string integrals_file;
   bool hasint=false;
   string wavelist_file; // format: name Re Im
@@ -110,6 +111,8 @@ int main(int argc, char** argv)
       break;
     case 'o':
       output_file = optarg;
+      output_evt = output_file;
+      output_evt.replace(output_evt.find(".root"),5,".evt");
       break;
    case 'w':
       wavelist_file = optarg;
@@ -133,7 +136,7 @@ int main(int argc, char** argv)
     }
  
 
-  gRandom->SetSeed(seed);
+  
 
   TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
@@ -180,7 +183,8 @@ int main(int argc, char** argv)
   //string theta_file= reactConf.lookup("finalstate.theta_file");
 
   TDiffractivePhaseSpace difPS;
-  difPS.SetSeed(1236735);
+  cerr << "Seed=" << seed << endl;
+  difPS.SetSeed(seed);
   difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
   difPS.SetTPrimeSlope(tslope);
@@ -334,6 +338,8 @@ int main(int argc, char** argv)
   unsigned int tenpercent=(unsigned int)(nevents/10);
   unsigned int i=0;
   //difPS.setVerbose(true);
+  ofstream evtout(output_evt.c_str());
+
   while(i<nevents && ((max_attempts>0 && attempts<max_attempts) || max_attempts==0))
     {
 
@@ -360,6 +366,7 @@ int main(int argc, char** argv)
       
       ifstream istr("/tmp/event.evt");
       istr >> e;
+      evtout << e;
       istr.close();
 
       // cerr << e <<endl;
@@ -375,6 +382,8 @@ int main(int argc, char** argv)
       //cerr << i << endl;
       
       outtree->Fill();
+      
+
       if(i>0 && ( i % tenpercent==0) )cerr << "[" << (double)i/(double)nevents*100. << "%]";
 
       ++i;
@@ -391,6 +400,8 @@ int main(int argc, char** argv)
   hWeights->Write();
   outtree->Write();
   outfile->Close();
+  evtout.close();
+
  
   return 0;
 }
