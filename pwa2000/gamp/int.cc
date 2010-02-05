@@ -10,7 +10,7 @@
 void printUsage(char* prog) {
     cerr << "usage:"  << endl;
     cerr << "  creating     : " << prog \
-         << " [-d] [-m max] [-r n] files" << endl;
+         << " [-d] [-m max] [-r n] [-w weightfile] files" << endl;
     cerr << "  adding       : " << prog \
          << " [-d] [-m max] [-r n] -a intfile" << endl;
     cerr << "  display evts : " << prog \
@@ -20,10 +20,12 @@ void printUsage(char* prog) {
     cerr << "  help         : " << prog \
          << " [-h]" << endl;
     cerr << "where:" << endl;
-    cerr << "    max    : maximum number of events" << endl;
-    cerr << "    n      : number of events to renormalize to" << endl;
-    cerr << "    intfile: integral file to read" <<  endl;
-    cerr << "             (for adding to or renormalizing)" << endl;
+    cerr << "    max       : maximum number of events" << endl;
+    cerr << "    n         : number of events to renormalize to" << endl;
+    cerr << "    weightfile: file containing weights for de-weighting" << endl;
+    cerr << "                (values will be divided by weights!)" << endl;
+    cerr << "    intfile   : integral file to read" <<  endl;
+    cerr << "                (for adding to or renormalizing)" << endl;
     cerr << endl;
     exit(0);
 }
@@ -39,6 +41,7 @@ int main(int argc, char** argv) {
     int add = 1;
     int display_events = 0;
     string oldint;
+    string weightfilename;
     integral ni;
 
     
@@ -47,7 +50,7 @@ int main(int argc, char** argv) {
     extern char* optarg;
     int c;
     if (argc == 1) printUsage(argv[0]);
-    while ( (c = getopt(argc,argv, "dm:r:a:i:h:q")) != -1 )
+    while ( (c = getopt(argc,argv, "dm:r:a:i:h:w:q")) != -1 )
         switch(c) {
             case 'd':
                 debug = 1;    
@@ -68,6 +71,9 @@ int main(int argc, char** argv) {
                 add = 0;
                 oldint = optarg;    
                 break;
+            case 'w':
+                weightfilename = optarg;    
+                break;
             case 'h':
             case '?':
                 printUsage(argv[0]);
@@ -76,12 +82,16 @@ int main(int argc, char** argv) {
 #line 102 "../int.nw"
     
 #line 127 "../int.nw"
-    if (oldint.size()) {
+    if (oldint.size()!=0) {
         ifstream oldfile(oldint.c_str());
         ni.scan(oldfile);
     }
     else {
         ni.files(argv+optind);
+    }
+
+    if (weightfilename.size()!=0) {
+      ni.weightfile(weightfilename);
     }
 
 

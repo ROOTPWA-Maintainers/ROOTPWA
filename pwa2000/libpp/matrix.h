@@ -49,6 +49,7 @@ public:
   const Type& el(int, int) const;
   const Type& element(int i, int j) const { return this->el(i, j); }
   matrix operator * (const matrix&) const;
+  matrix operator *= (const double);
   matrix operator + (const matrix&) const;
   matrix operator += (const matrix&);
   matrix operator - (const matrix&) const;
@@ -69,7 +70,7 @@ public:
   fourVec operator * (const fourVec&) const;
   matrix operator * (Type) const;
 
-  friend fourVec operator *=<> (fourVec&, const matrix&);
+  //friend fourVec operator *=<> (fourVec&, const matrix&);
   // friend matrix operator *<> (Type, matrix&);
 
   const matrix& print(std::ostream& os = std::cout) const;
@@ -340,6 +341,16 @@ matrix<Type>::operator += (const matrix& M)
   for (int i = 0; i < this->_nrows; ++i)
     for (int j = 0; j < M._ncols; ++j)
       this->el(i, j) += (const_cast<matrix<Type>*>(&M))->el(i, j);
+  return(*this);
+}
+
+template <class Type>
+matrix<Type>
+matrix<Type>::operator *= (const double k)
+{
+  for (int i = 0; i < this->_nrows; ++i)
+    for (int j = 0; j < this->_ncols; ++j)
+      this->el(i, j) *= k;
   return(*this);
 }
 

@@ -39,11 +39,21 @@ integral& integral::operator=(const integral& ni) {
     this->_maxEvents = ni._maxEvents;
     this->_index = ni._index;
     this->_sum = ni._sum;
+    this->_weightfilename = ni._weightfilename;
     return *this;
 }
 
 #line 376 "../integral.nw"
     
+
+ void 
+ integral::weightfile(string filename){
+   _weightfilename=filename;
+ }
+
+
+
+
 #line 457 "../integral.nw"
 integral& integral::integrate() {
     if (this->_nwaves == 0) throw "no waves";
@@ -51,6 +61,21 @@ integral& integral::integrate() {
     int nRead = 0;
     ifstream *ampfile = new ifstream[this->_nwaves];
     complex<double> *amps = new complex<double>[this->_nwaves];
+
+    double weightint=0;
+
+    ifstream wfile;
+    bool hasweight=false;
+    //cerr << "trying to open " << _weightfilename << endl;
+    if(_weightfilename.size()!=0){
+      wfile.open(_weightfilename.c_str());
+      //cerr << "trying to open " << _weightfilename << endl;
+      if(!wfile) { 
+	cerr << "error: cannot open " << _weightfilename << endl;
+	throw "file not found";
+      }
+      hasweight=true;
+    }
 
     
 #line 485 "../integral.nw"
@@ -73,7 +98,13 @@ integral& integral::integrate() {
 #line 466 "../integral.nw"
     int eof = 0;
     while (!eof && _maxEvents?nRead<_maxEvents:1) {
-        
+    
+      double w=1;
+      if(hasweight)wfile >> w;
+      double weight=1./w; // we have to de-weight the events!!!
+      weightint+=weight;
+      //cerr << weight << endl;
+
 #line 508 "../integral.nw"
     int index;
     map<string, int>::iterator ampName = this->_index.begin();
@@ -99,7 +130,9 @@ integral& integral::integrate() {
         map<string, int>::iterator ampName_j = this->_index.begin();
         while( ampName_j != this->_index.end() ) {
             j = (*ampName_j).second;
-            this->_sum.el(i,j) += amps[i]*conj(amps[j]);
+	    complex<double> val=amps[i]*conj(amps[j]);
+	    if(hasweight)val*=weight;
+            this->_sum.el(i,j) += val;
             ampName_j++;
         }
         ampName_i++;
@@ -107,6 +140,13 @@ integral& integral::integrate() {
 
 #line 470 "../integral.nw"
     }
+
+
+    double weightnorm=weightint/(double)nRead;
+    cerr << "Weights integral= " << weightnorm << endl;
+    // renormailze to importants sampling weights integral:
+    _sum*=1./weightnorm;
+
 
     delete [] ampfile;
     delete [] amps;

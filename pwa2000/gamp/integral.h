@@ -19,6 +19,8 @@ class integral {
         int _nwaves;
         int _nevents;
         int _maxEvents;
+        string _weightfilename;
+
     public:
         
 #line 68 "../integral.nw"
@@ -48,6 +50,8 @@ class integral {
 
 #line 152 "../integral.nw"
         integral& files(list<string>);
+
+        void weightfile(string filename);
 
 #line 175 "../integral.nw"
         integral& renormalize(int n);
