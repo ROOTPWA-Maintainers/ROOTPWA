@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 #include <complex>
 #include <cstdlib>
 #include <string>
@@ -89,6 +90,7 @@ int main(int argc, char** argv)
   unsigned int max_attempts=0;
   string output_file("genpw.root");
   string output_evt("genpw.evt");
+  string output_wht("genpw.wht");
   string integrals_file;
   bool hasint=false;
   string wavelist_file; // format: name Re Im
@@ -113,6 +115,9 @@ int main(int argc, char** argv)
       output_file = optarg;
       output_evt = output_file;
       output_evt.replace(output_evt.find(".root"),5,".evt");
+      output_wht = output_file;
+      output_wht.replace(output_wht.find(".root"),5,".wht");
+
       break;
    case 'w':
       wavelist_file = optarg;
@@ -339,6 +344,8 @@ int main(int argc, char** argv)
   unsigned int i=0;
   //difPS.setVerbose(true);
   ofstream evtout(output_evt.c_str());
+  ofstream evtwht(output_wht.c_str());
+  evtwht << setprecision(10);
 
   while(i<nevents && ((max_attempts>0 && attempts<max_attempts) || max_attempts==0))
     {
@@ -348,7 +355,7 @@ int main(int argc, char** argv)
       
       p->Delete(); // clear output array
 
-      ofstream str("/tmp/event.evt");
+      ofstream str("tmpevent.evt");
       difPS.event(str);
       impweight=difPS.impWeight();
       str.close();
@@ -364,9 +371,10 @@ int main(int argc, char** argv)
       e.setIOVersion(1);
       
       
-      ifstream istr("/tmp/event.evt");
+      ifstream istr("tmpevent.evt");
       istr >> e;
       evtout << e;
+      evtwht << impweight << endl;
       istr.close();
 
       // cerr << e <<endl;
@@ -401,7 +409,7 @@ int main(int argc, char** argv)
   outtree->Write();
   outfile->Close();
   evtout.close();
-
+  evtwht.close();
  
   return 0;
 }
