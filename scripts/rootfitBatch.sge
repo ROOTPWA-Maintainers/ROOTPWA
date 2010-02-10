@@ -29,12 +29,13 @@
 # this script requires BINS to be set to the directory containing the massbins!
 # and FITDIR to the directory of the fit
 
-#export FITDIR=/lustre/e18/user/sneubert/Q3PiData/FITS/fit10
+#export FITDIR=/lustre/e18/user/sneubert/Q3PiData/FITS/fit11
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/3Pi/fit8re
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/2008/fit1
-export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/LOWT/fit6
-export MYBATCH=1000.1360 # will be used of no array job is started
+export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/LOWT/fit10
+#export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/MODELS/Model4/fit2
+export MYBATCH=1840.1960 # will be used of no array job is started
 
 # batches for array job
 BATCHARRAY=( 0000.0000 1000.1360 1360.1600 1600.1840 1840.2080 2080.2320 2320.2560 2560.3040 3040.3520 3520.4000 )
@@ -42,6 +43,9 @@ BATCHARRAY=( 0000.0000 1000.1360 1360.1600 1600.1840 1840.2080 2080.2320 2320.25
 #BATCHARRAY=( 0000.0000 500.820 820.1020 1020.1180 1180.1300 1300.1420 1420.1540 1540.1660 1660.1820 1820.2020 2020.2500 )
 
 # BATCHARRAY=( 0000.0000 1000.1350  1350.1600  1600.1850  1850.2050  2050.2300  2300.2550  2550.3000  3000.3500  3500.4000 )
+
+#BATCHARRAY=( 0000.0000 1480.1720  1720.1960  1960.2200  2200.2440 )
+
 
 if [ -n "$SGE_TASK_ID" ]
 then
@@ -53,14 +57,16 @@ fi
 #export BINS=/lustre/e18/user/sneubert/Q3PiData/BATCHES/$BATCH
 #export BINS=/afs/e18/compass/analysis/sneubert/5PiBatches/$BATCH
 #export BINS=/afs/e18/compass/analysis/sneubert/5PiMTBatches/$BATCH
-export BINS=/afs/e18/compass/analysis/sneubert/5PiLTBatches/$BATCH
+#export BINS=/afs/e18/compass/analysis/sneubert/5PiModels/M4cBatches/$BATCH
+export BINS=/afs/e18/compass/analysis/sneubert/5PiLTBatches3/$BATCH
 #export BINS=/lustre/e18/user/sneubert/2008/5PiBatches/$BATCH
-export OUTFILE=$BATCH.result.root
+export OUTFILE=$BATCH.result.acc.root
 export WLIST=wavelist
 export RANK=1
 export RENORM=-N
 export NORM=norm.int
-export ACC=norm.int
+export ACC=accnorm.int
+export ACCEVENTS="-A 50000"
 
 cd ~/scratch/COMPASS/rootpwa/trunk/
 source setup.sh

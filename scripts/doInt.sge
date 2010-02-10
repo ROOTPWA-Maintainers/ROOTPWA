@@ -12,15 +12,17 @@ cd ~/scratch/COMPASS/rootpwa/trunk
 source setup.sh
 cd scripts/
 
-#DATADIR=/afs/e18/compass/analysis/sneubert/5PiLTData3/
-DATADIR=/afs/e18/compass/analysis/sneubert/5PiModels/Model4c/
+DATADIR=/afs/e18/compass/analysis/sneubert/5PiLTData3/
+#DATADIR=/afs/e18/compass/analysis/sneubert/5PiModels/ImpTest/pieces2/
 
 WAVESETDIR=$ROOTPWA/keyfiles/key5pi/
 
 # choose which amplitudes to do
-DOAMPS=1
-DOPSP=1
-#DOACC=1
+#DOAMPS=1
+#DOPSP=1
+DOACC=1
+
+
 
 cd $DATADIR
 
@@ -36,7 +38,7 @@ elif [ ! -n "$SGE_TASK_ID" ]; then
 fi
 echo SGE_TASK_ID=$SGE_TASK_ID
 # start counting at 0 !!!
-let "INDEX = SGE_TASK_ID -1"
+let "INDEX = SGE_TASK_ID"
 echo INDEX=$INDEX
 
 MYBIN=`echo $BINS | gawk -F " " '{ print $'${INDEX}"}";`
@@ -48,6 +50,8 @@ if [ ! -d $DATADIR/$MYBIN ]; then
     exit;
 fi
 
+WEIGHTS="-w ../$MYBIN.genbod.wht"
+
 if [ -n "$DOPSP" ]; then
   echo "--- Doing PSPAMPS ----------------";
   cd $DATADIR/$MYBIN/PSPAMPS;
@@ -56,7 +60,7 @@ if [ -n "$DOPSP" ]; then
   	addamp $i OLD/;
   done;
 
-  int *.amp > norm.int;
+  int $WEIGHTS *.amp > norm.int;
   cp norm.int $DATADIR/$MYBIN/AMPS;
 fi;
 

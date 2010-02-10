@@ -40,11 +40,11 @@ for i in $1*; do
     export NUMACCAMP=`ls $i/ACCAMPS | grep .amp | wc -l`
 
     MAXN=0;
-    MINN=1000000;
+    MINN=100000000;
     MAXNMC=0;
-    MINNMC=1000000;
+    MINNMC=100000000;
     MAXNACC=0;
-    MINNACC=1000000;
+    MINNACC=100000000;
 
     if [ $NUMAMP -gt 0 ]; then
     for j in $i/AMPS/*.amp; do
@@ -93,6 +93,7 @@ fi
 
     if [[ -e $i/AMPS/norm.int ]]; then
 	if grep -q nan $i/AMPS/norm.int ; then echo "${TXT_RED}!!${TXT_RESET}";
+	elif grep -q "(0,0)" $i/AMPS/norm.int ; then echo "${TXT_RED}(0,0)${TXT_RESET}"; 
 	else echo -e "\t ok";
 	fi
     else echo -e "\t no norm";

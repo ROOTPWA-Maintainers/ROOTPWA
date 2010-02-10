@@ -390,6 +390,16 @@ TFitResult::coherence(const unsigned int waveIndexA,
   const double          rhoAA = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
   const double          rhoBB = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
   const complex<double> rhoAB = spinDensityMatrixElem(waveIndexA, waveIndexB);
+
+  cout << "coherence("<<waveIndexA<<","<<waveIndexB<<"): "
+       <<rhoAA<<"  "
+       <<rhoBB<<"  "
+       <<rhoAB<<"  "
+       <<sqrt(std::norm(rhoAB))<<"  "
+       <<sqrt((rhoAA * rhoBB))<<endl;
+    
+
+
   return sqrt(std::norm(rhoAB) / (rhoAA * rhoBB));
 }
 

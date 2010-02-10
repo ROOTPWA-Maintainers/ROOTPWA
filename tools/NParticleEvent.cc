@@ -17,6 +17,7 @@
 
 // C/C++ Headers ----------------------
 #include "TVector3.h"
+#include <iomanip>
 
 // Collaborating Class Headers --------
 #include "FSParticle.h"
@@ -166,4 +167,34 @@ NParticleEvent::permute(int n, int k, int* permu, int x, int i){
       if(ok)_NPStates.push_back(s);
     } // end if(i==k)
   } // end loop over remaining states
+}
+
+void
+NParticleEvent::writeGAMP(ostream& out){
+  // number of particles
+  out<<nParticles()+1<<std::endl;
+  int geantId=9;
+  // beam:
+  TLorentzVector p=*_beam;
+  int q=*_qbeam>0 ? +1 : -1;
+  out << geantId <<" "
+      <<q<<" "<< std::setprecision(9)
+      <<p.X()<<" " // px
+      <<p.Y()<<" " // py
+      <<p.Z()<<" " // pz
+      <<p.E()<<std::endl; // E
+
+  // pions:
+  for(unsigned int i=0;i<nParticles();++i){
+    FSParticle pi=_fsparticles[i];
+    p=pi.p();
+    q=pi.q()>0 ? +1 : -1;
+    geantId= q>0 ? 8 : 9;
+    out << geantId <<" "
+        <<q<<" "
+        <<p.X()<<" " // px
+        <<p.Y()<<" " // py
+        <<p.Z()<<" " // pz
+        <<p.E()<<std::endl; // E
+  }
 }

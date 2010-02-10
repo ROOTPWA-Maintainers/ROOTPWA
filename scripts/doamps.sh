@@ -17,9 +17,9 @@ for i in *.key ;
 done
 
 # now do adding of amps
-for i in *list.dat ; 
-  do echo "Adding amplitudes as specified in $i" ;
-  addamp $i $AMPDIR/OLD/ ;
-done;
+#for i in *list.dat ; 
+#  do echo "Adding amplitudes as specified in $i" ;
+#  addamp $i $AMPDIR/OLD/ ;
+#done;
 
 cd $WORKDIR

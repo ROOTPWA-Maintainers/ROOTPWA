@@ -108,7 +108,8 @@ public:
 	    const std::string& waveListFileName,
 	    const std::string& normIntFileName,
 	    const std::string& accIntFileName,
-	    const std::string& ampDirName = ".");  ///< prepares all internal data structures
+	    const std::string& ampDirName = ".",
+	    const unsigned int numbAccEvents=0);  ///< prepares all internal data structures
   
 
   
@@ -164,6 +165,8 @@ private:
 
   bool _debug;              // if true debug messages are printed
   bool _useNormalizedAmps;  // if true normalized amplitudes are used
+
+  unsigned int _numbAccEvents; // number of input events used for acceptance integrals (accepted + rejected!)
 
   std::vector<std::string> _waveNames;       // wave names
   std::vector<int>         _waveRefl;        // reflectivities of waves

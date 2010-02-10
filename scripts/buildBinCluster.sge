@@ -2,7 +2,7 @@
 # Select queue
 #$ -l long=TRUE,h_vmem=100M
 # Divert output
-#$ -o /lustre/e18/user/sneubert/logs
+#$ -o /afs/e18/compass/analysis/sneubert/LOGS/
 # Write error in same file
 #$ -j y
 
@@ -11,7 +11,7 @@
 
 export DIARYFILE=$HOME/scratch/COMPASS/rootpwa/trunk/scripts/bindiary.txt
 
-export SET=F21565SET
+export SET=SELECTION1
 export KEY=$HOME/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/$SET
 echo "---- STARTING AMPLITUDE CALCULATIONS"; 
 echo "---- WAVESET: $KEY";
@@ -28,8 +28,9 @@ cd scripts/
 # find bin
 TEMPLIST=`mktemp -t dirlist.XXXXXX`
 #ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiData
-ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiLTData2
+ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiLTData3
 #ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiMTData
+#ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiModels/ImpTest/pieces3
 #ROOTDIR=/lustre/e18/user/sneubert/2008/5PiBins
 #ROOTDIR=/lustre/e18/user/sneubert/5PiMC/ACC_HT
 echo ROOTDIR=$ROOTDIR

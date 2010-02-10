@@ -32,7 +32,7 @@
 #include "TMultiGraph.h"
 #include "TFile.h"
 #include "integral.h"
-
+#include "TH1D.h"
 
 
 bool SameJPCEPS(TString s1, TString s2){
@@ -61,10 +61,13 @@ main(int argc, char** argv){
     integrals.push_back(integral());
     integrals.back().scan(file);
     masses.push_back(mass);
-    cout << mass << endl;
+    cerr << mass << endl;
     //getline(0);
     config.ignore(255,'\n');
   }
+  double weights[masses.size()];
+  for(unsigned int i=0;i<masses.size();++i)weights[i]=1;
+
 
   list<string> waves=integrals[0].files();
   //unsigned int nwaves=waves.size();
@@ -73,12 +76,32 @@ main(int argc, char** argv){
   // each entry records mass and maximum integral value
   map<TString,pair<double,double> > wavemap; 
   map<TString,TGraph*> graphs;
+  map<TString,TGraph*> diaggraphs_re;
+  map<TString,TGraph*> diaggraphs_im;
+  
+
   TMultiGraph* mg=new TMultiGraph();
+  TMultiGraph* mg_re=new TMultiGraph();
+  TMultiGraph* mg_im=new TMultiGraph();
+  
   while(it!=waves.end()){
     wavemap[*it]=pair<double,double>(0,0);
     graphs[*it]=new TGraph(masses.size());
     graphs[*it]->SetName(it->c_str());
     mg->Add(graphs[*it]);
+    list<string>::iterator itb=it;
+    ++itb;
+    while(itb!=waves.end()){
+      TString s=(*it);
+      s+=(*itb);
+      
+      diaggraphs_re[s]=new TGraph(masses.size());
+      diaggraphs_im[s]=new TGraph(masses.size());
+      mg_re->Add(diaggraphs_re[s]);
+      mg_im->Add(diaggraphs_im[s]);
+      
+      ++itb;
+    }
     ++it;
   }
 
@@ -101,8 +124,24 @@ main(int argc, char** argv){
       it3=it2;
       while(it3!=wavemap.end()){
 	try{
-	  double val=integrals[i].val(it2->first.Data(),it3->first.Data()).real();
-	  if(it2==it3){
+	  std::complex<double> c=integrals[i].val(it2->first.Data(),it3->first.Data());
+	  //double n1=sqrt(integrals[i].val(it2->first.Data(),it2->first.Data()).real());
+	  //double n2=sqrt(integrals[i].val(it3->first.Data(),it3->first.Data()).real());
+	  //double norm=n1*n2;
+	  double re=c.real();///norm;
+	  double im=c.imag();///norm;
+	  double val=integrals[i].val(it2->first.Data(),it3->first.Data()).real();///norm;
+	  if(it2!=it3){
+	    TString s=(it2->first);
+	    s+=it3->first;
+	    if(diaggraphs_re[s]!=NULL){
+	      diaggraphs_re[s]->SetPoint(i,masses[i],re);
+	      diaggraphs_re[s]->SetName(s);
+	      diaggraphs_im[s]->SetPoint(i,masses[i],im);
+	      diaggraphs_im[s]->SetName(s);
+	    }
+	  }
+	  else if(it2==it3){
 	    graphs[it2->first]->SetPoint(i,masses[i],val);
 	    if(it2->second.second<val){
 	      it2->second=pair<double,double>(masses[i],val);
@@ -139,8 +178,48 @@ main(int argc, char** argv){
   }
 
   TFile* file=TFile::Open("normgraphs.root","RECREATE");
+  // create histos
+  map<TString,TGraph*>::iterator git=diaggraphs_re.begin();
+  while(git!=diaggraphs_re.end()){
+    TGraph* g=git->second;
+    double max=-1E6;
+    double min=1E6;
+    double mean=0;
+    double val[masses.size()];
+    for(unsigned int i=1; i<masses.size(); ++i){
+      double x,y;
+      g->GetPoint(i,x,y);
+      if(max<y)max=y;
+      if(min>y)min=y;
+      mean+=y;
+      val[i]=y;
+    }
+    mean/=(double)masses.size();
+    double range=(max-min)*0.2;
+    //min/
+    //double var=0;
+    // for(unsigned int i=1; i<masses.size(); ++i){
+//       val[i]=(mean-val[i])/mean;
+//       var+=val[i]*val[i];
+//     }
+//     var=sqrt(var);
+    
+    //cerr << min << "   " << max << endl;
+    TString name=g->GetName();
+    name.Prepend("h");
+    TH1D* histo=new TH1D(name,name,20,min-range,max+range);
+    histo->FillN(masses.size(),val,weights);
+    histo->Write();
+    ++git;
+  }
+
+
+
+  
   mg->Write("graphs");
   mg2->Write("jpcgraphs");
+  mg_re->Write("greal");
+  mg_im->Write("gimag");
   file->Close();
 
   return 0;

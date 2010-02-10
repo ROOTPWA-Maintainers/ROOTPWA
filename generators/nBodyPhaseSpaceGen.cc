@@ -287,8 +287,13 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
 	  _M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
 
       //cerr << _M[1] << endl;
-      if(_weightType==IMPORTANCE)
-      _impweight=TMath::BreitWigner(_M[_n-2],_isoBWMass,_isoBWWidth);
+      if(_weightType==IMPORTANCE){
+	_impweight=TMath::BreitWigner(_M[_n-2],_isoBWMass,_isoBWWidth);
+	// BE CAREFULL:::: hard coded a1 BW in 3pi mass
+	_impweight*=TMath::BreitWigner(_M[_n-3],1.23,0.425);
+	// BE CAREFULL:::: hard coded rho BW in 2pi mass
+	_impweight*=TMath::BreitWigner(_M[_n-4],0.77,0.15);
+      }
       //cerr << _impweight << endl;
     } // end default mass picking
     break;

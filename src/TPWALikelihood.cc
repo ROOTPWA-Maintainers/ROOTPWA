@@ -62,7 +62,8 @@ TPWALikelihood<T>::TPWALikelihood()
     _Ltime(0),
     _Ntime(0),
     _debug(true),
-    _useNormalizedAmps(true)
+    _useNormalizedAmps(true),
+    _numbAccEvents(0)
 {
   _nmbWavesRefl[0] = 0;
   _nmbWavesRefl[1] = 0;
@@ -450,8 +451,10 @@ TPWALikelihood<T>::init(const unsigned int rank,
                         const std::string& waveListFileName,
                         const std::string& normIntFileName,
                         const std::string& accIntFileName,
-                        const std::string& ampDirName)
+                        const std::string& ampDirName,
+			const unsigned int numbAccEvents)
 {
+  _numbAccEvents=numbAccEvents;
   readWaveList(waveListFileName);
   buildParDataStruct(rank);
   readIntegrals(normIntFileName, accIntFileName);
@@ -628,7 +631,7 @@ TPWALikelihood<T>::readIntegrals(const string& normIntFileName,  // name of file
   // !!! integral.scan() performs no error checks!
   accInt.scan(intFile);
   intFile.close();
-  //_accInt.events(100000); TODO: add possibility to rescale here!
+  if(_numbAccEvents!=0)accInt.events(_numbAccEvents); 
   _accMatrix = reorderedIntegralMatrix(accInt);
 }
 

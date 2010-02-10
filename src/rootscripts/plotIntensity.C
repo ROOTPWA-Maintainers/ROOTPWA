@@ -147,7 +147,7 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
   graph->GetYaxis()->SetTitle("Intensity");
   {
     double       maxY;
-    const double factor = 5;
+    const double factor = 500;
     if (maxYVal > factor * maxYMean) {  // scale y-axis such that the important points are visible
       maxY = factor * maxYMean;
       cout << "    adjusting y scaling to [" << -0.1 * maxY << ", " << 1.1 * maxY << "]" << endl;

@@ -18,7 +18,7 @@ do
   UPPER=`echo $BIN | gawk -F"." '{ print $2 }' `;
   echo "$LOWER...$UPPER"
   cd $i/AMPS;
-  time pwafit -q -w $FITDIR/$WLIST -o $FITDIR/$OUTFILE  -r $RANK -l $LOWER -u $UPPER $RENORM -a $ACC -n $NORM
+  time pwafit -q -w $FITDIR/$WLIST -o $FITDIR/$OUTFILE  -r $RANK -l $LOWER -u $UPPER $RENORM -a $ACC $ACCEVENTS -n $NORM
 
   #cd -;
 done ;

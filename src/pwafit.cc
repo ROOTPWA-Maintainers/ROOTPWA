@@ -79,6 +79,7 @@ usage(const string& progName,
        << "        -N         use normalization of decay amplitudes (default: false)" << endl
        << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
        << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
+       << "        -A #       number of input events to normalize acceptance to" << endl
        << "        -r #       rank of spin density matrix (default: 1)" << endl
        << "        -M name    minimizer (default: Minuit2)" << endl
        << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
@@ -126,6 +127,7 @@ main(int    argc,
   bool         useNormalizedAmps  = false;                  // if true normalized amplitudes are used
   string       normIntFileName    = "";                     // file with normalization integrals
   string       accIntFileName     = "";                     // file with acceptance integrals
+  unsigned int numbAccEvents      = 0;                      // number of events used for acceptance integrals
   unsigned int rank               = 1;                      // rank of fit
   string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
   double       minimizerTolerance = 1e-10;                  // minimizer tolerance
@@ -133,7 +135,7 @@ main(int    argc,
   extern char* optarg;
   // extern int optind;
   int c;
-  while ((c = getopt(argc, argv, "l:u:w:d:o:S:Nn:a:r:M:m:t:qh")) != -1)
+  while ((c = getopt(argc, argv, "l:u:w:d:o:S:Nn:a:A:r:M:m:t:qh")) != -1)
     switch (c) {
     case 'l':
       massBinMin = atof(optarg);
@@ -162,6 +164,9 @@ main(int    argc,
       break;
     case 'a':
       accIntFileName = optarg;
+      break;
+    case 'A':
+      numbAccEvents = atoi(optarg);
       break;
     case 'r':
       rank = atoi(optarg);
@@ -207,10 +212,11 @@ main(int    argc,
        << "    use normalization ...................... "  << useNormalizedAmps       << endl
        << "        file with normalization integral ... '" << normIntFileName  << "'" << endl
        << "        file with acceptance integral ...... '" << accIntFileName   << "'" << endl
+       << "        number of acceptance norm. events .. "  << numbAccEvents    << endl
        << "    rank of fit ............................ "  << rank                    << endl
        << "    minimizer .............................. "  << minimizerType[0] << ", " << minimizerType[1] << endl
        << "    quiet .................................. "  << quiet << endl;
-
+  
   // ---------------------------------------------------------------------------
 
   gRandom->SetSeed(seed);
@@ -221,7 +227,7 @@ main(int    argc,
   if (quiet)
     L.setQuiet();
   L.useNormalizedAmps(useNormalizedAmps);
-  L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName);
+  L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
   if (!quiet)
     cout << L << endl;
   const unsigned int nmbPar = L.NDim();
