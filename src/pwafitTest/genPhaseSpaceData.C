@@ -35,20 +35,21 @@ const double gKaonMass	 = 0.493677;
 // steering of the 3 particle decay
 // last particle is also the beam particle
 
+/*
 // decay into 3 pions
 const string header(" *************************************\n * simulating decay into pi- pi+ pi- *\n *************************************\n");
 const int geantIds[3] = { 8,  9,  9};
 const int charges[3]  = {+1, -1, -1};
 Double_t daughterMasses[3] = {gPionMass, gPionMass, gPionMass};
+*/
 
-/*
 // K- p -> K- pi+ pi- p
 //const int numbPart = 3;
 const string header(" ************************************\n * simulating decay into K- pi+ pi- *\n ************************************\n");
 const int geantIds[3] = { 8,  9,  12};
 const int charges[3]  = {+1, -1, -1};
 Double_t daughterMasses[3] = {gPionMass, gPionMass, gKaonMass};
-*/
+
 
 const double gbeampartMass2 = daughterMasses[2]*daughterMasses[2];
 
@@ -151,35 +152,40 @@ writeComGeantAscii(ostream&         out,
 		  const TLorentzVector& 	beam,
 				TGenPhaseSpace&     event,
 		  const TVector3&			vertexpos,
-		  const TLorentzVector&		recoilproton)
+		  const TLorentzVector&		recoilproton,
+		  bool  formated = true) // true: text file ; false: binary file
 {
-  if (!out) {
-    cerr << "Output stream is not writable." << endl;
-    return false;
-  }
+	if (!out) {
+	cerr << "Output stream is not writable." << endl;
+	return false;
+	}
 
-  // total number of particles
-  out << 5 << endl;
-  // vertex position in cm
-  // note that Comgeant's coordinate system is different
-  out << vertexpos.Z() << " " << vertexpos.X() << " " << vertexpos.Y() << endl;
-  // beam particle: geant ID , -p_z, -p_x, -p_y must go the opposite direction upstream and should be defined as mulike with PID 44 in Comgeant
-  out << setprecision(numeric_limits<double>::digits10 + 1)
-      << "44 " << -beam.Pz() << " " << -beam.Px() << " " << -beam.Py() << endl;// << " " << beam.E() << endl;
-  // the recoil proton
-  out << setprecision(numeric_limits<double>::digits10 + 1)
-      << "14 " << recoilproton.Pz() << " " << recoilproton.Px() << " " << recoilproton.Py() << endl;// << " " << beam.E() << endl;
-  for (unsigned int i = 0; i < 3; ++i) {
-    TLorentzVector* hadron = event.GetDecay(i);
-    if (!hadron) {
-      cerr << "genbod returns NULL pointer to Lorentz vector for daughter " << i << "." << endl;
-      continue;
-    }
-    // hadron: geant ID, p_z, p_x, p_y
-    out << setprecision(numeric_limits<double>::digits10 + 1)
-    << geantIds[i] << " " << hadron->Pz() << " " << hadron->Px() << " " << hadron->Py() << endl;// << " " << hadron->E() << endl;
-    }
-  return true;
+	if (formated){
+	// total number of particles
+	out << 5 << endl;
+	// vertex position in cm
+	// note that Comgeant's coordinate system is different
+	out << vertexpos.Z() << " " << vertexpos.X() << " " << vertexpos.Y() << endl;
+	// beam particle: geant ID , -p_z, -p_x, -p_y must go the opposite direction upstream and should be defined as mulike with PID 44 in Comgeant
+	out << setprecision(numeric_limits<double>::digits10 + 1)
+	  << "44 " << -beam.Pz() << " " << -beam.Px() << " " << -beam.Py() << endl;// << " " << beam.E() << endl;
+	// the recoil proton
+	out << setprecision(numeric_limits<double>::digits10 + 1)
+	  << "14 " << recoilproton.Pz() << " " << recoilproton.Px() << " " << recoilproton.Py() << endl;// << " " << beam.E() << endl;
+	}
+	else
+
+	for (unsigned int i = 0; i < 3; ++i) {
+		TLorentzVector* hadron = event.GetDecay(i);
+		if (!hadron) {
+		  cerr << "genbod returns NULL pointer to Lorentz vector for daughter " << i << "." << endl;
+		  continue;
+		}
+		// hadron: geant ID, p_z, p_x, p_y
+		out << setprecision(numeric_limits<double>::digits10 + 1)
+		<< geantIds[i] << " " << hadron->Pz() << " " << hadron->Px() << " " << hadron->Py() << endl;// << " " << hadron->E() << endl;
+	}
+	return true;
 }
 
 
@@ -225,8 +231,10 @@ GetPhi(	//ostream&         		out,
 // main routine
 void
 genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of mass bin [GeV/c^2]
+			// if -1 then the lower mass will be calculated to be the minimum
 		  const double   xMassMax          = 2.140,  // upper bound of mass bin [GeV/c^2]
 		  const TString& outFileName       = "2100.2140.genbod.evt",
+		    // if empty filename will be generated according to mass limits
 		  const TString& thetaHistFileName = "./hTheta.root",  // histogram with experimental distribution of scattering angle
 		  const int      nmbEvent          = 2000,
 		  const bool     plot              = true,
@@ -283,21 +291,40 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
     hE        = new TH1D("hE", "E", 100, 180, 200);
   }*/
 
+  double _xMassMin = xMassMin;
+  if (_xMassMin < 0){
+	  _xMassMin = 0;
+	  for (int i = 0; i < 3; i++){
+		  _xMassMin+=daughterMasses[i];
+	  }
+	  cout << " calculating the invariant mass bin to be " << _xMassMin;
+  }
+
+  // generate filename if needed
+  TString _outFileName = outFileName;
+  if (_outFileName == ""){
+	  stringstream _filename;
+	  _filename << (int) (_xMassMin*1e3) << "." << (int) (xMassMax*1e3) << ".genbod.26";
+	  cout << " created genbot events filename: " << _filename.str() << endl;
+	  _outFileName = _filename.str();
+  }
+
   // open output files
-  ofstream outFile(outFileName);
+  ofstream outFile(_outFileName);
 
   // generate filename if needed
   TString _outFileNameComGeant = outFileNameComGeant;
   if (_outFileNameComGeant == ""){
 	  stringstream _filename;
-	  _filename << (int) (xMassMin*1e3) << "." << (int) (xMassMax*1e3) << ".genbod.fort.26";
+	  _filename << (int) (_xMassMin*1e3) << "." << (int) (xMassMax*1e3) << ".genbod.fort.26";
 	  cout << " created ComGeantevents filename: " << _filename.str() << endl;
 	  _outFileNameComGeant = _filename.str();
   }
 
-  ofstream outFileComGeant(_outFileNameComGeant);
+  ofstream outFileComGeant(_outFileNameComGeant);//, ios::binary);
+  //cout << " Writing binary outputfile for ComGeant ! " << endl; // remove ios::binary to make a textfile (bigger)
 
-  cout << "Writing " << nmbEvent << " events to file '" << outFileName << " and " << _outFileNameComGeant << "'." << endl;
+  cout << "Writing " << nmbEvent << " events to file " << _outFileName << " and " << _outFileNameComGeant << "." << endl;
 
   // get theta histogram
   TH1* thetaDist = NULL;
@@ -326,7 +353,7 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
 
     // sample theta directly:
     /*const double*/ theta  = thetaDist->GetRandom();
-    const double xMass  = gRandom->Uniform(xMassMin, xMassMax);
+    const double xMass  = gRandom->Uniform(_xMassMin, xMassMax);
     const double xMass2 = xMass * xMass;
 
     const double Ea = beam.E();
@@ -364,7 +391,11 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
     }
     double maxWeight = phaseSpace.GetWtMax();
     double weight    = phaseSpace.Generate();
-    if (weight / maxWeight < gRandom->Uniform())  // recjection sampling
+
+    if (weight / maxWeight < gRandom->Uniform())
+    // rejection sampling is needed to have more events for the higher
+    // masses. For higher masses the phase space is increased and therefore
+    // more events are needed to keep the statistical error on the same level
       continue;
 
     // event is accepted
@@ -382,7 +413,7 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
 				*(phaseSpace.GetDecay(2))).M();
     M23 	= ( *(phaseSpace.GetDecay(1)) +
 				*(phaseSpace.GetDecay(2))).M();
-    //theta 	= 0;
+    theta 	= q.Theta();
     dphi	= GetPhi(beam, phaseSpace, q);
     Vx 		= vertexPos.X();
     Vy 		= vertexPos.Y();
@@ -427,11 +458,11 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
     c->cd(11);
     values->Draw("Vz");
     c->cd(12);
-    values->Draw("M12:M13");
+    values->Draw("M12:M13", "", "COLZ");
     c->cd(13);
-    values->Draw("M12:M23");
+    values->Draw("M12:M23", "", "COLZ");
     c->cd(14);
-    values->Draw("M13:M23");
+    values->Draw("M13:M23", "", "COLZ");
   }
 }
 
