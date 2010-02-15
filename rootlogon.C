@@ -40,7 +40,7 @@
   gSystem->Load("librootpwatools.so");
 
   gSystem->AddIncludePath("-I$ROOTPWA/tools");
-
+  gSystem->AddIncludePath("-I$ROOTPWA/generators");
  
   gStyle->SetPadColor(0);
   gStyle->SetCanvasColor(0);
