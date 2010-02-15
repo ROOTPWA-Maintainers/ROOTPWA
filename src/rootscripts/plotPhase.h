@@ -45,8 +45,7 @@
 
 
 // signature with wave names
-//TGraphErrors*
-TGraph*
+TGraphErrors*
 plotPhase(TTree*             tree,                 // fitResult tree
 	  const std::string& waveNameA,            // name of first wave
 	  const std::string& waveNameB,            // name of second wave
@@ -58,8 +57,7 @@ plotPhase(TTree*             tree,                 // fitResult tree
 	  const string&      branchName = "fitResult_v2");
 
 // signature with wave indices
-//TGraphErrors*
-TGraph*
+TGraphErrors*
 plotPhase(TTree*             tree,                 // fitResult tree
 	  const int          waveIndexA,           // index of first wave
 	  const int          waveIndexB,           // index of second wave

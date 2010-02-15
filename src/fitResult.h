@@ -163,6 +163,9 @@ namespace rpwa {
     inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;  ///< prints all wave names
     inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
     inline std::ostream& printWaves       (std::ostream& out = std::cout) const;  ///< prints all wave intensities and their errors
+    std::ostream& printAmpsGenPW(std::ostream& out = std::cout) const;
+
+
 
     virtual inline std::ostream& print(std::ostream& out = std::cout) const;
     friend std::ostream& operator << (std::ostream&    out,
@@ -357,6 +360,21 @@ rpwa::fitResult::printWaves(std::ostream& out) const
   }
   return out;
 }
+
+// prints all amplitudes in format used for genpw
+// only supports rank 1 at the moment!!!
+inline
+std::ostream&
+rpwa::fitResult::printAmpsGenPW(std::ostream& s) const {
+  for(unsigned int i=0;i<_waveNames.size();++i){
+    s << _waveNames[i] << " "  
+      << prodAmp(i).real() << " "
+      << prodAmp(i).imag() << std::endl;
+  } 
+  return s;
+}
+
+
 
 
 /// dumps all raw data stored in object
