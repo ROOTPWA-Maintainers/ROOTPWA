@@ -78,8 +78,8 @@ cerr << "usage:" << endl
      << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
      << "        -i <file>  integral file"<< endl 
      << "        -r <file>  reaction config file"<< endl
-     << "        -M #   lower boundary of mass range (overwrites values from config file) " << endl
-     << "        -B #   width of mass bin" << endl
+     << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
+     << "        -B #   width of mass bin in MeV" << endl
      << endl;
  exit(errCode);
 }
@@ -194,8 +194,8 @@ int main(int argc, char** argv)
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
   if(overwriteMass){
-    mmin=massLower;
-    mmax=mmin+massBinWidth;
+    mmin=massLower/1000.0;
+    mmax=mmin+massBinWidth/1000.0;
 
   }
   double tslope=reactConf.lookup("finalstate.t_slope");
