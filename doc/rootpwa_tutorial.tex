@@ -182,6 +182,19 @@ RHO3SET      RHOPrimeSET
 \end{verbatim}
 Note the file {\tt pdgTable.txt}! The amplitude building scripts will uses this file to look up the available isobar states. It has to be at this location!
 
+\section{Creating Phase Space Monte Carlo Events with {\tt genpw}}
+The program {\tt genpw} can be used to generate phase space events which are the basis for the numerical calculation of the normalization (and acceptance) integrals.
+
+A typical call to genpw for this purpose would look like the following:
+
+\begin{verbatim}
+> genpw -n 20000 -o 1000.1040.genbod.root -r generators/5piDiffractive2004.conf
+\end{verbatim}
+
+This command will generate 3 files {\tt 1000.1040.genbod.root} and  {\tt 1000.1040.genbod.evt} and {\tt 1000.1040.genbod.wht}. The first two files contain the phase space events while the third file contains weights for the events which can be used for importance sampling integration. (Don't be confused by messages talking about breit-wigners at the moment, this feature is deactivated when you use the options like above).
+
+The reaction is defined in the config file given by the option {\tt -r}.
+
 \section{Building Amplitudes and Normalization Integrals}
 In the following we assume that you have set up your working directories as described in the preceeding section.
 
