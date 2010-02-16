@@ -57,9 +57,9 @@ int main(int argc, char** argv) {
   }
 
   TString path;
-  double mstart;
-  double mbin;
-  int nbins;
+  double mstart = 0;
+  double mbin = 0.04;
+  int nbins = 0;
 
   int c;
   while ((c = getopt(argc, argv, "n:s:b:o:h")) != -1)
