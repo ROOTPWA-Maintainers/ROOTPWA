@@ -1,8 +1,8 @@
 #!/bin/bash
 
 export WORKDIR=/afs/e18/compass/analysis/sneubert/
-export FITDIR=$WORKDIR/PWAFITS/LOWT/fit11/
-export FITFILE=$FITDIR/fit11.acc.root
+export FITDIR=$WORKDIR/PWAFITS/LOWT/fit13/
+export FITFILE=$FITDIR/fit13.acc.root
 export PLOTFILE=${FITFILE/.root/.plots.root}
 export BOOKY=${FITFILE/.root/.booky.pdf}
 export DATADIR=$WORKDIR/5PiLTData3/
@@ -25,6 +25,7 @@ for i in *; do
     test -s $i.root || cat $i.evt | evt2tree $i.root;
     # run evtweight on accepted events:
     cd ACCAMPS
+    # cd PSPAMPS
     WEIGHTEDFILE=${FITFILE/.root/.kineval.$i.root}
     test -s $WEIGHTEDFILE || evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -m $i  
     # produce nice plots

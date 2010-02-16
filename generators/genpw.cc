@@ -66,7 +66,7 @@ void printUsage(char* prog,
 {
 cerr << "usage:" << endl
      << prog
-     << " -n # [-a # -m #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
+     << " -n # [-a # -m # -M # -B #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
      << "    where:" << endl
      << "        -n #       (max) number of events to generate (default: 100)" << endl
      << "        -a #       (max) number of attempts to do (default: infty)" \
@@ -77,7 +77,9 @@ cerr << "usage:" << endl
      << "        -w <file.root>  to use TFitBin tree as input"<< endl 
      << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
      << "        -i <file>  integral file"<< endl 
-     << "        -r <file>  reaction config file"<< endl   
+     << "        -r <file>  reaction config file"<< endl
+     << "        -M #   lower boundary of mass range (overwrites values from config file) " << endl
+     << "        -B #   width of mass bin" << endl
      << endl;
  exit(errCode);
 }
@@ -98,9 +100,12 @@ int main(int argc, char** argv)
   string reactionFile;
   double maxWeight=0;
   int seed=123456;
+  double massLower=0;
+  double massBinWidth=0;
+  bool overwriteMass=false;
 
   int c;
-  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:h")) != -1)
+  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
@@ -135,6 +140,15 @@ int main(int argc, char** argv)
    case 'm':
       maxWeight = atof(optarg);
       break;
+   case 'M':
+      massLower = atof(optarg);
+      overwriteMass=true;
+      break;
+   case 'B':
+      massBinWidth = atof(optarg);
+      overwriteMass=true;
+      break;
+
     case 'h':
       printUsage(argv[0]);
       break;
@@ -179,6 +193,11 @@ int main(int argc, char** argv)
 
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
+  if(overwriteMass){
+    mmin=massLower;
+    mmax=mmin+massBinWidth;
+
+  }
   double tslope=reactConf.lookup("finalstate.t_slope");
   double binCenter=500 * (mmin + mmax);
 
@@ -221,27 +240,31 @@ int main(int argc, char** argv)
   }
 
   // see if we have a resonance in this wave
-  const Setting &bws = root["resonances"]["breitwigners"];
-  // loop through breitwigners
-  int nbw=bws.getLength();
-  printInfo << "found " << nbw << " Breit-Wigners in config" << endl;
   map<string, TBWProductionAmp*> bwAmps;
-  for(int ibw = 0; ibw < nbw; ++ibw) {
-    const Setting &bw = bws[ibw];
-    string jpcme;
-    double mass, width;
-    double cRe, cIm;
-    bw.lookupValue("jpcme",       jpcme);
-    bw.lookupValue("mass",        mass);
-    bw.lookupValue("width",       width);
-    bw.lookupValue("coupling_Re", cRe);
-    bw.lookupValue("coupling_Im", cIm);
-    complex<double> coupl(cRe, cIm);
-    cout << "    JPCME = " << jpcme << ", mass = " << mass << " GeV/c^2, "
-	 << "width = " << width << " GeV/c^2, coupling = " << coupl << endl;
-    bwAmps[jpcme] = new TBWProductionAmp(mass, width, coupl);
+  if(reactConf.exists("resonances")){
+    const Setting &bws = root["resonances"]["breitwigners"];
+    // loop through breitwigners
+    int nbw=bws.getLength();
+    printInfo << "found " << nbw << " Breit-Wigners in config" << endl;
+    
+    for(int ibw = 0; ibw < nbw; ++ibw) {
+      const Setting &bw = bws[ibw];
+      string jpcme;
+      double mass, width;
+      double cRe, cIm;
+      bw.lookupValue("jpcme",       jpcme);
+      bw.lookupValue("mass",        mass);
+      bw.lookupValue("width",       width);
+      bw.lookupValue("coupling_Re", cRe);
+      bw.lookupValue("coupling_Im", cIm);
+      complex<double> coupl(cRe, cIm);
+      cout << "    JPCME = " << jpcme << ", mass = " << mass << " GeV/c^2, "
+	   << "width = " << width << " GeV/c^2, coupling = " << coupl << endl;
+      bwAmps[jpcme] = new TBWProductionAmp(mass, width, coupl);
+    }
   }
-  // check if TFitBin is used as input
+
+    // check if TFitBin is used as input
   if(wavelist_file.find(".root")!=string::npos){
     cerr << "Using TFitBin as input!" << endl;
     TFile* fitresults=TFile::Open(wavelist_file.c_str(),"READ");
