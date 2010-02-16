@@ -463,20 +463,21 @@ ostream&
 nBodyPhaseSpaceGen::print(ostream& out) const
 {
   out << "nBodyPhaseSpaceGen parameters:" << endl
-      << "    number of daughter particles ............... " << _n                 << endl
-      << "    masses of the daughter particles ........... " << _m                 << endl
-      << "    sums of daughter particle masses ........... " << _mSum              << endl
-      << "    effective masses of (i + 1)-body systems ... " << _M                 << endl
-      << "    cos(polar angle) in (i + 1)-body systems ... " << _cosTheta          << endl
-      << "    azimuth in (i + 1)-body systems ............ " << _phi               << endl
-      << "    breakup momenta in (i + 1)-body systems .... " << _breakupMom        << endl
-      << "    weight formula ............................. " << _weightType        << endl
-      << "    normalization value ........................ " << _norm              << endl
-      << "    weight of generated event .................. " << _weight            << endl
-      << "    maximum weight used in hit-miss MC ......... " << _maxWeight         << endl
-      << "    maximum weight since instantiation ......... " << _maxWeightObserved << endl
-      << "    algorithm for kinematics calculation ....... " << _kinematicsType    << endl
-      << "    daughter four-momenta:" << endl;
+      << "    number of daughter particles ............... " << _n                 << endl;
+  //  << "    masses of the daughter particles ........... " << _m                 << endl;
+  //  << "    sums of daughter particle masses ........... " << _mSum              << endl
+  //  << "    effective masses of (i + 1)-body systems ... " << _M                 << endl
+  //  << "    cos(polar angle) in (i + 1)-body systems ... " << _cosTheta          << endl
+  //  << "    azimuth in (i + 1)-body systems ............ " << _phi               << endl
+  //   << "    breakup momenta in (i + 1)-body systems .... " << _breakupMom        << endl
+  out  << "    weight formula ............................. " << _weightType        << endl
+       << "    normalization value ........................ " << _norm              << endl
+       << "    weight of generated event .................. " << _weight            << endl
+       << "    maximum weight used in hit-miss MC ......... " << _maxWeight         << endl
+       << "    maximum weight since instantiation ......... " << _maxWeightObserved << endl
+       << "    algorithm for kinematics calculation ....... " << _kinematicsType    << endl
+       << "    daughter four-momenta:" << endl;
+  
   for (unsigned int i = 0; i < _n; ++i)
     out << "        daughter " << i << ": " << _daughters[i] << endl;
   return out;
