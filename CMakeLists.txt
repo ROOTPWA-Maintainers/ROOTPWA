@@ -51,5 +51,6 @@ add_subdirectory(pwa2000)
 add_subdirectory(tools)
 add_subdirectory(src)
 add_subdirectory(generators)
+add_subdirectory(keygen)
 #add_subdirectory(gui)
  
