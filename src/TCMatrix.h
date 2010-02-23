@@ -60,4 +60,25 @@ public:
 };
 
 
+inline
+std::ostream&
+operator << (std::ostream&   out,
+             const TCMatrix& A)
+{
+  for (int row = 0; row < A.nrows(); ++row) {
+    out << "row " << row << " = (";
+    for (int col = 0; col < A.ncols(); ++col) {
+      out << A(row, col);
+      if (col < A.ncols() - 1)
+        out << ", ";
+    }
+    if (row < A.nrows() - 1)
+      out << "), " << std::endl;
+    else
+      out << ")";
+  }
+  return out;
+}
+
+
 #endif  // TCMATRIX_HH

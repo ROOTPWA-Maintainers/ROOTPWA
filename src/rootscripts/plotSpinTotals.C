@@ -42,9 +42,11 @@
 #include "TString.h"
 #include "TCanvas.h"
 #include "TROOT.h"
+#include "TMultiGraph.h"
 #include "TGraphErrors.h"
 #include "TAxis.h"
 #include "TLine.h"
+#include "TLegend.h"
 
 #include "utilities.h"
 #include "plotSpinTotals.h"
@@ -54,35 +56,70 @@ using namespace std;
 
 
 vector<pair<string, TVirtualPad*> >
-plotSpinTotals(TTree*        tree,   // fitResult tree
-	       const int     color,  // color of line and marker
-	       const string& outFileName,
-	       const string& branchName)
+plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
+	       TTree**            trees,          // array of fitResult trees
+	       const int*         colors,         // array of line and marker colors
+	       const double       yAxisRangeMax,  // if != 0; range of y-axis is not allowed to be larger than this value
+	       const bool         drawLegend,     // if set legend is drawn
+	       const string&      outFileName,
+	       const string&      branchName)
 {
+  vector<pair<string, TVirtualPad*> > wavePads;
+
+  for (unsigned int i = 0; i < nmbTrees; ++i)
+    if (!trees[i]) {
+      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      return wavePads;
+    }
+
   TFile* outFile = NULL;
   if (outFileName != "")
     outFile = TFile::Open(outFileName.c_str(), "RECREATE");
+  if (!outFile || outFile->IsZombie()) {
+    printErr << "could not create file '" << outFileName << "'. exiting." << endl;
+    return wavePads;
+  }
 
   const unsigned int nmbPadsPerCanvMin = 6;  // minimum number of pads each canvas is subdivided into
   // define set of spin totals
   const string waves[] = {"logLikelihood",
                           "",  // total intensity
-			  "flat",
-			  "0-+0+",
-			  "1++0+",
-			  //"1++1+",
-			  "2-+0+",
-			  "2-+1+",
-			  "2++0-",
-			  "2++1+",
-			  "1-+0-",
-			  "1-+1+",
-			  "3++0+",
-			  "4++1+",
-			  "3-+1+",
-			  "3-+1-",
-			  "3-+0-",
-			  "0++0-"};
+  			  "flat",
+  			  "0-+0+",
+  			  "1++0+",
+  			  //"1++1+",
+  			  "2-+0+",
+  			  "2-+1+",
+  			  "2++0-",
+  			  "2++1+",
+  			  "1-+0-",
+  			  "1-+1+",
+  			  "3++0+",
+  			  "4++1+",
+  			  "3-+1+",
+  			  "3-+1-",
+  			  "3-+0-",
+  			  "0++0-"};
+  // const string waves[] = {"logLikelihood",
+  //                         "",  // total intensity
+  // 			  "flat",
+  // 			  "1--",
+  // 			  "1+-",
+  // 			  "2--",
+  // 			  "3--",
+  // 			  "3+-",
+  // 			  "1--0+",
+  // 			  "1--1+",
+  // 			  "1+-1+",
+  // 			  "2--1+",
+  // 			  "2--2+",
+  // 			  "3--0+",
+  // 			  "3--1+",
+  // 			  "3--2+",
+  // 			  "3--3+",
+  // 			  "3+-1+",
+  // 			  "3+-2+",
+  // 			  "3+-3+"};
   const unsigned int nmbWaves = sizeof(waves) / sizeof(string);
   printInfo << "plotting spin totals for:" << endl;
   for (unsigned int i = 0; i < nmbWaves; ++i)
@@ -90,10 +127,6 @@ plotSpinTotals(TTree*        tree,   // fitResult tree
 
   // set plot style
   gStyle->SetOptStat(0);
-  gStyle->SetMarkerStyle(23);
-  gStyle->SetMarkerSize(0.5);
-  gStyle->SetMarkerColor(color);
-  gStyle->SetLineColor(color);
   gStyle->SetFillColor(0);
   gStyle->SetPadColor(0);
 
@@ -103,12 +136,13 @@ plotSpinTotals(TTree*        tree,   // fitResult tree
   const unsigned int nmbPadsPerCanv = nmbPadsHor * nmbPadsVert;
 
   // plot spin totals
-  vector<pair<string, TVirtualPad*> > wavePads(nmbWaves, pair<string, TVirtualPad*>("", NULL));
+  wavePads.resize(nmbWaves, pair<string, TVirtualPad*>("", NULL));
   unsigned int countPad  = 0;
   unsigned int countCanv = 0;
   TCanvas*     canv      = 0;
   string       drawOpt;
   for (unsigned int i = 0; i < nmbWaves; ++i) {
+    const string waveName = (waves[i] != "") ? waves[i] : "total";
     // create new pad, if necessary
     if (countPad == 0) {
       stringstream canvName;
@@ -117,69 +151,109 @@ plotSpinTotals(TTree*        tree,   // fitResult tree
       if (!canv) {
 	canv = new TCanvas(canvName.str().c_str(), "Spin Totals", 10, 10, 1000, 900);
 	canv->Divide(nmbPadsHor, nmbPadsVert);
-	drawOpt = "APZ";
+	drawOpt = "AP";
       } else
-	drawOpt = "PZ SAME";
+	drawOpt = "P SAME";
     }
     
-    // build and run TTree::Draw() expression
-    string drawExpr;
-    if (waves[i] == "logLikelihood")  // draw likelihood
-      drawExpr = "-" + branchName + ".logLikelihood() / " + branchName + ".nmbEvents():0:"
-	         + branchName + ".massBinCenter()";
-    else
-      drawExpr = branchName + ".intensity(\"" + waves[i] + "\"):"
-	         + branchName + ".intensityErr(\"" + waves[i] + "\"):"
-	         + branchName + ".massBinCenter()";
-    cout << "    running TTree::Draw() expression '" << drawExpr << "' "
-	 << "on tree '" << tree->GetName() << "', '" << tree->GetTitle() << "'" << endl;
-    tree->Draw(drawExpr.c_str(), "", "goff");
+    // build multiGraph
+    TMultiGraph* graph = new TMultiGraph();
+    for (unsigned int j = 0; j < nmbTrees; ++j) {
+      // build and run TTree::Draw() expression
+      string drawExpr;
+      if (waves[i] == "logLikelihood")  // draw likelihood
+	drawExpr = "-" + branchName + ".logLikelihood() / " + branchName + ".nmbEvents():0:"
+	           + branchName + ".massBinCenter()";
+      else
+	drawExpr = branchName + ".intensity(\"" + waves[i] + "\"):"
+	           + branchName + ".intensityErr(\"" + waves[i] + "\"):"
+	           + branchName + ".massBinCenter()";
+      cout << "    running TTree::Draw() expression '" << drawExpr << "' "
+	   << "on tree '" << trees[j]->GetName() << "', '" << trees[j]->GetTitle() << "'" << endl;
+      trees[j]->Draw(drawExpr.c_str(), "", "goff");
 
-    // extract data from TTree::Draw() result and build graph
-    const int nmbBins = tree->GetSelectedRows();
-    vector<double> x(nmbBins), xErr(nmbBins);
-    for (int j = 0; j < nmbBins; ++j) {
-      x[j]    = tree->GetV3()[j] * 0.001;  // convert mass to GeV
-      xErr[j] = 0;
+      // extract data from TTree::Draw() result and build graph
+      const int nmbBins = trees[j]->GetSelectedRows();
+      vector<double> x(nmbBins), xErr(nmbBins);
+      vector<double> y(nmbBins), yErr(nmbBins);
+      for (int k = 0; k < nmbBins; ++k) {
+	x   [k] = trees[j]->GetV3()[k] * 0.001;  // convert mass to GeV
+	xErr[k] = 0;
+	y   [k] = trees[j]->GetV1()[k];
+	yErr[k] = (waves[i] == "logLikelihood") ? 0 : trees[j]->GetV2()[k];
+      }
+      TGraphErrors* g = new TGraphErrors(nmbBins,
+					 &(*(x.begin())),      // mass
+					 &(*(y.begin())),      // intensity
+					 &(*(xErr.begin())),   // mass error
+					 &(*(yErr.begin())));  // intensity error
+
+      {
+	stringstream graphName;
+	graphName << waveName << "_" << j;
+	g->SetName (graphName.str().c_str());
+	g->SetTitle(graphName.str().c_str());
+      }
+      g->SetMarkerStyle(21);
+      g->SetMarkerSize(0.5);
+      if (colors) {
+	g->SetMarkerColor(colors[j]);
+	g->SetLineColor  (colors[j]);
+      }
+      graph->Add(g, "P");
     }
-    TGraphErrors* g = new TGraphErrors(nmbBins,
-				       &(*(x.begin())),  // mass
-				       tree->GetV1(),    // intensity
-				       0,                // mass error
-				       (waves[i] == "logLikelihood") ? 0 : tree->GetV2());  // intensity error
-    // plot graph
+
     canv->cd(++countPad);
-    if (waves[i] != "") {
-      g->SetTitle(waves[i].c_str());
-      TString gName = "g";
-      gName.Append(waves[i]);
-      gName.ReplaceAll("+", "p");
-      gName.ReplaceAll("-", "m");
-      g->SetName(gName);
-    } else { 
-      g->SetTitle("total");
-      g->SetName ("total");
-    }
-    g->GetXaxis()->SetTitle("Mass [GeV]");
-    g->GetYaxis()->SetTitle("Intensity");
-    // compute maximum for y-axis
+    graph->SetTitle(waveName.c_str());
+    // TString gName = "g";
+    // gName.Append(waveName);
+    // gName.ReplaceAll("+", "p");
+    // gName.ReplaceAll("-", "m");
+    // graph->SetName(gName);
+    graph->SetName(waveName.c_str());
+    // compute y-range
     double maxY = 0;
-    for (int j = 0; j < nmbBins; ++j)
-      if(maxY < g->GetY()[j])
-	maxY = g->GetY()[j];
-    g->SetMinimum(-maxY * 0.1);
-    g->SetMaximum( maxY * 1.1);
-    g->Draw(drawOpt.c_str());
-    TLine line;
-    line.SetLineStyle(3);
-    line.DrawLine(g->GetXaxis()->GetXmin(), 0, g->GetXaxis()->GetXmax(), 0);
+    for (unsigned int j = 0; j < nmbTrees; ++j) {
+      TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(j));
+      for (int k = 0; k < g->GetN(); ++k) {
+	const double val = g->GetY()[k];
+	if (maxY < val)
+	  maxY = val;
+      }
+    }
+    if ((yAxisRangeMax > 0) && (maxY > yAxisRangeMax))
+      maxY = yAxisRangeMax;
+    graph->SetMinimum(-maxY * 0.1);
+    graph->SetMaximum( maxY * 1.1);
+    // draw graph
+    graph->Draw(drawOpt.c_str());
+    graph->GetXaxis()->SetTitle("Mass [GeV]");
+    if (waves[i] == "logLikelihood")
+      graph->GetYaxis()->SetTitle("ln(Likelihood)");
+    else
+      graph->GetYaxis()->SetTitle("Intensity");
+    TLine* line = new TLine(graph->GetXaxis()->GetXmin(), 0, graph->GetXaxis()->GetXmax(), 0);
+    line->SetLineStyle(3);
+    graph->GetListOfFunctions()->Add(line);
+    // add legend
+    if (drawLegend && (nmbTrees > 1)) {
+      TLegend* legend = new TLegend(0.65,0.80,0.99,0.99);
+      legend->SetFillColor(10);
+      legend->SetBorderSize(1);
+      legend->SetMargin(0.2);
+      for (unsigned int j = 0; j < nmbTrees; ++j) {
+	TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(j));
+	legend->AddEntry(g, trees[j]->GetTitle(), "LPE");
+      }
+      graph->GetListOfFunctions()->Add(legend);
+    }
     
     // memorize pad
     wavePads[i].first  = waves[i];
     wavePads[i].second = gPad;
 
     if (outFile)
-      g->Write();
+      graph->Write();
 
     if (countPad == nmbPadsPerCanv) {
       canv->Update();

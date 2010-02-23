@@ -65,7 +65,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
 	      const double       normalization = 1,      // scale factor for intensities
 	      const int*         graphColors   = NULL,   // array of colors for graph line and marker
 	      const bool         saveEps       = false,  // if set, EPS file with name waveId is created
-	      const string&      branchName    = "fitResult_v2");
+	      const std::string& branchName    = "fitResult_v2");
 
 
 inline
@@ -78,7 +78,7 @@ plotIntensity(std::vector<TTree*>&    trees,                  // array of fitRes
 	      const double            normalization = 1,      // scale factor for intensities
 	      const std::vector<int>& graphColors   = std::vector<int>(),  // array of colors for graph line and marker
 	      const bool              saveEps       = false,  // if set, EPS file with name waveId is created
-	      const string&           branchName    = "fitResult_v2")
+	      const std::string&      branchName    = "fitResult_v2")
 {
   return plotIntensity(trees.size(), &(*(trees.begin())), waveIndex, selectExpr,
 		       graphTitle, drawOption, normalization, &(*(graphColors.begin())),
@@ -96,7 +96,7 @@ plotIntensity(TTree*             tree,                    // fitResult tree
 	      const double       normalization = 1,       // scale factor for intensities
 	      const int          graphColor    = kBlack,  // color of line and marker
 	      const bool         saveEps       = false,   // if set, EPS file with name waveId is created
-	      const string&      branchName    = "fitResult_v2")
+	      const std::string& branchName    = "fitResult_v2")
 {
   return plotIntensity(1, &tree, waveIndex, selectExpr, graphTitle, drawOption,
 		       normalization, &graphColor, saveEps, branchName);
@@ -115,7 +115,7 @@ plotIntensity(TTree*             tree,                    // fitResult tree
 	      const double       normalization = 1,       // scale factor for intensities
 	      const int          graphColor    = kBlack,  // color of line and marker
 	      const bool         saveEps       = false,   // if set, EPS file with name waveId is created
-	      const string&      branchName    = "fitResult_v2")
+	      const std::string& branchName    = "fitResult_v2")
 {
   if (!tree) {
     printErr << "NULL pointer to tree. exiting." << endl;
@@ -147,7 +147,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
 	      const double       normalization = 1,      // scale factor for intensities
 	      const int*         graphColors   = NULL,   // array of colors for graph line and marker
 	      const bool         saveEps       = false,  // if set, EPS file with name waveId is created
-	      const string&      branchName    = "fitResult_v2")
+	      const std::string& branchName    = "fitResult_v2")
 {
   for (unsigned int i = 0; i < nmbTrees; ++i)
     if (!trees[i]) {
@@ -179,7 +179,7 @@ plotIntensity(std::vector<TTree*>&    trees,                  // array of fitRes
 	      const double            normalization = 1,      // scale factor for intensities
 	      const std::vector<int>& graphColors   = std::vector<int>(),  // array of colors for graph line and marker
 	      const bool              saveEps       = false,  // if set, EPS file with name waveId{
-	      const string&           branchName    = "fitResult_v2")
+	      const std::string&      branchName    = "fitResult_v2")
 {
   return plotIntensity(trees.size(), &(*(trees.begin())), waveName, selectExpr, graphTitle,
 		       drawOption, normalization, &(*(graphColors.begin())), saveEps, branchName);

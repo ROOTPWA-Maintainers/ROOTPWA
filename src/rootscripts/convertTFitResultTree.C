@@ -25,6 +25,7 @@ using namespace std;
 using namespace rpwa;
 
 
+#if TFITRESULT_ENABLED
 void
 convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
 		      const string&           outDirName        = "",  // if empty, files are modified in place
@@ -34,7 +35,6 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
 		      const string&           inBranchName      = "fitResult",
 		      const string&           outBranchName     = "fitResult_v2")
 { 
-#if TFITRESULT_ENABLED
 
   // modify files in place, if outDirName is not specified
   string _outDirName = outDirName;
@@ -147,9 +147,11 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
   }
   printInfo << "wrote " << countEntriesWritten << " entries to file." << endl;
 
-#else
-  printErr << "this script runs only under ROOT versions below 5.25.0. exiting." << endl;
-  
-#endif  // TFITRESULT_ENABLED
-
 }
+
+
+#else
+#warning "this script runs only under ROOT versions below 5.25.0"
+
+
+#endif  // TFITRESULT_ENABLED

@@ -38,7 +38,6 @@
   gSystem->Load("libGX11TTF.so");
   gSystem->Load("librootpwa.so");
 
-  gSystem->AddIncludePath("-I$ROOTPWA/tools");
   gSystem->AddIncludePath("-I$ROOTPWA/src");
 
   gROOT->ProcessLine(".L loadFitResult.C+");

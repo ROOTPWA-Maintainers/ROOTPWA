@@ -30,8 +30,6 @@ void globfree(glob_t *);
 #include "TComplex.h"
 #include "TMatrixT.h"
 
-#include "TCMatrix.h"
-
 
 //////////////////////////////////////////////////////////////////////////////////
 // macros and functions for printout and formatting
@@ -64,7 +62,7 @@ template <typename T> class maxPrecisionValue__;
 template <typename T>
 inline
 maxPrecisionValue__<T>
-maxPrecision(T value)
+maxPrecision(const T& value)
 { return maxPrecisionValue__<T>(value); }
 
 // output stream manipulator that prints a value with its maximum precision
@@ -72,37 +70,46 @@ maxPrecision(T value)
 template <typename T>
 inline
 maxPrecisionValue__<T>
-maxPrecisionAlign(T value)
+maxPrecisionAlign(const T& value)
 { return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::ALIGN); }
+
+// output stream manipulator that prints a value with maximum precision for double
+template <typename T>
+inline
+maxPrecisionValue__<T>
+maxPrecisionDouble(const T& value)
+{ return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::DOUBLE); }
 
 // general helper class that encapsulates a value of type T
 template <typename T>
 class maxPrecisionValue__ {
 public:
   enum modeEnum { PLAIN,
-		  ALIGN };
-  maxPrecisionValue__(const T        value,
+		  ALIGN,
+		  DOUBLE};  // forces precision for double
+  maxPrecisionValue__(const T&       value,
 		      const modeEnum mode = PLAIN)
-    : value_(value),
-      mode_ (mode)
+    : _value(value),
+      _mode (mode)
   { }
-  std::ostream& print(std::ostream&  out) const
+  std::ostream& print(std::ostream& out) const
   {
-    const int nmbDigits = std::numeric_limits<double>::digits10 + 1;
+    const int nmbDigits = (_mode != DOUBLE) ? std::numeric_limits<T>::digits10 + 1
+                                            : std::numeric_limits<double>::digits10 + 1;
     std::ostringstream s;
     s.precision(nmbDigits);
     s.setf(std::ios_base::scientific, std::ios_base::floatfield);
-    s << value_;
-    switch (mode_) {
+    s << _value;
+    switch (_mode) {
     case ALIGN:
       return out << std::setw(nmbDigits + 7) << s.str();  // make space for sign, dot, and exponent
-    case PLAIN: default:
+    case PLAIN: case DOUBLE: default:
       return out << s.str();
     }
   }
 private:
-  T        value_;
-  modeEnum mode_;
+  const T& _value;
+  modeEnum _mode;
 };
 
 template <typename T>
@@ -190,24 +197,12 @@ operator << (std::ostream&      out,
 }
 
 
-inline
-std::ostream&
-operator << (std::ostream&   out,
-             const TCMatrix& A)
+// indents output by offset
+inline void indent(std::ostream&      out,
+		   const unsigned int offset)
 {
-  for (int row = 0; row < A.nrows(); ++row) {
-    out << "row " << row << " = (";
-    for (int col = 0; col < A.ncols(); ++col) {
-      out << A(row, col);
-      if (col < A.ncols() - 1)
-        out << ", ";
-    }
-    if (row < A.nrows() - 1)
-      out << "), " << std::endl;
-    else
-      out << ")";
-  }
-  return out;
+  for (unsigned int i = 0; i < offset; ++i)
+    out << " ";
 }
 
 

@@ -204,7 +204,7 @@ compareSpinTotalsWithDima(TTree* tree,  // fitResult tree
   }
 
   // get ROOTpwa spinTotal histograms
-  vector<pair<string, TVirtualPad*> > wavePads = plotSpinTotals(tree, kBlack, "");
+  vector<pair<string, TVirtualPad*> > wavePads = plotSpinTotals(tree, kBlack, 0, true, "");
 
   // draw Dima's histograms on top of ROOTpwa's
   cout << endl;
