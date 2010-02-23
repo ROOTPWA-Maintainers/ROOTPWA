@@ -33,40 +33,44 @@ SET(INCLUDE_DIRECTORIES
 
 include_directories(${INCLUDE_DIRECTORIES})
 
-SET(SOURCES TPDGEntry.cc
-            TPDGDB.cc
-	    FSParticle.cc
-	    NParticleState.cc
-	    NParticleEvent.cc)
+SET(SOURCES
+  TPDGEntry.cc
+  TPDGDB.cc
+  FSParticle.cc
+  NParticleState.cc
+  NParticleEvent.cc
+)
    
 #add ROOT lib
 #SET(ROOT_LIB $ENV{ROOTSYS}/lib)
 SET(ROOT_BIN $ENV{ROOTSYS}/bin)
-SET(ROOT_LIBS ${ROOT_LIB}/libCore.so
-              ${ROOT_LIB}/libCint.so
-              ${ROOT_LIB}/libRIO.so
-              ${ROOT_LIB}/libNet.so
-              ${ROOT_LIB}/libHist.so
-              ${ROOT_LIB}/libGraf.so
-              ${ROOT_LIB}/libGraf3d.so
-              ${ROOT_LIB}/libGpad.so
-              ${ROOT_LIB}/libTree.so
-	      ${ROOT_LIB}/libThread.so
-              ${ROOT_LIB}/libRint.so
-              ${ROOT_LIB}/libPostscript.so
-              ${ROOT_LIB}/libMatrix.so
-              ${ROOT_LIB}/libPhysics.so
-              ${ROOT_LIB}/libMathCore.so
-              ${ROOT_LIB}/libMinuit.so
-              libdl.so
-              libm.so)
-#              ${ROOT_LIB}/libMinuit2.so
-#add PWA lib
+SET(ROOT_LIBS
+  ${ROOT_LIB}/libCore.so
+  ${ROOT_LIB}/libCint.so
+  ${ROOT_LIB}/libRIO.so
+  ${ROOT_LIB}/libNet.so
+  ${ROOT_LIB}/libHist.so
+  ${ROOT_LIB}/libGraf.so
+  ${ROOT_LIB}/libGraf3d.so
+  ${ROOT_LIB}/libGpad.so
+  ${ROOT_LIB}/libTree.so
+  ${ROOT_LIB}/libThread.so
+  ${ROOT_LIB}/libRint.so
+  ${ROOT_LIB}/libPostscript.so
+  ${ROOT_LIB}/libMatrix.so
+  ${ROOT_LIB}/libPhysics.so
+  ${ROOT_LIB}/libMathCore.so
+  ${ROOT_LIB}/libMinuit.so
+  ${ROOT_LIB}/libMinuit2.so
+  libdl.so
+  libm.so)
+
+# define PWA libraries
 SET(PWA_LIB ${LIBRARY_OUTPUT_PATH})
 SET(PWA_LIBS ${PWA_LIB}/libpp.so
              ${PWA_LIB}/libpwa.so)
 
-#add rootpwalib
+# add rootpwalib
 SET(ROOTPWA_LIB ${LIBRARY_OUTPUT_PATH})
 SET(ROOTPWA_LIBS ${ROOTPWA_LIB}/librootpwa.so)
 
@@ -92,9 +96,15 @@ set(TOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwatoolsDict.cc)
 #------- The library ---- ------------------------
 #-------------------------------------------------
 
-SET(SOURCES ${SOURCES} ${TOOLS_DICTIONARY})
+SET(SOURCES
+  ${SOURCES}
+  ${TOOLS_DICTIONARY}
+)
+
 ADD_LIBRARY(rootpwatools SHARED ${SOURCES})
+
 TARGET_LINK_LIBRARIES(rootpwatools ${ROOT_LIBS})
+
 
 #-------------------------------------------------
 #------- Main executables ------------------------
