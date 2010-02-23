@@ -1,4 +1,3 @@
-#line 15 "particle.nw"
 #ifndef __PARTICLE_H_
 #define __PARTICLE_H_
 
@@ -8,19 +7,16 @@
 #include <matrix.h>
 #include <lorentz.h>
 #include <particleData.h>
-#include <event.h>
 #include <pputil.h>
 #include <massDep.h>
 
 	
-#line 38 "particle.nw"
 	class decay;
 	class massDep;
 
 	class particle:public particleData {
 		private:
 			
-#line 54 "particle.nw"
 		static int _particle_debug;
 		int _lambda;
 		int _charge;
@@ -31,10 +27,8 @@
 		int _inRestFrame;
 		massDep* _massDep;
 	
-#line 44 "particle.nw"
 		public:
 			
-#line 67 "particle.nw"
 		particle();
 		particle(const particleData&,int);
 		particle(const particle&);
@@ -66,7 +60,6 @@
 		int is(std::string) const;
 		fourVec setupFrames(int debug = 0);
 		std::string sprint(std::string space = " ");
-#line 103 "particle.nw"
 		double q() const;
 		double q0() const;
 		std::complex<double> breitWigner() const;
@@ -80,16 +73,12 @@
 			_particle_debug = d;
 		}
 
-#line 46 "particle.nw"
 	};
 
-#line 29 "particle.nw"
 	
-#line 553 "particle.nw"
 class event;
 class decay {
 	
-#line 566 "particle.nw"
 	private:
 		// list<particle> _children;
 		static int _decay_debug;
@@ -99,9 +88,7 @@ class decay {
 		double _mass;
 		void _init(const std::list<particle>&,int,int,double);
 	
-#line 556 "particle.nw"
 	
-#line 577 "particle.nw"
  	public:
 		std::list<particle> _children;
 		decay();
@@ -114,7 +101,6 @@ class decay {
 		int L() const;
 		int S() const;
 
-#line 593 "particle.nw"
 		decay& calculateS();
 		fourVec fill(const event&, int debug=0);
 		fourVec* get4P(particle* part, int debug=0);
@@ -133,11 +119,8 @@ class decay {
 			_decay_debug = d;
 		}
 
-#line 557 "particle.nw"
 };
 
 
-#line 31 "particle.nw"
 #define _PARTICLE_H
 #endif
-

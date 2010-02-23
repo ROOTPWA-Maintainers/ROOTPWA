@@ -1,8 +1,11 @@
-#line 59 "massDep.nw"
 #include <massDep.h>
 #include <iostream>
 	using std::complex;
 	using std::vector;
+	
+
+extern particleDataTable PDGtable;
+
 
 complex<double> flat::val(particle& p) 
 {
@@ -27,7 +30,6 @@ complex<double> breitWigner::val(particle& p)
     return (ret);
 }
 
-#line 133 "massDep.nw"
 AMP_M::AMP_M() {
 	ves_sheet = 0;
 	_Pmax = 2;

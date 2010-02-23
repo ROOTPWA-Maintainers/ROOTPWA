@@ -1,7 +1,6 @@
-#line 120 "particle.nw"
+#include <event.h>
 #include <particle.h>
 	
-#line 128 "particle.nw"
 	using std::cout;
 	using std::cerr;
 	using std::endl;
@@ -10,9 +9,6 @@
 	using std::string;
 
 
-#line 122 "particle.nw"
-	
-#line 137 "particle.nw"
 	particle::particle():particleData() {
 		if(_particle_debug) {
 			cout << "in particle(" << this << ")::particle()" << endl;
@@ -163,9 +159,6 @@
 		return(this->_decay);
 	}
 
-#line 123 "particle.nw"
-	
-#line 614 "particle.nw"
 	void decay::_init(const list<particle>& cl, int l,int s,double m) {
 		_children = cl;
 		_l = l;
@@ -173,7 +166,6 @@
 		_mass = m;
 	}
 
-#line 622 "particle.nw"
 	decay::decay() {
 		_l = 0;
 		_s = 0;
@@ -678,11 +670,9 @@ decay& decay::operator*=(const lorentzTransform& L) {
 	}
 	return *this;
 }
-#line 124 "particle.nw"
 	int particle::_particle_debug = 0;
 	int decay::_decay_debug = 0;
 
-#line 290 "particle.nw"
 	int particle::Stable() const {
 		return((this->_decay)?0:1);
 	}

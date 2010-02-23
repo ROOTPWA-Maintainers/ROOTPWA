@@ -7,53 +7,77 @@
 using namespace std;
 	
 
+extern particleDataTable PDGtable;
+
+
 event::event()
+  : _beam     (NULL),
+    _target   (NULL),
+    _ioversion(1)
 {
-  this->_beam      = NULL;
-  this->_target    = NULL;
-  this->_ioversion = 1;
-}
-
-
-event::~event()
-{
-  if (this->_beam)
-    delete this->_beam;
-  if (this->_target)
-    delete this->_target;
 }
 
 
 event::event(const event& e)
 {
-  this->_final     = e._final;
-  this->_initial   = e._initial;
-  this->_beam      = new particle(*e._beam);
-  this->_target    = new particle(*e._target);
-  this->_ioversion = e._ioversion;
+  _final     = e._final;
+  _initial   = e._initial;
+  _beam      = new particle(*e._beam);
+  _target    = new particle(*e._target);
+  _ioversion = e._ioversion;
+}
+
+
+event::~event()
+{
+  if (_beam)
+    delete _beam;
+  if (_target)
+    delete _target;
 }
 
 
 event&
 event::operator = (const event& e)
 {
-  if (this->_beam)
-    delete this->_beam;
-  if (this->_target)
-    delete this->_target;
-  this->_final     = e._final;
-  this->_initial   = e._initial;
-  this->_beam      = new particle(*e._beam);
-  this->_target    = new particle(*e._target);
-  this->_ioversion = e._ioversion;
+  if (_beam)
+    delete _beam;
+  if (_target)
+    delete _target;
+  _final     = e._final;
+  _initial   = e._initial;
+  _beam      = new particle(*e._beam);
+  _target    = new particle(*e._target);
+  _ioversion = e._ioversion;
   return *this;
+}
+
+
+event
+operator * (const lorentzTransform& L,
+	    const event&            e)
+{
+  event r;
+  r.beam  (L * e.beam());
+  r.target(L * e.target());
+  list<particle>::const_iterator p = e._initial.begin();
+  while (p != e._initial.end()) {
+    r.addinitial(L * (*p));
+    ++p;
+  }
+  p = e._final.begin();
+  while (p != e._final.end()) {
+    r.addfinal(L * (*p));
+    ++p;
+  }
+  return r;
 }
 
 
 event&
 event::addfinal(const particle& p)
 {
-  this->_final.push_back(p);
+  _final.push_back(p);
   return *this;
 }
 		
@@ -61,7 +85,7 @@ event::addfinal(const particle& p)
 event&
 event::addinitial(const particle& p)
 {
-  this->_initial.push_back(p);
+  _initial.push_back(p);
   return *this;
 }
 
@@ -80,11 +104,11 @@ event::erase()
 event&
 event::beam(const particle& p)
 {
-  this->_initial.push_front(p);
-  if (this->_beam)
-    *(this->_beam) = p;
+  _initial.push_front(p);
+  if (_beam)
+    *_beam = p;
   else
-    this->_beam = new particle(p);
+    _beam = new particle(p);
   return *this;
 }
 	
@@ -92,32 +116,32 @@ event::beam(const particle& p)
 event&
 event::target(const particle& p)
 {
-  this->_initial.push_back(p);
-  if (this->_target)
-    *(this->_target) = p;
+  _initial.push_back(p);
+  if (_target)
+    *_target = p;
   else
-    this->_target = new particle(p);
+    _target = new particle(p);
   return *this;
 }
 
 
 int
-event::OK(double epsilon = 1e-6) const
+event::OK(const double epsilon) const
 {
   list<particle>::const_iterator p;
-  int q_initial = 0;
-  int q_final   = 0;
+  int     q_initial = 0;
+  int     q_final   = 0;
   fourVec p_initial, p_final;
-  int q_conserved, p_conserved;
+  int     q_conserved, p_conserved;
 
-  p = this->_initial.begin();
-  while (p != this->_initial.end()) {
+  p = _initial.begin();
+  while (p != _initial.end()) {
     q_initial += p->Charge();
     p_initial += p->get4P();
     ++p;
   }
-  p = this->_final.begin();
-  while (p != this->_final.end()) {
+  p = _final.begin();
+  while (p != _final.end()) {
     q_final += p->Charge();
     p_final += p->get4P();
     ++p;
@@ -126,20 +150,6 @@ event::OK(double epsilon = 1e-6) const
   p_conserved = (p_initial - p_final).lenSq() < epsilon;
 		
   return(q_conserved && p_conserved);
-}
-
-
-particle
-event::beam() const
-{
-  return *(this->_beam);
-}
-	
-
-particle
-event::target() const
-{
-  return *(this->_target);
 }
 
 
@@ -152,8 +162,8 @@ event::getPartPFinal(const string& name,
   int i = 0;
   if (debug)
     cout << "Looking for " << name << charge << "[" << index << "] in event" << endl;
-  list<particle>::const_iterator p = this->_final.begin();
-  while (p != this->_final.end()) {
+  list<particle>::const_iterator p = _final.begin();
+  while (p != _final.end()) {
     if (debug)
       cout << "checking against " << p->Name() << p->Charge() << endl;
     if ((p->Name() == name) && (p->Charge() == charge)) {
@@ -183,8 +193,8 @@ event::getPartPInitial(const string& name,
 		       const int     index) const
 {
   int i = 1;
-  list<particle>::const_iterator p = this->_initial.begin();
-  while (p != this->_initial.end())
+  list<particle>::const_iterator p = _initial.begin();
+  while (p != _initial.end())
     if ((p->Name() == name) && (i++ == index))
       return p->get4P();
   throw("PartNotFound");
@@ -236,14 +246,6 @@ event::f_mesons() const
 }
 
 
-void
-event::set_f_mesons(const list<particle>& l)
-{
-  _final.clear();
-  _final = l;
-}
-
-
 list<particle>
 event::f_baryons() const
 {
@@ -258,21 +260,14 @@ event::f_baryons() const
 }
 
 
-list<particle>
-event::f_particles() const
-{
-  return _final;
-}
-
-
 particle
 event::f_particle(const string& name,
 		  const int     charge,
 		  const int     index) const
 {
   int i = 0;
-  list<particle>::const_iterator p = this->_final.begin();
-  while (p != this->_final.end()) {
+  list<particle>::const_iterator p = _final.begin();
+  while (p != _final.end()) {
     if ((p->Name() == name) && (p->Charge() == charge)) {
       ++i;
       if (i == index)
@@ -281,6 +276,14 @@ event::f_particle(const string& name,
     ++p;
   }
   throw("PartNotFound");
+}
+
+
+void
+event::set_f_mesons(const list<particle>& l)
+{
+  _final.clear();
+  _final = l;
 }
 
 
@@ -325,21 +328,14 @@ event::i_baryons() const
 }
 
 
-list<particle>
-event::i_particles() const
-{
-  return _initial;
-}
-
-
 particle
 event::i_particle(const string& name,
 		  const int     charge,
 		  const int     index) const
 {
   int i = 0;
-  list<particle>::const_iterator p = this->_initial.begin();
-  while (p != this->_initial.end()) {
+  list<particle>::const_iterator p = _initial.begin();
+  while (p != _initial.end()) {
     if ((p->Name() == name) && (p->Charge() == charge)) {
       ++i;
       if (i == index)
@@ -354,30 +350,24 @@ event::i_particle(const string& name,
 threeVec
 event::mesonPlane() const
 {
-  threeVec A, C, N;
-  list<particle> i, f;
-  list<particle>::const_iterator ip, fp;
-		
-  i  = this->i_mesons();
-  ip = i.begin();
-  while (ip != i.end()) {
-    A += ip->get3P();
-    ++ip;
+  list<particle> i = i_mesons();
+  threeVec       A;
+  list<particle>::const_iterator p = i.begin();
+  while (p != i.end()) {
+    A += p->get3P();
+    ++p;
   }
-
-  f  = this->f_mesons();
-  fp = f.begin();
-  while (fp != f.end()) {
-    C += fp->get3P();
-    ++fp;
+  list<particle> f = f_mesons();
+  threeVec       C;
+  p = f.begin();
+  while (p != f.end()) {
+    C += p->get3P();
+    ++p;
   }
-		
   if ((A < threeVec(1e-4, 0, 0)) || (C < threeVec(1e-4, 0, 0)))
     return threeVec(0, 0, 0);
-		
-  N  = A / C;
+  threeVec N = A / C;
   N *= (1 / N.len());
-		
   return N;
 }
 
@@ -385,28 +375,23 @@ event::mesonPlane() const
 threeVec
 event::baryonPlane() const
 {
-  threeVec B, D, N;
-  list<particle> i, f;
-  list<particle>::const_iterator ip, fp;
-		
-  i  = this->i_baryons();
-  ip = i.begin();
-  while (ip != i.end()) {
-    B += ip->get3P();
-    ++ip;
+  list<particle> i = i_baryons();
+  threeVec       B;
+  list<particle>::const_iterator p = i.begin();
+  while (p != i.end()) {
+    B += p->get3P();
+    ++p;
   }
-
-  f  = this->f_baryons();
-  fp = f.begin();
-  while (fp != f.end()) {
-    D += fp->get3P();
-    ++fp;
+  list<particle> f = f_baryons();
+  threeVec       D;
+  p = f.begin();
+  while (p != f.end()) {
+    D += p->get3P();
+    ++p;
   }
-		
   if ((B < threeVec(1e-4, 0, 0)) || (D < threeVec(1e-4, 0, 0)))
     return threeVec(0, 0, 0);
-		
-  N  = B / D;
+  threeVec N  = B / D;
   N *= (1 / N.len());
 		
   return N;
@@ -417,13 +402,13 @@ void
 event::print() const
 {
   cout << "beam: ";
-  this->_beam->get4P().print();
+  _beam->get4P().print();
   cout << "target: ";
-  this->_target->get4P().print();
+  _target->get4P().print();
   cout << "final particles: ";
   cout << endl;
-  list<particle>::const_iterator p = this->_final.begin();
-  while (p != this->_final.end()) {
+  list<particle>::const_iterator p = _final.begin();
+  while (p != _final.end()) {
     p->print();
     ++p;
   }
@@ -446,6 +431,68 @@ operator << (ostream& os, const event& e)
 }
 
 
+ostream&
+event::write1(ostream& out) const
+{
+  const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
+  ostringstream      s;
+  s.precision(nmbDigits);
+  s.setf(ios_base::scientific, ios_base::floatfield);
+  s << _final.size() + 1 << endl;
+  fourVec v = _beam->get4P();
+  s << name2id(_beam->Name(), _beam->Charge()) << " " 
+    << _beam->Charge() << " " 
+    << v.x() << " " << v.y() << " " << v.z() << " " 
+    << v.t() << endl;
+  list<particle>::const_iterator part = _final.begin();
+  while (part != _final.end()) {
+    v = part->get4P();
+    s << name2id(part->Name(), part->Charge()) << " "
+      << part->Charge() << " "
+      << v.x() << " " << v.y() << " " << v.z() << " "
+      << v.t() << endl;
+    ++part;
+  }
+  out << s.str();
+  return out;
+}
+
+
+ostream&
+event::write2(ostream& out) const
+{
+  const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
+  ostringstream      s;
+  s.precision(nmbDigits);
+  s.setf(ios_base::scientific, ios_base::floatfield);
+  fourVec v = _beam->get4P();
+  s << "B " << name2id(_beam->Name(), _beam->Charge()) << " " 
+    << _beam->Charge() << " " 
+    << v.t() << " "
+    << v.x() << " " << v.y() << " " << v.z() << " " 
+    << endl;
+  v = _target->get4P();
+  s << "T " << name2id(_target->Name(), _target->Charge()) << " " 
+    << _target->Charge() << " " 
+    << v.t() << " "
+    << v.x() << " " << v.y() << " " << v.z() << " " 
+    << endl;
+  list<particle>::const_iterator part = _final.begin();
+  while (part != _final.end()) {
+    v = part->get4P();
+    s << "F " << name2id(part->Name(), part->Charge()) << " "
+      << part->Charge() << " "
+      << v.t() << " "
+      << v.x() << " " << v.y() << " " << v.z() << " "
+      << endl;
+    ++part;
+  }
+  s << "E" << endl;
+  out << s.str();
+  return out;
+}
+
+
 istream&
 operator >> (istream& is, event& e)
 {
@@ -462,151 +509,60 @@ operator >> (istream& is, event& e)
 }
 
 
-ostream&
-event::write2(ostream& out) const
+istream&
+event::read1(istream& is)
 {
-  const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
-  ostringstream      s;
-  s.precision(nmbDigits);
-  s.setf(ios_base::scientific, ios_base::floatfield);
-  fourVec v = this->beam().get4P();
-  s << "B " << name2id(this->_beam->Name(), this->_beam->Charge()) << " " 
-    << this->_beam->Charge() << " " 
-    << v.t() << " "
-    << v.x() << " " << v.y() << " " << v.z() << " " 
-    << endl;
-  v = this->target().get4P();
-  s << "T " << name2id(this->_target->Name(), this->_target->Charge()) << " " 
-    << this->_target->Charge() << " " 
-    << v.t() << " "
-    << v.x() << " " << v.y() << " " << v.z() << " " 
-    << endl;
-  list<particle>::const_iterator part = this->_final.begin();
-  while (part != this->_final.end()) {
-    v = part->get4P();
-    s << "F " << name2id(part->Name(), part->Charge()) << " "
-      << part->Charge() << " "
-      << v.t() << " "
-      << v.x() << " " << v.y() << " " << v.z() << " "
-      << endl;
-    ++part;
+  erase();
+  particle Target(PDGtable.get("p"), 1);
+  Target.set4P(fourVec(Target.Mass(), threeVec(0, 0, 0)));
+  target(Target);
+  int nparticles = 0;
+  is >> nparticles;
+  for (int i = 0; i < nparticles; ++i) {
+    int    ptype, q;
+    double px, py, pz, t;
+    is >> ptype >> q >> px >> py >> pz >> t;
+    string name = id2name((Geant_ID)ptype);
+    particle part(PDGtable.get(name), q);
+    part.setName(name);
+    part.set4P(fourVec(t, threeVec(px, py, pz)));
+    if (i == 0)
+      beam(part);
+    else
+      addfinal(part);
   }
-  s << "E" << endl;
-  out << s.str();
-  return out;
+  return is;
 }
 
 
 istream&
 event::read2(istream& is)
 {
-  int ptype, q;
-  double px, py, pz, t;
-  string name;
-		
+  erase();
   char Tag = 0;
-  this->erase();
   while (!(is >> Tag).eof()) {
+    int    ptype, q;
+    double px, py, pz, t;
+    is >> ptype >> q >> t >> px >> py >> pz;
+    string name;
+    name = id2name((Geant_ID)ptype);
+    particle part(PDGtable.get(name), q);
+    part.set4P(fourVec(t, threeVec(px, py, pz)));
     switch (Tag) {
     case 'I':
-      {
-	is >> ptype >> q >> t >> px >> py >> pz;
-	name = id2name((Geant_ID)ptype);
-	particle part(PDGtable.get(name), q);
-	part.set4P(fourVec(t, threeVec(px, py, pz)));
-	this->addinitial(part);
-      }
+      addinitial(part);
       break;
     case 'F':
-      {
-	is >> ptype >> q >> t >> px >> py >> pz;
-	name = id2name((Geant_ID)ptype);
-	particle part(PDGtable.get(name), q);
-	part.set4P(fourVec(t, threeVec(px, py, pz)));
-	this->addfinal(part);
-      }
+      addfinal(part);
       break;
     case 'B':
-      {
-	is >> ptype >> q >> t >> px >> py >> pz;
-	name = id2name((Geant_ID)ptype);
-	particle part(PDGtable.get(name), q);
-	part.set4P(fourVec(t, threeVec(px, py, pz)));
-	this->beam(part);
-      }
+      beam(part);
       break;
     case 'T':
-      {
-	is >> ptype >> q >> t >> px >> py >> pz;
-	name = id2name((Geant_ID)ptype);
-	particle part(PDGtable.get(name), q);
-	part.set4P(fourVec(t, threeVec(px, py, pz)));
-	this->target(part);
-      }
+      target(part);
       break;
     case 'E':
       return is;
-    }
-  }
-  return is;
-}
-
-
-ostream&
-event::write1(ostream& out) const
-{
-  const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
-  ostringstream      s;
-  s.precision(nmbDigits);
-  s.setf(ios_base::scientific, ios_base::floatfield);
-  s << this->_final.size() + 1 << endl;
-  fourVec v = this->beam().get4P();
-  s << name2id(this->_beam->Name(), this->_beam->Charge()) << " " 
-    << this->_beam->Charge() << " " 
-    << v.x() << " " << v.y() << " " << v.z() << " " 
-    << v.t() << endl;
-  list<particle>::const_iterator part = this->_final.begin();
-  while (part != this->_final.end()) {
-    v = part->get4P();
-    s << name2id(part->Name(), part->Charge()) << " "
-      << part->Charge() << " "
-      << v.x() << " " << v.y() << " " << v.z() << " "
-      << v.t() << endl;
-    ++part;
-  }
-  out << s.str();
-  return out;
-}
-
-
-istream&
-event::read1(istream& is)
-{
-  int nparticles = 0;
-  int ptype, q;
-  double px, py, pz, t;
-  string name;
-
-  this->erase();
-
-  particle Target(PDGtable.get("p"), 1);
-  Target.set4P(fourVec(Target.Mass(), threeVec(0, 0, 0)));
-  this->target(Target);
-		
-  is >> nparticles;
-  for (int i = 0; i < nparticles; ++i) {
-    is >> ptype >> q >> px >> py >> pz >> t;
-    name = id2name((Geant_ID)ptype);
-    if (i == 0) {
-      particle Beam(PDGtable.get(name), q);
-      Beam.setName(name);
-      Beam.set4P(fourVec(t, threeVec(px, py, pz)));
-      this->beam(Beam);
-    } else {
-      particle part(PDGtable.get(name), q);
-      part.setName(name);
-      part.set4P(fourVec(t, threeVec(px, py, pz)));
-      this->addfinal(part);
     }
   }
   return is;
@@ -617,32 +573,10 @@ event&
 event::setIOVersion(int ver)
 {
   if ((ver >= 1) && (ver <= 2))
-    this->_ioversion = ver;
+    _ioversion = ver;
   else {
     cerr << "unknown io version " << ver << endl;
     throw ("UnknownIOVersion");
   }
   return *this;
-}
-
-
-event
-operator * (const lorentzTransform& L,
-	    const event&            e)
-{
-  event r;
-  r.beam(L * e.beam());
-  r.target(L * e.target());
-  list<particle>::const_iterator p = e._initial.begin();
-  while (p != e._initial.end()) {
-    r.addinitial(L * (*p));
-    ++p;
-  }
-  p = e._final.begin();
-  while (p != e._final.end()) {
-    r.addfinal(L * (*p));
-    ++p;
-  }
-	
-  return r;
 }
