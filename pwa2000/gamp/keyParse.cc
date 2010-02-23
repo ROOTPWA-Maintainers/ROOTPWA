@@ -1120,7 +1120,9 @@ yyparse (std::complex<double>& result)
 	if (mode == "binary") {
 	  cout.write((char*) yyvsp[-1].Cnum,sizeof(complex<double>));
 	}
-	else {
+//!!! BG quick hack: allow to switch off output for test purposes
+	// else {
+	else if (mode == "ascii") {
 	  cout << "Mass = " << ~(wv.get4P()) << "\t";
 	  if ( wv.channel() == "t" ) {
 	    cout << "t = " << (e.beam().get4P()-wv.get4P()).lenSq() << "\t";

@@ -1,18 +1,84 @@
+///////////////////////////////////////////////////////////////////////////
+//
+//    Copyright 2009 Sebastian Neubert
+//
+//    This file is part of rootpwa
+//
+//    rootpwa is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    rootpwa is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------
+// File and Version Information:
+// $Id$
+//
+// Description:
+//      
+//
+//
+// Author List:
+//      Sebastian Neubert    TUM            (original author)
+//
+//
+//-----------------------------------------------------------
+
+
+#ifndef TGAMP_HH
+#define TGAMP_HH
+
+
 #include <complex>
 #include <vector>
+#include <iostream>
 #include <string>
-#include <pputil.h>
-#include <keyfile.h>
 
+
+class event;
 
 
 class Tgamp {
+
 public:
+
+  Tgamp(const std::string& pdgTableFileName = "");
+  virtual ~Tgamp();
   
-  std::complex<double> Amp(unsigned int i, event& e);
-  void addWave(const string& keyfilename){m_waves.push_back(keyfilename);}
+  std::complex<double> Amp(const std::string& keyFileName,
+			   event&             ev) const;
+  std::complex<double> Amp(const unsigned int iKey,
+			   event&             ev) const;
+  std::vector<std::complex<double> > Amp(const std::string& keyFileName,
+					 std::istream&      eventData) const;
+  std::vector<std::complex<double> > Amp(const unsigned int iKey,
+					 std::istream&      eventData) const;
+
+  void addWave(const std::string& keyFileName) { _keyFileNames.push_back(keyFileName); }
+
+  // performs reflection through production plane
+  static event reflectEvent(const event& evIn);
+  void         reflect     (const bool   r = true) { _reflect = r; }
 
 private:
-  std::vector<std::string> m_waves;
+
+  std::vector<std::string> _keyFileNames;
+  bool                     _reflect;  // if true events are reflected through production plane
 
 };
+
+
+#endif  // TGAMP_HH
+
+
+//--------------------------------------------------------------
+// $Log$
+//--------------------------------------------------------------
