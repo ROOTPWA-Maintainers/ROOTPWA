@@ -65,15 +65,15 @@ const double gBeamMomSigma = 1.2;  // [GeV/c]
 // measured K- beam energy in 2008 for K pi pi diffractive processes
 const double gBeamMom      = 191;  // [GeV/c]
 // 2004 beam:
-// const double gBeamDxDz      = 0.00026; // tilt from Quirin was in mrad
-// const double gBeamDxDzSigma = 0.00010;
-// const double gBeamDyDz      = 0.00001; // tilt from Quirin was in mrad
-// const double gBeamDyDzSigma = 0.00018;
+ const double gBeamDxDz      = 0.00026; // tilt from Quirin was in mrad
+ const double gBeamDxDzSigma = 0.00010;
+ const double gBeamDyDz      = 0.00001; // tilt from Quirin was in mrad
+ const double gBeamDyDzSigma = 0.00018;
 // ideal beam:
-const double gBeamDxDz      = 0.0;
-const double gBeamDxDzSigma = 0.0;
-const double gBeamDyDz      = 0.0;
-const double gBeamDyDzSigma = 0.0;
+//const double gBeamDxDz      = 0.0;
+//const double gBeamDxDzSigma = 0.0;
+//const double gBeamDyDz      = 0.0;
+//const double gBeamDyDzSigma = 0.0;
 
 // beamspot parameters [cm]
 const double gBeamOffsetX	= 0.0;
@@ -173,7 +173,6 @@ writeComGeantAscii(ostream&         out,
 	out << setprecision(numeric_limits<double>::digits10 + 1)
 	  << "14 " << recoilproton.Pz() << " " << recoilproton.Px() << " " << recoilproton.Py() << endl;// << " " << beam.E() << endl;
 	}
-	else
 
 	for (unsigned int i = 0; i < 3; ++i) {
 		TLorentzVector* hadron = event.GetDecay(i);
@@ -444,8 +443,10 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
     c->cd(4);
     values->Draw("M23");
     c->cd(5);
+    gPad->SetLogy();
     values->Draw("t");
     c->cd(6);
+    gPad->SetLogy();
     values->Draw("tprime");
     c->cd(7);
     values->Draw("theta");
