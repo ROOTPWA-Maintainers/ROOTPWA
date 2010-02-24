@@ -18,6 +18,11 @@
 #include "TROOT.h"
 #include "TMath.h"
 
+//  to run it do for example:
+// > root -l
+// root [0] .L genPhaseSpaceData.C+
+// root [1] genPhaseSpaceData(-1., 5., "", "./hTheta.root", 100000);
+
 
 using namespace std;
 
@@ -224,6 +229,23 @@ GetPhi(	//ostream&         		out,
 	return result;
 }
 
+float
+Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out){
+	float result = 0.;
+	//cout << particle_In.M() << " " << particle_In.E() << endl;
+	result = (particle_Out.M2()-particle_In.M2());
+	//hist_t_prime_M_diff->Fill(sqrt(result));
+	result = pow(result,2);
+	result /= 4*pow(particle_In.P(),2);
+	//hist_t_prime_P_part_In->Fill(particle_In.P());
+	result = fabs((particle_In-particle_Out).M2())-fabs(result);
+	//hist_t_prime->Fill(result);
+
+	//comparison->Fill_tprime_promme(result);
+
+	return result;
+}
+
 
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -265,6 +287,8 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
   double Vx 	= 0;
   double Vy 	= 0;
   double Vz 	= 0;
+  double dxdz   = 0;
+  double dydz   = 0;
   double E  	= 0;
   values->Branch("t", &t, "t/D");
   values->Branch("tprime", &tprime, "tprime/D");
@@ -277,6 +301,8 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
   values->Branch("Vx", &Vx, "Vx/D");
   values->Branch("Vy", &Vy, "Vy/D");
   values->Branch("Vz", &Vz, "Vz/D");
+  values->Branch("dxdz", &dxdz, "dxdz/D");
+  values->Branch("dydz", &dydz, "dydz/D");
   values->Branch("E", &E, "E/D");
   /*
   if (plot) {
@@ -402,10 +428,12 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
     progressIndicator(countEvent, nmbEvent);
 
     t 		= tGen;
-    tprime 	= 0;
-    M123 	= ( *(phaseSpace.GetDecay(0)) +
-				*(phaseSpace.GetDecay(1)) +
-				*(phaseSpace.GetDecay(2))).M();
+    TLorentzVector partout = (
+    		*(phaseSpace.GetDecay(0)) +
+    		*(phaseSpace.GetDecay(1)) +
+    		*(phaseSpace.GetDecay(2)));
+    tprime 	= Calc_t_prime(beam,partout);
+    M123 	= partout.M();
     M12 	= ( *(phaseSpace.GetDecay(0)) +
 				*(phaseSpace.GetDecay(1))).M();
     M13 	= ( *(phaseSpace.GetDecay(0)) +
@@ -417,6 +445,8 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
     Vx 		= vertexPos.X();
     Vy 		= vertexPos.Y();
     Vz 		= vertexPos.Z();
+    dxdz	= beam.X()/beam.Z();
+    dydz	= beam.Y()/beam.Z();
     E  		= Ea;
 
     values->Fill();
@@ -464,6 +494,12 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
     values->Draw("M12:M23", "", "COLZ");
     c->cd(14);
     values->Draw("M13:M23", "", "COLZ");
+    c->cd(15);
+    values->Draw("dxdz");
+    c->cd(16);
+    values->Draw("dydz");
+    c->Update();
+    c->Print("event_properties.pdf");
   }
 }
 
