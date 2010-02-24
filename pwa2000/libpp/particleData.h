@@ -35,7 +35,7 @@ public:
   particleData();
   particleData(const particleData&);
   particleData(const std::string& n,double m, double w, int i, int g, int j, int p, int c);
-  ~particleData();
+  virtual ~particleData();
   int OK() const;
 
   particleData& setName(const std::string&);
@@ -116,7 +116,7 @@ public:
 
   tableEntry(const particleData& p, tableEntry* n);
   tableEntry(const tableEntry& te);
-  ~tableEntry();
+  virtual ~tableEntry();
 	
   tableEntry& operator = (const tableEntry& te);
 	

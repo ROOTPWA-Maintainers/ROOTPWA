@@ -60,6 +60,7 @@ namespace rpwa {
 	    const int    I =  1,   // isospin
 	    const int    G = -1,   // G-parity
 	    const int    C = +1);  // charge conjugation
+    virtual ~waveKey();
 
     // accessors
     int                I           () const { return _I;            }

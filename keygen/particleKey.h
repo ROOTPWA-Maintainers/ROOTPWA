@@ -56,6 +56,7 @@ namespace rpwa {
 		int                L       = 0,    // relative orbital angular momentum between isobars
 		int                S       = -1,   // total spin of isobars
 		const std::string& massDep = "");  // mass dependence of amplitude (i.e. for sigma)
+    virtual ~particleKey();
 
     // accessors
     TString name()     const { return _name; }

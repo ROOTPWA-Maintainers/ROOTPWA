@@ -25,7 +25,7 @@ class massDep {
 class breitWigner:public massDep {
 	public:
 		breitWigner() {;}
-		~breitWigner() {;}
+		virtual ~breitWigner() {;}
 		breitWigner(const breitWigner&) {;}
 		// breitWigner& operator=(const breitWigner) {;}
 		breitWigner* create() const {return new breitWigner();}
@@ -39,7 +39,7 @@ class breitWigner:public massDep {
 class flat:public massDep {
 	public:
 		flat() {;}
-		~flat() {;}
+		virtual ~flat() {;}
 		flat(const flat&) {;}
 		// flat& operator=(const flat) {;}
 		flat* create() const {return new flat();}
@@ -72,7 +72,7 @@ class AMP_M:public massDep {
 		int ves_sheet;
 
 		AMP_M();
-		~AMP_M() {;}
+		virtual ~AMP_M() {;}
 		AMP_M(const AMP_M&) {;}
 		// AMP_M& operator=(const AMP_M) {;}
 		virtual massDep* create() const {return new AMP_M();}
@@ -91,7 +91,7 @@ class AMP_M:public massDep {
 class AMP_ves:public AMP_M {
 	public:
 		AMP_ves():AMP_M() {ves_sheet = 1;}
-		~AMP_ves() {;}
+		virtual ~AMP_ves() {;}
 		AMP_ves(const AMP_ves&) {;}
 		// AMP_ves& operator=(const AMP_ves) {;}
 		virtual massDep* create() const {return new AMP_ves();}
@@ -120,7 +120,7 @@ class AMP_ves:public AMP_M {
 class AMP_kach:public AMP_M {
 	public:
 		AMP_kach();
-		~AMP_kach() {;}
+		virtual ~AMP_kach() {;}
 		AMP_kach(const AMP_kach&) {;}
 		// AMP_ves& operator=(const AMP_ves) {;}
 		virtual massDep* create() const {return new AMP_kach();}

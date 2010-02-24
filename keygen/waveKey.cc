@@ -82,6 +82,11 @@ waveKey::waveKey(particleKey* mother,  // decay chain of mother particle
 }
 
 
+waveKey::~waveKey()
+{
+}
+
+
 // constructs wave name according to IGJPCME<isobar 1>_LS_<isobar 2>
 TString
 waveKey::waveName(const bool fileSuffix) const

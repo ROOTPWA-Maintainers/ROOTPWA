@@ -68,6 +68,11 @@ particleKey::particleKey(const TString& name,     // particle name
 }
 
 
+particleKey::~particleKey()
+{
+}
+
+
 TString 
 particleKey::waveName() const
 {

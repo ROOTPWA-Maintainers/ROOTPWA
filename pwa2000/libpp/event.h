@@ -6,7 +6,6 @@
 #include <string>
 #include <list>
 
-//#include "pputil.h"
 #include "Vec.h"
 #include "lorentz.h"
 #include "particle.h"
@@ -18,7 +17,7 @@ public:
 			
   event();
   event(const event&);
-  ~event();
+  virtual ~event();
 
   event& operator = (const event& e);
   friend event operator * (const lorentzTransform&,
