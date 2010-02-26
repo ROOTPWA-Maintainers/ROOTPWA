@@ -57,6 +57,7 @@ using namespace rpwa;
 
 bool
 rpwa::testKeyFile(const string& keyFileName,       // file name of key file under test
+		  const int     refl,              // reflectivity of wave
 		  const string& dataFileName,      // file with test data in .evt format
 		  const string& pdgTableFileName,  // path to PDG table file
 		  const double  precision,         // warn threshold for comparison |1 - amp. / refl. amp.|
@@ -70,7 +71,6 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
   Tgamp gamp(pdgTableFileName);
   gamp.reflect(false);
   vector<complex<double> > amps = gamp.Amp(keyFileName, dataFile);
-  //vector<complex<double> > amps = calcAmplitudes(keyFileName, dataFile, pdgTableFileName, false);
   dataFile.clear();
   dataFile.seekg(0, ios::beg);
   if (!dataFile.good()) {
@@ -85,38 +85,57 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
   }
   printInfo << "comparing amplitudes of " << amps.size() << " events "
 	    << "with the amplitudes of the respective reflected events:" << endl;
-  unsigned int countAmpRatioNotOk = 0;
+  unsigned int countAmpRatioNotOk    = 0;
+  unsigned int countAmpEigenValNotOk = 0;
+  const int    reflEigenValue        = -1 / refl;  // reciprocal is important in case of baryons, where refl = +-i
   for (unsigned int i = 0; i < amps.size(); ++i) {
+    cout << "    event " << i << ": " << endl;
     const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
     ostringstream s;
     s.precision(nmbDigits);
     s.setf(ios_base::scientific, ios_base::floatfield);
-    s << "event " << i << ": "
-      << "real part / real part refl. = " << amps[i].real() / ampsRefl[i].real() << ", "
-      << "imag. part / imag. part refl. = " << amps[i].imag() / ampsRefl[i].imag();
-    bool ampRatioOk = true;
-    if (   (fabs(amps[i].real() / ampsRefl[i].real()) - 1 > precision)
-	|| (fabs(amps[i].imag() / ampsRefl[i].imag()) - 1 > precision)) {
-      ampRatioOk = false;
-      ++countAmpRatioNotOk;
-    }
-    cout << "    " << s.str() << ((!ampRatioOk) ? " <!!!" : "") << endl;
     if (printAmp) {
-      s.str("");
       s << "amp. = " << amps[i] << ", amp. refl. = " << ampsRefl[i];
       cout << "        " << s.str() << endl;
     }
+    const double realPartRatio = (ampsRefl[i].real() != 0) ? amps[i].real() / ampsRefl[i].real() : 0;
+    const double imagPartRatio = (ampsRefl[i].real() != 0) ? amps[i].imag() / ampsRefl[i].imag() : 0;
+    s.str("");
+    s << "real part / real part refl. = "   << realPartRatio << ", "
+      << "imag. part / imag. part refl. = " << imagPartRatio;
+    bool ampRatioOk = true;
+    if (   (fabs(realPartRatio) - 1 > precision)
+	|| (fabs(imagPartRatio) - 1 > precision)) {
+      ampRatioOk = false;
+      ++countAmpRatioNotOk;
+    }
+    if (   ((realPartRatio != 0) && (realPartRatio / fabs(realPartRatio) != reflEigenValue))
+	|| ((imagPartRatio != 0) && (imagPartRatio / fabs(imagPartRatio) != reflEigenValue))) {
+      ampRatioOk = false;
+      ++countAmpEigenValNotOk;
+    }
+    cout << "        " << s.str() << ((!ampRatioOk) ? " <!!!" : "") << endl;
   }
+  bool returnVal = true;
   if (countAmpRatioNotOk == 0) {
     printInfo << "relative differences of absolute values of all real and imaginary parts "
 	      << "are smaller than " << precision << endl;
-    return true;
   } else {
     printWarn << "for " << countAmpRatioNotOk << " amplitude(s) the relative differences "
 	      << "of the abolute values of real or imaginary part "
 	      << "differ by more than " << precision << endl;
-    return false;
+    returnVal = false;
   }
+  if (countAmpEigenValNotOk == 0) {
+    printInfo << "all amplitudes have correct reflectivity eigenvalue of "
+	      << ((reflEigenValue > 0) ? "+" : "") << reflEigenValue << endl;
+  } else {
+    printWarn << "for " << countAmpEigenValNotOk << " amplitude(s) real and/or imaginary part "
+	      << "have a reflectivity eigenvalue different from "
+	      << ((reflEigenValue > 0) ? "+" : "") << reflEigenValue << endl;
+    returnVal = false;
+  }
+  return returnVal;
 }
 
 
@@ -141,11 +160,11 @@ rpwa::generateKeyFile(const waveKey& wave,              // complete isobar decay
   bool keyFileOk = true;
   if (testKey) {
     wave.write("none");
-    keyFileOk = testKeyFile(keyFileName, dataFileName, pdgTableFileName, 1e-9, true);
-    printInfo << "reflectivity = " << wave.refl() << ": amplitude of reflected event should have the "
-	      << ((wave.refl() > 0) ? "SAME" : "OPPOSITE") << " sign." << endl;
+    keyFileOk = testKeyFile(keyFileName, wave.refl(), dataFileName, pdgTableFileName, 1e-9, true);
   }
-  
+
+  if (!keyFileOk)
+    printWarn << "there seems to be some problems with this amplitude." << endl;
   cout <<"keep .key file? (y/n)" << endl;
   char keepFile;
   cin >> keepFile;

@@ -46,9 +46,9 @@ using namespace rpwa;
 
 
 void
-genKey(const bool   testKey          = true,
-       const string dataFileName     = "./testEvents.evt",  // file with test data in .evt format
-       const string pdgTableFileName = "./pdgTable.txt")
+genKey(const bool    testKey          = true,
+       const string& dataFileName     = "./testEvents.evt",  // file with test data in .evt format
+       const string& pdgTableFileName = "./pdgTable.txt")
 {
   // define final state particles
   particleKey p1("pi-");
@@ -60,12 +60,14 @@ genKey(const bool   testKey          = true,
   // define isobars: (name, daughter1, daughter2, L, S, mass dependence)
   particleKey i11("sigma",    &p1, &p2,  0, 0, "amp_ves");
   particleKey i1 ("a1(1269)", &p4, &i11, 1);
-  particleKey i2 ("f1(1285)", &p3, &i1,  1, 1);
+  //particleKey i2 ("f1(1285)", &p3, &i1,  1, 1);
+  particleKey i2 ("eta1(1600)", &p3, &i1,  1, 1);
   const int J    =  2;
+  //const int P    = +1;
   const int P    = -1;
-  const int M    =  0;
+  const int M    =  1;
   const int refl = +1;
-  const int L    =  2; 
+  const int L    =  1; 
   const int S    =  1;
 
   // define X system

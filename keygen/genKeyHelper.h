@@ -47,6 +47,7 @@ namespace rpwa {
 
 
   bool testKeyFile(const std::string& keyFileName,                            // file name of key file under test
+		   const int          refl,                                   // reflectivity of wave
 		   const std::string& dataFileName     = "./testEvents.evt",  // file with test data in .evt format
 		   const std::string& pdgTableFileName = "./pdgTable.txt",    // path to PDG table file
 		   const double       precision        = 1e-12,               // warn threshold for comparison |1 - amp. / refl. amp.|
