@@ -7,7 +7,7 @@
 #include <fstream>
 #include <cstdlib>
 
-#include <pputil.h>
+#include "pputil.h"
 
 
 #define getsign(x) (((x)>0)?"+":"-")

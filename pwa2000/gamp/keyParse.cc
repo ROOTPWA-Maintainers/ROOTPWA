@@ -92,10 +92,12 @@ enum yytokentype {
 
 /* Copy the first part of user declarations.  */
 #include <iostream>
-#include <particle.h>
-#include <wave.h>
-#include <keyfile.h>
-#include <massDep.h>
+
+#include "particle.h"
+#include "wave.h"
+#include "event.h"
+#include "keyfile.h"
+#include "massDep.h"
 #define stoi(x) strcmp((x),"+")?-1:1
 
 using namespace std;

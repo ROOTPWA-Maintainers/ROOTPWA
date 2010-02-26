@@ -319,13 +319,13 @@ string
 particle::sprint(const string& space) const
 {
   stringstream s;
-  s << Name() << chargetos(Charge()) << "[" << itos(_index) << "]";
+  s << Name() << chargetos(Charge()) << "[" << _index << "]";
   if (_decay) {
     s << space << "{";
     for (list<particle>::const_iterator i = _decay->_children.begin();
 	 i != _decay->_children.end(); ++i)
       s << space << i->sprint(space);
-    s << space << itos(_decay->L()) << space << itos(_decay->S()) << space << "}";
+    s << space << _decay->L() << space << _decay->S() << space << "}";
   }
   return s.str();
 }

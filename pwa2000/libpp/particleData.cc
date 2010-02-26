@@ -1,14 +1,10 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <particleData.h>
+#include "particleData.h"
 
 	
-using std::string;
-using std::ifstream;
-using std::cout;
-using std::cerr;
-using std::endl;
+using namespace std;
 
 
 int particleData::_particle_data_debug = 0;

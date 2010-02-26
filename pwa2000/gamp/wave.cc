@@ -1,15 +1,34 @@
+#include <sstream>
+
+#include "event.h"
 #include "wave.h"
+
+
+using namespace std;
+
+
+wave::wave()
+  : particle(),
+    _b(0),
+    _t(0)
+{
+}
 
 
 wave::wave(const wave& wv)
   : particle(wv)
 {
-  this->_m       = wv._m;
-  this->_epsilon = wv._epsilon;
-  this->_beam    = wv._beam;
-  this->_target  = wv._target;
-  this->_t       = wv._t;
-  this->_b       = wv._b;
+  _m       = wv._m;
+  _epsilon = wv._epsilon;
+  _beam    = wv._beam;
+  _target  = wv._target;
+  _t       = wv._t;
+  _b       = wv._b;
+}
+
+
+wave::~wave()
+{
 }
 
 
@@ -17,109 +36,102 @@ wave&
 wave::operator = (const wave& wv)
 {
   particle::operator = (wv);
-  this->_m       = wv._m;
-  this->_epsilon = wv._epsilon;
-  this->_beam    = wv._beam;
-  this->_target  = wv._target;
-  this->_t       = wv._t;
-  this->_b       = wv._b;
-  return(*this);
+  _m       = wv._m;
+  _epsilon = wv._epsilon;
+  _beam    = wv._beam;
+  _target  = wv._target;
+  _t       = wv._t;
+  _b       = wv._b;
+  return *this;
 }
 
 
-void
-wave::printFrames() const
+wave&
+wave::operator *= (const lorentzTransform& L)
 {
-  cout << "wave: " << endl;
-  cout << "beam: ";
-  this->_beam.print();
-  cout << "target: ";
-  this->_target.print();
-  cout << this->I() << getsign(this->G());
-  cout << "(" << this->J() << getsign(this->P()) << getsign(this->C()) << ")";
-  cout << " m = " << this->_m << " eps = " << this->_epsilon << endl;
-  cout << "momentum: ";
-  this->get4P().print();
-  cout << "decays to:" << endl;
-  if(!this->Stable())
-    this->Decay()->printFrames();
-}
-
-
-void
-wave::print() const
-{
-  cout << "wave: " << endl;
-  cout << "beam: ";
-  this->_beam.print();
-  cout << "target: ";
-  this->_target.print();
-  if (this->_b == 0.0) {
-    cout << this->I() << getsign(this->G());
-    cout << "(" << this->J() << getsign(this->P()) << getsign(this->C()) << ")";
-    cout << " m = " << this->_m << " eps = " << this->_epsilon << endl;
-  } else
-    cout << "b: " << this->_b << " t: " << this->_t;
-  cout << "momentum: ";
-  this->get4P().print();
-  cout << "decays to:" << endl;
-  if(!this->Stable())
-    this->Decay()->print();
+  _beam   *= L;
+  _target *= L;
+  particle::operator *= (L);
+  return *this;
 }
 
 
 wave
-wave::fill(const event& e, int debug)
+wave::setM(const int m)
 {
-  decay* d;
-  fourVec p;
+  _m = m;
+  return *this;
+}
+
+
+wave
+wave::setSlope(const double b)
+{
+  _b = b;
+  return *this;
+}
+
+
+wave
+wave::setT(const double t)
+{
+  _t = t;
+  return *this;
+}
+
+
+wave
+wave::channel(const char* ch)
+{
+  _channel = ch;
+  return *this;
+}
+
+
+wave
+wave::fill(const event& e,
+	   const int    debug)
+{
   if (debug) {
-    cout << "Filling wave" << endl;
-    cout << "Setting beam p to:" << endl;
+    cout << "Filling wave" << endl
+	 << "Setting beam p to:" << endl;
     e.beam().get4P().print();
   }
-  this->_beam = e.beam().get4P();
+  _beam = e.beam().get4P();
   if (debug) {
     cout << "Setting target p to:" << endl;
     e.target().get4P().print();
   }
-  this->_target = e.target().get4P();
-  d = this->Decay();
+  _target = e.target().get4P();
+  decay* d = Decay();
   if (debug)
     cout << "Calling fill for wave: " << endl;
-  p = d->fill(e, debug);
+  fourVec p = d->fill(e, debug);
   if (debug) {
     cout << "Setting p of wave to: " << endl;
     p.print();
   }
-  this->set4P(p);
+  set4P(p);
   return *this;	
 }
 
 
 wave&
-wave::setupFrames (int debug)
+wave::setupFrames(int debug)
 {
   if (debug)
     cout << "put wave into Gottfried-Jackson frame:" << endl;
   if (Stable()) {
     ;
   } else {
-    lorentzTransform L, T;
-    matrix <double> X(4, 4);
-    rotation R;
-    fourVec tempX, tempBeam, tempTarget, tempChild1;
-    list<particle>::iterator child1 = this->Decay()->_children.begin();
-    threeVec N;
-
-    tempX      = this->get4P ();
-    tempBeam   = this->_beam;
-    tempTarget = this->_target;
-    tempChild1 = (*child1).get4P();
+    fourVec tempX      = get4P();
+    fourVec tempBeam   = _beam;
+    fourVec tempTarget = _target;
+    fourVec tempChild1 = Decay()->_children.begin()->get4P();
 
     if (debug) {
-      cout << "initially in lab:" << endl;
-      cout << "tempX: ";
+      cout << "initially in lab:" << endl
+	   << "tempX: ";
       tempX.print();
       cout << "tempBeam: ";
       tempBeam.print();
@@ -129,21 +141,24 @@ wave::setupFrames (int debug)
       tempChild1.print();
     }
 
-    if (this->channel() == "t")
+    threeVec N;
+    if (channel() == "t")
       // put normal to production plane along y
       N = tempBeam.V () / tempX.V ();
-    else if ((this->channel() == "s") || (this->channel() == "expt"))
+    else if ((channel() == "s") || (channel() == "expt"))
       // use lab y
       N = threeVec(0.0, 1.0, 0.0);
+    lorentzTransform T;
+    rotation         R;
     T.set(R.set(N.phi(), N.theta() - M_PI / 2.0, -M_PI / 2.0));
-    L = T;
+    lorentzTransform L = T;
     tempX      *= T;
     tempBeam   *= T;
     tempTarget *= T;
     tempChild1 *= T;
     if (debug) {
-      cout << "put normal to PP along y:" << endl;
-      cout << "tempX: ";
+      cout << "put normal to PP along y:" << endl
+	   << "tempX: ";
       tempX.print();
       cout << "tempBeam: ";
       tempBeam.print();
@@ -155,6 +170,7 @@ wave::setupFrames (int debug)
 
     // boost to X rest frame
     T.set (tempX);
+    matrix <double> X(4, 4);
     X = T * L;
     // gives error: dereferencing pointer 'X.95' does break strict-aliasing rules
     //L = *((lorentzTransform*) &X);
@@ -165,8 +181,8 @@ wave::setupFrames (int debug)
     tempTarget *= T;
     tempChild1 *= T;
     if (debug) {
-      cout << "boost to XRF:" << endl;
-      cout << "tempX: ";
+      cout << "boost to XRF:" << endl
+	   << "tempX: ";
       tempX.print();
       cout << "tempBeam: ";
       tempBeam.print();
@@ -189,8 +205,8 @@ wave::setupFrames (int debug)
     tempTarget *= T;
     tempChild1 *= T;
     if (debug) {
-      cout << "put beam along z:" << endl;
-      cout << "tempX: ";
+      cout << "put beam along z:" << endl
+	   << "tempX: ";
       tempX.print();
       cout << "tempBeam: ";
       tempBeam.print();
@@ -201,75 +217,86 @@ wave::setupFrames (int debug)
     }
 
     // boost the beam and the target
-    this->_beam *= L;
-    this->_target *= L;
+    _beam   *= L;
+    _target *= L;
 
     // setupFrames of children
-    this->Decay()->setupFrames(L, debug);
+    Decay()->setupFrames(L, debug);
   }
   return *this;
 }
 
 
 complex<double>
-wave::decayAmp(int debug)
+wave::decayAmp(const int debug)
 {
   complex<double> a;
   if (Stable())
     a = complex<double>(1, 0);
-  else if (this->_b != 0.0) {
-    if (debug) {
-      cout << "calculate decay amplitude for expt wave b=" << this->_b;
-      cout << " t=" << this->_t << endl;
-    }
-    decay* d = this->Decay();
-    a = d->expt_amp(this->_b, this->_t,debug);
+  else if (_b != 0.0) {
+    if (debug)
+      cout << "calculate decay amplitude for expt wave b=" << _b << " t=" << _t << endl;
+    decay* d = Decay();
+    a = d->expt_amp(_b, _t, debug);
   } else {
-    if (debug) {
-      cout << "calculate decay amplitude for wave J=" << this->J();
-      cout << " m=" << this->_m << endl;
-    }
-    decay* d = this->Decay();
-    a = d->amp(this->J(), this->_m,debug);
+    if (debug)
+      cout << "calculate decay amplitude for wave J=" << J() << " m=" << _m << endl;
+    decay* d = Decay();
+    a = d->amp(J(), _m, debug);
   }
   return a;
 }
 
 
-wave&
-wave::operator *= (const lorentzTransform& L)
+string
+wave::sprint(const string& space) const
 {
-  this->_beam *= L;
-  this->_target *= L;
-  particle::operator *=(L);
-  return *this;
+  stringstream s;
+  s << "J=" << J() << space << "P=" << P() << space << "M=" << M() << space << "{";
+  for (list<particle>::const_iterator i = Decay()->_children.begin();
+       i != Decay()->_children.end(); ++i)
+    s << space << i->sprint(space);
+  s << space << Decay()->L() << space << Decay()->S() << space << "};";
+  return s.str();
 }
 
 
-string
-wave::sprint(string space)
+void
+wave::print() const
 {
-  string s;
-  s = "J=";
-  s += itos(this->J());
-  s += space;
-  s += "P=";
-  s += itos(this->P());
-  s += space;
-  s += "M=";
-  s += itos(this->M());
-  s += space;
-  s += "{";
-  list<particle>::iterator c;
-  for (c = this->Decay()->_children.begin(); c != this->Decay()->_children.end(); ++c) {
-    s += space;
-    s += c->sprint(space);
-  }
-  s += space;
-  s += itos(this->Decay()->L());
-  s += space;
-  s += itos(this->Decay()->S());
-  s += space;
-  s += "};";
-  return s;
+  cout << "wave: " << endl;
+  cout << "beam: ";
+  _beam.print();
+  cout << "target: ";
+  _target.print();
+  if (_b == 0.0) {
+    cout << I() << getsign(G());
+    cout << "(" << J() << getsign(P()) << getsign(C()) << ")";
+    cout << " m = " << _m << " eps = " << _epsilon << endl;
+  } else
+    cout << "b: " << _b << " t: " << _t;
+  cout << "momentum: ";
+  get4P().print();
+  cout << "decays to:" << endl;
+  if(!Stable())
+    Decay()->print();
+}
+
+
+void
+wave::printFrames() const
+{
+  cout << "wave: " << endl;
+  cout << "beam: ";
+  _beam.print();
+  cout << "target: ";
+  _target.print();
+  cout << I() << getsign(G());
+  cout << "(" << J() << getsign(P()) << getsign(C()) << ")";
+  cout << " m = " << _m << " eps = " << _epsilon << endl;
+  cout << "momentum: ";
+  get4P().print();
+  cout << "decays to:" << endl;
+  if(!Stable())
+    Decay()->printFrames();
 }

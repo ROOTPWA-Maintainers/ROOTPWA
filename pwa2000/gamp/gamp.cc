@@ -1,7 +1,11 @@
 #include <cstdlib>
 #include <unistd.h>
-#include <pputil.h>
-#include <keyfile.h>
+
+#include "event.h"
+#include "keyfile.h"
+
+
+using namespace std;
 
 
 extern int               keydebug;

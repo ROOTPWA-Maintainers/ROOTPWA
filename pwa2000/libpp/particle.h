@@ -42,10 +42,10 @@ public:
 
   decay*   Decay()  const { return _decay;           }
   int      Stable() const { return (_decay) ? 0 : 1; }
-  fourVec  get4P()  const { return _p;               }
   threeVec get3P()  const { return _p.V();           }
   int      Index()  const { return _index;           }
   int      Charge() const { return _charge;          }
+  fourVec  get4P()  const { return _p;               }
   fourVec* get4P(particle* p,
 		 const int debug = 0);
 

@@ -1,13 +1,17 @@
 #ifndef MASSDEP_H
 #define MASSDEP_H
 
+
 #include <iostream>
 #include <complex>
 #include <vector>
-#include <particle.h>
-#include <matrix.h>
+
+#include "particle.h"
+#include "matrix.h"
+
 
 class particle;
+
 
 class massDep {
 	public:
@@ -132,5 +136,3 @@ class AMP_kach:public AMP_M {
 
 
 #endif
-
-
