@@ -3,88 +3,92 @@
 	
 
 #include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <limits>
 #include <cassert>
 #include <cstring>
 #include <cmath>
 #include <complex>
-#include <Vec.h>
+
+#include "Vec.h"
 
 
-double conj(double x);
+inline double conj(const double x) { return x; }
 
 	
-template <class Type> class matrix;
+template <class T> class matrix;
 
-template <class Type> fourVec operator *= (fourVec&, const matrix<Type>&);
 
-template <class Type> matrix<Type> operator * (Type, matrix<Type>&);
+template <class T> fourVec   operator *= (fourVec& v, const matrix<T>& M);
+template <class T> matrix<T> operator *  (const T& a, const matrix<T>& M);
 
-template <class Type> class matrix {
+
+template <class T> class matrix {
+
+public:
+
+  matrix();
+  matrix(const int n, const int m);
+  matrix(const int n, const int m, T* p);
+  matrix(const matrix& M);
+  ~matrix();
+  matrix& operator = (const matrix&);
+   
+  T&       el     (const int i, const int j);
+  T&       element(const int i, const int j) { return el(i, j); }
+  const T& el     (const int i, const int j) const;
+  const T& element(const int i, const int j) const { return el(i, j); }
+
+  matrix   operator *= (const double    a);
+  matrix   operator += (const matrix&   M);
+  matrix   operator -= (const matrix&   M);
+  matrix   operator *  (const matrix&   M) const;
+  matrix   operator +  (const matrix&   M) const;
+  matrix   operator -  (const matrix&   M) const;
+  threeVec operator *  (const threeVec& v) const;
+  fourVec  operator *  (const fourVec&  v) const;
+  matrix   operator *  (const T&        a) const;
+
+  matrix conjugate() const;
+  matrix transpose() const;
+  matrix adjoint  () const;
+  int status() const { return _status; }
+  void setStatus(const int s) { _status = s; }
+  T trace() const;
+  T det() const;
+  matrix LU() const;
+  matrix inv() ;
+  int nrows() const { return _nrows; }
+  int ncols() const { return _ncols; }
+  matrix zero();
+
+  const matrix& print(std::ostream& os = std::cout) const;
+  matrix& scan(std::istream& is = std::cin);
 
 private:
 
-  int   _nrows;
-  int   _ncols;
-  Type* _f;
-  int   _status;
+  int _nrows;
+  int _ncols;
+  T*  _f;
+  int _status;
 
-  void _create(int, int);
+  void _create(const int, const int);
   void _destroy(void);
   void _copy(const matrix&);
 
   matrix _LU(int*, int*) const;
   matrix _lubksb(int* indx, matrix& b);
 
-public:
-
-  matrix();
-  matrix(int n, int m);
-  matrix(int, int, Type*);
-  matrix(const matrix&);
-  ~matrix();
-  matrix& operator = (const matrix&);
-   
-  Type& el(int, int);
-  Type& element(int i,int j) { return this->el(i, j); }
-  const Type& el(int, int) const;
-  const Type& element(int i, int j) const { return this->el(i, j); }
-  matrix operator * (const matrix&) const;
-  matrix operator *= (const double);
-  matrix operator + (const matrix&) const;
-  matrix operator += (const matrix&);
-  matrix operator - (const matrix&) const;
-  matrix operator -= (const matrix&);
-  matrix conjugate() const;
-  matrix transpose() const;
-  matrix adjoint() const;
-  int status() const { return _status; }
-  void setStatus(int s) {this->_status = s; }
-  Type trace() const;
-  Type det() const;
-  matrix LU() const;
-  matrix inv() ;
-  int nrows() const { return this->_nrows; }
-  int ncols() const { return this->_ncols; }
-  matrix zero();
-  threeVec operator * (const threeVec&) const;
-  fourVec operator * (const fourVec&) const;
-  matrix operator * (Type) const;
-
-  //friend fourVec operator *=<> (fourVec&, const matrix&);
-  // friend matrix operator *<> (Type, matrix&);
-
-  const matrix& print(std::ostream& os = std::cout) const;
-  matrix& scan(std::istream& is = std::cin);
-
 };
 
 	
-template <class Type> class identityMatrix : public matrix<Type> {
+template <class T> class identityMatrix : public matrix<T> {
 
 public:
 
-  identityMatrix(int n)
-    : matrix<Type>(n,n)
+  identityMatrix(const int n)
+    : matrix<T>(n, n)
   {
     for (int i = 0; i < n; ++i)
       this->el(i, i) = 1;
@@ -94,62 +98,60 @@ public:
 };
 	
 
-template <class Type>
-Type
-matrix<Type>::trace() const
+template <class T>
+T
+matrix<T>::trace() const
 {
-  Type tr = 0;
-  assert(this->_nrows == this->_ncols);
-  for (int i = 0; i < this->_nrows; ++i)
-    tr += (const_cast<matrix<Type>*>(this))->el(i, i);
-  return(tr);
+  T tr = 0;
+  assert(_nrows == _ncols);
+  for (int i = 0; i < _nrows; ++i)
+    tr += el(i, i);
+  return tr;
 }
 
 
-template <class Type>
-Type
-matrix<Type>::det() const
+template <class T>
+T
+matrix<T>::det() const
 {
-  Type dt = 1.0;
-  int *indx = new int[this->_ncols];
-  int d;
-  assert(this->_nrows == this->_ncols);
-  matrix r(this->_nrows, this->_ncols);
-  r = this->_LU(&d, indx);
-  for (int i = 0; i < this->_nrows; ++i)
+  T    dt   = 1.0;
+  int* indx = new int[_ncols];
+  int  d;
+  assert(_nrows == _ncols);
+  matrix r(_nrows, _ncols);
+  r = _LU(&d, indx);
+  for (int i = 0; i < _nrows; ++i)
     dt *= r.el(i, i);
   if (indx)
     delete[] indx;
-  return(d * dt);
+  return d * dt;
 }
 
 
-template <class Type>
+template <class T>
 double
-mag(Type t)
+mag(T t)
 {
   return abs(std::complex<double>(t));
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::_LU(int *d, int *indx) const
+template <class T>
+matrix<T>
+matrix<T>::_LU(int *d, int *indx) const
 {
   int i, j, k, imax = 0;
-  assert(this->_nrows == this->_ncols);
-  matrix<Type> r(this->_nrows, this->_ncols);
+  assert(_nrows == _ncols);
+  matrix<T> r(_nrows, _ncols);
 #define TINY 1.e-20;
-  Type big, dum, sum;
-  // Type temp;
-  Type *vv = new Type[this->_nrows];
+  T big, dum, sum;
+  // T temp;
+  T *vv = new T[_nrows];
   r = *this;
   *d = 1;
-  for (i = 0; i < this->_nrows; ++i) {
+  for (i = 0; i < _nrows; ++i) {
     big = 0.0;
-    for (j = 0; j < this->_nrows; ++j) {
-      //			if ((temp = fabs(r.el(i,j))) > big) 
-      //				big = temp;
+    for (j = 0; j < _nrows; ++j) {
       if (mag(r.el(i, j)) > mag(big))
 	big = r.el(i, j);
     }
@@ -163,7 +165,7 @@ matrix<Type>::_LU(int *d, int *indx) const
       r.setStatus(1);
     vv[i] = 1.0 / big;
   }
-  for (j = 0; j < this->_nrows; ++j) {
+  for (j = 0; j < _nrows; ++j) {
     for (i = 0; i < j; ++i) {
       sum = r.el(i, j);
       for (k = 0; k < i; ++k)
@@ -171,23 +173,19 @@ matrix<Type>::_LU(int *d, int *indx) const
       r.el(i, j) = sum;
     }
     big = 0.0;
-    for (i = j; i < this->_nrows; ++i) {
+    for (i = j; i < _nrows; ++i) {
       sum = r.el(i, j);
       for (k = 0; k < j; ++k) {
 	sum -= r.el(i, k) * r.el(k, j);
       }
       r.el(i, j) = sum;
-      //			if (( dum=vv[i] * fabs(sum)) >= big) {
-      //				big = dum;
-      //				imax = i;
-      //			}
       if (mag(vv[i] * sum) >= mag(big)) {
 	big = mag(vv[i] * sum);
 	imax = i;
       }
     }
     if (j != imax) {      /* do we need to interchange rows? */
-      for (k = 0; k < this->_nrows; ++k) {    /* Yes, make it so */
+      for (k = 0; k < _nrows; ++k) {    /* Yes, make it so */
 	dum = r.el(imax, k);
 	r.el(imax, k) = r.el(j, k);
 	r.el(j, k) = dum;
@@ -198,9 +196,9 @@ matrix<Type>::_LU(int *d, int *indx) const
     indx[j] = imax;
     if (r.el(j, j) == 0.0)
       r.el(j, j) = TINY;
-    if (j != this->_nrows) {
+    if (j != _nrows) {
       dum = 1.0 / r.el(j, j);
-      for (i = j + 1; i < this->_nrows; ++i)
+      for (i = j + 1; i < _nrows; ++i)
 	r.el(i, j) *= dum;
     }
   }
@@ -211,67 +209,68 @@ matrix<Type>::_LU(int *d, int *indx) const
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::LU() const
+template <class T>
+matrix<T>
+matrix<T>::LU() const
 {
   int d;
-  int *indx = new int[this->_nrows];
-  matrix<Type> r(this->_nrows, this->_ncols);
-  r = this->_LU(&d, indx);
+  int *indx = new int[_nrows];
+  matrix<T> r(_nrows, _ncols);
+  r = _LU(&d, indx);
   if (indx)
     delete[] indx;
   return(r);
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::_lubksb(int *indx, matrix& b) 
+template <class T>
+matrix<T>
+matrix<T>::_lubksb(int*    indx,
+		   matrix& b) 
 {
   int i, ii = -1, ip, j;
-  Type sum;
+  T sum;
   matrix r(b.nrows(), 1);
   r = b;
-  for (i = 0; i < this->_nrows; ++i) {
+  for (i = 0; i < _nrows; ++i) {
     ip = indx[i];
     sum = r.el(ip, 0);
     r.el(ip, 0) = r.el(i, 0);
     if (ii > -1) {
-      for (j = ii; j < this->_nrows; ++j)
-	sum -= this->element(i, j) * r.element(j, 0);
+      for (j = ii; j < _nrows; ++j)
+	sum -= element(i, j) * r.element(j, 0);
     }
     else if (mag(sum)) 
       ii = i;
     r.el(i, 0) = sum;
   }
-  for (i = this->_nrows-1; i > -1; --i) {
+  for (i = _nrows-1; i > -1; --i) {
     sum = r.el(i, 0);
-    for (j = i + 1; j < this->_nrows; ++j)
-      sum -= this->element(i, j) * r.element(j, 0);
-    r.el(i, 0) = sum / this->element(i, i);
+    for (j = i + 1; j < _nrows; ++j)
+      sum -= element(i, j) * r.element(j, 0);
+    r.el(i, 0) = sum / element(i, i);
   }
   return(r);
 }
 		
 
-template <class Type>
-matrix<Type>
-matrix<Type>::inv()
+template <class T>
+matrix<T>
+matrix<T>::inv()
 {
   int d;
   int i, j;
-  int *indx = new int[this->_ncols];
-  matrix r (this->_nrows, this->_ncols);
-  matrix lu(this->_nrows, this->_ncols);
-  lu = this->_LU(&d, indx);
+  int *indx = new int[_ncols];
+  matrix r (_nrows, _ncols);
+  matrix lu(_nrows, _ncols);
+  lu = _LU(&d, indx);
   if (lu.status()) {
-    for (j = 0; j < this->_nrows; ++j) {
-      matrix col(this->_nrows, 1);
-      matrix x(this->_nrows, 1);
+    for (j = 0; j < _nrows; ++j) {
+      matrix col(_nrows, 1);
+      matrix x(_nrows, 1);
       col.el(j, 0) = 1.0;
       x = lu._lubksb(indx, col);
-      for (i = 0; i < this->_nrows; ++i)
+      for (i = 0; i < _nrows; ++i)
 	r.el(i, j) = x.el(i, 0);
     }
     r.setStatus(1);
@@ -285,331 +284,340 @@ matrix<Type>::inv()
 }
 		
 
-template <class Type>
-matrix<Type>
-matrix<Type>::conjugate() const
+template <class T>
+matrix<T>
+matrix<T>::conjugate() const
 {
-  matrix<Type> r(this->_nrows, this->_ncols);
-  for (int i = 0; i < this->_nrows; ++i)
-    for (int j = 0; j < this->_ncols; ++j)
-      r.el(i, j) = conj((const_cast<matrix<Type>*>(this))->el(i, j));
+  matrix<T> r(_nrows, _ncols);
+  for (int i = 0; i < _nrows; ++i)
+    for (int j = 0; j < _ncols; ++j)
+      r.el(i, j) = conj(el(i, j));
   return(r);
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::transpose() const
+template <class T>
+matrix<T>
+matrix<T>::transpose() const
 {
-  matrix<Type> r(this->_ncols, this->_nrows);
-  for (int i = 0; i < this->_nrows; ++i)
-    for (int j = 0; j < this->_ncols; ++j)
-      r.el(j, i) = (const_cast<matrix<Type>*>(this))->el(i, j);
+  matrix<T> r(_ncols, _nrows);
+  for (int i = 0; i < _nrows; ++i)
+    for (int j = 0; j < _ncols; ++j)
+      r.el(j, i) = el(i, j);
   return(r);
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::adjoint() const
+template <class T>
+matrix<T>
+matrix<T>::adjoint() const
 {
-  matrix<Type> r(this->_ncols, this->_nrows);
-  r = (this->transpose()).conjugate();
+  matrix<T> r(_ncols, _nrows);
+  r = transpose().conjugate();
   return(r);
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::operator + (const matrix& M) const
+template <class T>
+matrix<T>
+matrix<T>::operator + (const matrix& M) const
 {
-  assert((this->_ncols == M._ncols) && (this->_nrows == M._nrows));
-  matrix<Type> r(this->_nrows, this->_ncols);
-  for (int i = 0; i < this->_nrows; ++i)
+  assert((_ncols == M._ncols) && (_nrows == M._nrows));
+  matrix<T> r(_nrows, _ncols);
+  for (int i = 0; i < _nrows; ++i)
     for (int j = 0; j < M._ncols; ++j)
-      r.el(i, j) =(const_cast<matrix<Type>*>(this))->el(i, j)
-	          + (const_cast<matrix<Type>*>(&M))->el(i, j);
+      r.el(i, j) = el(i, j) + M.el(i, j);
   return(r);
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::operator += (const matrix& M)
+template <class T>
+matrix<T>
+matrix<T>::operator += (const matrix& M)
 {
-  assert((this->_ncols == M._ncols) && (this->_nrows == M._nrows));
-  for (int i = 0; i < this->_nrows; ++i)
+  assert((_ncols == M._ncols) && (_nrows == M._nrows));
+  for (int i = 0; i < _nrows; ++i)
     for (int j = 0; j < M._ncols; ++j)
-      this->el(i, j) += (const_cast<matrix<Type>*>(&M))->el(i, j);
-  return(*this);
+      el(i, j) += M.el(i, j);
+  return *this;
 }
 
-template <class Type>
-matrix<Type>
-matrix<Type>::operator *= (const double k)
+template <class T>
+matrix<T>
+matrix<T>::operator *= (const double k)
 {
-  for (int i = 0; i < this->_nrows; ++i)
-    for (int j = 0; j < this->_ncols; ++j)
-      this->el(i, j) *= k;
-  return(*this);
+  for (int i = 0; i < _nrows; ++i)
+    for (int j = 0; j < _ncols; ++j)
+      el(i, j) *= k;
+  return *this;
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::operator - (const matrix& M) const
+template <class T>
+matrix<T>
+matrix<T>::operator - (const matrix& M) const
 {
-  assert((this->_ncols == M._ncols) && (this->_nrows == M._nrows));
-  matrix<Type> r(this->_nrows, this->_ncols);
-  for (int i = 0; i < this->_nrows; ++i)
+  assert((_ncols == M._ncols) && (_nrows == M._nrows));
+  matrix<T> r(_nrows, _ncols);
+  for (int i = 0; i < _nrows; ++i)
     for (int j = 0; j < M._ncols; ++j)
-      r.el(i, j) = (const_cast<matrix<Type>*>(this))->el(i, j)
-	           - (const_cast<matrix<Type>*>(&M))->el(i, j);
+      r.el(i, j) = el(i, j) - M.el(i, j);
   return(r);
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::operator -= (const matrix& M)
+template <class T>
+matrix<T>
+matrix<T>::operator -= (const matrix& M)
 {
-  assert((this->_ncols == M._ncols) && (this->_nrows == M._nrows));
-  for (int i = 0; i < this->_nrows; ++i)
+  assert((_ncols == M._ncols) && (_nrows == M._nrows));
+  for (int i = 0; i < _nrows; ++i)
     for (int j = 0; j < M._ncols; ++j)
-      this->el(i, j) -= (const_cast<matrix<Type>*>(&M))->el(i, j);
-  return(*this);
+      el(i, j) -= M.el(i, j);
+  return *this;
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::operator * (const matrix& M) const
+template <class T>
+matrix<T>
+matrix<T>::operator * (const matrix& M) const
 {
-  assert(this->_ncols == M._nrows);
-  matrix<Type> r(this->_nrows, M._ncols);
-  for (int i = 0; i < this->_nrows; ++i)
+  assert(_ncols == M._nrows);
+  matrix<T> r(_nrows, M._ncols);
+  for (int i = 0; i < _nrows; ++i)
     for (int j = 0; j < M._ncols; ++j)
-      for (int k = 0; k < this->_ncols; ++k)
-	r.el(i, j) += (const_cast<matrix<Type>*>(this))->el(i, k)
-	              * (const_cast<matrix<Type>*>(&M))->el(k, j);
+      for (int k = 0; k < _ncols; ++k)
+	r.el(i, j) += el(i, k) * M.el(k, j);
   return(r);
 }
 
 
-template <class Type>
-matrix<Type>
-operator * (Type a, matrix<Type>& M)
+template <class T>
+matrix<T>
+operator * (const T&         a,
+	    const matrix<T>& M)
 {
   return(M * a);
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::operator * (Type a) const
+template <class T>
+matrix<T>
+matrix<T>::operator * (const T& a) const
 {
-  matrix<Type> r(this->nrows(), this->ncols());
-  for (int i = 0; i < this->nrows(); ++i)
-    for (int j = 0; j < this->ncols(); ++j)
-      r.el(i, j) = a * this->element(i, j);
+  matrix<T> r(nrows(), ncols());
+  for (int i = 0; i < nrows(); ++i)
+    for (int j = 0; j < ncols(); ++j)
+      r.el(i, j) = a * element(i, j);
   return(r);
 }
 
 
-template <class Type>
-Type&
-matrix<Type>::el(int i, int j)
+template <class T>
+T&
+matrix<T>::el(const int i,
+	      const int j)
 {
-  assert((i < this->_nrows) && (j < this->_ncols));
+  assert((i < _nrows) && (j < _ncols));
   return _f[j + i * _ncols];
 }
 
 
-template <class Type>
-const Type&
-matrix<Type>::el(int i, int j) const
+template <class T>
+const T&
+matrix<T>::el(const int i,
+	      const int j) const
 {
-  assert((i < this->_nrows) && (j < this->_ncols));
+  assert((i < _nrows) && (j < _ncols));
   return _f[j + i * _ncols];
 }
 
 
-template <class Type>
+template <class T>
 void
-matrix<Type>::_create(int n, int m)
+matrix<T>::_create(const int n,
+		   const int m)
 {	
-  this->_nrows = n;
-  this->_ncols = m;
-  this->_f = NULL;
+  _nrows = n;
+  _ncols = m;
+  _f = NULL;
   if (n * m != 0) {
-    this->_f = new Type[n * m];
-    memset(this->_f, 0, n * m * sizeof(Type));
+    _f = new T[n * m];
+    memset(_f, 0, n * m * sizeof(T));
   }
 }
 
 
-template <class Type>
+template <class T>
 void
-matrix<Type>::_copy(const matrix<Type>& src)
+matrix<T>::_copy(const matrix<T>& src)
 {
-  this->_nrows = src._nrows;
-  this->_ncols = src._ncols;
-  this->_status = src.status();
-  if (this->_f)
-    delete[] this->_f;
-  this->_f = new Type[src._nrows * src._ncols];
-  memcpy(this->_f, src._f, src._nrows * src._ncols * sizeof(Type));
+  _nrows = src._nrows;
+  _ncols = src._ncols;
+  _status = src.status();
+  if (_f)
+    delete[] _f;
+  _f = new T[src._nrows * src._ncols];
+  memcpy(_f, src._f, src._nrows * src._ncols * sizeof(T));
 }
 
 
-template <class Type>
+template <class T>
 void
-matrix<Type>::_destroy(void)
+matrix<T>::_destroy(void)
 {
-  if (this->_f)
-    delete[] this->_f;
-  this->_f = NULL;
-  this->_nrows = 0;
-  this->_ncols = 0;
+  if (_f)
+    delete[] _f;
+  _f = NULL;
+  _nrows = 0;
+  _ncols = 0;
 }
 
 
-template <class Type>
-matrix<Type>::matrix()
+template <class T>
+matrix<T>::matrix()
 {
-  this->_create(0, 0);
+  _create(0, 0);
 }
 
 
-template <class Type>
-matrix<Type>::matrix(int i, int j)
+template <class T>
+matrix<T>::matrix(const int n,
+		  const int m)
 {
-  this->_create(i, j);
+  _create(n, m);
 }
 
 
-template <class Type>
-matrix<Type>::matrix(int i, int j, Type* p)
+template <class T>
+matrix<T>::matrix(const int n,
+		  const int m,
+		  T*        p)
 {
-  this->_create(i, j);
-  this->_f = p;
+  _create(n, m);
+  _f = p;
 }
 
 
-template <class Type>
-matrix<Type>::matrix(const matrix<Type>& M)
+template <class T>
+matrix<T>::matrix(const matrix<T>& M)
 {
-  this->_create(M._nrows, M._ncols);
-  this->_copy(M);
+  _create(M._nrows, M._ncols);
+  _copy(M);
 }
 
 
-template <class Type>
-matrix<Type>::~matrix()
+template <class T>
+matrix<T>::~matrix()
 {
-  this->_destroy();
+  _destroy();
 }
 
 
-template <class Type>
-matrix<Type>&
-matrix<Type>::operator = (const matrix<Type>& M)
+template <class T>
+matrix<T>&
+matrix<T>::operator = (const matrix<T>& M)
 {
-  this->_copy(M);
-  return(*this);
+  _copy(M);
+  return *this;
 }
 
 
-template <class Type>
-const matrix<Type>&
-matrix<Type>::print(std::ostream& os) const
+template <class T>
+const matrix<T>&
+matrix<T>::print(std::ostream& os) const
 {
-  os << _nrows << " " << _ncols << std::endl;
+  const unsigned int nmbDigits = std::numeric_limits<double>::digits10 + 1;
+  std::ostringstream s;
+  s.precision(nmbDigits);
+  s.setf(std::ios_base::scientific, std::ios_base::floatfield);
+  s << _nrows << " " << _ncols << std::endl;
   for (int i = 0; i < _nrows; ++i) {
     for (int j = 0; j < _ncols; ++j)
-      os << _f[j + i * _ncols] << "\t";
-    os << std::endl;
+      s << _f[j + i * _ncols] << "\t";
+    s << std::endl;
   }
-  return(*this);
+  os << s.str();
+  return *this;
 }
 
 
-template <class Type>
-matrix<Type>&
-matrix<Type>::scan(std::istream& is)
+template <class T>
+matrix<T>&
+matrix<T>::scan(std::istream& is)
 {
   int i = 0, j = 0;
   is >> i;
   is >> j;
-  this->_create(i, j);
+  _create(i, j);
   for (int i = 0; i < _nrows; ++i)
     for (int j = 0; j < _ncols; ++j) {
-      is >> this->_f[j + i * _ncols];
+      is >> _f[j + i * _ncols];
       if (is.eof())
 	throw "trunc matrix input";
     }
-  return(*this);
+  return *this;
 }
 
 
-template <class Type>
+template <class T>
 std::ostream&
-operator << (std::ostream& os, const matrix<Type>& m)
+operator << (std::ostream&    os,
+	     const matrix<T>& m)
 {
   m.print(os);
   return os;
 }
 
 
-template <class Type>
+template <class T>
 std::istream&
-operator >> (std::istream& is, matrix<Type>& m)
+operator >> (std::istream& is,
+	     matrix<T>&    m)
 {
   m.scan(is);
   return is;
 }
 
 
-template <class Type>
-matrix<Type>
-matrix<Type>::zero()
+template <class T>
+matrix<T>
+matrix<T>::zero()
 {
-  memset(this->_f, 0, this->_nrows * this->_ncols * sizeof(Type));
-  return(*this);
+  memset(_f, 0, _nrows * _ncols * sizeof(T));
+  return *this;
 }
 
 
-template <class Type>
+template <class T>
 threeVec
-matrix<Type>::operator * (const threeVec& V) const
+matrix<T>::operator * (const threeVec& V) const
 {
   threeVec R;
-  assert((this->_nrows == 3) && (this->_ncols == 3));
+  assert((_nrows == 3) && (_ncols == 3));
   for (int i = 0; i < 3; ++i)
     for (int j = 0; j < 3; ++j)
-      R.el(i) += (const_cast<matrix<Type>*>(this))->el(i, j)
-	         * (const_cast<threeVec*>(&V))->el(j); 
+      R.el(i) += el(i, j) * V.el(j); 
   return(R);
 }
 
 
-template <class Type>
+template <class T>
 fourVec
-matrix<Type>::operator * (const fourVec& v) const
+matrix<T>::operator * (const fourVec& v) const
 {
   fourVec r;
-  assert((this->_nrows == 4) && (this->_ncols == 4));
+  assert((_nrows == 4) && (_ncols == 4));
   for (int i = 0; i < 4; ++i)
     for (int j = 0; j < 4; ++j)
-      r.el(i) += (const_cast<matrix<Type>*>(this))->el(i, j)
-	         * (const_cast<fourVec*>(&v))->el(j); 
+      r.el(i) += el(i, j) * v.el(j); 
   return(r);
 }
 
 
-template <class Type>
+template <class T>
 fourVec
-operator *= (fourVec& v, const matrix<Type>& M)
+operator *= (fourVec& v, const matrix<T>& M)
 {
   v = M * v;
   return v;
