@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <exception>
 #include <string>
+
 #include "TString.h"
 #include "TGraph.h"
 #include "TMultiGraph.h"
@@ -35,14 +36,15 @@
 #include "TH1D.h"
 
 
+using namespace std;
+
+
 bool SameJPCEPS(TString s1, TString s2){
   TString ss1=s1(2,5);
   TString ss2=s2(2,5);
   //cout << ss1 << " " << ss2 << endl;
   return ss1==ss2;
 }
-
-
 
 
 int

@@ -1,15 +1,13 @@
-#line 4 "pputil.nw"
 #ifndef PPUTIL_H
 #define PPUTIL_H
 	
-#line 14 "pputil.nw"
+
 #include <iostream>
 #include <string>
 #include <complex>
 #include <cstdio>
 
 
-#line 26 "pputil.nw"
 typedef enum {
     g_Unknown = 0,
     g_Gamma = 1,
@@ -57,51 +55,58 @@ typedef enum {
 } Geant_ID;
 
 
-
-#line 7 "pputil.nw"
-	
-#line 135 "pputil.nw"
-inline double tilde(int l)
-{
-	return pow(l+1,0.5);
-}
-
-
-#line 8 "pputil.nw"
-	
-#line 77 "pputil.nw"
 #define signof(x) (x<0 ? -1 : 1)
 #define MAX(x,y) (x>y ? x : y)
 #define MIN(x,y) (x<y ? x : y)
 
 
-#line 9 "pputil.nw"
-	
-#line 97 "pputil.nw"
-	std::complex<double> D(double alpha,double beta,double gamma,int j,int n,int m);
-	double clebsch(int j1,int j2,int j3,int m1,int m2,int m3);
-	extern "C" void clebs_(int*,int*,int*,int*,int*,int*,int*,int*);
-	double d_jmn_b(int J, int M, int N, double beta);
-	int fact(int i);
-	double dfact(double i);
-	double F(int n,double p);
-	double lambda(double a, double b, double c);
-	std::complex<double> q(double M, double m1, double m2);
+inline double tilde(const int l) { return pow(l+1,0.5); }
+
+std::complex<double> D(const double alpha,
+		       const double beta,
+		       const double gamma,
+		       const int    j,
+		       const int    n,
+		       const int    m);
+double d_jmn_b(int    J,
+	       int    M,
+	       int    N,
+	       double beta);
+double clebsch(const int j1,
+	       const int j2,
+	       const int j3,
+	       const int m1,
+	       const int m2,
+	       const int m3);
+extern "C" void clebs_(int*,
+		       int*,
+		       int*,
+		       int*,
+		       int*,
+		       int*,
+		       int*,
+		       int*);
+int fact(int i);
+double dfact(const double i);
+double F(const int n,
+	 const double p);
+double lambda(const double a,
+	      const double b,
+	      const double c);
+std::complex<double> q(const double M,
+		       const double m1,
+		       const double m2);
+
+void addtab();
+void subtab();
+void ptab();
+void settab(const int);
+std::string itos(const int);
+std::string chargetos(int charge);
+
+Geant_ID    name2id(const std::string& name,
+		    const int          q);
+std::string id2name(const Geant_ID);
 
 
-#line 116 "pputil.nw"
-	void addtab() ;
-	void subtab() ;
-	void ptab() ;
-	void settab(int) ;
-	std::string itos(int);
-	std::string chargetos(int);
-
-#line 128 "pputil.nw"
-	Geant_ID  name2id( std::string name,int q);
-	std::string  id2name( Geant_ID );
-
-#line 10 "pputil.nw"
-#endif
-
-
+#endif  // PPUTIL_H

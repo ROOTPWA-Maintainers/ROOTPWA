@@ -1,343 +1,302 @@
-#line 373 "../integral.nw"
-#include <integral.h>
+#include <cstdlib>
+
+#include "integral.h"
+
+
+using namespace std;
 
     
-#line 387 "../integral.nw"
-integral::integral() {
-    this->_nwaves = 0;
-    this->_nevents = 0;
-    this->_maxEvents = 0;
+integral::integral()
+  : _nwaves   (0),
+    _nevents  (0),
+    _maxEvents(0)
+{
 }
 
-#line 399 "../integral.nw"
-integral::integral(char** files) {
-    this->_nwaves = 0;
-    this->_nevents = 0;
-    this->_maxEvents = 0;
-    this->files(files);
-    this->_sum = matrix<complex<double> >(this->_nwaves, this->_nwaves);    
+
+integral::integral(char** fileList)
+  : _nwaves   (0),
+    _nevents  (0),
+    _maxEvents(0)
+{
+  files(fileList);
+  _sum = matrix<complex<double> >(_nwaves, _nwaves);    
 }
 
-#line 411 "../integral.nw"
-integral::integral(const integral& ni) {
-    this->_nwaves = ni._nwaves;
-    this->_nevents = ni._nevents;
-    this->_maxEvents = ni._maxEvents;
-    this->_index = ni._index;
-    this->_sum = ni._sum;
+
+integral::integral(const integral& ni)
+{
+  _nwaves    = ni._nwaves;
+  _nevents   = ni._nevents;
+  _maxEvents = ni._maxEvents;
+  _index     = ni._index;
+  _sum       = ni._sum;
 }
 
-#line 424 "../integral.nw"
-integral::~integral() {
-    ;
+
+integral::~integral()
+{
 }
 
-#line 433 "../integral.nw"
-integral& integral::operator=(const integral& ni) {
-    this->_nwaves = ni._nwaves;
-    this->_nevents = ni._nevents;
-    this->_maxEvents = ni._maxEvents;
-    this->_index = ni._index;
-    this->_sum = ni._sum;
-    this->_weightfilename = ni._weightfilename;
-    return *this;
+
+integral&
+integral::operator = (const integral& ni)
+{
+  _nwaves         = ni._nwaves;
+  _nevents        = ni._nevents;
+  _maxEvents      = ni._maxEvents;
+  _index          = ni._index;
+  _sum            = ni._sum;
+  _weightFileName = ni._weightFileName;
+  return *this;
 }
 
-#line 376 "../integral.nw"
-    
 
- void 
- integral::weightfile(string filename){
-   _weightfilename=filename;
- }
+integral&
+integral::files(char** fileList)
+{
+  list<string> fList;
+  while (*fileList) {
+    fList.push_back(*fileList);
+    ++fileList;
+  }
+  files(fList);
+  return *this;
+}
 
 
+integral&
+integral::files(const list<string>& fileList)
+{
+  list<string>::const_iterator file = fileList.begin();
+  while (file != fileList.end()) {
+    _index[*file] = _nwaves++;
+    file++;
+  }
+  _sum = matrix<complex<double> >(_nwaves, _nwaves);    
+  return *this;
+}
 
 
-#line 457 "../integral.nw"
-integral& integral::integrate() {
-    if (this->_nwaves == 0) throw "no waves";
+list<string>
+integral::files() const
+{
+  list<string> fileList;
+  map<string, int>::const_iterator i = _index.begin();
+  while (i != _index.end() ) {
+    fileList.push_back(i->first);
+    ++i;
+  }
+  return fileList;
+}
 
-    int nRead = 0;
-    ifstream *ampfile = new ifstream[this->_nwaves];
-    complex<double> *amps = new complex<double>[this->_nwaves];
 
-    double weightint=0;
+char** integral::files_c_str() const
+{
+  char** fileList = (char**)malloc((_nwaves + 1) * sizeof(char*));
+  int    index = 0;
+  map<string, int>::const_iterator i = _index.begin();
+  while (i != _index.end()) {
+    const string fileName = i->first;
+    fileList[index] = (char*)malloc((fileName.size() + 1) * sizeof(char));
+    strcpy(fileList[index], fileName.c_str());
+    ++i;
+    ++index;
+  }
+  fileList[index] = NULL;
+  return fileList;
+}
 
-    ifstream wfile;
-    bool hasweight=false;
-    //cerr << "trying to open " << _weightfilename << endl;
-    if(_weightfilename.size()!=0){
-      wfile.open(_weightfilename.c_str());
-      //cerr << "trying to open " << _weightfilename << endl;
-      if(!wfile) { 
-	cerr << "error: cannot open " << _weightfilename << endl;
-	throw "file not found";
+
+integral&
+integral::integrate()
+{
+  if (_nwaves == 0)
+    throw "no waves";
+
+  ifstream weightFile;
+  bool     hasWeight = false;
+  if (_weightFileName.size() != 0) {
+    weightFile.open(_weightFileName.c_str());
+    if (!weightFile) { 
+      cerr << "error: cannot open " << _weightFileName << endl;
+      throw "file not found";
+    }
+    hasWeight = true;
+  }
+
+  ifstream* ampfile = new ifstream [_nwaves];
+  for (map<string, int>::const_iterator i = _index.begin(); i != _index.end(); ++i) {
+    const string fileName  = i->first;
+    const int    fileIndex = i->second;
+    ampfile[fileIndex].open((fileName).c_str());
+    if(!ampfile[fileIndex]) {
+      cerr << "error: cannot open " << fileName << endl;
+      throw "file not found";
+    }
+  }
+
+  complex<double>* amps      = new complex<double>[_nwaves];
+  double           weightInt = 0;
+  int              nRead     = 0;
+  int              eof       = 0;
+  while (!eof && ((_maxEvents) ? nRead < _maxEvents : true)) {
+    double w = 1;
+    if (hasWeight)
+      weightFile >> w;
+    const double weight = 1. / w; // we have to de-weight the events!!!
+    weightInt += weight;
+
+    for (map<string, int>::const_iterator i = _index.begin(); i != _index.end(); ++i) {
+      const int index = i->second;
+      ampfile[index].read((char*)&amps[index], sizeof(complex<double>));
+      if ((eof = ampfile[index].eof()))
+	break;
+    }
+    if (eof)
+      break;
+    ++_nevents;
+    ++nRead;
+
+    if (!(nRead % 100))
+      cerr << nRead << "\r" << flush;
+
+    for (map<string, int>::const_iterator i = _index.begin(); i != _index.end(); ++i) {
+      const int indexI = i->second;
+      for (map<string, int>::const_iterator j = _index.begin(); j != _index.end(); ++j) {
+	const int indexJ = j->second;
+	complex<double> val = amps[indexI] * conj(amps[indexJ]);
+	if (hasWeight)
+	  val *= weight;
+	_sum.el(indexI, indexJ) += val;
       }
-      hasweight=true;
     }
+  }
 
-    
-#line 485 "../integral.nw"
-    string filename;
-    int fileindex;
+  if (hasWeight) {
+    // renormalize to importance sampling weight integral:
+    const double weightNorm = weightInt / (double)nRead;
+    cerr << "Weight integral= " << weightNorm << endl;
+    _sum *= 1. / weightNorm;
+  }
 
-    map<string, int>::iterator ampName = this->_index.begin();
-    while( ampName != this->_index.end() ) {
-        filename = (*ampName).first;
-        fileindex = (*ampName).second;
-        ampfile[fileindex].open((filename).c_str());
-        if(!ampfile[fileindex]) {
-            cerr << "error: cannot open " << filename << endl;
-            throw "file not found";
-        }
-        ampName++;
-    }
-
-
-#line 466 "../integral.nw"
-    int eof = 0;
-    while (!eof && _maxEvents?nRead<_maxEvents:1) {
-    
-      double w=1;
-      if(hasweight)wfile >> w;
-      double weight=1./w; // we have to de-weight the events!!!
-      weightint+=weight;
-      //cerr << weight << endl;
-
-#line 508 "../integral.nw"
-    int index;
-    map<string, int>::iterator ampName = this->_index.begin();
-    while( ampName != this->_index.end() ) {
-        index = (*ampName).second;
-        ampfile[index].read((char*) &amps[index], sizeof(complex<double>));
-        if ( (eof = ampfile[index].eof()) ) break;
-        ampName++;
-    }
-    if (eof) break;
-    this->_nevents++;
-	nRead++;
-
-    if ( !(nRead % 100) ) cerr << nRead << "\r" << flush;
-
-#line 469 "../integral.nw"
-        
-#line 529 "../integral.nw"
-    int i, j;
-    map<string, int>::iterator ampName_i = this->_index.begin();
-    while( ampName_i != this->_index.end() ) {
-        i = (*ampName_i).second;
-        map<string, int>::iterator ampName_j = this->_index.begin();
-        while( ampName_j != this->_index.end() ) {
-            j = (*ampName_j).second;
-	    complex<double> val=amps[i]*conj(amps[j]);
-	    if(hasweight)val*=weight;
-            this->_sum.el(i,j) += val;
-            ampName_j++;
-        }
-        ampName_i++;
-    }
-
-#line 470 "../integral.nw"
-    }
-
-
-    double weightnorm=weightint/(double)nRead;
-    cerr << "Weights integral= " << weightnorm << endl;
-    // renormailze to importants sampling weights integral:
-    _sum*=1./weightnorm;
-
-
-    delete [] ampfile;
-    delete [] amps;
-    return *this;
-}
-
-#line 553 "../integral.nw"
-integral& integral::files(list<string> files) {
-    list<string>::iterator file = files.begin();
-    while(file != files.end()) {
-        this->_index[*file] = this->_nwaves++;
-        file++;
-    }
-    this->_sum = matrix<complex<double> >(this->_nwaves, this->_nwaves);    
-    return *this;
-}
-
-integral& integral::files(char** files) {
-    list<string> slist;
-    while(*files) {
-        slist.push_back(*files);
-        files++;
-    }
-    this->files(slist);
-    return *this;
-}
-
-#line 581 "../integral.nw"
-    integral& integral::renormalize(int n) {
-        _sum = ((complex<double>) ((double) n/ (double) _nevents))*_sum;
-        _nevents = n;
-        return *this;
-    }
-
-#line 591 "../integral.nw"
-    integral& integral::max(int m) { 
-        this->_maxEvents = m; 
-        return *this; 
-    }
-
-    integral& integral::events(int n) { 
-        this->_nevents = n; 
-        return *this; 
-    }
-
-#line 610 "../integral.nw"
-complex<double>& integral::el(string iname, string jname) {
-    return (_sum.el(_index[iname],_index[jname]));
-}
-
-#line 377 "../integral.nw"
-    
-#line 621 "../integral.nw"
-int integral::nevents() const {
-	return _nevents;
-}
-
-#line 634 "../integral.nw"
-list<string> integral::files() const {
-    list<string> fileList;
-    map<string, int>::const_iterator ampName = this->_index.begin();
-    while( ampName != this->_index.end() ) {
-        fileList.push_back((*ampName).first);
-        ampName++;
-    }
-    return fileList;
-}
-
-char** integral::files_c_str() const {
-    string fname;
-    int i = 0;
-    char** fileList = (char**) malloc((_nwaves+1)*sizeof(char*));
-
-    map<string, int>::const_iterator ampName = this->_index.begin();
-    while( ampName != this->_index.end() ) {
-        fname = (*ampName).first;
-        fileList[i] = (char*) malloc ((fname.size()+1)*sizeof(char));
-        strcpy(fileList[i],fname.c_str());
-        ampName++; i++;
-    }
-    fileList[i] = NULL;
-    return fileList;
-}
-
-#line 669 "../integral.nw"
-complex<double> integral::val(string iname, string jname) {
-
-    if( _index.find(iname) == _index.end() ) {
-        cerr << "error: " << iname << " not in integral" << endl;
-        throw "bad wave access";
-    }
-    if( _index.find(jname) == _index.end() ) {
-        cerr << "error: " << jname << " not in integral" << endl;
-        throw "bad wave access";
-    }
-
-    return (this->el(iname,jname)/((double) _nevents));
-}
-
-#line 697 "../integral.nw"
-integral integral::get(list<string> flist) {
-    // need to check that all requested files are in list
-    list<string>::iterator iname;
-    list<string>::iterator jname;
-    integral ret;
-
-    iname = flist.begin();
-    while (iname != flist.end()) {
-        if( _index.find(*iname) == _index.end() ) {
-            cerr << "error: " << *iname << " not in integral" << endl;
-            throw "bad wave access";
-        }
-        iname++;
-    }
-
-    ret.files(flist);
-    ret.events(_nevents);
-    iname = flist.begin();
-    while (iname != flist.end()) {
-        jname = flist.begin();
-        while (jname != flist.end()) {
-            ret.el(*iname,*jname) = this->el(*iname,*jname);
-            jname++;
-        }
-        iname++;
-    }
-    return ret;
-}
-
-integral integral::get(char** flist) {
-    list<string> slist;
-    while(*flist) {
-        slist.push_back(*flist);
-        flist++;
-    }
-    return this->get(slist);
-}
-
-#line 739 "../integral.nw"
-    int integral::index(string s) {
-        return _index[s];
-    }
-
-    int integral::index(char* s) {
-        return _index[s];
-    }
-
-#line 750 "../integral.nw"
-    matrix<complex<double> > integral::mat() {
-        return ((complex<double>) (1.0/((double) _nevents)))*_sum;
-    }
-
-#line 378 "../integral.nw"
-    
-#line 764 "../integral.nw"
-const integral& integral::print(ostream& os) const {
-    
-    os << _nwaves << endl;
-    os << _nevents << endl;
-    os << _sum;
-    os << _index.size() << endl;
-    map<string, int>::const_iterator ampName = this->_index.begin();
-    while( ampName != _index.end() ) {
-        os << (*ampName).first << " " << (*ampName).second << endl;
-        ampName++;
-    }
-
-    return *this;
-}
-
-#line 780 "../integral.nw"
-const integral& integral::print_events(ostream& os) const {
-
-    os << _nevents << endl;
-    return *this;
-}
-
-#line 794 "../integral.nw"
-integral& integral::scan(istream& is) {
-    int indexSize = 0, index = 0;
-    string name;
-
-    is >> _nwaves;
-    is >> _nevents;
-    is >> _sum;
-    is >> indexSize;
-    while(indexSize--) {
-        is >> name >> index;
-        _index[name] = index;
-    }
-    return *this;
+  delete [] ampfile;
+  delete [] amps;
+  return *this;
 }
 
 
+integral&
+integral::renormalize(const int n)
+{
+  _sum     = ((complex<double>) ((double) n / (double)_nevents)) * _sum;
+  _nevents = n;
+  return *this;
+}
+
+
+integral&
+integral::max(const int m)
+{
+  _maxEvents = m; 
+  return *this; 
+}
+
+
+integral& integral::events(const int n)
+{
+  _nevents = n; 
+  return *this; 
+}
+
+
+complex<double>
+integral::val(const string& iName,
+	      const string& jName)
+{
+  if (_index.find(iName) == _index.end()) {
+    cerr << "error: " << iName << " not in integral" << endl;
+    throw "bad wave access";
+  }
+  if (_index.find(jName) == _index.end()) {
+    cerr << "error: " << jName << " not in integral" << endl;
+    throw "bad wave access";
+  }
+  return el(iName, jName) / ((double)_nevents);
+}
+
+
+integral
+integral::get(char** fileList)
+{
+  list<string> fList;
+  while (*fileList) {
+    fList.push_back(*fileList);
+    ++fileList;
+  }
+  return get(fList);
+}
+
+
+integral
+integral::get(const list<string>& fileList)
+{
+  // need to check that all requested files are in list
+  for (list<string>::const_iterator i = fileList.begin(); i != fileList.end(); ++i)
+    if( _index.find(*i) == _index.end() ) {
+      cerr << "error: " << *i << " not in integral" << endl;
+      throw "bad wave access";
+    }
+  integral ret;
+  ret.files(fileList);
+  ret.events(_nevents);
+  for (list<string>::const_iterator i = fileList.begin(); i != fileList.end(); ++i)
+    for (list<string>::const_iterator j = fileList.begin(); j != fileList.end(); ++j)
+      ret.el(*i, *j) = el(*i, *j);
+  return ret;
+}
+
+
+matrix<complex<double> >
+integral::mat()
+{
+  return ((complex<double>)(1.0 / ((double)_nevents))) * _sum;
+}
+
+
+const integral&
+integral::print(ostream& os) const
+{
+  os << _nwaves << endl
+     << _nevents << endl
+     << _sum
+     << _index.size() << endl;
+  map<string, int>::const_iterator i = _index.begin();
+  while (i != _index.end()) {
+    os << i->first << " " << i->second << endl;
+    ++i;
+  }
+  return *this;
+}
+
+
+const integral&
+integral::print_events(ostream& os) const
+{
+  os << _nevents << endl;
+  return *this;
+}
+
+
+integral&
+integral::scan(istream& is)
+{
+  int    indexSize = 0, index = 0;
+  string name;
+  is >> _nwaves >> _nevents >> _sum >> indexSize;
+  while (indexSize--) {
+    is >> name >> index;
+    _index[name] = index;
+  }
+  return *this;
+}

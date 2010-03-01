@@ -40,17 +40,13 @@
 
 // Collaborating Class Headers -------
 #include <vector>
-using std::vector;
 #include <string>
-using std::string;
 #include <complex>
-using std::complex;
 
 
 #include "TString.h"
 #include "TMatrixD.h"
 #include "Math/IFunction.h"
-using namespace ROOT;
 
 #include "integral.h"
 #include "matrix.h"
@@ -61,10 +57,10 @@ using namespace ROOT;
 class TString;
 class TCMatrix;
 
-typedef matrix<complex<double> > intmat;
+typedef matrix<std::complex<double> > intmat;
 
 
-class TPWALikelihoodC : public Math::IGradientFunctionMultiDim {
+class TPWALikelihoodC : public ROOT::Math::IGradientFunctionMultiDim {
 public:
 
   // Constructors/Destructors ---------
@@ -74,8 +70,8 @@ public:
   // Accessors -----------------------
   
   unsigned int NDim() const;
-  string parname(unsigned int i)const {return _parnames.at(i);}
-  const vector<string>& wavetitles() const {return _wavenames;}
+  std::string parname(unsigned int i)const {return _parnames.at(i);}
+  const std::vector<std::string>& wavetitles() const {return _wavenames;}
   double parthreshold(unsigned int i) const {return _parthresholds[i];}
   double dLcache(unsigned int i) const {return _dLcache[i];}
   unsigned int ncalls() const {return _ncalls;}
@@ -108,9 +104,9 @@ public:
   // Note: amps which do not exist in higher ranks are NOT built!
 // convert parameters error matrix into error matrix of amplitudes
   void buildCAmps(const double* x,
-		  vector<complex<double> >& V,
-		  vector<pair<int,int> >& indices,
-		  vector<string>& names,
+		  std::vector<std::complex<double> >& V,
+		  std::vector<std::pair<int,int> >& indices,
+		  std::vector<std::string>& names,
 		  const TMatrixD& errpar,
 		  TMatrixD& erramp,
 		  bool withFlat=false);
@@ -140,37 +136,37 @@ private:
   bool _useNorm; // use normalized amplitudes
 
   // production amplitude vectors per rank
-  vector<vector<TPWAAmp>*> _V; // production amplitudes
+  std::vector<std::vector<TPWAAmp>*> _V; // production amplitudes
   mutable TPWAAmp _Vflat; // amplitude for flat wave
   unsigned int _NumNullConstraints; // number of null constraint waves
-  vector<string> _wavenames;
-  vector<string> _parnames;
-  vector<int> _reflect; // reflectivity of parameter
-  vector<double> _thresholds; // mass threshold for a wave
-  vector<double> _parthresholds; // mass threshold for a parameter
-  vector<unsigned int> _wmap; // map: waveindex -> id in normalization integral
-  vector<unsigned int> _accmap; // map: waveindex -> id in accpetance integral
-  mutable vector<double> _parcache; // parameter cache for derivative calc.
-  mutable vector<double> _dLcache;  // cache for derivatives
+  std::vector<std::string> _wavenames;
+  std::vector<std::string> _parnames;
+  std::vector<int> _reflect; // reflectivity of parameter
+  std::vector<double> _thresholds; // mass threshold for a wave
+  std::vector<double> _parthresholds; // mass threshold for a parameter
+  std::vector<unsigned int> _wmap; // map: waveindex -> id in normalization integral
+  std::vector<unsigned int> _accmap; // map: waveindex -> id in accpetance integral
+  mutable std::vector<double> _parcache; // parameter cache for derivative calc.
+  mutable std::vector<double> _dLcache;  // cache for derivatives
 
   // derivative with resp to real/imaginary part resp.
   // the dL are NOT well defined complex numbers!
-  mutable vector<vector<complex<double> >* > _dL; // complex derivatives
+  mutable std::vector<std::vector<std::complex<double> >* > _dL; // complex derivatives
   // derivative contribution of single event:
-  mutable vector<vector<complex<double> >* > _dl; // contribution of each event
+  mutable std::vector<std::vector<std::complex<double> >* > _dl; // contribution of each event
   // normalization contribution of derivative:
-  mutable vector<vector<complex<double> >* > _dLN;
+  mutable std::vector<std::vector<std::complex<double> >* > _dLN;
 
 
   // data cache:
-  vector<vector<complex<double> >* > _data; 
+  std::vector<std::vector<std::complex<double> >* > _data; 
 
   // normalization integrals 
   integral _I;
-  matrix<complex<double> > _mat;
+  matrix<std::complex<double> > _mat;
 
   integral _Acc;
-  mutable matrix<complex<double> > _accmat; // has to be mutable because
+  mutable matrix<std::complex<double> > _accmat; // has to be mutable because
                                             // of matrix accessor 
                                             // declaration not const
 

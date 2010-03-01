@@ -1,29 +1,31 @@
 #include <cstdlib>
 
-#include <pputil.h>
+#include "pputil.h"
 	
 
-using std::complex;
-using std::string;
-using std::cout;
-using std::cerr;
-using std::endl;
+using namespace std;
 
 	
-complex<double> D(double alpha,double beta,double gamma,int j,int m,int n)
+complex<double>
+D(const double alpha,
+  const double beta,
+  const double gamma,
+  const int    j,
+  const int    m,
+  const int    n)
 {
-  complex<double> c;
-  complex<double> i(0,1);
-
-  c = exp( -i*((m/2.0)*alpha+(n/2.0)*gamma) ) * d_jmn_b(j,m,n,beta);
-
-  return(c);
+  const complex<double> i(0, 1);
+  const complex<double> c = exp(-i * ((m / 2.0) * alpha + (n / 2.0) * gamma) ) * d_jmn_b(j, m, n, beta);
+  return c;
 }
 
 
-double d_jmn_b(int J, int M, int N, double beta)
+double
+d_jmn_b(int    J,
+	int    M,
+	int    N,
+	double beta)
 {
-
   int temp_M, k, k_low, k_hi;
   double const_term = 0.0, sum_term = 0.0, d = 1.0;
   int m_p_n, j_p_m, j_p_n, j_m_m, j_m_n;
@@ -75,8 +77,14 @@ double d_jmn_b(int J, int M, int N, double beta)
 }
 
 
-double clebsch(int j1, int j2, int j3, int m1, int m2, int m3) {
-
+double
+clebsch(const int j1,
+	const int j2,
+	const int j3,
+	const int m1,
+	const int m2,
+	const int m3)
+{
   int nu = 0;
   double exp;
   double n0, n1, n2, n3, n4, n5;
@@ -84,7 +92,7 @@ double clebsch(int j1, int j2, int j3, int m1, int m2, int m3) {
   double sum;
   double A;
 
-  if ( (m1 + m2) != m3 ) {
+  if ((m1 + m2) != m3) {
     return 0;
   }
 
@@ -123,22 +131,25 @@ double clebsch(int j1, int j2, int j3, int m1, int m2, int m3) {
   A = ((double) (n0*n1*n2*n3*n4*n5))/((double) (d0*d1*d2*d3*d4));
 	
   return pow(A,0.5)*sum;
-		
 }
 
 
-double dfact(double i) {
-  if (i < 0.00001) return 1;
-  if (i < 0) return 0;
-  return i*dfact(i-1);
-}
-
-
-double F(int n,double p)
+double
+dfact(const double i)
 {
+  if (i < 0.00001)
+    return 1;
+  if (i < 0)
+    return 0;
+  return i * dfact(i - 1);
+}
 
+
+double
+F(const int    n,
+  const double p)
+{
 #define Pr 0.1973 // Gev/c corresponds to 1 fermi
-    
   double ret;
   double z = (p/Pr) * (p/Pr);
   int m = n/2;
@@ -166,33 +177,34 @@ double F(int n,double p)
     ret = 1.0;
     break;
   }
-  return(ret);
+  return ret;
 }
 
 
-double lambda(double a, double b, double c)
+double
+lambda(const double a,
+       const double b,
+       const double c)
 {
-  return( a*a + b*b + c*c - 2.0*(a*b + b*c + c*a) );
+  return a * a + b * b + c * c - 2.0 * (a * b + b * c + c * a);
 }
 
 
-complex<double> q(double M, double m1, double m2) {
-
+complex<double>
+q(const double M,
+  const double m1,
+  const double m2)
+{
+  double lam = lambda(M * M, m1 * m1, m2 * m2);
   complex<double> ret;
-  double lam = lambda(M*M,m1*m1,m2*m2);
-
-  if (lam < 0) {
-    ret = complex<double>( 0.0, sqrt(fabs(lam/(4*M*M))) );
-  }
-  else {
-    ret = complex<double>( sqrt(lam/(4*M*M)), 0.0 );
-  }
-
-  return( ret );
+  if (lam < 0)
+    return complex<double>(0.0, sqrt(fabs(lam / (4 * M * M))));
+  return complex<double>(sqrt(lam / (4 * M * M)), 0.0 );
 }
 
 
-int fact(int i)
+int
+fact(int i)
 {
   int f = 1;
   if (i == 0 || i == 1)
@@ -207,34 +219,44 @@ int fact(int i)
 }
 
 
-int ntab = 0;
+int ntab    = 0;
 int tabsize = 8;
 
 
-void addtab() {
+void
+addtab()
+{
   ntab++;
 }
 
 
-void subtab() {
+void
+subtab()
+{
   ntab--;
-  if (ntab<0) ntab=0;
+  if (ntab < 0)
+    ntab = 0;
 }
 
 
-void ptab() {
-  for (int i = 0; i < ntab; i++) {
-    for (int s = 0; s < tabsize ; s++) cout << " ";
-  }
+void
+ptab()
+{
+  for (int i = 0; i < ntab; i++)
+    for (int s = 0; s < tabsize ; s++)
+      cout << " ";
 }
 
 
-void settab(int nchar) {
+void
+settab(const int nchar)
+{
   tabsize = nchar;
 }
 
 
-string id2name(Geant_ID type) 
+string
+id2name(const Geant_ID type) 
 {
   switch (type) {
   case g_EtaPrime:
@@ -301,7 +323,9 @@ string id2name(Geant_ID type)
 }
 
 
-Geant_ID  name2id(string name,int q)
+Geant_ID
+name2id(const string& name,
+	const int     q)
 {
   if (name == "pi") {
     switch (q) {
@@ -378,23 +402,28 @@ Geant_ID  name2id(string name,int q)
 }
 
 
-string itos(int i) {
-  int digits = (int) log10((float) i)+2;
-  char* c_s = (char*) malloc (digits*sizeof(char));
+string
+itos(const int i)
+{
+  int    digits = (int)log10((float) i) + 2;
+  char*  c_s    = (char*)malloc(digits * sizeof(char));
   string s;
-  sprintf(c_s,"%d",i);
+  sprintf(c_s, "%d", i);
   s = c_s;
   return s;
 }
 
 
-string chargetos(int charge) {
+string
+chargetos(int charge)
+{
   string s;
   string c;
-  if(charge) {
-    c =  charge<0 ? "-" : "+";
+  if (charge) {
+    c      = (charge < 0) ? "-" : "+";
     charge = abs(charge);
-    while(charge--) s+= c;
+    while (charge--)
+      s += c;
   }
   return s;
 }

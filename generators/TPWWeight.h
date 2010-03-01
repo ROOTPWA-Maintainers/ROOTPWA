@@ -82,7 +82,7 @@ private:
   std::vector<std::vector<TProductionAmp*> > m_amps;
 
   std::vector<Tgamp> m_gamp;
-  std::map<string,double> m_relphase;
+  std::map<std::string,double> m_relphase;
   std::map<double,integral> m_normInt;
 
   bool m_hasInt;

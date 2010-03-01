@@ -145,7 +145,7 @@ private:
   void clearCache();
   int getReflectivity(const TString& waveName) const;
 
-  matrix<complex<double> > reorderedIntegralMatrix(integral& integral) const;
+  matrix<std::complex<double> > reorderedIntegralMatrix(integral& integral) const;
   void copyFromParArray(const double*             inPar,              // input parameter array
                         vector2(std::complex<T>)& outVal,             // output values organized as 2D array of complex numbers with [rank][wave index]
                         T&                        outFlatVal) const;  // output value corresponding to flat wave
@@ -174,7 +174,7 @@ private:
   std::vector<std::string> _parNames;        // function parameter names
   std::vector<double>      _parThresholds;   // mass thresholds of parameters
 
-  vector2(complex<double>) _decayAmps;  // precalculated decay amplitudes [wave index][event index]
+  vector2(std::complex<double>) _decayAmps;  // precalculated decay amplitudes [wave index][event index]
 
   mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
   mutable std::vector<double> _derivCache;  // cache for derivatives
