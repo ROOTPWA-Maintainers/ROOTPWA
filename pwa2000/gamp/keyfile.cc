@@ -5,13 +5,12 @@
 using namespace std;
 
 
-extern particleDataTable table;
-extern FILE*             keyin;
-extern char*             fname;
-event                    e;
+extern FILE* gKeyInFile;
+extern char* gKeyInFileName;
+event        gEvent;
+bool         gSuppressKeyParseOutput = false;
 
-extern "C++" int keylex();
-extern "C++" int keyparse(std::complex<double>&);
+extern "C++" int keyparse(complex<double>& result);
 
 
 keyfile::keyfile()
@@ -23,8 +22,8 @@ keyfile::keyfile()
 keyfile::keyfile(const string& filename)
   : _filename(filename)
 {
-  fname = (char*) malloc(((filename.length()) + 1) * sizeof(char));
-  strcpy(fname, filename.c_str());
+  gKeyInFileName = (char*) malloc(((filename.length()) + 1) * sizeof(char));
+  strcpy(gKeyInFileName, filename.c_str());
 }
 
 
@@ -54,9 +53,9 @@ keyfile::operator = (const keyfile& kf)
 keyfile
 keyfile::open(const string& filename)
 {
-  fname = (char*) malloc(((filename.length()) + 1) * sizeof(char));
-  strcpy(fname, filename.c_str());
-  _file = fopen(fname, "r");
+  gKeyInFileName = (char*) malloc(((filename.length()) + 1) * sizeof(char));
+  strcpy(gKeyInFileName, filename.c_str());
+  _file = fopen(gKeyInFileName, "r");
   return *this;
 }
 
@@ -64,7 +63,7 @@ keyfile::open(const string& filename)
 keyfile
 keyfile::run() const
 {
-  keyin = _file;
+  gKeyInFile = _file;
   complex<double> result;
   keyparse(result);
   return *this;
@@ -74,8 +73,8 @@ keyfile::run() const
 keyfile
 keyfile::run(const event& ev) const
 {
-  e     = ev; 
-  keyin = _file;
+  gEvent     = ev; 
+  gKeyInFile = _file;
   complex<double> result;
   keyparse(result);
   return *this;
@@ -83,12 +82,16 @@ keyfile::run(const event& ev) const
 
 
 keyfile
-keyfile::run(const event& ev,
-	     std::complex<double>& result) const
+keyfile::run(const event&     ev,
+	     complex<double>& result,
+	     const bool       suppressOutput) const
 {
-  e     = ev; 
-  keyin = _file;
+  gEvent     = ev; 
+  gKeyInFile = _file;
+  const bool flag = gSuppressKeyParseOutput;
+  gSuppressKeyParseOutput = suppressOutput;
   keyparse(result);
+  gSuppressKeyParseOutput = flag;
   return *this;
 }
 

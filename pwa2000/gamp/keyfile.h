@@ -28,8 +28,9 @@ class keyfile {
 
   keyfile run()                             const;
   keyfile run(const event& ev)              const;
-  keyfile run(const event& ev,
-	      std::complex<double>& result) const;
+  keyfile run(const event&          ev,
+	      std::complex<double>& result,
+	      const bool            suppressOutput = false) const;
 		
   wave addWave(const wave& w);
   wave operator [] (const int index) const;

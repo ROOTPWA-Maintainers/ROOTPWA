@@ -58,20 +58,23 @@ public:
   std::complex<double> Amp(const unsigned int iKey,
 			   event&             ev) const;
   std::vector<std::complex<double> > Amp(const std::string& keyFileName,
-					 std::istream&      eventData) const;
+					 std::istream&      eventData,
+					 const bool         testMode = false) const;
   std::vector<std::complex<double> > Amp(const unsigned int iKey,
 					 std::istream&      eventData) const;
 
   void addWave(const std::string& keyFileName) { _keyFileNames.push_back(keyFileName); }
 
   // performs reflection through production plane
-  static event reflectEvent(const event& evIn);
-  void         reflect     (const bool   r = true) { _reflect = r; }
+  static event reflectEvent  (const event& evIn);
+  void         reflect       (const bool   flag = true) { _reflect        = flag; }
+  void         suppressOutput(const bool   flag = true) { _suppressOutput = flag; }
 
 private:
 
   std::vector<std::string> _keyFileNames;
-  bool                     _reflect;  // if true events are reflected through production plane
+  bool                     _reflect;         // if true events are reflected through production plane
+  bool                     _suppressOutput;  // if true output from keyparse() is suppressed
 
 };
 

@@ -38,6 +38,7 @@
 #include "lorentz.h"
 #include "Vec.h"
 #include "event.h"
+#include "wave.h"
 
 #include "Tgamp.h"
 
@@ -47,10 +48,12 @@ using namespace std;
 
 //extern int               keydebug;
 extern particleDataTable PDGtable;
+extern wave              gWave;
 
 
 Tgamp::Tgamp(const string& pdgTableFileName)
-  : _reflect(false)
+  : _reflect       (false),
+    _suppressOutput(true)
 {
   if (pdgTableFileName != "")
     PDGtable.initialize(pdgTableFileName.c_str());
@@ -74,7 +77,7 @@ Tgamp::Amp(const string& keyFileName,
   complex<double> amplitude;
   if (_reflect)
     ev = reflectEvent(ev);
-  key.run(ev, amplitude);
+  key.run(ev, amplitude, _suppressOutput);
   key.rewind();
   key.close();
   return amplitude;
@@ -96,14 +99,47 @@ Tgamp::Amp(const unsigned int iKey,
 
 vector<complex<double> >
 Tgamp::Amp(const string& keyFileName,
-	   istream&      eventData) const
+	   istream&      eventData,
+	   const bool    testMode) const  // enables test mode
 {
-  vector<complex<double> > amplitudes;
-  event ev;
-  ev.setIOVersion(1);
-  while (!(eventData >> ev).eof())
-    amplitudes.push_back(Amp(keyFileName, ev));
-  return amplitudes;
+  if (!testMode) {
+    vector<complex<double> > amplitudes;
+    event                    ev;
+    ev.setIOVersion(1);
+    while (!(eventData >> ev).eof())
+      amplitudes.push_back(Amp(keyFileName, ev));
+    return amplitudes;
+  } else {
+    cout << "!!! test mode!" << endl;
+    const int                debug = 0;
+    vector<complex<double> > amplitudes;
+    event                    ev;
+    ev.setIOVersion(1);
+    bool first = true;
+    while (!(eventData >> ev).eof())
+      if (first) {
+	amplitudes.push_back(Amp(keyFileName, ev));
+	first = false;
+      } else {
+	if (debug) {
+	  cout << "@@Found a wave" << endl;
+	  gWave.print();
+	  cout << "@@Filling wave" << endl;
+	}
+	gWave.fill(ev, debug);
+	if (debug) {
+	  cout << "@@Wave before boosts" << endl;
+	  gWave.print();
+	}
+	gWave.setupFrames(debug);
+	if (debug) {
+	  cout << "@@Wave after boosts" << endl;
+	  gWave.print();
+	}
+	amplitudes.push_back(gWave.decayAmp(debug));
+      }
+    return amplitudes;
+  }
 }
 
 

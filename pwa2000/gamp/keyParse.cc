@@ -110,11 +110,14 @@ int nwave;
 int debug = 0;
 string mode;
 
-wave wv;
 extern int lineno;
 extern particleDataTable PDGtable;
-extern event e;
-complex<double> amp;
+
+wave            gWave;
+extern event    gEvent;
+extern bool     gSuppressKeyParseOutput;
+complex<double> gAmplitude;
+
 string t_part_init;
 particle* t_part_final;
 
@@ -1099,7 +1102,7 @@ yyparse (std::complex<double>& result)
 
     case 5:
       {
-	wv.channel(yyvsp[-1].string);
+	gWave.channel(yyvsp[-1].string);
       }
       break;
 
@@ -1119,17 +1122,19 @@ yyparse (std::complex<double>& result)
     case 8:
       {
 	result=*yyvsp[-1].Cnum;
-	if (mode == "binary") {
-	  cout.write((char*) yyvsp[-1].Cnum,sizeof(complex<double>));
-	}
 //!!! BG quick hack: allow to switch off output for test purposes
-	// else {
-	else if (mode == "ascii") {
-	  cout << "Mass = " << ~(wv.get4P()) << "\t";
-	  if ( wv.channel() == "t" ) {
-	    cout << "t = " << (e.beam().get4P()-wv.get4P()).lenSq() << "\t";
+	if (!gSuppressKeyParseOutput) {
+	  if (mode == "binary") {
+	    cout.write((char*) yyvsp[-1].Cnum,sizeof(complex<double>));
 	  }
-	  cout << "Amp = " <<  *yyvsp[-1].Cnum << endl;
+	  // else {
+	  else if (mode == "ascii") {
+	    cout << "Mass = " << ~(gWave.get4P()) << "\t";
+	    if ( gWave.channel() == "t" ) {
+	      cout << "t = " << (gEvent.beam().get4P()-gWave.get4P()).lenSq() << "\t";
+	    }
+	    cout << "Amp = " <<  *yyvsp[-1].Cnum << endl;
+	  }
 	}
 	delete yyvsp[-1].Cnum;
       }
@@ -1197,47 +1202,47 @@ yyparse (std::complex<double>& result)
 
     case 15:
       {
-	wv.setDecay(*yyvsp[0].Decay);
+	gWave.setDecay(*yyvsp[0].Decay);
 	delete yyvsp[0].Decay;
 	if (debug) {
 	  cout << "@@Found a wave" << endl;
-	  wv.print();
+	  gWave.print();
 	  cout << "@@Filling wave" << endl;
 	}
-	wv.fill(e,debug);
+	gWave.fill(gEvent, debug);
 	if (debug) {
 	  cout << "@@Wave before boosts" << endl;
-	  wv.print();
+	  gWave.print();
 	}
-	wv.setupFrames(debug);
+	gWave.setupFrames(debug);
 	if (debug) {
 	  cout << "@@Wave after boosts" << endl;
-	  wv.print();
+	  gWave.print();
 	}
-	amp  = wv.decayAmp(debug);
-	yyval.Cnum = new complex<double>(amp);
+	gAmplitude = gWave.decayAmp(debug);
+	yyval.Cnum = new complex<double>(gAmplitude);
 	nwave++;
       }
       break;
 
     case 16:
       {
-	wv.setDecay(*yyvsp[0].Decay);
+	gWave.setDecay(*yyvsp[0].Decay);
 	delete yyvsp[0].Decay;
 	if (debug) {
 	  cout << "@@Found a wave" << endl;
-	  wv.print();
+	  gWave.print();
 	  cout << "@@Filling wave" << endl;
 	}
-	wv.fill(e,debug);
+	gWave.fill(gEvent, debug);
 	if (debug) {
 	  cout << "@@Wave before boosts" << endl;
-	  wv.print();
+	  gWave.print();
 	}
-	wv.setupFrames(debug);
+	gWave.setupFrames(debug);
 	if (debug) {
 	  cout << "@@Wave after boosts" << endl;
-	  wv.print();
+	  gWave.print();
 	}
 	if (debug) {
 	  cout << "This should compute decay amplitude expt wave" << endl;
@@ -1245,24 +1250,24 @@ yyparse (std::complex<double>& result)
 	double t = 0.0;
 	fourVec t_init(0.0,threeVec(0.0,0.0,0.0));
 	if (t_part_init == "beam") {
-	  t_init = wv.getBeam();
+	  t_init = gWave.getBeam();
 	}
 	else if (t_part_init == "target") {
-	  t_init = wv.getTarget();
+	  t_init = gWave.getTarget();
 	}
 	else {
 	  cerr << "unknown initial t specifier: " << t_part_init << endl;
 	  abort();
 	}
-	t = (t_init - *wv.get4P(t_part_final, debug)).lenSq();
+	t = (t_init - *gWave.get4P(t_part_final, debug)).lenSq();
 	if (debug) {
 	  cout << "calulating amplitude with t = " << t << endl;
 	}
 	delete t_part_final;
 
-	wv.setT(t);
-	amp  = wv.decayAmp(debug);
-	yyval.Cnum = new complex<double>(amp);
+	gWave.setT(t);
+	gAmplitude  = gWave.decayAmp(debug);
+	yyval.Cnum = new complex<double>(gAmplitude);
 	nwave++;
       }
       break;
@@ -1279,9 +1284,9 @@ yyparse (std::complex<double>& result)
 
     case 19:
       {
-	if(!strcmp(yyvsp[-2].string,"J")) wv.setJ(yyvsp[0].num);
-	if(!strcmp(yyvsp[-2].string,"M")) wv.setM(yyvsp[0].num);
-	if(!strcmp(yyvsp[-2].string,"P")) wv.setP(yyvsp[0].num);
+	if(!strcmp(yyvsp[-2].string,"J")) gWave.setJ(yyvsp[0].num);
+	if(!strcmp(yyvsp[-2].string,"M")) gWave.setM(yyvsp[0].num);
+	if(!strcmp(yyvsp[-2].string,"P")) gWave.setP(yyvsp[0].num);
       }
       break;
 
@@ -1327,7 +1332,7 @@ yyparse (std::complex<double>& result)
 	delete yyvsp[-5].Particle;
 	delete yyvsp[-4].Particle;
 	if(!strcmp(yyvsp[-3].string,"b")) {
-	  wv.setSlope(yyvsp[-1].Fnum);
+	  gWave.setSlope(yyvsp[-1].Fnum);
 	}
 	else {
 	  cerr << "unexpected field at line " << lineno << endl;

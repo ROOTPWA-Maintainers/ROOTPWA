@@ -69,7 +69,8 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
     return false;
   }
   Tgamp gamp(pdgTableFileName);
-  gamp.reflect(false);
+  gamp.reflect       (false);
+  gamp.suppressOutput(true);
   vector<complex<double> > amps = gamp.Amp(keyFileName, dataFile);
   dataFile.clear();
   dataFile.seekg(0, ios::beg);
@@ -156,12 +157,13 @@ rpwa::generateKeyFile(const waveKey& wave,              // complete isobar decay
        << "    number of neutral  FS particles = " << X.countFsCharge( 0) << endl
        << "    number of positive FS particles = " << X.countFsCharge(+1) << endl;
 
+  // generate keyfile with output mode set to binary
+  wave.write("binary");
+
   // test amplitude
   bool keyFileOk = true;
-  if (testKey) {
-    wave.write("none");
+  if (testKey)
     keyFileOk = testKeyFile(keyFileName, wave.refl(), dataFileName, pdgTableFileName, 1e-9, true);
-  }
 
   if (!keyFileOk)
     printWarn << "there seems to be some problems with this amplitude." << endl;
@@ -174,8 +176,6 @@ rpwa::generateKeyFile(const waveKey& wave,              // complete isobar decay
     gSystem->Exec(command.c_str());
     cout << ".key file removed!" << endl;
   } else {
-    // regenerate keyfile with output mode set to binary
-    wave.write("binary");
     // copy macro file
     const string command = "cp '" + srcMacroFileName + "' '" + keyFileName + ".C'";
     printInfo << "executing " << command << endl;
