@@ -56,10 +56,10 @@ getClassMethod__(std::string prettyFunction)
 #define printInfo std::cout << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "  << std::flush
 
 
-template <typename T> class maxPrecisionValue__;
+template<typename T> class maxPrecisionValue__;
 
 // output stream manipulator that prints a value with its maximum precision
-template <typename T>
+template<typename T>
 inline
 maxPrecisionValue__<T>
 maxPrecision(const T& value)
@@ -67,21 +67,21 @@ maxPrecision(const T& value)
 
 // output stream manipulator that prints a value with its maximum precision
 // in addition manipulator reserves space so that values will align
-template <typename T>
+template<typename T>
 inline
 maxPrecisionValue__<T>
 maxPrecisionAlign(const T& value)
 { return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::ALIGN); }
 
 // output stream manipulator that prints a value with maximum precision for double
-template <typename T>
+template<typename T>
 inline
 maxPrecisionValue__<T>
 maxPrecisionDouble(const T& value)
 { return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::DOUBLE); }
 
 // general helper class that encapsulates a value of type T
-template <typename T>
+template<typename T>
 class maxPrecisionValue__ {
 public:
   enum modeEnum { PLAIN,
@@ -112,7 +112,7 @@ private:
   modeEnum _mode;
 };
 
-template <typename T>
+template<typename T>
 inline
 std::ostream& operator << (std::ostream&                 out,
 			   const maxPrecisionValue__<T>& value)
@@ -120,7 +120,7 @@ std::ostream& operator << (std::ostream&                 out,
 
 
 // simple stream operators for some STL classes
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 inline
 std::ostream&
 operator << (std::ostream&            out,
@@ -176,7 +176,7 @@ operator << (std::ostream&   out,
 }
 
 
-template <typename T>
+template<typename T>
 std::ostream&
 operator << (std::ostream&      out,
              const TMatrixT<T>& A)
@@ -198,11 +198,25 @@ operator << (std::ostream&      out,
 
 
 // indents output by offset
-inline void indent(std::ostream&      out,
-		   const unsigned int offset)
+inline
+void
+indent(std::ostream&      out,
+       const unsigned int offset)
 {
   for (unsigned int i = 0; i < offset; ++i)
     out << " ";
+}
+
+
+// extracts sign of a value
+template<typename T>
+std::string
+sign(const T& val)
+{
+  if (val < 0)
+    return "-";
+  else
+    return "+";
 }
 
 

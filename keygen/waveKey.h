@@ -91,14 +91,21 @@ namespace rpwa {
 		      const int M) const;
 
     // assigns FS particle IDs according to the per-charge IDs
-    void assignFsIds(std::vector<int>&       fsIds,
-		     const std::vector<int>& fsNegIds,
-		     const std::vector<int>& fsPosIds,
-		     const std::vector<int>& fsNeutIds,
-		     const std::vector<int>& fsCharges) const;
+    void assignFsIds(std::vector<int>&                           fsIds,
+		     const std::map<TString, std::vector<int> >& fsPartIds) const;
 
     void writeReflectivityBasisAmp(std::ostream&      out,
 				   const unsigned int offset = 0) const;
+
+    // permutes indistinguishable FS particles
+    void permuteFsParts(std::map<TString, std::vector<int> >&           fsPartIds,
+			std::map<TString, std::vector<int> >::iterator& thisPart,
+			const std::vector<const particleKey*>           fsParts,
+			bool&                                           firstCall,
+			unsigned int&                                   countTerm,
+			const unsigned int                              nmbCombinations,
+			std::ostream&                                   out,
+			const unsigned int                              offset = 0) const;
 
     // constructs amplitude for a particular M and writes it out
     void writeBoseSymmetrizedAmp(std::ostream&      out,

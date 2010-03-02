@@ -36,7 +36,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iomanip>
+//#include <iomanip>
 #include <string>
 #include <cassert>
 
@@ -92,15 +92,13 @@ TString
 waveKey::waveName(const bool fileSuffix) const
 {
   stringstream name;
-  name << _I << (_G > 0 ? "+" : "-")
-       << _J << (_P > 0 ? "+" : "-") << (_C > 0 ? "+" : "-")
-       << _M << (_refl >= 0 ? "+" : "-")
+  name << _I << sign(_G) << _J << sign(_P) << sign(_C) << _M << sign(_refl)
        << _mother->isobar(0)->waveName()
        << "_" << _mother->L() << _mother->S() << "_"
        << _mother->isobar(1)->waveName();
   if (fileSuffix)
     name << ".key";
-  return name.str().c_str();
+  return name.str();
 }
 
 
@@ -109,17 +107,17 @@ waveKey::write(ostream&      out,
 	       const string& outputFormat) const
 {
   // get final state
-  vector<const particleKey*> fsParticles;
-  _mother->fsParticles(fsParticles);
+  vector<const particleKey*> fsParts;
+  _mother->fsParticles(fsParts);
   string fsName;
-  for (unsigned int i = 0; i < fsParticles.size(); ++i)
-    fsName += fsParticles[i]->name();
+  for (unsigned int i = 0; i < fsParts.size(); ++i)
+    fsName += fsParts[i]->name();
   // insert header
   out << "########################################################" << endl
       << "# gamp key file for                                    #" << endl
       << "# " << fsName << " final state" << endl
       << "########################################################" << endl
-      << "# IGJPCME<Isobar1>_LS_<Isobar2>                        #" << endl
+      << "# IGJPCMR<Isobar1>_LS_<Isobar2>                        #" << endl
       << "#                                                      #" << endl
       << "# "<< waveName() << endl
       << "#                                                      #" << endl
@@ -162,24 +160,24 @@ waveKey::setStateName(const int J,
 
 
 void 
-waveKey::assignFsIds(vector<int>&       fsIds,
-		     const vector<int>& fsNegIds,
-		     const vector<int>& fsPosIds,
-		     const vector<int>& fsNeutIds,
-		     const vector<int>& fsCharges) const
+waveKey::assignFsIds(vector<int>&                      fsIds,
+		     const map<TString, vector<int> >& fsPartIds) const
 {
-  assert(fsCharges.size() == fsNegIds.size() + fsPosIds.size() + fsNeutIds.size());
-  unsigned int countFsNeg  = 0;
-  unsigned int countFsPos  = 0;
-  unsigned int countFsNeut = 0;
-  for (unsigned int i = 0; i < fsCharges.size(); ++i) {
-    if (fsCharges[i] == -1)
-      fsIds[i] = fsNegIds[countFsNeg++];
-    else if (fsCharges[i] == +1)
-      fsIds[i] = fsPosIds[countFsPos++];
-    else if (fsCharges[i] == 0)
-      fsIds[i] = fsNeutIds[countFsNeut++];
-    assert(abs(fsCharges[i]) <= 1);
+  unsigned int nmbFsPart = 0;
+  for (map<TString, vector<int> >::const_iterator i = fsPartIds.begin(); i != fsPartIds.end(); ++i)
+    nmbFsPart += i->second.size();
+  vector<const particleKey*> fsParts;
+  _mother->fsParticles(fsParts);
+  assert(fsParts.size() == nmbFsPart);
+  fsIds.clear();
+  fsIds.resize(nmbFsPart, 0);
+  map<TString, unsigned int> countFs;
+  for (unsigned int i = 0; i < fsParts.size(); ++i) {
+    const TString partName = fsParts[i]->name();
+    map<TString, vector<int> >::const_iterator ids = fsPartIds.find(partName);
+    assert(ids != fsPartIds.end());
+    fsIds[i] = ids->second[countFs[partName]];
+    ++countFs[partName];
   }
 }
 
@@ -193,13 +191,14 @@ waveKey::writeReflectivityBasisAmp(ostream&           out,
 {
   const double theta = (_M == 0 ? 0.5 : 1 / sqrt(2));
   indent(out, offset);
-  out << showpoint << setprecision(18)
-      << theta << " * (" << endl;
+  out << "# reflectivity eigenstate for epsilon = " << sign(_refl) << endl;
+  indent(out, offset);
+  out << maxPrecision(theta) << " * (" << endl;
   setStateName(_J, _P, _M);
   _mother->write(out, offset + 4);
   const double factor = -(double)_refl * (double)_P * pow(-1, _J - _M);
   indent(out, offset);
-  out << (factor >= 0 ? " +" : " -") << endl;
+  out << sign(factor) << endl;
   setStateName(_J, _P, -_M);
   _mother->write(out, offset + 4);
   indent(out, offset);
@@ -207,72 +206,83 @@ waveKey::writeReflectivityBasisAmp(ostream&           out,
 }
 
 
+// permutes indistinguishable FS particles
+void 
+waveKey::permuteFsParts(map<TString, vector<int> >&           fsPartIds,
+			map<TString, vector<int> >::iterator& thisPart,
+			const std::vector<const particleKey*> fsParts,
+			bool&                                 firstCall,
+			unsigned int&                         countTerm,
+			const unsigned int                    nmbCombinations,
+			ostream&                              out,
+			const unsigned int                    offset) const
+{
+  do {
+    map<TString, vector<int> >::iterator nextPart = thisPart;
+    if (++nextPart != fsPartIds.end())
+      permuteFsParts(fsPartIds, nextPart, fsParts, firstCall,
+		     countTerm, nmbCombinations, out, offset);
+    else {
+      vector<int> fsIds;
+      assignFsIds(fsIds, fsPartIds);
+      _mother->setFsIds(fsIds);
+      indent(out, offset);
+      if (firstCall)
+	firstCall = false;
+      else {
+	indent(out, offset);
+	out << " +" << endl;
+      }
+      indent(out, offset + 4);
+      out << "# Bose symmetrization term " << ++countTerm
+	  << " of " << nmbCombinations << ": A(";
+      for (unsigned int j = 0; j < fsIds.size(); ++j) {
+	out << fsParts[j]->name() << "_" << fsIds[j];
+	if (j == fsIds.size() - 1)
+	  out << ")" << endl;
+	else
+	  out << ", ";
+      }
+      writeReflectivityBasisAmp(out, offset + 4);
+      out << endl;
+    }
+  } while (next_permutation(thisPart->second.begin(), thisPart->second.end()));
+}
+
+
 void 
 waveKey::writeBoseSymmetrizedAmp(ostream&           out,
 				 const unsigned int offset) const
 {
-  // get final state particle charges
-  vector<int> fsCharges;
-  _mother->fsCharges(fsCharges);
-  const unsigned int nmbFsNeg  = _mother->countFsCharge(-1);
-  const unsigned int nmbFsNeut = _mother->countFsCharge( 0);
-  const unsigned int nmbFsPos  = _mother->countFsCharge(+1);
+  // get final state particle mutliplicities
+  const map<TString, unsigned int> fsPartMult = _mother->fsPartMult();
 
   // initialize IDs for final state particles
-  vector<int> fsNegIds (nmbFsNeg);
-  vector<int> fsNeutIds(nmbFsNeut);
-  vector<int> fsPosIds (nmbFsPos);
-  for (unsigned int i = 0; i < nmbFsNeg; ++i)
-    fsNegIds[i]  = i + 1;
-  for (unsigned int i = 0; i < nmbFsNeut; ++i)
-    fsNeutIds[i] = i + 1;
-  for (unsigned int i = 0; i < nmbFsPos; ++i)
-    fsPosIds[i]  = i + 1;
+  map<TString, vector<int> > fsPartIds;
+  for (map<TString, unsigned int>::const_iterator i = fsPartMult.begin(); i != fsPartMult.end(); ++i) {
+    const TString      partName = i->first;
+    const unsigned int partMult = i->second;
+    fsPartIds[partName].resize(partMult, 0);
+    for (unsigned int j = 0; j < partMult; ++j)
+      fsPartIds[partName][j] = j + 1;
+  }
 
   // calculate normalization factor for symmetrization of FS particles
-  const double nmbCombinations =   TMath::Factorial(nmbFsNeg)
-                                 * TMath::Factorial(nmbFsNeut)
-                                 * TMath::Factorial(nmbFsPos);
-  const double normFactor      = 1 / sqrt(nmbCombinations);
+  double nmbCombinations = 1;
+  for (map<TString, unsigned int>::const_iterator i = fsPartMult.begin(); i != fsPartMult.end(); ++i)
+    nmbCombinations *= TMath::Factorial(i->second);
+  const double normFactor = 1 / sqrt(nmbCombinations);
 
   // Bose symmetrize amplitudes in reflectivity basis
   indent(out, offset);
-  out << showpoint << setprecision(18)
-      << normFactor << " * (" << endl << endl;
-  bool         first     = true;
-  unsigned int countTerm = 0;
-  do {  // permute the negative FS particles
-    do {  // permute the neutral FS particles
-      do {  // permute the positive FS particles
-	vector<int> fsIds(nmbFsPos + nmbFsNeg + nmbFsNeut);
-	assignFsIds(fsIds, fsNegIds, fsPosIds, fsNeutIds, fsCharges);
-	_mother->setFsIds(fsIds);
-	indent(out, offset);
-	if (first)
-	  first = false;
-	else {
-	  indent(out, offset);
-	  out << " +" << endl;
-	}
-	indent(out, offset + 4);
-	out << "# Bose symmetrization term " << ++countTerm
-	    << " of " << (unsigned int)nmbCombinations << ": A(";
-	for (unsigned int i = 0; i < fsIds.size(); ++i) {
-	  out << fsIds[i];
-	  if (fsCharges[i] == -1)
-	    out << "-";
-	  else if (fsCharges[i] == +1)
-	    out << "+";
-	  if (i == fsIds.size() - 1)
-	    out << ")" << endl;
-	  else
-	    out << ", ";
-	}
-	writeReflectivityBasisAmp(out, offset + 4);
-	out << endl;
-      } while (next_permutation(fsPosIds.begin(), fsPosIds.end()));
-    } while (next_permutation(fsNeutIds.begin(), fsNeutIds.end()));
-  } while (next_permutation(fsNegIds.begin(), fsNegIds.end()));
+  out << maxPrecision(normFactor) << " * (" << endl << endl;
+  bool                       first     = true;
+  unsigned int               countTerm = 0;
+  vector<const particleKey*> fsParts;
+  _mother->fsParticles(fsParts);
+  map<TString, vector<int> >::iterator firstPart = fsPartIds.begin();
+  permuteFsParts(fsPartIds, firstPart, fsParts, first,
+		  countTerm, (unsigned int)nmbCombinations, out, offset);
   indent(out, offset);
   out << ")";
 }

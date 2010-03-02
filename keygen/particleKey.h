@@ -38,6 +38,7 @@
 
 
 #include <vector>
+#include <map>
 #include <ostream>
 
 #include "TString.h"
@@ -59,21 +60,23 @@ namespace rpwa {
     virtual ~particleKey();
 
     // accessors
-    TString name()     const { return _name; }
+    TString name    () const { return _name;   }
+    int     charge  () const { return _charge; }
     TString waveName() const;
-    int     L   ()     const { return _L;    }
-    int     S   ()     const { return _S;    }
+    int     L       () const { return _L;      }
+    int     S       () const { return _S;      }
 
-    void setName (const TString& name) { _name = name; }
-    void setL    (const int L)         { _L    = L;    }
-    void setS    (const int S)         { _S    = S;    }
+    void setName (const TString& name);
+    void setL    (const int      L) { _L = L; }
+    void setS    (const int      S) { _S = S; }
 
     const particleKey* isobar(const unsigned int index) const { return _isobars[index]; }
 
-    unsigned int nmbFsParticles(const int                        index = -1) const;  ///< returns number of final state particles for each isobar or total (index == -1)
-    void         fsParticles   (std::vector<const particleKey*>& particles)  const;  ///< builds vector of pointers to final state particles
-    void         fsCharges     (std::vector<int>&                charges)    const;  ///< extracts charge pattern of final state particles
-    unsigned int countFsCharge (const int                        charge)     const;  ///< counts number of final state particles with particular charge
+    unsigned int                    nmbFsParticles(const int                        index = -1) const;  ///< returns number of final state particles for each isobar or total (index == -1)
+    void                            fsParticles   (std::vector<const particleKey*>& fsParts)    const;  ///< builds vector of pointers to final state particles
+    std::map<TString, unsigned int> fsPartMult    ()                                            const;  ///< counts multiplicities of indistinguishable FS particles
+    void                            fsCharges     (std::vector<int>&                charges)    const;  ///< extracts charge pattern of final state
+    unsigned int                    countFsCharge (const int                        charge)     const;  ///< counts number of final state particles with particular charge
 
     void setFsIds(const std::vector<int>& fsIds);
 
@@ -83,10 +86,11 @@ namespace rpwa {
   private:
 
     TString      _name;               // name of particle or state
+    int          _charge;             // particle charge
     particleKey* _isobars[2];         // pointers to the two isobars this particle decays into
     int          _L;                  // relative orbital angular momentum between isobars
     int          _S;                  // total spin of isobars
-    unsigned int _nmbFsParticles[2];  // number of final state particles in iso
+    unsigned int _nmbFsParticles[2];  // number of final state particles in the two isobars
     bool         _isFsParticle;       // indicates whether this particle is a final state particle
     unsigned int _id;                 // ID for final state particles
     TString      _massDep;            // mass dependence of amplitude (i.e. for sigma)

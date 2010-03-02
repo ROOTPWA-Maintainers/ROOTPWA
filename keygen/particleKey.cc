@@ -56,6 +56,12 @@ particleKey::particleKey(const TString& name,     // particle name
     _id          (0),
     _massDep     (massDep)
 {
+  if (_name.EndsWith("-"))
+    _charge = -1;
+  else if (_name.EndsWith("+"))
+    _charge = +1;
+  else
+    _charge = 0;
   _isobars[0] = isobar1;
   _isobars[1] = isobar2;
   if (!_isobars[0] || !_isobars[1])
@@ -93,6 +99,19 @@ particleKey::waveName() const
 }
 
 
+void
+particleKey::setName(const TString& name)
+{
+  _name = name;
+  if (_name.EndsWith("-"))
+    _charge = -1;
+  else if (_name.EndsWith("+"))
+    _charge = +1;
+  else
+    _charge = 0;
+}
+
+
 unsigned int 
 particleKey::nmbFsParticles(const int index) const
 {
@@ -111,14 +130,32 @@ particleKey::nmbFsParticles(const int index) const
 
 
 void 
-particleKey::fsParticles(vector<const particleKey*>& particles) const
+particleKey::fsParticles(vector<const particleKey*>& fsParts) const
 {
   if (_isFsParticle)
-    particles.push_back(this);
+    fsParts.push_back(this);
   else {
-    _isobars[0]->fsParticles(particles);
-    _isobars[1]->fsParticles(particles);
+    _isobars[0]->fsParticles(fsParts);
+    _isobars[1]->fsParticles(fsParts);
   }
+}
+
+
+map<TString, unsigned int>
+particleKey::fsPartMult() const
+{
+  map<TString, unsigned int> partMult;
+  vector<const particleKey*> fsPart;
+  fsParticles(fsPart);
+  for (unsigned int i = 0; i < fsPart.size(); ++i) {
+    const TString partName = fsPart[i]->name();
+    map<TString, unsigned int>::iterator mult = partMult.find(partName);
+    if (mult != partMult.end())
+      ++(mult->second);
+    else
+      partMult[partName] = 1;
+  }
+  return partMult;
 }
 
 
@@ -126,12 +163,7 @@ void
 particleKey::fsCharges(vector<int>& charges) const
 {
   if (_isFsParticle) {
-    if (_name.Contains("pi-"))
-      charges.push_back(-1);
-    else if (_name.Contains("pi+"))
-      charges.push_back(+1);
-    else if (_name.Contains("pi0"))
-      charges.push_back(0);
+    charges.push_back(_charge);
   } else {
     _isobars[0]->fsCharges(charges);
     _isobars[1]->fsCharges(charges);
@@ -142,27 +174,13 @@ particleKey::fsCharges(vector<int>& charges) const
 unsigned int
 particleKey::countFsCharge(const int charge) const
 {
-  string fsName;
-  switch (charge) {
-  case -1:
-    fsName = "pi-";
-    break;
-  case 0:
-    fsName = "pi0";
-    break;
-  case +1:
-    fsName = "pi+";
-    break;
-  default:
+  if (abs(charge) > 1)
     return 0;
-  }
   unsigned count = 0;
-  if (_isFsParticle)
-    if (_name.Contains(fsName.c_str()))
+  if (_isFsParticle) {
+    if (_charge == charge)
       count = 1;
-    else
-      count = 0;
-  else {
+  } else {
     count += _isobars[0]->countFsCharge(charge);
     count += _isobars[1]->countFsCharge(charge);
   }

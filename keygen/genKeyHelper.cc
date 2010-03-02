@@ -153,9 +153,11 @@ rpwa::generateKeyFile(const waveKey& wave,              // complete isobar decay
   printInfo << "generating .key file for wave " << waveName << endl
 	    << "    isobar decomposition:" << endl;
   X.write(cout, 4);
-  cout << "    number of negative FS particles = " << X.countFsCharge(-1) << endl
-       << "    number of neutral  FS particles = " << X.countFsCharge( 0) << endl
-       << "    number of positive FS particles = " << X.countFsCharge(+1) << endl;
+  cout << "    indistinguishable final state particle multiplicities "
+       << "(marked FS particles will be Bose-symmetrized):" << endl;
+  const map<TString, unsigned int> fsPartMult = X.fsPartMult();
+  for (map<TString, unsigned int>::const_iterator i = fsPartMult.begin(); i != fsPartMult.end(); ++i)
+    cout << "        " << i->first << " = " << i->second << ((i->second) >= 2 ? " <<<" : "") << endl;
 
   // generate keyfile with output mode set to binary
   wave.write("binary");

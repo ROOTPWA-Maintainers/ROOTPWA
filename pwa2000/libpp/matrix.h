@@ -17,14 +17,14 @@
 inline double conj(const double x) { return x; }
 
 	
-template <class T> class matrix;
+template<typename T> class matrix;
 
 
-template <class T> fourVec   operator *= (fourVec& v, const matrix<T>& M);
-template <class T> matrix<T> operator *  (const T& a, const matrix<T>& M);
+template<typename T> fourVec   operator *= (fourVec& v, const matrix<T>& M);
+template<typename T> matrix<T> operator *  (const T& a, const matrix<T>& M);
 
 
-template <class T> class matrix {
+template<typename T> class matrix {
 
 public:
 
@@ -83,7 +83,7 @@ private:
 };
 
 	
-template <class T> class identityMatrix : public matrix<T> {
+template<typename T> class identityMatrix : public matrix<T> {
 
 public:
 
@@ -98,7 +98,7 @@ public:
 };
 	
 
-template <class T>
+template<typename T>
 T
 matrix<T>::trace() const
 {
@@ -110,7 +110,7 @@ matrix<T>::trace() const
 }
 
 
-template <class T>
+template<typename T>
 T
 matrix<T>::det() const
 {
@@ -128,7 +128,7 @@ matrix<T>::det() const
 }
 
 
-template <class T>
+template<typename T>
 double
 mag(T t)
 {
@@ -136,7 +136,7 @@ mag(T t)
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::_LU(int *d, int *indx) const
 {
@@ -209,7 +209,7 @@ matrix<T>::_LU(int *d, int *indx) const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::LU() const
 {
@@ -223,7 +223,7 @@ matrix<T>::LU() const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::_lubksb(int*    indx,
 		   matrix& b) 
@@ -254,7 +254,7 @@ matrix<T>::_lubksb(int*    indx,
 }
 		
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::inv()
 {
@@ -284,7 +284,7 @@ matrix<T>::inv()
 }
 		
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::conjugate() const
 {
@@ -296,7 +296,7 @@ matrix<T>::conjugate() const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::transpose() const
 {
@@ -308,7 +308,7 @@ matrix<T>::transpose() const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::adjoint() const
 {
@@ -318,7 +318,7 @@ matrix<T>::adjoint() const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::operator + (const matrix& M) const
 {
@@ -331,7 +331,7 @@ matrix<T>::operator + (const matrix& M) const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::operator += (const matrix& M)
 {
@@ -342,7 +342,7 @@ matrix<T>::operator += (const matrix& M)
   return *this;
 }
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::operator *= (const double k)
 {
@@ -353,7 +353,7 @@ matrix<T>::operator *= (const double k)
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::operator - (const matrix& M) const
 {
@@ -366,7 +366,7 @@ matrix<T>::operator - (const matrix& M) const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::operator -= (const matrix& M)
 {
@@ -378,7 +378,7 @@ matrix<T>::operator -= (const matrix& M)
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::operator * (const matrix& M) const
 {
@@ -392,7 +392,7 @@ matrix<T>::operator * (const matrix& M) const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 operator * (const T&         a,
 	    const matrix<T>& M)
@@ -401,7 +401,7 @@ operator * (const T&         a,
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::operator * (const T& a) const
 {
@@ -413,7 +413,7 @@ matrix<T>::operator * (const T& a) const
 }
 
 
-template <class T>
+template<typename T>
 T&
 matrix<T>::el(const int i,
 	      const int j)
@@ -423,7 +423,7 @@ matrix<T>::el(const int i,
 }
 
 
-template <class T>
+template<typename T>
 const T&
 matrix<T>::el(const int i,
 	      const int j) const
@@ -433,7 +433,7 @@ matrix<T>::el(const int i,
 }
 
 
-template <class T>
+template<typename T>
 void
 matrix<T>::_create(const int n,
 		   const int m)
@@ -448,7 +448,7 @@ matrix<T>::_create(const int n,
 }
 
 
-template <class T>
+template<typename T>
 void
 matrix<T>::_copy(const matrix<T>& src)
 {
@@ -462,7 +462,7 @@ matrix<T>::_copy(const matrix<T>& src)
 }
 
 
-template <class T>
+template<typename T>
 void
 matrix<T>::_destroy(void)
 {
@@ -474,14 +474,14 @@ matrix<T>::_destroy(void)
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>::matrix()
 {
   _create(0, 0);
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>::matrix(const int n,
 		  const int m)
 {
@@ -489,7 +489,7 @@ matrix<T>::matrix(const int n,
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>::matrix(const int n,
 		  const int m,
 		  T*        p)
@@ -499,7 +499,7 @@ matrix<T>::matrix(const int n,
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>::matrix(const matrix<T>& M)
 {
   _create(M._nrows, M._ncols);
@@ -507,14 +507,14 @@ matrix<T>::matrix(const matrix<T>& M)
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>::~matrix()
 {
   _destroy();
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>&
 matrix<T>::operator = (const matrix<T>& M)
 {
@@ -523,7 +523,7 @@ matrix<T>::operator = (const matrix<T>& M)
 }
 
 
-template <class T>
+template<typename T>
 const matrix<T>&
 matrix<T>::print(std::ostream& os) const
 {
@@ -542,7 +542,7 @@ matrix<T>::print(std::ostream& os) const
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>&
 matrix<T>::scan(std::istream& is)
 {
@@ -560,7 +560,7 @@ matrix<T>::scan(std::istream& is)
 }
 
 
-template <class T>
+template<typename T>
 std::ostream&
 operator << (std::ostream&    os,
 	     const matrix<T>& m)
@@ -570,7 +570,7 @@ operator << (std::ostream&    os,
 }
 
 
-template <class T>
+template<typename T>
 std::istream&
 operator >> (std::istream& is,
 	     matrix<T>&    m)
@@ -580,7 +580,7 @@ operator >> (std::istream& is,
 }
 
 
-template <class T>
+template<typename T>
 matrix<T>
 matrix<T>::zero()
 {
@@ -589,7 +589,7 @@ matrix<T>::zero()
 }
 
 
-template <class T>
+template<typename T>
 threeVec
 matrix<T>::operator * (const threeVec& V) const
 {
@@ -602,7 +602,7 @@ matrix<T>::operator * (const threeVec& V) const
 }
 
 
-template <class T>
+template<typename T>
 fourVec
 matrix<T>::operator * (const fourVec& v) const
 {
@@ -615,7 +615,7 @@ matrix<T>::operator * (const fourVec& v) const
 }
 
 
-template <class T>
+template<typename T>
 fourVec
 operator *= (fourVec& v, const matrix<T>& M)
 {
