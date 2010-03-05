@@ -104,7 +104,8 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
     if (updateMode)
       outTree = inTree;
     else
-      outTree = new TTree(outTreeName.c_str(), "converted from TFitResult");
+      //outTree = new TTree(outTreeName.c_str(), "converted from TFitResult");
+      outTree = new TTree(outTreeName.c_str(), outTreeName.c_str());
     fitResult* outResult = 0;
     string _outBranchName = outBranchName;
     if (updateMode && (outBranchName == inBranchName))
@@ -126,7 +127,10 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
       }
       // copy data
       outResult = new fitResult(*inResult);
-      outBranch->Fill();
+      if (updateMode && (outTreeName == inTreeName))
+	outBranch->Fill();
+      else
+	outTree->Fill();
       delete outResult;
       outResult = 0;
       ++countEntriesWritten;

@@ -41,6 +41,8 @@
 #include "TChain.h"
 #include "THashList.h"
 
+#include "utilities.h"
+
 
 using namespace std;
 
@@ -53,13 +55,14 @@ loadFitResult(const string& fileNamePattern,
   // use TFileCollection to expand file name pattern into file list,
   // because TChain::Add() does support wildcards only for the root
   // files themselves (not in directories)
-  cout << "Constructing chain for '" << fileNamePattern << "' ..." << endl;
+  printInfo << "constructing chain for '" << fileNamePattern << "' ..." << endl;
   TFileCollection fileList("fitresults", "fitresults");
   fileList.Add(fileNamePattern.c_str());
-  cout << "    File list contains " << fileList.GetNFiles() << " files." << endl;
+  cout << "    file list contains " << fileList.GetNFiles() << " files." << endl;
   if (!chain)
     chain = new TChain(treeName.c_str(), treeName.c_str());
-  chain->AddFileInfoList(fileList.GetList());
-  cout << "    Chain '" << chain->GetName() << "'contains " << chain->GetEntries() << " entries." << endl;
+  if (!chain->AddFileInfoList(fileList.GetList()))
+    printWarn << "chain has problems reading file list." << endl;
+  cout << "    chain '" << chain->GetName() << "' contains " << chain->GetEntries() << " entries." << endl;
   return chain;
 }

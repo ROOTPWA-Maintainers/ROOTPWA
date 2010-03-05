@@ -89,12 +89,13 @@ compareIntensities(const pair<string, double>& a,
 
 
 vector<pair<string, TVirtualPad*> >
-plotAllIntensities(const unsigned int nmbTrees,      // number of fitResult trees
-		   TTree**            trees,         // array of fitResult trees
-		   const bool         createPsFile,  // if true, plots are written to waves.ps
-		   const string&      outPath,       // path for output files
-		   const int*         graphColors,   // array of colors for graph line and marker
-		   const bool         drawLegend,    // if set legend is drawn
+plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult trees
+		   TTree**            trees,          // array of fitResult trees
+		   const bool         createPsFile,   // if true, plots are written to waves.ps
+		   const string&      outPath,        // path for output files
+		   const int*         graphColors,    // array of colors for graph line and marker
+		   const bool         drawLegend,     // if set legend is drawn
+		   const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
 		   const string&      branchName)
 {
   const double intensityThr      = 500;          // threshold for total intensity in mass bin
@@ -194,8 +195,8 @@ plotAllIntensities(const unsigned int nmbTrees,      // number of fitResult tree
     ++canvJpcCounter[jpc];
 
     // draw intensity graph
-    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, "",
-				       "", "AP", 1, graphColors, false, branchName);
+    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, "", "", "AP", 1,
+				       graphColors, yAxisRangeMax, false, branchName);
     if (!graph)
       continue;
 

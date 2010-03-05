@@ -100,6 +100,35 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
   			  "3-+1-",
   			  "3-+0-",
   			  "0++0-"};
+//   const string waves[] = {"logLikelihood",
+//                           "",  // total intensity
+//   			  "flat",
+// 			  "0-+",
+// 			  "1++",
+// 			  "1-+",
+// 			  "2++",
+// 			  "2-+",
+// 			  "3++",
+// 			  "4++",
+// 			  "4-+",
+// 			  "0-+0+",
+// 			  "1++0+",
+// 			  "1++1+",
+// 			  "1++1-",
+// 			  "1-+0-",
+// 			  "1-+1+",
+// 			  "1-+1-",
+// 			  "2++0-",
+// 			  "2++1+",
+// 			  "2++1-",
+// 			  "2-+0+",
+// 			  "2-+1+",
+// 			  "2-+1-",
+// 			  "3++0+",
+// 			  "3++1+",
+// 			  "4++1+",
+// 			  "4-+0+",
+// 			  "4-+1+"};
   // const string waves[] = {"logLikelihood",
   //                         "",  // total intensity
   // 			  "flat",
@@ -158,6 +187,7 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
     
     // build multiGraph
     TMultiGraph* graph = new TMultiGraph();
+    double maxY = 0;
     for (unsigned int j = 0; j < nmbTrees; ++j) {
       // build and run TTree::Draw() expression
       string drawExpr;
@@ -201,26 +231,19 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
 	g->SetLineColor  (colors[j]);
       }
       graph->Add(g, "P");
-    }
 
-    canv->cd(++countPad);
-    graph->SetTitle(waveName.c_str());
-    // TString gName = "g";
-    // gName.Append(waveName);
-    // gName.ReplaceAll("+", "p");
-    // gName.ReplaceAll("-", "m");
-    // graph->SetName(gName);
-    graph->SetName(waveName.c_str());
-    // compute y-range
-    double maxY = 0;
-    for (unsigned int j = 0; j < nmbTrees; ++j) {
-      TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(j));
-      for (int k = 0; k < g->GetN(); ++k) {
-	const double val = g->GetY()[k];
+      // compute maximum for y-axis
+      for (int k = 0; k < nmbBins; ++k) {
+	const double val = y[k] + yErr[k];
 	if (maxY < val)
 	  maxY = val;
       }
     }
+    cout << "    maximum intensity for graph " << graph->GetName() << " is " << maxY << endl;
+
+    canv->cd(++countPad);
+    graph->SetTitle(waveName.c_str());
+    graph->SetName(waveName.c_str());
     if ((yAxisRangeMax > 0) && (maxY > yAxisRangeMax))
       maxY = yAxisRangeMax;
     graph->SetMinimum(-maxY * 0.1);
