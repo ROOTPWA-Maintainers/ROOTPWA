@@ -10,6 +10,7 @@ SET=$2
 cd $SET
 echo $PWD
 
+rm -f $DATA/amplist
 ls -1 $DATA/*.amp > $DATA/amplist
 ls -1 $DATA/OLD/*.amp >> $DATA/amplist
 
@@ -30,3 +31,4 @@ echo "Checking Set $j"
   fi
 cd - 
 done
+cat $DATA/amplist | wc

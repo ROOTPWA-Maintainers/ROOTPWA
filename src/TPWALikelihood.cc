@@ -62,7 +62,8 @@ TPWALikelihood<T>::TPWALikelihood()
     _Ltime(0),
     _Ntime(0),
     _debug(true),
-    _useNormalizedAmps(true)
+    _useNormalizedAmps(true),
+    _numbAccEvents(0)
 {
   _nmbWavesRefl[0] = 0;
   _nmbWavesRefl[1] = 0;
@@ -105,12 +106,10 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
     _parCache[i] = par[i];
 
   // build complex production amplitudes from function parameters taking into account rank restrictions
-  T                            prodAmpFlat;
-  complex<T>** prodAmps = NULL;
-// !!! a possible optimization would be to create the array only once
-// !!! and reuse it for each function call
+  T                   prodAmpFlat;
+  vector2(complex<T>) prodAmps;
   copyFromParArray(par, prodAmps, prodAmpFlat);
-  const T                      prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+  const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
   // array with likelihood derivative with resp to real and imaginary
   // parts of the production amplitudes although stored as complex
@@ -124,24 +123,23 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
     T                   l = 0;                                        // likelihood for this event
     vector2(complex<T>) d(_rank, vector<complex<T> >(_nmbWaves, 0));  // likelihood derivative for this event
     for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks and reflectivities
-      complex<T> ampPos = 0;  // positive reflectivity amplitude for this rank
-      complex<T> ampNeg = 0;  // negative reflectivity amplitude for this rank
+      complex<T> ampProdSum[2] = {0, 0};  // sum of amplitude products for negative/positive reflectivity for this rank
       for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {  // outer loop over waves
         // compute likelihood term
         const complex<T> amp  = prodAmps[iRank][iWave] * complex<T>(_decayAmps[iWave][iEvt]);
-        const int refl = _waveRefl[iWave];
+        const int        refl = _waveRefl[iWave];
         if (refl == -1)
-          ampNeg += amp;
+          ampProdSum[0] += amp;
         else
-          ampPos += amp;
+          ampProdSum[1] += amp;
         // compute derivatives
         for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave)  // inner loop over waves
           // sum up amplitudes for current rank and only for waves with same reflectivity
-            if (refl == _waveRefl[jWave])
-            d[iRank][jWave] += amp;
+	  if (refl == _waveRefl[jWave])
+	    d[iRank][jWave] += amp;
       } // end outer loop over waves
-      l += norm(ampPos);
-      l += norm(ampNeg);
+      l += norm(ampProdSum[1]);
+      l += norm(ampProdSum[0]);
       assert(l >= 0);
       // loop again over waves for current rank
       for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave)
@@ -174,19 +172,13 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
         const complex<T> I = complex<T>(_accMatrix.element(iWave, jWave));
         normFactor      += (prodAmps[iRank][iWave] * conj(prodAmps[iRank][jWave])) * I;
         normFactorDeriv += prodAmps[iRank][jWave] * conj(I);
-        }
+      }
       derivatives[iRank][iWave] += normFactorDeriv * twiceNmbEvt;  // account for 2 * nmbEvents
     }
   // take care of flat wave
   normFactor.real() += prodAmpFlat2;
   derivativeFlat    += twiceNmbEvt * prodAmpFlat;
  
-  // cleanup memory
-  unsigned int prodAmpsDim[2];
-  prodAmpsDim[0] = _rank;
-  prodAmpsDim[1] = _nmbWaves;
-  delete2DArray<complex<T> >(prodAmps, prodAmpsDim);
-
   // sort derivative results into output array and cache
   copyToParArray(derivatives, derivativeFlat, gradient);
   copyToParArray(derivatives, derivativeFlat, &(*(_derivCache.begin())));
@@ -227,7 +219,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 }
 
 
-template <typename T>
+template<typename T>
 void
 TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduced by rank conditions
                         double&       funcVal,         // function value
@@ -366,8 +358,8 @@ TPWALikelihood<T>::DoEval(const double* par) const
   timer.Start(true);
 
   // build complex production amplitudes from function parameters taking into account rank restrictions
-  T            prodAmpFlat;
-  complex<T>** prodAmps = NULL;
+  T                   prodAmpFlat;
+  vector2(complex<T>) prodAmps;
   copyFromParArray(par, prodAmps, prodAmpFlat);
   const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
@@ -376,17 +368,16 @@ TPWALikelihood<T>::DoEval(const double* par) const
   for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
     T l = 0;  // likelihood for this event
     for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks and reflectivities
-      complex<T> ampPos = 0;  // positive reflectivity amplitude for this rank
-      complex<T> ampNeg = 0;  // negative reflectivity amplitude for this rank
+      complex<T> ampProdSum[2] = {0, 0};  // sum of amplitude products for negative/positive reflectivity for this rank
       for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {  // loop over waves
         const complex<T> amp  = prodAmps[iRank][iWave] * complex<T>(_decayAmps[iWave][iEvt]);
         if (_waveRefl[iWave] == -1)
-          ampNeg += amp;
+          ampProdSum[0] += amp;
         else
-          ampPos += amp;
+          ampProdSum[1] += amp;
       }
-      l += norm(ampPos);
-      l += norm(ampNeg);
+      l += norm(ampProdSum[1]);
+      l += norm(ampProdSum[0]);
       assert(l >= 0);
     }  // end loop over rank
     l             += prodAmpFlat2;
@@ -410,12 +401,6 @@ TPWALikelihood<T>::DoEval(const double* par) const
       }
   // take care of flat wave
   normFactor.real() += prodAmpFlat2;
-
-  // cleanup memory
-  unsigned int prodAmpsDim[2];
-  prodAmpsDim[0] = _rank;
-  prodAmpsDim[1] = _nmbWaves;
-  delete2DArray<complex<T> >(prodAmps, prodAmpsDim);
 
   // log consumed time
   const double t2 = timer.RealTime();
@@ -533,7 +518,7 @@ TPWALikelihood<T>::DoEvalX(const double* par) const
 }
 
 
-template <typename T>
+template<typename T>
 double
 TPWALikelihood<T>::DoDerivative(const double* par,
                                 unsigned int  derivativeIndex) const
@@ -596,50 +581,49 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
     _parCache[i] = par[i];
 
   // build complex production amplitudes from function parameters taking into account rank restrictions
-  T                            prodAmpFlat;
-  complex<T>** prodAmps = NULL;
+  T                   prodAmpFlat;
+  vector2(complex<T>) prodAmps;
   copyFromParArray(par, prodAmps, prodAmpFlat);
   const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
   // array with likelihood derivative with resp to real and imaginary
   // parts of the production amplitudes although stored as complex
   // values, the dL are _not_ well defined complex numbers!
-  T                            derivativeFlat = 0;
+  T                   derivativeFlat = 0;
   vector2(complex<T>) derivatives(_rank, vector<complex<T> >(_nmbWaves, 0));
 
   // compute derivative for first term of log likelihood
   for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-    T                            l = 0;                                             // likelihood for this event
+    T                   l = 0;                                        // likelihood for this event
     vector2(complex<T>) d(_rank, vector<complex<T> >(_nmbWaves, 0));  // likelihood derivative for this event
     for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks and reflectivities
-      complex<T> ampPos = 0;  // positive reflectivity amplitude for this rank
-      complex<T> ampNeg = 0;  // negative reflectivity amplitude for this rank
+      complex<T> ampProdSum[2] = {0, 0};  // sum of amplitude products for negative/positive reflectivity for this rank
       for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave) {  // outer loop over waves
         const complex<T> amp  = prodAmps[iRank][iWave] * complex<T>(_decayAmps[iWave][iEvt]);
         const int        refl = _waveRefl[iWave];
         if (refl == -1)
-          ampNeg += amp;
+          ampProdSum[0] += amp;
         else
-          ampPos += amp;
-          for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave)  // inner loop over waves
-            // sum up amplitudes for current rank and only for waves with same reflectivity
-            if (refl == _waveRefl[jWave])
+          ampProdSum[1] += amp;
+	for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave)  // inner loop over waves
+	  // sum up amplitudes for current rank and only for waves with same reflectivity
+	  if (refl == _waveRefl[jWave])
             d[iRank][jWave] += amp;
       }  // end outer loop over waves
-      l += norm(ampPos);
-      l += norm(ampNeg);
+      l += norm(ampProdSum[1]);
+      l += norm(ampProdSum[0]);
       assert(l >= 0);
       // loop again over waves for current rank
-        for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
-        d[iRank][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
+      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
+	d[iRank][iWave] *= conj(complex<T>(_decayAmps[iWave][iEvt]));
     }  // end loop over rank
     l += prodAmpFlat2;
     // incorporate factor 2 / sigma
-      const T factor = 2. / l;
+    const T factor = 2. / l;
     for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-        for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
+      for (unsigned int iWave = 0; iWave <_nmbWaves; ++iWave)
         derivatives[iRank][iWave] -= factor * d[iRank][iWave];
-      derivativeFlat -= factor * prodAmpFlat;
+    derivativeFlat -= factor * prodAmpFlat;
   }  // end loop over events
  
   // log consumed time
@@ -663,12 +647,6 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
   }
   // take care of flat wave
   derivativeFlat += twiceNmbEvt * prodAmpFlat;
-
-  // cleanup memory
-  unsigned int prodAmpsDim[2];
-  prodAmpsDim[0] = _rank;
-  prodAmpsDim[1] = _nmbWaves;
-  delete2DArray<complex<T> >(prodAmps, prodAmpsDim);
 
   // return gradient values
   copyToParArray(derivatives, derivativeFlat, gradient);
@@ -703,8 +681,10 @@ TPWALikelihood<T>::init(const unsigned int rank,
                         const std::string& waveListFileName,
                         const std::string& normIntFileName,
                         const std::string& accIntFileName,
-                        const std::string& ampDirName)
+                        const std::string& ampDirName,
+			const unsigned int numbAccEvents)
 {
+  _numbAccEvents=numbAccEvents;
   readWaveList(waveListFileName);
   buildParDataStruct(rank);
   readIntegrals(normIntFileName, accIntFileName);
@@ -738,13 +718,10 @@ TPWALikelihood<T>::readWaveList(const string& waveListFileName)
         threshold = 0;
       if (_debug)
         cout << "    reading line " << setw(3) << lineNmb + 1 << ": " << waveName << ",  threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
-      if (getReflectivity(waveName) > 0) {
+      if (getReflectivity(waveName) > 0)
         ++_nmbWavesRefl[1];  // positive reflectivity
-        _waveNamesX[1].push_back(waveName);
-      } else {
+      else
         ++_nmbWavesRefl[0];  // negative reflectivity
-        _waveNamesX[0].push_back(waveName);
-      }
       _waveNames.push_back(waveName);
       _waveThresholds.push_back(threshold);
     } else
@@ -884,7 +861,7 @@ TPWALikelihood<T>::reorderedIntegralMatrix(integral& integral) const
 
 
 // returns integral matrix reordered according to _waveNames array
-template <typename T>
+template<typename T>
 void
 TPWALikelihood<T>::reorderIntegralMatrixX(integral&            integral,
                                           vector4(complex<T>)& reorderedMatrix) const
@@ -957,7 +934,8 @@ TPWALikelihood<T>::readIntegrals(const string& normIntFileName,  // name of file
   // !!! integral.scan() performs no error checks!
   accInt.scan(intFile);
   intFile.close();
-  //_accInt.events(100000); TODO: add possibility to rescale here!
+  if (_numbAccEvents != 0)
+    accInt.events(_numbAccEvents); 
   _accMatrix = reorderedIntegralMatrix(accInt);
   reorderIntegralMatrixX(accInt, _accMatrixX);
 }
@@ -985,7 +963,7 @@ TPWALikelihood<T>::readDecayAmplitudes(const string& ampDirName)
   clearCache();
 
   {
-  // loop over amplitudes and read in data
+    // loop over amplitudes and read in data
     vector3(complex<double>) amps;  // decay amplitudes [reflectivity][wave index][event index]
     amps.resize(2);                 // array dimension for reflectivity
     for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -1046,25 +1024,25 @@ TPWALikelihood<T>::readDecayAmplitudes(const string& ampDirName)
       }
       // get normalization
       const complex<double> normInt = _normMatrix.element(iWave, iWave);
-    _decayAmps.push_back(vector<complex<double> >());
+      _decayAmps.push_back(vector<complex<double> >());
       _decayAmps.back().reserve(_nmbEvents);  // number of events is known except for first wave
-    complex<double> amp;
-    while (ampFile.read((char*) &amp, sizeof(complex<double>))) {
+      complex<double> amp;
+      while (ampFile.read((char*) &amp, sizeof(complex<double>))) {
         if (_useNormalizedAmps)         // normalize data, if option is switched on
-        amp /= sqrt(normInt.real());  // rescale decay amplitude
-      _decayAmps.back().push_back(amp);
-    }
-    if (_debug)
+	  amp /= sqrt(normInt.real());  // rescale decay amplitude
+	_decayAmps.back().push_back(amp);
+      }
+      if (_debug)
         cout << "    read " << _decayAmps.back().size() << " events from file '" << _waveNames[iWave] << "'." << endl;
-    _nmbEvents = _decayAmps.back().size(); 
-  }
-  bool allWavesHaveSameNmbEvent = true;
+      _nmbEvents = _decayAmps.back().size(); 
+    }
+    bool allWavesHaveSameNmbEvent = true;
     for (unsigned int iWave = 1; iWave < _decayAmps.size(); ++iWave)
       if (_decayAmps[iWave - 1].size() != _decayAmps[iWave].size()) {
-      allWavesHaveSameNmbEvent = false;
-      break;
-    }
-  if ((!allWavesHaveSameNmbEvent) || (_decayAmps.back().size() != _nmbEvents))
+	allWavesHaveSameNmbEvent = false;
+	break;
+      }
+    if ((!allWavesHaveSameNmbEvent) || (_decayAmps.back().size() != _nmbEvents))
       printWarn << "amplitude files do not contain the same number of events for all waves." << endl;
     printInfo << "loaded " << _nmbEvents << " events into memory." << endl;
   }
@@ -1097,9 +1075,9 @@ TPWALikelihood<T>::readDecayAmplitudes(const string& ampDirName)
       for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave) {
         const double norm_j = sqrt(_normMatrix.element(jWave, jWave).real());
         _accMatrix.element(iWave, jWave) /= norm_i * norm_j;
-// !!! magic do-nothing line; without it fit result changes
-// this is probably due to the -O3 used in compilation which might break some things
-// has no influence when using -O0
+	// !!! magic do-nothing line; without it fit result changes
+	// this is probably due to the -O3 used in compilation which might break some things
+	// has no influence when using -O0
         cout << "";
       }
     }
@@ -1217,7 +1195,7 @@ TPWALikelihood<T>::buildCAmps(const double*             x,
       ++iWaveRefl[refl];
       //cout << "Wave" << iWave << "=" << V[iRank * _nmbWaves + iWave] << endl;
     }
-    }
+  }
   if (withFlat){
     V.push_back(complex<double>(x[parIndex], 0));
     indices.push_back(make_pair(parIndex, -1));
@@ -1286,16 +1264,16 @@ TPWALikelihood<T>::copyFromParArray(const double*        inPar,             // i
       } else {                              // production amplitude is complex
         re = inPar[parIndex++];
         im = inPar[parIndex++];
-    }
+      }
       outVal[iRank][iWave] = complex<T>(re, im);
       ++iWaveRefl[refl];
-  }
+    }
   }
   outFlatVal = inPar[parIndex];
 }
 
 
-template <typename T>
+template<typename T>
 void
 TPWALikelihood<T>::copyFromParArray(const double* inPar,             // input parameter array
                                     complex<T>**& outVal,            // output values organized as 2D array of complex numbers with [rank][wave index]
@@ -1326,7 +1304,7 @@ TPWALikelihood<T>::copyFromParArray(const double* inPar,             // input pa
 }
 
 
-template <typename T>
+template<typename T>
 void
 TPWALikelihood<T>::copyFromParArrayX(const double*        inPar,             // input parameter array
                                      vector3(complex<T>)& outVal,            // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
@@ -1452,7 +1430,7 @@ TPWALikelihood<T>::copyToParArrayX(const vector3(complex<T>)& inVal,         // 
 }
 
 
-template <typename T>
+template<typename T>
 ostream&
 TPWALikelihood<T>::print(ostream& out) const
 {

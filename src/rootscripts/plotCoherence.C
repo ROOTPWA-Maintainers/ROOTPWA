@@ -40,32 +40,36 @@
 #include "TLine.h"
 #include "TPad.h"
 
-#include "../TFitResult.h"
+#include "utilities.h"
+#include "fitResult.h"
 #include "plotCoherence.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 // signature with wave names
 TGraphErrors*
-plotCoherence(TTree*        tree,        // TFitResult tree
+plotCoherence(TTree*        tree,        // fitResult tree
 	      const string& waveNameA,   // name of first wave
 	      const string& waveNameB,   // name of second wave
 	      const string& selectExpr,  // TTree::Draw() selection expression
 	      const string& graphTitle,  // name and title of graph
 	      const char*   drawOption,  // draw option for graph
 	      const int     graphColor,  // color of line and marker
-	      const bool    saveEps)     // if set, EPS file with name waveId is created
+	      const bool    saveEps,     // if set, EPS file with name waveId is created
+	      const string& branchName)
+
 {
   if (!tree) {
-    cerr << "plotCoherence() error: Null pointer to tree. Exiting." << endl;
+    printErr << "NULL pointer to tree. exiting." << endl;
     return 0;
   }
 
   // call plotCoherence with wave indices
-  TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitResult", &massBin);
+  fitResult* massBin = new fitResult();
+  tree->SetBranchAddress(branchName.c_str(), &massBin);
   tree->GetEntry(0);
   const string waveNames[2]   = {waveNameA, waveNameB};
   int          waveIndices[2] = {-1, -1};
@@ -76,48 +80,50 @@ plotCoherence(TTree*        tree,        // TFitResult tree
 	break;
       }
     if (waveIndices[i] < 0) {
-      cerr << "plotCoherence() error: Cannot find wave '" << waveNames[i] << "' in tree '" << tree->GetName() << "'. Exiting." << endl;
+      printErr << "cannot find wave '" << waveNames[i] << "' "
+	       << "in tree '" << tree->GetName() << "'. exiting." << endl;
       return 0;
     }
   }
-  return plotCoherence(tree, waveIndices[0], waveIndices[1], selectExpr, graphTitle, drawOption, graphColor, saveEps);
+  return plotCoherence(tree, waveIndices[0], waveIndices[1], selectExpr,
+		       graphTitle, drawOption, graphColor, saveEps, branchName);
 }
 
 
 // signature with wave indices
 TGraphErrors*
-plotCoherence(TTree*        tree,        // TFitResult tree
+plotCoherence(TTree*        tree,        // fitResult tree
 	      const int     waveIndexA,  // index of first wave
 	      const int     waveIndexB,  // index of second wave
 	      const string& selectExpr,  // TTree::Draw() selection expression
 	      const string& graphTitle,  // name and title of graph
 	      const char*   drawOption,  // draw option for graph
 	      const int     graphColor,  // color of line and marker
-	      const bool    saveEps)     // if set, EPS file with name waveId is created
+	      const bool    saveEps,     // if set, EPS file with name waveId is created
+	      const string& branchName)
 {
   if (!tree) {
-    cerr << "plotCoherence() error: Null pointer to tree. Exiting." << endl;
+    printErr << "NULL pointer to tree. exiting." << endl;
     return 0;
   }
   // get wave names
-  TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitResult", &massBin);
+  fitResult* massBin = new fitResult();
+  tree->SetBranchAddress(branchName.c_str(), &massBin);
   tree->GetEntry(0);
   const string waveNameA = massBin->waveName(waveIndexA).Data();
   const string waveNameB = massBin->waveName(waveIndexB).Data();
-  cout << "Plotting coherence of wave '" << waveNameA << "' [" << waveIndexA << "] "
-       << "and wave '" << waveNameB << "' [" << waveIndexB << "]";
+  printInfo << "plotting coherence of wave '" << waveNameA << "' [" << waveIndexA << "] "
+	    << "and wave '" << waveNameB << "' [" << waveIndexB << "]" << endl;
   if (selectExpr != "")
-    cout << " using selection criterion '" << selectExpr << "'";
-  cout << "." << endl;
+    cout << "    using selection criterion '" << selectExpr << "'" << endl;
 
   // build and run TTree::Draw() expression
   stringstream drawExpr;
-  drawExpr << "coherence("  << waveIndexA << "," << waveIndexB << ")"
-	   << ":coherenceErr(" << waveIndexA << "," << waveIndexB << ")"
-	   << ":massBinCenter() >> h" << waveIndexA << "_" << waveIndexB;
-  cout << "    Running TTree::Draw() expression '" << drawExpr.str() << "' "
-       << "on tree '" << tree->GetName() << "'" << endl;
+  drawExpr << branchName << ".coherence("  << waveIndexA << "," << waveIndexB << "):"
+	   << branchName << ".coherenceErr(" << waveIndexA << "," << waveIndexB << "):"
+	   << branchName << ".massBinCenter() >> h" << waveIndexA << "_" << waveIndexB;
+  cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
+       << "on tree '" << tree->GetName() << "', '" << tree->GetTitle() << "'" << endl;
   tree->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
 
   // extract data from TTree::Draw() result and build graph
@@ -127,40 +133,46 @@ plotCoherence(TTree*        tree,        // TFitResult tree
     x[i]    = tree->GetV3()[i] * 0.001;  // convert mass to GeV
     xErr[i] = 0;
   }
-  TGraphErrors* g = new TGraphErrors(nmbBins,
-				     &(*(x.begin())),  // mass
-				     tree->GetV1(),    // coherence
-				     0,                // mass error
-                                     tree->GetV2());   // coherence error
-  stringstream name;
-  name << "coherence_" << waveNameA << "_" << waveNameB;
-  g->SetName(name.str().c_str());
-  stringstream title;
-  title << "Coherence(" << waveNameA << ", " << waveNameB << ")";
-  g->SetTitle(title.str().c_str());
-  if (graphTitle != "") {
-    g->SetName (graphTitle.c_str());
-    g->SetTitle(graphTitle.c_str());
+  TGraphErrors* graph = new TGraphErrors(nmbBins,
+					 &(*(x.begin())),  // mass
+					 tree->GetV1(),    // coherence
+					 0,                // mass error
+					 tree->GetV2());   // coherence error
+  stringstream graphName;
+  graphName << "coherence_" << waveNameA << "_" << waveNameB;
+  {
+    stringstream title;
+    title << "Coherence(" << waveNameA << " [" << waveIndexA << "], "
+	  << ", " << waveNameB << " [" << waveIndexB << "])";
+    if (graphTitle != "") {
+      graph->SetName (graphTitle.c_str());
+      graph->SetTitle(graphTitle.c_str());
+    } else {
+      graph->SetName(graphName.str().c_str());
+      graph->SetTitle(title.str().c_str());
+    }
   }
 
   // beautify and draw graph
-  g->SetMarkerStyle(23);
-  g->SetMarkerSize(0.5);
-  g->SetMarkerColor(graphColor);
-  g->SetLineColor(graphColor);
-  g->SetMinimum(-0.1);
-  g->SetMaximum( 1.1);
-  g->GetXaxis()->SetTitle("Mass [GeV]");
-  g->GetYaxis()->SetTitle("Coherence");
-  TGraphErrors* clone = (TGraphErrors*)g->DrawClone(drawOption);
-  clone->SetName(name.str().c_str());
+  graph->Draw(drawOption);
+  graph->SetMarkerStyle(21);
+  graph->SetMarkerSize(0.5);
+  graph->SetMarkerColor(graphColor);
+  graph->SetLineColor(graphColor);
+  graph->GetXaxis()->SetTitle("Mass [GeV]");
+  graph->GetYaxis()->SetTitle("Coherence");
+  graph->SetMinimum(-0.1);
+  graph->SetMaximum( 1.1);
+  // TGraphErrors* clone = (TGraphErrors*)graph->DrawClone(drawOption);
+  // clone->SetName(graphName.str().c_str());
+  gPad->Update();
   TLine line;
   line.SetLineStyle(3);
-  line.DrawLine(clone->GetXaxis()->GetXmin(), 0, clone->GetXaxis()->GetXmax(), 0);
+  line.DrawLine(graph->GetXaxis()->GetXmin(), 0, graph->GetXaxis()->GetXmax(), 0);
 
   // create EPS file
   if (saveEps)
-    gPad->SaveAs((name.str() + ".eps").c_str());
+    gPad->SaveAs((graphName.str() + ".eps").c_str());
 
-  return g;
+  return graph;
 }

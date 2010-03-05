@@ -38,7 +38,7 @@
   gSystem->Load("libGX11TTF.so");
   gSystem->Load("librootpwa.so");
 
-  gSystem->AddIncludePath("-I$ROOTPWA/tools");
+  gSystem->AddIncludePath("-I$ROOTPWA/src");
 
   gROOT->ProcessLine(".L loadFitResult.C+");
   gROOT->ProcessLine(".L plotIntensity.C+");
@@ -47,6 +47,7 @@
   gROOT->ProcessLine(".L plotPhase.C+");
   gROOT->ProcessLine(".L plotCoherence.C+");
   gROOT->ProcessLine(".L plot4.C+");
+  gROOT->ProcessLine(".L convertTFitResultTree.C+");
 
   gROOT->ProcessLine(".L loadFit.C+");
   gROOT->ProcessLine(".L plotwaves.C+");

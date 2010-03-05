@@ -43,12 +43,6 @@
 #include <string>
 #include <list>
 #include <algorithm>
-using namespace std;
-using std::cout;
-using std::endl;
-using std::ifstream;
-using std::pair;
-using std::stringstream;
 #include <assert.h>
 
 // Collaborating Class Headers --------
@@ -60,6 +54,11 @@ using std::stringstream;
 #include "TPWARealConstraint.h"
 #include "TPWANullConstraint.h"
 #include "TPWAPhaseConstraint.h"
+
+
+using namespace std;
+using namespace ROOT;
+
 
 // Class Member definitions ----------
 

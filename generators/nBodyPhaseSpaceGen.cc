@@ -41,9 +41,10 @@
 #include <algorithm>
 
 #include "nBodyPhaseSpaceGen.h"
-
+#include "TMath.h"
 
 using namespace std;
+using namespace rpwa;
 
 
 ClassImp(nBodyPhaseSpaceGen);
@@ -54,9 +55,15 @@ nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
     _weightType       (S_U_CHUNG),
     _norm             (0),
     _weight           (0),
+ _impweight(1),
     _maxWeightObserved(0),
     _maxWeight        (0),
-    _kinematicsType   (BLOCK)
+
+    _kinematicsType   (BLOCK),
+
+    _verbose(false),
+   
+    _isoBWMass(1.0),_isoBWWidth(0.01) // dummy values!!!
 { }
 
 
@@ -99,7 +106,7 @@ nBodyPhaseSpaceGen::setDecay(vector<double>& daughterMasses)  // array of daught
   _daughters.resize(_n, TLorentzVector(0, 0, 0, 0));
   // calculate normalization
   switch (_weightType) {
-  case S_U_CHUNG: 
+  case S_U_CHUNG: case IMPORTANCE: 
     // S. U. Chung's normalization
     _norm = 1 / (2 * pow(twoPi, 2 * (int)_n - 3) * factorial(_n - 2));
     break;
@@ -140,6 +147,7 @@ nBodyPhaseSpaceGen::setDecay(const unsigned int nmbOfDaughters,  // number of da
 double
 nBodyPhaseSpaceGen::generateDecay(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
 {
+  _weight = 1;
   const double nBodyMass = nBody.M();
   if (_n < 2) {
     printWarn << "number of daughter particles = " << _n << " is smaller than 2. weight is set to 0." << endl;
@@ -190,6 +198,7 @@ nBodyPhaseSpaceGen::generateDecayAccepted(const TLorentzVector& nBody,      // L
 void
 nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the system in its RF
 {
+
   _M[_n - 1] = nBodyMass;
   switch (_weightType) {
   case NUPHAZ: 
@@ -225,8 +234,48 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
       }
     }
     break;
+    /*  case IMPORTANCE:
+    {
+      
+      // set effective masses of (intermediate) two-body decays
+      const double massInterval = nBodyMass - _mSum[_n - 1];  // kinematically allowed mass interval
+      
+      //  do first isobar breitwigner importance sampling:
+      double m=0;//unsigned int count=0;
+      //while(m<_mSum[_n-2] || m>_mSum[_n-2]+massInterval){
+      //m=gRandom->BreitWigner(_isoBWMass,_isoBWWidth);
+	m=gRandom->Uniform(_mSum[_n-2],_mSum[_n-2]+massInterval);
+	//printErr <<  _M[_n-3] << " < " << m << " < " << _mSum[_n-2]+massInterval << endl;
+	//}
+      _M[_n-2]=m;
+      _impweight=TMath::BreitWigner(m,_isoBWMass,_isoBWWidth);  // for de-weighting (has to be read out explicitely!!!) 
+      
+      // now that the first isobar mass is fixed, generate the rest:
+      // create vector of sorted random values
+      vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
+      r[_n-3]=(_M[_n-2]-_mSum[_n-2])/massInterval;
+      
+      
+      for (unsigned int i = _n-3; i > 0; --i)
+	r[i-1] = gRandom->Uniform(0,r[i]);
+      
+      for (unsigned int i = 1; i < (_n - 2); ++i)             // loop over intermediate 2- to (n - 1)-bodies
+	_M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
+      
+      
+      
+      if(_verbose){
+	for(unsigned int i =0; i < (_n - 1) ; ++i){
+	  cerr << "M["<<i<<"]="<<_M[i] << endl;
+	}
+      }// end ifverbose
+    }// end if importance sampling
+    
+    
+    break;*/
   default:
     {
+      
       // create vector of sorted random values
       vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
       for (unsigned int i = 0; i < (_n - 2); ++i)
@@ -235,8 +284,18 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
       // set effective masses of (intermediate) two-body decays
       const double massInterval = nBodyMass - _mSum[_n - 1];  // kinematically allowed mass interval
       for (unsigned int i = 1; i < (_n - 1); ++i)             // loop over intermediate 2- to (n - 1)-bodies
-	_M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
-    }
+	  _M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
+
+      //cerr << _M[1] << endl;
+      if(_weightType==IMPORTANCE){
+	_impweight=TMath::BreitWigner(_M[_n-2],_isoBWMass,_isoBWWidth);
+	// BE CAREFULL:::: hard coded a1 BW in 3pi mass
+	_impweight*=TMath::BreitWigner(_M[_n-3],1.23,0.425);
+	// BE CAREFULL:::: hard coded rho BW in 2pi mass
+	_impweight*=TMath::BreitWigner(_M[_n-4],0.77,0.15);
+      }
+      //cerr << _impweight << endl;
+    } // end default mass picking
     break;
   }
 }
@@ -250,13 +309,13 @@ nBodyPhaseSpaceGen::calcWeight()
   for (unsigned int i = 1; i < _n; ++i)  // loop over 2- to n-bodies
     _breakupMom[i] = breakupMomentum(_M[i], _M[i - 1], _m[i]);
   switch (_weightType) {
-  case S_U_CHUNG: 
+  case S_U_CHUNG: case IMPORTANCE:
     {  // S. U. Chung's weight
       double momProd = 1;                    // product of breakup momenta
       for (unsigned int i = 1; i < _n; ++i)  // loop over 2- to n-bodies
 	momProd *= _breakupMom[i];
       const double massInterval = _M[_n - 1] - _mSum[_n - 1];  // kinematically allowed mass interval
-      _weight = _norm * pow(massInterval, (int)_n - 2) * momProd / _M[_n - 1];
+      _weight = _norm * pow(massInterval, (int)_n - 2) * momProd / _M[_n - 1] * _impweight;
     }
     break;
   case NUPHAZ: 
@@ -391,6 +450,7 @@ nBodyPhaseSpaceGen::estimateMaxWeight(const double       nBodyMass,        // si
 {
   double maxWeight = 0;
   for (unsigned int i = 0; i < nmbOfIterations; ++i) {
+    _weight=1;
     pickMasses(nBodyMass);
     calcWeight();
     maxWeight = max(_weight, maxWeight);
@@ -403,20 +463,21 @@ ostream&
 nBodyPhaseSpaceGen::print(ostream& out) const
 {
   out << "nBodyPhaseSpaceGen parameters:" << endl
-      << "    number of daughter particles ............... " << _n                 << endl
-      << "    masses of the daughter particles ........... " << _m                 << endl
-      << "    sums of daughter particle masses ........... " << _mSum              << endl
-      << "    effective masses of (i + 1)-body systems ... " << _M                 << endl
-      << "    cos(polar angle) in (i + 1)-body systems ... " << _cosTheta          << endl
-      << "    azimuth in (i + 1)-body systems ............ " << _phi               << endl
-      << "    breakup momenta in (i + 1)-body systems .... " << _breakupMom        << endl
-      << "    weight formula ............................. " << _weightType        << endl
-      << "    normalization value ........................ " << _norm              << endl
-      << "    weight of generated event .................. " << _weight            << endl
-      << "    maximum weight used in hit-miss MC ......... " << _maxWeight         << endl
-      << "    maximum weight since instantiation ......... " << _maxWeightObserved << endl
-      << "    algorithm for kinematics calculation ....... " << _kinematicsType    << endl
-      << "    daughter four-momenta:" << endl;
+      << "    number of daughter particles ............... " << _n                 << endl;
+  //  << "    masses of the daughter particles ........... " << _m                 << endl;
+  //  << "    sums of daughter particle masses ........... " << _mSum              << endl
+  //  << "    effective masses of (i + 1)-body systems ... " << _M                 << endl
+  //  << "    cos(polar angle) in (i + 1)-body systems ... " << _cosTheta          << endl
+  //  << "    azimuth in (i + 1)-body systems ............ " << _phi               << endl
+  //   << "    breakup momenta in (i + 1)-body systems .... " << _breakupMom        << endl
+  out  << "    weight formula ............................. " << _weightType        << endl
+       << "    normalization value ........................ " << _norm              << endl
+       << "    weight of generated event .................. " << _weight            << endl
+       << "    maximum weight used in hit-miss MC ......... " << _maxWeight         << endl
+       << "    maximum weight since instantiation ......... " << _maxWeightObserved << endl
+       << "    algorithm for kinematics calculation ....... " << _kinematicsType    << endl
+       << "    daughter four-momenta:" << endl;
+  
   for (unsigned int i = 0; i < _n; ++i)
     out << "        daughter " << i << ": " << _daughters[i] << endl;
   return out;

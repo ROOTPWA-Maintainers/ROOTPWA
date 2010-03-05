@@ -39,32 +39,35 @@
 #include "TAxis.h"
 #include "TPad.h"
 
-#include "../TFitResult.h"
+#include "utilities.h"
+#include "fitResult.h"
 #include "plotPhase.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 // signature with wave names
 TGraphErrors*
-plotPhase(TTree*        tree,        // TFitResult tree
+plotPhase(TTree*        tree,        // fitResult tree
 	  const string& waveNameA,   // name of first wave
 	  const string& waveNameB,   // name of second wave
 	  const string& selectExpr,  // TTree::Draw() selection expression
 	  const string& graphTitle,  // name and title of graph
 	  const char*   drawOption,  // draw option for graph
 	  const int     graphColor,  // color of line and marker
-	  const bool    saveEps)     // if set, EPS file with name waveId is created
+	  const bool    saveEps,     // if set, EPS file with name waveId is created
+	  const string& branchName)
 {
   if (!tree) {
-    cerr << "plotPhase() error: Null pointer to tree. Exiting." << endl;
+    printErr << "NULL pointer to tree. exiting." << endl;
     return 0;
   }
 
   // call plotPhase with wave indices
-  TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitResult", &massBin);
+  fitResult* massBin = new fitResult();
+  tree->SetBranchAddress(branchName.c_str(), &massBin);
   tree->GetEntry(0);
   const string waveNames[2]   = {waveNameA, waveNameB};
   int          waveIndices[2] = {-1, -1};
@@ -75,48 +78,50 @@ plotPhase(TTree*        tree,        // TFitResult tree
 	break;
       }
     if (waveIndices[i] < 0) {
-      cerr << "plotPhase() error: Cannot find wave '" << waveNames[i] << "' in tree '" << tree->GetName() << "'. Exiting." << endl;
+      printErr << "cannot find wave '" << waveNames[i] << "' "
+	       << "in tree '" << tree->GetName() << "'. exiting." << endl;
       return 0;
     }
   }
-  return plotPhase(tree, waveIndices[0], waveIndices[1], selectExpr, graphTitle, drawOption, graphColor, saveEps);
+  return plotPhase(tree, waveIndices[0], waveIndices[1], selectExpr,
+		   graphTitle, drawOption, graphColor, saveEps, branchName);
 }
 
 
 // signature with wave names
 TGraphErrors*
-plotPhase(TTree*        tree,        // TFitResult tree
+plotPhase(TTree*        tree,        // fitResult tree
 	  const int     waveIndexA,  // index of first wave
 	  const int     waveIndexB,  // index of second wave
 	  const string& selectExpr,  // TTree::Draw() selection expression
 	  const string& graphTitle,  // name and title of graph
 	  const char*   drawOption,  // draw option for graph
 	  const int     graphColor,  // color of line and marker
-	  const bool    saveEps)     // if set, EPS file with name waveId is created
+	  const bool    saveEps,     // if set, EPS file with name waveId is created
+	  const string& branchName)
 {
   if (!tree) {
-    cerr << "plotPhase() error: Null pointer to tree. Exiting." << endl;
+    printErr << "NULL pointer to tree. exiting." << endl;
     return 0;
   }
   // get wave names
-  TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitResult", &massBin);
+  fitResult* massBin = new fitResult();
+  tree->SetBranchAddress(branchName.c_str(), &massBin);
   tree->GetEntry(0);
   const string waveNameA = massBin->waveName(waveIndexA).Data();
   const string waveNameB = massBin->waveName(waveIndexB).Data();
-  cout << "Plotting phase between wave '" << waveNameA << "' [" << waveIndexA << "] "
-       << "and wave '" << waveNameB << "' [" << waveIndexB << "]";
+  printInfo << "plotting phase between wave '" << waveNameA << "' [" << waveIndexA << "] "
+	    << "and wave '" << waveNameB << "' [" << waveIndexB << "]" << endl;
   if (selectExpr != "")
-    cout << " using selection criterion '" << selectExpr << "'";
-  cout << "." << endl;
+    cout << "    using selection criterion '" << selectExpr << "'" << endl;
 
   // build and run TTree::Draw() expression
   stringstream drawExpr;
-  drawExpr << "phase("     << waveIndexA << "," << waveIndexB << ")"
-	   << ":phaseErr(" << waveIndexA << "," << waveIndexB << ")"
-	   << ":massBinCenter() >> h" << waveIndexA << "_" << waveIndexB;
-  cout << "    Running TTree::Draw() expression '" << drawExpr.str() << "' "
-       << "on tree '" << tree->GetName() << "'" << endl;
+  drawExpr << branchName << ".phase("     << waveIndexA << "," << waveIndexB << "):"
+	   << branchName << ".phaseErr(" << waveIndexA << "," << waveIndexB << "):"
+	   << branchName << ".massBinCenter() >> h" << waveIndexA << "_" << waveIndexB;
+  cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
+       << "on tree '" << tree->GetName() << "', '" << tree->GetTitle() << "'" << endl;
   tree->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
 
   // extract data from TTree::Draw() result and build graph
@@ -126,37 +131,43 @@ plotPhase(TTree*        tree,        // TFitResult tree
     x[i]    = tree->GetV3()[i] * 0.001;  // convert mass to GeV
     xErr[i] = 0;
   }
-  TGraphErrors* g = new TGraphErrors(nmbBins,
-				     &(*(x.begin())),  // mass
-				     tree->GetV1(),    // intensity
-				     0,                // mass error
-                                     tree->GetV2());   // intensity error
-  stringstream name;
-  name << "phase_" << waveNameA << "_" << waveNameB;
-  g->SetName(name.str().c_str());
-  stringstream title;
-  title << "#Delta#varphi(" << waveNameA << ", " << waveNameB << ")";
-  g->SetTitle(title.str().c_str());
-  if (graphTitle != "") {
-    g->SetName (graphTitle.c_str());
-    g->SetTitle(graphTitle.c_str());
+  TGraphErrors* graph = new TGraphErrors(nmbBins,
+					 &(*(x.begin())),  // mass
+					 tree->GetV1(),    // intensity
+					 0,                // mass error
+					 tree->GetV2());   // intensity error
+  stringstream graphName;
+  graphName << "phase_" << waveNameA << "_" << waveNameB;
+  {
+    stringstream title;
+    title << "#Delta#varphi(" << waveNameA << " [" << waveIndexA << "], "
+	  << waveNameB << " [" << waveIndexB << "])";
+    if (graphTitle != "") {
+      graph->SetName (graphTitle.c_str());
+      graph->SetTitle(graphTitle.c_str());
+    } else {
+      graph->SetName(graphName.str().c_str());
+      graph->SetTitle(title.str().c_str());
+    }
   }
 
   // beautify and draw graph
-  g->SetMarkerStyle(23);
-  g->SetMarkerSize(0.5);
-  g->SetMarkerColor(graphColor);
-  g->SetLineColor(graphColor);
-  g->SetMinimum(-180);
-  g->SetMaximum(180);
-  g->GetXaxis()->SetTitle("Mass [GeV]");
-  g->GetYaxis()->SetTitle("Phase Angle [deg]");
-  TGraphErrors* clone = (TGraphErrors*)g->DrawClone(drawOption);
-  clone->SetName(name.str().c_str());
+  graph->Draw(drawOption);
+  graph->SetMarkerStyle(21);
+  graph->SetMarkerSize(0.5);
+  graph->SetMarkerColor(graphColor);
+  graph->SetLineColor(graphColor);
+  graph->GetXaxis()->SetTitle("Mass [GeV]");
+  graph->GetYaxis()->SetTitle("Phase Angle [deg]");
+  graph->SetMinimum(-180);
+  graph->SetMaximum(180);
+  // TGraphErrors* clone = (TGraphErrors*);
+  // clone->SetName(name.str().c_str());
+  gPad->Update();
 
   // create EPS file
   if (saveEps)
-    gPad->SaveAs((name.str() + ".eps").c_str());
+    gPad->SaveAs((graphName.str() + ".eps").c_str());
 
-  return g;
+  return graph;
 }

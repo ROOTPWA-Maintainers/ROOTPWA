@@ -111,10 +111,11 @@ public:
 	    const std::string& waveListFileName,
 	    const std::string& normIntFileName,
 	    const std::string& accIntFileName,
-	    const std::string& ampDirName = ".");  ///< prepares all internal data structures
+	    const std::string& ampDirName = ".",
+	    const unsigned int numbAccEvents=0);  ///< prepares all internal data structures
   
 
-  
+
   void getIntCMatrix(TCMatrix& integr,
 		     TCMatrix& acceptance);
 
@@ -129,13 +130,13 @@ public:
   friend std::ostream& operator << (std::ostream&         out,
 				    const TPWALikelihood& func) { return func.print(out); }
 
-private:
-
   // overload private IGradientFunctionMultiDim member functions
   virtual double DoEval      (const double* par) const;
   virtual double DoEvalX     (const double* par) const;
   virtual double DoDerivative(const double* par,
-			      unsigned int  derivativeIndex) const;
+                              unsigned int  derivativeIndex) const;
+
+private:
 
   // helper functions
   void readWaveList       (const std::string& waveListFileName);  ///< reads wave names and thresholds from wave list file
@@ -148,9 +149,9 @@ private:
   void clearCache();
   int getReflectivity(const TString& waveName) const;
 
-  matrix<complex<double> > reorderedIntegralMatrix(integral& integral) const;
-  void                     reorderIntegralMatrixX (integral&            integral,
-						   vector4(complex<T>)& reorderedMatrix) const;
+  matrix<std::complex<double> > reorderedIntegralMatrix(integral& integral) const;
+  void                          reorderIntegralMatrixX (integral&                 integral,
+							vector4(std::complex<T>)& reorderedMatrix) const;
   void copyFromParArray(const double*             inPar,              // input parameter array
 			vector2(std::complex<T>)& outVal,             // output values organized as 2D array of complex numbers with [rank][wave index]
 			T&                        outFlatVal) const;  // output value corresponding to flat wave
@@ -180,13 +181,15 @@ private:
   bool _debug;              // if true debug messages are printed
   bool _useNormalizedAmps;  // if true normalized amplitudes are used
 
+  unsigned int _numbAccEvents; // number of input events used for acceptance integrals (accepted + rejected!)
+
   std::vector<std::string> _waveNames;       // wave names
   std::vector<int>         _waveRefl;        // reflectivities of waves
   std::vector<double>      _waveThresholds;  // mass thresholds of waves
   std::vector<std::string> _parNames;        // function parameter names
   std::vector<double>      _parThresholds;   // mass thresholds of parameters
 
-  vector2(complex<double>) _decayAmps;  // precalculated decay amplitudes [wave index][event index]
+  vector2(std::complex<double>) _decayAmps;  // precalculated decay amplitudes [wave index][event index]
 
   mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
   mutable std::vector<double> _derivCache;  // cache for derivatives
@@ -205,7 +208,7 @@ private:
 };
 
 
-template <typename T>
+template<typename T>
 unsigned int
 TPWALikelihood<T>::nmbWaves(const int reflectivity) const
 {

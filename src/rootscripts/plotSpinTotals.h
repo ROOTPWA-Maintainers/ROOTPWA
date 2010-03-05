@@ -44,10 +44,39 @@
 #include "TTree.h"
 
 
+std::vector<std::pair<string, TVirtualPad*> >
+plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult trees
+	       TTree**            trees,                 // array of fitResult trees
+	       const int*         colors        = 0,     // array of line and marker colors
+	       const double       yAxisRangeMax = 0,     // if != 0; range of y-axis is not allowed to be larger than this value
+	       const bool         drawLegend    = true,  // if set legend is drawn
+	       const std::string& outFileName   = "spinTotals.root",
+	       const std::string& branchName    = "fitResult_v2");
+
+
+std::vector<std::pair<string, TVirtualPad*> >
+plotSpinTotals(std::vector<TTree*>&    trees,                 // array of fitResult trees
+	       const std::vector<int>& colors,                // array of line and marker colors
+	       const double            yAxisRangeMax = 0,     // if != 0; range of y-axis is not allowed to be larger than this value
+	       const bool              drawLegend    = true,  // if set legend is drawn
+	       const std::string&      outFileName   = "spinTotals.root",
+	       const std::string&      branchName    = "fitResult_v2")
+{
+  return plotSpinTotals(trees.size(), &(*(trees.begin())), &(*(colors.begin())),
+			yAxisRangeMax, drawLegend, outFileName, branchName);
+}
+
+
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotSpinTotals(TTree*        tree,  // TFitBin tree
-	       const int     color       = kBlack,
-	       const string& outFileName = "spintotals.root");
+plotSpinTotals(TTree*             tree,                    // fitResult tree
+	       const int          color         = kBlack,  // color of line and marker
+	       const double       yAxisRangeMax = 0,       // if != 0; range of y-axis is not allowed to be larger than this value
+	       const bool         drawLegend    = true,    // if set legend is drawn
+	       const std::string& outFileName   = "spinTotals.root",
+	       const std::string& branchName    = "fitResult_v2")
+{
+  return plotSpinTotals(1, &tree, &color, yAxisRangeMax, drawLegend, outFileName, branchName);
+}
 
 
 #endif  // plotSpinTotals_hh

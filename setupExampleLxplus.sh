@@ -1,11 +1,12 @@
 #!/usr/bin/bash
 
 export ROOTSYS=/afs/cern.ch/sw/lcg/external/root/5.20.00/slc4_amd64_gcc34/root/
-export PATH=$ROOTSYS/bin:$HOME/w0/RootPWA/cmake-2.6.4/bin:$HOME/w0/RootPWA/PWA2000/bin:$HOME/w0/RootPWA/noweb-2.11b:$PATH
+export LIBCONFIG=$HOME/scratch/COMPASS/libconfig-1.4b4
+export ROOTPWA=$HOME/scratch/COMPASS/rootpwa/trunk
 
-export PWA2000=$HOME/w0/RootPWA/PWA2000
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROOTSYS/lib
-#export FITS=/afs/e18/compass/analysis/sneubert/PWAFITS
+export LD_LIBRARY_PATH=$LIBCONFIG/lib:$ROOTPWA/build/lib:$LD_LIBRARY_PATH
+export PATH=$ROOTPWA/build/bin:$PATH
+
 
 
 

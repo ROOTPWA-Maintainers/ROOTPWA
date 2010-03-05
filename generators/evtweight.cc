@@ -36,7 +36,7 @@
 #include "TPWWeight.h"
 #include "TFile.h"
 #include "TString.h"
-#include "TFitBin.h"
+#include "fitResult.h"
 #include "TH1.h"
 #include "TH1D.h"
 #include "TRandom3.h"
@@ -49,6 +49,7 @@
 
 using namespace std;
 using namespace libconfig;
+using namespace rpwa;
 
 extern particleDataTable PDGtable;
 
@@ -198,9 +199,9 @@ int main(int argc, char** argv)
 
   
   // load production amplitudes ------------------------------------------
-  // read TFitBin is used as input
+  // read TFitResult is used as input
   TFile* fitresults=TFile::Open(waveListFileName.c_str(),"READ");
-  TFitBin* Bin     = NULL;
+  fitResult* Bin     = NULL;
   if (!fitresults || fitresults->IsZombie()){
     cerr << "Cannot open start fit results file " << waveListFileName << endl;
     return 1;
@@ -211,22 +212,22 @@ int main(int argc, char** argv)
   if (!tree)
     cerr << "Cannot find fitbin tree '"<< "pwa" << "' "<< endl;
   else {
-    Bin = new TFitBin();
-    tree->SetBranchAddress("fitbin", &Bin);
+    Bin = new fitResult();
+    tree->SetBranchAddress("fitResult_v2", &Bin);
     // find entry which is closest to mass bin center
     unsigned int iBest = 0;
     double mBest = 0;
     for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
       tree->GetEntry(i);
-      if (fabs(binCenter - Bin->mass()) <= fabs(binCenter - mBest)) {
+      if (fabs(binCenter - Bin->massBinCenter()) <= fabs(binCenter - mBest)) {
 	iBest = i;
-	mBest = Bin->mass();
+	mBest = Bin->massBinCenter();
       }
     }  // end loop over TFitBins
     cerr << "Using data from Mass bin m=" << mBest << endl;
     tree->GetEntry(iBest); 
     // write wavelist file for generator
-    string tmpname("/tmp/genamps.txt");
+    string tmpname("genamps.txt");
     ofstream tmpfile(tmpname.c_str());
     Bin->printAmpsGenPW(tmpfile);
     tmpfile.close();
@@ -238,6 +239,8 @@ int main(int argc, char** argv)
   vector<int> reflectivities;
   vector<int> ranks;
   int maxrank=0;
+  // if we have read in a TFitResult the the name of the file has been changed!
+  // so it is ok to use the same variable here. See above!
   ifstream wavefile(waveListFileName.c_str());
   while(wavefile.good()){
     TString wavename;

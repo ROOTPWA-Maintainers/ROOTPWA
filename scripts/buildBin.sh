@@ -24,10 +24,10 @@ if [ -s $FILE ]; then
     ./doamps.sh $FILE;
 
   # Do integration
-    cd $AMPDIR
-    int *.amp > norm.int;
-    /bin/cp norm.int $bindir/AMPS;
-    cd -;
+   # cd $AMPDIR
+   # int *.amp > norm.int;
+   # /bin/cp norm.int $bindir/AMPS;
+   # cd -;
 fi;
 
   # Do accepted monte carlo
@@ -39,10 +39,10 @@ if [ -s $FILE ]; then
     ./doamps.sh $FILE;
 
   # Do integration
-    cd $AMPDIR
-    int *.amp > accnorm.int;
-    /bin/cp accnorm.int $bindir/AMPS;
-    cd -;
+  #  cd $AMPDIR
+  #  int *.amp > accnorm.int;
+  #  /bin/cp accnorm.int $bindir/AMPS;
+  #  cd -;
 fi;
 
 echo;

@@ -23,49 +23,63 @@
  */
 
 
-#include <complex>
 #include <iostream>
-//#include <stringstream>
-
 #include <fstream>
+#include <iomanip>
+#include <complex>
 #include <cstdlib>
 #include <string>
 #include <vector>
 #include <unistd.h>
 #include <stdlib.h>
-#include "TPWWeight.h"
+#include <event.h>
+
 #include "TFile.h"
-#include "TString.h"
-#include "TFitBin.h"
-#include "TH1.h"
-#include "TH1D.h"
-#include "TRandom3.h"
 #include "TTree.h"
+#include "TString.h"
+#include "TH1.h"
+//#include "TH1D.h"
+#include "TRandom3.h"
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
+
+#include "libconfig.h++"
+
+#include "utilities.h"
+#include "TDiffractivePhaseSpace.h"
+#include "TPWWeight.h"
 #include "TProductionAmp.h"
 #include "TBWProductionAmp.h"
-#include "TDiffractivePhaseSpace.h"
-#include <event.h>
-#include "libconfig.h++"
+#include "TFitBin.h"
+
 
 using namespace std;
 using namespace libconfig;
+using namespace rpwa;
+
 
 extern particleDataTable PDGtable;
 
-void printUsage(char* prog, int errCode=0) {
+
+void printUsage(char* prog,
+		int   errCode = 0)
+{
 cerr << "usage:" << endl
      << prog
-     << " -n # -o <file> -w <file> -k <path> -i <file> -r <file>"
+     << " -n # [-a # -m # -M # -B #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
      << "    where:" << endl
-     << "        -n #       number of events to generate" << endl
+     << "        -n #       (max) number of events to generate (default: 100)" << endl
+     << "        -a #       (max) number of attempts to do (default: infty)" \
+     << endl
+     << "        -m #       maxWeight" << endl
      << "        -o <file>  ROOT output file"<< endl
      << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
      << "        -w <file.root>  to use TFitBin tree as input"<< endl 
      << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
      << "        -i <file>  integral file"<< endl 
-     << "        -r <file>  reaction config file"<< endl   
+     << "        -r <file>  reaction config file"<< endl
+     << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
+     << "        -B #   width of mass bin in MeV" << endl
      << endl;
  exit(errCode);
 }
@@ -75,27 +89,47 @@ int main(int argc, char** argv)
 {
 
   unsigned int nevents=100;
+  unsigned int max_attempts=0;
   string output_file("genpw.root");
+  string output_evt("genpw.evt");
+  string output_wht("genpw.wht");
   string integrals_file;
+  bool hasint=false;
   string wavelist_file; // format: name Re Im
   string path_to_keyfiles("./");
   string reactionFile;
   double maxWeight=0;
+  int seed=123456;
+  double massLower=0;
+  double massBinWidth=0;
+  bool overwriteMass=false;
 
   int c;
-  while ((c = getopt(argc, argv, "n:o:w:k:i:r:m:h")) != -1)
+  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
       break;
+    case 'a':
+      max_attempts = atoi(optarg);
+      break;
+    case 's':
+      seed = atoi(optarg);
+      break;
     case 'o':
       output_file = optarg;
+      output_evt = output_file;
+      output_evt.replace(output_evt.find(".root"),5,".evt");
+      output_wht = output_file;
+      output_wht.replace(output_wht.find(".root"),5,".wht");
+
       break;
    case 'w':
       wavelist_file = optarg;
       break;
    case 'i':
       integrals_file = optarg;
+      hasint=true;
       break;
    case 'k':
       path_to_keyfiles = optarg;
@@ -106,27 +140,38 @@ int main(int argc, char** argv)
    case 'm':
       maxWeight = atof(optarg);
       break;
+   case 'M':
+      massLower = atof(optarg);
+      overwriteMass=true;
+      break;
+   case 'B':
+      massBinWidth = atof(optarg);
+      overwriteMass=true;
+      break;
+
     case 'h':
       printUsage(argv[0]);
       break;
     }
-
  
+
+  
 
   TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
   TTree* outtree=new TTree("pwevents","pwevents");
-  double weight;
+  double weight, impweight;
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector beam;
   double qbeam;
-  std::vector<int> q; // array of charges
+  vector<int> q; // array of charges
 
   outtree->Branch("weight",&weight,"weight/d");
+  outtree->Branch("impweight",&impweight,"impweight/d");
   outtree->Branch("p",&p);
   outtree->Branch("beam",&beam);
   outtree->Branch("q",&q);
-  outtree->Branch("qbeam",&qbeam,"qbeam/i");
+  outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
   PDGtable.initialize();
 
@@ -144,26 +189,45 @@ int main(int argc, char** argv)
   double targetz=reactConf.lookup("target.pos.z");
   double targetd=reactConf.lookup("target.length");
   double targetr=reactConf.lookup("target.radius");
+  double mrecoil=reactConf.lookup("target.mrecoil");
 
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
-  double   binCenter    = 500 * (mmin + mmax);
+  if(overwriteMass){
+    mmin=massLower/1000.0;
+    mmax=mmin+massBinWidth/1000.0;
 
+  }
+  double tslope=reactConf.lookup("finalstate.t_slope");
+  double binCenter=500 * (mmin + mmax);
+
+ 
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
 
-  string theta_file= reactConf.lookup("finalstate.theta_file");
+  //string theta_file= reactConf.lookup("finalstate.theta_file");
 
   TDiffractivePhaseSpace difPS;
-  difPS.SetSeed(1236735);
+  cerr << "Seed=" << seed << endl;
+  difPS.SetSeed(seed);
   difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
-  difPS.SetTarget(targetz,targetd,targetr);
+  difPS.SetTarget(targetz,targetd,targetr,mrecoil);
+  difPS.SetTPrimeSlope(tslope);
   difPS.SetMassRange(mmin,mmax);			
-  TFile* infile=TFile::Open(theta_file.c_str());
-  difPS.SetThetaDistribution((TH1*)infile->Get("h1"));
+
+
+  double impMass;
+  double impWidth;
+ 
+  if(reactConf.lookupValue("importance.mass",impMass) && reactConf.lookupValue("importance.width",impWidth)){
+    int act=reactConf.lookup("importance.active");
+      if(act==1){
+      difPS.SetImportanceBW(impMass,impWidth);
+    }
+  }
   
 
   const Setting& root = reactConf.getRoot();
-  const Setting &fspart = root["finalstate"]["particles"];
+  const Setting& fspart = root["finalstate"]["particles"];
   int nparticles = fspart.getLength();
 
   for(int ifs=0;ifs<nparticles;++ifs){
@@ -172,28 +236,35 @@ int main(int argc, char** argv)
     int myq;part.lookupValue("charge",myq);
     double m;part.lookupValue("mass",m);
     q.push_back(myq);
-    difPS.AddDecayProduct(particleinfo(id,myq,m));
+    difPS.AddDecayProduct(particleInfo(id,myq,m));
   }
-   // see if we have a resonance in this wave
-  const Setting &bws = root["resonances"]["breitwigners"];
-  // loop through breitwigners
-  int nbw=bws.getLength();
-  cerr << "Found " << nbw << " BreitWigners in Config" << endl;
-  map<string,TBWProductionAmp*> bwAmps;
-  for(int ibw=0;ibw<nbw;++ibw){
-    const Setting &bw=bws[ibw];
-    string jpcme;bw.lookupValue("jpcme",jpcme);
-    double mass;bw.lookupValue("mass",mass);
-    double width;bw.lookupValue("width",width);
-    double cRe;bw.lookupValue("coupling_Re",cRe);
-    double cIm;bw.lookupValue("coupling_Im",cIm);
-    std::complex<double> coupl(cRe,cIm);
-    cerr << jpcme << " m="<< mass << " w="<<width<<" c="<< coupl << endl;
-    bwAmps[jpcme]=new TBWProductionAmp(mass,width,coupl);
-  }
-    
 
-  // check if TFitBin is used as input
+  // see if we have a resonance in this wave
+  map<string, TBWProductionAmp*> bwAmps;
+  if(reactConf.exists("resonances")){
+    const Setting &bws = root["resonances"]["breitwigners"];
+    // loop through breitwigners
+    int nbw=bws.getLength();
+    printInfo << "found " << nbw << " Breit-Wigners in config" << endl;
+    
+    for(int ibw = 0; ibw < nbw; ++ibw) {
+      const Setting &bw = bws[ibw];
+      string jpcme;
+      double mass, width;
+      double cRe, cIm;
+      bw.lookupValue("jpcme",       jpcme);
+      bw.lookupValue("mass",        mass);
+      bw.lookupValue("width",       width);
+      bw.lookupValue("coupling_Re", cRe);
+      bw.lookupValue("coupling_Im", cIm);
+      complex<double> coupl(cRe, cIm);
+      cout << "    JPCME = " << jpcme << ", mass = " << mass << " GeV/c^2, "
+	   << "width = " << width << " GeV/c^2, coupling = " << coupl << endl;
+      bwAmps[jpcme] = new TBWProductionAmp(mass, width, coupl);
+    }
+  }
+
+    // check if TFitBin is used as input
   if(wavelist_file.find(".root")!=string::npos){
     cerr << "Using TFitBin as input!" << endl;
     TFile* fitresults=TFile::Open(wavelist_file.c_str(),"READ");
@@ -257,7 +328,7 @@ int main(int argc, char** argv)
     wavename.ReplaceAll(".amp",".key");
     wavename.Prepend(path_to_keyfiles.c_str());
 
-    std::complex<double> amp(RE,IM);
+    complex<double> amp(RE,IM);
     cerr << wavename << " " << amp << " r=" << rank/2 
 	 << " eps=" << refl << " qn=" << jpcme << endl;
     wavefile.ignore(256,'\n');
@@ -266,19 +337,26 @@ int main(int argc, char** argv)
     if(bwAmps[jpcme.Data()]!=NULL){
       pamp=bwAmps[jpcme.Data()];
       cerr << "Using BW for " << jpcme << endl;
+      // production vector index: rank+refl
+      weighter.addWave(wavename.Data(),pamp,amp,rank+refl);
     }
-    else pamp=new TProductionAmp(amp);
-
-    // production vector index: rank+refl
-    weighter.addWave(wavename.Data(),pamp,rank+refl);
-    
+    else {
+      pamp=new TProductionAmp(amp);
+      weighter.addWave(wavename.Data(),pamp,complex<double>(1,0),rank+refl);
+    }   
   }
 
-
-
-  weighter.loadIntegrals(integrals_file);
-
-
+  if(hasint){
+    // read integral files
+    ifstream intfile(integrals_file.c_str());
+    while(intfile.good()){
+      string filename;
+      double mass;
+      intfile >> filename >> mass;
+      weighter.loadIntegrals(filename,mass);
+      intfile.ignore(256,'\n');
+    } // loop over integralfile
+  }// endif hasint
 
   
   double maxweight=-1;
@@ -287,16 +365,22 @@ int main(int argc, char** argv)
 
   unsigned int tenpercent=(unsigned int)(nevents/10);
   unsigned int i=0;
-  while(i<nevents)
+  //difPS.setVerbose(true);
+  ofstream evtout(output_evt.c_str());
+  ofstream evtwht(output_wht.c_str());
+  evtwht << setprecision(10);
+
+  while(i<nevents && ((max_attempts>0 && attempts<max_attempts) || max_attempts==0))
     {
 
       ++attempts;
+
       
-					       
       p->Delete(); // clear output array
 
-      ofstream str("/tmp/event.evt");
+      ofstream str("tmpevent.evt");
       difPS.event(str);
+      impweight=difPS.impWeight();
       str.close();
       
       for(int ip=0; ip<nparticles;++ip){
@@ -310,8 +394,10 @@ int main(int argc, char** argv)
       e.setIOVersion(1);
       
       
-      ifstream istr("/tmp/event.evt");
+      ifstream istr("tmpevent.evt");
       istr >> e;
+      evtout << e;
+      evtwht << impweight << endl;
       istr.close();
 
       // cerr << e <<endl;
@@ -327,6 +413,8 @@ int main(int argc, char** argv)
       //cerr << i << endl;
       
       outtree->Fill();
+      
+
       if(i>0 && ( i % tenpercent==0) )cerr << "[" << (double)i/(double)nevents*100. << "%]";
 
       ++i;
@@ -335,16 +423,17 @@ int main(int argc, char** argv)
   cerr << endl;
   cerr << "Maxweight: " << maxweight << endl;
   cerr << "Attempts: " << attempts << endl;
-  cerr << "Efficiency: " << (double)nevents/(double)attempts << endl;
+  cerr << "Created Events: " << i << endl;
+  cerr << "Efficiency: " << (double)i/(double)attempts << endl;
   
 
   outfile->cd();
   hWeights->Write();
-outtree->Write();
+  outtree->Write();
   outfile->Close();
-  infile->Close();
-
+  evtout.close();
+  evtwht.close();
+ 
   return 0;
-
 }
 

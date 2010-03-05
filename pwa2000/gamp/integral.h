@@ -1,111 +1,68 @@
-#line 341 "../integral.nw"
 #ifndef INTEGRAL_H
 #define INTEGRAL_H
+
 
 #include <complex>
 #include <iostream>
 #include <string>
 #include <list>
 #include <map>
-#include <cstdlib>
-#include <matrix.h>
 
-using namespace std;
+#include "matrix.h"
+
 
 class integral {
-    private:
-        matrix<complex<double> > _sum;
-        map<string, int> _index;
-        int _nwaves;
-        int _nevents;
-        int _maxEvents;
-    public:
+
+public:
         
-#line 68 "../integral.nw"
-    
-#line 85 "../integral.nw"
-        integral();
+  integral();
+  integral(char**          files);
+  integral(const integral& ni);
+  virtual ~integral();
 
-#line 94 "../integral.nw"
-        integral(char**);
+  integral& operator = (const integral& ni);
 
-#line 101 "../integral.nw"
-        integral(const integral&);
+  integral& files(char**                        files);
+  integral& files(const std::list<std::string>& files);
+  std::list<std::string> files()       const;
+  char**                 files_c_str() const;
+  void weightfile(const std::string& fileName) { _weightFileName = fileName; }
 
-#line 108 "../integral.nw"
-        ~integral();
+  integral& integrate();
+  integral& renormalize(const int n);
+  integral& max(const int m);
+  integral& events(const int n);
+  int       nevents() const { return _nevents; }
 
-#line 115 "../integral.nw"
-        integral& operator=(const integral&);
+  std::complex<double>& el(const std::string& iName,
+			   const std::string& jName)
+  { return (_sum.el(_index[iName],_index[jName])); }
+  std::complex<double> val(const std::string& iName,
+			   const std::string& jName);
 
-#line 69 "../integral.nw"
-    
-#line 134 "../integral.nw"
-        integral& integrate();
+  integral get(char**                        files);
+  integral get(const std::list<std::string>& files);
 
-#line 143 "../integral.nw"
-        integral& files(char**);
+  int index(const std::string& s) { return _index[s]; }
+  int index(const char*        s) { return _index[s]; }
 
-#line 152 "../integral.nw"
-        integral& files(list<string>);
+  matrix<std::complex<double> > mat();
 
-#line 175 "../integral.nw"
-        integral& renormalize(int n);
+  const integral& print       (std::ostream& os = std::cout) const;
+  const integral& print_events(std::ostream& os = std::cout) const;
 
-#line 182 "../integral.nw"
-        integral& max(int m);
+  integral& scan(std::istream& is = std::cin);
 
-#line 190 "../integral.nw"
-        integral& events(int n);
+private:
 
-#line 200 "../integral.nw"
-        complex<double>& el(string, string);
+  matrix<std::complex<double> > _sum;
+  std::map<std::string, int>    _index;
+  int                           _nwaves;
+  int                           _nevents;
+  int                           _maxEvents;
+  std::string                   _weightFileName;
 
-
-#line 70 "../integral.nw"
-    
-#line 216 "../integral.nw"
-        int nevents() const;
-#line 222 "../integral.nw"
-        list<string> files() const;
-
-#line 231 "../integral.nw"
-        char** files_c_str() const;
-
-#line 239 "../integral.nw"
-        complex<double> val(string, string);
-
-#line 247 "../integral.nw"
-        integral get(char** flist);
-
-#line 259 "../integral.nw"
-        integral get(list<string> flist);
-
-#line 266 "../integral.nw"
-        int index(string s);
-
-#line 273 "../integral.nw"
-        int index(char* s);
-
-#line 285 "../integral.nw"
-        matrix<complex<double> > mat();
-
-
-#line 71 "../integral.nw"
-    
-#line 301 "../integral.nw"
-        const integral& print(ostream& os = cout) const;
-
-#line 309 "../integral.nw"
-        const integral& print_events(ostream& os = cout) const;
-
-#line 317 "../integral.nw"
-        integral& scan(istream& is = cin);
-
-
-
-#line 363 "../integral.nw"
 };
 
-#endif
 
+#endif  // INTEGRAL_H

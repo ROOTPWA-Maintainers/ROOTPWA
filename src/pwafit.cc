@@ -40,22 +40,25 @@
 #include <string>
 #include <complex>
 #include <cassert>
+#include <time.h>
 
 #include "TTree.h"
 #include "TFile.h"
 #include "TString.h"
 #include "TComplex.h"
+#include "TRandom3.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 
 #include "utilities.h"
 #include "TFitBin.h"
-#include "TFitResult.h"
+#include "fitResult.h"
 #include "TPWALikelihood.h"
 
 
 using namespace std;
 using namespace ROOT::Math;
+using namespace rpwa;
 
 
 void
@@ -65,27 +68,32 @@ usage(const string& progName,
   cerr << "usage:" << endl
        << progName
        << " -l # -u # -w wavelist [-d amplitude directory -o outfile -S start value file -N -n normfile"
-       << " [-a normfile] -r rank -M minimizer [-m algorithm] -q -h]" << endl
+       << " [-a normfile] -r rank -M minimizer [-m algorithm] -t # -q -h]" << endl
        << "    where:" << endl
        << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
        << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
        << "        -w file    path to wavelist file" << endl
        << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
        << "        -o file    path to output file (default: 'fitresult.root')" << endl
-       << "        -S file    path to file with start values (default: none)" << endl
+       << "        -S file    path to file with start values (default: none; highest priority)" << endl
+       << "        -s #       seed for random start values (default: 1234567)" << endl
+       << "        -x #       use fixed instead of random start values (default: 0.01)" << endl
+
        << "        -N         use normalization of decay amplitudes (default: false)" << endl
        << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
        << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
+       << "        -A #       number of input events to normalize acceptance to" << endl
        << "        -r #       rank of spin density matrix (default: 1)" << endl
        << "        -M name    minimizer (default: Minuit2)" << endl
        << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
        << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
-       << "                                         Minuit2:     Migrad, Simplex, Combined, Scan Fumili" << endl
+       << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
        << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
        << "                                         GSLMultiFit: -" << endl
        << "                                         GSLSimAn:    -" << endl
        << "                                         Linear:      Robust" << endl
        << "                                         Fumili:      -" << endl
+       << "        -t #       minimizer tolerance (default: 1e-10)" << endl
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
@@ -99,36 +107,37 @@ main(int    argc,
 {
   // ---------------------------------------------------------------------------
   // internal parameters
-  const string       valTreeName        = "pwa";
-  const string       valBranchName      = "fitResult";
-  const double       defaultStartValue  = 0.01;
-  double             startValStep       = 0.0005;
-  const unsigned int maxNmbOfIterations = 20000;
-  const double       minimizerTolerance = 1e-6;
-  //const double       minimizerTolerance = 1e-24;
-  const bool         runHesse           = false;
-  const bool         runMinos           = false;
+  const string       valTreeName         = "pwa";
+  const string       valBranchName       = "fitResult_v2";
+  double             defaultStartValue   = 0.01;
+  bool               useFixedStartValues = false;
+  double             startValStep        = 0.0005;
+  const unsigned int maxNmbOfIterations  = 20000;
+  const bool         runHesse            = false;
+  const bool         runMinos            = false;
+  int                startValSeed        = 1234567;
 
   // ---------------------------------------------------------------------------
   // parse command line options
-  const string progName          = argv[0];
-  double       massBinMin        = 0;                      // [MeV/c^2]
-  double       massBinMax        = 0;                      // [MeV/c^2]
-  string       waveListFileName  = "";                     // wavelist filename
-  string       ampDirName        = ".";                    // decay amplitude directory name
-  string       outFileName       = "fitresult.root";       // output filename
-  string       startValFileName  = "";                     // file with start values
-  bool         useStartVal       = false;                  // indicates whether there are valid start values
-  bool         useNormalizedAmps = false;                  // if true normalized amplitudes are used
-  string       normIntFileName   = "";                     // file with normalization integrals
-  string       accIntFileName    = "";                     // file with acceptance integrals
-  unsigned int rank              = 1;                      // rank of fit
-  string       minimizerType[2]  = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
-  bool         quiet             = false;
+  const string progName           = argv[0];
+  double       massBinMin         = 0;                      // [MeV/c^2]
+  double       massBinMax         = 0;                      // [MeV/c^2]
+  string       waveListFileName   = "";                     // wavelist filename
+  string       ampDirName         = ".";                    // decay amplitude directory name
+  string       outFileName        = "fitresult.root";       // output filename
+  string       startValFileName   = "";                     // file with start values
+  bool         useNormalizedAmps  = false;                  // if true normalized amplitudes are used
+  string       normIntFileName    = "";                     // file with normalization integrals
+  string       accIntFileName     = "";                     // file with acceptance integrals
+  unsigned int numbAccEvents      = 0;                      // number of events used for acceptance integrals
+  unsigned int rank               = 1;                      // rank of fit
+  string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+  double       minimizerTolerance = 1e-10;                  // minimizer tolerance
+  bool         quiet              = false;
   extern char* optarg;
   // extern int optind;
   int c;
-  while ((c = getopt(argc, argv, "l:u:w:d:o:S:Nn:a:r:M:m:qh")) != -1)
+  while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:x::Nn:a:A:r:M:m:t:qh")) != -1)
     switch (c) {
     case 'l':
       massBinMin = atof(optarg);
@@ -147,7 +156,14 @@ main(int    argc,
       break;
     case 'S':
       startValFileName = optarg;
-      useStartVal      = 1;
+      break;
+    case 's':
+      startValSeed = atoi(optarg);
+      break;
+    case 'x':
+      if (optarg)
+	defaultStartValue = atof(optarg);
+      useFixedStartValues = true;
       break;
     case 'N':
       useNormalizedAmps = true;
@@ -158,6 +174,9 @@ main(int    argc,
     case 'a':
       accIntFileName = optarg;
       break;
+    case 'A':
+      numbAccEvents = atoi(optarg);
+      break;
     case 'r':
       rank = atoi(optarg);
       break;
@@ -166,6 +185,9 @@ main(int    argc,
       break;
     case 'm':
       minimizerType[1] = optarg;
+      break;
+    case 't':
+      minimizerTolerance = atof(optarg);
       break;
     case 'q':
       quiet = true;
@@ -189,15 +211,21 @@ main(int    argc,
   // report parameters
   printInfo << "running " << progName << " with the following parameters:" << endl;
   cout << "    mass bin [" <<  massBinMin << ", " <<  massBinMax << "] MeV/c^2" << endl
-       << "    wave list file ......................... '" << waveListFileName << "'" << endl
-       << "    output file ............................ '" << outFileName      << "'" << endl
-       << "    file with start values ................. '" << startValFileName << "'" << endl
-       << "    use normalization ...................... "  << useNormalizedAmps       << endl
-       << "        file with normalization integral ... '" << normIntFileName  << "'" << endl
-       << "        file with acceptance integral ...... '" << accIntFileName   << "'" << endl
-       << "    rank of fit ............................ "  << rank                    << endl
-       << "    minimizer .............................. "  << minimizerType[0] << ", " << minimizerType[1] << endl
-       << "    quiet .................................. "  << quiet << endl;
+       << "    wave list file ............................... '" << waveListFileName << "'" << endl
+       << "    output file .................................. '" << outFileName      << "'" << endl
+       << "    file with start values ....................... '" << startValFileName << "'" << endl
+       << "    seed for random start values ................. "  << startValSeed            << endl;
+  if (useFixedStartValues)
+    cout << "    using fixed instead of random start values ... " << defaultStartValue << endl;
+  cout << "    use normalization ............................ "  << useNormalizedAmps       << endl
+       << "        file with normalization integral ......... '" << normIntFileName  << "'" << endl
+       << "        file with acceptance integral ............ '" << accIntFileName   << "'" << endl
+       << "        number of acceptance norm. events ........ "  << numbAccEvents    << endl
+       << "    rank of fit .................................. "  << rank                    << endl
+       << "    minimizer .................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
+       << "    quiet ........................................ "  << quiet << endl;
+  
+  gRandom->SetSeed(startValSeed);
 
   // ---------------------------------------------------------------------------
   // setup likelihood function
@@ -206,11 +234,12 @@ main(int    argc,
   if (quiet)
     L.setQuiet();
   L.useNormalizedAmps(useNormalizedAmps);
-  L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName);
+  L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
   if (!quiet)
     cout << L << endl;
-  const unsigned int nmbPar = L.NDim();
-  
+  const unsigned int nmbPar  = L.NDim();
+  const unsigned int nmbEvts = L.nmbEvents();
+
   // ---------------------------------------------------------------------------
   // setup minimizer
   printInfo << "creating and setting up minimizer " << minimizerType[0] << " using algorithm " << minimizerType[1] << endl;
@@ -223,11 +252,11 @@ main(int    argc,
   minimizer->SetPrintLevel((quiet) ? 0 : 3);
 
   // ---------------------------------------------------------------------------
-  // read in TFitResult with start values
+  // read in fitResult with start values
   printInfo << "reading start values from '" << startValFileName << "'." << endl;
   const double massBinCenter  = (massBinMin + massBinMax) / 2;
-  TFitResult*  startFitResult = NULL;
-  bool         hasStartVal    = false;
+  fitResult*   startFitResult = NULL;
+  bool         startValValid  = false;
   TFile*       startValFile   = NULL;
   if (startValFileName.length() <= 2)
     printWarn << "start value file name '" << startValFileName << "' is invalid. using default start values." << endl;
@@ -245,7 +274,7 @@ main(int    argc,
       else {
 	//startBin = new TFitBin();
 	//tree->SetBranchAddress("fitbin", &startBin);
-	startFitResult = new TFitResult();
+	startFitResult = new fitResult();
 	tree->SetBranchAddress(valBranchName.c_str(), &startFitResult);
 	// find tree entry which is closest to mass bin center
 	unsigned int bestIndex = 0;
@@ -258,7 +287,7 @@ main(int    argc,
 	  }
 	}
 	tree->GetEntry(bestIndex);
-	hasStartVal = true;
+	startValValid = true;
       }
     }
   }
@@ -274,29 +303,31 @@ main(int    argc,
     for (unsigned int i = 0; i < nmbPar; ++i)
       if (L.parName(i).length() > maxParNameLength)
 	maxParNameLength = L.parName(i).length();
+    const double sqrtNmbEvts = sqrt((double)nmbEvts);
     for (unsigned int i = 0; i < nmbPar; ++i) {
-      double startVal      = defaultStartValue;
+      double       startVal;
       const string parName = L.parName(i);
-      if (hasStartVal) {
-	// get parameter value from TFitResult
+      if (startValValid) {
+	// get parameter value from fitResult
 	assert(startFitResult);
 	startVal = startFitResult->fitParameter(parName.c_str());
-      }
+      } else
+	startVal = (useFixedStartValues) ? defaultStartValue : gRandom->Uniform(defaultStartValue, sqrtNmbEvts);
       // check if parameter needs to be fixed because of threshold
       if ((L.parThreshold(i) == 0) || (L.parThreshold(i) < massBinCenter)) {
-	if (!minimizer->SetVariable(i, parName, startVal, startValStep))
-	  success = false;
 	if (startVal == 0) {
 	  cout << "    read start value 0 for parameter " << parName << ". using default start value." << endl;
-	  startVal = defaultStartValue;
+	  startVal = (useFixedStartValues) ? defaultStartValue : gRandom->Uniform(defaultStartValue, sqrtNmbEvts);
 	}
 	cout << "    setting parameter [" << setw(3) << i << "] "
 	     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
-      } else {
-	if (!minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
+	if (!minimizer->SetVariable(i, parName, startVal, startValStep))
 	  success = false;
+      } else {
 	cout << "    fixing parameter  [" << setw(3) << i << "] "
 	     << setw(maxParNameLength) << parName << " = 0" << endl;
+	if (!minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
+	  success = false;
 	parIsFixed[i] = true;
       }
       if (!success) {
@@ -378,22 +409,22 @@ main(int    argc,
       printWarn << "cannot open output file '" << outFileName << "'. no results will be written." << endl;
     else {
       // check whether output tree already exists
-      TTree*      tree;
-      TFitBin*    result    = new TFitBin();
-      TFitResult* fitResult = new TFitResult();
+      TTree*     tree;
+      TFitBin*   fitBinResult = new TFitBin();
+      fitResult* result       = new fitResult();
       outFile->GetObject(valTreeName.c_str(), tree);
       if (!tree) {
 	printInfo << "file '" << outFileName << "' is empty. creating new tree '" << valTreeName << "' for PWA result." << endl;
 	tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
-	tree->Branch("fitbin",              &result);  // depricated legacy branch
-	tree->Branch(valBranchName.c_str(), &fitResult);
+	tree->Branch("fitbin",              &fitBinResult);  // depricated legacy branch
+	tree->Branch(valBranchName.c_str(), &result);
       } else {
-	tree->SetBranchAddress("fitbin",              &result);
-	tree->SetBranchAddress(valBranchName.c_str(), &fitResult);
+	tree->SetBranchAddress("fitbin",              &fitBinResult);
+	tree->SetBranchAddress(valBranchName.c_str(), &result);
       }
 
       { 
-	// get data structures to construct TFitResult
+	// get data structures to construct fitResult
 	vector<complex<double> > prodAmps;                // production amplitudes
 	vector<string>           prodAmpNames;            // names of production amplitudes used in fit
 	vector<pair<int,int> >   fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
@@ -408,7 +439,7 @@ main(int    argc,
 	L.getIntCMatrix(normIntegral, accIntegral);
 	const int normNmbEvents = useNormalizedAmps ? 1 : L.nmbEvents();  // number of events to normalize to
 
-	cout << "filling TFitResult:" << endl
+	cout << "filling fitResult:" << endl
 	     << "    number of fit parameters ............... " << nmbPar                        << endl
 	     << "    number of production amplitudes ........ " << prodAmps.size()               << endl
 	     << "    number of production amplitude names ... " << prodAmpNames.size()           << endl
@@ -417,16 +448,16 @@ main(int    argc,
 	     << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
 	     << "    dimension of normalization matrix ...... " << normIntegral.nrows()       << " x " << normIntegral.ncols()       << endl
 	     << "    dimension of acceptance matrix ......... " << accIntegral.nrows()        << " x " << accIntegral.ncols()        << endl;
-	fitResult->fill(L.nmbEvents(),
-			normNmbEvents,
-			massBinCenter,
-			minimizer->MinValue(),
-			rank,
-			prodAmps,
-			prodAmpNames,
-			fitParCovMatrix,
-			fitParCovMatrixIndices,
-			normIntegral);
+	result->fill(L.nmbEvents(),
+		     normNmbEvents,
+		     massBinCenter,
+		     minimizer->MinValue(),
+		     rank,
+		     prodAmps,
+		     prodAmpNames,
+		     fitParCovMatrix,
+		     fitParCovMatrixIndices,
+		     normIntegral);
       }
 
       if (1) { 
@@ -477,17 +508,17 @@ main(int    argc,
 	cout << "    dimension of error matrix .......... " << errMatrix.GetNrows()   << endl;
 	cout << "    dimension of integral matrix ....... " << integralMatrix.nrows() << endl;
 	cout << "    dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
-	result->fill(prodAmplitudes,
-		     indices,
-		     waveNames,
-		     nmbEvt,
-		     L.nmbEvents(), // raw number of data events
-		     massBinCenter,
-		     integralMatrix,
-		     errMatrix,
-		     minimizer->MinValue(),
-		     rank);
-	//result->PrintParameters();
+	fitBinResult->fill(prodAmplitudes,
+			   indices,
+			   waveNames,
+			   nmbEvt,
+			   L.nmbEvents(), // raw number of data events
+			   massBinCenter,
+			   integralMatrix,
+			   errMatrix,
+			   minimizer->MinValue(),
+			   rank);
+	//fitBinResult->PrintParameters();
       }
 
       // write result to file

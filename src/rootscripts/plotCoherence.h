@@ -45,25 +45,27 @@
 
 // signature with wave names
 TGraphErrors*
-plotCoherence(TTree*             tree,                 // TFitBin tree
+plotCoherence(TTree*             tree,                 // fitResult tree
 	      const std::string& waveNameA,            // name of first wave
 	      const std::string& waveNameB,            // name of second wave
 	      const std::string& selectExpr = "",      // TTree::Draw() selection expression
 	      const std::string& graphTitle = "",      // name and title of graph
 	      const char*        drawOption = "APZ",   // draw option for graph
 	      const int          graphColor = kBlack,  // color of line and marker
-	      const bool         saveEps    = false);  // if set, EPS file with name waveId is created
+	      const bool         saveEps    = false,   // if set, EPS file with name waveId is created
+	      const string&      branchName = "fitResult_v2");
 
 // signature with wave indices
 TGraphErrors*
-plotCoherence(TTree*             tree,                 // TFitBin tree
+plotCoherence(TTree*             tree,                 // fitResult tree
 	      const int          waveIndexA,           // index of first wave
 	      const int          waveIndexB,           // index of second wave
 	      const std::string& selectExpr = "",      // TTree::Draw() selection expression
 	      const std::string& graphTitle = "",      // name and title of graph
 	      const char*        drawOption = "APZ",   // draw option for graph
 	      const int          graphColor = kBlack,  // color of line and marker
-	      const bool         saveEps    = false);  // if set, EPS file with name waveId is created
+	      const bool         saveEps    = false,   // if set, EPS file with name waveId is created
+	      const string&      branchName = "fitResult_v2");
 
 
 #endif  // PLOTCOHERENCE_HH

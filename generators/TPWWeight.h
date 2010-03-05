@@ -30,7 +30,7 @@ class TPWWeight {
 public:
 
   // Constructors/Destructors ---------
-  TPWWeight(){}
+  TPWWeight(): m_hasInt(false){}
   ~TPWWeight(){}
 
 
@@ -47,12 +47,15 @@ public:
    */
   void addWave(const std::string& keyfilename, 
 	       TProductionAmp* amp,
+	       const std::complex<double>& branching,
 	       unsigned int vectori=0);
 
 
-  
-
-  void loadIntegrals(const std::string& filename);
+  /** @brief Load normalization integrals for a mass bin
+   * 
+   *  several integrals can be loaded to cover a larger range in mass
+   */
+  void loadIntegrals(const std::string& filename, double mass);
   
   // Operations ----------------------
   /** @brief Calculate weight for an event
@@ -75,11 +78,14 @@ private:
   std::vector<std::vector<std::string> > m_waves;
   
   // Production amplitudes
+  std::vector<std::vector<std::complex<double> > > m_branchings;
   std::vector<std::vector<TProductionAmp*> > m_amps;
 
   std::vector<Tgamp> m_gamp;
-  std::map<string,double> m_relphase;
-  integral m_normInt;
+  std::map<std::string,double> m_relphase;
+  std::map<double,integral> m_normInt;
+
+  bool m_hasInt;
 
   // Private Methods -----------------
 

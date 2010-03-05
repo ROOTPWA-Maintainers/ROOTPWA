@@ -33,6 +33,14 @@
 //-----------------------------------------------------------
 
 
+//
+// plots all waves of all trees sorted by JPC and intensity and
+// returns a list of wave names and pointers to the pads they were
+// drawn into
+// the intensity sorting is performed w.r.t. the first tree
+//
+
+
 #ifndef plotAllIntensities_hh
 #define plotAllIntensities_hh
 
@@ -44,13 +52,38 @@
 #include "TTree.h"
 
 
-// plots all waves sorted by JPC and returns a list of wave names and
-// pointers to the pads they were drawn into
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotAllIntensities(TTree*             tree,                  // TFitResult tree
+plotAllIntensities(const unsigned int nmbTrees,              // number of fitResult trees
+		   TTree**            trees,                 // array of fitResult trees
 		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
 		   const std::string& outPath      = "./",   // path for output files
-		   const bool         mcmc         = false);
+		   const int*         graphColors  = NULL,   // array of colors for graph line and marker
+		   const bool         drawLegend   = true,   // if set legend is drawn
+		   const string&      branchName   = "fitResult_v2");
+
+inline
+std::vector<std::pair<std::string, TVirtualPad*> >
+plotAllIntensities(TTree*             tree,                  // fitResult tree
+		   const bool         createPsFile = false,  // if true, plots are written to waves.ps
+		   const std::string& outPath      = "./",   // path for output files
+		   const string&      branchName   = "fitResult_v2")
+{
+  return plotAllIntensities(1, &tree, createPsFile, outPath, NULL, false, branchName);
+}
+
+
+inline
+std::vector<std::pair<std::string, TVirtualPad*> >
+plotAllIntensities(std::vector<TTree*>&    trees,                 // array of fitResult trees
+		   const bool              createPsFile = false,  // if true, plots are written to waves.ps
+		   const std::string&      outPath      = "./",   // path for output files
+		   const std::vector<int>& graphColors  = std::vector<int>(),  // array of colors for graph line and marker
+		   const bool              drawLegend   = true,   // if set legend is drawn
+		   const string&           branchName   = "fitResult_v2")
+{
+  return plotAllIntensities(trees.size(), &(*(trees.begin())), createPsFile,
+			    outPath, &(*(graphColors.begin())), drawLegend, branchName);
+}
 
 
 #endif  // plotAllIntensities_hh

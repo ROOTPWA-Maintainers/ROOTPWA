@@ -126,7 +126,7 @@ typedef unsigned int flex_uint32_t;
 #define YY_STATE_EOF(state) (YY_END_OF_BUFFER + state + 1)
 
 /* Special action meaning "start processing a new file". */
-#define YY_NEW_FILE keyrestart(keyin  )
+#define YY_NEW_FILE keyrestart(gKeyInFile  )
 
 #define YY_END_OF_BUFFER_CHAR 0
 
@@ -142,7 +142,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 
 extern int keyleng;
 
-extern FILE *keyin, *keyout;
+extern FILE *gKeyInFile, *keyout;
 
 #define EOB_ACT_CONTINUE_SCAN 0
 #define EOB_ACT_END_OF_FILE 1
@@ -234,7 +234,7 @@ struct yy_buffer_state
 	 *
 	 * When we actually see the EOF, we change the status to "new"
 	 * (via keyrestart()), so that the user can continue scanning by
-	 * just pointing keyin at a new input file.
+	 * just pointing gKeyInFile at a new input file.
 	 */
 #define YY_BUFFER_EOF_PENDING 2
 
@@ -272,7 +272,7 @@ static int yy_init = 1;		/* whether we need to initialize */
 static int yy_start = 0;	/* start state number */
 
 /* Flag which is used to allow keywrap()'s to do buffer switches
- * instead of setting up a fresh keyin.  A bit of a hack ...
+ * instead of setting up a fresh gKeyInFile.  A bit of a hack ...
  */
 static int yy_did_buffer_switch_on_eof;
 
@@ -305,7 +305,7 @@ void keyfree (void *  );
 	if ( ! YY_CURRENT_BUFFER ){ \
         keyensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            key_create_buffer(keyin,YY_BUF_SIZE ); \
+            key_create_buffer(gKeyInFile,YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_is_interactive = is_interactive; \
 	}
@@ -315,7 +315,7 @@ void keyfree (void *  );
 	if ( ! YY_CURRENT_BUFFER ){\
         keyensure_buffer_stack (); \
 		YY_CURRENT_BUFFER_LVALUE =    \
-            key_create_buffer(keyin,YY_BUF_SIZE ); \
+            key_create_buffer(gKeyInFile,YY_BUF_SIZE ); \
 	} \
 	YY_CURRENT_BUFFER_LVALUE->yy_at_bol = at_bol; \
 	}
@@ -329,7 +329,7 @@ void keyfree (void *  );
 
 typedef unsigned char YY_CHAR;
 
-FILE *keyin = (FILE *) 0, *keyout = (FILE *) 0;
+FILE *gKeyInFile = (FILE *) 0, *keyout = (FILE *) 0;
 
 typedef int yy_state_type;
 
@@ -493,7 +493,7 @@ using namespace std;
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max_size)\
 {\
-        int c = getc(keyin);\
+        int c = getc(gKeyInFile);\
         result = (c==EOF)?YY_NULL:(buf[0]=c,1);\
 }
 
@@ -501,7 +501,7 @@ extern particleDataTable PDGtable;
 particleData p;
 int i;
 int lineno=1;
-char* fname;
+char* gKeyInFileName;
 
 #line 507 "keyScan.cc"
 
@@ -572,18 +572,18 @@ static int input (void );
 		int c = '*'; \
 		size_t n; \
 		for ( n = 0; n < max_size && \
-			     (c = getc( keyin )) != EOF && c != '\n'; ++n ) \
+			     (c = getc( gKeyInFile )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
 		if ( c == '\n' ) \
 			buf[n++] = (char) c; \
-		if ( c == EOF && ferror( keyin ) ) \
+		if ( c == EOF && ferror( gKeyInFile ) ) \
 			YY_FATAL_ERROR( "input in flex scanner failed" ); \
 		result = n; \
 		} \
 	else \
 		{ \
 		errno=0; \
-		while ( (result = fread(buf, 1, max_size, keyin))==0 && ferror(keyin)) \
+		while ( (result = fread(buf, 1, max_size, gKeyInFile))==0 && ferror(gKeyInFile)) \
 			{ \
 			if( errno != EINTR) \
 				{ \
@@ -591,7 +591,7 @@ static int input (void );
 				break; \
 				} \
 			errno=0; \
-			clearerr(keyin); \
+			clearerr(gKeyInFile); \
 			} \
 		}\
 \
@@ -668,8 +668,8 @@ YY_DECL
 		if ( ! (yy_start) )
 			(yy_start) = 1;	/* first start state */
 
-		if ( ! keyin )
-			keyin = stdin;
+		if ( ! gKeyInFile )
+			gKeyInFile = stdin;
 
 		if ( ! keyout )
 			keyout = stdout;
@@ -677,7 +677,7 @@ YY_DECL
 		if ( ! YY_CURRENT_BUFFER ) {
 			keyensure_buffer_stack ();
 			YY_CURRENT_BUFFER_LVALUE =
-				key_create_buffer(keyin,YY_BUF_SIZE );
+				key_create_buffer(gKeyInFile,YY_BUF_SIZE );
 		}
 
 		key_load_buffer_state( );
@@ -861,7 +861,7 @@ ECHO;
 			{
 			/* We're scanning a new file or input source.  It's
 			 * possible that this happened because the user
-			 * just pointed keyin at a new source and called
+			 * just pointed gKeyInFile at a new source and called
 			 * keylex().  If so, then we have to assure
 			 * consistency between YY_CURRENT_BUFFER and our
 			 * globals.  Here is the right place to do so, because
@@ -869,7 +869,7 @@ ECHO;
 			 * back-up) that will match for the new input source.
 			 */
 			(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
-			YY_CURRENT_BUFFER_LVALUE->yy_input_file = keyin;
+			YY_CURRENT_BUFFER_LVALUE->yy_input_file = gKeyInFile;
 			YY_CURRENT_BUFFER_LVALUE->yy_buffer_status = YY_BUFFER_NORMAL;
 			}
 
@@ -1085,7 +1085,7 @@ static int yy_get_next_buffer (void)
 		if ( number_to_move == YY_MORE_ADJ )
 			{
 			ret_val = EOB_ACT_END_OF_FILE;
-			keyrestart(keyin  );
+			keyrestart(gKeyInFile  );
 			}
 
 		else
@@ -1206,7 +1206,7 @@ static int yy_get_next_buffer (void)
 					 */
 
 					/* Reset buffer status. */
-					keyrestart(keyin );
+					keyrestart(gKeyInFile );
 
 					/*FALLTHROUGH*/
 
@@ -1250,7 +1250,7 @@ static int yy_get_next_buffer (void)
 	if ( ! YY_CURRENT_BUFFER ){
         keyensure_buffer_stack ();
 		YY_CURRENT_BUFFER_LVALUE =
-            key_create_buffer(keyin,YY_BUF_SIZE );
+            key_create_buffer(gKeyInFile,YY_BUF_SIZE );
 	}
 
 	key_init_buffer(YY_CURRENT_BUFFER,input_file );
@@ -1296,7 +1296,7 @@ static void key_load_buffer_state  (void)
 {
     	(yy_n_chars) = YY_CURRENT_BUFFER_LVALUE->yy_n_chars;
 	(yytext_ptr) = (yy_c_buf_p) = YY_CURRENT_BUFFER_LVALUE->yy_buf_pos;
-	keyin = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
+	gKeyInFile = YY_CURRENT_BUFFER_LVALUE->yy_input_file;
 	(yy_hold_char) = *(yy_c_buf_p);
 }
 
@@ -1631,7 +1631,7 @@ int keyget_lineno  (void)
  */
 FILE *keyget_in  (void)
 {
-        return keyin;
+        return gKeyInFile;
 }
 
 /** Get the output stream.
@@ -1677,7 +1677,7 @@ void keyset_lineno (int  line_number )
  */
 void keyset_in (FILE *  in_str )
 {
-        keyin = in_str ;
+        gKeyInFile = in_str ;
 }
 
 void keyset_out (FILE *  out_str )
@@ -1776,10 +1776,7 @@ void keyfree (void * ptr )
 #line 93 "keyScan.ll"
 
 
-
-
-void keyerror(const char* s) {
-        cerr << fname << ":" << lineno << " " << s << " at " << keytext << endl;
+void keyerror(const char* s)
+{
+  cerr << gKeyInFileName << ":" << lineno << " " << s << " at " << keytext << endl;
 }
-
-

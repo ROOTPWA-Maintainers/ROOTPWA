@@ -35,12 +35,19 @@
 //-----------------------------------------------------------
 
 
+//
+//  !!! deprecated class --- use fitResult instead !!!
+//
+
+
 #include <algorithm>
 
-// PWA2000 classes
-#include "integral.h"
+#include "integral.h"  // PWA2000 classes
 
 #include "TFitResult.h"
+
+
+#if TFITRESULT_ENABLED
 
 
 using namespace std;
@@ -87,8 +94,49 @@ TFitResult::TFitResult(const TFitBin& fitBin)
 }
 
 
+TFitResult::TFitResult(const TFitResult& result)
+  : _nmbEvents             (result.nmbEvents()),
+    _normNmbEvents         (result.normNmbEvents()),
+    _massBinCenter         (result.massBinCenter()),
+    _logLikelihood         (result.logLikelihood()),
+    _rank                  (result.rank()),
+    _prodAmps              (result.prodAmps()),
+    _prodAmpNames          (result.prodAmpNames()),
+    _waveNames             (result.waveNames()),
+    _hasErrors             (result.covMatrixValid()),
+    _fitParCovMatrix       (result.fitParCovMatrix()),
+    _fitParCovMatrixIndices(result.fitParCovIndices()),
+    _normIntegral          (result.normIntegralMatrix()),
+    _normIntIndexMap       (result.normIntIndexMap())
+{ }
+
+
 TFitResult::~TFitResult()
 { }
+
+
+/// \brief calculates the model evidence using Rafters occam factor method
+///
+/// \f[  \ln P(\mathrm{Data}|M_k)\approx \ln P(\mathrm{Data}|A_{\mathrm{ML}}^k,M_k) + \ln{\frac{\sqrt{(2\pi)^d|\mathbf{C}_{A|D}|}}{\sum_i\frac{\pi}{\Psi_{ii}}}} \f]
+/// This uses a flat prior in each parameter (see note on Model Selection) such
+/// that no single wave can have more than the total intensity measured
+double
+TFitResult::evidence() const {
+  double       l   = -logLikelihood();
+  double       det = _fitParCovMatrix.Determinant();
+  double       d   = (double)_fitParCovMatrix.GetNcols();
+  double       sum = 0;
+  unsigned int ni  = _normIntegral.ncols();
+  for(unsigned int i=0;i<ni;++i){
+    sum += 1. / _normIntegral(i, i).Re();
+  }
+  double occ  = TMath::Power(TMath::Pi(), d * 0.5 - 1.) * TMath::Sqrt(2 * det) / sum;
+  double locc = TMath::Log(occ);
+  cout << "TFitResult::evidence" << endl;
+  cout << "    LogLikeli: " << l;
+  cout << "  Occamfactor: " << locc;
+  return l + locc;
+}
 
 
 /// \brief calculates spin density matrix element for waves A and B
@@ -115,9 +163,8 @@ double
 TFitResult::fitParameter(const string& parName) const
 {
   // check if parameter corresponds to real or imaginary part of production amplitude
-  TString name(parName);
-  bool    realPart = false;
-  realPart = (name.Contains("RE") || name.Contains("flat"));
+  TString    name(parName);
+  const bool realPart = (name.Contains("RE") || name.Contains("flat"));
   // find corresponding production amplitude
   if (realPart)
     name.ReplaceAll("_RE", "");
@@ -316,7 +363,7 @@ double
 TFitResult::phaseErr(const unsigned int waveIndexA,
 		     const unsigned int waveIndexB) const
 {
-  if ((!_hasErrors) || (waveIndexA == waveIndexB))
+  if (!_hasErrors || (waveIndexA == waveIndexB))
     return 0;
   // construct Jacobian for phi_AB = +- arctan(Im[rho_AB] / Re[rho_AB])
   const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
@@ -343,6 +390,16 @@ TFitResult::coherence(const unsigned int waveIndexA,
   const double          rhoAA = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
   const double          rhoBB = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
   const complex<double> rhoAB = spinDensityMatrixElem(waveIndexA, waveIndexB);
+
+  cout << "coherence("<<waveIndexA<<","<<waveIndexB<<"): "
+       <<rhoAA<<"  "
+       <<rhoBB<<"  "
+       <<rhoAB<<"  "
+       <<sqrt(std::norm(rhoAB))<<"  "
+       <<sqrt((rhoAA * rhoBB))<<endl;
+    
+
+
   return sqrt(std::norm(rhoAB) / (rhoAA * rhoBB));
 }
 
@@ -354,7 +411,7 @@ TFitResult::coherenceErr(const unsigned int waveIndexA,
 {
   // get amplitude indices for waves A and B
   const vector<unsigned int> prodAmpIndices[2] = {prodAmpIndicesForWave(waveIndexA),
-						  prodAmpIndicesForWave(waveIndexB)};
+                                                  prodAmpIndicesForWave(waveIndexB)};
   if (!_hasErrors || (prodAmpIndices[0].size() == 0) || (prodAmpIndices[1].size() == 0))
     return 0;
   // build Jacobian for coherence, which is a 1 x 2(n + m) matrix composed of (n + m) sub-Jacobians:
@@ -464,10 +521,10 @@ TFitResult::reset()
 
 
 void 
-TFitResult::fill(const unsigned int              nmbEvents,               // number of events in bin			 
-		 const unsigned int              normNmbEvents,	          // number of events to normalize to		 
-		 const double                    massBinCenter,	          // center value of mass bin			 
-		 const double                    logLikelihood,	          // log(likelihood) at maximum		 
+TFitResult::fill(const unsigned int              nmbEvents,               // number of events in bin                     
+		 const unsigned int              normNmbEvents,            // number of events to normalize to            
+		 const double                    massBinCenter,            // center value of mass bin                    
+		 const double                    logLikelihood,            // log(likelihood) at maximum          
 		 const int                       rank,		          // rank of fit				 
 		 const vector<complex<double> >& prodAmps,	          // production amplitudes			 
 		 const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
@@ -499,13 +556,13 @@ TFitResult::fill(const unsigned int              nmbEvents,               // num
   // check consistency
   if (_prodAmps.size() != _prodAmpNames.size())
     cout << "TFitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
-	 << ") does not match number of production amplitude names (" << _prodAmpNames.size() << ")." << endl;
+         << ") does not match number of production amplitude names (" << _prodAmpNames.size() << ")." << endl;
   if (_prodAmps.size() != _fitParCovMatrixIndices.size())
     cout << "TFitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
-	 << ") does not match number of covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
+         << ") does not match number of covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
   if (((int)_waveNames.size() != _normIntegral.nrows()) || ((int)_waveNames.size() != _normIntegral.ncols()))
     cout << "TFitResult::fill(): warning: number of waves (" << _waveNames.size()
-	 << ") does not match size of normalization integral (" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
+         << ") does not match size of normalization integral (" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
 }
 
 
@@ -526,3 +583,6 @@ TFitResult::buildWaveMap() {
     _normIntIndexMap[i]=j;
   }
 }
+
+
+#endif  // TFITRESULT_ENABLED

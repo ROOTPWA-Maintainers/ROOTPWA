@@ -7,8 +7,11 @@
 # include <string>
 
 // Collaborating Class Headers --------
-#include <utilities.h>
-#include <particle.h>
+#include "utilities.h"
+#include "particle.h"
+
+using namespace std;
+
 
 // Class Member definitions -----------
 
@@ -17,11 +20,13 @@
 void 
 TPWWeight::addWave(const std::string& keyfilename, 
 		   TProductionAmp* amp,
+		   const std::complex<double>& branching,
 		   unsigned int vectori){
   
   if(vectori<=m_waves.size()){
     m_waves.resize(vectori+1);
     m_amps.resize(vectori+1);
+    m_branchings.resize(vectori+1);
     m_gamp.resize(vectori+1);
   }
 
@@ -29,9 +34,9 @@ TPWWeight::addWave(const std::string& keyfilename,
   if(keyfilename.find("+-",7)!=string::npos){
     cerr << "Decomposing " << keyfilename << endl;
     cerr << "What is the relative phase (0 or pi)?:";
-    string select;
-    cin >> select;
-    if(select=="pi")m_relphase[keyfilename]=-1;
+    //string select;
+    //cin >> select;
+    if(keyfilename.find("f11285",7)!=string::npos)m_relphase[keyfilename]=-1;
     else m_relphase[keyfilename]=1;
 
     // deccompose into components:
@@ -52,15 +57,18 @@ TPWWeight::addWave(const std::string& keyfilename,
 
     m_gamp[vectori].addWave(w1a.Data());
     m_waves[vectori].push_back(keyfilename);
+    m_branchings[vectori].push_back(branching);
     m_amps[vectori].push_back(amp);
     m_gamp[vectori].addWave(w1b.Data());
     m_waves[vectori].push_back(keyfilename);
+    m_branchings[vectori].push_back(branching);
     m_amps[vectori].push_back(amp);
 
   }
   else {
     m_gamp[vectori].addWave(keyfilename);
     m_waves[vectori].push_back(keyfilename);
+    m_branchings[vectori].push_back(branching);
     m_amps[vectori].push_back(amp);
   }
   
@@ -69,7 +77,7 @@ TPWWeight::addWave(const std::string& keyfilename,
 
 
 void 
-TPWWeight::loadIntegrals(const std::string& normIntFileName){
+TPWWeight::loadIntegrals(const std::string& normIntFileName, double mass){
   //printInfo << "Loading normalization integral from '" 
   //	    << normIntFileName << "'." << endl;
   ifstream intFile(normIntFileName.c_str());
@@ -79,7 +87,9 @@ TPWWeight::loadIntegrals(const std::string& normIntFileName){
     throw;
   }
   // !!! integral.scan() performs no error checks!
-  m_normInt.scan(intFile);
+  // check units:
+  if(mass>10)mass/=1000; //(MeV/GeV)
+  m_normInt[mass].scan(intFile);
   intFile.close();
   // renomalize
   // list<string> waves=m_normInt.files();
@@ -100,7 +110,7 @@ TPWWeight::loadIntegrals(const std::string& normIntFileName){
 //     m_normInt.el(w1,w1)=m_normInt.nevents();
 //     ++it1;
 //   }
-  
+  m_hasInt=true;
 }
 
 
@@ -115,7 +125,7 @@ TPWWeight::prodAmp(unsigned int iv,
   std::list<particle>::iterator it=part.begin();
   while(it!=part.end())p+=(it++)->get4P();
   double m=p.len();
-  return m_amps[iv][iw]->amp(m);
+  return m_amps[iv][iw]->amp(m)*m_branchings[iv][iv];
 }
 
 
@@ -124,8 +134,27 @@ TPWWeight::prodAmp(unsigned int iv,
 
 double
 TPWWeight::weight(event& e){
-   unsigned int nvec=m_waves.size();
+  unsigned int nvec=m_waves.size();
   double w=0;
+  integral* close_int=0;
+  if(m_hasInt){
+    // get closest mass bin
+    double mass=e.f_mass();
+    // loop through available integrals;
+    std::map<double,integral>::iterator it=m_normInt.begin();
+    //cerr << m_normInt.size() << " Integrals available" << endl;
+    double closemass=0;
+    while(it!=m_normInt.end()){
+      double m=it->first;
+      if(fabs(m - mass)< fabs(m - closemass)){
+	closemass=m;
+      };
+      ++it;
+    }
+    //cerr << mass << " -> closemass=" << closemass << endl;
+    close_int=&(m_normInt[closemass]);
+  } // endif has int
+  
   for(unsigned int ivec=0;ivec<nvec;++ivec){ // loop over production vectors
     std::complex<double> amp(0,0);
     unsigned int nwaves=m_waves[ivec].size();
@@ -140,21 +169,24 @@ TPWWeight::weight(event& e){
       decayamp=m_gamp[ivec].Amp(iwaves,e);
       //std::cerr << "..first component ..."  << std::endl;
       if(w1.find("+-",7)!=string::npos){ // brute force treatment of composed amplitudes!
-
+	
 	// see addWave to understand bookkeeping!
 	// Here an isospin clebsch factor is missing
 	++iwaves;
 	decayamp+=m_relphase[m_waves[ivec][iwaves]]*m_gamp[ivec].Amp(iwaves,e);
       }
       // std::cerr << "..done"  << std::endl;
-      double nrm=sqrt(m_normInt.val(w1,w1).real());
+      double nrm=1;
+      if(m_hasInt){
+	nrm=sqrt(close_int->val(w1,w1).real());
+      }
       amp+=decayamp/nrm*prodAmp(ivec,iwaves,e);
     }
     w+=std::norm(amp);
   } // end loop over production vectors
-
+  if(w==0)w=1;
   return w;
-
+  
 }
 
 

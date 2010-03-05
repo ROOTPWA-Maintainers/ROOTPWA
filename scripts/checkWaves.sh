@@ -6,15 +6,23 @@
 
 cd $1/$2
 
+SELECT=$3
+
+if [ -z $SELECT ]; then SELECT=amp ; fi
+
 ls *.amp > /tmp/refamps
 cat /tmp/refamps
 
 cd $1
+
+COUNT=1
+
 for i in $1/*; do
-    cd $i/AMPS/
+    cd $i/PSPAMPS/
     ls *.amp > /tmp/diffamps
-    echo "Diffing bin $i to bin $2: "
-    diff /tmp/diffamps /tmp/refamps
+    echo "Checking bin $COUNT: "
+    let COUNT=$COUNT+1
+    diff /tmp/diffamps /tmp/refamps | grep $SELECT
     
 done;
 

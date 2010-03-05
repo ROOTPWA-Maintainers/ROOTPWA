@@ -11,13 +11,24 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <vector>
+
+// cint has problems parsing glob.h
+#ifndef __CINT__
+#include <glob.h>
+#else
+struct glob_t;
+int glob(const char *,
+	 int,
+	 int(*)(const char*, int),
+	 glob_t*);
+void globfree(glob_t *);
+#endif
 
 #include "TVector3.h"
 #include "TLorentzVector.h"
 #include "TComplex.h"
 #include "TMatrixT.h"
-
-#include "TCMatrix.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -45,54 +56,63 @@ getClassMethod__(std::string prettyFunction)
 #define printInfo std::cout << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "  << std::flush
 
 
-template <typename T> class maxPrecisionValue__;
+template<typename T> class maxPrecisionValue__;
 
 // output stream manipulator that prints a value with its maximum precision
-template <typename T>
+template<typename T>
 inline
 maxPrecisionValue__<T>
-maxPrecision(T value)
+maxPrecision(const T& value)
 { return maxPrecisionValue__<T>(value); }
 
 // output stream manipulator that prints a value with its maximum precision
 // in addition manipulator reserves space so that values will align
-template <typename T>
+template<typename T>
 inline
 maxPrecisionValue__<T>
-maxPrecisionAlign(T value)
+maxPrecisionAlign(const T& value)
 { return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::ALIGN); }
 
+// output stream manipulator that prints a value with maximum precision for double
+template<typename T>
+inline
+maxPrecisionValue__<T>
+maxPrecisionDouble(const T& value)
+{ return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::DOUBLE); }
+
 // general helper class that encapsulates a value of type T
-template <typename T>
+template<typename T>
 class maxPrecisionValue__ {
 public:
   enum modeEnum { PLAIN,
-		  ALIGN };
-  maxPrecisionValue__(const T        value,
+		  ALIGN,
+		  DOUBLE};  // forces precision for double
+  maxPrecisionValue__(const T&       value,
 		      const modeEnum mode = PLAIN)
-    : value_(value),
-      mode_ (mode)
+    : _value(value),
+      _mode (mode)
   { }
-  std::ostream& print(std::ostream&  out) const
+  std::ostream& print(std::ostream& out) const
   {
-    const int nmbDigits = std::numeric_limits<double>::digits10 + 1;
+    const int nmbDigits = (_mode != DOUBLE) ? std::numeric_limits<T>::digits10 + 1
+                                            : std::numeric_limits<double>::digits10 + 1;
     std::ostringstream s;
     s.precision(nmbDigits);
     s.setf(std::ios_base::scientific, std::ios_base::floatfield);
-    s << value_;
-    switch (mode_) {
+    s << _value;
+    switch (_mode) {
     case ALIGN:
       return out << std::setw(nmbDigits + 7) << s.str();  // make space for sign, dot, and exponent
-    case PLAIN: default:
+    case PLAIN: case DOUBLE: default:
       return out << s.str();
     }
   }
 private:
-  T        value_;
-  modeEnum mode_;
+  const T& _value;
+  modeEnum _mode;
 };
 
-template <typename T>
+template<typename T>
 inline
 std::ostream& operator << (std::ostream&                 out,
 			   const maxPrecisionValue__<T>& value)
@@ -100,7 +120,7 @@ std::ostream& operator << (std::ostream&                 out,
 
 
 // simple stream operators for some STL classes
-template <typename T1, typename T2>
+template<typename T1, typename T2>
 inline
 std::ostream&
 operator << (std::ostream&            out,
@@ -156,7 +176,7 @@ operator << (std::ostream&   out,
 }
 
 
-template <typename T>
+template<typename T>
 std::ostream&
 operator << (std::ostream&      out,
              const TMatrixT<T>& A)
@@ -177,23 +197,40 @@ operator << (std::ostream&      out,
 }
 
 
+// indents output by offset
+inline
+void
+indent(std::ostream&      out,
+       const unsigned int offset)
+{
+  for (unsigned int i = 0; i < offset; ++i)
+    out << " ";
+}
+
+
+// extracts sign of a value
+template<typename T>
+std::string
+sign(const T& val)
+{
+  if (val < 0)
+    return "-";
+  else
+    return "+";
+}
+
+
+// indicates progess by printing percentage complete
 inline
 std::ostream&
-operator << (std::ostream&   out,
-             const TCMatrix& A)
+progressIndicator(const long    currentPos,
+                  const long    nmbTotal,
+                  const int     nmbSteps = 10,
+                  std::ostream& out      = std::cout)
 {
-  for (int row = 0; row < A.nrows(); ++row) {
-    out << "row " << row << " = (";
-    for (int col = 0; col < A.ncols(); ++col) {
-      out << A(row, col);
-      if (col < A.ncols() - 1)
-        out << ", ";
-    }
-    if (row < A.nrows() - 1)
-      out << "), " << std::endl;
-    else
-      out << ")";
-  }
+  const double step = nmbTotal / (double)nmbSteps;
+  if ((nmbTotal >= 0) && ((int)(currentPos / step) - (int)((currentPos - 1) / step) != 0))
+    out << "    " << std::setw(3) << (int)(currentPos / step) * nmbSteps << " %" << std::endl;
   return out;
 }
 
@@ -229,7 +266,7 @@ operator << (std::ostream&   out,
 template<typename T>
 void
 delete2DArray(T**&               array,
-	      const unsigned int dim[2])
+              const unsigned int dim[2])
 {
   for (int i = dim[0] - 1; i >= 0; --i)
     if (array[i])
@@ -241,8 +278,8 @@ delete2DArray(T**&               array,
 template<typename T>
 void
 allocate2DArray(T**&               array,
-		const unsigned int dim[2],
-		const T&           defaultVal)
+                const unsigned int dim[2],
+                const T&           defaultVal)
 {
   if (array)
     delete2DArray<T>(array, dim);
@@ -258,24 +295,24 @@ allocate2DArray(T**&               array,
 template<typename T>
 void
 delete3DArray(T***&              array,
-	      const unsigned int dim[3])
+              const unsigned int dim[3])
 {
   for (int i = dim[0] - 1; i >= 0; --i)
     for (int j = dim[1] - 1; j >= 0; --j)
       if (array[i][j])
-	delete[] array[i][j];
+        delete[] array[i][j];
   delete2DArray<T>(*array, dim);      
 //     for (int i = dim[0] - 1; i >= 0; --i)
 //       if (array[i])
-// 	delete[] array[i];
+//      delete[] array[i];
 //     delete[] array;
 }
 
 template<typename T>
 void
 allocate3DArray(T***&              array,
-		const unsigned int dim[3],
-		const T&           defaultVal)
+                const unsigned int dim[3],
+                const T&           defaultVal)
 {
   if (array)
     delete3DArray<T>(array, dim);
@@ -286,7 +323,7 @@ allocate3DArray(T***&              array,
 //     for (unsigned int j = 0; j < dim[1]; ++j) {
 //       array[i][j] = new T[dim[2]];
 //       for (unsigned int k = 0; k < dim[2]; ++k)
-// 	array[i][j][k] = defaultVal;
+//      array[i][j][k] = defaultVal;
   }
 }
 
@@ -380,6 +417,24 @@ dalitzKinematicBorder(const double  mass_2,      // 2-body mass squared on x-axi
     return Esum_2 - (p1 + p2) * (p1 + p2);
   else
     return Esum_2 - (p1 - p2) * (p1 - p2);
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////
+// file system helper functions
+
+// expands glob pattern into list of file names
+inline
+std::vector<std::string>
+globFileList(const std::string& globPattern)
+{
+  std::vector<std::string> fileList;
+  glob_t globBuffer;
+  glob(globPattern.c_str(), GLOB_NOSORT, NULL, &globBuffer);
+  for (unsigned int i = 0; i < globBuffer.gl_pathc; ++i)
+    fileList.push_back(globBuffer.gl_pathv[i]);
+  globfree(&globBuffer);
+  return fileList;
 }
 
 

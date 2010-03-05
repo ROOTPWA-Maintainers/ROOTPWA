@@ -43,19 +43,20 @@
 #include "TROOT.h"
 #include "TFile.h"
 #include "TGraph.h"
+#include "TMultiGraph.h"
 #include "TLatex.h"
 #include "TList.h"
 #include "TPostScript.h"
 #include "TSystem.h"
+#include "TLegend.h"
 
-#include "../TFitResult.h"
-
+#include "fitResult.h"
 #include "plotIntensity.h"
-//#include "plotmcmc.h"
 #include "plotAllIntensities.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 string
@@ -69,7 +70,7 @@ buildCanvName(const string& jpc,
     name = n.str();
   }
   // remove all spaces
-  unsigned int pos = name.find(" ");
+  string::size_type pos = name.find(" ");
   while (pos != string::npos) {
     name.replace(pos, 1, "");
     pos = name.find(" ", pos + 1);
@@ -87,36 +88,39 @@ compareIntensities(const pair<string, double>& a,
 }
 
 
-// plots all waves sorted by JPC and returns a list of wave names and
-// pointers to the pads they were drawn into
 vector<pair<string, TVirtualPad*> >
-plotAllIntensities(TTree*        tree,          // TFitResult tree
-		   const bool    createPsFile,  // if true, plots are written to waves.ps
-		   const string& outPath,       // path for output files
-		   const bool    mcmc)
+plotAllIntensities(const unsigned int nmbTrees,      // number of fitResult trees
+		   TTree**            trees,         // array of fitResult trees
+		   const bool         createPsFile,  // if true, plots are written to waves.ps
+		   const string&      outPath,       // path for output files
+		   const int*         graphColors,   // array of colors for graph line and marker
+		   const bool         drawLegend,    // if set legend is drawn
+		   const string&      branchName)
 {
   const double intensityThr      = 500;          // threshold for total intensity in mass bin
   const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
   vector<pair<string, TVirtualPad*> > wavePads;  // return value
 
-  if (!tree) {
-    cerr << "plotAllIntensities() error: Null pointer to tree. Exiting." << endl;
-    return wavePads;
-  }
-  TFitResult* massBin = new TFitResult();
-  tree->SetBranchAddress("fitResult", &massBin);
-  const int nmbMassBins = tree->GetEntries();
-  tree->GetEntry(0);
+  for (unsigned int i = 0; i < nmbTrees; ++i)
+    if (!trees[i]) {
+      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      return wavePads;
+    }
+  // asssume that all mass trees have same wave set
+  fitResult* massBin = new fitResult();
+  trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+  const int nmbMassBins = trees[0]->GetEntries();
+  trees[0]->GetEntry(0);
   const int nmbWaves = massBin->nmbWaves();  // assumes that number of waves is the same for all bins
-  cout << "Drawing wave intensities from tree '" << tree->GetName() << "' for "
-       << nmbWaves << " waves in " << nmbMassBins << " mass bins." << endl;
+  printInfo << "drawing wave intensities from tree '" << trees[0]->GetName() << "' for "
+	    << nmbWaves << " waves in " << nmbMassBins << " mass bins." << endl;
 
-  // calculate total intensities
+  printInfo << "calculating total wave intensities" << endl;
   int            nmbBinsAboveThr = 0;
   double         totIntensity    = 0;          // total intensity of all waves
   vector<double> totIntensities(nmbWaves, 0);  // total intensity of individual waves
   for (int i = 0; i < nmbMassBins; ++i) {
-    tree->GetEntry(i);
+    trees[0]->GetEntry(i);
     const double binIntensity = massBin->intensity();
     totIntensity += binIntensity;
     if (binIntensity > intensityThr) {
@@ -125,22 +129,17 @@ plotAllIntensities(TTree*        tree,          // TFitResult tree
       ++nmbBinsAboveThr;
     }
   }
-  cout << "Calculated total wave intensities" << endl;
 
-
-  // sort waves by intensities (normalized to total intensity) in descending order
+  printInfo << "sorting waves according to their intensity" << endl;
   vector<pair<string, double> > waveIntensities(nmbWaves, pair<string, double>("", 0));
   for (int i = 0; i < nmbWaves; ++i) {
     const double relIntensity = totIntensities[i] / totIntensity;
     const string waveName     = massBin->waveName(i).Data();
     waveIntensities[i] = make_pair(waveName, relIntensity);
   }
-
-  cout << "Sorting waves according to their intensity" << endl;
   sort(waveIntensities.begin(), waveIntensities.end(), compareIntensities);
 
-  // group waves according to their JPC
-  cout << "Grouping waves w.r.t. JPC ..." << endl;
+  printInfo << "grouping waves w.r.t. to their JPC ..." << endl;
   map<string, int> nmbWavesPerJpc;  // number of waves for each JPC
   for (int i = 0; i < nmbWaves; ++i) {
     const string waveName = massBin->waveName(i).Data();
@@ -148,18 +147,12 @@ plotAllIntensities(TTree*        tree,          // TFitResult tree
     cout << "    wave [" << i << "] of " << nmbWaves << ": " << waveName << ", JPC = " << jpc << endl;
     ++nmbWavesPerJpc[jpc];
   }
-  cout << "... finished" << endl;
-  
+  cout << "    ... finished" << endl;
 
-  // calculate optimum canvas subdivision
+  printInfo << "creating canvases for all JPCs ..." << endl;
   const int nmbPadsHor     = (int)ceil(sqrt(nmbPadsPerCanvMin));
   const int nmbPadsVert    = (int)ceil((double)nmbPadsPerCanvMin / (double)nmbPadsHor);
   const int nmbPadsPerCanv = nmbPadsHor * nmbPadsVert;
-
-  cout << "Creating canvases for all JPCs ..." << endl;
-  cout.flush();
-
-
   map<string, TCanvas*> canvases;
   for (map<string, int>::const_iterator i = nmbWavesPerJpc.begin(); i != nmbWavesPerJpc.end(); ++i) {
     const string jpc     = i->first;
@@ -173,16 +166,16 @@ plotAllIntensities(TTree*        tree,          // TFitResult tree
     }
   }
 
-  cout << "Creating output ROOT file ..." << endl;
+  printInfo << "creating output ROOT file ..." << endl;
   const string outFileName = outPath + "waveIntensities.root";
   TFile*       outFile     = TFile::Open(outFileName.c_str(), "RECREATE");
   if (!outFile) {
-    cerr << "plotAllIntensities() error: Could not create output file '" << outFileName << "'. Exiting." << endl;
+    printErr << "could not create output file '" << outFileName << "'. exiting." << endl;
     return wavePads;
   }
   gROOT->cd();
 
-  cout << "Plotting waves ordered by decreasing intensity ..." << endl;
+  printInfo << "plotting waves ordered by decreasing intensity ..." << endl;
   wavePads.resize(nmbWaves, pair<string, TVirtualPad*>("", NULL));
   map<string, int> canvJpcCounter; 
   for (int i = 0; i < nmbWaves; ++i) {
@@ -201,15 +194,14 @@ plotAllIntensities(TTree*        tree,          // TFitResult tree
     ++canvJpcCounter[jpc];
 
     // draw intensity graph
-    //TGraph* g = (mcmc) ? plotmcmc(tree, waveName, "", waveName.c_str()) : plotIntensity(tree, waveName, "", waveName);
-    TGraph* g = plotIntensity(tree, waveName, "", waveName);
-    if (!g)
+    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, "",
+				       "", "AP", 1, graphColors, false, branchName);
+    if (!graph)
       continue;
-    g->SetName(waveName.c_str());
 
     // write graph to file
     outFile->cd();
-    g->Write();
+    graph->Write();
     gROOT->cd();
 
     // draw additional info
@@ -219,6 +211,18 @@ plotAllIntensities(TTree*        tree,          // TFitResult tree
     TLatex* text = new TLatex(0.15, 0.85, label.str().c_str());
     text->SetNDC(true);
     text->Draw();
+    // add legend
+    if (drawLegend && (nmbTrees > 1)) {
+      TLegend* legend = new TLegend(0.65,0.80,0.99,0.99);
+      legend->SetFillColor(10);
+      legend->SetBorderSize(1);
+      legend->SetMargin(0.2);
+      for (unsigned int j = 0; j < nmbTrees; ++j) {
+	TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(j));
+	legend->AddEntry(g, trees[j]->GetTitle(), "LPE");
+      }
+      legend->Draw();
+    }
 
     // memorize pad
     wavePads[i].first  = waveName;
@@ -227,9 +231,9 @@ plotAllIntensities(TTree*        tree,          // TFitResult tree
 
   // also write TH3s created by plotIntensity() to file
   TList* histList = gDirectory->GetList();
-  histList->Remove(tree);
-  cout << endl
-       << "Writing the following " << histList->GetEntries() <<" objects to '" << outFile->GetName() << "'" << endl;
+  for (unsigned int i = 0; i < nmbTrees; ++i)
+    histList->Remove(trees[i]);
+  printInfo << "writing the following " << histList->GetEntries() <<" objects to '" << outFile->GetName() << "'" << endl;
   histList->Print();
   outFile->cd();
   histList->Write();
@@ -241,21 +245,16 @@ plotAllIntensities(TTree*        tree,          // TFitResult tree
   outFile = 0;
   gROOT->cd();
 
-  // plot graphs into PS file
   if (createPsFile) {
-    // create a postscript file and set the paper size
     const string psFileName = outPath + "waveIntensities.ps";
-    const int    psType     = 112;
-    TPostScript  ps(psFileName.c_str(), psType);
-    //ps.Range(16,24);  // set x,y of printed page
+    TCanvas      dummyCanv("dummy", "dummy");
+    dummyCanv.Print((psFileName + "[").c_str());
     for (map<string, TCanvas*>::iterator i = canvases.begin(); i != canvases.end(); ++i) {
-      ps.NewPage();
-      i->second->Update();
+      i->second->Print(psFileName.c_str());
       delete i->second;
       i->second = 0;
     }
-    ps.Close();
-    //const string command = ;
+    dummyCanv.Print((psFileName + "]").c_str());
     gSystem->Exec(("gv " + psFileName).c_str());
   }
 
