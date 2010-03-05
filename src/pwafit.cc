@@ -314,12 +314,12 @@ main(int    argc,
 	assert(startFitResult);
 	startVal = startFitResult->fitParameter(parName.c_str());
       } else
-	startVal = (useFixedStartValues) ? defaultStartValue : random->Uniform(defaultStartValue, sqrtNmbEvts);
+	startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
       // check if parameter needs to be fixed because of threshold
       if ((L.parThreshold(i) == 0) || (L.parThreshold(i) < massBinCenter)) {
 	if (startVal == 0) {
 	  cout << "    read start value 0 for parameter " << parName << ". using default start value." << endl;
-	  startVal = (useFixedStartValues) ? defaultStartValue : random->Uniform(defaultStartValue, sqrtNmbEvts);
+	  startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
 	}
 	cout << "    setting parameter [" << setw(3) << i << "] "
 	     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
