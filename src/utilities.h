@@ -215,6 +215,8 @@ sign(const T& val)
 {
   if (val < 0)
     return "-";
+  else if (val == 0)
+    return "0";
   else
     return "+";
 }
