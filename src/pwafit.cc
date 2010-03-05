@@ -105,6 +105,7 @@ main(int    argc,
   double             startValStep       = 0.0005;
   const unsigned int maxNmbOfIterations = 20000;
   const double       minimizerTolerance = 1e-6;
+  //const double       minimizerTolerance = 1e-24;
   const bool         runHesse           = false;
   const bool         runMinos           = false;
 

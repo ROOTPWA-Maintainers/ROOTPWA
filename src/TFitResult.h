@@ -347,7 +347,7 @@ TFitResult::print(std::ostream& out) const
       << "    log(likelihood) at maximum .......... " << _logLikelihood << std::endl
       << "    rank of fit ......................... " << _rank          << std::endl
       << "    bin has a valid covariance matrix ... " << _hasErrors     << std::endl;
-  printProdAmpNames(out);
+  printProdAmps(out);
   printWaveNames(out);
   out << "    covariance matrix:" << std::endl << _fitParCovMatrix << std::endl;
   out << "    covariance matrix indices:" << std::endl;

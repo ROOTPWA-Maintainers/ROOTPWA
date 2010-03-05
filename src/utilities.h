@@ -99,7 +99,7 @@ std::ostream& operator << (std::ostream&                 out,
 { return value.print(out); }
 
 
-// simple stream operators for some SLT classes
+// simple stream operators for some STL classes
 template <typename T1, typename T2>
 inline
 std::ostream&

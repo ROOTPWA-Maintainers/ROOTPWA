@@ -133,6 +133,7 @@ private:
 
   // overload private IGradientFunctionMultiDim member functions
   virtual double DoEval      (const double* par) const;
+  virtual double DoEvalX     (const double* par) const;
   virtual double DoDerivative(const double* par,
 			      unsigned int  derivativeIndex) const;
 
@@ -197,9 +198,9 @@ private:
 
   vector2(std::string)                    _waveNamesX;            // wave names [reflectivity][wave index]
   vector3(protect__(std::pair<int, int>)) _prodAmpToFuncParMapX;  // maps each production amplitude to the indices for its real and imginary part in the parameter array; negative indices mean that the parameter is not existing due to rank restrictions
-  vector3(std::complex<double>)           _decayAmpsX;            // precalculated decay amplitudes [reflectivity][wave index][event index]
-  vector4(std::complex<double>)           _normMatrixX;           // normalization matrix w/o acceptance
-  vector4(std::complex<double>)           _accMatrixX;            // normalization matrix with acceptance
+  vector3(std::complex<double>)           _decayAmpsX;            // precalculated decay amplitudes [event index][reflectivity][wave index]
+  vector4(std::complex<double>)           _normMatrixX;           // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+  vector4(std::complex<double>)           _accMatrixX;            // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
 
 };
 
