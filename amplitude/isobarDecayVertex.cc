@@ -25,7 +25,9 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      basic test program for particle and related classes
+//      class that describes decay vertex of isobar into two particles
+//      the isobar -> particle1 + particle 2 vertex has exactly one
+//      incoming mother and two outgoing daughter particle
 //
 //
 // Author List:
@@ -35,59 +37,59 @@
 //-------------------------------------------------------------------------
 
 
-#include "TVector3.h"
-
 #include "utilities.h"
-#include "particleDataTable.h"
-#include "particle.h"
+#include "isobarDecayVertex.h"
 
-
+	
 using namespace std;
 using namespace rpwa;
 
 
-int
-main(int argc, char** argv)
+isobarDecayVertex::isobarDecayVertex(particle&          mother,
+				     particle&          daughter1,
+				     particle&          daughter2,
+				     const unsigned int L,
+				     const unsigned int S)
+  : vertex(),
+    _L    (L),
+    _S    (S)
 {
+  vertex::addInParticle (mother);
+  vertex::addOutParticle(daughter1);
+  vertex::addOutParticle(daughter2);
+}
 
-  if (1) {
-    // switch on debug output
-    particleProperties::setDebug(true);
-    particleDataTable::setDebug(true);
-    particle::setDebug(true);
+
+isobarDecayVertex::isobarDecayVertex(const isobarDecayVertex& vert)
+{
+  *this = vert;
+}
+
+
+isobarDecayVertex::~isobarDecayVertex()
+{ }
+
+
+isobarDecayVertex&
+isobarDecayVertex::operator = (const isobarDecayVertex& vert)
+{
+  if (this != &vert) {
+    vertex::operator = (vert);
+    _L = vert._L;
+    _S = vert._S;
   }
+  return *this;
+}
 
-  // test loading of particle data table
-  particleDataTable& pdt = particleDataTable::instance();
-  pdt.readFile();
-  if (1)
-    printInfo << "particle data table:" << endl
-	      << pdt;
 
-  // test filling of particle properties
-  if (1) {
-    particleProperties partProp;
-    const string       partName = "pi";
-    partProp.fillFromDataTable(partName);
-    printInfo << "particle properties for '" << partName << "':" << endl
-	      << partProp << endl;
-    pdt.addEntry(partProp);
-  }
-
-  // test construction of particles
-  if (1) {
-    TVector3 mom;
-    mom = TVector3(1, 2, 3);
-    const particle p1("pi",  +1, mom);
-    mom = TVector3(2, 3, 4);
-    const particle p2("pi",  -1, mom);
-    particle p3 = p2;
-    p3.setName("X");
-    p3.setCharge(+1);
-    printInfo << "created particles: " << endl
-	      << p1 << endl
-	      << p2 << endl
-	      << p3 << endl;
-  }
-
+ostream&
+isobarDecayVertex::print(ostream& out) const
+{
+  out << "isobar decay vertex data are "
+      << ((!dataAreValid()) ? "not " : "") << "valid:" << endl
+      << "    mother "     << *(inParticles()[0])  << endl
+      << "    daughter 1 " << *(outParticles()[0]) << endl
+      << "    daughter 2 " << *(outParticles()[1]) << endl
+      << "    L = " << _L << ", S = " << _S << endl;
+  return out;
 }

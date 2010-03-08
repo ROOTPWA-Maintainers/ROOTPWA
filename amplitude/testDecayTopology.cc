@@ -41,7 +41,7 @@
 #include "particleDataTable.h"
 #include "particle.h"
 #include "diffractiveDissVertex.h"
-//#include "isobarDecayVertex.h"
+#include "isobarDecayVertex.h"
 
 
 using namespace std;
@@ -70,12 +70,27 @@ main(int argc, char** argv)
     particle beam("pi", -1, mom);
     mom = TVector3(2, 3, 4);
     particle X("X", -1, mom);
+    X.setName("X");
     printInfo << "created particles: " << endl
 	      << beam << endl
 	      << X    << endl;
-    diffractiveDissVertex vert(beam, X);
+    diffractiveDissVertex vert1(beam, X);
     printInfo << "created vertex: " << endl
-	      << vert;
+	      << vert1;
+    diffractiveDissVertex vert2 = vert1;
+    printInfo << "copied vertex: " << endl
+	      << vert2;
+
+    mom = TVector3(3, 4, 5);
+    particle daughter1("pi",  -1, mom);
+    mom = TVector3(4, 5, 6);
+    particle daughter2("pi0",  0, mom);
+    isobarDecayVertex vert3(X, daughter1, daughter2, 1, 2);
+    printInfo << "created vertex: " << endl
+	      << vert3;
+    isobarDecayVertex vert4 = vert3;
+    printInfo << "copied vertex: " << endl
+	      << vert4;
   }
 
 }

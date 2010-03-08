@@ -72,7 +72,8 @@ namespace rpwa {
     virtual unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
     virtual unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles
 
-    virtual bool dataValid() const;  ///< indicates whether vertex data are complete and valid
+    virtual bool dataAreValid() const { return _dataValid; }  ///< indicates whether vertex data are complete and valid
+    virtual void setDataValid(const bool dataValid = true) { _dataValid = dataValid; }  ///< set internal flag that indicates that external data are complete and valid
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 
@@ -82,8 +83,9 @@ namespace rpwa {
 
   private:
 
-    std::vector<particle*> _inParticles;    ///< array of pointers to incoming particles
-    std::vector<particle*> _outParticles;   ///< array of pointers to outgoing particles
+    std::vector<particle*> _inParticles;   ///< array of pointers to incoming particles
+    std::vector<particle*> _outParticles;  ///< array of pointers to outgoing particles
+    bool                   _dataValid;     ///< indicates whether vertex data are complete and valid
 
     static bool _debug;  ///< if set to true, debug messages are printed
 	

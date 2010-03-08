@@ -52,7 +52,8 @@ bool vertex::_debug = false;
 
 vertex::vertex()
   : _inParticles (),
-    _outParticles()
+    _outParticles(),
+    _dataValid   (false)
 { }
 
 
@@ -72,6 +73,7 @@ vertex::operator = (const vertex& vert)
   if (this != &vert) {
     _inParticles  = vert._inParticles;
     _outParticles = vert._outParticles;
+    _dataValid    = vert._dataValid;
   }
   return *this;
 }
@@ -106,24 +108,15 @@ vertex::addOutParticle(particle& part)
 }
 
 
-bool
-vertex::dataValid() const
-{
-  if ((nmbInParticles() >= 1) && (nmbOutParticles() >= 1))
-    return true;
-  else
-    return false;
-}
-
-
 ostream&
 vertex::print(ostream& out) const
 {
-  out << "vertex incoming particles:" << endl;
+  out << "vertex data are " << ((!dataAreValid()) ? "not " : "") << "valid:" << endl
+      << "    incoming particles:" << endl;
   for (unsigned int i = 0; i < _inParticles.size(); ++i)
-    out << *(_inParticles[i]) << endl;
-  out << "vertex outgoing particles:" << endl;
+    out << "        " << *(_inParticles[i]) << endl;
+  out << "    outgoing particles:" << endl;
   for (unsigned int i = 0; i < _outParticles.size(); ++i)
-    out << *(_outParticles[i]) << endl;
+    out << "        " << *(_outParticles[i]) << endl;
   return out;
 }

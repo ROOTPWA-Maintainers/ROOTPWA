@@ -65,36 +65,12 @@ diffractiveDissVertex::~diffractiveDissVertex()
 { }
 
 
-diffractiveDissVertex&
-diffractiveDissVertex::operator = (const diffractiveDissVertex& vert)
-{
-  if (this != &vert)
-    vertex::operator = (vert);
-  return *this;
-}
-
-
-bool
-diffractiveDissVertex::dataValid() const
-{
-  if ((nmbInParticles() == 1) && (nmbOutParticles() == 1))
-    return true;
-  else
-    return false;
-}
-
-
 ostream&
 diffractiveDissVertex::print(ostream& out) const
 {
-  if (dataValid()) {
-    out << "diffractive dissociation vertex beam particle:" << endl
-	<< *(inParticles()[0]) << endl
-	<< "diffractive dissociation vertex X-system:" << endl
-	<< *(outParticles()[0]) << endl;
-  } else {
-    printWarn << "diffractive dissociation vertex data are incomplete or not valid" << endl;
-    vertex::print(out);
-  }
+  out << "diffractive dissociation vertex data are "
+      << ((!dataAreValid()) ? "not " : "") << "valid:" << endl
+      << "    beam " << *(inParticles()[0])  << endl
+      << "    X "    << *(outParticles()[0]) << endl;
   return out;
 }

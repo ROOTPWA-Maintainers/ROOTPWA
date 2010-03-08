@@ -52,20 +52,16 @@ namespace rpwa {
   public:
   
     diffractiveDissVertex(particle& beam,
-			  particle& XSystem);   ///< vertex makes sense only if both beam and X-system are specified
+			  particle& XSystem);  ///< vertex makes sense only if both beam and X-system are specified
     diffractiveDissVertex(const diffractiveDissVertex& vert);
     virtual ~diffractiveDissVertex();
 		
-    virtual diffractiveDissVertex& operator = (const diffractiveDissVertex& vert);
-
     virtual bool addInParticle (particle&) { return false; }  ///< disabled; only 1 incoming particle (beam) is allowed
     virtual bool addOutParticle(particle&) { return false; }  ///< disabled; only 1 outgoing particle (X-system) is allowed
 
     // diffractive dissociation specific accessors
     particle& beam()    { return *(inParticles() [0]); }  ///< returns beam particle
     particle& XSystem() { return *(outParticles()[0]); }  ///< returns X particle
-
-    virtual bool dataValid() const;  ///< indicates whether vertex data are complete and valid
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 

@@ -57,6 +57,7 @@ SET(SOURCES
   particle.cc
   vertex.cc
   diffractiveDissVertex.cc
+  isobarDecayVertex.cc
 )
 	    
 # define ROOT libraries
@@ -108,8 +109,6 @@ TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
 SET(THIS_EXE testDecayTopology)
 ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
 TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
-#ADD_EXECUTABLE(testDecayTopology testDecayTopology.cc)
-#TARGET_LINK_LIBRARIES(testDecayTopology ${THIS_LIB})
 
 
 #-------------------------------------------------
