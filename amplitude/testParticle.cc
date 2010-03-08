@@ -25,10 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      virtual base class that desbribes general interaction vertex between particles
-//      only pointers to partciles are stored
-//      vertex does not "own" its particles; creation and destruction
-//      of particles has to be done in calling code
+//      basic test program for particle and related classes
 //
 //
 // Author List:
@@ -38,61 +35,58 @@
 //-------------------------------------------------------------------------
 
 
-#include "utilities.h"
-#include "vertex.h"
+#include "TVector3.h"
 
-	
+#include "utilities.h"
+#include "particleDataTable.h"
+#include "particle.h"
+
+
 using namespace std;
 using namespace rpwa;
 
 
-bool vertex::_debug = false;
-
-
-vertex::vertex()
-  : _inParticles (),
-    _outParticles()
-{ }
-
-
-vertex::vertex(const vertex& vert)
+int
+main(int argc, char** argv)
 {
-  *this = vert;
-}
 
-
-vertex::~vertex()
-{ }
-
-
-vertex&
-vertex::operator = (const vertex& vert)
-{
-  if (this != &vert) {
-    _inParticles  = vert._inParticles;
-    _outParticles = vert._outParticles;
+  if (1) {
+    // switch on debug output
+    particleProperties::setDebug(true);
+    particleDataTable::setDebug(true);
+    particle::setDebug(true);
   }
-  return *this;
-}
 
+  // test loading of particle data table
+  particleDataTable& pdt = particleDataTable::instance();
+  pdt.readFile();
+  if (1)
+    printInfo << "particle data table:" << endl
+	      << pdt;
 
-// vertex&
-// vertex::operator *= (const lorentzTransform& L)
-// {
-//   for (list<particle>::iterator i = _children.begin(); i != _children.end(); ++i)
-//     *i *= L;
-//   return *this;
-// }
+  // test filling of particle properties
+  if (1) {
+    particleProperties partProp;
+    const string       partName = "pi";
+    partProp.fillFromDataTable(partName);
+    printInfo << "particle properties for '" << partName << "':" << endl
+	      << partProp << endl;
+    pdt.addEntry(partProp);
+  }
 
+  // test construction of particles
+  if (1) {
+    TVector3 mom;
+    mom = TVector3(1, 2, 3);
+    const particle p1("pi",  +1, mom);
+    mom = TVector3(2, 3, 4);
+    const particle p2("pi",  -1, mom);
+    mom = TVector3(3, 4, 5);
+    const particle p3("pi0",  0, mom);
+    printInfo << "created particles: " << endl
+	      << p1 << endl
+	      << p2 << endl
+	      << p3 << endl;
+  }
 
-ostream&
-vertex::print(ostream& out) const
-{
-  out << "vertex incoming particles:" << endl;
-  for (unsigned int i = 0; i < _inParticles.size(); ++i)
-    _inParticles[i]->print(out);
-  out << "vertex outgoing particles:" << endl;
-  for (unsigned int i = 0; i < _outParticles.size(); ++i)
-    _outParticles[i]->print(out);
-  return out;
 }

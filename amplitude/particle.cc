@@ -69,7 +69,9 @@ particle::particle(const int                 charge,
 
 	
 particle::particle(const string&   partName,
+		   const int       charge,
 		   const TVector3& momentum)
+  : _charge(charge)
 {
   fillFromDataTable(partName);
   _lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
@@ -92,19 +94,12 @@ particle::operator = (const particle& part)
 }
 
 
-void
+ostream&
 particle::print(ostream& out) const
 {
   particleProperties::print(out);
-  out << "charge = "        << _charge << ", "
-      << "LorentzVector = " << _lzVec  << endl;
-}
-
-
-ostream&
-operator << (ostream&        out,
-	     const particle& part)
-{
-  part.print(out);
+  out << ", "
+      << "charge = "        << sign(_charge) << ", "
+      << "LorentzVector = " << _lzVec;
   return out;
 }

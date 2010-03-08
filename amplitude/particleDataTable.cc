@@ -73,7 +73,27 @@ particleDataTable::entry(const string& partName)
 }
 
 
-void
+bool
+particleDataTable::addEntry(const particleProperties& partProp)
+{
+  const string name = partProp.name();
+  dataIterator i    = _dataTable.find(name);
+  if (i != _dataTable.end()) {
+    printWarn << "trying to add entry for particle '" << name << "' "
+	      << "which already exists in table"     << endl
+	      << "    existing entry: " << i->second << endl
+	      << "    conflicts with: " << partProp  << endl;
+    return false;
+  } else {
+    _dataTable[name] = partProp;
+    if (_debug)
+      printInfo << "added entry for '" << name << "' into particle data table" << endl;
+    return true;
+  }
+}
+
+
+ostream&
 particleDataTable::print(ostream& out)
 {
   unsigned int countEntries = 0;
@@ -81,24 +101,17 @@ particleDataTable::print(ostream& out)
     ++countEntries;
     out << "entry " << setw(3) << countEntries << ": " << i->second << endl;
   }
+  return out;
 }
 
 
-void
+ostream&
 particleDataTable::dump(ostream& out)
 {
   for (dataIterator i = begin(); i != end(); ++i) {
     i->second.dump(out);
     out << endl;
   }
-}
-
-
-ostream&
-operator << (ostream&                 out,
-	     const particleDataTable& dataTable)
-{
-  dataTable.print(out);
   return out;
 }
 
@@ -106,8 +119,7 @@ operator << (ostream&                 out,
 bool
 particleDataTable::readFile(const string& fileName)
 {
-  if (_debug)
-    printInfo << "opening particle data file '" << fileName << "'" << endl;
+  printInfo << "reading particle data from file '" << fileName << "'" << endl;
   ifstream file(fileName.c_str());
   if (!file || !file.good()) {
     printWarn << "cannot open file '" << fileName << "'" << endl;
@@ -124,34 +136,17 @@ particleDataTable::read(istream& in)
     printWarn << "cannot read from input stream" << endl;
     return false;
   }
+  if (_debug)
+    printInfo << "data table has " << nmbEntries() << " entries (before reading)" << endl;
   unsigned int countEntries = 0;
   while (in.good()) {
     particleProperties partProp;
-    if (in >> partProp) {
-      const string name = partProp.name();
-      dataIterator i    = _dataTable.find(name);
-      if (i != _dataTable.end()) {
-	printWarn << "trying to add data for particle "  << name
-		  << " which already exists in table"    << endl
-		  << "    existing entry: " << i->second << endl
-		  << "    conflicts with: " << partProp  << endl;
-      } else {
-	_dataTable[name] = partProp;
-	if (_debug)
-	  printInfo << "added entry for '" << name << "' into particle data table" << endl;
+    if (in >> partProp)
+      if(addEntry(partProp))
 	++countEntries;
-      }
-    }
   }
   printInfo << "successfully read " << countEntries << " new entries into particle data table" << endl;
+  if (_debug)
+    cout << "    data table has " << nmbEntries() << " entries (after reading)" << endl;
   return true;
-}
-
-
-istream&
-operator >> (istream&           in,
-	     particleDataTable& dataTable)
-{
-  dataTable.read(in);
-  return in;
 }

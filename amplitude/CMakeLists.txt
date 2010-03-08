@@ -38,6 +38,9 @@
 PROJECT(rootpwa)
 
 
+SET(THIS_LIB rootPwaAmplitude)
+
+
 ENABLE_TESTING()
 
 
@@ -45,8 +48,7 @@ SET(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR}/src
 )
-
-include_directories(${INCLUDE_DIRECTORIES})
+INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
 
 # list of source files that are compiled into library
 SET(SOURCES
@@ -79,18 +81,27 @@ SET(ROOT_LIBS
   libm.so
 )
 
+# define BOOST libraries
+SET(BOOST_LIBS
+#  boost_graph
+)
+
 
 #-------------------------------------------------
 #------- The library -----------------------------
 #-------------------------------------------------
 
-SET(SOURCES
-  ${SOURCES}
-)
+ADD_LIBRARY(${THIS_LIB} SHARED ${SOURCES})
+TARGET_LINK_LIBRARIES(${THIS_LIB} ${ROOT_LIBS})
+TARGET_LINK_LIBRARIES(${THIS_LIB} ${BOOST_LIBS})
 
-ADD_LIBRARY(rootPwaAmplitude SHARED ${SOURCES})
 
-TARGET_LINK_LIBRARIES(rootPwaAmplitude ${ROOT_LIBS})
+#-------------------------------------------------
+#------- Main executables ------------------------
+#-------------------------------------------------
+
+ADD_EXECUTABLE(testParticle testParticle.cc)
+TARGET_LINK_LIBRARIES(testParticle ${THIS_LIB})
 
 
 #-------------------------------------------------

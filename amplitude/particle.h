@@ -59,6 +59,7 @@ namespace rpwa {
 	     const TVector3&           momentum,
 	     const particleProperties& partProp);
     particle(const std::string&        partName,
+	     const int                 charge,
 	     const TVector3&           momentum);
     virtual ~particle();
 
@@ -70,9 +71,7 @@ namespace rpwa {
     void setCharge  (const int       charge)   { _charge = charge;                                                            }  ///< sets particle's charge
     void setMomentum(const TVector3& momentum) { _lzVec  = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
 
-    void print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
-    friend std::ostream& operator << (std::ostream&   out,
-				      const particle& part);
+    std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -81,11 +80,17 @@ namespace rpwa {
   private:
 			
     int            _charge;  ///< charge
-    TLorentzVector _lzVec;   ///< Lorentz vector
+    TLorentzVector _lzVec;   ///< Lorentz vector [GeV]
 
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
+
+
+  inline
+  std::ostream&
+  operator << (std::ostream&   out,
+	       const particle& part) { return part.print(out); }
 
 
 } // namespace rpwa

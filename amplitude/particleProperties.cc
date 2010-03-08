@@ -123,27 +123,31 @@ particleProperties::fillFromDataTable(const string& name)
     return false;
   } else {
     *this = *partProp;
+    if (_debug)
+      printInfo << "succesfully filled particle properties for '" << name << "': "
+		<< *this << endl;
     return true;
   }
 }
 
 
-void
+ostream&
 particleProperties::print(ostream& out) const
 {
   out << "particle '"  << _name         << "': "
-      << "mass = "     << _mass         << ", "
-      << "width = "    << _width        << ", "
+      << "mass = "     << _mass         << " [GeV/c^2], "
+      << "width = "    << _width        << " [GeV/c^2], "
       << "baryon # = " << _baryonNmb    << ", "
-      << "IG(JPC)"     << _I << sign(_G) << "(" << _J << sign(_P) << sign(_C) << "),  "
+      << "(2I)^G(2J)^PC = ("  << _I << ")^" << sign(_G)
+      << "(" << _J << ")^" << sign(_P) << sign(_C) << ", "
       << "S = "        << _S            << ", "
       << "Charm = "    << _Charm        << ", "
-      << "B = "        << _B
-      << endl;
+      << "B = "        << _B;
+  return out;
 }
 
 
-void
+ostream&
 particleProperties::dump(ostream& out) const
 {
   out << _name      << "\t"
@@ -157,15 +161,7 @@ particleProperties::dump(ostream& out) const
       << _G         << "\t" 
       << _J         << "\t" 
       << _P         << "\t" 
-      << _C         << endl;
-}
-
-
-ostream&
-operator << (ostream&                  out,
-	     const particleProperties& partProp)
-{
-  partProp.print(out);
+      << _C;
   return out;
 }
 
@@ -174,7 +170,7 @@ bool
 particleProperties::read(istringstream& line)
 {
   if (_debug)
-    printInfo << "trying to read particle properties from line '" << line << "' ... " << flush;
+    printInfo << "trying to read particle properties from line '" << line.str() << "' ... " << flush;
   if (line >> _name
            >> _mass
            >> _width
@@ -187,33 +183,13 @@ particleProperties::read(istringstream& line)
            >> _J
            >> _P
            >> _C) {
-    if (_debug)
-      cout << "success" << endl
-	   << *this     << endl;
+    if (_debug) {
+      cout << "success" << endl;
+      printInfo << "read "<< *this << endl;
+    }
     return true;
   } else {
     printWarn << "problems reading particle data from line '" << line.str() << "'" << endl;
     return false;
   }
-}
-
-
-istream&
-operator >> (istream&            in,
-	     particleProperties& partProp)
-{
-  string line;
-  if (getline(in, line)) {
-    // skip comments and empty lines
-    while ((line == "") || (line[0] == '#'))
-      if (partProp.debug())
-	printInfo << "ignoring line '" << line << "'" << endl;
-      if (!getline(in, line)) {
-	printWarn << "could not find valid particle entry before end of file" << endl;
-	return in;
-      }
-    istringstream lineStream(line);
-    partProp.read(lineStream);
-  }
-  return in;
 }

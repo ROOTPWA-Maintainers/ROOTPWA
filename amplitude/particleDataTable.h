@@ -54,8 +54,9 @@ namespace rpwa {
 
     static particleDataTable& instance() { return _instance; }  ///< get singleton instance
 
-    static bool                      isInTable(const std::string& partName);  ///< returns, whether particle has a table entry
-    static const particleProperties* entry    (const std::string& partName);  ///< access properties by particle name
+    static bool                      isInTable(const std::string&        partName);  ///< returns, whether particle has a table entry
+    static const particleProperties* entry    (const std::string&        partName);  ///< access properties by particle name
+    static bool                      addEntry (const particleProperties& partProp);  ///< adds entry to particle data table
 
     static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
     typedef std::map<std::string, particleProperties>::const_iterator dataIterator;
@@ -63,15 +64,11 @@ namespace rpwa {
     static dataIterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
 
 
-    static void print(std::ostream& out);  ///< prints particle data in human-readable form
-    static void dump (std::ostream& out);  ///< dumps particle properties in format of data file
-    friend std::ostream& operator << (std::ostream&            out,
-				      const particleDataTable& dataTable);
+    static std::ostream& print(std::ostream& out);  ///< prints particle data in human-readable form
+    static std::ostream& dump (std::ostream& out);  ///< dumps particle properties in format of data file
 
     static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
     static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
-    friend std::istream& operator >> (std::istream&      in,
-				      particleDataTable& dataTable);
 
     static void reset() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
@@ -92,6 +89,22 @@ namespace rpwa {
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
+
+  
+  inline
+  std::ostream&
+  operator << (std::ostream&            out,
+	       const particleDataTable& dataTable) { return dataTable.print(out); }
+
+
+  inline
+  std::istream&
+  operator >> (std::istream&      in,
+	       particleDataTable& dataTable)
+  {
+    dataTable.read(in);
+    return in;
+  }
 
 
 } // namespace rpwa

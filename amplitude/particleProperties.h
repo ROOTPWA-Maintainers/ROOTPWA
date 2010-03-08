@@ -26,6 +26,8 @@
 //
 // Description:
 //      container class for particle properties
+//      !NOTE! all potentially half-integer quantum numbers like I and
+//             J are in units of hbar / 2 so that they are always integer
 //
 //
 // Author List:
@@ -65,12 +67,12 @@ namespace rpwa {
     double      mass()      const { return _mass;      }  ///< returns particle mass
     double      width()     const { return _width;     }  ///< returns particle width
     int         baryonNmb() const { return _baryonNmb; }  ///< returns particle's baryon number
-    int         I()         const { return _I;         }  ///< returns particle's isospin
+    int         I()         const { return _I;         }  ///< returns particle's isospin * 2 (!!!)
     int         S()         const { return _S;         }  ///< returns particle's strangeness
     int         Charm()     const { return _Charm;     }  ///< returns particle's charm
     int         B()         const { return _B;         }  ///< returns particle's beauty
     int         G()         const { return _G;         }  ///< returns particle's G-parity
-    int         J()         const { return _J;         }  ///< returns particle's spin
+    int         J()         const { return _J;         }  ///< returns particle's spin * 2 (!!!)
     int         P()         const { return _P;         }  ///< returns particle's parity
     int         C()         const { return _C;         }  ///< returns particle's C-parity
 
@@ -80,23 +82,19 @@ namespace rpwa {
     void setMass     (const double       mass)      { _mass      = mass;      }  ///< sets particle mass
     void setWidth    (const double       width)     { _width     = width;     }  ///< sets particle width
     void setBaryonNmb(const int          baryonNmb) { _baryonNmb = baryonNmb; }  ///< sets particle's baryon number
-    void setI        (const int          I)         { _I         = I;         }  ///< sets particle's isospin
+    void setI        (const int          I)         { _I         = I;         }  ///< sets particle's isospin * 2 (!!!)
     void setS        (const int          S)         { _S         = S;         }  ///< sets particle's strangeness
     void setCharm    (const int          Charm)     { _Charm     = Charm;     }  ///< sets particle's charm
     void setB        (const int          B)         { _B         = B;         }  ///< sets particle's beauty
     void setG        (const int          G)         { _G         = G;         }  ///< sets particle's G-parity
-    void setJ        (const int          J)         { _J         = J;         }  ///< sets particle's spin
+    void setJ        (const int          J)         { _J         = J;         }  ///< sets particle's spin * 2 (!!!)
     void setP        (const int          P)         { _P         = P;         }  ///< sets particle's parity
     void setC        (const int          C)         { _C         = C;         }  ///< sets particle's C-parity
 
-    void print(std::ostream& out) const;  ///< prints particle data in human-readable form
-    void dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
-    friend std::ostream& operator << (std::ostream&             out,
-				      const particleProperties& partProp);
+    std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
+    std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
 
     bool read(std::istringstream& line);  ///< reads whitespace separated properties from single line
-    friend std::istream& operator >> (std::istream&       in,
-				      particleProperties& partProp);
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -108,18 +106,47 @@ namespace rpwa {
     double      _mass;       ///< mass [GeV/c^]
     double      _width;      ///< total width [GeV/c^2]
     int         _baryonNmb;  ///< baryon number
-    int         _I;          ///< isospin
+    int         _I;          ///< isospin * 2 (!!!)
     int         _S;          ///< strangeness
     int         _Charm;      ///< charm
     int         _B;          ///< beauty
     int         _G;          ///< G-parity (0 = undefined)
-    int         _J;          ///< spin
+    int         _J;          ///< spin * 2 (!!!)
     int         _P;          ///< parity (0 = undefined)
     int         _C;          ///< C-parity (0 = undefined)
 
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
+
+
+  inline
+  std::ostream&
+  operator << (std::ostream&             out,
+	       const particleProperties& partProp) { return partProp.print(out); }
+
+
+  inline
+  std::istream&
+  operator >> (std::istream&       in,
+	       particleProperties& partProp)
+  {
+    std::string line;
+    if (getline(in, line)) {
+      // skip comments and empty lines
+      while ((line == "") || (line[0] == '#')) {
+       	if (partProp.debug())
+       	  printInfo << "ignoring line '" << line << "'" << std::endl;
+	if (!getline(in, line)) {
+	  printWarn << "could not find valid particle entry before end of file" << std::endl;
+	  return in;
+	}
+      }
+      std::istringstream lineStream(line);
+      partProp.read(lineStream);
+    }
+    return in;
+  }
 
 
 } // namespace rpwa

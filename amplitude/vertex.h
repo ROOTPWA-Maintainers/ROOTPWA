@@ -70,9 +70,7 @@ namespace rpwa {
 
     virtual std::complex<double> amplitude() = 0;  ///< returns vertex amplitude
 		
-    virtual void print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
-    friend std::ostream& operator << (std::ostream&   out,
-				      const particle& part);
+    virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -86,6 +84,12 @@ namespace rpwa {
     static bool _debug;  ///< if set to true, debug messages are printed
 	
   };
+
+
+  inline
+  std::ostream&
+  operator << (std::ostream& out,
+	       const vertex& vert) { return vert.print(out); }
 
 
 } // namespace rpwa
