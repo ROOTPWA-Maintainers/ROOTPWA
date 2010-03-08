@@ -50,10 +50,10 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # list of source files that are compiled into library
 SET(SOURCES
-  #particleProperties.cc
-  #particleDataTable.cc
-  #particle.cc
-  #vertex.cc
+  particleProperties.cc
+  particleDataTable.cc
+  particle.cc
+  vertex.cc
 )
 	    
 # define ROOT libraries

@@ -44,6 +44,7 @@
 
 #include <iostream>
 #include <vector>
+#include <complex>
 
 #include "particle.h"
 
@@ -61,22 +62,20 @@ namespace rpwa {
     virtual vertex& operator = (const vertex& vert);
     //vertex& operator *= (const lorentzTransform& L);
 
-    virtual void addInParticle (particle* part) { _inParticles.push_back (part); }
-    virtual void addOutParticle(particle* part) { _outParticles.push_back(part); }
+    virtual void addInParticle (particle* part) { _inParticles.push_back (part); }  ///< adds an incoming particle to vertex
+    virtual void addOutParticle(particle* part) { _outParticles.push_back(part); }  ///< adds an outgoing particle to vertex
 
-    virtual const std::vector<particle*>&       inParticles ()       { return _inParticles;  }
-    virtual const std::vector<const particle*>& inParticles () const { return _inParticles;  }
-    virtual const std::vector<particle*>&       outParticles()       { return _outParticles; }
-    virtual const std::vector<const particle*>& outParticles() const { return _outParticles; }
+    virtual const std::vector<particle*>& inParticles () { return _inParticles;  }  ///< returns array of incoming particles
+    virtual const std::vector<particle*>& outParticles() { return _outParticles; }  ///< returns array of outgoing particles
 
-    virtual std::complex<double> amplitude() = 0;
+    virtual std::complex<double> amplitude() = 0;  ///< returns vertex amplitude
 		
-    virtual void print(std::ostream& out) const;
+    virtual void print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     friend std::ostream& operator << (std::ostream&   out,
 				      const particle& part);
 
-    static bool debug() const { return _debug; }
-    static void setDebug(const bool debug = true) { _debug = debug; }
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
   private:

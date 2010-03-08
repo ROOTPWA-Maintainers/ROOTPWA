@@ -6,7 +6,7 @@
 #//
 #//-------------------------------------------------------------------------
 #
-# PDG name       mass        width       baryon #    2I    S    C    B     G    2J     P     C
+# PDG name       mass        width       baryon #    2I    S    Ch   B     G    2J     P     C
 #                [GeV/c^2]   [GeV/c^2]
 # ----------------------------------------------------------------------------------------------
 # baryons
@@ -41,7 +41,7 @@ pbar             0.938272    0           -1           1    0    0    0     0    
 p                0.938272    0           +1           1    0    0    0     0     1    +1     0
 #
 #
-# PDG name       mass        width       baryon #    2I    S    C    B     G    2J     P     C
+# PDG name       mass        width       baryon #    2I    S    Ch   B     G    2J     P     C
 #                [GeV/c^2]   [GeV/c^2]
 # ----------------------------------------------------------------------------------------------
 # strange mesons
@@ -62,7 +62,7 @@ Kstar(892)       0.89166     0.0508      0            1    1    0    0     0    
 K0               0.497672    0           0            1    1    0    0     0     0    -1     0
 K                0.493677    0           0            1    1    0    0     0     0    -1     0
 #
-# PDG name       mass        width       baryon #    2I    S    C    B     G    2J     P     C
+# PDG name       mass        width       baryon #    2I    S    Ch   B     G    2J     P     C
 #                [GeV/c^2]   [GeV/c^2]
 # ----------------------------------------------------------------------------------------------
 # light unflavored mesons
@@ -118,7 +118,7 @@ eta              0.5473      1.18e-06    0            0    0    0    0    +1    
 pi0              0.134977    0           0            2    0    0    0    -1     0    -1    +1
 pi               0.13957     0           0            2    0    0    0    -1     0    -1    +1
 #
-# PDG name       mass        width       baryon #    2I    S    C    B     G    2J     P     C
+# PDG name       mass        width       baryon #    2I    S    Ch   B     G    2J     P     C
 #                [GeV/c^2]   [GeV/c^2]
 # ----------------------------------------------------------------------------------------------
 # various other particles

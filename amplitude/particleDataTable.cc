@@ -46,13 +46,13 @@ using namespace std;
 using namespace rpwa;
 
 
-particleDataTable         particleDataTable::_instance;
-map<string, particleData> particleDataTable::_dataTable;
-bool                      particleDataTable::_debug = false;
+particleDataTable               particleDataTable::_instance;
+map<string, particleProperties> particleDataTable::_dataTable;
+bool                            particleDataTable::_debug = false;
 
 
 bool
-particleDataTable::isInTable(const string& partName) const
+particleDataTable::isInTable(const string& partName)
 {
   if (_dataTable.find(partName) == _dataTable.end()) {
     return false;
@@ -62,7 +62,7 @@ particleDataTable::isInTable(const string& partName) const
 
 
 const particleProperties*
-particleDataTable::entry(const string& partName) const
+particleDataTable::entry(const string& partName)
 {
   dataIterator i = _dataTable.find(partName);
   if (i == _dataTable.end()) {
@@ -74,7 +74,7 @@ particleDataTable::entry(const string& partName) const
 
 
 void
-particleDataTable::print(ostream& out) const
+particleDataTable::print(ostream& out)
 {
   unsigned int countEntries = 0;
   for (dataIterator i = begin(); i != end(); ++i) {
@@ -85,7 +85,7 @@ particleDataTable::print(ostream& out) const
 
 
 void
-particleDataTable::dump(ostream& out) const
+particleDataTable::dump(ostream& out)
 {
   for (dataIterator i = begin(); i != end(); ++i) {
     i->second.dump(out);
@@ -131,10 +131,10 @@ particleDataTable::read(istream& in)
       const string name = partProp.name();
       dataIterator i    = _dataTable.find(name);
       if (i != _dataTable.end()) {
-	printWarn << "trying to add data for particle " << name
-		  << " which already exists in table"   << endl
-		  << "    existing entry: " << *i       << endl
-		  << "    conflicts with: " << partProp << endl;
+	printWarn << "trying to add data for particle "  << name
+		  << " which already exists in table"    << endl
+		  << "    existing entry: " << i->second << endl
+		  << "    conflicts with: " << partProp  << endl;
       } else {
 	_dataTable[name] = partProp;
 	if (_debug)
@@ -144,6 +144,7 @@ particleDataTable::read(istream& in)
     }
   }
   printInfo << "successfully read " << countEntries << " new entries into particle data table" << endl;
+  return true;
 }
 
 

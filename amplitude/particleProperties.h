@@ -67,7 +67,7 @@ namespace rpwa {
     int         baryonNmb() const { return _baryonNmb; }  ///< returns particle's baryon number
     int         I()         const { return _I;         }  ///< returns particle's isospin
     int         S()         const { return _S;         }  ///< returns particle's strangeness
-    int         C()         const { return _C;         }  ///< returns particle's charm
+    int         Charm()     const { return _Charm;     }  ///< returns particle's charm
     int         B()         const { return _B;         }  ///< returns particle's beauty
     int         G()         const { return _G;         }  ///< returns particle's G-parity
     int         J()         const { return _J;         }  ///< returns particle's spin
@@ -82,8 +82,8 @@ namespace rpwa {
     void setBaryonNmb(const int          baryonNmb) { _baryonNmb = baryonNmb; }  ///< sets particle's baryon number
     void setI        (const int          I)         { _I         = I;         }  ///< sets particle's isospin
     void setS        (const int          S)         { _S         = S;         }  ///< sets particle's strangeness
-    void setC        (const int          C)         { _B         = B;         }  ///< sets particle's charm
-    void setB        (const int          B)         { _C         = C;         }  ///< sets particle's beauty
+    void setCharm    (const int          Charm)     { _Charm     = Charm;     }  ///< sets particle's charm
+    void setB        (const int          B)         { _B         = B;         }  ///< sets particle's beauty
     void setG        (const int          G)         { _G         = G;         }  ///< sets particle's G-parity
     void setJ        (const int          J)         { _J         = J;         }  ///< sets particle's spin
     void setP        (const int          P)         { _P         = P;         }  ///< sets particle's parity
@@ -95,11 +95,11 @@ namespace rpwa {
 				      const particleProperties& partProp);
 
     bool read(std::istringstream& line);  ///< reads whitespace separated properties from single line
-    friend std::istream& operator << (std::istream&       in,
+    friend std::istream& operator >> (std::istream&       in,
 				      particleProperties& partProp);
 
-    static bool debug() const { return _debug; }
-    static void setDebug(const bool debug = true) { _debug = debug; }
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
   private:
@@ -110,7 +110,7 @@ namespace rpwa {
     int         _baryonNmb;  ///< baryon number
     int         _I;          ///< isospin
     int         _S;          ///< strangeness
-    int         _C;          ///< charm
+    int         _Charm;      ///< charm
     int         _B;          ///< beauty
     int         _G;          ///< G-parity (0 = undefined)
     int         _J;          ///< spin

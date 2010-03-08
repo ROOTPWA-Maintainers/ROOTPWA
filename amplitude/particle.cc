@@ -35,10 +35,7 @@
 //-------------------------------------------------------------------------
 
 
-//#include <sstream>
-
 #include "utilities.h"
-#include "particleDataTable.h"
 #include "particle.h"
 
 	
@@ -87,7 +84,7 @@ particle&
 particle::operator = (const particle& part)
 {
   if (this != &part) {
-    this->particleProperties::operator = part;
+    this->particleProperties::operator = (part);
     _charge = part._charge;
     _lzVec  = part._lzVec;
   }
@@ -98,7 +95,7 @@ particle::operator = (const particle& part)
 void
 particle::print(ostream& out) const
 {
-  particleProperties::print();
+  particleProperties::print(out);
   out << "charge = "        << _charge << ", "
       << "LorentzVector = " << _lzVec  << endl;
 }

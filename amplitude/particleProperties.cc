@@ -54,7 +54,7 @@ particleProperties::particleProperties()
     _baryonNmb(0),
     _I        (0),
     _S        (0),
-    _C        (0),
+    _Charm    (0),
     _B        (0),
     _G        (0),
     _J        (0),
@@ -84,7 +84,7 @@ particleProperties::operator = (const particleProperties& partProp)
     _baryonNmb = partProp._baryonNmb;
     _I         = partProp._I;
     _S         = partProp._S;
-    _C         = partProp._C;
+    _Charm     = partProp._Charm;
     _B         = partProp._B;
     _G         = partProp._G;
     _J         = partProp._J;
@@ -99,18 +99,18 @@ bool
 operator == (const particleProperties& lhsProp,
 	     const particleProperties& rhsProp)
 {
-  return (   (lhsProp._name      == rhsProp._name     )
-          && (lhsProp._mass      == rhsProp._mass     )
-          && (lhsProp._width     == rhsProp._width    )
-          && (lhsProp._baryonNmb == rhsProp._baryonNmb)
-          && (lhsProp._I         == rhsProp._I        )
-          && (lhsProp._S         == rhsProp._S        )
-          && (lhsProp._C         == rhsProp._C        )
-          && (lhsProp._B         == rhsProp._B        )
-          && (lhsProp._G         == rhsProp._G        )
-          && (lhsProp._J         == rhsProp._J        )
-          && (lhsProp._P         == rhsProp._P        )
-	  && (lhsProp._C         == rhsProp._C        ));
+  return (   (lhsProp.name()      == rhsProp.name()     )
+          && (lhsProp.mass()      == rhsProp.mass()     )
+          && (lhsProp.width()     == rhsProp.width()    )
+          && (lhsProp.baryonNmb() == rhsProp.baryonNmb())
+          && (lhsProp.I()         == rhsProp.I()        )
+          && (lhsProp.S()         == rhsProp.S()        )
+          && (lhsProp.Charm()     == rhsProp.Charm()    )
+          && (lhsProp.B()         == rhsProp.B()        )
+          && (lhsProp.G()         == rhsProp.G()        )
+          && (lhsProp.J()         == rhsProp.J()        )
+          && (lhsProp.P()         == rhsProp.P()        )
+	  && (lhsProp.C()         == rhsProp.C()        ));
 }
 
 
@@ -137,7 +137,7 @@ particleProperties::print(ostream& out) const
       << "baryon # = " << _baryonNmb    << ", "
       << "IG(JPC)"     << _I << sign(_G) << "(" << _J << sign(_P) << sign(_C) << "),  "
       << "S = "        << _S            << ", "
-      << "C = "        << _C            << ", "
+      << "Charm = "    << _Charm        << ", "
       << "B = "        << _B
       << endl;
 }
@@ -152,7 +152,7 @@ particleProperties::dump(ostream& out) const
       << _baryonNmb << "\t"
       << _I         << "\t"
       << _S         << "\t" 
-      << _C         << "\t" 
+      << _Charm     << "\t" 
       << _B         << "\t" 
       << _G         << "\t" 
       << _J         << "\t" 
@@ -181,7 +181,7 @@ particleProperties::read(istringstream& line)
            >> _baryonNmb
            >> _I
            >> _S
-           >> _C
+           >> _Charm
            >> _B
            >> _G
            >> _J
@@ -206,13 +206,13 @@ operator >> (istream&            in,
   if (getline(in, line)) {
     // skip comments and empty lines
     while ((line == "") || (line[0] == '#'))
-      if (_debug)
+      if (partProp.debug())
 	printInfo << "ignoring line '" << line << "'" << endl;
       if (!getline(in, line)) {
 	printWarn << "could not find valid particle entry before end of file" << endl;
 	return in;
       }
-    stringstream lineStream(line);
+    istringstream lineStream(line);
     partProp.read(lineStream);
   }
   return in;

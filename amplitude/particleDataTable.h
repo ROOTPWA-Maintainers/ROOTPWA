@@ -40,6 +40,7 @@
 
 
 #include <string>
+#include <map>
 
 #include "particleProperties.h"
 
@@ -51,18 +52,19 @@ namespace rpwa {
 
   public:
 
-    static particleDataTable& instance() { return _instance; }   ///< get singleton instance
+    static particleDataTable& instance() { return _instance; }  ///< get singleton instance
 
-    static bool isInTable(const string& partName) const;
-    static const particleProperties* entry(const std::string& partName) const;   ///< access properties by particle name
+    static bool                      isInTable(const std::string& partName);  ///< returns, whether particle has a table entry
+    static const particleProperties* entry    (const std::string& partName);  ///< access properties by particle name
 
-    typedef dataIterator std::map<std::string, particleData>::const_iterator;
-    static dataIterator begin() { return _dataTable.begin(); }   ///< returns iterator pointing at first entry of particle data table
-    static dataIterator end()   { return _dataTable.end();   }   ///< returns iterator pointing after last entry of particle data table
-    static unsigend int nmbEntries() const { return _dataTable.size(); }   ///< returns number of entries in particle data table
+    static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
+    typedef std::map<std::string, particleProperties>::const_iterator dataIterator;
+    static dataIterator begin() { return _dataTable.begin(); }  ///< returns iterator pointing at first entry of particle data table
+    static dataIterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
 
-    static void print(std::ostream& out) const;  ///< prints particle data in human-readable form
-    static void dump (std::ostream& out) const;  ///< dumps particle properties in format of data file
+
+    static void print(std::ostream& out);  ///< prints particle data in human-readable form
+    static void dump (std::ostream& out);  ///< dumps particle properties in format of data file
     friend std::ostream& operator << (std::ostream&            out,
 				      const particleDataTable& dataTable);
 
@@ -71,10 +73,10 @@ namespace rpwa {
     friend std::istream& operator >> (std::istream&      in,
 				      particleDataTable& dataTable);
 
-    static void reset() { _dataTable.clear(); }
+    static void reset() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
-    static bool debug() const { return _debug; }
-    static void setDebug(const bool debug = true) { _debug = debug; }
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
   private:
@@ -84,8 +86,8 @@ namespace rpwa {
     particleDataTable (const particleDataTable&);
     particleDataTable& operator = (const particleDataTable&);
 
-    static particleDataTable                   _instance;   ///< singleton instance
-    static std::map<std::string, particleData> _dataTable;  ///< map with particle data
+    static particleDataTable                         _instance;   ///< singleton instance
+    static std::map<std::string, particleProperties> _dataTable;  ///< map with particle data
 
     static bool _debug;  ///< if set to true, debug messages are printed
 
