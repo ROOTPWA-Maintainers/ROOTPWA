@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2009
+//    Copyright 2010
 //
 //    This file is part of rootpwa
 //
@@ -51,25 +51,30 @@ namespace rpwa {
 
   public:
 
-    static particleDataTable& instance() { return _instance; }
+    static particleDataTable& instance() { return _instance; }   ///< get singleton instance
 
-    static const particleProperties* operator [] (const string& partName);   ///< access properties by particle name
-    typedef iterator = std::map<std::string, particleData>::const_iterator;
-    static iterator begin() { return _dataTable.begin(); } 
-    static iterator end()   { return _dataTable.end();   } 
-    static unsigend int nmbEntries() const { return _dataTable.size(); }
+    static bool isInTable(const string& partName) const;
+    static const particleProperties* entry(const std::string& partName) const;   ///< access properties by particle name
+
+    typedef dataIterator std::map<std::string, particleData>::const_iterator;
+    static dataIterator begin() { return _dataTable.begin(); }   ///< returns iterator pointing at first entry of particle data table
+    static dataIterator end()   { return _dataTable.end();   }   ///< returns iterator pointing after last entry of particle data table
+    static unsigend int nmbEntries() const { return _dataTable.size(); }   ///< returns number of entries in particle data table
 
     static void print(std::ostream& out) const;  ///< prints particle data in human-readable form
     static void dump (std::ostream& out) const;  ///< dumps particle properties in format of data file
-    friend std::ostream& operator << (std::ostream&             out,
-				      const particleProperties& partProp);
+    friend std::ostream& operator << (std::ostream&            out,
+				      const particleDataTable& dataTable);
 
-    static bool readFile(const string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
+    static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
     static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
-    friend std::istream& operator << (std::istream&       in,
-				      particleProperties& partProp);
+    friend std::istream& operator >> (std::istream&      in,
+				      particleDataTable& dataTable);
 
     static void reset() { _dataTable.clear(); }
+
+    static bool debug() const { return _debug; }
+    static void setDebug(const bool debug = true) { _debug = debug; }
 
 
   private:
@@ -78,11 +83,12 @@ namespace rpwa {
     ~particleDataTable() { }
     particleDataTable (const particleDataTable&);
     particleDataTable& operator = (const particleDataTable&);
-  
 
     static particleDataTable                   _instance;   ///< singleton instance
     static std::map<std::string, particleData> _dataTable;  ///< map with particle data
-	
+
+    static bool _debug;  ///< if set to true, debug messages are printed
+
   };
 
 

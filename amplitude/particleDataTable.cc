@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2009
+//    Copyright 2010
 //
 //    This file is part of rootpwa
 //
@@ -35,6 +35,9 @@
 //-------------------------------------------------------------------------
 
 
+#include <fstream>
+#include <iomanip>
+
 #include "utilities.h"
 #include "particleDataTable.h"
 
@@ -43,122 +46,111 @@ using namespace std;
 using namespace rpwa;
 
 
-// static member initialization
-particleDataTable particleDataTable::_instance;
-
-	
-
+particleDataTable         particleDataTable::_instance;
+map<string, particleData> particleDataTable::_dataTable;
+bool                      particleDataTable::_debug = false;
 
 
-
-
-
-void
-particleDataTable::initialize(const char* PDTfile)
+bool
+particleDataTable::isInTable(const string& partName) const
 {
-  string name;
-  double mass, width;
-  int isospin, gparity, spin, parity,cparity;
-  ifstream ifs(PDTfile);
-	
-  while (!(ifs >> name).eof()) {
-    ifs >> mass;
-    ifs >> width;
-    ifs >> isospin;
-    ifs >> gparity;
-    ifs >> spin;
-    ifs >> parity;
-    ifs >> cparity;
-    insert(particleData(name, mass, width, isospin, gparity, spin, parity, cparity));
-  }
+  if (_dataTable.find(partName) == _dataTable.end()) {
+    return false;
+  } else
+    return true;
+}
+
+
+const particleProperties*
+particleDataTable::entry(const string& partName) const
+{
+  dataIterator i = _dataTable.find(partName);
+  if (i == _dataTable.end()) {
+    printWarn << "could not find entry for particle '" << partName << "'" << endl;
+    return 0;
+  } else
+    return &(i->second);
 }
 
 
 void
-particleDataTable::insert(const particleData& p)
+particleDataTable::print(ostream& out) const
 {
-  head = new tableEntry(p, head);
-}
-
-
-void
-particleDataTable::print() const
-{
-  tableEntry* te = this->head;
-  while (te != NULL) {
-    te->print();
-    te = te->next();
+  unsigned int countEntries = 0;
+  for (dataIterator i = begin(); i != end(); ++i) {
+    ++countEntries;
+    out << "entry " << setw(3) << countEntries << ": " << i->second << endl;
   }
 }
 
 
 void
-particleDataTable::dump() const
+particleDataTable::dump(ostream& out) const
 {
-  tableEntry* te = this->head;
-  while (te != NULL) {
-    te->dump();
-    te = te->next();
+  for (dataIterator i = begin(); i != end(); ++i) {
+    i->second.dump(out);
+    out << endl;
   }
 }
 
 
-int
-particleDataTable::ListLen() const
+ostream&
+operator << (ostream&                 out,
+	     const particleDataTable& dataTable)
 {
-  int len = 0;
-  tableEntry* te = this->head;
-  while (te != NULL) {
-    len++;
-    te = te->next();
+  dataTable.print(out);
+  return out;
+}
+
+
+bool
+particleDataTable::readFile(const string& fileName)
+{
+  if (_debug)
+    printInfo << "opening particle data file '" << fileName << "'" << endl;
+  ifstream file(fileName.c_str());
+  if (!file || !file.good()) {
+    printWarn << "cannot open file '" << fileName << "'" << endl;
+    return false;
   }
-  return(len);
+  return read(file);
 }
-	
 
-char**
-particleDataTable::List() const
+
+bool
+particleDataTable::read(istream& in)
 {
-  int particleno = 0;
-  int listlen = ListLen();
-  particleData p;
-  char** list;
-  list = (char**) malloc(listlen * sizeof(char*));
-  tableEntry *te = this->head;
-  while (te != NULL) {
-    p = te->Particle();
-    list[particleno] = (char*) malloc(((p.Name().length()) + 1) * sizeof(char));
-    strcpy(list[particleno], p.Name().c_str());
-    //     p.Name().to_char_type(list[particleno]);
-    particleno++;
-    te = te->next();
+  if (!in || !in.good()) {
+    printWarn << "cannot read from input stream" << endl;
+    return false;
   }
-  return(list);
-}
- 
-
-particleData
-particleDataTable::get(const string& name) const
-{
-  tableEntry* te = this->head;
-  while (te != NULL) {
-    if ((te->Particle()).Name() == name)
-      return te->Particle();
-    te = te->next();
+  unsigned int countEntries = 0;
+  while (in.good()) {
+    particleProperties partProp;
+    if (in >> partProp) {
+      const string name = partProp.name();
+      dataIterator i    = _dataTable.find(name);
+      if (i != _dataTable.end()) {
+	printWarn << "trying to add data for particle " << name
+		  << " which already exists in table"   << endl
+		  << "    existing entry: " << *i       << endl
+		  << "    conflicts with: " << partProp << endl;
+      } else {
+	_dataTable[name] = partProp;
+	if (_debug)
+	  printInfo << "added entry for '" << name << "' into particle data table" << endl;
+	++countEntries;
+      }
+    }
   }
-  return particleData(); 
+  printInfo << "successfully read " << countEntries << " new entries into particle data table" << endl;
 }
 
 
-double
-particleDataTable::mass(const string& name) const
+istream&
+operator >> (istream&           in,
+	     particleDataTable& dataTable)
 {
-  return this->get(name).Mass();
-}
-
-
-double
-particleDataTable::width(const string& name) const
-{
-  return this->get(name).Width();
+  dataTable.read(in);
+  return in;
 }

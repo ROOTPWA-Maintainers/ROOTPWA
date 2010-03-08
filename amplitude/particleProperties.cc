@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2009
+//    Copyright 2010
 //
 //    This file is part of rootpwa
 //
@@ -36,18 +36,21 @@
 
 
 #include "utilities.h"
+#include "particleDataTable.h"
 #include "particleProperties.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
+
+bool particleProperties::_debug = false;
+
 	
 particleProperties::particleProperties()
   : _name     (""),
     _mass     (0),
     _width    (0),
-    _charge   (0),
     _baryonNmb(0),
     _I        (0),
     _S        (0),
@@ -78,7 +81,6 @@ particleProperties::operator = (const particleProperties& partProp)
     _name      = partProp._name;
     _mass      = partProp._mass;
     _width     = partProp._width;
-    _charge    = partProp._charge;
     _baryonNmb = partProp._baryonNmb;
     _I         = partProp._I;
     _S         = partProp._S;
@@ -100,7 +102,6 @@ operator == (const particleProperties& lhsProp,
   return (   (lhsProp._name      == rhsProp._name     )
           && (lhsProp._mass      == rhsProp._mass     )
           && (lhsProp._width     == rhsProp._width    )
-          && (lhsProp._charge    == rhsProp._charge   )
           && (lhsProp._baryonNmb == rhsProp._baryonNmb)
           && (lhsProp._I         == rhsProp._I        )
           && (lhsProp._S         == rhsProp._S        )
@@ -113,14 +114,27 @@ operator == (const particleProperties& lhsProp,
 }
 
 
+bool
+particleProperties::fillFromDataTable(const string& name)
+{
+  const particleProperties* partProp = particleDataTable::instance().entry(name);
+  if (!partProp) {
+    printWarn << "trying to fill particle properties for '" << name << "' from non-existing table entry" << endl;
+    return false;
+  } else {
+    *this = *partProp;
+    return true;
+  }
+}
+
+
 void
 particleProperties::print(ostream& out) const
 {
   out << "particle '"  << _name         << "': "
       << "mass = "     << _mass         << ", "
       << "width = "    << _width        << ", "
-      << "charge = "   << sign(_charge) << ", "
-      << "baryon # = " << _baryonNmb    << endl
+      << "baryon # = " << _baryonNmb    << ", "
       << "IG(JPC)"     << _I << sign(_G) << "(" << _J << sign(_P) << sign(_C) << "),  "
       << "S = "        << _S            << ", "
       << "C = "        << _C            << ", "
@@ -147,8 +161,9 @@ particleProperties::dump(ostream& out) const
 }
 
 
-ostream& operator << (ostream&                  out,
-		      const particleProperties& partProp)
+ostream&
+operator << (ostream&                  out,
+	     const particleProperties& partProp)
 {
   partProp.print(out);
   return out;
@@ -158,6 +173,8 @@ ostream& operator << (ostream&                  out,
 bool
 particleProperties::read(istringstream& line)
 {
+  if (_debug)
+    printInfo << "trying to read particle properties from line '" << line << "' ... " << flush;
   if (line >> _name
            >> _mass
            >> _width
@@ -169,20 +186,32 @@ particleProperties::read(istringstream& line)
            >> _G
            >> _J
            >> _P
-           >> _C)
+           >> _C) {
+    if (_debug)
+      cout << "success" << endl
+	   << *this     << endl;
     return true;
-  else {
+  } else {
     printWarn << "problems reading particle data from line '" << line.str() << "'" << endl;
     return false;
   }
 }
 
 
-istream& operator << (istream&            in,
-		      particleProperties& partProp)
+istream&
+operator >> (istream&            in,
+	     particleProperties& partProp)
 {
   string line;
   if (getline(in, line)) {
+    // skip comments and empty lines
+    while ((line == "") || (line[0] == '#'))
+      if (_debug)
+	printInfo << "ignoring line '" << line << "'" << endl;
+      if (!getline(in, line)) {
+	printWarn << "could not find valid particle entry before end of file" << endl;
+	return in;
+      }
     stringstream lineStream(line);
     partProp.read(lineStream);
   }
