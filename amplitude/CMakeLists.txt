@@ -56,6 +56,7 @@ SET(SOURCES
   particleDataTable.cc
   particle.cc
   vertex.cc
+  diffractiveDissVertex.cc
 )
 	    
 # define ROOT libraries
@@ -100,8 +101,15 @@ TARGET_LINK_LIBRARIES(${THIS_LIB} ${BOOST_LIBS})
 #------- Main executables ------------------------
 #-------------------------------------------------
 
-ADD_EXECUTABLE(testParticle testParticle.cc)
-TARGET_LINK_LIBRARIES(testParticle ${THIS_LIB})
+SET(THIS_EXE testParticle)
+ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
+TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
+
+SET(THIS_EXE testDecayTopology)
+ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
+TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
+#ADD_EXECUTABLE(testDecayTopology testDecayTopology.cc)
+#TARGET_LINK_LIBRARIES(testDecayTopology ${THIS_LIB})
 
 
 #-------------------------------------------------

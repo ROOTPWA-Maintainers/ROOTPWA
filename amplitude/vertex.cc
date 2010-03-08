@@ -25,10 +25,11 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      virtual base class that desbribes general interaction vertex between particles
-//      only pointers to partciles are stored
-//      vertex does not "own" its particles; creation and destruction
-//      of particles has to be done in calling code
+//      base class that desbribes general interaction vertex between particles
+//      !NOTE! class stores pointers to particles, which are inserted via
+//             references in order to ensure existence of objects; the calling
+//             code has to ensure that lifetime of the particle instances is
+//             longer than life time of the vertex instances they are assigned to
 //
 //
 // Author List:
@@ -85,14 +86,44 @@ vertex::operator = (const vertex& vert)
 // }
 
 
+bool
+vertex::addInParticle (particle& part)
+{
+  if (_debug)
+    printInfo << "adding incoming " << part << endl;
+  _inParticles.push_back(&part);
+  return true;
+}
+
+
+bool
+vertex::addOutParticle(particle& part)
+{
+  if (_debug)
+    printInfo << "adding outgoing " << part << endl;
+  _outParticles.push_back(&part);
+  return true;
+}
+
+
+bool
+vertex::dataValid() const
+{
+  if ((nmbInParticles() >= 1) && (nmbOutParticles() >= 1))
+    return true;
+  else
+    return false;
+}
+
+
 ostream&
 vertex::print(ostream& out) const
 {
   out << "vertex incoming particles:" << endl;
   for (unsigned int i = 0; i < _inParticles.size(); ++i)
-    _inParticles[i]->print(out);
+    out << *(_inParticles[i]) << endl;
   out << "vertex outgoing particles:" << endl;
   for (unsigned int i = 0; i < _outParticles.size(); ++i)
-    _outParticles[i]->print(out);
+    out << *(_outParticles[i]) << endl;
   return out;
 }

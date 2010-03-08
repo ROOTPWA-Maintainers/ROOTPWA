@@ -25,7 +25,10 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      container class for all external particle related information
+//      class that describes production vertex in diffractive dissociation
+//      beam-Reggeon-(X-system) vertex has exactly one incoming beam and
+//      one outgoing X particle, which unambiguously defines the Reggeon
+//      kinematics
 //
 //
 // Author List:
@@ -36,70 +39,62 @@
 
 
 #include "utilities.h"
-#include "particle.h"
+#include "diffractiveDissVertex.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
 
-bool particle::_debug = false;
-
-
-particle::particle()
-  : particleProperties(),
-    _charge           (0),
-    _lzVec            ()
-{ }
-
-
-particle::particle(const particle& part)
+diffractiveDissVertex::diffractiveDissVertex(particle& beam,
+					     particle& XSystem)
+  : vertex()
 {
-  *this = part;
+  vertex::addInParticle (beam);
+  vertex::addOutParticle(XSystem);
 }
 
 
-particle::particle(const int                 charge,
-		   const TVector3&           momentum,
-		   const particleProperties& partProp)
-  : particleProperties(partProp),
-    _charge           (charge),
-    _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())))
-{ }
-
-	
-particle::particle(const string&   partName,
-		   const int       charge,
-		   const TVector3& momentum)
-  : _charge(charge)
+diffractiveDissVertex::diffractiveDissVertex(const diffractiveDissVertex& vert)
 {
-  fillFromDataTable(partName);
-  _lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
+  *this = vert;
 }
 
-	
-particle::~particle()
+
+diffractiveDissVertex::~diffractiveDissVertex()
 { }
 
 
-particle&
-particle::operator = (const particle& part)
+diffractiveDissVertex&
+diffractiveDissVertex::operator = (const diffractiveDissVertex& vert)
 {
-  if (this != &part) {
-    particleProperties::operator = (part);
-    _charge = part._charge;
-    _lzVec  = part._lzVec;
-  }
+  if (this != &vert)
+    vertex::operator = (vert);
   return *this;
 }
 
 
-ostream&
-particle::print(ostream& out) const
+bool
+diffractiveDissVertex::dataValid() const
 {
-  particleProperties::print(out);
-  out << ", "
-      << "charge = "         << sign(_charge) << ", "
-      << "Lorentz-vector = " << _lzVec;
+  if ((nmbInParticles() == 1) && (nmbOutParticles() == 1))
+    return true;
+  else
+    return false;
+}
+
+
+ostream&
+diffractiveDissVertex::print(ostream& out) const
+{
+  if (dataValid()) {
+    out << "diffractive dissociation vertex beam particle:" << endl
+	<< *(inParticles()[0]) << endl
+	<< "diffractive dissociation vertex X-system:" << endl
+	<< *(outParticles()[0]) << endl;
+  } else {
+    printWarn << "diffractive dissociation vertex data are incomplete or not valid" << endl;
+    vertex::print(out);
+  }
   return out;
 }

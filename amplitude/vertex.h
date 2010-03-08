@@ -25,10 +25,11 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      virtual base class that desbribes general interaction vertex between particles
-//      only pointers to partciles are stored
-//      vertex does not "own" its particles; creation and destruction
-//      of particles has to be done in calling code
+//      base class that desbribes general interaction vertex between particles
+//      !NOTE! class stores pointers to particles, which are inserted via
+//             references in order to ensure existence of objects; the calling
+//             code has to ensure that lifetime of the particle instances is
+//             longer than life time of the vertex instances they are assigned to
 //
 //
 // Author List:
@@ -62,14 +63,17 @@ namespace rpwa {
     virtual vertex& operator = (const vertex& vert);
     //vertex& operator *= (const lorentzTransform& L);
 
-    virtual void addInParticle (particle* part) { _inParticles.push_back (part); }  ///< adds an incoming particle to vertex
-    virtual void addOutParticle(particle* part) { _outParticles.push_back(part); }  ///< adds an outgoing particle to vertex
+    virtual bool addInParticle (particle& part);  ///< adds an incoming particle to vertex
+    virtual bool addOutParticle(particle& part);  ///< adds an outgoing particle to vertex
 
-    virtual const std::vector<particle*>& inParticles () { return _inParticles;  }  ///< returns array of incoming particles
-    virtual const std::vector<particle*>& outParticles() { return _outParticles; }  ///< returns array of outgoing particles
+    virtual const std::vector<particle*>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
+    virtual const std::vector<particle*>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
 
-    virtual std::complex<double> amplitude() = 0;  ///< returns vertex amplitude
-		
+    virtual unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
+    virtual unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles
+
+    virtual bool dataValid() const;  ///< indicates whether vertex data are complete and valid
+
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag

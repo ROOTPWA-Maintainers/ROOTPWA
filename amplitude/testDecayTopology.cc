@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      container class for all external particle related information
+//      basic test program for vertex and decay topology
 //
 //
 // Author List:
@@ -35,71 +35,47 @@
 //-------------------------------------------------------------------------
 
 
-#include "utilities.h"
-#include "particle.h"
+#include "TVector3.h"
 
-	
+#include "utilities.h"
+#include "particleDataTable.h"
+#include "particle.h"
+#include "diffractiveDissVertex.h"
+//#include "isobarDecayVertex.h"
+
+
 using namespace std;
 using namespace rpwa;
 
 
-bool particle::_debug = false;
-
-
-particle::particle()
-  : particleProperties(),
-    _charge           (0),
-    _lzVec            ()
-{ }
-
-
-particle::particle(const particle& part)
+int
+main(int argc, char** argv)
 {
-  *this = part;
-}
 
-
-particle::particle(const int                 charge,
-		   const TVector3&           momentum,
-		   const particleProperties& partProp)
-  : particleProperties(partProp),
-    _charge           (charge),
-    _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())))
-{ }
-
-	
-particle::particle(const string&   partName,
-		   const int       charge,
-		   const TVector3& momentum)
-  : _charge(charge)
-{
-  fillFromDataTable(partName);
-  _lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
-}
-
-	
-particle::~particle()
-{ }
-
-
-particle&
-particle::operator = (const particle& part)
-{
-  if (this != &part) {
-    particleProperties::operator = (part);
-    _charge = part._charge;
-    _lzVec  = part._lzVec;
+  if (1) {
+    // switch on debug output
+    //particleProperties::setDebug(true);
+    // particleDataTable::setDebug(true);
+    particle::setDebug(true);
+    vertex::setDebug(true);
   }
-  return *this;
-}
 
+  particleDataTable& pdt = particleDataTable::instance();
+  pdt.readFile();
 
-ostream&
-particle::print(ostream& out) const
-{
-  particleProperties::print(out);
-  out << ", "
-      << "charge = "         << sign(_charge) << ", "
-      << "Lorentz-vector = " << _lzVec;
-  return out;
+  // test construction of vertices
+  if (1) {
+    TVector3 mom;
+    mom = TVector3(1, 2, 3);
+    particle beam("pi", -1, mom);
+    mom = TVector3(2, 3, 4);
+    particle X("X", -1, mom);
+    printInfo << "created particles: " << endl
+	      << beam << endl
+	      << X    << endl;
+    diffractiveDissVertex vert(beam, X);
+    printInfo << "created vertex: " << endl
+	      << vert;
+  }
+
 }
