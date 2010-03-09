@@ -33,6 +33,8 @@
 #include <string>
 #include "Rtypes.h"
 
+#include "TGraphErrors.h"
+
 // Collaborating Class Declarations --
 
 class TFile;
@@ -62,12 +64,41 @@ namespace rpwa {
     std::string mtreename;
     std::string mbranchname;
 
-    double totalLogLikelihood;
-    double totalPerEventLogLikelihood;
-    double totalEvidence;
-    double totalPerEventEvidence;
-    unsigned int numBins;
+
+    void setLikelihoods(double logli,double logliperevt,
+			double evi, double eviperevt){
+      mTotalLogLikelihood=logli;
+      mTotalPerEventLogLikelihood=logliperevt;
+      mTotalEvidence=evi;
+      mTotalPerEventEvidence=eviperevt;
+    }
+    double mTotalLogLikelihood;
+    double mTotalPerEventLogLikelihood;
+    double mTotalEvidence;
+    double mTotalPerEventEvidence;
+
+    void setBinRange(double min, double max, unsigned int n){
+      mMin=min; mMax=max; mNumBins=n;
+    }
+    double mMin; // minimum mass bin in fit
+    double mMax; // maximum mass bin in fit
+    unsigned int mNumBins;
    
+    
+
+  };
+
+
+  /// \brief Decorator for TGraph to carry index to fit 
+  /// this is needed for density calculation
+  class TPwaFitGraphErrors : public TGraphErrors {
+  public:
+    TPwaFitGraphErrors() : TGraphErrors(), fitindex(0){}
+    TPwaFitGraphErrors(unsigned int n, unsigned int i): TGraphErrors(n),fitindex(i){}
+    virtual ~TPwaFitGraphErrors(){};
+    unsigned int fitindex;
+    
+    ClassDef(TPwaFitGraphErrors,1);
   };
 
 
@@ -99,7 +130,7 @@ public:
   /// \brief Create 2D density plots of the intensities
   /// This will produce a wheighted probability density profile
   /// combining the information of all the fits added
-  //void produceDensityPlots(); 
+  void produceDensityPlots(); 
 
   // Operations ----------------------
   void writeAllIntensities(std::string filename);

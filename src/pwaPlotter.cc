@@ -30,7 +30,9 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TH2D.h"
+#include "TF1.h"
 #include "TMultiGraph.h"
+#include "TAxis.h"
 #include "TGraphErrors.h"
 #include "fitResult.h"
 
@@ -38,6 +40,40 @@
 
 using namespace std;
 using namespace rpwa;
+
+TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
+  
+  unsigned int ybins=h->GetNbinsY();
+  unsigned int xpoints=g->GetN();
+  TAxis* ax=h->GetYaxis();
+  double ymin=ax->GetXmin();
+  double ymax=ax->GetXmax();
+
+  TF1 gaus("gaus","gausn(0)",ymin,ymax);
+
+  for(unsigned int ip=0; ip<xpoints; ++ip){
+    double x=g->GetX()[ip];
+    double err=g->GetEY()[ip];
+    double val=g->GetY()[ip];
+
+    
+    gaus.SetParameters(1,val,err);
+    for(unsigned int ibin=1; ibin<ybins;++ibin){
+      double y=ax->GetBinCenter(ibin);
+      if(fabs(y-val)<5.*err){
+	double w=gaus.Eval(ax->GetBinCenter(ibin))*weight;
+	h->Fill(x,y,w);
+      }
+    }
+  }
+  return h;
+}
+
+
+
+
+
+
 
   ClassImp(pwaPlotter);
 
@@ -72,6 +108,8 @@ using namespace rpwa;
       return;
     }
     
+    unsigned int ifit=mResultMetaInfo.size();
+       
     intree->SetBranchAddress(branchname.c_str(),&result);
     unsigned int nbins=intree->GetEntries();
     // extract info for this fit
@@ -119,7 +157,7 @@ using namespace rpwa;
     // create graphs for this fit
     set<string>::iterator it=mWavenames.begin();
     while(it!=mWavenames.end()){
-      TGraphErrors* g = new TGraphErrors(nbins);
+      TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins,ifit);
       stringstream graphName;
       graphName << "g" << title << "_" << *it;
       g->SetName (graphName.str().c_str());
@@ -127,8 +165,8 @@ using namespace rpwa;
       g->SetMarkerStyle(21);
       g->SetMarkerSize(0.5);
       g->SetMarkerColor(colour);
-      g->SetLineColor  (colour);
-      mIntensities[*it]->Add(g);
+      g->SetLineColor(colour);
+      mIntensities[*it]->Add(g,"p");
       ++it;
     }
     // loop again over fitResults and extract all info simultaneously
@@ -139,7 +177,7 @@ using namespace rpwa;
       while(it!=mIntensities.end()){
 	TGraphErrors* g=dynamic_cast<TGraphErrors*>(it->second->GetListOfGraphs()->Last());
 	g->SetPoint(i,
-		    result->massBinCenter(),
+		    result->massBinCenter()*0.001,
 		    result->intensity(it->first.c_str()));
 	g->SetPointError(i,
 		    binwidth,
@@ -151,6 +189,14 @@ using namespace rpwa;
 
 
     // write MetaInfo
+    fitResultMetaInfo meta(filename,
+			   title,
+			   colour,treename,
+			   branchname);
+    meta.setLikelihoods(logli,logliperevt,evi,eviperevt);
+    meta.setBinRange(mass_min-binwidth*0.5,mass_max+binwidth*0.5,nbins);
+    mResultMetaInfo.push_back(meta);
+    
     
     
   }
@@ -165,10 +211,62 @@ pwaPlotter::registerWave(const std::string& wavename){
     // create intensity graph:
     mIntensities[wavename]=new TMultiGraph();
     mIntensities[wavename]->SetTitle(wavename.c_str());
+    mIntensities[wavename]->SetName(wavename.c_str());
   }
   
   return inserted.second;
 }
+
+
+void 
+pwaPlotter::produceDensityPlots(){
+ map<string,TMultiGraph*>::iterator it=mIntensities.begin();
+  while(it!=mIntensities.end()){
+    // get ranges
+    TList* graphs=it->second->GetListOfGraphs();
+    unsigned int ng=graphs->GetEntries();
+    double xmin=1E9;double ymin=1E9;
+    double xmax=0; double ymax=-1E9;
+    unsigned int nbins=0;
+    for(unsigned int ig=0;ig<ng;++ig){
+      TPwaFitGraphErrors* g=dynamic_cast<TPwaFitGraphErrors*>(graphs->At(ig));
+      double xmin1,xmax1,ymin1,ymax1;
+      g->ComputeRange(xmin1,ymin1,xmax1,ymax1);
+
+      if(ymin > ymin1)ymin=ymin1;
+      if(ymax < ymax1)ymax=ymax1;
+      unsigned int ifit=g->fitindex;
+      if(xmin > mResultMetaInfo[ifit].mMin)xmin=mResultMetaInfo[ifit].mMin;
+      if(xmax < mResultMetaInfo[ifit].mMax)xmax=mResultMetaInfo[ifit].mMax;
+      if(nbins< mResultMetaInfo[ifit].mNumBins)
+	nbins=mResultMetaInfo[ifit].mNumBins;
+    }
+    double r=fabs(ymax-ymin)*0.1;
+    // create 2D Histogram:
+    string name="d";name.append(it->first);
+    
+    cerr << ymin << " .. " << ymax << endl;
+    TH2D* h=new TH2D(name.c_str(),name.c_str(),
+		     nbins,xmin,xmax,
+		     400,ymin-r,ymax+r);
+    
+    mIntensityDensityPlots[it->first]=h;
+    
+    // fill histo
+    for(unsigned int ig=0;ig<ng;++ig){
+      TPwaFitGraphErrors* g=dynamic_cast<TPwaFitGraphErrors*>(graphs->At(ig));
+      //double likeli=0;
+      h=drawDensity(g,h,1);
+    }
+    ++it;
+  }
+
+}
+
+
+
+
+
 
 
 void 
@@ -184,6 +282,7 @@ pwaPlotter::writeAllIntensities(std::string filename){
 }
 
 
+
 void 
 pwaPlotter::writeAllIntensities(TFile* outfile){
   outfile->cd();
@@ -192,6 +291,11 @@ pwaPlotter::writeAllIntensities(TFile* outfile){
     it->second->Write();
     ++it;
   }
+  map<string,TH2D*>::iterator itd=mIntensityDensityPlots.begin();
+  while(itd!=mIntensityDensityPlots.end()){
+    itd->second->Write();
+    ++itd;
+  } 
 }
 
 
