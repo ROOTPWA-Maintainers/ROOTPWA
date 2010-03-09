@@ -33,6 +33,7 @@
 #include "TF1.h"
 #include "TMultiGraph.h"
 #include "TAxis.h"
+#include "TMath.h"
 #include "TGraphErrors.h"
 #include "fitResult.h"
 
@@ -255,8 +256,10 @@ pwaPlotter::produceDensityPlots(){
     // fill histo
     for(unsigned int ig=0;ig<ng;++ig){
       TPwaFitGraphErrors* g=dynamic_cast<TPwaFitGraphErrors*>(graphs->At(ig));
+      unsigned int ifit=g->fitindex;
+      double w=mResultMetaInfo[ifit].mTotalPerEventLogLikelihood/(double)mResultMetaInfo[ifit].mNumBins;
       //double likeli=0;
-      h=drawDensity(g,h,1);
+      h=drawDensity(g,h,TMath::Exp(w));
     }
     ++it;
   }
