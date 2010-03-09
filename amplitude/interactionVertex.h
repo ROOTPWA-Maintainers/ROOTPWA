@@ -39,8 +39,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef VERTEX_H
-#define VERTEX_H
+#ifndef INTERACTIONVERTEX_H
+#define INTERACTIONVERTEX_H
 
 
 #include <iostream>
@@ -52,16 +52,16 @@
 
 namespace rpwa {
 
-  class vertex {
+  class interactionVertex {
 
   public:
   
-    vertex();
-    vertex(const vertex& vert);
-    virtual ~vertex();
+    interactionVertex();
+    interactionVertex(const interactionVertex& vert);
+    virtual ~interactionVertex();
 		
-    virtual vertex& operator = (const vertex& vert);
-    //vertex& operator *= (const lorentzTransform& L);
+    virtual interactionVertex& operator = (const interactionVertex& vert);
+    //interactionVertex& operator *= (const lorentzTransform& L);
 
     virtual bool addInParticle (particle& part);  ///< adds an incoming particle to vertex
     virtual bool addOutParticle(particle& part);  ///< adds an outgoing particle to vertex
@@ -94,11 +94,11 @@ namespace rpwa {
 
   inline
   std::ostream&
-  operator << (std::ostream& out,
-	       const vertex& vert) { return vert.print(out); }
+  operator << (std::ostream&            out,
+	       const interactionVertex& vert) { return vert.print(out); }
 
 
 } // namespace rpwa
 
 
-#endif  // VERTEX_H
+#endif  // INTERACTIONVERTEX_H

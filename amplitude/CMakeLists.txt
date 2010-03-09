@@ -44,6 +44,9 @@ SET(THIS_LIB rootPwaAmplitude)
 ENABLE_TESTING()
 
 
+SET(CMAKE_CXX_FLAGS_NONE "${CMAKE_CXX_FLAGS_NONE} -Wno-deprecated")
+
+
 SET(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR}/src
@@ -55,7 +58,7 @@ SET(SOURCES
   particleProperties.cc
   particleDataTable.cc
   particle.cc
-  vertex.cc
+  interactionVertex.cc
   diffractiveDissVertex.cc
   isobarDecayVertex.cc
 )
@@ -86,6 +89,7 @@ SET(ROOT_LIBS
 # define BOOST libraries
 SET(BOOST_LIBS
 #  boost_graph
+  /usr/lib/libboost_graph.so
 )
 
 

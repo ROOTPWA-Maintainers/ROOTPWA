@@ -41,12 +41,12 @@
 #define ISOBARDECAYVERTEX_H
 
 
-#include "vertex.h"
+#include "interactionVertex.h"
 
 
 namespace rpwa {
 
-  class isobarDecayVertex : public vertex {
+  class isobarDecayVertex : public interactionVertex {
 
   public:
   
@@ -69,10 +69,10 @@ namespace rpwa {
     particle& daughter2() { return *(outParticles()[0]); }  ///< returns second daughter particle
     
     unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters
-    unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters
+    unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)
 
     void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters
-    void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters
+    void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 
@@ -80,7 +80,7 @@ namespace rpwa {
   private:
     
     unsigned int _L;  ///< relative orbital angular momentum between the two daughters
-    unsigned int _S;  ///< total spin of the two daughters
+    unsigned int _S;  ///< total spin of the two daughters * 2 (!!!)
 
   };
 

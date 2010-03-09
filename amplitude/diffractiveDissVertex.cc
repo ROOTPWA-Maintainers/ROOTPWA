@@ -48,10 +48,10 @@ using namespace rpwa;
 
 diffractiveDissVertex::diffractiveDissVertex(particle& beam,
 					     particle& XSystem)
-  : vertex()
+  : interactionVertex()
 {
-  vertex::addInParticle (beam);
-  vertex::addOutParticle(XSystem);
+  interactionVertex::addInParticle (beam);
+  interactionVertex::addOutParticle(XSystem);
 }
 
 

@@ -49,6 +49,7 @@ bool particle::_debug = false;
 particle::particle()
   : particleProperties(),
     _charge           (0),
+    _spinProj         (0),
     _lzVec            ()
 { }
 
@@ -59,19 +60,23 @@ particle::particle(const particle& part)
 }
 
 
-particle::particle(const int                 charge,
-		   const TVector3&           momentum,
-		   const particleProperties& partProp)
+particle::particle(const particleProperties& partProp,
+		   const int                 charge,
+		   const int                 spinProj,
+		   const TVector3&           momentum)
   : particleProperties(partProp),
     _charge           (charge),
+    _spinProj         (spinProj),
     _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())))
 { }
 
 	
 particle::particle(const string&   partName,
 		   const int       charge,
+		   const int       spinProj,
 		   const TVector3& momentum)
-  : _charge(charge)
+  : _charge  (charge),
+    _spinProj(spinProj)
 {
   fillFromDataTable(partName);
   _lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
@@ -87,8 +92,9 @@ particle::operator = (const particle& part)
 {
   if (this != &part) {
     particleProperties::operator = (part);
-    _charge = part._charge;
-    _lzVec  = part._lzVec;
+    _charge   = part._charge;
+    _spinProj = part._spinProj;
+    _lzVec    = part._lzVec;
   }
   return *this;
 }
@@ -99,7 +105,8 @@ particle::print(ostream& out) const
 {
   particleProperties::print(out);
   out << ", "
-      << "charge = "         << sign(_charge) << ", "
-      << "Lorentz-vector = " << _lzVec;
+      << "charge = "          << sign(_charge) << ", "
+      << "spin projection = " << _spinProj     << ", "
+      << "Lorentz-vector = "  << _lzVec;
   return out;
 }

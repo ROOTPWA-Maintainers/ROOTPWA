@@ -55,21 +55,25 @@ namespace rpwa {
 			
     particle();
     particle(const particle&           part);
-    particle(const int                 charge,
-	     const TVector3&           momentum,
-	     const particleProperties& partProp);
+    particle(const particleProperties& partProp,
+	     const int                 charge,
+	     const int                 spinProj = 0,
+	     const TVector3&           momentum = TVector3());
     particle(const std::string&        partName,
 	     const int                 charge,
-	     const TVector3&           momentum);
+	     const int                 spinProj = 0,
+	     const TVector3&           momentum = TVector3());
     virtual ~particle();
 
     particle& operator = (const particle& part);
 
-    int            charge() const { return _charge; }  ///< returns particle's charge
-    TLorentzVector lzVec()  const { return _lzVec;  }  ///< returns Lorentz vector of particle
+    int            charge()   const { return _charge;   }  ///< returns particle's charge
+    int            spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
+    TLorentzVector lzVec()    const { return _lzVec;    }  ///< returns Lorentz vector of particle
 
-    void setCharge  (const int       charge)   { _charge = charge;                                                            }  ///< sets particle's charge
-    void setMomentum(const TVector3& momentum) { _lzVec  = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
+    void setCharge  (const int       charge)   { _charge   = charge;                                                            }  ///< sets particle's charge
+    void setSpinProj(const int       spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
+    void setMomentum(const TVector3& momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
 
     std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
@@ -79,8 +83,9 @@ namespace rpwa {
 
   private:
 			
-    int            _charge;  ///< charge
-    TLorentzVector _lzVec;   ///< Lorentz vector [GeV]
+    int            _charge;    ///< charge
+    int            _spinProj;  ///< spin projection quantum number; can be either M or helicity
+    TLorentzVector _lzVec;     ///< Lorentz vector [GeV]
 
     static bool _debug;  ///< if set to true, debug messages are printed
 

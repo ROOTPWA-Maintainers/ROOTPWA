@@ -50,13 +50,13 @@ isobarDecayVertex::isobarDecayVertex(particle&          mother,
 				     particle&          daughter2,
 				     const unsigned int L,
 				     const unsigned int S)
-  : vertex(),
+  : interactionVertex(),
     _L    (L),
     _S    (S)
 {
-  vertex::addInParticle (mother);
-  vertex::addOutParticle(daughter1);
-  vertex::addOutParticle(daughter2);
+  interactionVertex::addInParticle (mother);
+  interactionVertex::addOutParticle(daughter1);
+  interactionVertex::addOutParticle(daughter2);
 }
 
 
@@ -74,7 +74,7 @@ isobarDecayVertex&
 isobarDecayVertex::operator = (const isobarDecayVertex& vert)
 {
   if (this != &vert) {
-    vertex::operator = (vert);
+    interactionVertex::operator = (vert);
     _L = vert._L;
     _S = vert._S;
   }
@@ -90,6 +90,6 @@ isobarDecayVertex::print(ostream& out) const
       << "    mother "     << *(inParticles()[0])  << endl
       << "    daughter 1 " << *(outParticles()[0]) << endl
       << "    daughter 2 " << *(outParticles()[1]) << endl
-      << "    L = " << _L << ", S = " << _S << endl;
+      << "    L = " << _L << ", 2S = " << _S << endl;
   return out;
 }

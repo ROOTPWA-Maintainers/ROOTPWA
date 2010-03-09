@@ -78,12 +78,13 @@ main(int argc, char** argv)
   if (1) {
     TVector3 mom;
     mom = TVector3(1, 2, 3);
-    const particle p1("pi",  +1, mom);
+    const particle p1("pi",  +1,  0, mom);
     mom = TVector3(2, 3, 4);
-    const particle p2("pi",  -1, mom);
+    const particle p2("pi",  -1, -1, mom);
     particle p3 = p2;
     p3.setName("X");
     p3.setCharge(+1);
+    p3.setSpinProj(+1);
     printInfo << "created particles: " << endl
 	      << p1 << endl
 	      << p2 << endl

@@ -40,35 +40,35 @@
 
 
 #include "utilities.h"
-#include "vertex.h"
+#include "interactionVertex.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
 
-bool vertex::_debug = false;
+bool interactionVertex::_debug = false;
 
 
-vertex::vertex()
+interactionVertex::interactionVertex()
   : _inParticles (),
     _outParticles(),
     _dataValid   (false)
 { }
 
 
-vertex::vertex(const vertex& vert)
+interactionVertex::interactionVertex(const interactionVertex& vert)
 {
   *this = vert;
 }
 
 
-vertex::~vertex()
+interactionVertex::~interactionVertex()
 { }
 
 
-vertex&
-vertex::operator = (const vertex& vert)
+interactionVertex&
+interactionVertex::operator = (const interactionVertex& vert)
 {
   if (this != &vert) {
     _inParticles  = vert._inParticles;
@@ -79,8 +79,8 @@ vertex::operator = (const vertex& vert)
 }
 
 
-// vertex&
-// vertex::operator *= (const lorentzTransform& L)
+// interactionVertex&
+// interactionVertex::operator *= (const lorentzTransform& L)
 // {
 //   for (list<particle>::iterator i = _children.begin(); i != _children.end(); ++i)
 //     *i *= L;
@@ -89,7 +89,7 @@ vertex::operator = (const vertex& vert)
 
 
 bool
-vertex::addInParticle (particle& part)
+interactionVertex::addInParticle (particle& part)
 {
   if (_debug)
     printInfo << "adding incoming " << part << endl;
@@ -99,7 +99,7 @@ vertex::addInParticle (particle& part)
 
 
 bool
-vertex::addOutParticle(particle& part)
+interactionVertex::addOutParticle(particle& part)
 {
   if (_debug)
     printInfo << "adding outgoing " << part << endl;
@@ -109,7 +109,7 @@ vertex::addOutParticle(particle& part)
 
 
 ostream&
-vertex::print(ostream& out) const
+interactionVertex::print(ostream& out) const
 {
   out << "vertex data are " << ((!dataAreValid()) ? "not " : "") << "valid:" << endl
       << "    incoming particles:" << endl;

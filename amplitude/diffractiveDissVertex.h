@@ -42,12 +42,12 @@
 #define DIFFRACTIVEDISSVERTEX_H
 
 
-#include "vertex.h"
+#include "interactionVertex.h"
 
 
 namespace rpwa {
 
-  class diffractiveDissVertex : public vertex {
+  class diffractiveDissVertex : public interactionVertex {
 
   public:
   
