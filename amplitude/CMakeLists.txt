@@ -61,6 +61,7 @@ SET(SOURCES
   interactionVertex.cc
   diffractiveDissVertex.cc
   isobarDecayVertex.cc
+  decayTopology.cc
 )
 	    
 # define ROOT libraries

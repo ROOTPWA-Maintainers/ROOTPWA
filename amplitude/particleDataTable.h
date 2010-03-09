@@ -70,7 +70,7 @@ namespace rpwa {
     static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
     static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
 
-    static void reset() { _dataTable.clear(); }  ///< deletes all entries in particle data table
+    static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
