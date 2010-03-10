@@ -175,13 +175,18 @@ TARGET_LINK_LIBRARIES(selector rootpwa)
 TARGET_LINK_LIBRARIES(selector ${PWA_LIBS})
 TARGET_LINK_LIBRARIES(selector ${ROOT_LIBS})
 
+ADD_EXECUTABLE(pwaplot pwaplots.cc)
+TARGET_LINK_LIBRARIES(pwaplot rootpwa)
+TARGET_LINK_LIBRARIES(pwaplot ${PWA_LIBS})
+TARGET_LINK_LIBRARIES(pwaplot ${ROOT_LIBS})
+
 
 #-------------------------------------------------
 #------- Install Commands ------------------------
 #-------------------------------------------------
 
 INSTALL(FILES librootpwa.so DESTINATION lib)
-INSTALL(FILES pwafit pwaConstraintFit selector DESTINATION bin PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+INSTALL(FILES pwafit pwaConstraintFit selector pwaplot DESTINATION bin PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
 
 
 #-------------------------------------------------
