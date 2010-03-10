@@ -28,9 +28,12 @@
 
 #pragma link C++ class TFitBin+;
 #pragma link C++ class rpwa::fitResult+;
+#pragma link C++ class rpwa::pwaPlotter+;
+#pragma link C++ class rpwa::TPwaFitGraphErrors+;
 #pragma link C++ class TCMatrix+;
 #pragma link C++ class TCovEllipse+;
 #pragma link C++ class TMCMCMeta+;
+
 
 
 // TFitResult produces a name clash for ROOT versions from 5.25.0 on
