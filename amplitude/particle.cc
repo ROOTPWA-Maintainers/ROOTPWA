@@ -83,6 +83,21 @@ particle::particle(const string&   partName,
 }
 
 	
+particle::particle(const string& partName,
+		   const int     charge,
+		   const int     I,
+		   const int     G,
+		   const int     J,
+		   const int     P,
+		   const int     C,
+		   const int     spinProj)
+  : particleProperties(partName, I, G, J, P, C),
+    _charge  (charge),
+    _spinProj(spinProj)
+{
+}
+
+
 particle::~particle()
 { }
 

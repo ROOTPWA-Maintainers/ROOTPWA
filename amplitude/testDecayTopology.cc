@@ -52,6 +52,7 @@
 #include "particle.h"
 #include "diffractiveDissVertex.h"
 #include "isobarDecayVertex.h"
+#include "decayTopology.h"
 
 
 using namespace std;
@@ -121,37 +122,44 @@ main(int argc, char** argv)
   // BOOST Graph prototype
   if (1) {
     // define final state particles
-    vector<particle> fs;
-    fs.push_back(particle("pi", -1));
-    fs.push_back(particle("pi", +1));
-    fs.push_back(particle("pi", -1));
-    fs.push_back(particle("pi", +1));
-    fs.push_back(particle("pi", -1));
-    const unsigned int nmbFsParticles = fs.size();
+    particle pi0("pi", -1);
+    particle pi1("pi", +1);
+    particle pi2("pi", -1);
+    particle pi3("pi", +1);
+    particle pi4("pi", -1);
     // define isobars
-    particle i0("sigma",    0);
-    particle i1("a1(1269)", 0);
-    particle i2("f1(1285)", 0);
+    particle sigma("sigma",     0);
+    particle a1   ("a1(1269)", +1);
+    particle f1   ("f1(1285)",  0);
     // define X-system
-    particle X("X", -1);
-    X.setName("X");
-    X.setJ(4);
-    X.setP(+1);
-    X.setSpinProj(2);
+    //              q   I   G  2J  P   C  2M
+    particle X("X", -1, 1, -1, 4, +1, +1, 2);
     // define vertices
-    isobarDecayVertex vert0(X,  fs[4], i2,    1, 2);  // X     -> pi + f1
-    isobarDecayVertex vert1(i2, fs[2], i1,    1, 2);  // f1    -> pi + a1
-    isobarDecayVertex vert2(i1, fs[3], i0,    1, 2);  // a1    -> pi + sigma
-    isobarDecayVertex vert3(i0, fs[0], fs[1], 0, 0);  // sigma -> pi + pi
+    isobarDecayVertex vert0(X,     pi4, f1,    1, 2);
+    isobarDecayVertex vert1(f1,    pi2, a1,    1, 2);
+    isobarDecayVertex vert2(a1,    pi3, sigma, 1, 2);
+    isobarDecayVertex vert3(sigma, pi0, pi1,   0, 0);
 
     // build graph
+    vector<particle*> fsParticles;
+    fsParticles.push_back(&pi0);
+    fsParticles.push_back(&pi1);
+    fsParticles.push_back(&pi2);
+    fsParticles.push_back(&pi3);
+    fsParticles.push_back(&pi4);
+    const unsigned int nmbFsParticles = fsParticles.size();
     vector<interactionVertex*> decayVertices;
     decayVertices.push_back(&vert3);
     decayVertices.push_back(&vert1);
     decayVertices.push_back(&vert2);
     decayVertices.push_back(&vert0);
-    // loop over all pairs of interaction vertices
     const unsigned int nmbVertices = decayVertices.size();
+    decayTopology topo(fsParticles, decayVertices);
+    cout << endl;
+    printInfo << "decay toplogy:" << endl
+	      << topo << endl;
+
+    // loop over all pairs of interaction vertices
     typedef adjacency_list<vecS, vecS, directedS,
                            property<vertex_name_t, interactionVertex*>,
                            property<edge_name_t,   particle*> > decayGraph;
@@ -185,7 +193,7 @@ main(int argc, char** argv)
       interactionVertex* fromVertex = decayVertices[iVert];
       for (unsigned int iOutPart = 0; iOutPart < fromVertex->nmbOutParticles(); ++iOutPart)
 	for (unsigned int iFsPart = 0; iFsPart < nmbFsParticles; ++iFsPart)
-	  if (fromVertex->outParticles()[iOutPart] == &(fs[iFsPart])) {
+	  if (fromVertex->outParticles()[iOutPart] == fsParticles[iFsPart]) {
 	    bool     inserted;
 	    edgeDesc edge;
 	    tie(edge, inserted) = add_edge(iVert, nmbVertices + iFsPart, g);

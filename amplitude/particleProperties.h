@@ -55,6 +55,13 @@ namespace rpwa {
 		
     particleProperties();
     particleProperties(const particleProperties& partProp);
+    particleProperties(const std::string&        partName,
+		       const int                 I,
+		       const int                 G,
+		       const int                 J,
+		       const int                 P,
+		       const int                 C);
+    
     virtual ~particleProperties();
 
     particleProperties& operator =  (const particleProperties& partProp);

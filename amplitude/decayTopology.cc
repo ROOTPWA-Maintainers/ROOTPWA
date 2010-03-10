@@ -55,14 +55,19 @@ bool decayTopology::_debug = false;
 
 
 decayTopology::decayTopology()
-  : _nmbVertices   (0),
-    _nmbFsParticles(0)
 { }
 
 
 decayTopology::decayTopology(const decayTopology& topo)
 {
   *this = topo;
+}
+
+
+decayTopology::decayTopology(const vector<particle*>&          fsParticles,
+			     const vector<interactionVertex*>& vertices)
+{
+  constructDecay(fsParticles, vertices);
 }
 
 
@@ -74,11 +79,13 @@ decayTopology&
 decayTopology::operator = (const decayTopology& topo)
 {
   if (this != &topo) {
-    _graph          = topo._graph;
-    _vertexProp     = topo._vertexProp;
-    _edgeProp       = topo._edgeProp;
-    _nmbVertices    = topo._nmbVertices;
-    _nmbFsParticles = topo._nmbFsParticles;
+    _graph           = topo._graph;
+    _nodeProp        = topo._nodeProp;
+    _edgeProp        = topo._edgeProp;
+    _vertices        = topo._vertices;
+    _fsParticles     = topo._fsParticles;
+    _vertexNodeMap   = topo._vertexNodeMap;
+    _particleEdgeMap = topo._particleEdgeMap;
   }
   return *this;
 }
@@ -88,59 +95,83 @@ decayTopology&
 decayTopology::constructDecay(const vector<particle*>&          fsParticles,
 			      const vector<interactionVertex*>& vertices)
 {
-  _nmbVertices    = vertices.size();
-  _nmbFsParticles = fsParticles.size();
-  if (_nmbFsParticles == 0) {
+  clear();
+  const unsigned int nmbVertices    = vertices.size();
+  const unsigned int nmbFsParticles = fsParticles.size();
+  if (nmbFsParticles == 0) {
     printWarn << "cannot construct decay topology without final state particles" << endl;
     clear();
     return *this;
   }
-  if (_nmbVertices == 0) {
+  if (nmbVertices == 0) {
     printWarn << "cannot construct decay topology without vertices" << endl;
     clear();
     return *this;
   }
   // create graph vertices for interaction vertices and store pointers
-  _vertexProp = get(vertex_name, _graph);
-  for (unsigned int i = 0; i < _nmbVertices; ++i) {
-    vertexDesc v  = add_vertex(_graph);
-    _vertexProp[v] = vertices[i];
+  _nodeProp = get(vertex_name, _graph);
+  for (unsigned int i = 0; i < nmbVertices; ++i) {
+    nodeDesc node = add_vertex(_graph);
+    _nodeProp[node]             = vertices[i];
+    _vertexNodeMap[vertices[i]] = node;
   }
   // create final state vertices
-  for (unsigned int i = 0; i < _nmbFsParticles; ++i) {
-    vertexDesc v  = add_vertex(_graph);
-    _vertexProp[v] = 0;
+  for (unsigned int i = 0; i < nmbFsParticles; ++i) {
+    nodeDesc node   = add_vertex(_graph);
+    _nodeProp[node] = 0;
   }
   // create edges that connect the intercation vertices and store pointers to particles
   _edgeProp = get(edge_name, _graph);
-  for (unsigned int iFromVert = 0; iFromVert < _nmbVertices; ++iFromVert)
-    for (unsigned int iToVert = 0; iToVert < _nmbVertices; ++iToVert) {
-      interactionVertex* fromVertex = vertices[iFromVert];
+  for (vertexNodeMapIt iFromVert = _vertexNodeMap.begin();
+       iFromVert != _vertexNodeMap.end(); ++iFromVert)
+    for (vertexNodeMapIt iToVert = _vertexNodeMap.begin();
+	 iToVert != _vertexNodeMap.end(); ++iToVert) {
+      interactionVertex* fromVertex = iFromVert->first;
       for (unsigned int iOutPart = 0; iOutPart < fromVertex->nmbOutParticles(); ++iOutPart) {
-	interactionVertex* toVertex = vertices[iToVert];
-	for (unsigned int iInPart = 0; iInPart < toVertex->nmbInParticles(); ++iInPart)
-	  if (fromVertex->outParticles()[iOutPart] == toVertex->inParticles()[iInPart]) {
+	interactionVertex* toVertex = iToVert->first;
+	for (unsigned int iInPart = 0; iInPart < toVertex->nmbInParticles(); ++iInPart) {
+	  particle* p = fromVertex->outParticles()[iOutPart];
+	  if (p == toVertex->inParticles()[iInPart]) {
 	    bool     inserted;
 	    edgeDesc edge;
-	    tie(edge, inserted) = add_edge(iFromVert, iToVert, _graph);
-	    if (inserted)
-	      _edgeProp[edge] = fromVertex->outParticles()[iOutPart];
+	    tie(edge, inserted) = add_edge(iFromVert->second, iToVert->second, _graph);
+	    if (inserted) {
+	      _edgeProp[edge]     = p;
+	      _particleEdgeMap[p] = edge;
+	    }
 	  }
+	}
       }
     }
   // create edges for final state particles and store pointers
-  for (unsigned int iFromVert = 0; iFromVert < _nmbVertices; ++iFromVert) {
-    interactionVertex* fromVertex = vertices[iFromVert];
+  for (vertexNodeMapIt iFromVert = _vertexNodeMap.begin();
+       iFromVert != _vertexNodeMap.end(); ++iFromVert) {
+    interactionVertex* fromVertex = iFromVert->first;
     for (unsigned int iOutPart = 0; iOutPart < fromVertex->nmbOutParticles(); ++iOutPart)
-      for (unsigned int iFsPart = 0; iFsPart < _nmbFsParticles; ++iFsPart)
-	if (fromVertex->outParticles()[iOutPart] == fsParticles[iFsPart]) {
+      for (unsigned int iFsPart = 0; iFsPart < nmbFsParticles; ++iFsPart) {
+	particle* p = fromVertex->outParticles()[iOutPart];
+	if (p == fsParticles[iFsPart]) {
 	  bool     inserted;
 	  edgeDesc edge;
-	  tie(edge, inserted) = add_edge(iFromVert, _nmbVertices + iFsPart, _graph);
-	  if (inserted)
-	    _edgeProp[edge] = fromVertex->outParticles()[iOutPart];
+	  tie(edge, inserted) = add_edge(iFromVert->second, nmbVertices + iFsPart, _graph);
+	  if (inserted) {
+	    _edgeProp[edge]     = p;
+	    _particleEdgeMap[p] = edge;
+	  }
 	}
+      }
   }
+  // sort vertices
+  list<nodeDesc> sortedVertices;
+  topological_sort(_graph, front_inserter(sortedVertices));
+  for (list<nodeDesc>::iterator iVert = sortedVertices.begin();
+       iVert != sortedVertices.end(); ++iVert) {
+    interactionVertex* vertex = _nodeProp[*iVert];
+    if (vertex)
+      _vertices.push_back(vertex);
+  }
+  // copy final state particles
+  _fsParticles = fsParticles;
   return *this;
 }
 
@@ -149,31 +180,20 @@ ostream&
 decayTopology::print(ostream& out) const
 {
   out << "decay topology vertices:" << endl;
-  list<vertexDesc> vertices;
-  topological_sort(_graph, front_inserter(vertices));
-  for (list<vertexDesc>::const_iterator iVert = vertices.begin(); iVert != vertices.end(); ++iVert) {
-    const interactionVertex* v = _vertexProp[*iVert];
-    if (v)
+  list<nodeDesc> sortedVertices;
+  topological_sort(_graph, front_inserter(sortedVertices));
+  for (list<nodeDesc>::const_iterator iVert = sortedVertices.begin();
+       iVert != sortedVertices.end(); ++iVert) {
+    const interactionVertex* vertex = _nodeProp[*iVert];
+    if (vertex)
       out << "    decay ";
     else
       out << "    final state ";
-    out << "vertex[" << *iVert << "] ";
-    if (v) {
-      for (unsigned int i = 0; i < v->nmbInParticles(); ++i) {
-	const particle* p = v->inParticles()[i];
-	out << p->name() << sign(p->charge());
-	if (i < v->nmbInParticles() - 1)
-	  out << " + ";
-      }
-      out << " -> ";
-      for (unsigned int i = 0; i < v->nmbOutParticles(); ++i) {
-	const particle* p = v->outParticles()[i];
-	out << p->name() << sign(p->charge());
-	if (i < v->nmbOutParticles() - 1)
-	  out << " + ";
-      }
+    out << "node[" << *iVert << "] ";
+    if (vertex)
+      out << *vertex;
+    else
       out << endl;
-    }
   }
   out << "decay topology particles:" << endl;
   edgeIterator iEdge, iEdgeEnd;
@@ -182,8 +202,8 @@ decayTopology::print(ostream& out) const
     out << "    particle" << *iEdge << " ";
     if (p) {
       out << p->name() << sign(p->charge()) << " ";
-      if (!_vertexProp[target(*iEdge, _graph)])
-	out << "final state particle";
+      if (!_nodeProp[target(*iEdge, _graph)])
+	out << "(final state)";
       out << endl;
     } else
       out << "error! zero pointer to particle" << endl;
@@ -196,8 +216,10 @@ void
 decayTopology::clear()
 {
   _graph.clear();
-  _vertexProp     = get(vertex_name, _graph);
-  _edgeProp       = get(edge_name, _graph);
-  _nmbVertices    = 0;
-  _nmbFsParticles = 0;
+  _nodeProp = get(vertex_name, _graph);
+  _edgeProp = get(edge_name, _graph);
+  _vertices.clear();
+  _fsParticles.clear();
+  _vertexNodeMap.clear();
+  _particleEdgeMap.clear();
 }

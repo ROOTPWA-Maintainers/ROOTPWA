@@ -63,6 +63,14 @@ namespace rpwa {
 	     const int                 charge,
 	     const int                 spinProj = 0,
 	     const TVector3&           momentum = TVector3());
+    particle(const std::string&        partName,
+	     const int                 charge,
+	     const int                 I,
+	     const int                 G,
+	     const int                 J,
+	     const int                 P,
+	     const int                 C,
+	     const int                 spinProj);
     virtual ~particle();
 
     particle& operator = (const particle& part);

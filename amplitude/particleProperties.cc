@@ -69,6 +69,27 @@ particleProperties::particleProperties(const particleProperties& partProp)
 }
 
 
+particleProperties::particleProperties(const std::string& partName,
+				       const int          I,
+				       const int          G,
+				       const int          J,
+				       const int          P,
+				       const int          C)
+  : _name     (partName),
+    _mass     (0),
+    _width    (0),
+    _baryonNmb(0),
+    _I        (I),
+    _S        (0),
+    _Charm    (0),
+    _B        (0),
+    _G        (G),
+    _J        (J),
+    _P        (P),
+    _C        (C)
+{
+}
+
 
 particleProperties::~particleProperties()
 { }
