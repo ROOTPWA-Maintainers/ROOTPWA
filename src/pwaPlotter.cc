@@ -124,6 +124,9 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
     double logliperevt=0;
     double evi=0;
     double eviperevt=0;
+
+    set<string> wavesinthisfit;
+
     for(unsigned int i=0;i<nbins;++i){
       intree->GetEntry(i);
 
@@ -137,6 +140,7 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
       unsigned int nwaves=waveNames.size();
       for(unsigned int iw=0;iw<nwaves;++iw){
 	registerWave(waveNames[iw]);
+	wavesinthisfit.insert(waveNames[iw]);
       }
 
       // get loglikelihoods
@@ -156,8 +160,8 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
     // with the loop above! You will loose generality!!! You have been warned!
 
     // create graphs for this fit
-    set<string>::iterator it=mWavenames.begin();
-    while(it!=mWavenames.end()){
+    set<string>::iterator it=wavesinthisfit.begin();
+    while(it!=wavesinthisfit.end()){
       TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins,ifit);
       stringstream graphName;
       graphName << "g" << title << "_" << *it;
@@ -174,15 +178,16 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
     for(unsigned int i=0;i<nbins;++i){
       intree->GetEntry(i);
       // loop through waves
-      map<string,TMultiGraph*>::iterator it=mIntensities.begin();
-      while(it!=mIntensities.end()){
-	TGraphErrors* g=dynamic_cast<TGraphErrors*>(it->second->GetListOfGraphs()->Last());
+      it=wavesinthisfit.begin();
+      while(it!=wavesinthisfit.end()){
+	TMultiGraph* mg=mIntensities[*it];
+	TGraphErrors* g=dynamic_cast<TGraphErrors*>(mg->GetListOfGraphs()->Last());
 	g->SetPoint(i,
 		    result->massBinCenter()*0.001,
-		    result->intensity(it->first.c_str()));
+		    result->intensity(it->c_str()));
 	g->SetPointError(i,
-		    binwidth,
-		    result->intensityErr(it->first.c_str()));
+		    binwidth*0.5,
+		    result->intensityErr(it->c_str()));
 	++it;
       }
       
@@ -199,7 +204,10 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
     mResultMetaInfo.push_back(meta);
     
     
+    // cleanup
+    infile->Close();
     
+
   }
   
   
@@ -262,7 +270,23 @@ pwaPlotter::produceDensityPlots(){
       h=drawDensity(g,h,TMath::Exp(w));
     }
     ++it;
-  }
+    // rescale each x-bin
+    for(unsigned int ibin=0; ibin<nbins; ++ibin){
+      // get maximum bin in y for this x-bin
+      double max=0;
+      for(unsigned int iy=0;iy<400;++iy){
+	unsigned int bin = h->GetBin(ibin,iy);
+	double val=h->GetBinContent(bin);
+	if(val>max)max=val;
+      }
+      for(unsigned int iy=0;iy<400;++iy){
+	unsigned int bin = h->GetBin(ibin,iy);
+	h->SetBinContent(bin,h->GetBinContent(bin)/max);
+      }
+    }
+    
+    
+  }// end loop over waves
 
 }
 
