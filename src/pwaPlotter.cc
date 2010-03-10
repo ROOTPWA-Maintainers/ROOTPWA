@@ -61,10 +61,10 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
     gaus.SetParameters(1,val,err);
     for(unsigned int ibin=1; ibin<ybins;++ibin){
       double y=ax->GetBinCenter(ibin);
-      if(fabs(y-val)<5.*err){
+      //if(fabs(y-val)<5.*err){
 	double w=gaus.Eval(ax->GetBinCenter(ibin))*weight;
 	h->Fill(x,y,w);
-      }
+	//}
     }
   }
   return h;
@@ -110,6 +110,7 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
     }
     
     unsigned int ifit=mResultMetaInfo.size();
+    cerr << "Adding file "<< filename << endl;
        
     intree->SetBranchAddress(branchname.c_str(),&result);
     unsigned int nbins=intree->GetEntries();
@@ -206,6 +207,7 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
     
     // cleanup
     infile->Close();
+    cerr << endl;
     
 
   }
@@ -254,7 +256,7 @@ pwaPlotter::produceDensityPlots(){
     // create 2D Histogram:
     string name="d";name.append(it->first);
     
-    cerr << ymin << " .. " << ymax << endl;
+    //cerr << ymin << " .. " << ymax << endl;
     TH2D* h=new TH2D(name.c_str(),name.c_str(),
 		     nbins,xmin,xmax,
 		     400,ymin-r,ymax+r);
