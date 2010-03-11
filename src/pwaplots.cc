@@ -18,30 +18,43 @@
 //    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
-#ifdef __CINT__
+
+// Reads in the results of N fits and creates intensity plots using
+// the pwaPlotter class
+
+#include <vector>
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include "pwaPlotter.h"
+
+using namespace std;
+using namespace rpwa;
 
 
-#pragma link off all globals;
-#pragma link off all classes;
-#pragma link off all functions;
+int
+main(int argc, char** argv){
 
+  if(argc<2){
+    cerr<<"Usage: pwaplot outputfile fit1 fit2 fit3 ..."<<endl;
+    return 1;
+  }
 
-#pragma link C++ class TFitBin+;
-#pragma link C++ class rpwa::fitResult+;
-#pragma link C++ class rpwa::pwaPlotter+;
-#pragma link C++ class rpwa::TPwaFitGraphErrors+;
-#pragma link C++ class TCMatrix+;
-#pragma link C++ class TCovEllipse+;
-#pragma link C++ class TMCMCMeta+;
+  string outfilename=argv[1];
+  vector<string> inputfiles;
+  for(int i=2; i<argc; ++i){
+    inputfiles.push_back(argv[i]);
+  }
+  
+  pwaPlotter plotter;
+  
+  for(unsigned int i=0; i<inputfiles.size();++i){
+    plotter.addFit(inputfiles[i],inputfiles[i]);
+  }
 
+  plotter.produceDensityPlots();
 
+  plotter.writeAllIntensities(outfilename);
 
-// TFitResult produces a name clash for ROOT versions from 5.25.0 on
-#include "RVersion.h"
-// rootcint has problems with this: #if ROOT_VERSION_CODE < ROOT_VERSION(5,25,0)
-#if ROOT_VERSION_CODE < 334080  // make sure ROOT version is below 5.25.0
-#pragma link C++ class TFitResult+;
-#endif 
-
-
-#endif
+  return 0;
+}
