@@ -41,9 +41,12 @@
 #include <list>
 
 #include <boost/graph/topological_sort.hpp>
-#include <boost/graph/graphml.hpp>
+#include <boost/graph/depth_first_search.hpp>
+#include <boost/graph/graphviz.hpp>
+#include <boost/graph/breadth_first_search.hpp>
 
 #include "utilities.h"
+#include "isobarDecayVertex.h"
 #include "decayTopology.h"
 
 	
@@ -66,9 +69,10 @@ decayTopology::decayTopology(const decayTopology& topo)
 
 
 decayTopology::decayTopology(const vector<particle*>&          fsParticles,
+			     interactionVertex&                productionVertex,
 			     const vector<interactionVertex*>& vertices)
 {
-  constructDecay(fsParticles, vertices);
+  constructDecay(fsParticles, productionVertex, vertices);
 }
 
 
@@ -94,32 +98,48 @@ decayTopology::operator = (const decayTopology& topo)
 
 decayTopology&
 decayTopology::constructDecay(const vector<particle*>&          fsParticles,
-			      const vector<interactionVertex*>& vertices)
+			      interactionVertex&                productionVertex,
+			      const vector<interactionVertex*>& decayVertices)
 {
   clear();
-  const unsigned int nmbVertices    = vertices.size();
-  const unsigned int nmbFsParticles = fsParticles.size();
-  if (nmbFsParticles == 0) {
+  const unsigned int nmbVert   = decayVertices.size();
+  const unsigned int nmbFsPart = fsParticles.size();
+  if (nmbFsPart == 0) {
     printWarn << "cannot construct decay topology without final state particles" << endl;
     clear();
     return *this;
   }
-  if (nmbVertices == 0) {
+  if (nmbVert == 0) {
     printWarn << "cannot construct decay topology without vertices" << endl;
     clear();
     return *this;
   }
-  // create graph nodes for interaction vertices and store pointers
+  // create graph node for production vertex and store pointer
   _nodeProp = get(vertex_name, _graph);
-  for (unsigned int i = 0; i < nmbVertices; ++i) {
+  {
     nodeDesc node = add_vertex(_graph);
-    _nodeProp[node]             = vertices[i];
-    _vertexNodeMap[vertices[i]] = node;
+    _nodeProp[node]                   = &productionVertex;
+    _vertexNodeMap[&productionVertex] = node;
+    if (_debug)
+      printInfo << "added " << productionVertex << " as tree node [" << node << "]" << endl;
+  }
+  // create graph nodes for interaction vertices and store pointers
+  for (unsigned int i = 0; i < nmbVert; ++i) {
+    nodeDesc node = add_vertex(_graph);
+    if (!decayVertices[i])
+      printWarn << "zero pointer for decay vertex[" << i << "]" << endl;
+    _nodeProp[node]                  = decayVertices[i];
+    _vertexNodeMap[decayVertices[i]] = node;
+    if (_debug)
+      printInfo << "added " << *decayVertices[i] << " as tree node [" << node << "]" << endl;
   }
   // create final state nodes
-  for (unsigned int i = 0; i < nmbFsParticles; ++i) {
+  for (unsigned int i = 0; i < nmbFsPart; ++i) {
     nodeDesc node   = add_vertex(_graph);
     _nodeProp[node] = 0;
+    if (_debug)
+      printInfo << "created tree node [" << node << "] for final state "
+		<< *fsParticles[i] << endl;
   }
   // create edges that connect the intercation nodes and store pointers to particles
   _edgeProp = get(edge_name, _graph);
@@ -137,8 +157,13 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
 	    edgeDesc edge;
 	    tie(edge, inserted) = add_edge(iFromVert->second, iToVert->second, _graph);
 	    if (inserted) {
+	      if (!p)
+		printWarn << "zero pointer to isobar particle" << endl;
 	      _edgeProp[edge]     = p;
 	      _particleEdgeMap[p] = edge;
+	      if (_debug)
+		printInfo << "adding edge from node [" << iFromVert->second << "] "
+			  << "to node [" << iToVert->second << "]" << endl;
 	    }
 	  }
 	}
@@ -149,28 +174,38 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
        iFromVert != _vertexNodeMap.end(); ++iFromVert) {
     interactionVertex* fromVertex = iFromVert->first;
     for (unsigned int iOutPart = 0; iOutPart < fromVertex->nmbOutParticles(); ++iOutPart)
-      for (unsigned int iFsPart = 0; iFsPart < nmbFsParticles; ++iFsPart) {
+      for (unsigned int iFsPart = 0; iFsPart < nmbFsPart; ++iFsPart) {
 	particle* p = fromVertex->outParticles()[iOutPart];
 	if (p == fsParticles[iFsPart]) {
 	  bool     inserted;
 	  edgeDesc edge;
-	  tie(edge, inserted) = add_edge(iFromVert->second, nmbVertices + iFsPart, _graph);
+	  tie(edge, inserted) = add_edge(iFromVert->second, nmbVert + 1 + iFsPart, _graph);
 	  if (inserted) {
+	    if (!p)
+	      printWarn << "zero pointer for final state particle[" << iFsPart << "]" << endl;
 	    _edgeProp[edge]     = p;
 	    _particleEdgeMap[p] = edge;
+	    if (_debug)
+	      printInfo << "adding edge from node [" << iFromVert->second << "] "
+			<< "to final state node [" << nmbVert + 1 + iFsPart << "]" << endl;
 	  }
 	}
       }
   }
-  // sort nodes
-  list<nodeDesc> sortedNodes;
-  topological_sort(_graph, front_inserter(sortedNodes));
-  for (list<nodeDesc>::iterator iNode = sortedNodes.begin();
-       iNode != sortedNodes.end(); ++iNode) {
-    interactionVertex* vertex = _nodeProp[*iNode];
+  // sorting nodes depth first
+  vector<nodeDesc> nodes;
+  depth_first_visit(_graph, _vertexNodeMap[&productionVertex],
+		    makeDfsRecorder(back_inserter(nodes)),
+		    get(vertex_color, _graph));
+  if (_debug)
+    printInfo << "depth first node order: ";
+  for (unsigned int i = 0; i < nodes.size(); ++i) {
+    cout << nodes[i] << ((i < nodes.size() - 1) ? ", " : "");
+    interactionVertex* vertex = _nodeProp[nodes[i]];
     if (vertex)
       _vertices.push_back(vertex);
   }
+  cout << endl;
   // copy final state particles
   _fsParticles = fsParticles;
   return *this;
@@ -230,24 +265,42 @@ decayTopology::verifyTopology() const
 }
 
 
+const TLorentzVector&
+decayTopology::updateIsobarLzVec()
+{
+  // loop over decay vertices (leaving out production vertex)
+  // propagate changes from final state particles up to X-system
+  for (unsigned int i = nmbVertices() - 1; i > 0; --i) {
+    if (_debug)
+      printInfo << "updating Lorentz-vector of mother isobar of "
+		<< "node[" << _vertexNodeMap.find(_vertices[i])->second << "]" << endl;
+    static_cast<isobarDecayVertex*>(_vertices[i])->updateMotherLzVec();
+  }
+  return static_cast<isobarDecayVertex*>(&xDecayVertex())->mother().lzVec();
+}
+
+
 ostream&
 decayTopology::print(ostream& out) const
 {
   out << "decay topology nodes:" << endl;
-  list<nodeDesc> sortedNodes;
-  topological_sort(_graph, front_inserter(sortedNodes));
-  for (list<nodeDesc>::const_iterator iNode = sortedNodes.begin();
-       iNode != sortedNodes.end(); ++iNode) {
-    const interactionVertex* vertex = _nodeProp[*iNode];
-    if (vertex)
-      out << "    decay ";
-    else
-      out << "    final state ";
-    out << "node[" << *iNode << "] ";
-    if (vertex)
-      out << *vertex;
-    else
-      out << endl;
+  for (unsigned int i = 0; i < nmbVertices(); ++i) {
+    cout << "    " << ((i == 0) ? "production" : "decay")
+	 << " node[" << _vertexNodeMap.find(_vertices[i])->second << "] = ";
+    for (unsigned int j = 0; j < _vertices[i]->nmbInParticles(); ++j) {
+      const particle* p = _vertices[i]->inParticles()[j];
+      out << p->name() << sign(p->charge());
+      if (j < _vertices[i]->nmbInParticles() - 1)
+	out << " + ";
+    }
+    out << "  --->  ";
+    for (unsigned int j = 0; j < _vertices[i]->nmbOutParticles(); ++j) {
+      const particle* p = _vertices[i]->outParticles()[j];
+      out << p->name() << sign(p->charge());
+      if (j < _vertices[i]->nmbOutParticles() - 1)
+	out << " + ";
+    }
+    out << endl;
   }
   out << "decay topology particles:" << endl;
   edgeIterator iEdge, iEdgeEnd;

@@ -62,8 +62,8 @@ particle::particle(const particle& part)
 
 particle::particle(const particleProperties& partProp,
 		   const int                 charge,
-		   const int                 spinProj,
-		   const TVector3&           momentum)
+		   const TVector3&           momentum,
+		   const int                 spinProj)
   : particleProperties(partProp),
     _charge           (charge),
     _spinProj         (spinProj),
@@ -73,8 +73,8 @@ particle::particle(const particleProperties& partProp,
 	
 particle::particle(const string&   partName,
 		   const int       charge,
-		   const int       spinProj,
-		   const TVector3& momentum)
+		   const TVector3& momentum,
+		   const int       spinProj)
   : _charge  (charge),
     _spinProj(spinProj)
 {
@@ -85,13 +85,13 @@ particle::particle(const string&   partName,
 	
 particle::particle(const string& partName,
 		   const int     charge,
-		   const int     I,
+		   const int     isospin,
 		   const int     G,
 		   const int     J,
 		   const int     P,
 		   const int     C,
 		   const int     spinProj)
-  : particleProperties(partName, I, G, J, P, C),
+  : particleProperties(partName, isospin, G, J, P, C),
     _charge  (charge),
     _spinProj(spinProj)
 {
@@ -122,6 +122,6 @@ particle::print(ostream& out) const
   out << ", "
       << "charge = "          << sign(_charge) << ", "
       << "spin projection = " << _spinProj     << ", "
-      << "Lorentz-vector = "  << _lzVec;
+      << "Lorentz-vector = "  << _lzVec        << " GeV";
   return out;
 }

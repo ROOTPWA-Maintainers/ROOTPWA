@@ -68,8 +68,8 @@ diffractiveDissVertex::~diffractiveDissVertex()
 ostream&
 diffractiveDissVertex::print(ostream& out) const
 {
-  out << "diffractive dissociation vertex data are "
-      << ((!dataAreValid()) ? "not " : "") << "valid:" << endl
+  out << "diffractive dissociation vertex "
+      << "(data are " << ((!dataAreValid()) ? "not " : "") << "valid):" << endl
       << "    beam " << *(inParticles()[0])  << endl
       << "    X "    << *(outParticles()[0]) << endl;
   return out;

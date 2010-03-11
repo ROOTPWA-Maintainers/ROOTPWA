@@ -51,8 +51,8 @@ isobarDecayVertex::isobarDecayVertex(particle&          mother,
 				     const unsigned int L,
 				     const unsigned int S)
   : interactionVertex(),
-    _L    (L),
-    _S    (S)
+    _L               (L),
+    _S               (S)
 {
   interactionVertex::addInParticle (mother);
   interactionVertex::addOutParticle(daughter1);
@@ -82,11 +82,22 @@ isobarDecayVertex::operator = (const isobarDecayVertex& vert)
 }
 
 
+const TLorentzVector&
+isobarDecayVertex::updateMotherLzVec()
+{
+  if (debug())
+    printInfo << "updating Lorentz-vector of " << mother().name()
+	      << " p_before = " << mother().lzVec() << " GeV, " << flush;
+  mother().setLzVec(daughter1().lzVec() + daughter2().lzVec());
+  cout << "p_after = " << mother().lzVec() << " GeV" << endl;
+  return mother().lzVec();
+}
+
 ostream&
 isobarDecayVertex::print(ostream& out) const
 {
-  out << "isobar decay vertex data are "
-      << ((!dataAreValid()) ? "not " : "") << "valid:" << endl
+  out << "isobar decay vertex "
+      << "(data are " << ((!dataAreValid()) ? "not " : "") << "valid):" << endl
       << "    mother "     << *(inParticles()[0])  << endl
       << "    daughter 1 " << *(outParticles()[0]) << endl
       << "    daughter 2 " << *(outParticles()[1]) << endl

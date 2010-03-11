@@ -96,7 +96,7 @@ main(int argc, char** argv)
   if (0) {
     TVector3 mom;
     mom = TVector3(1, 2, 3);
-    particle beam("pi", -1, 0, mom);
+    particle beam("pi", -1, mom);
     particle X("X", -1);
     X.setName("X");
     printInfo << "created particles: " << endl
@@ -110,9 +110,9 @@ main(int argc, char** argv)
 	      << vert2;
 
     mom = TVector3(3, 4, 5);
-    particle daughter1("pi", -1, 0, mom);
+    particle daughter1("pi", -1, mom);
     mom = TVector3(4, 5, 6);
-    particle daughter2("pi0", 0, -1, mom);
+    particle daughter2("pi0", 0, mom);
     isobarDecayVertex vert3(X, daughter1, daughter2, 1, 2);
     printInfo << "created vertex: " << endl
 	      << vert3;
@@ -136,6 +136,9 @@ main(int argc, char** argv)
     // define X-system
     //              q   I   G  2J  P   C  2M
     particle X("X", -1, 1, -1, 4, +1, +1, 2);
+    // define production vertex
+    particle beam("pi", -1);
+    diffractiveDissVertex prodVert(beam, X);
     // define vertices
     isobarDecayVertex vert0(X,     pi4, f1,    1, 2);
     isobarDecayVertex vert1(f1,    pi2, a1,    1, 2);
@@ -157,12 +160,19 @@ main(int argc, char** argv)
     decayVertices.push_back(&vert0);
     const unsigned int nmbVertices = decayVertices.size();
     {
-      decayTopology topo(fsParticles, decayVertices);
+      decayTopology topo(fsParticles, prodVert, decayVertices);
       cout << endl;
       printInfo << "decay toplogy:" << endl
 		<< topo << endl;
+
       const bool topologyOkay = topo.verifyTopology();
-      cout << "topology okay = " << topologyOkay << endl;
+      cout << "topology okay = " << topologyOkay << endl << endl;
+
+      for (unsigned int i = 0; i < topo.nmbFsParticles(); ++i)
+	topo.fsParticles()[i]->setMomentum(TVector3(i + 1, 0, 0));
+      printInfo << "updating Lorentz-vectors:" << endl
+		<< topo.updateIsobarLzVec() << endl;
+
       ofstream graphVizFile("decay.dot");
       topo.writeGraphViz(graphVizFile);
       gSystem->Exec("dot -Tps -o decay.ps decay.dot");

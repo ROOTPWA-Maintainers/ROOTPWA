@@ -66,7 +66,9 @@ namespace rpwa {
     // isobar decay specific accessors
     particle& mother()    { return *(inParticles() [0]); }  ///< returns mother particle
     particle& daughter1() { return *(outParticles()[0]); }  ///< returns first daughter particle
-    particle& daughter2() { return *(outParticles()[0]); }  ///< returns second daughter particle
+    particle& daughter2() { return *(outParticles()[1]); }  ///< returns second daughter particle
+
+    const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
     
     unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters
     unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)

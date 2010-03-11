@@ -56,7 +56,7 @@ namespace rpwa {
     particleProperties();
     particleProperties(const particleProperties& partProp);
     particleProperties(const std::string&        partName,
-		       const int                 I,
+		       const int                 isospin,
 		       const int                 G,
 		       const int                 J,
 		       const int                 P,
@@ -70,33 +70,33 @@ namespace rpwa {
     friend bool         operator != (const particleProperties& lhsProp,
 				     const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
 
-    std::string name()      const { return _name;      }  ///< returns particle name
-    double      mass()      const { return _mass;      }  ///< returns particle mass
-    double      width()     const { return _width;     }  ///< returns particle width
-    int         baryonNmb() const { return _baryonNmb; }  ///< returns particle's baryon number
-    int         I()         const { return _I;         }  ///< returns particle's isospin * 2 (!!!)
-    int         S()         const { return _S;         }  ///< returns particle's strangeness
-    int         Charm()     const { return _Charm;     }  ///< returns particle's charm
-    int         B()         const { return _B;         }  ///< returns particle's beauty
-    int         G()         const { return _G;         }  ///< returns particle's G-parity
-    int         J()         const { return _J;         }  ///< returns particle's spin * 2 (!!!)
-    int         P()         const { return _P;         }  ///< returns particle's parity
-    int         C()         const { return _C;         }  ///< returns particle's C-parity
+    std::string name()        const { return _name;        }  ///< returns particle name
+    double      mass()        const { return _mass;        }  ///< returns particle mass
+    double      width()       const { return _width;       }  ///< returns particle width
+    int         baryonNmb()   const { return _baryonNmb;   }  ///< returns particle's baryon number
+    int         isospin()     const { return _isospin;     }  ///< returns particle's isospin * 2 (!!!)
+    int         strangeness() const { return _strangeness; }  ///< returns particle's strangeness
+    int         charm()       const { return _charm;       }  ///< returns particle's charm
+    int         beauty()      const { return _beauty;      }  ///< returns particle's beauty
+    int         G()           const { return _G;           }  ///< returns particle's G-parity
+    int         J()           const { return _J;           }  ///< returns particle's spin * 2 (!!!)
+    int         P()           const { return _P;           }  ///< returns particle's parity
+    int         C()           const { return _C;           }  ///< returns particle's C-parity
 
     bool fillFromDataTable(const std::string& name);
 
-    void setName     (const std::string& name)      { _name      = name;      }  ///< sets particle name
-    void setMass     (const double       mass)      { _mass      = mass;      }  ///< sets particle mass
-    void setWidth    (const double       width)     { _width     = width;     }  ///< sets particle width
-    void setBaryonNmb(const int          baryonNmb) { _baryonNmb = baryonNmb; }  ///< sets particle's baryon number
-    void setI        (const int          I)         { _I         = I;         }  ///< sets particle's isospin * 2 (!!!)
-    void setS        (const int          S)         { _S         = S;         }  ///< sets particle's strangeness
-    void setCharm    (const int          Charm)     { _Charm     = Charm;     }  ///< sets particle's charm
-    void setB        (const int          B)         { _B         = B;         }  ///< sets particle's beauty
-    void setG        (const int          G)         { _G         = G;         }  ///< sets particle's G-parity
-    void setJ        (const int          J)         { _J         = J;         }  ///< sets particle's spin * 2 (!!!)
-    void setP        (const int          P)         { _P         = P;         }  ///< sets particle's parity
-    void setC        (const int          C)         { _C         = C;         }  ///< sets particle's C-parity
+    void setName       (const std::string& name)        { _name        = name;        }  ///< sets particle name
+    void setMass       (const double       mass)        { _mass        = mass;        }  ///< sets particle mass
+    void setWidth      (const double       width)       { _width       = width;       }  ///< sets particle width
+    void setBaryonNmb  (const int          baryonNmb)   { _baryonNmb   = baryonNmb;   }  ///< sets particle's baryon number
+    void setIsospin    (const int          isospin)     { _isospin     = isospin;     }  ///< sets particle's isospin * 2 (!!!)
+    void setStrangeness(const int          strangeness) { _strangeness = strangeness; }  ///< sets particle's strangeness
+    void setCharm      (const int          charm)       { _charm       = charm;       }  ///< sets particle's charm
+    void setBeauty     (const int          beauty)      { _beauty      = beauty;      }  ///< sets particle's beauty
+    void setG          (const int          G)           { _G           = G;           }  ///< sets particle's G-parity
+    void setJ          (const int          J)           { _J           = J;           }  ///< sets particle's spin * 2 (!!!)
+    void setP          (const int          P)           { _P           = P;           }  ///< sets particle's parity
+    void setC          (const int          C)           { _C           = C;           }  ///< sets particle's C-parity
 
     std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
     std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
@@ -109,18 +109,18 @@ namespace rpwa {
 
   private:
 
-    std::string _name;       ///< full PDG name
-    double      _mass;       ///< mass [GeV/c^]
-    double      _width;      ///< total width [GeV/c^2]
-    int         _baryonNmb;  ///< baryon number
-    int         _I;          ///< isospin * 2 (!!!)
-    int         _S;          ///< strangeness
-    int         _Charm;      ///< charm
-    int         _B;          ///< beauty
-    int         _G;          ///< G-parity (0 = undefined)
-    int         _J;          ///< spin * 2 (!!!)
-    int         _P;          ///< parity (0 = undefined)
-    int         _C;          ///< C-parity (0 = undefined)
+    std::string _name;         ///< full PDG name
+    double      _mass;         ///< mass [GeV/c^]
+    double      _width;        ///< total width [GeV/c^2]
+    int         _baryonNmb;    ///< baryon number
+    int         _isospin;      ///< isospin * 2 (!!!)
+    int         _strangeness;  ///< strangeness
+    int         _charm;        ///< charm
+    int         _beauty;       ///< beauty
+    int         _G;            ///< G-parity (0 = undefined)
+    int         _J;            ///< spin * 2 (!!!)
+    int         _P;            ///< parity (0 = undefined)
+    int         _C;            ///< C-parity (0 = undefined)
 
     static bool _debug;  ///< if set to true, debug messages are printed
 

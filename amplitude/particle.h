@@ -57,15 +57,15 @@ namespace rpwa {
     particle(const particle&           part);
     particle(const particleProperties& partProp,
 	     const int                 charge,
-	     const int                 spinProj = 0,
-	     const TVector3&           momentum = TVector3());
+	     const TVector3&           momentum = TVector3(),
+	     const int                 spinProj = 0);
     particle(const std::string&        partName,
 	     const int                 charge,
-	     const int                 spinProj = 0,
-	     const TVector3&           momentum = TVector3());
+	     const TVector3&           momentum = TVector3(),
+	     const int                 spinProj = 0);
     particle(const std::string&        partName,
 	     const int                 charge,
-	     const int                 I,
+	     const int                 isospin,
 	     const int                 G,
 	     const int                 J,
 	     const int                 P,
@@ -75,13 +75,14 @@ namespace rpwa {
 
     particle& operator = (const particle& part);
 
-    int            charge()   const { return _charge;   }  ///< returns particle's charge
-    int            spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
-    TLorentzVector lzVec()    const { return _lzVec;    }  ///< returns Lorentz vector of particle
+    int                   charge()   const { return _charge;   }  ///< returns particle's charge
+    int                   spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
+    const TLorentzVector& lzVec()    const { return _lzVec;    }  ///< returns Lorentz vector of particle
 
     void setCharge  (const int       charge)   { _charge   = charge;                                                            }  ///< sets particle's charge
     void setSpinProj(const int       spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
     void setMomentum(const TVector3& momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
+    void setLzVec(const TLorentzVector& lzVec) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
 
     std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
