@@ -41,6 +41,7 @@
 #include <list>
 
 #include <boost/graph/topological_sort.hpp>
+#include <boost/graph/graphml.hpp>
 
 #include "utilities.h"
 #include "decayTopology.h"
@@ -108,19 +109,19 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
     clear();
     return *this;
   }
-  // create graph vertices for interaction vertices and store pointers
+  // create graph nodes for interaction vertices and store pointers
   _nodeProp = get(vertex_name, _graph);
   for (unsigned int i = 0; i < nmbVertices; ++i) {
     nodeDesc node = add_vertex(_graph);
     _nodeProp[node]             = vertices[i];
     _vertexNodeMap[vertices[i]] = node;
   }
-  // create final state vertices
+  // create final state nodes
   for (unsigned int i = 0; i < nmbFsParticles; ++i) {
     nodeDesc node   = add_vertex(_graph);
     _nodeProp[node] = 0;
   }
-  // create edges that connect the intercation vertices and store pointers to particles
+  // create edges that connect the intercation nodes and store pointers to particles
   _edgeProp = get(edge_name, _graph);
   for (vertexNodeMapIt iFromVert = _vertexNodeMap.begin();
        iFromVert != _vertexNodeMap.end(); ++iFromVert)
@@ -161,12 +162,12 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
 	}
       }
   }
-  // sort vertices
-  list<nodeDesc> sortedVertices;
-  topological_sort(_graph, front_inserter(sortedVertices));
-  for (list<nodeDesc>::iterator iVert = sortedVertices.begin();
-       iVert != sortedVertices.end(); ++iVert) {
-    interactionVertex* vertex = _nodeProp[*iVert];
+  // sort nodes
+  list<nodeDesc> sortedNodes;
+  topological_sort(_graph, front_inserter(sortedNodes));
+  for (list<nodeDesc>::iterator iNode = sortedNodes.begin();
+       iNode != sortedNodes.end(); ++iNode) {
+    interactionVertex* vertex = _nodeProp[*iNode];
     if (vertex)
       _vertices.push_back(vertex);
   }
@@ -176,20 +177,73 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
 }
 
 
+bool
+decayTopology::verifyTopology() const
+{
+  // check that decay topology is a tree of isobar decays
+  bool          topologyOkay = true;
+  nodeIndexType nodeIndex    = get(vertex_index, _graph);
+  nodeIterator  iNode, iNodeEnd;
+  unsigned int  countNodesWithNoInputEdge = 0;
+  for (tie(iNode, iNodeEnd) = boost::vertices(_graph); iNode != iNodeEnd; ++iNode) {
+    const unsigned int i = get(nodeIndex, *iNode);
+    // check that each node has exactly 1 incoming edge (isobar)
+    unsigned int nmbInEdges = in_degree(*iNode, _graph);
+    if (nmbInEdges == 0) {
+      ++countNodesWithNoInputEdge;
+      if (_debug)
+	printInfo << "assuming node[" << i << "] is production node" << endl;
+    } else if (nmbInEdges != 1) {
+      printWarn << "number of input edges of node[" << i << "] is "
+    		<< nmbInEdges << " != 1" << endl;
+      topologyOkay = false;
+    } else if (_debug)
+      printInfo << "number of input edges of node[" << i << "] is correct" << endl;
+    if (countNodesWithNoInputEdge > 1) {
+      printWarn << "there are " << countNodesWithNoInputEdge
+		<< " nodes with no no input edges." << endl;
+      topologyOkay = false;
+    }
+    // check that for each node the number of outgoing edges is either 2 (decay node) or 0 (final state node)
+    unsigned int nmbOutEdges = out_degree(*iNode, _graph);
+    if (nmbOutEdges == 0) {
+      if (_nodeProp[*iNode]) {
+	printWarn << "node[" << i << "] has no outgoing edges, "
+		  << "but has a interactionVertex pointer assigned." << endl;
+	topologyOkay = false;
+      } else if (_debug)
+	printInfo << "final state node[" << i << "] is correct" << endl;
+    } else if (nmbOutEdges == 2) {
+      if (!_nodeProp[*iNode]) {
+	printWarn << "node[" << i << "] has 2 outgoing edges, "
+		  << "but no interactionVertex pointer assigned." << endl;
+	topologyOkay = false;
+      } else if (_debug)
+	printInfo << "interaction node[" << i << "] is correct" << endl;
+    } else {
+      printWarn << "number of output edges of node[" << i << "] is "
+		<< nmbOutEdges << " != 0 or 2" << endl;
+      topologyOkay = false;
+    }
+  }
+  return topologyOkay;
+}
+
+
 ostream&
 decayTopology::print(ostream& out) const
 {
-  out << "decay topology vertices:" << endl;
-  list<nodeDesc> sortedVertices;
-  topological_sort(_graph, front_inserter(sortedVertices));
-  for (list<nodeDesc>::const_iterator iVert = sortedVertices.begin();
-       iVert != sortedVertices.end(); ++iVert) {
-    const interactionVertex* vertex = _nodeProp[*iVert];
+  out << "decay topology nodes:" << endl;
+  list<nodeDesc> sortedNodes;
+  topological_sort(_graph, front_inserter(sortedNodes));
+  for (list<nodeDesc>::const_iterator iNode = sortedNodes.begin();
+       iNode != sortedNodes.end(); ++iNode) {
+    const interactionVertex* vertex = _nodeProp[*iNode];
     if (vertex)
       out << "    decay ";
     else
       out << "    final state ";
-    out << "node[" << *iVert << "] ";
+    out << "node[" << *iNode << "] ";
     if (vertex)
       out << *vertex;
     else
@@ -208,6 +262,14 @@ decayTopology::print(ostream& out) const
     } else
       out << "error! zero pointer to particle" << endl;
   }
+  return out;
+}
+
+
+ostream&
+decayTopology::writeGraphViz(ostream& out) const
+{
+  write_graphviz(out, _graph);
   return out;
 }
 

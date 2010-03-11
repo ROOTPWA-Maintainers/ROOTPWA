@@ -35,6 +35,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <fstream>
+
 #include <boost/config.hpp>
 #include <boost/utility.hpp>
 #include <boost/graph/adjacency_list.hpp>
@@ -44,8 +46,8 @@
 #include <boost/graph/visitors.hpp>
 #include <boost/graph/connected_components.hpp>
 
-
 #include "TVector3.h"
+#include "TSystem.h"
 
 #include "utilities.h"
 #include "particleDataTable.h"
@@ -78,13 +80,13 @@ protected:
 int
 main(int argc, char** argv)
 {
-
   if (1) {
     // switch on debug output
     //particleProperties::setDebug(true);
     //particleDataTable::setDebug(true);
     particle::setDebug(true);
     interactionVertex::setDebug(true);
+    decayTopology::setDebug(true);
   }
 
   particleDataTable& pdt = particleDataTable::instance();
@@ -154,10 +156,17 @@ main(int argc, char** argv)
     decayVertices.push_back(&vert2);
     decayVertices.push_back(&vert0);
     const unsigned int nmbVertices = decayVertices.size();
-    decayTopology topo(fsParticles, decayVertices);
-    cout << endl;
-    printInfo << "decay toplogy:" << endl
-	      << topo << endl;
+    {
+      decayTopology topo(fsParticles, decayVertices);
+      cout << endl;
+      printInfo << "decay toplogy:" << endl
+		<< topo << endl;
+      const bool topologyOkay = topo.verifyTopology();
+      cout << "topology okay = " << topologyOkay << endl;
+      ofstream graphVizFile("decay.dot");
+      topo.writeGraphViz(graphVizFile);
+      gSystem->Exec("dot -Tps -o decay.ps decay.dot");
+    }
 
     // loop over all pairs of interaction vertices
     typedef adjacency_list<vecS, vecS, directedS,

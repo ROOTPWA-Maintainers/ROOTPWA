@@ -75,9 +75,11 @@ namespace rpwa {
     std::vector<interactionVertex*>& vertices()    { return _vertices;    }  ///< returns interaction vertices
     std::vector<particle*>&          fsParticles() { return _fsParticles; }  ///< returns final state particles
 
-    bool dataAreValid() const { return false; }  ///< indicates whether data are complete and valid
+    bool dataAreValid()   const { return false; }  ///< indicates whether data are complete and valid
+    bool verifyTopology() const;  ///< returns whether decay has the correct topology
 
     std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
+    std::ostream& writeGraphViz(std::ostream& out) const;  ///< writes graph in GraphViz DOT format
 
     void clear();  ///< deletes all information
 
@@ -88,19 +90,24 @@ namespace rpwa {
   private:
 
     // graph definition
-    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 				  boost::property<boost::vertex_name_t, interactionVertex*>,
 				  boost::property<boost::edge_name_t,   particle*> > decayGraph;
+    typedef boost::graph_traits<decayGraph> graphTraits;
     // node and edge property types
-    typedef boost::property_map<decayGraph, boost::vertex_name_t>::type nodePropType;
-    typedef boost::property_map<decayGraph, boost::edge_name_t>::type   edgePropType;
+    typedef boost::property_map<decayGraph, boost::vertex_name_t>::type  nodePropType;
+    typedef boost::property_map<decayGraph, boost::vertex_index_t>::type nodeIndexType;
+    typedef boost::property_map<decayGraph, boost::edge_name_t>::type    edgePropType;
+    typedef boost::property_map<decayGraph, boost::edge_index_t>::type   edgeIndexType;
     // node and edge descriptor types
-    typedef boost::graph_traits<decayGraph>::vertex_descriptor nodeDesc;
-    typedef boost::graph_traits<decayGraph>::edge_descriptor   edgeDesc;
+    typedef graphTraits::vertex_descriptor nodeDesc;
+    typedef graphTraits::edge_descriptor   edgeDesc;
     // iterators
-    typedef boost::graph_traits<decayGraph>::vertex_iterator    nodeIterator;
-    typedef boost::graph_traits<decayGraph>::edge_iterator      edgeIterator;
-    typedef boost::graph_traits<decayGraph>::adjacency_iterator adjIterator;
+    typedef graphTraits::vertex_iterator    nodeIterator;
+    typedef graphTraits::edge_iterator      edgeIterator;
+    typedef graphTraits::adjacency_iterator adjIterator;
+    typedef graphTraits::out_edge_iterator  outEdgeIterator;
+    typedef graphTraits::in_edge_iterator   inEdgeIterator;
     
     decayGraph   _graph;     ///< graph that represents particle decay
     nodePropType _nodeProp;  ///< node properties; pointers to interaction vertices
@@ -112,7 +119,7 @@ namespace rpwa {
     std::map<particle*,          edgeDesc> _particleEdgeMap;  ///< maps particle pointers to graph edges
     typedef std::map<interactionVertex*, nodeDesc>::iterator vertexNodeMapIt;
     typedef std::map<particle*,          edgeDesc>::iterator particleEdgeMapIt;
-    
+
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
