@@ -6,15 +6,14 @@ PROJECT(rootpwa)
 ENABLE_TESTING()
 
 # Build types
-set(CMAKE_BUILD_TYPE None)
-set(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Werror")
-set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
+SET(CMAKE_BUILD_TYPE None)
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -Wall -Werror")
+SET(CMAKE_CXX_LDFLAGS_DEBUG "-g")
+SET(CMAKE_CXX_FLAGS_NONE "-O3 -Wall -Werror")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -Werror")
 
-set(CMAKE_CXX_FLAGS_NONE "-O3 -Wall -Werror")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -Werror")
-
-set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
-set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
+SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
+SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 
 # Get ROOT Variables
 SET(ROOT_CONFIG_SEARCHPATH $ENV{ROOTSYS}/bin)
@@ -52,5 +51,6 @@ add_subdirectory(tools)
 add_subdirectory(src)
 add_subdirectory(generators)
 add_subdirectory(keygen)
+add_subdirectory(amplitude)
 #add_subdirectory(gui)
  
