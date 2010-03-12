@@ -248,22 +248,18 @@ decayTopology::print(ostream& out) const
 {
   out << "decay topology nodes:" << endl;
   cout << "    production node[" << _vertexNodeMap.find(_productionVertex)->second << "] = ";
-  const particle* p = _productionVertex->inParticles()[0];
-  out << p->name() << sign(p->charge()) << "  --->  ";
-  p = _productionVertex->outParticles()[0];
-  out << p->name() << sign(p->charge()) << endl;
+  out << _productionVertex->inParticles() [0]->name() << "  --->  "
+      << _productionVertex->outParticles()[0]->name() << endl;
   for (unsigned int i = 0; i < nmbVertices(); ++i) {
     cout << "    decay node[" << _vertexNodeMap.find(_vertices[i])->second << "] = ";
     for (unsigned int j = 0; j < _vertices[i]->nmbInParticles(); ++j) {
-      const particle* p = _vertices[i]->inParticles()[j];
-      out << p->name() << sign(p->charge());
+      out << _vertices[i]->inParticles()[j]->name();
       if (j < _vertices[i]->nmbInParticles() - 1)
 	out << "  +  ";
     }
     out << "  --->  ";
     for (unsigned int j = 0; j < _vertices[i]->nmbOutParticles(); ++j) {
-      const particle* p = _vertices[i]->outParticles()[j];
-      out << p->name() << sign(p->charge());
+      out << _vertices[i]->outParticles()[j]->name();
       if (j < _vertices[i]->nmbOutParticles() - 1)
 	out << "  +  ";
     }
@@ -275,7 +271,7 @@ decayTopology::print(ostream& out) const
     const particle* p = _edgeProp[*iEdge];
     out << "    particle" << *iEdge << " ";
     if (p) {
-      out << p->name() << sign(p->charge()) << " ";
+      out << p->name() << " ";
       if (!_nodeProp[target(*iEdge, _graph)])
 	out << "(final state)";
       out << endl;

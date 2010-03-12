@@ -70,7 +70,7 @@ namespace rpwa {
     friend bool operator != (const particleProperties& lhsProp,
 			     const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
     
-    std::string name()        const { return _name;        }  ///< returns particle name
+    virtual std::string name() const { return _name; }  ///< returns particle name of the corresponding data table entry
     double      mass()        const { return _mass;        }  ///< returns particle mass
     double      width()       const { return _width;       }  ///< returns particle width
     int         baryonNmb()   const { return _baryonNmb;   }  ///< returns particle's baryon number
@@ -102,6 +102,10 @@ namespace rpwa {
     virtual std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
 
     bool read(std::istringstream& line);  ///< reads whitespace separated properties from single line
+
+    static std::string chargeFromName(const std::string& name,
+				      int&               charge);  ///< checks whether last characters of particle name contain charge information and sets charge accordingly; returns name with charge stripped off
+    static std::string stripChargeFromName(const std::string& name);  ///< checks whether last characters of particle name contain charge information and returns name with charge stripped off
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

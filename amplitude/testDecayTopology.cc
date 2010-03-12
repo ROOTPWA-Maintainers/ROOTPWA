@@ -95,9 +95,8 @@ main(int argc, char** argv)
   if (0) {
     TVector3 mom;
     mom = TVector3(1, 2, 3);
-    particle beam("pi", -1, mom);
-    particle X("X", -1);
-    X.setName("X");
+    particle beam("pi-", mom);
+    particle X("X-");
     printInfo << "created particles: " << endl
 	      << beam << endl
 	      << X    << endl;
@@ -109,9 +108,9 @@ main(int argc, char** argv)
 	      << vert2;
 
     mom = TVector3(3, 4, 5);
-    particle daughter1("pi", -1, mom);
+    particle daughter1("pi-", mom);
     mom = TVector3(4, 5, 6);
-    particle daughter2("pi0", 0, mom);
+    particle daughter2("pi0", mom);
     isobarDecayVertex vert3(X, daughter1, daughter2, 1, 2);
     printInfo << "created vertex: " << endl
 	      << vert3;
@@ -123,20 +122,20 @@ main(int argc, char** argv)
   // test decay topology
   if (1) {
     // define final state particles
-    particle pi0("pi", -1);
-    particle pi1("pi", +1);
-    particle pi2("pi", -1);
-    particle pi3("pi", +1);
-    particle pi4("pi", -1);
+    particle pi0("pi-");
+    particle pi1("pi+");
+    particle pi2("pi-");
+    particle pi3("pi+");
+    particle pi4("pi-");
     // define isobars
-    particle sigma("sigma",     0);
-    particle a1   ("a1(1269)", +1);
-    particle f1   ("f1(1285)",  0);
+    particle sigma("sigma");
+    particle a1   ("a1(1269)+");
+    particle f1   ("f1(1285)");
     // define X-system
-    //              q   I   G  2J  P   C  2M
-    particle X("X", +1, 1, +1, 4, +1, -1, 2);
+    //               I   G  2J  P   C  2M
+    particle X("X+", 1, +1, 4, +1, -1, 2);
     // define production vertex
-    particle beam("pi", -1);
+    particle beam("pi-");
     diffractiveDissVertex prodVert(beam, X);
     // define vertices
     isobarDecayVertex vert0(X,     pi4, f1,    0, 3);

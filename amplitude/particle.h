@@ -60,11 +60,9 @@ namespace rpwa {
 	     const TVector3&           momentum = TVector3(),
 	     const int                 spinProj = 0);
     particle(const std::string&        partName,
-	     const int                 charge,
 	     const TVector3&           momentum = TVector3(),
 	     const int                 spinProj = 0);
     particle(const std::string&        partName,
-	     const int                 charge,
 	     const int                 isospin,
 	     const int                 G,
 	     const int                 J,
@@ -75,6 +73,7 @@ namespace rpwa {
 
     virtual particle& operator = (const particle& part);
 
+    std::string           name()     const;                       ///< returns particle name including charge
     int                   charge()   const { return _charge;   }  ///< returns particle's charge
     int                   spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
     const TLorentzVector& lzVec()    const { return _lzVec;    }  ///< returns Lorentz vector of particle
@@ -88,10 +87,10 @@ namespace rpwa {
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
+			
 
   private:
-			
+
     int            _charge;    ///< charge
     int            _spinProj;  ///< spin projection quantum number; can be either M or helicity
     TLorentzVector _lzVec;     ///< Lorentz vector [GeV]

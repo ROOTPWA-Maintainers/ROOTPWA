@@ -136,8 +136,13 @@ operator == (const particleProperties& lhsProp,
 
 
 bool
-particleProperties::fillFromDataTable(const string& name)
+particleProperties::fillFromDataTable(const string& partName)
 {
+  string       name         = partName;
+  const string strippedName = stripChargeFromName(partName);
+  if (!particleDataTable::instance().isInTable(partName))
+    // try with charge stripped from name
+    name = strippedName;
   const particleProperties* partProp = particleDataTable::instance().entry(name);
   if (!partProp) {
     printWarn << "trying to fill particle properties for '" << name << "' from non-existing table entry" << endl;
@@ -213,4 +218,38 @@ particleProperties::read(istringstream& line)
     printWarn << "problems reading particle data from line '" << line.str() << "'" << endl;
     return false;
   }
+}
+
+
+string
+particleProperties::chargeFromName(const string& name,
+				   int&          charge)
+{
+  // assumes that for singly charged particles the charge is
+  // designated by the last character in the name
+  // if no charge character is found charge 0 is assumed
+  // for multiply charged particles the charge state is the
+  // second-to-last character
+  charge = 0;
+  string     strippedName = name;
+  const char last         = name[name.length() - 1];
+  if ((last == '+') || (last == '0') || (last == '-')) {
+    charge = sign(last);
+    strippedName.erase(strippedName.length() - 1);
+    const char secondLast[] = {name[name.length() - 2], '\0'};
+    const int  chargeVal    = atoi(secondLast);
+    if (chargeVal != 0) {
+      charge *= chargeVal;
+      strippedName.erase(strippedName.length() - 1);
+    }
+  }
+  return strippedName;
+}
+
+
+string
+particleProperties::stripChargeFromName(const string& name)
+{
+  int dummy;
+  return chargeFromName(name, dummy);
 }

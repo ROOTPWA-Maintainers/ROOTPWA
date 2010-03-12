@@ -60,12 +60,12 @@ main(int argc, char** argv)
   // test loading of particle data table
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
-  if (1)
+  if (0)
     printInfo << "particle data table:" << endl
 	      << pdt;
 
   // test filling of particle properties
-  if (1) {
+  if (0) {
     particleProperties partProp;
     const string       partName = "pi";
     partProp.fillFromDataTable(partName);
@@ -75,20 +75,37 @@ main(int argc, char** argv)
   }
 
   // test construction of particles
-  if (1) {
+  if (0) {
     TVector3 mom;
     mom = TVector3(1, 2, 3);
-    const particle p1("pi",  +1, mom,  0);
+    const particle p1("pi+", mom,  0);
     mom = TVector3(2, 3, 4);
-    const particle p2("pi",  -1, mom, -1);
+    const particle p2("pi-", mom, -1);
     particle p3 = p2;
-    p3.setName("X");
-    p3.setCharge(+1);
+    p3.setName("X+");
     p3.setSpinProj(+1);
     printInfo << "created particles: " << endl
 	      << p1 << endl
 	      << p2 << endl
 	      << p3 << endl;
+  }
+
+  // checking charge name handling
+  if (1) {
+    for (int i = -2; i < 3; ++i) {
+      stringstream c;
+      c << "pi";
+      if (abs(i) > 1)
+	c << abs(i);
+      c << sign(i);
+      //const particle p(c.str(), i);
+      int q;
+      const string n = particle::chargeFromName(c.str(), q);
+      cout << c.str() << ": charge = " << q << ", name = " << n << endl;
+      const particle p(c.str());
+      cout << "name = " << p.name() << endl
+	   << endl;
+    }
   }
 
 }
