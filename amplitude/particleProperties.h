@@ -64,12 +64,12 @@ namespace rpwa {
     
     virtual ~particleProperties();
 
-    particleProperties& operator =  (const particleProperties& partProp);
-    friend bool         operator == (const particleProperties& lhsProp,
-				     const particleProperties& rhsProp);
-    friend bool         operator != (const particleProperties& lhsProp,
-				     const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
-
+    virtual particleProperties& operator =  (const particleProperties& partProp);
+    friend bool operator == (const particleProperties& lhsProp,
+			     const particleProperties& rhsProp);
+    friend bool operator != (const particleProperties& lhsProp,
+			     const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
+    
     std::string name()        const { return _name;        }  ///< returns particle name
     double      mass()        const { return _mass;        }  ///< returns particle mass
     double      width()       const { return _width;       }  ///< returns particle width
@@ -98,8 +98,8 @@ namespace rpwa {
     void setP          (const int          P)           { _P           = P;           }  ///< sets particle's parity
     void setC          (const int          C)           { _C           = C;           }  ///< sets particle's C-parity
 
-    std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
-    std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
+    virtual std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
+    virtual std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
 
     bool read(std::istringstream& line);  ///< reads whitespace separated properties from single line
 

@@ -145,7 +145,7 @@ const TLorentzVector&
 isobarDecayVertex::updateMotherLzVec()
 {
   if (debug())
-    printInfo << "updating Lorentz-vector of " << mother().name()
+    printInfo << "updating Lorentz-vector of particle " << mother().name()
 	      << " p_before = " << mother().lzVec() << " GeV, " << flush;
   mother().setLzVec(daughter1().lzVec() + daughter2().lzVec());
   cout << "p_after = " << mother().lzVec() << " GeV" << endl;

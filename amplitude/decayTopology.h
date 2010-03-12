@@ -66,35 +66,33 @@ namespace rpwa {
 		  const std::vector<interactionVertex*>& vertices);
     virtual ~decayTopology();
 
-    decayTopology& operator = (const decayTopology& topo);
+    virtual decayTopology& operator = (const decayTopology& topo);
     
-    decayTopology& constructDecay(const std::vector<particle*>&          fsParticles,
-				  interactionVertex&                     productionVertex,
-				  const std::vector<interactionVertex*>& vertices);  ///< constructs the dacy graph based on final state particles and vertices
+    virtual decayTopology& constructDecay(const std::vector<particle*>&          fsParticles,
+					  interactionVertex&                     productionVertex,
+					  const std::vector<interactionVertex*>& vertices);  ///< constructs the decay graph based on final state particles and vertices
 
-    unsigned int nmbFsParticles() const { return _fsParticles.size(); }  ///< returne number of final state particles
-    unsigned int nmbVertices()    const { return _vertices.size();    }  ///< returns number of interaction vertices
-    std::vector<particle*>&          fsParticles()      { return _fsParticles;  }  ///< returns final state particles
-    std::vector<interactionVertex*>& vertices()         { return _vertices;     }  ///< returns all interaction vertices ordered by depth first; first vertex is production vertex
-    interactionVertex&               productionVertex() { return *_vertices[0]; }  ///< returns production vertex
-    interactionVertex&               xDecayVertex()     { return *_vertices[1]; }  ///< returns X-decay vertex
+    virtual unsigned int nmbFsParticles() const { return _fsParticles.size(); }  ///< returne number of final state particles
+    virtual unsigned int nmbVertices()    const { return _vertices.size();    }  ///< returns number of interaction vertices
+    virtual std::vector<particle*>& fsParticles() { return _fsParticles; }  ///< returns final state particles
+    virtual std::vector<interactionVertex*>& interactionVertices() { return _vertices; }  ///< returns all interaction vertices (excluding production vertex) ordered by depth first; first vertex is X-decay vertex
+    virtual interactionVertex& productionVertex() { return *_productionVertex; }  ///< returns production vertex
+    virtual interactionVertex& xInteractionVertex() { return *_vertices[0]; }  ///< returns X-decay vertex
 
-    bool dataAreValid()   const { return false; }  ///< indicates whether data are complete and valid
-    bool verifyTopology() const;  ///< returns whether decay has the correct topology
+    virtual bool dataAreValid()   const { return false; }  ///< indicates whether data are complete and valid
+    virtual bool verifyTopology() const { return true;  }  ///< returns whether decay has the correct topology
 
-    const TLorentzVector& updateIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
+    virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
+    virtual std::ostream& writeGraphViz(std::ostream& out) const;  ///< writes graph in GraphViz DOT format
 
-    std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
-    std::ostream& writeGraphViz(std::ostream& out) const;  ///< writes graph in GraphViz DOT format
-
-    void clear();  ///< deletes all information
+    virtual void clear();  ///< deletes all information
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+    
 
-
-  private:
-
+  protected:
+    
     // graph definition
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 				  boost::property<boost::vertex_name_t, interactionVertex*,
@@ -119,28 +117,24 @@ namespace rpwa {
     decayGraph   _graph;     ///< graph that represents particle decay
     nodePropType _nodeProp;  ///< node properties; pointers to interaction vertices
     edgePropType _edgeProp;  ///< edge properties; pointer to particles
-
-    std::vector<interactionVertex*>        _vertices;         ///< array of interaction vertices
-    std::vector<particle*>                 _fsParticles;      ///< number of final state particles
-    std::map<interactionVertex*, nodeDesc> _vertexNodeMap;    ///< maps vertex pointers to graph nodes
-    std::map<particle*,          edgeDesc> _particleEdgeMap;  ///< maps particle pointers to graph edges
+    
+    std::map<interactionVertex*, nodeDesc> _vertexNodeMap;     ///< maps vertex pointers to graph nodes
+    std::map<particle*,          edgeDesc> _particleEdgeMap;   ///< maps particle pointers to graph edges
     typedef std::map<interactionVertex*, nodeDesc>::iterator vertexNodeMapIt;
     typedef std::map<particle*,          edgeDesc>::iterator particleEdgeMapIt;
+    
 
+  private:
+    
+    interactionVertex*                     _productionVertex;  ///< pointer to production vertex
+    std::vector<interactionVertex*>        _vertices;          ///< array of interaction vertices excluding production vertex; ordered depth-first
+    std::vector<particle*>                 _fsParticles;       ///< number of final state particles
+    
     static bool _debug;  ///< if set to true, debug messages are printed
     
     // recorder for depth first visitor
     template<class nodeOutIterator>
-    class dfsRecorder : public boost::default_dfs_visitor {
-    public:
-      dfsRecorder(nodeOutIterator nodeIt)
-	: _nodeIt(nodeIt)
-      { }
-      template<typename node, typename graph> void discover_vertex(node n, const graph &)
-      {	*_nodeIt++ = n; }
-    private:
-      nodeOutIterator _nodeIt;
-    };
+    class dfsRecorder;
     
     // object generator function
     template<class nodeOutIterator>

@@ -73,7 +73,7 @@ namespace rpwa {
 	     const int                 spinProj);
     virtual ~particle();
 
-    particle& operator = (const particle& part);
+    virtual particle& operator = (const particle& part);
 
     int                   charge()   const { return _charge;   }  ///< returns particle's charge
     int                   spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
@@ -84,7 +84,7 @@ namespace rpwa {
     void setMomentum(const TVector3& momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
     void setLzVec(const TLorentzVector& lzVec) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
 
-    std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
+    virtual std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
