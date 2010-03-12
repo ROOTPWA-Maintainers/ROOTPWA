@@ -258,14 +258,14 @@ decayTopology::print(ostream& out) const
       const particle* p = _vertices[i]->inParticles()[j];
       out << p->name() << sign(p->charge());
       if (j < _vertices[i]->nmbInParticles() - 1)
-	out << " + ";
+	out << "  +  ";
     }
     out << "  --->  ";
     for (unsigned int j = 0; j < _vertices[i]->nmbOutParticles(); ++j) {
       const particle* p = _vertices[i]->outParticles()[j];
       out << p->name() << sign(p->charge());
       if (j < _vertices[i]->nmbOutParticles() - 1)
-	out << " + ";
+	out << "  +  ";
     }
     out << endl;
   }

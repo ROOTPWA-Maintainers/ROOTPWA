@@ -80,15 +80,13 @@ protected:
 int
 main(int argc, char** argv)
 {
-  if (1) {
-    // switch on debug output
-    //particleProperties::setDebug(true);
-    //particleDataTable::setDebug(true);
-    particle::setDebug(true);
-    interactionVertex::setDebug(true);
-    decayTopology::setDebug(true);
-    isobarDecayTopology::setDebug(true);
-  }
+  // switch on debug output
+  particle::setDebug(true);
+  interactionVertex::setDebug(true);
+  diffractiveDissVertex::setDebug(true);
+  isobarDecayVertex::setDebug(true);
+  decayTopology::setDebug(true);
+  isobarDecayTopology::setDebug(true);
 
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
@@ -136,25 +134,24 @@ main(int argc, char** argv)
     particle f1   ("f1(1285)",  0);
     // define X-system
     //              q   I   G  2J  P   C  2M
-    particle X("X", -1, 1, -1, 4, +1, +1, 2);
+    particle X("X", +1, 1, +1, 4, +1, -1, 2);
     // define production vertex
     particle beam("pi", -1);
     diffractiveDissVertex prodVert(beam, X);
     // define vertices
-    isobarDecayVertex vert0(X,     pi4, f1,    0, 2);
+    isobarDecayVertex vert0(X,     pi4, f1,    0, 3);
     isobarDecayVertex vert1(f1,    pi2, a1,    2, 2);
     isobarDecayVertex vert2(a1,    pi3, sigma, 2, 2);
     isobarDecayVertex vert3(sigma, pi0, pi1,   0, 0);
 
     // Consistency check
     printInfo << endl << "Performing consistency checks on Isobar-Vertices.." << endl;
-    if(vert0.checkConsistency() &&
-       vert1.checkConsistency() &&
-       vert2.checkConsistency() &&
-       vert3.checkConsistency())
-      {
-	printInfo << "All vertices checked for consistency." << endl;
-    } 
+    if (vert0.checkConsistency() &&
+	vert1.checkConsistency() &&
+	vert2.checkConsistency() &&
+	vert3.checkConsistency()) {
+      printInfo << "All vertices checked for consistency." << endl;
+    }
     //else return 1;
     
     // build graph

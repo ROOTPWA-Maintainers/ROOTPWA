@@ -71,21 +71,35 @@ namespace rpwa {
     const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
 
     
-    unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters
+    unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters * 2 (!!!)
     unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)
 
-    void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters
+    void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters * 2 (!!!)
     void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
     bool checkConsistency(); ///< checks quantum decomposition of in-particle to outparticles
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
 
   private:
+
+    bool checkMultiplicativeQn(const int          motherQn,
+			       const int          daughter1Qn,
+			       const int          daughter2Qn,
+			       const std::string& qnName = "");  ///< checks consistency of a multiplicative quantum number
+    bool checkAdditiveQn      (const int          motherQn,
+			       const int          daughter1Qn,
+			       const int          daughter2Qn,
+			       const std::string& qnName = "");  ///< checks consistency of an additive quantum number
     
-    unsigned int _L;  ///< relative orbital angular momentum between the two daughters
+    unsigned int _L;  ///< relative orbital angular momentum between the two daughters * 2 (!!!)
     unsigned int _S;  ///< total spin of the two daughters * 2 (!!!)
+
+    static bool _debug;  ///< if set to true, debug messages are printed
 
   };
 

@@ -65,6 +65,14 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+
+  private:
+
+    static bool _debug;  ///< if set to true, debug messages are printed
+
   };
 
 

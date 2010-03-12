@@ -46,10 +46,16 @@ using namespace std;
 using namespace rpwa;
 
 
+bool diffractiveDissVertex::_debug = false;
+
+
 diffractiveDissVertex::diffractiveDissVertex(particle& beam,
 					     particle& XSystem)
   : interactionVertex()
 {
+  if (_debug)
+    printInfo << "contructing production vertex for diffractive dissociation: "
+	      << "beam = " << beam.name() << ", produced state = " << XSystem.name() << endl;
   interactionVertex::addInParticle (beam);
   interactionVertex::addOutParticle(XSystem);
 }

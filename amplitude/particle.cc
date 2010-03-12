@@ -120,8 +120,8 @@ particle::print(ostream& out) const
 {
   particleProperties::print(out);
   out << ", "
-      << "charge = "          << sign(_charge) << ", "
-      << "spin projection = " << _spinProj     << ", "
-      << "Lorentz-vector = "  << _lzVec        << " GeV";
+      << "charge = "         << sign(_charge) << ", "
+      << "2 * spin proj. = " << _spinProj     << ", "
+      << "Lorentz-vector = " << _lzVec        << " GeV";
   return out;
 }
