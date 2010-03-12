@@ -69,12 +69,15 @@ namespace rpwa {
     particle& daughter2() { return *(outParticles()[1]); }  ///< returns second daughter particle
 
     const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
+
     
     unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters
     unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)
 
     void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters
     void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
+
+    bool checkConsistency(); ///< checks quantum decomposition of in-particle to outparticles
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 

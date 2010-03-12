@@ -82,6 +82,24 @@ isobarDecayVertex::operator = (const isobarDecayVertex& vert)
 }
 
 
+bool 
+isobarDecayVertex::checkConsistency(){
+
+  // check multiplicative QN: G,P,C
+  
+
+  // check charge
+
+  // check flavour (Isospin, Charm, Beauty) coupling
+
+  // check spin coupling: s in {|s1-s2| .. s1+s2}
+  
+  // check l-s coupling: J in {|l-s| .. l+s}
+
+}
+
+
+
 const TLorentzVector&
 isobarDecayVertex::updateMotherLzVec()
 {
@@ -92,6 +110,7 @@ isobarDecayVertex::updateMotherLzVec()
   cout << "p_after = " << mother().lzVec() << " GeV" << endl;
   return mother().lzVec();
 }
+
 
 ostream&
 isobarDecayVertex::print(ostream& out) const
