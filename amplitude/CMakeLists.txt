@@ -49,6 +49,7 @@ SET(CMAKE_CXX_FLAGS_NONE "${CMAKE_CXX_FLAGS_NONE} -Wno-deprecated")
 
 SET(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
+  /afs/e18/user/sneubert/scratch/COMPASS/boost_1_42_0
   ${CMAKE_SOURCE_DIR}/src
 )
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
@@ -58,6 +59,7 @@ SET(SOURCES
   particleProperties.cc
   particleDataTable.cc
   particle.cc
+  angMomCoupl.cc
   interactionVertex.cc
   diffractiveDissVertex.cc
   isobarDecayVertex.cc
@@ -90,7 +92,7 @@ SET(ROOT_LIBS
 # define BOOST libraries
 SET(BOOST_LIBS
 #  boost_graph
-  /usr/lib/libboost_graph.so
+#  /usr/lib/libboost_graph.so
 )
 
 

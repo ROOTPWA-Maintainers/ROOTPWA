@@ -140,11 +140,22 @@ main(int argc, char** argv)
     particle beam("pi", -1);
     diffractiveDissVertex prodVert(beam, X);
     // define vertices
-    isobarDecayVertex vert0(X,     pi4, f1,    1, 2);
-    isobarDecayVertex vert1(f1,    pi2, a1,    1, 2);
-    isobarDecayVertex vert2(a1,    pi3, sigma, 1, 2);
+    isobarDecayVertex vert0(X,     pi4, f1,    0, 2);
+    isobarDecayVertex vert1(f1,    pi2, a1,    2, 2);
+    isobarDecayVertex vert2(a1,    pi3, sigma, 2, 2);
     isobarDecayVertex vert3(sigma, pi0, pi1,   0, 0);
 
+    // Consistency check
+    printInfo << endl << "Performing consistency checks on Isobar-Vertices.." << endl;
+    if(vert0.checkConsistency() &&
+       vert1.checkConsistency() &&
+       vert2.checkConsistency() &&
+       vert3.checkConsistency())
+      {
+	printInfo << "All vertices checked for consistency." << endl;
+    } 
+    else return 1;
+    
     // build graph
     vector<particle*> fsParticles;
     fsParticles.push_back(&pi0);

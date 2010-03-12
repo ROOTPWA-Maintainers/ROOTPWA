@@ -39,6 +39,7 @@
 
 #include "utilities.h"
 #include "isobarDecayVertex.h"
+#include "angMomCoupl.h"
 
 	
 using namespace std;
@@ -84,44 +85,57 @@ isobarDecayVertex::operator = (const isobarDecayVertex& vert)
 
 bool 
 isobarDecayVertex::checkConsistency(){
-
+  bool result=true;
   // check multiplicative QN: G,P, C is superflous if we use G??
   if(mother().G()!=daughter1().G()*daughter2().G()){
-    if(debug()){
-      printWarn << "G-Parity mismatch in isobarDecay "<< *this << flush;
-      return false;
-    }
+    if(debug())
+      printWarn << "G-Parity mismatch in "<< endl;
+    result=false;
   }
-  int lparity= (_L % 2 == 0) ? 1 : -1;
+  int lparity= (_L % 4 == 0) ? 1 : -1; // modulo 4 because L in units of Hbar/2
   if(mother().P()!=daughter1().P()*daughter2().P() * lparity){
-    if(debug()){
-      printWarn << "Parity mismatch in isobarDecay "<< *this << flush;
-      return false;
-    }
+    if(debug())
+      printWarn << "Parity mismatch in "<< endl;
+    result=false;
   }
   // if(mother().C()!=daughter1().C()*daughter2().C()){
-//     if(debug()){
+//     if(debug())
 //       printWarn << "C-Parity mismatch in isobarDecay "<< *this << flush;
-//       return false;
-//     }
+//     result=false;
 //   }
   
   // check charge
- //  if(mother().Q()!=daughter1().Q()+daughter2().Q()){
-//     if(debug()){
-//       printWarn << "Charge mismatch in isobarDecay "<< *this << flush;
-//       return false;
-//     }
-//   }
+  if(mother().charge()!=daughter1().charge()+daughter2().charge()){
+    if(debug())
+      printWarn << "Charge mismatch in "<< endl;
+    result=false;
+  }
 
 
   // check flavour (Isospin, Strangeness, Charm, Beauty) coupling
 
+  
+
+
   // check spin coupling: s in {|s1-s2| .. s1+s2}
   
+  if(!angMomCoupl(daughter1().J(),daughter2().J()).inRange(_S)){
+    if(debug())
+      printWarn << "Spin-Spin coupling out of range in "<< endl;
+    result=false;
+  }
+  
   // check l-s coupling: J in {|l-s| .. l+s}
+  
+  if(!angMomCoupl(_L,_S).inRange(mother().J())){
+    if(debug())
+      printWarn << "Spin-Orbit coupling out of range in "<< endl;
+    result=false;
+  }
 
-  return true;
+  if(!result && debug())printWarn <<  *this << flush;
+    
+  return result;
 
 }
 
