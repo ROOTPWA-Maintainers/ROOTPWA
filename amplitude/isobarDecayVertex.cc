@@ -85,16 +85,43 @@ isobarDecayVertex::operator = (const isobarDecayVertex& vert)
 bool 
 isobarDecayVertex::checkConsistency(){
 
-  // check multiplicative QN: G,P,C
+  // check multiplicative QN: G,P, C is superflous if we use G??
+  if(mother().G()!=daughter1().G()*daughter2().G()){
+    if(debug()){
+      printWarn << "G-Parity mismatch in isobarDecay "<< *this << flush;
+      return false;
+    }
+  }
+  int lparity= (_L % 2 == 0) ? 1 : -1;
+  if(mother().P()!=daughter1().P()*daughter2().P() * lparity){
+    if(debug()){
+      printWarn << "Parity mismatch in isobarDecay "<< *this << flush;
+      return false;
+    }
+  }
+  // if(mother().C()!=daughter1().C()*daughter2().C()){
+//     if(debug()){
+//       printWarn << "C-Parity mismatch in isobarDecay "<< *this << flush;
+//       return false;
+//     }
+//   }
   
-
   // check charge
+ //  if(mother().Q()!=daughter1().Q()+daughter2().Q()){
+//     if(debug()){
+//       printWarn << "Charge mismatch in isobarDecay "<< *this << flush;
+//       return false;
+//     }
+//   }
 
-  // check flavour (Isospin, Charm, Beauty) coupling
+
+  // check flavour (Isospin, Strangeness, Charm, Beauty) coupling
 
   // check spin coupling: s in {|s1-s2| .. s1+s2}
   
   // check l-s coupling: J in {|l-s| .. l+s}
+
+  return true;
 
 }
 
