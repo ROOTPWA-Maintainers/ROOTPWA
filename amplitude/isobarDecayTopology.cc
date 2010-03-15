@@ -62,10 +62,19 @@ isobarDecayTopology::isobarDecayTopology(const isobarDecayTopology& topo)
 
 isobarDecayTopology::isobarDecayTopology(const vector<particle*>&          fsParticles,
 					 interactionVertex&                productionVertex,
-					 const vector<isobarDecayVertex*>& decayVertices)
+					 const vector<interactionVertex*>& interactionVertices)
   : decayTopology()
 {
-  constructDecay(fsParticles, productionVertex, decayVertices);
+  constructDecay(fsParticles, productionVertex, interactionVertices);
+}
+
+
+isobarDecayTopology::isobarDecayTopology(const vector<particle*>&          fsParticles,
+					 interactionVertex&                productionVertex,
+					 const vector<isobarDecayVertex*>& isobarDecayVertices)
+  : decayTopology()
+{
+  constructDecay(fsParticles, productionVertex, isobarDecayVertices);
 }
 
 
@@ -80,6 +89,30 @@ isobarDecayTopology::operator = (const isobarDecayTopology& topo)
     decayTopology::operator = (topo);
     _vertices = topo._vertices;
   }
+  return *this;
+}
+
+
+isobarDecayTopology&
+isobarDecayTopology::constructDecay(const vector<particle*>&          fsParticles,
+				    interactionVertex&                productionVertex,
+				    const vector<interactionVertex*>& interactionVertices)
+{
+  const unsigned int nmbVert = interactionVertices.size();
+  if (_debug)
+    printInfo << "constructing isobar decay topology with "
+	      << fsParticles.size() << " final state particles and "
+	      << nmbVert            << " isobar decay vertices" << endl;
+  clear();
+  for (unsigned int i = 0; i < nmbVert; ++i)
+    if (!dynamic_cast<isobarDecayVertex*>(interactionVertices[i])) {
+      printErr << "interaction vertex[" << i << "] is not an isobarDecayVertex. aborting." << endl;
+      throw;
+    }
+  decayTopology::constructDecay(fsParticles, productionVertex, interactionVertices);
+  _vertices.resize(nmbVertices(), 0);
+  for (unsigned int i = 0; i < nmbVertices(); ++i)
+    _vertices[i] = static_cast<isobarDecayVertex*>(this->interactionVertices()[i]);
   return *this;
 }
 

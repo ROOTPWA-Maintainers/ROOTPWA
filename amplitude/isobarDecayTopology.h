@@ -51,17 +51,23 @@ namespace rpwa {
   public:
 			
     isobarDecayTopology();
-    isobarDecayTopology(const isobarDecayTopology&       topo);
-    isobarDecayTopology(const std::vector<particle*>&    fsParticles,
-		  interactionVertex&                     productionVertex,
-		  const std::vector<isobarDecayVertex*>& vertices);
+    isobarDecayTopology(const isobarDecayTopology&             topo);
+    isobarDecayTopology(const std::vector<particle*>&          fsParticles,
+			interactionVertex&                     productionVertex,
+			const std::vector<interactionVertex*>& interactionVertices);
+    isobarDecayTopology(const std::vector<particle*>&          fsParticles,
+			interactionVertex&                     productionVertex,
+			const std::vector<isobarDecayVertex*>& isobarDecayVertices);
     virtual ~isobarDecayTopology();
 
     isobarDecayTopology& operator = (const isobarDecayTopology& topo);
     
     isobarDecayTopology& constructDecay(const std::vector<particle*>&          fsParticles,
 					interactionVertex&                     productionVertex,
-					const std::vector<isobarDecayVertex*>& vertices);  ///< constructs the decay graph based on final state particles and vertices
+					const std::vector<interactionVertex*>& interactionVertices);  ///< constructs the decay graph based on final state particles and vertices
+    isobarDecayTopology& constructDecay(const std::vector<particle*>&          fsParticles,
+					interactionVertex&                     productionVertex,
+					const std::vector<isobarDecayVertex*>& isobarDecayVvertices);  ///< constructs the decay graph based on final state particles and vertices
 
     std::vector<isobarDecayVertex*>& isobarDecayVertices() { return _vertices; }  ///< returns all isobar decay vertices ordered by depth first; first vertex is X-decay vertex
     isobarDecayVertex& xIsobarDecayVertex() { return *_vertices[0]; }  ///< returns X-decay vertex

@@ -42,7 +42,9 @@
 
 #include <boost/graph/topological_sort.hpp>
 #include <boost/graph/depth_first_search.hpp>
+#if BOOST_GRAPH_LIB
 #include <boost/graph/graphviz.hpp>
+#endif
 #include <boost/graph/breadth_first_search.hpp>
 
 #include "utilities.h"
@@ -285,7 +287,11 @@ decayTopology::print(ostream& out) const
 ostream&
 decayTopology::writeGraphViz(ostream& out) const
 {
+#if BOOST_GRAPH_LIB
   write_graphviz(out, _graph);
+#else
+  printWarn << "cannot write GraphViz file. libboost_graph.so needed." << endl;
+#endif
   return out;
 }
 

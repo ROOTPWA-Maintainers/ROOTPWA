@@ -37,18 +37,10 @@
 
 #include <fstream>
 
-#include <boost/config.hpp>
-#include <boost/utility.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/topological_sort.hpp>
-#include <boost/graph/depth_first_search.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <boost/graph/visitors.hpp>
-#include <boost/graph/connected_components.hpp>
-
 #include "TVector3.h"
 #include "TSystem.h"
 
+#include "svnVersion.h"
 #include "utilities.h"
 #include "particleDataTable.h"
 #include "particle.h"
@@ -58,28 +50,14 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace rpwa;
-
-
-struct cycleDetector : public dfs_visitor<> {
-
-  cycleDetector(bool& hasCycle) 
-    : _hasCycle(hasCycle)
-  { }
-
-  template <class edge, class graph> void back_edge(edge, graph&) { _hasCycle = true; }
-
-protected:
-
-  bool& _hasCycle;
-
-};
 
 
 int
 main(int argc, char** argv)
 {
+  printSvnVersion();
+
   // switch on debug output
   particle::setDebug(true);
   interactionVertex::setDebug(true);
@@ -176,7 +154,9 @@ main(int argc, char** argv)
     
     ofstream graphVizFile("decay.dot");
     topo.writeGraphViz(graphVizFile);
+#if BOOST_GRAPH_LIB
     gSystem->Exec("dot -Tps -o decay.ps decay.dot");
+#endif
 
   }
 

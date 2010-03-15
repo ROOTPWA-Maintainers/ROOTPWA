@@ -35,24 +35,24 @@
 #//-------------------------------------------------------------------------
 
 
+# define project
 PROJECT(rootpwa)
+ENABLE_TESTING()
 
 
 SET(THIS_LIB rootPwaAmplitude)
 
 
-ENABLE_TESTING()
-
-
-SET(CMAKE_CXX_FLAGS_NONE "${CMAKE_CXX_FLAGS_NONE} -Wno-deprecated")
+ADD_DEFINITIONS(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
 
 
 SET(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
-  /afs/e18/user/sneubert/scratch/COMPASS/boost_1_42_0
+  ${Boost_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/src
 )
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
+
 
 # list of source files that are compiled into library
 SET(SOURCES
@@ -88,12 +88,6 @@ SET(ROOT_LIBS
   ${ROOT_LIB}/libMinuit2.so
   libdl.so
   libm.so
-)
-
-# define BOOST libraries
-SET(BOOST_LIBS
-#  boost_graph
-#  /usr/lib/libboost_graph.so
 )
 
 
