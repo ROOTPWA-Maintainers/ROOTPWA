@@ -71,6 +71,13 @@ namespace rpwa {
     const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
 
     
+    void getListOfValidDecays(std::vector<isobarDecayVertex*>&,
+			      int maxl=3, bool blockExotic=true);
+    void getListOfValidDecays(std::vector<isobarDecayVertex*>& d1list,
+			      std::vector<isobarDecayVertex*>& d2list,
+			      std::vector<isobarDecayVertex*>& outlist,
+			      int maxl=3, bool blockExotic=true);
+
     unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters * 2 (!!!)
     unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)
 

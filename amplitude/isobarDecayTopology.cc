@@ -169,6 +169,17 @@ isobarDecayTopology::verifyTopology() const
 }
 
 
+bool 
+isobarDecayTopology::checkConsistency() const {
+  unsigned int nv=_vertices.size();
+  bool result=true;
+  // loop over all vertices
+  for(unsigned int iv=0;iv<nv;++iv){
+    result &= _vertices[iv]->checkConsistency();
+  }
+  return result;
+}
+
 const TLorentzVector&
 isobarDecayTopology::updateIsobarLzVec()
 {

@@ -64,6 +64,7 @@ SET(SOURCES
   diffractiveDissVertex.cc
   isobarDecayVertex.cc
   decayTopology.cc
+  isobarDecayTopology.cc
 )
 	    
 # define ROOT libraries
@@ -117,6 +118,9 @@ SET(THIS_EXE testDecayTopology)
 ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
 TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
 
+SET(THIS_EXE testDecayCombinatorics)
+ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
+TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
 
 #-------------------------------------------------
 #------- Install Commands ------------------------

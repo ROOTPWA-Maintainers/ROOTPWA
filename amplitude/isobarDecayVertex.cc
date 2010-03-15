@@ -212,6 +212,105 @@ isobarDecayVertex::updateMotherLzVec()
 }
 
 
+void
+isobarDecayVertex::getListOfValidDecays(vector<isobarDecayVertex*>& d1list,
+					vector<isobarDecayVertex*>& d2list,
+					vector<isobarDecayVertex*>& outlist,
+					int maxl,bool blockExotic){
+  // save original daughters
+  particle* d1orig=outParticles()[0];
+  particle* d2orig=outParticles()[1];
+ 
+  // here we exploit the fact that in the isobarmodel each vertex
+  // has a unique association with its mother particle
+  unsigned int n1=d1list.size();
+  unsigned int n2=d2list.size();
+  for(unsigned int i1=0;i1<n1;++i1){ // loop over daughters1
+    if(d1list[i1]!=NULL)_outParticles[0]=&(d1list[i1]->mother());
+    for(unsigned int i2=0;i2<n2;++i2){ // loop over daughters2
+      if(d2list[i2]!=NULL)_outParticles[1]=&(d2list[i2]->mother());
+      getListOfValidDecays(outlist,maxl,blockExotic);
+    } // end loop over daughters2
+  } // end loop over daughters1
+
+  // restore original daughters
+  _outParticles[0]=d1orig;
+  _outParticles[1]=d2orig;
+
+}
+
+
+
+void
+isobarDecayVertex::getListOfValidDecays(vector<isobarDecayVertex*>& outlist, 
+					int maxl,
+					bool blockExotic){
+  
+  int q=daughter1().charge()*daughter2().charge();
+  int G=daughter1().G()*daughter2().G();
+  int strangeness=daughter1().strangeness()+daughter2().strangeness();
+  int charm=daughter1().charm()+daughter2().charm();
+  int beauty=daughter1().beauty()+daughter2().beauty();
+  
+  // s-s coupling loop
+  int s1=daughter1().J();
+  int s2=daughter2().J();
+  int I1=daughter1().isospin();
+  int I2=daughter2().isospin();
+  
+  //vector<int> scoupl=angMomCoupl(s1,s2).getCombinations(); Is this worth it?
+  for(int s=abs(s1-s2);s<=(s1+s2);s+=2){
+    // l loop
+    for(int l=0;l<=maxl;l+=2){
+      int P=daughter1().P() * daughter2().P() * (l % 4 == 0 ? 1 : -1);
+      // l-s coupling loop
+      for(int J=abs(l-s);J<=l+s;J+=2){	
+	for(int I=abs(I1-I2); I<= I1+I2 && I<=2; I+=2){
+
+	  int C=G * (I % 4 == 0 ? 1 : -1);
+
+	  cout <<"IG="<<I<<sign(G)<<"   Jpc="<<J<<sign(P)<<sign(C)
+	       <<"   s="<<s<<"   l="<<l<<endl;
+	  
+	  if(blockExotic){
+	    // Quark model boundary conditions:
+	    // for P==C everything ok
+	    // check P=(-1)^(J+1)
+	    if(P!=C && (C != (J % 4 == 0 ? 1 : -1) || P != (J+2 % 4 == 0 ? 1 : -1)) ){
+	      cout << "Blocking spin-exotic isobar!" << endl;
+	      continue;
+	    }
+	  }
+	
+
+	  // build new mother & vertex
+	  particle* newmo=new particle("Isobar",I,G,J,P,C,0);
+	  newmo->setCharge(q);newmo->setStrangeness(strangeness);
+	  newmo->setCharm(charm);newmo->setBeauty(beauty);
+	  outlist.push_back(new isobarDecayVertex(*newmo,
+						  daughter1(),
+						  daughter2(),l,s));
+
+	}// end isospin loop
+	
+      }// end l-s coupling loop
+      
+    }// end l loop
+    
+  }// end s-s coupling loop
+  
+  
+  
+}
+
+
+
+
+
+
+
+
+
 ostream&
 isobarDecayVertex::print(ostream& out) const
 {

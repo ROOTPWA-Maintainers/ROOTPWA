@@ -68,6 +68,9 @@ namespace rpwa {
 
     bool verifyTopology() const;  ///< returns whether decay has the correct topology
 
+    bool checkConsistency() const; ///< checks conservation laws at vertices
+
+    
     const TLorentzVector& updateIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 
     void clear();  ///< deletes all information

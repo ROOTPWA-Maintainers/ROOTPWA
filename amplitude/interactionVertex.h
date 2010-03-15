@@ -81,7 +81,7 @@ namespace rpwa {
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
-  private:
+  protected:
 
     std::vector<particle*> _inParticles;   ///< array of pointers to incoming particles
     std::vector<particle*> _outParticles;  ///< array of pointers to outgoing particles

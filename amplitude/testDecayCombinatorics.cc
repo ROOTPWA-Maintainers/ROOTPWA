@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 168                         $: revision of last commit
+// $Author:: bgrube                   $: author of last commit
+// $Date:: 2010-03-12 22:45:16 +0100 #$: date of last commit
 //
 // Description:
 //      basic test program for vertex and decay topology
@@ -81,80 +81,42 @@ int
 main(int argc, char** argv)
 {
   // switch on debug output
-  particle::setDebug(true);
-  interactionVertex::setDebug(true);
+  //particle::setDebug(true);
+  //interactionVertex::setDebug(true);
   diffractiveDissVertex::setDebug(true);
-  isobarDecayVertex::setDebug(true);
-  decayTopology::setDebug(true);
-  isobarDecayTopology::setDebug(true);
+  //isobarDecayVertex::setDebug(true);
+  //decayTopology::setDebug(true);
+  //isobarDecayTopology::setDebug(true);
 
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
 
-  // test construction of vertices
-  if (0) {
-    TVector3 mom;
-    mom = TVector3(1, 2, 3);
-    particle beam("pi-", mom);
-    particle X("X-");
-    printInfo << "created particles: " << endl
-	      << beam << endl
-	      << X    << endl;
-    diffractiveDissVertex vert1(beam, X);
-    printInfo << "created vertex: " << endl
-	      << vert1;
-    diffractiveDissVertex vert2 = vert1;
-    printInfo << "copied vertex: " << endl
-	      << vert2;
+  // define final state particles
+  particle pi0("pi-");
+  particle pi1("pi+");
+  particle pi2("pi-");
+ 
+  // define isobars
+  particle sigma("sigma");
+  //              I   G  2J  P   C  2M
+  particle X("X-", 2, -1, 0, -1, +1, 0);
+  
+  particle beam("pi-");
+  diffractiveDissVertex prodVert(beam, X);
+  
+  int lmax=8;
 
-    mom = TVector3(3, 4, 5);
-    particle daughter1("pi-", mom);
-    mom = TVector3(4, 5, 6);
-    particle daughter2("pi0", mom);
-    isobarDecayVertex vert3(X, daughter1, daughter2, 1, 2);
-    printInfo << "created vertex: " << endl
-	      << vert3;
-    isobarDecayVertex vert4 = vert3;
-    printInfo << "copied vertex: " << endl
-	      << vert4;
-  }
+  isobarDecayVertex vert0(sigma,     pi0, pi1, 0 , 0);  
+  isobarDecayVertex vert1(X,         sigma, pi2, 0, 0);
 
-  // test decay topology
-  if (1) {
-    // define final state particles
-    particle pi0("pi-");
-    particle pi1("pi+");
-    particle pi2("pi-");
-    particle pi3("pi+");
-    particle pi4("pi-");
-    // define isobars
-    particle sigma("sigma");
-    particle a1   ("a1(1269)+");
-    particle f1   ("f1(1285)");
-    // define X-system
-    //               I   G  2J  P   C  2M
-    particle X("X+", 1, +1, 4, +1, -1, 2);
-    // define production vertex
-    particle beam("pi-");
-    diffractiveDissVertex prodVert(beam, X);
-    // define vertices
-    isobarDecayVertex vert0(X,     pi4, f1,    0, 3);
-    isobarDecayVertex vert1(f1,    pi2, a1,    2, 2);
-    isobarDecayVertex vert2(a1,    pi3, sigma, 2, 2);
-    isobarDecayVertex vert3(sigma, pi0, pi1,   0, 0);
-
-       
-    // build graph
+// build graph
     vector<particle*> fsParticles;
     fsParticles.push_back(&pi0);
     fsParticles.push_back(&pi1);
     fsParticles.push_back(&pi2);
-    fsParticles.push_back(&pi3);
-    fsParticles.push_back(&pi4);
+  
     vector<isobarDecayVertex*> decayVertices;
-    decayVertices.push_back(&vert3);
     decayVertices.push_back(&vert1);
-    decayVertices.push_back(&vert2);
     decayVertices.push_back(&vert0);
     isobarDecayTopology topo(fsParticles, prodVert, decayVertices);
     cout << endl;
@@ -168,16 +130,22 @@ main(int argc, char** argv)
     const bool consistency = topo.checkConsistency();
     cout << "consistency = " << consistency << endl << endl;
 
+   
 
-    for (unsigned int i = 0; i < topo.nmbFsParticles(); ++i)
-      topo.fsParticles()[i]->setMomentum(TVector3(i + 1, 0, 0));
-    printInfo << "updating Lorentz-vectors:" << endl
-	      << topo.updateIsobarLzVec() << endl;
+    vector<isobarDecayVertex*> comb1;
+    vert0.getListOfValidDecays(comb1,lmax);
+
+    cout << "Created "<<comb1.size()<<" new decays"<<endl;
+
+    cout << *(comb1[0]) << endl;
+
+    vector<isobarDecayVertex*> dummy;dummy.push_back(NULL);
+
+    vector<isobarDecayVertex*> comb2;
+    vert1.getListOfValidDecays(comb1,dummy,comb2,lmax);
+
+    cout << "Created "<<comb2.size()<<" new decays"<<endl;
     
-    ofstream graphVizFile("decay.dot");
-    topo.writeGraphViz(graphVizFile);
-    gSystem->Exec("dot -Tps -o decay.ps decay.dot");
-
-  }
+    
 
 }

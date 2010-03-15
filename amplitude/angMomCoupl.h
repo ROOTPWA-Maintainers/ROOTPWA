@@ -35,6 +35,7 @@
 //-------------------------------------------------------------------------
 
 #include <cstdlib>
+#include <vector>
 
 namespace rpwa {
 
@@ -43,6 +44,7 @@ namespace rpwa {
     angMomCoupl(int j1, int j2) : _j1(j1), _j2(j2) {}
     
     bool inRange(int j) const {return (j>=abs(_j1-_j2) && j<=_j1+_j2);}
+    std::vector<int> getCombinations();
     
   private:
     int _j1;   

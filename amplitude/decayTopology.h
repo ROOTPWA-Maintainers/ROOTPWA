@@ -81,6 +81,8 @@ namespace rpwa {
 
     virtual bool dataAreValid()   const { return false; }  ///< indicates whether data are complete and valid
     virtual bool verifyTopology() const { return true;  }  ///< returns whether decay has the correct topology
+    virtual bool checkConsistency() const { return true; } ///< checks QN conservation rules on vertices
+    
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
     virtual std::ostream& writeGraphViz(std::ostream& out) const;  ///< writes graph in GraphViz DOT format

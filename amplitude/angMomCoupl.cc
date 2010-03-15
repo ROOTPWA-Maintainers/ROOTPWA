@@ -50,5 +50,11 @@
 
 // Class Member definitions -----------
 
+using namespace rpwa;
 
-
+std::vector<int> 
+angMomCoupl::getCombinations(){
+  std::vector<int> combo;
+  for(int j=abs(_j1-_j2);j<=(_j1+_j2);j+=2)combo.push_back(j);
+  return combo;
+}
