@@ -222,6 +222,20 @@ sign(const T& val)
 }
 
 
+// converts sign character into int
+inline
+int
+sign(const char s)
+{
+  if (s == '+')
+    return +1;
+  else if (s == '-')
+    return -1;
+  else
+    return 0;
+}
+
+
 // indicates progess by printing percentage complete
 inline
 std::ostream&
