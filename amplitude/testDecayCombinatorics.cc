@@ -66,6 +66,16 @@ main(int argc, char** argv)
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
 
+  particleProperties prop1("bla",2,-1,0,+1,+1);
+  particleProperties prop2("blub",2,1,0,+1,-1);
+  
+  string opt="IJP";
+ 
+  cout << "Comparison  result: " << (prop1 == prop2) << endl;
+  cout << "Comparison with opt="<<opt<<"  result: "
+       << (prop1 ==  pair<particleProperties,string>(prop2,opt)) << endl;
+
+
   // define final state particles
   particle pi0("pi-");
   particle pi1("pi+");

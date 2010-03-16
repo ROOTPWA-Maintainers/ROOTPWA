@@ -42,6 +42,8 @@
 
 
 #include <string>
+#include <map>
+#include <vector>
 #include <iostream>
 #include <sstream>
 
@@ -69,6 +71,14 @@ namespace rpwa {
 			     const particleProperties& rhsProp);
     friend bool operator != (const particleProperties& lhsProp,
 			     const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
+
+    friend bool operator == (const particleProperties& lhsProp,
+			     const std::pair<particleProperties, std::string>& rhsProp);
+    friend bool operator != (const particleProperties& lhsProp,
+			     const std::pair<particleProperties, std::string>& rhsProp)
+    {return !(lhsProp==rhsProp);}
+    
+
     
     virtual std::string name() const { return _name; }  ///< returns particle name of the corresponding data table entry
     double      mass()        const { return _mass;        }  ///< returns particle mass

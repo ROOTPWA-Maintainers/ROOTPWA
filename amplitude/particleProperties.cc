@@ -117,7 +117,7 @@ particleProperties::operator = (const particleProperties& partProp)
 
 
 bool
-operator == (const particleProperties& lhsProp,
+rpwa::operator == (const particleProperties& lhsProp,
 	     const particleProperties& rhsProp)
 {
   return (   (lhsProp.name()        == rhsProp.name()       )
@@ -133,6 +133,43 @@ operator == (const particleProperties& lhsProp,
           && (lhsProp.P()           == rhsProp.P()          )
 	  && (lhsProp.C()           == rhsProp.C()          ));
 }
+
+
+// opt can contain any of the following: I,G,J,P,C,strangeness,charm,beauty,baryonNmb
+bool 
+rpwa::operator == (particleProperties const & lhsProp,
+	     std::pair<particleProperties,
+	     std::string> const & rhsProp){
+
+  return ( 
+	  ((rhsProp.second.find("baryonNbm")==std::string::npos) || 
+	   (lhsProp.baryonNmb()   == rhsProp.first.baryonNmb()) )
+          && ((rhsProp.second.find("I")==std::string::npos) || 
+	      (lhsProp.isospin()     == rhsProp.first.isospin()) )
+          && ((rhsProp.second.find("strangeness")==std::string::npos) || 
+	      (lhsProp.strangeness() == rhsProp.first.strangeness()) )
+	  && ((rhsProp.second.find("charm")==std::string::npos) || 
+	      (lhsProp.charm()       == rhsProp.first.charm() ) )
+          && ((rhsProp.second.find("beauty")==std::string::npos) || 
+	      (lhsProp.beauty()      == rhsProp.first.beauty() ) )
+          && ((rhsProp.second.find("G")==std::string::npos) || 
+	      (lhsProp.G()           == rhsProp.first.G() ) )
+          && ((rhsProp.second.find("J")==std::string::npos) || 
+	      (lhsProp.J()           == rhsProp.first.J() ) )
+          && ((rhsProp.second.find("P")==std::string::npos) || 
+	      (lhsProp.P()           == rhsProp.first.P() ) )
+	  && ((rhsProp.second.find("C")==std::string::npos) || 
+	      (lhsProp.C()           == rhsProp.first.C() ) ));
+ 
+
+}
+
+
+
+
+
+
+
 
 
 bool
