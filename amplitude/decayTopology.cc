@@ -105,13 +105,16 @@ decayTopology&
 decayTopology::operator = (const decayTopology& topo)
 {
   if (this != &topo) {
-    _graph           = topo._graph;
-    _nodeProp        = topo._nodeProp;
-    _edgeProp        = topo._edgeProp;
-    _vertices        = topo._vertices;
-    _fsParticles     = topo._fsParticles;
-    _vertexNodeMap   = topo._vertexNodeMap;
-    _particleEdgeMap = topo._particleEdgeMap;
+    _graph            = topo._graph;
+    _nodeData         = topo._nodeData;
+    _nodeVertexMap    = topo._nodeVertexMap;
+    _edgeData         = topo._edgeData;
+    _edgeParticleMap  = topo._edgeParticleMap;
+    _vertexNodeMap    = topo._vertexNodeMap;
+    _particleEdgeMap  = topo._particleEdgeMap;
+    _productionVertex = topo._productionVertex;
+    _vertices         = topo._vertices;
+    _fsParticles      = topo._fsParticles;
   }
   return *this;
 }
@@ -141,10 +144,11 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
     return *this;
   }
   // create graph node for production vertex and store pointer
-  _nodeProp = get(vertex_name, _graph);
+  _nodeData      = get(vertex_bundle,        _graph);
+  _nodeVertexMap = get(vertex_vertexPointer, _graph);
   {
     nodeDesc node = add_vertex(_graph);
-    _nodeProp[node]                   = &productionVertex;
+    _nodeVertexMap[node]              = &productionVertex;
     _vertexNodeMap[&productionVertex] = node;
     if (_debug)
       printInfo << "added " << productionVertex << " as tree node [" << node << "]" << endl;
@@ -156,7 +160,7 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
       printErr << "null pointer for decay vertex[" << i << "]. aborting." << endl;
       throw;
     }
-    _nodeProp[node]                        = interactionVertices[i];
+    _nodeVertexMap[node]                   = interactionVertices[i];
     _vertexNodeMap[interactionVertices[i]] = node;
     if (_debug)
       printInfo << "added " << *interactionVertices[i] << " as tree node [" << node << "]" << endl;
@@ -164,13 +168,14 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
   // create final state nodes
   for (unsigned int i = 0; i < nmbFsPart; ++i) {
     nodeDesc node   = add_vertex(_graph);
-    _nodeProp[node] = 0;
+    _nodeVertexMap[node] = 0;
     if (_debug)
       printInfo << "created tree node [" << node << "] for final state "
 		<< *fsParticles[i] << endl;
   }
   // create edges that connect the intercation nodes and store pointers to particles
-  _edgeProp = get(edge_name, _graph);
+  _edgeData        = get(edge_bundle,          _graph);
+  _edgeParticleMap = get(edge_particlePointer, _graph);
   for (vertexNodeMapIt iFromVert = _vertexNodeMap.begin();
        iFromVert != _vertexNodeMap.end(); ++iFromVert)
     for (vertexNodeMapIt iToVert = _vertexNodeMap.begin();
@@ -189,8 +194,8 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
 		printErr << "null pointer to isobar particle. aborting." << endl;
 		throw;
 	      }
-	      _edgeProp[edge]     = p;
-	      _particleEdgeMap[p] = edge;
+	      _edgeParticleMap[edge] = p;
+	      _particleEdgeMap[p]    = edge;
 	      if (_debug)
 		printInfo << "adding edge from node [" << iFromVert->second << "] "
 			  << "to node [" << iToVert->second << "]" << endl;
@@ -216,8 +221,8 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
 		       << "aborting." << endl;
 	      throw;
 	    }
-	    _edgeProp[edge]     = p;
-	    _particleEdgeMap[p] = edge;
+	    _edgeParticleMap[edge] = p;
+	    _particleEdgeMap[p]    = edge;
 	    if (_debug)
 	      printInfo << "adding edge from node [" << iFromVert->second << "] "
 			<< "to final state node [" << nmbVert + 1 + iFsPart << "]" << endl;
@@ -225,16 +230,16 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
 	}
       }
   }
-  // sorting nodes depth first
+  // sorting nodes depth-first
   vector<nodeDesc> nodes;
   depth_first_visit(_graph, _vertexNodeMap[&productionVertex],
 		    makeDfsRecorder(back_inserter(nodes)),
 		    get(vertex_color, _graph));
   if (_debug)
-    printInfo << "depth first node order: ";
+    printInfo << "depth-first node order: ";
   for (unsigned int i = 0; i < nodes.size(); ++i) {
     cout << nodes[i] << ((i < nodes.size() - 1) ? ", " : "");
-    interactionVertex* vertex = _nodeProp[nodes[i]];
+    interactionVertex* vertex = _nodeVertexMap[nodes[i]];
     if (vertex && vertex != _productionVertex)  // skip production vertex
       _vertices.push_back(vertex);
   }
@@ -270,11 +275,11 @@ decayTopology::print(ostream& out) const
   out << "decay topology particles:" << endl;
   edgeIterator iEdge, iEdgeEnd;
   for (tie(iEdge, iEdgeEnd) = edges(_graph); iEdge != iEdgeEnd; ++iEdge) {
-    const particle* p = _edgeProp[*iEdge];
+    const particle* p = _edgeParticleMap[*iEdge];
     out << "    particle" << *iEdge << " ";
     if (p) {
       out << p->name() << " ";
-      if (!_nodeProp[target(*iEdge, _graph)])
+      if (!_nodeVertexMap[target(*iEdge, _graph)])
 	out << "(final state)";
       out << endl;
     } else
@@ -300,11 +305,13 @@ void
 decayTopology::clear()
 {
   _graph.clear();
-  _nodeProp = get(vertex_name, _graph);
-  _edgeProp = get(edge_name, _graph);
+  _nodeData        = get(vertex_bundle,        _graph);
+  _nodeVertexMap   = get(vertex_vertexPointer, _graph);
+  _edgeData        = get(edge_bundle,          _graph);
+  _edgeParticleMap = get(edge_particlePointer, _graph);
+  _vertexNodeMap.clear();
+  _particleEdgeMap.clear();
   _productionVertex = 0;
   _vertices.clear();
   _fsParticles.clear();
-  _vertexNodeMap.clear();
-  _particleEdgeMap.clear();
 }

@@ -170,14 +170,14 @@ isobarDecayTopology::verifyTopology() const
     // check that for each node the number of outgoing edges is either 2 (decay node) or 0 (final state node)
     unsigned int nmbOutEdges = out_degree(*iNode, _graph);
     if (nmbOutEdges == 0) {
-      if (_nodeProp[*iNode]) {
+      if (_nodeVertexMap[*iNode]) {
 	printWarn << "node[" << i << "] has no outgoing edges, "
 		  << "but has a isobar decay vertex pointer assigned." << endl;
 	topologyOkay = false;
       } else if (_debug)
 	printInfo << "final state node[" << i << "] is correct" << endl;
     } else if (nmbOutEdges == 2) {
-      if (!_nodeProp[*iNode]) {
+      if (!_nodeVertexMap[*iNode]) {
 	printWarn << "node[" << i << "] has 2 outgoing edges, "
 		  << "but no isobar decay vertex pointer assigned." << endl;
 	topologyOkay = false;

@@ -48,9 +48,20 @@
 #include <boost/config.hpp>
 #include <boost/utility.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/subgraph.hpp>
+#include <boost/graph/graph_utility.hpp>
 
 #include "particle.h"
 #include "interactionVertex.h"
+
+
+// add custom vertex and edge properties for graph
+namespace boost {
+  enum vertex_vertexPointer_t { vertex_vertexPointer };
+  BOOST_INSTALL_PROPERTY(vertex, vertexPointer);
+  enum edge_particlePointer_t { edge_particlePointer };
+  BOOST_INSTALL_PROPERTY(edge, particlePointer);
+}
 
 
 namespace rpwa {	
@@ -75,7 +86,7 @@ namespace rpwa {
     virtual unsigned int nmbFsParticles() const { return _fsParticles.size(); }  ///< returne number of final state particles
     virtual unsigned int nmbVertices()    const { return _vertices.size();    }  ///< returns number of interaction vertices
     virtual std::vector<particle*>& fsParticles() { return _fsParticles; }  ///< returns final state particles
-    virtual std::vector<interactionVertex*>& interactionVertices() { return _vertices; }  ///< returns all interaction vertices (excluding production vertex) ordered by depth first; first vertex is X-decay vertex
+    virtual std::vector<interactionVertex*>& interactionVertices() { return _vertices; }  ///< returns all interaction vertices (excluding production vertex) ordered by depth-first; first vertex is X-decay vertex
     virtual interactionVertex& productionVertex() { return *_productionVertex; }  ///< returns production vertex
     virtual interactionVertex& xInteractionVertex() { return *_vertices[0]; }  ///< returns X-decay vertex
 
@@ -94,49 +105,66 @@ namespace rpwa {
     
 
   protected:
-    
+
+    // data structures attached to nodes and edges
+    struct nodeData {
+    };
+    struct edgeData {
+    };
+    // node and edge properties
+    struct  vertexPointer_t {
+      typedef boost::vertex_property_tag kind;
+    };
+    typedef boost::property<boost::vertex_bundle_t, nodeData,
+			    boost::property<boost::vertex_vertexPointer_t, interactionVertex*,
+					    boost::property<boost::vertex_color_t, boost::default_color_type> > > nodeProperties;
+    typedef boost::property<boost::edge_bundle_t, edgeData,
+			    boost::property<boost::edge_particlePointer_t, particle*,
+					    boost::property<boost::edge_index_t, std::size_t> > > edgeProperties;
     // graph definition
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-				  boost::property<boost::vertex_name_t, interactionVertex*,
-				    boost::property<boost::vertex_color_t, boost::default_color_type> >,
-				  boost::property<boost::edge_name_t, particle*> > decayGraph;
+     				  nodeProperties, edgeProperties> decayGraph;
+    typedef boost::subgraph<decayGraph>     decaySubGraph;
     typedef boost::graph_traits<decayGraph> graphTraits;
     // node and edge property types
-    typedef boost::property_map<decayGraph, boost::vertex_name_t>::type  nodePropType;
-    typedef boost::property_map<decayGraph, boost::vertex_index_t>::type nodeIndexType;
-    typedef boost::property_map<decayGraph, boost::edge_name_t>::type    edgePropType;
-    typedef boost::property_map<decayGraph, boost::edge_index_t>::type   edgeIndexType;
+    typedef boost::property_map<decayGraph, boost::vertex_bundle_t>::type        nodeDataType;
+    typedef boost::property_map<decayGraph, boost::vertex_vertexPointer_t>::type nodeVertexType;
+    typedef boost::property_map<decayGraph, boost::vertex_index_t>::type         nodeIndexType;
+    typedef boost::property_map<decayGraph, boost::edge_bundle_t>::type          edgeDataType;
+    typedef boost::property_map<decayGraph, boost::edge_particlePointer_t>::type edgeParticleType;
+    typedef boost::property_map<decayGraph, boost::edge_index_t>::type           edgeIndexType;
     // node and edge descriptor types
     typedef graphTraits::vertex_descriptor nodeDesc;
     typedef graphTraits::edge_descriptor   edgeDesc;
-    // iterators
+    // node and edge iterators
     typedef graphTraits::vertex_iterator    nodeIterator;
     typedef graphTraits::edge_iterator      edgeIterator;
     typedef graphTraits::adjacency_iterator adjIterator;
     typedef graphTraits::out_edge_iterator  outEdgeIterator;
     typedef graphTraits::in_edge_iterator   inEdgeIterator;
     
-    decayGraph   _graph;     ///< graph that represents particle decay
-    nodePropType _nodeProp;  ///< node properties; pointers to interaction vertices
-    edgePropType _edgeProp;  ///< edge properties; pointer to particles
+    decayGraph       _graph;            ///< graph that represents particle decay
+    nodeDataType     _nodeData;         ///< external node properties
+    nodeVertexType   _nodeVertexMap;    ///< maps graph nodes to vertex pointers
+    edgeDataType     _edgeData;         ///< external edge properties
+    edgeParticleType _edgeParticleMap;  ///< maps graph edges to particle pointers
     
-    std::map<interactionVertex*, nodeDesc> _vertexNodeMap;     ///< maps vertex pointers to graph nodes
-    std::map<particle*,          edgeDesc> _particleEdgeMap;   ///< maps particle pointers to graph edges
+    std::map<interactionVertex*, nodeDesc> _vertexNodeMap;    ///< maps vertex pointers to graph nodes
+    std::map<particle*,          edgeDesc> _particleEdgeMap;  ///< maps particle pointers to graph edges
     typedef std::map<interactionVertex*, nodeDesc>::iterator vertexNodeMapIt;
     typedef std::map<particle*,          edgeDesc>::iterator particleEdgeMapIt;
     
 
   private:
     
-    interactionVertex*                     _productionVertex;  ///< pointer to production vertex
-    std::vector<interactionVertex*>        _vertices;          ///< array of interaction vertices excluding production vertex; ordered depth-first
-    std::vector<particle*>                 _fsParticles;       ///< number of final state particles
+    interactionVertex*              _productionVertex;  ///< pointer to production vertex
+    std::vector<interactionVertex*> _vertices;          ///< array of interaction vertices excluding production vertex; ordered depth-first
+    std::vector<particle*>          _fsParticles;       ///< number of final state particles
     
     static bool _debug;  ///< if set to true, debug messages are printed
     
-    // recorder for depth first visitor
-    template<class nodeOutIterator>
-    class dfsRecorder;
+    // recorder for depth-first visitor
+    template<class nodeOutIterator> class dfsRecorder;
     
     // object generator function
     template<class nodeOutIterator>
