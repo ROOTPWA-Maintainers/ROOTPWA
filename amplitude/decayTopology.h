@@ -122,9 +122,11 @@ namespace rpwa {
 			    boost::property<boost::edge_particlePointer_t, particle*,
 					    boost::property<boost::edge_index_t, std::size_t> > > edgeProperties;
     // graph definition
+
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
      				  nodeProperties, edgeProperties> decayGraph;
     typedef boost::subgraph<decayGraph>     decaySubGraph;
+
     typedef boost::graph_traits<decayGraph> graphTraits;
     // node and edge property types
     typedef boost::property_map<decayGraph, boost::vertex_bundle_t>::type        nodeDataType;
@@ -155,7 +157,7 @@ namespace rpwa {
     typedef std::map<particle*,          edgeDesc>::iterator particleEdgeMapIt;
     
 
-  private:
+  protected:
     
     interactionVertex*              _productionVertex;  ///< pointer to production vertex
     std::vector<interactionVertex*> _vertices;          ///< array of interaction vertices excluding production vertex; ordered depth-first

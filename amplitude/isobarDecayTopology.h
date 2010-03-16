@@ -69,6 +69,10 @@ namespace rpwa {
 					interactionVertex&                     productionVertex,
 					const std::vector<isobarDecayVertex*>& isobarDecayVvertices);  ///< constructs the decay graph based on final state particles and vertices
 
+
+    isobarDecayTopology& addSubDecay(const isobarDecayTopology& subDecay);
+
+
     std::vector<isobarDecayVertex*>& isobarDecayVertices() { return _vertices; }  ///< returns all isobar decay vertices ordered by depth-first; first vertex is X-decay vertex
     isobarDecayVertex& xIsobarDecayVertex() { return *_vertices[0]; }  ///< returns X-decay vertex
 

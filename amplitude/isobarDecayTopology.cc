@@ -139,6 +139,35 @@ isobarDecayTopology::constructDecay(const vector<particle*>&          fsParticle
 }
 
 
+
+isobarDecayTopology& 
+isobarDecayTopology::addSubDecay(const isobarDecayTopology& subDecay) {
+
+  cerr << "Before copying vertices" << endl;
+  
+  std::vector<interactionVertex*> vertices=this->interactionVertices();
+  std::vector<particle*>          fsPart=this->fsParticles(); 
+
+  cerr << "Before adding vertices" << endl;
+  cerr << vertices.size() << "   " << this->interactionVertices().size()<<endl;
+  cerr << fsPart.size() << endl;
+  vertices.insert(vertices.end(),subDecay._vertices.begin(),subDecay._vertices.end());
+ 
+  cerr << "Before adding final state particles" << endl;
+ 
+  fsPart.insert(fsPart.end(),subDecay._fsParticles.begin(),subDecay._fsParticles.end());
+
+  interactionVertex* prod=_productionVertex;
+
+ cerr << vertices.size() << endl;
+  cerr << fsPart.size() << endl;
+  cerr << "Before ConstructDecay" << endl;
+
+  return constructDecay(fsPart,*prod,vertices);
+ }
+
+
+
 bool
 isobarDecayTopology::verifyTopology() const
 {

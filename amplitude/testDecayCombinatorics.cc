@@ -104,19 +104,41 @@ main(int argc, char** argv)
   isobarDecayVertex vert0(sigma, pi0,   pi1, 0, 0);  
   isobarDecayVertex vert1(X,     sigma, pi2, 0, 0);
 
-  // build graph
+  //build graph
   vector<particle*> fsParticles;
-  fsParticles.push_back(&pi0);
-  fsParticles.push_back(&pi1);
+  fsParticles.push_back(&sigma);
   fsParticles.push_back(&pi2);
+  //fsParticles.push_back(&pi2);
   
   vector<isobarDecayVertex*> decayVertices;
   decayVertices.push_back(&vert1);
-  decayVertices.push_back(&vert0);
+  //decayVertices.push_back(&vert0);
   isobarDecayTopology topo(fsParticles, prodVert, decayVertices);
   cout << endl;
   printInfo << "decay toplogy:" << endl
 	    << topo << endl;
+  
+  cout << "Number of vertices: " << topo.interactionVertices().size() << endl;
+  cout << "Number of vertices: " << topo.isobarDecayVertices().size() << endl;
+
+
+  fsParticles.clear();
+  fsParticles.push_back(&pi0);
+  fsParticles.push_back(&pi1);
+  decayVertices.clear();
+  decayVertices.push_back(&vert0);
+  isobarDecayTopology topo2(fsParticles, prodVert, decayVertices);
+  cout << endl;
+  printInfo << "decay toplogy2:" << endl
+	    << topo2 << endl;
+
+  cerr << "Adding..." << endl;
+  topo.addSubDecay(topo2);
+  
+  printInfo << "Joined decay toplogy:" << endl
+	    << topo << endl;
+
+
     
   const bool topologyOkay = topo.verifyTopology();
   cout << "topology okay = " << topologyOkay << endl << endl;
