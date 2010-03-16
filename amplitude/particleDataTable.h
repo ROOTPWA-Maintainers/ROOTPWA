@@ -40,6 +40,7 @@
 
 
 #include <string>
+#include <vector>
 #include <map>
 
 #include "particleProperties.h"
@@ -56,6 +57,10 @@ namespace rpwa {
 
     static bool                      isInTable(const std::string&        partName);  ///< returns, whether particle has a table entry
     static const particleProperties* entry    (const std::string&        partName);  ///< access properties by particle name
+
+    static std::vector<const particleProperties*> entrylist(const particleProperties& prototype, const std::string& opt);///< returns list of particles have those same quantumnumbers as prototype as specified in opt
+
+
     static bool                      addEntry (const particleProperties& partProp);  ///< adds entry to particle data table
 
     static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
@@ -75,6 +80,7 @@ namespace rpwa {
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
+     
 
   private:
 

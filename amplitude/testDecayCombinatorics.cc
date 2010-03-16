@@ -66,14 +66,24 @@ main(int argc, char** argv)
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
 
+  //                             I  G J  P  C
   particleProperties prop1("bla",2,-1,0,+1,+1);
-  particleProperties prop2("blub",2,1,0,+1,-1);
+  particleProperties prop2("blub",2,+1,2,-1,-1);
   
-  string opt="IJP";
+  string opt="IGJPC";
  
   cout << "Comparison  result: " << (prop1 == prop2) << endl;
   cout << "Comparison with opt="<<opt<<"  result: "
        << (prop1 ==  pair<particleProperties,string>(prop2,opt)) << endl;
+
+  vector<const particleProperties*> selection=pdt.entrylist(prop2,opt);
+  cout << "Matching entries in pdt"<<" with prototype: "<< endl;
+  cout << prop2 << endl;
+  cout <<" with option "<<opt<< endl;
+
+  for(unsigned int i=0;i<selection.size();++i){
+    cout << *selection[i] << endl;
+  }
 
 
   // define final state particles

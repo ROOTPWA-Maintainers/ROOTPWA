@@ -73,6 +73,23 @@ particleDataTable::entry(const string& partName)
 }
 
 
+
+    
+std::vector<const particleProperties*> 
+particleDataTable::entrylist(const particleProperties& prototype, const std::string& opt){
+  pair<particleProperties,string> selector(prototype,opt);
+  std::vector<const particleProperties*> matchingentries;
+  dataIterator i = _dataTable.begin();
+  while(i != _dataTable.end()) {
+    if( i->second == selector)matchingentries.push_back(&(i->second));
+    ++i;
+  } 
+  return matchingentries;
+}
+
+
+
+
 bool
 particleDataTable::addEntry(const particleProperties& partProp)
 {
