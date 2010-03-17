@@ -57,6 +57,8 @@
 
 // add custom vertex and edge properties for graph
 namespace boost {
+  enum graph_bundle_t { graph_bundle };
+  BOOST_INSTALL_PROPERTY(graph, bundle);
   enum vertex_vertexPointer_t { vertex_vertexPointer };
   BOOST_INSTALL_PROPERTY(vertex, vertexPointer);
   enum edge_particlePointer_t { edge_particlePointer };
@@ -92,8 +94,7 @@ namespace rpwa {
 
     virtual bool dataAreValid()   const { return false; }  ///< indicates whether data are complete and valid
     virtual bool verifyTopology() const { return true;  }  ///< returns whether decay has the correct topology
-    virtual bool checkConsistency() const { return true; } ///< checks QN conservation rules on vertices
-    
+    virtual bool checkConsistency() const { return true; } ///< checks quantum number conservation rules on all vertices
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
     virtual std::ostream& writeGraphViz(std::ostream& out) const;  ///< writes graph in GraphViz DOT format
@@ -102,19 +103,17 @@ namespace rpwa {
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
-
-  protected:
 
     // data structures attached to nodes and edges
+    struct graphData {
+    };
     struct nodeData {
     };
     struct edgeData {
     };
     // node and edge properties
-    struct  vertexPointer_t {
-      typedef boost::vertex_property_tag kind;
-    };
+    typedef boost::property<boost::graph_bundle_t, graphData,
+     			    boost::property<boost::graph_name_t, std::string> > graphProperties;
     typedef boost::property<boost::vertex_bundle_t, nodeData,
 			    boost::property<boost::vertex_vertexPointer_t, interactionVertex*,
 					    boost::property<boost::vertex_color_t, boost::default_color_type> > > nodeProperties;
@@ -124,8 +123,8 @@ namespace rpwa {
     // graph definition
 
     typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-     				  nodeProperties, edgeProperties> decayGraph;
-    typedef boost::subgraph<decayGraph>     decaySubGraph;
+     				  nodeProperties, edgeProperties, graphProperties> graphType;
+    typedef boost::subgraph<graphType>      decayGraph;
 
     typedef boost::graph_traits<decayGraph> graphTraits;
     // node and edge property types
@@ -145,17 +144,33 @@ namespace rpwa {
     typedef graphTraits::out_edge_iterator  outEdgeIterator;
     typedef graphTraits::in_edge_iterator   inEdgeIterator;
     
+
+  protected:
+
     decayGraph       _graph;            ///< graph that represents particle decay
-    nodeDataType     _nodeData;         ///< external node properties
-    nodeVertexType   _nodeVertexMap;    ///< maps graph nodes to vertex pointers
-    edgeDataType     _edgeData;         ///< external edge properties
-    edgeParticleType _edgeParticleMap;  ///< maps graph edges to particle pointers
+    nodeDataType     _nodeDataMap;      ///< maps graph node descriptors to external properties
+    nodeVertexType   _nodeVertexMap;    ///< maps graph node descriptors to vertex pointers
+    nodeIndexType    _nodeIndexMap;     ///< maps graph node descriptors to node indices
+    edgeDataType     _edgeDataMap;      ///< maps graph edge descriptors to external properties
+    edgeParticleType _edgeParticleMap;  ///< maps graph edge descriptors to particle pointers
+    edgeIndexType    _edgeIndexMap;     ///< maps graph edge descriptors to edge indices
     
     std::map<interactionVertex*, nodeDesc> _vertexNodeMap;    ///< maps vertex pointers to graph nodes
     std::map<particle*,          edgeDesc> _particleEdgeMap;  ///< maps particle pointers to graph edges
     typedef std::map<interactionVertex*, nodeDesc>::iterator vertexNodeMapIt;
     typedef std::map<particle*,          edgeDesc>::iterator particleEdgeMapIt;
+
+    // recorder for depth-first visitor
+    template<class nodeOutIterator> class dfsRecorder;
     
+    // object generator function
+    template<class nodeOutIterator>
+    dfsRecorder<nodeOutIterator> makeDfsRecorder(nodeOutIterator nodeIt)
+    { return dfsRecorder<nodeOutIterator>(nodeIt); }
+
+    static decayGraph deepCopyGraph(const decayGraph& srcGraph,
+				    const bool        copyFsParticles = false);
+
 
   protected:
     
@@ -165,14 +180,6 @@ namespace rpwa {
     
     static bool _debug;  ///< if set to true, debug messages are printed
     
-    // recorder for depth-first visitor
-    template<class nodeOutIterator> class dfsRecorder;
-    
-    // object generator function
-    template<class nodeOutIterator>
-    dfsRecorder<nodeOutIterator> makeDfsRecorder(nodeOutIterator nodeIt)
-    { return dfsRecorder<nodeOutIterator>(nodeIt); }
-
   };
   
 
@@ -180,6 +187,25 @@ namespace rpwa {
   std::ostream&
   operator << (std::ostream&        out,
 	       const decayTopology& topo) { return topo.print(out); }
+
+
+  template<class nodeOutIterator>
+  class decayTopology::dfsRecorder : public boost::default_dfs_visitor {
+
+  public:
+
+    dfsRecorder(nodeOutIterator nodeIt)
+      : _nodeIt(nodeIt)
+    { }
+
+    template<typename node, typename graph> void discover_vertex(node n, const graph &)
+    { *_nodeIt++ = n; }
+  
+  private:
+
+    nodeOutIterator _nodeIt;
+
+  };
 
 
 } // namespace rpwa

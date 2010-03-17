@@ -118,7 +118,7 @@ particleProperties::operator = (const particleProperties& partProp)
 
 bool
 rpwa::operator == (const particleProperties& lhsProp,
-	     const particleProperties& rhsProp)
+		   const particleProperties& rhsProp)
 {
   return (   (lhsProp.name()        == rhsProp.name()       )
           && (lhsProp.mass()        == rhsProp.mass()       )
@@ -135,41 +135,33 @@ rpwa::operator == (const particleProperties& lhsProp,
 }
 
 
-// opt can contain any of the following: I,G,J,P,C,strangeness,charm,beauty,baryonNmb
+// the selector string can contain any of the following: I, G, J, P,
+// C, strangeness, charm, beauty, baryonNmb
 bool 
-rpwa::operator == (particleProperties const & lhsProp,
-	     std::pair<particleProperties,
-	     std::string> const & rhsProp){
-
-  return ( 
-	  ((rhsProp.second.find("baryonNbm")==std::string::npos) || 
-	   (lhsProp.baryonNmb()   == rhsProp.first.baryonNmb()) )
-          && ((rhsProp.second.find("I")==std::string::npos) || 
-	      (lhsProp.isospin()     == rhsProp.first.isospin()) )
-          && ((rhsProp.second.find("strangeness")==std::string::npos) || 
-	      (lhsProp.strangeness() == rhsProp.first.strangeness()) )
-	  && ((rhsProp.second.find("charm")==std::string::npos) || 
-	      (lhsProp.charm()       == rhsProp.first.charm() ) )
-          && ((rhsProp.second.find("beauty")==std::string::npos) || 
-	      (lhsProp.beauty()      == rhsProp.first.beauty() ) )
-          && ((rhsProp.second.find("G")==std::string::npos) || 
-	      (lhsProp.G()           == rhsProp.first.G() ) )
-          && ((rhsProp.second.find("J")==std::string::npos) || 
-	      (lhsProp.J()           == rhsProp.first.J() ) )
-          && ((rhsProp.second.find("P")==std::string::npos) || 
-	      (lhsProp.P()           == rhsProp.first.P() ) )
-	  && ((rhsProp.second.find("C")==std::string::npos) || 
-	      (lhsProp.C()           == rhsProp.first.C() ) ));
- 
-
+rpwa::operator == (particleProperties const &               lhsProp,
+		   pair<particleProperties, string> const & rhs)
+{
+  const particleProperties& rhsProp  = rhs.first;
+  const string&             selector = rhs.second;
+  return (   (    (selector.find("baryonNbm") == string::npos)
+	       || (lhsProp.baryonNmb()        == rhsProp.baryonNmb()))
+          && (    (selector.find("I") == string::npos)
+	       || (lhsProp.isospin()  == rhsProp.isospin()))
+          && (    (selector.find("strangeness") == string::npos)
+	       || (lhsProp.strangeness()        == rhsProp.strangeness()))
+	  && (    (selector.find("charm") == string::npos)
+	       || (lhsProp.charm()        == rhsProp.charm()))
+          && (    (selector.find("beauty") == string::npos)
+	       || (lhsProp.beauty()        == rhsProp.beauty()))
+          && (    (selector.find("G") == string::npos)
+	       || (lhsProp.G()        == rhsProp.G()))
+          && (    (selector.find("J") == string::npos)
+	       || (lhsProp.J()        == rhsProp.J()))
+          && (    (selector.find("P") == string::npos)
+	       || (lhsProp.P()        == rhsProp.P()))
+	  && (    (selector.find("C") == string::npos)
+	       || (lhsProp.C()        == rhsProp.C())));
 }
-
-
-
-
-
-
-
 
 
 bool
@@ -182,12 +174,12 @@ particleProperties::fillFromDataTable(const string& partName)
     name = strippedName;
   const particleProperties* partProp = particleDataTable::instance().entry(name);
   if (!partProp) {
-    printWarn << "trying to fill particle properties for '" << name << "' from non-existing table entry" << endl;
+    printWarn << "trying to fill particle properties for '" << partName << "' from non-existing table entry" << endl;
     return false;
   } else {
     *this = *partProp;
     if (_debug)
-      printInfo << "succesfully filled particle properties for '" << name << "': "
+      printInfo << "succesfully filled particle properties for '" << partName << "': "
 		<< *this << endl;
     return true;
   }

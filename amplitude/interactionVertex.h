@@ -62,10 +62,13 @@ namespace rpwa {
 		
     virtual interactionVertex& operator = (const interactionVertex& vert);
     //interactionVertex& operator *= (const lorentzTransform& L);
+    virtual interactionVertex& clone() const;
 
     virtual bool addInParticle (particle& part);  ///< adds an incoming particle to vertex
     virtual bool addOutParticle(particle& part);  ///< adds an outgoing particle to vertex
 
+    virtual std::vector<particle*>& inParticles () { return _inParticles;  }  ///< returns array of incoming particles
+    virtual std::vector<particle*>& outParticles() { return _outParticles; }  ///< returns array of outgoing particles
     virtual const std::vector<particle*>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
     virtual const std::vector<particle*>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
 
@@ -86,6 +89,9 @@ namespace rpwa {
     std::vector<particle*> _inParticles;   ///< array of pointers to incoming particles
     std::vector<particle*> _outParticles;  ///< array of pointers to outgoing particles
     bool                   _dataValid;     ///< indicates whether vertex data are complete and valid
+
+
+  private:
 
     static bool _debug;  ///< if set to true, debug messages are printed
 	

@@ -78,7 +78,9 @@ particle::particle(const string&   partName,
 {
   // extract charge from name
   chargeFromName(partName, _charge);
-  fillFromDataTable(partName);
+  if (!fillFromDataTable(partName))
+    // set at least name
+    setName(partName);
   _lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
 }
 
@@ -111,6 +113,14 @@ particle::operator = (const particle& part)
     _lzVec    = part._lzVec;
   }
   return *this;
+}
+
+
+particle&
+particle::clone() const
+{
+  particle* newPart = new particle(*this);
+  return *newPart;
 }
 
 

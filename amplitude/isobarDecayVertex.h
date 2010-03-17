@@ -59,6 +59,7 @@ namespace rpwa {
     virtual ~isobarDecayVertex();
 		
     virtual isobarDecayVertex& operator = (const isobarDecayVertex& vert);
+    virtual isobarDecayVertex& clone() const;
 
     virtual bool addInParticle (particle&) { return false; }  ///< disabled; only 1 incoming particle (mother) is allowed
     virtual bool addOutParticle(particle&) { return false; }  ///< disabled; only 2 outgoing particle (daughters) are allowed

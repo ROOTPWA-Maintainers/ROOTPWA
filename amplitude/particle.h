@@ -72,6 +72,7 @@ namespace rpwa {
     virtual ~particle();
 
     virtual particle& operator = (const particle& part);
+    virtual particle& clone() const;
 
     std::string           name()     const;                       ///< returns particle name including charge
     int                   charge()   const { return _charge;   }  ///< returns particle's charge

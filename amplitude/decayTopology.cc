@@ -40,12 +40,10 @@
 
 #include <list>
 
-#include <boost/graph/topological_sort.hpp>
 #include <boost/graph/depth_first_search.hpp>
 #if BOOST_GRAPH_LIB
 #include <boost/graph/graphviz.hpp>
 #endif
-#include <boost/graph/breadth_first_search.hpp>
 
 #include "utilities.h"
 #include "decayTopology.h"
@@ -54,25 +52,6 @@
 using namespace std;
 using namespace boost;
 using namespace rpwa;
-
-
-template<class nodeOutIterator>
-class decayTopology::dfsRecorder : public boost::default_dfs_visitor {
-
-public:
-
-  dfsRecorder(nodeOutIterator nodeIt)
-    : _nodeIt(nodeIt)
-  { }
-
-  template<typename node, typename graph> void discover_vertex(node n, const graph &)
-  {	*_nodeIt++ = n; }
-  
-private:
-
-  nodeOutIterator _nodeIt;
-
-};
 
 
 bool decayTopology::_debug = false;
@@ -106,10 +85,12 @@ decayTopology::operator = (const decayTopology& topo)
 {
   if (this != &topo) {
     _graph            = topo._graph;
-    _nodeData         = topo._nodeData;
+    _nodeDataMap      = topo._nodeDataMap;
     _nodeVertexMap    = topo._nodeVertexMap;
-    _edgeData         = topo._edgeData;
+    _nodeIndexMap     = topo._nodeIndexMap;
+    _edgeDataMap      = topo._edgeDataMap;
     _edgeParticleMap  = topo._edgeParticleMap;
+    _edgeIndexMap     = topo._edgeIndexMap;
     _vertexNodeMap    = topo._vertexNodeMap;
     _particleEdgeMap  = topo._particleEdgeMap;
     _productionVertex = topo._productionVertex;
@@ -143,9 +124,15 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
     clear();
     return *this;
   }
+  get_property(_graph, graph_name) = "root graph";
+  // get node and edge maps
+  _nodeDataMap     = get(vertex_bundle,        _graph);
+  _nodeVertexMap   = get(vertex_vertexPointer, _graph);
+  _nodeIndexMap    = get(vertex_index,         _graph);
+  _edgeDataMap     = get(edge_bundle,          _graph);
+  _edgeParticleMap = get(edge_particlePointer, _graph);
+  _edgeIndexMap    = get(edge_index,           _graph);
   // create graph node for production vertex and store pointer
-  _nodeData      = get(vertex_bundle,        _graph);
-  _nodeVertexMap = get(vertex_vertexPointer, _graph);
   {
     nodeDesc node = add_vertex(_graph);
     _nodeVertexMap[node]              = &productionVertex;
@@ -167,15 +154,13 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
   }
   // create final state nodes
   for (unsigned int i = 0; i < nmbFsPart; ++i) {
-    nodeDesc node   = add_vertex(_graph);
+    nodeDesc node        = add_vertex(_graph);
     _nodeVertexMap[node] = 0;
     if (_debug)
       printInfo << "created tree node [" << node << "] for final state "
 		<< *fsParticles[i] << endl;
   }
   // create edges that connect the intercation nodes and store pointers to particles
-  _edgeData        = get(edge_bundle,          _graph);
-  _edgeParticleMap = get(edge_particlePointer, _graph);
   for (vertexNodeMapIt iFromVert = _vertexNodeMap.begin();
        iFromVert != _vertexNodeMap.end(); ++iFromVert)
     for (vertexNodeMapIt iToVert = _vertexNodeMap.begin();
@@ -232,18 +217,22 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
   }
   // sorting nodes depth-first
   vector<nodeDesc> nodes;
+  vector<default_color_type> colors(num_vertices(_graph));
   depth_first_visit(_graph, _vertexNodeMap[&productionVertex],
 		    makeDfsRecorder(back_inserter(nodes)),
-		    get(vertex_color, _graph));
-  if (_debug)
+		    make_iterator_property_map(colors.begin(),
+						 get(vertex_index, _graph), colors[0]));
+  if (_debug) {
     printInfo << "depth-first node order: ";
+    for (unsigned int i = 0; i < nodes.size(); ++i)
+      cout << nodes[i] << ((i < nodes.size() - 1) ? ", " : "");
+    cout << endl;
+  }
   for (unsigned int i = 0; i < nodes.size(); ++i) {
-    cout << nodes[i] << ((i < nodes.size() - 1) ? ", " : "");
     interactionVertex* vertex = _nodeVertexMap[nodes[i]];
     if (vertex && vertex != _productionVertex)  // skip production vertex
       _vertices.push_back(vertex);
   }
-  cout << endl;
   // copy final state particles
   _fsParticles = fsParticles;
   return *this;
@@ -262,23 +251,24 @@ decayTopology::print(ostream& out) const
     for (unsigned int j = 0; j < _vertices[i]->nmbInParticles(); ++j) {
       out << _vertices[i]->inParticles()[j]->name();
       if (j < _vertices[i]->nmbInParticles() - 1)
-	out << "  +  ";
+  	out << "  +  ";
     }
     out << "  --->  ";
     for (unsigned int j = 0; j < _vertices[i]->nmbOutParticles(); ++j) {
       out << _vertices[i]->outParticles()[j]->name();
       if (j < _vertices[i]->nmbOutParticles() - 1)
-	out << "  +  ";
+  	out << "  +  ";
     }
     out << endl;
   }
   out << "decay topology particles:" << endl;
+  //cout << "### node[7] " << ((_nodeVertexMap[7]) ? "OOOPS!" : "okay") << endl;
   edgeIterator iEdge, iEdgeEnd;
   for (tie(iEdge, iEdgeEnd) = edges(_graph); iEdge != iEdgeEnd; ++iEdge) {
     const particle* p = _edgeParticleMap[*iEdge];
     out << "    particle" << *iEdge << " ";
     if (p) {
-      out << p->name() << " ";
+      out << p->name() << " " << target(*iEdge, _graph) << " ";
       if (!_nodeVertexMap[target(*iEdge, _graph)])
 	out << "(final state)";
       out << endl;
@@ -304,14 +294,82 @@ decayTopology::writeGraphViz(ostream& out) const
 void
 decayTopology::clear()
 {
-  _graph.clear();
-  _nodeData        = get(vertex_bundle,        _graph);
+  //_graph.clear();  //!!! does not exist for subgraph
+  decayGraph empty;
+  _graph           = empty;  // workaround
+  _nodeDataMap     = get(vertex_bundle,        _graph);
   _nodeVertexMap   = get(vertex_vertexPointer, _graph);
-  _edgeData        = get(edge_bundle,          _graph);
+  _nodeIndexMap    = get(vertex_index,         _graph);
+  _edgeDataMap     = get(edge_bundle,          _graph);
   _edgeParticleMap = get(edge_particlePointer, _graph);
+  _edgeIndexMap    = get(edge_index,           _graph);
   _vertexNodeMap.clear();
   _particleEdgeMap.clear();
   _productionVertex = 0;
   _vertices.clear();
   _fsParticles.clear();
+}
+
+
+decayTopology::decayGraph
+decayTopology::deepCopyGraph(const decayGraph& srcGraph,
+			     const bool        copyFsParticles)
+{
+  // copy graph data structure
+  decayGraph newGraph = srcGraph;
+  // copy vertices
+  nodeVertexType nodeVertexMap = get(vertex_vertexPointer, newGraph);
+  for (nodeIterator iNode = vertices(newGraph).first; iNode != vertices(newGraph).second; ++iNode) {
+    interactionVertex* srcVertex = nodeVertexMap[*iNode];
+    if (srcVertex) {
+      if (_debug)
+  	printInfo << "copying vertex " << *iNode << endl;
+      nodeVertexMap[*iNode] = &srcVertex->clone();
+    }
+  }  
+  // copy particles
+  //!!! what about beam particle?
+  edgeParticleType edgeParticleMap = get(edge_particlePointer, newGraph);
+  for (edgeIterator iEdge = edges(newGraph).first; iEdge != edges(newGraph).second; ++iEdge) {
+    particle* srcParticle = edgeParticleMap[*iEdge];
+    particle* newParticle = srcParticle;
+    if (!srcParticle) {
+      printErr << "null pointer to particle for edge " << *iEdge << ". aborting." << endl;
+      throw;
+    }
+    if (_debug) {
+      if (nodeVertexMap[target(*iEdge, newGraph)])
+  	printInfo << "copying particle ";
+      else if (copyFsParticles)
+  	printInfo << "copying final state particle ";
+    }
+    if (nodeVertexMap[target(*iEdge, newGraph)] || copyFsParticles) {
+      if (_debug)
+  	cout << *iEdge << " '" << srcParticle->name() << "'" << endl;
+      newParticle             = &srcParticle->clone();
+      edgeParticleMap[*iEdge] = newParticle;
+    }
+    // modify the vertices that the particle connects
+    nodeDesc           srcNode   = source(*iEdge, newGraph);
+    interactionVertex* srcVertex = nodeVertexMap[srcNode];
+    if (!srcVertex) {
+      printErr << "null pointer to source vertex. aborting." << endl;
+      throw;
+    }
+    for (unsigned int i = 0; i < srcVertex->nmbOutParticles(); ++i)
+      if (srcVertex->outParticles()[i] == srcParticle) {
+	srcVertex->outParticles()[i] = newParticle;
+	break;
+      }
+    nodeDesc           targetNode   = target(*iEdge, newGraph);
+    interactionVertex* targetVertex = nodeVertexMap[targetNode];
+    if (targetVertex) {
+      for (unsigned int i = 0; i < targetVertex->nmbInParticles(); ++i)
+	if (targetVertex->inParticles()[i] == srcParticle) {
+	  targetVertex->inParticles()[i] = newParticle;
+	  break;
+	}
+    }
+  }
+  return newGraph;
 }

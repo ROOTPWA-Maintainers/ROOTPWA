@@ -88,6 +88,14 @@ interactionVertex::operator = (const interactionVertex& vert)
 // }
 
 
+interactionVertex&
+interactionVertex::clone() const
+{
+  interactionVertex* newVertex = new interactionVertex(*this);
+  return *newVertex;
+}
+
+
 bool
 interactionVertex::addInParticle (particle& part)
 {

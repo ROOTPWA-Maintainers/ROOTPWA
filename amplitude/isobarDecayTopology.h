@@ -78,8 +78,9 @@ namespace rpwa {
 
     bool verifyTopology() const;  ///< returns whether decay has the correct topology
 
-    bool checkConsistency() const; ///< checks conservation laws at vertices
+    bool checkConsistency() const;  ///< checks conservation laws at vertices
 
+    std::vector<isobarDecayTopology*> possibleDecays();  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
     
     const TLorentzVector& updateIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 
@@ -90,6 +91,11 @@ namespace rpwa {
 
 
   private:
+
+    decayGraph joinDaughterGraphs(const isobarDecayVertex& topVertex,
+				  const decayGraph&        graph1,
+				  const decayGraph&        graph2,
+				  nodeDesc&                newTopNode);  ///< creates new graph with topNode as top node and graph1/2 as daughter graphs
     
     std::vector<isobarDecayVertex*> _vertices;  ///< array of isobar-decay vertices excluding production vertex; ordered depth-first; this is a copy of the respective array in decayTopology
 

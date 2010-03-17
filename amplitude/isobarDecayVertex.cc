@@ -90,6 +90,14 @@ isobarDecayVertex::operator = (const isobarDecayVertex& vert)
 }
 
     
+isobarDecayVertex&
+isobarDecayVertex::clone() const
+{
+  isobarDecayVertex* newVertex = new isobarDecayVertex(*this);
+  return *newVertex;
+}
+
+
 bool
 isobarDecayVertex::checkMultiplicativeQn(const int     mQn,
 					 const int     d1Qn,
