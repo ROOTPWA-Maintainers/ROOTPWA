@@ -141,6 +141,15 @@ particle::name() const
 }
 
 
+string
+particle::summary() const
+{
+  stringstream sum;
+  sum << name() <<"["<< isospin()*0.5 << sign(G()) <<"("<< J()*0.5 << sign(P()) << sign(C())<<")]";
+  return sum.str();
+}
+
+
 ostream&
 particle::print(ostream& out) const
 {

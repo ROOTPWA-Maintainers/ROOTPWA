@@ -367,14 +367,16 @@ isobarDecayTopology::possibleDecays()
 	const int I2 = d2.isospin();
 
 	const int  minS = 0;
-	const int  maxS = 2;
+	const int  maxS = 6;
 	const int  minL = 0;
-	const int  maxL = 2;
+	const int  maxL = 6;
 	const int  minJ = 0;
-	const int  maxJ = 2;
-	const int  minI = 2;
+
+	const int  maxJ = 8;
+
+	const int  minI = 0;
 	const int  maxI = 2;
-	const bool allowJpcExotic = true;
+	const bool allowJpcExotic = false;
   
 	for (int S = max(abs(s1 - s2), minS); S <= min(s1 + s2, maxS); S += 2) {        // loop over all allowed total spins
 	  for (int L = max(0, minL); L <= maxL; L += 2) {                               // loop over all allowed relative orbital angular momenta

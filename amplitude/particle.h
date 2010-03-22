@@ -75,6 +75,7 @@ namespace rpwa {
     virtual particle& clone() const;
 
     std::string           name()     const;                       ///< returns particle name including charge
+    std::string           summary()  const;                       ///< returns particle summary in short form
     int                   charge()   const { return _charge;   }  ///< returns particle's charge
     int                   spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
     const TLorentzVector& lzVec()    const { return _lzVec;    }  ///< returns Lorentz vector of particle
