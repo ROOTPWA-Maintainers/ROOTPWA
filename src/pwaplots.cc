@@ -54,7 +54,7 @@ main(int argc, char** argv){
 
   plotter.produceDensityPlots();
 
-  plotter.writeAllIntensities(outfilename);
+  plotter.writeAll(outfilename);
 
   return 0;
 }

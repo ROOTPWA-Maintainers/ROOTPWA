@@ -29,6 +29,7 @@
 // Collaborating Class Headers --------
 #include "TFile.h"
 #include "TTree.h"
+#include "TString.h"
 #include "TH2D.h"
 #include "TF1.h"
 #include "TMultiGraph.h"
@@ -51,13 +52,20 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
   double ymax=ax->GetXmax();
 
   TF1 gaus("gaus","gausn(0)",ymin,ymax);
-
+  TString tit=g->GetTitle();
+  
   for(unsigned int ip=0; ip<xpoints; ++ip){
     double x=g->GetX()[ip];
     double err=g->GetEY()[ip];
     double val=g->GetY()[ip];
-
-    
+  
+ //    if(tit.Contains("1-1++0+sigma_01_a11269") && val<100 && x>1.6 && x<2.0){
+//       //cerr << "x="<<x
+//       //	   << "  err="<< err 
+//       //	   << "  val="<< val << endl;
+//       //return h;
+//     }
+      
     gaus.SetParameters(1,val,err);
     for(unsigned int ibin=1; ibin<ybins;++ibin){
       double y=ax->GetBinCenter(ibin);
@@ -72,153 +80,231 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
 
 
 
+string
+getIGJPCMEps(const std::string& wavename){
+  return wavename.substr(0,7);
+}
 
 
 
+ClassImp(pwaPlotter);
 
-  ClassImp(pwaPlotter);
+pwaPlotter::pwaPlotter()
+  : mMinEvidence(0)
+{
+  mLogLikelihood= new TMultiGraph();
+  mLogLikelihood->SetTitle("LogLikelihood");
+  mLogLikelihood->SetName("LogLikelihood");
+  mLogLikelihoodPerEvent=new TMultiGraph();
+  mLogLikelihoodPerEvent->SetTitle("LogLikelihood/Event");
+  mLogLikelihoodPerEvent->SetName("LogLikelihoodPerEvent");
+  mEvidence= new TMultiGraph();
+  mEvidence->SetTitle("Evidence");
+  mEvidence->SetName("Evidence");
+  mEvidencePerEvent=new TMultiGraph();
+  mEvidencePerEvent->SetTitle("Evidence/Event");
+  mEvidencePerEvent->SetName("EvidencePerEvent");
+  
+}
 
 
-  pwaPlotter::~pwaPlotter(){
-    mWavenames.clear();
-    
+pwaPlotter::~pwaPlotter(){
+  mWavenames.clear();
+  
+}
+
+void 
+pwaPlotter::addFit(const std::string& filename,
+		   const std::string& title,
+		   const unsigned int colour,
+		   const std::string& treename,
+		   const std::string& branchname){
+  
+  // Open and test file and tree
+  TFile* infile = TFile::Open(filename.c_str(),"READ");
+  if(infile==NULL || infile->IsZombie()){
+    cerr << "Input file "<<filename<<" is not a valid file!" << endl;
+    return;
+  }
+  TTree* intree=(TTree*)infile->FindObjectAny(treename.c_str());
+  if(intree==NULL || intree->IsZombie()){
+    cerr << "Tree "<<treename<<" not found in file "<<filename<< endl;
+    return;
+  }
+  fitResult* result=0;
+  if(intree->FindBranch(branchname.c_str())==NULL){
+    cerr << "Invalid branch "<<treename<<"."<<branchname<<" in file "
+	 <<filename<<endl;
+    return;
   }
   
-  void 
-  pwaPlotter::addFit(const std::string& filename,
-		     const std::string& title,
-		     const unsigned int colour,
-		     const std::string& treename,
-		     const std::string& branchname){
-
-    // Open and test file and tree
-    TFile* infile = TFile::Open(filename.c_str(),"READ");
-    if(infile==NULL || infile->IsZombie()){
-      cerr << "Input file "<<filename<<" is not a valid file!" << endl;
-      return;
-    }
-    TTree* intree=(TTree*)infile->FindObjectAny(treename.c_str());
-    if(intree==NULL || intree->IsZombie()){
-      cerr << "Tree "<<treename<<" not found in file "<<filename<< endl;
-      return;
-    }
-    fitResult* result=0;
-    if(intree->FindBranch(branchname.c_str())==NULL){
-      cerr << "Invalid branch "<<treename<<"."<<branchname<<" in file "
-	   <<filename<<endl;
-      return;
+  unsigned int ifit=mResultMetaInfo.size();
+  cerr << "Adding file "<< filename << endl;
+  
+  intree->SetBranchAddress(branchname.c_str(),&result);
+  unsigned int nbins=intree->GetEntries();
+  // extract info for this fit
+  // loop through bins
+  // -> getRange in Mass bins
+  // -> collect all used waves
+  // -> integrate loglikelihood and evidence
+  double mass_min=1E6;
+  double mass_max=0;
+  double logli=0;
+  double logliperevt=0;
+  double evi=0;
+  double eviperevt=0;
+  
+  set<string> wavesinthisfit;
+  
+  for(unsigned int i=0;i<nbins;++i){
+    intree->GetEntry(i);
+    
+    double massBinCenter=result->massBinCenter()*0.001;
+    if(massBinCenter>mass_max)mass_max=massBinCenter;
+    if(massBinCenter<mass_min)mass_min=massBinCenter;
+    
+    // check fitResult for used waves
+    // if not already registered -> register wave (will create TMultiGraph)
+    const vector<string>& waveNames=result->waveNames();
+    unsigned int nwaves=waveNames.size();
+    for(unsigned int iw=0;iw<nwaves;++iw){
+      registerWave(waveNames[iw]);
+      wavesinthisfit.insert(waveNames[iw]);
+      // spin totals...
+      registerWave(getIGJPCMEps(waveNames[iw]));
+      wavesinthisfit.insert(getIGJPCMEps(waveNames[iw]));
     }
     
-    unsigned int ifit=mResultMetaInfo.size();
-    cerr << "Adding file "<< filename << endl;
-       
-    intree->SetBranchAddress(branchname.c_str(),&result);
-    unsigned int nbins=intree->GetEntries();
-    // extract info for this fit
-    // loop through bins
-    // -> getRange in Mass bins
-    // -> collect all used waves
-    // -> integrate loglikelihood and evidence
-    double mass_min=1E6;
-    double mass_max=0;
-    double logli=0;
-    double logliperevt=0;
-    double evi=0;
-    double eviperevt=0;
+    // get loglikelihoods
+    logli+=result->logLikelihood();
+    evi+=result->evidence();
+    logliperevt+=result->logLikelihood()/result->nmbEvents();
+    eviperevt+=result->evidence()/result->nmbEvents();
+  }
+  double binwidth=(mass_max-mass_min)/(double)(nbins-1);
+  cerr << "Number of bins: " << nbins 
+       << "   Width: " << binwidth << endl;
+  
+  
+  // create intensity plots ----------------------------------------------
+  // We have registered all graphs in the step before...
+  // This has to be done in a separate step! Try not to merge the following
+  // with the loop above! You will loose generality!!! You have been warned!
+  
+  // create graphs for this fit
+  set<string>::iterator it=wavesinthisfit.begin();
+  while(it!=wavesinthisfit.end()){
+    TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins,ifit);
+    stringstream graphName;
+    graphName << "g" << title << "_" << *it;
+    g->SetName (graphName.str().c_str());
+    g->SetTitle(graphName.str().c_str());
+    g->SetMarkerStyle(21);
+    g->SetMarkerSize(0.5);
+    g->SetMarkerColor(colour);
+    g->SetLineColor(colour);
+    mIntensities[*it]->Add(g,"p");
+    ++it;
+  }
+  // evidence and likelihood
+  TGraph* gLikeli=new TGraph(nbins);
+  stringstream graphName;
+  graphName << "g" << title << "_LogLikelihood";
+  gLikeli->SetName (graphName.str().c_str());
+  gLikeli->SetTitle(graphName.str().c_str());
+  gLikeli->SetMarkerStyle(21);
+  gLikeli->SetMarkerSize(0.5);
+  gLikeli->SetMarkerColor(colour);
+  gLikeli->SetLineColor(colour);
+  mLogLikelihood->Add(gLikeli,"p");
+  TGraph* gLikeliPE=new TGraph(nbins);
+  graphName.clear();
+  graphName << "g" << title << "_LogLikelihoodPerEvent";
+  gLikeliPE->SetName (graphName.str().c_str());
+  gLikeliPE->SetTitle(graphName.str().c_str());
+  gLikeliPE->SetMarkerStyle(21);
+  gLikeliPE->SetMarkerSize(0.5);
+  gLikeliPE->SetMarkerColor(colour);
+  gLikeliPE->SetLineColor(colour);
+  mLogLikelihoodPerEvent->Add(gLikeliPE,"p");
+  TGraph* gEvidence=new TGraph(nbins);
+  graphName.clear();
+  graphName << "g" << title << "_Evidence";
+  gEvidence->SetName (graphName.str().c_str());
+  gEvidence->SetTitle(graphName.str().c_str());
+  gEvidence->SetMarkerStyle(21);
+  gEvidence->SetMarkerSize(0.5);
+  gEvidence->SetMarkerColor(colour);
+  gEvidence->SetLineColor(colour);
+  mEvidence->Add(gEvidence,"p");
+  TGraph* gEvidencePE=new TGraph(nbins);
+  graphName.clear();
+  graphName << "g" << title << "_EvidencePerEvent";
+  gEvidencePE->SetName (graphName.str().c_str());
+  gEvidencePE->SetTitle(graphName.str().c_str());
+  gEvidencePE->SetMarkerStyle(21);
+  gEvidencePE->SetMarkerSize(0.5);
+  gEvidencePE->SetMarkerColor(colour);
+  gEvidencePE->SetLineColor(colour);
+  mEvidencePerEvent->Add(gEvidencePE,"p");
 
-    set<string> wavesinthisfit;
 
-    for(unsigned int i=0;i<nbins;++i){
-      intree->GetEntry(i);
-
-      double massBinCenter=result->massBinCenter()*0.001;
-      if(massBinCenter>mass_max)mass_max=massBinCenter;
-      if(massBinCenter<mass_min)mass_min=massBinCenter;
-
-      // check fitResult for used waves
-      // if not already registered -> register wave (will create TMultiGraph)
-      const vector<string>& waveNames=result->waveNames();
-      unsigned int nwaves=waveNames.size();
-      for(unsigned int iw=0;iw<nwaves;++iw){
-	registerWave(waveNames[iw]);
-	wavesinthisfit.insert(waveNames[iw]);
-      }
-
-      // get loglikelihoods
-      logli+=result->logLikelihood();
-      evi+=result->evidence();
-      logliperevt+=result->logLikelihood()/result->nmbEvents();
-      eviperevt+=result->evidence()/result->nmbEvents();
-    }
-    double binwidth=(mass_max-mass_min)/(double)(nbins-1);
-    cerr << "Number of bins: " << nbins 
-	 << "   Width: " << binwidth << endl;
-
-
-    // create intensity plots ----------------------------------------------
-    // We have registered all graphs in the step before...
-    // This has to be done in a separate step! Try not to merge the following
-    // with the loop above! You will loose generality!!! You have been warned!
-
-    // create graphs for this fit
-    set<string>::iterator it=wavesinthisfit.begin();
+  // loop again over fitResults and extract all info simultaneously
+  for(unsigned int i=0;i<nbins;++i){
+    intree->GetEntry(i);
+    // loop through waves
+    it=wavesinthisfit.begin();
     while(it!=wavesinthisfit.end()){
-      TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins,ifit);
-      stringstream graphName;
-      graphName << "g" << title << "_" << *it;
-      g->SetName (graphName.str().c_str());
-      g->SetTitle(graphName.str().c_str());
-      g->SetMarkerStyle(21);
-      g->SetMarkerSize(0.5);
-      g->SetMarkerColor(colour);
-      g->SetLineColor(colour);
-      mIntensities[*it]->Add(g,"p");
+      TMultiGraph* mg=mIntensities[*it];
+      TGraphErrors* g=dynamic_cast<TGraphErrors*>(mg->GetListOfGraphs()->Last());
+      g->SetPoint(i,
+		  result->massBinCenter()*0.001,
+		  result->intensity(it->c_str()));
+      g->SetPointError(i,
+		       binwidth*0.5,
+		       result->intensityErr(it->c_str()));
       ++it;
     }
-    // loop again over fitResults and extract all info simultaneously
-    for(unsigned int i=0;i<nbins;++i){
-      intree->GetEntry(i);
-      // loop through waves
-      it=wavesinthisfit.begin();
-      while(it!=wavesinthisfit.end()){
-	TMultiGraph* mg=mIntensities[*it];
-	TGraphErrors* g=dynamic_cast<TGraphErrors*>(mg->GetListOfGraphs()->Last());
-	g->SetPoint(i,
-		    result->massBinCenter()*0.001,
-		    result->intensity(it->c_str()));
-	g->SetPointError(i,
-		    binwidth*0.5,
-		    result->intensityErr(it->c_str()));
-	++it;
-      }
-      
-    }
-
-
-    // write MetaInfo
-    fitResultMetaInfo meta(filename,
-			   title,
-			   colour,treename,
-			   branchname);
-    meta.setLikelihoods(logli,logliperevt,evi,eviperevt);
-    meta.setBinRange(mass_min-binwidth*0.5,mass_max+binwidth*0.5,nbins);
-    mResultMetaInfo.push_back(meta);
-    
-    
-    // cleanup
-    infile->Close();
-    cerr << endl;
-    
-
+    gLikeli->SetPoint(i,
+		      result->massBinCenter()*0.001,
+		      result->logLikelihood());
+    gLikeliPE->SetPoint(i,
+			result->massBinCenter()*0.001,
+			result->logLikelihood()/result->nmbEvents());
+    gEvidence->SetPoint(i,
+			result->massBinCenter()*0.001,
+			result->evidence());
+    gEvidencePE->SetPoint(i,
+			result->massBinCenter()*0.001,
+			result->evidence()/result->nmbEvents());
   }
   
   
+  // write MetaInfo
+  fitResultMetaInfo meta(filename,
+			 title,
+			 colour,treename,
+			 branchname);
+  meta.setLikelihoods(logli,logliperevt,evi,eviperevt);
+  meta.setBinRange(mass_min-binwidth*0.5,mass_max+binwidth*0.5,nbins);
+  mResultMetaInfo.push_back(meta);
+  mMinEvidence=(mMinEvidence*ifit+evi)/(ifit+1);
+    
+  // cleanup
+  infile->Close();
+  cerr << endl;
+  
+  
+}
+
+
 
 bool 
 pwaPlotter::registerWave(const std::string& wavename){
   pair<set<string>::iterator,bool> inserted=mWavenames.insert(wavename);
   if(inserted.second){ // we had a true insterion
-    cerr << "New wave: " << wavename << endl;
+    cerr << "New wave ("<<mWavenames.size()<<"): " << wavename << endl;
     // create intensity graph:
     mIntensities[wavename]=new TMultiGraph();
     mIntensities[wavename]->SetTitle(wavename.c_str());
@@ -267,13 +353,14 @@ pwaPlotter::produceDensityPlots(){
     for(unsigned int ig=0;ig<ng;++ig){
       TPwaFitGraphErrors* g=dynamic_cast<TPwaFitGraphErrors*>(graphs->At(ig));
       unsigned int ifit=g->fitindex;
-      double w=mResultMetaInfo[ifit].mTotalPerEventLogLikelihood/(double)mResultMetaInfo[ifit].mNumBins;
+      double w=(mResultMetaInfo[ifit].mTotalPerEventEvidence)/(double)mResultMetaInfo[ifit].mNumBins;
       //double likeli=0;
+      //cout << "weight: "<<TMath::Exp(w)<<endl;
       h=drawDensity(g,h,TMath::Exp(w));
     }
     ++it;
     // rescale each x-bin
-    for(unsigned int ibin=0; ibin<nbins; ++ibin){
+    for(unsigned int ibin=1; ibin<=nbins; ++ibin){
       // get maximum bin in y for this x-bin
       double max=0;
       for(unsigned int iy=0;iy<400;++iy){
@@ -294,8 +381,28 @@ pwaPlotter::produceDensityPlots(){
 
 
 
+void 
+pwaPlotter::writeAll(std::string filename){
+  TFile* outfile=TFile::Open(filename.c_str(),"RECREATE");
+  if(outfile!=0 && !outfile->IsZombie()){
+    writeAll(outfile);
+    outfile->Close();
+  }
+  else{
+    cerr << "Error opening file " << filename << endl;
+  }
+}
 
-
+void 
+pwaPlotter::writeAll(TFile* outfile){
+   outfile->cd();
+   // write evidence and loglikelihoods
+   mLogLikelihood->Write();
+   mLogLikelihoodPerEvent->Write();
+   mEvidence->Write();
+   mEvidencePerEvent->Write();
+   writeAllIntensities(outfile);
+}
 
 
 void 

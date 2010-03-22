@@ -108,7 +108,7 @@ class pwaPlotter {
 public:
 
   // Constructors/Destructors ---------
-  pwaPlotter(){}
+  pwaPlotter();
   virtual ~pwaPlotter();
 
   // Accessors -----------------------
@@ -135,11 +135,12 @@ public:
   // Operations ----------------------
   void writeAllIntensities(std::string filename);
   void writeAllIntensities(TFile* outfile);
+
 //   void writeSpinTotals(std::string filename, std::string opt="");
 //   void writeSpinTotals(TFile* outfile, std::string opt="");
   
-//   void writeAll(std::string filename);
-//   void writeAll(TFile* outfile);
+  void writeAll(std::string filename);
+  void writeAll(TFile* outfile);
 
   
 
@@ -155,8 +156,14 @@ private:
   
   ///< TMultiGraphs
   std::map<std::string,TMultiGraph*> mIntensities;
+
+  TMultiGraph* mLogLikelihood;
+  TMultiGraph* mLogLikelihoodPerEvent;
+  TMultiGraph* mEvidence;
+  TMultiGraph* mEvidencePerEvent;
   
 
+  double mMinEvidence; // minimal evidence for a fit -- used to renormalize weighting
 
   // Private Methods -----------------
   
