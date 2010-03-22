@@ -43,7 +43,7 @@
 #include "utilities.h"
 #include "diffractiveDissVertex.h"
 #include "isobarDecayTopology.h"
-
+#include "particleDataTable.h"
 	
 using namespace std;
 using namespace boost;
@@ -359,7 +359,7 @@ isobarDecayTopology::possibleDecays()
 	const int charm       = d1.charm()       + d2.charm();
 	const int beauty      = d1.beauty()      + d2.beauty();
 	const int G           = d1.G()           * d2.G();
-	const int C           = d1.C()           * d2.C();
+	//const int C           = d1.C()           * d2.C();
 	// daughter quantum numbers that define ranges of possible mother quantum numbers
 	const int s1 = d1.J();
 	const int s2 = d2.J();
@@ -383,7 +383,7 @@ isobarDecayTopology::possibleDecays()
 	    const int P = d1.P() * d2.P() * (L % 4 == 0 ? 1 : -1);  // parity
 	    for (int J = max(abs(L - S), minJ); J <= min(L + S, maxJ); J += 2) {        // L-S coupling loop
 	      for (int I = max(abs(I1 - I2), minI); I <= min(I1 + I2, maxI); I += 2) {  // isospin loop
-		//int C = G * (I % 4 == 0 ? 1 : -1);  // C-Parity???
+		int C = G * (I % 4 == 0 ? 1 : -1);  // C-Parity???
 		if (_debug)
 		  printInfo << vertex->mother().name() << "  --->  "
 			    << d1.name() << "  +   " << d2.name() << "    "
@@ -401,28 +401,39 @@ isobarDecayTopology::possibleDecays()
 		    continue;
 		  }
 		}
-		//!!! if not taken care of by the calling code this is a potential memory leak
-		decayGraph graphCopy = deepCopyGraph(joinedGraph, false);
-		// set mother vertex quantum numbers
-		isobarDecayVertex* v = static_cast<isobarDecayVertex*>(get(vertex_vertexPointer, graphCopy, topNode));
-		v->setL(L);
-		v->setS(S);
-		// copy mother particle
-		particle* m = &v->mother().clone();
-		v->inParticles()[0] = m;
-		// m->setName("foo");
-		m->setCharge     (charge);
-		m->setBaryonNmb  (baryonNmb);
-		m->setIsospin    (I);
-		m->setStrangeness(strangeness);
-		m->setCharm      (charm);
-		m->setBeauty     (beauty);
-		m->setG          (G);
-		m->setJ          (J);
-		m->setP          (P);
-		m->setC          (C);
-		//cout << "!!! " << topNode << ", " << *v << endl;
-		decays.push_back(graphCopy);
+		//
+		//Get fitting candidates from PDTable
+		
+		particleProperties prop("isobar",I,G,J,P,C);
+		particleDataTable& pdt = particleDataTable::instance();
+		string opt="IGJPC";
+		vector<const particleProperties*> selection=pdt.entrylist(prop,opt);
+		unsigned int niso=selection.size();
+		cout << "Found "<<niso<<" isobar candidates"<<endl;
+		for(unsigned int iiso=0;iiso<niso;++iiso){
+		  //!!! if not taken care of by the calling code this is a potential memory leak
+		  decayGraph graphCopy = deepCopyGraph(joinedGraph, false);
+		  // set mother vertex quantum numbers
+		  isobarDecayVertex* v = static_cast<isobarDecayVertex*>(get(vertex_vertexPointer, graphCopy, topNode));
+		  v->setL(L);
+		  v->setS(S);
+		  // copy mother particle
+		  particle* m = &v->mother().clone();
+		  v->inParticles()[0] = m;
+		  m->setName(selection[iiso]->name());
+		  m->setCharge     (charge);
+		  m->setBaryonNmb  (baryonNmb);
+		  m->setIsospin    (I);
+		  m->setStrangeness(strangeness);
+		  m->setCharm      (charm);
+		  m->setBeauty     (beauty);
+		  m->setG          (G);
+		  m->setJ          (J);
+		  m->setP          (P);
+		  m->setC          (C);
+		  //cout << "!!! " << topNode << ", " << *v << endl;
+		  decays.push_back(graphCopy);
+		} // isobar candidate
 	      }  // isospin loop
 	    }  // L-S coupling loop
 	  }  // L loop

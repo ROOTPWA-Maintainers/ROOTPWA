@@ -144,7 +144,8 @@ isobarDecayVertex::checkConsistency(){
   if (!checkMultiplicativeQn(mother().G(), daughter1().G(), daughter2().G(), "G-parity"))
     vertexConsistent = false;
   // C-parity
-  if (!checkMultiplicativeQn(mother().C(), daughter1().C(), daughter2().C(), "C-parity"))
+  //if (!checkMultiplicativeQn(mother().C(), daughter1().C(), daughter2().C(), "C-parity"))
+  if(mother().G() * (mother().isospin() % 4 == 0 ? 1 : -1) != mother().C())  // C-Parity???
     vertexConsistent = false;
   // Parity
   const int angMomParity = (_L % 4 == 0) ? 1 : -1; // modulo 4 because L is in units of hbar/2

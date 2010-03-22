@@ -175,7 +175,7 @@ main(int argc, char** argv)
     particle pi4("pi-");
     // define isobars
     particle i0("isobar00");
-    particle i1("isobar1+");
+    particle i1("isobar1-");
     particle i2("isobar20");
     // define X-system
     particle X("X-");
@@ -183,10 +183,10 @@ main(int argc, char** argv)
     particle beam("pi-");
     diffractiveDissVertex prodVert(beam, X);
     // define vertices
-    isobarDecayVertex vert0(X,  pi4, i2);
-    isobarDecayVertex vert1(i2, pi2, i1);
-    isobarDecayVertex vert2(i1, pi3, i0);
-    isobarDecayVertex vert3(i0, pi0, pi1);
+    isobarDecayVertex vert0(X,  i0, i1);
+    isobarDecayVertex vert1(i0, pi0, pi1);
+    isobarDecayVertex vert2(i1, pi2, i2);
+    isobarDecayVertex vert3(i2, pi3, pi4);
     // build graph
     vector<particle*> fsParticles;
     fsParticles.push_back(&pi0);
