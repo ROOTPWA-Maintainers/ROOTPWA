@@ -52,7 +52,7 @@ extern wave              gWave;
 
 
 Tgamp::Tgamp(const string& pdgTableFileName)
-  : _reflect       (false),
+  : _reflect       (false), _mirror (false),
     _suppressOutput(true)
 {
   if (pdgTableFileName != "")
@@ -77,6 +77,8 @@ Tgamp::Amp(const string& keyFileName,
   complex<double> amplitude;
   if (_reflect)
     ev = reflectEvent(ev);
+  if(_mirror)
+    ev = mirrorEvent(ev);
   key.run(ev, amplitude, _suppressOutput);
   key.rewind();
   key.close();
@@ -160,7 +162,85 @@ Tgamp::Amp(const unsigned int iKey,
 event
 Tgamp::reflectEvent(const event& evIn)
 {
-  // get X Lorentz-vector in lab frame
+  // // get X Lorentz-vector in lab frame
+//   const list<particle> daughtersLab = evIn.f_mesons();
+//   fourVec              XLab;
+//   for (list<particle>::const_iterator i = daughtersLab.begin(); i != daughtersLab.end(); ++i)
+//     XLab += i->get4P();
+
+//   // rotation into scattering plane
+//   const fourVec          beamLab         = evIn.beam().get4P();
+//   const threeVec         prodPlaneNormal = beamLab.V() / XLab.V();
+//   static const double    piHalf          = acos(-1.0) / 2.0;
+//   rotation               R(prodPlaneNormal.phi(),
+//   			   prodPlaneNormal.theta() - piHalf,
+//   			   -piHalf);
+//   const lorentzTransform rotScatPlane(R);
+//   fourVec                X    = XLab;
+//   fourVec                beam = beamLab;
+//   X    *= rotScatPlane;
+//   beam *= rotScatPlane;
+
+//   // boost into X-RF
+//   const lorentzTransform boostRf(X);
+//   X    *= boostRf;
+//   beam *= boostRf;
+
+//   // rotation so that beam is along z-axis
+//   R.set(0, signof(beam.x()) * beam.V().theta(), 0);
+//   const lorentzTransform rotBeam(R);
+
+//   // total transformation
+//   matrix<double>         transMatrix = rotBeam * (boostRf * rotScatPlane);
+//   const lorentzTransform L           = lorentzTransform(transMatrix);
+//   const lorentzTransform Linv(transMatrix.inv());
+     
+  // transform event into Gottfried-Jackson frame
+  lorentzTransform L=toGottfriedJackson(evIn);
+  lorentzTransform Linv(L.inv());
+  event evOut = L * evIn;
+    
+  // reflect final state through production plane
+  list<particle> daughtersRefl = evOut.f_mesons();
+  for (list<particle>::iterator i = daughtersRefl.begin(); i != daughtersRefl.end(); ++i) {
+    fourVec daughter = i->get4P();
+    daughter.set(daughter.t(), daughter.x(), -daughter.y(), daughter.z());
+    i->set4P(daughter);
+  }
+  evOut.set_f_mesons(daughtersRefl);
+     
+  // transform event back to lab frame
+  evOut = Linv * evOut;
+  
+  return evOut;
+}
+
+// performs parity reflection
+event
+Tgamp::mirrorEvent(const event& evIn)
+{
+
+  lorentzTransform L=toGottfriedJackson(evIn);
+  lorentzTransform Linv(L.inv());
+  event evOut = L * evIn;
+  
+  list<particle> daughtersLab = evOut.f_mesons();
+  for (list<particle>::iterator i = daughtersLab.begin(); i != daughtersLab.end(); ++i){
+    fourVec daughter = i->get4P();
+    daughter.set(daughter.t(), -daughter.x(), -daughter.y(), -daughter.z());
+    i->set4P(daughter);
+  }
+  evOut.set_f_mesons(daughtersLab);
+    
+  // transform event back to lab frame
+  evOut = Linv * evOut;
+  return evOut;
+}
+
+
+lorentzTransform
+Tgamp::toGottfriedJackson(const event& evIn){
+// get X Lorentz-vector in lab frame
   const list<particle> daughtersLab = evIn.f_mesons();
   fourVec              XLab;
   for (list<particle>::const_iterator i = daughtersLab.begin(); i != daughtersLab.end(); ++i)
@@ -190,23 +270,6 @@ Tgamp::reflectEvent(const event& evIn)
 
   // total transformation
   matrix<double>         transMatrix = rotBeam * (boostRf * rotScatPlane);
-  const lorentzTransform L           = lorentzTransform(transMatrix);
-  const lorentzTransform Linv(transMatrix.inv());
-     
-  // transform event into Gottfried-Jackson frame
-  event evOut = L * evIn;
-    
-  // reflect final state through production plane
-  list<particle> daughtersRefl = evOut.f_mesons();
-  for (list<particle>::iterator i = daughtersRefl.begin(); i != daughtersRefl.end(); ++i) {
-    fourVec daughter = i->get4P();
-    daughter.set(daughter.t(), daughter.x(), -daughter.y(), daughter.z());
-    i->set4P(daughter);
-  }
-  evOut.set_f_mesons(daughtersRefl);
-     
-  // transform event back to lab frame
-  evOut = Linv * evOut;
-  
-  return evOut;
+  return lorentzTransform(transMatrix);
+
 }
