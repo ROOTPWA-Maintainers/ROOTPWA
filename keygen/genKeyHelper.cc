@@ -84,11 +84,29 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
     cerr << "different number of events for reflected and unmodified data." << endl;
     return false;
   }
+  dataFile.clear();
+  dataFile.seekg(0, ios::beg);
+  if (!dataFile.good()) {
+    printErr << "problems rereading data file." << endl;
+    return false;
+  }
+  gamp.reflect(false);
+  gamp.mirror(true);
+  vector<complex<double> > ampsMirr = gamp.Amp(keyFileName, dataFile);
+  if (amps.size() != ampsMirr.size()) {
+    cerr << "different number of events for mirrored and unmodified data." 
+	 << amps.size() << "!="<< ampsMirr.size() << endl;
+    return false;
+  }
+
   printInfo << "comparing amplitudes of " << amps.size() << " events "
-	    << "with the amplitudes of the respective reflected events:" << endl;
+	    << "with the amplitudes of the respective reflected/mirrored events:" << endl;
+  printInfo << "REMEMBER: We measure -1/eps*P_intr with reflection and P/P_intr with the mirror operation. P_intr is the intrinsic parity of the final state (e.g. -1 for 3 pions)" << endl;
   unsigned int countAmpRatioNotOk    = 0;
   unsigned int countAmpEigenValNotOk = 0;
-  const int    reflEigenValue        = -1 / refl;  // reciprocal is important in case of baryons, where refl = +-i
+  int    reflEigenValue        = 0;
+  int    parityEigenValue      = 0;
+  if(refl!=0)reflEigenValue=-1 / refl;  // reciprocal is important in case of baryons, where refl = +-i
   for (unsigned int i = 0; i < amps.size(); ++i) {
     cout << "    event " << i << ": " << endl;
     const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
@@ -96,12 +114,18 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
     s.precision(nmbDigits);
     s.setf(ios_base::scientific, ios_base::floatfield);
     if (printAmp) {
-      s << "amp. = " << amps[i] << ", amp. refl. = " << ampsRefl[i];
-      cout << "        " << s.str() << endl;
+      s << "        amp.       = " << amps[i] << endl
+	<< "        amp. refl. = " << ampsRefl[i] << endl
+	<< "        amp. mirr. = " << ampsMirr[i] << endl;
+      cout << s.str() << endl;
     }
     const double realPartRatio = (ampsRefl[i].real() != 0) ? amps[i].real() / ampsRefl[i].real() : 0;
     const double imagPartRatio = (ampsRefl[i].real() != 0) ? amps[i].imag() / ampsRefl[i].imag() : 0;
+    const double realPartRatioMirr = (ampsMirr[i].real() != 0) ? amps[i].real() / ampsMirr[i].real() : 0;
+    const double imagPartRatioMirr = (ampsMirr[i].real() != 0) ? amps[i].imag() / ampsMirr[i].imag() : 0;
     s.str("");
+    
+
     s << "real part / real part refl. = "   << realPartRatio << ", "
       << "imag. part / imag. part refl. = " << imagPartRatio;
     bool ampRatioOk = true;
@@ -116,6 +140,24 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
       ++countAmpEigenValNotOk;
     }
     cout << "        " << s.str() << ((!ampRatioOk) ? " <!!!" : "") << endl;
+    
+    s.str("");
+    s << "real part / real part mirr. = "   << realPartRatioMirr << ", "
+      << "imag. part / imag. part mirr. = " << imagPartRatioMirr;
+    bool ampRatioOkMirr = true;
+    if (   (fabs(realPartRatioMirr) - 1 > precision)
+	|| (fabs(imagPartRatioMirr) - 1 > precision)) {
+      ampRatioOk = false;
+      ++countAmpRatioNotOk;
+    }
+    if (   ((realPartRatioMirr != 0) && (realPartRatioMirr / fabs(realPartRatioMirr) != parityEigenValue))
+	|| ((imagPartRatioMirr != 0) && (imagPartRatioMirr / fabs(imagPartRatioMirr) != parityEigenValue))) {
+      ampRatioOkMirr = false;
+      ++countAmpEigenValNotOk;
+    }
+    cout << "        " << s.str() << ((!ampRatioOkMirr) ? " <!!!" : "") << endl;
+
+
   }
   bool returnVal = true;
   if (countAmpRatioNotOk == 0) {

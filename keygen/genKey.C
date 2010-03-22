@@ -47,7 +47,7 @@ using namespace rpwa;
 
 void
 genKey(const bool    testKey          = true,
-       const string& dataFileName     = "./testEvents.evt",  // file with test data in .evt format
+       const string& dataFileName     = "./testEvents4.evt",  // file with test data in .evt format
        const string& pdgTableFileName = "./pdgTable.txt")
 {
   // define final state particles
@@ -58,21 +58,22 @@ genKey(const bool    testKey          = true,
   particleKey p5("pi-");
   
   // define isobars: (name, daughter1, daughter2, L, S, mass dependence)
-  particleKey i11("sigma",    &p1, &p2,  0, 0, "amp_ves");
-  particleKey i1 ("a1(1269)", &p4, &i11, 1);
-  //particleKey i2 ("f1(1285)", &p3, &i1,  1, 1);
-  particleKey i2 ("eta1(1600)", &p3, &i1,  1, 1);
-  const int J    =  2;
-  //const int P    = +1;
+  particleKey i11("rho(770)",    &p1, &p2,  1, 0);
+  particleKey i1 ("a1(1269)", &p3, &i11, 0);
+  //particleKey i2 ("f1(1285)", &p4, &i1,  1, 1);
+  particleKey i2 ("eta1(1600)", &p4, &i1,  0, 1);
+  const int J    =  1;
+  //const int P    =  1;
   const int P    = -1;
   const int M    =  1;
-  const int refl = +1;
+  const int refl =  +1;
   const int L    =  1; 
   const int S    =  1;
 
   // define X system
-  particleKey X("X", &p5, &i2, L, S);
+  particleKey X("X", &i2, &p5, L, S);
   waveKey     wave(&X, J, P, M, refl);
+  //wave.setDebug(1);
 
   // test and generate key file
   const string thisFilePath = __FILE__;

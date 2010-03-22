@@ -59,7 +59,8 @@ namespace rpwa {
 	    const int    refl,     // reflectivity
 	    const int    I =  1,   // isospin
 	    const int    G = -1,   // G-parity
-	    const int    C = +1);  // charge conjugation
+	    const int    C = +1,  // charge conjugation
+	    const bool   doRefl = true);
     virtual ~waveKey();
 
     // accessors
@@ -79,10 +80,16 @@ namespace rpwa {
 
     void setOutputFormat(const std::string& outputFormat = "binary") { _outputFormat = outputFormat; }
 
+    void doReflectivity(bool flag){_doReflectivity=flag;}
+
+    void setDebug(bool flag) {_waveDebug=flag;}
+
     // constructs reflectivity eigenstate and writes it out
     void write(std::ostream&      out,
 	       const std::string& outputFormat = "") const;
     void write(const std::string& outputFormat = "") const;
+
+
 
   private:
 
@@ -121,6 +128,8 @@ namespace rpwa {
     particleKey* _mother;        // decay chain of mother particle
     std::string  _outputFormat;  // output format of amplitudes: 'binary', 'ascii', or 'none'
     int          _waveDebug;     // value of 'debug' parameter written to key file
+
+    bool _doReflectivity;
 
   };
 
