@@ -348,7 +348,6 @@ isobarDecayTopology::possibleDecays()
 						    topNode);
 	isobarDecayVertex* vertex = static_cast<isobarDecayVertex*>(get(vertex_vertexPointer, joinedGraph, topNode));
 	//cout << "!!! " << topNode << ", " << *vertex << endl;
-
 	particle&          d1     = vertex->daughter1();
 	particle&          d2     = vertex->daughter2();
 	//cout << "!!! " << d2 << endl;
@@ -368,12 +367,12 @@ isobarDecayTopology::possibleDecays()
 	const int I2 = d2.isospin();
 
 	const int  minS = 0;
-	const int  maxS = 0;
+	const int  maxS = 2;
 	const int  minL = 0;
-	const int  maxL = 0;
+	const int  maxL = 2;
 	const int  minJ = 0;
-	const int  maxJ = 0;
-	const int  minI = 0;
+	const int  maxJ = 2;
+	const int  minI = 2;
 	const int  maxI = 2;
 	const bool allowJpcExotic = true;
   
@@ -404,6 +403,8 @@ isobarDecayTopology::possibleDecays()
 		decayGraph graphCopy = deepCopyGraph(joinedGraph, false);
 		// set mother vertex quantum numbers
 		isobarDecayVertex* v = static_cast<isobarDecayVertex*>(get(vertex_vertexPointer, graphCopy, topNode));
+		v->setL(L);
+		v->setS(S);
 		// copy mother particle
 		particle* m = &v->mother().clone();
 		v->inParticles()[0] = m;
