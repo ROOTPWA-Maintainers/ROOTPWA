@@ -154,10 +154,7 @@ main(int argc, char** argv)
     
     ofstream graphVizFile("decay.dot");
     topo.writeGraphViz(graphVizFile);
-#if BOOST_GRAPH_LIB
     gSystem->Exec("dot -Tps -o decay.ps decay.dot");
-#endif
-
   }
 
 }

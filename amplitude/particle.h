@@ -43,6 +43,7 @@
 
 #include "TVector3.h"
 #include "TLorentzVector.h"
+#include "TLorentzRotation.h"
 
 #include "particleProperties.h"
 
@@ -80,10 +81,12 @@ namespace rpwa {
     int                   spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
     const TLorentzVector& lzVec()    const { return _lzVec;    }  ///< returns Lorentz vector of particle
 
-    void setCharge  (const int       charge)   { _charge   = charge;                                                            }  ///< sets particle's charge
-    void setSpinProj(const int       spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
-    void setMomentum(const TVector3& momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
-    void setLzVec(const TLorentzVector& lzVec) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
+    void setCharge  (const int             charge)   { _charge   = charge;                                                            }  ///< sets particle's charge
+    void setSpinProj(const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
+    void setMomentum(const TVector3&       momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
+    void setLzVec   (const TLorentzVector& lzVec)    { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
+
+    const TLorentzVector& transform(const TLorentzRotation& L) { return (_lzVec *= L); }  ///< applies Lorentz-transformation to particle
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 

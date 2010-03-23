@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <limits>
 #include <vector>
+#include <complex>
+
 
 // cint has problems parsing glob.h
 #ifndef __CINT__
@@ -215,10 +217,9 @@ sign(const T& val)
 {
   if (val < 0)
     return "-";
-  else if (val == 0)
+  if (val == 0)
     return "0";
-  else
-    return "+";
+  return "+";
 }
 
 
@@ -229,10 +230,21 @@ sign(const char s)
 {
   if (s == '+')
     return +1;
-  else if (s == '-')
+  if (s == '-')
     return -1;
-  else
-    return 0;
+  return 0;
+}
+
+
+// extracts sign from value
+template<typename T>
+T signum(const T& val)
+{
+  if (val < 0)
+    return -1;
+  if (val > 0)
+    return +1;
+  return 0;
 }
 
 
@@ -373,6 +385,7 @@ const double piHalf = pi / 2;
 const double twoPi  = 2 * pi;
 const double fourPi = 4 * pi;
 
+const std::complex<double> imag(0,1);
 
 // computes n!
 inline

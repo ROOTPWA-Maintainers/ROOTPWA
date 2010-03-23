@@ -41,9 +41,7 @@
 #include <list>
 
 #include <boost/graph/depth_first_search.hpp>
-#if BOOST_GRAPH_LIB
 #include <boost/graph/graphviz.hpp>
-#endif
 
 #include "utilities.h"
 #include "decayTopology.h"
@@ -124,7 +122,7 @@ decayTopology::constructDecay(const vector<particle*>&          fsParticles,
     clear();
     return *this;
   }
-  get_property(_graph, graph_name) = "root graph";
+  get_property(_graph, graph_name) = "root_graph";
   // get node and edge maps
   _nodeDataMap     = get(vertex_bundle,        _graph);
   _nodeVertexMap   = get(vertex_vertexPointer, _graph);
@@ -282,11 +280,7 @@ decayTopology::print(ostream& out) const
 ostream&
 decayTopology::writeGraphViz(ostream& out) const
 {
-#if BOOST_GRAPH_LIB
   write_graphviz(out, _graph);
-#else
-  printWarn << "cannot write GraphViz file. libboost_graph.so needed." << endl;
-#endif
   return out;
 }
 
@@ -372,4 +366,41 @@ decayTopology::deepCopyGraph(const decayGraph& srcGraph,
     }
   }
   return newGraph;
+}
+
+
+decayTopology::decayGraph
+decayTopology::subGraph(interactionVertex& startVertex)
+{
+  // find all nodes below start node
+  nodeDesc         startNode = _vertexNodeMap[&startVertex];
+  vector<nodeDesc> subGraphNodes;
+  {
+    vector<default_color_type> colors(num_vertices(_graph));
+    depth_first_visit(_graph, startNode,
+		      makeDfsRecorder(back_inserter(subGraphNodes)),
+		      make_iterator_property_map(colors.begin(),
+						 get(vertex_index, _graph), colors[0]));
+  }
+  if (_debug)
+    printInfo << "creating subgraph starting at node " << startNode
+	      << " using nodes: " << flush;
+  decayGraph subGraph = _graph.create_subgraph();
+  for (unsigned int j = 0; j < subGraphNodes.size(); ++j) {
+    add_vertex(subGraphNodes[j], subGraph);
+    if (_debug)
+      cout << subGraphNodes[j] << "    ";
+  }
+  if (_debug)
+    cout << endl;
+  return subGraph;
+}
+
+
+interactionVertex*
+decayTopology::vertex(particle& part)
+{
+  edgeDesc edge = _particleEdgeMap[&part];
+  nodeDesc node = target(edge, _graph);
+  return _nodeVertexMap[node];
 }

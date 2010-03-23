@@ -116,6 +116,14 @@ interactionVertex::addOutParticle(particle& part)
 }
 
 
+void
+interactionVertex::transformOutParticles(const TLorentzRotation& L)
+{
+  for (unsigned int i = 0; i < nmbOutParticles(); ++i)
+    _outParticles[i]->transform(L);
+}
+
+
 ostream&
 interactionVertex::print(ostream& out) const
 {

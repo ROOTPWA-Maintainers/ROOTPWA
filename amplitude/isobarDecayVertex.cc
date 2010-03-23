@@ -216,7 +216,8 @@ isobarDecayVertex::updateMotherLzVec()
     printInfo << "updating Lorentz-vector of particle " << mother().name()
 	      << " p_before = " << mother().lzVec() << " GeV, " << flush;
   mother().setLzVec(daughter1().lzVec() + daughter2().lzVec());
-  cout << "p_after = " << mother().lzVec() << " GeV" << endl;
+  if (_debug)
+    cout << "p_after = " << mother().lzVec() << " GeV" << endl;
   return mother().lzVec();
 }
 
@@ -247,7 +248,6 @@ isobarDecayVertex::getListOfValidDecays(vector<isobarDecayVertex*>& d1list,
   _outParticles[1]=d2orig;
 
 }
-
 
 
 void
@@ -307,17 +307,7 @@ isobarDecayVertex::getListOfValidDecays(vector<isobarDecayVertex*>& outlist,
     }// end l loop
     
   }// end s-s coupling loop
-  
-  
-  
 }
-
-
-
-
-
-
-
 
 
 ostream&

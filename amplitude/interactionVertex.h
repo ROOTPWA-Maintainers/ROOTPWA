@@ -47,6 +47,8 @@
 #include <vector>
 #include <complex>
 
+#include "TLorentzRotation.h"
+
 #include "particle.h"
 
 
@@ -61,11 +63,13 @@ namespace rpwa {
     virtual ~interactionVertex();
 		
     virtual interactionVertex& operator = (const interactionVertex& vert);
-    //interactionVertex& operator *= (const lorentzTransform& L);
     virtual interactionVertex& clone() const;
 
     virtual bool addInParticle (particle& part);  ///< adds an incoming particle to vertex
     virtual bool addOutParticle(particle& part);  ///< adds an outgoing particle to vertex
+
+    virtual void transformOutParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to outgoing particles
+    //virtual interactionVertex& operator *= (const TLorentzRotation& L);
 
     virtual std::vector<particle*>& inParticles () { return _inParticles;  }  ///< returns array of incoming particles
     virtual std::vector<particle*>& outParticles() { return _outParticles; }  ///< returns array of outgoing particles

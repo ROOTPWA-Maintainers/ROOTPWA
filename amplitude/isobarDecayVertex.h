@@ -68,6 +68,9 @@ namespace rpwa {
     particle& mother()    { return *(inParticles() [0]); }  ///< returns mother particle
     particle& daughter1() { return *(outParticles()[0]); }  ///< returns first daughter particle
     particle& daughter2() { return *(outParticles()[1]); }  ///< returns second daughter particle
+    const particle& mother()    const { return *(inParticles() [0]); }  ///< returns mother particle
+    const particle& daughter1() const { return *(outParticles()[0]); }  ///< returns first daughter particle
+    const particle& daughter2() const { return *(outParticles()[1]); }  ///< returns second daughter particle
 
     const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
 

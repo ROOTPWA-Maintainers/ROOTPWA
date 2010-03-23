@@ -54,7 +54,9 @@ ENABLE_TESTING()
 IF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE Release)
 ENDIF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-SET(CMAKE_CXX_FLAGS "-Wall -Werror")  # common flags
+# common compiler flags
+SET(CMAKE_CXX_FLAGS "-Wall -Werror")
+# flags for specific build types
 SET(CMAKE_CXX_FLAGS_DEBUG "-g")
 SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
 SET(CMAKE_CXX_LDFLAGS_DEBUG "-g")
@@ -68,34 +70,18 @@ SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 SET(Boost_INCLUDE_DIRS $ENV{BOOST_ROOT})
-IF(Boost_INCLUDE_DIRS)  # ugly CMAKE 2.4 workaround
+IF(Boost_INCLUDE_DIRS)  # ugly CMAKE 2.4 workaround to force user specified Boos library
   MESSAGE(STATUS "Using Boost include directory '${Boost_INCLUDE_DIRS}'")
 ELSE(Boost_INCLUDE_DIRS)
   FIND_PACKAGE(Boost)
   IF(Boost_FOUND)
     MESSAGE(STATUS "Using Boost include directory '${Boost_INCLUDE_DIRS}'")
     MESSAGE(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
-    FIND_LIBRARY(BOOST_GRAPH_LIB
-      libboost_graph.so
-      PATHS ${Boost_LIBRARY_DIRS}
-    )
-    IF(${BOOST_GRAPH_LIB} MATCHES "BOOST_GRAPH_LIB-NOTFOUND")
-      MESSAGE(STATUS "Could not find 'libboost_graph.so'. Disabling some features.")
-      SET(BOOST_GRAPH_LIB "")
-    ELSE(${BOOST_GRAPH_LIB} MATCHES "BOOST_GRAPH_LIB-NOTFOUND")
-      MESSAGE(STATUS "Using Boost Graph Library '${BOOST_GRAPH_LIB}'")
-    ENDIF(${BOOST_GRAPH_LIB} MATCHES "BOOST_GRAPH_LIB-NOTFOUND")
   ELSE(Boost_FOUND)
     MESSAGE(FATAL_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly?")
   ENDIF(Boost_FOUND)
 ENDIF(Boost_INCLUDE_DIRS)
-IF(BOOST_GRAPH_LIB)
-  ADD_DEFINITIONS(-D'BOOST_GRAPH_LIB=1')
-ELSE(BOOST_GRAPH_LIB)
-  ADD_DEFINITIONS(-D'BOOST_GRAPH_LIB=0')
-ENDIF(BOOST_GRAPH_LIB)
 SET(BOOST_LIBS
-  ${BOOST_GRAPH_LIB}
 )
 
 
@@ -176,4 +162,3 @@ ADD_SUBDIRECTORY(generators)
 ADD_SUBDIRECTORY(keygen)
 ADD_SUBDIRECTORY(amplitude)
 #ADD_SUBDIRECTORY(gui)
- 

@@ -144,6 +144,10 @@ namespace rpwa {
     typedef graphTraits::out_edge_iterator  outEdgeIterator;
     typedef graphTraits::in_edge_iterator   inEdgeIterator;
     
+    //!!! bad quick hacks
+    decayGraph subGraph(interactionVertex& startVertex);
+    interactionVertex* vertex(particle& part);
+
 
   protected:
 

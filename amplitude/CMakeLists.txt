@@ -40,15 +40,14 @@ PROJECT(rootpwa)
 ENABLE_TESTING()
 
 
-SET(THIS_LIB rootPwaAmplitude)
-
-
 ADD_DEFINITIONS(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
 
 
 SET(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
+  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
+  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
   ${CMAKE_SOURCE_DIR}/src
 )
 INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
@@ -65,6 +64,7 @@ SET(SOURCES
   isobarDecayVertex.cc
   decayTopology.cc
   isobarDecayTopology.cc
+  isobarHelicityAmplitude.cc
 )
 	    
 # define ROOT libraries
@@ -90,14 +90,21 @@ SET(ROOT_LIBS
   libm.so
 )
 
+SET(PWA2000_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libpp.so
+  ${LIBRARY_OUTPUT_PATH}/libpwa.so
+)
+
 
 #-------------------------------------------------
 #------- The library -----------------------------
 #-------------------------------------------------
 
+SET(THIS_LIB RootPwaAmplitude)
 ADD_LIBRARY(${THIS_LIB} SHARED ${SOURCES})
 TARGET_LINK_LIBRARIES(${THIS_LIB} ${ROOT_LIBS})
 TARGET_LINK_LIBRARIES(${THIS_LIB} ${BOOST_LIBS})
+TARGET_LINK_LIBRARIES(${THIS_LIB} ${PWA2000_LIBS})
 
 
 #-------------------------------------------------
@@ -115,6 +122,11 @@ TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
 SET(THIS_EXE testDecayCombinatorics)
 ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
 TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
+
+SET(THIS_EXE testAmplitude)
+ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
+TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
+
 
 #-------------------------------------------------
 #------- Install Commands ------------------------

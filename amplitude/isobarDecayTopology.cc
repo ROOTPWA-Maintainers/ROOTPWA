@@ -164,12 +164,12 @@ isobarDecayTopology::addSubDecay(const isobarDecayTopology& subDecay) {
 
   interactionVertex* prod=_productionVertex;
 
- cerr << vertices.size() << endl;
+  cerr << vertices.size() << endl;
   cerr << fsPart.size() << endl;
   cerr << "Before ConstructDecay" << endl;
 
   return constructDecay(fsPart,*prod,vertices);
- }
+}
 
 
 
@@ -239,13 +239,15 @@ bool
 isobarDecayTopology::checkConsistency() const {
   bool allVertConsistent = true;
   for (unsigned int i = 0; i < _vertices.size(); ++i) {
+    const bool vertexConsistent = _vertices[i]->checkConsistency();
+    if (!vertexConsistent)
+      allVertConsistent = false;
     if (_debug)
-      printInfo << "checking consistency of isobar decay vertex "
+      printInfo << "isobar decay vertex  "
 		<< _vertices[i]->mother().name() << "  --->  "
 		<< _vertices[i]->daughter1().name() << "  +  "
-		<< _vertices[i]->daughter2().name() << endl;
-    if (!_vertices[i]->checkConsistency())
-      allVertConsistent = false;
+		<< _vertices[i]->daughter2().name() << "  is "
+		<< ((vertexConsistent) ? "" : "NOT ") << "consistent" << endl;
   }
   return allVertConsistent;
 }
@@ -258,7 +260,7 @@ isobarDecayTopology::checkConsistency() const {
 vector<isobarDecayTopology*>
 isobarDecayTopology::possibleDecays()
 {
-  // order nodes pedth-first
+  // order nodes depth-first
   const unsigned int nmbVert = num_vertices(_graph) - 1;
   vector<nodeDesc>   startNodes;
   {

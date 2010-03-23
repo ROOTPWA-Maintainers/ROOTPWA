@@ -210,8 +210,6 @@ main(int argc, char** argv)
     unsigned int consistentDecays=0;
     unsigned int inconsistentDecays=0;
     for (unsigned int i = 0; i < decays.size(); ++i) {
-      //!!! for some completely obscure reason printing out the topology object
-      // sets the vertex pointer for final state node[7] to a non-zero value
       cout << *decays[i];
       decays[i]->verifyTopology();
       isobarDecayVertex::setDebug(true);

@@ -91,7 +91,7 @@ main(int argc, char** argv)
   }
 
   // checking charge name handling
-  if (1) {
+  if (0) {
     for (int i = -2; i < 3; ++i) {
       stringstream c;
       c << "pi";
