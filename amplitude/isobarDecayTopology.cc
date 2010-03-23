@@ -383,6 +383,8 @@ isobarDecayTopology::possibleDecays()
 	    const int P = d1.P() * d2.P() * (L % 4 == 0 ? 1 : -1);  // parity
 	    for (int J = max(abs(L - S), minJ); J <= min(L + S, maxJ); J += 2) {        // L-S coupling loop
 	      for (int I = max(abs(I1 - I2), minI); I <= min(I1 + I2, maxI); I += 2) {  // isospin loop
+		// check if charged state is allowed... 
+		if(abs(charge-0.5*(baryonNmb+strangeness+charm+beauty))!=I*0.5)continue;
 		int C = G * (I % 4 == 0 ? 1 : -1);  // C-Parity???
 		if (_debug)
 		  printInfo << vertex->mother().name() << "  --->  "
@@ -404,10 +406,15 @@ isobarDecayTopology::possibleDecays()
 		//
 		//Get fitting candidates from PDTable
 		
-		particleProperties prop("isobar",I,G,J,P,C);
+		stringstream isobarname("isobar");
+		isobarname << (abs(charge)>0 ? (string)sign(charge) : "");
+		if(abs(charge)>1)isobarname << abs(charge);
+		particleProperties prop(isobarname.str(),I,G,J,P,C);
 		particleDataTable& pdt = particleDataTable::instance();
 		string opt="IGJPC";
-		vector<const particleProperties*> selection=pdt.entrylist(prop,opt);
+		vector<const particleProperties*> selection;
+		if(vertex->mother().name()!="X-")selection=pdt.entrylist(prop,opt);
+		else selection.push_back(&vertex->mother());
 		unsigned int niso=selection.size();
 		cout << "Found "<<niso<<" isobar candidates"<<endl;
 		for(unsigned int iiso=0;iiso<niso;++iiso){
