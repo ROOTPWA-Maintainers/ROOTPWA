@@ -179,6 +179,8 @@ main(int argc, char** argv)
     particle i2("isobar20");
     // define X-system
     particle X("X-");
+    X.setMass(2.5);
+    X.setWidth(0.3);
     // define production vertex
     particle beam("pi-");
     diffractiveDissVertex prodVert(beam, X);

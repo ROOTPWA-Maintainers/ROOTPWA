@@ -418,6 +418,16 @@ isobarDecayTopology::possibleDecays()
 		unsigned int niso=selection.size();
 		cout << "Found "<<niso<<" isobar candidates"<<endl;
 		for(unsigned int iiso=0;iiso<niso;++iiso){
+		  // check proposed mass for this isobar
+		  // mother mass has to be larger than both daughters
+		  if(selection[iiso]->mass()+selection[iiso]->width()<d1.mass()+d2.mass()){
+		    cout << "Out of mass range m=" << selection[iiso]->mass() 
+			 << "  md1="<<d1.mass()
+			 << "  md2="<<d2.mass()<< endl << "Skipping candidate!" << endl;
+		    continue;
+		  }
+
+
 		  //!!! if not taken care of by the calling code this is a potential memory leak
 		  decayGraph graphCopy = deepCopyGraph(joinedGraph, false);
 		  // set mother vertex quantum numbers
@@ -428,6 +438,8 @@ isobarDecayTopology::possibleDecays()
 		  particle* m = &v->mother().clone();
 		  v->inParticles()[0] = m;
 		  m->setName(selection[iiso]->name());
+		  m->setMass(selection[iiso]->mass());
+		  m->setWidth(selection[iiso]->width());
 		  m->setCharge     (charge);
 		  m->setBaryonNmb  (baryonNmb);
 		  m->setIsospin    (I);
