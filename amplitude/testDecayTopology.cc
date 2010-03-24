@@ -36,6 +36,7 @@
 
 
 #include <fstream>
+#include <sstream>
 
 #include "TVector3.h"
 #include "TSystem.h"
@@ -47,6 +48,7 @@
 #include "diffractiveDissVertex.h"
 #include "isobarDecayVertex.h"
 #include "isobarDecayTopology.h"
+#include "decayGraph.hpp"
 
 
 using namespace std;
@@ -59,15 +61,65 @@ main(int argc, char** argv)
   printSvnVersion();
 
   // switch on debug output
-  particle::setDebug(true);
-  interactionVertex::setDebug(true);
-  diffractiveDissVertex::setDebug(true);
-  isobarDecayVertex::setDebug(true);
-  decayTopology::setDebug(true);
-  isobarDecayTopology::setDebug(true);
+  // particle::setDebug(true);
+  // interactionVertex::setDebug(true);
+  // diffractiveDissVertex::setDebug(true);
+  // isobarDecayVertex::setDebug(true);
+  // decayTopology::setDebug(true);
+  // isobarDecayTopology::setDebug(true);
+  decayGraph<interactionVertex, particle>::setDebug(true);
 
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
+
+
+  if (1) {
+    particle pi0("pi-");
+    particle pi1("pi+");
+    particle pi2("pi-");
+    particle pi3("pi+");
+    particle pi4("pi-");
+    // define isobars
+    particle sigma("sigma");
+    particle a1   ("a1(1269)+");
+    particle f1   ("f1(1285)");
+    // define X-system
+    //               I   G  2J  P   C  2M
+    particle X("X+", 1, +1, 4, +1, -1, 2);
+    // define production vertex
+    particle beam("pi-");
+    diffractiveDissVertex prodVert(beam, X);
+    // define vertices
+    isobarDecayVertex vert0(X,     pi4, f1,    0, 3);
+    isobarDecayVertex vert1(f1,    pi2, a1,    2, 2);
+    isobarDecayVertex vert2(a1,    pi3, sigma, 2, 2);
+    isobarDecayVertex vert3(sigma, pi0, pi1,   0, 0);
+
+    // construct graph
+    decayGraph<interactionVertex, particle> g;
+    g.name() = "test graph";
+    g.addVertex(vert0);
+    g.addVertex(vert1);
+    g.addVertex(vert2);
+    g.addVertex(vert3);
+    cout << g << endl;
+
+    for (decayGraph<interactionVertex, particle>::nodeIterator i = g.nodes().first;
+	 i != g.nodes().second; ++i) {
+      const isobarDecayVertex& v = *static_cast<isobarDecayVertex*>(&g.vertex(*i));
+      g.name(v) = v.mother().name();
+    }
+    for (decayGraph<interactionVertex, particle>::edgeIterator i = g.edges().first;
+	 i != g.edges().second; ++i) {
+      stringstream n;
+      n << "edge " << g.index(*i);
+      g.name(*i) = n.str();
+    }
+    g.print(cout, g.nodeNameMap(), g.edgeNameMap());
+    ofstream graphVizFile("decay.dot");
+    g.writeGraphViz(graphVizFile, g.nodeNameMap(), g.edgeNameMap());
+    gSystem->Exec("dot -Tps -o decay.ps decay.dot");
+  }
 
   // test construction of vertices
   if (0) {
@@ -98,7 +150,7 @@ main(int argc, char** argv)
   }
 
   // test decay topology
-  if (1) {
+  if (0) {
     // define final state particles
     particle pi0("pi-");
     particle pi1("pi+");
@@ -156,5 +208,4 @@ main(int argc, char** argv)
     topo.writeGraphViz(graphVizFile);
     gSystem->Exec("dot -Tps -o decay.ps decay.dot");
   }
-
 }

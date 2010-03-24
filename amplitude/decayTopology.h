@@ -57,8 +57,8 @@
 
 // add custom vertex and edge properties for graph
 namespace boost {
-  enum graph_bundle_t { graph_bundle };
-  BOOST_INSTALL_PROPERTY(graph, bundle);
+  // enum graph_bundle_t { graph_bundle };
+  // BOOST_INSTALL_PROPERTY(graph, bundle);
   enum vertex_vertexPointer_t { vertex_vertexPointer };
   BOOST_INSTALL_PROPERTY(vertex, vertexPointer);
   enum edge_particlePointer_t { edge_particlePointer };
@@ -112,8 +112,9 @@ namespace rpwa {
     struct edgeData {
     };
     // node and edge properties
-    typedef boost::property<boost::graph_bundle_t, graphData,
-     			    boost::property<boost::graph_name_t, std::string> > graphProperties;
+    // typedef boost::property<boost::graph_bundle_t, graphData,
+    //  			    boost::property<boost::graph_name_t, std::string> > graphProperties;
+    typedef boost::property<boost::graph_name_t, std::string> graphProperties;
     typedef boost::property<boost::vertex_bundle_t, nodeData,
 			    boost::property<boost::vertex_vertexPointer_t, interactionVertex*,
 					    boost::property<boost::vertex_color_t, boost::default_color_type> > > nodeProperties;
