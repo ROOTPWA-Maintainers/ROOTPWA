@@ -90,15 +90,15 @@ namespace rpwa {
     typedef typename boost::default_color_type color_t;
     typedef typename boost::property<boost::graph_bundle_t, GBundleData,
 		       boost::property<boost::graph_name_t, std::string> > graphProperties;
-    typedef typename boost::property<boost::vertex_bundle_t, NBundleData,
-		       boost::property<boost::vertex_VPointer_t, V*,
-		         boost::property<boost::vertex_index_t, std::size_t,
-		           boost::property<boost::vertex_name_t, std::string,
+    typedef typename boost::property<boost::vertex_bundle_t,        NBundleData,
+		       boost::property<boost::vertex_VPointer_t,    V*,
+		         boost::property<boost::vertex_index_t,     std::size_t,
+		           boost::property<boost::vertex_name_t,    std::string,
 			     boost::property<boost::vertex_color_t, color_t> > > > > nodeProperties;
-    typedef typename boost::property<boost::edge_bundle_t, EBundleData,
-		       boost::property<boost::edge_PPointer_t, P*,
-		         boost::property<boost::edge_index_t, std::size_t,
-			   boost::property<boost::edge_name_t, std::string,
+    typedef typename boost::property<boost::edge_bundle_t,        EBundleData,
+		       boost::property<boost::edge_PPointer_t,    P*,
+		         boost::property<boost::edge_index_t,     std::size_t,
+			   boost::property<boost::edge_name_t,    std::string,
 			     boost::property<boost::edge_color_t, color_t> > > > > edgeProperties;
     // graph definition
     typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
@@ -262,13 +262,19 @@ namespace rpwa {
     inline std::pair<edgeIterator, edgeIterator> edges() { return boost::edges   (_graph); }
     inline std::pair<nodeIterator, nodeIterator> nodes() { return boost::vertices(_graph); }
 
-    inline std::pair<adjIterator, adjIterator> adjacentVertices(const nodeDesc& nd) 
+    inline std::pair<adjIterator, adjIterator> adjacentVertices(const nodeDesc& nd)
     { return boost::adjacent_vertices(nd, _graph); }
+    inline std::pair<adjIterator, adjIterator> adjacentVertices(const V&        v )
+    { return adjacentVertices(node(v));            }
 
-    inline std::pair<inEdgeIterator, inEdgeIterator>   incomingEdges(const nodeDesc& nd) 
+    inline std::pair<inEdgeIterator, inEdgeIterator>   incomingEdges(const nodeDesc& nd)
     { return boost::in_edges (nd, _graph); }
-    inline std::pair<outEdgeIterator, outEdgeIterator> outgoingEdges(const nodeDesc& nd) 
+    inline std::pair<inEdgeIterator, inEdgeIterator>   incomingEdges(const V&        v )
+    { return incomingEdges(node(v));       }
+    inline std::pair<outEdgeIterator, outEdgeIterator> outgoingEdges(const nodeDesc& nd)
     { return boost::out_edges(nd, _graph); }
+    inline std::pair<outEdgeIterator, outEdgeIterator> outgoingEdges(const V&        v )
+    { return outgoingEdges(node(v));       }
 
     // node and edge mapping
     inline const V& vertex     (const nodeDesc& nd) const { return *boost::get(boost::vertex_VPointer, _graph)[nd]; }
@@ -279,10 +285,24 @@ namespace rpwa {
     inline V& vertex     (const nodeDesc& nd) { return *boost::get(boost::vertex_VPointer, _graph)[nd]; }
     inline V& operator [](const nodeDesc& nd) { return vertex(nd);                                      }
     inline P& particle   (const edgeDesc& ed) { return *boost::get(boost::edge_PPointer,   _graph)[ed]; }
-    inline P& operator [](const edgeDesc& ed) { return node(ed);                                        }
+    inline P& operator [](const edgeDesc& ed) { return particle(ed);                                    }
     
-    inline bool isNode(const V& v) const { return (_vertexNodeMap.find  (&v) != _vertexNodeMap.end());   }
-    inline bool isEdge(const P& p) const { return (_particleEdgeMap.find(&p) != _particleEdgeMap.end()); }
+    inline bool isNode(const V& v) const
+    {
+      //!!! the const cast is ugly, but I don't have a better solution
+      //    at the moment; find() expects a non-const pointer as
+      //    argument, but only to compare it to the pointers stored in
+      //    the map
+      return (_vertexNodeMap.find  (const_cast<V*>(&v)) != _vertexNodeMap.end());
+    }
+    inline bool isEdge(const P& p) const
+    {
+      //!!! the const cast is ugly, but I don't have a better solution
+      //    at the moment; find() expects a non-const pointer as
+      //    argument, but only to compare it to the pointers stored in
+      //    the map
+      return (_particleEdgeMap.find(const_cast<P*>(&p)) != _particleEdgeMap.end());
+    }
 
     inline
     const nodeDesc
@@ -310,7 +330,7 @@ namespace rpwa {
       //    at the moment; find() expects a non-const pointer as
       //    argument, but only to compare it to the pointers stored in
       //    the map
-      vertexNodeMapConstIt pos = _particleEdgeMap.find(const_cast<P*>(&p));
+      particleEdgeMapConstIt pos = _particleEdgeMap.find(const_cast<P*>(&p));
       if (pos == _particleEdgeMap.end()) {
 	printErr << "particle " << p << " is not an edge in graph '" << name() << "'. "
 		 << "aborting." << std::endl;
@@ -350,7 +370,7 @@ namespace rpwa {
       if ((nmbOutEdges(fromNd) < 1) || (nmbInEdges(toNd) < 1))
 	return false;
       adjIterator i, iEnd;
-      for (boost::tie(i, iEnd) = boost::adjacent_vertices(fromNd); i != iEnd; ++i)
+      for (boost::tie(i, iEnd) = boost::adjacent_vertices(fromNd, _graph); i != iEnd; ++i)
 	if (*i == toNd)
 	  return true;
       return false;
@@ -364,13 +384,16 @@ namespace rpwa {
 		 const nodeDesc& fromNd,
 		 const nodeDesc& toNd) const
     {
-      if ((nmbOutEdges(fromNd) < 1) || (nmbInEdges(toNd) < 1))
-	return false;
-      outEdgeIterator i, iEnd;
-      for (boost::tie(i, iEnd) = boost::out_edges(fromNd); i != iEnd; ++i)
-	if ((boost::target(*i) == toNd) && (*i == ed))
-	  return true;
-      return false;
+      std::pair<edgeDesc, bool> edFound;
+      edFound = boost::edge(fromNd, toNd, _graph);
+      //!!! for some reason the edge descriptor comparison returns
+      //    false although descriptors are the same
+      printWarn << "!!! DOES NOT WORK: ed = " << ed << ", fromNd = " << fromNd << ", "
+		<< "toNd = " << toNd << "; " << edFound.first << ", " << edFound.second << "; "
+		<< (edFound.first == ed) << std::endl;
+      if ((edFound.second) && (edFound.first == ed))
+	return true;
+      return false;	
     }
     inline bool particleConnects(const P& p,
 				 const V& fromV,
@@ -382,9 +405,10 @@ namespace rpwa {
 	 const nodeDesc& toNd) const
     {
       outEdgeIterator i, iEnd;
-      for (boost::tie(i, iEnd) = boost::out_edges(fromNd); i != iEnd; ++i)
-	if (boost::target(*i) == toNd)
+      for (boost::tie(i, iEnd) = boost::out_edges(fromNd, _graph); i != iEnd; ++i)
+	if (boost::target(*i, _graph) == toNd)
 	  return *i;
+      //!!! not sure whether this makes sense
       edgeDesc defaultEd;
       return defaultEd;
     }
@@ -396,8 +420,8 @@ namespace rpwa {
     {
       outEdgeIterator i, iEnd;
       nodeDesc        toNd = node(toV);
-      for (boost::tie(i, iEnd) = boost::out_edges(node(fromV)); i != iEnd; ++i)
-	if (boost::target(*i) == toNd)
+      for (boost::tie(i, iEnd) = boost::out_edges(node(fromV), _graph); i != iEnd; ++i)
+	if (boost::target(*i, _graph) == toNd)
 	  return &particle(*i);
       return 0;
     }
@@ -423,10 +447,10 @@ namespace rpwa {
     inline const std::string& name (const V&        v ) const { return name(node(v));                                    }
     inline const std::string& name (const edgeDesc& ed) const { return boost::get(boost::edge_name,       _graph)[ed];   }
     inline const std::string& name (const P&        p ) const { return name(edge(p));                                    }
-    inline const std::size_t& index(const nodeDesc& nd) const { return boost::get(boost::vertex_index,    _graph)[nd];   }
-    inline const std::size_t& index(const V&        v ) const { return index(node(v));                                   }
-    inline const std::size_t& index(const edgeDesc& ed) const { return boost::get(boost::edge_index,      _graph)[ed];   }
-    inline const std::size_t& index(const P&        p ) const { return index(edge(p));                                   }
+    inline const std::size_t  index(const nodeDesc& nd) const { return boost::get(boost::vertex_index,    _graph)[nd];   }
+    inline const std::size_t  index(const V&        v ) const { return index(node(v));                                   }
+    inline const std::size_t  index(const edgeDesc& ed) const { return boost::get(boost::edge_index,      _graph)[ed];   }
+    inline const std::size_t  index(const P&        p ) const { return index(edge(p));                                   }
     inline const color_t&     color(const nodeDesc& nd) const { return boost::get(boost::vertex_color,    _graph)[nd];   }
     inline const color_t&     color(const V&        v ) const { return color(node(v));                                   }
     inline const color_t&     color(const edgeDesc& ed) const { return boost::get(boost::edge_color,      _graph)[ed];   }
@@ -442,10 +466,6 @@ namespace rpwa {
     inline std::string& name (const V&        v ) { return name(node(v));                                    }
     inline std::string& name (const edgeDesc& ed) { return boost::get(boost::edge_name,       _graph)[ed];   }
     inline std::string& name (const P&        p ) { return name(edge(p));                                    }
-    inline std::size_t& index(const nodeDesc& nd) { return boost::get(boost::vertex_index,    _graph)[nd];   }
-    inline std::size_t& index(const V&        v ) { return index(node(v));                                   }
-    inline std::size_t& index(const edgeDesc& ed) { return boost::get(boost::edge_index,      _graph)[ed];   }
-    inline std::size_t& index(const P&        p ) { return index(edge(p));                                   }
     inline color_t&     color(const nodeDesc& nd) { return boost::get(boost::vertex_color,    _graph)[nd];   }
     inline color_t&     color(const V&        v ) { return color(node(v));                                   }
     inline color_t&     color(const edgeDesc& ed) { return boost::get(boost::edge_color,      _graph)[ed];   }
@@ -479,29 +499,37 @@ namespace rpwa {
 
     // virtual void clear();  ///< deletes all information
 
+    template<typename NLabel>
+    std::ostream&
+    print(std::ostream& out,
+	  NLabel        nodeLabelMap) const  ///< prints decay graph nodes in human-readable form; node labels are determined from nodeLabelMap
+    {
+      out << "graph '" << name() << "' has " << nmbNodes() << " nodes:" << std::endl;
+      nodeIterator iNode, iNodeEnd;
+      for (boost::tie(iNode, iNodeEnd) = boost::vertices(_graph); iNode != iNodeEnd; ++iNode) {
+      	out << "    " << boost::get(nodeLabelMap, *iNode) << " --> ";
+      	outEdgeIterator iEdge, iEdgeEnd;
+      	for (boost::tie(iEdge, iEdgeEnd) = boost::out_edges(*iNode, _graph);
+	     iEdge != iEdgeEnd; ++iEdge)
+      	  out << boost::get(nodeLabelMap, target(*iEdge, _graph)) << " ";
+      	out << std::endl;
+      }
+      return out;
+    }
+
     template<typename NLabel, typename ELabel>
     std::ostream&
     print(std::ostream& out,
-	  NLabel        nodeLabel,
-	  ELabel        edgeLabel) const  ///< prints decay graph in human-readable form
+	  NLabel        nodeLabelMap,
+	  ELabel        edgeLabelMap) const  ///< prints decay graph nodes and edges in human-readable form; node/edge labels are determined from node/edgeLabelMap
     {
-      out << "nodes of graph '" << name() << "':" << std::endl;
-      nodeIterator iNode, iNodeEnd;
-      for (boost::tie(iNode, iNodeEnd) = boost::vertices(_graph); iNode != iNodeEnd; ++iNode) {
-      	out << "    " << boost::get(nodeLabel, *iNode) << " --> ";
-      	outEdgeIterator iEdge, iEdgeEnd;
-      	for (boost::tie(iEdge, iEdgeEnd) = boost::out_edges(*iNode, _graph);
-      	     iEdge != iEdgeEnd; ++iEdge)
-      	  out << boost::get(nodeLabel, target(*iEdge, _graph)) << " ";
-      	out << std::endl;
-      }
-      out << "edges of graph '" << name() << "':" << std::endl;
+      print(out, nodeLabelMap);
+      out << "graph '" << name() << "' has " << nmbEdges() << " edges:" << std::endl;
       edgeIterator iEdge, iEdgeEnd;
       for (boost::tie(iEdge, iEdgeEnd) = boost::edges(_graph); iEdge != iEdgeEnd; ++iEdge)
-      	out << "    " << boost::get(edgeLabel, *iEdge)
-      	    << "(" << boost::get(nodeLabel, fromNode(*iEdge))
-      	    << ", " << boost::get(nodeLabel, toNode  (*iEdge)) << ") ";
-      out << std::endl;
+      	out << "    " << boost::get(edgeLabelMap, *iEdge)
+      	    << " = [" << boost::get(nodeLabelMap, fromNode(*iEdge))
+      	    << ", " << boost::get(nodeLabelMap, toNode  (*iEdge)) << "]" << std::endl;
       return out;
     }
 
@@ -513,12 +541,12 @@ namespace rpwa {
     template<typename NLabel, typename ELabel>
     std::ostream&
     writeGraphViz(std::ostream& out,
-		  const NLabel& nodeLabel,
-		  const ELabel& edgeLabel) const  ///< writes graph in GraphViz DOT format
+		  const NLabel& nodeLabelMap,
+		  const ELabel& edgeLabelMap) const  ///< writes graph in GraphViz DOT format with node/edge labels defined by node/edgeLabelMap
     {
       boost::write_graphviz(out, _graph,
-			    boost::make_label_writer(nodeLabel),
-			    boost::make_label_writer(edgeLabel));
+      			    boost::make_label_writer(nodeLabelMap),
+      			    boost::make_label_writer(edgeLabelMap));
       return out;
     }
 
