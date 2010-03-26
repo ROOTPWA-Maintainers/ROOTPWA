@@ -71,6 +71,20 @@ typedef decayGraph<interactionVertex, particle, graphBundleData,
 		   nodeBundleData, edgeBundleData> graphType;
 
 
+typedef shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
+
+
+isobarDecayVertexPtr createIsobarDecayVertex(particle&          mother,
+					particle&          daughter1,
+					particle&          daughter2,
+					const unsigned int L = 0,
+					const unsigned int S = 0)
+{
+  isobarDecayVertexPtr v(new isobarDecayVertex(mother, daughter1, daughter2, L, S));
+  return v;
+}
+
+
 int
 main(int argc, char** argv)
 {
@@ -106,10 +120,10 @@ main(int argc, char** argv)
     particle beam("pi-");
     diffractiveDissVertex prodVert(beam, X);
     // define vertices
-    isobarDecayVertex vert0(X,     pi4, f1,    0, 3);
-    isobarDecayVertex vert1(f1,    pi2, a1,    2, 2);
-    isobarDecayVertex vert2(a1,    pi3, sigma, 2, 2);
-    isobarDecayVertex vert3(sigma, pi0, pi1,   0, 0);
+    isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,     pi4, f1,    0, 3);
+    isobarDecayVertexPtr vert1 = createIsobarDecayVertex(f1,    pi2, a1,    2, 2);
+    isobarDecayVertexPtr vert2 = createIsobarDecayVertex(a1,    pi3, sigma, 2, 2);
+    isobarDecayVertexPtr vert3 = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0);
 
     // construct graph
     graphType g;
@@ -121,12 +135,13 @@ main(int argc, char** argv)
     cout << g;
 
     for (graphType::nodeIterator i = g.nodes().first; i != g.nodes().second; ++i) {
-      const isobarDecayVertex& v = *static_cast<isobarDecayVertex*>(&g.vertex(*i));
-      g.name(v) = v.mother().name();
+      const isobarDecayVertexPtr& v = static_pointer_cast<isobarDecayVertex>(g.vertex(*i));
+      g.name(v) = v->mother().name();
     }
     for (graphType::edgeIterator i = g.edges().first; i != g.edges().second; ++i) {
+      const particle& p = g.particle(*i);
       stringstream n;
-      n << "edge " << g.index(*i);
+      n << "edge [" << g.index(*i) << "] " << p.name();
       g.name(*i) = n.str();
     }
     g.print(cout, g.nodeNameMap(), g.edgeNameMap());
@@ -140,11 +155,11 @@ main(int argc, char** argv)
     g2.name()     = "graph copy";
     g2.data().foo = "foo";
     for (graphType::adjIterator i = g.adjacentVertices(vert1).first;
-	 i != g.adjacentVertices(vert1).second; ++i) {
+    	 i != g.adjacentVertices(vert1).second; ++i) {
       g2.data (*i).bar = *i + 0.5;
       g2.name (*i)    += " !bar!";
       g2.color(*i)     = white_color;
-      cout << "vert1 adjecent vertex " << *i << ": " << g2[*i];
+      cout << "vert1 adjecent vertex " << *i << ": " << *g2[*i];
     }
     cout << "nmbInParticles(vert1): " << g2.nmbInParticles(vert1) << endl;
     for (graphType::inEdgeIterator i = g.incomingEdges(vert1).first;
@@ -162,14 +177,14 @@ main(int argc, char** argv)
       g2.color(*i)     = black_color;
       cout << "vert1 out edge " << *i << ": " << g2[*i] << endl;
     }
-    isobarDecayVertex dummyVert(X, pi4, f1, 0, 3);
+    isobarDecayVertexPtr dummyVert = createIsobarDecayVertex(X, pi4, f1, 0, 3);
     cout << "isNode(vert0) = "     << g2.isNode(vert0) << ", "
     	 << "isNode(dummyVert) = " << g2.isNode(dummyVert) << endl;
     particle dummyPart("X+", 1, +1, 4, +1, -1, 2);
     cout << "isEdge(f1) = "        << g2.isEdge(f1) << ", "
     	 << "isEdge(dummyPart) = " << g2.isEdge(dummyPart) << endl;
-    cout << "fromVertex(f1): " << g2.fromVertex(f1);
-    cout << "toVertex(f1): "   << g2.toVertex  (f1);
+    cout << "fromVertex(f1): " << *g2.fromVertex(f1);
+    cout << "toVertex(f1): "   << *g2.toVertex  (f1);
     cout << "particleExists(vert0, vert1) = " << g2.particleExists(vert0, vert1) << ", "
      	 << "particleExists(vert1, vert0) = " << g2.particleExists(vert1, vert0) << endl;
 
@@ -179,16 +194,16 @@ main(int argc, char** argv)
     cout << "graph data = " << g2.data().foo << endl;
     for (graphType::nodeIterator i = g2.nodes().first; i != g2.nodes().second; ++i)
       cout << "node " << *i << ": data = " << g2.data(*i).bar << ", "
-	   << "name = '"  << g2.name(*i)  << "', "
-	   << "index = " << g2.index(*i) << ", "
-	   << "color = " << g2.color(*i) << ", "
-	   << endl;
+    	   << "name = '"  << g2.name(*i)  << "', "
+    	   << "index = " << g2.index(*i) << ", "
+    	   << "color = " << g2.color(*i) << ", "
+    	   << endl;
     for (graphType::edgeIterator i = g.edges().first; i != g.edges().second; ++i)
       cout << "edge " << *i << ": data = " << g2.data(*i).blah << ", "
-	   << "name = '"  << g2.name(*i)  << "', "
-	   << "index = " << g2.index(*i) << ", "
-	   << "color = " << g2.color(*i) << ", "
-	   << endl;
+    	   << "name = '"  << g2.name(*i)  << "', "
+    	   << "index = " << g2.index(*i) << ", "
+    	   << "color = " << g2.color(*i) << ", "
+    	   << endl;
         
     g2.print(cout, g2.nodeNameMap());
   }

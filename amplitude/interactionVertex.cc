@@ -128,7 +128,7 @@ ostream&
 interactionVertex::print(ostream& out) const
 {
   out << "interaction vertex "
-      << "(data are " << ((!dataAreValid()) ? "not " : "") << "valid):" << endl
+      // << "(data are " << ((!dataAreValid()) ? "not " : "") << "valid):" << endl
       << "    incoming particles:" << endl;
   for (unsigned int i = 0; i < _inParticles.size(); ++i)
     out << "        " << *(_inParticles[i]) << endl;

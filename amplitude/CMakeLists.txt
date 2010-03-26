@@ -60,9 +60,11 @@ SET(SOURCES
   particle.cc
   angMomCoupl.cc
   interactionVertex.cc
+  fsVertex.cc
   diffractiveDissVertex.cc
   isobarDecayVertex.cc
   decayTopology.cc
+  decayTopology2.cc
   isobarDecayTopology.cc
   isobarHelicityAmplitude.cc
 )

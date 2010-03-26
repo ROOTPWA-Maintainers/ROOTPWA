@@ -314,7 +314,7 @@ ostream&
 isobarDecayVertex::print(ostream& out) const
 {
   out << "isobar decay vertex "
-      << "(data are " << ((!dataAreValid()) ? "not " : "") << "valid):" << endl
+      // << "(data are " << ((!dataAreValid()) ? "not " : "") << "valid):" << endl
       << "    mother "     << *(inParticles()[0])  << endl
       << "    daughter 1 " << *(outParticles()[0]) << endl
       << "    daughter 2 " << *(outParticles()[1]) << endl

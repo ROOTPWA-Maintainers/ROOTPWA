@@ -25,10 +25,8 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      class that describes production vertex in diffractive dissociation
-//      beam-Reggeon-(X-system) vertex has exactly one incoming beam and
-//      one outgoing X particle, which unambiguously defines the Reggeon
-//      kinematics
+//      class that describes final state vertex decay topology
+//      class is just used for internal book keeping
 //
 //
 // Author List:
@@ -39,44 +37,41 @@
 
 
 #include "utilities.h"
-#include "diffractiveDissVertex.h"
+#include "fsVertex.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
 
-bool diffractiveDissVertex::_debug = false;
+bool fsVertex::_debug = false;
 
 
-diffractiveDissVertex::diffractiveDissVertex(particle& beam,
-					     particle& XSystem)
+fsVertex::fsVertex(particle& fsParticle)
   : interactionVertex()
 {
   if (_debug)
-    printInfo << "contructing production vertex for diffractive dissociation: "
-	      << "beam = " << beam.name() << ", produced state = " << XSystem.name() << endl;
-  interactionVertex::addInParticle (beam);
-  interactionVertex::addOutParticle(XSystem);
+    printInfo << "contructing final state vertex: "
+	      << "final state particle = " << fsParticle.name() << endl;
+  interactionVertex::addInParticle(fsParticle);
 }
 
 
-diffractiveDissVertex::diffractiveDissVertex(const diffractiveDissVertex& vert)
+fsVertex::fsVertex(const fsVertex& vert)
 {
   *this = vert;
 }
 
 
-diffractiveDissVertex::~diffractiveDissVertex()
+fsVertex::~fsVertex()
 { }
 
 
 ostream&
-diffractiveDissVertex::print(ostream& out) const
+fsVertex::print(ostream& out) const
 {
-  out << "diffractive dissociation vertex "
+  out << "final state vertex "
       // << "(data are " << ((!dataAreValid()) ? "not " : "") << "valid):" << endl
-      << "    beam " << *(inParticles()[0])  << endl
-      << "    X "    << *(outParticles()[0]) << endl;
+      << "    final state particle " << fsParticle()  << endl;
   return out;
 }
