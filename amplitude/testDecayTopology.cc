@@ -87,6 +87,8 @@ main(int argc, char** argv)
   // decayTopology::setDebug(true);
   // isobarDecayTopology::setDebug(true);
   graphType::setDebug(true);
+  decayTopologyGraphType::setDebug(true);
+  decayTopology2::setDebug(true);
 
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
@@ -143,24 +145,24 @@ main(int argc, char** argv)
     graphType g2  = g;
     g2.name()     = "graph copy";
     g2.data().foo = "foo";
-    for (graphType::adjIterator i = g.adjacentVertices(vert1).first;
-    	 i != g.adjacentVertices(vert1).second; ++i) {
+    for (graphType::adjIterator i = g2.adjacentVertices(vert1).first;
+    	 i != g2.adjacentVertices(vert1).second; ++i) {
       g2.data (*i).bar = *i + 0.5;
       g2.name (*i)    += " !bar!";
       g2.color(*i)     = white_color;
       cout << "vert1 adjacent vertex[" << *i << "]: " << *g2[*i] << endl;
     }
     cout << "nmbInParticles(vert1): " << g2.nmbInEdges(vert1) << endl;
-    for (graphType::inEdgeIterator i = g.incomingEdges(vert1).first;
-    	 i != g.incomingEdges(vert1).second; ++i) {
+    for (graphType::inEdgeIterator i = g2.incomingEdges(vert1).first;
+    	 i != g2.incomingEdges(vert1).second; ++i) {
       g2.data(*i).blah = g2.index(*i) + 2;
       g2.name (*i)    += " !blah!";
       g2.color(*i)     = gray_color;
       cout << "vert1 in edge[" << *i << "]: " << *g2[*i] << endl;
     }
     cout << "nmbOutParticles(vert1): " << g2.nmbOutEdges(vert1) << endl;
-    for (graphType::outEdgeIterator i = g.outgoingEdges(vert1).first;
-    	 i != g.outgoingEdges(vert1).second; ++i) {
+    for (graphType::outEdgeIterator i = g2.outgoingEdges(vert1).first;
+    	 i != g2.outgoingEdges(vert1).second; ++i) {
       g2.data(*i).blah = g2.index(*i) + 4;
       g2.name (*i)    += " !blah2!";
       g2.color(*i)     = black_color;
@@ -187,7 +189,7 @@ main(int argc, char** argv)
     	   << "index = " << g2.index(*i) << ", "
     	   << "color = " << g2.color(*i) << ", "
     	   << endl;
-    for (graphType::edgeIterator i = g.edges().first; i != g.edges().second; ++i)
+    for (graphType::edgeIterator i = g2.edges().first; i != g2.edges().second; ++i)
       cout << "edge " << *i << ": data = " << g2.data(*i).blah << ", "
     	   << "name = '"  << g2.name(*i)  << "', "
     	   << "index = " << g2.index(*i) << ", "
@@ -195,6 +197,20 @@ main(int argc, char** argv)
     	   << endl;
         
     g2.print(cout, g2.nodeNameMap());
+
+    vector<interactionVertexPtr> decayVertices;
+    decayVertices.push_back(vert3);
+    decayVertices.push_back(vert1);
+    decayVertices.push_back(vert2);
+    decayVertices.push_back(vert0);
+    vector<particlePtr> fsParticles;
+    fsParticles.push_back(pi0);
+    fsParticles.push_back(pi1);
+    fsParticles.push_back(pi2);
+    fsParticles.push_back(pi3);
+    fsParticles.push_back(pi4);
+    decayTopology2 topo(prodVert, decayVertices, fsParticles);
+    cout << topo;
   }
 
   // test construction of vertices

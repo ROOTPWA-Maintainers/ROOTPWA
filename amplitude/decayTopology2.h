@@ -45,8 +45,7 @@
 #define DECAYTOPOLOGY2_H
 
 
-// #include <vector>
-// #include <map>
+#include <vector>
 
 #include "particle.h"
 #include "interactionVertex2.h"
@@ -57,10 +56,10 @@
 namespace rpwa {
 
 
-  typedef decayGraph<interactionVertex2, particle> decayGraphType;
+  typedef decayGraph<interactionVertex2, particle> decayTopologyGraphType;
 
 
-  class decayTopology2 : public decayGraphType {
+  class decayTopology2 : public decayTopologyGraphType {
 	
   public:
 			
@@ -69,11 +68,11 @@ namespace rpwa {
      		   const std::vector<interactionVertexPtr>& interactionVertices,
      		   const std::vector<particlePtr>&          fsParticles);
     decayTopology2(const decayTopology2&                    topo);
-    decayTopology2(const decayGraphType&                    graph);
+    decayTopology2(const decayTopologyGraphType&            graph);
     virtual ~decayTopology2();
 
-    virtual decayTopology2& operator =(const decayTopology2& topo);
-    virtual decayTopology2& operator =(const decayGraphType& graph);
+    virtual decayTopology2& operator =(const decayTopology2&         topo);
+    virtual decayTopology2& operator =(const decayTopologyGraphType& graph);
     virtual void clear();  ///< deletes all information
     
     virtual unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices

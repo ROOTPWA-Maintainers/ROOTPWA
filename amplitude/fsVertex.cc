@@ -73,7 +73,7 @@ fsVertex::~fsVertex()
 ostream&
 fsVertex::print(ostream& out) const
 {
-  out << "final state vertex: " << fsParticle()->summary()  << endl;
+  out << "final state vertex: " << fsParticle()->summary();
   return out;
 }
 

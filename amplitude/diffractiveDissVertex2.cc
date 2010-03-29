@@ -82,7 +82,7 @@ ostream&
 diffractiveDissVertex2::print(ostream& out) const
 {
   out << "diffractive dissociation vertex: "
-      << beam()->summary() << " beam  --->  "
+      << "beam " << beam()->summary() << "  --->  "
       << XSystem()->summary();
   return out;
 }

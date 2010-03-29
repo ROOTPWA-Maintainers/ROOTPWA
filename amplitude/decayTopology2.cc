@@ -56,10 +56,10 @@ bool decayTopology2::_debug = false;
 
 
 decayTopology2::decayTopology2()
-  : decayGraphType(),
-    _prodVertex   (),
-    _intVertices  (),
-    _fsParticles  ()
+  : decayTopologyGraphType(),
+    _prodVertex           (),
+    _intVertices          (),
+    _fsParticles          ()
 {
   _prodVertex.reset();
 }
@@ -79,7 +79,7 @@ decayTopology2::decayTopology2(const interactionVertexPtr&              producti
 }
 
 
-decayTopology2::decayTopology2(const decayGraphType& graph)
+decayTopology2::decayTopology2(const decayTopologyGraphType& graph)
 {
   *this = graph;
 }
@@ -93,7 +93,7 @@ decayTopology2&
 decayTopology2::operator =(const decayTopology2& topo)
 {
   if (this != &topo) {
-    decayGraphType::operator =(topo);
+    decayTopologyGraphType::operator =(topo);
     _prodVertex  = topo._prodVertex;
     _intVertices = topo._intVertices;
     _fsParticles = topo._fsParticles;
@@ -103,10 +103,10 @@ decayTopology2::operator =(const decayTopology2& topo)
 
 
 decayTopology2&
-decayTopology2::operator =(const decayGraphType& graph)
+decayTopology2::operator =(const decayTopologyGraphType& graph)
 {
   if (this != &graph) {
-    decayGraphType::operator =(graph);
+    decayTopologyGraphType::operator =(graph);
     bool success = true;
     // find production vertex and final state particles
     vector<nodeDesc> sortedNds = sortNodesDfs(node(_prodVertex));
@@ -145,7 +145,7 @@ decayTopology2::operator =(const decayGraphType& graph)
 void
 decayTopology2::clear()
 {
-  decayGraphType::clear();
+  decayTopologyGraphType::clear();
   _prodVertex.reset();
   _intVertices.clear();
   _fsParticles.clear();
@@ -248,11 +248,11 @@ decayTopology2::isFsParticle(const particlePtr& part) const
 ostream&
 decayTopology2::print(ostream& out) const
 {
-  out << "decay topology nodes:" << endl;
-  out << "    production node[" << node(_prodVertex) << "] = " << *_prodVertex << endl;
+  out << "decay topology '" << name() << "' has " << nmbNodes() << " nodes:" << endl;
+  out << "    production  node[" << node(_prodVertex) << "] = " << *_prodVertex << endl;
   for (unsigned int i = 0; i < nmbInteractionVertices(); ++i)
     out << "    interaction node[" << node(_intVertices[i]) << "] = " << *_intVertices[i] << endl;
-  out << "decay topology particles:" << endl;
+  out << "decay topology '" << name() << "' has " << nmbEdges() << " edges:" << endl;
   edgeIterator iEdge, iEdgeEnd;
   for (tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge) {
     const particlePtr part = particle(*iEdge);
@@ -281,16 +281,20 @@ decayTopology2::checkTopology() const
     if (vert != _prodVertex)  // incoming particles of production vertex have no edges
       for (unsigned int i = 0; i < vert->nmbInParticles(); ++i)
 	if (!isEdge(vert->inParticles()[i])) {
-	  printWarn << "incoming particle[" << i << "] of vertex " << *vert << " has no associated graph edge" << endl;
+	  printWarn << "incoming particle[" << i << "] of " << *vert
+		    << " has no associated edge" << endl;
 	  topologyIsOkay = false;
 	} else if (_debug)
-	  printInfo << "success: incoming particle[" << i << "] of vertex " << *vert << " has associated graph edge" << endl;
+	  printInfo << "success: incoming particle[" << i << "] of " << *vert
+		    << " has associated edge" << endl;
     for (unsigned int i = 0; i < vert->nmbOutParticles(); ++i)
       if (!isEdge(vert->outParticles()[i])) {
-	printWarn << "outgoing particle[" << i << "] of vertex " << *vert << " has no associated graph edge" << endl;
+	printWarn << "outgoing particle[" << i << "] of " << *vert
+		  << " has no associated edge" << endl;
 	topologyIsOkay = false;
       } else if (_debug)
-	printInfo << "success: outgoing particle[" << i << "] of vertex " << *vert << " has associated graph edge" << endl;
+	printInfo << "success: outgoing particle[" << i << "] of " << *vert
+		  << " has associated edge" << endl;
   }
   // check production vertex
   if (!_prodVertex) {
@@ -298,10 +302,10 @@ decayTopology2::checkTopology() const
     topologyIsOkay = false;
   }
   if (!isNode(_prodVertex) || (vertex(node(_prodVertex)) != _prodVertex)) {
-    printWarn << *_prodVertex << " has no associated graph node" << endl;
+    printWarn << *_prodVertex << " has no associated node" << endl;
     topologyIsOkay = false;
   } else if (_debug)
-    printInfo << "success: " << *_prodVertex << " has node in graph" << endl;
+    printInfo << "success: " << *_prodVertex << " has associated node" << endl;
   if (nmbOutEdges(_prodVertex) != 1) {
     printWarn << *_prodVertex << " has " << nmbOutEdges(_prodVertex) << " != 1 "
 	      << "outgoing edges" << endl;
@@ -311,14 +315,15 @@ decayTopology2::checkTopology() const
 	      << "incoming edges" << endl;
     topologyIsOkay = false;
   } else if (_debug)
-    printInfo << "success: " << *_prodVertex << " has exactly 1 outgoing and no incoming edges" << endl;
+    printInfo << "success: " << *_prodVertex
+	      << " has exactly 1 outgoing and no incoming edges" << endl;
   // make sure that all nodes are reachable from production node
   //!!! this might not work; check!
   const vector<nodeDesc> sortedNds   = sortNodesDfs(node(_prodVertex));
   const unsigned int     nmbVertices = 1 + _intVertices.size() + _fsParticles.size();
   if (sortedNds.size() != nmbVertices) {
-    printWarn << "number of nodes reachable from production node is " << sortedNds.size() << " != "
-	      << nmbVertices << endl;
+    printWarn << "number of nodes reachable from production node is "
+	      << sortedNds.size() << " != " << nmbVertices << endl;
     topologyIsOkay = false;
   } else if (_debug)
     printInfo << "success: all nodes are reachable from poduction node" << endl;
@@ -331,10 +336,10 @@ decayTopology2::checkTopology() const
       continue;
     }
     if (!isNode(vert) || (vertex(node(vert)) != vert)) {
-      printWarn << *vert << " has no associated graph node" << endl;
+      printWarn << *vert << " has no associated node" << endl;
       topologyIsOkay = false;
     } else if (_debug)
-      printInfo << "success: " << *vert << " has node in graph" << endl;
+      printInfo << "success: " << *vert << " has associated node" << endl;
     if (nmbOutEdges(vert) < 1) {
       printWarn << *vert << " has " << nmbOutEdges(vert) << " < 1 "
 		<< "outgoing edges" << endl;
@@ -344,7 +349,8 @@ decayTopology2::checkTopology() const
 		<< "incoming edges" << endl;
       topologyIsOkay = false;
     } else if (_debug)
-      printInfo << "success: " << *vert << " has at least 1 outgoing and 1 incoming edge" << endl;
+      printInfo << "success: " << *vert
+		<< " has at least 1 outgoing and 1 incoming edge" << endl;
   }
   // make sure all final state particles have corresponding edges
   for (unsigned int i = 0; i < _fsParticles.size(); ++i) {
@@ -355,16 +361,18 @@ decayTopology2::checkTopology() const
       continue;
     }
     if (!isEdge(part) || (particle(edge(part)) != part)) {
-      printWarn << *part << " has no associated graph edge" << endl;
+      printWarn << "final state " << *part << " has no associated edge" << endl;
       topologyIsOkay = false;
     } else if (_debug)
-      printInfo << "success: " << *part << " has edge in graph" << endl;
+      printInfo << "success: final state " << *part << " has associated edge" << endl;
     const fsVertexPtr fsVert = dynamic_pointer_cast<fsVertex>(toVertex(part));
     if (!fsVert) {
-      printWarn << "vertex associated to " << *part << " is not a fsVertex" << endl;
+      printWarn << "vertex associated to final state particle "
+		<< "'" << part->name() << "' is not a final state Vertex" << endl;
       topologyIsOkay = false;
     } else if (_debug)
-      printInfo << "success: vertex associated to " << *part << " is an fsVertex" << endl;
+      printInfo << "success: vertex associated to final state particle "
+		<< "'" << part->name() << "' is a final state vertex" << endl;
   }
   return topologyIsOkay;
 }
@@ -425,19 +433,21 @@ decayTopology2::constructDecay(const interactionVertexPtr&              producti
     printErr << "null pointer for production vertex. aborting." << endl;
     throw;
   }
-  _prodVertex     = productionVertex;
-  nodeDesc prodNd = addVertex(productionVertex);
-  if (_debug)
-    printInfo << "added " << *vertex(prodNd) << " as tree node [" << prodNd << "]" << endl;
+  if (!productionVertex->outParticles()[0]) {
+    printErr << "null pointer for particle[0] coming out of production vertex. aborting." << endl;
+    throw;
+  }
+  name() = productionVertex->outParticles()[0]->summary();
+  // create graph node for production vertex and store pointer
+  _prodVertex = productionVertex;
+  addVertex(productionVertex);
   // create graph nodes for interaction vertices and store pointers
   for (unsigned int i = 0; i < nmbVert; ++i) {
     if (!interactionVertices[i]) {
       printErr << "null pointer for decay vertex[" << i << "]. aborting." << endl;
       throw;
     }
-    nodeDesc intNd = addVertex(interactionVertices[i]);
-    if (_debug)
-      printInfo << "added " << *vertex(intNd) << " as tree node [" << intNd << "]" << endl;
+    addVertex(interactionVertices[i]);
   }
   // create final state nodes and vertices
   for (unsigned int i = 0; i < nmbFsPart; ++i) {
@@ -446,14 +456,7 @@ decayTopology2::constructDecay(const interactionVertexPtr&              producti
       throw;
     }
     fsVertexPtr fsVert = createFsVertex(fsParticles[i]);
-    nodeDesc    fsNd   = addVertex(fsVert);
-    if (_debug)
-      printInfo << "added " << *vertex(fsNd) << " as tree node [" << fsNd << "]" << endl;
-  }
-  // check that topolgy makes sense
-  if (!checkTopology()) {
-    printErr << "topology has problems that need to be fixed. aborting." << endl;
-    throw;
+    addVertex(fsVert);
   }
   // memorize depth-first sorted interaction vertices and final state particles
   vector<nodeDesc> sortedNds = sortNodesDfs(node(_prodVertex));
@@ -475,7 +478,10 @@ decayTopology2::constructDecay(const interactionVertexPtr&              producti
 	}
     }
   }
-  // set graph name to particle coming out of production vertex
-  name() = _prodVertex->outParticles()[0]->name();
+  // check that topolgy makes sense
+  if (!checkTopology()) {
+    printErr << "topology has problems that need to be fixed. aborting." << endl;
+    throw;
+  }
   return *this;
 }

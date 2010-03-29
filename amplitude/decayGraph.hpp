@@ -185,7 +185,7 @@ namespace rpwa {
     
     virtual void clear()  ///< deletes all information
     {
-      printErr << "not implemented yet." << std::endl;
+      printWarn << "not implemented yet." << std::endl;
     }
 
 
@@ -261,8 +261,9 @@ namespace rpwa {
 		particle(ed)        = p;
 		_particleEdgeMap[p] = ed;
 		if (_debug)
-		  printInfo << "added edge from node [" << newNd << "] to node ["
-			    << *iNode << "] of graph '" << name() << "'" << std::endl;
+		  printInfo << "added edge for particle '" << p->name() << "' "
+			    << "from node [" << *iNode << "] to node ["
+			    << newNd << "] of graph '" << name() << "'" << std::endl;
 	      } else {
 		printErr << "could not add edge for particle " << *p << " "
 			 << "to graph '" << name() << "'. aborting." << std::endl;
