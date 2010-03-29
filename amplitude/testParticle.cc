@@ -36,6 +36,10 @@
 
 
 #include "TVector3.h"
+#include "TLorentzRotation.h"
+
+#include "Vec.h"
+#include "lorentz.h"
 
 #include "utilities.h"
 #include "particleDataTable.h"
@@ -105,6 +109,62 @@ main(int argc, char** argv)
       const particle p(c.str());
       cout << "name = " << p.name() << endl
 	   << endl;
+    }
+  }
+
+  if (1) {
+    {
+      fourVec  p(2, threeVec(0.5, 0.75, 1));
+      threeVec n = threeVec(0, 0, 1) / p.V();
+      cout << "before = " << n << "    " << p << endl;
+      rotation         R;
+      lorentzTransform L1;
+      L1.set(R.set(n.phi(), n.theta() - M_PI / 2, -M_PI / 2));
+      n *= R;
+      p *= L1;
+      cout << "L1 -> " << n << "    " << p << endl;
+      lorentzTransform L2;
+      L2.set(R.set(0, signof(p.x()) * p.theta(), 0));
+      p *= L2;
+      cout << "L2 -> " << p << endl;
+      lorentzTransform L3;
+      L3.set(p);
+      p *= L3;
+      cout << "L3 -> " << p << endl;
+
+      matrix<double> X(4, 4);
+      X = L3 * (L2 * L1);
+      lorentzTransform L(X);
+      p = fourVec(2, threeVec(0.5, 0.75, 1));
+      p *= L;
+      cout << "L -> " << p << endl;
+    }
+
+    {
+      TLorentzVector p(0.5, 0.75, 1, 2);
+      TVector3       n = TVector3(0, 0, 1).Cross(p.Vect());
+      TRotation R1;
+      R1.RotateZ(-n.Phi());
+      R1.RotateY(piHalf - n.Theta());
+      R1.RotateZ(piHalf);
+      n *= R1;
+      p *= R1;
+      cout << "R1 -> " << n << "    " << p << endl;
+      // rotate about yHfAxis so that daughter momentum is along z-axis
+      TRotation R2;
+      R2.RotateY(-signum(p.X()) * p.Theta());
+      p *= R2;
+      cout << "R2 -> " << p << endl;
+      // boost into daughter RF
+      TLorentzRotation L3(-p.BoostVector());
+      cout << "L3 -> " << L3 * p << endl;
+
+      R1.Transform(R2);
+      TLorentzRotation L(R1);
+      L.Boost(-p.BoostVector());
+      p = TLorentzVector(0.5, 0.75, 1, 2);
+      p *= L;
+      cout << "L -> " << p << endl;
     }
   }
 

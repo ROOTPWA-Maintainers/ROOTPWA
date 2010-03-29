@@ -41,6 +41,8 @@
 
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 #include "TVector3.h"
 #include "TLorentzVector.h"
 #include "TLorentzRotation.h"
@@ -72,7 +74,7 @@ namespace rpwa {
 	     const int                 spinProj);
     virtual ~particle();
 
-    virtual particle& operator = (const particle& part);
+    virtual particle& operator =(const particle& part);
     virtual particle& clone() const;
 
     std::string           name()     const;                       ///< returns particle name including charge
@@ -105,13 +107,43 @@ namespace rpwa {
   };
 
 
+  typedef boost::shared_ptr<particle> particlePtr;
+
+
+  inline
+  particlePtr
+  createParticle(const std::string& partName,
+		 const TVector3&    momentum = TVector3(),
+		 const int          spinProj = 0)
+  {
+    particlePtr p(new particle(partName, momentum, spinProj));
+    return p;
+  }
+
+
+  inline
+  particlePtr
+  createParticle(const std::string& partName,
+		 const int          isospin,
+		 const int          G,
+		 const int          J,
+		 const int          P,
+		 const int          C,
+		 const int          spinProj)
+  {
+    particlePtr p(new particle(partName, isospin, G, J, P, C, spinProj));
+    return p;
+  }
+
+
   inline
   std::ostream&
-  operator << (std::ostream&   out,
-	       const particle& part) { return part.print(out); }
+  operator <<(std::ostream&   out,
+	      const particle& part)
+  { return part.print(out); }
 
 
-} // namespace rpwa
+}  // namespace rpwa
 
 
 #endif  // PARTICLE_H

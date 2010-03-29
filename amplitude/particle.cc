@@ -104,10 +104,10 @@ particle::~particle()
 
 
 particle&
-particle::operator = (const particle& part)
+particle::operator =(const particle& part)
 {
   if (this != &part) {
-    particleProperties::operator = (part);
+    particleProperties::operator =(part);
     _charge   = part._charge;
     _spinProj = part._spinProj;
     _lzVec    = part._lzVec;
@@ -144,9 +144,9 @@ particle::name() const
 string
 particle::summary() const
 {
-  stringstream sum;
-  sum << name() <<"["<< isospin()*0.5 << sign(G()) <<"("<< J()*0.5 << sign(P()) << sign(C())<<")]";
-  return sum.str();
+  ostringstream out;
+  out << name() << "[" << isospin() * 0.5 << sign(G()) << "(" << J() * 0.5 << sign(P()) << sign(C()) << ")]";
+  return out.str();
 }
 
 

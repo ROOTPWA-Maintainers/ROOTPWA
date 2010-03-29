@@ -60,15 +60,18 @@ SET(SOURCES
   particle.cc
   angMomCoupl.cc
   interactionVertex.cc
+  interactionVertex2.cc
   fsVertex.cc
   diffractiveDissVertex.cc
+  diffractiveDissVertex2.cc
   isobarDecayVertex.cc
+  isobarDecayVertex2.cc
   decayTopology.cc
   decayTopology2.cc
   isobarDecayTopology.cc
   isobarHelicityAmplitude.cc
 )
-	    
+
 # define ROOT libraries
 SET(ROOT_BIN $ENV{ROOTSYS}/bin)
 SET(ROOT_LIBS

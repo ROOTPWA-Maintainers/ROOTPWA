@@ -25,8 +25,10 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      class that describes final state vertex decay topology
-//      class is just used for internal book keeping
+//      class that describes production vertex in diffractive dissociation
+//      beam-Reggeon-(X-system) vertex has exactly one incoming beam and
+//      one outgoing X particle, which unambiguously defines the Reggeon
+//      kinematics
 //
 //
 // Author List:
@@ -37,51 +39,60 @@
 
 
 #include "utilities.h"
-#include "fsVertex.h"
+#include "diffractiveDissVertex2.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
 
-bool fsVertex::_debug = false;
+bool diffractiveDissVertex2::_debug = false;
 
 
-fsVertex::fsVertex(const particlePtr& fsParticle)
+diffractiveDissVertex2::diffractiveDissVertex2(const particlePtr& beam,
+					       const particlePtr& XSystem)
   : interactionVertex2()
 {
-  if (!fsParticle) {
-    printErr << "null pointer to final state particle. aborting." << endl;
+  if (!beam) {
+    printErr << "null pointer to beam particle. aborting." << endl;
     throw;
   }
-  interactionVertex2::addInParticle(fsParticle);
+  if (!XSystem) {
+    printErr << "null pointer to particle representing X system. aborting." << endl;
+    throw;
+  }
+  interactionVertex2::addInParticle (beam);
+  interactionVertex2::addOutParticle(XSystem);
   if (_debug)
     printInfo << "contructed " << *this << endl;
 }
 
 
-fsVertex::fsVertex(const fsVertex& vert)
+diffractiveDissVertex2::diffractiveDissVertex2(const diffractiveDissVertex2& vert)
 {
   *this = vert;
 }
 
 
-fsVertex::~fsVertex()
+diffractiveDissVertex2::~diffractiveDissVertex2()
 { }
 
 
 ostream&
-fsVertex::print(ostream& out) const
+diffractiveDissVertex2::print(ostream& out) const
 {
-  out << "final state vertex: " << fsParticle()->summary()  << endl;
+  out << "diffractive dissociation vertex: "
+      << beam()->summary() << " beam  --->  "
+      << XSystem()->summary();
   return out;
 }
 
 
 ostream&
-fsVertex::dump(ostream& out) const
+diffractiveDissVertex2::dump(ostream& out) const
 {
-  out << "final state vertex:" << endl
-      << "    final state particle: " << *fsParticle() << endl;
+  out << "diffractive dissociation vertex: " << endl
+      << "    beam: "     << *beam()    << endl
+      << "    X system: " << *XSystem() << endl;
   return out;
 }

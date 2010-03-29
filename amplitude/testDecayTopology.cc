@@ -49,6 +49,9 @@
 #include "isobarDecayVertex.h"
 #include "isobarDecayTopology.h"
 #include "decayGraph.hpp"
+#include "diffractiveDissVertex2.h"
+#include "isobarDecayVertex2.h"
+#include "decayTopology2.h"
 
 
 using namespace std;
@@ -67,22 +70,8 @@ struct edgeBundleData {
 };
 
 
-typedef decayGraph<interactionVertex, particle, graphBundleData,
+typedef decayGraph<interactionVertex2, particle, graphBundleData,
 		   nodeBundleData, edgeBundleData> graphType;
-
-
-typedef shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
-
-
-isobarDecayVertexPtr createIsobarDecayVertex(particle&          mother,
-					particle&          daughter1,
-					particle&          daughter2,
-					const unsigned int L = 0,
-					const unsigned int S = 0)
-{
-  isobarDecayVertexPtr v(new isobarDecayVertex(mother, daughter1, daughter2, L, S));
-  return v;
-}
 
 
 int
@@ -104,21 +93,21 @@ main(int argc, char** argv)
 
 
   if (1) {
-    particle pi0("pi-");
-    particle pi1("pi+");
-    particle pi2("pi-");
-    particle pi3("pi+");
-    particle pi4("pi-");
+    particlePtr pi0 = createParticle("pi-");
+    particlePtr pi1 = createParticle("pi+");
+    particlePtr pi2 = createParticle("pi-");
+    particlePtr pi3 = createParticle("pi+");
+    particlePtr pi4 = createParticle("pi-");
     // define isobars
-    particle sigma("sigma");
-    particle a1   ("a1(1269)+");
-    particle f1   ("f1(1285)");
+    particlePtr sigma = createParticle("sigma");
+    particlePtr a1    = createParticle("a1(1269)+");
+    particlePtr f1    = createParticle("f1(1285)");
     // define X-system
-    //               I   G  2J  P   C  2M
-    particle X("X+", 1, +1, 4, +1, -1, 2);
+    //                                   I   G  2J  P   C  2M
+    particlePtr X = createParticle("X+", 2, +1, 4, +1, -1, 2);
     // define production vertex
-    particle beam("pi-");
-    diffractiveDissVertex prodVert(beam, X);
+    particlePtr beam = createParticle("pi-");
+    diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
     // define vertices
     isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,     pi4, f1,    0, 3);
     isobarDecayVertexPtr vert1 = createIsobarDecayVertex(f1,    pi2, a1,    2, 2);
@@ -135,13 +124,13 @@ main(int argc, char** argv)
     cout << g;
 
     for (graphType::nodeIterator i = g.nodes().first; i != g.nodes().second; ++i) {
-      const isobarDecayVertexPtr& v = static_pointer_cast<isobarDecayVertex>(g.vertex(*i));
-      g.name(v) = v->mother().name();
+      const isobarDecayVertexPtr v = static_pointer_cast<isobarDecayVertex2>(g.vertex(*i));
+      g.name(v) = v->mother()->name();
     }
     for (graphType::edgeIterator i = g.edges().first; i != g.edges().second; ++i) {
-      const particle& p = g.particle(*i);
+      const particlePtr& p = g.particle(*i);
       stringstream n;
-      n << "edge [" << g.index(*i) << "] " << p.name();
+      n << "edge [" << g.index(*i) << "] " << p->name();
       g.name(*i) = n.str();
     }
     g.print(cout, g.nodeNameMap(), g.edgeNameMap());
@@ -159,32 +148,32 @@ main(int argc, char** argv)
       g2.data (*i).bar = *i + 0.5;
       g2.name (*i)    += " !bar!";
       g2.color(*i)     = white_color;
-      cout << "vert1 adjecent vertex " << *i << ": " << *g2[*i];
+      cout << "vert1 adjacent vertex[" << *i << "]: " << *g2[*i] << endl;
     }
-    cout << "nmbInParticles(vert1): " << g2.nmbInParticles(vert1) << endl;
+    cout << "nmbInParticles(vert1): " << g2.nmbInEdges(vert1) << endl;
     for (graphType::inEdgeIterator i = g.incomingEdges(vert1).first;
     	 i != g.incomingEdges(vert1).second; ++i) {
       g2.data(*i).blah = g2.index(*i) + 2;
       g2.name (*i)    += " !blah!";
       g2.color(*i)     = gray_color;
-      cout << "vert1 in edge " << *i << ": " << g2[*i] << endl;
+      cout << "vert1 in edge[" << *i << "]: " << *g2[*i] << endl;
     }
-    cout << "nmbOutParticles(vert1): " << g2.nmbOutParticles(vert1) << endl;
+    cout << "nmbOutParticles(vert1): " << g2.nmbOutEdges(vert1) << endl;
     for (graphType::outEdgeIterator i = g.outgoingEdges(vert1).first;
     	 i != g.outgoingEdges(vert1).second; ++i) {
       g2.data(*i).blah = g2.index(*i) + 4;
       g2.name (*i)    += " !blah2!";
       g2.color(*i)     = black_color;
-      cout << "vert1 out edge " << *i << ": " << g2[*i] << endl;
+      cout << "vert1 out edge[" << *i << "]: " << *g2[*i] << endl;
     }
     isobarDecayVertexPtr dummyVert = createIsobarDecayVertex(X, pi4, f1, 0, 3);
     cout << "isNode(vert0) = "     << g2.isNode(vert0) << ", "
     	 << "isNode(dummyVert) = " << g2.isNode(dummyVert) << endl;
-    particle dummyPart("X+", 1, +1, 4, +1, -1, 2);
+    particlePtr dummyPart = createParticle("X+", 1, +1, 4, +1, -1, 2);
     cout << "isEdge(f1) = "        << g2.isEdge(f1) << ", "
     	 << "isEdge(dummyPart) = " << g2.isEdge(dummyPart) << endl;
-    cout << "fromVertex(f1): " << *g2.fromVertex(f1);
-    cout << "toVertex(f1): "   << *g2.toVertex  (f1);
+    cout << "fromVertex(f1): " << *g2.fromVertex(f1) << endl;
+    cout << "toVertex(f1): "   << *g2.toVertex  (f1) << endl;
     cout << "particleExists(vert0, vert1) = " << g2.particleExists(vert0, vert1) << ", "
      	 << "particleExists(vert1, vert0) = " << g2.particleExists(vert1, vert0) << endl;
 

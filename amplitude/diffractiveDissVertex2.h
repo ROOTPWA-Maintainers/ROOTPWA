@@ -25,8 +25,10 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      class that describes final state vertex decay topology
-//      class is just used for internal book keeping
+//      class that describes production vertex in diffractive dissociation
+//      beam-Reggeon-(X-system) vertex has exactly one incoming beam and
+//      one outgoing X particle, which unambiguously defines the Reggeon
+//      kinematics
 //
 //
 // Author List:
@@ -36,8 +38,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef FSVERTEX_H
-#define FSVERTEX_H
+#ifndef DIFFRACTIVEDISSVERTEX2_H
+#define DIFFRACTIVEDISSVERTEX2_H
 
 
 #include <boost/shared_ptr.hpp>
@@ -47,21 +49,23 @@
 
 namespace rpwa {
 
-
-  class fsVertex : public interactionVertex2 {
+  class diffractiveDissVertex2 : public interactionVertex2 {
 
   public:
   
-    fsVertex(const particlePtr& fsParticle);  ///< force vertex to have exactly one incoming and no outgoing particles
-    fsVertex(const fsVertex& vert);
-    virtual ~fsVertex();
+    diffractiveDissVertex2(const particlePtr& beam,
+			   const particlePtr& XSystem);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
+    diffractiveDissVertex2(const diffractiveDissVertex2& vert);
+    virtual ~diffractiveDissVertex2();
 		
-    inline virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (final state particle) is allowed
-    inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; no outgoing particles are allowed
+    virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (beam) is allowed
+    virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 1 outgoing particle (X-system) is allowed
 
-    // final-state specific accessors
-    inline particlePtr&       fsParticle()       { return inParticles()[0]; }  ///< returns final state particle
-    inline const particlePtr& fsParticle() const { return inParticles()[0]; }  ///< returns final state particle
+    // diffractive dissociation specific accessors
+    inline particlePtr&       beam   ()       { return inParticles ()[0]; }  ///< returns beam particle
+    inline particlePtr&       XSystem()       { return outParticles()[0]; }  ///< returns X particle
+    inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
+    inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     virtual std::ostream& dump (std::ostream& out) const;  ///< prints all vertex data in human-readable form
@@ -77,26 +81,27 @@ namespace rpwa {
   };
 
 
-  typedef boost::shared_ptr<fsVertex> fsVertexPtr;
+  typedef boost::shared_ptr<diffractiveDissVertex2> diffractiveDissVertexPtr;
 
 
   inline
-  fsVertexPtr
-  createFsVertex(const particlePtr& fsParticle)
+  diffractiveDissVertexPtr
+  createDiffractiveDissVertex(const particlePtr& beam,
+			      const particlePtr& XSystem)
   {
-    fsVertexPtr v(new fsVertex(fsParticle));
+    diffractiveDissVertexPtr v(new diffractiveDissVertex2(beam, XSystem));
     return v;
   }
 
 
   inline
   std::ostream&
-  operator <<(std::ostream&   out,
-	      const fsVertex& vert)
+  operator <<(std::ostream&                 out,
+	      const diffractiveDissVertex2& vert)
   { return vert.print(out); }
 
 
 }  // namespace rpwa
 
 
-#endif  // DIFFRACTIVEDISSVERTEX_H
+#endif  // DIFFRACTIVEDISSVERTEX2_H
