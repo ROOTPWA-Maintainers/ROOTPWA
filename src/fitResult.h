@@ -50,6 +50,7 @@
 #include "TComplex.h"
 #include "TMatrixT.h"
 #include "TString.h"
+#include "TRegexp.h"
 
 #include "utilities.h"
 #include "TCMatrix.h"
@@ -441,9 +442,15 @@ inline
 std::vector<unsigned int>
 rpwa::fitResult::waveIndicesMatchingPattern(const std::string& waveNamePattern) const
 {
+  // escape special characters:
+  TString Pattern(waveNamePattern);
+  Pattern.ReplaceAll("+","\\+");
+  Pattern.ReplaceAll("\\\\+","\\+");
+  
+
   std::vector<unsigned int> waveIndices;
   for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex)
-    if (waveName(waveIndex).Contains(waveNamePattern))
+    if (waveName(waveIndex).Contains(TRegexp(Pattern)))
       waveIndices.push_back(waveIndex);
   return waveIndices;
 }
@@ -454,9 +461,16 @@ inline
 std::vector<unsigned int>
 rpwa::fitResult::prodAmpIndicesMatchingPattern(const std::string& ampNamePattern) const
 {
+  
+  // escape special characters:
+  TString Pattern(ampNamePattern);
+  Pattern.ReplaceAll("+","\\+");
+  Pattern.ReplaceAll("\\\\+","\\+");
+  
+
   std::vector<unsigned int> prodAmpIndices;
   for (unsigned int prodAmpIndex = 0; prodAmpIndex < nmbProdAmps(); ++prodAmpIndex)
-    if (prodAmpName(prodAmpIndex).Contains(ampNamePattern))
+    if (prodAmpName(prodAmpIndex).Contains(TRegexp(Pattern)))
       prodAmpIndices.push_back(prodAmpIndex);
   return prodAmpIndices;
 }

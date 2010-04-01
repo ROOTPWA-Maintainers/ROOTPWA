@@ -146,9 +146,9 @@ fitResult::evidence() const
     sum += 1. / _normIntegral(i, i).Re();
   double occ  = TMath::Power(TMath::Pi(), d * 0.5 - 1.) * TMath::Sqrt(2 * det) / sum;
   double locc = TMath::Log(occ);
-  cout << "fitResult::evidence()" << endl
-       << "    LogLikeli: " << l
-       << "  Occamfactor: " << locc;
+  //cout << "fitResult::evidence()" << endl
+  //     << "    LogLikeli: " << l
+  //     << "  Occamfactor: " << locc;
   return l + locc;
 }
 
