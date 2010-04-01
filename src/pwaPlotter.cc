@@ -24,7 +24,7 @@
 
 // C/C++ Headers ----------------------
 #include <iostream>
-//#include <strstream>
+#include <limits>
 
 // Collaborating Class Headers --------
 #include "TFile.h"
@@ -71,7 +71,7 @@ TH2D* drawDensity(TGraphErrors* g, TH2D* h, double weight){
       double y=ax->GetBinCenter(ibin);
       //if(fabs(y-val)<5.*err){
 	double w=gaus.Eval(ax->GetBinCenter(ibin))*weight;
-	h->Fill(x,y,w);
+	if(w==w)h->Fill(x,y,w);
 	//}
     }
   }
@@ -164,6 +164,18 @@ pwaPlotter::addFit(const std::string& filename,
     if(massBinCenter>mass_max)mass_max=massBinCenter;
     if(massBinCenter<mass_min)mass_min=massBinCenter;
     
+    registerWave(".*"); // Total intensity
+    wavesinthisfit.insert(".*");
+    registerWave("^.....0"); // Total M=0
+    wavesinthisfit.insert("^.....0");
+    registerWave("^.....1"); // Total M=1
+    wavesinthisfit.insert("^.....1");
+
+    registerWave         ("^......\\+"); // Total Eps=+
+    wavesinthisfit.insert("^......\\+");
+    registerWave("^......-"); // Total Eps=-
+    wavesinthisfit.insert("^......-");
+
     // check fitResult for used waves
     // if not already registered -> register wave (will create TMultiGraph)
     const vector<string>& waveNames=result->waveNames();
@@ -192,12 +204,23 @@ pwaPlotter::addFit(const std::string& filename,
   // This has to be done in a separate step! Try not to merge the following
   // with the loop above! You will loose generality!!! You have been warned!
   
+  //cout << "creating graphs" << endl;
+ 
+
   // create graphs for this fit
   set<string>::iterator it=wavesinthisfit.begin();
   while(it!=wavesinthisfit.end()){
     TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins,ifit);
     stringstream graphName;
-    graphName << "g" << title << "_" << *it;
+    if(*it==".*") graphName << "g" << title << "_total";
+    else if(*it=="^.....0") graphName << "g" << title << "_M0";
+    else if(*it=="^.....1") graphName << "g" << title << "_M1";
+    else if(*it=="^......\\+") graphName << "g" << title << "_E+";
+    else if(*it=="^......-") graphName << "g" << title << "_E-";
+    else graphName << "g" << title << "_" << *it;
+
+    //cout << "creating graph   " << graphName.str() << endl;
+
     g->SetName (graphName.str().c_str());
     g->SetTitle(graphName.str().c_str());
     g->SetMarkerStyle(21);
@@ -207,6 +230,9 @@ pwaPlotter::addFit(const std::string& filename,
     mIntensities[*it]->Add(g,"p");
     ++it;
   }
+
+  //cout << "building Likelihood graphs" << endl;
+
   // evidence and likelihood
   TGraph* gLikeli=new TGraph(nbins);
   stringstream graphName;
@@ -249,6 +275,8 @@ pwaPlotter::addFit(const std::string& filename,
   gEvidencePE->SetLineColor(colour);
   mEvidencePerEvent->Add(gEvidencePE,"p");
 
+  //cout << "filling data" << endl;
+
 
   // loop again over fitResults and extract all info simultaneously
   for(unsigned int i=0;i<nbins;++i){
@@ -280,7 +308,7 @@ pwaPlotter::addFit(const std::string& filename,
 			result->evidence()/result->nmbEvents());
   }
   
-  
+  //cout << "writing meta" << endl;
   // write MetaInfo
   fitResultMetaInfo meta(filename,
 			 title,
@@ -356,7 +384,7 @@ pwaPlotter::produceDensityPlots(){
       double w=(mResultMetaInfo[ifit].mTotalPerEventEvidence)/(double)mResultMetaInfo[ifit].mNumBins;
       //double likeli=0;
       //cout << "weight: "<<TMath::Exp(w)<<endl;
-      h=drawDensity(g,h,TMath::Exp(w));
+      if(w==w)h=drawDensity(g,h,TMath::Exp(w));
     }
     ++it;
     // rescale each x-bin
@@ -368,9 +396,11 @@ pwaPlotter::produceDensityPlots(){
 	double val=h->GetBinContent(bin);
 	if(val>max)max=val;
       }
-      for(unsigned int iy=0;iy<400;++iy){
-	unsigned int bin = h->GetBin(ibin,iy);
-	h->SetBinContent(bin,h->GetBinContent(bin)/max);
+      if(max!=0 && max==max){
+	for(unsigned int iy=0;iy<400;++iy){
+	  unsigned int bin = h->GetBin(ibin,iy);
+	  h->SetBinContent(bin,h->GetBinContent(bin)/max);
+	}
       }
     }
     
