@@ -98,7 +98,9 @@ namespace rpwa {
   std::ostream&
   operator <<(std::ostream&                 out,
 	      const diffractiveDissVertex2& vert)
-  { return vert.print(out); }
+  {
+    return vert.print(out);
+  }
 
 
 }  // namespace rpwa

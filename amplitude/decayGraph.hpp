@@ -214,7 +214,7 @@ namespace rpwa {
 	}
 	// match with outgoing particles of other vertices
 	nodeIterator iNode, iNodeEnd;
-	for (boost::tie(iNode, iNodeEnd) = boost::vertices(_graph); iNode != iNodeEnd; ++iNode) {
+	for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
 	  if (*iNode == newNd)
 	    continue;
 	  const VPtr& otherV = vertex(*iNode);
@@ -248,7 +248,7 @@ namespace rpwa {
 	}
 	// match with incoming particles of other vertices
 	nodeIterator iNode, iNodeEnd;
-	for (boost::tie(iNode, iNodeEnd) = boost::vertices(_graph); iNode != iNodeEnd; ++iNode) {
+	for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
 	  if (*iNode == newNd)
 	    continue;
 	  const VPtr& otherV = vertex(*iNode);
@@ -521,7 +521,7 @@ namespace rpwa {
     {
       out << "graph '" << name() << "' has " << nmbNodes() << " nodes:" << std::endl;
       nodeIterator iNode, iNodeEnd;
-      for (boost::tie(iNode, iNodeEnd) = boost::vertices(_graph); iNode != iNodeEnd; ++iNode) {
+      for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
       	out << "    " << boost::get(nodeLabelMap, *iNode) << " --> ";
       	outEdgeIterator iEdge, iEdgeEnd;
       	for (boost::tie(iEdge, iEdgeEnd) = boost::out_edges(*iNode, _graph);
@@ -541,7 +541,7 @@ namespace rpwa {
       print(out, nodeLabelMap);
       out << "graph '" << name() << "' has " << nmbEdges() << " edges:" << std::endl;
       edgeIterator iEdge, iEdgeEnd;
-      for (boost::tie(iEdge, iEdgeEnd) = boost::edges(_graph); iEdge != iEdgeEnd; ++iEdge)
+      for (boost::tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge)
       	out << "    " << boost::get(edgeLabelMap, *iEdge)
       	    << " = [" << boost::get(nodeLabelMap, fromNode(*iEdge))
       	    << ", "   << boost::get(nodeLabelMap, toNode  (*iEdge)) << "]" << std::endl;
@@ -581,7 +581,7 @@ namespace rpwa {
 	_graph = g;
 	// rebuild reverse maps
 	nodeIterator iNode, iNodeEnd;
-	for (boost::tie(iNode, iNodeEnd) = boost::vertices(_graph); iNode != iNodeEnd; ++iNode) {
+	for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
 	  const VPtr& v = vertex(*iNode);
 	  if (!v) {
 	    printErr << "encountered null vertex pointer for node " << *iNode
@@ -591,7 +591,7 @@ namespace rpwa {
 	  _vertexNodeMap[v] = *iNode;
 	}
 	edgeIterator iEdge, iEdgeEnd;
-	for (boost::tie(iEdge, iEdgeEnd) = boost::edges(_graph); iEdge != iEdgeEnd; ++iEdge) {
+	for (boost::tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge) {
 	  const PPtr& p = particle(*iNode);
 	  if (!p) {
 	    printErr << "encountered null particle pointer for edge " << *iEdge

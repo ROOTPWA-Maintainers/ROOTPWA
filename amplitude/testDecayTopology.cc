@@ -210,7 +210,32 @@ main(int argc, char** argv)
     fsParticles.push_back(pi3);
     fsParticles.push_back(pi4);
     decayTopology2 topo(prodVert, decayVertices, fsParticles);
+    topo.name() = "topo";
     cout << topo;
+
+    decayTopologyGraphType g3;
+    g3.name() = "test graph 3";
+    g3.addVertex(vert0);
+    g3.addVertex(vert1);
+    g3.addVertex(vert2);
+    g3.addVertex(vert3);
+    g3.addVertex(prodVert);
+    g3.addVertex(createFsVertex(pi0));
+    g3.addVertex(createFsVertex(pi1));
+    g3.addVertex(createFsVertex(pi2));
+    g3.addVertex(createFsVertex(pi3));
+    g3.addVertex(createFsVertex(pi4));
+    cout << g3;
+    decayTopology2 topo2(g3);
+    topo2.name() = "topo graph copy";
+    cout << topo2;
+
+    const bool topologyOkay = topo2.checkTopology();
+    cout << "topology okay = " << topologyOkay << endl;
+
+    // printInfo << endl << "Performing consistency checks on Isobar-Vertices.." << endl;
+    // const bool consistency = topo2.checkConsistency();
+    // cout << "consistency = " << consistency << endl;
   }
 
   // test construction of vertices
@@ -286,7 +311,7 @@ main(int argc, char** argv)
     const bool topologyOkay = topo.verifyTopology();
     cout << "topology okay = " << topologyOkay << endl << endl;
 
-     printInfo << endl << "Performing consistency checks on Isobar-Vertices.." << endl;
+    printInfo << endl << "Performing consistency checks on Isobar-Vertices.." << endl;
     const bool consistency = topo.checkConsistency();
     cout << "consistency = " << consistency << endl << endl;
 

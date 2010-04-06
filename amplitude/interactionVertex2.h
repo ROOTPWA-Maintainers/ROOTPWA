@@ -113,7 +113,9 @@ namespace rpwa {
   std::ostream&
   operator <<(std::ostream&             out,
 	      const interactionVertex2& vert)
-  { return vert.print(out); }
+  {
+    return vert.print(out);
+  }
 
 
 }  // namespace rpwa

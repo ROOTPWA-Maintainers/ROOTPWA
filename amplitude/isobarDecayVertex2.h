@@ -74,23 +74,15 @@ namespace rpwa {
     inline const particlePtr& daughter1() const { return outParticles()[0]; }  ///< returns first daughter particle
     inline const particlePtr& daughter2() const { return outParticles()[1]; }  ///< returns second daughter particle
 
-//     const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
-
+    const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
     
-//     void getListOfValidDecays(std::vector<isobarDecayVertex2*>&,
-// 			      int maxl=3, bool blockExotic=true);
-//     void getListOfValidDecays(std::vector<isobarDecayVertex2*>& d1list,
-// 			      std::vector<isobarDecayVertex2*>& d2list,
-// 			      std::vector<isobarDecayVertex2*>& outlist,
-// 			      int maxl=3, bool blockExotic=true);
-
     inline unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters * 2 (!!!)
     inline unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)
 
     inline void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters * 2 (!!!)
     inline void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
-//     bool checkConsistency(); ///< checks quantum decomposition of in-particle to outparticles
+    bool checkConsistency();  ///< checks quantum decomposition of in-particle to outparticles
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     virtual std::ostream& dump (std::ostream& out) const;  ///< prints all vertex data in human-readable form
@@ -101,14 +93,14 @@ namespace rpwa {
 
   private:
 
-//     bool checkMultiplicativeQn(const int          motherQn,
-// 			       const int          daughter1Qn,
-// 			       const int          daughter2Qn,
-// 			       const std::string& qnName = "");  ///< checks consistency of a multiplicative quantum number
-//     bool checkAdditiveQn      (const int          motherQn,
-// 			       const int          daughter1Qn,
-// 			       const int          daughter2Qn,
-// 			       const std::string& qnName = "");  ///< checks consistency of an additive quantum number
+    bool checkMultiplicativeQn(const int          motherQn,
+			       const int          daughter1Qn,
+			       const int          daughter2Qn,
+			       const std::string& qnName = "");  ///< checks consistency of a multiplicative quantum number
+    bool checkAdditiveQn      (const int          motherQn,
+			       const int          daughter1Qn,
+			       const int          daughter2Qn,
+			       const std::string& qnName = "");  ///< checks consistency of an additive quantum number
     
     unsigned int _L;  ///< relative orbital angular momentum between the two daughters * 2 (!!!)
     unsigned int _S;  ///< total spin of the two daughters * 2 (!!!)
@@ -137,7 +129,10 @@ namespace rpwa {
   inline
   std::ostream&
   operator <<(std::ostream&             out,
-	      const isobarDecayVertex2& vert) { return vert.print(out); }
+	      const isobarDecayVertex2& vert)
+  {
+    return vert.print(out);
+  }
 
 
 }  // namespace rpwa

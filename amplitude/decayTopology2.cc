@@ -108,16 +108,28 @@ decayTopology2::operator =(const decayTopologyGraphType& graph)
   if (this != &graph) {
     decayTopologyGraphType::operator =(graph);
     bool success = true;
-    // find production vertex and final state particles
+    // find production vertex
+    // assumes that production vertex is the only vertex in graph with no incoming edges
+    unsigned int nmbNodesWithNoInEdge = 0;
+    nodeIterator iNode, iNodeEnd;
+    for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
+      if (nmbInEdges(*iNode) == 0) {
+	_prodVertex = vertex(*iNode);
+	++nmbNodesWithNoInEdge;
+      }
+    // final state particles
+    // assumes that only final state vertices have no outgoing edges
     vector<nodeDesc> sortedNds = sortNodesDfs(node(_prodVertex));
-    for (unsigned int i = 0; i < sortedNds.size(); ++i) {
-      if (nmbInEdges(sortedNds[i]) == 0)
-	_prodVertex = vertex(sortedNds[i]);
+    for (unsigned int i = 0; i < sortedNds.size(); ++i)
       if (nmbOutEdges(sortedNds[i]) == 0) {
 	const interactionVertexPtr& vert = vertex(sortedNds[i]);
 	if (dynamic_pointer_cast<fsVertex>(vert))
 	  _fsParticles.push_back(vert->inParticles()[0]);
       }
+    if (nmbNodesWithNoInEdge != 1) {
+      printWarn << "found " << nmbNodesWithNoInEdge << " instead of 1 candidate "
+		<< "for production vertex in graph '" << graph.name() << "'" << endl;
+      success = false;
     }
     if (!_prodVertex) {
       printWarn << "cannot find production vertex in graph '" << graph.name() << "'" << endl;

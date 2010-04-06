@@ -77,12 +77,10 @@ namespace rpwa {
     
     virtual unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
     virtual unsigned int nmbFsParticles        () const { return _fsParticles.size(); }  ///< returns number of final state particles
-//     virtual std::vector<particlePtr>&                fsParticles        ()       { return _fsParticles; }  ///< returns final state particles ordered depth-first
-//     virtual std::vector<interactionVertexPtr>&       interactionVertices()       { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
+
     virtual const std::vector<particlePtr>&          fsParticles        () const { return _fsParticles; }  ///< returns final state particles ordered depth-first
     virtual const std::vector<interactionVertexPtr>& interactionVertices() const { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
-    virtual interactionVertexPtr&       productionVertex  ()       { return _prodVertex;     }  ///< returns production vertex
-    virtual interactionVertexPtr&       xInteractionVertex()       { return _intVertices[0]; }  ///< returns X-decay vertex
+
     virtual const interactionVertexPtr& productionVertex  () const { return _prodVertex;     }  ///< returns production vertex
     virtual const interactionVertexPtr& xInteractionVertex() const { return _intVertices[0]; }  ///< returns X-decay vertex
 
@@ -119,9 +117,9 @@ namespace rpwa {
 					   const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
 
-    interactionVertexPtr               _prodVertex;   ///< pointer to production vertex
-    std::vector<interactionVertexPtr>  _intVertices;  ///< array of interaction vertices excluding production vertex; ordered depth-first
-    std::vector<particlePtr>           _fsParticles;  ///< array of final state particles; ordered depth-first
+    interactionVertexPtr              _prodVertex;   ///< pointer to production vertex
+    std::vector<interactionVertexPtr> _intVertices;  ///< array of interaction vertices excluding production vertex; ordered depth-first
+    std::vector<particlePtr>          _fsParticles;  ///< array of final state particles; ordered depth-first
     
     static bool _debug;  ///< if set to true, debug messages are printed
     
@@ -132,7 +130,9 @@ namespace rpwa {
   std::ostream&
   operator <<(std::ostream&        out,
   	      const decayTopology2& topo)
-  { return topo.print(out); }
+  {
+    return topo.print(out);
+  }
 
 
 }  // namespace rpwa
