@@ -74,7 +74,7 @@ namespace rpwa {
     inline const particlePtr& daughter1() const { return outParticles()[0]; }  ///< returns first daughter particle
     inline const particlePtr& daughter2() const { return outParticles()[1]; }  ///< returns second daughter particle
 
-    const TLorentzVector& updateMotherLzVec();  ///< sets mother Lorentz-vector to sum of daughter Lorentz-vetcors
+    const TLorentzVector& calcMotherLzVec();  ///< (re)calculates mother Lorentz-vector from daughter Lorentz-vectors
     
     inline unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters * 2 (!!!)
     inline unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)

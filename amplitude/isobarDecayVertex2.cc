@@ -109,10 +109,10 @@ isobarDecayVertex2::operator =(const isobarDecayVertex2& vert)
 
 
 const TLorentzVector&
-isobarDecayVertex2::updateMotherLzVec()
+isobarDecayVertex2::calcMotherLzVec()
 {
   if (_debug)
-    printInfo << "updating Lorentz-vector of particle " << mother()->name()
+    printInfo << "calculating Lorentz-vector of particle " << mother()->name()
 	      << " before = " << mother()->lzVec() << " GeV, " << flush;
   mother()->setLzVec(daughter1()->lzVec() + daughter2()->lzVec());
   if (_debug)
@@ -127,9 +127,12 @@ isobarDecayVertex2::checkMultiplicativeQn(const int     mQn,
 					  const int     d2Qn,
 					  const string& qnName)
 {
-  if (mQn == d1Qn * d2Qn)
+  if (mQn == d1Qn * d2Qn) {
+    if (_debug)
+      printInfo << *this << ": " << ((qnName == "") ? "multiplicative quantum number" : qnName)
+		<< " is consistent" << endl;
     return true;
-  else {
+  } else {
     if (_debug)
       printWarn << ((qnName == "") ? "multiplicative quantum number" : qnName) << " mismatch: "
 		<< mother()->name() << " = " << mQn << " != " << d1Qn * d2Qn  << " = "
@@ -146,9 +149,12 @@ isobarDecayVertex2::checkAdditiveQn(const int     mQn,
 				    const int     d2Qn,
 				    const string& qnName)
 {
-  if (mQn == d1Qn + d2Qn)
+  if (mQn == d1Qn + d2Qn) {
+    if (_debug)
+      printInfo << *this << ": " << ((qnName == "") ? "additive quantum number" : qnName)
+		<< " is consistent" << endl;
     return true;
-  else {
+  } else {
     if (_debug)
       printWarn << ((qnName == "") ? "additive quantum number" : qnName) << " mismatch: "
 		<< mother()->name() << " = " << mQn << " != " << d1Qn + d2Qn  << " = "
@@ -175,7 +181,8 @@ isobarDecayVertex2::checkConsistency()
       printWarn << "C-parity mismatch: " << mother()->name() << " = " << mother()->C()
 		<< " != " << cParity  << " = "
 		<< "(" << mother()->G() << ")^" << mother()->isospin() << " = G^2I"<< endl;
-  }
+  } else if (_debug)
+    printInfo << *this << ": C-parity is consistent" << endl;
   // parity
   const int angMomParity = (_L % 4 == 0) ? 1 : -1;  // modulo 4 because L is in units of hbar / 2
   if (mother()->P() != daughter1()->P() * daughter2()->P() * angMomParity) {
@@ -187,7 +194,8 @@ isobarDecayVertex2::checkConsistency()
 		<< "(" << daughter2()->name() << " = " << daughter2()->P() << ") * "
 		<< "(ang. momentum = " << angMomParity << ")" << endl;
     vertexConsistent = false;
-  }
+  } else if (_debug)
+    printInfo << *this << ": parity is consistent" << endl;
   // check additive quantum numbers
   // charge
   if (!checkAdditiveQn(mother()->charge(),      daughter1()->charge(),      daughter2()->charge(),      "charge"))
@@ -213,14 +221,16 @@ isobarDecayVertex2::checkConsistency()
 		<< "(" << daughter2()->name() << " 2J = " << daughter2()->J() << ") "
 		<< "cannot couple to total spin 2S = " << _S << endl;
     vertexConsistent = false;
-  }
+  } else if (_debug)
+    printInfo << *this << ": spin-spin coupling is consistent" << endl;
   // L-S coupling: J in {|L - S|, ..., L + S}
   if (!angMomCoupl(_L, _S).inRange(mother()->J())) {
     if (_debug)
       printWarn << "orbital angular momentum 2L = " << _L << " and spin 2S = " << _S
 		<< " cannot couple to angular momentum 2J = " << mother()->J() << endl;
     vertexConsistent = false;
-  }
+  } else if (_debug)
+    printInfo << *this << ": L-S coupling is consistent" << endl;
   // isospin coupling: I in {|I_1 - I_2|, ..., I_1 + I_2}
   if (!angMomCoupl(daughter1()->isospin(), daughter2()->isospin()).inRange(mother()->isospin())) {
     if (_debug)
@@ -229,7 +239,8 @@ isobarDecayVertex2::checkConsistency()
 		<< "(" << daughter2()->name() << " 2I = " << daughter2()->isospin() << ") "
 		<< "cannot couple to total isospin 2I = " << mother()->isospin() << endl;
     vertexConsistent = false;
-  }
+  } else if (_debug)
+    printInfo << *this << ": isospin coupling is consistent" << endl;
   //!!! missing: spin projections
   if (!vertexConsistent && _debug)
     printWarn << "vertex data are inconsistent (see warnings above):" << endl

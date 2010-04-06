@@ -48,6 +48,7 @@
 #include "diffractiveDissVertex.h"
 #include "isobarDecayVertex.h"
 #include "isobarDecayTopology.h"
+#include "isobarDecayTopology2.h"
 #include "decayGraph.hpp"
 #include "diffractiveDissVertex2.h"
 #include "isobarDecayVertex2.h"
@@ -89,6 +90,8 @@ main(int argc, char** argv)
   graphType::setDebug(true);
   decayTopologyGraphType::setDebug(true);
   decayTopology2::setDebug(true);
+  isobarDecayVertex2::setDebug(true);
+  isobarDecayTopology2::setDebug(true);
 
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
@@ -198,21 +201,6 @@ main(int argc, char** argv)
         
     g2.print(cout, g2.nodeNameMap());
 
-    vector<interactionVertexPtr> decayVertices;
-    decayVertices.push_back(vert3);
-    decayVertices.push_back(vert1);
-    decayVertices.push_back(vert2);
-    decayVertices.push_back(vert0);
-    vector<particlePtr> fsParticles;
-    fsParticles.push_back(pi0);
-    fsParticles.push_back(pi1);
-    fsParticles.push_back(pi2);
-    fsParticles.push_back(pi3);
-    fsParticles.push_back(pi4);
-    decayTopology2 topo(prodVert, decayVertices, fsParticles);
-    topo.name() = "topo";
-    cout << topo;
-
     decayTopologyGraphType g3;
     g3.name() = "test graph 3";
     g3.addVertex(vert0);
@@ -226,16 +214,30 @@ main(int argc, char** argv)
     g3.addVertex(createFsVertex(pi3));
     g3.addVertex(createFsVertex(pi4));
     cout << g3;
-    decayTopology2 topo2(g3);
-    topo2.name() = "topo graph copy";
-    cout << topo2;
+    decayTopology2 topo(g3);
+    topo.name() = "topo graph copy";
+    cout << topo;
 
+    vector<isobarDecayVertexPtr> decayVertices;
+    decayVertices.push_back(vert3);
+    decayVertices.push_back(vert1);
+    decayVertices.push_back(vert2);
+    decayVertices.push_back(vert0);
+    vector<particlePtr> fsParticles;
+    fsParticles.push_back(pi0);
+    fsParticles.push_back(pi1);
+    fsParticles.push_back(pi2);
+    fsParticles.push_back(pi3);
+    fsParticles.push_back(pi4);
+    isobarDecayTopology2 topo2(prodVert, decayVertices, fsParticles);
+    topo2.name() = "topo";
+    cout << topo2;
     const bool topologyOkay = topo2.checkTopology();
     cout << "topology okay = " << topologyOkay << endl;
-
-    // printInfo << endl << "Performing consistency checks on Isobar-Vertices.." << endl;
-    // const bool consistency = topo2.checkConsistency();
-    // cout << "consistency = " << consistency << endl;
+    printInfo << endl << "performing consistency checks on isobar decay topology" << endl;
+    const bool decayConsistent = topo2.checkConsistency();
+    cout << "decay consistent = " << decayConsistent << endl;
+    topo2.calcIsobarLzVec();
   }
 
   // test construction of vertices

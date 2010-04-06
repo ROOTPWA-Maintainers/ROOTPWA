@@ -75,22 +75,22 @@ namespace rpwa {
     virtual decayTopology2& operator =(const decayTopologyGraphType& graph);
     virtual void clear();  ///< deletes all information
     
-    virtual unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
-    virtual unsigned int nmbFsParticles        () const { return _fsParticles.size(); }  ///< returns number of final state particles
+    unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
+    unsigned int nmbFsParticles        () const { return _fsParticles.size(); }  ///< returns number of final state particles
 
-    virtual const std::vector<particlePtr>&          fsParticles        () const { return _fsParticles; }  ///< returns final state particles ordered depth-first
-    virtual const std::vector<interactionVertexPtr>& interactionVertices() const { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
+    const std::vector<particlePtr>&          fsParticles        () const { return _fsParticles; }  ///< returns final state particles ordered depth-first
+    const std::vector<interactionVertexPtr>& interactionVertices() const { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
 
-    virtual const interactionVertexPtr& productionVertex  () const { return _prodVertex;     }  ///< returns production vertex
-    virtual const interactionVertexPtr& xInteractionVertex() const { return _intVertices[0]; }  ///< returns X-decay vertex
+    const interactionVertexPtr& productionVertex  () const { return _prodVertex;     }  ///< returns production vertex
+    const interactionVertexPtr& xInteractionVertex() const { return _intVertices[0]; }  ///< returns X-decay vertex
 
     bool isProductionVertex (const interactionVertexPtr& vert) const { return (vert == _prodVertex); }
     bool isInteractionVertex(const interactionVertexPtr& vert) const;
     bool isFsVertex         (const interactionVertexPtr& vert) const;
     bool isFsParticle       (const particlePtr&          part) const;
 
-    virtual bool checkTopology   () const;                  ///< returns whether decay has the correct topology
-    virtual bool checkConsistency() const { return true; }  ///< checks conservation rules on all vertices
+    bool checkTopology   () const;                  ///< returns whether decay has the correct topology
+    bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 
@@ -103,8 +103,11 @@ namespace rpwa {
   //   interactionVertex* vertex(particle& part);
 
 
-  // protected:
+  protected:
 
+    decayTopology2& constructDecay(const interactionVertexPtr&              productionVertex,
+				   const std::vector<interactionVertexPtr>& interactionVertices,
+				   const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
   //   static decayGraph deepCopyGraph(const decayGraph& srcGraph,
   // 				    const bool        copyFsParticles = false);
@@ -112,11 +115,6 @@ namespace rpwa {
 
   private:
     
-    virtual decayTopology2& constructDecay(const interactionVertexPtr&              productionVertex,
-					   const std::vector<interactionVertexPtr>& interactionVertices,
-					   const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
-
-
     interactionVertexPtr              _prodVertex;   ///< pointer to production vertex
     std::vector<interactionVertexPtr> _intVertices;  ///< array of interaction vertices excluding production vertex; ordered depth-first
     std::vector<particlePtr>          _fsParticles;  ///< array of final state particles; ordered depth-first

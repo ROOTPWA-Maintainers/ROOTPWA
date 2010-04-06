@@ -69,6 +69,7 @@ SET(SOURCES
   decayTopology.cc
   decayTopology2.cc
   isobarDecayTopology.cc
+  isobarDecayTopology2.cc
   isobarHelicityAmplitude.cc
 )
 
