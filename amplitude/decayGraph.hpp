@@ -635,29 +635,6 @@ namespace rpwa {
     }
 
 
-    decayGraph
-    joinDaughterGraphs(const VPtr&                    motherVertex,
-		       const std::vector<decayGraph>& daughterGraphs)  ///< joins
-    {
-      decayGraph newGraph;
-      newGraph.addVertex(motherVertex);
-      for (unsigned int i = 0; i < daughterGraphs.size(); ++i)
-	newGraph.addGraph(daughterGraphs[i]);
-      return newGraph;
-    }
-
-    decayGraph
-    joinDaughterGraphs(const VPtr&       motherVertex,
-		       const decayGraph& daughterGraph1,
-		       const decayGraph& daughterGraph2)
-    {
-      std::vector<decayGraph> daughterGraphs(2);
-      daughterGraphs[0] = daughterGraph1;
-      daughterGraphs[1] = daughterGraph2;
-      return joinDaughterGraphs(motherVertex, daughterGraphs);
-    }
-
-
     // output member functions
     template<typename NLabel>
     std::ostream&

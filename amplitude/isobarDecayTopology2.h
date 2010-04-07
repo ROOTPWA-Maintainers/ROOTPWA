@@ -77,6 +77,12 @@ namespace rpwa {
 
     void addDecay(const isobarDecayTopology2& topo);  ///< returns sub-decay tree that starts at given vertex
 
+    static isobarDecayTopology2 joinDaughterGraphs(const isobarDecayVertexPtr&              motherVertex,
+						   const std::vector<isobarDecayTopology2>& daughterDecays);  ///< joins daughter decay graphs and connects them to a common mother vertex
+    static isobarDecayTopology2 joinDaughterGraphs(const isobarDecayVertexPtr& motherVertex,
+						   const isobarDecayTopology2& daughter1Decay,
+						   const isobarDecayTopology2& daughter2Decay);  ///< joins daughter decay graphs and connects them to a common mother vertex
+
     std::vector<isobarDecayTopology2> possibleDecays();  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
     
     const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
@@ -98,11 +104,6 @@ namespace rpwa {
 
     void buildIsobarVertexArray();  ///< (re)builds array of isobar decay vertices
 
-    decayTopologyGraphType joinDaughterGraphsX(const isobarDecayVertexPtr&   motherVertex,
-					       const decayTopologyGraphType& daughterGraph1,
-					       const decayTopologyGraphType& daughterGraph2,
-					       nodeDesc&                     newTopNode);  ///< creates new graph with topNode as top node and graph1/2 as daughter graphs
-    
     std::vector<isobarDecayVertexPtr> _isobarVertices;  ///< array of isobar-decay vertices excluding production vertex; ordered depth-first; this is a copy of the respective array in decayTopology
 
     static bool _debug;  ///< if set to true, debug messages are printed

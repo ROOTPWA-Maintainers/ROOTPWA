@@ -296,9 +296,19 @@ main(int argc, char** argv)
       subDecay1.addDecay(subDecay3);
       cout << "subdecay from node[2] + subdecay from node[9]: " << subDecay1;
       isobarDecayTopology2 decay;
-      decay.addVertex(vert0);
+      //                                    I   G  2J  P   C  2M
+      particlePtr X2 = createParticle("X-", 2, -1, 4, +1, +1, 2);
+      isobarDecayVertexPtr vertX= createIsobarDecayVertex(X2, pi4, f1, 2, 2);
+      decay.addVertex(vertX);
       subDecay1.addDecay(decay);
       cout << "subdecay from node[2] + subdecay from node[9] + vert0: " << subDecay1;
+      const isobarDecayTopology2& subDecayX = topo2.subDecay(2);
+      isobarDecayTopology2 newDecay = isobarDecayTopology2::joinDaughterGraphs(vertX, subDecayX, subDecay3);
+      diffractiveDissVertexPtr prodVertX = createDiffractiveDissVertex(beam, X2);
+      newDecay.setProductionVertex(prodVertX);
+      cout << "joined graph: " << newDecay;
+      newDecay.checkTopology();
+      newDecay.checkConsistency();
     }
     
     //topo2.possibleDecays();

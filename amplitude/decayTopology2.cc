@@ -213,29 +213,34 @@ decayTopology2::checkTopology() const
   if (!_prodVertex) {
     printWarn << "production vertex is null pointer" << endl;
     topologyIsOkay = false;
+  } else {
+    if (!isNode(_prodVertex) || (vertex(node(_prodVertex)) != _prodVertex)) {
+      printWarn << *_prodVertex << " has no associated node" << endl;
+      topologyIsOkay = false;
+    } else if (_debug)
+      printInfo << "success: " << *_prodVertex << " has associated node" << endl;
+    if (nmbOutEdges(_prodVertex) != 1) {
+      printWarn << *_prodVertex << " has " << nmbOutEdges(_prodVertex) << " != 1 "
+		<< "outgoing edges" << endl;
+      topologyIsOkay = false;
+    } else if (nmbInEdges(_prodVertex) != 0) {
+      printWarn << *_prodVertex << " has " << nmbInEdges(_prodVertex) << " != 0 "
+		<< "incoming edges" << endl;
+      topologyIsOkay = false;
+    } else if (_debug)
+      printInfo << "success: " << *_prodVertex
+		<< " has exactly 1 outgoing and no incoming edges" << endl;
   }
-  if (!isNode(_prodVertex) || (vertex(node(_prodVertex)) != _prodVertex)) {
-    printWarn << *_prodVertex << " has no associated node" << endl;
-    topologyIsOkay = false;
-  } else if (_debug)
-    printInfo << "success: " << *_prodVertex << " has associated node" << endl;
-  if (nmbOutEdges(_prodVertex) != 1) {
-    printWarn << *_prodVertex << " has " << nmbOutEdges(_prodVertex) << " != 1 "
-	      << "outgoing edges" << endl;
-    topologyIsOkay = false;
-  } else if (nmbInEdges(_prodVertex) != 0) {
-    printWarn << *_prodVertex << " has " << nmbInEdges(_prodVertex) << " != 0 "
-	      << "incoming edges" << endl;
-    topologyIsOkay = false;
-  } else if (_debug)
-    printInfo << "success: " << *_prodVertex
-	      << " has exactly 1 outgoing and no incoming edges" << endl;
   // make sure that all nodes are reachable from production node
-  //!!! this might not work; check!
-  const vector<nodeDesc> sortedNds   = sortNodesDfs(node(_prodVertex));
-  const unsigned int     nmbVertices = 1 + _intVertices.size() + _fsParticles.size();
+  vector<nodeDesc> sortedNds;
+  unsigned int     nmbVertices = _intVertices.size() + _fsParticles.size();
+  if (_prodVertex) {
+    sortedNds = sortNodesDfs(node(_prodVertex));
+    ++nmbVertices;
+  } else
+    sortedNds = sortNodesDfs(node(xInteractionVertex()));
   if (sortedNds.size() != nmbVertices) {
-    printWarn << "number of nodes reachable from production node is "
+    printWarn << "number of nodes reachable from top node is "
 	      << sortedNds.size() << " != " << nmbVertices << endl;
     topologyIsOkay = false;
   } else if (_debug)
@@ -286,6 +291,9 @@ decayTopology2::checkTopology() const
       printInfo << "success: vertex associated to final state particle "
 		<< "'" << part->name() << "' is a final state vertex" << endl;
   }
+  if (_debug)
+    printInfo << "decay topology " << ((topologyIsOkay) ? "passed" : "did not pass")
+	      << " all tests" << endl;
   return topologyIsOkay;
 }
 
@@ -303,6 +311,29 @@ decayTopology2::addDecay(const decayTopology2& topo)
 {
   decayTopologyGraphType::addGraph(topo);
   buildInternalData();
+}
+
+
+void decayTopology2::setProductionVertex(const interactionVertexPtr& productionVertex)
+{
+  if (!productionVertex) {
+    printErr << "null pointer for production vertex. aborting." << endl;
+    throw;
+  }
+  if (!productionVertex->outParticles()[0]) {
+    printErr << "null pointer for particle[0] coming out of production vertex. aborting." << endl;
+    throw;
+  }
+  name() = productionVertex->outParticles()[0]->summary();
+  if (!_prodVertex) {
+    // topology does not have production vertex -> create graph node
+    addVertex(productionVertex);
+  } else {
+    // delete existsing production vertex -> update graph node
+    vertex(node(_prodVertex)) = productionVertex;
+    _prodVertex.reset();
+  }
+  _prodVertex = productionVertex;
 }
 
 
@@ -367,7 +398,6 @@ decayTopology2::constructDecay(const interactionVertexPtr&              producti
     throw;
   }
   name() = productionVertex->outParticles()[0]->summary();
-  // create graph node for production vertex and store pointer
   _prodVertex = productionVertex;
   addVertex(productionVertex);
   // create graph nodes for interaction vertices and store pointers

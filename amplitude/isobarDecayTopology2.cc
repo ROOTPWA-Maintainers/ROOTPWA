@@ -180,7 +180,7 @@ bool
 isobarDecayTopology2::checkTopology() const
 {
   // perform basic checks of topology
-  bool topologyOkay = decayTopology2::checkTopology();
+  bool topologyIsOkay = decayTopology2::checkTopology();
   // check that decay topology is a tree of isobar decays
   for (unsigned int i = 0; i < nmbInteractionVertices(); ++i) {
     const int index = node(_isobarVertices[i]);
@@ -189,7 +189,7 @@ isobarDecayTopology2::checkTopology() const
     if (nmbIn != 1) {
       printWarn << "number of incoming edges of node[" << index << "] is "
 		<< nmbIn << " != 1" << endl;
-      topologyOkay = false;
+      topologyIsOkay = false;
     } else if (_debug)
       printInfo << "number of incoming edges of node[" << index << "] = " << nmbIn
 		<< " is correct" << endl;
@@ -198,12 +198,15 @@ isobarDecayTopology2::checkTopology() const
     if (nmbOut != 2) {
       printWarn << "number of outgoing edges of node[" << index << "] is "
     		<< nmbOut << " != 2" << endl;
-      topologyOkay = false;
+      topologyIsOkay = false;
     } else if (_debug)
       printInfo << "number of outgoing edges of node[" << index << "] = " << nmbOut
 		<< " is correct" << endl;
   }
-  return topologyOkay;
+  if (_debug)
+    printInfo << "isobar decay topology " << ((topologyIsOkay) ? "passed" : "did not pass")
+	      << " all tests" << endl;
+  return topologyIsOkay;
 }
 
 
@@ -220,6 +223,9 @@ isobarDecayTopology2::checkConsistency() const
 		  << ((vertexConsistent) ? "" : "NOT ") << "consistent" << endl;
     }
   }
+  if (_debug)
+    printInfo << "information in isobar decay vertices is " << ((allVertConsistent) ? "" : "NOT ")
+	      << "consistent" << endl;
   return allVertConsistent;
 }
 
@@ -429,42 +435,6 @@ isobarDecayTopology2::possibleDecays()
 }
 
 
-decayTopologyGraphType
-isobarDecayTopology2::joinDaughterGraphsX(const isobarDecayVertexPtr&   motherVertex,
-					  const decayTopologyGraphType& daughterGraph1,
-					  const decayTopologyGraphType& daughterGraph2,
-					  nodeDesc&                     newMotherNode)
-{
-  decayTopologyGraphType newGraph = joinDaughterGraphs(motherVertex, daughterGraph1, daughterGraph2);
-
-  // copy_graph(daughterGraph1, newGraph);
-  // copy_graph(daughterGraph2, newGraph);
-  // nodeDesc daughterNodes[2] = {1, 1 + num_vertices(daughterGraph1)};
-  // // copy isobar decay vertex at topNode
-  // isobarDecayVertex2* newMotherVertex = &motherVertex.clone();
-  // // connect subgraphs to new top node
-  // for (unsigned int i = 0; i < 2; ++i) {
-  //   bool     inserted;
-  //   edgeDesc edge;
-  //   tie(edge, inserted) = add_edge(newMotherNode, daughterNodes[i], newGraph);
-  //   isobarDecayVertex2* daughterVertex;
-  //   daughterVertex = static_cast<isobarDecayVertex2*>(get(vertex_vertexPointer, newGraph, daughterNodes[i]));
-  //   if (!daughterVertex) {
-  //     // final state vertex
-  //     put(edge_particlePointer, newGraph, edge, motherVertex.outParticles()[i]);
-  //   } else {
-  //     // isobar decay vertex
-  //     put(edge_particlePointer, newGraph, edge, &daughterVertex->mother());
-  //     newMotherVertex->outParticles()[i] = &daughterVertex->mother();
-  //     //cout << "!!! daughter vertex " << i << ": " << *daughterVertex << endl;
-  //   }
-  // }
-  // put(vertex_vertexPointer, newGraph, newMotherNode, newMotherVertex);
-  // //cout << "!!! new mother vertex: " << *newMotherVertex << endl;
-  return newGraph;
-}
-
-
 const TLorentzVector&
 isobarDecayTopology2::calcIsobarLzVec()
 {
@@ -546,4 +516,32 @@ isobarDecayTopology2::addDecay(const isobarDecayTopology2& topo)
 {
   decayTopology2::addDecay(topo);
   buildIsobarVertexArray();
+}
+
+
+isobarDecayTopology2
+isobarDecayTopology2::joinDaughterGraphs(const isobarDecayVertexPtr&         motherVertex,
+					 const vector<isobarDecayTopology2>& daughterDecays)  ///< joins daughter decay graphs and connects them to a common mother vertex
+{
+  if (_debug) {
+    printInfo << "joining " << daughterDecays.size() << " daughter graphs with mother vertex "
+	 << *motherVertex << endl;
+  }
+  isobarDecayTopology2 newTopo;
+  newTopo.addVertex(motherVertex);
+  for (unsigned int i = 0; i < daughterDecays.size(); ++i)
+    newTopo.addDecay(daughterDecays[i]);
+  return newTopo;
+}
+
+
+isobarDecayTopology2
+isobarDecayTopology2::joinDaughterGraphs(const isobarDecayVertexPtr& motherVertex,
+					 const isobarDecayTopology2& daughter1Decay,
+					 const isobarDecayTopology2& daughter2Decay)  ///< joins daughter decay graphs and connects them to a common mother vertex
+{
+  std::vector<isobarDecayTopology2> daughterDecays(2);
+  daughterDecays[0] = daughter1Decay;
+  daughterDecays[1] = daughter2Decay;
+  return joinDaughterGraphs(motherVertex, daughterDecays);
 }

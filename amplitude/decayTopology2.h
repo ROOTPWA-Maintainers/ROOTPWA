@@ -98,6 +98,8 @@ namespace rpwa {
 
     void addDecay(const decayTopology2& topo);  ///< copies all vertices and particles into this topology
 
+    void setProductionVertex(const interactionVertexPtr& productionVertex);  ///< (re)defines production vertex
+
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
