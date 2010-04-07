@@ -240,9 +240,9 @@ main(int argc, char** argv)
     cout << "decay consistent = " << decayConsistent << endl;
     topo2.calcIsobarLzVec();
 
-    cout << endl << "testing cloning" << endl;
-    isobarDecayTopology2 topo3 = *topo2.clone();
     {
+      cout << endl << "testing cloning" << endl;
+      isobarDecayTopology2 topo3 = *topo2.clone();
       isobarDecayVertexPtr v = topo3.isobarDecayVertices()[0];
       particlePtr          p = v->inParticles()[0];
       v->setL(2);
@@ -283,6 +283,22 @@ main(int argc, char** argv)
       for (unsigned int i = 0; i < topo3.nmbFsParticles(); ++i)
 	cout << topo3.fsParticles()[i] << "    ";
       cout << endl;
+    }
+
+    {
+      cout << endl << "testing subdecays and merge" << endl;
+      isobarDecayTopology2 subDecay1 = topo2.subDecay(2);
+      cout << "subdecay from node[2]: " << subDecay1;
+      const isobarDecayTopology2& subDecay2 = topo2.subDecay(1);
+      cout << "subdecay from node[1]: " << subDecay2;
+      const isobarDecayTopology2& subDecay3 = topo2.subDecay(9);
+      cout << "subdecay from node[9]: " << subDecay3;
+      subDecay1.addDecay(subDecay3);
+      cout << "subdecay from node[2] + subdecay from node[9]: " << subDecay1;
+      isobarDecayTopology2 decay;
+      decay.addVertex(vert0);
+      subDecay1.addDecay(decay);
+      cout << "subdecay from node[2] + subdecay from node[9] + vert0: " << subDecay1;
     }
     
     //topo2.possibleDecays();

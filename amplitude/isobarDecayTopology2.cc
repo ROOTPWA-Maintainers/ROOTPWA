@@ -483,13 +483,22 @@ isobarDecayTopology2::calcIsobarLzVec()
 ostream&
 isobarDecayTopology2::print(ostream& out) const
 {
-  out << "isobar decay topology '" << name() << "' has " << nmbNodes() << " nodes:" << endl;
-  out << "    production   node[" << node(productionVertex()) << "] = "
-      << *productionVertex() << endl;
+  // print nodes
+  out << "isobar decay topology '" << name() << "' has " << nmbNodes() << " node(s):" << endl;
+  if (productionVertex())
+    out << "    production   node[" << node(productionVertex()) << "] = "
+	<< *productionVertex() << endl;
+  else
+    out << "    topology has no production node." << endl;
   for (unsigned int i = 0; i < nmbInteractionVertices(); ++i)
     out << "    isobar decay node[" << node(interactionVertices()[i]) << "] = "
 	<< *interactionVertices()[i] << endl;
-  out << "isobar decay topology '" << name() << "' has " << nmbEdges() << " edges:" << endl;
+  nodeIterator iNode, iNodeEnd;
+  for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
+    if (isFsVertex(vertex(*iNode)))
+      out << "    final state node[" << *iNode << "] = " << *vertex(*iNode) << endl;
+  // print edges
+  out << "isobar decay topology '" << name() << "' has " << nmbEdges() << " edge(s):" << endl;
   edgeIterator iEdge, iEdgeEnd;
   for (tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge) {
     const particlePtr part = particle(*iEdge);
@@ -529,4 +538,12 @@ isobarDecayTopology2::subDecay(const nodeDesc& startNd)
 {
   isobarDecayTopology2 subTopo(decayTopology2::subDecay(startNd));
   return subTopo;
+}
+
+
+void
+isobarDecayTopology2::addDecay(const isobarDecayTopology2& topo)
+{
+  decayTopology2::addDecay(topo);
+  buildIsobarVertexArray();
 }

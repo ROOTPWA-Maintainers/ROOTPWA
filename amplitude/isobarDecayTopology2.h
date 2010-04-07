@@ -75,6 +75,8 @@ namespace rpwa {
 
     isobarDecayTopology2 subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
 
+    void addDecay(const isobarDecayTopology2& topo);  ///< returns sub-decay tree that starts at given vertex
+
     std::vector<isobarDecayTopology2> possibleDecays();  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
     
     const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system

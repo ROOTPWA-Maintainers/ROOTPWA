@@ -61,13 +61,6 @@ decayTopology2::decayTopology2()
     _intVertices          (),
     _fsParticles          ()
 {
-  _prodVertex.reset();
-}
-
-
-decayTopology2::decayTopology2(const decayTopology2& topo)
-{
-  *this = topo;
 }
 
 
@@ -76,6 +69,12 @@ decayTopology2::decayTopology2(const interactionVertexPtr&              producti
 			       const std::vector<particlePtr>&          fsParticles)
 {
   constructDecay(productionVertex, interactionVertices, fsParticles);
+}
+
+
+decayTopology2::decayTopology2(const decayTopology2& topo)
+{
+  *this = topo;
 }
 
 
@@ -107,48 +106,7 @@ decayTopology2::operator =(const decayTopologyGraphType& graph)
 {
   if (this != &graph) {
     decayTopologyGraphType::operator =(graph);
-    bool success = true;
-    // find production vertex
-    // assumes that production vertex is the only vertex in graph that has no incoming edges
-    unsigned int nmbNodesWithNoInEdge = 0;
-    nodeIterator iNode, iNodeEnd;
-    for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
-      if (nmbInEdges(*iNode) == 0) {
-	_prodVertex = vertex(*iNode);
-	++nmbNodesWithNoInEdge;
-      }
-    // final state particles
-    // assumes that only final state vertices have no outgoing edges
-    vector<nodeDesc> sortedNds = sortNodesDfs(node(_prodVertex));
-    for (unsigned int i = 0; i < sortedNds.size(); ++i)
-      if (nmbOutEdges(sortedNds[i]) == 0) {
-	const interactionVertexPtr& vert = vertex(sortedNds[i]);
-	if (dynamic_pointer_cast<fsVertex>(vert))
-	  _fsParticles.push_back(vert->inParticles()[0]);
-      }
-    if (nmbNodesWithNoInEdge != 1) {
-      printWarn << "found " << nmbNodesWithNoInEdge << " instead of 1 candidate "
-		<< "for production vertex in graph '" << graph.name() << "'" << endl;
-      success = false;
-    }
-    if (!_prodVertex) {
-      printWarn << "cannot find production vertex in graph '" << graph.name() << "'" << endl;
-      success = false;
-    }
-    if (_fsParticles.size() < 1) {
-      printWarn << "cannot find final state particles in graph '" << graph.name() << "'" << endl;
-      success = false;
-    }
-    if (!success) {
-      printErr << "cannot construct decay topology from graph '" << graph.name() << "'. aborting." << endl;
-      throw;
-    }
-    // find interaction vertices
-    for (unsigned int i = 0; i < sortedNds.size(); ++i) {
-      const interactionVertexPtr& vert = vertex(sortedNds[i]);
-      if (isInteractionVertex(vert))
-	_intVertices.push_back(vert);
-    }
+    buildInternalData();
   }
   return *this;
 }
@@ -204,10 +162,8 @@ decayTopology2::isInteractionVertex(const interactionVertexPtr& vert) const
 bool
 decayTopology2::isFsVertex(const interactionVertexPtr& vert) const
 {
-  const particlePtr& p = vert->inParticles()[0];
-  for (unsigned int i = 0; i < _fsParticles.size(); ++i)
-    if (p == _fsParticles[i])
-      return true;
+  if (dynamic_pointer_cast<fsVertex>(vert))
+    return true;
   return false;
 }
 
@@ -219,26 +175,6 @@ decayTopology2::isFsParticle(const particlePtr& part) const
     if (part == _fsParticles[i])
       return true;
   return false;
-}
-
-
-ostream&
-decayTopology2::print(ostream& out) const
-{
-  out << "decay topology '" << name() << "' has " << nmbNodes() << " nodes:" << endl;
-  out << "    production  node[" << node(_prodVertex) << "] = " << *_prodVertex << endl;
-  for (unsigned int i = 0; i < nmbInteractionVertices(); ++i)
-    out << "    interaction node[" << node(_intVertices[i]) << "] = " << *_intVertices[i] << endl;
-  out << "decay topology '" << name() << "' has " << nmbEdges() << " edges:" << endl;
-  edgeIterator iEdge, iEdgeEnd;
-  for (tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge) {
-    const particlePtr part = particle(*iEdge);
-    out << "    edge[" << *iEdge << "] = [" << fromNode(*iEdge) << ", " << toNode(*iEdge) << "] = '" << part->name() << "'";
-    if (isFsParticle(part))
-      out << " (final state)";
-    out << endl;
-  }
-  return out;
 }
 
 
@@ -342,8 +278,7 @@ decayTopology2::checkTopology() const
       topologyIsOkay = false;
     } else if (_debug)
       printInfo << "success: final state " << *part << " has associated edge" << endl;
-    const fsVertexPtr fsVert = dynamic_pointer_cast<fsVertex>(toVertex(part));
-    if (!fsVert) {
+    if (!isFsVertex(toVertex(part))) {
       printWarn << "vertex associated to final state particle "
 		<< "'" << part->name() << "' is not a final state Vertex" << endl;
       topologyIsOkay = false;
@@ -352,6 +287,51 @@ decayTopology2::checkTopology() const
 		<< "'" << part->name() << "' is a final state vertex" << endl;
   }
   return topologyIsOkay;
+}
+
+
+decayTopology2
+decayTopology2::subDecay(const nodeDesc& startNd)
+{
+  decayTopology2 subTopo(dfsSubGraph(startNd));
+  return subTopo;
+}
+
+
+void
+decayTopology2::addDecay(const decayTopology2& topo)
+{
+  decayTopologyGraphType::addGraph(topo);
+  buildInternalData();
+}
+
+
+ostream&
+decayTopology2::print(ostream& out) const
+{
+  // print nodes
+  out << "decay topology '" << name() << "' has " << nmbNodes() << " node(s):" << endl;
+  if (_prodVertex)
+    out << "    production  node[" << node(_prodVertex) << "] = " << *_prodVertex << endl;
+  else
+    out << "    topology has no production node." << endl;
+  for (unsigned int i = 0; i < nmbInteractionVertices(); ++i)
+    out << "    interaction node[" << node(_intVertices[i]) << "] = " << *_intVertices[i] << endl;
+  nodeIterator iNode, iNodeEnd;
+  for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
+    if (isFsVertex(vertex(*iNode)))
+      out << "    final state node[" << *iNode << "] = " << *vertex(*iNode) << endl;
+  // print edges
+  out << "decay topology '" << name() << "' has " << nmbEdges() << " edge(s):" << endl;
+  edgeIterator iEdge, iEdgeEnd;
+  for (tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge) {
+    const particlePtr part = particle(*iEdge);
+    out << "    edge[" << *iEdge << "] = [" << fromNode(*iEdge) << ", " << toNode(*iEdge) << "] = '" << part->name() << "'";
+    if (isFsParticle(part))
+      out << " (final state)";
+    out << endl;
+  }
+  return out;
 }
 
 
@@ -427,12 +407,78 @@ decayTopology2::constructDecay(const interactionVertexPtr&              producti
 	}
     }
   }
-  // check that topolgy makes sense
+  // check that topology makes sense
   if (!checkTopology()) {
     printErr << "topology has problems that need to be fixed. aborting." << endl;
     throw;
   }
   return *this;
+}
+
+
+void
+decayTopology2::buildInternalData()
+{
+  bool success = true;
+  // find production vertex
+  // assumes that production vertex is the only vertex in graph that
+  // has no incoming edges and exactly one outgoing edge
+  _prodVertex.reset();
+  unsigned int nmbProdVertCandidates = 0;
+  nodeIterator iNode, iNodeEnd;
+  for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
+    if ((nmbInEdges(*iNode) == 0) && (nmbOutEdges(*iNode) == 1)) {
+      _prodVertex = vertex(*iNode);
+      ++nmbProdVertCandidates;
+    }
+  // set final state particles
+  _fsParticles.clear();
+  vector<nodeDesc> sortedNds;
+  if (_prodVertex)
+    sortedNds = sortNodesDfs(node(_prodVertex));
+  else {
+    // take non-FS vertex with no incoming particle as top node
+    nodeDesc     topNode;
+    unsigned int nmbTopVertCandidates = 0;
+    for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
+      if ((nmbInEdges(*iNode) == 0) && !isFsVertex(vertex(*iNode))) {
+	topNode = *iNode;
+	++nmbTopVertCandidates;
+      }
+    if (nmbTopVertCandidates == 1)
+      sortedNds = sortNodesDfs(topNode);
+    else {
+      if (_debug)
+	printWarn << "ill-formed graph. vertex order will be un-defined." << endl;
+      for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
+	sortedNds.push_back(*iNode);
+    }
+  }
+  for (unsigned int i = 0; i < sortedNds.size(); ++i) {
+    const interactionVertexPtr& vert = vertex(sortedNds[i]);
+    if (isFsVertex(vert))
+      _fsParticles.push_back(vert->inParticles()[0]);
+  }
+  if (nmbProdVertCandidates > 1) {
+    printWarn << "found " << nmbProdVertCandidates << " instead of 0 or 1 candidate "
+	      << "for production vertex in graph '" << name() << "'" << endl;
+    success = false;
+  }
+  if (_fsParticles.size() < 1) {
+    printWarn << "cannot find final state particles in graph '" << name() << "'" << endl;
+    success = false;
+  }
+  if (!success) {
+    printErr << "cannot construct decay topology from graph '" << name() << "'. aborting." << endl;
+    throw;
+  }
+  // find interaction vertices
+  _intVertices.clear();
+  for (unsigned int i = 0; i < sortedNds.size(); ++i) {
+    const interactionVertexPtr& vert = vertex(sortedNds[i]);
+    if (isInteractionVertex(vert))
+      _intVertices.push_back(vert);
+  }
 }
 
 
@@ -463,12 +509,4 @@ decayTopology2::cloneEdge(const edgeDesc& ed)
       if (p == _fsParticles[i])
 	_fsParticles[i] = newP;
   return newP;
-}
-
-
-decayTopology2
-decayTopology2::subDecay(const nodeDesc& startNd)
-{
-  decayTopology2 subTopo(dfsSubGraph(startNd));
-  return subTopo;
 }

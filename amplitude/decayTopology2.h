@@ -75,8 +75,6 @@ namespace rpwa {
     virtual decayTopology2& operator =(const decayTopologyGraphType& graph);
     virtual decayTopology2* clone(const bool cloneFsParticles      = false,
 				  const bool cloneProductionVertex = false) const;
-    virtual interactionVertexPtr cloneNode(const nodeDesc& nd);
-    virtual particlePtr          cloneEdge(const edgeDesc& ed);
     virtual void clear();  ///< deletes all information
     
     unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
@@ -98,6 +96,8 @@ namespace rpwa {
 
     decayTopology2 subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
 
+    void addDecay(const decayTopology2& topo);  ///< copies all vertices and particles into this topology
+
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
@@ -115,6 +115,10 @@ namespace rpwa {
 				   const std::vector<interactionVertexPtr>& interactionVertices,
 				   const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
+    void buildInternalData();  ///< (re)builds internal data structure of vertex and particle pointers
+
+    virtual interactionVertexPtr cloneNode(const nodeDesc& nd);
+    virtual particlePtr          cloneEdge(const edgeDesc& ed);
 
   private:
 

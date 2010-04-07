@@ -627,6 +627,8 @@ namespace rpwa {
     void
     addGraph(const decayGraph& graph)  ///< copies all nodes and edges (including properties) in graph into this graph and creates additional edges for the possible connections between graph and this _graph
     {
+      if (_debug)
+	printInfo << "adding graph '" << graph.name() << "' to graph '" << name() << "'" << std::endl;
       boost::copy_graph(graph._graph, _graph);
       buildReverseMaps();
       createEdgesFromParticles();
@@ -662,7 +664,7 @@ namespace rpwa {
     print(std::ostream& out,
 	  NLabel        nodeLabelMap) const  ///< prints decay graph nodes in human-readable form; node labels are determined from nodeLabelMap
     {
-      out << "graph '" << name() << "' has " << nmbNodes() << " nodes:" << std::endl;
+      out << "graph '" << name() << "' has " << nmbNodes() << " node(s):" << std::endl;
       nodeIterator iNode, iNodeEnd;
       for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
       	out << "    " << boost::get(nodeLabelMap, *iNode) << " --> ";
@@ -682,7 +684,7 @@ namespace rpwa {
 	  ELabel        edgeLabelMap) const  ///< prints decay graph nodes and edges in human-readable form; node/edge labels are determined from node/edgeLabelMap
     {
       print(out, nodeLabelMap);
-      out << "graph '" << name() << "' has " << nmbEdges() << " edges:" << std::endl;
+      out << "graph '" << name() << "' has " << nmbEdges() << " edge(s):" << std::endl;
       edgeIterator iEdge, iEdgeEnd;
       for (boost::tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge)
       	out << "    " << boost::get(edgeLabelMap, *iEdge)
