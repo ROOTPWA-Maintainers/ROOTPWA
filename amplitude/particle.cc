@@ -95,7 +95,8 @@ particle::particle(const string& partName,
   : particleProperties(partName, isospin, G, J, P, C),
     _spinProj(spinProj)
 {
-  chargeFromName(partName, _charge);
+  const string strippedName = chargeFromName(partName, _charge);
+  setName(strippedName);
 }
 
 
@@ -116,11 +117,10 @@ particle::operator =(const particle& part)
 }
 
 
-particle&
+particle*
 particle::clone() const
 {
-  particle* newPart = new particle(*this);
-  return *newPart;
+  return new particle(*this);
 }
 
 

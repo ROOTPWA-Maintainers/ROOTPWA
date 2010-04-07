@@ -100,12 +100,17 @@ isobarDecayVertex2::operator =(const isobarDecayVertex2& vert)
 }
 
     
-// isobarDecayVertex2&
-// isobarDecayVertex2::clone() const
-// {
-//   isobarDecayVertex2* newVertex = new isobarDecayVertex2(*this);
-//   return *newVertex;
-// }
+isobarDecayVertex2*
+isobarDecayVertex2::clone(const bool cloneInParticles,
+			  const bool cloneOutParticles) const
+{
+  isobarDecayVertex2* vertexClone = new isobarDecayVertex2(*this);
+  if (cloneInParticles)
+    vertexClone->cloneInParticles();
+  if (cloneOutParticles)
+    vertexClone->cloneOutParticles();
+  return vertexClone;
+}
 
 
 const TLorentzVector&

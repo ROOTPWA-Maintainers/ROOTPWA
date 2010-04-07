@@ -109,7 +109,7 @@ decayTopology2::operator =(const decayTopologyGraphType& graph)
     decayTopologyGraphType::operator =(graph);
     bool success = true;
     // find production vertex
-    // assumes that production vertex is the only vertex in graph with no incoming edges
+    // assumes that production vertex is the only vertex in graph that has no incoming edges
     unsigned int nmbNodesWithNoInEdge = 0;
     nodeIterator iNode, iNodeEnd;
     for (tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode)
@@ -154,6 +154,34 @@ decayTopology2::operator =(const decayTopologyGraphType& graph)
 }
 
 
+decayTopology2*
+decayTopology2::clone(const bool cloneFsParticles,
+		      const bool cloneProductionVertex) const
+{
+  // copy graph data structure
+  decayTopology2* topoClone = new decayTopology2(*this);
+  // clone vertices
+  nodeIterator iNode, iNodeEnd;
+  for (tie(iNode, iNodeEnd) = topoClone->nodes(); iNode != iNodeEnd; ++iNode) {
+    const VPtr v = topoClone->vertex(*iNode);
+    if (   isInteractionVertex(v)
+	|| (cloneFsParticles      && isFsVertex        (v))
+        || (cloneProductionVertex && isProductionVertex(v)))
+      topoClone->cloneNode(*iNode);
+  }
+  // clone particles
+  //!!! what about beam particle?
+  edgeIterator iEdge, iEdgeEnd;
+  for (tie(iEdge, iEdgeEnd) = topoClone->edges(); iEdge != iEdgeEnd; ++iEdge) {
+    const PPtr p = topoClone->particle(*iEdge);
+    if (!isFsParticle(p) || cloneFsParticles)
+      topoClone->cloneEdge(*iEdge);
+  }
+  topoClone->buildReverseMaps();
+  return topoClone;
+}
+
+
 void
 decayTopology2::clear()
 {
@@ -162,70 +190,6 @@ decayTopology2::clear()
   _intVertices.clear();
   _fsParticles.clear();
 }
-
-
-// decayTopology2::decayGraph
-// decayTopology2::deepCopyGraph(const decayGraph& srcGraph,
-// 			     const bool        copyFsParticles)
-// {
-//   // copy graph data structure
-//   decayGraph newGraph = srcGraph;
-//   // copy vertices
-//   nodeVertexType nodeVertexMap = get(vertex_vertexPointer, newGraph);
-//   for (nodeIterator iNode = vertices(newGraph).first; iNode != vertices(newGraph).second; ++iNode) {
-//     interactionVertex* srcVertex = nodeVertexMap[*iNode];
-//     if (srcVertex) {
-//       if (_debug)
-//   	printInfo << "copying vertex " << *iNode << endl;
-//       nodeVertexMap[*iNode] = &srcVertex->clone();
-//     }
-//   }  
-//   // copy particles
-//   //!!! what about beam particle?
-//   edgeParticleType edgeParticleMap = get(edge_particlePointer, newGraph);
-//   for (edgeIterator iEdge = edges(newGraph).first; iEdge != edges(newGraph).second; ++iEdge) {
-//     particle* srcParticle = edgeParticleMap[*iEdge];
-//     particle* newParticle = srcParticle;
-//     if (!srcParticle) {
-//       printErr << "null pointer to particle for edge " << *iEdge << ". aborting." << endl;
-//       throw;
-//     }
-//     if (_debug) {
-//       if (nodeVertexMap[target(*iEdge, newGraph)])
-//   	printInfo << "copying particle ";
-//       else if (copyFsParticles)
-//   	printInfo << "copying final state particle ";
-//     }
-//     if (nodeVertexMap[target(*iEdge, newGraph)] || copyFsParticles) {
-//       if (_debug)
-//   	cout << *iEdge << " '" << srcParticle->name() << "'" << endl;
-//       newParticle             = &srcParticle->clone();
-//       edgeParticleMap[*iEdge] = newParticle;
-//     }
-//     // modify the vertices that the particle connects
-//     nodeDesc           srcNode   = source(*iEdge, newGraph);
-//     interactionVertex* srcVertex = nodeVertexMap[srcNode];
-//     if (!srcVertex) {
-//       printErr << "null pointer to source vertex. aborting." << endl;
-//       throw;
-//     }
-//     for (unsigned int i = 0; i < srcVertex->nmbOutParticles(); ++i)
-//       if (srcVertex->outParticles()[i] == srcParticle) {
-// 	srcVertex->outParticles()[i] = newParticle;
-// 	break;
-//       }
-//     nodeDesc           targetNode   = target(*iEdge, newGraph);
-//     interactionVertex* targetVertex = nodeVertexMap[targetNode];
-//     if (targetVertex) {
-//       for (unsigned int i = 0; i < targetVertex->nmbInParticles(); ++i)
-// 	if (targetVertex->inParticles()[i] == srcParticle) {
-// 	  targetVertex->inParticles()[i] = newParticle;
-// 	  break;
-// 	}
-//     }
-//   }
-//   return newGraph;
-// }
 
 
 bool
@@ -240,8 +204,9 @@ decayTopology2::isInteractionVertex(const interactionVertexPtr& vert) const
 bool
 decayTopology2::isFsVertex(const interactionVertexPtr& vert) const
 {
+  const particlePtr& p = vert->inParticles()[0];
   for (unsigned int i = 0; i < _fsParticles.size(); ++i)
-    if (_fsParticles[i] == vert->inParticles()[0])
+    if (p == _fsParticles[i])
       return true;
   return false;
 }
@@ -390,38 +355,10 @@ decayTopology2::checkTopology() const
 }
 
 
-// decayTopology2::decayGraph
-// decayTopology2::subGraph(interactionVertex& startVertex)
-// {
-//   // find all nodes below start node
-//   nodeDesc         startNode = _vertexNodeMap[&startVertex];
-//   vector<nodeDesc> subGraphNodes;
-//   {
-//     vector<default_color_type> colors(num_vertices(_graph));
-//     depth_first_visit(_graph, startNode,
-// 		      makeDfsRecorder(back_inserter(subGraphNodes)),
-// 		      make_iterator_property_map(colors.begin(),
-// 						 get(vertex_index, _graph), colors[0]));
-//   }
-//   if (_debug)
-//     printInfo << "creating subgraph starting at node " << startNode
-// 	      << " using nodes: " << flush;
-//   decayGraph subGraph = _graph.create_subgraph();
-//   for (unsigned int j = 0; j < subGraphNodes.size(); ++j) {
-//     add_vertex(subGraphNodes[j], subGraph);
-//     if (_debug)
-//       cout << subGraphNodes[j] << "    ";
-//   }
-//   if (_debug)
-//     cout << endl;
-//   return subGraph;
-// }
-
-
 decayTopology2&
 decayTopology2::constructDecay(const interactionVertexPtr&              productionVertex,
 			       const std::vector<interactionVertexPtr>& interactionVertices,
-			       const std::vector<particlePtr>& fsParticles)
+			       const std::vector<particlePtr>&          fsParticles)
 {
   clear();
   const unsigned int nmbVert   = interactionVertices.size();
@@ -496,4 +433,42 @@ decayTopology2::constructDecay(const interactionVertexPtr&              producti
     throw;
   }
   return *this;
+}
+
+
+interactionVertexPtr
+decayTopology2::cloneNode(const nodeDesc& nd)
+{
+  const interactionVertexPtr v    = vertex(nd);
+  interactionVertexPtr       newV = decayTopologyGraphType::cloneNode(nd);
+  // update member variables
+  if (isProductionVertex(v))
+    _prodVertex = newV;
+  else if (isInteractionVertex(v))
+    for (unsigned int i = 0; i < _intVertices.size(); ++i)
+      if (v == _intVertices[i])
+	_intVertices[i] = newV;
+  return newV;
+}
+
+
+particlePtr
+decayTopology2::cloneEdge(const edgeDesc& ed)
+{
+  const particlePtr p    = particle(ed);
+  particlePtr       newP = decayTopologyGraphType::cloneEdge(ed);
+  // update member variable
+  if (isFsParticle(p))
+    for (unsigned int i = 0; i < _fsParticles.size(); ++i)
+      if (p == _fsParticles[i])
+	_fsParticles[i] = newP;
+  return newP;
+}
+
+
+decayTopology2
+decayTopology2::subDecay(const nodeDesc& startNd)
+{
+  decayTopology2 subTopo(dfsSubGraph(startNd));
+  return subTopo;
 }

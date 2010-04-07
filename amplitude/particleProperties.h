@@ -66,17 +66,16 @@ namespace rpwa {
     
     virtual ~particleProperties();
 
-    virtual particleProperties& operator =  (const particleProperties& partProp);
-    friend bool operator == (const particleProperties& lhsProp,
-			     const particleProperties& rhsProp);
-    friend bool operator != (const particleProperties& lhsProp,
-			     const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
+    virtual particleProperties& operator =(const particleProperties& partProp);
+    friend bool operator ==(const particleProperties& lhsProp,
+			    const particleProperties& rhsProp);
+    friend bool operator !=(const particleProperties& lhsProp,
+			    const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
 
-    friend bool operator == (const particleProperties& lhsProp,
-			     const std::pair<particleProperties, std::string>& rhsProp);
-    friend bool operator != (const particleProperties& lhsProp,
-			     const std::pair<particleProperties, std::string>& rhsProp)
-    {return !(lhsProp==rhsProp);}
+    friend bool operator ==(const particleProperties& lhsProp,
+			    const std::pair<particleProperties, std::string>& rhsProp);
+    friend bool operator !=(const particleProperties& lhsProp,
+			    const std::pair<particleProperties, std::string>& rhsProp) {return !(lhsProp==rhsProp);}
     
 
     
@@ -143,14 +142,14 @@ namespace rpwa {
 
   inline
   std::ostream&
-  operator << (std::ostream&             out,
-	       const particleProperties& partProp) { return partProp.print(out); }
+  operator <<(std::ostream&             out,
+	      const particleProperties& partProp) { return partProp.print(out); }
 
 
   inline
   std::istream&
-  operator >> (std::istream&       in,
-	       particleProperties& partProp)
+  operator >>(std::istream&       in,
+	      particleProperties& partProp)
   {
     std::string line;
     if (getline(in, line)) {

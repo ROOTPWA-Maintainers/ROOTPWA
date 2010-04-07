@@ -437,7 +437,7 @@ isobarDecayTopology::possibleDecays()
 		  v->setL(L);
 		  v->setS(S);
 		  // copy mother particle
-		  particle* m = &v->mother().clone();
+		  particle* m = v->mother().clone();
 		  v->inParticles()[0] = m;
 		  m->setName(selection[iiso]->name());
 		  m->setMass(selection[iiso]->mass());

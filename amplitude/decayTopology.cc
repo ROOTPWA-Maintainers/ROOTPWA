@@ -340,7 +340,7 @@ decayTopology::deepCopyGraph(const decayGraph& srcGraph,
     if (nodeVertexMap[target(*iEdge, newGraph)] || copyFsParticles) {
       if (_debug)
   	cout << *iEdge << " '" << srcParticle->name() << "'" << endl;
-      newParticle             = &srcParticle->clone();
+      newParticle             = srcParticle->clone();
       edgeParticleMap[*iEdge] = newParticle;
     }
     // modify the vertices that the particle connects

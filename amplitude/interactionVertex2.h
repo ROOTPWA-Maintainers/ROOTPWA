@@ -63,19 +63,20 @@ namespace rpwa {
     virtual interactionVertex2& operator =(const interactionVertex2& vert);
     virtual interactionVertex2* clone(const bool cloneInParticles  = false,
 				      const bool cloneOutParticles = false) const;
+    virtual void clear();
 
     virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
     virtual bool addOutParticle(const particlePtr& part);  ///< adds an outgoing particle to vertex
 
-    virtual void transformOutParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to outgoing particles
+    void transformOutParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to outgoing particles
 
-    inline virtual unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
-    inline virtual unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles
+    inline unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
+    inline unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles
 
-    inline virtual std::vector<particlePtr>&       inParticles ()       { return _inParticles;  }  ///< returns array of incoming particles
-    inline virtual std::vector<particlePtr>&       outParticles()       { return _outParticles; }  ///< returns array of outgoing particles
-    inline virtual const std::vector<particlePtr>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
-    inline virtual const std::vector<particlePtr>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
+    inline std::vector<particlePtr>&       inParticles ()       { return _inParticles;  }  ///< returns array of incoming particles
+    inline std::vector<particlePtr>&       outParticles()       { return _outParticles; }  ///< returns array of outgoing particles
+    inline const std::vector<particlePtr>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
+    inline const std::vector<particlePtr>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     virtual std::ostream& dump (std::ostream& out) const;  ///< prints all vertex data in human-readable form
@@ -85,6 +86,9 @@ namespace rpwa {
 
 
   protected:
+
+    void cloneInParticles ();  ///< clones all incoming particles
+    void cloneOutParticles();  ///< clones all outgoing particles
 
     std::vector<particlePtr> _inParticles;   ///< array of pointers to incoming particles
     std::vector<particlePtr> _outParticles;  ///< array of pointers to outgoing particles

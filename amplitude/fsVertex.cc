@@ -70,6 +70,17 @@ fsVertex::~fsVertex()
 { }
 
 
+fsVertex*
+fsVertex::clone(const bool cloneInParticles,
+		const bool) const
+{
+  fsVertex* vertexClone = new fsVertex(*this);
+  if (cloneInParticles)
+    vertexClone->cloneInParticles();
+  return vertexClone;
+}
+
+
 ostream&
 fsVertex::print(ostream& out) const
 {

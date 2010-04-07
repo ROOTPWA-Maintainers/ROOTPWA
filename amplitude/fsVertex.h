@@ -56,6 +56,9 @@ namespace rpwa {
     fsVertex(const fsVertex& vert);
     virtual ~fsVertex();
 		
+    virtual fsVertex* clone(const bool cloneInParticles = false,
+			    const bool = false) const;
+
     inline virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (final state particle) is allowed
     inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; no outgoing particles are allowed
 

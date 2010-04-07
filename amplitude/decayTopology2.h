@@ -73,6 +73,10 @@ namespace rpwa {
 
     virtual decayTopology2& operator =(const decayTopology2&         topo);
     virtual decayTopology2& operator =(const decayTopologyGraphType& graph);
+    virtual decayTopology2* clone(const bool cloneFsParticles      = false,
+				  const bool cloneProductionVertex = false) const;
+    virtual interactionVertexPtr cloneNode(const nodeDesc& nd);
+    virtual particlePtr          cloneEdge(const edgeDesc& ed);
     virtual void clear();  ///< deletes all information
     
     unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
@@ -92,6 +96,8 @@ namespace rpwa {
     bool checkTopology   () const;                  ///< returns whether decay has the correct topology
     bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices
 
+    decayTopology2 subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
+
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
@@ -109,12 +115,9 @@ namespace rpwa {
 				   const std::vector<interactionVertexPtr>& interactionVertices,
 				   const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
-  //   static decayGraph deepCopyGraph(const decayGraph& srcGraph,
-  // 				    const bool        copyFsParticles = false);
-
 
   private:
-    
+
     interactionVertexPtr              _prodVertex;   ///< pointer to production vertex
     std::vector<interactionVertexPtr> _intVertices;  ///< array of interaction vertices excluding production vertex; ordered depth-first
     std::vector<particlePtr>          _fsParticles;  ///< array of final state particles; ordered depth-first

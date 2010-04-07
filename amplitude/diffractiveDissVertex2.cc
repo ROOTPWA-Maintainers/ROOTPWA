@@ -78,6 +78,19 @@ diffractiveDissVertex2::~diffractiveDissVertex2()
 { }
 
 
+diffractiveDissVertex2*
+diffractiveDissVertex2::clone(const bool cloneInParticles,
+			      const bool cloneOutParticles) const
+{
+  diffractiveDissVertex2* vertexClone = new diffractiveDissVertex2(*this);
+  if (cloneInParticles)
+    vertexClone->cloneInParticles();
+  if (cloneOutParticles)
+    vertexClone->cloneOutParticles();
+  return vertexClone;
+}
+
+
 ostream&
 diffractiveDissVertex2::print(ostream& out) const
 {

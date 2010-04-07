@@ -116,7 +116,7 @@ main(int argc, char** argv)
     // define vertices
     isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,     pi4, f1,    0, 3);
     isobarDecayVertexPtr vert1 = createIsobarDecayVertex(f1,    pi2, a1,    2, 2);
-    isobarDecayVertexPtr vert2 = createIsobarDecayVertex(a1,    pi3, sigma, 2, 2);
+    isobarDecayVertexPtr vert2 = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0);
     isobarDecayVertexPtr vert3 = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0);
 
     // construct graph
@@ -198,8 +198,9 @@ main(int argc, char** argv)
     	   << "index = " << g2.index(*i) << ", "
     	   << "color = " << g2.color(*i) << ", "
     	   << endl;
-        
     g2.print(cout, g2.nodeNameMap());
+    g2.clear();
+    printInfo << "after clear:" << endl << g2;
 
     decayTopologyGraphType g3;
     g3.name() = "test graph 3";
@@ -238,6 +239,53 @@ main(int argc, char** argv)
     const bool decayConsistent = topo2.checkConsistency();
     cout << "decay consistent = " << decayConsistent << endl;
     topo2.calcIsobarLzVec();
+
+    cout << endl << "testing cloning" << endl;
+    isobarDecayTopology2 topo3 = *topo2.clone();
+    {
+      isobarDecayVertexPtr v = topo3.isobarDecayVertices()[0];
+      particlePtr          p = v->inParticles()[0];
+      v->setL(2);
+      v->setS(2);
+      cout << *p << endl;
+      p->setG(-1);
+      p->setCharge(-1);
+      p->setC(1);
+      //topo3.checkConsistency();
+      cout << topo3;
+      decayTopologyGraphType::nodeIterator iNode, iNodeEnd;
+      cout << "!!! topo2 vertex pointers: ";
+      for (tie(iNode, iNodeEnd) = topo2.nodes(); iNode != iNodeEnd; ++iNode)
+	cout << topo2.vertex(*iNode) << "    ";
+      cout << endl;
+      cout << "!!! topo3 vertex pointers: ";
+      for (tie(iNode, iNodeEnd) = topo3.nodes(); iNode != iNodeEnd; ++iNode)
+	cout << topo3.vertex(*iNode) << "    ";
+      cout << endl;
+      cout << "!!! topo3 interaction vertex pointers: ";
+      for (unsigned int i = 0; i < topo3.nmbInteractionVertices(); ++i)
+	cout << topo3.interactionVertices()[i] << "    ";
+      cout << endl;
+      cout << "!!! topo3 isobar decay vertex pointers: ";
+      for (unsigned int i = 0; i < topo3.nmbInteractionVertices(); ++i)
+	cout << topo3.isobarDecayVertices()[i] << "    ";
+      cout << endl;
+      decayTopologyGraphType::edgeIterator iEdge, iEdgeEnd;
+      cout << "!!! topo2 particle pointers: ";
+      for (tie(iEdge, iEdgeEnd) = topo2.edges(); iEdge != iEdgeEnd; ++iEdge)
+	cout << topo2.particle(*iEdge) << "    ";
+      cout << endl;
+      cout << "!!! topo3 particle pointers: ";
+      for (tie(iEdge, iEdgeEnd) = topo3.edges(); iEdge != iEdgeEnd; ++iEdge)
+	cout << topo3.particle(*iEdge) << "    ";
+      cout << endl;
+      cout << "!!! topo3 FS particle pointers: ";
+      for (unsigned int i = 0; i < topo3.nmbFsParticles(); ++i)
+	cout << topo3.fsParticles()[i] << "    ";
+      cout << endl;
+    }
+    
+    //topo2.possibleDecays();
   }
 
   // test construction of vertices

@@ -96,7 +96,7 @@ particleProperties::~particleProperties()
 
 
 particleProperties&
-particleProperties::operator = (const particleProperties& partProp)
+particleProperties::operator =(const particleProperties& partProp)
 {
   if (this != &partProp) {
     _name        = partProp._name;
@@ -117,8 +117,8 @@ particleProperties::operator = (const particleProperties& partProp)
 
 
 bool
-rpwa::operator == (const particleProperties& lhsProp,
-		   const particleProperties& rhsProp)
+rpwa::operator ==(const particleProperties& lhsProp,
+		  const particleProperties& rhsProp)
 {
   return (   (lhsProp.name()        == rhsProp.name()       )
           && (lhsProp.mass()        == rhsProp.mass()       )
@@ -138,8 +138,8 @@ rpwa::operator == (const particleProperties& lhsProp,
 // the selector string can contain any of the following: I, G, J, P,
 // C, strangeness, charm, beauty, baryonNmb
 bool 
-rpwa::operator == (particleProperties const &               lhsProp,
-		   pair<particleProperties, string> const & rhs)
+rpwa::operator ==(particleProperties const &               lhsProp,
+		  pair<particleProperties, string> const & rhs)
 {
   const particleProperties& rhsProp  = rhs.first;
   const string&             selector = rhs.second;

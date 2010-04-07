@@ -61,15 +61,16 @@ namespace rpwa {
     virtual ~isobarDecayVertex2();
 		
     virtual isobarDecayVertex2& operator =(const isobarDecayVertex2& vert);
-//     virtual isobarDecayVertex2& clone() const;
+    virtual isobarDecayVertex2* clone(const bool cloneInParticles  = false,
+				      const bool cloneOutParticles = false) const;
 
     inline virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (mother) is allowed
     inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 2 outgoing particle (daughters) are allowed
 
     // isobar decay specific accessors
-    inline particlePtr&       mother   ()       { return inParticles ()[0]; }  ///< returns mother particle
-    inline particlePtr&       daughter1()       { return outParticles()[0]; }  ///< returns first daughter particle
-    inline particlePtr&       daughter2()       { return outParticles()[1]; }  ///< returns second daughter particle
+    // inline particlePtr&       mother   ()       { return inParticles ()[0]; }  ///< returns mother particle
+    // inline particlePtr&       daughter1()       { return outParticles()[0]; }  ///< returns first daughter particle
+    // inline particlePtr&       daughter2()       { return outParticles()[1]; }  ///< returns second daughter particle
     inline const particlePtr& mother   () const { return inParticles ()[0]; }  ///< returns mother particle
     inline const particlePtr& daughter1() const { return outParticles()[0]; }  ///< returns first daughter particle
     inline const particlePtr& daughter2() const { return outParticles()[1]; }  ///< returns second daughter particle

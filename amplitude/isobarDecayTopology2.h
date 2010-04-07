@@ -51,31 +51,31 @@ namespace rpwa {
   public:
 			
     isobarDecayTopology2();
-    isobarDecayTopology2(const isobarDecayTopology2&              topo);
     isobarDecayTopology2(const interactionVertexPtr&              productionVertex,
 			 const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
 			 const std::vector<particlePtr>&          fsParticles);
     isobarDecayTopology2(const interactionVertexPtr&              productionVertex,
 			 const std::vector<interactionVertexPtr>& isobarDecayVertices,
 			 const std::vector<particlePtr>&          fsParticles);
+    isobarDecayTopology2(const isobarDecayTopology2&              topo);
+    isobarDecayTopology2(const decayTopology2&                    topo);
     virtual ~isobarDecayTopology2();
 
-    isobarDecayTopology2& operator =(const isobarDecayTopology2& topo);
-    // isobarDecayTopology2& clone() const;
-    
-    void clear();  ///< deletes all information
+    virtual isobarDecayTopology2& operator =(const isobarDecayTopology2& topo);
+    virtual isobarDecayTopology2& operator =(const decayTopology2&       topo);
+    virtual isobarDecayTopology2* clone(const bool cloneFsParticles      = false,
+					const bool cloneProductionVertex = false) const;
+    virtual void clear();  ///< deletes all information
 
     const std::vector<isobarDecayVertexPtr>& isobarDecayVertices() const { return _isobarVertices;    }  ///< returns all isobar decay vertices ordered by depth-first; first vertex is X-decay vertex
     const isobarDecayVertexPtr               xIsobarDecayVertex () const { return _isobarVertices[0]; }  ///< returns X-decay vertex
 
-    bool checkTopology() const;     ///< returns whether decay has the correct topology
-
+    bool checkTopology   () const;  ///< returns whether decay has the correct topology
     bool checkConsistency() const;  ///< checks conservation rules on all vertices
 
+    isobarDecayTopology2 subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
 
-    // isobarDecayTopology2& addSubDecay(const isobarDecayTopology2& subDecay);
-
-    // std::vector<isobarDecayTopology2*> possibleDecays();  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
+    std::vector<isobarDecayTopology2> possibleDecays();  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
     
     const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 
@@ -94,10 +94,12 @@ namespace rpwa {
 					 const std::vector<interactionVertexPtr>& isobarDecayVertices,
 					 const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on final state particles and vertices
 
-    // decayGraph joinDaughterGraphs(const isobarDecayVertex2& topVertex,
-    // 				  const decayGraph&        graph1,
-    // 				  const decayGraph&        graph2,
-    // 				  nodeDesc&                newTopNode);  ///< creates new graph with topNode as top node and graph1/2 as daughter graphs
+    void buildIsobarVertexArray();  ///< (re)builds array of isobar decay vertices
+
+    decayTopologyGraphType joinDaughterGraphsX(const isobarDecayVertexPtr&   motherVertex,
+					       const decayTopologyGraphType& daughterGraph1,
+					       const decayTopologyGraphType& daughterGraph2,
+					       nodeDesc&                     newTopNode);  ///< creates new graph with topNode as top node and graph1/2 as daughter graphs
     
     std::vector<isobarDecayVertexPtr> _isobarVertices;  ///< array of isobar-decay vertices excluding production vertex; ordered depth-first; this is a copy of the respective array in decayTopology
 

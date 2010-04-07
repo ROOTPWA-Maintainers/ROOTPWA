@@ -77,18 +77,20 @@ interactionVertex2*
 interactionVertex2::clone(const bool cloneInParticles,
 			  const bool cloneOutParticles) const
 {
-  interactionVertex2* newVertex = new interactionVertex2(*this);
+  interactionVertex2* vertexClone = new interactionVertex2(*this);
   if (cloneInParticles)
-    for (unsigned int i = 0; i < newVertex->nmbInParticles(); ++i) {
-      particlePtr newPart(&(newVertex->inParticles()[i]->clone()));
-      newVertex->inParticles()[i] = newPart;
-    }
+    vertexClone->cloneInParticles();
   if (cloneOutParticles)
-    for (unsigned int i = 0; i < newVertex->nmbOutParticles(); ++i) {
-      particlePtr newPart(&(newVertex->outParticles()[i]->clone()));
-      newVertex->outParticles()[i] = newPart;
-    }
-  return newVertex;
+    vertexClone->cloneOutParticles();
+  return vertexClone;
+}
+
+
+void
+interactionVertex2::clear()
+{
+  _inParticles.clear();
+  _outParticles.clear();
 }
 
 
@@ -156,4 +158,24 @@ interactionVertex2::dump(ostream& out) const
   for (unsigned int i = 0; i < _outParticles.size(); ++i)
     out << "    outgoing[" << i << "]: " << *_outParticles[i] << endl;
   return out;
+}
+
+
+void
+interactionVertex2::cloneInParticles()
+{
+  for (unsigned int i = 0; i < nmbInParticles(); ++i) {
+    particlePtr newPart(inParticles()[i]->clone());
+    inParticles()[i] = newPart;
+  }
+}
+
+
+void
+interactionVertex2::cloneOutParticles()
+{
+  for (unsigned int i = 0; i < nmbOutParticles(); ++i) {
+    particlePtr newPart(outParticles()[i]->clone());
+    outParticles()[i] = newPart;
+  }
 }

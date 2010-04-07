@@ -58,12 +58,15 @@ namespace rpwa {
     diffractiveDissVertex2(const diffractiveDissVertex2& vert);
     virtual ~diffractiveDissVertex2();
 		
+    virtual diffractiveDissVertex2* clone(const bool cloneInParticles  = false,
+					  const bool cloneOutParticles = false) const;
+
     virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (beam) is allowed
     virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 1 outgoing particle (X-system) is allowed
 
     // diffractive dissociation specific accessors
-    inline particlePtr&       beam   ()       { return inParticles ()[0]; }  ///< returns beam particle
-    inline particlePtr&       XSystem()       { return outParticles()[0]; }  ///< returns X particle
+    // inline particlePtr&       beam   ()       { return inParticles ()[0]; }  ///< returns beam particle
+    // inline particlePtr&       XSystem()       { return outParticles()[0]; }  ///< returns X particle
     inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
     inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
 
