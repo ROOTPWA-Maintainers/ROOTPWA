@@ -469,7 +469,7 @@ namespace rpwa {
     inline nodeDesc fromNode(const edgeDesc& ed) const { return boost::source(ed, _graph); }  ///< returns descriptor of node where the given edge is coming from
     inline nodeDesc fromNode(const PPtr&     p ) const { return fromNode(edge(p));         }  ///< returns descriptor of node where the given particle is coming from
     inline nodeDesc toNode  (const edgeDesc& ed) const { return boost::target(ed, _graph); }  ///< returns descriptor of node where the given edge is going to
-    inline nodeDesc toNode  (const PPtr&     p ) const { return toNode  (edge(p));         }  ///< returns descriptor of node where the given particle is going to
+    inline nodeDesc toNode  (const PPtr&     p ) const { return toNode(edge(p));           }  ///< returns descriptor of node where the given particle is going to
 
     inline const VPtr& fromVertex(const edgeDesc& ed) const { return vertex(fromNode(ed)); }  ///< returns vertex where the given edge is coming from
     inline const VPtr& fromVertex(const PPtr&     p ) const { return vertex(fromNode(p));  }  ///< returns vertex where the given particle is coming from
@@ -650,7 +650,7 @@ namespace rpwa {
 
     inline
     decayGraph
-    dfsSubGraph(const VPtr& startV) const  ///< constructs subgraph that contains all nodes that can be reached from given start vertex
+    dfsSubGraph(const VPtr& startV)  ///< constructs subgraph that contains all nodes that can be reached from given start vertex
     {
       return dfsSubGraph(node(startV));
     }

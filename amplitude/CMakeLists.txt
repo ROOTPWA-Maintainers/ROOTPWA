@@ -71,6 +71,7 @@ SET(SOURCES
   isobarDecayTopology.cc
   isobarDecayTopology2.cc
   isobarHelicityAmplitude.cc
+  isobarHelicityAmplitude2.cc
 )
 
 # define ROOT libraries

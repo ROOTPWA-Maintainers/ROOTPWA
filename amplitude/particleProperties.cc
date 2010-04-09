@@ -217,7 +217,8 @@ string
 particleProperties::qnSummary() const
 {
   ostringstream out;
-  out << name() << "[" << isospin() * 0.5 << sign(G()) << "(" << J() * 0.5 << sign(P()) << sign(C()) << ")]";
+  out << name() << "[" << isospin() * 0.5 << sign(G())
+      << "(" << J() * 0.5 << sign(P()) << sign(C()) << ")]";
   return out.str();
 }
 

@@ -91,6 +91,8 @@ namespace rpwa {
 
     const TLorentzVector& transform(const TLorentzRotation& L) { return (_lzVec *= L); }  ///< applies Lorentz-transformation to particle
 
+    virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)M]
+
     virtual std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag

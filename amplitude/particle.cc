@@ -149,6 +149,16 @@ particle::setProperties(const particleProperties& prop)
 }
 
 
+string
+particle::qnSummary() const
+{
+  ostringstream out;
+  out << name() << "[" << 0.5 * isospin() << sign(G())
+      << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")" << 0.5 * spinProj() << "]";
+  return out.str();
+}
+
+
 ostream&
 particle::print(ostream& out) const
 {

@@ -118,7 +118,7 @@ namespace rpwa {
 		  const int P,
 		  const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
 
-    virtual std::string qnSummary() const;  ///< returns particle's quantum number summary
+    virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)]
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
     virtual std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
