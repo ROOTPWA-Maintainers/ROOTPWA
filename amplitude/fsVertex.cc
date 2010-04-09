@@ -56,7 +56,7 @@ fsVertex::fsVertex(const particlePtr& fsParticle)
   }
   interactionVertex2::addInParticle(fsParticle);
   if (_debug)
-    printInfo << "contructed " << *this << endl;
+    printInfo << "constructed " << *this << endl;
 }
 
 

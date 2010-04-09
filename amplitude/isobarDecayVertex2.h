@@ -44,6 +44,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "interactionVertex2.h"
+#include "massDependence.h"
 
 
 namespace rpwa {
@@ -52,11 +53,12 @@ namespace rpwa {
 
   public:
   
-    isobarDecayVertex2(const particlePtr& mother,
-		       const particlePtr& daughter1,
-		       const particlePtr& daughter2,
-		       const unsigned int L = 0,
-		       const unsigned int S = 0);  ///< force vertex to have exactly one incoming (mother) and two outgoing particles (daughters)
+    isobarDecayVertex2(const particlePtr&       mother,
+		       const particlePtr&       daughter1,
+		       const particlePtr&       daughter2,
+		       const unsigned int       L       = 0,
+		       const unsigned int       S       = 0,
+		       const massDependencePtr& massDep = massDependencePtr());  ///< force vertex to have exactly one incoming (mother) and two outgoing particles (daughters)
     isobarDecayVertex2(const isobarDecayVertex2& vert);
     virtual ~isobarDecayVertex2();
 		
@@ -83,6 +85,9 @@ namespace rpwa {
     inline void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters * 2 (!!!)
     inline void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
+    inline std::complex<double> massDependence() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitude
+    inline void setMassDependence(const massDependencePtr& massDep) { _massDep = massDep; }  ///< sets mass dependence
+
     bool checkConsistency();  ///< checks quantum decomposition of in-particle to outparticles
 
     virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
@@ -107,6 +112,8 @@ namespace rpwa {
     unsigned int _L;  ///< relative orbital angular momentum between the two daughters * 2 (!!!)
     unsigned int _S;  ///< total spin of the two daughters * 2 (!!!)
 
+    massDependencePtr _massDep;  ///< functor with mass dependence
+
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
@@ -117,13 +124,14 @@ namespace rpwa {
 
   inline
   isobarDecayVertexPtr
-  createIsobarDecayVertex(const particlePtr& mother,
-			  const particlePtr& daughter1,
-			  const particlePtr& daughter2,
-			  const unsigned int L = 0,
-			  const unsigned int S = 0)
+  createIsobarDecayVertex(const particlePtr&       mother,
+			  const particlePtr&       daughter1,
+			  const particlePtr&       daughter2,
+			  const unsigned int       L       = 0,
+			  const unsigned int       S       = 0,
+			  const massDependencePtr& massDep = massDependencePtr())
   {
-    isobarDecayVertexPtr v(new isobarDecayVertex2(mother, daughter1, daughter2, L, S));
+    isobarDecayVertexPtr v(new isobarDecayVertex2(mother, daughter1, daughter2, L, S, massDep));
     return v;
   }
 

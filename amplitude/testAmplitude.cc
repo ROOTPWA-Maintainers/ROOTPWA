@@ -51,6 +51,7 @@
 #include "particleDataTable.h"
 #include "diffractiveDissVertex.h"
 #include "diffractiveDissVertex2.h"
+#include "massDependence.h"
 #include "isobarHelicityAmplitude.h"
 #include "isobarHelicityAmplitude2.h"
 
@@ -73,6 +74,7 @@ main(int argc, char** argv)
   rpwa::isobarDecayVertex::setDebug(true);
   rpwa::isobarDecayTopology::setDebug(true);
   rpwa::isobarHelicityAmplitude::setDebug(true);
+
   rpwa::isobarDecayVertex2::setDebug(true);
   rpwa::isobarDecayTopology2::setDebug(true);
   rpwa::isobarHelicityAmplitude2::setDebug(true);
@@ -219,7 +221,6 @@ main(int argc, char** argv)
   }
 
   if (1) {
-    cout << "@@@" << endl;
     // define final state particles
     particlePtr pi0 = createParticle("pi-");
     particlePtr pi1 = createParticle("pi+");
@@ -239,10 +240,11 @@ main(int argc, char** argv)
     particlePtr              beam     = createParticle("pi-");
     diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
     // define vertices
-    isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,     pi4, f1,    2, 2);
-    isobarDecayVertexPtr vert1 = createIsobarDecayVertex(f1,    pi2, a1,    2, 2);
-    isobarDecayVertexPtr vert2 = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0);
-    isobarDecayVertexPtr vert3 = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0);
+    massDependencePtr    massDep = createRelativisticBreitWigner();
+    isobarDecayVertexPtr vert0   = createIsobarDecayVertex(X,     pi4, f1,    2, 2);
+    isobarDecayVertexPtr vert1   = createIsobarDecayVertex(f1,    pi2, a1,    2, 2, massDep);
+    isobarDecayVertexPtr vert2   = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0, massDep);
+    isobarDecayVertexPtr vert3   = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0, massDep);
     // set Lorentz vectors
     beam->setLzVec(TLorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058));
     pi0->setLzVec(TLorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947));

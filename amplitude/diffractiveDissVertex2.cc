@@ -64,7 +64,7 @@ diffractiveDissVertex2::diffractiveDissVertex2(const particlePtr& beam,
   interactionVertex2::addInParticle (beam);
   interactionVertex2::addOutParticle(XSystem);
   if (_debug)
-    printInfo << "contructed " << *this << endl;
+    printInfo << "constructed " << *this << endl;
 }
 
 

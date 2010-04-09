@@ -250,9 +250,10 @@ isobarHelicityAmplitude2::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
   const double    m1     = daughter1->lzVec().M();
   const double    m2     = daughter2->lzVec().M();
   const double    q0     = breakupMomentum(M0, m1, m2);
-  complex<double> bw     = 1;
-  if (!topVertex)
-    bw = breitWigner(M, M0, Gamma0, L, q, q0);
+  // complex<double> bw     = 1;
+  // if (!topVertex)
+  //   bw = breitWigner(M, M0, Gamma0, L, q, q0);
+  complex<double> bw = vertex->massDependence();
   if (_debug) {
     if (topVertex)
       debug << "< no mass dep. = " << bw << " >";

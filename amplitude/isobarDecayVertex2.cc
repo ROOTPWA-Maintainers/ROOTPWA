@@ -49,14 +49,16 @@ using namespace rpwa;
 bool isobarDecayVertex2::_debug = false;
 
 
-isobarDecayVertex2::isobarDecayVertex2(const particlePtr& mother,
-				       const particlePtr& daughter1,
-				       const particlePtr& daughter2,
-				       const unsigned int L,
-				       const unsigned int S)
+isobarDecayVertex2::isobarDecayVertex2(const particlePtr&       mother,
+				       const particlePtr&       daughter1,
+				       const particlePtr&       daughter2,
+				       const unsigned int       L,
+				       const unsigned int       S,
+				       const massDependencePtr& massDep)
   : interactionVertex2(),
     _L                (L),
-    _S                (S)
+    _S                (S),
+    _massDep          (massDep)
 {
   if (!mother) {
     printErr << "null pointer to mother particle. aborting." << endl;
@@ -73,8 +75,13 @@ isobarDecayVertex2::isobarDecayVertex2(const particlePtr& mother,
   interactionVertex2::addInParticle (mother);
   interactionVertex2::addOutParticle(daughter1);
   interactionVertex2::addOutParticle(daughter2);
+  if (!_massDep) {
+    _massDep = createFlatMassDependence();
+    if (_debug)
+      printWarn << "null pointer to mass dependence. setting " << *_massDep << endl;
+  }
   if (_debug)
-    printInfo << "contructed " << *this << endl;
+    printInfo << "constructed " << *this << endl;
 }
 
 
@@ -93,8 +100,9 @@ isobarDecayVertex2::operator =(const isobarDecayVertex2& vert)
 {
   if (this != &vert) {
     interactionVertex2::operator =(vert);
-    _L = vert._L;
-    _S = vert._S;
+    _L       = vert._L;
+    _S       = vert._S;
+    _massDep = vert._massDep;
   }
   return *this;
 }
@@ -265,7 +273,8 @@ isobarDecayVertex2::print(ostream& out) const
       << mother()->qnSummary() << "  --->  "
       << daughter1()->qnSummary()
       << "  [L = " << _L * 0.5 << ", S = " << _S * 0.5 << "]  "
-      << daughter2()->qnSummary();
+      << daughter2()->qnSummary()
+      << "; " << *_massDep;
   return out;
 }
 
@@ -277,7 +286,8 @@ isobarDecayVertex2::dump(ostream& out) const
       << "    mother: "     << *mother()    << endl
       << "    daughter 1: " << *daughter1() << endl
       << "    daughter 2: " << *daughter2() << endl
-      << "    L = " << _L * 0.5 << ", S = " << _S * 0.5 << endl;
+      << "    L = " << _L * 0.5 << ", S = " << _S * 0.5 << endl
+      << "    " << *_massDep << endl;
   return out;
 }
 

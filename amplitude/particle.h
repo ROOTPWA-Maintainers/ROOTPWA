@@ -50,7 +50,7 @@
 #include "particleProperties.h"
 
 
-namespace rpwa {	
+namespace rpwa {
 
   class particle : public particleProperties {
 	
@@ -143,7 +143,9 @@ namespace rpwa {
   std::ostream&
   operator <<(std::ostream&   out,
 	      const particle& part)
-  { return part.print(out); }
+  {
+    return part.print(out);
+  }
 
 
 }  // namespace rpwa
