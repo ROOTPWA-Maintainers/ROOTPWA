@@ -413,9 +413,9 @@ isobarDecayTopology::possibleDecays()
 		if(abs(charge)>1)isobarname << abs(charge);
 		particleProperties prop(isobarname.str(),I,G,J,P,C);
 		particleDataTable& pdt = particleDataTable::instance();
-		string opt="IGJPC";
+		string opt="allQn";
 		vector<const particleProperties*> selection;
-		if(vertex->mother().name()!="X-")selection=pdt.entrylist(prop,opt);
+		if(vertex->mother().name()!="X-")selection=pdt.entriesMatching(prop,opt);
 		else selection.push_back(&vertex->mother());
 		unsigned int niso=selection.size();
 		cout << "Found "<<niso<<" isobar candidates"<<endl;

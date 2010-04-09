@@ -135,13 +135,13 @@ interactionVertex2::print(ostream& out) const
 {
   out << "interaction vertex: ";
   for (unsigned int i = 0; i < _inParticles.size(); ++i) {
-    out << _inParticles[i]->summary();
+    out << _inParticles[i]->qnSummary();
     if (i < _inParticles.size() - 1)
       out << "  +  ";
   }
   out << "  --->  ";
   for (unsigned int i = 0; i < _outParticles.size(); ++i) {
-    out << _outParticles[i]->summary();
+    out << _outParticles[i]->qnSummary();
     if (i < _outParticles.size() - 1)
       out << "  +  ";
   }
@@ -157,6 +157,26 @@ interactionVertex2::dump(ostream& out) const
     out << "    incoming[" << i << "]: " << *_inParticles[i] << endl;
   for (unsigned int i = 0; i < _outParticles.size(); ++i)
     out << "    outgoing[" << i << "]: " << *_outParticles[i] << endl;
+  return out;
+}
+
+
+ostream&
+interactionVertex2::printPointers(ostream& out) const
+{
+  out << "interaction vertex " << this << ": incoming particles: ";
+  for (unsigned int i = 0; i < _inParticles.size(); ++i) {
+    out << "[" << i << "] = " << _inParticles[i];
+    if (i < _inParticles.size() - 1)
+      out << ", ";
+  }
+  out << "; outgoing particles: ";
+  for (unsigned int i = 0; i < _outParticles.size(); ++i) {
+    out << "[" << i << "] = " << _outParticles[i];
+    if (i < _outParticles.size() - 1)
+      out << ", ";
+  }
+  out << endl;
   return out;
 }
 

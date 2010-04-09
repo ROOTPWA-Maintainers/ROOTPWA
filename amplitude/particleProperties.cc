@@ -135,32 +135,33 @@ rpwa::operator ==(const particleProperties& lhsProp,
 }
 
 
-// the selector string can contain any of the following: I, G, J, P,
-// C, strangeness, charm, beauty, baryonNmb
+// selector string can contain any of the following:
+// I, G, J, P, C, strangeness, charm, beauty, baryonNmb, or allQn
 bool 
-rpwa::operator ==(particleProperties const &               lhsProp,
-		  pair<particleProperties, string> const & rhs)
+rpwa::operator ==(const particleProperties&               lhsProp,
+		  const pair<particleProperties, string>& rhs)
 {
-  const particleProperties& rhsProp  = rhs.first;
-  const string&             selector = rhs.second;
-  return (   (    (selector.find("baryonNbm") == string::npos)
-	       || (lhsProp.baryonNmb()        == rhsProp.baryonNmb()))
-          && (    (selector.find("I") == string::npos)
-	       || (lhsProp.isospin()  == rhsProp.isospin()))
-          && (    (selector.find("strangeness") == string::npos)
-	       || (lhsProp.strangeness()        == rhsProp.strangeness()))
-	  && (    (selector.find("charm") == string::npos)
-	       || (lhsProp.charm()        == rhsProp.charm()))
-          && (    (selector.find("beauty") == string::npos)
-	       || (lhsProp.beauty()        == rhsProp.beauty()))
-          && (    (selector.find("G") == string::npos)
-	       || (lhsProp.G()        == rhsProp.G()))
-          && (    (selector.find("J") == string::npos)
-	       || (lhsProp.J()        == rhsProp.J()))
-          && (    (selector.find("P") == string::npos)
-	       || (lhsProp.P()        == rhsProp.P()))
-	  && (    (selector.find("C") == string::npos)
-	       || (lhsProp.C()        == rhsProp.C())));
+  const particleProperties& rhsProp    = rhs.first;
+  const string&             selector   = rhs.second;
+  const bool                checkAllQn = (selector.find("allQn") != string::npos);
+  return (   (    ((selector.find("baryonNmb") == string::npos) && !checkAllQn)
+	       || (lhsProp.baryonNmb()         == rhsProp.baryonNmb()))
+          && (    ((selector.find("I") == string::npos) && !checkAllQn)
+	       || (lhsProp.isospin()   == rhsProp.isospin()))
+          && (    ((selector.find("strangeness") == string::npos) && !checkAllQn)
+	       || (lhsProp.strangeness()         == rhsProp.strangeness()))
+	  && (    ((selector.find("charm") == string::npos) && !checkAllQn)
+	       || (lhsProp.charm()         == rhsProp.charm()))
+	  && (    ((selector.find("beauty") == string::npos) && !checkAllQn)
+	       || (lhsProp.beauty()         == rhsProp.beauty()))
+	  && (    ((selector.find("G") == string::npos) && !checkAllQn)
+	       || (lhsProp.G()         == rhsProp.G()))
+	  && (    ((selector.find("J") == string::npos) && !checkAllQn)
+	       || (lhsProp.J()         == rhsProp.J()))
+	  && (    ((selector.find("P") == string::npos) && !checkAllQn)
+	       || (lhsProp.P()         == rhsProp.P()))
+	  && (    ((selector.find("C") == string::npos) && !checkAllQn)
+	       || (lhsProp.C()         == rhsProp.C())));
 }
 
 
@@ -186,18 +187,53 @@ particleProperties::fillFromDataTable(const string& partName)
 }
 
 
+void
+particleProperties::setSCB(const int strangeness,
+			   const int charm,
+			   const int beauty)
+{
+  setStrangeness(strangeness);
+  setCharm      (charm);
+  setBeauty     (beauty);
+}
+
+
+void
+particleProperties::setIGJPC(const int isospin,
+			     const int G,
+			     const int J,
+			     const int P,
+			     const int C)
+{
+  setIsospin(isospin);
+  setG      (G);
+  setJ      (J);
+  setP      (P);
+  setC      (C);
+}
+
+
+string
+particleProperties::qnSummary() const
+{
+  ostringstream out;
+  out << name() << "[" << isospin() * 0.5 << sign(G()) << "(" << J() * 0.5 << sign(P()) << sign(C()) << ")]";
+  return out.str();
+}
+
+
 ostream&
 particleProperties::print(ostream& out) const
 {
-  out << "particle '"  << _name         << "': "
-      << "mass = "     << _mass         << " GeV/c^2, "
-      << "width = "    << _width        << " GeV/c^2, "
-      << "baryon # = " << _baryonNmb    << ", "
-      << "(2I)^G(2J)^PC = ("  << _isospin << ")^" << sign(_G)
-      << "(" << _J << ")^" << sign(_P) << sign(_C) << ", "
-      << "strangeness = " << _strangeness << ", "
-      << "charm = "       << _charm       << ", "
-      << "beauty = "      << _beauty;
+  out << "particle '"  << name()         << "': "
+      << "mass = "     << mass()         << " GeV/c^2, "
+      << "width = "    << width()        << " GeV/c^2, "
+      << "baryon # = " << baryonNmb()    << ", "
+      << "I^G J^PC = "  << isospin() * 0.5 << "^" << sign(G())
+      << " " << J() *0.5 << "^" << sign(P()) << sign(C()) << ", "
+      << "strangeness = " << strangeness() << ", "
+      << "charm = "       << charm()       << ", "
+      << "beauty = "      << beauty();
   return out;
 }
 
@@ -205,18 +241,18 @@ particleProperties::print(ostream& out) const
 ostream&
 particleProperties::dump(ostream& out) const
 {
-  out << _name        << "\t"
-      << _mass        << "\t"
-      << _width       << "\t"
-      << _baryonNmb   << "\t"
-      << _isospin     << "\t"
-      << _strangeness << "\t" 
-      << _charm       << "\t" 
-      << _beauty      << "\t" 
-      << _G           << "\t" 
-      << _J           << "\t" 
-      << _P           << "\t" 
-      << _C;
+  out << name()        << "\t"
+      << mass()        << "\t"
+      << width()       << "\t"
+      << baryonNmb()   << "\t"
+      << isospin()     << "\t"
+      << strangeness() << "\t" 
+      << charm()       << "\t" 
+      << beauty()      << "\t" 
+      << G()           << "\t" 
+      << J()           << "\t" 
+      << P()           << "\t" 
+      << C();
   return out;
 }
 
@@ -255,10 +291,10 @@ particleProperties::chargeFromName(const string& name,
 				   int&          charge)
 {
   // assumes that for singly charged particles the charge is
-  // designated by the last character in the name
+  // designated by the last character in the name (e.g. 'pi+')
   // if no charge character is found charge 0 is assumed
   // for multiply charged particles the charge state is the
-  // second-to-last character
+  // second-to-last character (e.g. 'Delta(1232)2+')
   charge = 0;
   string     strippedName = name;
   const char last         = name[name.length() - 1];

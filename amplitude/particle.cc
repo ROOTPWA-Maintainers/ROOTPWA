@@ -141,12 +141,11 @@ particle::name() const
 }
 
 
-string
-particle::summary() const
+void
+particle::setProperties(const particleProperties& prop)
 {
-  ostringstream out;
-  out << name() << "[" << isospin() * 0.5 << sign(G()) << "(" << J() * 0.5 << sign(P()) << sign(C()) << ")]";
-  return out.str();
+  if (this != &prop)
+    particleProperties::operator =(prop);
 }
 
 

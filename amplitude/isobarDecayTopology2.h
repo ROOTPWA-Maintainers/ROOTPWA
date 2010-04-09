@@ -77,13 +77,21 @@ namespace rpwa {
 
     void addDecay(const isobarDecayTopology2& topo);  ///< returns sub-decay tree that starts at given vertex
 
-    static isobarDecayTopology2 joinDaughterGraphs(const isobarDecayVertexPtr&              motherVertex,
+    static isobarDecayTopology2 joinDaughterDecays(const isobarDecayVertexPtr&              motherVertex,
 						   const std::vector<isobarDecayTopology2>& daughterDecays);  ///< joins daughter decay graphs and connects them to a common mother vertex
-    static isobarDecayTopology2 joinDaughterGraphs(const isobarDecayVertexPtr& motherVertex,
+    static isobarDecayTopology2 joinDaughterDecays(const isobarDecayVertexPtr& motherVertex,
 						   const isobarDecayTopology2& daughter1Decay,
 						   const isobarDecayTopology2& daughter2Decay);  ///< joins daughter decay graphs and connects them to a common mother vertex
 
-    std::vector<isobarDecayTopology2> possibleDecays();  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
+    std::vector<isobarDecayTopology2> possibleDecays(const int  minI           = 0,
+						     const int  maxI           = 2,
+						     const int  minJ           = 0,
+						     const int  maxJ           = 8,
+						     const int  minL           = 0,
+						     const int  maxL           = 6,
+						     const int  minS           = 0,
+						     const int  maxS           = 6,
+						     const bool allowJpcExotic = false);  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
     
     const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 

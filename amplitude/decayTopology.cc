@@ -242,18 +242,18 @@ decayTopology::print(ostream& out) const
 {
   out << "decay topology nodes:" << endl;
   cout << "    production node[" << _vertexNodeMap.find(_productionVertex)->second << "] = ";
-  out << _productionVertex->inParticles() [0]->summary() << "  --->  "
-      << _productionVertex->outParticles()[0]->summary() << endl;
+  out << _productionVertex->inParticles() [0]->qnSummary() << "  --->  "
+      << _productionVertex->outParticles()[0]->qnSummary() << endl;
   for (unsigned int i = 0; i < nmbVertices(); ++i) {
     cout << "    decay node[" << _vertexNodeMap.find(_vertices[i])->second << "] = ";
     for (unsigned int j = 0; j < _vertices[i]->nmbInParticles(); ++j) {
-      out << _vertices[i]->inParticles()[j]->summary();
+      out << _vertices[i]->inParticles()[j]->qnSummary();
       if (j < _vertices[i]->nmbInParticles() - 1)
   	out << "  +  ";
     }
     out << "  --->  ";
     for (unsigned int j = 0; j < _vertices[i]->nmbOutParticles(); ++j) {
-      out << _vertices[i]->outParticles()[j]->summary();
+      out << _vertices[i]->outParticles()[j]->qnSummary();
       if (j < _vertices[i]->nmbOutParticles() - 1)
   	out << "  +  ";
     }

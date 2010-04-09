@@ -74,19 +74,20 @@ namespace rpwa {
 	     const int                 spinProj);
     virtual ~particle();
 
-    virtual particle& operator =(const particle& part);
+    virtual particle& operator =(const particle&           part);
     virtual particle* clone() const;
 
-    std::string           name()     const;                       ///< returns particle name including charge
-    std::string           summary()  const;                       ///< returns particle summary in short form
-    int                   charge()   const { return _charge;   }  ///< returns particle's charge
-    int                   spinProj() const { return _spinProj; }  ///< returns particle's spin projection quantum number
-    const TLorentzVector& lzVec()    const { return _lzVec;    }  ///< returns Lorentz vector of particle
+    std::string           name()      const;                       ///< returns particle name including charge
+    int                   charge()    const { return _charge;   }  ///< returns particle's charge
+    int                   spinProj()  const { return _spinProj; }  ///< returns particle's spin projection quantum number
+    const TLorentzVector& lzVec()     const { return _lzVec;    }  ///< returns Lorentz vector of particle
 
     void setCharge  (const int             charge)   { _charge   = charge;                                                            }  ///< sets particle's charge
     void setSpinProj(const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
     void setMomentum(const TVector3&       momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
     void setLzVec   (const TLorentzVector& lzVec)    { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
+
+    void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
     const TLorentzVector& transform(const TLorentzRotation& L) { return (_lzVec *= L); }  ///< applies Lorentz-transformation to particle
 

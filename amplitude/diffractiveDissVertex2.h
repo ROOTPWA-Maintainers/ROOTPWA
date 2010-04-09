@@ -70,8 +70,9 @@ namespace rpwa {
     inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
     inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
 
-    virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
-    virtual std::ostream& dump (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+    virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
+    virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+    virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

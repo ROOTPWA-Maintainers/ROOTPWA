@@ -181,10 +181,8 @@ main(int argc, char** argv)
     cout << "toVertex(f1): "   << *g2.toVertex  (f1) << endl;
     cout << "particleExists(vert0, vert1) = " << g2.particleExists(vert0, vert1) << ", "
      	 << "particleExists(vert1, vert0) = " << g2.particleExists(vert1, vert0) << endl;
-
-    //!!! does not work
     cout << "particleConnects(f1, vert0, vert1) = " << g2.particleConnects(f1, vert0, vert1) << endl;
-
+    cout << "particleConnects(a1, vert0, vert1) = " << g2.particleConnects(a1, vert0, vert1) << endl;
     cout << "graph data = " << g2.data().foo << endl;
     for (graphType::nodeIterator i = g2.nodes().first; i != g2.nodes().second; ++i)
       cout << "node " << *i << ": data = " << g2.data(*i).bar << ", "
@@ -303,15 +301,16 @@ main(int argc, char** argv)
       subDecay1.addDecay(decay);
       cout << "subdecay from node[2] + subdecay from node[9] + vert0: " << subDecay1;
       const isobarDecayTopology2& subDecayX = topo2.subDecay(2);
-      isobarDecayTopology2 newDecay = isobarDecayTopology2::joinDaughterGraphs(vertX, subDecayX, subDecay3);
+      isobarDecayTopology2 newDecay = isobarDecayTopology2::joinDaughterDecays(vertX, subDecayX, subDecay3);
       diffractiveDissVertexPtr prodVertX = createDiffractiveDissVertex(beam, X2);
       newDecay.setProductionVertex(prodVertX);
       cout << "joined graph: " << newDecay;
       newDecay.checkTopology();
       newDecay.checkConsistency();
+
+      cout << endl << "testing decay generator" << endl;
+      newDecay.possibleDecays();
     }
-    
-    //topo2.possibleDecays();
   }
 
   // test construction of vertices

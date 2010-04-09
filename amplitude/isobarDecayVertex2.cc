@@ -222,17 +222,17 @@ isobarDecayVertex2::checkConsistency()
   if (!angMomCoupl(daughter1()->J(), daughter2()->J()).inRange(_S)) {
     if(_debug)
       printWarn << "spins "
-		<< "(" << daughter1()->name() << " 2J = " << daughter1()->J() << ") and "
-		<< "(" << daughter2()->name() << " 2J = " << daughter2()->J() << ") "
-		<< "cannot couple to total spin 2S = " << _S << endl;
+		<< "(" << daughter1()->name() << " J = " << daughter1()->J() * 0.5 << ") and "
+		<< "(" << daughter2()->name() << " J = " << daughter2()->J() * 0.5 << ") "
+		<< "cannot couple to total spin S = " << _S * 0.5 << endl;
     vertexConsistent = false;
   } else if (_debug)
     printInfo << *this << ": spin-spin coupling is consistent" << endl;
   // L-S coupling: J in {|L - S|, ..., L + S}
   if (!angMomCoupl(_L, _S).inRange(mother()->J())) {
     if (_debug)
-      printWarn << "orbital angular momentum 2L = " << _L << " and spin 2S = " << _S
-		<< " cannot couple to angular momentum 2J = " << mother()->J() << endl;
+      printWarn << "orbital angular momentum L = " << _L * 0.5 << " and spin S = " << _S * 0.5
+		<< " cannot couple to angular momentum J = " << mother()->J() * 0.5 << endl;
     vertexConsistent = false;
   } else if (_debug)
     printInfo << *this << ": L-S coupling is consistent" << endl;
@@ -240,16 +240,20 @@ isobarDecayVertex2::checkConsistency()
   if (!angMomCoupl(daughter1()->isospin(), daughter2()->isospin()).inRange(mother()->isospin())) {
     if (_debug)
       printWarn << "isospins "
-		<< "(" << daughter1()->name() << " 2I = " << daughter1()->isospin() << ") and "
-		<< "(" << daughter2()->name() << " 2I = " << daughter2()->isospin() << ") "
-		<< "cannot couple to total isospin 2I = " << mother()->isospin() << endl;
+		<< "(" << daughter1()->name() << " I = " << daughter1()->isospin() * 0.5 << ") and "
+		<< "(" << daughter2()->name() << " I = " << daughter2()->isospin() * 0.5 << ") "
+		<< "cannot couple to total isospin I = " << mother()->isospin() * 0.5 << endl;
     vertexConsistent = false;
   } else if (_debug)
     printInfo << *this << ": isospin coupling is consistent" << endl;
   //!!! missing: spin projections
-  if (!vertexConsistent && _debug)
-    printWarn << "vertex data are inconsistent (see warnings above):" << endl
-	      << *this << flush;
+  if (_debug) {
+    if (vertexConsistent)
+      printInfo << "vertex data are consistent: " << *this << endl;
+    else
+      printWarn << "vertex data are inconsistent (see warnings above): "
+		<< *this << endl;
+  }
   return vertexConsistent;
 }
 
@@ -258,10 +262,10 @@ ostream&
 isobarDecayVertex2::print(ostream& out) const
 {
   out << "isobar decay vertex: "
-      << mother()->summary() << "  --->  "
-      << daughter1()->summary()
-      << "  [2L = " << _L << ", 2S = " << _S << "]  "
-      << daughter2()->summary();
+      << mother()->qnSummary() << "  --->  "
+      << daughter1()->qnSummary()
+      << "  [L = " << _L * 0.5 << ", S = " << _S * 0.5 << "]  "
+      << daughter2()->qnSummary();
   return out;
 }
 
@@ -273,6 +277,17 @@ isobarDecayVertex2::dump(ostream& out) const
       << "    mother: "     << *mother()    << endl
       << "    daughter 1: " << *daughter1() << endl
       << "    daughter 2: " << *daughter2() << endl
-      << "    2L = " << _L << ", 2S = " << _S << endl;
+      << "    L = " << _L * 0.5 << ", S = " << _S * 0.5 << endl;
+  return out;
+}
+
+
+ostream&
+isobarDecayVertex2::printPointers(ostream& out) const
+{
+  out << "isobar decay vertex "  << this        << ": "
+      << "mother particle: "     << mother()    << "; "
+      << "daughter 1 particle: " << daughter1() << "; "
+      << "daughter 2 particle: " << daughter2() << endl;
   return out;
 }

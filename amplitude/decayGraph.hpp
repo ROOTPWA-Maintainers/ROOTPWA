@@ -139,10 +139,12 @@ namespace rpwa {
     typedef typename boost::property_map<graph, boost::edge_name_t      >::type edgeNameMapType;      ///< type of map [edge descriptor] -> [edge name property       ]
     typedef typename boost::property_map<graph, boost::edge_color_t     >::type edgeColorMapType;     ///< type of map [edge descriptor] -> [edge color property      ]
 
-    typedef typename boost::property_map<graph, boost::vertex_index_t>::const_type nodeIndexMapConstType;  ///< type of map [node descriptor] -> [node index property]
-    typedef typename boost::property_map<graph, boost::vertex_name_t >::const_type nodeNameMapConstType;   ///< type of map [node descriptor] -> [node name property ]
-    typedef typename boost::property_map<graph, boost::edge_index_t  >::const_type edgeIndexMapConstType;  ///< type of map [edge descriptor] -> [edge index property]
-    typedef typename boost::property_map<graph, boost::edge_name_t   >::const_type edgeNameMapConstType;   ///< type of map [edge descriptor] -> [edge name property ]
+    typedef typename boost::property_map<graph, boost::vertex_VPointer_t>::const_type nodeVertexMapConstType;    ///< type of map [node descriptor] -> [vertex pointer property  ]
+    typedef typename boost::property_map<graph, boost::edge_PPointer_t  >::const_type edgeParticleMapConstType;  ///< type of map [edge descriptor] -> [particle pointer property]
+    typedef typename boost::property_map<graph, boost::vertex_index_t   >::const_type nodeIndexMapConstType;     ///< type of map [node descriptor] -> [node index property      ]
+    typedef typename boost::property_map<graph, boost::vertex_name_t    >::const_type nodeNameMapConstType;      ///< type of map [node descriptor] -> [node name property       ]
+    typedef typename boost::property_map<graph, boost::edge_index_t     >::const_type edgeIndexMapConstType;     ///< type of map [edge descriptor] -> [edge index property      ]
+    typedef typename boost::property_map<graph, boost::edge_name_t      >::const_type edgeNameMapConstType;      ///< type of map [edge descriptor] -> [edge name property       ]
 
     
   private:
@@ -180,27 +182,27 @@ namespace rpwa {
     void
     buildReverseMaps()  ///< (re)builds vertex-node and particle-edge maps
     {
-      nodeIterator iNode, iNodeEnd;
+      nodeIterator iNd, iNdEnd;
       _vertexNodeMap.clear();
-      for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
-	const VPtr& v = vertex(*iNode);
+      for (boost::tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd) {
+	const VPtr& v = vertex(*iNd);
 	if (!v) {
-	  printErr << "encountered null vertex pointer for node " << *iNode
+	  printErr << "encountered null vertex pointer for node " << *iNd
 		   << " in graph '" << name() << "'. aborting." << std::endl;
 	  throw;
 	}
-	_vertexNodeMap[v] = *iNode;
+	_vertexNodeMap[v] = *iNd;
       }
       _particleEdgeMap.clear();
-      edgeIterator iEdge, iEdgeEnd;
-      for (boost::tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge) {
-	const PPtr& p = particle(*iEdge);
+      edgeIterator iEd, iEdEnd;
+      for (boost::tie(iEd, iEdEnd) = edges(); iEd != iEdEnd; ++iEd) {
+	const PPtr& p = particle(*iEd);
 	if (!p) {
-	  printErr << "encountered null particle pointer for edge " << *iEdge
+	  printErr << "encountered null particle pointer for edge " << *iEd
 		   << " in graph '" << name() << "'. aborting." << std::endl;
 	  throw;
 	}
-	_particleEdgeMap[p] = *iEdge;
+	_particleEdgeMap[p] = *iEd;
       }
     }
 
@@ -229,26 +231,26 @@ namespace rpwa {
     {
       const PPtr p = particle(ed);
       if (!p) {
-	printErr << "encountered null particle pointer for edge " << ed
-		 << " while coling graph '" << name() << "'. aborting." << std::endl;
-	throw;
+      	printErr << "encountered null particle pointer for edge " << ed
+      		 << " while cloning graph '" << name() << "'. aborting." << std::endl;
+      	throw;
       }
       // clone particle
       if (_debug)
-	printInfo << "cloning " << *p << std::endl;
+      	printInfo << "cloning " << *p << std::endl;
       PPtr newP(p->clone());
       // store new particle in node property
       particle(ed) = newP;
       // store new particle in array of outgoing particles in fromVertex
       const VPtr& fromV = fromVertex(ed);
       for (unsigned int i = 0; i < fromV->nmbOutParticles(); ++i)
-	if (fromV->outParticles()[i] == p)
-	  fromV->outParticles()[i] = newP;
+      	if (fromV->outParticles()[i] == p)
+      	  fromV->outParticles()[i] = newP;
       // store new particle in array of incoming particles in toVertex
       const VPtr& toV = toVertex(ed);
       for (unsigned int i = 0; i < toV->nmbInParticles(); ++i)
-	if (toV->inParticles()[i] == p)
-	  toV->inParticles()[i] = newP;
+      	if (toV->inParticles()[i] == p)
+      	  toV->inParticles()[i] = newP;
       return newP;
     }
 
@@ -259,15 +261,18 @@ namespace rpwa {
     decayGraph*
     clone(const bool cloneParticles = true) const  ///< creates deep copy of graph
     {
+      if (_debug)
+	printInfo << "cloning graph '" << name() << "'; "
+		  << "cloneParticles = " << cloneParticles << std::endl;
       // copy graph data structure
       decayGraph* graphClone = new decayGraph(*this);
-      nodeIterator iNode, iNodeEnd;
-      for (boost::tie(iNode, iNodeEnd) = graphClone->nodes(); iNode != iNodeEnd; ++iNode)
-	graphClone->cloneNode(*iNode);
+      nodeIterator iNd, iNdEnd;
+      for (boost::tie(iNd, iNdEnd) = graphClone->nodes(); iNd != iNdEnd; ++iNd)
+	graphClone->cloneNode(*iNd);
       if (cloneParticles) {
-	edgeIterator iEdge, iEdgeEnd;
-	for (boost::tie(iEdge, iEdgeEnd) = graphClone->edges(); iEdge != iEdgeEnd; ++iEdge)
-	  graphClone->cloneEdge(*iEdge);
+	edgeIterator iEd, iEdEnd;
+	for (boost::tie(iEd, iEdEnd) = graphClone->edges(); iEd != iEdEnd; ++iEd)
+	  graphClone->cloneEdge(*iEd);
       }
       graphClone->buildReverseMaps();
       return graphClone;
@@ -308,22 +313,22 @@ namespace rpwa {
 	  throw;
 	}
 	// match with outgoing particles of other vertices
-	nodeIterator iNode, iNodeEnd;
-	for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
-	  if (*iNode == newNd)
+	nodeIterator iNd, iNdEnd;
+	for (boost::tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd) {
+	  if (*iNd == newNd)
 	    continue;
-	  const VPtr& otherV = vertex(*iNode);
+	  const VPtr& otherV = vertex(*iNd);
 	  for (unsigned int iOutPart = 0; iOutPart < otherV->nmbOutParticles(); ++iOutPart)
 	    if (p == otherV->outParticles()[iOutPart]) {
 	      bool     inserted;
 	      edgeDesc ed;
-	      boost::tie(ed, inserted) = boost::add_edge(*iNode, newNd, _graph);
+	      boost::tie(ed, inserted) = boost::add_edge(*iNd, newNd, _graph);
 	      if (inserted) {
 		particle(ed)        = p;
 		_particleEdgeMap[p] = ed;
 		if (_debug)
 		  printInfo << "added edge for particle '" << p->name() << "' "
-			    << "from node [" << *iNode << "] to node ["
+			    << "from node [" << *iNd << "] to node ["
 			    << newNd << "] of graph '" << name() << "'" << std::endl;
 	      } else {
 		printErr << "could not add edge for particle " << *p << " "
@@ -342,22 +347,22 @@ namespace rpwa {
 	  throw;
 	}
 	// match with incoming particles of other vertices
-	nodeIterator iNode, iNodeEnd;
-	for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
-	  if (*iNode == newNd)
+	nodeIterator iNd, iNdEnd;
+	for (boost::tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd) {
+	  if (*iNd == newNd)
 	    continue;
-	  const VPtr& otherV = vertex(*iNode);
+	  const VPtr& otherV = vertex(*iNd);
 	  for (unsigned int iInPart = 0; iInPart < otherV->nmbInParticles(); ++iInPart)
 	    if (p == otherV->inParticles()[iInPart]) {
 	      bool     inserted;
 	      edgeDesc ed;
-	      boost::tie(ed, inserted) = boost::add_edge(newNd, *iNode, _graph);
+	      boost::tie(ed, inserted) = boost::add_edge(newNd, *iNd, _graph);
 	      if (inserted) {
 		particle(ed)        = p;
 		_particleEdgeMap[p] = ed;
 		if (_debug)
 		  printInfo << "added edge for particle '" << p->name() << "' "
-			    << "from node [" << *iNode << "] to node ["
+			    << "from node [" << *iNd << "] to node ["
 			    << newNd << "] of graph '" << name() << "'" << std::endl;
 	      } else {
 		printErr << "could not add edge for particle " << *p << " "
@@ -401,12 +406,12 @@ namespace rpwa {
     // node and edge mapping
     inline const VPtr& vertex     (const nodeDesc& nd) const { return boost::get(boost::vertex_VPointer, _graph)[nd]; }  ///< returns vertex associated to node
     inline const VPtr& operator [](const nodeDesc& nd) const { return vertex(nd);                                     }  ///< returns vertex associated to node
-    inline const PPtr& particle   (const edgeDesc& ed) const { return boost::get(boost::edge_PPointer,  _graph)[ed];  }  ///< returns particle associated to edge
-    inline const PPtr& operator [](const edgeDesc& ed) const { return node(ed);                                       }  ///< returns particle associated to edge
+    inline const PPtr& particle   (const edgeDesc& ed) const { return boost::get(boost::edge_PPointer,   _graph)[ed]; }  ///< returns particle associated to edge
+    inline const PPtr& operator [](const edgeDesc& ed) const { return particle(ed);                                   }  ///< returns particle associated to edge
 
     inline VPtr& vertex     (const nodeDesc& nd) { return boost::get(boost::vertex_VPointer, _graph)[nd]; }  ///< returns vertex associated to node
     inline VPtr& operator [](const nodeDesc& nd) { return vertex(nd);                                     }  ///< returns vertex associated to node
-    inline PPtr& particle   (const edgeDesc& ed) { return boost::get(boost::edge_PPointer,  _graph)[ed];  }  ///< returns particle associated to edge
+    inline PPtr& particle   (const edgeDesc& ed) { return boost::get(boost::edge_PPointer,   _graph)[ed]; }  ///< returns particle associated to edge
     inline PPtr& operator [](const edgeDesc& ed) { return particle(ed);                                   }  ///< returns particle associated to edge
     
     inline bool isNode(const VPtr& v) const  ///< returns whether vertex is associated to a node in the graph
@@ -446,7 +451,16 @@ namespace rpwa {
       		 << "aborting." << std::endl;
       	throw;
       }
-      return pos->second;
+      //!!! for some reason the edge descriptor stored in the map does not work correctly,
+      //    however, the one returned by boost::edge works fine
+      //    I'm at a loss, because the behaviour is really strange:
+      //    e.g. mysteriously ed != ed1
+      //    or particle(ed) = something does _not_ change the particle pointer, whereas
+      //    particle(ed1) = something works as expected
+      //    at least the workaround is not too ugly
+      const edgeDesc ed  = pos->second;
+      const edgeDesc ed1 = edge(fromNode(ed), toNode(ed));
+      return ed1;
     }
     inline edgeDesc operator [](const PPtr& p) const { return edge(p); }  ///< gives node descriptor associated to vertex
 
@@ -485,11 +499,6 @@ namespace rpwa {
 		 const nodeDesc& toNd) const  ///< returns wether given edge goes from fromNd to toNd
     {
       std::pair<edgeDesc, bool> edFound = boost::edge(fromNd, toNd, _graph);
-      //!!! for some reason the edge descriptor comparison returns
-      //    false although descriptors are the same
-      printWarn << "!!! DOES NOT WORK: ed = " << ed << ", fromNd = " << fromNd << ", "
-		<< "toNd = " << toNd << "; " << edFound.first << ", " << edFound.second << "; "
-		<< (edFound.first == ed) << std::endl;
       if ((edFound.second) && (edFound.first == ed))
 	return true;
       return false;	
@@ -504,11 +513,10 @@ namespace rpwa {
 	 const nodeDesc& toNd) const  ///< returns descriptor of edge that goes from fromNd to toNd
     {
       std::pair<edgeDesc, bool> edFound = boost::edge(fromNd, toNd, _graph);
-      if (edFound.second)
-	return edFound.first;
-      //!!! not sure whether this makes sense
-      edgeDesc defaultEd;
-      return defaultEd;
+      if (!edFound.second)
+	printWarn << "there is no edge connecting nodes[" << fromNd << "] and "
+		  << "[" << toNd << "]. returning default edge." << std::endl;
+      return edFound.first;
     }
     inline
     const PPtr
@@ -517,21 +525,25 @@ namespace rpwa {
     {
       std::pair<edgeDesc, bool> edFound = boost::edge(node(fromV), node(toV), _graph);
       if (edFound.second)
-	return edge(edFound.first);
+	return particle(edFound.first);
       return 0;
     }
 
 
     // property accessors
-    nodeIndexMapType nodeIndexMap() { return boost::get(boost::vertex_index, _graph); }  ///< returns map [node descriptor] -> [node index property]
-    nodeNameMapType  nodeNameMap () { return boost::get(boost::vertex_name,  _graph); }  ///< returns map [node descriptor] -> [node name property ]
-    edgeIndexMapType edgeIndexMap() { return boost::get(boost::edge_index,   _graph); }  ///< returns map [edge descriptor] -> [edge index property]
-    edgeNameMapType  edgeNameMap () { return boost::get(boost::edge_name,    _graph); }  ///< returns map [edge descriptor] -> [edge name property ]
+    nodeVertexMapType   nodeVertexMap  () { return boost::get(boost::vertex_VPointer, _graph); }  ///< returns map [node descriptor] -> [node vertex pointer property]
+    nodeIndexMapType    nodeIndexMap   () { return boost::get(boost::vertex_index,    _graph); }  ///< returns map [node descriptor] -> [node index property]
+    nodeNameMapType     nodeNameMap    () { return boost::get(boost::vertex_name,     _graph); }  ///< returns map [node descriptor] -> [node name property ]
+    edgeParticleMapType edgeParticleMap() { return boost::get(boost::edge_PPointer,   _graph); }  ///< returns map [edge descriptor] -> [edge particle pointer property]
+    edgeIndexMapType    edgeIndexMap   () { return boost::get(boost::edge_index,      _graph); }  ///< returns map [edge descriptor] -> [edge index property]
+    edgeNameMapType     edgeNameMap    () { return boost::get(boost::edge_name,       _graph); }  ///< returns map [edge descriptor] -> [edge name property ]
 
-    nodeIndexMapConstType nodeIndexMap() const { return boost::get(boost::vertex_index, _graph); }  ///< returns map [node descriptor] -> [node index property]
-    nodeNameMapConstType  nodeNameMap () const { return boost::get(boost::vertex_name,  _graph); }  ///< returns map [node descriptor] -> [node name property ]
-    edgeIndexMapConstType edgeIndexMap() const { return boost::get(boost::edge_index,   _graph); }  ///< returns map [edge descriptor] -> [edge index property]
-    edgeNameMapConstType  edgeNameMap () const { return boost::get(boost::edge_name,    _graph); }  ///< returns map [edge descriptor] -> [edge name property ]
+    nodeVertexMapConstType   nodeVertexMap  () const { return boost::get(boost::vertex_VPointer, _graph); }  ///< returns map [node descriptor] -> [node vertex pointer property]
+    nodeIndexMapConstType    nodeIndexMap   () const { return boost::get(boost::vertex_index,    _graph); }  ///< returns map [node descriptor] -> [node index property]
+    nodeNameMapConstType     nodeNameMap    () const { return boost::get(boost::vertex_name,     _graph); }  ///< returns map [node descriptor] -> [node name property ]
+    edgeParticleMapConstType edgeParticleMap() const { return boost::get(boost::edge_PPointer,   _graph); }  ///< returns map [edge descriptor] -> [edge particle pointer property]
+    edgeIndexMapConstType    edgeIndexMap   () const { return boost::get(boost::edge_index,      _graph); }  ///< returns map [edge descriptor] -> [edge index property]
+    edgeNameMapConstType     edgeNameMap    () const { return boost::get(boost::edge_name,       _graph); }  ///< returns map [edge descriptor] -> [edge name property ]
 
     inline const GBundleData& data ()                   const { return boost::get_property(_graph, boost::graph_bundle); }  ///< returns bundled graph property structure
     inline const NBundleData& data (const nodeDesc& nd) const { return boost::get(boost::vertex_bundle,   _graph)[nd];   }  ///< returns bundled property structure for given node
@@ -579,7 +591,8 @@ namespace rpwa {
 			       boost::make_iterator_property_map(colors.begin(),
 								 nodeIndexMap(), colors[0]));
       if (_debug) {
-	printInfo << "depth-first node order starting at node[" << startNd << "]: ";
+	printInfo << "depth-first node order of graph '" << name() 
+		  << "' starting at node[" << startNd << "]: ";
 	for (unsigned int i = 0; i < sortedNds.size(); ++i)
 	  std::cout << sortedNds[i] << ((i < sortedNds.size() - 1) ? ", " : "");
 	std::cout << std::endl;
@@ -595,6 +608,24 @@ namespace rpwa {
     }
 
 
+    nodeDesc
+    topNode() const  ///< returns node which has no incoming edge and from which all other nodes can be reached
+    {
+      nodeIterator iNd, iNdEnd;
+      for (boost::tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd)
+	if (nmbInEdges(*iNd) == 0) {
+	  std::vector<nodeDesc> sortedNds = sortNodesDfs(*iNd);
+	  if (sortedNds.size() == nmbNodes())
+	    return *iNd;
+	}
+      // could not find such node
+      printWarn << "could not find top node in graph '" << name()
+		<< "'. returning default node." << std::endl;
+      nodeDesc defaultNd = *iNdEnd;
+      return defaultNd;
+    }
+
+
     // subgraph routines
     decayGraph
     dfsSubGraph(const nodeDesc& startNd)  ///< constructs subgraph that contains all nodes that can be reached from given start node
@@ -605,6 +636,7 @@ namespace rpwa {
     	printInfo << "creating subgraph of graph '" << name() << "' starting at node " << startNd
     		  << " using nodes: " << std::flush;
       decayGraph subGraph = _graph.create_subgraph();
+      subGraph.name() = "subgraph";
       for (unsigned int i = 0; i < subGraphNds.size(); ++i) {
     	subGraph.addMotherGraphNode(subGraphNds[i]);
     	if (_debug)
@@ -628,7 +660,8 @@ namespace rpwa {
     addGraph(const decayGraph& graph)  ///< copies all nodes and edges (including properties) in graph into this graph and creates additional edges for the possible connections between graph and this _graph
     {
       if (_debug)
-	printInfo << "adding graph '" << graph.name() << "' to graph '" << name() << "'" << std::endl;
+	printInfo << "adding graph '" << graph.name() << "' "
+		  << "to graph '" << name() << "'" << std::endl;
       boost::copy_graph(graph._graph, _graph);
       buildReverseMaps();
       createEdgesFromParticles();
@@ -642,13 +675,13 @@ namespace rpwa {
 	  NLabel        nodeLabelMap) const  ///< prints decay graph nodes in human-readable form; node labels are determined from nodeLabelMap
     {
       out << "graph '" << name() << "' has " << nmbNodes() << " node(s):" << std::endl;
-      nodeIterator iNode, iNodeEnd;
-      for (boost::tie(iNode, iNodeEnd) = nodes(); iNode != iNodeEnd; ++iNode) {
-      	out << "    " << boost::get(nodeLabelMap, *iNode) << " --> ";
-      	outEdgeIterator iEdge, iEdgeEnd;
-      	for (boost::tie(iEdge, iEdgeEnd) = boost::out_edges(*iNode, _graph);
-	     iEdge != iEdgeEnd; ++iEdge)
-      	  out << boost::get(nodeLabelMap, target(*iEdge, _graph)) << " ";
+      nodeIterator iNd, iNdEnd;
+      for (boost::tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd) {
+      	out << "    " << boost::get(nodeLabelMap, *iNd) << " --> ";
+      	outEdgeIterator iEd, iEdEnd;
+      	for (boost::tie(iEd, iEdEnd) = boost::out_edges(*iNd, _graph);
+	     iEd != iEdEnd; ++iEd)
+      	  out << boost::get(nodeLabelMap, target(*iEd, _graph)) << " ";
       	out << std::endl;
       }
       return out;
@@ -662,11 +695,11 @@ namespace rpwa {
     {
       print(out, nodeLabelMap);
       out << "graph '" << name() << "' has " << nmbEdges() << " edge(s):" << std::endl;
-      edgeIterator iEdge, iEdgeEnd;
-      for (boost::tie(iEdge, iEdgeEnd) = edges(); iEdge != iEdgeEnd; ++iEdge)
-      	out << "    " << boost::get(edgeLabelMap, *iEdge)
-      	    << " = [" << boost::get(nodeLabelMap, fromNode(*iEdge))
-      	    << ", "   << boost::get(nodeLabelMap, toNode  (*iEdge)) << "]" << std::endl;
+      edgeIterator iEd, iEdEnd;
+      for (boost::tie(iEd, iEdEnd) = edges(); iEd != iEdEnd; ++iEd)
+      	out << "    " << boost::get(edgeLabelMap, *iEd)
+      	    << " = [" << boost::get(nodeLabelMap, fromNode(*iEd))
+      	    << ", "   << boost::get(nodeLabelMap, toNode  (*iEd)) << "]" << std::endl;
       return out;
     }
 
@@ -674,6 +707,11 @@ namespace rpwa {
     std::ostream&
     print(std::ostream& out) const  ///< prints decay graph in human-readable form using node and edge indices
     { return print(out, nodeIndexMap(), edgeIndexMap()); }
+    
+    inline
+    std::ostream&
+    printPointers(std::ostream& out) const  ///< prints particle and vertex pointers stored in graph
+    { return print(out, nodeVertexMap(), edgeParticleMap()); }
     
     template<typename NLabel, typename ELabel>
     std::ostream&

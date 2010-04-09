@@ -68,9 +68,9 @@ namespace rpwa {
     inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 2 outgoing particle (daughters) are allowed
 
     // isobar decay specific accessors
-    // inline particlePtr&       mother   ()       { return inParticles ()[0]; }  ///< returns mother particle
-    // inline particlePtr&       daughter1()       { return outParticles()[0]; }  ///< returns first daughter particle
-    // inline particlePtr&       daughter2()       { return outParticles()[1]; }  ///< returns second daughter particle
+    inline particlePtr&       mother   ()       { return inParticles ()[0]; }  ///< returns mother particle
+    inline particlePtr&       daughter1()       { return outParticles()[0]; }  ///< returns first daughter particle
+    inline particlePtr&       daughter2()       { return outParticles()[1]; }  ///< returns second daughter particle
     inline const particlePtr& mother   () const { return inParticles ()[0]; }  ///< returns mother particle
     inline const particlePtr& daughter1() const { return outParticles()[0]; }  ///< returns first daughter particle
     inline const particlePtr& daughter2() const { return outParticles()[1]; }  ///< returns second daughter particle
@@ -85,8 +85,9 @@ namespace rpwa {
 
     bool checkConsistency();  ///< checks quantum decomposition of in-particle to outparticles
 
-    virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
-    virtual std::ostream& dump (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+    virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
+    virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+    virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

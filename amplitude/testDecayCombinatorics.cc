@@ -44,8 +44,11 @@
 #include "particleDataTable.h"
 #include "particle.h"
 #include "diffractiveDissVertex.h"
+#include "diffractiveDissVertex2.h"
 #include "isobarDecayVertex.h"
+#include "isobarDecayVertex2.h"
 #include "isobarDecayTopology.h"
+#include "isobarDecayTopology2.h"
 
 
 using namespace std;
@@ -65,6 +68,11 @@ main(int argc, char** argv)
   //decayTopology::setDebug(true);
   isobarDecayTopology::setDebug(true);
 
+  //decayTopologyGraphType::setDebug(true);
+  //isobarDecayVertex2::setDebug(true);
+  //decayTopology2::setDebug(true);
+  isobarDecayTopology2::setDebug(true);
+
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
 
@@ -78,7 +86,7 @@ main(int argc, char** argv)
     cout << "Comparison with opt="<<opt<<"  result: "
 	 << (prop1 ==  pair<particleProperties,string>(prop2,opt)) << endl;
 
-    vector<const particleProperties*> selection=pdt.entrylist(prop2,opt);
+    vector<const particleProperties*> selection=pdt.entriesMatching(prop2,opt);
     cout << "Matching entries in pdt"<<" with prototype: "<< endl;
     cout << prop2 << endl;
     cout <<" with option "<<opt<< endl;
@@ -166,7 +174,7 @@ main(int argc, char** argv)
     cout << "Created "<<comb2.size()<<" new decays"<<endl;
   }
 
-  if (1) {
+  if (0) {
     // define final state particles
     particle pi0("pi-");
     particle pi1("pi+");
@@ -174,9 +182,9 @@ main(int argc, char** argv)
     particle pi3("pi+");
     particle pi4("pi-");
     // define isobars
-    particle i0("isobar00");
-    particle i1("isobar1-");
-    particle i2("isobar20");
+    particle i0("isobarA0");
+    particle i1("isobarB-");
+    particle i2("isobarC0");
     // define X-system
     particle X("X-");
     X.setMass(2.5);
@@ -201,9 +209,10 @@ main(int argc, char** argv)
     decayVertices.push_back(&vert1);
     decayVertices.push_back(&vert2);
     decayVertices.push_back(&vert0);
+    
     isobarDecayTopology topo(fsParticles, prodVert, decayVertices);
     cout << endl;
-    printInfo << "decay toplogy:" << endl
+    printInfo << "decay topology:" << endl
 	      << topo << endl;
 
     vector<isobarDecayTopology*> decays = topo.possibleDecays();
@@ -227,5 +236,68 @@ main(int argc, char** argv)
     cout << "Got "<<inconsistentDecays<<" inconsistent"<<endl
 	 << "and "<<consistentDecays<<" valid decays"<<endl
 	 << "out of "<<decays.size()<<" constructed decays"<<endl;
+  }
+
+  if (1) {
+    particlePtr pi0 = createParticle("pi-");
+    particlePtr pi1 = createParticle("pi+");
+    particlePtr pi2 = createParticle("pi-");
+    particlePtr pi3 = createParticle("pi+");
+    particlePtr pi4 = createParticle("pi-");
+    // define isobars
+    particlePtr i0 = createParticle("isobarA0");
+    particlePtr i1 = createParticle("isobarB-");
+    particlePtr i2 = createParticle("isobarC0");
+    // define X-system
+    particlePtr X = createParticle("X-");
+    X->setMass(2.5);
+    X->setWidth(0.3);
+    // define production vertex
+    particlePtr beam = createParticle("pi-");
+    diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
+    // define vertices
+    isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,  i0,  i1);
+    isobarDecayVertexPtr vert1 = createIsobarDecayVertex(i0, pi0, pi1);
+    isobarDecayVertexPtr vert2 = createIsobarDecayVertex(i1, pi2, i2);
+    isobarDecayVertexPtr vert3 = createIsobarDecayVertex(i2, pi3, pi4);
+    vector<particlePtr> fsParticles;
+    fsParticles.push_back(pi0);
+    fsParticles.push_back(pi1);
+    fsParticles.push_back(pi2);
+    fsParticles.push_back(pi3);
+    fsParticles.push_back(pi4);
+    vector<isobarDecayVertexPtr> decayVertices;
+    decayVertices.push_back(vert3);
+    decayVertices.push_back(vert1);
+    decayVertices.push_back(vert2);
+    decayVertices.push_back(vert0);
+
+    isobarDecayTopology2 topo(prodVert, decayVertices, fsParticles);
+    cout << endl;
+    printInfo << "decay topology:" << topo;
+    vector<isobarDecayTopology2> decays             = topo.possibleDecays();
+    unsigned int                 consistentDecays   = 0;
+    unsigned int                 inconsistentDecays = 0;
+    for (unsigned int i = 0; i < decays.size(); ++i) {
+      cout << decays[i];
+      // decays[i].printPointers(cout);
+      // for (decayTopologyGraphType::nodeIterator j = decays[i].nodes().first;
+      // 	   j != decays[i].nodes().second; ++j)
+      //   decays[i].vertex(*j)->printPointers(cout);
+      //isobarDecayVertex2::setDebug(true);
+      bool isConsistent = decays[i].checkTopology() && decays[i].checkConsistency();
+      //isobarDecayVertex2::setDebug(false);
+      if (isConsistent){
+      	cout << "isobar decay topology is consistent" << endl;
+      	++consistentDecays;
+      }
+      else {
+      	cout << "isobar decay topology is NOT consistent" << endl;
+      	++inconsistentDecays;
+      }
+    }
+    cout << "got " << inconsistentDecays << " inconsistent" << endl
+	 << "and " << consistentDecays << " valid decays" << endl
+	 << "out of " << decays.size() << " constructed decays" << endl;
   }
 }

@@ -95,8 +95,8 @@ ostream&
 diffractiveDissVertex2::print(ostream& out) const
 {
   out << "diffractive dissociation vertex: "
-      << "beam " << beam()->summary() << "  --->  "
-      << XSystem()->summary();
+      << "beam " << beam()->qnSummary() << "  --->  "
+      << XSystem()->qnSummary();
   return out;
 }
 
@@ -107,5 +107,15 @@ diffractiveDissVertex2::dump(ostream& out) const
   out << "diffractive dissociation vertex: " << endl
       << "    beam: "     << *beam()    << endl
       << "    X system: " << *XSystem() << endl;
+  return out;
+}
+
+
+ostream&
+diffractiveDissVertex2::printPointers(ostream& out) const
+{
+  out << "diffractive dissociation vertex " << this << ": "
+      << "beam particle: "     << beam()    << "; "
+      << "X system particle: " << XSystem() << endl;
   return out;
 }

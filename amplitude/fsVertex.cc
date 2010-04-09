@@ -84,7 +84,7 @@ fsVertex::clone(const bool cloneInParticles,
 ostream&
 fsVertex::print(ostream& out) const
 {
-  out << "final state vertex: " << fsParticle()->summary();
+  out << "final state vertex: " << fsParticle()->qnSummary();
   return out;
 }
 
@@ -94,5 +94,13 @@ fsVertex::dump(ostream& out) const
 {
   out << "final state vertex:" << endl
       << "    final state particle: " << *fsParticle() << endl;
+  return out;
+}
+
+
+ostream&
+fsVertex::printPointers(ostream& out) const
+{
+  out << "final state vertex " << this << ": final state particle: " << fsParticle() << endl;
   return out;
 }

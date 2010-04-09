@@ -75,16 +75,28 @@ particleDataTable::entry(const string& partName)
 
 
     
-std::vector<const particleProperties*> 
-particleDataTable::entrylist(const particleProperties& prototype, const std::string& opt){
-  pair<particleProperties,string> selector(prototype,opt);
-  std::vector<const particleProperties*> matchingentries;
-  dataIterator i = _dataTable.begin();
-  while(i != _dataTable.end()) {
-    if( i->second == selector)matchingentries.push_back(&(i->second));
-    ++i;
-  } 
-  return matchingentries;
+vector<const particleProperties*> 
+particleDataTable::entriesMatching(const particleProperties& prototype,
+				   const string&             sel,
+				   const double              minIsobarMass)
+{
+  const pair<particleProperties, string> selector(prototype, sel);
+  vector<const particleProperties*> matchingEntries;
+  for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i)
+    // limit isobar mass, if minIsobarMass != 0
+    // accept isobar candidate if its mass + width is larger than minIsobarMass
+    if ((i->second == selector) && (   (i->second.mass() + i->second.width() > minIsobarMass)
+				    || (minIsobarMass == 0))) {
+      if (_debug) {
+	printInfo << "found entry " << i->second.name() << " matching " << prototype
+		  << " and '" << sel << "'" << flush;
+	if (minIsobarMass != 0)
+	  cout << " with mass > " << minIsobarMass << " GeV";
+	cout << endl;
+      }      
+      matchingEntries.push_back(&(i->second));
+    }
+  return matchingEntries;
 }
 
 

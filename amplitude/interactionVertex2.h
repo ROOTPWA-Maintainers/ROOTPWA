@@ -78,8 +78,9 @@ namespace rpwa {
     inline const std::vector<particlePtr>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
     inline const std::vector<particlePtr>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
 
-    virtual std::ostream& print(std::ostream& out) const;  ///< prints vertex parameters in human-readable form
-    virtual std::ostream& dump (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+    virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
+    virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+    virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

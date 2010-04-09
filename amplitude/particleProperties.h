@@ -67,15 +67,17 @@ namespace rpwa {
     virtual ~particleProperties();
 
     virtual particleProperties& operator =(const particleProperties& partProp);
+    // comparison operators that check equality of all fields
     friend bool operator ==(const particleProperties& lhsProp,
 			    const particleProperties& rhsProp);
     friend bool operator !=(const particleProperties& lhsProp,
 			    const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
-
-    friend bool operator ==(const particleProperties& lhsProp,
+    // comparison operators that check equality of fields selectable via string
+    friend bool operator ==(const particleProperties&                         lhsProp,
 			    const std::pair<particleProperties, std::string>& rhsProp);
-    friend bool operator !=(const particleProperties& lhsProp,
-			    const std::pair<particleProperties, std::string>& rhsProp) {return !(lhsProp==rhsProp);}
+    friend bool operator !=(const particleProperties&                         lhsProp,
+			    const std::pair<particleProperties, std::string>& rhsProp)
+    { return !(lhsProp == rhsProp); }
     
 
     
@@ -106,6 +108,17 @@ namespace rpwa {
     void setJ          (const int          J)           { _J           = J;           }  ///< sets particle's spin * 2 (!!!)
     void setP          (const int          P)           { _P           = P;           }  ///< sets particle's parity
     void setC          (const int          C)           { _C           = C;           }  ///< sets particle's C-parity
+
+    void setSCB  (const int strangeness,
+		  const int charm,
+		  const int beauty);  ///< sets particle's strangeness, charm, and beauty
+    void setIGJPC(const int isospin,
+		  const int G,
+		  const int J,
+		  const int P,
+		  const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
+
+    virtual std::string qnSummary() const;  ///< returns particle's quantum number summary
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
     virtual std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
@@ -143,7 +156,10 @@ namespace rpwa {
   inline
   std::ostream&
   operator <<(std::ostream&             out,
-	      const particleProperties& partProp) { return partProp.print(out); }
+	      const particleProperties& partProp)
+  {
+    return partProp.print(out);
+  }
 
 
   inline
