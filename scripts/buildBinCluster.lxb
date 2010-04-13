@@ -1,0 +1,69 @@
+#!/bin/bash
+# Script to submit amplitude calculations to lxbatch
+# (aa)
+
+# Set your ROOTPWA environment variables
+pwd=$PWD
+cd $HOME/w0/analysis/rootpwa/trunk/
+source setup.sh
+cd $pwd
+# SET is the name of your waveset
+export SET=SET1
+# and KEY the keydirectory where it is specified
+export KEY=$ROOTPWA/keyfiles/key5pi/$SET
+# ROOTDIR has to be set to the mass bin directory
+ROOTDIR=$ROOTPWA/testbin/5PiLTData3
+
+# Select queue (8nm, 1nh, 8nh, ...)
+QUEUE=8nh
+
+# Divert lsf output
+# logs will have name of bin preceded with 
+# o_ for standard output
+# e_ for error log
+if [ ! -r $ROOTPWA/lsf ];
+    then mkdir $ROOTPWA/lsf
+else rm -rf $ROOTPWA/lsf/*.*
+fi
+LOG=$ROOTPWA/lsf/
+# and keep logbook
+export DIARYFILE=$LOG/bindiary.txt
+
+# === START PROGRAMME ===
+echo "---- STARTING AMPLITUDE CALCULATIONS"; 
+echo "---- WAVESET: $KEY";
+echo;
+# test if any keyfiles are present and print them
+test -s $KEY || exit
+ls $KEY
+
+# create temporary wave list
+TEMPLIST=`mktemp -t dirlist.XXXXXX`
+
+# and print bins as well
+echo ROOTDIR=$ROOTDIR
+ls $ROOTDIR
+ls $ROOTDIR > $TEMPLIST
+
+# fake sge task ID
+iter=0
+
+for MYBIN in `cat $TEMPLIST` ; do
+   
+    iter=$((iter+1)) 
+    export SGE_TASK_ID=$iter
+    echo SGE_TASK_ID=$SGE_TASK_ID
+    
+    echo "Starting $SET for bin $MYBIN"
+    
+    # logbook entries:
+    echo -e "Start: \c" >> $DIARYFILE
+    date >> $DIARYFILE
+    echo $ROOTDIR/$MYBIN >> $DIARYFILE
+    echo $SET >> $DIARYFILE
+    echo "--------------------------------" >> $DIARYFILE
+    
+    export KEYDIR=$KEY
+    # submit job 
+    bsub -q $QUEUE -J $MYBIN -o $LOG/o_$MYBIN -e $LOG/e_$MYBIN $ROOTPWA/scripts/buildBin.sh $ROOTDIR/$MYBIN ;
+done
