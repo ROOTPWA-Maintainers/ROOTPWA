@@ -10,7 +10,7 @@ echo "FITDIR=$FITDIR"
 
 test -s $FITDIR/$OUTFILE && mv $FITDIR/$OUTFILE $FITDIR/$OUTFILE.previous
 
-for i in $1/*; 
+for i in $1; 
 do 
   export BIN=`echo $i | gawk -F"/" '{ print $(NF) }' `;
   echo "---- Massbin: $BIN";
@@ -18,7 +18,7 @@ do
   UPPER=`echo $BIN | gawk -F"." '{ print $2 }' `;
   echo "$LOWER...$UPPER"
   cd $i/AMPS;
-  time pwafit -q -w $FITDIR/$WLIST -o $FITDIR/$OUTFILE  -r $RANK -l $LOWER -u $UPPER $RENORM -a $ACC $ACCEVENTS -n $NORM
+  time pwafit -q -w $FITDIR/$WLIST -o $FITDIR/$OUTFILE  -r $RANK -l $LOWER -u $UPPER $RENORM $ACC $ACCEVENTS -n $NORM
 
   #cd -;
 done ;
