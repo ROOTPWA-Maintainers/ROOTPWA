@@ -60,5 +60,5 @@ for MYBIN in `cat $TEMPLIST` ; do
     export ACCEVENTS="-A 50000"
     
     # submit job 
-    bsub -q $QUEUE -J $MYBIN -o $LOG/o_fit_$MYBIN -e $LOG/e_fit_$MYBIN $ROOTPWA/scripts/rootfitBatch.sh $MYBIN ;
+    bsub -q $QUEUE -J $MYBIN -o $LOG/o_fit_$MYBIN -e $LOG/e_fit_$MYBIN $ROOTPWA/scripts/rootfitBatch.sh $BINS ;
 done
