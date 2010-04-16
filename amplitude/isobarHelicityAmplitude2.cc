@@ -39,7 +39,6 @@
 #include "TLorentzRotation.h"
 
 #include "utilities.h"
-#include "isobarHelicityAmplitude.h"
 #include "isobarHelicityAmplitude2.h"
 
 	

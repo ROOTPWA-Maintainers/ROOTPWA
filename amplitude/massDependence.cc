@@ -36,8 +36,8 @@
 
 
 #include "utilities.h"
-#include "isobarHelicityAmplitude.h"
 #include "isobarDecayVertex2.h"
+#include "isobarHelicityAmplitude2.h"
 #include "massDependence.h"
 
 

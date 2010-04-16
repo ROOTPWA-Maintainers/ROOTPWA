@@ -99,49 +99,49 @@ namespace rpwa {
   }
 
 
-  // // some wrappers for libpp functions
-  // // !NOTE! all angular momenta and spin projections are in units of hbar/2
-  // inline
-  // double
-  // normFactor(const int J) { return sqrt(J + 1); }
+  // some wrappers for libpp functions
+  // !NOTE! all angular momenta and spin projections are in units of hbar/2
+  inline
+  double
+  normFactor(const int J) { return sqrt(J + 1); }
 
 
-  // inline
-  // std::complex<double>
-  // DFuncConj(const int    J,
-  // 	    const int    M,
-  // 	    const int    lambda,
-  // 	    const double phi,
-  // 	    const double theta) { return conj(D(phi, theta, 0, J, M, lambda)); }
+  inline
+  std::complex<double>
+  DFuncConj(const int    J,
+  	    const int    M,
+  	    const int    lambda,
+  	    const double phi,
+  	    const double theta) { return conj(D(phi, theta, 0, J, M, lambda)); }
 
 
-  // inline
-  // double
-  // cgCoeff(const int J1,
-  // 	  const int M1,
-  // 	  const int J2,
-  // 	  const int M2,
-  // 	  const int J,
-  // 	  const int M) { return clebsch(J1, J2, J, M1, M2, M); }
+  inline
+  double
+  cgCoeff(const int J1,
+  	  const int M1,
+  	  const int J2,
+  	  const int M2,
+  	  const int J,
+  	  const int M) { return clebsch(J1, J2, J, M1, M2, M); }
 
   
-  // inline
-  // double barrierFactor(const int    L,
-  // 		       const double breakupMom) { return F(L, breakupMom); }
+  inline
+  double barrierFactor(const int    L,
+  		       const double breakupMom) { return F(L, breakupMom); }
 
 
-  // inline
-  // std::complex<double> breitWigner(const double m,
-  // 				   const double m0,
-  // 				   const double Gamma0,
-  // 				   const int    L,
-  // 				   const double q,
-  // 				   const double q0)
-  // {
-  //   const double Gamma  = Gamma0 * (m0 / m) * (q / q0)
-  //                         * (pow(F(L, q), 2) / pow(F(L, q0), 2));
-  //   return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
-  // }
+  inline
+  std::complex<double> breitWigner(const double m,
+  				   const double m0,
+  				   const double Gamma0,
+  				   const int    L,
+  				   const double q,
+  				   const double q0)
+  {
+    const double Gamma  = Gamma0 * (m0 / m) * (q / q0)
+                          * (pow(F(L, q), 2) / pow(F(L, q0), 2));
+    return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
+  }
 
 
 } // namespace rpwa
