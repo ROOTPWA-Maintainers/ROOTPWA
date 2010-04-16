@@ -26,6 +26,8 @@ using namespace rpwa;
 
 
 #if TFITRESULT_ENABLED
+
+
 void
 convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
 		      const string&           outDirName        = "",  // if empty, files are modified in place
@@ -152,10 +154,6 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
   printInfo << "wrote " << countEntriesWritten << " entries to file." << endl;
 
 }
-
-
-#else
-#warning "this script runs only under ROOT versions below 5.25.0"
 
 
 #endif  // TFITRESULT_ENABLED

@@ -49,47 +49,6 @@ using namespace std;
 using namespace rpwa;
 
 
-// signature with wave names
-TGraphErrors*
-plotCoherence(TTree*        tree,        // fitResult tree
-	      const string& waveNameA,   // name of first wave
-	      const string& waveNameB,   // name of second wave
-	      const string& selectExpr,  // TTree::Draw() selection expression
-	      const string& graphTitle,  // name and title of graph
-	      const char*   drawOption,  // draw option for graph
-	      const int     graphColor,  // color of line and marker
-	      const bool    saveEps,     // if set, EPS file with name waveId is created
-	      const string& branchName)
-
-{
-  if (!tree) {
-    printErr << "NULL pointer to tree. exiting." << endl;
-    return 0;
-  }
-
-  // call plotCoherence with wave indices
-  fitResult* massBin = new fitResult();
-  tree->SetBranchAddress(branchName.c_str(), &massBin);
-  tree->GetEntry(0);
-  const string waveNames[2]   = {waveNameA, waveNameB};
-  int          waveIndices[2] = {-1, -1};
-  for (int i = 0; i < 2; ++i) {
-    for (unsigned int j = 0; j < massBin->nmbWaves(); ++j)
-      if (massBin->waveName(j) == waveNames[i]) {
-	waveIndices[i] = j;
-	break;
-      }
-    if (waveIndices[i] < 0) {
-      printErr << "cannot find wave '" << waveNames[i] << "' "
-	       << "in tree '" << tree->GetName() << "'. exiting." << endl;
-      return 0;
-    }
-  }
-  return plotCoherence(tree, waveIndices[0], waveIndices[1], selectExpr,
-		       graphTitle, drawOption, graphColor, saveEps, branchName);
-}
-
-
 // signature with wave indices
 TGraphErrors*
 plotCoherence(TTree*        tree,        // fitResult tree
@@ -103,7 +62,7 @@ plotCoherence(TTree*        tree,        // fitResult tree
 	      const string& branchName)
 {
   if (!tree) {
-    printErr << "NULL pointer to tree. exiting." << endl;
+    printErr << "null pointer to tree. exiting." << endl;
     return 0;
   }
   // get wave names

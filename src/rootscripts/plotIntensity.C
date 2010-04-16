@@ -65,14 +65,15 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 {
   for (unsigned int i = 0; i < nmbTrees; ++i)
     if (!trees[i]) {
-      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      printErr << "null pointer to tree " << i << ". exiting." << endl;
       return 0;
     }
   // get wave name (assumes same wave set in all trees)
   fitResult* massBin = new fitResult();
   trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
   trees[0]->GetEntry(0);
-  const string waveName = massBin->waveName(waveIndex).Data();
+  const string waveName    = massBin->waveName   (waveIndex).Data();
+  const string waveNameEsc = massBin->waveNameEsc(waveIndex).Data();
   printInfo << "plotting wave intensity for wave '" << waveName << "' [" << waveIndex << "]";
   if (selectExpr != "")
     cout << " using selection criterion '" << selectExpr << "'";
@@ -95,8 +96,8 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
   for (unsigned int i = 0; i < nmbTrees; ++i) {
     // build and run TTree::Draw() expression
     stringstream drawExpr;
-    drawExpr << branchName << ".intensity(\"" << waveName << "\"):"
-	     << branchName << ".intensityErr(\"" << waveName << "\"):"
+    drawExpr << branchName << ".intensity(\"" << waveNameEsc << "\"):"
+	     << branchName << ".intensityErr(\"" << waveNameEsc << "\"):"
 	     << branchName << ".massBinCenter() >> h" << waveName << "_" << i;
     cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
 	 << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
