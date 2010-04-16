@@ -89,24 +89,25 @@ compareIntensities(const pair<string, double>& a,
 
 
 vector<pair<string, TVirtualPad*> >
-plotAllIntensities(const unsigned int nmbTrees,      // number of fitResult trees
-		   TTree**            trees,         // array of fitResult trees
-		   const bool         createPsFile,  // if true, plots are written to waves.ps
-		   const string&      outPath,       // path for output files
-		   const int*         graphColors,   // array of colors for graph line and marker
-		   const bool         drawLegend,    // if set legend is drawn
+plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult trees
+		   TTree**            trees,          // array of fitResult trees
+		   const bool         createPsFile,   // if true, plots are written to waves.ps
+		   const string&      outPath,        // path for output files
+		   const int*         graphColors,    // array of colors for graph line and marker
+		   const bool         drawLegend,     // if set legend is drawn
+		   const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
 		   const string&      branchName)
 {
-  const double intensityThr      = 500;          // threshold for total intensity in mass bin
+  const double intensityThr      = 0;            // threshold for total intensity in mass bin
   const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
   vector<pair<string, TVirtualPad*> > wavePads;  // return value
 
   for (unsigned int i = 0; i < nmbTrees; ++i)
     if (!trees[i]) {
-      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      printErr << "null pointer to tree " << i << ". exiting." << endl;
       return wavePads;
     }
-  // asssume that all mass trees have same wave set
+  // assume that all mass trees have same wave set
   fitResult* massBin = new fitResult();
   trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
   const int nmbMassBins = trees[0]->GetEntries();
@@ -194,8 +195,8 @@ plotAllIntensities(const unsigned int nmbTrees,      // number of fitResult tree
     ++canvJpcCounter[jpc];
 
     // draw intensity graph
-    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, "",
-				       "", "AP", 1, graphColors, false, branchName);
+    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, "", "", "AP", 1,
+				       graphColors, yAxisRangeMax, false, branchName);
     if (!graph)
       continue;
 

@@ -23,8 +23,7 @@
 // $Id$
 //
 // Description:
-//      Loads basic libraries and functions needed for analyzing fit
-//      results
+//      ROOT logon script that loads libraries required for plotting
 //
 //
 // Author List:
@@ -35,24 +34,39 @@
 
 
 {
-  gSystem->Load("libGX11TTF.so");
-  gSystem->Load("librootpwa.so");
+  //gSystem->Load("libGX11TTF.so");
 
+  // load ROOTPWA libraries
+  gSystem->Load("librootpwa.so");
   gSystem->AddIncludePath("-I$ROOTPWA/src");
 
+  // basic tree routines
   gROOT->ProcessLine(".L loadFitResult.C+");
-  gROOT->ProcessLine(".L plotIntensity.C+");
-  gROOT->ProcessLine(".L plotAllIntensities.C+");
-  gROOT->ProcessLine(".L plotSpinTotals.C+");
-  gROOT->ProcessLine(".L plotPhase.C+");
-  gROOT->ProcessLine(".L plotCoherence.C+");
-  gROOT->ProcessLine(".L plot4.C+");
   gROOT->ProcessLine(".L convertTFitResultTree.C+");
 
-  gROOT->ProcessLine(".L loadFit.C+");
-  gROOT->ProcessLine(".L plotwaves.C+");
+  // basic plotting routines
+  gROOT->ProcessLine(".L plotIntensity.C+");
+  gROOT->ProcessLine(".L plotPhase.C+");
+  gROOT->ProcessLine(".L plotCoherence.C+");
+
+  // summary plots
+  gROOT->ProcessLine(".L plotAllIntensities.C+");
+  gROOT->ProcessLine(".L plotSpinTotals.C+");
+  gROOT->ProcessLine(".L plot4.C+");
+
+  // deprecated routines
+  // gROOT->ProcessLine(".L loadFit.C+");
+  // gROOT->ProcessLine(".L plotwaves.C+");
 
   gStyle->SetPadColor(0);
   gStyle->SetCanvasColor(0);
-  gStyle->SetPalette(1);
+
+  // define grey-scale palette
+  UInt_t   nmbColorEndPoints         = 2;
+  Double_t red   [nmbColorEndPoints] = { 1, 0};
+  Double_t green [nmbColorEndPoints] = { 1, 0};
+  Double_t blue  [nmbColorEndPoints] = { 1, 0};
+  Double_t length[nmbColorEndPoints] = { 0, 1};
+  Int_t    nmbColors                 = 50;
+  TColor::CreateGradientColorTable(nmbColorEndPoints, length, red, green, blue, nmbColors);
 }

@@ -50,6 +50,7 @@ SET(SOURCES
   TCovEllipse.cc
   mcmc/TMCMCMeta.cc
   utilities.cc
+  pwaPlotter.cc
 )
 	    
 # define ROOT libraries
@@ -96,7 +97,7 @@ FIND_PROGRAM(ROOT_CINT_EXECUTABLE
 
 ADD_CUSTOM_COMMAND(OUTPUT rootpwaDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc
       COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src TFitBin.h TFitResult.h fitResult.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
+      ARGS -f rootpwaDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src TFitBin.h TFitResult.h fitResult.h pwaPlotter.h TCMatrix.h TCovEllipse.h mcmc/TMCMCMeta.h rootpwaLinkDef.h)
 
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwaDict.cc)
 
@@ -174,13 +175,18 @@ TARGET_LINK_LIBRARIES(selector rootpwa)
 TARGET_LINK_LIBRARIES(selector ${PWA_LIBS})
 TARGET_LINK_LIBRARIES(selector ${ROOT_LIBS})
 
+ADD_EXECUTABLE(pwaplot pwaplots.cc)
+TARGET_LINK_LIBRARIES(pwaplot rootpwa)
+TARGET_LINK_LIBRARIES(pwaplot ${PWA_LIBS})
+TARGET_LINK_LIBRARIES(pwaplot ${ROOT_LIBS})
+
 
 #-------------------------------------------------
 #------- Install Commands ------------------------
 #-------------------------------------------------
 
 INSTALL(FILES librootpwa.so DESTINATION lib)
-INSTALL(FILES pwafit pwaConstraintFit selector DESTINATION bin PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+INSTALL(FILES pwafit pwaConstraintFit selector pwaplot DESTINATION bin PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
 
 
 #-------------------------------------------------

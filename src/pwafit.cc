@@ -224,8 +224,6 @@ main(int    argc,
        << "    rank of fit .................................. "  << rank                    << endl
        << "    minimizer .................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
        << "    quiet ........................................ "  << quiet << endl;
-  
-  gRandom->SetSeed(startValSeed);
 
   // ---------------------------------------------------------------------------
   // setup likelihood function
@@ -299,6 +297,10 @@ main(int    argc,
   unsigned int maxParNameLength = 0;       // maximum length of parameter names
   vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
   {
+    // use local instance of random number generator so that other
+    // code has no chance of tampering with gRandom and thus cannot
+    // affect the reproducability of the start values
+    TRandom3 random(startValSeed);
     bool success = true;
     for (unsigned int i = 0; i < nmbPar; ++i)
       if (L.parName(i).length() > maxParNameLength)
@@ -312,12 +314,12 @@ main(int    argc,
 	assert(startFitResult);
 	startVal = startFitResult->fitParameter(parName.c_str());
       } else
-	startVal = (useFixedStartValues) ? defaultStartValue : gRandom->Uniform(defaultStartValue, sqrtNmbEvts);
+	startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
       // check if parameter needs to be fixed because of threshold
       if ((L.parThreshold(i) == 0) || (L.parThreshold(i) < massBinCenter)) {
 	if (startVal == 0) {
 	  cout << "    read start value 0 for parameter " << parName << ". using default start value." << endl;
-	  startVal = (useFixedStartValues) ? defaultStartValue : gRandom->Uniform(defaultStartValue, sqrtNmbEvts);
+	  startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
 	}
 	cout << "    setting parameter [" << setw(3) << i << "] "
 	     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;

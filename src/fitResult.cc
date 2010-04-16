@@ -146,9 +146,9 @@ fitResult::evidence() const
     sum += 1. / _normIntegral(i, i).Re();
   double occ  = TMath::Power(TMath::Pi(), d * 0.5 - 1.) * TMath::Sqrt(2 * det) / sum;
   double locc = TMath::Log(occ);
-  cout << "fitResult::evidence()" << endl
-       << "    LogLikeli: " << l
-       << "  Occamfactor: " << locc;
+  //cout << "fitResult::evidence()" << endl
+  //     << "    LogLikeli: " << l
+  //     << "  Occamfactor: " << locc;
   return l + locc;
 }
 
@@ -184,16 +184,14 @@ fitResult::fitParameter(const string& parName) const
     name.ReplaceAll("_RE", "");
   else
     name.ReplaceAll("_IM", "");
-  for (unsigned int i = 0; i < nmbProdAmps(); ++i)
-    if (name == _prodAmpNames[i]) {
-      if (realPart)
-	return prodAmp(i).real();
-      else
-	return prodAmp(i).imag();
-    }
-  // not found
-  printWarn << "Could not find any parameter named '" << parName << "'." << endl;
-  return 0;
+  const int index = prodAmpIndex(name.Data());
+  if (index >= 0) {
+    if (realPart)
+      return prodAmp(index).real();
+    else
+      return prodAmp(index).imag();
+  }
+  return 0;  // not found
 }
 
 
@@ -570,8 +568,39 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 }
 
 
+int
+fitResult::waveIndex(const string& waveName) const
+{
+  int index = -1;
+  for (unsigned int i = 0; i < nmbWaves(); ++i)
+    if (waveName == _waveNames[i]) {
+      index = i;
+      break;  // assumes that waves have unique names
+    }
+  if (index == -1)
+    printWarn << "could not find any wave named '" << waveName << "'." << endl;
+  return index;
+}
+
+
+int
+fitResult::prodAmpIndex(const string& prodAmpName) const
+{
+  int index = -1;
+  for (unsigned int i = 0; i < nmbProdAmps(); ++i)
+    if (prodAmpName == _prodAmpNames[i]) {
+      index = i;
+      break;  // assumes that production amplitudes have unique names
+    }
+  if (index == -1)
+    printWarn << "could not find any production amplitude named '" << prodAmpName << "'." << endl;
+  return index;
+}
+
+
 void
-fitResult::buildWaveMap() {
+fitResult::buildWaveMap()
+{
   int n=_prodAmpNames.size();
   for(int i=0;i<n;++i){
     // strip rank

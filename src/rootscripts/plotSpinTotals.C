@@ -49,10 +49,12 @@
 #include "TLegend.h"
 
 #include "utilities.h"
+#include "fitResult.h"
 #include "plotSpinTotals.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 vector<pair<string, TVirtualPad*> >
@@ -68,7 +70,7 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
 
   for (unsigned int i = 0; i < nmbTrees; ++i)
     if (!trees[i]) {
-      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      printErr << "null pointer to tree " << i << ". exiting." << endl;
       return wavePads;
     }
 
@@ -83,43 +85,72 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
   const unsigned int nmbPadsPerCanvMin = 6;  // minimum number of pads each canvas is subdivided into
   // define set of spin totals
   const string waves[] = {"logLikelihood",
-                          "",  // total intensity
+                          ".*",  // total intensity
   			  "flat",
-  			  "0-+0+",
-  			  "1++0+",
-  			  //"1++1+",
-  			  "2-+0+",
-  			  "2-+1+",
-  			  "2++0-",
-  			  "2++1+",
-  			  "1-+0-",
-  			  "1-+1+",
-  			  "3++0+",
-  			  "4++1+",
-  			  "3-+1+",
-  			  "3-+1-",
-  			  "3-+0-",
-  			  "0++0-"};
+  			  "0-\\+0\\+",
+  			  "1\\+\\+0\\+",
+  			  //"1\\+\\+1\\+",
+  			  "2-\\+0\\+",
+  			  "2-\\+1\\+",
+  			  "2\\+\\+0-",
+  			  "2\\+\\+1\\+",
+  			  "1-\\+0-",
+  			  "1-\\+1\\+",
+  			  "3\\+\\+0\\+",
+  			  "4\\+\\+1\\+",
+  			  "3-\\+1\\+",
+  			  "3-\\+1-",
+  			  "3-\\+0-",
+  			  "0\\+\\+0-"};
+//   const string waves[] = {"logLikelihood",
+//                           ".*",  // total intensity
+//   			  "flat",
+// 			  "0-\\+",
+// 			  "1\\+\\+",
+// 			  "1-\\+",
+// 			  "2\\+\\+",
+// 			  "2-\\+",
+// 			  "3\\+\\+",
+// 			  "4\\+\\+",
+// 			  "4-\\+",
+// 			  "0-\\+0\\+",
+// 			  "1\\+\\+0\\+",
+// 			  "1\\+\\+1\\+",
+// 			  "1\\+\\+1-",
+// 			  "1-\\+0-",
+// 			  "1-\\+1\\+",
+// 			  "1-\\+1-",
+// 			  "2\\+\\+0-",
+// 			  "2\\+\\+1\\+",
+// 			  "2\\+\\+1-",
+// 			  "2-\\+0\\+",
+// 			  "2-\\+1\\+",
+// 			  "2-\\+1-",
+// 			  "3\\+\\+0\\+",
+// 			  "3\\+\\+1\\+",
+// 			  "4\\+\\+1\\+",
+// 			  "4-\\+0\\+",
+// 			  "4-\\+1\\+"};
   // const string waves[] = {"logLikelihood",
-  //                         "",  // total intensity
+  //                         ".*",  // total intensity
   // 			  "flat",
   // 			  "1--",
-  // 			  "1+-",
+  // 			  "1\\+-",
   // 			  "2--",
   // 			  "3--",
-  // 			  "3+-",
-  // 			  "1--0+",
-  // 			  "1--1+",
-  // 			  "1+-1+",
-  // 			  "2--1+",
-  // 			  "2--2+",
-  // 			  "3--0+",
-  // 			  "3--1+",
-  // 			  "3--2+",
-  // 			  "3--3+",
-  // 			  "3+-1+",
-  // 			  "3+-2+",
-  // 			  "3+-3+"};
+  // 			  "3\\+-",
+  // 			  "1--0\\+",
+  // 			  "1--1\\+",
+  // 			  "1\\+-1\\+",
+  // 			  "2--1\\+",
+  // 			  "2--2\\+",
+  // 			  "3--0\\+",
+  // 			  "3--1\\+",
+  // 			  "3--2\\+",
+  // 			  "3--3\\+",
+  // 			  "3\\+-1\\+",
+  // 			  "3\\+-2\\+",
+  // 			  "3\\+-3\\+"};
   const unsigned int nmbWaves = sizeof(waves) / sizeof(string);
   printInfo << "plotting spin totals for:" << endl;
   for (unsigned int i = 0; i < nmbWaves; ++i)
@@ -142,7 +173,7 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
   TCanvas*     canv      = 0;
   string       drawOpt;
   for (unsigned int i = 0; i < nmbWaves; ++i) {
-    const string waveName = (waves[i] != "") ? waves[i] : "total";
+    const TString waveName = unescapeRegExpSpecialChar((waves[i] != ".*") ? waves[i] : "total");
     // create new pad, if necessary
     if (countPad == 0) {
       stringstream canvName;
@@ -158,6 +189,7 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
     
     // build multiGraph
     TMultiGraph* graph = new TMultiGraph();
+    double maxY = 0;
     for (unsigned int j = 0; j < nmbTrees; ++j) {
       // build and run TTree::Draw() expression
       string drawExpr;
@@ -201,26 +233,19 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
 	g->SetLineColor  (colors[j]);
       }
       graph->Add(g, "P");
-    }
 
-    canv->cd(++countPad);
-    graph->SetTitle(waveName.c_str());
-    // TString gName = "g";
-    // gName.Append(waveName);
-    // gName.ReplaceAll("+", "p");
-    // gName.ReplaceAll("-", "m");
-    // graph->SetName(gName);
-    graph->SetName(waveName.c_str());
-    // compute y-range
-    double maxY = 0;
-    for (unsigned int j = 0; j < nmbTrees; ++j) {
-      TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(j));
-      for (int k = 0; k < g->GetN(); ++k) {
-	const double val = g->GetY()[k];
+      // compute maximum for y-axis
+      for (int k = 0; k < nmbBins; ++k) {
+	const double val = y[k] + yErr[k];
 	if (maxY < val)
 	  maxY = val;
       }
     }
+    cout << "    maximum intensity for graph " << graph->GetName() << " is " << maxY << endl;
+
+    canv->cd(++countPad);
+    graph->SetTitle(waveName);
+    graph->SetName(waveName);
     if ((yAxisRangeMax > 0) && (maxY > yAxisRangeMax))
       maxY = yAxisRangeMax;
     graph->SetMinimum(-maxY * 0.1);

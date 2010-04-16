@@ -26,6 +26,8 @@ using namespace rpwa;
 
 
 #if TFITRESULT_ENABLED
+
+
 void
 convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
 		      const string&           outDirName        = "",  // if empty, files are modified in place
@@ -104,7 +106,8 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
     if (updateMode)
       outTree = inTree;
     else
-      outTree = new TTree(outTreeName.c_str(), "converted from TFitResult");
+      //outTree = new TTree(outTreeName.c_str(), "converted from TFitResult");
+      outTree = new TTree(outTreeName.c_str(), outTreeName.c_str());
     fitResult* outResult = 0;
     string _outBranchName = outBranchName;
     if (updateMode && (outBranchName == inBranchName))
@@ -126,7 +129,10 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
       }
       // copy data
       outResult = new fitResult(*inResult);
-      outBranch->Fill();
+      if (updateMode && (outTreeName == inTreeName))
+	outBranch->Fill();
+      else
+	outTree->Fill();
       delete outResult;
       outResult = 0;
       ++countEntriesWritten;
@@ -148,10 +154,6 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
   printInfo << "wrote " << countEntriesWritten << " entries to file." << endl;
 
 }
-
-
-#else
-#warning "this script runs only under ROOT versions below 5.25.0"
 
 
 #endif  // TFITRESULT_ENABLED

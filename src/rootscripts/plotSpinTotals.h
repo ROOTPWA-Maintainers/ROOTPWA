@@ -33,8 +33,8 @@
 //-----------------------------------------------------------
 
 
-#ifndef plotSpinTotals_hh
-#define plotSpinTotals_hh
+#ifndef PLOTSPINTOTALS_HH
+#define PLOTSPINTOTALS_HH
 
 
 #include <string>
@@ -48,7 +48,7 @@ std::vector<std::pair<string, TVirtualPad*> >
 plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult trees
 	       TTree**            trees,                 // array of fitResult trees
 	       const int*         colors        = 0,     // array of line and marker colors
-	       const double       yAxisRangeMax = 0,     // if != 0; range of y-axis is not allowed to be larger than this value
+	       const double       yAxisRangeMax = 0,     // if != 0; range of y-axis is limited to this value
 	       const bool         drawLegend    = true,  // if set legend is drawn
 	       const std::string& outFileName   = "spinTotals.root",
 	       const std::string& branchName    = "fitResult_v2");
@@ -57,7 +57,7 @@ plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult 
 std::vector<std::pair<string, TVirtualPad*> >
 plotSpinTotals(std::vector<TTree*>&    trees,                 // array of fitResult trees
 	       const std::vector<int>& colors,                // array of line and marker colors
-	       const double            yAxisRangeMax = 0,     // if != 0; range of y-axis is not allowed to be larger than this value
+	       const double            yAxisRangeMax = 0,     // if != 0; range of y-axis is limited to this value
 	       const bool              drawLegend    = true,  // if set legend is drawn
 	       const std::string&      outFileName   = "spinTotals.root",
 	       const std::string&      branchName    = "fitResult_v2")
@@ -70,7 +70,7 @@ plotSpinTotals(std::vector<TTree*>&    trees,                 // array of fitRes
 std::vector<std::pair<std::string, TVirtualPad*> >
 plotSpinTotals(TTree*             tree,                    // fitResult tree
 	       const int          color         = kBlack,  // color of line and marker
-	       const double       yAxisRangeMax = 0,       // if != 0; range of y-axis is not allowed to be larger than this value
+	       const double       yAxisRangeMax = 0,       // if != 0; range of y-axis is limited to this value
 	       const bool         drawLegend    = true,    // if set legend is drawn
 	       const std::string& outFileName   = "spinTotals.root",
 	       const std::string& branchName    = "fitResult_v2")
@@ -79,4 +79,4 @@ plotSpinTotals(TTree*             tree,                    // fitResult tree
 }
 
 
-#endif  // plotSpinTotals_hh
+#endif  // PLOTSPINTOTALS_HH

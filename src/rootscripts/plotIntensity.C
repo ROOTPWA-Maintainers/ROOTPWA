@@ -59,19 +59,21 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 	      const char*        drawOption,     // draw option for graph
 	      const double       normalization,  // scale factor for intensities
 	      const int*         graphColors,    // array of colors for graph line and marker
+	      const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
 	      const bool         saveEps,        // if set, EPS file with name waveId{
 	      const string&      branchName)
 {
   for (unsigned int i = 0; i < nmbTrees; ++i)
     if (!trees[i]) {
-      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      printErr << "null pointer to tree " << i << ". exiting." << endl;
       return 0;
     }
   // get wave name (assumes same wave set in all trees)
   fitResult* massBin = new fitResult();
   trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
   trees[0]->GetEntry(0);
-  const string waveName = massBin->waveName(waveIndex).Data();
+  const string waveName    = massBin->waveName   (waveIndex).Data();
+  const string waveNameEsc = massBin->waveNameEsc(waveIndex).Data();
   printInfo << "plotting wave intensity for wave '" << waveName << "' [" << waveIndex << "]";
   if (selectExpr != "")
     cout << " using selection criterion '" << selectExpr << "'";
@@ -90,13 +92,12 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
       graph->SetTitle((waveName + suffix.str()).c_str());
     }
   }
-  double maxYVal  = 0;
-  double maxYMean = 0;
+  double maxY = 0;
   for (unsigned int i = 0; i < nmbTrees; ++i) {
     // build and run TTree::Draw() expression
     stringstream drawExpr;
-    drawExpr << branchName << ".intensity(\"" << waveName << "\"):"
-	     << branchName << ".intensityErr(\"" << waveName << "\"):"
+    drawExpr << branchName << ".intensity(\"" << waveNameEsc << "\"):"
+	     << branchName << ".intensityErr(\"" << waveNameEsc << "\"):"
 	     << branchName << ".massBinCenter() >> h" << waveName << "_" << i;
     cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
 	 << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
@@ -132,29 +133,22 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
     graph->Add(g);
     
     // compute maximum for y-axis
-    for (int j = 0; j < nmbBins; ++j)
-      if (maxYVal < (y[j] + yErr[j]))
-	maxYVal = y[j] + yErr[j];
-    const double yMean = g->GetMean(2);
-    if (maxYMean < yMean)
-      maxYMean = yMean;
+    for (int j = 0; j < nmbBins; ++j) {
+      const double val = y[j] + yErr[j];
+      if (maxY < val)
+	maxY = val;
+    }
   }
-  cout << "    maximum intensity for graph " << graph->GetName() << " is " << maxYVal << ", maximum mean intensity is " << maxYMean << endl;
+  cout << "    maximum intensity for graph " << graph->GetName() << " is " << maxY << endl;
     
+  if ((yAxisRangeMax > 0) && (maxY > yAxisRangeMax))
+    maxY = yAxisRangeMax;
+  graph->SetMinimum(-maxY * 0.1);
+  graph->SetMaximum( maxY * 1.1);
   // draw graph
   graph->Draw(drawOption);
   graph->GetXaxis()->SetTitle("Mass [GeV]");
   graph->GetYaxis()->SetTitle("Intensity");
-  {
-    double       maxY;
-    const double factor = 500;
-    if (maxYVal > factor * maxYMean) {  // scale y-axis such that the important points are visible
-      maxY = factor * maxYMean;
-      cout << "    adjusting y scaling to [" << -0.1 * maxY << ", " << 1.1 * maxY << "]" << endl;
-    } else
-      maxY = maxYVal;
-    graph->GetYaxis()->SetRangeUser(-0.1 * maxY, 1.1 * maxY);
-  }
   TLine line;
   line.SetLineStyle(3);
   line.DrawLine(graph->GetXaxis()->GetXmin(), 0, graph->GetXaxis()->GetXmax(), 0);

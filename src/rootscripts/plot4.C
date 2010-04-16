@@ -44,24 +44,33 @@
 #include "TTree.h"
 #include "TCanvas.h"
 
+#include "utilities.h"
 #include "plotIntensity.h"
 #include "plotPhase.h"
 #include "plotCoherence.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
+// signature with wave indices
 void
 plot4(TTree*       tree,         // fitResult tree
       const int    waveIndexA,   // index of first wave
       const int    waveIndexB,   // index of second wave
-      const double massMin = 1,  // [GeV/c^2]
-      const double massMax = 4)  // [GeV/c^2]
+      const double massMin = 0,  // [GeV/c^2]
+      const double massMax = 0)  // [GeV/c^2]
 {
+  if (!tree) {
+    printErr << "null pointer to tree. exiting." << endl;
+    return;
+  }
+
   // select mass range; convert from GeV/c^2 to MeV/c^2
   stringstream selectExpr;
-  selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") && (massBinCenter() <= " << massMax * 1000 << ")";
+  if ((massMin != 0) || (massMax != 0))
+    selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") && (massBinCenter() <= " << massMax * 1000 << ")";
 
   stringstream canvName;
   canvName << "4plot_" << waveIndexA << "_" << waveIndexB;
@@ -85,3 +94,27 @@ plot4(TTree*       tree,         // fitResult tree
   plotCoherence(tree, waveIndexA, waveIndexB, selectExpr.str());
 }
  
+
+// signature with wave names
+void
+plot4(TTree*        tree,            // fitResult tree
+      const string& waveNameA,       // name of first wave
+      const string& waveNameB,       // name of second wave
+      const double  massMin    = 0,  // [GeV/c^2]
+      const double  massMax    = 0,  // [GeV/c^2]
+      const string& branchName = "fitResult_v2")
+{
+  if (!tree) {
+    printErr << "null pointer to tree. exiting." << endl;
+    return;
+  }
+  // get wave indices (assumes same wave set in all trees)
+  fitResult* massBin = new fitResult();
+  tree->SetBranchAddress(branchName.c_str(), &massBin);
+  tree->GetEntry(0);
+  const int indexA = massBin->waveIndex(waveNameA);
+  const int indexB = massBin->waveIndex(waveNameB);
+  if ((indexA >= 0) && (indexB >= 0))
+    return plot4(tree, indexA, indexB, massMin, massMax);
+  printErr << "cannot find wave(s) in tree '" << tree->GetName() << "'. exiting." << endl;
+}

@@ -1,0 +1,64 @@
+#!/bin/bash
+# Script to submit fits to lxbatch
+# (aa)
+
+# Set your ROOTPWA environment variables
+pwd=$PWD
+cd $HOME/w0/analysis/rootpwa/trunk/
+source setup.sh
+cd $pwd
+# ROOTDIR has to be set to the mass bin directory
+ROOTDIR=$ROOTPWA/testbin/5PiLTData3
+# and FITDIR to the directory of the fit
+export FITDIR=$ROOTPWA/testbin/fit
+
+# Select queue (8nm, 1nh, 8nh, ...)
+QUEUE=8nh
+
+# Divert lsf output
+# logs will have name of bin preceded with 
+# o_fit_ for standard output
+# e_fit_ for error log
+if [ ! -r $ROOTPWA/lsf ];
+    then mkdir $ROOTPWA/lsf
+else rm -rf $ROOTPWA/lsf/?_fit_*
+fi
+LOG=$ROOTPWA/lsf/
+
+# this script requires MYBIN to be set to the directory containing the massbin!
+# therefore create temporary bin list
+TEMPLIST=`mktemp -t dirlist.XXXXXX`
+# and print bins into it
+echo ROOTDIR=$ROOTDIR
+ls $ROOTDIR
+ls $ROOTDIR > $TEMPLIST
+
+# === START PROGRAMME ===
+echo "---- STARTING FITS";
+echo;
+
+# fake sge task ID
+iter=0
+
+for MYBIN in `cat $TEMPLIST` ; do
+   
+    iter=$((iter+1)) 
+    export SGE_TASK_ID=$iter
+    echo SGE_TASK_ID=$SGE_TASK_ID
+    
+    echo "Starting fit for bin $BIN"
+
+    # set variables
+    export BATCH=$MYBIN;
+    export BINS=$ROOTDIR/$MYBIN
+    export OUTFILE=$MYBIN.result.acc.root
+    export WLIST=wavelist
+    export RANK=1
+    export RENORM=-N
+    export NORM=norm.int
+    export ACC=accnorm.int
+    export ACCEVENTS="-A 50000"
+    
+    # submit job 
+    bsub -q $QUEUE -J $MYBIN -o $LOG/o_fit_$MYBIN -e $LOG/e_fit_$MYBIN $ROOTPWA/scripts/rootfitBatch.sh $BINS ;
+done
