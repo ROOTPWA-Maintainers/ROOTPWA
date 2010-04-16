@@ -16,6 +16,9 @@ using namespace std;
 using namespace rpwa;
 
 
+#if TFITRESULT_ENABLED
+
+
 void
 testFitResult(TTree*        oldTree,
 	      TTree*        newTree,
@@ -23,7 +26,6 @@ testFitResult(TTree*        oldTree,
 	      const string& oldBranchName = "fitResult",
 	      const string& newBranchName = "fitResult_v2")
 {
-#if TFITRESULT_ENABLED
 
   const bool copyBin = false;
 
@@ -202,10 +204,7 @@ testFitResult(TTree*        oldTree,
       }
     cout << "coherenceErr() max. deviation = " << maxDelta << endl << endl;
   }
+}
 
-#else
-  printErr << "this script runs only under ROOT versions below 5.25.0. exiting." << endl;
   
 #endif  // TFITRESULT_ENABLED
-
-}

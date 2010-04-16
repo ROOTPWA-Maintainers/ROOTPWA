@@ -65,7 +65,7 @@ export WLIST=wavelist
 export RANK=1
 export RENORM=-N
 export NORM=norm.int
-export ACC=accnorm.int
+export ACC="-a accnorm.int"
 export ACCEVENTS="-A 50000"
 
 cd ~/scratch/COMPASS/rootpwa/trunk/

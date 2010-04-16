@@ -26,11 +26,12 @@
 #include <map>
 #include <iostream>
 #include <iomanip>
+#include <limits>
 #include "TString.h"
 #include "TChain.h"
-#include "TFitBin.h"
+#include "fitResult.h"
 using namespace std;
-
+using namespace rpwa;
 
 
 int
@@ -56,7 +57,7 @@ main(int argc, char** argv){
   map<double,unsigned int> results; // <logli,index>
   unsigned int bestfit=0;
   double bestLogli=0;
-  TFitBin* bin=new TFitBin;
+  fitResult* bin=new fitResult;
   //loop over fits and extract quality information
   // we are using the sum of loglikelyhood per event for this
   for(unsigned int j=0; j<inputdirectories.size(); ++j){
@@ -70,7 +71,7 @@ main(int argc, char** argv){
       delete chain;
       continue;
     }
-    chain->SetBranchAddress("fitbin",&bin);
+    chain->SetBranchAddress("fitResult_v2",&bin);
     unsigned int n=chain->GetEntries();
     if(n!=nbins){
       cerr << n << " bins in this fit. Expected " << nbins 
@@ -81,9 +82,14 @@ main(int argc, char** argv){
     double sumlogli=0;
     for(unsigned int k=0;k<n;++k){
       chain->GetEntry(k);
-      sumlogli-=bin->logli()/bin->rawEvents();
+      sumlogli+=bin->evidence();
     }// end loop over bins
     cerr<<"SumLogli="<<setprecision(9)<<sumlogli<<endl;
+    if(sumlogli==0 || !(sumlogli>std::numeric_limits<double>::min() && sumlogli < std::numeric_limits<double>::max())){
+      cerr<<"Invalid value. Skipping."<< endl;
+      delete chain;
+      continue;
+    }
 
     results[sumlogli]=j;    
     if(sumlogli>bestLogli){

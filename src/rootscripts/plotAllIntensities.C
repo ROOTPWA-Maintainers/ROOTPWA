@@ -98,16 +98,16 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
 		   const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
 		   const string&      branchName)
 {
-  const double intensityThr      = 500;          // threshold for total intensity in mass bin
+  const double intensityThr      = 0;            // threshold for total intensity in mass bin
   const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
   vector<pair<string, TVirtualPad*> > wavePads;  // return value
 
   for (unsigned int i = 0; i < nmbTrees; ++i)
     if (!trees[i]) {
-      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
+      printErr << "null pointer to tree " << i << ". exiting." << endl;
       return wavePads;
     }
-  // asssume that all mass trees have same wave set
+  // assume that all mass trees have same wave set
   fitResult* massBin = new fitResult();
   trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
   const int nmbMassBins = trees[0]->GetEntries();

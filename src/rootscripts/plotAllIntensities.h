@@ -41,8 +41,8 @@
 //
 
 
-#ifndef plotAllIntensities_hh
-#define plotAllIntensities_hh
+#ifndef PLOTALLINTENSITIES_HH
+#define PLOTALLINTENSITIES_HH
 
 
 #include <string>
@@ -89,4 +89,4 @@ plotAllIntensities(std::vector<TTree*>&    trees,                  // array of f
 }
 
 
-#endif  // plotAllIntensities_hh
+#endif  // PLOTALLINTENSITIES_HH

@@ -44,18 +44,6 @@
 #include "TTree.h"
 
 
-// signature with wave names
-TGraphErrors*
-plotPhase(TTree*             tree,                 // fitResult tree
-	  const std::string& waveNameA,            // name of first wave
-	  const std::string& waveNameB,            // name of second wave
-	  const std::string& selectExpr = "",      // TTree::Draw() selection expression
-	  const std::string& graphTitle = "",      // name and title of graph
-	  const char*        drawOption = "APZ",   // draw option for graph
-	  const int          graphColor = kBlack,  // color of line and marker
-	  const bool         saveEps    = false,   // if set, EPS file with name waveId is created
-	  const string&      branchName = "fitResult_v2");
-
 // signature with wave indices
 TGraphErrors*
 plotPhase(TTree*             tree,                 // fitResult tree
@@ -67,6 +55,36 @@ plotPhase(TTree*             tree,                 // fitResult tree
 	  const int          graphColor = kBlack,  // color of line and marker
 	  const bool         saveEps    = false,  // if set, EPS file with name waveId is created
 	  const string&      branchName = "fitResult_v2");
+
+
+// signature with wave names
+TGraphErrors*
+plotPhase(TTree*             tree,                 // fitResult tree
+	  const std::string& waveNameA,            // name of first wave
+	  const std::string& waveNameB,            // name of second wave
+	  const std::string& selectExpr = "",      // TTree::Draw() selection expression
+	  const std::string& graphTitle = "",      // name and title of graph
+	  const char*        drawOption = "APZ",   // draw option for graph
+	  const int          graphColor = kBlack,  // color of line and marker
+	  const bool         saveEps    = false,   // if set, EPS file with name waveId is created
+	  const string&      branchName = "fitResult_v2")
+{
+  if (!tree) {
+    printErr << "null pointer to tree. exiting." << endl;
+    return 0;
+  }
+  // get wave indices (assumes same wave set in all trees)
+  rpwa::fitResult* massBin = new rpwa::fitResult();
+  tree->SetBranchAddress(branchName.c_str(), &massBin);
+  tree->GetEntry(0);
+  const int indexA = massBin->waveIndex(waveNameA);
+  const int indexB = massBin->waveIndex(waveNameB);
+  if ((indexA >= 0) && (indexB >= 0))
+    return plotPhase(tree, indexA, indexB, selectExpr,
+		     graphTitle, drawOption, graphColor, saveEps, branchName);
+  printErr << "cannot find wave(s) in tree '" << tree->GetName() << "'. exiting." << endl;
+  return 0;
+}
 
 
 #endif  // PLOTPHASE_HH

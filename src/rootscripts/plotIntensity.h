@@ -122,20 +122,18 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
 	      const bool         saveEps       = false,  // if set, EPS file with name waveId is created
 	      const std::string& branchName    = "fitResult_v2")
 {
-  for (unsigned int i = 0; i < nmbTrees; ++i)
-    if (!trees[i]) {
-      printErr << "NULL pointer to tree " << i << ". exiting." << endl;
-      return 0;
-    }
-
-  // call plotIntensity with wave index (assumes same wave set in all trees)
+  if (!trees[0]) {
+    printErr << "null pointer to tree[" << 0 << "]. exiting." << endl;
+    return 0;
+  }
+  // get wave index (assumes same wave set in all trees)
   rpwa::fitResult* massBin = new rpwa::fitResult();
   trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
   trees[0]->GetEntry(0);
-  for (unsigned int i = 0; i < massBin->nmbWaves(); ++i)
-    if (massBin->waveName(i) == waveName)
-      return plotIntensity(nmbTrees, trees, i, selectExpr, graphTitle, drawOption,
-			   normalization, graphColors, yAxisRangeMax, saveEps, branchName);
+  const int index = massBin->waveIndex(waveName);
+  if (index >= 0)
+    return plotIntensity(nmbTrees, trees, index, selectExpr, graphTitle, drawOption,
+			 normalization, graphColors, yAxisRangeMax, saveEps, branchName);
   printErr << "cannot find wave '" << waveName << "' "
 	   << "in tree '" << trees[0]->GetName() << "'. exiting." << endl;
   return 0;

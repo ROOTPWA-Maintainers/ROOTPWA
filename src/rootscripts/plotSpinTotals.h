@@ -33,8 +33,8 @@
 //-----------------------------------------------------------
 
 
-#ifndef plotSpinTotals_hh
-#define plotSpinTotals_hh
+#ifndef PLOTSPINTOTALS_HH
+#define PLOTSPINTOTALS_HH
 
 
 #include <string>
@@ -79,4 +79,4 @@ plotSpinTotals(TTree*             tree,                    // fitResult tree
 }
 
 
-#endif  // plotSpinTotals_hh
+#endif  // PLOTSPINTOTALS_HH
