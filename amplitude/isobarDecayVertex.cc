@@ -38,7 +38,7 @@
 
 
 #include "utilities.h"
-#include "isobarDecayVertex2.h"
+#include "isobarDecayVertex.h"
 #include "angMomCoupl.h"
 
 	
@@ -46,16 +46,16 @@ using namespace std;
 using namespace rpwa;
 
 
-bool isobarDecayVertex2::_debug = false;
+bool isobarDecayVertex::_debug = false;
 
 
-isobarDecayVertex2::isobarDecayVertex2(const particlePtr&       mother,
-				       const particlePtr&       daughter1,
-				       const particlePtr&       daughter2,
-				       const unsigned int       L,
-				       const unsigned int       S,
-				       const massDependencePtr& massDep)
-  : interactionVertex2(),
+isobarDecayVertex::isobarDecayVertex(const particlePtr&       mother,
+				     const particlePtr&       daughter1,
+				     const particlePtr&       daughter2,
+				     const unsigned int       L,
+				     const unsigned int       S,
+				     const massDependencePtr& massDep)
+  : interactionVertex(),
     _L                (L),
     _S                (S),
     _massDep          (massDep)
@@ -72,9 +72,9 @@ isobarDecayVertex2::isobarDecayVertex2(const particlePtr&       mother,
     printErr << "null pointer to daughter 2 particle. aborting." << endl;
     throw;
   }
-  interactionVertex2::addInParticle (mother);
-  interactionVertex2::addOutParticle(daughter1);
-  interactionVertex2::addOutParticle(daughter2);
+  interactionVertex::addInParticle (mother);
+  interactionVertex::addOutParticle(daughter1);
+  interactionVertex::addOutParticle(daughter2);
   if (!_massDep) {
     _massDep = createFlatMassDependence();
     if (_debug)
@@ -85,21 +85,21 @@ isobarDecayVertex2::isobarDecayVertex2(const particlePtr&       mother,
 }
 
 
-isobarDecayVertex2::isobarDecayVertex2(const isobarDecayVertex2& vert)
+isobarDecayVertex::isobarDecayVertex(const isobarDecayVertex& vert)
 {
   *this = vert;
 }
 
 
-isobarDecayVertex2::~isobarDecayVertex2()
+isobarDecayVertex::~isobarDecayVertex()
 { }
 
 
-isobarDecayVertex2&
-isobarDecayVertex2::operator =(const isobarDecayVertex2& vert)
+isobarDecayVertex&
+isobarDecayVertex::operator =(const isobarDecayVertex& vert)
 {
   if (this != &vert) {
-    interactionVertex2::operator =(vert);
+    interactionVertex::operator =(vert);
     _L       = vert._L;
     _S       = vert._S;
     _massDep = vert._massDep;
@@ -108,11 +108,11 @@ isobarDecayVertex2::operator =(const isobarDecayVertex2& vert)
 }
 
     
-isobarDecayVertex2*
-isobarDecayVertex2::clone(const bool cloneInParticles,
-			  const bool cloneOutParticles) const
+isobarDecayVertex*
+isobarDecayVertex::clone(const bool cloneInParticles,
+			 const bool cloneOutParticles) const
 {
-  isobarDecayVertex2* vertexClone = new isobarDecayVertex2(*this);
+  isobarDecayVertex* vertexClone = new isobarDecayVertex(*this);
   if (cloneInParticles)
     vertexClone->cloneInParticles();
   if (cloneOutParticles)
@@ -122,7 +122,7 @@ isobarDecayVertex2::clone(const bool cloneInParticles,
 
 
 const TLorentzVector&
-isobarDecayVertex2::calcMotherLzVec()
+isobarDecayVertex::calcMotherLzVec()
 {
   if (_debug)
     printInfo << "calculating Lorentz-vector of particle " << mother()->name()
@@ -135,10 +135,10 @@ isobarDecayVertex2::calcMotherLzVec()
 
 
 bool
-isobarDecayVertex2::checkMultiplicativeQn(const int     mQn,
-					  const int     d1Qn,
-					  const int     d2Qn,
-					  const string& qnName)
+isobarDecayVertex::checkMultiplicativeQn(const int     mQn,
+					 const int     d1Qn,
+					 const int     d2Qn,
+					 const string& qnName)
 {
   if (mQn == d1Qn * d2Qn) {
     if (_debug)
@@ -157,10 +157,10 @@ isobarDecayVertex2::checkMultiplicativeQn(const int     mQn,
 
 
 bool
-isobarDecayVertex2::checkAdditiveQn(const int     mQn,
-				    const int     d1Qn,
-				    const int     d2Qn,
-				    const string& qnName)
+isobarDecayVertex::checkAdditiveQn(const int     mQn,
+				   const int     d1Qn,
+				   const int     d2Qn,
+				   const string& qnName)
 {
   if (mQn == d1Qn + d2Qn) {
     if (_debug)
@@ -179,7 +179,7 @@ isobarDecayVertex2::checkAdditiveQn(const int     mQn,
 
 
 bool 
-isobarDecayVertex2::checkConsistency()
+isobarDecayVertex::checkConsistency()
 {
   bool vertexConsistent = true;
   // check multiplicative quantum numbers
@@ -267,7 +267,7 @@ isobarDecayVertex2::checkConsistency()
 
 
 ostream&
-isobarDecayVertex2::print(ostream& out) const
+isobarDecayVertex::print(ostream& out) const
 {
   out << "isobar decay vertex: "
       << mother()->qnSummary() << "  --->  "
@@ -280,7 +280,7 @@ isobarDecayVertex2::print(ostream& out) const
 
 
 ostream&
-isobarDecayVertex2::dump(ostream& out) const
+isobarDecayVertex::dump(ostream& out) const
 {
   out << "isobar decay vertex:" << endl
       << "    mother: "     << *mother()    << endl
@@ -293,7 +293,7 @@ isobarDecayVertex2::dump(ostream& out) const
 
 
 ostream&
-isobarDecayVertex2::printPointers(ostream& out) const
+isobarDecayVertex::printPointers(ostream& out) const
 {
   out << "isobar decay vertex "  << this        << ": "
       << "mother particle: "     << mother()    << "; "

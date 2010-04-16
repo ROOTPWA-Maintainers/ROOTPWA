@@ -36,34 +36,34 @@
 
 
 #include "utilities.h"
-#include "interactionVertex2.h"
+#include "interactionVertex.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
 
-bool interactionVertex2::_debug = false;
+bool interactionVertex::_debug = false;
 
 
-interactionVertex2::interactionVertex2()
+interactionVertex::interactionVertex()
   : _inParticles (),
     _outParticles()
 { }
 
 
-interactionVertex2::interactionVertex2(const interactionVertex2& vert)
+interactionVertex::interactionVertex(const interactionVertex& vert)
 {
   *this = vert;
 }
 
 
-interactionVertex2::~interactionVertex2()
+interactionVertex::~interactionVertex()
 { }
 
 
-interactionVertex2&
-interactionVertex2::operator =(const interactionVertex2& vert)
+interactionVertex&
+interactionVertex::operator =(const interactionVertex& vert)
 {
   if (this != &vert) {
     _inParticles  = vert._inParticles;
@@ -73,11 +73,11 @@ interactionVertex2::operator =(const interactionVertex2& vert)
 }
 
 
-interactionVertex2*
-interactionVertex2::clone(const bool cloneInParticles,
-			  const bool cloneOutParticles) const
+interactionVertex*
+interactionVertex::clone(const bool cloneInParticles,
+			 const bool cloneOutParticles) const
 {
-  interactionVertex2* vertexClone = new interactionVertex2(*this);
+  interactionVertex* vertexClone = new interactionVertex(*this);
   if (cloneInParticles)
     vertexClone->cloneInParticles();
   if (cloneOutParticles)
@@ -87,7 +87,7 @@ interactionVertex2::clone(const bool cloneInParticles,
 
 
 void
-interactionVertex2::clear()
+interactionVertex::clear()
 {
   _inParticles.clear();
   _outParticles.clear();
@@ -95,7 +95,7 @@ interactionVertex2::clear()
 
 
 bool
-interactionVertex2::addInParticle(const particlePtr& part)
+interactionVertex::addInParticle(const particlePtr& part)
 {
   if (!part) {
     printErr << "trying to add null pointer to incoming particles. aborting." << endl;
@@ -109,7 +109,7 @@ interactionVertex2::addInParticle(const particlePtr& part)
 
 
 bool
-interactionVertex2::addOutParticle(const particlePtr& part)
+interactionVertex::addOutParticle(const particlePtr& part)
 {
   if (!part) {
     printErr << "trying to add null pointer to outgoing particles. aborting." << endl;
@@ -123,7 +123,7 @@ interactionVertex2::addOutParticle(const particlePtr& part)
 
 
 void
-interactionVertex2::transformOutParticles(const TLorentzRotation& L)
+interactionVertex::transformOutParticles(const TLorentzRotation& L)
 {
   for (unsigned int i = 0; i < nmbOutParticles(); ++i)
     _outParticles[i]->transform(L);
@@ -131,7 +131,7 @@ interactionVertex2::transformOutParticles(const TLorentzRotation& L)
 
 
 ostream&
-interactionVertex2::print(ostream& out) const
+interactionVertex::print(ostream& out) const
 {
   out << "interaction vertex: ";
   for (unsigned int i = 0; i < _inParticles.size(); ++i) {
@@ -150,7 +150,7 @@ interactionVertex2::print(ostream& out) const
 
 
 ostream&
-interactionVertex2::dump(ostream& out) const
+interactionVertex::dump(ostream& out) const
 {
   out << "interaction vertex:" << endl;
   for (unsigned int i = 0; i < _inParticles.size(); ++i)
@@ -162,7 +162,7 @@ interactionVertex2::dump(ostream& out) const
 
 
 ostream&
-interactionVertex2::printPointers(ostream& out) const
+interactionVertex::printPointers(ostream& out) const
 {
   out << "interaction vertex " << this << ": incoming particles: ";
   for (unsigned int i = 0; i < _inParticles.size(); ++i) {
@@ -182,7 +182,7 @@ interactionVertex2::printPointers(ostream& out) const
 
 
 void
-interactionVertex2::cloneInParticles()
+interactionVertex::cloneInParticles()
 {
   for (unsigned int i = 0; i < nmbInParticles(); ++i) {
     particlePtr newPart(inParticles()[i]->clone());
@@ -192,7 +192,7 @@ interactionVertex2::cloneInParticles()
 
 
 void
-interactionVertex2::cloneOutParticles()
+interactionVertex::cloneOutParticles()
 {
   for (unsigned int i = 0; i < nmbOutParticles(); ++i) {
     particlePtr newPart(outParticles()[i]->clone());

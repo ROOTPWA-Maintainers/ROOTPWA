@@ -39,7 +39,7 @@
 #include "TLorentzRotation.h"
 
 #include "utilities.h"
-#include "isobarHelicityAmplitude2.h"
+#include "isobarHelicityAmplitude.h"
 
 	
 using namespace std;
@@ -47,26 +47,26 @@ using namespace boost;
 using namespace rpwa;
 
 
-bool isobarHelicityAmplitude2::_debug = false;
+bool isobarHelicityAmplitude::_debug = false;
 
 
-isobarHelicityAmplitude2::isobarHelicityAmplitude2()
+isobarHelicityAmplitude::isobarHelicityAmplitude()
   : _decay(0)
 { }
 
 
-isobarHelicityAmplitude2::isobarHelicityAmplitude2(isobarDecayTopology2& decay)
+isobarHelicityAmplitude::isobarHelicityAmplitude(isobarDecayTopology& decay)
 {
   setDecayTopology(decay);
 }
 
 
-isobarHelicityAmplitude2::~isobarHelicityAmplitude2()
+isobarHelicityAmplitude::~isobarHelicityAmplitude()
 { }
 
 
 void
-isobarHelicityAmplitude2::setDecayTopology(isobarDecayTopology2& decay)
+isobarHelicityAmplitude::setDecayTopology(isobarDecayTopology& decay)
 {
   if (!decay.checkTopology()) {
     printErr << "decay does not have the correct topology. aborting." << endl;
@@ -84,7 +84,7 @@ isobarHelicityAmplitude2::setDecayTopology(isobarDecayTopology2& decay)
 // final state particles for cases where the amplitudes for the
 // different helicity states have to be added incoherently
 complex<double>
-isobarHelicityAmplitude2::amplitude()
+isobarHelicityAmplitude::amplitude()
 {
   // transform daughters into their respective RFs
   transformDaughters();
@@ -94,7 +94,7 @@ isobarHelicityAmplitude2::amplitude()
 
 
 TLorentzRotation
-isobarHelicityAmplitude2::hfTransform(const TLorentzVector& daughterLv)
+isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
 {
   TLorentzVector daughter = daughterLv;
   const TVector3 zAxisMother(0, 0, 1);  // take z-axis as defined in mother frame
@@ -118,8 +118,8 @@ isobarHelicityAmplitude2::hfTransform(const TLorentzVector& daughterLv)
 
 
 TLorentzRotation
-isobarHelicityAmplitude2::gjTransform(const TLorentzVector& beamLv,
-				      const TLorentzVector& XLv)
+isobarHelicityAmplitude::gjTransform(const TLorentzVector& beamLv,
+				     const TLorentzVector& XLv)
 {
   TLorentzVector beam    = beamLv;
   TLorentzVector X       = XLv;
@@ -147,7 +147,7 @@ isobarHelicityAmplitude2::gjTransform(const TLorentzVector& beamLv,
 
 
 void
-isobarHelicityAmplitude2::transformDaughters()
+isobarHelicityAmplitude::transformDaughters()
 {
   // calculate Lorentz-vectors of all isobars
   _decay->calcIsobarLzVec();
@@ -190,8 +190,8 @@ isobarHelicityAmplitude2::transformDaughters()
 
 // assumes that daughters were transformed into mother RF
 complex<double>
-isobarHelicityAmplitude2::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
-						const bool                  topVertex) const
+isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
+					       const bool                  topVertex) const
 {
   const particlePtr& mother    = vertex->mother();
   const particlePtr& daughter1 = vertex->daughter1();
@@ -280,8 +280,8 @@ isobarHelicityAmplitude2::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 //     amplitudes are not zero before calculating the remaining parts
 //     of the amplitude
 complex<double>
-isobarHelicityAmplitude2::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
-						   const bool                  topVertex)
+isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
+						  const bool                  topVertex)
 {
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
@@ -289,7 +289,7 @@ isobarHelicityAmplitude2::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& v
   for (int lambda1 = -daughter1->J(); lambda1 <= +daughter1->J(); lambda1 += 2) {
     // calculate decay amplitude for daughter 1
     const isobarDecayVertexPtr& daughter1Vertex =
-      dynamic_pointer_cast<isobarDecayVertex2>(_decay->toVertex(daughter1));
+      dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
     complex<double> amp1 = 1;
     if (daughter1Vertex) {
       daughter1->setSpinProj(lambda1);
@@ -298,7 +298,7 @@ isobarHelicityAmplitude2::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& v
     for (int lambda2 = -daughter2->J(); lambda2 <= +daughter2->J(); lambda2 += 2) {
       // calculate decay amplitude for daughter 2
       const isobarDecayVertexPtr& daughter2Vertex =
-	dynamic_pointer_cast<isobarDecayVertex2>(_decay->toVertex(daughter2));
+	dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
       complex<double> amp2 = 1;
       if (daughter2Vertex) {
 	daughter2->setSpinProj(lambda2);

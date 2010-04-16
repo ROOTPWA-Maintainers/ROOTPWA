@@ -47,8 +47,8 @@
 
 namespace rpwa {
 
-  class isobarDecayVertex2;
-  typedef boost::shared_ptr<isobarDecayVertex2> isobarDecayVertexPtr;
+  class isobarDecayVertex;
+  typedef boost::shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
 
 
   class massDependence {
@@ -58,9 +58,9 @@ namespace rpwa {
     massDependence()          { }
     virtual ~massDependence() { }
 
-    virtual std::complex<double> amp(const isobarDecayVertex2& v) = 0;
+    virtual std::complex<double> amp(const isobarDecayVertex& v) = 0;
 
-    virtual std::complex<double> operator ()(const isobarDecayVertex2& v) { return amp(v); }
+    virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
 
     virtual std::ostream& print(std::ostream& out) const;
 
@@ -94,7 +94,7 @@ namespace rpwa {
     flatMassDependence()          { }
     virtual ~flatMassDependence() { }
 
-    virtual std::complex<double> amp(const isobarDecayVertex2&);
+    virtual std::complex<double> amp(const isobarDecayVertex&);
 
     virtual std::ostream& print(std::ostream& out) const;
 
@@ -128,7 +128,7 @@ namespace rpwa {
     relativisticBreitWigner()          { }
     virtual ~relativisticBreitWigner() { }
 
-    virtual std::complex<double> amp(const isobarDecayVertex2& v);
+    virtual std::complex<double> amp(const isobarDecayVertex& v);
 
     virtual std::ostream& print(std::ostream& out) const;
 

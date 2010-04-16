@@ -44,7 +44,7 @@
 // #include <list>
 
 #include "utilities.h"
-#include "decayTopology2.h"
+#include "decayTopology.h"
 
 	
 using namespace std;
@@ -52,10 +52,10 @@ using namespace boost;
 using namespace rpwa;
 
 
-bool decayTopology2::_debug = false;
+bool decayTopology::_debug = false;
 
 
-decayTopology2::decayTopology2()
+decayTopology::decayTopology()
   : decayTopologyGraphType(),
     _prodVertex           (),
     _intVertices          (),
@@ -64,32 +64,32 @@ decayTopology2::decayTopology2()
 }
 
 
-decayTopology2::decayTopology2(const interactionVertexPtr&              productionVertex,
-			       const std::vector<interactionVertexPtr>& interactionVertices,
-			       const std::vector<particlePtr>&          fsParticles)
+decayTopology::decayTopology(const interactionVertexPtr&              productionVertex,
+			     const std::vector<interactionVertexPtr>& interactionVertices,
+			     const std::vector<particlePtr>&          fsParticles)
 {
   constructDecay(productionVertex, interactionVertices, fsParticles);
 }
 
 
-decayTopology2::decayTopology2(const decayTopology2& topo)
+decayTopology::decayTopology(const decayTopology& topo)
 {
   *this = topo;
 }
 
 
-decayTopology2::decayTopology2(const decayTopologyGraphType& graph)
+decayTopology::decayTopology(const decayTopologyGraphType& graph)
 {
   *this = graph;
 }
 
 
-decayTopology2::~decayTopology2()
+decayTopology::~decayTopology()
 { }
 
 
-decayTopology2&
-decayTopology2::operator =(const decayTopology2& topo)
+decayTopology&
+decayTopology::operator =(const decayTopology& topo)
 {
   if (this != &topo) {
     decayTopologyGraphType::operator =(topo);
@@ -101,8 +101,8 @@ decayTopology2::operator =(const decayTopology2& topo)
 }
 
 
-decayTopology2&
-decayTopology2::operator =(const decayTopologyGraphType& graph)
+decayTopology&
+decayTopology::operator =(const decayTopologyGraphType& graph)
 {
   if (this != &graph) {
     decayTopologyGraphType::operator =(graph);
@@ -112,8 +112,8 @@ decayTopology2::operator =(const decayTopologyGraphType& graph)
 }
 
 
-decayTopology2*
-decayTopology2::clone(const bool cloneFsParticles,
+decayTopology*
+decayTopology::clone(const bool cloneFsParticles,
 		      const bool cloneProductionVertex) const
 {
   if (_debug)
@@ -121,7 +121,7 @@ decayTopology2::clone(const bool cloneFsParticles,
 	      << "cloneFsParticles = "      << cloneFsParticles << ", "
 	      << "cloneProductionVertex = " << cloneProductionVertex << endl;
   // copy graph data structure
-  decayTopology2* topoClone = new decayTopology2(*this);
+  decayTopology* topoClone = new decayTopology(*this);
   nodeIterator iNd, iNdEnd;
   for (tie(iNd, iNdEnd) = topoClone->nodes(); iNd != iNdEnd; ++iNd) {
     const interactionVertexPtr v = topoClone->vertex(*iNd);
@@ -157,7 +157,7 @@ decayTopology2::clone(const bool cloneFsParticles,
 
 
 void
-decayTopology2::clear()
+decayTopology::clear()
 {
   decayTopologyGraphType::clear();
   _prodVertex.reset();
@@ -167,7 +167,7 @@ decayTopology2::clear()
 
 
 bool
-decayTopology2::isInteractionVertex(const interactionVertexPtr& vert) const
+decayTopology::isInteractionVertex(const interactionVertexPtr& vert) const
 {
   if (isProductionVertex(vert) || isFsVertex(vert))
     return false;
@@ -176,7 +176,7 @@ decayTopology2::isInteractionVertex(const interactionVertexPtr& vert) const
 
 
 bool
-decayTopology2::isFsVertex(const interactionVertexPtr& vert) const
+decayTopology::isFsVertex(const interactionVertexPtr& vert) const
 {
   if (dynamic_pointer_cast<fsVertex>(vert))
     return true;
@@ -185,7 +185,7 @@ decayTopology2::isFsVertex(const interactionVertexPtr& vert) const
 
 
 bool
-decayTopology2::isFsParticle(const particlePtr& part) const
+decayTopology::isFsParticle(const particlePtr& part) const
 {
   for (unsigned int i = 0; i < _fsParticles.size(); ++i)
     if (part == _fsParticles[i])
@@ -195,7 +195,7 @@ decayTopology2::isFsParticle(const particlePtr& part) const
 
 
 bool
-decayTopology2::checkTopology() const
+decayTopology::checkTopology() const
 {
   bool topologyIsOkay = true;
   // make sure there are no dangling particles
@@ -318,24 +318,24 @@ decayTopology2::checkTopology() const
 }
 
 
-decayTopology2
-decayTopology2::subDecay(const nodeDesc& startNd)
+decayTopology
+decayTopology::subDecay(const nodeDesc& startNd)
 {
-  decayTopology2 subTopo(dfsSubGraph(startNd));
+  decayTopology subTopo(dfsSubGraph(startNd));
   subTopo.name() = "subdecay";
   return subTopo;
 }
 
 
 void
-decayTopology2::addDecay(const decayTopology2& topo)
+decayTopology::addDecay(const decayTopology& topo)
 {
   decayTopologyGraphType::addGraph(topo);
   buildInternalData();
 }
 
 
-void decayTopology2::setProductionVertex(const interactionVertexPtr& productionVertex)
+void decayTopology::setProductionVertex(const interactionVertexPtr& productionVertex)
 {
   if (!productionVertex) {
     printErr << "null pointer for production vertex. aborting." << endl;
@@ -359,7 +359,7 @@ void decayTopology2::setProductionVertex(const interactionVertexPtr& productionV
 
 
 ostream&
-decayTopology2::print(ostream& out) const
+decayTopology::print(ostream& out) const
 {
   // print nodes
   out << "decay topology '" << name() << "' has " << nmbNodes() << " node(s):" << endl;
@@ -388,8 +388,8 @@ decayTopology2::print(ostream& out) const
 }
 
 
-decayTopology2&
-decayTopology2::constructDecay(const interactionVertexPtr&              productionVertex,
+decayTopology&
+decayTopology::constructDecay(const interactionVertexPtr&              productionVertex,
 			       const std::vector<interactionVertexPtr>& interactionVertices,
 			       const std::vector<particlePtr>&          fsParticles)
 {
@@ -469,7 +469,7 @@ decayTopology2::constructDecay(const interactionVertexPtr&              producti
 
 
 void
-decayTopology2::buildInternalData()
+decayTopology::buildInternalData()
 {
   bool success = true;
   // find production vertex
@@ -535,7 +535,7 @@ decayTopology2::buildInternalData()
 
 
 interactionVertexPtr
-decayTopology2::cloneNode(const nodeDesc& nd)
+decayTopology::cloneNode(const nodeDesc& nd)
 {
   const interactionVertexPtr v    = vertex(nd);
   interactionVertexPtr       newV = decayTopologyGraphType::cloneNode(nd);
@@ -551,7 +551,7 @@ decayTopology2::cloneNode(const nodeDesc& nd)
 
 
 particlePtr
-decayTopology2::cloneEdge(const edgeDesc& ed)
+decayTopology::cloneEdge(const edgeDesc& ed)
 {
   const particlePtr p    = particle(ed);
   particlePtr       newP = decayTopologyGraphType::cloneEdge(ed);

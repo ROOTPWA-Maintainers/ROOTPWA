@@ -37,34 +37,34 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef ISOBARDECAYVERTEX2_H
-#define ISOBARDECAYVERTEX2_H
+#ifndef ISOBARDECAYVERTEX_H
+#define ISOBARDECAYVERTEX_H
 
 
 #include <boost/shared_ptr.hpp>
 
-#include "interactionVertex2.h"
+#include "interactionVertex.h"
 #include "massDependence.h"
 
 
 namespace rpwa {
 
-  class isobarDecayVertex2 : public interactionVertex2 {
+  class isobarDecayVertex : public interactionVertex {
 
   public:
   
-    isobarDecayVertex2(const particlePtr&       mother,
-		       const particlePtr&       daughter1,
-		       const particlePtr&       daughter2,
-		       const unsigned int       L       = 0,
-		       const unsigned int       S       = 0,
-		       const massDependencePtr& massDep = massDependencePtr());  ///< force vertex to have exactly one incoming (mother) and two outgoing particles (daughters)
-    isobarDecayVertex2(const isobarDecayVertex2& vert);
-    virtual ~isobarDecayVertex2();
+    isobarDecayVertex(const particlePtr&       mother,
+		      const particlePtr&       daughter1,
+		      const particlePtr&       daughter2,
+		      const unsigned int       L       = 0,
+		      const unsigned int       S       = 0,
+		      const massDependencePtr& massDep = massDependencePtr());  ///< force vertex to have exactly one incoming (mother) and two outgoing particles (daughters)
+    isobarDecayVertex(const isobarDecayVertex& vert);
+    virtual ~isobarDecayVertex();
 		
-    virtual isobarDecayVertex2& operator =(const isobarDecayVertex2& vert);
-    virtual isobarDecayVertex2* clone(const bool cloneInParticles  = false,
-				      const bool cloneOutParticles = false) const;
+    virtual isobarDecayVertex& operator =(const isobarDecayVertex& vert);
+    virtual isobarDecayVertex* clone(const bool cloneInParticles  = false,
+				     const bool cloneOutParticles = false) const;
 
     inline virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (mother) is allowed
     inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 2 outgoing particle (daughters) are allowed
@@ -119,7 +119,7 @@ namespace rpwa {
   };
 
 
-  typedef boost::shared_ptr<isobarDecayVertex2> isobarDecayVertexPtr;
+  typedef boost::shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
 
 
   inline
@@ -131,15 +131,15 @@ namespace rpwa {
 			  const unsigned int       S       = 0,
 			  const massDependencePtr& massDep = massDependencePtr())
   {
-    isobarDecayVertexPtr v(new isobarDecayVertex2(mother, daughter1, daughter2, L, S, massDep));
+    isobarDecayVertexPtr v(new isobarDecayVertex(mother, daughter1, daughter2, L, S, massDep));
     return v;
   }
 
 
   inline
   std::ostream&
-  operator <<(std::ostream&             out,
-	      const isobarDecayVertex2& vert)
+  operator <<(std::ostream&            out,
+	      const isobarDecayVertex& vert)
   {
     return vert.print(out);
   }
@@ -148,4 +148,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // ISOBARDECAYVERTEX2_H
+#endif  // ISOBARDECAYVERTEX_H

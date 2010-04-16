@@ -42,13 +42,13 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "interactionVertex2.h"
+#include "interactionVertex.h"
 
 
 namespace rpwa {
 
 
-  class fsVertex : public interactionVertex2 {
+  class fsVertex : public interactionVertex {
 
   public:
   

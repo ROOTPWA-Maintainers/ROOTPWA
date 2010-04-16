@@ -41,14 +41,14 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef DECAYTOPOLOGY2_H
-#define DECAYTOPOLOGY2_H
+#ifndef DECAYTOPOLOGY_H
+#define DECAYTOPOLOGY_H
 
 
 #include <vector>
 
 #include "particle.h"
-#include "interactionVertex2.h"
+#include "interactionVertex.h"
 #include "fsVertex.h"
 #include "decayGraph.hpp"
 
@@ -56,25 +56,25 @@
 namespace rpwa {
 
 
-  typedef decayGraph<interactionVertex2, particle> decayTopologyGraphType;
+  typedef decayGraph<interactionVertex, particle> decayTopologyGraphType;
 
 
-  class decayTopology2 : public decayTopologyGraphType {
+  class decayTopology : public decayTopologyGraphType {
 	
   public:
 			
-    decayTopology2();
-    decayTopology2(const interactionVertexPtr&              productionVertex,
-     		   const std::vector<interactionVertexPtr>& interactionVertices,
-     		   const std::vector<particlePtr>&          fsParticles);
-    decayTopology2(const decayTopology2&                    topo);
-    decayTopology2(const decayTopologyGraphType&            graph);
-    virtual ~decayTopology2();
+    decayTopology();
+    decayTopology(const interactionVertexPtr&              productionVertex,
+		  const std::vector<interactionVertexPtr>& interactionVertices,
+		  const std::vector<particlePtr>&          fsParticles);
+    decayTopology(const decayTopology&                     topo);
+    decayTopology(const decayTopologyGraphType&            graph);
+    virtual ~decayTopology();
 
-    virtual decayTopology2& operator =(const decayTopology2&         topo);
-    virtual decayTopology2& operator =(const decayTopologyGraphType& graph);
-    virtual decayTopology2* clone(const bool cloneFsParticles      = false,
-				  const bool cloneProductionVertex = false) const;
+    virtual decayTopology& operator =(const decayTopology&          topo);
+    virtual decayTopology& operator =(const decayTopologyGraphType& graph);
+    virtual decayTopology* clone(const bool cloneFsParticles      = false,
+				 const bool cloneProductionVertex = false) const;
     virtual void clear();  ///< deletes all information
     
     unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
@@ -94,9 +94,9 @@ namespace rpwa {
     bool checkTopology   () const;                  ///< returns whether decay has the correct topology
     bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices
 
-    decayTopology2 subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
+    decayTopology subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
 
-    void addDecay(const decayTopology2& topo);  ///< copies all vertices and particles into this topology
+    void addDecay(const decayTopology& topo);  ///< copies all vertices and particles into this topology
 
     void setProductionVertex(const interactionVertexPtr& productionVertex);  ///< (re)defines production vertex
 
@@ -113,9 +113,9 @@ namespace rpwa {
 
   protected:
 
-    decayTopology2& constructDecay(const interactionVertexPtr&              productionVertex,
-				   const std::vector<interactionVertexPtr>& interactionVertices,
-				   const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
+    decayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
+				  const std::vector<interactionVertexPtr>& interactionVertices,
+				  const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
     void buildInternalData();  ///< (re)builds internal data structure of vertex and particle pointers
 
@@ -136,7 +136,7 @@ namespace rpwa {
   inline
   std::ostream&
   operator <<(std::ostream&        out,
-  	      const decayTopology2& topo)
+  	      const decayTopology& topo)
   {
     return topo.print(out);
   }
@@ -145,4 +145,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // DECAYTOPOLOGY2_H
+#endif  // DECAYTOPOLOGY_H

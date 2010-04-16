@@ -35,8 +35,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef INTERACTIONVERTEX2_H
-#define INTERACTIONVERTEX2_H
+#ifndef INTERACTIONVERTEX_H
+#define INTERACTIONVERTEX_H
 
 
 #include <iostream>
@@ -52,17 +52,17 @@
 
 namespace rpwa {
 
-  class interactionVertex2 {
+  class interactionVertex {
 
   public:
   
-    interactionVertex2();
-    interactionVertex2(const interactionVertex2& vert);
-    virtual ~interactionVertex2();
+    interactionVertex();
+    interactionVertex(const interactionVertex& vert);
+    virtual ~interactionVertex();
 		
-    virtual interactionVertex2& operator =(const interactionVertex2& vert);
-    virtual interactionVertex2* clone(const bool cloneInParticles  = false,
-				      const bool cloneOutParticles = false) const;
+    virtual interactionVertex& operator =(const interactionVertex& vert);
+    virtual interactionVertex* clone(const bool cloneInParticles  = false,
+				     const bool cloneOutParticles = false) const;
     virtual void clear();
 
     virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
@@ -102,22 +102,22 @@ namespace rpwa {
   };
 
 
-  typedef boost::shared_ptr<interactionVertex2> interactionVertexPtr;
+  typedef boost::shared_ptr<interactionVertex> interactionVertexPtr;
 
 
   inline
   interactionVertexPtr
   createInteractionVertex()
   {
-    interactionVertexPtr v(new interactionVertex2());
+    interactionVertexPtr v(new interactionVertex());
     return v;
   }
 
 
   inline
   std::ostream&
-  operator <<(std::ostream&             out,
-	      const interactionVertex2& vert)
+  operator <<(std::ostream&            out,
+	      const interactionVertex& vert)
   {
     return vert.print(out);
   }

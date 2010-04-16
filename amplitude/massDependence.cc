@@ -36,8 +36,8 @@
 
 
 #include "utilities.h"
-#include "isobarDecayVertex2.h"
-#include "isobarHelicityAmplitude2.h"
+#include "isobarDecayVertex.h"
+#include "isobarHelicityAmplitude.h"
 #include "massDependence.h"
 
 
@@ -60,7 +60,7 @@ bool flatMassDependence::_debug = false;
 
 
 complex<double>
-flatMassDependence::amp(const isobarDecayVertex2&)
+flatMassDependence::amp(const isobarDecayVertex&)
 {
   return 1;
 }
@@ -78,7 +78,7 @@ bool relativisticBreitWigner::_debug = false;
 
 
 complex<double>
-relativisticBreitWigner::amp(const isobarDecayVertex2& v)
+relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
   const particlePtr& mother = v.mother();
 

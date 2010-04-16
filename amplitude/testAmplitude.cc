@@ -48,9 +48,9 @@
 
 #include "utilities.h"
 #include "particleDataTable.h"
-#include "diffractiveDissVertex2.h"
+#include "diffractiveDissVertex.h"
 #include "massDependence.h"
-#include "isobarHelicityAmplitude2.h"
+#include "isobarHelicityAmplitude.h"
 
 
 extern particleDataTable PDGtable;
@@ -68,9 +68,9 @@ main(int argc, char** argv)
   rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
   pdt.readFile();
 
-  isobarDecayVertex2::setDebug(true);
-  isobarDecayTopology2::setDebug(true);
-  isobarHelicityAmplitude2::setDebug(true);
+  isobarDecayVertex::setDebug(true);
+  isobarDecayTopology::setDebug(true);
+  isobarHelicityAmplitude::setDebug(true);
 
   if (0) {
     {
@@ -131,7 +131,7 @@ main(int argc, char** argv)
       particlePtr X = createParticle("X");
       TLorentzVector p(0.5, 0.75, 1, 2);
       X->setLzVec(p);
-      isobarHelicityAmplitude2 amp;
+      isobarHelicityAmplitude amp;
       TLorentzRotation L = amp.hfTransform(X->lzVec());
       cout << "!!! L -> " << L * p << endl;
     }
@@ -140,7 +140,7 @@ main(int argc, char** argv)
   if (0) {
     TLorentzVector beam(1,   0.5,  180, 182);
     TLorentzVector X   (0.5, 0.75, 1,   3);
-    isobarHelicityAmplitude2 amp;
+    isobarHelicityAmplitude amp;
     TLorentzRotation L = amp.gjTransform(beam, X);
     cout << "!!! L -> " << L * X << endl;
   }
@@ -189,8 +189,8 @@ main(int argc, char** argv)
     fsParticles.push_back(pi2);
     fsParticles.push_back(pi3);
     fsParticles.push_back(pi4);
-    isobarDecayTopology2     topo(prodVert, decayVertices, fsParticles);
-    isobarHelicityAmplitude2 amp(topo);
+    isobarDecayTopology     topo(prodVert, decayVertices, fsParticles);
+    isobarHelicityAmplitude amp(topo);
     complex<double>          decayAmp = amp.amplitude();
     cout << "!!!< decay amplitude = " << decayAmp << endl;
 

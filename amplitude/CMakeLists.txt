@@ -59,13 +59,13 @@ SET(SOURCES
   particleDataTable.cc
   particle.cc
   angMomCoupl.cc
-  interactionVertex2.cc
+  interactionVertex.cc
   fsVertex.cc
-  decayTopology2.cc
-  diffractiveDissVertex2.cc
-  isobarDecayVertex2.cc
-  isobarDecayTopology2.cc
-  isobarHelicityAmplitude2.cc
+  decayTopology.cc
+  diffractiveDissVertex.cc
+  isobarDecayVertex.cc
+  isobarDecayTopology.cc
+  isobarHelicityAmplitude.cc
   massDependence.cc
 )
 

@@ -39,19 +39,19 @@
 
 
 #include "utilities.h"
-#include "diffractiveDissVertex2.h"
+#include "diffractiveDissVertex.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
 
-bool diffractiveDissVertex2::_debug = false;
+bool diffractiveDissVertex::_debug = false;
 
 
-diffractiveDissVertex2::diffractiveDissVertex2(const particlePtr& beam,
-					       const particlePtr& XSystem)
-  : interactionVertex2()
+diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
+					     const particlePtr& XSystem)
+  : interactionVertex()
 {
   if (!beam) {
     printErr << "null pointer to beam particle. aborting." << endl;
@@ -61,28 +61,28 @@ diffractiveDissVertex2::diffractiveDissVertex2(const particlePtr& beam,
     printErr << "null pointer to particle representing X system. aborting." << endl;
     throw;
   }
-  interactionVertex2::addInParticle (beam);
-  interactionVertex2::addOutParticle(XSystem);
+  interactionVertex::addInParticle (beam);
+  interactionVertex::addOutParticle(XSystem);
   if (_debug)
     printInfo << "constructed " << *this << endl;
 }
 
 
-diffractiveDissVertex2::diffractiveDissVertex2(const diffractiveDissVertex2& vert)
+diffractiveDissVertex::diffractiveDissVertex(const diffractiveDissVertex& vert)
 {
   *this = vert;
 }
 
 
-diffractiveDissVertex2::~diffractiveDissVertex2()
+diffractiveDissVertex::~diffractiveDissVertex()
 { }
 
 
-diffractiveDissVertex2*
-diffractiveDissVertex2::clone(const bool cloneInParticles,
-			      const bool cloneOutParticles) const
+diffractiveDissVertex*
+diffractiveDissVertex::clone(const bool cloneInParticles,
+			     const bool cloneOutParticles) const
 {
-  diffractiveDissVertex2* vertexClone = new diffractiveDissVertex2(*this);
+  diffractiveDissVertex* vertexClone = new diffractiveDissVertex(*this);
   if (cloneInParticles)
     vertexClone->cloneInParticles();
   if (cloneOutParticles)
@@ -92,7 +92,7 @@ diffractiveDissVertex2::clone(const bool cloneInParticles,
 
 
 ostream&
-diffractiveDissVertex2::print(ostream& out) const
+diffractiveDissVertex::print(ostream& out) const
 {
   out << "diffractive dissociation vertex: "
       << "beam " << beam()->qnSummary() << "  --->  "
@@ -102,7 +102,7 @@ diffractiveDissVertex2::print(ostream& out) const
 
 
 ostream&
-diffractiveDissVertex2::dump(ostream& out) const
+diffractiveDissVertex::dump(ostream& out) const
 {
   out << "diffractive dissociation vertex: " << endl
       << "    beam: "     << *beam()    << endl
@@ -112,7 +112,7 @@ diffractiveDissVertex2::dump(ostream& out) const
 
 
 ostream&
-diffractiveDissVertex2::printPointers(ostream& out) const
+diffractiveDissVertex::printPointers(ostream& out) const
 {
   out << "diffractive dissociation vertex " << this << ": "
       << "beam particle: "     << beam()    << "; "

@@ -43,9 +43,9 @@
 #include "utilities.h"
 #include "particleDataTable.h"
 #include "particle.h"
-#include "diffractiveDissVertex2.h"
-#include "isobarDecayVertex2.h"
-#include "isobarDecayTopology2.h"
+#include "diffractiveDissVertex.h"
+#include "isobarDecayVertex.h"
+#include "isobarDecayTopology.h"
 
 
 using namespace std;
@@ -60,9 +60,9 @@ main(int argc, char** argv)
   //particleDataTable::setDebug(true);
   particle::setDebug(true);
   //decayTopologyGraphType::setDebug(true);
-  //isobarDecayVertex2::setDebug(true);
-  //decayTopology2::setDebug(true);
-  isobarDecayTopology2::setDebug(true);
+  //isobarDecayVertex::setDebug(true);
+  //decayTopology::setDebug(true);
+  isobarDecayTopology::setDebug(true);
 
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
@@ -120,10 +120,10 @@ main(int argc, char** argv)
     decayVertices.push_back(vert2);
     decayVertices.push_back(vert0);
 
-    isobarDecayTopology2 topo(prodVert, decayVertices, fsParticles);
+    isobarDecayTopology topo(prodVert, decayVertices, fsParticles);
     cout << endl;
     printInfo << "decay topology:" << topo;
-    vector<isobarDecayTopology2> decays             = topo.possibleDecays();
+    vector<isobarDecayTopology> decays             = topo.possibleDecays();
     unsigned int                 consistentDecays   = 0;
     unsigned int                 inconsistentDecays = 0;
     for (unsigned int i = 0; i < decays.size(); ++i) {
@@ -132,9 +132,9 @@ main(int argc, char** argv)
       // for (decayTopologyGraphType::nodeIterator j = decays[i].nodes().first;
       // 	   j != decays[i].nodes().second; ++j)
       //   decays[i].vertex(*j)->printPointers(cout);
-      //isobarDecayVertex2::setDebug(true);
+      //isobarDecayVertex::setDebug(true);
       bool isConsistent = decays[i].checkTopology() && decays[i].checkConsistency();
-      //isobarDecayVertex2::setDebug(false);
+      //isobarDecayVertex::setDebug(false);
       if (isConsistent){
       	cout << "isobar decay topology is consistent" << endl;
       	++consistentDecays;

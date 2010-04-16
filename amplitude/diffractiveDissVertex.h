@@ -38,28 +38,28 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef DIFFRACTIVEDISSVERTEX2_H
-#define DIFFRACTIVEDISSVERTEX2_H
+#ifndef DIFFRACTIVEDISSVERTEX_H
+#define DIFFRACTIVEDISSVERTEX_H
 
 
 #include <boost/shared_ptr.hpp>
 
-#include "interactionVertex2.h"
+#include "interactionVertex.h"
 
 
 namespace rpwa {
 
-  class diffractiveDissVertex2 : public interactionVertex2 {
+  class diffractiveDissVertex : public interactionVertex {
 
   public:
   
-    diffractiveDissVertex2(const particlePtr& beam,
-			   const particlePtr& XSystem);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
-    diffractiveDissVertex2(const diffractiveDissVertex2& vert);
-    virtual ~diffractiveDissVertex2();
+    diffractiveDissVertex(const particlePtr& beam,
+			  const particlePtr& XSystem);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
+    diffractiveDissVertex(const diffractiveDissVertex& vert);
+    virtual ~diffractiveDissVertex();
 		
-    virtual diffractiveDissVertex2* clone(const bool cloneInParticles  = false,
-					  const bool cloneOutParticles = false) const;
+    virtual diffractiveDissVertex* clone(const bool cloneInParticles  = false,
+					 const bool cloneOutParticles = false) const;
 
     virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (beam) is allowed
     virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 1 outgoing particle (X-system) is allowed
@@ -85,7 +85,7 @@ namespace rpwa {
   };
 
 
-  typedef boost::shared_ptr<diffractiveDissVertex2> diffractiveDissVertexPtr;
+  typedef boost::shared_ptr<diffractiveDissVertex> diffractiveDissVertexPtr;
 
 
   inline
@@ -93,15 +93,15 @@ namespace rpwa {
   createDiffractiveDissVertex(const particlePtr& beam,
 			      const particlePtr& XSystem)
   {
-    diffractiveDissVertexPtr v(new diffractiveDissVertex2(beam, XSystem));
+    diffractiveDissVertexPtr v(new diffractiveDissVertex(beam, XSystem));
     return v;
   }
 
 
   inline
   std::ostream&
-  operator <<(std::ostream&                 out,
-	      const diffractiveDissVertex2& vert)
+  operator <<(std::ostream&                out,
+	      const diffractiveDissVertex& vert)
   {
     return vert.print(out);
   }
@@ -110,4 +110,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // DIFFRACTIVEDISSVERTEX2_H
+#endif  // DIFFRACTIVEDISSVERTEX_H

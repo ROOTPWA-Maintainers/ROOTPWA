@@ -36,28 +36,28 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef ISOBARHELICITYAMPLITUDE2_H
-#define ISOBARHELICITYAMPLITUDE2_H
+#ifndef ISOBARHELICITYAMPLITUDE_H
+#define ISOBARHELICITYAMPLITUDE_H
 
 
 #include <complex>
 
 #include "pputil.h"
 
-#include "isobarDecayTopology2.h"
+#include "isobarDecayTopology.h"
 
 
 namespace rpwa {	
 
-  class isobarHelicityAmplitude2 {
+  class isobarHelicityAmplitude {
 	
   public:
 			
-    isobarHelicityAmplitude2();
-    isobarHelicityAmplitude2(isobarDecayTopology2& decay);
-    virtual ~isobarHelicityAmplitude2();
+    isobarHelicityAmplitude();
+    isobarHelicityAmplitude(isobarDecayTopology& decay);
+    virtual ~isobarHelicityAmplitude();
 
-    void setDecayTopology(isobarDecayTopology2& decay);
+    void setDecayTopology(isobarDecayTopology& decay);
 
     static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
 
@@ -83,7 +83,7 @@ namespace rpwa {
 
   private:
 
-    isobarDecayTopology2* _decay;  ///< isobar decay topology with all external information
+    isobarDecayTopology* _decay;  ///< isobar decay topology with all external information
     
     static bool _debug;  ///< if set to true, debug messages are printed
     
@@ -92,8 +92,8 @@ namespace rpwa {
 
   inline
   std::ostream&
-  operator <<(std::ostream&                   out,
-	      const isobarHelicityAmplitude2& amp)
+  operator <<(std::ostream&                  out,
+	      const isobarHelicityAmplitude& amp)
   {
     return amp.print(out);
   }
@@ -147,4 +147,4 @@ namespace rpwa {
 } // namespace rpwa
 
 
-#endif  // ISOBARHELICITYAMPLITUDE2_H
+#endif  // ISOBARHELICITYAMPLITUDE_H

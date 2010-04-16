@@ -48,13 +48,13 @@ bool fsVertex::_debug = false;
 
 
 fsVertex::fsVertex(const particlePtr& fsParticle)
-  : interactionVertex2()
+  : interactionVertex()
 {
   if (!fsParticle) {
     printErr << "null pointer to final state particle. aborting." << endl;
     throw;
   }
-  interactionVertex2::addInParticle(fsParticle);
+  interactionVertex::addInParticle(fsParticle);
   if (_debug)
     printInfo << "constructed " << *this << endl;
 }

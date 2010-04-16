@@ -46,10 +46,10 @@
 #include "particleDataTable.h"
 #include "particle.h"
 #include "decayGraph.hpp"
-#include "decayTopology2.h"
-#include "diffractiveDissVertex2.h"
-#include "isobarDecayVertex2.h"
-#include "isobarDecayTopology2.h"
+#include "decayTopology.h"
+#include "diffractiveDissVertex.h"
+#include "isobarDecayVertex.h"
+#include "isobarDecayTopology.h"
 
 
 using namespace std;
@@ -68,7 +68,7 @@ struct edgeBundleData {
 };
 
 
-typedef decayGraph<interactionVertex2, particle, graphBundleData,
+typedef decayGraph<interactionVertex, particle, graphBundleData,
 		   nodeBundleData, edgeBundleData> graphType;
 
 
@@ -81,11 +81,11 @@ main(int argc, char** argv)
   // particle::setDebug(true);
   graphType::setDebug(true);
   decayTopologyGraphType::setDebug(true);
-  decayTopology2::setDebug(true);
-  // interactionVertex2::setDebug(true);
-  // diffractiveDissVertex2::setDebug(true);
-  isobarDecayVertex2::setDebug(true);
-  isobarDecayTopology2::setDebug(true);
+  decayTopology::setDebug(true);
+  // interactionVertex::setDebug(true);
+  // diffractiveDissVertex::setDebug(true);
+  isobarDecayVertex::setDebug(true);
+  isobarDecayTopology::setDebug(true);
 
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile();
@@ -150,7 +150,7 @@ main(int argc, char** argv)
     cout << g;
 
     for (graphType::nodeIterator i = g.nodes().first; i != g.nodes().second; ++i) {
-      const isobarDecayVertexPtr v = static_pointer_cast<isobarDecayVertex2>(g.vertex(*i));
+      const isobarDecayVertexPtr v = static_pointer_cast<isobarDecayVertex>(g.vertex(*i));
       g.name(v) = v->mother()->name();
     }
     for (graphType::edgeIterator i = g.edges().first; i != g.edges().second; ++i) {
@@ -234,7 +234,7 @@ main(int argc, char** argv)
     g3.addVertex(createFsVertex(pi3));
     g3.addVertex(createFsVertex(pi4));
     cout << g3;
-    decayTopology2 topo(g3);
+    decayTopology topo(g3);
     topo.name() = "topo graph copy";
     cout << topo;
 
@@ -249,7 +249,7 @@ main(int argc, char** argv)
     fsParticles.push_back(pi2);
     fsParticles.push_back(pi3);
     fsParticles.push_back(pi4);
-    isobarDecayTopology2 topo2(prodVert, decayVertices, fsParticles);
+    isobarDecayTopology topo2(prodVert, decayVertices, fsParticles);
     topo2.name() = "topo";
     cout << topo2;
     const bool topologyOkay = topo2.checkTopology();
@@ -261,7 +261,7 @@ main(int argc, char** argv)
 
     {
       cout << endl << "testing cloning" << endl;
-      isobarDecayTopology2 topo3 = *topo2.clone();
+      isobarDecayTopology topo3 = *topo2.clone();
       isobarDecayVertexPtr v = topo3.isobarDecayVertices()[0];
       particlePtr          p = v->inParticles()[0];
       v->setL(2);
@@ -306,23 +306,23 @@ main(int argc, char** argv)
 
     {
       cout << endl << "testing subdecays and merge" << endl;
-      isobarDecayTopology2 subDecay1 = topo2.subDecay(2);
+      isobarDecayTopology subDecay1 = topo2.subDecay(2);
       cout << "subdecay from node[2]: " << subDecay1;
-      const isobarDecayTopology2& subDecay2 = topo2.subDecay(1);
+      const isobarDecayTopology& subDecay2 = topo2.subDecay(1);
       cout << "subdecay from node[1]: " << subDecay2;
-      const isobarDecayTopology2& subDecay3 = topo2.subDecay(9);
+      const isobarDecayTopology& subDecay3 = topo2.subDecay(9);
       cout << "subdecay from node[9]: " << subDecay3;
       subDecay1.addDecay(subDecay3);
       cout << "subdecay from node[2] + subdecay from node[9]: " << subDecay1;
-      isobarDecayTopology2 decay;
+      isobarDecayTopology decay;
       //                                    2I  G  2J  P   C  2M
       particlePtr X2 = createParticle("X-", 2, -1, 4, +1, +1, 2);
       isobarDecayVertexPtr vertX= createIsobarDecayVertex(X2, pi4, f1, 2, 2);
       decay.addVertex(vertX);
       subDecay1.addDecay(decay);
       cout << "subdecay from node[2] + subdecay from node[9] + vert0: " << subDecay1;
-      const isobarDecayTopology2& subDecayX = topo2.subDecay(2);
-      isobarDecayTopology2 newDecay = isobarDecayTopology2::joinDaughterDecays(vertX, subDecayX, subDecay3);
+      const isobarDecayTopology& subDecayX = topo2.subDecay(2);
+      isobarDecayTopology newDecay = isobarDecayTopology::joinDaughterDecays(vertX, subDecayX, subDecay3);
       diffractiveDissVertexPtr prodVertX = createDiffractiveDissVertex(beam, X2);
       newDecay.setProductionVertex(prodVertX);
       cout << "joined graph: " << newDecay;
