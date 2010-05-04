@@ -47,7 +47,7 @@
 #include "utilities.h"
 
 
-#define USE_FDF
+//#define USE_FDF
 
 
 using namespace std;
