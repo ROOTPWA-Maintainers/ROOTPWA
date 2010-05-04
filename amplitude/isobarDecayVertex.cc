@@ -125,12 +125,25 @@ const TLorentzVector&
 isobarDecayVertex::calcMotherLzVec()
 {
   if (_debug)
-    printInfo << "calculating Lorentz-vector of particle " << mother()->name()
+    printInfo << "calculating Lorentz-vector of mother particle " << mother()->name()
 	      << " before = " << mother()->lzVec() << " GeV, " << flush;
   mother()->setLzVec(daughter1()->lzVec() + daughter2()->lzVec());
   if (_debug)
     cout << "after = " << mother()->lzVec() << " GeV" << endl;
   return mother()->lzVec();
+}
+
+
+int
+isobarDecayVertex::calcMotherCharge()
+{
+  if (_debug)
+    printInfo << "calculating charge of mother particle " << mother()->name()
+	      << " before = " << mother()->charge() << ", " << flush;
+  mother()->setCharge(daughter1()->charge() + daughter2()->charge());
+  if (_debug)
+    cout << "after = " << mother()->charge() << endl;
+  return mother()->charge();
 }
 
 

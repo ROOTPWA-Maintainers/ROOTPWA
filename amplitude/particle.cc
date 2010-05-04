@@ -164,8 +164,8 @@ particle::print(ostream& out) const
 {
   particleProperties::print(out);
   out << ", "
-      << "charge = "         << _charge   << ", "
-      << "2 * spin proj. = " << _spinProj << ", "
-      << "Lorentz-vector = " << _lzVec    << " GeV";
+      << "charge = "         << _charge         << ", "
+      << "spin proj. = "     << 0.5 * _spinProj << ", "
+      << "Lorentz-vector = " << _lzVec          << " GeV";
   return out;
 }

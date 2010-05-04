@@ -65,6 +65,8 @@ SET(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 # define output directories
 SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
+MESSAGE(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
+MESSAGE(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 
 
 # setup Boost
@@ -85,36 +87,18 @@ SET(BOOST_LIBS
 )
 
 
-# make SVN version string accessible via predefined macro SVN_VERSION
-FIND_PACKAGE(Subversion)
-IF(Subversion_FOUND)
-  # unfortunately CMAKE only parses 'svn info'
-  FIND_PROGRAM(SVNVERSION_EXECUTABLE
-    svnversion
+# setup libconfig
+# environment variable $LIBCONFIG is expected to point to libconfig location
+SET(LIBCONFIG $ENV{LIBCONFIG})
+IF(LIBCONFIG)
+  MESSAGE(STATUS "Using libconfig in directory '${LIBCONFIG}'")
+  SET(LIBCONFIG_INCLUDE_DIR "${LIBCONFIG}/include")
+  SET(LIBCONFIG_LIBS
+    "${LIBCONFIG}/lib/libconfig++.so"
   )
-  IF(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
-    MESSAGE(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
-  ELSE(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
-    EXEC_PROGRAM(${SVNVERSION_EXECUTABLE}
-      ARGS "${CMAKE_SOURCE_DIR}"
-      OUTPUT_VARIABLE SVN_VERSION
-      RETURN_VALUE SVNVERSION_RETURN
-    )
-    IF(NOT ${SVNVERSION_RETURN})
-      MESSAGE(STATUS "Subversion repository version is '${SVN_VERSION}'")
-    ELSE(NOT ${SVNVERSION_RETURN})
-      MESSAGE(STATUS "Error running 'svnversion'. Repository version unknown.")
-      SET(SVN_VERSION "")
-    ENDIF(NOT ${SVNVERSION_RETURN})
-  ENDIF(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
-ELSE(Subversion_FOUND)
-  MESSAGE(STATUS "Could not find subversion installation. Repository version unknown.")
-ENDIF(Subversion_FOUND)
-IF(SVN_VERSION)
-  ADD_DEFINITIONS(-D'SVN_VERSION=\"${SVN_VERSION}\"')
-ELSE(SVN_VERSION)
-  ADD_DEFINITIONS(-D'SVN_VERSION=\"\"')
-ENDIF(SVN_VERSION)
+ELSE(LIBCONFIG)
+  MESSAGE(FATAL_ERROR "Environment variable LIBCONFIG is not set correctly.")
+ENDIF(LIBCONFIG)
 
 
 # setup ROOT includes and libraries
@@ -150,6 +134,38 @@ EXEC_PROGRAM(${ROOT_CONFIG_EXECUTABLE}
 )
 SET(ROOT_LIB ${root_libs})
 MESSAGE(STATUS "Linking against ROOT libraries in '${ROOT_LIB}'")
+
+
+# make SVN version string accessible via predefined macro SVN_VERSION
+FIND_PACKAGE(Subversion)
+IF(Subversion_FOUND)
+  # unfortunately CMAKE only parses 'svn info'
+  FIND_PROGRAM(SVNVERSION_EXECUTABLE
+    svnversion
+  )
+  IF(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
+    MESSAGE(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
+  ELSE(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
+    EXEC_PROGRAM(${SVNVERSION_EXECUTABLE}
+      ARGS "${CMAKE_SOURCE_DIR}"
+      OUTPUT_VARIABLE SVN_VERSION
+      RETURN_VALUE SVNVERSION_RETURN
+    )
+    IF(NOT ${SVNVERSION_RETURN})
+      MESSAGE(STATUS "Subversion repository version is '${SVN_VERSION}'")
+    ELSE(NOT ${SVNVERSION_RETURN})
+      MESSAGE(STATUS "Error running 'svnversion'. Repository version unknown.")
+      SET(SVN_VERSION "")
+    ENDIF(NOT ${SVNVERSION_RETURN})
+  ENDIF(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
+ELSE(Subversion_FOUND)
+  MESSAGE(STATUS "Could not find subversion installation. Repository version unknown.")
+ENDIF(Subversion_FOUND)
+IF(SVN_VERSION)
+  ADD_DEFINITIONS(-D'SVN_VERSION=\"${SVN_VERSION}\"')
+ELSE(SVN_VERSION)
+  ADD_DEFINITIONS(-D'SVN_VERSION=\"\"')
+ENDIF(SVN_VERSION)
 
 
 # Recurse into the given subdirectories. This does not actually cause

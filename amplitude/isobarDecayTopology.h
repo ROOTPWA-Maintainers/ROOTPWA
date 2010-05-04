@@ -40,6 +40,8 @@
 #define ISOBARDECAYTOPOLOGY_H
 
 
+#include <boost/shared_ptr.hpp>
+
 #include "isobarDecayVertex.h"
 #include "decayTopology.h"
 
@@ -95,6 +97,8 @@ namespace rpwa {
     
     const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 
+    void calcIsobarCharges();  ///< sets isobar charges as defined by final state particles
+
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
@@ -117,6 +121,9 @@ namespace rpwa {
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
+
+
+  typedef boost::shared_ptr<isobarDecayTopology> isobarDecayTopologyPtr;
   
 
   inline

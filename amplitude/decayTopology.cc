@@ -390,8 +390,8 @@ decayTopology::print(ostream& out) const
 
 decayTopology&
 decayTopology::constructDecay(const interactionVertexPtr&              productionVertex,
-			       const std::vector<interactionVertexPtr>& interactionVertices,
-			       const std::vector<particlePtr>&          fsParticles)
+			      const std::vector<interactionVertexPtr>& interactionVertices,
+			      const std::vector<particlePtr>&          fsParticles)
 {
   clear();
   const unsigned int nmbVert   = interactionVertices.size();

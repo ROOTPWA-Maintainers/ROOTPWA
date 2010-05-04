@@ -412,7 +412,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
 const TLorentzVector&
 isobarDecayTopology::calcIsobarLzVec()
 {
-  // loop over isobar decay vertices and propagate changes from final state particles up to X-system
+  // loop over isobar decay vertices and propagate Lorentz-vectors from final state particles up to X-system
   for (int i = nmbInteractionVertices() - 1; i >= 0; --i) {
     if (_debug)
       printInfo << "calculating Lorentz-vector of mother isobar '"
@@ -421,6 +421,22 @@ isobarDecayTopology::calcIsobarLzVec()
     _isobarVertices[i]->calcMotherLzVec();
   }
   return xIsobarDecayVertex()->mother()->lzVec();
+}
+
+
+void
+isobarDecayTopology::calcIsobarCharges()
+{
+  // loop over isobar decay vertices and propagate charges from final state particles up to X-system
+  for (int i = nmbInteractionVertices() - 1; i >= 0; --i) {
+    if (_debug)
+      printInfo << "calculating charge of mother isobar '"
+		<< _isobarVertices[i]->mother()->name() << "' "
+		<< "of node[" << node(_isobarVertices[i]) << "]" << endl;
+    _isobarVertices[i]->calcMotherCharge();
+  }
+  // update graph name
+  name() = productionVertex()->outParticles()[0]->qnSummary();
 }
 
 

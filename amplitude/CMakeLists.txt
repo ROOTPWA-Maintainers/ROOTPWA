@@ -46,6 +46,7 @@ ADD_DEFINITIONS(-Wno-deprecated)  # suppress deprecated header warnings from boo
 SET(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
+  ${LIBCONFIG_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR}/pwa2000/libpp
   ${CMAKE_SOURCE_DIR}/pwa2000/gamp
   ${CMAKE_SOURCE_DIR}/src
@@ -67,6 +68,7 @@ SET(SOURCES
   isobarDecayTopology.cc
   isobarHelicityAmplitude.cc
   massDependence.cc
+  keyFileParser.cc
 )
 
 # define ROOT libraries
@@ -106,6 +108,7 @@ SET(THIS_LIB RootPwaAmplitude)
 ADD_LIBRARY(${THIS_LIB} SHARED ${SOURCES})
 TARGET_LINK_LIBRARIES(${THIS_LIB} ${ROOT_LIBS})
 TARGET_LINK_LIBRARIES(${THIS_LIB} ${BOOST_LIBS})
+TARGET_LINK_LIBRARIES(${THIS_LIB} ${LIBCONFIG_LIBS})
 TARGET_LINK_LIBRARIES(${THIS_LIB} ${PWA2000_LIBS})
 
 

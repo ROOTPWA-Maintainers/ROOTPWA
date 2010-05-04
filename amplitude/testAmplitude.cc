@@ -51,6 +51,7 @@
 #include "diffractiveDissVertex.h"
 #include "massDependence.h"
 #include "isobarHelicityAmplitude.h"
+#include "keyFileParser.h"
 
 
 extern particleDataTable PDGtable;
@@ -145,7 +146,7 @@ main(int argc, char** argv)
     cout << "!!! L -> " << L * X << endl;
   }
 
-  if (1) {
+  if (0) {
     // define final state particles
     particlePtr pi0 = createParticle("pi-");
     particlePtr pi1 = createParticle("pi+");
@@ -157,7 +158,7 @@ main(int argc, char** argv)
     particlePtr a1    = createParticle("a1(1269)+");
     particlePtr f1    = createParticle("f1(1285)");
     // define X-system
-    //                     I   G  2J  P   C  2M
+    //                                   2I  G  2J  P   C  2M
     particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2);
     f1->setSpinProj(-2);
     a1->setSpinProj(-2);
@@ -189,9 +190,11 @@ main(int argc, char** argv)
     fsParticles.push_back(pi2);
     fsParticles.push_back(pi3);
     fsParticles.push_back(pi4);
-    isobarDecayTopology     topo(prodVert, decayVertices, fsParticles);
+    isobarDecayTopology topo(prodVert, decayVertices, fsParticles);
+    // topo.checkTopology();
+    // topo.checkConsistency();
     isobarHelicityAmplitude amp(topo);
-    complex<double>          decayAmp = amp.amplitude();
+    complex<double>         decayAmp = amp.amplitude();
     cout << "!!!< decay amplitude = " << decayAmp << endl;
 
     if (1) {  // compare to PWA2000
@@ -201,7 +204,7 @@ main(int argc, char** argv)
       ev.setIOVersion(1);
       if (!(eventData >> ev).eof()) {
 	keyfile key;
-	key.open("1-2-+1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
+	key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
 	complex<double> pwa2000amp;
 	key.run(ev, pwa2000amp, true);
 	key.rewind();
@@ -213,4 +216,14 @@ main(int argc, char** argv)
     }
   }
 
+  if (1) {
+    keyFileParser::setDebug(true);
+    keyFileParser&         parser = keyFileParser::instance();
+    isobarDecayTopologyPtr topo   = parser.parse("test.key");
+    if (topo) {
+      printInfo << *topo;
+      topo->checkTopology();
+      topo->checkConsistency();
+    }
+  }
 }

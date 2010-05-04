@@ -105,4 +105,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // DIFFRACTIVEDISSVERTEX_H
+#endif  // FSVERTEX_H
