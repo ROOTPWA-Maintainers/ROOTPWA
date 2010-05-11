@@ -49,6 +49,7 @@ using namespace rpwa;
 
 
 keyFileParser                keyFileParser::_instance;
+interactionVertexPtr         keyFileParser::_prodVert;
 vector<isobarDecayVertexPtr> keyFileParser::_decayVertices;
 vector<particlePtr>          keyFileParser::_fsParticles;
 bool                         keyFileParser::_debug = false;
@@ -59,9 +60,10 @@ keyFileParser::parse(const string& keyFileName)
 {
   printInfo << "parsing key file '" << keyFileName << "'" << endl;
 
-  isobarDecayTopologyPtr topoNullPtr;
+  _prodVert = interactionVertexPtr();
   _decayVertices.clear();
   _fsParticles.clear();
+  isobarDecayTopologyPtr topoNullPtr;
 
   // parse key file
   Config key;
@@ -82,26 +84,35 @@ keyFileParser::parse(const string& keyFileName)
   // find 'wave' group
   const Setting* waveKey = findGroup(rootKey, "wave");
   if (!waveKey) {
-    printWarn << "problems finding 'wave' group. cannot construct decay topology." << endl;
+    printWarn << "cannot find 'wave' group. cannot construct decay topology." << endl;
     return topoNullPtr;
   }
 
   // find 'options' group
-  const Setting* optionsKey = findGroup(*waveKey, "options");
-  if (optionsKey) {
+  const Setting* waveOptionsKey = findGroup(*waveKey, "options");
+  // default option values
+  bool boseSymmetrize       = true;
+  bool useReflectivityBasis = false;
+  if (waveOptionsKey) {
+    if (waveOptionsKey->lookupValue("boseSymmetrize",       boseSymmetrize) && _debug)
+      printInfo << "setting wave option 'boseSymmetrize' to "
+		<< ((boseSymmetrize) ? "true" : "false") << endl;
+    if (waveOptionsKey->lookupValue("useReflectivityBasis", useReflectivityBasis) && _debug)
+      printInfo << "setting wave option 'useReflectivityBasis' to "
+		<< ((useReflectivityBasis) ? "true" : "false") << endl;
   }
 
   // find 'XDecay' group
-  const Setting* XDecay = findGroup(*waveKey, "XDecay");
-  if (!XDecay) {
-    printWarn << "problems finding 'XDecay' group. cannot construct decay topology." << endl;
+  const Setting* XDecayKey = findGroup(*waveKey, "XDecay");
+  if (!XDecayKey) {
+    printWarn << "cannot find 'XDecay' group. cannot construct decay topology." << endl;
     return topoNullPtr;
   }
 
   // find 'XQuantumNumbers' group
   const Setting* XQnKey = findGroup(*waveKey, "XQuantumNumbers");
   if (!XQnKey) {
-    printWarn << "problems finding 'XQuantumNumbers' group. cannot construct decay topology." << endl;
+    printWarn << "cannot find 'XQuantumNumbers' group. cannot construct decay topology." << endl;
     return topoNullPtr;
   }
   // get X quantum numbers
@@ -120,7 +131,7 @@ keyFileParser::parse(const string& keyFileName)
       XQnOkay = false;
     }
   if (!XQnOkay) {
-    printWarn << "problems finding X quantum numbers. cannot construct decay topology." << endl;
+    printWarn << "cannot find X quantum numbers. cannot construct decay topology." << endl;
     return topoNullPtr;
   }
   // create X particle
@@ -129,17 +140,20 @@ keyFileParser::parse(const string& keyFileName)
   if (_debug)
     printInfo << "constructed X particle: " << X->qnSummary() << endl;
 
-  // traverse decay chain and create final state particles and isobar decay vertices
-  constructVertex(*XDecay, X);
-
-//!!! still needs to be implemented
   // create production vertex
-  particlePtr              beam     = createParticle("pi-");
-  diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
-  
+  if (!constructProductionVertex(rootKey, X)) {
+    printWarn << "problems constructing production vertex. cannot construct decay topology." << endl;
+    return topoNullPtr;
+  }
+
+  // traverse decay chain and create final state particles and isobar decay vertices
+  if (!constructDecayVertex(*XDecayKey, X)) {
+    printWarn << "problems constructing decay chain. cannot construct decay topology." << endl;
+    return topoNullPtr;
+  }
 
   // create decay isobar decay topology
-  isobarDecayTopologyPtr topo(new isobarDecayTopology(prodVert, _decayVertices, _fsParticles));
+  isobarDecayTopologyPtr topo(new isobarDecayTopology(_prodVert, _decayVertices, _fsParticles));
   topo->calcIsobarCharges();
   
   printInfo << "successfully constructed decay topology from key file "
@@ -150,89 +164,121 @@ keyFileParser::parse(const string& keyFileName)
 
 const Setting*
 keyFileParser::findGroup(const Setting&     parent,
-			 const std::string& groupName)
+			 const std::string& groupName,
+			 const bool         mustExist)
 {
   // find field
   if (!parent.exists(groupName)) {
-    printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "'"
-	      << "of key file '" << parent.getSourceFile() << "'." << endl;
+    if (mustExist)
+      printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "'"
+		<< "of key file '" << parent.getSourceFile() << "'." << endl;
     return 0;
   }
-  const Setting* group = &parent[groupName];
-  if (!group->isGroup()) {
+  const Setting* groupKey = &parent[groupName];
+  if (!groupKey->isGroup()) {
     printWarn << "'" << groupName << "' field in '" << parent.getPath() << "'"
 	      << "of key file '" << parent.getSourceFile() << "' is not a group." << endl;
     return 0;
   }
-  return group;
+  return groupKey;
+}
+
+
+const Setting*
+keyFileParser::findList(const Setting&     parent,
+			const std::string& listName,
+			const bool         mustExist)
+{
+  // find field
+  if (!parent.exists(listName)) {
+    if (mustExist)
+      printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "'"
+		<< "of key file '" << parent.getSourceFile() << "'." << endl;
+    return 0;
+  }
+  const Setting* listKey = &parent[listName];
+  if (!listKey->isList()) {
+    printWarn << "'" << listName << "' field in '" << parent.getPath() << "'"
+	      << "of key file '" << parent.getSourceFile() << "' is not a list. "
+	      << "check that braces are correct." << endl;
+    return 0;
+  }
+  if (listKey->getLength() < 1) {
+    printWarn << "list '" << listName << "' in '" << parent.getPath() << "'"
+	      << "of key file '" << parent.getSourceFile() << "' is empty." << endl;
+    return 0;
+  }
+  return listKey;
 }
 
 
 bool
-keyFileParser::constructVertex(const Setting&     parentKey,
-			       const particlePtr& parentParticle)
+keyFileParser::constructParticle(const Setting& particleKey,
+				 particlePtr&   particle)
+{
+  string name;
+  if (particleKey.lookupValue("name", name)) {
+    particle = createParticle(name);
+    if (_debug)
+      printInfo << "created particle " << particle->qnSummary() << endl;
+    return true;
+  } else {
+    printWarn << "cannot construct particle from entry '" << particleKey.getPath() << "'. "
+	      << "name field is missing." << endl;
+    particle = particlePtr();
+    return false;
+  }
+}
+
+
+bool
+keyFileParser::constructDecayVertex(const Setting&     parentKey,
+				    const particlePtr& parentParticle)
 {
   bool                success = true;
   vector<particlePtr> daughters;
-  if (parentKey.exists("fsParticles")) {
-    if (_debug)
-      printInfo << "reading final state particles from '" << parentKey.getPath() << "':" << endl;
-    const Setting& fsPartKeys = parentKey["fsParticles"];
-    for (int i = 0; i < fsPartKeys.getLength(); ++i) {
-      const Setting& fsPartKey = fsPartKeys[i];
-      // mandatory fields
-      string name;
-      if (fsPartKey.lookupValue("name", name)) {
-	particlePtr p = createParticle(name);
+
+  if (_debug)
+    printInfo << "reading final state particles from '" << parentKey.getPath() << "':" << endl;
+  const Setting* fsPartKeys = findList(parentKey, "fsParticles", false);
+  if (fsPartKeys)
+    for (int i = 0; i < fsPartKeys->getLength(); ++i) {
+      particlePtr p;
+      if (constructParticle((*fsPartKeys)[i], p)) {
 	daughters.push_back   (p);
 	_fsParticles.push_back(p);
-      }	else {
-	printWarn << "final state particle group '" << fsPartKey.getPath() << "' "
-		  << "has no name field." << endl;
+      }	else
 	success = false;
-      }
-      if (_debug)
-	cout << "        created final state particle[" << i << "]: "
-	     << daughters.back()->qnSummary() << endl;
     }
-  }
-  if (parentKey.exists("isobars")) {
-    if (_debug)
-      printInfo << "reading isobars from '" << parentKey.getPath() << "':" << endl;
-    const Setting& isobarKeys = parentKey["isobars"];
-    for (int i = 0; i < isobarKeys.getLength(); ++i) {
-      const Setting& isobarKey = isobarKeys[i];
-      // mandatory fields
-      string name;
-      if (isobarKey.lookupValue("name", name))
-	daughters.push_back(createParticle(name));
-      else {
-	printWarn << "isobar group '" << isobarKey.getPath() << "' "
-		  << "has no name field." << endl;
+
+  if (_debug)
+    printInfo << "reading isobars from '" << parentKey.getPath() << "':" << endl;
+  const Setting* isobarKeys = findList(parentKey, "isobars", false);
+  if (isobarKeys)
+    for (int i = 0; i < isobarKeys->getLength(); ++i) {
+      particlePtr p;
+      if (constructParticle((*isobarKeys)[i], p))
+	daughters.push_back(p);
+      else
 	success = false;
-      }
-      if (_debug)
-	cout << "        created isobar[" << i << "]: " << daughters.back()->qnSummary() << endl;
-      success &= constructVertex(isobarKeys[i], daughters.back());
+      success &= constructDecayVertex((*isobarKeys)[i], daughters.back());
     }
+
+  if (daughters.size() < 2) {
+    printWarn << "cannot construct isobar vertex, because number of daughters "
+	      << "(" << daughters.size() << ") in '" << parentKey.getPath() << "' "
+	      << "is too low" << endl;
+    success = false;
   }
-  if (!success) {
-    printWarn << "problems constructing decay chain from key "
-	      << "file '" << parentKey.getSourceFile() << "" << endl;
-    return false;
-  }
-  if (daughters.size() != 2) {
-    printWarn << "number of daughters specified in '" << parentKey.getPath() << "'"
-	      << "is " << daughters.size() << " != 2. " << flush;
-    if (daughters.size() > 2)
-      cout << "constructing isobar vertex using " << daughters[0]->qnSummary() << " "
-	   << "and " << daughters[2]->qnSummary() << endl;
-    else if (daughters.size() < 2) {
-      cout << "cannot construct isobar vertex." << endl;
-      return false;
-    }
-  }
+  if (daughters.size() > 2)
+    printWarn << "number of daughters " << "(" << daughters.size() << ") "
+	      << "in '" << parentKey.getPath() << "' is larger than 2. "
+	      << "using daughters " << daughters[0]->qnSummary() << " and "
+	      << daughters[1]->qnSummary() << endl;
   
+  if (!success)
+    return false;
+
   // get isobar vertex parameters
   int L = 0, S = 0;
   if (   !parentKey.lookupValue("L", L)
@@ -244,7 +290,7 @@ keyFileParser::constructVertex(const Setting&     parentKey,
   massDependencePtr massDep;
   if (parentParticle->bareName() != "X") {
     if (   (massDepString == "BreitWigner")
-	   || (massDepString == ""))
+	|| (massDepString == ""))
       massDep = createRelativisticBreitWigner();
     else {
       printWarn << "unknown mass dependence '" << massDepString << "'. using Breit-Wigner." << endl;
@@ -253,10 +299,64 @@ keyFileParser::constructVertex(const Setting&     parentKey,
   }
   
   // construct isobar decay vertex
-  _decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0], daughters[1],
-						   L, S, massDep));
+  _decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0],
+						   daughters[1], L, S, massDep));
   if (_debug)
-    printInfo << "constructed " << _decayVertices.back();
+    printInfo << "constructed " << *_decayVertices.back() << endl;
+  return true;
+}
 
+
+bool
+keyFileParser::constructProductionVertex(const Setting&     rootKey,
+					 const particlePtr& X)
+{
+  // find 'productionVertex' group
+  const Setting* prodVertKey = findGroup(rootKey, "productionVertex");
+  if (!prodVertKey) {
+    printWarn << "cannot find 'productionVertex' group" << endl;
+    return false;
+  }
+
+  bool success = true;
+
+  // get vertex type
+  string vertType;
+  if (!prodVertKey->lookupValue("type", vertType)) {
+    printWarn << "cannot find 'type' entry in '" << prodVertKey->getPath() << "'" << endl;
+    success = false;
+  }
+
+  // get beam particles
+  if (!prodVertKey->exists("beamParticles")) {
+    printWarn << "cannot find 'beamParticles' entry in '" << prodVertKey->getPath() << "'" << endl;
+    success = false;
+  }
+  if (_debug)
+    printInfo << "reading beam particles from '" << prodVertKey->getPath() << "':" << endl;
+  const Setting* beamPartKeys = findList(*prodVertKey, "beamParticles");
+  if (!beamPartKeys)
+    success = false;
+  
+  if (!success)
+    return false;
+
+  // create production vertex
+  if (vertType == "diffractiveDissociation") {
+    if (beamPartKeys->getLength() > 1) {
+      printWarn << "list of beam particles in '" << beamPartKeys->getPath() << "' "
+		<< "has " << beamPartKeys->getLength()  << " entries. using only first one." << endl;
+    }
+    particlePtr beam;
+    if (!constructParticle((*beamPartKeys)[0], beam))
+      return false;
+    _prodVert = createDiffractiveDissVertex(beam, X);
+  } else {
+    printWarn << "unknown production vertex type '" << vertType << "'" << endl;
+    return false;
+  }
+
+  if (_debug)
+    printInfo << "constructed " << *_prodVert << endl;
   return true;
 }

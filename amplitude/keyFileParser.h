@@ -71,28 +71,32 @@ namespace rpwa {
     keyFileParser& operator =(const keyFileParser&);
 
     const libconfig::Setting* findGroup(const libconfig::Setting& parent,
-					const std::string&        groupName);  ///< finds field in keyfile and makes sure it is a group
+					const std::string&        groupName,
+					const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a group
+
+    const libconfig::Setting* findList(const libconfig::Setting& parent,
+				       const std::string&        listName,
+				       const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a non-empty list
+
+    bool constructParticle(const libconfig::Setting& particleKey,
+			   particlePtr&              particle);  ///< creates particle using name in particle key
     
-    bool constructVertex(const libconfig::Setting& parentKey,
-			 const particlePtr&        parentParticle);  ///< recursively traverses decay chain and creates decay vertices and final state particles
+    bool constructDecayVertex(const libconfig::Setting& parentKey,
+			      const particlePtr&        parentParticle);  ///< recursively traverses decay chain and creates decay vertices and final state particles
+
+    bool constructProductionVertex(const libconfig::Setting& rootKey,
+				   const particlePtr&        X);  ///< creates production vertex
 
 
     static keyFileParser                     _instance;       ///< singleton instance
+
+    static interactionVertexPtr              _prodVert;       ///< production vertex
     static std::vector<isobarDecayVertexPtr> _decayVertices;  ///< isobar decay vertices
     static std::vector<particlePtr>          _fsParticles;    ///< final state particles
 
     static bool _debug;     ///< if set to true, debug messages are printed
 
   };
-
-
-  // inline
-  // std::ostream&
-  // operator <<(std::ostream&        out,
-  // 	      const keyFileParser& parser)
-  // {
-  //   return parser.print(out);
-  // }
 
 
 }  // namespace rpwa
