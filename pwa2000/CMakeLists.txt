@@ -35,5 +35,15 @@
 #//-------------------------------------------------------------------------
 
 
+set(PWA2000_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
+  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
+  PARENT_SCOPE
+)
+set(PWA2000_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libpp.so
+  ${LIBRARY_OUTPUT_PATH}/libpwa.so
+  PARENT_SCOPE
+)
 add_subdirectory(libpp)
 add_subdirectory(gamp)

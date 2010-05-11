@@ -308,6 +308,7 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
   add_custom_command(OUTPUT ${OUTPUT_FILES}
     COMMAND ${ROOTCINT_EXECUTABLE}
     ARGS -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${LINKDEF_FILE}
-    DEPENDS ${HEADER_FILES} ${LINKDEF_FILE})
+    DEPENDS ${HEADER_FILES} ${LINKDEF_FILE}
+  )
 
 endfunction(root_generate_dictionary)

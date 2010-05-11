@@ -61,6 +61,8 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 # common compiler flags
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS "-Wall -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -137,20 +139,29 @@ else()
 endif()
 
 
+# setup doxygen
+find_package(Doxygen)
+if(NOT DOXYGEN_FOUND)
+  message(WARNING "Cannot find Doxygen. No documentation will be generated.")
+else()
+  set(DOXYGEN_TARGET  "doxygen")
+  set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
+  set(DOXYGEN_CONF    "${CMAKE_SOURCE_DIR}/rootpwaDoxyfile.conf")
+  message(STATUS "Run 'make ${DOXYGEN_TARGET}' to create Doxygen documentation files in ${DOXYGEN_DOC_DIR}")
+  add_custom_target(${DOXYGEN_TARGET}
+    COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
+    DEPENDS ${DOXYGEN_CONF}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  )
+endif()
+
+
 enable_testing()
 
 
 # build subprojects
 
 # PWA2000
-set(PWA2000_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
-)
-set(PWA2000_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libpp.so
-  ${LIBRARY_OUTPUT_PATH}/libpwa.so
-)
 add_subdirectory(pwa2000)
 
 # RootPwa
