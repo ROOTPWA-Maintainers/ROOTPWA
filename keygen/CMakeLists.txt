@@ -1,6 +1,6 @@
 #///////////////////////////////////////////////////////////////////////////
 #//
-#//    Copyright 2009 Sebastian Neubert
+#//    Copyright 2010
 #//
 #//    This file is part of rootpwa
 #//
@@ -18,83 +18,40 @@
 #//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 #//
 #///////////////////////////////////////////////////////////////////////////
+#//-------------------------------------------------------------------------
+#// File and Version Information:
+#// $Rev::                             $: revision of last commit
+#// $Author::                          $: author of last commit
+#// $Date::                            $: date of last commit
+#//
+#// Description:
+#//      build file for RootPwaKey library
+#//
+#//
+#// Author List:
+#//      Sebastian Neubert    TUM            (original author)
+#//
+#//
+#//-------------------------------------------------------------------------
 
 
-PROJECT(rootpwa)
-
-
-ENABLE_TESTING()
-
-
-SET(INCLUDE_DIRECTORIES
+# set include directories
+set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
-  ${CMAKE_SOURCE_DIR}/src
+  ${PWA2000_INCLUDE_DIR}
+  ${ROOTPWA_INCLUDE_DIR}
 )
+include_directories(${INCLUDE_DIRECTORIES})
 
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
 
-# list of source files that are compiled into library
-SET(SOURCES
+# source files that are compiled into library
+set(SOURCES
   particleKey.cc
   waveKey.cc
   genKeyHelper.cc
 )
 
-# define ROOT libraries
-#SET(ROOT_LIB $ENV{ROOTSYS}/lib)
-SET(ROOT_BIN $ENV{ROOTSYS}/bin)
-SET(ROOT_LIBS
-  ${ROOT_LIB}/libCore.so 
-  ${ROOT_LIB}/libCint.so
-  ${ROOT_LIB}/libRIO.so		
-  ${ROOT_LIB}/libNet.so
-  ${ROOT_LIB}/libHist.so
-  ${ROOT_LIB}/libGraf.so
-  ${ROOT_LIB}/libGraf3d.so 
-  ${ROOT_LIB}/libGpad.so
-  ${ROOT_LIB}/libTree.so
-  ${ROOT_LIB}/libThread.so
-  ${ROOT_LIB}/libRint.so
-  ${ROOT_LIB}/libPostscript.so
-  ${ROOT_LIB}/libMatrix.so 
-  ${ROOT_LIB}/libPhysics.so
-  ${ROOT_LIB}/libMathCore.so
-  ${ROOT_LIB}/libMinuit2.so
-  libdl.so
-  libm.so
-)
 
-# define PWA libraries
-SET(PWA_LIB ${LIBRARY_OUTPUT_PATH})
-SET(PWA_LIBS
-  ${PWA_LIB}/libpp.so
-  ${PWA_LIB}/libpwa.so
-)
-
-# add rootpwalib
-SET(ROOTPWA_LIB ${LIBRARY_OUTPUT_PATH})
-SET(ROOTPWA_LIBS ${ROOTPWA_LIB}/librootpwa.so)
-
-
-#-------------------------------------------------
-#------- The library -----------------------------
-#-------------------------------------------------
-
-SET(SOURCES
-  ${SOURCES}
-)
-
-ADD_LIBRARY(rootpwaKey SHARED ${SOURCES})
-
-TARGET_LINK_LIBRARIES(rootpwaKey ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(rootpwaKey ${PWA_LIBS})
-TARGET_LINK_LIBRARIES(rootpwaKey ${ROOTPWA_LIBS})
-
-
-#-------------------------------------------------
-#------- Install Commands ------------------------
-#-------------------------------------------------
-
-INSTALL(FILES librootpwaKey.so DESTINATION lib)
+# library
+set(THIS_LIB "RootPwaKey")
+make_shared_library("${THIS_LIB}" "${SOURCES}" "${ROOT_LIBS}" "${PWA2000_LIBS}" "${ROOTPWA_LIBS}")

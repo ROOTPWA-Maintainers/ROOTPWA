@@ -32,7 +32,7 @@
 #pragma link C++ class rpwa::TPwaFitGraphErrors+;
 #pragma link C++ class TCMatrix+;
 #pragma link C++ class TCovEllipse+;
-#pragma link C++ class TMCMCMeta+;
+//#pragma link C++ class TMCMCMeta+;
 
 
 

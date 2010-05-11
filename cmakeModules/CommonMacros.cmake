@@ -25,37 +25,46 @@
 #// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      build file for pp library
+#//      collection of cmake macros
 #//
 #//
 #// Author List:
-#//      Sebastian Neubert    TUM            (original author)
+#//      Boris Grube    TUM            (original author)
 #//
 #//
 #//-------------------------------------------------------------------------
 
 
-set(CMAKE_CXX_FLAGS   "-O2 -Wall -Werror")
-set(CMAKE_LDCXX_FLAGS "-O2")
+# takes list of file names and returns file name list with new extension
+# example:
+#   switch_file_extension("${CC_LIST}" ".cc" ".h" H_LIST)
+function(switch_file_extension IN_FILE_LIST OLD_EXT NEW_EXT OUT_FILE_LIST)
+  set(NEW_FILE_LIST)
+  foreach(_OLD_FILE ${IN_FILE_LIST})
+    string(REGEX REPLACE "^(.*)${OLD_EXT}$" "\\1${NEW_EXT}" _NEW_FILE ${_OLD_FILE})
+    set(NEW_FILE_LIST ${NEW_FILE_LIST} ${_NEW_FILE})
+  endforeach()
+  set(${OUT_FILE_LIST} ${NEW_FILE_LIST})
+endfunction(switch_file_extension)
 
 
-# set include directories
-include_directories(${CMAKE_SOURCE_DIR}/pwa2000/libpp)
+# adds standard shared library
+# additional libraries that should be linked to can be given as optional arguments
+function(make_shared_library LIB_NAME SOURCES)
+  add_library(${LIB_NAME} SHARED ${SOURCES})
+  # proccess link libraries in additional arguments
+  foreach(_LIB ${ARGN})
+    target_link_libraries(${LIB_NAME} ${_LIB})
+  endforeach()
+endfunction(make_shared_library)
 
 
-# source files that are compiled into library
-set(SOURCES
-  event.cc
-  massDep.cc
-  particle.cc
-  pputil.cc
-  lorentz.cc
-  matrix.cc
-  particleData.cc
-  Vec.cc
-)
-	    
-
-# library
-set(THIS_LIB "pp")
-make_shared_library("${THIS_LIB}" "${SOURCES}")
+# adds standard executable
+# additional libraries that should be linked to can be given as optional arguments
+function(make_executable EXE_NAME SOURCES)
+  add_executable(${EXE_NAME} ${SOURCES})
+  # proccess link libraries in additional arguments
+  foreach(_LIB ${ARGN})
+    target_link_libraries(${EXE_NAME} ${_LIB})
+  endforeach()
+endfunction(make_executable)

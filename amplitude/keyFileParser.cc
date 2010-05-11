@@ -132,7 +132,7 @@ keyFileParser::parse(const string& keyFileName)
   // traverse decay chain and create final state particles and isobar decay vertices
   constructVertex(*XDecay, X);
 
-
+//!!! still needs to be implemented
   // create production vertex
   particlePtr              beam     = createParticle("pi-");
   diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);

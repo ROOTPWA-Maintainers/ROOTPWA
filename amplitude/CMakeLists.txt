@@ -35,27 +35,22 @@
 #//-------------------------------------------------------------------------
 
 
-# define project
-PROJECT(rootpwa)
-ENABLE_TESTING()
+add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
 
 
-ADD_DEFINITIONS(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
-
-
-SET(INCLUDE_DIRECTORIES
+# set include directories
+set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
   ${LIBCONFIG_INCLUDE_DIR}
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
+  ${PWA2000_INCLUDE_DIR}
   ${CMAKE_SOURCE_DIR}/src
 )
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
+include_directories(${INCLUDE_DIRECTORIES})
 
 
-# list of source files that are compiled into library
-SET(SOURCES
+# source files that are compiled into library
+set(SOURCES
   particleProperties.cc
   particleDataTable.cc
   particle.cc
@@ -71,70 +66,18 @@ SET(SOURCES
   keyFileParser.cc
 )
 
-# define ROOT libraries
-SET(ROOT_BIN $ENV{ROOTSYS}/bin)
-SET(ROOT_LIBS
-  ${ROOT_LIB}/libCore.so 
-  ${ROOT_LIB}/libCint.so
-  ${ROOT_LIB}/libRIO.so		
-  ${ROOT_LIB}/libNet.so
-  ${ROOT_LIB}/libHist.so
-  ${ROOT_LIB}/libGraf.so
-  ${ROOT_LIB}/libGraf3d.so 
-  ${ROOT_LIB}/libGpad.so
-  ${ROOT_LIB}/libTree.so
-  ${ROOT_LIB}/libThread.so
-  ${ROOT_LIB}/libRint.so
-  ${ROOT_LIB}/libPostscript.so
-  ${ROOT_LIB}/libMatrix.so 
-  ${ROOT_LIB}/libPhysics.so
-  ${ROOT_LIB}/libMathCore.so
-  ${ROOT_LIB}/libMinuit2.so
-  libdl.so
-  libm.so
-)
 
-SET(PWA2000_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libpp.so
-  ${LIBRARY_OUTPUT_PATH}/libpwa.so
-)
+# library
+set(THIS_LIB "RootPwaAmp")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+ "${BOOST_LIBS}"
+ "${ROOT_LIBS}"
+ "${LIBCONFIG_LIBS}"
+ "${PWA2000_LIBS}")
 
 
-#-------------------------------------------------
-#------- The library -----------------------------
-#-------------------------------------------------
-
-SET(THIS_LIB RootPwaAmplitude)
-ADD_LIBRARY(${THIS_LIB} SHARED ${SOURCES})
-TARGET_LINK_LIBRARIES(${THIS_LIB} ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(${THIS_LIB} ${BOOST_LIBS})
-TARGET_LINK_LIBRARIES(${THIS_LIB} ${LIBCONFIG_LIBS})
-TARGET_LINK_LIBRARIES(${THIS_LIB} ${PWA2000_LIBS})
-
-
-#-------------------------------------------------
-#------- Main executables ------------------------
-#-------------------------------------------------
-
-SET(THIS_EXE testParticle)
-ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
-TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
-
-SET(THIS_EXE testDecayTopology)
-ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
-TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
-
-SET(THIS_EXE testDecayCombinatorics)
-ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
-TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
-
-SET(THIS_EXE testAmplitude)
-ADD_EXECUTABLE(${THIS_EXE} ${THIS_EXE}.cc)
-TARGET_LINK_LIBRARIES(${THIS_EXE} ${THIS_LIB})
-
-
-#-------------------------------------------------
-#------- Install Commands ------------------------
-#-------------------------------------------------
-
-INSTALL(FILES librootPwaAmplitude.so DESTINATION lib)
+# executables
+make_executable(testParticle           testParticle.cc           ${THIS_LIB})
+make_executable(testDecayTopology      testDecayTopology.cc      ${THIS_LIB})
+make_executable(testDecayCombinatorics testDecayCombinatorics.cc ${THIS_LIB})
+make_executable(testAmplitude          testAmplitude.cc          ${THIS_LIB})

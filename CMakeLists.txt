@@ -36,145 +36,193 @@
 
 
 # check if cmake has the required version
-CMAKE_MINIMUM_REQUIRED(VERSION 2.4.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
 
 
 # set verbosity
-SET(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displayed during build
+set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displayed during build
                                # the same effect can be achieved by calling 'make VERBOSE=1'
 
 
 # define project
-PROJECT(rootpwa)
-ENABLE_TESTING()
+project(ROOTPWA)
+
+
+# load some common cmake macros
+# where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
+message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'")
+include(CommonMacros)
 
 
 # define build types
 # set a default build type for single-configuration CMake generators, if no build type is set.
-IF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE Release)
-ENDIF(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 # common compiler flags
-SET(CMAKE_CXX_FLAGS "-Wall -Werror")
+set(CMAKE_CXX_FLAGS "-Wall -Werror")
 # flags for specific build types
-SET(CMAKE_CXX_FLAGS_DEBUG "-g")
-SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
-SET(CMAKE_CXX_LDFLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 
 
 # define output directories
-SET(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
-SET(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
-MESSAGE(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
-MESSAGE(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
+set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
+message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
+set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
+message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 
 
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
-SET(Boost_INCLUDE_DIRS $ENV{BOOST_ROOT})
-IF(Boost_INCLUDE_DIRS)  # ugly CMAKE 2.4 workaround to force user specified Boos library
-  MESSAGE(STATUS "Using Boost include directory '${Boost_INCLUDE_DIRS}'")
-ELSE(Boost_INCLUDE_DIRS)
-  FIND_PACKAGE(Boost)
-  IF(Boost_FOUND)
-    MESSAGE(STATUS "Using Boost include directory '${Boost_INCLUDE_DIRS}'")
-    MESSAGE(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
-  ELSE(Boost_FOUND)
-    MESSAGE(FATAL_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly?")
-  ENDIF(Boost_FOUND)
-ENDIF(Boost_INCLUDE_DIRS)
-SET(BOOST_LIBS
-)
+#set(Boost_DEBUG 1)
+find_package(Boost 1.42.0 REQUIRED)
+if(Boost_FOUND)
+  message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
+  message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
+else()
+  message(SEND_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly?")
+endif()
 
 
 # setup libconfig
 # environment variable $LIBCONFIG is expected to point to libconfig location
-SET(LIBCONFIG $ENV{LIBCONFIG})
-IF(LIBCONFIG)
-  MESSAGE(STATUS "Using libconfig in directory '${LIBCONFIG}'")
-  SET(LIBCONFIG_INCLUDE_DIR "${LIBCONFIG}/include")
-  SET(LIBCONFIG_LIBS
+set(LIBCONFIG $ENV{LIBCONFIG})
+if(LIBCONFIG)
+  message(STATUS "Using libconfig in directory '${LIBCONFIG}'")
+  set(LIBCONFIG_INCLUDE_DIR "${LIBCONFIG}/include")
+  set(LIBCONFIG_LIBS
     "${LIBCONFIG}/lib/libconfig++.so"
   )
-ELSE(LIBCONFIG)
-  MESSAGE(FATAL_ERROR "Environment variable LIBCONFIG is not set correctly.")
-ENDIF(LIBCONFIG)
+else()
+  message(SEND_ERROR "Environment variable LIBCONFIG=${LIBCONFIG} is not set correctly.")
+endif()
 
 
 # setup ROOT includes and libraries
-SET(ROOT_CONFIG_SEARCHPATH $ENV{ROOTSYS}/bin)
-FIND_PROGRAM(ROOT_CONFIG_EXECUTABLE
-  root-config
-  PATHS ${ROOT_CONFIG_SEARCHPATH}
-  NO_DEFAULT_PATH
-)
-IF(${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
-  MESSAGE(FATAL_ERROR "ROOT not installed in the searchpath and ROOTSYS is not set. Please set ROOTSYS or add the path to your ROOT installation in the Macro FindROOT.cmake in th subdirectory cmake/modules.")
-ELSE(${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND")
-  STRING(REGEX REPLACE "(^.*)/bin/root-config" "\\1" test ${ROOT_CONFIG_EXECUTABLE})
-  SET($ENV{ROOTSYS} ${test})
-ENDIF(${ROOT_CONFIG_EXECUTABLE} MATCHES "ROOT_CONFIG_EXECUTABLE-NOTFOUND") 
-# ROOT version
-EXEC_PROGRAM(${ROOT_CONFIG_EXECUTABLE}
-  ARGS "--version --svn-revision"
-  OUTPUT_VARIABLE ROOT_VERSION
-)
-MESSAGE(STATUS "Linking against ROOT version ${ROOT_VERSION}")
-# ROOT includes
-EXEC_PROGRAM(${ROOT_CONFIG_EXECUTABLE}
-  ARGS "--incdir"
-  OUTPUT_VARIABLE root_headers
-)
-SET(ROOT_INCLUDE_DIR ${root_headers})
-MESSAGE(STATUS "Using ROOT include directory '${ROOT_INCLUDE_DIR}'")
-# ROOT libraries
-EXEC_PROGRAM(${ROOT_CONFIG_EXECUTABLE}
-  ARGS "--libdir"
-  OUTPUT_VARIABLE root_libs
-)
-SET(ROOT_LIB ${root_libs})
-MESSAGE(STATUS "Linking against ROOT libraries in '${ROOT_LIB}'")
+find_package(ROOT 5.26 REQUIRED Minuit2)
 
 
 # make SVN version string accessible via predefined macro SVN_VERSION
-FIND_PACKAGE(Subversion)
-IF(Subversion_FOUND)
+find_package(Subversion)
+if(Subversion_FOUND)
   # unfortunately CMAKE only parses 'svn info'
-  FIND_PROGRAM(SVNVERSION_EXECUTABLE
+  find_program(SVNVERSION_EXECUTABLE
     svnversion
   )
-  IF(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
-    MESSAGE(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
-  ELSE(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
-    EXEC_PROGRAM(${SVNVERSION_EXECUTABLE}
-      ARGS "${CMAKE_SOURCE_DIR}"
+  if(NOT SVNVERSION_EXECUTABLE)
+    message(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
+  else()
+    execute_process(
+      COMMAND ${SVNVERSION_EXECUTABLE} "${CMAKE_SOURCE_DIR}"
       OUTPUT_VARIABLE SVN_VERSION
-      RETURN_VALUE SVNVERSION_RETURN
-    )
-    IF(NOT ${SVNVERSION_RETURN})
-      MESSAGE(STATUS "Subversion repository version is '${SVN_VERSION}'")
-    ELSE(NOT ${SVNVERSION_RETURN})
-      MESSAGE(STATUS "Error running 'svnversion'. Repository version unknown.")
-      SET(SVN_VERSION "")
-    ENDIF(NOT ${SVNVERSION_RETURN})
-  ENDIF(${SVNVERSION_EXECUTABLE} MATCHES "SVNVERSION_EXECUTABLE-NOTFOUND")
-ELSE(Subversion_FOUND)
-  MESSAGE(STATUS "Could not find subversion installation. Repository version unknown.")
-ENDIF(Subversion_FOUND)
-IF(SVN_VERSION)
-  ADD_DEFINITIONS(-D'SVN_VERSION=\"${SVN_VERSION}\"')
-ELSE(SVN_VERSION)
-  ADD_DEFINITIONS(-D'SVN_VERSION=\"\"')
-ENDIF(SVN_VERSION)
+      RESULT_VARIABLE _SVNVERSION_RETURN
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(NOT ${_SVNVERSION_RETURN})
+      message(STATUS "Subversion repository revision is '${SVN_VERSION}'")
+    else()
+      message(STATUS "Error running 'svnversion'. Repository version unknown.")
+      set(SVN_VERSION "")
+    endif()
+  endif()
+else()
+  message(STATUS "Could not find subversion installation. Repository version unknown.")
+endif()
+if(SVN_VERSION)
+  add_definitions(-D'SVN_VERSION=\"${SVN_VERSION}\"')
+else()
+  add_definitions(-D'SVN_VERSION=\"\"')
+endif()
 
 
-# Recurse into the given subdirectories. This does not actually cause
-# another cmake executable to run. The same process will walk through
-# the project's entire directory structure.
-ADD_SUBDIRECTORY(pwa2000)
-ADD_SUBDIRECTORY(tools)
-ADD_SUBDIRECTORY(src)
-ADD_SUBDIRECTORY(generators)
-ADD_SUBDIRECTORY(keygen)
-ADD_SUBDIRECTORY(amplitude)
-#ADD_SUBDIRECTORY(gui)
+enable_testing()
+
+
+# build subprojects
+
+# PWA2000
+set(PWA2000_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
+  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
+)
+set(PWA2000_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libpp.so
+  ${LIBRARY_OUTPUT_PATH}/libpwa.so
+)
+add_subdirectory(pwa2000)
+
+# RootPwa
+set(ROOTPWA_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/src
+)
+set(ROOTPWA_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libRootPwa.so
+)
+add_subdirectory(src)
+
+# RootPwaAmp
+set(ROOTPWAAMP_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/amplitude
+)
+set(ROOTPWAAMP_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libRootPwaAmp.so
+)
+add_subdirectory(amplitude)
+
+# RootPwaTools
+set(ROOTPWATOOLS_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/tools
+)
+set(ROOTPWATOOLS_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libRootPwaTools.so
+)
+add_subdirectory(tools)
+
+# RootPwaGen
+set(ROOTPWAGEN_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/generators
+)
+set(ROOTPWAGEN_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libRootPwaGen.so
+)
+add_subdirectory(generators)
+
+# RootPwaKey
+set(ROOTPWAKEY_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/keygen
+)
+set(ROOTPWAKEY_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libRootPwaKey.so
+)
+add_subdirectory(keygen)
+
+# Fortran
+set(FORTRAN_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/fortran
+)
+set(FORTRAN_LIBS
+  ${LIBRARY_OUTPUT_PATH}/libFortran.so
+)
+add_subdirectory(fortran)
+
+
+# add dependencies
+#add_dependencies(RootPwa      pp pwa)
+#add_dependencies(RootPwaAmp   pp pwa)
+#add_dependencies(RootPwaTools pp pwa)
+#add_dependencies(RootPwaGen   pp pwa RootPwaTools)
+#add_dependencies(RootPwaKey   pp pwa RootPwaTools)
+
+
+
+#add_subdirectory(gui)
+
+
+# file(GLOB _CC_LIST ${CMAKE_CURRENT_SOURCE_DIR} "amplitude/*.cc")
+# #message("foo ${_CC_LIST}")
+# switch_file_extension("${_CC_LIST}" ".cc" ".h" _H_LIST)
+# #message("bar ${_H_LIST}")
+
+# root_generate_dictionary("testDict.cc" "${ROOT_INCLUDE_DIR}" "${_H_LIST}" "testLinkDef.h")

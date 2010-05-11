@@ -81,7 +81,8 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
   gamp.reflect(true);
   vector<complex<double> > ampsRefl = gamp.Amp(keyFileName, dataFile);
   if (amps.size() != ampsRefl.size()) {
-    cerr << "different number of events for reflected and unmodified data." << endl;
+    printErr << "different number of events for reflected (" << ampsRefl.size() << ") "
+	     << "and unmodified data(" << amps.size() << ")." << endl;
     return false;
   }
   dataFile.clear();
@@ -94,8 +95,8 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
   gamp.mirror(true);
   vector<complex<double> > ampsMirr = gamp.Amp(keyFileName, dataFile);
   if (amps.size() != ampsMirr.size()) {
-    cerr << "different number of events for mirrored and unmodified data." 
-	 << amps.size() << "!="<< ampsMirr.size() << endl;
+    printErr << "different number of events for mirrored (" << ampsMirr.size() << ") "
+	     << "and unmodified data(" << amps.size() << ")." << endl;
     return false;
   }
 
