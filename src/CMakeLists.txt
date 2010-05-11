@@ -39,7 +39,7 @@
 set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -74,18 +74,21 @@ set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
 # library
 set(THIS_LIB "RootPwa")
-make_shared_library("${THIS_LIB}" "${SOURCES}" "${ROOT_LIBS}")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+  "${ROOT_LIBS}"
+  "${PWA2000_LIBS}"
+)
 
 
 # executables
-make_executable(listwaves         listwaves.cc         ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(pwafit            pwafit.cc            ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(pwaConstraintFit  pwaConstraintFit.cc  ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(selector          selector.cc          ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(pwaplot           pwaplots.cc          ${THIS_LIB} "${ROOT_LIBS}" "${PWA2000_LIBS}")
+make_executable(listwaves         listwaves.cc         ${THIS_LIB})
+make_executable(pwafit            pwafit.cc            ${THIS_LIB})
+make_executable(pwaConstraintFit  pwaConstraintFit.cc  ${THIS_LIB})
+make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
+make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
+make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
+make_executable(selector          selector.cc          ${THIS_LIB})
+make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
 
 
 # test executables

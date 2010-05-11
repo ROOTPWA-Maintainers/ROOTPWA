@@ -41,7 +41,8 @@ set(CMAKE_CXX_LDFLAGS "-O2")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${PWA2000_INCLUDE_DIR}
+  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -59,10 +60,12 @@ set(SOURCES
 
 # library
 set(THIS_LIB "pwa")
-make_shared_library("${THIS_LIB}" "${SOURCES}")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+ ${LIBRARY_OUTPUT_PATH}/libpp.so
+)
 
 
 # executables
-make_executable(gamp gamp.cc ${THIS_LIB} ${LIBRARY_OUTPUT_PATH}/libpp.so)
-make_executable(vamp vamp.cc ${THIS_LIB} ${LIBRARY_OUTPUT_PATH}/libpp.so)
-make_executable(int  int.cc  ${THIS_LIB} ${LIBRARY_OUTPUT_PATH}/libpp.so)
+make_executable(gamp gamp.cc ${THIS_LIB})
+make_executable(vamp vamp.cc ${THIS_LIB})
+make_executable(int  int.cc  ${THIS_LIB})

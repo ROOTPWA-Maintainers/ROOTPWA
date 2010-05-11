@@ -44,7 +44,8 @@ set(INCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIRS}
   ${LIBCONFIG_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
-  ${CMAKE_SOURCE_DIR}/src
+  ${ROOTPWA_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -73,7 +74,8 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
  "${BOOST_LIBS}"
  "${ROOT_LIBS}"
  "${LIBCONFIG_LIBS}"
- "${PWA2000_LIBS}")
+ "${PWA2000_LIBS}"
+)
 
 
 # executables

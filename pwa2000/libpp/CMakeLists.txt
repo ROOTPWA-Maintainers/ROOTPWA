@@ -40,7 +40,10 @@ set(CMAKE_LDCXX_FLAGS "-O2")
 
 
 # set include directories
-include_directories(${CMAKE_SOURCE_DIR}/pwa2000/libpp)
+set(INCLUDE_DIRECTORIES
+  ${CMAKE_CURRENT_SOURCE_DIR}
+)
+include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library

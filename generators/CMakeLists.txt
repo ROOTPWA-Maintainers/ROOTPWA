@@ -41,7 +41,7 @@ set(INCLUDE_DIRECTORIES
   ${LIBCONFIG_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
-  ${ROOTPWAGEN_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -69,12 +69,14 @@ set(SOURCES ${SOURCES} ${GEN_DICTIONARY})
 
 # library
 set(THIS_LIB "RootPwaGen")
-make_shared_library("${THIS_LIB}" "${SOURCES}" "${ROOT_LIBS}" "${PWA2000_LIBS}" "${ROOTPWA_LIBS}")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+  "${ROOT_LIBS}"
+  "${PWA2000_LIBS}"
+  "${ROOTPWA_LIBS}"
+)
 
 
 # executables
-make_executable(genpw genpw.cc ${THIS_LIB} "${ROOT_LIBS}" "${LIBCONFIG_LIBS}"
-  "${PWA2000_LIBS}" "${ROOTPWA_LIBS}")
-make_executable(evtweight evtweight.cc ${THIS_LIB} "${ROOT_LIBS}"
-  "${PWA2000_LIBS}" "${ROOTPWA_LIBS}")
-make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB} "${ROOT_LIBS}")
+make_executable(genpw     genpw.cc     ${THIS_LIB} "${LIBCONFIG_LIBS}")
+make_executable(evtweight evtweight.cc ${THIS_LIB})
+make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})

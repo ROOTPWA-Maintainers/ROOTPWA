@@ -39,7 +39,7 @@
 set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
-  ${ROOTPWATOOLS_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -67,16 +67,19 @@ set(SOURCES ${SOURCES} ${TOOLS_DICTIONARY})
 
 # library
 set(THIS_LIB "RootPwaTools")
-make_shared_library("${THIS_LIB}" "${SOURCES}" "${ROOT_LIBS}")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+  "${ROOT_LIBS}"
+  "${PWA2000_LIBS}"
+)
 
 
 # executables
-make_executable(addamp          addamp.cc)
-make_executable(reflect         reflect.cc         "${PWA2000_LIBS}")
-make_executable(plotGampMassDep plotGampMassDep.cc "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(key2tex         key2tex.cc         "${ROOT_LIBS}")
-make_executable(addisokey       addisokey.cc       "${ROOT_LIBS}")
-make_executable(evt2tree        evt2tree.cc        "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(binevt          binevt.cc          "${ROOT_LIBS}" "${PWA2000_LIBS}")
-make_executable(mutator         mutator.cc         "${ROOT_LIBS}")
-make_executable(getThresholds   getThresholds.cc   "${ROOT_LIBS}" "${PWA2000_LIBS}")
+make_executable(addamp          addamp.cc          ${THIS_LIB})
+make_executable(reflect         reflect.cc         ${THIS_LIB})
+make_executable(plotGampMassDep plotGampMassDep.cc ${THIS_LIB})
+make_executable(key2tex         key2tex.cc         ${THIS_LIB})
+make_executable(addisokey       addisokey.cc       ${THIS_LIB})
+make_executable(evt2tree        evt2tree.cc        ${THIS_LIB})
+make_executable(binevt          binevt.cc          ${THIS_LIB})
+make_executable(mutator         mutator.cc         ${THIS_LIB})
+make_executable(getThresholds   getThresholds.cc   ${THIS_LIB})
