@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 220                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-05-11 16:49:30 +0200 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      program that converts standrad ASCII PWA2000 .evt files into
@@ -41,6 +41,7 @@
 #include <cassert>
 #include <iomanip>
 #include <limits>
+#include <algorithm>
 
 #include "TChain.h"
 #include "TClonesArray.h"
@@ -94,26 +95,32 @@ getParticleMass(const string& name)
 
 
 bool
-convertTreeToEvt(const string&  inFileNamePattern = "testEvents.root",
-		 const string&  outFileName       = "testTree.evt",
-		 const long int maxNmbEvents      = -1,
-		 const string&  inTreeName        = "rootPwaEvtTree",
-		 const string&  pdgTableFileName  = "./particleDataTable.txt",
-		 const bool     debug             = false)
+convertTreeToEvt(const string&  inFileNamePattern     = "testEvents.root",
+		 const string&  outFileName           = "testTree.evt",
+		 const long int maxNmbEvents          = -1,
+		 const string&  pdgTableFileName      = "./particleDataTable.txt",
+		 const string&  inTreeName            = "rootPwaEvtTree",
+		 const string&  leafNameIsPartNames   = "initialStateNames",
+		 const string&  leafNameIsPartMomenta = "initialStateMomenta",
+		 const string&  leafNameFsPartNames   = "finalStateNames",
+		 const string&  leafNameFsPartMomenta = "finalStateMomenta",
+		 const bool     debug                 = false)
 {
   rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
   pdt.readFile(pdgTableFileName);
 
   // open input file
+  printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
   TChain chain(inTreeName.c_str());
   if (chain.Add(inFileNamePattern.c_str()) < 1) {
-    printWarn << "cannot open input file(s) '" << inFileNamePattern << "'" << endl;
+    printWarn << "no events in input file(s) '" << inFileNamePattern << "'" << endl;
     return false;
   }
   const long int nmbEventsChain = chain.GetEntries();
   chain.GetListOfFiles()->ls();
 
   // create output file
+  printInfo << "creating output file '" << outFileName << "'" << endl;
   ofstream outFile(outFileName.c_str());
   if (!outFile) {
     printWarn << "cannot open output file '" << outFileName << "'" << endl;
@@ -121,35 +128,23 @@ convertTreeToEvt(const string&  inFileNamePattern = "testEvents.root",
   }
 
   // create leaf variables
-  // TClonesArray* initialStateNames   = new TClonesArray("TObjString", 0);
-  // TClonesArray* initialStateMomenta = new TClonesArray("TVector3",   0);
-  // TClonesArray* finalStateNames     = new TClonesArray("TObjString", 0);
-  // TClonesArray* finalStateMomenta   = new TClonesArray("TVector3",   0);
   TClonesArray* initialStateNames   = 0;
   TClonesArray* initialStateMomenta = 0;
   TClonesArray* finalStateNames     = 0;
   TClonesArray* finalStateMomenta   = 0;
 
   // connect leaf variables to tree branches
-  // chain.GetBranch("initialStateNames"  )->SetAutoDelete(kFALSE);
-  // chain.GetBranch("initialStateMomenta")->SetAutoDelete(kFALSE);
-  // chain.GetBranch("finalStateNames"    )->SetAutoDelete(kFALSE);
-  // chain.GetBranch("finalStateMomenta"  )->SetAutoDelete(kFALSE);
-  chain.SetBranchAddress("initialStateNames",   &initialStateNames  );
-  chain.SetBranchAddress("initialStateMomenta", &initialStateMomenta);
-  chain.SetBranchAddress("finalStateNames",     &finalStateNames    );
-  chain.SetBranchAddress("finalStateMomenta",   &finalStateMomenta  );
-
+  chain.SetBranchAddress(leafNameIsPartNames.c_str(),   &initialStateNames  );
+  chain.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta);
+  chain.SetBranchAddress(leafNameFsPartNames.c_str(),   &finalStateNames    );
+  chain.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta  );
+			 
   // loop over events
-  const long int nmbEvents = ((maxNmbEvents > 0) ? maxNmbEvents : nmbEventsChain);
+  const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+			                         : nmbEventsChain);
   for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
     if (!debug)
       progressIndicator(eventIndex, nmbEvents);
-
-    // initialStateNames->Clear  ();
-    // initialStateMomenta->Clear();
-    // finalStateNames->Clear    ();
-    // finalStateMomenta->Clear  ();
 
     if (chain.LoadTree(eventIndex) < 0)
       break;
@@ -157,13 +152,13 @@ convertTreeToEvt(const string&  inFileNamePattern = "testEvents.root",
 
     assert(initialStateNames  );
     assert(initialStateMomenta);
-    assert(initialStateNames->GetSize() == initialStateMomenta->GetSize());
-    const unsigned int nmbIsPart = initialStateNames->GetSize();
+    assert(initialStateNames->GetEntriesFast() == initialStateMomenta->GetEntriesFast());
+    const unsigned int nmbIsPart = initialStateNames->GetEntriesFast();
 
     assert(finalStateNames  );
     assert(finalStateMomenta);
-    assert(finalStateNames->GetSize() == finalStateMomenta->GetSize());
-    const unsigned int nmbFsPart = finalStateNames->GetSize();
+    assert(finalStateNames->GetEntriesFast() == finalStateMomenta->GetEntriesFast());
+    const unsigned int nmbFsPart = finalStateNames->GetEntriesFast();
 
     outFile << nmbIsPart + nmbFsPart << endl;
 
@@ -183,8 +178,7 @@ convertTreeToEvt(const string&  inFileNamePattern = "testEvents.root",
 	      << sqrt(mass * mass + mom.Mag2()) << endl;
       if (debug) {
 	cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-	     << "charge = " << charge << "; ";
-	mom.Print();
+	     << "charge = " << charge << "; " << mom << endl;
       }
     }
 
@@ -203,8 +197,7 @@ convertTreeToEvt(const string&  inFileNamePattern = "testEvents.root",
 	      << sqrt(mass * mass + mom.Mag2()) << endl;
       if (debug) {
 	cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-	     << "charge = " << charge << "; ";
-	mom.Print();
+	     << "charge = " << charge << "; " << mom << endl;
       }
     }
     
@@ -212,5 +205,6 @@ convertTreeToEvt(const string&  inFileNamePattern = "testEvents.root",
       cout << endl;
   }
 
+  printInfo << "wrote " << nmbEvents << " events to file '" << outFileName << "'" << endl;
   return true;
 }

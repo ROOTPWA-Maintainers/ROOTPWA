@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 220                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-05-11 16:49:30 +0200 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      program that converts standrad ASCII PWA2000 .evt files into
@@ -70,10 +70,17 @@ getParticleName(const int id,
 
 
 bool
-convertEvtToTree(const string&  evtFileName  = "1500.1540.evt",
-		 const string&  outFileName  = "testEvents.root",
-		 const long int maxNmbEvents = -1,
-		 const string&  outTreeName  = "rootPwaEvtTree")
+convertEvtToTree(//const string&  evtFileName           = "1500.1540.evt",
+		 //const string&  outFileName           = "testEvents.root",
+		 const string&  evtFileName           = "testTree.evt",
+		 const string&  outFileName           = "testEvents2.root",
+		 const long int maxNmbEvents          = -1,
+		 const string&  outTreeName           = "rootPwaEvtTree",
+		 const string&  leafNameIsPartNames   = "initialStateNames",
+		 const string&  leafNameIsPartMomenta = "initialStateMomenta",
+		 const string&  leafNameFsPartNames   = "finalStateNames",
+		 const string&  leafNameFsPartMomenta = "finalStateMomenta",
+		 const bool     debug                 = false)
 {
   // open input file
   printInfo << "opening input file '" << evtFileName << "'" << endl;
@@ -108,10 +115,10 @@ convertEvtToTree(const string&  evtFileName  = "1500.1540.evt",
   // connect leaf variables to tree branches
   const int split   = 0;
   const int bufSize = 256000;
-  tree->Branch("initialStateNames",   "TClonesArray", &initialStateNames,   bufSize, split);
-  tree->Branch("initialStateMomenta", "TClonesArray", &initialStateMomenta, bufSize, split);
-  tree->Branch("finalStateNames",     "TClonesArray", &finalStateNames,     bufSize, split);
-  tree->Branch("finalStateMomenta",   "TClonesArray", &finalStateMomenta,   bufSize, split);
+  tree->Branch(leafNameIsPartNames.c_str(),   "TClonesArray", &initialStateNames,   bufSize, split);
+  tree->Branch(leafNameIsPartMomenta.c_str(), "TClonesArray", &initialStateMomenta, bufSize, split);
+  tree->Branch(leafNameFsPartNames.c_str(),   "TClonesArray", &finalStateNames,     bufSize, split);
+  tree->Branch(leafNameFsPartMomenta.c_str(), "TClonesArray", &finalStateMomenta,   bufSize, split);
 
   // loop over events and fill tree
   bool     success     = true;
@@ -138,6 +145,8 @@ convertEvtToTree(const string&  evtFileName  = "1500.1540.evt",
     } else
       break;
     assert(nmbParticles > 0);
+    if (debug)
+      printInfo << "# of particles = " << nmbParticles << endl;
     
     // read initial state particle data (beam only)
     initialStateNames->Clear  ();
@@ -158,6 +167,15 @@ convertEvtToTree(const string&  evtFileName  = "1500.1540.evt",
       }
     } else
       break;
+    assert(initialStateNames->GetEntriesFast() == initialStateMomenta->GetEntriesFast());
+    const unsigned int nmbIsPart = initialStateNames->GetEntriesFast();
+    if (debug) {
+      printInfo << nmbIsPart << " initial state particles:" << endl;
+      for (unsigned int i = 0; i < nmbIsPart; ++i)
+      	cout << "        particle[" << i << "]: "
+      	     << ((TObjString*)(*initialStateNames)[i])->GetString() << "; "
+      	     << *((TVector3*)(*initialStateMomenta)[i]) << endl;
+    }
 
     // read final state particle data
     finalStateNames->Clear  ();
@@ -180,11 +198,22 @@ convertEvtToTree(const string&  evtFileName  = "1500.1540.evt",
       } else
 	break;
     }
+    assert(finalStateNames->GetEntriesFast() == finalStateMomenta->GetEntriesFast());
+    const unsigned int nmbFsPart = finalStateNames->GetEntriesFast();
+    if (debug) {
+      printInfo << nmbFsPart << " final state particles:" << endl;
+      for (unsigned int i = 0; i < nmbFsPart; ++i)
+      	cout << "        particle[" << i << "]: "
+      	     << ((TObjString*)(*finalStateNames)[i])->GetString() << "; "
+      	     << *((TVector3*)(*finalStateMomenta)[i]) << endl;
+    }
 
     tree->Fill();
     ++countEvents;
     if ((maxNmbEvents > 0) && (countEvents >= maxNmbEvents))
       break;
+    if (debug)
+      cout << endl;
   }
 
   tree->Write();

@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 200                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-04-09 11:32:36 +0200 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      ROOT logon macro that loads libraries needed by other ROOT macros
