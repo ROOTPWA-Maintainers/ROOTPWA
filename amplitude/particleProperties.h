@@ -48,6 +48,9 @@
 #include <sstream>
 
 
+#include "utilities.h"
+
+
 namespace rpwa {
 
 
