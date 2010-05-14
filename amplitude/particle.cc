@@ -50,7 +50,8 @@ particle::particle()
   : particleProperties(),
     _charge           (0),
     _spinProj         (0),
-    _lzVec            ()
+    _lzVec            (),
+    _index            (-1)
 { }
 
 
@@ -62,19 +63,23 @@ particle::particle(const particle& part)
 
 particle::particle(const particleProperties& partProp,
 		   const int                 charge,
-		   const TVector3&           momentum,
-		   const int                 spinProj)
+		   const int                 index,
+		   const int                 spinProj,
+		   const TVector3&           momentum)
   : particleProperties(partProp),
     _charge           (charge),
     _spinProj         (spinProj),
-    _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())))
+    _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()))),
+    _index            (index)
 { }
 
 	
 particle::particle(const string&   partName,
-		   const TVector3& momentum,
-		   const int       spinProj)
-  : _spinProj(spinProj)
+		   const int       index,
+		   const int       spinProj,
+		   const TVector3& momentum)
+  : _spinProj(spinProj),
+    _index   (index)
 {
   // extract charge from name
   chargeFromName(partName, _charge);
@@ -91,9 +96,11 @@ particle::particle(const string& partName,
 		   const int     J,
 		   const int     P,
 		   const int     C,
-		   const int     spinProj)
+		   const int     spinProj,
+		   const int     index)
   : particleProperties(partName, isospin, G, J, P, C),
-    _spinProj(spinProj)
+    _spinProj(spinProj),
+    _index   (index)
 {
   const string strippedName = chargeFromName(partName, _charge);
   setName(strippedName);
@@ -112,6 +119,7 @@ particle::operator =(const particle& part)
     _charge   = part._charge;
     _spinProj = part._spinProj;
     _lzVec    = part._lzVec;
+    _index    = part._index;
   }
   return *this;
 }
@@ -166,6 +174,7 @@ particle::print(ostream& out) const
   out << ", "
       << "charge = "         << _charge         << ", "
       << "spin proj. = "     << 0.5 * _spinProj << ", "
-      << "Lorentz-vector = " << _lzVec          << " GeV";
+      << "Lorentz-vector = " << _lzVec          << " GeV, "
+      << "index = "          << _index;
   return out;
 }

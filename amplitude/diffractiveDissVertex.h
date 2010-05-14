@@ -47,6 +47,9 @@
 #include "interactionVertex.h"
 
 
+class TClonesArray;
+
+
 namespace rpwa {
 
   class diffractiveDissVertex : public interactionVertex {
@@ -65,10 +68,11 @@ namespace rpwa {
     virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 1 outgoing particle (X-system) is allowed
 
     // diffractive dissociation specific accessors
-    // inline particlePtr&       beam   ()       { return inParticles ()[0]; }  ///< returns beam particle
-    // inline particlePtr&       XSystem()       { return outParticles()[0]; }  ///< returns X particle
     inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
     inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
+    
+    virtual bool readData(const TClonesArray& initialStateNames,
+			  const TClonesArray& initialStateMomenta);  ///< reads data from TClonesArrays
 
     virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form

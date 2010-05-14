@@ -41,7 +41,14 @@
 //-------------------------------------------------------------------------
 
 
-// #include <list>
+#include <vector>
+#include <map>
+#include <algorithm>
+
+#include "TClonesArray.h"
+#include "TClass.h"
+#include "TObjString.h"
+#include "TVector3.h"
 
 #include "utilities.h"
 #include "decayTopology.h"
@@ -311,6 +318,28 @@ decayTopology::checkTopology() const
       printInfo << "success: vertex associated to final state particle "
     		<< "'" << part->name() << "' is a final state vertex" << endl;
   }
+  // make sure final state indices make sense
+  // sort final state particles w.r.t. name
+  map<string, vector<particlePtr> > fsPartSorted;
+  for (unsigned int i = 0; i < _fsParticles.size(); ++i) {
+    const particlePtr& part = _fsParticles[i];
+    fsPartSorted[part->name()].push_back(part);
+  }
+  for (map<string, vector<particlePtr> >::iterator i = fsPartSorted.begin();
+       i != fsPartSorted.end(); ++i) {
+    // sort particles of the same name by their index
+    vector<particlePtr>& parts = i->second;
+    sort(parts.begin(), parts.end(), rpwa::compareIndicesAsc);
+    // check indices
+    for (unsigned int j = 0; j < parts.size(); ++j)
+      if (parts[j]->index() != (int)j) {
+  	printWarn << "indices for final state particles '" << i->first << "' are not consecutive. "
+  		  << "expected index [" << j << "], found [" << parts[j]->index() << "]." << endl;
+  	topologyIsOkay = false;
+      } else if (_debug)
+	printInfo << "success: final state particle '" << i->first << "' "
+		  << "has expected index [" << j << "]" << endl;
+  }
   if (_debug)
     printInfo << "decay topology " << ((topologyIsOkay) ? "passed" : "did not pass")
 	      << " all tests" << endl;
@@ -355,6 +384,70 @@ void decayTopology::setProductionVertex(const interactionVertexPtr& productionVe
     _prodVertex.reset();
   }
   _prodVertex = productionVertex;
+}
+
+
+bool
+decayTopology::readData(const TClonesArray& initialStateNames,
+			const TClonesArray& initialStateMomenta,
+			const TClonesArray& finalStateNames,
+			const TClonesArray& finalStateMomenta)
+{
+  bool success = true;
+  // set initial state
+  // production vertex class has to implement readData() for the corresponding case
+  if(!productionVertex()->readData(initialStateNames, initialStateMomenta))
+    success = false;
+  // check final state data
+  const string nameClassName = finalStateNames.GetClass()->GetName();
+  if (nameClassName != "TObjString") {
+    printWarn << "final state names are not of type TObjString." << endl;
+    success = false;
+  }
+  const string momClassName = finalStateMomenta.GetClass()->GetName();
+  if (momClassName != "TVector3") {
+    printWarn << "final state momenta are not of type TVector3." << endl;
+    success = false;
+  }
+  if (finalStateNames.GetEntriesFast() != finalStateMomenta.GetEntriesFast()) {
+    printWarn << "arrays for final state names and momenta have different sizes: "
+	      << finalStateNames.GetEntriesFast() << " vs. "
+	      << finalStateMomenta.GetEntriesFast() << endl;
+    success = false;
+  }
+  if (!success)
+    return false;
+  // sort final state momenta w.r.t. particle name
+  const unsigned int nmbFsPart = finalStateNames.GetEntriesFast();
+  map<string, vector<const TVector3*> > fsMomenta;
+  for (unsigned int i = 0; i < nmbFsPart; ++i) {
+    const string    name = ((TObjString*)finalStateNames[i])->GetString().Data();
+    const TVector3* mom  = (TVector3*)initialStateMomenta[i];
+    fsMomenta[name].push_back(mom);
+  }
+  // set final state
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    const particlePtr& part = fsParticles()[i];
+    map<string, vector<const TVector3*> >::const_iterator entry = fsMomenta.find(part->name());
+    if (entry != fsMomenta.end()) {
+      unsigned int partIndex = part->index();
+      if (partIndex < 0)
+	partIndex = 0;
+      if (partIndex < entry->second.size())
+	part->setMomentum(*(entry->second[partIndex]));
+      else {
+	printWarn << "index [" << partIndex << "] for final state particle "
+		  << "'" << part->name() << "' out of range. "
+		  << "data contain only " << entry->second.size() << " entries." << endl;
+	success = false;
+      }
+    } else {
+      printWarn << "cannot find entry for final state particle '" << part->name() << "' "
+		<< "in data." << endl;
+      success = false;
+    }
+  }
+  return true;
 }
 
 

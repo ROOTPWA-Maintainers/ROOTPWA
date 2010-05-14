@@ -74,7 +74,6 @@ createDiffLeafs(TClonesArray*      partNames  [3],
     diff.SetY((momenta[0].Y() - momenta[1].Y()) / momenta[0].Y());
     diff.SetZ((momenta[0].Z() - momenta[1].Z()) / momenta[0].Z());
   }
-  cout << "!!! " << diff << endl;
   new((*(partMomenta[2]))[index]) TVector3(diff);
   
   if (debug) {
@@ -192,7 +191,7 @@ createDiffTree(const string&  inFileNamePatternA    = "testEvents.root",
     finalStateMomenta[2]->Clear();
     for (unsigned int i = 0; i < nmbFsPart[0]; ++i)
       createDiffLeafs(finalStateNames, finalStateMomenta, i, absoluteDiff, debug);
-    
+
     tree->Fill();
     if (debug)
       cout << endl;

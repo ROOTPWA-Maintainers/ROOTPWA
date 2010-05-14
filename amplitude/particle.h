@@ -60,33 +60,38 @@ namespace rpwa {
     particle(const particle&           part);
     particle(const particleProperties& partProp,
 	     const int                 charge,
-	     const TVector3&           momentum = TVector3(),
-	     const int                 spinProj = 0);
+	     const int                 index    = -1,
+	     const int                 spinProj = 0,
+	     const TVector3&           momentum = TVector3());
     particle(const std::string&        partName,
-	     const TVector3&           momentum = TVector3(),
-	     const int                 spinProj = 0);
+	     const int                 index    = -1,
+	     const int                 spinProj = 0,
+	     const TVector3&           momentum = TVector3());
     particle(const std::string&        partName,
 	     const int                 isospin,
 	     const int                 G,
 	     const int                 J,
 	     const int                 P,
 	     const int                 C,
-	     const int                 spinProj);
+	     const int                 spinProj,
+	     const int                 index = -1);
     virtual ~particle();
 
-    virtual particle& operator =(const particle&           part);
+    virtual particle& operator =(const particle& part);
     virtual particle* clone() const;
 
-    std::string           name()      const;                       ///< returns particle name including charge
-    std::string           bareName()  const { return stripChargeFromName(name()); }  ///< returns particle name w/o charge
-    int                   charge()    const { return _charge;   }  ///< returns particle's charge
-    int                   spinProj()  const { return _spinProj; }  ///< returns particle's spin projection quantum number
-    const TLorentzVector& lzVec()     const { return _lzVec;    }  ///< returns Lorentz vector of particle
+    std::string           name    () const;                       ///< returns particle name including charge
+    std::string           bareName() const { return stripChargeFromName(name()); }  ///< returns particle name w/o charge
+    int                   charge  () const { return _charge;                     }  ///< returns particle's charge
+    int                   spinProj() const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
+    const TLorentzVector& lzVec   () const { return _lzVec;                      }  ///< returns Lorentz vector of particle
+    int                   index   () const { return _index;                      }  ///< returns index label assigned to particle
 
-    void setCharge  (const int             charge)   { _charge   = charge;                                                            }  ///< sets particle's charge
+    void setCharge  (const int             charge  ) { _charge   = charge;                                                            }  ///< sets particle's charge
     void setSpinProj(const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
     void setMomentum(const TVector3&       momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
-    void setLzVec   (const TLorentzVector& lzVec)    { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
+    void setLzVec   (const TLorentzVector& lzVec   ) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
+    void setIndex   (const int             index   ) { _index    = index;                                                             }  ///< sets particle's index label
 
     void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
@@ -105,6 +110,7 @@ namespace rpwa {
     int            _charge;    ///< charge
     int            _spinProj;  ///< spin projection quantum number; can be either M or helicity
     TLorentzVector _lzVec;     ///< Lorentz vector [GeV]
+    int            _index;     ///< index that can be used to label indistinguishable particles
 
     static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -116,11 +122,25 @@ namespace rpwa {
 
   inline
   particlePtr
-  createParticle(const std::string& partName,
-		 const TVector3&    momentum = TVector3(),
-		 const int          spinProj = 0)
+  createParticle(const particleProperties& partProp,
+		 const int                 charge,
+		 const int                 index    = -1,
+		 const int                 spinProj = 0,
+		 const TVector3&           momentum = TVector3())
   {
-    particlePtr p(new particle(partName, momentum, spinProj));
+    particlePtr p(new particle(partProp, charge, index, spinProj, momentum));
+    return p;
+  }
+
+
+  inline
+  particlePtr
+  createParticle(const std::string& partName,
+		 const int          index    = -1,
+		 const int          spinProj = 0,
+		 const TVector3&    momentum = TVector3())
+  {
+    particlePtr p(new particle(partName, index, spinProj, momentum));
     return p;
   }
 
@@ -133,10 +153,39 @@ namespace rpwa {
 		 const int          J,
 		 const int          P,
 		 const int          C,
-		 const int          spinProj)
+		 const int          spinProj,
+		 const int          index = -1)
   {
-    particlePtr p(new particle(partName, isospin, G, J, P, C, spinProj));
+    particlePtr p(new particle(partName, isospin, G, J, P, C, spinProj, index));
     return p;
+  }
+
+
+  // predicate for sort (ascending)
+  inline
+  bool
+  compareIndicesAsc(const particlePtr& a,
+		    const particlePtr& b)
+  {
+    if (!a || !b) {
+      printWarn << "null pointer to particle. result undefined." << std::endl;
+      return false;
+    }
+    return a->index() < b->index();
+  }
+
+
+  // predicate for sort (descending)
+  inline
+  bool
+  compareIndicesDesc(const particlePtr& a,
+		     const particlePtr& b)
+  {
+    if (!a || !b) {
+      printWarn << "null pointer to particle. result undefined." << std::endl;
+      return false;
+    }
+    return a->index() > b->index();
   }
 
 

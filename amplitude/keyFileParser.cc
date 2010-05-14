@@ -219,8 +219,19 @@ keyFileParser::constructParticle(const Setting& particleKey,
   string name;
   if (particleKey.lookupValue("name", name)) {
     particle = createParticle(name);
+    int spinProj;
+    if (particleKey.lookupValue("spinProj", spinProj))
+      particle->setSpinProj(spinProj);
     if (_debug)
-      printInfo << "created particle " << particle->qnSummary() << endl;
+      printInfo << "created particle " << particle->qnSummary() << flush;
+    int index;
+    if (particleKey.lookupValue("index", index)) {
+      particle->setIndex(index);
+      if (_debug)
+	cout << " with index [" << index << "]" << flush;
+    }
+    if (_debug)
+      cout << endl;
     return true;
   } else {
     printWarn << "cannot construct particle from entry '" << particleKey.getPath() << "'. "
@@ -285,18 +296,13 @@ keyFileParser::constructDecayVertex(const Setting&     parentKey,
       || !parentKey.lookupValue("S", S))
     printWarn << "Either L or S are not specified in '" << parentKey.getPath() << "'. "
 	      << "using zero." << endl;
-  string massDepString = "";
-  parentKey.lookupValue("massDep", massDepString);
+
+  // get mass dependence
+  string massDepType = "";
+  parentKey.lookupValue("massDep", massDepType);
   massDependencePtr massDep;
-  if (parentParticle->bareName() != "X") {
-    if (   (massDepString == "BreitWigner")
-	|| (massDepString == ""))
-      massDep = createRelativisticBreitWigner();
-    else {
-      printWarn << "unknown mass dependence '" << massDepString << "'. using Breit-Wigner." << endl;
-      massDep = createRelativisticBreitWigner();
-    }
-  }
+  if (parentParticle->bareName() != "X")
+    massDep = mapMassDependence(massDepType);
   
   // construct isobar decay vertex
   _decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0],
@@ -304,6 +310,21 @@ keyFileParser::constructDecayVertex(const Setting&     parentKey,
   if (_debug)
     printInfo << "constructed " << *_decayVertices.back() << endl;
   return true;
+}
+
+
+massDependencePtr
+keyFileParser::mapMassDependence(const string& massDepType)
+{
+  massDependencePtr massDep;
+  if (   (massDepType == "BreitWigner")
+      || (massDepType == ""))
+    massDep = createRelativisticBreitWigner();
+  else {
+    printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
+    massDep = createRelativisticBreitWigner();
+  }
+  return massDep;
 }
 
 
@@ -317,45 +338,50 @@ keyFileParser::constructProductionVertex(const Setting&     rootKey,
     printWarn << "cannot find 'productionVertex' group" << endl;
     return false;
   }
-
   bool success = true;
-
   // get vertex type
   string vertType;
   if (!prodVertKey->lookupValue("type", vertType)) {
     printWarn << "cannot find 'type' entry in '" << prodVertKey->getPath() << "'" << endl;
     success = false;
   }
-
-  // get beam particles
-  if (!prodVertKey->exists("beamParticles")) {
-    printWarn << "cannot find 'beamParticles' entry in '" << prodVertKey->getPath() << "'" << endl;
+  // get initial state particles
+  if (!prodVertKey->exists("isParticles")) {
+    printWarn << "cannot find 'isParticles' entry in '" << prodVertKey->getPath() << "'" << endl;
     success = false;
   }
   if (_debug)
-    printInfo << "reading beam particles from '" << prodVertKey->getPath() << "':" << endl;
-  const Setting* beamPartKeys = findList(*prodVertKey, "beamParticles");
-  if (!beamPartKeys)
+    printInfo << "reading initial state particles from '" << prodVertKey->getPath() << "':" << endl;
+  const Setting* isPartKeys = findList(*prodVertKey, "isParticles");
+  if (!isPartKeys)
     success = false;
-  
+
   if (!success)
     return false;
-
   // create production vertex
+  return mapProductionVertexType(vertType, *isPartKeys, X);
+}
+
+
+bool
+keyFileParser::mapProductionVertexType(const string&      vertType,
+				       const Setting&     isPartKeys,
+				       const particlePtr& X)
+{
   if (vertType == "diffractiveDissociation") {
-    if (beamPartKeys->getLength() > 1) {
-      printWarn << "list of beam particles in '" << beamPartKeys->getPath() << "' "
-		<< "has " << beamPartKeys->getLength()  << " entries. using only first one." << endl;
+    if (isPartKeys.getLength() > 1) {
+      printWarn << "list of initial state particles in '" << isPartKeys.getPath() << "' "
+		<< "has " << isPartKeys.getLength()  << " entries. using only first one." << endl;
     }
     particlePtr beam;
-    if (!constructParticle((*beamPartKeys)[0], beam))
+    if (!constructParticle(isPartKeys[0], beam))
       return false;
     _prodVert = createDiffractiveDissVertex(beam, X);
+
   } else {
     printWarn << "unknown production vertex type '" << vertType << "'" << endl;
     return false;
   }
-
   if (_debug)
     printInfo << "constructed " << *_prodVert << endl;
   return true;

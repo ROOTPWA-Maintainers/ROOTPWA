@@ -70,6 +70,7 @@ main(int argc, char** argv)
   pdt.readFile();
 
   isobarDecayVertex::setDebug(true);
+  decayTopology::setDebug(true);
   isobarDecayTopology::setDebug(true);
   isobarHelicityAmplitude::setDebug(true);
 

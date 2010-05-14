@@ -94,7 +94,8 @@ main(int argc, char** argv)
   if (0) {
     TVector3 mom;
     mom = TVector3(1, 2, 3);
-    particlePtr beam = createParticle("pi-", mom);
+    particlePtr beam = createParticle("pi-");
+    beam->setMomentum(mom);
     particlePtr X    = createParticle("X-");
     printInfo << "created particles: " << endl
 	      << *beam << endl
@@ -107,9 +108,11 @@ main(int argc, char** argv)
 	      << *vert2;
 
     mom = TVector3(3, 4, 5);
-    particlePtr daughter1 = createParticle("pi-", mom);
+    particlePtr daughter1 = createParticle("pi-");
+    daughter1->setMomentum(mom);
     mom = TVector3(4, 5, 6);
-    particlePtr daughter2 = createParticle("pi0", mom);
+    particlePtr daughter2 = createParticle("pi0");
+    daughter2->setMomentum(mom);
     isobarDecayVertexPtr vert3 = createIsobarDecayVertex(X, daughter1, daughter2, 1, 2);
     printInfo << "created vertex: " << endl
 	      << *vert3;

@@ -333,8 +333,11 @@ isobarDecayTopology::possibleDecays(const int  minI,
   	      for (int I = max(abs(isospins[0] - isospins[1]), minI);
 		   I <= min(isospins[0] + isospins[1], maxI); I += 2) {
   		// check whether charge state is allowed
-  		if (abs(charge - 0.5 * (baryonNmb + strangeness + charm + beauty)) != 0.5 * I)
-		  continue;
+		// !!! the Gell-Mann-Nishijima formula cannot be used
+		//     here, because it employs the the z-component of
+		//     the isospin, I_z (not I); see PDG 2008 eq. 14.1
+  		// if (abs(charge - 0.5 * (baryonNmb + strangeness + charm + beauty)) != 0.5 * I)
+		//   continue;
   		const int C = G * (I % 4 == 0 ? 1 : -1);  // C-parity
   		if (!allowJpcExotic)
   		  // quark model restrictions: P == C is always allowed

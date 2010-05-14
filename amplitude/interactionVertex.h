@@ -50,6 +50,9 @@
 #include "particle.h"
 
 
+class TClonesArray;
+
+
 namespace rpwa {
 
   class interactionVertex {
@@ -77,6 +80,9 @@ namespace rpwa {
     inline std::vector<particlePtr>&       outParticles()       { return _outParticles; }  ///< returns array of outgoing particles
     inline const std::vector<particlePtr>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
     inline const std::vector<particlePtr>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
+
+    virtual bool readData(const TClonesArray& names,
+			  const TClonesArray& momenta);  ///< general interface to read data from TClonesArrays; noop here
 
     virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form

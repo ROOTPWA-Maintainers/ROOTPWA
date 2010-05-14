@@ -83,9 +83,13 @@ namespace rpwa {
     
     bool constructDecayVertex(const libconfig::Setting& parentKey,
 			      const particlePtr&        parentParticle);  ///< recursively traverses decay chain and creates decay vertices and final state particles
+    massDependencePtr mapMassDependence(const std::string& massDepType);  ///< creates mass dependence functor of specified type
 
     bool constructProductionVertex(const libconfig::Setting& rootKey,
 				   const particlePtr&        X);  ///< creates production vertex
+    bool mapProductionVertexType(const std::string&        vertType,
+				 const libconfig::Setting& isPartKeys,
+				 const particlePtr&        X);  ///< creates production vertex according to type and list of initial state particles
 
 
     static keyFileParser                     _instance;       ///< singleton instance

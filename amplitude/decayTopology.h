@@ -53,6 +53,9 @@
 #include "decayGraph.hpp"
 
 
+class TClonesArray;
+
+
 namespace rpwa {
 
 
@@ -99,6 +102,11 @@ namespace rpwa {
     void addDecay(const decayTopology& topo);  ///< copies all vertices and particles into this topology
 
     void setProductionVertex(const interactionVertexPtr& productionVertex);  ///< (re)defines production vertex
+
+    bool readData(const TClonesArray& initialStateNames,
+		  const TClonesArray& initialStateMomenta,
+		  const TClonesArray& finalStateNames,
+		  const TClonesArray& finalStateMomenta);  ///< reads data from TClonesArrays
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 

@@ -38,6 +38,11 @@
 //-------------------------------------------------------------------------
 
 
+#include "TClonesArray.h"
+#include "TClass.h"
+#include "TObjString.h"
+#include "TVector3.h"
+
 #include "utilities.h"
 #include "diffractiveDissVertex.h"
 
@@ -88,6 +93,41 @@ diffractiveDissVertex::clone(const bool cloneInParticles,
   if (cloneOutParticles)
     vertexClone->cloneOutParticles();
   return vertexClone;
+}
+
+
+bool
+diffractiveDissVertex::readData(const TClonesArray& initialStateNames,
+				const TClonesArray& initialStateMomenta)
+{
+  // check inital state data
+  bool success = true;
+  const string nameClassName = initialStateNames.GetClass()->GetName();
+  if (nameClassName != "TObjString") {
+    printWarn << "initial state names are not of type TObjString." << endl;
+    success = false;
+  }
+  const string momClassName = initialStateMomenta.GetClass()->GetName();
+  if (momClassName != "TVector3") {
+    printWarn << "initial state momenta are not of type TVector3." << endl;
+    success = false;
+  }
+  if (initialStateNames.GetEntriesFast() != initialStateMomenta.GetEntriesFast()) {
+    printWarn << "arrays for initial state names and momenta have different sizes: "
+	      << initialStateNames.GetEntriesFast() << " vs. "
+	      << initialStateMomenta.GetEntriesFast() << endl;
+    success = false;
+  }
+  if (!success)
+    return false;
+  // set inital state
+  const string particleName = ((TObjString*)initialStateNames[0])->GetString().Data();
+  if (particleName != beam()->name()) {
+    printWarn << "cannot find entry for beam particle '" << beam()->name() << "' in data." << endl;
+    return false;
+  }
+  beam()->setMomentum(*((TVector3*)initialStateMomenta[0]));
+  return true;
 }
 
 

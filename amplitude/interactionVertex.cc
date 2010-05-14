@@ -35,6 +35,8 @@
 //-------------------------------------------------------------------------
 
 
+#include "TClonesArray.h"
+
 #include "utilities.h"
 #include "interactionVertex.h"
 
@@ -127,6 +129,15 @@ interactionVertex::transformOutParticles(const TLorentzRotation& L)
 {
   for (unsigned int i = 0; i < nmbOutParticles(); ++i)
     _outParticles[i]->transform(L);
+}
+
+
+bool
+interactionVertex::readData(const TClonesArray&,
+			    const TClonesArray&)
+{
+  printWarn << "function not implemented" << endl;
+  return false;
 }
 
 
