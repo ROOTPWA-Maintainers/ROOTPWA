@@ -88,8 +88,22 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
   const double M0     = mother->mass();               // resonance peak position
   const double Gamma0 = mother->width();              // resonance peak width
   const double q      = breakupMomentum(M,  m1, m2);  // breakup momentum
-  const double q0     = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
+  //const double q0     = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
   const double L      = v.L();
+
+  // this is how it is done in PWA2000
+  const double M02    = M0 * M0;
+  const double m12    = m1 * m1;
+  const double m22    = m2 * m2;
+  // const double m12    = v.daughter1()->mass() * v.daughter1()->mass();
+  // const double m22    = v.daughter2()->mass() * v.daughter2()->mass();
+  const double lambda = M02 * M02 + m12 * m12 + m22 * m22 - 2 * (M02 * m12 + m12 * m22 + m22 * M02);
+  const double q0     = sqrt(fabs(lambda / (4 * M02)));  //!!! the fabs is probably wrong
+
+  // printInfo << "< Breit-Wigner(" << M << ", " << M0 << ", " << Gamma0
+  //  	    << ", " << L << ", " << q << ", " << q0 << ")" 
+  // 	    << "; " << v.daughter1()->mass() << ", " << v.daughter2()->mass()
+  // 	    << endl;
 
   return breitWigner(M, M0, Gamma0, L, q, q0);
 }

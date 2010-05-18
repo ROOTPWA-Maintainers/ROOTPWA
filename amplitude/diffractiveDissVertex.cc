@@ -121,11 +121,14 @@ diffractiveDissVertex::readData(const TClonesArray& initialStateNames,
   if (!success)
     return false;
   // set inital state
-  const string particleName = ((TObjString*)initialStateNames[0])->GetString().Data();
-  if (particleName != beam()->name()) {
+  const string partName = ((TObjString*)initialStateNames[0])->GetString().Data();
+  if (partName != beam()->name()) {
     printWarn << "cannot find entry for beam particle '" << beam()->name() << "' in data." << endl;
     return false;
   }
+  if (_debug)
+    printInfo << "setting momentum of beam particle " << partName
+	      << " to " << *((TVector3*)initialStateMomenta[0]) << " GeV" << endl;
   beam()->setMomentum(*((TVector3*)initialStateMomenta[0]));
   return true;
 }

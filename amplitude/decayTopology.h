@@ -109,6 +109,8 @@ namespace rpwa {
 		  const TClonesArray& finalStateMomenta);  ///< reads data from TClonesArrays
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
+    virtual std::ostream& printIsParticles(std::ostream& out) const;  ///< prints initial state particle data in human-readable form
+    virtual std::ostream& printFsParticles(std::ostream& out) const;  ///< prints final state particle data in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

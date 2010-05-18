@@ -39,6 +39,12 @@
 
 #include "TVector3.h"
 #include "TLorentzRotation.h"
+#include "TChain.h"
+#include "TClonesArray.h"
+#include "TStopwatch.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TH2.h"
 
 #include "Vec.h"
 #include "lorentz.h"
@@ -68,11 +74,14 @@ main(int argc, char** argv)
 
   rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
   pdt.readFile();
-
-  isobarDecayVertex::setDebug(true);
-  decayTopology::setDebug(true);
-  isobarDecayTopology::setDebug(true);
-  isobarHelicityAmplitude::setDebug(true);
+  TStopwatch timer;
+  
+  // isobarDecayVertex::setDebug(true);
+  // decayTopology::setDebug(true);
+  // isobarDecayTopology::setDebug(true);
+  // isobarHelicityAmplitude::setDebug(true);
+  // diffractiveDissVertex::setDebug(true);
+  // keyFileParser::setDebug(true);
 
   if (0) {
     {
@@ -149,11 +158,11 @@ main(int argc, char** argv)
 
   if (0) {
     // define final state particles
-    particlePtr pi0 = createParticle("pi-");
-    particlePtr pi1 = createParticle("pi+");
-    particlePtr pi2 = createParticle("pi-");
-    particlePtr pi3 = createParticle("pi+");
-    particlePtr pi4 = createParticle("pi-");
+    particlePtr pi0 = createParticle("pi-", 0);
+    particlePtr pi1 = createParticle("pi+", 0);
+    particlePtr pi2 = createParticle("pi-", 1);
+    particlePtr pi3 = createParticle("pi+", 1);
+    particlePtr pi4 = createParticle("pi-", 2);
     // define isobars
     particlePtr sigma = createParticle("sigma");
     particlePtr a1    = createParticle("a1(1269)+");
@@ -161,8 +170,6 @@ main(int argc, char** argv)
     // define X-system
     //                                   2I  G  2J  P   C  2M
     particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2);
-    f1->setSpinProj(-2);
-    a1->setSpinProj(-2);
     // define production vertex
     particlePtr              beam     = createParticle("pi-");
     diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
@@ -195,6 +202,7 @@ main(int argc, char** argv)
     // topo.checkTopology();
     // topo.checkConsistency();
     isobarHelicityAmplitude amp(topo);
+    cout << topo;
     complex<double>         decayAmp = amp.amplitude();
     cout << "!!!< decay amplitude = " << decayAmp << endl;
 
@@ -218,13 +226,147 @@ main(int argc, char** argv)
   }
 
   if (1) {
-    keyFileParser::setDebug(true);
     keyFileParser&         parser = keyFileParser::instance();
     isobarDecayTopologyPtr topo   = parser.parse("test.key");
     if (topo) {
       printInfo << *topo;
       topo->checkTopology();
       topo->checkConsistency();
+      isobarHelicityAmplitude amp(*topo);
+
+      // read data from tree
+      const string&            inFileNamePattern     = "testEvents.root";
+      const long int           maxNmbEvents          = -1;
+      const string&            inTreeName            = "rootPwaEvtTree";
+      const string&            leafNameIsPartNames   = "initialStateNames";
+      const string&            leafNameIsPartMomenta = "initialStateMomenta";
+      const string&            leafNameFsPartNames   = "finalStateNames";
+      const string&            leafNameFsPartMomenta = "finalStateMomenta";
+      vector<complex<double> > myAmps;
+      {
+	// open input file
+	printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
+	TChain chain(inTreeName.c_str());
+	if (chain.Add(inFileNamePattern.c_str()) < 1) {
+	  printWarn << "no events in input file(s) '" << inFileNamePattern << "'" << endl;
+	  return false;
+	}
+	const long int nmbEventsChain = chain.GetEntries();
+	chain.GetListOfFiles()->ls();
+
+	// create branch pointers and leaf variables
+	TBranch*      initialStateNamesBr   = 0;
+	TBranch*      initialStateMomentaBr = 0;
+	TBranch*      finalStateNamesBr     = 0;
+	TBranch*      finalStateMomentaBr   = 0;
+	TClonesArray* initialStateNames     = 0;
+	TClonesArray* initialStateMomenta   = 0;
+	TClonesArray* finalStateNames       = 0;
+	TClonesArray* finalStateMomenta     = 0;
+	
+	// connect leaf variables to tree branches
+	chain.SetBranchAddress(leafNameIsPartNames.c_str  (), &initialStateNames,   &initialStateNamesBr  );
+	chain.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta, &initialStateMomentaBr);
+	chain.SetBranchAddress(leafNameFsPartNames.c_str  (), &finalStateNames,     &finalStateNamesBr    );
+	chain.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta,   &finalStateMomentaBr  );
+
+	// loop over events
+	const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+				    : nmbEventsChain);
+	timer.Reset();
+	timer.Start();
+	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+	//for (long int eventIndex = 1; eventIndex < 2; ++eventIndex) {
+	  progressIndicator(eventIndex, nmbEvents);
+	  
+	  if (chain.LoadTree(eventIndex) < 0)
+	    break;
+	  // read only required branches
+	  initialStateNamesBr->GetEntry  (eventIndex);
+	  initialStateMomentaBr->GetEntry(eventIndex);
+	  finalStateNamesBr->GetEntry    (eventIndex);
+	  finalStateMomentaBr->GetEntry  (eventIndex);
+
+	  if (!initialStateNames || !initialStateMomenta || !finalStateNames || !finalStateMomenta) {
+	    printWarn << "at least one data array is null pointer: "
+		      << "initialStateNames = "   << initialStateNames   << ", "
+		      << "initialStateMomenta = " << initialStateMomenta << ", "
+		      << "finalStateNames = "     << finalStateNames     << ", "
+		      << "finalStateMomenta = "   << finalStateMomenta   << ". "
+		      << "skipping event." << endl;
+	    continue;
+	  }
+
+	  if (topo->readData(*initialStateNames, *initialStateMomenta,
+			     *finalStateNames,   *finalStateMomenta)) {
+	    // topo->printIsParticles(cout);
+	    // topo->printFsParticles(cout);
+	    myAmps.push_back(amp.amplitude());
+	    if ((myAmps.back().real() == 0) || (myAmps.back().imag() == 0))
+	      printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
+	  }
+	}
+	
+	timer.Stop();
+	printInfo << "successfully read " << myAmps.size() << " events from file(s) "
+		  << "'" << inFileNamePattern << "' and calculated amplitudes" << endl;
+	cout << "needed ";
+	timer.Print();
+      }
+
+      vector<complex<double> > pwa2kAmps;
+      if (1) {  // compare to PWA2000
+	PDGtable.initialize();
+	const string evtFileName = "testTree.evt";
+	ifstream     eventData(evtFileName.c_str());
+	keyfile      key;
+	event        ev;
+	key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
+	ev.setIOVersion(1);
+	timer.Reset();
+	timer.Start();
+	while (!(eventData >> ev).eof()) {
+	  complex<double> pwa2kamp;
+	  key.run(ev, pwa2kamp, true);
+	  pwa2kAmps.push_back(pwa2kamp);
+	  key.rewind();
+	}
+	timer.Stop();
+	printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
+		  << "'" << evtFileName << "' and calculated amplitudes" << endl;
+	cout << "needed ";
+	timer.Print();
+      }
+
+      printInfo << "myAmps[0] = " << myAmps[0] << " vs. pwa2kAmps[0] = " << pwa2kAmps[0] << ", "
+		<< "delta = " << myAmps[0] - pwa2kAmps[0] << endl;
+
+      if (1) {
+	const string outFileName = "testDiff.root";
+	printInfo << "writing comparison plots to " << outFileName << endl;
+	TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
+	TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+	TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+	TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+	TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+	TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
+	TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
+	TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+	TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+	for (unsigned int i = 0; i < myAmps.size(); ++i) {
+	  hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
+	  hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
+	  hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
+	  hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
+	  hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
+	  hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
+	  hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
+	  hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
+	}
+	f->Write();
+	f->Close();
+      }
     }
   }
+  
 }

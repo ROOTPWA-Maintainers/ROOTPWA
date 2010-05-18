@@ -395,7 +395,7 @@ decayTopology::readData(const TClonesArray& initialStateNames,
 {
   bool success = true;
   // set initial state
-  // production vertex class has to implement readData() for the corresponding case
+  // production vertex class has to implement readData()
   if(!productionVertex()->readData(initialStateNames, initialStateMomenta))
     success = false;
   // check final state data
@@ -422,24 +422,28 @@ decayTopology::readData(const TClonesArray& initialStateNames,
   map<string, vector<const TVector3*> > fsMomenta;
   for (unsigned int i = 0; i < nmbFsPart; ++i) {
     const string    name = ((TObjString*)finalStateNames[i])->GetString().Data();
-    const TVector3* mom  = (TVector3*)initialStateMomenta[i];
+    const TVector3* mom  = (TVector3*)finalStateMomenta[i];
     fsMomenta[name].push_back(mom);
   }
   // set final state
   for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
-    const particlePtr& part = fsParticles()[i];
-    map<string, vector<const TVector3*> >::const_iterator entry = fsMomenta.find(part->name());
+    const particlePtr& part     = fsParticles()[i];
+    const string       partName = part->name();
+    map<string, vector<const TVector3*> >::const_iterator entry = fsMomenta.find(partName);
     if (entry != fsMomenta.end()) {
       unsigned int partIndex = part->index();
       if (partIndex < 0)
-	partIndex = 0;
-      if (partIndex < entry->second.size())
-	part->setMomentum(*(entry->second[partIndex]));
-      else {
-	printWarn << "index [" << partIndex << "] for final state particle "
-		  << "'" << part->name() << "' out of range. "
-		  << "data contain only " << entry->second.size() << " entries." << endl;
-	success = false;
+      	partIndex = 0;
+      if (partIndex < entry->second.size()) {
+      	if (_debug)
+      	  printInfo << "setting momentum of final state particle " << partName << "["
+		    << partIndex << "] to " << *(entry->second[partIndex]) << " GeV" << endl;
+      	part->setMomentum(*(entry->second[partIndex]));
+      } else {
+      	printWarn << "index [" << partIndex << "] for final state particle "
+      		  << "'" << part->name() << "' out of range. data contain only "
+      		  << entry->second.size() << " entries for this particle type." << endl;
+      	success = false;
       }
     } else {
       printWarn << "cannot find entry for final state particle '" << part->name() << "' "
@@ -447,7 +451,7 @@ decayTopology::readData(const TClonesArray& initialStateNames,
       success = false;
     }
   }
-  return true;
+  return success;
 }
 
 
@@ -476,6 +480,32 @@ decayTopology::print(ostream& out) const
     if (isFsParticle(part))
       out << " (final state)";
     out << endl;
+  }
+  return out;
+}
+
+
+ostream&
+decayTopology::printIsParticles(ostream& out) const
+{
+  out << "initial state particles:" << endl;
+  for (unsigned int i = 0; i < productionVertex()->nmbInParticles(); ++i) {
+    const particlePtr& part = productionVertex()->inParticles()[i];
+    out << "    particle[" << i << "]: " << part->qnSummary() << ", "
+	<< "index = " << part->index() << ", p = " << part->lzVec() << " GeV" << endl;
+  }
+  return out;
+}
+
+
+ostream&
+decayTopology::printFsParticles(ostream& out) const
+{
+  out << "final state particles:" << endl;
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    const particlePtr& part = fsParticles()[i];
+    out << "    particle[" << i << "]: " << part->qnSummary() << ", "
+	<< "index = " << part->index() << ", p = " << part->lzVec() << " GeV" << endl;
   }
   return out;
 }
