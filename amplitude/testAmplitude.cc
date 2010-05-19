@@ -81,7 +81,7 @@ main(int argc, char** argv)
   // isobarDecayTopology::setDebug(true);
   // isobarHelicityAmplitude::setDebug(true);
   // diffractiveDissVertex::setDebug(true);
-  // keyFileParser::setDebug(true);
+  keyFileParser::setDebug(true);
 
   if (0) {
     {
@@ -227,12 +227,13 @@ main(int argc, char** argv)
 
   if (1) {
     keyFileParser&         parser = keyFileParser::instance();
-    isobarDecayTopologyPtr topo   = parser.parse("test.key");
-    if (topo) {
+    isobarDecayTopologyPtr topo;
+    if (parser.parse("test.key", topo)) {
       printInfo << *topo;
       topo->checkTopology();
       topo->checkConsistency();
       isobarHelicityAmplitude amp(*topo);
+      parser.setAmplitudeOptions(amp);
 
       // read data from tree
       const string&            inFileNamePattern     = "testEvents.root";

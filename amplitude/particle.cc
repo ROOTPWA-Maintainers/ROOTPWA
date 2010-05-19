@@ -51,7 +51,8 @@ particle::particle()
     _charge           (0),
     _spinProj         (0),
     _lzVec            (),
-    _index            (-1)
+    _index            (-1),
+    _refl             (0)
 { }
 
 
@@ -97,10 +98,12 @@ particle::particle(const string& partName,
 		   const int     P,
 		   const int     C,
 		   const int     spinProj,
+		   const int     refl,
 		   const int     index)
   : particleProperties(partName, isospin, G, J, P, C),
     _spinProj(spinProj),
-    _index   (index)
+    _index   (index),
+    _refl    (refl)
 {
   const string strippedName = chargeFromName(partName, _charge);
   setName(strippedName);
@@ -162,7 +165,8 @@ particle::qnSummary() const
 {
   ostringstream out;
   out << name() << "[" << 0.5 * isospin() << sign(G())
-      << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")" << 0.5 * spinProj() << "]";
+      << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")" << 0.5 * spinProj() 
+      << ((reflectivity() != 0) ? sign(reflectivity()) : "") << "]";
   return out.str();
 }
 
@@ -174,6 +178,7 @@ particle::print(ostream& out) const
   out << ", "
       << "charge = "         << _charge         << ", "
       << "spin proj. = "     << 0.5 * _spinProj << ", "
+      << "reflectivity = "   << _refl           << ", "
       << "Lorentz-vector = " << _lzVec          << " GeV, "
       << "index = "          << _index;
   return out;

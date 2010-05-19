@@ -283,11 +283,10 @@ ostream&
 isobarDecayVertex::print(ostream& out) const
 {
   out << "isobar decay vertex: "
-      << mother()->qnSummary() << "  --->  "
+      << mother()->qnSummary() << "  --{" << *_massDep << "}-->  "
       << daughter1()->qnSummary()
       << "  [L = " << _L * 0.5 << ", S = " << _S * 0.5 << "]  "
-      << daughter2()->qnSummary()
-      << "; " << *_massDep;
+      << daughter2()->qnSummary();
   return out;
 }
 

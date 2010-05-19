@@ -52,18 +52,23 @@ keyFileParser                keyFileParser::_instance;
 interactionVertexPtr         keyFileParser::_prodVert;
 vector<isobarDecayVertexPtr> keyFileParser::_decayVertices;
 vector<particlePtr>          keyFileParser::_fsParticles;
-bool                         keyFileParser::_debug = false;
+bool                         keyFileParser::_useReflectivityBasis = false;
+bool                         keyFileParser::_boseSymmetrize       = false;
+bool                         keyFileParser::_debug                = false;
 
 
-isobarDecayTopologyPtr
-keyFileParser::parse(const string& keyFileName)
+bool
+keyFileParser::parse(const string&           keyFileName,
+		     isobarDecayTopologyPtr& topo)
 {
   printInfo << "parsing key file '" << keyFileName << "'" << endl;
 
   _prodVert = interactionVertexPtr();
   _decayVertices.clear();
   _fsParticles.clear();
-  isobarDecayTopologyPtr topoNullPtr;
+  if (topo)
+    topo.reset();
+  topo = isobarDecayTopologyPtr();  // null pointer
 
   // parse key file
   Config key;
@@ -72,93 +77,84 @@ keyFileParser::parse(const string& keyFileName)
   } catch(const FileIOException& ioEx) {
     printWarn << "I/O error while reading key file '" << keyFileName << "'. "
 	      << "cannot construct decay topology." << endl;
-    return topoNullPtr;
+    return false;
   } catch(const ParseException&  parseEx) {
     printWarn << "parse error in '" << parseEx.getFile() << "' line " << parseEx.getLine()
 	      << ": " << parseEx.getError() << ". cannot construct decay topology." << endl;
-    return topoNullPtr;
+    return false;
   }
 
   const Setting& rootKey = key.getRoot();
 
-  // find 'wave' group
+  // find wave group
   const Setting* waveKey = findGroup(rootKey, "wave");
   if (!waveKey) {
     printWarn << "cannot find 'wave' group. cannot construct decay topology." << endl;
-    return topoNullPtr;
+    return false;
   }
 
-  // find 'options' group
+  // find wave options group
   const Setting* waveOptionsKey = findGroup(*waveKey, "options");
-  // default option values
-  bool boseSymmetrize       = true;
-  bool useReflectivityBasis = false;
   if (waveOptionsKey) {
-    if (waveOptionsKey->lookupValue("boseSymmetrize",       boseSymmetrize) && _debug)
+    if (waveOptionsKey->lookupValue("boseSymmetrize", _boseSymmetrize) && _debug)
       printInfo << "setting wave option 'boseSymmetrize' to "
-		<< ((boseSymmetrize) ? "true" : "false") << endl;
-    if (waveOptionsKey->lookupValue("useReflectivityBasis", useReflectivityBasis) && _debug)
+		<< ((_boseSymmetrize) ? "true" : "false") << endl;
+    if (waveOptionsKey->lookupValue("useReflectivityBasis", _useReflectivityBasis) && _debug)
       printInfo << "setting wave option 'useReflectivityBasis' to "
-		<< ((useReflectivityBasis) ? "true" : "false") << endl;
+		<< ((_useReflectivityBasis) ? "true" : "false") << endl;
   }
 
-  // find 'XDecay' group
+  // find X decay group
   const Setting* XDecayKey = findGroup(*waveKey, "XDecay");
   if (!XDecayKey) {
     printWarn << "cannot find 'XDecay' group. cannot construct decay topology." << endl;
-    return topoNullPtr;
+    return false;
   }
 
-  // find 'XQuantumNumbers' group
+  // find  X quantum numbers group
   const Setting* XQnKey = findGroup(*waveKey, "XQuantumNumbers");
   if (!XQnKey) {
     printWarn << "cannot find 'XQuantumNumbers' group. cannot construct decay topology." << endl;
-    return topoNullPtr;
-  }
-  // get X quantum numbers
-  map<string, int> XQn;
-  XQn["isospin"];
-  XQn["G"];
-  XQn["J"];
-  XQn["P"];
-  XQn["C"];
-  XQn["M"];
-  bool XQnOkay = true;
-  for (map<string, int>::iterator i = XQn.begin(); i != XQn.end(); ++i)
-    if (!XQnKey->lookupValue(i->first, i->second)) {
-      printWarn << "cannot find integer field '" << i->first << "in "
-		<< "'" << XQnKey->getPath() << "'." << endl;
-      XQnOkay = false;
-    }
-  if (!XQnOkay) {
-    printWarn << "cannot find X quantum numbers. cannot construct decay topology." << endl;
-    return topoNullPtr;
+    return false;
   }
   // create X particle
-  particlePtr X = createParticle("X", XQn["isospin"], XQn["G"],
-				 XQn["J"], XQn["P"], XQn["C"], XQn["M"]);
-  if (_debug)
-    printInfo << "constructed X particle: " << X->qnSummary() << endl;
+  particlePtr X;
+  if (!constructXParticle(*XQnKey, X)) {
+    printWarn << "problems constructing X particle. cannot construct decay topology." << endl;
+    return false;
+  }
 
   // create production vertex
   if (!constructProductionVertex(rootKey, X)) {
     printWarn << "problems constructing production vertex. cannot construct decay topology." << endl;
-    return topoNullPtr;
+    return false;
   }
 
   // traverse decay chain and create final state particles and isobar decay vertices
   if (!constructDecayVertex(*XDecayKey, X)) {
     printWarn << "problems constructing decay chain. cannot construct decay topology." << endl;
-    return topoNullPtr;
+    return false;
   }
 
   // create decay isobar decay topology
-  isobarDecayTopologyPtr topo(new isobarDecayTopology(_prodVert, _decayVertices, _fsParticles));
+  topo = createIsobarDecayTopology(_prodVert, _decayVertices, _fsParticles);
   topo->calcIsobarCharges();
   
   printInfo << "successfully constructed decay topology from key file "
 	    << "'" << keyFileName << "'." << endl;
-  return topo;
+  return true;
+}
+
+
+void
+keyFileParser::setAmplitudeOptions(isobarHelicityAmplitude& amp)
+{
+  if (_debug)
+    printInfo << "setting amplitude options: "
+	      << ((_boseSymmetrize) ? "en" : "dis") << "abling Bose symmetrization, "
+	      << ((_useReflectivityBasis) ? "en" : "dis") << "abling reflectivity basis" << endl;
+  amp.enableReflectivityBasis (_useReflectivityBasis);
+  amp.enableBoseSymmetrization(_boseSymmetrize      );
 }
 
 
@@ -175,6 +171,7 @@ keyFileParser::findGroup(const Setting&     parent,
     return 0;
   }
   const Setting* groupKey = &parent[groupName];
+  // check that it is a group
   if (!groupKey->isGroup()) {
     printWarn << "'" << groupName << "' field in '" << parent.getPath() << "'"
 	      << "of key file '" << parent.getSourceFile() << "' is not a group." << endl;
@@ -197,18 +194,56 @@ keyFileParser::findList(const Setting&     parent,
     return 0;
   }
   const Setting* listKey = &parent[listName];
+  // check that it is a list
   if (!listKey->isList()) {
     printWarn << "'" << listName << "' field in '" << parent.getPath() << "'"
 	      << "of key file '" << parent.getSourceFile() << "' is not a list. "
 	      << "check that braces are correct." << endl;
     return 0;
   }
+  // check that it is not empty
   if (listKey->getLength() < 1) {
     printWarn << "list '" << listName << "' in '" << parent.getPath() << "'"
 	      << "of key file '" << parent.getSourceFile() << "' is empty." << endl;
     return 0;
   }
   return listKey;
+}
+
+
+bool
+keyFileParser::constructXParticle(const Setting& XQnKey,
+				  particlePtr&   X)
+{
+  // get X quantum numbers
+  map<string, int> XQn;
+  XQn["isospin"];
+  XQn["G"      ];
+  XQn["J"      ];
+  XQn["P"      ];
+  XQn["C"      ];
+  XQn["M"      ];
+  if (_useReflectivityBasis)
+    XQn["refl"];
+  bool success = true;
+  for (map<string, int>::iterator i = XQn.begin(); i != XQn.end(); ++i)
+    if (!XQnKey.lookupValue(i->first, i->second)) {
+      printWarn << "cannot find integer field '" << i->first << "in "
+		<< "'" << XQnKey.getPath() << "'." << endl;
+      success = false;
+    }
+  if (!success) {
+    printWarn << "cannot find X quantum numbers. cannot construct decay topology." << endl;
+    return false;
+  }
+  // create X particle
+  X = createParticle("X",
+		     XQn["isospin"], XQn["G"],
+		     XQn["J"], XQn["P"], XQn["C"],
+		     XQn["M"], (_useReflectivityBasis) ? XQn["refl"]: 0);
+  if (_debug)
+    printInfo << "constructed X particle: " << X->qnSummary() << endl;
+  return true;
 }
 
 
@@ -332,7 +367,7 @@ bool
 keyFileParser::constructProductionVertex(const Setting&     rootKey,
 					 const particlePtr& X)
 {
-  // find 'productionVertex' group
+  // find production vertex group
   const Setting* prodVertKey = findGroup(rootKey, "productionVertex");
   if (!prodVertKey) {
     printWarn << "cannot find 'productionVertex' group" << endl;

@@ -46,6 +46,7 @@
 #include "libconfig.h++"
 
 #include "isobarDecayTopology.h"
+#include "isobarHelicityAmplitude.h"
 
 
 namespace rpwa {
@@ -57,7 +58,10 @@ namespace rpwa {
 
     static keyFileParser& instance() { return _instance; }  ///< get singleton instance
   
-    isobarDecayTopologyPtr parse(const std::string& keyFileName);
+    static bool parse(const std::string&      keyFileName,
+		      isobarDecayTopologyPtr& topo);  ///< parses key file and constructs decay topology
+
+    static void setAmplitudeOptions(isobarHelicityAmplitude& amp);  ///< sets amplitude options
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -70,33 +74,37 @@ namespace rpwa {
     keyFileParser (const keyFileParser&);
     keyFileParser& operator =(const keyFileParser&);
 
-    const libconfig::Setting* findGroup(const libconfig::Setting& parent,
-					const std::string&        groupName,
-					const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a group
+    static const libconfig::Setting* findGroup(const libconfig::Setting& parent,
+					       const std::string&        groupName,
+					       const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a group
 
-    const libconfig::Setting* findList(const libconfig::Setting& parent,
-				       const std::string&        listName,
-				       const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a non-empty list
+    static const libconfig::Setting* findList(const libconfig::Setting& parent,
+					      const std::string&        listName,
+					      const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a non-empty list
 
-    bool constructParticle(const libconfig::Setting& particleKey,
-			   particlePtr&              particle);  ///< creates particle using name in particle key
+    static bool constructXParticle(const libconfig::Setting& XQnKey,
+				   particlePtr&              X);  ///< creates X particle with quantum numbers defined in X key
+    static bool constructParticle(const libconfig::Setting& particleKey,
+				  particlePtr&              particle);  ///< creates particle using name in particle key
     
-    bool constructDecayVertex(const libconfig::Setting& parentKey,
-			      const particlePtr&        parentParticle);  ///< recursively traverses decay chain and creates decay vertices and final state particles
-    massDependencePtr mapMassDependence(const std::string& massDepType);  ///< creates mass dependence functor of specified type
+    static bool constructDecayVertex(const libconfig::Setting& parentKey,
+				     const particlePtr&        parentParticle);  ///< recursively traverses decay chain and creates decay vertices and final state particles
+    static massDependencePtr mapMassDependence(const std::string& massDepType);  ///< creates mass dependence functor of specified type
 
-    bool constructProductionVertex(const libconfig::Setting& rootKey,
-				   const particlePtr&        X);  ///< creates production vertex
-    bool mapProductionVertexType(const std::string&        vertType,
-				 const libconfig::Setting& isPartKeys,
-				 const particlePtr&        X);  ///< creates production vertex according to type and list of initial state particles
+    static bool constructProductionVertex(const libconfig::Setting& rootKey,
+					  const particlePtr&        X);  ///< creates production vertex
+    static bool mapProductionVertexType(const std::string&        vertType,
+					const libconfig::Setting& isPartKeys,
+					const particlePtr&        X);  ///< creates production vertex according to type and list of initial state particles
 
 
-    static keyFileParser                     _instance;       ///< singleton instance
+    static keyFileParser                     _instance;  ///< singleton instance
 
-    static interactionVertexPtr              _prodVert;       ///< production vertex
-    static std::vector<isobarDecayVertexPtr> _decayVertices;  ///< isobar decay vertices
-    static std::vector<particlePtr>          _fsParticles;    ///< final state particles
+    static interactionVertexPtr              _prodVert;              ///< production vertex
+    static std::vector<isobarDecayVertexPtr> _decayVertices;         ///< isobar decay vertices
+    static std::vector<particlePtr>          _fsParticles;           ///< final state particles
+    static bool                              _useReflectivityBasis;  ///< switches use of reflectivity basis in amplitude
+    static bool                              _boseSymmetrize;        ///< switches use of Bose-symmetrization in amplitude
 
     static bool _debug;     ///< if set to true, debug messages are printed
 

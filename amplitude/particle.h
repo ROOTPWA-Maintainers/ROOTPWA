@@ -74,24 +74,27 @@ namespace rpwa {
 	     const int                 P,
 	     const int                 C,
 	     const int                 spinProj,
+	     const int                 refl  = 0,
 	     const int                 index = -1);
     virtual ~particle();
 
     virtual particle& operator =(const particle& part);
     virtual particle* clone() const;
 
-    std::string           name    () const;                                         ///< returns particle name including charge
-    std::string           bareName() const { return stripChargeFromName(name()); }  ///< returns particle name w/o charge
-    int                   charge  () const { return _charge;                     }  ///< returns particle's charge
-    int                   spinProj() const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
-    const TLorentzVector& lzVec   () const { return _lzVec;                      }  ///< returns Lorentz vector of particle
-    int                   index   () const { return _index;                      }  ///< returns index label assigned to particle
+    std::string           name        () const;                                         ///< returns particle name including charge
+    std::string           bareName    () const { return stripChargeFromName(name()); }  ///< returns particle name w/o charge
+    int                   charge      () const { return _charge;                     }  ///< returns particle's charge
+    int                   spinProj    () const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
+    const TLorentzVector& lzVec       () const { return _lzVec;                      }  ///< returns Lorentz vector of particle
+    int                   index       () const { return _index;                      }  ///< returns index label assigned to particle; -1 means undefined
+    int                   reflectivity() const { return _refl;                       }  ///< returns particle's reflectivity; 0 means undefined
 
-    void setCharge  (const int             charge  ) { _charge   = charge;                                                            }  ///< sets particle's charge
-    void setSpinProj(const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
-    void setMomentum(const TVector3&       momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
-    void setLzVec   (const TLorentzVector& lzVec   ) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
-    void setIndex   (const int             index   ) { _index    = index;                                                             }  ///< sets particle's index label
+    void setCharge      (const int             charge  ) { _charge   = charge;                                                            }  ///< sets particle's charge
+    void setSpinProj    (const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
+    void setMomentum    (const TVector3&       momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
+    void setLzVec       (const TLorentzVector& lzVec   ) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
+    void setIndex       (const int             index   ) { _index    = index;                                                             }  ///< sets particle's index label
+    void setReflectivity(const int             refl    ) { _refl     = refl;                                                              }  ///< sets particle's reflectivity
 
     void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
@@ -111,6 +114,7 @@ namespace rpwa {
     int            _spinProj;  ///< spin projection quantum number; can be either M or helicity
     TLorentzVector _lzVec;     ///< Lorentz vector [GeV]
     int            _index;     ///< index that can be used to label indistinguishable particles
+    int            _refl;      ///< reflectivity
 
     static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -154,9 +158,10 @@ namespace rpwa {
 		 const int          P,
 		 const int          C,
 		 const int          spinProj,
+		 const int          refl  = 0,
 		 const int          index = -1)
   {
-    particlePtr p(new particle(partName, isospin, G, J, P, C, spinProj, index));
+    particlePtr p(new particle(partName, isospin, G, J, P, C, spinProj, refl, index));
     return p;
   }
 

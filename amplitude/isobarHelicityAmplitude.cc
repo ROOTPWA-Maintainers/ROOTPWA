@@ -51,7 +51,9 @@ bool isobarHelicityAmplitude::_debug = false;
 
 
 isobarHelicityAmplitude::isobarHelicityAmplitude()
-  : _decay(0)
+  : _decay               (0),
+    _useReflectivityBasis(false),
+    _boseSymmetrize      (false)
 { }
 
 
@@ -205,17 +207,28 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
     debug << "< sqrt(" << L << " + 1) = " << norm << " >  ";
 
   // calculate D-function
-  const int             J       = mother->J();
-  const int             Lambda  = mother->spinProj();
-  const int             lambda1 = daughter1->spinProj();
-  const int             lambda2 = daughter2->spinProj();
-  const int             lambda  = lambda1 - lambda2;
-  const double          phi     = daughter1->lzVec().Phi();  // use daughter1 as analyzer
-  const double          theta   = daughter1->lzVec().Theta();
-  const complex<double> DFunc   = DFuncConj(J, Lambda, lambda, phi, theta);
-  if (_debug)
-    debug << "< D^{" << J << " *}" << "_{" << Lambda << ", " << lambda << "}"
-	  << "(" << phi << ", " << theta << ", 0) = " << DFunc << " >  ";
+  const int       J       = mother->J();
+  const int       Lambda  = mother->spinProj();
+  const int       lambda1 = daughter1->spinProj();
+  const int       lambda2 = daughter2->spinProj();
+  const int       lambda  = lambda1 - lambda2;
+  const int       P       = mother->P();
+  const int       refl    = mother->reflectivity();
+  const double    phi     = daughter1->lzVec().Phi();  // use daughter1 as analyzer
+  const double    theta   = daughter1->lzVec().Theta();
+  complex<double> DFunc;
+  if (topVertex && _useReflectivityBasis) {
+    DFunc = DFuncConjRefl(J, Lambda, lambda, P, refl, phi, theta);
+    if (_debug)
+      debug << "< {^" << sign(refl) << "}D^{" << J << " " << sign(P) << " *}"
+	    << "_{" << Lambda << ", " << lambda << "}" << "(" << phi << ", " << theta << ", 0) "
+	    << "= " << DFunc << " >  ";
+  } else {
+    DFunc = DFuncConj(J, Lambda, lambda, phi, theta);
+    if (_debug)
+      debug << "< D^{" << J << " *}" << "_{" << Lambda << ", " << lambda << "}"
+	    << "(" << phi << ", " << theta << ", 0) = " << DFunc << " >  ";
+  }
 
   // calculate Clebsch-Gordan coefficient for L-S coupling
   const int    S         = vertex->S();
@@ -243,16 +256,13 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
     debug << "< Blatt-Weisskopf(" << L << ", " << q << ") = " << bf << " >  ";
 
   // calculate Breit-Wigner
-  const double    M      = mother->lzVec().M();
-  const double    M0     = mother->mass();
-  const double    Gamma0 = mother->width();
-  const double    m1     = daughter1->lzVec().M();
-  const double    m2     = daughter2->lzVec().M();
-  const double    q0     = breakupMomentum(M0, m1, m2);
-  // complex<double> bw     = 1;
-  // if (!topVertex)
-  //   bw = breitWigner(M, M0, Gamma0, L, q, q0);
-  complex<double> bw = vertex->massDependence();
+  const double          M      = mother->lzVec().M();
+  const double          M0     = mother->mass();
+  const double          Gamma0 = mother->width();
+  const double          m1     = daughter1->lzVec().M();
+  const double          m2     = daughter2->lzVec().M();
+  const double          q0     = breakupMomentum(M0, m1, m2);
+  const complex<double> bw     = vertex->massDependence();
   if (_debug) {
     if (topVertex)
       debug << "< no mass dep. = " << bw << " >";
@@ -283,6 +293,7 @@ complex<double>
 isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
 						  const bool                  topVertex)
 {
+  const particlePtr& mother    = vertex->mother();
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
   complex<double>    ampSum    = 0;
@@ -307,7 +318,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& ve
       complex<double> amp = twoBodyDecayAmplitude(vertex, topVertex) * amp1 * amp2;
       if (_debug)
 	printInfo << "amplitude for " << *vertex << ": "
-		  << "[lambda = " << vertex->mother()->spinProj() << "]  --->  "
+		  << mother->name()    << " [lambda = " << mother->spinProj() << "]  --->  "
 		  << daughter1->name() << " [lambda = " << lambda1 << "]  +  "
 		  << daughter2->name() << " [lambda = " << lambda2 << "]  =  " << amp << endl;
       ampSum += amp;

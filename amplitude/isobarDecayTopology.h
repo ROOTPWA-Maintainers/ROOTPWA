@@ -127,6 +127,30 @@ namespace rpwa {
   
 
   inline
+  isobarDecayTopologyPtr
+  createIsobarDecayTopology(const interactionVertexPtr&              productionVertex,
+			    const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
+			    const std::vector<particlePtr>&          fsParticles)
+  {
+    isobarDecayTopologyPtr t(new isobarDecayTopology(productionVertex,
+						     isobarDecayVertices, fsParticles));
+    return t;
+  }
+
+
+  inline
+  isobarDecayTopologyPtr
+  createIsobarDecayTopology(const interactionVertexPtr&              productionVertex,
+			    const std::vector<interactionVertexPtr>& isobarDecayVertices,
+			    const std::vector<particlePtr>&          fsParticles)
+  {
+    isobarDecayTopologyPtr t(new isobarDecayTopology(productionVertex,
+						     isobarDecayVertices, fsParticles));
+    return t;
+  }
+
+
+  inline
   std::ostream&
   operator <<(std::ostream&              out,
   	      const isobarDecayTopology& topo)
