@@ -66,7 +66,8 @@ decayTopology::decayTopology()
   : decayTopologyGraphType(),
     _prodVertex           (),
     _intVertices          (),
-    _fsParticles          ()
+    _fsParticles          (),
+    _fsPartMomCache       ()
 {
 }
 
@@ -100,9 +101,10 @@ decayTopology::operator =(const decayTopology& topo)
 {
   if (this != &topo) {
     decayTopologyGraphType::operator =(topo);
-    _prodVertex  = topo._prodVertex;
-    _intVertices = topo._intVertices;
-    _fsParticles = topo._fsParticles;
+    _prodVertex     = topo._prodVertex;
+    _intVertices    = topo._intVertices;
+    _fsParticles    = topo._fsParticles;
+    _fsPartMomCache = topo._fsPartMomCache;
   }
   return *this;
 }
@@ -121,7 +123,7 @@ decayTopology::operator =(const decayTopologyGraphType& graph)
 
 decayTopology*
 decayTopology::clone(const bool cloneFsParticles,
-		      const bool cloneProductionVertex) const
+		     const bool cloneProductionVertex) const
 {
   if (_debug)
     printInfo << "cloning decay topology '" << name() << "'; "
@@ -129,7 +131,7 @@ decayTopology::clone(const bool cloneFsParticles,
 	      << "cloneProductionVertex = " << cloneProductionVertex << endl;
   // copy graph data structure
   decayTopology* topoClone = new decayTopology(*this);
-  nodeIterator iNd, iNdEnd;
+  nodeIterator   iNd, iNdEnd;
   for (tie(iNd, iNdEnd) = topoClone->nodes(); iNd != iNdEnd; ++iNd) {
     const interactionVertexPtr v = topoClone->vertex(*iNd);
     // clone vertex
@@ -170,6 +172,23 @@ decayTopology::clear()
   _prodVertex.reset();
   _intVertices.clear();
   _fsParticles.clear();
+  _fsPartMomCache.clear();
+}
+
+
+map<string, unsigned int>
+decayTopology::nmbIndistFsParticles() const
+{
+  map<string, unsigned int> partMult;
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    const string partName = fsParticles()[i]->name();
+    map<string, unsigned int>::iterator entry = partMult.find(partName);
+    if (entry != partMult.end())
+      ++(entry->second);
+    else
+      partMult[partName] = 1;
+  }
+  return partMult;
 }
 
 
@@ -198,6 +217,16 @@ decayTopology::isFsParticle(const particlePtr& part) const
     if (part == _fsParticles[i])
       return true;
   return false;
+}
+
+
+int
+decayTopology::fsParticleIndex(const particlePtr& part) const
+{
+  for (unsigned int i = 0; i < _fsParticles.size(); ++i)
+    if (part == _fsParticles[i])
+      return i;
+  return -1;
 }
 
 
@@ -426,6 +455,7 @@ decayTopology::readData(const TClonesArray& initialStateNames,
     fsMomenta[name].push_back(mom);
   }
   // set final state
+  _fsPartMomCache.resize(nmbFsParticles(), TVector3());
   for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
     const particlePtr& part     = fsParticles()[i];
     const string       partName = part->name();
@@ -439,6 +469,7 @@ decayTopology::readData(const TClonesArray& initialStateNames,
       	  printInfo << "setting momentum of final state particle " << partName << "["
 		    << partIndex << "] to " << *(entry->second[partIndex]) << " GeV" << endl;
       	part->setMomentum(*(entry->second[partIndex]));
+	_fsPartMomCache[i] = part->lzVec().Vect();
       } else {
       	printWarn << "index [" << partIndex << "] for final state particle "
       		  << "'" << part->name() << "' out of range. data contain only "
@@ -450,6 +481,46 @@ decayTopology::readData(const TClonesArray& initialStateNames,
 		<< "in data." << endl;
       success = false;
     }
+  }
+  return success;
+}
+
+
+bool
+decayTopology::revertMomenta()
+{
+  // revert production kinematics
+  bool success = productionVertex()->revertMomenta();
+  // revert final state momenta
+  if (_fsPartMomCache.size() != nmbFsParticles())
+    return false;
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    const particlePtr& part = fsParticles()[i];
+    part->setMomentum(_fsPartMomCache[i]);
+    if (_debug)
+      printInfo << "resetting momentum of final state particle " << part->name() << "[" << i << "] "
+		<< "to " << _fsPartMomCache[i] << " GeV" << endl;
+  }
+  return success;
+}
+
+
+bool
+decayTopology::revertMomenta(const vector<unsigned int>& indexMap)
+{
+  // revert production kinematics
+  bool success = productionVertex()->revertMomenta();
+  // revert final state momenta
+  if ((_fsPartMomCache.size() != nmbFsParticles()) || (indexMap.size() != nmbFsParticles()))
+    return false;
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    const particlePtr& part     = fsParticles()[i];
+    const unsigned int newIndex = indexMap[i];
+    part->setMomentum(_fsPartMomCache[newIndex]);
+    if (_debug)
+      printInfo << "(re)setting momentum of final state particle " << part->name() << "[" << i << "] "
+		<< "to that of " << fsParticles()[newIndex]->name()
+		<< "[" << newIndex << "] = " << _fsPartMomCache[newIndex] << " GeV" << endl;
   }
   return success;
 }

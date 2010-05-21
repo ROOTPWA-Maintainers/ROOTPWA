@@ -62,6 +62,8 @@ bool flatMassDependence::_debug = false;
 complex<double>
 flatMassDependence::amp(const isobarDecayVertex&)
 {
+  if (_debug)
+    printInfo << "no mass dependence = 1" << endl;
   return 1;
 }
 
@@ -100,12 +102,12 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
   const double lambda = M02 * M02 + m12 * m12 + m22 * m22 - 2 * (M02 * m12 + m12 * m22 + m22 * M02);
   const double q0     = sqrt(fabs(lambda / (4 * M02)));  //!!! the fabs is probably wrong
 
-  // printInfo << "< Breit-Wigner(" << M << ", " << M0 << ", " << Gamma0
-  //  	    << ", " << L << ", " << q << ", " << q0 << ")" 
-  // 	    << "; " << v.daughter1()->mass() << ", " << v.daughter2()->mass()
-  // 	    << endl;
-
-  return breitWigner(M, M0, Gamma0, L, q, q0);
+  const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
+  if (_debug)
+    printInfo << "Breit-Wigner(m = " << M << " GeV, m_0 = " << M0 << "GeV, "
+	      << "Gamma_0 = " << Gamma0 << "GeV, L = " << 0.5 * L << ", q = " << q << "GeV, "
+	      << q0 << "GeV) = " << bw << endl;
+  return bw;
 }
 
 

@@ -77,6 +77,14 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 
 
+# make CMAKE_SOURCE_DIR accessible via predefined macro CMAKE_SOURCE_DIR
+if(CMAKE_SOURCE_DIR)
+  add_definitions(-D'CMAKE_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\"')
+else()
+  add_definitions(-D'CMAKE_SOURCE_DIR=\"\"')
+endif()
+
+
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 #set(Boost_DEBUG 1)

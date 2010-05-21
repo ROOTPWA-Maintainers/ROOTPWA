@@ -84,6 +84,8 @@ namespace rpwa {
     virtual bool readData(const TClonesArray& names,
 			  const TClonesArray& momenta);  ///< general interface to read data from TClonesArrays; noop here
 
+    virtual bool revertMomenta();  ///< general interface to reset momenta to the values of last event read; noop here
+
     virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
     virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex

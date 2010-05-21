@@ -52,6 +52,7 @@
 #include "event.h"
 #include "wave.h"
 
+#include "svnVersion.h"
 #include "utilities.h"
 #include "particleDataTable.h"
 #include "diffractiveDissVertex.h"
@@ -71,6 +72,8 @@ using namespace rpwa;
 int
 main(int argc, char** argv)
 {
+  printCompilerInfo();
+  printSvnVersion();
 
   rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
   pdt.readFile();
@@ -80,6 +83,8 @@ main(int argc, char** argv)
   // decayTopology::setDebug(true);
   // isobarDecayTopology::setDebug(true);
   // isobarHelicityAmplitude::setDebug(true);
+  // flatMassDependence::setDebug(true);
+  // relativisticBreitWigner::setDebug(true);
   // diffractiveDissVertex::setDebug(true);
   keyFileParser::setDebug(true);
 
@@ -244,76 +249,79 @@ main(int argc, char** argv)
       const string&            leafNameFsPartNames   = "finalStateNames";
       const string&            leafNameFsPartMomenta = "finalStateMomenta";
       vector<complex<double> > myAmps;
-      {
-	// open input file
-	printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
-	TChain chain(inTreeName.c_str());
-	if (chain.Add(inFileNamePattern.c_str()) < 1) {
-	  printWarn << "no events in input file(s) '" << inFileNamePattern << "'" << endl;
-	  return false;
-	}
-	const long int nmbEventsChain = chain.GetEntries();
-	chain.GetListOfFiles()->ls();
-
-	// create branch pointers and leaf variables
-	TBranch*      initialStateNamesBr   = 0;
-	TBranch*      initialStateMomentaBr = 0;
-	TBranch*      finalStateNamesBr     = 0;
-	TBranch*      finalStateMomentaBr   = 0;
-	TClonesArray* initialStateNames     = 0;
-	TClonesArray* initialStateMomenta   = 0;
-	TClonesArray* finalStateNames       = 0;
-	TClonesArray* finalStateMomenta     = 0;
-	
-	// connect leaf variables to tree branches
-	chain.SetBranchAddress(leafNameIsPartNames.c_str  (), &initialStateNames,   &initialStateNamesBr  );
-	chain.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta, &initialStateMomentaBr);
-	chain.SetBranchAddress(leafNameFsPartNames.c_str  (), &finalStateNames,     &finalStateNamesBr    );
-	chain.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta,   &finalStateMomentaBr  );
-
-	// loop over events
-	const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-				    : nmbEventsChain);
-	timer.Reset();
-	timer.Start();
-	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-	//for (long int eventIndex = 1; eventIndex < 2; ++eventIndex) {
-	  progressIndicator(eventIndex, nmbEvents);
-	  
-	  if (chain.LoadTree(eventIndex) < 0)
-	    break;
-	  // read only required branches
-	  initialStateNamesBr->GetEntry  (eventIndex);
-	  initialStateMomentaBr->GetEntry(eventIndex);
-	  finalStateNamesBr->GetEntry    (eventIndex);
-	  finalStateMomentaBr->GetEntry  (eventIndex);
-
-	  if (!initialStateNames || !initialStateMomenta || !finalStateNames || !finalStateMomenta) {
-	    printWarn << "at least one data array is null pointer: "
-		      << "initialStateNames = "   << initialStateNames   << ", "
-		      << "initialStateMomenta = " << initialStateMomenta << ", "
-		      << "finalStateNames = "     << finalStateNames     << ", "
-		      << "finalStateMomenta = "   << finalStateMomenta   << ". "
-		      << "skipping event." << endl;
-	    continue;
-	  }
-
-	  if (topo->readData(*initialStateNames, *initialStateMomenta,
-			     *finalStateNames,   *finalStateMomenta)) {
-	    // topo->printIsParticles(cout);
-	    // topo->printFsParticles(cout);
-	    myAmps.push_back(amp.amplitude());
-	    if ((myAmps.back().real() == 0) || (myAmps.back().imag() == 0))
-	      printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
-	  }
-	}
-	
-	timer.Stop();
-	printInfo << "successfully read " << myAmps.size() << " events from file(s) "
-		  << "'" << inFileNamePattern << "' and calculated amplitudes" << endl;
-	cout << "needed ";
-	timer.Print();
+      // open input file
+      printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
+      TChain chain(inTreeName.c_str());
+      if (chain.Add(inFileNamePattern.c_str()) < 1) {
+	printWarn << "no events in input file(s) '" << inFileNamePattern << "'" << endl;
+	return false;
       }
+      const long int nmbEventsChain = chain.GetEntries();
+      chain.GetListOfFiles()->ls();
+
+      // create branch pointers and leaf variables
+      TBranch*      initialStateNamesBr   = 0;
+      TBranch*      initialStateMomentaBr = 0;
+      TBranch*      finalStateNamesBr     = 0;
+      TBranch*      finalStateMomentaBr   = 0;
+      TClonesArray* initialStateNames     = 0;
+      TClonesArray* initialStateMomenta   = 0;
+      TClonesArray* finalStateNames       = 0;
+      TClonesArray* finalStateMomenta     = 0;
+	
+      // connect leaf variables to tree branches
+      chain.SetBranchAddress(leafNameIsPartNames.c_str  (), &initialStateNames,   &initialStateNamesBr  );
+      chain.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta, &initialStateMomentaBr);
+      chain.SetBranchAddress(leafNameFsPartNames.c_str  (), &finalStateNames,     &finalStateNamesBr    );
+      chain.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta,   &finalStateMomentaBr  );
+
+      // loop over events
+      const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+				  : nmbEventsChain);
+      timer.Reset();
+      timer.Start();
+      for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+	//for (long int eventIndex = 1; eventIndex < 2; ++eventIndex) {
+	progressIndicator(eventIndex, nmbEvents);
+	  
+	if (chain.LoadTree(eventIndex) < 0)
+	  break;
+	// read only required branches
+	initialStateNamesBr->GetEntry  (eventIndex);
+	initialStateMomentaBr->GetEntry(eventIndex);
+	finalStateNamesBr->GetEntry    (eventIndex);
+	finalStateMomentaBr->GetEntry  (eventIndex);
+
+	if (!initialStateNames || !initialStateMomenta || !finalStateNames || !finalStateMomenta) {
+	  printWarn << "at least one data array is null pointer: "
+		    << "initialStateNames = "   << initialStateNames   << ", "
+		    << "initialStateMomenta = " << initialStateMomenta << ", "
+		    << "finalStateNames = "     << finalStateNames     << ", "
+		    << "finalStateMomenta = "   << finalStateMomenta   << ". "
+		    << "skipping event." << endl;
+	  continue;
+	}
+
+	if (topo->readData(*initialStateNames, *initialStateMomenta,
+			   *finalStateNames,   *finalStateMomenta)) {
+	  // topo->printIsParticles(cout);
+	  // topo->printFsParticles(cout);
+	  // complex<double> A = amp.amplitude();
+	  // complex<double> B = amp.amplitude();
+	  // topo->revertMomenta();
+	  // complex<double> C = amp.amplitude();
+	  // cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
+	  myAmps.push_back(amp.amplitude());
+	  if ((myAmps.back().real() == 0) || (myAmps.back().imag() == 0))
+	    printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
+	}
+      }
+	
+      timer.Stop();
+      printInfo << "successfully read " << myAmps.size() << " events from file(s) "
+		<< "'" << inFileNamePattern << "' and calculated amplitudes" << endl;
+      cout << "needed ";
+      timer.Print();
 
       vector<complex<double> > pwa2kAmps;
       if (1) {  // compare to PWA2000
@@ -337,37 +345,35 @@ main(int argc, char** argv)
 		  << "'" << evtFileName << "' and calculated amplitudes" << endl;
 	cout << "needed ";
 	timer.Print();
-      }
-
-      printInfo << "myAmps[0] = " << myAmps[0] << " vs. pwa2kAmps[0] = " << pwa2kAmps[0] << ", "
-		<< "delta = " << myAmps[0] - pwa2kAmps[0] << endl;
-
-      if (1) {
-	const string outFileName = "testDiff.root";
-	printInfo << "writing comparison plots to " << outFileName << endl;
-	TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
-	TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-	TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-	TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-	TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-	TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
-	TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
-	TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-	TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-	for (unsigned int i = 0; i < myAmps.size(); ++i) {
-	  hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
-	  hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
-	  hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
-	  hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
-	  hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
-	  hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
-	  hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
-	  hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
+	printInfo << "myAmps[0] = " << myAmps[0] << " vs. pwa2kAmps[0] = " << pwa2kAmps[0] << ", "
+		  << "delta = " << myAmps[0] - pwa2kAmps[0] << endl;
+	
+	if (1) {
+	  const string outFileName = "testDiff.root";
+	  printInfo << "writing comparison plots to " << outFileName << endl;
+	  TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
+	  TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+	  TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+	  TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+	  TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+	  TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
+	  TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
+	  TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+	  TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+	  for (unsigned int i = 0; i < myAmps.size(); ++i) {
+	    hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
+	    hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
+	    hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
+	    hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
+	    hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
+	    hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
+	    hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
+	    hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
+	  }
+	  f->Write();
+	  f->Close();
 	}
-	f->Write();
-	f->Close();
       }
     }
   }
-  
 }

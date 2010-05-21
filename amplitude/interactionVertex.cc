@@ -141,6 +141,14 @@ interactionVertex::readData(const TClonesArray&,
 }
 
 
+bool
+interactionVertex::revertMomenta()
+{
+  printWarn << "function not implemented" << endl;
+  return false;
+}
+
+
 ostream&
 interactionVertex::print(ostream& out) const
 {

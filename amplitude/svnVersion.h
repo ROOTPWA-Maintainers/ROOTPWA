@@ -45,19 +45,39 @@
 #include "utilities.h"
 
 
+inline std::string svnVersion() { return SVN_VERSION; }
+
+
 inline
 void
 printSvnVersion()
 {
-  const std::string ver = SVN_VERSION;
+  const std::string ver = svnVersion();
   if (ver == "")
-    printInfo << "subversion repository version is unknown." << std::endl;
+    printInfo << "subversion repository revision is unknown." << std::endl;
   else
-    printInfo << "subversion repository version is '" << ver << "'" << std::endl;
+    printInfo << "subversion repository revision is '" << ver << "'" << std::endl;
 }
 
 
-inline std::string svnVersion() { return SVN_VERSION; }
+inline std::string compileDir() { return CMAKE_SOURCE_DIR; }
+
+
+inline
+void
+printCompilerInfo()
+{
+  const std::string date = __DATE__;
+  const std::string time = __TIME__;
+  const std::string ver  = __VERSION__;
+  const std::string dir  = compileDir();
+  printInfo << "this executable was compiled in ";
+  if (dir != "")
+    std::cout << "'" << dir << "' ";
+  else
+    std::cout << "unknown directory ";
+  std::cout << date << " " << time << " by compiler " << ver << std::endl;
+}
 
 
 #endif  // SVNVERSION_H

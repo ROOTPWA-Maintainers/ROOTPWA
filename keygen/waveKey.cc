@@ -221,7 +221,7 @@ waveKey::writeReflectivityBasisAmp(ostream&           out,
 void 
 waveKey::permuteFsParts(map<TString, vector<int> >&           fsPartIds,
 			map<TString, vector<int> >::iterator& thisPart,
-			const std::vector<const particleKey*> fsParts,
+			const vector<const particleKey*>      fsParts,
 			bool&                                 firstCall,
 			unsigned int&                         countTerm,
 			const unsigned int                    nmbCombinations,

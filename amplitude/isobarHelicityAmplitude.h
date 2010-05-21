@@ -41,6 +41,8 @@
 
 
 #include <complex>
+#include <map>
+#include <vector>
 
 #include "pputil.h"
 
@@ -76,6 +78,7 @@ namespace rpwa {
     
     std::complex<double> twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
 						  const bool                  topVertex = false);  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
+    std::complex<double> boseSymmetrizedAmp();  ///< performs Bose symmetrization
 
     std::complex<double> amplitude();                           ///< computes amplitude
     std::complex<double> operator ()() { return amplitude(); }  ///< computes amplitude
@@ -87,6 +90,11 @@ namespace rpwa {
     
 
   private:
+
+    std::complex<double> sumBoseSymTerms(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
+					 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
+					 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry);  ///< function that sums up amplitudes of all permutations of indistinguishable final state particles
+
 
     isobarDecayTopology* _decay;                 ///< isobar decay topology with all external information
     bool                 _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
@@ -110,36 +118,47 @@ namespace rpwa {
   // !NOTE! all angular momenta and spin projections are in units of hbar/2
   inline
   double
-  normFactor(const int J)  ///< standard normalization factor in amplitudes
+  normFactor(const int  L,
+	     const bool debug = false)  ///< standard normalization factor in amplitudes
   {
-    return sqrt(J + 1);
+    const double norm = sqrt(L + 1);
+    if (debug)
+      printInfo << "normalization factor sqrt(2 * L = " << 0.5 * L << " + 1) = " << norm << std::endl;
+    return norm;
   }
   
   
   inline
   std::complex<double>
-  DFuncConj(const int    J,
-  	    const int    M,
-  	    const int    lambda,
+  DFuncConj(const int    j,
+  	    const int    m,
+  	    const int    n,
   	    const double phi,
-  	    const double theta)  ///< conjugated Wigner D-function D^{J *}_{M lambda}(phi, theta, 0)
+  	    const double theta,
+	    const bool   debug = false)  ///< conjugated Wigner D-function D^{J *}_{M lambda}(phi, theta, 0)
   {
-    return conj(D(phi, theta, 0, J, M, lambda));
+    const std::complex<double> DFunc = conj(D(phi, theta, 0, j, m, n));
+    if (debug)
+      printInfo << "Wigner D^{J = " << 0.5 * j << " *}" << "_{M = " << 0.5 * m << ", "
+		<< "M' = " << 0.5 * n << "}" << "(alpha = " << phi << ", beta = " << theta << ", "
+		<< "gamma = 0) = " << DFunc << std::endl;
+    return DFunc;
   }
   
   
   inline
   std::complex<double>
-  DFuncConjRefl(const int    J,
-		const int    M,
-		const int    lambda,
+  DFuncConjRefl(const int    j,
+		const int    m,
+		const int    n,
 		const int    P,
 		const int    refl,
 		const double phi,
-		const double theta)  ///< conjugated Wigner D-function {^epsilon}D^{J P *}_{M lambda}(phi, theta, 0) in reflectivity basis
+		const double theta,
+		const bool   debug = false)  ///< conjugated Wigner D-function {^epsilon}D^{J P *}_{M lambda}(phi, theta, 0) in reflectivity basis
   {
-    if (M < 0) {
-      printWarn << "in reflectivity basis M = " << M << " < 0 is not allowed. "
+    if (m < 0) {
+      printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
 		<< "returning 0." << std::endl;
       return 0;
     }
@@ -148,39 +167,61 @@ namespace rpwa {
 		<< "returning 0." << std::endl;
       return 0;
     }
-    const double preFactor  = (M == 0 ? 0.5 : 1 / sqrt(2));
-    const double reflFactor = -(double)refl * (double)P * pow(-1, J - M);
-    return preFactor * (               DFuncConj(J,  M, lambda, phi, theta)
-		        - reflFactor * DFuncConj(J, -M, lambda, phi, theta));
+    const double               preFactor  = (m == 0 ? 0.5 : 1 / sqrt(2));
+    const double               reflFactor = -(double)refl * (double)P * pow(-1, j - m);
+    const std::complex<double> DFunc     
+      =  preFactor * (               DFuncConj(j,  m, n, phi, theta)
+		      - reflFactor * DFuncConj(j, -m, n, phi, theta));
+    if (debug)
+      printInfo << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
+		<< "refl = " << sign(refl) << " *}" << "_{M = " << 0.5 * m << ", "
+		<< "M' = " << 0.5 * n << "}(alpha = " << phi << ", "
+		<< "beta = " << theta << ", gamma = 0) = " << DFunc << std::endl;
+    return DFunc;
   }
 
 
   inline
   double
-  cgCoeff(const int J1,
-  	  const int M1,
-  	  const int J2,
-  	  const int M2,
-  	  const int J,
-  	  const int M)  ///< Clebsch-Gordan coefficient (J1 M1, J2 M2 | J M)
-  { return clebsch(J1, J2, J, M1, M2, M); }
+  cgCoeff(const int  J1,
+  	  const int  M1,
+  	  const int  J2,
+  	  const int  M2,
+  	  const int  J,
+  	  const int  M,
+	  const bool debug = false)  ///< Clebsch-Gordan coefficient (J1 M1, J2 M2 | J M)
+  {
+    const double cg = clebsch(J1, J2, J, M1, M2, M);
+    if (debug)
+      printInfo << "Clebsch-Gordan (J_1 = " << 0.5 * J1 << ", M_1 = " << 0.5 * M1 << "; "
+		<< "J_2 = " << 0.5 * J2 << ", M_2 = " << 0.5 * M2
+		<< " | J = " << 0.5 * J << ", M = " << 0.5 * M << ") = " << cg << std::endl;
+    return cg;
+  }
 
   
   inline
-  double barrierFactor(const int    L,
-  		       const double breakupMom)  ///< Blatt-Weisskopf barrier factor
+  double
+  barrierFactor(const int    L,
+		const double breakupMom,
+		const bool   debug = false)  ///< Blatt-Weisskopf barrier factor
   {
-    return F(L, breakupMom);
+    const double bf = F(L, breakupMom);
+    if (debug)
+      printInfo << "Blatt-Weisskopf barrier factor(L = " << 0.5 * L << ", "
+		<< "q = " << breakupMom << " GeV) = " << bf << std::endl;
+    return bf;
   }
 
 
   inline
-  std::complex<double> breitWigner(const double m,
-  				   const double m0,
-  				   const double Gamma0,
-  				   const int    L,
-  				   const double q,
-  				   const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
+  std::complex<double>
+  breitWigner(const double m,
+	      const double m0,
+	      const double Gamma0,
+	      const int    L,
+	      const double q,
+	      const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
   {
     const double Gamma  = Gamma0 * (m0 / m) * (q / q0) * (pow(F(L, q), 2) / pow(F(L, q0), 2));
     return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);

@@ -61,6 +61,7 @@ namespace rpwa {
     diffractiveDissVertex(const diffractiveDissVertex& vert);
     virtual ~diffractiveDissVertex();
 		
+    virtual diffractiveDissVertex& operator =(const diffractiveDissVertex& vert);
     virtual diffractiveDissVertex* clone(const bool cloneInParticles  = false,
 					 const bool cloneOutParticles = false) const;
 
@@ -74,6 +75,8 @@ namespace rpwa {
     virtual bool readData(const TClonesArray& initialStateNames,
 			  const TClonesArray& initialStateMomenta);  ///< reads data from TClonesArrays
 
+    virtual bool revertMomenta();  ///< resets momenta to the values of last event read
+
     virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
     virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
     virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
@@ -83,6 +86,8 @@ namespace rpwa {
 
 
   private:
+
+    TVector3 _beamMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 
     static bool _debug;  ///< if set to true, debug messages are printed
 

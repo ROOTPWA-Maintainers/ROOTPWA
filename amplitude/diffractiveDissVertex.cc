@@ -56,7 +56,8 @@ bool diffractiveDissVertex::_debug = false;
 
 diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
 					     const particlePtr& XSystem)
-  : interactionVertex()
+  : interactionVertex(),
+    _beamMomCache    ()
 {
   if (!beam) {
     printErr << "null pointer to beam particle. aborting." << endl;
@@ -83,6 +84,17 @@ diffractiveDissVertex::~diffractiveDissVertex()
 { }
 
 
+diffractiveDissVertex&
+diffractiveDissVertex::operator =(const diffractiveDissVertex& vert)
+{
+  if (this != &vert) {
+    interactionVertex::operator =(vert);
+    _beamMomCache = vert._beamMomCache;
+  }
+  return *this;
+}
+
+
 diffractiveDissVertex*
 diffractiveDissVertex::clone(const bool cloneInParticles,
 			     const bool cloneOutParticles) const
@@ -100,6 +112,7 @@ bool
 diffractiveDissVertex::readData(const TClonesArray& initialStateNames,
 				const TClonesArray& initialStateMomenta)
 {
+  _beamMomCache = TVector3();
   // check inital state data
   bool success = true;
   const string nameClassName = initialStateNames.GetClass()->GetName();
@@ -130,6 +143,17 @@ diffractiveDissVertex::readData(const TClonesArray& initialStateNames,
     printInfo << "setting momentum of beam particle " << partName
 	      << " to " << *((TVector3*)initialStateMomenta[0]) << " GeV" << endl;
   beam()->setMomentum(*((TVector3*)initialStateMomenta[0]));
+  _beamMomCache = beam()->lzVec().Vect();
+  return true;
+}
+
+
+bool
+diffractiveDissVertex::revertMomenta()
+{
+  if (_debug)
+    printInfo << "resetting beam momentum to " << _beamMomCache << " GeV" << endl;
+  beam()->setMomentum(_beamMomCache);
   return true;
 }
 

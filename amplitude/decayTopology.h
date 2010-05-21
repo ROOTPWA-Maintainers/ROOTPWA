@@ -46,6 +46,7 @@
 
 
 #include <vector>
+#include <map>
 
 #include "particle.h"
 #include "interactionVertex.h"
@@ -54,6 +55,7 @@
 
 
 class TClonesArray;
+class TVector3;
 
 
 namespace rpwa {
@@ -82,6 +84,7 @@ namespace rpwa {
     
     unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
     unsigned int nmbFsParticles        () const { return _fsParticles.size(); }  ///< returns number of final state particles
+    std::map<std::string, unsigned int> nmbIndistFsParticles() const;  ///< returns multiplicities of indistinguishable final state particles
 
     const std::vector<particlePtr>&          fsParticles        () const { return _fsParticles; }  ///< returns final state particles ordered depth-first
     const std::vector<interactionVertexPtr>& interactionVertices() const { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
@@ -89,10 +92,11 @@ namespace rpwa {
     const interactionVertexPtr& productionVertex  () const { return _prodVertex;     }  ///< returns production vertex
     const interactionVertexPtr& xInteractionVertex() const { return _intVertices[0]; }  ///< returns X-decay vertex
 
-    bool isProductionVertex (const interactionVertexPtr& vert) const { return (vert == _prodVertex); }
-    bool isInteractionVertex(const interactionVertexPtr& vert) const;
-    bool isFsVertex         (const interactionVertexPtr& vert) const;
-    bool isFsParticle       (const particlePtr&          part) const;
+    bool isProductionVertex (const interactionVertexPtr& vert) const { return (vert == _prodVertex); }  ///< returns whether given vertex is the production vertex
+    bool isInteractionVertex(const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the interaction vertices
+    bool isFsVertex         (const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the final state vertices
+    bool isFsParticle       (const particlePtr&          part) const;  ///< returns whether given particle is one of the final state particles
+    int  fsParticleIndex    (const particlePtr&          part) const;  ///< returns index in final state particle array; -1 means particle is not a final state particle
 
     bool checkTopology   () const;                  ///< returns whether decay has the correct topology
     bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices
@@ -107,6 +111,10 @@ namespace rpwa {
 		  const TClonesArray& initialStateMomenta,
 		  const TClonesArray& finalStateNames,
 		  const TClonesArray& finalStateMomenta);  ///< reads data from TClonesArrays
+
+    bool revertMomenta();  ///< resets momenta to the values of last event read
+    bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
+
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
     virtual std::ostream& printIsParticles(std::ostream& out) const;  ///< prints initial state particle data in human-readable form
@@ -134,9 +142,10 @@ namespace rpwa {
 
   private:
 
-    interactionVertexPtr              _prodVertex;   ///< pointer to production vertex
-    std::vector<interactionVertexPtr> _intVertices;  ///< array of interaction vertices excluding production vertex; ordered depth-first
-    std::vector<particlePtr>          _fsParticles;  ///< array of final state particles; ordered depth-first
+    interactionVertexPtr              _prodVertex;      ///< pointer to production vertex
+    std::vector<interactionVertexPtr> _intVertices;     ///< array of interaction vertices excluding production vertex; ordered depth-first
+    std::vector<particlePtr>          _fsParticles;     ///< array of final state particles; ordered depth-first
+    std::vector<TVector3>             _fsPartMomCache;  ///< caches final state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
     
     static bool _debug;  ///< if set to true, debug messages are printed
     

@@ -36,7 +36,11 @@
 //-------------------------------------------------------------------------
 
 
+#include <algorithm>
+#include <cassert>
+
 #include "TLorentzRotation.h"
+#include "TMath.h"
 
 #include "utilities.h"
 #include "isobarHelicityAmplitude.h"
@@ -88,10 +92,17 @@ isobarHelicityAmplitude::setDecayTopology(isobarDecayTopology& decay)
 complex<double>
 isobarHelicityAmplitude::amplitude()
 {
-  // transform daughters into their respective RFs
-  transformDaughters();
   // recursively sum over all possible helicities of the decay particles
-  return twoBodyDecayAmplitudeSum(_decay->xIsobarDecayVertex(), true);
+  complex<double> amp = 0;
+  if (_boseSymmetrize)
+    amp = boseSymmetrizedAmp();
+  else {
+    // transform daughters into their respective RFs
+    transformDaughters();
+    // calculate amplitude
+    amp = twoBodyDecayAmplitudeSum(_decay->xIsobarDecayVertex(), true);
+  }
+  return amp;
 }
 
 
@@ -166,7 +177,7 @@ isobarHelicityAmplitude::transformDaughters()
     const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
     if (_debug)
       printInfo << "transforming outgoing particles of vertex " << *vertex
-		<< "into " << vertex->mother()->name() << " Gottfried-Jackson RF" << endl;
+		<< " into " << vertex->mother()->name() << " Gottfried-Jackson RF" << endl;
     vertex->transformOutParticles(gjTrans);
   }
   // 2) transform daughters of isobar decay vertices to the respective helicity frames
@@ -174,17 +185,17 @@ isobarHelicityAmplitude::transformDaughters()
     const isobarDecayVertexPtr& vertex  = _decay->isobarDecayVertices()[i];
     if (_debug)
       printInfo << "transforming all child particles of vertex " << *vertex
-		<< "into " << vertex->mother()->name() << " helicity RF" << endl;
+		<< " into " << vertex->mother()->name() << " helicity RF" << endl;
     const TLorentzRotation hfTrans = hfTransform(vertex->mother()->lzVec());
     // get all particles downstream of this vertex
     decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
     decayTopologyGraphType::edgeIterator iEd, iEdEnd;
     for (tie(iEd, iEdEnd) = subGraph.edges(); iEd != iEdEnd; ++iEd) {
-      const particlePtr& p = subGraph.particle(*iEd);
+      const particlePtr& part = subGraph.particle(*iEd);
       if (_debug)
-	cout << "    transforming " << p->name() << " into "
+	cout << "    transforming " << part->name() << " into "
 	     << vertex->mother()->name() << " helicity RF" << endl;
-      p->transform(hfTrans);
+      part->transform(hfTrans);
     }
   }
 }
@@ -198,13 +209,10 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
   const particlePtr& mother    = vertex->mother();
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
-  ostringstream      debug;
 
   // calculate normalization factor
   const int    L    = vertex->L();
-  const double norm = normFactor(L);
-  if (_debug)
-    debug << "< sqrt(" << L << " + 1) = " << norm << " >  ";
+  const double norm = normFactor(L, _debug);
 
   // calculate D-function
   const int       J       = mother->J();
@@ -217,66 +225,42 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
   const double    phi     = daughter1->lzVec().Phi();  // use daughter1 as analyzer
   const double    theta   = daughter1->lzVec().Theta();
   complex<double> DFunc;
-  if (topVertex && _useReflectivityBasis) {
-    DFunc = DFuncConjRefl(J, Lambda, lambda, P, refl, phi, theta);
-    if (_debug)
-      debug << "< {^" << sign(refl) << "}D^{" << J << " " << sign(P) << " *}"
-	    << "_{" << Lambda << ", " << lambda << "}" << "(" << phi << ", " << theta << ", 0) "
-	    << "= " << DFunc << " >  ";
-  } else {
-    DFunc = DFuncConj(J, Lambda, lambda, phi, theta);
-    if (_debug)
-      debug << "< D^{" << J << " *}" << "_{" << Lambda << ", " << lambda << "}"
-	    << "(" << phi << ", " << theta << ", 0) = " << DFunc << " >  ";
-  }
+  if (topVertex && _useReflectivityBasis)
+    DFunc = DFuncConjRefl(J, Lambda, lambda, P, refl, phi, theta, _debug);
+  else
+    DFunc = DFuncConj(J, Lambda, lambda, phi, theta, _debug);
 
   // calculate Clebsch-Gordan coefficient for L-S coupling
   const int    S         = vertex->S();
-  const double lsClebsch = cgCoeff(L, 0, S, lambda, J, lambda);
-  if (_debug)
-    debug << "< (" << L << ", 0; " << S << ", " << lambda
-	  << " | " << J << ", " << lambda << ") = " << lsClebsch << " >  ";
+  const double lsClebsch = cgCoeff(L, 0, S, lambda, J, lambda, _debug);
   // if (lsClebsch == 0)
   //   return 0;
 
   // calculate Clebsch-Gordan coefficient for S-S coupling
   const int    s1        = daughter1->J();
   const int    s2        = daughter2->J();
-  const double ssClebsch = cgCoeff(s1, lambda1, s2, -lambda2, S, lambda);
-  if (_debug)
-    debug << "< (" << s1 << ", " << lambda1 << "; " << s2 << ", " << -lambda2
-	  << " | " << S << ", " << lambda << ") = " << ssClebsch << " >  ";
+  const double ssClebsch = cgCoeff(s1, lambda1, s2, -lambda2, S, lambda, _debug);
   // if (ssClebsch == 0)
   //   return 0;
 
   // calulate barrier factor
   const double q  = daughter1->lzVec().Vect().Mag();
-  const double bf = barrierFactor(L, q);
-  if (_debug)
-    debug << "< Blatt-Weisskopf(" << L << ", " << q << ") = " << bf << " >  ";
+  const double bf = barrierFactor(L, q, _debug);
 
   // calculate Breit-Wigner
-  const double          M      = mother->lzVec().M();
-  const double          M0     = mother->mass();
-  const double          Gamma0 = mother->width();
-  const double          m1     = daughter1->lzVec().M();
-  const double          m2     = daughter2->lzVec().M();
-  const double          q0     = breakupMomentum(M0, m1, m2);
+  // const double          M      = mother->lzVec().M();
+  // const double          M0     = mother->mass();
+  // const double          Gamma0 = mother->width();
+  // const double          m1     = daughter1->lzVec().M();
+  // const double          m2     = daughter2->lzVec().M();
+  // const double          q0     = breakupMomentum(M0, m1, m2);
   const complex<double> bw     = vertex->massDependence();
-  if (_debug) {
-    if (topVertex)
-      debug << "< no mass dep. = " << bw << " >";
-    else
-      debug << "< Breit-Wigner(" << M << ", " << M0 << ", " << Gamma0
-	    << ", " << L << ", " << q << ", " << q0 << ") = " << bw << " >";
-  }
 
   // calculate decay amplitude
   complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
   
   if (_debug)
-    printInfo << "calculating two-body decay amplitude for " << *vertex << ": "
-	      << debug.str() << " = " << amp << endl;
+    printInfo << "two-body decay amplitude = " << amp << endl;
   return amp;
 }
 
@@ -293,6 +277,8 @@ complex<double>
 isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
 						  const bool                  topVertex)
 {
+  if (_debug)
+    printInfo << "calculating decay amplitude for " << *vertex << endl;
   const particlePtr& mother    = vertex->mother();
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
@@ -301,28 +287,120 @@ isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& ve
     // calculate decay amplitude for daughter 1
     const isobarDecayVertexPtr& daughter1Vertex =
       dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
-    complex<double> amp1 = 1;
+    complex<double> daughter1Amp = 0;
     if (daughter1Vertex) {
       daughter1->setSpinProj(lambda1);
-      amp1 *= twoBodyDecayAmplitudeSum(daughter1Vertex, false);
-    }
+      daughter1Amp = twoBodyDecayAmplitudeSum(daughter1Vertex, false);
+    } else
+      daughter1Amp = 1;
     for (int lambda2 = -daughter2->J(); lambda2 <= +daughter2->J(); lambda2 += 2) {
       // calculate decay amplitude for daughter 2
       const isobarDecayVertexPtr& daughter2Vertex =
 	dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
-      complex<double> amp2 = 1;
+      complex<double> daughter2Amp = 0;
       if (daughter2Vertex) {
 	daughter2->setSpinProj(lambda2);
-	amp2 *= twoBodyDecayAmplitudeSum(daughter2Vertex, false);
-      }
-      complex<double> amp = twoBodyDecayAmplitude(vertex, topVertex) * amp1 * amp2;
+	daughter2Amp = twoBodyDecayAmplitudeSum(daughter2Vertex, false);
+      } else
+	daughter2Amp = 1;
+      complex<double> motherAmp = twoBodyDecayAmplitude(vertex, topVertex);
+      complex<double> amp       = motherAmp * daughter1Amp * daughter2Amp;
       if (_debug)
-	printInfo << "amplitude for " << *vertex << ": "
-		  << mother->name()    << " [lambda = " << mother->spinProj() << "]  --->  "
-		  << daughter1->name() << " [lambda = " << lambda1 << "]  +  "
-		  << daughter2->name() << " [lambda = " << lambda2 << "]  =  " << amp << endl;
+	printInfo << "amplitude for : "
+		  << mother->name()    << " [lambda = " << 0.5 * mother->spinProj() << "] -> "
+		  << daughter1->name() << " [lambda = " << 0.5 * lambda1 << "] + "
+		  << daughter2->name() << " [lambda = " << 0.5 * lambda2 << "] = "
+		  << "mother amp. = " << motherAmp << " * daughter_1 amp = "
+		  << daughter1Amp << " * daughter_2 amp = "<< daughter2Amp << " = " << amp << endl;
       ampSum += amp;
     }
   }
+  if (_debug)
+    printInfo << "decay amplitude for " << *vertex << " = " << ampSum << endl;
   return ampSum;
+}
+
+
+complex<double>
+isobarHelicityAmplitude::sumBoseSymTerms(const map<string, vector<unsigned int> >&     origFsPartIndices,
+					 const map<string, vector<unsigned int> >&     newFsPartIndices,
+					 map<string, vector<unsigned int> >::iterator& newFsPartIndicesEntry)
+{
+  
+  complex<double> amp = 0;
+  do {
+    map<string, vector<unsigned int> >::iterator nextFsPartIndicesEntry = newFsPartIndicesEntry;
+    if (++nextFsPartIndicesEntry != newFsPartIndices.end())
+      amp += sumBoseSymTerms(origFsPartIndices, newFsPartIndices, nextFsPartIndicesEntry);
+    else {
+      vector<unsigned int> fsPartIndexMap(_decay->nmbFsParticles(), 0);
+      if (_debug)
+      	printInfo << "calculating amplitude for Bose term final state permutation ";
+      for (map<string, vector<unsigned int> >::const_iterator i = origFsPartIndices.begin();
+      	   i != origFsPartIndices.end(); ++i) {
+	const string partName = i->first;
+	map<string, vector<unsigned int> >::const_iterator entry = newFsPartIndices.find(partName);
+	assert(entry != newFsPartIndices.end());
+	for (unsigned int j = 0; j < i->second.size(); ++j) {
+	  assert(entry->second.size() == i->second.size());
+	  const unsigned int origFsPartIndex = i->second[j];
+	  const unsigned int newFsPartIndex  = entry->second[j];
+	  if (_debug)
+	    cout << partName << "[" << origFsPartIndex << " -> " << newFsPartIndex << "]  ";
+	  fsPartIndexMap[origFsPartIndex] = newFsPartIndex;
+	}
+      }
+      if (_debug)
+       	cout << endl;
+      // (re)set final state momenta
+      if (!_decay->revertMomenta(fsPartIndexMap)) {
+      	printWarn << "problems reverting momenta in decay topology. returning 0." << endl;
+      	return 0;
+      }
+      // transform daughters into their respective RFs
+      transformDaughters();
+      // calculate amplitude
+      amp += twoBodyDecayAmplitudeSum(_decay->xIsobarDecayVertex(), true);
+    }
+  } while (next_permutation(newFsPartIndicesEntry->second.begin(),
+			    newFsPartIndicesEntry->second.end()));
+  return amp;
+}
+
+
+complex<double>
+isobarHelicityAmplitude::boseSymmetrizedAmp()
+{
+  // get final state indistinguishable particles
+  typedef map<string, unsigned int>::const_iterator indistFsPartIt;
+  const map<string, unsigned int> indistFsPart = _decay->nmbIndistFsParticles();
+  if (_debug) {
+    printInfo << "Bose-symmetrizing amplitude: indistinguishable final state particle "
+	      << "multiplicities (marked FS particles will be Bose-symmetrized): ";
+    for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
+      cout << i->first << " = " << i->second << ((i->second) >= 2 ? " <<<  " : "  ");
+    cout << endl;
+  }
+
+  // calculate normalization factor
+  double nmbCombinations = 1;
+  for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
+    nmbCombinations *= TMath::Factorial(i->second);
+  const double normFactor = 1 / sqrt(nmbCombinations);
+
+  // initialize indices used to generate final state permutations
+  // in order to get all permutations with std::next_permutation
+  // indices have to be sorted ascending
+  map<string, vector<unsigned int> > origFsPartIndices, newFsPartIndices;
+  for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
+    const string partName = _decay->fsParticles()[i]->name();
+    origFsPartIndices[partName].push_back(i);
+    newFsPartIndices [partName].push_back(i);
+  }
+
+  // Bose-symmetrize amplitudes
+  if (_debug)
+    printInfo << "Bose-symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
+  map<string, vector<unsigned int> >::iterator firstEntry = newFsPartIndices.begin();
+  return normFactor * sumBoseSymTerms(origFsPartIndices, newFsPartIndices, firstEntry);
 }
