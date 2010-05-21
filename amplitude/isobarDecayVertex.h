@@ -87,8 +87,9 @@ namespace rpwa {
     inline void setL(const unsigned int L) { _L = L; }  ///< sets the relative orbital angular momentum between the two daughters * 2 (!!!)
     inline void setS(const unsigned int S) { _S = S; }  ///< sets the total spin of the two daughters * 2 (!!!)
 
-    inline std::complex<double> massDependence() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitude
-    inline void setMassDependence(const massDependencePtr& massDep) { _massDep = massDep; }  ///< sets mass dependence
+    inline std::complex<double>     massDepAmplitude() const { return _massDep->amp(*this); }  ///< returns mass-dependent amplitude
+    inline const massDependencePtr& massDependence  () const { return _massDep;             }  ///< returns mass-dependence
+    inline void setMassDependence(const massDependencePtr& massDep) { _massDep = massDep; }    ///< sets mass dependence
 
     bool checkConsistency();  ///< checks quantum decomposition of in-particle to outparticles
 

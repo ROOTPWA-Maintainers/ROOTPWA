@@ -88,7 +88,7 @@ keyFileParser::parse(const string&           keyFileName,
 
   // find wave group
   const Setting* waveKey = findGroup(rootKey, "wave");
-  if (!waveKey) {
+  if (not waveKey) {
     printWarn << "cannot find 'wave' group. cannot construct decay topology." << endl;
     return false;
   }
@@ -96,42 +96,42 @@ keyFileParser::parse(const string&           keyFileName,
   // find wave options group
   const Setting* waveOptionsKey = findGroup(*waveKey, "options");
   if (waveOptionsKey) {
-    if (waveOptionsKey->lookupValue("boseSymmetrize", _boseSymmetrize) && _debug)
+    if (waveOptionsKey->lookupValue("boseSymmetrize", _boseSymmetrize) and _debug)
       printInfo << "setting wave option 'boseSymmetrize' to "
 		<< ((_boseSymmetrize) ? "true" : "false") << endl;
-    if (waveOptionsKey->lookupValue("useReflectivityBasis", _useReflectivityBasis) && _debug)
+    if (waveOptionsKey->lookupValue("useReflectivityBasis", _useReflectivityBasis) and _debug)
       printInfo << "setting wave option 'useReflectivityBasis' to "
 		<< ((_useReflectivityBasis) ? "true" : "false") << endl;
   }
 
   // find X decay group
   const Setting* XDecayKey = findGroup(*waveKey, "XDecay");
-  if (!XDecayKey) {
+  if (not XDecayKey) {
     printWarn << "cannot find 'XDecay' group. cannot construct decay topology." << endl;
     return false;
   }
 
   // find  X quantum numbers group
   const Setting* XQnKey = findGroup(*waveKey, "XQuantumNumbers");
-  if (!XQnKey) {
+  if (not XQnKey) {
     printWarn << "cannot find 'XQuantumNumbers' group. cannot construct decay topology." << endl;
     return false;
   }
   // create X particle
   particlePtr X;
-  if (!constructXParticle(*XQnKey, X)) {
+  if (not constructXParticle(*XQnKey, X)) {
     printWarn << "problems constructing X particle. cannot construct decay topology." << endl;
     return false;
   }
 
   // create production vertex
-  if (!constructProductionVertex(rootKey, X)) {
+  if (not constructProductionVertex(rootKey, X)) {
     printWarn << "problems constructing production vertex. cannot construct decay topology." << endl;
     return false;
   }
 
   // traverse decay chain and create final state particles and isobar decay vertices
-  if (!constructDecayVertex(*XDecayKey, X)) {
+  if (not constructDecayVertex(*XDecayKey, X)) {
     printWarn << "problems constructing decay chain. cannot construct decay topology." << endl;
     return false;
   }
@@ -164,7 +164,7 @@ keyFileParser::findGroup(const Setting&     parent,
 			 const bool         mustExist)
 {
   // find field
-  if (!parent.exists(groupName)) {
+  if (not parent.exists(groupName)) {
     if (mustExist)
       printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "'"
 		<< "of key file '" << parent.getSourceFile() << "'." << endl;
@@ -172,7 +172,7 @@ keyFileParser::findGroup(const Setting&     parent,
   }
   const Setting* groupKey = &parent[groupName];
   // check that it is a group
-  if (!groupKey->isGroup()) {
+  if (not groupKey->isGroup()) {
     printWarn << "'" << groupName << "' field in '" << parent.getPath() << "'"
 	      << "of key file '" << parent.getSourceFile() << "' is not a group." << endl;
     return 0;
@@ -187,7 +187,7 @@ keyFileParser::findList(const Setting&     parent,
 			const bool         mustExist)
 {
   // find field
-  if (!parent.exists(listName)) {
+  if (not parent.exists(listName)) {
     if (mustExist)
       printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "'"
 		<< "of key file '" << parent.getSourceFile() << "'." << endl;
@@ -195,7 +195,7 @@ keyFileParser::findList(const Setting&     parent,
   }
   const Setting* listKey = &parent[listName];
   // check that it is a list
-  if (!listKey->isList()) {
+  if (not listKey->isList()) {
     printWarn << "'" << listName << "' field in '" << parent.getPath() << "'"
 	      << "of key file '" << parent.getSourceFile() << "' is not a list. "
 	      << "check that braces are correct." << endl;
@@ -227,12 +227,12 @@ keyFileParser::constructXParticle(const Setting& XQnKey,
     XQn["refl"];
   bool success = true;
   for (map<string, int>::iterator i = XQn.begin(); i != XQn.end(); ++i)
-    if (!XQnKey.lookupValue(i->first, i->second)) {
+    if (not XQnKey.lookupValue(i->first, i->second)) {
       printWarn << "cannot find integer field '" << i->first << "in "
 		<< "'" << XQnKey.getPath() << "'." << endl;
       success = false;
     }
-  if (!success) {
+  if (not success) {
     printWarn << "cannot find X quantum numbers. cannot construct decay topology." << endl;
     return false;
   }
@@ -322,13 +322,13 @@ keyFileParser::constructDecayVertex(const Setting&     parentKey,
 	      << "using daughters " << daughters[0]->qnSummary() << " and "
 	      << daughters[1]->qnSummary() << endl;
   
-  if (!success)
+  if (not success)
     return false;
 
   // get isobar vertex parameters
   int L = 0, S = 0;
-  if (   !parentKey.lookupValue("L", L)
-      || !parentKey.lookupValue("S", S))
+  if (   not parentKey.lookupValue("L", L)
+      or not parentKey.lookupValue("S", S))
     printWarn << "Either L or S are not specified in '" << parentKey.getPath() << "'. "
 	      << "using zero." << endl;
 
@@ -353,8 +353,10 @@ keyFileParser::mapMassDependence(const string& massDepType)
 {
   massDependencePtr massDep;
   if (   (massDepType == "BreitWigner")
-      || (massDepType == ""))
+      or (massDepType == ""))
     massDep = createRelativisticBreitWigner();
+  else if (massDepType == "piPiSWaveAuMorganPenningtonM")
+    massDep = createPiPiSWaveAuMorganPenningtonM();
   else {
     printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
     massDep = createRelativisticBreitWigner();
@@ -369,29 +371,29 @@ keyFileParser::constructProductionVertex(const Setting&     rootKey,
 {
   // find production vertex group
   const Setting* prodVertKey = findGroup(rootKey, "productionVertex");
-  if (!prodVertKey) {
+  if (not prodVertKey) {
     printWarn << "cannot find 'productionVertex' group" << endl;
     return false;
   }
   bool success = true;
   // get vertex type
   string vertType;
-  if (!prodVertKey->lookupValue("type", vertType)) {
+  if (not prodVertKey->lookupValue("type", vertType)) {
     printWarn << "cannot find 'type' entry in '" << prodVertKey->getPath() << "'" << endl;
     success = false;
   }
   // get initial state particles
-  if (!prodVertKey->exists("isParticles")) {
+  if (not prodVertKey->exists("isParticles")) {
     printWarn << "cannot find 'isParticles' entry in '" << prodVertKey->getPath() << "'" << endl;
     success = false;
   }
   if (_debug)
     printInfo << "reading initial state particles from '" << prodVertKey->getPath() << "':" << endl;
   const Setting* isPartKeys = findList(*prodVertKey, "isParticles");
-  if (!isPartKeys)
+  if (not isPartKeys)
     success = false;
 
-  if (!success)
+  if (not success)
     return false;
   // create production vertex
   return mapProductionVertexType(vertType, *isPartKeys, X);
@@ -409,7 +411,7 @@ keyFileParser::mapProductionVertexType(const string&      vertType,
 		<< "has " << isPartKeys.getLength()  << " entries. using only first one." << endl;
     }
     particlePtr beam;
-    if (!constructParticle(isPartKeys[0], beam))
+    if (not constructParticle(isPartKeys[0], beam))
       return false;
     _prodVert = createDiffractiveDissVertex(beam, X);
 

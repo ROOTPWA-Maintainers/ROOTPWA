@@ -43,6 +43,12 @@
 #include <complex>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/triangular.hpp>
+#include <boost/numeric/ublas/lu.hpp>
+
+
+namespace ublas = boost::numeric::ublas;
 
 
 namespace rpwa {
@@ -155,6 +161,56 @@ namespace rpwa {
   }
 
 
+  class piPiSWaveAuMorganPenningtonM : public massDependence {
+
+  public:
+
+    piPiSWaveAuMorganPenningtonM();
+    virtual ~piPiSWaveAuMorganPenningtonM() { }
+
+    virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+    virtual std::ostream& print(std::ostream& out) const;
+
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+    int vesSheet;
+
+
+  protected:
+
+    ublas::matrix<std::complex<double> >               _T;
+    std::vector<ublas::matrix<std::complex<double> > > _a;
+    std::vector<ublas::matrix<std::complex<double> > > _c;
+    ublas::matrix<double>                              _sP;
+
+
+  private:
+
+    double _piChargedMass;
+    double _piNeutralMass;
+    double _kaonChargedMass;
+    double _kaonNeutralMass;
+    double _kaonMeanMass;
+    
+    static bool _debug;  ///< if set to true, debug messages are printed
+    
+  };
+
+
+  typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonM> piPiSWaveAuMorganPenningtonMPtr;
+
+
+  inline
+  piPiSWaveAuMorganPenningtonMPtr
+  createPiPiSWaveAuMorganPenningtonM()
+  {
+    piPiSWaveAuMorganPenningtonMPtr md(new piPiSWaveAuMorganPenningtonM());
+    return md;
+  }
+
+
   // /** @brief AMP parameterization of pipi s-wave
   //  *  
   //  *  We have introduced a small modification by setting the off-diagonal 
@@ -162,19 +218,7 @@ namespace rpwa {
   //  */
   // class AMP_M : public massDependence {
 
-  // protected:
-  //   int _Pmax;
-  //   int _Nmax;
-  //   matrix<std::complex<double> > _rho;
-  //   matrix<std::complex<double> > _M;
-  //   matrix<std::complex<double> > _T;
-  //   matrix<std::complex<double> > _f;
-  //   std::vector<matrix<std::complex<double> > > _a;
-  //   std::vector<matrix<std::complex<double> > > _c;
-  //   matrix<double> _sP;
-
   // public:
-  //   int ves_sheet;
 
   //   AMP_M();
   //   virtual ~AMP_M() { }
@@ -229,6 +273,39 @@ namespace rpwa {
   //   virtual void print() { std::cout << "AMP_kach"; }
   //   //std::complex<double> val(const particle& p);
   // };
+
+
+  // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
+  // matrix inversion routine using lu_factorize and lu_substitute
+  template<class T>
+  bool
+  invertMatrix(const ublas::matrix<T>& A,
+	       ublas::matrix<T>&       inverseA)
+  {
+    // create working copy of input
+    ublas::matrix<T> M(A);
+    // create permutation matrix for LU-factorization
+    ublas::permutation_matrix<std::size_t> pM(M.size1());
+    // perform LU-factorization
+    if (ublas::lu_factorize(M, pM) != 0)
+      return false;
+    // create identity matrix of "inverse"
+    inverseA.assign(ublas::identity_matrix<T>(M.size1()));
+    // backsubstitute to get the inverse
+    ublas::lu_substitute(M, pM, inverseA);
+    return true;
+  }
+
+
+  template<class T>
+  ublas::matrix<T>
+  invertMatrix(const ublas::matrix<T>& A,
+	       bool&                   isSingular)
+  { 
+    ublas::matrix<T> inverseA (A.size1(), A.size2());
+    isSingular = !invert (A, inverseA);
+    return inverseA;
+  }
 
 
 }  // namespace rpwa

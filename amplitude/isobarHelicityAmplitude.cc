@@ -248,13 +248,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
   const double bf = barrierFactor(L, q, _debug);
 
   // calculate Breit-Wigner
-  // const double          M      = mother->lzVec().M();
-  // const double          M0     = mother->mass();
-  // const double          Gamma0 = mother->width();
-  // const double          m1     = daughter1->lzVec().M();
-  // const double          m2     = daughter2->lzVec().M();
-  // const double          q0     = breakupMomentum(M0, m1, m2);
-  const complex<double> bw     = vertex->massDependence();
+  const complex<double> bw = vertex->massDepAmplitude();
 
   // calculate decay amplitude
   complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
@@ -403,4 +397,13 @@ isobarHelicityAmplitude::boseSymmetrizedAmp()
     printInfo << "Bose-symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
   map<string, vector<unsigned int> >::iterator firstEntry = newFsPartIndices.begin();
   return normFactor * sumBoseSymTerms(origFsPartIndices, newFsPartIndices, firstEntry);
+}
+
+
+void
+isobarHelicityAmplitude::setDebug(const bool debug)
+{
+  _debug = debug;
+  for (unsigned int i = 0; i < _decay->nmbInteractionVertices(); ++i)
+    _decay->isobarDecayVertices()[i]->massDependence()->setDebug(debug);
 }

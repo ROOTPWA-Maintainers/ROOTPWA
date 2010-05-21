@@ -85,8 +85,8 @@ namespace rpwa {
 
     std::ostream& print(std::ostream& out) const { return out; }  ///< prints amplitude parameters in human-readable form
     
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+    static bool debug() { return _debug; }          ///< returns debug flag
+    void setDebug(const bool debug = true);  ///< sets debug flag
     
 
   private:

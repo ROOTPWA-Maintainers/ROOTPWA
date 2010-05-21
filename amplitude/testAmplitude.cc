@@ -216,7 +216,7 @@ main(int argc, char** argv)
       event    ev;
       ifstream eventData("testEvents.evt");
       ev.setIOVersion(1);
-      if (!(eventData >> ev).eof()) {
+      if (not (eventData >> ev).eof()) {
 	keyfile key;
 	key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
 	complex<double> pwa2000amp;
@@ -292,7 +292,8 @@ main(int argc, char** argv)
 	finalStateNamesBr->GetEntry    (eventIndex);
 	finalStateMomentaBr->GetEntry  (eventIndex);
 
-	if (!initialStateNames || !initialStateMomenta || !finalStateNames || !finalStateMomenta) {
+	if (   not initialStateNames or not initialStateMomenta
+	    or not finalStateNames   or not finalStateMomenta) {
 	  printWarn << "at least one data array is null pointer: "
 		    << "initialStateNames = "   << initialStateNames   << ", "
 		    << "initialStateMomenta = " << initialStateMomenta << ", "
@@ -312,7 +313,7 @@ main(int argc, char** argv)
 	  // complex<double> C = amp.amplitude();
 	  // cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
 	  myAmps.push_back(amp.amplitude());
-	  if ((myAmps.back().real() == 0) || (myAmps.back().imag() == 0))
+	  if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
 	    printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
 	}
       }
@@ -334,7 +335,7 @@ main(int argc, char** argv)
 	ev.setIOVersion(1);
 	timer.Reset();
 	timer.Start();
-	while (!(eventData >> ev).eof()) {
+	while (not (eventData >> ev).eof()) {
 	  complex<double> pwa2kamp;
 	  key.run(ev, pwa2kamp, true);
 	  pwa2kAmps.push_back(pwa2kamp);
@@ -356,8 +357,8 @@ main(int argc, char** argv)
 	  TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
 	  TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
 	  TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-	  TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
-	  TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 10000, -3e-9, 3e-9);
+	  TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
+	  TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
 	  TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 	  TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 	  for (unsigned int i = 0; i < myAmps.size(); ++i) {
@@ -365,6 +366,8 @@ main(int argc, char** argv)
 	    hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
 	    hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
 	    hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
+	    // hDiffReal->Fill((pwa2kAmps[i].real() - myAmps[i].real()) / pwa2kAmps[i].real());
+	    // hDiffImag->Fill((pwa2kAmps[i].imag() - myAmps[i].imag()) / pwa2kAmps[i].imag());
 	    hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
 	    hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
 	    hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
