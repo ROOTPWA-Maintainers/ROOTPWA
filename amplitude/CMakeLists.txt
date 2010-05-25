@@ -65,6 +65,7 @@ set(SOURCES
   isobarHelicityAmplitude.cc
   massDependence.cc
   keyFileParser.cc
+  evtTreeHelper.cc
 )
 
 

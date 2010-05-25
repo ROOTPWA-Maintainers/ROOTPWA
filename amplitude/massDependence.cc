@@ -47,6 +47,7 @@ using namespace boost::numeric::ublas;
 using namespace rpwa;
 
 
+////////////////////////////////////////////////////////////////////////////////
 bool massDependence::_debug = false;
 
 
@@ -58,6 +59,7 @@ massDependence::print(ostream& out) const
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 bool flatMassDependence::_debug = false;
 
 
@@ -78,6 +80,7 @@ flatMassDependence::print(ostream& out) const
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 bool relativisticBreitWigner::_debug = false;
 
 
@@ -121,15 +124,17 @@ relativisticBreitWigner::print(ostream& out) const
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
 bool piPiSWaveAuMorganPenningtonM::_debug = false;
 
 
 piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
-  : vesSheet(0),
-    _T      (2, 2),
-    _a      (2, matrix<complex<double> >(2, 2)),
-    _c      (5, matrix<complex<double> >(2, 2)),
-    _sP     (1, 2)
+  : massDependence(),
+    _T       (2, 2),
+    _a       (2, matrix<complex<double> >(2, 2)),
+    _c       (5, matrix<complex<double> >(2, 2)),
+    _sP      (1, 2),
+    _vesSheet(0)
 {
   double f[2] = {0.1968, -0.0154};
 
@@ -196,7 +201,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
   complex<double>       qKmKm   = q(mass, _kaonMeanMass,    _kaonMeanMass);
 
   matrix<complex<double> > rho(2, 2);
-  if (vesSheet) {
+  if (_vesSheet) {
     if (qKmKm.imag() > 0)
       qKmKm *= -1;
     rho(0, 0) = (2. * qPiPi) / mass;
@@ -240,47 +245,77 @@ piPiSWaveAuMorganPenningtonM::print(ostream& out) const
 }
 
 
+////////////////////////////////////////////////////////////////////////////////
+bool piPiSWaveAuMorganPenningtonVes::_debug = false;
 
 
-// complex<double> AMP_ves::val(const particle& p) {
-//   complex<double>        bw, amp_m;
-//   static complex<double> coupling(-0.3743, 0.3197);
-//   static double          massf0 = 0.9837, widthf0 = 0.0376;
-
-//   double piChargedMass = PDGtable.get("pi").Mass();
-//   double mass = ~(p.get4P());
-
-//   ves_sheet = 1;
-//   amp_m     = AMP_M::val(p);
-
-//   if (mass > 2.0 * piChargedMass) {
-//     double p, p0, gam, denom, A, B, C;
-//     p     = q(mass, piChargedMass, piChargedMass).real();
-//     p0    = q(massf0,  piChargedMass, piChargedMass).real();
-//     gam   = widthf0 * (p / p0);
-//     A     = massf0 * massf0 - mass * mass;
-//     B     = massf0 * gam;
-//     C     = B * (mass / p);
-//     denom = C / (A * A + B * B);
-//     bw    = denom * complex<double>(A, B);
-//   }
-
-//   return amp_m - coupling * bw;
-// }
+piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
+  : piPiSWaveAuMorganPenningtonM()
+{
+  _vesSheet = 1;
+}
 
 
-// AMP_kach::AMP_kach(): AMP_M()
-// {
-//   // Change parameters according to Kachaev's prescription
-//   _c[4](0, 0) = 0; // was 0.1957;
-//   _c[4](1, 1) = 0; // was -0.3977;
+complex<double>
+piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
+{
+  double mass = v.mother()->lzVec().M();
 
-//   _a[0](0, 1) = 0; // setting off-diagonal values to 0
-//   _a[0](1, 0) = 0; // 
+  const double          f0Mass  = 0.9837;  // [GeV]
+  const double          f0Width = 0.0376;  // [GeV]
+  const complex<double> coupling(-0.3743, 0.3197);
+
+  const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
+
+  complex<double> bw;
+  if (mass > 2 * _piChargedMass) {
+    const double p     = q(mass,   _piChargedMass, _piChargedMass).real();
+    const double p0    = q(f0Mass, _piChargedMass, _piChargedMass).real();
+    const double Gamma = f0Width * (p / p0);
+    const double A     = f0Mass * f0Mass - mass * mass;
+    const double B     = f0Mass * Gamma;
+    const double C     = B * (mass / p);
+    const double denom = C / (A * A + B * B);
+    bw = denom * complex<double>(A, B);
+  }
+
+  return ampM - coupling * bw;
+}
+
+
+ostream&
+piPiSWaveAuMorganPenningtonVes::print(ostream& out) const
+{
+  out << "VES pi pi s-wave with f_0(980) subtracted";
+  return out;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+bool piPiSWaveAuMorganPenningtonKachaev::_debug = false;
+
+
+piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
+  : piPiSWaveAuMorganPenningtonM()
+{
+  // change parameters according to Kachaev's prescription
+  _c[4](0, 0) = 0; // was 0.1957;
+  _c[4](1, 1) = 0; // was -0.3977;
+
+  _a[0](0, 1) = 0; // was 0.0150
+  _a[0](1, 0) = 0; // was 0.0150
  
-//   // _a[1] are the f's from the AMP paper! Setting to 0!
-//   _a[1](0, 0) = 0;
-//   _a[1](0, 1) = 0;
-//   _a[1](1, 0) = 0;
-//   _a[1](1, 1) = 0;
-// }
+  // _a[1] are the f's from the AMP paper
+  _a[1](0, 0) = 0;
+  _a[1](0, 1) = 0;
+  _a[1](1, 0) = 0;
+  _a[1](1, 1) = 0;
+}
+
+
+ostream&
+piPiSWaveAuMorganPenningtonKachaev::print(ostream& out) const
+{
+  out << "Kachaev's pi pi s-wave with f_0(980) removed";
+  return out;
+}

@@ -57,6 +57,8 @@ namespace rpwa {
   typedef boost::shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
 
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// Brief base class for mass dependences
   class massDependence {
 
   public:
@@ -93,12 +95,14 @@ namespace rpwa {
   }
 
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// Brief trivial flat mass dependence
   class flatMassDependence : public massDependence {
 
   public:
   
-    flatMassDependence()          { }
-    virtual ~flatMassDependence() { }
+    flatMassDependence() : massDependence() { }
+    virtual ~flatMassDependence()           { }
 
     virtual std::complex<double> amp(const isobarDecayVertex&);
 
@@ -127,12 +131,14 @@ namespace rpwa {
   }
 
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// Brief relativistic Breit-Wigner with mass-dependent width and Blatt-Weisskopf barrier factors
   class relativisticBreitWigner : public massDependence {
 
   public:
 
-    relativisticBreitWigner()          { }
-    virtual ~relativisticBreitWigner() { }
+    relativisticBreitWigner() : massDependence() { }
+    virtual ~relativisticBreitWigner()           { }
 
     virtual std::complex<double> amp(const isobarDecayVertex& v);
 
@@ -161,6 +167,11 @@ namespace rpwa {
   }
 
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// Brief Au-Morgan-Pennington parameterization of pi pi s-wave
+  /// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+  /// we have introduced a small modification by setting the
+  /// off-diagonal elements of the M-matrix to zero.
   class piPiSWaveAuMorganPenningtonM : public massDependence {
 
   public:
@@ -175,8 +186,6 @@ namespace rpwa {
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
-    int vesSheet;
-
 
   protected:
 
@@ -184,15 +193,16 @@ namespace rpwa {
     std::vector<ublas::matrix<std::complex<double> > > _a;
     std::vector<ublas::matrix<std::complex<double> > > _c;
     ublas::matrix<double>                              _sP;
-
-
-  private:
+    int                                                _vesSheet;
 
     double _piChargedMass;
     double _piNeutralMass;
     double _kaonChargedMass;
     double _kaonNeutralMass;
     double _kaonMeanMass;
+
+
+  private:
     
     static bool _debug;  ///< if set to true, debug messages are printed
     
@@ -211,70 +221,91 @@ namespace rpwa {
   }
 
 
-  // /** @brief AMP parameterization of pipi s-wave
-  //  *  
-  //  *  We have introduced a small modification by setting the off-diagonal 
-  //  *  elements of the M-matrix to zero.
-  //  */
-  // class AMP_M : public massDependence {
+  //////////////////////////////////////////////////////////////////////////////
+  /// Brief old VES pi pi s-wave parameterization
+  /// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+  /// brute force subtraction of the f0(980)
+  class piPiSWaveAuMorganPenningtonVes : public piPiSWaveAuMorganPenningtonM {
 
-  // public:
+  public:
 
-  //   AMP_M();
-  //   virtual ~AMP_M() { }
-  //   AMP_M(const AMP_M&) { }
-  //   virtual massDependence* create() const { return new AMP_M(); }
-  //   virtual massDependence* clone() const { return new AMP_M(*this); }
+    piPiSWaveAuMorganPenningtonVes();
+    virtual ~piPiSWaveAuMorganPenningtonVes() { }
 
-  //   virtual void print() { std::cout << "AMP_M"; }
-  //   std::complex<double> val(const particle& p);
-  // };
+    virtual std::complex<double> amp(const isobarDecayVertex& v);
 
+    virtual std::ostream& print(std::ostream& out) const;
 
-  // /** @brief old VES parameterization
-  //  *
-  //  *  Brute force subtraction of the f0(980)
-  //  */ 
-  // class AMP_ves : public AMP_M {
-  // public:
-  //   AMP_ves() : AMP_M() { ves_sheet = 1; }
-  //   virtual ~AMP_ves() { }
-  //   AMP_ves(const AMP_ves&) { }
-  //   virtual massDependence* create() const { return new AMP_ves(); }
-  //   virtual massDependence* clone() const { return new AMP_ves(*this); }
-
-  //   virtual void print() { std::cout << "AMP_ves"; }
-  //   std::complex<double> val(const particle& p);
-  // };
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
-  // /** @brief Kachaev's version of the AMP parameterization
-  //  * 
-  //  * From the original fortran code:
-  //  * Source: K.L.Au et al, Phys.Rev. D35, P 1633. M solution.
-  //  * 04-Mar-2003 See eps_k1.for for description.
-  //  * Here matrix M=K^{-1} is parametrized with one pole.
-  //  * Misprint in the article (other than in K1--K3 solutions)
-  //  * was corrected.
-  //  *
-  //  * 14-Mar-2003 Nice amplitude for pi-pi S-wave without f0(975).
-  //  * It is smooth and nicely tends to zero after approx 1.5 GeV.
-  //  * f0(975) pole excluded; coupling to KK zeroed; set C411=C422=0.
-  //  * The largest effect from C411, zeroing of C422 looks insignificant.
-  //  */ 
-  // class AMP_kach : public AMP_M {
-  // public:
-  //   AMP_kach();
-  //   virtual ~AMP_kach() { }
-  //   AMP_kach(const AMP_kach&) { }
-  //   virtual massDependence* create() const { return new AMP_kach(); }
-  //   virtual massDependence* clone() const { return new AMP_kach(*this); }
+  private:
 
-  //   virtual void print() { std::cout << "AMP_kach"; }
-  //   //std::complex<double> val(const particle& p);
-  // };
+    static bool _debug;  ///< if set to true, debug messages are printed
+    
+  };
 
 
+  typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonVes> piPiSWaveAuMorganPenningtonVesPtr;
+
+
+  inline
+  piPiSWaveAuMorganPenningtonVesPtr
+  createPiPiSWaveAuMorganPenningtonVes()
+  {
+    piPiSWaveAuMorganPenningtonVesPtr md(new piPiSWaveAuMorganPenningtonVes());
+    return md;
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////
+  /// Brief Kachaev's version of the AMP pi pi s-wave parameterization
+  ///
+  /// from the original fortran code:
+  /// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+  /// 04-Mar-2003 See eps_k1.for for description.
+  /// here matrix M=K^{-1} is parametrized with one pole.
+  /// misprint in the article (other than in K1--K3 solutions)
+  /// was corrected.
+  ///
+  /// 14-Mar-2003 nice amplitude for pi-pi S-wave without f0(975).
+  /// it is smooth and nicely tends to zero after approx 1.5 GeV.
+  /// f0(975) pole excluded; coupling to KK zeroed; set C411=C422=0.
+  /// the largest effect from C411, zeroing of C422 looks insignificant.
+  class piPiSWaveAuMorganPenningtonKachaev : public piPiSWaveAuMorganPenningtonM {
+
+  public:
+
+    piPiSWaveAuMorganPenningtonKachaev();
+    virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
+
+    virtual std::ostream& print(std::ostream& out) const;
+
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+
+  private:
+
+    static bool _debug;  ///< if set to true, debug messages are printed
+    
+  };
+
+
+  typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonKachaev> piPiSWaveAuMorganPenningtonKachaevPtr;
+
+
+  inline
+  piPiSWaveAuMorganPenningtonKachaevPtr
+  createPiPiSWaveAuMorganPenningtonKachaev()
+  {
+    piPiSWaveAuMorganPenningtonKachaevPtr md(new piPiSWaveAuMorganPenningtonKachaev());
+    return md;
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////
   // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
   // matrix inversion routine using lu_factorize and lu_substitute
   template<class T>

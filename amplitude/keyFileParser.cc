@@ -333,11 +333,14 @@ keyFileParser::constructDecayVertex(const Setting&     parentKey,
 	      << "using zero." << endl;
 
   // get mass dependence
-  string massDepType = "";
-  parentKey.lookupValue("massDep", massDepType);
   massDependencePtr massDep;
-  if (parentParticle->bareName() != "X")
+  if (parentParticle->bareName() != "X") {
+    string         massDepType = "";
+    const Setting* massDepKey  = findGroup(parentKey, "massDep", false);
+    if (massDepKey)
+      massDepKey->lookupValue("name", massDepType);
     massDep = mapMassDependence(massDepType);
+  }
   
   // construct isobar decay vertex
   _decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0],
@@ -353,10 +356,16 @@ keyFileParser::mapMassDependence(const string& massDepType)
 {
   massDependencePtr massDep;
   if (   (massDepType == "BreitWigner")
-      or (massDepType == ""))
+      or (massDepType == ""))  // default mass dependence
     massDep = createRelativisticBreitWigner();
+  else if (massDepType == "flat")
+    massDep = createFlatMassDependence();
   else if (massDepType == "piPiSWaveAuMorganPenningtonM")
     massDep = createPiPiSWaveAuMorganPenningtonM();
+  else if (massDepType == "piPiSWaveAuMorganPenningtonVes")
+    massDep = createPiPiSWaveAuMorganPenningtonVes();
+  else if (massDepType == "piPiSWaveAuMorganPenningtonKachaev")
+    massDep = createPiPiSWaveAuMorganPenningtonKachaev();
   else {
     printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
     massDep = createRelativisticBreitWigner();
