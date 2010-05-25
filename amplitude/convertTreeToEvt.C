@@ -49,49 +49,13 @@
 #include "TVector3.h"
 
 #include "pputil.h"
-#include "particleDataTable.h"
-#include "particleProperties.h"
 #include "utilities.h"
+#include "particleDataTable.h"
+#include "evtTreeHelper.h"
 
 
 using namespace std;
 using namespace rpwa;
-
-
-void
-getParticleId(string name,
-	      int&   id,
-	      int&   charge)
-{
-  particleProperties::chargeFromName(name, charge);
-  id     = name2id(name, charge);
-  if (id == g_Unknown)
-    id = name2id(particleProperties::stripChargeFromName(name), charge);
-  if (id == g_Unknown)
-    printWarn << "unknown particle '" << name << "'" << endl;
-}
-
-
-double
-getParticleMass(const string& name)
-{
-  rpwa::particleDataTable&  pdt  = rpwa::particleDataTable::instance();
-  const particleProperties* prop = 0;
-  if (pdt.isInTable(name))
-    prop = pdt.entry(name);
-  else {
-    const string n = particleProperties::stripChargeFromName(name);
-    if (pdt.isInTable(n))
-      prop = pdt.entry(n);
-  }
-  if (!prop) {
-    printWarn << "neither particle '" << name << "' "
-	      << "nor '" << particleProperties::stripChargeFromName(name) << "' "
-	      << "are in particle data table. using mass 0." << endl;
-    return 0;
-  }
-  return prop->mass();
-}
 
 
 bool
@@ -106,9 +70,6 @@ convertTreeToEvt(const string&  inFileNamePattern     = "testEvents.root",
 		 const string&  leafNameFsPartMomenta = "finalStateMomenta",
 		 const bool     debug                 = false)
 {
-  rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
-  pdt.readFile(pdgTableFileName);
-
   // open input file
   printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
   TChain chain(inTreeName.c_str());
@@ -116,7 +77,6 @@ convertTreeToEvt(const string&  inFileNamePattern     = "testEvents.root",
     printWarn << "no events in input file(s) '" << inFileNamePattern << "'" << endl;
     return false;
   }
-  const long int nmbEventsChain = chain.GetEntries();
   chain.GetListOfFiles()->ls();
 
   // create output file
@@ -127,84 +87,13 @@ convertTreeToEvt(const string&  inFileNamePattern     = "testEvents.root",
     return false;
   }
 
-  // create leaf variables
-  TClonesArray* initialStateNames   = 0;
-  TClonesArray* initialStateMomenta = 0;
-  TClonesArray* finalStateNames     = 0;
-  TClonesArray* finalStateMomenta   = 0;
+  const bool success = writeEvtFromTree(chain, outFile, maxNmbEvents, pdgTableFileName, inTreeName,
+					leafNameIsPartNames, leafNameIsPartMomenta,
+					leafNameFsPartNames, leafNameFsPartMomenta, debug);
 
-  // connect leaf variables to tree branches
-  chain.SetBranchAddress(leafNameIsPartNames.c_str(),   &initialStateNames  );
-  chain.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta);
-  chain.SetBranchAddress(leafNameFsPartNames.c_str(),   &finalStateNames    );
-  chain.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta  );
-			 
-  // loop over events
-  const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-			                         : nmbEventsChain);
-  for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-    if (!debug)
-      progressIndicator(eventIndex, nmbEvents);
-
-    if (chain.LoadTree(eventIndex) < 0)
-      break;
-    chain.GetEntry(eventIndex);
-
-    assert(initialStateNames  );
-    assert(initialStateMomenta);
-    assert(initialStateNames->GetEntriesFast() == initialStateMomenta->GetEntriesFast());
-    const unsigned int nmbIsPart = initialStateNames->GetEntriesFast();
-
-    assert(finalStateNames  );
-    assert(finalStateMomenta);
-    assert(finalStateNames->GetEntriesFast() == finalStateMomenta->GetEntriesFast());
-    const unsigned int nmbFsPart = finalStateNames->GetEntriesFast();
-
-    outFile << nmbIsPart + nmbFsPart << endl;
-
-    if (debug)
-      printInfo << "event[" << eventIndex << "]: " << nmbIsPart
-		<< " initial state particles:" << endl;
-    for (unsigned int i = 0; i < nmbIsPart; ++i) {
-      assert((*initialStateNames  )[i]);
-      assert((*initialStateMomenta)[i]);
-      const string   name = ((TObjString*)(*initialStateNames)[i])->GetString().Data();
-      const TVector3 mom  = *((TVector3*)(*initialStateMomenta)[i]);
-      const double   mass = getParticleMass(name);
-      int id, charge;
-      getParticleId(name, id, charge);
-      outFile << setprecision(numeric_limits<double>::digits10 + 1)
-	      << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
-	      << sqrt(mass * mass + mom.Mag2()) << endl;
-      if (debug) {
-	cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-	     << "charge = " << charge << "; " << mom << endl;
-      }
-    }
-
-    if (debug)
-      printInfo << "event[" << eventIndex << "]: " << nmbFsPart << " final state particles:" << endl;
-    for (unsigned int i = 0; i < nmbFsPart; ++i) {
-      assert((*finalStateNames  )[i]);
-      assert((*finalStateMomenta)[i]);
-      const string   name = ((TObjString*)(*finalStateNames)[i])->GetString().Data();
-      const TVector3 mom = *((TVector3*)(*finalStateMomenta)[i]);
-      const double   mass = getParticleMass(name);
-      int id, charge;
-      getParticleId(name, id, charge);
-      outFile << setprecision(numeric_limits<double>::digits10 + 1)
-	      << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
-	      << sqrt(mass * mass + mom.Mag2()) << endl;
-      if (debug) {
-	cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-	     << "charge = " << charge << "; " << mom << endl;
-      }
-    }
-    
-    if (debug)
-      cout << endl;
-  }
-
-  printInfo << "wrote " << nmbEvents << " events to file '" << outFileName << "'" << endl;
-  return true;
+  if (success)
+    printInfo << "wrote events to file '" << outFileName << "'" << endl;
+  else
+    printWarn << "problems processing events" << endl;
+  return success;
 }
