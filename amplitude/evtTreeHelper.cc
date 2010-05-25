@@ -242,7 +242,6 @@ namespace rpwa {
   writeEvtFromTree(TChain&        inTree,
 		   ostream&       outEvt,
 		   const long int maxNmbEvents          = -1,
-		   const string&  pdgTableFileName      = "./particleDataTable.txt",
 		   const string&  inTreeName            = "rootPwaEvtTree",
 		   const string&  leafNameIsPartNames   = "initialStateNames",
 		   const string&  leafNameIsPartMomenta = "initialStateMomenta",
@@ -250,9 +249,6 @@ namespace rpwa {
 		   const string&  leafNameFsPartMomenta = "finalStateMomenta",
 		   const bool     debug                 = false)
   {
-    rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
-    pdt.readFile(pdgTableFileName);
-
     const long int nmbEventsTree = inTree.GetEntries();
     if (!outEvt) {
       printWarn << "cannot write to output stream" << endl;

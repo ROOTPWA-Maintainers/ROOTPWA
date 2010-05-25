@@ -87,7 +87,10 @@ convertTreeToEvt(const string&  inFileNamePattern     = "testEvents.root",
     return false;
   }
 
-  const bool success = writeEvtFromTree(chain, outFile, maxNmbEvents, pdgTableFileName, inTreeName,
+  rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
+  pdt.readFile(pdgTableFileName);
+
+  const bool success = writeEvtFromTree(chain, outFile, maxNmbEvents, inTreeName,
 					leafNameIsPartNames, leafNameIsPartMomenta,
 					leafNameFsPartNames, leafNameFsPartMomenta, debug);
 

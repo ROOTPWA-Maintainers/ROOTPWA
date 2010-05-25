@@ -257,9 +257,28 @@ progressIndicator(const long    currentPos,
                   std::ostream& out      = std::cout)
 {
   const double step = nmbTotal / (double)nmbSteps;
-  if ((nmbTotal >= 0) && ((int)(currentPos / step) - (int)((currentPos - 1) / step) != 0))
+  if ((nmbTotal >= 0) and ((int)(currentPos / step) - (int)((currentPos - 1) / step) != 0))
     out << "    " << std::setw(3) << (int)(currentPos / step) * nmbSteps << " %" << std::endl;
   return out;
+}
+
+
+inline
+std::vector<std::string>
+tokenizeString(const std::string& in,
+	       const std::string& delimiter)
+{
+  // skip delimiters at beginning.
+  std::vector<std::string> tokens;
+  std::string::size_type begin = in.find_first_not_of(delimiter, 0);
+  std::string::size_type end   = in.find_first_of    (delimiter, begin);
+  while ((begin != std::string::npos) or (end != std::string::npos)) {
+    tokens.push_back(in.substr(begin, end - begin));
+    // skip delimiters
+    begin = in.find_first_not_of(delimiter, end);
+    end   = in.find_first_of    (delimiter, begin);
+  }
+  return tokens;
 }
 
 
@@ -435,7 +454,7 @@ dalitzKinematicBorder(const double  mass_2,      // 2-body mass squared on x-axi
   const double E2 = (M_2    - mass_2 - m_2[2]) / (2 * mass);
   const double E1_2  = E1 * E1;
   const double E2_2  = E2 * E2;
-  if ((E1_2 < m_2[1]) || (E2_2 < m_2[2]))
+  if ((E1_2 < m_2[1]) or (E2_2 < m_2[2]))
     return 0;
 
   // calculate m12^2
