@@ -55,13 +55,13 @@ bool isobarHelicityAmplitude::_debug = false;
 
 
 isobarHelicityAmplitude::isobarHelicityAmplitude()
-  : _decay               (0),
+  : _decay               (),
     _useReflectivityBasis(false),
     _boseSymmetrize      (false)
 { }
 
 
-isobarHelicityAmplitude::isobarHelicityAmplitude(isobarDecayTopology& decay)
+isobarHelicityAmplitude::isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay)
 {
   setDecayTopology(decay);
 }
@@ -72,17 +72,21 @@ isobarHelicityAmplitude::~isobarHelicityAmplitude()
 
 
 void
-isobarHelicityAmplitude::setDecayTopology(isobarDecayTopology& decay)
+isobarHelicityAmplitude::setDecayTopology(const isobarDecayTopologyPtr& decay)
 {
-  if (!decay.checkTopology()) {
+  if (not decay) {
+    printErr << "null pointer to decay topology. aborting." << endl;
+    throw;
+  }
+  if (not decay->checkTopology()) {
     printErr << "decay does not have the correct topology. aborting." << endl;
     throw;
   }
-  if (!decay.checkConsistency()) {
+  if (not decay->checkConsistency()) {
     printErr << "decay is not consistent. aborting." << endl;
     throw;
   }
-  _decay = &decay;
+  _decay = decay;
 }
 
 
@@ -90,7 +94,7 @@ isobarHelicityAmplitude::setDecayTopology(isobarDecayTopology& decay)
 // final state particles for cases where the amplitudes for the
 // different helicity states have to be added incoherently
 complex<double>
-isobarHelicityAmplitude::amplitude()
+isobarHelicityAmplitude::amplitude() const
 {
   // recursively sum over all possible helicities of the decay particles
   complex<double> amp = 0;
@@ -160,7 +164,7 @@ isobarHelicityAmplitude::gjTransform(const TLorentzVector& beamLv,
 
 
 void
-isobarHelicityAmplitude::transformDaughters()
+isobarHelicityAmplitude::transformDaughters() const
 {
   // calculate Lorentz-vectors of all isobars
   _decay->calcIsobarLzVec();
@@ -225,7 +229,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
   const double    phi     = daughter1->lzVec().Phi();  // use daughter1 as analyzer
   const double    theta   = daughter1->lzVec().Theta();
   complex<double> DFunc;
-  if (topVertex && _useReflectivityBasis)
+  if (topVertex and _useReflectivityBasis)
     DFunc = DFuncConjRefl(J, Lambda, lambda, P, refl, phi, theta, _debug);
   else
     DFunc = DFuncConj(J, Lambda, lambda, phi, theta, _debug);
@@ -269,7 +273,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 //     of the amplitude
 complex<double>
 isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
-						  const bool                  topVertex)
+						  const bool                  topVertex) const
 {
   if (_debug)
     printInfo << "calculating decay amplitude for " << *vertex << endl;
@@ -318,7 +322,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& ve
 complex<double>
 isobarHelicityAmplitude::sumBoseSymTerms(const map<string, vector<unsigned int> >&     origFsPartIndices,
 					 const map<string, vector<unsigned int> >&     newFsPartIndices,
-					 map<string, vector<unsigned int> >::iterator& newFsPartIndicesEntry)
+					 map<string, vector<unsigned int> >::iterator& newFsPartIndicesEntry) const
 {
   
   complex<double> amp = 0;
@@ -347,7 +351,7 @@ isobarHelicityAmplitude::sumBoseSymTerms(const map<string, vector<unsigned int> 
       if (_debug)
        	cout << endl;
       // (re)set final state momenta
-      if (!_decay->revertMomenta(fsPartIndexMap)) {
+      if (not _decay->revertMomenta(fsPartIndexMap)) {
       	printWarn << "problems reverting momenta in decay topology. returning 0." << endl;
       	return 0;
       }
@@ -363,7 +367,7 @@ isobarHelicityAmplitude::sumBoseSymTerms(const map<string, vector<unsigned int> 
 
 
 complex<double>
-isobarHelicityAmplitude::boseSymmetrizedAmp()
+isobarHelicityAmplitude::boseSymmetrizedAmp() const
 {
   // get final state indistinguishable particles
   typedef map<string, unsigned int>::const_iterator indistFsPartIt;

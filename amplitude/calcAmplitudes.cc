@@ -80,6 +80,73 @@ usage(const string& progName,
 }
 
 
+long int
+processTree(TTree&                         tree,
+	    const isobarDecayTopologyPtr&  decayTopo,
+	    const isobarHelicityAmplitude& amplitude,
+	    ostream&                       ampFile,
+	    const bool                     asciiOutput,
+	    const string&                  leafNameIsPartNames   = "initialStateNames",
+	    const string&                  leafNameIsPartMomenta = "initialStateMomenta",
+	    const string&                  leafNameFsPartNames   = "finalStateNames",
+	    const string&                  leafNameFsPartMomenta = "finalStateMomenta",
+	    const bool                     debug                 = false)
+{
+  // create branch pointers and leaf variables
+  TBranch*      initialStateNamesBr   = 0;
+  TBranch*      initialStateMomentaBr = 0;
+  TBranch*      finalStateNamesBr     = 0;
+  TBranch*      finalStateMomentaBr   = 0;
+  TClonesArray* initialStateNames     = 0;
+  TClonesArray* initialStateMomenta   = 0;
+  TClonesArray* finalStateNames       = 0;
+  TClonesArray* finalStateMomenta     = 0;
+	
+  // connect leaf variables to tree branches
+  tree.SetBranchAddress(leafNameIsPartNames.c_str  (), &initialStateNames,   &initialStateNamesBr  );
+  tree.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta, &initialStateMomentaBr);
+  tree.SetBranchAddress(leafNameFsPartNames.c_str  (), &finalStateNames,     &finalStateNamesBr    );
+  tree.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta,   &finalStateMomentaBr  );
+
+  // loop over events
+  const long int nmbEvents   = tree.GetEntries();
+  long int       countEvents = 0;
+  for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+    progressIndicator(eventIndex, nmbEvents);
+      
+    if (tree.LoadTree(eventIndex) < 0)
+      break;
+    // read only required branches
+    initialStateNamesBr->GetEntry  (eventIndex);
+    initialStateMomentaBr->GetEntry(eventIndex);
+    finalStateNamesBr->GetEntry    (eventIndex);
+    finalStateMomentaBr->GetEntry  (eventIndex);
+
+    if (   not initialStateNames or not initialStateMomenta
+	or not finalStateNames   or not finalStateMomenta) {
+      printWarn << "at least one of the input data arrays is a null pointer: "
+		<< "        production kinematics: particle names = " << initialStateNames << ", "
+		<< "momenta = " << initialStateMomenta << endl
+		<< "        decay final state:     particle names = " << finalStateNames << ", "
+		<< "momenta = " << finalStateMomenta << endl
+		<< "skipping event." << endl;
+      continue;
+    }
+
+    if (decayTopo->readData(*initialStateNames, *initialStateMomenta,
+			    *finalStateNames,   *finalStateMomenta)) {
+      const complex<double> amp = amplitude();
+      if (asciiOutput)
+	ampFile  << setprecision(numeric_limits<double>::digits10 + 1) << amp << endl;
+      else
+	ampFile.write((char*)(&amp), sizeof(complex<double>));
+      ++countEvents;
+    }
+  }
+  return countEvents;
+}
+
+
 int
 main(int    argc,
      char** argv)
@@ -221,79 +288,33 @@ main(int    argc,
   printInfo << *decayTopo;
   decayTopo->checkTopology();
   decayTopo->checkConsistency();
-  isobarHelicityAmplitude amplitude(*decayTopo);
+  isobarHelicityAmplitude amplitude(decayTopo);
   parser.setAmplitudeOptions(amplitude);
   
   // create output file for amplitudes
-  printInfo << "creating amplitude file '" << ampFileName << "'" << endl;
+  printInfo << "creating amplitude file '" << ampFileName << "'; "
+	    << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
   ofstream ampFile(ampFileName.c_str());
   if (!ampFile) {
     printErr << "cannot create amplitude file '" << ampFileName << "'. exiting." << endl;
     exit(1);
   }
 
-  // read data from tree(s) and calculate amplitudes
+  // read data from tree(s), calculate amplitudes, and write them to output file
   TStopwatch timer;
   timer.Reset();
   timer.Start();
   long int countEvents = 0;
   for (unsigned int i = 0; i < trees.size(); ++i) {
-    // create branch pointers and leaf variables
-    TBranch*      initialStateNamesBr   = 0;
-    TBranch*      initialStateMomentaBr = 0;
-    TBranch*      finalStateNamesBr     = 0;
-    TBranch*      finalStateMomentaBr   = 0;
-    TClonesArray* initialStateNames     = 0;
-    TClonesArray* initialStateMomenta   = 0;
-    TClonesArray* finalStateNames       = 0;
-    TClonesArray* finalStateMomenta     = 0;
-	
-    // connect leaf variables to tree branches
-    trees[i]->SetBranchAddress(leafNameIsPartNames.c_str  (), &initialStateNames,   &initialStateNamesBr  );
-    trees[i]->SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta, &initialStateMomentaBr);
-    trees[i]->SetBranchAddress(leafNameFsPartNames.c_str  (), &finalStateNames,     &finalStateNamesBr    );
-    trees[i]->SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta,   &finalStateMomentaBr  );
-
-    // loop over events
-    const long int nmbEvents = trees[i]->GetEntries();
     printInfo << "processing ";
     if (chain and (i == 0)) 
       cout << "chain of .root files";
     else
       cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
     cout << endl;
-    for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-      progressIndicator(eventIndex, nmbEvents);
-      
-      if (trees[i]->LoadTree(eventIndex) < 0)
-	break;
-      // read only required branches
-      initialStateNamesBr->GetEntry  (eventIndex);
-      initialStateMomentaBr->GetEntry(eventIndex);
-      finalStateNamesBr->GetEntry    (eventIndex);
-      finalStateMomentaBr->GetEntry  (eventIndex);
-
-      if (   not initialStateNames or not initialStateMomenta
-	  or not finalStateNames   or not finalStateMomenta) {
-	printWarn << "at least one data array is null pointer: "
-		  << "initialStateNames = "   << initialStateNames   << ", "
-		  << "initialStateMomenta = " << initialStateMomenta << ", "
-		  << "finalStateNames = "     << finalStateNames     << ", "
-		  << "finalStateMomenta = "   << finalStateMomenta   << ". "
-		  << "skipping event." << endl;
-	continue;
-      }
-
-      if (decayTopo->readData(*initialStateNames, *initialStateMomenta,
-			      *finalStateNames,   *finalStateMomenta)) {
-      	const complex<double> amp = amplitude();
-	if (asciiOutput)
-	  ampFile  << setprecision(numeric_limits<double>::digits10 + 1) << amp << endl;
-	else
-	  ampFile.write((char*)(&amp), sizeof(complex<double>));
-	++countEvents;
-      }
-    }
+    countEvents += processTree(*trees[i], decayTopo, amplitude, ampFile, asciiOutput,
+			       leafNameIsPartNames, leafNameIsPartMomenta,
+			       leafNameFsPartNames, leafNameFsPartMomenta, debug);
   }
   
   timer.Stop();

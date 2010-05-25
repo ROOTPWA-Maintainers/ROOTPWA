@@ -56,10 +56,10 @@ namespace rpwa {
   public:
 			
     isobarHelicityAmplitude();
-    isobarHelicityAmplitude(isobarDecayTopology& decay);
+    isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay);
     virtual ~isobarHelicityAmplitude();
 
-    void setDecayTopology(isobarDecayTopology& decay);
+    void setDecayTopology(const isobarDecayTopologyPtr& decay);
 
     bool reflectivityBasis () const { return _useReflectivityBasis; }  ///< returns whether reflectivity basis is used
     bool boseSymmetrization() const { return _boseSymmetrize;       }  ///< returns whether Bose symmetrization is used
@@ -71,17 +71,17 @@ namespace rpwa {
     static TLorentzRotation gjTransform(const TLorentzVector& beamLv,
 					const TLorentzVector& XLv);  ///< constructs Lorentz-transformation to X Gottfried-Jackson frame
     
-    void transformDaughters();  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
+    void transformDaughters() const;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
 
     std::complex<double> twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
 					       const bool                  topVertex) const;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
     
     std::complex<double> twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
-						  const bool                  topVertex = false);  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
-    std::complex<double> boseSymmetrizedAmp();  ///< performs Bose symmetrization
+						  const bool                  topVertex = false) const;  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
+    std::complex<double> boseSymmetrizedAmp() const;  ///< performs Bose symmetrization
 
-    std::complex<double> amplitude();                           ///< computes amplitude
-    std::complex<double> operator ()() { return amplitude(); }  ///< computes amplitude
+    std::complex<double> amplitude()   const;                         ///< computes amplitude
+    std::complex<double> operator ()() const { return amplitude(); }  ///< computes amplitude
 
     std::ostream& print(std::ostream& out) const { return out; }  ///< prints amplitude parameters in human-readable form
     
@@ -93,12 +93,12 @@ namespace rpwa {
 
     std::complex<double> sumBoseSymTerms(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
 					 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
-					 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry);  ///< function that sums up amplitudes of all permutations of indistinguishable final state particles
+					 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< function that sums up amplitudes of all permutations of indistinguishable final state particles
 
 
-    isobarDecayTopology* _decay;                 ///< isobar decay topology with all external information
-    bool                 _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
-    bool                 _boseSymmetrize;        ///< if set, amplitudes are Bose-symmetrized
+    isobarDecayTopologyPtr _decay;                 ///< isobar decay topology with all external information
+    bool                   _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
+    bool                   _boseSymmetrize;        ///< if set, amplitudes are Bose-symmetrized
     
     static bool _debug;  ///< if set to true, debug messages are printed
     

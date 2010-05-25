@@ -203,7 +203,7 @@ main(int argc, char** argv)
     fsParticles.push_back(pi2);
     fsParticles.push_back(pi3);
     fsParticles.push_back(pi4);
-    isobarDecayTopology topo(prodVert, decayVertices, fsParticles);
+    isobarDecayTopologyPtr topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
     // topo.checkTopology();
     // topo.checkConsistency();
     isobarHelicityAmplitude amp(topo);
@@ -237,7 +237,7 @@ main(int argc, char** argv)
       printInfo << *topo;
       topo->checkTopology();
       topo->checkConsistency();
-      isobarHelicityAmplitude amp(*topo);
+      isobarHelicityAmplitude amp(topo);
       parser.setAmplitudeOptions(amp);
 
       // read data from tree
