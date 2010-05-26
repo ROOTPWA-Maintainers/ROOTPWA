@@ -391,20 +391,16 @@ keyFileParser::constructProductionVertex(const Setting&     rootKey,
     printWarn << "cannot find 'type' entry in '" << prodVertKey->getPath() << "'" << endl;
     success = false;
   }
-  // get initial state particles
-  if (not prodVertKey->exists("isParticles")) {
-    printWarn << "cannot find 'isParticles' entry in '" << prodVertKey->getPath() << "'" << endl;
-    success = false;
-  }
-  if (_debug)
-    printInfo << "reading initial state particles from '" << prodVertKey->getPath() << "':" << endl;
-  const Setting* isPartKeys = findList(*prodVertKey, "isParticles");
+  // get production kinematics particles
+  const Setting* isPartKeys = findList(*prodVertKey, "particles");
   if (not isPartKeys)
     success = false;
-
   if (not success)
     return false;
   // create production vertex
+  if (_debug)
+    printInfo << "reading production kinematics particles from "
+	      << "'" << prodVertKey->getPath() << "'" << endl;
   return mapProductionVertexType(vertType, *isPartKeys, X);
 }
 
@@ -416,7 +412,7 @@ keyFileParser::mapProductionVertexType(const string&      vertType,
 {
   if (vertType == "diffractiveDissociation") {
     if (isPartKeys.getLength() > 1) {
-      printWarn << "list of initial state particles in '" << isPartKeys.getPath() << "' "
+      printWarn << "list of production kinematics particles in '" << isPartKeys.getPath() << "' "
 		<< "has " << isPartKeys.getLength()  << " entries. using only first one." << endl;
     }
     particlePtr beam;

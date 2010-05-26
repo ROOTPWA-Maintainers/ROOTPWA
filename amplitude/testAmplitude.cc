@@ -241,13 +241,13 @@ main(int argc, char** argv)
       parser.setAmplitudeOptions(amp);
 
       // read data from tree
-      const string&            inFileNamePattern     = "testEvents.root";
-      const long int           maxNmbEvents          = -1;
-      const string&            inTreeName            = "rootPwaEvtTree";
-      const string&            leafNameIsPartNames   = "initialStateNames";
-      const string&            leafNameIsPartMomenta = "initialStateMomenta";
-      const string&            leafNameFsPartNames   = "finalStateNames";
-      const string&            leafNameFsPartMomenta = "finalStateMomenta";
+      const string&            inFileNamePattern         = "testEvents.root";
+      const long int           maxNmbEvents              = -1;
+      const string&            inTreeName                = "rootPwaEvtTree";
+      const string&            prodKinParticlesLeafName  = "prodKinParticles";
+      const string&            prodKinMomentaLeafName    = "prodKinMomenta";
+      const string&            decayKinParticlesLeafName = "decayKinParticles";
+      const string&            decayKinMomentaLeafName   = "decayKinMomenta";
       vector<complex<double> > myAmps;
       // open input file
       printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
@@ -260,20 +260,20 @@ main(int argc, char** argv)
       chain.GetListOfFiles()->ls();
 
       // create branch pointers and leaf variables
-      TBranch*      initialStateNamesBr   = 0;
-      TBranch*      initialStateMomentaBr = 0;
-      TBranch*      finalStateNamesBr     = 0;
-      TBranch*      finalStateMomentaBr   = 0;
-      TClonesArray* initialStateNames     = 0;
-      TClonesArray* initialStateMomenta   = 0;
-      TClonesArray* finalStateNames       = 0;
-      TClonesArray* finalStateMomenta     = 0;
+      TBranch*      prodKinParticlesBr  = 0;
+      TBranch*      prodKinMomentaBr    = 0;
+      TBranch*      decayKinParticlesBr = 0;
+      TBranch*      decayKinMomentaBr   = 0;
+      TClonesArray* prodKinParticles    = 0;
+      TClonesArray* prodKinMomenta      = 0;
+      TClonesArray* decayKinParticles   = 0;
+      TClonesArray* decayKinMomenta     = 0;
 	
       // connect leaf variables to tree branches
-      chain.SetBranchAddress(leafNameIsPartNames.c_str  (), &initialStateNames,   &initialStateNamesBr  );
-      chain.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta, &initialStateMomentaBr);
-      chain.SetBranchAddress(leafNameFsPartNames.c_str  (), &finalStateNames,     &finalStateNamesBr    );
-      chain.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta,   &finalStateMomentaBr  );
+      chain.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
+      chain.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
+      chain.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
+      chain.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
 
       // loop over events
       const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
@@ -287,32 +287,32 @@ main(int argc, char** argv)
 	if (chain.LoadTree(eventIndex) < 0)
 	  break;
 	// read only required branches
-	initialStateNamesBr->GetEntry  (eventIndex);
-	initialStateMomentaBr->GetEntry(eventIndex);
-	finalStateNamesBr->GetEntry    (eventIndex);
-	finalStateMomentaBr->GetEntry  (eventIndex);
+	prodKinParticlesBr->GetEntry (eventIndex);
+	prodKinMomentaBr->GetEntry   (eventIndex);
+	decayKinParticlesBr->GetEntry(eventIndex);
+	decayKinMomentaBr->GetEntry  (eventIndex);
 
-	if (   not initialStateNames or not initialStateMomenta
-	    or not finalStateNames   or not finalStateMomenta) {
+	if (   not prodKinParticles  or not prodKinMomenta
+	    or not decayKinParticles or not decayKinMomenta) {
 	  printWarn << "at least one data array is null pointer: "
-		    << "initialStateNames = "   << initialStateNames   << ", "
-		    << "initialStateMomenta = " << initialStateMomenta << ", "
-		    << "finalStateNames = "     << finalStateNames     << ", "
-		    << "finalStateMomenta = "   << finalStateMomenta   << ". "
+		    << "prodKinParticles = "  << prodKinParticles  << ", "
+		    << "prodKinMomenta = "    << prodKinMomenta    << ", "
+		    << "decayKinParticles = " << decayKinParticles << ", "
+		    << "decayKinMomenta = "   << decayKinMomenta   << ". "
 		    << "skipping event." << endl;
 	  continue;
 	}
 
-	if (topo->readData(*initialStateNames, *initialStateMomenta,
-			   *finalStateNames,   *finalStateMomenta)) {
-	  // topo->printIsParticles(cout);
-	  // topo->printFsParticles(cout);
-	  // complex<double> A = amp.amplitude();
-	  // complex<double> B = amp.amplitude();
+	if (topo->readData(*prodKinParticles,  *prodKinMomenta,
+			   *decayKinParticles, *decayKinMomenta)) {
+	  // topo->printProdKinParticles(cout);
+	  // topo->printDecayKinParticles(cout);
+	  // complex<double> A = amp();
+	  // complex<double> B = amp();
 	  // topo->revertMomenta();
-	  // complex<double> C = amp.amplitude();
+	  // complex<double> C = amp();
 	  // cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
-	  myAmps.push_back(amp.amplitude());
+	  myAmps.push_back(amp());
 	  if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
 	    printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
 	}

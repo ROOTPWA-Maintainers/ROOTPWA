@@ -109,40 +109,42 @@ diffractiveDissVertex::clone(const bool cloneInParticles,
 
 
 bool
-diffractiveDissVertex::readData(const TClonesArray& initialStateNames,
-				const TClonesArray& initialStateMomenta)
+diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
+				const TClonesArray& prodKinMomenta)
 {
   _beamMomCache = TVector3();
   // check inital state data
   bool success = true;
-  const string nameClassName = initialStateNames.GetClass()->GetName();
-  if (nameClassName != "TObjString") {
-    printWarn << "initial state names are not of type TObjString." << endl;
+  const string partClassName = prodKinParticles.GetClass()->GetName();
+  if (partClassName != "TObjString") {
+    printWarn << "production kinematics particle names are of type " << partClassName
+	      << " and not TObjString. cannot read production kinematics." << endl;
     success = false;
   }
-  const string momClassName = initialStateMomenta.GetClass()->GetName();
+  const string momClassName = prodKinMomenta.GetClass()->GetName();
   if (momClassName != "TVector3") {
-    printWarn << "initial state momenta are not of type TVector3." << endl;
+    printWarn << "production kinematics momenta are of type " << momClassName
+	      << " and not TVector3. cannot read production kinematics." << endl;
     success = false;
   }
-  if (initialStateNames.GetEntriesFast() != initialStateMomenta.GetEntriesFast()) {
-    printWarn << "arrays for initial state names and momenta have different sizes: "
-	      << initialStateNames.GetEntriesFast() << " vs. "
-	      << initialStateMomenta.GetEntriesFast() << endl;
+  if (prodKinParticles.GetEntriesFast() != prodKinMomenta.GetEntriesFast()) {
+    printWarn << "arrays of production kinematics particles and momenta have different sizes: "
+	      << prodKinParticles.GetEntriesFast() << " vs. "
+	      << prodKinMomenta.GetEntriesFast  () << endl;
     success = false;
   }
   if (!success)
     return false;
   // set inital state
-  const string partName = ((TObjString*)initialStateNames[0])->GetString().Data();
+  const string partName = ((TObjString*)prodKinParticles[0])->GetString().Data();
   if (partName != beam()->name()) {
     printWarn << "cannot find entry for beam particle '" << beam()->name() << "' in data." << endl;
     return false;
   }
   if (_debug)
     printInfo << "setting momentum of beam particle " << partName
-	      << " to " << *((TVector3*)initialStateMomenta[0]) << " GeV" << endl;
-  beam()->setMomentum(*((TVector3*)initialStateMomenta[0]));
+	      << " to " << *((TVector3*)prodKinMomenta[0]) << " GeV" << endl;
+  beam()->setMomentum(*((TVector3*)prodKinMomenta[0]));
   _beamMomCache = beam()->lzVec().Vect();
   return true;
 }

@@ -33,6 +33,10 @@
 //      each final state particle a corresponding final state vertex
 //      is created for internal use
 //
+//      "final state" particles are the measured decay daughters;
+//      additional final state particles that belong to the production
+//      process are handled by the production vertex
+//
 //
 // Author List:
 //      Boris Grube          TUM            (original author)
@@ -417,44 +421,45 @@ void decayTopology::setProductionVertex(const interactionVertexPtr& productionVe
 
 
 bool
-decayTopology::readData(const TClonesArray& initialStateNames,
-			const TClonesArray& initialStateMomenta,
-			const TClonesArray& finalStateNames,
-			const TClonesArray& finalStateMomenta)
+decayTopology::readData(const TClonesArray& prodKinParticles,
+			const TClonesArray& prodKinMomenta,
+			const TClonesArray& decayKinParticles,
+			const TClonesArray& decayKinMomenta)
 {
   bool success = true;
-  // set initial state
+  // set production kinematics
   // production vertex class has to implement readData()
-  if(!productionVertex()->readData(initialStateNames, initialStateMomenta))
+  if(!productionVertex()->readData(prodKinParticles, prodKinMomenta))
     success = false;
-  // check final state data
-  const string nameClassName = finalStateNames.GetClass()->GetName();
-  if (nameClassName != "TObjString") {
-    printWarn << "final state names are not of type TObjString." << endl;
+  // check decay kinematics data
+  const string partClassName = decayKinParticles.GetClass()->GetName();
+  if (partClassName != "TObjString") {
+    printWarn << "decay kinematics particle names are of type " << partClassName
+	      << " and not TObjString. cannot read decay kinematics." << endl;
     success = false;
   }
-  const string momClassName = finalStateMomenta.GetClass()->GetName();
+  const string momClassName = decayKinMomenta.GetClass()->GetName();
   if (momClassName != "TVector3") {
-    printWarn << "final state momenta are not of type TVector3." << endl;
+    printWarn << "decay kinematics momenta are of type " << momClassName
+	      << " and not TVector3. cannot read decay kinematics." << endl;
     success = false;
   }
-  if (finalStateNames.GetEntriesFast() != finalStateMomenta.GetEntriesFast()) {
-    printWarn << "arrays for final state names and momenta have different sizes: "
-	      << finalStateNames.GetEntriesFast() << " vs. "
-	      << finalStateMomenta.GetEntriesFast() << endl;
+  const int nmbFsPart = decayKinParticles.GetEntriesFast();
+  if (nmbFsPart != decayKinMomenta.GetEntriesFast()) {
+    printWarn << "arrays of decay kinematics particles and momenta have different sizes: "
+	      << nmbFsPart << " vs. " << decayKinMomenta.GetEntriesFast  () << endl;
     success = false;
   }
   if (!success)
     return false;
-  // sort final state momenta w.r.t. particle name
-  const unsigned int nmbFsPart = finalStateNames.GetEntriesFast();
+  // sort decay kinematics momenta w.r.t. particle name
   map<string, vector<const TVector3*> > fsMomenta;
-  for (unsigned int i = 0; i < nmbFsPart; ++i) {
-    const string    name = ((TObjString*)finalStateNames[i])->GetString().Data();
-    const TVector3* mom  = (TVector3*)finalStateMomenta[i];
+  for (int i = 0; i < nmbFsPart; ++i) {
+    const string    name = ((TObjString*)decayKinParticles[i])->GetString().Data();
+    const TVector3* mom  = (TVector3*)decayKinMomenta[i];
     fsMomenta[name].push_back(mom);
   }
-  // set final state
+  // set decay kinematics
   _fsPartMomCache.resize(nmbFsParticles(), TVector3());
   for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
     const particlePtr& part     = fsParticles()[i];
@@ -491,7 +496,7 @@ decayTopology::revertMomenta()
 {
   // revert production kinematics
   bool success = productionVertex()->revertMomenta();
-  // revert final state momenta
+  // revert decay kinematics
   if (_fsPartMomCache.size() != nmbFsParticles())
     return false;
   for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
@@ -510,7 +515,7 @@ decayTopology::revertMomenta(const vector<unsigned int>& indexMap)
 {
   // revert production kinematics
   bool success = productionVertex()->revertMomenta();
-  // revert final state momenta
+  // revert decay kinematics
   if ((_fsPartMomCache.size() != nmbFsParticles()) || (indexMap.size() != nmbFsParticles()))
     return false;
   for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
@@ -557,9 +562,9 @@ decayTopology::print(ostream& out) const
 
 
 ostream&
-decayTopology::printIsParticles(ostream& out) const
+decayTopology::printProdKinParticles(ostream& out) const
 {
-  out << "initial state particles:" << endl;
+  out << "production kinematics particles:" << endl;
   for (unsigned int i = 0; i < productionVertex()->nmbInParticles(); ++i) {
     const particlePtr& part = productionVertex()->inParticles()[i];
     out << "    particle[" << i << "]: " << part->qnSummary() << ", "
@@ -570,9 +575,9 @@ decayTopology::printIsParticles(ostream& out) const
 
 
 ostream&
-decayTopology::printFsParticles(ostream& out) const
+decayTopology::printDecayKinParticles(ostream& out) const
 {
-  out << "final state particles:" << endl;
+  out << "decay kinematics particles:" << endl;
   for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
     const particlePtr& part = fsParticles()[i];
     out << "    particle[" << i << "]: " << part->qnSummary() << ", "
@@ -695,7 +700,7 @@ decayTopology::buildInternalData()
       sortedNds = sortNodesDfs(topNode);
     else {
       if (_debug)
-	printWarn << "ill-formed graph. vertex order will be un-defined." << endl;
+	printWarn << "ill-formed graph. vertex order will be undefined." << endl;
       for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd)
 	sortedNds.push_back(*iNd);
     }

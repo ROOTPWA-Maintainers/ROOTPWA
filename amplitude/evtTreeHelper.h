@@ -61,24 +61,23 @@ namespace rpwa {
 
   bool fillTreeFromEvt(std::istream&      inEvt,
 		       TTree&             outTree,
-		       const long int     maxNmbEvents          = -1,
-		       const std::string& leafNameIsPartNames   = "initialStateNames",
-		       const std::string& leafNameIsPartMomenta = "initialStateMomenta",
-		       const std::string& leafNameFsPartNames   = "finalStateNames",
-		       const std::string& leafNameFsPartMomenta = "finalStateMomenta",
-		       const bool         debug                 = false);
+		       const long int     maxNmbEvents              = -1,
+		       const std::string& prodKinParticlesLeafName  = "prodKinParticles",
+		       const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
+		       const std::string& decayKinParticlesLeafName = "decayKinParticles",
+		       const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
+		       const bool         debug                     = false);
   
 
   bool writeEvtFromTree(TChain&            inTree,
 			std::ostream&      outEvt,
-			const long int     maxNmbEvents          = -1,
-			const std::string& pdgTableFileName      = "./particleDataTable.txt",
-			const std::string& inTreeName            = "rootPwaEvtTree",
-			const std::string& leafNameIsPartNames   = "initialStateNames",
-			const std::string& leafNameIsPartMomenta = "initialStateMomenta",
-			const std::string& leafNameFsPartNames   = "finalStateNames",
-			const std::string& leafNameFsPartMomenta = "finalStateMomenta",
-			const bool         debug                 = false);
+			const long int     maxNmbEvents              = -1,
+			const std::string& inTreeName                = "rootPwaEvtTree",
+			const std::string& prodKinParticlesLeafName  = "prodKinParticles",
+			const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
+			const std::string& decayKinParticlesLeafName = "decayKinParticles",
+			const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
+			const bool         debug                     = false);
 
 
 }  // namespace rpwa

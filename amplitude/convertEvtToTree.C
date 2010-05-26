@@ -57,18 +57,18 @@ using namespace rpwa;
 
 
 bool
-convertEvtToTree(//const string&  evtFileName           = "1500.1540.3pi.evt",
-		 //const string&  evtFileName           = "1720.1840.5pi.evt",
-		 //const string&  outFileName           = "testEvents.root",
-		 const string&  evtFileName           = "testTree.evt",
-		 const string&  outFileName           = "testEvents2.root",
-		 const long int maxNmbEvents          = -1,
-		 const string&  outTreeName           = "rootPwaEvtTree",
-		 const string&  leafNameIsPartNames   = "initialStateNames",
-		 const string&  leafNameIsPartMomenta = "initialStateMomenta",
-		 const string&  leafNameFsPartNames   = "finalStateNames",
-		 const string&  leafNameFsPartMomenta = "finalStateMomenta",
-		 const bool     debug                 = false)
+convertEvtToTree(//const string&  evtFileName               = "1500.1540.3pi.evt",
+		 const string&  evtFileName               = "1720.1840.5pi.evt",
+		 const string&  outFileName               = "testEvents.root",
+		 //const string&  evtFileName               = "testTree.evt",
+		 //const string&  outFileName               = "testEvents2.root",
+		 const long int maxNmbEvents              = -1,
+		 const string&  outTreeName               = "rootPwaEvtTree",
+		 const string&  prodKinParticlesLeafName  = "prodKinParticles",
+		 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
+		 const string&  decayKinParticlesLeafName = "decayKinParticles",
+		 const string&  decayKinMomentaLeafName   = "decayKinMomenta",
+		 const bool     debug                     = false)
 {
   // open input file
   printInfo << "opening input file '" << evtFileName << "'" << endl;
@@ -94,12 +94,13 @@ convertEvtToTree(//const string&  evtFileName           = "1500.1540.3pi.evt",
     return false;
   }
 
+  // doit
   const bool success = fillTreeFromEvt(evtFile, *tree, maxNmbEvents,
-				       leafNameIsPartNames, leafNameIsPartMomenta,
-				       leafNameFsPartNames, leafNameFsPartMomenta, debug);
-
+				       prodKinParticlesLeafName,  prodKinMomentaLeafName,
+				       decayKinParticlesLeafName, decayKinMomentaLeafName, debug);
   tree->Write();
   tree->OptimizeBaskets(10000000, 1.1, "d");
+
   outFile->Close();
   if (success)
     printInfo << "wrote events to file '" << outFileName << "'" << endl;

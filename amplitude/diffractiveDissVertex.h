@@ -72,8 +72,8 @@ namespace rpwa {
     inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
     inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
     
-    virtual bool readData(const TClonesArray& initialStateNames,
-			  const TClonesArray& initialStateMomenta);  ///< reads data from TClonesArrays
+    virtual bool readData(const TClonesArray& prodKinParticles,
+			  const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
 
     virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 

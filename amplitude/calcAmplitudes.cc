@@ -72,7 +72,7 @@ usage(const string& progName,
        << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)"
        << "        -o file    path to amplitude file (default: ./out.amp)" << endl
        << "        -a         write amplitudes in ASCII format (default: binary)" << endl
-       << "        -l names   semicolon separated tree leaf names (default: 'initialStateNames;initialStateMomenta;finalStateNames;finalStateMomenta')"
+       << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')"
        << "        -v         verbose; print debug output (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
@@ -86,27 +86,27 @@ processTree(TTree&                         tree,
 	    const isobarHelicityAmplitude& amplitude,
 	    ostream&                       ampFile,
 	    const bool                     asciiOutput,
-	    const string&                  leafNameIsPartNames   = "initialStateNames",
-	    const string&                  leafNameIsPartMomenta = "initialStateMomenta",
-	    const string&                  leafNameFsPartNames   = "finalStateNames",
-	    const string&                  leafNameFsPartMomenta = "finalStateMomenta",
-	    const bool                     debug                 = false)
+	    const string&                  prodKinParticlesLeafName  = "prodKinParticles",
+	    const string&                  prodKinMomentaLeafName    = "prodKinMomenta",
+	    const string&                  decayKinParticlesLeafName = "decayKinParticles",
+	    const string&                  decayKinMomentaLeafName   = "decayKinMomenta",
+	    const bool                     debug                     = false)
 {
   // create branch pointers and leaf variables
-  TBranch*      initialStateNamesBr   = 0;
-  TBranch*      initialStateMomentaBr = 0;
-  TBranch*      finalStateNamesBr     = 0;
-  TBranch*      finalStateMomentaBr   = 0;
-  TClonesArray* initialStateNames     = 0;
-  TClonesArray* initialStateMomenta   = 0;
-  TClonesArray* finalStateNames       = 0;
-  TClonesArray* finalStateMomenta     = 0;
+  TBranch*      prodKinParticlesBr  = 0;
+  TBranch*      prodKinMomentaBr    = 0;
+  TBranch*      decayKinParticlesBr = 0;
+  TBranch*      decayKinMomentaBr   = 0;
+  TClonesArray* prodKinParticles    = 0;
+  TClonesArray* prodKinMomenta      = 0;
+  TClonesArray* decayKinParticles   = 0;
+  TClonesArray* decayKinMomenta     = 0;
 	
   // connect leaf variables to tree branches
-  tree.SetBranchAddress(leafNameIsPartNames.c_str  (), &initialStateNames,   &initialStateNamesBr  );
-  tree.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta, &initialStateMomentaBr);
-  tree.SetBranchAddress(leafNameFsPartNames.c_str  (), &finalStateNames,     &finalStateNamesBr    );
-  tree.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta,   &finalStateMomentaBr  );
+  tree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
+  tree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
+  tree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
+  tree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
 
   // loop over events
   const long int nmbEvents   = tree.GetEntries();
@@ -117,24 +117,24 @@ processTree(TTree&                         tree,
     if (tree.LoadTree(eventIndex) < 0)
       break;
     // read only required branches
-    initialStateNamesBr->GetEntry  (eventIndex);
-    initialStateMomentaBr->GetEntry(eventIndex);
-    finalStateNamesBr->GetEntry    (eventIndex);
-    finalStateMomentaBr->GetEntry  (eventIndex);
+    prodKinParticlesBr->GetEntry (eventIndex);
+    prodKinMomentaBr->GetEntry   (eventIndex);
+    decayKinParticlesBr->GetEntry(eventIndex);
+    decayKinMomentaBr->GetEntry  (eventIndex);
 
-    if (   not initialStateNames or not initialStateMomenta
-	or not finalStateNames   or not finalStateMomenta) {
+    if (   not prodKinParticles  or not prodKinMomenta
+	or not decayKinParticles or not decayKinMomenta) {
       printWarn << "at least one of the input data arrays is a null pointer: "
-		<< "        production kinematics: particle names = " << initialStateNames << ", "
-		<< "momenta = " << initialStateMomenta << endl
-		<< "        decay final state:     particle names = " << finalStateNames << ", "
-		<< "momenta = " << finalStateMomenta << endl
+		<< "        production kinematics: particle names = " << prodKinParticles << ", "
+		<< "momenta = " << prodKinMomenta << endl
+		<< "        decay kinematics:      particle names = " << decayKinParticles << ", "
+		<< "momenta = " << decayKinMomenta << endl
 		<< "skipping event." << endl;
       continue;
     }
 
-    if (decayTopo->readData(*initialStateNames, *initialStateMomenta,
-			    *finalStateNames,   *finalStateMomenta)) {
+    if (decayTopo->readData(*prodKinParticles,  *prodKinMomenta,
+			    *decayKinParticles, *decayKinMomenta)) {
       const complex<double> amp = amplitude();
       if (asciiOutput)
 	ampFile  << setprecision(numeric_limits<double>::digits10 + 1) << amp << endl;
@@ -158,8 +158,8 @@ main(int    argc,
   string       inTreeName   = "rootPwaEvtTree";
   string       ampFileName  = "./out.amp";
   bool         asciiOutput  = false;
-  string       leafNames    = "initialStateNames;initialStateMomenta;"
-                              "finalStateNames;finalStateMomenta";
+  string       leafNames    = "prodKinParticles;prodKinMomenta;"
+                              "decayKinParticles;decayKinMomenta";
   bool         debug        = false;
   extern char* optarg;
   extern int   optind;
@@ -216,16 +216,16 @@ main(int    argc,
   }
 
   // get leaf names
-  const vector<string> leafNameTokens        = tokenizeString(leafNames, ";");
-  const string         leafNameIsPartNames   = leafNameTokens[0];
-  const string         leafNameIsPartMomenta = leafNameTokens[1];
-  const string         leafNameFsPartNames   = leafNameTokens[2];
-  const string         leafNameFsPartMomenta = leafNameTokens[3];
+  const vector<string> leafNameTokens            = tokenizeString(leafNames, ";");
+  const string         prodKinParticlesLeafName  = leafNameTokens[0];
+  const string         prodKinMomentaLeafName    = leafNameTokens[1];
+  const string         decayKinParticlesLeafName = leafNameTokens[2];
+  const string         decayKinMomentaLeafName   = leafNameTokens[3];
   printInfo << "using the following leaf names:" << endl
-	    << "        production kinematics: particle names = '" << leafNameIsPartNames << "', "
-	    << "momenta = '" << leafNameIsPartMomenta << "'" << endl
-	    << "        decay final state:     particle names = '" << leafNameFsPartNames << "', "
-	    << "momenta = '" << leafNameFsPartMomenta << "'" << endl;
+	    << "        production kinematics: particle names = '" << prodKinParticlesLeafName << "', "
+	    << "momenta = '" << prodKinMomentaLeafName << "'" << endl
+	    << "        decay kinematics:      particle names = '" << decayKinParticlesLeafName << "', "
+	    << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
 
   // open root files and build chain
   TChain* chain = 0;
@@ -260,8 +260,8 @@ main(int    argc,
       continue;
     }
     if (fillTreeFromEvt(evtFile, *tree, -1,
-			leafNameIsPartNames, leafNameIsPartMomenta,
-			leafNameFsPartNames, leafNameFsPartMomenta, debug))
+			prodKinParticlesLeafName,  prodKinMomentaLeafName,
+			decayKinParticlesLeafName, decayKinMomentaLeafName, debug))
       trees.push_back(tree);
     else {
       printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "
@@ -313,8 +313,8 @@ main(int    argc,
       cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
     cout << endl;
     countEvents += processTree(*trees[i], decayTopo, amplitude, ampFile, asciiOutput,
-			       leafNameIsPartNames, leafNameIsPartMomenta,
-			       leafNameFsPartNames, leafNameFsPartMomenta, debug);
+			       prodKinParticlesLeafName,  prodKinMomentaLeafName,
+			       decayKinParticlesLeafName, decayKinMomentaLeafName, debug);
   }
   
   timer.Stop();

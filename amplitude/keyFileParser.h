@@ -95,7 +95,7 @@ namespace rpwa {
 					  const particlePtr&        X);  ///< creates production vertex
     static bool mapProductionVertexType(const std::string&        vertType,
 					const libconfig::Setting& isPartKeys,
-					const particlePtr&        X);  ///< creates production vertex according to type and list of initial state particles
+					const particlePtr&        X);  ///< creates production vertex according to type and list of production kinematics particles
 
 
     static keyFileParser                     _instance;  ///< singleton instance
@@ -106,7 +106,7 @@ namespace rpwa {
     static bool                              _useReflectivityBasis;  ///< switches use of reflectivity basis in amplitude
     static bool                              _boseSymmetrize;        ///< switches use of Bose-symmetrization in amplitude
 
-    static bool _debug;     ///< if set to true, debug messages are printed
+    static bool _debug;  ///< if set to true, debug messages are printed
 
   };
 

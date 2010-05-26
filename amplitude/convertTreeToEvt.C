@@ -59,16 +59,16 @@ using namespace rpwa;
 
 
 bool
-convertTreeToEvt(const string&  inFileNamePattern     = "testEvents.root",
-		 const string&  outFileName           = "testTree.evt",
-		 const long int maxNmbEvents          = -1,
-		 const string&  pdgTableFileName      = "./particleDataTable.txt",
-		 const string&  inTreeName            = "rootPwaEvtTree",
-		 const string&  leafNameIsPartNames   = "initialStateNames",
-		 const string&  leafNameIsPartMomenta = "initialStateMomenta",
-		 const string&  leafNameFsPartNames   = "finalStateNames",
-		 const string&  leafNameFsPartMomenta = "finalStateMomenta",
-		 const bool     debug                 = false)
+convertTreeToEvt(const string&  inFileNamePattern         = "testEvents.root",
+		 const string&  outFileName               = "testTree.evt",
+		 const long int maxNmbEvents              = -1,
+		 const string&  pdgTableFileName          = "./particleDataTable.txt",
+		 const string&  inTreeName                = "rootPwaEvtTree",
+		 const string&  prodKinParticlesLeafName  = "prodKinParticles",
+		 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
+		 const string&  decayKinParticlesLeafName = "decayKinParticles",
+		 const string&  decayKinMomentaLeafName   = "decayKinMomenta",
+		 const bool     debug                     = false)
 {
   // open input file
   printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
@@ -90,9 +90,10 @@ convertTreeToEvt(const string&  inFileNamePattern     = "testEvents.root",
   rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
   pdt.readFile(pdgTableFileName);
 
+  // doit
   const bool success = writeEvtFromTree(chain, outFile, maxNmbEvents, inTreeName,
-					leafNameIsPartNames, leafNameIsPartMomenta,
-					leafNameFsPartNames, leafNameFsPartMomenta, debug);
+					prodKinParticlesLeafName,  prodKinMomentaLeafName,
+					decayKinParticlesLeafName, decayKinMomentaLeafName, debug);
 
   if (success)
     printInfo << "wrote events to file '" << outFileName << "'" << endl;

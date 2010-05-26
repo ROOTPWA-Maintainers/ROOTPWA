@@ -111,10 +111,10 @@ namespace rpwa {
   fillTreeFromEvt(istream&       inEvt,
 		  TTree&         outTree,
 		  const long int maxNmbEvents,
-		  const string&  leafNameIsPartNames,
-		  const string&  leafNameIsPartMomenta,
-		  const string&  leafNameFsPartNames,
-		  const string&  leafNameFsPartMomenta,
+		  const string&  prodKinParticlesLeafName,
+		  const string&  prodKinMomentaLeafName,
+		  const string&  decayKinParticlesLeafName,
+		  const string&  decayKinMomentaLeafName,
 		  const bool     debug)
   {
     if (!inEvt || !inEvt.good()) {
@@ -123,18 +123,18 @@ namespace rpwa {
     }
 
     // create leaf variables
-    TClonesArray* initialStateNames   = new TClonesArray("TObjString", 1);
-    TClonesArray* initialStateMomenta = new TClonesArray("TVector3",   1);
-    TClonesArray* finalStateNames     = new TClonesArray("TObjString", 0);
-    TClonesArray* finalStateMomenta   = new TClonesArray("TVector3",   0);
+    TClonesArray* prodKinParticles  = new TClonesArray("TObjString", 1);
+    TClonesArray* prodKinMomenta    = new TClonesArray("TVector3",   1);
+    TClonesArray* decayKinParticles = new TClonesArray("TObjString", 0);
+    TClonesArray* decayKinMomenta   = new TClonesArray("TVector3",   0);
 
     // connect leaf variables to tree branches
     const int split   = 0;
     const int bufSize = 256000;
-    outTree.Branch(leafNameIsPartNames.c_str(),   "TClonesArray", &initialStateNames,   bufSize, split);
-    outTree.Branch(leafNameIsPartMomenta.c_str(), "TClonesArray", &initialStateMomenta, bufSize, split);
-    outTree.Branch(leafNameFsPartNames.c_str(),   "TClonesArray", &finalStateNames,     bufSize, split);
-    outTree.Branch(leafNameFsPartMomenta.c_str(), "TClonesArray", &finalStateMomenta,   bufSize, split);
+    outTree.Branch(prodKinParticlesLeafName.c_str(),  "TClonesArray", &prodKinParticles,  bufSize, split);
+    outTree.Branch(prodKinMomentaLeafName.c_str(),    "TClonesArray", &prodKinMomenta,    bufSize, split);
+    outTree.Branch(decayKinParticlesLeafName.c_str(), "TClonesArray", &decayKinParticles, bufSize, split);
+    outTree.Branch(decayKinMomentaLeafName.c_str(),   "TClonesArray", &decayKinMomenta,   bufSize, split);
 
     // loop over events and fill tree
     bool     success     = true;
@@ -164,9 +164,9 @@ namespace rpwa {
       if (debug)
 	printInfo << "# of particles = " << nmbParticles << endl;
     
-      // read initial state particle data (beam only)
-      initialStateNames->Clear  ();
-      initialStateMomenta->Clear();
+      // read production kinematics data (beam only)
+      prodKinParticles->Clear();
+      prodKinMomenta->Clear  ();
       if (getline(inEvt, line)) {
 	++countLines;
 	stringstream lineStream(line);
@@ -174,8 +174,8 @@ namespace rpwa {
 	double momX = 0, momY = 0, momZ = 0, E = 0;
 	if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
 	  const string name = particleNameFromGeantId(id , charge);
-	  new((*initialStateNames  )[0]) TObjString(name.c_str());
-	  new((*initialStateMomenta)[0]) TVector3  (momX, momY, momZ);
+	  new((*prodKinParticles)[0]) TObjString(name.c_str());
+	  new((*prodKinMomenta  )[0]) TVector3  (momX, momY, momZ);
 	} else {
 	  printWarn << "event " << countEvents + 1 << ": error reading beam data "
 		    << "from line " << countLines << ": " << line << endl;
@@ -183,19 +183,19 @@ namespace rpwa {
 	}
       } else
 	break;
-      assert(initialStateNames->GetEntriesFast() == initialStateMomenta->GetEntriesFast());
-      const unsigned int nmbIsPart = initialStateNames->GetEntriesFast();
+      assert(prodKinParticles->GetEntriesFast() == prodKinMomenta->GetEntriesFast());
+      const unsigned int nmbProdKinPart = prodKinParticles->GetEntriesFast();
       if (debug) {
-	printInfo << nmbIsPart << " initial state particles:" << endl;
-	for (unsigned int i = 0; i < nmbIsPart; ++i)
+	printInfo << nmbProdKinPart << " production kinematics particles:" << endl;
+	for (unsigned int i = 0; i < nmbProdKinPart; ++i)
 	  cout << "        particle[" << i << "]: "
-	       << ((TObjString*)(*initialStateNames)[i])->GetString() << "; "
-	       << *((TVector3*)(*initialStateMomenta)[i]) << endl;
+	       << ((TObjString*)(*prodKinParticles)[i])->GetString() << "; "
+	       << *((TVector3*)(*prodKinMomenta)[i]) << endl;
       }
 
-      // read final state particle data
-      finalStateNames->Clear  ();
-      finalStateMomenta->Clear();
+      // read decay kinematics data
+      decayKinParticles->Clear  ();
+      decayKinMomenta->Clear();
       for (int i = 0; i < nmbParticles - 1; ++i) {
 	if (getline(inEvt, line)) {
 	  ++countLines;
@@ -204,24 +204,24 @@ namespace rpwa {
 	  double momX, momY, momZ, E;
 	  if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
 	    const string name = particleNameFromGeantId(id , charge);
-	    new((*finalStateNames  )[i]) TObjString(name.c_str());
-	    new((*finalStateMomenta)[i]) TVector3  (momX, momY, momZ);
+	    new((*decayKinParticles  )[i]) TObjString(name.c_str());
+	    new((*decayKinMomenta)[i]) TVector3  (momX, momY, momZ);
 	  } else {
-	    printWarn << "event " << countEvents + 1 << ": error reading final state "
+	    printWarn << "event " << countEvents + 1 << ": error reading decay kinematics "
 		      << "particle[" << i << "] data from line " << countLines << ": " << line << endl;
 	    success = false;
 	  }
 	} else
 	  break;
       }
-      assert(finalStateNames->GetEntriesFast() == finalStateMomenta->GetEntriesFast());
-      const unsigned int nmbFsPart = finalStateNames->GetEntriesFast();
+      assert(decayKinParticles->GetEntriesFast() == decayKinMomenta->GetEntriesFast());
+      const unsigned int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
       if (debug) {
-	printInfo << nmbFsPart << " final state particles:" << endl;
-	for (unsigned int i = 0; i < nmbFsPart; ++i)
+	printInfo << nmbDecayKinPart << " decay kinematics particles:" << endl;
+	for (unsigned int i = 0; i < nmbDecayKinPart; ++i)
 	  cout << "        particle[" << i << "]: "
-	       << ((TObjString*)(*finalStateNames)[i])->GetString() << "; "
-	       << *((TVector3*)(*finalStateMomenta)[i]) << endl;
+	       << ((TObjString*)(*decayKinParticles)[i])->GetString() << "; "
+	       << *((TVector3*)(*decayKinMomenta)[i]) << endl;
       }
 
       outTree.Fill();
@@ -241,13 +241,13 @@ namespace rpwa {
   bool
   writeEvtFromTree(TChain&        inTree,
 		   ostream&       outEvt,
-		   const long int maxNmbEvents          = -1,
-		   const string&  inTreeName            = "rootPwaEvtTree",
-		   const string&  leafNameIsPartNames   = "initialStateNames",
-		   const string&  leafNameIsPartMomenta = "initialStateMomenta",
-		   const string&  leafNameFsPartNames   = "finalStateNames",
-		   const string&  leafNameFsPartMomenta = "finalStateMomenta",
-		   const bool     debug                 = false)
+		   const long int maxNmbEvents,
+		   const string&  inTreeName,
+		   const string&  prodKinParticlesLeafName,
+		   const string&  prodKinMomentaLeafName,
+		   const string&  decayKinParticlesLeafName,
+		   const string&  decayKinMomentaLeafName,
+		   const bool     debug)
   {
     const long int nmbEventsTree = inTree.GetEntries();
     if (!outEvt) {
@@ -256,16 +256,16 @@ namespace rpwa {
     }
 
     // create leaf variables
-    TClonesArray* initialStateNames   = 0;
-    TClonesArray* initialStateMomenta = 0;
-    TClonesArray* finalStateNames     = 0;
-    TClonesArray* finalStateMomenta   = 0;
+    TClonesArray* prodKinParticles  = 0;
+    TClonesArray* prodKinMomenta    = 0;
+    TClonesArray* decayKinParticles = 0;
+    TClonesArray* decayKinMomenta   = 0;
 
     // connect leaf variables to tree branches
-    inTree.SetBranchAddress(leafNameIsPartNames.c_str(),   &initialStateNames  );
-    inTree.SetBranchAddress(leafNameIsPartMomenta.c_str(), &initialStateMomenta);
-    inTree.SetBranchAddress(leafNameFsPartNames.c_str(),   &finalStateNames    );
-    inTree.SetBranchAddress(leafNameFsPartMomenta.c_str(), &finalStateMomenta  );
+    inTree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles );
+    inTree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta   );
+    inTree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles);
+    inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta  );
 			 
     // loop over events
     const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
@@ -278,26 +278,25 @@ namespace rpwa {
 	break;
       inTree.GetEntry(eventIndex);
 
-      assert(initialStateNames  );
-      assert(initialStateMomenta);
-      assert(initialStateNames->GetEntriesFast() == initialStateMomenta->GetEntriesFast());
-      const unsigned int nmbIsPart = initialStateNames->GetEntriesFast();
+      assert(prodKinParticles );
+      assert(prodKinMomenta   );
+      assert(decayKinParticles);
+      assert(decayKinMomenta  );
+      const int nmbProdKinPart  = prodKinParticles->GetEntriesFast ();
+      const int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
+      assert(nmbProdKinPart  == prodKinMomenta->GetEntriesFast ());
+      assert(nmbDecayKinPart == decayKinMomenta->GetEntriesFast());
 
-      assert(finalStateNames  );
-      assert(finalStateMomenta);
-      assert(finalStateNames->GetEntriesFast() == finalStateMomenta->GetEntriesFast());
-      const unsigned int nmbFsPart = finalStateNames->GetEntriesFast();
-
-      outEvt << nmbIsPart + nmbFsPart << endl;
+      outEvt << nmbProdKinPart + nmbDecayKinPart << endl;
 
       if (debug)
-	printInfo << "event[" << eventIndex << "]: " << nmbIsPart
-		  << " initial state particles:" << endl;
-      for (unsigned int i = 0; i < nmbIsPart; ++i) {
-	assert((*initialStateNames  )[i]);
-	assert((*initialStateMomenta)[i]);
-	const string   name = ((TObjString*)(*initialStateNames)[i])->GetString().Data();
-	const TVector3 mom  = *((TVector3*)(*initialStateMomenta)[i]);
+	printInfo << "event[" << eventIndex << "]: " << nmbProdKinPart
+		  << " production kinematics particles:" << endl;
+      for (int i = 0; i < nmbProdKinPart; ++i) {
+	assert((*prodKinParticles)[i]);
+	assert((*prodKinMomenta  )[i]);
+	const string   name = ((TObjString*)(*prodKinParticles)[i])->GetString().Data();
+	const TVector3 mom  = *((TVector3*)(*prodKinMomenta)[i]);
 	const double   mass = getParticleMass(name);
 	int id, charge;
 	idAndChargeFromParticleName(name, id, charge);
@@ -311,12 +310,13 @@ namespace rpwa {
       }
 
       if (debug)
-	printInfo << "event[" << eventIndex << "]: " << nmbFsPart << " final state particles:" << endl;
-      for (unsigned int i = 0; i < nmbFsPart; ++i) {
-	assert((*finalStateNames  )[i]);
-	assert((*finalStateMomenta)[i]);
-	const string   name = ((TObjString*)(*finalStateNames)[i])->GetString().Data();
-	const TVector3 mom = *((TVector3*)(*finalStateMomenta)[i]);
+	printInfo << "event[" << eventIndex << "]: " << nmbDecayKinPart
+		  << " decay kinematics particles:" << endl;
+      for (int i = 0; i < nmbDecayKinPart; ++i) {
+	assert((*decayKinParticles  )[i]);
+	assert((*decayKinMomenta)[i]);
+	const string   name = ((TObjString*)(*decayKinParticles)[i])->GetString().Data();
+	const TVector3 mom  = *((TVector3*)(*decayKinMomenta)[i]);
 	const double   mass = getParticleMass(name);
 	int id, charge;
 	idAndChargeFromParticleName(name, id, charge);

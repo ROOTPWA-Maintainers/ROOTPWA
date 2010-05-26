@@ -33,6 +33,10 @@
 //      each final state particle a corresponding final state vertex
 //      is created for internal use
 //
+//      "final state" particles are the measured decay daughters;
+//      additional final state particles that belong to the production
+//      process are handled by the production vertex
+//
 //
 // Author List:
 //      Boris Grube          TUM            (original author)
@@ -107,26 +111,21 @@ namespace rpwa {
 
     void setProductionVertex(const interactionVertexPtr& productionVertex);  ///< (re)defines production vertex
 
-    bool readData(const TClonesArray& initialStateNames,
-		  const TClonesArray& initialStateMomenta,
-		  const TClonesArray& finalStateNames,
-		  const TClonesArray& finalStateMomenta);  ///< reads data from TClonesArrays
+    bool readData(const TClonesArray& prodKinParticles,
+		  const TClonesArray& prodKinMomenta,
+		  const TClonesArray& decayKinParticles,
+		  const TClonesArray& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
 
     bool revertMomenta();  ///< resets momenta to the values of last event read
     bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
 
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
-    virtual std::ostream& printIsParticles(std::ostream& out) const;  ///< prints initial state particle data in human-readable form
-    virtual std::ostream& printFsParticles(std::ostream& out) const;  ///< prints final state particle data in human-readable form
+    virtual std::ostream& printProdKinParticles (std::ostream& out) const;  ///< prints production kinematics data in human-readable form
+    virtual std::ostream& printDecayKinParticles(std::ostream& out) const;  ///< prints decay kinematics data in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-    
-  //   //!!! bad quick hacks
-  //   decayGraph subGraph(interactionVertex& startVertex);
-  //   interactionVertex* vertex(particle& part);
 
 
   protected:
