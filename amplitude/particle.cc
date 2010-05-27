@@ -134,9 +134,9 @@ particle::operator =(const particle& part)
 
 
 particle*
-particle::clone() const
+particle::doClone() const
 {
-  particle* particleClone = new particle(*this);
+  particle* particleClone(new particle(*this));
   if (_debug)
     printInfo << "cloned " << *this << "; " << this << " -> " << particleClone << endl;
   return particleClone;

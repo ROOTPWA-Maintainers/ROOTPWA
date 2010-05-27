@@ -55,6 +55,11 @@ class TClonesArray;
 
 namespace rpwa {
 
+  
+  class interactionVertex;
+  typedef boost::shared_ptr<interactionVertex> interactionVertexPtr;
+
+
   class interactionVertex {
 
   public:
@@ -64,8 +69,9 @@ namespace rpwa {
     virtual ~interactionVertex();
 		
     virtual interactionVertex& operator =(const interactionVertex& vert);
-    virtual interactionVertex* clone(const bool cloneInParticles  = false,
-				     const bool cloneOutParticles = false) const;
+    interactionVertexPtr clone(const bool cloneInParticles  = false,
+			       const bool cloneOutParticles = false) const  ///< creates deep copy of interaction vertex; must not be virtual
+    { return interactionVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
     virtual void clear();
 
     virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
@@ -96,6 +102,9 @@ namespace rpwa {
 
   protected:
 
+    virtual interactionVertex* doClone(const bool cloneInParticles,
+				       const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
     void cloneInParticles ();  ///< clones all incoming particles
     void cloneOutParticles();  ///< clones all outgoing particles
 
@@ -108,9 +117,6 @@ namespace rpwa {
     static bool _debug;  ///< if set to true, debug messages are printed
 	
   };
-
-
-  typedef boost::shared_ptr<interactionVertex> interactionVertexPtr;
 
 
   inline

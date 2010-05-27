@@ -266,34 +266,34 @@ main(int argc, char** argv)
 
     {
       cout << endl << "testing cloning" << endl;
-      isobarDecayTopology  topo3 = *topo2.clone();
-      isobarDecayVertexPtr v     = topo3.isobarDecayVertices()[0];
-      particlePtr          p     = v->inParticles()[0];
+      isobarDecayTopologyPtr topo3 = topo2.clone();
+      isobarDecayVertexPtr   v     = topo3->isobarDecayVertices()[0];
+      particlePtr            p     = v->inParticles()[0];
       v->setL(2);
       v->setS(2);
       cout << *p << endl;
       p->setG(-1);
       p->setCharge(-1);
       p->setC(1);
-      //topo3.checkTopology();
-      //topo3.checkConsistency();
-      cout << topo3;
+      //topo3->checkTopology();
+      //topo3->checkConsistency();
+      cout << *topo3;
       decayTopologyGraphType::nodeIterator iNode, iNodeEnd;
       cout << "!!! topo2 vertex pointers: ";
       for (tie(iNode, iNodeEnd) = topo2.nodes(); iNode != iNodeEnd; ++iNode)
 	cout << topo2.vertex(*iNode) << "    ";
       cout << endl;
       cout << "!!! topo3 vertex pointers: ";
-      for (tie(iNode, iNodeEnd) = topo3.nodes(); iNode != iNodeEnd; ++iNode)
-	cout << topo3.vertex(*iNode) << "    ";
+      for (tie(iNode, iNodeEnd) = topo3->nodes(); iNode != iNodeEnd; ++iNode)
+	cout << topo3->vertex(*iNode) << "    ";
       cout << endl;
       cout << "!!! topo3 interaction vertex pointers: ";
-      for (unsigned int i = 0; i < topo3.nmbInteractionVertices(); ++i)
-	cout << topo3.interactionVertices()[i] << "    ";
+      for (unsigned int i = 0; i < topo3->nmbInteractionVertices(); ++i)
+	cout << topo3->interactionVertices()[i] << "    ";
       cout << endl;
       cout << "!!! topo3 isobar decay vertex pointers: ";
-      for (unsigned int i = 0; i < topo3.nmbInteractionVertices(); ++i)
-	cout << topo3.isobarDecayVertices()[i] << "    ";
+      for (unsigned int i = 0; i < topo3->nmbInteractionVertices(); ++i)
+	cout << topo3->isobarDecayVertices()[i] << "    ";
       cout << endl;
       decayTopologyGraphType::edgeIterator iEdge, iEdgeEnd;
       cout << "!!! topo2 particle pointers: ";
@@ -301,12 +301,12 @@ main(int argc, char** argv)
 	cout << topo2.particle(*iEdge) << "    ";
       cout << endl;
       cout << "!!! topo3 particle pointers: ";
-      for (tie(iEdge, iEdgeEnd) = topo3.edges(); iEdge != iEdgeEnd; ++iEdge)
-	cout << topo3.particle(*iEdge) << "    ";
+      for (tie(iEdge, iEdgeEnd) = topo3->edges(); iEdge != iEdgeEnd; ++iEdge)
+	cout << topo3->particle(*iEdge) << "    ";
       cout << endl;
       cout << "!!! topo3 FS particle pointers: ";
-      for (unsigned int i = 0; i < topo3.nmbFsParticles(); ++i)
-	cout << topo3.fsParticles()[i] << "    ";
+      for (unsigned int i = 0; i < topo3->nmbFsParticles(); ++i)
+	cout << topo3->fsParticles()[i] << "    ";
       cout << endl;
     }
 

@@ -70,8 +70,9 @@ namespace rpwa {
 
     virtual isobarDecayTopology& operator =(const isobarDecayTopology& topo);
     virtual isobarDecayTopology& operator =(const decayTopology&       topo);
-    virtual isobarDecayTopology* clone(const bool cloneFsParticles      = false,
-				       const bool cloneProductionVertex = false) const;
+    isobarDecayTopologyPtr clone(const bool cloneFsParticles    = false,
+				 const bool cloneProdKinematics = false) const  ///< creates deep copy of isobar decay topology; must not be virtual
+    { return isobarDecayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }
     virtual void clear();  ///< deletes all information
 
     const std::vector<isobarDecayVertexPtr>& isobarDecayVertices() const { return _isobarVertices;    }  ///< returns all isobar decay vertices ordered by depth-first; first vertex is X-decay vertex
@@ -113,6 +114,9 @@ namespace rpwa {
 
   private:
 
+    virtual isobarDecayTopology* doClone(const bool cloneFsParticles,
+					 const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
     isobarDecayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
 					const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
 					const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on final state particles and vertices
@@ -149,6 +153,15 @@ namespace rpwa {
   {
     isobarDecayTopologyPtr t(new isobarDecayTopology(productionVertex,
 						     isobarDecayVertices, fsParticles));
+    return t;
+  }
+
+
+  inline
+  isobarDecayTopologyPtr
+  createIsobarDecayTopology(const isobarDecayTopology& topo)
+  {
+    isobarDecayTopologyPtr t(new isobarDecayTopology(topo));
     return t;
   }
 

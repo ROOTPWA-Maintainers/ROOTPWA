@@ -71,8 +71,8 @@ fsVertex::~fsVertex()
 
 
 fsVertex*
-fsVertex::clone(const bool cloneInParticles,
-		const bool) const
+fsVertex::doClone(const bool cloneInParticles,
+		  const bool) const
 {
   fsVertex* vertexClone = new fsVertex(*this);
   if (cloneInParticles)

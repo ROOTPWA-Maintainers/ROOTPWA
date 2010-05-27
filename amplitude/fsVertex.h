@@ -48,6 +48,10 @@
 namespace rpwa {
 
 
+  class fsVertex;
+  typedef boost::shared_ptr<fsVertex> fsVertexPtr;
+
+
   class fsVertex : public interactionVertex {
 
   public:
@@ -56,8 +60,9 @@ namespace rpwa {
     fsVertex(const fsVertex& vert);
     virtual ~fsVertex();
 		
-    virtual fsVertex* clone(const bool cloneInParticles = false,
-			    const bool = false) const;
+    fsVertexPtr clone(const bool cloneInParticles  = false,
+		      const bool                   = false) const  ///< creates deep copy of final state vertex; must not be virtual
+    { return fsVertexPtr(doClone(cloneInParticles, false)); }
 
     inline virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (final state particle) is allowed
     inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; no outgoing particles are allowed
@@ -74,14 +79,17 @@ namespace rpwa {
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
+  protected:
+
+    virtual fsVertex* doClone(const bool cloneInParticles,
+			      const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
+
   private:
 
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
-
-
-  typedef boost::shared_ptr<fsVertex> fsVertexPtr;
 
 
   inline

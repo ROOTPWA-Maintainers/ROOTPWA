@@ -114,15 +114,15 @@ isobarDecayTopology::operator =(const decayTopology& topo)
 
 
 isobarDecayTopology*
-isobarDecayTopology::clone(const bool cloneFsParticles,
-			   const bool cloneProdKinematics) const
+isobarDecayTopology::doClone(const bool cloneFsParticles,
+			     const bool cloneProdKinematics) const
 {
   if (_debug)
     printInfo << "cloning isobar decay topology '" << name() << "'; "
 	      << ((cloneFsParticles   ) ? "in" : "ex") << "cluding final state particles, "
 	      << ((cloneProdKinematics) ? "in" : "ex") << "cluding production kinematics particles"
 	      << endl;
-  decayTopology*       topoClone       = decayTopology::clone(cloneFsParticles, cloneProdKinematics);
+  decayTopology*       topoClone       = decayTopology::doClone(cloneFsParticles, cloneProdKinematics);
   isobarDecayTopology* isobarTopoClone = new isobarDecayTopology(*topoClone);
   isobarTopoClone->buildIsobarVertexArray();
   return isobarTopoClone;
@@ -378,7 +378,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
 		// loop over isobar candidates
   		for (unsigned int iIsobar = 0; iIsobar < isobarCandidates.size(); ++iIsobar) {
 		  // clone topology
-  		  isobarDecayTopology* decayCopy = motherDecay.clone(false, false);
+  		  const isobarDecayTopologyPtr& decayCopy = motherDecay.clone(false, false);
   		  // set mother vertex quantum numbers
   		  const isobarDecayVertexPtr& motherVertexCopy =
 		    static_pointer_cast<isobarDecayVertex>(decayCopy->vertex(motherDecay.node(motherVertex)));

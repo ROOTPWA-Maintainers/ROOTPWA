@@ -260,15 +260,15 @@ namespace rpwa {
     }
 
 
-  public:
+  protected:
 
     virtual
     decayGraph*
-    clone(const bool cloneParticles = true) const  ///< creates deep copy of graph
+    doClone(const bool cloneParticles) const  ///< helper function to use covariant return types with smart pointers; needed for public clone()
     {
       if (_debug)
-	printInfo << "cloning graph '" << name() << "'; "
-		  << "cloneParticles = " << cloneParticles << std::endl;
+	printInfo << "cloning graph '" << name() << "' "
+		  << ((cloneParticles   ) ? "in" : "ex") << "cluding particles" << std::endl;
       // copy graph data structure
       decayGraph* graphClone = new decayGraph(*this);
       nodeIterator iNd, iNdEnd;
@@ -282,6 +282,17 @@ namespace rpwa {
       graphClone->buildReverseMaps();
       return graphClone;
     }
+
+
+  public:
+
+    inline
+    boost::shared_ptr<decayGraph>
+    clone(const bool cloneParticles = false) const  ///< creates deep copy of decay graph; must not be virtual
+    {
+      return boost::shared_ptr<decayGraph>(doClone(cloneParticles));
+    }
+    
     
     virtual
     void

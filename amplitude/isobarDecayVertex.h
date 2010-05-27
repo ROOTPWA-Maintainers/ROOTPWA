@@ -49,6 +49,11 @@
 
 namespace rpwa {
 
+
+  class isobarDecayVertex;
+  typedef boost::shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
+
+
   class isobarDecayVertex : public interactionVertex {
 
   public:
@@ -63,8 +68,9 @@ namespace rpwa {
     virtual ~isobarDecayVertex();
 		
     virtual isobarDecayVertex& operator =(const isobarDecayVertex& vert);
-    virtual isobarDecayVertex* clone(const bool cloneInParticles  = false,
-				     const bool cloneOutParticles = false) const;
+    isobarDecayVertexPtr clone(const bool cloneInParticles  = false,
+			       const bool cloneOutParticles = false) const  ///< creates copy of isobar decay vertex; must not be virtual
+    { return isobarDecayVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
 
     inline virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (mother) is allowed
     inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 2 outgoing particle (daughters) are allowed
@@ -101,6 +107,12 @@ namespace rpwa {
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
+  protected:
+
+    virtual isobarDecayVertex* doClone(const bool cloneInParticles,
+				       const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
+
   private:
 
     bool checkMultiplicativeQn(const int          motherQn,
@@ -120,9 +132,6 @@ namespace rpwa {
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
-
-
-  typedef boost::shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
 
 
   inline

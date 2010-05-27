@@ -96,8 +96,8 @@ diffractiveDissVertex::operator =(const diffractiveDissVertex& vert)
 
 
 diffractiveDissVertex*
-diffractiveDissVertex::clone(const bool cloneInParticles,
-			     const bool cloneOutParticles) const
+diffractiveDissVertex::doClone(const bool cloneInParticles,
+			       const bool cloneOutParticles) const
 {
   diffractiveDissVertex* vertexClone = new diffractiveDissVertex(*this);
   if (cloneInParticles)

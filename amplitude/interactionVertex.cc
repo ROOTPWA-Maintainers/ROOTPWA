@@ -76,8 +76,8 @@ interactionVertex::operator =(const interactionVertex& vert)
 
 
 interactionVertex*
-interactionVertex::clone(const bool cloneInParticles,
-			 const bool cloneOutParticles) const
+interactionVertex::doClone(const bool cloneInParticles,
+			   const bool cloneOutParticles) const
 {
   interactionVertex* vertexClone = new interactionVertex(*this);
   if (cloneInParticles)

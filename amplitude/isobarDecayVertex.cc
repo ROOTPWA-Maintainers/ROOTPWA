@@ -109,8 +109,8 @@ isobarDecayVertex::operator =(const isobarDecayVertex& vert)
 
     
 isobarDecayVertex*
-isobarDecayVertex::clone(const bool cloneInParticles,
-			 const bool cloneOutParticles) const
+isobarDecayVertex::doClone(const bool cloneInParticles,
+			   const bool cloneOutParticles) const
 {
   isobarDecayVertex* vertexClone = new isobarDecayVertex(*this);
   if (cloneInParticles)

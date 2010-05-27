@@ -65,6 +65,8 @@ class TVector3;
 namespace rpwa {
 
 
+  class decayTopology;
+  typedef boost::shared_ptr<decayTopology> decayTopologyPtr;
   typedef decayGraph<interactionVertex, particle> decayTopologyGraphType;
 
 
@@ -82,8 +84,10 @@ namespace rpwa {
 
     virtual decayTopology& operator =(const decayTopology&          topo);
     virtual decayTopology& operator =(const decayTopologyGraphType& graph);
-    virtual decayTopology* clone(const bool cloneFsParticles      = false,
-				 const bool cloneProductionVertex = false) const;
+    decayTopologyPtr clone(const bool cloneFsParticles    = false,
+			   const bool cloneProdKinematics = false) const  ///< creates deep copy of decay topology; must not be virtual
+    { return decayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }
+
     virtual void clear();  ///< deletes all information
     
     unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
@@ -131,6 +135,9 @@ namespace rpwa {
 
   protected:
 
+    virtual decayTopology* doClone(const bool cloneFsParticles,
+				   const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
     decayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
 				  const std::vector<interactionVertexPtr>& interactionVertices,
 				  const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
@@ -153,6 +160,35 @@ namespace rpwa {
     
   };
   
+
+  inline
+  decayTopologyPtr
+  createDecayTopology(const interactionVertexPtr&              productionVertex,
+		      const std::vector<interactionVertexPtr>& interactionVertices,
+		      const std::vector<particlePtr>&          fsParticles)
+  {
+    decayTopologyPtr t(new decayTopology(productionVertex, interactionVertices, fsParticles));
+    return t;
+  }
+
+
+  inline
+  decayTopologyPtr
+  createDecayTopology(const decayTopology& topo)
+  {
+    decayTopologyPtr t(new decayTopology(topo));
+    return t;
+  }
+
+
+  inline
+  decayTopologyPtr
+  createDecayTopology(const decayTopologyGraphType& graph)
+  {
+    decayTopologyPtr t(new decayTopology(graph));
+    return t;
+  }
+
 
   inline
   std::ostream&

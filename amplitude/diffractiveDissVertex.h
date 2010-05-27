@@ -52,6 +52,11 @@ class TClonesArray;
 
 namespace rpwa {
 
+
+  class diffractiveDissVertex;
+  typedef boost::shared_ptr<diffractiveDissVertex> diffractiveDissVertexPtr;
+
+
   class diffractiveDissVertex : public interactionVertex {
 
   public:
@@ -62,8 +67,9 @@ namespace rpwa {
     virtual ~diffractiveDissVertex();
 		
     virtual diffractiveDissVertex& operator =(const diffractiveDissVertex& vert);
-    virtual diffractiveDissVertex* clone(const bool cloneInParticles  = false,
-					 const bool cloneOutParticles = false) const;
+    diffractiveDissVertexPtr clone(const bool cloneInParticles  = false,
+				   const bool cloneOutParticles = false) const  ///< creates deep copy of diffractive dissociation vertex; must not be virtual
+    { return diffractiveDissVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
 
     virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (beam) is allowed
     virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 1 outgoing particle (X-system) is allowed
@@ -85,6 +91,12 @@ namespace rpwa {
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
+  protected:
+
+    virtual diffractiveDissVertex* doClone(const bool cloneInParticles,
+					   const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
+
   private:
 
     TVector3 _beamMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
@@ -92,9 +104,6 @@ namespace rpwa {
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
-
-
-  typedef boost::shared_ptr<diffractiveDissVertex> diffractiveDissVertexPtr;
 
 
   inline

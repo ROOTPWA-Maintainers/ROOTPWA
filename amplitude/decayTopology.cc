@@ -126,8 +126,8 @@ decayTopology::operator =(const decayTopologyGraphType& graph)
 
 
 decayTopology*
-decayTopology::clone(const bool cloneFsParticles,
-		     const bool cloneProdKinematics) const
+decayTopology::doClone(const bool cloneFsParticles,
+		       const bool cloneProdKinematics) const
 {
   if (_debug)
     printInfo << "cloning decay topology '" << name() << "' "

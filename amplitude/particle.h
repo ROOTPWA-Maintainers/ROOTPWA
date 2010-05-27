@@ -52,6 +52,10 @@
 
 namespace rpwa {
 
+  class particle;
+  typedef boost::shared_ptr<particle> particlePtr;
+
+
   class particle : public particleProperties {
 	
   public:
@@ -81,7 +85,7 @@ namespace rpwa {
     virtual ~particle();
 
     virtual particle& operator =(const particle& part);
-    virtual particle* clone() const;
+    particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
     std::string           name        () const;                                         ///< returns particle name including charge
     std::string           bareName    () const { return stripChargeFromName(name()); }  ///< returns particle name w/o charge
@@ -108,6 +112,11 @@ namespace rpwa {
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+    
+  protected:
+    
+    virtual particle* doClone() const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 			
 
   private:
@@ -121,9 +130,6 @@ namespace rpwa {
     static bool _debug;  ///< if set to true, debug messages are printed
 
   };
-
-
-  typedef boost::shared_ptr<particle> particlePtr;
 
 
   inline
