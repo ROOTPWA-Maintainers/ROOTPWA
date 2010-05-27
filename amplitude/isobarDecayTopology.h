@@ -48,6 +48,11 @@
 
 namespace rpwa {	
 
+
+  class isobarDecayTopology;
+  typedef boost::shared_ptr<isobarDecayTopology> isobarDecayTopologyPtr;
+  
+
   class isobarDecayTopology : public decayTopology {
 	
   public:
@@ -75,7 +80,8 @@ namespace rpwa {
     bool checkTopology   () const;  ///< returns whether decay has the correct topology
     bool checkConsistency() const;  ///< checks conservation rules on all vertices
 
-    isobarDecayTopology subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
+    isobarDecayTopology subDecay(const nodeDesc& startNd,
+				 const bool      linkToMotherTopo = false);  ///< returns sub-decay tree that starts at given vertex
 
     void addDecay(const isobarDecayTopology& topo);  ///< returns sub-decay tree that starts at given vertex
 
@@ -123,9 +129,6 @@ namespace rpwa {
   };
 
 
-  typedef boost::shared_ptr<isobarDecayTopology> isobarDecayTopologyPtr;
-  
-
   inline
   isobarDecayTopologyPtr
   createIsobarDecayTopology(const interactionVertexPtr&              productionVertex,
@@ -146,6 +149,15 @@ namespace rpwa {
   {
     isobarDecayTopologyPtr t(new isobarDecayTopology(productionVertex,
 						     isobarDecayVertices, fsParticles));
+    return t;
+  }
+
+
+  inline
+  isobarDecayTopologyPtr
+  createIsobarDecayTopology(const decayTopology& topo)
+  {
+    isobarDecayTopologyPtr t(new isobarDecayTopology(topo));
     return t;
   }
 

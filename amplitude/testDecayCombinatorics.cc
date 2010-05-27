@@ -101,14 +101,14 @@ main(int argc, char** argv)
     X->setMass(2.5);
     X->setWidth(0.3);
     // define production vertex
-    particlePtr beam = createParticle("pi-");
+    particlePtr              beam     = createParticle("pi-");
     diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
     // define vertices
     isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,  i0,  i1);
     isobarDecayVertexPtr vert1 = createIsobarDecayVertex(i0, pi0, pi1);
     isobarDecayVertexPtr vert2 = createIsobarDecayVertex(i1, pi2, i2);
     isobarDecayVertexPtr vert3 = createIsobarDecayVertex(i2, pi3, pi4);
-    vector<particlePtr> fsParticles;
+    vector<particlePtr>  fsParticles;
     fsParticles.push_back(pi0);
     fsParticles.push_back(pi1);
     fsParticles.push_back(pi2);
@@ -124,8 +124,8 @@ main(int argc, char** argv)
     cout << endl;
     printInfo << "decay topology:" << topo;
     vector<isobarDecayTopology> decays             = topo.possibleDecays();
-    unsigned int                 consistentDecays   = 0;
-    unsigned int                 inconsistentDecays = 0;
+    unsigned int                consistentDecays   = 0;
+    unsigned int                inconsistentDecays = 0;
     for (unsigned int i = 0; i < decays.size(); ++i) {
       cout << decays[i];
       // decays[i].printPointers(cout);

@@ -123,10 +123,10 @@ namespace rpwa {
     }
 
     // create leaf variables
-    TClonesArray* prodKinParticles  = new TClonesArray("TObjString", 1);
-    TClonesArray* prodKinMomenta    = new TClonesArray("TVector3",   1);
-    TClonesArray* decayKinParticles = new TClonesArray("TObjString", 0);
-    TClonesArray* decayKinMomenta   = new TClonesArray("TVector3",   0);
+    TClonesArray* prodKinParticles  = new TClonesArray("TObjString");
+    TClonesArray* prodKinMomenta    = new TClonesArray("TVector3");
+    TClonesArray* decayKinParticles = new TClonesArray("TObjString");
+    TClonesArray* decayKinMomenta   = new TClonesArray("TVector3");
 
     // connect leaf variables to tree branches
     const int split   = 0;

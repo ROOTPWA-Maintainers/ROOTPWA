@@ -189,7 +189,7 @@ isobarHelicityAmplitude::transformDaughters() const
     const isobarDecayVertexPtr& vertex  = _decay->isobarDecayVertices()[i];
     if (_debug)
       printInfo << "transforming all child particles of vertex " << *vertex
-		<< " into " << vertex->mother()->name() << " helicity RF" << endl;
+  		<< " into " << vertex->mother()->name() << " helicity RF" << endl;
     const TLorentzRotation hfTrans = hfTransform(vertex->mother()->lzVec());
     // get all particles downstream of this vertex
     decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
@@ -197,8 +197,8 @@ isobarHelicityAmplitude::transformDaughters() const
     for (tie(iEd, iEdEnd) = subGraph.edges(); iEd != iEdEnd; ++iEd) {
       const particlePtr& part = subGraph.particle(*iEd);
       if (_debug)
-	cout << "    transforming " << part->name() << " into "
-	     << vertex->mother()->name() << " helicity RF" << endl;
+    	cout << "    transforming " << part->name() << " into "
+    	     << vertex->mother()->name() << " helicity RF" << endl;
       part->transform(hfTrans);
     }
   }

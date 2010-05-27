@@ -66,21 +66,25 @@ particle::particle(const particleProperties& partProp,
 		   const int                 charge,
 		   const int                 index,
 		   const int                 spinProj,
+		   const int                 refl,
 		   const TVector3&           momentum)
   : particleProperties(partProp),
     _charge           (charge),
     _spinProj         (spinProj),
     _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()))),
-    _index            (index)
+    _index            (index),
+    _refl             (refl)
 { }
 
 	
 particle::particle(const string&   partName,
 		   const int       index,
 		   const int       spinProj,
+		   const int       refl,
 		   const TVector3& momentum)
   : _spinProj(spinProj),
-    _index   (index)
+    _index   (index),
+    _refl    (refl)
 {
   // extract charge from name
   chargeFromName(partName, _charge);
@@ -123,6 +127,7 @@ particle::operator =(const particle& part)
     _spinProj = part._spinProj;
     _lzVec    = part._lzVec;
     _index    = part._index;
+    _refl     = part._refl;
   }
   return *this;
 }
@@ -131,7 +136,10 @@ particle::operator =(const particle& part)
 particle*
 particle::clone() const
 {
-  return new particle(*this);
+  particle* particleClone = new particle(*this);
+  if (_debug)
+    printInfo << "cloned " << *this << "; " << this << " -> " << particleClone << endl;
+  return particleClone;
 }
 
 

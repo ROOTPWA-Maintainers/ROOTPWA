@@ -322,7 +322,7 @@ main(int    argc,
 	    << "wrote them to '" << ampFileName << "'" << endl;
   printInfo << "this job consumed: ";
   timer.Print();
- 
+
   // clean up
   for (unsigned int i = 0; i < trees.size(); ++i)
     delete trees[i];

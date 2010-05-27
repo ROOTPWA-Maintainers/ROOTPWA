@@ -104,6 +104,10 @@ diffractiveDissVertex::clone(const bool cloneInParticles,
     vertexClone->cloneInParticles();
   if (cloneOutParticles)
     vertexClone->cloneOutParticles();
+  if (_debug)
+    printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+	      << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
+	      << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
   return vertexClone;
 }
 

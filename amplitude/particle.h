@@ -62,10 +62,12 @@ namespace rpwa {
 	     const int                 charge,
 	     const int                 index    = -1,
 	     const int                 spinProj = 0,
+	     const int                 refl     = 0,
 	     const TVector3&           momentum = TVector3());
     particle(const std::string&        partName,
 	     const int                 index    = -1,
 	     const int                 spinProj = 0,
+	     const int                 refl     = 0,
 	     const TVector3&           momentum = TVector3());
     particle(const std::string&        partName,
 	     const int                 isospin,
@@ -130,9 +132,10 @@ namespace rpwa {
 		 const int                 charge,
 		 const int                 index    = -1,
 		 const int                 spinProj = 0,
+		 const int                 refl     = 0,
 		 const TVector3&           momentum = TVector3())
   {
-    particlePtr p(new particle(partProp, charge, index, spinProj, momentum));
+    particlePtr p(new particle(partProp, charge, index, spinProj, refl, momentum));
     return p;
   }
 
@@ -142,9 +145,10 @@ namespace rpwa {
   createParticle(const std::string& partName,
 		 const int          index    = -1,
 		 const int          spinProj = 0,
+		 const int          refl     = 0,
 		 const TVector3&    momentum = TVector3())
   {
-    particlePtr p(new particle(partName, index, spinProj, momentum));
+    particlePtr p(new particle(partName, index, spinProj, refl, momentum));
     return p;
   }
 

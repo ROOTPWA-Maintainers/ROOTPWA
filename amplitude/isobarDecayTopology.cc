@@ -115,14 +115,15 @@ isobarDecayTopology::operator =(const decayTopology& topo)
 
 isobarDecayTopology*
 isobarDecayTopology::clone(const bool cloneFsParticles,
-			   const bool cloneProductionVertex) const
+			   const bool cloneProdKinematics) const
 {
   if (_debug)
     printInfo << "cloning isobar decay topology '" << name() << "'; "
-	      << "cloneFsParticles = "      << cloneFsParticles << ", "
-	      << "cloneProductionVertex = " << cloneProductionVertex << endl;
-  decayTopology         topoClone       = *decayTopology::clone(cloneFsParticles, cloneProductionVertex);
-  isobarDecayTopology* isobarTopoClone = new isobarDecayTopology(topoClone);
+	      << ((cloneFsParticles   ) ? "in" : "ex") << "cluding final state particles, "
+	      << ((cloneProdKinematics) ? "in" : "ex") << "cluding production kinematics particles"
+	      << endl;
+  decayTopology*       topoClone       = decayTopology::clone(cloneFsParticles, cloneProdKinematics);
+  isobarDecayTopology* isobarTopoClone = new isobarDecayTopology(*topoClone);
   isobarTopoClone->buildIsobarVertexArray();
   return isobarTopoClone;
 }
@@ -281,7 +282,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
       daughterDecays.push_back(&decayPossibilities[*iNd]);
     if (daughterDecays.size() != 2) {
       printErr << "node[" << startNds[iStart] << "]: " << *vertex(startNds[iStart]) << " has "
-	       << daughterDecays.size() << " daughters. Exactly two are required."
+	       << daughterDecays.size() << " daughters. exactly two are required."
 	       << "aborting." << endl;
       throw;
     }
@@ -289,7 +290,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
     // loop over all combinations of daughter decays
     unsigned int iDaughter[2];
     for (iDaughter[0] = 0; iDaughter[0] < daughterDecays[0]->size(); ++iDaughter[0])
-      for(iDaughter[1] = 0; iDaughter[1] < daughterDecays[1]->size(); ++iDaughter[1]) {
+      for (iDaughter[1] = 0; iDaughter[1] < daughterDecays[1]->size(); ++iDaughter[1]) {
 
 	// copy mother vertex
 	isobarDecayVertexPtr motherVertex(new isobarDecayVertex(*static_pointer_cast<isobarDecayVertex>(vertex(startNds[iStart]))));
@@ -306,8 +307,8 @@ isobarDecayTopology::possibleDecays(const int  minI,
 	motherVertex->daughter2() = daughters[1];
   	// join daughter subdecays and mother vertex
   	isobarDecayTopology motherDecay = joinDaughterDecays(motherVertex,
-							      (*daughterDecays[0])[iDaughter[0]],
-							      (*daughterDecays[1])[iDaughter[1]]);
+							     (*daughterDecays[0])[iDaughter[0]],
+							     (*daughterDecays[1])[iDaughter[1]]);
 	
 	// calculate mother quantum numbers fixed by daughter quantum numbers
 	const int baryonNmb   = daughters[0]->baryonNmb()   + daughters[1]->baryonNmb();
@@ -497,9 +498,10 @@ isobarDecayTopology::buildIsobarVertexArray()
 
 
 isobarDecayTopology
-isobarDecayTopology::subDecay(const nodeDesc& startNd)
+isobarDecayTopology::subDecay(const nodeDesc& startNd,
+			      const bool      linkToMotherTopo)
 {
-  isobarDecayTopology subTopo(decayTopology::subDecay(startNd));
+  isobarDecayTopology subTopo(decayTopology::subDecay(startNd, linkToMotherTopo));
   subTopo.name() = vertex(startNd)->inParticles()[0]->qnSummary();
   return subTopo;
 }

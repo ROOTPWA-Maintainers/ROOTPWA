@@ -105,7 +105,8 @@ namespace rpwa {
     bool checkTopology   () const;                  ///< returns whether decay has the correct topology
     bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices
 
-    decayTopology subDecay(const nodeDesc& startNd);  ///< returns sub-decay tree that starts at given vertex
+    decayTopology subDecay(const nodeDesc& startNd,
+			   const bool      linkToMotherTopo = false);  ///< returns sub-decay tree that starts at given vertex
 
     void addDecay(const decayTopology& topo);  ///< copies all vertices and particles into this topology
 
@@ -136,7 +137,9 @@ namespace rpwa {
 
     void buildInternalData();  ///< (re)builds internal data structure of vertex and particle pointers
 
-    virtual interactionVertexPtr cloneNode(const nodeDesc& nd);
+    virtual interactionVertexPtr cloneNode(const nodeDesc& nd,
+					   const bool      cloneInParticles  = false,
+					   const bool      cloneOutParticles = false);
     virtual particlePtr          cloneEdge(const edgeDesc& ed);
 
   private:

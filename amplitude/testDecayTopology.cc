@@ -51,6 +51,8 @@
 #include "isobarDecayVertex.h"
 #include "isobarDecayTopology.h"
 
+#include "test.hpp"
+
 
 using namespace std;
 using namespace rpwa;
@@ -78,12 +80,12 @@ main(int argc, char** argv)
   printSvnVersion();
 
   // switch on debug output
-  // particle::setDebug(true);
+  particle::setDebug(true);
   graphType::setDebug(true);
   decayTopologyGraphType::setDebug(true);
   decayTopology::setDebug(true);
-  // interactionVertex::setDebug(true);
-  // diffractiveDissVertex::setDebug(true);
+  interactionVertex::setDebug(true);
+  diffractiveDissVertex::setDebug(true);
   isobarDecayVertex::setDebug(true);
   isobarDecayTopology::setDebug(true);
 
@@ -264,15 +266,16 @@ main(int argc, char** argv)
 
     {
       cout << endl << "testing cloning" << endl;
-      isobarDecayTopology topo3 = *topo2.clone();
-      isobarDecayVertexPtr v = topo3.isobarDecayVertices()[0];
-      particlePtr          p = v->inParticles()[0];
+      isobarDecayTopology  topo3 = *topo2.clone();
+      isobarDecayVertexPtr v     = topo3.isobarDecayVertices()[0];
+      particlePtr          p     = v->inParticles()[0];
       v->setL(2);
       v->setS(2);
       cout << *p << endl;
       p->setG(-1);
       p->setCharge(-1);
       p->setC(1);
+      //topo3.checkTopology();
       //topo3.checkConsistency();
       cout << topo3;
       decayTopologyGraphType::nodeIterator iNode, iNodeEnd;
@@ -310,6 +313,9 @@ main(int argc, char** argv)
     {
       cout << endl << "testing subdecays and merge" << endl;
       isobarDecayTopology subDecay1 = topo2.subDecay(2);
+      subDecay1.decayTopologyGraphType::printPointers(cout);
+      subDecay1.decayTopology::print(cout);
+      subDecay1.checkTopology();
       cout << "subdecay from node[2]: " << subDecay1;
       const isobarDecayTopology& subDecay2 = topo2.subDecay(1);
       cout << "subdecay from node[1]: " << subDecay2;

@@ -82,9 +82,9 @@ main(int argc, char** argv)
   if (0) {
     TVector3 mom;
     mom = TVector3(1, 2, 3);
-    const particle p1("pi+", 0,  0, mom);
+    const particle p1("pi+", 0,  0, 0, mom);
     mom = TVector3(2, 3, 4);
-    const particle p2("pi-", 1, -1, mom);
+    const particle p2("pi-", 1, -1, 0, mom);
     particle p3 = p2;
     p3.setName("X+");
     p3.setSpinProj(+1);

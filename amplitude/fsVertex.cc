@@ -77,7 +77,10 @@ fsVertex::clone(const bool cloneInParticles,
   fsVertex* vertexClone = new fsVertex(*this);
   if (cloneInParticles)
     vertexClone->cloneInParticles();
-  return vertexClone;
+  if (_debug)
+    printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+	      << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles" << std::endl;
+ return vertexClone;
 }
 
 
