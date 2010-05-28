@@ -308,10 +308,14 @@ particle::q0() const
   child++;
   const particle& child2 = *child;
   const double    Msq    = Mass() * Mass();
+  //!!! this is wrong! q_0 should be a constant and should not depend
+  //!!! on the actual but on the nominal masses of the daughters
   const double    m1sq   = child1.get4P().lenSq();
   const double    m2sq   = child2.get4P().lenSq();
+  // const double    m1sq   = child1.Mass() * child1.Mass();
+  // const double    m2sq   = child2.Mass() * child2.Mass();
   const double    lam    = lambda(Msq, m1sq, m2sq);
-  return sqrt(fabs(lam / (4 * Msq)));
+  return sqrt(fabs(lam / (4 * Msq)));  // the fabs is probably wrong
 }
 
 
