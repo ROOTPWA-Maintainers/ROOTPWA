@@ -189,8 +189,9 @@ endif()
 # generate list of ROOT libraries
 if(ROOT_FOUND)
 
-  # create list from root-config output
+  # create list of internal libraries from root-config output
   set(_LIBRARY_NAMES)
+  set(_EXTERNAL_ZLIB)
   separate_arguments(ROOT_LIBRARIES)
   # remove first -L entry
   list(REMOVE_AT ROOT_LIBRARIES 0)
@@ -198,7 +199,13 @@ if(ROOT_FOUND)
   foreach(_LIBRARY ${ROOT_LIBRARIES})
     # extract library name from compiler flag and append to list
     string(REGEX REPLACE "^-.(.*)$" "\\1" _LIBNAME "${_LIBRARY}")
-    list(APPEND _LIBRARY_NAMES ${_LIBNAME})
+    # workaround for root-config inconsistency: if ROOT is built with --disable-builtin-zlib
+    # root-config returns the flag for the external zlib together with the internal libraries
+    if(_LIBNAME STREQUAL "z")
+      set(_EXTERNAL_ZLIB "-lz")
+    else()
+      list(APPEND _LIBRARY_NAMES ${_LIBNAME})
+    endif()
   endforeach()
 
   # append components
@@ -221,8 +228,12 @@ if(ROOT_FOUND)
     endif()
   endforeach()
 
-  # append aux libs
+  # create list of external libraries from root-config output
   separate_arguments(ROOT_AUX_LIBRARIES)
+  # append external zlib to auxiliary libraries
+  if(_EXTERNAL_ZLIB)
+    list(APPEND ROOT_AUX_LIBRARIES ${_EXTERNAL_ZLIB})
+  endif()
   # loop over -l entries
   foreach(_LIBRARY ${ROOT_AUX_LIBRARIES})
     # extract library name from compiler flag
