@@ -1,6 +1,6 @@
 #///////////////////////////////////////////////////////////////////////////
 #//
-#//    Copyright 2009 Sebastian Neubert
+#//    Copyright 2010
 #//
 #//    This file is part of rootpwa
 #//
@@ -18,51 +18,54 @@
 #//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 #//
 #///////////////////////////////////////////////////////////////////////////
+#//-------------------------------------------------------------------------
+#// File and Version Information:
+#// $Rev::                             $: revision of last commit
+#// $Author::                          $: author of last commit
+#// $Date::                            $: date of last commit
+#//
+#// Description:
+#//      build file for pwa library and amplitude executables
+#//
+#//
+#// Author List:
+#//      Sebastian Neubert    TUM            (original author)
+#//
+#//
+#//-------------------------------------------------------------------------
 
-PROJECT(rootpwa)
 
-SET(INCLUDE_DIRECTORIES
+set(CMAKE_CXX_FLAGS   "-O2 -Wall")
+set(CMAKE_CXX_LDFLAGS "-O2")
+
+
+# set include directories
+set(INCLUDE_DIRECTORIES
   ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
+include_directories(${INCLUDE_DIRECTORIES})
 
-INCLUDE_DIRECTORIES(${INCLUDE_DIRECTORIES})
 
-SET(SOURCES
+# source files that are compiled into library
+set(SOURCES
   integral.cc
   keyParse.cc
   keyfile.cc
   keyScan.cc
   wave.cc
-  #keyScan.ll
-  #keyParse.yy
   Tgamp.cc
 )
-	    
-SET(MYFLAGS "-O2 -Wall")
-
-SET(CMAKE_CXX_FLAGS ${MYFLAGS})
-SET(CMAKE_CXX_LDFLAGS "-O2")
-
-#add libpp
-SET(ROOTPWA_LIB  "${LIBRARY_OUTPUT_PATH}")
-SET(PWA2000_LIBS "${ROOTPWA_LIB}/libpp.so")
-
-ADD_LIBRARY(pwa SHARED ${SOURCES})
 
 
-#-------------------------------------------------
-#------- Main executables ------------------------
-#-------------------------------------------------
+# library
+set(THIS_LIB "pwa")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+ ${LIBRARY_OUTPUT_PATH}/libpp.so
+)
 
-ADD_EXECUTABLE(gamp gamp.cc)
-TARGET_LINK_LIBRARIES(gamp pwa)
-TARGET_LINK_LIBRARIES(gamp ${PWA2000_LIBS})
 
-ADD_EXECUTABLE(vamp vamp.cc)
-TARGET_LINK_LIBRARIES(vamp pwa)
-TARGET_LINK_LIBRARIES(vamp ${PWA2000_LIBS})
-
-ADD_EXECUTABLE(int int.cc)
-TARGET_LINK_LIBRARIES(int pwa)
-TARGET_LINK_LIBRARIES(int ${PWA2000_LIBS})
+# executables
+make_executable(gamp gamp.cc ${THIS_LIB})
+make_executable(vamp vamp.cc ${THIS_LIB})
+make_executable(int  int.cc  ${THIS_LIB})

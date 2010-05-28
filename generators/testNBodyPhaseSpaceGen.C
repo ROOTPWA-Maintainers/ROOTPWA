@@ -24,6 +24,7 @@
 
 
 using namespace std;
+using namespace rpwa;
 
 
 const double gChargedPionMass = 0.13957018;  // charged pion rest mass [GeV/c^2] [PDG08]

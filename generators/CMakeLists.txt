@@ -1,6 +1,6 @@
 #///////////////////////////////////////////////////////////////////////////
 #//
-#//    Copyright 2009 Sebastian Neubert
+#//    Copyright 2010
 #//
 #//    This file is part of rootpwa
 #//
@@ -18,23 +18,36 @@
 #//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 #//
 #///////////////////////////////////////////////////////////////////////////
+#//-------------------------------------------------------------------------
+#// File and Version Information:
+#// $Rev::                             $: revision of last commit
+#// $Author::                          $: author of last commit
+#// $Date::                            $: date of last commit
+#//
+#// Description:
+#//      build file for RootPwaGen
+#//
+#//
+#// Author List:
+#//      Sebastian Neubert    TUM            (original author)
+#//
+#//
+#//-------------------------------------------------------------------------
 
-PROJECT(rootpwa)
 
-ENABLE_TESTING()
-
-SET(INCLUDE_DIRECTORIES
+# set include directories
+set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
-  $ENV{LIBCONFIG}/include
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
-  ${CMAKE_SOURCE_DIR}/src
-  ${CMAKE_SOURCE_DIR}/generators
+  ${LIBCONFIG_INCLUDE_DIR}
+  ${PWA2000_INCLUDE_DIR}
+  ${ROOTPWA_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
 include_directories(${INCLUDE_DIRECTORIES})
 
-SET(SOURCES
+
+# source files that are compiled into library
+set(SOURCES
   nBodyPhaseSpaceGen.cc
   TProductionAmp.cc
   TBWProductionAmp.cc
@@ -42,111 +55,28 @@ SET(SOURCES
   TDiffractivePhaseSpace.cc
 )
    
-#add ROOT lib
-#SET(ROOT_LIB $ENV{ROOTSYS}/lib)
-SET(ROOT_BIN $ENV{ROOTSYS}/bin)
-SET(ROOT_LIBS
-  ${ROOT_LIB}/libCore.so
-  ${ROOT_LIB}/libCint.so
-  ${ROOT_LIB}/libRIO.so
-  ${ROOT_LIB}/libNet.so
-  ${ROOT_LIB}/libHist.so
-  ${ROOT_LIB}/libGraf.so
-  ${ROOT_LIB}/libGraf3d.so
-  ${ROOT_LIB}/libGpad.so
-  ${ROOT_LIB}/libTree.so
-  ${ROOT_LIB}/libThread.so
-  ${ROOT_LIB}/libRint.so
-  ${ROOT_LIB}/libPostscript.so
-  ${ROOT_LIB}/libMatrix.so
-  ${ROOT_LIB}/libPhysics.so
-  ${ROOT_LIB}/libMathCore.so
-  ${ROOT_LIB}/libMinuit.so
-#  ${ROOT_LIB}/libMinuit2.so
-  libdl.so
-  libm.so
+
+# ROOT dictionary
+set(GEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
+root_generate_dictionary(
+  "${GEN_DICTIONARY}"
+  "${CMAKE_CURRENT_SOURCE_DIR};${ROOTPWA_INCLUDE_DIR}"
+  "nBodyPhaseSpaceGen.h"
+  "rootPwaGenLinkDef.h"
+)
+set(SOURCES ${SOURCES} ${GEN_DICTIONARY})
+
+
+# library
+set(THIS_LIB "RootPwaGen")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+  "${ROOT_LIBS}"
+  "${PWA2000_LIBS}"
+  "${ROOTPWA_LIBS}"
 )
 
-#add PWA lib
-SET(PWA_LIB ${LIBRARY_OUTPUT_PATH})
-SET(PWA_LIBS
-  ${PWA_LIB}/libpp.so
-  ${PWA_LIB}/libpwa.so
-)
 
-#add rootpwalib
-SET(ROOTPWA_LIB ${LIBRARY_OUTPUT_PATH})
-SET(ROOTPWA_LIBS ${ROOTPWA_LIB}/librootpwa.so)
-
-SET(LIBCONFIG_LIB $ENV{LIBCONFIG}/lib)
-SET(LIBCONFIG ${LIBCONFIG_LIB}/libconfig++.so)
-
-
-#-------------------------------------------------
-#------ Root Dictionary --------------------------
-#-------------------------------------------------
-
-FIND_PROGRAM(ROOT_CINT_EXECUTABLE
-  NAMES rootcint
-  PATHS ${ROOT_BIN}
-  NO_DEFAULT_PATH
-)
-
-ADD_CUSTOM_COMMAND(OUTPUT rootpwagenDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwagenDict.cc
-      COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwagenDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/src -I${CMAKE_SOURCE_DIR}/generators nBodyPhaseSpaceGen.h rootpwagenLinkDef.h)
-
-
-set(GEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwagenDict.cc)
-
-
-#-------------------------------------------------
-#------- The library ---- ------------------------
-#-------------------------------------------------
-
-SET(SOURCES
-  ${SOURCES}
-  ${GEN_DICTIONARY}
-)
-
-ADD_LIBRARY(rootpwagen SHARED ${SOURCES})
-
-TARGET_LINK_LIBRARIES(rootpwagen ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(rootpwagen ${PWA_LIBS})
-TARGET_LINK_LIBRARIES(rootpwagen ${ROOTPWA_LIBS})
-
-
-#-------------------------------------------------
-#------- Main executables ------------------------
-#-------------------------------------------------
-
-ADD_EXECUTABLE(genpw genpw.cc)
-TARGET_LINK_LIBRARIES(genpw ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(genpw ${PWA_LIBS})
-TARGET_LINK_LIBRARIES(genpw ${LIBCONFIG})
-TARGET_LINK_LIBRARIES(genpw rootpwagen)
-TARGET_LINK_LIBRARIES(genpw ${ROOTPWA_LIBS})
-
-ADD_EXECUTABLE(evtweight evtweight.cc)
-TARGET_LINK_LIBRARIES(evtweight ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(evtweight ${PWA_LIBS})
-TARGET_LINK_LIBRARIES(evtweight ${ROOTPWA_LIBS})
-
-ADD_EXECUTABLE(plotBWAmp plotBWAmp.cc)
-TARGET_LINK_LIBRARIES(plotBWAmp ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(plotBWAmp rootpwagen)
-
-
-#-------------------------------------------------
-#------- Install options -------------------------
-#-------------------------------------------------
-
-#INSTALL(FILES DESTINATION bin PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
-
-
-#-------------------------------------------------
-#------- Test Executables ------------------------
-#-------------------------------------------------
-
-#ADD_TEST(testBuild  ${CMAKE_BUILD_TOOL})
-#ADD_TEST(testPWAFit root ${CMAKE_CURRENT_SOURCE_DIR}/runTestNBodyPhaseSpaceGen.C)
+# executables
+make_executable(genpw     genpw.cc     ${THIS_LIB} "${LIBCONFIG_LIBS}")
+make_executable(evtweight evtweight.cc ${THIS_LIB})
+make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})

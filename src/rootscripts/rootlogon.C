@@ -37,7 +37,7 @@
   //gSystem->Load("libGX11TTF.so");
 
   // load ROOTPWA libraries
-  gSystem->Load("librootpwa.so");
+  gSystem->Load("libRootPwa.so");
   gSystem->AddIncludePath("-I$ROOTPWA/src");
 
   // basic tree routines
