@@ -467,7 +467,7 @@ isobarDecayTopology::print(ostream& out) const
   for (tie(iEd, iEdEnd) = edges(); iEd != iEdEnd; ++iEd) {
     const particlePtr part = particle(*iEd);
     out << "    edge[" << *iEd << "] = " << part->name();
-    const int fsIndex = fsParticleIndex(part);
+    const int fsIndex = fsParticlesIndex(part);
     if (fsIndex >= 0)
       out << "[" << fsIndex << "] (final state)";
     out << endl;

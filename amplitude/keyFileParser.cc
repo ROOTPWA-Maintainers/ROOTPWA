@@ -52,8 +52,8 @@ keyFileParser                keyFileParser::_instance;
 interactionVertexPtr         keyFileParser::_prodVert;
 vector<isobarDecayVertexPtr> keyFileParser::_decayVertices;
 vector<particlePtr>          keyFileParser::_fsParticles;
-bool                         keyFileParser::_useReflectivityBasis = false;
-bool                         keyFileParser::_boseSymmetrize       = false;
+bool                         keyFileParser::_useReflectivityBasis = true;
+bool                         keyFileParser::_boseSymmetrize       = true;
 bool                         keyFileParser::_debug                = false;
 
 
@@ -94,7 +94,7 @@ keyFileParser::parse(const string&           keyFileName,
   }
 
   // find wave options group
-  const Setting* waveOptionsKey = findGroup(*waveKey, "options");
+  const Setting* waveOptionsKey = findGroup(*waveKey, "options", false);
   if (waveOptionsKey) {
     if (waveOptionsKey->lookupValue("boseSymmetrize", _boseSymmetrize) and _debug)
       printInfo << "setting wave option 'boseSymmetrize' to "

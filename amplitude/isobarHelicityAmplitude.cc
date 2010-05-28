@@ -56,8 +56,8 @@ bool isobarHelicityAmplitude::_debug = false;
 
 isobarHelicityAmplitude::isobarHelicityAmplitude()
   : _decay               (),
-    _useReflectivityBasis(false),
-    _boseSymmetrize      (false)
+    _useReflectivityBasis(true),
+    _boseSymmetrize      (true)
 { }
 
 

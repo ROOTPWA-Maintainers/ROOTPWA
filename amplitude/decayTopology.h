@@ -104,7 +104,7 @@ namespace rpwa {
     bool isInteractionVertex(const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the interaction vertices
     bool isFsVertex         (const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the final state vertices
     bool isFsParticle       (const particlePtr&          part) const;  ///< returns whether given particle is one of the final state particles
-    int  fsParticleIndex    (const particlePtr&          part) const;  ///< returns index in final state particle array; -1 means particle is not a final state particle
+    int  fsParticlesIndex   (const particlePtr&          part) const;  ///< returns index of particle in final state particle array; -1 means particle is not a final state particle
 
     bool checkTopology   () const;                  ///< returns whether decay has the correct topology
     bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices

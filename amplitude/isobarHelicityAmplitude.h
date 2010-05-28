@@ -63,8 +63,8 @@ namespace rpwa {
 
     bool reflectivityBasis () const { return _useReflectivityBasis; }  ///< returns whether reflectivity basis is used
     bool boseSymmetrization() const { return _boseSymmetrize;       }  ///< returns whether Bose symmetrization is used
-    void enableReflectivityBasis (const bool flag) { _useReflectivityBasis = flag; }  ///< en/disables use of reflectivity basis
-    void enableBoseSymmetrization(const bool flag) { _boseSymmetrize       = flag; }  ///< en/disables use of Bose symmetrization
+    void enableReflectivityBasis (const bool flag = true) { _useReflectivityBasis = flag; }  ///< en/disables use of reflectivity basis
+    void enableBoseSymmetrization(const bool flag = true) { _boseSymmetrize       = flag; }  ///< en/disables use of Bose symmetrization
 
     static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
     

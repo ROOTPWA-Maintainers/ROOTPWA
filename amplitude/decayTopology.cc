@@ -229,7 +229,7 @@ decayTopology::isFsParticle(const particlePtr& part) const
 
 
 int
-decayTopology::fsParticleIndex(const particlePtr& part) const
+decayTopology::fsParticlesIndex(const particlePtr& part) const
 {
   for (unsigned int i = 0; i < _fsParticles.size(); ++i)
     if (part == _fsParticles[i])
@@ -399,27 +399,39 @@ decayTopology::checkTopology() const
 		<< "in list of incoming particles of vertex " << *toVert << endl;
   }
   // make sure final state indices make sense
+  // two cases are allowed:
+  // i)  all final state particles have indices at default value -1
+  // ii) all final state particles have an index != -1; the indices
+  // range from 0 to (number of final state particles - 1)
   // sort final state particles w.r.t. name
   map<string, vector<particlePtr> > fsPartSorted;
+  bool                              allIndicesAtDefault = true;
   for (unsigned int i = 0; i < _fsParticles.size(); ++i) {
     const particlePtr& part = _fsParticles[i];
     fsPartSorted[part->name()].push_back(part);
+    if (part->index() >= 0)
+      allIndicesAtDefault = false;
   }
-  for (map<string, vector<particlePtr> >::iterator i = fsPartSorted.begin();
-       i != fsPartSorted.end(); ++i) {
-    // sort particles of the same name by their index
-    vector<particlePtr>& parts = i->second;
-    sort(parts.begin(), parts.end(), rpwa::compareIndicesAsc);
-    // check indices
-    for (unsigned int j = 0; j < parts.size(); ++j)
-      if (parts[j]->index() != (int)j) {
-  	printWarn << "indices for final state particles '" << i->first << "' are not consecutive. "
-  		  << "expected index [" << j << "], found [" << parts[j]->index() << "]." << endl;
-  	topologyIsOkay = false;
-      } else if (_debug)
-  	printInfo << "success: final state particle '" << i->first << "' "
-  		  << "has expected index [" << j << "]" << endl;
-  }
+  if (allIndicesAtDefault) {
+    if (_debug)
+      printInfo << "success: all final state particles have default indices" << endl;
+  } else
+    for (map<string, vector<particlePtr> >::iterator i = fsPartSorted.begin();
+	 i != fsPartSorted.end(); ++i) {
+      // sort particles with same name by their index
+      vector<particlePtr>& parts = i->second;
+      sort(parts.begin(), parts.end(), rpwa::compareIndicesAsc);
+      // check that indices are consecutive and include all unmbers
+      // from 0 to (number of final state particles - 1)
+      for (unsigned int j = 0; j < parts.size(); ++j)
+	if (parts[j]->index() != (int)j) {
+	  printWarn << "indices for final state particles '" << i->first << "' are not consecutive. "
+		    << "expected index [" << j << "], found [" << parts[j]->index() << "]." << endl;
+	  topologyIsOkay = false;
+	} else if (_debug)
+	  printInfo << "success: final state particle '" << i->first << "' "
+		    << "has expected index [" << j << "]" << endl;
+    }
   if (_debug)
     printInfo << "decay topology " << ((topologyIsOkay) ? "passed" : "did not pass")
 	      << " all tests" << endl;
@@ -474,6 +486,15 @@ decayTopology::readData(const TClonesArray& prodKinParticles,
 			const TClonesArray& decayKinParticles,
 			const TClonesArray& decayKinMomenta)
 {
+  // two modes are supported:
+  // i) all final state particles have indices at default value -1: in
+  //    case there are more than one final state particles of the same
+  //    type, the momenta are assigned in the same order the particles
+  //    are stored in the final state particle array
+  // ii) all final state particles have an index != -1: the data are
+  //     assigned according to the indices of the particles
+  // in case only part of the final state particles have non-default
+  // indices, the result is undefined
   bool success = true;
   // set production kinematics
   // production vertex class has to implement readData()
@@ -502,10 +523,12 @@ decayTopology::readData(const TClonesArray& prodKinParticles,
     return false;
   // sort decay kinematics momenta w.r.t. particle name
   map<string, vector<const TVector3*> > fsMomenta;
+  map<string, int>                      countFsPart;  // index counter for partcles with default index
   for (int i = 0; i < nmbFsPart; ++i) {
     const string    name = ((TObjString*)decayKinParticles[i])->GetString().Data();
     const TVector3* mom  = (TVector3*)decayKinMomenta[i];
     fsMomenta[name].push_back(mom);
+    countFsPart[name] = 0;
   }
   // set decay kinematics
   _fsPartMomCache.resize(nmbFsParticles(), TVector3());
@@ -514,10 +537,12 @@ decayTopology::readData(const TClonesArray& prodKinParticles,
     const string       partName = part->name();
     map<string, vector<const TVector3*> >::const_iterator entry = fsMomenta.find(partName);
     if (entry != fsMomenta.end()) {
-      unsigned int partIndex = part->index();
-      if (partIndex < 0)
-      	partIndex = 0;
-      if (partIndex < entry->second.size()) {
+      int partIndex = part->index();
+      if (partIndex < 0) {
+      	partIndex = countFsPart[partName];
+	++countFsPart[partName];
+      }
+      if ((unsigned int)partIndex < entry->second.size()) {
       	if (_debug)
       	  printInfo << "setting momentum of final state particle " << partName << "["
 		    << partIndex << "] to " << *(entry->second[partIndex]) << " GeV" << endl;
