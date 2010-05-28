@@ -40,5 +40,5 @@
 
   gSystem->Load("libpp.so");
   gSystem->Load("libpwa.so");
-  gSystem->Load("librootpwaKey.so");
+  gSystem->Load("libRootPwaKey.so");
 }

@@ -14,95 +14,89 @@ class particle;
 
 
 class massDep {
-	public:
-		massDep() { }
-		virtual ~massDep() { }
-		virtual massDep* create() const = 0;
-		virtual massDep* clone() const = 0;
+public:
+  massDep() { }
+  virtual ~massDep() { }
+  virtual massDep* create() const = 0;
+  virtual massDep* clone() const = 0;
 
-		virtual void print() { std::cout << "massDep"; }
-		virtual std::complex<double> val(particle&) = 0;
-
+  virtual void print() { std::cout << "massDep"; }
+  virtual std::complex<double> val(const particle& p) = 0;
 };
 
 
-class breitWigner:public massDep {
-	public:
-		breitWigner() {;}
-		virtual ~breitWigner() {;}
-		breitWigner(const breitWigner&) {;}
-		// breitWigner& operator=(const breitWigner) {;}
-		breitWigner* create() const {return new breitWigner();}
-		breitWigner* clone() const {return new breitWigner(*this);}
+class breitWigner : public massDep {
+public:
+  breitWigner() { }
+  virtual ~breitWigner() { }
+  breitWigner(const breitWigner&) { }
+  breitWigner* create() const { return new breitWigner(); }
+  breitWigner* clone() const { return new breitWigner(*this); }
 
-		virtual void print() { std::cout << "breitWigner"; }
-		std::complex<double> val(particle&);
-
+  virtual void print() { std::cout << "breitWigner"; }
+  std::complex<double> val(const particle& p);
 };
 
-class flat:public massDep {
-	public:
-		flat() {;}
-		virtual ~flat() {;}
-		flat(const flat&) {;}
-		// flat& operator=(const flat) {;}
-		flat* create() const {return new flat();}
-		flat* clone() const {return new flat(*this);}
 
-		virtual void print() { std::cout << "flat"; }
-		std::complex<double> val(particle&);
+class flat : public massDep {
+public:
+  flat() { }
+  virtual ~flat() { }
+  flat(const flat&) { }
+  flat* create() const { return new flat(); }
+  flat* clone() const { return new flat(*this); }
 
+  virtual void print() { std::cout << "flat"; }
+  std::complex<double> val(const particle& p);
 };
+
 
 /** @brief AMP parameterization of pipi s-wave
  *  
  *  We have introduced a small modification by setting the off-diagonal 
  *  elements of the M-matrix to zero.
  */
-class AMP_M:public massDep {
+class AMP_M : public massDep {
 
-	protected:
-		int _Pmax;
-		int _Nmax;
-		matrix<std::complex<double> > _rho;
-		matrix<std::complex<double> > _M;
-		matrix<std::complex<double> > _T;
-		matrix<std::complex<double> > _f;
-		std::vector<matrix<std::complex<double> > > _a;
-		std::vector<matrix<std::complex<double> > > _c;
-		matrix<double> _sP;
+protected:
+  int _Pmax;
+  int _Nmax;
+  matrix<std::complex<double> > _rho;
+  matrix<std::complex<double> > _M;
+  matrix<std::complex<double> > _T;
+  matrix<std::complex<double> > _f;
+  std::vector<matrix<std::complex<double> > > _a;
+  std::vector<matrix<std::complex<double> > > _c;
+  matrix<double> _sP;
 
-	public:
-		int ves_sheet;
+public:
+  int ves_sheet;
 
-		AMP_M();
-		virtual ~AMP_M() {;}
-		AMP_M(const AMP_M&) {;}
-		// AMP_M& operator=(const AMP_M) {;}
-		virtual massDep* create() const {return new AMP_M();}
-		virtual massDep* clone() const {return new AMP_M(*this);}
+  AMP_M();
+  virtual ~AMP_M() { }
+  AMP_M(const AMP_M&) { }
+  virtual massDep* create() const { return new AMP_M(); }
+  virtual massDep* clone() const { return new AMP_M(*this); }
 
-		virtual void print() { std::cout << "AMP_M"; }
-		std::complex<double> val(particle&);
-
-
+  virtual void print() { std::cout << "AMP_M"; }
+  std::complex<double> val(const particle& p);
 };
+
 
 /** @brief old VES parameterization
  *
  *  Brute force subtraction of the f0(980)
  */ 
-class AMP_ves:public AMP_M {
-	public:
-		AMP_ves():AMP_M() {ves_sheet = 1;}
-		virtual ~AMP_ves() {;}
-		AMP_ves(const AMP_ves&) {;}
-		// AMP_ves& operator=(const AMP_ves) {;}
-		virtual massDep* create() const {return new AMP_ves();}
-		virtual massDep* clone() const {return new AMP_ves(*this);}
+class AMP_ves : public AMP_M {
+public:
+  AMP_ves() : AMP_M() { ves_sheet = 1; }
+  virtual ~AMP_ves() { }
+  AMP_ves(const AMP_ves&) { }
+  virtual massDep* create() const { return new AMP_ves(); }
+  virtual massDep* clone() const { return new AMP_ves(*this); }
 
-		virtual void print() { std::cout << "AMP_ves"; }
-		std::complex<double> val(particle&);
+  virtual void print() { std::cout << "AMP_ves"; }
+  std::complex<double> val(const particle& p);
 };
 
 
@@ -120,18 +114,16 @@ class AMP_ves:public AMP_M {
  * f0(975) pole excluded; coupling to KK zeroed; set C411=C422=0.
  * The largest effect from C411, zeroing of C422 looks insignificant.
  */ 
+class AMP_kach : public AMP_M {
+public:
+  AMP_kach();
+  virtual ~AMP_kach() { }
+  AMP_kach(const AMP_kach&) { }
+  virtual massDep* create() const { return new AMP_kach(); }
+  virtual massDep* clone() const { return new AMP_kach(*this); }
 
-class AMP_kach:public AMP_M {
-	public:
-		AMP_kach();
-		virtual ~AMP_kach() {;}
-		AMP_kach(const AMP_kach&) {;}
-		// AMP_ves& operator=(const AMP_ves) {;}
-		virtual massDep* create() const {return new AMP_kach();}
-		virtual massDep* clone() const {return new AMP_kach(*this);}
-
-		virtual void print() { std::cout << "AMP_kach"; }
-  //std::complex<double> val(particle&);
+  virtual void print() { std::cout << "AMP_kach"; }
+  //std::complex<double> val(const particle& p);
 };
 
 

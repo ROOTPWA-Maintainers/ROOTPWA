@@ -1,6 +1,6 @@
 #///////////////////////////////////////////////////////////////////////////
 #//
-#//    Copyright 2009 Sebastian Neubert
+#//    Copyright 2010
 #//
 #//    This file is part of rootpwa
 #//
@@ -18,22 +18,34 @@
 #//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 #//
 #///////////////////////////////////////////////////////////////////////////
+#//-------------------------------------------------------------------------
+#// File and Version Information:
+#// $Rev::                             $: revision of last commit
+#// $Author::                          $: author of last commit
+#// $Date::                            $: date of last commit
+#//
+#// Description:
+#//      build file for RootPwaTools library
+#//
+#//
+#// Author List:
+#//      Sebastian Neubert    TUM            (original author)
+#//
+#//
+#//-------------------------------------------------------------------------
 
-PROJECT(rootpwa)
 
-ENABLE_TESTING()
-
-
-SET(INCLUDE_DIRECTORIES
+# set include directories
+set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
-  ${CMAKE_SOURCE_DIR}/tools
+  ${PWA2000_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
-
 include_directories(${INCLUDE_DIRECTORIES})
 
-SET(SOURCES
+
+# source files that are compiled into library
+set(SOURCES
   TPDGEntry.cc
   TPDGDB.cc
   FSParticle.cc
@@ -41,108 +53,33 @@ SET(SOURCES
   NParticleEvent.cc
 )
    
-#add ROOT lib
-#SET(ROOT_LIB $ENV{ROOTSYS}/lib)
-SET(ROOT_BIN $ENV{ROOTSYS}/bin)
-SET(ROOT_LIBS
-  ${ROOT_LIB}/libCore.so
-  ${ROOT_LIB}/libCint.so
-  ${ROOT_LIB}/libRIO.so
-  ${ROOT_LIB}/libNet.so
-  ${ROOT_LIB}/libHist.so
-  ${ROOT_LIB}/libGraf.so
-  ${ROOT_LIB}/libGraf3d.so
-  ${ROOT_LIB}/libGpad.so
-  ${ROOT_LIB}/libTree.so
-  ${ROOT_LIB}/libThread.so
-  ${ROOT_LIB}/libRint.so
-  ${ROOT_LIB}/libPostscript.so
-  ${ROOT_LIB}/libMatrix.so
-  ${ROOT_LIB}/libPhysics.so
-  ${ROOT_LIB}/libMathCore.so
-  ${ROOT_LIB}/libMinuit.so
-  ${ROOT_LIB}/libMinuit2.so
-  libdl.so
-  libm.so)
 
-# define PWA libraries
-SET(PWA_LIB ${LIBRARY_OUTPUT_PATH})
-SET(PWA_LIBS ${PWA_LIB}/libpp.so
-             ${PWA_LIB}/libpwa.so)
-
-# add rootpwalib
-SET(ROOTPWA_LIB ${LIBRARY_OUTPUT_PATH})
-SET(ROOTPWA_LIBS ${ROOTPWA_LIB}/librootpwa.so)
+# ROOT dictionary
+set(TOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaToolsDict.cc)
+root_generate_dictionary(
+  "${TOOLS_DICTIONARY}"
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "TPDGEntry.h;TPDGDB.h"
+  "rootPwaToolsLinkDef.h"
+)
+set(SOURCES ${SOURCES} ${TOOLS_DICTIONARY})
 
 
-#-------------------------------------------------
-#------ Root Dictionary --------------------------
-#-------------------------------------------------
-
-FIND_PROGRAM(ROOT_CINT_EXECUTABLE
-  NAMES rootcint
-  PATHS ${ROOT_BIN}
-  NO_DEFAULT_PATH
- )
-
-ADD_CUSTOM_COMMAND(OUTPUT rootpwatoolsDict.h ${CMAKE_CURRENT_BINARY_DIR}/rootpwatoolsDict.cc
-      COMMAND ${ROOT_CINT_EXECUTABLE}
-      ARGS -f rootpwatoolsDict.cc -c -DHAVE_CONFIG_H -I${CMAKE_SOURCE_DIR}/tools -I$ENV{ROOTSYS}/include TPDGEntry.h TPDGDB.h rootpwatoolsLinkDef.h)
-
-
-set(TOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootpwatoolsDict.cc)
-
-#-------------------------------------------------
-#------- The library ---- ------------------------
-#-------------------------------------------------
-
-SET(SOURCES
-  ${SOURCES}
-  ${TOOLS_DICTIONARY}
+# library
+set(THIS_LIB "RootPwaTools")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+  "${ROOT_LIBS}"
+  "${PWA2000_LIBS}"
 )
 
-ADD_LIBRARY(rootpwatools SHARED ${SOURCES})
 
-TARGET_LINK_LIBRARIES(rootpwatools ${ROOT_LIBS})
-
-
-#-------------------------------------------------
-#------- Main executables ------------------------
-#-------------------------------------------------
-
-ADD_EXECUTABLE(addamp addamp.cc)
-
-ADD_EXECUTABLE(reflect reflect.cc)
-TARGET_LINK_LIBRARIES(reflect ${PWA_LIBS})
-
-ADD_EXECUTABLE(plotGampMassDep plotGampMassDep.cc)
-TARGET_LINK_LIBRARIES(plotGampMassDep ${PWA_LIBS})
-TARGET_LINK_LIBRARIES(plotGampMassDep ${ROOT_LIBS})
-
-ADD_EXECUTABLE(key2tex key2tex.cc)
-TARGET_LINK_LIBRARIES(key2tex ${ROOT_LIBS})
-
-ADD_EXECUTABLE(addisokey addisokey.cc)
-TARGET_LINK_LIBRARIES(addisokey ${ROOT_LIBS})
-
-ADD_EXECUTABLE(evt2tree evt2tree.cc)
-TARGET_LINK_LIBRARIES(evt2tree ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(evt2tree ${PWA_LIBS})
-
-ADD_EXECUTABLE(binevt binevt.cc)
-TARGET_LINK_LIBRARIES(binevt ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(binevt ${PWA_LIBS})
-
-ADD_EXECUTABLE(mutator mutator.cc)
-TARGET_LINK_LIBRARIES(mutator ${ROOT_LIBS})
-
-ADD_EXECUTABLE(getThresholds getThresholds.cc)
-TARGET_LINK_LIBRARIES(getThresholds ${ROOT_LIBS})
-TARGET_LINK_LIBRARIES(getThresholds ${PWA_LIBS})
-
-
-#-------------------------------------------------
-#------- Install options -------------------------
-#-------------------------------------------------
-
-INSTALL(FILES addamp key2tex reflect mutator addisokey DESTINATION bin PERMISSIONS OWNER_READ OWNER_EXECUTE GROUP_READ GROUP_EXECUTE)
+# executables
+make_executable(addamp          addamp.cc          ${THIS_LIB})
+make_executable(reflect         reflect.cc         ${THIS_LIB})
+make_executable(plotGampMassDep plotGampMassDep.cc ${THIS_LIB})
+make_executable(key2tex         key2tex.cc         ${THIS_LIB})
+make_executable(addisokey       addisokey.cc       ${THIS_LIB})
+make_executable(evt2tree        evt2tree.cc        ${THIS_LIB})
+make_executable(binevt          binevt.cc          ${THIS_LIB})
+make_executable(mutator         mutator.cc         ${THIS_LIB})
+make_executable(getThresholds   getThresholds.cc   ${THIS_LIB})

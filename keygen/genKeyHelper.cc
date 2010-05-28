@@ -81,26 +81,56 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
   gamp.reflect(true);
   vector<complex<double> > ampsRefl = gamp.Amp(keyFileName, dataFile);
   if (amps.size() != ampsRefl.size()) {
-    cerr << "different number of events for reflected and unmodified data." << endl;
+    printErr << "different number of events for reflected (" << ampsRefl.size() << ") "
+	     << "and unmodified data(" << amps.size() << ")." << endl;
     return false;
   }
+  dataFile.clear();
+  dataFile.seekg(0, ios::beg);
+  if (!dataFile.good()) {
+    printErr << "problems rereading data file." << endl;
+    return false;
+  }
+  gamp.reflect(false);
+  gamp.mirror(true);
+  vector<complex<double> > ampsMirr = gamp.Amp(keyFileName, dataFile);
+  if (amps.size() != ampsMirr.size()) {
+    printErr << "different number of events for mirrored (" << ampsMirr.size() << ") "
+	     << "and unmodified data(" << amps.size() << ")." << endl;
+    return false;
+  }
+
   printInfo << "comparing amplitudes of " << amps.size() << " events "
-	    << "with the amplitudes of the respective reflected events:" << endl;
+	    << "with the amplitudes of the respective reflected/mirrored events:" << endl;
+  printInfo << endl
+	    << "!NOTE: reflection and mirroring do _not_ take into account the intrinsic " << endl
+	    << "       parity P_intr of the final state. The sign change of the reflected" << endl
+	    << "       amplitude is given by -P_intr / refl, that of the mirrored events" << endl
+	    << "       by P * P_intr. check that this is really the case!" << endl;
   unsigned int countAmpRatioNotOk    = 0;
-  unsigned int countAmpEigenValNotOk = 0;
-  const int    reflEigenValue        = -1 / refl;  // reciprocal is important in case of baryons, where refl = +-i
+  //unsigned int countAmpEigenValNotOk = 0;
+  int          reflEigenValue        = 0;
+  //int          parityEigenValue      = 0;
+  if (refl != 0)
+    reflEigenValue = -1 / refl;  // reciprocal becomes important in case of baryons, where refl = +-i
+                                 // this case is not treated correctly yet
   for (unsigned int i = 0; i < amps.size(); ++i) {
-    cout << "    event " << i << ": " << endl;
+    cout << endl << "    event " << i << ": " << endl;
     const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
     ostringstream s;
     s.precision(nmbDigits);
     s.setf(ios_base::scientific, ios_base::floatfield);
     if (printAmp) {
-      s << "amp. = " << amps[i] << ", amp. refl. = " << ampsRefl[i];
-      cout << "        " << s.str() << endl;
+      s << "        amp.       = " << amps[i] << endl
+	<< "        amp. refl. = " << ampsRefl[i] << endl
+	<< "        amp. mirr. = " << ampsMirr[i] << endl;
+      cout << s.str();
     }
-    const double realPartRatio = (ampsRefl[i].real() != 0) ? amps[i].real() / ampsRefl[i].real() : 0;
-    const double imagPartRatio = (ampsRefl[i].real() != 0) ? amps[i].imag() / ampsRefl[i].imag() : 0;
+    const double realPartRatio     = (ampsRefl[i].real() != 0) ? amps[i].real() / ampsRefl[i].real() : 0;
+    const double imagPartRatio     = (ampsRefl[i].real() != 0) ? amps[i].imag() / ampsRefl[i].imag() : 0;
+    const double realPartRatioMirr = (ampsMirr[i].real() != 0) ? amps[i].real() / ampsMirr[i].real() : 0;
+    const double imagPartRatioMirr = (ampsMirr[i].real() != 0) ? amps[i].imag() / ampsMirr[i].imag() : 0;
+
     s.str("");
     s << "real part / real part refl. = "   << realPartRatio << ", "
       << "imag. part / imag. part refl. = " << imagPartRatio;
@@ -110,12 +140,30 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
       ampRatioOk = false;
       ++countAmpRatioNotOk;
     }
-    if (   ((realPartRatio != 0) && (realPartRatio / fabs(realPartRatio) != reflEigenValue))
-	|| ((imagPartRatio != 0) && (imagPartRatio / fabs(imagPartRatio) != reflEigenValue))) {
-      ampRatioOk = false;
-      ++countAmpEigenValNotOk;
-    }
+    // if (   ((realPartRatio != 0) && (realPartRatio / fabs(realPartRatio) != reflEigenValue))
+    // 	|| ((imagPartRatio != 0) && (imagPartRatio / fabs(imagPartRatio) != reflEigenValue))) {
+    //   ampRatioOk = false;
+    //   ++countAmpEigenValNotOk;
+    // }
     cout << "        " << s.str() << ((!ampRatioOk) ? " <!!!" : "") << endl;
+    
+    s.str("");
+    s << "real part / real part mirr. = "   << realPartRatioMirr << ", "
+      << "imag. part / imag. part mirr. = " << imagPartRatioMirr;
+    bool ampRatioOkMirr = true;
+    if (   (fabs(realPartRatioMirr) - 1 > precision)
+	|| (fabs(imagPartRatioMirr) - 1 > precision)) {
+      ampRatioOk = false;
+      ++countAmpRatioNotOk;
+    }
+    // if (   ((realPartRatioMirr != 0) && (realPartRatioMirr / fabs(realPartRatioMirr) != parityEigenValue))
+    // 	|| ((imagPartRatioMirr != 0) && (imagPartRatioMirr / fabs(imagPartRatioMirr) != parityEigenValue))) {
+    //   ampRatioOkMirr = false;
+    //   ++countAmpEigenValNotOk;
+    // }
+    cout << "        " << s.str() << ((!ampRatioOkMirr) ? " <!!!" : "") << endl;
+
+
   }
   bool returnVal = true;
   if (countAmpRatioNotOk == 0) {
@@ -127,15 +175,15 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
 	      << "differ by more than " << precision << endl;
     returnVal = false;
   }
-  if (countAmpEigenValNotOk == 0) {
-    printInfo << "all amplitudes have correct reflectivity eigenvalue of "
-	      << ((reflEigenValue > 0) ? "+" : "") << reflEigenValue << endl;
-  } else {
-    printWarn << "for " << countAmpEigenValNotOk << " amplitude(s) real and/or imaginary part "
-	      << "have a reflectivity eigenvalue different from "
-	      << ((reflEigenValue > 0) ? "+" : "") << reflEigenValue << endl;
-    returnVal = false;
-  }
+  // if (countAmpEigenValNotOk == 0) {
+  //   printInfo << "all amplitudes have correct reflectivity eigenvalue of "
+  // 	      << ((reflEigenValue > 0) ? "+" : "") << reflEigenValue << endl;
+  // } else {
+  //   printWarn << "for " << countAmpEigenValNotOk << " amplitude(s) real and/or imaginary part "
+  // 	      << "have a reflectivity eigenvalue different from "
+  // 	      << ((reflEigenValue > 0) ? "+" : "") << reflEigenValue << endl;
+  //   returnVal = false;
+  // }
   return returnVal;
 }
 

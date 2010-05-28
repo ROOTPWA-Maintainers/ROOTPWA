@@ -41,7 +41,7 @@
 #include <vector>
 #include <iostream>
 #include <string>
-
+#include <lorentz.h>
 
 class event;
 
@@ -67,14 +67,20 @@ public:
 
   // performs reflection through production plane
   static event reflectEvent  (const event& evIn);
+  static event mirrorEvent   (const event& evIn);
   void         reflect       (const bool   flag = true) { _reflect        = flag; }
+  void         mirror        (const bool   flag = true) { _mirror        = true; }
   void         suppressOutput(const bool   flag = true) { _suppressOutput = flag; }
 
 private:
 
   std::vector<std::string> _keyFileNames;
   bool                     _reflect;         // if true events are reflected through production plane
+  bool                     _mirror;         // if true events are parity-mirrored
   bool                     _suppressOutput;  // if true output from keyparse() is suppressed
+
+
+  static lorentzTransform toGottfriedJackson(const event& ev);
 
 };
 

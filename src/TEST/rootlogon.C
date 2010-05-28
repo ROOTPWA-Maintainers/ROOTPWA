@@ -1,6 +1,4 @@
 {
-gSystem->Load("libGX11TTF.so");
-
-gSystem->Load("librootpwa.so");
-
+  gSystem->Load("libGX11TTF.so");
+  gSystem->Load("libRootPwa.so");
 }

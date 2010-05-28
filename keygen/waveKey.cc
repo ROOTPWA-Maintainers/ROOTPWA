@@ -57,7 +57,8 @@ waveKey::waveKey(particleKey* mother,  // decay chain of mother particle
 		 const int    refl,    // reflectivity
 		 const int    I,       // isospin
 		 const int    G,       // G-parity
-		 const int    C)       // charge conjugation
+		 const int    C,       // charge conjugation
+		 const bool  doRefl)
   : _I           (I),
     _G           (G),
     _J           (J),
@@ -67,15 +68,18 @@ waveKey::waveKey(particleKey* mother,  // decay chain of mother particle
     _refl        (refl),
     _mother      (mother),
     _outputFormat("binary"),
-    _waveDebug   (0)
+    _waveDebug   (0),
+    _doReflectivity (doRefl)
 {
   assert(mother);
-  if(_M < 0) {
+  if(_refl==0)_doReflectivity=false;
+
+  if(_doReflectivity && _M < 0 ) {
     printWarn << "M = " << _M << " < 0 not allowed in reflectivity basis. "
 	      << "setting M = -M > 0" << endl;
     _M *= -1;
   }
-  if ((_refl != +1) && (_refl != -1)) { 
+  if (_doReflectivity && (_refl != +1) && (_refl != -1)) { 
     printErr << "reflectivity " << _refl << " does not make sense; must be +-1. aborting." << endl;
     throw;
   }
@@ -189,20 +193,27 @@ void
 waveKey::writeReflectivityBasisAmp(ostream&           out,
 				   const unsigned int offset) const
 {
-  const double theta = (_M == 0 ? 0.5 : 1 / sqrt(2));
-  indent(out, offset);
-  out << "# reflectivity eigenstate for epsilon = " << sign(_refl) << endl;
-  indent(out, offset);
-  out << maxPrecision(theta) << " * (" << endl;
-  setStateName(_J, _P, _M);
-  _mother->write(out, offset + 4);
-  const double factor = -(double)_refl * (double)_P * pow(-1, _J - _M);
-  indent(out, offset);
-  out << sign(factor) << endl;
-  setStateName(_J, _P, -_M);
-  _mother->write(out, offset + 4);
-  indent(out, offset);
-  out << ")" << endl;
+  if(_doReflectivity){
+    const double theta = (_M == 0 ? 0.5 : 1 / sqrt(2));
+    indent(out, offset);
+    out << "# reflectivity eigenstate for epsilon = " << sign(_refl) << endl;
+    indent(out, offset);
+    out << maxPrecision(theta) << " * (" << endl;
+    setStateName(_J, _P, _M);
+    _mother->write(out, offset + 4);
+    const double factor = -(double)_refl * (double)_P * pow(-1, _J - _M);
+    indent(out, offset);
+    out << sign(factor) << endl;
+    setStateName(_J, _P, -_M);
+    _mother->write(out, offset + 4);
+    indent(out, offset);
+    out << ")" << endl;
+  }
+  else {
+    indent(out, offset);
+    setStateName(_J, _P, _M);
+    _mother->write(out, offset + 4);
+  }
 }
 
 
@@ -210,7 +221,7 @@ waveKey::writeReflectivityBasisAmp(ostream&           out,
 void 
 waveKey::permuteFsParts(map<TString, vector<int> >&           fsPartIds,
 			map<TString, vector<int> >::iterator& thisPart,
-			const std::vector<const particleKey*> fsParts,
+			const vector<const particleKey*>      fsParts,
 			bool&                                 firstCall,
 			unsigned int&                         countTerm,
 			const unsigned int                    nmbCombinations,

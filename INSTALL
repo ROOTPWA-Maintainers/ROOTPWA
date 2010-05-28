@@ -13,9 +13,25 @@ ROOT:
   If you do not find libMinuit2.so or libMathMore.so in $ROOTSYS/lib then
   you probably need to re-configure ROOT with these options
 
-CMAKE:
-  CMake is a cross platform build system available from http://cmake.org/
-  Some help can also be found here: http://www.vtk.org/Wiki/CMake_FAQ
+
+CMake:
+  CMake is a cross platform build system available from
+  <http://cmake.org/>.  Some help can also be found here:
+  <http://www.vtk.org/Wiki/CMake_FAQ>. The minimum required version of
+  CMake is 2.8.0. If your linux distribution offers only outdated
+  packages you can compile CMake yourself:
+
+  1) Download the latest CMake release from
+     <http://www.cmake.org/cmake/resources/software.html>
+  2) Prepare installation
+     &> bootstrap --prefix=<install directory>
+     You can speed up things on multi-core machines using the
+     --parallel=<# of processes> option. If you plan to use the CMake
+     GUI you should set the --qt-gui flag
+  3) Compile CMake
+     &> make && make install
+  4) Add <install directory>/bin to your path or make an alias for cmake
+
 
 BNL PWA software PWA2000:
   pwa2000 is now part of the rootpwa repository. 
@@ -34,7 +50,6 @@ libconfig:
 
 	We will provide a copy of the package from 
 	http://sourceforge.net/projects/rootpwa/files/
-
 
 
 --- Building rootpwa:
