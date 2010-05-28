@@ -38,6 +38,8 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
+#include <complex>
 
 
 class TTree;
@@ -45,6 +47,10 @@ class TChain;
 
 
 namespace rpwa {
+
+
+  class isobarDecayTopology;
+  class isobarHelicityAmplitude;
 
 
   std::string particleNameFromGeantId(const int id,
@@ -78,6 +84,17 @@ namespace rpwa {
 			const std::string& decayKinParticlesLeafName = "decayKinParticles",
 			const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
 			const bool         debug                     = false);
+
+
+  long int processTree(TTree&                              tree,
+		       isobarDecayTopology&                decayTopo,
+		       const isobarHelicityAmplitude&      amplitude,
+		       std::vector<std::complex<double> >& ampValues,
+		       const std::string&                  prodKinParticlesLeafName  = "prodKinParticles",
+		       const std::string&                  prodKinMomentaLeafName    = "prodKinMomenta",
+		       const std::string&                  decayKinParticlesLeafName = "decayKinParticles",
+		       const std::string&                  decayKinMomentaLeafName   = "decayKinMomenta",
+		       const bool                          printProgress             = true);
 
 
 }  // namespace rpwa

@@ -66,6 +66,8 @@ keyFileParser::parse(const string&           keyFileName,
   _prodVert = interactionVertexPtr();
   _decayVertices.clear();
   _fsParticles.clear();
+  _useReflectivityBasis = true;
+  _boseSymmetrize       = true;
   if (topo)
     topo.reset();
   topo = isobarDecayTopologyPtr();  // null pointer
@@ -166,15 +168,15 @@ keyFileParser::findGroup(const Setting&     parent,
   // find field
   if (not parent.exists(groupName)) {
     if (mustExist)
-      printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "'"
-		<< "of key file '" << parent.getSourceFile() << "'." << endl;
+      printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
+		<< "of key file '" << parent.getSourceFile() << "'" << endl;
     return 0;
   }
   const Setting* groupKey = &parent[groupName];
   // check that it is a group
   if (not groupKey->isGroup()) {
-    printWarn << "'" << groupName << "' field in '" << parent.getPath() << "'"
-	      << "of key file '" << parent.getSourceFile() << "' is not a group." << endl;
+    printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
+	      << "of key file '" << parent.getSourceFile() << "' is not a group" << endl;
     return 0;
   }
   return groupKey;
@@ -189,22 +191,22 @@ keyFileParser::findList(const Setting&     parent,
   // find field
   if (not parent.exists(listName)) {
     if (mustExist)
-      printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "'"
-		<< "of key file '" << parent.getSourceFile() << "'." << endl;
+      printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
+		<< "of key file '" << parent.getSourceFile() << "'" << endl;
     return 0;
   }
   const Setting* listKey = &parent[listName];
   // check that it is a list
   if (not listKey->isList()) {
-    printWarn << "'" << listName << "' field in '" << parent.getPath() << "'"
+    printWarn << "'" << listName << "' field in '" << parent.getPath() << "' "
 	      << "of key file '" << parent.getSourceFile() << "' is not a list. "
 	      << "check that braces are correct." << endl;
     return 0;
   }
   // check that it is not empty
   if (listKey->getLength() < 1) {
-    printWarn << "list '" << listName << "' in '" << parent.getPath() << "'"
-	      << "of key file '" << parent.getSourceFile() << "' is empty." << endl;
+    printWarn << "list '" << listName << "' in '" << parent.getPath() << "' "
+	      << "of key file '" << parent.getSourceFile() << "' is empty" << endl;
     return 0;
   }
   return listKey;
@@ -229,7 +231,7 @@ keyFileParser::constructXParticle(const Setting& XQnKey,
   for (map<string, int>::iterator i = XQn.begin(); i != XQn.end(); ++i)
     if (not XQnKey.lookupValue(i->first, i->second)) {
       printWarn << "cannot find integer field '" << i->first << "in "
-		<< "'" << XQnKey.getPath() << "'." << endl;
+		<< "'" << XQnKey.getPath() << "'" << endl;
       success = false;
     }
   if (not success) {

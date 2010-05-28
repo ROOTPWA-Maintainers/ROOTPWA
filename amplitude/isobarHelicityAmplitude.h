@@ -66,20 +66,16 @@ namespace rpwa {
     void enableReflectivityBasis (const bool flag = true) { _useReflectivityBasis = flag; }  ///< en/disables use of reflectivity basis
     void enableBoseSymmetrization(const bool flag = true) { _boseSymmetrize       = flag; }  ///< en/disables use of Bose symmetrization
 
+    bool doParityTransform() const { return _doParityTransform; }  ///< returns whether parity inversion is performed on decay
+    bool doReflection     () const { return _doReflection;      }  ///< returns whether decay is reflected through production plane
+    void enableParityTransform(const bool flag = true) { _doParityTransform = flag; }  ///< en/disables parity inversion of decay
+    void enableReflection     (const bool flag = true) { _doReflection      = flag; }  ///< en/disables reflection of decay through production plane
+
     static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
     
     static TLorentzRotation gjTransform(const TLorentzVector& beamLv,
 					const TLorentzVector& XLv);  ///< constructs Lorentz-transformation to X Gottfried-Jackson frame
     
-    void transformDaughters() const;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
-
-    std::complex<double> twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
-					       const bool                  topVertex) const;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
-    
-    std::complex<double> twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
-						  const bool                  topVertex = false) const;  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
-    std::complex<double> boseSymmetrizedAmp() const;  ///< performs Bose symmetrization
-
     std::complex<double> amplitude()   const;                         ///< computes amplitude
     std::complex<double> operator ()() const { return amplitude(); }  ///< computes amplitude
 
@@ -91,6 +87,18 @@ namespace rpwa {
 
   private:
 
+    void parityTransformDecay() const;  ///< performs parity inversion on all decay three-momenta
+    void reflectDecay        () const;  ///< performs reflection through production plane on all decay three-momenta
+
+    void transformDaughters() const;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
+
+    std::complex<double> twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
+					       const bool                  topVertex) const;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
+    
+    std::complex<double> twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
+						  const bool                  topVertex = false) const;  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
+    std::complex<double> boseSymmetrizedAmp() const;  ///< performs Bose symmetrization
+
     std::complex<double> sumBoseSymTerms(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
 					 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
 					 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< function that sums up amplitudes of all permutations of indistinguishable final state particles
@@ -99,6 +107,8 @@ namespace rpwa {
     isobarDecayTopologyPtr _decay;                 ///< isobar decay topology with all external information
     bool                   _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
     bool                   _boseSymmetrize;        ///< if set, amplitudes are Bose-symmetrized
+    bool                   _doParityTransform;     ///< is set, all three-momenta of the decay particles are parity transformed for test purposes
+    bool                   _doReflection;          ///< is set, all three-momenta of the decay particles are reflected through production plane for test purposes
     
     static bool _debug;  ///< if set to true, debug messages are printed
     

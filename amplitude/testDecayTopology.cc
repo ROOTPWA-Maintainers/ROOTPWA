@@ -51,8 +51,6 @@
 #include "isobarDecayVertex.h"
 #include "isobarDecayTopology.h"
 
-#include "test.hpp"
-
 
 using namespace std;
 using namespace rpwa;

@@ -49,6 +49,8 @@
 
 #include "pputil.h"
 #include "particleDataTable.h"
+#include "isobarDecayTopology.h"
+#include "isobarHelicityAmplitude.h"
 #include "utilities.h"
 
 
@@ -335,6 +337,68 @@ namespace rpwa {
 
     printInfo << "wrote " << nmbEvents << " events to output stream" << endl;
     return true;
+  }
+
+
+  bool
+  processTree(TTree&                         tree,
+	      isobarDecayTopology&           decayTopo,
+	      const isobarHelicityAmplitude& amplitude,
+	      vector<complex<double> >&      ampValues,
+	      const string&                  prodKinParticlesLeafName,
+	      const string&                  prodKinMomentaLeafName,
+	      const string&                  decayKinParticlesLeafName,
+	      const string&                  decayKinMomentaLeafName,
+	      const bool                     printProgress)
+  {
+    // create branch pointers and leaf variables
+    TBranch*      prodKinParticlesBr  = 0;
+    TBranch*      prodKinMomentaBr    = 0;
+    TBranch*      decayKinParticlesBr = 0;
+    TBranch*      decayKinMomentaBr   = 0;
+    TClonesArray* prodKinParticles    = 0;
+    TClonesArray* prodKinMomenta      = 0;
+    TClonesArray* decayKinParticles   = 0;
+    TClonesArray* decayKinMomenta     = 0;
+	
+    // connect leaf variables to tree branches
+    tree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
+    tree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
+    tree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
+    tree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
+
+    // loop over events
+    const long int nmbEvents = tree.GetEntries();
+    bool           success   = true;
+    for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+      if (printProgress)
+	progressIndicator(eventIndex, nmbEvents);
+      
+      if (tree.LoadTree(eventIndex) < 0)
+	break;
+      // read only required branches
+      prodKinParticlesBr->GetEntry (eventIndex);
+      prodKinMomentaBr->GetEntry   (eventIndex);
+      decayKinParticlesBr->GetEntry(eventIndex);
+      decayKinMomentaBr->GetEntry  (eventIndex);
+
+      if (   not prodKinParticles  or not prodKinMomenta
+	  or not decayKinParticles or not decayKinMomenta) {
+	printWarn << "at least one of the input data arrays is a null pointer: "
+		  << "        production kinematics: particle names = " << prodKinParticles << ", "
+		  << "momenta = " << prodKinMomenta << endl
+		  << "        decay kinematics:      particle names = " << decayKinParticles << ", "
+		  << "momenta = " << decayKinMomenta << endl
+		  << "skipping event." << endl;
+	success = false;
+	continue;
+      }
+
+      if (decayTopo.readData(*prodKinParticles,  *prodKinMomenta,
+			     *decayKinParticles, *decayKinMomenta))
+	ampValues.push_back(amplitude());
+    }
+    return success;
   }
 
 

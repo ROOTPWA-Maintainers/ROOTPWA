@@ -49,6 +49,7 @@
 #include "TClonesArray.h"
 #include "TStopwatch.h"
 
+#include "svnVersion.h"
 #include "utilities.h"
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
@@ -80,77 +81,13 @@ usage(const string& progName,
 }
 
 
-long int
-processTree(TTree&                         tree,
-	    const isobarDecayTopologyPtr&  decayTopo,
-	    const isobarHelicityAmplitude& amplitude,
-	    ostream&                       ampFile,
-	    const bool                     asciiOutput,
-	    const string&                  prodKinParticlesLeafName  = "prodKinParticles",
-	    const string&                  prodKinMomentaLeafName    = "prodKinMomenta",
-	    const string&                  decayKinParticlesLeafName = "decayKinParticles",
-	    const string&                  decayKinMomentaLeafName   = "decayKinMomenta",
-	    const bool                     debug                     = false)
-{
-  // create branch pointers and leaf variables
-  TBranch*      prodKinParticlesBr  = 0;
-  TBranch*      prodKinMomentaBr    = 0;
-  TBranch*      decayKinParticlesBr = 0;
-  TBranch*      decayKinMomentaBr   = 0;
-  TClonesArray* prodKinParticles    = 0;
-  TClonesArray* prodKinMomenta      = 0;
-  TClonesArray* decayKinParticles   = 0;
-  TClonesArray* decayKinMomenta     = 0;
-	
-  // connect leaf variables to tree branches
-  tree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
-  tree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
-  tree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
-  tree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
-
-  // loop over events
-  const long int nmbEvents   = tree.GetEntries();
-  long int       countEvents = 0;
-  for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-    progressIndicator(eventIndex, nmbEvents);
-      
-    if (tree.LoadTree(eventIndex) < 0)
-      break;
-    // read only required branches
-    prodKinParticlesBr->GetEntry (eventIndex);
-    prodKinMomentaBr->GetEntry   (eventIndex);
-    decayKinParticlesBr->GetEntry(eventIndex);
-    decayKinMomentaBr->GetEntry  (eventIndex);
-
-    if (   not prodKinParticles  or not prodKinMomenta
-	or not decayKinParticles or not decayKinMomenta) {
-      printWarn << "at least one of the input data arrays is a null pointer: "
-		<< "        production kinematics: particle names = " << prodKinParticles << ", "
-		<< "momenta = " << prodKinMomenta << endl
-		<< "        decay kinematics:      particle names = " << decayKinParticles << ", "
-		<< "momenta = " << decayKinMomenta << endl
-		<< "skipping event." << endl;
-      continue;
-    }
-
-    if (decayTopo->readData(*prodKinParticles,  *prodKinMomenta,
-			    *decayKinParticles, *decayKinMomenta)) {
-      const complex<double> amp = amplitude();
-      if (asciiOutput)
-	ampFile  << setprecision(numeric_limits<double>::digits10 + 1) << amp << endl;
-      else
-	ampFile.write((char*)(&amp), sizeof(complex<double>));
-      ++countEvents;
-    }
-  }
-  return countEvents;
-}
-
-
 int
 main(int    argc,
      char** argv)
 {
+  printCompilerInfo();
+  printSvnVersion();
+
   // parse command line options
   const string progName     = argv[0];
   string       keyFileName  = "";
@@ -194,7 +131,7 @@ main(int    argc,
 
   // get input file names
   if (optind >= argc) {
-    printErr << "you need to specify at least one data file to process. exiting." << endl;;
+    printErr << "you need to specify at least one data file to process. aborting." << endl;;
     usage(progName, 1);
   }
   vector<string> rootFileNames;
@@ -211,7 +148,7 @@ main(int    argc,
   }
 
   if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
-    printErr << "specified input files are neither .root nor .evt files. exiting.";
+    printErr << "specified input files are neither .root nor .evt files. aborting.";
     usage(progName, 1);
   }
 
@@ -275,14 +212,14 @@ main(int    argc,
 
   // parse key file and create decay topology and amplitude instances
   if (keyFileName == "") {
-    printErr << "no key file specified. exiting." << endl;
+    printErr << "no key file specified. aborting." << endl;
     usage(progName, 1);
   }
   keyFileParser&         parser = keyFileParser::instance();
   isobarDecayTopologyPtr decayTopo;
   if (not parser.parse(keyFileName, decayTopo)) {
     printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
-	     << "exiting." << endl;
+	     << "aborting." << endl;
     exit(1);
   }
   printInfo << *decayTopo;
@@ -296,15 +233,15 @@ main(int    argc,
 	    << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
   ofstream ampFile(ampFileName.c_str());
   if (!ampFile) {
-    printErr << "cannot create amplitude file '" << ampFileName << "'. exiting." << endl;
+    printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
     exit(1);
   }
 
-  // read data from tree(s), calculate amplitudes, and write them to output file
+  // read data from tree(s), calculate amplitudes
   TStopwatch timer;
   timer.Reset();
   timer.Start();
-  long int countEvents = 0;
+  vector<complex<double> > ampValues;
   for (unsigned int i = 0; i < trees.size(); ++i) {
     printInfo << "processing ";
     if (chain and (i == 0)) 
@@ -312,16 +249,25 @@ main(int    argc,
     else
       cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
     cout << endl;
-    countEvents += processTree(*trees[i], decayTopo, amplitude, ampFile, asciiOutput,
-			       prodKinParticlesLeafName,  prodKinMomentaLeafName,
-			       decayKinParticlesLeafName, decayKinMomentaLeafName, debug);
+    if (not processTree(*trees[i], *decayTopo, amplitude, ampValues,
+			prodKinParticlesLeafName,  prodKinMomentaLeafName,
+			decayKinParticlesLeafName, decayKinMomentaLeafName))
+      printWarn << "problems reading tree" << endl;
   }
-  
+  printInfo << "successfully calculated amplitudes for " << ampValues.size() << " events" << endl;
   timer.Stop();
-  printInfo << "successfully calculated amplitudes for " << countEvents << " events and "
-	    << "wrote them to '" << ampFileName << "'" << endl;
   printInfo << "this job consumed: ";
   timer.Print();
+
+  // write amplitudes to output file
+  for (unsigned int i = 0; i < ampValues.size(); ++i)
+    if (asciiOutput)
+      ampFile  << setprecision(numeric_limits<double>::digits10 + 1) << ampValues[i] << endl;
+    else
+      ampFile.write((char*)(&ampValues[i]), sizeof(complex<double>));
+  printInfo << "successfully wrote " << ampValues.size() << " amplitude values to "
+	    << "'" << ampFileName << "' in " << ((asciiOutput) ? "ASCII" : "binary")
+	    << " mode" << endl;
 
   // clean up
   for (unsigned int i = 0; i < trees.size(); ++i)

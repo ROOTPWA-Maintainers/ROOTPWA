@@ -57,7 +57,9 @@ bool isobarHelicityAmplitude::_debug = false;
 isobarHelicityAmplitude::isobarHelicityAmplitude()
   : _decay               (),
     _useReflectivityBasis(true),
-    _boseSymmetrize      (true)
+    _boseSymmetrize      (true),
+    _doParityTransform   (false),
+    _doReflection        (false)
 { }
 
 
@@ -164,8 +166,25 @@ isobarHelicityAmplitude::gjTransform(const TLorentzVector& beamLv,
 
 
 void
+isobarHelicityAmplitude::parityTransformDecay() const
+{
+}
+
+
+void
+isobarHelicityAmplitude::reflectDecay() const
+{
+}
+
+
+void
 isobarHelicityAmplitude::transformDaughters() const
 {
+  // modify event for testing purposes
+  if (_doParityTransform)
+    parityTransformDecay();
+  if (_doReflection)
+    reflectDecay();
   // calculate Lorentz-vectors of all isobars
   _decay->calcIsobarLzVec();
   // calculate Lorentz-transformations into the correct frames for the
