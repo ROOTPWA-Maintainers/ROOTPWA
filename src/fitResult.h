@@ -199,6 +199,8 @@ namespace rpwa {
     inline std::ostream& printWaves       (std::ostream& out = std::cout) const;  ///< prints all wave intensities and their errors
     std::ostream& printAmpsGenPW(std::ostream& out = std::cout) const;
 
+
+
     virtual inline std::ostream& print(std::ostream& out = std::cout) const;
     friend std::ostream& operator << (std::ostream&    out,
 				      const fitResult& result) { return result.print(out); }
@@ -403,8 +405,6 @@ namespace rpwa {
     } 
     return s;
   }
-
-
 
 
   /// dumps all raw data stored in object
