@@ -230,8 +230,6 @@ namespace rpwa {
       ++countEvents;
       if ((maxNmbEvents > 0) && (countEvents >= maxNmbEvents))
 	break;
-      if (debug)
-	cout << endl;
     }
 
     printInfo << "read " << countLines << " lines from input stream and wrote "

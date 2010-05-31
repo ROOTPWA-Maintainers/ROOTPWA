@@ -58,7 +58,7 @@ isobarHelicityAmplitude::isobarHelicityAmplitude()
   : _decay               (),
     _useReflectivityBasis(true),
     _boseSymmetrize      (true),
-    _doParityTransform   (false),
+    _doSpaceInversion    (false),
     _doReflection        (false)
 { }
 
@@ -166,14 +166,40 @@ isobarHelicityAmplitude::gjTransform(const TLorentzVector& beamLv,
 
 
 void
-isobarHelicityAmplitude::parityTransformDecay() const
+isobarHelicityAmplitude::spaceInvertDecay() const
 {
+  // transform final state particles into X rest frame
+  const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
+  const TLorentzVector&  XLv     = _decay->xIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
+  _decay->transformFsParticles(gjTrans);
+  // perform parity transformation on final state particles in X rest frame
+  for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
+    const particlePtr&    part     = _decay->fsParticles()[i];
+    const TLorentzVector& fsPartLv = part->lzVec();
+    part->setLzVec(TLorentzVector(-fsPartLv.Vect(), fsPartLv.E()));
+  }
+  // transform final state particles back to lab frame
+  _decay->transformFsParticles(gjTrans.Inverse());
 }
 
 
 void
 isobarHelicityAmplitude::reflectDecay() const
 {
+  // transform final state particles into X rest frame
+  const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
+  const TLorentzVector&  XLv     = _decay->xIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
+  _decay->transformFsParticles(gjTrans);
+  // reflect final state particles through production plane
+  for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
+    const particlePtr&    part     = _decay->fsParticles()[i];
+    const TLorentzVector& fsPartLv = part->lzVec();
+    part->setLzVec(TLorentzVector(fsPartLv.X(), -fsPartLv.Y(), -fsPartLv.Z(), fsPartLv.E()));
+  }
+  // transform final state particles back to lab frame
+  _decay->transformFsParticles(gjTrans.Inverse());
 }
 
 
@@ -181,8 +207,8 @@ void
 isobarHelicityAmplitude::transformDaughters() const
 {
   // modify event for testing purposes
-  if (_doParityTransform)
-    parityTransformDecay();
+  if (_doSpaceInversion)
+    spaceInvertDecay();
   if (_doReflection)
     reflectDecay();
   // calculate Lorentz-vectors of all isobars

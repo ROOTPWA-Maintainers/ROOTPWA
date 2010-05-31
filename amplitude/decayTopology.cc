@@ -200,6 +200,44 @@ decayTopology::nmbIndistFsParticles() const
 }
 
 
+int
+decayTopology::fsParticlesIntrinsicParity() const
+{
+  // calculate product of final state particles
+  int intrinsicParity = 1;
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i)
+    intrinsicParity *= fsParticles()[i]->P();
+  return intrinsicParity;
+}
+
+
+int
+decayTopology::spaceInvEigenValue() const
+{
+  const particlePtr& X = xInteractionVertex()->inParticles()[0];
+  // parity of X is P = P_spatial * P_intrinsic; we want to know P_spatial
+  return X->P() / fsParticlesIntrinsicParity();
+}
+
+
+int
+decayTopology::reflectionEigenValue() const
+{
+  const particlePtr& X = xInteractionVertex()->inParticles()[0];
+  // reflectivity eigenvalue of X is r = -1 / refl = r_spatial * P_intrinsic
+  // -> r_spatial = r / P_intrinsic = -1 / (refl * P_intrinsic)
+  return -1 / (X->reflectivity() * fsParticlesIntrinsicParity()) ;
+}
+
+
+void
+decayTopology::transformFsParticles(const TLorentzRotation& L)
+{
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i)
+    fsParticles()[i]->transform(L);
+}
+
+
 bool
 decayTopology::isInteractionVertex(const interactionVertexPtr& vert) const
 {
@@ -221,8 +259,8 @@ decayTopology::isFsVertex(const interactionVertexPtr& vert) const
 bool
 decayTopology::isFsParticle(const particlePtr& part) const
 {
-  for (unsigned int i = 0; i < _fsParticles.size(); ++i)
-    if (part == _fsParticles[i])
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i)
+    if (part == fsParticles()[i])
       return true;
   return false;
 }
@@ -231,8 +269,8 @@ decayTopology::isFsParticle(const particlePtr& part) const
 int
 decayTopology::fsParticlesIndex(const particlePtr& part) const
 {
-  for (unsigned int i = 0; i < _fsParticles.size(); ++i)
-    if (part == _fsParticles[i])
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i)
+    if (part == fsParticles()[i])
       return i;
   return -1;
 }
@@ -251,7 +289,7 @@ decayTopology::checkTopology() const
       topologyIsOkay = false;
       continue;
     }
-    if (vert != _prodVertex)  // incoming particles of production vertex have no edges
+    if (not isProductionVertex(vert))  // incoming particles of production vertex have no edges
       for (unsigned int i = 0; i < vert->nmbInParticles(); ++i)
 	if (not isEdge(vert->inParticles()[i])) {
 	  printWarn << "incoming particle[" << i << "] of " << *vert
@@ -270,7 +308,7 @@ decayTopology::checkTopology() const
 		  << " has associated edge" << endl;
   }
   // check production vertex
-  if (not _prodVertex) {
+  if (not productionVertex()) {
     printWarn << "production vertex is null pointer" << endl;
     topologyIsOkay = false;
   } else {
@@ -293,9 +331,9 @@ decayTopology::checkTopology() const
   }
   // make sure that all nodes are reachable from top node
   vector<nodeDesc> sortedNds;
-  unsigned int     nmbVertices = _intVertices.size() + _fsParticles.size();
-  if (_prodVertex) {
-    sortedNds = sortNodesDfs(node(_prodVertex));
+  unsigned int     nmbVertices = nmbInteractionVertices() + nmbFsParticles();
+  if (productionVertex()) {
+    sortedNds = sortNodesDfs(node(productionVertex()));
     ++nmbVertices;
   } else {
     nodeDesc topNd = topNode();
@@ -310,8 +348,8 @@ decayTopology::checkTopology() const
   } else if (_debug)
     printInfo << "success: all nodes are reachable from top node" << endl;
   // make sure all interaction vertices have corresponding nodes
-  for (unsigned int i = 0; i < _intVertices.size(); ++i) {
-    const interactionVertexPtr& vert = _intVertices[i];
+  for (unsigned int i = 0; i < nmbInteractionVertices(); ++i) {
+    const interactionVertexPtr& vert = interactionVertices()[i];
     if (not vert) {
       printWarn << "interaction vertex[" << i << "] is null pointer" << endl;
       topologyIsOkay = false;
@@ -335,8 +373,8 @@ decayTopology::checkTopology() const
 		<< " has at least 1 outgoing and 1 incoming edge" << endl;
   }
   // make sure all final state particles have corresponding edges
-  for (unsigned int i = 0; i < _fsParticles.size(); ++i) {
-    const particlePtr& part = _fsParticles[i];
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    const particlePtr& part = fsParticles()[i];
     if (not part) {
       printWarn << "final state particle[" << i << "] is null pointer" << endl;
       topologyIsOkay = false;
@@ -406,8 +444,8 @@ decayTopology::checkTopology() const
   // sort final state particles w.r.t. name
   map<string, vector<particlePtr> > fsPartSorted;
   bool                              allIndicesAtDefault = true;
-  for (unsigned int i = 0; i < _fsParticles.size(); ++i) {
-    const particlePtr& part = _fsParticles[i];
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    const particlePtr& part = fsParticles()[i];
     fsPartSorted[part->name()].push_back(part);
     if (part->index() >= 0)
       allIndicesAtDefault = false;
@@ -472,7 +510,7 @@ void decayTopology::setProductionVertex(const interactionVertexPtr& productionVe
     // topology does not have production vertex -> create graph node
     addVertex(productionVertex);
   } else {
-    // delete existsing production vertex -> update graph node
+    // delete existing production vertex -> update graph node
     vertex(node(_prodVertex)) = productionVertex;
     _prodVertex.reset();
   }
@@ -609,14 +647,14 @@ decayTopology::print(ostream& out) const
 {
   // print nodes
   out << "decay topology '" << name() << "' has " << nmbNodes() << " node(s):" << endl;
-  if (_prodVertex)
-    out << "    production  node[" << node(_prodVertex) << "] = " << _prodVertex << ": "
-	<< *_prodVertex << endl;
+  if (productionVertex())
+    out << "    production  node[" << node(productionVertex()) << "] = " << productionVertex() << ": "
+	<< *productionVertex() << endl;
   else
     out << "    topology has no production node." << endl;
   for (unsigned int i = 0; i < nmbInteractionVertices(); ++i)
-    out << "    interaction node[" << node(_intVertices[i]) << "] = " << _intVertices[i] << ": "
-	<< *_intVertices[i] << endl;
+    out << "    interaction node[" << node(interactionVertices()[i]) << "] = " << interactionVertices()[i] << ": "
+	<< *interactionVertices()[i] << endl;
   nodeIterator iNd, iNdEnd;
   for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd)
     if (isFsVertex(vertex(*iNd)))
@@ -820,8 +858,8 @@ decayTopology::cloneNode(const nodeDesc& nd,
   if (isProductionVertex(vert))
     _prodVertex = newVert;
   else if (isInteractionVertex(vert))
-    for (unsigned int i = 0; i < _intVertices.size(); ++i)
-      if (vert == _intVertices[i])
+    for (unsigned int i = 0; i < nmbInteractionVertices(); ++i)
+      if (vert == interactionVertices()[i])
 	_intVertices[i] = newVert;
   return newVert;
 }
@@ -834,8 +872,8 @@ decayTopology::cloneEdge(const edgeDesc& ed)
   const particlePtr& newPart = decayTopologyGraphType::cloneEdge(ed);
   // update member variable
   if (isFsParticle(part))
-    for (unsigned int i = 0; i < _fsParticles.size(); ++i)
-      if (part == _fsParticles[i])
+    for (unsigned int i = 0; i < nmbFsParticles(); ++i)
+      if (part == fsParticles()[i])
   	_fsParticles[i] = newPart;
   return newPart;
 }

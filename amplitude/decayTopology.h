@@ -52,6 +52,8 @@
 #include <vector>
 #include <map>
 
+#include "TLorentzRotation.h"
+
 #include "particle.h"
 #include "interactionVertex.h"
 #include "fsVertex.h"
@@ -94,11 +96,17 @@ namespace rpwa {
     unsigned int nmbFsParticles        () const { return _fsParticles.size(); }  ///< returns number of final state particles
     std::map<std::string, unsigned int> nmbIndistFsParticles() const;  ///< returns multiplicities of indistinguishable final state particles
 
+    int fsParticlesIntrinsicParity() const;  ///< returns intrinsic parity of final state particles
+    int spaceInvEigenValue()         const;  ///< returns eigenvalue of decay under space inversion
+    int reflectionEigenValue()       const;  ///< returns eigenvalue of decay under reflection through production plane
+
     const std::vector<particlePtr>&          fsParticles        () const { return _fsParticles; }  ///< returns final state particles ordered depth-first
     const std::vector<interactionVertexPtr>& interactionVertices() const { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
 
     const interactionVertexPtr& productionVertex  () const { return _prodVertex;     }  ///< returns production vertex
     const interactionVertexPtr& xInteractionVertex() const { return _intVertices[0]; }  ///< returns X-decay vertex
+
+    void transformFsParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to all final state particles
 
     bool isProductionVertex (const interactionVertexPtr& vert) const { return (vert == _prodVertex); }  ///< returns whether given vertex is the production vertex
     bool isInteractionVertex(const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the interaction vertices
