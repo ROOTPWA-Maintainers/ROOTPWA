@@ -292,11 +292,11 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
     return 0;
 
   // calculate D-function
-  const int       Lambda  = mother->spinProj();
-  const int       P       = mother->P();
-  const int       refl    = mother->reflectivity();
-  const double    phi     = daughter1->lzVec().Phi();  // use daughter1 as analyzer
-  const double    theta   = daughter1->lzVec().Theta();
+  const int       Lambda = mother->spinProj();
+  const int       P      = mother->P();
+  const int       refl   = mother->reflectivity();
+  const double    phi    = daughter1->lzVec().Phi();  // use daughter1 as analyzer
+  const double    theta  = daughter1->lzVec().Theta();
   complex<double> DFunc;
   if (topVertex and _useReflectivityBasis)
     DFunc = DFuncConjRefl(J, Lambda, lambda, P, refl, phi, theta, _debug);

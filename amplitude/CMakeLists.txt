@@ -80,8 +80,10 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 
 
 # executables
-make_executable(calcAmplitudes         calcAmplitudes.cc         ${THIS_LIB})
-make_executable(checkKeyFile           checkKeyFile.cc           ${THIS_LIB})
+make_executable(calcAmplitudes calcAmplitudes.cc ${THIS_LIB})
+make_executable(checkKeyFile   checkKeyFile.cc   ${THIS_LIB})
+make_executable(ampDiff        ampDiff.cc        ${THIS_LIB})
+
 make_executable(testParticle           testParticle.cc           ${THIS_LIB})
 make_executable(testDecayTopology      testDecayTopology.cc      ${THIS_LIB})
 make_executable(testDecayCombinatorics testDecayCombinatorics.cc ${THIS_LIB})
