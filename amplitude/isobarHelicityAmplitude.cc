@@ -64,6 +64,10 @@ isobarHelicityAmplitude::isobarHelicityAmplitude()
 
 
 isobarHelicityAmplitude::isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay)
+  : _useReflectivityBasis(true),
+    _boseSymmetrize      (true),
+    _doSpaceInversion    (false),
+    _doReflection        (false)
 {
   setDecayTopology(decay);
 }
@@ -106,7 +110,7 @@ isobarHelicityAmplitude::amplitude() const
     // transform daughters into their respective RFs
     transformDaughters();
     // calculate amplitude
-    amp = twoBodyDecayAmplitudeSum(_decay->xIsobarDecayVertex(), true);
+    amp = twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
   }
   return amp;
 }
@@ -168,9 +172,11 @@ isobarHelicityAmplitude::gjTransform(const TLorentzVector& beamLv,
 void
 isobarHelicityAmplitude::spaceInvertDecay() const
 {
+  if (_debug)
+    printInfo << "space inverting final state momenta." << endl;
   // transform final state particles into X rest frame
   const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->xIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->mother()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   _decay->transformFsParticles(gjTrans);
   // perform parity transformation on final state particles in X rest frame
@@ -187,9 +193,11 @@ isobarHelicityAmplitude::spaceInvertDecay() const
 void
 isobarHelicityAmplitude::reflectDecay() const
 {
+  if (_debug)
+    printInfo << "reflecting final state momenta through production plane." << endl;
   // transform final state particles into X rest frame
   const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->xIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->mother()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   _decay->transformFsParticles(gjTrans);
   // reflect final state particles through production plane
@@ -206,13 +214,19 @@ isobarHelicityAmplitude::reflectDecay() const
 void
 isobarHelicityAmplitude::transformDaughters() const
 {
-  // modify event for testing purposes
-  if (_doSpaceInversion)
-    spaceInvertDecay();
-  if (_doReflection)
-    reflectDecay();
   // calculate Lorentz-vectors of all isobars
   _decay->calcIsobarLzVec();
+  // modify event for testing purposes
+  if (_doSpaceInversion) {
+    spaceInvertDecay();
+    // recalculate Lorentz-vectors of all isobars
+    _decay->calcIsobarLzVec();
+  }
+  if (_doReflection) {
+    reflectDecay();
+    // recalculate Lorentz-vectors of all isobars
+    _decay->calcIsobarLzVec();
+  }
   // calculate Lorentz-transformations into the correct frames for the
   // daughters in the decay vertices
   // 1) transform daughters of all decay vertices into Gottfried-Jackson frame
@@ -220,7 +234,7 @@ isobarHelicityAmplitude::transformDaughters() const
   //    this should be solved in a more general way so that the production vertex is asked
   //    for the beam
   const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->xIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->mother()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   for (unsigned int i = 0; i < _decay->nmbInteractionVertices(); ++i) {
     const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
@@ -259,16 +273,26 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
 
-  // calculate normalization factor
-  const int    L    = vertex->L();
-  const double norm = normFactor(L, _debug);
+  // calculate Clebsch-Gordan coefficient for L-S coupling
+  const int    L         = vertex->L();
+  const int    S         = vertex->S();
+  const int    J         = mother->J();
+  const int    lambda1   = daughter1->spinProj();
+  const int    lambda2   = daughter2->spinProj();
+  const int    lambda    = lambda1 - lambda2;
+  const double lsClebsch = cgCoeff(L, 0, S, lambda, J, lambda, _debug);
+  if (lsClebsch == 0)
+    return 0;
+
+  // calculate Clebsch-Gordan coefficient for S-S coupling
+  const int    s1        = daughter1->J();
+  const int    s2        = daughter2->J();
+  const double ssClebsch = cgCoeff(s1, lambda1, s2, -lambda2, S, lambda, _debug);
+  if (ssClebsch == 0)
+    return 0;
 
   // calculate D-function
-  const int       J       = mother->J();
   const int       Lambda  = mother->spinProj();
-  const int       lambda1 = daughter1->spinProj();
-  const int       lambda2 = daughter2->spinProj();
-  const int       lambda  = lambda1 - lambda2;
   const int       P       = mother->P();
   const int       refl    = mother->reflectivity();
   const double    phi     = daughter1->lzVec().Phi();  // use daughter1 as analyzer
@@ -279,25 +303,15 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
   else
     DFunc = DFuncConj(J, Lambda, lambda, phi, theta, _debug);
 
-  // calculate Clebsch-Gordan coefficient for L-S coupling
-  const int    S         = vertex->S();
-  const double lsClebsch = cgCoeff(L, 0, S, lambda, J, lambda, _debug);
-  // if (lsClebsch == 0)
-  //   return 0;
-
-  // calculate Clebsch-Gordan coefficient for S-S coupling
-  const int    s1        = daughter1->J();
-  const int    s2        = daughter2->J();
-  const double ssClebsch = cgCoeff(s1, lambda1, s2, -lambda2, S, lambda, _debug);
-  // if (ssClebsch == 0)
-  //   return 0;
-
   // calulate barrier factor
   const double q  = daughter1->lzVec().Vect().Mag();
   const double bf = barrierFactor(L, q, _debug);
 
   // calculate Breit-Wigner
   const complex<double> bw = vertex->massDepAmplitude();
+
+  // calculate normalization factor
+  const double norm = normFactor(L, _debug);
 
   // calculate decay amplitude
   complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
@@ -349,7 +363,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& ve
       complex<double> motherAmp = twoBodyDecayAmplitude(vertex, topVertex);
       complex<double> amp       = motherAmp * daughter1Amp * daughter2Amp;
       if (_debug)
-	printInfo << "amplitude for : "
+	printInfo << "amplitude term for : "
 		  << mother->name()    << " [lambda = " << 0.5 * mother->spinProj() << "] -> "
 		  << daughter1->name() << " [lambda = " << 0.5 * lambda1 << "] + "
 		  << daughter2->name() << " [lambda = " << 0.5 * lambda2 << "] = "
@@ -374,8 +388,10 @@ isobarHelicityAmplitude::sumBoseSymTerms(const map<string, vector<unsigned int> 
   do {
     map<string, vector<unsigned int> >::iterator nextFsPartIndicesEntry = newFsPartIndicesEntry;
     if (++nextFsPartIndicesEntry != newFsPartIndices.end())
+      // recurse to other permutations
       amp += sumBoseSymTerms(origFsPartIndices, newFsPartIndices, nextFsPartIndicesEntry);
     else {
+      // build final state index map for this permutation
       vector<unsigned int> fsPartIndexMap(_decay->nmbFsParticles(), 0);
       if (_debug)
       	printInfo << "calculating amplitude for Bose term final state permutation ";
@@ -403,7 +419,7 @@ isobarHelicityAmplitude::sumBoseSymTerms(const map<string, vector<unsigned int> 
       // transform daughters into their respective RFs
       transformDaughters();
       // calculate amplitude
-      amp += twoBodyDecayAmplitudeSum(_decay->xIsobarDecayVertex(), true);
+      amp += twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
     }
   } while (next_permutation(newFsPartIndicesEntry->second.begin(),
 			    newFsPartIndicesEntry->second.end()));
@@ -449,10 +465,16 @@ isobarHelicityAmplitude::boseSymmetrizedAmp() const
 }
 
 
-void
-isobarHelicityAmplitude::setDebug(const bool debug)
+ostream&
+isobarHelicityAmplitude::print(ostream& out) const
 {
-  _debug = debug;
-  for (unsigned int i = 0; i < _decay->nmbInteractionVertices(); ++i)
-    _decay->isobarDecayVertices()[i]->massDependence()->setDebug(debug);
+  out << "isobar helicity amplitude: "
+      << *_decay
+      << "reflectivity basis : "            << ((_useReflectivityBasis) ? "en" : "dis") << "abled" << endl
+      << "Bose-symmetrization: "            << ((_boseSymmetrize)       ? "en" : "dis") << "abled" << endl
+      << "space inversion of FS momenta: "  << ((_doSpaceInversion)     ? "en" : "dis") << "abled" << endl
+      << "reflection through prod. plane: " << ((_doReflection)         ? "en" : "dis") << "abled" << endl;
+  return out;
 }
+
+

@@ -251,7 +251,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
     throw;
   }
   // order nodes depth-first
-  vector<nodeDesc> startNds = sortNodesDfs(xIsobarDecayVertex());
+  vector<nodeDesc> startNds = sortNodesDfs(XIsobarDecayVertex());
   // create decay topologies of all subdecays
   vector<isobarDecayTopology> subDecays(startNds.size());
   for (unsigned int i = 0; i < startNds.size(); ++i)
@@ -404,7 +404,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
   for (unsigned int i = 0; i < decays.size(); ++i) {
     // clone production vertex and set X-particle
     const interactionVertexPtr newProdVert(productionVertex()->clone(false, false));
-    const particlePtr&         newX = decays[i].xIsobarDecayVertex()->mother();
+    const particlePtr&         newX = decays[i].XIsobarDecayVertex()->mother();
     newProdVert->outParticles()[0] = newX;
     // add production vertex
     decays[i].setProductionVertex(newProdVert);
@@ -424,7 +424,7 @@ isobarDecayTopology::calcIsobarLzVec()
 		<< "of node[" << node(_isobarVertices[i]) << "]" << endl;
     _isobarVertices[i]->calcMotherLzVec();
   }
-  return xIsobarDecayVertex()->mother()->lzVec();
+  return XIsobarDecayVertex()->mother()->lzVec();
 }
 
 

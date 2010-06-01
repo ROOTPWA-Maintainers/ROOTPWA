@@ -76,7 +76,7 @@ namespace rpwa {
     virtual void clear();  ///< deletes all information
 
     const std::vector<isobarDecayVertexPtr>& isobarDecayVertices() const { return _isobarVertices;    }  ///< returns all isobar decay vertices ordered by depth-first; first vertex is X-decay vertex
-    const isobarDecayVertexPtr               xIsobarDecayVertex () const { return _isobarVertices[0]; }  ///< returns X-decay vertex
+    const isobarDecayVertexPtr               XIsobarDecayVertex () const { return _isobarVertices[0]; }  ///< returns X-decay vertex
 
     bool checkTopology   () const;  ///< returns whether decay has the correct topology
     bool checkConsistency() const;  ///< checks conservation rules on all vertices

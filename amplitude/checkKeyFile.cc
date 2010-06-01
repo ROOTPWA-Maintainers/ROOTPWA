@@ -53,6 +53,8 @@
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "keyFileParser.h"
+#include "isobarHelicityAmplitude.h"
+#include "massDependence.h"
 
 
 using namespace std;
@@ -69,9 +71,9 @@ usage(const string& progName,
        << "    where:" << endl
        << "        -d file    path to file with test data (.evt or ROOT format)" << endl
        << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-       << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)"
-       << "        -e #       maximum deviation of amplitude ratios from 1 (default: 1E-6)"
-       << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')"
+       << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
+       << "        -e #       maximum deviation of amplitude ratios from 1 (default: 1E-6)" << endl
+       << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
        << "        -v         verbose; print debug output (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
@@ -87,7 +89,7 @@ bool testAmplitude(TTree&          tree,
 		   const string&   decayKinParticlesLeafName = "decayKinParticles",
 		   const string&   decayKinMomentaLeafName   = "decayKinMomenta",
 		   const bool      debug                     = false,
-		   const double    maxDelta                 = 1e-6)
+		   const double    maxDelta                  = 1e-6)
 {
   // parse key file and create decay topology and amplitude instances
   keyFileParser&         parser = keyFileParser::instance();
@@ -115,7 +117,7 @@ bool testAmplitude(TTree&          tree,
   // construct amplitude
   isobarHelicityAmplitude amplitude(decayTopo);
   parser.setAmplitudeOptions(amplitude);
-  
+
   // read data from tree and calculate amplitudes
   vector<complex<double> > ampValues;
   if (not processTree(tree, *decayTopo, amplitude, ampValues,
@@ -295,6 +297,13 @@ main(int    argc,
     default:
       usage(progName);
     }
+
+  // set debug options
+  if (debug) {
+    keyFileParser::setDebug(true);
+    isobarHelicityAmplitude::setDebug(true);
+    massDependence::setDebug(true);
+  }
 
   // get key file names
   if (optind >= argc) {

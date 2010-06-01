@@ -76,7 +76,7 @@ namespace rpwa {
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
     
 
-  private:
+  protected:
     
     static bool _debug;  ///< if set to true, debug messages are printed
     
@@ -108,14 +108,6 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
-
-  private:
-    
-    static bool _debug;  ///< if set to true, debug messages are printed
-    
   };
 
 
@@ -144,14 +136,6 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
-
-  private:
-    
-    static bool _debug;  ///< if set to true, debug messages are printed
-    
   };
 
 
@@ -183,10 +167,6 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-
   protected:
 
     ublas::matrix<std::complex<double> >               _T;
@@ -200,11 +180,6 @@ namespace rpwa {
     double _kaonChargedMass;
     double _kaonNeutralMass;
     double _kaonMeanMass;
-
-
-  private:
-    
-    static bool _debug;  ///< if set to true, debug messages are printed
     
   };
 
@@ -236,14 +211,6 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-
-  private:
-
-    static bool _debug;  ///< if set to true, debug messages are printed
-    
   };
 
 
@@ -282,14 +249,6 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-
-  private:
-
-    static bool _debug;  ///< if set to true, debug messages are printed
-    
   };
 
 

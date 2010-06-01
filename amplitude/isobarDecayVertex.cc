@@ -163,11 +163,10 @@ isobarDecayVertex::checkMultiplicativeQn(const int     mQn,
 		<< " is consistent" << endl;
     return true;
   } else {
-    if (_debug)
-      printWarn << ((qnName == "") ? "multiplicative quantum number" : qnName) << " mismatch: "
-		<< mother()->name() << " = " << mQn << " != " << d1Qn * d2Qn  << " = "
-		<< "(" << daughter1()->name() << " = " << d1Qn << ") * "
-		<< "(" << daughter2()->name() << " = " << d2Qn << ")" << endl;
+    printWarn << ((qnName == "") ? "multiplicative quantum number" : qnName) << " mismatch: "
+	      << mother()->name() << " = " << mQn << " != " << d1Qn * d2Qn  << " = "
+	      << "(" << daughter1()->name() << " = " << d1Qn << ") * "
+	      << "(" << daughter2()->name() << " = " << d2Qn << ")" << endl;
     return false;
   }
 }
@@ -185,11 +184,10 @@ isobarDecayVertex::checkAdditiveQn(const int     mQn,
 		<< " is consistent" << endl;
     return true;
   } else {
-    if (_debug)
-      printWarn << ((qnName == "") ? "additive quantum number" : qnName) << " mismatch: "
-		<< mother()->name() << " = " << mQn << " != " << d1Qn + d2Qn  << " = "
-		<< "(" << daughter1()->name() << " = " << d1Qn << ") + "
-		<< "(" << daughter2()->name() << " = " << d2Qn << ")" << endl;
+    printWarn << ((qnName == "") ? "additive quantum number" : qnName) << " mismatch: "
+	      << mother()->name() << " = " << mQn << " != " << d1Qn + d2Qn  << " = "
+	      << "(" << daughter1()->name() << " = " << d1Qn << ") + "
+	      << "(" << daughter2()->name() << " = " << d2Qn << ")" << endl;
     return false;
   }
 }
@@ -207,22 +205,20 @@ isobarDecayVertex::checkConsistency()
   const int cParity = mother()->G() * (mother()->isospin() % 4 == 0 ? 1 : -1);
   if (cParity != mother()->C()) {
     vertexConsistent = false;
-    if (_debug)
-      printWarn << "C-parity mismatch: " << mother()->name() << " = " << mother()->C()
-		<< " != " << cParity  << " = "
-		<< "(" << mother()->G() << ")^" << mother()->isospin() << " = G^2I"<< endl;
+    printWarn << "C-parity mismatch: " << mother()->name() << " = " << mother()->C()
+	      << " != " << cParity  << " = "
+	      << "(" << mother()->G() << ")^" << mother()->isospin() << " = G^2I"<< endl;
   } else if (_debug)
     printInfo << *this << ": C-parity is consistent" << endl;
   // parity
   const int angMomParity = (_L % 4 == 0) ? 1 : -1;  // modulo 4 because L is in units of hbar / 2
   if (mother()->P() != daughter1()->P() * daughter2()->P() * angMomParity) {
-    if (_debug)
-      printWarn << "parity mismatch: "
-		<< mother()->name() << " = " << mother()->P() << " != "
-		<< daughter1()->P() * daughter2()->P() * angMomParity  << " = "
-		<< "(" << daughter1()->name() << " = " << daughter1()->P() << ") * "
-		<< "(" << daughter2()->name() << " = " << daughter2()->P() << ") * "
-		<< "(ang. momentum = " << angMomParity << ")" << endl;
+    printWarn << "parity mismatch: "
+	      << mother()->name() << " = " << mother()->P() << " != "
+	      << daughter1()->P() * daughter2()->P() * angMomParity  << " = "
+	      << "(" << daughter1()->name() << " = " << daughter1()->P() << ") * "
+	      << "(" << daughter2()->name() << " = " << daughter2()->P() << ") * "
+	      << "(ang. momentum = " << angMomParity << ")" << endl;
     vertexConsistent = false;
   } else if (_debug)
     printInfo << *this << ": parity is consistent" << endl;
@@ -245,40 +241,36 @@ isobarDecayVertex::checkConsistency()
   // check angular momentum like quantum numbers
   // spin coupling: S in {|s1 - s2|, ..., s1 + s2}
   if (!angMomCoupl(daughter1()->J(), daughter2()->J()).inRange(_S)) {
-    if(_debug)
-      printWarn << "spins "
-		<< "(" << daughter1()->name() << " J = " << daughter1()->J() * 0.5 << ") and "
-		<< "(" << daughter2()->name() << " J = " << daughter2()->J() * 0.5 << ") "
-		<< "cannot couple to total spin S = " << _S * 0.5 << endl;
+    printWarn << "spins "
+	      << "(" << daughter1()->name() << " J = " << daughter1()->J() * 0.5 << ") and "
+	      << "(" << daughter2()->name() << " J = " << daughter2()->J() * 0.5 << ") "
+	      << "cannot couple to total spin S = " << _S * 0.5 << endl;
     vertexConsistent = false;
   } else if (_debug)
     printInfo << *this << ": spin-spin coupling is consistent" << endl;
   // L-S coupling: J in {|L - S|, ..., L + S}
   if (!angMomCoupl(_L, _S).inRange(mother()->J())) {
-    if (_debug)
-      printWarn << "orbital angular momentum L = " << _L * 0.5 << " and spin S = " << _S * 0.5
-		<< " cannot couple to angular momentum J = " << mother()->J() * 0.5 << endl;
+    printWarn << "orbital angular momentum L = " << _L * 0.5 << " and spin S = " << _S * 0.5
+	      << " cannot couple to angular momentum J = " << mother()->J() * 0.5 << endl;
     vertexConsistent = false;
   } else if (_debug)
     printInfo << *this << ": L-S coupling is consistent" << endl;
   // isospin coupling: I in {|I_1 - I_2|, ..., I_1 + I_2}
   if (!angMomCoupl(daughter1()->isospin(), daughter2()->isospin()).inRange(mother()->isospin())) {
-    if (_debug)
-      printWarn << "isospins "
-		<< "(" << daughter1()->name() << " I = " << daughter1()->isospin() * 0.5 << ") and "
-		<< "(" << daughter2()->name() << " I = " << daughter2()->isospin() * 0.5 << ") "
-		<< "cannot couple to total isospin I = " << mother()->isospin() * 0.5 << endl;
+    printWarn << "isospins "
+	      << "(" << daughter1()->name() << " I = " << daughter1()->isospin() * 0.5 << ") and "
+	      << "(" << daughter2()->name() << " I = " << daughter2()->isospin() * 0.5 << ") "
+	      << "cannot couple to total isospin I = " << mother()->isospin() * 0.5 << endl;
     vertexConsistent = false;
   } else if (_debug)
     printInfo << *this << ": isospin coupling is consistent" << endl;
   //!!! missing: spin projections
-  if (_debug) {
-    if (vertexConsistent)
+  if (vertexConsistent) {
+    if (_debug)
       printInfo << "vertex data are consistent: " << *this << endl;
-    else
-      printWarn << "vertex data are inconsistent (see warnings above): "
-		<< *this << endl;
-  }
+  } else
+    printWarn << "vertex data are inconsistent (see warnings above): "
+	      << *this << endl;
   return vertexConsistent;
 }
 

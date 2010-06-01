@@ -60,9 +60,6 @@ massDependence::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool flatMassDependence::_debug = false;
-
-
 complex<double>
 flatMassDependence::amp(const isobarDecayVertex&)
 {
@@ -81,9 +78,6 @@ flatMassDependence::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool relativisticBreitWigner::_debug = false;
-
-
 complex<double>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
@@ -125,9 +119,6 @@ relativisticBreitWigner::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool piPiSWaveAuMorganPenningtonM::_debug = false;
-
-
 piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
   : massDependence(),
     _T       (2, 2),
@@ -246,9 +237,6 @@ piPiSWaveAuMorganPenningtonM::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool piPiSWaveAuMorganPenningtonVes::_debug = false;
-
-
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
   : piPiSWaveAuMorganPenningtonM()
 {
@@ -292,9 +280,6 @@ piPiSWaveAuMorganPenningtonVes::print(ostream& out) const
 
 
 ////////////////////////////////////////////////////////////////////////////////
-bool piPiSWaveAuMorganPenningtonKachaev::_debug = false;
-
-
 piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
   : piPiSWaveAuMorganPenningtonM()
 {
