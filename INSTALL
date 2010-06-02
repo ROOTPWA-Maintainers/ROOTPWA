@@ -31,7 +31,19 @@ CMake:
   3) Compile CMake
      &> make && make install
   4) Add <install directory>/bin to your path or make an alias for cmake
-
+  
+  or
+  
+  1) Download the latest CMake binary (.tar.gz) from
+  	<http://www.cmake.org/cmake/resources/software.html> 
+  	and unpack it to ~/bin/
+  2) add to your loginshell script (.bashrc or .bashprofile or ...)
+  	the path to the binary:
+  	
+	echo setting up cmake
+	export PATH=$HOME/bin/cmake-2.8.1-Linux-i386/bin:$PATH
+	
+	or make an alias for cmake
 
 BNL PWA software PWA2000:
   pwa2000 is now part of the rootpwa repository. 
