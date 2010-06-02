@@ -66,14 +66,14 @@ usage(const string& progName,
 {
   cerr << "usage:" << endl
        << progName
-       << " -k key file [-p PDG file -t tree name -o output file -a -l leaf names -v -h] input data file(s)" << endl
+       << " -k key file [-p PDG file -o output file -a -t tree name -l leaf names -v -h] input data file(s)" << endl
        << "    where:" << endl
        << "        -k file    path to key file" << endl
        << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-       << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)"
        << "        -o file    path to amplitude file (default: ./out.amp)" << endl
        << "        -a         write amplitudes in ASCII format (default: binary)" << endl
-       << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')"
+       << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
+       << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
        << "        -v         verbose; print debug output (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
@@ -92,16 +92,16 @@ main(int    argc,
   const string progName     = argv[0];
   string       keyFileName  = "";
   string       pdgFileName  = "./particleDataTable.txt";
-  string       inTreeName   = "rootPwaEvtTree";
   string       ampFileName  = "./out.amp";
   bool         asciiOutput  = false;
+  string       inTreeName   = "rootPwaEvtTree";
   string       leafNames    = "prodKinParticles;prodKinMomenta;"
                               "decayKinParticles;decayKinMomenta";
   bool         debug        = false;
   extern char* optarg;
   extern int   optind;
   int          c;
-  while ((c = getopt(argc, argv, "k:p:t:o:al:vh")) != -1)
+  while ((c = getopt(argc, argv, "k:p:o:at:l:vh")) != -1)
     switch (c) {
     case 'k':
       keyFileName = optarg;
@@ -109,14 +109,14 @@ main(int    argc,
     case 'p':
       pdgFileName = optarg;
       break;
-    case 't':
-      inTreeName = optarg;
-      break;
     case 'o':
       ampFileName = optarg;
       break;
     case 'a':
       asciiOutput = true;
+      break;
+    case 't':
+      inTreeName = optarg;
       break;
     case 'l':
       leafNames = optarg;
@@ -222,11 +222,11 @@ main(int    argc,
 	     << "aborting." << endl;
     exit(1);
   }
-  printInfo << *decayTopo;
   decayTopo->checkTopology();
   decayTopo->checkConsistency();
   isobarHelicityAmplitude amplitude(decayTopo);
   parser.setAmplitudeOptions(amplitude);
+  printInfo << amplitude;
   
   // create output file for amplitudes
   printInfo << "creating amplitude file '" << ampFileName << "'; "

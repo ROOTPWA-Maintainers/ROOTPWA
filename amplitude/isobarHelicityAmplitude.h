@@ -178,7 +178,7 @@ namespace rpwa {
       return 0;
     }
     const double               preFactor  = (m == 0 ? 0.5 : 1 / sqrt(2));
-    const double               reflFactor = -(double)refl * (double)P * pow(-1, j - m);
+    const double               reflFactor = (double)refl * (double)P * pow(-1, 0.5 * (j - m));
     const std::complex<double> DFunc     
       =  preFactor * (               DFuncConj(j,  m, n, phi, theta)
 		      - reflFactor * DFuncConj(j, -m, n, phi, theta));

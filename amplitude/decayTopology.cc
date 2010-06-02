@@ -224,11 +224,11 @@ int
 decayTopology::reflectionEigenValue() const
 {
   const particlePtr& X = XInteractionVertex()->inParticles()[0];
-  // reflectivity eigenvalue of X is r = -1 / refl = r_spatial * P_spatial (???)
-  // -> r_spatial = r / P_spatial = -1 / (refl * P_spatial)
+  // eigenvalue of reflection through production plane is r_spatial / P_intrinsic
+  // where r = -1 / refl is the reflectivity eiganvalue
+  return -1 / (X->reflectivity() * fsParticlesIntrinsicParity());
   //return -1 / (X->reflectivity() * spaceInvEigenValue());
-  //return -1 / (X->reflectivity() * fsParticlesIntrinsicParity());
-  return -1 / X->reflectivity();
+  //return -1 / X->reflectivity();
 }
 
 

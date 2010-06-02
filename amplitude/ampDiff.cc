@@ -138,12 +138,12 @@ main(int    argc,
   TH1D* hAmps1Im   = new TH1D("hAmps1Im",   "hAmps1Im;Event Number;#Jgothic[Amp 1]", nmbAmps, -0.5, nmbAmps - 0.5);
   TH1D* hAmps2Re   = new TH1D("hAmps2Re",   "hAmps2Re;Event Number;#Rgothic[Amp 2]", nmbAmps, -0.5, nmbAmps - 0.5);
   TH1D* hAmps2Im   = new TH1D("hAmps2Im",   "hAmps2Im;Event Number;#Jgothic[Amp 2]", nmbAmps, -0.5, nmbAmps - 0.5);
-  TH1D* hAbsDiffRe = new TH1D("hAbsDiffRe", "hAbsDiffRe;#Rgothic[Amp 1 - Amp 2];Count", 100000, -3e-7, 3e-7);
-  TH1D* hAbsDiffIm = new TH1D("hAbsDiffIm", "hAbsDiffIm;#Jgothic[Amp 1 - Amp 2];Count", 100000, -3e-7, 3e-7);
-  TH1D* hRelDiffRe = new TH1D("hRelDiffRe", "hRelDiffRe;(#Rgothic[Ampl 1] - #Rgothic[Ampl 2]) / #Rgothic[Ampl 1];Count", 100000, -3e-7, 3e-7);
-  TH1D* hRelDiffIm = new TH1D("hRelDiffIm", "hRelDiffIm;(#Jgothic[Ampl 1] - #Jgothic[Ampl 2]) / #Jgothic[Ampl 1];Count", 100000, -3e-7, 3e-7);
-  TH2D* hCorrRe    = new TH2D("hCorrRe",    "hCorrRe;#Rgothic[Amp 1];#Rgothic[Amp 2]", 1000, -2, 2, 1000, -2, 2);
-  TH2D* hCorrIm    = new TH2D("hCorrIm",    "hCorrIm;#Jgothic[Amp 1];#Jgothic[Amp 2]", 1000, -2, 2, 1000, -2, 2);
+  TH1D* hAbsDiffRe = new TH1D("hAbsDiffRe", "hAbsDiffRe;#Rgothic[Amp 1 - Amp 2];Count", 1000000, -1e-3, 1e-3);
+  TH1D* hAbsDiffIm = new TH1D("hAbsDiffIm", "hAbsDiffIm;#Jgothic[Amp 1 - Amp 2];Count", 1000000, -1e-3, 1e-3);
+  TH1D* hRelDiffRe = new TH1D("hRelDiffRe", "hRelDiffRe;(#Rgothic[Ampl 1] - #Rgothic[Ampl 2]) / #Rgothic[Ampl 1];Count", 1000000, -1e-2, 1e-2);
+  TH1D* hRelDiffIm = new TH1D("hRelDiffIm", "hRelDiffIm;(#Jgothic[Ampl 1] - #Jgothic[Ampl 2]) / #Jgothic[Ampl 1];Count", 1000000, -1e-2, 1e-2);
+  TH2D* hCorrRe    = new TH2D("hCorrRe",    "hCorrRe;#Rgothic[Amp 1];#Rgothic[Amp 2]", 5000, -5, 5, 5000, -5, 5);
+  TH2D* hCorrIm    = new TH2D("hCorrIm",    "hCorrIm;#Jgothic[Amp 1];#Jgothic[Amp 2]", 5000, -5, 5, 5000, -5, 5);
 
   // compare amplitudes
   double maxAbsDiff = 0;

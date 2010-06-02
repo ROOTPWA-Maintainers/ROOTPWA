@@ -83,8 +83,7 @@ main(int argc, char** argv)
   // decayTopology::setDebug(true);
   // isobarDecayTopology::setDebug(true);
   // isobarHelicityAmplitude::setDebug(true);
-  // flatMassDependence::setDebug(true);
-  // relativisticBreitWigner::setDebug(true);
+  // massDependence::setDebug(true);
   // diffractiveDissVertex::setDebug(true);
   keyFileParser::setDebug(true);
 
@@ -231,18 +230,35 @@ main(int argc, char** argv)
   }
 
   if (1) {
+    const long int maxNmbEvents   = 1;
+    const string   newKeyFileName = "test.key";
+    const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
+    const string   rootInFileName = "testEvents.root";
+    //const string   evtInFileName  = "testTree.evt";
+    const string   evtInFileName  = "testTree.evt.1";
+    // const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-0-+0+f0980_00_pi-.key";
+    // const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-0-+0+f0980_00_pi-.key";
+    // const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+rho770_01_pi-.key";
+    // const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+rho770_01_pi-.key";
+    // const string   newKeyFileName = "1-1++0+f21270_12_pi-.key.new";
+    // const string   oldKeyFileName = "1-1++0+f21270_12_pi-.key";
+    // // const string   rootInFileName = "testEvents.3pic.root";
+    // // const string   evtInFileName  = "testEvents.3pic.evt";
+    // const string   rootInFileName = "500.540.ps.root";
+    // const string   evtInFileName  = "500.540.ps.evt";
+
     keyFileParser&         parser = keyFileParser::instance();
     isobarDecayTopologyPtr topo;
-    if (parser.parse("test.key", topo)) {
-      printInfo << *topo;
+    if (parser.parse(newKeyFileName, topo)) {
       topo->checkTopology();
       topo->checkConsistency();
       isobarHelicityAmplitude amp(topo);
       parser.setAmplitudeOptions(amp);
+      // amp.enableReflectivityBasis(false);
+      // amp.enableBoseSymmetrization(false);
+      printInfo << amp;
 
       // read data from tree
-      const string&            inFileNamePattern         = "testEvents.root";
-      const long int           maxNmbEvents              = -1;
       const string&            inTreeName                = "rootPwaEvtTree";
       const string&            prodKinParticlesLeafName  = "prodKinParticles";
       const string&            prodKinMomentaLeafName    = "prodKinMomenta";
@@ -250,10 +266,10 @@ main(int argc, char** argv)
       const string&            decayKinMomentaLeafName   = "decayKinMomenta";
       vector<complex<double> > myAmps;
       // open input file
-      printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
+      printInfo << "opening input file(s) '" << rootInFileName << "'" << endl;
       TChain chain(inTreeName.c_str());
-      if (chain.Add(inFileNamePattern.c_str()) < 1) {
-	printWarn << "no events in input file(s) '" << inFileNamePattern << "'" << endl;
+      if (chain.Add(rootInFileName.c_str()) < 1) {
+	printWarn << "no events in input file(s) '" << rootInFileName << "'" << endl;
 	return false;
       }
       const long int nmbEventsChain = chain.GetEntries();
@@ -281,7 +297,6 @@ main(int argc, char** argv)
       timer.Reset();
       timer.Start();
       for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-	//for (long int eventIndex = 1; eventIndex < 2; ++eventIndex) {
 	progressIndicator(eventIndex, nmbEvents);
 	  
 	if (chain.LoadTree(eventIndex) < 0)
@@ -320,18 +335,17 @@ main(int argc, char** argv)
 	
       timer.Stop();
       printInfo << "successfully read " << myAmps.size() << " events from file(s) "
-		<< "'" << inFileNamePattern << "' and calculated amplitudes" << endl;
+		<< "'" << rootInFileName << "' and calculated amplitudes" << endl;
       cout << "needed ";
       timer.Print();
 
       vector<complex<double> > pwa2kAmps;
       if (1) {  // compare to PWA2000
 	PDGtable.initialize();
-	const string evtFileName = "testTree.evt";
-	ifstream     eventData(evtFileName.c_str());
+	ifstream     eventData(evtInFileName.c_str());
 	keyfile      key;
 	event        ev;
-	key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
+	key.open(oldKeyFileName);
 	ev.setIOVersion(1);
 	timer.Reset();
 	timer.Start();
@@ -343,11 +357,14 @@ main(int argc, char** argv)
 	}
 	timer.Stop();
 	printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
-		  << "'" << evtFileName << "' and calculated amplitudes" << endl;
+		  << "'" << evtInFileName << "' and calculated amplitudes" << endl;
 	cout << "needed ";
 	timer.Print();
 	printInfo << "myAmps[0] = " << myAmps[0] << " vs. pwa2kAmps[0] = " << pwa2kAmps[0] << ", "
-		  << "delta = " << myAmps[0] - pwa2kAmps[0] << endl;
+		  << "abs. delta = " << myAmps[0] - pwa2kAmps[0] << ", rel. delta = "
+		  << "(" << (myAmps[0].real() - pwa2kAmps[0].real()) / myAmps[0].real() << ", "
+		  << (myAmps[0].imag() - pwa2kAmps[0].imag()) / myAmps[0].imag() << ")"
+		  << endl;
 	
 	if (1) {
 	  const string outFileName = "testDiff.root";

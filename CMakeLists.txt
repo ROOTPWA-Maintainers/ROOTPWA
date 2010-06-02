@@ -232,8 +232,8 @@ add_dependencies(pwa          pp)
 add_dependencies(RootPwa      pp pwa)
 add_dependencies(RootPwaAmp   pp pwa)
 add_dependencies(RootPwaTools pp pwa)
-add_dependencies(RootPwaGen   pp pwa RootPwaTools)
-add_dependencies(RootPwaKey   pp pwa RootPwaTools)
+add_dependencies(RootPwaGen   pp pwa RootPwa)
+add_dependencies(RootPwaKey   pp pwa RootPwa)
 
 
 

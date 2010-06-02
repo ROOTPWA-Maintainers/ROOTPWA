@@ -283,17 +283,17 @@ bool
 keyFileParser::constructDecayVertex(const Setting&     parentKey,
 				    const particlePtr& parentParticle)
 {
-  bool                success = true;
-  vector<particlePtr> daughters;
+  bool success = true;
 
   if (_debug)
     printInfo << "reading final state particles from '" << parentKey.getPath() << "':" << endl;
-  const Setting* fsPartKeys = findList(parentKey, "fsParticles", false);
+  const Setting*      fsPartKeys = findList(parentKey, "fsParticles", false);
+  vector<particlePtr> fsDaughters;
   if (fsPartKeys)
     for (int i = 0; i < fsPartKeys->getLength(); ++i) {
       particlePtr p;
       if (constructParticle((*fsPartKeys)[i], p)) {
-	daughters.push_back   (p);
+	fsDaughters.push_back (p);
 	_fsParticles.push_back(p);
       }	else
 	success = false;
@@ -301,29 +301,25 @@ keyFileParser::constructDecayVertex(const Setting&     parentKey,
 
   if (_debug)
     printInfo << "reading isobars from '" << parentKey.getPath() << "':" << endl;
-  const Setting* isobarKeys = findList(parentKey, "isobars", false);
+  const Setting*      isobarKeys = findList(parentKey, "isobars", false);
+  vector<particlePtr> isobarDaughters;
   if (isobarKeys)
     for (int i = 0; i < isobarKeys->getLength(); ++i) {
       particlePtr p;
       if (constructParticle((*isobarKeys)[i], p))
-	daughters.push_back(p);
+	isobarDaughters.push_back(p);
       else
 	success = false;
-      success &= constructDecayVertex((*isobarKeys)[i], daughters.back());
+      success &= constructDecayVertex((*isobarKeys)[i], isobarDaughters.back());
     }
 
-  if (daughters.size() < 2) {
+  const unsigned int nmbDaughters = fsDaughters.size() + isobarDaughters.size();
+  if (nmbDaughters != 2) {
     printWarn << "cannot construct isobar vertex, because number of daughters "
-	      << "(" << daughters.size() << ") in '" << parentKey.getPath() << "' "
-	      << "is too low" << endl;
+	      << "(" << nmbDaughters << ") in '" << parentKey.getPath() << "' "
+	      << "is not 2" << endl;
     success = false;
   }
-  if (daughters.size() > 2)
-    printWarn << "number of daughters " << "(" << daughters.size() << ") "
-	      << "in '" << parentKey.getPath() << "' is larger than 2. "
-	      << "using daughters " << daughters[0]->qnSummary() << " and "
-	      << daughters[1]->qnSummary() << endl;
-  
   if (not success)
     return false;
 
@@ -344,6 +340,22 @@ keyFileParser::constructDecayVertex(const Setting&     parentKey,
     massDep = mapMassDependence(massDepType);
   }
   
+  // if there is 1 final state particle and 1 isobar put them in the
+  // same order as in the key file
+  vector<particlePtr> daughters(2, particlePtr());
+  if ((fsDaughters.size() == 1) and (isobarDaughters.size() == 1)) {
+    if (fsPartKeys->getIndex() < isobarKeys->getIndex()) {
+      daughters[0] = fsDaughters    [0];
+      daughters[1] = isobarDaughters[0];
+    } else {
+      daughters[0] = isobarDaughters[0];
+      daughters[1] = fsDaughters    [0];
+    }
+  } else if (fsDaughters.size() == 2)
+    daughters = fsDaughters;
+  else if (isobarDaughters.size() == 2)
+    daughters = isobarDaughters;
+
   // construct isobar decay vertex
   _decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0],
 						   daughters[1], L, S, massDep));

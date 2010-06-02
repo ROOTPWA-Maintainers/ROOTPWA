@@ -61,8 +61,8 @@ using namespace rpwa;
 bool
 convertTreeToEvt(const string&  inFileNamePattern         = "testEvents.root",
 		 const string&  outFileName               = "testTree.evt",
-		 const long int maxNmbEvents              = -1,
 		 const string&  pdgTableFileName          = "./particleDataTable.txt",
+		 const long int maxNmbEvents              = -1,
 		 const string&  inTreeName                = "rootPwaEvtTree",
 		 const string&  prodKinParticlesLeafName  = "prodKinParticles",
 		 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
