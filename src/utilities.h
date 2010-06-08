@@ -297,8 +297,8 @@ tokenizeString(const std::string& in,
 // functions without knowing the array size at compile time
 // elements can be accessed in the canonical way using []^n operators
 // this implementation is, due to the levels of indirection,
-// potentially less peformant than quasi-arrays, which on the other
-// hand make element access cumbersome
+// potentially less peformant than pseudo-arrays, which on the other
+// hand make element access more cumbersome
 // 
 // array dimensions are passed as unsigned int arrays, where the order
 // reflects the order of the indices:
@@ -312,8 +312,8 @@ tokenizeString(const std::string& in,
 
 template<typename T>
 void
-delete2DArray(T**&               array,
-              const unsigned int dim[2])
+delete2DArray(T**&               array,   // two-dimensional array to delete
+              const unsigned int dim[2])  // extents of two-dimensional array
 {
   for (int i = dim[0] - 1; i >= 0; --i)
     if (array[i])
@@ -324,55 +324,119 @@ delete2DArray(T**&               array,
 
 template<typename T>
 void
-allocate2DArray(T**&               array,
-                const unsigned int dim[2],
-                const T&           defaultVal)
+allocate2DArray(T**&               array,           // two-dimensional array to create
+                const unsigned int dim[2],          // extents of two-dimensional array
+                const T*           defaultVal = 0)  // optional default value
 {
   if (array)
     delete2DArray<T>(array, dim);
   array = new T*[dim[0]];
   for (unsigned int i = 0; i < dim[0]; ++i) {
     array[i] = new T[dim[1]];
-    for (unsigned int j = 0; j < dim[1]; ++j)
-      array[i][j] = defaultVal;
+    if (defaultVal)
+      for (unsigned int j = 0; j < dim[1]; ++j)
+	array[i][j] = *defaultVal;
   }
 }
 
 
 template<typename T>
 void
-delete3DArray(T***&              array,
-              const unsigned int dim[3])
+delete3DArray(T***&              array,   // three-dimensional array to delete
+              const unsigned int dim[3])  // extents of three-dimensional array
 {
   for (int i = dim[0] - 1; i >= 0; --i)
     for (int j = dim[1] - 1; j >= 0; --j)
       if (array[i][j])
         delete[] array[i][j];
   delete2DArray<T>(*array, dim);      
-//     for (int i = dim[0] - 1; i >= 0; --i)
-//       if (array[i])
-//      delete[] array[i];
-//     delete[] array;
 }
 
 template<typename T>
 void
-allocate3DArray(T***&              array,
-                const unsigned int dim[3],
-                const T&           defaultVal)
+allocate3DArray(T***&              array,           // three-dimensional array to create
+                const unsigned int dim[3],          // extents of three-dimensional array
+                const T*           defaultVal = 0)  // optional default value
 {
   if (array)
     delete3DArray<T>(array, dim);
   array = new T**[dim[0]];
-  for (unsigned int i = 0; i < dim[0]; ++i) {
-    allocate2DArray<T>(array[i], &dim[1]);
-//     array[i] = new T*[dim[1]];
-//     for (unsigned int j = 0; j < dim[1]; ++j) {
-//       array[i][j] = new T[dim[2]];
-//       for (unsigned int k = 0; k < dim[2]; ++k)
-//      array[i][j][k] = defaultVal;
-  }
+  for (unsigned int i = 0; i < dim[0]; ++i)
+    allocate2DArray<T>(array[i], &dim[1], defaultVal);
 }
+
+
+// pseudo-n-dimensional arrays map the dimensions onto a one-dimensional array
+//
+// here index is (like in C++ multi-dimensional arrays) row-major, that
+// is values for last index i_(n - 1) are consecutive
+//
+// array[x_0][x_1] ... [x_(n - 1)]
+//        |    |            |
+//     dim[0]  |            |
+//          dim[1] ...   dim[n - 1]
+//
+// no range checks whatsoever are performed
+
+template<typename D, typename T>
+inline
+void
+allocatePseudoNdimArray(D*&      array,           // pointer to one-dimensional array
+			const T* dim,             // extents of n-dimensional array
+			const T  nmbDim,          // number of dimensions
+			const D* defaultVal = 0)  // optional default value
+{
+  T nmbElements = dim[0];
+  for (T i = 1; i < nmbDim; ++i)
+    nmbElements *= dim[i];
+  array = new D[nmbElements];
+  if (defaultVal)
+    for (T i = 0; i < nmbElements; ++i)
+      array[i] = *defaultVal;
+}
+
+
+template<typename T>
+inline
+T
+indicesToOffset(const T* indices,  // indices to map to one-dimensional array index
+		const T* dim,      // extents of n-dimensional array
+		const T  nmbDim)   // number of dimensions
+{
+  T offset = indices[0];
+  for (T i = 1; i < nmbDim; ++i)
+    offset = offset * dim[i] + indices[i];
+  return offset;
+}
+
+template<typename T>
+inline
+T
+indicesToOffset(const std::vector<T>& indices,  // indices to map to one-dimensional array
+		const std::vector<T>& dim)      // extents of n-dimensional array
+{
+  T offset = indices[0];
+  for (T i = 1; i < dim.size(); ++i)
+    offset = offset * dim[i] + indices[i];
+  return offset;
+}
+
+
+template<typename T>
+inline
+void
+offsetToIndices(const T               offset,   // one-dimensional array index
+		const std::vector<T>& dim,      // extents of n-dimensional array
+		std::vector<T>&       indices)  // indices to map onto
+{
+  T index = offset;
+  for (T i = dim.size() - 1; i >= 1; --i) {
+    index      = index / dim[i];
+    indices[i] = index % dim[i];
+  }
+  indices[0] = index;
+}
+
 
 
 //////////////////////////////////////////////////////////////////////////////////
