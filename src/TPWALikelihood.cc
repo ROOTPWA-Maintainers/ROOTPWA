@@ -47,7 +47,7 @@
 #include "utilities.h"
 
 
-//#define USE_FDF
+#define USE_FDF
 
 
 using namespace std;
@@ -90,7 +90,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
                        double&       funcVal,         // function value
                        double*       gradient) const  // array of derivatives
 {
-  if (0) {  // run FdFX
+  if (1) {  // run FdFX
     FdFX(par, funcVal, gradient);
     return;
   }
@@ -241,9 +241,11 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
   copyFromParArrayX(par, prodAmps, prodAmpFlat);
   const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
-  // array with likelihood derivative with resp to real and imaginary
-  // parts of the production amplitudes although stored as complex
-  // values, the dL are _not_ well defined complex numbers!
+  // create array of likelihood derivative w.r.t. real and imaginary
+  // parts of the production amplitudes
+  // !NOTE! although stored as complex values, the dL are _not_ well
+  // defined complex numbers!
+  //!!! maybe it would be better to store them as array of pair<double, double> or Boost tuple
    T                   derivativeFlat = 0;
    vector3(complex<T>) derivatives(_rank, vector2(complex<T>)(2));
    for (unsigned int iRank = 0; iRank < _rank; ++iRank)
@@ -251,7 +253,8 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
        derivatives[iRank][iRefl].resize(_nmbWavesRefl[iRefl], 0);
   //!!! possible optimization: dL/dIm[Par_i] is 0 for all i
 
-  // loop over events and calculate first term of log likelihood and derivatives with respect to parameters
+  // loop over events and calculate first term of log likelihood sum
+  // as well as derivatives with respect to parameters
   T logLikelihood = 0;
   for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
     T                   l = 0;                             // likelihood for this event
@@ -260,19 +263,19 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
        d[iRank][iRefl].resize(_nmbWavesRefl[iRefl], 0);
     for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                     // incoherent sum over ranks
-      complex<T> ampProdSum[2] = {0, 0};                                       // amplitude sum for negative/positive reflectivity for this rank
-      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)                         // incoherent sum over reflectivities
+      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                       // incoherent sum over reflectivities
+	complex<T> ampProdSum = 0;                                             // amplitude sum for negative/positive reflectivity for this rank
         for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
           // compute likelihood term
           const complex<T> amp = prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmpsX[iEvt][iRefl][iWave]);
-          ampProdSum[iRefl] += amp;
+          ampProdSum += amp;
           // compute derivatives
           for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)  // inner loop over waves
             // sum up amplitudes for current rank and only for waves with same reflectivity
             d[iRank][iRefl][jWave] += amp;
         }
-      l += norm(ampProdSum[1]);
-      l += norm(ampProdSum[0]);
+	l += norm(ampProdSum);
+      }
       assert(l >= 0);
       // loop again over waves for current rank
       for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -280,7 +283,7 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
           d[iRank][iRefl][iWave] *= conj(complex<T>(_decayAmpsX[iEvt][iRefl][iWave]));
     }  // end loop over rank
     l             += prodAmpFlat2;
-    logLikelihood -= TMath::Log(l);  // accumulate log likelihood
+    logLikelihood -= log(l);  // accumulate log likelihood
     // incorporate factor 2 / sigma
     const T factor = 2. / l;
     for (unsigned int iRank = 0; iRank < _rank; ++iRank)
@@ -297,7 +300,7 @@ TPWALikelihood<T>::FdFX(const double* par,             // parameter array; reduc
   // compute normalization term of log likelihood and its derivatives with respect to parameters
   complex<T> normFactor  = 0;
   const T    nmbEvt      = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
-  const T twiceNmbEvt = 2 * nmbEvt;
+  const T    twiceNmbEvt = 2 * nmbEvt;
   for (unsigned int iRank = 0; iRank < _rank; ++iRank)
     for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
       for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
@@ -338,7 +341,7 @@ template <typename T>
 double
 TPWALikelihood<T>::DoEval(const double* par) const
 {
-  if (1)  // run DoEvalX
+  if (0)  // run DoEvalX
     return DoEvalX(par);
 
   ++(_nmbCalls[DOEVAL]);
@@ -465,20 +468,18 @@ TPWALikelihood<T>::DoEvalX(const double* par) const
   T logLikelihood = 0;
   for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
     T l = 0;  // likelihood for this event
-    for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                     // incoherent sum over ranks
-      complex<T> ampProdSum[2] = {0, 0};                                       // amplitude sum for negative/positive reflectivity for this rank
-      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)                         // incoherent sum over reflectivities
-        for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+    for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                   // incoherent sum over ranks
+      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                     // incoherent sum over reflectivities
+	complex<T> ampProdSum = 0;                                           // amplitude sum for negative/positive reflectivity for this rank
+        for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
           // compute likelihood term
-          const complex<T> amp = prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmpsX[iEvt][iRefl][iWave]);
-          ampProdSum[iRefl] += amp;
-        }
-      l += norm(ampProdSum[1]);
-      l += norm(ampProdSum[0]);
+          ampProdSum += prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmpsX[iEvt][iRefl][iWave]);
+	l += norm(ampProdSum);
+      }
       assert(l >= 0);
   }  // end loop over rank
     l             += prodAmpFlat2;
-    logLikelihood -= TMath::Log(l);  // accumulate log likelihood
+    logLikelihood -= log(l);  // accumulate log likelihood
   }  // end loop over events
 
   // log consumed time
@@ -718,10 +719,13 @@ TPWALikelihood<T>::readWaveList(const string& waveListFileName)
         threshold = 0;
       if (_debug)
         cout << "    reading line " << setw(3) << lineNmb + 1 << ": " << waveName << ",  threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
-      if (getReflectivity(waveName) > 0)
+      if (getReflectivity(waveName) > 0) {
         ++_nmbWavesRefl[1];  // positive reflectivity
-      else
+	_waveNamesX[1].push_back(waveName);
+      } else {
         ++_nmbWavesRefl[0];  // negative reflectivity
+	_waveNamesX[0].push_back(waveName);
+      }
       _waveNames.push_back(waveName);
       _waveThresholds.push_back(threshold);
     } else
