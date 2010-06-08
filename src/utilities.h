@@ -310,59 +310,58 @@ tokenizeString(const std::string& in,
 //
 // array memory has to be freed in reverser order of its allocation
 
-template<typename T>
+template<typename D, typename T>
 void
-delete2DArray(T**&               array,   // two-dimensional array to delete
-              const unsigned int dim[2])  // extents of two-dimensional array
+delete2DArray(D**&    array,   // two-dimensional array to delete
+              const T dim[2])  // extents of two-dimensional array
 {
-  for (int i = dim[0] - 1; i >= 0; --i)
+  for (T i = 0; i < dim[0]; ++i)
     if (array[i])
       delete[] array[i];
   delete[] array;
   array = NULL;
 }
 
-template<typename T>
+template<typename D, typename T>
 void
-allocate2DArray(T**&               array,           // two-dimensional array to create
-                const unsigned int dim[2],          // extents of two-dimensional array
-                const T*           defaultVal = 0)  // optional default value
+allocate2DArray(D**&     array,           // two-dimensional array to create
+                const T  dim[2],          // extents of two-dimensional array
+                const D* defaultVal = 0)  // optional default value
 {
   if (array)
-    delete2DArray<T>(array, dim);
-  array = new T*[dim[0]];
-  for (unsigned int i = 0; i < dim[0]; ++i) {
-    array[i] = new T[dim[1]];
+    delete2DArray<D, T>(array, dim);
+  array = new D*[dim[0]];
+  for (T i = 0; i < dim[0]; ++i) {
+    array[i] = new D[dim[1]];
     if (defaultVal)
-      for (unsigned int j = 0; j < dim[1]; ++j)
+      for (T j = 0; j < dim[1]; ++j)
 	array[i][j] = *defaultVal;
   }
 }
 
 
-template<typename T>
+template<typename D, typename T>
 void
-delete3DArray(T***&              array,   // three-dimensional array to delete
-              const unsigned int dim[3])  // extents of three-dimensional array
+delete3DArray(D***&   array,   // three-dimensional array to delete
+              const T dim[3])  // extents of three-dimensional array
 {
-  for (int i = dim[0] - 1; i >= 0; --i)
-    for (int j = dim[1] - 1; j >= 0; --j)
-      if (array[i][j])
-        delete[] array[i][j];
-  delete2DArray<T>(*array, dim);      
+  for (T i = 0; i < dim[0]; ++i)
+    if (array[i])
+      delete2DArray<D, T>(array[i], &dim[1]);      
+  delete[] array;
 }
 
-template<typename T>
+template<typename D, typename T>
 void
-allocate3DArray(T***&              array,           // three-dimensional array to create
-                const unsigned int dim[3],          // extents of three-dimensional array
-                const T*           defaultVal = 0)  // optional default value
+allocate3DArray(D***&    array,           // three-dimensional array to create
+                const T  dim[3],          // extents of three-dimensional array
+                const D* defaultVal = 0)  // optional default value
 {
   if (array)
-    delete3DArray<T>(array, dim);
-  array = new T**[dim[0]];
-  for (unsigned int i = 0; i < dim[0]; ++i)
-    allocate2DArray<T>(array[i], &dim[1], defaultVal);
+    delete3DArray<D, T>(array, dim);
+  array = new D**[dim[0]];
+  for (T i = 0; i < dim[0]; ++i)
+    allocate2DArray<D, T>(array[i], &dim[1], defaultVal);
 }
 
 
@@ -425,14 +424,30 @@ indicesToOffset(const std::vector<T>& indices,  // indices to map to one-dimensi
 template<typename T>
 inline
 void
+offsetToIndices(const T  offset,   // one-dimensional array index
+		const T* dim,      // extents of n-dimensional array
+		const T  nmbDim,   // number of dimensions
+		T*       indices)  // indices to map onto
+{
+  T index = offset;
+  for (T i = nmbDim - 1; i >= 1; --i) {
+    indices[i] = index % dim[i];
+    index      = index / dim[i];
+  }
+  indices[0] = index;
+}
+
+template<typename T>
+inline
+void
 offsetToIndices(const T               offset,   // one-dimensional array index
 		const std::vector<T>& dim,      // extents of n-dimensional array
 		std::vector<T>&       indices)  // indices to map onto
 {
   T index = offset;
   for (T i = dim.size() - 1; i >= 1; --i) {
-    index      = index / dim[i];
     indices[i] = index % dim[i];
+    index      = index / dim[i];
   }
   indices[0] = index;
 }
