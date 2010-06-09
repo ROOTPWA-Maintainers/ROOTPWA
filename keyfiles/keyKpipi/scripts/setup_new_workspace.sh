@@ -26,10 +26,16 @@ then
 			FOLDERNAME=${BINLOW}.${BINHIGH}
         		echo "creating folder ${FOLDERNAME}"
 			mkdir $1/${FOLDERNAME}
-			mkdir $1/${FOLDERNAME}/ACCAMPS
-			mkdir $1/${FOLDERNAME}/AMPS
-			mkdir $1/${FOLDERNAME}/MC
-			mkdir $1/${FOLDERNAME}/PSPAMPS 
+			cd $1/${FOLDERNAME}
+			mkdir ACCAMPS
+			mkdir AMPS
+			mkdir MC
+			mkdir PSPAMPS 
+			echo " filling with MC pasespace events "
+			BINLOWGEV=`echo "scale=4; ${BINLOW}/1000" | bc`
+			BINHIGHGEV=`echo "scale=4; ${BINHIGH}/1000" | bc`
+			root -l -q -b ${ROOTPWA}/src/pwafitTest/genPhaseSpaceData.C+\(${BINLOWGEV},${BINHIGHGEV},\"\",\"${ROOTPWA}/src/pwafitTest/hTheta.root\",10000,true\)
+			cd -
 		done
 		echo " filling with events "
 		./readtree $5 $6 $1 $2 $3 $4 $7
