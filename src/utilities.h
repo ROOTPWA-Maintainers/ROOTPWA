@@ -453,7 +453,6 @@ offsetToIndices(const T               offset,   // one-dimensional array index
 }
 
 
-
 //////////////////////////////////////////////////////////////////////////////////
 // conversion functions
 
@@ -471,6 +470,43 @@ toString(const T& fromValue)
   // #include <boost/lexical_cast.hpp>
   // double d = 453.23;
   // string str = boost::lexical_cast<string>(d);
+}
+
+// conversion functions for std::vector to C array
+template<typename T>
+inline
+const T*
+toArray(const std::vector<T>& vec)
+{
+  return &(*(vec.begin()));
+}
+
+template<typename T>
+inline
+T*
+toArray(std::vector<T>& vec)
+{
+  return &(*(vec.begin()));
+}
+
+template<typename T>
+inline
+const T*
+toArray(std::size_t&          size,
+        const std::vector<T>& vec)
+{
+  size = vec.size();
+  return &(*(vec.begin()));
+}
+
+template<typename T>
+inline
+T*
+toArray(std::size_t&    size,
+        std::vector<T>& vec)
+{
+  size = vec.size();
+  return &(*(vec.begin()));
 }
 
 

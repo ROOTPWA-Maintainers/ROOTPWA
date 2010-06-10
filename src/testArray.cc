@@ -8,10 +8,13 @@
 #include <iostream>
 #include <complex>
 
+#include "boost/multi_array.hpp"
+
 #include "utilities.h"
 
 
 using namespace std;
+using namespace boost;
 
 
 int main(int argc, char** argv)
@@ -22,9 +25,9 @@ int main(int argc, char** argv)
       for (unsigned int k = 0; k < 4; ++k)
 	a[i][j][k] = i * 100 + j * 10 + k;
 
-  if (1) {
+  if (0) {
   
-    double*** x               = 0;
+    double***          x      = 0;
     const unsigned int dim[3] = {2, 3, 4};
     allocate3DArray(x, dim);
     for (unsigned int i = 0; i < 2; ++i)
@@ -86,6 +89,34 @@ int main(int argc, char** argv)
 	}
     
     delete[] x;
+  }
+
+  if (1) {
+
+    const unsigned int dim[3] = {1000, 300, 400};
+    // double             a[dim[0]][dim[1]][dim[2]];
+    double***          x      = 0;
+    allocate3DArray(x, dim);
+    double*            y      = 0;
+    const unsigned int nmbDim = 3;
+    allocatePseudoNdimArray(y, dim, nmbDim);
+    multi_array<double, 3> z(extents[dim[0]][dim[1]][dim[2]]);
+
+    for (unsigned int i = 0; i < dim[0]; ++i)
+      for (unsigned int j = 0; j < dim[1]; ++j)
+	for (unsigned int k = 0; k < dim[2]; ++k) {
+	  const unsigned int indices[3] = {i, j, k};
+	  const unsigned int offset     = indicesToOffset(indices, dim, nmbDim);
+	  // if (a[i][j][k] != 0)
+	  //   cout << "a ";
+	  if (x[i][j][k] != 0)
+	    cout << "x ";
+	  if (y[offset] != 0)
+	    cout << "y ";
+	  if (z[i][j][k] != 0)
+	    cout << "z ";
+	}
+    cout << endl;
   }
   
   return 0;

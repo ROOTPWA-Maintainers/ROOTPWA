@@ -43,6 +43,10 @@
 #include <utility>
 #include <iostream>
 
+#define BOOST_DISABLE_ASSERTS
+#include "boost/multi_array.hpp"
+#include "boost/tuple/tuple.hpp"
+
 #include "Math/IFunction.h"
 
 // PWA2000 classes
@@ -56,6 +60,14 @@ class TCMatrix;
 
 template <typename T = double>  // template for type of internal variables used for intermediate results
 class TPWALikelihood : public ROOT::Math::IGradientFunctionMultiDim {
+
+private:
+
+  typedef boost::multi_array<std::string, 2>            waveNameArrayType;    // 2-dimensional array wave names
+  typedef boost::multi_array<boost::tuple<int, int>, 3> ampToParMapType;      // 3-dimensional array for mapping of amplitudes and parameters
+  typedef boost::multi_array<std::complex<double>, 3>   ampsArrayType;        // 3-dimensional array for production and decay amplitudes
+  typedef boost::multi_array<std::complex<double>, 4>   normMatrixArrayType;  // 4-dimensional array for normalization matrices
+
 
 public:
 
@@ -86,6 +98,8 @@ public:
   /// calculates gradient (vector of partial derivatives) of function at point defined by par
   virtual void Gradient(const double* par,
 			double*       gradient) const;
+  virtual void GradientX(const double* par,
+			 double*       gradient) const;
 
   unsigned int                    nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
   unsigned int                    rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
@@ -150,23 +164,23 @@ private:
   int getReflectivity(const TString& waveName) const;
 
   matrix<std::complex<double> > reorderedIntegralMatrix(integral& integral) const;
-  void                          reorderIntegralMatrixX (integral&                 integral,
-							vector4(std::complex<T>)& reorderedMatrix) const;
+  void                          reorderIntegralMatrixX (integral&            integral,
+							normMatrixArrayType& reorderedMatrix) const;
   void copyFromParArray(const double*             inPar,              // input parameter array
 			vector2(std::complex<T>)& outVal,             // output values organized as 2D array of complex numbers with [rank][wave index]
 			T&                        outFlatVal) const;  // output value corresponding to flat wave
   void copyFromParArray(const double*      inPar,              // input parameter array
 			std::complex<T>**& outVal,             // output values organized as 2D array of complex numbers with [rank][wave index]
 			T&                 outFlatVal) const;  // output value corresponding to flat wave
-  void copyFromParArrayX(const double*             inPar,              // input parameter array
-			 vector3(std::complex<T>)& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
+  void copyFromParArrayX(const double*  inPar,              // input parameter array
+			 ampsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
 			 T&                        outFlatVal) const;  // output value corresponding to flat wave
   void copyToParArray(const vector2(std::complex<T>)& inVal,          // values corresponding to production amplitudes
 		      const T                         inFlatVal,      // value corresponding to flat wave
 		      double*                         outPar) const;  // output parameter array
-  void copyToParArrayX(const vector3(std::complex<T>)& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
-		       const T                         inFlatVal,      // value corresponding to flat wave
-		       double*                         outPar) const;  // output parameter array
+  void copyToParArrayX(const ampsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
+		       const T              inFlatVal,      // value corresponding to flat wave
+		       double*              outPar) const;  // output parameter array
 
   unsigned int _nmbEvents;        // number of events
   unsigned int _rank;             // rank of spin density matrix
@@ -199,11 +213,14 @@ private:
   mutable matrix<std::complex<double> > _accMatrix;   // normalization matrix with acceptance
 
 
-  vector2(std::string)                    _waveNamesX;            // wave names [reflectivity][wave index]
-  vector3(protect__(std::pair<int, int>)) _prodAmpToFuncParMapX;  // maps each production amplitude to the indices for its real and imginary part in the parameter array; negative indices mean that the parameter is not existing due to rank restrictions
-  vector3(std::complex<double>)           _decayAmpsX;            // precalculated decay amplitudes [event index][reflectivity][wave index]
-  vector4(std::complex<double>)           _normMatrixX;           // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
-  vector4(std::complex<double>)           _accMatrixX;            // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+  waveNameArrayType   _waveNamesX;            // wave names [reflectivity][wave index]
+  ampToParMapType     _prodAmpToFuncParMapX;  // maps each production amplitude to the indices of its
+                                              // real and imginary part in the parameter array;
+                                              // negative indices mean that the parameter is not
+                                              // existing due to rank restrictions
+  ampsArrayType       _decayAmpsX;            // precalculated decay amplitudes [event index][reflectivity][wave index]
+  normMatrixArrayType _normMatrixX;           // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+  normMatrixArrayType _accMatrixX;            // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
 
 };
 
