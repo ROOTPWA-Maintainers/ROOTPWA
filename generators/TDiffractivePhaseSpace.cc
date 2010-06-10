@@ -328,7 +328,9 @@ unsigned int
 TDiffractivePhaseSpace::event(ostream& stream)
 {
   unsigned int attempts = event();
-  writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
+  //writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
+  // use the first particle as the beam particle
+  writePwa2000Ascii(stream, _decayProducts[0]._gId, _decayProducts[0]._charge);
   return attempts;
 }
 

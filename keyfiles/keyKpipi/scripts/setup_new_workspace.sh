@@ -27,14 +27,15 @@ then
         		echo "creating folder ${FOLDERNAME}"
 			mkdir $1/${FOLDERNAME}
 			cd $1/${FOLDERNAME}
-			mkdir ACCAMPS
-			mkdir AMPS
-			mkdir MC
-			mkdir PSPAMPS 
+			mkdir "ACCAMPS"
+			mkdir "AMPS"
+			mkdir "MC"
+			mkdir "PSPAMPS" 
 			echo " filling with MC pasespace events "
-			BINLOWGEV=`echo "scale=4; ${BINLOW}/1000" | bc`
-			BINHIGHGEV=`echo "scale=4; ${BINHIGH}/1000" | bc`
-			root -l -q -b ${ROOTPWA}/src/pwafitTest/genPhaseSpaceData.C+\(${BINLOWGEV},${BINHIGHGEV},\"\",\"${ROOTPWA}/src/pwafitTest/hTheta.root\",10000,true\)
+			genpw -n 10000 -M ${BINLOW} -B ${BINWIDTH} -r $ROOTPWA/generators/KpipiDiffractive2008.conf
+			# BINLOWGEV=`echo "scale=4; ${BINLOW}/1000" | bc`
+			# BINHIGHGEV=`echo "scale=4; ${BINHIGH}/1000" | bc`
+			# root -l -q -b ${ROOTPWA}/src/pwafitTest/genPhaseSpaceData.C+\(${BINLOWGEV},${BINHIGHGEV},\"\",\"${ROOTPWA}/src/pwafitTest/hTheta.root\",10000,true\)
 			cd -
 		done
 		echo " filling with events "

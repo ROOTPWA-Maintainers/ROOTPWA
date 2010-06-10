@@ -72,7 +72,7 @@ cerr << "usage:" << endl
      << "        -a #       (max) number of attempts to do (default: infty)" \
      << endl
      << "        -m #       maxWeight" << endl
-     << "        -o <file>  ROOT output file"<< endl
+     << "        -o <file>  ROOT output file (if not specified, generated automaticly)"<< endl
      << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
      << "        -w <file.root>  to use TFitBin tree as input"<< endl 
      << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
@@ -90,9 +90,9 @@ int main(int argc, char** argv)
 
   unsigned int nevents=100;
   unsigned int max_attempts=0;
-  string output_file("genpw.root");
-  string output_evt("genpw.evt");
-  string output_wht("genpw.wht");
+  string output_file(""); // either given by option or generated automaticly by mass range
+  string output_evt("");
+  string output_wht("");
   string integrals_file;
   bool hasint=false;
   string wavelist_file; // format: name Re Im
@@ -118,11 +118,6 @@ int main(int argc, char** argv)
       break;
     case 'o':
       output_file = optarg;
-      output_evt = output_file;
-      output_evt.replace(output_evt.find(".root"),5,".evt");
-      output_wht = output_file;
-      output_wht.replace(output_wht.find(".root"),5,".wht");
-
       break;
    case 'w':
       wavelist_file = optarg;
@@ -153,31 +148,21 @@ int main(int argc, char** argv)
       printUsage(argv[0]);
       break;
     }
- 
-
-  
-
-  TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
-  TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
-  TTree* outtree=new TTree("pwevents","pwevents");
-  double weight, impweight;
-  TClonesArray* p=new TClonesArray("TLorentzVector");
-  TLorentzVector beam;
-  double qbeam;
-  vector<int> q; // array of charges
-
-  outtree->Branch("weight",&weight,"weight/d");
-  outtree->Branch("impweight",&impweight,"impweight/d");
-  outtree->Branch("p",&p);
-  outtree->Branch("beam",&beam);
-  outtree->Branch("q",&q);
-  outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
   PDGtable.initialize();
 
   TPWWeight weighter;
   Config reactConf;
   reactConf.readFile(reactionFile.c_str());
+
+  // variable that need to get initialized either by input options
+  // or the config file
+  // will be stored in the tree later
+  double weight, impweight;
+  TClonesArray* p=new TClonesArray("TLorentzVector");
+  TLorentzVector beam;
+  double qbeam;
+  vector<int> q; // array of charges
 
   double Mom=reactConf.lookup("beam.momentum");
   double MomSigma=reactConf.lookup("beam.sigma_momentum");
@@ -203,6 +188,30 @@ int main(int argc, char** argv)
 
  
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
+
+  // generate the filename automatically if not specified
+  if (output_file == "") {
+	  stringstream _filename;
+	  _filename << trunc(mmin*1e3) << "." << trunc(mmax*1e3) << ".genbod.root";
+	  cout << " created output filename: " << _filename.str() << endl;
+	  output_file = _filename.str();
+  }
+  output_evt = output_file;
+  output_evt.replace(output_evt.find(".root"),5,".evt");
+  output_wht = output_file;
+  output_wht.replace(output_wht.find(".root"),5,".wht");
+
+  // now create the root file to store the events
+  TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
+  TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
+  TTree* outtree=new TTree("pwevents","pwevents");
+
+  outtree->Branch("weight",&weight,"weight/d");
+  outtree->Branch("impweight",&impweight,"impweight/d");
+  outtree->Branch("p",&p);
+  outtree->Branch("beam",&beam);
+  outtree->Branch("q",&q);
+  outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
   //string theta_file= reactConf.lookup("finalstate.theta_file");
 
@@ -415,7 +424,7 @@ int main(int argc, char** argv)
       outtree->Fill();
       
 
-      if(i>0 && ( i % tenpercent==0) )cerr << "[" << (double)i/(double)nevents*100. << "%]";
+      if(i>0 && ( i % tenpercent==0) )cerr << "\x1B[2K" << "\x1B[0E" << "[" << (double)i/(double)nevents*100. << "%]";
 
       ++i;
     } // end event loop

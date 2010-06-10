@@ -59,7 +59,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	// K pi decay modes
 	// Daum et al. used a very controversial resonance, the kappa or K*(800)
 	//particleKey Kstar800("Kstar(800)",  &K_minus, &pi_plus, 0, 1); // not in the PDG table yet
-	particleKey Kstar892("Kstar(892)0", &K_minus, &pi_plus, 0, 1);
+	particleKey Kstar892("Kstar(892)0", &K_minus, &pi_plus, 0, 1); // 1-
 	// probably I will have to treat both Kstar(1430) as a broad
 	// Kpi-P wave since they are overlapping, but it is also very
 	// likely that I'm talking bullshit
@@ -68,9 +68,9 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 
 	// pi pi decay modes
 	// f0(980) is also called as the epsilon in Daum et al. paper, I guess
-	particleKey f0980 ("f0(980)" , &pi_plus, &pi_minus, 1, 1);
-	particleKey rho770("rho(770)", &pi_plus, &pi_minus, 0, 1);
-	particleKey f21270("f2(1270)", &pi_plus, &pi_minus, 1, 1);
+	particleKey f0980 ("f0(980)" , &pi_plus, &pi_minus, 1, 1); // 0++
+	particleKey rho770("rho(770)", &pi_plus, &pi_minus, 0, 1); // 1--
+	particleKey f21270("f2(1270)", &pi_plus, &pi_minus, 1, 1); // 2++
 
 	// PWA wave set according to Daum et al.
 	// ..JPLMpartiyexchange(isobar1 isobar2)
