@@ -63,14 +63,14 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	// probably I will have to treat both Kstar(1430) as a broad
 	// Kpi-P wave since they are overlapping, but it is also very
 	// likely that I'm talking bullshit
-	particleKey Kstar01430("Kstar0(1430)" , &K_minus, &pi_plus, 1, 1); // 0++
-	particleKey Kstar21430("Kstar2(1430)0", &K_minus, &pi_plus, 1, 1); // 2++
+	particleKey Kstar01430("Kstar0(1430)" , &K_minus, &pi_plus, 0, 0); // 0++
+	particleKey Kstar21430("Kstar2(1430)0", &K_minus, &pi_plus, 2, 0); // 2++
 
 	// pi pi decay modes
 	// f0(980) is also called as the epsilon in Daum et al. paper, I guess
-	particleKey f0980 ("f0(980)" , &pi_plus, &pi_minus, 1, 1); // 0++
-	particleKey rho770("rho(770)", &pi_plus, &pi_minus, 0, 1); // 1--
-	particleKey f21270("f2(1270)", &pi_plus, &pi_minus, 1, 1); // 2++
+	particleKey f0980 ("f0(980)" , &pi_plus, &pi_minus, 0, 0); // 0++
+	particleKey rho770("rho(770)", &pi_plus, &pi_minus, 1, 0); // 1--
+	particleKey f21270("f2(1270)", &pi_plus, &pi_minus, 2, 0); // 2++
 
 	// PWA wave set according to Daum et al.
 	// ..JPLMpartiyexchange(isobar1 isobar2)
@@ -94,7 +94,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 1+P0+(eK)
-		particleKey X("X", &f0980, &K_minus, 1, 0);// spin here could be also 1 (see flip waves below)
+		particleKey X("X", &f0980, &K_minus, 1, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
@@ -124,7 +124,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 2+D1+(K*pi)
-		particleKey X("X", &Kstar892, &pi_minus, 2, 0); // spin here could be also 1 !
+		particleKey X("X", &Kstar892, &pi_minus, 2, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,+1, 1,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
@@ -143,7 +143,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 1+D0+(K*pi)
-		particleKey X("X", &Kstar892, &pi_minus, 2, 0); // spin here could be also 1
+		particleKey X("X", &Kstar892, &pi_minus, 2, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
@@ -156,7 +156,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	}
 
 	{ // 2+D1+(pK)
-		particleKey X("X", &rho770, &K_minus, 2, 0); // spin here could be also 1
+		particleKey X("X", &rho770, &K_minus, 2, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,+1, 1,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
@@ -176,23 +176,20 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	}
 
 	{ // 2?S0+(K**pi)
-		particleKey X("X", &Kstar21430, &pi_minus, 1, 1);
+		particleKey X("X", &Kstar21430, &pi_minus, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1); // I'm not sure about the parity here
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 
-	{ // 2-S0+(fK) <-- error in the paper? S-wave with a spin of 1 never gives J = 2 -> P wave
-		particleKey X("X", &f21270, &K_minus, 1, 1);
+	{ // 2-S0+(fK)
+		particleKey X("X", &f21270, &K_minus, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
-	// Flip waves, whatever this means, it must be related to the spin
-	/* these waves recur
-	 * Although denoted as "spin flip"
-	 * I don't see how to flip any spins with
-	 * given quantum numbers L-S <= J <= L+S
+	// Flip waves, whatever this means
+	/*
 	{ // 1+S0+(pK)
 		particleKey X("X", &rho770, &K_minus, 0, 1);
 		//      wave(&X, J, P, M, refl);
@@ -204,12 +201,12 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 1,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
-	}*/
+	}
 
 	{ // 1+P0+(eK)
-		particleKey X("X", &f0980, &K_minus, 1, 1);  // spin here could be also 0
+		particleKey X("X", &f0980, &K_minus, 1, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
-	}
+	}*/
 }
