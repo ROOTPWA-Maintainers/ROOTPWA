@@ -198,14 +198,15 @@ main(int    argc,
     }
   if (normIntFileName.length() <= 1) {
     normIntFileName = "norm.int";
-    printWarn << "using default normalization integral file '" << normIntFileName << "'." << endl;
+    printWarn << "using default normalization integral file '" << normIntFileName << "'" << endl;
   }
   if (accIntFileName.length() <= 1) {
     accIntFileName = "norm.int";
-    printWarn << "using default acceptance normalization integral file '" << accIntFileName << "'." << endl;
+    printWarn << "using default acceptance normalization integral file "
+	      << "'" << accIntFileName << "'" << endl;
   }
   if (waveListFileName.length() <= 1) {
-    printErr << "no wavelist file specified! aborting!" << endl;
+    printErr << "no wavelist file specified. aborting." << endl;
     usage(progName, 1);
   }
   // report parameters
@@ -233,17 +234,18 @@ main(int    argc,
     L.setQuiet();
   L.useNormalizedAmps(useNormalizedAmps);
   L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
-  if (!quiet)
+  if (not quiet)
     cout << L << endl;
   const unsigned int nmbPar  = L.NDim();
   const unsigned int nmbEvts = L.nmbEvents();
 
   // ---------------------------------------------------------------------------
   // setup minimizer
-  printInfo << "creating and setting up minimizer " << minimizerType[0] << " using algorithm " << minimizerType[1] << endl;
+  printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
+	    << "using algorithm '" << minimizerType[1] << "'" << endl;
   Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-  if (!minimizer) { 
-    printErr << "could not create minimizer! exiting!" << endl;
+  if (not minimizer) { 
+    printErr << "could not create minimizer. exiting." << endl;
     throw;
   }
   minimizer->SetFunction(L);
@@ -251,24 +253,27 @@ main(int    argc,
 
   // ---------------------------------------------------------------------------
   // read in fitResult with start values
-  printInfo << "reading start values from '" << startValFileName << "'." << endl;
+  printInfo << "reading start values from '" << startValFileName << "'" << endl;
   const double massBinCenter  = (massBinMin + massBinMax) / 2;
   fitResult*   startFitResult = NULL;
   bool         startValValid  = false;
   TFile*       startValFile   = NULL;
   if (startValFileName.length() <= 2)
-    printWarn << "start value file name '" << startValFileName << "' is invalid. using default start values." << endl;
+    printWarn << "start value file name '" << startValFileName << "' is invalid. "
+	      << "using default start values." << endl;
   else {
     // open root file
     startValFile = TFile::Open(startValFileName.c_str(), "READ");
-    if (!startValFile || startValFile->IsZombie())
-      printWarn << "cannot open start value file '" << startValFileName << "'. using default start values." << endl;
+    if (not startValFile or startValFile->IsZombie())
+      printWarn << "cannot open start value file '" << startValFileName << "'. "
+		<< "using default start values." << endl;
     else {
       // get tree with start values
       TTree* tree;
       startValFile->GetObject(valTreeName.c_str(), tree);
-      if (!tree)
-	printWarn << "cannot find start value tree '"<< valTreeName << "' in file '" << startValFileName << "'." << endl;
+      if (not tree)
+	printWarn << "cannot find start value tree '"<< valTreeName << "' in file "
+		  << "'" << startValFileName << "'" << endl;
       else {
 	//startBin = new TFitBin();
 	//tree->SetBranchAddress("fitbin", &startBin);
@@ -292,8 +297,8 @@ main(int    argc,
 
   // ---------------------------------------------------------------------------
   // set start parameter values
-  printInfo << "setting start values for " << nmbPar << " parameters." << endl
-	    << "    parameter naming scheme is: V[rank index]_[IGJPCME][isobar spec]" << endl;
+  printInfo << "setting start values for " << nmbPar << " parameters" << endl
+	    << "    parameter naming scheme is: V[rank index]_[IGJPCMR][isobar spec]" << endl;
   unsigned int maxParNameLength = 0;       // maximum length of parameter names
   vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
   {
@@ -301,39 +306,60 @@ main(int    argc,
     // code has no chance of tampering with gRandom and thus cannot
     // affect the reproducability of the start values
     TRandom3 random(startValSeed);
-    bool success = true;
-    for (unsigned int i = 0; i < nmbPar; ++i)
-      if (L.parName(i).length() > maxParNameLength)
-	maxParNameLength = L.parName(i).length();
-    const double sqrtNmbEvts = sqrt((double)nmbEvts);
+    bool     success = true;
     for (unsigned int i = 0; i < nmbPar; ++i) {
-      double       startVal;
       const string parName = L.parName(i);
+      if (parName.length() > maxParNameLength)
+	maxParNameLength = parName.length();
+      // workaround, because Minuit2Minimizer::SetVariable() expects
+      // that variables are set consecutively. how stupid is that?
+      // so we prepare variables here and set values below
+      if ((L.parThreshold(i) == 0) or (L.parThreshold(i) < massBinCenter)) {
+	if (not minimizer->SetVariable(i, parName, 0, startValStep))
+	  success = false;
+      } else {
+	if (not minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
+	  success = false;
+	parIsFixed[i] = true;
+      }
+    }
+    const double         sqrtNmbEvts = sqrt((double)nmbEvts);
+    vector<unsigned int> parIndices  = L.orderedParIndices();
+    for (unsigned int i = 0; i< parIndices.size(); ++i) {
+      const unsigned int parIndex = parIndices[i];
+      double             startVal;
+      const string       parName = minimizer->VariableName(parIndex);
+      if (parName != L.parName(parIndex))
+	printWarn << "parameter name in minimizer and likelihood is inconsistent "
+		  << "(" << parName << " vs. " << L.parName(parIndex) << ")" << endl;
       if (startValValid) {
 	// get parameter value from fitResult
 	assert(startFitResult);
 	startVal = startFitResult->fitParameter(parName.c_str());
       } else
-	startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
+	startVal = (useFixedStartValues) ? defaultStartValue
+	                                 : random.Uniform(defaultStartValue, sqrtNmbEvts);
       // check if parameter needs to be fixed because of threshold
-      if ((L.parThreshold(i) == 0) || (L.parThreshold(i) < massBinCenter)) {
+      if ((L.parThreshold(parIndex) == 0) or (L.parThreshold(parIndex) < massBinCenter)) {
 	if (startVal == 0) {
-	  cout << "    read start value 0 for parameter " << parName << ". using default start value." << endl;
-	  startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
+	  cout << "    read start value 0 for parameter " << parName << ". "
+	       << "using default start value." << endl;
+	  startVal = (useFixedStartValues) ? defaultStartValue
+	                                   : random.Uniform(defaultStartValue, sqrtNmbEvts);
 	}
 	cout << "    setting parameter [" << setw(3) << i << "] "
 	     << setw(maxParNameLength) << parName << " = " << maxPrecisionAlign(startVal) << endl;
-	if (!minimizer->SetVariable(i, parName, startVal, startValStep))
+	if (not minimizer->SetVariableValue(parIndex, startVal))
 	  success = false;
       } else {
 	cout << "    fixing parameter  [" << setw(3) << i << "] "
 	     << setw(maxParNameLength) << parName << " = 0" << endl;
-	if (!minimizer->SetFixedVariable(i, parName, 0.))  // fix this parameter to 0
+	if (not minimizer->SetVariableValue(parIndex, 0.))  // fix this parameter to 0
 	  success = false;
-	parIsFixed[i] = true;
+	parIsFixed[parIndex] = true;
       }
-      if (!success) {
-	printErr << "something went wrong when setting log likelihood parameters! exiting." << endl;
+      if (not success) {
+	printErr << "something went wrong when setting log likelihood parameters. aborting." << endl;
 	throw;
       }
     }
@@ -347,22 +373,23 @@ main(int    argc,
 
   // ---------------------------------------------------------------------------
   // find minimum of likelihood function
-  printInfo << "performing minimization." << endl;
+  printInfo << "performing minimization" << endl;
   {
     minimizer->SetMaxIterations(maxNmbOfIterations);
     minimizer->SetTolerance    (minimizerTolerance);
     const bool success = minimizer->Minimize();
     if (success)
-      printInfo << "minimization finished successfully." << endl;
+      printInfo << "minimization finished successfully" << endl;
     else
-      printWarn << "minimization failed." << endl;
+      printWarn << "minimization failed" << endl;
     if (runHesse) {
-      printInfo << "calculating Hessian matrix." << endl;
+      printInfo << "calculating Hessian matrix" << endl;
       //success = minimizer->Hesse();  // comes only with ROOT 5.24+
-      if (!success)
-	printWarn << "calculation of Hessian matrix failed." << endl;
+      if (not success)
+	printWarn << "calculation of Hessian matrix failed" << endl;
     }
-    printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. minimizer status summary:" << endl
+    printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. "
+	      << "minimizer status summary:" << endl
 	      << "    total number of parameters .......................... " << minimizer->NDim()             << endl
 	      << "    number of free parameters ........................... " << minimizer->NFree()            << endl
 	      << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
@@ -379,18 +406,20 @@ main(int    argc,
   // ---------------------------------------------------------------------------
   // print results
   printInfo << "minimization result:" << endl;
-  for (unsigned int i = 0; i< nmbPar; ++i) {
+  vector<unsigned int> parIndices = L.orderedParIndices();
+  for (unsigned int i = 0; i< parIndices.size(); ++i) {
+    const unsigned int parIndex = parIndices[i];
     cout << "    parameter [" << setw(3) << i << "] "
-	 << setw(maxParNameLength) << L.parName(i) << " = ";
-    if (parIsFixed[i])
-      cout << minimizer->X()[i] << " (fixed)" << endl;
+	 << setw(maxParNameLength) << L.parName(parIndex) << " = ";
+    if (parIsFixed[parIndex])
+      cout << minimizer->X()[parIndex] << " (fixed)" << endl;
     else {
-      cout << setw(12) << maxPrecisionAlign(minimizer->X()[i]) << " +- "
-	   << setw(12) << maxPrecisionAlign(minimizer->Errors()[i]);
-      if (runMinos && (i == 156)) {  // does not work for all parameters
+      cout << setw(12) << maxPrecisionAlign(minimizer->X()     [parIndex]) << " +- "
+	   << setw(12) << maxPrecisionAlign(minimizer->Errors()[parIndex]);
+      if (runMinos and (parIndex == 156)) {  // does not work for all parameters
 	double minosErrLow = 0;
 	double minosErrUp  = 0;
-	const bool success = minimizer->GetMinosError(i, minosErrLow, minosErrUp);
+	const bool success = minimizer->GetMinosError(parIndex, minosErrLow, minosErrUp);
 	if (success)
 	  cout << "    Minos: " << "[" << minosErrLow << ", +" << minosErrUp << "]" << endl;
       } else
@@ -403,20 +432,22 @@ main(int    argc,
 
   // ---------------------------------------------------------------------------
   // write out result
-  printInfo << "writing result to '" << outFileName << "'." << endl;
+  printInfo << "writing result to '" << outFileName << "'" << endl;
   {
     // open output file and create tree for writing
     TFile* outFile = new TFile(outFileName.c_str(), "UPDATE");
-    if (!outFile || outFile->IsZombie())
-      printWarn << "cannot open output file '" << outFileName << "'. no results will be written." << endl;
+    if ((not outFile) or outFile->IsZombie())
+      printWarn << "cannot open output file '" << outFileName << "'. "
+		<< "no results will be written." << endl;
     else {
       // check whether output tree already exists
       TTree*     tree;
       TFitBin*   fitBinResult = new TFitBin();
       fitResult* result       = new fitResult();
       outFile->GetObject(valTreeName.c_str(), tree);
-      if (!tree) {
-	printInfo << "file '" << outFileName << "' is empty. creating new tree '" << valTreeName << "' for PWA result." << endl;
+      if (not tree) {
+	printInfo << "file '" << outFileName << "' is empty. "
+		  << "creating new tree '" << valTreeName << "' for PWA result." << endl;
 	tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
 	tree->Branch("fitbin",              &fitBinResult);  // depricated legacy branch
 	tree->Branch(valBranchName.c_str(), &result);

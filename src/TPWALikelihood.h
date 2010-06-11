@@ -58,15 +58,19 @@ class TString;
 class TCMatrix;
 
 
-template <typename T = double>  // template for type of internal variables used for intermediate results
+template<typename T = double>  // template for type of internal variables used for intermediate results
 class TPWALikelihood : public ROOT::Math::IGradientFunctionMultiDim {
 
 private:
 
-  typedef boost::multi_array<std::string, 2>            waveNameArrayType;    // 2-dimensional array wave names
-  typedef boost::multi_array<boost::tuple<int, int>, 3> ampToParMapType;      // 3-dimensional array for mapping of amplitudes and parameters
-  typedef boost::multi_array<std::complex<double>, 3>   ampsArrayType;        // 3-dimensional array for production and decay amplitudes
-  typedef boost::multi_array<std::complex<double>, 4>   normMatrixArrayType;  // 4-dimensional array for normalization matrices
+  // define array types
+  typedef boost::multi_array<std::string,            2> waveNameArrayType;    // array for wave names
+  typedef boost::multi_array<double,                 2> waveThrArrayType;     // array for wave thresholds
+  typedef boost::multi_array<unsigned int,           2> waveToIntMapType;     // array for mapping of waves to integral indices
+  typedef boost::multi_array<unsigned int,           2> waveToListMapType;    // array for mapping of waves to position in wave list
+  typedef boost::multi_array<boost::tuple<int, int>, 3> ampToParMapType;      // array for mapping of amplitudes to parameters
+  typedef boost::multi_array<std::complex<double>,   3> ampsArrayType;        // array for production and decay amplitudes
+  typedef boost::multi_array<std::complex<double>,   4> normMatrixArrayType;  // array for normalization matrices
 
 
 public:
@@ -92,24 +96,19 @@ public:
   virtual void FdF(const double* par,
 		   double&       funcVal,
 		   double*       gradient) const;
-  virtual void FdFX(const double* par,
-		    double&       funcVal,
-		    double*       gradient) const;
   /// calculates gradient (vector of partial derivatives) of function at point defined by par
   virtual void Gradient(const double* par,
 			double*       gradient) const;
-  virtual void GradientX(const double* par,
-			 double*       gradient) const;
 
-  unsigned int                    nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
-  unsigned int                    rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
-  inline unsigned int             nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
-  unsigned int                    nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
-  std::string                     waveName    (const unsigned int waveIndex)        const { return _waveNames[waveIndex];    }  ///< returns name of wave at waveIndex
-  const std::vector<std::string>& waveNames   ()                                    const { return _waveNames;               }  ///< returns vector with all wave names
-  std::string                     parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
-  double                          parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
-
+  unsigned int             nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
+  unsigned int             rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
+  inline unsigned int      nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
+  unsigned int             nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
+  std::string              waveName    (const unsigned int waveIndex)        const { return _waveNames[waveIndex];    }  ///< returns name of wave at waveIndex
+  std::vector<std::string> waveNames   ()                                    const;  ///< returns vector with all wave names ordered like in input wave list
+  std::string              parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
+  double                   parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
+  
   double dLcache(const unsigned int i) const { return _derivCache[i]; }
   unsigned int ncalls(const functionCallEnum callType = FDF) const { return _nmbCalls[FDF]; }
   double Ltime() const { return _Ltime; }
@@ -117,8 +116,8 @@ public:
   //const integral& normInt() const { return _normInt; }
 
   // modifiers
-  void useNormalizedAmps(const bool useNorm = true) { _useNormalizedAmps = useNorm; }
-  void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
+  void        useNormalizedAmps(const bool useNorm = true) { _useNormalizedAmps = useNorm; }
+  static void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
 
   // operations
   void init(const unsigned int rank,
@@ -127,18 +126,16 @@ public:
 	    const std::string& accIntFileName,
 	    const std::string& ampDirName = ".",
 	    const unsigned int numbAccEvents=0);  ///< prepares all internal data structures
+
+  void getIntCMatrix(TCMatrix& normMatrix,
+		     TCMatrix& accMatrix) const;
   
-
-
-  void getIntCMatrix(TCMatrix& integr,
-		     TCMatrix& acceptance);
-
   // note: amplitudes which do not exist in higher ranks are NOT built!
-  void buildCAmps(const double*                       x,
-		  std::vector<std::complex<double> >& V,
-		  std::vector<std::pair<int,int> >&   indices,
-		  std::vector<std::string>&           names,
-		  const bool                          withFlat = false);
+  void buildCAmps(const double*                       inPar,
+		  std::vector<std::complex<double> >& prodAmps,
+		  std::vector<std::pair<int,int> >&   parIndices,
+		  std::vector<std::string>&           prodAmpNames,
+		  const bool                          withFlat = false) const;
 
   std::ostream& print(std::ostream& out = std::cout) const;
   friend std::ostream& operator << (std::ostream&         out,
@@ -146,9 +143,10 @@ public:
 
   // overload private IGradientFunctionMultiDim member functions
   virtual double DoEval      (const double* par) const;
-  virtual double DoEvalX     (const double* par) const;
   virtual double DoDerivative(const double* par,
                               unsigned int  derivativeIndex) const;
+
+  std::vector<unsigned int> orderedParIndices() const;  // helper function for backwards-compatibility
 
 private:
 
@@ -158,29 +156,19 @@ private:
   void readIntegrals      (const std::string& normIntFileName,
 			   const std::string& accIntFileName);    ///< reads normalization and acceptance integrals from file
   void readDecayAmplitudes(const std::string& ampDirName = ".");  ///< reads decay amplitudes from files in specified directory
-
-
-  void clearCache();
-  int getReflectivity(const TString& waveName) const;
-
-  matrix<std::complex<double> > reorderedIntegralMatrix(integral& integral) const;
-  void                          reorderIntegralMatrixX (integral&            integral,
-							normMatrixArrayType& reorderedMatrix) const;
-  void copyFromParArray(const double*             inPar,              // input parameter array
-			vector2(std::complex<T>)& outVal,             // output values organized as 2D array of complex numbers with [rank][wave index]
-			T&                        outFlatVal) const;  // output value corresponding to flat wave
-  void copyFromParArray(const double*      inPar,              // input parameter array
-			std::complex<T>**& outVal,             // output values organized as 2D array of complex numbers with [rank][wave index]
-			T&                 outFlatVal) const;  // output value corresponding to flat wave
-  void copyFromParArrayX(const double*  inPar,              // input parameter array
-			 ampsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
-			 T&                        outFlatVal) const;  // output value corresponding to flat wave
-  void copyToParArray(const vector2(std::complex<T>)& inVal,          // values corresponding to production amplitudes
-		      const T                         inFlatVal,      // value corresponding to flat wave
-		      double*                         outPar) const;  // output parameter array
-  void copyToParArrayX(const ampsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
-		       const T              inFlatVal,      // value corresponding to flat wave
-		       double*              outPar) const;  // output parameter array
+  
+  
+  void clear();
+  static int getReflectivity(const TString& waveName);
+  
+  void reorderIntegralMatrix(integral&            integral,
+			     normMatrixArrayType& reorderedMatrix) const;
+  void copyFromParArray(const double*  inPar,              // input parameter array
+			ampsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
+			T&             outFlatVal) const;  // output value corresponding to flat wave
+  void copyToParArray(const ampsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
+		      const T              inFlatVal,      // value corresponding to flat wave
+		      double*              outPar) const;  // output parameter array
 
   unsigned int _nmbEvents;        // number of events
   unsigned int _rank;             // rank of spin density matrix
@@ -192,36 +180,30 @@ private:
   mutable double       _Ltime;        // total time spent calculating L
   mutable double       _Ntime;        // total time spent calculating normalization
 
-  bool _debug;              // if true debug messages are printed
-  bool _useNormalizedAmps;  // if true normalized amplitudes are used
+  bool        _useNormalizedAmps;  // if true normalized amplitudes are used
+  static bool _debug;              // if true debug messages are printed
 
   unsigned int _numbAccEvents; // number of input events used for acceptance integrals (accepted + rejected!)
 
-  std::vector<std::string> _waveNames;       // wave names
-  std::vector<int>         _waveRefl;        // reflectivities of waves
-  std::vector<double>      _waveThresholds;  // mass thresholds of waves
-  std::vector<std::string> _parNames;        // function parameter names
-  std::vector<double>      _parThresholds;   // mass thresholds of parameters
-
-  vector2(std::complex<double>) _decayAmps;  // precalculated decay amplitudes [wave index][event index]
-
+  waveNameArrayType        _waveNames;            // wave names [reflectivity][wave index]
+  waveThrArrayType         _waveThresholds;       // mass thresholds of waves
+  waveToListMapType        _waveToWaveList;       // maps wave to its index in wave list
+  std::vector<std::string> _parNames;             // function parameter names
+  std::vector<double>      _parThresholds;        // mass thresholds of parameters
+  ampToParMapType          _prodAmpToFuncParMap;  // maps each production amplitude to the indices of
+                                                  // its real and imginary part in the parameter
+                                                  // array; negative indices mean that the parameter
+                                                  // is not existing due to rank restrictions
+  
+  ampsArrayType _decayAmps;  // precalculated decay amplitudes [event index][reflectivity][wave index]
+  
   mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
   mutable std::vector<double> _derivCache;  // cache for derivatives
-
+  
   // normalization integrals 
-  matrix<std::complex<double> >         _normMatrix;  // normalization matrix w/o acceptance
-  mutable matrix<std::complex<double> > _accMatrix;   // normalization matrix with acceptance
-
-
-  waveNameArrayType   _waveNamesX;            // wave names [reflectivity][wave index]
-  ampToParMapType     _prodAmpToFuncParMapX;  // maps each production amplitude to the indices of its
-                                              // real and imginary part in the parameter array;
-                                              // negative indices mean that the parameter is not
-                                              // existing due to rank restrictions
-  ampsArrayType       _decayAmpsX;            // precalculated decay amplitudes [event index][reflectivity][wave index]
-  normMatrixArrayType _normMatrixX;           // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
-  normMatrixArrayType _accMatrixX;            // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
-
+  normMatrixArrayType _normMatrix;  // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+  normMatrixArrayType _accMatrix;   // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+  
 };
 
 

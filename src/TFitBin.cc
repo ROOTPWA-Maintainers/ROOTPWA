@@ -105,9 +105,9 @@ TFitBin::buildWaveMap() {
   for(int i=0;i<n;++i){
     // strip rank
     TString title=wavetitle(i);
-    cout << "title=="<<title<<endl;
+    //cout << "title=="<<title<<endl;
     if(find(_wavetitles.begin(),_wavetitles.end(),title)==_wavetitles.end()){
-      cout<<"Wave: "<<title<<endl;
+      //cout<<"Wave: "<<title<<endl;
       _wavetitles.push_back(title);
     }
     
