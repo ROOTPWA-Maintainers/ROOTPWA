@@ -267,7 +267,7 @@ namespace rpwa {
   //////////////////////////////////////////////////////////////////////////////
   // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
   // matrix inversion routine using lu_factorize and lu_substitute
-  template<class T>
+  template<typename T>
   bool
   invertMatrix(const ublas::matrix<T>& A,
 	       ublas::matrix<T>&       inverseA)
@@ -287,7 +287,7 @@ namespace rpwa {
   }
 
 
-  template<class T>
+  template<typename T>
   ublas::matrix<T>
   invertMatrix(const ublas::matrix<T>& A,
 	       bool&                   isSingular)

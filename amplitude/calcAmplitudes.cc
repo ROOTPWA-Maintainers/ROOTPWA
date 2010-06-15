@@ -64,7 +64,9 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-  cerr << "usage:" << endl
+  cerr << "calculates amplitudes for all events in input data files and writes them to file" << endl
+       << endl
+       << "usage:" << endl
        << progName
        << " -k key file [-p PDG file -o output file -a -t tree name -l leaf names -v -h] input data file(s)" << endl
        << "    where:" << endl
@@ -148,7 +150,7 @@ main(int    argc,
   }
 
   if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
-    printErr << "specified input files are neither .root nor .evt files. aborting.";
+    printErr << "none of the specified input files is a .root or .evt file. aborting.";
     usage(progName, 1);
   }
 

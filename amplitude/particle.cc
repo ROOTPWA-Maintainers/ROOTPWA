@@ -191,3 +191,13 @@ particle::print(ostream& out) const
       << "index = "          << _index;
   return out;
 }
+
+
+string
+particle::label() const
+{
+  ostringstream out;
+  out << name() << "[" << 0.5 * isospin() << sign(G())
+      << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")]";
+  return out.str();
+}

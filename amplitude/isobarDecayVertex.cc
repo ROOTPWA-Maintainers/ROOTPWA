@@ -37,6 +37,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <sstream>
+
 #include "utilities.h"
 #include "isobarDecayVertex.h"
 #include "angMomCoupl.h"
@@ -309,3 +311,13 @@ isobarDecayVertex::printPointers(ostream& out) const
       << "daughter 2 particle: " << daughter2() << endl;
   return out;
 }
+
+
+string
+isobarDecayVertex::label() const
+{
+  stringstream out;
+  out << "isobar decay: L = " << _L * 0.5 << ", S = " << _S * 0.5;
+  return out.str();
+}
+

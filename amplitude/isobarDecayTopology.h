@@ -108,6 +108,9 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 
+    virtual std::ostream& writeGraphViz(std::ostream&      out);          ///< writes graph in GraphViz DOT format
+    virtual bool          writeGraphViz(const std::string& outFileName);  ///< writes graph in GraphViz DOT format
+
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 

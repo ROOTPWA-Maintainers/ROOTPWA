@@ -440,7 +440,7 @@ isobarDecayTopology::calcIsobarCharges()
     _isobarVertices[i]->calcMotherCharge();
   }
   // update graph name
-  name() = productionVertex()->outParticles()[0]->qnSummary();
+  name() = "\"" + productionVertex()->outParticles()[0]->qnSummary() + "\"";
 }
 
 
@@ -476,6 +476,50 @@ isobarDecayTopology::print(ostream& out) const
 }
 
 
+ostream&
+isobarDecayTopology::writeGraphViz(ostream& out)
+{
+  if (_debug)
+    printInfo << "generating graphViz file for graph '" << name() << "'" << endl;
+  // set global properties
+  graphNodeAttribute()["style"    ] = "filled";
+  graphNodeAttribute()["fillcolor"] = "white";
+  // set node names
+  nodeIterator iNd, iNdEnd;
+  for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd) {
+    nodeAttribute(*iNd)["label"] = vertex(*iNd)->label();
+    //nodeAttribute(*iNd)["style"] = "filled";
+  }
+  // set node shapes
+  nodeAttribute(productionVertex())["shape"] = "box";
+  for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+    nodeAttribute(toNode(fsParticles()[i]))["shape"] = "diamond";
+    nodeAttribute(toNode(fsParticles()[i]))["style"] = "dashed,filled";
+  }
+  // set edge names
+  edgeIterator iEd, iEdEnd;
+  for (tie(iEd, iEdEnd) = edges(); iEd != iEdEnd; ++iEd)
+    edgeAttribute(*iEd)["label"] = particle(*iEd)->label();
+  // set X edge name
+  edgeAttribute(edge(XParticle()))["label"] = XParticle()->qnSummary();
+  decayTopologyGraphType::writeGraphViz(out);
+  return out;
+}
+
+
+bool
+isobarDecayTopology::writeGraphViz(const string& outFileName)
+{
+  ofstream graphVizFile(outFileName.c_str());
+  if (not graphVizFile) {
+    printWarn << "cannot create file '" << outFileName << "'. graph is not written." << endl;
+    return false;
+  }
+  writeGraphViz(graphVizFile);
+  return true;
+}
+
+
 void
 isobarDecayTopology::buildIsobarVertexArray()
 {
@@ -502,7 +546,7 @@ isobarDecayTopology::subDecay(const nodeDesc& startNd,
 			      const bool      linkToMotherTopo)
 {
   isobarDecayTopology subTopo(decayTopology::subDecay(startNd, linkToMotherTopo));
-  subTopo.name() = vertex(startNd)->inParticles()[0]->qnSummary();
+  subTopo.name() = "\"" + vertex(startNd)->inParticles()[0]->qnSummary() + "\"";
   return subTopo;
 }
 

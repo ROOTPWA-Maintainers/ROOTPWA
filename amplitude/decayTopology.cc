@@ -507,7 +507,7 @@ void decayTopology::setProductionVertex(const interactionVertexPtr& productionVe
     printErr << "null pointer for particle[0] coming out of production vertex. aborting." << endl;
     throw;
   }
-  name() = productionVertex->outParticles()[0]->qnSummary();
+  name() = "\"" + productionVertex->outParticles()[0]->qnSummary() + "\"";
   if (not _prodVertex) {
     // topology does not have production vertex -> create graph node
     addVertex(productionVertex);
@@ -734,7 +734,7 @@ decayTopology::constructDecay(const interactionVertexPtr&              productio
     printErr << "null pointer for particle[0] coming out of production vertex. aborting." << endl;
     throw;
   }
-  name() = productionVertex->outParticles()[0]->qnSummary();
+  name() = "\"" + productionVertex->outParticles()[0]->qnSummary() + "\"";
   _prodVertex = productionVertex;
   addVertex(productionVertex);
   // create graph nodes for interaction vertices and store pointers

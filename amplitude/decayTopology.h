@@ -103,8 +103,9 @@ namespace rpwa {
     const std::vector<particlePtr>&          fsParticles        () const { return _fsParticles; }  ///< returns final state particles ordered depth-first
     const std::vector<interactionVertexPtr>& interactionVertices() const { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
 
-    const interactionVertexPtr& productionVertex  () const { return _prodVertex;     }  ///< returns production vertex
-    const interactionVertexPtr& XInteractionVertex() const { return _intVertices[0]; }  ///< returns X-decay vertex
+    const particlePtr&          XParticle         () const { return XInteractionVertex()->inParticles()[0]; }  ///< returns X particle
+    const interactionVertexPtr& productionVertex  () const { return _prodVertex;                            }  ///< returns production vertex
+    const interactionVertexPtr& XInteractionVertex() const { return _intVertices[0];                        }  ///< returns X-decay vertex
 
     void transformFsParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to all final state particles
 

@@ -252,6 +252,7 @@ main(int argc, char** argv)
     if (parser.parse(newKeyFileName, topo)) {
       topo->checkTopology();
       topo->checkConsistency();
+      topo->writeGraphViz("decay.dot");
       isobarHelicityAmplitude amp(topo);
       parser.setAmplitudeOptions(amp);
       // amp.enableReflectivityBasis(false);

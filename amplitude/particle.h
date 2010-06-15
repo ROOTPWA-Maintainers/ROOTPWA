@@ -110,6 +110,8 @@ namespace rpwa {
 
     virtual std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
+    virtual std::string label() const;  ///< returns graph label
+
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
