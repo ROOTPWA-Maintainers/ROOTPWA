@@ -35,7 +35,6 @@
 #include "utilities.h"
 #include "TDiffractivePhaseSpace.h"
 
-
 using namespace std;
 using namespace rpwa;
 
@@ -73,6 +72,7 @@ TDiffractivePhaseSpace::TDiffractivePhaseSpace()
     _pionMass(0.13957018),
     _pionMass2(_pionMass * _pionMass)
 {
+  _primaryVertexGen = NULL;
   _phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
   _phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
 }

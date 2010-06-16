@@ -52,6 +52,8 @@
 #include "TBWProductionAmp.h"
 #include "TFitBin.h"
 
+//#include "TPrimaryVertexGen.h"
+
 
 using namespace std;
 using namespace libconfig;
@@ -90,7 +92,7 @@ int main(int argc, char** argv)
 
   unsigned int nevents=100;
   unsigned int max_attempts=0;
-  string output_file(""); // either given by option or generated automaticly by mass range
+  string output_file(""); // either given by option or generated automatically by mass range
   string output_evt("");
   string output_wht("");
   string integrals_file;
@@ -166,6 +168,10 @@ int main(int argc, char** argv)
 
   double Mom=reactConf.lookup("beam.momentum");
   double MomSigma=reactConf.lookup("beam.sigma_momentum");
+  double BeamPartMass(0.13957018);
+  if (reactConf.exists("beam.mass")){
+	  BeamPartMass = reactConf.lookup("beam.mass");
+  }
   double DxDz=reactConf.lookup("beam.DxDz");
   double DxDzSigma=reactConf.lookup("beam.sigma_DxDz");
   double DyDz=reactConf.lookup("beam.DyDz");
@@ -181,14 +187,28 @@ int main(int argc, char** argv)
   if(overwriteMass){
     mmin=massLower/1000.0;
     mmax=mmin+massBinWidth/1000.0;
-
   }
   double tslope=reactConf.lookup("finalstate.t_slope");
   double binCenter=500 * (mmin + mmax);
-
- 
+/*
+  // check weather to use a primary vertex generator as requested by the config file
+  TPrimaryVertexGen* primaryVertexGen(NULL);
+  string histfilename_primvertex("");
+  if (reactConf.lookupValue("primvertex.histfilename", histfilename_primvertex)){
+  	primaryVertexGen = new TPrimaryVertexGen(
+  			histfilename_primvertex,
+  			BeamPartMass,
+  			Mom,
+  			MomSigma
+  			);
+  	if (!primaryVertexGen->Check()){
+  		cerr << " Error: histogram filename with beam properties not loaded! " << endl;
+  		delete primaryVertexGen;
+  		primaryVertexGen = NULL;
+  	}
+  }
+ */
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
-
   // generate the filename automatically if not specified
   if (output_file == "") {
 	  stringstream _filename;
@@ -221,7 +241,8 @@ int main(int argc, char** argv)
   difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
   difPS.SetTPrimeSlope(tslope);
-  difPS.SetMassRange(mmin,mmax);			
+  difPS.SetMassRange(mmin,mmax);
+  //difPS.SetPrimaryVertexGen(primaryVertexGen);
 
 
   double impMass;
@@ -442,6 +463,8 @@ int main(int argc, char** argv)
   outfile->Close();
   evtout.close();
   evtwht.close();
+
+  //delete primaryVertexGen;
  
   return 0;
 }
