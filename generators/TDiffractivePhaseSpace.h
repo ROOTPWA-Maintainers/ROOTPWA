@@ -166,6 +166,15 @@ namespace rpwa {
      */
     unsigned int event(ostream&);
 
+    /** @brief generates on event
+     *
+     * returns number of attempts to generate this event;
+     * writes event to VES formatted stream and
+     * for ComGeant fort.26 input files
+     *
+     */
+    unsigned int event(ostream&, ostream&);
+
   double impWeight() const {return _phaseSpace.impWeight();}
 
   private:
@@ -194,6 +203,7 @@ namespace rpwa {
     double _beamDyDzSigma;
 
     TLorentzVector _beamLab; // cache for last generated beam (in lab frame)
+    TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)
     TVector3 _vertex; 		 // cache for last generated vertex
 
     //TH1* thetaDistribution;
@@ -214,6 +224,11 @@ namespace rpwa {
     bool writePwa2000Ascii(std::ostream& out,
 			   const int     beamGeantId,
 			   const int     beamCharge);
+
+    // writes event to ascii file read by ComGeant fort.26 interface
+    bool writeComGeantAscii(
+    		ostream& out,
+    		bool  formated = true); // true: text file ; false: binary file (not implemented yet)
   
     void  BuildDaughterList();
     // particle masses

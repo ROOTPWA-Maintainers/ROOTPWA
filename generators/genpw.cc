@@ -72,12 +72,13 @@ cerr << "usage:" << endl
      << " -n # [-a # -m # -M # -B #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
      << "    where:" << endl
      << "        -n #       (max) number of events to generate (default: 100)" << endl
-     << "        -a #       (max) number of attempts to do (default: infty)" \
+     << "        -a #       (max) number of attempts to do (default: infinity)" \
      << endl
      << "        -m #       maxWeight" << endl
-     << "        -o <file>  ROOT output file (if not specified, generated automaticly)"<< endl
+     << "        -o <file>  ROOT output file (if not specified, generated automatically)"<< endl
      << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
      << "        -w <file.root>  to use TFitBin tree as input"<< endl 
+     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 1)" << endl
      << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
      << "        -i <file>  integral file"<< endl 
      << "        -r <file>  reaction config file"<< endl
@@ -96,6 +97,7 @@ int main(int argc, char** argv)
   string output_file(""); // either given by option or generated automatically by mass range
   string output_evt("");
   string output_wht("");
+  string output_comgeant("");
   string integrals_file;
   bool hasint=false;
   string wavelist_file; // format: name Re Im
@@ -106,9 +108,10 @@ int main(int argc, char** argv)
   double massLower=0;
   double massBinWidth=0;
   bool overwriteMass=false;
+  bool writeComGeantout=false;
 
   int c;
-  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h")) != -1)
+  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h:c")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
@@ -138,6 +141,9 @@ int main(int argc, char** argv)
    case 'm':
       maxWeight = atof(optarg);
       break;
+   case 'c':
+	  writeComGeantout = true;
+	  break;
    case 'M':
       massLower = atof(optarg);
       overwriteMass=true;
@@ -222,6 +228,9 @@ int main(int argc, char** argv)
   output_evt.replace(output_evt.find(".root"),5,".evt");
   output_wht = output_file;
   output_wht.replace(output_wht.find(".root"),5,".wht");
+  output_comgeant = output_file;
+  output_comgeant.erase(output_comgeant.find(".root"),5);
+  output_comgeant.append(".fort.26");
 
   // now create the root file to store the events
   TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
@@ -400,6 +409,9 @@ int main(int argc, char** argv)
   unsigned int i=0;
   //difPS.setVerbose(true);
   ofstream evtout(output_evt.c_str());
+  ofstream evtgeant;
+  if (writeComGeantout)
+	  evtgeant.open(output_comgeant.c_str());
   ofstream evtwht(output_wht.c_str());
   evtwht << setprecision(10);
 
@@ -412,7 +424,10 @@ int main(int argc, char** argv)
       p->Delete(); // clear output array
 
       ofstream str("tmpevent.evt");
-      difPS.event(str);
+      if (writeComGeantout)
+    	  difPS.event(str, evtgeant);
+      else
+    	  difPS.event(str);
       impweight=difPS.impWeight();
       str.close();
       
@@ -467,6 +482,8 @@ int main(int argc, char** argv)
   outfile->Close();
   evtout.close();
   evtwht.close();
+  if (writeComGeantout)
+	  evtgeant.close();
  
   return 0;
 }
