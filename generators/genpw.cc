@@ -41,6 +41,7 @@
 //#include "TH1D.h"
 #include "TRandom3.h"
 #include "TLorentzVector.h"
+#include "TVector3.h"
 #include "TClonesArray.h"
 
 #include "libconfig.h++"
@@ -52,7 +53,7 @@
 #include "TBWProductionAmp.h"
 #include "TFitBin.h"
 
-//#include "TPrimaryVertexGen.h"
+#include "TPrimaryVertexGen.h"
 
 
 using namespace std;
@@ -163,6 +164,7 @@ int main(int argc, char** argv)
   double weight, impweight;
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector beam;
+  TVector3 vertex;
   double qbeam;
   vector<int> q; // array of charges
 
@@ -190,7 +192,7 @@ int main(int argc, char** argv)
   }
   double tslope=reactConf.lookup("finalstate.t_slope");
   double binCenter=500 * (mmin + mmax);
-/*
+
   // check weather to use a primary vertex generator as requested by the config file
   TPrimaryVertexGen* primaryVertexGen(NULL);
   string histfilename_primvertex("");
@@ -207,7 +209,7 @@ int main(int argc, char** argv)
   		primaryVertexGen = NULL;
   	}
   }
- */
+
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
   // generate the filename automatically if not specified
   if (output_file == "") {
@@ -230,6 +232,7 @@ int main(int argc, char** argv)
   outtree->Branch("impweight",&impweight,"impweight/d");
   outtree->Branch("p",&p);
   outtree->Branch("beam",&beam);
+  outtree->Branch("vertex", &vertex);
   outtree->Branch("q",&q);
   outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
@@ -242,7 +245,7 @@ int main(int argc, char** argv)
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
   difPS.SetTPrimeSlope(tslope);
   difPS.SetMassRange(mmin,mmax);
-  //difPS.SetPrimaryVertexGen(primaryVertexGen);
+  difPS.SetPrimaryVertexGen(primaryVertexGen);
 
 
   double impMass;
@@ -418,6 +421,7 @@ int main(int argc, char** argv)
       }
 
       beam=*difPS.GetBeam();
+      vertex=*difPS.GetVertex();
 
       // calculate weight
       event e;
@@ -463,8 +467,6 @@ int main(int argc, char** argv)
   outfile->Close();
   evtout.close();
   evtwht.close();
-
-  //delete primaryVertexGen;
  
   return 0;
 }

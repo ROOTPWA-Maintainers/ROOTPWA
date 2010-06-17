@@ -77,6 +77,10 @@ TDiffractivePhaseSpace::TDiffractivePhaseSpace()
   _phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
 }
 
+TDiffractivePhaseSpace::~TDiffractivePhaseSpace(){
+	delete _primaryVertexGen;
+}
+
 
 // /////////////////////////////////////////////////////////////////////////////////
 // helper functions
@@ -244,16 +248,40 @@ TDiffractivePhaseSpace::BuildDaughterList()
 unsigned int 
 TDiffractivePhaseSpace::event()
 {
+	unsigned long int attempts = 0;
   // construct primary vertex and beam
-  const TVector3 vertexPos(0, 0, 
+  // use the primary Vertex Generator if available
+	if (_primaryVertexGen){
+		// as documented one may need several attempts to get a vertex position
+		// which is valid also for the beam direction measurement
+		while(attempts < 1000){
+			_vertex = _primaryVertexGen->Get_Vertex();
+			TVector3 beam_dir = _primaryVertexGen->Get_beam_dir(_vertex);
+			if (beam_dir.Mag() == 0){
+					++attempts;
+					//cout << " skipping " << endl;
+					continue;
+			}
+			_beamLab = _primaryVertexGen->Get_beam_part(beam_dir);
+			break;
+		}
+		// Just a few events should contain a vertex position with no beam direction information
+		if (attempts == 999){
+			cerr << " Error in beam construction. Please check the beam properties loaded correctly!" << endl;
+			_beamLab = makeBeam();
+		}
+	} else {
+		_vertex.SetXYZ(0, 0,
 			   _targetZPos+gRandom->Uniform(-_targetZLength * 0.5,
 				 			 _targetZLength * 0.5));
-  _beamLab = makeBeam();
+		_beamLab = makeBeam();
+	}
+
+
   const TLorentzVector targetLab(0, 0, 0, _targetMass);
   const TLorentzVector overallCm = _beamLab + targetLab;  // beam-target center-of-mass system
   
   bool              done     = false;
-  unsigned long int attempts = 0;
   while (!done) {
     
     const double tPrime = -gRandom->Exp(_invSlopePar);             // pick random t'

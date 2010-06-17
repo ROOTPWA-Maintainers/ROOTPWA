@@ -70,11 +70,12 @@ namespace rpwa {
 
     // Constructors/Destructors ---------
     TDiffractivePhaseSpace();
-    ~TDiffractivePhaseSpace(){}
+    ~TDiffractivePhaseSpace();
 
     // Accessors -----------------------
     const TLorentzVector* const GetDecay(unsigned int i){return &_phaseSpace.daughter(i);}
     TLorentzVector* GetBeam(){return &_beamLab;}
+    TVector3* GetVertex(){return &_vertex;}
     // Modifiers -----------------------
     /** @brief Set beam parameters
      * 
@@ -193,6 +194,7 @@ namespace rpwa {
     double _beamDyDzSigma;
 
     TLorentzVector _beamLab; // cache for last generated beam (in lab frame)
+    TVector3 _vertex; 		 // cache for last generated vertex
 
     //TH1* thetaDistribution;
 

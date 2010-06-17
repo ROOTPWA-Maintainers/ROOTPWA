@@ -27,14 +27,16 @@ TPrimaryVertexGen::TPrimaryVertexGen(string histfilename, double beam_part_mass,
 	hist_angles_horiz_sigma= NULL;
 	hist_vertex_distr_xy   = NULL;
 	hist_vertex_distr_z    = NULL;
-	_histograms_loaded = Load_histograms(histfilename);
+	_histograms_loaded = Load_histograms(histfilename, true);
 	_beam_part_mass = beam_part_mass;
-	_beam_energy_mean = _beam_energy_mean;
-	_beam_energy_sigma = _beam_energy_sigma;
+	_beam_energy_mean = mean_beam_energy;
+	_beam_energy_sigma = mean_beam_energy_spread;
 }
 
 TPrimaryVertexGen::~TPrimaryVertexGen(){
-	histogramfile->Close();
+	if (histogramfile){
+		histogramfile->Close();
+	}
 	delete histogramfile;
 	delete hist_angles_vert_mean;
 	delete hist_angles_horiz_mean;
@@ -105,7 +107,7 @@ bool TPrimaryVertexGen::Load_histograms(string filename, bool plot){
 		analyze_beam_properties_output->cd(6);
 		hist_vertex_distr_z->Draw("");
 		gPad->Update();
-		//analyze_beam_properties_output->Print("Fitted_beam_property_distributions.pdf");
+		analyze_beam_properties_output->Print("Fitted_beam_property_distributions.pdf");
 	}
 	result = true;
 	return result;
@@ -149,7 +151,7 @@ TVector3& TPrimaryVertexGen::Get_beam_dir(const TVector3 vertex){
 	double sigma_vert = hist_angles_vert_sigma->GetBinContent(
 			hist_angles_vert_sigma->FindBin(vertex.X(), vertex.Y()));
 	if ((sigma_horiz == 0.) || (sigma_vert == 0.)) {
-		cout << " Warning in Get_Beam: out of histogram range " << endl;
+		//cout << " Warning in Get_Beam: out of histogram range " << endl;
 		result->SetZ(0.);
 		return *result;
 	}
