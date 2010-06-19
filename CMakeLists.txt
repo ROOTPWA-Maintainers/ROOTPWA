@@ -49,10 +49,14 @@ project(ROOTPWA)
 
 
 # load some common cmake macros
-# where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
+# set path, where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
 message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'")
 include(CommonMacros)
+
+
+# force out-of-source builds.
+ENFORCE_OUT_OF_SOURCE_BUILD()
 
 
 # define build types
@@ -70,7 +74,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 
 
-# define output directories
+# redirect output files
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
@@ -103,9 +107,17 @@ set(LIBCONFIG $ENV{LIBCONFIG})
 if(LIBCONFIG)
   message(STATUS "Using libconfig in directory '${LIBCONFIG}'")
   set(LIBCONFIG_INCLUDE_DIR "${LIBCONFIG}/include")
-  set(LIBCONFIG_LIBS
-    "${LIBCONFIG}/lib/libconfig++.so"
-  )
+  set(LIBCONFIG_LIBRARY_DIR "${LIBCONFIG}/lib")
+  set(_LIBCONFIG_LIB_NAMES "config++")
+  find_library(LIBCONFIG_LIBS
+    NAMES ${_LIBCONFIG_LIB_NAMES}
+    PATHS ${LIBCONFIG_LIBRARY_DIR}
+    NO_DEFAULT_PATH)
+  if(NOT LIBCONFIG_LIBS)
+    message(SEND_ERROR "Cannot find libconfig library ${_LIBCONFIG_LIB_NAMES} in ${LIBCONFIG_LIBRARY_DIR}.")
+  else()
+    message(STATUS "Using libconfig library ${LIBCONFIG_LIBS}")
+  endif()
 else()
   message(SEND_ERROR "Environment variable LIBCONFIG=${LIBCONFIG} is not set correctly.")
 endif()
@@ -177,72 +189,29 @@ set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src
 )
 set(ROOTPWA_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwa.so
+  RootPwa
 )
 add_subdirectory(src)
 
 # RootPwaAmp
-# set(ROOTPWAAMP_INCLUDE_DIR
-#   ${CMAKE_SOURCE_DIR}/amplitude
-# )
-# set(ROOTPWAAMP_LIBS
-#   ${LIBRARY_OUTPUT_PATH}/libRootPwaAmp.so
-# )
 # add_subdirectory(amplitude)
 
 # RootPwaTools
-set(ROOTPWATOOLS_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/tools
-)
-set(ROOTPWATOOLS_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwaTools.so
-)
 add_subdirectory(tools)
 
 # RootPwaGen
-set(ROOTPWAGEN_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/generators
-)
-set(ROOTPWAGEN_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwaGen.so
-)
 add_subdirectory(generators)
 
 # RootPwaKey
-set(ROOTPWAKEY_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/keygen
-)
-set(ROOTPWAKEY_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwaKey.so
-)
 add_subdirectory(keygen)
 
 # Fortran
-set(FORTRAN_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/fortran
-)
-set(FORTRAN_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libFortran.so
-)
 add_subdirectory(fortran)
 
-
-# add dependencies
-add_dependencies(pwa          pp)
-add_dependencies(RootPwa      pp pwa)
-# add_dependencies(RootPwaAmp   pp pwa)
-add_dependencies(RootPwaTools pp pwa)
-add_dependencies(RootPwaGen   pp pwa RootPwa)
-add_dependencies(RootPwaKey   pp pwa RootPwa)
-
-
-
-#add_subdirectory(gui)
 
 
 # file(GLOB _CC_LIST ${CMAKE_CURRENT_SOURCE_DIR} "amplitude/*.cc")
 # #message("foo ${_CC_LIST}")
 # switch_file_extension("${_CC_LIST}" ".cc" ".h" _H_LIST)
 # #message("bar ${_H_LIST}")
-
 # root_generate_dictionary("testDict.cc" "${ROOT_INCLUDE_DIR}" "${_H_LIST}" "testLinkDef.h")

@@ -39,6 +39,7 @@
 
 // C/C++ Headers ----------------------
 #include <iostream>
+#include <cmath>
 
 // Collaborating Class Headers --------
 #include "FSParticle.h"
