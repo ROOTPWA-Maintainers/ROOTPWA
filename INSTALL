@@ -5,7 +5,7 @@ Installation instructions for rootpwa:
 
 ROOT: 
   ROOT is available from http://root.cern.ch 
-  Version 5.22 or higher is needed 
+  Version 5.26 or higher is needed 
   and it must have been built with the 
 	--enable-mathmore 
 	--enable-minuit2 
@@ -37,13 +37,11 @@ CMake:
   1) Download the latest CMake binary (.tar.gz) from
   	<http://www.cmake.org/cmake/resources/software.html> 
   	and unpack it to ~/bin/
-  2) add to your loginshell script (.bashrc or .bashprofile or ...)
-  	the path to the binary:
-  	
-	echo setting up cmake
-	export PATH=$HOME/bin/cmake-2.8.1-Linux-i386/bin:$PATH
-	
-	or make an alias for cmake
+  2) Add the path to the binary to your loginshell script
+     (.bashrc or .bashprofile or ...) or make an alias for cmake:
+     &> echo "setting up cmake"
+     &> export PATH=${HOME}/bin/cmake-2.8.1-Linux-i386/bin:${PATH}
+
 
 BNL PWA software PWA2000:
   pwa2000 is now part of the rootpwa repository. 
@@ -57,7 +55,7 @@ libconfig:
 	The installation is straight forward and should work without
 	any problems but you should use the prefix pointing to 
 	the lib files in the topfolder instead of /bin/local:
-	./configure --prefix=$LIBCONFIG
+	&> ./configure --prefix=$LIBCONFIG
 	See ./configure --help for details.
 
 	We will provide a copy of the package from 

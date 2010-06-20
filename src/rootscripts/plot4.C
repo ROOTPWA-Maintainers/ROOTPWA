@@ -56,11 +56,12 @@ using namespace rpwa;
 
 // signature with wave indices
 void
-plot4(TTree*       tree,         // fitResult tree
-      const int    waveIndexA,   // index of first wave
-      const int    waveIndexB,   // index of second wave
-      const double massMin = 0,  // [GeV/c^2]
-      const double massMax = 0)  // [GeV/c^2]
+plot4(TTree*       tree,             // fitResult tree
+      const int    waveIndexA,       // index of first wave
+      const int    waveIndexB,       // index of second wave
+      const double massMin     = 0,  // [GeV/c^2]
+      const double massMax     = 0,  // [GeV/c^2]
+      const string& branchName = "fitResult_v2")
 {
   if (!tree) {
     printErr << "null pointer to tree. exiting." << endl;
@@ -79,19 +80,21 @@ plot4(TTree*       tree,         // fitResult tree
  
   // wave A intensity
   canv->cd(1);
-  plotIntensity(tree, waveIndexA, selectExpr.str());
+  plotIntensity(tree, waveIndexA, false, kBlack, false, "", "APZ", 1, 0,
+		selectExpr.str(), branchName);
 
   // wave A - wave B phase angle
   canv->cd(2);
-  plotPhase(tree, waveIndexA, waveIndexB, selectExpr.str());
+  plotPhase(tree, waveIndexA, waveIndexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
 
   // wave B intensity
   canv->cd(3);
-  plotIntensity(tree, waveIndexB, selectExpr.str());
+  plotIntensity(tree, waveIndexB, false, kBlack, false, "", "APZ", 1, 0,
+		selectExpr.str(), branchName);
 
   // wave A - wave B coherence
   canv->cd(4);
-  plotCoherence(tree, waveIndexA, waveIndexB, selectExpr.str());
+  plotCoherence(tree, waveIndexA, waveIndexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
 }
  
 
