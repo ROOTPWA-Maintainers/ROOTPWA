@@ -124,9 +124,15 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 								//      wave(&X, J, P, M, refl);
 								waveKey wave(&X, J,parity,M,+1);
 								generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+								// move the .key file
 								stringstream command;
 								command << "mv " << wave.waveName(true) << " " << movetoFilePath << "/";
-								cout << " executing " << command.str();
+								cout << " executing " << command.str() << endl;
+								system(command.str().c_str());
+								command.str("");
+								// remove the .C file
+								command << "rm -f " << wave.waveName(true) << ".C" << endl;
+								cout << " executing " << command.str() << endl;
 								system(command.str().c_str());
 								wavecounter++;
 							}
@@ -137,7 +143,11 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 								generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 								stringstream command;
 								command << "mv " << wave.waveName(true) << " " << movetoFilePath << "/";
-								cout << " executing " << command.str();
+								cout << " executing " << command.str() << endl;
+								system(command.str().c_str());
+								command.str("");
+								command << "rm -f " << wave.waveName(true) << ".C" << endl;
+								cout << " executing " << command.str() << endl;
 								system(command.str().c_str());
 								wavecounter++;
 							}

@@ -14,7 +14,8 @@ then
 	if [ $CONTINUE == "Y" ]
 	then
 		echo " cleaning up $1 "
-		rm -rf $1*
+		rm -rf $1
+		mkdir $1
 		echo " compiling tree reader "
 		g++ `root-config --glibs` `root-config --cflags` -O0 -o readtree Tree_to_BNL_event.C
 		let BINWIDTH=($4-$3)/$2
@@ -32,7 +33,7 @@ then
 			mkdir "MC"
 			mkdir "PSPAMPS" 
 			echo " filling with MC pasespace events "
-			genpw -n 10000 -M ${BINLOW} -B ${BINWIDTH} -r $ROOTPWA/generators/KpipiDiffractive2008.conf
+			genpw -n 10000 -M ${BINLOW} -B ${BINWIDTH} -c -r $ROOTPWA/generators/KpipiDiffractive2008.conf
 			# BINLOWGEV=`echo "scale=4; ${BINLOW}/1000" | bc`
 			# BINHIGHGEV=`echo "scale=4; ${BINHIGH}/1000" | bc`
 			# root -l -q -b ${ROOTPWA}/src/pwafitTest/genPhaseSpaceData.C+\(${BINLOWGEV},${BINHIGHGEV},\"\",\"${ROOTPWA}/src/pwafitTest/hTheta.root\",10000,true\)
