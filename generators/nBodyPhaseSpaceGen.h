@@ -7,6 +7,18 @@
 //
 // the event is boosted into the same frame in which the n-body system is
 // given
+//
+// !Note! some of the implemented weights can be applied only in
+//        certain cases; if you are not sure, use the "S.U. Chung"
+//        weight
+//
+// !Note! in case this class is used to calculate the absolute value
+//        of the phase space integral, be sure to use the "S.U. Chung"
+//        weight; if in the integral the phase space is weighted with
+//        some amplitude with angular depdendence, the integral has to
+//        be divided by the correct power of (2) pi (the "S.U. Chung"
+//        already contains a factor (4 pi)^(n - 1) from (trivial)
+//        integration over all angles)
 // 
 // based on:
 // GENBOD (CERNLIB W515), see F. James, "Monte Carlo Phase Space", CERN 68-15 (1968)
@@ -77,7 +89,7 @@ namespace rpwa {
     double       random ()                        { return _rnd.pick(); }  ///< returns number from internal random generator; intended for higher-level generators
 
 
-  void setProposalBW(double mass, double width) { _isoBWMass=mass;_isoBWWidth=width;} ///< set proposal function for importance sampling in the (n-1) isobar mass as simple Breit-Wigner-Shape (to be used with IMPORTANCE weighting option)
+    void setProposalBW(double mass, double width) { _isoBWMass=mass;_isoBWWidth=width;} ///< set proposal function for importance sampling in the (n-1) isobar mass as simple Breit-Wigner-Shape (to be used with IMPORTANCE weighting option)
 
     // high-level generator interface
     /// generates full event with certain n-body mass and momentum and returns event weight
@@ -110,18 +122,18 @@ namespace rpwa {
     kinematicsTypeEnum kinematicsType   () const                                  { return _kinematicsType;           }  ///< returns algorithm used to calculate event kinematics
 
 
-  void setVerbose(bool flag){_verbose=flag;}
+    void setVerbose(bool flag){_verbose=flag;}
 
-  //----------------------------------------------------------------------------
-  // weight routines
-  enum weightTypeEnum {S_U_CHUNG = 1,   // gives physically correct mass dependence
-		       NUPHAZ    = 2,   // weight used in nuphaz
-		       GENBOD    = 3,   // default weight used in genbod (gives wrong mass dependence)
-		       FLAT      = 4,  // uniform mass distribution; warning: produces distorted angular distribution
-		       IMPORTANCE = 5}; // like S_U_CHUNG but with importance sampling in (n-1) fs particle state (single breitwigner) 
-  void           setWeightType(const weightTypeEnum weightType) { _weightType = weightType; }  ///< selects formula used for weight calculation
+    //----------------------------------------------------------------------------
+    // weight routines
+    enum weightTypeEnum {S_U_CHUNG = 1,   // gives physically correct mass dependence
+			 NUPHAZ    = 2,   // weight used in nuphaz
+			 GENBOD    = 3,   // default weight used in genbod (gives wrong mass dependence)
+			 FLAT      = 4,   // uniform mass distribution; warning: produces distorted angular distribution
+			 IMPORTANCE = 5}; // like S_U_CHUNG but with importance sampling in (n-1) fs particle state (single breitwigner) 
+    void           setWeightType(const weightTypeEnum weightType) { _weightType = weightType; }  ///< selects formula used for weight calculation
   
-  weightTypeEnum weightType   () const                          { return _weightType;       }  ///< returns formula used for weight calculation
+    weightTypeEnum weightType   () const                          { return _weightType;       }  ///< returns formula used for weight calculation
 
 
     void   setMaxWeight          (const double maxWeight) { _maxWeight = maxWeight;    }  ///< sets maximum weight used for hit-miss MC
@@ -153,10 +165,10 @@ namespace rpwa {
 
 
 
-  double                             impWeight() const {return _impweight;}
-  std::ostream& print(std::ostream& out = std::cout) const;  ///< prints generator status
-  friend std::ostream& operator << (std::ostream&             out,
-				    const nBodyPhaseSpaceGen& gen) { return gen.print(out); }
+    double                             impWeight() const {return _impweight;}
+    std::ostream& print(std::ostream& out = std::cout) const;  ///< prints generator status
+    friend std::ostream& operator << (std::ostream&             out,
+				      const nBodyPhaseSpaceGen& gen) { return gen.print(out); }
 
   private:
 
@@ -169,32 +181,32 @@ namespace rpwa {
     std::vector<double> _m;  ///< masses of daughter particles
 
 
-  // internal variables
-  unsigned int                _n;                  ///< number of daughter particles
-  std::vector<double>         _M;                  ///< effective masses of (i + 1)-body systems
-  std::vector<double>         _cosTheta;           ///< cosine of polar angle of the 2-body decay of the (i + 1)-body system
-  std::vector<double>         _phi;                ///< azimuthal angle of the 2-body decay of the (i + 1)-body system
-  std::vector<double>         _mSum;               ///< sums of daughter particle masses
-  std::vector<double>         _breakupMom;         ///< breakup momenta for the two-body decays: (i + 1)-body --> daughter_(i + 1) + i-body
-  std::vector<TLorentzVector> _daughters;          ///< Lorentz vectors of the daughter particles
-  weightTypeEnum              _weightType;         ///< switches between different weight formulas
-  double                      _norm;               ///< normalization value
-  double                      _weight;             ///< phase space weight of generated event
-  double                      _impweight;          ///< importance sampling weight
-  double                      _maxWeightObserved;  ///< maximum event weight calculated processing the input data
-  double                      _maxWeight;          ///< maximum weight used to weight events in hit-miss MC
-  kinematicsTypeEnum          _kinematicsType;     ///< switches between different ways of calculating event kinematics
+    // internal variables
+    unsigned int                _n;                  ///< number of daughter particles
+    std::vector<double>         _M;                  ///< effective masses of (i + 1)-body systems
+    std::vector<double>         _cosTheta;           ///< cosine of polar angle of the 2-body decay of the (i + 1)-body system
+    std::vector<double>         _phi;                ///< azimuthal angle of the 2-body decay of the (i + 1)-body system
+    std::vector<double>         _mSum;               ///< sums of daughter particle masses
+    std::vector<double>         _breakupMom;         ///< breakup momenta for the two-body decays: (i + 1)-body --> daughter_(i + 1) + i-body
+    std::vector<TLorentzVector> _daughters;          ///< Lorentz vectors of the daughter particles
+    weightTypeEnum              _weightType;         ///< switches between different weight formulas
+    double                      _norm;               ///< normalization value
+    double                      _weight;             ///< phase space weight of generated event
+    double                      _impweight;          ///< importance sampling weight
+    double                      _maxWeightObserved;  ///< maximum event weight calculated processing the input data
+    double                      _maxWeight;          ///< maximum weight used to weight events in hit-miss MC
+    kinematicsTypeEnum          _kinematicsType;     ///< switches between different ways of calculating event kinematics
 
 
 
-  bool _verbose;
+    bool _verbose;
 
-  double _isoBWMass;  ///< Breit-Wigner mass for importance sampling proposal
-  double _isoBWWidth; ///< Breit-Wigner width for importance sampling proposal
+    double _isoBWMass;  ///< Breit-Wigner mass for importance sampling proposal
+    double _isoBWWidth; ///< Breit-Wigner width for importance sampling proposal
 
 
-  // wrapper class for random number generator
-  class rndGen {
+    // wrapper class for random number generator
+    class rndGen {
 
     
     public:
