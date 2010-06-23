@@ -8,18 +8,21 @@
 # Write error in same file
 #$ -j y
 
-cd ~/scratch/COMPASS/rootpwa/trunk
-source setup.sh
+#cd ~/scratch/COMPASS/rootpwa/trunk
+cd $ROOTPWA
+#source setup.sh
 cd scripts/
 
-DATADIR=/afs/e18/compass/analysis/sneubert/5PiLTData3/
+#DATADIR=/afs/e18/compass/analysis/sneubert/5PiLTData3/
 #DATADIR=/afs/e18/compass/analysis/sneubert/5PiModels/ImpTest/pieces2/
+DATADIR=$HOME/disk2/analysis/Kp_Kppipi/pwa/WA03_like/
 
-WAVESETDIR=$ROOTPWA/keyfiles/key5pi/
+#WAVESETDIR=$ROOTPWA/keyfiles/key5pi/
+WAVESETDIR=$ROOTPWA/keyfiles/keyKpipi/
 
 # choose which amplitudes to do
-#DOAMPS=1
-#DOPSP=1
+DOAMPS=1
+DOPSP=1
 DOACC=1
 
 

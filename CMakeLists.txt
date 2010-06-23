@@ -49,15 +49,28 @@ project(ROOTPWA)
 
 
 # load some common cmake macros
-# where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
+# set path, where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
 message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'")
 include(CommonMacros)
 
 
+# force out-of-source builds.
+enforce_out_of_source_build()
+
+
+# warn user if system is not UNIX
+if(NOT UNIX)
+  message(FATAL_ERROR "This is an unsupported system.")
+endif()
+message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version '${CMAKE_HOST_SYSTEM_VERSION}' architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
+message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}' architecture '${CMAKE_SYSTEM_PROCESSOR}'")
+
+
 # define build types
 # set a default build type for single-configuration CMake generators, if no build type is set.
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+  message(STATUS "No build type was specified. Setting build type to 'Release'.")
   set(CMAKE_BUILD_TYPE Release)
 endif()
 # common compiler flags
@@ -68,8 +81,18 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
+# report global build settings
+foreach(_LANG "C" "CXX")
+  message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'")
+  message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'")
+endforeach()
+foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
+  message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
+endforeach()
+message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
 
 
+# redirect output files
 # define output directories
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
@@ -103,11 +126,19 @@ set(LIBCONFIG $ENV{LIBCONFIG})
 if(LIBCONFIG)
   message(STATUS "Using libconfig in directory '${LIBCONFIG}'")
   set(LIBCONFIG_INCLUDE_DIR "${LIBCONFIG}/include")
-  set(LIBCONFIG_LIBS
-    "${LIBCONFIG}/lib/libconfig++.so"
-  )
+  set(LIBCONFIG_LIBRARY_DIR "${LIBCONFIG}/lib")
+  set(_LIBCONFIG_LIB_NAMES "config++")
+  find_library(LIBCONFIG_LIBS
+    NAMES ${_LIBCONFIG_LIB_NAMES}
+    PATHS ${LIBCONFIG_LIBRARY_DIR}
+    NO_DEFAULT_PATH)
+  if(NOT LIBCONFIG_LIBS)
+    message(SEND_ERROR "Cannot find libconfig library '${_LIBCONFIG_LIB_NAMES}' in '${LIBCONFIG_LIBRARY_DIR}'")
+  else()
+    message(STATUS "Using libconfig library '${LIBCONFIG_LIBS}'")
+  endif()
 else()
-  message(SEND_ERROR "Environment variable LIBCONFIG=${LIBCONFIG} is not set correctly.")
+  message(SEND_ERROR "Environment variable LIBCONFIG='${LIBCONFIG}' is not set correctly")
 endif()
 
 
@@ -155,7 +186,7 @@ else()
   set(DOXYGEN_TARGET  "doxygen")
   set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
   set(DOXYGEN_CONF    "${CMAKE_SOURCE_DIR}/rootpwaDoxyfile.conf")
-  message(STATUS "Run 'make ${DOXYGEN_TARGET}' to create Doxygen documentation files in ${DOXYGEN_DOC_DIR}")
+  message(STATUS "Run 'make ${DOXYGEN_TARGET}' to create Doxygen documentation files in '${DOXYGEN_DOC_DIR}'")
   add_custom_target(${DOXYGEN_TARGET}
     COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
     DEPENDS ${DOXYGEN_CONF}
@@ -177,72 +208,29 @@ set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src
 )
 set(ROOTPWA_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwa.so
+  RootPwa
 )
 add_subdirectory(src)
 
 # RootPwaAmp
-set(ROOTPWAAMP_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/amplitude
-)
-set(ROOTPWAAMP_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwaAmp.so
-)
 add_subdirectory(amplitude)
 
 # RootPwaTools
-set(ROOTPWATOOLS_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/tools
-)
-set(ROOTPWATOOLS_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwaTools.so
-)
 add_subdirectory(tools)
 
 # RootPwaGen
-set(ROOTPWAGEN_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/generators
-)
-set(ROOTPWAGEN_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwaGen.so
-)
 add_subdirectory(generators)
 
 # RootPwaKey
-set(ROOTPWAKEY_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/keygen
-)
-set(ROOTPWAKEY_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libRootPwaKey.so
-)
 add_subdirectory(keygen)
 
 # Fortran
-set(FORTRAN_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/fortran
-)
-set(FORTRAN_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libFortran.so
-)
 add_subdirectory(fortran)
 
-
-# add dependencies
-add_dependencies(pwa          pp)
-add_dependencies(RootPwa      pp pwa)
-add_dependencies(RootPwaAmp   pp pwa)
-add_dependencies(RootPwaTools pp pwa)
-add_dependencies(RootPwaGen   pp pwa RootPwa)
-add_dependencies(RootPwaKey   pp pwa RootPwa)
-
-
-
-#add_subdirectory(gui)
 
 
 # file(GLOB _CC_LIST ${CMAKE_CURRENT_SOURCE_DIR} "amplitude/*.cc")
 # #message("foo ${_CC_LIST}")
 # switch_file_extension("${_CC_LIST}" ".cc" ".h" _H_LIST)
 # #message("bar ${_H_LIST}")
-
 # root_generate_dictionary("testDict.cc" "${ROOT_INCLUDE_DIR}" "${_H_LIST}" "testLinkDef.h")

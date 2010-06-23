@@ -104,9 +104,9 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
 	    << "with the amplitudes of the respective reflected/mirrored events:" << endl;
   printInfo << endl
 	    << "!NOTE: reflection and mirroring do _not_ take into account the intrinsic " << endl
-	    << "       parity P_intr of the final state. The sign of the reflected amplitude" << endl
-	    << "       is given by -P_intr / refl, that of the mirrored events by P * P_intr." << endl
-	    << "       check that this is really the case!" << endl;
+	    << "       parity P_intr of the final state. The sign change of the reflected" << endl
+	    << "       amplitude is given by -P_intr / refl, that of the mirrored events" << endl
+	    << "       by P * P_intr. check that this is really the case!" << endl;
   unsigned int countAmpRatioNotOk    = 0;
   //unsigned int countAmpEigenValNotOk = 0;
   int          reflEigenValue        = 0;

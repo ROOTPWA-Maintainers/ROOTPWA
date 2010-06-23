@@ -54,6 +54,8 @@ enable_language(Fortran)
 #set(CMAKE_Fortran_FLAGS "-O2 -m32 -fno-automatic -ffixed-line-length-none -finit-local-zero")
 #set(CMAKE_Fortran_FLAGS "-O2 -m32 -fno-automatic -ffixed-line-length-none")
 set(CMAKE_Fortran_FLAGS "-O2 -fno-automatic -ffixed-line-length-none")
+message(STATUS "Using Fortran compiler '${CMAKE_Fortran_COMPILER}'")
+message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
 
 
 # source files that are compiled into library

@@ -53,6 +53,7 @@ set(SOURCES
   TBWProductionAmp.cc
   TPWWeight.cc
   TDiffractivePhaseSpace.cc
+  TPrimaryVertexGen.cc
 )
    
 

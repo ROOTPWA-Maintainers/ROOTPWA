@@ -1,6 +1,7 @@
 #!/bin/bash
 
 WORKDIR=$PWD
+echo $KEYDIR
 cd $KEYDIR
 
 for i in *.key ; 

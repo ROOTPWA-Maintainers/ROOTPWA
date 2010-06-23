@@ -48,7 +48,6 @@
 #include "TList.h"
 #include "TPostScript.h"
 #include "TSystem.h"
-#include "TLegend.h"
 
 #include "fitResult.h"
 #include "plotIntensity.h"
@@ -195,8 +194,8 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
     ++canvJpcCounter[jpc];
 
     // draw intensity graph
-    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, "", "", "AP", 1,
-				       graphColors, yAxisRangeMax, false, branchName);
+    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, false, graphColors, drawLegend,
+				       "", "AP", 1, yAxisRangeMax, "", branchName);
     if (!graph)
       continue;
 
@@ -212,18 +211,6 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
     TLatex* text = new TLatex(0.15, 0.85, label.str().c_str());
     text->SetNDC(true);
     text->Draw();
-    // add legend
-    if (drawLegend && (nmbTrees > 1)) {
-      TLegend* legend = new TLegend(0.65,0.80,0.99,0.99);
-      legend->SetFillColor(10);
-      legend->SetBorderSize(1);
-      legend->SetMargin(0.2);
-      for (unsigned int j = 0; j < nmbTrees; ++j) {
-	TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(j));
-	legend->AddEntry(g, trees[j]->GetTitle(), "LPE");
-      }
-      legend->Draw();
-    }
 
     // memorize pad
     wavePads[i].first  = waveName;

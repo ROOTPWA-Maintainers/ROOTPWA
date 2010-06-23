@@ -200,8 +200,10 @@ progressIndicator(const long currentPos,
                   ostream&   out      = cout)
 {
   const double step = nmbTotal / (double)nmbSteps;
-  if ((nmbTotal >= 0) && ((int)(currentPos / step) - (int)((currentPos - 1) / step) != 0))
-    out << "    " << setw(3) << (int)(currentPos / step) * nmbSteps << " %" << endl;
+  if ((nmbTotal >= 0) && ((int)(currentPos / step) - (int)((currentPos - 1) / step) != 0)){
+    out << "\x1B[2K" << "\x1B[0E" << "    " << setw(3) << (int)(currentPos / step) * nmbSteps << "%";
+    flush(out);
+  }
   return out;
 }
 
@@ -275,6 +277,7 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
 //  TH2D* hVertex;
 //  TH1D* hVz;
 //  TH1D* hE;
+  TFile temp("/tmp/buffer.root", "RECREATE");
   TTree* values = new TTree("values","values");
   double t 		= 0;
   double tprime = 0;
@@ -329,7 +332,7 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
   TString _outFileName = outFileName;
   if (_outFileName == ""){
 	  stringstream _filename;
-	  _filename << (int) (_xMassMin*1e3) << "." << (int) (xMassMax*1e3) << ".genbod.26";
+	  _filename << trunc(_xMassMin*1e3) << "." << trunc(xMassMax*1e3) << ".genbod.26";
 	  cout << " created genbot events filename: " << _filename.str() << endl;
 	  _outFileName = _filename.str();
   }
@@ -341,7 +344,7 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
   TString _outFileNameComGeant = outFileNameComGeant;
   if (_outFileNameComGeant == ""){
 	  stringstream _filename;
-	  _filename << (int) (_xMassMin*1e3) << "." << (int) (xMassMax*1e3) << ".genbod.fort.26";
+	  _filename << trunc(_xMassMin*1e3) << "." << trunc(xMassMax*1e3) << ".genbod.fort.26";
 	  cout << " created ComGeantevents filename: " << _filename.str() << endl;
 	  _outFileNameComGeant = _filename.str();
   }
@@ -457,6 +460,7 @@ genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of m
 
   cout << endl << "Needed " << attempts << " attempts to generate " << countEvent << " events." << endl;
   outFile.close();
+  outFileComGeant.close();
 
   if (plot) {
     gROOT->SetStyle("Plain");

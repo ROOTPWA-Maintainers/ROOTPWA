@@ -61,7 +61,7 @@ set(SOURCES
 # library
 set(THIS_LIB "pwa")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
- ${LIBRARY_OUTPUT_PATH}/libpp.so
+  pp
 )
 
 

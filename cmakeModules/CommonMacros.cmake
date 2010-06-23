@@ -68,3 +68,13 @@ function(make_executable EXE_NAME SOURCES)
     target_link_libraries(${EXE_NAME} ${_LIB})
   endforeach()
 endfunction(make_executable)
+
+
+macro(enforce_out_of_source_build)
+  if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+    message(FATAL_ERROR "Building this project in the source directory is not allowed. Please remove CMakeCache.txt, create a build directory, and run cmake there, for example:
+rm CMakeCache.txt
+mkdir build && cd build
+cmake ..")
+  endif()
+endmacro(enforce_out_of_source_build)
