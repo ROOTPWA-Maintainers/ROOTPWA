@@ -41,8 +41,8 @@ set(PWA2000_INCLUDE_DIR
   PARENT_SCOPE
 )
 set(PWA2000_LIBS
-  ${LIBRARY_OUTPUT_PATH}/libpp.so
-  ${LIBRARY_OUTPUT_PATH}/libpwa.so
+  pp
+  pwa
   PARENT_SCOPE
 )
 add_subdirectory(libpp)

@@ -41,6 +41,8 @@
 #include "TLine.h"
 #include "TPad.h"
 #include "TMath.h"
+#include "TLegend.h"
+#include "TList.h"
 
 #include "plotIntensity.h"
 
@@ -54,13 +56,14 @@ TMultiGraph*
 plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 	      TTree**            trees,          // array of fitResult trees
 	      const int          waveIndex,      // wave index
-	      const string&      selectExpr,     // TTree::Draw() selection expression
+	      const bool         saveEps,        // if set, EPS file with name waveId{
+	      const int*         graphColors,    // array of colors for graph line and marker
+	      const bool         drawLegend,     // if set legend is drawn
 	      const string&      graphTitle,     // name and title of graph (default is waveId)
 	      const char*        drawOption,     // draw option for graph
 	      const double       normalization,  // scale factor for intensities
-	      const int*         graphColors,    // array of colors for graph line and marker
 	      const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
-	      const bool         saveEps,        // if set, EPS file with name waveId{
+	      const string&      selectExpr,     // TTree::Draw() selection expression
 	      const string&      branchName)
 {
   for (unsigned int i = 0; i < nmbTrees; ++i)
@@ -154,6 +157,19 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
   line.DrawLine(graph->GetXaxis()->GetXmin(), 0, graph->GetXaxis()->GetXmax(), 0);
   gPad->Update();
 
+  // add legend
+  if (drawLegend && (nmbTrees > 1)) {
+    TLegend* legend = new TLegend(0.65,0.80,0.99,0.99);
+    legend->SetFillColor(10);
+    legend->SetBorderSize(1);
+    legend->SetMargin(0.2);
+    for (unsigned int i = 0; i < nmbTrees; ++i) {
+      TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(i));
+      legend->AddEntry(g, trees[i]->GetTitle(), "LPE");
+    }
+    legend->Draw();
+  }
+  
   // create EPS file
   if (saveEps)
     gPad->SaveAs((waveName + ".eps").c_str());

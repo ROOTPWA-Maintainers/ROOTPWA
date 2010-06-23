@@ -187,7 +187,7 @@ nBodyPhaseSpace(double* var,  // n-body mass
   min[0] = m[0] + m[1];
   for (int i = 1; i < n - 2; ++i)
     min[i] = min[i - 1] + m[i + 1];
-  double max[n - 2];  // lower integration limits for effective (i + 2)-body masses
+  double max[n - 2];  // upper integration limits for effective (i + 2)-body masses
   mSum = 0;
   for (int i = n - 3; i >= 0; --i) {
     mSum  += m[i + 2];
@@ -211,6 +211,7 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
   const double       massRange[2] = {m[0] + m[1] + m[2], 2};                                 // [GeV/c^2]
   const double       mass         = (massRange[0] + massRange[1]) / 2;
   const unsigned int seed         = 1234567890;
+  const bool         hitMissMode  = false;
 
   // create output file
   printInfo << "creating output file '" << outFileName << "' ... " << endl;
@@ -268,7 +269,7 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
   hMass   [nmbGen] = new TH1F("hMassTGen",   "Mother Mass TGen;m [GeV/c^{2}]", 1000, 0, 2.5);
   TH1F* hMassRaw   = new TH1F("hMassRaw",    "Mother Mass Raw;m [GeV/c^{2}]",  1000, 0, 2.5);
 
-  if (1) {
+  if (0) {
     printInfo << "testing generators for constant 3-body mass = " << mass << " GeV/c^2" << endl
 	      << "    generating " << nmbEvents << " events ... " << endl;
     unsigned int countAtt[nmbGen + 1];
@@ -384,11 +385,17 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
       TLorentzVector mother = constructMother(random, massRange[0] + random.Rndm() * (massRange[1] - massRange[0]));
       hMassRaw->Fill(mother.M());
       for (unsigned int i = 0; i < nmbGen; ++i)
-	if (countAcc[i] < nmbEvents){
+	if (countAcc[i] < nmbEvents) {
 	  ++countAtt[i];
-	  if (gen[i]->generateDecayAccepted(mother)) {
-	    ++countAcc[i];
-	    hMass[i]->Fill(mother.M());
+	  if (hitMissMode) {
+	    if (gen[i]->generateDecayAccepted(mother)) {
+	      ++countAcc[i];
+	      hMass[i]->Fill(mother.M());
+	    }
+	  } else {
+	    hMass[i]->Fill(mother.M(), gen[i]->generateDecay(mother));
+	    if (gen[i]->eventAccepted())
+	      ++countAcc[i];
 	  }
 	}
       TGen.SetDecay(mother, (int)n, m);
@@ -396,10 +403,13 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
       maxTGenWeightObserved   = (TGenWeight > maxTGenWeightObserved) ? TGenWeight : maxTGenWeightObserved;
       if (countAcc[nmbGen] < nmbEvents) {
 	++countAtt[nmbGen];
-	if ((TGenWeight / maxTGenWeight) > random.Rndm()) {
+	if (hitMissMode) {
+	  if ((TGenWeight / maxTGenWeight) > random.Rndm())
+	    hMass[nmbGen]->Fill(mother.M());
+	} else
+	  hMass[nmbGen]->Fill(mother.M(), TGenWeight);
+	if ((TGenWeight / maxTGenWeight) > random.Rndm())
 	  ++countAcc[nmbGen];
-	  hMass[nmbGen]->Fill(mother.M());
-	}
       }
       done = true;
       for (unsigned int i = 0; i <= nmbGen; ++i)
@@ -424,19 +434,31 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
     Lips->SetLineWidth(2);
     for (unsigned int i = 0; i <= nmbGen; ++i) {
       Lips->SetParameter(n + 1, 1);
-      const double A = hMass[i]->GetBinContent(hMass[i]->FindBin(massRange[1]) - 1) / Lips->Eval(massRange[1]);
+      double A;
+      if (hitMissMode)
+	// scale function to last bin
+	A = hMass[i]->GetBinContent(hMass[i]->FindBin(massRange[1]) - 1) / Lips->Eval(massRange[1]);
+      else {
+	// scale histograms by number of events per bin
+	for (int j = 1; j < hMassRaw->GetNbinsX(); ++j) {
+	  const double nmbEvBin = hMassRaw->GetBinContent(j);
+	  if (nmbEvBin > 0)
+	    hMass[i]->SetBinContent(j, hMass[i]->GetBinContent(j) / nmbEvBin);
+	}
+	A = 1;
+      }
       Lips->SetParameter(n + 1, A);
-      //cout << A << ", " << Lips->Eval(massRange[0]) << ", " << Lips->Eval(massRange[1]) << endl;
       new TCanvas();
       hMass[i]->Draw();
       Lips->DrawCopy("LSAME");
-      hMass[i]->Draw("SAME E");
+      if (hitMissMode)
+	hMass[i]->Draw("SAME E");
     }
     new TCanvas;
     hMassRaw->Draw();
   }
 
-  if (1) {
+  if (0) {
     const unsigned int n2            = 4;                                     // number of daughters
     double             m2[n2]        = {gChargedPionMass, gChargedPionMass,
 					gChargedPionMass, gChargedPionMass};  // daughter masses

@@ -41,6 +41,7 @@
 //#include "TH1D.h"
 #include "TRandom3.h"
 #include "TLorentzVector.h"
+#include "TVector3.h"
 #include "TClonesArray.h"
 
 #include "libconfig.h++"
@@ -51,6 +52,8 @@
 #include "TProductionAmp.h"
 #include "TBWProductionAmp.h"
 #include "TFitBin.h"
+
+#include "TPrimaryVertexGen.h"
 
 
 using namespace std;
@@ -69,12 +72,13 @@ cerr << "usage:" << endl
      << " -n # [-a # -m # -M # -B #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
      << "    where:" << endl
      << "        -n #       (max) number of events to generate (default: 100)" << endl
-     << "        -a #       (max) number of attempts to do (default: infty)" \
+     << "        -a #       (max) number of attempts to do (default: infinity)" \
      << endl
      << "        -m #       maxWeight" << endl
-     << "        -o <file>  ROOT output file"<< endl
+     << "        -o <file>  ROOT output file (if not specified, generated automatically)"<< endl
      << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
      << "        -w <file.root>  to use TFitBin tree as input"<< endl 
+     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 1)" << endl
      << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
      << "        -i <file>  integral file"<< endl 
      << "        -r <file>  reaction config file"<< endl
@@ -90,9 +94,10 @@ int main(int argc, char** argv)
 
   unsigned int nevents=100;
   unsigned int max_attempts=0;
-  string output_file("genpw.root");
-  string output_evt("genpw.evt");
-  string output_wht("genpw.wht");
+  string output_file(""); // either given by option or generated automatically by mass range
+  string output_evt("");
+  string output_wht("");
+  string output_comgeant("");
   string integrals_file;
   bool hasint=false;
   string wavelist_file; // format: name Re Im
@@ -103,9 +108,10 @@ int main(int argc, char** argv)
   double massLower=0;
   double massBinWidth=0;
   bool overwriteMass=false;
+  bool writeComGeantout=false;
 
   int c;
-  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h")) != -1)
+  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h:c")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
@@ -118,11 +124,6 @@ int main(int argc, char** argv)
       break;
     case 'o':
       output_file = optarg;
-      output_evt = output_file;
-      output_evt.replace(output_evt.find(".root"),5,".evt");
-      output_wht = output_file;
-      output_wht.replace(output_wht.find(".root"),5,".wht");
-
       break;
    case 'w':
       wavelist_file = optarg;
@@ -140,6 +141,9 @@ int main(int argc, char** argv)
    case 'm':
       maxWeight = atof(optarg);
       break;
+   case 'c':
+	  writeComGeantout = true;
+	  break;
    case 'M':
       massLower = atof(optarg);
       overwriteMass=true;
@@ -153,25 +157,6 @@ int main(int argc, char** argv)
       printUsage(argv[0]);
       break;
     }
- 
-
-  
-
-  TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
-  TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
-  TTree* outtree=new TTree("pwevents","pwevents");
-  double weight, impweight;
-  TClonesArray* p=new TClonesArray("TLorentzVector");
-  TLorentzVector beam;
-  double qbeam;
-  vector<int> q; // array of charges
-
-  outtree->Branch("weight",&weight,"weight/d");
-  outtree->Branch("impweight",&impweight,"impweight/d");
-  outtree->Branch("p",&p);
-  outtree->Branch("beam",&beam);
-  outtree->Branch("q",&q);
-  outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
   PDGtable.initialize();
 
@@ -179,8 +164,22 @@ int main(int argc, char** argv)
   Config reactConf;
   reactConf.readFile(reactionFile.c_str());
 
+  // variable that need to get initialized either by input options
+  // or the config file
+  // will be stored in the tree later
+  double weight, impweight;
+  TClonesArray* p=new TClonesArray("TLorentzVector");
+  TLorentzVector beam;
+  TVector3 vertex;
+  double qbeam;
+  vector<int> q; // array of charges
+
   double Mom=reactConf.lookup("beam.momentum");
   double MomSigma=reactConf.lookup("beam.sigma_momentum");
+  double BeamPartMass(0.13957018);
+  if (reactConf.exists("beam.mass")){
+	  BeamPartMass = reactConf.lookup("beam.mass");
+  }
   double DxDz=reactConf.lookup("beam.DxDz");
   double DxDzSigma=reactConf.lookup("beam.sigma_DxDz");
   double DyDz=reactConf.lookup("beam.DyDz");
@@ -196,13 +195,55 @@ int main(int argc, char** argv)
   if(overwriteMass){
     mmin=massLower/1000.0;
     mmax=mmin+massBinWidth/1000.0;
-
   }
   double tslope=reactConf.lookup("finalstate.t_slope");
   double binCenter=500 * (mmin + mmax);
 
- 
+  // check weather to use a primary vertex generator as requested by the config file
+  TPrimaryVertexGen* primaryVertexGen(NULL);
+  string histfilename_primvertex("");
+  if (reactConf.lookupValue("primvertex.histfilename", histfilename_primvertex)){
+  	primaryVertexGen = new TPrimaryVertexGen(
+  			histfilename_primvertex,
+  			BeamPartMass,
+  			Mom,
+  			MomSigma
+  			);
+  	if (!primaryVertexGen->Check()){
+  		cerr << " Error: histogram filename with beam properties not loaded! " << endl;
+  		delete primaryVertexGen;
+  		primaryVertexGen = NULL;
+  	}
+  }
+
   if(!reactConf.lookupValue("beam.charge",qbeam))qbeam=-1;
+  // generate the filename automatically if not specified
+  if (output_file == "") {
+	  stringstream _filename;
+	  _filename << trunc(mmin*1e3) << "." << trunc(mmax*1e3) << ".genbod.root";
+	  cout << " created output filename: " << _filename.str() << endl;
+	  output_file = _filename.str();
+  }
+  output_evt = output_file;
+  output_evt.replace(output_evt.find(".root"),5,".evt");
+  output_wht = output_file;
+  output_wht.replace(output_wht.find(".root"),5,".wht");
+  output_comgeant = output_file;
+  output_comgeant.erase(output_comgeant.find(".root"),5);
+  output_comgeant.append(".fort.26");
+
+  // now create the root file to store the events
+  TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
+  TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
+  TTree* outtree=new TTree("pwevents","pwevents");
+
+  outtree->Branch("weight",&weight,"weight/d");
+  outtree->Branch("impweight",&impweight,"impweight/d");
+  outtree->Branch("p",&p);
+  outtree->Branch("beam",&beam);
+  outtree->Branch("vertex", &vertex);
+  outtree->Branch("q",&q);
+  outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
   //string theta_file= reactConf.lookup("finalstate.theta_file");
 
@@ -212,7 +253,8 @@ int main(int argc, char** argv)
   difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
   difPS.SetTPrimeSlope(tslope);
-  difPS.SetMassRange(mmin,mmax);			
+  difPS.SetMassRange(mmin,mmax);
+  difPS.SetPrimaryVertexGen(primaryVertexGen);
 
 
   double impMass;
@@ -367,6 +409,9 @@ int main(int argc, char** argv)
   unsigned int i=0;
   //difPS.setVerbose(true);
   ofstream evtout(output_evt.c_str());
+  ofstream evtgeant;
+  if (writeComGeantout)
+	  evtgeant.open(output_comgeant.c_str());
   ofstream evtwht(output_wht.c_str());
   evtwht << setprecision(10);
 
@@ -379,7 +424,10 @@ int main(int argc, char** argv)
       p->Delete(); // clear output array
 
       ofstream str("tmpevent.evt");
-      difPS.event(str);
+      if (writeComGeantout)
+    	  difPS.event(str, evtgeant);
+      else
+    	  difPS.event(str);
       impweight=difPS.impWeight();
       str.close();
       
@@ -388,6 +436,7 @@ int main(int argc, char** argv)
       }
 
       beam=*difPS.GetBeam();
+      vertex=*difPS.GetVertex();
 
       // calculate weight
       event e;
@@ -415,7 +464,7 @@ int main(int argc, char** argv)
       outtree->Fill();
       
 
-      if(i>0 && ( i % tenpercent==0) )cerr << "[" << (double)i/(double)nevents*100. << "%]";
+      if(i>0 && ( i % tenpercent==0) )cerr << "\x1B[2K" << "\x1B[0E" << "[" << (double)i/(double)nevents*100. << "%]";
 
       ++i;
     } // end event loop
@@ -433,6 +482,8 @@ int main(int argc, char** argv)
   outfile->Close();
   evtout.close();
   evtwht.close();
+  if (writeComGeantout)
+	  evtgeant.close();
  
   return 0;
 }

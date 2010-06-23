@@ -35,7 +35,6 @@
 #include "utilities.h"
 #include "TDiffractivePhaseSpace.h"
 
-
 using namespace std;
 using namespace rpwa;
 
@@ -73,8 +72,13 @@ TDiffractivePhaseSpace::TDiffractivePhaseSpace()
     _pionMass(0.13957018),
     _pionMass2(_pionMass * _pionMass)
 {
+  _primaryVertexGen = NULL;
   _phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
   _phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
+}
+
+TDiffractivePhaseSpace::~TDiffractivePhaseSpace(){
+	delete _primaryVertexGen;
 }
 
 
@@ -125,6 +129,40 @@ TDiffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
 	<< " " << hadron.E() << endl;
   }
   return true;
+}
+
+bool
+TDiffractivePhaseSpace::writeComGeantAscii(ostream& out, bool  formated){
+	if (!out) {
+	cerr << "Output stream is not writable." << endl;
+	return false;
+	}
+
+	if (formated){
+		// total number of particles including recoil proton and beam particle
+		unsigned int nmbDaughters = _decayProducts.size();
+		out << nmbDaughters+1+1 << endl;
+		// vertex position in cm
+		// note that Comgeant's coordinate system is different
+		out << _vertex.Z() << " " << _vertex.X() << " " << _vertex.Y() << endl;
+		// beam particle: geant ID , -p_z, -p_x, -p_y must go the opposite direction upstream and should be defined as mulike with PID 44 in Comgeant
+		out << setprecision(numeric_limits<double>::digits10 + 1)
+		  << "44 " << -_beamLab.Pz() << " " << -_beamLab.Px() << " " << -_beamLab.Py() << endl;// << " " << beam.E() << endl;
+		// the recoil proton
+		out << setprecision(numeric_limits<double>::digits10 + 1)
+		  << "14 " << _recoilprotonLab.Pz() << " " << _recoilprotonLab.Px() << " " << _recoilprotonLab.Py() << endl;// << " " << beam.E() << endl;
+
+		for (unsigned int i = 0; i < nmbDaughters; ++i) {
+			const TLorentzVector& hadron = _phaseSpace.daughter(i);
+			// hadron: geant ID, p_z, p_x, p_y
+			out << setprecision(numeric_limits<double>::digits10 + 1)
+			<< _decayProducts[i]._gId << " "
+			<< hadron.Pz() << " "
+			<< hadron.Px() << " "
+			<< hadron.Py() << endl;// << " " << hadron->E() << endl;
+		}
+	}
+	return true;
 }
 
 
@@ -244,16 +282,40 @@ TDiffractivePhaseSpace::BuildDaughterList()
 unsigned int 
 TDiffractivePhaseSpace::event()
 {
+	unsigned long int attempts = 0;
   // construct primary vertex and beam
-  const TVector3 vertexPos(0, 0, 
+  // use the primary Vertex Generator if available
+	if (_primaryVertexGen){
+		// as documented one may need several attempts to get a vertex position
+		// which is valid also for the beam direction measurement
+		while(attempts < 1000){
+			_vertex = _primaryVertexGen->Get_Vertex();
+			TVector3 beam_dir = _primaryVertexGen->Get_beam_dir(_vertex);
+			if (beam_dir.Mag() == 0){
+					++attempts;
+					//cout << " skipping " << endl;
+					continue;
+			}
+			_beamLab = _primaryVertexGen->Get_beam_part(beam_dir);
+			break;
+		}
+		// Just a few events should contain a vertex position with no beam direction information
+		if (attempts == 999){
+			cerr << " Error in beam construction. Please check the beam properties loaded correctly!" << endl;
+			_beamLab = makeBeam();
+		}
+	} else {
+		_vertex.SetXYZ(0, 0,
 			   _targetZPos+gRandom->Uniform(-_targetZLength * 0.5,
 				 			 _targetZLength * 0.5));
-  _beamLab = makeBeam();
+		_beamLab = makeBeam();
+	}
+
+
   const TLorentzVector targetLab(0, 0, 0, _targetMass);
   const TLorentzVector overallCm = _beamLab + targetLab;  // beam-target center-of-mass system
   
   bool              done     = false;
-  unsigned long int attempts = 0;
   while (!done) {
     
     const double tPrime = -gRandom->Exp(_invSlopePar);             // pick random t'
@@ -298,6 +360,8 @@ TDiffractivePhaseSpace::event()
     // rotate according to beam tilt
     TVector3 beamDir = _beamLab.Vect().Unit();
     xSystemLab.RotateUz(beamDir);
+    // calculate the recoil proton properties
+    _recoilprotonLab = _beamLab - xSystemLab;
     
     // apply t cut
     if (t > -_tMin)
@@ -328,7 +392,20 @@ unsigned int
 TDiffractivePhaseSpace::event(ostream& stream)
 {
   unsigned int attempts = event();
-  writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
+  //writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
+  // use the first particle as the beam particle
+  writePwa2000Ascii(stream, _decayProducts[0]._gId, _decayProducts[0]._charge);
+  return attempts;
+}
+
+unsigned int
+TDiffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
+{
+  unsigned int attempts = event();
+  //writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
+  // use the first particle as the beam particle
+  writePwa2000Ascii(stream, _decayProducts[0]._gId, _decayProducts[0]._charge);
+  writeComGeantAscii(streamComGeant);
   return attempts;
 }
 

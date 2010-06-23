@@ -201,7 +201,7 @@ waveKey::writeReflectivityBasisAmp(ostream&           out,
     out << maxPrecision(theta) << " * (" << endl;
     setStateName(_J, _P, _M);
     _mother->write(out, offset + 4);
-    const double factor = -(double)_refl * (double)_P * pow(-1, _J - _M);
+    const double factor = -(double)_refl * (double)_P * pow((double)-1, _J - _M);
     indent(out, offset);
     out << sign(factor) << endl;
     setStateName(_J, _P, -_M);
