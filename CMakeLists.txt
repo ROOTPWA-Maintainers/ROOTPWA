@@ -144,6 +144,35 @@ endif()
 find_package(ROOT 5.26 REQUIRED Minuit2)
 
 
+# setup CUDA
+set(USE_CUDA FALSE)
+if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
+  # use default SDK path, if not defined by user
+  set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
+endif()
+find_package(CUDA 3.0)
+if(NOT CUDA_FOUND)
+  message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
+  set(USE_CUDA FALSE)
+else()
+  message(STATUS "Found CUDA version ${CUDA_VERSION}")
+  message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'")
+  message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'")
+  message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
+  if(NOT CUDA_SDK_ROOT_DIR)
+    message(SEND_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
+  else()
+    message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'")
+    message(STATUS "Enabling compilation of CUDA components")
+    set(USE_CUDA TRUE)
+    # set some global switches
+    set(CUDA_BUILD_CUBIN     OFF)
+    set(CUDA_BUILD_EMULATION OFF)
+    set(CUDA_VERBOSE_BUILD   OFF)
+  endif()
+endif()
+
+
 # make SVN version string accessible via predefined macro SVN_VERSION
 find_package(Subversion)
 if(Subversion_FOUND)
@@ -209,6 +238,9 @@ set(ROOTPWA_LIBS
   RootPwa
 )
 add_subdirectory(src)
+
+# CUDA stuff
+add_subdirectory(cuda)
 
 # RootPwaAmp
 # add_subdirectory(amplitude)
