@@ -44,7 +44,8 @@
 using namespace std;
 
 
-bool printCudaDeviceInfo(const int deviceId)
+bool
+printCudaDeviceInfo(const int deviceId)
 {
   const unsigned int nGpuArchCoresPerSM[] = {1, 8, 32};  // from SDK/shared/inc/shrUtils.h
 
@@ -422,7 +423,7 @@ testGlobMemComplexBandwidth(const unsigned int nmbBlocks            = 30,
   const unsigned int memSizeOut  = nmbBlocks * nmbThreadsPerBlock * sizeof(T);
   cout << "allocating " << 2 * memSizeIn / (1024. * 1024.) << " MiBytes of global memory for " << nmbElements << " data elements:" << endl
        << "(" << nmbBlocks << " blocks) x (" << nmbThreadsPerBlock << " threads per block) x "
-       << "(" << nmbElementsPerThread <<  " number data elements per thread)"<< endl;
+       << "(" << nmbElementsPerThread <<  " data elements per thread)"<< endl;
   T* hostInDataRe = (T*) malloc(memSizeIn);
   T* hostInDataIm = (T*) malloc(memSizeIn);
   T* hostOutData  = (T*) malloc(memSizeOut);
@@ -503,7 +504,7 @@ int main(int    argc,
   for (int deviceId = 0; deviceId < deviceCount; ++deviceId)
     printCudaDeviceInfo(deviceId);
   
-  // take most powerful GPU
+  // use most powerful GPU in system
   const int deviceId = cutGetMaxGflopsDeviceId();
   cudaDeviceProp deviceProp;
   cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
