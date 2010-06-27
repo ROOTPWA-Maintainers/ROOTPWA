@@ -26,7 +26,7 @@
 //
 // Description:
 //      benchmarks coalesced memory access for global and texture memory
-//      using various data types
+//      using various data types of up to 16 bytes
 // 
 //      based on MisterAnderson42's post in the nvidia forum
 //      http://forums.nvidia.com/index.php?s=&showtopic=52806&view=findpost&p=292058
@@ -106,7 +106,7 @@ readOnlyGlobalMemKernel(const T*           inData,       // pointer to input dat
 			T*,
 			const unsigned int nmbElements)  // number of data elements for each thread
 {
-  __shared__ T       sharedMem[SHARED_MEM_BLOCK_SIZE];  // dummy shared memory to store values
+  __shared__ double  sharedMem[SHARED_MEM_BLOCK_SIZE][2];  // dummy shared memory to store values
   const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
   const unsigned int nmbThreads = gridDim.x * blockDim.x;
   T                  val;
@@ -114,8 +114,9 @@ readOnlyGlobalMemKernel(const T*           inData,       // pointer to input dat
   for (unsigned int i = 0; i < nmbElements; ++i)
     val += inData[(i * nmbThreads ) + threadId];  // dummy operation to prevent removal of operations by compiler
   const unsigned int index = threadIdx.x & (SHARED_MEM_BLOCK_SIZE - 1);
-  sharedMem[index] = val;                  // dummy operation to prevent removal of operations by compiler
-  *((float *)(&sharedMem[index])) += 1.0;  // dummy operation to prevent removal of operations by compiler
+  *((T*)(&sharedMem[index])) = val;  // dummy operation to prevent removal of operations by compiler
+  sharedMem[index][0] += 1.0;        // dummy operation to prevent removal of operations by compiler
+  sharedMem[index][1] += 1.0;        // dummy operation to prevent removal of operations by compiler
 }
 
 
@@ -225,7 +226,7 @@ int main()
   cout << "using grid (" << nmbBlocks << " blocks) x (" << nmbThreadsPerBlock << " threads per block)" << endl
        << "running " << nmbIterations << " kernel iterations" << endl;
 
-  // create largest device data arrays possible with 16 bytes words
+  // create largest data arrays possible with 16 bytes words
   // !!! this does not work for textures
   // const unsigned int nmbElementsPerThread = (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 10)  // leave 10 % margin
   //                                           / (nmbBlocks * nmbThreadsPerBlock * 2 * sizeof(float4));
@@ -240,6 +241,7 @@ int main()
        << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
   cutilSafeCall(cudaMalloc((void**) &deviceInData,  sizeof(float4) * nmbElements));
   cutilSafeCall(cudaMalloc((void**) &deviceOutData, sizeof(float4) * nmbElements));
+  // bind textures
   cutilSafeCall(cudaBindTexture(0, floatTexture,  deviceInData, sizeof(float ) * nmbElements));
   cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, sizeof(float2) * nmbElements));
   cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData, sizeof(float4) * nmbElements));
@@ -276,8 +278,8 @@ int main()
     BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float4,         1);
     BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double,         1);
     BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2,        1);
-    // BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2Complex,  1);
-    // BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2Complex, 1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2Complex,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2Complex, 1);
   }
 
   if (1) {
