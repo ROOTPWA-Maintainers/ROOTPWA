@@ -40,6 +40,7 @@
 
 
 #include <iostream>
+#include <algorithm>
 
 #include <cuda_runtime.h>
 #include <cutil_inline.h>
@@ -162,51 +163,23 @@ readOnlyTextureMemKernel(T*,
   sharedMem[index] = val;                  // dummy operation to prevent removal of operations by compiler
   *((float *)(&sharedMem[index])) += 1.0;  // dummy operation to prevent removal of operations by compiler
 }
- 
-// __global__ void
-// readOnlyTextureMemFloat4Kernel(float4* inData, 
-// 			       float4* outData,
-// 			       float4)
-// {
-//   const unsigned int threadId = threadIdx.x + blockIdx.x * blockDim.x;
-//   __shared__ float4 shared[SHARED_MEM_BLOCK_SIZE];
-//   shared[threadIdx.x] = tex1Dfetch(textureFloat4, threadId);
-//   *((float *)(&shared[(threadIdx.x + 1) & (SHARED_MEM_BLOCK_SIZE - 1)])) += 1.0;
-// }
 
 
-#define BENCHMARK_GLOB_MEM(kernel, elementType, nmbTransfersPerElement)	\
+// helper macros for different kernel types
+#define GLOBAL_MEM_KERNEL(kernel, elementType)				\
   {									\
-    /* dry-run kernel first to avoid any setup and caching effects*/	\
     kernel<elementType><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceInData, (elementType*)deviceOutData, nmbElementsPerThread); \
-    /* setup and start timer */						\
-    cudaEvent_t start, end;						\
-    cutilSafeCall(cudaEventCreate(&start));				\
-    cutilSafeCall(cudaEventCreate(&end));				\
-    cutilSafeCall(cudaEventRecord(start, 0));				\
-    /* run kernel */							\
-    for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration) \
-      kernel<elementType><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceInData, (elementType*)deviceOutData, nmbElementsPerThread); \
-    /* stop timer */							\
-    cutilSafeCall(cudaEventRecord(end, 0));				\
-    cutilSafeCall(cudaEventSynchronize(end));				\
-    /* calculate and report bandwidth */				\
-    float runTime;							\
-    cutilSafeCall(cudaEventElapsedTime(&runTime, start, end));		\
-    runTime /= nmbIterations * 1000;  /* [sec] per iteration */		\
-    const float bandwidth = nmbTransfersPerElement * nmbElements * sizeof(elementType) / runTime; \
-    cout << #kernel << "<" << #elementType << "> bandwidth: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl; \
-    cutilSafeCall(cudaEventDestroy(start));				\
-    cutilSafeCall(cudaEventDestroy(end));				\
+  }
+#define TEXTURE_MEM_KERNEL(kernel, elementType)				\
+  {									\
+    kernel<elementType, elementType ## TextureReader><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceOutData, nmbElementsPerThread); \
   }
 
 
-#define BENCHMARK_TEX_MEM(kernel, elementType, nmbTransfersPerElement)	\
+#define BENCHMARK(memoryType, kernel, elementType, nmbTransfersPerElement) \
   {									\
-    /* bind texture to input data */								\
-    cutilSafeCall(cudaBindTexture(0, elementType ## Texture,  deviceInData, sizeof(elementType) * nmbElements)); \
     /* dry-run kernel first to avoid any setup and caching effects*/	\
-    kernel<elementType, elementType ## TextureReader><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceOutData, nmbElementsPerThread); \
+    memoryType ## _KERNEL(kernel, elementType);				\
     /* setup and start timer */						\
     cudaEvent_t start, end;						\
     cutilSafeCall(cudaEventCreate(&start));				\
@@ -214,18 +187,16 @@ readOnlyTextureMemKernel(T*,
     cutilSafeCall(cudaEventRecord(start, 0));				\
     /* run kernel */							\
     for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration) \
-      kernel<elementType, elementType ## TextureReader><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceOutData, nmbElementsPerThread); \
+      memoryType ## _KERNEL(kernel, elementType);			\
     /* stop timer */							\
     cutilSafeCall(cudaEventRecord(end, 0));				\
     cutilSafeCall(cudaEventSynchronize(end));				\
-    /* unbind texture */						\
-    cutilSafeCall(cudaUnbindTexture(elementType ## Texture));		\
     /* calculate and report bandwidth */				\
     float runTime;							\
     cutilSafeCall(cudaEventElapsedTime(&runTime, start, end));		\
     runTime /= nmbIterations * 1000;  /* [sec] per iteration */		\
     const float bandwidth = nmbTransfersPerElement * nmbElements * sizeof(elementType) / runTime; \
-    cout << #kernel << "<" << #elementType << "> bandwidth: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl; \
+    cout << #kernel << "<" << #elementType << "> total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl; \
     cutilSafeCall(cudaEventDestroy(start));				\
     cutilSafeCall(cudaEventDestroy(end));				\
   }
@@ -242,67 +213,85 @@ int main()
   cutilSafeCall(cudaSetDevice(deviceId));
 
   // create maximum number of threads for all blocks
-  const unsigned int nmbBlocks            = deviceProp.multiProcessorCount;
-  const unsigned int nmbThreadsPerBlock   = deviceProp.maxThreadsPerBlock;
-  const unsigned int nmbIterations        = 100;
+  const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
+  const unsigned int nmbThreadsPerBlock = deviceProp.maxThreadsPerBlock;
+  const unsigned int nmbIterations      = 100;
   cout << "using grid (" << nmbBlocks << " blocks) x (" << nmbThreadsPerBlock << " threads per block)" << endl
        << "running " << nmbIterations << " kernel iterations" << endl;
 
   // create largest device data arrays possible with 16 bytes words
-  const unsigned int nmbElementsPerThread = (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 10)  // leave 10 % margin
-                                            / (nmbBlocks * nmbThreadsPerBlock * 2 * sizeof(float4));
-  const unsigned int nmbElements          = nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread;
-  float4*            deviceInData;
-  float4*            deviceOutData;
+  // !!! this does not work for textures
+  // const unsigned int nmbElementsPerThread = (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 10)  // leave 10 % margin
+  //                                           / (nmbBlocks * nmbThreadsPerBlock * 2 * sizeof(float4));
+  // const unsigned int nmbElements          = nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread;
+  // !!! somehow there seems to be a 512 MByte limit for textures
+  unsigned int       nmbElements          = min((unsigned long)1 << 29, deviceProp.totalGlobalMem / 2) / sizeof(float4);
+  const unsigned int nmbElementsPerThread = nmbElements / (nmbBlocks * nmbThreadsPerBlock);
+  nmbElements = nmbElementsPerThread * nmbBlocks * nmbThreadsPerBlock;
+  float4* deviceInData;
+  float4* deviceOutData;
   cout << "allocating 2 * " << sizeof(float4) * nmbElements / (1024. * 1024.) << " MiBytes in global memory "
        << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
   cutilSafeCall(cudaMalloc((void**) &deviceInData,  sizeof(float4) * nmbElements));
   cutilSafeCall(cudaMalloc((void**) &deviceOutData, sizeof(float4) * nmbElements));
+  cutilSafeCall(cudaBindTexture(0, floatTexture,  deviceInData, sizeof(float ) * nmbElements));
+  cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, sizeof(float2) * nmbElements));
+  cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData, sizeof(float4) * nmbElements));
   
-  if (0) {
+  if (1) {
     cout << "--------------------------------------------------------------------------------" << endl
-	 << "running global memory copy benchmarks" << endl;
-    BENCHMARK_GLOB_MEM(copyGlobalMemKernel, float,   2);
-    BENCHMARK_GLOB_MEM(copyGlobalMemKernel, float2,  2);
-    BENCHMARK_GLOB_MEM(copyGlobalMemKernel, float4,  2);
-    BENCHMARK_GLOB_MEM(copyGlobalMemKernel, double,  2);
-    BENCHMARK_GLOB_MEM(copyGlobalMemKernel, double2, 2);
-  }
-
-  if (0) {
-    cout << "--------------------------------------------------------------------------------" << endl
-	 << "running global memory write-only benchmarks" << endl;
-    BENCHMARK_GLOB_MEM(writeOnlyGlobalMemKernel, float,   1);
-    BENCHMARK_GLOB_MEM(writeOnlyGlobalMemKernel, float2,  1);
-    BENCHMARK_GLOB_MEM(writeOnlyGlobalMemKernel, float4,  1);
-    BENCHMARK_GLOB_MEM(writeOnlyGlobalMemKernel, double,  1);
-    BENCHMARK_GLOB_MEM(writeOnlyGlobalMemKernel, double2, 1);
+  	 << "running global memory copy benchmarks" << endl;
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float,   2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float2,  2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float4,  2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, double,  2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, double2, 2);
   }
 
   if (1) {
     cout << "--------------------------------------------------------------------------------" << endl
-	 << "running global memory read-only benchmarks" << endl;
-    BENCHMARK_GLOB_MEM(readOnlyGlobalMemKernel, float,   1);
-    BENCHMARK_GLOB_MEM(readOnlyGlobalMemKernel, float2,  1);
-    BENCHMARK_GLOB_MEM(readOnlyGlobalMemKernel, float4,  1);
-    BENCHMARK_GLOB_MEM(readOnlyGlobalMemKernel, double,  1);
-    BENCHMARK_GLOB_MEM(readOnlyGlobalMemKernel, double2, 1);
+  	 << "running global memory write-only benchmarks" << endl;
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float,   1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float2,  1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float4,  1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, double,  1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, double2, 1);
   }
 
   if (1) {
     cout << "--------------------------------------------------------------------------------" << endl
-	 << "running texture memory copy benchmarks" << endl;
-    BENCHMARK_TEX_MEM(copyTextureMemKernel, float,  2);
-    BENCHMARK_TEX_MEM(copyTextureMemKernel, float2, 2);
-    BENCHMARK_TEX_MEM(copyTextureMemKernel, float4, 2);
+  	 << "running global memory read-only benchmarks" << endl;
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float,   1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float4,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2, 1);
+  }
+
+  if (1) {
+    cout << "--------------------------------------------------------------------------------" << endl
+  	 << "running global memory read-only benchmarks" << endl;
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float,   1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float4,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2, 1);
+  }
+
+  if (1) {
+    cout << "--------------------------------------------------------------------------------" << endl
+  	 << "running texture memory copy benchmarks" << endl;
+    BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float,  2);
+    BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float2, 2);
+    BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float4, 2);
   }
 	
   if (1) {
     cout << "--------------------------------------------------------------------------------" << endl
-	 << "running texture memory read-only benchmarks" << endl;
-    BENCHMARK_TEX_MEM(readOnlyTextureMemKernel, float,  1);
-    BENCHMARK_TEX_MEM(readOnlyTextureMemKernel, float2, 1);
-    BENCHMARK_TEX_MEM(readOnlyTextureMemKernel, float4, 1);
+  	 << "running texture memory read-only benchmarks" << endl;
+    BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float,  1);
+    BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float2, 1);
+    BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float4, 1);
   }
 
 }
