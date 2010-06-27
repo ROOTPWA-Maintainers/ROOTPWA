@@ -40,6 +40,8 @@
 #include <cuda_runtime.h>
 #include <cutil_inline.h>
 
+#include "complex.hpp"
+
 
 using namespace std;
 
@@ -97,204 +99,6 @@ printCudaDeviceInfo(const int deviceId)
 									"unknown") << endl;
   return true;
 }
-
-
-// see http://forums.nvidia.com/lofiversion/index.php?t73978.html
-// and http://forums.nvidia.com/index.php?showtopic=108787
-template<typename storageT, typename scalarT>
-struct __align__(16) testComplex {
-  
-  storageT _complex;
-
-  // accessors for real and imaginary components
-  inline __host__ __device__ scalarT& real() { return _complex.x; };
-  inline __host__ __device__ scalarT& imag() { return _complex.y; };
-
-  inline __host__ __device__ const scalarT& real() const { return _complex.x; };
-  inline __host__ __device__ const scalarT& imag() const { return _complex.y; };
-
-  testComplex(const scalarT& re = scalarT(),
-  	      const scalarT& im = scalarT())
-  {
-    _complex.x = re;
-    _complex.y = im;
-  }
-  testComplex(const testComplex& b)
-  {
-    _complex.x = b._complex.x;
-    _complex.y = b._complex.y;
-  }
-  
-  // assignment operators
-  inline __host__ __device__ testComplex<storageT, scalarT>& operator =(const testComplex& a)
-  {
-    _complex.x = a._complex.x;
-    _complex.y = a._complex.y;
-    return *this;
-  };
-  inline __host__ __device__ testComplex<storageT, scalarT>& operator =(const scalarT (&a)[2])
-  {
-    _complex.x = a[0];
-    _complex.y = a[1];
-    return *this;
-  };
-  inline __host__ __device__ testComplex<storageT, scalarT>& operator =(const scalarT& a)
-  {
-    _complex.x = a;
-    _complex.y = 0;
-    return *this;
-  };
-
-  // basic arithmetic operations with complex numbers
-  inline __host__ __device__ testComplex<storageT, scalarT>& operator +=(const testComplex<storageT, scalarT>& b)
-  {
-    this->_complex.x += b._complex.x;
-    this->_complex.y += b._complex.y;
-    return *this;
-  }
-  inline __host__ __device__ testComplex<storageT, scalarT> operator +(const testComplex<storageT, scalarT>& b) const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x + b._complex.x, _complex.y  + b._complex.y}};
-    return result;
-  }
-  inline __host__ __device__ testComplex<storageT, scalarT> operator -(const testComplex<storageT, scalarT>& b) const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x - b._complex.x, _complex.y  - b._complex.y}};
-    return result;
-  }
-  inline __host__ __device__ testComplex<storageT, scalarT> operator *(const testComplex<storageT, scalarT>& b) const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x * b._complex.x - _complex.y * b._complex.y,
-					      _complex.y * b._complex.x + _complex.x * b._complex.y}};
-    return result;
-  }
-  inline __host__ __device__ testComplex<storageT, scalarT> operator /(const testComplex<storageT, scalarT>& b) const
-  {
-    scalarT denom = (b._complex.x * b._complex.x + b._complex.y * b._complex.y );
-    testComplex<storageT, scalarT> result = {{(_complex.x * b._complex.x + _complex.y * b._complex.y ) / denom,
-					      (_complex.y * b._complex.x - _complex.x * b._complex.y ) / denom}};
-    return result;
-  }
-
-
-  // basic arithmetic operations with scalars
-  inline __host__ __device__ testComplex<storageT, scalarT> operator +(const scalarT& b) const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x + b, _complex.y}};
-    return result;
-  }
-  inline __host__ __device__ testComplex<storageT, scalarT> operator -(const scalarT& b) const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x - b, _complex.y}};
-    return result;
-  }
-  inline __host__ __device__ testComplex<storageT, scalarT> operator *(const scalarT& b) const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x * b, _complex.y * b}};
-    return result;
-  }
-  inline __host__ __device__ testComplex<storageT, scalarT> operator /(const scalarT& b) const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x / b, _complex.y / b}};
-    return result;
-  }
-
-  // negate a complex number
-  inline __host__ __device__ testComplex<storageT, scalarT> operator -() const
-  {
-    testComplex<storageT, scalarT> result = {{-_complex.x, -_complex.y}};
-    return result;
-  }
-
-  // complex conjugate
-  inline __host__ __device__ testComplex<storageT, scalarT> conj() const
-  {
-    testComplex<storageT, scalarT> result = {{_complex.x, -_complex.y}};
-    return result;
-  }
-
-  // complex norm = Re^2 + Im^2
-  inline __host__ __device__ scalarT norm() const
-  {
-    return _complex.x * _complex.x + _complex.y * _complex.y;
-  }
-
-  // complex absolute value
-  inline __host__ __device__ scalarT abs() const
-  {
-    return sqrt(norm());
-  }
-
-  // complex phase angle
-  inline __host__ __device__ testComplex<storageT, scalarT> arg() const
-  {
-    return atan2(_complex.y, _complex.x);
-  }
-
-  // a possible alternative to a testComplex constructor
-  static __host__ __device__ testComplex<storageT, scalarT> maketestComplex(const scalarT& a, const scalarT& b)
-  {
-    testComplex<storageT, scalarT> res;
-    res.real() = a;
-    res.imag() = b;
-    return res;
-  }
-
-  // constants: 0, 1, i
-  static __host__ __device__ const testComplex<storageT, scalarT> zero()
-  {
-    return maketestComplex((scalarT)0, (scalarT)0);
-  }
-  static __host__ __device__ const testComplex<storageT, scalarT> one()
-  {
-    return maketestComplex((scalarT)1, (scalarT)0);
-  }
-  static __host__ __device__ const testComplex<storageT, scalarT> i()
-  {
-    return maketestComplex((scalarT)0, (scalarT)1);
-  }
-};
-
-template<typename storageT, typename scalarT>
-__host__ __device__ testComplex<storageT, scalarT>
-operator +(const scalarT&                        a,
-	   const testComplex<storageT, scalarT>& b)
-{
-  testComplex<storageT, scalarT> result = {{a + b.value.x, b.value.y}};
-  return result;
-}
-template<typename storageT, typename scalarT>
-__host__ __device__ testComplex<storageT, scalarT>
-operator -(const scalarT&                        a,
-	   const testComplex<storageT, scalarT>& b)
-{
-  testComplex<storageT, scalarT> result = {{a - b.value.x, -b.value.y}};
-  return result;
-}
-template<typename storageT, typename scalarT>
-__host__ __device__ testComplex<storageT, scalarT>
-operator *(const scalarT&                        a,
-	   const testComplex<storageT, scalarT>& b)
-{
-  testComplex<storageT, scalarT> result = {{a * b._complex.x, a * b._complex.y}};
-  return result;
-}
-template<typename storageT, typename scalarT>
-__host__ __device__ testComplex<storageT, scalarT>
-operator /(const scalarT&                        a,
-	   const testComplex<storageT, scalarT>& b)
-{
-  scalarT denom = b._complex.x * b._complex.x + b._complex.y * b._complex.y;
-  testComplex<storageT, scalarT> result = {{a * b._complex.x / denom, -a * b._complex.y / denom}};
-  return result;
-}
-
-
-template<typename T>
-struct __align__(16) complexStorage {
-  T x;
-  T y;
-};
 
 
 template<typename T>
@@ -382,10 +186,10 @@ testGlobMemBandwidth(const unsigned int nmbBlocks            = 30,
   cutilSafeCall(cudaFree(deviceOutData));
   cudaThreadExit();
 
-  testComplex<double2, double> a = 1.;
-  testComplex<double2, double> b(2., 3.);
-  //testComplex<double2, double> c = {(double)3., (double)4.};
-  // = (2. * a + b * a - a) / 2.;
+  // dummy test
+  complex<double2, double> a = 1.;
+  complex<double2, double> b(2., 3.);
+  complex<double2, double> c = (2. * a + b * a - a) / 2.;
 }
 
 
@@ -522,17 +326,22 @@ int main(int    argc,
   testGlobMemBandwidth<double>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
   cout << endl;
   cout << "testing global memory read bandwidth for complex<float2, float>:" << endl;
-  testGlobMemBandwidth<testComplex<float2, float> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
+  testGlobMemBandwidth<complex<float2, float> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
   cout << endl;
   cout << "testing global memory read bandwidth for complex<double2, double>:" << endl;
-  testGlobMemBandwidth<testComplex<double2, double> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
+  testGlobMemBandwidth<complex<double2, double> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
   cout << endl;
   cout << "testing global memory read bandwidth for complex<struct<double>, double>:" << endl;
-  testGlobMemBandwidth<testComplex<complexStorage<double>, double> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
+  testGlobMemBandwidth<complex<complexStorage<double>, double> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
   cout << endl;
   cout << "testing global memory read bandwidth for float re[], im[]:" << endl;
   testGlobMemComplexBandwidth<float>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
   cout << endl;
   cout << "testing global memory read bandwidth for double re[], im[]:" << endl;
   testGlobMemComplexBandwidth<double>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
+
+  // dummy test
+  complex<double2, double> a = 1.;
+  complex<double2, double> b(2., 3.);
+  complex<double2, double> c = (2. * a + b * a - a) / 2.;
 }

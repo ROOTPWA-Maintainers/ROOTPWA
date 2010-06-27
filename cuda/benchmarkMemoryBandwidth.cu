@@ -46,11 +46,17 @@
 #include <cutil_inline.h>
 #include <cutil_math.h>  // operators for float2 and float4
 
+#include "complex.hpp"
+
 
 #define SHARED_MEM_BLOCK_SIZE 128  // a power of two larger than half-warp size
 
 
 using namespace std;
+
+
+typedef complex<float2,  float > float2Complex;
+typedef complex<double2, double> double2Complex;
 
 
 // cutil_math.h does not define anything for double2
@@ -241,41 +247,37 @@ int main()
   if (1) {
     cout << "--------------------------------------------------------------------------------" << endl
   	 << "running global memory copy benchmarks" << endl;
-    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float,   2);
-    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float2,  2);
-    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float4,  2);
-    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, double,  2);
-    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, double2, 2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float,          2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float2,         2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float4,         2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, double,         2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, double2,        2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, float2Complex,  2);
+    BENCHMARK(GLOBAL_MEM, copyGlobalMemKernel, double2Complex, 2);
   }
 
   if (1) {
     cout << "--------------------------------------------------------------------------------" << endl
   	 << "running global memory write-only benchmarks" << endl;
-    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float,   1);
-    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float2,  1);
-    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float4,  1);
-    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, double,  1);
-    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, double2, 1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float,          1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float2,         1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float4,         1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, double,         1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, double2,        1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, float2Complex,  1);
+    BENCHMARK(GLOBAL_MEM, writeOnlyGlobalMemKernel, double2Complex, 1);
   }
 
   if (1) {
     cout << "--------------------------------------------------------------------------------" << endl
   	 << "running global memory read-only benchmarks" << endl;
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float,   1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2,  1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float4,  1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double,  1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2, 1);
-  }
-
-  if (1) {
-    cout << "--------------------------------------------------------------------------------" << endl
-  	 << "running global memory read-only benchmarks" << endl;
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float,   1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2,  1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float4,  1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double,  1);
-    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2, 1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float,          1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2,         1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float4,         1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double,         1);
+    BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2,        1);
+    // BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, float2Complex,  1);
+    // BENCHMARK(GLOBAL_MEM, readOnlyGlobalMemKernel, double2Complex, 1);
   }
 
   if (1) {
