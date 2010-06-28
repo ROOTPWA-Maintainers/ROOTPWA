@@ -65,7 +65,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 
 	// K pi decay modes
 	// Daum et al. used a very controversial resonance, the kappa or K*(800)
-	//particleKey Kstar800("Kstar(800)",  &K_minus, &pi_plus, 1, 0); // not in the PDG table yet
+	particleKey kappa("kappa",  &K_minus, &pi_plus, 0, 0); //0+
 	particleKey Kstar892("Kstar(892)0", &K_minus, &pi_plus, 1, 0); // 1-
 	// probably I will have to treat both Kstar(1430) as a broad
 	// Kpi-P wave since they are overlapping, but it is also very
@@ -76,9 +76,12 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	// pi pi decay modes
 	// f0(980) is also called as the epsilon in Daum et al. paper, I guess
 	particleKey f0980 ("f0(980)" , &pi_plus, &pi_minus, 0, 0); // 0++
+	// or rather the sigma ?
+	particleKey sigma ("sigma" , &pi_plus, &pi_minus, 0, 0); // 0++
 	particleKey rho770("rho(770)", &pi_plus, &pi_minus, 1, 0); // 1--
 	particleKey f21270("f2(1270)", &pi_plus, &pi_minus, 2, 0); // 2++
 
+	if (0){
 	// let's create all possible combinations of decays according
 	// to the rules of L,S coupling and parity
 
@@ -160,9 +163,10 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 
 	cout << " created " << wavecounter << " keys " << endl;
 
-	// ..JPLMpartiyexchange(isobar1 isobar2)
+	} // own wave set
 
-	if (0){
+
+	if (1){
 	// PWA wave set according to Daum et al.
 	// ..JPLMpartiyexchange(isobar1 isobar2)
 	{ // 0-P0+(K*pi)
@@ -179,22 +183,22 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	}
 
 	{ // 0-S0+(eK)
-		particleKey X("X", &f0980, &K_minus, 0, 0);
+		particleKey X("X", &sigma, &K_minus, 0, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 0,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 1+P0+(eK)
-		particleKey X("X", &f0980, &K_minus, 1, 0);
+		particleKey X("X", &sigma, &K_minus, 1, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 1+P0+(kpi)
-//		particleKey X("X", &Kstar0800, &pi_minus, 1, 0);
-		//      wave(&X, J, P, M, refl);
-//		waveKey wave(&X, 1,+1, 0,+1);
-//		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		particleKey X("X", &kappa, &pi_minus, 1, 0);
+		//	    wave(&X, J, P, M, refl);
+		waveKey wave(&X, 1,+1, 0,+1);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 1+S0+(pK)
 		particleKey X("X", &rho770, &K_minus, 0, 1);
@@ -227,10 +231,10 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 
-	{ // 0?P0+(pK)
+	{ // 0-P0+(pK)
 		particleKey X("X", &rho770, &K_minus, 1, 1);
 		//      wave(&X, J, P, M, refl);
-		waveKey wave(&X, 0,-1, 0,+1); // I'm not sure about the parity
+		waveKey wave(&X, 0,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 1+D0+(K*pi)
@@ -240,10 +244,10 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 	{ // 1+P1+(kpi)
-//		particleKey X("X", &Kstar0800, &pi_minus, 1, 0);
+		particleKey X("X", &kappa, &pi_minus, 1, 0);
 		//      wave(&X, J, P, M, refl);
-//		waveKey wave(&X, 1,+1, 1,+1);
-//		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		waveKey wave(&X, 1,+1, 1,+1);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
 	}
 
 	{ // 2+D1+(pK)
