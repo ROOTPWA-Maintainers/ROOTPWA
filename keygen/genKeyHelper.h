@@ -58,6 +58,7 @@ namespace rpwa {
 		       const std::string&   srcMacroFileName,                       // path to macro that will be copied to <wave name>.C
 		       const bool           testKey          = true,                // if true amplitude behavior under reflectivity is tested
 		       const std::string&   dataFileName     = "./testEvents.evt",  // file with test data in .evt format
+		       const bool           promptUser       = true,                // if set user is prompted whether (s)he wants to keep the key file
 		       const std::string&   pdgTableFileName = "./pdgTable.txt");   // path to PDG table file
   
   
