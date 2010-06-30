@@ -39,19 +39,37 @@
 //-------------------------------------------------------------------------
 
 
-#define ALIGN __align__(16)
+#ifndef COMPLEX_HPP
+#define COMPLEX_HPP
+
+
+#include <iostream>
+
+#include <cuda_runtime.h>
+
+
+// boosting ALIGN from 8 to 16 doubles throughput for double scalars
+// in copy and write operations, but leaves read-only bandwidth unchanged
+// effective bandwitdth for floats drops to half
+#ifndef ALIGN
+#define ALIGN 8
+#endif
 
 
 // possible storage type
+// without __align__ directive throughput drops to 50%
 template<typename T>
-struct ALIGN complexStorage {
+struct __align__(ALIGN) complexStruct {
   T x;
   T y;
 };
 
 
 template<typename storageT, typename scalarT>
-struct ALIGN complex {
+struct complex {
+
+  typedef storageT storage_type;
+  typedef scalarT  value_type;
   
   storageT _complex;
   
@@ -115,20 +133,22 @@ struct ALIGN complex {
     return *this;
   }
 
-  // contruction function
-  static __host__ __device__
-  complex<storageT, scalarT>
-  makecomplex(const scalarT& re = (scalarT)0,
-	      const scalarT& im = (scalarT)0)
-  {
-    return complex<storageT, scalarT>(re, im);
-  }
-
   // constants: 0, 1, i
   static __host__ __device__ const complex<storageT, scalarT> zero() { return complex<storageT, scalarT>(0, 0); }
   static __host__ __device__ const complex<storageT, scalarT> one()  { return complex<storageT, scalarT>(1, 0); }
   static __host__ __device__ const complex<storageT, scalarT> i()    { return complex<storageT, scalarT>(0, 1); }
 };
+
+
+// contruction function
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+makeComplex(const scalarT re = (scalarT)0,
+	    const scalarT im = (scalarT)0)
+{
+  return complex<storageT, scalarT>(re, im);
+}
 
 
 // summation
@@ -320,3 +340,37 @@ arg(const complex<storageT, scalarT>& a)
 {
   return atan2(a._complex.y, a._complex.x);
 }
+
+
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+bool
+operator ==(const complex<storageT, scalarT>& a,
+	    const complex<storageT, scalarT>& b)
+{
+  return ((a._complex.x == b._complex.x) and (a._complex.y == b._complex.y));
+}
+
+
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+bool
+operator !=(const complex<storageT, scalarT>& a,
+	    const complex<storageT, scalarT>& b)
+{
+  return not(a == b);
+}
+
+
+template<typename storageT, typename scalarT>
+__host__
+std::ostream&
+operator <<(std::ostream& out,
+	    const complex<storageT, scalarT>& a)
+{
+  out << "(" << a.real() << ", " << a.imag() << ")";
+  return out;
+}
+
+
+#endif  // COMPLEX_HPP

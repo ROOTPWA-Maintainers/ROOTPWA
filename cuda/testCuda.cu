@@ -26,6 +26,7 @@
 //
 // Description:
 //      test some CUDA stuff
+//      http://blog.icare3d.org/2010/06/cuda-dynamic-template-parameters-22.html
 //
 //
 // Author List:
@@ -36,11 +37,14 @@
 
 
 #include <iostream>
+#include <string>
+#include <cstdlib>
+#include <ctime>
 
-#include <cuda_runtime.h>
 #include <cutil_inline.h>
 
 #include "complex.hpp"
+#include "textureReader.hpp"
 
 
 using namespace std;
@@ -101,192 +105,204 @@ printCudaDeviceInfo(const int deviceId)
 }
 
 
-template<typename T>
+template<typename T, typename textureReaderT>
 __global__ void
-testGlobMemReadBandwidthKernel(const T*           inData,       // pointer to input data in global memory
-			       T*                 outData,      // pointer to output data in global memory
-			       const unsigned int nmbElements)  // number of data elements for each thread
+sumTextureMemKernel(T*                 outData,  // pointer to device output data in global memory
+		    const unsigned int nmbElementsPerThread)
 {
   const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
   const unsigned int nmbThreads = gridDim.x * blockDim.x;
-  T sum = 0;
-  // #pragma unroll 1
-  for (unsigned int i = 0; i < nmbElements; ++i)
+  T                  sum        = 0;
+#pragma unroll 1
+  for (int i = 0; i < nmbElementsPerThread; ++i)
+    sum += textureReaderT::fetch((i * nmbThreads ) + threadId);
+  outData[threadId] = sum;
+}
+
+
+template<typename T>
+__global__ void
+sumGlobalMemKernel(const T*           inData,   // pointer to device input data in global memory
+		   T*                 outData,  // pointer to device output data in global memory
+		   const unsigned int nmbElementsPerThread)
+{
+  const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
+  const unsigned int nmbThreads = gridDim.x * blockDim.x;
+  T                  sum        = 0;
+#pragma unroll 1
+  for (int i = 0; i < nmbElementsPerThread; ++i)
     sum += inData[(i * nmbThreads ) + threadId];
   outData[threadId] = sum;
 }
 
 
 template<typename T>
-void
-testGlobMemBandwidth(const unsigned int nmbBlocks            = 30,
-		     const unsigned int nmbThreadsPerBlock   = 512,
-		     const unsigned int nmbElementsPerThread = 10000)
+bool
+verifySumKernel(const T*           inData,
+		const T*           outData,  // output of GPU kernel
+		const unsigned int nmbBlocks,
+		const unsigned int nmbThreadsPerBlock,
+		const unsigned int nmbElementsPerThread)
 {
-  cout << "testing global memory bandwidth" << endl;
+  if (not inData or not outData) {
+    cout << "null pointer for data" << endl;
+    return false;
+  }
+  const unsigned int nmbThreads = nmbBlocks * nmbThreadsPerBlock;
+  T                  data[nmbThreads];
+  bool               success = true;
+  for (unsigned int threadId = 0; threadId < nmbThreads; ++threadId) {
+    T sum = 0;
+    for (int i = 0; i < nmbElementsPerThread; ++i)
+      sum += inData[(i * nmbThreads ) + threadId];
+    data[threadId] = sum;
+    if (data[threadId] != outData[threadId]) {
+      cout << "(CPU[" << threadId << "] = " << data[threadId]    << ") != "
+	   << "(GPU[" << threadId << "] = " << outData[threadId] << "); "
+	   << "delta = " << data[threadId] - outData[threadId] << endl;
+      success = false;
+    }
+  }
+  return success;
+}
 
-  // allocate host memory
-  const unsigned int nmbElements = nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread;
-  const unsigned int memSizeIn   = nmbElements * sizeof(T);
-  const unsigned int memSizeOut  = nmbBlocks * nmbThreadsPerBlock * sizeof(T);
-  cout << "allocating " << memSizeIn / (1024. * 1024.) << " MiBytes of global memory for " << nmbElements << " data elements:" << endl
-       << "(" << nmbBlocks << " blocks) x (" << nmbThreadsPerBlock << " threads per block) x "
-       << "(" << nmbElementsPerThread <<  " number data elements per thread)"<< endl;
-  T* hostInData  = (T*) malloc(memSizeIn);
-  T* hostOutData = (T*) malloc(memSizeOut);
 
-  // initalize host memory
+template<typename T, typename textureReaderT>
+struct sumTextureMemKernelCaller {
+  
+  typedef T                                     value_type;
+  typedef typename textureReaderT::texture_type texture_type;
+
+  static void call(const unsigned int nmbBlocks,
+		   const unsigned int nmbThreadsPerBlock,
+		   const T*,
+		   T*                 deviceOutData,
+		   const unsigned int nmbElementsPerThread)
+  {
+    sumTextureMemKernel<T, textureReaderT><<< nmbBlocks, nmbThreadsPerBlock >>>
+      (deviceOutData, nmbElementsPerThread);
+  }
+
+  static bool verify(const T*           hostInData,
+		     const T*           hostOutData,  // output of GPU kernel
+		     const unsigned int nmbBlocks,
+		     const unsigned int nmbThreadsPerBlock,
+		     const unsigned int nmbElementsPerThread)
+  {
+    return verifySumKernel(hostInData, hostOutData, nmbBlocks,
+			   nmbThreadsPerBlock, nmbElementsPerThread);
+  }
+
+};
+
+
+template<typename T>
+struct sumGlobalMemKernelCaller {
+  
+  typedef T value_type;
+
+  static void call(const unsigned int nmbBlocks,
+		   const unsigned int nmbThreadsPerBlock,
+		   const T*           deviceInData,
+		   T*                 deviceOutData,
+		   const unsigned int nmbElementsPerThread)
+  {
+    sumGlobalMemKernel<T><<< nmbBlocks, nmbThreadsPerBlock >>>
+      (deviceInData, deviceOutData, nmbElementsPerThread);
+  }
+
+  static bool verify(const T*           hostInData,
+		     const T*           hostOutData,  // output of GPU kernel
+		     const unsigned int nmbBlocks,
+		     const unsigned int nmbThreadsPerBlock,
+		     const unsigned int nmbElementsPerThread)
+  {
+    return verifySumKernel(hostInData, hostOutData, nmbBlocks,
+			   nmbThreadsPerBlock, nmbElementsPerThread);
+  }
+
+};
+
+
+template<typename T, typename textureReaderT, typename kernelCallerT>
+void runKernel(const unsigned int nmbBlocks,
+	       const unsigned int nmbThreadsPerBlock,
+	       const unsigned int nmbIterations)
+{
+  // create maximum sized texture (512 MB)
+  unsigned int       nmbElements          = ((unsigned int)1 << 29) / sizeof(T);
+  const unsigned int nmbThreads           = nmbBlocks * nmbThreadsPerBlock;
+  const unsigned int nmbElementsPerThread = nmbElements / nmbThreads;
+  nmbElements = nmbElementsPerThread * nmbThreads;
+  const unsigned int dataSizeIn  = nmbElements * sizeof(T);
+  const unsigned int dataSizeOut = nmbThreads  * sizeof(T);
+
+  // create and initalize host arrays
+  cout << "allocating " << dataSizeIn / (1024. * 1024.) << " MiBytes in global memory "
+       << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
+  T* hostInData  = (T*) malloc(dataSizeIn );
+  T* hostOutData = (T*) malloc(dataSizeOut);
+  srand (time(NULL));
   for (unsigned int i = 0; i < nmbElements; ++i)
-    hostInData[i] = (T)i;
+    hostInData[i] = (T)rand();
 
-  // allocate device memory and copy host data to device
+  // create device arrays and copy host data to device
   T* deviceInData;
-  cutilSafeCall(cudaMalloc((void**) &deviceInData, memSizeIn));
-  cutilSafeCall(cudaMemcpy(deviceInData, hostInData, memSizeIn, cudaMemcpyHostToDevice));
   T* deviceOutData;
-  cutilSafeCall(cudaMalloc((void**) &deviceOutData, memSizeOut));
+  cutilSafeCall(cudaMalloc((void**) &deviceInData,  dataSizeIn ));
+  cutilSafeCall(cudaMalloc((void**) &deviceOutData, dataSizeOut));
+  cutilSafeCall(cudaMemcpy(deviceInData, hostInData, dataSizeIn, cudaMemcpyHostToDevice));
 
-  // initialize timer
-  unsigned int timer = 0;
-  cutilCheckError(cutCreateTimer(&timer));
-  cutilCheckError(cutStartTimer (timer));
-  cudaEvent_t start, stop;
+  // bind texture
+  textureReaderT::bindTexture(deviceInData, dataSizeIn);
+
+  // dry-run kernel first to avoid any setup and caching effects
+  kernelCallerT::call(nmbBlocks, nmbThreadsPerBlock, deviceInData,
+		      deviceOutData, nmbElementsPerThread);
+
+  // setup and start timer
+  cudaEvent_t start, end;
   cutilSafeCall(cudaEventCreate(&start));
-  cutilSafeCall(cudaEventCreate(&stop));
+  cutilSafeCall(cudaEventCreate(&end  ));
   cutilSafeCall(cudaEventRecord(start, 0));
 
-  // execute test kernel
-  testGlobMemReadBandwidthKernel<T><<< nmbBlocks, nmbThreadsPerBlock >>>(deviceInData, deviceOutData, nmbElementsPerThread);
-  cutilCheckMsg("there were errors executing testGlobMemBandwidthKernel");  // check if kernel execution generated an error
-  
-  // calculate memory bandwidth
-  cutilSafeCall(cudaEventRecord(stop, 0));
-  cutilSafeCall(cudaEventSynchronize(stop));
-  cutilSafeThreadSync();
-  cutilCheckError(cutStopTimer(timer));
-  const float elapsedTimeCutTimer = cutGetTimerValue(timer) / 1000.;  // [sec]
-  float elapsedTimeEvent;  // [sec]
-  cutilSafeCall(cudaEventElapsedTime(&elapsedTimeEvent, start, stop));
-  elapsedTimeEvent /= 1000.;
-  cout << "CUT timer time: " << elapsedTimeCutTimer * 1000 << " msec" << endl
-       << "global memory read bandwidth: "<< memSizeIn / (1024 * 1024 * 1024 * elapsedTimeCutTimer) << " GiByte/sec" << endl
-       << "CUDA event time: " << elapsedTimeEvent * 1000 << " msec" << endl
-       << "global memory read bandwidth: "<< memSizeIn / (1024 * 1024 * 1024 * elapsedTimeEvent) << " GiByte/sec" << endl;
+  // run kernel
+  for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration)
+    kernelCallerT::call(nmbBlocks, nmbThreadsPerBlock, deviceInData,
+			deviceOutData, nmbElementsPerThread);
+
+  // stop timer
+  cutilSafeCall(cudaEventRecord(end, 0));
+  cutilSafeCall(cudaEventSynchronize(end));
+
+  // calculate and report bandwidth
+  float elapsedTime;
+  cutilSafeCall(cudaEventElapsedTime(&elapsedTime, start, end));
+  elapsedTime /= nmbIterations * 1000;  // [sec] per iteration
+  const float bandwidth = dataSizeIn / elapsedTime;
+  cout << "processed " << dataSizeIn / (1024. * 1024.) << " MiBytes in "
+       << elapsedTime * 1000 << " msec; "
+       << "total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl;
   cutilSafeCall(cudaEventDestroy(start));
-  cutilSafeCall(cudaEventDestroy(stop));
-  cutilCheckError(cutDeleteTimer(timer));
+  cutilSafeCall(cudaEventDestroy(end  ));
 
   // copy kernel output data to host
-  cutilSafeCall(cudaMemcpy(hostOutData, deviceOutData, memSizeOut, cudaMemcpyDeviceToHost));
+  cutilSafeCall(cudaMemcpy(hostOutData, deviceOutData, dataSizeOut, cudaMemcpyDeviceToHost));
+
+  // test data
+  if (kernelCallerT::verify(hostInData, hostOutData, nmbBlocks,
+			    nmbThreadsPerBlock, nmbElementsPerThread))
+    cout << "verification successful" << endl;
+  else
+    cout << "verification failed" << endl;
+
+  // unbind texture
+  textureReaderT::unbindTexture();
 
   // cleanup memory
-  free(hostInData);
+  free(hostInData );
   free(hostOutData);
-  cutilSafeCall(cudaFree(deviceInData));
-  cutilSafeCall(cudaFree(deviceOutData));
-  cudaThreadExit();
-
-  // dummy test
-  complex<double2, double> a = 1.;
-  complex<double2, double> b(2., 3.);
-  complex<double2, double> c = (2. * a + b * a - a) / 2.;
-}
-
-
-template<typename T>
-__global__ void
-testGlobMemComplexReadBandwidthKernel(const T*           inDataRe,     // pointer to real parts in global memory
-				      const T*           inDataIm,     // pointer to imaginary parts in global memory
-				      T*                 outData,      // pointer to output data in global memory
-				      const unsigned int nmbElements)  // number of data elements for each thread
-{
-  const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
-  const unsigned int nmbThreads = gridDim.x * blockDim.x;
-  T sumRe = 0;
-  T sumIm = 0;
-  // #pragma unroll 1
-  for (unsigned int i = 0; i < nmbElements; ++i) {
-    sumRe += inDataRe[(i * nmbThreads ) + threadId];
-    sumIm += inDataIm[(i * nmbThreads ) + threadId];
-  }
-  outData[threadId] = sumRe + sumIm;
-}
-
-
-template<typename T>
-void
-testGlobMemComplexBandwidth(const unsigned int nmbBlocks            = 30,
-			    const unsigned int nmbThreadsPerBlock   = 512,
-			    const unsigned int nmbElementsPerThread = 10000)
-{
-  cout << "testing global memory bandwidth for complex SoA" << endl;
-
-  // allocate host memory
-  const unsigned int nmbElements = nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread;
-  const unsigned int memSizeIn   = nmbElements * sizeof(T);
-  const unsigned int memSizeOut  = nmbBlocks * nmbThreadsPerBlock * sizeof(T);
-  cout << "allocating " << 2 * memSizeIn / (1024. * 1024.) << " MiBytes of global memory for " << nmbElements << " data elements:" << endl
-       << "(" << nmbBlocks << " blocks) x (" << nmbThreadsPerBlock << " threads per block) x "
-       << "(" << nmbElementsPerThread <<  " data elements per thread)"<< endl;
-  T* hostInDataRe = (T*) malloc(memSizeIn);
-  T* hostInDataIm = (T*) malloc(memSizeIn);
-  T* hostOutData  = (T*) malloc(memSizeOut);
-
-  // initalize host memory
-  for (unsigned int i = 0; i < nmbElements; ++i) {
-    hostInDataRe[i] = (T)i;
-    hostInDataIm[i] = (T)i;
-  }
-
-  // allocate device memory and copy host data to device
-  T* deviceInDataRe;
-  cutilSafeCall(cudaMalloc((void**) &deviceInDataRe, memSizeIn));
-  cutilSafeCall(cudaMemcpy(deviceInDataRe, hostInDataRe, memSizeIn, cudaMemcpyHostToDevice));
-  T* deviceInDataIm;
-  cutilSafeCall(cudaMalloc((void**) &deviceInDataIm, memSizeIn));
-  cutilSafeCall(cudaMemcpy(deviceInDataIm, hostInDataIm, memSizeIn, cudaMemcpyHostToDevice));
-  T* deviceOutData;
-  cutilSafeCall(cudaMalloc((void**) &deviceOutData, memSizeOut));
-
-  // initialize timer
-  unsigned int timer = 0;
-  cutilCheckError(cutCreateTimer(&timer));
-  cutilCheckError(cutStartTimer (timer));
-  cudaEvent_t start, stop;
-  cutilSafeCall(cudaEventCreate(&start));
-  cutilSafeCall(cudaEventCreate(&stop));
-  cutilSafeCall(cudaEventRecord(start, 0));
-
-  // execute test kernel
-  testGlobMemComplexReadBandwidthKernel<T><<< nmbBlocks, nmbThreadsPerBlock >>>(deviceInDataRe, deviceInDataIm, deviceOutData, nmbElementsPerThread);
-  cutilCheckMsg("there were errors executing testGlobMemBandwidthKernel");  // check if kernel execution generated an error
-  
-  // calculate memory bandwidth
-  cutilSafeCall(cudaEventRecord(stop, 0));
-  cutilSafeCall(cudaEventSynchronize(stop));
-  cutilSafeThreadSync();
-  cutilCheckError(cutStopTimer(timer));
-  const float elapsedTimeCutTimer = cutGetTimerValue(timer) / 1000.;  // [sec]
-  float elapsedTimeEvent;  // [sec]
-  cutilSafeCall(cudaEventElapsedTime(&elapsedTimeEvent, start, stop));
-  elapsedTimeEvent /= 1000.;
-  cout << "CUT timer time: " << elapsedTimeCutTimer * 1000 << " msec" << endl
-       << "global memory read bandwidth: "<< 2 * memSizeIn / (1024 * 1024 * 1024 * elapsedTimeCutTimer) << " GiByte/sec" << endl
-       << "CUDA event time: " << elapsedTimeEvent * 1000 << " msec" << endl
-       << "global memory read bandwidth: "<< 2 * memSizeIn / (1024 * 1024 * 1024 * elapsedTimeEvent) << " GiByte/sec" << endl;
-  cutilSafeCall(cudaEventDestroy(start));
-  cutilSafeCall(cudaEventDestroy(stop));
-  cutilCheckError(cutDeleteTimer(timer));
-
-  // copy kernel output data to host
-  cutilSafeCall(cudaMemcpy(hostOutData, deviceOutData, memSizeOut, cudaMemcpyDeviceToHost));
-
-  // cleanup memory
-  free(hostInDataRe);
-  free(hostInDataIm);
-  free(hostOutData);
-  cutilSafeCall(cudaFree(deviceInDataRe));
-  cutilSafeCall(cudaFree(deviceInDataIm));
+  cutilSafeCall(cudaFree(deviceInData ));
   cutilSafeCall(cudaFree(deviceOutData));
   cudaThreadExit();
 }
@@ -315,33 +331,28 @@ int main(int    argc,
   cout << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
   cutilSafeCall(cudaSetDevice(deviceId));
 
-  const unsigned int nmbBlocks            = deviceProp.multiProcessorCount;
-  const unsigned int nmbThreadsPerBlock   = deviceProp.maxThreadsPerBlock;
-  const unsigned int nmbElementsPerThread = 5000;
-  // cout << "testing global memory read bandwidth for int:" << endl;
-  // testGlobMemBandwidth<int>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
-  // cout << "testing global memory read bandwidth for float:" << endl;
-  // testGlobMemBandwidth<float>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
-  cout << "testing global memory read bandwidth for double:" << endl;
-  testGlobMemBandwidth<double>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
-  cout << endl;
-  cout << "testing global memory read bandwidth for complex<float2, float>:" << endl;
-  testGlobMemBandwidth<complex<float2, float> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
-  cout << endl;
-  cout << "testing global memory read bandwidth for complex<double2, double>:" << endl;
-  testGlobMemBandwidth<complex<double2, double> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
-  cout << endl;
-  cout << "testing global memory read bandwidth for complex<struct<double>, double>:" << endl;
-  testGlobMemBandwidth<complex<complexStorage<double>, double> >(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
-  cout << endl;
-  cout << "testing global memory read bandwidth for float re[], im[]:" << endl;
-  testGlobMemComplexBandwidth<float>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
-  cout << endl;
-  cout << "testing global memory read bandwidth for double re[], im[]:" << endl;
-  testGlobMemComplexBandwidth<double>(nmbBlocks, nmbThreadsPerBlock, nmbElementsPerThread);
+  // create maximum number of threads for all blocks
+  const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
+  const unsigned int nmbThreadsPerBlock = deviceProp.maxThreadsPerBlock;
+  const unsigned int nmbIterations      = 100;
+  cout << "using grid (" << nmbBlocks << " blocks) x "
+       << "(" << nmbThreadsPerBlock << " threads per block)" << endl
+       << "running " << nmbIterations << " kernel iterations" << endl;
+  
+  // run kernels
+  runKernel<complex<float2, float>, floatComplexTextureReader,
+     sumGlobalMemKernelCaller<complex<float2, float> > >
+    (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
-  // dummy test
-  complex<double2, double> a = 1.;
-  complex<double2, double> b(2., 3.);
-  complex<double2, double> c = (2. * a + b * a - a) / 2.;
+  runKernel<complex<double2, double>, doubleComplexTextureReader,
+    sumGlobalMemKernelCaller<complex<double2, double> > >
+  (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
+
+  runKernel<complex<float2, float>, floatComplexTextureReader,
+    sumTextureMemKernelCaller<complex<float2, float>, floatComplexTextureReader> >
+  (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
+
+  runKernel<complex<double2, double>, doubleComplexTextureReader,
+    sumTextureMemKernelCaller<complex<double2, double>, doubleComplexTextureReader> >
+  (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 }
