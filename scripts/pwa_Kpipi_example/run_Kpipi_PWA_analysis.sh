@@ -53,7 +53,7 @@ RUNSCRIPT_FILE=(\
 
 for (( STEP=0; STEP<10; STEP++ )) # in
 do 
-	echo "${STEP} is ${RUNSCRIPT[${STEP}]}"
+	# echo "${STEP} is ${RUNSCRIPT[${STEP}]}"
 	if [ ${RUNSCRIPT[${STEP}]} == "Y" ]
 	then
 		source ${RUNSCRIPT_FILE[${STEP}]}

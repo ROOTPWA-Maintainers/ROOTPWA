@@ -10,6 +10,17 @@ it is not prooved to work that way.
 	Put it for example in the .bashrc
 2. . run_Kpipi_PWA_analysis.sh
 	pray it works not only on my machine
-3. No warranty for correctness. It worked with SVN version 259.
+3. No warranty for correctness. It worked with SVN version 290.
 	
 Enjoy!
+
+ step1.sh: "             getting files              " 
+ step2.sh: "          setting up workspace          "
+ step3.sh: "     Filling flat phasespace events     "
+ step4.sh: "      Filtering RAW data into bins      "
+ step5.sh: "    MC acceptance of flat phasespace    "
+ step6.sh: "  Generation of partial wave key files  "
+ step7.sh: " Calculation of Amplitudes and Integrals"
+ step8.sh: "      Specifying amplitudes for fit     "
+ step9.sh: "        Fitting the partial waves       "
+ step10.sh:"      Visualization of fit results      "
