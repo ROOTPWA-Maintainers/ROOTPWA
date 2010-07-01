@@ -230,6 +230,11 @@ enable_testing()
 # PWA2000
 add_subdirectory(pwa2000)
 
+# Utilities
+set(UTILITIES_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/utilities
+)
+
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src

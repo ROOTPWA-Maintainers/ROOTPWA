@@ -42,92 +42,105 @@
 #define TEXTUREREADER_HPP
 
 
-texture<float,  1, cudaReadModeElementType> floatTexture;
-struct floatTextureReader {
-
-  typedef float texture_type;
-
-  static __device__ float fetch(const int index) { return tex1Dfetch(floatTexture, index); }
-
-  static __host__ void bindTexture(const void*        deviceInData,
-				   const unsigned int memSize)
-  { return cutilSafeCall(cudaBindTexture(0, floatTexture, deviceInData, memSize)); }
-
-  static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(floatTexture)); }
-
-};
+#include "complex.hpp"
 
 
-texture<float2, 1, cudaReadModeElementType> float2Texture;
-struct float2TextureReader {
+// namespace rpwa {
 
-  typedef float2 texture_type;
-
-  static __device__ float2 fetch(const int index) { return tex1Dfetch(float2Texture, index); }
-
-  static __host__ void bindTexture(const void*        deviceInData,
-				   const unsigned int memSize)
-  { return cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
-
-  static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float2Texture)); }
-
-};
+//   namespace gpu {
 
 
-struct floatComplexTextureReader {
+    texture<float,  1, cudaReadModeElementType> floatTexture;
+    struct floatTextureReader {
 
-  typedef float2 texture_type;
+      typedef float texture_type;
 
-  static __device__ complex<float2, float> fetch(const int index)
-  {
-    const float2 val = tex1Dfetch(float2Texture, index);
-    return complex<float2, float>(val.x, val.y);
-  }
+      static __device__ float fetch(const int index) { return tex1Dfetch(floatTexture, index); }
 
-  static __host__ void bindTexture(const void*        deviceInData,
-				   const unsigned int memSize)
-  { return cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
+      static __host__ void bindTexture(const void*        deviceInData,
+				       const unsigned int memSize)
+      { return cutilSafeCall(cudaBindTexture(0, floatTexture, deviceInData, memSize)); }
 
-  static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float2Texture)); }
+      static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(floatTexture)); }
 
-};
+    };
 
 
-texture<float4, 1, cudaReadModeElementType> float4Texture;
-struct float4TextureReader {
+    texture<float2, 1, cudaReadModeElementType> float2Texture;
+    struct float2TextureReader {
 
-  typedef float4 texture_type;
+      typedef float2 texture_type;
 
-  static __device__ float4 fetch(const int index) { return tex1Dfetch(float4Texture, index); }
+      static __device__ float2 fetch(const int index) { return tex1Dfetch(float2Texture, index); }
 
-  static __host__ void bindTexture(const void*        deviceInData,
-				   const unsigned int memSize)
-  { return cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData, memSize)); }
+      static __host__ void bindTexture(const void*        deviceInData,
+				       const unsigned int memSize)
+      { return cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
+
+      static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float2Texture)); }
+
+    };
+
+
+    struct floatComplexTextureReader {
+
+      typedef float2 texture_type;
+
+      static __device__ complex<float2, float> fetch(const int index)
+      {
+	const float2 val = tex1Dfetch(float2Texture, index);
+	return complex<float2, float>(val.x, val.y);
+      }
+
+      static __host__ void bindTexture(const void*        deviceInData,
+				       const unsigned int memSize)
+      { return cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData, memSize)); }
+
+      static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float2Texture)); }
+
+    };
+
+
+    texture<float4, 1, cudaReadModeElementType> float4Texture;
+    struct float4TextureReader {
+
+      typedef float4 texture_type;
+
+      static __device__ float4 fetch(const int index) { return tex1Dfetch(float4Texture, index); }
+
+      static __host__ void bindTexture(const void*        deviceInData,
+				       const unsigned int memSize)
+      { return cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData, memSize)); }
   
-  static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float4Texture)); }
+      static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(float4Texture)); }
 
-};
+    };
 
 
-texture<int4, 1, cudaReadModeElementType> int4Texture;
-struct doubleComplexTextureReader {
+    texture<int4, 1, cudaReadModeElementType> int4Texture;
+    struct doubleComplexTextureReader {
 
-  typedef int4 texture_type;
+      typedef int4 texture_type;
 
-  static __device__ complex<double2, double> fetch(const int index)
-  {
-    const int4 val = tex1Dfetch(int4Texture, index);
-    return complex<double2, double>(__hiloint2double(val.y, val.x),
-				    __hiloint2double(val.w, val.z));
-  }
+      static __device__ complex<double2, double> fetch(const int index)
+      {
+	const int4 val = tex1Dfetch(int4Texture, index);
+	return complex<double2, double>(__hiloint2double(val.y, val.x),
+					__hiloint2double(val.w, val.z));
+      }
 
-  static __host__ void bindTexture(const void*        deviceInData,
-				   const unsigned int memSize)
-  { return cutilSafeCall(cudaBindTexture(0, int4Texture, deviceInData, memSize)); }
+      static __host__ void bindTexture(const void*        deviceInData,
+				       const unsigned int memSize)
+      { return cutilSafeCall(cudaBindTexture(0, int4Texture, deviceInData, memSize)); }
   
-  static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(int4Texture)); }
+      static __host__ void unbindTexture() { return cutilSafeCall(cudaUnbindTexture(int4Texture)); }
 
-};
+    };
+
+
+//   }  // namespace gpu
+
+// }  // namespace rpwa
 
 
 #endif  // TEXTUREREADER_HPP

@@ -25,7 +25,9 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      test some CUDA stuff
+//      test processing of complex value arrays
+//
+//      template design based on ideas from
 //      http://blog.icare3d.org/2010/06/cuda-dynamic-template-parameters-22.html
 //
 //
@@ -43,11 +45,13 @@
 
 #include <cutil_inline.h>
 
+#include "reportingUtils.hpp"
 #include "complex.hpp"
 #include "textureReader.hpp"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 bool
@@ -60,11 +64,11 @@ printCudaDeviceInfo(const int deviceId)
   if (deviceId == 0) {
     // fields for both major & minor fields are 9999, if no CUDA capable devices are present
     if ((deviceProp.major == 9999) and (deviceProp.minor == 9999)) {
-      cout << "there is no CUDA device" << endl;
+      printWarn << "there is no CUDA device" << endl;
       return false;
     }
   }
-  cout << "CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
+  printInfo << "CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
     
   // print info
   int driverVersion = 0;
@@ -105,23 +109,9 @@ printCudaDeviceInfo(const int deviceId)
 }
 
 
-template<typename T, typename textureReaderT>
-__global__ void
-sumTextureMemKernel(T*                 outData,  // pointer to device output data in global memory
-		    const unsigned int nmbElementsPerThread)
-{
-  const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
-  const unsigned int nmbThreads = gridDim.x * blockDim.x;
-  T                  sum        = 0;
-#pragma unroll 1
-  for (int i = 0; i < nmbElementsPerThread; ++i)
-    sum += textureReaderT::fetch((i * nmbThreads ) + threadId);
-  outData[threadId] = sum;
-}
-
-
 template<typename T>
-__global__ void
+__global__
+void
 sumGlobalMemKernel(const T*           inData,   // pointer to device input data in global memory
 		   T*                 outData,  // pointer to device output data in global memory
 		   const unsigned int nmbElementsPerThread)
@@ -130,8 +120,83 @@ sumGlobalMemKernel(const T*           inData,   // pointer to device input data 
   const unsigned int nmbThreads = gridDim.x * blockDim.x;
   T                  sum        = 0;
 #pragma unroll 1
-  for (int i = 0; i < nmbElementsPerThread; ++i)
-    sum += inData[(i * nmbThreads ) + threadId];
+  for (unsigned int i = 0; i < nmbElementsPerThread; ++i)
+    sum += inData[(i * nmbThreads) + threadId];  // coalesce memory access
+  outData[threadId] = sum;
+}
+
+
+template<typename T, typename textureReaderT>
+__global__
+void
+sumTextureMemKernel(T*                 outData,  // pointer to device output data in global memory
+		    const unsigned int nmbElementsPerThread)
+{
+  const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
+  const unsigned int nmbThreads = gridDim.x * blockDim.x;
+  T                  sum        = 0;
+#pragma unroll 1
+  for (unsigned int i = 0; i < nmbElementsPerThread; ++i)
+    sum += textureReaderT::fetch((i * nmbThreads) + threadId);  // coalesce memory access
+  outData[threadId] = sum;
+}
+
+
+template<typename T>
+inline __host__ __device__
+T
+indicesToOffset(const T* indices,  // indices to map to one-dimensional array index
+		const T* dim,      // extents of n-dimensional array
+		const T  nmbDim)   // number of dimensions
+{
+  T offset = indices[0];
+  for (T i = 1; i < nmbDim; ++i)
+    offset = offset * dim[i] + indices[i];
+  return offset;
+}
+
+
+template<typename T>
+__global__
+void
+sum2GlobalMemKernel(const T*           inData,   // pointer to device input data in global memory
+		    T*                 outData,  // pointer to device output data in global memory
+		    const unsigned int nmbElements0,
+		    const unsigned int nmbElements1)
+{
+  const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
+  const unsigned int nmbThreads = gridDim.x * blockDim.x;
+  T                  sum        = 0;
+  unsigned int       indices[2];
+  const unsigned int dim[2] = {nmbElements0, nmbElements1};
+#pragma unroll 1
+  for (indices[0] = 0; indices[0] < dim[0]; ++indices[0])
+    for (unsigned int i = 0; i < dim[1]; ++i) {
+      indices[1] = (i * nmbThreads) + threadId;  // coalesce memory access
+      sum += inData[indicesToOffset<unsigned int>(indices, dim, 2)];
+    }
+  outData[threadId] = sum;
+}
+
+
+template<typename T, typename textureReaderT>
+__global__
+void
+sum2TextureMemKernel(T*                 outData,  // pointer to device output data in global memory
+		     const unsigned int nmbElements0,
+		     const unsigned int nmbElements1)
+{
+  const unsigned int threadId   = blockDim.x * blockIdx.x + threadIdx.x;
+  const unsigned int nmbThreads = gridDim.x * blockDim.x;
+  T                  sum        = 0;
+  unsigned int       indices[2];
+  const unsigned int dim[2] = {nmbElements0, nmbElements1};
+#pragma unroll 1
+  for (indices[0] = 0; indices[0] < dim[0]; ++indices[0])
+    for (unsigned int i = 0; i < dim[1]; ++i) {
+      indices[1] = (i * nmbThreads) + threadId;  // coalesce memory access
+      sum += textureReaderT::fetch(indicesToOffset<unsigned int>(indices, dim, 2));
+    }
   outData[threadId] = sum;
 }
 
@@ -145,7 +210,7 @@ verifySumKernel(const T*           inData,
 		const unsigned int nmbElementsPerThread)
 {
   if (not inData or not outData) {
-    cout << "null pointer for data" << endl;
+    printWarn << "null pointer for data" << endl;
     return false;
   }
   const unsigned int nmbThreads = nmbBlocks * nmbThreadsPerBlock;
@@ -157,14 +222,82 @@ verifySumKernel(const T*           inData,
       sum += inData[(i * nmbThreads ) + threadId];
     data[threadId] = sum;
     if (data[threadId] != outData[threadId]) {
-      cout << "(CPU[" << threadId << "] = " << data[threadId]    << ") != "
-	   << "(GPU[" << threadId << "] = " << outData[threadId] << "); "
-	   << "delta = " << data[threadId] - outData[threadId] << endl;
+      printWarn << "(CPU[" << threadId << "] = " << data[threadId]    << ") != "
+		<< "(GPU[" << threadId << "] = " << outData[threadId] << "); "
+		<< "delta = " << data[threadId] - outData[threadId] << endl;
       success = false;
     }
   }
   return success;
 }
+
+
+template<typename T>
+bool
+verifySum2Kernel(const T*            inData,
+		 const T*            outData,  // output of GPU kernel
+		 const unsigned int  nmbBlocks,
+		 const unsigned int  nmbThreadsPerBlock,
+		 const unsigned int* dim)
+{
+  if (not inData or not outData) {
+    printWarn << "null pointer for data" << endl;
+    return false;
+  }
+  const unsigned int nmbThreads = nmbBlocks * nmbThreadsPerBlock;
+  T                  data[nmbThreads];
+  bool               success = true;
+  for (unsigned int threadId = 0; threadId < nmbThreads; ++threadId) {
+    T            sum = 0;
+    unsigned int indices[2];
+    for (indices[0] = 0; indices[0] < dim[0]; ++indices[0])
+      for (unsigned int i = 0; i < dim[1]; ++i) {
+	indices[1] = (i * nmbThreads) + threadId;  // coalesce memory access
+	sum += inData[indicesToOffset<unsigned int>(indices, dim, 2)];
+      }
+    data[threadId] = sum;
+    if (data[threadId] != outData[threadId]) {
+      printWarn << "(CPU[" << threadId << "] = " << data[threadId]    << ") != "
+		<< "(GPU[" << threadId << "] = " << outData[threadId] << "); "
+		<< "delta = " << data[threadId] - outData[threadId] << endl;
+      success = false;
+    }
+  }
+  return success;
+}
+
+
+template<typename T>
+struct sumGlobalMemKernelCaller {
+  
+  typedef T value_type;
+
+  static void call(const unsigned int nmbBlocks,
+		   const unsigned int nmbThreadsPerBlock,
+		   const T*           deviceInData,
+		   T*                 deviceOutData,
+		   const unsigned int nmbElementsPerThread)
+  {
+    sumGlobalMemKernel<T><<< nmbBlocks, nmbThreadsPerBlock >>>
+      (deviceInData, deviceOutData, nmbElementsPerThread);
+  }
+
+  static unsigned long dataSize(const unsigned int nmbBlocks,
+				const unsigned int nmbThreadsPerBlock,
+				const unsigned int nmbElementsPerThread)
+  { return nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread * sizeof(T); }
+
+  static bool verify(const T*           hostInData,
+		     const T*           hostOutData,  // output of GPU kernel
+		     const unsigned int nmbBlocks,
+		     const unsigned int nmbThreadsPerBlock,
+		     const unsigned int nmbElementsPerThread)
+  {
+    return verifySumKernel(hostInData, hostOutData, nmbBlocks,
+			   nmbThreadsPerBlock, nmbElementsPerThread);
+  }
+
+};
 
 
 template<typename T, typename textureReaderT>
@@ -183,21 +316,26 @@ struct sumTextureMemKernelCaller {
       (deviceOutData, nmbElementsPerThread);
   }
 
+  static unsigned long dataSize(const unsigned int nmbBlocks,
+				const unsigned int nmbThreadsPerBlock,
+				const unsigned int nmbElementsPerThread)
+  { return nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread * sizeof(T); }
+
   static bool verify(const T*           hostInData,
 		     const T*           hostOutData,  // output of GPU kernel
 		     const unsigned int nmbBlocks,
 		     const unsigned int nmbThreadsPerBlock,
 		     const unsigned int nmbElementsPerThread)
   {
-    return verifySumKernel(hostInData, hostOutData, nmbBlocks,
-			   nmbThreadsPerBlock, nmbElementsPerThread);
+    return verifySumKernel(hostInData, hostOutData, nmbBlocks, nmbThreadsPerBlock,
+			   nmbElementsPerThread);
   }
 
 };
 
 
 template<typename T>
-struct sumGlobalMemKernelCaller {
+struct sum2GlobalMemKernelCaller {
   
   typedef T value_type;
 
@@ -207,8 +345,18 @@ struct sumGlobalMemKernelCaller {
 		   T*                 deviceOutData,
 		   const unsigned int nmbElementsPerThread)
   {
-    sumGlobalMemKernel<T><<< nmbBlocks, nmbThreadsPerBlock >>>
-      (deviceInData, deviceOutData, nmbElementsPerThread);
+    sum2GlobalMemKernel<T><<< nmbBlocks, nmbThreadsPerBlock >>>
+      (deviceInData, deviceOutData, (unsigned int)sqrt(nmbElementsPerThread),
+       (unsigned int)sqrt(nmbElementsPerThread));
+  }
+
+  static unsigned long dataSize(const unsigned int nmbBlocks,
+				const unsigned int nmbThreadsPerBlock,
+				const unsigned int nmbElementsPerThread)
+  {
+    const unsigned int nmbElements[2] = {(unsigned int)sqrt(nmbElementsPerThread),
+					 (unsigned int)sqrt(nmbElementsPerThread)};
+    return nmbBlocks * nmbThreadsPerBlock * nmbElements[0] * nmbElements[1] * sizeof(T);
   }
 
   static bool verify(const T*           hostInData,
@@ -217,8 +365,49 @@ struct sumGlobalMemKernelCaller {
 		     const unsigned int nmbThreadsPerBlock,
 		     const unsigned int nmbElementsPerThread)
   {
-    return verifySumKernel(hostInData, hostOutData, nmbBlocks,
-			   nmbThreadsPerBlock, nmbElementsPerThread);
+    const unsigned int nmbElements[2] = {(unsigned int)sqrt(nmbElementsPerThread),
+					 (unsigned int)sqrt(nmbElementsPerThread)};
+    return verifySum2Kernel(hostInData, hostOutData, nmbBlocks, nmbThreadsPerBlock, nmbElements);
+  }
+
+};
+
+
+template<typename T, typename textureReaderT>
+struct sum2TextureMemKernelCaller {
+  
+  typedef T                                     value_type;
+  typedef typename textureReaderT::texture_type texture_type;
+
+  static void call(const unsigned int nmbBlocks,
+		   const unsigned int nmbThreadsPerBlock,
+		   const T*,
+		   T*                 deviceOutData,
+		   const unsigned int nmbElementsPerThread)
+  {
+    sum2TextureMemKernel<T, textureReaderT><<< nmbBlocks, nmbThreadsPerBlock >>>
+      (deviceOutData, (unsigned int)sqrt(nmbElementsPerThread),
+       (unsigned int)sqrt(nmbElementsPerThread));
+  }
+
+  static unsigned long dataSize(const unsigned int nmbBlocks,
+				const unsigned int nmbThreadsPerBlock,
+				const unsigned int nmbElementsPerThread)
+  {
+    const unsigned int nmbElements[2] = {(unsigned int)sqrt(nmbElementsPerThread),
+					 (unsigned int)sqrt(nmbElementsPerThread)};
+    return nmbBlocks * nmbThreadsPerBlock * nmbElements[0] * nmbElements[1] * sizeof(T);
+  }
+
+  static bool verify(const T*           hostInData,
+		     const T*           hostOutData,  // output of GPU kernel
+		     const unsigned int nmbBlocks,
+		     const unsigned int nmbThreadsPerBlock,
+		     const unsigned int nmbElementsPerThread)
+  {
+    const unsigned int nmbElements[2] = {(unsigned int)sqrt(nmbElementsPerThread),
+					 (unsigned int)sqrt(nmbElementsPerThread)};
+    return verifySum2Kernel(hostInData, hostOutData, nmbBlocks, nmbThreadsPerBlock, nmbElements);
   }
 
 };
@@ -238,8 +427,8 @@ void runKernel(const unsigned int nmbBlocks,
   const unsigned int dataSizeOut = nmbThreads  * sizeof(T);
 
   // create and initalize host arrays
-  cout << "allocating " << dataSizeIn / (1024. * 1024.) << " MiBytes in global memory "
-       << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
+  printInfo << "allocating " << dataSizeIn / (1024. * 1024.) << " MiBytes in global memory "
+	    << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
   T* hostInData  = (T*) malloc(dataSizeIn );
   T* hostOutData = (T*) malloc(dataSizeOut);
   srand (time(NULL));
@@ -258,7 +447,7 @@ void runKernel(const unsigned int nmbBlocks,
 
   // dry-run kernel first to avoid any setup and caching effects
   kernelCallerT::call(nmbBlocks, nmbThreadsPerBlock, deviceInData,
-		      deviceOutData, nmbElementsPerThread);
+  		      deviceOutData, nmbElementsPerThread);
 
   // setup and start timer
   cudaEvent_t start, end;
@@ -269,7 +458,7 @@ void runKernel(const unsigned int nmbBlocks,
   // run kernel
   for (unsigned int iteration = 0; iteration < nmbIterations; ++iteration)
     kernelCallerT::call(nmbBlocks, nmbThreadsPerBlock, deviceInData,
-			deviceOutData, nmbElementsPerThread);
+  			deviceOutData, nmbElementsPerThread);
 
   // stop timer
   cutilSafeCall(cudaEventRecord(end, 0));
@@ -279,10 +468,12 @@ void runKernel(const unsigned int nmbBlocks,
   float elapsedTime;
   cutilSafeCall(cudaEventElapsedTime(&elapsedTime, start, end));
   elapsedTime /= nmbIterations * 1000;  // [sec] per iteration
-  const float bandwidth = dataSizeIn / elapsedTime;
-  cout << "processed " << dataSizeIn / (1024. * 1024.) << " MiBytes in "
-       << elapsedTime * 1000 << " msec; "
-       << "total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl;
+  const unsigned long dataSize  = kernelCallerT::dataSize(nmbBlocks, nmbThreadsPerBlock,
+							  nmbElementsPerThread);
+  const float         bandwidth = dataSize / elapsedTime;
+  printInfo << "processed " << dataSize / (1024. * 1024.) << " MiBytes in "
+	    << elapsedTime * 1000 << " msec; "
+	    << "total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl;
   cutilSafeCall(cudaEventDestroy(start));
   cutilSafeCall(cudaEventDestroy(end  ));
 
@@ -292,9 +483,9 @@ void runKernel(const unsigned int nmbBlocks,
   // test data
   if (kernelCallerT::verify(hostInData, hostOutData, nmbBlocks,
 			    nmbThreadsPerBlock, nmbElementsPerThread))
-    cout << "verification successful" << endl;
+    printInfo << "verification successful" << endl;
   else
-    cout << "verification failed" << endl;
+    printWarn << "verification failed" << endl;
 
   // unbind texture
   textureReaderT::unbindTexture();
@@ -315,10 +506,10 @@ int main(int    argc,
   int deviceCount = 0;
   cutilSafeCall(cudaGetDeviceCount(&deviceCount));
   if (deviceCount == 0) {
-    cout << "there is no CUDA device" << endl;
+    printWarn << "there is no CUDA device" << endl;
     return 0;
   }
-  cout << "found " << deviceCount << " CUDA device(s)" << endl;
+  printInfo << "found " << deviceCount << " CUDA device(s)" << endl;
 
   // print info for all CUDA devices in system
   for (int deviceId = 0; deviceId < deviceCount; ++deviceId)
@@ -328,16 +519,16 @@ int main(int    argc,
   const int deviceId = cutGetMaxGflopsDeviceId();
   cudaDeviceProp deviceProp;
   cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
-  cout << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
+  printInfo << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
   cutilSafeCall(cudaSetDevice(deviceId));
 
   // create maximum number of threads for all blocks
   const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
   const unsigned int nmbThreadsPerBlock = deviceProp.maxThreadsPerBlock;
   const unsigned int nmbIterations      = 100;
-  cout << "using grid (" << nmbBlocks << " blocks) x "
-       << "(" << nmbThreadsPerBlock << " threads per block)" << endl
-       << "running " << nmbIterations << " kernel iterations" << endl;
+  printInfo << "using grid (" << nmbBlocks << " blocks) x "
+	    << "(" << nmbThreadsPerBlock << " threads per block); "
+	    << "running " << nmbIterations << " kernel iterations" << endl;
   
   // run kernels
   runKernel<complex<float2, float>, floatComplexTextureReader,
@@ -355,4 +546,21 @@ int main(int    argc,
   runKernel<complex<double2, double>, doubleComplexTextureReader,
     sumTextureMemKernelCaller<complex<double2, double>, doubleComplexTextureReader> >
   (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
+
+  runKernel<complex<float2, float>, floatComplexTextureReader,
+     sum2GlobalMemKernelCaller<complex<float2, float> > >
+    (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
+
+  runKernel<complex<double2, double>, doubleComplexTextureReader,
+    sum2GlobalMemKernelCaller<complex<double2, double> > >
+  (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
+
+  runKernel<complex<float2, float>, floatComplexTextureReader,
+    sum2TextureMemKernelCaller<complex<float2, float>, floatComplexTextureReader> >
+  (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
+
+  runKernel<complex<double2, double>, doubleComplexTextureReader,
+    sum2TextureMemKernelCaller<complex<double2, double>, doubleComplexTextureReader> >
+  (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
+
 }

@@ -46,6 +46,7 @@
 #include <cutil_inline.h>
 #include <cutil_math.h>  // operators for float2 and float4
 
+#include "reportingUtils.hpp"
 #include "complex.hpp"
 #include "textureReader.hpp"
 
@@ -54,6 +55,7 @@
 
 
 using namespace std;
+using namespace rpwa;
 
 
 typedef complex<float2,                float > float2Complex;
@@ -75,7 +77,8 @@ operator += (double2&       a,
 
 // global memory kernels
 template<typename T>
-__global__ void
+__global__
+void
 copyGlobalMemKernel(const T*           inData,       // pointer to device input data in global memory
 		    T*                 outData,      // pointer to device output data in global memory
 		    const unsigned int nmbElements)  // number of data elements for each thread
@@ -90,7 +93,8 @@ copyGlobalMemKernel(const T*           inData,       // pointer to device input 
 }
 
 template<typename T>
-__global__ void
+__global__
+void
 copyGlobalMem2Kernel(const T*           inData1,      // pointer to device input data in global memory
 		     const T*           inData2,      // pointer to device input data in global memory
 		     T*                 outData1,     // pointer to device output data in global memory
@@ -108,7 +112,8 @@ copyGlobalMem2Kernel(const T*           inData1,      // pointer to device input
 }
 
 template<typename T>
-__global__ void
+__global__
+void
 writeOnlyGlobalMemKernel(const T*,
 			 T*                 outData,      // pointer to device output data in global memory
 			 const unsigned int nmbElements)  // number of data elements for each thread
@@ -122,7 +127,8 @@ writeOnlyGlobalMemKernel(const T*,
 }
 
 template<typename T>
-__global__ void
+__global__
+void
 writeOnlyGlobalMem2Kernel(const T*,
 			  const T*,
 			  T*                 outData1,     // pointer to device output data in global memory
@@ -140,7 +146,8 @@ writeOnlyGlobalMem2Kernel(const T*,
 }
 
 template<typename T>
-__global__ void
+__global__
+void
 readOnlyGlobalMemKernel(const T*           inData,       // pointer to device input data in global memory
 			T*,
 			const unsigned int nmbElements)  // number of data elements for each thread
@@ -159,7 +166,8 @@ readOnlyGlobalMemKernel(const T*           inData,       // pointer to device in
 }
 
 template<typename T>
-__global__ void
+__global__
+void
 readOnlyGlobalMem2Kernel(const T*           inData1,      // pointer to device input data in global memory
 			 const T*           inData2,      // pointer to device input data in global memory
 			 T*,
@@ -184,7 +192,8 @@ readOnlyGlobalMem2Kernel(const T*           inData1,      // pointer to device i
 
 // texture memory kernels
 template<typename T, typename textureReaderT>  // T is limited to 1-, 2-, or 4-component signed or unsigned 8-, 16-, or 32-bit integers, or 32-bit floats
-__global__ void
+__global__
+void
 copyTextureMemKernel(T*                 outData,      // pointer to device output data in global memory
 		     const unsigned int nmbElements)  // number of data elements for each thread
 {
@@ -198,7 +207,8 @@ copyTextureMemKernel(T*                 outData,      // pointer to device outpu
 }
 
 template<typename T, typename textureReaderT>  // T is limited to 1-, 2-, or 4-component signed or unsigned 8-, 16-, or 32-bit integers, or 32-bit floats
-__global__ void
+__global__
+void
 readOnlyTextureMemKernel(T*,
 			 const unsigned int nmbElements)  // number of data elements for each thread
 {
@@ -254,8 +264,10 @@ readOnlyTextureMemKernel(T*,
     runTime /= nmbIterations * 1000;  /* [sec] per iteration */		\
     const float dataSize  = nmbTransfersPerElement * nmbElements * sizeof(elementType);	\
     const float bandwidth = dataSize / runTime;				\
-    cout << #kernel << "<" << #elementType << "> processed " << dataSize / (1024 * 1024) << " MiBytes in " \
-	 << runTime * 1000 << " msec; total throughput: " << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl; \
+    printInfo << #kernel << "<" << #elementType << "> processed "	\
+              << dataSize / (1024 * 1024) << " MiBytes in "		\
+	      << runTime * 1000 << " msec; total throughput: "		\
+	      << bandwidth / (1024 * 1024 * 1024) << " GiByte/sec" << endl; \
     cutilSafeCall(cudaEventDestroy(start));				\
     cutilSafeCall(cudaEventDestroy(end));				\
   }
@@ -268,15 +280,16 @@ int main()
   const int deviceId = cutGetMaxGflopsDeviceId();
   cudaDeviceProp deviceProp;
   cutilSafeCall(cudaGetDeviceProperties(&deviceProp, deviceId));
-  cout << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
+  printInfo << "using CUDA device[" << deviceId << "]: '" << deviceProp.name << "'" << endl;
   cutilSafeCall(cudaSetDevice(deviceId));
 
   // create maximum number of threads for all blocks
   const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
   const unsigned int nmbThreadsPerBlock = deviceProp.maxThreadsPerBlock;
   const unsigned int nmbIterations      = 100;
-  cout << "using grid (" << nmbBlocks << " blocks) x (" << nmbThreadsPerBlock << " threads per block)" << endl
-       << "running " << nmbIterations << " kernel iterations" << endl;
+  printInfo << "using grid (" << nmbBlocks << " blocks) x "
+	    << "(" << nmbThreadsPerBlock << " threads per block); "
+	    << "running " << nmbIterations << " kernel iterations" << endl;
 
   // create largest data arrays possible with 16 bytes words
   // !!! this does not work for textures
@@ -289,8 +302,9 @@ int main()
   nmbElements = nmbElementsPerThread * nmbBlocks * nmbThreadsPerBlock;
   float4* deviceInData [2];
   float4* deviceOutData[2];
-  cout << "allocating 4 * " << sizeof(float4) * nmbElements / (1024. * 1024.) << " MiBytes in global memory "
-       << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
+  printInfo << "allocating 4 * " << sizeof(float4) * nmbElements / (1024. * 1024.)
+	    << " MiBytes in global memory "
+	    << "(" << nmbElementsPerThread << " data elements per thread)" << endl;
   cutilSafeCall(cudaMalloc((void**) &deviceInData [0], sizeof(float4) * nmbElements));
   cutilSafeCall(cudaMalloc((void**) &deviceInData [1], sizeof(float4) * nmbElements));
   cutilSafeCall(cudaMalloc((void**) &deviceOutData[0], sizeof(float4) * nmbElements));
@@ -301,8 +315,7 @@ int main()
   cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData[0], sizeof(float4) * nmbElements));
   
   if (1) {
-    cout << "--------------------------------------------------------------------------------" << endl
-  	 << "running global memory copy benchmarks" << endl;
+    printInfo << "running global memory copy benchmarks ------------------------------------" << endl;
     BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float,               2);
     BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float2,              2);
     BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float4,              2);
@@ -317,8 +330,7 @@ int main()
   }
 
   if (1) {
-    cout << "--------------------------------------------------------------------------------" << endl
-  	 << "running global memory write-only benchmarks" << endl;
+    printInfo << "running global memory write-only benchmarks ------------------------------" << endl;
     BENCHMARK(GLOBAL_MEM,   writeOnlyGlobalMemKernel,  float,               1);
     BENCHMARK(GLOBAL_MEM,   writeOnlyGlobalMemKernel,  float2,              1);
     BENCHMARK(GLOBAL_MEM,   writeOnlyGlobalMemKernel,  float4,              1);
@@ -333,8 +345,7 @@ int main()
   }
 
   if (1) {
-    cout << "--------------------------------------------------------------------------------" << endl
-  	 << "running global memory read-only benchmarks" << endl;
+    printInfo << "running global memory read-only benchmarks -------------------------------" << endl;
     BENCHMARK(GLOBAL_MEM,   readOnlyGlobalMemKernel,  float,               1);
     BENCHMARK(GLOBAL_MEM,   readOnlyGlobalMemKernel,  float2,              1);
     BENCHMARK(GLOBAL_MEM,   readOnlyGlobalMemKernel,  float4,              1);
@@ -349,16 +360,14 @@ int main()
   }
 
   if (1) {
-    cout << "--------------------------------------------------------------------------------" << endl
-  	 << "running texture memory copy benchmarks" << endl;
+    printInfo << "running texture memory copy benchmarks -----------------------------------" << endl;
     BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float,  2);
     BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float2, 2);
     BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float4, 2);
   }
 	
   if (1) {
-    cout << "--------------------------------------------------------------------------------" << endl
-  	 << "running texture memory read-only benchmarks" << endl;
+    printInfo << "running texture memory read-only benchmarks ------------------------------" << endl;
     BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float,  1);
     BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float2, 1);
     BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float4, 1);

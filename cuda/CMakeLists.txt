@@ -51,8 +51,9 @@ if(USE_CUDA)
 
   # set include directories
   set(INCLUDE_DIRECTORIES
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${UTILITIES_INCLUDE_DIR}
     ${CUDA_SDK_ROOT_DIR}/common/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}
   )
   include_directories(${INCLUDE_DIRECTORIES})
 
@@ -69,8 +70,8 @@ if(USE_CUDA)
   endif()
 
   # compile CUDA executable
-  cuda_add_executable(testCuda testCuda.cu)
-  target_link_libraries(testCuda ${CUDA_CUTIL_LIBRARY})
+  cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+  target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
   
   cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
   target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
