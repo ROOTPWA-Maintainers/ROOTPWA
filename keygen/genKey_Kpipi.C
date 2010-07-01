@@ -126,7 +126,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 							if (1){
 								//      wave(&X, J, P, M, refl);
 								waveKey wave(&X, J,parity,M,+1);
-								generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+								generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 								// move the .key file
 								stringstream command;
 								command << "mv " << wave.waveName(true) << " " << movetoFilePath << "/";
@@ -143,7 +143,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 							if (0){
 								//      wave(&X, J, P, M, refl);
 								waveKey wave(&X, J,parity,M,-1);
-								generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+								generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 								stringstream command;
 								command << "mv " << wave.waveName(true) << " " << movetoFilePath << "/";
 								cout << " executing " << command.str() << endl;
@@ -173,115 +173,115 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		particleKey X("X", &Kstar892, &pi_minus, 1, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 0,-1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+S0+(K*pi)
 		particleKey X("X", &Kstar892, &pi_minus, 0, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ // 0-S0+(eK)
 		particleKey X("X", &sigma, &K_minus, 0, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 0,-1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+P0+(eK)
 		particleKey X("X", &sigma, &K_minus, 1, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+P0+(kpi)
 		particleKey X("X", &kappa, &pi_minus, 1, 0);
 		//	    wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+S0+(pK)
 		particleKey X("X", &rho770, &K_minus, 0, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+S1+(K*pi)
 		particleKey X("X", &Kstar892, &pi_minus, 0, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 1,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+S1+(pK)
 		particleKey X("X", &rho770, &K_minus, 0, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 1,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 2+D1+(K*pi)
 		particleKey X("X", &Kstar892, &pi_minus, 2, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,+1, 1,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 2-P0+(K*pi)
 		particleKey X("X", &Kstar892, &pi_minus, 1, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ // 0-P0+(pK)
 		particleKey X("X", &rho770, &K_minus, 1, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 0,-1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+D0+(K*pi)
 		particleKey X("X", &Kstar892, &pi_minus, 2, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+P1+(kpi)
 		particleKey X("X", &kappa, &pi_minus, 1, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 1,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ // 2+D1+(pK)
 		particleKey X("X", &rho770, &K_minus, 2, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,+1, 1,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ // 1+D0+(pK)
 		particleKey X("X", &rho770, &K_minus, 2, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 2-P0+(pK)
 		particleKey X("X", &rho770, &K_minus, 1, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ // 2?S0+(K**pi)
 		particleKey X("X", &Kstar21430, &pi_minus, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1); // I'm not sure about the parity here
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ // 2-S0+(fK)
 		particleKey X("X", &f21270, &K_minus, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	// Flip waves, whatever this means
 	/*
@@ -289,20 +289,20 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 		particleKey X("X", &rho770, &K_minus, 0, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ // 1+S1+(pK)
 		particleKey X("X", &rho770, &K_minus, 0, 1);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 1,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ // 1+P0+(eK)
 		particleKey X("X", &f0980, &K_minus, 1, 0);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 1,+1, 0,+1);
-		generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}*/
 	}
 }
