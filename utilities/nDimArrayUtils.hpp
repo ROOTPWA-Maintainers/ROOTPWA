@@ -42,6 +42,14 @@
 #include <vector>
 
 
+#ifdef GENERATE_CUDA_FUNCTIONS
+#warning "generating CUDA device functions for nDimArray.hpp"
+#define DEVICE __host__ __device__
+#else
+#define DEVICE
+#endif
+
+
 namespace rpwa {
 
 
@@ -147,7 +155,7 @@ namespace rpwa {
 
   template<typename D, typename T>
   inline
-  void
+  T
   allocatePseudoNdimArray(D*&      array,           // pointer to one-dimensional array
 			  const T* dim,             // extents of n-dimensional array
 			  const T  nmbDim,          // number of dimensions
@@ -160,22 +168,23 @@ namespace rpwa {
     if (defaultVal)
       for (T i = 0; i < nmbElements; ++i)
 	array[i] = *defaultVal;
+    return nmbElements * sizeof(D);
   }
 
 
   template<typename D, typename T>
   inline
-  void
+  T
   allocatePseudoNdimArray(D*&                   array,           // pointer to one-dimensional array
 			  const std::vector<T>& dim,             // extents of n-dimensional array
 			  const D*              defaultVal = 0)  // optional default value
   {
-    allocatePseudoNdimArray<D, T>(array, &(*(dim.begin())), dim.size(), defaultVal);
+    return allocatePseudoNdimArray<D, T>(array, &(*(dim.begin())), dim.size(), defaultVal);
   }
 
 
   template<typename T>
-  inline
+  inline DEVICE
   T
   indicesToOffset(const T* indices,  // indices to map to one-dimensional array index
 		  const T* dim,      // extents of n-dimensional array
@@ -201,7 +210,7 @@ namespace rpwa {
 
 
   template<typename T>
-  inline
+  inline DEVICE
   void
   offsetToIndices(const T  offset,   // one-dimensional array index
 		  const T* dim,      // extents of n-dimensional array

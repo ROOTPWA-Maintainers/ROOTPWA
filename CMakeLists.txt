@@ -108,14 +108,14 @@ endif()
 
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
-#set(Boost_DEBUG 1)
-# find_package(Boost 1.42.0 REQUIRED)
-# if(Boost_FOUND)
-#   message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
-#   message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
-# else()
-#   message(SEND_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly?")
-# endif()
+# set(Boost_DEBUG 1)
+find_package(Boost 1.42.0 REQUIRED)
+if(Boost_FOUND)
+  message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
+  message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
+else()
+  message(SEND_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly?")
+endif()
 
 
 # setup libconfig

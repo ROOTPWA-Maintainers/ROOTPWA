@@ -158,7 +158,7 @@ readOnlyGlobalMemKernel(const T*           inData,       // pointer to device in
   T                  val;
 #pragma unroll 1
   for (unsigned int i = 0; i < nmbElements; ++i)
-    val += inData[(i * nmbThreads ) + threadId];  // dummy operation to prevent removal of operations by compiler
+    val += inData[(i * nmbThreads ) + threadId];
   const unsigned int index = threadIdx.x & (SHARED_MEM_BLOCK_SIZE - 1);
   *((T*)(&sharedMem[index])) = val;  // dummy operation to prevent removal of operations by compiler
   sharedMem[index][0] += 1.0;        // dummy operation to prevent removal of operations by compiler
@@ -189,6 +189,24 @@ readOnlyGlobalMem2Kernel(const T*           inData1,      // pointer to device i
   sharedMem[index][1] += 1.0;        // dummy operation to prevent removal of operations by compiler
 }
 
+
+template<typename T>
+__global__
+void
+readOnlySameLocGlobalMemKernel(const T*           inData,       // pointer to device input data in global memory
+			       T*,
+			       const unsigned int nmbElements)  // number of data elements for each thread
+{
+  __shared__ double sharedMem[SHARED_MEM_BLOCK_SIZE][2];  // dummy shared memory to store 16 byte values
+  T                 val;
+#pragma unroll 1
+  for (unsigned int i = 0; i < nmbElements; ++i)
+    val += inData[i];
+  const unsigned int index = threadIdx.x & (SHARED_MEM_BLOCK_SIZE - 1);
+  *((T*)(&sharedMem[index])) = val;  // dummy operation to prevent removal of operations by compiler
+  sharedMem[index][0] += 1.0;        // dummy operation to prevent removal of operations by compiler
+  sharedMem[index][1] += 1.0;        // dummy operation to prevent removal of operations by compiler
+}
 
 // texture memory kernels
 template<typename T, typename textureReaderT>  // T is limited to 1-, 2-, or 4-component signed or unsigned 8-, 16-, or 32-bit integers, or 32-bit floats
@@ -286,7 +304,7 @@ int main()
   // create maximum number of threads for all blocks
   const unsigned int nmbBlocks          = deviceProp.multiProcessorCount;
   const unsigned int nmbThreadsPerBlock = deviceProp.maxThreadsPerBlock;
-  const unsigned int nmbIterations      = 100;
+  const unsigned int nmbIterations      = 1000;
   printInfo << "using grid (" << nmbBlocks << " blocks) x "
 	    << "(" << nmbThreadsPerBlock << " threads per block); "
 	    << "running " << nmbIterations << " kernel iterations" << endl;
@@ -314,7 +332,7 @@ int main()
   cutilSafeCall(cudaBindTexture(0, float2Texture, deviceInData[0], sizeof(float2) * nmbElements));
   cutilSafeCall(cudaBindTexture(0, float4Texture, deviceInData[0], sizeof(float4) * nmbElements));
   
-  if (1) {
+  if (0) {
     printInfo << "running global memory copy benchmarks ------------------------------------" << endl;
     BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float,               2);
     BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float2,              2);
@@ -329,7 +347,7 @@ int main()
     BENCHMARK(GLOBAL_MEM_2, copyGlobalMem2Kernel, double,              4);
   }
 
-  if (1) {
+  if (0) {
     printInfo << "running global memory write-only benchmarks ------------------------------" << endl;
     BENCHMARK(GLOBAL_MEM,   writeOnlyGlobalMemKernel,  float,               1);
     BENCHMARK(GLOBAL_MEM,   writeOnlyGlobalMemKernel,  float2,              1);
@@ -344,7 +362,7 @@ int main()
     BENCHMARK(GLOBAL_MEM_2, writeOnlyGlobalMem2Kernel, double,              2);
   }
 
-  if (1) {
+  if (0) {
     printInfo << "running global memory read-only benchmarks -------------------------------" << endl;
     BENCHMARK(GLOBAL_MEM,   readOnlyGlobalMemKernel,  float,               1);
     BENCHMARK(GLOBAL_MEM,   readOnlyGlobalMemKernel,  float2,              1);
@@ -360,13 +378,26 @@ int main()
   }
 
   if (1) {
+    printInfo << "running global memory read-only benchmarks (same memory locations) -------" << endl;
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, float,               1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, float2,              1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, float4,              1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, double,              1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, double2,             1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, float2Complex,       1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, double2Complex,      1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, floatStructComplex,  1);
+    BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, doubleStructComplex, 1);
+  }
+
+  if (0) {
     printInfo << "running texture memory copy benchmarks -----------------------------------" << endl;
     BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float,  2);
     BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float2, 2);
     BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float4, 2);
   }
 	
-  if (1) {
+  if (0) {
     printInfo << "running texture memory read-only benchmarks ------------------------------" << endl;
     BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float,  1);
     BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float2, 1);

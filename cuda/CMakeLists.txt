@@ -51,8 +51,9 @@ if(USE_CUDA)
 
   # set include directories
   set(INCLUDE_DIRECTORIES
-    ${UTILITIES_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
     ${CUDA_SDK_ROOT_DIR}/common/inc
+    ${UTILITIES_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
   )
   include_directories(${INCLUDE_DIRECTORIES})
@@ -75,5 +76,7 @@ if(USE_CUDA)
   
   cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
   target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
+
+  make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
 
 endif()

@@ -38,7 +38,6 @@
 //-------------------------------------------------------------------------
 
 
-#include <iostream>
 #include <string>
 #include <cstdlib>
 #include <ctime>
@@ -46,6 +45,10 @@
 #include <cutil_inline.h>
 
 #include "reportingUtils.hpp"
+#ifndef GENERATE_CUDA_FUNCTIONS
+#define GENERATE_CUDA_FUNCTIONS
+#endif
+#include "nDimArrayUtils.hpp"
 #include "complex.hpp"
 #include "textureReader.hpp"
 
@@ -139,20 +142,6 @@ sumTextureMemKernel(T*                 outData,  // pointer to device output dat
   for (unsigned int i = 0; i < nmbElementsPerThread; ++i)
     sum += textureReaderT::fetch((i * nmbThreads) + threadId);  // coalesce memory access
   outData[threadId] = sum;
-}
-
-
-template<typename T>
-inline __host__ __device__
-T
-indicesToOffset(const T* indices,  // indices to map to one-dimensional array index
-		const T* dim,      // extents of n-dimensional array
-		const T  nmbDim)   // number of dimensions
-{
-  T offset = indices[0];
-  for (T i = 1; i < nmbDim; ++i)
-    offset = offset * dim[i] + indices[i];
-  return offset;
 }
 
 
@@ -531,36 +520,45 @@ int main(int    argc,
 	    << "running " << nmbIterations << " kernel iterations" << endl;
   
   // run kernels
+  printInfo << "testing 1D complex<float> global memory read -------------------------------" << endl;
   runKernel<complex<float2, float>, floatComplexTextureReader,
      sumGlobalMemKernelCaller<complex<float2, float> > >
     (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  printInfo << "testing 1D complex<double> global memory read ------------------------------" << endl;
   runKernel<complex<double2, double>, doubleComplexTextureReader,
     sumGlobalMemKernelCaller<complex<double2, double> > >
   (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  printInfo << "testing 1D complex<float> texture memory read ------------------------------" << endl;
   runKernel<complex<float2, float>, floatComplexTextureReader,
     sumTextureMemKernelCaller<complex<float2, float>, floatComplexTextureReader> >
   (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  printInfo << "testing 1D complex<double> texture memory read -----------------------------" << endl;
   runKernel<complex<double2, double>, doubleComplexTextureReader,
     sumTextureMemKernelCaller<complex<double2, double>, doubleComplexTextureReader> >
   (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  printInfo << "testing 2D complex<float> global memory read -------------------------------" << endl;
   runKernel<complex<float2, float>, floatComplexTextureReader,
      sum2GlobalMemKernelCaller<complex<float2, float> > >
     (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  printInfo << "testing 2D complex<double> global memory read ------------------------------" << endl;
   runKernel<complex<double2, double>, doubleComplexTextureReader,
     sum2GlobalMemKernelCaller<complex<double2, double> > >
   (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  printInfo << "testing 2D complex<float> texture memory read ------------------------------" << endl;
   runKernel<complex<float2, float>, floatComplexTextureReader,
     sum2TextureMemKernelCaller<complex<float2, float>, floatComplexTextureReader> >
   (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  printInfo << "testing 2D complex<double> texture memory read -----------------------------" << endl;
   runKernel<complex<double2, double>, doubleComplexTextureReader,
     sum2TextureMemKernelCaller<complex<double2, double>, doubleComplexTextureReader> >
   (nmbBlocks, nmbThreadsPerBlock, nmbIterations);
 
+  return 0;
 }
