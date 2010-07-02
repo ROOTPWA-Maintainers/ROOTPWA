@@ -42,7 +42,7 @@
 #include <vector>
 
 
-#ifdef GENERATE_CUDA_FUNCTIONS
+#ifdef __CUDACC__  // source is compiled by nvcc
 #warning "generating CUDA device functions for nDimArray.hpp"
 #define DEVICE __host__ __device__
 #else

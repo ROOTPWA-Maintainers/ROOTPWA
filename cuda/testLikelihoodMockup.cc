@@ -43,9 +43,6 @@
 #include "boost/multi_array.hpp"
 
 #include "reportingUtils.hpp"
-#ifdef GENERATE_CUDA_FUNCTIONS
-#undef GENERATE_CUDA_FUNCTIONS
-#endif
 #include "nDimArrayUtils.hpp"
 
 

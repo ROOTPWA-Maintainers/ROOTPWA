@@ -45,9 +45,6 @@
 #include <cutil_inline.h>
 
 #include "reportingUtils.hpp"
-#ifndef GENERATE_CUDA_FUNCTIONS
-#define GENERATE_CUDA_FUNCTIONS
-#endif
 #include "nDimArrayUtils.hpp"
 #include "complex.hpp"
 #include "textureReader.hpp"
