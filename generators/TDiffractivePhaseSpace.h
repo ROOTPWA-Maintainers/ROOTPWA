@@ -76,6 +76,8 @@ namespace rpwa {
     const TLorentzVector* const GetDecay(unsigned int i){return &_phaseSpace.daughter(i);}
     TLorentzVector* GetBeam(){return &_beamLab;}
     TVector3* GetVertex(){return &_vertex;}
+    double Gettprime(){return _tprime;}
+
     // Modifiers -----------------------
     /** @brief Set beam parameters
      * 
@@ -118,7 +120,10 @@ namespace rpwa {
      *
      *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
      */
-    void SetTPrimeSlope(double slopePar) { _invSlopePar = 1. / slopePar;}  // inverse for simple usage with TRandom
+    void SetTPrimeSlope(double slopePar, double slopeParGradient = 0.) {
+    	_invSlopePar = 1. / slopePar;
+    	_invSlopeParGradient = slopeParGradient == 0. ? 0. : 1. / slopeParGradient;
+    }  // inverse for simple usage with TRandom
   
 
 
@@ -205,10 +210,12 @@ namespace rpwa {
     TLorentzVector _beamLab; // cache for last generated beam (in lab frame)
     TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)
     TVector3 _vertex; 		 // cache for last generated vertex
+    double _tprime;			 // cache for last generated t' (recalculated)
 
     //TH1* thetaDistribution;
 
     double _invSlopePar;  // inverse slope parameter 1 / b of t' distribution [(GeV/c)^{-2}]
+    double _invSlopeParGradient; // slope parameter = _SlopeParGradient*Xmass + _invSlopePar
 
     // cut on t-distribution
     double _tMin;  // [(GeV/c)^2]
@@ -235,6 +242,9 @@ namespace rpwa {
     double _protonMass;
     double _pionMass;
     double _pionMass2;
+
+    // calculate the t' by using the information of the incoming and outgoing particle in the vertex
+    float Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out);
 
   };
 

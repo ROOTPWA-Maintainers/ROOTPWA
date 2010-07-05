@@ -74,5 +74,5 @@ genKey(const bool    testKey          = true,
 
   // test and generate key file
   const string thisFilePath = __FILE__;
-  generateKeyFile(wave, thisFilePath, testKey, dataFileName, pdgTableFileName);
+  generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 }

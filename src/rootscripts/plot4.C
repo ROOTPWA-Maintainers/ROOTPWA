@@ -61,7 +61,8 @@ plot4(TTree*       tree,             // fitResult tree
       const int    waveIndexB,       // index of second wave
       const double massMin     = 0,  // [GeV/c^2]
       const double massMax     = 0,  // [GeV/c^2]
-      const string& branchName = "fitResult_v2")
+      const string& branchName = "fitResult_v2",
+      TCanvas* canvas_result = NULL) // fill a given canvas instead of creating one (name/title will be changed)
 {
   if (!tree) {
     printErr << "null pointer to tree. exiting." << endl;
@@ -75,8 +76,17 @@ plot4(TTree*       tree,             // fitResult tree
 
   stringstream canvName;
   canvName << "4plot_" << waveIndexA << "_" << waveIndexB;
-  TCanvas* canv = new TCanvas(canvName.str().c_str(), canvName.str().c_str(), 10, 10, 1000, 800);
+  TCanvas* canv = canvas_result;
+  // create a new Canvas if no Canvas given to draw to
+  if (!canv){
+	  canv = new TCanvas(canvName.str().c_str(), canvName.str().c_str(), 10, 10, 1000, 800);
+  } else {
+	  canv->SetName(canvName.str().c_str());
+	  canv->SetTitle(canvName.str().c_str());
+	  canv->SetCanvasSize(1000,800);
+  }
   canv->Divide(2, 2);
+  canvas_result = canv;
  
   // wave A intensity
   canv->cd(1);

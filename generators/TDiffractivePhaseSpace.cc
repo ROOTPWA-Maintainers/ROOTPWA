@@ -75,6 +75,8 @@ TDiffractivePhaseSpace::TDiffractivePhaseSpace()
   _primaryVertexGen = NULL;
   _phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
   _phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
+  _tprime = 0;
+  _invSlopeParGradient = 0.;
 }
 
 TDiffractivePhaseSpace::~TDiffractivePhaseSpace(){
@@ -318,8 +320,11 @@ TDiffractivePhaseSpace::event()
   bool              done     = false;
   while (!done) {
     
-    const double tPrime = -gRandom->Exp(_invSlopePar);             // pick random t'
-    const double xMass  = gRandom->Uniform(_xMassMin, _xMassMax);  // pick random X mass
+	const double xMass  = gRandom->Uniform(_xMassMin, _xMassMax);  // pick random X mass
+	// calculate the slope parameter depending on the invariant mass
+	const double calc_invSlopePar = _invSlopeParGradient*xMass + _invSlopePar;
+	const double tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
+	//cout << " inv slope par " << _invSlopePar << " gradient " << _invSlopeParGradient << " t' is " << tPrime << endl;
     // make sure that X mass is not larger than maximum allowed mass
     if (xMass + _recoilMass > overallCm.M())
       continue;
@@ -363,6 +368,15 @@ TDiffractivePhaseSpace::event()
     // calculate the recoil proton properties
     _recoilprotonLab = _beamLab - xSystemLab;
     
+    // recalculate t' for xcheck or save the generated
+    // number directly if you change if (1) to (0) to
+    // speed up the process a bit
+    if (1){
+    	_tprime = Calc_t_prime(_beamLab, xSystemLab);
+    } else {
+    	_tprime = tPrime;
+    }
+
     // apply t cut
     if (t > -_tMin)
       continue;
@@ -421,5 +435,15 @@ TDiffractivePhaseSpace::SetBeam(double Mom,  double MomSigma,
   _beamDxDzSigma=DxDzSigma;
   _beamDyDz=DyDz;
   _beamDyDzSigma=DyDzSigma;
+}
+
+float
+TDiffractivePhaseSpace::Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out){
+	float result = 0.;
+	result = (particle_Out.M2()-particle_In.M2());
+	result = pow(result,2);
+	result /= 4*pow(particle_In.P(),2);
+	result = fabs((particle_In-particle_Out).M2())-fabs(result);
+	return result;
 }
 

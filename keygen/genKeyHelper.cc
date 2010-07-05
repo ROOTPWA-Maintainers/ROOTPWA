@@ -101,8 +101,8 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
   }
 
   printInfo << "comparing amplitudes of " << amps.size() << " events "
-	    << "with the amplitudes of the respective reflected/mirrored events:" << endl;
-  printInfo << endl
+	    << "with the amplitudes of the respective reflected/mirrored events:" << endl
+	    << endl
 	    << "!NOTE: reflection and mirroring do _not_ take into account the intrinsic " << endl
 	    << "       parity P_intr of the final state. The sign change of the reflected" << endl
 	    << "       amplitude is given by -P_intr / refl, that of the mirrored events" << endl
@@ -193,6 +193,7 @@ rpwa::generateKeyFile(const waveKey& wave,              // complete isobar decay
 		      const string&  srcMacroFileName,  // path to macro that will be copied to <wave name>.C
 		      const bool     testKey,           // if true amplitude behavior under reflectivity is tested
 		      const string&  dataFileName,      // file with test data in .evt format
+		      const bool     promptUser,        // if set user is prompted whether (s)he wants to keep the key file
 		      const string&  pdgTableFileName)  // path to PDG table file
 {
   const string       waveName    = wave.waveName(false).Data();
@@ -217,9 +218,11 @@ rpwa::generateKeyFile(const waveKey& wave,              // complete isobar decay
 
   if (!keyFileOk)
     printWarn << "there seems to be some problems with this amplitude." << endl;
-  cout <<"keep .key file? (y/n)" << endl;
-  char keepFile;
-  cin >> keepFile;
+  char keepFile = 'y';
+  if (promptUser) {
+    cout <<"keep .key file? (y/n)" << endl;
+    cin >> keepFile;
+  }
   if ((keepFile == 'n') || (keepFile == 'N')) {
     const string command = "rm '" + keyFileName + "'";
     printInfo << "executing " << command << endl;
