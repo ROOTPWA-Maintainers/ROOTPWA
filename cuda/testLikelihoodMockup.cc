@@ -141,7 +141,7 @@ logLikelihoodSumPseudoArray(const complexT*    decayAmps,
 {
   const scalarT      prodAmpFlat2   = prodAmpFlat * prodAmpFlat;
   const unsigned int prodAmpDim [3] = {rank,      2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
-  const unsigned int decayAmpDim[3] = {nmbEvents, 2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
+  const unsigned int decayAmpDim[3] = {2, max(nmbWavesRefl[0], nmbWavesRefl[1]), nmbEvents};
   // loop over events and calculate first term of log likelihood
   scalarT logLikelihood = 0;
   for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
@@ -152,7 +152,7 @@ logLikelihoodSumPseudoArray(const complexT*    decayAmps,
         for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
           // compute likelihood term
 	  const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
-	  const unsigned int decayAmpIndices[3] = {iEvt,  iRefl, iWave};
+	  const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
 	  ampProdSum += prodAmps   [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
 	                * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
 	}
@@ -176,7 +176,7 @@ runLogLikelihoodSumPseudoArray(const unsigned int nmbRepitions,
 			       double&            elapsedTime)
 {
   // set decay amplitudes
-  const unsigned int decayAmpDim[3] = {nmbEvents, 2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
+  const unsigned int decayAmpDim[3] = {2, max(nmbWavesRefl[0], nmbWavesRefl[1]), nmbEvents};
   complex<double>*   decayAmps;
   const unsigned int decayAmpsSize  = allocatePseudoNdimArray<complex<double>, unsigned int>
                                         (decayAmps, decayAmpDim, 3);
@@ -186,7 +186,7 @@ runLogLikelihoodSumPseudoArray(const unsigned int nmbRepitions,
   for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
     for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave)
       for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
-	const unsigned int decayAmpIndices[3] = {iEvt, iRefl, iWave};
+	const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
 	const unsigned int decayAmpOffset     = indicesToOffset<unsigned int>(decayAmpIndices,
 									      decayAmpDim, 3);
 	const double       val                = iEvt * 1000 + iRefl * 100 + iWave;
