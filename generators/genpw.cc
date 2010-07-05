@@ -171,6 +171,7 @@ int main(int argc, char** argv)
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector beam;
   TVector3 vertex;
+  double tprime(0.);
   double qbeam;
   vector<int> q; // array of charges
 
@@ -197,6 +198,14 @@ int main(int argc, char** argv)
     mmax=mmin+massBinWidth/1000.0;
   }
   double tslope=reactConf.lookup("finalstate.t_slope");
+  double t_slopegradient(0.);
+  reactConf.lookupValue("finalstate.t_slopegradient", t_slopegradient);
+  /*
+  if (reactConf.lookupValue("finalstate.t_slopegradient", t_slopegradient)){
+	  cout << " setting t' slope gradient to " << t_slopegradient << endl;
+  } else {
+	  cout << " t' slope gradient is set by default to " << t_slopegradient << endl;
+  }*/
   double binCenter=500 * (mmin + mmax);
 
   // check weather to use a primary vertex generator as requested by the config file
@@ -244,6 +253,7 @@ int main(int argc, char** argv)
   outtree->Branch("vertex", &vertex);
   outtree->Branch("q",&q);
   outtree->Branch("qbeam",&qbeam,"qbeam/I");
+  outtree->Branch("tprime", &tprime);
 
   //string theta_file= reactConf.lookup("finalstate.theta_file");
 
@@ -252,7 +262,7 @@ int main(int argc, char** argv)
   difPS.SetSeed(seed);
   difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
-  difPS.SetTPrimeSlope(tslope);
+  difPS.SetTPrimeSlope(tslope, t_slopegradient);
   difPS.SetMassRange(mmin,mmax);
   difPS.SetPrimaryVertexGen(primaryVertexGen);
 
@@ -437,6 +447,7 @@ int main(int argc, char** argv)
 
       beam=*difPS.GetBeam();
       vertex=*difPS.GetVertex();
+      tprime=difPS.Gettprime();
 
       // calculate weight
       event e;

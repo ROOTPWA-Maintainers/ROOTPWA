@@ -50,12 +50,14 @@
 using namespace std;
 using namespace rpwa;
 
-void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
+void genKey_Kpipi_WA3(const bool testKey = true, const string& dataFileName =
 		"../keyfiles/keyKpipi/testEventsKpipi.evt", // file with test data in .evt format
-		const string& pdgTableFileName = "./pdgTable.txt") {
+		const string& pdgTableFileName = "./pdgTable.txt",
+		const string& movetoFilePath = "./" // where to copy the keyfiles to
+				) {
 
 	const string thisFilePath = __FILE__;
-	const string movetoFilePath = "${ROOTPWA}/keyfiles/keyKpipi/SETX";
+	//const string movetoFilePath = "${ROOTPWA}/keyfiles/keyKpipi/SETX";
 	// define final state particles
 	particleKey pi_minus("pi-");
 	particleKey pi_plus("pi+");

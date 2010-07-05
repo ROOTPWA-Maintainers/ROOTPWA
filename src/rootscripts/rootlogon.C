@@ -54,10 +54,6 @@
   gROOT->ProcessLine(".L plotSpinTotals.C+");
   gROOT->ProcessLine(".L plot4.C+");
 
-  // deprecated routines
-  // gROOT->ProcessLine(".L loadFit.C+");
-  // gROOT->ProcessLine(".L plotwaves.C+");
-
   gStyle->SetPadColor(0);
   gStyle->SetCanvasColor(0);
 
