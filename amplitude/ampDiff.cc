@@ -42,8 +42,9 @@
 #include <complex>
 
 #include "TFile.h"
-#include "TH1.h"
-#include "TH2.h"
+#include "TTree.h"
+#include "TObjString.h"
+#include "TSystem.h"
 
 #include "svnVersion.h"
 #include "utilities.h"
@@ -65,6 +66,38 @@ usage(const string& progName,
        << "        -h         print help" << endl
        << endl;
   exit(errCode);
+}
+
+
+// tries to extract mass bin boundaries from amplitude file path
+// assumes standard directory layout:
+// .../[massBinMin].[massBinMax]/{PSP,}AMPS/*.amp
+bool
+massBinFromPath(const string& path,
+                unsigned int& massBinMin,
+                unsigned int& massBinMax)
+{
+	// strip .amp file
+	size_t pos;;
+	if ((pos = path.find_last_of("/")) == string::npos)
+		return false;
+	string massBinDir = path.substr(0, pos);
+	// strip {PSP,}AMP
+	if ((pos = massBinDir.find_last_of("/")) == string::npos)
+		return false;
+	massBinDir = massBinDir.substr(0, pos);
+	// extract [massBinMin].[massBinMax]
+	if ((pos = massBinDir.find_last_of("/")) == string::npos)
+		return false;
+	massBinDir = massBinDir.substr(pos + 1);
+	// extract mass bins
+	if ((pos = massBinDir.find_last_of(".")) == string::npos)
+		return false;
+	massBinMin = atoi(massBinDir.substr(0, pos ).c_str());
+	massBinMax = atoi(massBinDir.substr(pos + 1).c_str());
+	if ((massBinMin == 0) or (massBinMax == 0))
+		return false;
+	return true;
 }
 
 
@@ -106,12 +139,12 @@ main(int    argc,
 
   // open amplitude files
   printInfo << "comparing amplitude files '" << ampFileNames[0] << "' and "
-	    << "'" << ampFileNames[1] << endl;
+            << "'" << ampFileNames[1] << endl;
   ifstream ampFiles[2];
   for (unsigned int i = 0; i < 2; ++i) {
     ampFiles[i].open(ampFileNames[i].c_str());
     if (!ampFiles[i]) {
-      printErr << "cannot open amplitude file '" << ampFileNames[i] << "'. aborting." << endl;
+	    printErr << "cannot open amplitude file '" << ampFileNames[i] << "'. aborting." << endl;
       exit(1);
     }
   }
@@ -119,31 +152,58 @@ main(int    argc,
   // read amplitudes into memory
   vector<complex<double> > amps[2];
   for (unsigned int i = 0; i < 2; ++i) {
-    complex<double> amp;
-    while (ampFiles[i].read((char*) &amp, sizeof(complex<double>)))
-      amps[i].push_back(amp);
+	  complex<double> amp;
+	  while (ampFiles[i].read((char*) &amp, sizeof(complex<double>)))
+		  amps[i].push_back(amp);
   }  
   if (amps[0].size() != amps[1].size())
-    printWarn << "the two amplitude files have different number of amplitudes "
-	      << "(" << amps[0].size() << " vs. " << amps[1].size() << ")." << endl;
+	  printWarn << "the two amplitude files have different number of amplitudes "
+	            << "(" << amps[0].size() << " vs. " << amps[1].size() << ")." << endl;
   const unsigned int nmbAmps = min(amps[0].size(), amps[1].size());
 
-  // open output file and book histograms
+  // open output file
   TFile* outFile = 0;
   if (outFileName != "") {
-    printInfo << "writing difference plots to '" << outFileName << "'" << endl;
+    printInfo << "writing difference tree to '" << outFileName << "'" << endl;
     outFile = TFile::Open(outFileName.c_str(), "RECREATE");
   }
-  TH1D* hAmps1Re   = new TH1D("hAmps1Re",   "hAmps1Re;Event Number;#Rgothic[Amp 1]", nmbAmps, -0.5, nmbAmps - 0.5);
-  TH1D* hAmps1Im   = new TH1D("hAmps1Im",   "hAmps1Im;Event Number;#Jgothic[Amp 1]", nmbAmps, -0.5, nmbAmps - 0.5);
-  TH1D* hAmps2Re   = new TH1D("hAmps2Re",   "hAmps2Re;Event Number;#Rgothic[Amp 2]", nmbAmps, -0.5, nmbAmps - 0.5);
-  TH1D* hAmps2Im   = new TH1D("hAmps2Im",   "hAmps2Im;Event Number;#Jgothic[Amp 2]", nmbAmps, -0.5, nmbAmps - 0.5);
-  TH1D* hAbsDiffRe = new TH1D("hAbsDiffRe", "hAbsDiffRe;#Rgothic[Amp 1 - Amp 2];Count", 1000000, -1e-3, 1e-3);
-  TH1D* hAbsDiffIm = new TH1D("hAbsDiffIm", "hAbsDiffIm;#Jgothic[Amp 1 - Amp 2];Count", 1000000, -1e-3, 1e-3);
-  TH1D* hRelDiffRe = new TH1D("hRelDiffRe", "hRelDiffRe;(#Rgothic[Ampl 1] - #Rgothic[Ampl 2]) / #Rgothic[Ampl 1];Count", 1000000, -1e-2, 1e-2);
-  TH1D* hRelDiffIm = new TH1D("hRelDiffIm", "hRelDiffIm;(#Jgothic[Ampl 1] - #Jgothic[Ampl 2]) / #Jgothic[Ampl 1];Count", 1000000, -1e-2, 1e-2);
-  TH2D* hCorrRe    = new TH2D("hCorrRe",    "hCorrRe;#Rgothic[Amp 1];#Rgothic[Amp 2]", 5000, -5, 5, 5000, -5, 5);
-  TH2D* hCorrIm    = new TH2D("hCorrIm",    "hCorrIm;#Jgothic[Amp 1];#Jgothic[Amp 2]", 5000, -5, 5, 5000, -5, 5);
+
+  // create tree
+  TTree* tree = new TTree("ampDiffTree", "ampDiffTree");
+  if (!tree) {
+    printErr << "problems creating tree 'ampDiffTree' " << "in file '" << outFileName << "'" << endl;
+    return false;
+  }
+
+  // create leaf variables
+  const string cmd     = "basename '" + ampFileNames[0] + "'";
+  TObjString*  ampName = new TObjString(gSystem->GetFromPipe(cmd.c_str()));
+  UInt_t       eventNmb;
+  UInt_t       massBinMin = 0, massBinMax = 0;  // [MeV/c^2]
+  double_t     valReal[2], valImag[2];
+  double_t     absDiffReal, absDiffImag;
+  double_t     relDiffReal, relDiffImag;
+
+  // get mass bin boundaries from file paths
+  if (not     massBinFromPath(ampFileNames[0], massBinMin, massBinMax)
+      and not massBinFromPath(ampFileNames[1], massBinMin, massBinMax))
+	  printWarn << "cannot determine mass bin boundaries from file paths" << endl;
+  else
+	  printInfo << "extracted mass bin boundaries [" << massBinMin << ", " << massBinMax << "] from file paths" << endl;
+  
+  // connect leaf variables to tree branches
+  const int split   = 0;
+  const int bufSize = 256000;
+  tree->Branch("ampName",     "TObjString", &ampName,  bufSize, split);
+  tree->Branch("eventNmb",    &eventNmb,    "eventNmb/i");
+  tree->Branch("massBinMin",  &massBinMin,  "massBinMin/i");
+  tree->Branch("massBinMax",  &massBinMax,  "massBinMax/i");
+  tree->Branch("valReal",     valReal,      "valReal[2]/D");
+  tree->Branch("valImag",     valImag,      "valImag[2]/D");
+  tree->Branch("absDiffReal", &absDiffReal, "absDiffReal/D");
+  tree->Branch("absDiffImag", &absDiffImag, "absDiffImag/D");
+  tree->Branch("relDiffReal", &relDiffReal, "relDiffReal/D");
+  tree->Branch("relDiffImag", &relDiffImag, "relDiffImag/D");
 
   // compare amplitudes
   double maxAbsDiff = 0;
@@ -151,43 +211,43 @@ main(int    argc,
   for (unsigned int i = 0; i < nmbAmps; ++i) {
     const complex<double> absDiff = amps[0][i] - amps[1][i];
     const complex<double> relDiff = complex<double>(absDiff.real() / amps[0][i].real(),
-						    absDiff.imag() / amps[0][i].imag());
-    // fill histograms
+                                                    absDiff.imag() / amps[0][i].imag());
+    // fill tree
     if (outFile) {
-      hAmps1Re->SetBinContent(i + 1, amps[0][i].real());
-      hAmps1Im->SetBinContent(i + 1, amps[0][i].imag());
-      hAmps2Re->SetBinContent(i + 1, amps[1][i].real());
-      hAmps2Im->SetBinContent(i + 1, amps[1][i].imag());
-      hAbsDiffRe->Fill(absDiff.real());
-      hAbsDiffIm->Fill(absDiff.imag());
-      hRelDiffRe->Fill(relDiff.real());
-      hRelDiffIm->Fill(relDiff.imag());
-      hCorrRe->Fill(amps[0][i].real(), amps[1][i].real());
-      hCorrIm->Fill(amps[0][i].imag(), amps[1][i].imag());
+	    eventNmb    = i;
+	    valReal[0]  = amps[0][i].real();
+	    valImag[0]  = amps[0][i].imag();
+	    valReal[1]  = amps[1][i].real();
+	    valImag[1]  = amps[1][i].imag();
+	    absDiffReal = absDiff.real();
+	    absDiffImag = absDiff.imag();
+	    relDiffReal = relDiff.real();
+	    relDiffImag = relDiff.imag();
+	    tree->Fill();
     }
     // print amplitudes
     if (debug) {
-      const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
-      ostringstream s;
-      s.precision(nmbDigits);
-      s.setf(ios_base::scientific, ios_base::floatfield);
-      s << "    " << setw(49) << amps[0][i] << " - " << setw(49) << amps[1][i]
-	<< " = " << setw(49) << absDiff	<< ", relative "
-	<< "(" << setw(23) << relDiff.real() << ", " << setw(23) << relDiff.imag() << " )";
-      cout << s.str() << endl;
+	    const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
+	    ostringstream s;
+	    s.precision(nmbDigits);
+	    s.setf(ios_base::scientific, ios_base::floatfield);
+	    s << "    " << setw(49) << amps[0][i] << " - " << setw(49) << amps[1][i]
+	      << " = " << setw(49) << absDiff	<< ", relative "
+	      << "(" << setw(23) << relDiff.real() << ", " << setw(23) << relDiff.imag() << " )";
+	    cout << s.str() << endl;
     }
     // compute maximum deviations
     maxAbsDiff = max(fabs(absDiff.real()), fabs(absDiff.imag()));
     maxRelDiff = max(fabs(relDiff.real()), fabs(relDiff.imag()));
   }
-
+  
   printInfo << "maximum observed deviation absolute = " << maxAbsDiff << ", "
-	    << "relative = " << maxRelDiff << endl;
+            << "relative = " << maxRelDiff << endl;
   if (outFile) {
-    outFile->Write();
+	  outFile->Write();
     outFile->Close();
     delete outFile;
-    printInfo << "wrote difference plots to '" << outFileName << "'" << endl;
+    printInfo << "wrote difference tree to '" << outFileName << "'" << endl;
   }
   return 0;
 }
