@@ -72,9 +72,9 @@ using namespace rpwa;
 int
 main(int argc, char** argv)
 {
-  printCompilerInfo();
-  printSvnVersion();
-
+	printCompilerInfo();
+	printSvnVersion();
+	
   rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
   pdt.readFile();
   TStopwatch timer;
@@ -88,11 +88,11 @@ main(int argc, char** argv)
   keyFileParser::setDebug(true);
 
   if (0) {
-    {
-      fourVec  p(2, threeVec(0.5, 0.75, 1));
-      threeVec n = threeVec(0, 0, 1) / p.V();
-      cout << "before = " << n << "    " << p << endl;
-      rotation         R;
+	  {
+		  fourVec  p(2, threeVec(0.5, 0.75, 1));
+		  threeVec n = threeVec(0, 0, 1) / p.V();
+		  cout << "before = " << n << "    " << p << endl;
+		  rotation         R;
       lorentzTransform L1;
       L1.set(R.set(n.phi(), n.theta() - M_PI / 2, -M_PI / 2));
       n *= R;
@@ -113,11 +113,11 @@ main(int argc, char** argv)
       p = fourVec(2, threeVec(0.5, 0.75, 1));
       p *= L;
       cout << "L -> " << p << endl;
-    }
+	  }
 
-    {
-      TLorentzVector p(0.5, 0.75, 1, 2);
-      TVector3       n = TVector3(0, 0, 1).Cross(p.Vect());
+	  {
+		  TLorentzVector p(0.5, 0.75, 1, 2);
+		  TVector3       n = TVector3(0, 0, 1).Cross(p.Vect());
       TRotation R1;
       R1.RotateZ(-n.Phi());
       R1.RotateY(piHalf - n.Theta());
@@ -209,48 +209,54 @@ main(int argc, char** argv)
     cout << topo;
     complex<double>         decayAmp = amp.amplitude();
     cout << "!!!< decay amplitude = " << decayAmp << endl;
-
+    
     if (1) {  // compare to PWA2000
       PDGtable.initialize();
       event    ev;
       ifstream eventData("testEvents.evt");
       ev.setIOVersion(1);
       if (not (eventData >> ev).eof()) {
-	keyfile key;
-	key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
-	complex<double> pwa2000amp;
-	key.run(ev, pwa2000amp, true);
-	key.rewind();
-	key.close();
-	cout << "!!! PWA2000 amplitude = " << pwa2000amp << endl;
-	cout << "!!! my amplitude = " << decayAmp << " vs. PWA2000 amplitude = " << pwa2000amp << ", "
-	     << "delta = " << decayAmp - pwa2000amp << endl;
+	      keyfile key;
+	      key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
+	      complex<double> pwa2000amp;
+	      key.run(ev, pwa2000amp, true);
+	      key.rewind();
+	      key.close();
+	      cout << "!!! PWA2000 amplitude = " << pwa2000amp << endl;
+	      cout << "!!! my amplitude = " << decayAmp << " vs. PWA2000 amplitude = " << pwa2000amp << ", "
+	           << "delta = " << decayAmp - pwa2000amp << endl;
       }
     }
   }
 
   if (1) {
-    const long int maxNmbEvents   = 1;
-    const string   newKeyFileName = "test.key";
-    const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
-    const string   rootInFileName = "testEvents.root";
-    //const string   evtInFileName  = "testTree.evt";
-    const string   evtInFileName  = "testTree.evt.1";
+    const long int maxNmbEvents   = 1000000;
+    // const string   newKeyFileName = "test.key";
+    // const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
+    // const string   rootInFileName = "testEvents.root";
+    // const string   evtInFileName  = "testTree.evt";
+    // const string   evtInFileName  = "testTree.evt.1";
     // const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-0-+0+f0980_00_pi-.key";
     // const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-0-+0+f0980_00_pi-.key";
     // const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+rho770_01_pi-.key";
     // const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+rho770_01_pi-.key";
     // const string   newKeyFileName = "1-1++0+f21270_12_pi-.key.new";
     // const string   oldKeyFileName = "1-1++0+f21270_12_pi-.key";
-    // // const string   rootInFileName = "testEvents.3pic.root";
-    // // const string   evtInFileName  = "testEvents.3pic.evt";
+    // const string   rootInFileName = "testEvents.3pic.root";
+    // const string   evtInFileName  = "testEvents.3pic.evt";
     // const string   rootInFileName = "500.540.ps.root";
     // const string   evtInFileName  = "500.540.ps.evt";
+    const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+    const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
+    // const string   rootInFileName = "2340.2380.1358.root";
+    // const string   evtInFileName  = "2340.2380.1358.evt";
+    const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.amp/2340.2380/2340.2380.root";
+    const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.amp/2340.2380/2340.2380.evt";
 
     keyFileParser&         parser = keyFileParser::instance();
     isobarDecayTopologyPtr topo;
     if (parser.parse(newKeyFileName, topo)) {
-      topo->checkTopology();
+	    topo->checkTopology();
       topo->checkConsistency();
       topo->writeGraphViz("decay.dot");
       isobarHelicityAmplitude amp(topo);
@@ -270,8 +276,8 @@ main(int argc, char** argv)
       printInfo << "opening input file(s) '" << rootInFileName << "'" << endl;
       TChain chain(inTreeName.c_str());
       if (chain.Add(rootInFileName.c_str()) < 1) {
-	printWarn << "no events in input file(s) '" << rootInFileName << "'" << endl;
-	return false;
+	      printWarn << "no events in input file(s) '" << rootInFileName << "'" << endl;
+	      return false;
       }
       const long int nmbEventsChain = chain.GetEntries();
       chain.GetListOfFiles()->ls();
@@ -285,7 +291,7 @@ main(int argc, char** argv)
       TClonesArray* prodKinMomenta      = 0;
       TClonesArray* decayKinParticles   = 0;
       TClonesArray* decayKinMomenta     = 0;
-	
+  
       // connect leaf variables to tree branches
       chain.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
       chain.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
@@ -294,106 +300,107 @@ main(int argc, char** argv)
 
       // loop over events
       const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-				  : nmbEventsChain);
+                                  : nmbEventsChain);
       timer.Reset();
       timer.Start();
       for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-	progressIndicator(eventIndex, nmbEvents);
-	  
-	if (chain.LoadTree(eventIndex) < 0)
-	  break;
-	// read only required branches
-	prodKinParticlesBr->GetEntry (eventIndex);
-	prodKinMomentaBr->GetEntry   (eventIndex);
-	decayKinParticlesBr->GetEntry(eventIndex);
-	decayKinMomentaBr->GetEntry  (eventIndex);
-
-	if (   not prodKinParticles  or not prodKinMomenta
-	    or not decayKinParticles or not decayKinMomenta) {
-	  printWarn << "at least one data array is null pointer: "
-		    << "prodKinParticles = "  << prodKinParticles  << ", "
-		    << "prodKinMomenta = "    << prodKinMomenta    << ", "
-		    << "decayKinParticles = " << decayKinParticles << ", "
-		    << "decayKinMomenta = "   << decayKinMomenta   << ". "
-		    << "skipping event." << endl;
-	  continue;
-	}
-
-	if (topo->readData(*prodKinParticles,  *prodKinMomenta,
-			   *decayKinParticles, *decayKinMomenta)) {
-	  // topo->printProdKinParticles(cout);
-	  // topo->printDecayKinParticles(cout);
-	  // complex<double> A = amp();
-	  // complex<double> B = amp();
-	  // topo->revertMomenta();
-	  // complex<double> C = amp();
-	  // cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
-	  myAmps.push_back(amp());
-	  if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
-	    printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
-	}
+	      progressIndicator(eventIndex, nmbEvents);
+    
+	      if (chain.LoadTree(eventIndex) < 0)
+		      break;
+	      // read only required branches
+	      prodKinParticlesBr->GetEntry (eventIndex);
+	      prodKinMomentaBr->GetEntry   (eventIndex);
+	      decayKinParticlesBr->GetEntry(eventIndex);
+	      decayKinMomentaBr->GetEntry  (eventIndex);
+	      
+	      if (   not prodKinParticles  or not prodKinMomenta
+	          or not decayKinParticles or not decayKinMomenta) {
+		      printWarn << "at least one data array is null pointer: "
+		                << "prodKinParticles = "  << prodKinParticles  << ", "
+		                << "prodKinMomenta = "    << prodKinMomenta    << ", "
+		                << "decayKinParticles = " << decayKinParticles << ", "
+		                << "decayKinMomenta = "   << decayKinMomenta   << ". "
+		                << "skipping event." << endl;
+		      continue;
+	      }
+	      
+	      if (topo->readData(*prodKinParticles,  *prodKinMomenta,
+	                         *decayKinParticles, *decayKinMomenta)) {
+		      // topo->printProdKinParticles(cout);
+		      // topo->printDecayKinParticles(cout);
+		      // complex<double> A = amp();
+		      // complex<double> B = amp();
+		      // topo->revertMomenta();
+		      // complex<double> C = amp();
+		      // cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
+		      myAmps.push_back(amp());
+		      if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
+			      printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
+	      }
       }
-	
+      
       timer.Stop();
       printInfo << "successfully read " << myAmps.size() << " events from file(s) "
-		<< "'" << rootInFileName << "' and calculated amplitudes" << endl;
+                << "'" << rootInFileName << "' and calculated amplitudes" << endl;
       cout << "needed ";
       timer.Print();
-
+      
       vector<complex<double> > pwa2kAmps;
       if (1) {  // compare to PWA2000
-	PDGtable.initialize();
-	ifstream     eventData(evtInFileName.c_str());
-	keyfile      key;
-	event        ev;
-	key.open(oldKeyFileName);
-	ev.setIOVersion(1);
-	timer.Reset();
-	timer.Start();
-	while (not (eventData >> ev).eof()) {
-	  complex<double> pwa2kamp;
-	  key.run(ev, pwa2kamp, true);
-	  pwa2kAmps.push_back(pwa2kamp);
-	  key.rewind();
-	}
-	timer.Stop();
-	printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
-		  << "'" << evtInFileName << "' and calculated amplitudes" << endl;
-	cout << "needed ";
-	timer.Print();
-	printInfo << "myAmps[0] = " << myAmps[0] << " vs. pwa2kAmps[0] = " << pwa2kAmps[0] << ", "
-		  << "abs. delta = " << myAmps[0] - pwa2kAmps[0] << ", rel. delta = "
-		  << "(" << (myAmps[0].real() - pwa2kAmps[0].real()) / myAmps[0].real() << ", "
-		  << (myAmps[0].imag() - pwa2kAmps[0].imag()) / myAmps[0].imag() << ")"
-		  << endl;
-	
-	if (1) {
-	  const string outFileName = "testDiff.root";
-	  printInfo << "writing comparison plots to " << outFileName << endl;
-	  TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
-	  TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-	  TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-	  TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-	  TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-	  TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
-	  TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
-	  TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-	  TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-	  for (unsigned int i = 0; i < myAmps.size(); ++i) {
-	    hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
-	    hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
-	    hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
-	    hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
-	    // hDiffReal->Fill((pwa2kAmps[i].real() - myAmps[i].real()) / pwa2kAmps[i].real());
-	    // hDiffImag->Fill((pwa2kAmps[i].imag() - myAmps[i].imag()) / pwa2kAmps[i].imag());
-	    hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
-	    hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
-	    hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
-	    hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
-	  }
-	  f->Write();
-	  f->Close();
-	}
+	      PDGtable.initialize();
+	      ifstream     eventData(evtInFileName.c_str());
+	      keyfile      key;
+	      event        ev;
+	      key.open(oldKeyFileName);
+	      ev.setIOVersion(1);
+	      timer.Reset();
+	      timer.Start();
+	      while (not (eventData >> ev).eof()) {
+		      complex<double> pwa2kamp;
+		      key.run(ev, pwa2kamp, true);
+		      pwa2kAmps.push_back(pwa2kamp);
+		      key.rewind();
+	      }
+	      timer.Stop();
+	      printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
+	                << "'" << evtInFileName << "' and calculated amplitudes" << endl;
+	      cout << "needed ";
+	      timer.Print();
+	      printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << " vs. pwa2kAmps[0] = "
+	                << maxPrecisionDouble(pwa2kAmps[0]) << ", abs. delta = "
+	                << maxPrecisionDouble(myAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
+	                << "(" << maxPrecision((myAmps[0].real() - pwa2kAmps[0].real()) / myAmps[0].real())
+	                << ", " << maxPrecision((myAmps[0].imag() - pwa2kAmps[0].imag()) / myAmps[0].imag())
+	                << ")" << endl;
+	      
+	      if (1) {
+		      const string outFileName = "testDiff.root";
+		      printInfo << "writing comparison plots to " << outFileName << endl;
+		      TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
+		      TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+		      TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+		      TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+		      TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+		      TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
+		      TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
+		      TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+		      TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+		      for (unsigned int i = 0; i < myAmps.size(); ++i) {
+			      hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
+			      hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
+			      hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
+			      hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
+			      // hDiffReal->Fill((pwa2kAmps[i].real() - myAmps[i].real()) / pwa2kAmps[i].real());
+			      // hDiffImag->Fill((pwa2kAmps[i].imag() - myAmps[i].imag()) / pwa2kAmps[i].imag());
+			      hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
+			      hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
+			      hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
+			      hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
+		      }
+		      f->Write();
+		      f->Close();
+	      }
       }
     }
   }

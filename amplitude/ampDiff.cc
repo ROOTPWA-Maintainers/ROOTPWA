@@ -206,8 +206,10 @@ main(int    argc,
   tree->Branch("relDiffImag", &relDiffImag, "relDiffImag/D");
 
   // compare amplitudes
-  double maxAbsDiff = 0;
-  double maxRelDiff = 0;
+  double   maxAbsDiff      = 0;
+  long int maxAbsDiffIndex = -1;
+  double   maxRelDiff      = 0;
+  long int maxRelDiffIndex = -1;
   for (unsigned int i = 0; i < nmbAmps; ++i) {
     const complex<double> absDiff = amps[0][i] - amps[1][i];
     const complex<double> relDiff = complex<double>(absDiff.real() / amps[0][i].real(),
@@ -237,12 +239,21 @@ main(int    argc,
 	    cout << s.str() << endl;
     }
     // compute maximum deviations
-    maxAbsDiff = max(fabs(absDiff.real()), fabs(absDiff.imag()));
-    maxRelDiff = max(fabs(relDiff.real()), fabs(relDiff.imag()));
+    const double absMax = max(fabs(absDiffReal), fabs(absDiffImag));
+    const double relMax = max(fabs(relDiffReal), fabs(relDiffImag));
+    if (absMax > maxAbsDiff) {
+	    maxAbsDiff      = absMax;
+	    maxAbsDiffIndex = i;
+    }
+    if (relMax > maxRelDiff) {
+	    maxRelDiff      = relMax;
+	    maxRelDiffIndex = i;
+    }
   }
-  
-  printInfo << "maximum observed deviation absolute = " << maxAbsDiff << ", "
-            << "relative = " << maxRelDiff << endl;
+  printInfo << "maximum observed deviations: absolute = " << maxPrecision(maxAbsDiff) << " "
+            << "(event " << maxAbsDiffIndex << "), relative = " << maxPrecision(maxRelDiff) << " "
+            << "(event " << maxRelDiffIndex << ")" << endl;
+
   if (outFile) {
 	  outFile->Write();
     outFile->Close();

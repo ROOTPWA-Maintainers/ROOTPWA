@@ -109,6 +109,10 @@ plotAmpDiffs(const string&  inFileNamePattern,
 
   // loop over tree
   set<string> ampNames;
+  double      maxAbsDiff      = 0;
+  long int    maxAbsDiffIndex = -1;
+  double      maxRelDiff      = 0;
+  long int    maxRelDiffIndex = -1;
   for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 	  progressIndicator(eventIndex, nmbEvents);
   
@@ -128,8 +132,52 @@ plotAmpDiffs(const string&  inFileNamePattern,
     hRelDiffIm->Fill(relDiffImag);
     // hCorrRe->Fill(valReal[0], valReal[1]);
     // hCorrIm->Fill(valImag[0], valImag[1]);
+    // compute maximum deviations
+    const double absMax = max(fabs(absDiffReal), fabs(absDiffImag));
+    const double relMax = max(fabs(relDiffReal), fabs(relDiffImag));
+    if (absMax > maxAbsDiff) {
+	    maxAbsDiff      = absMax;
+	    maxAbsDiffIndex = eventIndex;
+    }
+    if (relMax > maxRelDiff) {
+	    maxRelDiff      = relMax;
+	    maxRelDiffIndex = eventIndex;
+    }
   }
-  
+  printInfo << "maximum observed deviations: absolute = " << maxPrecision(maxAbsDiff) << " "
+            << "(event " << maxAbsDiffIndex << "), relative = " << maxPrecision(maxRelDiff) << " "
+            << "(event " << maxRelDiffIndex << ")" << endl;
+
+  // print events with max deviation
+  inTree.GetEntry(maxAbsDiffIndex);
+  printInfo << "event[" << maxAbsDiffIndex << "]:"                 << endl
+            << "    ampName ....... " << ampName->GetString()      << endl
+            << "    eventNmb ...... " << eventNmb                  << endl
+            << "    massBinMin .... " << massBinMin                << endl
+            << "    massBinMax .... " << massBinMax                << endl
+            << "    valReal[0] .... " << maxPrecision(valReal[0] ) << endl
+            << "    valReal[1] .... " << maxPrecision(valReal[1] ) << endl
+            << "    valImag[0] .... " << maxPrecision(valImag[0] ) << endl
+            << "    valImag[1] .... " << maxPrecision(valImag[1] ) << endl
+            << "    absDiffReal ... " << maxPrecision(absDiffReal) << endl
+            << "    absDiffImag ... " << maxPrecision(absDiffImag) << endl
+            << "    relDiffReal ... " << maxPrecision(relDiffReal) << endl
+            << "    relDiffImag ... " << maxPrecision(relDiffImag) << endl;
+  inTree.GetEntry(maxRelDiffIndex);
+  printInfo << "event[" << maxRelDiffIndex << "]:"                 << endl
+            << "    ampName ....... " << ampName->GetString()      << endl
+            << "    eventNmb ...... " << eventNmb                  << endl
+            << "    massBinMin .... " << massBinMin                << endl
+            << "    massBinMax .... " << massBinMax                << endl
+            << "    valReal[0] .... " << maxPrecision(valReal[0] ) << endl
+            << "    valReal[1] .... " << maxPrecision(valReal[1] ) << endl
+            << "    valImag[0] .... " << maxPrecision(valImag[0] ) << endl
+            << "    valImag[1] .... " << maxPrecision(valImag[1] ) << endl
+            << "    absDiffReal ... " << maxPrecision(absDiffReal) << endl
+            << "    absDiffImag ... " << maxPrecision(absDiffImag) << endl
+            << "    relDiffReal ... " << maxPrecision(relDiffReal) << endl
+            << "    relDiffImag ... " << maxPrecision(relDiffImag) << endl;
+
   const string leafsToDraw[] = {"absDiffReal",
                                 "absDiffImag",
                                 "relDiffReal",
