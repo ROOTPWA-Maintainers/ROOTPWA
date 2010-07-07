@@ -118,8 +118,8 @@ main(int    argc,
     if (fileName.substr(fileName.length() - 4) == ".key")
       keyFileNames.push_back(fileName);
     else
-      printWarn << "input file '" << fileName << "' is not a .key file. "
-		<< "skipping." << endl;
+	    printWarn << "input file '" << fileName << "' is not a .key file. "
+	              << "skipping." << endl;
   }
   if (keyFileNames.size() == 0) {
     printErr << "none of the specified input files is a .key file. aborting.";
@@ -150,38 +150,38 @@ main(int    argc,
     // parse key file and create decay topology
     keyFileParser&         parser = keyFileParser::instance();
     isobarDecayTopologyPtr decayTopo;
-    if (not parser.parse(keyFileNames[i], decayTopo)) {
+    if (not parser.parse(keyFileNames[i]) or not parser.constructDecayTopology(decayTopo)) {
       printErr << "problems constructing decay topology from key file '" << keyFileNames[i] << "'. "
-	       << "aborting." << endl;
+               << "aborting." << endl;
       exit(1);
     }
     const string dotFileName = keyFileNames[i].substr(0, keyFileNames[i].length() - 4) + ".dot";
     if (debug)
-      printInfo << "writing graph to file '" << dotFileName << "'" << endl;
+	    printInfo << "writing graph to file '" << dotFileName << "'" << endl;
     if (not decayTopo->writeGraphViz(dotFileName))
-      printWarn << "there were problems writing graph to file '" << dotFileName << "'" << endl;
+	    printWarn << "there were problems writing graph to file '" << dotFileName << "'" << endl;
     
     // convert file to output format
     const string outFileName = keyFileNames[i].substr(0, keyFileNames[i].length() - 4)
                                + "." + outFormat;
     if (debug)
-      printInfo << "converting graph to file '" << outFileName << "'" << endl;
+	    printInfo << "converting graph to file '" << outFileName << "'" << endl;
     stringstream cmd;
     if (   (outFormat == "ps" ) or (outFormat == "svg")
-	or (outFormat == "fig") or (outFormat == "dia")
-	or (outFormat == "png") or (outFormat == "gif")) {
-      cmd << "dot -T" << outFormat << " -o " << outFileName << " " << dotFileName;
-      if (debug)
-	printInfo << "executing command '" << cmd.str() << "'" << endl;
-      if (gSystem->Exec(cmd.str().c_str()) != 0)
-       	printWarn << "command '" << cmd.str() << "' was not successful." << endl;
-      // cleanup
-      cmd.str("");
-      cmd << "rm --verbose " << dotFileName;
-      if (gSystem->Exec(cmd.str().c_str()) != 0)
-	printWarn << "command '" << cmd.str() << "' was not successful." << endl;
+        or (outFormat == "fig") or (outFormat == "dia")
+        or (outFormat == "png") or (outFormat == "gif")) {
+	    cmd << "dot -T" << outFormat << " -o " << outFileName << " " << dotFileName;
+	    if (debug)
+		    printInfo << "executing command '" << cmd.str() << "'" << endl;
+	    if (gSystem->Exec(cmd.str().c_str()) != 0)
+		    printWarn << "command '" << cmd.str() << "' was not successful." << endl;
+	    // cleanup
+	    cmd.str("");
+	    cmd << "rm --verbose " << dotFileName;
+	    if (gSystem->Exec(cmd.str().c_str()) != 0)
+		    printWarn << "command '" << cmd.str() << "' was not successful." << endl;
     }
   }
-
+  
   return 0;
 }

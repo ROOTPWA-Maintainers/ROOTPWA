@@ -214,7 +214,7 @@ decayTopology::fsParticlesIntrinsicParity() const
 int
 decayTopology::spaceInvEigenValue() const
 {
-  const particlePtr& X = XInteractionVertex()->inParticles()[0];
+  const particlePtr& X = XDecayVertex()->inParticles()[0];
   // parity of X is P = P_spatial * P_intrinsic; we want to know P_spatial
   return X->P() / fsParticlesIntrinsicParity();
 }
@@ -223,7 +223,7 @@ decayTopology::spaceInvEigenValue() const
 int
 decayTopology::reflectionEigenValue() const
 {
-  const particlePtr& X = XInteractionVertex()->inParticles()[0];
+  const particlePtr& X = XDecayVertex()->inParticles()[0];
   // eigenvalue of reflection through production plane is r_spatial / P_intrinsic
   // where r = -1 / refl is the reflectivity eiganvalue
   return -1 / (X->reflectivity() * fsParticlesIntrinsicParity());

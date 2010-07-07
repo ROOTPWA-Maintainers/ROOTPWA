@@ -87,19 +87,18 @@ int
 main(int    argc,
      char** argv)
 {
-  printCompilerInfo();
-  printSvnVersion();
-
+	printCompilerInfo();
+	printSvnVersion();
+	
   // parse command line options
-  const string progName     = argv[0];
-  string       keyFileName  = "";
-  string       pdgFileName  = "./particleDataTable.txt";
-  string       ampFileName  = "./out.amp";
-  bool         asciiOutput  = false;
-  string       inTreeName   = "rootPwaEvtTree";
-  string       leafNames    = "prodKinParticles;prodKinMomenta;"
-                              "decayKinParticles;decayKinMomenta";
-  bool         debug        = false;
+  const string progName    = argv[0];
+  string       keyFileName = "";
+  string       pdgFileName = "./particleDataTable.txt";
+  string       ampFileName = "./out.amp";
+  bool         asciiOutput = false;
+  string       inTreeName  = "rootPwaEvtTree";
+  string       leafNames   = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+  bool         debug       = false;
   extern char* optarg;
   extern int   optind;
   int          c;
@@ -139,19 +138,19 @@ main(int    argc,
   vector<string> rootFileNames;
   vector<string> evtFileNames;
   while (optind < argc) {
-    const string fileName = argv[optind++];
-    if (fileName.substr(fileName.length() - 5) == ".root")
-      rootFileNames.push_back(fileName);
-    else if (fileName.substr(fileName.length() - 4) == ".evt")
-      evtFileNames.push_back(fileName);
+	  const string fileName = argv[optind++];
+	  if (fileName.substr(fileName.length() - 5) == ".root")
+		  rootFileNames.push_back(fileName);
+	  else if (fileName.substr(fileName.length() - 4) == ".evt")
+		  evtFileNames.push_back(fileName);
     else
-      printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
-		<< "skipping." << endl;
+	    printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
+	              << "skipping." << endl;
   }
 
   if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
-    printErr << "none of the specified input files is a .root or .evt file. aborting.";
-    usage(progName, 1);
+	  printErr << "none of the specified input files is a .root or .evt file. aborting.";
+	  usage(progName, 1);
   }
 
   // get leaf names
@@ -161,67 +160,67 @@ main(int    argc,
   const string         decayKinParticlesLeafName = leafNameTokens[2];
   const string         decayKinMomentaLeafName   = leafNameTokens[3];
   printInfo << "using the following leaf names:" << endl
-	    << "        production kinematics: particle names = '" << prodKinParticlesLeafName << "', "
-	    << "momenta = '" << prodKinMomentaLeafName << "'" << endl
-	    << "        decay kinematics:      particle names = '" << decayKinParticlesLeafName << "', "
-	    << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
-
+            << "        production kinematics: particle names = '" << prodKinParticlesLeafName << "', "
+            << "momenta = '" << prodKinMomentaLeafName << "'" << endl
+            << "        decay kinematics:      particle names = '" << decayKinParticlesLeafName << "', "
+            << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
+  
   // open root files and build chain
   TChain* chain = 0;
   if (rootFileNames.size() > 0) {
-    chain = new TChain(inTreeName.c_str());
-    for (unsigned int i = 0; i < rootFileNames.size(); ++i) {
-      printInfo << "opening ROOT input file '" << rootFileNames[i] << "'" << endl;
+	  chain = new TChain(inTreeName.c_str());
+	  for (unsigned int i = 0; i < rootFileNames.size(); ++i) {
+		  printInfo << "opening ROOT input file '" << rootFileNames[i] << "'" << endl;
       if (chain->Add(rootFileNames[i].c_str()) < 1)
-	printWarn << "no events in ROOT input file '" << rootFileNames[i] << "'" << endl;
-    }
-    chain->GetListOfFiles()->ls();
+	      printWarn << "no events in ROOT input file '" << rootFileNames[i] << "'" << endl;
+	  }
+	  chain->GetListOfFiles()->ls();
   }
 
   // convert .evt files to root trees
   vector<TTree*> trees;
   if (chain)
-    trees.push_back(chain);
+	  trees.push_back(chain);
   for (unsigned int i = 0; i < evtFileNames.size(); ++i) {
-    printInfo << "opening .evt input file '" << evtFileNames[i] << "'" << endl;
-    ifstream evtFile(evtFileNames[i].c_str());
+	  printInfo << "opening .evt input file '" << evtFileNames[i] << "'" << endl;
+	  ifstream evtFile(evtFileNames[i].c_str());
     if (!evtFile || !evtFile.good()) {
-      printWarn << "cannot open .evt input file '" << evtFileNames[i] << "'. skipping." << endl;
-      continue;
+	    printWarn << "cannot open .evt input file '" << evtFileNames[i] << "'. skipping." << endl;
+	    continue;
     }
     printInfo << "converting .evt input file '" << evtFileNames[i] << "' "
-	      << "into memory resident tree. this might reduce performance. "
-	      << "ROOT input format is recommended." << endl;
+              << "into memory resident tree. this might reduce performance. "
+              << "ROOT input format is recommended." << endl;
     // create tree
     TTree* tree = new TTree(inTreeName.c_str(), inTreeName.c_str());
     if (!tree) {
-      printErr << "problems creating tree '" << inTreeName << "'. skipping." << endl;
-      continue;
+	    printErr << "problems creating tree '" << inTreeName << "'. skipping." << endl;
+	    continue;
     }
     if (fillTreeFromEvt(evtFile, *tree, -1,
-			prodKinParticlesLeafName,  prodKinMomentaLeafName,
-			decayKinParticlesLeafName, decayKinMomentaLeafName, debug))
-      trees.push_back(tree);
+                        prodKinParticlesLeafName,  prodKinMomentaLeafName,
+                        decayKinParticlesLeafName, decayKinMomentaLeafName, debug))
+	    trees.push_back(tree);
     else {
-      printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "
-		<< "skipping." << endl;
+	    printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "
+	              << "skipping." << endl;
     }
   }
 
   // initialize particle data table
   particleDataTable& pdt = particleDataTable::instance();
   pdt.readFile(pdgFileName);
-
+  
   // parse key file and create decay topology and amplitude instances
   if (keyFileName == "") {
-    printErr << "no key file specified. aborting." << endl;
+	  printErr << "no key file specified. aborting." << endl;
     usage(progName, 1);
   }
   keyFileParser&         parser = keyFileParser::instance();
   isobarDecayTopologyPtr decayTopo;
-  if (not parser.parse(keyFileName, decayTopo)) {
-    printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
-	     << "aborting." << endl;
+  if (not parser.parse(keyFileName) or not parser.constructDecayTopology(decayTopo)) {
+	  printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
+	           << "aborting." << endl;
     exit(1);
   }
   decayTopo->checkTopology();
@@ -232,48 +231,48 @@ main(int    argc,
   
   // create output file for amplitudes
   printInfo << "creating amplitude file '" << ampFileName << "'; "
-	    << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
+            << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
   ofstream ampFile(ampFileName.c_str());
   if (!ampFile) {
-    printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
+	  printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
     exit(1);
   }
-
+  
   // read data from tree(s), calculate amplitudes
   TStopwatch timer;
   timer.Reset();
   timer.Start();
   vector<complex<double> > ampValues;
   for (unsigned int i = 0; i < trees.size(); ++i) {
-    printInfo << "processing ";
-    if (chain and (i == 0)) 
-      cout << "chain of .root files";
+	  printInfo << "processing ";
+	  if (chain and (i == 0)) 
+		  cout << "chain of .root files";
     else
-      cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
-    cout << endl;
-    if (not processTree(*trees[i], *decayTopo, amplitude, ampValues,
-			prodKinParticlesLeafName,  prodKinMomentaLeafName,
-			decayKinParticlesLeafName, decayKinMomentaLeafName))
-      printWarn << "problems reading tree" << endl;
+	    cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
+	  cout << endl;
+	  if (not processTree(*trees[i], *decayTopo, amplitude, ampValues,
+	                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
+	                      decayKinParticlesLeafName, decayKinMomentaLeafName))
+		  printWarn << "problems reading tree" << endl;
   }
   printInfo << "successfully calculated amplitudes for " << ampValues.size() << " events" << endl;
   timer.Stop();
   printInfo << "this job consumed: ";
   timer.Print();
-
+  
   // write amplitudes to output file
   for (unsigned int i = 0; i < ampValues.size(); ++i)
     if (asciiOutput)
-      ampFile  << setprecision(numeric_limits<double>::digits10 + 1) << ampValues[i] << endl;
+	    ampFile  << setprecision(numeric_limits<double>::digits10 + 1) << ampValues[i] << endl;
     else
-      ampFile.write((char*)(&ampValues[i]), sizeof(complex<double>));
+	    ampFile.write((char*)(&ampValues[i]), sizeof(complex<double>));
   printInfo << "successfully wrote " << ampValues.size() << " amplitude values to "
-	    << "'" << ampFileName << "' in " << ((asciiOutput) ? "ASCII" : "binary")
-	    << " mode" << endl;
-
+            << "'" << ampFileName << "' in " << ((asciiOutput) ? "ASCII" : "binary")
+            << " mode" << endl;
+  
   // clean up
   for (unsigned int i = 0; i < trees.size(); ++i)
-    delete trees[i];
+	  delete trees[i];
   trees.clear();
 
   return 0;

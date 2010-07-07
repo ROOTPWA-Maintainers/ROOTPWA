@@ -246,16 +246,17 @@ main(int argc, char** argv)
     // const string   evtInFileName  = "testEvents.3pic.evt";
     // const string   rootInFileName = "500.540.ps.root";
     // const string   evtInFileName  = "500.540.ps.evt";
-    const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+    const string   newKeyFileName = "testWrite.key";
+    //const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
     const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
     // const string   rootInFileName = "2340.2380.1358.root";
     // const string   evtInFileName  = "2340.2380.1358.evt";
-    const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.amp/2340.2380/2340.2380.root";
-    const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.amp/2340.2380/2340.2380.evt";
+    const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.root";
+    const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.evt";
 
     keyFileParser&         parser = keyFileParser::instance();
     isobarDecayTopologyPtr topo;
-    if (parser.parse(newKeyFileName, topo)) {
+    if (parser.parse(newKeyFileName) and parser.constructDecayTopology(topo)) {
 	    topo->checkTopology();
       topo->checkConsistency();
       topo->writeGraphViz("decay.dot");
@@ -338,7 +339,7 @@ main(int argc, char** argv)
 		      if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
 			      printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
 	      }
-      }
+      } // event loop
       
       timer.Stop();
       printInfo << "successfully read " << myAmps.size() << " events from file(s) "
@@ -401,7 +402,12 @@ main(int argc, char** argv)
 		      f->Write();
 		      f->Close();
 	      }
-      }
-    }
+      } // compare to PWA2000
+    }  // parsing of key file successful
+
+    // test key file creation
+    if (1)
+	    parser.writeKeyFile("testWrite.key", topo);
+    
   }
 }

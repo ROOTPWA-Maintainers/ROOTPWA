@@ -82,35 +82,35 @@ usage(const string& progName,
 
 
 bool testAmplitude(TTree&          tree,
-		   const string&   keyFileName,
-		   vector<string>& keyFileErrors,
-		   const string&   prodKinParticlesLeafName  = "prodKinParticles",
-		   const string&   prodKinMomentaLeafName    = "prodKinMomenta",
-		   const string&   decayKinParticlesLeafName = "decayKinParticles",
-		   const string&   decayKinMomentaLeafName   = "decayKinMomenta",
-		   const bool      debug                     = false,
-		   const double    maxDelta                  = 1e-6)
+                   const string&   keyFileName,
+                   vector<string>& keyFileErrors,
+                   const string&   prodKinParticlesLeafName  = "prodKinParticles",
+                   const string&   prodKinMomentaLeafName    = "prodKinMomenta",
+                   const string&   decayKinParticlesLeafName = "decayKinParticles",
+                   const string&   decayKinMomentaLeafName   = "decayKinMomenta",
+                   const bool      debug                     = false,
+                   const double    maxDelta                  = 1e-6)
 {
   // parse key file and create decay topology and amplitude instances
-  keyFileParser&         parser = keyFileParser::instance();
-  isobarDecayTopologyPtr decayTopo;
-  if (not parser.parse(keyFileName, decayTopo)) {
-    printWarn << "problems constructing decay topology from key file '" << keyFileName << "'. "
-	      << "skipping." << endl;
+	keyFileParser&         parser = keyFileParser::instance();
+	isobarDecayTopologyPtr decayTopo;
+	if (not parser.parse(keyFileName) or not parser.constructDecayTopology(decayTopo)) {
+		printWarn << "problems constructing decay topology from key file '" << keyFileName << "'. "
+		          << "skipping." << endl;
     keyFileErrors.push_back("parsing errors");
     return false;
-  }
-
+	}
+	
   // check topology
-  bool success = true;
-  if (not decayTopo->checkTopology()) {
-    keyFileErrors.push_back("problematic topology");
-    success = false;
-  }
-  if (not decayTopo->checkConsistency()) {
-    keyFileErrors.push_back("inconsistent decay");
-    success = false;
-  }
+	bool success = true;
+	if (not decayTopo->checkTopology()) {
+		keyFileErrors.push_back("problematic topology");
+		success = false;
+	}
+	if (not decayTopo->checkConsistency()) {
+		keyFileErrors.push_back("inconsistent decay");
+		success = false;
+	}
   if (!success)
     return false;
 
@@ -121,8 +121,8 @@ bool testAmplitude(TTree&          tree,
   // read data from tree and calculate amplitudes
   vector<complex<double> > ampValues;
   if (not processTree(tree, *decayTopo, amplitude, ampValues,
-		      prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		      decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
+                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
+                      decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
     printWarn << "problems reading tree" << endl;
     return false;
   }
@@ -131,8 +131,8 @@ bool testAmplitude(TTree&          tree,
   vector<complex<double> > ampSpaceInvValues;
   amplitude.enableSpaceInversion(true);
   if (not processTree(tree, *decayTopo, amplitude, ampSpaceInvValues,
-		      prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		      decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
+                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
+                      decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
     printWarn << "problems reading tree" << endl;
     return false;
   }
@@ -142,18 +142,18 @@ bool testAmplitude(TTree&          tree,
   amplitude.enableSpaceInversion(false);
   amplitude.enableReflection    (true);
   if (not processTree(tree, *decayTopo, amplitude, ampReflValues,
-		      prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		      decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
+                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
+                      decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
     printWarn << "problems reading tree" << endl;
     return false;
   }
   
   if (   (ampValues.size() != ampSpaceInvValues.size())
       or (ampValues.size() != ampReflValues.size    ())) {
-    printWarn << "different number of amplitudes for space inverted "
-	      << "(" << ampSpaceInvValues.size() << "), reflected "
-	      << "(" << ampReflValues.size() << "), and unmodified data "
-	      << "(" << ampValues.size() << ")." << endl;
+	  printWarn << "different number of amplitudes for space inverted "
+	            << "(" << ampSpaceInvValues.size() << "), reflected "
+	            << "(" << ampReflValues.size() << "), and unmodified data "
+	            << "(" << ampValues.size() << ")." << endl;
     return false;
   }
 
@@ -162,77 +162,77 @@ bool testAmplitude(TTree&          tree,
   unsigned int countSpaceInvEigenValNotOk = 0;
   unsigned int countReflEigenValNotOk     = 0;
   for (unsigned int i = 0; i < ampValues.size(); ++i) {
-    const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
-    ostringstream s;
-    s.precision(nmbDigits);
-    s.setf(ios_base::scientific, ios_base::floatfield);
-    if (debug) {
-      printInfo << "amplitude " << i << ": " << endl;
-      s << "        ampl.            = " << ampValues        [i] << endl
-	<< "        ampl. space inv. = " << ampSpaceInvValues[i] << endl
-	<< "        ampl. refl.      = " << ampReflValues    [i] << endl;
-      cout << s.str();
+	  const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
+	  ostringstream s;
+	  s.precision(nmbDigits);
+	  s.setf(ios_base::scientific, ios_base::floatfield);
+	  if (debug) {
+		  printInfo << "amplitude " << i << ": " << endl;
+		  s << "        ampl.            = " << ampValues        [i] << endl
+		    << "        ampl. space inv. = " << ampSpaceInvValues[i] << endl
+		    << "        ampl. refl.      = " << ampReflValues    [i] << endl;
+		  cout << s.str();
     }
 
     // check space inversion symmetry
     const complex<double> spaceInvRatio
-      = complex<double>((ampSpaceInvValues[i].real() != 0) ?
-			  ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
-                        (ampSpaceInvValues[i].imag() != 0) ?
-			  ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
+	    = complex<double>((ampSpaceInvValues[i].real() != 0) ?
+	                      ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
+	                      (ampSpaceInvValues[i].imag() != 0) ?
+	                      ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
     bool ampRatioOk = true;
     if (   (fabs(spaceInvRatio.real()) - 1 > maxDelta)
-    	or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
-      ampRatioOk = false;
-      ++countAmpRatioNotOk;
+        or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
+	    ampRatioOk = false;
+	    ++countAmpRatioNotOk;
     }
     const int spaceInvEigenValue = decayTopo->spaceInvEigenValue();
     bool      spaceInvEigenValOk = true;
-    if (   ((spaceInvRatio.real() != 0)
-	    and (spaceInvRatio.real() / fabs(spaceInvRatio.real()) != spaceInvEigenValue))
-     	or ((spaceInvRatio.imag() != 0)
-	    and (spaceInvRatio.imag() / fabs(spaceInvRatio.imag()) != spaceInvEigenValue))) {
+    if ((    (spaceInvRatio.real() != 0)
+         and (spaceInvRatio.real() / fabs(spaceInvRatio.real()) != spaceInvEigenValue))
+        or (    (spaceInvRatio.imag() != 0)
+            and (spaceInvRatio.imag() / fabs(spaceInvRatio.imag()) != spaceInvEigenValue))) {
       spaceInvEigenValOk = false;
       ++countSpaceInvEigenValNotOk;
     }
     if (debug) {
       s.str("");
       s << "Re[ampl.] / Re[ampl.] space inv. = " << setw(23) << spaceInvRatio.real() << ", "
-	<< "Im[ampl.] / Im[ampl.] space inv. = " << setw(23) << spaceInvRatio.imag();
+        << "Im[ampl.] / Im[ampl.] space inv. = " << setw(23) << spaceInvRatio.imag();
       cout << "        " << s.str();
       if (not spaceInvEigenValOk)
-	cout << " <! eigenvalue != " << spaceInvEigenValue;
+	      cout << " <! eigenvalue != " << spaceInvEigenValue;
       cout << endl;
     }
 
     // check reflection symmetry through production plane
     const complex<double> reflRatio
-      = complex<double>((ampReflValues[i].real() != 0) ?
-			  ampValues[i].real() / ampReflValues[i].real() : 0,
-                        (ampReflValues[i].imag() != 0) ?
-                          ampValues[i].imag() / ampReflValues[i].imag() : 0);
+	    = complex<double>((ampReflValues[i].real() != 0) ?
+	                      ampValues[i].real() / ampReflValues[i].real() : 0,
+	                      (ampReflValues[i].imag() != 0) ?
+	                      ampValues[i].imag() / ampReflValues[i].imag() : 0);
     if (   (fabs(reflRatio.real()) - 1 > maxDelta)
-	or (fabs(reflRatio.imag()) - 1 > maxDelta)) {
-      ampRatioOk = false;
-      ++countAmpRatioNotOk;
+        or (fabs(reflRatio.imag()) - 1 > maxDelta)) {
+	    ampRatioOk = false;
+	    ++countAmpRatioNotOk;
     }
     const int reflEigenValue = decayTopo->reflectionEigenValue();
     bool      reflEigenValOk = true;
-    if (   ((reflRatio.real() != 0)
-	    and (reflRatio.real() / fabs(reflRatio.real()) != reflEigenValue))
-    	or ((reflRatio.imag() != 0)
-	    and (reflRatio.imag() / fabs(reflRatio.imag()) != reflEigenValue))) {
-      reflEigenValOk = false;
-      ++countReflEigenValNotOk;
+    if ((    (reflRatio.real() != 0)
+         and (reflRatio.real() / fabs(reflRatio.real()) != reflEigenValue))
+        or (    (reflRatio.imag() != 0)
+            and (reflRatio.imag() / fabs(reflRatio.imag()) != reflEigenValue))) {
+	    reflEigenValOk = false;
+	    ++countReflEigenValNotOk;
     }
     if (debug) {
-      s.str("");
-      s << "Re[ampl.] / Re[ampl.] refl.      = " << setw(23) << reflRatio.real() << ", "
-	<< "Im[ampl.] / Im[ampl.] refl.      = " << setw(23) << reflRatio.imag();
-      cout << "        " << s.str();
-      if (not reflEigenValOk)
-	cout << " <! eigenvalue != " << reflEigenValue;
-      cout << endl;
+	    s.str("");
+	    s << "Re[ampl.] / Re[ampl.] refl.      = " << setw(23) << reflRatio.real() << ", "
+	      << "Im[ampl.] / Im[ampl.] refl.      = " << setw(23) << reflRatio.imag();
+	    cout << "        " << s.str();
+	    if (not reflEigenValOk)
+		    cout << " <! eigenvalue != " << reflEigenValue;
+	    cout << endl;
     }
   }
 
@@ -247,8 +247,8 @@ bool testAmplitude(TTree&          tree,
     success = false;
   }
   if (countReflEigenValNotOk > 0) {
-    keyFileErrors.push_back("wrong eigenvalue for reflection through production plane");
-    success = false;
+	  keyFileErrors.push_back("wrong eigenvalue for reflection through production plane");
+	  success = false;
   }
   return success;
 }
@@ -324,13 +324,13 @@ main(int    argc,
   const string         decayKinMomentaLeafName   = leafNameTokens[3];
   if (debug)
     printInfo << "using the following leaf names:" << endl
-	      << "        production kinematics: "
-	      << "particle names = '" << prodKinParticlesLeafName << "', "
-	      << "momenta = '" << prodKinMomentaLeafName << "'" << endl
-	      << "        decay kinematics     : "
-	      << "particle names = '" << decayKinParticlesLeafName << "', "
-	      << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
-
+              << "        production kinematics: "
+              << "particle names = '" << prodKinParticlesLeafName << "', "
+              << "momenta = '" << prodKinMomentaLeafName << "'" << endl
+              << "        decay kinematics     : "
+              << "particle names = '" << decayKinParticlesLeafName << "', "
+              << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
+  
   // determine test data format
   bool rootDataFormat = false;
   if (dataFileName.substr(dataFileName.length() - 5) == ".root")
@@ -338,33 +338,33 @@ main(int    argc,
 
   TTree* tree = 0;
   if (rootDataFormat) {
-    // open root file and build chain
-    TChain* chain = new TChain(inTreeName.c_str());
-    printInfo << "opening ROOT input file '" << dataFileName << "'" << endl;
+	  // open root file and build chain
+	  TChain* chain = new TChain(inTreeName.c_str());
+	  printInfo << "opening ROOT input file '" << dataFileName << "'" << endl;
     if (chain->Add(dataFileName.c_str()) < 1)
-      printWarn << "no events in ROOT input file '" << dataFileName << "'" << endl;
+	    printWarn << "no events in ROOT input file '" << dataFileName << "'" << endl;
     chain->GetListOfFiles()->ls();
     tree = chain;
   } else {
-    // convert .evt file to root tree
-    printInfo << "opening .evt input file '" << dataFileName << "'" << endl;
-    ifstream evtFile(dataFileName.c_str());
-    if (not evtFile or not evtFile.good()) {
-      printErr << "cannot open .evt input file '" << dataFileName << "'. aborting." << endl;
-      exit(1);
+	  // convert .evt file to root tree
+	  printInfo << "opening .evt input file '" << dataFileName << "'" << endl;
+	  ifstream evtFile(dataFileName.c_str());
+	  if (not evtFile or not evtFile.good()) {
+		  printErr << "cannot open .evt input file '" << dataFileName << "'. aborting." << endl;
+		  exit(1);
     }
     // create tree
     tree = new TTree(inTreeName.c_str(), inTreeName.c_str());
     if (not tree) {
-      printErr << "problems creating tree '" << inTreeName << "'. aborting." << endl;
-      exit(1);
+	    printErr << "problems creating tree '" << inTreeName << "'. aborting." << endl;
+	    exit(1);
     }
     if (not fillTreeFromEvt(evtFile, *tree, -1,
-			    prodKinParticlesLeafName,  prodKinMomentaLeafName,
-			    decayKinParticlesLeafName, decayKinMomentaLeafName, debug)) {
-      printErr << "problems creating tree from .evt input file '" << dataFileName << "' "
-	       << "aborting." << endl;
-      exit(1);
+                            prodKinParticlesLeafName,  prodKinMomentaLeafName,
+                            decayKinParticlesLeafName, decayKinMomentaLeafName, debug)) {
+	    printErr << "problems creating tree from .evt input file '" << dataFileName << "' "
+	             << "aborting." << endl;
+	    exit(1);
     }
   }
 
@@ -376,12 +376,12 @@ main(int    argc,
   map<string, vector<string> > keyFileErrors;  // maps error description to key files
   unsigned int                 countKeyFileErr = 0;
   for (unsigned int i = 0; i < keyFileNames.size(); ++i) {
-    cout << endl;
-    printInfo << "checking key file '" << keyFileNames[i] << "'" << endl;
-    vector<string> errors;
+	  cout << endl;
+	  printInfo << "checking key file '" << keyFileNames[i] << "'" << endl;
+	  vector<string> errors;
     if (not testAmplitude(*tree, keyFileNames[i], errors,
-			  prodKinParticlesLeafName,  prodKinMomentaLeafName,
-			  decayKinParticlesLeafName, decayKinMomentaLeafName, debug, maxDelta))
+                          prodKinParticlesLeafName,  prodKinMomentaLeafName,
+                          decayKinParticlesLeafName, decayKinMomentaLeafName, debug, maxDelta))
       ++countKeyFileErr;
     // collect errors
     for (unsigned int j = 0; j < errors.size(); ++j)
@@ -390,19 +390,19 @@ main(int    argc,
 
   cout << endl;
   if (countKeyFileErr == 0)
-    printInfo << "success! all keyfile(s) passed all tests" << endl;
+	  printInfo << "success! all keyfile(s) passed all tests" << endl;
   else {
-    printInfo << keyFileNames.size() - countKeyFileErr << " of " << keyFileNames.size()
-  	    << " keyfile(s) passed all tests" << endl;
+	  printInfo << keyFileNames.size() - countKeyFileErr << " of " << keyFileNames.size()
+	            << " keyfile(s) passed all tests" << endl;
     printInfo << countKeyFileErr << " problematic keyfile(s):" << endl;
     for (map<string, vector<string> >::const_iterator entry = keyFileErrors.begin();
-  	 entry != keyFileErrors.end(); ++entry) {
-      cout << "        " << entry->first << ":" << endl;
-      for (unsigned int i = 0; i < entry->second.size(); ++i)
-  	cout << "            " << entry->second[i] << endl;
+         entry != keyFileErrors.end(); ++entry) {
+	    cout << "        " << entry->first << ":" << endl;
+	    for (unsigned int i = 0; i < entry->second.size(); ++i)
+		    cout << "            " << entry->second[i] << endl;
     }
   }
-
+  
   // clean up
   delete tree;
   return 0;
