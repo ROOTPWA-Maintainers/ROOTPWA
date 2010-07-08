@@ -70,6 +70,8 @@ namespace rpwa {
 
     virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
 
+    virtual std::string name() const { return "massDependence"; }
+    
     virtual std::ostream& print(std::ostream& out) const;
 
     static bool debug() { return _debug; }                             ///< returns debug flag
@@ -106,6 +108,8 @@ namespace rpwa {
 
     virtual std::complex<double> amp(const isobarDecayVertex&);
 
+    virtual std::string name() const { return "flatMassDependence"; }
+    
     virtual std::ostream& print(std::ostream& out) const;
 
   };
@@ -134,6 +138,8 @@ namespace rpwa {
 
     virtual std::complex<double> amp(const isobarDecayVertex& v);
 
+    virtual std::string name() const { return "relativisticBreitWigner"; }
+    
     virtual std::ostream& print(std::ostream& out) const;
 
   };
@@ -165,6 +171,8 @@ namespace rpwa {
 
     virtual std::complex<double> amp(const isobarDecayVertex& v);
 
+    virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }
+    
     virtual std::ostream& print(std::ostream& out) const;
 
   protected:
@@ -209,6 +217,8 @@ namespace rpwa {
 
     virtual std::complex<double> amp(const isobarDecayVertex& v);
 
+    virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }
+    
     virtual std::ostream& print(std::ostream& out) const;
 
   };
@@ -247,6 +257,8 @@ namespace rpwa {
     piPiSWaveAuMorganPenningtonKachaev();
     virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
 
+    virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }
+    
     virtual std::ostream& print(std::ostream& out) const;
 
   };
