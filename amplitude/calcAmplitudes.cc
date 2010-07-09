@@ -64,13 +64,14 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-  cerr << "calculates amplitudes for all events in input data files and writes them to file" << endl
+  cerr << "calculates amplitudes for events in input data files and writes them to file" << endl
        << endl
        << "usage:" << endl
        << progName
-       << " -k key file [-p PDG file -o output file -a -t tree name -l leaf names -v -h] input data file(s)" << endl
+       << " -k key file [-n max. # of events -p PDG file -o output file -a -t tree name -l leaf names -v -h] input data file(s)" << endl
        << "    where:" << endl
        << "        -k file    path to key file" << endl
+       << "        -n #       maximum number of events to read (default: all)" << endl
        << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
        << "        -o file    path to amplitude file (default: ./out.amp)" << endl
        << "        -a         write amplitudes in ASCII format (default: binary)" << endl
@@ -93,6 +94,7 @@ main(int    argc,
   // parse command line options
   const string progName    = argv[0];
   string       keyFileName = "";
+  long int     maxNmbEvents = -1;
   string       pdgFileName = "./particleDataTable.txt";
   string       ampFileName = "./out.amp";
   bool         asciiOutput = false;
@@ -102,10 +104,13 @@ main(int    argc,
   extern char* optarg;
   extern int   optind;
   int          c;
-  while ((c = getopt(argc, argv, "k:p:o:at:l:vh")) != -1)
+  while ((c = getopt(argc, argv, "k:n:p:o:at:l:vh")) != -1)
     switch (c) {
     case 'k':
       keyFileName = optarg;
+      break;
+    case 'n':
+	    maxNmbEvents = atol(optarg);
       break;
     case 'p':
       pdgFileName = optarg;
@@ -250,7 +255,7 @@ main(int    argc,
     else
 	    cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
 	  cout << endl;
-	  if (not processTree(*trees[i], *decayTopo, amplitude, ampValues,
+	  if (not processTree(*trees[i], *decayTopo, amplitude, ampValues, maxNmbEvents - ampValues.size(),
 	                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                      decayKinParticlesLeafName, decayKinMomentaLeafName))
 		  printWarn << "problems reading tree" << endl;

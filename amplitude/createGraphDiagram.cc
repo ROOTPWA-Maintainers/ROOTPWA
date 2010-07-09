@@ -68,7 +68,7 @@ usage(const string& progName,
        << " [-p PDG file -f output format -v -h] key file(s)" << endl
        << "    where:" << endl
        << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-       << "        -f format  output format: dot, ps (default), svg, fig, dia, png, gif" << endl
+       << "        -f format  output format: dot, ps, eps (default), svg, fig, dia, png, gif" << endl
        << "        -v         verbose; print debug output (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
@@ -86,7 +86,7 @@ main(int    argc,
   // parse command line options
   const string progName     = argv[0];
   string       pdgFileName  = "./particleDataTable.txt";
-  string       outFormat    = "ps";
+  string       outFormat    = "eps";
   bool         debug        = false;
   extern char* optarg;
   extern int   optind;
@@ -128,7 +128,7 @@ main(int    argc,
 
   // check output format
   transform(outFormat.begin(), outFormat.end(), outFormat.begin(), (int(*)(int))tolower);
-  const string validFormats[] = {"dot", "ps", "svg", "fig", "dia", "png", "gif"};
+  const string validFormats[] = {"dot", "ps", "eps", "svg", "fig", "dia", "png", "gif"};
   bool         isValidFormat  = false;
   for (unsigned int i = 0; i < sizeof(validFormats) / sizeof(validFormats[0]); ++i)
     if (outFormat == validFormats[i]) {
@@ -145,6 +145,7 @@ main(int    argc,
   pdt.readFile(pdgFileName);
 
   // loop over key files
+  unsigned int countSuccess = 0;
   for (unsigned int i = 0; i < keyFileNames.size(); ++i) {
 
     // parse key file and create decay topology
@@ -152,14 +153,17 @@ main(int    argc,
     isobarDecayTopologyPtr decayTopo;
     if (not parser.parse(keyFileNames[i]) or not parser.constructDecayTopology(decayTopo)) {
       printErr << "problems constructing decay topology from key file '" << keyFileNames[i] << "'. "
-               << "aborting." << endl;
-      exit(1);
+               << "skipping." << endl;
+      continue;
     }
     const string dotFileName = keyFileNames[i].substr(0, keyFileNames[i].length() - 4) + ".dot";
     if (debug)
 	    printInfo << "writing graph to file '" << dotFileName << "'" << endl;
-    if (not decayTopo->writeGraphViz(dotFileName))
-	    printWarn << "there were problems writing graph to file '" << dotFileName << "'" << endl;
+    if (not decayTopo->writeGraphViz(dotFileName)) {
+	    printWarn << "there were problems writing graph to file '" << dotFileName << "'. "
+	              << "skipping." << endl;
+	    continue;
+    }
     
     // convert file to output format
     const string outFileName = keyFileNames[i].substr(0, keyFileNames[i].length() - 4)
@@ -167,21 +171,27 @@ main(int    argc,
     if (debug)
 	    printInfo << "converting graph to file '" << outFileName << "'" << endl;
     stringstream cmd;
-    if (   (outFormat == "ps" ) or (outFormat == "svg")
+    if (   (outFormat == "ps" ) or (outFormat == "eps")
         or (outFormat == "fig") or (outFormat == "dia")
-        or (outFormat == "png") or (outFormat == "gif")) {
+        or (outFormat == "png") or (outFormat == "gif")
+        or (outFormat == "svg")) {
 	    cmd << "dot -T" << outFormat << " -o " << outFileName << " " << dotFileName;
 	    if (debug)
 		    printInfo << "executing command '" << cmd.str() << "'" << endl;
 	    if (gSystem->Exec(cmd.str().c_str()) != 0)
 		    printWarn << "command '" << cmd.str() << "' was not successful." << endl;
+	    else
+		    ++countSuccess;
 	    // cleanup
 	    cmd.str("");
-	    cmd << "rm --verbose " << dotFileName;
+	    cmd << "rm " << (debug ? "--verbose " : "") << dotFileName;
 	    if (gSystem->Exec(cmd.str().c_str()) != 0)
 		    printWarn << "command '" << cmd.str() << "' was not successful." << endl;
     }
   }
+
+  printInfo << "successfully created " << countSuccess << " out of " << keyFileNames.size()
+            << " diagram files" << endl;
   
   return 0;
 }

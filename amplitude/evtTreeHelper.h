@@ -49,52 +49,53 @@ class TChain;
 namespace rpwa {
 
 
-  class isobarDecayTopology;
-  class isobarHelicityAmplitude;
+	class isobarDecayTopology;
+	class isobarHelicityAmplitude;
 
 
-  std::string particleNameFromGeantId(const int id,
-				      const int charge);
+	std::string particleNameFromGeantId(const int id,
+	                                    const int charge);
 
 
-  void idAndChargeFromParticleName(const std::string& name,
-				   int&               id,
-				   int&               charge);
+	void idAndChargeFromParticleName(const std::string& name,
+	                                 int&               id,
+	                                 int&               charge);
 
 
-  double getParticleMass(const std::string& name);
+	double getParticleMass(const std::string& name);
 
 
-  bool fillTreeFromEvt(std::istream&      inEvt,
-		       TTree&             outTree,
-		       const long int     maxNmbEvents              = -1,
-		       const std::string& prodKinParticlesLeafName  = "prodKinParticles",
-		       const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
-		       const std::string& decayKinParticlesLeafName = "decayKinParticles",
-		       const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
-		       const bool         debug                     = false);
+	bool fillTreeFromEvt(std::istream&      inEvt,
+	                     TTree&             outTree,
+	                     const long int     maxNmbEvents              = -1,
+	                     const std::string& prodKinParticlesLeafName  = "prodKinParticles",
+	                     const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
+	                     const std::string& decayKinParticlesLeafName = "decayKinParticles",
+	                     const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
+	                     const bool         debug                     = false);
   
 
-  bool writeEvtFromTree(TChain&            inTree,
-			std::ostream&      outEvt,
-			const long int     maxNmbEvents              = -1,
-			const std::string& inTreeName                = "rootPwaEvtTree",
-			const std::string& prodKinParticlesLeafName  = "prodKinParticles",
-			const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
-			const std::string& decayKinParticlesLeafName = "decayKinParticles",
-			const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
-			const bool         debug                     = false);
+	bool writeEvtFromTree(TChain&            inTree,
+	                      std::ostream&      outEvt,
+	                      const long int     maxNmbEvents              = -1,
+	                      const std::string& inTreeName                = "rootPwaEvtTree",
+	                      const std::string& prodKinParticlesLeafName  = "prodKinParticles",
+	                      const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
+	                      const std::string& decayKinParticlesLeafName = "decayKinParticles",
+	                      const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
+	                      const bool         debug                     = false);
 
 
-  long int processTree(TTree&                              tree,
-		       isobarDecayTopology&                decayTopo,
-		       const isobarHelicityAmplitude&      amplitude,
-		       std::vector<std::complex<double> >& ampValues,
-		       const std::string&                  prodKinParticlesLeafName  = "prodKinParticles",
-		       const std::string&                  prodKinMomentaLeafName    = "prodKinMomenta",
-		       const std::string&                  decayKinParticlesLeafName = "decayKinParticles",
-		       const std::string&                  decayKinMomentaLeafName   = "decayKinMomenta",
-		       const bool                          printProgress             = true);
+	long int processTree(TTree&                              tree,
+	                     isobarDecayTopology&                decayTopo,
+	                     const isobarHelicityAmplitude&      amplitude,
+	                     std::vector<std::complex<double> >& ampValues,
+	                     const long int                      maxNmbEvents              = -1,
+	                     const std::string&                  prodKinParticlesLeafName  = "prodKinParticles",
+	                     const std::string&                  prodKinMomentaLeafName    = "prodKinMomenta",
+	                     const std::string&                  decayKinParticlesLeafName = "decayKinParticles",
+	                     const std::string&                  decayKinMomentaLeafName   = "decayKinMomenta",
+	                     const bool                          printProgress             = true);
 
 
 }  // namespace rpwa

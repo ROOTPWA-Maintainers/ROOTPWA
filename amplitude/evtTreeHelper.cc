@@ -40,6 +40,7 @@
 #include <sstream>
 #include <string>
 #include <cassert>
+#include <algorithm>
 
 #include "TTree.h"
 #include "TChain.h"
@@ -60,344 +61,345 @@ using namespace std;
 namespace rpwa {
 
 
-  string
-  particleNameFromGeantId(const int id,
-			  const int charge)
-  {
-    assert((charge == -1) || (charge == 0) || (charge == +1));
-    string name = id2name((Geant_ID)id);
-    name = particleProperties::stripChargeFromName(name);
-    stringstream n;
-    n << name << sign(charge);
-    return n.str();
-  }
-
-
-  void
-  idAndChargeFromParticleName(const string& name,
-			      int&          id,
-			      int&          charge)
-  {
-    particleProperties::chargeFromName(name, charge);
-    id     = name2id(name, charge);
-    if (id == g_Unknown)
-      id = name2id(particleProperties::stripChargeFromName(name), charge);
-    if (id == g_Unknown)
-      printWarn << "unknown particle '" << name << "'" << endl;
-  }
-
-
-  double
-  getParticleMass(const string& name)
-  {
-    rpwa::particleDataTable&  pdt  = rpwa::particleDataTable::instance();
-    const particleProperties* prop = 0;
-    if (pdt.isInTable(name))
-      prop = pdt.entry(name);
-    else {
-      const string n = particleProperties::stripChargeFromName(name);
-      if (pdt.isInTable(n))
-	prop = pdt.entry(n);
-    }
-    if (!prop) {
-      printWarn << "neither particle '" << name << "' "
-		<< "nor '" << particleProperties::stripChargeFromName(name) << "' "
-		<< "are in particle data table. using mass 0." << endl;
-      return 0;
-    }
-    return prop->mass();
-  }
-
-
-  bool
-  fillTreeFromEvt(istream&       inEvt,
-		  TTree&         outTree,
-		  const long int maxNmbEvents,
-		  const string&  prodKinParticlesLeafName,
-		  const string&  prodKinMomentaLeafName,
-		  const string&  decayKinParticlesLeafName,
-		  const string&  decayKinMomentaLeafName,
-		  const bool     debug)
-  {
-    if (!inEvt || !inEvt.good()) {
-      printWarn << "cannot read from input stream" << endl;
-      return false;
-    }
-
-    // create leaf variables
-    TClonesArray* prodKinParticles  = new TClonesArray("TObjString");
-    TClonesArray* prodKinMomenta    = new TClonesArray("TVector3");
-    TClonesArray* decayKinParticles = new TClonesArray("TObjString");
-    TClonesArray* decayKinMomenta   = new TClonesArray("TVector3");
-
-    // connect leaf variables to tree branches
-    const int split   = 0;
-    const int bufSize = 256000;
-    outTree.Branch(prodKinParticlesLeafName.c_str(),  "TClonesArray", &prodKinParticles,  bufSize, split);
-    outTree.Branch(prodKinMomentaLeafName.c_str(),    "TClonesArray", &prodKinMomenta,    bufSize, split);
-    outTree.Branch(decayKinParticlesLeafName.c_str(), "TClonesArray", &decayKinParticles, bufSize, split);
-    outTree.Branch(decayKinMomentaLeafName.c_str(),   "TClonesArray", &decayKinMomenta,   bufSize, split);
-
-    // loop over events and fill tree
-    bool     success     = true;
-    long int countEvents = 0;
-    long int countLines  = 0;
-    while (inEvt.good()) {
-
-      // read event
-      string line;
-
-      // read number of particles
-      int nmbParticles = 0;
-      if (getline(inEvt, line)) {
-	++countLines;
-	stringstream lineStream(line);
-	int n;
-	if (lineStream >> n)
-	  nmbParticles = n;
-	else {
-	  printWarn << "event " << countEvents + 1 << ": error reading number of particles "
-		    << "from line " << countLines << ": " << line << endl;
-	  success = false;
+	string
+	particleNameFromGeantId(const int id,
+	                        const int charge)
+	{
+		assert((charge == -1) || (charge == 0) || (charge == +1));
+		string name = id2name((Geant_ID)id);
+		name = particleProperties::stripChargeFromName(name);
+		stringstream n;
+		n << name << sign(charge);
+		return n.str();
 	}
-      } else
-	break;
-      assert(nmbParticles > 0);
-      if (debug)
-	printInfo << "# of particles = " << nmbParticles << endl;
+
+
+	void
+	idAndChargeFromParticleName(const string& name,
+	                            int&          id,
+	                            int&          charge)
+	{
+		particleProperties::chargeFromName(name, charge);
+		id = name2id(name, charge);
+		if (id == g_Unknown)
+			id = name2id(particleProperties::stripChargeFromName(name), charge);
+		if (id == g_Unknown)
+			printWarn << "unknown particle '" << name << "'" << endl;
+	}
+
+
+	double
+	getParticleMass(const string& name)
+	{
+		rpwa::particleDataTable&  pdt  = rpwa::particleDataTable::instance();
+		const particleProperties* prop = 0;
+		if (pdt.isInTable(name))
+			prop = pdt.entry(name);
+		else {
+			const string n = particleProperties::stripChargeFromName(name);
+			if (pdt.isInTable(n))
+				prop = pdt.entry(n);
+		}
+		if (!prop) {
+			printWarn << "neither particle '" << name << "' "
+			          << "nor '" << particleProperties::stripChargeFromName(name) << "' "
+			          << "are in particle data table. using mass 0." << endl;
+			return 0;
+		}
+		return prop->mass();
+	}
+
+
+	bool
+	fillTreeFromEvt(istream&       inEvt,
+	                TTree&         outTree,
+	                const long int maxNmbEvents,
+	                const string&  prodKinParticlesLeafName,
+	                const string&  prodKinMomentaLeafName,
+	                const string&  decayKinParticlesLeafName,
+	                const string&  decayKinMomentaLeafName,
+	                const bool     debug)
+	{
+		if (!inEvt || !inEvt.good()) {
+			printWarn << "cannot read from input stream" << endl;
+			return false;
+		}
+
+		// create leaf variables
+		TClonesArray* prodKinParticles  = new TClonesArray("TObjString");
+		TClonesArray* prodKinMomenta    = new TClonesArray("TVector3");
+		TClonesArray* decayKinParticles = new TClonesArray("TObjString");
+		TClonesArray* decayKinMomenta   = new TClonesArray("TVector3");
+
+		// connect leaf variables to tree branches
+		const int split   = 0;
+		const int bufSize = 256000;
+		outTree.Branch(prodKinParticlesLeafName.c_str(),  "TClonesArray", &prodKinParticles,  bufSize, split);
+		outTree.Branch(prodKinMomentaLeafName.c_str(),    "TClonesArray", &prodKinMomenta,    bufSize, split);
+		outTree.Branch(decayKinParticlesLeafName.c_str(), "TClonesArray", &decayKinParticles, bufSize, split);
+		outTree.Branch(decayKinMomentaLeafName.c_str(),   "TClonesArray", &decayKinMomenta,   bufSize, split);
+
+		// loop over events and fill tree
+		bool     success     = true;
+		long int countEvents = 0;
+		long int countLines  = 0;
+		while (inEvt.good()) {
+
+			// read event
+			string line;
+
+			// read number of particles
+			int nmbParticles = 0;
+			if (getline(inEvt, line)) {
+				++countLines;
+				stringstream lineStream(line);
+				int n;
+				if (lineStream >> n)
+					nmbParticles = n;
+				else {
+					printWarn << "event " << countEvents + 1 << ": error reading number of particles "
+					          << "from line " << countLines << ": " << line << endl;
+					success = false;
+				}
+			} else
+				break;
+			assert(nmbParticles > 0);
+			if (debug)
+				printInfo << "# of particles = " << nmbParticles << endl;
     
-      // read production kinematics data (beam only)
-      prodKinParticles->Clear();
-      prodKinMomenta->Clear  ();
-      if (getline(inEvt, line)) {
-	++countLines;
-	stringstream lineStream(line);
-	int    id = 0, charge = 0;
-	double momX = 0, momY = 0, momZ = 0, E = 0;
-	if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-	  const string name = particleNameFromGeantId(id , charge);
-	  new((*prodKinParticles)[0]) TObjString(name.c_str());
-	  new((*prodKinMomenta  )[0]) TVector3  (momX, momY, momZ);
-	} else {
-	  printWarn << "event " << countEvents + 1 << ": error reading beam data "
-		    << "from line " << countLines << ": " << line << endl;
-	  success = false;
+			// read production kinematics data (beam only)
+			prodKinParticles->Clear();
+			prodKinMomenta->Clear  ();
+			if (getline(inEvt, line)) {
+				++countLines;
+				stringstream lineStream(line);
+				int    id = 0, charge = 0;
+				double momX = 0, momY = 0, momZ = 0, E = 0;
+				if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
+					const string name = particleNameFromGeantId(id , charge);
+					new((*prodKinParticles)[0]) TObjString(name.c_str());
+					new((*prodKinMomenta  )[0]) TVector3  (momX, momY, momZ);
+				} else {
+					printWarn << "event " << countEvents + 1 << ": error reading beam data "
+					          << "from line " << countLines << ": " << line << endl;
+					success = false;
+				}
+			} else
+				break;
+			assert(prodKinParticles->GetEntriesFast() == prodKinMomenta->GetEntriesFast());
+			const unsigned int nmbProdKinPart = prodKinParticles->GetEntriesFast();
+			if (debug) {
+				printInfo << nmbProdKinPart << " production kinematics particles:" << endl;
+				for (unsigned int i = 0; i < nmbProdKinPart; ++i)
+					cout << "        particle[" << i << "]: "
+					     << ((TObjString*)(*prodKinParticles)[i])->GetString() << "; "
+					     << *((TVector3*)(*prodKinMomenta)[i]) << endl;
+			}
+
+			// read decay kinematics data
+			decayKinParticles->Clear  ();
+			decayKinMomenta->Clear();
+			for (int i = 0; i < nmbParticles - 1; ++i) {
+				if (getline(inEvt, line)) {
+					++countLines;
+					stringstream lineStream(line);
+					int    id, charge;
+					double momX, momY, momZ, E;
+					if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
+						const string name = particleNameFromGeantId(id , charge);
+						new((*decayKinParticles  )[i]) TObjString(name.c_str());
+						new((*decayKinMomenta)[i]) TVector3  (momX, momY, momZ);
+					} else {
+						printWarn << "event " << countEvents + 1 << ": error reading decay kinematics "
+						          << "particle[" << i << "] data from line " << countLines << ": " << line << endl;
+						success = false;
+					}
+				} else
+					break;
+			}
+			assert(decayKinParticles->GetEntriesFast() == decayKinMomenta->GetEntriesFast());
+			const unsigned int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
+			if (debug) {
+				printInfo << nmbDecayKinPart << " decay kinematics particles:" << endl;
+				for (unsigned int i = 0; i < nmbDecayKinPart; ++i)
+					cout << "        particle[" << i << "]: "
+					     << ((TObjString*)(*decayKinParticles)[i])->GetString() << "; "
+					     << *((TVector3*)(*decayKinMomenta)[i]) << endl;
+			}
+
+			outTree.Fill();
+			++countEvents;
+			if ((maxNmbEvents > 0) && (countEvents >= maxNmbEvents))
+				break;
+		}
+
+		printInfo << "read " << countLines << " lines from input stream and wrote "
+		          << countEvents << " events to tree '" << outTree.GetName() << "'" << endl;
+		return success;
 	}
-      } else
-	break;
-      assert(prodKinParticles->GetEntriesFast() == prodKinMomenta->GetEntriesFast());
-      const unsigned int nmbProdKinPart = prodKinParticles->GetEntriesFast();
-      if (debug) {
-	printInfo << nmbProdKinPart << " production kinematics particles:" << endl;
-	for (unsigned int i = 0; i < nmbProdKinPart; ++i)
-	  cout << "        particle[" << i << "]: "
-	       << ((TObjString*)(*prodKinParticles)[i])->GetString() << "; "
-	       << *((TVector3*)(*prodKinMomenta)[i]) << endl;
-      }
-
-      // read decay kinematics data
-      decayKinParticles->Clear  ();
-      decayKinMomenta->Clear();
-      for (int i = 0; i < nmbParticles - 1; ++i) {
-	if (getline(inEvt, line)) {
-	  ++countLines;
-	  stringstream lineStream(line);
-	  int    id, charge;
-	  double momX, momY, momZ, E;
-	  if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-	    const string name = particleNameFromGeantId(id , charge);
-	    new((*decayKinParticles  )[i]) TObjString(name.c_str());
-	    new((*decayKinMomenta)[i]) TVector3  (momX, momY, momZ);
-	  } else {
-	    printWarn << "event " << countEvents + 1 << ": error reading decay kinematics "
-		      << "particle[" << i << "] data from line " << countLines << ": " << line << endl;
-	    success = false;
-	  }
-	} else
-	  break;
-      }
-      assert(decayKinParticles->GetEntriesFast() == decayKinMomenta->GetEntriesFast());
-      const unsigned int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
-      if (debug) {
-	printInfo << nmbDecayKinPart << " decay kinematics particles:" << endl;
-	for (unsigned int i = 0; i < nmbDecayKinPart; ++i)
-	  cout << "        particle[" << i << "]: "
-	       << ((TObjString*)(*decayKinParticles)[i])->GetString() << "; "
-	       << *((TVector3*)(*decayKinMomenta)[i]) << endl;
-      }
-
-      outTree.Fill();
-      ++countEvents;
-      if ((maxNmbEvents > 0) && (countEvents >= maxNmbEvents))
-	break;
-    }
-
-    printInfo << "read " << countLines << " lines from input stream and wrote "
-	      << countEvents << " events to tree '" << outTree.GetName() << "'" << endl;
-    return success;
-  }
 
 
-  bool
-  writeEvtFromTree(TChain&        inTree,
-		   ostream&       outEvt,
-		   const long int maxNmbEvents,
-		   const string&  inTreeName,
-		   const string&  prodKinParticlesLeafName,
-		   const string&  prodKinMomentaLeafName,
-		   const string&  decayKinParticlesLeafName,
-		   const string&  decayKinMomentaLeafName,
-		   const bool     debug)
-  {
-    const long int nmbEventsTree = inTree.GetEntries();
-    if (!outEvt) {
-      printWarn << "cannot write to output stream" << endl;
-      return false;
-    }
+	bool
+	writeEvtFromTree(TChain&        inTree,
+	                 ostream&       outEvt,
+	                 const long int maxNmbEvents,
+	                 const string&  inTreeName,
+	                 const string&  prodKinParticlesLeafName,
+	                 const string&  prodKinMomentaLeafName,
+	                 const string&  decayKinParticlesLeafName,
+	                 const string&  decayKinMomentaLeafName,
+	                 const bool     debug)
+	{
+		const long int nmbEventsTree = inTree.GetEntries();
+		if (!outEvt) {
+			printWarn << "cannot write to output stream" << endl;
+			return false;
+		}
 
-    // create leaf variables
-    TClonesArray* prodKinParticles  = 0;
-    TClonesArray* prodKinMomenta    = 0;
-    TClonesArray* decayKinParticles = 0;
-    TClonesArray* decayKinMomenta   = 0;
+		// create leaf variables
+		TClonesArray* prodKinParticles  = 0;
+		TClonesArray* prodKinMomenta    = 0;
+		TClonesArray* decayKinParticles = 0;
+		TClonesArray* decayKinMomenta   = 0;
 
-    // connect leaf variables to tree branches
-    inTree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles );
-    inTree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta   );
-    inTree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles);
-    inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta  );
+		// connect leaf variables to tree branches
+		inTree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles );
+		inTree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta   );
+		inTree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles);
+		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta  );
 			 
-    // loop over events
-    const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-				: nmbEventsTree);
-    for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-      if (!debug)
-	progressIndicator(eventIndex, nmbEvents);
+		// loop over events
+		const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                            : nmbEventsTree);
+		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+			if (!debug)
+				progressIndicator(eventIndex, nmbEvents);
 
-      if (inTree.LoadTree(eventIndex) < 0)
-	break;
-      inTree.GetEntry(eventIndex);
+			if (inTree.LoadTree(eventIndex) < 0)
+				break;
+			inTree.GetEntry(eventIndex);
 
-      assert(prodKinParticles );
-      assert(prodKinMomenta   );
-      assert(decayKinParticles);
-      assert(decayKinMomenta  );
-      const int nmbProdKinPart  = prodKinParticles->GetEntriesFast ();
-      const int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
-      assert(nmbProdKinPart  == prodKinMomenta->GetEntriesFast ());
-      assert(nmbDecayKinPart == decayKinMomenta->GetEntriesFast());
+			assert(prodKinParticles );
+			assert(prodKinMomenta   );
+			assert(decayKinParticles);
+			assert(decayKinMomenta  );
+			const int nmbProdKinPart  = prodKinParticles->GetEntriesFast ();
+			const int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
+			assert(nmbProdKinPart  == prodKinMomenta->GetEntriesFast ());
+			assert(nmbDecayKinPart == decayKinMomenta->GetEntriesFast());
 
-      outEvt << nmbProdKinPart + nmbDecayKinPart << endl;
+			outEvt << nmbProdKinPart + nmbDecayKinPart << endl;
 
-      if (debug)
-	printInfo << "event[" << eventIndex << "]: " << nmbProdKinPart
-		  << " production kinematics particles:" << endl;
-      for (int i = 0; i < nmbProdKinPart; ++i) {
-	assert((*prodKinParticles)[i]);
-	assert((*prodKinMomenta  )[i]);
-	const string   name = ((TObjString*)(*prodKinParticles)[i])->GetString().Data();
-	const TVector3 mom  = *((TVector3*)(*prodKinMomenta)[i]);
-	const double   mass = getParticleMass(name);
-	int id, charge;
-	idAndChargeFromParticleName(name, id, charge);
-	outEvt << setprecision(numeric_limits<double>::digits10 + 1)
-	       << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
-	       << sqrt(mass * mass + mom.Mag2()) << endl;
-	if (debug) {
-	  cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-	       << "charge = " << charge << "; " << mom << endl;
-	}
-      }
+			if (debug)
+				printInfo << "event[" << eventIndex << "]: " << nmbProdKinPart
+				          << " production kinematics particles:" << endl;
+			for (int i = 0; i < nmbProdKinPart; ++i) {
+				assert((*prodKinParticles)[i]);
+				assert((*prodKinMomenta  )[i]);
+				const string   name = ((TObjString*)(*prodKinParticles)[i])->GetString().Data();
+				const TVector3 mom  = *((TVector3*)(*prodKinMomenta)[i]);
+				const double   mass = getParticleMass(name);
+				int id, charge;
+				idAndChargeFromParticleName(name, id, charge);
+				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
+				       << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
+				       << sqrt(mass * mass + mom.Mag2()) << endl;
+				if (debug) {
+					cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
+					     << "charge = " << charge << "; " << mom << endl;
+				}
+			}
 
-      if (debug)
-	printInfo << "event[" << eventIndex << "]: " << nmbDecayKinPart
-		  << " decay kinematics particles:" << endl;
-      for (int i = 0; i < nmbDecayKinPart; ++i) {
-	assert((*decayKinParticles  )[i]);
-	assert((*decayKinMomenta)[i]);
-	const string   name = ((TObjString*)(*decayKinParticles)[i])->GetString().Data();
-	const TVector3 mom  = *((TVector3*)(*decayKinMomenta)[i]);
-	const double   mass = getParticleMass(name);
-	int id, charge;
-	idAndChargeFromParticleName(name, id, charge);
-	outEvt << setprecision(numeric_limits<double>::digits10 + 1)
-	       << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
-	       << sqrt(mass * mass + mom.Mag2()) << endl;
-	if (debug) {
-	  cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-	       << "charge = " << charge << "; " << mom << endl;
-	}
-      }
+			if (debug)
+				printInfo << "event[" << eventIndex << "]: " << nmbDecayKinPart
+				          << " decay kinematics particles:" << endl;
+			for (int i = 0; i < nmbDecayKinPart; ++i) {
+				assert((*decayKinParticles  )[i]);
+				assert((*decayKinMomenta)[i]);
+				const string   name = ((TObjString*)(*decayKinParticles)[i])->GetString().Data();
+				const TVector3 mom  = *((TVector3*)(*decayKinMomenta)[i]);
+				const double   mass = getParticleMass(name);
+				int id, charge;
+				idAndChargeFromParticleName(name, id, charge);
+				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
+				       << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
+				       << sqrt(mass * mass + mom.Mag2()) << endl;
+				if (debug) {
+					cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
+					     << "charge = " << charge << "; " << mom << endl;
+				}
+			}
     
-      if (debug)
-	cout << endl;
-    }
+			if (debug)
+				cout << endl;
+		}
 
-    printInfo << "wrote " << nmbEvents << " events to output stream" << endl;
-    return true;
-  }
+		printInfo << "wrote " << nmbEvents << " events to output stream" << endl;
+		return true;
+	}
 
 
-  bool
-  processTree(TTree&                         tree,
-	      isobarDecayTopology&           decayTopo,
-	      const isobarHelicityAmplitude& amplitude,
-	      vector<complex<double> >&      ampValues,
-	      const string&                  prodKinParticlesLeafName,
-	      const string&                  prodKinMomentaLeafName,
-	      const string&                  decayKinParticlesLeafName,
-	      const string&                  decayKinMomentaLeafName,
-	      const bool                     printProgress)
-  {
-    // create branch pointers and leaf variables
-    TBranch*      prodKinParticlesBr  = 0;
-    TBranch*      prodKinMomentaBr    = 0;
-    TBranch*      decayKinParticlesBr = 0;
-    TBranch*      decayKinMomentaBr   = 0;
-    TClonesArray* prodKinParticles    = 0;
-    TClonesArray* prodKinMomenta      = 0;
-    TClonesArray* decayKinParticles   = 0;
-    TClonesArray* decayKinMomenta     = 0;
+	bool
+	processTree(TTree&                         tree,
+	            isobarDecayTopology&           decayTopo,
+	            const isobarHelicityAmplitude& amplitude,
+	            vector<complex<double> >&      ampValues,
+	            const long int                 maxNmbEvents,
+	            const string&                  prodKinParticlesLeafName,
+	            const string&                  prodKinMomentaLeafName,
+	            const string&                  decayKinParticlesLeafName,
+	            const string&                  decayKinMomentaLeafName,
+	            const bool                     printProgress)
+	{
+		// create branch pointers and leaf variables
+		TBranch*      prodKinParticlesBr  = 0;
+		TBranch*      prodKinMomentaBr    = 0;
+		TBranch*      decayKinParticlesBr = 0;
+		TBranch*      decayKinMomentaBr   = 0;
+		TClonesArray* prodKinParticles    = 0;
+		TClonesArray* prodKinMomenta      = 0;
+		TClonesArray* decayKinParticles   = 0;
+		TClonesArray* decayKinMomenta     = 0;
 	
-    // connect leaf variables to tree branches
-    tree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
-    tree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
-    tree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
-    tree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
+		// connect leaf variables to tree branches
+		tree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
+		tree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
+		tree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
+		tree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
 
-    // loop over events
-    const long int nmbEvents = tree.GetEntries();
-    bool           success   = true;
-    for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-      if (printProgress)
-	progressIndicator(eventIndex, nmbEvents);
+		// loop over events
+		const long int nmbEvents = min((long int)tree.GetEntries(), maxNmbEvents);
+		bool           success   = true;
+		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+			if (printProgress)
+				progressIndicator(eventIndex, nmbEvents);
       
-      if (tree.LoadTree(eventIndex) < 0)
-	break;
-      // read only required branches
-      prodKinParticlesBr->GetEntry (eventIndex);
-      prodKinMomentaBr->GetEntry   (eventIndex);
-      decayKinParticlesBr->GetEntry(eventIndex);
-      decayKinMomentaBr->GetEntry  (eventIndex);
+			if (tree.LoadTree(eventIndex) < 0)
+				break;
+			// read only required branches
+			prodKinParticlesBr->GetEntry (eventIndex);
+			prodKinMomentaBr->GetEntry   (eventIndex);
+			decayKinParticlesBr->GetEntry(eventIndex);
+			decayKinMomentaBr->GetEntry  (eventIndex);
 
-      if (   not prodKinParticles  or not prodKinMomenta
-	  or not decayKinParticles or not decayKinMomenta) {
-	printWarn << "at least one of the input data arrays is a null pointer: "
-		  << "        production kinematics: particle names = " << prodKinParticles << ", "
-		  << "momenta = " << prodKinMomenta << endl
-		  << "        decay kinematics:      particle names = " << decayKinParticles << ", "
-		  << "momenta = " << decayKinMomenta << endl
-		  << "skipping event." << endl;
-	success = false;
-	continue;
-      }
+			if (   not prodKinParticles  or not prodKinMomenta
+			       or not decayKinParticles or not decayKinMomenta) {
+				printWarn << "at least one of the input data arrays is a null pointer: "
+				          << "        production kinematics: particle names = " << prodKinParticles << ", "
+				          << "momenta = " << prodKinMomenta << endl
+				          << "        decay kinematics:      particle names = " << decayKinParticles << ", "
+				          << "momenta = " << decayKinMomenta << endl
+				          << "skipping event." << endl;
+				success = false;
+				continue;
+			}
 
-      if (decayTopo.readData(*prodKinParticles,  *prodKinMomenta,
-			     *decayKinParticles, *decayKinMomenta))
-	ampValues.push_back(amplitude());
-    }
-    return success;
-  }
+			if (decayTopo.readData(*prodKinParticles,  *prodKinMomenta,
+			                       *decayKinParticles, *decayKinMomenta))
+				ampValues.push_back(amplitude());
+		}
+		return success;
+	}
 
 
 }  // namespace rpwa

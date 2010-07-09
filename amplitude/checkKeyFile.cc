@@ -67,9 +67,10 @@ usage(const string& progName,
 {
   cerr << "usage:" << endl
        << progName
-       << " -d test data [-p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
+       << " -d test data [-n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
        << "    where:" << endl
        << "        -d file    path to file with test data (.evt or ROOT format)" << endl
+       << "        -n #       maximum number of events to read (default: all)" << endl
        << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
        << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
        << "        -e #       maximum deviation of amplitude ratios from 1 (default: 1E-6)" << endl
@@ -84,12 +85,13 @@ usage(const string& progName,
 bool testAmplitude(TTree&          tree,
                    const string&   keyFileName,
                    vector<string>& keyFileErrors,
+                   const long int  maxNmbEvents              = -1,
+                   const bool      debug                     = false,
+                   const double    maxDelta                  = 1e-6,
                    const string&   prodKinParticlesLeafName  = "prodKinParticles",
                    const string&   prodKinMomentaLeafName    = "prodKinMomenta",
                    const string&   decayKinParticlesLeafName = "decayKinParticles",
-                   const string&   decayKinMomentaLeafName   = "decayKinMomenta",
-                   const bool      debug                     = false,
-                   const double    maxDelta                  = 1e-6)
+                   const string&   decayKinMomentaLeafName   = "decayKinMomenta")
 {
   // parse key file and create decay topology and amplitude instances
 	keyFileParser&         parser = keyFileParser::instance();
@@ -100,8 +102,8 @@ bool testAmplitude(TTree&          tree,
     keyFileErrors.push_back("parsing errors");
     return false;
 	}
-	
-  // check topology
+
+	printInfo << "checking decay topology" << endl;
 	bool success = true;
 	if (not decayTopo->checkTopology()) {
 		keyFileErrors.push_back("problematic topology");
@@ -114,13 +116,20 @@ bool testAmplitude(TTree&          tree,
   if (!success)
     return false;
 
+  printInfo << "calculating amplitudes for ";
+  if (maxNmbEvents < 0)
+	  cout << "all";
+  else
+	  cout << maxNmbEvents;
+  cout << " events" << endl;
+
   // construct amplitude
   isobarHelicityAmplitude amplitude(decayTopo);
   parser.setAmplitudeOptions(amplitude);
 
   // read data from tree and calculate amplitudes
   vector<complex<double> > ampValues;
-  if (not processTree(tree, *decayTopo, amplitude, ampValues,
+  if (not processTree(tree, *decayTopo, amplitude, ampValues, maxNmbEvents,
                       prodKinParticlesLeafName,  prodKinMomentaLeafName,
                       decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
     printWarn << "problems reading tree" << endl;
@@ -130,7 +139,7 @@ bool testAmplitude(TTree&          tree,
   // calculate amplitudes for parity transformed decay daughters
   vector<complex<double> > ampSpaceInvValues;
   amplitude.enableSpaceInversion(true);
-  if (not processTree(tree, *decayTopo, amplitude, ampSpaceInvValues,
+  if (not processTree(tree, *decayTopo, amplitude, ampSpaceInvValues, maxNmbEvents,
                       prodKinParticlesLeafName,  prodKinMomentaLeafName,
                       decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
     printWarn << "problems reading tree" << endl;
@@ -141,7 +150,7 @@ bool testAmplitude(TTree&          tree,
   vector<complex<double> > ampReflValues;
   amplitude.enableSpaceInversion(false);
   amplitude.enableReflection    (true);
-  if (not processTree(tree, *decayTopo, amplitude, ampReflValues,
+  if (not processTree(tree, *decayTopo, amplitude, ampReflValues, maxNmbEvents,
                       prodKinParticlesLeafName,  prodKinMomentaLeafName,
                       decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
     printWarn << "problems reading tree" << endl;
@@ -157,7 +166,7 @@ bool testAmplitude(TTree&          tree,
     return false;
   }
 
-  // check symmetry properties of amplitudes
+  printInfo << "checking symmetry properties of amplitudes" << endl;
   unsigned int countAmpRatioNotOk         = 0;
   unsigned int countSpaceInvEigenValNotOk = 0;
   unsigned int countReflEigenValNotOk     = 0;
@@ -264,6 +273,7 @@ main(int    argc,
   // parse command line options
   const string progName     = argv[0];
   string       dataFileName = "";
+  long int     maxNmbEvents = -1;
   string       pdgFileName  = "./particleDataTable.txt";
   string       inTreeName   = "rootPwaEvtTree";
   double       maxDelta     = 1e-6;
@@ -273,10 +283,13 @@ main(int    argc,
   extern char* optarg;
   extern int   optind;
   int          c;
-  while ((c = getopt(argc, argv, "d:p:t:e:l:vh")) != -1)
+  while ((c = getopt(argc, argv, "d:n:p:t:e:l:vh")) != -1)
     switch (c) {
     case 'd':
       dataFileName = optarg;
+      break;
+    case 'n':
+	    maxNmbEvents = atol(optarg);
       break;
     case 'p':
       pdgFileName = optarg;
@@ -379,10 +392,12 @@ main(int    argc,
 	  cout << endl;
 	  printInfo << "checking key file '" << keyFileNames[i] << "'" << endl;
 	  vector<string> errors;
-    if (not testAmplitude(*tree, keyFileNames[i], errors,
+	  if (not testAmplitude(*tree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
                           prodKinParticlesLeafName,  prodKinMomentaLeafName,
-                          decayKinParticlesLeafName, decayKinMomentaLeafName, debug, maxDelta))
+                          decayKinParticlesLeafName, decayKinMomentaLeafName))
       ++countKeyFileErr;
+    else
+	    printInfo << "key file '" << keyFileNames[i] << "' successfully passed all tests" << endl;
     // collect errors
     for (unsigned int j = 0; j < errors.size(); ++j)
       keyFileErrors[errors[j]].push_back(keyFileNames[i]);
@@ -390,7 +405,7 @@ main(int    argc,
 
   cout << endl;
   if (countKeyFileErr == 0)
-	  printInfo << "success! all keyfile(s) passed all tests" << endl;
+	  printInfo << "success! all " << keyFileNames.size() << " keyfile(s) passed all tests" << endl;
   else {
 	  printInfo << keyFileNames.size() - countKeyFileErr << " of " << keyFileNames.size()
 	            << " keyfile(s) passed all tests" << endl;
