@@ -51,6 +51,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 set(SOURCES
   mcPhaseSpace.cc
   cauchyIntegral.cc
+  dynMassDep.cc
 )
    
 

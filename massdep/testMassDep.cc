@@ -31,6 +31,7 @@
 #include <iomanip>
 #include "TGraph.h"
 #include "TSystem.h"
+#include "TFile.h"
 #include "TCanvas.h"
 #include "TTree.h"
 #include "TMath.h"
@@ -38,84 +39,15 @@
 #include "mcPhaseSpace.h"
 #include "TROOT.h"
 #include "cauchyIntegral.h"
+#include "dynMassDep.h"
 
 using namespace std;
 using namespace rpwa;
 
 typedef complex<double> cd;
 
-const double gChargedPionMass = 0.13957018;  // charged pion rest mass [GeV/c^2] [PDG08]
+//const double gChargedPionMass = 0.13957018;  // charged pion rest mass [GeV/c^2] [PDG08]
 
-
-class massDep 
-{
-public:
-  massDep(double M, double width) 
-    : mS(M*M), mM(M), mWidth(width){
-  double masses[4] = {gChargedPionMass,gChargedPionMass,
-		      gChargedPionMass,gChargedPionMass};
-  ps=new mcPhaseSpace(4,masses,0,40,400,500000);
-  rho0=ps->eval(M);
-}
-  complex<double> val(double m);
-
-  mcPhaseSpace* phasespace() const {return ps;}
-  double get_rho0()const {return rho0;}
-  double get_rho(double m)const {return ps->eval(m);}
-  double get_ms(double s) const ;
-  double disperse(double* x, double* par) const;
-
-private:
-  double mS;
-  double mM;
-  double mWidth;
-  mcPhaseSpace* ps;
-  double rho0;
-
-  
-
-
-};
-
-
-cd
-massDep::val(double m){
-  double s=m*m;
-  double ms=get_ms(s);
-  cd N(mWidth*mM,0);
-  cd D(mS-s-ms,-mM*mWidth*ps->eval(m)/rho0);
-  return N/D;
-}
-
-
-double
-massDep::disperse(double* x, double* par) const{
-  // x[0] is s' (which will be integrated over in the cauchyIntegral)
-  // par[0] is s (which the dispersion integral depends on)
-  
-  double nom=mM*mWidth*get_rho(sqrt(x[0]))/rho0;
-  double denom=(x[0]-par[0])*(x[0]-mS);
-  return nom/denom;
-
-}
-
-double
-massDep::get_ms(double s) const {
-  if(s==mS)return 0;
-  TF1* f=new TF1("ms",this,&massDep::disperse,ps->thres()*ps->thres(),1600,1,"massDep","disperse");
-  f->SetParameter(0,s);
-  vector<realPole> p;
-  double residual_s=mM*mWidth*get_rho(sqrt(s))/rho0/(s-mS);
-  double residual_mS=mM*mWidth*get_rho(sqrt(mS))/rho0/(mS-s);
-  p.push_back(realPole(s,residual_s));
-  p.push_back(realPole(mS,residual_mS));
-  double low=ps->thres();low*=low;
-  cauchyIntegral cauchy(f,p,low,1600);
-  double I=cauchy.eval_Hunter(4);
-  //cout << "I= " << setprecision(12);
-  //cout << I << endl; 
-  return (s-mS)/TMath::Pi()*I;
-}
 
 
 int
@@ -155,39 +87,91 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
 
   
 
-  double mr=1.275;
+  //double mr=1.275;
   //double mr=1.7;
   //double wr=0.185;
-  double wr=0.30;
+  //double wr=0.30;
 
-  massDep* myBW=new massDep(mr,wr);
+  //double mr=0.77549;
+  //double wr=0.1462;
+  double mr=0.5;
+  double wr=0.6;
 
+  double masses[4] = {gChargedPionMass,gChargedPionMass,
+		      gChargedPionMass,gChargedPionMass};
+  dynMassDep* rho1=new dynMassDep(mr,wr,2,masses,1);
+  rho1->phasespace()->doCalc(1);
+  rho1->store_ms(10);
+  mr=0.77549;
+  wr=0.1462;
+  dynMassDep* rho2=new dynMassDep(mr,wr,2,masses,1);
+  rho2->phasespace()->doCalc(1);
+  rho2->store_ms(10);
   
+  mr=1.275;
+  //mr=1.7;
+  wr=0.185;
+  //wr=0.3;
+  dynMassDep* myBW=new dynMassDep(mr,wr,4,masses,2);
+  myBW->phasespace()->setSubSystems22(rho1,rho2);
+  myBW->phasespace()->doCalc(2);
+  myBW->store_ms(10);
 
 
   unsigned int nsteps=500;
   double step=0.005;
-  double m0=1.00;
+  double m0=0.8;
+
+  double mtwopi=2*gChargedPionMass;
+
+  TF1* twopi=new TF1("twopipsp","1./TMath::Pi()/16*TMath::Sqrt(x*x-[0]*[0])/x",mtwopi,10);
+  twopi->SetParameter(0,mtwopi);
 
   TGraph* intens=new TGraph(nsteps); // intensity
+  TGraph* intens_static=new TGraph(nsteps); // intensity static breitwigner
+  TGraph* intens_nodisp=new TGraph(nsteps); // intensity without dispersive term
+  
   TGraph* rho=new TGraph(nsteps);    // phase space
   TGraph* argand=new TGraph(nsteps); // argand plot
+  TGraph* argand_static=new TGraph(nsteps); // argand plot
+  TGraph* argand_nodisp=new TGraph(nsteps); // argand plot
+
   TGraph* ms=new TGraph(nsteps); // dispersion
 
-  double rho0=myBW->get_rho0();
+  TGraph* phase=new TGraph(nsteps);
+  TGraph* phase_static=new TGraph(nsteps);
+  TGraph* phase_nodisp=new TGraph(nsteps);
 
-  //TF1* f2=new TF1("ms2",myBW,&massDep::disperse,myBW->phasespace()->thres()*myBW->phasespace()->thres(),400,1,"massDep","disperse");
+
+  double rho0=myBW->get_rho0();
+  cout << "rho0="<<rho0<<endl;;
+
+  //TF1* f2=new TF1("ms2",myBW,&dynMassDep::disperse,myBW->phasespace()->thres()*myBW->phasespace()->thres(),400,1,"dynMassDep","disperse");
 
   for(unsigned int i=0; i<nsteps; ++i){
     double m=m0+i*step;
     std::cout << m << ".." << flush;
     complex<double> amp=myBW->val(m);
+    complex<double> amp_static=myBW->val_static(m);
+    complex<double> amp_nodisp=myBW->val_nodisperse(m);
+
+
     double r=myBW->get_rho(m)/rho0;
-    intens->SetPoint(i,m,norm(amp)*r);
+
+    intens->SetPoint(i,m,norm(amp));
+    intens_static->SetPoint(i,m,norm(amp_static));
+    intens_nodisp->SetPoint(i,m,norm(amp_nodisp));
+
+    phase->SetPoint(i,m,arg(amp));
+    phase_static->SetPoint(i,m,arg(amp_static));
+    phase_nodisp->SetPoint(i,m,arg(amp_nodisp));
     
     rho->SetPoint(i,m,r);
     argand->SetPoint(i,amp.real(),amp.imag());
-    ms->SetPoint(i,m,myBW->get_ms(m*m));
+    argand_static->SetPoint(i,amp_static.real(),amp_static.imag());
+    argand_nodisp->SetPoint(i,amp_nodisp.real(),amp_nodisp.imag());
+
+    ms->SetPoint(i,m,myBW->calc_ms(m*m));
 
     // calculate dispersion integral m(s)
     // dispersion part:
@@ -208,24 +192,39 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
 
 
   TCanvas* c=new TCanvas("c","Mass Dep",10,10,600,600);
-  c->Divide(2,2);
+  c->Divide(2,3);
   c->cd(1);
-  intens->SetTitle("Intensity");
-  intens->Draw("APC");
+  intens_static->SetTitle("Intensity");
+  intens_static->Draw("AC");
+  intens_nodisp->SetLineColor(kBlue);
+  intens_nodisp->Draw("SAME C");
+  intens->SetLineColor(kRed);
+  intens->Draw("SAME C");
+  //intens->Print();
   c->cd(2);
  
   argand->SetTitle("Argand plot");
-  argand->Draw("AP");
-
+  
+  argand_static->Draw("AP");
+  argand_nodisp->SetMarkerColor(kBlue);argand_nodisp->Draw("SAME P");
+  argand->SetMarkerColor(kRed);
+  argand->Draw("SAME P");
 
   c->cd(3);
-  //f->Draw("AP");
+  phase_static->Draw("AC");
+  phase_nodisp->SetLineColor(kBlue);phase_nodisp->Draw("SAME C");
+  phase->SetLineColor(kRed);phase->Draw("SAME C");  
 
   c->cd(4);
-  ms->Draw("APC");
+  
+  
+  myBW->graph_ms()->Draw("AC");
 
-  c->cd(3);
-  myBW->phasespace()->getGraph()->Draw("APC");
+  c->cd(5);
+  myBW->phasespace()->getGraph()->Draw("AC");
+  //myBW->phasespace()->getGraph()->Print();
+  twopi->SetLineColor(kRed);
+  twopi->Draw("SAME C");
   //f2->SetParameter(0,mr*mr);
   //f2->Draw("same");  
 
@@ -233,10 +232,23 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   c->Flush();
 
 
+  TFile* file=TFile::Open("parmeterize.root","RECREATE");
+  intens_static->Write("StaticIntensity");
+  intens_nodisp->Write("DynamicNoDispIntensity");
+  intens->Write("DynIntensity");
+  phase_static->Write("StaticPhase");
+  phase_nodisp->Write("DynamicNoDispPhase");
+  phase->Write("DynPhase");
+
+  myBW->phasespace()->getGraph()->Write("PhaseSpace");
+  argand->Write("Argand");
+  
+
 
   gApplication->SetReturnFromRun(kFALSE);
   gSystem->Run();
 
+  file->Close();
 
 
   return 0;

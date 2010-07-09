@@ -53,6 +53,11 @@ cauchyIntegral::trafo(double t){
 
 double
 cauchyIntegral::ofart(double x){
+  if(x>_rup || x<_rlow){
+    cout << "cauchyIntergral:: x out of range: " << x 
+	 << " ("<< _rlow << "," << _rup << ")" << endl;
+    throw;
+  }
   return (2.* x-_range)/_diff;
 }
 
