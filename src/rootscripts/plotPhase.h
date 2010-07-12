@@ -38,52 +38,135 @@
 
 
 #include <string>
+#include <vector>
 
-#include "TGraphErrors.h"
-#include "TGraphPolar.h"
 #include "TTree.h"
+#include "TMultiGraph.h"
+
+#include "fitResult.h"
 
 
-// signature with wave indices
-TGraphErrors*
-plotPhase(TTree*             tree,                 // fitResult tree
-	  const int          waveIndexA,           // index of first wave
-	  const int          waveIndexB,           // index of second wave
-	  const std::string& selectExpr = "",      // TTree::Draw() selection expression
-	  const std::string& graphTitle = "",      // name and title of graph
-	  const char*        drawOption = "APZ",   // draw option for graph
-	  const int          graphColor = kBlack,  // color of line and marker
-	  const bool         saveEps    = false,  // if set, EPS file with name waveId is created
-	  const string&      branchName = "fitResult_v2");
+// .............................................................................
+// signatures with wave indices
+TMultiGraph*
+plotPhase(const unsigned int nmbTrees,             // number of fitResult trees
+          TTree**            trees,                // array of fitResult trees
+          const int          waveIndexA,           // index of first wave
+          const int          waveIndexB,           // index of second wave
+          const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
+          const int*         graphColors = NULL,   // array of colors for graph line and marker
+          const bool         drawLegend  = true,   // if set legend is drawn
+          const string&      graphTitle  = "",     // name and title of graph (default is wave IDs)
+          const char*        drawOption  = "AP",   // draw option for graph
+          const string&      selectExpr  = "",     // TTree::Draw() selection expression
+          const string&      branchName  = "fitResult_v2");  // fitResult branch name
 
 
-// signature with wave names
-TGraphErrors*
-plotPhase(TTree*             tree,                 // fitResult tree
-	  const std::string& waveNameA,            // name of first wave
-	  const std::string& waveNameB,            // name of second wave
-	  const std::string& selectExpr = "",      // TTree::Draw() selection expression
-	  const std::string& graphTitle = "",      // name and title of graph
-	  const char*        drawOption = "APZ",   // draw option for graph
-	  const int          graphColor = kBlack,  // color of line and marker
-	  const bool         saveEps    = false,   // if set, EPS file with name waveId is created
-	  const string&      branchName = "fitResult_v2")
+inline
+TMultiGraph*
+plotPhase(std::vector<TTree*>&    trees,                // array of fitResult trees
+          const int               waveIndexA,           // index of first wave
+          const int               waveIndexB,           // index of second wave
+          const bool              saveEps     = false,  // if set, EPS file with name wave ID is created
+          const std::vector<int>& graphColors = std::vector<int>(),  // array of colors for graph line and marker
+          const bool              drawLegend  = true,   // if set legend is drawn
+          const string&           graphTitle  = "",     // name and title of graph (default is wave IDs)
+          const char*             drawOption  = "AP",   // draw option for graph
+          const string&           selectExpr  = "",     // TTree::Draw() selection expression
+          const string&           branchName  = "fitResult_v2")  // fitResult branch name
 {
-  if (!tree) {
-    printErr << "null pointer to tree. exiting." << endl;
-    return 0;
-  }
-  // get wave indices (assumes same wave set in all trees)
-  rpwa::fitResult* massBin = new rpwa::fitResult();
-  tree->SetBranchAddress(branchName.c_str(), &massBin);
-  tree->GetEntry(0);
-  const int indexA = massBin->waveIndex(waveNameA);
-  const int indexB = massBin->waveIndex(waveNameB);
-  if ((indexA >= 0) && (indexB >= 0))
-    return plotPhase(tree, indexA, indexB, selectExpr,
-		     graphTitle, drawOption, graphColor, saveEps, branchName);
-  printErr << "cannot find wave(s) in tree '" << tree->GetName() << "'. exiting." << endl;
-  return 0;
+	return plotPhase(trees.size(), &(*(trees.begin())), waveIndexA, waveIndexB, saveEps,
+	                 &(*(graphColors.begin())), drawLegend, graphTitle, drawOption,
+	                 selectExpr, branchName);
+}
+
+
+inline
+TMultiGraph*
+plotPhase(TTree*        tree,                // fitResult tree
+          const int     waveIndexA,          // index of first wave
+          const int     waveIndexB,          // index of second wave
+          const bool    saveEps    = false,  // if set, EPS file with name wave ID is created
+          const int     graphColor = NULL,   // array of colors for graph line and marker
+          const bool    drawLegend = false,  // if set legend is drawn
+          const string& graphTitle = "",     // name and title of graph (default is wave IDs)
+          const char*   drawOption = "AP",   // draw option for graph
+          const string& selectExpr = "",     // TTree::Draw() selection expression
+          const string& branchName = "fitResult_v2")  // fitResult branch name
+{
+	return plotPhase(1, &tree, waveIndexA, waveIndexB, saveEps, &graphColor,
+	                 drawLegend, graphTitle, drawOption, selectExpr, branchName);
+}
+
+
+// .............................................................................
+// signatures with wave names
+inline
+TMultiGraph*
+plotPhase(const unsigned int nmbTrees,             // number of fitResult trees
+          TTree**            trees,                // array of fitResult trees
+          const std::string& waveNameA,            // name of first wave
+          const std::string& waveNameB,            // name of second wave
+          const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
+          const int*         graphColors = NULL,   // array of colors for graph line and marker
+          const bool         drawLegend  = true,   // if set legend is drawn
+          const string&      graphTitle  = "",     // name and title of graph (default is wave IDs)
+          const char*        drawOption  = "AP",   // draw option for graph
+          const string&      selectExpr  = "",     // TTree::Draw() selection expression
+          const string&      branchName  = "fitResult_v2")  // fitResult branch name
+{
+	if (!trees[0]) {
+		printErr << "null pointer to tree[" << 0 << "]. exiting." << endl;
+		return 0;
+	}
+	// get wave indices (assumes same wave set in all trees)
+	rpwa::fitResult* massBin = new rpwa::fitResult();
+	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+	trees[0]->GetEntry(0);
+	const int indexA = massBin->waveIndex(waveNameA);
+	const int indexB = massBin->waveIndex(waveNameB);
+	if ((indexA >= 0) && (indexB >= 0))
+		return plotPhase(nmbTrees, trees, indexA, indexB, saveEps, graphColors, drawLegend,
+		                 graphTitle, drawOption, selectExpr, branchName);
+	printErr << "cannot find wave(s) in tree '" << trees[0]->GetName() << "'. aborting." << endl;
+	return 0;
+}
+
+
+inline
+TMultiGraph*
+plotPhase(std::vector<TTree*>&    trees,                // array of fitResult trees
+          const std::string&      waveNameA,            // name of first wave
+          const std::string&      waveNameB,            // name of second wave
+          const bool              saveEps     = false,  // if set, EPS file with name wave ID is created
+          const std::vector<int>& graphColors = std::vector<int>(),  // array of colors for graph line and marker
+          const bool              drawLegend  = true,   // if set legend is drawn
+          const string&           graphTitle  = "",     // name and title of graph (default is wave IDs)
+          const char*             drawOption  = "AP",   // draw option for graph
+          const string&           selectExpr  = "",     // TTree::Draw() selection expression
+          const string&           branchName  = "fitResult_v2")  // fitResult branch name
+{
+	return plotPhase(trees.size(), &(*(trees.begin())), waveNameA, waveNameB, saveEps,
+	                 &(*(graphColors.begin())), drawLegend, graphTitle, drawOption,
+	                 selectExpr, branchName);
+}
+
+
+inline
+TMultiGraph*
+plotPhase(TTree*             tree,                // fitResult tree
+          const std::string& waveNameA,           // name of first wave
+          const std::string& waveNameB,           // name of second wave
+          const bool         saveEps    = false,  // if set, EPS file with name wave ID is created
+          const int          graphColor = NULL,   // array of colors for graph line and marker
+          const bool         drawLegend = false,  // if set legend is drawn
+          const string&      graphTitle = "",     // name and title of graph (default is wave IDs)
+          const char*        drawOption = "AP",   // draw option for graph
+          const string&      selectExpr = "",     // TTree::Draw() selection expression
+          const string&      branchName = "fitResult_v2")  // fitResult branch name
+{
+	return plotPhase(1, &tree, waveNameA, waveNameB, saveEps, &graphColor,
+	                 drawLegend, graphTitle, drawOption, selectExpr, branchName);
 }
 
 
