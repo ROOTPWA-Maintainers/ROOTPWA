@@ -36,20 +36,21 @@ int
 main(int argc, char** argv){
 
   if(argc<2){
-    cerr<<"Usage: pwaplot outputfile fit1 fit2 fit3 ..."<<endl;
+    cerr<<"Usage: pwaplot nbins outputfile fit1 fit2 fit3 ..."<<endl;
     return 1;
   }
-
-  string outfilename=argv[1];
+  
+  unsigned int nbins=atoi(argv[1]);
+  string outfilename=argv[2];
   vector<string> inputfiles;
-  for(int i=2; i<argc; ++i){
+  for(int i=3; i<argc; ++i){
     inputfiles.push_back(argv[i]);
   }
   
   pwaPlotter plotter;
   
   for(unsigned int i=0; i<inputfiles.size();++i){
-    plotter.addFit(inputfiles[i],inputfiles[i]);
+    plotter.addFit(inputfiles[i],inputfiles[i],1,"pwa","fitResult_v2",nbins);
   }
 
   plotter.produceDensityPlots();
