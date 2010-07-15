@@ -119,8 +119,8 @@ TLorentzRotation
 isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
 {
   TLorentzVector daughter = daughterLv;
-  const TVector3 zAxisMother(0, 0, 1);  // take z-axis as defined in mother frame
-  const TVector3 yHfAxis = zAxisMother.Cross(daughter.Vect());  // y-axis of helicity frame
+  const TVector3 zAxisParent(0, 0, 1);  // take z-axis as defined in parent frame
+  const TVector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
   // rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
   TRotation rot1;
   rot1.RotateZ(-yHfAxis.Phi());
@@ -175,7 +175,7 @@ isobarHelicityAmplitude::spaceInvertDecay() const
     printInfo << "space inverting final state momenta." << endl;
   // transform final state particles into X rest frame
   const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->parent()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   _decay->transformFsParticles(gjTrans);
   // perform parity transformation on final state particles in X rest frame
@@ -196,7 +196,7 @@ isobarHelicityAmplitude::reflectDecay() const
     printInfo << "reflecting final state momenta through production plane." << endl;
   // transform final state particles into X rest frame
   const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->parent()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   _decay->transformFsParticles(gjTrans);
   // reflect final state particles through production plane
@@ -233,13 +233,13 @@ isobarHelicityAmplitude::transformDaughters() const
   //    this should be solved in a more general way so that the production vertex is asked
   //    for the beam
   const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->mother()->lzVec();
+  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->parent()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
     const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
     if (_debug)
       printInfo << "transforming outgoing particles of vertex " << *vertex
-                << " into " << vertex->mother()->name() << " Gottfried-Jackson RF" << endl;
+                << " into " << vertex->parent()->name() << " Gottfried-Jackson RF" << endl;
     vertex->transformOutParticles(gjTrans);
   }
   // 2) transform daughters of isobar decay vertices to the respective helicity frames
@@ -247,8 +247,8 @@ isobarHelicityAmplitude::transformDaughters() const
     const isobarDecayVertexPtr& vertex  = _decay->isobarDecayVertices()[i];
     if (_debug)
       printInfo << "transforming all child particles of vertex " << *vertex
-                << " into " << vertex->mother()->name() << " helicity RF" << endl;
-    const TLorentzRotation hfTrans = hfTransform(vertex->mother()->lzVec());
+                << " into " << vertex->parent()->name() << " helicity RF" << endl;
+    const TLorentzRotation hfTrans = hfTransform(vertex->parent()->lzVec());
     // get all particles downstream of this vertex
     decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
     decayTopologyGraphType::edgeIterator iEd, iEdEnd;
@@ -256,26 +256,26 @@ isobarHelicityAmplitude::transformDaughters() const
       const particlePtr& part = subGraph.particle(*iEd);
       if (_debug)
         cout << "    transforming " << part->name() << " into "
-             << vertex->mother()->name() << " helicity RF" << endl;
+             << vertex->parent()->name() << " helicity RF" << endl;
       part->transform(hfTrans);
     }
   }
 }
 
 
-// assumes that daughters were transformed into mother RF
+// assumes that daughters were transformed into parent RF
 complex<double>
 isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                  const bool                  topVertex) const
 {
-  const particlePtr& mother    = vertex->mother();
+  const particlePtr& parent    = vertex->parent();
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
 
   // calculate Clebsch-Gordan coefficient for L-S coupling
   const int    L         = vertex->L();
   const int    S         = vertex->S();
-  const int    J         = mother->J();
+  const int    J         = parent->J();
   const int    lambda1   = daughter1->spinProj();
   const int    lambda2   = daughter2->spinProj();
   const int    lambda    = lambda1 - lambda2;
@@ -291,9 +291,9 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
     return 0;
 
   // calculate D-function
-  const int       Lambda = mother->spinProj();
-  const int       P      = mother->P();
-  const int       refl   = mother->reflectivity();
+  const int       Lambda = parent->spinProj();
+  const int       P      = parent->P();
+  const int       refl   = parent->reflectivity();
   const double    phi    = daughter1->lzVec().Phi();  // use daughter1 as analyzer
   const double    theta  = daughter1->lzVec().Theta();
   complex<double> DFunc;
@@ -335,7 +335,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& ve
 {
   if (_debug)
     printInfo << "calculating decay amplitude for " << *vertex << endl;
-  const particlePtr& mother    = vertex->mother();
+  const particlePtr& parent    = vertex->parent();
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
   complex<double>    ampSum    = 0;
@@ -359,14 +359,14 @@ isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& ve
         daughter2Amp = twoBodyDecayAmplitudeSum(daughter2Vertex, false);
       } else
         daughter2Amp = 1;
-      complex<double> motherAmp = twoBodyDecayAmplitude(vertex, topVertex);
-      complex<double> amp       = motherAmp * daughter1Amp * daughter2Amp;
+      complex<double> parentAmp = twoBodyDecayAmplitude(vertex, topVertex);
+      complex<double> amp       = parentAmp * daughter1Amp * daughter2Amp;
       if (_debug)
         printInfo << "amplitude term for : "
-                  << mother->name()    << " [lambda = " << 0.5 * mother->spinProj() << "] -> "
+                  << parent->name()    << " [lambda = " << 0.5 * parent->spinProj() << "] -> "
                   << daughter1->name() << " [lambda = " << 0.5 * lambda1 << "] + "
                   << daughter2->name() << " [lambda = " << 0.5 * lambda2 << "] = "
-                  << "mother amp. = " << motherAmp << " * daughter_1 amp = "
+                  << "parent amp. = " << parentAmp << " * daughter_1 amp = "
                   << daughter1Amp << " * daughter_2 amp = "<< daughter2Amp << " = "
                   << maxPrecisionDouble(amp) << endl;
       ampSum += amp;

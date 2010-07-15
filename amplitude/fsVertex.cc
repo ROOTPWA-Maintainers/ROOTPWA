@@ -84,6 +84,24 @@ fsVertex::doClone(const bool cloneInParticles,
 }
 
 
+bool
+fsVertex::addInParticle(const particlePtr&)
+{
+	if (_debug)
+		printWarn << "cannot add incoming particle to " << *this << endl;
+	return false;
+}
+
+
+bool
+fsVertex::addOutParticle(const particlePtr&)
+{
+	if (_debug)
+		printWarn << "cannot add outgoing particle to " << *this << endl;
+	return false;
+}
+
+
 ostream&
 fsVertex::print(ostream& out) const
 {

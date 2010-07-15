@@ -64,8 +64,8 @@ namespace rpwa {
 		      const bool                   = false) const  ///< creates deep copy of final state vertex; must not be virtual
     { return fsVertexPtr(doClone(cloneInParticles, false)); }
 
-    inline virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (final state particle) is allowed
-    inline virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; no outgoing particles are allowed
+	  virtual bool addInParticle (const particlePtr&);  ///< disabled; final state particle has to be specified at construction
+	  virtual bool addOutParticle(const particlePtr&);  ///< disabled; no outgoing particles are allowed
 
     // final-state specific accessors
     inline particlePtr&       fsParticle()       { return inParticles()[0]; }  ///< returns final state particle

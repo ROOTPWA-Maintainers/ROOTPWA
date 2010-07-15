@@ -65,7 +65,7 @@ namespace rpwa {
 	particleNameFromGeantId(const int id,
 	                        const int charge)
 	{
-		assert((charge == -1) || (charge == 0) || (charge == +1));
+		assert((charge == -1) or (charge == 0) or (charge == +1));
 		string name = id2name((Geant_ID)id);
 		name = particleProperties::stripChargeFromName(name);
 		stringstream n;
@@ -100,7 +100,7 @@ namespace rpwa {
 			if (pdt.isInTable(n))
 				prop = pdt.entry(n);
 		}
-		if (!prop) {
+		if (not prop) {
 			printWarn << "neither particle '" << name << "' "
 			          << "nor '" << particleProperties::stripChargeFromName(name) << "' "
 			          << "are in particle data table. using mass 0." << endl;
@@ -120,7 +120,7 @@ namespace rpwa {
 	                const string&  decayKinMomentaLeafName,
 	                const bool     debug)
 	{
-		if (!inEvt || !inEvt.good()) {
+		if (not inEvt or not inEvt.good()) {
 			printWarn << "cannot read from input stream" << endl;
 			return false;
 		}
@@ -229,7 +229,7 @@ namespace rpwa {
 
 			outTree.Fill();
 			++countEvents;
-			if ((maxNmbEvents > 0) && (countEvents >= maxNmbEvents))
+			if ((maxNmbEvents > 0) and (countEvents >= maxNmbEvents))
 				break;
 		}
 
@@ -251,7 +251,7 @@ namespace rpwa {
 	                 const bool     debug)
 	{
 		const long int nmbEventsTree = inTree.GetEntries();
-		if (!outEvt) {
+		if (not outEvt) {
 			printWarn << "cannot write to output stream" << endl;
 			return false;
 		}
@@ -272,7 +272,7 @@ namespace rpwa {
 		const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
 		                            : nmbEventsTree);
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-			if (!debug)
+			if (not debug)
 				progressIndicator(eventIndex, nmbEvents);
 
 			if (inTree.LoadTree(eventIndex) < 0)

@@ -172,7 +172,7 @@ isobarDecayTopology::constructDecay(const interactionVertexPtr&         producti
 	vector<isobarDecayVertexPtr> decayVertices(nmbVert);
 	for (unsigned int i = 0; i < nmbVert; ++i) {
 		decayVertices[i] = dynamic_pointer_cast<isobarDecayVertex>(isobarDecayVertices[i]);
-		if (!decayVertices[i]) {
+		if (not decayVertices[i]) {
 			printErr << "interaction vertex[" << i << "] is not an isobarDecayVertex. aborting." << endl;
 			throw;
 		}
@@ -221,7 +221,7 @@ isobarDecayTopology::checkConsistency() const
 	bool allVertConsistent = true;
 	for (unsigned int i = 0; i < _isobarVertices.size(); ++i) {
 		const bool vertexConsistent = _isobarVertices[i]->checkConsistency();
-		if (!vertexConsistent) {
+		if (not vertexConsistent) {
 			allVertConsistent = false;
 			if (_debug)
 				printInfo << "isobar decay vertex " << *_isobarVertices[i] << " is "
@@ -246,7 +246,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
                                     const int  maxS,
                                     const bool allowJpcExotic)
 {
-	if (!checkTopology()) {
+	if (not checkTopology()) {
 		printErr << "ill-formed graph topology. aborting." << endl;
 		throw;
 	}
@@ -292,9 +292,9 @@ isobarDecayTopology::possibleDecays(const int  minI,
 		for (iDaughter[0] = 0; iDaughter[0] < daughterDecays[0]->size(); ++iDaughter[0])
 			for (iDaughter[1] = 0; iDaughter[1] < daughterDecays[1]->size(); ++iDaughter[1]) {
 
-				// copy mother vertex
-				isobarDecayVertexPtr motherVertex(new isobarDecayVertex(*static_pointer_cast<isobarDecayVertex>(vertex(startNds[iStart]))));
-				particlePtr          mother = motherVertex->mother();
+				// copy parent vertex
+				isobarDecayVertexPtr parentVertex(new isobarDecayVertex(*static_pointer_cast<isobarDecayVertex>(vertex(startNds[iStart]))));
+				particlePtr          parent = parentVertex->parent();
 				// get daughter particles from the respective decay topologies
 				const nodeDesc topNodes[2] = 
 					{(*daughterDecays[0])[iDaughter[0]].topNode(),
@@ -302,22 +302,22 @@ isobarDecayTopology::possibleDecays(const int  minI,
 				const particlePtr daughters[2] = 
 					{(*daughterDecays[0])[iDaughter[0]].vertex(topNodes[0])->inParticles()[0],
 					 (*daughterDecays[1])[iDaughter[1]].vertex(topNodes[1])->inParticles()[0]};
-				// set daughters of mother vertex
-				motherVertex->daughter1() = daughters[0];
-				motherVertex->daughter2() = daughters[1];
-				// join daughter subdecays and mother vertex
-				isobarDecayTopology motherDecay = joinDaughterDecays(motherVertex,
+				// set daughters of parent vertex
+				parentVertex->daughter1() = daughters[0];
+				parentVertex->daughter2() = daughters[1];
+				// join daughter subdecays and parent vertex
+				isobarDecayTopology parentDecay = joinDaughterDecays(parentVertex,
 				                                                     (*daughterDecays[0])[iDaughter[0]],
 				                                                     (*daughterDecays[1])[iDaughter[1]]);
 	
-				// calculate mother quantum numbers fixed by daughter quantum numbers
+				// calculate parent quantum numbers fixed by daughter quantum numbers
 				const int baryonNmb   = daughters[0]->baryonNmb()   + daughters[1]->baryonNmb();
 				const int charge      = daughters[0]->charge()      + daughters[1]->charge();
 				const int strangeness = daughters[0]->strangeness() + daughters[1]->strangeness();
 				const int charm       = daughters[0]->charm()       + daughters[1]->charm();
 				const int beauty      = daughters[0]->beauty()      + daughters[1]->beauty();
 				const int G           = daughters[0]->G()           * daughters[1]->G();
-				// daughter quantum numbers that define ranges of possible mother quantum numbers
+				// daughter quantum numbers that define ranges of possible parent quantum numbers
 				const int spins   [2] = {daughters[0]->J(),       daughters[1]->J()      };
 				const int isospins[2] = {daughters[0]->isospin(), daughters[1]->isospin()};
 
@@ -340,11 +340,11 @@ isobarDecayTopology::possibleDecays(const int  minI,
 								// if (abs(charge - 0.5 * (baryonNmb + strangeness + charm + beauty)) != 0.5 * I)
 								//   continue;
 								const int C = G * (I % 4 == 0 ? 1 : -1);  // C-parity
-								if (!allowJpcExotic)
+								if (not allowJpcExotic)
 									// quark model restrictions: P == C is always allowed
 									// check that P = (-1)^(J + 1)
-									if ((P != C) && (   (C != (J % 4     == 0 ? 1 : -1))
-									                    || (P != (J + 2 % 4 == 0 ? 1 : -1)))) {
+									if ((P != C) and (   (C != (J % 4     == 0 ? 1 : -1))
+									                  or (P != (J + 2 % 4 == 0 ? 1 : -1)))) {
 										if (_debug)
 											printInfo << "disregarding spin-exotic isobar with IG(JPC) = "
 											          << 0.5 * I << sign(G)
@@ -352,18 +352,18 @@ isobarDecayTopology::possibleDecays(const int  minI,
 										continue;
 									}
 		
-								// find candidates for mother isobar in particle data table
-								particleProperties isobarProp(*mother);
+								// find candidates for parent isobar in particle data table
+								particleProperties isobarProp(*parent);
 								isobarProp.setBaryonNmb(baryonNmb);
 								isobarProp.setSCB      (strangeness, charm, beauty);
 								isobarProp.setIGJPC    (I, G, J, P, C);
 								particleDataTable& pdt = particleDataTable::instance();
 								vector<const particleProperties*> isobarCandidates;
-								const string motherName    = mother->name();
+								const string parentName    = parent->name();
 								const double minIsobarMass = daughters[0]->mass() + daughters[1]->mass();
-								if (   (motherName == "X-") || (motherName == "X0")
-								       || (motherName == "X+") || (motherName == "X")) {
-									if (mother->mass() + mother->width() < minIsobarMass) {
+								if (   (parentName == "X-") or (parentName == "X0")
+								    or (parentName == "X+") or (parentName == "X")) {
+									if (parent->mass() + parent->width() < minIsobarMass) {
 										cout << isobarProp.qnSummary() << " mass too low. skipping candidate." << endl;
 										continue;
 									}
@@ -378,18 +378,18 @@ isobarDecayTopology::possibleDecays(const int  minI,
 								// loop over isobar candidates
 								for (unsigned int iIsobar = 0; iIsobar < isobarCandidates.size(); ++iIsobar) {
 									// clone topology
-									const isobarDecayTopologyPtr& decayCopy = motherDecay.clone(false, false);
-									// set mother vertex quantum numbers
-									const isobarDecayVertexPtr& motherVertexCopy =
-										static_pointer_cast<isobarDecayVertex>(decayCopy->vertex(motherDecay.node(motherVertex)));
-									motherVertexCopy->setL(L);
-									motherVertexCopy->setS(S);
-									// set mother particle
-									const particlePtr& motherCopy = motherVertexCopy->mother();
-									motherCopy->setProperties(*isobarCandidates[iIsobar]);
-									motherCopy->setCharge(charge);
+									const isobarDecayTopologyPtr& decayCopy = parentDecay.clone(false, false);
+									// set parent vertex quantum numbers
+									const isobarDecayVertexPtr& parentVertexCopy =
+										static_pointer_cast<isobarDecayVertex>(decayCopy->vertex(parentDecay.node(parentVertex)));
+									parentVertexCopy->setL(L);
+									parentVertexCopy->setS(S);
+									// set parent particle
+									const particlePtr& parentCopy = parentVertexCopy->parent();
+									parentCopy->setProperties(*isobarCandidates[iIsobar]);
+									parentCopy->setCharge(charge);
 									if (_debug)
-										printInfo << "created decay topology for " << *motherVertexCopy << endl;
+										printInfo << "created decay topology for " << *parentVertexCopy << endl;
 									decayPossibilities[startNds[iStart]].push_back(*decayCopy);
 								} // isobar candidate loop
 							}  // isospin loop
@@ -404,7 +404,7 @@ isobarDecayTopology::possibleDecays(const int  minI,
 	for (unsigned int i = 0; i < decays.size(); ++i) {
 		// clone production vertex and set X-particle
 		const interactionVertexPtr newProdVert(productionVertex()->clone(false, false));
-		const particlePtr&         newX = decays[i].XIsobarDecayVertex()->mother();
+		const particlePtr&         newX = decays[i].XIsobarDecayVertex()->parent();
 		newProdVert->outParticles()[0] = newX;
 		// add production vertex
 		decays[i].setProductionVertex(newProdVert);
@@ -419,12 +419,12 @@ isobarDecayTopology::calcIsobarLzVec()
 	// loop over isobar decay vertices and propagate Lorentz-vectors from final state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		if (_debug)
-			printInfo << "calculating Lorentz-vector of mother isobar '"
-			          << _isobarVertices[i]->mother()->name() << "' "
+			printInfo << "calculating Lorentz-vector of parent isobar '"
+			          << _isobarVertices[i]->parent()->name() << "' "
 			          << "of node[" << node(_isobarVertices[i]) << "]" << endl;
-		_isobarVertices[i]->calcMotherLzVec();
+		_isobarVertices[i]->calcParentLzVec();
 	}
-	return XIsobarDecayVertex()->mother()->lzVec();
+	return XIsobarDecayVertex()->parent()->lzVec();
 }
 
 
@@ -434,10 +434,10 @@ isobarDecayTopology::calcIsobarCharges()
 	// loop over isobar decay vertices and propagate charges from final state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		if (_debug)
-			printInfo << "calculating charge of mother isobar '"
-			          << _isobarVertices[i]->mother()->name() << "' "
+			printInfo << "calculating charge of parent isobar '"
+			          << _isobarVertices[i]->parent()->name() << "' "
 			          << "of node[" << node(_isobarVertices[i]) << "]" << endl;
-		_isobarVertices[i]->calcMotherCharge();
+		_isobarVertices[i]->calcParentCharge();
 	}
 	// update graph name
 	name() = "\"" + productionVertex()->outParticles()[0]->qnSummary() + "\"";
@@ -532,12 +532,12 @@ isobarDecayTopology::buildIsobarVertexArray()
 	for (unsigned int i = 0; i < nmbDecayVertices(); ++i) {
 		const interactionVertexPtr& v = decayVertices()[i];
 		_isobarVertices[i] = dynamic_pointer_cast<isobarDecayVertex>(v);
-		if (!_isobarVertices[i]) {
+		if (not _isobarVertices[i]) {
 			printWarn << *v << " is not of type isobarDecayVertex." << endl;
 			success = false;
 		}
 	}
-	if (!success) {
+	if (not success) {
 		printErr << "incompatible topology to copy from. some interaction vertices are "
 		         << "not of type isobarDecayVertex. aborting." << endl;
 		throw;
@@ -547,9 +547,9 @@ isobarDecayTopology::buildIsobarVertexArray()
 
 isobarDecayTopology
 isobarDecayTopology::subDecay(const nodeDesc& startNd,
-                              const bool      linkToMotherTopo)
+                              const bool      linkToParentTopo)
 {
-	isobarDecayTopology subTopo(decayTopology::subDecay(startNd, linkToMotherTopo));
+	isobarDecayTopology subTopo(decayTopology::subDecay(startNd, linkToParentTopo));
 	subTopo.name() = "\"" + vertex(startNd)->inParticles()[0]->qnSummary() + "\"";
 	return subTopo;
 }
@@ -564,15 +564,15 @@ isobarDecayTopology::addDecay(const isobarDecayTopology& topo)
 
 
 isobarDecayTopology
-isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr&        motherVertex,
-                                        const vector<isobarDecayTopology>& daughterDecays)  ///< joins daughter decay graphs and connects them to a common mother vertex
+isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr&        parentVertex,
+                                        const vector<isobarDecayTopology>& daughterDecays)  ///< joins daughter decay graphs and connects them to a common parent vertex
 {
 	if (_debug) {
-		printInfo << "joining " << daughterDecays.size() << " daughter graphs with mother "
-		          << *motherVertex << endl;
+		printInfo << "joining " << daughterDecays.size() << " daughter graphs with parent "
+		          << *parentVertex << endl;
 	}
 	isobarDecayTopology newTopo;
-	newTopo.addVertex(motherVertex);
+	newTopo.addVertex(parentVertex);
 	for (unsigned int i = 0; i < daughterDecays.size(); ++i)
 		newTopo.addDecay(daughterDecays[i]);
 	return newTopo;
@@ -580,12 +580,12 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr&        mothe
 
 
 isobarDecayTopology
-isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& motherVertex,
+isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& parentVertex,
                                         const isobarDecayTopology&  daughter1Decay,
-                                        const isobarDecayTopology&  daughter2Decay)  ///< joins daughter decay graphs and connects them to a common mother vertex
+                                        const isobarDecayTopology&  daughter2Decay)  ///< joins daughter decay graphs and connects them to a common parent vertex
 {
 	std::vector<isobarDecayTopology> daughterDecays(2);
 	daughterDecays[0] = daughter1Decay;
 	daughterDecays[1] = daughter2Decay;
-	return joinDaughterDecays(motherVertex, daughterDecays);
+	return joinDaughterDecays(parentVertex, daughterDecays);
 }

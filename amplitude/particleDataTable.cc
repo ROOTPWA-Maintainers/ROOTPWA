@@ -54,22 +54,22 @@ bool                            particleDataTable::_debug = false;
 bool
 particleDataTable::isInTable(const string& partName)
 {
-  if (_dataTable.find(partName) == _dataTable.end()) {
-    return false;
-  } else
-    return true;
+	if (_dataTable.find(partName) == _dataTable.end()) {
+		return false;
+	} else
+		return true;
 }
 
 
 const particleProperties*
 particleDataTable::entry(const string& partName)
 {
-  dataIterator i = _dataTable.find(partName);
-  if (i == _dataTable.end()) {
-    printWarn << "could not find entry for particle '" << partName << "'" << endl;
-    return 0;
-  } else
-    return &(i->second);
+	dataIterator i = _dataTable.find(partName);
+	if (i == _dataTable.end()) {
+		printWarn << "could not find entry for particle '" << partName << "'" << endl;
+		return 0;
+	} else
+		return &(i->second);
 }
 
 
@@ -77,26 +77,26 @@ particleDataTable::entry(const string& partName)
     
 vector<const particleProperties*> 
 particleDataTable::entriesMatching(const particleProperties& prototype,
-				   const string&             sel,
-				   const double              minIsobarMass)
+                                   const string&             sel,
+                                   const double              minIsobarMass)
 {
-  const pair<particleProperties, string> selector(prototype, sel);
-  vector<const particleProperties*> matchingEntries;
-  for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i)
-    // limit isobar mass, if minIsobarMass != 0
-    // accept isobar candidate if its mass + width is larger than minIsobarMass
-    if ((i->second == selector) && (   (i->second.mass() + i->second.width() > minIsobarMass)
-				    || (minIsobarMass == 0))) {
-      if (_debug) {
-	printInfo << "found entry " << i->second.name() << " matching " << prototype
-		  << " and '" << sel << "'" << flush;
-	if (minIsobarMass != 0)
-	  cout << " with mass > " << minIsobarMass << " GeV";
-	cout << endl;
-      }      
-      matchingEntries.push_back(&(i->second));
-    }
-  return matchingEntries;
+	const pair<particleProperties, string> selector(prototype, sel);
+	vector<const particleProperties*> matchingEntries;
+	for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i)
+		// limit isobar mass, if minIsobarMass != 0
+		// accept isobar candidate if its mass + width is larger than minIsobarMass
+		if ((i->second == selector) and (   (i->second.mass() + i->second.width() > minIsobarMass)
+		                                 or (minIsobarMass == 0))) {
+			if (_debug) {
+				printInfo << "found entry " << i->second.name() << " matching " << prototype
+				          << " and '" << sel << "'" << flush;
+				if (minIsobarMass != 0)
+					cout << " with mass > " << minIsobarMass << " GeV";
+				cout << endl;
+			}      
+			matchingEntries.push_back(&(i->second));
+		}
+	return matchingEntries;
 }
 
 
@@ -105,77 +105,77 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 bool
 particleDataTable::addEntry(const particleProperties& partProp)
 {
-  const string name = partProp.name();
-  dataIterator i    = _dataTable.find(name);
-  if (i != _dataTable.end()) {
-    printWarn << "trying to add entry for particle '" << name << "' "
-	      << "which already exists in table"     << endl
-	      << "    existing entry: " << i->second << endl
-	      << "    conflicts with: " << partProp  << endl;
-    return false;
-  } else {
-    _dataTable[name] = partProp;
-    if (_debug)
-      printInfo << "added entry for '" << name << "' into particle data table" << endl;
-    return true;
-  }
+	const string name = partProp.name();
+	dataIterator i    = _dataTable.find(name);
+	if (i != _dataTable.end()) {
+		printWarn << "trying to add entry for particle '" << name << "' "
+		          << "which already exists in table"     << endl
+		          << "    existing entry: " << i->second << endl
+		          << "    conflicts with: " << partProp  << endl;
+		return false;
+	} else {
+		_dataTable[name] = partProp;
+		if (_debug)
+			printInfo << "added entry for '" << name << "' into particle data table" << endl;
+		return true;
+	}
 }
 
 
 ostream&
 particleDataTable::print(ostream& out)
 {
-  unsigned int countEntries = 0;
-  for (dataIterator i = begin(); i != end(); ++i) {
-    ++countEntries;
-    out << "entry " << setw(3) << countEntries << ": " << i->second << endl;
-  }
-  return out;
+	unsigned int countEntries = 0;
+	for (dataIterator i = begin(); i != end(); ++i) {
+		++countEntries;
+		out << "entry " << setw(3) << countEntries << ": " << i->second << endl;
+	}
+	return out;
 }
 
 
 ostream&
 particleDataTable::dump(ostream& out)
 {
-  for (dataIterator i = begin(); i != end(); ++i) {
-    i->second.dump(out);
-    out << endl;
-  }
-  return out;
+	for (dataIterator i = begin(); i != end(); ++i) {
+		i->second.dump(out);
+		out << endl;
+	}
+	return out;
 }
 
 
 bool
 particleDataTable::readFile(const string& fileName)
 {
-  printInfo << "reading particle data from file '" << fileName << "'" << endl;
-  ifstream file(fileName.c_str());
-  if (!file || !file.good()) {
-    printWarn << "cannot open file '" << fileName << "'" << endl;
-    return false;
-  }
-  return read(file);
+	printInfo << "reading particle data from file '" << fileName << "'" << endl;
+	ifstream file(fileName.c_str());
+	if (not file or not file.good()) {
+		printWarn << "cannot open file '" << fileName << "'" << endl;
+		return false;
+	}
+	return read(file);
 }
 
 
 bool
 particleDataTable::read(istream& in)
 {
-  if (!in || !in.good()) {
-    printWarn << "cannot read from input stream" << endl;
-    return false;
-  }
-  if (_debug)
-    printInfo << "data table has " << nmbEntries() << " entries (before reading)" << endl;
-  unsigned int countEntries = 0;
-  while (in.good()) {
-    particleProperties partProp;
-    if (in >> partProp)
-      if(addEntry(partProp))
-	++countEntries;
-  }
-  printInfo << "successfully read " << countEntries << " new entries into particle data table" << endl;
-  if (_debug)
-    cout << "    data table has " << nmbEntries() << " entries (after reading)" << endl;
-  return true;
+	if (not in or not in.good()) {
+		printWarn << "cannot read from input stream" << endl;
+		return false;
+	}
+	if (_debug)
+		printInfo << "data table has " << nmbEntries() << " entries (before reading)" << endl;
+	unsigned int countEntries = 0;
+	while (in.good()) {
+		particleProperties partProp;
+		if (in >> partProp)
+			if(addEntry(partProp))
+				++countEntries;
+	}
+	printInfo << "successfully read " << countEntries << " new entries into particle data table" << endl;
+	if (_debug)
+		cout << "    data table has " << nmbEntries() << " entries (after reading)" << endl;
+	return true;
 }

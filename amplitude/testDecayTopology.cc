@@ -154,7 +154,7 @@ main(int argc, char** argv)
 
     for (graphType::nodeIterator i = g.nodes().first; i != g.nodes().second; ++i) {
       const isobarDecayVertexPtr v = static_pointer_cast<isobarDecayVertex>(g.vertex(*i));
-      g.name(v) = v->mother()->name();
+      g.name(v) = v->parent()->name();
     }
     for (graphType::edgeIterator i = g.edges().first; i != g.edges().second; ++i) {
       const particlePtr& p = g.particle(*i);

@@ -82,15 +82,15 @@ namespace rpwa {
     bool checkConsistency() const;  ///< checks conservation rules on all vertices
 
     isobarDecayTopology subDecay(const nodeDesc& startNd,
-                                 const bool      linkToMotherTopo = false);  ///< returns sub-decay tree that starts at given vertex
+                                 const bool      linkToParentTopo = false);  ///< returns sub-decay tree that starts at given vertex
 
     void addDecay(const isobarDecayTopology& topo);  ///< returns sub-decay tree that starts at given vertex
 
-    static isobarDecayTopology joinDaughterDecays(const isobarDecayVertexPtr&             motherVertex,
-                                                  const std::vector<isobarDecayTopology>& daughterDecays);  ///< joins daughter decay graphs and connects them to a common mother vertex
-	  static isobarDecayTopology joinDaughterDecays(const isobarDecayVertexPtr& motherVertex,
+    static isobarDecayTopology joinDaughterDecays(const isobarDecayVertexPtr&             parentVertex,
+                                                  const std::vector<isobarDecayTopology>& daughterDecays);  ///< joins daughter decay graphs and connects them to a common parent vertex
+	  static isobarDecayTopology joinDaughterDecays(const isobarDecayVertexPtr& parentVertex,
 	                                                const isobarDecayTopology&  daughter1Decay,
-	                                                const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common mother vertex
+	                                                const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common parent vertex
 
     std::vector<isobarDecayTopology> possibleDecays(const int  minI           = 0,
                                                     const int  maxI           = 2,

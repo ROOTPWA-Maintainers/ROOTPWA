@@ -81,13 +81,13 @@ flatMassDependence::print(ostream& out) const
 complex<double>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
-  const particlePtr& mother = v.mother();
+  const particlePtr& parent = v.parent();
 
-  const double M      = mother->lzVec().M();          // mother mass
+  const double M      = parent->lzVec().M();          // parent mass
   const double m1     = v.daughter1()->lzVec().M();   // daughter 1 mass
   const double m2     = v.daughter2()->lzVec().M();   // daughter 2 mass
-  const double M0     = mother->mass();               // resonance peak position
-  const double Gamma0 = mother->width();              // resonance peak width
+  const double M0     = parent->mass();               // resonance peak position
+  const double Gamma0 = parent->width();              // resonance peak width
   const double q      = breakupMomentum(M,  m1, m2);  // breakup momentum
   //const double q0     = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
   const double L      = v.L();
@@ -178,7 +178,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
   const complex<double> imag(0, 1);
 
-  double mass = v.mother()->lzVec().M();
+  double mass = v.parent()->lzVec().M();
   double s    = mass * mass;
   if (fabs(s - _sP(0, 1)) < 1e-6) {
     mass += 1e-6;
@@ -247,7 +247,7 @@ piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 complex<double>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
-  double mass = v.mother()->lzVec().M();
+  double mass = v.parent()->lzVec().M();
 
   const double          f0Mass  = 0.9837;  // [GeV]
   const double          f0Width = 0.0376;  // [GeV]
