@@ -92,35 +92,40 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   //double wr=0.185;
   //double wr=0.30;
 
-  //double mr=0.77549;
-  //double wr=0.1462;
-  double mr=0.5;
-  double wr=0.6;
+  double mr=0.77549;
+  double wr=0.1462;
+  //double mr=0.5;
+  //double wr=0.6;
 
   double masses[4] = {gChargedPionMass,gChargedPionMass,
 		      gChargedPionMass,gChargedPionMass};
-  dynMassDep* rho1=new dynMassDep(mr,wr,2,masses,1);
-  rho1->phasespace()->doCalc(1);
-  rho1->store_ms(10);
-  mr=0.77549;
-  wr=0.1462;
-  dynMassDep* rho2=new dynMassDep(mr,wr,2,masses,1);
-  rho2->phasespace()->doCalc(1);
-  rho2->store_ms(10);
+   dynMassDep* rho1=new dynMassDep(mr,wr,2,masses,1);
+   rho1->phasespace()->doCalc(1);
+   rho1->store_ms(10,1000);
+ //   mr=1.269;
+//    wr=0.25;
+//    dynMassDep* a1=new dynMassDep(mr,wr,3,masses,0);
+//    a1->phasespace()->setSubSystems21(rho1);
+//    a1->phasespace()->doCalc(0);
+//    a1->store_ms(10,1000);
   
-  mr=1.275;
-  //mr=1.7;
-  wr=0.185;
-  //wr=0.3;
-  dynMassDep* myBW=new dynMassDep(mr,wr,4,masses,2);
-  myBW->phasespace()->setSubSystems22(rho1,rho2);
-  myBW->phasespace()->doCalc(2);
-  myBW->store_ms(10);
+   //mr=1.275;
+   mr=1.7;
+   // wr=0.109;
+  wr=0.3;
+  //mr=0.77549;
+  //wr=0.1462;
+  dynMassDep* myBW=new dynMassDep(mr,wr,4,masses,0);
+  //myBW->phasespace()->setSubSystems132(rho1,a1);
+  myBW->phasespace()->setSubSystems22(rho1,rho1);
+  //myBW->phasespace()->setSubSystems21(rho1);
+  myBW->phasespace()->doCalc(0);
+  myBW->store_ms(10,1000);
 
 
   unsigned int nsteps=500;
   double step=0.005;
-  double m0=0.8;
+  double m0=0.58;
 
   double mtwopi=2*gChargedPionMass;
 
@@ -200,7 +205,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   intens_nodisp->Draw("SAME C");
   intens->SetLineColor(kRed);
   intens->Draw("SAME C");
-  //intens->Print();
+  intens->Print();
   c->cd(2);
  
   argand->SetTitle("Argand plot");
@@ -218,7 +223,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   c->cd(4);
   
   
-  myBW->graph_ms()->Draw("AC");
+  ms->Draw("AC");
 
   c->cd(5);
   myBW->phasespace()->getGraph()->Draw("AC");

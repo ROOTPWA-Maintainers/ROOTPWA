@@ -149,8 +149,8 @@ rpwa::mcPhaseSpace::rho(double m, int l)const {
   //double wsum=0;
   for(unsigned int i=0;i<_nsamples;++i){
     double w=_gen->generateDecay(mother);
+    if(_nparticles==2)w=1;
     
-    w+=0;
     // get event
     vector<TLorentzVector> p(_nparticles);
     for(unsigned ip=0;ip<_nparticles;++ip){
@@ -196,7 +196,7 @@ rpwa::mcPhaseSpace::rho(double m, int l)const {
     case 2: 
       {
 	// double mass=0.77549;
-// 	double gamma=0.1462;
+        // double gamma=0.1462;
 
 	assert(_nparticles==4);
 	//cout << "(12)(34) phasespace" << endl;
@@ -231,8 +231,49 @@ rpwa::mcPhaseSpace::rho(double m, int l)const {
 	}
 	break;
       }
-    }
   
+    case 3: 
+      {
+
+	//  (1(23))4
+	// double mass=0.77549;
+        // double gamma=0.1462;
+
+	assert(_nparticles==4);
+	//cout << "(12)3))4 phasespace" << endl;
+	TLorentzVector Iso1=p[0]+p[1];
+	// go into isobar rest frame 
+	TVector3 b=-Iso1.BoostVector();
+	p[0].Boost(b);
+	double k1=p[0].Vect().Mag();
+	int l1=_isobars[0]->l();
+	double rho1=pow(k1,2*l1+1);///Iso1.M();
+	double BW1=norm(_isobars[0]->val(Iso1.M()));
+	
+	TLorentzVector Iso2=Iso1+p[2];
+	// go into isobar rest frame 
+	TVector3 b2=-Iso2.BoostVector();
+	p[2].Boost(b2);
+	//cout << "p2+p3=" << (p[2].Vect()+p[3].Vect()).Mag() << endl;
+	double k2=p[2].Vect().Mag();
+	int l2=_isobars[1]->l();
+	double rho2=pow(k2,2*l2+1);///Iso2.M();
+	double BW2=norm(_isobars[1]->val(Iso2.M()));
+
+	breakup=p[3].Vect().Mag();
+	decayprop=rho1*BW1*rho2*BW2;
+	if(decayprop!=decayprop){
+	  cerr << "mcPhaseSpace:: decayprop("<<m<<")==Nan"<<endl;
+	  throw;
+	}
+	if(decayprop==0){
+	  cerr << "mcPhaseSpace:: decayprop("<<m<<")==0"<<endl;
+	  throw;
+	}
+	break;
+      }
+    }
+
 // double BWwheight1=TMath::BreitWigner(Iso1.M(),mass,gamma);
 //     double BWwheight2=TMath::BreitWigner(Iso2.M(),mass,gamma);
 
@@ -276,7 +317,7 @@ rpwa::mcPhaseSpace::rho(double m, int l)const {
     cerr << "mcPhaseSpace:: rho("<<m<<")==Nan"<<endl;
     throw;
   }
-
+  //cerr << "mcPhaseSpace:: rho("<<m<<")="<<I<<endl;
   return I;
 }
 
