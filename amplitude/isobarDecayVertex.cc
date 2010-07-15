@@ -62,22 +62,22 @@ isobarDecayVertex::isobarDecayVertex(const particlePtr&       parent,
 	  _S                (S),
 	  _massDep          (massDep)
 {
-	if (!parent) {
+	if (not parent) {
 		printErr << "null pointer to parent particle. aborting." << endl;
 		throw;
 	}
-	if (!daughter1) {
+	if (not daughter1) {
 		printErr << "null pointer to daughter 1 particle. aborting." << endl;
 		throw;
 	}
-	if (!daughter2) {
+	if (not daughter2) {
 		printErr << "null pointer to daughter 2 particle. aborting." << endl;
 		throw;
 	}
 	interactionVertex::addInParticle (parent);
 	interactionVertex::addOutParticle(daughter1);
 	interactionVertex::addOutParticle(daughter2);
-	if (!_massDep) {
+	if (not _massDep) {
 		_massDep = createFlatMassDependence();
 		if (_debug)
 			printWarn << "null pointer to mass dependence. setting " << *_massDep << endl;
@@ -219,7 +219,7 @@ isobarDecayVertex::checkConsistency()
 	bool vertexConsistent = true;
 	// check multiplicative quantum numbers
 	// G-parity
-	if (!checkMultiplicativeQn(parent()->G(), daughter1()->G(), daughter2()->G(), "G-parity"))
+	if (not checkMultiplicativeQn(parent()->G(), daughter1()->G(), daughter2()->G(), "G-parity"))
 		vertexConsistent = false;
 	// C-parity
 	const int cParity = parent()->G() * (parent()->isospin() % 4 == 0 ? 1 : -1);
@@ -244,23 +244,28 @@ isobarDecayVertex::checkConsistency()
 		printInfo << *this << ": parity is consistent" << endl;
 	// check additive quantum numbers
 	// charge
-	if (!checkAdditiveQn(parent()->charge(),      daughter1()->charge(),      daughter2()->charge(),      "charge"))
+	if (not checkAdditiveQn(parent()->charge(), daughter1()->charge(),
+	                        daughter2()->charge(), "charge"))
 		vertexConsistent = false;
 	// baryon number
-	if (!checkAdditiveQn(parent()->baryonNmb(),   daughter1()->baryonNmb(),   daughter2()->baryonNmb(),   "baryonNmb"))
+	if (not checkAdditiveQn(parent()->baryonNmb(), daughter1()->baryonNmb(),
+	                        daughter2()->baryonNmb(), "baryonNmb"))
 		vertexConsistent = false;
 	// strangeness
-	if (!checkAdditiveQn(parent()->strangeness(), daughter1()->strangeness(), daughter2()->strangeness(), "strangeness"))
+	if (not checkAdditiveQn(parent()->strangeness(), daughter1()->strangeness(),
+	                        daughter2()->strangeness(), "strangeness"))
 		vertexConsistent = false;
 	// charm
-	if (!checkAdditiveQn(parent()->charm(),       daughter1()->charm(),       daughter2()->charm(),       "charm"))
+	if (not checkAdditiveQn(parent()->charm(), daughter1()->charm(),
+	                        daughter2()->charm(), "charm"))
 		vertexConsistent = false;
 	// beautty
-	if (!checkAdditiveQn(parent()->beauty(),      daughter1()->beauty(),      daughter2()->beauty(),      "beauty"))
+	if (not checkAdditiveQn(parent()->beauty(), daughter1()->beauty(),
+	                        daughter2()->beauty(), "beauty"))
 		vertexConsistent = false;
 	// check angular momentum like quantum numbers
 	// spin coupling: S in {|s1 - s2|, ..., s1 + s2}
-	if (!angMomCoupl(daughter1()->J(), daughter2()->J()).inRange(_S)) {
+	if (not angMomCoupl(daughter1()->J(), daughter2()->J()).inRange(_S)) {
 		printWarn << "spins "
 		          << "(" << daughter1()->name() << " J = " << daughter1()->J() * 0.5 << ") and "
 		          << "(" << daughter2()->name() << " J = " << daughter2()->J() * 0.5 << ") "
@@ -269,14 +274,14 @@ isobarDecayVertex::checkConsistency()
 	} else if (_debug)
 		printInfo << *this << ": spin-spin coupling is consistent" << endl;
 	// L-S coupling: J in {|L - S|, ..., L + S}
-	if (!angMomCoupl(_L, _S).inRange(parent()->J())) {
+	if (not angMomCoupl(_L, _S).inRange(parent()->J())) {
 		printWarn << "orbital angular momentum L = " << _L * 0.5 << " and spin S = " << _S * 0.5
 		          << " cannot couple to angular momentum J = " << parent()->J() * 0.5 << endl;
 		vertexConsistent = false;
 	} else if (_debug)
 		printInfo << *this << ": L-S coupling is consistent" << endl;
 	// isospin coupling: I in {|I_1 - I_2|, ..., I_1 + I_2}
-	if (!angMomCoupl(daughter1()->isospin(), daughter2()->isospin()).inRange(parent()->isospin())) {
+	if (not angMomCoupl(daughter1()->isospin(), daughter2()->isospin()).inRange(parent()->isospin())) {
 		printWarn << "isospins "
 		          << "(" << daughter1()->name() << " I = " << daughter1()->isospin() * 0.5 << ") and "
 		          << "(" << daughter2()->name() << " I = " << daughter2()->isospin() * 0.5 << ") "

@@ -58,10 +58,10 @@ namespace rpwa {
   public:
       
     isobarDecayTopology();
-    isobarDecayTopology(const interactionVertexPtr&              productionVertex,
+    isobarDecayTopology(const productionVertexPtr&               productionVertex,
                         const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
                         const std::vector<particlePtr>&          fsParticles);
-    isobarDecayTopology(const interactionVertexPtr&              productionVertex,
+    isobarDecayTopology(const productionVertexPtr&               productionVertex,
                         const std::vector<interactionVertexPtr>& isobarDecayVertices,
                         const std::vector<particlePtr>&          fsParticles);
     isobarDecayTopology(const isobarDecayTopology&               topo);
@@ -120,10 +120,10 @@ namespace rpwa {
 	  virtual isobarDecayTopology* doClone(const bool cloneFsParticles,
 	                                       const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
-    isobarDecayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
+    isobarDecayTopology& constructDecay(const productionVertexPtr&               productionVertex,
                                         const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
                                         const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on final state particles and vertices
-	  isobarDecayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
+	  isobarDecayTopology& constructDecay(const productionVertexPtr&               productionVertex,
 	                                      const std::vector<interactionVertexPtr>& isobarDecayVertices,
 	                                      const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on final state particles and vertices
 	  
@@ -138,25 +138,25 @@ namespace rpwa {
 
   inline
   isobarDecayTopologyPtr
-  createIsobarDecayTopology(const interactionVertexPtr&              productionVertex,
+  createIsobarDecayTopology(const productionVertexPtr&               productionVertex,
                             const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
                             const std::vector<particlePtr>&          fsParticles)
   {
-    isobarDecayTopologyPtr t(new isobarDecayTopology(productionVertex,
-                                                     isobarDecayVertices, fsParticles));
-    return t;
+    isobarDecayTopologyPtr topo(new isobarDecayTopology(productionVertex,
+                                                        isobarDecayVertices, fsParticles));
+    return topo;
   }
 
 
   inline
   isobarDecayTopologyPtr
-  createIsobarDecayTopology(const interactionVertexPtr&              productionVertex,
+  createIsobarDecayTopology(const productionVertexPtr&               productionVertex,
                             const std::vector<interactionVertexPtr>& isobarDecayVertices,
                             const std::vector<particlePtr>&          fsParticles)
   {
-	  isobarDecayTopologyPtr t(new isobarDecayTopology(productionVertex,
-	                                                   isobarDecayVertices, fsParticles));
-	  return t;
+	  isobarDecayTopologyPtr topo(new isobarDecayTopology(productionVertex,
+	                                                      isobarDecayVertices, fsParticles));
+	  return topo;
   }
 	
 	
@@ -164,8 +164,8 @@ namespace rpwa {
 	isobarDecayTopologyPtr
 	createIsobarDecayTopology(const isobarDecayTopology& topo)
 	{
-		isobarDecayTopologyPtr t(new isobarDecayTopology(topo));
-		return t;
+		isobarDecayTopologyPtr topoCopy(new isobarDecayTopology(topo));
+		return topoCopy;
 	}
 	
 	
@@ -173,8 +173,8 @@ namespace rpwa {
 	isobarDecayTopologyPtr
 	createIsobarDecayTopology(const decayTopology& topo)
 	{
-		isobarDecayTopologyPtr t(new isobarDecayTopology(topo));
-		return t;
+		isobarDecayTopologyPtr topoCopy(new isobarDecayTopology(topo));
+		return topoCopy;
   }
 
 

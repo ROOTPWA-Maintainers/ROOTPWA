@@ -55,7 +55,7 @@ isobarDecayTopology::isobarDecayTopology()
 { }
 
 
-isobarDecayTopology::isobarDecayTopology(const interactionVertexPtr&         productionVertex,
+isobarDecayTopology::isobarDecayTopology(const productionVertexPtr&          productionVertex,
                                          const vector<isobarDecayVertexPtr>& isobarDecayVertices,
                                          const vector<particlePtr>&          fsParticles)
 	: decayTopology()
@@ -64,7 +64,7 @@ isobarDecayTopology::isobarDecayTopology(const interactionVertexPtr&         pro
 }
 
 
-isobarDecayTopology::isobarDecayTopology(const interactionVertexPtr&         productionVertex,
+isobarDecayTopology::isobarDecayTopology(const productionVertexPtr&          productionVertex,
                                          const vector<interactionVertexPtr>& isobarDecayVertices,
                                          const vector<particlePtr>&          fsParticles)
 	: decayTopology()
@@ -138,7 +138,7 @@ isobarDecayTopology::clear()
 
 
 isobarDecayTopology&
-isobarDecayTopology::constructDecay(const interactionVertexPtr&         productionVertex,
+isobarDecayTopology::constructDecay(const productionVertexPtr&          productionVertex,
                                     const vector<isobarDecayVertexPtr>& isobarDecayVertices,
                                     const vector<particlePtr>&          fsParticles)
 {
@@ -164,7 +164,7 @@ isobarDecayTopology::constructDecay(const interactionVertexPtr&         producti
 
 
 isobarDecayTopology&
-isobarDecayTopology::constructDecay(const interactionVertexPtr&         productionVertex,
+isobarDecayTopology::constructDecay(const productionVertexPtr&          productionVertex,
                                     const vector<interactionVertexPtr>& isobarDecayVertices,
                                     const vector<particlePtr>&          fsParticles)
 {
@@ -403,8 +403,9 @@ isobarDecayTopology::possibleDecays(const int  minI,
 	vector<isobarDecayTopology> decays = decayPossibilities[startNds.back()];
 	for (unsigned int i = 0; i < decays.size(); ++i) {
 		// clone production vertex and set X-particle
-		const interactionVertexPtr newProdVert(productionVertex()->clone(false, false));
-		const particlePtr&         newX = decays[i].XIsobarDecayVertex()->parent();
+		const productionVertexPtr newProdVert(static_pointer_cast<rpwa::productionVertex>
+		                                      (productionVertex()->clone(false, false)));
+		const particlePtr&        newX = decays[i].XIsobarDecayVertex()->parent();
 		newProdVert->outParticles()[0] = newX;
 		// add production vertex
 		decays[i].setProductionVertex(newProdVert);

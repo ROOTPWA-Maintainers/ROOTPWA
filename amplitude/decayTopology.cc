@@ -76,7 +76,7 @@ decayTopology::decayTopology()
 }
 
 
-decayTopology::decayTopology(const interactionVertexPtr&              productionVertex,
+decayTopology::decayTopology(const productionVertexPtr&               productionVertex,
                              const std::vector<interactionVertexPtr>& decayVertices,
                              const std::vector<particlePtr>&          fsParticles)
 {
@@ -497,17 +497,17 @@ decayTopology::addDecay(const decayTopology& topo)
 }
 
 
-void decayTopology::setProductionVertex(const interactionVertexPtr& productionVertex)
+void decayTopology::setProductionVertex(const productionVertexPtr& productionVertex)
 {
 	if (not productionVertex) {
 		printErr << "null pointer for production vertex. aborting." << endl;
 		throw;
 	}
-	if (not productionVertex->outParticles()[0]) {
+	if (not productionVertex->XParticle()) {
 		printErr << "null pointer for particle[0] coming out of production vertex. aborting." << endl;
 		throw;
 	}
-	name() = "\"" + productionVertex->outParticles()[0]->qnSummary() + "\"";
+	name() = "\"" + productionVertex->XParticle()->qnSummary() + "\"";
 	if (not _prodVertex) {
 		// topology does not have production vertex -> create graph node
 		addVertex(productionVertex);
@@ -704,7 +704,7 @@ decayTopology::printDecayKinParticles(ostream& out) const
 
 
 decayTopology&
-decayTopology::constructDecay(const interactionVertexPtr&              productionVertex,
+decayTopology::constructDecay(const productionVertexPtr&               productionVertex,
                               const std::vector<interactionVertexPtr>& decayVertices,
                               const std::vector<particlePtr>&          fsParticles)
 {
@@ -729,11 +729,11 @@ decayTopology::constructDecay(const interactionVertexPtr&              productio
 		printErr << "null pointer for production vertex. aborting." << endl;
 		throw;
 	}
-	if (not productionVertex->outParticles()[0]) {
-		printErr << "null pointer for particle[0] coming out of production vertex. aborting." << endl;
+	if (not productionVertex->XParticle()) {
+		printErr << "null pointer for X particle coming out of production vertex. aborting." << endl;
 		throw;
 	}
-	name() = "\"" + productionVertex->outParticles()[0]->qnSummary() + "\"";
+	name() = "\"" + productionVertex->XParticle()->qnSummary() + "\"";
 	_prodVertex = productionVertex;
 	addVertex(productionVertex);
 	// create graph nodes for interaction vertices and store pointers
@@ -794,8 +794,9 @@ decayTopology::buildInternalData()
 	nodeIterator iNd, iNdEnd;
 	for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd)
 		if ((nmbInEdges(*iNd) == 0) and (nmbOutEdges(*iNd) == 1)) {
-			_prodVertex = vertex(*iNd);
-			++nmbProdVertCandidates;
+			_prodVertex = dynamic_pointer_cast<rpwa::productionVertex>(vertex(*iNd));
+			if (_prodVertex)
+				++nmbProdVertCandidates;
 		}
 	// set final state particles
 	_fsParticles.clear();
@@ -857,7 +858,7 @@ decayTopology::cloneNode(const nodeDesc& nd,
 	const interactionVertexPtr& newVert = decayTopologyGraphType::cloneNode(nd);
 	// update member variables
 	if (isProductionVertex(vert))
-		_prodVertex = newVert;
+		_prodVertex = static_pointer_cast<rpwa::productionVertex>(newVert);
 	else if (isDecayVertex(vert))
 		for (unsigned int i = 0; i < nmbDecayVertices(); ++i)
 			if (vert == decayVertices()[i])

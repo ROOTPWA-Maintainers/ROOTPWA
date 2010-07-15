@@ -48,21 +48,21 @@ bool fsVertex::_debug = false;
 
 
 fsVertex::fsVertex(const particlePtr& fsParticle)
-  : interactionVertex()
+	: interactionVertex()
 {
-  if (!fsParticle) {
-    printErr << "null pointer to final state particle. aborting." << endl;
-    throw;
-  }
-  interactionVertex::addInParticle(fsParticle);
-  if (_debug)
-    printInfo << "constructed " << *this << endl;
+	if (not fsParticle) {
+		printErr << "null pointer to final state particle. aborting." << endl;
+		throw;
+	}
+	interactionVertex::addInParticle(fsParticle);
+	if (_debug)
+		printInfo << "constructed " << *this << endl;
 }
 
 
 fsVertex::fsVertex(const fsVertex& vert)
 {
-  *this = vert;
+	*this = vert;
 }
 
 
@@ -72,15 +72,15 @@ fsVertex::~fsVertex()
 
 fsVertex*
 fsVertex::doClone(const bool cloneInParticles,
-		  const bool) const
+                  const bool) const
 {
-  fsVertex* vertexClone = new fsVertex(*this);
-  if (cloneInParticles)
-    vertexClone->cloneInParticles();
-  if (_debug)
-    printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-	      << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles" << std::endl;
- return vertexClone;
+	fsVertex* vertexClone = new fsVertex(*this);
+	if (cloneInParticles)
+		vertexClone->cloneInParticles();
+	if (_debug)
+		printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+		          << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles" << std::endl;
+	return vertexClone;
 }
 
 
@@ -106,7 +106,7 @@ ostream&
 fsVertex::print(ostream& out) const
 {
 	out << label() << ": " << fsParticle()->qnSummary();
-  return out;
+	return out;
 }
 
 
@@ -114,8 +114,8 @@ ostream&
 fsVertex::dump(ostream& out) const
 {
 	out << label() << ":" << endl
-      << "    final state particle: " << *fsParticle() << endl;
-  return out;
+	    << "    final state particle: " << *fsParticle() << endl;
+	return out;
 }
 
 
@@ -123,5 +123,5 @@ ostream&
 fsVertex::printPointers(ostream& out) const
 {
 	out << label() << " " << this << ": final state particle: " << fsParticle() << endl;
-  return out;
+	return out;
 }

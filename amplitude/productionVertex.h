@@ -62,7 +62,7 @@ namespace rpwa {
   
 		productionVertex();
 		virtual ~productionVertex();
-		
+
 		// production specific accessors
 		virtual TVector3           zAxis    ()     const = 0;           ///< returns z-axis defined by production process
 		virtual const particlePtr& XParticle()     const = 0;           ///< returns X particle

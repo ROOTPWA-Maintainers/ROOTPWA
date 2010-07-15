@@ -55,20 +55,20 @@ bool diffractiveDissVertex::_debug = false;
 
 
 diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
-                                             const particlePtr& XSystem)
-	: interactionVertex(),
-	  _beamMomCache    ()
+                                             const particlePtr& XParticle)
+	: productionVertex(),
+	  _beamMomCache   ()
 {
-	if (!beam) {
+	if (not beam) {
 		printErr << "null pointer to beam particle. aborting." << endl;
 		throw;
 	}
-	if (!XSystem) {
+	if (not XParticle) {
 		printErr << "null pointer to particle representing X system. aborting." << endl;
 		throw;
 	}
 	interactionVertex::addInParticle (beam);
-	interactionVertex::addOutParticle(XSystem);
+	interactionVertex::addOutParticle(XParticle);
 	if (_debug)
 		printInfo << "constructed " << *this << endl;
 }
@@ -155,7 +155,7 @@ diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
 		          << prodKinMomenta.GetEntriesFast  () << endl;
 		success = false;
 	}
-	if (!success)
+	if (not success)
 		return false;
 	// set inital state
 	const string partName = ((TObjString*)prodKinParticles[0])->GetString().Data();
@@ -187,7 +187,7 @@ diffractiveDissVertex::print(ostream& out) const
 {
 	out << label() << ": "
 	    << "beam " << beam()->qnSummary() << "  --->  "
-	    << XSystem()->qnSummary();
+	    << XParticle()->qnSummary();
 	return out;
 }
 
@@ -197,7 +197,7 @@ diffractiveDissVertex::dump(ostream& out) const
 {
 	out << label() << ": " << endl
 	    << "    beam: "     << *beam()    << endl
-	    << "    X system: " << *XSystem() << endl;
+	    << "    X system: " << *XParticle() << endl;
 	return out;
 }
 
@@ -207,6 +207,6 @@ diffractiveDissVertex::printPointers(ostream& out) const
 {
 	out << label() << " " << this << ": "
 	    << "beam particle: "     << beam()    << "; "
-	    << "X system particle: " << XSystem() << endl;
+	    << "X system particle: " << XParticle() << endl;
 	return out;
 }

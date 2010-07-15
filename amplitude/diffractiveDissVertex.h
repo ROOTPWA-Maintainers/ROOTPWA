@@ -44,7 +44,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "interactionVertex.h"
+#include "productionVertex.h"
 
 
 class TClonesArray;
@@ -57,12 +57,12 @@ namespace rpwa {
 	typedef boost::shared_ptr<diffractiveDissVertex> diffractiveDissVertexPtr;
 
 
-	class diffractiveDissVertex : public interactionVertex {
+	class diffractiveDissVertex : public productionVertex {
 
 	public:
   
 		diffractiveDissVertex(const particlePtr& beam,
-		                      const particlePtr& XSystem);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
+		                      const particlePtr& XParticle);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
 		diffractiveDissVertex(const diffractiveDissVertex& vert);
 		virtual ~diffractiveDissVertex();
 		
@@ -74,9 +74,13 @@ namespace rpwa {
 		virtual bool addInParticle (const particlePtr&);  ///< disabled; all incoming particles have to be specified at construction
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
+		// production specific accessors
+		virtual TVector3           zAxis    ()     const { return beam()->lzVec().Vect().Unit(); }  ///< returns z-axis defined by production process
+		virtual const particlePtr& XParticle()     const { return outParticles()[0];             }  ///< returns X particle
+		virtual double             productionAmp() const { return 1;                             }  ///< returns production amplitude
+
 		// diffractive dissociation specific accessors
-		inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
-		inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
+		inline const particlePtr& beam() const { return inParticles()[0]; }  ///< returns beam particle
     
 		virtual bool readData(const TClonesArray& prodKinParticles,
 		                      const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
@@ -111,9 +115,9 @@ namespace rpwa {
 	inline
 	diffractiveDissVertexPtr
 	createDiffractiveDissVertex(const particlePtr& beam,
-	                            const particlePtr& XSystem)
+	                            const particlePtr& XParticle)
 	{
-		diffractiveDissVertexPtr v(new diffractiveDissVertex(beam, XSystem));
+		diffractiveDissVertexPtr v(new diffractiveDissVertex(beam, XParticle));
 		return v;
 	}
 

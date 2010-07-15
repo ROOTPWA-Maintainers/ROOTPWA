@@ -49,11 +49,11 @@ using namespace libconfig;
 using namespace rpwa;
 
 
-keyFileParser                keyFileParser::_instance;
-Config                       keyFileParser::_key;
-bool                         keyFileParser::_boseSymmetrize       = true;
-bool                         keyFileParser::_useReflectivityBasis = true;
-bool                         keyFileParser::_debug                = false;
+keyFileParser keyFileParser::_instance;
+Config        keyFileParser::_key;
+bool          keyFileParser::_boseSymmetrize       = true;
+bool          keyFileParser::_useReflectivityBasis = true;
+bool          keyFileParser::_debug                = false;
 
 
 bool
@@ -119,7 +119,7 @@ keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 	}
   
 	// create production vertex
-	interactionVertexPtr prodVert = interactionVertexPtr();
+	productionVertexPtr prodVert = productionVertexPtr();
 	if (not constructProductionVertex(rootKey, X, prodVert)) {
 		printWarn << "problems constructing production vertex. cannot construct decay topology." << endl;
 		return false;
@@ -432,9 +432,9 @@ keyFileParser::mapMassDependence(const string& massDepType)
 
 
 bool
-keyFileParser::constructProductionVertex(const Setting&        rootKey,
-                                         const particlePtr&    X,
-                                         interactionVertexPtr& prodVert)
+keyFileParser::constructProductionVertex(const Setting&       rootKey,
+                                         const particlePtr&   X,
+                                         productionVertexPtr& prodVert)
 {
 	// find production vertex group
 	const Setting* prodVertKey = findGroup(rootKey, "productionVertex");
@@ -464,10 +464,10 @@ keyFileParser::constructProductionVertex(const Setting&        rootKey,
 
 
 bool
-keyFileParser::mapProductionVertexType(const string&         vertType,
-                                       const Setting&        particleKeys,
-                                       const particlePtr&    X,
-                                       interactionVertexPtr& prodVert)
+keyFileParser::mapProductionVertexType(const string&        vertType,
+                                       const Setting&       particleKeys,
+                                       const particlePtr&   X,
+                                       productionVertexPtr& prodVert)
 {
 	if (vertType == "diffractiveDissociation") {
 		if (particleKeys.getLength() > 1) {
@@ -490,8 +490,8 @@ keyFileParser::mapProductionVertexType(const string&         vertType,
 
 
 bool
-keyFileParser::setProductionVertexKeys(Setting&                    prodVertKey,
-                                       const interactionVertexPtr& prodVert)
+keyFileParser::setProductionVertexKeys(Setting&                   prodVertKey,
+                                       const productionVertexPtr& prodVert)
 {
 	if (dynamic_pointer_cast<diffractiveDissVertex>(prodVert)) {
 		if (_debug)

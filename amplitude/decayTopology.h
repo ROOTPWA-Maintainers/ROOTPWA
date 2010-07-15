@@ -55,6 +55,7 @@
 #include "TLorentzRotation.h"
 
 #include "particle.h"
+#include "productionVertex.h"
 #include "interactionVertex.h"
 #include "fsVertex.h"
 #include "decayGraph.hpp"
@@ -77,7 +78,7 @@ namespace rpwa {
 	public:
 			
 		decayTopology();
-		decayTopology(const interactionVertexPtr&              productionVertex,
+		decayTopology(const productionVertexPtr&               productionVertex,
 		              const std::vector<interactionVertexPtr>& decayVertices,
 		              const std::vector<particlePtr>&          fsParticles);
 		decayTopology(const decayTopology&                     topo);
@@ -103,9 +104,9 @@ namespace rpwa {
 		const std::vector<particlePtr>&          fsParticles  () const { return _fsParticles;   }  ///< returns final state particles ordered depth-first
 		const std::vector<interactionVertexPtr>& decayVertices() const { return _decayVertices; }  ///< returns decay vertices ordered depth-first
 
-		const particlePtr&          XParticle       () const { return XDecayVertex()->inParticles()[0]; }  ///< returns X particle
-		const interactionVertexPtr& productionVertex() const { return _prodVertex;                      }  ///< returns production vertex
-		const interactionVertexPtr& XDecayVertex    () const { return _decayVertices[0];                }  ///< returns X-decay vertex
+		const particlePtr&          XParticle       () const { return productionVertex()->XParticle(); }  ///< returns X particle
+		const productionVertexPtr&  productionVertex() const { return _prodVertex;                     }  ///< returns production vertex
+		const interactionVertexPtr& XDecayVertex    () const { return _decayVertices[0];               }  ///< returns X-decay vertex
 
 		void transformFsParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to all final state particles
 
@@ -123,7 +124,7 @@ namespace rpwa {
 
 		void addDecay(const decayTopology& topo);  ///< copies all vertices and particles into this topology
 
-		void setProductionVertex(const interactionVertexPtr& productionVertex);  ///< (re)defines production vertex
+		void setProductionVertex(const productionVertexPtr& productionVertex);  ///< (re)defines production vertex
 
 		bool readData(const TClonesArray& prodKinParticles,
 		              const TClonesArray& prodKinMomenta,
@@ -147,7 +148,7 @@ namespace rpwa {
 		virtual decayTopology* doClone(const bool cloneFsParticles,
 		                               const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
-		decayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
+		decayTopology& constructDecay(const productionVertexPtr&               productionVertex,
 		                              const std::vector<interactionVertexPtr>& decayVertices,
 		                              const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
@@ -160,7 +161,7 @@ namespace rpwa {
 
 	private:
 
-		interactionVertexPtr              _prodVertex;      ///< pointer to production vertex
+		productionVertexPtr               _prodVertex;      ///< pointer to production vertex
 		std::vector<interactionVertexPtr> _decayVertices;   ///< array of decay vertices; ordered depth-first
 		std::vector<particlePtr>          _fsParticles;     ///< array of final state particles; ordered depth-first
 		std::vector<TVector3>             _fsPartMomCache;  ///< caches final state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
@@ -172,7 +173,7 @@ namespace rpwa {
 
 	inline
 	decayTopologyPtr
-	createDecayTopology(const interactionVertexPtr&              productionVertex,
+	createDecayTopology(const productionVertexPtr&               productionVertex,
 	                    const std::vector<interactionVertexPtr>& decayVertices,
 	                    const std::vector<particlePtr>&          fsParticles)
 	{

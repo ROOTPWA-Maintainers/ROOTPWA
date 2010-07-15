@@ -47,70 +47,70 @@ bool particle::_debug = false;
 
 
 particle::particle()
-  : particleProperties(),
-    _charge           (0),
-    _spinProj         (0),
-    _lzVec            (),
-    _index            (-1),
-    _refl             (0)
+	: particleProperties(),
+	  _charge           (0),
+	  _spinProj         (0),
+	  _lzVec            (),
+	  _index            (-1),
+	  _refl             (0)
 { }
 
 
 particle::particle(const particle& part)
 {
-  *this = part;
+	*this = part;
 }
 
 
 particle::particle(const particleProperties& partProp,
-		   const int                 charge,
-		   const int                 index,
-		   const int                 spinProj,
-		   const int                 refl,
-		   const TVector3&           momentum)
-  : particleProperties(partProp),
-    _charge           (charge),
-    _spinProj         (spinProj),
-    _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()))),
-    _index            (index),
-    _refl             (refl)
+                   const int                 charge,
+                   const int                 index,
+                   const int                 spinProj,
+                   const int                 refl,
+                   const TVector3&           momentum)
+	: particleProperties(partProp),
+	  _charge           (charge),
+	  _spinProj         (spinProj),
+	  _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()))),
+	  _index            (index),
+	  _refl             (refl)
 { }
 
 	
 particle::particle(const string&   partName,
-		   const int       index,
-		   const int       spinProj,
-		   const int       refl,
-		   const TVector3& momentum)
-  : _spinProj(spinProj),
-    _index   (index),
-    _refl    (refl)
+                   const int       index,
+                   const int       spinProj,
+                   const int       refl,
+                   const TVector3& momentum)
+	: _spinProj(spinProj),
+	  _index   (index),
+	  _refl    (refl)
 {
-  // extract charge from name
-  chargeFromName(partName, _charge);
-  if (!fillFromDataTable(partName))
-    // set at least name
-    setName(partName);
-  _lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
+	// extract charge from name
+	chargeFromName(partName, _charge);
+	if (not fillFromDataTable(partName))
+		// set at least name
+		setName(partName);
+	_lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));
 }
 
 	
 particle::particle(const string& partName,
-		   const int     isospin,
-		   const int     G,
-		   const int     J,
-		   const int     P,
-		   const int     C,
-		   const int     spinProj,
-		   const int     refl,
-		   const int     index)
-  : particleProperties(partName, isospin, G, J, P, C),
-    _spinProj(spinProj),
-    _index   (index),
-    _refl    (refl)
+                   const int     isospin,
+                   const int     G,
+                   const int     J,
+                   const int     P,
+                   const int     C,
+                   const int     spinProj,
+                   const int     refl,
+                   const int     index)
+	: particleProperties(partName, isospin, G, J, P, C),
+	  _spinProj(spinProj),
+	  _index   (index),
+	  _refl    (refl)
 {
-  const string strippedName = chargeFromName(partName, _charge);
-  setName(strippedName);
+	const string strippedName = chargeFromName(partName, _charge);
+	setName(strippedName);
 }
 
 
@@ -121,83 +121,83 @@ particle::~particle()
 particle&
 particle::operator =(const particle& part)
 {
-  if (this != &part) {
-    particleProperties::operator =(part);
-    _charge   = part._charge;
-    _spinProj = part._spinProj;
-    _lzVec    = part._lzVec;
-    _index    = part._index;
-    _refl     = part._refl;
-  }
-  return *this;
+	if (this != &part) {
+		particleProperties::operator =(part);
+		_charge   = part._charge;
+		_spinProj = part._spinProj;
+		_lzVec    = part._lzVec;
+		_index    = part._index;
+		_refl     = part._refl;
+	}
+	return *this;
 }
 
 
 particle*
 particle::doClone() const
 {
-  particle* particleClone(new particle(*this));
-  if (_debug)
-    printInfo << "cloned " << *this << "; " << this << " -> " << particleClone << endl;
-  return particleClone;
+	particle* particleClone(new particle(*this));
+	if (_debug)
+		printInfo << "cloned " << *this << "; " << this << " -> " << particleClone << endl;
+	return particleClone;
 }
 
 
 string
 particle::name() const
 {
-  const string entryName    = particleProperties::name();
-  const string strippedName = stripChargeFromName(entryName);
-  if (entryName == strippedName) {
-    stringstream n;  // append charge
-    n << entryName;
-    if (abs(_charge) > 1)
-      n << abs(_charge);
-    n << sign(_charge);
-    return n.str();
-  } else
-    return entryName;
+	const string entryName    = particleProperties::name();
+	const string strippedName = stripChargeFromName(entryName);
+	if (entryName == strippedName) {
+		stringstream n;  // append charge
+		n << entryName;
+		if (abs(_charge) > 1)
+			n << abs(_charge);
+		n << sign(_charge);
+		return n.str();
+	} else
+		return entryName;
 }
 
 
 void
 particle::setProperties(const particleProperties& prop)
 {
-  if (this != &prop)
-    particleProperties::operator =(prop);
+	if (this != &prop)
+		particleProperties::operator =(prop);
 }
 
 
 string
 particle::qnSummary() const
 {
-  ostringstream out;
-  out << name() << "[" << 0.5 * isospin() << sign(G())
-      << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")" << 0.5 * spinProj() 
-      << ((reflectivity() != 0) ? sign(reflectivity()) : "") << "]";
-  return out.str();
+	ostringstream out;
+	out << name() << "[" << 0.5 * isospin() << sign(G())
+	    << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")" << 0.5 * spinProj() 
+	    << ((reflectivity() != 0) ? sign(reflectivity()) : "") << "]";
+	return out.str();
 }
 
 
 ostream&
 particle::print(ostream& out) const
 {
-  particleProperties::print(out);
-  out << ", "
-      << "charge = "         << _charge         << ", "
-      << "spin proj. = "     << 0.5 * _spinProj << ", "
-      << "reflectivity = "   << _refl           << ", "
-      << "Lorentz-vector = " << _lzVec          << " GeV, "
-      << "index = "          << _index;
-  return out;
+	particleProperties::print(out);
+	out << ", "
+	    << "charge = "         << _charge         << ", "
+	    << "spin proj. = "     << 0.5 * _spinProj << ", "
+	    << "reflectivity = "   << _refl           << ", "
+	    << "Lorentz-vector = " << _lzVec          << " GeV, "
+	    << "index = "          << _index;
+	return out;
 }
 
 
 string
 particle::label() const
 {
-  ostringstream out;
-  out << name() << "[" << 0.5 * isospin() << sign(G())
-      << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")]";
-  return out.str();
+	ostringstream out;
+	out << name() << "[" << 0.5 * isospin() << sign(G())
+	    << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")]";
+	return out.str();
 }

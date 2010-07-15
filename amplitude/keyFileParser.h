@@ -101,14 +101,14 @@ namespace rpwa {
 
     static bool constructProductionVertex(const libconfig::Setting& rootKey,
                                           const particlePtr&        X,
-                                          interactionVertexPtr&     prodVert);  ///< creates production vertex
+                                          productionVertexPtr&      prodVert);  ///< creates production vertex
     static bool mapProductionVertexType(const std::string&        vertType,
                                         const libconfig::Setting& particleKeys,
                                         const particlePtr&        X,
-                                        interactionVertexPtr&     prodVert);  ///< creates production vertex according to type and list of production kinematics particles
+                                        productionVertexPtr&      prodVert);  ///< creates production vertex according to type and list of production kinematics particles
 
-    static bool setProductionVertexKeys(libconfig::Setting&         prodVertKey,
-                                        const interactionVertexPtr& prodVert);  ///< puts production vertex info into keys
+    static bool setProductionVertexKeys(libconfig::Setting&        prodVertKey,
+                                        const productionVertexPtr& prodVert);  ///< puts production vertex info into keys
 
 	  static bool setXQuantumNumbersKeys(libconfig::Setting& XQnKey,
 	                                     const particle&     X);  ///< puts X quantum numbers into keys

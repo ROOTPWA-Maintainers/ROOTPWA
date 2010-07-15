@@ -57,15 +57,15 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-  cerr << "usage:" << endl
-       << progName
-       << " [-o out file -v -h] .amp file 1 .amp file 2" << endl
-       << "    where:" << endl
-       << "        -o file    path to output ROOT file (default: none)" << endl
-       << "        -v         verbose; print debug output (default: false)" << endl
-       << "        -h         print help" << endl
-       << endl;
-  exit(errCode);
+	cerr << "usage:" << endl
+	     << progName
+	     << " [-o out file -v -h] .amp file 1 .amp file 2" << endl
+	     << "    where:" << endl
+	     << "        -o file    path to output ROOT file (default: none)" << endl
+	     << "        -v         verbose; print debug output (default: false)" << endl
+	     << "        -h         print help" << endl
+	     << endl;
+	exit(errCode);
 }
 
 
@@ -105,160 +105,160 @@ int
 main(int    argc,
      char** argv)
 {
-  printCompilerInfo();
-  printSvnVersion();
+	printCompilerInfo();
+	printSvnVersion();
 
-  // parse command line options
-  const string progName        = argv[0];
-  string       outFileName     = "";
-  bool         debug           = false;
-  string       ampFileNames[2] = {"", ""};
-  extern char* optarg;
-  extern int   optind;
-  int          c;
-  while ((c = getopt(argc, argv, "o:vh")) != -1)
-    switch (c) {
-    case 'o':
-      outFileName = optarg;
-      break;
-    case 'v':
-      debug = true;
-      break;
-    case 'h':
-    default:
-      usage(progName);
-    }
+	// parse command line options
+	const string progName        = argv[0];
+	string       outFileName     = "";
+	bool         debug           = false;
+	string       ampFileNames[2] = {"", ""};
+	extern char* optarg;
+	extern int   optind;
+	int          c;
+	while ((c = getopt(argc, argv, "o:vh")) != -1)
+		switch (c) {
+		case 'o':
+			outFileName = optarg;
+			break;
+		case 'v':
+			debug = true;
+			break;
+		case 'h':
+		default:
+			usage(progName);
+		}
 
-  // get amplitude file names
-  if (argc - optind != 2) {
-    printErr << "you have to specify two amplitude files. aborting." << endl;;
-    usage(progName, 1);
-  }
-  ampFileNames[0] = argv[optind++];
-  ampFileNames[1] = argv[optind++];
+	// get amplitude file names
+	if (argc - optind != 2) {
+		printErr << "you have to specify two amplitude files. aborting." << endl;;
+		usage(progName, 1);
+	}
+	ampFileNames[0] = argv[optind++];
+	ampFileNames[1] = argv[optind++];
 
-  // open amplitude files
-  printInfo << "comparing amplitude files '" << ampFileNames[0] << "' and "
-            << "'" << ampFileNames[1] << endl;
-  ifstream ampFiles[2];
-  for (unsigned int i = 0; i < 2; ++i) {
-    ampFiles[i].open(ampFileNames[i].c_str());
-    if (!ampFiles[i]) {
-	    printErr << "cannot open amplitude file '" << ampFileNames[i] << "'. aborting." << endl;
-      exit(1);
-    }
-  }
+	// open amplitude files
+	printInfo << "comparing amplitude files '" << ampFileNames[0] << "' and "
+	          << "'" << ampFileNames[1] << endl;
+	ifstream ampFiles[2];
+	for (unsigned int i = 0; i < 2; ++i) {
+		ampFiles[i].open(ampFileNames[i].c_str());
+		if (not ampFiles[i]) {
+			printErr << "cannot open amplitude file '" << ampFileNames[i] << "'. aborting." << endl;
+			exit(1);
+		}
+	}
 
-  // read amplitudes into memory
-  vector<complex<double> > amps[2];
-  for (unsigned int i = 0; i < 2; ++i) {
-	  complex<double> amp;
-	  while (ampFiles[i].read((char*) &amp, sizeof(complex<double>)))
-		  amps[i].push_back(amp);
-  }  
-  if (amps[0].size() != amps[1].size())
-	  printWarn << "the two amplitude files have different number of amplitudes "
-	            << "(" << amps[0].size() << " vs. " << amps[1].size() << ")." << endl;
-  const unsigned int nmbAmps = min(amps[0].size(), amps[1].size());
+	// read amplitudes into memory
+	vector<complex<double> > amps[2];
+	for (unsigned int i = 0; i < 2; ++i) {
+		complex<double> amp;
+		while (ampFiles[i].read((char*) &amp, sizeof(complex<double>)))
+			amps[i].push_back(amp);
+	}  
+	if (amps[0].size() != amps[1].size())
+		printWarn << "the two amplitude files have different number of amplitudes "
+		          << "(" << amps[0].size() << " vs. " << amps[1].size() << ")." << endl;
+	const unsigned int nmbAmps = min(amps[0].size(), amps[1].size());
 
-  // open output file
-  TFile* outFile = 0;
-  if (outFileName != "") {
-    printInfo << "writing difference tree to '" << outFileName << "'" << endl;
-    outFile = TFile::Open(outFileName.c_str(), "RECREATE");
-  }
+	// open output file
+	TFile* outFile = 0;
+	if (outFileName != "") {
+		printInfo << "writing difference tree to '" << outFileName << "'" << endl;
+		outFile = TFile::Open(outFileName.c_str(), "RECREATE");
+	}
 
-  // create tree
-  TTree* tree = new TTree("ampDiffTree", "ampDiffTree");
-  if (!tree) {
-    printErr << "problems creating tree 'ampDiffTree' " << "in file '" << outFileName << "'" << endl;
-    return false;
-  }
+	// create tree
+	TTree* tree = new TTree("ampDiffTree", "ampDiffTree");
+	if (not tree) {
+		printErr << "problems creating tree 'ampDiffTree' " << "in file '" << outFileName << "'" << endl;
+		return false;
+	}
 
-  // create leaf variables
-  const string cmd     = "basename '" + ampFileNames[0] + "'";
-  TObjString*  ampName = new TObjString(gSystem->GetFromPipe(cmd.c_str()));
-  UInt_t       eventNmb;
-  UInt_t       massBinMin = 0, massBinMax = 0;  // [MeV/c^2]
-  double_t     valReal[2], valImag[2];
-  double_t     absDiffReal, absDiffImag;
-  double_t     relDiffReal, relDiffImag;
+	// create leaf variables
+	const string cmd     = "basename '" + ampFileNames[0] + "'";
+	TObjString*  ampName = new TObjString(gSystem->GetFromPipe(cmd.c_str()));
+	UInt_t       eventNmb;
+	UInt_t       massBinMin = 0, massBinMax = 0;  // [MeV/c^2]
+	double_t     valReal[2], valImag[2];
+	double_t     absDiffReal, absDiffImag;
+	double_t     relDiffReal, relDiffImag;
 
-  // get mass bin boundaries from file paths
-  if (not     massBinFromPath(ampFileNames[0], massBinMin, massBinMax)
-      and not massBinFromPath(ampFileNames[1], massBinMin, massBinMax))
-	  printWarn << "cannot determine mass bin boundaries from file paths" << endl;
-  else
-	  printInfo << "extracted mass bin boundaries [" << massBinMin << ", " << massBinMax << "] from file paths" << endl;
+	// get mass bin boundaries from file paths
+	if (not     massBinFromPath(ampFileNames[0], massBinMin, massBinMax)
+	    and not massBinFromPath(ampFileNames[1], massBinMin, massBinMax))
+		printWarn << "cannot determine mass bin boundaries from file paths" << endl;
+	else
+		printInfo << "extracted mass bin boundaries [" << massBinMin << ", " << massBinMax << "] from file paths" << endl;
   
-  // connect leaf variables to tree branches
-  const int split   = 0;
-  const int bufSize = 256000;
-  tree->Branch("ampName",     "TObjString", &ampName,  bufSize, split);
-  tree->Branch("eventNmb",    &eventNmb,    "eventNmb/i");
-  tree->Branch("massBinMin",  &massBinMin,  "massBinMin/i");
-  tree->Branch("massBinMax",  &massBinMax,  "massBinMax/i");
-  tree->Branch("valReal",     valReal,      "valReal[2]/D");
-  tree->Branch("valImag",     valImag,      "valImag[2]/D");
-  tree->Branch("absDiffReal", &absDiffReal, "absDiffReal/D");
-  tree->Branch("absDiffImag", &absDiffImag, "absDiffImag/D");
-  tree->Branch("relDiffReal", &relDiffReal, "relDiffReal/D");
-  tree->Branch("relDiffImag", &relDiffImag, "relDiffImag/D");
+	// connect leaf variables to tree branches
+	const int split   = 0;
+	const int bufSize = 256000;
+	tree->Branch("ampName",     "TObjString", &ampName,  bufSize, split);
+	tree->Branch("eventNmb",    &eventNmb,    "eventNmb/i");
+	tree->Branch("massBinMin",  &massBinMin,  "massBinMin/i");
+	tree->Branch("massBinMax",  &massBinMax,  "massBinMax/i");
+	tree->Branch("valReal",     valReal,      "valReal[2]/D");
+	tree->Branch("valImag",     valImag,      "valImag[2]/D");
+	tree->Branch("absDiffReal", &absDiffReal, "absDiffReal/D");
+	tree->Branch("absDiffImag", &absDiffImag, "absDiffImag/D");
+	tree->Branch("relDiffReal", &relDiffReal, "relDiffReal/D");
+	tree->Branch("relDiffImag", &relDiffImag, "relDiffImag/D");
 
-  // compare amplitudes
-  double   maxAbsDiff      = 0;
-  long int maxAbsDiffIndex = -1;
-  double   maxRelDiff      = 0;
-  long int maxRelDiffIndex = -1;
-  for (unsigned int i = 0; i < nmbAmps; ++i) {
-    const complex<double> absDiff = amps[0][i] - amps[1][i];
-    const complex<double> relDiff = complex<double>(absDiff.real() / amps[0][i].real(),
-                                                    absDiff.imag() / amps[0][i].imag());
-    // fill tree
-    if (outFile) {
-	    eventNmb    = i;
-	    valReal[0]  = amps[0][i].real();
-	    valImag[0]  = amps[0][i].imag();
-	    valReal[1]  = amps[1][i].real();
-	    valImag[1]  = amps[1][i].imag();
-	    absDiffReal = absDiff.real();
-	    absDiffImag = absDiff.imag();
-	    relDiffReal = relDiff.real();
-	    relDiffImag = relDiff.imag();
-	    tree->Fill();
-    }
-    // print amplitudes
-    if (debug) {
-	    const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
-	    ostringstream s;
-	    s.precision(nmbDigits);
-	    s.setf(ios_base::scientific, ios_base::floatfield);
-	    s << "    " << setw(49) << amps[0][i] << " - " << setw(49) << amps[1][i]
-	      << " = " << setw(49) << absDiff	<< ", relative "
-	      << "(" << setw(23) << relDiff.real() << ", " << setw(23) << relDiff.imag() << " )";
-	    cout << s.str() << endl;
-    }
-    // compute maximum deviations
-    const double absMax = max(fabs(absDiffReal), fabs(absDiffImag));
-    const double relMax = max(fabs(relDiffReal), fabs(relDiffImag));
-    if (absMax > maxAbsDiff) {
-	    maxAbsDiff      = absMax;
-	    maxAbsDiffIndex = i;
-    }
-    if (relMax > maxRelDiff) {
-	    maxRelDiff      = relMax;
-	    maxRelDiffIndex = i;
-    }
-  }
-  printInfo << "maximum observed deviations: absolute = " << maxPrecision(maxAbsDiff) << " "
-            << "(event " << maxAbsDiffIndex << "), relative = " << maxPrecision(maxRelDiff) << " "
-            << "(event " << maxRelDiffIndex << ")" << endl;
+	// compare amplitudes
+	double   maxAbsDiff      = 0;
+	long int maxAbsDiffIndex = -1;
+	double   maxRelDiff      = 0;
+	long int maxRelDiffIndex = -1;
+	for (unsigned int i = 0; i < nmbAmps; ++i) {
+		const complex<double> absDiff = amps[0][i] - amps[1][i];
+		const complex<double> relDiff = complex<double>(absDiff.real() / amps[0][i].real(),
+		                                                absDiff.imag() / amps[0][i].imag());
+		// fill tree
+		if (outFile) {
+			eventNmb    = i;
+			valReal[0]  = amps[0][i].real();
+			valImag[0]  = amps[0][i].imag();
+			valReal[1]  = amps[1][i].real();
+			valImag[1]  = amps[1][i].imag();
+			absDiffReal = absDiff.real();
+			absDiffImag = absDiff.imag();
+			relDiffReal = relDiff.real();
+			relDiffImag = relDiff.imag();
+			tree->Fill();
+		}
+		// print amplitudes
+		if (debug) {
+			const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
+			ostringstream s;
+			s.precision(nmbDigits);
+			s.setf(ios_base::scientific, ios_base::floatfield);
+			s << "    " << setw(49) << amps[0][i] << " - " << setw(49) << amps[1][i]
+			  << " = " << setw(49) << absDiff	<< ", relative "
+			  << "(" << setw(23) << relDiff.real() << ", " << setw(23) << relDiff.imag() << " )";
+			cout << s.str() << endl;
+		}
+		// compute maximum deviations
+		const double absMax = max(fabs(absDiffReal), fabs(absDiffImag));
+		const double relMax = max(fabs(relDiffReal), fabs(relDiffImag));
+		if (absMax > maxAbsDiff) {
+			maxAbsDiff      = absMax;
+			maxAbsDiffIndex = i;
+		}
+		if (relMax > maxRelDiff) {
+			maxRelDiff      = relMax;
+			maxRelDiffIndex = i;
+		}
+	}
+	printInfo << "maximum observed deviations: absolute = " << maxPrecision(maxAbsDiff) << " "
+	          << "(event " << maxAbsDiffIndex << "), relative = " << maxPrecision(maxRelDiff) << " "
+	          << "(event " << maxRelDiffIndex << ")" << endl;
 
-  if (outFile) {
-	  outFile->Write();
-    outFile->Close();
-    delete outFile;
-    printInfo << "wrote difference tree to '" << outFileName << "'" << endl;
-  }
-  return 0;
+	if (outFile) {
+		outFile->Write();
+		outFile->Close();
+		delete outFile;
+		printInfo << "wrote difference tree to '" << outFileName << "'" << endl;
+	}
+	return 0;
 }
