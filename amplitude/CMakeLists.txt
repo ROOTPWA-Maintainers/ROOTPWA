@@ -59,6 +59,7 @@ set(SOURCES
   interactionVertex.cc
   fsVertex.cc
   decayTopology.cc
+  productionVertex.cc
   diffractiveDissVertex.cc
   isobarDecayVertex.cc
   isobarDecayTopology.cc

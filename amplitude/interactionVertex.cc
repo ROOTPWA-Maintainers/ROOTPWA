@@ -156,7 +156,7 @@ interactionVertex::revertMomenta()
 ostream&
 interactionVertex::print(ostream& out) const
 {
-  out << "interaction vertex: ";
+	out << label() << ": ";
   for (unsigned int i = 0; i < _inParticles.size(); ++i) {
     out << _inParticles[i]->qnSummary();
     if (i < _inParticles.size() - 1)
@@ -175,7 +175,7 @@ interactionVertex::print(ostream& out) const
 ostream&
 interactionVertex::dump(ostream& out) const
 {
-  out << "interaction vertex:" << endl;
+	out << label() << ":" << endl;
   for (unsigned int i = 0; i < _inParticles.size(); ++i)
     out << "    incoming[" << i << "]: " << *_inParticles[i] << endl;
   for (unsigned int i = 0; i < _outParticles.size(); ++i)
@@ -187,7 +187,7 @@ interactionVertex::dump(ostream& out) const
 ostream&
 interactionVertex::printPointers(ostream& out) const
 {
-  out << "interaction vertex " << this << ": incoming particles: ";
+	out << label() << " " << this << ": incoming particles: ";
   for (unsigned int i = 0; i < _inParticles.size(); ++i) {
     out << "[" << i << "] = " << _inParticles[i];
     if (i < _inParticles.size() - 1)

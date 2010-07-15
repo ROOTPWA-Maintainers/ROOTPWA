@@ -56,87 +56,87 @@ class TClonesArray;
 namespace rpwa {
 
   
-  class interactionVertex;
-  typedef boost::shared_ptr<interactionVertex> interactionVertexPtr;
+	class interactionVertex;
+	typedef boost::shared_ptr<interactionVertex> interactionVertexPtr;
 
 
-  class interactionVertex {
+	class interactionVertex {
 
-  public:
+	public:
   
-    interactionVertex();
-    interactionVertex(const interactionVertex& vert);
-    virtual ~interactionVertex();
+		interactionVertex();
+		interactionVertex(const interactionVertex& vert);
+		virtual ~interactionVertex();
 		
-    virtual interactionVertex& operator =(const interactionVertex& vert);
-    interactionVertexPtr clone(const bool cloneInParticles  = false,
-			       const bool cloneOutParticles = false) const  ///< creates deep copy of interaction vertex; must not be virtual
-    { return interactionVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
-    virtual void clear();
+		virtual interactionVertex& operator =(const interactionVertex& vert);
+		interactionVertexPtr clone(const bool cloneInParticles  = false,
+		                           const bool cloneOutParticles = false) const  ///< creates deep copy of interaction vertex; must not be virtual
+		{ return interactionVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
+		virtual void clear();
 
-    virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
-    virtual bool addOutParticle(const particlePtr& part);  ///< adds an outgoing particle to vertex
+		virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
+		virtual bool addOutParticle(const particlePtr& part);  ///< adds an outgoing particle to vertex
 
-    void transformOutParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to outgoing particles
+		void transformOutParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to outgoing particles
 
-    inline unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
-    inline unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles
+		inline unsigned int nmbInParticles () const { return _inParticles.size();  }  ///< returns number of incoming particles
+		inline unsigned int nmbOutParticles() const { return _outParticles.size(); }  ///< returns number of outgoing particles
 
-    inline std::vector<particlePtr>&       inParticles ()       { return _inParticles;  }  ///< returns array of incoming particles
-    inline std::vector<particlePtr>&       outParticles()       { return _outParticles; }  ///< returns array of outgoing particles
-    inline const std::vector<particlePtr>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
-    inline const std::vector<particlePtr>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
+		inline std::vector<particlePtr>&       inParticles ()       { return _inParticles;  }  ///< returns array of incoming particles
+		inline std::vector<particlePtr>&       outParticles()       { return _outParticles; }  ///< returns array of outgoing particles
+		inline const std::vector<particlePtr>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
+		inline const std::vector<particlePtr>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
 
-    virtual bool readData(const TClonesArray& names,
-			  const TClonesArray& momenta);  ///< general interface to read data from TClonesArrays; noop here
+		virtual bool readData(const TClonesArray& names,
+		                      const TClonesArray& momenta);  ///< general interface to read data from TClonesArrays; noop here
 
-    virtual bool revertMomenta();  ///< general interface to reset momenta to the values of last event read; noop here
+		virtual bool revertMomenta();  ///< general interface to reset momenta to the values of last event read; noop here
 
-    virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
-    virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
-    virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
+		virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
+		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
 
-    virtual std::string label() const { return "interaction vertex"; }  ///< returns graph label
+		virtual std::string label() const { return "interaction vertex"; }  ///< returns label used in graph visualization and reporting
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-
-  protected:
-
-    virtual interactionVertex* doClone(const bool cloneInParticles,
-				       const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
-
-    void cloneInParticles ();  ///< clones all incoming particles
-    void cloneOutParticles();  ///< clones all outgoing particles
-
-    std::vector<particlePtr> _inParticles;   ///< array of pointers to incoming particles
-    std::vector<particlePtr> _outParticles;  ///< array of pointers to outgoing particles
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
-  private:
+	protected:
 
-    static bool _debug;  ///< if set to true, debug messages are printed
+		virtual interactionVertex* doClone(const bool cloneInParticles,
+		                                   const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
+		void cloneInParticles ();  ///< clones all incoming particles
+		void cloneOutParticles();  ///< clones all outgoing particles
+
+		std::vector<particlePtr> _inParticles;   ///< array of pointers to incoming particles
+		std::vector<particlePtr> _outParticles;  ///< array of pointers to outgoing particles
+
+
+	private:
+
+		static bool _debug;  ///< if set to true, debug messages are printed
 	
-  };
+	};
 
 
-  inline
-  interactionVertexPtr
-  createInteractionVertex()
-  {
-    interactionVertexPtr v(new interactionVertex());
-    return v;
-  }
+	inline
+	interactionVertexPtr
+	createInteractionVertex()
+	{
+		interactionVertexPtr v(new interactionVertex());
+		return v;
+	}
 
 
-  inline
-  std::ostream&
-  operator <<(std::ostream&            out,
-	      const interactionVertex& vert)
-  {
-    return vert.print(out);
-  }
+	inline
+	std::ostream&
+	operator <<(std::ostream&            out,
+	            const interactionVertex& vert)
+	{
+		return vert.print(out);
+	}
 
 
 }  // namespace rpwa

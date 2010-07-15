@@ -53,78 +53,78 @@ class TClonesArray;
 namespace rpwa {
 
 
-  class diffractiveDissVertex;
-  typedef boost::shared_ptr<diffractiveDissVertex> diffractiveDissVertexPtr;
+	class diffractiveDissVertex;
+	typedef boost::shared_ptr<diffractiveDissVertex> diffractiveDissVertexPtr;
 
 
-  class diffractiveDissVertex : public interactionVertex {
+	class diffractiveDissVertex : public interactionVertex {
 
-  public:
+	public:
   
-    diffractiveDissVertex(const particlePtr& beam,
-			  const particlePtr& XSystem);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
-    diffractiveDissVertex(const diffractiveDissVertex& vert);
-    virtual ~diffractiveDissVertex();
+		diffractiveDissVertex(const particlePtr& beam,
+		                      const particlePtr& XSystem);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
+		diffractiveDissVertex(const diffractiveDissVertex& vert);
+		virtual ~diffractiveDissVertex();
 		
-    virtual diffractiveDissVertex& operator =(const diffractiveDissVertex& vert);
-    diffractiveDissVertexPtr clone(const bool cloneInParticles  = false,
-				   const bool cloneOutParticles = false) const  ///< creates deep copy of diffractive dissociation vertex; must not be virtual
-    { return diffractiveDissVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
+		virtual diffractiveDissVertex& operator =(const diffractiveDissVertex& vert);
+		diffractiveDissVertexPtr clone(const bool cloneInParticles  = false,
+		                               const bool cloneOutParticles = false) const  ///< creates deep copy of diffractive dissociation vertex; must not be virtual
+		{ return diffractiveDissVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
 
-    virtual bool addInParticle (const particlePtr&) { return false; }  ///< disabled; only 1 incoming particle (beam) is allowed
-    virtual bool addOutParticle(const particlePtr&) { return false; }  ///< disabled; only 1 outgoing particle (X-system) is allowed
+		virtual bool addInParticle (const particlePtr&);  ///< disabled; all incoming particles have to be specified at construction
+		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
-    // diffractive dissociation specific accessors
-    inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
-    inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
+		// diffractive dissociation specific accessors
+		inline const particlePtr& beam   () const { return inParticles ()[0]; }  ///< returns beam particle
+		inline const particlePtr& XSystem() const { return outParticles()[0]; }  ///< returns X particle
     
-    virtual bool readData(const TClonesArray& prodKinParticles,
-			  const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
+		virtual bool readData(const TClonesArray& prodKinParticles,
+		                      const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
 
-    virtual bool revertMomenta();  ///< resets momenta to the values of last event read
+		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 
-    virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
-    virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
-    virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
+		virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
+		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
+		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
 
-    virtual std::string label() const { return "diffractive dissociation"; }  ///< returns graph label
+		virtual std::string label() const { return "diffractive dissociation vertex"; }  ///< returns label used in graph visualization and reporting
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-
-  protected:
-
-    virtual diffractiveDissVertex* doClone(const bool cloneInParticles,
-					   const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
-  private:
+	protected:
 
-    TVector3 _beamMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-
-    static bool _debug;  ///< if set to true, debug messages are printed
-
-  };
+		virtual diffractiveDissVertex* doClone(const bool cloneInParticles,
+		                                       const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
 
-  inline
-  diffractiveDissVertexPtr
-  createDiffractiveDissVertex(const particlePtr& beam,
-			      const particlePtr& XSystem)
-  {
-    diffractiveDissVertexPtr v(new diffractiveDissVertex(beam, XSystem));
-    return v;
-  }
+	private:
+
+		TVector3 _beamMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+
+		static bool _debug;  ///< if set to true, debug messages are printed
+
+	};
 
 
-  inline
-  std::ostream&
-  operator <<(std::ostream&                out,
-	      const diffractiveDissVertex& vert)
-  {
-    return vert.print(out);
-  }
+	inline
+	diffractiveDissVertexPtr
+	createDiffractiveDissVertex(const particlePtr& beam,
+	                            const particlePtr& XSystem)
+	{
+		diffractiveDissVertexPtr v(new diffractiveDissVertex(beam, XSystem));
+		return v;
+	}
+
+
+	inline
+	std::ostream&
+	operator <<(std::ostream&                out,
+	            const diffractiveDissVertex& vert)
+	{
+		return vert.print(out);
+	}
 
 
 }  // namespace rpwa

@@ -55,28 +55,28 @@ bool diffractiveDissVertex::_debug = false;
 
 
 diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
-					     const particlePtr& XSystem)
-  : interactionVertex(),
-    _beamMomCache    ()
+                                             const particlePtr& XSystem)
+	: interactionVertex(),
+	  _beamMomCache    ()
 {
-  if (!beam) {
-    printErr << "null pointer to beam particle. aborting." << endl;
-    throw;
-  }
-  if (!XSystem) {
-    printErr << "null pointer to particle representing X system. aborting." << endl;
-    throw;
-  }
-  interactionVertex::addInParticle (beam);
-  interactionVertex::addOutParticle(XSystem);
-  if (_debug)
-    printInfo << "constructed " << *this << endl;
+	if (!beam) {
+		printErr << "null pointer to beam particle. aborting." << endl;
+		throw;
+	}
+	if (!XSystem) {
+		printErr << "null pointer to particle representing X system. aborting." << endl;
+		throw;
+	}
+	interactionVertex::addInParticle (beam);
+	interactionVertex::addOutParticle(XSystem);
+	if (_debug)
+		printInfo << "constructed " << *this << endl;
 }
 
 
 diffractiveDissVertex::diffractiveDissVertex(const diffractiveDissVertex& vert)
 {
-  *this = vert;
+	*this = vert;
 }
 
 
@@ -87,108 +87,126 @@ diffractiveDissVertex::~diffractiveDissVertex()
 diffractiveDissVertex&
 diffractiveDissVertex::operator =(const diffractiveDissVertex& vert)
 {
-  if (this != &vert) {
-    interactionVertex::operator =(vert);
-    _beamMomCache = vert._beamMomCache;
-  }
-  return *this;
+	if (this != &vert) {
+		interactionVertex::operator =(vert);
+		_beamMomCache = vert._beamMomCache;
+	}
+	return *this;
 }
 
 
 diffractiveDissVertex*
 diffractiveDissVertex::doClone(const bool cloneInParticles,
-			       const bool cloneOutParticles) const
+                               const bool cloneOutParticles) const
 {
-  diffractiveDissVertex* vertexClone = new diffractiveDissVertex(*this);
-  if (cloneInParticles)
-    vertexClone->cloneInParticles();
-  if (cloneOutParticles)
-    vertexClone->cloneOutParticles();
-  if (_debug)
-    printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-	      << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
-	      << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
-  return vertexClone;
+	diffractiveDissVertex* vertexClone = new diffractiveDissVertex(*this);
+	if (cloneInParticles)
+		vertexClone->cloneInParticles();
+	if (cloneOutParticles)
+		vertexClone->cloneOutParticles();
+	if (_debug)
+		printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+		          << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
+		          << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
+	return vertexClone;
+}
+
+
+bool
+diffractiveDissVertex::addInParticle(const particlePtr&)
+{
+	if (_debug)
+		printWarn << "cannot add incoming particle to " << *this << endl;
+	return false;
+}
+
+
+bool
+diffractiveDissVertex::addOutParticle(const particlePtr&)
+{
+	if (_debug)
+		printWarn << "cannot add outgoing particle to " << *this << endl;
+	return false;
 }
 
 
 bool
 diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
-				const TClonesArray& prodKinMomenta)
+                                const TClonesArray& prodKinMomenta)
 {
-  _beamMomCache = TVector3();
-  // check inital state data
-  bool success = true;
-  const string partClassName = prodKinParticles.GetClass()->GetName();
-  if (partClassName != "TObjString") {
-    printWarn << "production kinematics particle names are of type " << partClassName
-	      << " and not TObjString. cannot read production kinematics." << endl;
-    success = false;
-  }
-  const string momClassName = prodKinMomenta.GetClass()->GetName();
-  if (momClassName != "TVector3") {
-    printWarn << "production kinematics momenta are of type " << momClassName
-	      << " and not TVector3. cannot read production kinematics." << endl;
-    success = false;
-  }
-  if (prodKinParticles.GetEntriesFast() != prodKinMomenta.GetEntriesFast()) {
-    printWarn << "arrays of production kinematics particles and momenta have different sizes: "
-	      << prodKinParticles.GetEntriesFast() << " vs. "
-	      << prodKinMomenta.GetEntriesFast  () << endl;
-    success = false;
-  }
-  if (!success)
-    return false;
-  // set inital state
-  const string partName = ((TObjString*)prodKinParticles[0])->GetString().Data();
-  if (partName != beam()->name()) {
-    printWarn << "cannot find entry for beam particle '" << beam()->name() << "' in data." << endl;
-    return false;
-  }
-  if (_debug)
-    printInfo << "setting momentum of beam particle " << partName
-	      << " to " << *((TVector3*)prodKinMomenta[0]) << " GeV" << endl;
-  beam()->setMomentum(*((TVector3*)prodKinMomenta[0]));
-  _beamMomCache = beam()->lzVec().Vect();
-  return true;
+	_beamMomCache = TVector3();
+	// check inital state data
+	bool success = true;
+	const string partClassName = prodKinParticles.GetClass()->GetName();
+	if (partClassName != "TObjString") {
+		printWarn << "production kinematics particle names are of type " << partClassName
+		          << " and not TObjString. cannot read production kinematics." << endl;
+		success = false;
+	}
+	const string momClassName = prodKinMomenta.GetClass()->GetName();
+	if (momClassName != "TVector3") {
+		printWarn << "production kinematics momenta are of type " << momClassName
+		          << " and not TVector3. cannot read production kinematics." << endl;
+		success = false;
+	}
+	if (prodKinParticles.GetEntriesFast() != prodKinMomenta.GetEntriesFast()) {
+		printWarn << "arrays of production kinematics particles and momenta have different sizes: "
+		          << prodKinParticles.GetEntriesFast() << " vs. "
+		          << prodKinMomenta.GetEntriesFast  () << endl;
+		success = false;
+	}
+	if (!success)
+		return false;
+	// set inital state
+	const string partName = ((TObjString*)prodKinParticles[0])->GetString().Data();
+	if (partName != beam()->name()) {
+		printWarn << "cannot find entry for beam particle '" << beam()->name() << "' in data." << endl;
+		return false;
+	}
+	if (_debug)
+		printInfo << "setting momentum of beam particle " << partName
+		          << " to " << *((TVector3*)prodKinMomenta[0]) << " GeV" << endl;
+	beam()->setMomentum(*((TVector3*)prodKinMomenta[0]));
+	_beamMomCache = beam()->lzVec().Vect();
+	return true;
 }
 
 
 bool
 diffractiveDissVertex::revertMomenta()
 {
-  if (_debug)
-    printInfo << "resetting beam momentum to " << _beamMomCache << " GeV" << endl;
-  beam()->setMomentum(_beamMomCache);
-  return true;
+	if (_debug)
+		printInfo << "resetting beam momentum to " << _beamMomCache << " GeV" << endl;
+	beam()->setMomentum(_beamMomCache);
+	return true;
 }
 
 
 ostream&
 diffractiveDissVertex::print(ostream& out) const
 {
-  out << "diffractive dissociation vertex: "
-      << "beam " << beam()->qnSummary() << "  --->  "
-      << XSystem()->qnSummary();
-  return out;
+	out << label() << ": "
+	    << "beam " << beam()->qnSummary() << "  --->  "
+	    << XSystem()->qnSummary();
+	return out;
 }
 
 
 ostream&
 diffractiveDissVertex::dump(ostream& out) const
 {
-  out << "diffractive dissociation vertex: " << endl
-      << "    beam: "     << *beam()    << endl
-      << "    X system: " << *XSystem() << endl;
-  return out;
+	out << label() << ": " << endl
+	    << "    beam: "     << *beam()    << endl
+	    << "    X system: " << *XSystem() << endl;
+	return out;
 }
 
 
 ostream&
 diffractiveDissVertex::printPointers(ostream& out) const
 {
-  out << "diffractive dissociation vertex " << this << ": "
-      << "beam particle: "     << beam()    << "; "
-      << "X system particle: " << XSystem() << endl;
-  return out;
+	out << label() << " " << this << ": "
+	    << "beam particle: "     << beam()    << "; "
+	    << "X system particle: " << XSystem() << endl;
+	return out;
 }

@@ -235,7 +235,7 @@ isobarHelicityAmplitude::transformDaughters() const
   const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
   const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->mother()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
-  for (unsigned int i = 0; i < _decay->nmbInteractionVertices(); ++i) {
+  for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
     const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
     if (_debug)
       printInfo << "transforming outgoing particles of vertex " << *vertex
@@ -243,7 +243,7 @@ isobarHelicityAmplitude::transformDaughters() const
     vertex->transformOutParticles(gjTrans);
   }
   // 2) transform daughters of isobar decay vertices to the respective helicity frames
-  for (unsigned int i = 1; i < _decay->nmbInteractionVertices(); ++i) {  // exclude X-decay vertex
+  for (unsigned int i = 1; i < _decay->nmbDecayVertices(); ++i) {  // exclude X-decay vertex
     const isobarDecayVertexPtr& vertex  = _decay->isobarDecayVertices()[i];
     if (_debug)
       printInfo << "transforming all child particles of vertex " << *vertex

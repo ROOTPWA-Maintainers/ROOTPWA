@@ -25,8 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      class that describes final state vertex decay topology
-//      class is just used for internal book keeping
+//      production vertex virtual base class
 //
 //
 // Author List:
@@ -37,73 +36,23 @@
 
 
 #include "utilities.h"
-#include "fsVertex.h"
+#include "productionVertex.h"
 
 	
 using namespace std;
 using namespace rpwa;
 
 
-bool fsVertex::_debug = false;
+bool productionVertex::_debug = false;
 
 
-fsVertex::fsVertex(const particlePtr& fsParticle)
-  : interactionVertex()
+productionVertex::productionVertex()
+	: interactionVertex()
 {
-  if (!fsParticle) {
-    printErr << "null pointer to final state particle. aborting." << endl;
-    throw;
-  }
-  interactionVertex::addInParticle(fsParticle);
-  if (_debug)
-    printInfo << "constructed " << *this << endl;
+	if (_debug)
+		printInfo << "constructed " << *this << endl;
 }
 
 
-fsVertex::fsVertex(const fsVertex& vert)
-{
-  *this = vert;
-}
-
-
-fsVertex::~fsVertex()
+productionVertex::~productionVertex()
 { }
-
-
-fsVertex*
-fsVertex::doClone(const bool cloneInParticles,
-		  const bool) const
-{
-  fsVertex* vertexClone = new fsVertex(*this);
-  if (cloneInParticles)
-    vertexClone->cloneInParticles();
-  if (_debug)
-    printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-	      << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles" << std::endl;
- return vertexClone;
-}
-
-
-ostream&
-fsVertex::print(ostream& out) const
-{
-	out << label() << ": " << fsParticle()->qnSummary();
-  return out;
-}
-
-
-ostream&
-fsVertex::dump(ostream& out) const
-{
-	out << label() << ":" << endl
-      << "    final state particle: " << *fsParticle() << endl;
-  return out;
-}
-
-
-ostream&
-fsVertex::printPointers(ostream& out) const
-{
-	out << label() << " " << this << ": final state particle: " << fsParticle() << endl;
-  return out;
-}

@@ -67,145 +67,145 @@ class TVector3;
 namespace rpwa {
 
 
-  class decayTopology;
-  typedef boost::shared_ptr<decayTopology> decayTopologyPtr;
-  typedef decayGraph<interactionVertex, particle> decayTopologyGraphType;
+	class decayTopology;
+	typedef boost::shared_ptr<decayTopology> decayTopologyPtr;
+	typedef decayGraph<interactionVertex, particle> decayTopologyGraphType;
 
 
-  class decayTopology : public decayTopologyGraphType {
+	class decayTopology : public decayTopologyGraphType {
 	
-  public:
+	public:
 			
-    decayTopology();
-    decayTopology(const interactionVertexPtr&              productionVertex,
-		  const std::vector<interactionVertexPtr>& interactionVertices,
-		  const std::vector<particlePtr>&          fsParticles);
-    decayTopology(const decayTopology&                     topo);
-    decayTopology(const decayTopologyGraphType&            graph);
-    virtual ~decayTopology();
+		decayTopology();
+		decayTopology(const interactionVertexPtr&              productionVertex,
+		              const std::vector<interactionVertexPtr>& decayVertices,
+		              const std::vector<particlePtr>&          fsParticles);
+		decayTopology(const decayTopology&                     topo);
+		decayTopology(const decayTopologyGraphType&            graph);
+		virtual ~decayTopology();
 
-    virtual decayTopology& operator =(const decayTopology&          topo);
-    virtual decayTopology& operator =(const decayTopologyGraphType& graph);
-    decayTopologyPtr clone(const bool cloneFsParticles    = false,
-			   const bool cloneProdKinematics = false) const  ///< creates deep copy of decay topology; must not be virtual
-    { return decayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }
+		virtual decayTopology& operator =(const decayTopology&          topo);
+		virtual decayTopology& operator =(const decayTopologyGraphType& graph);
+		decayTopologyPtr clone(const bool cloneFsParticles    = false,
+		                       const bool cloneProdKinematics = false) const  ///< creates deep copy of decay topology; must not be virtual
+		{ return decayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }
 
-    virtual void clear();  ///< deletes all information
+		virtual void clear();  ///< deletes all information
     
-    unsigned int nmbInteractionVertices() const { return _intVertices.size(); }  ///< returns number of interaction vertices
-    unsigned int nmbFsParticles        () const { return _fsParticles.size(); }  ///< returns number of final state particles
-    std::map<std::string, unsigned int> nmbIndistFsParticles() const;  ///< returns multiplicities of indistinguishable final state particles
+		unsigned int nmbDecayVertices() const { return _decayVertices.size(); }  ///< returns number of decay vertices
+		unsigned int nmbFsParticles  () const { return _fsParticles.size();   }  ///< returns number of final state particles
+		std::map<std::string, unsigned int> nmbIndistFsParticles() const;  ///< returns multiplicities of indistinguishable final state particles
 
-    int fsParticlesIntrinsicParity() const;  ///< returns intrinsic parity of final state particles
-    int spaceInvEigenValue()         const;  ///< returns eigenvalue of decay under space inversion
-    int reflectionEigenValue()       const;  ///< returns eigenvalue of decay under reflection through production plane
+		int fsParticlesIntrinsicParity() const;  ///< returns intrinsic parity of final state particles
+		int spaceInvEigenValue()         const;  ///< returns eigenvalue of decay under space inversion
+		int reflectionEigenValue()       const;  ///< returns eigenvalue of decay under reflection through production plane
 
-    const std::vector<particlePtr>&          fsParticles        () const { return _fsParticles; }  ///< returns final state particles ordered depth-first
-    const std::vector<interactionVertexPtr>& interactionVertices() const { return _intVertices; }  ///< returns interaction vertices (excluding production vertex) ordered depth-first
+		const std::vector<particlePtr>&          fsParticles  () const { return _fsParticles;   }  ///< returns final state particles ordered depth-first
+		const std::vector<interactionVertexPtr>& decayVertices() const { return _decayVertices; }  ///< returns decay vertices ordered depth-first
 
-    const particlePtr&          XParticle       () const { return XDecayVertex()->inParticles()[0]; }  ///< returns X particle
-    const interactionVertexPtr& productionVertex() const { return _prodVertex;                      }  ///< returns production vertex
-    const interactionVertexPtr& XDecayVertex    () const { return _intVertices[0];                  }  ///< returns X-decay vertex
+		const particlePtr&          XParticle       () const { return XDecayVertex()->inParticles()[0]; }  ///< returns X particle
+		const interactionVertexPtr& productionVertex() const { return _prodVertex;                      }  ///< returns production vertex
+		const interactionVertexPtr& XDecayVertex    () const { return _decayVertices[0];                }  ///< returns X-decay vertex
 
-    void transformFsParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to all final state particles
+		void transformFsParticles(const TLorentzRotation& L);  ///< applies Lorentz-transformation to all final state particles
 
-    bool isProductionVertex (const interactionVertexPtr& vert) const { return (vert == _prodVertex); }  ///< returns whether given vertex is the production vertex
-    bool isInteractionVertex(const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the interaction vertices
-    bool isFsVertex         (const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the final state vertices
-    bool isFsParticle       (const particlePtr&          part) const;  ///< returns whether given particle is one of the final state particles
-    int  fsParticlesIndex   (const particlePtr&          part) const;  ///< returns index of particle in final state particle array; -1 means particle is not a final state particle
+		bool isProductionVertex(const interactionVertexPtr& vert) const { return (vert == _prodVertex); }  ///< returns whether given vertex is the production vertex
+		bool isDecayVertex     (const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the interaction vertices
+		bool isFsVertex        (const interactionVertexPtr& vert) const;  ///< returns whether given vertex is one of the final state vertices
+		bool isFsParticle      (const particlePtr&          part) const;  ///< returns whether given particle is one of the final state particles
+		int  fsParticlesIndex  (const particlePtr&          part) const;  ///< returns index of particle in final state particle array; -1 means particle is not a final state particle
 
-    bool checkTopology   () const;                  ///< returns whether decay has the correct topology
-    bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices
+		bool checkTopology   () const;                  ///< returns whether decay has the correct topology
+		bool checkConsistency() const { return true; }  ///< checks consistency of information in vertices
 
-    decayTopology subDecay(const nodeDesc& startNd,
-			   const bool      linkToMotherTopo = false);  ///< returns sub-decay tree that starts at given vertex
+		decayTopology subDecay(const nodeDesc& startNd,
+		                       const bool      linkToMotherTopo = false);  ///< returns sub-decay tree that starts at given vertex
 
-    void addDecay(const decayTopology& topo);  ///< copies all vertices and particles into this topology
+		void addDecay(const decayTopology& topo);  ///< copies all vertices and particles into this topology
 
-    void setProductionVertex(const interactionVertexPtr& productionVertex);  ///< (re)defines production vertex
+		void setProductionVertex(const interactionVertexPtr& productionVertex);  ///< (re)defines production vertex
 
-    bool readData(const TClonesArray& prodKinParticles,
-		  const TClonesArray& prodKinMomenta,
-		  const TClonesArray& decayKinParticles,
-		  const TClonesArray& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
+		bool readData(const TClonesArray& prodKinParticles,
+		              const TClonesArray& prodKinMomenta,
+		              const TClonesArray& decayKinParticles,
+		              const TClonesArray& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
 
-    bool revertMomenta();  ///< resets momenta to the values of last event read
-    bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
-
-
-    virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
-    virtual std::ostream& printProdKinParticles (std::ostream& out) const;  ///< prints production kinematics data in human-readable form
-    virtual std::ostream& printDecayKinParticles(std::ostream& out) const;  ///< prints decay kinematics data in human-readable form
-
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+		bool revertMomenta();  ///< resets momenta to the values of last event read
+		bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
 
 
-  protected:
+		virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
+		virtual std::ostream& printProdKinParticles (std::ostream& out) const;  ///< prints production kinematics data in human-readable form
+		virtual std::ostream& printDecayKinParticles(std::ostream& out) const;  ///< prints decay kinematics data in human-readable form
 
-    virtual decayTopology* doClone(const bool cloneFsParticles,
-				   const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
-    decayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
-				  const std::vector<interactionVertexPtr>& interactionVertices,
-				  const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
-    void buildInternalData();  ///< (re)builds internal data structure of vertex and particle pointers
+	protected:
 
-    virtual interactionVertexPtr cloneNode(const nodeDesc& nd,
-					   const bool      cloneInParticles  = false,
-					   const bool      cloneOutParticles = false);
-    virtual particlePtr          cloneEdge(const edgeDesc& ed);
+		virtual decayTopology* doClone(const bool cloneFsParticles,
+		                               const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
-  private:
+		decayTopology& constructDecay(const interactionVertexPtr&              productionVertex,
+		                              const std::vector<interactionVertexPtr>& decayVertices,
+		                              const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on, production vertex, intermediate vertices, and final state particles
 
-    interactionVertexPtr              _prodVertex;      ///< pointer to production vertex
-    std::vector<interactionVertexPtr> _intVertices;     ///< array of interaction vertices excluding production vertex; ordered depth-first
-    std::vector<particlePtr>          _fsParticles;     ///< array of final state particles; ordered depth-first
-    std::vector<TVector3>             _fsPartMomCache;  ///< caches final state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		void buildInternalData();  ///< (re)builds internal data structure of vertex and particle pointers
+
+		virtual interactionVertexPtr cloneNode(const nodeDesc& nd,
+		                                       const bool      cloneInParticles  = false,
+		                                       const bool      cloneOutParticles = false);
+		virtual particlePtr          cloneEdge(const edgeDesc& ed);
+
+	private:
+
+		interactionVertexPtr              _prodVertex;      ///< pointer to production vertex
+		std::vector<interactionVertexPtr> _decayVertices;   ///< array of decay vertices; ordered depth-first
+		std::vector<particlePtr>          _fsParticles;     ///< array of final state particles; ordered depth-first
+		std::vector<TVector3>             _fsPartMomCache;  ///< caches final state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
     
-    static bool _debug;  ///< if set to true, debug messages are printed
+		static bool _debug;  ///< if set to true, debug messages are printed
     
-  };
+	};
   
 
-  inline
-  decayTopologyPtr
-  createDecayTopology(const interactionVertexPtr&              productionVertex,
-		      const std::vector<interactionVertexPtr>& interactionVertices,
-		      const std::vector<particlePtr>&          fsParticles)
-  {
-    decayTopologyPtr t(new decayTopology(productionVertex, interactionVertices, fsParticles));
-    return t;
-  }
+	inline
+	decayTopologyPtr
+	createDecayTopology(const interactionVertexPtr&              productionVertex,
+	                    const std::vector<interactionVertexPtr>& decayVertices,
+	                    const std::vector<particlePtr>&          fsParticles)
+	{
+		decayTopologyPtr t(new decayTopology(productionVertex, decayVertices, fsParticles));
+		return t;
+	}
 
 
-  inline
-  decayTopologyPtr
-  createDecayTopology(const decayTopology& topo)
-  {
-    decayTopologyPtr t(new decayTopology(topo));
-    return t;
-  }
+	inline
+	decayTopologyPtr
+	createDecayTopology(const decayTopology& topo)
+	{
+		decayTopologyPtr t(new decayTopology(topo));
+		return t;
+	}
 
 
-  inline
-  decayTopologyPtr
-  createDecayTopology(const decayTopologyGraphType& graph)
-  {
-    decayTopologyPtr t(new decayTopology(graph));
-    return t;
-  }
+	inline
+	decayTopologyPtr
+	createDecayTopology(const decayTopologyGraphType& graph)
+	{
+		decayTopologyPtr t(new decayTopology(graph));
+		return t;
+	}
 
 
-  inline
-  std::ostream&
-  operator <<(std::ostream&        out,
-  	      const decayTopology& topo)
-  {
-    return topo.print(out);
-  }
+	inline
+	std::ostream&
+	operator <<(std::ostream&        out,
+	            const decayTopology& topo)
+	{
+		return topo.print(out);
+	}
 
 
 }  // namespace rpwa

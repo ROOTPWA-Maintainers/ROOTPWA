@@ -286,11 +286,11 @@ main(int argc, char** argv)
 	cout << topo3->vertex(*iNode) << "    ";
       cout << endl;
       cout << "!!! topo3 interaction vertex pointers: ";
-      for (unsigned int i = 0; i < topo3->nmbInteractionVertices(); ++i)
-	cout << topo3->interactionVertices()[i] << "    ";
+      for (unsigned int i = 0; i < topo3->nmbDecayVertices(); ++i)
+	cout << topo3->decayVertices()[i] << "    ";
       cout << endl;
       cout << "!!! topo3 isobar decay vertex pointers: ";
-      for (unsigned int i = 0; i < topo3->nmbInteractionVertices(); ++i)
+      for (unsigned int i = 0; i < topo3->nmbDecayVertices(); ++i)
 	cout << topo3->isobarDecayVertices()[i] << "    ";
       cout << endl;
       decayTopologyGraphType::edgeIterator iEdge, iEdgeEnd;
