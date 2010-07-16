@@ -40,6 +40,7 @@ namespace rpwa {
 
   class nBodyPhaseSpaceGen;
   class absMassDep;
+  class absDecayChannel;
 
 class mcPhaseSpace {
 public:
@@ -56,23 +57,20 @@ public:
  
 
   // Accessors -----------------------
-  double rho(double m, int l=0) const ; /// standard accessor: explicitely calculate
+  void rho(double m, std::vector<double>& results) const ; /// standard accessor: explicitely calculate
   
-  void doCalc(int l);         /// calculate and store complete phase space
-  bool hasCached()const {return _graph!=NULL;}
+  void doCalc();         /// calculate and store complete phase space
+  bool hasCached()const {return _graph.size()!=0;}
   double thres() const {return _thres;}
-  double eval(double m) ; /// uses cached info
-  double Evaluate(double *x, double *p) ; /// accessor used with TF1
+  double eval(double m, unsigned int i=0) ; /// uses cached info
+  //double Evaluate(double *x, double *p) ; /// accessor used with TF1
 
-  TGraph* getGraph() {return _graph;}
+  unsigned int nChannels()const;
+  TGraph* getGraph(unsigned int i) {return _graph[i];}
 
   // Modifiers -----------------------
-
-  void setSubSystems21(rpwa::absMassDep* iso); // 3-body decay (pp)p opt=1
-  void setSubSystems22(rpwa::absMassDep* iso1, 
-		       rpwa::absMassDep* iso2);  // 4-body decay (pp)(pp) opt=2
-  void setSubSystems132(rpwa::absMassDep* iso1, 
-			rpwa::absMassDep* iso2); // 4-body decay  p((pp)p) opt=3
+  void addDecayChannel(absDecayChannel* ch);
+ 
 
 
 
@@ -89,11 +87,10 @@ private:
   unsigned int _nsamples;
   unsigned int _nparticles;
 
-  std::vector<absMassDep*> _isobars;
-  int _opt; // which isobar option to be used
+  std::vector<absDecayChannel*> _channels;
 
   // Data Points for interpolation
-  TGraph* _graph;
+  std::vector<TGraph*> _graph;
 
   // Private Methods -----------------
 

@@ -40,6 +40,7 @@
 #include "TROOT.h"
 #include "cauchyIntegral.h"
 #include "dynMassDep.h"
+#include "decayChannels.h"
 
 using namespace std;
 using namespace rpwa;
@@ -99,12 +100,16 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
 
   double masses[4] = {gChargedPionMass,gChargedPionMass,
 		      gChargedPionMass,gChargedPionMass};
-   dynMassDep* rho1=new dynMassDep(mr,wr,2,masses,1);
-   rho1->phasespace()->doCalc(1);
+   dynMassDep* rho1=new dynMassDep(mr,wr,2,masses);
+   rho1->phasespace()->doCalc();
    rho1->store_ms(10,1000);
- //   mr=1.269;
-//    wr=0.25;
-//    dynMassDep* a1=new dynMassDep(mr,wr,3,masses,0);
+   mr=1.269;
+   wr=0.25;
+   dynMassDep* a1=new dynMassDep(mr,wr,3,masses);
+   decay21* ch1=new decay21(rho1,1,1);
+   a1->addDecayChannel(ch1);
+   
+
 //    a1->phasespace()->setSubSystems21(rho1);
 //    a1->phasespace()->doCalc(0);
 //    a1->store_ms(10,1000);
@@ -115,11 +120,11 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   wr=0.3;
   //mr=0.77549;
   //wr=0.1462;
-  dynMassDep* myBW=new dynMassDep(mr,wr,4,masses,0);
+  dynMassDep* myBW=new dynMassDep(mr,wr,2,masses);
   //myBW->phasespace()->setSubSystems132(rho1,a1);
-  myBW->phasespace()->setSubSystems22(rho1,rho1);
+  //myBW->phasespace()->setSubSystems22(rho1,rho1);
   //myBW->phasespace()->setSubSystems21(rho1);
-  myBW->phasespace()->doCalc(0);
+  myBW->phasespace()->doCalc();
   myBW->store_ms(10,1000);
 
 
@@ -148,7 +153,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   TGraph* phase_nodisp=new TGraph(nsteps);
 
 
-  double rho0=myBW->get_rho0();
+  double rho0=myBW->get_rho0(0);
   cout << "rho0="<<rho0<<endl;;
 
   //TF1* f2=new TF1("ms2",myBW,&dynMassDep::disperse,myBW->phasespace()->thres()*myBW->phasespace()->thres(),400,1,"dynMassDep","disperse");
@@ -161,7 +166,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
     complex<double> amp_nodisp=myBW->val_nodisperse(m);
 
 
-    double r=myBW->get_rho(m)/rho0;
+    double r=myBW->get_rho(m,0)/rho0;
 
     intens->SetPoint(i,m,norm(amp));
     intens_static->SetPoint(i,m,norm(amp_static));
@@ -176,7 +181,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
     argand_static->SetPoint(i,amp_static.real(),amp_static.imag());
     argand_nodisp->SetPoint(i,amp_nodisp.real(),amp_nodisp.imag());
 
-    ms->SetPoint(i,m,myBW->calc_ms(m*m));
+    ms->SetPoint(i,m,myBW->calc_ms(m*m,0));
 
     // calculate dispersion integral m(s)
     // dispersion part:
@@ -226,7 +231,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   ms->Draw("AC");
 
   c->cd(5);
-  myBW->phasespace()->getGraph()->Draw("AC");
+  myBW->phasespace()->getGraph(0)->Draw("AC");
   //myBW->phasespace()->getGraph()->Print();
   twopi->SetLineColor(kRed);
   twopi->Draw("SAME C");
@@ -245,7 +250,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   phase_nodisp->Write("DynamicNoDispPhase");
   phase->Write("DynPhase");
 
-  myBW->phasespace()->getGraph()->Write("PhaseSpace");
+  myBW->phasespace()->getGraph(0)->Write("PhaseSpace");
   argand->Write("Argand");
   
 

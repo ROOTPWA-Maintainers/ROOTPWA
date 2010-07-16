@@ -17,6 +17,8 @@
 // Collaborating Class Headers --------
 #include "nBodyPhaseSpaceGen.h"
 #include "absMassDep.h"
+#include "absDecayChannel.h"
+
 
 using namespace std;
 using namespace rpwa;
@@ -31,7 +33,7 @@ rpwa::mcPhaseSpace::mcPhaseSpace(unsigned int n,
 			   unsigned int nsteps,
 			   unsigned int nsamples,
 			   int seed)
-  : _wmax(0),_thres(minM),_mMax(maxM),_nsteps(nsteps),_nsamples(nsamples),_nparticles(n),_opt(0),_graph(NULL)
+  : _wmax(0),_thres(minM),_mMax(maxM),_nsteps(nsteps),_nsamples(nsamples),_nparticles(n)
 {
   // prepare generator
 
@@ -61,7 +63,21 @@ rpwa::mcPhaseSpace::mcPhaseSpace(unsigned int n,
 
 
 void
-rpwa::mcPhaseSpace::doCalc(int l) {
+rpwa::mcPhaseSpace::addDecayChannel(absDecayChannel* ch)
+{
+  _channels.push_back(ch);
+}
+ 
+
+unsigned int 
+rpwa::mcPhaseSpace::nChannels()const{
+  unsigned int nchan=_channels.size();
+  if(nchan==0)nchan=1;
+  return nchan;
+}
+
+void
+rpwa::mcPhaseSpace::doCalc() {
   double step=(_mMax-_thres)/(double)_nsteps;
   
   cout << "Prepcalculating PhaseSpace..." << endl;
@@ -70,7 +86,10 @@ rpwa::mcPhaseSpace::doCalc(int l) {
   cout << "   maxM     =  " << _mMax << endl;
   cout << "   step     =  " << step << endl;
   cout << "   nSamples =  " << _nsamples << endl;
-  _graph=new TGraph(_nsteps);
+
+  for(unsigned int ich=0;ich<nChannels();++ich){
+    _graph.push_back(new TGraph(_nsteps));
+  }
   int tenpercent=(int)(_nsteps*0.1);
  
   for(unsigned int istep=0;istep<_nsteps;++istep){
@@ -85,7 +104,12 @@ rpwa::mcPhaseSpace::doCalc(int l) {
     // ******************************************************
 
     double m=_thres+((double)istep+0.5)*step;
-    _graph->SetPoint(istep,m,rho(m,l));
+    // calculate phase space for all decay channels
+    vector<double> rh(nChannels());
+    rho(m,rh);
+    for(unsigned int ich=0;ich<nChannels();++ich){
+      _graph[ich]->SetPoint(istep,m,rh[ich]);
+    }
     
   }
   cout << " ... done " << endl;
@@ -93,46 +117,21 @@ rpwa::mcPhaseSpace::doCalc(int l) {
 
 
 
-double 
-rpwa::mcPhaseSpace::Evaluate(double *x, double *p) {
-  if(!hasCached())throw;
-  return _graph->Eval(x[0]);
-}
+// double 
+// rpwa::mcPhaseSpace::Evaluate(double *x, double *p) {
+//   if(!hasCached())throw;
+//   return _graph[0]->Eval(x[0]);
+// }
 
 double
-rpwa::mcPhaseSpace::eval(double m) {
+rpwa::mcPhaseSpace::eval(double m,unsigned int i) {
   if(!hasCached())throw;
-  return _graph->Eval(m);
+  return _graph[i]->Eval(m);
 }
 
 
-void 
-rpwa::mcPhaseSpace::setSubSystems21(absMassDep* iso){ // 3-body decay (pp)p
-  _opt=1;
-  _isobars.push_back(iso);
-}
-
-void 
-rpwa::mcPhaseSpace::setSubSystems22(absMassDep* iso1, 
-		     absMassDep* iso2){  // 4-body decay (pp)(pp)
-  _opt=2;
-  _isobars.push_back(iso1);
-  _isobars.push_back(iso2);
-  
-}
-
-void 
-rpwa::mcPhaseSpace::setSubSystems132(absMassDep* iso1, 
-			absMassDep* iso2){ // 4-body decay  p((pp)p)
-  _opt=3;
-  _isobars.push_back(iso1);
-  _isobars.push_back(iso2);
-}
-
-
-
-double
-rpwa::mcPhaseSpace::rho(double m, int l)const {
+void
+rpwa::mcPhaseSpace::rho(double m, std::vector<double>& results)const {
   //cout << "rho::M=" << m << endl;
   double ua=m;
   for(unsigned ip=0;ip<_nparticles;++ip){
@@ -142,10 +141,12 @@ rpwa::mcPhaseSpace::rho(double m, int l)const {
   double u=1;
   if(_nparticles>2)u=TMath::Power(ua,_nparticles-2)/TMath::Factorial(_nparticles-2);
 
-  
-
   TLorentzVector mother(0,0,0,m);
-  double I=0;
+
+  // calculate all channels in parallel
+  results.clear();
+  results.resize(nChannels());
+
   //double wsum=0;
   for(unsigned int i=0;i<_nsamples;++i){
     double w=_gen->generateDecay(mother);
@@ -158,166 +159,33 @@ rpwa::mcPhaseSpace::rho(double m, int l)const {
     }
     // calculate contribution of this event
 
-    double decayprop=0;
-    double breakup=0;
-
-    switch(_opt){
-      // 2body
-    case 0:  
-      {
-	
+    if(_channels.size()==0){
 	TLorentzVector Iso1=p[0]+p[1];
 	// go into isobar rest frame 
 	TVector3 b=-Iso1.BoostVector();
 	p[0].Boost(b);
-	breakup=p[0].Vect().Mag();
-	decayprop=0.5;
-	break;
-      }
-      // 3body -> (12)3
-
-    case 1:
-      {
-	assert(_nparticles==3);
-	TLorentzVector Iso1=p[0]+p[1];
-	// go into isobar rest frame 
-	TVector3 b=-Iso1.BoostVector();
-	p[0].Boost(b);
-	double k1=p[0].Vect().Mag();
-	int l1=_isobars[0]->l();
-	double rho1=pow(k1,2*l1+1);///Iso1.M();
-	double BW=norm(_isobars[0]->val(Iso1.M()));
-	decayprop=rho1*BW;
-	breakup=p[2].Vect().Mag();
-	break;
-      }
-
-	// 4body -> (12)(34)
-    case 2: 
-      {
-	// double mass=0.77549;
-        // double gamma=0.1462;
-
-	assert(_nparticles==4);
-	//cout << "(12)(34) phasespace" << endl;
-	TLorentzVector Iso1=p[0]+p[1];
-	// go into isobar rest frame 
-	TVector3 b=-Iso1.BoostVector();
-	p[0].Boost(b);
-	double k1=p[0].Vect().Mag();
-	int l1=_isobars[0]->l();
-	double rho1=pow(k1,2*l1+1);///Iso1.M();
-	double BW1=norm(_isobars[0]->val(Iso1.M()));
-	
-	TLorentzVector Iso2=p[2]+p[3];
-	// go into isobar rest frame 
-	TVector3 b2=-Iso2.BoostVector();
-	p[2].Boost(b2);
-	//cout << "p2+p3=" << (p[2].Vect()+p[3].Vect()).Mag() << endl;
-	double k2=p[2].Vect().Mag();
-	int l2=_isobars[1]->l();
-	double rho2=pow(k2,2*l2+1);///Iso2.M();
-	double BW2=norm(_isobars[1]->val(Iso2.M()));
-
-	breakup=Iso1.Vect().Mag();
-	decayprop=rho1*BW1*rho2*BW2;
-	if(decayprop!=decayprop){
-	  cerr << "mcPhaseSpace:: decayprop("<<m<<")==Nan"<<endl;
-	  throw;
-	}
-	if(decayprop==0){
-	  cerr << "mcPhaseSpace:: decayprop("<<m<<")==0"<<endl;
-	  throw;
-	}
-	break;
-      }
-  
-    case 3: 
-      {
-
-	//  (1(23))4
-	// double mass=0.77549;
-        // double gamma=0.1462;
-
-	assert(_nparticles==4);
-	//cout << "(12)3))4 phasespace" << endl;
-	TLorentzVector Iso1=p[0]+p[1];
-	// go into isobar rest frame 
-	TVector3 b=-Iso1.BoostVector();
-	p[0].Boost(b);
-	double k1=p[0].Vect().Mag();
-	int l1=_isobars[0]->l();
-	double rho1=pow(k1,2*l1+1);///Iso1.M();
-	double BW1=norm(_isobars[0]->val(Iso1.M()));
-	
-	TLorentzVector Iso2=Iso1+p[2];
-	// go into isobar rest frame 
-	TVector3 b2=-Iso2.BoostVector();
-	p[2].Boost(b2);
-	//cout << "p2+p3=" << (p[2].Vect()+p[3].Vect()).Mag() << endl;
-	double k2=p[2].Vect().Mag();
-	int l2=_isobars[1]->l();
-	double rho2=pow(k2,2*l2+1);///Iso2.M();
-	double BW2=norm(_isobars[1]->val(Iso2.M()));
-
-	breakup=p[3].Vect().Mag();
-	decayprop=rho1*BW1*rho2*BW2;
-	if(decayprop!=decayprop){
-	  cerr << "mcPhaseSpace:: decayprop("<<m<<")==Nan"<<endl;
-	  throw;
-	}
-	if(decayprop==0){
-	  cerr << "mcPhaseSpace:: decayprop("<<m<<")==0"<<endl;
-	  throw;
-	}
-	break;
-      }
+	double breakup=p[0].Vect().Mag();
+	double decayprop=0.5;
+	results[0] += 1./w * breakup/m * decayprop;
+    }
+    else { // loop over decay channels
+      unsigned int nch=_channels.size();
+      for(unsigned int ich=0;ich<nch;++ich){
+	double prob;double brkup;
+	_channels[ich]->tau(p,prob,brkup);
+	results[0] += 1./w * pow(brkup,2*_channels[ich]->l()+1)/m * prob;
+      }// end loop over decay channels
     }
 
-// double BWwheight1=TMath::BreitWigner(Iso1.M(),mass,gamma);
-//     double BWwheight2=TMath::BreitWigner(Iso2.M(),mass,gamma);
-
-  //   // 4pi=a1 pi=rhopi pi=pipipipi
-//     TLorentzVector Iso1=p[0]+p[1];
-//     TLorentzVector Iso2=p[0]+p[1]+p[2];
-//     // go into isobar rest frame 
-//     TVector3 b=-Iso1.BoostVector();
-//     p[0].Boost(b);
-//     double k1=p[0].Vect().Mag();
-//     int l1=1;
-//     double rho1=pow(k1,2*l1+1);///Iso1.M();
-//     TVector3 b2=-Iso2.BoostVector();
-//     // go into a1 restframe
-//     p[2].Boost(b2);
-//     double k2=p[2].Vect().Mag();
-//     int l2=0;
-//     double rho2=pow(k2,2*l2+1);///Iso1.M();
-    
-    
-//     double BWwheight1=TMath::BreitWigner(Iso1.M(),0.77549,0.1462);
-//     double BWwheight2=TMath::BreitWigner(Iso2.M(),1.230,0.280);
-
-
-    
-    // breakup momentum
-    int l=0;
-
-    //cout << "W=" <<w << endl;
-    //cout << fn*u*pow(breakup,2*l+1)/m * decayprop << endl;
-
-    I += 1./w * pow(breakup,2*l+1)/m * decayprop;
-    
-    //I+= w* pow(k,2*l)/m *rho1 *rho2;
- 
-    //I+=w;
-    
+     
   }// end loop over samples
-  I*= fn * u / (double)_nsamples;
-  if(I!=I){
-    cerr << "mcPhaseSpace:: rho("<<m<<")==Nan"<<endl;
-    throw;
+  // loop over decay channels and renormalize
+  for(unsigned int ich=0;ich<results.size();++ich){
+    results[ich]*= fn * u / (double)_nsamples;
+    if(results[ich]!=results[ich]){
+      cerr << "mcPhaseSpace:: rho_"<<ich<<"("<<m<<")==Nan"<<endl;
+      throw;
+    }
   }
-  //cerr << "mcPhaseSpace:: rho("<<m<<")="<<I<<endl;
-  return I;
 }
 

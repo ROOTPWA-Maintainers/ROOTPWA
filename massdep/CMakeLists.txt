@@ -49,6 +49,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
+  decayChannels.cc
   mcPhaseSpace.cc
   cauchyIntegral.cc
   dynMassDep.cc
