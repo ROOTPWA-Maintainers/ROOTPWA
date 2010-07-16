@@ -101,18 +101,20 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   double masses[4] = {gChargedPionMass,gChargedPionMass,
 		      gChargedPionMass,gChargedPionMass};
    dynMassDep* rho1=new dynMassDep(mr,wr,2,masses);
+   rho1->setFixedChannel(0);
    rho1->phasespace()->doCalc();
    rho1->store_ms(10,1000);
    mr=1.269;
    wr=0.25;
    dynMassDep* a1=new dynMassDep(mr,wr,3,masses);
    decay21* ch1=new decay21(rho1,1,1);
+   a1->setFixedChannel(0);
    a1->addDecayChannel(ch1);
-   
+   a1->phasespace()->doCalc();
 
 //    a1->phasespace()->setSubSystems21(rho1);
 //    a1->phasespace()->doCalc(0);
-//    a1->store_ms(10,1000);
+   a1->store_ms(10,1000);
   
    //mr=1.275;
    mr=1.7;
@@ -120,11 +122,16 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   wr=0.3;
   //mr=0.77549;
   //wr=0.1462;
-  dynMassDep* myBW=new dynMassDep(mr,wr,2,masses);
+  dynMassDep* myBW=new dynMassDep(mr,wr,4,masses);
+  decay22* ch2=new decay22(rho1,rho1,0,0.5);
+  decay23* ch3=new decay23(rho1,a1,1,0.5);
+  myBW->addDecayChannel(ch2);
+  myBW->addDecayChannel(ch3);
+  myBW->phasespace()->doCalc();
   //myBW->phasespace()->setSubSystems132(rho1,a1);
   //myBW->phasespace()->setSubSystems22(rho1,rho1);
   //myBW->phasespace()->setSubSystems21(rho1);
-  myBW->phasespace()->doCalc();
+  //myBW->phasespace()->doCalc();
   myBW->store_ms(10,1000);
 
 
@@ -161,9 +168,9 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   for(unsigned int i=0; i<nsteps; ++i){
     double m=m0+i*step;
     std::cout << m << ".." << flush;
-    complex<double> amp=myBW->val(m);
-    complex<double> amp_static=myBW->val_static(m);
-    complex<double> amp_nodisp=myBW->val_nodisperse(m);
+    complex<double> amp=myBW->val(m,0);
+    complex<double> amp_static=myBW->val_static(m,0);
+    complex<double> amp_nodisp=myBW->val_nodisperse(m,0);
 
 
     double r=myBW->get_rho(m,0)/rho0;
@@ -181,7 +188,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
     argand_static->SetPoint(i,amp_static.real(),amp_static.imag());
     argand_nodisp->SetPoint(i,amp_nodisp.real(),amp_nodisp.imag());
 
-    ms->SetPoint(i,m,myBW->calc_ms(m*m,0));
+    //ms->SetPoint(i,m,myBW->calc_ms(m*m,0));
 
     // calculate dispersion integral m(s)
     // dispersion part:
@@ -210,7 +217,7 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   intens_nodisp->Draw("SAME C");
   intens->SetLineColor(kRed);
   intens->Draw("SAME C");
-  intens->Print();
+  ///intens->Print();
   c->cd(2);
  
   argand->SetTitle("Argand plot");

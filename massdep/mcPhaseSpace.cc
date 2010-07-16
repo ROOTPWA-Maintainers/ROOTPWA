@@ -173,7 +173,7 @@ rpwa::mcPhaseSpace::rho(double m, std::vector<double>& results)const {
       for(unsigned int ich=0;ich<nch;++ich){
 	double prob;double brkup;
 	_channels[ich]->tau(p,prob,brkup);
-	results[0] += 1./w * pow(brkup,2*_channels[ich]->l()+1)/m * prob;
+	results[ich] += 1./w * pow(brkup,2*_channels[ich]->l()+1)/m * prob;
       }// end loop over decay channels
     }
 

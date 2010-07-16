@@ -33,7 +33,7 @@ using namespace std;
 rpwa::dynMassDep::dynMassDep(double M, double width,
 			     unsigned int nparticles, double* masses) 
   : mS(M*M), mM(M), mWidth(width){
-  ps=new mcPhaseSpace(nparticles,masses,0,40,400,500000);
+  ps=new mcPhaseSpace(nparticles,masses,0,40,400,5000);
 }
 
 
@@ -47,23 +47,31 @@ rpwa::dynMassDep::addDecayChannel(absDecayChannel* ch){
 
 
 rpwa::cd
-rpwa::dynMassDep::val(double m){
+rpwa::dynMassDep::val(double m,unsigned int i){
   if(m<ps->thres()){
      cout << "Requested m=" << m << " which is below threshold "<< ps->thres() << endl;
     //throw;
     return 0;
   }
-  rho0=get_rho0(0);
+  double br=1;
+  if(_channels.size()>0)br=_channels[i]->branching();
+  double lambda=br*ps->eval(m,i)/get_rho0(i);
   double s=m*m;
-  double ms=get_ms(s,0);
-  double r=ps->eval(m,0)/rho0;
-  cd N(mWidth*mM*r,0);
+  double ms=0;
+  double r=0;
+  for(unsigned int ich=0;ich<ps->nChannels();++ich){
+    ms+=get_ms(s,ich);
+    double br=1;
+    if(_channels.size()>0)br=_channels[i]->branching();
+    r+=br*ps->eval(m,ich)/get_rho0(ich);
+  }
+  cd N(mWidth*mM*lambda,0);
   cd D(mS-s-ms,-mM*mWidth*r);
   return N/D;
 }
 
 rpwa::cd
-rpwa::dynMassDep::val_static(double m){
+rpwa::dynMassDep::val_static(double m,unsigned int i){
  if(m<ps->thres()){
      cout << "Requested m=" << m << " which is below threshold "<< ps->thres() << endl;
     //throw;
@@ -78,17 +86,24 @@ rpwa::dynMassDep::val_static(double m){
 
 
 rpwa::cd
-rpwa::dynMassDep::val_nodisperse(double m){
+rpwa::dynMassDep::val_nodisperse(double m, unsigned int i){
  if(m<ps->thres()){
      cout << "Requested m=" << m << " which is below threshold "<< ps->thres() << endl;
     //throw;
     return 0;
   }
-  rho0=get_rho0(0);
-  double s=m*m;
-  double r=ps->eval(m,0)/rho0;
-  cd N(mWidth*mM*r,0);
-  cd D(mS-s,-mM*mWidth*r);
+double br=1;
+ if(_channels.size()>0)br=_channels[i]->branching();
+ double lambda=br*ps->eval(m,i)/get_rho0(i);
+ double s=m*m;
+ double r=0;
+ for(unsigned int ich=0;ich<ps->nChannels();++ich){
+   double br=1;
+   if(_channels.size()>0)br=_channels[i]->branching();
+    r+=br*ps->eval(m,ich)/get_rho0(ich);
+  }
+ cd N(mWidth*mM*lambda,0);
+ cd D(mS-s,-mM*mWidth*r);
   return N/D;
 }
 

@@ -44,9 +44,12 @@ namespace rpwa {
 	       unsigned int nparticles, double* masses);
     ~dynMassDep() {if(ps!=NULL)delete ps;ps=NULL;}
     
-    cd val(double m);
-    cd val_static(double m);
-    cd val_nodisperse(double m);
+    cd val(double m){return val(m,_channel);}
+    cd val(double m, unsigned int i);
+    cd val_static(double m){return val_static(m,_channel);}
+    cd val_static(double m, unsigned int i);
+    cd val_nodisperse(double m){return val_nodisperse(m,_channel);}
+    cd val_nodisperse(double m, unsigned int i);
     mcPhaseSpace* phasespace() const {return ps;}
     double get_rho0(unsigned int i)const;
     double get_rho(double m, unsigned int i)const {return ps->eval(m,i);}
