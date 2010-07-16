@@ -176,7 +176,8 @@ main(int argc, char** argv)
     particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2);
     // define production vertex
     particlePtr              beam     = createParticle("pi-");
-    diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
+    particlePtr              target   = createParticle("p");
+    diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
     // define vertices
     massDependencePtr    massDep = createRelativisticBreitWigner();
     isobarDecayVertexPtr vert0   = createIsobarDecayVertex(X,     pi4, f1,    2, 2);

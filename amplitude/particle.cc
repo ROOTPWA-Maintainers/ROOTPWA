@@ -172,8 +172,8 @@ string
 particle::qnSummary() const
 {
 	ostringstream out;
-	out << name() << "[" << 0.5 * isospin() << sign(G())
-	    << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")" << 0.5 * spinProj() 
+	out << name() << "[" << 0.5 * isospin() << ((G() != 0) ? sign(G()) : "")
+	    << "(" << 0.5 * J() << sign(P()) << ((C() != 0) ? sign(C()) : "") << ")" << 0.5 * spinProj() 
 	    << ((reflectivity() != 0) ? sign(reflectivity()) : "") << "]";
 	return out.str();
 }

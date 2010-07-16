@@ -55,12 +55,20 @@ bool diffractiveDissVertex::_debug = false;
 
 
 diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
-                                             const particlePtr& XParticle)
+                                             const particlePtr& target,
+                                             const particlePtr& XParticle,
+                                             const particlePtr& recoil)
 	: productionVertex(),
-	  _beamMomCache   ()
+	  _beamMomCache   (),
+	  _targetMomCache (),
+	  _recoilMomCache ()
 {
 	if (not beam) {
 		printErr << "null pointer to beam particle. aborting." << endl;
+		throw;
+	}
+	if (not target) {
+		printErr << "null pointer to target particle. aborting." << endl;
 		throw;
 	}
 	if (not XParticle) {
@@ -68,7 +76,13 @@ diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
 		throw;
 	}
 	interactionVertex::addInParticle (beam);
+	interactionVertex::addInParticle (target);
 	interactionVertex::addOutParticle(XParticle);
+	if (not recoil) {
+		if (_debug)
+			printWarn << "recoil not specified. assuming elastic scattering." << endl;
+		interactionVertex::addOutParticle(createParticle(*target));
+	}
 	if (_debug)
 		printInfo << "constructed " << *this << endl;
 }
@@ -89,7 +103,9 @@ diffractiveDissVertex::operator =(const diffractiveDissVertex& vert)
 {
 	if (this != &vert) {
 		interactionVertex::operator =(vert);
-		_beamMomCache = vert._beamMomCache;
+		_beamMomCache   = vert._beamMomCache;
+		_targetMomCache = vert._targetMomCache;
+		_recoilMomCache = vert._recoilMomCache;
 	}
 	return *this;
 }
@@ -127,6 +143,13 @@ diffractiveDissVertex::addOutParticle(const particlePtr&)
 	if (_debug)
 		printWarn << "cannot add outgoing particle to " << *this << endl;
 	return false;
+}
+
+
+complex<double>
+diffractiveDissVertex::productionAmp() const
+{
+	return 1;
 }
 
 
@@ -178,6 +201,12 @@ diffractiveDissVertex::revertMomenta()
 	if (_debug)
 		printInfo << "resetting beam momentum to " << _beamMomCache << " GeV" << endl;
 	beam()->setMomentum(_beamMomCache);
+	if (_debug)
+		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
+	target()->setMomentum(_targetMomCache);
+	if (_debug)
+		printInfo << "resetting recoil momentum to " << _recoilMomCache << " GeV" << endl;
+	recoil()->setMomentum(_recoilMomCache);
 	return true;
 }
 
@@ -186,8 +215,8 @@ ostream&
 diffractiveDissVertex::print(ostream& out) const
 {
 	out << label() << ": "
-	    << "beam " << beam()->qnSummary() << "  --->  "
-	    << XParticle()->qnSummary();
+	    << "beam " << beam()->qnSummary() << "  +  target " << target()->qnSummary()
+	    << "  --->  " << XParticle()->qnSummary() << "  +  recoil " << recoil()->qnSummary();
 	return out;
 }
 
@@ -196,8 +225,10 @@ ostream&
 diffractiveDissVertex::dump(ostream& out) const
 {
 	out << label() << ": " << endl
-	    << "    beam: "     << *beam()    << endl
-	    << "    X system: " << *XParticle() << endl;
+	    << "    beam ..... " << *beam()      << endl
+	    << "    target ... " << *target()    << endl
+	    << "     X........ " << *XParticle() << endl
+	    << "    recoil ... " << *recoil()    << endl;
 	return out;
 }
 
@@ -206,7 +237,9 @@ ostream&
 diffractiveDissVertex::printPointers(ostream& out) const
 {
 	out << label() << " " << this << ": "
-	    << "beam particle: "     << beam()    << "; "
-	    << "X system particle: " << XParticle() << endl;
+	    << "beam particle: "   << beam()      << "; "
+	    << "target particle: " << target()    << "; "
+	    << "X particle: "      << XParticle() << "; "
+	    << "recoil particle: " << recoil()    << endl;
 	return out;
 }

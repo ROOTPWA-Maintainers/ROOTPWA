@@ -39,6 +39,8 @@
 #define PRODUCTIONVERTEX_H
 
 
+#include <complex>
+
 #include <boost/shared_ptr.hpp>
 
 #include "TVector3.h"
@@ -64,10 +66,15 @@ namespace rpwa {
 		virtual ~productionVertex();
 
 		// production specific accessors
-		virtual TVector3           zAxis    ()     const = 0;           ///< returns z-axis defined by production process
-		virtual const particlePtr& XParticle()     const = 0;           ///< returns X particle
-		virtual double             productionAmp() const { return 1; }  ///< returns production amplitude
+		virtual TVector3             zAxis        () const = 0;           ///< returns z-axis defined by production process
+		virtual const particlePtr&   XParticle    () const = 0;           ///< returns X particle
+		virtual std::complex<double> productionAmp() const { return 1; }  ///< returns production amplitude
     
+		virtual bool readData(const TClonesArray& names,
+		                      const TClonesArray& momenta) = 0;  ///< general interface to read data from TClonesArrays
+
+		virtual bool revertMomenta() = 0;  ///< general interface to reset momenta to the values of last event read
+
 		virtual std::string label() const { return "production vertex"; }  ///< returns label used in graph visualization and reporting
 
 		static bool debug() { return _debug; }                             ///< returns debug flag

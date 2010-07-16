@@ -90,6 +90,9 @@ namespace rpwa {
 
     static bool constructXParticle(const libconfig::Setting& XQnKey,
                                    particlePtr&              X);  ///< creates X particle with quantum numbers defined in X key
+	  static bool setXQuantumNumbersKeys(libconfig::Setting& XQnKey,
+	                                     const particle&     X);  ///< puts X quantum numbers into keys
+
     static bool constructParticle(const libconfig::Setting& particleKey,
                                   particlePtr&              particle);  ///< creates particle using name in particle key
     
@@ -98,27 +101,23 @@ namespace rpwa {
                                      std::vector<isobarDecayVertexPtr>& decayVertices,
                                      std::vector<particlePtr>&          fsParticles);  ///< recursively traverses decay chain and creates decay vertices and final state particles
     static massDependencePtr mapMassDependence(const std::string& massDepType);  ///< creates mass dependence functor of specified type
+	  static bool setMassDependence(libconfig::Setting&   isobarMassDepKey,
+	                                const massDependence& massDep);  ///< puts mass dependence into key
+
 
     static bool constructProductionVertex(const libconfig::Setting& rootKey,
                                           const particlePtr&        X,
                                           productionVertexPtr&      prodVert);  ///< creates production vertex
-    static bool mapProductionVertexType(const std::string&        vertType,
-                                        const libconfig::Setting& particleKeys,
+    static bool mapProductionVertexType(const libconfig::Setting& prodVertKey,
+                                        const std::string&        vertType,
                                         const particlePtr&        X,
                                         productionVertexPtr&      prodVert);  ///< creates production vertex according to type and list of production kinematics particles
-
     static bool setProductionVertexKeys(libconfig::Setting&        prodVertKey,
                                         const productionVertexPtr& prodVert);  ///< puts production vertex info into keys
-
-	  static bool setXQuantumNumbersKeys(libconfig::Setting& XQnKey,
-	                                     const particle&     X);  ///< puts X quantum numbers into keys
 
 	  static bool setXDecayKeys(libconfig::Setting&        parentDecayKey,
 	                            const isobarDecayTopology& topo,
 	                            const isobarDecayVertex&   vert);  ///< recursive function that puts X decay chain into keys
-
-	  static bool setMassDependence(libconfig::Setting&   isobarMassDepKey,
-	                                const massDependence& massDep);  ///< puts mass dependence into key
 
 
     static keyFileParser _instance;  ///< singleton instance

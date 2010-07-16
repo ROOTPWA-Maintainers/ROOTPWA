@@ -102,7 +102,8 @@ main(int argc, char** argv)
 		X->setWidth(0.3);
 		// define production vertex
 		particlePtr              beam     = createParticle("pi-");
-		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, X);
+		particlePtr              target   = createParticle("p");
+		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
 		// define vertices
 		isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,  i0,  i1);
 		isobarDecayVertexPtr vert1 = createIsobarDecayVertex(i0, pi0, pi1);

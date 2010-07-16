@@ -122,8 +122,8 @@ namespace rpwa {
   flatMassDependencePtr
   createFlatMassDependence()
   {
-    flatMassDependencePtr md(new flatMassDependence());
-    return md;
+    flatMassDependencePtr massDep(new flatMassDependence());
+    return massDep;
   }
 
 
@@ -152,8 +152,8 @@ namespace rpwa {
   relativisticBreitWignerPtr
   createRelativisticBreitWigner()
   {
-    relativisticBreitWignerPtr md(new relativisticBreitWigner());
-    return md;
+    relativisticBreitWignerPtr massDep(new relativisticBreitWigner());
+    return massDep;
   }
 
 
@@ -199,8 +199,8 @@ namespace rpwa {
   piPiSWaveAuMorganPenningtonMPtr
   createPiPiSWaveAuMorganPenningtonM()
   {
-    piPiSWaveAuMorganPenningtonMPtr md(new piPiSWaveAuMorganPenningtonM());
-    return md;
+    piPiSWaveAuMorganPenningtonMPtr massDep(new piPiSWaveAuMorganPenningtonM());
+    return massDep;
   }
 
 
@@ -231,8 +231,8 @@ namespace rpwa {
   piPiSWaveAuMorganPenningtonVesPtr
   createPiPiSWaveAuMorganPenningtonVes()
   {
-    piPiSWaveAuMorganPenningtonVesPtr md(new piPiSWaveAuMorganPenningtonVes());
-    return md;
+    piPiSWaveAuMorganPenningtonVesPtr massDep(new piPiSWaveAuMorganPenningtonVes());
+    return massDep;
   }
 
 
@@ -271,8 +271,8 @@ namespace rpwa {
   piPiSWaveAuMorganPenningtonKachaevPtr
   createPiPiSWaveAuMorganPenningtonKachaev()
   {
-    piPiSWaveAuMorganPenningtonKachaevPtr md(new piPiSWaveAuMorganPenningtonKachaev());
-    return md;
+    piPiSWaveAuMorganPenningtonKachaevPtr massDep(new piPiSWaveAuMorganPenningtonKachaev());
+    return massDep;
   }
 
 

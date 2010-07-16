@@ -291,7 +291,14 @@ decayTopology::checkTopology() const
 			topologyIsOkay = false;
 			continue;
 		}
-		if (not isProductionVertex(vert))  // incoming particles of production vertex have no edges
+		if (isProductionVertex(vert)) {
+			// for production vertex only X particle has associated edge
+			if (not isEdge(static_pointer_cast<rpwa::productionVertex>(vert)->XParticle())) {
+				printWarn << "X particle of " << *vert << " has no associated edge" << endl;
+				topologyIsOkay = false;
+			} else if (_debug)
+				printInfo << "success: X particle of " << *vert << " has associated edge" << endl;
+		} else {
 			for (unsigned int i = 0; i < vert->nmbInParticles(); ++i)
 				if (not isEdge(vert->inParticles()[i])) {
 					printWarn << "incoming particle[" << i << "] of " << *vert
@@ -300,14 +307,15 @@ decayTopology::checkTopology() const
 				} else if (_debug)
 					printInfo << "success: incoming particle[" << i << "] of " << *vert
 					          << " has associated edge" << endl;
-		for (unsigned int i = 0; i < vert->nmbOutParticles(); ++i)
-			if (not isEdge(vert->outParticles()[i])) {
-				printWarn << "outgoing particle[" << i << "] of " << *vert
-				          << " has no associated edge" << endl;
-				topologyIsOkay = false;
-			} else if (_debug)
-				printInfo << "success: outgoing particle[" << i << "] of " << *vert
-				          << " has associated edge" << endl;
+			for (unsigned int i = 0; i < vert->nmbOutParticles(); ++i)
+				if (not isEdge(vert->outParticles()[i])) {
+					printWarn << "outgoing particle[" << i << "] of " << *vert
+					          << " has no associated edge" << endl;
+					topologyIsOkay = false;
+				} else if (_debug)
+					printInfo << "success: outgoing particle[" << i << "] of " << *vert
+					          << " has associated edge" << endl;
+		}
 	}
 	// check production vertex
 	if (not productionVertex()) {

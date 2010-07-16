@@ -145,8 +145,8 @@ namespace rpwa {
 	                        const unsigned int       S       = 0,
 	                        const massDependencePtr& massDep = massDependencePtr())
 	{
-		isobarDecayVertexPtr v(new isobarDecayVertex(parent, daughter1, daughter2, L, S, massDep));
-		return v;
+		isobarDecayVertexPtr vert(new isobarDecayVertex(parent, daughter1, daughter2, L, S, massDep));
+		return vert;
 	}
 
 

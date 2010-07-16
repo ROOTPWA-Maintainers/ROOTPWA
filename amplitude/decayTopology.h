@@ -177,8 +177,8 @@ namespace rpwa {
 	                    const std::vector<interactionVertexPtr>& decayVertices,
 	                    const std::vector<particlePtr>&          fsParticles)
 	{
-		decayTopologyPtr t(new decayTopology(productionVertex, decayVertices, fsParticles));
-		return t;
+		decayTopologyPtr topo(new decayTopology(productionVertex, decayVertices, fsParticles));
+		return topo;
 	}
 
 
@@ -186,8 +186,8 @@ namespace rpwa {
 	decayTopologyPtr
 	createDecayTopology(const decayTopology& topo)
 	{
-		decayTopologyPtr t(new decayTopology(topo));
-		return t;
+		decayTopologyPtr topoCopy(new decayTopology(topo));
+		return topoCopy;
 	}
 
 
@@ -195,8 +195,8 @@ namespace rpwa {
 	decayTopologyPtr
 	createDecayTopology(const decayTopologyGraphType& graph)
 	{
-		decayTopologyPtr t(new decayTopology(graph));
-		return t;
+		decayTopologyPtr topoCopy(new decayTopology(graph));
+		return topoCopy;
 	}
 
 

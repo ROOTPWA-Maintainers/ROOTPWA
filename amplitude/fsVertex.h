@@ -98,8 +98,8 @@ namespace rpwa {
   fsVertexPtr
   createFsVertex(const particlePtr& fsParticle)
   {
-    fsVertexPtr v(new fsVertex(fsParticle));
-    return v;
+    fsVertexPtr vert(new fsVertex(fsParticle));
+    return vert;
   }
 
 

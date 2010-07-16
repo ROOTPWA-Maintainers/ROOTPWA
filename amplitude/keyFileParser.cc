@@ -257,6 +257,8 @@ bool
 keyFileParser::constructXParticle(const Setting& XQnKey,
                                   particlePtr&   X)
 {
+	if (_debug)
+		printInfo << "reading X quantum numbers from '" << XQnKey.getPath() << "':" << endl;
 	// get X quantum numbers
 	map<string, int> XQn;
 	XQn["isospin"];
@@ -290,9 +292,29 @@ keyFileParser::constructXParticle(const Setting& XQnKey,
 
 
 bool
+keyFileParser::setXQuantumNumbersKeys(Setting&        XQnKey,
+                                      const particle& X)
+{
+	if (_debug)
+		printInfo << "setting quantum number keys for " << X.qnSummary() << endl;
+	XQnKey.add("isospin", Setting::TypeInt) = X.isospin();
+	XQnKey.add("G",       Setting::TypeInt) = X.G();
+	XQnKey.add("J",       Setting::TypeInt) = X.J();
+	XQnKey.add("P",       Setting::TypeInt) = X.P();
+	XQnKey.add("C",       Setting::TypeInt) = X.C();
+	XQnKey.add("M",       Setting::TypeInt) = X.spinProj();
+	if (_useReflectivityBasis)
+		XQnKey.add("refl", Setting::TypeInt) = X.reflectivity();
+	return true;
+}
+
+
+bool
 keyFileParser::constructParticle(const Setting& particleKey,
                                  particlePtr&   particle)
 {
+	if (_debug)
+		printInfo << "reading particle information from '" << particleKey.getPath() << "':" << endl;
 	string name;
 	if (particleKey.lookupValue("name", name)) {
 		particle = createParticle(name);
@@ -325,10 +347,10 @@ keyFileParser::constructDecayVertex(const Setting&                parentKey,
                                     vector<isobarDecayVertexPtr>& decayVertices,
                                     vector<particlePtr>&          fsParticles)
 {
+	if (_debug)
+		printInfo << "reading decay vertex information from '" << parentKey.getPath() << "':" << endl;
 	bool success = true;
 
-	if (_debug)
-		printInfo << "reading final state particles from '" << parentKey.getPath() << "':" << endl;
 	const Setting*      fsPartKeys = findList(parentKey, "fsParticles", false);
 	vector<particlePtr> fsDaughters;
 	if (fsPartKeys)
@@ -341,8 +363,6 @@ keyFileParser::constructDecayVertex(const Setting&                parentKey,
 				success = false;
 		}
   
-	if (_debug)
-		printInfo << "reading isobars from '" << parentKey.getPath() << "':" << endl;
 	const Setting*      isobarKeys = findList(parentKey, "isobars", false);
 	vector<particlePtr> isobarDaughters;
 	if (isobarKeys)
@@ -432,6 +452,28 @@ keyFileParser::mapMassDependence(const string& massDepType)
 
 
 bool
+keyFileParser::setMassDependence(Setting&              isobarDecayKey,
+                                 const massDependence& massDep)
+{
+	const string massDepName = massDep.name();
+	if (massDepName == "flatMassDependence")
+		// default for X
+		return true;
+	else if (massDepName == "relativisticBreitWigner")
+		// default mass dependence for isobars
+		return true;
+	else {
+		if (_debug)
+			printInfo << "setting key for " << massDep << " mass dependence to "
+			          << "'" << massDepName << "'" << endl;
+		Setting& massDepKey = isobarDecayKey.add("massDep", Setting::TypeGroup);
+		massDepKey.add("name", Setting::TypeString) = massDepName;
+	}
+	return true;
+}
+
+
+bool
 keyFileParser::constructProductionVertex(const Setting&       rootKey,
                                          const particlePtr&   X,
                                          productionVertexPtr& prodVert)
@@ -442,6 +484,8 @@ keyFileParser::constructProductionVertex(const Setting&       rootKey,
 		printWarn << "cannot find 'productionVertex' group" << endl;
 		return false;
 	}
+	if (_debug)
+		printInfo << "reading production vertex from '" << prodVertKey->getPath() << "':" << endl;
 	bool success = true;
 	// get vertex type
 	string vertType;
@@ -449,43 +493,49 @@ keyFileParser::constructProductionVertex(const Setting&       rootKey,
 		printWarn << "cannot find 'type' entry in '" << prodVertKey->getPath() << "'" << endl;
 		success = false;
 	}
-	// get production kinematics particles
-	const Setting* particleKeys = findList(*prodVertKey, "particles");
-	if (not particleKeys)
-		success = false;
-	if (not success)
-		return false;
 	// create production vertex
-	if (_debug)
-		printInfo << "reading production kinematics particles from "
-		          << "'" << prodVertKey->getPath() << "'" << endl;
-	return mapProductionVertexType(vertType, *particleKeys, X, prodVert);
+	return mapProductionVertexType(*prodVertKey, vertType, X, prodVert);
 }
 
 
 bool
-keyFileParser::mapProductionVertexType(const string&        vertType,
-                                       const Setting&       particleKeys,
+keyFileParser::mapProductionVertexType(const Setting&       prodVertKey,
+                                       const string&        vertType,
                                        const particlePtr&   X,
                                        productionVertexPtr& prodVert)
 {
+	prodVert = productionVertexPtr();
+	bool success = true;
 	if (vertType == "diffractiveDissociation") {
-		if (particleKeys.getLength() > 1) {
-			printWarn << "list of production kinematics particles in '" << particleKeys.getPath() << "' "
-			          << "has " << particleKeys.getLength()  << " entries. using only first one." << endl;
+		map<string, particlePtr> prodKinParticles;
+		prodKinParticles["beam"  ] = particlePtr();
+		prodKinParticles["target"] = particlePtr();
+		prodKinParticles["recoil"] = particlePtr();
+		// construct particles
+		for (map<string, particlePtr>::iterator i = prodKinParticles.begin();
+		     i != prodKinParticles.end(); ++i) {
+			const Setting* particleKey = findGroup(prodVertKey, i->first,
+			                                       (i->first != "recoil") ? true : false);
+			if (particleKey) {
+				if (not constructParticle(*particleKey, i->second))
+					success = false;
+			} else if (i->first != "recoil")
+				success = false;
 		}
-		particlePtr beam;
-		if (not constructParticle(particleKeys[0], beam))
-			return false;
-		prodVert = createDiffractiveDissVertex(beam, X);
-    
+		if (success)
+			prodVert = createDiffractiveDissVertex(prodKinParticles["beam"], prodKinParticles["target"],
+			                                       X, prodKinParticles["recoil"]);
 	} else {
 		printWarn << "unknown production vertex type '" << vertType << "'" << endl;
 		return false;
 	}
-	if (_debug)
-		printInfo << "constructed " << *prodVert << endl;
-	return true;
+	if (_debug) {
+		if (success and prodVert)
+			printInfo << "constructed " << *prodVert << endl;
+		else
+			printWarn << "problems constructing production vertex of type '" << vertType << "'" << endl;
+	}
+	return success;
 }
 
 
@@ -494,36 +544,26 @@ keyFileParser::setProductionVertexKeys(Setting&                   prodVertKey,
                                        const productionVertexPtr& prodVert)
 {
 	if (dynamic_pointer_cast<diffractiveDissVertex>(prodVert)) {
+		const diffractiveDissVertexPtr& vert = static_pointer_cast<diffractiveDissVertex>(prodVert);
 		if (_debug)
-			printInfo << "setting keys for " << *prodVert << endl;
+			printInfo << "setting keys for " << *vert << endl;
 		prodVertKey.add("type", Setting::TypeString) = "diffractiveDissociation";
-		Setting& particlesKey    = prodVertKey.add("particles", Setting::TypeList);
-		Setting& beamParticleKey = particlesKey.add(Setting::TypeGroup);
-		beamParticleKey.add("name", Setting::TypeString) = prodVert->inParticles()[0]->name();
+		map<string, particlePtr> prodKinParticles;
+		prodKinParticles["beam"  ] = vert->beam  ();
+		prodKinParticles["target"] = vert->target();
+		prodKinParticles["recoil"] = vert->recoil();
+		// write particles
+		for (map<string, particlePtr>::iterator i = prodKinParticles.begin();
+		     i != prodKinParticles.end(); ++i) {
+			Setting& particleKey = prodVertKey.add(i->first, Setting::TypeGroup);
+			particleKey.add("name", Setting::TypeString) = i->second->name();
+		}
 		return true;
 	} else {
 		printWarn << "writing of keys for production vertex of this type is not yet implemented:"
 		          << *prodVert << endl;
 		return false;
 	}
-}
-
-
-bool
-keyFileParser::setXQuantumNumbersKeys(Setting&        XQnKey,
-                                      const particle& X)
-{
-	if (_debug)
-		printInfo << "setting quantum number keys for " << X.qnSummary() << endl;
-	XQnKey.add("isospin", Setting::TypeInt) = X.isospin();
-	XQnKey.add("G",       Setting::TypeInt) = X.G();
-	XQnKey.add("J",       Setting::TypeInt) = X.J();
-	XQnKey.add("P",       Setting::TypeInt) = X.P();
-	XQnKey.add("C",       Setting::TypeInt) = X.C();
-	XQnKey.add("M",       Setting::TypeInt) = X.spinProj();
-	if (_useReflectivityBasis)
-		XQnKey.add("refl", Setting::TypeInt) = X.reflectivity();
-	return true;
 }
 
 
@@ -565,26 +605,4 @@ keyFileParser::setXDecayKeys(Setting&                   parentDecayKey,
 		}
 	}
 	return success;
-}
-
-
-bool
-keyFileParser::setMassDependence(Setting&              isobarDecayKey,
-                                 const massDependence& massDep)
-{
-	const string massDepName = massDep.name();
-	if (massDepName == "flatMassDependence")
-		// default for X
-		return true;
-	else if (massDepName == "relativisticBreitWigner")
-		// default mass dependence for isobars
-		return true;
-	else {
-		if (_debug)
-			printInfo << "setting key for " << massDep << " mass dependence to "
-			          << "'" << massDepName << "'" << endl;
-		Setting& massDepKey = isobarDecayKey.add("massDep", Setting::TypeGroup);
-		massDepKey.add("name", Setting::TypeString) = massDepName;
-	}
-	return true;
 }

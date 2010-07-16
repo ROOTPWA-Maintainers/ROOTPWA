@@ -62,7 +62,9 @@ namespace rpwa {
 	public:
   
 		diffractiveDissVertex(const particlePtr& beam,
-		                      const particlePtr& XParticle);  ///< force vertex to have exactly one incoming (beam) and one outgoing particle (X system)
+		                      const particlePtr& target,
+		                      const particlePtr& XParticle,
+		                      const particlePtr& recoil = particlePtr());  ///< force vertex to have two incoming (beam + target) and two outgoing particles (X + recoil); recoil is optional
 		diffractiveDissVertex(const diffractiveDissVertex& vert);
 		virtual ~diffractiveDissVertex();
 		
@@ -75,12 +77,14 @@ namespace rpwa {
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
 		// production specific accessors
-		virtual TVector3           zAxis    ()     const { return beam()->lzVec().Vect().Unit(); }  ///< returns z-axis defined by production process
-		virtual const particlePtr& XParticle()     const { return outParticles()[0];             }  ///< returns X particle
-		virtual double             productionAmp() const { return 1;                             }  ///< returns production amplitude
+		virtual TVector3             zAxis    ()     const { return beam()->lzVec().Vect().Unit(); }  ///< returns z-axis defined by production process
+		virtual const particlePtr&   XParticle()     const { return outParticles()[0];             }  ///< returns X particle
+		virtual std::complex<double> productionAmp() const;                                           ///< returns production amplitude
 
 		// diffractive dissociation specific accessors
-		inline const particlePtr& beam() const { return inParticles()[0]; }  ///< returns beam particle
+		inline const particlePtr& beam  () const { return inParticles ()[0]; }  ///< returns beam particle
+		inline const particlePtr& target() const { return inParticles ()[1]; }  ///< returns target particle
+		inline const particlePtr& recoil() const { return outParticles()[1]; }  ///< returns recoil particle
     
 		virtual bool readData(const TClonesArray& prodKinParticles,
 		                      const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
@@ -105,7 +109,9 @@ namespace rpwa {
 
 	private:
 
-		TVector3 _beamMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		TVector3 _beamMomCache;    ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		TVector3 _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		TVector3 _recoilMomCache;  ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -115,10 +121,12 @@ namespace rpwa {
 	inline
 	diffractiveDissVertexPtr
 	createDiffractiveDissVertex(const particlePtr& beam,
-	                            const particlePtr& XParticle)
+	                            const particlePtr& target,
+	                            const particlePtr& XParticle,
+	                            const particlePtr& recoil = particlePtr())
 	{
-		diffractiveDissVertexPtr v(new diffractiveDissVertex(beam, XParticle));
-		return v;
+		diffractiveDissVertexPtr vert(new diffractiveDissVertex(beam, target, XParticle, recoil));
+		return vert;
 	}
 
 

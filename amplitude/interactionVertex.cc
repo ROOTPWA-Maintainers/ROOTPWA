@@ -136,23 +136,6 @@ interactionVertex::transformOutParticles(const TLorentzRotation& L)
 }
 
 
-bool
-interactionVertex::readData(const TClonesArray&,
-                            const TClonesArray&)
-{
-	printWarn << "function not implemented" << endl;
-	return false;
-}
-
-
-bool
-interactionVertex::revertMomenta()
-{
-	printWarn << "function not implemented" << endl;
-	return false;
-}
-
-
 ostream&
 interactionVertex::print(ostream& out) const
 {

@@ -136,6 +136,15 @@ namespace rpwa {
 
 	inline
 	particlePtr
+	createParticle(const particle& part)
+	{
+		particlePtr partCopy(new particle(part));
+		return partCopy;
+	}
+
+
+	inline
+	particlePtr
 	createParticle(const particleProperties& partProp,
 	               const int                 charge,
 	               const int                 index    = -1,
@@ -143,8 +152,8 @@ namespace rpwa {
 	               const int                 refl     = 0,
 	               const TVector3&           momentum = TVector3())
 	{
-		particlePtr p(new particle(partProp, charge, index, spinProj, refl, momentum));
-		return p;
+		particlePtr part(new particle(partProp, charge, index, spinProj, refl, momentum));
+		return part;
 	}
 
 
@@ -156,8 +165,8 @@ namespace rpwa {
 	               const int          refl     = 0,
 	               const TVector3&    momentum = TVector3())
 	{
-		particlePtr p(new particle(partName, index, spinProj, refl, momentum));
-		return p;
+		particlePtr part(new particle(partName, index, spinProj, refl, momentum));
+		return part;
 	}
 
 
@@ -173,12 +182,12 @@ namespace rpwa {
 	               const int          refl  = 0,
 	               const int          index = -1)
 	{
-		particlePtr p(new particle(partName, isospin, G, J, P, C, spinProj, refl, index));
-		return p;
+		particlePtr part(new particle(partName, isospin, G, J, P, C, spinProj, refl, index));
+		return part;
 	}
 
 
-	// predicate for sort (ascending)
+	// predicate for ascending sort
 	inline
 	bool
 	compareIndicesAsc(const particlePtr& a,
@@ -192,7 +201,7 @@ namespace rpwa {
 	}
 
 
-	// predicate for sort (descending)
+	// predicate for descending sort
 	inline
 	bool
 	compareIndicesDesc(const particlePtr& a,
