@@ -68,7 +68,7 @@ namespace rpwa {
 
 	inline
 	int
-	powMinusOne(const int exponent)
+	powMinusOne(const int exponent)  ///< optimized function for pow(-1, n)
 	{
 		if (exponent & 0x1)  // exponent is odd
 			return -1;
@@ -77,14 +77,14 @@ namespace rpwa {
 	}
 
 
-	// Wigner d-function d^j_{m n}(theta)
+	// based on PWA2000 implementation in pputil.cc
 	template<typename T>
 	T
 	dFunc(const int  j,
 	      const int  m,
 	      const int  n,
 	      const T&   theta,
-	      const bool debug = false)
+	      const bool debug = false)  ///< Wigner d-function d^j_{m n}(theta)
 	{
 		if ((j < 0) or (std::abs(m) > j) or (std::abs(n) > j)) {
 			printErr << "illegal argument for Wigner d^{J = " << 0.5 * j << "}"
@@ -133,8 +133,29 @@ namespace rpwa {
 		if (debug)
 			printInfo << "Wigner d^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
 			          << "M' = " << 0.5 * n << "}" << "(theta = " << theta << ") = "
-			          << maxPrecisionDouble(dFuncVal) << std::endl;
+			          << maxPrecision(dFuncVal) << std::endl;
 		return dFuncVal;
+	}
+
+
+	template<typename T>
+	inline
+	std::complex<T>
+	DFunc(const int  j,
+	      const int  m,
+	      const int  n,
+	      const T&   alpha,
+	      const T&   beta,
+	      const T&   gamma = 0,
+	      const bool debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	{
+		const T               arg      = ((T)m / 2) * alpha + ((T)n / 2) * gamma;
+		const std::complex<T> DFuncVal = std::exp(std::complex<T>(0, -arg)) * dFunc(j, m, n, beta);
+		if (debug)
+			printInfo << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
+			          << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
+			          << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+		return DFuncVal;
 	}
 
 

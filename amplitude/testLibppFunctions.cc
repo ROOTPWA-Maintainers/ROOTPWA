@@ -115,7 +115,7 @@ main(int argc, char** argv)
 	}	
 
 
-	if (1) {
+	if (0) {
 		printInfo << "testing Wigner d-function" << endl;
 
 		const unsigned int nmbAngles = 50000;
@@ -124,7 +124,7 @@ main(int argc, char** argv)
 		vector<double> angles(nmbAngles, 0);
 		TRandom3       random(1234567890);
 		for (unsigned int i = 0; i < nmbAngles; ++i)
-			angles[i] = (random.Uniform(-pi, +pi));
+			angles[i] = (random.Uniform(-piHalf, +piHalf));
 		
     // determine size of data array
     unsigned int nmbVals = 0;
@@ -173,11 +173,80 @@ main(int argc, char** argv)
     double maxDeviation = 0;
     for (unsigned int i = 0; i < nmbVals; ++i) {
 	    const double delta = oldVals[i] - newVals[i];
-	    if (fabs(delta) > maxDeviation)
-		    maxDeviation = fabs(delta);
+	    if (abs(delta) > maxDeviation)
+		    maxDeviation = abs(delta);
     }
     printInfo << "maximum deviation is " << maxDeviation << endl;
-    
+	}
+	
+
+	if (1) {
+		printInfo << "testing Wigner D-function" << endl;
+
+		const unsigned int nmbAngles = 50000;
+		const int          maxJ      = 7;  // for larger values libpp implementation gives wrong results
+
+		vector<TVector3> angles(nmbAngles);
+		TRandom3         random(1234567890);
+		for (unsigned int i = 0; i < nmbAngles; ++i) {
+			angles[i].SetX(random.Uniform(-pi,     +pi    ));
+			angles[i].SetY(random.Uniform(-piHalf, +piHalf));
+			angles[i].SetZ(random.Uniform(-pi,     +pi    ));
+		}
+		
+    // determine size of data array
+    unsigned int nmbVals = 0;
+    for (int j = 0; j < maxJ; ++j)
+	    for (int m = -j; m <= j; ++m)
+		    for (int n = -j; n <= j; ++n)
+			    for (unsigned int i = 0; i < angles.size(); ++i)
+				    ++nmbVals;
+
+    // compute mathUtils values
+    TStopwatch timer;
+    timer.Reset();
+    timer.Start();
+    unsigned int             valIndex = 0;
+    vector<complex<double> > newVals(nmbVals, 0);
+    for (int j = 0; j < maxJ; ++j)
+	    for (int m = -j; m <= j; ++m)
+		    for (int n = -j; n <= j; ++n)
+			    for (unsigned int i = 0; i < angles.size(); ++i) {
+				    const TVector3& a = angles[i];
+				    newVals[valIndex] = DFunc(2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
+				    ++valIndex;
+			    }
+    timer.Stop();
+    printInfo << "calculated mathUtil D-Functions for " << newVals.size() << " angles" << endl
+		          << "    this consumed: ";
+    timer.Print();
+
+    // compute libpp values
+    timer.Reset();
+    timer.Start();
+    valIndex = 0;
+    vector<complex<double> > oldVals(nmbVals, 0);
+    for (int j = 0; j < maxJ; ++j)
+	    for (int m = -j; m <= j; ++m)
+		    for (int n = -j; n <= j; ++n)
+			    for (unsigned int i = 0; i < angles.size(); ++i) {
+				    const TVector3& a = angles[i];
+				    oldVals[valIndex] = D(a.X(), a.Y(), a.Z(), 2 * j, 2 * m, 2 * n);
+				    ++valIndex;
+			    }
+    timer.Stop();
+    printInfo << "calculated libpp D-Functions for " << oldVals.size() << " angles" << endl
+		          << "    this consumed: ";
+    timer.Print();
+
+    // check values
+    complex<double> maxDeviation = 0;
+    for (unsigned int i = 0; i < nmbVals; ++i) {
+	    const complex<double> delta = oldVals[i] - newVals[i];
+	    if (abs(delta) > abs(maxDeviation))
+		    maxDeviation = abs(delta);
+    }
+    printInfo << "maximum deviation is " << maxDeviation << endl;
 	}
 	
 }
