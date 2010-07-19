@@ -44,6 +44,7 @@ set(INCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIRS}
   ${LIBCONFIG_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -90,4 +91,4 @@ make_executable(testParticle           testParticle.cc           ${THIS_LIB})
 make_executable(testDecayTopology      testDecayTopology.cc      ${THIS_LIB})
 make_executable(testDecayCombinatorics testDecayCombinatorics.cc ${THIS_LIB})
 make_executable(testAmplitude          testAmplitude.cc          ${THIS_LIB})
-#make_executable(testFactorial          testFactorial.cc          ${THIS_LIB})
+make_executable(testLibppFunctions     testLibppFunctions.cc     ${THIS_LIB})

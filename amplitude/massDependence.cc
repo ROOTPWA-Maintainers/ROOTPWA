@@ -36,8 +36,8 @@
 
 
 #include "utilities.h"
+#include "mathUtils.hpp"
 #include "isobarDecayVertex.h"
-#include "isobarHelicityAmplitude.h"
 #include "particleDataTable.h"
 #include "massDependence.h"
 
@@ -54,8 +54,8 @@ bool massDependence::_debug = false;
 ostream&
 massDependence::print(ostream& out) const
 {
-  out << "mass dependence";
-  return out;
+	out << "mass dependence";
+	return out;
 }
 
 
@@ -63,17 +63,17 @@ massDependence::print(ostream& out) const
 complex<double>
 flatMassDependence::amp(const isobarDecayVertex&)
 {
-  if (_debug)
-    printInfo << "no mass dependence = 1" << endl;
-  return 1;
+	if (_debug)
+		printInfo << "no mass dependence = 1" << endl;
+	return 1;
 }
 
 
 ostream&
 flatMassDependence::print(ostream& out) const
 {
-  out << "flat mass dependence";
-  return out;
+	out << "flat mass dependence";
+	return out;
 }
 
 
@@ -81,226 +81,226 @@ flatMassDependence::print(ostream& out) const
 complex<double>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
-  const particlePtr& parent = v.parent();
+	const particlePtr& parent = v.parent();
 
-  const double M      = parent->lzVec().M();          // parent mass
-  const double m1     = v.daughter1()->lzVec().M();   // daughter 1 mass
-  const double m2     = v.daughter2()->lzVec().M();   // daughter 2 mass
-  const double M0     = parent->mass();               // resonance peak position
-  const double Gamma0 = parent->width();              // resonance peak width
-  const double q      = breakupMomentum(M,  m1, m2);  // breakup momentum
-  //const double q0     = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
-  const double L      = v.L();
+	const double M      = parent->lzVec().M();          // parent mass
+	const double m1     = v.daughter1()->lzVec().M();   // daughter 1 mass
+	const double m2     = v.daughter2()->lzVec().M();   // daughter 2 mass
+	const double M0     = parent->mass();               // resonance peak position
+	const double Gamma0 = parent->width();              // resonance peak width
+	const double q      = breakupMomentum(M,  m1, m2);  // breakup momentum
+	//const double q0     = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
+	const double L      = v.L();
 
-  // this is how it is done in PWA2000
-  const double M02    = M0 * M0;
-  const double m12    = m1 * m1;
-  const double m22    = m2 * m2;
-  // const double m12    = v.daughter1()->mass() * v.daughter1()->mass();
-  // const double m22    = v.daughter2()->mass() * v.daughter2()->mass();
-  const double lambda = M02 * M02 + m12 * m12 + m22 * m22 - 2 * (M02 * m12 + m12 * m22 + m22 * M02);
-  const double q0     = sqrt(fabs(lambda / (4 * M02)));  //!!! the fabs is probably wrong
+	// this is how it is done in PWA2000
+	const double M02    = M0 * M0;
+	const double m12    = m1 * m1;
+	const double m22    = m2 * m2;
+	// const double m12    = v.daughter1()->mass() * v.daughter1()->mass();
+	// const double m22    = v.daughter2()->mass() * v.daughter2()->mass();
+	const double lambda = M02 * M02 + m12 * m12 + m22 * m22 - 2 * (M02 * m12 + m12 * m22 + m22 * M02);
+	const double q0     = sqrt(fabs(lambda / (4 * M02)));  //!!! the fabs is probably wrong
 
-  const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
-  if (_debug)
-    printInfo << "Breit-Wigner(m = " << M << " GeV, m_0 = " << M0 << "GeV, "
-	      << "Gamma_0 = " << Gamma0 << "GeV, L = " << 0.5 * L << ", q = " << q << "GeV, "
-	      << q0 << "GeV) = " << bw << endl;
-  return bw;
+	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
+	if (_debug)
+		printInfo << "Breit-Wigner(m = " << M << " GeV, m_0 = " << M0 << "GeV, "
+		          << "Gamma_0 = " << Gamma0 << "GeV, L = " << 0.5 * L << ", q = " << q << "GeV, "
+		          << q0 << "GeV) = " << bw << endl;
+	return bw;
 }
 
 
 ostream&
 relativisticBreitWigner::print(ostream& out) const
 {
-  out << "relativistic Breit-Wigner";
-  return out;
+	out << "relativistic Breit-Wigner";
+	return out;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
-  : massDependence(),
-    _T       (2, 2),
-    _a       (2, matrix<complex<double> >(2, 2)),
-    _c       (5, matrix<complex<double> >(2, 2)),
-    _sP      (1, 2),
-    _vesSheet(0)
+	: massDependence(),
+	  _T       (2, 2),
+	  _a       (2, matrix<complex<double> >(2, 2)),
+	  _c       (5, matrix<complex<double> >(2, 2)),
+	  _sP      (1, 2),
+	  _vesSheet(0)
 {
-  double f[2] = {0.1968, -0.0154};
+	double f[2] = {0.1968, -0.0154};
 
-  _a[0](0, 0) =  0.1131;
-  _a[0](0, 1) =  0.0150;
-  _a[0](1, 0) =  0.0150;
-  _a[0](1, 1) = -0.3216;
-  _a[1](0, 0) = f[0] * f[0];
-  _a[1](0, 1) = f[0] * f[1];
-  _a[1](1, 0) = f[1] * f[0];
-  _a[1](1, 1) = f[1] * f[1];
+	_a[0](0, 0) =  0.1131;
+	_a[0](0, 1) =  0.0150;
+	_a[0](1, 0) =  0.0150;
+	_a[0](1, 1) = -0.3216;
+	_a[1](0, 0) = f[0] * f[0];
+	_a[1](0, 1) = f[0] * f[1];
+	_a[1](1, 0) = f[1] * f[0];
+	_a[1](1, 1) = f[1] * f[1];
 	
-  _c[0](0, 0) =  0.0337;
-  _c[1](0, 0) = -0.3185;
-  _c[2](0, 0) = -0.0942;
-  _c[3](0, 0) = -0.5927;
-  _c[4](0, 0) =  0.1957; 
-  _c[0](0, 1) = _c[0](1, 0) = -0.2826;
-  _c[1](0, 1) = _c[1](1, 0) =  0.0918;
-  _c[2](0, 1) = _c[2](1, 0) =  0.1669;
-  _c[3](0, 1) = _c[3](1, 0) = -0.2082;
-  _c[4](0, 1) = _c[4](1, 0) = -0.1386;
-  _c[0](1, 1) =  0.3010;
-  _c[1](1, 1) = -0.5140;
-  _c[2](1, 1) =  0.1176;
-  _c[3](1, 1) =  0.5204;
-  _c[4](1, 1) = -0.3977; 
+	_c[0](0, 0) =  0.0337;
+	_c[1](0, 0) = -0.3185;
+	_c[2](0, 0) = -0.0942;
+	_c[3](0, 0) = -0.5927;
+	_c[4](0, 0) =  0.1957; 
+	_c[0](0, 1) = _c[0](1, 0) = -0.2826;
+	_c[1](0, 1) = _c[1](1, 0) =  0.0918;
+	_c[2](0, 1) = _c[2](1, 0) =  0.1669;
+	_c[3](0, 1) = _c[3](1, 0) = -0.2082;
+	_c[4](0, 1) = _c[4](1, 0) = -0.1386;
+	_c[0](1, 1) =  0.3010;
+	_c[1](1, 1) = -0.5140;
+	_c[2](1, 1) =  0.1176;
+	_c[3](1, 1) =  0.5204;
+	_c[4](1, 1) = -0.3977; 
 
-  _sP(0, 0) = -0.0074;
-  _sP(0, 1) =  0.9828;
+	_sP(0, 0) = -0.0074;
+	_sP(0, 1) =  0.9828;
   
-  particleDataTable& pdt = particleDataTable::instance();
-  const string partList[] = {"pi", "pi0", "K", "K0"};
-  for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
-    if (not pdt.isInTable(partList[i])) {
-      printErr << "cannot find particle " << partList[i] << " in particle data table. "
-	       << "was the table initiatlized properly?" << endl;
-      throw;
-    }
-  _piChargedMass   = pdt.entry("pi" )->mass();
-  _piNeutralMass   = pdt.entry("pi0")->mass();
-  _kaonChargedMass = pdt.entry("K"  )->mass();
-  _kaonNeutralMass = pdt.entry("K0" )->mass();
-  _kaonMeanMass    = (_kaonChargedMass + _kaonNeutralMass) / 2;
+	particleDataTable& pdt = particleDataTable::instance();
+	const string partList[] = {"pi", "pi0", "K", "K0"};
+	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
+		if (not pdt.isInTable(partList[i])) {
+			printErr << "cannot find particle " << partList[i] << " in particle data table. "
+			         << "was the table initiatlized properly?" << endl;
+			throw;
+		}
+	_piChargedMass   = pdt.entry("pi" )->mass();
+	_piNeutralMass   = pdt.entry("pi0")->mass();
+	_kaonChargedMass = pdt.entry("K"  )->mass();
+	_kaonNeutralMass = pdt.entry("K0" )->mass();
+	_kaonMeanMass    = (_kaonChargedMass + _kaonNeutralMass) / 2;
 }
 
 
 complex<double>
 piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
-  const complex<double> imag(0, 1);
+	const complex<double> imag(0, 1);
 
-  double mass = v.parent()->lzVec().M();
-  double s    = mass * mass;
-  if (fabs(s - _sP(0, 1)) < 1e-6) {
-    mass += 1e-6;
-    s     = mass * mass;
-  }
+	double mass = v.parent()->lzVec().M();
+	double s    = mass * mass;
+	if (fabs(s - _sP(0, 1)) < 1e-6) {
+		mass += 1e-6;
+		s     = mass * mass;
+	}
 
-  const complex<double> qPiPi   = q(mass, _piChargedMass,   _piChargedMass);
-  const complex<double> qPi0Pi0 = q(mass, _piNeutralMass,   _piNeutralMass);
-  const complex<double> qKK     = q(mass, _kaonChargedMass, _kaonChargedMass);
-  const complex<double> qK0K0   = q(mass, _kaonNeutralMass, _kaonNeutralMass);
-  complex<double>       qKmKm   = q(mass, _kaonMeanMass,    _kaonMeanMass);
+	const complex<double> qPiPi   = q(mass, _piChargedMass,   _piChargedMass);
+	const complex<double> qPi0Pi0 = q(mass, _piNeutralMass,   _piNeutralMass);
+	const complex<double> qKK     = q(mass, _kaonChargedMass, _kaonChargedMass);
+	const complex<double> qK0K0   = q(mass, _kaonNeutralMass, _kaonNeutralMass);
+	complex<double>       qKmKm   = q(mass, _kaonMeanMass,    _kaonMeanMass);
 
-  matrix<complex<double> > rho(2, 2);
-  if (_vesSheet) {
-    if (qKmKm.imag() > 0)
-      qKmKm *= -1;
-    rho(0, 0) = (2. * qPiPi) / mass;
-    rho(1, 1) = (2. * qKmKm) / mass;
-  } else {
-    rho(0, 0) = ((2. * qPiPi) / mass + (2. * qPi0Pi0) / mass) / 2.;
-    rho(1, 1) = ((2. * qKK)   / mass + (2. * qK0K0)   / mass) / 2.;
-  }
-  rho(0, 1) = rho(1, 0) = 0;
+	matrix<complex<double> > rho(2, 2);
+	if (_vesSheet) {
+		if (qKmKm.imag() > 0)
+			qKmKm *= -1;
+		rho(0, 0) = (2. * qPiPi) / mass;
+		rho(1, 1) = (2. * qKmKm) / mass;
+	} else {
+		rho(0, 0) = ((2. * qPiPi) / mass + (2. * qPi0Pi0) / mass) / 2.;
+		rho(1, 1) = ((2. * qKK)   / mass + (2. * qK0K0)   / mass) / 2.;
+	}
+	rho(0, 1) = rho(1, 0) = 0;
 
-  const double scale = (s / (4 * _kaonMeanMass * _kaonMeanMass)) - 1;
+	const double scale = (s / (4 * _kaonMeanMass * _kaonMeanMass)) - 1;
 
-  matrix<complex<double> > M(zero_matrix<complex<double> >(2, 2));
-  for (unsigned int p = 0; p < _sP.size2(); ++p) {
-    const complex<double> fa = 1. / (s - _sP(0, p));
-    M += fa * _a[p];
-  }
-  for (unsigned int n = 0; n < _c.size(); ++n) {
-    const complex<double> sc = pow(scale, n);
-    M += sc *_c[n];
-  }
+	matrix<complex<double> > M(zero_matrix<complex<double> >(2, 2));
+	for (unsigned int p = 0; p < _sP.size2(); ++p) {
+		const complex<double> fa = 1. / (s - _sP(0, p));
+		M += fa * _a[p];
+	}
+	for (unsigned int n = 0; n < _c.size(); ++n) {
+		const complex<double> sc = pow(scale, n);
+		M += sc *_c[n];
+	}
 	
-  // modification: off-diagonal terms set to 0
-  M(0, 1) = 0;
-  M(1, 0) = 0;
+	// modification: off-diagonal terms set to 0
+	M(0, 1) = 0;
+	M(1, 0) = 0;
 
-  invertMatrix<complex<double> >(M - imag * rho, _T);
-  const complex<double> amp = _T(0, 0);
-  if (_debug)
-    printInfo << "Au-Morgan-Pennington M pi pi s-wave (m = " << mass << "GeV) = " << amp << endl;
+	invertMatrix<complex<double> >(M - imag * rho, _T);
+	const complex<double> amp = _T(0, 0);
+	if (_debug)
+		printInfo << "Au-Morgan-Pennington M pi pi s-wave (m = " << mass << "GeV) = " << amp << endl;
 
-  return amp;
+	return amp;
 }
 
 
 ostream&
 piPiSWaveAuMorganPenningtonM::print(ostream& out) const
 {
-  out << "AMP pi pi s-wave with off-diagonal elements of M-matrix set to zero";
-  return out;
+	out << "AMP pi pi s-wave with off-diagonal elements of M-matrix set to zero";
+	return out;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
-  : piPiSWaveAuMorganPenningtonM()
+	: piPiSWaveAuMorganPenningtonM()
 {
-  _vesSheet = 1;
+	_vesSheet = 1;
 }
 
 
 complex<double>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
-  double mass = v.parent()->lzVec().M();
+	double mass = v.parent()->lzVec().M();
 
-  const double          f0Mass  = 0.9837;  // [GeV]
-  const double          f0Width = 0.0376;  // [GeV]
-  const complex<double> coupling(-0.3743, 0.3197);
+	const double          f0Mass  = 0.9837;  // [GeV]
+	const double          f0Width = 0.0376;  // [GeV]
+	const complex<double> coupling(-0.3743, 0.3197);
 
-  const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
+	const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
-  complex<double> bw;
-  if (mass > 2 * _piChargedMass) {
-    const double p     = q(mass,   _piChargedMass, _piChargedMass).real();
-    const double p0    = q(f0Mass, _piChargedMass, _piChargedMass).real();
-    const double Gamma = f0Width * (p / p0);
-    const double A     = f0Mass * f0Mass - mass * mass;
-    const double B     = f0Mass * Gamma;
-    const double C     = B * (mass / p);
-    const double denom = C / (A * A + B * B);
-    bw = denom * complex<double>(A, B);
-  }
+	complex<double> bw;
+	if (mass > 2 * _piChargedMass) {
+		const double p     = q(mass,   _piChargedMass, _piChargedMass).real();
+		const double p0    = q(f0Mass, _piChargedMass, _piChargedMass).real();
+		const double Gamma = f0Width * (p / p0);
+		const double A     = f0Mass * f0Mass - mass * mass;
+		const double B     = f0Mass * Gamma;
+		const double C     = B * (mass / p);
+		const double denom = C / (A * A + B * B);
+		bw = denom * complex<double>(A, B);
+	}
 
-  return ampM - coupling * bw;
+	return ampM - coupling * bw;
 }
 
 
 ostream&
 piPiSWaveAuMorganPenningtonVes::print(ostream& out) const
 {
-  out << "VES pi pi s-wave with f_0(980) subtracted";
-  return out;
+	out << "VES pi pi s-wave with f_0(980) subtracted";
+	return out;
 }
 
 
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
-  : piPiSWaveAuMorganPenningtonM()
+	: piPiSWaveAuMorganPenningtonM()
 {
-  // change parameters according to Kachaev's prescription
-  _c[4](0, 0) = 0; // was 0.1957;
-  _c[4](1, 1) = 0; // was -0.3977;
+	// change parameters according to Kachaev's prescription
+	_c[4](0, 0) = 0; // was 0.1957;
+	_c[4](1, 1) = 0; // was -0.3977;
 
-  _a[0](0, 1) = 0; // was 0.0150
-  _a[0](1, 0) = 0; // was 0.0150
+	_a[0](0, 1) = 0; // was 0.0150
+	_a[0](1, 0) = 0; // was 0.0150
  
-  // _a[1] are the f's from the AMP paper
-  _a[1](0, 0) = 0;
-  _a[1](0, 1) = 0;
-  _a[1](1, 0) = 0;
-  _a[1](1, 1) = 0;
+	// _a[1] are the f's from the AMP paper
+	_a[1](0, 0) = 0;
+	_a[1](0, 1) = 0;
+	_a[1](1, 0) = 0;
+	_a[1](1, 1) = 0;
 }
 
 
 ostream&
 piPiSWaveAuMorganPenningtonKachaev::print(ostream& out) const
 {
-  out << "Kachaev's pi pi s-wave with f_0(980) removed";
-  return out;
+	out << "Kachaev's pi pi s-wave with f_0(980) removed";
+	return out;
 }

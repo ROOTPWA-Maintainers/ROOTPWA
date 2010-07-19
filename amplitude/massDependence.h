@@ -53,261 +53,261 @@ namespace ublas = boost::numeric::ublas;
 
 namespace rpwa {
 
-  class isobarDecayVertex;
-  typedef boost::shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
+	class isobarDecayVertex;
+	typedef boost::shared_ptr<isobarDecayVertex> isobarDecayVertexPtr;
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// Brief base class for mass dependences
-  class massDependence {
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief base class for mass dependences
+	class massDependence {
 
-  public:
+	public:
   
-    massDependence()          { }
-    virtual ~massDependence() { }
+		massDependence()          { }
+		virtual ~massDependence() { }
 
-    virtual std::complex<double> amp(const isobarDecayVertex& v) = 0;
+		virtual std::complex<double> amp(const isobarDecayVertex& v) = 0;
 
-    virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
+		virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
 
-    virtual std::string name() const { return "massDependence"; }
+		virtual std::string name() const { return "massDependence"; }
     
-    virtual std::ostream& print(std::ostream& out) const;
+		virtual std::ostream& print(std::ostream& out) const;
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
     
 
-  protected:
+	protected:
     
-    static bool _debug;  ///< if set to true, debug messages are printed
+		static bool _debug;  ///< if set to true, debug messages are printed
     
-  };
+	};
 
 
-  typedef boost::shared_ptr<massDependence> massDependencePtr;
+	typedef boost::shared_ptr<massDependence> massDependencePtr;
 
 
-  inline
-  std::ostream&
-  operator <<(std::ostream&         out,
-	      const massDependence& massDep)
-  {
-    return massDep.print(out);
-  }
+	inline
+	std::ostream&
+	operator <<(std::ostream&         out,
+	            const massDependence& massDep)
+	{
+		return massDep.print(out);
+	}
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// Brief trivial flat mass dependence
-  class flatMassDependence : public massDependence {
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief trivial flat mass dependence
+	class flatMassDependence : public massDependence {
 
-  public:
+	public:
   
-    flatMassDependence() : massDependence() { }
-    virtual ~flatMassDependence()           { }
+		flatMassDependence() : massDependence() { }
+		virtual ~flatMassDependence()           { }
 
-    virtual std::complex<double> amp(const isobarDecayVertex&);
+		virtual std::complex<double> amp(const isobarDecayVertex&);
 
-    virtual std::string name() const { return "flatMassDependence"; }
+		virtual std::string name() const { return "flatMassDependence"; }
     
-    virtual std::ostream& print(std::ostream& out) const;
+		virtual std::ostream& print(std::ostream& out) const;
 
-  };
-
-
-  typedef boost::shared_ptr<flatMassDependence> flatMassDependencePtr;
+	};
 
 
-  inline
-  flatMassDependencePtr
-  createFlatMassDependence()
-  {
-    flatMassDependencePtr massDep(new flatMassDependence());
-    return massDep;
-  }
+	typedef boost::shared_ptr<flatMassDependence> flatMassDependencePtr;
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// Brief relativistic Breit-Wigner with mass-dependent width and Blatt-Weisskopf barrier factors
-  class relativisticBreitWigner : public massDependence {
+	inline
+	flatMassDependencePtr
+	createFlatMassDependence()
+	{
+		flatMassDependencePtr massDep(new flatMassDependence());
+		return massDep;
+	}
 
-  public:
 
-    relativisticBreitWigner() : massDependence() { }
-    virtual ~relativisticBreitWigner()           { }
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief relativistic Breit-Wigner with mass-dependent width and Blatt-Weisskopf barrier factors
+	class relativisticBreitWigner : public massDependence {
 
-    virtual std::complex<double> amp(const isobarDecayVertex& v);
+	public:
 
-    virtual std::string name() const { return "relativisticBreitWigner"; }
+		relativisticBreitWigner() : massDependence() { }
+		virtual ~relativisticBreitWigner()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "relativisticBreitWigner"; }
     
-    virtual std::ostream& print(std::ostream& out) const;
+		virtual std::ostream& print(std::ostream& out) const;
 
-  };
-
-
-  typedef boost::shared_ptr<relativisticBreitWigner> relativisticBreitWignerPtr;
+	};
 
 
-  inline
-  relativisticBreitWignerPtr
-  createRelativisticBreitWigner()
-  {
-    relativisticBreitWignerPtr massDep(new relativisticBreitWigner());
-    return massDep;
-  }
+	typedef boost::shared_ptr<relativisticBreitWigner> relativisticBreitWignerPtr;
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// Brief Au-Morgan-Pennington parameterization of pi pi s-wave
-  /// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
-  /// we have introduced a small modification by setting the
-  /// off-diagonal elements of the M-matrix to zero.
-  class piPiSWaveAuMorganPenningtonM : public massDependence {
+	inline
+	relativisticBreitWignerPtr
+	createRelativisticBreitWigner()
+	{
+		relativisticBreitWignerPtr massDep(new relativisticBreitWigner());
+		return massDep;
+	}
 
-  public:
 
-    piPiSWaveAuMorganPenningtonM();
-    virtual ~piPiSWaveAuMorganPenningtonM() { }
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief Au-Morgan-Pennington parameterization of pi pi s-wave
+	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+	/// we have introduced a small modification by setting the
+	/// off-diagonal elements of the M-matrix to zero.
+	class piPiSWaveAuMorganPenningtonM : public massDependence {
 
-    virtual std::complex<double> amp(const isobarDecayVertex& v);
+	public:
 
-    virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }
+		piPiSWaveAuMorganPenningtonM();
+		virtual ~piPiSWaveAuMorganPenningtonM() { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }
     
-    virtual std::ostream& print(std::ostream& out) const;
+		virtual std::ostream& print(std::ostream& out) const;
 
-  protected:
+	protected:
 
-    ublas::matrix<std::complex<double> >               _T;
-    std::vector<ublas::matrix<std::complex<double> > > _a;
-    std::vector<ublas::matrix<std::complex<double> > > _c;
-    ublas::matrix<double>                              _sP;
-    int                                                _vesSheet;
+		ublas::matrix<std::complex<double> >               _T;
+		std::vector<ublas::matrix<std::complex<double> > > _a;
+		std::vector<ublas::matrix<std::complex<double> > > _c;
+		ublas::matrix<double>                              _sP;
+		int                                                _vesSheet;
 
-    double _piChargedMass;
-    double _piNeutralMass;
-    double _kaonChargedMass;
-    double _kaonNeutralMass;
-    double _kaonMeanMass;
+		double _piChargedMass;
+		double _piNeutralMass;
+		double _kaonChargedMass;
+		double _kaonNeutralMass;
+		double _kaonMeanMass;
     
-  };
+	};
 
 
-  typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonM> piPiSWaveAuMorganPenningtonMPtr;
+	typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonM> piPiSWaveAuMorganPenningtonMPtr;
 
 
-  inline
-  piPiSWaveAuMorganPenningtonMPtr
-  createPiPiSWaveAuMorganPenningtonM()
-  {
-    piPiSWaveAuMorganPenningtonMPtr massDep(new piPiSWaveAuMorganPenningtonM());
-    return massDep;
-  }
+	inline
+	piPiSWaveAuMorganPenningtonMPtr
+	createPiPiSWaveAuMorganPenningtonM()
+	{
+		piPiSWaveAuMorganPenningtonMPtr massDep(new piPiSWaveAuMorganPenningtonM());
+		return massDep;
+	}
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// Brief old VES pi pi s-wave parameterization
-  /// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
-  /// brute force subtraction of the f0(980)
-  class piPiSWaveAuMorganPenningtonVes : public piPiSWaveAuMorganPenningtonM {
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief old VES pi pi s-wave parameterization
+	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+	/// brute force subtraction of the f0(980)
+	class piPiSWaveAuMorganPenningtonVes : public piPiSWaveAuMorganPenningtonM {
 
-  public:
+	public:
 
-    piPiSWaveAuMorganPenningtonVes();
-    virtual ~piPiSWaveAuMorganPenningtonVes() { }
+		piPiSWaveAuMorganPenningtonVes();
+		virtual ~piPiSWaveAuMorganPenningtonVes() { }
 
-    virtual std::complex<double> amp(const isobarDecayVertex& v);
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-    virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }
+		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }
     
-    virtual std::ostream& print(std::ostream& out) const;
+		virtual std::ostream& print(std::ostream& out) const;
 
-  };
-
-
-  typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonVes> piPiSWaveAuMorganPenningtonVesPtr;
+	};
 
 
-  inline
-  piPiSWaveAuMorganPenningtonVesPtr
-  createPiPiSWaveAuMorganPenningtonVes()
-  {
-    piPiSWaveAuMorganPenningtonVesPtr massDep(new piPiSWaveAuMorganPenningtonVes());
-    return massDep;
-  }
+	typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonVes> piPiSWaveAuMorganPenningtonVesPtr;
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  /// Brief Kachaev's version of the AMP pi pi s-wave parameterization
-  ///
-  /// from the original fortran code:
-  /// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
-  /// 04-Mar-2003 See eps_k1.for for description.
-  /// here matrix M=K^{-1} is parametrized with one pole.
-  /// misprint in the article (other than in K1--K3 solutions)
-  /// was corrected.
-  ///
-  /// 14-Mar-2003 nice amplitude for pi-pi S-wave without f0(975).
-  /// it is smooth and nicely tends to zero after approx 1.5 GeV.
-  /// f0(975) pole excluded; coupling to KK zeroed; set C411=C422=0.
-  /// the largest effect from C411, zeroing of C422 looks insignificant.
-  class piPiSWaveAuMorganPenningtonKachaev : public piPiSWaveAuMorganPenningtonM {
+	inline
+	piPiSWaveAuMorganPenningtonVesPtr
+	createPiPiSWaveAuMorganPenningtonVes()
+	{
+		piPiSWaveAuMorganPenningtonVesPtr massDep(new piPiSWaveAuMorganPenningtonVes());
+		return massDep;
+	}
 
-  public:
 
-    piPiSWaveAuMorganPenningtonKachaev();
-    virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief Kachaev's version of the AMP pi pi s-wave parameterization
+	///
+	/// from the original fortran code:
+	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+	/// 04-Mar-2003 See eps_k1.for for description.
+	/// here matrix M=K^{-1} is parametrized with one pole.
+	/// misprint in the article (other than in K1--K3 solutions)
+	/// was corrected.
+	///
+	/// 14-Mar-2003 nice amplitude for pi-pi S-wave without f0(975).
+	/// it is smooth and nicely tends to zero after approx 1.5 GeV.
+	/// f0(975) pole excluded; coupling to KK zeroed; set C411=C422=0.
+	/// the largest effect from C411, zeroing of C422 looks insignificant.
+	class piPiSWaveAuMorganPenningtonKachaev : public piPiSWaveAuMorganPenningtonM {
 
-    virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }
+	public:
+
+		piPiSWaveAuMorganPenningtonKachaev();
+		virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
+
+		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }
     
-    virtual std::ostream& print(std::ostream& out) const;
+		virtual std::ostream& print(std::ostream& out) const;
 
-  };
-
-
-  typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonKachaev> piPiSWaveAuMorganPenningtonKachaevPtr;
+	};
 
 
-  inline
-  piPiSWaveAuMorganPenningtonKachaevPtr
-  createPiPiSWaveAuMorganPenningtonKachaev()
-  {
-    piPiSWaveAuMorganPenningtonKachaevPtr massDep(new piPiSWaveAuMorganPenningtonKachaev());
-    return massDep;
-  }
+	typedef boost::shared_ptr<piPiSWaveAuMorganPenningtonKachaev> piPiSWaveAuMorganPenningtonKachaevPtr;
 
 
-  //////////////////////////////////////////////////////////////////////////////
-  // http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
-  // matrix inversion routine using lu_factorize and lu_substitute
-  template<typename T>
-  bool
-  invertMatrix(const ublas::matrix<T>& A,
-	       ublas::matrix<T>&       inverseA)
-  {
-    // create working copy of input
-    ublas::matrix<T> M(A);
-    // create permutation matrix for LU-factorization
-    ublas::permutation_matrix<std::size_t> pM(M.size1());
-    // perform LU-factorization
-    if (ublas::lu_factorize(M, pM) != 0)
-      return false;
-    // create identity matrix of "inverse"
-    inverseA.assign(ublas::identity_matrix<T>(M.size1()));
-    // backsubstitute to get the inverse
-    ublas::lu_substitute(M, pM, inverseA);
-    return true;
-  }
+	inline
+	piPiSWaveAuMorganPenningtonKachaevPtr
+	createPiPiSWaveAuMorganPenningtonKachaev()
+	{
+		piPiSWaveAuMorganPenningtonKachaevPtr massDep(new piPiSWaveAuMorganPenningtonKachaev());
+		return massDep;
+	}
 
 
-  template<typename T>
-  ublas::matrix<T>
-  invertMatrix(const ublas::matrix<T>& A,
-	       bool&                   isSingular)
-  { 
-    ublas::matrix<T> inverseA (A.size1(), A.size2());
-    isSingular = !invert (A, inverseA);
-    return inverseA;
-  }
+	//////////////////////////////////////////////////////////////////////////////
+	// http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
+	// matrix inversion routine using lu_factorize and lu_substitute
+	template<typename T>
+	bool
+	invertMatrix(const ublas::matrix<T>& A,
+	             ublas::matrix<T>&       inverseA)
+	{
+		// create working copy of input
+		ublas::matrix<T> M(A);
+		// create permutation matrix for LU-factorization
+		ublas::permutation_matrix<std::size_t> pM(M.size1());
+		// perform LU-factorization
+		if (ublas::lu_factorize(M, pM) != 0)
+			return false;
+		// create identity matrix of "inverse"
+		inverseA.assign(ublas::identity_matrix<T>(M.size1()));
+		// backsubstitute to get the inverse
+		ublas::lu_substitute(M, pM, inverseA);
+		return true;
+	}
+
+
+	template<typename T>
+	ublas::matrix<T>
+	invertMatrix(const ublas::matrix<T>& A,
+	             bool&                   isSingular)
+	{ 
+		ublas::matrix<T> inverseA (A.size1(), A.size2());
+		isSingular = !invert (A, inverseA);
+		return inverseA;
+	}
 
 
 }  // namespace rpwa

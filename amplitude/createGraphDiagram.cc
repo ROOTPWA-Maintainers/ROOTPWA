@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 249                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-06-02 21:03:57 +0200 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      reads in data files in .evt or tree format, calculates

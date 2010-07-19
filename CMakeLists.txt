@@ -91,9 +91,7 @@ foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
 endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
 
-
 # redirect output files
-# define output directories
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
@@ -202,6 +200,11 @@ enable_testing()
 
 # PWA2000
 add_subdirectory(pwa2000)
+
+# Utilities
+set(UTILITIES_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/utilities
+)
 
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR
