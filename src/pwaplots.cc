@@ -26,6 +26,11 @@
 #include <iostream>
 #include <iomanip>
 #include <string>
+#include <cstdlib>
+
+int atoi ( const char * str );
+
+
 #include "pwaPlotter.h"
 
 using namespace std;
