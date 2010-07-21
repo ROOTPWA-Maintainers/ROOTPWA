@@ -366,12 +366,35 @@ TDiffractivePhaseSpace::event()
     TVector3 beamDir = _beamLab.Vect().Unit();
     xSystemLab.RotateUz(beamDir);
     // calculate the recoil proton properties
-    _recoilprotonLab = _beamLab - xSystemLab;
+    _recoilprotonLab = (_beamLab + targetLab) - xSystemLab; // targetLab
+
+/* check for coplanarity
+	cout << " Energy balance is " << (_beamLab + targetLab).E() << " vs. " << (_recoilprotonLab+xSystemLab).E() << endl;
+    cout << " Momentum balance is " << (_beamLab + targetLab).Mag() << " vs. " << (_recoilprotonLab+xSystemLab).Mag() << endl;
+	cout << " Direction X balance is " << (_beamLab + targetLab).Px() << " vs. " << (_recoilprotonLab+xSystemLab).Px() << endl;
+	cout << " Direction Y balance is " << (_beamLab + targetLab).Py() << " vs. " << (_recoilprotonLab+xSystemLab).Py() << endl;
+	cout << " Direction Z balance is " << (_beamLab + targetLab).Pz() << " vs. " << (_recoilprotonLab+xSystemLab).Pz() << endl;
+	
+	// own rotation
+	TVector3 vec_direction = _beamLab.Vect().Unit();
+	TVector3 vec_origin(0.,0.,1.);
+	// get the angle of the vector
+	double angle = vec_origin.Angle(vec_direction);
+	// get the rotation axis perpendicular to the plane between these both
+	TVector3 vec_rotation = vec_origin.Cross(vec_direction);
+	vec_rotation = vec_rotation.Unit();
+	// rotate around this axis by the given angle
+	//particle_null.Rotate  (-angle, vec_rotation);
+	_recoilprotonLab.Rotate(-angle, vec_rotation);
+	xSystemLab.Rotate(-angle, vec_rotation);	
+
+	cout << " delta phi is " << (_recoilprotonLab.Phi()-xSystemLab.Phi())/3.141592654 << endl;
+*/
     
     // recalculate t' for xcheck or save the generated
     // number directly if you change if (1) to (0) to
     // speed up the process a bit
-    if (1){
+    if (0){
     	_tprime = Calc_t_prime(_beamLab, xSystemLab);
     } else {
     	_tprime = tPrime;
