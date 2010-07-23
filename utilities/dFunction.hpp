@@ -59,10 +59,18 @@ namespace rpwa {
 		static dFunction& instance() { return _instance; }  ///< get singleton instance
 		
 		struct cacheEntryType {
+
+			cacheEntryType()
+				: valid    (false),
+				  constTerm(0)
+			{ }
+
+			bool             valid;
 			T                constTerm;
 			std::vector<int> kmn1;
 			std::vector<int> jmnk;
 			std::vector<T>   factor;
+
 		};
 
 		T operator ()(const int j,
@@ -94,11 +102,11 @@ namespace rpwa {
 			const T cosThetaHalf = cos(thetaHalf);
 			const T sinThetaHalf = sin(thetaHalf);
 
-			T dFuncVal = 0;
-			if (_cacheValid[j][j + _m][j + _n] && _useCache) {
+			T               dFuncVal   = 0;
+			cacheEntryType& cacheEntry = _cache[j][j + _m][j + _n];
+			if (cacheEntry.valid and _useCache) {
 				// calculate function value using cache
-				const cacheEntryType& cacheEntry = _cache[j][j + _m][j + _n];
-				T                     sumTerm    = 0;
+				T sumTerm = 0;
 				for (unsigned int i = 0; i < cacheEntry.factor.size(); ++i) {
 					sumTerm +=   std::pow(cosThetaHalf, cacheEntry.kmn1[i])
 						         * std::pow(sinThetaHalf, cacheEntry.jmnk[i]) / cacheEntry.factor[i];
@@ -106,8 +114,6 @@ namespace rpwa {
 				dFuncVal = cacheEntry.constTerm * sumTerm;
 			} else {
 				// calculate function value and put values into cache
-				cacheEntryType& cacheEntry = _cache[j][j + _m][j + _n];
-			
 				const int jpm       = (j + _m) / 2;
 				const int jpn       = (j + _n) / 2;
 				const int jmm       = (j - _m) / 2;
@@ -144,7 +150,7 @@ namespace rpwa {
 				}
 				dFuncVal = constTerm * sumTerm;
 				if (_useCache)
-					_cacheValid[j][j + _m][j + _n] = true;
+					cacheEntry.valid = true;
 			}
 
 			if (_debug)
@@ -163,25 +169,17 @@ namespace rpwa {
 
 	private:
 
-		dFunction ()
-		{
-			for (unsigned int j = 0; j < _maxJ; ++j)
-				for (unsigned int m = 0; m < 2 * _maxJ; ++m)
-					for (unsigned int n = 0; n < 2 * _maxJ; ++n)
-						_cacheValid[j][m][n] = false;
-		}
+		dFunction () { }
 		~dFunction() { }
 		dFunction (const dFunction&);
 		dFunction& operator =(const dFunction&);
-
-		static const unsigned int _maxJ = 20;  // maximum allowed angular momentum
 
 		static dFunction _instance;  ///< singleton instance
 		static bool      _debug;     ///< if set to true, debug messages are printed
 		static bool      _useCache;  ///< if set to true, cache is used
 
-		static cacheEntryType _cache     [_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values
-		static bool           _cacheValid[_maxJ][2 * _maxJ][2 * _maxJ];  ///< flags validity of cache entries
+		static const unsigned int _maxJ = 20;  // maximum allowed angular momentum
+		static cacheEntryType     _cache[_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values
 		
 	};
 
@@ -191,9 +189,7 @@ namespace rpwa {
 	template<typename T> bool         dFunction<T>::_useCache = true;
 
 	template<typename T> typename dFunction<T>::cacheEntryType
-	  dFunction<T>::_cache     [_maxJ][2 * _maxJ][2 * _maxJ];
-	template<typename T> bool
-	  dFunction<T>::_cacheValid[_maxJ][2 * _maxJ][2 * _maxJ];
+	  dFunction<T>::_cache[_maxJ][2 * _maxJ][2 * _maxJ];
 
 
 	// Wigner D-function D^J_{M M'}(alpha, beta, gamma)

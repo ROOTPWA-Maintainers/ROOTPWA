@@ -42,8 +42,10 @@ echo ">>> info: called ${0} ${*}"
 #VALGRIND_TOOL="memcheck"
 VALGRIND_TOOL="callgrind"
 
-PROGRAM="../build/bin/calcAmplitudes"
-PROGRAM_OPT="-k test.key testEvents.5k.root"
+#PROGRAM="../build/bin/calcAmplitudes"
+#PROGRAM_OPT="-k test.key testEvents.5k.root"
+PROGRAM="../debugBuild/bin/testLibppFunctions"
+PROGRAM_OPT=""
 
 LOG_FILE="./"$(basename ${PROGRAM})"_${VALGRIND_TOOL}.log"
 OUT_FILE="./"$(basename ${PROGRAM})"_${VALGRIND_TOOL}.out"

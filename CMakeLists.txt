@@ -80,7 +80,9 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
+set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
 # report global build settings
 foreach(_LANG "C" "CXX")
   message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'")
@@ -88,6 +90,7 @@ foreach(_LANG "C" "CXX")
 endforeach()
 foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
   message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
+  message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
 endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
 

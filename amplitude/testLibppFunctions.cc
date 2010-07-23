@@ -119,6 +119,7 @@ main(int argc, char** argv)
 		printInfo << "testing Wigner d-function" << endl;
 
 		const unsigned int nmbAngles = 50000;
+		// const unsigned int nmbAngles = 500;
 		const int          maxJ      = 7;  // for larger values libpp implementation gives wrong results
 
 		vector<double> angles(nmbAngles, 0);
@@ -145,7 +146,6 @@ main(int argc, char** argv)
 	    for (int m = -j; m <= j; ++m)
 		    for (int n = -j; n <= j; ++n)
 			    for (unsigned int i = 0; i < angles.size(); ++i) {
-				    // newVals[valIndex] = dFunc(2 * j, 2 * m, 2 * n, angles[i]);
 				    newVals[valIndex] = dFunction<double>::instance()(2 * j, 2 * m, 2 * n, angles[i]);
 				    ++valIndex;
 			    }
