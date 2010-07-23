@@ -36,8 +36,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef FACTORIAL_H
-#define FACTORIAL_H
+#ifndef FACTORIAL_HPP
+#define FACTORIAL_HPP
 
 
 #include <vector>
@@ -82,7 +82,7 @@ namespace rpwa {
 		factorial& operator =(const factorial&);
 
 		static factorial      _instance;  ///< singleton instance
-		static std::vector<T> _cache;     ///< cache of already calculated values
+		static std::vector<T> _cache;     ///< cache for already calculated values
 
 	};
 
@@ -94,4 +94,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // FACTORIAL_H
+#endif  // FACTORIAL_HPP

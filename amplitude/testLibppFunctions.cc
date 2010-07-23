@@ -46,6 +46,7 @@
 #include "utilities.h"
 #include "mathUtils.hpp"
 #include "factorial.hpp"
+#include "dFunction.hpp"
 
 
 using namespace std;
@@ -115,7 +116,7 @@ main(int argc, char** argv)
 	}	
 
 
-	if (0) {
+	if (1) {
 		printInfo << "testing Wigner d-function" << endl;
 
 		const unsigned int nmbAngles = 50000;
@@ -144,7 +145,8 @@ main(int argc, char** argv)
 	    for (int m = -j; m <= j; ++m)
 		    for (int n = -j; n <= j; ++n)
 			    for (unsigned int i = 0; i < angles.size(); ++i) {
-				    newVals[valIndex] = dFunc(2 * j, 2 * m, 2 * n, angles[i]);
+				    // newVals[valIndex] = dFunc(2 * j, 2 * m, 2 * n, angles[i]);
+				    newVals[valIndex] = dFunction<double>::instance()(2 * j, 2 * m, 2 * n, angles[i]);
 				    ++valIndex;
 			    }
     timer.Stop();
@@ -170,17 +172,22 @@ main(int argc, char** argv)
     timer.Print();
 
     // check values
-    double maxDeviation = 0;
+    double maxAbsDeviation = 0;
+    double maxRelDeviation = 0;
     for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const double delta = oldVals[i] - newVals[i];
-	    if (abs(delta) > maxDeviation)
-		    maxDeviation = abs(delta);
+	    const double absDelta = oldVals[i] - newVals[i];
+	    const double relDelta = absDelta / oldVals[i];
+	    if (abs(absDelta) > maxAbsDeviation)
+		    maxAbsDeviation = abs(absDelta);
+	    if (abs(relDelta) > maxRelDeviation)
+		    maxRelDeviation = abs(relDelta);
     }
-    printInfo << "maximum deviation is " << maxDeviation << endl;
+    printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
+              << "maximum relative deviation is " << maxRelDeviation << endl;
 	}
 	
 
-	if (1) {
+	if (0) {
 		printInfo << "testing Wigner D-function" << endl;
 
 		const unsigned int nmbAngles = 50000;
@@ -213,7 +220,7 @@ main(int argc, char** argv)
 		    for (int n = -j; n <= j; ++n)
 			    for (unsigned int i = 0; i < angles.size(); ++i) {
 				    const TVector3& a = angles[i];
-				    newVals[valIndex] = DFunc(2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
+				    newVals[valIndex] = DFunc<complex<double> >(2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
 				    ++valIndex;
 			    }
     timer.Stop();

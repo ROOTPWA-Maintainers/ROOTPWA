@@ -48,7 +48,11 @@
 #include "factorial.hpp"
 
 
-namespace rpwa {  
+namespace rpwa {
+
+
+	// redefine some standard functions to make switching of complex data types easier
+	template<typename T> inline T exp(const T& x) { return std::exp(x); }
 
 
   // some wrappers for libpp functions
@@ -138,19 +142,19 @@ namespace rpwa {
 	}
 
 
-	template<typename T>
+	template<typename complexT, typename scalarT>
 	inline
-	std::complex<T>
-	DFunc(const int  j,
-	      const int  m,
-	      const int  n,
-	      const T&   alpha,
-	      const T&   beta,
-	      const T&   gamma = 0,
-	      const bool debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	complexT
+	DFunc(const int      j,
+	      const int      m,
+	      const int      n,
+	      const scalarT& alpha,
+	      const scalarT& beta,
+	      const scalarT& gamma = 0,
+	      const bool     debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
 	{
-		const T               arg      = ((T)m / 2) * alpha + ((T)n / 2) * gamma;
-		const std::complex<T> DFuncVal = std::exp(std::complex<T>(0, -arg)) * dFunc(j, m, n, beta);
+		const scalarT  arg      = ((scalarT)m / 2) * alpha + ((scalarT)n / 2) * gamma;
+		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunc(j, m, n, beta);
 		if (debug)
 			printInfo << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
 			          << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
