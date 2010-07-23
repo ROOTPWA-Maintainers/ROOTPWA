@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      optimized Wigner d-function d^j_{m m'} with caching
+//      optimized Wigner d-function d^J_{M M'} with caching
 //     	based on PWA2000 function d_jmn_b() in pputil.cc
 //
 //
@@ -43,7 +43,6 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
-#include <map>
 
 #include "utilities.h"
 #include "mathUtils.hpp"
@@ -71,9 +70,8 @@ namespace rpwa {
 		              const int n,
 		              const T&  theta)  ///< returns d^j_{m n}(theta)
 		{
-			const int maxJ = 200;
-			if (j > maxJ) {
-				printErr << "J = " << 0.5 * j << " is too large. maximum allowed j is " << 0.5 * maxJ << ". "
+			if (j > 2 * (int)_maxJ) {
+				printErr << "J = " << 0.5 * j << " is too large. maximum allowed j is " << _maxJ << ". "
 				         << "aborting." << std::endl;
 				throw;
 			}
@@ -96,12 +94,19 @@ namespace rpwa {
 			const T cosThetaHalf = cos(thetaHalf);
 			const T sinThetaHalf = sin(thetaHalf);
 
-			T             dFuncVal = 0;
-			const int     cacheKey = (maxJ * j + _m) * maxJ + _n;
-			cacheIterator entry    = _cache.find(cacheKey);
-			if (entry == _cache.end()) {
+			T dFuncVal = 0;
+			if (_cacheValid[j][j + _m][j + _n] && _useCache) {
+				// calculate function value using cache
+				const cacheEntryType& cacheEntry = _cache[j][j + _m][j + _n];
+				T                     sumTerm    = 0;
+				for (unsigned int i = 0; i < cacheEntry.factor.size(); ++i) {
+					sumTerm +=   std::pow(cosThetaHalf, cacheEntry.kmn1[i])
+						         * std::pow(sinThetaHalf, cacheEntry.jmnk[i]) / cacheEntry.factor[i];
+				}
+				dFuncVal = cacheEntry.constTerm * sumTerm;
+			} else {
 				// calculate function value and put values into cache
-				cacheEntryType& cacheEntry = _cache[cacheKey];
+				cacheEntryType& cacheEntry = _cache[j][j + _m][j + _n];
 			
 				const int jpm       = (j + _m) / 2;
 				const int jpn       = (j + _n) / 2;
@@ -112,17 +117,16 @@ namespace rpwa {
 					                    * rpwa::factorial<T>::instance()(jpn)
 					                    * rpwa::factorial<T>::instance()(jmn);
 				const T   constTerm = powMinusOne(jpm) * std::sqrt(kk);
-				cacheEntry.constTerm = constTerm;
+				if (_useCache)
+					cacheEntry.constTerm = constTerm;
 				
 				T         sumTerm = 0;
 				const int mpn     = (_m + _n) / 2;
 				const int kMin    = std::max(0,   mpn);
 				const int kMax    = std::min(jpm, jpn);
 				for (int k = kMin; k <= kMax; ++k) {
-					const int kmn1 = 2 * k - (_m + _n) / 2;
-					const int jmnk = j + (_m + _n) / 2 - 2 * k;
-					cacheEntry.kmn1.push_back(kmn1);
-					cacheEntry.jmnk.push_back(jmnk);
+					const int kmn1   = 2 * k - (_m + _n) / 2;
+					const int jmnk   = j + (_m + _n) / 2 - 2 * k;
 					const int jmk    = (j + _m) / 2 - k;
 					const int jnk    = (j + _n) / 2 - k;
 					const int kmn2   = k - (_m + _n) / 2;
@@ -130,20 +134,17 @@ namespace rpwa {
 						                  * rpwa::factorial<T>::instance()(jmk)
 						                  * rpwa::factorial<T>::instance()(jnk)
 					                    * rpwa::factorial<T>::instance()(kmn2)) / powMinusOne(k);
-					cacheEntry.factor.push_back(factor);
+					if (_useCache) {
+						cacheEntry.kmn1.push_back(kmn1);
+						cacheEntry.jmnk.push_back(jmnk);
+						cacheEntry.factor.push_back(factor);
+					}
 					// using the 1 / factor here so that function value is the same as in PWA2000
 					sumTerm += std::pow(cosThetaHalf, kmn1) * std::pow(sinThetaHalf, jmnk) / factor;
 				}
 				dFuncVal = constTerm * sumTerm;
-			} else {
-				// calculate function value using cache
-				const cacheEntryType& cacheEntry = entry->second;
-				T                     sumTerm    = 0;
-				for (unsigned int i = 0; i < cacheEntry.factor.size(); ++i) {
-					sumTerm +=   std::pow(cosThetaHalf, cacheEntry.kmn1[i])
-						         * std::pow(sinThetaHalf, cacheEntry.jmnk[i]) / cacheEntry.factor[i];
-				}
-				dFuncVal = cacheEntry.constTerm * sumTerm;
+				if (_useCache)
+					_cacheValid[j][j + _m][j + _n] = true;
 			}
 
 			if (_debug)
@@ -153,30 +154,69 @@ namespace rpwa {
 			return dFuncVal;
 		}
 
+		static bool useCache() { return _useCache; }                                   ///< returns caching flag
+		static void setUseCache(const bool useCache = true) { _useCache = useCache; }  ///< sets caching flag
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
     
 
 	private:
 
-		dFunction () { }
+		dFunction ()
+		{
+			for (unsigned int j = 0; j < _maxJ; ++j)
+				for (unsigned int m = 0; m < 2 * _maxJ; ++m)
+					for (unsigned int n = 0; n < 2 * _maxJ; ++n)
+						_cacheValid[j][m][n] = false;
+		}
 		~dFunction() { }
 		dFunction (const dFunction&);
 		dFunction& operator =(const dFunction&);
 
+		static const unsigned int _maxJ = 20;  // maximum allowed angular momentum
+
 		static dFunction _instance;  ///< singleton instance
 		static bool      _debug;     ///< if set to true, debug messages are printed
-		
-		static std::map<int, cacheEntryType> _cache;  ///< cache for already calculated values
-		typedef typename std::map<int, cacheEntryType>::const_iterator cacheIterator;
+		static bool      _useCache;  ///< if set to true, cache is used
+
+		static cacheEntryType _cache     [_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values
+		static bool           _cacheValid[_maxJ][2 * _maxJ][2 * _maxJ];  ///< flags validity of cache entries
 		
 	};
 
 
 	template<typename T> dFunction<T> dFunction<T>::_instance;
-	template<typename T> bool         dFunction<T>::_debug = false;
-	
-	template<typename T> std::map<int, typename dFunction<T>::cacheEntryType> dFunction<T>::_cache;
+	template<typename T> bool         dFunction<T>::_debug    = false;
+	template<typename T> bool         dFunction<T>::_useCache = true;
+
+	template<typename T> typename dFunction<T>::cacheEntryType
+	  dFunction<T>::_cache     [_maxJ][2 * _maxJ][2 * _maxJ];
+	template<typename T> bool
+	  dFunction<T>::_cacheValid[_maxJ][2 * _maxJ][2 * _maxJ];
+
+
+	// Wigner D-function D^J_{M M'}(alpha, beta, gamma)
+	template<typename complexT, typename scalarT>
+	inline
+	complexT
+	DFunction(const int      j,
+	          const int      m,
+	          const int      n,
+	          const scalarT& alpha,
+	          const scalarT& beta,
+	          const scalarT& gamma = 0,
+	          const bool     debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	{
+		const scalarT  arg      = ((scalarT)m / 2) * alpha + ((scalarT)n / 2) * gamma;
+		const complexT DFuncVal =   rpwa::exp(complexT(0, -arg))
+			                        * dFunction<scalarT>::instance()(j, m, n, beta);
+		if (debug)
+			printInfo << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
+			          << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
+			          << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+		return DFuncVal;
+	}
 
 
 }  // namespace rpwa

@@ -45,7 +45,6 @@
 
 #include "pputil.h"
 #include "utilities.h"
-#include "factorial.hpp"
 
 
 namespace rpwa {
@@ -78,88 +77,6 @@ namespace rpwa {
 			return -1;
 		else                 // exponent is even
 			return +1;
-	}
-
-
-	// based on PWA2000 implementation in pputil.cc
-	template<typename T>
-	T
-	dFunc(const int  j,
-	      const int  m,
-	      const int  n,
-	      const T&   theta,
-	      const bool debug = false)  ///< Wigner d-function d^j_{m n}(theta)
-	{
-		if ((j < 0) or (std::abs(m) > j) or (std::abs(n) > j)) {
-			printErr << "illegal argument for Wigner d^{J = " << 0.5 * j << "}"
-			         << "_{M = " << 0.5 * m << ", " << "M' = " << 0.5 * n << "}"
-			         << "(theta = " << theta << "). aborting." << std::endl;
-			throw;
-		}
-
-		// swap spin projections for negative angle
-		int _m        = m;
-		int _n        = n;
-		T   thetaHalf = theta / 2;
-		if (theta < 0) {
-			thetaHalf = std::abs(thetaHalf);
-			std::swap(_m, _n);
-		}
-
-		const int j_p_m     = (j + _m) / 2;
-		const int j_m_m     = (j - _m) / 2;
-		const int j_p_n     = (j + _n) / 2;
-		const int j_m_n     = (j - _n) / 2;
-		const T   kk        =   rpwa::factorial<T>::instance()(j_p_m)
-			                    * rpwa::factorial<T>::instance()(j_m_m)
-			                    * rpwa::factorial<T>::instance()(j_p_n)
-			                    * rpwa::factorial<T>::instance()(j_m_n);
-		const T   constTerm = powMinusOne(j_p_m) * std::sqrt(kk);	
- 
-		const T   cosThetaHalf = cos(thetaHalf);
-		const T   sinThetaHalf = sin(thetaHalf);
-		const int m_p_n        = (_m + _n) / 2;
-		const int kMin         = std::max(0,     m_p_n);
-		const int kMax         = std::min(j_p_m, j_p_n);
-		T         sumTerm      = 0;
-		for (int k = kMin; k <= kMax; ++k) {
-			const int kmn1 = 2 * k - (_m + _n) / 2;
-			const int jmnk = j + (_m + _n) / 2 - 2 * k;
-			const int jmk  = (j + _m) / 2 - k;
-			const int jnk  = (j + _n) / 2 - k;
-			const int kmn2 = k - (_m + _n) / 2;
-			sumTerm += powMinusOne(k) * std::pow(cosThetaHalf, kmn1) * std::pow(sinThetaHalf, jmnk)
-				         / (  rpwa::factorial<T>::instance()(k)   * rpwa::factorial<T>::instance()(jmk)
-				            * rpwa::factorial<T>::instance()(jnk) * rpwa::factorial<T>::instance()(kmn2));
-		}
-		const T dFuncVal = constTerm * sumTerm;
-
-		if (debug)
-			printInfo << "Wigner d^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
-			          << "M' = " << 0.5 * n << "}" << "(theta = " << theta << ") = "
-			          << maxPrecision(dFuncVal) << std::endl;
-		return dFuncVal;
-	}
-
-
-	template<typename complexT, typename scalarT>
-	inline
-	complexT
-	DFunc(const int      j,
-	      const int      m,
-	      const int      n,
-	      const scalarT& alpha,
-	      const scalarT& beta,
-	      const scalarT& gamma = 0,
-	      const bool     debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
-	{
-		const scalarT  arg      = ((scalarT)m / 2) * alpha + ((scalarT)n / 2) * gamma;
-		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunc(j, m, n, beta);
-		if (debug)
-			printInfo << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
-			          << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
-			          << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
-		return DFuncVal;
 	}
 
 

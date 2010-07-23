@@ -44,7 +44,6 @@
 
 #include "svnVersion.h"
 #include "utilities.h"
-#include "mathUtils.hpp"
 #include "factorial.hpp"
 #include "dFunction.hpp"
 
@@ -136,6 +135,7 @@ main(int argc, char** argv)
 				    ++nmbVals;
 
     // compute mathUtils values
+    //dFunction<double>::instance().setUseCache(false);
     TStopwatch timer;
     timer.Reset();
     timer.Start();
@@ -220,7 +220,7 @@ main(int argc, char** argv)
 		    for (int n = -j; n <= j; ++n)
 			    for (unsigned int i = 0; i < angles.size(); ++i) {
 				    const TVector3& a = angles[i];
-				    newVals[valIndex] = DFunc<complex<double> >(2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
+				    newVals[valIndex] = DFunction<complex<double> >(2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
 				    ++valIndex;
 			    }
     timer.Stop();
