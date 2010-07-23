@@ -76,7 +76,8 @@ TDiffractivePhaseSpace::TDiffractivePhaseSpace()
   _phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
   _phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
   _tprime = 0;
-  _invSlopeParGradient = 0.;
+  _invSlopePar = NULL;
+  _invM		   = NULL;
 }
 
 TDiffractivePhaseSpace::~TDiffractivePhaseSpace(){
@@ -279,6 +280,44 @@ TDiffractivePhaseSpace::BuildDaughterList()
 //   }
 // }
 
+double
+TDiffractivePhaseSpace::Get_inv_SlopePar(double invariant_M){
+	double result = 1.;
+	if (!_invSlopePar) return result;
+	if (_ninvSlopePar == 1) return _invSlopePar[0];
+	if (invariant_M < 0.) return _invSlopePar[0];
+	// assuming to have sorted entries
+	// case of linear extrapolation
+	int i_1(-1);
+	int i_2(-1);
+	if (invariant_M < _invM[0]){
+		i_1 = 0;
+		i_2 = 1;
+	}
+	if (invariant_M >= _invM[_ninvSlopePar-1]){
+		i_1 =_ninvSlopePar-2;
+		i_2 =_ninvSlopePar-1;
+	}
+	// case of linear interpolation
+	if (i_1 < 0 || i_2 < 0){
+		// search for the matching two points
+		for (int i = 0; i < _ninvSlopePar-2; i++){
+			if (_invM[i] <= invariant_M && invariant_M < _invM[i+1]){
+				i_1=i;
+				i_2=i+1;
+				break;
+			}
+		}
+	}
+	// extra/interpolate lineary
+	double m_1 = _invM[i_1];
+	double m_2 = _invM[i_2];
+	double invt_1 = _invSlopePar[i_1];
+	double invt_2 = _invSlopePar[i_2];
+	result = invt_1+(invt_2-invt_1)/(m_2-m_1)*(invariant_M-m_1);
+	return result;
+}
+
 
 // based on Dima's prod_decay_split.f
 unsigned int 
@@ -322,7 +361,7 @@ TDiffractivePhaseSpace::event()
     
 	const double xMass  = gRandom->Uniform(_xMassMin, _xMassMax);  // pick random X mass
 	// calculate the slope parameter depending on the invariant mass
-	const double calc_invSlopePar = _invSlopeParGradient*xMass + _invSlopePar;
+	const double calc_invSlopePar = Get_inv_SlopePar(xMass);
 	const double tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
 	//cout << " inv slope par " << _invSlopePar << " gradient " << _invSlopeParGradient << " t' is " << tPrime << endl;
     // make sure that X mass is not larger than maximum allowed mass

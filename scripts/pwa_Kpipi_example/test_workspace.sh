@@ -1,7 +1,7 @@
 # this script tests the status of the Kpipi PWA workflow chain
 # the variables in set_workspace_var.sh must be set correctly
 # author: Promme@web.de ; jasinski@kph.uni-mainz.de
-# worked with SVN version 258
+# worked with SVN version 290
 
 #!/bin/bash
 
@@ -165,7 +165,7 @@ then
 	STEP_DONE[8]=1
 fi
 
-# step 10: Is ther already a file available showing the Intensities?
+# step 10: Is there already a file available showing the Intensities?
 if [ -f ${KPIPI_FIT_DIR}/waveintensities.ps ]
 then
 	STEP_DONE[9]=1
@@ -182,4 +182,4 @@ do
 		echo -e " ${STEP_NAME[$I]}\E[37;31m not complete "; tput sgr0
 	fi
 done
-echo -e "\n Warning: the constency of data is not beeing checked! \n"
+echo -e "\n Warning: the consistency of data is not beeing checked! \n"
