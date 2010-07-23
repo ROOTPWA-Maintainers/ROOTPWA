@@ -45,9 +45,8 @@
 #include <vector>
 #include <map>
 
-#include "boost/tuple/tuple.hpp"
-
 #include "utilities.h"
+#include "mathUtils.hpp"
 #include "factorial.hpp"
 
 
@@ -60,28 +59,6 @@ namespace rpwa {
 			
 		static dFunction& instance() { return _instance; }  ///< get singleton instance
 		
-
-		// define cache types
-		typedef boost::tuple<int, int, int> qnTupleType;
-
-		struct compareQnTuple {
-			bool operator() (const qnTupleType& lhs,
-			                 const qnTupleType& rhs) const
-			{
-				const int lhsJ = boost::get<0>(lhs);
-				const int rhsJ = boost::get<0>(rhs);
-				if (lhsJ != rhsJ)
-					return lhsJ < rhsJ;
-				const int lhsM = boost::get<1>(lhs);
-				const int rhsM = boost::get<1>(rhs);
-				if (lhsM != rhsM)
-					return lhsM < rhsM;
-				const int lhsN = boost::get<2>(lhs);
-				const int rhsN = boost::get<2>(rhs);
-				return lhsN < rhsN;
-			}
-		};
-		
 		struct cacheEntryType {
 			T                constTerm;
 			std::vector<int> kmn1;
@@ -89,12 +66,17 @@ namespace rpwa {
 			std::vector<T>   factor;
 		};
 
-
-		T operator ()(const int  j,
-		              const int  m,
-		              const int  n,
-		              const T&   theta)  ///< returns d^j_{m n}(theta)
+		T operator ()(const int j,
+		              const int m,
+		              const int n,
+		              const T&  theta)  ///< returns d^j_{m n}(theta)
 		{
+			const int maxJ = 200;
+			if (j > maxJ) {
+				printErr << "J = " << 0.5 * j << " is too large. maximum allowed j is " << 0.5 * maxJ << ". "
+				         << "aborting." << std::endl;
+				throw;
+			}
 			if ((j < 0) or (std::abs(m) > j) or (std::abs(n) > j)) {
 				printErr << "illegal argument for Wigner d^{J = " << 0.5 * j << "}"
 				         << "_{M = " << 0.5 * m << ", " << "M' = " << 0.5 * n << "}"
@@ -103,23 +85,23 @@ namespace rpwa {
 			}
 			
 			// swap spin projections for negative angle
-			qnTupleType qnTuple(j, m, n);
-			T           thetaHalf = theta / 2;
+			int _m        = m;
+			int _n        = n;
+			T   thetaHalf = theta / 2;
 			if (theta < 0) {
 				thetaHalf = std::abs(thetaHalf);
-				std::swap(boost::get<1>(qnTuple), boost::get<2>(qnTuple));
+				std::swap(_m, _n);
 			}
 
 			const T cosThetaHalf = cos(thetaHalf);
 			const T sinThetaHalf = sin(thetaHalf);
 
 			T             dFuncVal = 0;
-			cacheIterator entry    = _cache.find(qnTuple);
+			const int     cacheKey = (maxJ * j + _m) * maxJ + _n;
+			cacheIterator entry    = _cache.find(cacheKey);
 			if (entry == _cache.end()) {
 				// calculate function value and put values into cache
-				cacheEntryType& cacheEntry = _cache[qnTuple];
-				const int&      _m         = boost::get<1>(qnTuple);
-				const int&      _n         = boost::get<2>(qnTuple);
+				cacheEntryType& cacheEntry = _cache[cacheKey];
 			
 				const int jpm       = (j + _m) / 2;
 				const int jpn       = (j + _n) / 2;
@@ -185,19 +167,16 @@ namespace rpwa {
 		static dFunction _instance;  ///< singleton instance
 		static bool      _debug;     ///< if set to true, debug messages are printed
 		
-		static std::map<qnTupleType, cacheEntryType, compareQnTuple> _cache;  ///< cache for already calculated values
-		typedef typename std::map<qnTupleType, cacheEntryType,
-				compareQnTuple>::const_iterator cacheIterator;
+		static std::map<int, cacheEntryType> _cache;  ///< cache for already calculated values
+		typedef typename std::map<int, cacheEntryType>::const_iterator cacheIterator;
 		
 	};
 
 
-	template<typename T> dFunction<T>   dFunction<T>::_instance;
-	template<typename T> bool           dFunction<T>::_debug = false;
+	template<typename T> dFunction<T> dFunction<T>::_instance;
+	template<typename T> bool         dFunction<T>::_debug = false;
 	
-	template<typename T> std::map<typename dFunction<T>::qnTupleType,
-	                              typename dFunction<T>::cacheEntryType,
-	                              typename dFunction<T>::compareQnTuple> dFunction<T>::_cache;
+	template<typename T> std::map<int, typename dFunction<T>::cacheEntryType> dFunction<T>::_cache;
 
 
 }  // namespace rpwa

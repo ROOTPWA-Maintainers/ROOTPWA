@@ -51,7 +51,7 @@
 namespace rpwa {
 
 
-	// redefine some standard functions to make switching of complex data types easier
+	// redefine some standard functions to make switching of complex data type easier
 	template<typename T> inline T exp(const T& x) { return std::exp(x); }
 
 
