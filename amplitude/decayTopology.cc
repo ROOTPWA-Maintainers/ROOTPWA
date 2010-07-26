@@ -214,21 +214,19 @@ decayTopology::fsParticlesIntrinsicParity() const
 int
 decayTopology::spaceInvEigenValue() const
 {
-	const particlePtr& X = XDecayVertex()->inParticles()[0];
 	// parity of X is P = P_spatial * P_intrinsic; we want to know P_spatial
-	return X->P() / fsParticlesIntrinsicParity();
+	return XParticle()->P() / fsParticlesIntrinsicParity();
 }
 
 
 int
 decayTopology::reflectionEigenValue() const
 {
-	const particlePtr& X = XDecayVertex()->inParticles()[0];
 	// eigenvalue of reflection through production plane is r_spatial / P_intrinsic
 	// where r = -1 / refl is the reflectivity eiganvalue
-	return -1 / (X->reflectivity() * fsParticlesIntrinsicParity());
-	//return -1 / (X->reflectivity() * spaceInvEigenValue());
-	//return -1 / X->reflectivity();
+	return -1 / (XParticle()->reflectivity() * fsParticlesIntrinsicParity());
+	//return -1 / (XParticle()->reflectivity() * spaceInvEigenValue());
+	//return -1 / XParticle()->reflectivity();
 }
 
 
@@ -571,7 +569,7 @@ decayTopology::readData(const TClonesArray& prodKinParticles,
 		return false;
 	// sort decay kinematics momenta w.r.t. particle name
 	map<string, vector<const TVector3*> > fsMomenta;
-	map<string, int>                      countFsPart;  // index counter for partcles with default index
+	map<string, int>                      countFsPart;  // counter for particles
 	for (int i = 0; i < nmbFsPart; ++i) {
 		const string    name = ((TObjString*)decayKinParticles[i])->GetString().Data();
 		const TVector3* mom  = (TVector3*)decayKinMomenta[i];
@@ -691,7 +689,12 @@ decayTopology::printProdKinParticles(ostream& out) const
 	out << "production kinematics particles:" << endl;
 	for (unsigned int i = 0; i < productionVertex()->nmbInParticles(); ++i) {
 		const particlePtr& part = productionVertex()->inParticles()[i];
-		out << "    particle[" << i << "]: " << part->qnSummary() << ", "
+		out << "    incoming particle[" << i << "]: " << part->qnSummary() << ", "
+		    << "index = " << part->index() << ", p = " << part->lzVec() << " GeV" << endl;
+	}
+	for (unsigned int i = 0; i < productionVertex()->nmbOutParticles(); ++i) {
+		const particlePtr& part = productionVertex()->outParticles()[i];
+		out << "    outgoing particle[" << i << "]: " << part->qnSummary() << ", "
 		    << "index = " << part->index() << ", p = " << part->lzVec() << " GeV" << endl;
 	}
 	return out;

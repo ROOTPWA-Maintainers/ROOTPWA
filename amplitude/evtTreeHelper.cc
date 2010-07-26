@@ -118,6 +118,7 @@ namespace rpwa {
 	                const string&  prodKinMomentaLeafName,
 	                const string&  decayKinParticlesLeafName,
 	                const string&  decayKinMomentaLeafName,
+	                const string&  targetParticleName,
 	                const bool     debug)
 	{
 		if (not inEvt or not inEvt.good()) {
@@ -167,7 +168,7 @@ namespace rpwa {
 			if (debug)
 				printInfo << "# of particles = " << nmbParticles << endl;
     
-			// read production kinematics data (beam only)
+			// read production kinematics data (beam + fixed target)
 			prodKinParticles->Clear();
 			prodKinMomenta->Clear  ();
 			if (getline(inEvt, line)) {
@@ -176,8 +177,8 @@ namespace rpwa {
 				int    id = 0, charge = 0;
 				double momX = 0, momY = 0, momZ = 0, E = 0;
 				if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-					const string name = particleNameFromGeantId(id , charge);
-					new((*prodKinParticles)[0]) TObjString(name.c_str());
+					const string beamParticleName = particleNameFromGeantId(id , charge);
+					new((*prodKinParticles)[0]) TObjString(beamParticleName.c_str());
 					new((*prodKinMomenta  )[0]) TVector3  (momX, momY, momZ);
 				} else {
 					printWarn << "event " << countEvents + 1 << ": error reading beam data "
@@ -186,19 +187,21 @@ namespace rpwa {
 				}
 			} else
 				break;
-			assert(prodKinParticles->GetEntriesFast() == prodKinMomenta->GetEntriesFast());
-			const unsigned int nmbProdKinPart = prodKinParticles->GetEntriesFast();
+			new((*prodKinParticles)[1]) TObjString(targetParticleName.c_str());
+			new((*prodKinMomenta  )[1]) TVector3  (0, 0, 0);
+			const int nmbProdKinPart = prodKinParticles->GetEntriesFast();
+			assert((nmbProdKinPart > 0) and (nmbProdKinPart == prodKinMomenta->GetEntriesFast()));
 			if (debug) {
 				printInfo << nmbProdKinPart << " production kinematics particles:" << endl;
-				for (unsigned int i = 0; i < nmbProdKinPart; ++i)
+				for (int i = 0; i < nmbProdKinPart; ++i)
 					cout << "        particle[" << i << "]: "
 					     << ((TObjString*)(*prodKinParticles)[i])->GetString() << "; "
 					     << *((TVector3*)(*prodKinMomenta)[i]) << endl;
 			}
 
 			// read decay kinematics data
-			decayKinParticles->Clear  ();
-			decayKinMomenta->Clear();
+			decayKinParticles->Clear();
+			decayKinMomenta->Clear  ();
 			for (int i = 0; i < nmbParticles - 1; ++i) {
 				if (getline(inEvt, line)) {
 					++countLines;
@@ -217,14 +220,14 @@ namespace rpwa {
 				} else
 					break;
 			}
-			assert(decayKinParticles->GetEntriesFast() == decayKinMomenta->GetEntriesFast());
-			const unsigned int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
+			const int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
+			assert((nmbDecayKinPart > 0) and (nmbDecayKinPart == decayKinMomenta->GetEntriesFast()));
 			if (debug) {
 				printInfo << nmbDecayKinPart << " decay kinematics particles:" << endl;
-				for (unsigned int i = 0; i < nmbDecayKinPart; ++i)
+				for (int i = 0; i < nmbDecayKinPart; ++i)
 					cout << "        particle[" << i << "]: "
 					     << ((TObjString*)(*decayKinParticles)[i])->GetString() << "; "
-					     << *((TVector3*)(*decayKinMomenta)[i]) << endl;
+					     << *((TVector3*) (*decayKinMomenta)  [i]) << endl;
 			}
 
 			outTree.Fill();
@@ -234,7 +237,8 @@ namespace rpwa {
 		}
 
 		printInfo << "read " << countLines << " lines from input stream and wrote "
-		          << countEvents << " events to tree '" << outTree.GetName() << "'" << endl;
+		          << countEvents << " events to tree '" << outTree.GetName() << "' "
+		          << "assuming fixed " << targetParticleName << " target" << endl;
 		return success;
 	}
 
@@ -287,13 +291,20 @@ namespace rpwa {
 			const int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
 			assert(nmbProdKinPart  == prodKinMomenta->GetEntriesFast ());
 			assert(nmbDecayKinPart == decayKinMomenta->GetEntriesFast());
+			if (nmbProdKinPart < 1) {
+				printWarn << "arrays for production kinematics particles do not have any entries. "
+				          << "at least entry for beam (index 0) is required. skipping event." << endl;
+				continue;
+			}
 
-			outEvt << nmbProdKinPart + nmbDecayKinPart << endl;
+			// write total number of particles
+			outEvt << 1 + nmbDecayKinPart << endl;  // PWA2000 supports only beam in production kinematics
 
+			// write production kinematics (beam only)
 			if (debug)
 				printInfo << "event[" << eventIndex << "]: " << nmbProdKinPart
 				          << " production kinematics particles:" << endl;
-			for (int i = 0; i < nmbProdKinPart; ++i) {
+			for (int i = 0; i < 1; ++i) {  // only beam
 				assert((*prodKinParticles)[i]);
 				assert((*prodKinMomenta  )[i]);
 				const string   name = ((TObjString*)(*prodKinParticles)[i])->GetString().Data();
@@ -310,6 +321,7 @@ namespace rpwa {
 				}
 			}
 
+			// write decay kinematics
 			if (debug)
 				printInfo << "event[" << eventIndex << "]: " << nmbDecayKinPart
 				          << " decay kinematics particles:" << endl;

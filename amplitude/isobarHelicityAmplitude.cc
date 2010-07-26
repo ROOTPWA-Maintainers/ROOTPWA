@@ -176,8 +176,8 @@ isobarHelicityAmplitude::spaceInvertDecay() const
   if (_debug)
     printInfo << "space inverting final state momenta." << endl;
   // transform final state particles into X rest frame
-  const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->parent()->lzVec();
+  const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
+  const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   _decay->transformFsParticles(gjTrans);
   // perform parity transformation on final state particles in X rest frame
@@ -197,8 +197,8 @@ isobarHelicityAmplitude::reflectDecay() const
   if (_debug)
     printInfo << "reflecting final state momenta through production plane." << endl;
   // transform final state particles into X rest frame
-  const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->parent()->lzVec();
+  const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
+  const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   _decay->transformFsParticles(gjTrans);
   // reflect final state particles through production plane
@@ -231,11 +231,8 @@ isobarHelicityAmplitude::transformDaughters() const
   // calculate Lorentz-transformations into the correct frames for the
   // daughters in the decay vertices
   // 1) transform daughters of all decay vertices into Gottfried-Jackson frame
-  //!!! this assumes that beam particle is first incoming particle in production vertex
-  //    this should be solved in a more general way so that the production vertex is asked
-  //    for the beam
-  const TLorentzVector&  beamLv  = _decay->productionVertex  ()->inParticles()[0]->lzVec();
-  const TLorentzVector&  XLv     = _decay->XIsobarDecayVertex()->parent()->lzVec();
+  const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
+  const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
   const TLorentzRotation gjTrans = gjTransform(beamLv, XLv);
   for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
     const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];

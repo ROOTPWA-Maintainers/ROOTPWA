@@ -441,7 +441,7 @@ isobarDecayTopology::calcIsobarCharges()
 		_isobarVertices[i]->calcParentCharge();
 	}
 	// update graph name
-	name() = "\"" + productionVertex()->outParticles()[0]->qnSummary() + "\"";
+	name() = "\"" + XParticle()->qnSummary() + "\"";
 }
 
 

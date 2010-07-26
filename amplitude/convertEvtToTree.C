@@ -58,53 +58,55 @@ using namespace rpwa;
 
 bool
 convertEvtToTree(//const string&  evtFileName               = "1500.1540.3pi.evt",
-		 const string&  evtFileName               = "1720.1840.5pi.evt",
-		 const string&  outFileName               = "testEvents.root",
-		 //const string&  evtFileName               = "testTree.evt",
-		 //const string&  outFileName               = "testEvents2.root",
-		 const long int maxNmbEvents              = -1,
-		 const string&  outTreeName               = "rootPwaEvtTree",
-		 const string&  prodKinParticlesLeafName  = "prodKinParticles",
-		 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
-		 const string&  decayKinParticlesLeafName = "decayKinParticles",
-		 const string&  decayKinMomentaLeafName   = "decayKinMomenta",
-		 const bool     debug                     = false)
+                 const string&  evtFileName               = "1720.1840.5pi.evt",
+                 const string&  outFileName               = "testEvents.root",
+                 //const string&  evtFileName               = "testTree.evt",
+                 //const string&  outFileName               = "testEvents2.root",
+                 const long int maxNmbEvents              = -1,
+                 const string&  outTreeName               = "rootPwaEvtTree",
+                 const string&  prodKinParticlesLeafName  = "prodKinParticles",
+                 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
+                 const string&  decayKinParticlesLeafName = "decayKinParticles",
+                 const string&  decayKinMomentaLeafName   = "decayKinMomenta",
+                 const string&  targetParticleName        = "p+",
+                 const bool     debug                     = false)
 {
-  // open input file
-  printInfo << "opening input file '" << evtFileName << "'" << endl;
-  ifstream evtFile(evtFileName.c_str());
-  if (!evtFile || !evtFile.good()) {
-    printWarn << "cannot open input file '" << evtFileName << "'" << endl;
-    return false;
-  }
+	// open input file
+	printInfo << "opening input file '" << evtFileName << "'" << endl;
+	ifstream evtFile(evtFileName.c_str());
+	if (not evtFile or not evtFile.good()) {
+		printWarn << "cannot open input file '" << evtFileName << "'" << endl;
+		return false;
+	}
 
-  // create output file
-  printInfo << "creating output file '" << outFileName << "'" << endl;
-  TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
-  if (!outFile) {
-    printErr << "cannot open output file '" << outFileName << "'" << endl;
-    return false;
-  }
+	// create output file
+	printInfo << "creating output file '" << outFileName << "'" << endl;
+	TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
+	if (not outFile) {
+		printErr << "cannot open output file '" << outFileName << "'" << endl;
+		return false;
+	}
 
-  // create tree
-  TTree* tree = new TTree(outTreeName.c_str(), outTreeName.c_str());
-  if (!tree) {
-    printErr << "problems creating tree '" << outTreeName << "' "
-	     << "in file '" << outFileName << "'" << endl;
-    return false;
-  }
+	// create tree
+	TTree* tree = new TTree(outTreeName.c_str(), outTreeName.c_str());
+	if (not tree) {
+		printErr << "problems creating tree '" << outTreeName << "' "
+		         << "in file '" << outFileName << "'" << endl;
+		return false;
+	}
 
-  // doit
-  const bool success = fillTreeFromEvt(evtFile, *tree, maxNmbEvents,
-				       prodKinParticlesLeafName,  prodKinMomentaLeafName,
-				       decayKinParticlesLeafName, decayKinMomentaLeafName, debug);
-  tree->Write();
-  tree->OptimizeBaskets(10000000, 1.1, "d");
+	// doit
+	const bool success = fillTreeFromEvt(evtFile, *tree, maxNmbEvents,
+	                                     prodKinParticlesLeafName,  prodKinMomentaLeafName,
+	                                     decayKinParticlesLeafName, decayKinMomentaLeafName,
+	                                     targetParticleName, debug);
+	tree->Write();
+	tree->OptimizeBaskets(10000000, 1.1, "d");
 
-  outFile->Close();
-  if (success)
-    printInfo << "wrote events to file '" << outFileName << "'" << endl;
-  else
-    printWarn << "problems processing events" << endl;
-  return success;
+	outFile->Close();
+	if (success)
+		printInfo << "wrote events to file '" << outFileName << "'" << endl;
+	else
+		printWarn << "problems processing events" << endl;
+	return success;
 }

@@ -69,12 +69,13 @@ usage(const string& progName,
 	     << progName
 	     << " -d test data [-n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
 	     << "    where:" << endl
-	     << "        -d file    path to file with test data (.evt or ROOT format)" << endl
+	     << "        -d file    path to file with test data (.evt or .root format)" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
 	     << "        -e #       maximum deviation of amplitude ratios from 1 (default: 1E-6)" << endl
 	     << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	     << "        -r         target particle name for .evt files (default: 'p+')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -271,19 +272,20 @@ main(int    argc,
 	printSvnVersion();
 
 	// parse command line options
-	const string progName     = argv[0];
-	string       dataFileName = "";
-	long int     maxNmbEvents = -1;
-	string       pdgFileName  = "./particleDataTable.txt";
-	string       inTreeName   = "rootPwaEvtTree";
-	double       maxDelta     = 1e-6;
-	string       leafNames    = "prodKinParticles;prodKinMomenta;"
-		"decayKinParticles;decayKinMomenta";
-	bool         debug        = false;
+	const string progName           = argv[0];
+	string       dataFileName       = "";
+	long int     maxNmbEvents       = -1;
+	string       pdgFileName        = "./particleDataTable.txt";
+	string       inTreeName         = "rootPwaEvtTree";
+	double       maxDelta           = 1e-6;
+	string       leafNames          = "prodKinParticles;prodKinMomenta;"
+		                                "decayKinParticles;decayKinMomenta";
+	string       targetParticleName = "p+";
+	bool         debug              = false;
 	extern char* optarg;
 	extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "d:n:p:t:e:l:vh")) != -1)
+	while ((c = getopt(argc, argv, "d:n:p:t:e:l:r:vh")) != -1)
 		switch (c) {
 		case 'd':
 			dataFileName = optarg;
@@ -302,6 +304,9 @@ main(int    argc,
 			break;
 		case 'l':
 			leafNames = optarg;
+			break;
+		case 'r':
+			targetParticleName = optarg;
 			break;
 		case 'v':
 			debug = true;
@@ -374,7 +379,8 @@ main(int    argc,
 		}
 		if (not fillTreeFromEvt(evtFile, *tree, -1,
 		                        prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		                        decayKinParticlesLeafName, decayKinMomentaLeafName, debug)) {
+		                        decayKinParticlesLeafName, decayKinMomentaLeafName,
+		                        targetParticleName, debug)) {
 			printErr << "problems creating tree from .evt input file '" << dataFileName << "' "
 			         << "aborting." << endl;
 			exit(1);

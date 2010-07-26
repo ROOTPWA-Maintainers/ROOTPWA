@@ -77,9 +77,9 @@ namespace rpwa {
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; all outgoing particles have to be specified at construction
 
 		// production specific accessors
-		virtual TVector3             zAxis    ()     const { return beam()->lzVec().Vect().Unit(); }  ///< returns z-axis defined by production process
-		virtual const particlePtr&   XParticle()     const { return outParticles()[0];             }  ///< returns X particle
-		virtual std::complex<double> productionAmp() const;                                           ///< returns production amplitude
+		virtual const TLorentzVector& referenceLzVec() const { return beam()->lzVec();   }  ///< returns Lorentz-vector that defines z-axis for angular distributions
+		virtual const particlePtr&    XParticle     () const { return outParticles()[0]; }  ///< returns X particle
+		virtual std::complex<double>  productionAmp () const;                                           ///< returns production amplitude
 
 		// diffractive dissociation specific accessors
 		inline const particlePtr& beam  () const { return inParticles ()[0]; }  ///< returns beam particle

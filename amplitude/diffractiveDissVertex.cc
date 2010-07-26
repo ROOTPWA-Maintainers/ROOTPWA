@@ -157,9 +157,11 @@ bool
 diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
                                 const TClonesArray& prodKinMomenta)
 {
-	_beamMomCache = TVector3();
-	// check inital state data
-	bool success = true;
+	_beamMomCache   = TVector3();
+	_targetMomCache = TVector3();
+	_recoilMomCache = TVector3();
+	// check production vertex data
+	bool         success       = true;
 	const string partClassName = prodKinParticles.GetClass()->GetName();
 	if (partClassName != "TObjString") {
 		printWarn << "production kinematics particle names are of type " << partClassName
@@ -172,26 +174,62 @@ diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
 		          << " and not TVector3. cannot read production kinematics." << endl;
 		success = false;
 	}
-	if (prodKinParticles.GetEntriesFast() != prodKinMomenta.GetEntriesFast()) {
+	const int nmbEntries = prodKinParticles.GetEntriesFast();
+	if (nmbEntries != prodKinMomenta.GetEntriesFast()) {
 		printWarn << "arrays of production kinematics particles and momenta have different sizes: "
-		          << prodKinParticles.GetEntriesFast() << " vs. "
-		          << prodKinMomenta.GetEntriesFast  () << endl;
+		          << nmbEntries << " vs. " << prodKinMomenta.GetEntriesFast  () << endl;
+		success = false;
+	}
+	if (nmbEntries < 2) {
+		printWarn << "arrays of production kinematics particles and momenta have " << nmbEntries
+		          << " entry/ies. need at least beam (index 0) and target (index 1); "
+		          << "recoil (index 2) is optional." << endl;
 		success = false;
 	}
 	if (not success)
 		return false;
-	// set inital state
-	const string partName = ((TObjString*)prodKinParticles[0])->GetString().Data();
-	if (partName != beam()->name()) {
-		printWarn << "cannot find entry for beam particle '" << beam()->name() << "' in data." << endl;
-		return false;
+	// set beam
+	const string beamName = ((TObjString*)prodKinParticles[0])->GetString().Data();
+	if (beamName != beam()->name()) {
+		printWarn << "cannot find entry for beam particle '" << beam()->name() << "' "
+		          << "at index 0 in data." << endl;
+		success = false;
+	} else {
+		if (_debug)
+			printInfo << "setting momentum of beam particle " << beamName
+			          << " to " << *((TVector3*)prodKinMomenta[0]) << " GeV" << endl;
+		beam()->setMomentum(*((TVector3*)prodKinMomenta[0]));
+		_beamMomCache = beam()->lzVec().Vect();
 	}
-	if (_debug)
-		printInfo << "setting momentum of beam particle " << partName
-		          << " to " << *((TVector3*)prodKinMomenta[0]) << " GeV" << endl;
-	beam()->setMomentum(*((TVector3*)prodKinMomenta[0]));
-	_beamMomCache = beam()->lzVec().Vect();
-	return true;
+	// set target
+	const string targetName = ((TObjString*)prodKinParticles[1])->GetString().Data();
+	if (targetName != target()->name()) {
+		printWarn << "cannot find entry for target particle '" << target()->name() << "' "
+		          << "at index 1 in data." << endl;
+		success = false;
+	} else {
+		if (_debug)
+			printInfo << "setting momentum of target particle " << targetName
+			          << " to " << *((TVector3*)prodKinMomenta[1]) << " GeV" << endl;
+		target()->setMomentum(*((TVector3*)prodKinMomenta[1]));
+		_targetMomCache = target()->lzVec().Vect();
+	}
+	// set recoil (optional)
+	if (nmbEntries >= 3) {
+		const string recoilName = ((TObjString*)prodKinParticles[2])->GetString().Data();
+		if (recoilName != recoil()->name()) {
+			printWarn << "cannot find entry for recoil particle '" << target()->name() << "' "
+			          << "at index 2 in data." << endl;
+			success = false;
+		} else {
+			if (_debug)
+				printInfo << "setting momentum of recoil particle " << recoilName
+				          << " to " << *((TVector3*)prodKinMomenta[2]) << " GeV" << endl;
+			recoil()->setMomentum(*((TVector3*)prodKinMomenta[2]));
+			_recoilMomCache = recoil()->lzVec().Vect();
+		}
+	}
+	return success;
 }
 
 
@@ -227,7 +265,7 @@ diffractiveDissVertex::dump(ostream& out) const
 	out << label() << ": " << endl
 	    << "    beam ..... " << *beam()      << endl
 	    << "    target ... " << *target()    << endl
-	    << "     X........ " << *XParticle() << endl
+	    << "    X ........ " << *XParticle() << endl
 	    << "    recoil ... " << *recoil()    << endl;
 	return out;
 }
@@ -237,9 +275,9 @@ ostream&
 diffractiveDissVertex::printPointers(ostream& out) const
 {
 	out << label() << " " << this << ": "
-	    << "beam particle: "   << beam()      << "; "
-	    << "target particle: " << target()    << "; "
-	    << "X particle: "      << XParticle() << "; "
-	    << "recoil particle: " << recoil()    << endl;
+	    << "beam particle   = " << beam()      << "; "
+	    << "target particle = " << target()    << "; "
+	    << "X particle      = " << XParticle() << "; "
+	    << "recoil particle = " << recoil()    << endl;
 	return out;
 }

@@ -68,7 +68,7 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -k key file [-n max. # of events -p PDG file -o output file -a -t tree name -l leaf names -v -h] input data file(s)" << endl
+	     << " -k key file [-n max. # of events -p PDG file -o output file -a -t tree name -l leaf names -r target particle name -v -h] input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
 	     << "        -k file    path to key file" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
@@ -77,6 +77,7 @@ usage(const string& progName,
 	     << "        -a         write amplitudes in ASCII format (default: binary)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
 	     << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	     << "        -r         target particle name for .evt files (default: 'p+')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -92,19 +93,21 @@ main(int    argc,
 	printSvnVersion();
 	
 	// parse command line options
-	const string progName    = argv[0];
-	string       keyFileName = "";
-	long int     maxNmbEvents = -1;
-	string       pdgFileName = "./particleDataTable.txt";
-	string       ampFileName = "./out.amp";
-	bool         asciiOutput = false;
-	string       inTreeName  = "rootPwaEvtTree";
-	string       leafNames   = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
-	bool         debug       = false;
+	const string progName           = argv[0];
+	string       keyFileName        = "";
+	long int     maxNmbEvents       = -1;
+	string       pdgFileName        = "./particleDataTable.txt";
+	string       ampFileName        = "./out.amp";
+	bool         asciiOutput        = false;
+	string       inTreeName         = "rootPwaEvtTree";
+	string       leafNames          = "prodKinParticles;prodKinMomenta;"
+		                                "decayKinParticles;decayKinMomenta";
+	string       targetParticleName = "p+";
+	bool         debug              = false;
 	extern char* optarg;
 	extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "k:n:p:o:at:l:vh")) != -1)
+	while ((c = getopt(argc, argv, "k:n:p:o:at:l:r:vh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -126,6 +129,9 @@ main(int    argc,
 			break;
 		case 'l':
 			leafNames = optarg;
+			break;
+		case 'r':
+			targetParticleName = optarg;
 			break;
 		case 'v':
 			debug = true;
@@ -204,7 +210,8 @@ main(int    argc,
 		}
 		if (fillTreeFromEvt(evtFile, *tree, -1,
 		                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		                    decayKinParticlesLeafName, decayKinMomentaLeafName, debug))
+		                    decayKinParticlesLeafName, decayKinMomentaLeafName,
+		                    targetParticleName, debug))
 			trees.push_back(tree);
 		else {
 			printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "

@@ -72,6 +72,7 @@ namespace rpwa {
 	                     const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
 	                     const std::string& decayKinParticlesLeafName = "decayKinParticles",
 	                     const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
+	                     const std::string& targetParticleName        = "p+",
 	                     const bool         debug                     = false);
   
 

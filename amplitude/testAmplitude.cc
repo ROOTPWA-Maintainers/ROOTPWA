@@ -252,10 +252,10 @@ main(int argc, char** argv)
     //const string   newKeyFileName = "test2.key";
     const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
     const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
-    // const string   rootInFileName = "2340.2380.1358.root";
-    // const string   evtInFileName  = "2340.2380.1358.evt";
-    const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.root";
-    const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.evt";
+    const string   rootInFileName = "2340.2380.root";
+    const string   evtInFileName  = "2340.2380.evt";
+    // const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.root";
+    // const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.evt";
 
     keyFileParser&         parser = keyFileParser::instance();
     isobarDecayTopologyPtr topo;
