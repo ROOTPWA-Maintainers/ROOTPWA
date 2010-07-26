@@ -78,9 +78,9 @@ namespace rpwa {
 		              const int n,
 		              const T&  theta)  ///< returns d^j_{m n}(theta)
 		{
-			if (j > (int)_maxJ) {
-				printErr << "J = " << 0.5 * j << " is too large. maximum allowed j is " << _maxJ * 0.5 << ". "
-				         << "aborting." << std::endl;
+			if (j >= (int)_maxJ) {
+				printErr << "J = " << 0.5 * j << " is too large. maximum allowed J is "
+				         << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
 				throw;
 			}
 			if ((j < 0) or (std::abs(m) > j) or (std::abs(n) > j)) {
@@ -178,7 +178,7 @@ namespace rpwa {
 		static bool      _debug;     ///< if set to true, debug messages are printed
 		static bool      _useCache;  ///< if set to true, cache is used
 
-		static const unsigned int _maxJ = 40;                           ///< 2 * maximum allowed angular momentum
+		static const unsigned int _maxJ = 41;                           ///< 2 * maximum allowed angular momentum + 1
 		static cacheEntryType     _cache[_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values [j][m][m']
 		
 	};
@@ -262,11 +262,15 @@ namespace rpwa {
                 << "returning 0." << std::endl;
       return 0;
     }
-    const T        preFactor  = (m == 0 ? 0.5 : 1 / std::sqrt(2));
-    const T        reflFactor = refl * P * powMinusOne((j - m) / 2);
-    const complexT DFuncVal
-	    = preFactor * (                DFunction<complexT>(j,  m, n, alpha, beta, gamma)
-	                    - reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma));
+    complexT  DFuncVal;
+    const int reflFactor = refl * P * powMinusOne((j - m) / 2);
+    if (m == 0)
+	    DFuncVal = (reflFactor == +1) ? complexT(0) : DFunction<complexT>(j, 0, n, alpha, beta, gamma);
+    else {
+	    DFuncVal = 1 / std::sqrt((T)2)
+		             * (                   DFunction<complexT>(j,  m, n, alpha, beta, gamma)
+		                 - (T)reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma));
+    }
     if (debug)
       printInfo << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
                 << "refl = " << sign(refl) << "}" << "_{M = " << 0.5 * m << ", "
