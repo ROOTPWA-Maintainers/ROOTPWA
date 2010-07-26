@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      optimized Wigner d-function d^J_{M M'} with caching
+//      optimized Wigner d-function d^j_{m n} with caching
 //     	based on PWA2000 function d_jmn_b() in pputil.cc
 //
 //
@@ -78,8 +78,8 @@ namespace rpwa {
 		              const int n,
 		              const T&  theta)  ///< returns d^j_{m n}(theta)
 		{
-			if (j > 2 * (int)_maxJ) {
-				printErr << "J = " << 0.5 * j << " is too large. maximum allowed j is " << _maxJ << ". "
+			if (j > (int)_maxJ) {
+				printErr << "J = " << 0.5 * j << " is too large. maximum allowed j is " << _maxJ * 0.5 << ". "
 				         << "aborting." << std::endl;
 				throw;
 			}
@@ -178,8 +178,8 @@ namespace rpwa {
 		static bool      _debug;     ///< if set to true, debug messages are printed
 		static bool      _useCache;  ///< if set to true, cache is used
 
-		static const unsigned int _maxJ = 20;  // maximum allowed angular momentum
-		static cacheEntryType     _cache[_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values
+		static const unsigned int _maxJ = 40;                           ///< 2 * maximum allowed angular momentum
+		static cacheEntryType     _cache[_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values [j][m][m']
 		
 	};
 
@@ -192,21 +192,20 @@ namespace rpwa {
 	  dFunction<T>::_cache[_maxJ][2 * _maxJ][2 * _maxJ];
 
 
-	// Wigner D-function D^J_{M M'}(alpha, beta, gamma)
-	template<typename complexT, typename scalarT>
+	template<typename complexT, typename T>
 	inline
 	complexT
-	DFunction(const int      j,
-	          const int      m,
-	          const int      n,
-	          const scalarT& alpha,
-	          const scalarT& beta,
-	          const scalarT& gamma = 0,
-	          const bool     debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	DFunction(const int  j,
+	          const int  m,
+	          const int  n,
+	          const T&   alpha,
+	          const T&   beta,
+	          const T&   gamma = T(0),
+	          const bool debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
 	{
-		const scalarT  arg      = ((scalarT)m / 2) * alpha + ((scalarT)n / 2) * gamma;
+		const T        arg      = ((T)m / 2) * alpha + ((T)n / 2) * gamma;
 		const complexT DFuncVal =   rpwa::exp(complexT(0, -arg))
-			                        * dFunction<scalarT>::instance()(j, m, n, beta);
+			                        * dFunction<T>::instance()(j, m, n, beta);
 		if (debug)
 			printInfo << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
 			          << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
@@ -215,6 +214,92 @@ namespace rpwa {
 	}
 
 
+	template<typename complexT, typename T>
+	inline
+	complexT
+	DFunctionConj(const int  j,
+	              const int  m,
+	              const int  n,
+	              const T&   alpha,
+	              const T&   beta,
+	              const T&   gamma = T(0),
+	              const bool debug = false)  ///< complex conjugate of Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	{
+		const complexT DFuncVal = conj(DFunction<complexT>(j, m, n, alpha, beta, gamma, false));
+    if (debug)
+      printInfo << "Wigner D^{J = " << 0.5 * j << " *}" << "_{M = " << 0.5 * m << ", "
+                << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
+                << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+		return DFuncVal;
+	}
+
+
+	template<typename complexT, typename T>
+  inline
+  complexT
+  DFunctionRefl(const int  j,
+                const int  m,
+                const int  n,
+                const int  P,
+                const int  refl,
+	              const T&   alpha,
+	              const T&   beta,
+	              const T&   gamma = T(0),
+                const bool debug = false)  ///< Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
+  {
+    if (m < 0) {
+      printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
+                << "returning 0." << std::endl;
+      return 0;
+    }
+    if (std::abs(refl) != 1) {
+      printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
+                << "returning 0." << std::endl;
+      return 0;
+    }
+    if (std::abs(P) != 1) {
+      printWarn << "parity value P = " << P << " != +-1 is not allowed. "
+                << "returning 0." << std::endl;
+      return 0;
+    }
+    const T        preFactor  = (m == 0 ? 0.5 : 1 / std::sqrt(2));
+    const T        reflFactor = refl * P * powMinusOne((j - m) / 2);
+    const complexT DFuncVal
+	    = preFactor * (                DFunction<complexT>(j,  m, n, alpha, beta, gamma)
+	                    - reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma));
+    if (debug)
+      printInfo << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
+                << "refl = " << sign(refl) << "}" << "_{M = " << 0.5 * m << ", "
+                << "M' = " << 0.5 * n << "}(alpha = " << alpha << ", " << "beta = " << beta << ", "
+                << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+    return DFuncVal;
+  }
+
+  
+	template<typename complexT, typename T>
+  inline
+  complexT
+  DFunctionReflConj(const int  j,
+                    const int  m,
+                    const int  n,
+                    const int  P,
+                    const int  refl,
+                    const T&   alpha,
+                    const T&   beta,
+                    const T&   gamma = T(0),
+                    const bool debug = false)  ///< complex conjugate of Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
+  {
+	  const complexT DFuncVal = conj(DFunctionRefl<complexT>(j, m, n, P, refl,
+	                                                         alpha, beta, gamma, false));
+    if (debug)
+      printInfo << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
+                << "refl = " << sign(refl) << " *}" << "_{M = " << 0.5 * m << ", "
+                << "M' = " << 0.5 * n << "}(alpha = " << alpha << ", " << "beta = " << beta << ", "
+                << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+    return DFuncVal;
+  }
+
+  
 }  // namespace rpwa
 
 

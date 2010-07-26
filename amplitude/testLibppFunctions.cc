@@ -115,7 +115,7 @@ main(int argc, char** argv)
 	}	
 
 
-	if (1) {
+	if (0) {
 		printInfo << "testing Wigner d-function" << endl;
 
 		const unsigned int nmbAngles = 50000;
@@ -220,7 +220,10 @@ main(int argc, char** argv)
 		    for (int n = -j; n <= j; ++n)
 			    for (unsigned int i = 0; i < angles.size(); ++i) {
 				    const TVector3& a = angles[i];
-				    newVals[valIndex] = DFunction<complex<double> >(2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
+				    // newVals[valIndex] = DFunction<complex<double> >
+					  //                       (2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
+				    newVals[valIndex] = DFunctionConj<complex<double> >
+					                        (2 * j, 2 * m, 2 * n, a.X(), a.Y(), a.Z());
 				    ++valIndex;
 			    }
     timer.Stop();
@@ -238,7 +241,8 @@ main(int argc, char** argv)
 		    for (int n = -j; n <= j; ++n)
 			    for (unsigned int i = 0; i < angles.size(); ++i) {
 				    const TVector3& a = angles[i];
-				    oldVals[valIndex] = D(a.X(), a.Y(), a.Z(), 2 * j, 2 * m, 2 * n);
+				    // oldVals[valIndex] = D(a.X(), a.Y(), a.Z(), 2 * j, 2 * m, 2 * n);
+				    oldVals[valIndex] = conj(D(a.X(), a.Y(), a.Z(), 2 * j, 2 * m, 2 * n));
 				    ++valIndex;
 			    }
     timer.Stop();
@@ -255,5 +259,91 @@ main(int argc, char** argv)
     }
     printInfo << "maximum deviation is " << maxDeviation << endl;
 	}
-	
+
+
+	if (1) {
+		printInfo << "testing Wigner D-function in reflectivity basis" << endl;
+
+		const unsigned int nmbAngles = 10000;
+		const int          maxJ      = 7;  // for larger values libpp implementation gives wrong results
+
+		vector<TVector3> angles(nmbAngles);
+		TRandom3         random(1234567890);
+		for (unsigned int i = 0; i < nmbAngles; ++i) {
+			angles[i].SetX(random.Uniform(-pi,     +pi    ));
+			angles[i].SetY(random.Uniform(-piHalf, +piHalf));
+			angles[i].SetZ(random.Uniform(-pi,     +pi    ));
+		}
+		
+    // determine size of data array
+    unsigned int nmbVals = 0;
+    for (int j = 0; j < maxJ; ++j)
+	    for (int m = 0; m <= j; ++m)
+		    for (int n = -j; n <= j; ++n)
+			    for (int P = -1; P <= 1; P += 2)
+				    for (int refl = -1; refl <= 1; refl += 2)
+					    for (unsigned int i = 0; i < angles.size(); ++i)
+						    ++nmbVals;
+
+    // compute mathUtils values
+    TStopwatch timer;
+    timer.Reset();
+    timer.Start();
+    unsigned int             valIndex = 0;
+    vector<complex<double> > newVals(nmbVals, 0);
+    for (int j = 0; j < maxJ; ++j)
+	    for (int m = 0; m <= j; ++m)
+		    for (int n = -j; n <= j; ++n)
+			    for (int P = -1; P <= 1; P += 2)
+				    for (int refl = -1; refl <= 1; refl += 2)
+					    for (unsigned int i = 0; i < angles.size(); ++i) {
+						    const TVector3& a = angles[i];
+						    // newVals[valIndex] = DFunctionRefl<complex<double> >
+						    //                       (2 * j, 2 * m, 2 * n, P, refl, a.X(), a.Y(), a.Z());
+						    newVals[valIndex] = DFunctionReflConj<complex<double> >
+							                        (2 * j, 2 * m, 2 * n, P, refl, a.X(), a.Y(), a.Z());
+						    ++valIndex;
+					    }
+    timer.Stop();
+    printInfo << "calculated mathUtil D-Functions for " << newVals.size() << " angles" << endl
+		          << "    this consumed: ";
+    timer.Print();
+
+    // compute libpp values
+    timer.Reset();
+    timer.Start();
+    valIndex = 0;
+    vector<complex<double> > oldVals(nmbVals, 0);
+    for (int j = 0; j < maxJ; ++j)
+	    for (int m = 0; m <= j; ++m)
+		    for (int n = -j; n <= j; ++n)
+			    for (int P = -1; P <= 1; P += 2)
+				    for (int refl = -1; refl <= 1; refl += 2)
+					    for (unsigned int i = 0; i < angles.size(); ++i) {
+						    const TVector3& a          = angles[i];
+						    const int       _j         = 2 * j;
+						    const int       _m         = 2 * m;
+						    const int       _n         = 2 * n;
+						    const double    preFactor  = (_m == 0 ? 0.5 : 1 / sqrt(2));
+						    const double    reflFactor = (double)refl * (double)P * pow(-1, 0.5 * (_j - _m));
+						    oldVals[valIndex] = preFactor * (                D(a.X(), a.Y(), a.Z(), _j,  _m, _n)
+						                                      - reflFactor * D(a.X(), a.Y(), a.Z(), _j, -_m, _n));
+						    oldVals[valIndex] = conj(oldVals[valIndex]);
+						    ++valIndex;
+					    }
+    timer.Stop();
+    printInfo << "calculated libpp D-Functions for " << oldVals.size() << " angles" << endl
+		          << "    this consumed: ";
+    timer.Print();
+
+    // check values
+    complex<double> maxDeviation = 0;
+    for (unsigned int i = 0; i < nmbVals; ++i) {
+	    const complex<double> delta = oldVals[i] - newVals[i];
+	    if (abs(delta) > abs(maxDeviation))
+		    maxDeviation = abs(delta);
+    }
+    printInfo << "maximum deviation is " << maxDeviation << endl;
+	}
+
 }
