@@ -127,7 +127,7 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	  _sP      (1, 2),
 	  _vesSheet(0)
 {
-	double f[2] = {0.1968, -0.0154};
+	const double f[2] = {0.1968, -0.0154};
 
 	_a[0](0, 0) =  0.1131;
 	_a[0](0, 1) =  0.0150;

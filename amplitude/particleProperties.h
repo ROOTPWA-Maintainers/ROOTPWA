@@ -84,18 +84,19 @@ namespace rpwa {
     
 
     
-		virtual std::string name() const { return _name; }  ///< returns particle name of the corresponding data table entry
-		double      mass()        const { return _mass;        }  ///< returns particle mass
-		double      width()       const { return _width;       }  ///< returns particle width
-		int         baryonNmb()   const { return _baryonNmb;   }  ///< returns particle's baryon number
-		int         isospin()     const { return _isospin;     }  ///< returns particle's isospin * 2 (!!!)
-		int         strangeness() const { return _strangeness; }  ///< returns particle's strangeness
-		int         charm()       const { return _charm;       }  ///< returns particle's charm
-		int         beauty()      const { return _beauty;      }  ///< returns particle's beauty
-		int         G()           const { return _G;           }  ///< returns particle's G-parity
-		int         J()           const { return _J;           }  ///< returns particle's spin * 2 (!!!)
-		int         P()           const { return _P;           }  ///< returns particle's parity
-		int         C()           const { return _C;           }  ///< returns particle's C-parity
+		virtual std::string name()        const { return _name;         }  ///< returns particle name of the corresponding data table entry
+		double              mass()        const { return _mass;         }  ///< returns particle mass
+		double              mass2()       const { return _mass * _mass; }  ///< returns particle mass squared
+		double              width()       const { return _width;        }  ///< returns particle width
+		int                 baryonNmb()   const { return _baryonNmb;    }  ///< returns particle's baryon number
+		int                 isospin()     const { return _isospin;      }  ///< returns particle's isospin * 2 (!!!)
+		int                 strangeness() const { return _strangeness;  }  ///< returns particle's strangeness
+		int                 charm()       const { return _charm;        }  ///< returns particle's charm
+		int                 beauty()      const { return _beauty;       }  ///< returns particle's beauty
+		int                 G()           const { return _G;            }  ///< returns particle's G-parity
+		int                 J()           const { return _J;            }  ///< returns particle's spin * 2 (!!!)
+		int                 P()           const { return _P;            }  ///< returns particle's parity
+		int                 C()           const { return _C;            }  ///< returns particle's C-parity
 
 		bool fillFromDataTable(const std::string& name);
 

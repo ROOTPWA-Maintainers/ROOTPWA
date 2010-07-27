@@ -26,9 +26,10 @@
 //
 // Description:
 //      class that describes production vertex in diffractive dissociation
-//      beam-Reggeon-(X-system) vertex has exactly one incoming beam and
-//      one outgoing X particle, which unambiguously defines the Reggeon
-//      kinematics
+//      the beam-Reggeon-X vertex has exactly one incoming beam and
+//      one outgoing particle (X), which unambiguously defines the Reggeon
+//      kinematics; in addition the target has to be specified; if the recoil
+//      particle is not specified, elastic scattering is assumed
 //
 //
 // Author List:
@@ -218,7 +219,7 @@ diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
 	if (nmbEntries >= 3) {
 		const string recoilName = ((TObjString*)prodKinParticles[2])->GetString().Data();
 		if (recoilName != recoil()->name()) {
-			printWarn << "cannot find entry for recoil particle '" << target()->name() << "' "
+			printWarn << "cannot find entry for recoil particle '" << recoil()->name() << "' "
 			          << "at index 2 in data." << endl;
 			success = false;
 		} else {
@@ -275,9 +276,9 @@ ostream&
 diffractiveDissVertex::printPointers(ostream& out) const
 {
 	out << label() << " " << this << ": "
-	    << "beam particle   = " << beam()      << "; "
+	    << "beam particle = "   << beam()      << "; "
 	    << "target particle = " << target()    << "; "
-	    << "X particle      = " << XParticle() << "; "
+	    << "X particle = "      << XParticle() << "; "
 	    << "recoil particle = " << recoil()    << endl;
 	return out;
 }

@@ -26,9 +26,10 @@
 //
 // Description:
 //      class that describes production vertex in diffractive dissociation
-//      beam-Reggeon-(X-system) vertex has exactly one incoming beam and
-//      one outgoing X particle, which unambiguously defines the Reggeon
-//      kinematics
+//      the beam-Reggeon-X vertex has exactly one incoming beam and
+//      one outgoing particle (X), which unambiguously defines the Reggeon
+//      kinematics; in addition the target has to be specified; if the recoil
+//      particle is not specified, elastic scattering is assumed
 //
 //
 // Author List:

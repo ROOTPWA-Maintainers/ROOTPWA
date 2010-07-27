@@ -62,6 +62,7 @@ set(SOURCES
   decayTopology.cc
   productionVertex.cc
   diffractiveDissVertex.cc
+  leptoProductionVertex.cc
   isobarDecayVertex.cc
   isobarDecayTopology.cc
   isobarHelicityAmplitude.cc
