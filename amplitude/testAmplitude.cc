@@ -249,8 +249,8 @@ main(int argc, char** argv)
     // const string   evtInFileName  = "500.540.ps.evt";
     //const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
     //const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
-    //const string   newKeyFileName = "test2.key";
-    const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
+    const string   newKeyFileName = "test2.key";
+    // const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
     const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
     const string   rootInFileName = "2340.2380.root";
     const string   evtInFileName  = "2340.2380.evt";
@@ -268,6 +268,9 @@ main(int argc, char** argv)
       // amp.enableReflectivityBasis(false);
       // amp.enableBoseSymmetrization(false);
       printInfo << amp;
+      parser.writeKeyFile("testWrite.key", topo);  // test key file creation
+
+      exit(1);
 
       // read data from tree
       const string&            inTreeName                = "rootPwaEvtTree";
@@ -407,10 +410,6 @@ main(int argc, char** argv)
 	      }
       } // compare to PWA2000
     }  // parsing of key file successful
-
-    // test key file creation
-    if (1)
-	    parser.writeKeyFile("testWrite.key", topo);
     
   }
 }

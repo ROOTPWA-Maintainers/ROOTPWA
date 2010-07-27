@@ -465,7 +465,7 @@ keyFileParser::setMassDependence(Setting&              isobarDecayKey,
 		return true;
 	else {
 		if (_debug)
-			printInfo << "setting key for " << massDep << " mass dependence to "
+			printInfo << "setting key for '" << massDep << "' mass dependence to "
 			          << "'" << massDepName << "'" << endl;
 		Setting& massDepKey = isobarDecayKey.add("massDep", Setting::TypeGroup);
 		massDepKey.add("name", Setting::TypeString) = massDepName;
@@ -519,7 +519,7 @@ keyFileParser::mapProductionVertexType(const Setting&       prodVertKey,
 			const Setting* particleKey = findGroup(prodVertKey, i->first,
 			                                       (i->first != "recoil") ? true : false);
 			if (particleKey) {
-				if (i->first != "beam")
+				if (i->first == "beam")
 					beamParticleKey = particleKey;
 				if (not constructParticle(*particleKey, i->second))
 					success = false;
@@ -533,15 +533,14 @@ keyFileParser::mapProductionVertexType(const Setting&       prodVertKey,
 			if (vertType == "leptoProductionVertex" ) {
 				prodVert = createLeptoProductionVertex(prodKinParticles["beam"], prodKinParticles["target"],
 				                                       X, prodKinParticles["recoil"]);
-				double beamLongPol;
-				if (beamParticleKey->lookupValue("longPol", beamLongPol)) {
-					if (_debug)
-						printInfo << "setting polarization of beam " << prodKinParticles["beam"]->qnSummary()
-						          << " to " << beamLongPol << endl;
-					static_pointer_cast<leptoProductionVertex>(prodVert)->setBeamPol(beamLongPol);
-				} else
+				double beamLongPol = 0;
+				if ((beamParticleKey->lookupValue("longPol", beamLongPol)) and (_debug))
+					printInfo << "setting polarization of beam " << prodKinParticles["beam"]->qnSummary()
+					          << " to " << beamLongPol << endl;
+				else
 					printWarn << "no polarization is given for beam " << prodKinParticles["beam"]->qnSummary()
 					          << ". assuming unpolarized beam." << endl;
+				static_pointer_cast<leptoProductionVertex>(prodVert)->setBeamPol(beamLongPol);
 			}
 		}
 	} else {

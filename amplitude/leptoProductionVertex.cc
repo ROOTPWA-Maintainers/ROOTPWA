@@ -419,7 +419,7 @@ ostream&
 leptoProductionVertex::print(ostream& out) const
 {
 	out << name() << ": "
-	    << "beam " << beamLepton()->qnSummary() << " -> "
+	    << "beam " << beamLepton()->qnSummary() << " P_L = " << _longPol << " -> "
 	    << "scattered "  << scatteredLepton()->qnSummary() << " + virtual " << virtPhoton()->qnSummary()
 	    << "  +  target " << target()->qnSummary() << "  --->  "
 	    << XParticle()->qnSummary() << "  +  recoil " << recoil()->qnSummary();
