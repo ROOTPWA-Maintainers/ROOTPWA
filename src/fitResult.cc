@@ -41,7 +41,7 @@
 #include "integral.h"
 
 #include "fitResult.h"
-
+#include "Math/SpecFuncMathCore.h"
 
 using namespace std;
 using namespace rpwa;
@@ -140,16 +140,25 @@ fitResult::evidence() const
   double       l   = -logLikelihood();
   double       det = _fitParCovMatrix.Determinant();
   double       d   = (double)_fitParCovMatrix.GetNcols();
-  double       sum = 0;
-  unsigned int ni  = _normIntegral.ncols();
-  for (unsigned int i = 0; i < ni ; ++i)
-    sum += 1. / _normIntegral(i, i).Re();
-  double occ  = TMath::Power(TMath::Pi(), d * 0.5 - 1.) * TMath::Sqrt(2 * det) / sum;
-  double locc = TMath::Log(occ);
-  //cout << "fitResult::evidence()" << endl
-  //     << "    LogLikeli: " << l
-  //     << "  Occamfactor: " << locc;
-  return l + locc;
+  //double       sum = 0;
+  //unsigned int ni  = _normIntegral.ncols();
+  //  for (unsigned int i = 0; i < ni ; ++i)
+  //    sum += 1. / _normIntegral(i, i).Re();
+  double vad  = TMath::Power(2*TMath::Pi(), d * 0.5) * TMath::Sqrt(det);
+  double lvad = TMath::Log(vad);
+
+  double lva = TMath::Log(d) + 0.5*(d*1.144729886+(d-1)*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
+  
+  
+  
+//   cout << "fitResult::evidence()" << endl
+//        << "    LogLikeli   : " << l << endl
+//        << "    logVA       : " << lva << endl
+//        << "    logVA|D     : " << lvad << endl
+//        << "    Occamfactor : " << -lva+lvad << endl
+//        << "    evidence    : " << l + lvad - lva << endl;
+  
+  return l + lvad - lva;
 }
 
 
