@@ -70,7 +70,7 @@ namespace rpwa {
 
 		virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
 
-		virtual std::string name() const { return "massDependence"; }
+		virtual std::string name() const { return "massDependence"; }  ///< returns label used in graph visualization, reporting, and key file
     
 		virtual std::ostream& print(std::ostream& out) const;
 
@@ -108,7 +108,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
-		virtual std::string name() const { return "flatMassDependence"; }
+		virtual std::string name() const { return "flatMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
     
 		virtual std::ostream& print(std::ostream& out) const;
 
@@ -138,7 +138,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "relativisticBreitWigner"; }
+		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
     
 		virtual std::ostream& print(std::ostream& out) const;
 
@@ -171,7 +171,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }
+		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }  ///< returns label used in graph visualization, reporting, and key file
     
 		virtual std::ostream& print(std::ostream& out) const;
 
@@ -217,7 +217,7 @@ namespace rpwa {
 
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
-		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }
+		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }  ///< returns label used in graph visualization, reporting, and key file
     
 		virtual std::ostream& print(std::ostream& out) const;
 
@@ -257,7 +257,7 @@ namespace rpwa {
 		piPiSWaveAuMorganPenningtonKachaev();
 		virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
 
-		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }
+		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }  ///< returns label used in graph visualization, reporting, and key file
     
 		virtual std::ostream& print(std::ostream& out) const;
 
@@ -304,8 +304,8 @@ namespace rpwa {
 	invertMatrix(const ublas::matrix<T>& A,
 	             bool&                   isSingular)
 	{ 
-		ublas::matrix<T> inverseA (A.size1(), A.size2());
-		isSingular = !invert (A, inverseA);
+		ublas::matrix<T> inverseA(A.size1(), A.size2());
+		isSingular = !invert(A, inverseA);
 		return inverseA;
 	}
 

@@ -303,7 +303,7 @@ isobarDecayVertex::checkConsistency()
 ostream&
 isobarDecayVertex::print(ostream& out) const
 {
-	out << label() << ": "
+	out << name() << ": "
 	    << parent()->qnSummary() << "  --{" << *_massDep << "}-->  "
 	    << daughter1()->qnSummary()
 	    << "  [L = " << _L * 0.5 << ", S = " << _S * 0.5 << "]  "
@@ -315,7 +315,7 @@ isobarDecayVertex::print(ostream& out) const
 ostream&
 isobarDecayVertex::dump(ostream& out) const
 {
-	out << label() << ":" << endl
+	out << name() << ":" << endl
 	    << "    parent: "     << *parent()    << endl
 	    << "    daughter 1: " << *daughter1() << endl
 	    << "    daughter 2: " << *daughter2() << endl
@@ -328,7 +328,7 @@ isobarDecayVertex::dump(ostream& out) const
 ostream&
 isobarDecayVertex::printPointers(ostream& out) const
 {
-	out << label() << " "  << this << ": "
+	out << name() << " "  << this << ": "
 	    << "parent particle: "     << parent()    << "; "
 	    << "daughter 1 particle: " << daughter1() << "; "
 	    << "daughter 2 particle: " << daughter2() << endl;

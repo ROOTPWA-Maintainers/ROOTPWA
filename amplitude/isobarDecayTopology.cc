@@ -489,7 +489,7 @@ isobarDecayTopology::writeGraphViz(ostream& out)
 	nodeIterator iNd, iNdEnd;
 	for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd) {
 		stringstream label;
-		label << vertex(*iNd)->label();
+		label << vertex(*iNd)->name();
 		const isobarDecayVertexPtr& vert = dynamic_pointer_cast<isobarDecayVertex>(vertex(*iNd));
 		if (vert)
 			label << ": L = " << vert->L() * 0.5 << ", S = " << vert->S() * 0.5;

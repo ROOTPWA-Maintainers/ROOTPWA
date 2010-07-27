@@ -75,7 +75,7 @@ namespace rpwa {
 
 		virtual bool revertMomenta() = 0;  ///< general interface to reset momenta to the values of last event read
 
-		virtual std::string label() const { return "production vertex"; }  ///< returns label used in graph visualization and reporting
+		virtual std::string name() const { return "productionVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

@@ -90,6 +90,9 @@ namespace rpwa {
 		inline const particlePtr& scatteredLepton() const { return outParticles()[2]; }  ///< returns outgoing beam particle
 		inline const particlePtr& recoil         () const { return outParticles()[1]; }  ///< returns recoil particle
 
+		inline double beamPol() const { return _longPol; }  ///< returns (longitudinal) beam polarization
+		inline void setBeamPol(const double longPol = 0) { _longPol = longPol; }  ///< sets (longitudinal) beam polarization
+
 		// leptoproduction kinematic variables
 		inline double Q2     () const { return -virtPhoton()->lzVec().Mag2();                                }  ///< returns Q^2 of virtual photon
 		inline double nu     () const { return target()->lzVec() * virtPhoton()->lzVec() / target()->mass(); }  ///< returns energy of virtual photon
@@ -110,7 +113,7 @@ namespace rpwa {
 		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
 		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
 
-		virtual std::string label() const { return "leptoproduction vertex"; }  ///< returns label used in graph visualization and reporting
+		virtual std::string name() const { return "leptoProductionVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -123,6 +126,8 @@ namespace rpwa {
 
 
 	private:
+
+		double _longPol;  ///< longitudinal beam polarization
 
 		TVector3 _beamLeptonMomCache;       ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _targetMomCache;           ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data

@@ -253,7 +253,7 @@ diffractiveDissVertex::revertMomenta()
 ostream&
 diffractiveDissVertex::print(ostream& out) const
 {
-	out << label() << ": "
+	out << name() << ": "
 	    << "beam " << beam()->qnSummary() << "  +  target " << target()->qnSummary()
 	    << "  --->  " << XParticle()->qnSummary() << "  +  recoil " << recoil()->qnSummary();
 	return out;
@@ -263,7 +263,7 @@ diffractiveDissVertex::print(ostream& out) const
 ostream&
 diffractiveDissVertex::dump(ostream& out) const
 {
-	out << label() << ": " << endl
+	out << name() << ": " << endl
 	    << "    beam ..... " << *beam()      << endl
 	    << "    target ... " << *target()    << endl
 	    << "    X ........ " << *XParticle() << endl
@@ -275,7 +275,7 @@ diffractiveDissVertex::dump(ostream& out) const
 ostream&
 diffractiveDissVertex::printPointers(ostream& out) const
 {
-	out << label() << " " << this << ": "
+	out << name() << " " << this << ": "
 	    << "beam particle = "   << beam()      << "; "
 	    << "target particle = " << target()    << "; "
 	    << "X particle = "      << XParticle() << "; "

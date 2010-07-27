@@ -40,6 +40,7 @@
 
 #include "utilities.h"
 #include "diffractiveDissVertex.h"
+#include "leptoProductionVertex.h"
 #include "keyFileParser.h"
 
   
@@ -433,7 +434,7 @@ keyFileParser::mapMassDependence(const string& massDepType)
 {
 	massDependencePtr massDep;
 	if (   (massDepType == "BreitWigner")
-	       or (massDepType == ""))  // default mass dependence
+	    or (massDepType == ""))  // default mass dependence
 		massDep = createRelativisticBreitWigner();
 	else if (massDepType == "flat")
 		massDep = createFlatMassDependence();
@@ -506,25 +507,43 @@ keyFileParser::mapProductionVertexType(const Setting&       prodVertKey,
 {
 	prodVert = productionVertexPtr();
 	bool success = true;
-	if (vertType == "diffractiveDissociation") {
+	if ((vertType == "diffractiveDissVertex") or (vertType == "leptoProductionVertex")) {
+		const string             prodKinParticleNames[] = {"beam", "target", "recoil"};
 		map<string, particlePtr> prodKinParticles;
-		prodKinParticles["beam"  ] = particlePtr();
-		prodKinParticles["target"] = particlePtr();
-		prodKinParticles["recoil"] = particlePtr();
+		for (unsigned int i = 0; i < sizeof(prodKinParticleNames) / sizeof(string); ++i)
+			prodKinParticles[prodKinParticleNames[i]] = particlePtr();
 		// construct particles
+		const Setting* beamParticleKey = 0;  // needed for leptoproduction vertex
 		for (map<string, particlePtr>::iterator i = prodKinParticles.begin();
 		     i != prodKinParticles.end(); ++i) {
 			const Setting* particleKey = findGroup(prodVertKey, i->first,
 			                                       (i->first != "recoil") ? true : false);
 			if (particleKey) {
+				if (i->first != "beam")
+					beamParticleKey = particleKey;
 				if (not constructParticle(*particleKey, i->second))
 					success = false;
 			} else if (i->first != "recoil")
 				success = false;
 		}
-		if (success)
-			prodVert = createDiffractiveDissVertex(prodKinParticles["beam"], prodKinParticles["target"],
-			                                       X, prodKinParticles["recoil"]);
+		if (success) {
+			if (vertType == "diffractiveDissVertex")
+				prodVert = createDiffractiveDissVertex(prodKinParticles["beam"], prodKinParticles["target"],
+				                                       X, prodKinParticles["recoil"]);
+			if (vertType == "leptoProductionVertex" ) {
+				prodVert = createLeptoProductionVertex(prodKinParticles["beam"], prodKinParticles["target"],
+				                                       X, prodKinParticles["recoil"]);
+				double beamLongPol;
+				if (beamParticleKey->lookupValue("longPol", beamLongPol)) {
+					if (_debug)
+						printInfo << "setting polarization of beam " << prodKinParticles["beam"]->qnSummary()
+						          << " to " << beamLongPol << endl;
+					static_pointer_cast<leptoProductionVertex>(prodVert)->setBeamPol(beamLongPol);
+				} else
+					printWarn << "no polarization is given for beam " << prodKinParticles["beam"]->qnSummary()
+					          << ". assuming unpolarized beam." << endl;
+			}
+		}
 	} else {
 		printWarn << "unknown production vertex type '" << vertType << "'" << endl;
 		return false;
@@ -543,21 +562,35 @@ bool
 keyFileParser::setProductionVertexKeys(Setting&                   prodVertKey,
                                        const productionVertexPtr& prodVert)
 {
-	if (dynamic_pointer_cast<diffractiveDissVertex>(prodVert)) {
-		const diffractiveDissVertexPtr& vert = static_pointer_cast<diffractiveDissVertex>(prodVert);
+	const string prodVertName = prodVert->name();
+	if ((prodVertName == "diffractiveDissVertex") or (prodVertName == "leptoProductionVertex")) {
 		if (_debug)
-			printInfo << "setting keys for " << *vert << endl;
-		prodVertKey.add("type", Setting::TypeString) = "diffractiveDissociation";
+			printInfo << "setting keys for " << *prodVert << endl;
+		prodVertKey.add("type", Setting::TypeString) = prodVertName;
 		map<string, particlePtr> prodKinParticles;
-		prodKinParticles["beam"  ] = vert->beam  ();
-		prodKinParticles["target"] = vert->target();
-		prodKinParticles["recoil"] = vert->recoil();
+		if (prodVertName == "diffractiveDissVertex") {
+			const diffractiveDissVertexPtr& vert = static_pointer_cast<diffractiveDissVertex>(prodVert);
+			prodKinParticles["beam"  ] = vert->beam  ();
+			prodKinParticles["target"] = vert->target();
+			prodKinParticles["recoil"] = vert->recoil();
+		} else if (prodVertName == "leptoProductionVertex") {
+			const leptoProductionVertexPtr& vert = static_pointer_cast<leptoProductionVertex>(prodVert);
+			prodKinParticles["beam"  ] = vert->beamLepton();
+			prodKinParticles["target"] = vert->target    ();
+			prodKinParticles["recoil"] = vert->recoil    ();
+		}
 		// write particles
+		Setting* beamParticleKey = 0;  // needed for leptoproduction vertex
 		for (map<string, particlePtr>::iterator i = prodKinParticles.begin();
 		     i != prodKinParticles.end(); ++i) {
 			Setting& particleKey = prodVertKey.add(i->first, Setting::TypeGroup);
 			particleKey.add("name", Setting::TypeString) = i->second->name();
+			if (i->first == "beam")
+				beamParticleKey = &particleKey;
 		}
+		if ((prodVertName == "leptoProductionVertex") and beamParticleKey)
+			beamParticleKey->add("longPol", Setting::TypeFloat)
+				= static_pointer_cast<leptoProductionVertex>(prodVert)->beamPol();
 		return true;
 	} else {
 		printWarn << "writing of keys for production vertex of this type is not yet implemented:"

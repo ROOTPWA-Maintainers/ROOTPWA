@@ -73,6 +73,7 @@ leptoProductionVertex::leptoProductionVertex(const particlePtr& beamLepton,
                                              const particlePtr& XParticle,
                                              const particlePtr& recoil)
 	: productionVertex        (),
+	  _longPol                (0),
 	  _beamLeptonMomCache     (),
 	  _targetMomCache         (),
 	  _scatteredLeptonMomCache(),
@@ -167,8 +168,6 @@ leptoProductionVertex::addOutParticle(const particlePtr&)
 complex<double>
 leptoProductionVertex::productionAmp() const
 {
-	const double pol = 1;  // longitudinal lepton beam polarization
-
 	// calculate azimuthal angle between lepton-scattering and
 	// production plane in (virtual photon, target) CM system since
 	TVector3             k1, k2, q, v;  // vectors of beam lepton, scattered lepton, virtual photon,
@@ -218,7 +217,7 @@ leptoProductionVertex::productionAmp() const
 	// compute some intermediary terms
 	const double          xi    = sqrt(epsilon * (1 + epsilon + 2 * delta));
 	const double          zeta  = sqrt(xi * (1 - epsilon) / (1 + epsilon));
-	const double          term  = pol * sqrt(1 - epsilon * epsilon);
+	const double          term  = _longPol * sqrt(1 - epsilon * epsilon);
 	const complex<double> phase = exp(complex<double>(0, phi));
 	
 	// define lower triangle of virtual photon spin density matrix
@@ -230,11 +229,11 @@ leptoProductionVertex::productionAmp() const
 	// hermitian_matrix<complex<double> > rho(3, 3);  // does not work for some reason
 	// column with lambda' = -1
 	rho(0, 0) = 1 + term;                                     // lambda = -1
-	rho(1, 0) = (pol * zeta + xi) * phase;                    // lambda =  0
+	rho(1, 0) = (_longPol * zeta + xi) * phase;               // lambda =  0
 	rho(2, 0) = -epsilon * exp(complex<double>(0, 2 * phi));  // lambda = +1
 	// column with lambda' =  0
 	rho(1, 1) = 2 * (epsilon + delta);                        // lambda =  0
-	rho(2, 1) = (pol * zeta - xi) * phase;                    // lambda = +1
+	rho(2, 1) = (_longPol * zeta - xi) * phase;               // lambda = +1
 	// column with lambda' = +1
 	rho(2, 2) = 1 - term;                                     // lambda = +1
 
@@ -419,7 +418,7 @@ leptoProductionVertex::revertMomenta()
 ostream&
 leptoProductionVertex::print(ostream& out) const
 {
-	out << label() << ": "
+	out << name() << ": "
 	    << "beam " << beamLepton()->qnSummary() << " -> "
 	    << "scattered "  << scatteredLepton()->qnSummary() << " + virtual " << virtPhoton()->qnSummary()
 	    << "  +  target " << target()->qnSummary() << "  --->  "
@@ -431,7 +430,7 @@ leptoProductionVertex::print(ostream& out) const
 ostream&
 leptoProductionVertex::dump(ostream& out) const
 {
-	out << label() << ": " << endl
+	out << name() << ": " << endl
 	    << "    beam lepton ........ " << *beamLepton()      << endl
 	    << "    target ............. " << *target()          << endl
 	    << "    virtual photon ..... " << *virtPhoton()      << endl
@@ -445,7 +444,7 @@ leptoProductionVertex::dump(ostream& out) const
 ostream&
 leptoProductionVertex::printPointers(ostream& out) const
 {
-	out << label() << " " << this << ": "
+	out << name() << " " << this << ": "
 	    << "beam lepton = "      << beamLepton()      << "; "
 	    << "target particle = "  << target()          << "; "
 	    << "virtual photon = "   << virtPhoton()      << "; "

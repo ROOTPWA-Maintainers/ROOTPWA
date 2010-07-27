@@ -105,7 +105,7 @@ fsVertex::addOutParticle(const particlePtr&)
 ostream&
 fsVertex::print(ostream& out) const
 {
-	out << label() << ": " << fsParticle()->qnSummary();
+	out << name() << ": " << fsParticle()->qnSummary();
 	return out;
 }
 
@@ -113,7 +113,7 @@ fsVertex::print(ostream& out) const
 ostream&
 fsVertex::dump(ostream& out) const
 {
-	out << label() << ":" << endl
+	out << name() << ":" << endl
 	    << "    final state particle: " << *fsParticle() << endl;
 	return out;
 }
@@ -122,6 +122,6 @@ fsVertex::dump(ostream& out) const
 ostream&
 fsVertex::printPointers(ostream& out) const
 {
-	out << label() << " " << this << ": final state particle: " << fsParticle() << endl;
+	out << name() << " " << this << ": final state particle: " << fsParticle() << endl;
 	return out;
 }

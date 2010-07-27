@@ -96,7 +96,7 @@ namespace rpwa {
 		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
 		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
 
-		virtual std::string label() const { return "diffractive dissociation vertex"; }  ///< returns label used in graph visualization and reporting
+		virtual std::string name() const { return "diffractiveDissVertex"; }  ///< returns label used in graph visualization, reporting, and key file
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

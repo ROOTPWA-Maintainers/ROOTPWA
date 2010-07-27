@@ -139,7 +139,7 @@ interactionVertex::transformOutParticles(const TLorentzRotation& L)
 ostream&
 interactionVertex::print(ostream& out) const
 {
-	out << label() << ": ";
+	out << name() << ": ";
 	for (unsigned int i = 0; i < _inParticles.size(); ++i) {
 		out << _inParticles[i]->qnSummary();
 		if (i < _inParticles.size() - 1)
@@ -158,7 +158,7 @@ interactionVertex::print(ostream& out) const
 ostream&
 interactionVertex::dump(ostream& out) const
 {
-	out << label() << ":" << endl;
+	out << name() << ":" << endl;
 	for (unsigned int i = 0; i < _inParticles.size(); ++i)
 		out << "    incoming[" << i << "]: " << *_inParticles[i] << endl;
 	for (unsigned int i = 0; i < _outParticles.size(); ++i)
@@ -170,7 +170,7 @@ interactionVertex::dump(ostream& out) const
 ostream&
 interactionVertex::printPointers(ostream& out) const
 {
-	out << label() << " " << this << ": incoming particles: ";
+	out << name() << " " << this << ": incoming particles: ";
 	for (unsigned int i = 0; i < _inParticles.size(); ++i) {
 		out << "[" << i << "] = " << _inParticles[i];
 		if (i < _inParticles.size() - 1)
