@@ -225,8 +225,6 @@ decayTopology::reflectionEigenValue() const
 	// eigenvalue of reflection through production plane is r_spatial / P_intrinsic
 	// where r = -1 / refl is the reflectivity eiganvalue
 	return -1 / (XParticle()->reflectivity() * fsParticlesIntrinsicParity());
-	//return -1 / (XParticle()->reflectivity() * spaceInvEigenValue());
-	//return -1 / XParticle()->reflectivity();
 }
 
 

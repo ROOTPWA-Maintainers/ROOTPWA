@@ -534,10 +534,11 @@ keyFileParser::mapProductionVertexType(const Setting&       prodVertKey,
 				prodVert = createLeptoProductionVertex(prodKinParticles["beam"], prodKinParticles["target"],
 				                                       X, prodKinParticles["recoil"]);
 				double beamLongPol = 0;
-				if ((beamParticleKey->lookupValue("longPol", beamLongPol)) and (_debug))
-					printInfo << "setting polarization of beam " << prodKinParticles["beam"]->qnSummary()
-					          << " to " << beamLongPol << endl;
-				else
+				if ((beamParticleKey->lookupValue("longPol", beamLongPol))) {
+					if (_debug)
+						printInfo << "setting polarization of beam " << prodKinParticles["beam"]->qnSummary()
+						          << " to " << beamLongPol << endl;
+				} else
 					printWarn << "no polarization is given for beam " << prodKinParticles["beam"]->qnSummary()
 					          << ". assuming unpolarized beam." << endl;
 				static_pointer_cast<leptoProductionVertex>(prodVert)->setBeamPol(beamLongPol);

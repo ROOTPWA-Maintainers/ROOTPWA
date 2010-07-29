@@ -136,6 +136,10 @@ bool testAmplitude(TTree&          tree,
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
+	if (ampValues.size() < 1) {
+		printWarn << "no amplitude were calculated" << endl;
+		return false;
+	}
   
 	// calculate amplitudes for parity transformed decay daughters
 	vector<complex<double> > ampSpaceInvValues;
@@ -159,7 +163,7 @@ bool testAmplitude(TTree&          tree,
 	}
   
 	if (   (ampValues.size() != ampSpaceInvValues.size())
-	       or (ampValues.size() != ampReflValues.size    ())) {
+	    or (ampValues.size() != ampReflValues.size    ())) {
 		printWarn << "different number of amplitudes for space inverted "
 		          << "(" << ampSpaceInvValues.size() << "), reflected "
 		          << "(" << ampReflValues.size() << "), and unmodified data "
@@ -168,17 +172,27 @@ bool testAmplitude(TTree&          tree,
 	}
 
 	printInfo << "checking symmetry properties of amplitudes" << endl;
+	unsigned int countAmpZero               = 0;
 	unsigned int countAmpRatioNotOk         = 0;
 	unsigned int countSpaceInvEigenValNotOk = 0;
 	unsigned int countReflEigenValNotOk     = 0;
 	for (unsigned int i = 0; i < ampValues.size(); ++i) {
+		// check that amplitude is non-zero
+		bool ampZero = false;
+		if (ampValues[i] == complex<double>(0, 0)) {
+			ampZero = true;
+			++countAmpZero;
+		}
 		const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;
 		ostringstream s;
 		s.precision(nmbDigits);
 		s.setf(ios_base::scientific, ios_base::floatfield);
 		if (debug) {
 			printInfo << "amplitude " << i << ": " << endl;
-			s << "        ampl.            = " << ampValues        [i] << endl
+			s << "        ampl.            = " << ampValues[i];
+			if (ampZero)
+				s << " <! zero amplitude";
+			s << endl
 			  << "        ampl. space inv. = " << ampSpaceInvValues[i] << endl
 			  << "        ampl. refl.      = " << ampReflValues    [i] << endl;
 			cout << s.str();
@@ -190,12 +204,9 @@ bool testAmplitude(TTree&          tree,
 			                  ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
 			                  (ampSpaceInvValues[i].imag() != 0) ?
 			                  ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
-		bool ampRatioOk = true;
 		if (   (fabs(spaceInvRatio.real()) - 1 > maxDelta)
-		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
-			ampRatioOk = false;
+		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta))
 			++countAmpRatioNotOk;
-		}
 		const int spaceInvEigenValue = decayTopo->spaceInvEigenValue();
 		bool      spaceInvEigenValOk = true;
 		if (   (    (spaceInvRatio.real() != 0)
@@ -222,10 +233,8 @@ bool testAmplitude(TTree&          tree,
 			                  (ampReflValues[i].imag() != 0) ?
 			                  ampValues[i].imag() / ampReflValues[i].imag() : 0);
 		if (   (fabs(reflRatio.real()) - 1 > maxDelta)
-		    or (fabs(reflRatio.imag()) - 1 > maxDelta)) {
-			ampRatioOk = false;
+		    or (fabs(reflRatio.imag()) - 1 > maxDelta))
 			++countAmpRatioNotOk;
-		}
 		const int reflEigenValue = decayTopo->reflectionEigenValue();
 		bool      reflEigenValOk = true;
 		if (   (    (reflRatio.real() != 0)
@@ -246,6 +255,10 @@ bool testAmplitude(TTree&          tree,
 		}
 	}
 
+	if (countAmpZero > 0) {
+		keyFileErrors.push_back("zero amplitude");
+		success = false;
+	}
 	if (countAmpRatioNotOk > 0) {
 		stringstream s;
 		s << "amplitude deviation in symmetry check larger than " << maxDelta;
@@ -317,12 +330,17 @@ main(int    argc,
 		}
 
 	// set debug options
-	if (debug) {
-		keyFileParser::setDebug(true);
-		isobarHelicityAmplitude::setDebug(true);
-		massDependence::setDebug(true);
-	}
+	// if (debug) {
+	// 	keyFileParser::setDebug(true);
+	// 	isobarHelicityAmplitude::setDebug(true);
+	// 	massDependence::setDebug(true);
+	// }
 
+	// check command line args
+	if (dataFileName == "") {
+		printErr << "you need to specify a test data file (option -d). aborting." << endl;;
+		usage(progName, 1);
+	}
 	// get key file names
 	if (optind >= argc) {
 		printErr << "you need to specify at least one key file to process. aborting." << endl;;
@@ -380,7 +398,7 @@ main(int    argc,
 		if (not fillTreeFromEvt(evtFile, *tree, -1,
 		                        prodKinParticlesLeafName,  prodKinMomentaLeafName,
 		                        decayKinParticlesLeafName, decayKinMomentaLeafName,
-		                        targetParticleName, debug)) {
+		                        targetParticleName, false)) {
 			printErr << "problems creating tree from .evt input file '" << dataFileName << "' "
 			         << "aborting." << endl;
 			exit(1);
@@ -409,12 +427,19 @@ main(int    argc,
 			keyFileErrors[errors[j]].push_back(keyFileNames[i]);
 	}
 
+	// clean up
+	delete tree;
+
+	// report final result and set exit status accordingly
 	cout << endl;
-	if (countKeyFileErr == 0)
+	if (countKeyFileErr == 0) {
 		printInfo << "success! all " << keyFileNames.size() << " keyfile(s) passed all tests" << endl;
-	else {
-		printInfo << keyFileNames.size() - countKeyFileErr << " of " << keyFileNames.size()
-		          << " keyfile(s) passed all tests" << endl;
+		return 0;
+	}
+
+	printInfo << keyFileNames.size() - countKeyFileErr << " of " << keyFileNames.size()
+	          << " keyfile(s) passed all tests" << endl;
+	if (keyFileErrors.size() > 0) {
 		printInfo << countKeyFileErr << " problematic keyfile(s):" << endl;
 		for (map<string, vector<string> >::const_iterator entry = keyFileErrors.begin();
 		     entry != keyFileErrors.end(); ++entry) {
@@ -423,8 +448,6 @@ main(int    argc,
 				cout << "            " << entry->second[i] << endl;
 		}
 	}
+	return 1;
   
-	// clean up
-	delete tree;
-	return 0;
 }

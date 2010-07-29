@@ -232,6 +232,8 @@ main(int argc, char** argv)
 
   if (1) {
     const long int maxNmbEvents   = 1000000;
+    // const long int maxNmbEvents   = 1;
+
     // const string   newKeyFileName = "test.key";
     // const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
     // const string   rootInFileName = "testEvents.root";
@@ -247,15 +249,18 @@ main(int argc, char** argv)
     // const string   evtInFileName  = "testEvents.3pic.evt";
     // const string   rootInFileName = "500.540.ps.root";
     // const string   evtInFileName  = "500.540.ps.evt";
-    //const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
-    //const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
-    const string   newKeyFileName = "test2.key";
+    // const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+    // const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
     // const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
-    const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
-    const string   rootInFileName = "2340.2380.root";
-    const string   evtInFileName  = "2340.2380.evt";
+    // const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
     // const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.root";
     // const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.evt";
+    const string   newKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/new/rho_sigma_set/1+1--1+rho770_01_sigma.key";
+    const string   oldKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/rho_sigma_set/1+1--1+rho770_01_sigma.key";
+    // const string   oldKeyFileName = "1+1--1+rho770_01_sigma.key";
+    const string   rootInFileName = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.root";
+    const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
+    // const string   evtInFileName  = "1000.1060.evt";
 
     keyFileParser&         parser = keyFileParser::instance();
     isobarDecayTopologyPtr topo;
@@ -269,8 +274,6 @@ main(int argc, char** argv)
       // amp.enableBoseSymmetrization(false);
       printInfo << amp;
       parser.writeKeyFile("testWrite.key", topo);  // test key file creation
-
-      exit(1);
 
       // read data from tree
       const string&            inTreeName                = "rootPwaEvtTree";
@@ -389,8 +392,8 @@ main(int argc, char** argv)
 		      TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
 		      TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
 		      TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-		      TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
-		      TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-7, 3e-7);
+		      TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
+		      TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
 		      TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 		      TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 		      for (unsigned int i = 0; i < myAmps.size(); ++i) {

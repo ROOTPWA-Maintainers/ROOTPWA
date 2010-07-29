@@ -264,9 +264,15 @@ namespace rpwa {
     }
     complexT  DFuncVal;
     const int reflFactor = refl * P * powMinusOne((j - m) / 2);
-    if (m == 0)
-	    DFuncVal = (reflFactor == +1) ? complexT(0) : DFunction<complexT>(j, 0, n, alpha, beta, gamma);
-    else {
+    if (m == 0) {
+	    if (reflFactor == +1) {
+		    DFuncVal = complexT(0);
+		    // printWarn << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
+		    //           << "refl = " << sign(refl) << "}" << "_{M = " << 0.5 * m << ", "
+		    //           << "M' = " << 0.5 * n << "}(alpha, beta, gamma) is always zero." << endl;
+	    } else
+		    DFuncVal = DFunction<complexT>(j, 0, n, alpha, beta, gamma);
+    } else {
 	    DFuncVal = 1 / std::sqrt((T)2)
 		             * (                   DFunction<complexT>(j,  m, n, alpha, beta, gamma)
 		                 - (T)reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma));

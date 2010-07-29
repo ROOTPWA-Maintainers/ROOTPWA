@@ -54,7 +54,7 @@ bool massDependence::_debug = false;
 ostream&
 massDependence::print(ostream& out) const
 {
-	out << "mass dependence";
+	out << name();
 	return out;
 }
 
@@ -64,7 +64,7 @@ complex<double>
 flatMassDependence::amp(const isobarDecayVertex&)
 {
 	if (_debug)
-		printInfo << "no mass dependence = 1" << endl;
+		printInfo << name() << " = 1" << endl;
 	return 1;
 }
 
@@ -72,7 +72,7 @@ flatMassDependence::amp(const isobarDecayVertex&)
 ostream&
 flatMassDependence::print(ostream& out) const
 {
-	out << "flat mass dependence";
+	out << name();
 	return out;
 }
 
@@ -103,9 +103,9 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 	if (_debug)
-		printInfo << "Breit-Wigner(m = " << M << " GeV, m_0 = " << M0 << "GeV, "
+		printInfo << name() << "(m = " << M << " GeV, m_0 = " << M0 << "GeV, "
 		          << "Gamma_0 = " << Gamma0 << "GeV, L = " << 0.5 * L << ", q = " << q << "GeV, "
-		          << q0 << "GeV) = " << bw << endl;
+		          << q0 << "GeV) = " << maxPrecisionDouble(bw) << endl;
 	return bw;
 }
 
@@ -113,7 +113,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 ostream&
 relativisticBreitWigner::print(ostream& out) const
 {
-	out << "relativistic Breit-Wigner";
+	out << name();
 	return out;
 }
 
@@ -222,7 +222,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 	invertMatrix<complex<double> >(M - imag * rho, _T);
 	const complex<double> amp = _T(0, 0);
 	if (_debug)
-		printInfo << "Au-Morgan-Pennington M pi pi s-wave (m = " << mass << "GeV) = " << amp << endl;
+		printInfo << name() << "(m = " << mass << "GeV) = " << maxPrecisionDouble(amp) << endl;
 
 	return amp;
 }
@@ -231,7 +231,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 ostream&
 piPiSWaveAuMorganPenningtonM::print(ostream& out) const
 {
-	out << "AMP pi pi s-wave with off-diagonal elements of M-matrix set to zero";
+	out << name();
 	return out;
 }
 
@@ -267,14 +267,18 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 		bw = denom * complex<double>(A, B);
 	}
 
-	return ampM - coupling * bw;
+	const complex<double> amp = ampM - coupling * bw;
+	if (_debug)
+		printInfo << name() << "(m = " << mass << "GeV) = " << maxPrecisionDouble(amp) << endl;
+
+	return amp;
 }
 
 
 ostream&
 piPiSWaveAuMorganPenningtonVes::print(ostream& out) const
 {
-	out << "VES pi pi s-wave with f_0(980) subtracted";
+	out << name();
 	return out;
 }
 
@@ -301,6 +305,6 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 ostream&
 piPiSWaveAuMorganPenningtonKachaev::print(ostream& out) const
 {
-	out << "Kachaev's pi pi s-wave with f_0(980) removed";
+	out << name();
 	return out;
 }

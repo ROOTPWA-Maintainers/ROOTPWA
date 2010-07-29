@@ -380,8 +380,10 @@ namespace rpwa {
 		tree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
 
 		// loop over events
-		const long int nmbEvents = min((long int)tree.GetEntries(), maxNmbEvents);
-		bool           success   = true;
+		const long int nmbEventsTree = tree.GetEntries();
+		const long int nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                : nmbEventsTree);
+		bool           success       = true;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (printProgress)
 				progressIndicator(eventIndex, nmbEvents);
@@ -395,7 +397,7 @@ namespace rpwa {
 			decayKinMomentaBr->GetEntry  (eventIndex);
 
 			if (   not prodKinParticles  or not prodKinMomenta
-			       or not decayKinParticles or not decayKinMomenta) {
+			    or not decayKinParticles or not decayKinMomenta) {
 				printWarn << "at least one of the input data arrays is a null pointer: "
 				          << "        production kinematics: particle names = " << prodKinParticles << ", "
 				          << "momenta = " << prodKinMomenta << endl
@@ -409,6 +411,10 @@ namespace rpwa {
 			if (decayTopo.readData(*prodKinParticles,  *prodKinMomenta,
 			                       *decayKinParticles, *decayKinMomenta))
 				ampValues.push_back(amplitude());
+			else {
+				printWarn << "problems reading event[" << eventIndex << "]" << endl;
+				success = false;
+			}
 		}
 		return success;
 	}

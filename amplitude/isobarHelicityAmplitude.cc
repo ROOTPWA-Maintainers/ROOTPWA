@@ -205,7 +205,7 @@ isobarHelicityAmplitude::reflectDecay() const
   for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
     const particlePtr&    part     = _decay->fsParticles()[i];
     const TLorentzVector& fsPartLv = part->lzVec();
-    part->setLzVec(TLorentzVector(fsPartLv.X(), -fsPartLv.Y(), -fsPartLv.Z(), fsPartLv.E()));
+    part->setLzVec(TLorentzVector(fsPartLv.X(), -fsPartLv.Y(), fsPartLv.Z(), fsPartLv.E()));
   }
   // transform final state particles back to lab frame
   _decay->transformFsParticles(gjTrans.Inverse());
@@ -267,6 +267,9 @@ complex<double>
 isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
                  const bool                  topVertex) const
 {
+  if (_debug)
+    printInfo << "calculating two-body decay amplitude for " << *vertex << endl;
+
   const particlePtr& parent    = vertex->parent();
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
@@ -332,8 +335,6 @@ complex<double>
 isobarHelicityAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
               const bool                  topVertex) const
 {
-  if (_debug)
-    printInfo << "calculating decay amplitude for " << *vertex << endl;
   const particlePtr& parent    = vertex->parent();
   const particlePtr& daughter1 = vertex->daughter1();
   const particlePtr& daughter2 = vertex->daughter2();
