@@ -42,6 +42,9 @@
 
 #include "fitResult.h"
 #include "Math/SpecFuncMathCore.h"
+#include "TDecompChol.h"
+#include "TMath.h"
+#include "TMatrixDSym.h"
 
 using namespace std;
 using namespace rpwa;
@@ -138,12 +141,23 @@ double
 fitResult::evidence() const
 {
   double       l   = -logLikelihood();
+ 
   double       det = _fitParCovMatrix.Determinant();
+  // simple determinant neglecting all off-diagonal entries
+//   unsigned int n= _fitParCovMatrix.GetNcols();
+//   double det2=1;
+//   for(unsigned int i=0;i<n;++i){
+//    det2*=_fitParCovMatrix[i][i];
+//   }
+  
+  
+
+
   double       d   = (double)_fitParCovMatrix.GetNcols();
-  //double       sum = 0;
-  //unsigned int ni  = _normIntegral.ncols();
-  //  for (unsigned int i = 0; i < ni ; ++i)
-  //    sum += 1. / _normIntegral(i, i).Re();
+  double       sum = 0;
+  unsigned int ni  = _normIntegral.ncols();
+   for (unsigned int i = 0; i < ni ; ++i)
+     sum += 1. / _normIntegral(i, i).Re();
   double vad  = TMath::Power(2*TMath::Pi(), d * 0.5) * TMath::Sqrt(det);
   double lvad = TMath::Log(vad);
 
@@ -151,7 +165,9 @@ fitResult::evidence() const
   
   
   
-//   cout << "fitResult::evidence()" << endl
+ //  cout << "fitResult::evidence()" << endl
+//        << "    det         : " << det << endl
+//        << "    detsimple   : " << det2 << endl
 //        << "    LogLikeli   : " << l << endl
 //        << "    logVA       : " << lva << endl
 //        << "    logVA|D     : " << lvad << endl
