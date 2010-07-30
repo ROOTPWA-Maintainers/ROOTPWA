@@ -231,8 +231,8 @@ main(int argc, char** argv)
   }
 
   if (1) {
-    const long int maxNmbEvents   = 1000000;
-    // const long int maxNmbEvents   = 1;
+    // const long int maxNmbEvents   = 1000000;
+    const long int maxNmbEvents   = 2;
 
     // const string   newKeyFileName = "test.key";
     // const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
@@ -347,6 +347,7 @@ main(int argc, char** argv)
 		      myAmps.push_back(amp());
 		      if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
 			      printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
+		      topo->productionVertex()->productionAmp();
 	      }
       } // event loop
       
@@ -355,6 +356,8 @@ main(int argc, char** argv)
                 << "'" << rootInFileName << "' and calculated amplitudes" << endl;
       cout << "needed ";
       timer.Print();
+
+      exit(1);
       
       vector<complex<double> > pwa2kAmps;
       if (1) {  // compare to PWA2000
