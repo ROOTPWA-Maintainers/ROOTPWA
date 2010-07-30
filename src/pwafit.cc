@@ -113,7 +113,7 @@ main(int    argc,
   bool               useFixedStartValues = false;
   double             startValStep        = 0.0005;
   const unsigned int maxNmbOfIterations  = 20000;
-  const bool         runHesse            = false;
+  const bool         runHesse            = true;
   const bool         runMinos            = false;
   int                startValSeed        = 1234567;
 
@@ -296,6 +296,7 @@ main(int    argc,
 	    << "    parameter naming scheme is: V[rank index]_[IGJPCME][isobar spec]" << endl;
   unsigned int maxParNameLength = 0;       // maximum length of parameter names
   vector<bool> parIsFixed(nmbPar, false);  // memorizes state of variables; ROOT::Math::Minimizer has no corresponding accessor
+
   {
     // use local instance of random number generator so that other
     // code has no chance of tampering with gRandom and thus cannot
@@ -315,6 +316,7 @@ main(int    argc,
 	startVal = startFitResult->fitParameter(parName.c_str());
       } else
 	startVal = (useFixedStartValues) ? defaultStartValue : random.Uniform(defaultStartValue, sqrtNmbEvts);
+
       // check if parameter needs to be fixed because of threshold
       if ((L.parThreshold(i) == 0) || (L.parThreshold(i) < massBinCenter)) {
 	if (startVal == 0) {
@@ -337,28 +339,34 @@ main(int    argc,
 	throw;
       }
     }
-    // cleanup
-    if(startValFile) {
-      startValFile->Close();
-      delete startValFile;
-      startValFile = NULL;
+    if (!success) {
+      printErr << "something went wrong when setting log likelihood parameters! exiting." << endl;
+      throw;
     }
   }
-  
+
+  // cleanup
+  if(startValFile) {
+    startValFile->Close();
+    delete startValFile;
+    startValFile = NULL;
+  }
+
+
   // ---------------------------------------------------------------------------
   // find minimum of likelihood function
   printInfo << "performing minimization." << endl;
   {
     minimizer->SetMaxIterations(maxNmbOfIterations);
     minimizer->SetTolerance    (minimizerTolerance);
-    const bool success = minimizer->Minimize();
+    bool success = minimizer->Minimize();
     if (success)
       printInfo << "minimization finished successfully." << endl;
     else
       printWarn << "minimization failed." << endl;
     if (runHesse) {
       printInfo << "calculating Hessian matrix." << endl;
-      //success = minimizer->Hesse();  // comes only with ROOT 5.24+
+      success = minimizer->Hesse();  // comes only with ROOT 5.24+
       if (!success)
 	printWarn << "calculation of Hessian matrix failed." << endl;
     }
