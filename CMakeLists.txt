@@ -245,6 +245,12 @@ set(ROOTPWA_LIBS
 add_subdirectory(src)
 
 # CUDA stuff
+set(CUDA_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/cuda
+)
+set(CUDA_LIBS
+  cuda
+)
 add_subdirectory(cuda)
 
 # RootPwaAmp

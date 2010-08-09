@@ -40,6 +40,7 @@ set(INCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIRS}
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
+  ${CUDA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
@@ -78,6 +79,7 @@ set(THIS_LIB "RootPwa")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
   "${PWA2000_LIBS}"
+  "${CUDA_LIBS}"
 )
 
 

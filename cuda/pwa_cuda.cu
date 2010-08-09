@@ -48,137 +48,20 @@
 #include "reportingUtils.hpp"
 #include <cutil_inline.h>
 
-typedef double Scalar;
-#define ALIGN 2 * sizeof( Scalar)
-
 // my includes:
-#include "CudaComplex.h" // includes my Complex datatype
 using namespace rpwa;
 using namespace std;
 
-// kernel:
-#include "pwa_cuda_kernel.cu"
 
+// kernel:
+#include "cuda_helper.cu"
+
+#include "CudaComplex.h" // includes my Complex datatype
 ////////////////////////////////////////////////////////////////////////////////
 // declarations:
 
 ////////////////////////////////////////////////////////////////////////////////
 // SumArrayCUDA FUNCTON:
-
-template<typename complexT, typename scalarT>
-void PrepareCUDA(complexT* decayAmps, const unsigned int decay_mem_size, complexT** d_decayAmps, int *num_threads, int *num_blocks)
-{
-	int dev;
-	cudaSetDevice( cutGetMaxGflopsDeviceId() ); // selects the best gpu
-	cudaGetDevice(&dev);
-	struct cudaDeviceProp prop;
-	cudaGetDeviceProperties (&prop, dev);
-	*num_threads = prop.maxThreadsPerBlock;
-	*num_blocks  = prop.multiProcessorCount;
-	// *num_blocks  = 1;
-	*num_threads = 448;
-  
-	cudaMalloc( (void**) d_decayAmps, decay_mem_size);
-	cudaMemcpy( *d_decayAmps, decayAmps, decay_mem_size, cudaMemcpyHostToDevice);
-}
-
-template<typename complexT, typename scalarT>
-scalarT SumArrayCUDA(complexT* prodAmps, const unsigned int prod_mem_size, const scalarT prodAmpFlat, const unsigned int nmbEvents, const unsigned int rank, const unsigned int nmbWavesRefl[2], complexT* d_decayAmps, int num_threads, int num_blocks)
-{
-	complexT* d_prodAmps;
-	cudaMalloc( (void**) &d_prodAmps, prod_mem_size);
-	cudaMemcpy( d_prodAmps, prodAmps, prod_mem_size, cudaMemcpyHostToDevice);
-
-	scalarT* d_preresult;
-	int result_mem_size = sizeof(scalarT) * num_threads * num_blocks;
-	cudaMalloc( (void**) &d_preresult, result_mem_size);
-
-	SumCUDAPseudoArray<complexT,scalarT><<<num_blocks, num_threads>>>
-		(d_decayAmps, d_prodAmps, prodAmpFlat, nmbEvents, rank,
-		 nmbWavesRefl[0], nmbWavesRefl[1], max(nmbWavesRefl[0], nmbWavesRefl[1]), d_preresult);
-
-	scalarT* d_preresult2;
-	cudaMalloc( (void**) &d_preresult2, sizeof(scalarT) * num_threads);
-	SumCUDA<scalarT><<<1,num_threads>>>(d_preresult, num_threads * num_blocks, d_preresult2);
-	
-	scalarT* d_result;
-	cudaMalloc( (void**) &d_result, sizeof(scalarT));
-	SumCUDA<scalarT><<<1,1>>>(d_preresult2, num_threads, d_result);
-  
-	scalarT* result = (scalarT*) malloc(sizeof(scalarT));
-	cudaMemcpy(result, d_result, sizeof(scalarT), cudaMemcpyDeviceToHost);
-
-	cudaFree(d_result);
-	//	cudaFree(d_decayAmps);
-	cudaFree(d_prodAmps);
-	cudaFree(d_preresult);
-	cudaFree(d_preresult2);
-
-	return *result;
-}
-
-template<typename complexT, typename scalarT>
-scalarT SumArrayCUDATest(complexT* decayAmps, const unsigned int decay_mem_size,  complexT* prodAmps, const unsigned int prod_mem_size, const scalarT prodAmpFlat, const unsigned int nmbEvents, const unsigned int rank, const unsigned int nmbWavesRefl[2])
-{
-	int num_threads = 0;
-	int num_blocks = 0;
-	complexT* d_decayAmps;
-
-	/////////////////// BEGIN PrepareCUDA code
-
-	int dev;
-	cudaSetDevice( cutGetMaxGflopsDeviceId() ); // selects the best gpu
-	cudaGetDevice(&dev);
-	struct cudaDeviceProp prop;
-	cudaGetDeviceProperties (&prop, dev);
-	num_threads = prop.maxThreadsPerBlock;
-	num_blocks  = prop.multiProcessorCount;
-	// num_blocks  = 1;
-	num_threads = 448;
-  
-	cudaMalloc( (void**) &d_decayAmps, decay_mem_size);
-	cudaMemcpy( d_decayAmps, decayAmps, decay_mem_size, cudaMemcpyHostToDevice);
-
-	/////////////////// END PrepareCUDA code
-
-	//	printf("num_threads: %i \n", num_threads);
-	//	printf("num_blocks: %i \n", num_blocks);
-  
-	/////////////////// BEGIN SumArrayCUDA code
-
-	complexT* d_prodAmps;
-	cudaMalloc( (void**) &d_prodAmps, prod_mem_size);
-	cudaMemcpy( d_prodAmps, prodAmps, prod_mem_size, cudaMemcpyHostToDevice);
-
-	scalarT* d_preresult;
-	int result_mem_size = sizeof(scalarT) * num_threads * num_blocks;
-	cudaMalloc( (void**) &d_preresult, result_mem_size);
-
-	SumCUDAPseudoArray<complexT,scalarT><<<num_blocks, num_threads>>>
-		(d_decayAmps, d_prodAmps, prodAmpFlat, nmbEvents, rank,
-		 nmbWavesRefl[0], nmbWavesRefl[1], max(nmbWavesRefl[0], nmbWavesRefl[1]), d_preresult);
-
-	scalarT* d_preresult2;
-	cudaMalloc( (void**) &d_preresult2, sizeof(scalarT) * num_threads);
-	SumCUDA<scalarT><<<1,num_threads>>>(d_preresult, num_threads * num_blocks, d_preresult2);
-	
-	scalarT* d_result;
-	cudaMalloc( (void**) &d_result, sizeof(scalarT));
-	SumCUDA<scalarT><<<1,1>>>(d_preresult2, num_threads, d_result);
-  
-	scalarT* result = (scalarT*) malloc(sizeof(scalarT));
-	cudaMemcpy(result, d_result, sizeof(scalarT), cudaMemcpyDeviceToHost);
-
-	cudaFree(d_result);
-	cudaFree(d_decayAmps);
-	cudaFree(d_prodAmps);
-	cudaFree(d_preresult);
-	cudaFree(d_preresult2);
-
-	return *result;
-
-	//////////////////// END SumArrayCUDA code
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 // SumArray FUNCTION:
@@ -306,7 +189,7 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 	int num_blocks = 0;
 	complex<Scalar> *d_decayAmps;
 
-	PrepareCUDA<complex<Scalar>,Scalar>(decayAmps,decayAmpsSize,&d_decayAmps,&num_threads,&num_blocks);
+	PrepareCUDA<complex<Scalar>,Scalar>(decayAmps,decayAmpsSize,&d_decayAmps,num_threads,num_blocks);
 
 	printf("num_threads: %i \n", num_threads);
 	printf("num_blocks: %i \n", num_blocks);

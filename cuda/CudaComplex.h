@@ -33,22 +33,29 @@
 //
 //
 //-------------------------------------------------------------------------
+#ifndef CUDACOMPLEX_H
+#define CUDACOMPLEX_H
 
+#include "../utilities/nDimArrayUtils.hpp"
 
 namespace rpwa{
   template <typename T>
-  class __align__(ALIGN) complex
+  class
+#ifdef __CUDACC__
+    __align__(ALIGN)
+#endif
+ complex
   {
   public:
     T _re;
     T _im;
-    __host__ __device__ complex(T re = 0, T im = 0) : _re(re), _im(im) {}
-    /* __host__ __device__ complex <T>& operator=(const complex <T>& c) */
+    DEVICE complex(T re = 0, T im = 0) : _re(re), _im(im) {}
+    /* DEVICE complex <T>& operator=(const complex <T>& c) */
     /* { */
     /*   _re=c._re; _im=c._im; */
     /*   return *this; */
     /* }     */
-    __host__ __device__ friend complex <T> operator+(const complex <T>& a, const complex <T>& b)      
+    DEVICE friend complex <T> operator+(const complex <T>& a, const complex <T>& b)      
     {
       complex <T> result;
       result._re = a._re + b._re;
@@ -56,48 +63,50 @@ namespace rpwa{
       return result;
     }
   
-    __host__ __device__ friend complex <T> operator*(const complex <T>& a, const complex <T>& b)
+    DEVICE friend complex <T> operator*(const complex <T>& a, const complex <T>& b)
     {
       complex <T> result;
       result._re = (a._re * b._re) - (a._im * b._im);
       result._im = (a._re * b._im) + (a._im * b._re);
       return result;
     }
-    __host__ __device__ friend T norm(const complex <T>& a) {return (sqrt((a._re * a._re) + (a._im * a._im)));}
-    __host__ __device__ friend T real(const complex <T>& a) {return a._re;}
-    __host__ __device__ friend T imag(const complex <T>& a) {return a._im;}
+    DEVICE friend T norm(const complex <T>& a) {return (sqrt((a._re * a._re) + (a._im * a._im)));}
+    DEVICE friend T real(const complex <T>& a) {return a._re;}
+    DEVICE friend T imag(const complex <T>& a) {return a._im;}
   };
   
   /*  class __align__(ALIGN) ccomplex
   {
   public:
     double2 c;
-    __host__ __device__ ccomplex() : c.x(0), c.y(0) {}
-    __host__ __device__ ccomplex(double re, double im) : c.x(re), c.y(im) {}
-    __host__ __device__ ccomplex(double re) : c.x(re), c.y(0) {}
+    DEVICE ccomplex() : c.x(0), c.y(0) {}
+    DEVICE ccomplex(double re, double im) : c.x(re), c.y(im) {}
+    DEVICE ccomplex(double re) : c.x(re), c.y(0) {}
   
-    __host__ __device__ friend ccomplex operator+(ccomplex a, ccomplex b)
+    DEVICE friend ccomplex operator+(ccomplex a, ccomplex b)
     {
       return make_double2(a.x + b.x, a.y + b.y);
     }
 
-    __host__ __device__ friend ccomplex operator*(ccomplex a, ccomplex b)
+    DEVICE friend ccomplex operator*(ccomplex a, ccomplex b)
     {
       return make_double2((a.x * b.x) - (a.y * b.y),(a.x * b.y) + (a.y * b.x));
     }
 
-    __host__ __device__ friend double norm(ccomplex a)
+    DEVICE friend double norm(ccomplex a)
     {
       return (sqrt((a.x * a.x) + (a.y * a.y)));
     }
 
-    __host__ __device__ friend double real(ccomplex a)
+    DEVICE friend double real(ccomplex a)
     {
       return (a.x);
     }
-    __host__ __device__ friend double imag(ccomplex a)
+    DEVICE friend double imag(ccomplex a)
     {
       return (a.y);
     }
     };*/
 };
+
+#endif // CUDACOMPLEX_H

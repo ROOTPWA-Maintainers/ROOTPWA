@@ -49,7 +49,7 @@
 #include "utilities.h"
 
 
-#define USE_FDF
+//#define USE_FDF
 
 
 using namespace std;
@@ -229,6 +229,20 @@ TPWALikelihood<T>::DoEval(const double* par) const
   ampsArrayType prodAmps;
   copyFromParArray(par, prodAmps, prodAmpFlat);
   const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+  
+  
+
+  return SumArrayCUDA2
+    (reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
+     prodAmps.size()*sizeof(rpwa::complex<double>),
+     prodAmpFlat,
+     _nmbEvents,
+     _rank,
+     _nmbWavesRefl,
+     _cudaDecayAmps,
+     _num_threads,
+     _num_blocks
+     );
 
   // loop over events and calculate first term of log likelihood
   T logLikelihood = 0;
@@ -446,6 +460,12 @@ TPWALikelihood<T>::init(const unsigned int rank,
   buildParDataStruct(rank);
   readIntegrals(normIntFileName, accIntFileName);
   readDecayAmplitudes(ampDirName);
+  PrepareCUDA2(reinterpret_cast<rpwa::complex<double>*>(_decayAmps.data()),
+	       _decayAmps.size()*sizeof(rpwa::complex<double>),
+	       &_cudaDecayAmps,
+	       _num_threads,
+	       _num_blocks);
+
 }
 
 

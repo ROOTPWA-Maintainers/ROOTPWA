@@ -458,7 +458,7 @@ main(int    argc,
 
       { 
 	// get data structures to construct fitResult
-	vector<complex<double> > prodAmps;                // production amplitudes
+	vector<std::complex<double> > prodAmps;                // production amplitudes
 	vector<string>           prodAmpNames;            // names of production amplitudes used in fit
 	vector<pair<int,int> >   fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 	L.buildCAmps(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
@@ -499,7 +499,7 @@ main(int    argc,
 	vector<pair<int,int> > indices;         // indices for error matrix access
 	vector<TString>        waveNames;       // contains rank information 
 	{
-	  vector<complex<double> > V;
+	  vector<std::complex<double> > V;
 	  vector<string>           names;
 	  L.buildCAmps(minimizer->X(), V, indices, names, true);
 	  // convert to TComplex;
