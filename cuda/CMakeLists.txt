@@ -73,6 +73,9 @@ if(USE_CUDA)
   # compile CUDA executable
   cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
   target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
+
+  cuda_add_executable(pwa_cuda pwa_cuda.cu)
+  target_link_libraries(pwa_cuda ${CUDA_CUTIL_LIBRARY})
   
   cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
   target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
