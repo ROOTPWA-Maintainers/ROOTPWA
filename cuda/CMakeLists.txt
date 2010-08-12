@@ -70,11 +70,12 @@ if(USE_CUDA)
     message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
   endif()
 
+  # compile CUDA library
+  cuda_add_library(cuda cuda_helper.cu SHARED)
+
   # compile CUDA executable
   cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
   target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
-
-  cuda_add_library(cuda cuda_helper.cu SHARED)
 
   cuda_add_executable(pwa_cuda pwa_cuda.cu)
   target_link_libraries(pwa_cuda ${CUDA_CUTIL_LIBRARY} cuda)

@@ -43,7 +43,7 @@
 
 
 #ifdef __CUDACC__  // source is compiled by nvcc
-#warning "generating CUDA device functions for nDimArray.hpp"
+#warning "info: generating CUDA device functions for nDimArray.hpp"
 #define DEVICE __host__ __device__
 #else
 #define DEVICE

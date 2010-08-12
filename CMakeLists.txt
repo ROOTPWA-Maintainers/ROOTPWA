@@ -235,15 +235,6 @@ set(UTILITIES_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/utilities
 )
 
-# RootPwa
-set(ROOTPWA_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/src
-)
-set(ROOTPWA_LIBS
-  RootPwa
-)
-add_subdirectory(src)
-
 # CUDA stuff
 set(CUDA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/cuda
@@ -252,6 +243,15 @@ set(CUDA_LIBS
   cuda
 )
 add_subdirectory(cuda)
+
+# RootPwa
+set(ROOTPWA_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/src
+)
+set(ROOTPWA_LIBS
+  RootPwa
+)
+add_subdirectory(src)
 
 # RootPwaAmp
 # add_subdirectory(amplitude)

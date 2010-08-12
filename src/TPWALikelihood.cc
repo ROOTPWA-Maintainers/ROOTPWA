@@ -50,6 +50,7 @@
 
 
 //#define USE_FDF
+#define USE_CUDA
 
 
 using namespace std;
@@ -218,6 +219,10 @@ TPWALikelihood<T>::DoEval(const double* par) const
   FdF(par, logLikelihood, gradient);
   return logLikelihood;
 
+#elif defined(USE_CUDA)
+
+  return DoEvalCuda(par);
+
 #else
 
   // log consumed time
@@ -229,20 +234,6 @@ TPWALikelihood<T>::DoEval(const double* par) const
   ampsArrayType prodAmps;
   copyFromParArray(par, prodAmps, prodAmpFlat);
   const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
-  
-  
-
-  return SumArrayCUDA2
-    (reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
-     prodAmps.size()*sizeof(rpwa::complex<double>),
-     prodAmpFlat,
-     _nmbEvents,
-     _rank,
-     _nmbWavesRefl,
-     _cudaDecayAmps,
-     _num_threads,
-     _num_blocks
-     );
 
   // loop over events and calculate first term of log likelihood
   T logLikelihood = 0;
@@ -296,6 +287,67 @@ TPWALikelihood<T>::DoEval(const double* par) const
   return funcVal;
 
 #endif  // USE_FDF
+}
+
+
+template<typename T>
+double
+TPWALikelihood<T>::DoEvalCuda(const double* par) const
+{
+  ++(_nmbCalls[DOEVAL]);
+
+  // log consumed time
+  TStopwatch timer;
+  timer.Start(true);
+
+  // build complex production amplitudes from function parameters taking into account rank restrictions
+  T             prodAmpFlat;
+  ampsArrayType prodAmps;
+  copyFromParArray(par, prodAmps, prodAmpFlat);
+  const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+
+  T logLikelihood = SumArrayCUDA2(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
+                                  prodAmps.size()*sizeof(rpwa::complex<double>),
+                                  prodAmpFlat,
+                                  _nmbEvents,
+                                  _rank,
+                                  _nmbWavesRefl,
+                                  _cudaDecayAmps,
+                                  _num_threads,
+                                  _num_blocks);
+
+  // log consumed time
+  const double t1 = timer.RealTime();
+  timer.Start(true);
+
+  // compute normalization term of log likelihood
+  complex<T> normFactor = 0;
+  const T    nmbEvt     = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
+  for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+    for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+      for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+        for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {  // inner loop over waves with same reflectivity
+          const complex<T> I = complex<T>(_accMatrix[iRefl][iWave][iRefl][jWave]);
+          normFactor += (prodAmps[iRank][iRefl][iWave] * conj(prodAmps[iRank][iRefl][jWave])) * I;
+        }
+  // take care of flat wave
+  normFactor.real() += prodAmpFlat2;
+
+  // log consumed time
+  const double t2 = timer.RealTime();
+  timer.Stop();
+  _Ltime += t1;
+  _Ntime += t2;
+  
+  if (_debug)
+    printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
+              << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
+              << "normalized likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
+              << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
+
+  // calculate and return log likelihood value
+  const double funcVal = logLikelihood + nmbEvt * normFactor.real();
+  return funcVal;
 }
 
 
@@ -455,17 +507,18 @@ TPWALikelihood<T>::init(const unsigned int rank,
                         const std::string& ampDirName,
 			const unsigned int numbAccEvents)
 {
-  _numbAccEvents=numbAccEvents;
-  readWaveList(waveListFileName);
-  buildParDataStruct(rank);
-  readIntegrals(normIntFileName, accIntFileName);
-  readDecayAmplitudes(ampDirName);
-  PrepareCUDA2(reinterpret_cast<rpwa::complex<double>*>(_decayAmps.data()),
-	       _decayAmps.size()*sizeof(rpwa::complex<double>),
-	       &_cudaDecayAmps,
-	       _num_threads,
-	       _num_blocks);
-
+	_numbAccEvents=numbAccEvents;
+	readWaveList(waveListFileName);
+	buildParDataStruct(rank);
+	readIntegrals(normIntFileName, accIntFileName);
+	readDecayAmplitudes(ampDirName);
+#ifdef USE_CUDA
+	PrepareCUDA2(reinterpret_cast<rpwa::complex<double>*>(_decayAmps.data()),
+	             _decayAmps.size()*sizeof(rpwa::complex<double>),
+	             &_cudaDecayAmps,
+	             _num_threads,
+	             _num_blocks);
+#endif  // USE_CUDA
 }
 
 

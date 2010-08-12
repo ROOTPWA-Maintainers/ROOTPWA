@@ -147,7 +147,7 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 
 	Scalar resultcpu = 0;
 	Scalar resultcuda = 0;
-	Scalar resultcuda2 = 0;
+	//Scalar resultcuda2 = 0;
 
 	unsigned int timer = 0;
 	cutCreateTimer( &timer);
@@ -185,11 +185,12 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 	cutCreateTimer( &timer3);
 	cutStartTimer( timer3);
 
-	int num_threads = 0;
-	int num_blocks = 0;
+	unsigned int num_threads = 0;
+	unsigned int num_blocks = 0;
 	complex<Scalar> *d_decayAmps;
 
-	PrepareCUDA<complex<Scalar>,Scalar>(decayAmps,decayAmpsSize,&d_decayAmps,num_threads,num_blocks);
+	PrepareCUDA<complex<Scalar>,Scalar>(decayAmps, decayAmpsSize, &d_decayAmps,
+	                                    num_threads, num_blocks);
 
 	printf("num_threads: %i \n", num_threads);
 	printf("num_blocks: %i \n", num_blocks);

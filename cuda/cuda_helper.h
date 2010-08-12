@@ -33,20 +33,43 @@
 //
 //
 //-------------------------------------------------------------------------
-#ifndef CUDA_HELPER
-#define CUDA_HELPER
+
+
+#ifndef CUDA_HELPER_H
+#define CUDA_HELPER_H
+
 
 typedef double Scalar;
 #define ALIGN 2 * sizeof( Scalar)
 
-// my includes:
-#include "CudaComplex.h" // includes my Complex datatype
 
-////////////////////////////////////////////////////////////////////////////////
-// declarations:
+#include "CudaComplex.h"
 
-double SumArrayCUDA2(rpwa::complex<double>* prodAmps, const unsigned int prod_mem_size, const double prodAmpFlat, const unsigned int nmbEvents, const unsigned int rank, const unsigned int nmbWavesRefl[2], rpwa::complex<double>* d_decayAmps, unsigned int num_threads, unsigned int num_blocks);
 
-void PrepareCUDA2(rpwa::complex<double>* decayAmps, const unsigned int decay_mem_size, rpwa::complex<double>** d_decayAmps,unsigned int &num_threads, unsigned int &num_blocks);
+namespace rpwa {
 
-#endif // CUDA_HELPER
+
+double
+SumArrayCUDA2(rpwa::complex<double>* prodAmps,
+              const unsigned int     prod_mem_size,
+              const double           prodAmpFlat,
+              const unsigned int     nmbEvents,
+              const unsigned int     rank,
+              const unsigned int     nmbWavesRefl[2],
+              rpwa::complex<double>* d_decayAmps,
+              unsigned int           num_threads,
+              unsigned int           num_blocks);
+
+
+void
+PrepareCUDA2(rpwa::complex<double>*  decayAmps,
+             const unsigned int      decay_mem_size,
+             rpwa::complex<double>** d_decayAmps,
+             unsigned int&           num_threads,
+             unsigned int&           num_blocks);
+
+
+}  // namespace rpwa
+
+
+#endif // CUDA_HELPER_H
