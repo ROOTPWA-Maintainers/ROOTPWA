@@ -50,29 +50,30 @@ namespace rpwa{
     T _re;
     T _im;
     DEVICE complex(T re = 0, T im = 0) : _re(re), _im(im) {}
-    /* DEVICE complex <T>& operator=(const complex <T>& c) */
+    /* DEVICE complex<T>& operator=(const complex<T>& c) */
     /* { */
     /*   _re=c._re; _im=c._im; */
     /*   return *this; */
     /* }     */
-    DEVICE friend complex <T> operator+(const complex <T>& a, const complex <T>& b)      
+    DEVICE friend complex<T> operator+(const complex<T>& a, const complex<T>& b)      
     {
-      complex <T> result;
+      complex<T> result;
       result._re = a._re + b._re;
       result._im = a._im + b._im;
       return result;
     }
   
-    DEVICE friend complex <T> operator*(const complex <T>& a, const complex <T>& b)
+    DEVICE friend complex<T> operator*(const complex<T>& a, const complex<T>& b)
     {
-      complex <T> result;
+      complex<T> result;
       result._re = (a._re * b._re) - (a._im * b._im);
       result._im = (a._re * b._im) + (a._im * b._re);
       return result;
     }
-    DEVICE friend T norm(const complex <T>& a) {return (sqrt((a._re * a._re) + (a._im * a._im)));}
-    DEVICE friend T real(const complex <T>& a) {return a._re;}
-    DEVICE friend T imag(const complex <T>& a) {return a._im;}
+    DEVICE friend T abs (const complex<T>& a) { return sqrt(norm(a));                     }
+    DEVICE friend T norm(const complex<T>& a) { return (a._re * a._re) + (a._im * a._im); }
+    DEVICE friend T real(const complex<T>& a) { return a._re;                             }
+    DEVICE friend T imag(const complex<T>& a) { return a._im;                             }
   };
   
   /*  class __align__(ALIGN) ccomplex

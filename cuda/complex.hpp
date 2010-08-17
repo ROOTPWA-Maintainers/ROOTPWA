@@ -60,312 +60,312 @@
 
 //   namespace gpu {
 
-    // possible storage type
-    // without __align__ directive throughput drops to 50%
-    template<typename T>
-    struct __align__(ALIGN) complexStruct {
-      T x;
-      T y;
-    };
+// possible storage type
+// without __align__ directive throughput drops to 50%
+template<typename T>
+struct __align__(ALIGN) complexStruct {
+	T x;
+	T y;
+};
 
 
-    template<typename storageT, typename scalarT>
-    struct complex {
+template<typename storageT, typename scalarT>
+struct complex {
 
-      typedef storageT storage_type;
-      typedef scalarT  value_type;
+	typedef storageT storage_type;
+	typedef scalarT  value_type;
   
-      storageT _complex;
+	storageT _complex;
   
-      // accessors for real and imaginary components
-      inline __host__ __device__ scalarT& real() { return _complex.x; };
-      inline __host__ __device__ scalarT& imag() { return _complex.y; };
+	// accessors for real and imaginary components
+	inline __host__ __device__ scalarT& real() { return _complex.x; };
+	inline __host__ __device__ scalarT& imag() { return _complex.y; };
 
-      inline __host__ __device__ const scalarT& real() const { return _complex.x; };
-      inline __host__ __device__ const scalarT& imag() const { return _complex.y; };
+	inline __host__ __device__ const scalarT& real() const { return _complex.x; };
+	inline __host__ __device__ const scalarT& imag() const { return _complex.y; };
   
-      // constructors
-      inline __host__ __device__
-      complex(const scalarT& re = (scalarT)0,
-	      const scalarT& im = (scalarT)0)
-      {
-	_complex.x = re;
-	_complex.y = im;
-      }
+	// constructors
+	inline __host__ __device__
+	complex(const scalarT& re = (scalarT)0,
+	        const scalarT& im = (scalarT)0)
+	{
+		_complex.x = re;
+		_complex.y = im;
+	}
 
-      inline __host__ __device__
-      complex(const complex& a)
-      {
-	_complex.x = a._complex.x;
-	_complex.y = a._complex.y;
-      }
+	inline __host__ __device__
+	complex(const complex& a)
+	{
+		_complex.x = a._complex.x;
+		_complex.y = a._complex.y;
+	}
   
-      // assignment operators
-      inline __host__ __device__
-      complex<storageT, scalarT>&
-      operator =(const complex& a)
-      {
-	_complex.x = a._complex.x;
-	_complex.y = a._complex.y;
-	return *this;
-      };
+	// assignment operators
+	inline __host__ __device__
+	complex<storageT, scalarT>&
+	operator =(const complex& a)
+	{
+		_complex.x = a._complex.x;
+		_complex.y = a._complex.y;
+		return *this;
+	};
 
-      inline __host__ __device__
-      complex<storageT, scalarT>&
-      operator =(const scalarT& re)
-      {
-	_complex.x = re;
-	_complex.y = 0;
-	return *this;
-      };
+	inline __host__ __device__
+	complex<storageT, scalarT>&
+	operator =(const scalarT& re)
+	{
+		_complex.x = re;
+		_complex.y = 0;
+		return *this;
+	};
 
-      inline __host__ __device__
-      complex<storageT, scalarT>&
-      operator +=(const complex<storageT, scalarT>& a)
-      {
-	this->_complex.x += a._complex.x;
-	this->_complex.y += a._complex.y;
-	return *this;
-      }
+	inline __host__ __device__
+	complex<storageT, scalarT>&
+	operator +=(const complex<storageT, scalarT>& a)
+	{
+		this->_complex.x += a._complex.x;
+		this->_complex.y += a._complex.y;
+		return *this;
+	}
 
-      // constants: 0, 1, i
-      static __host__ __device__ const complex<storageT, scalarT> zero() { return complex<storageT, scalarT>(0, 0); }
-      static __host__ __device__ const complex<storageT, scalarT> one()  { return complex<storageT, scalarT>(1, 0); }
-      static __host__ __device__ const complex<storageT, scalarT> i()    { return complex<storageT, scalarT>(0, 1); }
-    };
-
-
-    // contruction function
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    makeComplex(const scalarT re = (scalarT)0,
-		const scalarT im = (scalarT)0)
-    {
-      return complex<storageT, scalarT>(re, im);
-    }
+	// constants: 0, 1, i
+	static __host__ __device__ const complex<storageT, scalarT> zero() { return complex<storageT, scalarT>(0, 0); }
+	static __host__ __device__ const complex<storageT, scalarT> one()  { return complex<storageT, scalarT>(1, 0); }
+	static __host__ __device__ const complex<storageT, scalarT> i()    { return complex<storageT, scalarT>(0, 1); }
+};
 
 
-    // summation
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator +(const complex<storageT, scalarT>& a)
-    {
-      return a;
-    }
-
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator +(const complex<storageT, scalarT>& a,
-	       const complex<storageT, scalarT>& b)
-    {
-      return complex<storageT, scalarT>(a._complex.x + b._complex.x, a._complex.y  + b._complex.y);
-    }
-
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator +(const scalarT&                    a,
-	       const complex<storageT, scalarT>& b)
-    {
-      return complex<storageT, scalarT>(a + b.value.x, b.value.y);
-    }
-
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator +(const complex<storageT, scalarT>& a,
-	       const scalarT&                    b)
-    {
-      return complex<storageT, scalarT>(a.value.x + b, a.value.y);
-    }
+// contruction function
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+makeComplex(const scalarT re = (scalarT)0,
+            const scalarT im = (scalarT)0)
+{
+	return complex<storageT, scalarT>(re, im);
+}
 
 
-    // subtraction
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator -(const complex<storageT, scalarT>& a)
-    {
-      return complex<storageT, scalarT>(-a._complex.x, -a._complex.y);
-    }
+// summation
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator +(const complex<storageT, scalarT>& a)
+{
+	return a;
+}
 
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator -(const complex<storageT, scalarT>& a,
-	       const complex<storageT, scalarT>& b)
-    {
-      return complex<storageT, scalarT>(a._complex.x - b._complex.x, a._complex.y  - b._complex.y);
-    }
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator +(const complex<storageT, scalarT>& a,
+           const complex<storageT, scalarT>& b)
+{
+	return complex<storageT, scalarT>(a._complex.x + b._complex.x, a._complex.y  + b._complex.y);
+}
 
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator -(const scalarT&                    a,
-	       const complex<storageT, scalarT>& b)
-    {
-      return complex<storageT, scalarT>(a - b.value.x, -b.value.y);
-    }
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator +(const scalarT&                    a,
+           const complex<storageT, scalarT>& b)
+{
+	return complex<storageT, scalarT>(a + b.value.x, b.value.y);
+}
 
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator -(const complex<storageT, scalarT>& a,
-	       const scalarT&                    b)
-    {
-      return complex<storageT, scalarT>(a.value.x - b, a.value.y);
-    }
-
-
-    // multiplication
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT> operator *(const complex<storageT, scalarT>& a,
-					  const complex<storageT, scalarT>& b)
-    {
-      return complex<storageT, scalarT>(a._complex.x * b._complex.x - a._complex.y * b._complex.y,
-					a._complex.y * b._complex.x + a._complex.x * b._complex.y);
-    }
-
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator *(const scalarT&                    a,
-	       const complex<storageT, scalarT>& b)
-    {
-      return complex<storageT, scalarT>(a * b._complex.x, a * b._complex.y);
-    }
-
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator *(const complex<storageT, scalarT>& a,
-	       const scalarT&                    b)
-    {
-      return complex<storageT, scalarT>(a._complex.x * b, a._complex.y * b);
-    }
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator +(const complex<storageT, scalarT>& a,
+           const scalarT&                    b)
+{
+	return complex<storageT, scalarT>(a.value.x + b, a.value.y);
+}
 
 
-    // division
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator /(const complex<storageT, scalarT>& a,
-	       const complex<storageT, scalarT>& b)
-    {
-      scalarT denom = (b._complex.x * b._complex.x + b._complex.y * b._complex.y );
-      return complex<storageT, scalarT>((a._complex.x * b._complex.x + a._complex.y * b._complex.y ) / denom,
-					(a._complex.y * b._complex.x - a._complex.x * b._complex.y ) / denom);
-    }
+// subtraction
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator -(const complex<storageT, scalarT>& a)
+{
+	return complex<storageT, scalarT>(-a._complex.x, -a._complex.y);
+}
 
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator /(const scalarT&                    a,
-	       const complex<storageT, scalarT>& b)
-    {
-      scalarT denom = b._complex.x * b._complex.x + b._complex.y * b._complex.y;
-      return complex<storageT, scalarT>(a * b._complex.x / denom, -a * b._complex.y / denom);
-    }
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator -(const complex<storageT, scalarT>& a,
+           const complex<storageT, scalarT>& b)
+{
+	return complex<storageT, scalarT>(a._complex.x - b._complex.x, a._complex.y  - b._complex.y);
+}
 
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    operator /(const complex<storageT, scalarT>& a,
-	       const scalarT&                    b)
-    {
-      return complex<storageT, scalarT>(a._complex.x / b, a._complex.y / b);
-    }
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator -(const scalarT&                    a,
+           const complex<storageT, scalarT>& b)
+{
+	return complex<storageT, scalarT>(a - b.value.x, -b.value.y);
+}
 
-    // real part
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    scalarT
-    real(const complex<storageT, scalarT>& a)
-    {
-      return a.real();
-    }
-
-    // imaginary part
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    scalarT
-    imag(const complex<storageT, scalarT>& a)
-    {
-      return a.imag();
-    }
-
-    // complex norm = Re^2 + Im^2
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    scalarT
-    norm(const complex<storageT, scalarT>& a)
-    {
-      return a._complex.x * a._complex.x + a._complex.y * a._complex.y;
-    }
-
-    // complex absolute value
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    scalarT
-    abs(const complex<storageT, scalarT>& a)
-    {
-      return sqrt(a.norm());
-    }
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator -(const complex<storageT, scalarT>& a,
+           const scalarT&                    b)
+{
+	return complex<storageT, scalarT>(a.value.x - b, a.value.y);
+}
 
 
-    // complex conjugate
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    complex<storageT, scalarT>
-    conj(const complex<storageT, scalarT>& a)
-    {
-      return complex<storageT, scalarT>(a._complex.x, -a._complex.y);
-    }
+// multiplication
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT> operator *(const complex<storageT, scalarT>& a,
+                                      const complex<storageT, scalarT>& b)
+{
+	return complex<storageT, scalarT>(a._complex.x * b._complex.x - a._complex.y * b._complex.y,
+	                                  a._complex.y * b._complex.x + a._complex.x * b._complex.y);
+}
+
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator *(const scalarT&                    a,
+           const complex<storageT, scalarT>& b)
+{
+	return complex<storageT, scalarT>(a * b._complex.x, a * b._complex.y);
+}
+
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator *(const complex<storageT, scalarT>& a,
+           const scalarT&                    b)
+{
+	return complex<storageT, scalarT>(a._complex.x * b, a._complex.y * b);
+}
 
 
-    // complex phase angle
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    scalarT
-    arg(const complex<storageT, scalarT>& a)
-    {
-      return atan2(a._complex.y, a._complex.x);
-    }
+// division
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator /(const complex<storageT, scalarT>& a,
+           const complex<storageT, scalarT>& b)
+{
+	scalarT denom = (b._complex.x * b._complex.x + b._complex.y * b._complex.y );
+	return complex<storageT, scalarT>((a._complex.x * b._complex.x + a._complex.y * b._complex.y ) / denom,
+	                                  (a._complex.y * b._complex.x - a._complex.x * b._complex.y ) / denom);
+}
+
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator /(const scalarT&                    a,
+           const complex<storageT, scalarT>& b)
+{
+	scalarT denom = b._complex.x * b._complex.x + b._complex.y * b._complex.y;
+	return complex<storageT, scalarT>(a * b._complex.x / denom, -a * b._complex.y / denom);
+}
+
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+operator /(const complex<storageT, scalarT>& a,
+           const scalarT&                    b)
+{
+	return complex<storageT, scalarT>(a._complex.x / b, a._complex.y / b);
+}
+
+// real part
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+scalarT
+real(const complex<storageT, scalarT>& a)
+{
+	return a.real();
+}
+
+// imaginary part
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+scalarT
+imag(const complex<storageT, scalarT>& a)
+{
+	return a.imag();
+}
+
+// complex norm = Re^2 + Im^2
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+scalarT
+norm(const complex<storageT, scalarT>& a)
+{
+	return a._complex.x * a._complex.x + a._complex.y * a._complex.y;
+}
+
+// complex absolute value
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+scalarT
+abs(const complex<storageT, scalarT>& a)
+{
+	return sqrt(a.norm());
+}
 
 
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    bool
-    operator ==(const complex<storageT, scalarT>& a,
-		const complex<storageT, scalarT>& b)
-    {
-      return ((a._complex.x == b._complex.x) and (a._complex.y == b._complex.y));
-    }
+// complex conjugate
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+complex<storageT, scalarT>
+conj(const complex<storageT, scalarT>& a)
+{
+	return complex<storageT, scalarT>(a._complex.x, -a._complex.y);
+}
 
 
-    template<typename storageT, typename scalarT>
-    inline __host__ __device__
-    bool
-    operator !=(const complex<storageT, scalarT>& a,
-		const complex<storageT, scalarT>& b)
-    {
-      return not(a == b);
-    }
+// complex phase angle
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+scalarT
+arg(const complex<storageT, scalarT>& a)
+{
+	return atan2(a._complex.y, a._complex.x);
+}
 
 
-    template<typename storageT, typename scalarT>
-    __host__
-    std::ostream&
-    operator <<(std::ostream& out,
-		const complex<storageT, scalarT>& a)
-    {
-      out << "(" << a.real() << ", " << a.imag() << ")";
-      return out;
-    }
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+bool
+operator ==(const complex<storageT, scalarT>& a,
+            const complex<storageT, scalarT>& b)
+{
+	return ((a._complex.x == b._complex.x) and (a._complex.y == b._complex.y));
+}
+
+
+template<typename storageT, typename scalarT>
+inline __host__ __device__
+bool
+operator !=(const complex<storageT, scalarT>& a,
+            const complex<storageT, scalarT>& b)
+{
+	return not(a == b);
+}
+
+
+template<typename storageT, typename scalarT>
+__host__
+std::ostream&
+operator <<(std::ostream& out,
+            const complex<storageT, scalarT>& a)
+{
+	out << "(" << a.real() << ", " << a.imag() << ")";
+	return out;
+}
 
 
 //   }  // namespace gpu

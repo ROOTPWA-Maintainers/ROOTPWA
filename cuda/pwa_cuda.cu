@@ -54,7 +54,7 @@ using namespace std;
 
 
 // kernel:
-#include "cuda_helper.cu"
+#include "cudaLikelihoodInterface.cu"
 
 #include "CudaComplex.h" // includes my Complex datatype
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,9 +118,8 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
 				const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
 				const unsigned int decayAmpOffset     = indicesToOffset<unsigned int>(decayAmpIndices,
-					decayAmpDim, 3);
-				// const double       val                = iEvt * 1000 + iRefl * 100 + iWave;
-				const double       val                = iEvt;
+					                                                                    decayAmpDim, 3);
+				const double       val                = iEvt * 1000 + iRefl * 100 + iWave;
 				decayAmps[decayAmpOffset] = complex<double>(val, val + 0.5);
 			}
 
@@ -137,9 +136,7 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 				const unsigned int prodAmpIndices[3] = {iRank, iRefl, iWave};
 				const unsigned int prodAmpOffset     = indicesToOffset<unsigned int>(prodAmpIndices,
 				                                                                     prodAmpDim, 3);
-				// const double       val               = iRank * 1000 + iRefl * 100 + iWave;
-				// const double       val               = (iRefl == 0) ? iWave : 0;
-				const double       val               = iWave;
+				const double       val               = iRank * 1000 + iRefl * 100 + iWave;
 				prodAmps[prodAmpOffset] = complex<double>(val, val + 0.5);
 			}
   
@@ -185,19 +182,20 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 	cutCreateTimer( &timer3);
 	cutStartTimer( timer3);
 
-	unsigned int num_threads = 0;
-	unsigned int num_blocks = 0;
-	complex<Scalar> *d_decayAmps;
+	unsigned int nmbThreadsPerBlock = 0;
+	unsigned int nmbBlocks          = 0;
+	complex<Scalar>* d_decayAmps;
 
-	PrepareCUDA<complex<Scalar>,Scalar>(decayAmps, decayAmpsSize, &d_decayAmps,
-	                                    num_threads, num_blocks);
+	PrepareCUDA<complex<Scalar> >(decayAmps, decayAmpsSize, d_decayAmps, nmbBlocks, nmbThreadsPerBlock);
 
-	printf("num_threads: %i \n", num_threads);
-	printf("num_blocks: %i \n", num_blocks);
+	printf("nmbThreadsPerBlock: %i \n", nmbThreadsPerBlock);
+	printf("nmbBlocks         : %i \n", nmbBlocks);
   
 	for (int i=0; i < iterat; i++)
 	{
-	  resultcuda = SumArrayCUDA<complex<Scalar>,Scalar>(prodAmps, prodAmpsSize, prodAmpFlat, nmbEvents, rank, nmbWavesRefl, d_decayAmps, num_threads, num_blocks);
+		resultcuda = runCudaLogLikelihoodKernels<rpwa::complex<Scalar>, Scalar>
+		  (prodAmps, prodAmpsSize, prodAmpFlat, d_decayAmps, nmbEvents,
+		   rank, nmbWavesRefl, nmbBlocks, nmbThreadsPerBlock);
 	}
 
 	cout << "GPU result:" << resultcuda << endl;
@@ -221,11 +219,11 @@ int main( int argc, char** argv)
 	// const unsigned int nmbEvents = 32 * 4 * 10;
 	const unsigned int rank = 2;
 	const unsigned int nmbWavesRefl[2] = {7,34};
-	const unsigned int iterat = 1000;
+	const unsigned int iterat = 10;
 	// const unsigned int rank = 1;
 	// const unsigned int nmbWavesRefl[2] = {1,1};
-	//  printf("Num Threads: %i \n", num_threads);
-	//  printf("Num Blocks: %i \n", num_blocks);
+	//  printf("Num Threads: %i \n", nmbThreadsPerBlock);
+	//  printf("Num Blocks: %i \n", nmbBlocks);
   
 	StartCalc(nmbEvents, rank, nmbWavesRefl, iterat); // change the datatype only here
 

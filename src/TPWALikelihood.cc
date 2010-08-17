@@ -306,15 +306,15 @@ TPWALikelihood<T>::DoEvalCuda(const double* par) const
   copyFromParArray(par, prodAmps, prodAmpFlat);
   const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
-  T logLikelihood = SumArrayCUDA2(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
-                                  prodAmps.size()*sizeof(rpwa::complex<double>),
-                                  prodAmpFlat,
-                                  _nmbEvents,
-                                  _rank,
-                                  _nmbWavesRefl,
-                                  _cudaDecayAmps,
-                                  _num_threads,
-                                  _num_blocks);
+  T logLikelihood = sumLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
+                                         prodAmps.num_elements() * sizeof(rpwa::complex<double>),
+                                         prodAmpFlat,
+                                         _cudaDecayAmps,
+                                         _nmbEvents,
+                                         _rank,
+                                         _nmbWavesRefl,
+                                         _nmbBlocks,
+                                         _nmbThreadsPerBlock);
 
   // log consumed time
   const double t1 = timer.RealTime();
@@ -513,11 +513,11 @@ TPWALikelihood<T>::init(const unsigned int rank,
 	readIntegrals(normIntFileName, accIntFileName);
 	readDecayAmplitudes(ampDirName);
 #ifdef USE_CUDA
-	PrepareCUDA2(reinterpret_cast<rpwa::complex<double>*>(_decayAmps.data()),
-	             _decayAmps.size()*sizeof(rpwa::complex<double>),
-	             &_cudaDecayAmps,
-	             _num_threads,
-	             _num_blocks);
+	initLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(_decayAmps.data()),
+	                      _decayAmps.num_elements() * sizeof(rpwa::complex<double>),
+	                      _cudaDecayAmps,
+	                      _nmbBlocks,
+	                      _nmbThreadsPerBlock);
 #endif  // USE_CUDA
 }
 

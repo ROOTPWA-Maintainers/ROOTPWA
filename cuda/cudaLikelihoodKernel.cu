@@ -25,7 +25,8 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      CUDA Kernels for likelihood and summation
+//      CUDA kernels for summation of large arrays and for likelihood
+//      calculation
 //
 //
 // Author List:
@@ -35,12 +36,15 @@
 //-------------------------------------------------------------------------
 
 
+
+// cascadable kernel that computes sum of N values of an array
 template<typename T>
 __global__
 void
-SumCUDA (const T*           valArray,
-         const unsigned int nmbVals,
-         T*                 sumArray)
+sumKernel
+(const T*           d_valArray,  // array with values to sum up
+ const unsigned int nmbVals,     // number of values this kernel has to sum up
+ T*                 d_sumArray)  // output array of partial sums with one entry for each kernel
 {
 	const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
 	const unsigned int nmbThreads = gridDim.x * blockDim.x;
@@ -48,37 +52,38 @@ SumCUDA (const T*           valArray,
 	// #pragma unroll 16
 	T sum = T(0);
 	for (unsigned int i = threadId; i < nmbVals; i += nmbThreads)
-		sum += valArray[i];
+		sum += d_valArray[i];
 
-	sumArray[threadId] = sum;
+	d_sumArray[threadId] = sum;
 }
 
 
-template<typename complexT, typename scalarT>
+// kernel that calculates real-data term of log likelihood sum for a number of events
+template<typename complexT, typename T>
 __global__
 void
-SumCUDAPseudoArray(const complexT*     decayAmps,
-                   const complexT*     prodAmps,
-                   const scalarT       prodAmpFlat,
-                   const unsigned int  nmbEvents,
-                   const unsigned int  rank,
-                   // const unsigned int* nmbWavesRefl,
-                   const unsigned int  nmbWavesRefl0,
-                   const unsigned int  nmbWavesRefl1,
-                   const unsigned int  nmbWavesReflMax,
-                   scalarT*            logLikelihoodSums)
+sumLogLikelihoodKernel
+(const complexT*    d_prodAmps,           // 3-dim array of production amplitudes [iRank][iRefl][iWave]
+ const T            prodAmpFlat2,         // squared production amplitude of flat wave
+ const complexT*    d_decayAmps,          // 3-dim array of decay amplitudes [iRefl][iWave][iEvt]
+ const unsigned int nmbEvents,            // number of events this kernel should process
+ const unsigned int rank,                 // rank of spin-density matrix
+ const unsigned int nmbWavesReflNeg,      // number waves with negative reflectivity
+ const unsigned int nmbWavesReflPos,      // number waves with positive reflectivity
+ const unsigned int nmbWavesMax,          // maximum extent of iWave index for production and decay amplitude arrays
+ T*                 d_logLikelihoodSums)  // output array of partial log likelihood sums with one entry for each kernel
 {
 	const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
 	const unsigned int nmbThreads = gridDim.x * blockDim.x;
 
-	const scalarT      prodAmpFlat2    = prodAmpFlat * prodAmpFlat;
-	const unsigned int prodAmpDim [3]  = {rank, 2, nmbWavesReflMax};
-	const unsigned int decayAmpDim[3]  = {2, nmbWavesReflMax, nmbEvents};
-	const unsigned int nmbWavesRefl[2] = {nmbWavesRefl0, nmbWavesRefl1};
-	// loop over events and calculate first term of log likelihood
-	scalarT logLikelihood = scalarT(0);
+	const unsigned int nmbWavesRefl[2] = {nmbWavesReflNeg, nmbWavesReflPos};
+	// define extents of arrays
+	const unsigned int prodAmpDim [3] = {rank, 2,           nmbWavesMax};
+	const unsigned int decayAmpDim[3] = {2,    nmbWavesMax, nmbEvents};
+	// loop over events and calculate real-data term of log likelihood
+	T logLikelihoodSum = T(0);
 	for (unsigned int iEvt = threadId; iEvt < nmbEvents; iEvt += nmbThreads) {
-		scalarT l = scalarT(0);  // likelihood for this event
+		T l = T(0);  // likelihood for this event
 		for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 				complexT ampProdSum = complexT(0);  // amplitude sum for negative/positive reflectivity for this rank
@@ -87,18 +92,15 @@ SumCUDAPseudoArray(const complexT*     decayAmps,
 					const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
 					const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
 					ampProdSum =   ampProdSum
-						           +   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
-						             * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
+						           +   d_prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
+						             * d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
 				}
 				l += norm(ampProdSum);
 			}
 		}
 		l             += prodAmpFlat2;
-		logLikelihood -= log(l);  // accumulate log likelihood
+		logLikelihoodSum -= log(l);  // accumulate log likelihood
   }
-
-	logLikelihoodSums[threadId] = logLikelihood;
-	//logLikelihoodSums[threadId] = threadId;
+	// write result
+	d_logLikelihoodSums[threadId] = logLikelihoodSum;
 }
-
-

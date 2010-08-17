@@ -71,18 +71,19 @@ if(USE_CUDA)
   endif()
 
   # compile CUDA library
-  cuda_add_library(cuda cuda_helper.cu SHARED)
+  cuda_add_library(cuda cudaLikelihoodInterface.cu SHARED)
 
   # compile CUDA executable
-  cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
-  target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
-
   cuda_add_executable(pwa_cuda pwa_cuda.cu)
   target_link_libraries(pwa_cuda ${CUDA_CUTIL_LIBRARY} cuda)
   
+  make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
+  target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda)
+
+  cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+  target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
+
   cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
   target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
-
-  make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
 
 endif()

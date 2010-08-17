@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      Test CUDA program
+//      interface for CUDA likelihood functions
 //
 //
 // Author List:
@@ -35,12 +35,12 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef CUDA_HELPER_H
-#define CUDA_HELPER_H
+#ifndef CUDALIKELIHOODINTERFACE_H
+#define CUDALIKELIHOODINTERFACE_H
 
 
 typedef double Scalar;
-#define ALIGN 2 * sizeof( Scalar)
+#define ALIGN 2 * sizeof(Scalar)
 
 
 #include "CudaComplex.h"
@@ -50,26 +50,28 @@ namespace rpwa {
 
 
 double
-SumArrayCUDA2(rpwa::complex<double>* prodAmps,
-              const unsigned int     prod_mem_size,
-              const double           prodAmpFlat,
-              const unsigned int     nmbEvents,
-              const unsigned int     rank,
-              const unsigned int     nmbWavesRefl[2],
-              rpwa::complex<double>* d_decayAmps,
-              unsigned int           num_threads,
-              unsigned int           num_blocks);
+sumLogLikelihoodCuda
+(const rpwa::complex<double>* prodAmps,
+ const unsigned int           prod_mem_size,
+ const double                 prodAmpFlat,
+ const rpwa::complex<double>* d_decayAmps,
+ const unsigned int           nmbEvents,
+ const unsigned int           rank,
+ const unsigned int           nmbWavesRefl[2],
+ const unsigned int           nmbBlocks,
+ const unsigned int           nmbThreadsPerBlock);
 
 
 void
-PrepareCUDA2(rpwa::complex<double>*  decayAmps,
-             const unsigned int      decay_mem_size,
-             rpwa::complex<double>** d_decayAmps,
-             unsigned int&           num_threads,
-             unsigned int&           num_blocks);
+initLogLikelihoodCuda
+(const rpwa::complex<double>* decayAmps,
+ const unsigned int           decay_mem_size,
+ rpwa::complex<double>*&      d_decayAmps,
+ unsigned int&                nmbBlocks,
+ unsigned int&                nmbThreadsPerBlock);
 
 
 }  // namespace rpwa
 
 
-#endif // CUDA_HELPER_H
+#endif // CUDALIKELIHOODINTERFACE_H

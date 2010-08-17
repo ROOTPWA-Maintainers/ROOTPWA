@@ -52,7 +52,8 @@
 // PWA2000 classes
 #include "integral.h"
 #include "matrix.h"
-#include "../cuda/cuda_helper.h"
+#include "../cuda/cudaLikelihoodInterface.h"
+
 
 class TString;
 class TCMatrix;
@@ -198,8 +199,9 @@ private:
   
 	ampsArrayType _decayAmps;  // precalculated decay amplitudes [event index][reflectivity][wave index]
   
-	rpwa::complex<double>* _cudaDecayAmps;  // precalculated decay amplitudes [event index][reflectivity][wave index]
-	unsigned int _num_threads,_num_blocks;
+	rpwa::complex<double>* _cudaDecayAmps;  // device pointer to precalculated decay amplitudes [event index][reflectivity][wave index]
+	unsigned int _nmbBlocks;           // number of CUDA blocks used to run kernels
+	unsigned int _nmbThreadsPerBlock;  // number of CUDA threads that is run per block
 
 	mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
 	mutable std::vector<double> _derivCache;  // cache for derivatives
