@@ -35,47 +35,29 @@
 //-------------------------------------------------------------------------
 
 
-// 'Standard' includes:
-#include <stdlib.h>
-#include <stdio.h>
-#include <string>
-#include <math.h>
-#include <cutil_math.h>
-#include <ctime>
-#include <cuda_runtime.h>
-#include <iostream>
-#include "nDimArrayUtils.hpp"
-#include "reportingUtils.hpp"
-#include <cutil_inline.h>
+#include "cudaLikelihoodInterface.cu"
 
-// my includes:
+
 using namespace rpwa;
 using namespace std;
 
 
-// kernel:
-#include "cudaLikelihoodInterface.cu"
-
-#include "CudaComplex.h" // includes my Complex datatype
-////////////////////////////////////////////////////////////////////////////////
-// declarations:
-
-////////////////////////////////////////////////////////////////////////////////
-// SumArrayCUDA FUNCTON:
-
-////////////////////////////////////////////////////////////////////////////////
-// SumArray FUNCTION:
-
-template<typename complexT, typename scalarT>
-scalarT SumArray(complexT* decayAmps, complexT* prodAmps, const scalarT prodAmpFlat, const unsigned int nmbEvents, const unsigned int rank, const unsigned int nmbWavesRefl[2])
+template<typename complexT, typename T>
+T
+SumArray(complexT*          decayAmps,
+         complexT*          prodAmps,
+         const T            prodAmpFlat,
+         const unsigned int nmbEvents,
+         const unsigned int rank,
+         const unsigned int nmbWavesRefl[2])
 {
-	const scalarT      prodAmpFlat2   = prodAmpFlat * prodAmpFlat;
+	const T            prodAmpFlat2   = prodAmpFlat * prodAmpFlat;
 	const unsigned int prodAmpDim [3] = {rank,      2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
 	const unsigned int decayAmpDim[3] = {2, max(nmbWavesRefl[0], nmbWavesRefl[1]), nmbEvents};
 	// loop over events and calculate first term of log likelihood
-	scalarT logLikelihood = 0;
+	T logLikelihood = 0;
 	for (unsigned int iEvt = 0; iEvt < nmbEvents; iEvt++) {
-		scalarT l = 0;  // likelihood for this event
+		T l = 0;  // likelihood for this event
 		for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 				complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
@@ -95,23 +77,22 @@ scalarT SumArray(complexT* decayAmps, complexT* prodAmps, const scalarT prodAmpF
 	}  // end loop over events
   
 	return logLikelihood;
-
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// StartCalc FUNCTION: 
 
-// StartCalc for complex datatype:
-void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsigned int nmbWavesRefl[2], const unsigned int iterat)
+void
+StartCalc(const unsigned int nmbEvents,
+          const unsigned int rank,
+          const unsigned int nmbWavesRefl[2],
+          const unsigned int iterat)
 {
-  
 	// set decay amplitudes
-	const unsigned int decayAmpDim[3] = {2, max(nmbWavesRefl[0], nmbWavesRefl[1]), nmbEvents};
-	complex<Scalar>*   decayAmps;
-	const unsigned int decayAmpsSize
-		= allocatePseudoNdimArray<complex<double>, unsigned int>(decayAmps, decayAmpDim, 3);
+	const unsigned int     decayAmpDim[3] = {2, max(nmbWavesRefl[0], nmbWavesRefl[1]), nmbEvents};
+	rpwa::complex<Scalar>* decayAmps;
+	const unsigned int     decayAmpsSize
+		= allocatePseudoNdimArray<rpwa::complex<double>, unsigned int>(decayAmps, decayAmpDim, 3);
 	//  printInfo << "size of decay amplitude array is " << decayAmpsSize / (1024. * 1024.) << " MiBytes; "
-	//	    << 100 * nmbEvents * (nmbWavesRefl[0] + nmbWavesRefl[1]) * sizeof(complex<double>)
+	//	    << 100 * nmbEvents * (nmbWavesRefl[0] + nmbWavesRefl[1]) * sizeof(rpwa::complex<double>)
 	//               / (double)decayAmpsSize << " % used" << endl;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave)
@@ -120,13 +101,13 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 				const unsigned int decayAmpOffset     = indicesToOffset<unsigned int>(decayAmpIndices,
 					                                                                    decayAmpDim, 3);
 				const double       val                = iEvt * 1000 + iRefl * 100 + iWave;
-				decayAmps[decayAmpOffset] = complex<double>(val, val + 0.5);
+				decayAmps[decayAmpOffset] = rpwa::complex<double>(val, val + 0.5);
 			}
 
 	// set production amplitudes
-	const unsigned int prodAmpDim[3] = {rank, 2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
-	complex<double>*   prodAmps;
-	const unsigned int prodAmpsSize  = allocatePseudoNdimArray<complex<double>, unsigned int>
+	const unsigned int     prodAmpDim[3] = {rank, 2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
+	rpwa::complex<double>* prodAmps;
+	const unsigned int     prodAmpsSize  = allocatePseudoNdimArray<rpwa::complex<double>, unsigned int>
 		(prodAmps, prodAmpDim, 3);
 	// printInfo << "size of production amplitude array is " << prodAmpsSize << " bytes" << endl;
 	unsigned int parIndex = 1;
@@ -137,7 +118,7 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 				const unsigned int prodAmpOffset     = indicesToOffset<unsigned int>(prodAmpIndices,
 				                                                                     prodAmpDim, 3);
 				const double       val               = iRank * 1000 + iRefl * 100 + iWave;
-				prodAmps[prodAmpOffset] = complex<double>(val, val + 0.5);
+				prodAmps[prodAmpOffset] = rpwa::complex<double>(val, val + 0.5);
 			}
   
 	const double prodAmpFlat = parIndex;
@@ -152,7 +133,8 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 
 	for (int i=0; i < iterat; i++)
 	{
-	  resultcpu = SumArray<complex<Scalar>, Scalar>(decayAmps,prodAmps,prodAmpFlat,nmbEvents,rank,nmbWavesRefl);
+	  resultcpu = SumArray<rpwa::complex<Scalar>, Scalar>(decayAmps, prodAmps, prodAmpFlat,
+	                                                      nmbEvents, rank, nmbWavesRefl);
 	}
 
 	cout << "CPU result:" << resultcpu << endl;
@@ -168,7 +150,7 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 
 	// for (int i=0; i < iterat; i++)
 	// {
-	//   resultcuda2 = SumArrayCUDATest<complex<Scalar>, Scalar>(decayAmps,decayAmpsSize,prodAmps,prodAmpsSize,prodAmpFlat,nmbEvents,rank,nmbWavesRefl);
+	//   resultcuda2 = SumArrayCUDATest<rpwa::complex<Scalar>, Scalar>(decayAmps,decayAmpsSize,prodAmps,prodAmpsSize,prodAmpFlat,nmbEvents,rank,nmbWavesRefl);
 	// }
 
 	// cout << "GPU Test result:" << resultcuda2 << endl;
@@ -184,9 +166,9 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 
 	unsigned int nmbThreadsPerBlock = 0;
 	unsigned int nmbBlocks          = 0;
-	complex<Scalar>* d_decayAmps;
+	rpwa::complex<Scalar>* d_decayAmps;
 
-	PrepareCUDA<complex<Scalar> >(decayAmps, decayAmpsSize, d_decayAmps, nmbBlocks, nmbThreadsPerBlock);
+	PrepareCUDA<rpwa::complex<Scalar> >(decayAmps, decayAmpsSize, d_decayAmps, nmbBlocks, nmbThreadsPerBlock);
 
 	printf("nmbThreadsPerBlock: %i \n", nmbThreadsPerBlock);
 	printf("nmbBlocks         : %i \n", nmbBlocks);
@@ -209,12 +191,11 @@ void StartCalc(const unsigned int nmbEvents, const unsigned int rank, const unsi
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program main:
 
-int main( int argc, char** argv) 
+int
+main(int    argc,
+     char** argv) 
 {
-
 	const unsigned int nmbEvents = 100000;
 	// const unsigned int nmbEvents = 32 * 4 * 10;
 	const unsigned int rank = 2;
@@ -228,5 +209,4 @@ int main( int argc, char** argv)
 	StartCalc(nmbEvents, rank, nmbWavesRefl, iterat); // change the datatype only here
 
 	//  cutilExit(argc, argv);
-
 }

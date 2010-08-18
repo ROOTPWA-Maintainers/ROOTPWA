@@ -53,7 +53,7 @@ using namespace boost;
 using namespace rpwa;
 
 
-typedef multi_array<std::complex<double>, 3> ampsArrayType;  // array for production and decay amplitudes
+typedef multi_array<std::complex<double>, 3> ampsArrayType;  // host array type of production and decay amplitudes
 
 
 template<typename complexT, typename T>
@@ -304,29 +304,51 @@ runLogLikelihoodSumCuda(const unsigned int nmbRepitions,
 	}
 
 	// initialize CUDA environment
+	cudaLikelihoodInterface<rpwa::complex<double> >& interface
+		= cudaLikelihoodInterface<rpwa::complex<double> >::instance();
+	interface.setDebug(true);
+	interface.initCudaDevice();
+	printInfo << interface;
+	cout << "free mem before = " << interface.freeDeviceMem() / (1024. * 1024.)
+	     << ", " << interface._d_decayAmps << endl;
+
 	rpwa::complex<double>* d_decayAmps;
 	unsigned int           nmbBlocks;
 	unsigned int           nmbThreadsPerBlock;
-	initLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
-	                      decayAmps.num_elements() * sizeof(rpwa::complex<double>),
-	                      d_decayAmps,
-	                      nmbBlocks,
-	                      nmbThreadsPerBlock);
+	// initLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
+	//                       decayAmps.num_elements() * sizeof(rpwa::complex<double>),
+	//                       d_decayAmps,
+	//                       nmbBlocks,
+	//                       nmbThreadsPerBlock);
+	// cout << "free mem after  = " << interface.freeDeviceMem() / (1024. * 1024.) << endl;
+
+	interface.loadDecayAmps(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
+	                        decayAmps.num_elements(), nmbEvents, nmbWavesRefl, false);
+	cout << "free mem after  = " << interface.freeDeviceMem() / (1024. * 1024.)
+	     << ", " << interface._d_decayAmps << endl;
 
 	// call function
 	clock_t start, finish;  // rough estimation of run time
 	double  logLikelihood;
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
-		logLikelihood = sumLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
-		                                     prodAmps.num_elements() * sizeof(rpwa::complex<double>),
-		                                     prodAmpFlat,
-		                                     d_decayAmps,
-		                                     nmbEvents,
-		                                     rank,
-		                                     nmbWavesRefl,
-                                         nmbBlocks,
-		                                     nmbThreadsPerBlock);
+		// logLikelihood = sumLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
+		//                                      prodAmps.num_elements() * sizeof(rpwa::complex<double>),
+		//                                      prodAmpFlat,
+		//                                      // d_decayAmps,
+		//                                      interface._d_decayAmps,
+		//                                      nmbEvents,
+		//                                      rank,
+		//                                      nmbWavesRefl,
+    //                                      // nmbBlocks,
+		//                                      // nmbThreadsPerBlock);
+		//                                      interface.nmbBlocks(),
+		//                                      interface.nmbThreadsPerBlock());
+		logLikelihood = interface.sumLogLikelihood
+			(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
+			 prodAmps.num_elements(),
+			 prodAmpFlat,
+			 rank);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 
@@ -342,11 +364,15 @@ runLogLikelihoodSumCuda(const unsigned int nmbRepitions,
 }
 
 
+
+
+
+
 int
 main(int    argc,
      char** argv)
 {
-	const unsigned int nmbRepitions    = 10;
+	const unsigned int nmbRepitions    = 100;
 	// setup parameters that roughly correspond to the pi- pi+ pi- PWA
 	const unsigned int nmbEvents       = 100000;
 	// 34 waves with positive, 7 waves with negative reflectivity, and flat wave: 42 in total
