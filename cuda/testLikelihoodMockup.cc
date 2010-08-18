@@ -56,26 +56,26 @@ using namespace rpwa;
 typedef multi_array<std::complex<double>, 3> ampsArrayType;  // host array type of production and decay amplitudes
 
 
-template<typename complexT, typename T>
-T
-logLikelihoodSumMultiArray(const ampsArrayType& decayAmps,
-                           const ampsArrayType& prodAmps,
-                           const T&             prodAmpFlat,
-                           const unsigned int   nmbEvents,
-                           const unsigned int   rank,
-                           const unsigned int   nmbWavesRefl[2])
+template<typename complexT>
+typename complexT::value_type
+logLikelihoodSumMultiArray(const ampsArrayType&                 decayAmps,
+                           const ampsArrayType&                 prodAmps,
+                           const typename complexT::value_type& prodAmpFlat,
+                           const unsigned int                   nmbEvents,
+                           const unsigned int                   rank,
+                           const unsigned int                   nmbWavesRefl[2])
 {
-	const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+	const typename complexT::value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 	// loop over events and calculate first term of log likelihood
-	T logLikelihood = 0;
+	typename complexT::value_type logLikelihood = 0;
 	for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
-		T l = 0;  // likelihood for this event
+		typename complexT::value_type l = 0;  // likelihood for this event
 		for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 				complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
 				for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 					// compute likelihood term
-					ampProdSum += prodAmps[iRank][iRefl][iWave] * decayAmps[iRefl][iWave][iEvt];
+					ampProdSum += prodAmps[iRank][iRefl][iWave] * decayAmps[iEvt][iRefl][iWave];
 				}
 				l += norm(ampProdSum);
 			}
@@ -98,12 +98,12 @@ runLogLikelihoodSumMultiArray(const unsigned int nmbRepitions,
 {
 	// set decay amplitudes
 	ampsArrayType decayAmps;
-	decayAmps.resize(extents[2][max(nmbWavesRefl[0], nmbWavesRefl[1])][nmbEvents]);
+	decayAmps.resize(extents[nmbEvents][2][max(nmbWavesRefl[0], nmbWavesRefl[1])]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave)
 			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
 				const double val = iEvt * 1000 + iRefl * 100 + iWave;
-				decayAmps[iRefl][iWave][iEvt] = std::complex<double>(val, val + 0.5);
+				decayAmps[iEvt][iRefl][iWave] = std::complex<double>(val, val + 0.5);
 			}
 
 	// set production amplitudes
@@ -123,8 +123,8 @@ runLogLikelihoodSumMultiArray(const unsigned int nmbRepitions,
 	double  logLikelihood;
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
-		logLikelihood = logLikelihoodSumMultiArray<std::complex<double>, double>
-			(decayAmps, prodAmps, prodAmpFlat, nmbEvents, rank, nmbWavesRefl);
+		logLikelihood = logLikelihoodSumMultiArray<std::complex<double> >
+			                (decayAmps, prodAmps, prodAmpFlat, nmbEvents, rank, nmbWavesRefl);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 
@@ -132,45 +132,34 @@ runLogLikelihoodSumMultiArray(const unsigned int nmbRepitions,
 }
 
 
-template<typename complexT, typename T>
-T
-logLikelihoodSumPseudoArray(const complexT*    decayAmps,
-                            const complexT*    prodAmps,
-                            const T&           prodAmpFlat,
-                            const unsigned int nmbEvents,
-                            const unsigned int rank,
-                            const unsigned int nmbWavesRefl[2])
+template<typename complexT>
+typename complexT::value_type
+logLikelihoodSumPseudoArray(const complexT*                      decayAmps,
+                            const complexT*                      prodAmps,
+                            const typename complexT::value_type& prodAmpFlat,
+                            const unsigned int                   nmbEvents,
+                            const unsigned int                   rank,
+                            const unsigned int                   nmbWavesRefl[2])
 {
-	const T            prodAmpFlat2   = prodAmpFlat * prodAmpFlat;
-	const unsigned int prodAmpDim [3] = {rank,      2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
-	const unsigned int decayAmpDim[3] = {2, max(nmbWavesRefl[0], nmbWavesRefl[1]), nmbEvents};
+	const typename complexT::value_type prodAmpFlat2   = prodAmpFlat * prodAmpFlat;
+	const unsigned int                  prodAmpDim [3] = {rank,      2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
+	const unsigned int                  decayAmpDim[3] = {nmbEvents, 2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
 	// loop over events and calculate first term of log likelihood
-	T logLikelihood = 0;
+	typename complexT::value_type logLikelihood = 0;
 	for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
-		T l = 0;  // likelihood for this event
+		typename complexT::value_type l = 0;  // likelihood for this event
 		for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 				complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
 				for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 					// compute likelihood term
 					const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
-					const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
-					// ampProdSum +=   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
-					// 	            * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
-					ampProdSum =   ampProdSum
-						           +   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
-					 	             * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
-					// cout << "    [" << iEvt << "]["  << iRank << "][" << iRefl << "][" << iWave << "] = "
-					//      // << "(" << real(ampProdSum) << ", " << imag(ampProdSum) << ")"
-					//      << "("
-					//      << real(prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)])
-					//      << ", "
-					//      << imag(prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)])
-					//      << "), ("
-					//      << real(decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)])
-					//      << ", "
-					//      << imag(decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)])
-					//      << ")" << endl;
+					const unsigned int decayAmpIndices[3] = {iEvt,  iRefl, iWave};
+					ampProdSum +=   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
+						            * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
+					// ampProdSum =   ampProdSum
+					// 	           +   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
+					//  	             * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
 				}
 				l += norm(ampProdSum);
 			}
@@ -192,17 +181,17 @@ runLogLikelihoodSumPseudoArray(const unsigned int nmbRepitions,
                                double&            elapsedTime)
 {
 	// set decay amplitudes
-	const unsigned int    decayAmpDim[3] = {2, max(nmbWavesRefl[0], nmbWavesRefl[1]), nmbEvents};
+	const unsigned int    decayAmpDim[3] = {nmbEvents, 2, max(nmbWavesRefl[0], nmbWavesRefl[1])};
 	std::complex<double>* decayAmps;
 	const unsigned int    decayAmpsSize  = allocatePseudoNdimArray<std::complex<double>, unsigned int>
-		(decayAmps, decayAmpDim, 3);
+		                                       (decayAmps, decayAmpDim, 3);
 	printInfo << "size of decay amplitude array is " << decayAmpsSize / (1024. * 1024.) << " MiBytes; "
 	          << 100 * nmbEvents * (nmbWavesRefl[0] + nmbWavesRefl[1]) * sizeof(std::complex<double>)
 		/ (double)decayAmpsSize << " % used" << endl;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave)
 			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
-				const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
+				const unsigned int decayAmpIndices[3] = {iEvt, iRefl, iWave};
 				const unsigned int decayAmpOffset     = indicesToOffset<unsigned int>(decayAmpIndices,
 					                                                                    decayAmpDim, 3);
 				const double       val                = iEvt * 1000 + iRefl * 100 + iWave;
@@ -232,7 +221,7 @@ runLogLikelihoodSumPseudoArray(const unsigned int nmbRepitions,
 	double  logLikelihood;
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
-		logLikelihood = logLikelihoodSumPseudoArray<std::complex<double>, double>
+		logLikelihood = logLikelihoodSumPseudoArray<std::complex<double> >
 			(decayAmps, prodAmps, prodAmpFlat, nmbEvents, rank, nmbWavesRefl);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
@@ -253,12 +242,12 @@ runLogLikelihoodSumCuda(const unsigned int nmbRepitions,
 {
 	// set decay amplitudes
 	ampsArrayType decayAmps;
-	decayAmps.resize(extents[2][max(nmbWavesRefl[0], nmbWavesRefl[1])][nmbEvents]);
+	decayAmps.resize(extents[nmbEvents][2][max(nmbWavesRefl[0], nmbWavesRefl[1])]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave)
 			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
 				const double val = iEvt * 1000 + iRefl * 100 + iWave;
-				decayAmps[iRefl][iWave][iEvt] = std::complex<double>(val, val + 0.5);
+				decayAmps[iEvt][iRefl][iWave] = std::complex<double>(val, val + 0.5);
 			}
 
 	// set production amplitudes
@@ -307,10 +296,9 @@ runLogLikelihoodSumCuda(const unsigned int nmbRepitions,
 	cudaLikelihoodInterface<rpwa::complex<double> >& interface
 		= cudaLikelihoodInterface<rpwa::complex<double> >::instance();
 	interface.setDebug(true);
-	interface.initCudaDevice();
-	printInfo << interface;
-	cout << "free mem before = " << interface.freeDeviceMem() / (1024. * 1024.)
-	     << ", " << interface._d_decayAmps << endl;
+	// interface.initCudaDevice();
+	// printInfo << interface;
+	// cout << "free mem before = " << interface.freeDeviceMem() / (1024. * 1024.) << endl;
 
 	rpwa::complex<double>* d_decayAmps;
 	unsigned int           nmbBlocks;
@@ -322,10 +310,9 @@ runLogLikelihoodSumCuda(const unsigned int nmbRepitions,
 	//                       nmbThreadsPerBlock);
 	// cout << "free mem after  = " << interface.freeDeviceMem() / (1024. * 1024.) << endl;
 
-	interface.loadDecayAmps(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
-	                        decayAmps.num_elements(), nmbEvents, nmbWavesRefl, false);
-	cout << "free mem after  = " << interface.freeDeviceMem() / (1024. * 1024.)
-	     << ", " << interface._d_decayAmps << endl;
+	interface.init(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
+	               decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
+	// cout << "free mem after  = " << interface.freeDeviceMem() / (1024. * 1024.) << endl;
 
 	// call function
 	clock_t start, finish;  // rough estimation of run time
@@ -352,27 +339,15 @@ runLogLikelihoodSumCuda(const unsigned int nmbRepitions,
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 
-	// cout << endl << "-----------------------------------------------------------------" << endl << endl;
-	// const double foo = logLikelihoodSumPseudoArray<rpwa::complex<double>, double>
-	// 		(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
-	// 		 reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
-	// 		 prodAmpFlat, nmbEvents, rank, nmbWavesRefl);
-	// printInfo << logLikelihood << " vs. " << foo << ": " << logLikelihood - foo << endl;
-
-	//cutilSafeCall(cudaFree(d_decayAmps));
 	return logLikelihood;
 }
-
-
-
-
 
 
 int
 main(int    argc,
      char** argv)
 {
-	const unsigned int nmbRepitions    = 100;
+	const unsigned int nmbRepitions    = 10;
 	// setup parameters that roughly correspond to the pi- pi+ pi- PWA
 	const unsigned int nmbEvents       = 100000;
 	// 34 waves with positive, 7 waves with negative reflectivity, and flat wave: 42 in total

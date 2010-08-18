@@ -61,10 +61,24 @@ namespace rpwa {
 		DEVICE complex(T re = 0, T im = 0) : _re(re), _im(im)        { }
 		DEVICE complex(const complex<T>& z) : _re(z._re), _im(z._im) { }
 
-		inline T&       real()       { return _re; }
-		inline const T& real() const { return _re; }
-		inline T&       imag()       { return _im; }
-		inline const T& imag() const { return _im; }
+		inline DEVICE T&       real()       { return _re; }
+		inline DEVICE const T& real() const { return _re; }
+		inline DEVICE T&       imag()       { return _im; }
+		inline DEVICE const T& imag() const { return _im; }
+		
+		inline DEVICE complex<T>& operator =(const complex<T>& z)
+		{
+			_re = z.real();
+			_im = z.imag();
+			return *this;
+		} 
+		
+		inline DEVICE complex<T>& operator +=(const complex<T>& z)
+		{
+			_re += z.real();
+			_im += z.imag();
+			return *this;
+		}
     
 		inline DEVICE friend complex<T> operator+(const complex<T>& a, const complex<T>& b)      
 		{

@@ -80,14 +80,18 @@ namespace rpwa {
 
 		static cudaLikelihoodInterface& instance() { return _instance; }  ///< get singleton instance
 
-		static bool initCudaDevice();  ///< initializes CUDA device
-
 		static unsigned int totalDeviceMem();  ///< returns total memory capacity of used CUDA device
 		static unsigned int freeDeviceMem ();  ///< returns available memory capacity of used CUDA device
 
 		static unsigned int nmbBlocks         () { return _nmbBlocks;          }
 		static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }
 
+		static bool init(const complexT*    decayAmps,
+		                 const unsigned int nmbDecayAmps,
+		                 const unsigned int nmbEvents,
+		                 const unsigned int nmbWavesRefl[2],
+		                 const bool         reshuffleArray = true);  ///< convenience routine that initializes the CUDA device and copies decay amplitudes into device memory
+		static bool initCudaDevice();  ///< initializes CUDA device
 		static bool loadDecayAmps(const complexT*    decayAmps,
 		                          const unsigned int nmbDecayAmps,
 		                          const unsigned int nmbEvents,
@@ -105,11 +109,10 @@ namespace rpwa {
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
-		static complexT*             _d_decayAmps;         ///< device pointer to precalculated decay amplitudes
 	private:
 
 		cudaLikelihoodInterface () { }
-		~cudaLikelihoodInterface() { cutilSafeCall(cudaFree(_d_decayAmps)); }
+		~cudaLikelihoodInterface();
 		cudaLikelihoodInterface (const cudaLikelihoodInterface&);
 		cudaLikelihoodInterface& operator =(const cudaLikelihoodInterface&);
 
@@ -122,6 +125,7 @@ namespace rpwa {
 		static struct cudaDeviceProp _cudaDeviceProp;      ///< properties of used CUDA device
 		static unsigned int          _nmbBlocks;           ///< number of CUDA blocks used to run kernels
 		static unsigned int          _nmbThreadsPerBlock;  ///< number of CUDA threads that is run per block
+		static complexT*             _d_decayAmps;         ///< device pointer to precalculated decay amplitudes
 		static unsigned int          _nmbEvents;           ///< number of events to process
 		static unsigned int          _nmbWavesRefl[2];     ///< number of waves for each reflectivity
 

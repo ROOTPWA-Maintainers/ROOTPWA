@@ -175,7 +175,7 @@ StartCalc(const unsigned int nmbEvents,
   
 	for (int i=0; i < iterat; i++)
 	{
-		resultcuda = runCudaLogLikelihoodKernels<rpwa::complex<Scalar>, Scalar>
+		resultcuda = runCudaLogLikelihoodKernels<rpwa::complex<Scalar> >
 		  (prodAmps, prodAmpsSize, prodAmpFlat, d_decayAmps, nmbEvents,
 		   rank, nmbWavesRefl, nmbBlocks, nmbThreadsPerBlock);
 	}
