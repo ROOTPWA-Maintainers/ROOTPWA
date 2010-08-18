@@ -47,10 +47,12 @@
 #include "TStopwatch.h"
 
 #include "utilities.h"
+#ifdef CUDA_ENABLED
+#include "../cuda/cudaLikelihoodInterface.h"
+#endif
 
 
 //#define USE_FDF
-#define USE_CUDA
 
 
 using namespace std;
@@ -68,6 +70,9 @@ TPWALikelihood<T>::TPWALikelihood()
     _nmbPars          (0),
     _Ltime            (0),
     _Ntime            (0),
+#ifdef CUDA_ENABLED
+    _useCuda          (false),
+#endif
     _useNormalizedAmps(true),
     _numbAccEvents    (0)
 {
@@ -219,10 +224,6 @@ TPWALikelihood<T>::DoEval(const double* par) const
   FdF(par, logLikelihood, gradient);
   return logLikelihood;
 
-#elif defined(USE_CUDA)
-
-  return DoEvalCuda(par);
-
 #else
 
   // log consumed time
@@ -235,23 +236,34 @@ TPWALikelihood<T>::DoEval(const double* par) const
   copyFromParArray(par, prodAmps, prodAmpFlat);
   const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
-  // loop over events and calculate first term of log likelihood
+  // loop over events and calculate real-data term of log likelihood
   T logLikelihood = 0;
-  for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-    T l = 0;  // likelihood for this event
-    for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                   // incoherent sum over ranks
-      for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                     // incoherent sum over reflectivities
-	complex<T> ampProdSum = 0;                                           // amplitude sum for negative/positive reflectivity for this rank
-        for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
-          // compute likelihood term
-          ampProdSum += prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
-	l += norm(ampProdSum);
-      }
-      assert(l >= 0);
-  }  // end loop over rank
-    l             += prodAmpFlat2;
-    logLikelihood -= log(l);  // accumulate log likelihood
-  }  // end loop over events
+#ifdef CUDA_ENABLED  
+  if (_useCuda) {
+	  rpwa::cudaLikelihoodInterface<rpwa::complex<T> >& interface
+		  = rpwa::cudaLikelihoodInterface<rpwa::complex<T> >::instance();
+	  logLikelihood = interface.sumLogLikelihood
+		  (reinterpret_cast<rpwa::complex<T>*>(prodAmps.data()),
+		   prodAmps.num_elements(), prodAmpFlat, _rank);
+  } else
+#endif
+	{
+	  for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
+		  T l = 0;  // likelihood for this event
+		  for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                   // incoherent sum over ranks
+			  for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                     // incoherent sum over reflectivities
+				  complex<T> ampProdSum = 0;                                           // amplitude sum for negative/positive reflectivity for this rank
+				  for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
+					  // compute likelihood term
+					  ampProdSum += prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
+				  l += norm(ampProdSum);
+			  }
+			  assert(l >= 0);
+		  }  // end loop over rank
+		  l             += prodAmpFlat2;
+		  logLikelihood -= log(l);  // accumulate log likelihood
+	  }  // end loop over events
+  }
 
   // log consumed time
   const double t1 = timer.RealTime();
@@ -287,67 +299,6 @@ TPWALikelihood<T>::DoEval(const double* par) const
   return funcVal;
 
 #endif  // USE_FDF
-}
-
-
-template<typename T>
-double
-TPWALikelihood<T>::DoEvalCuda(const double* par) const
-{
-  ++(_nmbCalls[DOEVAL]);
-
-  // log consumed time
-  TStopwatch timer;
-  timer.Start(true);
-
-  // build complex production amplitudes from function parameters taking into account rank restrictions
-  T             prodAmpFlat;
-  ampsArrayType prodAmps;
-  copyFromParArray(par, prodAmps, prodAmpFlat);
-  const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
-
-  T logLikelihood = sumLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
-                                         prodAmps.num_elements() * sizeof(rpwa::complex<double>),
-                                         prodAmpFlat,
-                                         _cudaDecayAmps,
-                                         _nmbEvents,
-                                         _rank,
-                                         _nmbWavesRefl,
-                                         _nmbBlocks,
-                                         _nmbThreadsPerBlock);
-
-  // log consumed time
-  const double t1 = timer.RealTime();
-  timer.Start(true);
-
-  // compute normalization term of log likelihood
-  complex<T> normFactor = 0;
-  const T    nmbEvt     = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
-  for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-    for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-      for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-        for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {  // inner loop over waves with same reflectivity
-          const complex<T> I = complex<T>(_accMatrix[iRefl][iWave][iRefl][jWave]);
-          normFactor += (prodAmps[iRank][iRefl][iWave] * conj(prodAmps[iRank][iRefl][jWave])) * I;
-        }
-  // take care of flat wave
-  normFactor.real() += prodAmpFlat2;
-
-  // log consumed time
-  const double t2 = timer.RealTime();
-  timer.Stop();
-  _Ltime += t1;
-  _Ntime += t2;
-  
-  if (_debug)
-    printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
-              << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
-              << "normalized likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
-              << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
-
-  // calculate and return log likelihood value
-  const double funcVal = logLikelihood + nmbEvt * normFactor.real();
-  return funcVal;
 }
 
 
@@ -500,6 +451,18 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 
 template<typename T>
 void 
+#ifdef CUDA_ENABLED	
+TPWALikelihood<T>::useCuda(const bool useCuda)
+{
+	_useCuda = useCuda;
+}
+#else
+TPWALikelihood<T>::useCuda(const bool) { }
+#endif
+
+
+template<typename T>
+void 
 TPWALikelihood<T>::init(const unsigned int rank,
                         const std::string& waveListFileName,
                         const std::string& normIntFileName,
@@ -512,13 +475,14 @@ TPWALikelihood<T>::init(const unsigned int rank,
 	buildParDataStruct(rank);
 	readIntegrals(normIntFileName, accIntFileName);
 	readDecayAmplitudes(ampDirName);
-#ifdef USE_CUDA
-	initLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(_decayAmps.data()),
-	                      _decayAmps.num_elements() * sizeof(rpwa::complex<double>),
-	                      _cudaDecayAmps,
-	                      _nmbBlocks,
-	                      _nmbThreadsPerBlock);
-#endif  // USE_CUDA
+#ifdef CUDA_ENABLED	
+	if (_useCuda) {
+		rpwa::cudaLikelihoodInterface<rpwa::complex<T> >& interface
+			= rpwa::cudaLikelihoodInterface<rpwa::complex<T> >::instance();
+		interface.init(reinterpret_cast<rpwa::complex<T>*>(_decayAmps.data()),
+		               _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
+	}
+#endif
 }
 
 
@@ -975,6 +939,9 @@ TPWALikelihood<T>::print(ostream& out) const
       << "number of negative reflectivity waves ... " << _nmbWavesRefl[0]   << endl
       << "number of function parameters ........... " << _nmbPars           << endl
       << "print debug messages .................... " << _debug             << endl
+#ifdef CUDA_ENABLED
+      << "use CUDA kernels ........................ " << _useCuda           << endl
+#endif	  
       << "use normalized amplitudes ............... " << _useNormalizedAmps << endl
       << "list of waves: " << endl;
   for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)

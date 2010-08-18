@@ -74,9 +74,6 @@ if(USE_CUDA)
   cuda_add_library(cuda cudaLikelihoodInterface.cu SHARED)
 
   # compile CUDA executable
-  cuda_add_executable(pwa_cuda pwa_cuda.cu)
-  target_link_libraries(pwa_cuda ${CUDA_CUTIL_LIBRARY} cuda)
-  
   make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
   target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda)
 

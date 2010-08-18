@@ -94,6 +94,11 @@ usage(const string& progName,
        << "                                         Linear:      Robust" << endl
        << "                                         Fumili:      -" << endl
        << "        -t #       minimizer tolerance (default: 1e-10)" << endl
+#ifdef CUDA_ENABLED	  
+       << "        -c         enable CUDA acceleration (default: off)" << endl
+#else
+       << "        -c         [enable CUDA acceleration] disabled" << endl
+#endif
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
        << endl;
@@ -133,69 +138,75 @@ main(int    argc,
   unsigned int rank               = 1;                      // rank of fit
   string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
   double       minimizerTolerance = 1e-10;                  // minimizer tolerance
+  bool         useCuda            = false;                  // if true CUDA kernels are activated
   bool         quiet              = false;
   extern char* optarg;
   // extern int optind;
   int c;
-  while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:x::Nn:a:A:r:M:m:t:qh")) != -1)
-    switch (c) {
-    case 'l':
-      massBinMin = atof(optarg);
-      break;
-    case 'u':
-      massBinMax = atof(optarg);
-      break;
-    case 'w':
-      waveListFileName = optarg;
-      break;
-    case 'd':
-      ampDirName = optarg;
-      break;
-    case 'o':
-      outFileName = optarg;
-      break;
-    case 'S':
-      startValFileName = optarg;
-      break;
-    case 's':
-      startValSeed = atoi(optarg);
-      break;
-    case 'x':
-      if (optarg)
-	defaultStartValue = atof(optarg);
-      useFixedStartValues = true;
-      break;
-    case 'N':
-      useNormalizedAmps = true;
-      break;
-    case 'n':
-      normIntFileName = optarg;
-      break;
-    case 'a':
-      accIntFileName = optarg;
-      break;
-    case 'A':
-      numbAccEvents = atoi(optarg);
-      break;
-    case 'r':
-      rank = atoi(optarg);
-      break;
-    case 'M':
-      minimizerType[0] = optarg;
-      break;
-    case 'm':
-      minimizerType[1] = optarg;
-      break;
-    case 't':
-      minimizerTolerance = atof(optarg);
-      break;
-    case 'q':
-      quiet = true;
-      break;
-    case 'h':
-      usage(progName);
-      break;
-    }
+  while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:x::Nn:a:A:r:M:m:t:cqh")) != -1)
+	  switch (c) {
+	  case 'l':
+		  massBinMin = atof(optarg);
+		  break;
+	  case 'u':
+		  massBinMax = atof(optarg);
+		  break;
+	  case 'w':
+		  waveListFileName = optarg;
+		  break;
+	  case 'd':
+		  ampDirName = optarg;
+		  break;
+	  case 'o':
+		  outFileName = optarg;
+		  break;
+	  case 'S':
+		  startValFileName = optarg;
+		  break;
+	  case 's':
+		  startValSeed = atoi(optarg);
+		  break;
+	  case 'x':
+		  if (optarg)
+			  defaultStartValue = atof(optarg);
+		  useFixedStartValues = true;
+		  break;
+	  case 'N':
+		  useNormalizedAmps = true;
+		  break;
+	  case 'n':
+		  normIntFileName = optarg;
+		  break;
+	  case 'a':
+		  accIntFileName = optarg;
+		  break;
+	  case 'A':
+		  numbAccEvents = atoi(optarg);
+		  break;
+	  case 'r':
+		  rank = atoi(optarg);
+		  break;
+	  case 'M':
+		  minimizerType[0] = optarg;
+		  break;
+	  case 'm':
+		  minimizerType[1] = optarg;
+		  break;
+	  case 't':
+		  minimizerTolerance = atof(optarg);
+		  break;
+	  case 'c':
+#ifdef CUDA_ENABLED	  
+		  useCuda = true;
+#endif
+		  break;
+	  case 'q':
+		  quiet = true;
+		  break;
+	  case 'h':
+		  usage(progName);
+		  break;
+	  }
   if (normIntFileName.length() <= 1) {
     normIntFileName = "norm.int";
     printWarn << "using default normalization integral file '" << normIntFileName << "'" << endl;
@@ -224,6 +235,7 @@ main(int    argc,
        << "        number of acceptance norm. events ........ "  << numbAccEvents    << endl
        << "    rank of fit .................................. "  << rank                    << endl
        << "    minimizer .................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
+       << "    CUDA acceleration ............................ "  << ((useCuda) ? "en" : "dis") << "abled" << endl
        << "    quiet ........................................ "  << quiet << endl;
 
   // ---------------------------------------------------------------------------
@@ -233,6 +245,9 @@ main(int    argc,
   if (quiet)
     L.setQuiet();
   L.useNormalizedAmps(useNormalizedAmps);
+#ifdef CUDA_ENABLED	  
+  L.useCuda(useCuda);
+#endif  
   L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
   if (not quiet)
     cout << L << endl;

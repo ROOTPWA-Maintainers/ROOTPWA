@@ -157,9 +157,6 @@ logLikelihoodSumPseudoArray(const complexT*                      decayAmps,
 					const unsigned int decayAmpIndices[3] = {iEvt,  iRefl, iWave};
 					ampProdSum +=   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
 						            * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
-					// ampProdSum =   ampProdSum
-					// 	           +   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
-					//  	             * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
 				}
 				l += norm(ampProdSum);
 			}
@@ -296,46 +293,17 @@ runLogLikelihoodSumCuda(const unsigned int nmbRepitions,
 	cudaLikelihoodInterface<rpwa::complex<double> >& interface
 		= cudaLikelihoodInterface<rpwa::complex<double> >::instance();
 	interface.setDebug(true);
-	// interface.initCudaDevice();
-	// printInfo << interface;
-	// cout << "free mem before = " << interface.freeDeviceMem() / (1024. * 1024.) << endl;
-
-	rpwa::complex<double>* d_decayAmps;
-	unsigned int           nmbBlocks;
-	unsigned int           nmbThreadsPerBlock;
-	// initLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
-	//                       decayAmps.num_elements() * sizeof(rpwa::complex<double>),
-	//                       d_decayAmps,
-	//                       nmbBlocks,
-	//                       nmbThreadsPerBlock);
-	// cout << "free mem after  = " << interface.freeDeviceMem() / (1024. * 1024.) << endl;
-
 	interface.init(reinterpret_cast<rpwa::complex<double>*>(decayAmps.data()),
 	               decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
-	// cout << "free mem after  = " << interface.freeDeviceMem() / (1024. * 1024.) << endl;
 
 	// call function
 	clock_t start, finish;  // rough estimation of run time
 	double  logLikelihood;
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
-		// logLikelihood = sumLogLikelihoodCuda(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
-		//                                      prodAmps.num_elements() * sizeof(rpwa::complex<double>),
-		//                                      prodAmpFlat,
-		//                                      // d_decayAmps,
-		//                                      interface._d_decayAmps,
-		//                                      nmbEvents,
-		//                                      rank,
-		//                                      nmbWavesRefl,
-    //                                      // nmbBlocks,
-		//                                      // nmbThreadsPerBlock);
-		//                                      interface.nmbBlocks(),
-		//                                      interface.nmbThreadsPerBlock());
 		logLikelihood = interface.sumLogLikelihood
 			(reinterpret_cast<rpwa::complex<double>*>(prodAmps.data()),
-			 prodAmps.num_elements(),
-			 prodAmpFlat,
-			 rank);
+			 prodAmps.num_elements(), prodAmpFlat, rank);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 

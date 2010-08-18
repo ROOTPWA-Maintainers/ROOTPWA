@@ -52,7 +52,9 @@
 // PWA2000 classes
 #include "integral.h"
 #include "matrix.h"
-#include "../cuda/cudaLikelihoodInterface.h"
+
+
+#define CUDA_ENABLED
 
 
 class TString;
@@ -117,6 +119,7 @@ public:
 	//const integral& normInt() const { return _normInt; }
 
 	// modifiers
+	void        useCuda          (const bool useCuda = true);
 	void        useNormalizedAmps(const bool useNorm = true) { _useNormalizedAmps = useNorm; }
 	static void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
 
@@ -144,7 +147,6 @@ public:
 	
 	// overload private IGradientFunctionMultiDim member functions
 	virtual double DoEval      (const double* par) const;
-	virtual double DoEvalCuda  (const double* par) const;
 	virtual double DoDerivative(const double* par,
 	                            unsigned int  derivativeIndex) const;
 
@@ -182,6 +184,9 @@ private:
 	mutable double       _Ltime;        // total time spent calculating L
 	mutable double       _Ntime;        // total time spent calculating normalization
 
+#ifdef CUDA_ENABLED
+	bool        _useCuda;            // if true CUDA kernels are used for some calculations
+#endif
 	bool        _useNormalizedAmps;  // if true normalized amplitudes are used
 	static bool _debug;              // if true debug messages are printed
 
@@ -199,10 +204,6 @@ private:
   
 	ampsArrayType _decayAmps;  // precalculated decay amplitudes [event index][reflectivity][wave index]
   
-	rpwa::complex<double>* _cudaDecayAmps;  // device pointer to precalculated decay amplitudes [event index][reflectivity][wave index]
-	unsigned int _nmbBlocks;           // number of CUDA blocks used to run kernels
-	unsigned int _nmbThreadsPerBlock;  // number of CUDA threads that is run per block
-
 	mutable std::vector<double> _parCache;    // parameter cache for derivative calc.
 	mutable std::vector<double> _derivCache;  // cache for derivatives
   

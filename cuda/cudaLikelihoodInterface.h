@@ -49,28 +49,6 @@ typedef double Scalar;
 namespace rpwa {
 
 
-	double
-	sumLogLikelihoodCuda
-	(const rpwa::complex<double>* prodAmps,
-	 const unsigned int           prod_mem_size,
-	 const double                 prodAmpFlat,
-	 const rpwa::complex<double>* d_decayAmps,
-	 const unsigned int           nmbEvents,
-	 const unsigned int           rank,
-	 const unsigned int           nmbWavesRefl[2],
-	 const unsigned int           nmbBlocks,
-	 const unsigned int           nmbThreadsPerBlock);
-
-
-	void
-	initLogLikelihoodCuda
-	(const rpwa::complex<double>* decayAmps,
-	 const unsigned int           decay_mem_size,
-	 rpwa::complex<double>*&      d_decayAmps,
-	 unsigned int&                nmbBlocks,
-	 unsigned int&                nmbThreadsPerBlock);
-
-
 	template<typename complexT>
 	class cudaLikelihoodInterface {
 
@@ -80,11 +58,11 @@ namespace rpwa {
 
 		static cudaLikelihoodInterface& instance() { return _instance; }  ///< get singleton instance
 
-		static unsigned int totalDeviceMem();  ///< returns total memory capacity of used CUDA device
-		static unsigned int freeDeviceMem ();  ///< returns available memory capacity of used CUDA device
-
-		static unsigned int nmbBlocks         () { return _nmbBlocks;          }
-		static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }
+		static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
+		static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
+		static unsigned int freeDeviceMem     ();                                 ///< returns available memory capacity of used CUDA device
+		static unsigned int nmbBlocks         () { return _nmbBlocks;          }  ///< returns number of CUDA thread blocks 
+		static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }  ///< returns number of CUDA threads per block
 
 		static bool init(const complexT*    decayAmps,
 		                 const unsigned int nmbDecayAmps,
