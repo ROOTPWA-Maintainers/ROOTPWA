@@ -37,7 +37,19 @@ do
   		# Do integration
   		cd ${AMPDIR}
   		int *.amp > norm.int;
+		cd -;
+
+		# Do monte carlo accepted
+  		export FILE=${FILE/evt/acc.evt};
+  		echo "---- acc-input: ${FILE}";
+  		export AMPDIR=${BIN}/ACCAMPS;
+  		./doamps.sh ${FILE};
+
+  		# Do integration
+  		cd ${AMPDIR}
+  		int *.amp > norm.int;		
   		cd -;		
+
 	else
   		echo -e "\n skipping ${BIN}"
 	fi
