@@ -42,7 +42,7 @@
 
 #include "nDimArrayUtils.hpp"
 #include "reportingUtils.hpp"
-#include "cudaLikelihoodInterface.h" // includes my Complex datatype
+#include "cudaLikelihoodInterface.cuh"
 
 
 using namespace rpwa;
@@ -53,16 +53,17 @@ using namespace std;
 
 
 template<typename complexT> cudaLikelihoodInterface<complexT> cudaLikelihoodInterface<complexT>::_instance;
-template<typename complexT> bool                    cudaLikelihoodInterface<complexT>::_cudaInitialized    = false;
-template<typename complexT> int                     cudaLikelihoodInterface<complexT>::_nmbOfCudaDevices   = 0;
-template<typename complexT> int                     cudaLikelihoodInterface<complexT>::_cudaDeviceId       = -1;
-template<typename complexT> struct cudaDeviceProp   cudaLikelihoodInterface<complexT>::_cudaDeviceProp;
-template<typename complexT> unsigned int            cudaLikelihoodInterface<complexT>::_nmbBlocks          = 0;
-template<typename complexT> unsigned int            cudaLikelihoodInterface<complexT>::_nmbThreadsPerBlock = 0;
-template<typename complexT> complexT*               cudaLikelihoodInterface<complexT>::_d_decayAmps        = 0;
-template<typename complexT> unsigned int            cudaLikelihoodInterface<complexT>::_nmbEvents          = 0;
-template<typename complexT> unsigned int            cudaLikelihoodInterface<complexT>::_nmbWavesRefl[2]    = {0, 0};
-template<typename complexT> bool                    cudaLikelihoodInterface<complexT>::_debug              = false;
+
+template<typename complexT> bool           cudaLikelihoodInterface<complexT>::_cudaInitialized    = false;
+template<typename complexT> int            cudaLikelihoodInterface<complexT>::_nmbOfCudaDevices   = 0;
+template<typename complexT> int            cudaLikelihoodInterface<complexT>::_cudaDeviceId       = -1;
+template<typename complexT> cudaDeviceProp cudaLikelihoodInterface<complexT>::_cudaDeviceProp;
+template<typename complexT> unsigned int   cudaLikelihoodInterface<complexT>::_nmbBlocks          = 0;
+template<typename complexT> unsigned int   cudaLikelihoodInterface<complexT>::_nmbThreadsPerBlock = 0;
+template<typename complexT> complexT*      cudaLikelihoodInterface<complexT>::_d_decayAmps        = 0;
+template<typename complexT> unsigned int   cudaLikelihoodInterface<complexT>::_nmbEvents          = 0;
+template<typename complexT> unsigned int   cudaLikelihoodInterface<complexT>::_nmbWavesRefl[2]    = {0, 0};
+template<typename complexT> bool           cudaLikelihoodInterface<complexT>::_debug              = false;
 
 
 template<typename complexT>
@@ -171,6 +172,8 @@ cudaLikelihoodInterface<complexT>::initCudaDevice()
 	_nmbBlocks          = _cudaDeviceProp.multiProcessorCount;
 	//nmbThreadsPerBlock = _cudaDeviceProp.maxThreadsPerBlock;
 	_nmbThreadsPerBlock = 448;
+	printInfo << "using " << _nmbBlocks << " x " << _nmbThreadsPerBlock << " = "
+	          << _nmbBlocks * _nmbThreadsPerBlock << " CUDA threads" << endl;
 
 	_cudaInitialized = true;
 	return true;

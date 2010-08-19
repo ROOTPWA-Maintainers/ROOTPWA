@@ -41,9 +41,7 @@
 
 #include <iostream>
 
-typedef double Scalar;
-#define ALIGN 2 * sizeof(Scalar)
-#include "CudaComplex.h"
+#include "complex.cuh"
 
 
 namespace rpwa {

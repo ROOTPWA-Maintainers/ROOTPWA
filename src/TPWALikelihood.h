@@ -152,6 +152,8 @@ public:
 
 	std::vector<unsigned int> orderedParIndices() const;  // helper function for backwards-compatibility
 
+	mutable unsigned int _nmbCalls[4];  // function call counters
+
 private:
 
 	// helper functions
@@ -180,7 +182,6 @@ private:
 	unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves 
 	unsigned int _nmbPars;          // number of function parameters
 
-	mutable unsigned int _nmbCalls[4];  // function call counters
 	mutable double       _Ltime;        // total time spent calculating L
 	mutable double       _Ntime;        // total time spent calculating normalization
 

@@ -45,7 +45,7 @@
 #include "reportingUtils.hpp"
 #include "nDimArrayUtils.hpp"
 #include "nDimArrayUtils.hpp"
-#include "cudaLikelihoodInterface.h"
+#include "cudaLikelihoodInterface.cuh"
 
 
 using namespace std;

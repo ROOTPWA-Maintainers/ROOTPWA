@@ -35,20 +35,21 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef CUDACOMPLEX_H
-#define CUDACOMPLEX_H
+#ifndef COMPLEX_CUH
+#define COMPLEX_CUH
 
 
-#include "../utilities/nDimArrayUtils.hpp"
+#include "../utilities/cudaUtils.hpp"
+
+
+#define COMPLEX_ALIGN 2 * sizeof(double)
 
 
 namespace rpwa {
 
 
 	template<typename T> class
-#ifdef __CUDACC__
-	__align__(ALIGN)
-#endif
+	ALIGN(COMPLEX_ALIGN)
 	complex {
 
 	public:
@@ -58,29 +59,29 @@ namespace rpwa {
 		T _re;
 		T _im;
 
-		DEVICE complex(T re = 0, T im = 0) : _re(re), _im(im)        { }
-		DEVICE complex(const complex<T>& z) : _re(z._re), _im(z._im) { }
+		HOST_DEVICE complex(T re = 0, T im = 0) : _re(re), _im(im)        { }
+		HOST_DEVICE complex(const complex<T>& z) : _re(z._re), _im(z._im) { }
 
-		inline DEVICE T&       real()       { return _re; }
-		inline DEVICE const T& real() const { return _re; }
-		inline DEVICE T&       imag()       { return _im; }
-		inline DEVICE const T& imag() const { return _im; }
+		inline HOST_DEVICE T&       real()       { return _re; }
+		inline HOST_DEVICE const T& real() const { return _re; }
+		inline HOST_DEVICE T&       imag()       { return _im; }
+		inline HOST_DEVICE const T& imag() const { return _im; }
 		
-		inline DEVICE complex<T>& operator =(const complex<T>& z)
+		inline HOST_DEVICE complex<T>& operator =(const complex<T>& z)
 		{
 			_re = z.real();
 			_im = z.imag();
 			return *this;
 		} 
 		
-		inline DEVICE complex<T>& operator +=(const complex<T>& z)
+		inline HOST_DEVICE complex<T>& operator +=(const complex<T>& z)
 		{
 			_re += z.real();
 			_im += z.imag();
 			return *this;
 		}
     
-		inline DEVICE friend complex<T> operator+(const complex<T>& a, const complex<T>& b)      
+		inline HOST_DEVICE friend complex<T> operator+(const complex<T>& a, const complex<T>& b)      
 		{
 			complex<T> result;
 			result._re = a._re + b._re;
@@ -88,17 +89,17 @@ namespace rpwa {
 			return result;
 		}
   
-		inline DEVICE friend complex<T> operator*(const complex<T>& a, const complex<T>& b)
+		inline HOST_DEVICE friend complex<T> operator*(const complex<T>& a, const complex<T>& b)
 		{
 			complex<T> result;
 			result._re = (a._re * b._re) - (a._im * b._im);
 			result._im = (a._re * b._im) + (a._im * b._re);
 			return result;
 		}
-		inline DEVICE friend T abs (const complex<T>& z) { return sqrt(norm(z));                     }
-		inline DEVICE friend T norm(const complex<T>& z) { return (z._re * z._re) + (z._im * z._im); }
-		inline DEVICE friend T real(const complex<T>& z) { return z._re;                             }
-		inline DEVICE friend T imag(const complex<T>& z) { return z._im;                             }
+		inline HOST_DEVICE friend T abs (const complex<T>& z) { return sqrt(norm(z));                     }
+		inline HOST_DEVICE friend T norm(const complex<T>& z) { return (z._re * z._re) + (z._im * z._im); }
+		inline HOST_DEVICE friend T real(const complex<T>& z) { return z._re;                             }
+		inline HOST_DEVICE friend T imag(const complex<T>& z) { return z._im;                             }
 
   };
   
@@ -106,4 +107,4 @@ namespace rpwa {
 };  // namespace rpwa
 
 
-#endif // CUDACOMPLEX_H
+#endif // COMPLEX_CUH
