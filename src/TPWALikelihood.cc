@@ -47,7 +47,9 @@
 #include "TStopwatch.h"
 
 #include "utilities.h"
+
 #ifdef CUDA_ENABLED
+#include "../cuda/complex.cuh"
 #include "../cuda/cudaLikelihoodInterface.cuh"
 #endif
 
@@ -57,6 +59,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace rpwa;
 
 
 template<typename T> bool TPWALikelihood<T>::_debug = true;
@@ -241,10 +244,10 @@ TPWALikelihood<T>::DoEval(const double* par) const
 #ifdef CUDA_ENABLED  
 	if (_useCuda) {
 		cout << "+" << flush;
-		rpwa::cudaLikelihoodInterface<rpwa::complex<T> >& interface
-			= rpwa::cudaLikelihoodInterface<rpwa::complex<T> >::instance();
+		cuda::cudaLikelihoodInterface<cuda::complex<T> >& interface
+			= cuda::cudaLikelihoodInterface<cuda::complex<T> >::instance();
 		logLikelihood = interface.sumLogLikelihood
-			(reinterpret_cast<rpwa::complex<T>*>(prodAmps.data()),
+			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
 	} else
 #endif
@@ -392,8 +395,8 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 				complex<T> ampProdSum = 0;                                             // amplitude sum for negative/positive reflectivity for this rank
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 					// compute likelihood term
-					const complex<T> amp = prodAmps[iRank][iRefl][iWave]
-						* complex<T>(_decayAmps[iEvt][iRefl][iWave]);
+					const complex<T> amp =   prodAmps[iRank][iRefl][iWave]
+						                     * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
 					ampProdSum += amp;
 					// compute derivatives
 					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
@@ -480,9 +483,9 @@ TPWALikelihood<T>::init(const unsigned int rank,
 	readDecayAmplitudes(ampDirName);
 #ifdef CUDA_ENABLED	
 	if (_useCuda) {
-		rpwa::cudaLikelihoodInterface<rpwa::complex<T> >& interface
-			= rpwa::cudaLikelihoodInterface<rpwa::complex<T> >::instance();
-		interface.init(reinterpret_cast<rpwa::complex<T>*>(_decayAmps.data()),
+		cuda::cudaLikelihoodInterface<cuda::complex<T> >& interface
+			= cuda::cudaLikelihoodInterface<cuda::complex<T> >::instance();
+		interface.init(reinterpret_cast<cuda::complex<T>*>(_decayAmps.data()),
 		               _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
 	}
 #endif

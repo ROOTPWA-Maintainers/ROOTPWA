@@ -41,84 +41,86 @@
 
 #include <iostream>
 
-#include "complex.cuh"
-
 
 namespace rpwa {
 
+	namespace cuda {
 
-	template<typename complexT>
-	class cudaLikelihoodInterface {
 
-	public:
+		template<typename complexT>
+		class cudaLikelihoodInterface {
 
-		typedef typename complexT::value_type value_type;
+		public:
 
-		static cudaLikelihoodInterface& instance() { return _instance; }  ///< get singleton instance
+			typedef typename complexT::value_type value_type;
 
-		static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
-		static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
-		static unsigned int freeDeviceMem     ();                                 ///< returns available memory capacity of used CUDA device
-		static unsigned int nmbBlocks         () { return _nmbBlocks;          }  ///< returns number of CUDA thread blocks 
-		static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }  ///< returns number of CUDA threads per block
+			static cudaLikelihoodInterface& instance() { return _instance; }  ///< get singleton instance
 
-		static bool init(const complexT*    decayAmps,
-		                 const unsigned int nmbDecayAmps,
-		                 const unsigned int nmbEvents,
-		                 const unsigned int nmbWavesRefl[2],
-		                 const bool         reshuffleArray = true);  ///< convenience routine that initializes the CUDA device and copies decay amplitudes into device memory
-		static bool initCudaDevice();  ///< initializes CUDA device
-		static bool loadDecayAmps(const complexT*    decayAmps,
-		                          const unsigned int nmbDecayAmps,
-		                          const unsigned int nmbEvents,
-		                          const unsigned int nmbWavesRefl[2],
-		                          const bool         reshuffleArray = true);  ///< copies decay amplitudes into CUDA device memory
+			static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
+			static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
+			static unsigned int freeDeviceMem     ();                                 ///< returns available memory capacity of used CUDA device
+			static unsigned int nmbBlocks         () { return _nmbBlocks;          }  ///< returns number of CUDA thread blocks 
+			static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }  ///< returns number of CUDA threads per block
 
-		static value_type sumLogLikelihood(const complexT*    prodAmps,
-		                                   const unsigned int nmbProdAmps,
-		                                   const value_type   prodAmpFlat,
-		                                   const unsigned int rank);  ///< computes log likelihood sum for given production amplitudes
+			static bool init(const complexT*    decayAmps,
+			                 const unsigned int nmbDecayAmps,
+			                 const unsigned int nmbEvents,
+			                 const unsigned int nmbWavesRefl[2],
+			                 const bool         reshuffleArray = true);  ///< convenience routine that initializes the CUDA device and copies decay amplitudes into device memory
+			static bool initCudaDevice();  ///< initializes CUDA device
+			static bool loadDecayAmps(const complexT*    decayAmps,
+			                          const unsigned int nmbDecayAmps,
+			                          const unsigned int nmbEvents,
+			                          const unsigned int nmbWavesRefl[2],
+			                          const bool         reshuffleArray = true);  ///< copies decay amplitudes into CUDA device memory
+
+			static value_type sumLogLikelihood(const complexT*    prodAmps,
+			                                   const unsigned int nmbProdAmps,
+			                                   const value_type   prodAmpFlat,
+			                                   const unsigned int rank);  ///< computes log likelihood sum for given production amplitudes
 		
-		static std::ostream& print(std::ostream& out);  ///< prints properties of used CUDA device
+			static std::ostream& print(std::ostream& out);  ///< prints properties of used CUDA device
 
-		static bool debug() { return _debug; }                             ///< returns debug flag
-		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-
-	private:
-
-		cudaLikelihoodInterface () { }
-		~cudaLikelihoodInterface();
-		cudaLikelihoodInterface (const cudaLikelihoodInterface&);
-		cudaLikelihoodInterface& operator =(const cudaLikelihoodInterface&);
+			static bool debug() { return _debug; }                             ///< returns debug flag
+			static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
-		static cudaLikelihoodInterface _instance;  ///< singleton instance
+		private:
 
-		static bool                  _cudaInitialized;     ///< indicates whether CUDA environment was initialized correctly
-		static int                   _nmbOfCudaDevices;    ///< number of found CUDA capable devices
-		static int                   _cudaDeviceId;        ///< device ID of used CUDA device
-		static struct cudaDeviceProp _cudaDeviceProp;      ///< properties of used CUDA device
-		static unsigned int          _nmbBlocks;           ///< number of CUDA blocks used to run kernels
-		static unsigned int          _nmbThreadsPerBlock;  ///< number of CUDA threads that is run per block
-		static complexT*             _d_decayAmps;         ///< device pointer to precalculated decay amplitudes
-		static unsigned int          _nmbEvents;           ///< number of events to process
-		static unsigned int          _nmbWavesRefl[2];     ///< number of waves for each reflectivity
-
-		static bool _debug;  ///< if set to true, debug messages are printed
-
-	};
+			cudaLikelihoodInterface () { }
+			~cudaLikelihoodInterface();
+			cudaLikelihoodInterface (const cudaLikelihoodInterface&);
+			cudaLikelihoodInterface& operator =(const cudaLikelihoodInterface&);
 
 
-	template<typename complexT>
-	inline
-	std::ostream&
-	operator <<(std::ostream&                            out,
-	            const cudaLikelihoodInterface<complexT>& interface)
-	{
-		return interface.print(out);
-	}
+			static cudaLikelihoodInterface _instance;  ///< singleton instance
 
+			static bool                  _cudaInitialized;     ///< indicates whether CUDA environment was initialized correctly
+			static int                   _nmbOfCudaDevices;    ///< number of found CUDA capable devices
+			static int                   _cudaDeviceId;        ///< device ID of used CUDA device
+			static struct cudaDeviceProp _cudaDeviceProp;      ///< properties of used CUDA device
+			static unsigned int          _nmbBlocks;           ///< number of CUDA blocks used to run kernels
+			static unsigned int          _nmbThreadsPerBlock;  ///< number of CUDA threads that is run per block
+			static complexT*             _d_decayAmps;         ///< device pointer to precalculated decay amplitudes
+			static unsigned int          _nmbEvents;           ///< number of events to process
+			static unsigned int          _nmbWavesRefl[2];     ///< number of waves for each reflectivity
+
+			static bool _debug;  ///< if set to true, debug messages are printed
+
+		};
+
+
+		template<typename complexT>
+		inline
+		std::ostream&
+		operator <<(std::ostream&                            out,
+		            const cudaLikelihoodInterface<complexT>& interface)
+		{
+			return interface.print(out);
+		}
+
+
+	}  // namespace cuda
 
 }  // namespace rpwa
 

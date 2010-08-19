@@ -35,21 +35,20 @@
 //-------------------------------------------------------------------------
 
 
-#include <complex>
-
 #include <cuda.h>
 #include <cutil_inline.h>
 
 #include "nDimArrayUtils.hpp"
 #include "reportingUtils.hpp"
+
+#include "complex.cuh"
 #include "cudaLikelihoodInterface.cuh"
-
-
-using namespace rpwa;
-using namespace std;
-
-
 #include "cudaLikelihoodKernel.cu"
+
+
+using namespace std;
+using namespace rpwa;
+using namespace rpwa::cuda;
 
 
 template<typename complexT> cudaLikelihoodInterface<complexT> cudaLikelihoodInterface<complexT>::_instance;
@@ -348,5 +347,5 @@ cudaLikelihoodInterface<complexT>::print(ostream& out)
 
 
 // explicit specializations
-template class cudaLikelihoodInterface<rpwa::complex<float > >;
-template class cudaLikelihoodInterface<rpwa::complex<double> >;
+template class cudaLikelihoodInterface<cuda::complex<float > >;
+template class cudaLikelihoodInterface<cuda::complex<double> >;
