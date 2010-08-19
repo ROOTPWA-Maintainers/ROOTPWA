@@ -40,7 +40,7 @@ do
 		cd -;
 
 		# Do monte carlo accepted
-  		export FILE=${FILE/evt/acc.evt};
+  		export FILE=${FILE/genbod.evt/acc.evt};
   		echo "---- acc-input: ${FILE}";
   		export AMPDIR=${BIN}/ACCAMPS;
   		./doamps.sh ${FILE};
