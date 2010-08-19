@@ -19,6 +19,8 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "TCanvas.h"
+#include "TClonesArray.h"
+#include "TLorentzVector.h"
 #include "TH1F.h"
 
 using namespace std;
@@ -41,12 +43,191 @@ double last_percent(-1.);
 // draw a progress bar only when the length changes significantly
 void DrawProgressBar(int len, double percent);
 
+// oldest tree layout
+int run_v1(int argc, char* argv[]);
+
+// newer tree layout
+int run_v2(int argc, char* argv[]);
+
 // input: root file name, tree name in the file, path to write to, nbins, binlow, binhigh [MeV], N particles
 int main(int argc, char* argv[]){
 	if (argc != 8){
 		cout << " please check options" << endl;
 		return 0;
 	}
+	// check the version of the tree that is coded to the tree name
+	string version(argv[2]);
+	//cout << version << endl;
+	if (version.find("v2") != -1){
+		cout << " calling the method for tree version 2 ... " << endl;
+		return run_v2(argc, argv);
+	}
+	return run_v1(argc, argv);
+}
+
+int run_v2(int argc, char* argv[]){
+	// open the root file
+	TFile rootfile(argv[1]);
+	// try to get the tree
+	TTree* tree_events = (TTree*) rootfile.Get(argv[2]);
+	if (!tree_events){
+		cout << " Sorry, tree " << argv[2] << " not found! " << endl;
+		return -1;
+	}
+	int nbins = atoi(argv[4]);
+	float binlow  = (float) atoi(argv[5]);
+	float binhigh = (float) atoi(argv[6]);
+	float binwidth = (binhigh-binlow)/nbins;
+	int N_expected_events = atoi(argv[7]);
+	string path = argv[3];
+	TH1F* checkhist[3];
+	checkhist[0] = new TH1F("checkhist0","invariant mass distribution of reconstructed events", nbins, binlow, binhigh);
+	checkhist[1] = new TH1F("checkhist1","invariant mass distribution of MC exact events", nbins, binlow, binhigh);
+	checkhist[2] = new TH1F("checkhist2","invariant mass distribution of MC accepted events", nbins, binlow, binhigh);
+	// map of files that will be filled with streams to the text files
+	map<int, ofstream**> files; // ofstream must be stored as a pointer (try out what happens if not)
+	// in addition we do have 3 output streams for real data, MC generated and MC accepted events
+	int openfile[3] = {0,0,0}; // variable to store whether the file contains real data, MC generated data or MC accepted events
+	// search for entries in the tree
+	cout << " scanning events in tree " << endl;
+	openfile[0] = tree_events->GetEntries("isMC == 0");
+	cout << " found " << openfile[0] << " reconstructed events " << endl;
+	openfile[1] = tree_events->GetEntries("isMC > 0");
+	cout << " found " << openfile[1] << " MC generated  events " << endl;
+	openfile[2] = tree_events->GetEntries("isMC == 2");
+	cout << " found " << openfile[2] << " MC accepted   events " << endl;
+
+	// create the file streams
+	for (int i = (int) binlow; i < (int) binhigh; i+=(int)binwidth) {
+		ofstream** _files = new ofstream*[3];
+		_files[0] = NULL; _files[1] = NULL; _files[2] = NULL;
+		for (int j = 0; j < 3; j++){ // real, MC, MC accepted
+			if (!openfile[j]) continue; // do we have to generate this file?
+			stringstream _filename;
+			stringstream _filekey;
+			_filekey << i << "." << i+(int)binwidth;
+			_filename << path << _filekey.str() << "/" << _filekey.str();
+			switch (j) {
+			case 0:
+				break;// do nothing
+			case 1:
+				_filename << ".genbod.check";
+				break;
+			case 2:
+				_filename << ".acc";
+				break;
+			}
+			_filename << ".evt";
+			cout << " opening file " << _filename.str() << endl;
+			_files[j] = new ofstream(_filename.str().c_str());
+		}
+		// use the upper bound for the key
+		files[i+(int)binwidth] = _files;
+	}
+	if (tree_events){
+		// set variables to the leaves
+		TClonesArray* events_lzvecs = NULL; // lz vectors of 0..X-1 particles out, X particle in, X+1 recoil particle
+		vector <int>* events_charges = NULL;
+		vector <int>* events_g3pids = NULL;
+		int		events_id;
+		int		events_isMC; // 0 not a MC event; 1 MC event; 2 accepted MC event;
+		tree_events->SetBranchAddress("id"  , &events_id);
+		tree_events->SetBranchAddress("p"   , &events_lzvecs);
+		tree_events->SetBranchAddress("q"   , &events_charges);
+		tree_events->SetBranchAddress("pid" , &events_g3pids);
+		tree_events->SetBranchAddress("isMC", &events_isMC);
+		// read the events and write the events to the file
+		int events_id_cut(-1); // put a -1 if you want to filter the first or only event id in the tree
+		// we need the data structure to hold the particle information
+		vector<TParticle> particles;
+		int nentries = tree_events->GetEntries();
+		cout << " running over " << nentries << " events " << endl;
+		for (int i = 0; i < nentries; i++){
+			tree_events->GetEntry(i);
+			if (events_id_cut < 0){ // take the first events_id to cut on
+				events_id_cut = events_id;
+				cout << " filtering events with events_id " << events_id << endl;
+			}
+			DrawProgressBar(50, (i+1)/(float)nentries);
+			if (events_id_cut != events_id){
+				continue;
+			}
+			particles.clear();
+			TLorentzVector sumlz(0.,0.,0.,0.);
+			// loop through the particles
+			// last two particles are the beam particle and the (neglected) recoil proton
+			// the loop starts with -1 which is a special case to retrieve the
+			// beam particle first that is not the first element in events_lzvecs
+			// one could of course use also vector::insert but this would cost performance
+			for (int i = -1; i < events_lzvecs->GetEntriesFast()-2; i++){
+				int ipart = i;
+				if (i < 0) ipart = events_lzvecs->GetEntriesFast()-2; // case recoil proton
+				TLorentzVector* lzvec = (TLorentzVector*)(*events_lzvecs)[ipart];
+				// store the new information available
+				TParticle particle;
+				particle.geantid = (*events_g3pids)[ipart];
+				particle.charge  = (*events_charges)[ipart];
+				particle.E       = lzvec->E();
+				particle.px      = lzvec->X();
+				particle.py      = lzvec->Y();
+				particle.pz      = lzvec->Z();
+				// reconstruct the invariant mass of the outgoing particle system
+				// to get the bin entry
+				if (i > -1) sumlz += *lzvec;
+				particles.push_back(particle);
+			}
+			int _M = (int) floor(sumlz.M() * 1000.); // (MeV)
+			// cut into the allowed range
+			if ((binlow <= _M) && (_M < binhigh)){
+				// write all particles to the file
+				if (events_isMC < 0 || events_isMC > 2){
+					cout << " error: not defined MC status: " << events_isMC << endl;
+					continue;
+				}
+				for (int i = 0; i < 3; i++){
+					if ((i == events_isMC) || // not only the value it self is counted
+						(i == 1 && events_isMC == 2)){ // but also accepted events are MC exact events
+						// reference on pointer on pointer... yepp, it is still working ;)
+						ofstream* _pstream = (*files.upper_bound(_M)).second[i];
+						WriteEventToStream(particles, *_pstream);
+						checkhist[i]->Fill(_M);
+					}
+				}
+			}
+		}
+	}
+	// close all files
+	cout << " deleting objects " << endl;
+	for (int i = (int) binlow; i < (int) binhigh; i+=(int)binwidth) {
+		ofstream** _files = files[i+(int)binwidth];
+		for (int j = 0; j < 3; j++){
+			//cout << i << " " << j << endl;
+			ofstream* _file = _files[j];
+			if (_file){
+				_file->close();
+				delete _file;
+			}
+		}
+	}
+	cout << " done " << endl;
+	// Draw a crosscheck histogram
+	TCanvas canvas("canvas", "canvas", 1000, 600);
+	for (int i=0; i<3; i++){
+		if (openfile[i]){
+			checkhist[i]->Draw("P Text");
+			string addstring("");
+			if (i==1) addstring = ".genbod";
+			if (i==2) addstring = ".acc";
+			canvas.Print( (path+"checkhist"+addstring+".pdf").c_str());
+			delete checkhist[i];
+		}
+	}
+	// finish the job
+	rootfile.Close();
+	return 0;
+}
+
+int run_v1(int argc, char* argv[]){
 	int nbins = atoi(argv[4]);
 	float binlow  = (float) atoi(argv[5]);
 	float binhigh = (float) atoi(argv[6]);
@@ -91,7 +272,7 @@ int main(int argc, char* argv[]){
 		int last_beampart_id(-1);
 		int particle_counter(0);
 		int events_id_cut(-1); // put a -1 if you want to filter the first or only event id in the tree
-		// we need the datastructure to hold the particle information
+		// we need the data structure to hold the particle information
 		vector<TParticle> particles;
 		int nentries = tree_events->GetEntries();
 		for (int i = 0; i < nentries; i++){
@@ -105,7 +286,7 @@ int main(int argc, char* argv[]){
 				continue;
 			}
 			//cout << "here " << i << " particles " << particle_counter  << endl;
-			// initilize the last_beampart_id if it appears to be the first entry found
+			// initialize the last_beampart_id if it appears to be the first entry found
 			if (last_beampart_id < 0){
 				last_beampart_id = events_GeantPID;
 			}
@@ -169,7 +350,7 @@ int main(int argc, char* argv[]){
 	// finish the job
 	rootfile.Close();
 	return 0;
-} 
+}
 
 void WriteEventToStream(vector<TParticle>& particles, ofstream& stream){
 	//Final state particle 4-momenta in BNL format:
