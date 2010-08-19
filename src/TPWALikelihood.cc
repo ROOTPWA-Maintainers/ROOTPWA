@@ -50,7 +50,7 @@
 
 #ifdef CUDA_ENABLED
 #include "../cuda/complex.cuh"
-#include "../cuda/cudaLikelihoodInterface.cuh"
+#include "../cuda/likelihoodInterface.cuh"
 #endif
 
 
@@ -244,8 +244,8 @@ TPWALikelihood<T>::DoEval(const double* par) const
 #ifdef CUDA_ENABLED  
 	if (_useCuda) {
 		cout << "+" << flush;
-		cuda::cudaLikelihoodInterface<cuda::complex<T> >& interface
-			= cuda::cudaLikelihoodInterface<cuda::complex<T> >::instance();
+		cuda::likelihoodInterface<cuda::complex<T> >& interface
+			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
 		logLikelihood = interface.sumLogLikelihood
 			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
@@ -483,8 +483,8 @@ TPWALikelihood<T>::init(const unsigned int rank,
 	readDecayAmplitudes(ampDirName);
 #ifdef CUDA_ENABLED	
 	if (_useCuda) {
-		cuda::cudaLikelihoodInterface<cuda::complex<T> >& interface
-			= cuda::cudaLikelihoodInterface<cuda::complex<T> >::instance();
+		cuda::likelihoodInterface<cuda::complex<T> >& interface
+			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
 		interface.init(reinterpret_cast<cuda::complex<T>*>(_decayAmps.data()),
 		               _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
 	}

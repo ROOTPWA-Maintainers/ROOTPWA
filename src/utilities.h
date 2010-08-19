@@ -117,7 +117,7 @@ private:
 template<typename T>
 inline
 std::ostream& operator << (std::ostream&                 out,
-			   const maxPrecisionValue__<T>& value)
+                           const maxPrecisionValue__<T>& value)
 { return value.print(out); }
 
 

@@ -41,6 +41,9 @@
 
 #include <iostream>
 #include <string>
+#include <sstream>
+#include <iomanip>
+#include <limits>
 
 
 namespace rpwa {
@@ -66,6 +69,69 @@ namespace rpwa {
 #define printErr  std::cerr << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << std::flush
 #define printWarn std::cerr << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << std::flush
 #define printInfo std::cout << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "  << std::flush
+
+
+	template<typename T> class maxPrecisionValue__;
+
+	// output stream manipulator that prints a value with its maximum precision
+	template<typename T>
+	inline
+	maxPrecisionValue__<T>
+	maxPrecision(const T& value)
+	{ return maxPrecisionValue__<T>(value); }
+
+	// output stream manipulator that prints a value with its maximum precision
+	// in addition manipulator reserves space so that values will align
+	template<typename T>
+	inline
+	maxPrecisionValue__<T>
+	maxPrecisionAlign(const T& value)
+	{ return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::ALIGN); }
+
+	// output stream manipulator that prints a value with maximum precision for double
+	template<typename T>
+	inline
+	maxPrecisionValue__<T>
+	maxPrecisionDouble(const T& value)
+	{ return maxPrecisionValue__<T>(value, maxPrecisionValue__<T>::DOUBLE); }
+
+	// general helper class that encapsulates a value of type T
+	template<typename T>
+	class maxPrecisionValue__ {
+	public:
+		enum modeEnum { PLAIN,
+		                ALIGN,
+		                DOUBLE};  // forces precision for double
+		maxPrecisionValue__(const T&       value,
+		                    const modeEnum mode = PLAIN)
+			: _value(value),
+			  _mode (mode)
+		{ }
+		std::ostream& print(std::ostream& out) const
+		{
+			const int nmbDigits = (_mode != DOUBLE) ? std::numeric_limits<T>::digits10 + 1
+				: std::numeric_limits<double>::digits10 + 1;
+			std::ostringstream s;
+			s.precision(nmbDigits);
+			s.setf(std::ios_base::scientific, std::ios_base::floatfield);
+			s << _value;
+			switch (_mode) {
+			case ALIGN:
+				return out << std::setw(nmbDigits + 7) << s.str();  // make space for sign, dot, and exponent
+			case PLAIN: case DOUBLE: default:
+				return out << s.str();
+			}
+		}
+	private:
+		const T& _value;
+		modeEnum _mode;
+	};
+
+	template<typename T>
+	inline
+	std::ostream& operator << (std::ostream&                 out,
+	                           const maxPrecisionValue__<T>& value)
+	{ return value.print(out); }
 
 
 }  // namespace rpwa

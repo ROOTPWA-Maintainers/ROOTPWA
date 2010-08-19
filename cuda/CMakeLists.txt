@@ -71,7 +71,7 @@ if(USE_CUDA)
   endif()
 
   # compile CUDA library
-  cuda_add_library(cuda cudaLikelihoodInterface.cu SHARED)
+  cuda_add_library(cuda likelihoodInterface.cu SHARED)
 
   # compile CUDA executable
   make_executable(testLikelihoodMockup testLikelihoodMockup.cc)

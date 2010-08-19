@@ -35,8 +35,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef CUDALIKELIHOODINTERFACE_H
-#define CUDALIKELIHOODINTERFACE_H
+#ifndef LIKELIHOODINTERFACE_CUH
+#define LIKELIHOODINTERFACE_CUH
 
 
 #include <iostream>
@@ -48,13 +48,13 @@ namespace rpwa {
 
 
 		template<typename complexT>
-		class cudaLikelihoodInterface {
+		class likelihoodInterface {
 
 		public:
 
 			typedef typename complexT::value_type value_type;
 
-			static cudaLikelihoodInterface& instance() { return _instance; }  ///< get singleton instance
+			static likelihoodInterface& instance() { return _instance; }  ///< get singleton instance
 
 			static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
 			static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
@@ -87,13 +87,13 @@ namespace rpwa {
 
 		private:
 
-			cudaLikelihoodInterface () { }
-			~cudaLikelihoodInterface();
-			cudaLikelihoodInterface (const cudaLikelihoodInterface&);
-			cudaLikelihoodInterface& operator =(const cudaLikelihoodInterface&);
+			likelihoodInterface () { }
+			~likelihoodInterface();
+			likelihoodInterface (const likelihoodInterface&);
+			likelihoodInterface& operator =(const likelihoodInterface&);
 
 
-			static cudaLikelihoodInterface _instance;  ///< singleton instance
+			static likelihoodInterface _instance;  ///< singleton instance
 
 			static bool                  _cudaInitialized;     ///< indicates whether CUDA environment was initialized correctly
 			static int                   _nmbOfCudaDevices;    ///< number of found CUDA capable devices
@@ -113,8 +113,8 @@ namespace rpwa {
 		template<typename complexT>
 		inline
 		std::ostream&
-		operator <<(std::ostream&                            out,
-		            const cudaLikelihoodInterface<complexT>& interface)
+		operator <<(std::ostream&                        out,
+		            const likelihoodInterface<complexT>& interface)
 		{
 			return interface.print(out);
 		}
@@ -125,4 +125,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif // CUDALIKELIHOODINTERFACE_H
+#endif // LIKELIHOODINTERFACE_CUH
