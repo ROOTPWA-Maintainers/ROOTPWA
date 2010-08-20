@@ -74,10 +74,10 @@ namespace rpwa {
 			                          const unsigned int nmbWavesRefl[2],
 			                          const bool         reshuffleArray = true);  ///< copies decay amplitudes into CUDA device memory
 
-			static value_type sumLogLikelihood(const complexT*    prodAmps,
-			                                   const unsigned int nmbProdAmps,
-			                                   const value_type   prodAmpFlat,
-			                                   const unsigned int rank);  ///< computes log likelihood sum for given production amplitudes
+			static value_type logLikelihood(const complexT*    prodAmps,
+			                                const unsigned int nmbProdAmps,
+			                                const value_type   prodAmpFlat,
+			                                const unsigned int rank);  ///< computes log likelihood for given production amplitudes
 		
 			static std::ostream& print(std::ostream& out);  ///< prints properties of used CUDA device
 

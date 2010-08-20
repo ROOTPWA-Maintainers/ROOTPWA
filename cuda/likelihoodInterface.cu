@@ -226,7 +226,7 @@ likelihoodInterface<complexT>::loadDecayAmps
 
 template<typename complexT>
 likelihoodInterface<complexT>::value_type
-likelihoodInterface<complexT>::sumLogLikelihood
+likelihoodInterface<complexT>::logLikelihood
 (const complexT*    prodAmps,     // array of production amplitudes; [iRank][iRefl][iWave]
  const unsigned int nmbProdAmps,  // number of elements in production amplitude array
  const value_type   prodAmpFlat,  // (real) amplitude of flat wave
@@ -241,47 +241,47 @@ likelihoodInterface<complexT>::sumLogLikelihood
 	}
 
 	// first summation stage
-	value_type*        d_logLikelihoodSums0;
+	value_type*        d_logLikelihoods0;
 	const unsigned int nmbElements0 = _nmbThreadsPerBlock * _nmbBlocks;
 	{
 		const	unsigned int size = sizeof(value_type) * nmbElements0;
-		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoodSums0, size));
-		sumLogLikelihoodKernel<complexT><<<_nmbBlocks, _nmbThreadsPerBlock>>>
+		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods0, size));
+		logLikelihoodKernel<complexT><<<_nmbBlocks, _nmbThreadsPerBlock>>>
 			(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
 			 _nmbWavesRefl[0], _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]),
-			 d_logLikelihoodSums0);
+			 d_logLikelihoods0);
 	}
 
 	// second summation stage
-	value_type*        d_logLikelihoodSums1;
+	value_type*        d_logLikelihoods1;
 	const unsigned int nmbElements1 = _nmbThreadsPerBlock;
 	{ 
 		const	unsigned int size = sizeof(value_type) * nmbElements1;
-		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoodSums1, size));
-		sumKernel<value_type><<<1, _nmbThreadsPerBlock>>>(d_logLikelihoodSums0, nmbElements0,
-		                                                  d_logLikelihoodSums1);
+		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods1, size));
+		sumKernel<value_type><<<1, _nmbThreadsPerBlock>>>(d_logLikelihoods0, nmbElements0,
+		                                                  d_logLikelihoods1);
 	}
 	
 	// third and last summation stage
-	value_type*        d_logLikelihoodSums2;
+	value_type*        d_logLikelihoods2;
 	const unsigned int nmbElements2 = 1;
 	{
 		const	unsigned int size = sizeof(value_type) * nmbElements2;
-		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoodSums2, size));
-		sumKernel<value_type><<<1, 1>>>(d_logLikelihoodSums1, nmbElements1, d_logLikelihoodSums2);
+		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods2, size));
+		sumKernel<value_type><<<1, 1>>>(d_logLikelihoods1, nmbElements1, d_logLikelihoods2);
 	}
 
 	// copy result to host
-	value_type logLikelihoodSum;
-	cutilSafeCall(cudaMemcpy(&logLikelihoodSum, d_logLikelihoodSums2,
+	value_type logLikelihood;
+	cutilSafeCall(cudaMemcpy(&logLikelihood, d_logLikelihoods2,
 	                         sizeof(value_type), cudaMemcpyDeviceToHost));
 
-	cutilSafeCall(cudaFree(d_prodAmps          ));
-	cutilSafeCall(cudaFree(d_logLikelihoodSums0));
-	cutilSafeCall(cudaFree(d_logLikelihoodSums1));
-	cutilSafeCall(cudaFree(d_logLikelihoodSums2));
+	cutilSafeCall(cudaFree(d_prodAmps       ));
+	cutilSafeCall(cudaFree(d_logLikelihoods0));
+	cutilSafeCall(cudaFree(d_logLikelihoods1));
+	cutilSafeCall(cudaFree(d_logLikelihoods2));
 
-	return logLikelihoodSum;
+	return logLikelihood;
 }
 
 

@@ -128,13 +128,12 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 	array<ampsArrayType::index, 3> derivShape     = {{ _rank, 2,
 	                                                   max(_nmbWavesRefl[0], _nmbWavesRefl[1]) }};
 	ampsArrayType                  derivatives(derivShape);
-	//!!! possible optimization: dL/dIm[Par_i] is 0 for all i
 
 	// loop over events and calculate first term of log likelihood sum
 	// as well as derivatives with respect to parameters
 	T logLikelihood = 0;
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-		T             l = 0;          // likelihood for this event
+		T             likelihood = 0;          // likelihood for this event
 		ampsArrayType d(derivShape);  // likelihood derivative for this event
 		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                     // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                       // incoherent sum over reflectivities
@@ -149,18 +148,18 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 						// sum up amplitudes for current rank and only for waves with same reflectivity
 						d[iRank][iRefl][jWave] += amp;
 				}
-				l += norm(ampProdSum);
+				likelihood += norm(ampProdSum);
 			}
-			assert(l >= 0);
+			assert(likelihood >= 0);
 			// loop again over waves for current rank
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 					d[iRank][iRefl][iWave] *= conj(complex<T>(_decayAmps[iEvt][iRefl][iWave]));
 		}  // end loop over rank
-		l             += prodAmpFlat2;
-		logLikelihood -= log(l);  // accumulate log likelihood
+		likelihood    += prodAmpFlat2;
+		logLikelihood -= log(likelihood);  // accumulate log likelihood
 		// incorporate factor 2 / sigma
-		const T factor = 2. / l;
+		const T factor = 2. / likelihood;
 		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
@@ -205,7 +204,8 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 	if (_debug)
 		printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
 		          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
-		          << "normalized likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
+		          << "normalized likelihood = "
+		          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
 		          << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
 
 	// return likelihood value
@@ -246,7 +246,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
 		cout << "+" << flush;
 		cuda::likelihoodInterface<cuda::complex<T> >& interface
 			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
-		logLikelihood = interface.sumLogLikelihood
+		logLikelihood = interface.logLikelihood
 			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
 	} else
@@ -254,19 +254,19 @@ TPWALikelihood<T>::DoEval(const double* par) const
 		{
 			cout << "-" << flush;
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-				T l = 0;  // likelihood for this event
+				T likelihood = 0;  // likelihood for this event
 				for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                   // incoherent sum over ranks
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                     // incoherent sum over reflectivities
 						complex<T> ampProdSum = 0;                                           // amplitude sum for negative/positive reflectivity for this rank
 						for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
 							// compute likelihood term
 							ampProdSum += prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
-						l += norm(ampProdSum);
+						likelihood += norm(ampProdSum);
 					}
-					assert(l >= 0);
+					assert(likelihood >= 0);
 				}  // end loop over rank
-				l             += prodAmpFlat2;
-				logLikelihood -= log(l);  // accumulate log likelihood
+				likelihood    += prodAmpFlat2;
+				logLikelihood -= log(likelihood);  // accumulate log likelihood
 			}  // end loop over events
 		}
 
@@ -296,7 +296,8 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	// if (_debug)
 	// 	printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
 	// 	          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
-	// 	          << "normalized likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
+	// 	          << "normalized likelihood = "
+	// 	          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
 	// 	          << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
 
 	// calculate and return log likelihood value
@@ -383,41 +384,41 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	array<ampsArrayType::index, 3> derivShape     = {{ _rank, 2,
 	                                                   max(_nmbWavesRefl[0], _nmbWavesRefl[1]) }};
 	ampsArrayType                  derivatives(derivShape);
-	//!!! possible optimization: dL/dIm[Par_i] is 0 for all i
 
 	// compute derivative for first term of log likelihood
 	cout << "*" << flush;
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-		T             l = 0;          // likelihood for this event
-		ampsArrayType d(derivShape);  // likelihood derivative for this event
-		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                     // incoherent sum over ranks
-			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                       // incoherent sum over reflectivities
-				complex<T> ampProdSum = 0;                                             // amplitude sum for negative/positive reflectivity for this rank
+		T             likelihood = 0;          // likelihood for this event
+		ampsArrayType derivative(derivShape);  // likelihood derivative for this event
+		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+				complex<T> ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 					// compute likelihood term
 					const complex<T> amp =   prodAmps[iRank][iRefl][iWave]
 						                     * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
 					ampProdSum += amp;
-					// compute derivatives
-					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-						// sum up amplitudes for current rank and only for waves with same reflectivity
-						d[iRank][iRefl][jWave] += amp;
 				}
-				l += norm(ampProdSum);
+				likelihood += norm(ampProdSum);
+				// set derivative term that is independent on derivative wave index
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+					// amplitude sums for current rank and for waves with same reflectivity
+					derivative[iRank][iRefl][jWave] = ampProdSum;
 			}
-			assert(l >= 0);
-			// loop again over waves for current rank
+			assert(likelihood >= 0);
+			// loop again over waves for current rank and multiply with complex conjugate
+			// of decay amplitude of the wave with the derivative wave index
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-					d[iRank][iRefl][iWave] *= conj(complex<T>(_decayAmps[iEvt][iRefl][iWave]));
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+					derivative[iRank][iRefl][jWave] *= conj(complex<T>(_decayAmps[iEvt][iRefl][jWave]));
 		}  // end loop over rank
-		l += prodAmpFlat2;
+		likelihood += prodAmpFlat2;
 		// incorporate factor 2 / sigma
-		const T factor = 2. / l;
+		const T factor = 2. / likelihood;
 		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-					derivatives[iRank][iRefl][iWave] -= factor * d[iRank][iRefl][iWave];
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+					derivatives[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
 		derivativeFlat -= factor * prodAmpFlat;
 	}  // end loop over events
  
