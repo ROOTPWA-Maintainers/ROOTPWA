@@ -53,6 +53,7 @@ if(USE_CUDA)
   set(INCLUDE_DIRECTORIES
     ${Boost_INCLUDE_DIRS}
     ${CUDA_SDK_ROOT_DIR}/common/inc
+		${ROOT_INCLUDE_DIR}
     ${UTILITIES_INCLUDE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
   )
@@ -75,7 +76,7 @@ if(USE_CUDA)
 
   # compile CUDA executable
   make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
-  target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda)
+  target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda ${ROOT_LIBS})
 
   cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
   target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})

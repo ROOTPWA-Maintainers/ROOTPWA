@@ -240,16 +240,17 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	timer.Start(true);
 
 	// loop over events and calculate real-data term of log likelihood
-	T logLikelihood = 0;
-#ifdef CUDA_ENABLED  
-	if (_useCuda) {
+	T logLikelihood     = 0;
+	T logLikelihoodCuda = 0;
+#ifdef CUDA_ENABLED
+	//if (_useCuda) {
 		cout << "+" << flush;
 		cuda::likelihoodInterface<cuda::complex<T> >& interface
 			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
-		logLikelihood = interface.logLikelihood
+		logLikelihoodCuda = interface.logLikelihood
 			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
-	} else
+	// } else
 #endif
 		{
 			cout << "-" << flush;
@@ -274,6 +275,13 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	//const double t1 = timer.RealTime();
 	timer.Start(true);
 
+	static T maxDiff = 0;
+	const  T diff    = abs(1 - logLikelihoodCuda / logLikelihood);
+	if (diff > maxDiff) {
+		maxDiff = diff;
+		printInfo << maxDiff << endl;
+	}
+	
 	// compute normalization term of log likelihood
 	complex<T> normFactor = 0;
 	const T    nmbEvt     = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
@@ -299,7 +307,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	// 	          << "normalized likelihood = "
 	// 	          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
 	// 	          << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
-
+	
 	// calculate and return log likelihood value
 	const double funcVal = logLikelihood + nmbEvt * normFactor.real();
 	return funcVal;
@@ -380,51 +388,90 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	// parts of the production amplitudes
 	// !NOTE! although stored as and constructed from complex values,
 	// the dL themselves are _not_ well defined complex numbers!
-	T                              derivativeFlat = 0;
-	array<ampsArrayType::index, 3> derivShape     = {{ _rank, 2,
-	                                                   max(_nmbWavesRefl[0], _nmbWavesRefl[1]) }};
+	array<ampsArrayType::index, 3> derivShape = {{ _rank, 2, max(_nmbWavesRefl[0], _nmbWavesRefl[1]) }};
 	ampsArrayType                  derivatives(derivShape);
+	T                              derivativeFlat = 0;
 
 	// compute derivative for first term of log likelihood
-	cout << "*" << flush;
-	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-		T             likelihood = 0;          // likelihood for this event
-		ampsArrayType derivative(derivShape);  // likelihood derivative for this event
-		for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
-			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-				complex<T> ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
-				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
-					// compute likelihood term
-					const complex<T> amp =   prodAmps[iRank][iRefl][iWave]
-						                     * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
-					ampProdSum += amp;
-				}
-				likelihood += norm(ampProdSum);
-				// set derivative term that is independent on derivative wave index
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-					// amplitude sums for current rank and for waves with same reflectivity
-					derivative[iRank][iRefl][jWave] = ampProdSum;
-			}
-			assert(likelihood >= 0);
-			// loop again over waves for current rank and multiply with complex conjugate
-			// of decay amplitude of the wave with the derivative wave index
-			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-					derivative[iRank][iRefl][jWave] *= conj(complex<T>(_decayAmps[iEvt][iRefl][jWave]));
-		}  // end loop over rank
-		likelihood += prodAmpFlat2;
-		// incorporate factor 2 / sigma
-		const T factor = 2. / likelihood;
-		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-					derivatives[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
-		derivativeFlat -= factor * prodAmpFlat;
-	}  // end loop over events
- 
+#ifdef CUDA_ENABLED
+	// if (_useCuda) {
+	  ampsArrayType derivativesCuda(derivShape);
+	  T             derivativeFlatCuda = 0;
+		cout << "#" << flush;
+		cuda::likelihoodInterface<cuda::complex<T> >& interface
+			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
+		interface.logLikelihoodDeriv(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
+		                             prodAmps.num_elements(), prodAmpFlat, _rank,
+		                             reinterpret_cast<cuda::complex<T>*>(derivativesCuda.data()),
+		                             derivativeFlatCuda);
+	// } else
+#endif
+		{
+			cout << "*" << flush;
+			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
+				T             likelihood = 0;          // likelihood for this event
+				ampsArrayType derivative(derivShape);  // likelihood derivative for this event
+				for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+						complex<T> ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
+						for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
+							// compute likelihood term
+							const complex<T> amp =   prodAmps[iRank][iRefl][iWave]
+								                     * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
+							ampProdSum += amp;
+						}
+						likelihood += norm(ampProdSum);
+						// set derivative term that is independent on derivative wave index
+						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+							// amplitude sums for current rank and for waves with same reflectivity
+							derivative[iRank][iRefl][jWave] = ampProdSum;
+					}
+					assert(likelihood >= 0);
+					// loop again over waves for current rank and multiply with complex conjugate
+					// of decay amplitude of the wave with the derivative wave index
+					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+							derivative[iRank][iRefl][jWave] *= conj(complex<T>(_decayAmps[iEvt][iRefl][jWave]));
+				}  // end loop over rank
+				likelihood += prodAmpFlat2;
+				// incorporate factor 2 / sigma
+				const T factor = 2. / likelihood;
+				for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
+							derivatives[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
+				derivativeFlat -= factor * prodAmpFlat;
+			}  // end loop over events
+		}
+	
 	// log consumed time
 	const double t1 = timer.RealTime();
 	timer.Start(true);
+
+	static complex<T> maxDiff = 0;
+	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+			for (unsigned int iWave = 1; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+				complex<T> diff;
+				diff.real() = 1 -   derivativesCuda[iRank][iRefl][iWave].real()
+					                / derivatives[iRank][iRefl][iWave].real();
+				diff.imag() = 1 -   derivativesCuda[iRank][iRefl][iWave].imag()
+					                / derivatives[iRank][iRefl][iWave].imag();
+				if (abs(diff.real()) > maxDiff.real()) {
+					maxDiff.real() = abs(diff.real());
+					printInfo << "[" << iRank << "][" << iRefl << "][" << iWave << "]: " << maxDiff << endl;
+				}
+				if (abs(diff.imag()) > maxDiff.imag()) {
+					maxDiff.imag() = abs(diff.imag());
+					printInfo << "[" << iRank << "][" << iRefl << "][" << iWave << "]: " << maxDiff << endl;
+				}
+			}
+	static T maxDiffFlat = 0;
+	const  T diffFlat    = abs(1 - derivativeFlatCuda / derivativeFlat);
+	if (diffFlat > maxDiffFlat) {
+		maxDiffFlat = diffFlat;
+		printInfo << maxDiffFlat << endl;
+	}
 
 	// normalize derivatives w.r.t. parameters
 	const T nmbEvt      = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;

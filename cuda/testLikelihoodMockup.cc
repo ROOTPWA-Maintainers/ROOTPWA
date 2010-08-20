@@ -42,6 +42,8 @@
 #define BOOST_DISABLE_ASSERTS
 #include "boost/multi_array.hpp"
 
+#include "TRandom3.h"
+
 #include "reportingUtils.hpp"
 #include "nDimArrayUtils.hpp"
 #include "nDimArrayUtils.hpp"
@@ -66,13 +68,16 @@ generateData(const unsigned int nmbEvents,
              ampsArrayType&     prodAmps,
              double&            prodAmpFlat)
 {
+	TRandom3 random(123456789);
+
 	// set decay amplitudes
 	decayAmps.resize(extents[nmbEvents][2][max(nmbWavesRefl[0], nmbWavesRefl[1])]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave)
 			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
-				const double val = iEvt * 1000 + iRefl * 100 + iWave;
-				decayAmps[iEvt][iRefl][iWave] = complex<double>(val, val + 0.5);
+				//const double val = iEvt * 1000 + iRefl * 100 + iWave;
+				//decayAmps[iEvt][iRefl][iWave] = complex<double>(val, val + 0.5);
+				decayAmps[iEvt][iRefl][iWave] = complex<double>(random.Uniform(0, 1), random.Uniform(0, 1));
 			}
 
 	// set production amplitudes
@@ -81,10 +86,12 @@ generateData(const unsigned int nmbEvents,
 	for (unsigned int iRank = 0; iRank < rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-				const double val = iRank * 1000 + iRefl * 100 + iWave;
-				prodAmps[iRank][iRefl][iWave] = complex<double>(val, val + 0.5);
+				//const double val = iRank * 1000 + iRefl * 100 + iWave;
+				//prodAmps[iRank][iRefl][iWave] = complex<double>(val, val + 0.5);
+				prodAmps[iRank][iRefl][iWave] = complex<double>(random.Uniform(0, 1), random.Uniform(0, 1));
 			}
-	prodAmpFlat = parIndex;
+	//prodAmpFlat = parIndex;
+	prodAmpFlat = random.Uniform(0, 1);
 }
 
 
@@ -409,10 +416,10 @@ main(int    argc,
 			= runLogLikelihoodCuda       (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[2]);
 
 		printInfo << "finished:" << endl
-		          << "    elapsed time (multiArray) ............... " << elapsedTime[0]  << " sec" << endl
+		          << "    elapsed time (multi_array) .............. " << elapsedTime[0]  << " sec" << endl
 		          << "    elapsed time (pseudo array) ............. " << elapsedTime[1]  << " sec" << endl
 		          << "    elapsed time (CUDA) ..................... " << elapsedTime[2]  << " sec" << endl
-		          << "    log(likelihood) (multiArray) ............ " << maxPrecision(logLikelihoods[0]) << endl
+		          << "    log(likelihood) (multi_array) ........... " << maxPrecision(logLikelihoods[0]) << endl
 		          << "    log(likelihood) (pseudo array) .......... " << maxPrecision(logLikelihoods[1]) << endl
 		          << "    log(likelihood) (CUDA) .................. " << maxPrecision(logLikelihoods[2]) << endl
 		          << "    delta[log(likelihood)] .................. "
@@ -437,9 +444,9 @@ main(int    argc,
 				for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
 					const complex<double> diffAbs =   derivatives[0][iRank][iRefl][iWave]
 						                              - derivatives[1][iRank][iRefl][iWave];
-					cout << "    [" << iRank << "][" << iRefl << "][" << iWave << "]: "
-					     << derivatives[0][iRank][iRefl][iWave] << " - "
-					     << derivatives[1][iRank][iRefl][iWave] << " = " << diffAbs << endl;
+					// cout << "    [" << iRank << "][" << iRefl << "][" << iWave << "]: "
+					//      << derivatives[0][iRank][iRefl][iWave] << " - "
+					//      << derivatives[1][iRank][iRefl][iWave] << " = " << diffAbs << endl;
 					if (abs(diffAbs.real()) > maxDiffAbs.real())
 						maxDiffAbs.real() = abs(diffAbs.real());
 					if (abs(diffAbs.imag()) > maxDiffAbs.imag())
@@ -456,10 +463,14 @@ main(int    argc,
 				}
 
 		printInfo << "finished:" << endl
-		          << "    elapsed time (multiArray) ... " << elapsedTime[0]  << " sec" << endl
-		          << "    elapsed time (CUDA) ......... " << elapsedTime[1]  << " sec" << endl
-		          << "    max. absolute difference .... " << maxDiffAbs                << endl
-		          << "    max. relative difference .... " << maxDiffRel                << endl;
+		          << "    elapsed time (multi_array) ... " << elapsedTime[0]  << " sec" << endl
+		          << "    elapsed time (CUDA) .......... " << elapsedTime[1]  << " sec" << endl
+		          << "    max. absolute difference ..... " << maxDiffAbs                << endl
+		          << "    max. relative difference ..... " << maxDiffRel                << endl
+		          << "    flat deriv. (multi_array) .... " << derivativeFlat[0]         << endl
+		          << "    flat deriv. (CUDA) ........... " << derivativeFlat[1]         << endl
+		          << "    flat deriv. difference ....... "
+		          << derivativeFlat[0] - derivativeFlat[1] << endl;
 	}
 
   
