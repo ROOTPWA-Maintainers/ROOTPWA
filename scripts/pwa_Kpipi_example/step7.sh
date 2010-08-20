@@ -32,7 +32,8 @@ do
 	  		export FILE="${BIN}/${BINLOW}.${BINHIGH}.evt";
 	  		echo " input: ${FILE}";
 			export BATCHFILE="${BIN}/calcamp_batch_${KPIPI_CALC_AMP_FARM}.evt.sh"
-			cat > ${BATCHFILE} << EOF
+
+cat > ${BATCHFILE} << EOF
 #!/bin/bash
 # 
 #PBS -N calcampJob
@@ -41,10 +42,11 @@ do
 #PBS -V
 #PBS -l nodes=1:x86_64
 
-export PATH=$PBS_O_PATH
-cd $PBS_O_WORKDIR
+export PATH=\$PBS_O_PATH
+cd \$PBS_O_WORKDIR
 ./doamps.sh ${FILE}
-			EOF
+
+EOF
 			echo " submitting batchscript ${BATCHFILE}"
 			qsub ${BATCHFILE}
 
@@ -53,7 +55,8 @@ cd $PBS_O_WORKDIR
 	  		export AMPDIR=${BIN}/PSPAMPS;
 			echo " mc-input: ${FILE}";
 	  		export BATCHFILE="${BIN}/calcamp_batch_${KPIPI_CALC_AMP_FARM}.genbod.evt.sh"
-			cat > ${BATCHFILE} << EOF
+
+cat > ${BATCHFILE} << EOF
 #!/bin/bash
 # 
 #PBS -N calcmcampJob
@@ -62,12 +65,13 @@ cd $PBS_O_WORKDIR
 #PBS -V
 #PBS -l nodes=1:x86_64
 
-export PATH=$PBS_O_PATH
-cd $PBS_O_WORKDIR
+export PATH=\$PBS_O_PATH
+cd \$PBS_O_WORKDIR
 ./doamps.sh ${FILE}
 cd ${AMPDIR}
 int *.amp > norm.int;
-			EOF
+
+EOF
 			echo " submitting batchscript ${BATCHFILE}"
 			qsub ${BATCHFILE}
 
@@ -76,7 +80,8 @@ int *.amp > norm.int;
 	  		export AMPDIR=${BIN}/ACCAMPS;
 			echo " acc-input: ${FILE}";
 	  		export BATCHFILE="${BIN}/calcamp_batch_${KPIPI_CALC_AMP_FARM}.acc.evt.sh"
-			cat > ${BATCHFILE} << EOF
+			
+cat > ${BATCHFILE} << EOF
 #!/bin/bash
 # 
 #PBS -N calcmcaccampJob
@@ -85,12 +90,13 @@ int *.amp > norm.int;
 #PBS -V
 #PBS -l nodes=1:x86_64
 
-export PATH=$PBS_O_PATH
-cd $PBS_O_WORKDIR
+export PATH=\$PBS_O_PATH
+cd \$PBS_O_WORKDIR
 ./doamps.sh ${FILE}
 cd ${AMPDIR}
 int *.amp > norm.int;
-			EOF
+			
+EOF
 			echo " submitting batchscript ${BATCHFILE}"
 			qsub ${BATCHFILE}
 
