@@ -7,6 +7,13 @@
 # ************************ variables to set ! **************************
 	export KPIPI_WORKSPACE="/mnt/disk2/analysis/Kp_Kppipi/PWA_20MeV" # if you specify here an exisiting directory with ~5GB space you may leave the rest unchanged
 
+	# time consuming jobs should be run on a computer farm
+	# local : run on this machine
+	# cern  : run on CERN batch system
+	# gridka: run on Karlsruhe batch system
+	# mainz : run on Mainz blaster
+	export KPIPI_CALC_AMP_FARM="local" # local or mainz are forseen settings for amplitude calculations	
+
 	export KPIPI_RAW_FILE_DIR=${KPIPI_WORKSPACE} # the directory where the data file will be copied to (must exist)
 	export KPIPI_RAW_FILE="hist.root"			 # the name of the file
 	export KPIPI_MC_FILE_DIR=${KPIPI_WORKSPACE}  # the directory where the mc-acceptance data file will be copied to (must exist)
