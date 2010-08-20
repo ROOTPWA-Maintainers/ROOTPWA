@@ -83,6 +83,13 @@ namespace rpwa {
 				return *this;
 			}
     
+			inline HOST_DEVICE complex<T>& operator -=(const complex<T>& z)
+			{
+				_re -= z.real();
+				_im -= z.imag();
+				return *this;
+			}
+    
 			inline HOST_DEVICE friend complex<T> operator+(const complex<T>& a, const complex<T>& b)      
 			{
 				complex<T> result;
@@ -98,6 +105,9 @@ namespace rpwa {
 					result._im = (a._re * b._im) + (a._im * b._re);
 					return result;
 				}
+
+			inline HOST_DEVICE friend complex<T> conj(const complex<T>& z)
+				{ return complex<T>(z.real(), -z.imag()); }
 
 			inline HOST_DEVICE friend T abs (const complex<T>& z) { return sqrt(norm(z));                     }
 			inline HOST_DEVICE friend T norm(const complex<T>& z) { return (z._re * z._re) + (z._im * z._im); }

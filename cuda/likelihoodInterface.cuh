@@ -58,7 +58,7 @@ namespace rpwa {
 
 			static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
 			static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
-			static unsigned int freeDeviceMem     ();                                 ///< returns available memory capacity of used CUDA device
+			static unsigned int availableDeviceMem();                                 ///< returns available memory capacity of used CUDA device
 			static unsigned int nmbBlocks         () { return _nmbBlocks;          }  ///< returns number of CUDA thread blocks 
 			static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }  ///< returns number of CUDA threads per block
 
@@ -78,6 +78,13 @@ namespace rpwa {
 			                                const unsigned int nmbProdAmps,
 			                                const value_type   prodAmpFlat,
 			                                const unsigned int rank);  ///< computes log likelihood for given production amplitudes
+		
+			static value_type logLikelihoodDeriv(const complexT*    prodAmps,
+			                                     const unsigned int nmbProdAmps,
+			                                     const value_type   prodAmpFlat,
+			                                     const unsigned int rank,
+			                                     complexT*          derivatives,
+			                                     value_type&        derivativeFlat);  ///< computes derivatives of log likelihood for given production amplitudes
 		
 			static std::ostream& print(std::ostream& out);  ///< prints properties of used CUDA device
 
