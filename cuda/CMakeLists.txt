@@ -37,14 +37,18 @@
 
 if(USE_CUDA)
 
-  set(CMAKE_CXX_FLAGS "-O3")
-  message(STATUS "Using CXX flags '${CMAKE_CXX_FLAGS}' for CUDA compilation")
+	#set(CUDA_VERBOSE_BUILD "ON")
+
+	# -Wall reports warnings in system libraries; so we cannot use -Werror
+  set(CMAKE_CXX_FLAGS "-Wall")
+  #message(STATUS "Using CXX flags '${CMAKE_CXX_FLAGS}' for CUDA compilation")
 
   # define for which shader models
   #set(_SHADER_MODELS "13" "20")
   set(_SHADER_MODELS "13")
   foreach(_SHADER_MODEL ${_SHADER_MODELS})
-    list(APPEND CUDA_NVCC_FLAGS "--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
+    list(APPEND CUDA_NVCC_FLAGS
+			"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
   endforeach()
   list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v")
   message(STATUS "Compiling using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")

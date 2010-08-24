@@ -247,7 +247,9 @@ readOnlyTextureMemKernel(T*,
 // helper macros for different kernel types
 #define GLOBAL_MEM_KERNEL(kernel, elementType)	  \
 	{ \
-		kernel<elementType><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceInData[0], (elementType*)deviceOutData[0], nmbElementsPerThread); \
+		kernel<elementType><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceInData[0], \
+		                                                         (elementType*)deviceOutData[0], \
+		                                                         nmbElementsPerThread); \
 	}
 #define GLOBAL_MEM_2_KERNEL(kernel, elementType)	  \
 	{ \
@@ -259,7 +261,8 @@ readOnlyTextureMemKernel(T*,
 	}
 #define TEXTURE_MEM_KERNEL(kernel, elementType)	  \
 	{ \
-		kernel<elementType, cuda::elementType ## TextureReader><<< nmbBlocks, nmbThreadsPerBlock >>>((elementType*)deviceOutData[0], nmbElementsPerThread); \
+		kernel<elementType, cuda::elementType ## TextureReader><<< nmbBlocks, nmbThreadsPerBlock >>> \
+			((elementType*)deviceOutData[0], nmbElementsPerThread); \
 	}
 
 #define BENCHMARK(memoryType, kernel, elementType, nmbTransfersPerElement) \
@@ -316,7 +319,9 @@ int main()
 	//                                           / (nmbBlocks * nmbThreadsPerBlock * 4 * sizeof(float4));
 	// const unsigned int nmbElements          = nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread;
 	// !!! somehow there seems to be a 512 MByte limit for textures
-	unsigned int       nmbElements          = min((unsigned long)1 << 29, (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 10) / 4) / sizeof(float4);
+	unsigned int nmbElements =
+		min((unsigned long)1 << 29,
+		    (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 10) / 4) / sizeof(float4);
 	const unsigned int nmbElementsPerThread = nmbElements / (nmbBlocks * nmbThreadsPerBlock);
 	nmbElements = nmbElementsPerThread * nmbBlocks * nmbThreadsPerBlock;
 	float4* deviceInData [2];

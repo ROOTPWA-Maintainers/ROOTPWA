@@ -204,7 +204,7 @@ verifySumKernel(const T*           inData,
 	bool               success = true;
 	for (unsigned int threadId = 0; threadId < nmbThreads; ++threadId) {
 		T sum = 0;
-		for (int i = 0; i < nmbElementsPerThread; ++i)
+		for (unsigned int i = 0; i < nmbElementsPerThread; ++i)
 			sum += inData[(i * nmbThreads ) + threadId];
 		data[threadId] = sum;
 		if (data[threadId] != outData[threadId]) {

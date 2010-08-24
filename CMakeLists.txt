@@ -74,12 +74,15 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 # common compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -pedantic")
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS "-Wall -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+#!!! it was neccessary to revert from -O3 back to -O2 due to problems
+#!!! with the correct execution of CUDA code; see comment in
+#!!! cuda/likelihoodInterface.cu, logLikelihoodDeriv()
+set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 # report global build settings
 foreach(_LANG "C" "CXX")
@@ -90,6 +93,7 @@ foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
   message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
 endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
+
 
 # redirect output files
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")

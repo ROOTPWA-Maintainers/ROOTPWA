@@ -61,6 +61,7 @@ namespace rpwa {
 			static unsigned int availableDeviceMem();                                 ///< returns available memory capacity of used CUDA device
 			static unsigned int nmbBlocks         () { return _nmbBlocks;          }  ///< returns number of CUDA thread blocks 
 			static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }  ///< returns number of CUDA threads per block
+			static const struct cudaDeviceProp* deviceProperties();
 
 			static bool init(const complexT*    decayAmps,
 			                 const unsigned int nmbDecayAmps,

@@ -71,8 +71,6 @@ TPWALikelihood<T>::TPWALikelihood()
 	  _rank             (1),
 	  _nmbWaves         (0),
 	  _nmbPars          (0),
-	  _Ltime            (0),
-	  _Ntime            (0),
 #ifdef CUDA_ENABLED
 	  _useCuda          (false),
 #endif
@@ -81,8 +79,7 @@ TPWALikelihood<T>::TPWALikelihood()
 {
 	_nmbWavesRefl[0] = 0;
 	_nmbWavesRefl[1] = 0;
-	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i)
-		_nmbCalls[i] = 0;
+	resetFuncCallInfo();
 #ifdef USE_FDF
 	printInfo << "using FdF() to calculate likelihood" << endl;
 #else
@@ -104,11 +101,11 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
                        double&       funcVal,         // function value
                        double*       gradient) const  // array of derivatives
 {
-	++(_nmbCalls[FDF]);
+	++(_funcCallInfo[FDF].nmbCalls);
   
-	// log consumed time
-	TStopwatch timer;
-	timer.Start(true);
+	// timer for total time
+	TStopwatch timerTot;
+	timerTot.Start();
   
 	// copy arguments into parameter cache
 	for (unsigned int i = 0; i < _nmbPars; ++i)
@@ -131,6 +128,8 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 
 	// loop over events and calculate first term of log likelihood sum
 	// as well as derivatives with respect to parameters
+	TStopwatch timer;
+	timer.Start();
 	T logLikelihood = 0;
 	for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 		T             likelihood = 0;          // likelihood for this event
@@ -166,12 +165,12 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 					derivatives[iRank][iRefl][iWave] -= factor * d[iRank][iRefl][iWave];
 		derivativeFlat -= factor * prodAmpFlat;
 	}  // end loop over events
-  
-	// log consumed time
-	const double t1 = timer.RealTime();
-	timer.Start(true);
+	// log time needed for likelihood calculation
+	timer.Stop();
+	_funcCallInfo[FDF].funcTime += timer.RealTime();
 
 	// compute normalization term of log likelihood and normalize derivatives w.r.t. parameters
+	timer.Start();
 	complex<T> normFactor  = 0;
 	const T    nmbEvt      = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
 	const T    twiceNmbEvt = 2 * nmbEvt;
@@ -190,26 +189,26 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 	// take care of flat wave
 	normFactor.real() += prodAmpFlat2;
 	derivativeFlat    += twiceNmbEvt * prodAmpFlat;
+	// log time needed for normalization
+	timer.Stop();
+	_funcCallInfo[FDF].normTime += timer.RealTime();
 
 	// sort derivative results into output array and cache
 	copyToParArray(derivatives, derivativeFlat, gradient);
 	copyToParArray(derivatives, derivativeFlat, toArray(_derivCache));
 
-	// log consumed time
-	const double t2 = timer.RealTime();
-	timer.Stop();
-	_Ltime += t1;
-	_Ntime += t2;
-  
+	// set function return value
+	funcVal = logLikelihood + nmbEvt * normFactor.real();
+
+	// log total consumed time
+	timerTot.Stop();
+	_funcCallInfo[FDF].totalTime += timerTot.RealTime();
+
 	if (_debug)
 		printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
 		          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
 		          << "normalized likelihood = "
-		          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
-		          << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
-
-	// return likelihood value
-	funcVal = logLikelihood + nmbEvt * normFactor.real();
+		          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl;
 }
 
 
@@ -217,7 +216,7 @@ template<typename T>
 double
 TPWALikelihood<T>::DoEval(const double* par) const
 {
-	++(_nmbCalls[DOEVAL]);
+	++(_funcCallInfo[DOEVAL].nmbCalls);
 
 #ifdef USE_FDF
 
@@ -229,29 +228,31 @@ TPWALikelihood<T>::DoEval(const double* par) const
 
 #else
 
+	// timer for total time
+	TStopwatch timerTot;
+	timerTot.Start();
+  
 	// build complex production amplitudes from function parameters taking into account rank restrictions
 	T             prodAmpFlat;
 	ampsArrayType prodAmps;
 	copyFromParArray(par, prodAmps, prodAmpFlat);
 	const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
-	// log consumed time
-	TStopwatch timer;
-	timer.Start(true);
-
 	// loop over events and calculate real-data term of log likelihood
+	TStopwatch timer;
+	timer.Start();
 	T logLikelihood     = 0;
-	T logLikelihoodCuda = 0;
 #ifdef CUDA_ENABLED
 	//if (_useCuda) {
 		cout << "+" << flush;
 		cuda::likelihoodInterface<cuda::complex<T> >& interface
 			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
-		logLikelihoodCuda = interface.logLikelihood
+		logLikelihood = interface.logLikelihood
 			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
 	// } else
 #endif
+		T logLikelihoodCpu = 0;
 		{
 			cout << "-" << flush;
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
@@ -266,23 +267,23 @@ TPWALikelihood<T>::DoEval(const double* par) const
 					}
 					assert(likelihood >= 0);
 				}  // end loop over rank
-				likelihood    += prodAmpFlat2;
-				logLikelihood -= log(likelihood);  // accumulate log likelihood
+				likelihood       += prodAmpFlat2;
+				logLikelihoodCpu -= log(likelihood);  // accumulate log likelihood
 			}  // end loop over events
 		}
-
-	// log consumed time
-	//const double t1 = timer.RealTime();
-	timer.Start(true);
+	// log time needed for likelihood calculation
+	timer.Stop();
+	_funcCallInfo[DOEVAL].funcTime += timer.RealTime();
 
 	static T maxDiff = 0;
-	const  T diff    = abs(1 - logLikelihoodCuda / logLikelihood);
+	const  T diff    = abs(1 - logLikelihood / logLikelihoodCpu);
 	if (diff > maxDiff) {
 		maxDiff = diff;
-		printInfo << maxDiff << endl;
+		cout << endl << "    log(likelihood) max diff = " << maxDiff << endl;
 	}
 	
 	// compute normalization term of log likelihood
+	timer.Start();
 	complex<T> normFactor = 0;
 	const T    nmbEvt     = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
@@ -294,13 +295,17 @@ TPWALikelihood<T>::DoEval(const double* par) const
 				}
 	// take care of flat wave
 	normFactor.real() += prodAmpFlat2;
-
-	// log consumed time
-	//const double t2 = timer.RealTime();
+	// log time needed for normalization
 	timer.Stop();
-	// _Ltime += t1;
-	// _Ntime += t2;
+	_funcCallInfo[DOEVAL].normTime += timer.RealTime();
   
+	// calculate and return log likelihood value
+	const double funcVal = logLikelihood + nmbEvt * normFactor.real();
+
+	// log total consumed time
+	timerTot.Stop();
+	_funcCallInfo[DOEVAL].totalTime += timerTot.RealTime();
+
 	// if (_debug)
 	// 	printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
 	// 	          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
@@ -308,8 +313,6 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	// 	          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
 	// 	          << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
 	
-	// calculate and return log likelihood value
-	const double funcVal = logLikelihood + nmbEvt * normFactor.real();
 	return funcVal;
 
 #endif  // USE_FDF
@@ -321,7 +324,11 @@ double
 TPWALikelihood<T>::DoDerivative(const double* par,
                                 unsigned int  derivativeIndex) const
 {
-	++(_nmbCalls[DODERIVATIVE]);
+	++(_funcCallInfo[DODERIVATIVE].nmbCalls);
+
+	// timer for total time
+	TStopwatch timerTot;
+	timerTot.Start();
 
 	// check whether parameter is in cache
 	bool samePar = true;
@@ -332,6 +339,9 @@ TPWALikelihood<T>::DoDerivative(const double* par,
 		}
 	if (samePar) {
 		//cout << "using cached derivative! " << endl;
+		timerTot.Stop();
+		_funcCallInfo[DODERIVATIVE].totalTime += timerTot.RealTime();
+		_funcCallInfo[DODERIVATIVE].funcTime   = _funcCallInfo[DODERIVATIVE].totalTime;
 		return _derivCache[derivativeIndex];
 	}
 	// call FdF
@@ -348,8 +358,12 @@ void
 TPWALikelihood<T>::Gradient(const double* par,             // parameter array; reduced by rank conditions
                             double*       gradient) const  // array of derivatives
 {
-	++(_nmbCalls[GRADIENT]);
+	++(_funcCallInfo[GRADIENT].nmbCalls);
   
+	// timer for total time
+	TStopwatch timerTot;
+	timerTot.Start();
+
 #ifdef USE_FDF
 
 	// check whether parameter is in cache
@@ -362,6 +376,9 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	if (samePar) {
 		for (unsigned int i = 0; i < _nmbPars ; ++i)
 			gradient[i] = _derivCache[i];
+		timerTot.Stop();
+		_funcCallInfo[GRADIENT].totalTime += timerTot.RealTime();
+		_funcCallInfo[GRADIENT].funcTime   = _funcCallInfo[GRADIENT].totalTime;
 		return;
 	}
 	// call FdF
@@ -369,10 +386,6 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	FdF(par, logLikelihood, gradient);
 
 #else
-
-	// log consumed time
-	TStopwatch timer;
-	timer.Start(true);
 
 	// copy arguments into parameter cache
 	for (unsigned int i = 0; i < _nmbPars; ++i)
@@ -393,19 +406,23 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	T                              derivativeFlat = 0;
 
 	// compute derivative for first term of log likelihood
+	TStopwatch timer;
+	timer.Start();
 #ifdef CUDA_ENABLED
 	// if (_useCuda) {
-	  ampsArrayType derivativesCuda(derivShape);
-	  T             derivativeFlatCuda = 0;
+	  // ampsArrayType derivativesCuda(derivShape);
+	  // T             derivativeFlatCuda = 0;
 		cout << "#" << flush;
 		cuda::likelihoodInterface<cuda::complex<T> >& interface
 			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
 		interface.logLikelihoodDeriv(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 		                             prodAmps.num_elements(), prodAmpFlat, _rank,
-		                             reinterpret_cast<cuda::complex<T>*>(derivativesCuda.data()),
-		                             derivativeFlatCuda);
+		                             reinterpret_cast<cuda::complex<T>*>(derivatives.data()),
+		                             derivativeFlat);
 	// } else
 #endif
+		ampsArrayType derivativesCpu(derivShape);
+		T             derivativeFlatCpu = 0;
 		{
 			cout << "*" << flush;
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
@@ -439,41 +456,45 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 				for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-							derivatives[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
-				derivativeFlat -= factor * prodAmpFlat;
+							derivativesCpu[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
+				derivativeFlatCpu -= factor * prodAmpFlat;
 			}  // end loop over events
 		}
-	
-	// log consumed time
-	const double t1 = timer.RealTime();
-	timer.Start(true);
+	// log time needed for gradient calculation
+	timer.Stop();
+	_funcCallInfo[GRADIENT].funcTime += timer.RealTime();
 
 	static complex<T> maxDiff = 0;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-			for (unsigned int iWave = 1; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 				complex<T> diff;
-				diff.real() = 1 -   derivativesCuda[iRank][iRefl][iWave].real()
-					                / derivatives[iRank][iRefl][iWave].real();
-				diff.imag() = 1 -   derivativesCuda[iRank][iRefl][iWave].imag()
-					                / derivatives[iRank][iRefl][iWave].imag();
+				diff.real() = 1 -   derivatives[iRank][iRefl][iWave].real()
+					                / derivativesCpu[iRank][iRefl][iWave].real();
+				diff.imag() = 1 -   derivatives[iRank][iRefl][iWave].imag()
+					                / derivativesCpu[iRank][iRefl][iWave].imag();
+				bool newMaxDiff = false;
 				if (abs(diff.real()) > maxDiff.real()) {
 					maxDiff.real() = abs(diff.real());
-					printInfo << "[" << iRank << "][" << iRefl << "][" << iWave << "]: " << maxDiff << endl;
+					newMaxDiff = true;
 				}
 				if (abs(diff.imag()) > maxDiff.imag()) {
 					maxDiff.imag() = abs(diff.imag());
-					printInfo << "[" << iRank << "][" << iRefl << "][" << iWave << "]: " << maxDiff << endl;
+					newMaxDiff = true;
 				}
+				if (newMaxDiff)
+					cout << endl << "    derivatives max diff [" << iRank << "][" << iRefl << "]["
+					     << iWave << "] = " << maxDiff << endl;
 			}
 	static T maxDiffFlat = 0;
-	const  T diffFlat    = abs(1 - derivativeFlatCuda / derivativeFlat);
+	const  T diffFlat    = abs(1 - derivativeFlat / derivativeFlatCpu);
 	if (diffFlat > maxDiffFlat) {
 		maxDiffFlat = diffFlat;
-		printInfo << maxDiffFlat << endl;
+		cout << endl << "    flat derivative max diff = " << maxDiffFlat << endl;
 	}
 
 	// normalize derivatives w.r.t. parameters
+	timer.Start();
 	const T nmbEvt      = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
 	const T twiceNmbEvt = 2 * nmbEvt;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
@@ -488,16 +509,17 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 			}
 	// take care of flat wave
 	derivativeFlat += twiceNmbEvt * prodAmpFlat;
+	// log time needed for normalization
+	timer.Stop();
+	_funcCallInfo[GRADIENT].normTime += timer.RealTime();
 
-	// return gradient values
+	// set return gradient values
 	copyToParArray(derivatives, derivativeFlat, gradient);
 	copyToParArray(derivatives, derivativeFlat, toArray(_derivCache));
 
-	// log consumed time
-	const double t2 = timer.RealTime();
-	timer.Stop();
-	_Ltime += t1;
-	_Ntime += t2;
+	// log total consumed time
+	timerTot.Stop();
+	_funcCallInfo[GRADIENT].totalTime += timerTot.RealTime();
 
 #endif  // USE_FDF
 }
@@ -1012,6 +1034,23 @@ TPWALikelihood<T>::print(ostream& out) const
 
 
 template<typename T>
+ostream&
+TPWALikelihood<T>::printFuncInfo(ostream& out) const
+{
+	const string funcNames[NMB_FUNCTIONCALLENUM] = {"FdF", "Gradient", "DoEval", "DoDerivative"};
+	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i)
+		if (_funcCallInfo[i].nmbCalls > 0)
+			out << "    " << _funcCallInfo[i].nmbCalls
+			    << " calls to TPWALikelihood<T>::" << funcNames[i] << "()" << endl
+			    << "    time spent in TPWALikelihood<T>::" << funcNames[i] << "(): " << endl
+			    << "        total time ................. " << _funcCallInfo[i].totalTime << " sec" << endl
+			    << "        return value calculation ... " << _funcCallInfo[i].funcTime  << " sec" << endl
+			    << "        normalization .............. " << _funcCallInfo[i].normTime  << " sec" << endl;
+	return out;
+}
+
+
+template<typename T>
 vector<unsigned int>
 TPWALikelihood<T>::orderedParIndices() const
 {
@@ -1056,4 +1095,17 @@ TPWALikelihood<T>::waveNames() const
 			names[index] = _waveNames[iRefl][iWave];
 		}
 	return names;
+}
+
+
+template<typename T>
+void
+TPWALikelihood<T>::resetFuncCallInfo() const
+{
+	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i) {
+		_funcCallInfo[i].nmbCalls   = 0;
+		_funcCallInfo[i].funcTime   = 0;
+		_funcCallInfo[i].normTime   = 0;
+		_funcCallInfo[i].totalTime  = 0;
+	}
 }

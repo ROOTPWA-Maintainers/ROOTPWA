@@ -87,6 +87,13 @@ public:
 		NMB_FUNCTIONCALLENUM = 4
 	};
 
+	struct functionCallInfo {
+		unsigned int nmbCalls;   // number of times function was called
+		double       funcTime;   // time needed to calculate function value(s) (w/o normalization)
+		double       normTime;   // time needed to normalize function value(s)
+		double       totalTime;  // total execution time of function
+	};
+
 	TPWALikelihood();
 	~TPWALikelihood();
 
@@ -103,6 +110,11 @@ public:
 	virtual void Gradient(const double* par,
 	                      double*       gradient) const;
 	
+	// overload private IGradientFunctionMultiDim member functions
+	virtual double DoEval      (const double* par) const;
+	virtual double DoDerivative(const double* par,
+	                            unsigned int  derivativeIndex) const;
+
 	unsigned int             nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
 	unsigned int             rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
 	inline unsigned int      nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
@@ -113,9 +125,12 @@ public:
 	double                   parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
   
 	double dLcache(const unsigned int i) const { return _derivCache[i]; }
-	unsigned int ncalls(const functionCallEnum callType = FDF) const { return _nmbCalls[FDF]; }
-	double Ltime() const { return _Ltime; }
-	double Ntime() const { return _Ntime; }
+	unsigned int ncalls(const functionCallEnum func = FDF) const
+	{ return _funcCallInfo[func].nmbCalls; }
+	double Ltime(const functionCallEnum func = FDF) const
+	{ return _funcCallInfo[func].funcTime; }
+	double Ntime(const functionCallEnum func = FDF) const
+	{ return _funcCallInfo[func].normTime; }
 	//const integral& normInt() const { return _normInt; }
 
 	// modifiers
@@ -142,17 +157,12 @@ public:
 	                const bool                          withFlat = false) const;
 	
 	std::ostream& print(std::ostream& out = std::cout) const;
+	std::ostream& printFuncInfo(std::ostream& out = std::cout) const;
 	friend std::ostream& operator << (std::ostream&         out,
 	                                  const TPWALikelihood& func) { return func.print(out); }
 	
-	// overload private IGradientFunctionMultiDim member functions
-	virtual double DoEval      (const double* par) const;
-	virtual double DoDerivative(const double* par,
-	                            unsigned int  derivativeIndex) const;
-
 	std::vector<unsigned int> orderedParIndices() const;  // helper function for backwards-compatibility
 
-	mutable unsigned int _nmbCalls[4];  // function call counters
 
 private:
 
@@ -176,14 +186,13 @@ private:
 	                    const T              inFlatVal,      // value corresponding to flat wave
 	                    double*              outPar) const;  // output parameter array
 
+	void resetFuncCallInfo() const;
+
 	unsigned int _nmbEvents;        // number of events
 	unsigned int _rank;             // rank of spin density matrix
 	unsigned int _nmbWaves;         // number of waves
 	unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves 
 	unsigned int _nmbPars;          // number of function parameters
-
-	mutable double       _Ltime;        // total time spent calculating L
-	mutable double       _Ntime;        // total time spent calculating normalization
 
 #ifdef CUDA_ENABLED
 	bool        _useCuda;            // if true CUDA kernels are used for some calculations
@@ -212,6 +221,8 @@ private:
 	normMatrixArrayType _normMatrix;  // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
 	normMatrixArrayType _accMatrix;   // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
   
+	mutable functionCallInfo _funcCallInfo[NMB_FUNCTIONCALLENUM];  // collects function call statistics
+
 };
 
 

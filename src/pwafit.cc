@@ -466,11 +466,8 @@ main(int    argc,
 				cout << endl;
 		}
 	}
-	cout << "number of calls to likelihood function FdF() ... " << L.ncalls() << endl
-	     << "total time spent for likelihood calculation .... " << L.Ltime()  << " sec" << endl
-	     << "total time spent for normalization ............. " << L.Ntime()  << " sec" << endl;
-	for (unsigned int i = 0; i < TPWALikelihood<double>::NMB_FUNCTIONCALLENUM; ++i)
-		cout << "    # of function calls[" << i << "] = " << L._nmbCalls[i] << endl;
+	printInfo << "function call summary:" << endl;
+	L.printFuncInfo(cout);
 
 	// ---------------------------------------------------------------------------
 	// write out result

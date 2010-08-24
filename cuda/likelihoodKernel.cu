@@ -55,11 +55,34 @@ namespace rpwa {
 			const unsigned int nmbThreads = gridDim.x * blockDim.x;
   
 			// #pragma unroll 16
-			T sum = 0;
+			T sum = T(0);
 			for (unsigned int i = threadId; i < nmbVals; i += nmbThreads)
 				sum += d_valArray[i];
 
 			d_sumArray[threadId] = sum;
+		}
+
+
+		// generic kernel that computes sum of N values in an array and
+		// writes result to memory location defined by pointer and offset
+		template<typename T>
+		__global__
+		void
+		sumToMemCellKernel
+		(const T*           d_valArray,    // array with values to sum up
+		 const unsigned int nmbVals,       // total number of values all kernels have to process
+		 T*                 d_sumArray,    // output array of partial sums
+		 const unsigned int outputOffset)  // offset of memory location the result will be written to
+		{
+			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
+			const unsigned int nmbThreads = gridDim.x * blockDim.x;
+  
+			// #pragma unroll 16
+			T sum = T(0);
+			for (unsigned int i = threadId; i < nmbVals; i += nmbThreads)
+				sum += d_valArray[i];
+
+			d_sumArray[outputOffset] = sum;
 		}
 
 
@@ -91,7 +114,7 @@ namespace rpwa {
 				typename complexT::value_type likelihood = 0;  // likelihood for this event
 				for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-						complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
+						complexT ampProdSum = complexT(0);  // amplitude sum for negative/positive reflectivity for this rank
 						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 							// compute likelihood term
 							const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
@@ -139,7 +162,7 @@ namespace rpwa {
 				typename complexT::value_type likelihood      = 0;  // likelihood for this event
 				for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-						complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
+						complexT ampProdSum = complexT(0);  // amplitude sum for negative/positive reflectivity for this rank
 						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 							const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
 							const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
@@ -186,20 +209,32 @@ namespace rpwa {
 			const unsigned int decayAmpDim [3] = {2,    nmbWavesMax, nmbEvents};
 			const unsigned int derivTermDim[3] = {rank, 2,           nmbEvents};
 			// loop over events and calculate real-data term of derivative of log likelihood
-			complexT derivativeSum = 0;
+			complexT derivativeSum = complexT(0);
 			for (unsigned int iEvt = threadId; iEvt < nmbEvents; iEvt += nmbThreads) {
 				// multiply derivative term 1 with with complex conjugate of
 				// decay amplitude of the wave with the derivative wave index
+				const unsigned int decayAmpIndices [3] = {iRefl, iWave, iEvt};
 				const unsigned int derivTermIndices[3] = {iRank, iRefl, iEvt};
-				const unsigned int decayAmpIndices[3]  = {iRefl, iWave, iEvt};
 				const complexT     derivative          =
 					  d_derivTerms[indicesToOffset<unsigned int>(derivTermIndices, derivTermDim, 3)]
-					* conj(d_decayAmps [indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)]);
+					* conj(d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)]);
 				// apply factor from derivative of log
 				derivativeSum -= (2. / d_likelihoods[iEvt]) * derivative;
+
+				// derivativeSum = (iRefl == 0) ? -1 : 1;
+
+				// derivativeSum += d_likelihoods[iEvt];
+				// derivativeSum = d_likelihoods[(iRefl == 0) ? 0 : 1];
+
+				// const unsigned int decayAmpIndices [3] = {0, iWave, 0};
+				// const complexT     derivative          =
+				// 	d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
+				// derivativeSum = derivative;
+				// derivativeSum = d_decayAmps[(iRefl == 0) ? 0 : 1];
 			}
 			// write result
 			d_derivativeSums[threadId] = derivativeSum;
+			// d_derivativeSums[threadId] = iRefl * 10 + iWave;
 		}
 
 
