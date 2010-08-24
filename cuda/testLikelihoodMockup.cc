@@ -146,7 +146,7 @@ runLogLikelihoodMultiArray(const unsigned int nmbRepitions,
 
 	// call function
 	clock_t start, finish;  // rough estimation of run time
-	double  logLikelihood;
+	double  logLikelihood = 0;
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
 		logLikelihood = logLikelihoodMultiArray<complex<double> >
@@ -275,7 +275,7 @@ logLikelihoodPseudoArray(const complexT*                      decayAmps,
 					const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
 					const unsigned int decayAmpIndices[3] = {iEvt,  iRefl, iWave};
 					ampProdSum +=   prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
-						* decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
+						            * decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
 				}
 				likelihood += norm(ampProdSum);
 			}
@@ -519,7 +519,7 @@ int
 main(int    argc,
      char** argv)
 {
-	if (1) {
+	if (0) {
 		const unsigned int nmbRepitions    = 2;
 		const unsigned int nmbEvents       = 100000;
 		const unsigned int nmbWavesRefl[2] = {2, 2};
@@ -536,9 +536,9 @@ main(int    argc,
 	}
 
 	{
-		const unsigned int nmbRepitions    = 10;
+		const unsigned int nmbRepitions    = 100;
 		// setup parameters that roughly correspond to the pi- pi+ pi- PWA
-		const unsigned int nmbEvents       = 100000;
+		const unsigned int nmbEvents       = 30000;
 		// 34 waves with positive, 7 waves with negative reflectivity, and flat wave: 42 in total
 		const unsigned int nmbWavesRefl[2] = {7, 34};
 		const unsigned int rank            = 2;
@@ -550,7 +550,7 @@ main(int    argc,
 		          << "    number of positive reflectivity waves ... " << nmbWavesRefl[1] << endl
 		          << "    number of negative reflectivity waves ... " << nmbWavesRefl[0] << endl;
   
-		if (0) {
+		if (1) {
 			double elapsedTime   [3];
 			double logLikelihoods[3];
 

@@ -243,18 +243,15 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	timer.Start();
 	T logLikelihood     = 0;
 #ifdef CUDA_ENABLED
-	//if (_useCuda) {
-		cout << "+" << flush;
+	if (_useCuda) {
 		cuda::likelihoodInterface<cuda::complex<T> >& interface
 			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
 		logLikelihood = interface.logLikelihood
 			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
-	// } else
+	} else
 #endif
-		T logLikelihoodCpu = 0;
 		{
-			cout << "-" << flush;
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 				T likelihood = 0;  // likelihood for this event
 				for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                   // incoherent sum over ranks
@@ -267,20 +264,20 @@ TPWALikelihood<T>::DoEval(const double* par) const
 					}
 					assert(likelihood >= 0);
 				}  // end loop over rank
-				likelihood       += prodAmpFlat2;
-				logLikelihoodCpu -= log(likelihood);  // accumulate log likelihood
+				likelihood    += prodAmpFlat2;
+				logLikelihood -= log(likelihood);  // accumulate log likelihood
 			}  // end loop over events
 		}
 	// log time needed for likelihood calculation
 	timer.Stop();
 	_funcCallInfo[DOEVAL].funcTime += timer.RealTime();
 
-	static T maxDiff = 0;
-	const  T diff    = abs(1 - logLikelihood / logLikelihoodCpu);
-	if (diff > maxDiff) {
-		maxDiff = diff;
-		cout << endl << "    log(likelihood) max diff = " << maxDiff << endl;
-	}
+	// static T maxDiff = 0;
+	// const  T diff    = abs(1 - logLikelihood / logLikelihoodCpu);
+	// if (diff > maxDiff) {
+	// 	maxDiff = diff;
+	// 	cout << endl << "    log(likelihood) max diff = " << maxDiff << endl;
+	// }
 	
 	// compute normalization term of log likelihood
 	timer.Start();
@@ -306,12 +303,11 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	timerTot.Stop();
 	_funcCallInfo[DOEVAL].totalTime += timerTot.RealTime();
 
-	// if (_debug)
-	// 	printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
-	// 	          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
-	// 	          << "normalized likelihood = "
-	// 	          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
-	// 	          << "    time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
+	if (_debug)
+		printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
+		          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
+		          << "normalized likelihood = "
+		          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl;
 	
 	return funcVal;
 
@@ -395,7 +391,6 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	T             prodAmpFlat;
 	ampsArrayType prodAmps;
 	copyFromParArray(par, prodAmps, prodAmpFlat);
-	const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 
 	// create array of likelihood derivative w.r.t. real and imaginary
 	// parts of the production amplitudes
@@ -409,22 +404,17 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	TStopwatch timer;
 	timer.Start();
 #ifdef CUDA_ENABLED
-	// if (_useCuda) {
-	  // ampsArrayType derivativesCuda(derivShape);
-	  // T             derivativeFlatCuda = 0;
-		cout << "#" << flush;
+	if (_useCuda) {
 		cuda::likelihoodInterface<cuda::complex<T> >& interface
 			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
 		interface.logLikelihoodDeriv(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 		                             prodAmps.num_elements(), prodAmpFlat, _rank,
 		                             reinterpret_cast<cuda::complex<T>*>(derivatives.data()),
 		                             derivativeFlat);
-	// } else
+	} else
 #endif
-		ampsArrayType derivativesCpu(derivShape);
-		T             derivativeFlatCpu = 0;
 		{
-			cout << "*" << flush;
+			const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 				T             likelihood = 0;          // likelihood for this event
 				ampsArrayType derivative(derivShape);  // likelihood derivative for this event
@@ -456,42 +446,42 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 				for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-							derivativesCpu[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
-				derivativeFlatCpu -= factor * prodAmpFlat;
+							derivatives[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
+				derivativeFlat -= factor * prodAmpFlat;
 			}  // end loop over events
 		}
 	// log time needed for gradient calculation
 	timer.Stop();
 	_funcCallInfo[GRADIENT].funcTime += timer.RealTime();
 
-	static complex<T> maxDiff = 0;
-	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				complex<T> diff;
-				diff.real() = 1 -   derivatives[iRank][iRefl][iWave].real()
-					                / derivativesCpu[iRank][iRefl][iWave].real();
-				diff.imag() = 1 -   derivatives[iRank][iRefl][iWave].imag()
-					                / derivativesCpu[iRank][iRefl][iWave].imag();
-				bool newMaxDiff = false;
-				if (abs(diff.real()) > maxDiff.real()) {
-					maxDiff.real() = abs(diff.real());
-					newMaxDiff = true;
-				}
-				if (abs(diff.imag()) > maxDiff.imag()) {
-					maxDiff.imag() = abs(diff.imag());
-					newMaxDiff = true;
-				}
-				if (newMaxDiff)
-					cout << endl << "    derivatives max diff [" << iRank << "][" << iRefl << "]["
-					     << iWave << "] = " << maxDiff << endl;
-			}
-	static T maxDiffFlat = 0;
-	const  T diffFlat    = abs(1 - derivativeFlat / derivativeFlatCpu);
-	if (diffFlat > maxDiffFlat) {
-		maxDiffFlat = diffFlat;
-		cout << endl << "    flat derivative max diff = " << maxDiffFlat << endl;
-	}
+	// static complex<T> maxDiff = 0;
+	// for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+	// 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+	// 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+	// 			complex<T> diff;
+	// 			diff.real() = 1 -   derivatives[iRank][iRefl][iWave].real()
+	// 				                / derivativesCpu[iRank][iRefl][iWave].real();
+	// 			diff.imag() = 1 -   derivatives[iRank][iRefl][iWave].imag()
+	// 				                / derivativesCpu[iRank][iRefl][iWave].imag();
+	// 			bool newMaxDiff = false;
+	// 			if (abs(diff.real()) > maxDiff.real()) {
+	// 				maxDiff.real() = abs(diff.real());
+	// 				newMaxDiff = true;
+	// 			}
+	// 			if (abs(diff.imag()) > maxDiff.imag()) {
+	// 				maxDiff.imag() = abs(diff.imag());
+	// 				newMaxDiff = true;
+	// 			}
+	// 			if (newMaxDiff)
+	// 				cout << endl << "    derivatives max diff [" << iRank << "][" << iRefl << "]["
+	// 				     << iWave << "] = " << maxDiff << endl;
+	// 		}
+	// static T maxDiffFlat = 0;
+	// const  T diffFlat    = abs(1 - derivativeFlat / derivativeFlatCpu);
+	// if (diffFlat > maxDiffFlat) {
+	// 	maxDiffFlat = diffFlat;
+	// 	cout << endl << "    flat derivative max diff = " << maxDiffFlat << endl;
+	// }
 
 	// normalize derivatives w.r.t. parameters
 	timer.Start();

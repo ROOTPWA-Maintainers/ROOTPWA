@@ -220,21 +220,9 @@ namespace rpwa {
 					* conj(d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)]);
 				// apply factor from derivative of log
 				derivativeSum -= (2. / d_likelihoods[iEvt]) * derivative;
-
-				// derivativeSum = (iRefl == 0) ? -1 : 1;
-
-				// derivativeSum += d_likelihoods[iEvt];
-				// derivativeSum = d_likelihoods[(iRefl == 0) ? 0 : 1];
-
-				// const unsigned int decayAmpIndices [3] = {0, iWave, 0};
-				// const complexT     derivative          =
-				// 	d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
-				// derivativeSum = derivative;
-				// derivativeSum = d_decayAmps[(iRefl == 0) ? 0 : 1];
 			}
 			// write result
 			d_derivativeSums[threadId] = derivativeSum;
-			// d_derivativeSums[threadId] = iRefl * 10 + iWave;
 		}
 
 
