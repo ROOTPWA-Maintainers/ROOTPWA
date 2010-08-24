@@ -9,14 +9,20 @@
 #include <iostream>
 #include "TApplication.h"
 #include "TCanvas.h"
+#include "TrpwaMainFrame.h"
 
 using namespace std;
 
 int main(int argc, char *argv[]) {
+	cout << " __________________________________________" << endl;
+	cout << endl;
+	cout << "                rootpwa GUI                " << endl;
+	cout << "                  vers.0.1                 " << endl;
+	cout << endl;
+	cout << " __________________________________________" << endl;
 	TApplication app("App", &argc, argv);
-	TCanvas canvas;
-	canvas.Draw();
-	cout << "" << endl; // prints 
+	// load the main frame and let the show begin
+	TrpwaMainFrame::Instance();
 	app.Run();
 	return 0;
 }
