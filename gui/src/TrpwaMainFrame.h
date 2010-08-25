@@ -15,6 +15,7 @@
 #include "TRootEmbeddedCanvas.h"
 #include <TGProgressBar.h>
 #include <vector>
+#include "TrpwaSessionManager.h"
 
 using namespace std;
 
@@ -34,7 +35,12 @@ private:
 
 	static TrpwaMainFrame* pInstance; // singleton reference
 
+	TGVerticalFrame *steplist; // frame holding frames for each step
+	TGGroupFrame *frame_session_options;
+
 	vector <TGProgressBar*> progressbars; // references to the progress bars
+
+	TrpwaSessionManager* current_session;
 
 public:
 	// return the reference to the only instance of this class
@@ -46,6 +52,18 @@ public:
 	};
 
 	void CheckStatus();
+
+	// save the current session and start a new one
+	void NewSession();
+
+	// save the current session
+	void SaveSession();
+
+	// load a session
+	void LoadSession();
+
+	// check the status of the session
+	void Update();
 
 	void CloseWindow(); // override to call the application abortion
 

@@ -8,3 +8,4 @@
  */
 
 #pragma link C++ class TrpwaMainFrame;
+//#pragma link C++ class TSessionDialogbox;

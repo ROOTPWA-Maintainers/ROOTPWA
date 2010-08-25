@@ -17,6 +17,8 @@
 #include <TGButtonGroup.h>
 #include <string>
 #include <cmath>
+#include "TrpwaSessionManager.h"
+#include <TGFileDialog.h>
 
 static const int nsteps = 11;
 static const string step_titles[nsteps] = {
@@ -64,6 +66,8 @@ static float step_status[nsteps] = {
 TrpwaMainFrame* TrpwaMainFrame::pInstance = NULL;
 
 TrpwaMainFrame::TrpwaMainFrame(const TGWindow *p,UInt_t w,UInt_t h) : TGMainFrame(p,w,h) {
+	current_session = NULL;
+	steplist = NULL;
 	Build();
 }
 
@@ -75,26 +79,25 @@ void TrpwaMainFrame::CloseWindow(){
 }
 
 void TrpwaMainFrame::Build(){
-	// Create canvas widget
-	//fEcanvas = new TRootEmbeddedCanvas("Ecanvas",this,200,200);
-	//AddFrame(fEcanvas, new TGLayoutHints(kLHintsExpandX| kLHintsExpandY, 10,10,10,1));
-	// Create a horizontal frame widget with buttons
-	TGVerticalFrame *steplist = new TGVerticalFrame(this, 800, 100);
-	AddFrame(steplist, new TGLayoutHints(kLHintsCenterX,2,2,2,2));
-
 	//TGHorizontalFrame *frame_session_options = new TGHorizontalFrame(steplist,400,20);
-	TGGroupFrame *frame_session_options = new TGGroupFrame(steplist, " session ", kHorizontalFrame);
+	frame_session_options = new TGGroupFrame(this, " session ", kHorizontalFrame);
 	TGTextButton *button_load = new TGTextButton(frame_session_options," Load ");
-	//button_load->Connect("Clicked()","TrpwaMainFrame",this,"DoDraw()");
+	button_load->Connect("Clicked()","TrpwaMainFrame",this,"LoadSession()");
 	frame_session_options->AddFrame(button_load, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
 	TGTextButton *button_modify = new TGTextButton(frame_session_options," Modify ");
 	//button_modify->Connect("Clicked()","TrpwaMainFrame",this,"DoDraw()");
 	frame_session_options->AddFrame(button_modify, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
 	TGTextButton *button_new = new TGTextButton(frame_session_options," New ");
-	//button_new->Connect("Clicked()","TrpwaMainFrame",this,"DoDraw()");
+	button_new->Connect("Clicked()","TrpwaMainFrame",this,"NewSession()");
 	frame_session_options->AddFrame(button_new, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
-	steplist->AddFrame(frame_session_options, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+	TGTextButton *button_save = new TGTextButton(frame_session_options," Save ");
+	button_save->Connect("Clicked()","TrpwaMainFrame",this,"SaveSession()");
+	frame_session_options->AddFrame(button_save, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
+	this->AddFrame(frame_session_options, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
+
+	steplist = new TGVerticalFrame(this, 800, 100);
+	AddFrame(steplist, new TGLayoutHints(kLHintsCenterX,2,2,2,2));
 
 	// setup the options for each step of analysis and connect to the corresponding calls
 	for (int istep = 0; istep < nsteps; istep++){
@@ -129,13 +132,13 @@ void TrpwaMainFrame::Build(){
 		//buttongroup->Show();
 	}
 
-	TGHorizontalFrame *frame_low = new TGHorizontalFrame(steplist,200,40);
+	TGHorizontalFrame *frame_low = new TGHorizontalFrame(this,200,40);
 	TGTextButton *button_update = new TGTextButton(frame_low," Update ");
 	button_update->Connect("Clicked()","TrpwaMainFrame",this,"CheckStatus()");
 	frame_low->AddFrame(button_update, new TGLayoutHints(kLHintsCenterX,5,5,15,10));
 	TGTextButton *exit = new TGTextButton(frame_low," Exit ","gApplication->Terminate(0)");
 	frame_low->AddFrame(exit, new TGLayoutHints(kLHintsCenterX,5,5,15,10));
-	steplist->AddFrame(frame_low, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+	this->AddFrame(frame_low, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,5,5,5,5));
 
 	// Set a name to the main frame
@@ -150,8 +153,36 @@ void TrpwaMainFrame::Build(){
 
 void TrpwaMainFrame::CheckStatus() {
 	cout << " checking the status ... " << endl;
+	if (current_session){
+		/*
+				"  specify amplitudes for fit  ",
+				"       fit partial waves      ",
+				"         show results         ",
+				"            predict           "
+		*/
+		step_status[0]=current_session->Check_binned_data_structure();
+		step_status[1]=current_session->Check_flat_phase_space_events();
+		step_status[2]=1.;
+		step_status[3]=current_session->Check_real_data_events();
+		step_status[4]=current_session->Check_MC_data_events();
+		step_status[5]=current_session->Check_PWA_keyfiles();
+
+		step_status[6]=(
+				current_session->Check_PWA_real_data_amplitudes()   +
+				current_session->Check_PWA_MC_acc_data_amplitudes() +
+				current_session->Check_PWA_MC_data_amplitudes()
+				)/3.;
+
+		step_status[7]=current_session->Check_wave_lists();
+		step_status[8]=current_session->Check_fits();
+
+		step_status[9]=1.;
+		step_status[10]=1.;
+	}
+
 	for (int istep = 0; istep < nsteps; istep++){
-		step_status[istep]+=0.1;
+		if (!current_session) step_status[istep]=0.;
+		//step_status[istep]+=0.1;
 		progressbars[istep]->SetPosition(step_status[istep]);
 		if (floor(step_status[istep]) >= 1.){
 			progressbars[istep]->SetBarColor("green");
@@ -174,7 +205,60 @@ void TrpwaMainFrame::CheckStatus() {
 	}*/
 }
 
+void TrpwaMainFrame::NewSession(){
+	if (current_session){
+		SaveSession();
+		delete current_session;
+	}
+	current_session = new TrpwaSessionManager();
+	current_session->Set_title(" test session ");
+	current_session->Set_Config_File("default.cfg");
+	Update();
+}
+
+void TrpwaMainFrame::SaveSession(){
+	if (current_session){
+		if (!current_session->Save_Session()){
+			cout << " Error while saving session occurred! " << endl;
+		}
+	}
+}
+
+void TrpwaMainFrame::LoadSession(){
+	TGFileInfo fileinfo;
+	const char* filetypes[] = {"Session files","*.cfg"};
+	fileinfo.fFileTypes = filetypes;
+	//TGMainFrame filedialogwindow(, 200, 200);
+	TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fileinfo);
+	if (fileinfo.fFilename) {
+		if (current_session){
+			SaveSession();
+			delete current_session;
+		}
+		cout << " loading " << fileinfo.fFilename << endl;
+		current_session = new TrpwaSessionManager();
+		string filename = fileinfo.fFilename;
+		if (!current_session->Load_Session(filename)){
+			cout << " Error while loading session occurred";
+		} else {
+			Update();
+		}
+	}
+	// delete filedialog; will be deleted automatically
+}
+
+void TrpwaMainFrame::Update(){
+	if (current_session){
+		frame_session_options->SetTitle(current_session->Get_title().c_str());
+		CheckStatus();
+		//steplist->Activate(true); ??
+	} else {
+		//steplist->SetEditDisabled(); ??
+	}
+}
+
 TrpwaMainFrame::~TrpwaMainFrame() {
 	// Clean up used widgets: frames, buttons, layouthints
 	Cleanup();
+	delete current_session;
 }
