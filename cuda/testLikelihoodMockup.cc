@@ -372,7 +372,7 @@ runLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 	// initialize CUDA environment
 	cuda::likelihoodInterface<cuda::complex<double> >& interface
 		= cuda::likelihoodInterface<cuda::complex<double> >::instance();
-	interface.setDebug(true);
+	//interface.setDebug(true);
 	interface.init(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
 	               decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
 
@@ -574,7 +574,7 @@ main(int    argc,
 
 
 	if (1) {
-		const unsigned int nmbRepitions    = 10;
+		const unsigned int nmbRepitions    = 100;
 		// setup parameters that roughly correspond to the pi- pi+ pi- PWA
 		const unsigned int nmbEvents       = 10000;
 		// 34 waves with positive, 7 waves with negative reflectivity, and flat wave: 42 in total

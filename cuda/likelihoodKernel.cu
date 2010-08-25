@@ -281,28 +281,29 @@ namespace rpwa {
 		 const unsigned int nmbWavesReflNeg,   // number waves with negative reflectivity
 		 const unsigned int nmbWavesReflPos,   // number waves with positive reflectivity
 		 const unsigned int nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
-		 T*                 d_derivativeSums)  // output array of partial sums with one entry for each kernel
+		 T*                 d_derivativeSums,  // output array of partial sums with one entry for each kernel
+		 const unsigned int nmbSums)           // number of elements in output array
 		{
-			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
-			const unsigned int nmbThreads = gridDim.x * blockDim.x;
-  
-			const unsigned int nmbWavesRefl[2] = {nmbWavesReflNeg, nmbWavesReflPos};
-			// define extents of derivative array
-			const unsigned int derivDim   [4] = {rank, 2, nmbWavesMax, nmbDerivatives};
-			const unsigned int derivSumDim[4] = {rank, 2, nmbWavesMax, nmbThreads};
-			for (unsigned int iRank = 0; iRank < rank; ++iRank)
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-					for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-						T derivativeSum = T(0);
-						for (unsigned int i = threadId; i < nmbDerivatives; i += nmbThreads) {
-							const unsigned int derivIndices[4] = {iRank, iRefl, iWave, i};
-							derivativeSum
-								+= d_derivatives[indicesToOffset<unsigned int>(derivIndices, derivDim, 4)];
+			const unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+			if (threadId < nmbSums) {
+				const unsigned int nmbWavesRefl[2] = {nmbWavesReflNeg, nmbWavesReflPos};
+				// define extents of derivative array
+				const unsigned int derivDim   [4] = {rank, 2, nmbWavesMax, nmbDerivatives};
+				const unsigned int derivSumDim[4] = {rank, 2, nmbWavesMax, nmbSums};
+				for (unsigned int iRank = 0; iRank < rank; ++iRank)
+					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
+							T derivativeSum = T(0);
+							for (unsigned int i = threadId; i < nmbDerivatives; i += nmbSums) {
+								const unsigned int derivIndices[4] = {iRank, iRefl, iWave, i};
+								derivativeSum
+									+= d_derivatives[indicesToOffset<unsigned int>(derivIndices, derivDim, 4)];
+							}
+							const unsigned int derivSumIndices[4] = {iRank, iRefl, iWave, threadId};
+							d_derivativeSums[indicesToOffset<unsigned int>(derivSumIndices, derivSumDim, 4)]
+								= derivativeSum;
 						}
-						const unsigned int derivSumIndices[4] = {iRank, iRefl, iWave, threadId};
-						d_derivativeSums[indicesToOffset<unsigned int>(derivSumIndices, derivSumDim, 4)]
-							= derivativeSum;
-					}
+			}
 		}
 
 
