@@ -147,6 +147,28 @@ namespace rpwa {
 	//
 	// no range checks whatsoever are performed
 
+	template<typename T>
+	inline
+	HOST_DEVICE
+	T
+	nmbElements(const T* dim,     // extents of n-dimensional array
+	            const T  nmbDim)  // number of dimensions
+	{
+		T nmbElements = dim[0];
+		for (T i = 1; i < nmbDim; ++i)
+			nmbElements *= dim[i];
+		return nmbElements;
+	}
+
+	template<typename T>
+	inline
+	void
+	nmbElements(const std::vector<T>& dim)  // extents of n-dimensional array
+	{
+		return nmbElements<T>(&(*(dim.begin())), dim.size());
+	}
+
+
 	template<typename D, typename T>
 	inline
 	T
@@ -164,7 +186,6 @@ namespace rpwa {
 				array[i] = *defaultVal;
 		return nmbElements * sizeof(D);
 	}
-
 
 	template<typename D, typename T>
 	inline

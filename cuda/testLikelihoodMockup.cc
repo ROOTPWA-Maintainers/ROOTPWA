@@ -525,7 +525,7 @@ main(int    argc,
 		const unsigned int nmbWavesRefl[2] = {2, 2};
 		const unsigned int rank            = 1;
 		
-		printInfo << "running mock-up log likelihood calculation with parameters:"       << endl
+		printInfo << "running derivative test with parameters:"       << endl
 		          << "    number of repitions ..................... " << nmbRepitions    << endl
 		          << "    number of events ........................ " << nmbEvents       << endl
 		          << "    rank of fit ............................. " << rank            << endl
@@ -535,7 +535,8 @@ main(int    argc,
 		testLogLikelihoodDerivCuda<double>(nmbRepitions, nmbEvents, rank, nmbWavesRefl);
 	}
 
-	{
+
+	if (0) {
 		const unsigned int nmbRepitions    = 100;
 		// setup parameters that roughly correspond to the pi- pi+ pi- PWA
 		const unsigned int nmbEvents       = 30000;
@@ -550,75 +551,87 @@ main(int    argc,
 		          << "    number of positive reflectivity waves ... " << nmbWavesRefl[1] << endl
 		          << "    number of negative reflectivity waves ... " << nmbWavesRefl[0] << endl;
   
-		if (1) {
-			double elapsedTime   [3];
-			double logLikelihoods[3];
+		double elapsedTime   [3];
+		double logLikelihoods[3];
 
-			logLikelihoods[0]
-				= runLogLikelihoodMultiArray (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[0]);
-			logLikelihoods[1]
-				= runLogLikelihoodPseudoArray(nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[1]);
-			logLikelihoods[2]
-				= runLogLikelihoodCuda       (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[2]);
+		logLikelihoods[0]
+			= runLogLikelihoodMultiArray (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[0]);
+		logLikelihoods[1]
+			= runLogLikelihoodPseudoArray(nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[1]);
+		logLikelihoods[2]
+			= runLogLikelihoodCuda       (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[2]);
 
-			printInfo << "finished log likelihood calculation:" << endl
-			          << "    elapsed time (multi_array) ...... " << elapsedTime[0]  << " sec" << endl
-			          << "    elapsed time (pseudoArray) ...... " << elapsedTime[1]  << " sec" << endl
-			          << "    elapsed time (CUDA) ............. " << elapsedTime[2]  << " sec" << endl
-			          << "    log(likelihood) (multi_array) ... " << maxPrecision(logLikelihoods[0]) << endl
-			          << "    log(likelihood) (pseudoArray) ... " << maxPrecision(logLikelihoods[1]) << endl
-			          << "    log(likelihood) (CUDA) .......... " << maxPrecision(logLikelihoods[2]) << endl
-			          << "    delta[log(likelihood)] ........... "
-			          << maxPrecision(logLikelihoods[0] - logLikelihoods[2]) << endl;
-		}
+		printInfo << "finished log likelihood calculation:" << endl
+		          << "    elapsed time (multi_array) ...... " << elapsedTime[0]  << " sec" << endl
+		          << "    elapsed time (pseudoArray) ...... " << elapsedTime[1]  << " sec" << endl
+		          << "    elapsed time (CUDA) ............. " << elapsedTime[2]  << " sec" << endl
+		          << "    log(likelihood) (multi_array) ... " << maxPrecision(logLikelihoods[0]) << endl
+		          << "    log(likelihood) (pseudoArray) ... " << maxPrecision(logLikelihoods[1]) << endl
+		          << "    log(likelihood) (CUDA) .......... " << maxPrecision(logLikelihoods[2]) << endl
+		          << "    delta[log(likelihood)] ........... "
+		          << maxPrecision(logLikelihoods[0] - logLikelihoods[2]) << endl;
+	}
 
 
-		if (0) {
-			double        elapsedTime   [2];
-			ampsArrayType derivatives   [2];
-			double        derivativeFlat[2];
+	if (1) {
+		const unsigned int nmbRepitions    = 10;
+		// setup parameters that roughly correspond to the pi- pi+ pi- PWA
+		const unsigned int nmbEvents       = 10000;
+		// 34 waves with positive, 7 waves with negative reflectivity, and flat wave: 42 in total
+		const unsigned int nmbWavesRefl[2] = {7, 34};
+		const unsigned int rank            = 2;
 
-			runLogLikelihoodDerivMultiArray(nmbRepitions, nmbEvents, rank, nmbWavesRefl,
-			                                derivatives[0], derivativeFlat[0], elapsedTime[0]);
-			runLogLikelihoodDerivCuda(nmbRepitions, nmbEvents, rank, nmbWavesRefl,
-			                          derivatives[1], derivativeFlat[1], elapsedTime[1]);
+		printInfo << "running mock-up log likelihood gradient calculation with parameters:" << endl
+		          << "    number of repitions ..................... " << nmbRepitions    << endl
+		          << "    number of events ........................ " << nmbEvents       << endl
+		          << "    rank of fit ............................. " << rank            << endl
+		          << "    number of positive reflectivity waves ... " << nmbWavesRefl[1] << endl
+		          << "    number of negative reflectivity waves ... " << nmbWavesRefl[0] << endl;
 
-			complex<double> maxDiffAbs = 0;
-			complex<double> maxDiffRel = 0;
-			for (unsigned int iRank = 0; iRank < rank; ++iRank)
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-					for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-						const complex<double> diffAbs =   derivatives[0][iRank][iRefl][iWave]
-							- derivatives[1][iRank][iRefl][iWave];
-						cout << "    [" << iRank << "][" << iRefl << "][" << iWave << "]: "
-						     << maxPrecisionDouble(derivatives[0][iRank][iRefl][iWave]) << " - "
-						     << maxPrecisionDouble(derivatives[1][iRank][iRefl][iWave]) << " = "
-						     << maxPrecisionDouble(diffAbs) << endl;
-						if (abs(diffAbs.real()) > maxDiffAbs.real())
-							maxDiffAbs.real() = abs(diffAbs.real());
-						if (abs(diffAbs.imag()) > maxDiffAbs.imag())
-							maxDiffAbs.imag() = abs(diffAbs.imag());
-						complex<double> diffRel;
-						diffRel.real() = 1 -   derivatives[0][iRank][iRefl][iWave].real()
-							/ derivatives[1][iRank][iRefl][iWave].real();
-						diffRel.imag() = 1 -   derivatives[0][iRank][iRefl][iWave].imag()
-							/ derivatives[1][iRank][iRefl][iWave].imag();
-						if (abs(diffRel.real()) > maxDiffRel.real())
-							maxDiffRel.real() = abs(diffRel.real());
-						if (abs(diffRel.imag()) > maxDiffRel.imag())
-							maxDiffRel.imag() = abs(diffRel.imag());
-					}
+		double        elapsedTime   [2];
+		ampsArrayType derivatives   [2];
+		double        derivativeFlat[2];
 
-			printInfo << "finished calculation of log likelihood derivatives:" << endl
-			          << "    elapsed time (multi_array) ... " << elapsedTime[0]  << " sec" << endl
-			          << "    elapsed time (CUDA) .......... " << elapsedTime[1]  << " sec" << endl
-			          << "    max. absolute difference ..... " << maxDiffAbs                << endl
-			          << "    max. relative difference ..... " << maxDiffRel                << endl
-			          << "    flat deriv. (multi_array) .... " << maxPrecision(derivativeFlat[0]) << endl
-			          << "    flat deriv. (CUDA) ........... " << maxPrecision(derivativeFlat[1]) << endl
-			          << "    flat deriv. difference ....... "
-			          << derivativeFlat[0] - derivativeFlat[1] << endl;
-		}
+		runLogLikelihoodDerivMultiArray(nmbRepitions, nmbEvents, rank, nmbWavesRefl,
+		                                derivatives[0], derivativeFlat[0], elapsedTime[0]);
+		runLogLikelihoodDerivCuda(nmbRepitions, nmbEvents, rank, nmbWavesRefl,
+		                          derivatives[1], derivativeFlat[1], elapsedTime[1]);
+
+		complex<double> maxDiffAbs = 0;
+		complex<double> maxDiffRel = 0;
+		for (unsigned int iRank = 0; iRank < rank; ++iRank)
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+				for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
+					const complex<double> diffAbs =   derivatives[0][iRank][iRefl][iWave]
+						- derivatives[1][iRank][iRefl][iWave];
+					cout << "    [" << iRank << "][" << iRefl << "][" << iWave << "]: "
+					     << maxPrecisionDouble(derivatives[0][iRank][iRefl][iWave]) << " - "
+					     << maxPrecisionDouble(derivatives[1][iRank][iRefl][iWave]) << " = "
+					     << maxPrecisionDouble(diffAbs) << endl;
+					if (abs(diffAbs.real()) > maxDiffAbs.real())
+						maxDiffAbs.real() = abs(diffAbs.real());
+					if (abs(diffAbs.imag()) > maxDiffAbs.imag())
+						maxDiffAbs.imag() = abs(diffAbs.imag());
+					complex<double> diffRel;
+					diffRel.real() = 1 -   derivatives[0][iRank][iRefl][iWave].real()
+						/ derivatives[1][iRank][iRefl][iWave].real();
+					diffRel.imag() = 1 -   derivatives[0][iRank][iRefl][iWave].imag()
+						/ derivatives[1][iRank][iRefl][iWave].imag();
+					if (abs(diffRel.real()) > maxDiffRel.real())
+						maxDiffRel.real() = abs(diffRel.real());
+					if (abs(diffRel.imag()) > maxDiffRel.imag())
+						maxDiffRel.imag() = abs(diffRel.imag());
+				}
+
+		printInfo << "finished calculation of log likelihood derivatives:" << endl
+		          << "    elapsed time (multi_array) ... " << elapsedTime[0]  << " sec" << endl
+		          << "    elapsed time (CUDA) .......... " << elapsedTime[1]  << " sec" << endl
+		          << "    max. absolute difference ..... " << maxDiffAbs                << endl
+		          << "    max. relative difference ..... " << maxDiffRel                << endl
+		          << "    flat deriv. (multi_array) .... " << maxPrecision(derivativeFlat[0]) << endl
+		          << "    flat deriv. (CUDA) ........... " << maxPrecision(derivativeFlat[1]) << endl
+		          << "    flat deriv. difference ....... "
+		          << derivativeFlat[0] - derivativeFlat[1] << endl;
 	}
 
 	return 0;

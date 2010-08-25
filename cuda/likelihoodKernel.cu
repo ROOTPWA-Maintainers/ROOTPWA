@@ -226,6 +226,87 @@ namespace rpwa {
 		}
 
 
+		template<typename complexT>
+		__global__
+		void
+		logLikelihoodDerivKernelXXX
+		(const complexT*                      d_decayAmps,       // 3-dim. array of decay amplitudes; [iRefl][iWave][iEvt]
+		 const complexT*                      d_derivTerms,      // precalculated 3-dim. array of first derivative terms; [iRank][iRefl][iEvt]
+		 const typename complexT::value_type* d_likelihoods,     // precalculated array of likelihoods for each event
+		 const unsigned int                   nmbEvents,         // total number of events all kernels have to process
+		 const unsigned int                   rank,              // rank of spin-density matrix
+		 const unsigned int                   nmbWavesReflNeg,   // number waves with negative reflectivity
+		 const unsigned int                   nmbWavesReflPos,   // number waves with positive reflectivity
+		 const unsigned int                   nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
+		 complexT*                            d_derivativeSums)  // output array of partial derivative sums with one entry for each kernel
+		{
+			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
+			const unsigned int nmbThreads = gridDim.x * blockDim.x;
+
+			const unsigned int nmbWavesRefl[2] = {nmbWavesReflNeg, nmbWavesReflPos};
+			// define extents of arrays
+			const unsigned int decayAmpDim [3] = {2,    nmbWavesMax, nmbEvents};
+			const unsigned int derivTermDim[3] = {rank, 2,           nmbEvents};
+			const unsigned int derivSumDim [4] = {rank, 2,           nmbWavesMax, nmbThreads};
+			// loop over events and calculate real-data term of derivative of log likelihood
+			for (unsigned int iRank = 0; iRank < rank; ++iRank)
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+					for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
+						complexT derivativeSum = complexT(0);
+						for (unsigned int iEvt = threadId; iEvt < nmbEvents; iEvt += nmbThreads) {
+							// multiply derivative term 1 with with complex conjugate of
+							// decay amplitude of the wave with the derivative wave index
+							const unsigned int decayAmpIndices [3] = {iRefl, iWave, iEvt};
+							const unsigned int derivTermIndices[3] = {iRank, iRefl, iEvt};
+							const complexT     derivative          =
+								  d_derivTerms[indicesToOffset<unsigned int>(derivTermIndices, derivTermDim, 3)]
+								* conj(d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)]);
+							// apply factor from derivative of log
+							derivativeSum -= (2. / d_likelihoods[iEvt]) * derivative;
+						}
+						// write result
+						const unsigned int derivSumIndices[4] = {iRank, iRefl, iWave, threadId};
+						d_derivativeSums[indicesToOffset<unsigned int>(derivSumIndices, derivSumDim, 4)]
+							= derivativeSum;
+					}
+		}
+
+
+		template<typename T>
+		__global__
+		void
+		sumKernelXXX
+		(const T*           d_derivatives,     // array with values to sum up
+		 const unsigned int nmbDerivatives,    // total number of values all kernels have to process
+		 const unsigned int rank,              // rank of spin-density matrix
+		 const unsigned int nmbWavesReflNeg,   // number waves with negative reflectivity
+		 const unsigned int nmbWavesReflPos,   // number waves with positive reflectivity
+		 const unsigned int nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
+		 T*                 d_derivativeSums)  // output array of partial sums with one entry for each kernel
+		{
+			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
+			const unsigned int nmbThreads = gridDim.x * blockDim.x;
+  
+			const unsigned int nmbWavesRefl[2] = {nmbWavesReflNeg, nmbWavesReflPos};
+			// define extents of derivative array
+			const unsigned int derivDim   [4] = {rank, 2, nmbWavesMax, nmbDerivatives};
+			const unsigned int derivSumDim[4] = {rank, 2, nmbWavesMax, nmbThreads};
+			for (unsigned int iRank = 0; iRank < rank; ++iRank)
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+					for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
+						T derivativeSum = T(0);
+						for (unsigned int i = threadId; i < nmbDerivatives; i += nmbThreads) {
+							const unsigned int derivIndices[4] = {iRank, iRefl, iWave, i};
+							derivativeSum
+								+= d_derivatives[indicesToOffset<unsigned int>(derivIndices, derivDim, 4)];
+						}
+						const unsigned int derivSumIndices[4] = {iRank, iRefl, iWave, threadId};
+						d_derivativeSums[indicesToOffset<unsigned int>(derivSumIndices, derivSumDim, 4)]
+							= derivativeSum;
+					}
+		}
+
+
 		// kernel that operates on the output of logLikelihoodDerivFirstTermKernel
 		// and calculates the real-data derivative sum of the log likelihood for the flat wave
 		template<typename complexT>
