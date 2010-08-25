@@ -59,10 +59,19 @@ namespace rpwa {
 			static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
 			static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
 			static unsigned int availableDeviceMem();                                 ///< returns available memory capacity of used CUDA device
-			static unsigned int nmbBlocks         () { return _nmbBlocks;          }  ///< returns number of CUDA thread blocks 
-			static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }  ///< returns number of CUDA threads per block
+			// static unsigned int nmbBlocks         () { return _nmbBlocks;          }  ///< returns number of CUDA thread blocks 
+			// static unsigned int nmbThreadsPerBlock() { return _nmbThreadsPerBlock; }  ///< returns number of CUDA threads per block
 			static const struct cudaDeviceProp* deviceProperties();
 
+			template<typename kernelT>
+			static std::ostream& printKernelAttributes(std::ostream& out,
+			                                           kernelT*      kernel);  ///< prints attributes of CUDA kernel
+			template<typename kernelT>
+			static void estimateOptimumKernelGrid(kernelT*           kernel,
+			                                      unsigned int&      nmbBlocks,
+			                                      unsigned int&      nmbThreadsPerBlock,
+			                                      const unsigned int minNmbThreads = 0);
+			
 			static bool init(const complexT*    decayAmps,
 			                 const unsigned int nmbDecayAmps,
 			                 const unsigned int nmbEvents,
@@ -107,8 +116,8 @@ namespace rpwa {
 			static int                   _nmbOfCudaDevices;    ///< number of found CUDA capable devices
 			static int                   _cudaDeviceId;        ///< device ID of used CUDA device
 			static struct cudaDeviceProp _cudaDeviceProp;      ///< properties of used CUDA device
-			static unsigned int          _nmbBlocks;           ///< number of CUDA blocks used to run kernels
-			static unsigned int          _nmbThreadsPerBlock;  ///< number of CUDA threads that is run per block
+			// static unsigned int          _nmbBlocks;           ///< number of CUDA blocks used to run kernels
+			// static unsigned int          _nmbThreadsPerBlock;  ///< number of CUDA threads that is run per block
 			static complexT*             _d_decayAmps;         ///< device pointer to precalculated decay amplitudes
 			static unsigned int          _nmbEvents;           ///< number of events to process
 			static unsigned int          _nmbWavesRefl[2];     ///< number of waves for each reflectivity

@@ -56,8 +56,8 @@ template<typename complexT> bool           likelihoodInterface<complexT>::_cudaI
 template<typename complexT> int            likelihoodInterface<complexT>::_nmbOfCudaDevices   = 0;
 template<typename complexT> int            likelihoodInterface<complexT>::_cudaDeviceId       = -1;
 template<typename complexT> cudaDeviceProp likelihoodInterface<complexT>::_cudaDeviceProp;
-template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbBlocks          = 0;
-template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbThreadsPerBlock = 0;
+// template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbBlocks          = 0;
+// template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbThreadsPerBlock = 0;
 template<typename complexT> complexT*      likelihoodInterface<complexT>::_d_decayAmps        = 0;
 template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbEvents          = 0;
 template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbWavesRefl[2]    = {0, 0};
@@ -111,6 +111,81 @@ likelihoodInterface<complexT>::deviceProperties()
 
 
 template<typename complexT>
+template<typename kernelT>
+ostream&
+likelihoodInterface<complexT>::printKernelAttributes(ostream& out,
+                                                     kernelT* kernel)
+{
+	if (not kernel)
+		out << "null pointer to kernel" << endl;
+	struct cudaFuncAttributes	kernelAttr;
+	cutilSafeCall(cudaFuncGetAttributes(&kernelAttr, kernel));
+	out << "kernel attributes:" << endl
+	    << "    compiled for architecture ........ " << kernelAttr.binaryVersion / 10. << endl
+	    << "    PTX virtual architecture ......... " << kernelAttr.binaryVersion / 10. << endl
+	    << "    amount of constant memory ........ " << kernelAttr.constSizeBytes  << " bytes" << endl
+	    << "    amount of local memory ........... " << kernelAttr.localSizeBytes  << " bytes" << endl
+	    << "    amount of shared memory .......... " << kernelAttr.sharedSizeBytes << " bytes" << endl
+	    << "    number of registers used ......... " << kernelAttr.numRegs            << endl
+	    << "    maximum # of threads per block ... " << kernelAttr.maxThreadsPerBlock << endl;
+	return out;
+}
+
+
+template<typename complexT>
+template<typename kernelT>
+void
+likelihoodInterface<complexT>::estimateOptimumKernelGrid(kernelT*           kernel,
+                                                         unsigned int&      nmbBlocks,
+                                                         unsigned int&      nmbThreadsPerBlock,
+                                                         const unsigned int minNmbThreads)
+{
+	nmbBlocks = nmbThreadsPerBlock = 0;
+	if (not kernel)
+		printWarn << "null pointer to kernel" << endl;
+	struct cudaFuncAttributes	kernelAttr;
+	cutilSafeCall(cudaFuncGetAttributes(&kernelAttr, kernel));
+	unsigned int       maxNmbThreadsPerBlock = kernelAttr.maxThreadsPerBlock;
+	const unsigned int warpSize              = _cudaDeviceProp.warpSize;
+	// make sure maxNmbThreadsPerBlock is multiple of warp size
+	if (maxNmbThreadsPerBlock > warpSize)
+		maxNmbThreadsPerBlock = (maxNmbThreadsPerBlock / warpSize) * warpSize;
+	const unsigned int maxNmbBlocks = _cudaDeviceProp.multiProcessorCount;
+	if (minNmbThreads == 0) {
+		// special case: use maximum occupancy grid
+		nmbBlocks          = maxNmbBlocks;
+		nmbThreadsPerBlock = maxNmbThreadsPerBlock;
+	} else if (minNmbThreads / maxNmbThreadsPerBlock >= maxNmbBlocks) {
+		// create needed number of blocks with max. number of threads per block
+		nmbBlocks = minNmbThreads / maxNmbThreadsPerBlock;
+		if (minNmbThreads % maxNmbThreadsPerBlock > 0)
+			++nmbBlocks;
+		nmbThreadsPerBlock = maxNmbThreadsPerBlock;
+	} else {
+		// there are not enough threads for maximum occupancy grid
+		// run with lower number of threads per block and try to maximize number of blocks
+		nmbThreadsPerBlock = minNmbThreads / maxNmbBlocks;
+		if (minNmbThreads % maxNmbBlocks > 0)
+			++nmbThreadsPerBlock;
+		// make sure nmbThreadsPerBlock is multiple of warp size
+		if (nmbThreadsPerBlock > warpSize)
+			nmbThreadsPerBlock = (nmbThreadsPerBlock / warpSize) * warpSize;
+		else
+			nmbThreadsPerBlock = warpSize;
+		nmbBlocks = minNmbThreads / nmbThreadsPerBlock;
+		if (minNmbThreads / nmbThreadsPerBlock > 0)
+			++nmbBlocks;
+	}
+	// if (_debug)
+		printInfo << "optimum grid for " << minNmbThreads << " requested threads is "
+		          << "[" << nmbBlocks << " blocks x " << nmbThreadsPerBlock << " threads] = "
+		          << nmbBlocks * nmbThreadsPerBlock << " threads. "
+		          << "maximum occupancy grid for this kernel would be "
+		          << "[" << maxNmbBlocks << " blocks x " << maxNmbThreadsPerBlock << " threads]" << endl;
+}
+
+
+template<typename complexT>
 bool
 likelihoodInterface<complexT>::init
 (const complexT*    decayAmps,        // array of decay amplitudes; [iRefl][iWave][iEvt] or [iEvt][iRefl][iWave]
@@ -159,11 +234,11 @@ likelihoodInterface<complexT>::initCudaDevice()
   cutilSafeCall(cudaSetDevice(_cudaDeviceId));
 
   // setup thread grid paramters
-	_nmbBlocks          = _cudaDeviceProp.multiProcessorCount;
-	//nmbThreadsPerBlock = _cudaDeviceProp.maxThreadsPerBlock;
-	_nmbThreadsPerBlock = 448;
-	printInfo << "using " << _nmbBlocks << " x " << _nmbThreadsPerBlock << " = "
-	          << _nmbBlocks * _nmbThreadsPerBlock << " CUDA threads for likelihood calculation" << endl;
+	// _nmbBlocks          = _cudaDeviceProp.multiProcessorCount;
+	// //nmbThreadsPerBlock = _cudaDeviceProp.maxThreadsPerBlock;
+	// _nmbThreadsPerBlock = 448;
+	// printInfo << "using " << _nmbBlocks << " x " << _nmbThreadsPerBlock << " = "
+	//           << _nmbBlocks * _nmbThreadsPerBlock << " CUDA threads for likelihood calculation" << endl;
 
 	_cudaInitialized = true;
 	return true;
@@ -245,23 +320,31 @@ likelihoodInterface<complexT>::logLikelihood
 	}
 
 	// first summation stage
-	value_type*        d_logLikelihoods0;
-	const unsigned int nmbElements0 = _nmbThreadsPerBlock * _nmbBlocks;
+	value_type* d_logLikelihoods0;
+	// run kernel with maximum occupancy grid
+	static unsigned int nmbBlocks, nmbThreadsPerBlock;
+	static bool         firstCall = true;
+	if (firstCall) {
+		printInfo << "logLikelihoodKernel<complexT>" << endl;
+		estimateOptimumKernelGrid(logLikelihoodKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
+		firstCall = false;
+	}
+	const unsigned int nmbElements0 = nmbBlocks * nmbThreadsPerBlock;
 	cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods0, sizeof(value_type) * nmbElements0));
-	logLikelihoodKernel<complexT><<<_nmbBlocks, _nmbThreadsPerBlock>>>
+	logLikelihoodKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 		(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
 		 _nmbWavesRefl[0], _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]),
 		 d_logLikelihoods0);
 	cutilSafeCall(cudaFree(d_prodAmps));
 	// second summation stage
 	value_type*        d_logLikelihoods1;
-	const unsigned int nmbElements1 = _nmbThreadsPerBlock;
+	const unsigned int nmbElements1 = nmbThreadsPerBlock;
 	cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods1, sizeof(value_type) * nmbElements1));
-	sumKernel<value_type><<<1, _nmbThreadsPerBlock>>>(d_logLikelihoods0, nmbElements0,
-	                                                  d_logLikelihoods1);
+	sumKernel<value_type><<<1, nmbThreadsPerBlock>>>(d_logLikelihoods0, nmbElements0,
+	                                                 d_logLikelihoods1);
 	cutilSafeCall(cudaFree(d_logLikelihoods0));
 	value_type logLikelihood;
-	if (0) {  // perform third and last summation stage on device
+	if (1) {  // perform third and last summation stage on device
 		value_type* d_logLikelihoods2;
 		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods2, sizeof(value_type)));
 		sumKernel<value_type><<<1, 1>>>(d_logLikelihoods1, nmbElements1, d_logLikelihoods2);
@@ -328,18 +411,14 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 	{
 		cutilSafeCall(cudaMalloc((void**)&d_derivTerms,  sizeof(complexT) * rank * 2 * _nmbEvents));
 		cutilSafeCall(cudaMalloc((void**)&d_likelihoods, sizeof(value_type) * _nmbEvents));
-		// ensure that number of threads per block is multiple of warp
-		// size and that it does not exceed maximum allowed number
-		unsigned int nmbThreadsPerBlock = _nmbEvents / (unsigned int)_cudaDeviceProp.multiProcessorCount;
-		if (_nmbEvents % (unsigned int)_cudaDeviceProp.multiProcessorCount > 0)
-			++nmbThreadsPerBlock;
-		if (nmbThreadsPerBlock > (unsigned int)_cudaDeviceProp.maxThreadsPerBlock)
-			nmbThreadsPerBlock = (unsigned int)_cudaDeviceProp.maxThreadsPerBlock;
-		unsigned int nmbBlocks = _nmbEvents / nmbThreadsPerBlock;
-		if (_nmbEvents % nmbThreadsPerBlock > 0)
-			++nmbBlocks;
-		// printInfo << "nmbEvents = " << _nmbEvents << ", nmbBlocks = " << nmbBlocks 
-		//           << ", nmbThreadsPerBlock = " << nmbThreadsPerBlock << endl;
+		static unsigned int nmbBlocks, nmbThreadsPerBlock;
+		static bool         firstCall = true;
+		if (firstCall) {
+			printInfo << "logLikelihoodDerivFirstTermKernel<complexT>" << endl;
+			estimateOptimumKernelGrid(logLikelihoodDerivFirstTermKernel<complexT>, nmbBlocks,
+			                          nmbThreadsPerBlock, _nmbEvents);
+			firstCall = false;
+		}
 		logLikelihoodDerivFirstTermKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 			(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
 			 _nmbWavesRefl[0], _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]),
@@ -349,19 +428,26 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 
 	// second stage: calculate sums of derivatives w.r.t. all production amplitudes
 	if (0) {
-		const unsigned int nmbThreadsPerBlock = 384;
 		complexT*          d_derivatives;
 		const unsigned int derivativeDim[3] = {rank, 2, max(_nmbWavesRefl[0], _nmbWavesRefl[1])};
 		const unsigned int nmbDerivElements = nmbElements<unsigned int>(derivativeDim, 3);
 		cutilSafeCall(cudaMalloc((void**)&d_derivatives, sizeof(complexT) * nmbDerivElements));
+		// run kernel with maximum occupancy grid
+		static unsigned int nmbBlocks, nmbThreadsPerBlock;
+		static bool         firstCall = true;
+		if (firstCall) {
+			printInfo << "logLikelihoodDerivKernel<complexT>" << endl;
+			estimateOptimumKernelGrid(logLikelihoodDerivKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
+			firstCall = false;
+		}
 		for (unsigned int iRank = 0; iRank < rank; ++iRank)
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 					// first summation stage
 					complexT*          d_derivativeSums0;
-					const unsigned int nmbElements0 = nmbThreadsPerBlock * _nmbBlocks;
+					const unsigned int nmbElements0 = nmbBlocks * nmbThreadsPerBlock;
 					cutilSafeCall(cudaMalloc((void**)&d_derivativeSums0, sizeof(complexT) * nmbElements0));
-					logLikelihoodDerivKernel<complexT><<<_nmbBlocks, nmbThreadsPerBlock>>>
+					logLikelihoodDerivKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 						(_d_decayAmps, d_derivTerms, d_likelihoods, _nmbEvents, rank,
 						 max(_nmbWavesRefl[0], _nmbWavesRefl[1]), iRank, iRefl, iWave,
 						 d_derivativeSums0);
@@ -384,13 +470,20 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 		                         sizeof(complexT) * nmbDerivElements, cudaMemcpyDeviceToHost));
 		cutilSafeCall(cudaFree(d_derivatives));
 	} else {
-		const unsigned int nmbThreadsPerBlock = 384;
+		// run kernel with maximum occupancy grid
+		static unsigned int nmbBlocks, nmbThreadsPerBlock;
+		static bool         firstCall = true;
+		if (firstCall) {
+			printInfo << "logLikelihoodDerivKernelXXX<complexT>" << endl;
+			estimateOptimumKernelGrid(logLikelihoodDerivKernelXXX<complexT>, nmbBlocks, nmbThreadsPerBlock);
+			firstCall = false;
+		}
 		// first summation stage
 		complexT*          d_derivativeSums0;
-		const unsigned int nmbSums0     = nmbThreadsPerBlock * _nmbBlocks;
+		const unsigned int nmbSums0     = nmbBlocks * nmbThreadsPerBlock;
 		const unsigned int nmbElements0 = rank * 2 * max(_nmbWavesRefl[0], _nmbWavesRefl[1]) * nmbSums0;
 		cutilSafeCall(cudaMalloc((void**)&d_derivativeSums0, sizeof(complexT) * nmbElements0));
-		logLikelihoodDerivKernelXXX<complexT><<<_nmbBlocks, nmbThreadsPerBlock>>>
+		logLikelihoodDerivKernelXXX<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 			(_d_decayAmps, d_derivTerms, d_likelihoods, _nmbEvents, rank, _nmbWavesRefl[0],
 			 _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]), d_derivativeSums0);
 		// second summation stage
@@ -418,18 +511,27 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 	
 	// flat wave requires special treatment	
 	{
+		// run kernel with maximum occupancy grid
+		static unsigned int nmbBlocks, nmbThreadsPerBlock;
+		static bool         firstCall = true;
+		if (firstCall) {
+			printInfo << "logLikelihoodDerivFlatKernel<complexT>" << endl;
+			estimateOptimumKernelGrid(logLikelihoodDerivFlatKernel<complexT>, nmbBlocks,
+			                          nmbThreadsPerBlock);
+			firstCall = false;
+		}
 		// first summation stage
 		value_type*        d_derivativeSumsFlat0;
-		const unsigned int nmbElements0 = _nmbThreadsPerBlock * _nmbBlocks;
+		const unsigned int nmbElements0 = nmbBlocks * nmbThreadsPerBlock;
 		cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat0, sizeof(value_type) * nmbElements0));
-		logLikelihoodDerivFlatKernel<complexT><<<_nmbBlocks, _nmbThreadsPerBlock>>>
+		logLikelihoodDerivFlatKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 			(prodAmpFlat, d_likelihoods, _nmbEvents, d_derivativeSumsFlat0);
 		// second summation stage
 		value_type*        d_derivativeSumsFlat1;
-		const unsigned int nmbElements1 = _nmbThreadsPerBlock;
+		const unsigned int nmbElements1 = nmbThreadsPerBlock;
 		cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat1, sizeof(value_type) * nmbElements1));
-		sumKernel<value_type><<<1, _nmbThreadsPerBlock>>>(d_derivativeSumsFlat0, nmbElements0,
-		                                                  d_derivativeSumsFlat1);
+		sumKernel<value_type><<<1, nmbThreadsPerBlock>>>(d_derivativeSumsFlat0, nmbElements0,
+		                                                 d_derivativeSumsFlat1);
 		// third and last summation stage
 		value_type* d_derivativeSumsFlat2;
 		cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat2, sizeof(value_type)));
