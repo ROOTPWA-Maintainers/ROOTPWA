@@ -52,9 +52,6 @@
 #include "likelihoodInterface.cuh"
 
 
-#define CUDA_ENABLED
-
-
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -371,25 +368,26 @@ runLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 	generateData(nmbEvents, rank, nmbWavesRefl, decayAmps, prodAmps, prodAmpFlat);
 
 	// initialize CUDA environment
-	cuda::likelihoodInterface<cuda::complex<double> >& interface
-		= cuda::likelihoodInterface<cuda::complex<double> >::instance();
+	// cuda::likelihoodInterface<cuda::complex<double> >& interface
+	// 	= cuda::likelihoodInterface<cuda::complex<double> >::instance();
 	// interface.setDebug(true);
-	interface.init(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
-	               decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
+	cuda::likelihoodInterface<cuda::complex<double> >::init
+		(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
+		 decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
 
 	// call function
 	clock_t start, finish;  // rough estimation of run time
 	start = clock();
 	derivatives.resize(extents[rank][2][max(nmbWavesRefl[0], nmbWavesRefl[1])]);
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
-		interface.logLikelihoodDeriv
+		cuda::likelihoodInterface<cuda::complex<double> >::logLikelihoodDeriv
 			(reinterpret_cast<cuda::complex<double>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, rank,
 			 reinterpret_cast<cuda::complex<double>*>(derivatives.data()), derivativeFlat);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 
-	interface.closeCudaDevice();
+	cuda::likelihoodInterface<cuda::complex<double> >::closeCudaDevice();
 }
 
 
@@ -423,7 +421,7 @@ testLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 		T                              derivativeFlat = 0;
 
 		// compute derivative for first term of log likelihood
-#ifdef CUDA_ENABLED
+#ifdef USE_CUDA
 		// if (_useCuda) {
 		ampsArrayType derivativesCuda(derivShape);
 		T             derivativeFlatCuda = 0;
@@ -567,9 +565,11 @@ main(int    argc,
 			= runLogLikelihoodCuda       (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[2]);
 
 		printInfo << "finished log likelihood calculation:" << endl
-		          << "    elapsed time (multi_array) ...... " << elapsedTime[0]  << " sec" << endl
-		          << "    elapsed time (pseudoArray) ...... " << elapsedTime[1]  << " sec" << endl
-		          << "    elapsed time (CUDA) ............. " << elapsedTime[2]  << " sec" << endl
+		          << "    elapsed time (multi_array) ...... " << elapsedTime[0] << " sec" << endl
+		          << "    elapsed time (pseudoArray) ...... " << elapsedTime[1] << " sec" << endl
+		          << "    elapsed time (CUDA) ............. " << elapsedTime[2] << " sec" << endl
+		          << "    CUDA kernel time ................ "
+		          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl
 		          << "    log(likelihood) (multi_array) ... " << maxPrecision(logLikelihoods[0]) << endl
 		          << "    log(likelihood) (pseudoArray) ... " << maxPrecision(logLikelihoods[1]) << endl
 		          << "    log(likelihood) (CUDA) .......... " << maxPrecision(logLikelihoods[2]) << endl

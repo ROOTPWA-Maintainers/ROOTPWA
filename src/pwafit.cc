@@ -95,10 +95,10 @@ usage(const string& progName,
 	     << "                                         Linear:      Robust" << endl
 	     << "                                         Fumili:      -" << endl
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
-#ifdef CUDA_ENABLED	  
+#ifdef USE_CUDA
 	     << "        -c         enable CUDA acceleration (default: off)" << endl
 #else
-	     << "        -c         [enable CUDA acceleration] disabled" << endl
+	     << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
 #endif
 	     << "        -q         run quietly (default: false)" << endl
 	     << "        -h         print help" << endl
@@ -225,7 +225,7 @@ main(int    argc,
 			minimizerTolerance = atof(optarg);
 			break;
 		case 'c':
-#ifdef CUDA_ENABLED	  
+#ifdef USE_CUDA
 			useCuda = true;
 #endif
 			break;
@@ -274,7 +274,7 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
-#ifdef CUDA_ENABLED	  
+#ifdef USE_CUDA
 	L.useCuda(useCuda);
 #endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
@@ -468,6 +468,10 @@ main(int    argc,
 	}
 	printInfo << "function call summary:" << endl;
 	L.printFuncInfo(cout);
+#ifdef USE_CUDA
+	printInfo << "total CUDA kernel time: "
+	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
+#endif	  
 
 	// ---------------------------------------------------------------------------
 	// write out result

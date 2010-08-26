@@ -41,6 +41,8 @@
 
 #include <iostream>
 
+#include <boost/timer.hpp>
+
 
 namespace rpwa {
 
@@ -74,6 +76,7 @@ namespace rpwa {
 		template<typename complexT>
 		class likelihoodInterface {
 
+			template<typename U, typename T> friend class sumKernelCaller;
 			template<typename U, typename T> friend class sumDerivativesKernelCaller;
 
 
@@ -121,6 +124,9 @@ namespace rpwa {
 			                               const unsigned int rank,
 			                               complexT*          derivatives,
 			                               value_type&        derivativeFlat);  ///< computes derivatives of log likelihood for given production amplitudes
+
+			static double kernelTime     () { return _kernelTime; }  ///< returns total time spent in CUDA kernels [sec]
+			static void   resetKernelTime() { _kernelTime = 0;    }  ///< resets kernel time counter to 0
 		
 			static std::ostream& print(std::ostream& out);  ///< prints properties of used CUDA device
 
@@ -141,18 +147,23 @@ namespace rpwa {
 			                              unsigned int                        nmbSumsPrev,
 			                              const unsigned int                  sumElementSize = 1);
 
+			static void startKernelTimer() { _timer.restart(); };
+			static void stopKernelTimer();
+
 
 			static likelihoodInterface _instance;  ///< singleton instance
 
-			static bool                  _cudaInitialized;     ///< indicates whether CUDA environment was initialized correctly
-			static int                   _nmbOfCudaDevices;    ///< number of found CUDA capable devices
-			static int                   _cudaDeviceId;        ///< device ID of used CUDA device
-			static struct cudaDeviceProp _cudaDeviceProp;      ///< properties of used CUDA device
-			static complexT*             _d_decayAmps;         ///< device pointer to precalculated decay amplitudes
-			static unsigned int          _nmbEvents;           ///< number of events to process
-			static unsigned int          _nmbWavesRefl[2];     ///< number of waves for each reflectivity
-			static unsigned int          _nmbWavesMax;         ///< maximum extent of wave index for production and decay amplitude arrays
-			static unsigned int          _rank;                ///< rank of spin-density matrix
+			static bool                  _cudaInitialized;   ///< indicates whether CUDA environment was initialized correctly
+			static int                   _nmbOfCudaDevices;  ///< number of found CUDA capable devices
+			static int                   _cudaDeviceId;      ///< device ID of used CUDA device
+			static struct cudaDeviceProp _cudaDeviceProp;    ///< properties of used CUDA device
+			static complexT*             _d_decayAmps;       ///< device pointer to precalculated decay amplitudes
+			static unsigned int          _nmbEvents;         ///< number of events to process
+			static unsigned int          _nmbWavesRefl[2];   ///< number of waves for each reflectivity
+			static unsigned int          _nmbWavesMax;       ///< maximum extent of wave index for production and decay amplitude arrays
+			static unsigned int          _rank;              ///< rank of spin-density matrix; needed for friend kernel caller
+			static boost::timer          _timer;             ///< used for timing
+			static double                _kernelTime;        ///< accumulates time spent in CUDA kernels
 
 			static bool _debug;  ///< if set to true, debug messages are printed
 

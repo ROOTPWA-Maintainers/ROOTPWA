@@ -41,7 +41,7 @@ cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
 
 # set verbosity
 set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displayed during build
-                               # the same effect can be achieved by calling 'make VERBOSE=1'
+# the same effect can be achieved by calling 'make VERBOSE=1'
 
 
 # define project
@@ -147,6 +147,8 @@ find_package(ROOT 5.26 REQUIRED Minuit2)
 
 # setup CUDA
 set(USE_CUDA FALSE)
+#set(CUDA_SHADER_MODELS "13" "20")
+set(CUDA_SHADER_MODELS "13")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
   # use default SDK path, if not defined by user
   set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
@@ -163,13 +165,33 @@ else()
   if(NOT CUDA_SDK_ROOT_DIR)
     message(SEND_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
   else()
-    message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'")
-    message(STATUS "Enabling compilation of CUDA components")
-    set(USE_CUDA TRUE)
-    # set some global switches
-    set(CUDA_BUILD_CUBIN     OFF)
-    set(CUDA_BUILD_EMULATION OFF)
-    set(CUDA_VERBOSE_BUILD   OFF)
+		# find cuda utility library
+		find_library(CUDA_CUTIL_LIBRARY
+			NAMES cutil_${CMAKE_SYSTEM_PROCESSOR}
+			PATHS ${CUDA_SDK_ROOT_DIR}/lib
+			NO_DEFAULT_PATH
+			)
+		if(NOT CUDA_CUTIL_LIBRARY)
+			message(SEND_ERROR "Could not find CUDA utility library 'cutil_${CMAKE_SYSTEM_PROCESSOR}' in '${CUDA_SDK_ROOT_DIR}/lib'")
+		else()
+			set(USE_CUDA TRUE)
+			message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
+			message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'")
+			message(STATUS "Enabling compilation of CUDA components")
+			# define for which shader models code is generated
+			message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
+			foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
+				list(APPEND CUDA_NVCC_FLAGS
+					"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
+			endforeach()
+			#list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
+			# set some global switches
+			set(CUDA_BUILD_CUBIN     OFF)
+			set(CUDA_BUILD_EMULATION OFF)
+			set(CUDA_VERBOSE_BUILD   OFF)
+			# enable CUDA code in other parts of the project
+			add_definitions(-DUSE_CUDA)
+		endif()
   endif()
 endif()
 
@@ -180,7 +202,7 @@ if(Subversion_FOUND)
   # unfortunately CMAKE only parses 'svn info'
   find_program(SVNVERSION_EXECUTABLE
     svnversion
-  )
+		)
   if(NOT SVNVERSION_EXECUTABLE)
     message(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
   else()
@@ -219,7 +241,7 @@ else()
     COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
     DEPENDS ${DOXYGEN_CONF}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  )
+		)
 endif()
 
 
@@ -234,24 +256,29 @@ add_subdirectory(pwa2000)
 # Utilities
 set(UTILITIES_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/utilities
-)
+	)
 
 # CUDA stuff
-set(CUDA_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/cuda
-)
-set(CUDA_LIBS
-  cuda
-)
-add_subdirectory(cuda)
+if(USE_CUDA)
+	set(CUDA_INCLUDE_DIR
+		${CMAKE_SOURCE_DIR}/cuda
+		)
+	set(CUDA_LIBS
+		cuda
+		)
+	add_subdirectory(cuda)
+else()
+	set(CUDA_INCLUDE_DIR)
+	set(CUDA_LIBS)
+endif()
 
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src
-)
+	)
 set(ROOTPWA_LIBS
   RootPwa
-)
+	)
 add_subdirectory(src)
 
 # RootPwaAmp

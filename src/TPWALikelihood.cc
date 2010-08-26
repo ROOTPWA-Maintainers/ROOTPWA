@@ -48,9 +48,10 @@
 
 #include "utilities.h"
 
-#ifdef CUDA_ENABLED
+#ifdef USE_CUDA
 #include "../cuda/complex.cuh"
 #include "../cuda/likelihoodInterface.cuh"
+using namespace rpwa;
 #endif
 
 
@@ -59,7 +60,6 @@
 
 using namespace std;
 using namespace boost;
-using namespace rpwa;
 
 
 template<typename T> bool TPWALikelihood<T>::_debug = true;
@@ -71,7 +71,7 @@ TPWALikelihood<T>::TPWALikelihood()
 	  _rank             (1),
 	  _nmbWaves         (0),
 	  _nmbPars          (0),
-#ifdef CUDA_ENABLED
+#ifdef USE_CUDA
 	  _useCuda          (false),
 #endif
 	  _useNormalizedAmps(true),
@@ -242,11 +242,9 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	TStopwatch timer;
 	timer.Start();
 	T logLikelihood     = 0;
-#ifdef CUDA_ENABLED
+#ifdef USE_CUDA
 	if (_useCuda) {
-		cuda::likelihoodInterface<cuda::complex<T> >& interface
-			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
-		logLikelihood = interface.logLikelihood
+		logLikelihood = cuda::likelihoodInterface<cuda::complex<T> >::logLikelihood
 			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
 	} else
@@ -403,14 +401,13 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	// compute derivative for first term of log likelihood
 	TStopwatch timer;
 	timer.Start();
-#ifdef CUDA_ENABLED
+#ifdef USE_CUDA
 	if (_useCuda) {
-		cuda::likelihoodInterface<cuda::complex<T> >& interface
-			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
-		interface.logLikelihoodDeriv(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
-		                             prodAmps.num_elements(), prodAmpFlat, _rank,
-		                             reinterpret_cast<cuda::complex<T>*>(derivatives.data()),
-		                             derivativeFlat);
+		cuda::likelihoodInterface<cuda::complex<T> >::logLikelihoodDeriv
+			(reinterpret_cast<cuda::complex<T>*>(prodAmps.data()),
+			 prodAmps.num_elements(), prodAmpFlat, _rank,
+			 reinterpret_cast<cuda::complex<T>*>(derivatives.data()),
+			 derivativeFlat);
 	} else
 #endif
 		{
@@ -517,7 +514,7 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 
 template<typename T>
 void 
-#ifdef CUDA_ENABLED	
+#ifdef USE_CUDA
 TPWALikelihood<T>::useCuda(const bool useCuda)
 {
 	_useCuda = useCuda;
@@ -541,12 +538,11 @@ TPWALikelihood<T>::init(const unsigned int rank,
 	buildParDataStruct(rank);
 	readIntegrals(normIntFileName, accIntFileName);
 	readDecayAmplitudes(ampDirName);
-#ifdef CUDA_ENABLED	
+#ifdef USE_CUDA
 	if (_useCuda) {
-		cuda::likelihoodInterface<cuda::complex<T> >& interface
-			= cuda::likelihoodInterface<cuda::complex<T> >::instance();
-		interface.init(reinterpret_cast<cuda::complex<T>*>(_decayAmps.data()),
-		               _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
+		cuda::likelihoodInterface<cuda::complex<T> >::init
+			(reinterpret_cast<cuda::complex<T>*>(_decayAmps.data()),
+			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
 	}
 #endif
 }
@@ -1005,7 +1001,7 @@ TPWALikelihood<T>::print(ostream& out) const
 	    << "number of negative reflectivity waves ... " << _nmbWavesRefl[0]   << endl
 	    << "number of function parameters ........... " << _nmbPars           << endl
 	    << "print debug messages .................... " << _debug             << endl
-#ifdef CUDA_ENABLED
+#ifdef USE_CUDA
 	    << "use CUDA kernels ........................ " << _useCuda           << endl
 #endif	  
 	    << "use normalized amplitudes ............... " << _useNormalizedAmps << endl

@@ -54,9 +54,6 @@
 #include "matrix.h"
 
 
-#define CUDA_ENABLED
-
-
 class TString;
 class TCMatrix;
 
@@ -194,7 +191,7 @@ private:
 	unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves 
 	unsigned int _nmbPars;          // number of function parameters
 
-#ifdef CUDA_ENABLED
+#ifdef USE_CUDA
 	bool        _useCuda;            // if true CUDA kernels are used for some calculations
 #endif
 	bool        _useNormalizedAmps;  // if true normalized amplitudes are used
