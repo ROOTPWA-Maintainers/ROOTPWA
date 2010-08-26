@@ -16,6 +16,7 @@
 #include <TGProgressBar.h>
 #include <vector>
 #include "TrpwaSessionManager.h"
+#include "TrpwaWaveSelectFrame.h"
 
 using namespace std;
 
@@ -41,6 +42,8 @@ private:
 	vector <TGProgressBar*> progressbars; // references to the progress bars
 
 	TrpwaSessionManager* current_session;
+
+	TrpwaWaveSelectFrame* frame_wave_select; // window for wave selection
 
 public:
 	// return the reference to the only instance of this class
@@ -69,6 +72,10 @@ public:
 	void Update();
 
 	void CloseWindow(); // override to call the application abortion
+
+	void SelectWaves(); // calls the interface for wave selection
+
+	void Dummy(); // will be called for every function not implemented yet
 
 	// call the root script for class definition
 	ClassDef(TrpwaMainFrame,0);

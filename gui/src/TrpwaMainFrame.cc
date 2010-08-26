@@ -34,6 +34,20 @@ static const string step_titles[nsteps] = {
 		"         show results         ",
 		"            predict           "
 };
+// list with functions to call when button pressed
+static const string func_calls[nsteps] = {
+		"Dummy()",
+		"Dummy()",
+		"Dummy()",
+		"Dummy()",
+		"Dummy()",
+		"Dummy()",
+		"Dummy()",
+		"SelectWaves()",
+		"Dummy()",
+		"Dummy()",
+		"Dummy()"
+};
 static const int nbatches = 5;
 static const string step_batchnames[nbatches] = {
 		"local ",
@@ -110,6 +124,7 @@ void TrpwaMainFrame::Build(){
 		frame_session->AddFrame(subframe, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,8,1));
 		TGTextButton *button = new TGTextButton(subframe, step_titles[istep].c_str());
+		button->Connect("Clicked()","TrpwaMainFrame",this,func_calls[istep].c_str());
 		subframe->AddFrame(button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
 		TGHProgressBar* statusbar = new TGHProgressBar(subframe, TGProgressBar::kStandard,300);
@@ -150,6 +165,7 @@ void TrpwaMainFrame::Build(){
 	MapSubwindows();
 	// Initialize the layout algorithm
 	Resize(GetDefaultSize());
+	SetWMSize(fWidth, fHeight);
 	// Map main frame
 	MapWindow();
 }
@@ -268,6 +284,25 @@ void TrpwaMainFrame::LoadSession(){
 	// delete filedialog; will be deleted automatically
 }
 
+void TrpwaMainFrame::SelectWaves(){
+	if (current_session){
+	    // set a list of waves together with the waves that are already selected
+		TWaveSelections waveselections;
+		for (int i = 0; i < current_session->Get_n_bins(); i++){
+			TWaveSelection waveselection;
+			waveselection.selected_waves  = current_session->GetSelectedWaves(i, waveselection.available_waves, waveselection.bin_low, waveselection.bin_high);
+			waveselections.push_back(waveselection);
+			cout << " found " << waveselection.selected_waves.size() << " selected waves " << waveselection.bin_low << "." << waveselection.bin_high << " of available " << waveselection.available_waves.size() << endl;
+			for (int i = 0; i < waveselection.selected_waves.size() ; i++){
+				cout << waveselection.selected_waves[i] << " " << waveselection.available_waves[i] << endl;
+			}
+		}
+		// set the client frames
+		frame_wave_select = new TrpwaWaveSelectFrame(waveselections);
+		//waveselections;
+	}
+}
+
 void TrpwaMainFrame::Update(){
 	if (current_session){
 		frame_session_options->SetTitle(current_session->Get_title().c_str());
@@ -276,6 +311,10 @@ void TrpwaMainFrame::Update(){
 	} else {
 		//steplist->SetEditDisabled(); ??
 	}
+}
+
+void TrpwaMainFrame::Dummy(){
+	cout << " not implemented yet! " << endl;
 }
 
 TrpwaMainFrame::~TrpwaMainFrame() {

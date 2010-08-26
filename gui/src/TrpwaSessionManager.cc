@@ -91,8 +91,8 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 				cout << " Error in TrpwaSessionManager::Save_Session(): number of stored bins does not match the bin number stored! " << endl;
 				return result;
 			}
-			file << " bins_lowedge = [ ";
 			// write also the individual bins down
+			file << " bins_lowedge = [ ";
 			for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
 				if (it != _bins.begin()) file << " , ";
 				file << it->second.bin_low;
@@ -100,7 +100,6 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 
 			file << " bins_highedge = [ ";
-			// write also the individual bins down
 			for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
 				if (it != _bins.begin()) file << " , ";
 				file << it->second.bin_high;
@@ -108,7 +107,6 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 
 			file << " bins_wavelist = [ ";
-			// write also the individual bins down
 			for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
 				if (it != _bins.begin()) file << " , ";
 				file << "\"" << it->second.wave_list_file << "\"";
@@ -116,7 +114,6 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 
 			file << " bins_foldername = [ ";
-			// write also the individual bins down
 			for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
 				if (it != _bins.begin()) file << " , ";
 				file << "\"" << it->second.bin_folder_name << "\"";
@@ -254,6 +251,7 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 			bin.wave_list_file  = (const char*) _setting_wavelists  [i];
 			bin.bin_low         = _setting_lowedges   [i];
 			bin.bin_high        = _setting_highedges  [i];
+			bin.wave_list	    = ReadWaveList(_dir_fit_results +"/"+ bin.wave_list_file);
 			_bins[bin.bin_low]  = bin;
 		}
 		if (_bins.size() != (unsigned) _n_bins){
@@ -433,6 +431,7 @@ bool TrpwaSessionManager::Initialize(){
 		_bin.wave_list_file = /*_dir_fit_results+"/" +*/ "wavelist." + _bin.bin_folder_name;
 		_bin.bin_high = highedge;
 		_bin.bin_low  = lowedge;
+		_bin.wave_list = ReadWaveList(_dir_fit_results+"/"+_bin.wave_list_file);
 		_bins[lowedge] = _bin;
 		cout << " initialized bin " << _bin.wave_list_file << endl;
 	}
@@ -668,6 +667,100 @@ float TrpwaSessionManager::Check_fits(){
 	return result;
 }
 
+// return a list of the wavenames without an extension in the ith bin
+vector<string> &TrpwaSessionManager::GetSelectedWaves(int ibin){
+	vector<string>* result = new vector<string>();
+	vector<string> _allwaves;
+	vector<bool> _selected = GetSelectedWaves(ibin, _allwaves);
+	for (unsigned int i = 0; i < _allwaves.size(); i++){
+		if (_selected[i]) result->push_back(_allwaves[i]);
+	}
+	return *result;
+}
+
+	// return a list of selections to the list of "allwaves" in the ith bin
+vector<bool>   &TrpwaSessionManager::GetSelectedWaves(int ibin, vector<string>& allwaves){
+	int _bin_low;
+	int _bin_high;
+	return GetSelectedWaves(ibin, allwaves, _bin_low, _bin_high);
+}
+
+vector<bool>   &TrpwaSessionManager::GetSelectedWaves(int ibin, vector<string>& allwaves, int& bin_low, int& bin_high){
+	Check_PWA_keyfiles(); // to (re)initialize the _kefiles variable
+	vector<bool>* result = new vector<bool>();
+	if (_keyfiles.size() == 0){
+		cout << " Error in TrpwaSessionManager::GetSelectedWaves(): No Keyfiles available! " << endl;
+		return *result;
+	}
+	allwaves = _keyfiles;
+	if (_bins.size() > 0){
+		int bincounter(0);
+		for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+			if (bincounter == ibin){
+				bin_low = (*it).second.bin_low;
+				bin_high= (*it).second.bin_high;
+				vector<string> _selected_waves = (*it).second.wave_list;
+				// find the corresponding entries in the list of available keys
+				for (unsigned int i = 0; i < allwaves.size(); i++){
+					bool found(false);
+					for (vector<string>::iterator j = _selected_waves.begin(); j != _selected_waves.end(); j++){
+						// the key was found in the mother list
+						// write it out and delete it from the list to see afterwards if all keys were also available
+						if ((*j) == allwaves[i]) {
+							result->push_back(true);
+							found = true;
+							_selected_waves.erase(j);
+						}
+						break;
+					}
+					if (!found) result->push_back(false);
+				}
+				// the list should be empty now, check this
+				// if not we have selected waves that are not available in the key list -> inconsistency
+				if (_selected_waves.size() != 0){
+					cout << " Error in TrpwaSessionManager::GetSelectedWaves(): there are amps in ";
+					cout << (*it).second.wave_list_file << " specified that are not available in the list of keys! "  << endl;
+					result->clear();
+					allwaves.clear();
+					return *result;
+				}
+				if (allwaves.size()!=result->size()){
+					cout << " unexpected error in TrpwaSessionManager::GetSelectedWaves(), please inform the coder! " << endl;
+					result->clear();
+					allwaves.clear();
+					return *result;
+				}
+				break; // the correct bin was found
+			}
+			bincounter++;
+		}
+	} else {
+		if (_n_bins > 0) cout << " Error in TrpwaSessionManager::GetSelectedWaves(): Bin structure not initialized yet! " << endl;
+	}
+	return *result;
+}
+
+	// return a list of available Waves in the ith bin
+	// Check_PWA_keyfiles() is called
+vector<string> &TrpwaSessionManager::GetAvailableWaves(int ibin){
+	vector<string>* result = new vector<string>();
+	Check_PWA_keyfiles();
+	(*result) = _keyfiles;
+	return *result;
+}
+
+	// return the lower bound of the ith bin
+int	TrpwaSessionManager::GetBinLow(int ibin){
+	cout << " TrpwaSessionManager::GetBinLow() not implemented yet " << endl;
+	return 0;
+}
+
+	// return the upper bound of the ith bin
+int TrpwaSessionManager::GetBinHigh(int ibin){
+	cout << " TrpwaSessionManager::GetBinHigh() not implemented yet " << endl;
+	return 0;
+}
+
 // check whether a file exists
 bool TrpwaSessionManager::FileExists(string filename){
 	  ifstream ifile(filename.c_str());
@@ -724,5 +817,61 @@ bool TrpwaSessionManager::AreListsEqual(const vector<string>& list1, const vecto
 	}
 	// only if all elements were found list2 will be empty
 	if (_templist.size() == 0) return true; else return false;
+}
+
+vector<string> &TrpwaSessionManager::ReadWaveList(string filename){
+	vector<string>* result = new vector<string>();
+
+	// Check whether the file exists, if not create it if possible
+	if (!FileExists(filename)){
+		Check_PWA_keyfiles();
+		cout << " wave list " << filename << " does not exist: creating a new one with ";
+		cout << _keyfiles.size() << " key files " << endl;
+		ofstream _file(filename.c_str());
+		if (_file.good()){
+			for (unsigned int i = 0; i < _keyfiles.size(); i++){
+				_file << _keyfiles[i] << ".amp" << endl;
+			}
+
+		} else {
+			cout << " Error in TrpwaSessionManager::ReadWaveList(): Could not create a new wave list -> wave list ";
+			cout << filename << " is missing! " << endl;
+			return *result;
+		}
+		_file.close();
+	}
+	// read the written wave list
+	ifstream _file(filename.c_str());
+	if (_file.good()){
+		char* line = new char[1024];
+		while(1){
+			_file.getline(line, 1024);
+			if (!_file.good()) break;
+			string _wave = line;
+			// remove empty spaces
+			for (unsigned int i=0;i<_wave.length();i++)
+				if (_wave[i]==' ') {
+					_wave.erase(i,1);
+					i--;
+				}
+			// skip waves with # in it
+			if (_wave.find('#')!=string::npos){
+				cout << " omitting line: " << _wave << endl;
+				continue;
+			}
+			// take only entries with .amp ending
+			if (_wave.size() < 4 || _wave.compare(_wave.size()-4, 4, ".amp") != 0){
+				cout << " omitting line with no .amp ending " << endl;
+				continue;
+			}
+			// remove the .amp ending
+			_wave.erase(_wave.size()-4, 4);
+			result->push_back(_wave);
+		}
+	} else {
+		cout << " Error in TrpwaSessionManager::ReadWaveList(): Could not read wave list "<< filename;
+	}
+
+	return *result;
 }
 

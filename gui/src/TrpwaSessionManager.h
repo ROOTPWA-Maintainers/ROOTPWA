@@ -34,6 +34,7 @@ struct TrpwaBinInfo {
 	int bin_high; // upper bin excluded (MeV)
 	string bin_folder_name; // bin folder name with path to it
 	string wave_list_file; // file with specified waves for fit
+	vector<string> wave_list; // list of selected waves as specified in wave_list_file
 };
 
 typedef map <int, TrpwaBinInfo> TBinMap;
@@ -69,17 +70,14 @@ public:
 	bool Set_ROOTPWA_dir(string path = "");
 
 	// set the path to the binned data
-	// folder will be created if does not exist
 	// true if succeeded
 	bool Set_binned_data_dir(string path);
 
 	// set the path to the key files
-	// folder will be created if does not exist
 	// true if succeeded
 	bool Set_key_files_dir(string path);
 
 	// set the path to the fit results
-	// folder will be created if does not exist
 	// true if succeeded
 	// Call Initialize() aver having set all variables!
 	bool Set_fit_results_dir(string path);
@@ -220,6 +218,25 @@ public:
 	// if rmext the files will be delivered without the extension
 	int GetDir (string path, vector<string> &files, string filterext = "", bool rmext = false);
 
+	// return a list of the wavenames without an extension in the ith bin
+	vector<string> &GetSelectedWaves(int ibin);
+
+	// return a list of selections to the list of "allwaves" in the ith bin
+	vector<bool>   &GetSelectedWaves(int ibin, vector<string>& allwaves);
+
+	// return a list of selections to the list of "allwaves" in the ith bin and in addition the bin edges
+	vector<bool>   &GetSelectedWaves(int ibin, vector<string>& allwaves, int& bin_low, int& bin_high);
+
+	// return a list of available Waves in the ith bin
+	// Check_PWA_keyfiles() is called
+	vector<string> &GetAvailableWaves(int ibin);
+
+	// return the lower bound of the ith bin
+	int	GetBinLow(int ibin);
+
+	// return the upper bound of the ith bin
+	int GetBinHigh(int ibin);
+
 	/*
 	TrpwaSessionManager& operator=(const TrpwaSessionManager& copysource) const{
 		//Set_n_bins(copysource.Get_n_bins());
@@ -250,6 +267,13 @@ private:
 
 	// true if both lists are equal
 	bool AreListsEqual(const vector<string>& list1, const vector<string>& list2);
+
+	// read the wave list given
+	// put every entry with the ending .amp without the character# in it
+	// into the list that is returned
+	// if the wave list is not existing wavelist will be written
+	// in this case Check_PWA_keyfiles() is called to get a list of expected keyfiles
+	vector<string> &ReadWaveList(string filename);
 };
 
 
