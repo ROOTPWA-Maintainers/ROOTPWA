@@ -59,6 +59,9 @@ public:
 	// save the current session
 	void SaveSession();
 
+	// save the current session as (opening a dialog)
+	void SaveSessionAs();
+
 	// load a session
 	void LoadSession();
 

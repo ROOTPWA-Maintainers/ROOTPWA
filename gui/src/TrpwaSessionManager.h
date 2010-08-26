@@ -36,6 +36,8 @@ struct TrpwaBinInfo {
 	string wave_list_file; // file with specified waves for fit
 };
 
+typedef map <int, TrpwaBinInfo> TBinMap;
+
 class TrpwaSessionManager{
 public:
 	TrpwaSessionManager();
@@ -180,18 +182,21 @@ public:
 	// returns the status [0-1] of calculated amplitudes
 	// of real data
 	// (comparing number of .amp files with .key files in the real data folder)
+	// Check_PWA_keyfiles is called
 	float Check_PWA_real_data_amplitudes();
 
 	// returns the status [0-1] of calculated amplitudes
 	// of flat phase space data
 	// (comparing number of .amp files with .key files
 	// in the flat phase space data folder)
+	// Check_PWA_keyfiles is called
 	float Check_PWA_MC_data_amplitudes();
 
 	// returns the status [0-1] of calculated amplitudes
 	// of accepted flat phase space data
 	// (comparing number of .amp files with .key files
 	// in the accpeted events data folder)
+	// Check_PWA_keyfiles is called
 	float Check_PWA_MC_acc_data_amplitudes();
 
 	// returns the status [0-1] of wave lists
@@ -201,6 +206,19 @@ public:
 	// returns the status [0-1] of the fits of the bins
 	// (searches and counts fit result files)
 	float Check_fits();
+
+	// check whether a file exists
+	bool FileExists(string filename);
+
+	// check whether a directory exists
+	bool DirExists(string dirname);
+
+	// get all files in a given path
+	// returns the number of entries
+	// files is filled with the filenames in this directory
+	// filterext is the extension to be specified for filtering
+	// if rmext the files will be delivered without the extension
+	int GetDir (string path, vector<string> &files, string filterext = "", bool rmext = false);
 
 	/*
 	TrpwaSessionManager& operator=(const TrpwaSessionManager& copysource) const{
@@ -225,7 +243,13 @@ private:
 	string _title; // the title of the session
 	string _description; // users description of this session
 
-	map <int, TrpwaBinInfo> _bins; // map with settings to each bin
+	TBinMap _bins; // map with settings to each bin
+
+	vector<string> _keyfiles; // key files without the extension determined by accessing the keyfile folder
+	int _n_keyfiles; // will be determined by accessing the keyfile folder
+
+	// true if both lists are equal
+	bool AreListsEqual(const vector<string>& list1, const vector<string>& list2);
 };
 
 

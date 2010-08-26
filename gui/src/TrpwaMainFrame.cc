@@ -93,6 +93,9 @@ void TrpwaMainFrame::Build(){
 	TGTextButton *button_save = new TGTextButton(frame_session_options," Save ");
 	button_save->Connect("Clicked()","TrpwaMainFrame",this,"SaveSession()");
 	frame_session_options->AddFrame(button_save, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
+	TGTextButton *button_save_as = new TGTextButton(frame_session_options," Save as ");
+	button_save_as->Connect("Clicked()","TrpwaMainFrame",this,"SaveSessionAs()");
+	frame_session_options->AddFrame(button_save_as, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
 	this->AddFrame(frame_session_options, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
 
@@ -213,6 +216,11 @@ void TrpwaMainFrame::NewSession(){
 	current_session = new TrpwaSessionManager();
 	current_session->Set_title(" test session ");
 	current_session->Set_Config_File("default.cfg");
+	current_session->Set_bin_low(1000);
+	current_session->Set_bin_high(2000);
+	current_session->Set_n_bins(10);
+	current_session->Initialize();
+
 	Update();
 }
 
@@ -224,11 +232,24 @@ void TrpwaMainFrame::SaveSession(){
 	}
 }
 
+void TrpwaMainFrame::SaveSessionAs(){
+	if (current_session){
+		TGFileInfo fileinfo;
+		const char* filetypes[] = {"Session files","*.cfg"};
+		fileinfo.fFileTypes = filetypes;
+		TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fileinfo);
+		if (fileinfo.fFilename) {
+			if (!current_session->Save_Session(fileinfo.fFilename)){
+				cout << " Error while saving session occurred! " << endl;
+			}
+		}
+	}
+}
+
 void TrpwaMainFrame::LoadSession(){
 	TGFileInfo fileinfo;
 	const char* filetypes[] = {"Session files","*.cfg"};
 	fileinfo.fFileTypes = filetypes;
-	//TGMainFrame filedialogwindow(, 200, 200);
 	TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fileinfo);
 	if (fileinfo.fFilename) {
 		if (current_session){
@@ -239,7 +260,7 @@ void TrpwaMainFrame::LoadSession(){
 		current_session = new TrpwaSessionManager();
 		string filename = fileinfo.fFilename;
 		if (!current_session->Load_Session(filename)){
-			cout << " Error while loading session occurred";
+			cout << " Error while loading session occurred" << endl;
 		} else {
 			Update();
 		}
