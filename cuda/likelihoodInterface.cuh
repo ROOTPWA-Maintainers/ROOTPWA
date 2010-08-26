@@ -56,10 +56,23 @@ namespace rpwa {
 
 			static likelihoodInterface& instance() { return _instance; }  ///< get singleton instance
 
+			static bool init(const complexT*    decayAmps,
+			                 const unsigned int nmbDecayAmps,
+			                 const unsigned int nmbEvents,
+			                 const unsigned int nmbWavesRefl[2],
+			                 const bool         reshuffleArray = true);  ///< convenience routine that initializes the CUDA device and copies decay amplitudes into device memory
+			static bool initCudaDevice();   ///< initializes CUDA device
+			static void closeCudaDevice();  ///< closes CUDA device
+			static bool loadDecayAmps(const complexT*    decayAmps,
+			                          const unsigned int nmbDecayAmps,
+			                          const unsigned int nmbEvents,
+			                          const unsigned int nmbWavesRefl[2],
+			                          const bool         reshuffleArray = true);  ///< copies decay amplitudes into CUDA device memory
+
 			static bool         cudaInitialized   () { return _cudaInitialized;    }  ///< returns status of CUDA initialization
 			static unsigned int totalDeviceMem    ();                                 ///< returns total memory capacity of used CUDA device
 			static unsigned int availableDeviceMem();                                 ///< returns available memory capacity of used CUDA device
-			static const struct cudaDeviceProp* deviceProperties();
+			static const struct cudaDeviceProp* deviceProperties();                   ///< returns pointer to properties of used CUDA device
 
 			template<typename kernelT>
 			static std::ostream& printKernelAttributes(std::ostream& out,
@@ -70,18 +83,6 @@ namespace rpwa {
 			                                      unsigned int&      nmbThreadsPerBlock,
 			                                      const unsigned int minNmbThreads = 0);
 			
-			static bool init(const complexT*    decayAmps,
-			                 const unsigned int nmbDecayAmps,
-			                 const unsigned int nmbEvents,
-			                 const unsigned int nmbWavesRefl[2],
-			                 const bool         reshuffleArray = true);  ///< convenience routine that initializes the CUDA device and copies decay amplitudes into device memory
-			static bool initCudaDevice();  ///< initializes CUDA device
-			static bool loadDecayAmps(const complexT*    decayAmps,
-			                          const unsigned int nmbDecayAmps,
-			                          const unsigned int nmbEvents,
-			                          const unsigned int nmbWavesRefl[2],
-			                          const bool         reshuffleArray = true);  ///< copies decay amplitudes into CUDA device memory
-
 			static value_type logLikelihood(const complexT*    prodAmps,
 			                                const unsigned int nmbProdAmps,
 			                                const value_type   prodAmpFlat,
@@ -117,6 +118,8 @@ namespace rpwa {
 			static complexT*             _d_decayAmps;         ///< device pointer to precalculated decay amplitudes
 			static unsigned int          _nmbEvents;           ///< number of events to process
 			static unsigned int          _nmbWavesRefl[2];     ///< number of waves for each reflectivity
+			static unsigned int          _nmbWavesMax;         ///< maximum extent of wave index for production and decay amplitude arrays
+			static unsigned int          _rank;                ///< rank of spin-density matrix
 
 			static bool _debug;  ///< if set to true, debug messages are printed
 

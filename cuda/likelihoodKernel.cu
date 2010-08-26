@@ -41,24 +41,25 @@ namespace rpwa {
 	namespace cuda {
 
 
-		// generic cascadable kernel that computes sum of N values in an array
+		// generic cascadable kernel that tranforms array with N values
+		// into array with M partial sums over of the input values
 		template<typename T>
 		__global__
 		void
 		sumKernel
 		(const T*           d_valArray,  // array with values to sum up
 		 const unsigned int nmbVals,     // total number of values all kernels have to process
-		 T*                 d_sumArray)  // output array of partial sums with one entry for each kernel
+		 T*                 d_sumArray,  // output array of partial sums with one entry for each kernel
+		 const unsigned int nmbSums)     // number of elements in output array
 		{
-			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
-			const unsigned int nmbThreads = gridDim.x * blockDim.x;
-  
-			// #pragma unroll 16
-			T sum = T(0);
-			for (unsigned int i = threadId; i < nmbVals; i += nmbThreads)
-				sum += d_valArray[i];
-
-			d_sumArray[threadId] = sum;
+			const unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
+			if (threadId < nmbSums) {
+				// #pragma unroll 16
+				T sum = T(0);
+				for (unsigned int i = threadId; i < nmbVals; i += nmbSums)
+					sum += d_valArray[i];
+				d_sumArray[threadId] = sum;
+			}
 		}
 
 
@@ -274,27 +275,27 @@ namespace rpwa {
 		template<typename T>
 		__global__
 		void
-		sumKernelXXX
-		(const T*           d_derivatives,     // array with values to sum up
-		 const unsigned int nmbDerivatives,    // total number of values all kernels have to process
-		 const unsigned int rank,              // rank of spin-density matrix
-		 const unsigned int nmbWavesReflNeg,   // number waves with negative reflectivity
-		 const unsigned int nmbWavesReflPos,   // number waves with positive reflectivity
-		 const unsigned int nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
-		 T*                 d_derivativeSums,  // output array of partial sums with one entry for each kernel
-		 const unsigned int nmbSums)           // number of elements in output array
+		sumDerivativesKernel
+		(const T*           d_derivatives,      // array with values to sum up
+		 const unsigned int nmbDerivatives,     // total number of values all kernels have to process
+		 const unsigned int rank,               // rank of spin-density matrix
+		 const unsigned int nmbWavesReflNeg,    // number waves with negative reflectivity
+		 const unsigned int nmbWavesReflPos,    // number waves with positive reflectivity
+		 const unsigned int nmbWavesMax,        // maximum extent of iWave index for production and decay amplitude arrays
+		 T*                 d_derivativeSums,   // output array of partial sums with one entry for each kernel
+		 const unsigned int nmbDerivativeSums)  // number of elements in output array
 		{
 			const unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
-			if (threadId < nmbSums) {
+			if (threadId < nmbDerivativeSums) {
 				const unsigned int nmbWavesRefl[2] = {nmbWavesReflNeg, nmbWavesReflPos};
 				// define extents of derivative array
 				const unsigned int derivDim   [4] = {rank, 2, nmbWavesMax, nmbDerivatives};
-				const unsigned int derivSumDim[4] = {rank, 2, nmbWavesMax, nmbSums};
+				const unsigned int derivSumDim[4] = {rank, 2, nmbWavesMax, nmbDerivativeSums};
 				for (unsigned int iRank = 0; iRank < rank; ++iRank)
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
 							T derivativeSum = T(0);
-							for (unsigned int i = threadId; i < nmbDerivatives; i += nmbSums) {
+							for (unsigned int i = threadId; i < nmbDerivatives; i += nmbDerivativeSums) {
 								const unsigned int derivIndices[4] = {iRank, iRefl, iWave, i};
 								derivativeSum
 									+= d_derivatives[indicesToOffset<unsigned int>(derivIndices, derivDim, 4)];

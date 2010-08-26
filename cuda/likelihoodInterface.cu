@@ -52,23 +52,152 @@ using namespace rpwa::cuda;
 
 template<typename complexT> likelihoodInterface<complexT> likelihoodInterface<complexT>::_instance;
 
-template<typename complexT> bool           likelihoodInterface<complexT>::_cudaInitialized    = false;
-template<typename complexT> int            likelihoodInterface<complexT>::_nmbOfCudaDevices   = 0;
-template<typename complexT> int            likelihoodInterface<complexT>::_cudaDeviceId       = -1;
+template<typename complexT> bool           likelihoodInterface<complexT>::_cudaInitialized  = false;
+template<typename complexT> int            likelihoodInterface<complexT>::_nmbOfCudaDevices = 0;
+template<typename complexT> int            likelihoodInterface<complexT>::_cudaDeviceId     = -1;
 template<typename complexT> cudaDeviceProp likelihoodInterface<complexT>::_cudaDeviceProp;
-template<typename complexT> complexT*      likelihoodInterface<complexT>::_d_decayAmps        = 0;
-template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbEvents          = 0;
-template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbWavesRefl[2]    = {0, 0};
-template<typename complexT> bool           likelihoodInterface<complexT>::_debug              = false;
+template<typename complexT> complexT*      likelihoodInterface<complexT>::_d_decayAmps      = 0;
+template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbEvents        = 0;
+template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbWavesRefl[2]  = {0, 0};
+template<typename complexT> unsigned int   likelihoodInterface<complexT>::_nmbWavesMax      = 0;
+template<typename complexT> unsigned int   likelihoodInterface<complexT>::_rank             = 0;
+template<typename complexT> bool           likelihoodInterface<complexT>::_debug            = false;
 
 
 template<typename complexT>
 likelihoodInterface<complexT>::~likelihoodInterface()
 {
+	closeCudaDevice();
+}
+
+
+template<typename complexT>
+bool
+likelihoodInterface<complexT>::init
+(const complexT*    decayAmps,        // array of decay amplitudes; [iRefl][iWave][iEvt] or [iEvt][iRefl][iWave]
+ const unsigned int nmbDecayAmps,     // number of elements in decay amplitude array
+ const unsigned int nmbEvents,        // total number of events
+ const unsigned int nmbWavesRefl[2],  // number of waves for each reflectivity
+ const bool         reshuffleArray)   // if set devcay amplitude array is reshuffled from [iEvt][iRefl][iWave] to [iRefl][iWave][iEvt]
+{
+	if (not initCudaDevice()) {
+		printWarn << "problems initializing CUDA device" << endl;
+		return false;
+	}
+	if (_debug)
+		printInfo << _instance;
+	if (not loadDecayAmps(decayAmps, nmbDecayAmps, nmbEvents, nmbWavesRefl, reshuffleArray)) {
+		printWarn << "problems loading decay amplitudes into CUDA device" << endl;
+		return false;
+	}
+	return true;
+}
+
+
+template<typename complexT>
+bool
+likelihoodInterface<complexT>::initCudaDevice()
+{
+	_cudaInitialized = false;
+
+  // get number of CUDA devices in system
+  cutilSafeCall(cudaGetDeviceCount(&_nmbOfCudaDevices));
+  if (_nmbOfCudaDevices == 0) {
+    printWarn << "there are no CUDA devices in the system" << endl;
+    return false;
+  }
+  printInfo << "found " << _nmbOfCudaDevices << " CUDA device(s)" << endl;
+
+  // use most powerful GPU in system
+  _cudaDeviceId = cutGetMaxGflopsDeviceId();
+  cutilSafeCall(cudaGetDeviceProperties(&_cudaDeviceProp, _cudaDeviceId));
+  // fields for both major & minor fields are 9999, if device is not present
+  if ((_cudaDeviceProp.major == 9999) and (_cudaDeviceProp.minor == 9999)) {
+	  printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
+	  return false;
+  }
+  cutilSafeCall(cudaSetDevice(_cudaDeviceId));
+	_cudaInitialized = true;
+  printInfo << "using CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
+            << availableDeviceMem() << " bytes available memory" << endl;
+	return true;
+}
+
+
+template<typename complexT>
+void
+likelihoodInterface<complexT>::closeCudaDevice()
+{
+	if (_cudaInitialized)
+		printInfo << "closing CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
+		          << availableDeviceMem() << " bytes available memory" << endl;
+	_cudaInitialized    = false;
+  _nmbOfCudaDevices   = 0;
+  _cudaDeviceId       = -1;
+  _nmbEvents          = 0;
+  _nmbWavesRefl[0]    = 0;
+  _nmbWavesRefl[1]    = 0;
+  _nmbWavesMax        = 0;
+  _rank               = 0;
 	if (_d_decayAmps) {
 		cutilSafeCall(cudaFree(_d_decayAmps));
-		cutilSafeCall(cudaThreadExit());
+		_d_decayAmps = 0;
 	}
+	cutilSafeCall(cudaThreadExit());
+}
+
+
+template<typename complexT>
+bool
+likelihoodInterface<complexT>::loadDecayAmps
+(const complexT*    decayAmps,        // array of decay amplitudes; [iRefl][iWave][iEvt] or [iEvt][iRefl][iWave]
+ const unsigned int nmbDecayAmps,     // number of elements in decay amplitude array
+ const unsigned int nmbEvents,        // total number of events
+ const unsigned int nmbWavesRefl[2],  // number of waves for each reflectivity
+ const bool         reshuffleArray)   // if set devcay amplitude array is reshuffled from [iEvt][iRefl][iWave] to [iRefl][iWave][iEvt]
+{
+	if (not decayAmps) {
+		printErr << "null pointer to decay amplitudes. aborting." << endl;
+		throw;
+	}
+	if (not _cudaInitialized) {
+		printWarn << "cannot load decay amplitudes. CUDA device is not initialized." << endl;
+		return false;
+	}
+
+	_nmbEvents       = nmbEvents;
+	_nmbWavesRefl[0] = nmbWavesRefl[0];
+	_nmbWavesRefl[1] = nmbWavesRefl[1];
+	_nmbWavesMax     = max(_nmbWavesRefl[0], _nmbWavesRefl[1]);
+
+	complexT* h_decayAmps = 0;
+	if (reshuffleArray) {
+		// change memory layout of decay amplitudes from [iEvt][iRefl][iWave] to [iRefl][iWave][iEvt]
+		h_decayAmps  = new complexT[nmbDecayAmps];
+		const unsigned int decayAmpDimOld[3] = {_nmbEvents, 2, _nmbWavesMax};
+		const unsigned int decayAmpDimNew[3] = {2, _nmbWavesMax, _nmbEvents};
+		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+				for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
+					const unsigned int decayAmpIndicesOld[3] = {iEvt, iRefl, iWave};
+					const unsigned int offsetOld             = indicesToOffset<unsigned int>
+						                                           (decayAmpIndicesOld, decayAmpDimOld, 3);
+					const unsigned int decayAmpIndicesNew[3] = {iRefl, iWave, iEvt};
+					const unsigned int offsetNew             = indicesToOffset<unsigned int>
+						                                           (decayAmpIndicesNew, decayAmpDimNew, 3);
+					h_decayAmps[offsetNew].real() = real(decayAmps[offsetOld]);
+					h_decayAmps[offsetNew].imag() = imag(decayAmps[offsetOld]);
+				}
+	}
+
+	// copy decay amps to device memory
+	const unsigned int size = nmbDecayAmps * sizeof(complexT);
+	cutilSafeCall(cudaMalloc((void**)&_d_decayAmps, size));
+	cutilSafeCall(cudaMemcpy(_d_decayAmps, (reshuffleArray) ? h_decayAmps : decayAmps,
+	                         size, cudaMemcpyHostToDevice));
+	printInfo << availableDeviceMem() / (1024. * 1024.) << " MiBytes left on CUDA device after loading "
+	          << "decay amplitudes" << endl;
+	return true;
 }
 
 
@@ -190,112 +319,6 @@ likelihoodInterface<complexT>::estimateOptimumKernelGrid(kernelT*           kern
 
 
 template<typename complexT>
-bool
-likelihoodInterface<complexT>::init
-(const complexT*    decayAmps,        // array of decay amplitudes; [iRefl][iWave][iEvt] or [iEvt][iRefl][iWave]
- const unsigned int nmbDecayAmps,     // number of elements in decay amplitude array
- const unsigned int nmbEvents,        // total number of events
- const unsigned int nmbWavesRefl[2],  // number of waves for each reflectivity
- const bool         reshuffleArray)   // if set devcay amplitude array is reshuffled from [iEvt][iRefl][iWave] to [iRefl][iWave][iEvt]
-{
-	if (not initCudaDevice()) {
-		printWarn << "problems initializing CUDA device" << endl;
-		return false;
-	}
-	if (_debug)
-		printInfo << _instance;
-	if (not loadDecayAmps(decayAmps, nmbDecayAmps, nmbEvents, nmbWavesRefl, reshuffleArray)) {
-		printWarn << "problems loading decay amplitudes into CUDA device" << endl;
-		return false;
-	}
-	return true;
-}
-
-
-template<typename complexT>
-bool
-likelihoodInterface<complexT>::initCudaDevice()
-{
-	_cudaInitialized = false;
-
-  // get number of CUDA devices in system
-  cutilSafeCall(cudaGetDeviceCount(&_nmbOfCudaDevices));
-  if (_nmbOfCudaDevices == 0) {
-    printWarn << "there are no CUDA devices in the system" << endl;
-    return false;
-  }
-  printInfo << "found " << _nmbOfCudaDevices << " CUDA device(s)" << endl;
-
-  // use most powerful GPU in system
-  _cudaDeviceId = cutGetMaxGflopsDeviceId();
-  cutilSafeCall(cudaGetDeviceProperties(&_cudaDeviceProp, _cudaDeviceId));
-  // fields for both major & minor fields are 9999, if device is not present
-  if ((_cudaDeviceProp.major == 9999) and (_cudaDeviceProp.minor == 9999)) {
-	  printWarn << "there is no CUDA device with ID " << _cudaDeviceId << endl;
-	  return false;
-  }
-  cutilSafeCall(cudaSetDevice(_cudaDeviceId));
-	_cudaInitialized = true;
-  printInfo << "using CUDA device[" << _cudaDeviceId << "]: '" << _cudaDeviceProp.name << "' "
-            << availableDeviceMem() << " bytes available memory" << endl;
-	return true;
-}
-
-
-template<typename complexT>
-bool
-likelihoodInterface<complexT>::loadDecayAmps
-(const complexT*    decayAmps,        // array of decay amplitudes; [iRefl][iWave][iEvt] or [iEvt][iRefl][iWave]
- const unsigned int nmbDecayAmps,     // number of elements in decay amplitude array
- const unsigned int nmbEvents,        // total number of events
- const unsigned int nmbWavesRefl[2],  // number of waves for each reflectivity
- const bool         reshuffleArray)   // if set devcay amplitude array is reshuffled from [iEvt][iRefl][iWave] to [iRefl][iWave][iEvt]
-{
-	if (not decayAmps) {
-		printErr << "null pointer to decay amplitudes. aborting." << endl;
-		throw;
-	}
-	if (not _cudaInitialized) {
-		printWarn << "cannot load decay amplitudes. CUDA device is not initialized." << endl;
-		return false;
-	}
-
-	_nmbEvents       = nmbEvents;
-	_nmbWavesRefl[0] = nmbWavesRefl[0];
-	_nmbWavesRefl[1] = nmbWavesRefl[1];
-
-	complexT* h_decayAmps = 0;
-	if (reshuffleArray) {
-		// change memory layout of decay amplitudes from [iEvt][iRefl][iWave] to [iRefl][iWave][iEvt]
-		h_decayAmps  = new complexT[nmbDecayAmps];
-		const unsigned int decayAmpDimOld[3] = {_nmbEvents, 2, max(_nmbWavesRefl[0], _nmbWavesRefl[1])};
-		const unsigned int decayAmpDimNew[3] = {2, max(_nmbWavesRefl[0], _nmbWavesRefl[1]), _nmbEvents};
-		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-				for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-					const unsigned int decayAmpIndicesOld[3] = {iEvt, iRefl, iWave};
-					const unsigned int offsetOld             = indicesToOffset<unsigned int>
-						                                           (decayAmpIndicesOld, decayAmpDimOld, 3);
-					const unsigned int decayAmpIndicesNew[3] = {iRefl, iWave, iEvt};
-					const unsigned int offsetNew             = indicesToOffset<unsigned int>
-						                                           (decayAmpIndicesNew, decayAmpDimNew, 3);
-					h_decayAmps[offsetNew].real() = real(decayAmps[offsetOld]);
-					h_decayAmps[offsetNew].imag() = imag(decayAmps[offsetOld]);
-				}
-	}
-
-	// copy decay amps to device memory
-	const unsigned int size = nmbDecayAmps * sizeof(complexT);
-	cutilSafeCall(cudaMalloc((void**)&_d_decayAmps, size));
-	cutilSafeCall(cudaMemcpy(_d_decayAmps, (reshuffleArray) ? h_decayAmps : decayAmps,
-	                         size, cudaMemcpyHostToDevice));
-	printInfo << availableDeviceMem() / (1024. * 1024.) << " MiBytes left on CUDA device after loading "
-	          << "decay amplitudes" << endl;
-	return true;
-}
-
-
-template<typename complexT>
 likelihoodInterface<complexT>::value_type
 likelihoodInterface<complexT>::logLikelihood
 (const complexT*    prodAmps,     // array of production amplitudes; [iRank][iRefl][iWave]
@@ -309,7 +332,7 @@ likelihoodInterface<complexT>::logLikelihood
 	}
 
 	// copy production amplitudes to device
-	complexT* d_prodAmps;
+	complexT* d_prodAmps = 0;
 	{
 		const unsigned int size = nmbProdAmps * sizeof(complexT);
 		cutilSafeCall(cudaMalloc((void**)&d_prodAmps, size));
@@ -317,50 +340,78 @@ likelihoodInterface<complexT>::logLikelihood
 	}
 
 	// first summation stage
-	value_type* d_logLikelihoods0;
-	// run kernel with maximum occupancy grid
-	static unsigned int nmbBlocks, nmbThreadsPerBlock;
-	static bool         firstCall = true;
-	if (firstCall) {
-		printInfo << "logLikelihoodKernel<complexT>" << endl;
+	value_type*  d_logLikelihoodSumsPrev = 0;
+	value_type*  d_logLikelihoodSumsNext = 0;
+	unsigned int nmbSumsPrev             = 0;
+	{
+		// run kernel with maximum occupancy grid
+		unsigned int nmbBlocks, nmbThreadsPerBlock;
+		if (_debug)
+			printInfo << "running logLikelihoodKernel<complexT>" << endl;
 		estimateOptimumKernelGrid(logLikelihoodKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
-		firstCall = false;
+		nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
+		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoodSumsPrev, sizeof(value_type) * nmbSumsPrev));
+		logLikelihoodKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+			(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
+			 _nmbWavesRefl[0], _nmbWavesRefl[1], _nmbWavesMax, d_logLikelihoodSumsPrev);
+		cutilSafeCall(cudaFree(d_prodAmps));
 	}
-	const unsigned int nmbElements0 = nmbBlocks * nmbThreadsPerBlock;
-	cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods0, sizeof(value_type) * nmbElements0));
-	logLikelihoodKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
-		(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
-		 _nmbWavesRefl[0], _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]),
-		 d_logLikelihoods0);
-	cutilSafeCall(cudaFree(d_prodAmps));
-	// second summation stage
-	value_type*        d_logLikelihoods1;
-	const unsigned int nmbElements1 = nmbThreadsPerBlock;
-	cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods1, sizeof(value_type) * nmbElements1));
-	sumKernel<value_type><<<1, nmbThreadsPerBlock>>>(d_logLikelihoods0, nmbElements0,
-	                                                 d_logLikelihoods1);
-	cutilSafeCall(cudaFree(d_logLikelihoods0));
+
+	// cascaded summation of log likelihoods
+	const unsigned int nmbOfSumsAtEachStage = 6;
+	do {
+		// allocate device array for new sums
+		unsigned int nmbSumsNext = nmbSumsPrev / nmbOfSumsAtEachStage;
+		if (nmbSumsNext <= nmbOfSumsAtEachStage)
+			nmbSumsNext = 1;
+		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoodSumsNext, sizeof(value_type) * nmbSumsNext));
+		unsigned int nmbBlocks, nmbThreadsPerBlock;
+		if (_debug)
+			printInfo << "running sumKernel<value_type>" << endl;
+		estimateOptimumKernelGrid(sumKernel<value_type>, nmbBlocks, nmbThreadsPerBlock, nmbSumsNext);
+		// run kernel
+		sumKernel<value_type><<<nmbBlocks, nmbThreadsPerBlock>>>
+			(d_logLikelihoodSumsPrev, nmbSumsPrev, d_logLikelihoodSumsNext, nmbSumsNext);
+		// cleanup
+		cutilSafeCall(cudaFree(d_logLikelihoodSumsPrev));
+		// prepare for next iteration
+		d_logLikelihoodSumsPrev = d_logLikelihoodSumsNext;
+		nmbSumsPrev             = nmbSumsNext;
+	} while (nmbSumsPrev > nmbOfSumsAtEachStage);
+	// copy result to host and cleanup
 	value_type logLikelihood;
-	if (1) {  // perform third and last summation stage on device
-		value_type* d_logLikelihoods2;
-		cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods2, sizeof(value_type)));
-		sumKernel<value_type><<<1, 1>>>(d_logLikelihoods1, nmbElements1, d_logLikelihoods2);
-		cutilSafeCall(cudaFree(d_logLikelihoods1));
-		// copy result to host
-		cutilSafeCall(cudaMemcpy(&logLikelihood, d_logLikelihoods2,
-		                         sizeof(value_type), cudaMemcpyDeviceToHost));
-		cutilSafeCall(cudaFree(d_logLikelihoods2));
-	} else {  // perform third and last summation stage on host
-		// copy sums to host
-		value_type* h_logLikelihoods1 = new value_type[nmbElements1];
-		cutilSafeCall(cudaMemcpy(h_logLikelihoods1, d_logLikelihoods1,
-		                         sizeof(value_type) * nmbElements1, cudaMemcpyDeviceToHost));
-		cutilSafeCall(cudaFree(d_logLikelihoods1));
-		// calculate sum
-		logLikelihood = 0;
-		for (unsigned int i = 0; i < nmbElements1; ++i)
-			logLikelihood += h_logLikelihoods1[i];
-	}
+	cutilSafeCall(cudaMemcpy(&logLikelihood, d_logLikelihoodSumsPrev,
+	                         sizeof(value_type), cudaMemcpyDeviceToHost));
+	cutilSafeCall(cudaFree(d_logLikelihoodSumsPrev));
+
+	// // second summation stage
+	// value_type*        d_logLikelihoods1;
+	// const unsigned int nmbElements1 = nmbThreadsPerBlock;
+	// cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods1, sizeof(value_type) * nmbElements1));
+	// sumKernel<value_type><<<1, nmbThreadsPerBlock>>>(d_logLikelihoods0, nmbElements0,
+	//                                                  d_logLikelihoods1);
+	// cutilSafeCall(cudaFree(d_logLikelihoods0));
+	// value_type logLikelihood;
+	// if (1) {  // perform third and last summation stage on device
+	// 	value_type* d_logLikelihoods2;
+	// 	cutilSafeCall(cudaMalloc((void**)&d_logLikelihoods2, sizeof(value_type)));
+	// 	sumKernel<value_type><<<1, 1>>>(d_logLikelihoods1, nmbElements1, d_logLikelihoods2);
+	// 	cutilSafeCall(cudaFree(d_logLikelihoods1));
+	// 	// copy result to host
+	// 	cutilSafeCall(cudaMemcpy(&logLikelihood, d_logLikelihoods2,
+	// 	                         sizeof(value_type), cudaMemcpyDeviceToHost));
+	// 	cutilSafeCall(cudaFree(d_logLikelihoods2));
+	// } else {  // perform third and last summation stage on host
+	// 	// copy sums to host
+	// 	value_type* h_logLikelihoods1 = new value_type[nmbElements1];
+	// 	cutilSafeCall(cudaMemcpy(h_logLikelihoods1, d_logLikelihoods1,
+	// 	                         sizeof(value_type) * nmbElements1, cudaMemcpyDeviceToHost));
+	// 	cutilSafeCall(cudaFree(d_logLikelihoods1));
+	// 	// calculate sum
+	// 	logLikelihood = 0;
+	// 	for (unsigned int i = 0; i < nmbElements1; ++i)
+	// 		logLikelihood += h_logLikelihoods1[i];
+	// }
 
 	return logLikelihood;
 }
@@ -395,7 +446,7 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 	}
 
 	// copy production amplitudes to device
-	complexT* d_prodAmps;
+	complexT* d_prodAmps = 0;
 	{
 		const unsigned int size = nmbProdAmps * sizeof(complexT);
 		cutilSafeCall(cudaMalloc((void**)&d_prodAmps, size));
@@ -403,107 +454,132 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 	}
 
 	// first stage: precalculate derivative term and likelihoods for each event
-	complexT*   d_derivTerms;
-	value_type* d_likelihoods;
+	complexT*   d_derivTerms  = 0;
+	value_type* d_likelihoods = 0;
 	{
 		cutilSafeCall(cudaMalloc((void**)&d_derivTerms,  sizeof(complexT) * rank * 2 * _nmbEvents));
 		cutilSafeCall(cudaMalloc((void**)&d_likelihoods, sizeof(value_type) * _nmbEvents));
-		static unsigned int nmbBlocks, nmbThreadsPerBlock;
-		static bool         firstCall = true;
-		if (firstCall) {
-			printInfo << "logLikelihoodDerivFirstTermKernel<complexT>" << endl;
-			estimateOptimumKernelGrid(logLikelihoodDerivFirstTermKernel<complexT>, nmbBlocks,
-			                          nmbThreadsPerBlock, _nmbEvents);
-			firstCall = false;
-		}
+		unsigned int nmbBlocks, nmbThreadsPerBlock;
+		if (_debug)
+			printInfo << "running logLikelihoodDerivFirstTermKernel<complexT>" << endl;
+		estimateOptimumKernelGrid(logLikelihoodDerivFirstTermKernel<complexT>, nmbBlocks,
+		                          nmbThreadsPerBlock, _nmbEvents);
 		logLikelihoodDerivFirstTermKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 			(d_prodAmps, prodAmpFlat * prodAmpFlat, _d_decayAmps, _nmbEvents, rank,
-			 _nmbWavesRefl[0], _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]),
-			 d_derivTerms, d_likelihoods);
+			 _nmbWavesRefl[0], _nmbWavesRefl[1], _nmbWavesMax, d_derivTerms, d_likelihoods);
 		cutilSafeCall(cudaFree(d_prodAmps));
 	}
 
 	// second stage: calculate sums of derivatives w.r.t. all production amplitudes
 	if (0) {
-		complexT*          d_derivatives;
-		const unsigned int derivativeDim[3] = {rank, 2, max(_nmbWavesRefl[0], _nmbWavesRefl[1])};
-		const unsigned int nmbDerivElements = nmbElements<unsigned int>(derivativeDim, 3);
-		cutilSafeCall(cudaMalloc((void**)&d_derivatives, sizeof(complexT) * nmbDerivElements));
-		// run kernel with maximum occupancy grid
-		static unsigned int nmbBlocks, nmbThreadsPerBlock;
-		static bool         firstCall = true;
-		if (firstCall) {
-			printInfo << "logLikelihoodDerivKernel<complexT>" << endl;
-			estimateOptimumKernelGrid(logLikelihoodDerivKernel<complexT>, nmbBlocks, nmbThreadsPerBlock);
-			firstCall = false;
-		}
+		// complexT*          d_derivatives = 0;
+		const unsigned int derivSumDim[3] = {rank, 2, _nmbWavesMax};
+		// const unsigned int nmbDerivElements = nmbElements<unsigned int>(derivativeDim, 3);
+		// cutilSafeCall(cudaMalloc((void**)&d_derivatives, sizeof(complexT) * nmbDerivElements));
 		for (unsigned int iRank = 0; iRank < rank; ++iRank)
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
 					// first summation stage
-					complexT*          d_derivativeSums0;
-					const unsigned int nmbElements0 = nmbBlocks * nmbThreadsPerBlock;
-					cutilSafeCall(cudaMalloc((void**)&d_derivativeSums0, sizeof(complexT) * nmbElements0));
-					logLikelihoodDerivKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
-						(_d_decayAmps, d_derivTerms, d_likelihoods, _nmbEvents, rank,
-						 max(_nmbWavesRefl[0], _nmbWavesRefl[1]), iRank, iRefl, iWave,
-						 d_derivativeSums0);
-					// second summation stage
-					complexT*          d_derivativeSums1;
-					const unsigned int nmbElements1 = nmbThreadsPerBlock;
-					cutilSafeCall(cudaMalloc((void**)&d_derivativeSums1, sizeof(complexT) * nmbElements1));
-					sumKernel<complexT><<<1, nmbThreadsPerBlock>>>(d_derivativeSums0, nmbElements0,
-					                                               d_derivativeSums1);
-					cutilSafeCall(cudaFree(d_derivativeSums0));
-					// third and last summation stage
-					const unsigned int derivativeIndices[3] = {iRank, iRefl, iWave};
-					unsigned int offset                     = indicesToOffset<unsigned int>(derivativeIndices,
-						  derivativeDim, 3);
-					sumToMemCellKernel<complexT><<<1, 1>>>(d_derivativeSums1, nmbElements1,
-					                                       d_derivatives, offset);
+					complexT*    d_derivativeSumsPrev = 0;
+					complexT*    d_derivativeSumsNext = 0;
+					unsigned int nmbSumsPrev          = 0;
+					{
+						// run kernel with maximum occupancy grid
+						unsigned int nmbBlocks, nmbThreadsPerBlock;
+						if (_debug)
+							printInfo << "running logLikelihoodDerivKernel<complexT>" << endl;
+						estimateOptimumKernelGrid(logLikelihoodDerivKernel<complexT>, nmbBlocks,
+						                          nmbThreadsPerBlock);
+						nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
+						cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsPrev, sizeof(complexT) * nmbSumsPrev));
+						logLikelihoodDerivKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+							(_d_decayAmps, d_derivTerms, d_likelihoods, _nmbEvents, rank,
+							 _nmbWavesMax, iRank, iRefl, iWave, d_derivativeSumsPrev);
+					}
+					// cascaded summation of derivatives
+					const unsigned int nmbOfSumsAtEachStage = 6;
+					do {
+						// allocate device array for new sums
+						unsigned int nmbSumsNext = nmbSumsPrev / nmbOfSumsAtEachStage;
+						if (nmbSumsNext <= nmbOfSumsAtEachStage)
+							nmbSumsNext = 1;
+						cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsNext, sizeof(complexT) * nmbSumsNext));
+						unsigned int nmbBlocks, nmbThreadsPerBlock;
+						if (_debug)
+							printInfo << "running sumKernel<complexT>" << endl;
+						estimateOptimumKernelGrid(sumKernel<complexT>, nmbBlocks, nmbThreadsPerBlock,
+						                          nmbSumsNext);
+						// run kernel
+						sumKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+							(d_derivativeSumsPrev, nmbSumsPrev, d_derivativeSumsNext, nmbSumsNext);
+						// cleanup
+						cutilSafeCall(cudaFree(d_derivativeSumsPrev));
+						// prepare for next iteration
+						d_derivativeSumsPrev = d_derivativeSumsNext;
+						nmbSumsPrev          = nmbSumsNext;
+					} while (nmbSumsPrev > nmbOfSumsAtEachStage);
+					// copy result to host and cleanup
+					const unsigned int derivSumIndices[3] = {iRank, iRefl, iWave};
+					cutilSafeCall
+						(cudaMemcpy(&derivatives[indicesToOffset<unsigned int>(derivSumIndices, derivSumDim, 3)],
+						            d_derivativeSumsPrev, sizeof(complexT), cudaMemcpyDeviceToHost));
+					cutilSafeCall(cudaFree(d_derivativeSumsPrev));
+					
+					// // second summation stage
+					// complexT*          d_derivativeSums1 = 0;
+					// const unsigned int nmbElements1      = nmbThreadsPerBlock;
+					// cutilSafeCall(cudaMalloc((void**)&d_derivativeSums1, sizeof(complexT) * nmbElements1));
+					// sumKernel<complexT><<<1, nmbThreadsPerBlock>>>(d_derivativeSums0, nmbElements0,
+					//                                                d_derivativeSums1, nmbElements1);
+					// cutilSafeCall(cudaFree(d_derivativeSums0));
+					// // third and last summation stage
+					// const unsigned int derivativeIndices[3] = {iRank, iRefl, iWave};
+					// unsigned int offset                     = indicesToOffset<unsigned int>(derivativeIndices,
+					// 	  derivativeDim, 3);
+					// sumToMemCellKernel<complexT><<<1, 1>>>(d_derivativeSums1, nmbElements1,
+					//                                        d_derivatives, offset);
 				}
-		// copy result to host and cleanup
-		cutilSafeCall(cudaMemcpy(derivatives, d_derivatives,
-		                         sizeof(complexT) * nmbDerivElements, cudaMemcpyDeviceToHost));
-		cutilSafeCall(cudaFree(d_derivatives));
+		// // copy result to host and cleanup
+		// cutilSafeCall(cudaMemcpy(derivatives, d_derivatives,
+		//                          sizeof(complexT) * nmbDerivElements, cudaMemcpyDeviceToHost));
+		// cutilSafeCall(cudaFree(d_derivatives));
 	} else {
-		// run kernel with maximum occupancy grid
-		static unsigned int nmbBlocks, nmbThreadsPerBlock;
-		static bool         firstCall = true;
-		if (firstCall) {
-			printInfo << "logLikelihoodDerivKernelXXX<complexT>" << endl;
-			estimateOptimumKernelGrid(logLikelihoodDerivKernelXXX<complexT>, nmbBlocks, nmbThreadsPerBlock);
-			firstCall = false;
-		}
 		// first summation stage
-		complexT*          d_derivativeSums0;
-		const unsigned int nmbSums0     = nmbBlocks * nmbThreadsPerBlock;
-		const unsigned int nmbElements0 = rank * 2 * max(_nmbWavesRefl[0], _nmbWavesRefl[1]) * nmbSums0;
-		cutilSafeCall(cudaMalloc((void**)&d_derivativeSums0, sizeof(complexT) * nmbElements0));
-		logLikelihoodDerivKernelXXX<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
-			(_d_decayAmps, d_derivTerms, d_likelihoods, _nmbEvents, rank, _nmbWavesRefl[0],
-			 _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]), d_derivativeSums0);
-		const unsigned int nmbOfSumsAtEachStage = 6;
-		complexT*          d_derivativeSumsPrev = d_derivativeSums0;
+		complexT*          d_derivativeSumsPrev = 0;
 		complexT*          d_derivativeSumsNext = 0;
-		unsigned int       nmbSumsPrev          = nmbSums0;
+		unsigned int       nmbSumsPrev          = 0;
+		const unsigned int nmbDerivElements     = rank * 2 * _nmbWavesMax;
+		{
+			// run kernel with maximum occupancy grid
+			unsigned int nmbBlocks, nmbThreadsPerBlock;
+			if (_debug)
+				printInfo << "running logLikelihoodDerivKernelXXX<complexT>" << endl;
+			estimateOptimumKernelGrid(logLikelihoodDerivKernelXXX<complexT>, nmbBlocks, nmbThreadsPerBlock);
+			nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
+			cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsPrev,
+			                         sizeof(complexT) * nmbDerivElements * nmbSumsPrev));
+			logLikelihoodDerivKernelXXX<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+				(_d_decayAmps, d_derivTerms, d_likelihoods, _nmbEvents, rank, _nmbWavesRefl[0],
+				 _nmbWavesRefl[1], _nmbWavesMax, d_derivativeSumsPrev);
+		}
+		// cascaded summation of derivatives
+		const unsigned int nmbOfSumsAtEachStage = 6;
 		do {
 			// allocate device array for new sums
 			unsigned int nmbSumsNext = nmbSumsPrev / nmbOfSumsAtEachStage;
 			if (nmbSumsNext <= nmbOfSumsAtEachStage)
 				nmbSumsNext = 1;
-			const unsigned int nmbElementsNext = rank * 2 * max(_nmbWavesRefl[0], _nmbWavesRefl[1])
-				                                   * nmbSumsNext;
-			cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsNext, sizeof(complexT) * nmbElementsNext));
-			// estimate kernel grid
-			unsigned int nmbBlocksSum, nmbThreadsPerBlockSum;
-			// printInfo << "sumKernelXXX<complexT>" << endl;
-			estimateOptimumKernelGrid(sumKernelXXX<complexT>, nmbBlocksSum, nmbThreadsPerBlockSum,
+			cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsNext,
+			                         sizeof(complexT) * nmbDerivElements * nmbSumsNext));
+			unsigned int nmbBlocks, nmbThreadsPerBlock;
+			if (_debug)
+				printInfo << "running sumDerivativesKernel<complexT>" << endl;
+			estimateOptimumKernelGrid(sumDerivativesKernel<complexT>, nmbBlocks, nmbThreadsPerBlock,
 			                          nmbSumsNext);
 			// run kernel
-			sumKernelXXX<complexT><<<nmbBlocksSum, nmbThreadsPerBlockSum>>>
+			sumDerivativesKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
 				(d_derivativeSumsPrev, nmbSumsPrev, rank, _nmbWavesRefl[0], _nmbWavesRefl[1],
-				 max(_nmbWavesRefl[0], _nmbWavesRefl[1]), d_derivativeSumsNext, nmbSumsNext);
+				 _nmbWavesMax, d_derivativeSumsNext, nmbSumsNext);
 			// cleanup
 			cutilSafeCall(cudaFree(d_derivativeSumsPrev));
 			// prepare for next iteration
@@ -514,62 +590,87 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 		// // second summation stage
 		// complexT*          d_derivativeSums1;
 		// const unsigned int nmbSums1     = nmbThreadsPerBlock;
-		// const unsigned int nmbElements1 = rank * 2 * max(_nmbWavesRefl[0], _nmbWavesRefl[1]) * nmbSums1;
+		// const unsigned int nmbElements1 = rank * 2 * _nmbWavesMax * nmbSums1;
 		// cutilSafeCall(cudaMalloc((void**)&d_derivativeSums1, sizeof(complexT) * nmbElements1));
 		// sumKernelXXX<complexT><<<1, nmbThreadsPerBlock>>>
 		// 	(d_derivativeSums0, nmbSums0, rank, _nmbWavesRefl[0], _nmbWavesRefl[1],
-		// 	 max(_nmbWavesRefl[0], _nmbWavesRefl[1]), d_derivativeSums1);
+		// 	 _nmbWavesMax, d_derivativeSums1);
 		// cutilSafeCall(cudaFree(d_derivativeSums0));
 		// // third and last summation stage
 		// complexT*          d_derivativeSums2;
-		// const unsigned int nmbElements2 = rank * 2 * max(_nmbWavesRefl[0], _nmbWavesRefl[1]);
+		// const unsigned int nmbElements2 = rank * 2 * _nmbWavesMax;
 		// cutilSafeCall(cudaMalloc((void**)&d_derivativeSums2, sizeof(complexT) * nmbElements2));
 		// sumKernelXXX<complexT><<<1, 1>>>(d_derivativeSums1, nmbSums1, rank, _nmbWavesRefl[0],
-		//                                  _nmbWavesRefl[1], max(_nmbWavesRefl[0], _nmbWavesRefl[1]),
-		//                                  d_derivativeSums2);
+		//                                  _nmbWavesRefl[1], _nmbWavesMax, d_derivativeSums2);
 		// cutilSafeCall(cudaFree(d_derivativeSums1));
 
 		// copy result to host and cleanup
 		cutilSafeCall(cudaMemcpy(derivatives, d_derivativeSumsPrev,
-		                         sizeof(complexT) * rank * 2 * max(_nmbWavesRefl[0], _nmbWavesRefl[1]),
-		                         cudaMemcpyDeviceToHost));
+		                         sizeof(complexT) * nmbDerivElements, cudaMemcpyDeviceToHost));
 		cutilSafeCall(cudaFree(d_derivativeSumsPrev));
 	}
 	
 	// flat wave requires special treatment	
 	{
-		// run kernel with maximum occupancy grid
-		static unsigned int nmbBlocks, nmbThreadsPerBlock;
-		static bool         firstCall = true;
-		if (firstCall) {
-			printInfo << "logLikelihoodDerivFlatKernel<complexT>" << endl;
+		// first summation stage
+		value_type*  d_derivativeSumsPrev = 0;
+		value_type*  d_derivativeSumsNext = 0;
+		unsigned int nmbSumsPrev          = 0;
+		{
+			// run kernel with maximum occupancy grid
+			unsigned int nmbBlocks, nmbThreadsPerBlock;
+			if (_debug)
+				printInfo << "running logLikelihoodDerivFlatKernel<complexT>" << endl;
 			estimateOptimumKernelGrid(logLikelihoodDerivFlatKernel<complexT>, nmbBlocks,
 			                          nmbThreadsPerBlock);
-			firstCall = false;
+			nmbSumsPrev = nmbBlocks * nmbThreadsPerBlock;
+			cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsPrev, sizeof(value_type) * nmbSumsPrev));
+			logLikelihoodDerivFlatKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
+				(prodAmpFlat, d_likelihoods, _nmbEvents, d_derivativeSumsPrev);
+			// cascaded summation of derivatives
+			const unsigned int nmbOfSumsAtEachStage = 6;
+			do {
+				// allocate device array for new sums
+				unsigned int nmbSumsNext = nmbSumsPrev / nmbOfSumsAtEachStage;
+				if (nmbSumsNext <= nmbOfSumsAtEachStage)
+					nmbSumsNext = 1;
+				cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsNext, sizeof(value_type) * nmbSumsNext));
+				unsigned int nmbBlocks, nmbThreadsPerBlock;
+				if (_debug)
+					printInfo << "running sumKernel<complexT>" << endl;
+				estimateOptimumKernelGrid(sumKernel<value_type>, nmbBlocks, nmbThreadsPerBlock, nmbSumsNext);
+				// run kernel
+				sumKernel<value_type><<<nmbBlocks, nmbThreadsPerBlock>>>
+					(d_derivativeSumsPrev, nmbSumsPrev, d_derivativeSumsNext, nmbSumsNext);
+				// cleanup
+				cutilSafeCall(cudaFree(d_derivativeSumsPrev));
+				// prepare for next iteration
+				d_derivativeSumsPrev = d_derivativeSumsNext;
+				nmbSumsPrev          = nmbSumsNext;
+			} while (nmbSumsPrev > nmbOfSumsAtEachStage);
+			// copy result to host and cleanup
+			cutilSafeCall(cudaMemcpy(&derivativeFlat, d_derivativeSumsPrev,
+			                         sizeof(value_type), cudaMemcpyDeviceToHost));
+			cutilSafeCall(cudaFree(d_derivativeSumsPrev));
+			
+		// // second summation stage
+		// value_type*        d_derivativeSumsFlat1 = 0;
+		// const unsigned int nmbElements1          = nmbThreadsPerBlock;
+		// cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat1, sizeof(value_type) * nmbElements1));
+		// sumKernel<value_type><<<1, nmbThreadsPerBlock>>>(d_derivativeSumsFlat0, nmbElements0,
+		//                                                  d_derivativeSumsFlat1, nmbElements1);
+		// // third and last summation stage
+		// value_type* d_derivativeSumsFlat2 = 0;
+		// cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat2, sizeof(value_type)));
+		// sumKernel<value_type><<<1, 1>>>(d_derivativeSumsFlat1, nmbElements1, d_derivativeSumsFlat2, 1);
+		// // copy result to host
+		// cutilSafeCall(cudaMemcpy(&derivativeFlat, d_derivativeSumsFlat2,
+		//                          sizeof(value_type), cudaMemcpyDeviceToHost));
+		// // cleanup
+		// cutilSafeCall(cudaFree(d_derivativeSumsFlat0));
+		// cutilSafeCall(cudaFree(d_derivativeSumsFlat1));
+		// cutilSafeCall(cudaFree(d_derivativeSumsFlat2));
 		}
-		// first summation stage
-		value_type*        d_derivativeSumsFlat0;
-		const unsigned int nmbElements0 = nmbBlocks * nmbThreadsPerBlock;
-		cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat0, sizeof(value_type) * nmbElements0));
-		logLikelihoodDerivFlatKernel<complexT><<<nmbBlocks, nmbThreadsPerBlock>>>
-			(prodAmpFlat, d_likelihoods, _nmbEvents, d_derivativeSumsFlat0);
-		// second summation stage
-		value_type*        d_derivativeSumsFlat1;
-		const unsigned int nmbElements1 = nmbThreadsPerBlock;
-		cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat1, sizeof(value_type) * nmbElements1));
-		sumKernel<value_type><<<1, nmbThreadsPerBlock>>>(d_derivativeSumsFlat0, nmbElements0,
-		                                                 d_derivativeSumsFlat1);
-		// third and last summation stage
-		value_type* d_derivativeSumsFlat2;
-		cutilSafeCall(cudaMalloc((void**)&d_derivativeSumsFlat2, sizeof(value_type)));
-		sumKernel<value_type><<<1, 1>>>(d_derivativeSumsFlat1, nmbElements1, d_derivativeSumsFlat2);
-		// copy result to host
-		cutilSafeCall(cudaMemcpy(&derivativeFlat, d_derivativeSumsFlat2,
-		                         sizeof(value_type), cudaMemcpyDeviceToHost));
-		// cleanup
-		cutilSafeCall(cudaFree(d_derivativeSumsFlat0));
-		cutilSafeCall(cudaFree(d_derivativeSumsFlat1));
-		cutilSafeCall(cudaFree(d_derivativeSumsFlat2));
 	}
 
 	// cleanup
