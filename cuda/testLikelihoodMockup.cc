@@ -336,7 +336,7 @@ runLogLikelihoodCuda(const unsigned int nmbRepitions,
 	// initialize CUDA environment
 	cuda::likelihoodInterface<cuda::complex<double> >& interface
 		= cuda::likelihoodInterface<cuda::complex<double> >::instance();
-	interface.setDebug(true);
+	// interface.setDebug(true);
 	interface.init(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
 	               decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
 
@@ -351,6 +351,7 @@ runLogLikelihoodCuda(const unsigned int nmbRepitions,
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 
+	interface.closeCudaDevice();
 	return logLikelihood;
 }
 
@@ -372,7 +373,7 @@ runLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 	// initialize CUDA environment
 	cuda::likelihoodInterface<cuda::complex<double> >& interface
 		= cuda::likelihoodInterface<cuda::complex<double> >::instance();
-	//interface.setDebug(true);
+	// interface.setDebug(true);
 	interface.init(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
 	               decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
 
@@ -387,6 +388,8 @@ runLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 			 reinterpret_cast<cuda::complex<double>*>(derivatives.data()), derivativeFlat);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
+
+	interface.closeCudaDevice();
 }
 
 
@@ -512,6 +515,8 @@ testLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
 					     << maxPrecisionDouble(  derivatives[iRank][iRefl][iWave]
 					                           - derivativesCuda[iRank][iRefl][iWave]) << endl;
 	}
+
+	interface.closeCudaDevice();
 }
 
 
@@ -536,10 +541,10 @@ main(int    argc,
 	}
 
 
-	if (0) {
+	if (1) {
 		const unsigned int nmbRepitions    = 100;
 		// setup parameters that roughly correspond to the pi- pi+ pi- PWA
-		const unsigned int nmbEvents       = 30000;
+		const unsigned int nmbEvents       = 10000;
 		// 34 waves with positive, 7 waves with negative reflectivity, and flat wave: 42 in total
 		const unsigned int nmbWavesRefl[2] = {7, 34};
 		const unsigned int rank            = 2;
@@ -573,7 +578,7 @@ main(int    argc,
 	}
 
 
-	if (1) {
+	if (0) {
 		const unsigned int nmbRepitions    = 100;
 		// setup parameters that roughly correspond to the pi- pi+ pi- PWA
 		const unsigned int nmbEvents       = 10000;

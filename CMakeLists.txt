@@ -79,10 +79,7 @@ endif()
 set(CMAKE_CXX_FLAGS "-Wall -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-#!!! it was neccessary to revert from -O3 back to -O2 due to problems
-#!!! with the correct execution of CUDA code; see comment in
-#!!! cuda/likelihoodInterface.cu, logLikelihoodDeriv()
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 # report global build settings
 foreach(_LANG "C" "CXX")

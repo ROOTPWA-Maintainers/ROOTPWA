@@ -47,8 +47,35 @@ namespace rpwa {
 	namespace cuda {
 
 
+		// some helper classes to wrap kernel calls so that they can be
+		// used as template parameters
+		template<typename complexT, typename T>
+		struct sumKernelCaller {
+			typedef T value_type;
+			static void call(const T*           d_sumsPrev,
+			                 const unsigned int nmbSumsPrev,
+			                 T*                 d_sumsNext,
+			                 const unsigned int nmbSumsNext,
+			                 const bool         debug = false);
+		};
+
+
+		template<typename complexT, typename T>
+		struct sumDerivativesKernelCaller {
+			typedef T value_type;
+			static void call(const T*           d_sumsPrev,
+			                 const unsigned int nmbSumsPrev,
+			                 T*                 d_sumsNext,
+			                 const unsigned int nmbSumsNext,
+			                 const bool         debug = false);
+		};
+
+
 		template<typename complexT>
 		class likelihoodInterface {
+
+			template<typename U, typename T> friend class sumDerivativesKernelCaller;
+
 
 		public:
 
@@ -82,18 +109,18 @@ namespace rpwa {
 			                                      unsigned int&      nmbBlocks,
 			                                      unsigned int&      nmbThreadsPerBlock,
 			                                      const unsigned int minNmbThreads = 0);
-			
+
 			static value_type logLikelihood(const complexT*    prodAmps,
 			                                const unsigned int nmbProdAmps,
 			                                const value_type   prodAmpFlat,
 			                                const unsigned int rank);  ///< computes log likelihood for given production amplitudes
 		
-			static value_type logLikelihoodDeriv(const complexT*    prodAmps,
-			                                     const unsigned int nmbProdAmps,
-			                                     const value_type   prodAmpFlat,
-			                                     const unsigned int rank,
-			                                     complexT*          derivatives,
-			                                     value_type&        derivativeFlat);  ///< computes derivatives of log likelihood for given production amplitudes
+			static void logLikelihoodDeriv(const complexT*    prodAmps,
+			                               const unsigned int nmbProdAmps,
+			                               const value_type   prodAmpFlat,
+			                               const unsigned int rank,
+			                               complexT*          derivatives,
+			                               value_type&        derivativeFlat);  ///< computes derivatives of log likelihood for given production amplitudes
 		
 			static std::ostream& print(std::ostream& out);  ///< prints properties of used CUDA device
 
@@ -107,6 +134,12 @@ namespace rpwa {
 			~likelihoodInterface();
 			likelihoodInterface (const likelihoodInterface&);
 			likelihoodInterface& operator =(const likelihoodInterface&);
+
+			template<class kernelCaller>
+			static void cascadedKernelSum(const unsigned int                  nmbOfSumsAtEachStage,
+			                              typename kernelCaller::value_type*& d_sumsPrev,
+			                              unsigned int                        nmbSumsPrev,
+			                              const unsigned int                  sumElementSize = 1);
 
 
 			static likelihoodInterface _instance;  ///< singleton instance
