@@ -126,6 +126,9 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 		result = true;
 	}
 	file.close();
+
+	if (!SaveSelectedWaves()) result = false;
+	
 	return result;
 }
 
@@ -820,6 +823,7 @@ bool TrpwaSessionManager::AreListsEqual(const vector<string>& list1, const vecto
 }
 
 vector<string> &TrpwaSessionManager::ReadWaveList(string filename){
+	cout << " reading wave list " << filename << endl;
 	vector<string>* result = new vector<string>();
 
 	// Check whether the file exists, if not create it if possible
@@ -871,7 +875,90 @@ vector<string> &TrpwaSessionManager::ReadWaveList(string filename){
 	} else {
 		cout << " Error in TrpwaSessionManager::ReadWaveList(): Could not read wave list "<< filename;
 	}
+	cout << " found " << result->size() << " waves " << endl;
 
 	return *result;
+}
+
+bool TrpwaSessionManager::SetSelectedWaves(const vector<int>& bin_lowedes,const vector< vector<string> >& waves){
+	bool result(true);	
+	// perform some checks
+	if (bin_lowedes.size() != waves.size()){
+		return false;
+	}
+	// find the corresponding waves and set the status
+	for (unsigned int i = 0; i < waves.size(); i++){
+		// check if the requested bin is existing
+		if (_bins.find(bin_lowedes[i]) == _bins.end()){
+			cout << " Error in TrpwaSessionManager::SetSelectedWaves(): bin key ";
+			cout << bin_lowedes[i] << " does not exist " << endl;
+			continue;
+		}
+		vector < string >& _wavelist   = _bins[bin_lowedes[i]].wave_list;
+		_wavelist.clear();
+		for (unsigned int iwave = 0 ; iwave < waves[i].size(); iwave++){
+			// search for the matching string in the key files and fill the empty list
+			bool found(false);
+			for (unsigned int jwave = 0; jwave < _keyfiles.size(); jwave++){
+				if (_keyfiles[jwave] == waves[i][iwave]){
+					found = true;
+					// add the wave if requested
+					_wavelist.push_back(_keyfiles[jwave]);
+					break;
+				}
+			}
+			if (!found){
+				cout << " Error in TrpwaSessionManager::SetSelectedWaves(): no matching wave for ";
+				cout << waves[i][iwave] << " in bin " << bin_lowedes[i] << " in the keyfiles found ";
+				result = false;
+			}
+		}
+	}
+	//if (! SaveSelectedWaves()) return false;
+	return result;
+}
+
+bool TrpwaSessionManager::SaveSelectedWaves(){
+	bool result(true);
+
+	// write for every bin the keyfiles out
+	// add an # in front of the wave key if it is not specified as an selected wave
+
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		vector < string > _wavelist   = it->second.wave_list; // copy the wave list
+		string filename = _dir_fit_results + "/" + it->second.wave_list_file;		
+		ofstream _file(filename.c_str());
+		if (_file.good()){
+			cout << " bin " << it->first << " nwaves " << _wavelist.size() << endl;		
+			for (unsigned int iwave = 0; iwave < _keyfiles.size(); iwave++){
+				// search for the wave in the selected waves to know whether it occurs
+				bool found(false);
+				for (vector<string>::iterator jwave = _wavelist.begin(); jwave !=_wavelist.end(); jwave++){
+					if ((*jwave) == _keyfiles[iwave]){
+						found = true;
+						// erase this element. At the end no element should be left
+						_wavelist.erase(jwave);
+						break;
+					}					
+				}
+				if (!found) _file << "# ";
+				_file << _keyfiles[iwave] << ".amp" << endl;
+			} 
+		} else {
+				cout << " Error in TrpwaSessionManager::SaveSelectedWaves: could not write wave list " << filename << endl;
+		}
+		_file.close();
+		if (_wavelist.size() > 0){
+			cout << " Error in TrpwaSessionManager::SaveSelectedWaves: wave list of bin " << it->first << " contains unsaved keys " << endl;
+			for (unsigned int iwave = 0; iwave < _wavelist.size(); iwave++){
+				cout << _wavelist[iwave] << endl;			
+			}
+			cout << endl;
+		} else {
+			result = true;
+		}
+	}
+
+	return result;
 }
 

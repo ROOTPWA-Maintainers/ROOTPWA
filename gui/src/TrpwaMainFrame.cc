@@ -288,18 +288,45 @@ void TrpwaMainFrame::SelectWaves(){
 	if (current_session){
 	    // set a list of waves together with the waves that are already selected
 		TWaveSelections waveselections;
+		//cout << " before: " << endl;
 		for (int i = 0; i < current_session->Get_n_bins(); i++){
 			TWaveSelection waveselection;
 			waveselection.selected_waves  = current_session->GetSelectedWaves(i, waveselection.available_waves, waveselection.bin_low, waveselection.bin_high);
 			waveselections.push_back(waveselection);
-			/*
-			cout << " found " << waveselection.selected_waves.size() << " selected waves " << waveselection.bin_low << "." << waveselection.bin_high << " of available " << waveselection.available_waves.size() << endl;
-			for (int i = 0; i < waveselection.selected_waves.size() ; i++){
-				cout << waveselection.selected_waves[i] << " " << waveselection.available_waves[i] << endl;
-			}*/
+			//cout << " found " << waveselection.selected_waves.size() << " selected waves " << waveselection.bin_low << "." << waveselection.bin_high << " of available " << waveselection.available_waves.size() << endl;
+			//for (int i = 0; i < waveselection.selected_waves.size() ; i++){
+				//cout << waveselection.selected_waves[i] << " " << waveselection.available_waves[i] << endl;
+			//}
 		}
 		// set the client frames
 		frame_wave_select = new TrpwaWaveSelectFrame(waveselections);
+		/*cout << " after: " << endl;
+		for (int i = 0; i < current_session->Get_n_bins(); i++){
+			TWaveSelection& waveselection = waveselections[i];
+			cout << " found " << waveselection.selected_waves.size() << " selected waves " << waveselection.bin_low << "." << waveselection.bin_high << " of available " << waveselection.available_waves.size() << endl;
+			for (int i = 0; i < waveselection.selected_waves.size() ; i++){
+				cout << waveselection.selected_waves[i] << " " << waveselection.available_waves[i] << endl;
+			}
+		}*/		
+
+		// write now the waves to the session manager
+		vector<int> bin_lowedges;
+		vector< vector<string> > waves;
+		for (unsigned int i = 0; i < waveselections.size(); i++){
+			bin_lowedges.push_back(waveselections[i].bin_low);
+			vector <string> _waves;
+			vector <string>& _available_waves = waveselections[i].available_waves;
+			vector <bool>& _selected_waves = waveselections[i].selected_waves;
+			for (unsigned int iwave = 0; iwave < _available_waves.size(); iwave++){
+				if (_selected_waves[iwave]){
+					_waves.push_back(_available_waves[iwave]);
+				}
+			}
+			waves.push_back(_waves);
+		}
+		if (!current_session->SetSelectedWaves(bin_lowedges,waves)){
+			cout << " error setting selected waves " << endl;
+		}
 		//waveselections;
 	}
 }

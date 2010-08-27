@@ -237,6 +237,14 @@ public:
 	// return the upper bound of the ith bin
 	int GetBinHigh(int ibin);
 
+	// set the selected Waves
+	// bin_lowedes are the low edges of the bins to be set
+	// selections are the corresponding waves for each bin
+	bool SetSelectedWaves(const vector<int>& bin_lowedes,const vector< vector<string> >& waves);
+
+	// save the wavelists
+	bool SaveSelectedWaves();
+
 	/*
 	TrpwaSessionManager& operator=(const TrpwaSessionManager& copysource) const{
 		//Set_n_bins(copysource.Get_n_bins());
