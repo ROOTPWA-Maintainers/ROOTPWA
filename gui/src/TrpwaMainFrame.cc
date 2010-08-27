@@ -292,10 +292,11 @@ void TrpwaMainFrame::SelectWaves(){
 			TWaveSelection waveselection;
 			waveselection.selected_waves  = current_session->GetSelectedWaves(i, waveselection.available_waves, waveselection.bin_low, waveselection.bin_high);
 			waveselections.push_back(waveselection);
+			/*
 			cout << " found " << waveselection.selected_waves.size() << " selected waves " << waveselection.bin_low << "." << waveselection.bin_high << " of available " << waveselection.available_waves.size() << endl;
 			for (int i = 0; i < waveselection.selected_waves.size() ; i++){
 				cout << waveselection.selected_waves[i] << " " << waveselection.available_waves[i] << endl;
-			}
+			}*/
 		}
 		// set the client frames
 		frame_wave_select = new TrpwaWaveSelectFrame(waveselections);

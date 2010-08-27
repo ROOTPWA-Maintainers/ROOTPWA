@@ -7,6 +7,7 @@
 #include <TGFrame.h>
 #include <vector>
 #include <string>
+#include "TGButton.h"
 
 using namespace std;
 
@@ -28,6 +29,16 @@ private:
 
 	TWaveSelections* _waveselections; // set and selected waves
 
+	int _selected_bin; // -1 if all bins
+
+	TGButton* _button_allbins; // reference to button with all bins
+	vector<TGTextButton*> _buttons_binselection; // holds the buttons to all bins
+
+	vector<TGTextButton*> _buttons_waveselection; // holds the buttons to all waves
+
+	// set the buttons according to the wave list in _selected bin
+	void UpdateWaveButtons();
+
 public:
 
 	// provide a selection of waves to be modified by the user here
@@ -37,6 +48,12 @@ public:
 	void Build();
 
 	virtual ~TrpwaWaveSelectFrame();
+
+	// action to be taken on bin selection
+	void BinSelectClick();
+
+	// action to be taken on wave selection click
+	void WaveSelectClick();
 
 	// call the root script for class definition
 	ClassDef(TrpwaWaveSelectFrame,0);
