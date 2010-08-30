@@ -168,6 +168,7 @@ main(int    argc,
 	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
 	bool         cudaEnabled        = false;                  // if true CUDA kernels are activated
+	bool         genCudaDiffHist    = false;                  // if true CUDA vs. CPU difference histograms are created
 	bool         quiet              = false;
 	extern char* optarg;
 	// extern int optind;
@@ -276,6 +277,13 @@ main(int    argc,
 	L.useNormalizedAmps(useNormalizedAmps);
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
+	L._genCudaDiffHist = false;
+	if (cudaEnabled and genCudaDiffHist) {
+		L._genCudaDiffHist = true;
+		const string cudaDiffFileName = outFileName.substr(0, outFileName.length() - 5)
+			                              + ".cudaDiff.root";
+		L._outFile = TFile::Open(cudaDiffFileName.c_str(), "RECREATE");
+	}
 #endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (not quiet)

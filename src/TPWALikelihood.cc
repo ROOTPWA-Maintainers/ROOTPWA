@@ -76,7 +76,7 @@ TPWALikelihood<T>::TPWALikelihood()
 #endif
 	  _useNormalizedAmps(true),
 	  _numbAccEvents    (0),
-	  _genCudaDiffHist  (true)
+	  _genCudaDiffHist  (false)
 {
 	_nmbWavesRefl[0] = 0;
 	_nmbWavesRefl[1] = 0;
@@ -565,7 +565,9 @@ TPWALikelihood<T>::init(const unsigned int rank,
 			(reinterpret_cast<cuda::complex<T>*>(_decayAmps.data()),
 			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
 		if (_cudaEnabled and _genCudaDiffHist) {
-			_outFile = TFile::Open("cudaDiff.root", "RECREATE");
+			if (not _outFile)
+				_outFile = TFile::Open("cudaDiff.root", "RECREATE");
+			_outFile->cd();
 			_hLikelihoodDiffAbs = new TH1D
 				("hLikelihoodDiffAbs", "hLikelihoodDiffAbs;L_{CPU} - L_{GPU};Count", 10000, -1e-7, 1e-7);
 			_hLikelihoodDiffRel = new TH1D
@@ -583,11 +585,11 @@ TPWALikelihood<T>::init(const unsigned int rank,
 							_hDerivDiffAbs[iRank][iRefl][iWave][reIm] =
 								new TH1D(("hDerivDiffAbs" + n.str()).c_str(),
 								         ("hDerivDiffAbs" + n.str() + ";#nabla_{CPU} - #nabla_{GPU};Count").c_str(),
-								         10000, -1e-10, 1e-10);
+								         10000, -1e-11, 1e-11);
 							_hDerivDiffRel[iRank][iRefl][iWave][reIm] =
 								new TH1D(("hDerivDiffRel" + n.str()).c_str(),
 								         ("hDerivDiffRel" + n.str() + ";1 - #nabla_{GPU} / #nabla_{CPU};Count").c_str(),
-								         10000, -1e-10, 1e-10);
+								         10000, -1e-11, 1e-11);
 						}
 			_hDerivDiffFlatAbs = new TH1D
 				("hDerivDiffFlatAbs", "hDerivDiffFlatAbs;#nabla_{CPU} - #nabla_{GPU};Count",

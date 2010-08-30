@@ -223,7 +223,9 @@ private:
   
 	mutable functionCallInfo _funcCallInfo[NMB_FUNCTIONCALLENUM];  // collects function call statistics
 
-
+	
+public:
+	
 	typedef boost::multi_array<TH1D*, 4> histArrayType;
 	bool                  _genCudaDiffHist;
 	mutable TFile*        _outFile;
@@ -235,6 +237,7 @@ private:
 	mutable TH1D*         _hDerivDiffFlatRel;
 	mutable TH1D*         _hDerivDiffTotAbs[2];
 	mutable TH1D*         _hDerivDiffTotRel[2];
+
 };
 
 
