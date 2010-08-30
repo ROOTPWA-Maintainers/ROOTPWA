@@ -118,7 +118,8 @@ pwaPlotter::addFit(const std::string& filename,
 		   const std::string& title,
 		   const unsigned int colour,
 		   const std::string& treename,
-		   const std::string& branchname){
+		   const std::string& branchname,
+		   const unsigned int numb_bins){
   
   // Open and test file and tree
   TFile* infile = TFile::Open(filename.c_str(),"READ");
@@ -143,6 +144,11 @@ pwaPlotter::addFit(const std::string& filename,
   
   intree->SetBranchAddress(branchname.c_str(),&result);
   unsigned int nbins=intree->GetEntries();
+  if(numb_bins!=0 && nbins!=numb_bins){
+    cerr << "Wrong number of bins "<<nbins<<" in file "
+	 <<filename<<endl;
+    return;
+  }
   // extract info for this fit
   // loop through bins
   // -> getRange in Mass bins
@@ -277,13 +283,26 @@ pwaPlotter::addFit(const std::string& filename,
 
   //cout << "filling data" << endl;
 
-
   // loop again over fitResults and extract all info simultaneously
   for(unsigned int i=0;i<nbins;++i){
     intree->GetEntry(i);
     // loop through waves
     it=wavesinthisfit.begin();
     while(it!=wavesinthisfit.end()){
+      // check if this is a single wave
+      if(it->find("amp")!=it->npos){
+	// check if Phase Space is already filled
+	bool fillps=mPhaseSpace[*it]->GetN()!=(int)nbins;
+	if(fillps){
+	  unsigned int waveid=result->waveIndex(*it);
+	  mPhaseSpace[*it]->Set(i+1);
+	  mPhaseSpace[*it]->SetPoint(i,
+				     result->massBinCenter()*0.001,
+				     result->normIntegral(waveid,
+							  waveid).real());
+	}
+      } // end ccheck for single wave
+
       TMultiGraph* mg=mIntensities[*it];
       TGraphErrors* g=dynamic_cast<TGraphErrors*>(mg->GetListOfGraphs()->Last());
       g->SetPoint(i,
@@ -337,6 +356,10 @@ pwaPlotter::registerWave(const std::string& wavename){
     mIntensities[wavename]=new TMultiGraph();
     mIntensities[wavename]->SetTitle(wavename.c_str());
     mIntensities[wavename]->SetName(wavename.c_str());
+    mPhaseSpace[wavename]=new TGraph();
+    string psname=wavename;psname.append("PS");
+    mPhaseSpace[wavename]->SetTitle(psname.c_str());
+    mPhaseSpace[wavename]->SetName(psname.c_str());
   }
   
   return inserted.second;
@@ -461,7 +484,12 @@ pwaPlotter::writeAllIntensities(TFile* outfile){
   while(itd!=mIntensityDensityPlots.end()){
     itd->second->Write();
     ++itd;
-  } 
+  }
+  map<string,TGraph*>::iterator itps=mPhaseSpace.begin();
+  while(itps!=mPhaseSpace.end()){
+    itps->second->Write();
+    ++itps;
+  }
 }
 
 

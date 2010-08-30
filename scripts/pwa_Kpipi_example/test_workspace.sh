@@ -1,7 +1,7 @@
 # this script tests the status of the Kpipi PWA workflow chain
 # the variables in set_workspace_var.sh must be set correctly
 # author: Promme@web.de ; jasinski@kph.uni-mainz.de
-# worked with SVN version 258
+# worked with SVN version 290
 
 #!/bin/bash
 
@@ -24,8 +24,8 @@ export STEP_NAME=(\
  "             getting files              "\
  "          setting up workspace          "\
  "     Filling flat phasespace events     "\
- "      Filtering RAW data into bins      "\
  "    MC acceptance of flat phasespace    "\
+ "  Filtering RAW and MC data into bins   "\
  "  Generation of partial wave key files  "\
  " Calculation of Amplitudes and Integrals"\
  "      Specifying amplitudes for fit     "\
@@ -39,7 +39,10 @@ export STEP_DONE=( 0 0 0 0 0 0 0 0 0 0 );
 # step 1: is the raw file in place?
 if [ -f ${KPIPI_RAW_FILE_DIR}/${KPIPI_RAW_FILE} ]
 then
-	STEP_DONE[0]=1
+	if [ -f ${KPIPI_MC_FILE_DIR}/${KPIPI_MC_FILE} ]
+	then
+		STEP_DONE[0]=1
+	fi
 fi
 
 # step 6: search for at least one .key file
@@ -61,10 +64,13 @@ fi
 # step 2: Is the workspace directory set correctly? Are there some bins?
 # step 3: Searching for .genbod.evt files
 STEP_DONE[2]=1
-# step 4: Searching for .evt files
+FILTERED_MC_EXACT_EVENTS_EXIST=1
+# step 4: MC data checks
 STEP_DONE[3]=1
-# step 5: Searching for .acc.evt files
+# step 5: Searching for .evt files and .acc.evt files
 STEP_DONE[4]=1
+FILTERED_RAW_EVENTS_EXIST=1
+FILTERED_MC_ACC_EVENTS_EXIST=1
 # step 7: count the .amp files in the AMPS folder
 STEP_DONE[6]=1
 if [ -d ${KPIPI_WORK_DIR} ]
@@ -83,14 +89,21 @@ then
 			if [ ! -f ${BIN}/${BINLOW}.${BINHIGH}.genbod.evt ]
 			then
 				STEP_DONE[2]=0 # only one genbod file must be missing to turn the result false
+				FILTERED_MC_EXACT_EVENTS_EXIST=0
 			fi	
+			if [ ! -f ${KPIPI_MC_FILE_DIR}/${KPIPI_MC_FILE} ]
+			then
+				STEP_DONE[3]=0 # this check is sensless here since the file is obtained by the web. To be changed.
+			fi
 			if [ ! -f ${BIN}/${BINLOW}.${BINHIGH}.evt ]
 			then
-				STEP_DONE[3]=0 # only one genbod file must be missing to turn the result false
+				STEP_DONE[4]=0 # only one event file must be missing to turn the result false
+				FILTERED_RAW_EVENTS_EXIST=0
 			fi
 			if [ ! -f ${BIN}/${BINLOW}.${BINHIGH}.acc.evt ]
 			then
-				STEP_DONE[4]=0 # only one genbod file must be missing to turn the result false
+				STEP_DONE[4]=0 # only one acceptance file must be missing to turn the result false
+				FILTERED_MC_ACC_EVENTS_EXIST=0
 			fi
 			# check for .amp and .int files in AMPS folder
 			let AMPFILE_COUNTER=0
@@ -128,6 +141,24 @@ then
 			then
 				STEP_DONE[6]=0
 			fi
+			# check for .amp and .int files in ACCAMPS folder
+			let AMPFILE_COUNTER=0
+			for AMPFILE in cat $(ls ${BIN}/ACCAMPS/)
+			do
+				EXT=${AMPFILE#*.}
+				if [ ${EXT} == "amp" ]
+				then
+					((AMPFILE_COUNTER++))
+				fi
+			done
+			if [ ! ${AMPFILE_COUNTER} == ${KEYFILE_COUNTER} ]
+			then
+				STEP_DONE[6]=0	
+			fi
+			if [ ! -f ${BIN}/ACCAMPS/norm.int ]
+			then
+				STEP_DONE[6]=0
+			fi
 		fi
 	done
 	if [ ${COUNTBINS} == ${KPIPI_NBINS} ]
@@ -146,6 +177,9 @@ else
 	STEP_DONE[3]=0
 	STEP_DONE[4]=0
 	STEP_DONE[6]=0
+	FILTERED_MC_EXACT_EVENTS_EXIST=0
+	FILTERED_RAW_EVENTS_EXIST=0
+	FILTERED_MC_ACC_EVENTS_EXIST=0
 fi
 
 # step 8: search for wavelist
@@ -165,7 +199,7 @@ then
 	STEP_DONE[8]=1
 fi
 
-# step 10: Is ther already a file available showing the Intensities?
+# step 10: Is there already a file available showing the Intensities?
 if [ -f ${KPIPI_FIT_DIR}/waveintensities.ps ]
 then
 	STEP_DONE[9]=1
@@ -182,4 +216,4 @@ do
 		echo -e " ${STEP_NAME[$I]}\E[37;31m not complete "; tput sgr0
 	fi
 done
-echo -e "\n Warning: the constency of data is not beeing checked! \n"
+echo -e "\n Warning: the consistency of data is not beeing checked! \n"

@@ -1,6 +1,7 @@
+
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2009 Sebastian Neubert
+//    Copyright 2010 Sebastian Neubert
 //
 //    This file is part of rootpwa
 //
@@ -19,48 +20,39 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-// Reads in the results of N fits and creates intensity plots using
-// the pwaPlotter class
+/** @brief Decay Channel in isobar picture
+ */
+
+#ifndef ABSDECAYCHANNEL_HH
+#define ABSDECAYCHANNEL_HH
 
 #include <vector>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <cstdlib>
+#include "TLorentzVector.h"
 
-int atoi ( const char * str );
+namespace rpwa {
 
-
-#include "pwaPlotter.h"
-
-using namespace std;
-using namespace rpwa;
-
-
-int
-main(int argc, char** argv){
-
-  if(argc<2){
-    cerr<<"Usage: pwaplot nbins outputfile fit1 fit2 fit3 ..."<<endl;
-    return 1;
-  }
+  class absDecayChannel {
+  public:
+    absDecayChannel(double b,int l=0): _branching(b),_l(l){}
+    virtual ~absDecayChannel(){}
   
-  unsigned int nbins=atoi(argv[1]);
-  string outfilename=argv[2];
-  vector<string> inputfiles;
-  for(int i=3; i<argc; ++i){
-    inputfiles.push_back(argv[i]);
-  }
+    virtual void tau(std::vector<TLorentzVector>& particles,
+	     double& evtweight, // returns isobar part of phase space for event
+	     double& breakup) =0 ;   // returns breakup momentum of top vertex
+
+    virtual double branching() const {return _branching;}
+    virtual int l() const {return _l;}
+    virtual void set_branching(double& b){_branching=b;}
+
+  protected:
+
+    double _branching;
+    int _l;
+
+  };
+
+
+
+} // end namespace
   
-  pwaPlotter plotter;
-  
-  for(unsigned int i=0; i<inputfiles.size();++i){
-    plotter.addFit(inputfiles[i],inputfiles[i],1,"pwa","fitResult_v2",nbins);
-  }
-
-  plotter.produceDensityPlots();
-
-  plotter.writeAll(outfilename);
-
-  return 0;
-}
+#endif

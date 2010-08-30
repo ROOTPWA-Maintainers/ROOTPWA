@@ -25,6 +25,7 @@ do
 	_BIN=$(basename ${BIN}) # get the directory name
 	BINHIGH=${_BIN#*.}		# the number behind the "." is the hight bound 
 	BINLOW=${_BIN%.*}		# the number in front of the "." is the low bound
+    let BINWIDTH=(${KPIPI_BIN_MAX}-${KPIPI_BIN_MIN})/${KPIPI_NBINS}
 	# not everything in ./* is always a valid folder. Check the name to have numbers	
 	if echo ${BINLOW} | grep "^[0-9]*$">/tmp/aux
 	then

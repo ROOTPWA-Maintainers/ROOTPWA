@@ -95,7 +95,8 @@ plot4(TTree*       tree,             // fitResult tree
 
   // wave A - wave B phase angle
   canv->cd(2);
-  plotPhase(tree, waveIndexA, waveIndexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
+  plotPhase(tree, waveIndexA, waveIndexB, false, kBlack, false, "", "APZ",
+            selectExpr.str(), branchName);
 
   // wave B intensity
   canv->cd(3);

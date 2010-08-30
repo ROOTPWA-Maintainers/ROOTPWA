@@ -29,6 +29,8 @@
 #include <limits>
 #include "TString.h"
 #include "TChain.h"
+#include "TH2D.h"
+#include "TFile.h"
 #include "fitResult.h"
 using namespace std;
 using namespace rpwa;
@@ -54,6 +56,12 @@ main(int argc, char** argv){
     cerr << "Not enough fits to create " << nsurv << " survivors." << endl;
   }
 
+  TH2D* hWavesetSize=new TH2D("hWS","Waveset sizes evolution",20,-0.5,19.5,100,0,100);
+  TH2D* hEvidences=new TH2D("hEvi","Evidence evolution",20,-0.5,19.5,1000,1.75E6,1.9E6);
+   TH2D* hEviSize=new TH2D("hEviSize","Evidence vs Waveset size",100,0,100,1000,1.75E6,1.9E6);
+
+TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100,1000,1.75E6,1.9E6);
+
   map<double,unsigned int> results; // <logli,index>
   unsigned int bestfit=0;
   double bestLogli=0;
@@ -62,9 +70,16 @@ main(int argc, char** argv){
   // we are using the sum of loglikelyhood per event for this
   for(unsigned int j=0; j<inputdirectories.size(); ++j){
     cerr << "Examining "<<inputdirectories[j]<<endl;
+    // get generation
+    unsigned int startgen=inputdirectories[j].Index("gen",0)+3;
+    unsigned int endgen=inputdirectories[j].Index("/",startgen);
+    TString genS=inputdirectories[j](startgen,endgen-startgen);
+    cerr << "generation=" << genS << endl;
+    double gen=atof(genS.Data());
+
     TChain* chain=new TChain("pwa");
     TString f=inputdirectories[j];
-    f+="/*.root";
+    f+="/*.result.root";
     if(chain->Add(f)==0){
       cerr << "No fitoutput files found." << nbins 
 	   << ". Skipping fit!" << endl;
@@ -80,20 +95,30 @@ main(int argc, char** argv){
       continue;
     }
     double sumlogli=0;
+    double sumevi=0;
+    unsigned int nwaves=0;
     for(unsigned int k=0;k<n;++k){
       chain->GetEntry(k);
-      sumlogli+=bin->evidence();
+      if(k==0)nwaves=bin->nmbWaves();
+      sumevi+=bin->evidence();
+      sumlogli+=-bin->logLikelihood();
     }// end loop over bins
-    cerr<<"SumLogli="<<setprecision(9)<<sumlogli<<endl;
-    if(sumlogli==0 || !(sumlogli>std::numeric_limits<double>::min() && sumlogli < std::numeric_limits<double>::max())){
+    cerr<<"SumLogli    ="<<setprecision(9)<<sumlogli<<endl;
+    cerr<<"SumEvidence ="<<setprecision(9)<<sumevi<<endl;
+    if(sumevi==0 || !(sumevi>std::numeric_limits<double>::min() && sumevi < std::numeric_limits<double>::max())){
       cerr<<"Invalid value. Skipping."<< endl;
       delete chain;
       continue;
     }
+    
+    hWavesetSize->Fill(gen,nwaves);
+    hEvidences->Fill(gen,sumevi);
+    hEviSize->Fill(nwaves,sumevi);
+    hLogliSize->Fill(nwaves,sumlogli);
 
-    results[sumlogli]=j;    
-    if(sumlogli>bestLogli){
-      bestLogli=sumlogli;
+    results[sumevi]=j;    
+    if(sumevi>bestLogli){
+      bestLogli=sumevi;
       bestfit=j;
     }
     delete chain;
@@ -116,5 +141,12 @@ main(int argc, char** argv){
     cout << inputdirectories[mrit->second]<<"/wavelist "<<mrit->first << endl;
   }
   
+  TFile* outfile=TFile::Open("genetic_stats.root","RECREATE");
+  hWavesetSize->Write();
+  hEvidences->Write();
+  hEviSize->Write();
+hLogliSize->Write();
+  outfile->Close();
+
   return 0;
 }
