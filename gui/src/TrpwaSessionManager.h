@@ -237,6 +237,21 @@ public:
 	// return the upper bound of the ith bin
 	int GetBinHigh(int ibin);
 
+	// return the wave list of selected waves for a bin
+	vector<string> &GetWaveList(int ibin);
+
+	// return the wave list of selected waves for a bin with bin low bound and bin high bound
+	vector<string> &GetWaveList(int ibin, int& bin_low, int& bin_high);
+
+	// return the absolute path the the file with waves
+	// bin_low and bin_high are the lower and upper edge of the bin
+	// the fit result file name with path that should be used is also returned
+	string GetWaveListFile(int ibin, int& bin_low, int& bin_high, string& fitresultfile);
+
+	// return the command to fit a certain bin
+	// executedir is the directory to execute this command in
+	string GetFitCommand(int ibin, string& executedir);
+
 	// set the selected Waves
 	// bin_lowedes are the low edges of the bins to be set
 	// selections are the corresponding waves for each bin
@@ -244,6 +259,12 @@ public:
 
 	// save the wavelists
 	bool SaveSelectedWaves();
+
+	// sort by JPC iso1 iso2 M reflectivity
+	void SortWaves(vector<string>& wavelist);
+
+	// get the corresponding variables to the coded wavename
+	void GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s);
 
 	/*
 	TrpwaSessionManager& operator=(const TrpwaSessionManager& copysource) const{

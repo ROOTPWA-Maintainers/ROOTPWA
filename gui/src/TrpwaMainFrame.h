@@ -75,6 +75,8 @@ public:
 
 	void SelectWaves(); // calls the interface for wave selection
 
+	void FitPartialWaves(); // send jobs for partial wave fitting
+
 	void Dummy(); // will be called for every function not implemented yet
 
 	// call the root script for class definition

@@ -21,6 +21,8 @@ TrpwaWaveSelectFrame::TrpwaWaveSelectFrame(TWaveSelections& waveselections)
 	_waveselections = &waveselections; // give a reference to be kept after window distruction
 	_selected_bin = -1;
 	Build();
+	BinSelectClick();
+	//WaveSelectClick();
 	fClient->WaitFor(this); // wait till the user closes this window
 }
 
@@ -74,7 +76,7 @@ void TrpwaWaveSelectFrame::Build(){
 		_text << (*_waveselections)[0].available_waves[iwave];
 		TGCheckButton* button = new TGCheckButton(buttongroup, new TGHotString(_text.str().c_str()));
 		_buttons_waveselection.push_back(button);
-		button->SetState(kButtonDown);
+		button->SetState(kButtonUp);
 		button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"WaveSelectClick()");
 		// create a new radio button group if a certain number of bins is exceeded
 		if (((iwave+1)%50)==0){
@@ -154,12 +156,15 @@ void TrpwaWaveSelectFrame::WaveSelectClick(){
 			}
 		}
 	}
+	// check for consistency in case of all waves
+	if (_selected_bin == -1) UpdateWaveButtons();
 }
 
 void TrpwaWaveSelectFrame::UpdateWaveButtons(){
 	// uncheck all buttons
 	for (unsigned int iwave = 0; iwave < _buttons_waveselection.size(); iwave++){
 		_buttons_waveselection[iwave]->SetState(kButtonUp);
+		_buttons_waveselection[iwave]->SetTextColor(0x000000, false);
 	}
 	if (_selected_bin > (signed) (*_waveselections).size()){
 		cout << " unexpected inconsistency of wave selections size and selected bin! " << endl;
@@ -196,6 +201,7 @@ void TrpwaWaveSelectFrame::UpdateWaveButtons(){
 			for (unsigned int iwave = 0; iwave < nwaves; iwave++){
 				string lastwave = ""; // check the waves to be at the same place for every bin
 				bool keepchecked(false);
+				unsigned int  ichecked(0); // count how many times this wave was checked
 				for (unsigned int ibin = 0; ibin < _waveselections->size(); ibin++){
 					if (nwaves != (*_waveselections)[ibin].available_waves.size()){
 						cout << " Error in TrpwaWaveSelectFrame::UpdateWaveButtons(): wave lists in bin ";
@@ -209,10 +215,17 @@ void TrpwaWaveSelectFrame::UpdateWaveButtons(){
 						cout << " Error in TrpwaWaveSelectFrame::UpdateWaveButtons(): wave lists differ for bins. This is not expected yet! " << endl;
 						continue;
 					}
-					if (_selected_waves[iwave]) keepchecked = true;
+					if (_selected_waves[iwave]) {
+						keepchecked = true;
+						ichecked++;
+					}
 				}
 				if (keepchecked) {
 					_buttons_waveselection[iwave]->SetState(kButtonDown);
+					// visualize if the wave is not set to this state for all waves
+					if (ichecked != 0 && ichecked != _waveselections->size()){
+						_buttons_waveselection[iwave]->SetTextColor(0xff0000, false);
+					}
 				} else {
 					_buttons_waveselection[iwave]->SetState(kButtonUp);
 				}

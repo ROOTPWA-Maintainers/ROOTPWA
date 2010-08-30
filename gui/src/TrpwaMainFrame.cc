@@ -16,9 +16,12 @@
 #include <TGPack.h>
 #include <TGButtonGroup.h>
 #include <string>
+#include <sstream>
+#include <fstream>
 #include <cmath>
 #include "TrpwaSessionManager.h"
 #include <TGFileDialog.h>
+#include <cstdlib>
 
 static const int nsteps = 11;
 static const string step_titles[nsteps] = {
@@ -44,7 +47,7 @@ static const string func_calls[nsteps] = {
 		"Dummy()",
 		"Dummy()",
 		"SelectWaves()",
-		"Dummy()",
+		"FitPartialWaves()",
 		"Dummy()",
 		"Dummy()"
 };
@@ -343,6 +346,31 @@ void TrpwaMainFrame::Update(){
 
 void TrpwaMainFrame::Dummy(){
 	cout << " not implemented yet! " << endl;
+}
+
+void TrpwaMainFrame::FitPartialWaves(){
+	if (current_session){
+		// calls will move to a separate class depending on the
+		// farm type given, but for now implemented here
+
+		// write a script to submit it
+		ofstream script("/tmp/_fitpartialwaves.sh");
+		if (script.good()){
+			script << "# generated script to call wave fitting \n" << endl;
+			for (int i = 0; i < current_session->Get_n_bins(); i++){
+				string executedir;
+				string fitcommand = current_session->GetFitCommand(i, executedir);
+				script << "cd " << executedir << endl;
+				script << fitcommand << endl;
+				script << "cd -" << endl;
+			}
+		}
+		script.close();
+		stringstream command;
+		command << "source /tmp/_fitpartialwaves.sh";
+
+		system(command.str().c_str());
+	}
 }
 
 TrpwaMainFrame::~TrpwaMainFrame() {

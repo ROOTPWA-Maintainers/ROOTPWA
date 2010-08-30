@@ -9,12 +9,14 @@
 
 #include "TrpwaSessionManager.h"
 #include <cstdlib>
+#include <stdlib.h>
 #include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "libconfig.h++"
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -541,6 +543,7 @@ float TrpwaSessionManager::Check_PWA_keyfiles(){
 	float result(0.);
 
 	_n_keyfiles = GetDir(_dir_key_files, _keyfiles, ".key", true);
+	SortWaves(_keyfiles);
 
 	if (_n_keyfiles > 0) result = 1.;
 
@@ -713,15 +716,15 @@ vector<bool>   &TrpwaSessionManager::GetSelectedWaves(int ibin, vector<string>& 
 							result->push_back(true);
 							found = true;
 							_selected_waves.erase(j);
+							break;
 						}
-						break;
 					}
 					if (!found) result->push_back(false);
 				}
 				// the list should be empty now, check this
 				// if not we have selected waves that are not available in the key list -> inconsistency
 				if (_selected_waves.size() != 0){
-					cout << " Error in TrpwaSessionManager::GetSelectedWaves(): there are amps in ";
+					cout << " Error in TrpwaSessionManager::GetSelectedWaves(): there are " << _selected_waves.size() << " amps in ";
 					cout << (*it).second.wave_list_file << " specified that are not available in the list of keys! "  << endl;
 					result->clear();
 					allwaves.clear();
@@ -762,6 +765,80 @@ int	TrpwaSessionManager::GetBinLow(int ibin){
 int TrpwaSessionManager::GetBinHigh(int ibin){
 	cout << " TrpwaSessionManager::GetBinHigh() not implemented yet " << endl;
 	return 0;
+}
+
+vector<string>& TrpwaSessionManager::GetWaveList(int ibin, int& bin_low, int& bin_high){
+	vector<string>* result = new vector<string>();
+	int bincounter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			(*result) = (*it).second.wave_list; // copy the wave list
+			break;
+		}
+		bincounter++;
+	}
+	return (*result);
+}
+
+string TrpwaSessionManager::GetWaveListFile(int ibin, int& bin_low, int& bin_high, string& fitresultfile){
+	string result = "";
+	int bincounter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			result = _dir_fit_results + "/" + (*it).second.wave_list_file;
+			fitresultfile = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".root";
+			break;
+		}
+		bincounter++;
+	}
+	return result;
+}
+
+string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
+	string result = "";
+	string wavelistfile = "";
+	string normalizationfile = "";
+	string fitresultfile = "";
+	int bincounter(0);
+	int bin_low = -1;
+	int bin_high = -1;
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			wavelistfile = _dir_fit_results + "/" + (*it).second.wave_list_file;
+			fitresultfile = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".root";
+			executedir = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "AMPS/";
+			normalizationfile = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "PSPAMPS/" + "norm.int";
+			break;
+		}
+		bincounter++;
+	}
+	if (!FileExists(wavelistfile)){
+		cout << " Error in TrpwaSessionManager::GetFitCommand(): wave list file " << wavelistfile << " does not exist! " << endl;
+		return result;
+	}
+	if (FileExists(fitresultfile)){
+		cout << " Warning in TrpwaSessionManager::GetFitCommand(): fit result " << fitresultfile << " exist already! " << endl;
+	}
+	if (!FileExists(normalizationfile)){
+		cout << " Error in TrpwaSessionManager::GetFitCommand(): normalization integral file " << normalizationfile << " does not exist! " << endl;
+		return result;
+	}
+	stringstream _result;
+	_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
+	result = _result.str();
+	return result;
+}
+
+vector<string>& TrpwaSessionManager::GetWaveList(int ibin){
+	int bin_low;
+	int bin_high;
+	GetWaveList(ibin, bin_low, bin_high);
 }
 
 // check whether a file exists
@@ -960,5 +1037,22 @@ bool TrpwaSessionManager::SaveSelectedWaves(){
 	}
 
 	return result;
+}
+
+// sort by JPC iso1 iso2 M reflectivity
+void TrpwaSessionManager::SortWaves(vector<string>& wavelist){
+	//int J,P,C,M,refl,l,s;
+	//string iso1,iso2;
+	sort(wavelist.begin(), wavelist.end());
+	//cout << " sorted " << wavelist.size() << " waves " << endl;
+}
+
+// get the corresponding variables to the coded wavename
+void TrpwaSessionManager::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s){
+	cout << " TrpwaSessionManager::GetJPCMreflISO1lsISO2() not implemented yet " << endl;
+	for (unsigned int i = 0; i < wavename.size(); i++){
+		cout << wavename[i] << " ";
+	}
+	cout << endl;
 }
 
