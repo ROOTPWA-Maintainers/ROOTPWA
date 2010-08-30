@@ -47,10 +47,6 @@
 
 #include <cmath>
 
-#include <boost/numeric/ublas/hermitian.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
-#include <boost/numeric/ublas/io.hpp>
-
 #include "TClonesArray.h"
 #include "TClass.h"
 #include "TObjString.h"
@@ -61,7 +57,6 @@
 
 	
 using namespace std;
-using namespace boost::numeric::ublas;
 using namespace rpwa;
 
 
@@ -215,7 +210,7 @@ leptoProductionVertex::productionAmp() const
 	const double epsilon = this->epsilon();
 	const double delta   = this->delta(epsilon);
 	printInfo << "phi = " << phi << ", epsilon = " << maxPrecision(epsilon) << ", "
-	          << "delta = " << maxPrecision(delta) << endl;
+	          << "delta = " << maxPrecision(delta) << ", pol = " << _longPol << endl;
 	// compute some intermediary terms
 	const double          xi    = sqrt(epsilon * (1 + epsilon + 2 * delta));
 	const double          zeta  = sqrt(xi * (1 - epsilon) / (1 + epsilon));
@@ -228,68 +223,71 @@ leptoProductionVertex::productionAmp() const
 	// Wolf (common factor 1/2 is dropped):
 	//   eq. 44 and 57 with 60, where alpha_2 was set to 0 (long. lepton
 	//   polarization), into eq. 62
-	matrix<complex<double> > rho(3, 3);
-	// hermitian_matrix<complex<double>, lower> rho(3, 3);  // does not work for some reason
+	complex<double> rho[3][3];
 	// column with lambda' = -1
-	rho(0, 0) = 1 + term;                                     // lambda = -1
-	rho(1, 0) = (_longPol * zeta + xi) * phase;               // lambda =  0
-	rho(2, 0) = -epsilon * exp(complex<double>(0, 2 * phi));  // lambda = +1
+	rho[0][0] = 1 + term;                                     // lambda = -1
+	rho[1][0] = (_longPol * zeta + xi) * phase;               // lambda =  0
+	rho[2][0] = -epsilon * exp(complex<double>(0, 2 * phi));  // lambda = +1
 	// column with lambda' =  0
-	rho(1, 1) = 2 * (epsilon + delta);                        // lambda =  0
-	rho(2, 1) = (_longPol * zeta - xi) * phase;               // lambda = +1
+	rho[1][1] = 2 * (epsilon + delta);                        // lambda =  0
+	rho[2][1] = (_longPol * zeta - xi) * phase;               // lambda = +1
 	// column with lambda' = +1
-	rho(2, 2) = 1 - term;                                     // lambda = +1
+	rho[2][2] = 1 - term;                                     // lambda = +1
 	// conjugated elements
-	rho(0, 1) = conj(rho(1, 0));
-	rho(0, 2) = conj(rho(2, 0));
-	rho(1, 2) = conj(rho(2, 1));
+	rho[0][1] = conj(rho[1][0]);
+	rho[0][2] = conj(rho[2][0]);
+	rho[1][2] = conj(rho[2][1]);
 	for (unsigned int j = 0; j < 3; ++j)
 		for (unsigned int i = 0; i < 3; ++i)
-			printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho(i, j)) << endl;
+			printInfo << "rho[" << i << "][" << j << "] = " << maxPrecisionDouble(rho[i][j]) << endl;
+	const complex<double> detRho =   rho[0][0] * rho[1][1] * rho[2][2]
+		                             + rho[0][1] * rho[1][2] * rho[2][0]
+		                             + rho[1][0] * rho[2][1] * rho[0][2]
+		                             - rho[0][2] * rho[1][1] * rho[2][0]
+		                             - rho[1][2] * rho[0][0] * rho[2][1]
+		                             - rho[0][1] * rho[2][2] * rho[1][0];
+	printInfo << "det[rho] = " << detRho << " vs. "
+	          << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
+	              - (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
+	              + 2 * _longPol * _longPol * zeta * xi * sqrt(1 - epsilon * epsilon)) / 4
+	          << endl;
 
-	// perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
-	// triangle matrix with real diagonal elements
-	triangular_matrix<complex<double> > V(3, 3);
-	// first column
-	V(0, 0) = sqrt(real(rho(0, 0)));
-	V(1, 0) = rho(1, 0) / real(V(0, 0));
-	V(2, 0) = rho(2, 0) / real(V(0, 0));
-	// second column
-	V(1, 1) = sqrt(real(rho(1, 1)) - norm(V(1, 0)));
-	V(2, 1) = (rho(2, 1) - V(2, 0) * conj(V(1, 0))) / real(V(1, 1));
-	// third column
-	V(2, 2) = sqrt(real(rho(2, 2)) - norm(V(2, 1)) - norm(V(2, 0)));
-	printInfo << "V(2, 2)^2 = " << real(rho(2, 2)) - norm(V(2, 1)) - norm(V(2, 0)) << ": "
-	          << real(rho(2, 2)) << " - " << norm(V(2, 1)) << " - " << norm(V(2, 0)) << endl;
-	for (unsigned int j = 0; j < 3; ++j)
-		for (unsigned int i = j; i < 3; ++i)
-			printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V(i, j)) << endl;
-	matrix<complex<double> > rhoPrime(3, 3);
-	rhoPrime = prod(V, herm(V));
-	for (unsigned int j = 0; j < 3; ++j)
-		for (unsigned int i = 0; i < 3; ++i)
-			printInfo << "deltaRho[" << i << "][" << j << "] = "
-			          << maxPrecisionDouble(rho(i, j) - rhoPrime(i, j)) << endl;
+  // perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
+  // triangle matrix with real diagonal elements
+  complex<double> V[3][3];
+  // first column
+  V[0][0] = sqrt(real(rho[0][0]));
+  V[1][0] = rho[1][0] / real(V[0][0]);
+  V[2][0] = rho[2][0] / real(V[0][0]);
+  // second column
+  V[1][1] = sqrt(real(rho[1][1]) - norm(V[1][0]));
+  V[2][1] = (rho[2][1] - V[2][0] * conj(V[1][0])) / real(V[1][1]);
+  // third column
+  V[2][2] = sqrt(real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]));
+  // zero elements
+	V[0][1] = 0;
+	V[0][2] = 0;
+	V[1][2] = 0;
+  printInfo << "V[2][2]^2 = " << real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]) << ": "
+            << real(rho[2][2]) << " - " << norm(V[2][1]) << " - " << norm(V[2][0]) << endl;
+  for (unsigned int j = 0; j < 3; ++j)
+	  for (unsigned int i = 0; i < 3; ++i)
+		  printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
+  complex<double> rhoPrime[3][3];
+  for (unsigned int j = 0; j < 3; ++j)
+	  for (unsigned int i = 0; i < 3; ++i) {
+		  rhoPrime[i][j] = 0;
+		  for (unsigned int r = 0; r < 3; ++r)
+			  rhoPrime[i][j] += V[i][r] * conj(V[j][r]);
+	  }
+  for (unsigned int j = 0; j < 3; ++j)
+	  for (unsigned int i = 0; i < 3; ++i)
+		  printInfo << "deltaRho[" << i << "][" << j << "] = "
+		            << maxPrecisionDouble(rho[i][j] - rhoPrime[i][j]) << endl;
 
-	triangular_matrix<complex<double> > VPrime(3, 3);
-	// first column
-	VPrime(0, 0) = 1;
-	VPrime(1, 0) = xi * phase;
-	VPrime(2, 0) = -epsilon * exp(complex<double>(0, 2 * phi));
-	// second column
-	VPrime(1, 1) = sqrt((1 - epsilon) * (epsilon + 2 * delta));
-	VPrime(2, 1) = -sqrt(epsilon * (1 - epsilon) * (1 + 1 / (epsilon + 2 * delta))) * phase;
-	// third column
-	VPrime(2, 2) = sqrt(2 * delta * (1 - epsilon) / (epsilon + 2 * delta));
-	for (unsigned int j = 0; j < 3; ++j)
-		for (unsigned int i = j; i < 3; ++i)
-			printInfo << "deltaV[" << i << "][" << j << "] = "
-			          << maxPrecisionDouble(V(i, j) - VPrime(i, j)) << endl;
 
 	// compute production amplitude for given photon helicity
 	complex<double> prodAmp = 0;
-	// for (unsigned int r = 0; r < V.size2(); ++r)
-	// 	prodAmp += V(virtPhoton()->spinProj(), r);
 	return prodAmp;
 }
 
