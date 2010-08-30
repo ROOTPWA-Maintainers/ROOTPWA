@@ -389,7 +389,6 @@ likelihoodInterface<complexT>::logLikelihood
 
 	// first summation stage
 	value_type*  d_logLikelihoodSumsPrev = 0;
-	// value_type*  d_logLikelihoodSumsNext = 0;
 	unsigned int nmbSumsPrev             = 0;
 	{
 		// run kernel with maximum occupancy grid
@@ -476,7 +475,6 @@ likelihoodInterface<complexT>::logLikelihoodDeriv
 	{
 		// first summation stage
 		complexT*          d_derivativeSumsPrev = 0;
-		// complexT*          d_derivativeSumsNext = 0;
 		unsigned int       nmbSumsPrev          = 0;
 		const unsigned int nmbDerivElements     = rank * 2 * _nmbWavesMax;
 		{

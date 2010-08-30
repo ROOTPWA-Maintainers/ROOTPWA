@@ -48,6 +48,8 @@
 #include "boost/tuple/tuple.hpp"
 
 #include "Math/IFunction.h"
+#include "TFile.h"
+#include "TH1.h"
 
 // PWA2000 classes
 #include "integral.h"
@@ -131,7 +133,8 @@ public:
 	//const integral& normInt() const { return _normInt; }
 
 	// modifiers
-	void        useCuda          (const bool useCuda = true);
+	void        enableCuda       (const bool enableCuda = true);
+	bool        cudaEnabled      () const;
 	void        useNormalizedAmps(const bool useNorm = true) { _useNormalizedAmps = useNorm; }
 	static void setQuiet         (const bool flag    = true) { _debug             = !flag;   }
 
@@ -192,7 +195,7 @@ private:
 	unsigned int _nmbPars;          // number of function parameters
 
 #ifdef USE_CUDA
-	bool        _useCuda;            // if true CUDA kernels are used for some calculations
+	bool        _cudaEnabled;        // if true CUDA kernels are used for some calculations
 #endif
 	bool        _useNormalizedAmps;  // if true normalized amplitudes are used
 	static bool _debug;              // if true debug messages are printed
@@ -220,6 +223,18 @@ private:
   
 	mutable functionCallInfo _funcCallInfo[NMB_FUNCTIONCALLENUM];  // collects function call statistics
 
+
+	typedef boost::multi_array<TH1D*, 4> histArrayType;
+	bool                  _genCudaDiffHist;
+	mutable TFile*        _outFile;
+	mutable TH1D*         _hLikelihoodDiffAbs;
+	mutable TH1D*         _hLikelihoodDiffRel;
+	mutable histArrayType _hDerivDiffAbs;
+	mutable histArrayType _hDerivDiffRel;
+	mutable TH1D*         _hDerivDiffFlatAbs;
+	mutable TH1D*         _hDerivDiffFlatRel;
+	mutable TH1D*         _hDerivDiffTotAbs[2];
+	mutable TH1D*         _hDerivDiffTotRel[2];
 };
 
 

@@ -167,7 +167,7 @@ main(int    argc,
 	unsigned int rank               = 1;                      // rank of fit
 	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
-	bool         useCuda            = true;                  // if true CUDA kernels are activated
+	bool         cudaEnabled        = false;                  // if true CUDA kernels are activated
 	bool         quiet              = false;
 	extern char* optarg;
 	// extern int optind;
@@ -226,7 +226,7 @@ main(int    argc,
 			break;
 		case 'c':
 #ifdef USE_CUDA
-			useCuda = true;
+			cudaEnabled = true;
 #endif
 			break;
 		case 'q':
@@ -264,7 +264,7 @@ main(int    argc,
 	     << "        number of acceptance norm. events ........ "  << numbAccEvents    << endl
 	     << "    rank of fit .................................. "  << rank                    << endl
 	     << "    minimizer .................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
-	     << "    CUDA acceleration ............................ "  << ((useCuda) ? "en" : "dis") << "abled" << endl
+	     << "    CUDA acceleration ............................ "  << ((cudaEnabled) ? "en" : "dis") << "abled" << endl
 	     << "    quiet ........................................ "  << quiet << endl;
 
 	// ---------------------------------------------------------------------------
@@ -275,7 +275,7 @@ main(int    argc,
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
 #ifdef USE_CUDA
-	L.useCuda(useCuda);
+	L.enableCuda(cudaEnabled);
 #endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (not quiet)
@@ -422,7 +422,6 @@ main(int    argc,
 		minimizer->SetMaxIterations(maxNmbOfIterations);
 		minimizer->SetTolerance    (minimizerTolerance);
 		bool success = minimizer->Minimize();
-		cout << endl;
 		if (success)
 			printInfo << "minimization finished successfully" << endl;
 		else
@@ -433,7 +432,6 @@ main(int    argc,
 			TStopwatch timer;
 			timer.Start();
 			success = minimizer->Hesse();
-			cout << endl;
 			if (not success)
 				printWarn << "calculation of Hessian matrix failed" << endl;
 			timer.Stop();
@@ -575,15 +573,15 @@ main(int    argc,
 				// representation of number of events depends on whether normalization was done
 				const int nmbEvt = useNormalizedAmps ? 1 : L.nmbEvents();
 	
-				cout << "filling TFitBin:" << endl;
-				cout << "    number of fit parameters ........... " << nmbPar                 << endl;
-				cout << "    number of production amplitudes .... " << prodAmplitudes.size()  << endl;
-				cout << "    number of indices .................. " << indices.size()         << endl;
-				cout << "    number of wave names (with rank) ... " << waveNames.size()       << endl;
-				cout << "    number of wave titles (w/o rank) ... " << waveTitles.size()      << endl;
-				cout << "    dimension of error matrix .......... " << errMatrix.GetNrows()   << endl;
-				cout << "    dimension of integral matrix ....... " << integralMatrix.nrows() << endl;
-				cout << "    dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
+				cout << "filling TFitBin:" << endl
+				     << "    number of fit parameters ........... " << nmbPar                 << endl
+				     << "    number of production amplitudes .... " << prodAmplitudes.size()  << endl
+				     << "    number of indices .................. " << indices.size()         << endl
+				     << "    number of wave names (with rank) ... " << waveNames.size()       << endl
+				     << "    number of wave titles (w/o rank) ... " << waveTitles.size()      << endl
+				     << "    dimension of error matrix .......... " << errMatrix.GetNrows()   << endl
+				     << "    dimension of integral matrix ....... " << integralMatrix.nrows() << endl
+				     << "    dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
 				fitBinResult->fill(prodAmplitudes,
 				                   indices,
 				                   waveNames,
