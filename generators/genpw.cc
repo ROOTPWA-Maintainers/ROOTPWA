@@ -105,8 +105,8 @@ int main(int argc, char** argv)
   string reactionFile;
   double maxWeight=0;
   int seed=123456;
-  double massLower=0;
-  double massBinWidth=0;
+  int massLower=0;
+  int massBinWidth=0;
   bool overwriteMass=false;
   bool writeComGeantout=false;
 
@@ -145,11 +145,11 @@ int main(int argc, char** argv)
 	  writeComGeantout = true;
 	  break;
    case 'M':
-      massLower = atof(optarg);
+      massLower = atoi(optarg);
       overwriteMass=true;
       break;
    case 'B':
-      massBinWidth = atof(optarg);
+      massBinWidth = atoi(optarg);
       overwriteMass=true;
       break;
 
@@ -191,21 +191,39 @@ int main(int argc, char** argv)
   double targetr=reactConf.lookup("target.radius");
   double mrecoil=reactConf.lookup("target.mrecoil");
 
+  double tprime_min(0.); 
+  reactConf.lookupValue("finalstate.t_min", tprime_min);
+
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
   if(overwriteMass){
     mmin=massLower/1000.0;
-    mmax=mmin+massBinWidth/1000.0;
+    mmax=(massLower+massBinWidth)/1000.0;
   }
-  double tslope=reactConf.lookup("finalstate.t_slope");
-  double t_slopegradient(0.);
-  reactConf.lookupValue("finalstate.t_slopegradient", t_slopegradient);
-  /*
-  if (reactConf.lookupValue("finalstate.t_slopegradient", t_slopegradient)){
-	  cout << " setting t' slope gradient to " << t_slopegradient << endl;
+  // array of tslopes even when only one is existing
+  double* tslope = NULL;
+  double* inv_m  = NULL;
+  int ntslope = 1;
+  if (reactConf.lookup("finalstate.t_slope").isArray()){
+	  ntslope = reactConf.lookup("finalstate.t_slope").getLength();
+	  if (reactConf.lookup("finalstate.inv_m").getLength()!=ntslope){
+		  cout << " Error: please check number of t' values and the corresponding invariant masses in the Configuration File! " << endl;
+		  return 0;
+	  }
+	  tslope = new double[ntslope];
+	  inv_m  = new double[ntslope];
+	  cout << " found array of t' slopes. Reading " << ntslope << " of values ";
+	  for (int i = 0; i < ntslope; i++){
+		  tslope[i] = reactConf.lookup("finalstate.t_slope")[i];
+		  inv_m[i]  = reactConf.lookup("finalstate.inv_m")[i];
+		  //cout << inv_m[i] << " " << tslope[i] << endl;
+	  }
+	  cout << " done. " << endl;
   } else {
-	  cout << " t' slope gradient is set by default to " << t_slopegradient << endl;
-  }*/
+	  tslope = new double[1];
+	  tslope[0]=reactConf.lookup("finalstate.t_slope");
+	  //cout << " tslope set to " << tslope[0];
+  }
   double binCenter=500 * (mmin + mmax);
 
   // check weather to use a primary vertex generator as requested by the config file
@@ -229,7 +247,7 @@ int main(int argc, char** argv)
   // generate the filename automatically if not specified
   if (output_file == "") {
 	  stringstream _filename;
-	  _filename << trunc(mmin*1e3) << "." << trunc(mmax*1e3) << ".genbod.root";
+	  _filename << massLower << "." << massLower+massBinWidth << ".genbod.root";
 	  cout << " created output filename: " << _filename.str() << endl;
 	  output_file = _filename.str();
   }
@@ -262,9 +280,13 @@ int main(int argc, char** argv)
   difPS.SetSeed(seed);
   difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
   difPS.SetTarget(targetz,targetd,targetr,mrecoil);
-  difPS.SetTPrimeSlope(tslope, t_slopegradient);
+  difPS.SetTPrimeSlope(tslope, inv_m, ntslope);
   difPS.SetMassRange(mmin,mmax);
   difPS.SetPrimaryVertexGen(primaryVertexGen);
+  if (tprime_min >= 0)  
+	difPS.SettMin(tprime_min);
+  else
+	cout << " Error: tprime_min must be positive " << endl;
 
 
   double impMass;
@@ -495,6 +517,9 @@ int main(int argc, char** argv)
   evtwht.close();
   if (writeComGeantout)
 	  evtgeant.close();
+
+  delete [] tslope;
+  delete [] inv_m;
  
   return 0;
 }

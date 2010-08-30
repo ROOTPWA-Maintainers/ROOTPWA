@@ -55,6 +55,8 @@ libconfig:
 	The installation is straight forward and should work without
 	any problems but you should use the prefix pointing to 
 	the lib files in the topfolder instead of /bin/local:
+	export LIBCONFIG=/your/folder/to/intall/libconfig
+	
 	&> ./configure --prefix=$LIBCONFIG
 	See ./configure --help for details.
 

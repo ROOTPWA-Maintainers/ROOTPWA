@@ -19,48 +19,47 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-// Reads in the results of N fits and creates intensity plots using
-// the pwaPlotter class
+/** @brief compound system with mass dependence
+ */
+
+#ifndef ABSMASSDEP_HH
+#define ABSMASSDEP_HH
 
 #include <vector>
-#include <iostream>
-#include <iomanip>
-#include <string>
-#include <cstdlib>
+#include <complex>
 
-int atoi ( const char * str );
+// Base Class Headers ----------------
 
 
-#include "pwaPlotter.h"
-
-using namespace std;
-using namespace rpwa;
+// Collaborating Class Declarations --
 
 
-int
-main(int argc, char** argv){
+namespace rpwa { 
 
-  if(argc<2){
-    cerr<<"Usage: pwaplot nbins outputfile fit1 fit2 fit3 ..."<<endl;
-    return 1;
-  }
+typedef std::complex<double> cd;
+
+class absMassDep {
+public:
   
-  unsigned int nbins=atoi(argv[1]);
-  string outfilename=argv[2];
-  vector<string> inputfiles;
-  for(int i=3; i<argc; ++i){
-    inputfiles.push_back(argv[i]);
-  }
-  
-  pwaPlotter plotter;
-  
-  for(unsigned int i=0; i<inputfiles.size();++i){
-    plotter.addFit(inputfiles[i],inputfiles[i],1,"pwa","fitResult_v2",nbins);
-  }
+  virtual ~absMassDep(){}
 
-  plotter.produceDensityPlots();
+  // Accessors -----------------------
+  virtual cd val(double m)=0;
+  virtual double get_rho(double m, unsigned int i)const =0;
+  virtual int l(unsigned int i)const  =0;
+  virtual int l()const  =0;
 
-  plotter.writeAll(outfilename);
+  // Modifiers -----------------------
 
-  return 0;
+  // Operations ----------------------
+
+
+};
+
 }
+
+#endif
+
+//--------------------------------------------------------------
+// $Log$
+//--------------------------------------------------------------

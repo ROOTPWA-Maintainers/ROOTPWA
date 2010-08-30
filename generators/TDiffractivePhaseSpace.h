@@ -120,12 +120,30 @@ namespace rpwa {
      *
      *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
      */
-    void SetTPrimeSlope(double slopePar, double slopeParGradient = 0.) {
-    	_invSlopePar = 1. / slopePar;
-    	_invSlopeParGradient = slopeParGradient == 0. ? 0. : 1. / slopeParGradient;
+    void SetTPrimeSlope(double slopePar) {
+    	_invSlopePar = new double[1];
+    	_invSlopePar[0] = 1. / slopePar;
     }  // inverse for simple usage with TRandom
   
-
+    /** @brief Set the slopes b of the t-prime distribution depending on the invariant mass
+     *
+     *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
+     *
+     *  in case of more than one value assuming sorted ascending input for interpolation
+     */
+    void SetTPrimeSlope(double* slopePar, double* inv_m = NULL, int nvalues = 1) {
+    	// delete previous arrays if existing
+    	if (_invSlopePar) delete [] _invSlopePar;
+    	if (_invM)	      delete [] _invM;
+    	_invSlopePar = new double [nvalues];
+    	_invM		 = new double [nvalues];
+    	_ninvSlopePar = nvalues;
+    	for (int i = 0; i < _ninvSlopePar; i++){
+    		if (inv_m) _invM[i] = inv_m[i]; else _invM[i] = 0;
+    		_invSlopePar[i] = 1. / slopePar[i];
+    		//cout << _invM[i] << " " << _invSlopePar[i] << endl;
+    	}
+    }  // inverse for simple usage with TRandom
 
     /** @brief Set mass range of produced system X
      * 
@@ -146,6 +164,8 @@ namespace rpwa {
     _phaseSpace.setProposalBW(mass,width);
     _phaseSpace.setWeightType(nBodyPhaseSpaceGen::IMPORTANCE);
   }
+
+  void SettMin(double tMin){_tMin = tMin;};
 
   /*
    * If you set the Primary Vertex Generator (create it first)
@@ -214,8 +234,9 @@ namespace rpwa {
 
     //TH1* thetaDistribution;
 
-    double _invSlopePar;  // inverse slope parameter 1 / b of t' distribution [(GeV/c)^{-2}]
-    double _invSlopeParGradient; // slope parameter = _SlopeParGradient*Xmass + _invSlopePar
+    double* _invSlopePar;  // inverse slope parameter(s) 1 / b of t' distribution [(GeV/c)^{-2}]
+    double* _invM;		   // invariant masses corresponding to _invSlopePar
+    int		_ninvSlopePar;
 
     // cut on t-distribution
     double _tMin;  // [(GeV/c)^2]
@@ -246,6 +267,11 @@ namespace rpwa {
     // calculate the t' by using the information of the incoming and outgoing particle in the vertex
     float Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out);
 
+
+    // case invariant_M < 0. : first entry in _invSlopePar is taken (if any)
+    // case invariant_M >= 0.: extrapolation or interpolation of given points
+    // for t' over invariant Mass
+    double Get_inv_SlopePar(double invariant_M = -1.);
   };
 
 }  // namespace rpwa

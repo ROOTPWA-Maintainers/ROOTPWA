@@ -124,8 +124,10 @@ public:
 	      const std::string& title,
 	      const unsigned int colour=1,
 	      const std::string& treename="pwa",
-	      const std::string& branchname="fitResult_v2");
+	      const std::string& branchname="fitResult_v2",
+	      const unsigned int numb_bins=0);
 	      
+
 
   /// \brief Create 2D density plots of the intensities
   /// This will produce a wheighted probability density profile
@@ -156,6 +158,7 @@ private:
   
   ///< TMultiGraphs
   std::map<std::string,TMultiGraph*> mIntensities;
+  std::map<std::string,TGraph*> mPhaseSpace;
 
   TMultiGraph* mLogLikelihood;
   TMultiGraph* mLogLikelihoodPerEvent;
@@ -169,7 +172,7 @@ private:
   
   bool registerWave(const std::string& wavename); ///< create wave histograms/graphs
 
-  ClassDef(pwaPlotter,1);
+  ClassDef(pwaPlotter,2);
 
 };
 

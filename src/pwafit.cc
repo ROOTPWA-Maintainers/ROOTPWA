@@ -373,9 +373,11 @@ main(int    argc,
 			const unsigned int parIndex = parIndices[i];
 			double             startVal;
 			const string       parName = minimizer->VariableName(parIndex);
-			if (parName != L.parName(parIndex))
+			if (parName != L.parName(parIndex)) {
 				printWarn << "parameter name in minimizer and likelihood is inconsistent "
 				          << "(" << parName << " vs. " << L.parName(parIndex) << ")" << endl;
+				success = false;
+			}
 			if (startValValid) {
 				// get parameter value from fitResult
 				assert(startFitResult);

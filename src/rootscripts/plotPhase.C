@@ -36,11 +36,13 @@
 #include <iostream>
 #include <sstream>
 
+#include "TGraphErrors.h"
 #include "TAxis.h"
 #include "TPad.h"
+#include "TLegend.h"
+#include "TList.h"
 
 #include "utilities.h"
-#include "fitResult.h"
 #include "plotPhase.h"
 
 
@@ -49,85 +51,116 @@ using namespace rpwa;
 
 
 // signature with wave names
-TGraphErrors*
-plotPhase(TTree*        tree,        // fitResult tree
-	  const int     waveIndexA,  // index of first wave
-	  const int     waveIndexB,  // index of second wave
-	  const string& selectExpr,  // TTree::Draw() selection expression
-	  const string& graphTitle,  // name and title of graph
-	  const char*   drawOption,  // draw option for graph
-	  const int     graphColor,  // color of line and marker
-	  const bool    saveEps,     // if set, EPS file with name waveId is created
-	  const string& branchName)
+TMultiGraph*
+plotPhase(const unsigned int nmbTrees,     // number of fitResult trees
+          TTree**            trees,        // array of fitResult trees
+          const int          waveIndexA,   // index of first wave
+          const int          waveIndexB,   // index of second wave
+          const bool         saveEps,      // if set, EPS file with name wave ID is created
+          const int*         graphColors,  // array of colors for graph line and marker
+          const bool         drawLegend,   // if set legend is drawn
+          const string&      graphTitle,   // name and title of graph (default is wave IDs)
+          const char*        drawOption,   // draw option for graph
+          const string&      selectExpr,   // TTree::Draw() selection expression
+          const string&      branchName)   // fitResult branch name
 {
-  if (!tree) {
-    printErr << "null pointer to tree. exiting." << endl;
-    return 0;
-  }
-  // get wave names
-  fitResult* massBin = new fitResult();
-  tree->SetBranchAddress(branchName.c_str(), &massBin);
-  tree->GetEntry(0);
-  const string waveNameA = massBin->waveName(waveIndexA).Data();
-  const string waveNameB = massBin->waveName(waveIndexB).Data();
-  printInfo << "plotting phase between wave '" << waveNameA << "' [" << waveIndexA << "] "
-	    << "and wave '" << waveNameB << "' [" << waveIndexB << "]" << endl;
-  if (selectExpr != "")
-    cout << "    using selection criterion '" << selectExpr << "'" << endl;
+	for (unsigned int i = 0; i < nmbTrees; ++i)
+		if (!trees[i]) {
+			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
+			return 0;
+		}
+	// get wave names (assume same wave set in all trees)
+	fitResult* massBin = new fitResult();
+	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+	trees[0]->GetEntry(0);
+	const string waveNameA = massBin->waveName(waveIndexA).Data();
+	const string waveNameB = massBin->waveName(waveIndexB).Data();
+	printInfo << "plotting phase between wave '" << waveNameA << "' [" << waveIndexA << "] "
+	          << "and wave '" << waveNameB << "' [" << waveIndexB << "]" << endl;
+	if (selectExpr != "")
+		cout << "    using selection criterion '" << selectExpr << "'" << endl;
 
-  // build and run TTree::Draw() expression
-  stringstream drawExpr;
-  drawExpr << branchName << ".phase("     << waveIndexA << "," << waveIndexB << "):"
-	   << branchName << ".phaseErr(" << waveIndexA << "," << waveIndexB << "):"
-	   << branchName << ".massBinCenter() >> h" << waveIndexA << "_" << waveIndexB;
-  cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
-       << "on tree '" << tree->GetName() << "', '" << tree->GetTitle() << "'" << endl;
-  tree->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
+	// create multiGraph
+	TMultiGraph* graph = new TMultiGraph();
+	{
+		if (graphTitle != "") {
+			graph->SetName (graphTitle.c_str());
+			graph->SetTitle(graphTitle.c_str());
+		} else {
+			stringstream name;
+			name << "phase_" << waveNameA << "_" << waveNameB;
+			stringstream title;
+			title << "#Delta#varphi(" << waveNameA << " [" << waveIndexA << "], "
+			      << waveNameB << " [" << waveIndexB << "])";
+			graph->SetName(name.str().c_str());
+			graph->SetTitle(title.str().c_str());
+		}
+	}
 
-  // extract data from TTree::Draw() result and build graph
-  const int nmbBins = tree->GetSelectedRows();
-  vector<double> x(nmbBins), xErr(nmbBins);
-  for (int i = 0; i < nmbBins; ++i) {
-    x[i]    = tree->GetV3()[i] * 0.001;  // convert mass to GeV
-    xErr[i] = 0;
-  }
-  TGraphErrors* graph = new TGraphErrors(nmbBins,
-					 &(*(x.begin())),  // mass
-					 tree->GetV1(),    // intensity
-					 0,                // mass error
-					 tree->GetV2());   // intensity error
-  stringstream graphName;
-  graphName << "phase_" << waveNameA << "_" << waveNameB;
-  {
-    stringstream title;
-    title << "#Delta#varphi(" << waveNameA << " [" << waveIndexA << "], "
-	  << waveNameB << " [" << waveIndexB << "])";
-    if (graphTitle != "") {
-      graph->SetName (graphTitle.c_str());
-      graph->SetTitle(graphTitle.c_str());
-    } else {
-      graph->SetName(graphName.str().c_str());
-      graph->SetTitle(title.str().c_str());
-    }
-  }
+	// fill multiGraph
+	for (unsigned int i = 0; i < nmbTrees; ++i) {
 
-  // beautify and draw graph
-  graph->Draw(drawOption);
-  graph->SetMarkerStyle(21);
-  graph->SetMarkerSize(0.5);
-  graph->SetMarkerColor(graphColor);
-  graph->SetLineColor(graphColor);
-  graph->GetXaxis()->SetTitle("Mass [GeV]");
-  graph->GetYaxis()->SetTitle("Phase Angle [deg]");
-  graph->SetMinimum(-180);
-  graph->SetMaximum(180);
-  // TGraphErrors* clone = (TGraphErrors*);
-  // clone->SetName(name.str().c_str());
-  gPad->Update();
+		// builf and run TTree::Draw() expression
+		stringstream drawExpr;
+		drawExpr << branchName << ".phase("     << waveIndexA << "," << waveIndexB << "):"
+		         << branchName << ".phaseErr(" << waveIndexA << "," << waveIndexB << "):"
+		         << branchName << ".massBinCenter() >> h" << waveIndexA << "_" << waveIndexB
+		         << "_" << i;
+		cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
+		     << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
+		trees[i]->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
 
-  // create EPS file
-  if (saveEps)
-    gPad->SaveAs((graphName.str() + ".eps").c_str());
+		// extract data from TTree::Draw() result and build graph
+		const int nmbBins = trees[i]->GetSelectedRows();
+		vector<double> x(nmbBins), xErr(nmbBins);
+		for (int j = 0; j < nmbBins; ++j) {
+			x   [j] = trees[i]->GetV3()[j] * 0.001;  // convert mass to GeV
+			xErr[j] = 0;
+		}
+		TGraphErrors* g = new TGraphErrors(nmbBins,
+		                                   &(*(x.begin())),     // mass
+		                                   trees[i]->GetV1(),   // phase
+		                                   &(*(xErr.begin())),  // mass error
+		                                   trees[i]->GetV2());  // phase error
+		
+		// beautify graph
+		stringstream graphName;
+		graphName << graph->GetName() << "_" << i;
+		g->SetName (graphName.str().c_str());
+		g->SetTitle(graphName.str().c_str());
+		g->SetMarkerStyle(21);
+		g->SetMarkerSize(0.5);
+		if (graphColors) {
+			g->SetMarkerColor(graphColors[i]);
+			g->SetLineColor  (graphColors[i]);
+		}
+		graph->Add(g);
+	}
 
-  return graph;
+	graph->SetMinimum(-240);
+	graph->SetMaximum( 240);
+	// draw graph
+	graph->Draw(drawOption);
+	graph->GetXaxis()->SetTitle("Mass [GeV]");
+	graph->GetYaxis()->SetTitle("Phase Angle [deg]");
+	gPad->Update();
+
+	// add legend
+	if (drawLegend && (nmbTrees > 1)) {
+		TLegend* legend = new TLegend(0.65,0.80,0.99,0.99);
+		legend->SetFillColor(10);
+		legend->SetBorderSize(1);
+		legend->SetMargin(0.2);
+		for (unsigned int i = 0; i < nmbTrees; ++i) {
+			TGraph* g = static_cast<TGraph*>(graph->GetListOfGraphs()->At(i));
+			legend->AddEntry(g, trees[i]->GetTitle(), "LPE");
+		}
+		legend->Draw();
+	}
+  
+	// create EPS file
+	if (saveEps)
+		gPad->SaveAs(((string)graph->GetName() + ".eps").c_str());
+
+	return graph;
 }
