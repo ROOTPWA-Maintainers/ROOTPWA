@@ -802,6 +802,7 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 	string result = "";
 	string wavelistfile = "";
 	string normalizationfile = "";
+	string acceptancefile = "";
 	string fitresultfile = "";
 	int bincounter(0);
 	int bin_low = -1;
@@ -813,6 +814,7 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 			wavelistfile = _dir_fit_results + "/" + (*it).second.wave_list_file;
 			fitresultfile = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".root";
 			executedir = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "AMPS/";
+			acceptancefile = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "ACCAMPS/" + "norm.int";
 			normalizationfile = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "PSPAMPS/" + "norm.int";
 			break;
 		}
@@ -830,15 +832,27 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 		return result;
 	}
 	stringstream _result;
-	_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
+	//_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
+	_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile;
 	result = _result.str();
 	return result;
+}
+
+vector<string>& TrpwaSessionManager::GetFitResults(){
+	vector<string>* result = new vector<string>();
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		string fitresultfile;
+		fitresultfile = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".root";
+		if (FileExists(fitresultfile)) (*result).push_back(fitresultfile);
+		else cout << " Warning in TrpwaSessionManager::GetFitResults(): fit result " << fitresultfile << " does not exist. Skipping " << endl;
+	}
+	return *result;
 }
 
 vector<string>& TrpwaSessionManager::GetWaveList(int ibin){
 	int bin_low;
 	int bin_high;
-	GetWaveList(ibin, bin_low, bin_high);
+	return GetWaveList(ibin, bin_low, bin_high);
 }
 
 // check whether a file exists
@@ -998,7 +1012,7 @@ bool TrpwaSessionManager::SetSelectedWaves(const vector<int>& bin_lowedes,const 
 bool TrpwaSessionManager::SaveSelectedWaves(){
 	bool result(true);
 
-	// write for every bin the keyfiles out
+	// write for every bin the key files out
 	// add an # in front of the wave key if it is not specified as an selected wave
 
 	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){

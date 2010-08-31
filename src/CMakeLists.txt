@@ -94,7 +94,7 @@ make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
 make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
 make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
 make_executable(testArray         testArray.cc         ${THIS_LIB})
-# make_executable(mockup            mockup.cxx           ${THIS_LIB})
+make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
 
 
 # test executables

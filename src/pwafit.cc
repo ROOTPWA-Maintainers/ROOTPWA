@@ -266,7 +266,7 @@ main(int    argc,
 	     << "    rank of fit .................................. "  << rank                    << endl
 	     << "    minimizer .................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
 	     << "    CUDA acceleration ............................ "  << ((cudaEnabled) ? "en" : "dis") << "abled" << endl
-	     << "    quiet ........................................ "  << quiet << endl;
+	     << "    quiet ........................................ "  << ((quiet) ? "yes" : "no") << endl;
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
@@ -281,7 +281,7 @@ main(int    argc,
 	if (cudaEnabled and genCudaDiffHist) {
 		L._genCudaDiffHist = true;
 		const string cudaDiffFileName = outFileName.substr(0, outFileName.length() - 5)
-			                              + ".cudaDiff.root";
+			+ ".cudaDiff.root";
 		L._outFile = TFile::Open(cudaDiffFileName.c_str(), "RECREATE");
 	}
 #endif  

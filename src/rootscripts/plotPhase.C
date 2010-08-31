@@ -69,12 +69,15 @@ plotPhase(const unsigned int nmbTrees,     // number of fitResult trees
 			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
 			return 0;
 		}
-	// get wave names (assume same wave set in all trees)
-	fitResult* massBin = new fitResult();
-	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
-	trees[0]->GetEntry(0);
-	const string waveNameA = massBin->waveName(waveIndexA).Data();
-	const string waveNameB = massBin->waveName(waveIndexB).Data();
+	string waveNameA, waveNameB;
+	{
+		// get wave names (assume same wave set in all bins)
+		fitResult* massBin = new fitResult();
+		trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+		trees[0]->GetEntry(0);
+		waveNameA = massBin->waveName(waveIndexA).Data();
+		waveNameB = massBin->waveName(waveIndexB).Data();
+	}
 	printInfo << "plotting phase between wave '" << waveNameA << "' [" << waveIndexA << "] "
 	          << "and wave '" << waveNameB << "' [" << waveIndexB << "]" << endl;
 	if (selectExpr != "")
@@ -100,12 +103,29 @@ plotPhase(const unsigned int nmbTrees,     // number of fitResult trees
 	// fill multiGraph
 	for (unsigned int i = 0; i < nmbTrees; ++i) {
 
+		// get wave index for this tree (assume same wave set in all bins)
+		fitResult* massBin = new fitResult();
+		trees[i]->SetBranchAddress(branchName.c_str(), &massBin);
+		trees[i]->GetEntry(0);
+		const int waveIndexAThisTree = massBin->waveIndex(waveNameA);
+		const int waveIndexBThisTree = massBin->waveIndex(waveNameB);
+		if (waveIndexAThisTree < 0) {
+			printInfo << "cannot find wave '" << waveNameA << "' in tree '" << trees[i]->GetTitle() << "'. "
+			          << "skipping." << endl;
+			continue;
+		}
+		if (waveIndexBThisTree < 0) {
+			printInfo << "cannot find wave '" << waveNameB << "' in tree '" << trees[i]->GetTitle() << "'. "
+			          << "skipping." << endl;
+			continue;
+		}
+
 		// builf and run TTree::Draw() expression
 		stringstream drawExpr;
-		drawExpr << branchName << ".phase("     << waveIndexA << "," << waveIndexB << "):"
-		         << branchName << ".phaseErr(" << waveIndexA << "," << waveIndexB << "):"
-		         << branchName << ".massBinCenter() >> h" << waveIndexA << "_" << waveIndexB
-		         << "_" << i;
+		drawExpr << branchName << ".phase("    << waveIndexAThisTree << "," << waveIndexBThisTree << "):"
+		         << branchName << ".phaseErr(" << waveIndexAThisTree << "," << waveIndexBThisTree << "):"
+		         << branchName << ".massBinCenter() >> h" << waveIndexAThisTree << "_"
+		         << waveIndexBThisTree << "_" << i;
 		cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
 		     << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;
 		trees[i]->Draw(drawExpr.str().c_str(), selectExpr.c_str(), "goff");
