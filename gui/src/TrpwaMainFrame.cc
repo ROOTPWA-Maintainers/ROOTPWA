@@ -48,7 +48,7 @@ static const string func_calls[nsteps] = {
 		"Dummy()",
 		"SelectWaves()",
 		"FitPartialWaves()",
-		"Dummy()",
+		"ShowFitResults()",
 		"Dummy()"
 };
 static const int nbatches = 5;
@@ -198,8 +198,8 @@ void TrpwaMainFrame::CheckStatus() {
 		step_status[7]=current_session->Check_wave_lists();
 		step_status[8]=current_session->Check_fits();
 
-		step_status[9]=1.;
-		step_status[10]=1.;
+		step_status[9]=0.;
+		step_status[10]=0.;
 	}
 
 	for (int istep = 0; istep < nsteps; istep++){
@@ -353,6 +353,14 @@ void TrpwaMainFrame::FitPartialWaves(){
 		// calls will move to a separate class depending on the
 		// farm type given, but for now implemented here
 
+		// remove old results
+		vector<string> fitresultfiles = current_session->GetFitResults();
+		for (unsigned int i = 0; i < fitresultfiles.size(); i++){
+			stringstream command;
+			command << "mv " << fitresultfiles[i] << " " << fitresultfiles[i] << ".previous" << endl;
+			system(command.str().c_str());
+		}
+
 		// write a script to submit it
 		ofstream script("/tmp/_fitpartialwaves.sh");
 		if (script.good()){
@@ -371,6 +379,47 @@ void TrpwaMainFrame::FitPartialWaves(){
 
 		system(command.str().c_str());
 	}
+}
+
+void TrpwaMainFrame::ShowFitResults(){
+	if (current_session){
+		// calls will move to a separate class depending on the
+		// farm type given, but for now implemented here
+
+		// write a script to submit it
+		ofstream script("/tmp/_showresults.sh");
+		if (script.good()){
+			script << "# generated script to show fit results \n" << endl;
+			script << "cd ${ROOTPWA}/src/rootscripts" << endl;
+			ofstream rootmacro("/tmp/rootmacro.C");
+			if (rootmacro.good()){
+				rootmacro << "void rootmacro(){" << endl;
+				rootmacro << "TChain* tree = new TChain(\"pwa\",\"pwa\");" << endl;
+				vector<string> fitresultfiles = current_session->GetFitResults();
+				for (unsigned int i = 0; i < fitresultfiles.size(); i++){
+					rootmacro << "tree->Add(\"" << fitresultfiles[i] << "\");"<< endl;
+				}
+				rootmacro << "plotAllIntensities(tree, true);" << endl;
+				rootmacro << "};" << endl;
+			}
+			rootmacro.close();
+			script << "root -l -q /tmp/rootmacro.C" << endl;
+			//script << "rm /tmp/rootmacro.C" << endl;
+			script << "mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ~/" << endl;
+			script << "cd -" << endl;
+		}
+		script.close();
+		stringstream command;
+		command << "source /tmp/_showresults.sh";
+
+		system(command.str().c_str());
+	}
+	/*
+	# visualization must be performed in the rootscript folder containing all needed (logon) scripts
+	# run the lines of code
+	# hopefully a ps file was created containing all intensities
+	mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ${KPIPI_FIT_DIR}
+	# ps2pdf ${KPIPI_FIT_DIR}/waveintensities.ps*/
 }
 
 TrpwaMainFrame::~TrpwaMainFrame() {

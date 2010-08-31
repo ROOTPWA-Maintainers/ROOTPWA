@@ -252,6 +252,9 @@ public:
 	// executedir is the directory to execute this command in
 	string GetFitCommand(int ibin, string& executedir);
 
+	// retrieve a list of available fit results with path to it
+	vector<string>& GetFitResults();
+
 	// set the selected Waves
 	// bin_lowedes are the low edges of the bins to be set
 	// selections are the corresponding waves for each bin

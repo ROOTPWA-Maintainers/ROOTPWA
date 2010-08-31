@@ -77,6 +77,8 @@ public:
 
 	void FitPartialWaves(); // send jobs for partial wave fitting
 
+	void ShowFitResults(); // send a command to show the available fit results
+
 	void Dummy(); // will be called for every function not implemented yet
 
 	// call the root script for class definition

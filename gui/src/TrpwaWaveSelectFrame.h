@@ -32,12 +32,16 @@ private:
 	int _selected_bin; // -1 if all bins
 
 	TGButton* _button_allbins; // reference to button with all bins
+	TGButton* _copybinbutton;  // reference to button to copy bins
 	vector<TGTextButton*> _buttons_binselection; // holds the buttons to all bins
 
 	vector<TGTextButton*> _buttons_waveselection; // holds the buttons to all waves
 
 	// set the buttons according to the wave list in _selected bin
 	void UpdateWaveButtons();
+
+	// copy the wave selection from one bin to an other
+	void CopyWaveSelection(int frombin, int tobin);
 
 public:
 
