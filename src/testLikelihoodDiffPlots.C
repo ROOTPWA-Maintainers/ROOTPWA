@@ -40,12 +40,18 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <map>
 #include <algorithm>
 #include <cmath>
 
 #include "TFile.h"
 #include "TTree.h"
 #include "TH1.h"
+
+
+#ifdef __MAKECINT__
+#pragma link C++ class std::map<std::string, double>+;
+#endif
 
 
 using namespace std;
@@ -60,7 +66,9 @@ void testLikelihoodDiffPlots(const string& inFileNameA = "testLikelihood.root",
 	const string inFileNames[2] = {inFileNameA, inFileNameB};
 	TFile*       inFiles[2]     = {0, 0};
 	TTree*       inTrees[2]     = {0, 0};
-	UInt_t       nmbPar [2]     = {0, 0};
+	// leaf variables
+	Double_t             logLikelihood[2] = {0, 0};
+	map<string, double>* derivatives  [2] = {0, 0};
 	for (unsigned int i = 0; i < 2; ++i) {
 		inFiles[i] = TFile::Open(inFileNames[i].c_str(), "READ");
 		if (!inFiles[i] || inFiles[i]->IsZombie()) {
@@ -72,21 +80,15 @@ void testLikelihoodDiffPlots(const string& inFileNameA = "testLikelihood.root",
 			cout << "cannot find tree '" << inTreeName << "'. aborting." << endl;
 			throw;
 		}
-		inTrees[i]->SetBranchAddress("nmbPar", &nmbPar[i]);
-		inTrees[i]->GetEntry(0);
-	}
-	if (nmbPar[0] != nmbPar[1]) {
-		cout << "likelihoods have different number of parameters: "
-		     << nmbPar[0] << " vs. " << nmbPar[1] << ". aborting." << endl;
-		throw;
-	}
-
-	// connect remaining leafs
-	Double_t logLikelihood[2];
-	Double_t derivatives  [2][nmbPar[0]];
-	for (unsigned int i = 0; i < 2; ++i) {
+		// connect leafs
 		inTrees[i]->SetBranchAddress("logLikelihood", &logLikelihood[i]);
 		inTrees[i]->SetBranchAddress("derivatives",   &derivatives  [i]);
+		inTrees[i]->GetEntry(0);
+	}
+	if (derivatives[0]->size() != derivatives[1]->size()) {
+		cout << "derivative arrays have different size: "
+		     << derivatives[0]->size() << " vs. " << derivatives[1]->size() << ". aborting." << endl;
+		throw;
 	}
 
 	// create output file
@@ -107,58 +109,68 @@ void testLikelihoodDiffPlots(const string& inFileNameA = "testLikelihood.root",
 	TH1D* hDerivDiffTotRel = new TH1D
 		("hDerivDiffTotRel", "hDerivDiffTotRel;1 - #nabla_{GPU} / #nabla_{CPU};Count",
 		 10000, -1e-10, 1e-10);
-	TH1D* hDerivDiffAbs[nmbPar[0]];
-	TH1D* hDerivDiffRel[nmbPar[0]];
-	for (unsigned int i = 0; i < nmbPar[0]; ++i) {
+	map<string, TH1D*> hDerivDiffAbs;
+	map<string, TH1D*> hDerivDiffRel;
+	for (map<string, double>::const_iterator i = derivatives[0]->begin();
+	     i != derivatives[0]->end(); ++i) {
 		stringstream suf;
-		suf << "_" << i;
-		hDerivDiffAbs[i] =
+		suf << "_" << i->first;
+		hDerivDiffAbs[i->first] =
 			new TH1D(("hDerivDiffAbs" + suf.str()).c_str(),
 			         ("hDerivDiffAbs" + suf.str() + ";#nabla_{CPU} - #nabla_{GPU};Count").c_str(),
 			         10000, -1e-11, 1e-11);
-		hDerivDiffRel[i] =
+		hDerivDiffRel[i->first] =
 			new TH1D(("hDerivDiffRel" + suf.str()).c_str(),
 			         ("hDerivDiffRel" + suf.str() + ";1 - #nabla_{GPU} / #nabla_{CPU};Count").c_str(),
 			         10000, -1e-11, 1e-11);
 	}
 
 	// loop over tree and fill histograms
-	long int nmbEntries = min(inTrees[0]->GetEntriesFast(), inTrees[1]->GetEntriesFast());
+	// long int nmbEntries = min(inTrees[0]->GetEntries(), inTrees[1]->GetEntries());
+	long int nmbEntries = 100;
 	for (long int entry = 0; entry < nmbEntries; ++entry) {
-		inTrees[0]->GetEntry(entry);
-		inTrees[1]->GetEntry(entry);
+		Long64_t treeEntries[2] = {inTrees[0]->LoadTree(entry), inTrees[1]->LoadTree(entry)};
+		inTrees[0]->GetEntry(treeEntries[0]);
+		inTrees[1]->GetEntry(treeEntries[1]);
 		
 		hLikelihoodDiffAbs->Fill(logLikelihood[0] - logLikelihood[1]);
 		hLikelihoodDiffRel->Fill(1 - logLikelihood[1] / logLikelihood[0]);
-		for (unsigned int i = 0; i < nmbPar[0]; ++i) {
-			double diffAbs = derivatives[0][i] - derivatives[1][i];
-			double diffRel = 1 -   derivatives[1][i]	/ derivatives[0][i];
-			hDerivDiffAbs[i]->Fill(diffAbs);
-			hDerivDiffRel[i]->Fill(diffRel);
+		// cout << "[" << entry << "] = " << logLikelihood[0] << " vs. " << logLikelihood[1] << endl;
+		for (map<string, double>::const_iterator i = derivatives[0]->begin();
+		     i != derivatives[0]->end(); ++i) {
+			map<string, double>::const_iterator j  = derivatives[1]->find(i->first);
+			if (j == derivatives[1]->end()) {
+				cout << "cannot find derivative for '" << i->first << "' in second tree. skipping." << endl;
+				continue;
+			}
+			double diffAbs = i->second - j->second;
+			double diffRel = 1 - j->second / i->second;
+			hDerivDiffAbs[i->first]->Fill(diffAbs);
+			hDerivDiffRel[i->first]->Fill(diffRel);
 			hDerivDiffTotAbs->Fill(diffAbs);
 			hDerivDiffTotRel->Fill(diffRel);
 		}
 	}
 
 	// find gradients with maximum mean and RMS of relative difference
-	double       maxMean      = 0;
-	unsigned int maxMeanIndex = 0;
-	double       maxRms       = 0;
-	unsigned int maxRmsIndex  = 0;
-	for (unsigned int i = 0; i < nmbPar[0]; ++i) {
-		const double mean = abs((double)hDerivDiffRel[i]->GetMean());
+	double maxMean = 0;
+	string maxMeanParName;
+	double maxRms = 0;
+	string maxRmsParName;
+	for (map<string, TH1D*>::const_iterator i = hDerivDiffRel.begin(); i != hDerivDiffRel.end(); ++i) {
+		const double mean = abs((double)i->second->GetMean());
 		if (mean > maxMean) {
-			maxMean      = mean;
-			maxMeanIndex = i;
+			maxMean        = mean;
+			maxMeanParName = i->first;
 		}
-		const double rms = hDerivDiffRel[i]->GetRMS();
+		const double rms = i->second->GetRMS();
 		if (rms > maxRms) {
-			maxRms      = rms;
-			maxRmsIndex = i;
+			maxRms        = rms;
+			maxRmsParName = i->first;
 		}
 	}
-	cout << "max. mean of relative diff. = " << maxMean << " @ [" << maxMeanIndex << "]" << endl;
-	cout << "max. RMS  of relative diff. = " << maxRms  << " @ [" << maxRmsIndex  << "]" << endl;
+	cout << "max. mean of relative diff. = " << maxMean << " @ [" << maxMeanParName << "]" << endl;
+	cout << "max. RMS  of relative diff. = " << maxRms  << " @ [" << maxRmsParName  << "]" << endl;
 
 	// write outout and cleanup
 	inFiles[0]->Close();

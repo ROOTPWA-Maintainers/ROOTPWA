@@ -34,6 +34,8 @@
 #pragma link C++ class TCovEllipse+;
 //#pragma link C++ class TMCMCMeta+;
 
+// STL tree leafs
+#pragma link C++ class std::map<std::string, double>+;
 
 
 // TFitResult produces a name clash for ROOT versions from 5.25.0 on

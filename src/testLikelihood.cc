@@ -35,6 +35,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <map>
+
 #include "TRandom3.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -170,12 +172,11 @@ main(int    argc,
   TTree tree("testLikelihoodTree", "testLikelihoodTree");
 
   // define tree branches
-	UInt_t   nmbPar = L.NDim();
+	const unsigned int nmbPar = L.NDim();
 	Double_t logLikelihood;
-	Double_t derivatives[nmbPar];
-  tree.Branch("nmbPar",        &nmbPar,        "nmbPar/i");
+	map<string, double> derivatives;
   tree.Branch("logLikelihood", &logLikelihood, "logLikelihood/D");
-  tree.Branch("derivatives",   derivatives,    "derivatives[nmbPar]/D");
+  tree.Branch("derivatives",   &derivatives);
 
   // setup random number generator
   TRandom3 random(startValSeed);
@@ -184,10 +185,16 @@ main(int    argc,
   for (unsigned int i = 0; i < nmbLikelihoodVals; ++i) {
 		// some random production amplitudes
 		double prodAmps[nmbPar];
-		for (unsigned int i = 0; i < nmbPar; ++i)
-			prodAmps[i] = random.Uniform(0, i);
+		for (unsigned int j = 0; j < nmbPar; ++j)
+			prodAmps[j] = random.Uniform(0, j);
 		logLikelihood = L.DoEval(prodAmps);
-		L.Gradient(prodAmps, derivatives);
+		double gradient[nmbPar];
+		L.Gradient(prodAmps, gradient);
+		derivatives.clear();
+		for (unsigned int j = 0; j < nmbPar; ++j) {
+			const string parName = L.parName(j);
+			derivatives[parName] = gradient[j];
+		}
 		tree.Fill();
 	}
 
