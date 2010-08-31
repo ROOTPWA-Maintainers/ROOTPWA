@@ -70,11 +70,14 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
 			return 0;
 		}
-	// get wave name (assume same wave set in all trees)
-	fitResult* massBin = new fitResult();
-	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
-	trees[0]->GetEntry(0);
-	const string waveName = massBin->waveName(waveIndex).Data();
+	string waveName;
+	{
+		// get wave name (assume same wave set in all bins)
+		fitResult* massBin = new fitResult();
+		trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+		trees[0]->GetEntry(0);
+		waveName = massBin->waveName(waveIndex).Data();
+	}
 	printInfo << "plotting wave intensity for wave '" << waveName << "' [" << waveIndex << "]";
 	if (selectExpr != "")
 		cout << " using selection criterion '" << selectExpr << "'";
@@ -98,10 +101,21 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 	double maxY = 0;
 	for (unsigned int i = 0; i < nmbTrees; ++i) {
 
+		// get wave index for this tree (assume same wave set in all bins)
+		fitResult* massBin = new fitResult();
+		trees[i]->SetBranchAddress(branchName.c_str(), &massBin);
+		trees[i]->GetEntry(0);
+		const int waveIndexThisTree = massBin->waveIndex(waveName);
+		if (waveIndexThisTree < 0) {
+			printInfo << "cannot find wave '" << waveName << "' in tree '" << trees[i]->GetTitle() << "'. "
+			          << "skipping." << endl;
+			continue;
+		}
+
 		// build and run TTree::Draw() expression
 		stringstream drawExpr;
-		drawExpr << branchName << ".intensity(" << waveIndex << "):"
-		         << branchName << ".intensityErr(" << waveIndex << "):"
+		drawExpr << branchName << ".intensity(" << waveIndexThisTree << "):"
+		         << branchName << ".intensityErr(" << waveIndexThisTree << "):"
 		         << branchName << ".massBinCenter() >> h" << waveName << "_" << i;
 		cout << "    running TTree::Draw() expression '" << drawExpr.str() << "' "
 		     << "on tree '" << trees[i]->GetName() << "', '" << trees[i]->GetTitle() << "'" << endl;

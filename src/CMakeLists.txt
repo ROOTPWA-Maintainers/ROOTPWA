@@ -84,11 +84,13 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 make_executable(listwaves         listwaves.cc         ${THIS_LIB})
 make_executable(pwafit            pwafit.cc            ${THIS_LIB})
 make_executable(pwaConstraintFit  pwaConstraintFit.cc  ${THIS_LIB})
+make_executable(selector          selector.cc          ${THIS_LIB})
+make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
+
 make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
 make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
 make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
-make_executable(selector          selector.cc          ${THIS_LIB})
-make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
+make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
 
 
 # test executables

@@ -130,7 +130,7 @@ main(int    argc,
   string       normIntFileName    = "";                     // file with normalization integrals
   string       accIntFileName     = "";                     // file with acceptance integrals
   unsigned int numbAccEvents      = 0;                      // number of events used for acceptance integrals
-  unsigned int rank               = 1;                      // rank of fit
+  unsigned int rank               = 1;                      // rank of spin-density matrix
   string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
   double       minimizerTolerance = 1e-10;                  // minimizer tolerance
   bool         quiet              = false;
@@ -223,7 +223,7 @@ main(int    argc,
        << "        number of acceptance norm. events ........ "  << numbAccEvents    << endl
        << "    rank of fit .................................. "  << rank                    << endl
        << "    minimizer .................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
-       << "    quiet ........................................ "  << quiet << endl;
+       << "    quiet ........................................ "  << ((quiet) ? "yes" : "no") << endl;
 
   // ---------------------------------------------------------------------------
   // setup likelihood function
