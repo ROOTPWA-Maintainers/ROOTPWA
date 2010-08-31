@@ -36,6 +36,7 @@
 
 
 #include <map>
+#include <list>
 
 #include "TRandom3.h"
 #include "TFile.h"
@@ -163,39 +164,63 @@ main(int    argc,
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
+#ifdef USE_CUDA
+	// L.enableCuda(true);
+#endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (!quiet)
 		cout << L << endl;
 
   // create output file and tree
 	TFile& outFile = *TFile::Open(outFileName.c_str(), "RECREATE");
-  TTree tree("testLikelihoodTree", "testLikelihoodTree");
+  TTree  tree("testLikelihoodTree", "testLikelihoodTree");
 
   // define tree branches
-	const unsigned int nmbPar = L.NDim();
-	Double_t logLikelihood;
+	Double_t            logLikelihood;
 	map<string, double> derivatives;
   tree.Branch("logLikelihood", &logLikelihood, "logLikelihood/D");
   tree.Branch("derivatives",   &derivatives);
 
-  // setup random number generator
-  TRandom3 random(startValSeed);
+  // setup random number generator and production amplitude map
+  TRandom3     random(startValSeed);
+  list<string> prodAmpNames;  // needed, to ensure that parameter values do not depend on ordering
+	const unsigned int nmbPar = L.NDim();
+  for (unsigned int i = 0; i < nmbPar; ++i)
+	  prodAmpNames.push_back(L.parName(i));
+  prodAmpNames.sort();
 
 	// calculate some likelihood values and derivatives
   for (unsigned int i = 0; i < nmbLikelihoodVals; ++i) {
-		// some random production amplitudes
-		double prodAmps[nmbPar];
-		for (unsigned int j = 0; j < nmbPar; ++j)
-			prodAmps[j] = random.Uniform(0, j);
-		logLikelihood = L.DoEval(prodAmps);
-		double gradient[nmbPar];
-		L.Gradient(prodAmps, gradient);
-		derivatives.clear();
-		for (unsigned int j = 0; j < nmbPar; ++j) {
-			const string parName = L.parName(j);
-			derivatives[parName] = gradient[j];
-		}
-		tree.Fill();
+		// generate random production amplitudes independent of parameter order
+	  double prodAmps[nmbPar];
+	  bool   success = true;
+	  for (list<string>::const_iterator j = prodAmpNames.begin(); j != prodAmpNames.end(); ++j) {
+		  int parIndex = -1;
+		  for (unsigned int k = 0; k < nmbPar; ++k)
+			  if (L.parName(k) == *j) {
+				  parIndex = k;
+				  break;
+			  }
+		  if (parIndex < 0) {
+			  cout << "cannot find parameter '" << *j << "'. skipping." << endl;
+			  success = false;
+			  continue;
+		  }
+		  prodAmps[parIndex] = random.Uniform(0, 10);
+		  // cout << "    [" << *j << "] = [" << parIndex << "] = " << prodAmps[parIndex] << endl;
+	  }
+	  if (success) {
+		  logLikelihood = L.DoEval(prodAmps);
+		  // cout << "[" << i << "] = " << logLikelihood << endl;
+		  double gradient[nmbPar];
+		  L.Gradient(prodAmps, gradient);
+		  derivatives.clear();
+		  for (unsigned int j = 0; j < nmbPar; ++j) {
+			  const string parName = L.parName(j);
+			  derivatives[parName] = gradient[j];
+		  }
+		  tree.Fill();
+	  }
 	}
 
 	tree.Write();
