@@ -77,6 +77,7 @@ namespace rpwa {
 		 const unsigned int                  nmbWavesMax,       // maximum extent of iWave index for production and decay amplitude arrays
 		 typename complexT::value_type*      d_logLikelihoods)  // output array of partial log likelihood sums with one entry for each kernel
 		{
+			typedef typename complexT::value_type T;
 			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
 			const unsigned int nmbThreads = gridDim.x * blockDim.x;
 
@@ -85,12 +86,12 @@ namespace rpwa {
 			const unsigned int prodAmpDim [3] = {rank, 2,           nmbWavesMax};
 			const unsigned int decayAmpDim[3] = {2,    nmbWavesMax, nmbEvents};
 			// loop over events and calculate real-data term of log likelihood
-			typename complexT::value_type logLikelihood = 0;
+			T logLikelihood = 0;
 			for (unsigned int iEvt = threadId; iEvt < nmbEvents; iEvt += nmbThreads) {
-				typename complexT::value_type likelihood = 0;  // likelihood for this event
+				T likelihood = 0;  // likelihood for this event
 				for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-						complexT ampProdSum = complexT(0);  // amplitude sum for negative/positive reflectivity for this rank
+						complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
 						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 							// compute likelihood term
 							const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
@@ -199,7 +200,7 @@ namespace rpwa {
 								  d_derivTerms[indicesToOffset<unsigned int>(derivTermIndices, derivTermDim, 3)]
 								* conj(d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)]);
 							// apply factor from derivative of log
-							derivativeSum -= (2. / d_likelihoods[iEvt]) * derivative;
+							derivativeSum -= ((typename complexT::value_type)2. / d_likelihoods[iEvt]) * derivative;
 						}
 						// write result
 						const unsigned int derivSumIndices[4] = {iRank, iRefl, iWave, threadId};

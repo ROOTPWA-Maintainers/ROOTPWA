@@ -38,6 +38,7 @@
 #include <complex>
 #include <cassert>
 #include <ctime>
+#include <algorithm>
 
 #define BOOST_DISABLE_ASSERTS
 #include "boost/multi_array.hpp"
@@ -45,7 +46,6 @@
 #include "TRandom3.h"
 
 #include "reportingUtils.hpp"
-#include "nDimArrayUtils.hpp"
 #include "nDimArrayUtils.hpp"
 
 #include "complex.cuh"
@@ -60,14 +60,15 @@ using namespace rpwa;
 typedef multi_array<complex<double>, 3> ampsArrayType;  // host array type of production and decay amplitudes
 
 
+template<typename complexT>
 void
-generateData(const unsigned int nmbEvents,
-             const unsigned int rank,
-             const unsigned int nmbWavesRefl[2],
-             ampsArrayType&     decayAmps,
-             ampsArrayType&     prodAmps,
-             double&            prodAmpFlat,
-             const unsigned int seed = 123456789)
+generateData(const unsigned int             nmbEvents,
+             const unsigned int             rank,
+             const unsigned int             nmbWavesRefl[2],
+             multi_array<complexT, 3>&      decayAmps,
+             multi_array<complexT, 3>&      prodAmps,
+             typename complexT::value_type& prodAmpFlat,
+             const unsigned int             seed = 123456789)
 {
 	TRandom3 random(seed);
 
@@ -76,9 +77,9 @@ generateData(const unsigned int nmbEvents,
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave)
 			for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
-				//const double val = iEvt * 1000 + iRefl * 100 + iWave;
-				//decayAmps[iEvt][iRefl][iWave] = complex<double>(val, val + 0.5);
-				decayAmps[iEvt][iRefl][iWave] = complex<double>(random.Uniform(0, 1), random.Uniform(0, 1));
+				//const complexT::value_type val = iEvt * 1000 + iRefl * 100 + iWave;
+				//decayAmps[iEvt][iRefl][iWave] = complexT(val, val + 0.5);
+				decayAmps[iEvt][iRefl][iWave] = complexT(random.Uniform(0, 1), random.Uniform(0, 1));
 			}
 
 	// set production amplitudes
@@ -87,9 +88,9 @@ generateData(const unsigned int nmbEvents,
 	for (unsigned int iRank = 0; iRank < rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-				//const double val = iRank * 1000 + iRefl * 100 + iWave;
-				//prodAmps[iRank][iRefl][iWave] = complex<double>(val, val + 0.5);
-				prodAmps[iRank][iRefl][iWave] = complex<double>(random.Uniform(0, 1), random.Uniform(0, 1));
+				//const complexT::value_type val = iRank * 1000 + iRefl * 100 + iWave;
+				//prodAmps[iRank][iRefl][iWave] = complexT(val, val + 0.5);
+				prodAmps[iRank][iRefl][iWave] = complexT(random.Uniform(0, 1), random.Uniform(0, 1));
 			}
 	//prodAmpFlat = parIndex;
 	prodAmpFlat = random.Uniform(0, 1);
@@ -98,18 +99,19 @@ generateData(const unsigned int nmbEvents,
 
 template<typename complexT>
 typename complexT::value_type
-logLikelihoodMultiArray(const ampsArrayType&                 decayAmps,
-                        const ampsArrayType&                 prodAmps,
+logLikelihoodMultiArray(const multi_array<complexT, 3>&      decayAmps,
+                        const multi_array<complexT, 3>&      prodAmps,
                         const typename complexT::value_type& prodAmpFlat,
                         const unsigned int                   nmbEvents,
                         const unsigned int                   rank,
                         const unsigned int                   nmbWavesRefl[2])
 {
-	const typename complexT::value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
+	typedef typename complexT::value_type T;
+	const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 	// loop over events and calculate first term of log likelihood
-	typename complexT::value_type logLikelihood = 0;
+	vector<T> logLikelihoods(nmbEvents, 0);
 	for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
-		typename complexT::value_type likelihood = 0;  // likelihood for this event
+		T likelihood = 0;  // likelihood for this event
 		for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 				complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
@@ -121,33 +123,35 @@ logLikelihoodMultiArray(const ampsArrayType&                 decayAmps,
 			}
 			assert(likelihood >= 0);
 		}  // end loop over rank
-		likelihood    += prodAmpFlat2;
-		logLikelihood -= log(likelihood);  // accumulate log likelihood
+		likelihood          += prodAmpFlat2;
+		logLikelihoods[iEvt] = -log(likelihood);
 	}  // end loop over events
 
-	return logLikelihood;
+	return cascadeSum(logLikelihoods);
+	//return kahanSum(logLikelihoods);
 }
 
 
-double
+template<typename complexT>
+typename complexT::value_type
 runLogLikelihoodMultiArray(const unsigned int nmbRepitions,
                            const unsigned int nmbEvents,
                            const unsigned int rank,
                            const unsigned int nmbWavesRefl[2],
                            double&            elapsedTime)
 {
-	ampsArrayType decayAmps;
-	ampsArrayType prodAmps;
-	double        prodAmpFlat;
+	multi_array<complexT, 3>      decayAmps;
+	multi_array<complexT, 3>      prodAmps;
+	typename complexT::value_type prodAmpFlat;
 	generateData(nmbEvents, rank, nmbWavesRefl, decayAmps, prodAmps, prodAmpFlat);
 
 	// call function
-	clock_t start, finish;  // rough estimation of run time
-	double  logLikelihood = 0;
+	clock_t                       start, finish;  // rough estimation of run time
+	typename complexT::value_type logLikelihood = 0;
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
-		logLikelihood = logLikelihoodMultiArray<complex<double> >
-			(decayAmps, prodAmps, prodAmpFlat, nmbEvents, rank, nmbWavesRefl);
+		logLikelihood = logLikelihoodMultiArray(decayAmps, prodAmps, prodAmpFlat,
+		                                        nmbEvents, rank, nmbWavesRefl);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 
@@ -157,13 +161,13 @@ runLogLikelihoodMultiArray(const unsigned int nmbRepitions,
 
 template<typename complexT>
 void
-logLikelihoodDerivMultiArray(const ampsArrayType&                 decayAmps,
-                             const ampsArrayType&                 prodAmps,
+logLikelihoodDerivMultiArray(const multi_array<complexT, 3>&      decayAmps,
+                             const multi_array<complexT, 3>&      prodAmps,
                              const typename complexT::value_type& prodAmpFlat,
                              const unsigned int                   nmbEvents,
                              const unsigned int                   rank,
                              const unsigned int                   nmbWavesRefl[2],
-                             ampsArrayType&                       derivatives,
+                             multi_array<complexT, 3>&            derivatives,
                              typename complexT::value_type&       derivativeFlat)
 {
 	// create array of likelihood derivative w.r.t. real and imaginary
@@ -179,7 +183,7 @@ logLikelihoodDerivMultiArray(const ampsArrayType&                 decayAmps,
 	const typename complexT::value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 	for (unsigned int iEvt = 0; iEvt < nmbEvents; ++iEvt) {
 		typename complexT::value_type likelihood = 0;  // likelihood for this event
-		ampsArrayType                 derivative(extents[rank][2][max(nmbWavesRefl[0], nmbWavesRefl[1])]);  // likelihood derivative for this event
+		multi_array<complexT, 3>      derivative(extents[rank][2][max(nmbWavesRefl[0], nmbWavesRefl[1])]);  // likelihood derivative for this event
 		for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 				complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
@@ -214,33 +218,34 @@ logLikelihoodDerivMultiArray(const ampsArrayType&                 decayAmps,
 }
 
 
+template<typename complexT>
 void
-runLogLikelihoodDerivMultiArray(const unsigned int nmbRepitions,
-                                const unsigned int nmbEvents,
-                                const unsigned int rank,
-                                const unsigned int nmbWavesRefl[2],
-                                ampsArrayType&     derivatives,
-                                double&            derivativeFlat,
-                                double&            elapsedTime)
+runLogLikelihoodDerivMultiArray(const unsigned int             nmbRepitions,
+                                const unsigned int             nmbEvents,
+                                const unsigned int             rank,
+                                const unsigned int             nmbWavesRefl[2],
+                                multi_array<complexT, 3>&      derivatives,
+                                typename complexT::value_type& derivativeFlat,
+                                double&                        elapsedTime)
 {
-	ampsArrayType decayAmps;
-	ampsArrayType prodAmps;
-	double        prodAmpFlat;
+	multi_array<complexT, 3>      decayAmps;
+	multi_array<complexT, 3>      prodAmps;
+	typename complexT::value_type prodAmpFlat;
 	generateData(nmbEvents, rank, nmbWavesRefl, decayAmps, prodAmps, prodAmpFlat);
 
 	// call function
 	clock_t start, finish;  // rough estimation of run time
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i) {
-		logLikelihoodDerivMultiArray<complex<double> >
-			(decayAmps, prodAmps, prodAmpFlat, nmbEvents, rank, nmbWavesRefl, derivatives, derivativeFlat);
+		logLikelihoodDerivMultiArray(decayAmps, prodAmps, prodAmpFlat,
+		                             nmbEvents, rank, nmbWavesRefl, derivatives, derivativeFlat);
 	}
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 	// for (unsigned int iRank = 0; iRank < rank; ++iRank)
 	// 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 	// 		for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-	// 			complex<double> derivative = derivatives[iRank][iRefl][iWave];
+	// 			complexT derivative = derivatives[iRank][iRefl][iWave];
 	// 			cout  << "    derivative[" << iRank << "][" << iRefl << "][" << iWave << "] = "
 	// 			      << "(" << maxPrecision(derivative.real()) << ", "
 	// 			      << maxPrecision(derivative.real()) << ")" << endl;
@@ -331,46 +336,43 @@ runLogLikelihoodCuda(const unsigned int nmbRepitions,
 	generateData(nmbEvents, rank, nmbWavesRefl, decayAmps, prodAmps, prodAmpFlat);
 
 	// initialize CUDA environment
-	cuda::likelihoodInterface<cuda::complex<double> >& interface
-		= cuda::likelihoodInterface<cuda::complex<double> >::instance();
-	// interface.setDebug(true);
-	interface.init(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
-	               decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
+	cuda::likelihoodInterface<cuda::complex<double> >::init
+		(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
+		 decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
+	//cuda::likelihoodInterface<cuda::complex<double> >::setDebug(true);
 
 	// call function
 	clock_t start, finish;  // rough estimation of run time
 	double  logLikelihood = 0;
 	start = clock();
 	for (unsigned int i = 0; i < nmbRepitions; ++i)
-		logLikelihood = interface.logLikelihood
+		logLikelihood = cuda::likelihoodInterface<cuda::complex<double> >::logLikelihood
 			(reinterpret_cast<cuda::complex<double>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, rank);
 	finish = clock();
 	elapsedTime = ((double)(finish - start)) / CLOCKS_PER_SEC;  // [sec]
 
-	interface.closeCudaDevice();
+	cuda::likelihoodInterface<cuda::complex<double> >::closeCudaDevice();
 	return logLikelihood;
 }
 
 
+template<typename complexT>
 void
-runLogLikelihoodDerivCuda(const unsigned int nmbRepitions,
-                          const unsigned int nmbEvents,
-                          const unsigned int rank,
-                          const unsigned int nmbWavesRefl[2],
-                          ampsArrayType&     derivatives,
-                          double&            derivativeFlat,
-                          double&            elapsedTime)
+runLogLikelihoodDerivCuda(const unsigned int             nmbRepitions,
+                          const unsigned int             nmbEvents,
+                          const unsigned int             rank,
+                          const unsigned int             nmbWavesRefl[2],
+                          multi_array<complexT, 3>&      derivatives,
+                          typename complexT::value_type& derivativeFlat,
+                          double&                        elapsedTime)
 {
-	ampsArrayType decayAmps;
-	ampsArrayType prodAmps;
-	double        prodAmpFlat;
+	multi_array<complexT, 3>      decayAmps;
+	multi_array<complexT, 3>      prodAmps;
+	typename complexT::value_type prodAmpFlat;
 	generateData(nmbEvents, rank, nmbWavesRefl, decayAmps, prodAmps, prodAmpFlat);
 
 	// initialize CUDA environment
-	// cuda::likelihoodInterface<cuda::complex<double> >& interface
-	// 	= cuda::likelihoodInterface<cuda::complex<double> >::instance();
-	// interface.setDebug(true);
 	cuda::likelihoodInterface<cuda::complex<double> >::init
 		(reinterpret_cast<cuda::complex<double>*>(decayAmps.data()),
 		 decayAmps.num_elements(), nmbEvents, nmbWavesRefl, true);
@@ -557,12 +559,13 @@ main(int    argc,
 		double elapsedTime   [3];
 		double logLikelihoods[3];
 
-		logLikelihoods[0]
-			= runLogLikelihoodMultiArray (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[0]);
-		logLikelihoods[1]
-			= runLogLikelihoodPseudoArray(nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[1]);
-		logLikelihoods[2]
-			= runLogLikelihoodCuda       (nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[2]);
+		//logLikelihoods[0]	= runLogLikelihoodMultiArray<cuda::complex<double> >
+		logLikelihoods[0]	= runLogLikelihoodMultiArray<complex<double> >
+			(nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[0]);
+		logLikelihoods[1] = runLogLikelihoodPseudoArray
+			(nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[1]);
+		logLikelihoods[2] = runLogLikelihoodCuda
+			(nmbRepitions, nmbEvents, rank, nmbWavesRefl, elapsedTime[2]);
 
 		printInfo << "finished log likelihood calculation:" << endl
 		          << "    elapsed time (multi_array) ...... " << elapsedTime[0] << " sec" << endl
@@ -593,22 +596,24 @@ main(int    argc,
 		          << "    number of positive reflectivity waves ... " << nmbWavesRefl[1] << endl
 		          << "    number of negative reflectivity waves ... " << nmbWavesRefl[0] << endl;
 
-		double        elapsedTime   [2];
-		ampsArrayType derivatives   [2];
-		double        derivativeFlat[2];
+		//typedef cuda::complex<double> complexT;
+		typedef std::complex<double> complexT;
+		double                   elapsedTime   [2];
+		multi_array<complexT, 3> derivatives   [2];
+		double                   derivativeFlat[2];
 
 		runLogLikelihoodDerivMultiArray(nmbRepitions, nmbEvents, rank, nmbWavesRefl,
 		                                derivatives[0], derivativeFlat[0], elapsedTime[0]);
 		runLogLikelihoodDerivCuda(nmbRepitions, nmbEvents, rank, nmbWavesRefl,
 		                          derivatives[1], derivativeFlat[1], elapsedTime[1]);
 
-		complex<double> maxDiffAbs = 0;
-		complex<double> maxDiffRel = 0;
+		complexT maxDiffAbs = 0;
+		complexT maxDiffRel = 0;
 		for (unsigned int iRank = 0; iRank < rank; ++iRank)
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 				for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-					const complex<double> diffAbs =   derivatives[0][iRank][iRefl][iWave]
-						- derivatives[1][iRank][iRefl][iWave];
+					const complexT diffAbs =   derivatives[0][iRank][iRefl][iWave]
+						                       - derivatives[1][iRank][iRefl][iWave];
 					cout << "    [" << iRank << "][" << iRefl << "][" << iWave << "]: "
 					     << maxPrecisionDouble(derivatives[0][iRank][iRefl][iWave]) << " - "
 					     << maxPrecisionDouble(derivatives[1][iRank][iRefl][iWave]) << " = "
@@ -617,7 +622,7 @@ main(int    argc,
 						maxDiffAbs.real() = abs(diffAbs.real());
 					if (abs(diffAbs.imag()) > maxDiffAbs.imag())
 						maxDiffAbs.imag() = abs(diffAbs.imag());
-					complex<double> diffRel;
+					complexT diffRel;
 					diffRel.real() = 1 -   derivatives[0][iRank][iRefl][iWave].real()
 						/ derivatives[1][iRank][iRefl][iWave].real();
 					diffRel.imag() = 1 -   derivatives[0][iRank][iRefl][iWave].imag()

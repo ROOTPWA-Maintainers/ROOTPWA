@@ -47,6 +47,7 @@
 #include "TStopwatch.h"
 
 #include "utilities.h"
+#include "nDimArrayUtils.hpp"
 
 #ifdef USE_CUDA
 #include "../cuda/complex.cuh"
@@ -255,7 +256,7 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	}
 #endif
 	if (not _cudaEnabled or _genCudaDiffHist)	{
-		T logLikelihoodCpu = 0;
+		vector<T> logLikelihoods(_nmbEvents, 0);
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 			T likelihood = 0;  // likelihood for this event
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                   // incoherent sum over ranks
@@ -268,9 +269,10 @@ TPWALikelihood<T>::DoEval(const double* par) const
 				}
 				assert(likelihood >= 0);
 			}  // end loop over rank
-			likelihood       += prodAmpFlat2;
-			logLikelihoodCpu -= log(likelihood);  // accumulate log likelihood
+			likelihood          += prodAmpFlat2;
+			logLikelihoods[iEvt] = -log(likelihood);
 		}  // end loop over events
+		const T logLikelihoodCpu = cascadeSum(logLikelihoods);
 		if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
 			const T diffAbs = logLikelihoodCpu - logLikelihood;
 			const T diffRel = 1 - logLikelihood / logLikelihoodCpu;

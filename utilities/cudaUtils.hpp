@@ -47,6 +47,13 @@
 
 
 #ifdef __CUDACC__
+#define DEVICE __device__
+#else
+#define DEVICE
+#endif
+
+
+#ifdef __CUDACC__
 //#warning "info: generating CUDA device functions for nDimArray.hpp"
 #define HOST_DEVICE __host__ __device__
 #else

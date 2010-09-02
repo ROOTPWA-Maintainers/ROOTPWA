@@ -40,15 +40,17 @@
 
 
 #include <vector>
+#include <algorithm>
 
 #include "cudaUtils.hpp"
 
 
 namespace rpwa {
 
-
+	//////////////////////////////////////////////////////////////////////////////
 	// macros for n-dimensional arrays made of nested vectors
-#ifndef protect__  // macro that converts arguments containing commas into single string; useful for more complex types T
+#ifndef protect__  // macro that converts arguments containing commas
+									 // into single string; required for more complex types T
 #define protect__(x...) x
 #endif
 #define vector2(T) std::vector<std::vector<T> >
@@ -56,6 +58,7 @@ namespace rpwa {
 #define vector4(T) std::vector<std::vector<std::vector<std::vector<T> > > >
 
 
+	//////////////////////////////////////////////////////////////////////////////
 	// management function for arrays based on pointer^n variables that
 	// can be passed to functions without knowing the array size at
 	// compile time
@@ -134,6 +137,7 @@ namespace rpwa {
 	}
 
 
+	//////////////////////////////////////////////////////////////////////////////
 	// functions for pseudo-n-dimensional arrays where dimensions are
 	// mapped onto a one-dimensional array
 	//
@@ -257,6 +261,70 @@ namespace rpwa {
 		indices[0] = index;
 	}
 
+
+	//////////////////////////////////////////////////////////////////////////////
+	// sum of large floating point arrays
+
+	// cascaded sum reduces (random) round-off errors form O[eps * sqrt(n)] (for naive accumulation)
+	// to O[eps * sqrt(log n)] with very little overhead
+	// see http://en.wikipedia.org/wiki/Pairwise_summation
+	template<typename T>
+	inline
+	T
+	cascadeSum(const std::vector<T>& data,
+	           const std::size_t     nmbOfSumsAtEachStage = 2)
+	{
+		const std::vector<T>* sumsPrev       = &data;
+		std::vector<T>*       sumsNext       = 0;
+		bool                  firstIteration = true;
+		do {
+			std::size_t nmbSumsNext = sumsPrev->size() / nmbOfSumsAtEachStage;
+			if (sumsPrev->size() % nmbOfSumsAtEachStage > 0)
+				++nmbSumsNext;
+			sumsNext = new std::vector<T>(nmbSumsNext, T());
+			for (std::size_t i = 0; i < nmbSumsNext; ++i) {
+				for (std::size_t j = i * nmbOfSumsAtEachStage;
+				     j < min((i + 1) * nmbOfSumsAtEachStage, sumsPrev->size()); ++j) {
+					// cout << j << "   ";
+					(*sumsNext)[i] += (*sumsPrev)[j];
+				}
+				// cout << endl;
+			}
+			// cout << endl << sumsNext << endl;
+			// cleanup
+			if (firstIteration)
+				firstIteration = false;
+			else
+				delete sumsPrev;
+			// prepare for next iteration
+			sumsPrev = sumsNext;
+		} while (sumsPrev->size() > 1);
+		return (*sumsPrev)[0];
+	}
+
+	
+	// Kahan sum reduces (random) round-off errors form O[eps * sqrt(n)] (for naive accumulation)
+	// to O[eps] at the cost of 4 summations (instead of 1) for each entry
+	// see http://en.wikipedia.org/wiki/Kahan_summation
+	template<typename T>
+	inline
+	T
+	kahanSum(const std::vector<T>& data)
+	{
+		const std::size_t nmbElements = data.size();
+		if (nmbElements < 1)
+			return T();
+		T sum          = data[0];
+		T compensation = T();  // running compensation for lost low-order bits
+		for (std::size_t i = 1; i < nmbElements; ++i) {
+			const T x = data[i] - compensation;  // at the beginning compensation is zero
+			const T y = sum + x;                 // sum is big, x small, so low-order digits of x are lost
+			compensation = (y - sum) - x;        // (y - sum) recovers the high-order part of x;
+																					 // subtracting x recovers -(the lost low part of x)
+			sum = y;                             // beware eagerly optimising compilers!
+		}                                      // in the next iteration the lost low part will be added to x
+		return sum;
+	}		
 
 }  // namespace rpwa
 

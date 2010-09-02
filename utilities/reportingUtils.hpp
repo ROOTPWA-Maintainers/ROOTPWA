@@ -44,10 +44,14 @@
 #include <sstream>
 #include <iomanip>
 #include <limits>
+#include <vector>
 
 
 namespace rpwa {
 
+
+	//////////////////////////////////////////////////////////////////////////////
+  // macros for printinf errors, warnings, and infos
 
   // cuts out block "className::methodName" from __PRETTY_FUNCTION__ output
   inline
@@ -65,15 +69,16 @@ namespace rpwa {
     return prettyFunction;
   }
 
-  // macros for printinf errors, warnings, and infos
 #define printErr  std::cerr << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << std::flush
 #define printWarn std::cerr << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << std::flush
 #define printInfo std::cout << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "  << std::flush
 
 
+	//////////////////////////////////////////////////////////////////////////////
+	// output stream manipulator that prints a value with its maximum precision
+
 	template<typename T> class maxPrecisionValue__;
 
-	// output stream manipulator that prints a value with its maximum precision
 	template<typename T>
 	inline
 	maxPrecisionValue__<T>
@@ -132,6 +137,32 @@ namespace rpwa {
 	std::ostream& operator << (std::ostream&                 out,
 	                           const maxPrecisionValue__<T>& value)
 	{ return value.print(out); }
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// simple stream operators for some STL classes
+
+	template<typename T1, typename T2>
+	inline
+	std::ostream&
+	operator << (std::ostream&            out,
+	             const std::pair<T1, T2>& pair)
+	{
+		return out << "(" << pair.first << ", " << pair.second << ")";
+	}
+	
+	
+	template<typename T>
+	inline
+	std::ostream&
+	operator << (std::ostream&         out,
+	             const std::vector<T>& vec)
+	{
+		out << "{";
+		for (unsigned int i = 0; i < (vec.size() - 1); ++i)
+			out << "[" << i << "] = " << vec[i] << ", ";
+		return out << "[" << vec.size() - 1 << "] = " << vec[vec.size() - 1] << "}";
+	}
 
 
 }  // namespace rpwa

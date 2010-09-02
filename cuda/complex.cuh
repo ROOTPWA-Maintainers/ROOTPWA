@@ -25,7 +25,8 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      Complex class
+//      complex number class fully compatible to std::complex
+//      only transcedental functions are missing
 //
 //
 // Author List:
@@ -39,6 +40,9 @@
 #define COMPLEX_CUH
 
 
+#include <cmath>
+#include <sstream>
+
 #include "../utilities/cudaUtils.hpp"
 
 
@@ -50,6 +54,19 @@ namespace rpwa {
 	namespace cuda {
 
 
+		// forward declarations
+		template<typename T> class complex;
+		
+		template<typename T> HOST_DEVICE T abs (const complex<T>& z);  ///<  returns magnitude of z
+		template<typename T> HOST_DEVICE T arg (const complex<T>& z);  ///<  returns phase angle of z
+		template<typename T> HOST_DEVICE T norm(const complex<T>& z);  ///<  returns z magnitude squared
+
+		template<typename T> HOST_DEVICE complex<T> conj (const complex<T>& z);  ///<  returns complex conjugate of z
+		template<typename T> HOST_DEVICE complex<T> polar(const T& rho,
+		                                                  const T& phi = 0);     ///<  returns complex with magnitude r and phase angle phi
+
+
+
 		template<typename T> class
 		ALIGN(COMPLEX_ALIGN)
 		complex {
@@ -58,64 +75,420 @@ namespace rpwa {
 
 			typedef T value_type;
 
-			T _re;
-			T _im;
+			T _real;
+			T _imag;
 
-			HOST_DEVICE complex(T re = 0, T im = 0) : _re(re), _im(im)        { }
-			HOST_DEVICE complex(const complex<T>& z) : _re(z._re), _im(z._im) { }
+			HOST_DEVICE complex(const T& real = T(), const T& imag = T())
+				: _real(real), _imag(imag) { }
+			template<typename U>
+			HOST_DEVICE complex(const complex<U>& z)
+				: _real(z._real), _imag(z._imag) { }
 
-			inline HOST_DEVICE T&       real()       { return _re; }
-			inline HOST_DEVICE const T& real() const { return _re; }
-			inline HOST_DEVICE T&       imag()       { return _im; }
-			inline HOST_DEVICE const T& imag() const { return _im; }
-		
-			inline HOST_DEVICE complex<T>& operator =(const complex<T>& z)
-				{
-					_re = z.real();
-					_im = z.imag();
-					return *this;
-				} 
-		
-			inline HOST_DEVICE complex<T>& operator +=(const complex<T>& z)
+			//////////////////////////////////////////////////////////////////////////
+			// accessors
+			HOST_DEVICE T&       real()       { return _real; }
+			HOST_DEVICE const T& real() const { return _real; }
+			HOST_DEVICE T&       imag()       { return _imag; }
+			HOST_DEVICE const T& imag() const { return _imag; }
+
+			HOST_DEVICE void real(const T& val) { _real = val; }
+			HOST_DEVICE void imag(const T& val) { _imag = val; }
+
+			//////////////////////////////////////////////////////////////////////////
+			// assignment operator for scalars
+      HOST_DEVICE complex<T>& operator =(const T& t)
+      {
+	      _real = t;
+	      _imag = T();
+	      return *this;
+      } 
+      
+			HOST_DEVICE complex<T>& operator +=(const T& t)
 			{
-				_re += z.real();
-				_im += z.imag();
+				_real += t;
 				return *this;
 			}
     
-			inline HOST_DEVICE complex<T>& operator -=(const complex<T>& z)
+			HOST_DEVICE complex<T>& operator -=(const T& t)
 			{
-				_re -= z.real();
-				_im -= z.imag();
+				_real -= t;
 				return *this;
 			}
     
-			inline HOST_DEVICE friend complex<T> operator+(const complex<T>& a, const complex<T>& b)      
+			HOST_DEVICE complex<T>& operator *=(const T& t)
 			{
-				complex<T> result;
-				result._re = a._re + b._re;
-				result._im = a._im + b._im;
-				return result;
+				_real *= t;
+				_imag *= t;
+				return *this;
 			}
-  
-			inline HOST_DEVICE friend complex<T> operator*(const complex<T>& a, const complex<T>& b)
-				{
-					complex<T> result;
-					result._re = (a._re * b._re) - (a._im * b._im);
-					result._im = (a._re * b._im) + (a._im * b._re);
-					return result;
-				}
 
-			inline HOST_DEVICE friend complex<T> conj(const complex<T>& z)
-				{ return complex<T>(z.real(), -z.imag()); }
+			HOST_DEVICE complex<T>& operator /=(const T& t)
+			{
+				_real /= t;
+				_imag /= t;
+				return *this;
+			}
 
-			inline HOST_DEVICE friend T abs (const complex<T>& z) { return sqrt(norm(z));                     }
-			inline HOST_DEVICE friend T norm(const complex<T>& z) { return (z._re * z._re) + (z._im * z._im); }
-			inline HOST_DEVICE friend T real(const complex<T>& z) { return z._re;                             }
-			inline HOST_DEVICE friend T imag(const complex<T>& z) { return z._im;                             }
+			//////////////////////////////////////////////////////////////////////////
+			// assignment operator for complex numbers
+			template<typename U>
+			HOST_DEVICE complex<T>& operator =(const complex<U>& z)
+			{
+				_real = z.real();
+				_imag = z.imag();
+				return *this;
+			} 
+		
+			template<typename U>
+			HOST_DEVICE complex<T>& operator +=(const complex<U>& z)
+			{
+				_real += z.real();
+				_imag += z.imag();
+				return *this;
+			}
+    
+			template<typename U>
+			HOST_DEVICE complex<T>& operator -=(const complex<U>& z)
+			{
+				_real -= z.real();
+				_imag -= z.imag();
+				return *this;
+			}
+    
+			template<typename U>
+			HOST_DEVICE complex<T>& operator *=(const complex<U>& z)
+			{
+				const T newReal = _real * z.real() - _imag * z.imag();
+				_imag = _real * z.imag() + _imag * z.real();
+				_real = newReal;
+				return *this;
+			}
+
+			template<typename U>
+			HOST_DEVICE complex<T>& operator /=(const complex<U>& z)
+			{
+				const T newReal = _real * z.real() + _imag * z.imag();
+				const T norm    = cuda::norm(z);
+				_imag = (_imag * z.real() - _real * z.imag()) / norm;
+				_real = newReal / norm;
+				return *this;
+			}
 
 		};
+
+		
+		//////////////////////////////////////////////////////////////////////////
+		// operators with scalars
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator +(const complex<T>& z,
+		           const T&          t)
+		{
+			complex<T> result = z;
+			result += t;
+			return result;
+		}
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator +(const T&          t,
+		           const complex<T>& z)
+		{
+			complex<T> result = z;
+			result += t;
+			return result;
+		}
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator -(const complex<T>& z,
+		           const T&          t)
+		{
+			complex<T> result = z;
+			result -= t;
+			return result;
+		}
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator -(const T&          t,
+		           const complex<T>& z)
+		{
+			complex<T> result(t, -z.imag());
+			result -= z.real();
+			return result;
+		}
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator *(const complex<T>& z,
+		           const T&          t)
+		{
+			complex<T> result = z;
+			result *= t;
+			return result;
+		}
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator *(const T&          t,
+		           const complex<T>& z)
+		{
+			complex<T> result = z;
+			result *= t;
+			return result;
+		}
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator /(const complex<T>& z,
+		           const T&          t)
+		{
+			complex<T> result = z;
+			result /= t;
+			return result;
+		}
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator /(const T&          t,
+		           const complex<T>& z)
+		{
+			complex<T> result = t;
+			result /= z;
+			return result;
+		}
+
+		template<typename T>
+		inline
+		HOST_DEVICE
+		bool
+		operator ==(const complex<T>& z,
+		            const T&          t)
+		{ return (z.real() == t) and (z.imag() == T()); }
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		bool
+		operator ==(const T&          t,
+		            const complex<T>& z)
+		{ return (t == z.real()) and (T() == z.imag()); }
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		bool
+		operator !=(const complex<T>& z,
+		            const T&          t)
+		{ return (z.real() != t) or (z.imag() != T()); }
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		bool
+		operator !=(const T&          t,
+		            const complex<T>& z)
+		{ return (t != z.real()) or (T() != z.imag()); }
+
+		//////////////////////////////////////////////////////////////////////////
+		// operators with complex numbers
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator +(const complex<T>& x,
+		           const complex<T>& y)
+		{
+			complex<T> result = x;
+			result += y;
+			return result;
+		}
   
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator -(const complex<T>& x,
+		           const complex<T>& y)
+		{
+			complex<T> result = x;
+			result -= y;
+			return result;
+		}
+  
+		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator *(const complex<T>& x,
+		           const complex<T>& y)
+		{
+			complex<T> result = x;
+			result *= y;
+			return result;
+		}
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator /(const complex<T>& x,
+		           const complex<T>& y)
+		{
+			complex<T> result = x;
+			result /= y;
+			return result;
+		}
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		bool
+		operator ==(const complex<T>& x,
+		            const complex<T>& y)
+		{ return (x.real() == y.real()) and (x.imag() == y.imag()); }
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		bool
+		operator !=(const complex<T>& x,
+		            const complex<T>& y)
+		{ return (x.real() != y.real()) or (x.imag() != y.imag()); }
+
+		//////////////////////////////////////////////////////////////////////////
+		// sign operators
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator +(const complex<T>& z)
+		{ return z; }
+  
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		operator -(const complex<T>& z)
+		{ return complex<T>(-z.real(), -z.imag()); }
+			
+		//////////////////////////////////////////////////////////////////////////
+		// accessor functions
+		template<typename T> inline HOST_DEVICE T&       real(complex<T>&       z) { return z.real(); }
+		template<typename T> inline HOST_DEVICE const T& real(const complex<T>& z) { return z.real(); }
+		template<typename T> inline HOST_DEVICE T&       imag(complex<T>&       z) { return z.imag(); }
+		template<typename T> inline HOST_DEVICE const T& imag(const complex<T>& z) { return z.imag(); }
+
+		//////////////////////////////////////////////////////////////////////////
+		// other functions
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		T
+		abs(const complex<T>& z)
+		{
+			T       real = z.real();
+			T       imag = z.imag();
+			const T s    = max(std::abs(real), std::abs(imag));
+			if (s == T())
+				return s;
+			real /= s; 
+			imag /= s;
+			return s * std::sqrt(real * real + imag * imag);
+		}
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		T
+		arg(const complex<T>& z)
+		{	return std::atan2(z.imag(), z.real());	}
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		T
+		norm(const complex<T>& z)
+		{
+			const T real = z.real();
+			const T imag = z.imag();
+			return real * real + imag * imag;
+			// const T rho = cuda::abs(z);
+			// return rho * rho;
+		}
+
+		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		polar(const T& rho,
+		      const T& phi)
+		{ return complex<T>(rho * std::cos(phi), rho * std::sin(phi)); }
+
+ 		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		conj(const complex<T>& z)
+		{ return complex<T>(z.real(), -z.imag()); }
+
+
+		//////////////////////////////////////////////////////////////////////////
+		// stream operators
+		template<typename T, typename CharT, class Traits>
+		HOST
+		std::basic_istream<CharT, Traits>&
+		operator >>(std::basic_istream<CharT, Traits>& in,
+		            complex<T>&                        z)
+		{
+			T     real, imag;
+			CharT ch;
+			in >> ch;
+			if (ch == '(') {
+				in >> real >> ch;
+				if (ch == ',') {
+					in >> imag >> ch;
+					if (ch == ')') 
+						z = complex<T>(real, imag);
+					else
+						in.setstate(std::ios_base::failbit);
+				}	else if (ch == ')')
+					z = real;
+				else
+					in.setstate(std::ios_base::failbit);
+			} else {
+				in.putback(ch);
+				in >> real;
+				z = real;
+			}
+			return in;
+		}
+
+		template<typename T, typename CharT, class Traits>
+		HOST
+		std::basic_ostream<CharT, Traits>&
+		operator<<(std::basic_ostream<CharT, Traits>& out,
+		           const complex<T>&                  z)
+		{
+			std::basic_ostringstream<CharT, Traits> s;
+			s.flags(out.flags());
+			s.imbue(out.getloc());
+			s.precision(out.precision());
+			s << '(' << z.real() << ',' << z.imag() << ')';
+			return out << s.str();
+		}
+
 
 	}  // namespace cuda
 
