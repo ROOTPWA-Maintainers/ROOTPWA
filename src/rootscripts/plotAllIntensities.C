@@ -86,7 +86,187 @@ compareIntensities(const pair<string, double>& a,
   return a.second > b.second;
 }
 
+vector<pair<string, TVirtualPad*> >
+plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult trees
+		   TTree**            trees,          // array of fitResult trees
+		   const bool         createPsFile,   // if true, plots are written to waves.ps
+		   const string&      outPath,        // path for output files
+		   const int*         graphColors,    // array of colors for graph line and marker
+		   const bool         drawLegend,     // if set legend is drawn
+		   const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
+		   const string&      branchName)
+{
+  const double intensityThr      = 0;            // threshold for total intensity in mass bin
+  const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
+  vector<pair<string, TVirtualPad*> > wavePads;  // return value
 
+  fitResult* massBin = new fitResult();
+  map<string, int> wavelist; // map with counts of all available waves
+  double totIntensity    = 0;          // total intensity of all waves
+  int nmbBinsAboveThr = 0;
+  map<string, double> totIntensities; // total intensities per wave name
+  int nbinelements(0);
+
+  for (unsigned int i = 0; i < nmbTrees; ++i)
+    if (!trees[i]) {
+      printErr << "null pointer to tree " << i << ". exiting." << endl;
+      return wavePads;
+    } else {
+    	// check whether all mass bins have the same wave set and store the maximum count
+    	trees[i]->SetBranchAddress(branchName.c_str(), &massBin);
+    	for (int imassbin = 0; imassbin < trees[i]->GetEntries(); imassbin++){
+    		trees[i]->GetEntry(imassbin);
+    		nbinelements++;
+    		const double binIntensity = massBin->intensity();
+    		totIntensity += binIntensity;
+    		for (unsigned iwave = 0; iwave < massBin->waveNames().size(); iwave++){
+    			wavelist[massBin->waveNames()[iwave]]++;
+    			// found a new wave when the specific counter is 1
+    			if (wavelist[massBin->waveNames()[iwave]] == 1){
+
+    			}
+    			// calculate the total wave intensities
+    			// warning, several fit results per bin and wave name lead to a wrong calculation
+    			if (binIntensity > intensityThr) {
+    				totIntensities[massBin->waveNames()[iwave]]+=massBin->intensity(iwave);
+    				if (iwave == 0)
+    					++nmbBinsAboveThr;
+    			}
+    		}
+    	}
+    }
+  //const int nmbWaves = wavelist.size();
+  printInfo << "drawing wave intensities from tree '" << trees[0]->GetName() << "' for "
+  		    << wavelist.size() << " waves in " << nbinelements << " mass bins." << endl;
+
+  printInfo << "sorting waves according to their intensity" << endl;
+  vector<pair<string, double> > waveIntensities(totIntensities.size(), pair<string, double>("", 0));
+  {
+	  int i(0);
+	  for (map<string,double>::iterator it_intensity = totIntensities.begin(); it_intensity != totIntensities.end(); it_intensity++){
+		const double relIntensity = (*it_intensity).second / totIntensity;
+		const string waveName     = (*it_intensity).first;
+		waveIntensities[i] = make_pair(waveName, relIntensity);
+		i++;
+	  }
+  }
+  sort(waveIntensities.begin(), waveIntensities.end(), compareIntensities); // map is not suitable for sorting according to second term
+
+  printInfo << "grouping waves w.r.t. to their JPC ..." << endl;
+  map<string, int> nmbWavesPerJpc;  // number of waves for each JPC
+  {
+	  int i(0);
+	  for (map<string,double>::iterator it_intensity = totIntensities.begin(); it_intensity != totIntensities.end(); it_intensity++){
+		const string waveName = (*it_intensity).first;
+		const string jpc      = (waveName != "flat") ? string(waveName, 2, 3) : waveName;
+		cout << "    wave [" << i << "] of " << totIntensities.size() << ": " << waveName << ", JPC = " << jpc << endl;
+		++nmbWavesPerJpc[jpc];
+		i++;
+	  }
+  }
+  cout << "    ... finished" << endl;
+
+  printInfo << "creating canvases for all JPCs ..." << endl;
+  const int nmbPadsHor     = (int)ceil(sqrt(nmbPadsPerCanvMin));
+  const int nmbPadsVert    = (int)ceil((double)nmbPadsPerCanvMin / (double)nmbPadsHor);
+  const int nmbPadsPerCanv = nmbPadsHor * nmbPadsVert;
+  map<string, TCanvas*> canvases;
+  for (map<string, int>::const_iterator i = nmbWavesPerJpc.begin(); i != nmbWavesPerJpc.end(); ++i) {
+    const string jpc     = i->first;
+    const int    nmbCanv = (int)ceil((double)i->second / (double)nmbPadsPerCanv);
+    for (int j = 0; j < nmbCanv; ++j) {
+      const string name = buildCanvName(jpc, j);
+      if (canvases[name] == NULL) {
+	canvases[name] = new TCanvas(name.c_str(), name.c_str(), 10, 10, 1000, 800);
+	canvases[name]->Divide(nmbPadsHor, nmbPadsVert);
+      }
+    }
+  }
+
+  printInfo << "creating output ROOT file ..." << endl;
+  const string outFileName = outPath + "waveIntensities.root";
+  TFile*       outFile     = TFile::Open(outFileName.c_str(), "RECREATE");
+  if (!outFile) {
+    printErr << "could not create output file '" << outFileName << "'. exiting." << endl;
+    return wavePads;
+  }
+  gROOT->cd();
+
+  printInfo << "plotting waves ordered by decreasing intensity ..." << endl;
+  wavePads.resize(waveIntensities.size(), pair<string, TVirtualPad*>("", NULL));
+  map<string, int> canvJpcCounter;
+  for (unsigned int i = 0; i < waveIntensities.size(); ++i) {
+    // get canvas
+    const string waveName  = waveIntensities[i].first;
+    const string jpc       = (waveName != "flat") ? string(waveName, 2, 3) : waveName;
+    const int    canvCount = canvJpcCounter[jpc];
+    const string canvName  = buildCanvName(jpc, (int)floor((double)canvCount / (double)nmbPadsPerCanv));
+    const int    padIndex  = (canvCount % nmbPadsPerCanv) + 1;
+    TCanvas*     canv      = canvases[canvName];
+    canv->cd(padIndex);
+    cout << endl
+	 << "    Selecting canvas '" << canvName << "'." << endl
+	 << "    wave " << canvCount + 1 << " of " << nmbWavesPerJpc[jpc]
+	 << " for JPC = " << jpc << ", intensity rank = " << i + 1 << endl;
+    ++canvJpcCounter[jpc];
+
+    // draw intensity graph
+    TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, false, graphColors, drawLegend,
+				       "", "AP", 1, yAxisRangeMax, "", branchName);
+    if (!graph)
+      continue;
+
+    // write graph to file
+    outFile->cd();
+    graph->Write();
+    gROOT->cd();
+
+    // draw additional info
+    const double intensity = floor(waveIntensities[i].second * 1000 + 0.5) / 10;
+    stringstream label;
+    label << "I = " << intensity << "% (" << i + 1 << ")";
+    TLatex* text = new TLatex(0.15, 0.85, label.str().c_str());
+    text->SetNDC(true);
+    text->Draw();
+
+    // memorize pad
+    wavePads[i].first  = waveName;
+    wavePads[i].second = gPad;
+  }
+
+  // also write TH3s created by plotIntensity() to file
+  TList* histList = gDirectory->GetList();
+  for (unsigned int i = 0; i < nmbTrees; ++i)
+    histList->Remove(trees[i]);
+  printInfo << "writing the following " << histList->GetEntries() <<" objects to '" << outFile->GetName() << "'" << endl;
+  histList->Print();
+  outFile->cd();
+  histList->Write();
+
+  // cleanup
+  outFile->Close();
+  if (outFile)
+    delete outFile;
+  outFile = 0;
+  gROOT->cd();
+
+  if (createPsFile) {
+    const string psFileName = outPath + "waveIntensities.ps";
+    TCanvas      dummyCanv("dummy", "dummy");
+    dummyCanv.Print((psFileName + "[").c_str());
+    for (map<string, TCanvas*>::iterator i = canvases.begin(); i != canvases.end(); ++i) {
+      i->second->Print(psFileName.c_str());
+      delete i->second;
+      i->second = 0;
+    }
+    dummyCanv.Print((psFileName + "]").c_str());
+    gSystem->Exec(("gv " + psFileName).c_str());
+  }
+
+  return wavePads;
+}
+
+/*
 vector<pair<string, TVirtualPad*> >
 plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult trees
 		   TTree**            trees,          // array of fitResult trees
@@ -248,3 +428,4 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
 
   return wavePads;
 }
+*/
