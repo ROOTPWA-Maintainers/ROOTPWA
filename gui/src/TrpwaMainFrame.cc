@@ -358,7 +358,7 @@ void TrpwaMainFrame::FitPartialWaves(){
 		for (unsigned int i = 0; i < fitresultfiles.size(); i++){
 			stringstream command;
 			command << "mv " << fitresultfiles[i] << " " << fitresultfiles[i] << ".previous" << endl;
-			system(command.str().c_str());
+			cout << system(command.str().c_str()) << endl;
 		}
 
 		// write a script to submit it
@@ -377,7 +377,7 @@ void TrpwaMainFrame::FitPartialWaves(){
 		stringstream command;
 		command << "source /tmp/_fitpartialwaves.sh";
 
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 	}
 }
 
