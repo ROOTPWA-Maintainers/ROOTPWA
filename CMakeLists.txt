@@ -225,6 +225,9 @@ add_subdirectory(keygen)
 # Fortran
 add_subdirectory(fortran)
 
+# gui
+add_subdirectory(gui/src)
+
 
 
 # file(GLOB _CC_LIST ${CMAKE_CURRENT_SOURCE_DIR} "amplitude/*.cc")

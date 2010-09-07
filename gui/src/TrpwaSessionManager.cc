@@ -832,10 +832,17 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 		return result;
 	}
 	stringstream _result;
-	//_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
-	_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile;
-	result = _result.str();
-	return result;
+	if (!FileExists(acceptancefile)){
+		cout << " Warning in TrpwaSessionManager::GetFitCommand(): acceptance integral file " << normalizationfile << " does not exist! " << endl;
+		cout << " Supplying fit command without normalization! " << endl;
+		_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
+		result = _result.str();
+		return result;
+	} else {
+		_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile;
+		result = _result.str();
+		return result;
+	}
 }
 
 vector<string>& TrpwaSessionManager::GetFitResults(){

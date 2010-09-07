@@ -257,7 +257,7 @@ void TrpwaMainFrame::SaveSessionAs(){
 		const char* filetypes[] = {"Session files","*.cfg"};
 		fileinfo.fFileTypes = filetypes;
 		TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fileinfo);
-		if (fileinfo.fFilename) {
+		if (filedialog && fileinfo.fFilename) {
 			if (!current_session->Save_Session(fileinfo.fFilename)){
 				cout << " Error while saving session occurred! " << endl;
 			}
@@ -270,7 +270,7 @@ void TrpwaMainFrame::LoadSession(){
 	const char* filetypes[] = {"Session files","*.cfg"};
 	fileinfo.fFileTypes = filetypes;
 	TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fileinfo);
-	if (fileinfo.fFilename) {
+	if (filedialog && fileinfo.fFilename) {
 		if (current_session){
 			SaveSession();
 			delete current_session;
