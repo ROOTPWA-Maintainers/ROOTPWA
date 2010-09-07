@@ -412,7 +412,7 @@ void TrpwaMainFrame::ShowFitResults(){
 		stringstream command;
 		command << "source /tmp/_showresults.sh";
 
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 	}
 	/*
 	# visualization must be performed in the rootscript folder containing all needed (logon) scripts
