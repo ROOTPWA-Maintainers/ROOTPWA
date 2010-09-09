@@ -105,6 +105,105 @@ pwaPlotter::pwaPlotter()
   mEvidencePerEvent->SetTitle("Evidence/Event");
   mEvidencePerEvent->SetName("EvidencePerEvent");
   
+
+  std::vector<strpair> phlist;
+  phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-0-+0+pi-_00_f01500=rho770_00_rho770.amp"));
+  
+phlist.push_back(
+    strpair("1-1++0+rho770_11_a11269=pi-_0_rho770.amp",
+	    "1-0-+0+pi-_00_f01500=rho770_00_rho770.amp"));
+  
+
+
+  phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-0-+0+rho770_11_pi1300=pi-_1_rho770.amp"));
+  phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"));
+
+  phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp"));
+
+  phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-1++0+rho770_11_a11269=pi-_0_rho770.amp"));
+
+ phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-4++0-rho31690=rho770_03_f21270_23_pi-.amp"));
+
+phlist.push_back(
+    strpair("1-2++0-rho770_11_a11269=pi-_0_rho770.amp",
+	    "1-4++0-rho31690=rho770_03_f21270_23_pi-.amp"));
+
+
+
+ phlist.push_back(
+    strpair("1-1++0+sigma_01_a11269=pi-_0_rho770.amp",
+	    "1-0-+0+rho770_11_pi1300=pi-_1_rho770.amp"));
+
+ phlist.push_back(
+    strpair("1-1++0+sigma_01_a11269=pi-_0_rho770.amp",
+	    "1-1++0+sigma_10_pi1300=pi-_1_rho770.amp"));
+
+ phlist.push_back(
+    strpair("1-1++0+rho770_11_a11269=pi-_0_rho770.amp",
+	    "1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"));
+
+
+
+phlist.push_back(
+    strpair("1-2-+0+rho770_02_a21320=pi-_2_rho770.amp",
+	    "1-1++0+sigma_10_pi1300=pi-_1_rho770.amp"));
+
+phlist.push_back(
+    strpair("1-1++0+sigma_22_a21320=pi-_2_rho770.amp",
+	    "1-1++0+sigma_10_pi1300=pi-_1_rho770.amp"));
+
+phlist.push_back(
+    strpair("1-1++0+sigma_22_a21320=pi-_2_rho770.amp",
+	    "1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"));
+
+phlist.push_back(
+    strpair("1-1++0+sigma_22_a21320=pi-_2_rho770.amp",
+	    "1-1++0+sigma_01_a11269=pi-_0_rho770.amp"));
+
+
+ phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-1++0+sigma_01_a11269=pi-_0_rho770.amp"));
+
+ phlist.push_back(
+    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
+	    "1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp"));
+
+
+phlist.push_back(
+    strpair("1-2-+0+rho770_02_a21320=pi-_2_rho770.amp",
+	    "1-2-+0+rho770_02_a11269=pi-_0_rho770.amp"));
+ 
+phlist.push_back(
+    strpair("1-2-+0+rho770_02_a21320=pi-_2_rho770.amp",
+	    "1-4-+0+rho770_22_a11269=pi-_0_rho770.amp"));
+ 
+
+
+
+
+
+  for(unsigned int i=0;i<phlist.size();++i){
+    mPhases[phlist[i]]=new TMultiGraph();
+    std::stringstream name;
+    name << "PHI"<<phlist[i].first<<"---"<<"PHI"<<phlist[i].second;
+    mPhases[phlist[i]]->SetTitle(name.str().c_str());
+    mPhases[phlist[i]]->SetName(name.str().c_str());
+  }
+
+
 }
 
 
@@ -281,6 +380,39 @@ pwaPlotter::addFit(const std::string& filename,
   gEvidencePE->SetLineColor(colour);
   mEvidencePerEvent->Add(gEvidencePE,"p");
 
+
+  // create Phase graphs
+  std::map<strpair,TMultiGraph*>::iterator iph=mPhases.begin();
+  while(iph!=mPhases.end()){
+    // check if both waves have bee used in this fit
+    std::string w1=iph->first.first;
+    std::string w2=iph->first.second;
+    if(wavesinthisfit.find(w1)!=wavesinthisfit.end() &&
+       wavesinthisfit.find(w2)!=wavesinthisfit.end()  ){
+      TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins,ifit);
+      stringstream graphName;
+      graphName << "PHI"<<w1<<"---"<<"PHI"<<w2;
+
+      cout << "creating graph   " << graphName.str() << endl;
+      
+      g->SetName (graphName.str().c_str());
+      g->SetTitle(graphName.str().c_str());
+      g->SetMarkerStyle(21);
+      g->SetMarkerSize(0.5);
+      g->SetMarkerColor(colour);
+      g->SetLineColor(colour);
+      iph->second->Add(g);
+	
+    } // endif both waves available
+    ++iph;
+  } // end create phase graphs
+
+
+
+
+
+
+
   //cout << "filling data" << endl;
 
   // loop again over fitResults and extract all info simultaneously
@@ -312,7 +444,43 @@ pwaPlotter::addFit(const std::string& filename,
 		       binwidth*0.5,
 		       result->intensityErr(it->c_str()));
       ++it;
-    }
+    }// end loop through waves
+
+    // loop through phase plots
+    iph=mPhases.begin();
+    while(iph!=mPhases.end()){
+      std::string w1=iph->first.first;
+      std::string w2=iph->first.second;
+      if(wavesinthisfit.find(w1)!=wavesinthisfit.end() &&
+	 wavesinthisfit.find(w2)!=wavesinthisfit.end()  ){
+	TGraphErrors* g=dynamic_cast<TGraphErrors*>(iph->second->GetListOfGraphs()->Last());
+
+	double ph=result->phase(w1,w2);
+	// check if we should make a transformation by 2pi
+	// this is needed because of cyclical variable phi
+	if(i>0){
+	  //double mpre;
+	  //double phpre;
+	  //g->GetPoint(i-1,mpre,phpre);
+	  //double diff1=fabs(ph-phpre);
+	  //double diff2=fabs(ph+360-phpre);
+	  //double diff3=fabs(ph-360-phpre);
+	  //if(diff2<diff1 && diff2<diff3)ph+=360;
+	  //else if(diff3<diff1 && diff3<diff2)ph-=360;
+	}
+
+	g->SetPoint(i,
+		    result->massBinCenter()*0.001,
+		    ph);
+      g->SetPointError(i,
+		       binwidth*0.5,
+		       result->phaseErr(w1,w2));
+      
+      }
+      ++iph;
+    } // end loop over phase graphs
+
+
     gLikeli->SetPoint(i,
 		      result->massBinCenter()*0.001,
 		      result->logLikelihood());
@@ -364,6 +532,31 @@ pwaPlotter::registerWave(const std::string& wavename){
   
   return inserted.second;
 }
+
+
+
+void
+pwaPlotter::printStats(){
+  map<string,TMultiGraph*>::iterator it=mIntensities.begin();
+  multimap<unsigned int, string> m;
+  while(it!=mIntensities.end()){
+    // get ranges
+    TList* graphs=it->second->GetListOfGraphs();
+    unsigned int ng=graphs->GetEntries();
+    m.insert(pair<unsigned int,string>(ng,it->first));
+    //cout << it->first << "    used:" << ng << endl;
+    ++it;
+  }
+  multimap<unsigned int, string>::iterator it2=m.begin();
+  
+  while(it2!=m.end()){
+    cout << it2->second << "    used " << it2->first << " times" << endl;
+    ++it2;
+  }
+}
+
+
+
 
 
 void 
@@ -490,6 +683,12 @@ pwaPlotter::writeAllIntensities(TFile* outfile){
     itps->second->Write();
     ++itps;
   }
+  map<strpair,TMultiGraph*>::iterator itph=mPhases.begin();
+  while(itph!=mPhases.end()){
+    itph->second->Write();
+    ++itph;
+  }
+
 }
 
 
