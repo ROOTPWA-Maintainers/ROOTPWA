@@ -114,7 +114,8 @@ public:
 
   
   void getIntCMatrix(TCMatrix& integr,
-		     TCMatrix& acceptance);
+		     TCMatrix& acceptance,
+		     std::vector<double>& phaseSpace);
 
   // note: amplitudes which do not exist in higher ranks are NOT built!
   void buildCAmps(const double*                       x,
@@ -182,7 +183,7 @@ private:
   // normalization integrals 
   matrix<std::complex<double> >         _normMatrix;  // normalization matrix w/o acceptance
   mutable matrix<std::complex<double> > _accMatrix;   // normalization matrix with acceptance
-
+  std::vector<double>                   _phaseSpace;
 };
 
 

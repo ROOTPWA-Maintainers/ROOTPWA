@@ -705,8 +705,10 @@ TPWALikelihood<T>::readDecayAmplitudes(const string& ampDirName)
     // matrices _normMatrix and _accMatrix are already normalized to number of Monte Carlo events
     printInfo << "rescaling integrals." << endl;
     // rescale normalization integral
+    _phaseSpace.resize(_nmbWaves);
     for (unsigned int iWave = 0; iWave < _nmbWaves; ++iWave) {
       const double norm_i = sqrt(_normMatrix.element(iWave, iWave).real());
+      _phaseSpace[iWave]=norm_i;
       for (unsigned int jWave = 0; jWave < _nmbWaves; ++jWave) {
         if (iWave == jWave)
           continue;  // set diagonal terms later so that norm_i,j stay unaffected
@@ -747,7 +749,8 @@ TPWALikelihood<T>::readDecayAmplitudes(const string& ampDirName)
 template <typename T>
 void
 TPWALikelihood<T>::getIntCMatrix(TCMatrix& normMatrix,
-				 TCMatrix& accMatrix)
+				 TCMatrix& accMatrix,
+				 vector<double>& phaseSpace)
 {
   //normMatrix.ResizeTo(_nmbWaves,_nmbWaves);
   for (unsigned int i = 0; i < _nmbWaves; ++i)  // outer loop
@@ -758,6 +761,9 @@ TPWALikelihood<T>::getIntCMatrix(TCMatrix& normMatrix,
   // add flat
   normMatrix.set(_nmbWaves, _nmbWaves, 1);
   accMatrix.set (_nmbWaves, _nmbWaves, 1);
+  phaseSpace.clear();
+  phaseSpace=_phaseSpace;
+  phaseSpace.push_back(1);
 }
 
 
