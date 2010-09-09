@@ -446,7 +446,8 @@ main(int    argc,
 	const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 	TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 	TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
-	L.getIntCMatrix(normIntegral, accIntegral);
+	vector<double> phaseSpace;
+	L.getIntCMatrix(normIntegral, accIntegral,phaseSpace);
 	const int normNmbEvents = useNormalizedAmps ? 1 : L.nmbEvents();  // number of events to normalize to
 
 	cout << "filling fitResult:" << endl
@@ -467,7 +468,8 @@ main(int    argc,
 		     prodAmpNames,
 		     fitParCovMatrix,
 		     fitParCovMatrixIndices,
-		     normIntegral);
+		     normIntegral,
+		     phaseSpace);
       }
 
       if (1) { 
@@ -504,7 +506,8 @@ main(int    argc,
 	const unsigned int n = waveTitles.size();
 	TCMatrix integralMatrix(n, n);
 	TCMatrix accMatrix     (n, n);
-	L.getIntCMatrix(integralMatrix, accMatrix);
+	vector<double> phaseSpace;
+	L.getIntCMatrix(integralMatrix, accMatrix,phaseSpace);
 	//integralMatrix.Print();
 	// representation of number of events depends on whether normalization was done
 	const int nmbEvt = useNormalizedAmps ? 1 : L.nmbEvents();
