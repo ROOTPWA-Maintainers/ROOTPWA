@@ -93,8 +93,12 @@ namespace rpwa {
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacompset& cs);
     
-    double intensity(std::string wave, double m);
-    
+    double intensity(const std::string& wave, double m);
+    double phase(const std::string& wave1,
+		 double ps1,
+		 const std::string& wave2,
+		 double ps2,
+		 double m);
     
   private:
     std::vector<pwacomponent> _comp;
