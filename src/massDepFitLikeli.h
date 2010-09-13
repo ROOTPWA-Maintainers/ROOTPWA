@@ -47,8 +47,11 @@ namespace rpwa {
     
     // Modifiers -----------------------
     void init(TTree* fitresulttree,
-	      pwacompset* compset);
+	      pwacompset* compset,
+	      double mmin=0, double mmax=5000);
     
+
+
     // Operations ----------------------
     virtual double DoEval  (const double* par) const;
     
@@ -64,6 +67,8 @@ namespace rpwa {
     fitResult* _rhom; // measured spindensity matrix;
     std::vector<std::string> _wlist;
     std::vector<unsigned int> _index; // wave indices
+    
+    double  _mmin, _mmax; // fitrange
     // Private Methods -----------------
     
   };

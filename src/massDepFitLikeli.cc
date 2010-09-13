@@ -13,7 +13,10 @@ unsigned int
 rpwa::massDepFitLikeli::NDim() const {return _compset->numPar();}
 
 void
-rpwa::massDepFitLikeli::init(TTree* sp, pwacompset* compset){
+rpwa::massDepFitLikeli::init(TTree* sp, pwacompset* compset,
+			     double mmin, double mmax){
+  _mmin=mmin;
+  _mmax=mmax;
   _compset=compset;
   _tree=sp;
   _rhom=NULL;//new fitResult();
@@ -62,7 +65,8 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
   for(unsigned im=0;im<nbins/2;++im){
     _tree->GetEntry(im);
     double mass=_rhom->massBinCenter();
-    if(mass<1700)continue;
+    if(mass<_mmin)continue;
+    if(mass>_mmax)continue;
     //if(mass>2000)continue;
     //cout << "Mass=" << mass << endl;
     // inpu values: measured spin density matrix
