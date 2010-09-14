@@ -20,6 +20,7 @@
 
 
 // Collaborating Class Headers --------
+#include <algorithm>
 
 
 // Class Member definitions -----------
