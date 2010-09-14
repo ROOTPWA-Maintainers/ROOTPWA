@@ -24,7 +24,7 @@
 //
 // Description:
 //      Implementation of class TPWALikelihood
-//      see TPWALikelihood.hh for details
+//      see TPWALikelihood.h for details
 //
 //
 // Author List:
@@ -39,7 +39,9 @@
 #include <fstream>
 #include <cassert>
 
-#include "boost/tuple/tuple.hpp"
+#include "boost/accumulators/accumulators.hpp"
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/sum.hpp>
 
 #include "TString.h"
 #include "TSystem.h"
@@ -48,12 +50,13 @@
 
 #include "utilities.h"
 #include "nDimArrayUtils.hpp"
-
+#include "sumAccumulators.hpp"
 #ifdef USE_CUDA
 #include "../cuda/complex.cuh"
 #include "../cuda/likelihoodInterface.cuh"
 using namespace rpwa;
 #endif
+#include "TPWALikelihood.h"
 
 
 //#define USE_FDF
@@ -61,6 +64,7 @@ using namespace rpwa;
 
 using namespace std;
 using namespace boost;
+using namespace boost::accumulators;
 
 
 template<typename T> bool TPWALikelihood<T>::_debug = true;
@@ -145,8 +149,8 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 				complex<T> ampProdSum = 0;                                             // amplitude sum for negative/positive reflectivity for this rank
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 					// compute likelihood term
-					const complex<T> amp = prodAmps[iRank][iRefl][iWave]
-						* complex<T>(_decayAmps[iEvt][iRefl][iWave]);
+					const complex<T> amp =   prodAmps[iRank][iRefl][iWave]
+						                     * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
 					ampProdSum += amp;
 					// compute derivatives
 					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
@@ -256,23 +260,25 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	}
 #endif
 	if (not _cudaEnabled or _genCudaDiffHist)	{
-		vector<T> logLikelihoods(_nmbEvents, 0);
+		// accumulator_set<T, stats<tag::sum> > logLikelihoodAcc;
+		// accumulator_set<T, stats<tag::sum(cascade)> > logLikelihoodAcc
+		// 	(tag::cascadeSum::nmbElements = _nmbEvents);
+		accumulator_set<T, stats<tag::sum(kahan)> > logLikelihoodAcc;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 			T likelihood = 0;  // likelihood for this event
-			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {                   // incoherent sum over ranks
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {                     // incoherent sum over reflectivities
-					complex<T> ampProdSum = 0;                                           // amplitude sum for negative/positive reflectivity for this rank
+			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
+				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
+					complex<T> ampProdSum = 0;  // amplitude sum for certain rank and reflectivity
 					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
-						// compute likelihood term
 						ampProdSum += prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
 					likelihood += norm(ampProdSum);
 				}
 				assert(likelihood >= 0);
-			}  // end loop over rank
-			likelihood          += prodAmpFlat2;
-			logLikelihoods[iEvt] = -log(likelihood);
-		}  // end loop over events
-		const T logLikelihoodCpu = cascadeSum(logLikelihoods);
+			}
+			likelihood += prodAmpFlat2;
+			logLikelihoodAcc(-log(likelihood));
+		}
+		const T logLikelihoodCpu = sum(logLikelihoodAcc);
 		if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
 			const T diffAbs = logLikelihoodCpu - logLikelihood;
 			const T diffRel = 1 - logLikelihood / logLikelihoodCpu;
@@ -1162,3 +1168,8 @@ TPWALikelihood<T>::resetFuncCallInfo() const
 		_funcCallInfo[i].totalTime  = 0;
 	}
 }
+
+
+// explicit specializations
+// template class TPWALikelihood<float >;
+template class TPWALikelihood<double>;

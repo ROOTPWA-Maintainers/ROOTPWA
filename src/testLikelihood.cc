@@ -165,7 +165,8 @@ main(int    argc,
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
 #ifdef USE_CUDA
-	L.enableCuda(true);
+	L.enableCuda(false);
+	//L.enableCuda(true);
 #endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (!quiet)

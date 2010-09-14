@@ -266,7 +266,7 @@ namespace rpwa {
 	// sum of large floating point arrays
 
 	// cascaded sum reduces (random) round-off errors form O[eps * sqrt(n)] (for naive accumulation)
-	// to O[eps * sqrt(log n)] with very little overhead
+	// to O[eps * sqrt(log n)] (for nmbOfSumsAtEachStage = 2) with very little overhead
 	// see http://en.wikipedia.org/wiki/Pairwise_summation
 	template<typename T>
 	inline

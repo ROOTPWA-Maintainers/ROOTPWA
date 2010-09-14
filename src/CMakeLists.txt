@@ -53,7 +53,7 @@ set(SOURCES
   TFitResult.cc
   fitResult.cc
   TCMatrix.cc
-  TPWALikelihood.h
+  TPWALikelihood.cc
   TPWALikelihoodC.cc
   TPWAAmp.cc
   TPWAPhaseConstraint.cc

@@ -33,8 +33,8 @@
 //-----------------------------------------------------------
 
 
-#ifndef TPWALIKELIHOOD_HH
-#define TPWALIKELIHOOD_HH
+#ifndef TPWALIKELIHOOD_H
+#define TPWALIKELIHOOD_H
 
 
 #include <vector>
@@ -118,7 +118,7 @@ public:
 	unsigned int             rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
 	inline unsigned int      nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
 	unsigned int             nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
-	std::string              waveName    (const unsigned int waveIndex)        const { return _waveNames[waveIndex];    }  ///< returns name of wave at waveIndex
+	// std::string              waveName    (const unsigned int waveIndex)        const { return _waveNames[waveIndex];    }  ///< returns name of wave at waveIndex
 	std::vector<std::string> waveNames   ()                                    const;  ///< returns vector with all wave names ordered like in input wave list
 	std::string              parName     (const unsigned int parIndex)         const { return _parNames[parIndex];      }  ///< returns name of likelihood parameter at parIndex
 	double                   parThreshold(const unsigned int parIndex)         const { return _parThresholds[parIndex]; }  ///< returns threshold in GeV/c^2 above which likelihood parameter at parIndex becomes free
@@ -254,10 +254,10 @@ TPWALikelihood<T>::nmbWaves(const int reflectivity) const
 }
 
 
-#include "TPWALikelihood.cc"
+// #include "TPWALikelihood.cc"
 
 
-#endif  // TPWALIKELIHOOD_HH
+#endif  // TPWALIKELIHOOD_H
 
 
 //--------------------------------------------------------------

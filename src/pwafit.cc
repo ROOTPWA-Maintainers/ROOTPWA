@@ -55,6 +55,10 @@
 #include "TFitBin.h"
 #include "fitResult.h"
 #include "TPWALikelihood.h"
+#ifdef USE_CUDA
+#include "../cuda/complex.cuh"
+#include "../cuda/likelihoodInterface.cuh"
+#endif
 
 
 using namespace std;
@@ -167,7 +171,7 @@ main(int    argc,
 	unsigned int rank               = 1;                      // rank of fit
 	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
-	bool         cudaEnabled        = true;                  // if true CUDA kernels are activated
+	bool         cudaEnabled        = false;                  // if true CUDA kernels are activated
 	bool         genCudaDiffHist    = false;                  // if true CUDA vs. CPU difference histograms are created
 	bool         quiet              = false;
 	extern char* optarg;
@@ -510,8 +514,8 @@ main(int    argc,
 			{ 
 				// get data structures to construct fitResult
 				vector<std::complex<double> > prodAmps;                // production amplitudes
-				vector<string>           prodAmpNames;            // names of production amplitudes used in fit
-				vector<pair<int,int> >   fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
+				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 				L.buildCAmps(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
