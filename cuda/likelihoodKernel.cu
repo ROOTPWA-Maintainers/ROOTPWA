@@ -41,6 +41,28 @@ namespace rpwa {
 	namespace cuda {
 
 
+		// generic compensated sum
+		template<typename T>
+		__device__
+		void
+		compensatedSum(const T value,
+		               T*      sum,
+		               T*      compensation)
+		{
+			if (not sum or not compensation)
+				return;
+			// at the beginning _compensation is assumed to be zero
+			const T correctedTerm = value - *compensation;
+			// _sum is big, correctedTerm small, so low-order digits of correctedTerm are lost
+			const T newSum        = *sum + correctedTerm;
+			// (newSum - sum) recovers the high-order part of correctedTerm;
+			// subtracting correctedTerm recovers -(the lost low part of correctedTerm)
+			*compensation = (newSum - *sum) - correctedTerm;
+			*sum          = newSum;  // beware of eagerly optimising compilers
+			// in the next call the lost low part stored in compensation will be added to sum
+		}
+
+
 		// generic cascadable kernel that transforms array with N values
 		// into array with M partial sums over of the input values
 		template<typename T>
@@ -54,9 +76,10 @@ namespace rpwa {
 		{
 			const unsigned int threadId = blockIdx.x * blockDim.x + threadIdx.x;
 			if (threadId < nmbSums) {
-				T sum = T(0);
+				T sum          = T();
+				T compensation = T();
 				for (unsigned int i = threadId; i < nmbVals; i += nmbSums)
-					sum += d_valArray[i];
+					compensatedSum(d_valArray[i], &sum, &compensation);
 				d_sumArray[threadId] = sum;
 			}
 		}
@@ -86,25 +109,29 @@ namespace rpwa {
 			const unsigned int prodAmpDim [3] = {rank, 2,           nmbWavesMax};
 			const unsigned int decayAmpDim[3] = {2,    nmbWavesMax, nmbEvents};
 			// loop over events and calculate real-data term of log likelihood
-			T logLikelihood = 0;
+			T logLikelihood             = 0;
+			T logLikelihoodCompensation = 0;
 			for (unsigned int iEvt = threadId; iEvt < nmbEvents; iEvt += nmbThreads) {
-				T likelihood = 0;  // likelihood for this event
+				T likelihood             = 0;  // likelihood for this event
+				T likelihoodCompensation = 0;
 				for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-						complexT ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
+						complexT ampProdSum             = 0;  // amplitude sum for current rank and reflectivity
+						complexT ampProdSumCompensation = 0;
 						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 							// compute likelihood term
 							const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
 							const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
-							ampProdSum +=
+							const complexT     value              =
 								  d_prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
 								* d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
+							compensatedSum(value, &ampProdSum, &ampProdSumCompensation);
 						}
-						likelihood += norm(ampProdSum);
+						compensatedSum(norm(ampProdSum), &likelihood, &likelihoodCompensation);
 					}
 				}
-				likelihood    += prodAmpFlat2;
-				logLikelihood -= log(likelihood);  // accumulate log likelihood
+				compensatedSum(prodAmpFlat2,     &likelihood,    &likelihoodCompensation);
+				compensatedSum(-log(likelihood), &logLikelihood, &logLikelihoodCompensation);
 			}
 			// write result
 			d_logLikelihoods[threadId] = logLikelihood;
@@ -129,32 +156,36 @@ namespace rpwa {
 		 complexT*                           d_derivTerms,     // 3-dim. output array of first derivative terms; [iRank][iRefl][iEvt]
 		 typename complexT::value_type*      d_likelihoods)    // output array of likelihoods for each event
 		{
+			typedef typename complexT::value_type T;
 			const unsigned int iEvt = blockIdx.x * blockDim.x + threadIdx.x;
 			if (iEvt < nmbEvents) {
 				const unsigned int nmbWavesRefl[2] = {nmbWavesReflNeg, nmbWavesReflPos};
 				// define extents of arrays
-				const unsigned int            prodAmpDim  [3] = {rank, 2,           nmbWavesMax};
-				const unsigned int            decayAmpDim [3] = {2,    nmbWavesMax, nmbEvents};
-				const unsigned int            derivTermDim[3] = {rank, 2,           nmbEvents};
-				typename complexT::value_type likelihood      = 0;  // likelihood for this event
+				const unsigned int prodAmpDim  [3]        = {rank, 2,           nmbWavesMax};
+				const unsigned int decayAmpDim [3]        = {2,    nmbWavesMax, nmbEvents};
+				const unsigned int derivTermDim[3]        = {rank, 2,           nmbEvents};
+				T                  likelihood             = 0;  // likelihood for this event
+				T                  likelihoodCompensation = 0;
 				for (unsigned int iRank = 0; iRank < rank; ++iRank) {  // incoherent sum over ranks
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-						complexT ampProdSum = complexT(0);  // amplitude sum for negative/positive reflectivity for this rank
+						complexT ampProdSum             = 0;  // amplitude sum for current rand and reflectivity
+						complexT ampProdSumCompensation = 0;
 						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 							const unsigned int prodAmpIndices [3] = {iRank, iRefl, iWave};
 							const unsigned int decayAmpIndices[3] = {iRefl, iWave, iEvt};
-							ampProdSum +=
+							const complexT     value              =
 								  d_prodAmps [indicesToOffset<unsigned int>(prodAmpIndices,  prodAmpDim,  3)]
 								* d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)];
+							compensatedSum(value, &ampProdSum, &ampProdSumCompensation);
 						}
-						likelihood += norm(ampProdSum);
+						compensatedSum(norm(ampProdSum), &likelihood, &likelihoodCompensation);
 						// write derivative term
 						const unsigned int derivTermIndices[3] = {iRank, iRefl, iEvt};
 						d_derivTerms[indicesToOffset<unsigned int>(derivTermIndices, derivTermDim, 3)]
 							= ampProdSum;
 					}
 				}
-				likelihood += prodAmpFlat2;
+				compensatedSum(prodAmpFlat2, &likelihood, &likelihoodCompensation);
 				// write likelihood
 				d_likelihoods[iEvt] = likelihood;
 			}
@@ -190,7 +221,8 @@ namespace rpwa {
 			for (unsigned int iRank = 0; iRank < rank; ++iRank)
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 					for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-						complexT derivativeSum = complexT(0);
+						complexT derivativeSum             = 0;
+						complexT derivativeSumCompensation = 0;
 						for (unsigned int iEvt = threadId; iEvt < nmbEvents; iEvt += nmbThreads) {
 							// multiply derivative term 1 with with complex conjugate of
 							// decay amplitude of the wave with the derivative wave index
@@ -200,7 +232,8 @@ namespace rpwa {
 								  d_derivTerms[indicesToOffset<unsigned int>(derivTermIndices, derivTermDim, 3)]
 								* conj(d_decayAmps[indicesToOffset<unsigned int>(decayAmpIndices, decayAmpDim, 3)]);
 							// apply factor from derivative of log
-							derivativeSum -= ((typename complexT::value_type)2. / d_likelihoods[iEvt]) * derivative;
+							compensatedSum(-((typename complexT::value_type)2. / d_likelihoods[iEvt]) * derivative,
+							               &derivativeSum, &derivativeSumCompensation);
 						}
 						// write result
 						const unsigned int derivSumIndices[4] = {iRank, iRefl, iWave, threadId};
@@ -221,13 +254,15 @@ namespace rpwa {
 		 const unsigned int                   nmbEvents,             // total number of events all kernels have to process
 		 typename complexT::value_type*       d_derivativeFlatSums)  // output array of partial derivative sums with one entry for each kernel
 		{
+			typedef typename complexT::value_type T;
 			const unsigned int threadId   = blockIdx.x * blockDim.x + threadIdx.x;
 			const unsigned int nmbThreads = gridDim.x * blockDim.x;
-
 			// loop over events and calculate real-data term of derivative of log likelihood
-			typename complexT::value_type derivativeFlatSum = 0;
+			T derivativeFlatSum             = 0;
+			T derivativeFlatSumCompensation = 0;
 			for (unsigned int iEvt = threadId; iEvt < nmbEvents; iEvt += nmbThreads)
-				derivativeFlatSum -= (2. / d_likelihoods[iEvt]) * prodAmpFlat;
+				compensatedSum(-((T)2. / d_likelihoods[iEvt]) * prodAmpFlat,
+				               &derivativeFlatSum, &derivativeFlatSumCompensation);
 			// write result
 			d_derivativeFlatSums[threadId] = derivativeFlatSum;
 		}
@@ -257,11 +292,13 @@ namespace rpwa {
 				for (unsigned int iRank = 0; iRank < rank; ++iRank)
 					for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 						for (unsigned int iWave = 0; iWave < nmbWavesRefl[iRefl]; ++iWave) {
-							T derivativeSum = T(0);
+							T derivativeSum             = 0;
+							T derivativeSumCompensation = 0;
 							for (unsigned int i = threadId; i < nmbDerivatives; i += nmbDerivativeSums) {
 								const unsigned int derivIndices[4] = {iRank, iRefl, iWave, i};
-								derivativeSum
-									+= d_derivatives[indicesToOffset<unsigned int>(derivIndices, derivDim, 4)];
+								compensatedSum
+									(d_derivatives[indicesToOffset<unsigned int>(derivIndices, derivDim, 4)],
+									 &derivativeSum, &derivativeSumCompensation);
 							}
 							const unsigned int derivSumIndices[4] = {iRank, iRefl, iWave, threadId};
 							d_derivativeSums[indicesToOffset<unsigned int>(derivSumIndices, derivSumDim, 4)]

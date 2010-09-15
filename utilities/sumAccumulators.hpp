@@ -270,5 +270,3 @@ namespace boost {
 
 
 #endif  // SUMACCUMULATORS_HPP
-
-

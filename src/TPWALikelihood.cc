@@ -270,12 +270,12 @@ TPWALikelihood<T>::DoEval(const double* par) const
 			logLikelihoodAcc(-log(sum(likelihoodAcc)));
 		}
 		const T logLikelihoodCpu = sum(logLikelihoodAcc);
-		if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
-			const T diffAbs = logLikelihoodCpu - logLikelihood;
-			const T diffRel = 1 - logLikelihood / logLikelihoodCpu;
-			_hLikelihoodDiffAbs->Fill(diffAbs);
-			_hLikelihoodDiffRel->Fill(diffRel);
-		}
+		// if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
+		// 	const T diffAbs = logLikelihoodCpu - logLikelihood;
+		// 	const T diffRel = 1 - logLikelihood / logLikelihoodCpu;
+		// 	_hLikelihoodDiffAbs->Fill(diffAbs);
+		// 	_hLikelihoodDiffRel->Fill(diffRel);
+		// }
 		if (not _cudaEnabled)
 			logLikelihood = logLikelihoodCpu;
 	}
@@ -448,7 +448,6 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-						// derivativesCpu[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
 						derivativesAcc[iRank][iRefl][jWave](-factor * derivative[iRank][iRefl][jWave]);
 			derivativeFlatAcc(-factor * prodAmpFlat);
 		}  // end loop over events
