@@ -36,7 +36,6 @@
 #ifndef TPWALIKELIHOOD_H
 #define TPWALIKELIHOOD_H
 
-
 #include <vector>
 #include <string>
 #include <complex>
@@ -54,6 +53,8 @@
 // PWA2000 classes
 #include "integral.h"
 #include "matrix.h"
+
+#include "sumAccumulators.hpp"
 
 
 class TString;
@@ -87,10 +88,13 @@ public:
 	};
 
 	struct functionCallInfo {
+		typedef boost::accumulators::accumulator_set
+		  <double, boost::accumulators::stats
+		    <boost::accumulators::tag::sum(boost::accumulators::compensated)> > timeAccType;
 		unsigned int nmbCalls;   // number of times function was called
-		double       funcTime;   // time needed to calculate function value(s) (w/o normalization)
-		double       normTime;   // time needed to normalize function value(s)
-		double       totalTime;  // total execution time of function
+		timeAccType  funcTime;   // time needed to calculate function value(s) (w/o normalization)
+		timeAccType  normTime;   // time needed to normalize function value(s)
+		timeAccType  totalTime;  // total execution time of function
 	};
 
 	TPWALikelihood();
@@ -127,9 +131,9 @@ public:
 	unsigned int ncalls(const functionCallEnum func = FDF) const
 	{ return _funcCallInfo[func].nmbCalls; }
 	double Ltime(const functionCallEnum func = FDF) const
-	{ return _funcCallInfo[func].funcTime; }
+	{ return sum(_funcCallInfo[func].funcTime); }
 	double Ntime(const functionCallEnum func = FDF) const
-	{ return _funcCallInfo[func].normTime; }
+	{ return sum(_funcCallInfo[func].normTime); }
 	//const integral& normInt() const { return _normInt; }
 
 	// modifiers
@@ -252,9 +256,6 @@ TPWALikelihood<T>::nmbWaves(const int reflectivity) const
 	else
 		return _nmbWavesRefl[0];  // negative reflectivity
 }
-
-
-// #include "TPWALikelihood.cc"
 
 
 #endif  // TPWALIKELIHOOD_H

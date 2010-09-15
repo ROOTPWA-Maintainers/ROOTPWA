@@ -33,8 +33,8 @@
 #include "TString.h"
 #include "TComplex.h"
 #include "TRandom.h"
-#include "TFitBin.h"
 #include "TPWALikelihood.h"
+#include "TFitBin.h"
 
 using namespace std;
 

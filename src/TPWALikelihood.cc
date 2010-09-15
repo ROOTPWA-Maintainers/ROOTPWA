@@ -39,22 +39,16 @@
 #include <fstream>
 #include <cassert>
 
-#include "boost/accumulators/accumulators.hpp"
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/sum.hpp>
-
 #include "TString.h"
 #include "TSystem.h"
 #include "TCMatrix.h"
 #include "TStopwatch.h"
 
-#include "utilities.h"
-#include "nDimArrayUtils.hpp"
-#include "sumAccumulators.hpp"
+#include "reportingUtils.hpp"
+#include "conversionUtils.hpp"
 #ifdef USE_CUDA
 #include "../cuda/complex.cuh"
 #include "../cuda/likelihoodInterface.cuh"
-using namespace rpwa;
 #endif
 #include "TPWALikelihood.h"
 
@@ -63,6 +57,7 @@ using namespace rpwa;
 
 
 using namespace std;
+using namespace rpwa;
 using namespace boost;
 using namespace boost::accumulators;
 
@@ -177,7 +172,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 	}  // end loop over events
 	// log time needed for likelihood calculation
 	timer.Stop();
-	_funcCallInfo[FDF].funcTime += timer.RealTime();
+	_funcCallInfo[FDF].funcTime(timer.RealTime());
 
 	// compute normalization term of log likelihood and normalize derivatives w.r.t. parameters
 	timer.Start();
@@ -201,7 +196,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 	derivativeFlat    += twiceNmbEvt * prodAmpFlat;
 	// log time needed for normalization
 	timer.Stop();
-	_funcCallInfo[FDF].normTime += timer.RealTime();
+	_funcCallInfo[FDF].normTime(timer.RealTime());
 
 	// sort derivative results into output array and cache
 	copyToParArray(derivatives, derivativeFlat, gradient);
@@ -212,7 +207,7 @@ TPWALikelihood<T>::FdF(const double* par,             // parameter array; reduce
 
 	// log total consumed time
 	timerTot.Stop();
-	_funcCallInfo[FDF].totalTime += timerTot.RealTime();
+	_funcCallInfo[FDF].totalTime(timerTot.RealTime());
 
 	if (_debug)
 		printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
@@ -260,23 +255,19 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	}
 #endif
 	if (not _cudaEnabled or _genCudaDiffHist)	{
-		// accumulator_set<T, stats<tag::sum> > logLikelihoodAcc;
-		// accumulator_set<T, stats<tag::sum(cascade)> > logLikelihoodAcc
-		// 	(tag::cascadeSum::nmbElements = _nmbEvents);
-		accumulator_set<T, stats<tag::sum(kahan)> > logLikelihoodAcc;
+		accumulator_set<T, stats<tag::sum(compensated)> > logLikelihoodAcc;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-			T likelihood = 0;  // likelihood for this event
+			accumulator_set<T, stats<tag::sum(compensated)> > likelihoodAcc;
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-					complex<T> ampProdSum = 0;  // amplitude sum for certain rank and reflectivity
+					accumulator_set<complex<T>, stats<tag::sum(compensated)> > ampProdAcc;
 					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
-						ampProdSum += prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
-					likelihood += norm(ampProdSum);
+						ampProdAcc(prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmps[iEvt][iRefl][iWave]));
+					likelihoodAcc(norm(sum(ampProdAcc)));
 				}
-				assert(likelihood >= 0);
 			}
-			likelihood += prodAmpFlat2;
-			logLikelihoodAcc(-log(likelihood));
+			likelihoodAcc(prodAmpFlat2);
+			logLikelihoodAcc(-log(sum(likelihoodAcc)));
 		}
 		const T logLikelihoodCpu = sum(logLikelihoodAcc);
 		if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
@@ -290,37 +281,36 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	}
 	// log time needed for likelihood calculation
 	timer.Stop();
-	_funcCallInfo[DOEVAL].funcTime += timer.RealTime();
+	_funcCallInfo[DOEVAL].funcTime(timer.RealTime());
 	
 	// compute normalization term of log likelihood
 	timer.Start();
-	complex<T> normFactor = 0;
-	const T    nmbEvt     = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
+	accumulator_set<T, stats<tag::sum(compensated)> > normFactorAcc;
+	const T nmbEvt = (_useNormalizedAmps) ? 1 : (T)_nmbEvents;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {  // inner loop over waves with same reflectivity
-					const complex<T> I = complex<T>(_accMatrix[iRefl][iWave][iRefl][jWave]);
-					normFactor += (prodAmps[iRank][iRefl][iWave] * conj(prodAmps[iRank][iRefl][jWave])) * I;
-				}
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)  // loop over waves with same reflectivity
+					normFactorAcc(real((prodAmps[iRank][iRefl][iWave] * conj(prodAmps[iRank][iRefl][jWave]))
+					                   * complex<T>(_accMatrix[iRefl][iWave][iRefl][jWave])));
 	// take care of flat wave
-	normFactor.real() += prodAmpFlat2;
+	normFactorAcc(prodAmpFlat2);
 	// log time needed for normalization
 	timer.Stop();
-	_funcCallInfo[DOEVAL].normTime += timer.RealTime();
+	_funcCallInfo[DOEVAL].normTime(timer.RealTime());
   
 	// calculate and return log likelihood value
-	const double funcVal = logLikelihood + nmbEvt * normFactor.real();
+	const double funcVal = logLikelihood + nmbEvt * sum(normFactorAcc);
 
 	// log total consumed time
 	timerTot.Stop();
-	_funcCallInfo[DOEVAL].totalTime += timerTot.RealTime();
+	_funcCallInfo[DOEVAL].totalTime(timerTot.RealTime());
 
 	if (_debug)
 		printInfo << "log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
-		          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
+		          << "normalization =  " << maxPrecisionAlign(sum(normFactorAcc)) << ", "
 		          << "normalized likelihood = "
-		          << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl;
+		          << maxPrecisionAlign(logLikelihood + nmbEvt * sum(normFactorAcc)) << endl;
 	
 	return funcVal;
 
@@ -349,8 +339,8 @@ TPWALikelihood<T>::DoDerivative(const double* par,
 	if (samePar) {
 		//cout << "using cached derivative! " << endl;
 		timerTot.Stop();
-		_funcCallInfo[DODERIVATIVE].totalTime += timerTot.RealTime();
-		_funcCallInfo[DODERIVATIVE].funcTime   = _funcCallInfo[DODERIVATIVE].totalTime;
+		_funcCallInfo[DODERIVATIVE].totalTime(timerTot.RealTime());
+		_funcCallInfo[DODERIVATIVE].funcTime (sum(_funcCallInfo[DODERIVATIVE].totalTime));
 		return _derivCache[derivativeIndex];
 	}
 	// call FdF
@@ -386,8 +376,8 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 		for (unsigned int i = 0; i < _nmbPars ; ++i)
 			gradient[i] = _derivCache[i];
 		timerTot.Stop();
-		_funcCallInfo[GRADIENT].totalTime += timerTot.RealTime();
-		_funcCallInfo[GRADIENT].funcTime   = _funcCallInfo[GRADIENT].totalTime;
+		_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
+		_funcCallInfo[GRADIENT].funcTime (sum(_funcCallInfo[GRADIENT].totalTime));
 		return;
 	}
 	// call FdF
@@ -426,76 +416,78 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	}
 #endif
 	if (not _cudaEnabled or _genCudaDiffHist)	{
-		ampsArrayType derivativesCpu(derivShape);
-		T             derivativeFlatCpu = 0;
+		multi_array<accumulator_set<complex<T>, stats<tag::sum(compensated)> >, 3>
+			derivativesAcc(derivShape);
+		// ampsArrayType derivativesCpu(derivShape);
+		accumulator_set<T, stats<tag::sum(compensated)> > derivativeFlatAcc;
 		const T prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-			T             likelihood = 0;          // likelihood for this event
+			accumulator_set<T, stats<tag::sum(compensated)> > likelihoodAcc;
 			ampsArrayType derivative(derivShape);  // likelihood derivative for this event
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-					complex<T> ampProdSum = 0;  // amplitude sum for negative/positive reflectivity for this rank
-					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
-						// compute likelihood term
-						const complex<T> amp =   prodAmps[iRank][iRefl][iWave]
-							                     * complex<T>(_decayAmps[iEvt][iRefl][iWave]);
-						ampProdSum += amp;
-					}
-					likelihood += norm(ampProdSum);
+					accumulator_set<complex<T>, stats<tag::sum(compensated)> > ampProdAcc;
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
+						ampProdAcc(prodAmps[iRank][iRefl][iWave] * complex<T>(_decayAmps[iEvt][iRefl][iWave]));
+					const complex<T> ampProdSum = sum(ampProdAcc);
+					likelihoodAcc(norm(ampProdSum));
 					// set derivative term that is independent on derivative wave index
 					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
 						// amplitude sums for current rank and for waves with same reflectivity
 						derivative[iRank][iRefl][jWave] = ampProdSum;
 				}
-				assert(likelihood >= 0);
 				// loop again over waves for current rank and multiply with complex conjugate
 				// of decay amplitude of the wave with the derivative wave index
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
 						derivative[iRank][iRefl][jWave] *= conj(complex<T>(_decayAmps[iEvt][iRefl][jWave]));
 			}  // end loop over rank
-			likelihood += prodAmpFlat2;
+			likelihoodAcc(prodAmpFlat2);
 			// incorporate factor 2 / sigma
-			const T factor = 2. / likelihood;
+			const T factor = 2. / sum(likelihoodAcc);
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave)
-						derivativesCpu[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
-			derivativeFlatCpu -= factor * prodAmpFlat;
+						// derivativesCpu[iRank][iRefl][jWave] -= factor * derivative[iRank][iRefl][jWave];
+						derivativesAcc[iRank][iRefl][jWave](-factor * derivative[iRank][iRefl][jWave]);
+			derivativeFlatAcc(-factor * prodAmpFlat);
 		}  // end loop over events
-		if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
+		// if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
+		// 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+		// 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+		// 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+		// 				complex<T> diffAbs =   derivativesCpu[iRank][iRefl][iWave]
+		// 					                   - derivatives   [iRank][iRefl][iWave];
+		// 				complex<T> diffRel;
+		// 				diffRel.real() = 1 -   derivatives   [iRank][iRefl][iWave].real()
+		// 					                   / derivativesCpu[iRank][iRefl][iWave].real();
+		// 				diffRel.imag() = 1 -   derivatives   [iRank][iRefl][iWave].imag()
+		// 					                   / derivativesCpu[iRank][iRefl][iWave].imag();
+		// 				_hDerivDiffAbs[iRank][iRefl][iWave][0]->Fill(diffAbs.real());
+		// 				_hDerivDiffAbs[iRank][iRefl][iWave][1]->Fill(diffAbs.imag());
+		// 				_hDerivDiffRel[iRank][iRefl][iWave][0]->Fill(diffRel.real());
+		// 				_hDerivDiffRel[iRank][iRefl][iWave][1]->Fill(diffRel.imag());
+		// 				_hDerivDiffTotAbs[0]->Fill(diffAbs.real());
+		// 				_hDerivDiffTotAbs[1]->Fill(diffAbs.imag());
+		// 				_hDerivDiffTotRel[0]->Fill(diffRel.real());
+		// 				_hDerivDiffTotRel[1]->Fill(diffRel.imag());
+		// 			}
+		// 	const T diffFlatAbs = derivativeFlatCpu - derivativeFlat;
+		// 	const T diffFlatRel = 1 - derivativeFlat / derivativeFlatCpu;
+		// 	_hDerivDiffFlatAbs->Fill(diffFlatAbs);
+		// 	_hDerivDiffFlatRel->Fill(diffFlatRel);
+		// }
+		if (not _cudaEnabled) {
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-						complex<T> diffAbs =   derivativesCpu[iRank][iRefl][iWave]
-							                   - derivatives   [iRank][iRefl][iWave];
-						complex<T> diffRel;
-						diffRel.real() = 1 -   derivatives   [iRank][iRefl][iWave].real()
-							                   / derivativesCpu[iRank][iRefl][iWave].real();
-						diffRel.imag() = 1 -   derivatives   [iRank][iRefl][iWave].imag()
-							                   / derivativesCpu[iRank][iRefl][iWave].imag();
-						_hDerivDiffAbs[iRank][iRefl][iWave][0]->Fill(diffAbs.real());
-						_hDerivDiffAbs[iRank][iRefl][iWave][1]->Fill(diffAbs.imag());
-						_hDerivDiffRel[iRank][iRefl][iWave][0]->Fill(diffRel.real());
-						_hDerivDiffRel[iRank][iRefl][iWave][1]->Fill(diffRel.imag());
-						_hDerivDiffTotAbs[0]->Fill(diffAbs.real());
-						_hDerivDiffTotAbs[1]->Fill(diffAbs.imag());
-						_hDerivDiffTotRel[0]->Fill(diffRel.real());
-						_hDerivDiffTotRel[1]->Fill(diffRel.imag());
-					}
-			const T diffFlatAbs = derivativeFlatCpu - derivativeFlat;
-			const T diffFlatRel = 1 - derivativeFlat / derivativeFlatCpu;
-			_hDerivDiffFlatAbs->Fill(diffFlatAbs);
-			_hDerivDiffFlatRel->Fill(diffFlatRel);
-		}
-		if (not _cudaEnabled) {
-			derivatives    = derivativesCpu;
-			derivativeFlat = derivativeFlatCpu;
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+						derivatives[iRank][iRefl][iWave] = sum(derivativesAcc[iRank][iRefl][iWave]);
+			derivativeFlat = sum(derivativeFlatAcc);
 		}
 	}
 	// log time needed for gradient calculation
 	timer.Stop();
-	_funcCallInfo[GRADIENT].funcTime += timer.RealTime();
+	_funcCallInfo[GRADIENT].funcTime(timer.RealTime());
 
 	// normalize derivatives w.r.t. parameters
 	timer.Start();
@@ -504,18 +496,18 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				complex<T> normFactorDeriv = 0;
+				accumulator_set<complex<T>, stats<tag::sum(compensated)> > normFactorDerivAcc;
 				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {  // inner loop over waves with same reflectivity
 					const complex<T> I = complex<T>(_accMatrix[iRefl][iWave][iRefl][jWave]);
-					normFactorDeriv += prodAmps[iRank][iRefl][jWave] * conj(I);
+					normFactorDerivAcc(prodAmps[iRank][iRefl][jWave] * conj(I));
 				}
-				derivatives[iRank][iRefl][iWave] += normFactorDeriv * twiceNmbEvt;  // account for 2 * nmbEvents
+				derivatives[iRank][iRefl][iWave] += sum(normFactorDerivAcc) * twiceNmbEvt;  // account for 2 * nmbEvents
 			}
 	// take care of flat wave
-	derivativeFlat += twiceNmbEvt * prodAmpFlat;
+	derivativeFlat += prodAmpFlat * twiceNmbEvt;
 	// log time needed for normalization
 	timer.Stop();
-	_funcCallInfo[GRADIENT].normTime += timer.RealTime();
+	_funcCallInfo[GRADIENT].normTime(timer.RealTime());
 
 	// set return gradient values
 	copyToParArray(derivatives, derivativeFlat, gradient);
@@ -523,7 +515,7 @@ TPWALikelihood<T>::Gradient(const double* par,             // parameter array; r
 
 	// log total consumed time
 	timerTot.Stop();
-	_funcCallInfo[GRADIENT].totalTime += timerTot.RealTime();
+	_funcCallInfo[GRADIENT].totalTime(timerTot.RealTime());
 
 #endif  // USE_FDF
 }
@@ -1102,9 +1094,9 @@ TPWALikelihood<T>::printFuncInfo(ostream& out) const
 			out << "    " << _funcCallInfo[i].nmbCalls
 			    << " calls to TPWALikelihood<T>::" << funcNames[i] << "()" << endl
 			    << "    time spent in TPWALikelihood<T>::" << funcNames[i] << "(): " << endl
-			    << "        total time ................. " << _funcCallInfo[i].totalTime << " sec" << endl
-			    << "        return value calculation ... " << _funcCallInfo[i].funcTime  << " sec" << endl
-			    << "        normalization .............. " << _funcCallInfo[i].normTime  << " sec" << endl;
+			    << "        total time ................. " << sum(_funcCallInfo[i].totalTime) << " sec" << endl
+			    << "        return value calculation ... " << sum(_funcCallInfo[i].funcTime ) << " sec" << endl
+			    << "        normalization .............. " << sum(_funcCallInfo[i].normTime ) << " sec" << endl;
 	return out;
 }
 
@@ -1162,10 +1154,11 @@ void
 TPWALikelihood<T>::resetFuncCallInfo() const
 {
 	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i) {
-		_funcCallInfo[i].nmbCalls   = 0;
-		_funcCallInfo[i].funcTime   = 0;
-		_funcCallInfo[i].normTime   = 0;
-		_funcCallInfo[i].totalTime  = 0;
+		_funcCallInfo[i].nmbCalls  = 0;
+		// boost accumulators do not have a reset function
+		_funcCallInfo[i].funcTime  = typename functionCallInfo::timeAccType();
+		_funcCallInfo[i].normTime  = typename functionCallInfo::timeAccType();
+		_funcCallInfo[i].totalTime = typename functionCallInfo::timeAccType();
 	}
 }
 

@@ -257,6 +257,7 @@ add_subdirectory(pwa2000)
 set(UTILITIES_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/utilities
 	)
+add_subdirectory(utilities)
 
 # CUDA stuff
 if(USE_CUDA)

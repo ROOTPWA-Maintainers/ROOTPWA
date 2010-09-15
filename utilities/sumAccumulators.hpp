@@ -46,6 +46,9 @@
 #include "boost/accumulators/framework/parameters/sample.hpp"
 #include "boost/accumulators/framework/depends_on.hpp"
 #include "boost/accumulators/framework/extractor.hpp"
+#include "boost/accumulators/accumulators.hpp"
+#include "boost/accumulators/statistics/stats.hpp"
+#include "boost/accumulators/statistics/sum.hpp"
 
 
 namespace boost {
@@ -54,8 +57,7 @@ namespace boost {
 		
 		///////////////////////////////////////////////////////////////////////////////
 		// named parameter for cascaded sum
-		BOOST_PARAMETER_NESTED_KEYWORD(tag, cascadeSumNmbElements,          nmbElements)
-		BOOST_PARAMETER_NESTED_KEYWORD(tag, cascadeSumNmbOfSumsAtEachStage, nmbOfSumsAtEachStage)
+		BOOST_PARAMETER_NESTED_KEYWORD(tag, cascadedSumNmbElements, nmbElements)
 
 
 		////////////////////////////////////////////////////////////////////////////
@@ -63,103 +65,103 @@ namespace boost {
 		namespace impl {
 
 			// cascaded sum reduces (random) round-off errors form O[eps * sqrt(n)] (for naive accumulation)
-			// to O[eps * sqrt(log n)] (for nmbOfSumsAtEachStage = 2) with very little overhead
+			// to O[eps * sqrt(log n)] with very little overhead
 			// see http://en.wikipedia.org/wiki/Pairwise_summation
 			// the implementation is somewhat simplistic in that it requires buffer memory of
-			// 1 / nmbOfSumsAtEachStage of the size of the original data
+			// 3/4 of the size of the original data
 			template<typename sampleT>
-			struct cascadeSumAccumulator : accumulator_base	{
+			struct cascadedSumAccumulator : accumulator_base	{
 
 				typedef sampleT result_type;
     
 				// constructor takes an Boost.Paramter argument pack there might be an initial value in
 				// the argument pack; 'sample' is defined in sample.hpp
 				template<typename argsT>
-				cascadeSumAccumulator(const argsT& args)
-					: _countElements       (0),
-					  _nmbOfSumsAtEachStage(args[cascadeSumNmbOfSumsAtEachStage | 2]),
-					  _partialSumsIndex    (0)
+				cascadedSumAccumulator(const argsT& args)
+					: _sumNextElement  (false),
+					  _partialSumsIndex(0)
 				{
-					std::size_t nmbValues = args[cascadeSumNmbElements | 1];
-					std::size_t nmbSums   = nmbValues / _nmbOfSumsAtEachStage;
-					if (nmbValues % _nmbOfSumsAtEachStage > 0)
+					std::size_t nmbValues = args[cascadedSumNmbElements | 1];
+					std::size_t nmbSums   = nmbValues / 2;
+					if (nmbValues % 2 > 0)
 						++nmbSums;
 					if (nmbSums > 0) {
 						_partialSums.resize(nmbSums, sampleT());
 						_partialSums[0] = args[sample | sampleT()];
 					}
 				}
-    
+				
 				template<typename argsT>
 				void
 				operator ()(const argsT& args)  // accumulate function also accepts an argument pack
 				{
-					// sum _nmbOfSumsAtEachStage elements and store result in _partialSums
-					if (_countElements < _nmbOfSumsAtEachStage)
+					// sum pairs and store result in _partialSums
+					if (_sumNextElement) {
 						_partialSums[_partialSumsIndex] += args[sample];
-					else {
-						_countElements = 0;
 						++_partialSumsIndex;
+					} else {
 						if (_partialSumsIndex >= _partialSums.size())
 							_partialSums.resize(_partialSumsIndex, sampleT());
 						_partialSums[_partialSumsIndex] = args[sample];
 					}
-					++_countElements;
+					_sumNextElement = !_sumNextElement;
 				}
-    
+				
 				result_type
 				result(dont_care) const  // passed argument pack is not used
 				{
 					// sum up partial sums
-					const std::vector<sampleT>* sumsPrev       = &_partialSums;
-					std::vector<sampleT>*       sumsNext       = 0;
-					bool                        firstIteration = true;
-					do {
-						std::size_t nmbSumsNext = sumsPrev->size() / _nmbOfSumsAtEachStage;
-						if (sumsPrev->size() % _nmbOfSumsAtEachStage > 0)
-							++nmbSumsNext;
-						sumsNext = new std::vector<sampleT>(nmbSumsNext, sampleT());
-						for (std::size_t i = 0; i < nmbSumsNext; ++i) {
-							for (std::size_t j = i * _nmbOfSumsAtEachStage;
-							     j < min((i + 1) * _nmbOfSumsAtEachStage, sumsPrev->size()); ++j) {
-								(*sumsNext)[i] += (*sumsPrev)[j];
-							}
-						}
-						// cleanup
-						if (firstIteration)
-							firstIteration = false;
-						else
-							delete sumsPrev;
-						// prepare for next iteration
-						sumsPrev = sumsNext;
-					} while (sumsPrev->size() > 1);
-					return (*sumsPrev)[0];
+					// treat special cases
+					const std::size_t size = _partialSums.size();
+					if (size == 0)
+						return 0;
+					else if (size == 1)
+						return _partialSums[0];
+					else if (size == 2)
+						return _partialSums[0] + _partialSums[1];
+					// allocate buffer for intermediate sums
+					const std::size_t halfSize = size / 2;
+					sampleT sum[halfSize + 1];
+					// perform first summation pass
+					std::size_t iNewSum, iOldSum;
+					for (iNewSum = iOldSum = 0; iNewSum < halfSize; iNewSum++, iOldSum += 2)
+						sum[iNewSum] = _partialSums[iOldSum] + _partialSums[iOldSum + 1];
+					if (halfSize > 0)
+						sum[halfSize] = _partialSums[size - 1];
+					// sum pairs until only one pair remains
+					std::size_t newSumSize = (size + 1) / 2;
+					while (newSumSize > 2) {
+						for (iNewSum = iOldSum = 0; iNewSum < newSumSize / 2; iNewSum++, iOldSum += 2)
+							sum[iNewSum] = sum[iOldSum] + sum[iOldSum + 1];
+						if (newSumSize % 2 > 0)
+							sum[newSumSize / 2] = sum[newSumSize - 1];
+						newSumSize = (newSumSize + 1) / 2;
+					}
+					return sum[0] + sum[1];
 				}
 				
-
 			private:
-
-				size_t               _countElements;
-				size_t               _nmbOfSumsAtEachStage;
-				size_t               _partialSumsIndex;
+				
+				bool                 _sumNextElement;
+				std::size_t          _partialSumsIndex;
 				std::vector<sampleT> _partialSums;
 				
 			};
+			
 
-
-			// Kahan sum reduces (random) round-off errors form O[eps * sqrt(n)] (for naive accumulation)
-			// to O[eps] at the cost of 4 summations (instead of 1) for each entry; however, no additional
-			// buffer memory is required
+			// compensated (or Kahan) sum reduces (random) round-off errors form O[eps * sqrt(n)] (for
+			// naive accumulation) to O[eps] at the cost of 4 summations (instead of 1) for each entry;
+			// however, no additional buffer memory is required
 			// see http://en.wikipedia.org/wiki/Kahan_summation
 			template<typename sampleT>
-			struct kahanSumAccumulator : accumulator_base	{
+			struct compensatedSumAccumulator : accumulator_base	{
 
 				typedef sampleT result_type;
     
 				// constructor takes an Boost.Paramter argument pack there might be an initial value in
 				// the argument pack; 'sample' is defined in sample.hpp
 				template<typename argsT>
-				kahanSumAccumulator(const argsT& args)
+				compensatedSumAccumulator(const argsT& args)
 					: _sum(args[sample | sampleT()]),
 					  _compensation(sampleT())
 				{	}
@@ -169,16 +171,16 @@ namespace boost {
 				operator ()(const argsT& args)  // accumulate function also accepts an argument pack
 				{
 					// at the beginning _compensation is zero
-					const sampleT x = args[sample] - _compensation;
-					// _sum is big, x small, so low-order digits of x are lost
-					const sampleT y = _sum + x;
-					// (y - _sum) recovers the high-order part of x;
-					// subtracting x recovers -(the lost low part of x)
-					_compensation = (y - _sum) - x;
-					_sum = y;  // beware eagerly optimising compilers!
-					// in the next call the lost low part stored in _compensation will be added to x
+					const sampleT correctedTerm = args[sample] - _compensation;
+					// _sum is big, correctedTerm small, so low-order digits of correctedTerm are lost
+					const sampleT newSum        = _sum + correctedTerm;
+					// (newSum - _sum) recovers the high-order part of correctedTerm;
+					// subtracting correctedTerm recovers -(the lost low part of correctedTerm)
+					_compensation = (newSum - _sum) - correctedTerm;
+					_sum          = newSum;  // beware of eagerly optimising compilers
+					// in the next call the lost low part stored in _compensation will be added to sum
 				}
-    
+
 				result_type
 				result(dont_care) const  // passed argument pack is not used
 				{
@@ -200,21 +202,19 @@ namespace boost {
 		// bind features to accumulator implementations
 		namespace tag {
 
-			struct cascadeSum : depends_on<>,
-			                    tag::cascadeSumNmbElements,
-			                    tag::cascadeSumNmbOfSumsAtEachStage
+			struct cascadedSum : depends_on<>,
+			                    tag::cascadedSumNmbElements
 			{
-				typedef accumulators::impl::cascadeSumAccumulator<mpl::_1> impl;
+				typedef accumulators::impl::cascadedSumAccumulator<mpl::_1> impl;
 #ifdef BOOST_ACCUMULATORS_DOXYGEN_INVOKED
-				static const parameter::keyword<tag::cascadeSumNmbElements>          nmbElements;
-				static const parameter::keyword<tag::cascadeSumNmbOfSumsAtEachStage> nmbOfSumsAtEachStage;
+				static const parameter::keyword<tag::cascadedSumNmbElements> nmbElements;
 #endif
 			};
 
 
-			struct kahanSum : depends_on<>
+			struct compensatedSum : depends_on<>
 			{
-				typedef accumulators::impl::kahanSumAccumulator<mpl::_1> impl;
+				typedef accumulators::impl::compensatedSumAccumulator<mpl::_1> impl;
 			};
 
 		}
@@ -224,44 +224,44 @@ namespace boost {
 		// extractors for features
 		namespace extract {
 
-			const extractor<tag::cascadeSum> cascadeSum = {};
-			BOOST_ACCUMULATORS_IGNORE_GLOBAL(cascadeSum)
+			const extractor<tag::cascadedSum> cascadedSum = {};
+			BOOST_ACCUMULATORS_IGNORE_GLOBAL(cascadedSum)
 
 
-			const extractor<tag::kahanSum> kahanSum = {};
-			BOOST_ACCUMULATORS_IGNORE_GLOBAL(kahanSum)
+			const extractor<tag::compensatedSum> compensatedSum = {};
+			BOOST_ACCUMULATORS_IGNORE_GLOBAL(compensatedSum)
 
 		}
-		using extract::cascadeSum;
-		using extract::kahanSum;
+		using extract::cascadedSum;
+		using extract::compensatedSum;
 
 
 		////////////////////////////////////////////////////////////////////////////
 		// register feature variants
 
-		// sum(cascade) -> cascadeSum
-		struct cascade {};
+		// sum(cascaded) -> cascadedSum
+		struct cascaded {};
 		template<>
-		struct as_feature<tag::sum(cascade)>
+		struct as_feature<tag::sum(cascaded)>
 		{
-			typedef tag::cascadeSum type;
+			typedef tag::cascadedSum type;
 		};
     // for feature-based dependency resolution: provides the same feature as sum
 		template<>
-		struct feature_of<tag::cascadeSum> : feature_of<tag::sum>
+		struct feature_of<tag::cascadedSum> : feature_of<tag::sum>
     { };
 
 		
-		// sum(kahan) -> kahanSum
-		struct kahan {};
+		// sum(compensated) -> compensatedSum
+		struct compensated {};
 		template<>
-		struct as_feature<tag::sum(kahan)>
+		struct as_feature<tag::sum(compensated)>
 		{
-			typedef tag::kahanSum type;
+			typedef tag::compensatedSum type;
 		};
     // for feature-based dependency resolution: provides the same feature as sum
 		template<>
-		struct feature_of<tag::kahanSum> : feature_of<tag::sum>
+		struct feature_of<tag::compensatedSum> : feature_of<tag::sum>
     { };
 
 		

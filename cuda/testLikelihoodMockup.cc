@@ -60,6 +60,38 @@ using namespace rpwa;
 typedef multi_array<complex<double>, 3> ampsArrayType;  // host array type of production and decay amplitudes
 
 
+template<typename T>
+inline
+T
+cascadeSum(const std::vector<T>& data,
+           const std::size_t     nmbOfSumsAtEachStage = 2)
+{
+	const std::vector<T>* sumsPrev       = &data;
+	std::vector<T>*       sumsNext       = 0;
+	bool                  firstIteration = true;
+	do {
+		std::size_t nmbSumsNext = sumsPrev->size() / nmbOfSumsAtEachStage;
+		if (sumsPrev->size() % nmbOfSumsAtEachStage > 0)
+			++nmbSumsNext;
+		sumsNext = new std::vector<T>(nmbSumsNext, T());
+		for (std::size_t i = 0; i < nmbSumsNext; ++i)
+			for (std::size_t j = i * nmbOfSumsAtEachStage;
+			     j < min((i + 1) * nmbOfSumsAtEachStage, sumsPrev->size()); ++j)
+				(*sumsNext)[i] += (*sumsPrev)[j];
+		// cleanup
+		if (firstIteration)
+			firstIteration = false;
+		else
+			delete sumsPrev;
+		// prepare for next iteration
+		sumsPrev = sumsNext;
+	} while (sumsPrev->size() > 1);
+	const T sum = (*sumsPrev)[0];
+	delete sumsPrev;
+	return sum;
+}
+
+
 template<typename complexT>
 void
 generateData(const unsigned int             nmbEvents,

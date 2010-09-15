@@ -100,7 +100,11 @@ the source code. CMake is supporting this:
    defined in the to-level CMakeLists.txt.
    You can choose a different built option with:
 
-	&> cmake -D MAKE_BUILD_TYPE=DEBUG ..
+	&> cmake -D CMAKE_BUILD_TYPE=DEBUG ..
+  
+   or
+  
+	&> cmake -D CMAKE_BUILD_TYPE=RELWITHDEBINFO ..
 
 There is no make install needed anymore.
 

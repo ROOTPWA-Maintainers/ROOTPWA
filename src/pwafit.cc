@@ -51,10 +51,10 @@
 #include "Math/Factory.h"
 #include "TStopwatch.h"
 
+#include "TPWALikelihood.h"
 #include "utilities.h"
 #include "TFitBin.h"
 #include "fitResult.h"
-#include "TPWALikelihood.h"
 #ifdef USE_CUDA
 #include "../cuda/complex.cuh"
 #include "../cuda/likelihoodInterface.cuh"
