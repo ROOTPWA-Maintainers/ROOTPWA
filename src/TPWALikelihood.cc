@@ -576,12 +576,12 @@ TPWALikelihood<complexT>::init(const unsigned int rank,
 	buildParDataStruct(rank);
 	readIntegrals(normIntFileName, accIntFileName);
 	readDecayAmplitudes(ampDirName);
-// #ifdef USE_CUDA
-// 	if (_cudaEnabled) {
-// 		cuda::likelihoodInterface<cuda::complex<T> >::init
-// 			(reinterpret_cast<cuda::complex<T>*>(_decayAmps.data()),
-// 			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
-// 		if (_cudaEnabled and _genCudaDiffHist) {
+#ifdef USE_CUDA
+	if (_cudaEnabled) {
+		cuda::likelihoodInterface<cuda::complex<value_type> >::init
+			(reinterpret_cast<cuda::complex<value_type>*>(_decayAmps.data()),
+			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
+// 		if (_genCudaDiffHist) {
 // 			if (not _outFile)
 // 				_outFile = TFile::Open("cudaDiff.root", "RECREATE");
 // 			_outFile->cd();
@@ -625,8 +625,8 @@ TPWALikelihood<complexT>::init(const unsigned int rank,
 // 					 10000, -1e-10, 1e-10);
 // 			}
 // 		}
-// 	}
-// #endif
+	}
+#endif
 }
 
 
