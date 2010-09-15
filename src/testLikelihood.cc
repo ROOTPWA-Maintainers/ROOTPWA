@@ -160,7 +160,7 @@ main(int    argc,
 
   // setup likelihood function
   printInfo << "creating and setting up likelihood function" << endl;
-  TPWALikelihood<double> L;
+  TPWALikelihood<complex<double> > L;
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);

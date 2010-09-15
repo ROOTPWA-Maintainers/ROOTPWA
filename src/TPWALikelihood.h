@@ -38,8 +38,8 @@
 
 #include <vector>
 #include <string>
-#include <complex>
-#include <utility>
+// #include <complex>
+// #include <utility>
 #include <iostream>
 
 #define BOOST_DISABLE_ASSERTS
@@ -61,7 +61,7 @@ class TString;
 class TCMatrix;
 
 
-template<typename T = double>  // template for type of internal variables used for intermediate results
+template<typename complexT>  // type of internal variables used for intermediate results
 class TPWALikelihood : public ROOT::Math::IGradientFunctionMultiDim {
 
 private:
@@ -72,11 +72,13 @@ private:
 	typedef boost::multi_array<unsigned int,           2> waveToIntMapType;     // array for mapping of waves to integral indices
 	typedef boost::multi_array<unsigned int,           2> waveToListMapType;    // array for mapping of waves to position in wave list
 	typedef boost::multi_array<boost::tuple<int, int>, 3> ampToParMapType;      // array for mapping of amplitudes to parameters
-	typedef boost::multi_array<std::complex<double>,   3> ampsArrayType;        // array for production and decay amplitudes
-	typedef boost::multi_array<std::complex<double>,   4> normMatrixArrayType;  // array for normalization matrices
+	typedef boost::multi_array<complexT,               3> ampsArrayType;        // array for production and decay amplitudes
+	typedef boost::multi_array<complexT,               4> normMatrixArrayType;  // array for normalization matrices
 
 
 public:
+
+	typedef typename complexT::value_type value_type;
 
 	// enum for function call counters
 	enum functionCallEnum {
@@ -120,7 +122,7 @@ public:
 
 	unsigned int             nmbEvents   ()                                    const { return _nmbEvents;               }  ///< returns number of events that enter in the likelihood
 	unsigned int             rank        ()                                    const { return _rank;                    }  ///< returns rank of spin density matrix
-	inline unsigned int      nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
+	unsigned int             nmbWaves    (const int          reflectivity = 0) const;                                      ///< returns total number of waves (reflectivity == 0) or number or number of waves with positive/negative reflectivity; flat wave is not counted!
 	unsigned int             nmbPars     ()                                    const { return _nmbPars;                 }  ///< returns total number of parameters
 	// std::string              waveName    (const unsigned int waveIndex)        const { return _waveNames[waveIndex];    }  ///< returns name of wave at waveIndex
 	std::vector<std::string> waveNames   ()                                    const;  ///< returns vector with all wave names ordered like in input wave list
@@ -185,9 +187,9 @@ private:
 	                           normMatrixArrayType& reorderedMatrix) const;
 	void copyFromParArray(const double*  inPar,              // input parameter array
 	                      ampsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
-	                      T&             outFlatVal) const;  // output value corresponding to flat wave
+	                      value_type&    outFlatVal) const;  // output value corresponding to flat wave
 	void copyToParArray(const ampsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
-	                    const T              inFlatVal,      // value corresponding to flat wave
+	                    const value_type     inFlatVal,      // value corresponding to flat wave
 	                    double*              outPar) const;  // output parameter array
 
 	void resetFuncCallInfo() const;
@@ -196,6 +198,7 @@ private:
 	unsigned int _rank;             // rank of spin density matrix
 	unsigned int _nmbWaves;         // number of waves
 	unsigned int _nmbWavesRefl[2];  // number of negative (= 0) and positive (= 1) reflectivity waves 
+	unsigned int _nmbWavesReflMax;  // maximum of number of negative and positive reflectivity waves 
 	unsigned int _nmbPars;          // number of function parameters
 
 #ifdef USE_CUDA
@@ -243,19 +246,6 @@ public:
 	mutable TH1D*         _hDerivDiffTotRel[2];
 
 };
-
-
-template<typename T>
-unsigned int
-TPWALikelihood<T>::nmbWaves(const int reflectivity) const
-{
-	if (reflectivity == 0)
-		return _nmbWaves;
-	else if (reflectivity > 0)
-		return _nmbWavesRefl[1];  // positive reflectivity
-	else
-		return _nmbWavesRefl[0];  // negative reflectivity
-}
 
 
 #endif  // TPWALIKELIHOOD_H

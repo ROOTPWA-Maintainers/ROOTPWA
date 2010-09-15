@@ -171,7 +171,7 @@ main(int    argc,
 	unsigned int rank               = 1;                      // rank of fit
 	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
-	bool         cudaEnabled        = true;                  // if true CUDA kernels are activated
+	bool         cudaEnabled        = false;                  // if true CUDA kernels are activated
 	bool         genCudaDiffHist    = false;                  // if true CUDA vs. CPU difference histograms are created
 	bool         quiet              = false;
 	extern char* optarg;
@@ -275,7 +275,7 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
 	printInfo << "creating and setting up likelihood function" << endl;
-	TPWALikelihood<double> L;
+	TPWALikelihood<complex<double> > L;
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
