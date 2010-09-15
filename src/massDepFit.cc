@@ -97,6 +97,22 @@ usage(const string& progName,
   exit(errCode);
 }
 
+//  function loops through fitResults and puts phasespace values into a graph for interpolation
+TGraph*
+getPhaseSpace(TTree* tree, const std::string& wave){
+  unsigned int n=tree->GetEntries();
+  TGraph* graph=new TGraph(n);
+  fitResult* res=0;
+  tree->SetBranchAddress("fitResult_v2",&res);
+  for(unsigned int i=0; i<n; ++i){
+    tree->GetEntry(i);
+    double m=res->massBinCenter();
+    double ps=res->phaseSpace(wave);
+    graph->SetPoint(i,m,ps);
+  }
+  return graph;
+}
+
 
 int
 main(int    argc,
@@ -181,27 +197,31 @@ extern char* optarg;
 
 
 
-  std::map<std::string,std::complex<double> > channels;
-  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"]=complex<double>(50,0);
-  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"]=complex<double>(50,0);
+  std::map<std::string,pwachannel > channels;
+  std::string ch1="1-2-+0+rho770_02_a21320=pi-_2_rho770.amp";
+  std::string ch2="1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp";
+  std::string ch3="1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp";
+  channels[ch1]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch1));
+  channels[ch2]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch2));
+  channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
   pwacomponent comp1("pi2(1880)",1880,150,channels);
   comp1.setLimits(1700,1900,50,300);
   comp1.setFixed(0,0);
 
-  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"]=complex<double>(1,0);
-  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"]=complex<double>(50,0);
-  pwacomponent comp2("pi2(2300)",2300,280,channels);
+  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(1,0));
+  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
+  pwacomponent comp2("pi2(2300)",2300,400,channels);
   comp2.setLimits(2000,2500,200,800);
   comp2.setFixed(1,0);
 
-  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"]=complex<double>(50,0);
-  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"]=complex<double>(50,0);
+  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(50,0));
+  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(50,0));
   pwacomponent comp3("pi2(1670)",1672,260,channels);
   comp3.setLimits(1600,1700,200,400);
   comp3.setFixed(1,1);
 
-  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"]=complex<double>(20,0);
-  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"]=complex<double>(5,0);
+  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(20,0));
+  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
   pwacomponent comp4("pi2(2100)",2090,600,channels);
   comp4.setLimits(2000,2200,100,800);
   comp4.setFixed(1,0);
@@ -261,10 +281,10 @@ extern char* optarg;
 				       comp.gamma(), 
 				       0.10,
 				       gmin,gmax);
-    std::map<std::string,std::complex<double> >::const_iterator it=comp.channels().begin();
+    std::map<std::string,pwachannel >::const_iterator it=comp.channels().begin();
     while(it!=comp.channels().end()){
-      minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.real(), 0.10);
-      minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.imag(), 0.10);
+      minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.C().real(), 0.10);
+      minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);
       ++it;
     } // end loop over channels
 
@@ -373,7 +393,7 @@ extern char* optarg;
      fitgraphs[iw]->SetDrawOption("AP");
      fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
-    
+     graphs[iw]->Add(comp1.channels().find(wl[iw])->second.ps());
    }
 
    std::vector<TGraphErrors*> phasedatagraphs;
@@ -531,7 +551,7 @@ extern char* optarg;
    }
 
      phasegraphs[iw]->Write();
-     phase2d[iw]->Write();
+     //phase2d[iw]->Write();
    }
    outfile->Close();
    

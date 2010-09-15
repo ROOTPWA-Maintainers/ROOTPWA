@@ -86,12 +86,12 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	  
 	  for(unsigned int k=0;k<_compset->n();++k){
 	    if((*_compset)[k].channels().count(w1)>0)
-	      f1+=(*_compset)[k].val(mass)* ((*_compset)[k].channels()).find(w1)->second;
+	      f1+=(*_compset)[k].val(mass)* ((*_compset)[k].channels()).find(w1)->second.C();
 	    if((*_compset)[k].channels().count(w2)>0)
-	      f2+=(*_compset)[k].val(mass)* ((*_compset)[k].channels()).find(w2)->second; 
+	      f2+=(*_compset)[k].val(mass)* ((*_compset)[k].channels()).find(w2)->second.C(); 
 	  }
 	  f1*=_rhom->phaseSpace(_index[i]);
-	  f2*=_rhom->phaseSpace(_index[i]);
+	  f2*=_rhom->phaseSpace(_index[j]);
 	  rho=f1*conj(f2);
 	  // compare to measured spin density matrix element
 	  complex<double> rhom=rho-_rhom->spinDensityMatrixElem(_index[i],_index[j]);
@@ -108,7 +108,7 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	  
 	  //cerr << "d-rho("<<i<<","<<j<<")=" << dchi<<endl;;
 	  //cerr << "sigma ="<< sigma << endl;
-	  chi2+=dchi;
+	  if(i==j)chi2+=dchi;
 	}
       }// end loop over i
   } // end loop over mass-bins

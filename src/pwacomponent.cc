@@ -29,7 +29,7 @@ using namespace std;
 
 rpwa::pwacomponent::pwacomponent(const string& name,
 				 double m0, double gamma,
-				 const map<string,complex<double> >& channels)
+				 const map<string,pwachannel >& channels)
   : _name(name), _m0(m0), _m02(m0*m0),_m0min(0),_m0max(5000),_gamma(gamma),_gammamin(0),_gammamax(1000),_fixm(false),_fixgamma(false), _channels(channels)
 {}
 
@@ -37,21 +37,21 @@ rpwa::pwacomponent::pwacomponent(const string& name,
 
 void
 rpwa::pwacomponent::setCouplings(const double* par){
-  map<string,complex<double> >::iterator it=_channels.begin();
+  map<string,pwachannel >::iterator it=_channels.begin();
   unsigned int counter=0;
   while(it!=_channels.end()){
-    it->second=complex<double>(par[counter],par[counter+1]);
+    it->second.setCoupling(complex<double>(par[counter],par[counter+1]));
     counter+=2;
     ++it;
   }
 }
 void
 rpwa::pwacomponent::getCouplings(double* par){
-  map<string,complex<double> >::iterator it=_channels.begin();
+  map<string,pwachannel >::iterator it=_channels.begin();
   unsigned int counter=0;
   while(it!=_channels.end()){
-    par[counter]=it->second.real();
-    par[counter+1]=it->second.imag();
+    par[counter]=it->second.C().real();
+    par[counter+1]=it->second.C().imag();
     counter+=2;
     ++it;
   }
@@ -60,7 +60,23 @@ rpwa::pwacomponent::getCouplings(double* par){
     
 complex<double>
 rpwa::pwacomponent::val(double m) const {
-  return _gamma*_m0/complex<double>(m*m-_m02,_gamma*_m0);
+  // calculate dynamic width:
+  // loop over decay channels
+  double gamma=0;
+  std::map<std::string,pwachannel >::const_iterator it=_channels.begin();
+  double n=(double)numChannels();
+  while(it!=_channels.end()){
+    double ps=1;
+    if(it->second.ps()!=NULL){
+      double ps0=it->second.ps(_m0);
+      ps=it->second.ps(m)/ps0;
+    }
+    gamma+=_gamma*ps/n;
+    ++it;
+  }
+
+
+  return gamma*_m0/complex<double>(m*m-_m02,gamma*_m0);
 }
 
 
@@ -71,8 +87,8 @@ vector<string>
 rpwa::pwacompset::wavelist() const {
   vector<string> wl;
   for(unsigned int i=0;i<n();++i){
-    const map<string,complex<double> >& channellist=_comp[i].channels();
-    map<string,complex<double> >::const_iterator it=channellist.begin();
+    const map<string,pwachannel >& channellist=_comp[i].channels();
+    map<string,pwachannel >::const_iterator it=channellist.begin();
     while(it!=channellist.end()){
       if(find(wl.begin(),wl.end(),it->first)==wl.end())
 	 wl.push_back(it->first);
@@ -115,7 +131,7 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
   for(unsigned int ic=0;ic<n();++ic){
     if(_comp[ic].channels().count(wave)==0)continue;
     else {
-      rho+=_comp[ic].val(m)*_comp[ic].channels().find(wave)->second;
+      rho+=_comp[ic].val(m)*_comp[ic].channels().find(wave)->second.C();
     }
 
   }
@@ -134,14 +150,14 @@ rpwa::pwacompset::phase(const std::string& wave1,
 
   for(unsigned int ic=0;ic<n();++ic){
     if(_comp[ic].channels().count(wave1)!=0){
-      rho1+=_comp[ic].val(m)*_comp[ic].channels().find(wave1)->second;
+      rho1+=_comp[ic].val(m)*_comp[ic].channels().find(wave1)->second.C();
     }
     if(_comp[ic].channels().count(wave2)!=0){
-      rho2=_comp[ic].val(m)*_comp[ic].channels().find(wave2)->second;
+      rho2=_comp[ic].val(m)*_comp[ic].channels().find(wave2)->second.C();
     }
   }
-  //rho1*=ps1;
-  //rho2*=ps2;
+  rho1*=ps1;
+  rho2*=ps2;
   return arg(rho1*conj(rho2));
 }
 
@@ -150,9 +166,9 @@ std::ostream& rpwa::operator<< (std::ostream& o,const rpwa::pwacomponent& c){
   o << c.name() << endl
     << "Mass= " << c.m0() << "   Width="<< c.gamma() << endl
     << "Decay modes: " << endl;
-  std::map<std::string,std::complex<double> >::const_iterator it=c.channels().begin();
+  std::map<std::string,pwachannel >::const_iterator it=c.channels().begin();
   while(it!=c.channels().end()){
-    o << it->first << "    C=" << it->second << endl;
+    o << it->first << "    C=" << it->second.C() << endl;
       ++it;
   }
 

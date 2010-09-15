@@ -24,16 +24,40 @@
 #include <map>
 #include <vector>
 #include <complex>
+#include <TGraph.h>
 
 // Collaborating Class Declarations --
 
 namespace rpwa {
 
+  class pwachannel {
+  public:
+    pwachannel() : _C(0,0),_ps(NULL){}
+    pwachannel(std::complex<double> coupling,
+	       TGraph* phasespace)
+      : _C(coupling), _ps(phasespace){}
+
+    // accessors
+    std::complex<double> C() const {return _C;}
+    TGraph* ps() const {return _ps;}
+    double ps(double m) const {return _ps->Eval(m);}
+
+    //modifiers
+    void setCoupling(std::complex<double> c){_C=c;}
+
+
+  private:
+    std::complex<double> _C;
+    TGraph* _ps;
+
+  };
+
+
   class pwacomponent {
   public:
     pwacomponent(const std::string& name,
 		 double m0, double gamma,
-		 const std::map<std::string,std::complex<double> >& channels);
+		 const std::map<std::string,pwachannel >& channels);
     
     virtual ~pwacomponent(){}
     
@@ -55,7 +79,7 @@ namespace rpwa {
 
     double m0() const {return _m0;}
     double gamma() const {return _gamma;}
-    const std::map<std::string,std::complex<double> >& channels()const {return _channels;}
+    const std::map<std::string,pwachannel >& channels()const {return _channels;}
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacomponent& c);
 
@@ -68,7 +92,8 @@ namespace rpwa {
     double _gammamin,_gammamax;
     bool _fixm;
     bool _fixgamma;
-    std::map<std::string,std::complex<double> > _channels;
+    std::map<std::string,pwachannel > _channels;
+    
 
   };
 
