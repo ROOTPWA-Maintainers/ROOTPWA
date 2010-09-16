@@ -21,7 +21,7 @@
 
 // Collaborating Class Headers --------
 #include <algorithm>
-
+#include <iostream>
 
 // Class Member definitions -----------
 
@@ -75,19 +75,47 @@ rpwa::pwacomponent::val(double m) const {
     ++it;
   }
 
-
+  //std::cerr << _name <<"  compval=" <<gamma*_m0/complex<double>(m*m-_m02,gamma*_m0) << std::endl;
   return gamma*_m0/complex<double>(m*m-_m02,gamma*_m0);
 }
 
 
+double
+lambda(const double a,
+       const double b,
+       const double c)
+{
+  return a * a + b * b + c * c - 2.0 * (a * b + b * c + c * a);
+}
 
+
+complex<double>
+q(const double M,
+  const double m1,
+  const double m2)
+{
+  double lam = lambda(M * M, m1 * m1, m2 * m2);
+  complex<double> ret;
+  if (lam < 0)
+    return complex<double>(0.0, sqrt(fabs(lam / (4 * M * M))));
+  return complex<double>(sqrt(lam / (4 * M * M)), 0.0 );
+}
+
+complex<double>
+rpwa::pwabkg::val(double m) const {
+  m-=_m0; // shift baseline mass
+  // calculate breakup momentum
+  complex<double> p=q(m,_m1,_m2);
+  //std::cerr << _name <<"  val=" << exp(-_gamma*p) << std::endl;
+  return exp(-_gamma*p);
+}
 
 
 vector<string> 
 rpwa::pwacompset::wavelist() const {
   vector<string> wl;
   for(unsigned int i=0;i<n();++i){
-    const map<string,pwachannel >& channellist=_comp[i].channels();
+    const map<string,pwachannel >& channellist=_comp[i]->channels();
     map<string,pwachannel >::const_iterator it=channellist.begin();
     while(it!=channellist.end()){
       if(find(wl.begin(),wl.end(),it->first)==wl.end())
@@ -103,10 +131,10 @@ void
 rpwa::pwacompset::setPar(const double* par){ // set parameters
   unsigned int parcount=0;
   for(unsigned int i=0;i<n();++i){
-    _comp[i].setPar(par[parcount],par[parcount+1]);
+    _comp[i]->setPar(par[parcount],par[parcount+1]);
     parcount+=2;
-    _comp[i].setCouplings(&par[parcount]);
-    parcount+=_comp[i].numChannels()*2; // RE and Im for each channel
+    _comp[i]->setCouplings(&par[parcount]);
+    parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
   }
 }
 
@@ -115,11 +143,11 @@ void
 rpwa::pwacompset::getPar(double* par){       // return parameters 
   unsigned int parcount=0;
   for(unsigned int i=0;i<n();++i){
-    par[parcount]=_comp[i].m0();
-    par[parcount+1]=_comp[i].gamma();
+    par[parcount]=_comp[i]->m0();
+    par[parcount+1]=_comp[i]->gamma();
     parcount+=2;
-    _comp[i].getCouplings(&par[parcount]);
-    parcount+=_comp[i].numChannels()*2; // RE and Im for each channel
+    _comp[i]->getCouplings(&par[parcount]);
+    parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
   }
 }
 
@@ -129,9 +157,9 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
   complex<double> rho(0,0);
   for(unsigned int ic=0;ic<n();++ic){
-    if(_comp[ic].channels().count(wave)==0)continue;
+    if(_comp[ic]->channels().count(wave)==0)continue;
     else {
-      rho+=_comp[ic].val(m)*_comp[ic].channels().find(wave)->second.C();
+      rho+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave)->second.C();
     }
 
   }
@@ -149,11 +177,11 @@ rpwa::pwacompset::phase(const std::string& wave1,
   complex<double> rho2(0,0);
 
   for(unsigned int ic=0;ic<n();++ic){
-    if(_comp[ic].channels().count(wave1)!=0){
-      rho1+=_comp[ic].val(m)*_comp[ic].channels().find(wave1)->second.C();
+    if(_comp[ic]->channels().count(wave1)!=0){
+      rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C();
     }
-    if(_comp[ic].channels().count(wave2)!=0){
-      rho2=_comp[ic].val(m)*_comp[ic].channels().find(wave2)->second.C();
+    if(_comp[ic]->channels().count(wave2)!=0){
+      rho2=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
     }
   }
   rho1*=ps1;
@@ -177,7 +205,7 @@ std::ostream& rpwa::operator<< (std::ostream& o,const rpwa::pwacomponent& c){
 
 std::ostream& rpwa::operator<< (std::ostream& out,const rpwa::pwacompset& cs){
   for(unsigned int i=0;i<cs.n();++i){
-    const rpwa::pwacomponent& c =cs[i];
+    const rpwa::pwacomponent& c =*cs[i];
     out << c << endl;
   }
   return out;

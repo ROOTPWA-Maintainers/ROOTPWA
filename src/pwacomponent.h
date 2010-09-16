@@ -63,7 +63,7 @@ namespace rpwa {
     
     std::string name() const {return _name;}
     virtual std::complex<double> val(double m) const ;
-    void setPar(double m0, double gamma){_m0=m0;_m02=m0*m0;_gamma=gamma;}
+    virtual void setPar(double m0, double gamma){_m0=m0;_m02=m0*m0;_gamma=gamma;}
     unsigned int numChannels() const {return _channels.size();}
     unsigned int numPar() const {return numChannels()*2+2;}
     void setCouplings(const double* par);
@@ -83,7 +83,7 @@ namespace rpwa {
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacomponent& c);
 
-  private:
+  protected:
     std::string _name;
     double _m0;
     double _m02;
@@ -98,13 +98,33 @@ namespace rpwa {
   };
 
 
+  class pwabkg : public pwacomponent{
+  public:
+    pwabkg(const std::string& name,
+	   double m0, double gamma,
+	   const std::map<std::string,pwachannel >& channels)
+      : pwacomponent(name,m0,gamma,channels){}
+    
+    virtual ~pwabkg(){}
+    
+    virtual std::complex<double> val(double m) const ;
+
+    void setIsobars(double m1,double m2){_m1=m1;_m2=m2;}
+    
+  private:
+    // isobar masses
+    double _m1;
+    double _m2;
+    
+  };
+
 
   class pwacompset {
   public:
     pwacompset():_numpar(0){}
     ~pwacompset(){}
 
-    void add(const pwacomponent& comp){_comp.push_back(comp);_numpar+=comp.numPar();}
+    void add(pwacomponent* comp){_comp.push_back(comp);_numpar+=comp->numPar();}
     
     unsigned int n() const {return _comp.size();}
     unsigned int numPar() const {return _numpar;}
@@ -114,7 +134,7 @@ namespace rpwa {
     void setPar(const double* par); // set parameters
     void getPar(double* par);       // return parameters 
 
-    const pwacomponent& operator[](unsigned int i) const {return _comp[i];}
+    const pwacomponent* operator[](unsigned int i) const {return _comp[i];}
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacompset& cs);
     
@@ -126,7 +146,7 @@ namespace rpwa {
 		 double m);
     
   private:
-    std::vector<pwacomponent> _comp;
+    std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
 
   };

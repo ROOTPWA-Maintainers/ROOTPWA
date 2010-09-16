@@ -201,9 +201,11 @@ extern char* optarg;
   std::string ch1="1-2-+0+rho770_02_a21320=pi-_2_rho770.amp";
   std::string ch2="1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp";
   std::string ch3="1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp";
+  std::string ch4="1-2-+0+rho770_02_a11269=pi-_0_rho770.amp";
   channels[ch1]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch1));
   channels[ch2]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch2));
   channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
+  channels[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
   pwacomponent comp1("pi2(1880)",1880,150,channels);
   comp1.setLimits(1700,1900,50,300);
   comp1.setFixed(0,0);
@@ -212,7 +214,7 @@ extern char* optarg;
   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
   pwacomponent comp2("pi2(2300)",2300,400,channels);
   comp2.setLimits(2000,2500,200,800);
-  comp2.setFixed(1,0);
+  comp2.setFixed(0,0);
 
   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(50,0));
   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(50,0));
@@ -226,16 +228,39 @@ extern char* optarg;
   comp4.setLimits(2000,2200,100,800);
   comp4.setFixed(1,0);
 
+
+  std::map<std::string,pwachannel > channels0mp;
+  std::string ch5="1-0-+0+pi-_00_f01500=rho770_00_rho770.amp";
+  std::string ch6="1-0-+0+rho770_00_a11269=pi-_0_rho770.amp";
+  channels0mp[ch5]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
+  channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
+  pwacomponent comp5("pi(1800)",1816,208,channels0mp);
+  comp5.setLimits(1750,18500,100,300);
+  comp5.setFixed(1,1);
+  channels0mp[ch5].setCoupling(std::complex<double>(5,0));
+  pwacomponent comp6("pi(2070)",2070,310,channels0mp);
+  comp6.setLimits(2000,2200,100,500);
+  comp5.setFixed(1,1);
+
+
+  channels0mp.clear();
+  channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch6));
+  pwabkg bkg1=pwabkg("0-+Bkg",0,0.001,channels0mp);
+  bkg1.setIsobars(770,1269);
+  bkg1.setLimits(0,0,0,1);
+  bkg1.setFixed(1,0);
+
   
   pwacompset compset;
-  compset.add(comp1);
-  compset.add(comp2);
-  compset.add(comp3);
-  compset.add(comp4);
+  //compset.add(&comp1); // pi2(1880)
+  //compset.add(&comp2); // pi2(2300)
+  //compset.add(&comp3); // pi2(1670)
+  //compset.add(&comp4); // pi2(2100)
+  compset.add(&comp5); // pi(1800)
+  compset.add(&comp6); // pi(2070)
+  compset.add(&bkg1);
 
-
-
-
+  
 
 
   massDepFitLikeli L;
@@ -261,7 +286,7 @@ extern char* optarg;
   // Set startvalues
   unsigned int parcount=0;
   for(unsigned int ic=0;ic<compset.n();++ic){
-    const pwacomponent& comp=compset[ic];
+    const pwacomponent& comp=*compset[ic];
     TString name(comp.name());
     double mmin,mmax,gmin,gmax;
     comp.getLimits(mmin,mmax,gmin,gmax);
@@ -393,7 +418,7 @@ extern char* optarg;
      fitgraphs[iw]->SetDrawOption("AP");
      fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
-     graphs[iw]->Add(comp1.channels().find(wl[iw])->second.ps());
+     graphs[iw]->Add(getPhaseSpace(tree,wl[iw]));
    }
 
    std::vector<TGraphErrors*> phasedatagraphs;
@@ -518,6 +543,12 @@ extern char* optarg;
 
    TFile* outfile=TFile::Open(outFileName.c_str(),"RECREATE");
    for(unsigned int iw=0; iw<wl.size();++iw){
+     TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(2);
+     for(unsigned int ib=0;ib<nbins;++ib){
+       double m,ps;g->GetPoint(ib,m,ps);
+       g->SetPoint(ib,m,ps*2000);
+     }
+     
      graphs[iw]->Write();
    }
    for(unsigned int iw=0; iw<phasegraphs.size();++iw){
@@ -535,21 +566,22 @@ extern char* optarg;
      double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
      double dp,dm;dp=dph+360;dm=dph-360;
      double fp,fm;fp=fph+360;fm=fph-360;
-     
-     if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
-       phasedatagraphs[iw]->SetPoint(ib,m,dp);
-     else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
-       phasedatagraphs[iw]->SetPoint(ib,m,dm);
-
-     if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
-       phasefitgraphs[iw]->SetPoint(ib,m,fp);
-     else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
-       phasefitgraphs[iw]->SetPoint(ib,m,fm);
-
-     phasedatagraphs[iw]->GetPoint(ib,m,predph);
-     phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+     if(0){
+       if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
+	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
+       else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
+	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
+       
+       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
+	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
+       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
+	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
+       
+       phasedatagraphs[iw]->GetPoint(ib,m,predph);
+       phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+     }
    }
-
+   
      phasegraphs[iw]->Write();
      //phase2d[iw]->Write();
    }
