@@ -165,8 +165,8 @@ main(int    argc,
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
 #ifdef USE_CUDA
-	L.enableCuda(false);
-	//L.enableCuda(true);
+	//L.enableCuda(false);
+	L.enableCuda(true);
 #endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (!quiet)
@@ -214,7 +214,7 @@ main(int    argc,
 		  logLikelihood = L.DoEval(prodAmps);
 		  // cout << "[" << i << "] = " << logLikelihood << endl;
 		  double gradient[nmbPar];
-		  //L.Gradient(prodAmps, gradient);
+		  L.Gradient(prodAmps, gradient);
 		  derivatives.clear();
 		  for (unsigned int j = 0; j < nmbPar; ++j) {
 			  const string parName = L.parName(j);
