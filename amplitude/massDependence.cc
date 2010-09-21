@@ -90,7 +90,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 	const double Gamma0 = parent->width();              // resonance peak width
 	const double q      = breakupMomentum(M,  m1, m2);  // breakup momentum
 	//const double q0     = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
-	const double L      = v.L();
+	const unsigned int L      = v.L();
 
 	// this is how it is done in PWA2000
 	const double M02    = M0 * M0;
@@ -211,7 +211,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		M += fa * _a[p];
 	}
 	for (unsigned int n = 0; n < _c.size(); ++n) {
-		const complex<double> sc = pow(scale, n);
+	  const complex<double> sc = pow(scale, (int) n);
 		M += sc *_c[n];
 	}
 	
