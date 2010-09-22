@@ -83,14 +83,14 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const double M      = parent->lzVec().M();          // parent mass
-	const double m1     = v.daughter1()->lzVec().M();   // daughter 1 mass
-	const double m2     = v.daughter2()->lzVec().M();   // daughter 2 mass
-	const double M0     = parent->mass();               // resonance peak position
-	const double Gamma0 = parent->width();              // resonance peak width
-	const double q      = breakupMomentum(M,  m1, m2);  // breakup momentum
-	//const double q0     = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
-	const unsigned int L      = v.L();
+	const double M       = parent->lzVec().M();          // parent mass
+	const double m1      = v.daughter1()->lzVec().M();   // daughter 1 mass
+	const double m2      = v.daughter2()->lzVec().M();   // daughter 2 mass
+	const double M0      = parent->mass();               // resonance peak position
+	const double Gamma0  = parent->width();              // resonance peak width
+	const double q       = breakupMomentum(M,  m1, m2);  // breakup momentum
+	//const double q0      = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
+	const unsigned int L = v.L();
 
 	// this is how it is done in PWA2000
 	const double M02    = M0 * M0;
@@ -211,7 +211,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		M += fa * _a[p];
 	}
 	for (unsigned int n = 0; n < _c.size(); ++n) {
-	  const complex<double> sc = pow(scale, (int) n);
+		const complex<double> sc = pow(scale, (int) n);
 		M += sc *_c[n];
 	}
 	

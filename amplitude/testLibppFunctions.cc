@@ -70,7 +70,7 @@ main(int argc, char** argv)
 		vector<unsigned int> data  (nmbData);
 		TRandom3             random(1234567890);
 		for (unsigned int i = 0; i < nmbData; ++i)
-		  data[i] = (unsigned int) random.Uniform() * maxArg;
+			data[i] = (unsigned int)(random.Uniform() * maxArg);
 
 		TStopwatch timer;
 		timer.Reset();

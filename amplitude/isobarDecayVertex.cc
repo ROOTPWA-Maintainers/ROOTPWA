@@ -171,6 +171,19 @@ isobarDecayVertex::calcParentCharge()
 }
 
 
+int
+isobarDecayVertex::calcParentBaryonNmb()
+{
+	if (_debug)
+		printInfo << "calculating baryon number of parent particle " << parent()->name()
+		          << " before = " << parent()->baryonNmb() << ", " << flush;
+	parent()->setBaryonNmb(daughter1()->baryonNmb() + daughter2()->baryonNmb());
+	if (_debug)
+		cout << "after = " << parent()->baryonNmb() << endl;
+	return parent()->baryonNmb();
+}
+
+
 bool
 isobarDecayVertex::checkMultiplicativeQn(const int     mQn,
                                          const int     d1Qn,

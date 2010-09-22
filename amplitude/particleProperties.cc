@@ -217,8 +217,8 @@ string
 particleProperties::qnSummary() const
 {
 	ostringstream out;
-	out << name() << "[" << 0.5 * isospin() << sign(G())
-	    << "(" << 0.5 * J() << sign(P()) << sign(C()) << ")]";
+	out << name() << "[" << 0.5 * isospin() << ((G() != 0) ? sign(G()) : "")
+	    << "(" << 0.5 * J() << ((P() != 0) ? sign(P()) : "") << ((C() != 0) ? sign(C()) : "") << ")]";
 	return out.str();
 }
 
@@ -230,8 +230,21 @@ particleProperties::print(ostream& out) const
 	    << "mass = "     << mass()         << " GeV/c^2, "
 	    << "width = "    << width()        << " GeV/c^2, "
 	    << "baryon # = " << baryonNmb()    << ", "
-	    << "I^G J^PC = "  << 0.5 * isospin() << "^" << sign(G())
-	    << " " << 0.5 * J() << "^" << sign(P()) << sign(C()) << ", "
+	    << "I" << ((G() != 0) ? "^G" : "") << " J";
+	if (P() != 0)
+		out << "^P" << ((C() != 0) ? "C" : "") << " = ";
+  else
+		out << ((C() != 0) ? "^C" : "") << " = ";
+	out << 0.5 * isospin();
+	if (G() != 0)
+		out << "^" << sign(G());
+	out << " " << 0.5 * J();
+	if (P() != 0)
+		out << "^" << sign(P()) << ((C() != 0) ? sign(C()) : "");
+	else
+		if (C() != 0)
+			out << "^" << sign(C());
+	out << ", "
 	    << "strangeness = " << strangeness() << ", "
 	    << "charm = "       << charm()       << ", "
 	    << "beauty = "      << beauty();

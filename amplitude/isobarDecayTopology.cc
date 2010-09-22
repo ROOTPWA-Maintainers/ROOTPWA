@@ -445,6 +445,20 @@ isobarDecayTopology::calcIsobarCharges()
 }
 
 
+void
+isobarDecayTopology::calcIsobarBaryonNmbs()
+{
+	// loop over isobar decay vertices and propagate baryon numbers from final state particles up to X-system
+	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
+		if (_debug)
+			printInfo << "calculating baryon number of parent isobar '"
+			          << _isobarVertices[i]->parent()->name() << "' "
+			          << "of node[" << node(_isobarVertices[i]) << "]" << endl;
+		_isobarVertices[i]->calcParentBaryonNmb();
+	}
+}
+
+
 ostream&
 isobarDecayTopology::print(ostream& out) const
 {

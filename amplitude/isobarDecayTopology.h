@@ -104,7 +104,8 @@ namespace rpwa {
 	  
 	  const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 	  
-	  void calcIsobarCharges();  ///< sets isobar charges as defined by final state particles
+	  void calcIsobarCharges   ();  ///< sets isobar charges as defined by final state particles
+	  void calcIsobarBaryonNmbs();  ///< sets isobar baryon numbers as defined by final state particles
 	  
 	  virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 	  

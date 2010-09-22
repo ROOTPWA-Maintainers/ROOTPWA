@@ -85,7 +85,8 @@ namespace rpwa {
 
 		const TLorentzVector& calcParentLzVec();  ///< (re)calculates parent Lorentz-vector from daughter Lorentz-vectors
 
-		int calcParentCharge();  ///< sets parent charge to sum of daughter charges
+		int calcParentCharge   ();  ///< sets parent charge to sum of daughter charges
+		int calcParentBaryonNmb();  ///< sets parent baryon number to sum of daughter baryon numbers
     
 		inline unsigned int L() const { return _L; }  ///< returns the relative orbital angular momentum between the two daughters * 2 (!!!)
 		inline unsigned int S() const { return _S; }  ///< returns the total spin of the two daughters * 2 (!!!)

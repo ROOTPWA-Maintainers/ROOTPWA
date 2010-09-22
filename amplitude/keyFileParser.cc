@@ -142,7 +142,8 @@ keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 
 	// create decay isobar decay topology
 	topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
-	topo->calcIsobarCharges();
+	topo->calcIsobarCharges   ();
+	topo->calcIsobarBaryonNmbs();
   
 	printInfo << "successfully constructed decay topology from key file" << endl;
 	return true;
@@ -261,31 +262,34 @@ keyFileParser::constructXParticle(const Setting& XQnKey,
 	if (_debug)
 		printInfo << "reading X quantum numbers from '" << XQnKey.getPath() << "':" << endl;
 	// get X quantum numbers
-	map<string, int> XQn;
-	XQn["isospin"];
-	XQn["G"      ];
-	XQn["J"      ];
-	XQn["P"      ];
-	XQn["C"      ];
-	XQn["M"      ];
+	map<string, int> mandatoryXQn, optionalXQn;
+	mandatoryXQn["isospin"];
+	optionalXQn ["G"      ];
+	mandatoryXQn["J"      ];
+	optionalXQn ["P"      ];
+	optionalXQn ["C"      ];
+	mandatoryXQn["M"      ];
 	if (_useReflectivityBasis)
-		XQn["refl"];
+		optionalXQn["refl"];
 	bool success = true;
-	for (map<string, int>::iterator i = XQn.begin(); i != XQn.end(); ++i)
+	for (map<string, int>::iterator i = mandatoryXQn.begin(); i != mandatoryXQn.end(); ++i)
 		if (not XQnKey.lookupValue(i->first, i->second)) {
 			printWarn << "cannot find integer field '" << i->first << "in "
 			          << "'" << XQnKey.getPath() << "'" << endl;
 			success = false;
 		}
+	for (map<string, int>::iterator i = optionalXQn.begin(); i != optionalXQn.end(); ++i)
+		if (not XQnKey.lookupValue(i->first, i->second))
+			i->second = 0;
 	if (not success) {
 		printWarn << "cannot find X quantum numbers. cannot construct decay topology." << endl;
 		return false;
 	}
 	// create X particle
 	X = createParticle("X",
-	                   XQn["isospin"], XQn["G"],
-	                   XQn["J"], XQn["P"], XQn["C"],
-	                   XQn["M"], (_useReflectivityBasis) ? XQn["refl"]: 0);
+	                   mandatoryXQn["isospin"], optionalXQn["G"],
+	                   mandatoryXQn["J"], optionalXQn["P"], optionalXQn["C"],
+	                   mandatoryXQn["M"], (_useReflectivityBasis) ? optionalXQn["refl"] : 0);
 	if (_debug)
 		printInfo << "constructed X particle: " << X->qnSummary() << endl;
 	return true;
@@ -299,10 +303,13 @@ keyFileParser::setXQuantumNumbersKeys(Setting&        XQnKey,
 	if (_debug)
 		printInfo << "setting quantum number keys for " << X.qnSummary() << endl;
 	XQnKey.add("isospin", Setting::TypeInt) = X.isospin();
-	XQnKey.add("G",       Setting::TypeInt) = X.G();
+	if (X.G() != 0)
+		XQnKey.add("G",     Setting::TypeInt) = X.G();
 	XQnKey.add("J",       Setting::TypeInt) = X.J();
-	XQnKey.add("P",       Setting::TypeInt) = X.P();
-	XQnKey.add("C",       Setting::TypeInt) = X.C();
+	if (X.P() != 0)
+		XQnKey.add("P",     Setting::TypeInt) = X.P();
+	if (X.C() != 0)
+		XQnKey.add("C",     Setting::TypeInt) = X.C();
 	XQnKey.add("M",       Setting::TypeInt) = X.spinProj();
 	if (_useReflectivityBasis)
 		XQnKey.add("refl", Setting::TypeInt) = X.reflectivity();
