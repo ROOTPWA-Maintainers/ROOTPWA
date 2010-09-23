@@ -71,10 +71,11 @@ message(" my sources are "${SOURCES})
 set(THIS_LIB "RootPwaGui")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
+	"${LIBCONFIG_LIBS}"
 #  "${PWA2000_LIBS}"
 #  "${ROOTPWA_LIBS}"
 )
 
 
 # executables
-make_executable(rootpwa_gui rootpwa_gui.cpp ${THIS_LIB} "${LIBCONFIG_LIBS}")
+make_executable(rootpwa_gui rootpwa_gui.cpp ${THIS_LIB})
