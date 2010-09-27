@@ -44,8 +44,8 @@ static const string func_calls[nsteps] = {
 		"Dummy()",
 		"Dummy()",
 		"Dummy()",
-		"Dummy()",
-		"Dummy()",
+		"GenKeys()",
+		"CalcAmps()",
 		"SelectWaves()",
 		"FitPartialWaves()",
 		"ShowFitResults()",
@@ -420,6 +420,76 @@ void TrpwaMainFrame::ShowFitResults(){
 	# hopefully a ps file was created containing all intensities
 	mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ${KPIPI_FIT_DIR}
 	# ps2pdf ${KPIPI_FIT_DIR}/waveintensities.ps*/
+}
+
+void TrpwaMainFrame::GenKeys() {
+	if (current_session){
+		cout << " calling the key file generator " << endl;
+		string keyfilegen = current_session->Get_key_file_generator_file();
+		string keyfilegendir = keyfilegen.substr( 0, keyfilegen.rfind("/")+1 );
+		// run the key generator within it's directory
+		stringstream command;
+		command << "cd "+keyfilegendir << "; ";
+		// move all keyfiles there
+		command << "mkdir guibackup;";
+		command << "mv *.key guibackup/;";
+		// create the new key files
+		command << "root -l -q "+keyfilegen << "+;";
+		// remove all keyfile in the destination directory
+		command << "rm " << current_session->Get_key_files_dir() << "/*.key;";
+		// move the key files to the destination directory
+		command << "mv *.key " << current_session->Get_key_files_dir() << "/ ;";
+		command << "cd -;";
+		//cout << command.str();
+		system(command.str().c_str());
+		Update();
+	}
+	//system();
+}
+
+void TrpwaMainFrame::CalcAmps(){
+	if (current_session){
+		cout << " sending jobs for amplitude calculation " << endl;
+		vector<string>& amp_real_miss  = current_session->Get_PWA_real_data_amplitudes(true);
+		vector<string>& amp_real_avail = current_session->Get_PWA_real_data_amplitudes(false);
+		cout << endl << " available amplitudes: " << endl;
+		/*
+		for (unsigned int i = 0; i < amp_real_avail.size(); i++){
+			cout << amp_real_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
+			cout << amp_real_miss[i] << endl;
+		}*/
+
+		vector<string>& amp_mc_miss  = current_session->Get_PWA_MC_data_amplitudes(true);
+		vector<string>& amp_mc_avail = current_session->Get_PWA_MC_data_amplitudes(false);
+		/*
+		cout << endl << " available amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_avail.size(); i++){
+			cout << amp_mc_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
+			cout << amp_mc_miss[i] << endl;
+		}*/
+
+		vector<string>& amp_mc_acc_miss  = current_session->Get_PWA_MC_acc_data_amplitudes(true);
+		vector<string>& amp_mc_acc_avail = current_session->Get_PWA_MC_acc_data_amplitudes(false);
+		/*
+		cout << endl << " available amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_acc_avail.size(); i++){
+			cout << amp_mc_acc_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
+			cout << amp_mc_acc_miss[i] << endl;
+		}*/
+
+		cout << " missing " <<  amp_real_miss.size() << " real data amplitudes " << endl;
+		cout << " missing " <<  amp_mc_miss.size() << " real mc data amplitudes " << endl;
+		cout << " missing " <<  amp_mc_acc_miss.size() << " real mc acc data amplitudes " << endl;
+	}
 }
 
 TrpwaMainFrame::~TrpwaMainFrame() {

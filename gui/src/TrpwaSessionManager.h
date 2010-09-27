@@ -183,6 +183,9 @@ public:
 	// Check_PWA_keyfiles is called
 	float Check_PWA_real_data_amplitudes();
 
+	// Get a list of (missing/available) calculated amplitudes with full path
+	vector<string>& Get_PWA_real_data_amplitudes(bool missing = true);
+
 	// returns the status [0-1] of calculated amplitudes
 	// of flat phase space data
 	// (comparing number of .amp files with .key files
@@ -190,12 +193,22 @@ public:
 	// Check_PWA_keyfiles is called
 	float Check_PWA_MC_data_amplitudes();
 
+	// Get a list of (missing/available) calculated amplitudes with full path
+	vector<string>& Get_PWA_MC_data_amplitudes(bool missing = true);
+
 	// returns the status [0-1] of calculated amplitudes
 	// of accepted flat phase space data
 	// (comparing number of .amp files with .key files
 	// in the accpeted events data folder)
 	// Check_PWA_keyfiles is called
 	float Check_PWA_MC_acc_data_amplitudes();
+
+	// Get a list of (missing/available) calculated amplitudes with full path
+	vector<string>& Get_PWA_MC_acc_data_amplitudes(bool missing = true);
+
+	// Get a list of (missing/available) calculated amplitudes with full path
+	// folder = AMPS | PSPAMPS | ACCAMPS
+	vector<string>& Get_PWA_data_amplitudes(string folder, bool missing = true);
 
 	// returns the status [0-1] of wave lists
 	// (searches for wave lists in the bins)
@@ -260,7 +273,7 @@ public:
 	// selections are the corresponding waves for each bin
 	bool SetSelectedWaves(const vector<int>& bin_lowedes,const vector< vector<string> >& waves);
 
-	// save the wavelists
+	// save the wave lists
 	bool SaveSelectedWaves();
 
 	// sort by JPC iso1 iso2 M reflectivity
@@ -299,6 +312,13 @@ private:
 
 	// true if both lists are equal
 	bool AreListsEqual(const vector<string>& list1, const vector<string>& list2);
+
+	// gives the number of entries in list1 found in list2
+	int CompareLists(const vector<string>& list1, const vector<string>& list2);
+
+	// returns the entries of list1 (not if missing = true) found in list2
+	// does not check for dubletts
+	vector<string>& CompareLists(const vector<string>& list1, const vector<string>& list2, bool missing = true);
 
 	// read the wave list given
 	// put every entry with the ending .amp without the character# in it

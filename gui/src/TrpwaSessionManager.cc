@@ -552,13 +552,39 @@ float TrpwaSessionManager::Check_PWA_keyfiles(){
 	return result;
 }
 
+vector<string>& TrpwaSessionManager::Get_PWA_data_amplitudes(string folder, bool missing){
+	Check_PWA_keyfiles();
+	vector<string>* result = new vector<string>();
+	Check_PWA_keyfiles();
+	cout << " searching for amplitude files in "<< folder <<" folders " << endl;
+	if ( _n_bins <= 0 ) return *result;
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		string _dir = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + folder + "/";
+		vector<string> _amps;
+		GetDir(_dir, _amps, ".amp", true);
+		// retrieve the requested lists
+		vector<string>& _temp_result = CompareLists(_keyfiles, _amps, missing);
+		// append the directory path and fill it to the result
+		for (vector<string>::iterator it = _temp_result.begin(); it != _temp_result.end(); it++){
+			result->push_back(_dir+(*it)+".amp");
+		}
+	}
+	return *result;
+}
+
 // returns the status [0-1] of calculated amplitudes
 // of real data
 // (comparing number of .amp files with .key files in the real data folder)
 float TrpwaSessionManager::Check_PWA_real_data_amplitudes(){
+	float result(0.);
+	result = Get_PWA_data_amplitudes("AMPS",false).size();
+	cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
+	result = (double) result / ((double) _n_bins*_keyfiles.size());
+	return result;
+	/*
 	Check_PWA_keyfiles();
 	cout << " searching for amplitude files in AMPS folders " << endl;
-	float result(0.);
+
 
 	if ( _n_bins <= 0 ) return result;
 	int counter(0);
@@ -568,22 +594,52 @@ float TrpwaSessionManager::Check_PWA_real_data_amplitudes(){
 		GetDir(_dir, _amps, ".amp", true);
 		if (AreListsEqual(_keyfiles, _amps)) {
 			counter+=_amps.size();
+		} else {
+			counter += CompareLists(_amps, _keyfiles);
 		}
 		//if (FileExists(_dir_binned_data + "/" + it->second.bin_folder_name + "/" + "AMPS/")){
 
 		//}
 	}
+
 	cout << " found " << counter << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
 	result = (double) counter / ((double) _n_bins*_keyfiles.size());
-
 	return result;
+	*/
 }
+
+vector<string>& TrpwaSessionManager::Get_PWA_real_data_amplitudes(bool missing){
+	return Get_PWA_data_amplitudes("AMPS", missing);
+}
+
+vector<string>& TrpwaSessionManager::CompareLists(const vector<string>& list1, const vector<string>& list2, bool missing){
+	vector<string>* result = new vector<string>();
+	for (vector<string>::const_iterator i = list1.begin(); i != list1.end(); ++i){
+		bool found(false);
+		for (vector<string>::const_iterator j = list2.begin(); j != list2.end(); ++j){
+			if (*i == *j){
+				if (!missing) result->push_back(*i);
+				found = true;
+				break;
+			}
+		}
+		if (!found && missing) result->push_back(*i);
+	}
+	return *result;
+}
+
 
 // returns the status [0-1] of calculated amplitudes
 // of flat phase space data
 // (comparing number of .amp files with .key files
 // in the flat phase space data folder)
 float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
+	float result(0.);
+	result = Get_PWA_data_amplitudes("PSPAMPS",false).size();
+	cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
+	result = (double) result / ((double) _n_bins*_keyfiles.size());
+	return result;
+	/*
 	Check_PWA_keyfiles();
 	cout << " searching for amplitude files in PSPAMPS folders " << endl;
 	float result(0.);
@@ -596,6 +652,8 @@ float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
 		GetDir(_dir, _amps, ".amp", true);
 		if (AreListsEqual(_keyfiles, _amps)) {
 			counter+=_amps.size();
+		} else {
+			counter += CompareLists(_amps, _keyfiles);
 		}
 		//if (FileExists(_dir_binned_data + "/" + it->second.bin_folder_name + "/" + "AMPS/")){
 
@@ -605,6 +663,11 @@ float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
 	result = (double) counter / ((double) _n_bins*_keyfiles.size());
 
 	return result;
+	*/
+}
+
+vector<string>& TrpwaSessionManager::Get_PWA_MC_data_amplitudes(bool missing){
+	return Get_PWA_data_amplitudes("PSPAMPS", missing);
 }
 
 // returns the status [0-1] of calculated amplitudes
@@ -612,6 +675,12 @@ float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
 // (comparing number of .amp files with .key files
 // in the accpeted events data folder)
 float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(){
+	float result(0.);
+	result = Get_PWA_data_amplitudes("ACCAMPS",false).size();
+	cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
+	result = (double) result / ((double) _n_bins*_keyfiles.size());
+	return result;
+	/*
 	Check_PWA_keyfiles();
 	cout << " searching for amplitude files in ACCAMPS folders " << endl;
 	float result(0.);
@@ -624,6 +693,8 @@ float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(){
 		GetDir(_dir, _amps, ".amp", true);
 		if (AreListsEqual(_keyfiles, _amps)) {
 			counter+=_amps.size();
+		} else {
+			counter += CompareLists(_amps, _keyfiles);
 		}
 		//if (FileExists(_dir_binned_data + "/" + it->second.bin_folder_name + "/" + "AMPS/")){
 
@@ -633,6 +704,11 @@ float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(){
 	result = (double) counter / ((double) _n_bins*_keyfiles.size());
 
 	return result;
+	*/
+}
+
+vector<string>& TrpwaSessionManager::Get_PWA_MC_acc_data_amplitudes(bool missing){
+	return Get_PWA_data_amplitudes("ACCAMPS", missing);
 }
 
 // returns the status [0-1] of wave lists
@@ -918,6 +994,23 @@ bool TrpwaSessionManager::AreListsEqual(const vector<string>& list1, const vecto
 	}
 	// only if all elements were found list2 will be empty
 	if (_templist.size() == 0) return true; else return false;
+}
+
+int TrpwaSessionManager::CompareLists(const vector<string>& list1, const vector<string>& list2){
+	int result(0);
+	vector<string> _templist = list2;
+	for (unsigned int i = 0; i < list1.size(); i++){
+		bool found(false);
+		for (vector<string>::iterator j = _templist.begin(); j != _templist.end(); ++j){
+			if (list1[i] == *j){
+				result++;
+				_templist.erase(j);
+				found = true;
+				break;
+			}
+		}
+	}
+	return result;
 }
 
 vector<string> &TrpwaSessionManager::ReadWaveList(string filename){

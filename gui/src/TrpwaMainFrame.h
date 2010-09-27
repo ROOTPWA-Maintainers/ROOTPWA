@@ -79,6 +79,10 @@ public:
 
 	void ShowFitResults(); // send a command to show the available fit results
 
+	void GenKeys(); // send a command to generate the key files
+
+	void CalcAmps(); // send jobs to calculate amplitudes
+
 	void Dummy(); // will be called for every function not implemented yet
 
 	// call the root script for class definition
