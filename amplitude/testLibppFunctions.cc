@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      basic test program for amplitude classes
+//      compare math functions to libpp implementations
 //
 //
 // Author List:
@@ -38,6 +38,9 @@
 #include <vector>
 #include <cstdlib>
 #include <ctime>
+#include <complex>
+
+#include <boost/math/special_functions/spherical_harmonic.hpp>
 
 #include "TRandom3.h"
 #include "TStopwatch.h"
@@ -50,14 +53,17 @@
 
 using namespace std;
 using namespace rpwa;
+using namespace boost::math;
 
 
 int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printSvnVersion  ();
 
+	//////////////////////////////////////////////////////////////////////////////
+	// factorial
 	if (0) {
 		printInfo << "testing factorial" << endl;
 
@@ -112,14 +118,15 @@ main(int argc, char** argv)
 			printInfo << "all factorials okay." << endl;
 		else
 			printInfo << "there were errors." << endl;
-	}	
+	}
 
 
+	//////////////////////////////////////////////////////////////////////////////
+	// Wigner d-function d^j_{m n}(theta)
 	if (0) {
 		printInfo << "testing Wigner d-function" << endl;
 
 		const unsigned int nmbAngles = 50000;
-		// const unsigned int nmbAngles = 500;
 		const int          maxJ      = 7;  // for larger values libpp implementation gives wrong results
 
 		vector<double> angles(nmbAngles, 0);
@@ -136,7 +143,7 @@ main(int argc, char** argv)
 				    ++nmbVals;
 
     // compute mathUtils values
-    //dFunction<double>::instance().setUseCache(false);
+    //dFunctionCached<double>::instance().setUseCache(false);
     TStopwatch timer;
     timer.Reset();
     timer.Start();
@@ -146,13 +153,16 @@ main(int argc, char** argv)
 	    for (int m = -j; m <= j; ++m)
 		    for (int n = -j; n <= j; ++n)
 			    for (unsigned int i = 0; i < angles.size(); ++i) {
-				    newVals[valIndex] = dFunction<double>::instance()(2 * j, 2 * m, 2 * n, angles[i]);
+				    newVals[valIndex] = dFunction(2 * j, 2 * m, 2 * n, angles[i]);
 				    ++valIndex;
 			    }
     timer.Stop();
     printInfo << "calculated mathUtil d-Functions for " << newVals.size() << " angles" << endl
 		          << "    this consumed: ";
     timer.Print();
+    printInfo << "size of cache is "
+              << dFunctionCached<double>::instance().cacheSize() / (1024. * 1024.) << " MBytes"
+              << endl;
 
     // compute libpp values
     timer.Reset();
@@ -187,6 +197,81 @@ main(int argc, char** argv)
 	}
 	
 
+	//////////////////////////////////////////////////////////////////////////////
+	// spherical harmonics Y_l^m(theta, phi)
+	if (1) {
+		printInfo << "testing spherical harmonics" << endl;
+
+		const unsigned int nmbAngles = 150000;
+		const int          maxL      = 10;
+
+		vector<double> angles[2];
+		angles[0].resize(nmbAngles, 0);
+		angles[1].resize(nmbAngles, 0);
+		TRandom3 random(1234567890);
+		for (unsigned int i = 0; i < nmbAngles; ++i) {
+			angles[0][i] = (random.Uniform(-piHalf, +piHalf));  // theta
+			angles[1][i] = (random.Uniform(-pi,     +pi    ));  // phi
+		}
+		
+    // determine size of data array
+    unsigned int nmbVals = 0;
+    for (int l = 0; l < maxL; ++l)
+	    for (int m = -l; m <= l; ++m)
+		    for (unsigned int i = 0; i < angles[0].size(); ++i)
+			    ++nmbVals;
+
+    // compute mathUtils values
+    //dFunctionCached<double>::instance().setUseCache(false);
+    TStopwatch timer;
+    timer.Reset();
+    timer.Start();
+    unsigned int             valIndex = 0;
+    vector<complex<double> > myVals(nmbVals, 0);
+    for (int l = 0; l < maxL; ++l)
+	    for (int m = -l; m <= l; ++m)
+		    for (unsigned int i = 0; i < angles[0].size(); ++i) {
+			    myVals[valIndex] = sphericalHarmonic<complex<double> >
+				                       (2 * l, 2 * m, angles[0][i], angles[1][i]);
+			    ++valIndex;
+		    }
+    timer.Stop();
+    printInfo << "calculated mathUtil spherical harmonics for " << myVals.size() << " angles" << endl
+		          << "    this consumed: ";
+    timer.Print();
+    printInfo << "size of cache is "
+              << dFunctionCached<double>::instance().cacheSize() / (1024. * 1024.) << " MBytes"
+              << endl;
+
+    // compute Boost values
+    timer.Reset();
+    timer.Start();
+    valIndex = 0;
+    vector<complex<double> > boostVals(nmbVals, 0);
+    for (int l = 0; l < maxL; ++l)
+	    for (int m = -l; m <= l; ++m)
+		    for (unsigned int i = 0; i < angles[0].size(); ++i) {
+			    boostVals[valIndex] = spherical_harmonic(l, m, angles[0][i], angles[1][i]);
+			    ++valIndex;
+		    }
+    timer.Stop();
+    printInfo << "calculated Boost spherical harmonics for " << boostVals.size() << " angles" << endl
+		          << "    this consumed: ";
+    timer.Print();
+
+    // check values
+    complex<double> maxDeviation = 0;
+    for (unsigned int i = 0; i < nmbVals; ++i) {
+	    const complex<double> delta = boostVals[i] - myVals[i];
+	    if (abs(delta) > abs(maxDeviation))
+		    maxDeviation = abs(delta);
+    }
+    printInfo << "maximum deviation is " << maxDeviation << endl;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// Wigner D-function D^j_{m n}(alpha, beta, gamma)
 	if (0) {
 		printInfo << "testing Wigner D-function" << endl;
 
@@ -230,6 +315,9 @@ main(int argc, char** argv)
     printInfo << "calculated mathUtil D-Functions for " << newVals.size() << " angles" << endl
 		          << "    this consumed: ";
     timer.Print();
+    printInfo << "size of cache is "
+              << dFunctionCached<double>::instance().cacheSize() / (1024. * 1024.) << " MBytes"
+              << endl;
 
     // compute libpp values
     timer.Reset();
@@ -261,7 +349,9 @@ main(int argc, char** argv)
 	}
 
 
-	if (1) {
+	//////////////////////////////////////////////////////////////////////////////
+	// Wigner D-function in reflectivity basis {^refl}D^j_{m n}(alpha, beta, gamma)
+	if (0) {
 		printInfo << "testing Wigner D-function in reflectivity basis" << endl;
 
 		const unsigned int nmbAngles = 10000;
@@ -308,6 +398,9 @@ main(int argc, char** argv)
     printInfo << "calculated mathUtil D-Functions for " << newVals.size() << " angles" << endl
 		          << "    this consumed: ";
     timer.Print();
+    printInfo << "size of cache is "
+              << dFunctionCached<double>::instance().cacheSize() / (1024. * 1024.) << " MBytes"
+              << endl;
 
     // compute libpp values
     timer.Reset();
@@ -324,8 +417,8 @@ main(int argc, char** argv)
 						    const int       _j         = 2 * j;
 						    const int       _m         = 2 * m;
 						    const int       _n         = 2 * n;
-						    const double    preFactor  = (_m == 0 ? 0.5 : 1 / sqrt(2));
-						    const double    reflFactor = (double)refl * (double)P * pow(-1, 0.5 * (_j - _m));
+						    const double    preFactor  = (_m == 0 ? 0.5 : 1 / std::sqrt(2));
+						    const double    reflFactor = (double)refl * (double)P * std::pow(-1, 0.5 * (_j - _m));
 						    oldVals[valIndex] = preFactor * (                D(a.X(), a.Y(), a.Z(), _j,  _m, _n)
 						                                      - reflFactor * D(a.X(), a.Y(), a.Z(), _j, -_m, _n));
 						    oldVals[valIndex] = conj(oldVals[valIndex]);

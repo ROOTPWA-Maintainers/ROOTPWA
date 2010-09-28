@@ -50,8 +50,13 @@
 namespace rpwa {
 
 
-	// redefine some standard functions to make switching of complex data type easier
-	template<typename T> inline T exp(const T& x) { return std::exp(x); }
+	// redefine some standard functions to make switching of implementation easier
+	template<typename T> inline T abs (const T& x) { return std::abs (x); }
+	template<typename T> inline T sqrt(const T& x) { return std::sqrt(x); }
+	template<typename T> inline T exp (const T& x) { return std::exp (x); }
+	template<typename T1, typename T2> inline T1 pow(const T1& base,
+	                                                 const T2& exponent)
+	{ return std::pow(base, exponent); }
 
 
   // some wrappers for libpp functions
@@ -91,8 +96,8 @@ namespace rpwa {
   {
     const std::complex<double> DFunc = conj(D(phi, theta, 0, j, m, n));
     if (debug)
-      printInfo << "Wigner D^{J = " << 0.5 * j << " *}" << "_{M = " << 0.5 * m << ", "
-                << "M' = " << 0.5 * n << "}" << "(alpha = " << phi << ", beta = " << theta << ", "
+      printInfo << "Wigner D^{J = " << 0.5 * j << " *}_{M = " << 0.5 * m << ", "
+                << "M' = " << 0.5 * n << "}(alpha = " << phi << ", beta = " << theta << ", "
                 << "gamma = 0) = " << maxPrecisionDouble(DFunc) << std::endl;
     return DFunc;
   }
@@ -126,7 +131,7 @@ namespace rpwa {
                       - reflFactor * DFuncConj(j, -m, n, phi, theta));
     if (debug)
       printInfo << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-                << "refl = " << sign(refl) << " *}" << "_{M = " << 0.5 * m << ", "
+                << "refl = " << sign(refl) << " *}_{M = " << 0.5 * m << ", "
                 << "M' = " << 0.5 * n << "}(alpha = " << phi << ", "
                 << "beta = " << theta << ", gamma = 0) = " << maxPrecisionDouble(DFunc) << std::endl;
     return DFunc;

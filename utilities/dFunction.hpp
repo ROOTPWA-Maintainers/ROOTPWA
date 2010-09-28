@@ -25,8 +25,15 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      optimized Wigner d-function d^j_{m n} with caching
+//      optimized Wigner d-function d^j_{m n}(theta) with caching
+//      used as basis for optimized spherical harmonics Y_l^m(theta, phi)
+//      as well as for optimized D-function D^j_{m n}(alpha, beta,
+//      gamma) and D-function in reflectivity basis
+//
 //     	based on PWA2000 function d_jmn_b() in pputil.cc
+//
+//      !NOTE! spin j and projections m and n are given in units of hbar/2
+//
 //
 //
 // Author List:
@@ -52,11 +59,11 @@
 namespace rpwa {
 
 	template<typename T>
-	class dFunction {
+	class dFunctionCached {
 	
 	public:
 			
-		static dFunction& instance() { return _instance; }  ///< get singleton instance
+		static dFunctionCached& instance() { return _instance; }  ///< get singleton instance
 		
 		struct cacheEntryType {
 
@@ -83,7 +90,7 @@ namespace rpwa {
 				         << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
 				throw;
 			}
-			if ((j < 0) or (std::abs(m) > j) or (std::abs(n) > j)) {
+			if ((j < 0) or (rpwa::abs(m) > j) or (rpwa::abs(n) > j)) {
 				printErr << "illegal argument for Wigner d^{J = " << 0.5 * j << "}"
 				         << "_{M = " << 0.5 * m << ", " << "M' = " << 0.5 * n << "}"
 				         << "(theta = " << theta << "). aborting." << std::endl;
@@ -95,7 +102,7 @@ namespace rpwa {
 			int _n        = n;
 			T   thetaHalf = theta / 2;
 			if (theta < 0) {
-				thetaHalf = std::abs(thetaHalf);
+				thetaHalf = rpwa::abs(thetaHalf);
 				std::swap(_m, _n);
 			}
 
@@ -104,16 +111,16 @@ namespace rpwa {
 
 			T               dFuncVal   = 0;
 			cacheEntryType& cacheEntry = _cache[j][j + _m][j + _n];
-			if (cacheEntry.valid and _useCache) {
+			if (_useCache and cacheEntry.valid) {
 				// calculate function value using cache
 				T sumTerm = 0;
 				for (unsigned int i = 0; i < cacheEntry.factor.size(); ++i) {
-					sumTerm +=   std::pow(cosThetaHalf, cacheEntry.kmn1[i])
-						         * std::pow(sinThetaHalf, cacheEntry.jmnk[i]) / cacheEntry.factor[i];
+					sumTerm +=   rpwa::pow(cosThetaHalf, cacheEntry.kmn1[i])
+						         * rpwa::pow(sinThetaHalf, cacheEntry.jmnk[i]) / cacheEntry.factor[i];
 				}
 				dFuncVal = cacheEntry.constTerm * sumTerm;
 			} else {
-				// calculate function value and put values into cache
+				// calculate function value and put intermediate values into cache
 				const int jpm       = (j + _m) / 2;
 				const int jpn       = (j + _n) / 2;
 				const int jmm       = (j - _m) / 2;
@@ -122,7 +129,7 @@ namespace rpwa {
 					                    * rpwa::factorial<T>::instance()(jmm)
 					                    * rpwa::factorial<T>::instance()(jpn)
 					                    * rpwa::factorial<T>::instance()(jmn);
-				const T   constTerm = powMinusOne(jpm) * std::sqrt(kk);
+				const T   constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
 				if (_useCache)
 					cacheEntry.constTerm = constTerm;
 				
@@ -141,12 +148,12 @@ namespace rpwa {
 						                  * rpwa::factorial<T>::instance()(jnk)
 					                    * rpwa::factorial<T>::instance()(kmn2)) / powMinusOne(k);
 					if (_useCache) {
-						cacheEntry.kmn1.push_back(kmn1);
-						cacheEntry.jmnk.push_back(jmnk);
+						cacheEntry.kmn1.push_back  (kmn1);
+						cacheEntry.jmnk.push_back  (jmnk);
 						cacheEntry.factor.push_back(factor);
 					}
 					// using the 1 / factor here so that function value is the same as in PWA2000
-					sumTerm += std::pow(cosThetaHalf, kmn1) * std::pow(sinThetaHalf, jmnk) / factor;
+					sumTerm += rpwa::pow(cosThetaHalf, kmn1) * rpwa::pow(sinThetaHalf, jmnk) / factor;
 				}
 				dFuncVal = constTerm * sumTerm;
 				if (_useCache)
@@ -160,23 +167,42 @@ namespace rpwa {
 			return dFuncVal;
 		}
 
-		static bool useCache() { return _useCache; }                                   ///< returns caching flag
+		static bool useCache()                              { return _useCache;     }  ///< returns caching flag
 		static void setUseCache(const bool useCache = true) { _useCache = useCache; }  ///< sets caching flag
+		static unsigned int cacheSize()  ///< returns cache size in bytes
+		{
+			// space required by struct
+			unsigned int size = _maxJ * (2 * _maxJ) * (2 * _maxJ) * sizeof(cacheEntryType);
+			// space required by vectors in struct
+			for (unsigned int i = 0; i < _maxJ; ++i)
+				for (unsigned int j = 0; j < 2 * _maxJ; ++j)
+					for (unsigned int k = 0; k < 2 * _maxJ; ++k) {
+						// std::cout << "[" << i << "][" << j << "][" << k << "] = "
+						//           << _cache[i][j][k].valid << "; "
+						//           << _cache[i][j][k].kmn1.size  () * sizeof(int) << ", "
+						//           << _cache[i][j][k].jmnk.size  () * sizeof(int) << ", "
+						//           << _cache[i][j][k].factor.size() * sizeof(T) << std::endl;
+						size += _cache[i][j][k].kmn1.capacity  () * sizeof(int);
+						size += _cache[i][j][k].jmnk.capacity  () * sizeof(int);
+						size += _cache[i][j][k].factor.capacity() * sizeof(T);
+					}
+			return size;
+		}
 
-		static bool debug() { return _debug; }                             ///< returns debug flag
+		static bool debug()                           { return _debug;  }  ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
     
 
 	private:
 
-		dFunction () { }
-		~dFunction() { }
-		dFunction (const dFunction&);
-		dFunction& operator =(const dFunction&);
+		dFunctionCached () { }
+		~dFunctionCached() { }
+		dFunctionCached (const dFunctionCached&);
+		dFunctionCached& operator =(const dFunctionCached&);
 
-		static dFunction _instance;  ///< singleton instance
-		static bool      _debug;     ///< if set to true, debug messages are printed
-		static bool      _useCache;  ///< if set to true, cache is used
+		static dFunctionCached _instance;  ///< singleton instance
+		static bool            _debug;     ///< if set to true, debug messages are printed
+		static bool            _useCache;  ///< if set to true, cache is used
 
 		static const unsigned int _maxJ = 41;                           ///< 2 * maximum allowed angular momentum + 1
 		static cacheEntryType     _cache[_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values [j][m][m']
@@ -184,80 +210,115 @@ namespace rpwa {
 	};
 
 
-	template<typename T> dFunction<T> dFunction<T>::_instance;
-	template<typename T> bool         dFunction<T>::_debug    = false;
-	template<typename T> bool         dFunction<T>::_useCache = true;
+	template<typename T> dFunctionCached<T> dFunctionCached<T>::_instance;
+	template<typename T> bool               dFunctionCached<T>::_debug    = false;
+	template<typename T> bool               dFunctionCached<T>::_useCache = true;
 
-	template<typename T> typename dFunction<T>::cacheEntryType
-	  dFunction<T>::_cache[_maxJ][2 * _maxJ][2 * _maxJ];
+	template<typename T> typename dFunctionCached<T>::cacheEntryType
+	  dFunctionCached<T>::_cache[_maxJ][2 * _maxJ][2 * _maxJ];
 
 
-	template<typename complexT, typename T>
+	template<typename T>
+	inline
+	T
+	dFunction(const int j,
+	          const int m,
+	          const int n,
+	          const T&  theta)  ///< Wigner d-function d^j_{m n}(theta)
+	{
+		return dFunctionCached<T>::instance()(j, m, n, theta);
+	}
+
+
+	template<typename complexT>
+  inline
+  complexT
+  sphericalHarmonic(const int                            l,
+                    const int                            m,
+                    const typename complexT::value_type& theta,
+                    const typename complexT::value_type& phi,
+                    const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
+  {
+	  // crude implementation using Wigner d-function
+	  typedef typename complexT::value_type T;
+	  const complexT Y =   rpwa::sqrt((l + 1) / fourPi) * rpwa::exp(complexT(0, ((T)m / 2) * phi))
+		                   * dFunction(l, m, 0, theta);
+	                     // * d_jmn_b(l, m, 0, theta);
+	  if (debug)
+		  printInfo << "spherical harmonic Y_l = " << 0.5 * l << "^m = " << 0.5 * m 
+		            << "(phi = " << phi << ", theta = " << theta << ") = "
+		            << maxPrecisionDouble(Y) << std::endl;
+    return Y;
+  }
+  
+  
+	template<typename complexT>
 	inline
 	complexT
-	DFunction(const int  j,
-	          const int  m,
-	          const int  n,
-	          const T&   alpha,
-	          const T&   beta,
-	          const T&   gamma = T(0),
-	          const bool debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	DFunction(const int                            j,
+	          const int                            m,
+	          const int                            n,
+	          const typename complexT::value_type& alpha,
+	          const typename complexT::value_type& beta,
+	          const typename complexT::value_type& gamma = typename complexT::value_type(),
+	          const bool                           debug = false)  ///< Wigner D-function D^j_{m n}(alpha, beta, gamma)
 	{
+		typedef typename complexT::value_type T;
 		const T        arg      = ((T)m / 2) * alpha + ((T)n / 2) * gamma;
-		const complexT DFuncVal =   rpwa::exp(complexT(0, -arg))
-			                        * dFunction<T>::instance()(j, m, n, beta);
+		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunction<T>(j, m, n, beta);
 		if (debug)
 			printInfo << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
 			          << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
 			          << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
 		return DFuncVal;
 	}
-
-
-	template<typename complexT, typename T>
+	
+	
+	template<typename complexT>
 	inline
 	complexT
-	DFunctionConj(const int  j,
-	              const int  m,
-	              const int  n,
-	              const T&   alpha,
-	              const T&   beta,
-	              const T&   gamma = T(0),
-	              const bool debug = false)  ///< complex conjugate of Wigner D-function D^j_{m n}(alpha, beta, gamma)
+	DFunctionConj(const int                            j,
+	              const int                            m,
+	              const int                            n,
+	              const typename complexT::value_type& alpha,
+	              const typename complexT::value_type& beta,
+	              const typename complexT::value_type& gamma = typename complexT::value_type(),
+	              const bool                           debug = false)  ///< complex conjugate of Wigner D-function D^j_{m n}(alpha, beta, gamma)
 	{
 		const complexT DFuncVal = conj(DFunction<complexT>(j, m, n, alpha, beta, gamma, false));
-    if (debug)
-      printInfo << "Wigner D^{J = " << 0.5 * j << " *}" << "_{M = " << 0.5 * m << ", "
+		if (debug)
+			printInfo << "Wigner D^{J = " << 0.5 * j << " *}" << "_{M = " << 0.5 * m << ", "
                 << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
-                << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+			          << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
 		return DFuncVal;
 	}
 
 
-	template<typename complexT, typename T>
+	template<typename complexT>
   inline
   complexT
-  DFunctionRefl(const int  j,
-                const int  m,
-                const int  n,
-                const int  P,
-                const int  refl,
-	              const T&   alpha,
-	              const T&   beta,
-	              const T&   gamma = T(0),
-                const bool debug = false)  ///< Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
+  DFunctionRefl(const int                            j,
+                const int                            m,
+                const int                            n,
+                const int                            P,
+                const int                            refl,
+	              const typename complexT::value_type& alpha,
+	              const typename complexT::value_type& beta,
+                const typename complexT::value_type& gamma = typename complexT::value_type(),
+                const bool                           debug = false)  ///< Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
   {
+		typedef typename complexT::value_type T;
     if (m < 0) {
       printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
                 << "returning 0." << std::endl;
       return 0;
     }
-    if (std::abs(refl) != 1) {
+    if (rpwa::abs(refl) != 1) {
       printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
                 << "returning 0." << std::endl;
       return 0;
     }
-    if (std::abs(P) != 1) {
+    if (rpwa::abs(P) != 1) {
       printWarn << "parity value P = " << P << " != +-1 is not allowed. "
                 << "returning 0." << std::endl;
       return 0;
@@ -273,7 +334,7 @@ namespace rpwa {
 	    } else
 		    DFuncVal = DFunction<complexT>(j, 0, n, alpha, beta, gamma);
     } else {
-	    DFuncVal = 1 / std::sqrt((T)2)
+	    DFuncVal = 1 / rpwa::sqrt((T)2)
 		             * (                   DFunction<complexT>(j,  m, n, alpha, beta, gamma)
 		                 - (T)reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma));
     }
@@ -286,18 +347,18 @@ namespace rpwa {
   }
 
   
-	template<typename complexT, typename T>
+	template<typename complexT>
   inline
   complexT
-  DFunctionReflConj(const int  j,
-                    const int  m,
-                    const int  n,
-                    const int  P,
-                    const int  refl,
-                    const T&   alpha,
-                    const T&   beta,
-                    const T&   gamma = T(0),
-                    const bool debug = false)  ///< complex conjugate of Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
+  DFunctionReflConj(const int                            j,
+                    const int                            m,
+                    const int                            n,
+                    const int                            P,
+                    const int                            refl,
+                    const typename complexT::value_type& alpha,
+                    const typename complexT::value_type& beta,
+                    const typename complexT::value_type& gamma = typename complexT::value_type(),
+                    const bool                           debug = false)  ///< complex conjugate of Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
   {
 	  const complexT DFuncVal = conj(DFunctionRefl<complexT>(j, m, n, P, refl,
 	                                                         alpha, beta, gamma, false));
