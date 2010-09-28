@@ -128,10 +128,10 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 		vector<double> y, yErr;
 		for (int j = 0; j < nmbBins; ++j) {
 			y	.push_back(trees[i]->GetV1()[j] * normalization);  // scale intensities
-			if (y[y.size()-1] == 0){ // remove 0 entries
-				y.pop_back();
-				continue;
-			}
+			// if (y[y.size()-1] == 0){ // remove 0 entries
+			// 	y.pop_back();
+			// 	continue;
+			// }
 			x	.push_back(trees[i]->GetV3()[j] * 0.001);  // convert mass to GeV
 			xErr.push_back(0);
 			yErr.push_back(trees[i]->GetV2()[j] * normalization);  // scale intensity errors

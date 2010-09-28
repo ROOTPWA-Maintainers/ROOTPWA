@@ -441,7 +441,8 @@ void TrpwaMainFrame::GenKeys() {
 		command << "mv *.key " << current_session->Get_key_files_dir() << "/ ;";
 		command << "cd -;";
 		//cout << command.str();
-		system(command.str().c_str());
+		if (not system(command.str().c_str()))
+			throw;
 		Update();
 	}
 	//system();
@@ -451,7 +452,7 @@ void TrpwaMainFrame::CalcAmps(){
 	if (current_session){
 		cout << " sending jobs for amplitude calculation " << endl;
 		vector<string>& amp_real_miss  = current_session->Get_PWA_real_data_amplitudes(true);
-		vector<string>& amp_real_avail = current_session->Get_PWA_real_data_amplitudes(false);
+		//vector<string>& amp_real_avail = current_session->Get_PWA_real_data_amplitudes(false);
 		cout << endl << " available amplitudes: " << endl;
 		/*
 		for (unsigned int i = 0; i < amp_real_avail.size(); i++){
@@ -463,7 +464,7 @@ void TrpwaMainFrame::CalcAmps(){
 		}*/
 
 		vector<string>& amp_mc_miss  = current_session->Get_PWA_MC_data_amplitudes(true);
-		vector<string>& amp_mc_avail = current_session->Get_PWA_MC_data_amplitudes(false);
+		//vector<string>& amp_mc_avail = current_session->Get_PWA_MC_data_amplitudes(false);
 		/*
 		cout << endl << " available amplitudes: " << endl;
 		for (unsigned int i = 0; i < amp_mc_avail.size(); i++){
@@ -475,7 +476,7 @@ void TrpwaMainFrame::CalcAmps(){
 		}*/
 
 		vector<string>& amp_mc_acc_miss  = current_session->Get_PWA_MC_acc_data_amplitudes(true);
-		vector<string>& amp_mc_acc_avail = current_session->Get_PWA_MC_acc_data_amplitudes(false);
+		//vector<string>& amp_mc_acc_avail = current_session->Get_PWA_MC_acc_data_amplitudes(false);
 		/*
 		cout << endl << " available amplitudes: " << endl;
 		for (unsigned int i = 0; i < amp_mc_acc_avail.size(); i++){
