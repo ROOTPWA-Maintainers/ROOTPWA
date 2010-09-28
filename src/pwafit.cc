@@ -145,6 +145,8 @@ int
 main(int    argc,
      char** argv)
 {
+	printCompilerInfo();
+	printSvnVersion  ();
 	// ---------------------------------------------------------------------------
 	// internal parameters
 	const string       valTreeName           = "pwa";

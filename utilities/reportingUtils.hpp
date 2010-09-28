@@ -52,7 +52,7 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-  // macros for printinf errors, warnings, and infos
+  // macros for printing errors, warnings, and infos
 
   // cuts out block "className::methodName" from __PRETTY_FUNCTION__ output
   inline
@@ -73,6 +73,42 @@ namespace rpwa {
 #define printErr  std::cerr << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << std::flush
 #define printWarn std::cerr << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << std::flush
 #define printInfo std::cout << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "  << std::flush
+
+
+	//////////////////////////////////////////////////////////////////////////////
+  // functions to print version and compilation info
+
+	inline std::string svnVersion() { return SVN_VERSION; }  // SVN_VERSION set by Makefile
+
+	inline
+	void
+	printSvnVersion()
+	{
+		const std::string ver = svnVersion();
+		if (ver == "")
+			printInfo << "subversion repository revision is unknown." << std::endl;
+		else
+			printInfo << "subversion repository revision is '" << ver << "'" << std::endl;
+	}
+
+
+	inline std::string compileDir() { return CMAKE_SOURCE_DIR; }  // CMAKE_SOURCE_DIR set by Makefile
+
+	inline
+	void
+	printCompilerInfo()
+	{
+		const std::string date = __DATE__;
+		const std::string time = __TIME__;
+		const std::string ver  = __VERSION__;
+		const std::string dir  = compileDir();
+		printInfo << "this executable was compiled in ";
+		if (dir != "")
+			std::cout << "'" << dir << "'";
+		else
+			std::cout << "unknown directory";
+		std::cout << " on " << date << " " << time << " by compiler " << ver << std::endl;
+	}
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -141,7 +177,8 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-	// indents output by offset
+	// indenting
+
 	inline
 	void
 	indent(std::ostream&      out,
