@@ -48,8 +48,8 @@
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
 #ifdef USE_CUDA
-#include "../cuda/complex.cuh"
-#include "../cuda/likelihoodInterface.cuh"
+#include "complex.cuh"
+#include "likelihoodInterface.cuh"
 #endif
 #include "TPWALikelihood.h"
 

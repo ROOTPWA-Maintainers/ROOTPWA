@@ -42,11 +42,12 @@
 #include "TFile.h"
 #include "TTree.h"
 
+#include "reportingUtils.hpp"
 #include "TPWALikelihood.h"
-#include "utilities.h"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 void

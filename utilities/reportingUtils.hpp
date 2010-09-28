@@ -25,7 +25,8 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      some primitive standardized streams for reporting
+//      some primitive standardized streams for reporting plus some
+//      stream operators for common STL classes
 //
 //
 // Author List:
@@ -137,6 +138,18 @@ namespace rpwa {
 	std::ostream& operator << (std::ostream&                 out,
 	                           const maxPrecisionValue__<T>& value)
 	{ return value.print(out); }
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// indents output by offset
+	inline
+	void
+	indent(std::ostream&      out,
+	       const unsigned int offset)
+	{
+		for (unsigned int i = 0; i < offset; ++i)
+			out << " ";
+	}
 
 
 	//////////////////////////////////////////////////////////////////////////////

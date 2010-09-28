@@ -40,8 +40,12 @@
 
 #include <algorithm>
 
-#include "nBodyPhaseSpaceGen.h"
 #include "TMath.h"
+
+#include "reportingUtilsRoot.hpp"
+#include "physUtils.hpp"
+#include "nBodyPhaseSpaceGen.h"
+
 
 using namespace std;
 using namespace rpwa;

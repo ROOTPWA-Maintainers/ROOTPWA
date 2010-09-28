@@ -52,7 +52,8 @@
 #include "TString.h"
 #include "TRegexp.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
+#include "reportingUtilsRoot.hpp"
 #include "TCMatrix.h"
 #include "TFitBin.h"
 

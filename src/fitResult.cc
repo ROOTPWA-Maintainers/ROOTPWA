@@ -37,14 +37,16 @@
 
 #include <algorithm>
 
-// PWA2000 classes
-#include "integral.h"
-
-#include "fitResult.h"
 #include "Math/SpecFuncMathCore.h"
 #include "TDecompChol.h"
 #include "TMath.h"
 #include "TMatrixDSym.h"
+
+// PWA2000 classes
+#include "integral.h"
+
+#include "fitResult.h"
+
 
 using namespace std;
 using namespace rpwa;

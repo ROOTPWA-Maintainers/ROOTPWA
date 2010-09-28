@@ -39,8 +39,8 @@
 set(INCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIRS}
   ${ROOT_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
+  ${PWA2000_INCLUDE_DIR}
   ${CUDA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -59,7 +59,6 @@ set(SOURCES
   TPWAPhaseConstraint.cc
   TLogMultiGaus.cc
   TCovEllipse.cc
-  utilities.cc
   pwaPlotter.cc
 )
 
@@ -68,7 +67,7 @@ set(SOURCES
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
 root_generate_dictionary(
   "${ROOTPWA_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "${INCLUDE_DIRECTORIES}"
   "TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
   "rootPwaLinkDef.h"
 )

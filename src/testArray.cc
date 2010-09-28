@@ -10,11 +10,13 @@
 
 #include "boost/multi_array.hpp"
 
-#include "utilities.h"
+#include "nDimArrayUtils.hpp"
+#include "reportingUtils.hpp"
 
 
 using namespace std;
 using namespace boost;
+using namespace rpwa;
 
 
 int main(int argc, char** argv)
