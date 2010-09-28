@@ -38,8 +38,6 @@
 
 #include <vector>
 #include <string>
-// #include <complex>
-// #include <utility>
 #include <iostream>
 
 #define BOOST_DISABLE_ASSERTS
@@ -229,22 +227,7 @@ private:
 	normMatrixArrayType _accMatrix;   // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
   
 	mutable functionCallInfo _funcCallInfo[NMB_FUNCTIONCALLENUM];  // collects function call statistics
-
 	
-public:
-	
-	typedef boost::multi_array<TH1D*, 4> histArrayType;
-	bool                  _genCudaDiffHist;
-	mutable TFile*        _outFile;
-	mutable TH1D*         _hLikelihoodDiffAbs;
-	mutable TH1D*         _hLikelihoodDiffRel;
-	mutable histArrayType _hDerivDiffAbs;
-	mutable histArrayType _hDerivDiffRel;
-	mutable TH1D*         _hDerivDiffFlatAbs;
-	mutable TH1D*         _hDerivDiffFlatRel;
-	mutable TH1D*         _hDerivDiffTotAbs[2];
-	mutable TH1D*         _hDerivDiffTotRel[2];
-
 };
 
 

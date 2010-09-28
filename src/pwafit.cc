@@ -51,6 +51,7 @@
 #include "Math/Factory.h"
 #include "TStopwatch.h"
 
+#include "conversionUtils.hpp"
 #include "TPWALikelihood.h"
 #include "TFitBin.h"
 #include "fitResult.h"
@@ -72,7 +73,7 @@ usage(const string& progName,
 	cerr << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm] -t # -q -h]" << endl
+	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
@@ -97,6 +98,7 @@ usage(const string& progName,
 	     << "                                         GSLSimAn:    -" << endl
 	     << "                                         Linear:      Robust" << endl
 	     << "                                         Fumili:      -" << endl
+	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
 	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
 #ifdef USE_CUDA
 	     << "        -c         enable CUDA acceleration (default: off)" << endl
@@ -121,12 +123,13 @@ printMinimizerStatus(ostream&   out,
 	    << "    maximum allowed number of iterations ................ " << minimizer.MaxIterations()    << endl
 	    << "    maximum allowed number of function calls ............ " << minimizer.MaxFunctionCalls() << endl
 	    << "    minimizer status .................................... " << minimizer.Status()           << endl
-	    << "    minimizer provides error and error matrix ........... " << minimizer.ProvidesError()    << endl
-	    << "    minimizer has performed detailed error validation ... " << minimizer.IsValidError()     << endl
+	    << "    minimizer provides error and error matrix ........... " << yesNo(minimizer.ProvidesError()) << endl
+	    << "    minimizer has performed detailed error validation ... " << yesNo(minimizer.IsValidError())  << endl
 	    << "    estimated distance to minimum ....................... " << minimizer.Edm()              << endl
 	    << "    statistical scale used for error calculation ........ " << minimizer.ErrorDef()         << endl
-	    << "    minimizer strategy .................................. " << minimizer.Strategy()         << endl
-	    << "    absolute tolerance .................................. " << minimizer.Tolerance()        << endl;
+	    << "    strategy ............................................ " << minimizer.Strategy()         << endl
+	    << "    absolute tolerance .................................. " << minimizer.Tolerance()        << endl
+	    << "    precision ........................................... " << minimizer.Precision()        << endl;
 	return out;
 }
 
@@ -144,15 +147,16 @@ main(int    argc,
 {
 	// ---------------------------------------------------------------------------
 	// internal parameters
-	const string       valTreeName         = "pwa";
-	const string       valBranchName       = "fitResult_v2";
-	double             defaultStartValue   = 0.01;
-	bool               useFixedStartValues = false;
-	double             startValStep        = 0.0005;
-	const unsigned int maxNmbOfIterations  = 20000;
-	const bool         runHesse            = true;
-	const bool         runMinos            = false;
-	int                startValSeed        = 1234567;
+	const string       valTreeName           = "pwa";
+	const string       valBranchName         = "fitResult_v2";
+	double             defaultStartValue     = 0.01;
+	bool               useFixedStartValues   = false;
+	double             startValStep          = 0.0005;
+	const unsigned int maxNmbOfIterations    = 20000;
+	const unsigned int maxNmbOfFunctionCalls = 40000;
+	const bool         runHesse              = true;
+	const bool         runMinos              = false;
+	int                startValSeed          = 1234567;
 
 	// ---------------------------------------------------------------------------
 	// parse command line options
@@ -169,14 +173,14 @@ main(int    argc,
 	unsigned int numbAccEvents      = 0;                      // number of events used for acceptance integrals
 	unsigned int rank               = 1;                      // rank of fit
 	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+	int          minimizerStrategy  = 1;                      // minimizer strategy
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
 	bool         cudaEnabled        = false;                  // if true CUDA kernels are activated
-	bool         genCudaDiffHist    = false;                  // if true CUDA vs. CPU difference histograms are created
 	bool         quiet              = false;
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:x::Nn:a:A:r:M:m:t:cqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:x::Nn:a:A:r:M:m:g:t:cqh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -225,6 +229,9 @@ main(int    argc,
 		case 'm':
 			minimizerType[1] = optarg;
 			break;
+		case 'g':
+			minimizerStrategy = atoi(optarg);
+			break;
 		case 't':
 			minimizerTolerance = atof(optarg);
 			break;
@@ -256,20 +263,23 @@ main(int    argc,
 	// report parameters
 	printInfo << "running " << progName << " with the following parameters:" << endl;
 	cout << "    mass bin [" <<  massBinMin << ", " <<  massBinMax << "] MeV/c^2" << endl
-	     << "    wave list file ............................... '" << waveListFileName << "'" << endl
-	     << "    output file .................................. '" << outFileName      << "'" << endl
-	     << "    file with start values ....................... '" << startValFileName << "'" << endl
-	     << "    seed for random start values ................. "  << startValSeed            << endl;
+	     << "    path to wave list file ......................... '" << waveListFileName << "'" << endl
+	     << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
+	     << "    path to output file ............................ '" << outFileName      << "'" << endl
+	     << "    path to file with start values ................. '" << startValFileName << "'" << endl
+	     << "    seed for random start values ................... "  << startValSeed            << endl;
 	if (useFixedStartValues)
-		cout << "    using fixed instead of random start values ... " << defaultStartValue << endl;
-	cout << "    use normalization ............................ "  << useNormalizedAmps       << endl
-	     << "        file with normalization integral ......... '" << normIntFileName  << "'" << endl
-	     << "        file with acceptance integral ............ '" << accIntFileName   << "'" << endl
-	     << "        number of acceptance norm. events ........ "  << numbAccEvents    << endl
-	     << "    rank of fit .................................. "  << rank                    << endl
-	     << "    minimizer .................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
-	     << "    CUDA acceleration ............................ "  << ((cudaEnabled) ? "en" : "dis") << "abled" << endl
-	     << "    quiet ........................................ "  << ((quiet) ? "yes" : "no") << endl;
+		cout << "    using fixed instead of random start values ..... " << defaultStartValue << endl;
+	cout << "    use normalization .............................. "  << yesNo(useNormalizedAmps) << endl
+	     << "        path to file with normalization integral ... '" << normIntFileName  << "'" << endl
+	     << "        path to file with acceptance integral ...... '" << accIntFileName   << "'" << endl
+	     << "        number of acceptance norm. events .......... "  << numbAccEvents    << endl
+	     << "    rank of spin density matrix .................... "  << rank                    << endl
+	     << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
+	     << "    minimizer strategy ............................. "  << minimizerStrategy  << endl
+	     << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
+	     << "    CUDA acceleration .............................. "  << enDisabled(cudaEnabled) << endl
+	     << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
@@ -280,13 +290,6 @@ main(int    argc,
 	L.useNormalizedAmps(useNormalizedAmps);
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
-	L._genCudaDiffHist = false;
-	if (cudaEnabled and genCudaDiffHist) {
-		L._genCudaDiffHist = true;
-		const string cudaDiffFileName = outFileName.substr(0, outFileName.length() - 5)
-			+ ".cudaDiff.root";
-		L._outFile = TFile::Open(cudaDiffFileName.c_str(), "RECREATE");
-	}
 #endif  
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
 	if (not quiet)
@@ -303,8 +306,12 @@ main(int    argc,
 		printErr << "could not create minimizer. exiting." << endl;
 		throw;
 	}
-	minimizer->SetFunction(L);
-	minimizer->SetPrintLevel((quiet) ? 0 : 3);
+	minimizer->SetFunction        (L);
+	minimizer->SetStrategy        (minimizerStrategy);
+	minimizer->SetTolerance       (minimizerTolerance);
+	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
+	minimizer->SetMaxIterations   (maxNmbOfIterations);
+	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
 
 	// ---------------------------------------------------------------------------
 	// read in fitResult with start values
@@ -432,8 +439,6 @@ main(int    argc,
 	// find minimum of likelihood function
 	printInfo << "performing minimization" << endl;
 	{
-		minimizer->SetMaxIterations(maxNmbOfIterations);
-		minimizer->SetTolerance    (minimizerTolerance);
 		bool success = minimizer->Minimize();
 		if (success)
 			printInfo << "minimization finished successfully" << endl;

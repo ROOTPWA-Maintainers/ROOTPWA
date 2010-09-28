@@ -77,8 +77,7 @@ TPWALikelihood<complexT>::TPWALikelihood()
 	  _cudaEnabled      (false),
 #endif
 	  _useNormalizedAmps(true),
-	  _numbAccEvents    (0),
-	  _genCudaDiffHist  (false)
+	  _numbAccEvents    (0)
 {
 	_nmbWavesRefl[0] = 0;
 	_nmbWavesRefl[1] = 0;
@@ -94,10 +93,6 @@ TPWALikelihood<complexT>::TPWALikelihood()
 template<typename complexT>
 TPWALikelihood<complexT>::~TPWALikelihood()
 {
-	if (_cudaEnabled and _genCudaDiffHist) {
-		_outFile->Write();
-		_outFile->Close();
-	}
 	clear();
 }
 
@@ -237,7 +232,7 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 	FdF(par, logLikelihood, gradient);
 	return logLikelihood;
 
-#else
+#else  // USE_FDF
 
 	// timer for total time
 	TStopwatch timerTot;
@@ -258,9 +253,9 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 		logLikelihood = cuda::likelihoodInterface<cuda::complex<value_type> >::logLikelihood
 			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
-	}
-#endif
-	if (not _cudaEnabled or _genCudaDiffHist)	{
+	} else
+#else  // USE_CUDA
+	{
 		accumulator_set<value_type, stats<tag::sum(compensated)> > logLikelihoodAcc;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
 			accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
@@ -275,16 +270,9 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 			likelihoodAcc(prodAmpFlat2);
 			logLikelihoodAcc(-log(sum(likelihoodAcc)));
 		}
-		const value_type logLikelihoodCpu = sum(logLikelihoodAcc);
-		// if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
-		// 	const value_type diffAbs = logLikelihoodCpu - logLikelihood;
-		// 	const value_type diffRel = 1 - logLikelihood / logLikelihoodCpu;
-		// 	_hLikelihoodDiffAbs->Fill(diffAbs);
-		// 	_hLikelihoodDiffRel->Fill(diffRel);
-		// }
-		if (not _cudaEnabled)
-			logLikelihood = logLikelihoodCpu;
+		logLikelihood = sum(logLikelihoodAcc);
 	}
+#endif  // USE_CUDA
 	// log time needed for likelihood calculation
 	timer.Stop();
 	_funcCallInfo[DOEVAL].funcTime(timer.RealTime());
@@ -390,7 +378,7 @@ TPWALikelihood<complexT>::Gradient
 	double logLikelihood;
 	FdF(par, logLikelihood, gradient);
 
-#else
+#else  // USE_FDF
 
 	// copy arguments into parameter cache
 	for (unsigned int i = 0; i < _nmbPars; ++i)
@@ -419,9 +407,9 @@ TPWALikelihood<complexT>::Gradient
 			 prodAmps.num_elements(), prodAmpFlat, _rank,
 			 reinterpret_cast<cuda::complex<value_type>*>(derivatives.data()),
 			 derivativeFlat);
-	}
-#endif
-	if (not _cudaEnabled or _genCudaDiffHist)	{
+	} else
+#else  // USE_CUDA
+	{
 		accumulator_set<value_type, stats<tag::sum(compensated)> > derivativeFlatAcc;
 		multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3>
 			derivativesAcc(derivShape);
@@ -456,39 +444,13 @@ TPWALikelihood<complexT>::Gradient
 						derivativesAcc[iRank][iRefl][jWave](-factor * derivative[iRank][iRefl][jWave]);
 			derivativeFlatAcc(-factor * prodAmpFlat);
 		}  // end loop over events
-		// if (_cudaEnabled and _genCudaDiffHist) {  // fill difference histograms
-		// 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-		// 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-		// 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-		// 				complex<T> diffAbs =   derivativesCpu[iRank][iRefl][iWave]
-		// 					                   - derivatives   [iRank][iRefl][iWave];
-		// 				complex<T> diffRel;
-		// 				diffRel.real() = 1 -   derivatives   [iRank][iRefl][iWave].real()
-		// 					                   / derivativesCpu[iRank][iRefl][iWave].real();
-		// 				diffRel.imag() = 1 -   derivatives   [iRank][iRefl][iWave].imag()
-		// 					                   / derivativesCpu[iRank][iRefl][iWave].imag();
-		// 				_hDerivDiffAbs[iRank][iRefl][iWave][0]->Fill(diffAbs.real());
-		// 				_hDerivDiffAbs[iRank][iRefl][iWave][1]->Fill(diffAbs.imag());
-		// 				_hDerivDiffRel[iRank][iRefl][iWave][0]->Fill(diffRel.real());
-		// 				_hDerivDiffRel[iRank][iRefl][iWave][1]->Fill(diffRel.imag());
-		// 				_hDerivDiffTotAbs[0]->Fill(diffAbs.real());
-		// 				_hDerivDiffTotAbs[1]->Fill(diffAbs.imag());
-		// 				_hDerivDiffTotRel[0]->Fill(diffRel.real());
-		// 				_hDerivDiffTotRel[1]->Fill(diffRel.imag());
-		// 			}
-		// 	const T diffFlatAbs = derivativeFlatCpu - derivativeFlat;
-		// 	const T diffFlatRel = 1 - derivativeFlat / derivativeFlatCpu;
-		// 	_hDerivDiffFlatAbs->Fill(diffFlatAbs);
-		// 	_hDerivDiffFlatRel->Fill(diffFlatRel);
-		// }
-		if (not _cudaEnabled) {
-			for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-						derivatives[iRank][iRefl][iWave] = sum(derivativesAcc[iRank][iRefl][iWave]);
-			derivativeFlat = sum(derivativeFlatAcc);
-		}
+		for (unsigned int iRank = 0; iRank < _rank; ++iRank)
+			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+					derivatives[iRank][iRefl][iWave] = sum(derivativesAcc[iRank][iRefl][iWave]);
+		derivativeFlat = sum(derivativeFlatAcc);
 	}
+#endif  // USE_CUDA
 	// log time needed for gradient calculation
 	timer.Stop();
 	_funcCallInfo[GRADIENT].funcTime(timer.RealTime());
@@ -577,55 +539,10 @@ TPWALikelihood<complexT>::init(const unsigned int rank,
 	readIntegrals(normIntFileName, accIntFileName);
 	readDecayAmplitudes(ampDirName);
 #ifdef USE_CUDA
-	if (_cudaEnabled) {
+	if (_cudaEnabled)
 		cuda::likelihoodInterface<cuda::complex<value_type> >::init
 			(reinterpret_cast<cuda::complex<value_type>*>(_decayAmps.data()),
 			 _decayAmps.num_elements(), _nmbEvents, _nmbWavesRefl, true);
-// 		if (_genCudaDiffHist) {
-// 			if (not _outFile)
-// 				_outFile = TFile::Open("cudaDiff.root", "RECREATE");
-// 			_outFile->cd();
-// 			_hLikelihoodDiffAbs = new TH1D
-// 				("hLikelihoodDiffAbs", "hLikelihoodDiffAbs;L_{CPU} - L_{GPU};Count", 10000, -1e-7, 1e-7);
-// 			_hLikelihoodDiffRel = new TH1D
-// 				("hLikelihoodDiffRel", "hLikelihoodDiffRel;1 - L_{GPU} / L_{CPU};Count",
-// 				 10000, -1e-11, 1e-11);
-// 			_hDerivDiffAbs.resize(extents[_rank][2][_nmbWavesReflMax][2]);
-// 			_hDerivDiffRel.resize(extents[_rank][2][_nmbWavesReflMax][2]);
-// 			for (unsigned int iRank = 0; iRank < _rank; ++iRank)
-// 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-// 					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-// 						for (unsigned int reIm = 0; reIm < 2; ++reIm) {
-// 							stringstream n;
-// 							n << "_" << iRank << "_" << iRefl << "_" << iWave << "_"
-// 							  << ((reIm == 0) ? "real" : "imag");
-// 							_hDerivDiffAbs[iRank][iRefl][iWave][reIm] =
-// 								new TH1D(("hDerivDiffAbs" + n.str()).c_str(),
-// 								         ("hDerivDiffAbs" + n.str() + ";#nabla_{CPU} - #nabla_{GPU};Count").c_str(),
-// 								         10000, -1e-11, 1e-11);
-// 							_hDerivDiffRel[iRank][iRefl][iWave][reIm] =
-// 								new TH1D(("hDerivDiffRel" + n.str()).c_str(),
-// 								         ("hDerivDiffRel" + n.str() + ";1 - #nabla_{GPU} / #nabla_{CPU};Count").c_str(),
-// 								         10000, -1e-11, 1e-11);
-// 						}
-// 			_hDerivDiffFlatAbs = new TH1D
-// 				("hDerivDiffFlatAbs", "hDerivDiffFlatAbs;#nabla_{CPU} - #nabla_{GPU};Count",
-// 				 10000, -1e-10, 1e-10);
-// 			_hDerivDiffFlatRel = new TH1D
-// 				("hDerivDiffFlatRel", "hDerivDiffFlatRel;1 - #nabla_{GPU} / #nabla_{CPU};Count",
-// 				 10000, -1e-12, 1e-12);
-// 			for (unsigned int reIm = 0; reIm < 2; ++reIm) {
-// 				string n = "hDerivDiffTotAbs" + string((reIm == 0) ? "Real" : "Imag");
-// 				_hDerivDiffTotAbs[reIm] = new TH1D
-// 					(n.c_str(), (n + ";#nabla_{CPU} - #nabla_{GPU};Count").c_str(),
-// 					 10000, -1e-10, 1e-10);
-// 				n = "hDerivDiffTotRel" + string((reIm == 0) ? "Real" : "Imag");
-// 				_hDerivDiffTotRel[reIm] = new TH1D
-// 					(n.c_str(), (n + ";1 - #nabla_{GPU} / #nabla_{CPU};Count").c_str(),
-// 					 10000, -1e-10, 1e-10);
-// 			}
-// 		}
-	}
 #endif
 }
 

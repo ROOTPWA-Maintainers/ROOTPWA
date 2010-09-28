@@ -122,6 +122,43 @@ namespace rpwa {
 	}
 
 
+	// converts bool to "true"/"false" string
+	std::string trueFalse(const bool val)
+	{
+		if (val)
+			return "true";
+		else
+			return "false";
+	}
+
+	// converts bool to "yes"/"no" string
+	std::string yesNo(const bool val)
+	{
+		if (val)
+			return "yes";
+		else
+			return "no";
+	}
+
+	// converts bool to "on"/"off" string
+	std::string onOff(const bool val)
+	{
+		if (val)
+			return "on";
+		else
+			return "off";
+	}
+
+	// converts bool to "enabled"/"disabled" string
+	std::string enDisabled(const bool val)
+	{
+		if (val)
+			return "enabled";
+		else
+			return "disabled";
+	}
+
+
 }  // namespace rpwa
 
 
