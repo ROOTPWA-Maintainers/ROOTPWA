@@ -43,6 +43,7 @@
 
 #include "utilities.h"
 #include "mathUtils.hpp"
+#include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"
 
   
@@ -66,30 +67,6 @@ isobarCanonicalAmplitude::isobarCanonicalAmplitude(const isobarDecayTopologyPtr&
 
 isobarCanonicalAmplitude::~isobarCanonicalAmplitude()
 { }
-
-
-TLorentzRotation
-isobarCanonicalAmplitude::hfTransform(const TLorentzVector& daughterLv)
-{
-	TLorentzVector daughter = daughterLv;
-	const TVector3 zAxisParent(0, 0, 1);  // take z-axis as defined in parent frame
-	const TVector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
-	// rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
-	TRotation rot1;
-	rot1.RotateZ(-yHfAxis.Phi());
-	rot1.RotateY(piHalf - yHfAxis.Theta());
-	rot1.RotateZ(piHalf);
-	daughter *= rot1;
-	// rotate about yHfAxis so that daughter momentum is along z-axis
-	TRotation rot2;
-	rot2.RotateY(-signum(daughter.X()) * daughter.Theta());
-	daughter *= rot2;
-	// boost to daughter RF
-	rot1.Transform(rot2);
-	TLorentzRotation hfTransform(rot1);
-	hfTransform.Boost(-daughter.BoostVector());
-	return hfTransform;
-}
 
 
 void
@@ -121,13 +98,14 @@ isobarCanonicalAmplitude::transformDaughters() const
 			          << " into " << vertex->parent()->name() << " Gottfried-Jackson RF" << endl;
 		vertex->transformOutParticles(gjTrans);
 	}
-	// 2) transform daughters of isobar decay vertices to the respective helicity frames
+	// 2) transform daughters of isobar decay vertices to the respective rest frames
 	for (unsigned int i = 1; i < _decay->nmbDecayVertices(); ++i) {  // exclude X-decay vertex
-		const isobarDecayVertexPtr& vertex  = _decay->isobarDecayVertices()[i];
+		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
 			printInfo << "transforming all child particles of vertex " << *vertex
-			          << " into " << vertex->parent()->name() << " helicity RF" << endl;
-		const TLorentzRotation hfTrans = hfTransform(vertex->parent()->lzVec());
+			          << " into " << vertex->parent()->name() << " daughter RF" << endl;
+		// coordinate system does not change so this is just a simple Lorentz=boost
+		const TVector3 rfBoost = -vertex->parent()->lzVec().BoostVector();
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
 		decayTopologyGraphType::edgeIterator iEd, iEdEnd;
@@ -135,8 +113,8 @@ isobarCanonicalAmplitude::transformDaughters() const
 			const particlePtr& part = subGraph.particle(*iEd);
 			if (_debug)
 				cout << "    transforming " << part->name() << " into "
-				     << vertex->parent()->name() << " helicity RF" << endl;
-			part->transform(hfTrans);
+				     << vertex->parent()->name() << " RF" << endl;
+			part->transform(rfBoost);
 		}
 	}
 }
@@ -148,43 +126,26 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
                                                 const bool                  topVertex) const
 {
 	if (_debug)
-		printInfo << "calculating two-body decay amplitude for " << *vertex << endl;
+		printInfo << "calculating two-body decay amplitude in canonical formalism "
+		          << "for " << *vertex << endl;
 
 	const particlePtr& parent    = vertex->parent();
 	const particlePtr& daughter1 = vertex->daughter1();
 	const particlePtr& daughter2 = vertex->daughter2();
 
-	// calculate Clebsch-Gordan coefficient for L-S coupling
-	const int    L         = vertex->L();
-	const int    S         = vertex->S();
-	const int    J         = parent->J();
-	const int    lambda1   = daughter1->spinProj();
-	const int    lambda2   = daughter2->spinProj();
-	const int    lambda    = lambda1 - lambda2;
-	const double lsClebsch = cgCoeff(L, 0, S, lambda, J, lambda, _debug);
-	if (lsClebsch == 0)
-		return 0;
-
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
+	const int    m1        = daughter1->spinProj();
 	const int    s2        = daughter2->J();
-	const double ssClebsch = cgCoeff(s1, lambda1, s2, -lambda2, S, lambda, _debug);
+	const int    m2        = daughter2->spinProj();
+	const int    S         = vertex->S();
+	const int    mS        = m1 + m2;
+	const double ssClebsch = cgCoeff(s1, m1, s2, m2, S, mS, _debug);
 	if (ssClebsch == 0)
 		return 0;
 
-	// calculate D-function
-	const int       Lambda = parent->spinProj();
-	const int       P      = parent->P();
-	const int       refl   = parent->reflectivity();
-	const double    phi    = daughter1->lzVec().Phi();  // use daughter1 as analyzer
-	const double    theta  = daughter1->lzVec().Theta();
-	complex<double> DFunc;
-	if (topVertex and _useReflectivityBasis)
-		DFunc = DFuncConjRefl(J, Lambda, lambda, P, refl, phi, theta, _debug);
-	else
-		DFunc = DFuncConj(J, Lambda, lambda, phi, theta, _debug);
-
 	// calulate barrier factor
+	const int    L  = vertex->L();
 	const double q  = daughter1->lzVec().Vect().Mag();
 	const double bf = barrierFactor(L, q, _debug);
 
@@ -194,8 +155,40 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	// calculate normalization factor
 	const double norm = normFactor(L, _debug);
 
+	// sum over all possible spin projections of L
+	const int       J     = parent->J();
+	const int       M     = parent->spinProj();
+	const int       P     = parent->P();
+	const int       refl  = parent->reflectivity();
+	const double    phi   = daughter1->lzVec().Phi();  // use daughter1 as analyzer
+	const double    theta = daughter1->lzVec().Theta();
+	complex<double> amp	  = 0;
+	for (int mL = -L; mL <= L; mL += 2) {
+		// calculate Clebsch-Gordan coefficient for L-S coupling
+		double LSClebsch;
+		if (_useReflectivityBasis and topVertex) {
+			// symmetrize L-S coupling term
+			const int reflFactor = reflectivityFactor(J, P, M, refl);
+			if (M == 0) {
+				if (reflFactor == +1)
+					LSClebsch = 0;
+				else
+					LSClebsch = cgCoeff(L, mL, S, mS, J, 0, _debug);
+			} else {
+				LSClebsch = 1 / rpwa::sqrt((double)2)
+					* (               cgCoeff(L, mL, S, mS, J, +M, _debug)
+					   - reflFactor * cgCoeff(L, mL, S, mS, J, -M, _debug));
+			}
+		} else
+			LSClebsch = cgCoeff(L, mL, S, mS, J, M, _debug);
+		if (LSClebsch == 0)
+			continue;
+		// multiply spherical harmonic
+		amp += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
+	}
+
 	// calculate decay amplitude
-	complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
+	amp *= norm * ssClebsch * bf * bw;
   
 	if (_debug)
 		printInfo << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;

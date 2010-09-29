@@ -54,10 +54,10 @@
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "keyFileParser.h"
-#include "isobarHelicityAmplitude.h"
 
 
 using namespace std;
+using namespace boost;
 using namespace rpwa;
 
 
@@ -231,16 +231,14 @@ main(int    argc,
 	}
 	keyFileParser&         parser = keyFileParser::instance();
 	isobarDecayTopologyPtr decayTopo;
-	if (not parser.parse(keyFileName) or not parser.constructDecayTopology(decayTopo)) {
+	isobarAmplitudePtr     amplitude;
+	if (   not parser.parse(keyFileName)
+	    or not parser.constructAmplitude(amplitude, decayTopo)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		         << "aborting." << endl;
 		exit(1);
 	}
-	decayTopo->checkTopology();
-	decayTopo->checkConsistency();
-	isobarHelicityAmplitude amplitude(decayTopo);
-	parser.setAmplitudeOptions(amplitude);
-	printInfo << amplitude;
+	printInfo << *amplitude;
   
 	// create output file for amplitudes
 	printInfo << "creating amplitude file '" << ampFileName << "'; "
@@ -263,7 +261,7 @@ main(int    argc,
 		else
 			cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
 		cout << endl;
-		if (not processTree(*trees[i], *decayTopo, amplitude, ampValues, maxNmbEvents - ampValues.size(),
+		if (not processTree(*trees[i], decayTopo, amplitude, ampValues, maxNmbEvents - ampValues.size(),
 		                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 		                    decayKinParticlesLeafName, decayKinMomentaLeafName))
 			printWarn << "problems reading tree" << endl;

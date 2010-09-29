@@ -39,7 +39,6 @@
 #define KEYFILEPARSER_H
 
 
-//#include <iostream>
 #include <string>
 #include <vector>
 
@@ -62,7 +61,13 @@ namespace rpwa {
 
     static bool constructDecayTopology(isobarDecayTopologyPtr& topo);  ///< construct isobar decay topology from keyfile
 
-    static void setAmplitudeOptions(isobarAmplitude& amp);  ///< sets amplitude options from keyfile
+	  static bool constructAmplitude(isobarAmplitudePtr&     amp,
+	                                 isobarDecayTopologyPtr& topo);  ///< construct isobar decay topology and amplitude from keyfile
+	  static bool constructAmplitude(isobarAmplitudePtr&     amp)    ///< construct isobar decay amplitude from keyfile
+	  {
+		  isobarDecayTopologyPtr topo;
+		  return constructAmplitude(amp, topo);
+	  }
 
 	  static bool writeKeyFile(const std::string&            keyFileName,
 	                           const isobarDecayTopologyPtr& topo,

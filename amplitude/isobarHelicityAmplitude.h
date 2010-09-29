@@ -38,17 +38,15 @@
 #ifndef ISOBARHELICITYAMPLITUDE_H
 #define ISOBARHELICITYAMPLITUDE_H
 
-
-#include <complex>
-#include <map>
-#include <vector>
-
-#include "utilities.h"
-#include "isobarDecayTopology.h"
 #include "isobarAmplitude.h"
 
 
 namespace rpwa {  
+
+
+	class isobarHelicityAmplitude;
+	typedef boost::shared_ptr<isobarHelicityAmplitude> isobarHelicityAmplitudePtr;
+
 
 	class isobarHelicityAmplitude : public isobarAmplitude {
   
@@ -77,6 +75,15 @@ namespace rpwa {
 		static bool _debug;  ///< if set to true, debug messages are printed
     
 	};
+  
+  
+	inline
+	isobarHelicityAmplitudePtr
+	createIsobarHelicityAmplitude(const isobarDecayTopologyPtr& decay)
+	{
+		isobarHelicityAmplitudePtr amp(new isobarHelicityAmplitude(decay));
+		return amp;
+	}
   
   
 } // namespace rpwa

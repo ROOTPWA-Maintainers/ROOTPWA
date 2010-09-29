@@ -39,16 +39,15 @@
 #define ISOBARCANONICALAMPLITUDE_H
 
 
-#include <complex>
-#include <map>
-#include <vector>
-
-#include "utilities.h"
-#include "isobarDecayTopology.h"
 #include "isobarAmplitude.h"
 
 
 namespace rpwa {  
+
+
+	class isobarCanonicalAmplitude;
+	typedef boost::shared_ptr<isobarCanonicalAmplitude> isobarCanonicalAmplitudePtr;
+
 
 	class isobarCanonicalAmplitude : public isobarAmplitude {
   
@@ -58,8 +57,6 @@ namespace rpwa {
 		isobarCanonicalAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarCanonicalAmplitude();
 
-		static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
-    
 		std::ostream& print(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
     
 		static bool debug() { return _debug; }                             ///< returns debug flag
@@ -79,6 +76,15 @@ namespace rpwa {
 	};
   
   
+	inline
+	isobarCanonicalAmplitudePtr
+	createIsobarCanonicalAmplitude(const isobarDecayTopologyPtr& decay)
+	{
+		isobarCanonicalAmplitudePtr amp(new isobarCanonicalAmplitude(decay));
+		return amp;
+	}
+
+
 } // namespace rpwa
 
 

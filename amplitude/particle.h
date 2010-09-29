@@ -104,7 +104,12 @@ namespace rpwa {
 
 		void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
-		const TLorentzVector& transform(const TLorentzRotation& L) { return (_lzVec *= L); }  ///< applies Lorentz-transformation to particle
+		const TLorentzVector& transform(const TLorentzRotation& L)     { return _lzVec.Transform(L); }  ///< applies Lorentz-transformation to particle
+		const TLorentzVector& transform(const TVector3&         boost)  ///< applies Lorentz-boost to particle
+		{
+			_lzVec.Boost(boost);
+			return _lzVec;
+		}
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)M]
 

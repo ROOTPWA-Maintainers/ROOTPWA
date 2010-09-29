@@ -125,12 +125,12 @@ bool testAmplitude(TTree&          tree,
 	cout << " events" << endl;
 
 	// construct amplitude
-	isobarHelicityAmplitude amplitude(decayTopo);
-	parser.setAmplitudeOptions(amplitude);
+	isobarAmplitudePtr amplitude;
+	parser.constructAmplitude(amplitude, decayTopo);
 
 	// read data from tree and calculate amplitudes
 	vector<complex<double> > ampValues;
-	if (not processTree(tree, *decayTopo, amplitude, ampValues, maxNmbEvents,
+	if (not processTree(tree, decayTopo, amplitude, ampValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
@@ -143,8 +143,8 @@ bool testAmplitude(TTree&          tree,
   
 	// calculate amplitudes for parity transformed decay daughters
 	vector<complex<double> > ampSpaceInvValues;
-	amplitude.enableSpaceInversion(true);
-	if (not processTree(tree, *decayTopo, amplitude, ampSpaceInvValues, maxNmbEvents,
+	amplitude->enableSpaceInversion(true);
+	if (not processTree(tree, decayTopo, amplitude, ampSpaceInvValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
@@ -153,9 +153,9 @@ bool testAmplitude(TTree&          tree,
   
 	// calculate amplitudes for decay daughters reflected through production plane
 	vector<complex<double> > ampReflValues;
-	amplitude.enableSpaceInversion(false);
-	amplitude.enableReflection    (true);
-	if (not processTree(tree, *decayTopo, amplitude, ampReflValues, maxNmbEvents,
+	amplitude->enableSpaceInversion(false);
+	amplitude->enableReflection    (true);
+	if (not processTree(tree, decayTopo, amplitude, ampReflValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;

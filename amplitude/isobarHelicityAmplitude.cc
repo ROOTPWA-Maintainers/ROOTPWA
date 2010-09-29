@@ -123,7 +123,7 @@ isobarHelicityAmplitude::transformDaughters() const
 	}
 	// 2) transform daughters of isobar decay vertices to the respective helicity frames
 	for (unsigned int i = 1; i < _decay->nmbDecayVertices(); ++i) {  // exclude X-decay vertex
-		const isobarDecayVertexPtr& vertex  = _decay->isobarDecayVertices()[i];
+		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
 			printInfo << "transforming all child particles of vertex " << *vertex
 			          << " into " << vertex->parent()->name() << " helicity RF" << endl;
@@ -148,7 +148,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
                                                const bool                  topVertex) const
 {
 	if (_debug)
-		printInfo << "calculating two-body decay amplitude for " << *vertex << endl;
+		printInfo << "calculating two-body decay amplitude in helicity formalism for " << *vertex << endl;
 
 	const particlePtr& parent    = vertex->parent();
 	const particlePtr& daughter1 = vertex->daughter1();

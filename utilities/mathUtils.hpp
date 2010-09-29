@@ -69,12 +69,12 @@ namespace rpwa {
 	// various small helper functions
   inline
   double
-  normFactor(const int  L,
+  normFactor(const int  l,
              const bool debug = false)  ///< standard normalization factor in amplitudes
   {
-	  const double norm = rpwa::sqrt(L + 1);
+	  const double norm = rpwa::sqrt(l + 1);
     if (debug)
-      printInfo << "normalization factor sqrt(2 * L = " << 0.5 * L << " + 1) = "
+      printInfo << "normalization factor sqrt(2 * L = " << 0.5 * l << " + 1) = "
                 << maxPrecision(norm) << std::endl;
     return norm;
   }
@@ -82,12 +82,38 @@ namespace rpwa {
 
 	inline
 	int
-	powMinusOne(const int exponent)  ///< optimized function for pow(-1, n)
+	powMinusOne(const int exponent)  ///< optimized function for (-1)^n
 	{
 		if (exponent & 0x1)  // exponent is odd
 			return -1;
 		else                 // exponent is even
 			return +1;
+	}
+
+	
+	inline
+	int
+	reflectivityFactor(const int j,
+	                   const int P,
+	                   const int m,
+	                   const int refl)  ///< calculates prefactor for reflectibity symmetrization
+	{
+    if (rpwa::abs(P) != 1) {
+      printWarn << "parity value P = " << P << " != +-1 is not allowed. "
+                << "returning 0." << std::endl;
+      return 0;
+    }
+    if (m < 0) {
+      printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
+                << "returning 0." << std::endl;
+      return 0;
+    }
+    if (rpwa::abs(refl) != 1) {
+      printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
+                << "returning 0." << std::endl;
+      return 0;
+    }
+    return refl * P * powMinusOne((j - m) / 2);
 	}
 
 

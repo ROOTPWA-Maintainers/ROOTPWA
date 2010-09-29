@@ -49,6 +49,11 @@
 
 namespace rpwa {  
 
+
+	class isobarAmplitude;
+	typedef boost::shared_ptr<rpwa::isobarAmplitude> isobarAmplitudePtr;
+
+
 	class isobarAmplitude {
   
 	public:

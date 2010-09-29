@@ -41,6 +41,8 @@
 #include "utilities.h"
 #include "diffractiveDissVertex.h"
 #include "leptoProductionVertex.h"
+#include "isobarHelicityAmplitude.h"
+#include "isobarCanonicalAmplitude.h"
 #include "keyFileParser.h"
 
   
@@ -150,15 +152,33 @@ keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 }
 
 
-void
-keyFileParser::setAmplitudeOptions(isobarAmplitude& amp)
+bool
+keyFileParser::constructAmplitude(isobarAmplitudePtr&     amp,
+                                  isobarDecayTopologyPtr& topo)
 {
+	// use topology if it exists, if not create new one
+	if (not topo and not constructDecayTopology(topo)) {
+		printWarn << "problems constructing decay topology. cannot construct decay amplitude." << endl;
+		return false;
+	}
+	if (not topo->checkTopology() or not topo->checkConsistency()) {
+		printWarn << "decay topology has issues. cannot construct decay amplitude." << endl;
+		return false;
+	}
+	if (amp)
+		amp.reset();
+	amp = createIsobarHelicityAmplitude(topo);
+	if (not amp) {
+		printWarn << "problems constructing decay amplitude." << endl;
+		return false;
+	}
 	if (_debug)
 		printInfo << "setting amplitude options: "
-		          << ((_boseSymmetrize) ? "en" : "dis") << "abling Bose symmetrization, "
+		          << ((_boseSymmetrize      ) ? "en" : "dis") << "abling Bose symmetrization, "
 		          << ((_useReflectivityBasis) ? "en" : "dis") << "abling reflectivity basis" << endl;
-	amp.enableBoseSymmetrization(_boseSymmetrize      );
-	amp.enableReflectivityBasis (_useReflectivityBasis);
+	amp->enableBoseSymmetrization(_boseSymmetrize      );
+	amp->enableReflectivityBasis (_useReflectivityBasis);
+	return true;
 }
 
 

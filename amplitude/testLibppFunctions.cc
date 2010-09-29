@@ -199,7 +199,7 @@ main(int argc, char** argv)
 
 	//////////////////////////////////////////////////////////////////////////////
 	// spherical harmonics Y_l^m(theta, phi)
-	if (1) {
+	if (0) {
 		printInfo << "testing spherical harmonics" << endl;
 
 		const unsigned int nmbAngles = 150000;
@@ -351,7 +351,7 @@ main(int argc, char** argv)
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Wigner D-function in reflectivity basis {^refl}D^j_{m n}(alpha, beta, gamma)
-	if (0) {
+	if (1) {
 		printInfo << "testing Wigner D-function in reflectivity basis" << endl;
 
 		const unsigned int nmbAngles = 10000;
@@ -419,8 +419,8 @@ main(int argc, char** argv)
 						    const int       _n         = 2 * n;
 						    const double    preFactor  = (_m == 0 ? 0.5 : 1 / std::sqrt(2));
 						    const double    reflFactor = (double)refl * (double)P * std::pow(-1, 0.5 * (_j - _m));
-						    oldVals[valIndex] = preFactor * (                D(a.X(), a.Y(), a.Z(), _j,  _m, _n)
-						                                      - reflFactor * D(a.X(), a.Y(), a.Z(), _j, -_m, _n));
+						    oldVals[valIndex] = preFactor * (               D(a.X(), a.Y(), a.Z(), _j,  _m, _n)
+						                                     - reflFactor * D(a.X(), a.Y(), a.Z(), _j, -_m, _n));
 						    oldVals[valIndex] = conj(oldVals[valIndex]);
 						    ++valIndex;
 					    }

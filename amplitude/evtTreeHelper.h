@@ -36,10 +36,11 @@
 //-------------------------------------------------------------------------
 
 
-#include <iostream>
 #include <string>
 #include <vector>
 #include <complex>
+
+#include "isobarAmplitude.h"
 
 
 class TTree;
@@ -50,7 +51,7 @@ namespace rpwa {
 
 
 	class isobarDecayTopology;
-	class isobarHelicityAmplitude;
+	class isobarAmplitude;
 
 
 	std::string particleNameFromGeantId(const int id,
@@ -88,8 +89,8 @@ namespace rpwa {
 
 
 	long int processTree(TTree&                              tree,
-	                     isobarDecayTopology&                decayTopo,
-	                     const isobarHelicityAmplitude&      amplitude,
+	                     const isobarDecayTopologyPtr&       decayTopo,
+	                     const isobarAmplitudePtr&           amplitude,
 	                     std::vector<std::complex<double> >& ampValues,
 	                     const long int                      maxNmbEvents              = -1,
 	                     const std::string&                  prodKinParticlesLeafName  = "prodKinParticles",

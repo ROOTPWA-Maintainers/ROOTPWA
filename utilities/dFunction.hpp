@@ -233,22 +233,22 @@ namespace rpwa {
 	template<typename complexT>
   inline
   complexT
-  sphericalHarmonic(const int                            l,
-                    const int                            m,
-                    const typename complexT::value_type& theta,
-                    const typename complexT::value_type& phi,
-                    const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
-  {
+  sphericalHarmonic
+	(const int                            l,
+	 const int                            m,
+	 const typename complexT::value_type& theta,
+	 const typename complexT::value_type& phi,
+	 const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
+	{
 	  // crude implementation using Wigner d-function
 	  typedef typename complexT::value_type T;
-	  const complexT Y =   rpwa::sqrt((l + 1) / fourPi) * rpwa::exp(complexT(0, ((T)m / 2) * phi))
-		                   * dFunction(l, m, 0, theta);
-	                     // * d_jmn_b(l, m, 0, theta);
+	  const complexT YVal =   rpwa::sqrt((l + 1) / fourPi) * rpwa::exp(complexT(0, ((T)m / 2) * phi))
+		                      * dFunction(l, m, 0, theta);
 	  if (debug)
 		  printInfo << "spherical harmonic Y_l = " << 0.5 * l << "^m = " << 0.5 * m 
 		            << "(phi = " << phi << ", theta = " << theta << ") = "
-		            << maxPrecisionDouble(Y) << std::endl;
-    return Y;
+		            << maxPrecisionDouble(YVal) << std::endl;
+    return YVal;
   }
   
   
@@ -265,7 +265,7 @@ namespace rpwa {
 	{
 		typedef typename complexT::value_type T;
 		const T        arg      = ((T)m / 2) * alpha + ((T)n / 2) * gamma;
-		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunction<T>(j, m, n, beta);
+		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunction(j, m, n, beta);
 		if (debug)
 			printInfo << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
 			          << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
@@ -308,23 +308,8 @@ namespace rpwa {
                 const bool                           debug = false)  ///< Wigner D-function D^{j P refl}_{m n}(alpha, beta, gamma) in reflectivity basis
   {
 		typedef typename complexT::value_type T;
-    if (m < 0) {
-      printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
-    if (rpwa::abs(refl) != 1) {
-      printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
-    if (rpwa::abs(P) != 1) {
-      printWarn << "parity value P = " << P << " != +-1 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
     complexT  DFuncVal;
-    const int reflFactor = refl * P * powMinusOne((j - m) / 2);
+    const int reflFactor = reflectivityFactor(j, P, m, refl);
     if (m == 0) {
 	    if (reflFactor == +1) {
 		    DFuncVal = complexT(0);
@@ -332,11 +317,11 @@ namespace rpwa {
 		    //           << "refl = " << sign(refl) << "}" << "_{M = " << 0.5 * m << ", "
 		    //           << "M' = " << 0.5 * n << "}(alpha, beta, gamma) is always zero." << endl;
 	    } else
-		    DFuncVal = DFunction<complexT>(j, 0, n, alpha, beta, gamma);
+		    DFuncVal = DFunction<complexT>(j, 0, n, alpha, beta, gamma, false);
     } else {
-	    DFuncVal = 1 / rpwa::sqrt((T)2)
-		             * (                   DFunction<complexT>(j,  m, n, alpha, beta, gamma)
-		                 - (T)reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma));
+	    DFuncVal = 1 / rpwa::sqrt(2)
+		    * (                  DFunction<complexT>(j, +m, n, alpha, beta, gamma, false)
+		       - (T)reflFactor * DFunction<complexT>(j, -m, n, alpha, beta, gamma, false));
     }
     if (debug)
       printInfo << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "

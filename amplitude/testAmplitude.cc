@@ -60,6 +60,7 @@
 #include "diffractiveDissVertex.h"
 #include "massDependence.h"
 #include "keyFileParser.h"
+#include "isobarAmplitude.h"
 #include "isobarHelicityAmplitude.h"
 
 
@@ -267,15 +268,10 @@ main(int argc, char** argv)
 
 		keyFileParser&         parser = keyFileParser::instance();
 		isobarDecayTopologyPtr topo;
-		if (parser.parse(newKeyFileName) and parser.constructDecayTopology(topo)) {
-			topo->checkTopology();
-			topo->checkConsistency();
+		isobarAmplitudePtr     amp;
+		if (parser.parse(newKeyFileName) and parser.constructAmplitude(amp, topo)) {
 			topo->writeGraphViz("decay.dot");
-			isobarHelicityAmplitude amp(topo);
-			parser.setAmplitudeOptions(amp);
-			// amp.enableReflectivityBasis (false);
-			// amp.enableBoseSymmetrization(false);
-			printInfo << amp;
+			printInfo << *amp;
 			parser.writeKeyFile("testWrite.key", topo);  // test key file creation
 
 			// read data from tree
@@ -343,12 +339,12 @@ main(int argc, char** argv)
 				                   *decayKinParticles, *decayKinMomenta)) {
 					// topo->printProdKinParticles(cout);
 					// topo->printDecayKinParticles(cout);
-					// complex<double> A = amp();
-					// complex<double> B = amp();
+					// complex<double> A = (*amp)();
+					// complex<double> B = (*amp)();
 					// topo->revertMomenta();
-					// complex<double> C = amp();
+					// complex<double> C = (*amp)();
 					// cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
-					myAmps.push_back(amp());
+					myAmps.push_back((*amp)());
 					if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
 						printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
 					topo->productionVertex()->productionAmp();

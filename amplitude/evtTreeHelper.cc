@@ -356,17 +356,26 @@ namespace rpwa {
 
 
 	bool
-	processTree(TTree&                         tree,
-	            isobarDecayTopology&           decayTopo,
-	            const isobarHelicityAmplitude& amplitude,
-	            vector<complex<double> >&      ampValues,
-	            const long int                 maxNmbEvents,
-	            const string&                  prodKinParticlesLeafName,
-	            const string&                  prodKinMomentaLeafName,
-	            const string&                  decayKinParticlesLeafName,
-	            const string&                  decayKinMomentaLeafName,
-	            const bool                     printProgress)
+	processTree(TTree&                        tree,
+	            const isobarDecayTopologyPtr& decayTopo,
+	            const isobarAmplitudePtr&     amplitude,
+	            vector<complex<double> >&     ampValues,
+	            const long int                maxNmbEvents,
+	            const string&                 prodKinParticlesLeafName,
+	            const string&                 prodKinMomentaLeafName,
+	            const string&                 decayKinParticlesLeafName,
+	            const string&                 decayKinMomentaLeafName,
+	            const bool                    printProgress)
 	{
+		if (not decayTopo) {
+			printWarn << "null pointer to isobar decay topology. cannot process tree." << endl;
+			return false;
+		}
+		if (not amplitude) {
+			printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
+			return false;
+		}
+
 		// create branch pointers and leaf variables
 		TBranch*      prodKinParticlesBr  = 0;
 		TBranch*      prodKinMomentaBr    = 0;
@@ -413,9 +422,9 @@ namespace rpwa {
 				continue;
 			}
 
-			if (decayTopo.readData(*prodKinParticles,  *prodKinMomenta,
-			                       *decayKinParticles, *decayKinMomenta))
-				ampValues.push_back(amplitude());
+			if (decayTopo->readData(*prodKinParticles,  *prodKinMomenta,
+			                        *decayKinParticles, *decayKinMomenta))
+				ampValues.push_back((*amplitude)());
 			else {
 				printWarn << "problems reading event[" << eventIndex << "]" << endl;
 				success = false;
