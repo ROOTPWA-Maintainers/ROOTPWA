@@ -42,6 +42,8 @@
 #include <cassert>
 #include <algorithm>
 
+#include <boost/progress.hpp>
+
 #include "TTree.h"
 #include "TChain.h"
 #include "TClonesArray.h"
@@ -56,6 +58,7 @@
 
 
 using namespace std;
+using namespace boost;
 
 
 namespace rpwa {
@@ -273,11 +276,12 @@ namespace rpwa {
 		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta  );
 			 
 		// loop over events
-		const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-		                            : nmbEventsTree);
+		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                       : nmbEventsTree);
+		progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents) : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-			if (not debug)
-				progressIndicator(eventIndex, nmbEvents);
+			if (progressIndicator)
+				++(*progressIndicator);
 
 			if (inTree.LoadTree(eventIndex) < 0)
 				break;
@@ -380,13 +384,14 @@ namespace rpwa {
 		tree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
 
 		// loop over events
-		const long int nmbEventsTree = tree.GetEntries();
-		const long int nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-		                                : nmbEventsTree);
-		bool           success       = true;
+		const long int    nmbEventsTree     = tree.GetEntries();
+		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                       : nmbEventsTree);
+		bool              success           = true;
+		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents) : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-			if (printProgress)
-				progressIndicator(eventIndex, nmbEvents);
+			if (progressIndicator)
+				++(*progressIndicator);
       
 			if (tree.LoadTree(eventIndex) < 0)
 				break;

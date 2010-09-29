@@ -38,6 +38,8 @@
 #include <string>
 #include <set>
 
+#include <boost/progress.hpp>
+
 #include "TFile.h"
 #include "TChain.h"
 #include "TTreeFormula.h"
@@ -50,6 +52,7 @@
 
 
 using namespace std;
+using namespace boost;
 
 
 bool
@@ -108,13 +111,14 @@ plotAmpDiffs(const string&  inFileNamePattern,
 	// TH2F* hCorrIm    = new TH2F("corrImag",    "corrImag;#Jgothic[Amp 1];#Jgothic[Amp 2]", 5000, -5, 5, 5000, -5, 5);
 
 	// loop over tree
-	set<string> ampNames;
-	double      maxAbsDiff      = 0;
-	long int    maxAbsDiffIndex = -1;
-	double      maxRelDiff      = 0;
-	long int    maxRelDiffIndex = -1;
+	set<string>      ampNames;
+	double           maxAbsDiff      = 0;
+	long int         maxAbsDiffIndex = -1;
+	double           maxRelDiff      = 0;
+	long int         maxRelDiffIndex = -1;
+	progress_display progressIndicator(nmbEvents);
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-		progressIndicator(eventIndex, nmbEvents);
+		++progressIndicator;
   
 		if (inTree.LoadTree(eventIndex) < 0)
 			break;
@@ -192,9 +196,10 @@ plotAmpDiffs(const string&  inFileNamePattern,
 		                     (leafsToDraw[i] + " vs. Wave;Wave;" + leafsToDraw[i]).c_str(),
 		                     1, 0, 1, 100000, min - 0.1 * fabs(min), max + 0.1 * fabs(max));
 		hLeafs[i]->SetBit(TH1::kCanRebin);
-		TTreeFormula* leafVal = new TTreeFormula("", leafsToDraw[i].c_str(), &inTree);
+		TTreeFormula*    leafVal = new TTreeFormula("", leafsToDraw[i].c_str(), &inTree);
+		progress_display progressIndicator(nmbEvents);
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-			progressIndicator(eventIndex, nmbEvents);
+			++progressIndicator;
 			if (inTree.LoadTree(eventIndex) < 0)
 				break;
 			inTree.GetEntry(eventIndex);

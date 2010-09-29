@@ -65,7 +65,9 @@ set(SOURCES
   leptoProductionVertex.cc
   isobarDecayVertex.cc
   isobarDecayTopology.cc
+  isobarAmplitude.cc
   isobarHelicityAmplitude.cc
+  isobarCanonicalAmplitude.cc
   massDependence.cc
   keyFileParser.cc
   evtTreeHelper.cc

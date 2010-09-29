@@ -46,7 +46,7 @@
 #include "libconfig.h++"
 
 #include "isobarDecayTopology.h"
-#include "isobarHelicityAmplitude.h"
+#include "isobarAmplitude.h"
 
 
 namespace rpwa {
@@ -62,7 +62,7 @@ namespace rpwa {
 
     static bool constructDecayTopology(isobarDecayTopologyPtr& topo);  ///< construct isobar decay topology from keyfile
 
-    static void setAmplitudeOptions(isobarHelicityAmplitude& amp);  ///< sets amplitude options from keyfile
+    static void setAmplitudeOptions(isobarAmplitude& amp);  ///< sets amplitude options from keyfile
 
 	  static bool writeKeyFile(const std::string&            keyFileName,
 	                           const isobarDecayTopologyPtr& topo,

@@ -54,6 +54,7 @@
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "keyFileParser.h"
+#include "isobarHelicityAmplitude.h"
 
 
 using namespace std;

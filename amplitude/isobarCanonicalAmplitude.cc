@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      general isobar decay amplitude in helicity formalism
+//      general isobar decay amplitude in caninical formalism
 //
 //
 // Author List:
@@ -43,7 +43,7 @@
 
 #include "utilities.h"
 #include "mathUtils.hpp"
-#include "isobarHelicityAmplitude.h"
+#include "isobarCanonicalAmplitude.h"
 
   
 using namespace std;
@@ -51,25 +51,25 @@ using namespace boost;
 using namespace rpwa;
 
 
-bool isobarHelicityAmplitude::_debug = false;
+bool isobarCanonicalAmplitude::_debug = false;
 
 
-isobarHelicityAmplitude::isobarHelicityAmplitude()
+isobarCanonicalAmplitude::isobarCanonicalAmplitude()
 	: isobarAmplitude()
 { }
 
 
-isobarHelicityAmplitude::isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay)
+isobarCanonicalAmplitude::isobarCanonicalAmplitude(const isobarDecayTopologyPtr& decay)
 	: isobarAmplitude(decay)
 { }
 
 
-isobarHelicityAmplitude::~isobarHelicityAmplitude()
+isobarCanonicalAmplitude::~isobarCanonicalAmplitude()
 { }
 
 
 TLorentzRotation
-isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
+isobarCanonicalAmplitude::hfTransform(const TLorentzVector& daughterLv)
 {
 	TLorentzVector daughter = daughterLv;
 	const TVector3 zAxisParent(0, 0, 1);  // take z-axis as defined in parent frame
@@ -93,7 +93,7 @@ isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
 
 
 void
-isobarHelicityAmplitude::transformDaughters() const
+isobarCanonicalAmplitude::transformDaughters() const
 {
 	// calculate Lorentz-vectors of all isobars
 	_decay->calcIsobarLzVec();
@@ -144,8 +144,8 @@ isobarHelicityAmplitude::transformDaughters() const
 
 // assumes that daughters were transformed into parent RF
 complex<double>
-isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
-                                               const bool                  topVertex) const
+isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vertex,
+                                                const bool                  topVertex) const
 {
 	if (_debug)
 		printInfo << "calculating two-body decay amplitude for " << *vertex << endl;
@@ -204,9 +204,9 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 
 
 ostream&
-isobarHelicityAmplitude::print(ostream& out) const
+isobarCanonicalAmplitude::print(ostream& out) const
 {
-	out << "isobar decay amplitude (helicity formalism): "
+	out << "isobar decay amplitude (canonical formalism): "
 	    << *_decay
 	    << "reflectivity basis : "            << ((_useReflectivityBasis) ? "en" : "dis") << "abled" << endl
 	    << "Bose-symmetrization: "            << ((_boseSymmetrize)       ? "en" : "dis") << "abled" << endl

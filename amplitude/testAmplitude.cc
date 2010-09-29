@@ -37,6 +37,8 @@
 
 #include <fstream>
 
+#include <boost/progress.hpp>
+
 #include "TVector3.h"
 #include "TLorentzRotation.h"
 #include "TChain.h"
@@ -57,8 +59,8 @@
 #include "particleDataTable.h"
 #include "diffractiveDissVertex.h"
 #include "massDependence.h"
-#include "isobarHelicityAmplitude.h"
 #include "keyFileParser.h"
+#include "isobarHelicityAmplitude.h"
 
 
 extern particleDataTable PDGtable;
@@ -66,6 +68,7 @@ extern wave              gWave;
 
 
 using namespace std;
+using namespace boost;
 using namespace rpwa;
 
 
@@ -75,347 +78,346 @@ main(int argc, char** argv)
 	printCompilerInfo();
 	printSvnVersion();
 	
-  rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
-  pdt.readFile();
-  TStopwatch timer;
+	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
+	pdt.readFile();
+	TStopwatch timer;
   
-  // isobarDecayVertex::setDebug(true);
-  // decayTopology::setDebug(true);
-  // isobarDecayTopology::setDebug(true);
-  // isobarHelicityAmplitude::setDebug(true);
-  // massDependence::setDebug(true);
-  // diffractiveDissVertex::setDebug(true);
-  keyFileParser::setDebug(true);
+	// isobarDecayVertex::setDebug(true);
+	// decayTopology::setDebug(true);
+	// isobarDecayTopology::setDebug(true);
+	// isobarHelicityAmplitude::setDebug(true);
+	// massDependence::setDebug(true);
+	// diffractiveDissVertex::setDebug(true);
+	keyFileParser::setDebug(true);
 
-  if (0) {
-	  {
-		  fourVec  p(2, threeVec(0.5, 0.75, 1));
-		  threeVec n = threeVec(0, 0, 1) / p.V();
-		  cout << "before = " << n << "    " << p << endl;
-		  rotation         R;
-      lorentzTransform L1;
-      L1.set(R.set(n.phi(), n.theta() - M_PI / 2, -M_PI / 2));
-      n *= R;
-      p *= L1;
-      cout << "L1 -> " << n << "    " << p << endl;
-      lorentzTransform L2;
-      L2.set(R.set(0, signof(p.x()) * p.theta(), 0));
-      p *= L2;
-      cout << "L2 -> " << p << endl;
-      lorentzTransform L3;
-      L3.set(p);
-      p *= L3;
-      cout << "L3 -> " << p << endl;
+	if (0) {
+		{
+			fourVec  p(2, threeVec(0.5, 0.75, 1));
+			threeVec n = threeVec(0, 0, 1) / p.V();
+			cout << "before = " << n << "    " << p << endl;
+			rotation         R;
+			lorentzTransform L1;
+			L1.set(R.set(n.phi(), n.theta() - M_PI / 2, -M_PI / 2));
+			n *= R;
+			p *= L1;
+			cout << "L1 -> " << n << "    " << p << endl;
+			lorentzTransform L2;
+			L2.set(R.set(0, signof(p.x()) * p.theta(), 0));
+			p *= L2;
+			cout << "L2 -> " << p << endl;
+			lorentzTransform L3;
+			L3.set(p);
+			p *= L3;
+			cout << "L3 -> " << p << endl;
 
-      matrix<double> X(4, 4);
-      X = L3 * (L2 * L1);
-      lorentzTransform L(X);
-      p = fourVec(2, threeVec(0.5, 0.75, 1));
-      p *= L;
-      cout << "L -> " << p << endl;
-	  }
+			matrix<double> X(4, 4);
+			X = L3 * (L2 * L1);
+			lorentzTransform L(X);
+			p = fourVec(2, threeVec(0.5, 0.75, 1));
+			p *= L;
+			cout << "L -> " << p << endl;
+		}
 
-	  {
-		  TLorentzVector p(0.5, 0.75, 1, 2);
-		  TVector3       n = TVector3(0, 0, 1).Cross(p.Vect());
-      TRotation R1;
-      R1.RotateZ(-n.Phi());
-      R1.RotateY(piHalf - n.Theta());
-      R1.RotateZ(piHalf);
-      n *= R1;
-      p *= R1;
-      cout << "R1 -> " << n << "    " << p << endl;
-      // rotate about yHfAxis so that daughter momentum is along z-axis
-      TRotation R2;
-      R2.RotateY(-signum(p.X()) * p.Theta());
-      p *= R2;
-      cout << "R2 -> " << p << endl;
-      // boost into daughter RF
-      TLorentzRotation L3(-p.BoostVector());
-      cout << "L3 -> " << L3 * p << endl;
+		{
+			TLorentzVector p(0.5, 0.75, 1, 2);
+			TVector3       n = TVector3(0, 0, 1).Cross(p.Vect());
+			TRotation R1;
+			R1.RotateZ(-n.Phi());
+			R1.RotateY(piHalf - n.Theta());
+			R1.RotateZ(piHalf);
+			n *= R1;
+			p *= R1;
+			cout << "R1 -> " << n << "    " << p << endl;
+			// rotate about yHfAxis so that daughter momentum is along z-axis
+			TRotation R2;
+			R2.RotateY(-signum(p.X()) * p.Theta());
+			p *= R2;
+			cout << "R2 -> " << p << endl;
+			// boost into daughter RF
+			TLorentzRotation L3(-p.BoostVector());
+			cout << "L3 -> " << L3 * p << endl;
 
-      R1.Transform(R2);
-      TLorentzRotation L(R1);
-      L.Boost(-p.BoostVector());
-      p = TLorentzVector(0.5, 0.75, 1, 2);
-      p *= L;
-      cout << "L -> " << p << endl;
-    }
+			R1.Transform(R2);
+			TLorentzRotation L(R1);
+			L.Boost(-p.BoostVector());
+			p = TLorentzVector(0.5, 0.75, 1, 2);
+			p *= L;
+			cout << "L -> " << p << endl;
+		}
 
-    {
-      particlePtr X = createParticle("X");
-      TLorentzVector p(0.5, 0.75, 1, 2);
-      X->setLzVec(p);
-      isobarHelicityAmplitude amp;
-      TLorentzRotation L = amp.hfTransform(X->lzVec());
-      cout << "!!! L -> " << L * p << endl;
-    }
-  }
+		{
+			particlePtr X = createParticle("X");
+			TLorentzVector p(0.5, 0.75, 1, 2);
+			X->setLzVec(p);
+			isobarHelicityAmplitude amp;
+			TLorentzRotation L = amp.hfTransform(X->lzVec());
+			cout << "!!! L -> " << L * p << endl;
+		}
+	}
 
-  if (0) {
-    TLorentzVector beam(1,   0.5,  180, 182);
-    TLorentzVector X   (0.5, 0.75, 1,   3);
-    isobarHelicityAmplitude amp;
-    TLorentzRotation L = amp.gjTransform(beam, X);
-    cout << "!!! L -> " << L * X << endl;
-  }
+	if (0) {
+		TLorentzVector beam(1,   0.5,  180, 182);
+		TLorentzVector X   (0.5, 0.75, 1,   3);
+		isobarHelicityAmplitude amp;
+		TLorentzRotation L = amp.gjTransform(beam, X);
+		cout << "!!! L -> " << L * X << endl;
+	}
 
-  if (0) {
-    // define final state particles
-    particlePtr pi0 = createParticle("pi-", 0);
-    particlePtr pi1 = createParticle("pi+", 0);
-    particlePtr pi2 = createParticle("pi-", 1);
-    particlePtr pi3 = createParticle("pi+", 1);
-    particlePtr pi4 = createParticle("pi-", 2);
-    // define isobars
-    particlePtr sigma = createParticle("sigma");
-    particlePtr a1    = createParticle("a1(1269)+");
-    particlePtr f1    = createParticle("f1(1285)");
-    // define X-system
-    //                                   2I  G  2J  P   C  2M
-    particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2);
-    // define production vertex
-    particlePtr              beam     = createParticle("pi-");
-    particlePtr              target   = createParticle("p");
-    diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
-    // define vertices
-    massDependencePtr    massDep = createRelativisticBreitWigner();
-    isobarDecayVertexPtr vert0   = createIsobarDecayVertex(X,     pi4, f1,    2, 2);
-    isobarDecayVertexPtr vert1   = createIsobarDecayVertex(f1,    pi2, a1,    2, 2, massDep);
-    isobarDecayVertexPtr vert2   = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0, massDep);
-    isobarDecayVertexPtr vert3   = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0, massDep);
-    // set Lorentz vectors
-    beam->setLzVec(TLorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058));
-    pi0->setLzVec(TLorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947));
-    pi1->setLzVec(TLorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973));
-    pi2->setLzVec(TLorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114));
-    pi3->setLzVec(TLorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277));
-    pi4->setLzVec(TLorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995));
-    // build graph
-    vector<isobarDecayVertexPtr> decayVertices;
-    decayVertices.push_back(vert3);
-    decayVertices.push_back(vert1);
-    decayVertices.push_back(vert2);
-    decayVertices.push_back(vert0);
-    vector<particlePtr> fsParticles;
-    fsParticles.push_back(pi0);
-    fsParticles.push_back(pi1);
-    fsParticles.push_back(pi2);
-    fsParticles.push_back(pi3);
-    fsParticles.push_back(pi4);
-    isobarDecayTopologyPtr topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
-    // topo.checkTopology();
-    // topo.checkConsistency();
-    isobarHelicityAmplitude amp(topo);
-    cout << topo;
-    complex<double>         decayAmp = amp.amplitude();
-    cout << "!!!< decay amplitude = " << decayAmp << endl;
+	if (0) {
+		// define final state particles
+		particlePtr pi0 = createParticle("pi-", 0);
+		particlePtr pi1 = createParticle("pi+", 0);
+		particlePtr pi2 = createParticle("pi-", 1);
+		particlePtr pi3 = createParticle("pi+", 1);
+		particlePtr pi4 = createParticle("pi-", 2);
+		// define isobars
+		particlePtr sigma = createParticle("sigma");
+		particlePtr a1    = createParticle("a1(1269)+");
+		particlePtr f1    = createParticle("f1(1285)");
+		// define X-system
+		//                                   2I  G  2J  P   C  2M
+		particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2);
+		// define production vertex
+		particlePtr              beam     = createParticle("pi-");
+		particlePtr              target   = createParticle("p");
+		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
+		// define vertices
+		massDependencePtr    massDep = createRelativisticBreitWigner();
+		isobarDecayVertexPtr vert0   = createIsobarDecayVertex(X,     pi4, f1,    2, 2);
+		isobarDecayVertexPtr vert1   = createIsobarDecayVertex(f1,    pi2, a1,    2, 2, massDep);
+		isobarDecayVertexPtr vert2   = createIsobarDecayVertex(a1,    pi3, sigma, 2, 0, massDep);
+		isobarDecayVertexPtr vert3   = createIsobarDecayVertex(sigma, pi0, pi1,   0, 0, massDep);
+		// set Lorentz vectors
+		beam->setLzVec(TLorentzVector(0.104385398, 0.0132061851, 189.987978, 189.988058));
+		pi0->setLzVec(TLorentzVector(-0.0761465106, -0.116917817, 5.89514709, 5.89844947));
+		pi1->setLzVec(TLorentzVector(-0.0244305532, -0.106013023, 30.6551865, 30.6556973));
+		pi2->setLzVec(TLorentzVector(0.000287952441, 0.10263611, 3.95724077, 3.96103114));
+		pi3->setLzVec(TLorentzVector(0.0299586212, 0.176440177, 115.703054, 115.703277));
+		pi4->setLzVec(TLorentzVector(0.176323963, -0.0985753246, 30.9972271, 30.9981995));
+		// build graph
+		vector<isobarDecayVertexPtr> decayVertices;
+		decayVertices.push_back(vert3);
+		decayVertices.push_back(vert1);
+		decayVertices.push_back(vert2);
+		decayVertices.push_back(vert0);
+		vector<particlePtr> fsParticles;
+		fsParticles.push_back(pi0);
+		fsParticles.push_back(pi1);
+		fsParticles.push_back(pi2);
+		fsParticles.push_back(pi3);
+		fsParticles.push_back(pi4);
+		isobarDecayTopologyPtr topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
+		// topo.checkTopology();
+		// topo.checkConsistency();
+		isobarHelicityAmplitude amp(topo);
+		cout << topo;
+		complex<double>         decayAmp = amp.amplitude();
+		cout << "!!!< decay amplitude = " << decayAmp << endl;
     
-    if (1) {  // compare to PWA2000
-      PDGtable.initialize();
-      event    ev;
-      ifstream eventData("testEvents.evt");
-      ev.setIOVersion(1);
-      if (not (eventData >> ev).eof()) {
-	      keyfile key;
-	      key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
-	      complex<double> pwa2000amp;
-	      key.run(ev, pwa2000amp, true);
-	      key.rewind();
-	      key.close();
-	      cout << "!!! PWA2000 amplitude = " << pwa2000amp << endl;
-	      cout << "!!! my amplitude = " << decayAmp << " vs. PWA2000 amplitude = " << pwa2000amp << ", "
-	           << "delta = " << decayAmp - pwa2000amp << endl;
-      }
-    }
-  }
+		if (1) {  // compare to PWA2000
+			PDGtable.initialize();
+			event    ev;
+			ifstream eventData("testEvents.evt");
+			ev.setIOVersion(1);
+			if (not (eventData >> ev).eof()) {
+				keyfile key;
+				key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
+				complex<double> pwa2000amp;
+				key.run(ev, pwa2000amp, true);
+				key.rewind();
+				key.close();
+				cout << "!!! PWA2000 amplitude = " << pwa2000amp << endl;
+				cout << "!!! my amplitude = " << decayAmp << " vs. PWA2000 amplitude = " << pwa2000amp << ", "
+				     << "delta = " << decayAmp - pwa2000amp << endl;
+			}
+		}
+	}
 
-  if (1) {
-    // const long int maxNmbEvents   = 1000000;
-    const long int maxNmbEvents   = 2;
+	if (1) {
+		const long int maxNmbEvents   = 1000000;
+		//const long int maxNmbEvents   = 2;
 
-    // const string   newKeyFileName = "test.key";
-    // const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
-    // const string   rootInFileName = "testEvents.root";
-    // const string   evtInFileName  = "testTree.evt";
-    // const string   evtInFileName  = "testTree.evt.1";
-    // const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-0-+0+f0980_00_pi-.key";
-    // const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-0-+0+f0980_00_pi-.key";
-    // const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+rho770_01_pi-.key";
-    // const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+rho770_01_pi-.key";
-    // const string   newKeyFileName = "1-1++0+f21270_12_pi-.key.new";
-    // const string   oldKeyFileName = "1-1++0+f21270_12_pi-.key";
-    // const string   rootInFileName = "testEvents.3pic.root";
-    // const string   evtInFileName  = "testEvents.3pic.evt";
-    // const string   rootInFileName = "500.540.ps.root";
-    // const string   evtInFileName  = "500.540.ps.evt";
-    // const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
-    // const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
-    // const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
-    // const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
-    // const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.root";
-    // const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/2340.2380/2340.2380.evt";
-    const string   newKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/new/rho_sigma_set/1+1--1+rho770_01_sigma.key";
-    const string   oldKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/rho_sigma_set/1+1--1+rho770_01_sigma.key";
-    // const string   oldKeyFileName = "1+1--1+rho770_01_sigma.key";
-    const string   rootInFileName = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.root";
-    const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
-    // const string   evtInFileName  = "1000.1060.evt";
+		// const string   newKeyFileName = "test.key";
+		// const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
+		// const string   rootInFileName = "testEvents.root";
+		// const string   evtInFileName  = "testTree.evt";
+		// const string   evtInFileName  = "testTree.evt.1";
+		// const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-0-+0+f0980_00_pi-.key";
+		// const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-0-+0+f0980_00_pi-.key";
+		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+rho770_01_pi-.key";
+		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+rho770_01_pi-.key";
+		// const string   newKeyFileName = "1-1++0+f21270_12_pi-.key.new";
+		// const string   oldKeyFileName = "1-1++0+f21270_12_pi-.key";
+		// const string   rootInFileName = "testEvents.3pic.root";
+		// const string   evtInFileName  = "testEvents.3pic.evt";
+		// const string   rootInFileName = "500.540.ps.root";
+		// const string   evtInFileName  = "500.540.ps.evt";
+		const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+		const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
+		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
+		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
+		const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
+		const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
+		// const string   newKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/new/rho_sigma_set/1+1--1+rho770_01_sigma.key";
+		// const string   oldKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/rho_sigma_set/1+1--1+rho770_01_sigma.key";
+		// // const string   oldKeyFileName = "1+1--1+rho770_01_sigma.key";
+		// const string   rootInFileName = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.root";
+		// const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
+		// const string   evtInFileName  = "1000.1060.evt";
 
-    keyFileParser&         parser = keyFileParser::instance();
-    isobarDecayTopologyPtr topo;
-    if (parser.parse(newKeyFileName) and parser.constructDecayTopology(topo)) {
-	    topo->checkTopology();
-      topo->checkConsistency();
-      topo->writeGraphViz("decay.dot");
-      isobarHelicityAmplitude amp(topo);
-      parser.setAmplitudeOptions(amp);
-      // amp.enableReflectivityBasis(false);
-      // amp.enableBoseSymmetrization(false);
-      printInfo << amp;
-      parser.writeKeyFile("testWrite.key", topo);  // test key file creation
+		keyFileParser&         parser = keyFileParser::instance();
+		isobarDecayTopologyPtr topo;
+		if (parser.parse(newKeyFileName) and parser.constructDecayTopology(topo)) {
+			topo->checkTopology();
+			topo->checkConsistency();
+			topo->writeGraphViz("decay.dot");
+			isobarHelicityAmplitude amp(topo);
+			parser.setAmplitudeOptions(amp);
+			// amp.enableReflectivityBasis (false);
+			// amp.enableBoseSymmetrization(false);
+			printInfo << amp;
+			parser.writeKeyFile("testWrite.key", topo);  // test key file creation
 
-      // read data from tree
-      const string&            inTreeName                = "rootPwaEvtTree";
-      const string&            prodKinParticlesLeafName  = "prodKinParticles";
-      const string&            prodKinMomentaLeafName    = "prodKinMomenta";
-      const string&            decayKinParticlesLeafName = "decayKinParticles";
-      const string&            decayKinMomentaLeafName   = "decayKinMomenta";
-      vector<complex<double> > myAmps;
-      // open input file
-      printInfo << "opening input file(s) '" << rootInFileName << "'" << endl;
-      TChain chain(inTreeName.c_str());
-      if (chain.Add(rootInFileName.c_str()) < 1) {
-	      printWarn << "no events in input file(s) '" << rootInFileName << "'" << endl;
-	      return false;
-      }
-      const long int nmbEventsChain = chain.GetEntries();
-      chain.GetListOfFiles()->ls();
+			// read data from tree
+			const string&            inTreeName                = "rootPwaEvtTree";
+			const string&            prodKinParticlesLeafName  = "prodKinParticles";
+			const string&            prodKinMomentaLeafName    = "prodKinMomenta";
+			const string&            decayKinParticlesLeafName = "decayKinParticles";
+			const string&            decayKinMomentaLeafName   = "decayKinMomenta";
+			vector<complex<double> > myAmps;
+			// open input file
+			printInfo << "opening input file(s) '" << rootInFileName << "'" << endl;
+			TChain chain(inTreeName.c_str());
+			if (chain.Add(rootInFileName.c_str()) < 1) {
+				printWarn << "no events in input file(s) '" << rootInFileName << "'" << endl;
+				return false;
+			}
+			const long int nmbEventsChain = chain.GetEntries();
+			chain.GetListOfFiles()->ls();
 
-      // create branch pointers and leaf variables
-      TBranch*      prodKinParticlesBr  = 0;
-      TBranch*      prodKinMomentaBr    = 0;
-      TBranch*      decayKinParticlesBr = 0;
-      TBranch*      decayKinMomentaBr   = 0;
-      TClonesArray* prodKinParticles    = 0;
-      TClonesArray* prodKinMomenta      = 0;
-      TClonesArray* decayKinParticles   = 0;
-      TClonesArray* decayKinMomenta     = 0;
+			// create branch pointers and leaf variables
+			TBranch*      prodKinParticlesBr  = 0;
+			TBranch*      prodKinMomentaBr    = 0;
+			TBranch*      decayKinParticlesBr = 0;
+			TBranch*      decayKinMomentaBr   = 0;
+			TClonesArray* prodKinParticles    = 0;
+			TClonesArray* prodKinMomenta      = 0;
+			TClonesArray* decayKinParticles   = 0;
+			TClonesArray* decayKinMomenta     = 0;
   
-      // connect leaf variables to tree branches
-      chain.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
-      chain.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
-      chain.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
-      chain.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
+			// connect leaf variables to tree branches
+			chain.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
+			chain.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
+			chain.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
+			chain.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
 
-      // loop over events
-      const long int nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
-                                  : nmbEventsChain);
-      timer.Reset();
-      timer.Start();
-      for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-	      progressIndicator(eventIndex, nmbEvents);
+			// loop over events
+			const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
+			                              : nmbEventsChain);
+			progress_display progressIndicator(nmbEvents);
+			timer.Reset();
+			timer.Start();
+			for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+				++progressIndicator;
     
-	      if (chain.LoadTree(eventIndex) < 0)
-		      break;
-	      // read only required branches
-	      prodKinParticlesBr->GetEntry (eventIndex);
-	      prodKinMomentaBr->GetEntry   (eventIndex);
-	      decayKinParticlesBr->GetEntry(eventIndex);
-	      decayKinMomentaBr->GetEntry  (eventIndex);
+				if (chain.LoadTree(eventIndex) < 0)
+					break;
+				// read only required branches
+				prodKinParticlesBr->GetEntry (eventIndex);
+				prodKinMomentaBr->GetEntry   (eventIndex);
+				decayKinParticlesBr->GetEntry(eventIndex);
+				decayKinMomentaBr->GetEntry  (eventIndex);
 	      
-	      if (   not prodKinParticles  or not prodKinMomenta
-	          or not decayKinParticles or not decayKinMomenta) {
-		      printWarn << "at least one data array is null pointer: "
-		                << "prodKinParticles = "  << prodKinParticles  << ", "
-		                << "prodKinMomenta = "    << prodKinMomenta    << ", "
-		                << "decayKinParticles = " << decayKinParticles << ", "
-		                << "decayKinMomenta = "   << decayKinMomenta   << ". "
-		                << "skipping event." << endl;
-		      continue;
-	      }
+				if (   not prodKinParticles  or not prodKinMomenta
+				       or not decayKinParticles or not decayKinMomenta) {
+					printWarn << "at least one data array is null pointer: "
+					          << "prodKinParticles = "  << prodKinParticles  << ", "
+					          << "prodKinMomenta = "    << prodKinMomenta    << ", "
+					          << "decayKinParticles = " << decayKinParticles << ", "
+					          << "decayKinMomenta = "   << decayKinMomenta   << ". "
+					          << "skipping event." << endl;
+					continue;
+				}
 	      
-	      if (topo->readData(*prodKinParticles,  *prodKinMomenta,
-	                         *decayKinParticles, *decayKinMomenta)) {
-		      // topo->printProdKinParticles(cout);
-		      // topo->printDecayKinParticles(cout);
-		      // complex<double> A = amp();
-		      // complex<double> B = amp();
-		      // topo->revertMomenta();
-		      // complex<double> C = amp();
-		      // cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
-		      myAmps.push_back(amp());
-		      if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
-			      printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
-		      topo->productionVertex()->productionAmp();
-	      }
-      } // event loop
+				if (topo->readData(*prodKinParticles,  *prodKinMomenta,
+				                   *decayKinParticles, *decayKinMomenta)) {
+					// topo->printProdKinParticles(cout);
+					// topo->printDecayKinParticles(cout);
+					// complex<double> A = amp();
+					// complex<double> B = amp();
+					// topo->revertMomenta();
+					// complex<double> C = amp();
+					// cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
+					myAmps.push_back(amp());
+					if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
+						printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
+					topo->productionVertex()->productionAmp();
+				}
+			} // event loop
       
-      timer.Stop();
-      printInfo << "successfully read " << myAmps.size() << " events from file(s) "
-                << "'" << rootInFileName << "' and calculated amplitudes" << endl;
-      cout << "needed ";
-      timer.Print();
-
-      exit(1);
+			timer.Stop();
+			printInfo << "successfully read " << myAmps.size() << " events from file(s) "
+			          << "'" << rootInFileName << "' and calculated amplitudes" << endl;
+			cout << "needed ";
+			timer.Print();
       
-      vector<complex<double> > pwa2kAmps;
-      if (1) {  // compare to PWA2000
-	      PDGtable.initialize();
-	      ifstream     eventData(evtInFileName.c_str());
-	      keyfile      key;
-	      event        ev;
-	      key.open(oldKeyFileName);
-	      ev.setIOVersion(1);
-	      timer.Reset();
-	      timer.Start();
-	      while (not (eventData >> ev).eof()) {
-		      complex<double> pwa2kamp;
-		      key.run(ev, pwa2kamp, true);
-		      pwa2kAmps.push_back(pwa2kamp);
-		      key.rewind();
-	      }
-	      timer.Stop();
-	      printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
-	                << "'" << evtInFileName << "' and calculated amplitudes" << endl;
-	      cout << "needed ";
-	      timer.Print();
-	      printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << " vs. pwa2kAmps[0] = "
-	                << maxPrecisionDouble(pwa2kAmps[0]) << ", abs. delta = "
-	                << maxPrecisionDouble(myAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
-	                << "(" << maxPrecision((myAmps[0].real() - pwa2kAmps[0].real()) / myAmps[0].real())
-	                << ", " << maxPrecision((myAmps[0].imag() - pwa2kAmps[0].imag()) / myAmps[0].imag())
-	                << ")" << endl;
+			vector<complex<double> > pwa2kAmps;
+			if (1) {  // compare to PWA2000
+				PDGtable.initialize();
+				ifstream     eventData(evtInFileName.c_str());
+				keyfile      key;
+				event        ev;
+				key.open(oldKeyFileName);
+				ev.setIOVersion(1);
+				timer.Reset();
+				timer.Start();
+				while (not (eventData >> ev).eof()) {
+					complex<double> pwa2kamp;
+					key.run(ev, pwa2kamp, true);
+					pwa2kAmps.push_back(pwa2kamp);
+					key.rewind();
+				}
+				timer.Stop();
+				printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
+				          << "'" << evtInFileName << "' and calculated amplitudes" << endl;
+				cout << "needed ";
+				timer.Print();
+				printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << " vs. pwa2kAmps[0] = "
+				          << maxPrecisionDouble(pwa2kAmps[0]) << ", abs. delta = "
+				          << maxPrecisionDouble(myAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
+				          << "(" << maxPrecision((myAmps[0].real() - pwa2kAmps[0].real()) / myAmps[0].real())
+				          << ", " << maxPrecision((myAmps[0].imag() - pwa2kAmps[0].imag()) / myAmps[0].imag())
+				          << ")" << endl;
 	      
-	      if (1) {
-		      const string outFileName = "testDiff.root";
-		      printInfo << "writing comparison plots to " << outFileName << endl;
-		      TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
-		      TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-		      TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-		      TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-		      TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-		      TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
-		      TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
-		      TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-		      TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-		      for (unsigned int i = 0; i < myAmps.size(); ++i) {
-			      hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
-			      hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
-			      hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
-			      hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
-			      // hDiffReal->Fill((pwa2kAmps[i].real() - myAmps[i].real()) / pwa2kAmps[i].real());
-			      // hDiffImag->Fill((pwa2kAmps[i].imag() - myAmps[i].imag()) / pwa2kAmps[i].imag());
-			      hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
-			      hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
-			      hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
-			      hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
-		      }
-		      f->Write();
-		      f->Close();
-	      }
-      } // compare to PWA2000
-    }  // parsing of key file successful
+				if (1) {
+					const string outFileName = "testDiff.root";
+					printInfo << "writing comparison plots to " << outFileName << endl;
+					TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
+					TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+					TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
+					TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+					TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
+					TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
+					TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
+					TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+					TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
+					for (unsigned int i = 0; i < myAmps.size(); ++i) {
+						hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
+						hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
+						hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
+						hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
+						// hDiffReal->Fill((pwa2kAmps[i].real() - myAmps[i].real()) / pwa2kAmps[i].real());
+						// hDiffImag->Fill((pwa2kAmps[i].imag() - myAmps[i].imag()) / pwa2kAmps[i].imag());
+						hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
+						hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
+						hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
+						hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
+					}
+					f->Write();
+					f->Close();
+				}
+			} // compare to PWA2000
+		}  // parsing of key file successful
     
-  }
+	}
 }

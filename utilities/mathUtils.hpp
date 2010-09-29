@@ -43,6 +43,8 @@
 #include <algorithm>
 #include <complex>
 
+#include <boost/math/tools/promotion.hpp>
+
 #include "pputil.h"
 #include "utilities.h"
 
@@ -50,23 +52,27 @@
 namespace rpwa {
 
 
-	// redefine some standard functions to make switching of implementation easier
-	template<typename T> inline T abs (const T& x) { return std::abs (x); }
-	template<typename T> inline T sqrt(const T& x) { return std::sqrt(x); }
-	template<typename T> inline T exp (const T& x) { return std::exp (x); }
-	template<typename T1, typename T2> inline T1 pow(const T1& base,
-	                                                 const T2& exponent)
+	//////////////////////////////////////////////////////////////////////////////
+	// define aliases for some math functions so implementations may be switched easliy
+	template<typename T> inline T abs(const T& x) { return std::abs (x); }
+	template<typename T>
+	inline typename boost::math::tools::promote_args<T>::type sqrt(const T& x) { return std::sqrt(x); }
+	template<typename T>
+	inline typename boost::math::tools::promote_args<T>::type exp (const T& x) { return std::exp (x); }
+	template<typename T1, typename T2>
+	inline typename boost::math::tools::promote_args<T1, T2>::type pow(const T1& base,
+	                                                                   const T2& exponent)
 	{ return std::pow(base, exponent); }
 
 
-  // some wrappers for libpp functions
-  // !NOTE! all angular momenta and spin projections are in units of hbar/2
+	//////////////////////////////////////////////////////////////////////////////
+	// various small helper functions
   inline
   double
   normFactor(const int  L,
              const bool debug = false)  ///< standard normalization factor in amplitudes
   {
-	  const double norm = std::sqrt(L + 1);
+	  const double norm = rpwa::sqrt(L + 1);
     if (debug)
       printInfo << "normalization factor sqrt(2 * L = " << 0.5 * L << " + 1) = "
                 << maxPrecision(norm) << std::endl;
@@ -85,6 +91,9 @@ namespace rpwa {
 	}
 
 
+	//////////////////////////////////////////////////////////////////////////////
+  // some wrappers for libpp functions
+  // !NOTE! all angular momenta and spin projections are in units of hbar/2
   inline
   std::complex<double>
   DFuncConj(const int    j,
@@ -119,13 +128,13 @@ namespace rpwa {
                 << "returning 0." << std::endl;
       return 0;
     }
-    if (abs(refl) != 1) {
+    if (rpwa::abs(refl) != 1) {
       printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
                 << "returning 0." << std::endl;
       return 0;
     }
-    const double               preFactor  = (m == 0 ? 0.5 : 1 / sqrt(2));
-    const double               reflFactor = (double)refl * (double)P * pow(-1, 0.5 * (j - m));
+    const double               preFactor  = (m == 0 ? 0.5 : 1 / rpwa::sqrt(2));
+    const double               reflFactor = (double)refl * (double)P * rpwa::pow(-1, 0.5 * (j - m));
     const std::complex<double> DFunc     
       =  preFactor * (               DFuncConj(j,  m, n, phi, theta)
                       - reflFactor * DFuncConj(j, -m, n, phi, theta));
@@ -181,7 +190,8 @@ namespace rpwa {
               const double q,
               const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
   {
-    const double Gamma  = Gamma0 * (m0 / m) * (q / q0) * (pow(F(L, q), 2) / pow(F(L, q0), 2));
+	  const double Gamma  =   Gamma0 * (m0 / m) * (q / q0)
+		                      * (rpwa::pow(F(L, q), 2) / rpwa::pow(F(L, q0), 2));
     return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
   }
   

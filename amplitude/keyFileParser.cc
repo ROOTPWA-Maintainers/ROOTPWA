@@ -151,7 +151,7 @@ keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 
 
 void
-keyFileParser::setAmplitudeOptions(isobarHelicityAmplitude& amp)
+keyFileParser::setAmplitudeOptions(isobarAmplitude& amp)
 {
 	if (_debug)
 		printInfo << "setting amplitude options: "

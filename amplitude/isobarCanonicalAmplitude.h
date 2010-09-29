@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      general isobar decay amplitude in helicity formalism
+//      general isobar decay amplitude in caninical formalism
 //
 //
 // Author List:
@@ -35,8 +35,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef ISOBARHELICITYAMPLITUDE_H
-#define ISOBARHELICITYAMPLITUDE_H
+#ifndef ISOBARCANONICALAMPLITUDE_H
+#define ISOBARCANONICALAMPLITUDE_H
 
 
 #include <complex>
@@ -50,16 +50,16 @@
 
 namespace rpwa {  
 
-	class isobarHelicityAmplitude : public isobarAmplitude {
+	class isobarCanonicalAmplitude : public isobarAmplitude {
   
 	public:
       
-		isobarHelicityAmplitude();
-		isobarHelicityAmplitude(const isobarDecayTopologyPtr& decay);
-		virtual ~isobarHelicityAmplitude();
+		isobarCanonicalAmplitude();
+		isobarCanonicalAmplitude(const isobarDecayTopologyPtr& decay);
+		virtual ~isobarCanonicalAmplitude();
 
 		static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
-
+    
 		std::ostream& print(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
     
 		static bool debug() { return _debug; }                             ///< returns debug flag
@@ -82,4 +82,4 @@ namespace rpwa {
 } // namespace rpwa
 
 
-#endif  // ISOBARHELICITYAMPLITUDE_H
+#endif  // ISOBARCANONICALAMPLITUDE_H
