@@ -43,8 +43,6 @@
 #include <vector>
 #include <complex>
 
-#include <boost/shared_ptr.hpp>
-
 #include "TLorentzRotation.h"
 
 #include "particle.h"

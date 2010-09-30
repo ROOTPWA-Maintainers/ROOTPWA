@@ -194,16 +194,3 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		printInfo << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
 	return amp;
 }
-
-
-ostream&
-isobarCanonicalAmplitude::print(ostream& out) const
-{
-	out << "isobar decay amplitude (canonical formalism): "
-	    << *_decay
-	    << "reflectivity basis : "            << ((_useReflectivityBasis) ? "en" : "dis") << "abled" << endl
-	    << "Bose-symmetrization: "            << ((_boseSymmetrize)       ? "en" : "dis") << "abled" << endl
-	    << "space inversion of FS momenta: "  << ((_doSpaceInversion)     ? "en" : "dis") << "abled" << endl
-	    << "reflection through prod. plane: " << ((_doReflection)         ? "en" : "dis") << "abled" << endl;
-	return out;
-}

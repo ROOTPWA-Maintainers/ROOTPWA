@@ -58,7 +58,7 @@ namespace rpwa {
 
 		static TLorentzRotation hfTransform(const TLorentzVector& daughterLv);  ///< constructs Lorentz-transformation to helicity RF of daughter particle
 
-		std::ostream& print(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
+		std::string name() const { return "isobarHelicityAmplitude"; }
     
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

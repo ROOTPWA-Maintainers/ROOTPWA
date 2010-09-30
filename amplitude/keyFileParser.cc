@@ -52,11 +52,10 @@ using namespace libconfig;
 using namespace rpwa;
 
 
-keyFileParser keyFileParser::_instance;
-Config        keyFileParser::_key;
-bool          keyFileParser::_boseSymmetrize       = true;
-bool          keyFileParser::_useReflectivityBasis = true;
-bool          keyFileParser::_debug                = false;
+keyFileParser  keyFileParser::_instance;
+Config         keyFileParser::_key;
+const Setting* keyFileParser::_amplitudeKey = 0;
+bool           keyFileParser::_debug        = false;
 
 
 bool
@@ -74,6 +73,9 @@ keyFileParser::parse(const string& keyFileName)
 		          << ": " << parseEx.getError() << ". cannot construct decay topology." << endl;
 		return false;
 	}
+	// find amplitude group
+	const Setting& rootKey = _key.getRoot();
+	_amplitudeKey = findGroup(rootKey, "amplitude", false);
 	return true;
 }
 
@@ -81,8 +83,6 @@ keyFileParser::parse(const string& keyFileName)
 bool
 keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 {
-	_boseSymmetrize       = true;
-	_useReflectivityBasis = true;
 	if (topo)
 		topo.reset();
 	topo = isobarDecayTopologyPtr();  // null pointer
@@ -95,17 +95,6 @@ keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 	if (not waveKey) {
 		printWarn << "cannot find 'wave' group. cannot construct decay topology." << endl;
 		return false;
-	}
-
-	// find wave options group
-	const Setting* waveOptionsKey = findGroup(*waveKey, "options", false);
-	if (waveOptionsKey) {
-		if (waveOptionsKey->lookupValue("boseSymmetrize", _boseSymmetrize) and _debug)
-			printInfo << "setting wave option 'boseSymmetrize' to "
-			          << ((_boseSymmetrize) ? "true" : "false") << endl;
-		if (waveOptionsKey->lookupValue("useReflectivityBasis", _useReflectivityBasis) and _debug)
-			printInfo << "setting wave option 'useReflectivityBasis' to "
-			          << ((_useReflectivityBasis) ? "true" : "false") << endl;
 	}
 
 	// find  X quantum numbers group
@@ -153,64 +142,126 @@ keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 
 
 bool
-keyFileParser::constructAmplitude(isobarAmplitudePtr&     amp,
-                                  isobarDecayTopologyPtr& topo)
+keyFileParser::constructAmplitude(isobarAmplitudePtr& amplitude)
 {
-	// use topology if it exists, if not create new one
-	if (not topo and not constructDecayTopology(topo)) {
+	isobarDecayTopologyPtr topo;
+	if (not constructDecayTopology(topo)) {
 		printWarn << "problems constructing decay topology. cannot construct decay amplitude." << endl;
+		return false;
+	}
+	return constructAmplitude(amplitude, topo);
+}
+
+
+isobarAmplitudePtr
+keyFileParser::mapAmplitudeType(const string&                 formalismType,
+                                const isobarDecayTopologyPtr& topo)
+{
+	isobarAmplitudePtr amplitude;
+	if (formalismType == "helicity")
+		amplitude = createIsobarHelicityAmplitude(topo);
+	else if (formalismType == "canonical")
+		amplitude = createIsobarCanonicalAmplitude(topo);
+	else {
+		printWarn << "unknown amplitude formalism '" << formalismType << "'. "
+		          << "using helicity formalism." << endl;
+		amplitude = createIsobarHelicityAmplitude(topo);
+	}
+	return amplitude;
+}
+
+
+bool
+keyFileParser::setAmplitude(Setting&                  amplitudeKey,
+                            const isobarAmplitudePtr& amplitude)
+{
+	string       formalism     = "";
+	const string amplitudeName = amplitude->name();
+	if (amplitudeName == "isobarCanonicalAmplitude") {
+		formalism = "canonical";
+	} else if (amplitudeName != "isobarHelicityAmplitude") {
+		printWarn << "unknown amplitude type '" << amplitudeName << "'" << endl;
+		return false;
+	}
+	if (formalism != "") {
+		if (_debug)
+			printInfo << "setting 'formalism' key for '" << amplitudeName << "' to "
+			          << "'" << formalism << "'" << endl;
+		amplitudeKey.add("formalism", Setting::TypeString) = formalism;
+	}
+	if (not amplitude->boseSymmetrization())
+		amplitudeKey.add("boseSymmetrize", Setting::TypeBoolean) = amplitude->boseSymmetrization();
+	if (not amplitude->reflectivityBasis())
+		amplitudeKey.add("useReflectivityBasis", Setting::TypeBoolean) = amplitude->reflectivityBasis();
+	return true;
+}
+
+
+bool
+keyFileParser::constructAmplitude(isobarAmplitudePtr&           amplitude,
+                                  const isobarDecayTopologyPtr& topo)
+{
+	if (not topo) {
+		printWarn << "null pointer to decay topology. cannot construct decay amplitude." << endl;
 		return false;
 	}
 	if (not topo->checkTopology() or not topo->checkConsistency()) {
 		printWarn << "decay topology has issues. cannot construct decay amplitude." << endl;
 		return false;
 	}
-	if (amp)
-		amp.reset();
-	amp = createIsobarHelicityAmplitude(topo);
-	if (not amp) {
+	if (amplitude)
+		amplitude.reset();
+	// get amplitude parameters from key file
+	// default values
+	string formalism            = "helicity";
+	bool   boseSymmetrize       = true;
+	bool   useReflectivityBasis = true;
+	if (_amplitudeKey) {
+		if (_amplitudeKey->lookupValue("formalism", formalism) and _debug)
+			printInfo << "setting amplitude formalism to '" << formalism << "'" << endl;
+		if (_amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
+			printInfo << "setting amplitude option 'boseSymmetrize' to "
+			          << ((boseSymmetrize) ? "true" : "false") << endl;
+		if (_amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
+			printInfo << "setting amplitude option 'useReflectivityBasis' to "
+			          << ((useReflectivityBasis) ? "true" : "false") << endl;
+	}
+	// construct amplitude
+	amplitude = mapAmplitudeType(formalism, topo);
+	if (_debug)
+		printInfo << "constructed amplitude '"<< amplitude->name() << "': "
+		          << ((boseSymmetrize      ) ? "en" : "dis") << "abled Bose symmetrization, "
+		          << ((useReflectivityBasis) ? "en" : "dis") << "abled reflectivity basis" << endl;
+	if (not amplitude) {
 		printWarn << "problems constructing decay amplitude." << endl;
 		return false;
 	}
-	if (_debug)
-		printInfo << "setting amplitude options: "
-		          << ((_boseSymmetrize      ) ? "en" : "dis") << "abling Bose symmetrization, "
-		          << ((_useReflectivityBasis) ? "en" : "dis") << "abling reflectivity basis" << endl;
-	amp->enableBoseSymmetrization(_boseSymmetrize      );
-	amp->enableReflectivityBasis (_useReflectivityBasis);
+	amplitude->enableBoseSymmetrization(boseSymmetrize      );
+	amplitude->enableReflectivityBasis (useReflectivityBasis);
 	return true;
 }
 
 
 bool
-keyFileParser::writeKeyFile(const string&                 keyFileName,
-                            const isobarDecayTopologyPtr& topo,
-                            const bool                    writeProdVert,
-                            const bool)
+keyFileParser::writeKeyFile(const string&             keyFileName,
+                            const isobarAmplitudePtr& amplitude,
+                            const bool                writeProdVert)
 {
-	printInfo << "writing key file '" << keyFileName << "': " << *topo;
+	if (not amplitude) {
+		printWarn << "null pointer to decay amplitude. cannot write key file." << endl;
+		return false;
+	}
+	printInfo << "writing key file '" << keyFileName << "'" << endl;
 	Config key;
 	Setting& rootKey = key.getRoot();
-
-	if (writeProdVert) {
-		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
-		setProductionVertexKeys(prodVertKey, topo->productionVertex());
+	if (not writeKeyFile(rootKey, amplitude->decayTopology(), writeProdVert)) {
+		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
+		return false;
 	}
-	
-	Setting& waveKey = rootKey.add("wave", Setting::TypeGroup);
-
-	// if (writeWaveOpt) {
-	// 	Setting& waveOptionsKey = waveKey.add("options", Setting::TypeGroup);
-	// 	waveOptionsKey.add("boseSymmetrize",       Setting::TypeBoolean) = _boseSymmetrize;
-	// 	waveOptionsKey.add("useReflectivityBasis", Setting::TypeBoolean) = _useReflectivityBasis;
-	// }
-	
-	Setting& XQnKey = waveKey.add("XQuantumNumbers", Setting::TypeGroup);
-	setXQuantumNumbersKeys(XQnKey, *(topo->XParticle()));
-
-	Setting& XDecayKey = waveKey.add("XDecay", Setting::TypeGroup);
-	setXDecayKeys(XDecayKey, *topo, *(topo->XIsobarDecayVertex()));
-
+	if (not writeKeyFile(rootKey, amplitude)) {
+		printWarn << "problems writing keys for amplitude. cannot write key file." << endl;
+		return false;
+	}
 	try {
 		key.writeFile(keyFileName.c_str());
 	} catch(const FileIOException& ioEx) {
@@ -218,6 +269,73 @@ keyFileParser::writeKeyFile(const string&                 keyFileName,
 		return false;
 	}
 	printInfo << "successfully written key file '" << keyFileName << "'" << endl;
+	return true;
+}
+
+
+bool
+keyFileParser::writeKeyFile(Setting&                  rootKey,
+                            const isobarAmplitudePtr& amplitude)
+{
+	printInfo << "writing ";
+	amplitude->printParameters(cout);
+	Setting& amplitudeKey = rootKey.add("amplitude", Setting::TypeGroup);
+	if (not setAmplitude(amplitudeKey, amplitude)) {
+		printWarn << "problems writing amplitude paramaters" << endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool
+keyFileParser::writeKeyFile(const string&                 keyFileName,
+                            const isobarDecayTopologyPtr& topo,
+                            const bool                    writeProdVert)
+{
+	if (not topo) {
+		printWarn << "null pointer to decay topology. cannot write key file." << endl;
+		return false;
+	}
+	printInfo << "writing key file '" << keyFileName << "'" << endl;
+	Config key;
+	Setting& rootKey = key.getRoot();
+	if (not writeKeyFile(rootKey, topo, writeProdVert)) {
+		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
+		return false;
+	}
+	try {
+		key.writeFile(keyFileName.c_str());
+	} catch(const FileIOException& ioEx) {
+		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
+		return false;
+	}
+	printInfo << "successfully written key file '" << keyFileName << "'" << endl;
+	return true;
+}
+
+
+bool
+keyFileParser::writeKeyFile(Setting&                      rootKey,
+                            const isobarDecayTopologyPtr& topo,
+                            const bool                    writeProdVert)
+{
+	printInfo << "writing " << *topo;
+	if (writeProdVert) {
+		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
+		setProductionVertexKeys(prodVertKey, topo->productionVertex());
+	}
+	Setting& waveKey   = rootKey.add("wave",            Setting::TypeGroup);
+	Setting& XQnKey    = waveKey.add("XQuantumNumbers", Setting::TypeGroup);
+	Setting& XDecayKey = waveKey.add("XDecay",          Setting::TypeGroup);
+	if (not setXQuantumNumbersKeys(XQnKey, *(topo->XParticle()))) {
+		printWarn << "problems writing X quantum numbers" << endl;
+		return false;
+	}
+	if (not setXDecayKeys(XDecayKey, *topo, *(topo->XIsobarDecayVertex()))) {
+		printWarn << "problems writing X decay" << endl;
+		return false;
+	}
 	return true;
 }
 
@@ -289,8 +407,7 @@ keyFileParser::constructXParticle(const Setting& XQnKey,
 	optionalXQn ["P"      ];
 	optionalXQn ["C"      ];
 	mandatoryXQn["M"      ];
-	if (_useReflectivityBasis)
-		optionalXQn["refl"];
+	optionalXQn ["refl"   ];
 	bool success = true;
 	for (map<string, int>::iterator i = mandatoryXQn.begin(); i != mandatoryXQn.end(); ++i)
 		if (not XQnKey.lookupValue(i->first, i->second)) {
@@ -309,7 +426,7 @@ keyFileParser::constructXParticle(const Setting& XQnKey,
 	X = createParticle("X",
 	                   mandatoryXQn["isospin"], optionalXQn["G"],
 	                   mandatoryXQn["J"], optionalXQn["P"], optionalXQn["C"],
-	                   mandatoryXQn["M"], (_useReflectivityBasis) ? optionalXQn["refl"] : 0);
+	                   mandatoryXQn["M"], optionalXQn["refl"]);
 	if (_debug)
 		printInfo << "constructed X particle: " << X->qnSummary() << endl;
 	return true;
@@ -331,8 +448,8 @@ keyFileParser::setXQuantumNumbersKeys(Setting&        XQnKey,
 	if (X.C() != 0)
 		XQnKey.add("C",     Setting::TypeInt) = X.C();
 	XQnKey.add("M",       Setting::TypeInt) = X.spinProj();
-	if (_useReflectivityBasis)
-		XQnKey.add("refl", Setting::TypeInt) = X.reflectivity();
+	if (X.reflectivity() != 0)
+		XQnKey.add("refl",  Setting::TypeInt) = X.reflectivity();
 	return true;
 }
 
@@ -428,7 +545,7 @@ keyFileParser::constructDecayVertex(const Setting&                parentKey,
 		const Setting* massDepKey  = findGroup(parentKey, "massDep", false);
 		if (massDepKey)
 			massDepKey->lookupValue("name", massDepType);
-		massDep = mapMassDependence(massDepType);
+		massDep = mapMassDependenceType(massDepType);
 	}
   
 	// if there is 1 final state particle and 1 isobar put them in the
@@ -457,7 +574,7 @@ keyFileParser::constructDecayVertex(const Setting&                parentKey,
 
 
 massDependencePtr
-keyFileParser::mapMassDependence(const string& massDepType)
+keyFileParser::mapMassDependenceType(const string& massDepType)
 {
 	massDependencePtr massDep;
 	if (   (massDepType == "BreitWigner")
@@ -597,14 +714,16 @@ keyFileParser::setProductionVertexKeys(Setting&                   prodVertKey,
 		map<string, particlePtr> prodKinParticles;
 		if (prodVertName == "diffractiveDissVertex") {
 			const diffractiveDissVertexPtr& vert = static_pointer_cast<diffractiveDissVertex>(prodVert);
-			prodKinParticles["beam"  ] = vert->beam  ();
+			prodKinParticles["beam"  ] = vert->beam();
 			prodKinParticles["target"] = vert->target();
-			prodKinParticles["recoil"] = vert->recoil();
+			if (vert->recoil()->name() != vert->target()->name())
+				prodKinParticles["recoil"] = vert->recoil();
 		} else if (prodVertName == "leptoProductionVertex") {
 			const leptoProductionVertexPtr& vert = static_pointer_cast<leptoProductionVertex>(prodVert);
 			prodKinParticles["beam"  ] = vert->beamLepton();
-			prodKinParticles["target"] = vert->target    ();
-			prodKinParticles["recoil"] = vert->recoil    ();
+			prodKinParticles["target"] = vert->target();
+			if (vert->recoil()->name() != vert->target()->name())
+				prodKinParticles["recoil"] = vert->recoil();
 		}
 		// write particles
 		Setting* beamParticleKey = 0;  // needed for leptoproduction vertex

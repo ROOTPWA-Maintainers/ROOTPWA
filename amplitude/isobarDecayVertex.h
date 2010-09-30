@@ -41,8 +41,6 @@
 #define ISOBARDECAYVERTEX_H
 
 
-#include <boost/shared_ptr.hpp>
-
 #include "interactionVertex.h"
 #include "massDependence.h"
 

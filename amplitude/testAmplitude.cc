@@ -238,7 +238,7 @@ main(int argc, char** argv)
 		const long int maxNmbEvents   = 1000000;
 		//const long int maxNmbEvents   = 2;
 
-		// const string   newKeyFileName = "test.key";
+		const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
 		// const string   rootInFileName = "testEvents.root";
 		// const string   evtInFileName  = "testTree.evt";
@@ -253,7 +253,7 @@ main(int argc, char** argv)
 		// const string   evtInFileName  = "testEvents.3pic.evt";
 		// const string   rootInFileName = "500.540.ps.root";
 		// const string   evtInFileName  = "500.540.ps.evt";
-		const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+		//const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
 		const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
 		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
 		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
@@ -266,14 +266,16 @@ main(int argc, char** argv)
 		// const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
 		// const string   evtInFileName  = "1000.1060.evt";
 
-		keyFileParser&         parser = keyFileParser::instance();
-		isobarDecayTopologyPtr topo;
-		isobarAmplitudePtr     amp;
-		if (parser.parse(newKeyFileName) and parser.constructAmplitude(amp, topo)) {
+		keyFileParser&     parser = keyFileParser::instance();
+		isobarAmplitudePtr amp;
+		if (parser.parse(newKeyFileName) and parser.constructAmplitude(amp)) {
+			isobarDecayTopologyPtr topo = amp->decayTopology();
 			topo->writeGraphViz("decay.dot");
 			printInfo << *amp;
-			parser.writeKeyFile("testWrite.key", topo);  // test key file creation
+			parser.writeKeyFile("testWrite.key", amp);  // test key file creation
 
+			exit(1);
+			
 			// read data from tree
 			const string&            inTreeName                = "rootPwaEvtTree";
 			const string&            prodKinParticlesLeafName  = "prodKinParticles";

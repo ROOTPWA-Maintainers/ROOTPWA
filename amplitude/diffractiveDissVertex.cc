@@ -79,7 +79,9 @@ diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
 	interactionVertex::addInParticle (beam);
 	interactionVertex::addInParticle (target);
 	interactionVertex::addOutParticle(XParticle);
-	if (not recoil) {
+	if (recoil)
+		interactionVertex::addOutParticle(recoil);
+	else {
 		if (_debug)
 			printWarn << "recoil not specified. assuming elastic scattering." << endl;
 		interactionVertex::addOutParticle(createParticle(*target));
@@ -253,8 +255,7 @@ diffractiveDissVertex::revertMomenta()
 ostream&
 diffractiveDissVertex::print(ostream& out) const
 {
-	out << name() << ": "
-	    << "beam " << beam()->qnSummary() << "  +  target " << target()->qnSummary()
+	out << name() << ": beam " << beam()->qnSummary() << "  +  target " << target()->qnSummary()
 	    << "  --->  " << XParticle()->qnSummary() << "  +  recoil " << recoil()->qnSummary();
 	return out;
 }

@@ -331,13 +331,21 @@ isobarAmplitude::boseSymmetrizedAmp() const
 
 
 ostream&
+isobarAmplitude::printParameters(ostream& out) const
+{
+	out << name() << ": " << endl
+	    << "    reflectivity basis ............... " << ((_useReflectivityBasis) ? "en" : "dis") << "abled" << endl
+	    << "    Bose-symmetrization .............. " << ((_boseSymmetrize      ) ? "en" : "dis") << "abled" << endl
+	    << "    space inversion of FS momenta .... " << ((_doSpaceInversion    ) ? "en" : "dis") << "abled" << endl
+	    << "    reflection through prod. plane ... " << ((_doReflection        ) ? "en" : "dis") << "abled" << endl;
+	return out;
+}
+
+
+ostream&
 isobarAmplitude::print(ostream& out) const
 {
-	out << "isobar amplitude: "
-	    << *_decay
-	    << "reflectivity basis : "            << ((_useReflectivityBasis) ? "en" : "dis") << "abled" << endl
-	    << "Bose-symmetrization: "            << ((_boseSymmetrize)       ? "en" : "dis") << "abled" << endl
-	    << "space inversion of FS momenta: "  << ((_doSpaceInversion)     ? "en" : "dis") << "abled" << endl
-	    << "reflection through prod. plane: " << ((_doReflection)         ? "en" : "dis") << "abled" << endl;
+	printParameters(out);
+	out << *_decay;
 	return out;
 }

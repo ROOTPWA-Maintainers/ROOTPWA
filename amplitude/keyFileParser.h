@@ -61,18 +61,16 @@ namespace rpwa {
 
     static bool constructDecayTopology(isobarDecayTopologyPtr& topo);  ///< construct isobar decay topology from keyfile
 
-	  static bool constructAmplitude(isobarAmplitudePtr&     amp,
-	                                 isobarDecayTopologyPtr& topo);  ///< construct isobar decay topology and amplitude from keyfile
-	  static bool constructAmplitude(isobarAmplitudePtr&     amp)    ///< construct isobar decay amplitude from keyfile
-	  {
-		  isobarDecayTopologyPtr topo;
-		  return constructAmplitude(amp, topo);
-	  }
+	  static bool constructAmplitude(isobarAmplitudePtr&           amplitude);   ///< construct isobar decay amplitude from keyfile
+	  static bool constructAmplitude(isobarAmplitudePtr&           amplitude,
+	                                 const isobarDecayTopologyPtr& topo);  ///< construct isobar amplitude using existing decay topology
 
 	  static bool writeKeyFile(const std::string&            keyFileName,
+	                           const isobarAmplitudePtr&     amplitude,
+	                           const bool                    writeProdVert = true);  ///< creates key file from amplitude
+	  static bool writeKeyFile(const std::string&            keyFileName,
 	                           const isobarDecayTopologyPtr& topo,
-	                           const bool                    writeProdVert = true,
-	                           const bool                    writeWaveOpt  = false);  ///< creates key file from decay topology
+	                           const bool                    writeProdVert = true);  ///< creates key file from decay topology
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -93,6 +91,11 @@ namespace rpwa {
                                               const std::string&        listName,
                                               const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a non-empty list
 
+	  static isobarAmplitudePtr mapAmplitudeType(const std::string&            formalismType,
+	                                             const isobarDecayTopologyPtr& topo);  ///< creates amplitude for specified formalism
+	  static bool setAmplitude(libconfig::Setting&       amplitudeKey,
+	                           const isobarAmplitudePtr& amplitude);  ///< puts amplitude specification into key
+
     static bool constructXParticle(const libconfig::Setting& XQnKey,
                                    particlePtr&              X);  ///< creates X particle with quantum numbers defined in X key
 	  static bool setXQuantumNumbersKeys(libconfig::Setting& XQnKey,
@@ -105,7 +108,7 @@ namespace rpwa {
                                      const particlePtr&                 parentParticle,
                                      std::vector<isobarDecayVertexPtr>& decayVertices,
                                      std::vector<particlePtr>&          fsParticles);  ///< recursively traverses decay chain and creates decay vertices and final state particles
-    static massDependencePtr mapMassDependence(const std::string& massDepType);  ///< creates mass dependence functor of specified type
+    static massDependencePtr mapMassDependenceType(const std::string& massDepType);  ///< creates mass dependence functor of specified type
 	  static bool setMassDependence(libconfig::Setting&   isobarMassDepKey,
 	                                const massDependence& massDep);  ///< puts mass dependence into key
 
@@ -124,12 +127,16 @@ namespace rpwa {
 	                            const isobarDecayTopology& topo,
 	                            const isobarDecayVertex&   vert);  ///< recursive function that puts X decay chain into keys
 
+	  static bool writeKeyFile(libconfig::Setting&           rootKey,
+	                           const isobarAmplitudePtr&     amplitude);  ///< writes amplitude parameters to key file
+	  static bool writeKeyFile(libconfig::Setting&           rootKey,
+	                           const isobarDecayTopologyPtr& topo,
+	                           const bool                    writeProdVert = true);  ///< writes decay topology to key file
 
     static keyFileParser _instance;  ///< singleton instance
 
-	  static libconfig::Config _key;                   ///< key file
-    static bool              _boseSymmetrize;        ///< switches use of Bose-symmetrization in amplitude
-    static bool              _useReflectivityBasis;  ///< switches use of reflectivity basis in amplitude
+	  static libconfig::Config         _key;            ///< key file
+	  static const libconfig::Setting* _amplitudeKey;   ///< pointer to amplitude options
 
     static bool _debug;  ///< if set to true, debug messages are printed
 

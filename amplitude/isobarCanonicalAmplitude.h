@@ -57,7 +57,7 @@ namespace rpwa {
 		isobarCanonicalAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarCanonicalAmplitude();
 
-		std::ostream& print(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
+		std::string name() const { return "isobarCanonicalAmplitude"; }
     
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

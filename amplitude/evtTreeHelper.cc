@@ -357,7 +357,6 @@ namespace rpwa {
 
 	bool
 	processTree(TTree&                        tree,
-	            const isobarDecayTopologyPtr& decayTopo,
 	            const isobarAmplitudePtr&     amplitude,
 	            vector<complex<double> >&     ampValues,
 	            const long int                maxNmbEvents,
@@ -367,10 +366,6 @@ namespace rpwa {
 	            const string&                 decayKinMomentaLeafName,
 	            const bool                    printProgress)
 	{
-		if (not decayTopo) {
-			printWarn << "null pointer to isobar decay topology. cannot process tree." << endl;
-			return false;
-		}
 		if (not amplitude) {
 			printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
 			return false;
@@ -422,6 +417,7 @@ namespace rpwa {
 				continue;
 			}
 
+			const isobarDecayTopologyPtr& decayTopo = amplitude->decayTopology();
 			if (decayTopo->readData(*prodKinParticles,  *prodKinMomenta,
 			                        *decayKinParticles, *decayKinMomenta))
 				ampValues.push_back((*amplitude)());

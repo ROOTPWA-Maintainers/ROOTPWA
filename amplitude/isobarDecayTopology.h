@@ -40,8 +40,6 @@
 #define ISOBARDECAYTOPOLOGY_H
 
 
-#include <boost/shared_ptr.hpp>
-
 #include "isobarDecayVertex.h"
 #include "decayTopology.h"
 

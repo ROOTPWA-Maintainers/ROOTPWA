@@ -62,7 +62,8 @@ namespace rpwa {
 		isobarAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarAmplitude();
 
-		void setDecayTopology(const isobarDecayTopologyPtr& decay);
+		const isobarDecayTopologyPtr& decayTopology   () const { return _decay; }              ///< returns pointer to decay topology
+		void                          setDecayTopology(const isobarDecayTopologyPtr& decay);   ///< sets decay topology
 
 		bool reflectivityBasis () const { return _useReflectivityBasis; }  ///< returns whether reflectivity basis is used
 		bool boseSymmetrization() const { return _boseSymmetrize;       }  ///< returns whether Bose symmetrization is used
@@ -80,7 +81,9 @@ namespace rpwa {
 		std::complex<double> amplitude()   const;                         ///< computes amplitude
 		std::complex<double> operator ()() const { return amplitude(); }  ///< computes amplitude
 
-		virtual std::ostream& print(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
+		virtual std::string   name           ()                  const { return "isobarAmplitude"; }
+		virtual std::ostream& printParameters(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
+		virtual std::ostream& print          (std::ostream& out) const;  ///< prints amplitude in human-readable form
     
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

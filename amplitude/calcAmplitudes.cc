@@ -229,17 +229,16 @@ main(int    argc,
 		printErr << "no key file specified. aborting." << endl;
 		usage(progName, 1);
 	}
-	keyFileParser&         parser = keyFileParser::instance();
-	isobarDecayTopologyPtr decayTopo;
-	isobarAmplitudePtr     amplitude;
+	keyFileParser&     parser = keyFileParser::instance();
+	isobarAmplitudePtr amplitude;
 	if (   not parser.parse(keyFileName)
-	    or not parser.constructAmplitude(amplitude, decayTopo)) {
+	    or not parser.constructAmplitude(amplitude)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		         << "aborting." << endl;
 		exit(1);
 	}
 	printInfo << *amplitude;
-  
+
 	// create output file for amplitudes
 	printInfo << "creating amplitude file '" << ampFileName << "'; "
 	          << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
@@ -261,7 +260,7 @@ main(int    argc,
 		else
 			cout << ".evt tree[" << ((chain) ? i : i + 1) << "]";
 		cout << endl;
-		if (not processTree(*trees[i], decayTopo, amplitude, ampValues, maxNmbEvents - ampValues.size(),
+		if (not processTree(*trees[i], amplitude, ampValues, maxNmbEvents - ampValues.size(),
 		                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 		                    decayKinParticlesLeafName, decayKinMomentaLeafName))
 			printWarn << "problems reading tree" << endl;

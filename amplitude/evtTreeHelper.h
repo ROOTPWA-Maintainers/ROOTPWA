@@ -89,7 +89,6 @@ namespace rpwa {
 
 
 	long int processTree(TTree&                              tree,
-	                     const isobarDecayTopologyPtr&       decayTopo,
 	                     const isobarAmplitudePtr&           amplitude,
 	                     std::vector<std::complex<double> >& ampValues,
 	                     const long int                      maxNmbEvents              = -1,

@@ -130,7 +130,7 @@ bool testAmplitude(TTree&          tree,
 
 	// read data from tree and calculate amplitudes
 	vector<complex<double> > ampValues;
-	if (not processTree(tree, decayTopo, amplitude, ampValues, maxNmbEvents,
+	if (not processTree(tree, amplitude, ampValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
@@ -144,7 +144,7 @@ bool testAmplitude(TTree&          tree,
 	// calculate amplitudes for parity transformed decay daughters
 	vector<complex<double> > ampSpaceInvValues;
 	amplitude->enableSpaceInversion(true);
-	if (not processTree(tree, decayTopo, amplitude, ampSpaceInvValues, maxNmbEvents,
+	if (not processTree(tree, amplitude, ampSpaceInvValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
@@ -155,7 +155,7 @@ bool testAmplitude(TTree&          tree,
 	vector<complex<double> > ampReflValues;
 	amplitude->enableSpaceInversion(false);
 	amplitude->enableReflection    (true);
-	if (not processTree(tree, decayTopo, amplitude, ampReflValues, maxNmbEvents,
+	if (not processTree(tree, amplitude, ampReflValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
