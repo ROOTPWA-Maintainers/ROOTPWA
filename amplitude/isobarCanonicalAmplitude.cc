@@ -153,10 +153,10 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const complex<double> bw = vertex->massDepAmplitude();
 
 	// calculate normalization factor
-	const double norm = normFactor(L, _debug);
+	const int    J    = parent->J();
+	const double norm = normFactor(J, _debug) * rpwa::sqrt(fourPi / (L + 1));
 
 	// sum over all possible spin projections of L
-	const int       J     = parent->J();
 	const int       M     = parent->spinProj();
 	const int       P     = parent->P();
 	const int       refl  = parent->reflectivity();

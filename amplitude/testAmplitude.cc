@@ -62,6 +62,8 @@
 #include "keyFileParser.h"
 #include "isobarAmplitude.h"
 #include "isobarHelicityAmplitude.h"
+#include "isobarCanonicalAmplitude.h"
+#include "evtTreeHelper.h"
 
 
 extern particleDataTable PDGtable;
@@ -86,7 +88,6 @@ main(int argc, char** argv)
 	// isobarDecayVertex::setDebug(true);
 	// decayTopology::setDebug(true);
 	// isobarDecayTopology::setDebug(true);
-	// isobarHelicityAmplitude::setDebug(true);
 	// massDependence::setDebug(true);
 	// diffractiveDissVertex::setDebug(true);
 	keyFileParser::setDebug(true);
@@ -208,8 +209,8 @@ main(int argc, char** argv)
 		fsParticles.push_back(pi3);
 		fsParticles.push_back(pi4);
 		isobarDecayTopologyPtr topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
-		// topo.checkTopology();
-		// topo.checkConsistency();
+		// topo->checkTopology();
+		// topo->checkConsistency();
 		isobarHelicityAmplitude amp(topo);
 		cout << topo;
 		complex<double>         decayAmp = amp.amplitude();
@@ -234,11 +235,54 @@ main(int argc, char** argv)
 		}
 	}
 
+	if (0) {
+		// define final state particles
+		particlePtr pi0 = createParticle("pi-", 0);
+		particlePtr pi1 = createParticle("pi+", 0);
+		// define X-system
+		//                                   2I  G  2J  P   C  2M
+		particlePtr X = createParticle("X0", 2, +1, 2, -1, -1, 0);
+		// define production vertex
+		particlePtr              beam     = createParticle("pi-");
+		particlePtr              target   = createParticle("p+");
+		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
+		// define vertices and final-state particles
+		isobarDecayVertexPtr         vert0 = createIsobarDecayVertex(X, pi0, pi1, 2, 0);
+		vector<isobarDecayVertexPtr> decayVertices;
+		decayVertices.push_back(vert0);
+		vector<particlePtr> fsParticles;
+		fsParticles.push_back(pi0);
+		fsParticles.push_back(pi1);
+		isobarDecayTopologyPtr topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
+		topo->checkTopology();
+		topo->checkConsistency();
+		isobarAmplitude::setDebug         (true);
+		isobarHelicityAmplitude::setDebug (true);
+		isobarCanonicalAmplitude::setDebug(true);
+		isobarAmplitudePtr amp[2] = {createIsobarHelicityAmplitude (topo),
+		                             createIsobarCanonicalAmplitude(topo)};
+		for (unsigned int i = 0; i < 2; ++i) {
+			amp[i]->enableBoseSymmetrization(false);
+			amp[i]->enableReflectivityBasis (false);
+			cout << *(amp[i]);
+		}
+		TChain chain("rootPwaEvtTree");
+		chain.Add("/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
+		chain.GetListOfFiles()->ls();
+		vector<complex<double> > ampValues[2];
+		for (unsigned int i = 0; i < 2; ++i) {
+			processTree(chain, amp[i], ampValues[i], 2);
+		}		
+ 		for (unsigned int i = 0; i < ampValues[0].size(); ++i)
+			cout << "amplitude[" << i << "] = " << ampValues[0][i] << " vs. " << ampValues[1][i] << "; "
+			     << "ratio = " << ampValues[0][i] / ampValues[1][i] << endl;
+	}
+
 	if (1) {
 		const long int maxNmbEvents   = 1000000;
 		//const long int maxNmbEvents   = 2;
 
-		const string   newKeyFileName = "test.key";
+		// const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
 		// const string   rootInFileName = "testEvents.root";
 		// const string   evtInFileName  = "testTree.evt";
@@ -254,6 +298,7 @@ main(int argc, char** argv)
 		// const string   rootInFileName = "500.540.ps.root";
 		// const string   evtInFileName  = "500.540.ps.evt";
 		//const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+		const string   newKeyFileName = "1-4++1+rho770_41_pi-.key";
 		const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
 		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
 		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
@@ -273,8 +318,6 @@ main(int argc, char** argv)
 			topo->writeGraphViz("decay.dot");
 			printInfo << *amp;
 			parser.writeKeyFile("testWrite.key", amp);  // test key file creation
-
-			exit(1);
 			
 			// read data from tree
 			const string&            inTreeName                = "rootPwaEvtTree";

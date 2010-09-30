@@ -245,7 +245,7 @@ namespace rpwa {
 	  const complexT YVal =   rpwa::sqrt((l + 1) / fourPi) * rpwa::exp(complexT(0, ((T)m / 2) * phi))
 		                      * dFunction(l, m, 0, theta);
 	  if (debug)
-		  printInfo << "spherical harmonic Y_l = " << 0.5 * l << "^m = " << 0.5 * m 
+		  printInfo << "spherical harmonic Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
 		            << "(phi = " << phi << ", theta = " << theta << ") = "
 		            << maxPrecisionDouble(YVal) << std::endl;
     return YVal;
