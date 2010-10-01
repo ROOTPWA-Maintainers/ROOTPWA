@@ -36,8 +36,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef FACTORIAL_HPP
-#define FACTORIAL_HPP
+#ifndef FACTORIALCACHED_HPP
+#define FACTORIALCACHED_HPP
 
 
 #include <vector>
@@ -49,12 +49,12 @@
 namespace rpwa {
 
 	template<typename T>
-	class factorial {
+	class factorialCached {
 	
 	public:
 			
-		static factorial& instance() { return _instance; }  ///< get singleton instance
-		T operator ()(unsigned int n)                       ///< returns n!
+		static factorialCached& instance() { return _instance; }  ///< get singleton instance
+		T operator ()(const unsigned int n)                       ///< returns n!
 		{
 			const unsigned int cacheSize = _cache.size();
 			if (n >= cacheSize) {
@@ -76,22 +76,29 @@ namespace rpwa {
 
 	private:
 
-		factorial () { }
-		~factorial() { }
-		factorial (const factorial&);
-		factorial& operator =(const factorial&);
+		factorialCached () { }
+		~factorialCached() { }
+		factorialCached (const factorialCached&);
+		factorialCached& operator =(const factorialCached&);
 
-		static factorial      _instance;  ///< singleton instance
-		static std::vector<T> _cache;     ///< cache for already calculated values
+		static factorialCached _instance;  ///< singleton instance
+ 		static std::vector<T>  _cache;     ///< cache for already calculated values
 
 	};
 
 
-	template<typename T> factorial<T>   factorial<T>::_instance;
-	template<typename T> std::vector<T> factorial<T>::_cache(1, 1);
+	template<typename T> factorialCached<T> factorialCached<T>::_instance;
+	template<typename T> std::vector<T>     factorialCached<T>::_cache(1, 1);
 
+
+	template<typename T>
+	inline
+	T
+	factorial(const unsigned int n)  ///< returns factorial of n
+	{ return factorialCached<T>::instance()(n);	}
+	
 
 }  // namespace rpwa
 
 
-#endif  // FACTORIAL_HPP
+#endif  // FACTORIALCACHED_HPP

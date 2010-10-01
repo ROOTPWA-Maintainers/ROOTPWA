@@ -86,9 +86,9 @@ main(int argc, char** argv)
 		vector<double> newFact(nmbData);
 		for (unsigned int it = 0; it < nmbIterations; ++it)
 			for (unsigned int i = 0; i < nmbData; ++i)
-				//newFact[i] = rpwa::factorial<unsigned int>::instance()(data[i]);
-				//newFact[i] = rpwa::factorial<float>::instance()(data[i]);
-		    newFact[i] = rpwa::factorial<double>::instance()(data[i]);
+				//newFact[i] = rpwa::factorial<unsigned int>(data[i]);
+				//newFact[i] = rpwa::factorial<float>(data[i]);
+		    newFact[i] = rpwa::factorial<double>(data[i]);
 		timer.Stop();
 		printInfo << "calculated mathUtil factorials for " << nmbIterations * nmbData << " values" << endl
 		          << "    this consumed: ";
@@ -123,7 +123,7 @@ main(int argc, char** argv)
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Wigner d-function d^j_{m n}(theta)
-	if (0) {
+	if (1) {
 		printInfo << "testing Wigner d-function" << endl;
 
 		const unsigned int nmbAngles = 50000;
@@ -351,7 +351,7 @@ main(int argc, char** argv)
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Wigner D-function in reflectivity basis {^refl}D^j_{m n}(alpha, beta, gamma)
-	if (1) {
+	if (0) {
 		printInfo << "testing Wigner D-function in reflectivity basis" << endl;
 
 		const unsigned int nmbAngles = 10000;

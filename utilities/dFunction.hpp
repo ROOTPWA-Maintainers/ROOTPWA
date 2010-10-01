@@ -63,8 +63,6 @@ namespace rpwa {
 	
 	public:
 			
-		static dFunctionCached& instance() { return _instance; }  ///< get singleton instance
-		
 		struct cacheEntryType {
 
 			cacheEntryType()
@@ -80,11 +78,17 @@ namespace rpwa {
 
 		};
 
+		typedef std::vector<std::vector<std::vector<cacheEntryType> > > cacheType;
+
+
+		static dFunctionCached& instance() { return _instance; }  ///< get singleton instance
+
 		T operator ()(const int j,
 		              const int m,
 		              const int n,
 		              const T&  theta)  ///< returns d^j_{m n}(theta)
 		{
+			// check input parameters
 			if (j >= (int)_maxJ) {
 				printErr << "J = " << 0.5 * j << " is too large. maximum allowed J is "
 				         << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
@@ -96,7 +100,15 @@ namespace rpwa {
 				         << "(theta = " << theta << "). aborting." << std::endl;
 				throw;
 			}
+
+			// trivial case
+			if (j == 0)
+				return 1;
 			
+			// setup cache, if needed
+			if (_useCache and not _cacheInitialized)
+				initCache();
+
 			// swap spin projections for negative angle
 			int _m        = m;
 			int _n        = n;
@@ -110,7 +122,7 @@ namespace rpwa {
 			const T sinThetaHalf = sin(thetaHalf);
 
 			T               dFuncVal   = 0;
-			cacheEntryType& cacheEntry = _cache[j][j + _m][j + _n];
+			cacheEntryType& cacheEntry = _cache[j][(j + _m) / 2][(j + _n) / 2];
 			if (_useCache and cacheEntry.valid) {
 				// calculate function value using cache
 				T sumTerm = 0;
@@ -125,10 +137,10 @@ namespace rpwa {
 				const int jpn       = (j + _n) / 2;
 				const int jmm       = (j - _m) / 2;
 				const int jmn       = (j - _n) / 2;
-				const T   kk        =   rpwa::factorial<T>::instance()(jpm)
-					                    * rpwa::factorial<T>::instance()(jmm)
-					                    * rpwa::factorial<T>::instance()(jpn)
-					                    * rpwa::factorial<T>::instance()(jmn);
+				const T   kk        =   rpwa::factorial<T>(jpm)
+					                    * rpwa::factorial<T>(jmm)
+					                    * rpwa::factorial<T>(jpn)
+					                    * rpwa::factorial<T>(jmn);
 				const T   constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
 				if (_useCache)
 					cacheEntry.constTerm = constTerm;
@@ -143,10 +155,10 @@ namespace rpwa {
 					const int jmk    = (j + _m) / 2 - k;
 					const int jnk    = (j + _n) / 2 - k;
 					const int kmn2   = k - (_m + _n) / 2;
-					const T   factor = (  rpwa::factorial<T>::instance()(k)
-						                  * rpwa::factorial<T>::instance()(jmk)
-						                  * rpwa::factorial<T>::instance()(jnk)
-					                    * rpwa::factorial<T>::instance()(kmn2)) / powMinusOne(k);
+					const T   factor = (  rpwa::factorial<T>(k)
+						                  * rpwa::factorial<T>(jmk)
+						                  * rpwa::factorial<T>(jnk)
+					                    * rpwa::factorial<T>(kmn2)) / powMinusOne(k);
 					if (_useCache) {
 						cacheEntry.kmn1.push_back  (kmn1);
 						cacheEntry.jmnk.push_back  (jmnk);
@@ -171,21 +183,22 @@ namespace rpwa {
 		static void setUseCache(const bool useCache = true) { _useCache = useCache; }  ///< sets caching flag
 		static unsigned int cacheSize()  ///< returns cache size in bytes
 		{
-			// space required by struct
-			unsigned int size = _maxJ * (2 * _maxJ) * (2 * _maxJ) * sizeof(cacheEntryType);
-			// space required by vectors in struct
-			for (unsigned int i = 0; i < _maxJ; ++i)
-				for (unsigned int j = 0; j < 2 * _maxJ; ++j)
-					for (unsigned int k = 0; k < 2 * _maxJ; ++k) {
-						// std::cout << "[" << i << "][" << j << "][" << k << "] = "
-						//           << _cache[i][j][k].valid << "; "
-						//           << _cache[i][j][k].kmn1.size  () * sizeof(int) << ", "
-						//           << _cache[i][j][k].jmnk.size  () * sizeof(int) << ", "
-						//           << _cache[i][j][k].factor.size() * sizeof(T) << std::endl;
-						size += _cache[i][j][k].kmn1.capacity  () * sizeof(int);
-						size += _cache[i][j][k].jmnk.capacity  () * sizeof(int);
-						size += _cache[i][j][k].factor.capacity() * sizeof(T);
+			if (not _cacheInitialized)
+				return 0;
+			unsigned int size = sizeof(_cache);
+			for (int j = 0; j < (int)_maxJ; ++j) {
+				size += sizeof(_cache[j]);
+				for (int m = -j; m <= j; m += 2) {
+					size += sizeof(_cache[j][(j + m) / 2]);
+					for (int n = -j; n <= j; n += 2) {
+						cacheEntryType& cacheEntry = _cache[j][(j + m) / 2][(j + n) / 2];
+						size += sizeof(cacheEntry);
+						size += cacheEntry.kmn1.capacity  () * sizeof(int);
+						size += cacheEntry.jmnk.capacity  () * sizeof(int);
+						size += cacheEntry.factor.capacity() * sizeof(T);
 					}
+				}
+			}
 			return size;
 		}
 
@@ -195,27 +208,41 @@ namespace rpwa {
 
 	private:
 
-		dFunctionCached () { }
+		dFunctionCached () { std::cout << "#"; }
 		~dFunctionCached() { }
 		dFunctionCached (const dFunctionCached&);
 		dFunctionCached& operator =(const dFunctionCached&);
 
-		static dFunctionCached _instance;  ///< singleton instance
-		static bool            _debug;     ///< if set to true, debug messages are printed
-		static bool            _useCache;  ///< if set to true, cache is used
+		static void initCache()  ///< initializes cache
+		{
+			_cache.clear();
+			_cache.resize(_maxJ);
+			for (int j = 0; j < (int)_maxJ; ++j) {
+				_cache[j].resize(j + 1);  // 2J + 1 possible m values
+				for (int m = -j; m <= j; m += 2)
+					_cache[j][(j + m) / 2].resize(j + 1);  // 2J + 1 possible n values
+			}
+			_cacheInitialized = true;
+		}
+			
 
-		static const unsigned int _maxJ = 41;                           ///< 2 * maximum allowed angular momentum + 1
-		static cacheEntryType     _cache[_maxJ][2 * _maxJ][2 * _maxJ];  ///< cache for already calculated values [j][m][m']
+		static dFunctionCached _instance;          ///< singleton instance
+		static bool            _debug;             ///< if set to true, debug messages are printed
+		static bool            _useCache;          ///< if set to true, cache is used
+		static bool            _cacheInitialized;  ///< indicates, whether cache is initialized
+
+		static const unsigned int _maxJ = 41;  ///< 2 * maximum allowed angular momentum + 1
+		static cacheType          _cache;      ///< cache for intermediate coefficients [j][m][n]
 		
 	};
 
 
 	template<typename T> dFunctionCached<T> dFunctionCached<T>::_instance;
-	template<typename T> bool               dFunctionCached<T>::_debug    = false;
-	template<typename T> bool               dFunctionCached<T>::_useCache = true;
+	template<typename T> bool               dFunctionCached<T>::_debug            = false;
+	template<typename T> bool               dFunctionCached<T>::_useCache         = true;
+	template<typename T> bool               dFunctionCached<T>::_cacheInitialized = false;
 
-	template<typename T> typename dFunctionCached<T>::cacheEntryType
-	  dFunctionCached<T>::_cache[_maxJ][2 * _maxJ][2 * _maxJ];
+	template<typename T> typename dFunctionCached<T>::cacheType	dFunctionCached<T>::_cache;
 
 
 	template<typename T>
@@ -225,11 +252,31 @@ namespace rpwa {
 	          const int m,
 	          const int n,
 	          const T&  theta)  ///< Wigner d-function d^j_{m n}(theta)
+	{	return dFunctionCached<T>::instance()(j, m, n, theta); }
+
+
+	template<typename complexT>
+  inline
+  complexT
+  sphericalHarmonicNoNorm
+	(const int                            l,
+	 const int                            m,
+	 const typename complexT::value_type& theta,
+	 const typename complexT::value_type& phi,
+	 const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
 	{
-		return dFunctionCached<T>::instance()(j, m, n, theta);
-	}
-
-
+	  // crude implementation using Wigner d-function
+	  typedef typename complexT::value_type T;
+	  const complexT YVal = rpwa::exp(complexT(0, ((T)m / 2) * phi)) * dFunction(l, m, 0, theta);
+	  if (debug)
+		  printInfo << "spherical harmonic w/o normalization "
+		            << "Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
+		            << "(phi = " << phi << ", theta = " << theta << ") = "
+		            << maxPrecisionDouble(YVal) << std::endl;
+    return YVal;
+  }
+  
+  
 	template<typename complexT>
   inline
   complexT
@@ -240,10 +287,9 @@ namespace rpwa {
 	 const typename complexT::value_type& phi,
 	 const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
 	{
-	  // crude implementation using Wigner d-function
-	  typedef typename complexT::value_type T;
-	  const complexT YVal =   rpwa::sqrt((l + 1) / fourPi) * rpwa::exp(complexT(0, ((T)m / 2) * phi))
-		                      * dFunction(l, m, 0, theta);
+		// crude implementation using Wigner d-function
+		const complexT YVal =   rpwa::sqrt((l + 1) / fourPi)
+			                    * sphericalHarmonicNoNorm<complexT>(l, m, theta, phi, false);
 	  if (debug)
 		  printInfo << "spherical harmonic Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
 		            << "(phi = " << phi << ", theta = " << theta << ") = "

@@ -42,7 +42,7 @@
 #include "TMath.h"
 
 #include "utilities.h"
-#include "mathUtils.hpp"
+#include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
 
   
@@ -180,9 +180,9 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const double    theta  = daughter1->lzVec().Theta();
 	complex<double> DFunc;
 	if (topVertex and _useReflectivityBasis)
-		DFunc = DFuncConjRefl(J, Lambda, lambda, P, refl, phi, theta, _debug);
+		DFunc = DFunctionReflConj<complex<double> >(J, Lambda, lambda, P, refl, phi, theta, 0, _debug);
 	else
-		DFunc = DFuncConj(J, Lambda, lambda, phi, theta, _debug);
+		DFunc = DFunctionConj<complex<double> >(J, Lambda, lambda, phi, theta, 0, _debug);
 
 	// calulate barrier factor
 	const double q  = daughter1->lzVec().Vect().Mag();

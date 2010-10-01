@@ -121,59 +121,6 @@ namespace rpwa {
   // some wrappers for libpp functions
   // !NOTE! all angular momenta and spin projections are in units of hbar/2
   inline
-  std::complex<double>
-  DFuncConj(const int    j,
-            const int    m,
-            const int    n,
-            const double phi,
-            const double theta,
-            const bool   debug = false)  ///< conjugated Wigner D-function D^{J *}_{M lambda}(phi, theta, 0)
-  {
-    const std::complex<double> DFunc = conj(D(phi, theta, 0, j, m, n));
-    if (debug)
-      printInfo << "Wigner D^{J = " << 0.5 * j << " *}_{M = " << 0.5 * m << ", "
-                << "M' = " << 0.5 * n << "}(alpha = " << phi << ", beta = " << theta << ", "
-                << "gamma = 0) = " << maxPrecisionDouble(DFunc) << std::endl;
-    return DFunc;
-  }
-  
-  
-  inline
-  std::complex<double>
-  DFuncConjRefl(const int    j,
-                const int    m,
-                const int    n,
-                const int    P,
-                const int    refl,
-                const double phi,
-                const double theta,
-                const bool   debug = false)  ///< conjugated Wigner D-function {^epsilon}D^{J P *}_{M lambda}(phi, theta, 0) in reflectivity basis
-  {
-    if (m < 0) {
-      printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
-    if (rpwa::abs(refl) != 1) {
-      printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
-    const double               preFactor  = (m == 0 ? 0.5 : 1 / rpwa::sqrt(2));
-    const double               reflFactor = (double)refl * (double)P * rpwa::pow(-1, 0.5 * (j - m));
-    const std::complex<double> DFunc     
-      =  preFactor * (               DFuncConj(j,  m, n, phi, theta)
-                      - reflFactor * DFuncConj(j, -m, n, phi, theta));
-    if (debug)
-      printInfo << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-                << "refl = " << sign(refl) << " *}_{M = " << 0.5 * m << ", "
-                << "M' = " << 0.5 * n << "}(alpha = " << phi << ", "
-                << "beta = " << theta << ", gamma = 0) = " << maxPrecisionDouble(DFunc) << std::endl;
-    return DFunc;
-  }
-
-  
-  inline
   double
   cgCoeff(const int  J1,
           const int  M1,

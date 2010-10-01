@@ -42,7 +42,6 @@
 #include "TMath.h"
 
 #include "utilities.h"
-#include "mathUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"
 
@@ -154,7 +153,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 
 	// calculate normalization factor
 	const int    J    = parent->J();
-	const double norm = normFactor(J, _debug) * rpwa::sqrt(fourPi / (L + 1));
+	const double norm = normFactor(J, _debug);
 
 	// sum over all possible spin projections of L
 	const int       M     = parent->spinProj();
@@ -175,7 +174,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 				else
 					LSClebsch = cgCoeff(L, mL, S, mS, J, 0, _debug);
 			} else {
-				LSClebsch = 1 / rpwa::sqrt((double)2)
+				LSClebsch = 1 / rpwa::sqrt(2)
 					* (               cgCoeff(L, mL, S, mS, J, +M, _debug)
 					   - reflFactor * cgCoeff(L, mL, S, mS, J, -M, _debug));
 			}
@@ -184,7 +183,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		if (LSClebsch == 0)
 			continue;
 		// multiply spherical harmonic
-		amp += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
+		amp += LSClebsch * sphericalHarmonicNoNorm<complex<double> >(L, mL, theta, phi, _debug);
 	}
 
 	// calculate decay amplitude
