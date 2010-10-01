@@ -297,8 +297,8 @@ main(int argc, char** argv)
 		// const string   evtInFileName  = "testEvents.3pic.evt";
 		// const string   rootInFileName = "500.540.ps.root";
 		// const string   evtInFileName  = "500.540.ps.evt";
-		//const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
-		const string   newKeyFileName = "1-4++1+rho770_41_pi-.key";
+		const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+		//const string   newKeyFileName = "1-4++1+rho770_41_pi-.key";
 		const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
 		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
 		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
