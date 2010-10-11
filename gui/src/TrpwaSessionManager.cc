@@ -17,6 +17,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <complex>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -586,6 +587,8 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 	if(!corresponding_amplitudefiles){
 		corresponding_amplitudefiles = new vector < vector<string> >();
 		delete_corresponding_ampsfiles = true;
+	} else {
+		corresponding_amplitudefiles->clear();
 	}
 	cout << " searching for integral files in "<< folder <<" folders " << endl;
 	if ( _n_bins <= 0 ) return *result;
@@ -595,16 +598,22 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 		GetDir(_dir, _ints, ".int", false);
 		// append the directory path and fill it to the result
 		bool found(false);
+		bool push_back_amplitudefiles(false);
 		for (vector<string>::iterator _it = _ints.begin(); _it != _ints.end(); _it++){
-			if (!missing) // accept all files with the ending .int as not missing input
-				result->push_back(_dir+(*_it));
-			if ((*_it)=="norm.int") // but requirer norm.int as missing file
+			//if (!missing) // accept all files with the ending .int as not missing input
+			//	result->push_back(_dir+(*_it));
+			if ((*_it)=="norm.int"){ // requirer norm.int
 				found = true;
+				result->push_back(_dir+(*_it));
+				push_back_amplitudefiles = true;
+			}
 		}
 		// write out norm.int if search for it was not successful
-		if (missing && !found)
+		if (missing && !found){
 			result->push_back(_dir+"norm.int");
-		if (corresponding_amplitudefiles){
+			push_back_amplitudefiles = true;
+		}
+		if (push_back_amplitudefiles){
 			// retrieve the available amplitude files
 			vector<string> _amps;
 			GetDir(_dir, _amps, ".amp", false);
@@ -618,9 +627,10 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 	}
 	// check now the consistency of this result
 	if (corresponding_amplitudefiles->size() != result->size()){
+		cout << " Error in TrpwaSessionManager::Get_PWA_data_integrals: consistency of result not ensured! " << endl;
+		cout << corresponding_amplitudefiles->size() << " does not fit " << result->size() << endl;
 		corresponding_amplitudefiles->clear();
 		result->clear();
-		cout << " Error in TrpwaSessionManager::Get_PWA_data_integrals: consistency of result not ensured! " << endl;
 	} else {
 		vector< vector<string> >::iterator it_pair = corresponding_amplitudefiles->begin();
 		for (vector<string>::iterator it = result->begin(); it != result->end(); it++){
@@ -1159,7 +1169,7 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 	integralfile >> dimensionx >> dimensiony;
 
 	cout << norm_file << ": " << endl;
-	cout << " namps " << namps << " nevents " << endl;
+	cout << " namps " << namps << " nevents " << nevents << endl;
 
 	if (namps != (int) corresponding_amplitudefiles.size()){
 		cout << " Inonsystency of " << norm_file << " dimension is wrong " << endl;
@@ -1169,6 +1179,39 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 	}
 	if (namps != dimensionx || namps != dimensiony){
 		cout << " Warning in TrpwaSessionManager::Is_valid_norm_integral: " << norm_file << " dimensions do not fit the number of amplitudes." << endl;
+	}
+
+	// search the matrix elements
+	complex<double> matrix_element;
+
+	// store broken col/row entries
+	vector<int> broken_entries;
+
+	// count 0 entries in cols and rows
+	vector<int> zero_entries_x(dimensionx);
+	vector<int> zero_entries_y(dimensiony);
+
+	// read the matrix
+	for (int i = 0; i < dimensionx; i++){
+		for (int j = 0; j < dimensiony; j++){
+			integralfile >> matrix_element;
+			if (!integralfile.good()){
+				cout << " Inconsistency of " << norm_file << " found: " << endl;
+				cout << " matrix is incomplete! " << endl;
+				return false;
+			}
+			// no 0 entries in the diagonal allowed!
+			if (matrix_element.real() == 0. && matrix_element.imag() == 0.){
+				if (i == j){
+					cout << " Inconsistency of " << norm_file << " found: " << endl;
+					cout << " 0 entry in diagonal element! row " << i << " col " << j << " " << matrix_element << endl;
+					result = false;
+					broken_entries.push_back(i); // store the broken entry for identification afterwards
+				}
+				zero_entries_x[i]++;
+				zero_entries_y[i]++;
+			}
+		}
 	}
 
 	// search for amplitudes in the file
@@ -1182,7 +1225,16 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 		string amplitudename(line);
 		if (amplitudename.find(".amp")!=string::npos){
 			int pos_amp = amplitudename.find(".amp");
-			// remove the numbers behind the .amp name
+			// get the numbers behind the .amp name
+			string snumber;
+			if (pos_amp+5 < (int) amplitudename.size()){
+				snumber = amplitudename.substr(pos_amp+5, amplitudename.size()-pos_amp);
+			} else {
+				cout << " Not a valid amplitude position! " << endl;
+				result = false;
+				snumber = "-1";
+			}
+			int number = atoi(snumber.c_str());
 			// remove the .amp ending
 			amplitudename.erase(pos_amp, amplitudename.size()-pos_amp);
 			// find the slash, if not available -> take the first position of the string
@@ -1190,8 +1242,23 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 			if (slashpos != (int) string::npos){
 				amplitudename.erase(0, slashpos+1);
 			}
-			//cout << " filtered: " << amplitudename << endl;
+			//cout << " filtered: " << amplitudename << " pos " << snumber << endl;
 			integrated_ampslist.push_back(amplitudename);
+			// give amplitudes corresponding to entries with proplems
+			for (vector<int>::iterator it = broken_entries.begin(); it != broken_entries.end(); it++){
+				if (number == (*it)){
+					cout << " wave with broken entries: " << amplitudename << endl;
+					break;
+				}
+			}
+			if (zero_entries_x[number] == dimensionx){
+				cout << " all x entries are 0! for " << amplitudename << endl;
+				result = false;
+			}
+			if (zero_entries_y[number] == dimensiony){
+				cout << " all y entries are 0! for " << amplitudename << endl;
+				result = false;
+			}
 		}
 	}
 
@@ -1215,7 +1282,7 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 	}
 
 	if (ampslist.size() == integrated_ampslist.size() && AreListsEqual(ampslist, integrated_ampslist)){
-		result = true;
+		//result = true;
 	} else {
 		result = false;
 		cout << " Inconsistency of " << norm_file << " processed amplitudes do not match! " << endl;
