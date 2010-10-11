@@ -581,7 +581,15 @@ TPWALikelihood<T>::reorderedIntegralMatrix(integral& integral) const
 {
   // get original matrix and list of wave names
   const matrix<complex<double> > intMatrix    = integral.mat();
-  const list<string>             intWaveNames = integral.files();
+  /*const*/ list<string>             intWaveNames = integral.files();
+  // "int" saves also filenames with path, this must be treated here
+  for (list<string>::iterator it = intWaveNames.begin(); it!= intWaveNames.end(); it++){
+	  // find the slash, if not available -> take the first position of the string
+	  int slashpos = (*it).rfind('/');
+	  if (slashpos != (int) string::npos){
+		  (*it).erase(0, slashpos+1);
+	  }
+  }
   // build index lookup-table
   vector<unsigned int> indexLookUp;  // lookup table: wave index -> index in normalization integral
   indexLookUp.resize(_nmbWaves, 0);
