@@ -23,7 +23,7 @@
 #include <TGFileDialog.h>
 #include <cstdlib>
 
-static const int nsteps = 11;
+static const int nsteps = 12;
 static const string step_titles[nsteps] = {
 		"      set up workspace        ",
 		" fill flat phase space events ",
@@ -32,6 +32,7 @@ static const string step_titles[nsteps] = {
 		"   filter MC data into bins   ",
 		"     generate PWA keyfiles    ",
 		"   calculate PWA amplitudes   ",
+		"   integrate PWA amplitudes   ",
 		"  specify amplitudes for fit  ",
 		"       fit partial waves      ",
 		"         show results         ",
@@ -46,6 +47,7 @@ static const string func_calls[nsteps] = {
 		"Dummy()",
 		"GenKeys()",
 		"CalcAmps()",
+		"IntAmps()",
 		"SelectWaves()",
 		"FitPartialWaves()",
 		"ShowFitResults()",
@@ -194,12 +196,16 @@ void TrpwaMainFrame::CheckStatus() {
 				current_session->Check_PWA_MC_acc_data_amplitudes() +
 				current_session->Check_PWA_MC_data_amplitudes()
 				)/3.;
+		step_status[7]=(
+				current_session->Check_PWA_MC_acc_data_integrals()  +
+				current_session->Check_PWA_MC_data_integrals()
+				)/2.;
 
-		step_status[7]=current_session->Check_wave_lists();
-		step_status[8]=current_session->Check_fits();
+		step_status[8]=current_session->Check_wave_lists();
+		step_status[9]=current_session->Check_fits();
 
-		step_status[9]=0.;
 		step_status[10]=0.;
+		step_status[11]=0.;
 	}
 
 	for (int istep = 0; istep < nsteps; istep++){
@@ -441,8 +447,7 @@ void TrpwaMainFrame::GenKeys() {
 		command << "mv *.key " << current_session->Get_key_files_dir() << "/ ;";
 		command << "cd -;";
 		//cout << command.str();
-		if (not system(command.str().c_str()))
-			throw;
+		system(command.str().c_str());
 		Update();
 	}
 	//system();
@@ -451,9 +456,11 @@ void TrpwaMainFrame::GenKeys() {
 void TrpwaMainFrame::CalcAmps(){
 	if (current_session){
 		cout << " sending jobs for amplitude calculation " << endl;
-		vector<string>& amp_real_miss  = current_session->Get_PWA_real_data_amplitudes(true);
+		vector<string>  evt_real_miss;
+		vector<string>  key_real_miss;
+		vector<string>& amp_real_miss  = current_session->Get_PWA_real_data_amplitudes(true, &evt_real_miss, &key_real_miss);
 		//vector<string>& amp_real_avail = current_session->Get_PWA_real_data_amplitudes(false);
-		cout << endl << " available amplitudes: " << endl;
+		//cout << endl << " available amplitudes: " << endl;
 		/*
 		for (unsigned int i = 0; i < amp_real_avail.size(); i++){
 			cout << amp_real_avail[i] << endl;
@@ -462,8 +469,9 @@ void TrpwaMainFrame::CalcAmps(){
 		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
 			cout << amp_real_miss[i] << endl;
 		}*/
-
-		vector<string>& amp_mc_miss  = current_session->Get_PWA_MC_data_amplitudes(true);
+		vector<string>  evt_mc_miss;
+		vector<string>  key_mc_miss;
+		vector<string>& amp_mc_miss  = current_session->Get_PWA_MC_data_amplitudes(true, &evt_mc_miss, &key_mc_miss);
 		//vector<string>& amp_mc_avail = current_session->Get_PWA_MC_data_amplitudes(false);
 		/*
 		cout << endl << " available amplitudes: " << endl;
@@ -474,8 +482,9 @@ void TrpwaMainFrame::CalcAmps(){
 		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
 			cout << amp_mc_miss[i] << endl;
 		}*/
-
-		vector<string>& amp_mc_acc_miss  = current_session->Get_PWA_MC_acc_data_amplitudes(true);
+		vector<string>  evt_mc_acc_miss;
+		vector<string>  key_mc_acc_miss;
+		vector<string>& amp_mc_acc_miss  = current_session->Get_PWA_MC_acc_data_amplitudes(true, &evt_mc_acc_miss, &key_mc_acc_miss);
 		//vector<string>& amp_mc_acc_avail = current_session->Get_PWA_MC_acc_data_amplitudes(false);
 		/*
 		cout << endl << " available amplitudes: " << endl;
@@ -484,12 +493,80 @@ void TrpwaMainFrame::CalcAmps(){
 		}
 		cout << endl << " missing amplitudes: " << endl;
 		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
-			cout << amp_mc_acc_miss[i] << endl;
+			cout << amp_mc_acc_miss[i] << " " << evt_mc_acc_miss[i] << endl;
 		}*/
 
 		cout << " missing " <<  amp_real_miss.size() << " real data amplitudes " << endl;
 		cout << " missing " <<  amp_mc_miss.size() << " real mc data amplitudes " << endl;
 		cout << " missing " <<  amp_mc_acc_miss.size() << " real mc acc data amplitudes " << endl;
+
+		cout << " calculating missing amplitudes ... " << endl;
+
+		string pdg_table = current_session->Get_pdg_table();
+
+		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;";
+			cout << " calculating " << amp_real_miss[i] << endl;
+			system(command.str().c_str());
+		}
+
+		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_mc_miss[i] <<" || cat "<< evt_mc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_miss[i]<<" > "<< amp_mc_miss[i]<< " ;";
+			cout << " calculating " << amp_mc_miss[i] << endl;
+			system(command.str().c_str());
+		}
+
+		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_mc_acc_miss[i] <<" || cat "<< evt_mc_acc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_acc_miss[i]<<" > "<< amp_mc_acc_miss[i]<< " ;";
+			cout << " calculating " << amp_mc_acc_miss[i] << endl;
+			system(command.str().c_str());
+		}
+		cout << " done " << endl;
+	}
+}
+
+void TrpwaMainFrame::IntAmps(){
+	if (current_session){
+		cout << " sending jobs for amplitude integration " << endl;
+		vector< vector<string> > amp_mc_avail;
+		vector< vector<string> > amp_mc_acc_avail;
+		vector<string>& int_mc_miss = current_session->Get_PWA_MC_data_integrals(true, &amp_mc_avail);
+		vector<string>& int_mc_acc_miss = current_session->Get_PWA_MC_acc_data_integrals(true, &amp_mc_acc_avail);
+
+		cout << " available " <<  int_mc_miss.size() << " real mc data amplitudes " << endl;
+		cout << " available " <<  int_mc_acc_miss.size() << " real mc acc data amplitudes " << endl;
+
+		cout << " integrating available amplitudes ... " << endl;
+
+		for (unsigned int i = 0; i < int_mc_miss.size(); i++){
+			stringstream command;
+			command << "int ";
+			cout << " integrating " << int_mc_miss[i] << endl;// << " with " << endl;
+			for (unsigned int j = 0; j < amp_mc_avail[i].size(); j++){
+				command << amp_mc_avail[i][j] << " ";
+				//cout << amp_mc_avail[i][j] << endl;
+			}
+			command << " > " << int_mc_miss[i];
+			//cout << command.str() << endl;
+			system(command.str().c_str());
+		}
+
+		for (unsigned int i = 0; i < int_mc_acc_miss.size(); i++){
+			stringstream command;
+			command << "int ";
+			cout << " integrating " << int_mc_acc_miss[i] << endl;// << " with " << endl;
+			for (unsigned int j = 0; j < amp_mc_acc_avail[i].size(); j++){
+				command << amp_mc_acc_avail[i][j] << " ";
+				//cout << amp_mc_acc_avail[i][j] << endl;
+			}
+			command << " > " << int_mc_acc_miss[i];
+			//cout << command.str() << endl;
+			system(command.str().c_str());
+		}
+		cout << " done " << endl;
 	}
 }
 

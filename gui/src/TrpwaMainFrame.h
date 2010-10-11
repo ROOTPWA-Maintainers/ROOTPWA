@@ -83,6 +83,8 @@ public:
 
 	void CalcAmps(); // send jobs to calculate amplitudes
 
+	void IntAmps(); // send jobs to integrate available amplitudes
+
 	void Dummy(); // will be called for every function not implemented yet
 
 	// call the root script for class definition
