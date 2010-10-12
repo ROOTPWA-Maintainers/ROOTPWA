@@ -165,8 +165,8 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 		batch_script << "#PBS -V" <<endl;
 		batch_script << "#PBS -l nodes=1:x86_64" << endl;
 		batch_script << endl;
-		batch_script << "export PATH=\\" << "$PBS_O_PATH" << endl;
-		batch_script << "cd \\" << "$PBS_O_WORKDIR" << endl;
+		batch_script << "export PATH=$PBS_O_PATH" << endl;
+		batch_script << "cd $PBS_O_WORKDIR" << endl;
 	}
 	batch_script << command << endl;
 	batch_script << " echo \"removing " << batch_script_name.str() << "\"" << endl;
