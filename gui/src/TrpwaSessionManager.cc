@@ -45,11 +45,12 @@ TrpwaSessionManager::TrpwaSessionManager(){
 	_n_bins   = 0;
 	_n_events_flat_phasespace = 0;
 	_config_file = "";
+	jobManager = TrpwaJobManager::Instance();
 	Set_ROOTPWA_dir();
 }
 
 TrpwaSessionManager::~TrpwaSessionManager(){
-	;
+
 }
 
 bool TrpwaSessionManager::Set_Config_File(string config_file){

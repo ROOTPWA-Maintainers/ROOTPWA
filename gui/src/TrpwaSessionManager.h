@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "TrpwaJobManager.h"
 
 using namespace std;
 
@@ -380,7 +381,9 @@ private:
 	TBinMap _bins; // map with settings to each bin
 
 	vector<string> _keyfiles; // key files without the extension determined by accessing the keyfile folder
-	int _n_keyfiles; // will be determined by accessing the keyfile folder
+	int _n_keyfiles; // will be determined by accessing the key file folder
+
+	TrpwaJobManager* jobManager; // to send commands performing analysis on different farm types
 
 	// true if both lists are equal
 	bool AreListsEqual(const vector<string>& list1, const vector<string>& list2);

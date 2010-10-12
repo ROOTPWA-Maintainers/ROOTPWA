@@ -20,6 +20,7 @@
 #include <fstream>
 #include <cmath>
 #include "TrpwaSessionManager.h"
+#include "TrpwaJobManager.h"
 #include <TGFileDialog.h>
 #include <cstdlib>
 
@@ -142,11 +143,15 @@ void TrpwaMainFrame::Build(){
 		statusbar->ShowPos(true);
 		statusbar->SetBarColor("red");
 		TGButtonGroup* buttongroup = new TGButtonGroup(frame_session," batch farm type ",kHorizontalFrame);
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
 		for (int ibatch = 0; ibatch < nbatches; ibatch++){
 			//if (steps_batchimplemented[istep][ibatch]){
 				TGRadioButton* radiobutton = new TGRadioButton(buttongroup, new TGHotString(step_batchnames[ibatch].c_str()));
-				if (ibatch == 0) radiobutton->SetState(kButtonDown);
-				if (!steps_batchimplemented[istep][ibatch])radiobutton->SetState(kButtonDisabled);
+				if (ibatch == 0) {
+					radiobutton->SetState(kButtonDown);
+				} else {
+					if (jobmanager->GetFarmType() != step_batchnames[ibatch]/*!steps_batchimplemented[istep][ibatch]*/)radiobutton->SetState(kButtonDisabled);
+				}
 			//}
 		}
 		frame_session->AddFrame(buttongroup);
