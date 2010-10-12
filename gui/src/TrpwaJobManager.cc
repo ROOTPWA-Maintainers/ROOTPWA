@@ -159,7 +159,7 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 	if (_available_farmtype == arrfarmtypes[3]){  // case mainz blaster
 		batch_script << "#!/bin/bash" << endl;
 		batch_script << "#" << endl;
-		batch_script << "#PBS -N calcampJob" << endl;
+		batch_script << "#PBS -N "<< jobname << endl;
 		batch_script << "#PBS -j oe" << endl;
 		batch_script << "#PBS -o "<< batch_script_name.str() <<".out" << endl;
 		batch_script << "#PBS -V" <<endl;

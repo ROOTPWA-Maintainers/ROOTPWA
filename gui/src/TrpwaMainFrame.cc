@@ -529,26 +529,55 @@ void TrpwaMainFrame::CalcAmps(){
 
 		string pdg_table = current_session->Get_pdg_table();
 
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		stringstream batchcommand;
+
 		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
 			stringstream command;
-			command << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;";
+			command << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;" << '\n';
 			cout << " calculating " << amp_real_miss[i] << endl;
-			cout << system(command.str().c_str()) << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_real_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_data_amp");
+				batchcommand.str("");
+			}
 		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_data_amp");
+		//batchcommand.str("");
 
 		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
 			stringstream command;
-			command << "test -s "<< amp_mc_miss[i] <<" || cat "<< evt_mc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_miss[i]<<" > "<< amp_mc_miss[i]<< " ;";
+			command << "test -s "<< amp_mc_miss[i] <<" || cat "<< evt_mc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_miss[i]<<" > "<< amp_mc_miss[i]<< " ;" << '\n';
 			cout << " calculating " << amp_mc_miss[i] << endl;
-			cout << system(command.str().c_str()) << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_mc_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_mc_amp");
+				batchcommand.str("");
+			}
 		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_mc_amp");
+		//batchcommand.str("");
 
 		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
 			stringstream command;
-			command << "test -s "<< amp_mc_acc_miss[i] <<" || cat "<< evt_mc_acc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_acc_miss[i]<<" > "<< amp_mc_acc_miss[i]<< " ;";
+			command << "test -s "<< amp_mc_acc_miss[i] <<" || cat "<< evt_mc_acc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_acc_miss[i]<<" > "<< amp_mc_acc_miss[i]<< " ;" << '\n';
 			cout << " calculating " << amp_mc_acc_miss[i] << endl;
-			cout << system(command.str().c_str()) << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_mc_acc_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_mc_acc_amp");
+				batchcommand.str("");
+			}
 		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_mc_acc_amp");
+		//batchcommand.str("");
+
 		cout << " done " << endl;
 	}
 }
@@ -566,7 +595,10 @@ void TrpwaMainFrame::IntAmps(){
 
 		cout << " integrating available amplitudes ... " << endl;
 
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
 		for (unsigned int i = 0; i < int_mc_miss.size(); i++){
+			if (amp_mc_avail[i].size() == 0) continue;
 			stringstream command;
 			command << "int ";
 			cout << " integrating " << int_mc_miss[i] << endl;// << " with " << endl;
@@ -576,10 +608,12 @@ void TrpwaMainFrame::IntAmps(){
 			}
 			command << " > " << int_mc_miss[i];
 			//cout << command.str() << endl;
-			cout << system(command.str().c_str()) << endl;
+			jobmanager->SendJob(command.str(), "calintegral");
+			//cout << system(command.str().c_str()) << endl;
 		}
 
 		for (unsigned int i = 0; i < int_mc_acc_miss.size(); i++){
+			if (amp_mc_acc_avail[i].size() == 0) continue;
 			stringstream command;
 			command << "int ";
 			cout << " integrating " << int_mc_acc_miss[i] << endl;// << " with " << endl;
@@ -589,7 +623,8 @@ void TrpwaMainFrame::IntAmps(){
 			}
 			command << " > " << int_mc_acc_miss[i];
 			//cout << command.str() << endl;
-			cout << system(command.str().c_str()) << endl;
+			jobmanager->SendJob(command.str(), "calintegral");
+			//cout << system(command.str().c_str()) << endl;
 		}
 		cout << " done " << endl;
 	}
