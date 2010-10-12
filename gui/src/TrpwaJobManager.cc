@@ -18,6 +18,12 @@ TrpwaJobManager* TrpwaJobManager::_pinstance = NULL;
 
 TrpwaJobManager::TrpwaJobManager(){
 	_available_farmtype = arrfarmtypes[0]; // set to local
+	cout << system("echo $(pwd)/rootpwa_gui_scripts > /tmp/_pwd") << endl;
+	ifstream _filestream("/tmp/_pwd");
+	_filestream >> _temp_space;
+	_filestream.close();
+	cout << system(("mkdir "+_temp_space).c_str()) << endl;
+	cout << " using " << _temp_space << " as farm script submission " << endl;
 	CheckFarmType();
 }
 
@@ -127,5 +133,52 @@ void TrpwaJobManager::CheckFarmType(){
 			}
 		}
 	}*/
+	//_available_farmtype = arrfarmtypes[3]; // test purposes
 	cout << " farmtype is set to " << _available_farmtype << endl;
+}
+
+bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
+	// make a unique label by time and a counter
+	time_t rawtime;
+	time ( &rawtime );
+	string stime = ctime (&rawtime);
+	// replace empty spaces in time string by -
+	for (unsigned int i = 0; i < stime.size(); i++){
+		if (stime[i] == ' ' || stime[i] == '\n'){
+			stime[i]='_';
+		}
+		//cout << stime[i];
+	}
+	//cout << endl;
+	static int jobcounter(0);
+	jobcounter++;
+	stringstream batch_script_name;
+	batch_script_name << _temp_space << "/" << jobname << "_" << stime << jobcounter << ".sh";
+	ofstream batch_script(batch_script_name.str().c_str());
+	if (!batch_script) return false;
+	if (_available_farmtype == arrfarmtypes[3]){  // case mainz blaster
+		batch_script << "#!/bin/bash" << endl;
+		batch_script << "#" << endl;
+		batch_script << "#PBS -N calcampJob" << endl;
+		batch_script << "#PBS -j oe" << endl;
+		batch_script << "#PBS -o "<< batch_script_name.str() <<".out" << endl;
+		batch_script << "#PBS -V" <<endl;
+		batch_script << "#PBS -l nodes=1:x86_64" << endl;
+		batch_script << endl;
+		batch_script << "export PATH=\\" << "$PBS_O_PATH" << endl;
+		batch_script << "cd \\" << "$PBS_O_WORKDIR" << endl;
+	}
+	batch_script << command << endl;
+	batch_script << " echo \"removing " << batch_script_name.str() << "\"" << endl;
+	batch_script << "rm " << batch_script_name.str();
+	batch_script.close();
+
+	// send the jobs
+	if (_available_farmtype == arrfarmtypes[0]){  // case local
+		if (system(("source "+batch_script_name.str()).c_str()) == 0) return true; else return false;
+	}
+	if (_available_farmtype == arrfarmtypes[3]){  // case mainz blaster
+		if (system(("qsub "+batch_script_name.str()).c_str()) == 0) return true; else return false;
+	}
+	return false;
 }

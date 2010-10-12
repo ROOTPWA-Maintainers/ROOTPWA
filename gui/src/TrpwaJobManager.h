@@ -26,7 +26,7 @@ static const string arrfarmtypes [] = {
 		"gridka ",
 		"mainz ",
 		"munich "
-};
+}; // warning, do only add at the end and do not change the order
 
 static const set<string> farmtypes(arrfarmtypes, arrfarmtypes+5);
 
@@ -39,8 +39,17 @@ public:
 	// (local is always available)
 	string GetFarmType(){return _available_farmtype;};
 
+	// send a job to the farm with the command specified
+	// in the command string
+	// job is an optional job name that will be used for the submitted script
+	// the script will be erased after execution
+	// duration is the optional job queue length
+	// please use always filenames with full path!
+	bool SendJob(string command, string jobname = "job", int duration = 60);
+
 private:
 	string _available_farmtype;
+	string _temp_space; // path to store scripts to (default is $(pwd)/rootpwa_gui_scripts)
 	static TrpwaJobManager* _pinstance;
 
 	// farm type is checked on creation

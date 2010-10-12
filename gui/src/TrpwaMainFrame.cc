@@ -142,6 +142,7 @@ void TrpwaMainFrame::Build(){
 				kLHintsExpandX,1,1,1,1));
 		statusbar->ShowPos(true);
 		statusbar->SetBarColor("red");
+		/*
 		TGButtonGroup* buttongroup = new TGButtonGroup(frame_session," batch farm type ",kHorizontalFrame);
 		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
 		for (int ibatch = 0; ibatch < nbatches; ibatch++){
@@ -150,11 +151,11 @@ void TrpwaMainFrame::Build(){
 				if (ibatch == 0) {
 					radiobutton->SetState(kButtonDown);
 				} else {
-					if (jobmanager->GetFarmType() != step_batchnames[ibatch]/*!steps_batchimplemented[istep][ibatch]*/)radiobutton->SetState(kButtonDisabled);
+					if (jobmanager->GetFarmType() != step_batchnames[ibatch])radiobutton->SetState(kButtonDisabled);
 				}
 			//}
 		}
-		frame_session->AddFrame(buttongroup);
+		frame_session->AddFrame(buttongroup);*/
 		steplist->AddFrame(frame_session, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
 		//buttongroup->Show();
@@ -371,7 +372,25 @@ void TrpwaMainFrame::FitPartialWaves(){
 			command << "mv " << fitresultfiles[i] << " " << fitresultfiles[i] << ".previous" << endl;
 			cout << system(command.str().c_str()) << endl;
 		}
+		// send one job per bin
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
 
+		for (int i = 0; i < current_session->Get_n_bins(); i++){
+			string executedir;
+			string fitcommand = current_session->GetFitCommand(i, executedir);
+			stringstream command;
+			command << "cd " << executedir << ";\n";
+			command << fitcommand << ";\n";
+			cout << " sending fit job for bin " << i << endl;
+			if (!jobmanager->SendJob(command.str(), "fit")){
+				cout << " failed!" << endl;
+			} else {
+				cout << " done " << endl;
+			}
+		}
+
+
+/*
 		// write a script to submit it
 		ofstream script("/tmp/_fitpartialwaves.sh");
 		if (script.good()){
@@ -389,6 +408,7 @@ void TrpwaMainFrame::FitPartialWaves(){
 		command << "source /tmp/_fitpartialwaves.sh";
 
 		cout << system(command.str().c_str()) << endl;
+		*/
 	}
 }
 
