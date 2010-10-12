@@ -452,7 +452,7 @@ void TrpwaMainFrame::GenKeys() {
 		command << "mv *.key " << current_session->Get_key_files_dir() << "/ ;";
 		command << "cd -;";
 		//cout << command.str();
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 		Update();
 	}
 	//system();
@@ -513,21 +513,21 @@ void TrpwaMainFrame::CalcAmps(){
 			stringstream command;
 			command << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;";
 			cout << " calculating " << amp_real_miss[i] << endl;
-			system(command.str().c_str());
+			cout << system(command.str().c_str()) << endl;
 		}
 
 		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
 			stringstream command;
 			command << "test -s "<< amp_mc_miss[i] <<" || cat "<< evt_mc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_miss[i]<<" > "<< amp_mc_miss[i]<< " ;";
 			cout << " calculating " << amp_mc_miss[i] << endl;
-			system(command.str().c_str());
+			cout << system(command.str().c_str()) << endl;
 		}
 
 		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
 			stringstream command;
 			command << "test -s "<< amp_mc_acc_miss[i] <<" || cat "<< evt_mc_acc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_acc_miss[i]<<" > "<< amp_mc_acc_miss[i]<< " ;";
 			cout << " calculating " << amp_mc_acc_miss[i] << endl;
-			system(command.str().c_str());
+			cout << system(command.str().c_str()) << endl;
 		}
 		cout << " done " << endl;
 	}
@@ -556,7 +556,7 @@ void TrpwaMainFrame::IntAmps(){
 			}
 			command << " > " << int_mc_miss[i];
 			//cout << command.str() << endl;
-			system(command.str().c_str());
+			cout << system(command.str().c_str()) << endl;
 		}
 
 		for (unsigned int i = 0; i < int_mc_acc_miss.size(); i++){
@@ -569,7 +569,7 @@ void TrpwaMainFrame::IntAmps(){
 			}
 			command << " > " << int_mc_acc_miss[i];
 			//cout << command.str() << endl;
-			system(command.str().c_str());
+			cout << system(command.str().c_str()) << endl;
 		}
 		cout << " done " << endl;
 	}

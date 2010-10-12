@@ -41,7 +41,7 @@ void TrpwaJobManager::CheckFarmType(){
 		// search for "kph" after executing qnodes request
 		stringstream command;
 		command << "qnodes | grep kph > /tmp/_blaster_test;";
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 		ifstream testfile("/tmp/_blaster_test");
 		if (testfile){
 			while (1) {
@@ -64,7 +64,7 @@ void TrpwaJobManager::CheckFarmType(){
 		// not tested yet!
 		stringstream command;
 		command << "bqueues | grep atlas > /tmp/_lxplus_test;";
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 		ifstream testfile("/tmp/_lxplus_test");
 		if (testfile){
 			while (1) {
@@ -87,7 +87,7 @@ void TrpwaJobManager::CheckFarmType(){
 		// not tested yet!
 		stringstream command;
 		command << "bqstat | grep atlas > /tmp/_gridka_test;";
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 		ifstream testfile("/tmp/_gridka_test");
 		if (testfile){
 			while (1) {
@@ -113,7 +113,7 @@ void TrpwaJobManager::CheckFarmType(){
 		// not tested yet!
 		stringstream command;
 		command << "bqstat | grep atlas > /tmp/_gridka_test;";
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 		ifstream testfile("/tmp/_gridka_test");
 		if (testfile){
 			while (1) {
