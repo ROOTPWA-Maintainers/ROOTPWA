@@ -138,6 +138,7 @@ void TrpwaJobManager::CheckFarmType(){
 }
 
 bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
+  if (command == "") return false;
 	// make a unique label by time and a counter
 	time_t rawtime;
 	time ( &rawtime );
@@ -170,7 +171,7 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 	}
 	batch_script << command << endl;
 	batch_script << " echo \"removing " << batch_script_name.str() << "\"" << endl;
-	batch_script << "rm " << batch_script_name.str();
+	//batch_script << "rm " << batch_script_name.str();
 	batch_script.close();
 
 	// send the jobs

@@ -590,8 +590,8 @@ void TrpwaMainFrame::IntAmps(){
 		vector<string>& int_mc_miss = current_session->Get_PWA_MC_data_integrals(true, &amp_mc_avail);
 		vector<string>& int_mc_acc_miss = current_session->Get_PWA_MC_acc_data_integrals(true, &amp_mc_acc_avail);
 
-		cout << " available " <<  int_mc_miss.size() << " real mc data amplitudes " << endl;
-		cout << " available " <<  int_mc_acc_miss.size() << " real mc acc data amplitudes " << endl;
+		cout << " available " <<  int_mc_miss.size() << " real mc data integrals " << endl;
+		cout << " available " <<  int_mc_acc_miss.size() << " real mc acc data integrals " << endl;
 
 		cout << " integrating available amplitudes ... " << endl;
 
@@ -609,7 +609,6 @@ void TrpwaMainFrame::IntAmps(){
 			command << " > " << int_mc_miss[i];
 			//cout << command.str() << endl;
 			jobmanager->SendJob(command.str(), "calintegral");
-			//cout << system(command.str().c_str()) << endl;
 		}
 
 		for (unsigned int i = 0; i < int_mc_acc_miss.size(); i++){
@@ -623,8 +622,7 @@ void TrpwaMainFrame::IntAmps(){
 			}
 			command << " > " << int_mc_acc_miss[i];
 			//cout << command.str() << endl;
-			jobmanager->SendJob(command.str(), "calintegral");
-			//cout << system(command.str().c_str()) << endl;
+			jobmanager->SendJob(command.str(), "calcintegral");
 		}
 		cout << " done " << endl;
 	}

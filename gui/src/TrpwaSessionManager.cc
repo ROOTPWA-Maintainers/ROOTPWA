@@ -579,6 +579,51 @@ float TrpwaSessionManager::Check_PWA_keyfiles(){
 	return result;
 }
 
+string TrpwaSessionManager::Get_PWA_data_integral(int bin, string folder, bool missing,
+	vector<string>* corresponding_amplitudefiles){
+	string result = "";
+	if (corresponding_amplitudefiles) corresponding_amplitudefiles->clear();	
+	if (bin < 0 || bin >= _n_bins){
+			return result;
+	}
+	int ibin(0);
+	//cout << " bin " << bin << endl;
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); it++){
+		if (ibin != bin){
+			ibin++;			
+			continue;
+		}
+		string _dir = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + folder + "/";
+		//cout << " searching in " << _dir << endl;
+		vector<string> _ints;
+		GetDir(_dir, _ints, ".int", false);
+		// append the directory path and fill it to the result
+		bool found(false);
+		for (vector<string>::iterator _it = _ints.begin(); _it != _ints.end(); _it++){
+			//if (!missing) // accept all files with the ending .int as not missing input
+			//	result->push_back(_dir+(*_it));
+			if ((*_it)=="norm.int"){ // requirer norm.int
+				found = true;
+			}
+		}
+		// write out norm.int if search for it was not successful
+		if ((missing && !found) || (!missing && found)){
+			result = _dir+"norm.int";
+			if (corresponding_amplitudefiles){
+				// retrieve the available amplitude files
+				GetDir(_dir, (*corresponding_amplitudefiles), ".amp", false);
+				// add the full path to it
+				for (vector<string>::iterator _itamps = corresponding_amplitudefiles->begin(); _itamps != corresponding_amplitudefiles->end(); _itamps++){
+					(*_itamps) = _dir+(*_itamps);
+				}
+			}
+		}
+		break;
+	}	
+	//if (result=="") cout << " found " << endl; else cout << " not found " << endl;
+	return result;
+}
+
 vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool missing,
 		vector < vector<string> >* corresponding_amplitudefiles){
 	vector<string>* result = new vector<string>();
@@ -593,6 +638,15 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 	}
 	cout << " searching for integral files in "<< folder <<" folders " << endl;
 	if ( _n_bins <= 0 ) return *result;
+	for (int ibin = 0; ibin < _n_bins; ibin++){
+		vector<string> _corresponding_amplitudefiles;	
+		string integralfile = Get_PWA_data_integral(ibin, folder, missing, &_corresponding_amplitudefiles);
+		if (integralfile != ""){
+			result->push_back(integralfile);
+			corresponding_amplitudefiles->push_back(_corresponding_amplitudefiles);
+		}
+	}
+/*
 	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
 		string _dir = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + folder + "/";
 		vector<string> _ints;
@@ -626,7 +680,9 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 			corresponding_amplitudefiles->push_back(_amps);
 		}
 	}
+*/
 	// check now the consistency of this result
+	cout << " integrals before check " << result->size() << " missing " << missing << endl;
 	if (corresponding_amplitudefiles->size() != result->size()){
 		cout << " Error in TrpwaSessionManager::Get_PWA_data_integrals: consistency of result not ensured! " << endl;
 		cout << corresponding_amplitudefiles->size() << " does not fit " << result->size() << endl;
@@ -634,13 +690,18 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 		result->clear();
 	} else {
 		vector< vector<string> >::iterator it_pair = corresponding_amplitudefiles->begin();
-		for (vector<string>::iterator it = result->begin(); it != result->end(); it++){
-			if (!Is_valid_norm_integral((*it), (*it_pair))){
+		for (vector<string>::iterator it = result->begin(); it != result->end(); ++it){
+			if (!missing&&!Is_valid_norm_integral((*it), (*it_pair))){
 				result->erase(it);
 				corresponding_amplitudefiles->erase(it_pair);
+				it--;
+				it_pair--;
 			}
+			it_pair++;
 		}
 	}
+	cout << " integrals after check " << result->size() << " missing " << missing << endl;
+	if (corresponding_amplitudefiles->size() != result->size()){ cout << " noooooooo ! " << endl;}
 	if (delete_corresponding_ampsfiles) {
 		delete corresponding_amplitudefiles;
 		corresponding_amplitudefiles = NULL;
@@ -1449,4 +1510,3 @@ void TrpwaSessionManager::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P,
 	}
 	cout << endl;
 }
-

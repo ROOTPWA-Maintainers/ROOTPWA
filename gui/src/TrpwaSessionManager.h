@@ -251,6 +251,10 @@ public:
 	vector<string>& Get_PWA_data_integrals(string folder, bool missing = true,
 			vector < vector<string> >* corresponding_amplitudefiles = NULL);
 
+	// same as above for one bin
+	string Get_PWA_data_integral(int bin, string folder, bool missing = true,
+			vector<string>* corresponding_amplitudefiles = NULL);
+
 	// returns the status [0-1] of calculated integrals
 	// of accepted flat phase space data
 	// (searching for .int files)
