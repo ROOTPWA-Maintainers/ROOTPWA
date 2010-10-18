@@ -87,14 +87,14 @@ options:
   -${SYM_LIST_OPT} <FILE>         path to list with amplitudes to symmetrize
   -${HELP_OPT}                display this help and exit
 EOF
-    echo
-    printPar
-    if [[ "${#}" -eq 1 ]]
-    then
-	exit ${1}
-    else
-	exit 1
-    fi
+echo
+printPar
+if [[ "${#}" -eq 1 ]]
+then
+		exit ${1}
+else
+		exit 1
+fi
 }
 
 
@@ -119,20 +119,20 @@ function runCalcAmplitudes {
     declare -i _COUNT_KEY=0
     for _KEY_FILE in ${KEY_PATTERN}
     do
-	local _KEY_NAME=$(basename ${_KEY_FILE})
-	local _AMP_FILE=${_AMP_DIR}/${_KEY_NAME/.key/.amp}
-	(( ++_COUNT_KEY ))
-	echo
-	echo ">>> info: generating amplitudes for '${_KEY_NAME}' [${_COUNT_KEY}/${_NMB_OF_KEYS}]"
+				local _KEY_NAME=$(basename ${_KEY_FILE})
+				local _AMP_FILE=${_AMP_DIR}/${_KEY_NAME/.key/.amp}
+				(( ++_COUNT_KEY ))
+				echo
+				echo ">>> info: generating amplitudes for '${_KEY_NAME}' [${_COUNT_KEY}/${_NMB_OF_KEYS}]"
         # don't overwrite existing files
-	if [[ -s "${_AMP_FILE}" ]]
-	then
-	    echo "??? warning: file '${_AMP_FILE}' already exists. skipping."
-	else
+				if [[ -s "${_AMP_FILE}" ]]
+				then
+						echo "??? warning: file '${_AMP_FILE}' already exists. skipping."
+				else
             local _CMD="${ROOTPWA_BIN}/calcAmplitudes -k ${_KEY_FILE} -p ${PDG_TABLE} -o ${_AMP_FILE} ${_DT_FILE}"
-	    echo "${_CMD}"
-	    time eval ${_CMD}
-	fi
+						echo "${_CMD}"
+						time eval ${_CMD}
+				fi
     done
 }
 
@@ -143,7 +143,7 @@ function runSymmetrization {
     local _SYM_DIR="${_AMP_DIR}/SYM"
     if [[ ! -d "${_SYM_DIR}" ]]
     then
-	mkdir --parents --verbose "${_SYM_DIR}"
+				mkdir --parents --verbose "${_SYM_DIR}"
     fi
     echo
     echo ">>> info: linking all amplitude files in '${_AMP_DIR}' to '${_SYM_DIR}'"
@@ -151,42 +151,42 @@ function runSymmetrization {
     cd ${_SYM_DIR}
     for _AMP in ${_AMP_DIR}/*.amp
     do
-	ln --symbolic --verbose "../$(basename ${_AMP})"
+				ln --symbolic --verbose "../$(basename ${_AMP})"
     done
     cd ${_CURRENT_DIR}
-    if [[ -s "${_SYM_LIST}" ]]
+    if [[ -n "${_SYM_LIST}" && -s "${_SYM_LIST}" ]]
     then
-	echo
-	echo ">>> info: symmetrizing amplitudes in '${_AMP_DIR}' using '${_SYM_LIST}'"
-	echo "    writing results to '${_SYM_DIR}'"
+				echo
+				echo ">>> info: symmetrizing amplitudes in '${_AMP_DIR}' using '${_SYM_LIST}'"
+				echo "    writing results to '${_SYM_DIR}'"
 	# read list into arrays
-	IFS_OLD=${IFS}
-	IFS=$'\n'
-	local _LINES=( $(cat ${_SYM_LIST}) )
-	IFS=${IFS_OLD}
-	local _AMPS1=()       # array of input amplitude 1 names
-	local _AMPS2=()       # array of input amplitude 2 names
-	local _SYM_AMPS=()    # array of output amplitude names
-	local _PHASES=()      # array of relative phases
-	local _AMP_RATIOS=()  # array of amplitude ratios
-	for (( IDX=0; IDX<"${#_LINES[@]}"; IDX+=5 ))
-	do
-	    _AMPS1=( ${_AMPS1[@]} ${_LINES[IDX]} )
-	    _AMPS2=( ${_AMPS2[@]} ${_LINES[IDX+1]} )
-	    _SYM_AMPS=( ${_SYM_AMPS[@]} ${_LINES[IDX+2]} )
-	    _PHASES=( ${_PHASES[@]} ${_LINES[IDX+3]} )
-	    _AMP_RATIOS=( ${_AMP_RATIOS[@]} ${_LINES[IDX+4]} )
-	done
-	_CURRENT_DIR=$(pwd)
-	cd "${_SYM_DIR}"
-	for (( IDX=0; IDX<"${#_SYM_AMPS[@]}"; IDX++ ))
-	do
-	    local _CMD="${ROOTPWA_BIN}/addamp ${_AMPS1[IDX]} ${_AMPS2[IDX]} ${_SYM_AMPS[IDX]} ${_PHASES[IDX]} ${_AMP_RATIOS[IDX]}"
-	    echo "${_CMD}"
+				IFS_OLD=${IFS}
+				IFS=$'\n'
+				local _LINES=( $(cat ${_SYM_LIST}) )
+				IFS=${IFS_OLD}
+				local _AMPS1=()       # array of input amplitude 1 names
+				local _AMPS2=()       # array of input amplitude 2 names
+				local _SYM_AMPS=()    # array of output amplitude names
+				local _PHASES=()      # array of relative phases
+				local _AMP_RATIOS=()  # array of amplitude ratios
+				for (( IDX=0; IDX<"${#_LINES[@]}"; IDX+=5 ))
+				do
+						_AMPS1=( ${_AMPS1[@]} ${_LINES[IDX]} )
+						_AMPS2=( ${_AMPS2[@]} ${_LINES[IDX+1]} )
+						_SYM_AMPS=( ${_SYM_AMPS[@]} ${_LINES[IDX+2]} )
+						_PHASES=( ${_PHASES[@]} ${_LINES[IDX+3]} )
+						_AMP_RATIOS=( ${_AMP_RATIOS[@]} ${_LINES[IDX+4]} )
+				done
+				_CURRENT_DIR=$(pwd)
+				cd "${_SYM_DIR}"
+				for (( IDX=0; IDX<"${#_SYM_AMPS[@]}"; IDX++ ))
+				do
+						local _CMD="${ROOTPWA_BIN}/addamp ${_AMPS1[IDX]} ${_AMPS2[IDX]} ${_SYM_AMPS[IDX]} ${_PHASES[IDX]} ${_AMP_RATIOS[IDX]}"
+						echo "${_CMD}"
             eval ${_CMD}
-	    rm ${_AMPS1[IDX]} ${_AMPS2[IDX]}
-	done
-	cd ${_CURRENT_DIR}
+						rm ${_AMPS1[IDX]} ${_AMPS2[IDX]}
+				done
+				cd ${_CURRENT_DIR}
     fi
     # deference third argument
     eval "${3}=${_SYM_DIR}"
@@ -254,7 +254,7 @@ then
 fi
 if [[ -z "${SYM_LIST}" ]]
 then
-    SYM_LIST="${PWA_WAVE_LIST%/*}/symmetrize.list"
+    SYM_LIST=""
 fi
 # parse command line options
 while getopts "${KEY_PATTERN_OPT}:${MASS_BINS_DIR_OPT}:${PDG_TABLE_OPT}:${HELP_OPT}" OPTION
@@ -285,9 +285,9 @@ fi
 
 # convert all input paths to absolute paths
 KEY_PATTERN=$(readlink --canonicalize-missing "${KEY_PATTERN}")
-MASS_BINS_DIR=$(readlink --canonicalize-missing ${MASS_BINS_DIR})
-PDG_TABLE=$(readlink --canonicalize-missing ${PDG_TABLE})
-SYM_LIST=$(readlink --canonicalize-missing ${SYM_LIST})
+MASS_BINS_DIR=$(readlink --canonicalize-missing "${MASS_BINS_DIR}")
+PDG_TABLE=$(readlink --canonicalize-missing "${PDG_TABLE}")
+SYM_LIST=$(readlink --canonicalize-missing "${SYM_LIST}")
 
 
 echo ">>> info: ${0} started on $(date)"

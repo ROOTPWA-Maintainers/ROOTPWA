@@ -152,10 +152,11 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const complex<double> bw = vertex->massDepAmplitude();
 
 	// calculate normalization factor
-	const int    J    = parent->J();
-	const double norm = normFactor(J, _debug);
+	const double norm = sqrt(fourPi);  // this factor comes from the fact that the (PWA2000)
+																		 // helicity amplitude lacks a factor of 1 / sqrt(4 pi)
 
 	// sum over all possible spin projections of L
+	const int       J     = parent->J();
 	const int       M     = parent->spinProj();
 	const int       P     = parent->P();
 	const int       refl  = parent->reflectivity();
@@ -183,7 +184,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 		if (LSClebsch == 0)
 			continue;
 		// multiply spherical harmonic
-		amp += LSClebsch * sphericalHarmonicNoNorm<complex<double> >(L, mL, theta, phi, _debug);
+		amp += LSClebsch * sphericalHarmonic<complex<double> >(L, mL, theta, phi, _debug);
 	}
 
 	// calculate decay amplitude

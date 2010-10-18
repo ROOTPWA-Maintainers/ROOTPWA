@@ -230,8 +230,9 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
 				          << parent->name()    << " [lambda = " << 0.5 * parent->spinProj() << "] -> "
 				          << daughter1->name() << " [lambda = " << 0.5 * lambda1 << "] + "
 				          << daughter2->name() << " [lambda = " << 0.5 * lambda2 << "] = "
-				          << "parent amp. = " << parentAmp << " * daughter_1 amp = "
-				          << daughter1Amp << " * daughter_2 amp = "<< daughter2Amp << " = "
+				          << "parent amp. = " << maxPrecisionDouble(parentAmp)
+				          << " * daughter_1 amp = " << maxPrecisionDouble(daughter1Amp)
+				          << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp) << " = "
 				          << maxPrecisionDouble(amp) << endl;
 			ampSum += amp;
 		}

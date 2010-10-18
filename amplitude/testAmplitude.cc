@@ -85,11 +85,14 @@ main(int argc, char** argv)
 	pdt.readFile();
 	TStopwatch timer;
   
-	// isobarDecayVertex::setDebug(true);
-	// decayTopology::setDebug(true);
-	// isobarDecayTopology::setDebug(true);
-	// massDependence::setDebug(true);
-	// diffractiveDissVertex::setDebug(true);
+	isobarDecayVertex::setDebug(true);
+	decayTopology::setDebug(true);
+	isobarDecayTopology::setDebug(true);
+	massDependence::setDebug(true);
+	diffractiveDissVertex::setDebug(true);
+	isobarAmplitude::setDebug(true);
+	isobarHelicityAmplitude::setDebug(true);
+	isobarCanonicalAmplitude::setDebug(true);
 	keyFileParser::setDebug(true);
 
 	if (0) {
@@ -279,8 +282,8 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		const long int maxNmbEvents   = 1000000;
-		//const long int maxNmbEvents   = 2;
+		//const long int maxNmbEvents   = 1000000;
+		const long int maxNmbEvents   = 2;
 
 		// const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
@@ -297,9 +300,12 @@ main(int argc, char** argv)
 		// const string   evtInFileName  = "testEvents.3pic.evt";
 		// const string   rootInFileName = "500.540.ps.root";
 		// const string   evtInFileName  = "500.540.ps.evt";
-		const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
-		//const string   newKeyFileName = "1-4++1+rho770_41_pi-.key";
-		const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
+		//const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
+		// const string   newKeyFileName = "1-4++1+rho770_41_pi-.key";
+		// const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
+		//const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		const string   newKeyFileName = "1-0-+0+rho770_11_pi-.key";
+		const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-0-+0+rho770_11_pi-.key";
 		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
 		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
 		const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
@@ -405,18 +411,20 @@ main(int argc, char** argv)
 			vector<complex<double> > pwa2kAmps;
 			if (1) {  // compare to PWA2000
 				PDGtable.initialize();
-				ifstream     eventData(evtInFileName.c_str());
-				keyfile      key;
-				event        ev;
+				ifstream eventData(evtInFileName.c_str());
+				keyfile  key;
+				event    ev;
 				key.open(oldKeyFileName);
 				ev.setIOVersion(1);
 				timer.Reset();
 				timer.Start();
-				while (not (eventData >> ev).eof()) {
+				unsigned int countEvent = 0;
+				while ((countEvent < maxNmbEvents) and (not (eventData >> ev).eof())) {
 					complex<double> pwa2kamp;
 					key.run(ev, pwa2kamp, true);
 					pwa2kAmps.push_back(pwa2kamp);
 					key.rewind();
+					++countEvent;
 				}
 				timer.Stop();
 				printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "

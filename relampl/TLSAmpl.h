@@ -50,7 +50,7 @@ class TLSAmpl {
 	  Int_t cPsiInt, Int_t cPsiChi, 
 	  Int_t cChiPhi, Int_t cPsiPhi,
 	  Int_t cPhiOme, Int_t cChiOme,
-	  Int_t cPhiEps, Int_t cChiOme,
+	  Int_t cPhiEps, Int_t cChiEps,
 	  Int_t cNum);
   
   Int_t GetNterms() {return Nterms;};

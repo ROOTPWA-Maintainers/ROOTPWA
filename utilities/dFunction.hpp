@@ -239,28 +239,6 @@ namespace rpwa {
 	template<typename complexT>
   inline
   complexT
-  sphericalHarmonicNoNorm
-	(const int                            l,
-	 const int                            m,
-	 const typename complexT::value_type& theta,
-	 const typename complexT::value_type& phi,
-	 const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
-	{
-	  // crude implementation using Wigner d-function
-	  typedef typename complexT::value_type T;
-	  const complexT YVal = rpwa::exp(complexT(0, ((T)m / 2) * phi)) * dFunction(l, m, 0, theta);
-	  if (debug)
-		  printInfo << "spherical harmonic w/o normalization "
-		            << "Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
-		            << "(phi = " << phi << ", theta = " << theta << ") = "
-		            << maxPrecisionDouble(YVal) << std::endl;
-    return YVal;
-  }
-  
-  
-	template<typename complexT>
-  inline
-  complexT
   sphericalHarmonic
 	(const int                            l,
 	 const int                            m,
@@ -268,9 +246,10 @@ namespace rpwa {
 	 const typename complexT::value_type& phi,
 	 const bool                           debug = false)  ///< spherical harmonics Y_l^{m}(theta, phi)
 	{
+		typedef typename complexT::value_type T;
 		// crude implementation using Wigner d-function
 		const complexT YVal =   rpwa::sqrt((l + 1) / fourPi)
-			                    * sphericalHarmonicNoNorm<complexT>(l, m, theta, phi, false);
+			                    * rpwa::exp(complexT(0, ((T)m / 2) * phi)) * dFunction(l, m, 0, theta);
 	  if (debug)
 		  printInfo << "spherical harmonic Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
 		            << "(phi = " << phi << ", theta = " << theta << ") = "
