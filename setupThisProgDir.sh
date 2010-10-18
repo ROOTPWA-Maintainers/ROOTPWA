@@ -59,10 +59,10 @@ PWA_BASE_DIR=${ROOTPWA%/}  # remove trailing /
 PWA_BASE_DIR=${PWA_BASE_DIR%/$(basename ${ROOTPWA})}  # one level above
 
 # set Boost path
-export BOOST_ROOT=${PWA_BASE_DIR}/boost
+export BOOST_ROOT=${PWA_BASE_DIR}/../../boost
 
 # set libconfig path
-export LIBCONFIG=${PWA_BASE_DIR}/libconfig
+export LIBCONFIG=${PWA_BASE_DIR}/../../libconfig
 
 # set paths
 # add new paths to front to insure that they override older definitions

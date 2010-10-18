@@ -24,8 +24,7 @@
 #// $Author::                          $: author of last commit
 #// $Date::                            $: date of last commit
 #//
-#// Description:
-#//      main build file for ROOTPWA
+#// Description:#//      main build file for ROOTPWA
 #//
 #//
 #// Author List:
@@ -231,9 +230,10 @@ add_subdirectory(generators)
 add_subdirectory(keygen)
 
 # Fortran
-add_subdirectory(fortran)
+# add_subdirectory(fortran)
 
-
+# Relativic Amplitudes
+add_subdirectory(relampl)
 
 # file(GLOB _CC_LIST ${CMAKE_CURRENT_SOURCE_DIR} "amplitude/*.cc")
 # #message("foo ${_CC_LIST}")

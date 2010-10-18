@@ -14,8 +14,8 @@ TFhh::TFhh(Int_t J_, Int_t S1, Int_t S2,
 	   Int_t even_contr_) {
   
   J=J_;
-  lambda=lambda_;
-  nu=nu_;
+  lambda= lambda_;
+  nu= nu_;
   even_contraction = even_contr_;
   Int_t delta=lambda-nu;
   Nterms=0;
@@ -583,7 +583,7 @@ Int_t TJSS::CalcAmpl() {
 
 Int_t TJSS::PrintHFILE() {
   char DecayName[10];
-  sprintf(DecayName,"%d%d%d%c", JMother, SDecay1, SDecay2,
+  sprintf(DecayName,"%lld%lld%lld%c%c", JMother, SDecay1, SDecay2,
 	  etaJ*eta1*eta2==-1?'n':'p',' ');
   char ofname[20];
   sprintf(ofname, "CalcAmpl-%s.h", DecayName);
@@ -635,5 +635,6 @@ Int_t TJSS::PrintHFILE() {
     }
   }
   ofs << "};" << endl;
-  
+
+  return 0;
 }

@@ -359,6 +359,7 @@ TLSContrib::PrintNR() {
   if (cNum==1) cout <<"*g";
   if (cNum==2) cout <<"*f";
   if (cNum==3) cout <<"*h";
+  return 0;
 }
 
 Int_t
@@ -367,6 +368,7 @@ TLSContrib::PrintNRG(TFracNum m) {
   if (cNum==1) cout <<"*g";
   if (cNum==2) cout <<"*f";
   if (cNum==3) cout <<"*h";
+  return 0;
 }
 
 
@@ -411,6 +413,7 @@ Int_t TLSNonRel::Print() {
     RelLS[i]->PrintNR();
   }
   cout << endl;
+  return 0;
 }
 
 Int_t TLSNonRel::PrintG() {
@@ -421,4 +424,5 @@ Int_t TLSNonRel::PrintG() {
     RelLS[i]->PrintNRG(GnrInv);
   }
   cout << endl;
+  return 0;
 }
