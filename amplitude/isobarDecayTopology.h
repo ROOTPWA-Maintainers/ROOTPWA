@@ -66,8 +66,8 @@ namespace rpwa {
     isobarDecayTopology(const decayTopology&                     topo);
     virtual ~isobarDecayTopology();
 
-    virtual isobarDecayTopology& operator =(const isobarDecayTopology& topo);
-    virtual isobarDecayTopology& operator =(const decayTopology&       topo);
+    isobarDecayTopology& operator =(const isobarDecayTopology& topo);
+    isobarDecayTopology& operator =(const decayTopology&       topo);
     isobarDecayTopologyPtr clone(const bool cloneFsParticles    = false,
                                  const bool cloneProdKinematics = false) const  ///< creates deep copy of isobar decay topology; must not be virtual
 	  { return isobarDecayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }

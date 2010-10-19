@@ -163,7 +163,7 @@ createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
 	long int nmbEvents = min(nmbEventsChain[0], nmbEventsChain[1]);
 	if (maxNmbEvents > 0)
 		nmbEvents = min(maxNmbEvents, nmbEvents);
-	progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents) : 0;
+	progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents, cout, "") : 0;
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 		if (progressIndicator)
 			++(*progressIndicator);

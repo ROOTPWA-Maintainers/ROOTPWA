@@ -36,6 +36,7 @@
 
 
 {
+	gSystem->AddIncludePath("-I$BOOST_ROOT");
   gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
   gSystem->AddIncludePath("-I$ROOTPWA/src");
 

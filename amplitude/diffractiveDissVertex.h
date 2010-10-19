@@ -69,7 +69,7 @@ namespace rpwa {
 		diffractiveDissVertex(const diffractiveDissVertex& vert);
 		virtual ~diffractiveDissVertex();
 		
-		virtual diffractiveDissVertex& operator =(const diffractiveDissVertex& vert);
+		diffractiveDissVertex& operator =(const diffractiveDissVertex& vert);
 		diffractiveDissVertexPtr clone(const bool cloneInParticles  = false,
 		                               const bool cloneOutParticles = false) const  ///< creates deep copy of diffractive dissociation vertex; must not be virtual
 		{ return diffractiveDissVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }

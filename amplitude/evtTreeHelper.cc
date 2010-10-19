@@ -147,9 +147,12 @@ namespace rpwa {
 		bool     success     = true;
 		long int countEvents = 0;
 		long int countLines  = 0;
+		inEvt.seekg(0, ios::end);
+		long int fileLength = inEvt.tellg();
+		inEvt.seekg(0, ios::beg);
+		progress_display* progressIndicator = (not debug) ? new progress_display(fileLength, cout, "") : 0;
+		long int          lastPos           = inEvt.tellg();
 		while (inEvt.good()) {
-
-			// read event
 			string line;
 
 			// read number of particles
@@ -235,6 +238,9 @@ namespace rpwa {
 
 			outTree.Fill();
 			++countEvents;
+			if (progressIndicator)
+				(*progressIndicator) += inEvt.tellg() - lastPos;
+			lastPos = inEvt.tellg();
 			if ((maxNmbEvents > 0) and (countEvents >= maxNmbEvents))
 				break;
 		}
@@ -278,7 +284,7 @@ namespace rpwa {
 		// loop over events
 		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
 		                                       : nmbEventsTree);
-		progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents) : 0;
+		progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents, cout, "") : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
 				++(*progressIndicator);
@@ -392,7 +398,7 @@ namespace rpwa {
 		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
 		                                       : nmbEventsTree);
 		bool              success           = true;
-		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents) : 0;
+		progress_display* progressIndicator = (printProgress) ? new progress_display(nmbEvents, cout, "") : 0;
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
 				++(*progressIndicator);

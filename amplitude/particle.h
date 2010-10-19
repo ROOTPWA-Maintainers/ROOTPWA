@@ -84,7 +84,7 @@ namespace rpwa {
 		         const int                 index = -1);
 		virtual ~particle();
 
-		virtual particle& operator =(const particle& part);
+		particle& operator =(const particle& part);
 		particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
 		std::string           name        () const;                                         ///< returns particle name including charge

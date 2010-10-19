@@ -65,7 +65,7 @@ namespace rpwa {
 		isobarDecayVertex(const isobarDecayVertex& vert);
 		virtual ~isobarDecayVertex();
 		
-		virtual isobarDecayVertex& operator =(const isobarDecayVertex& vert);
+		isobarDecayVertex& operator =(const isobarDecayVertex& vert);
 		isobarDecayVertexPtr clone(const bool cloneInParticles  = false,
 		                           const bool cloneOutParticles = false) const  ///< creates copy of isobar decay vertex; must not be virtual
 		{ return isobarDecayVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }

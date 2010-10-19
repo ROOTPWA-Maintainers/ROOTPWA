@@ -85,7 +85,7 @@ public:
 
 
   // Operations ----------------------
-  virtual void Print();
+  virtual void Print(const Option_t* = 0) const;
 
 private:
 
@@ -111,12 +111,12 @@ private:
 
   // Private Methods -----------------
   // for printing
-  TString Istr();
-  TString Gstr();
-  TString Jstr();
-  TString Pstr();
-  TString Cstr();
-  TString Statstr();
+  TString Istr() const;
+  TString Gstr() const;
+  TString Jstr() const;
+  TString Pstr() const;
+  TString Cstr() const;
+  TString Statstr() const;
 
 
 public:

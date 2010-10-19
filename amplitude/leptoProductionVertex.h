@@ -70,7 +70,7 @@ namespace rpwa {
 		leptoProductionVertex(const leptoProductionVertex& vert);
 		virtual ~leptoProductionVertex();
 		
-		virtual leptoProductionVertex& operator =(const leptoProductionVertex& vert);
+		leptoProductionVertex& operator =(const leptoProductionVertex& vert);
 		leptoProductionVertexPtr clone(const bool cloneInParticles  = false,
 		                               const bool cloneOutParticles = false) const  ///< creates deep copy of leptoproduction vertex; must not be virtual
 		{ return leptoProductionVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }

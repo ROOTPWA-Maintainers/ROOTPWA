@@ -66,7 +66,7 @@ namespace rpwa {
 		interactionVertex(const interactionVertex& vert);
 		virtual ~interactionVertex();
 		
-		virtual interactionVertex& operator =(const interactionVertex& vert);
+		interactionVertex& operator =(const interactionVertex& vert);
 		interactionVertexPtr clone(const bool cloneInParticles  = false,
 		                           const bool cloneOutParticles = false) const  ///< creates deep copy of interaction vertex; must not be virtual
 		{ return interactionVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }

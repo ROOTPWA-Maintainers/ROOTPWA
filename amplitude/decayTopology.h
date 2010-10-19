@@ -85,8 +85,8 @@ namespace rpwa {
 		decayTopology(const decayTopologyGraphType&            graph);
 		virtual ~decayTopology();
 
-		virtual decayTopology& operator =(const decayTopology&          topo);
-		virtual decayTopology& operator =(const decayTopologyGraphType& graph);
+		decayTopology& operator =(const decayTopology&          topo);
+		decayTopology& operator =(const decayTopologyGraphType& graph);
 		decayTopologyPtr clone(const bool cloneFsParticles    = false,
 		                       const bool cloneProdKinematics = false) const  ///< creates deep copy of decay topology; must not be virtual
 		{ return decayTopologyPtr(doClone(cloneFsParticles, cloneProdKinematics)); }

@@ -116,7 +116,7 @@ plotAmpDiffs(const string&  inFileNamePattern,
 	long int         maxAbsDiffIndex = -1;
 	double           maxRelDiff      = 0;
 	long int         maxRelDiffIndex = -1;
-	progress_display progressIndicator(nmbEvents);
+	progress_display progressIndicator(nmbEvents, cout, "");
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 		++progressIndicator;
   
@@ -197,7 +197,7 @@ plotAmpDiffs(const string&  inFileNamePattern,
 		                     1, 0, 1, 100000, min - 0.1 * fabs(min), max + 0.1 * fabs(max));
 		hLeafs[i]->SetBit(TH1::kCanRebin);
 		TTreeFormula*    leafVal = new TTreeFormula("", leafsToDraw[i].c_str(), &inTree);
-		progress_display progressIndicator(nmbEvents);
+		progress_display progressIndicator(nmbEvents, cout, "");
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			++progressIndicator;
 			if (inTree.LoadTree(eventIndex) < 0)

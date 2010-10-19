@@ -73,9 +73,9 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 # common compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Werror")
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
-set(CMAKE_CXX_FLAGS "-Wall -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Wextra -pedantic -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")

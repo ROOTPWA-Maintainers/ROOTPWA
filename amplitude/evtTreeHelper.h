@@ -40,7 +40,11 @@
 #include <vector>
 #include <complex>
 
+// cint has problems parsing Boost stuff
+//#ifndef __CINT__
+#if !defined (__CINT__) || !defined (__MAKECINT__)
 #include "isobarAmplitude.h"
+#endif
 
 
 class TTree;
@@ -88,6 +92,8 @@ namespace rpwa {
 	                      const bool         debug                     = false);
 
 
+// cint has problems parsing Boost stuff
+#if !defined (__CINT__) || !defined (__MAKECINT__)
 	long int processTree(TTree&                              tree,
 	                     const isobarAmplitudePtr&           amplitude,
 	                     std::vector<std::complex<double> >& ampValues,
@@ -97,6 +103,7 @@ namespace rpwa {
 	                     const std::string&                  decayKinParticlesLeafName = "decayKinParticles",
 	                     const std::string&                  decayKinMomentaLeafName   = "decayKinMomenta",
 	                     const bool                          printProgress             = true);
+#endif
 
 
 }  // namespace rpwa

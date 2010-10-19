@@ -69,7 +69,7 @@ namespace rpwa {
     
 		virtual ~particleProperties();
 
-		virtual particleProperties& operator =(const particleProperties& partProp);
+		particleProperties& operator =(const particleProperties& partProp);
 		// comparison operators that check equality of all fields
 		friend bool operator ==(const particleProperties& lhsProp,
 		                        const particleProperties& rhsProp);

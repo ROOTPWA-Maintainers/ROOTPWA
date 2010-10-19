@@ -54,6 +54,7 @@ public:
 
   // Accessors -----------------------
   TTree* getTree() { return _tree;}
+	using TObject::Draw;
   void Draw(char* com, char* sel, char* opt, int n, int s);
   
 
