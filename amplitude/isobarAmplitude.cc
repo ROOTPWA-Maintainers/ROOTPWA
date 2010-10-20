@@ -205,21 +205,21 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
 	complex<double>    ampSum    = 0;
 	for (int lambda1 = -daughter1->J(); lambda1 <= +daughter1->J(); lambda1 += 2) {
 		// calculate decay amplitude for daughter 1
+		daughter1->setSpinProj(lambda1);
 		const isobarDecayVertexPtr& daughter1Vertex =
 			dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
 		complex<double> daughter1Amp = 0;
 		if (daughter1Vertex) {
-			daughter1->setSpinProj(lambda1);
 			daughter1Amp = twoBodyDecayAmplitudeSum(daughter1Vertex, false);
 		} else
 			daughter1Amp = 1;
 		for (int lambda2 = -daughter2->J(); lambda2 <= +daughter2->J(); lambda2 += 2) {
 			// calculate decay amplitude for daughter 2
+			daughter2->setSpinProj(lambda2);
 			const isobarDecayVertexPtr& daughter2Vertex =
 				dynamic_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
 			complex<double> daughter2Amp = 0;
 			if (daughter2Vertex) {
-				daughter2->setSpinProj(lambda2);
 				daughter2Amp = twoBodyDecayAmplitudeSum(daughter2Vertex, false);
 			} else
 				daughter2Amp = 1;

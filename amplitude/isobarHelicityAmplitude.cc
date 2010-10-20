@@ -42,6 +42,7 @@
 #include "TMath.h"
 
 #include "utilities.h"
+#include "clebschGordanCoeff.hpp"
 #include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
 
@@ -161,14 +162,14 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int    lambda1   = daughter1->spinProj();
 	const int    lambda2   = daughter2->spinProj();
 	const int    lambda    = lambda1 - lambda2;
-	const double lsClebsch = cgCoeff(L, 0, S, lambda, J, lambda, _debug);
+	const double lsClebsch = clebschGordanCoeff<double>(L, 0, S, lambda, J, lambda, _debug);
 	if (lsClebsch == 0)
 		return 0;
 
 	// calculate Clebsch-Gordan coefficient for S-S coupling
 	const int    s1        = daughter1->J();
 	const int    s2        = daughter2->J();
-	const double ssClebsch = cgCoeff(s1, lambda1, s2, -lambda2, S, lambda, _debug);
+	const double ssClebsch = clebschGordanCoeff<double>(s1, lambda1, s2, -lambda2, S, lambda, _debug);
 	if (ssClebsch == 0)
 		return 0;
 

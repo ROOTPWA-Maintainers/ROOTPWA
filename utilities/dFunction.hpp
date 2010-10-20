@@ -32,7 +32,7 @@
 //
 //     	based on PWA2000 function d_jmn_b() in pputil.cc
 //
-//      !NOTE! spin j and projections m and n are given in units of hbar/2
+//      !NOTE! spin j and projections m and n are in units of hbar/2
 //
 //
 //

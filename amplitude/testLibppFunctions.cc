@@ -48,6 +48,7 @@
 #include "svnVersion.h"
 #include "utilities.h"
 #include "factorial.hpp"
+#include "clebschGordanCoeff.hpp"
 #include "dFunction.hpp"
 
 
@@ -122,8 +123,80 @@ main(int argc, char** argv)
 
 
 	//////////////////////////////////////////////////////////////////////////////
-	// Wigner d-function d^j_{m n}(theta)
+	// Clebsch-Gordan coefficients (j1 m1 j2 m2 | J M)
 	if (1) {
+		printInfo << "testing Clebsch-Gordan coefficients" << endl;
+
+		const unsigned int nmbIterations = 100;
+		const int          maxJ          = 7;
+
+    // determine size of data array
+		unsigned int nmbVals = maxJ * (2 * maxJ - 1);
+		nmbVals = nmbVals * nmbVals * nmbVals;
+
+    // compute mathUtils values
+    TStopwatch timer;
+    timer.Reset();
+    timer.Start();
+    vector<double> newVals(nmbVals, 0);
+    for (unsigned int it = 0; it < nmbIterations; ++it) {
+	    unsigned int valIndex = 0;
+			for (int j1 = 0; j1 < maxJ; ++j1)
+				for (int m1 = -j1; m1 <= j1; ++m1)
+					for (int j2 = 0; j2 < maxJ; ++j2)
+						for (int m2 = -j2; m2 <= j2; ++m2)
+							for (int J = 0; J < maxJ; ++J)
+								for (int M = -J; M <= J; ++M) {
+									newVals[valIndex] =
+										clebschGordanCoeff<double>(2 * j1, 2 * m1, 2 * j2, 2 * m2, 2 * J, 2 * M);
+									++valIndex;
+						    }
+    }
+    timer.Stop();
+    printInfo << "calculated mathUtil Clebsch-Gordan coefficients for " << newVals.size()
+              << " x " << nmbIterations << " calls " << endl << "    this consumed: ";
+    timer.Print();
+
+    // compute libpp values
+    timer.Reset();
+    timer.Start();
+    vector<double> oldVals(nmbVals, 0);
+    for (unsigned int it = 0; it < nmbIterations; ++it) {
+	    unsigned int valIndex = 0;
+	    for (int j1 = 0; j1 < maxJ; ++j1)
+		    for (int m1 = -j1; m1 <= j1; ++m1)
+			    for (int j2 = 0; j2 < maxJ; ++j2)
+				    for (int m2 = -j2; m2 <= j2; ++m2)
+					    for (int J = 0; J < maxJ; ++J)
+						    for (int M = -J; M <= J; ++M) {
+							    oldVals[valIndex] = cgCoeff(2 * j1, 2 * m1, 2 * j2, 2 * m2, 2 * J, 2 * M);
+							    ++valIndex;
+						    }
+    }
+    timer.Stop();
+    printInfo << "calculated libpp Clebsch-Gordan coefficients for " << oldVals.size()
+              << " x " << nmbIterations << " calls " << endl << "    this consumed: ";
+    timer.Print();
+
+    // check values
+    double maxAbsDeviation = 0;
+    double maxRelDeviation = 0;
+    for (unsigned int i = 0; i < nmbVals; ++i) {
+	    const double absDelta = oldVals[i] - newVals[i];
+	    const double relDelta = absDelta / oldVals[i];
+	    if (abs(absDelta) > maxAbsDeviation)
+		    maxAbsDeviation = abs(absDelta);
+	    if ((newVals[i] != 0) && (abs(relDelta) > maxRelDeviation))
+		    maxRelDeviation = abs(relDelta);
+    }
+    printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
+              << "maximum relative deviation is " << maxRelDeviation << endl;
+	}
+	
+
+	//////////////////////////////////////////////////////////////////////////////
+	// Wigner d-function d^j_{m n}(theta)
+	if (0) {
 		printInfo << "testing Wigner d-function" << endl;
 
 		const unsigned int nmbAngles = 50000;

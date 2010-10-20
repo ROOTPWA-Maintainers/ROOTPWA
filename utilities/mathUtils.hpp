@@ -67,19 +67,6 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	// various small helper functions
-  inline
-  double
-  normFactor(const int  l,
-             const bool debug = false)  ///< standard normalization factor in amplitudes
-  {
-	  const double norm = rpwa::sqrt(l + 1);
-    if (debug)
-      printInfo << "normalization factor sqrt(2 * L = " << 0.5 * l << " + 1) = "
-                << maxPrecision(norm) << std::endl;
-    return norm;
-  }
-  
-
 	inline
 	int
 	powMinusOne(const int exponent)  ///< optimized function for (-1)^n
@@ -91,6 +78,37 @@ namespace rpwa {
 	}
 
 	
+  template <typename T>
+  inline
+  bool
+  isOdd(const T val)  ///< returns whether val is an odd number (assuming T is integer type)
+  {
+    return val & 0x1;
+  }
+  
+
+  template <typename T>
+  inline
+  bool
+  isEven(const T val)  ///< returns whether val is an even number (assuming T is integer type)
+  {
+    return val & 0x0;
+  }
+  
+
+	inline
+	double
+	normFactor(const int  l,
+	           const bool debug = false)  ///< standard normalization factor in amplitudes
+	{
+		const double norm = rpwa::sqrt(l + 1);
+		if (debug)
+			printInfo << "normalization factor sqrt(2 * L = " << 0.5 * l << " + 1) = "
+			          << maxPrecision(norm) << std::endl;
+		return norm;
+	}
+
+
 	inline
 	int
 	reflectivityFactor(const int j,

@@ -304,11 +304,11 @@ main(int argc, char** argv)
 		// const string   newKeyFileName = "1-4++1+rho770_41_pi-.key";
 		// const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
 		//const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
-		const string   newKeyFileName = "1-0-+0+rho770_11_pi-.key";
+		//const string   newKeyFileName = "1-0-+0+rho770_11_pi-.key";
 		const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-0-+0+rho770_11_pi-.key";
 		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
-		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
-		const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
+		//const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
+		//const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
 		const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
 		// const string   newKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/new/rho_sigma_set/1+1--1+rho770_01_sigma.key";
 		// const string   oldKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/rho_sigma_set/1+1--1+rho770_01_sigma.key";
@@ -316,6 +316,8 @@ main(int argc, char** argv)
 		// const string   rootInFileName = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.root";
 		// const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
 		// const string   evtInFileName  = "1000.1060.evt";
+		const string   newKeyFileName = "../keyfiles/key2pip/SET1_new/11-1+f21270_13_p.key";
+		const string   rootInFileName = "1220.1240.root";
 
 		keyFileParser&     parser = keyFileParser::instance();
 		isobarAmplitudePtr amp;
@@ -406,7 +408,10 @@ main(int argc, char** argv)
 			printInfo << "successfully read " << myAmps.size() << " events from file(s) "
 			          << "'" << rootInFileName << "' and calculated amplitudes" << endl;
 			cout << "needed ";
+			printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
 			timer.Print();
+
+			exit(1);
       
 			vector<complex<double> > pwa2kAmps;
 			if (1) {  // compare to PWA2000

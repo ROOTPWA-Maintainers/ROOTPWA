@@ -36,8 +36,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef FACTORIALCACHED_HPP
-#define FACTORIALCACHED_HPP
+#ifndef FACTORIAL_HPP
+#define FACTORIAL_HPP
 
 
 #include <vector>
@@ -101,4 +101,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // FACTORIALCACHED_HPP
+#endif  // FACTORIAL_HPP

@@ -42,6 +42,7 @@
 #include "TMath.h"
 
 #include "utilities.h"
+#include "clebschGordanCoeff.hpp"
 #include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"
 
@@ -139,7 +140,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 	const int    m2        = daughter2->spinProj();
 	const int    S         = vertex->S();
 	const int    mS        = m1 + m2;
-	const double ssClebsch = cgCoeff(s1, m1, s2, m2, S, mS, _debug);
+	const double ssClebsch = clebschGordanCoeff<double>(s1, m1, s2, m2, S, mS, _debug);
 	if (ssClebsch == 0)
 		return 0;
 
@@ -173,14 +174,14 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 				if (reflFactor == +1)
 					LSClebsch = 0;
 				else
-					LSClebsch = cgCoeff(L, mL, S, mS, J, 0, _debug);
+					LSClebsch = clebschGordanCoeff<double>(L, mL, S, mS, J, 0, _debug);
 			} else {
 				LSClebsch = 1 / rpwa::sqrt(2)
-					* (               cgCoeff(L, mL, S, mS, J, +M, _debug)
-					   - reflFactor * cgCoeff(L, mL, S, mS, J, -M, _debug));
+					* (               clebschGordanCoeff<double>(L, mL, S, mS, J, +M, _debug)
+					   - reflFactor * clebschGordanCoeff<double>(L, mL, S, mS, J, -M, _debug));
 			}
 		} else
-			LSClebsch = cgCoeff(L, mL, S, mS, J, M, _debug);
+			LSClebsch = clebschGordanCoeff<double>(L, mL, S, mS, J, M, _debug);
 		if (LSClebsch == 0)
 			continue;
 		// multiply spherical harmonic
