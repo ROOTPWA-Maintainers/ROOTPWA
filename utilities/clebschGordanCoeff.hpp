@@ -67,69 +67,97 @@ namespace rpwa {
 		{
 			// check input parameters
 			if ((j1 < 0) || (j2 < 0) || (J < 0)) {
-				printErr << "illegal parameters: negative spins are not allowed (j1 = " << 0.5 * j1 << ", "
+				printErr << "negative spins are not allowed (j1 = " << 0.5 * j1 << ", "
 				         << "j2 = " << 0.5 * j2 << ", J = " << 0.5 * J << "). aborting." << std::endl;
 				throw;
 			}
-			if ((rpwa::abs(m1) > j1) || (rpwa::abs(m2) > j2) || (rpwa::abs(M) > J)) {
-				return 0;
-				// printErr << "illegal parameters: spin projection quantum numbers must lie within [-j, +j] "
-				//          << "(j1 = " << 0.5 * j1 << ", m1 = " << 0.5 * m1 << ", j2 = " << 0.5 * j2 << ", "
-				//          << "m2 = " << 0.5 * m2 << ", J = " << 0.5 * J << ", M = " << 0.5 * M << "). "
-				//          << "aborting." << std::endl;
-				// throw;
+			if (_useCache && ((j1 >= _maxJ) || (j2 >= _maxJ) || (J >= _maxJ))) {
+				printErr << "spins are too large. maximum allowed spin is "
+				         << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
+				throw;
 			}
 			if (isOdd(j1 - m1) || isOdd(j2 - m2) || isOdd(J - M)) {
-				printErr << "illegal parameters: integer spin projection for half integer spin or vice versa "
+				printErr << "integer spin projection for half integer spin or vice versa "
 				         << "(j1 = " << 0.5 * j1 << ", m1 = " << 0.5 * m1 << ", j2 = " << 0.5 * j2 << ", "
 				         << "m2 = " << 0.5 * m2 << ", J = " << 0.5 * J << ", M = " << 0.5 * M << "). "
 				         << "aborting." << std::endl;
 				throw;
 			}
+			if ((rpwa::abs(m1) > j1) || (rpwa::abs(m2) > j2) || (rpwa::abs(M) > J))
+				return 0;
 			if (m1 + m2 != M)
 				return 0;
 			if ((J < rpwa::abs(j1 - j2)) || J > j1 + j2)
 				return 0;
 
-			int nu  = 0;
-			T   d3, n2;
-			while (    ((d3 = (j1 - j2 - M) / 2 + nu) < 0)
-			        || ((n2 = (j1 - m1)     / 2 + nu) < 0))
-				nu++;
 
-			T sum = 0;
-			T d1, d2, n1;
-			while (    ((d1 = (J - j1 + j2) / 2 - nu) >= 0)
-			        && ((d2 = (J + M)       / 2 - nu) >= 0)
-			        && ((n1 = (j2 + J + m1) / 2 - nu) >= 0)) {
-				d3   = (j1 - j2 - M) / 2 + nu;
-				n2   = (j1 - m1)     / 2 + nu;
-				sum +=   powMinusOne(nu + (j2 + m2) / 2) * rpwa::factorial<T>(n1) * rpwa::factorial<T>(n2)
-					     / (  rpwa::factorial<T>(nu) * rpwa::factorial<T>(d1)
-					        * rpwa::factorial<T>(d2) * rpwa::factorial<T>(d3));
-				nu++;
+			T        clebschVal = 0;
+			double*& cacheEntry = _cache[j1][m1][j2][m2][J];
+			if (_useCache and cacheEntry) {
+				// calculate function value using cache
+				clebschVal = *cacheEntry;
+			} else {
+				// calculate function value and put intermediate values into cache
+				int nu = 0;
+				while (    ((j1 - j2 - M) / 2 + nu < 0)
+				        || ((j1 - m1)     / 2 + nu < 0))
+					nu++;
+
+				T   sum = 0;
+				int d1, d2, n1;
+				while (    ((d1 = (J - j1 + j2) / 2 - nu) >= 0)
+				        && ((d2 = (J + M)       / 2 - nu) >= 0)
+				        && ((n1 = (j2 + J + m1) / 2 - nu) >= 0)) {
+					const int d3 = (j1 - j2 - M) / 2 + nu;
+					const int n2 = (j1 - m1)     / 2 + nu;
+					sum +=   powMinusOne(nu + (j2 + m2) / 2) * rpwa::factorial<T>(n1) * rpwa::factorial<T>(n2)
+						     / (  rpwa::factorial<T>(nu) * rpwa::factorial<T>(d1)
+						        * rpwa::factorial<T>(d2) * rpwa::factorial<T>(d3));
+					nu++;
+				}
+
+				if (sum == 0)
+					return 0;
+
+				const T N1 = rpwa::factorial<T>((J  + j1 - j2) / 2);
+				const T N2 = rpwa::factorial<T>((J  - j1 + j2) / 2);
+				const T N3 = rpwa::factorial<T>((j1 + j2 - J ) / 2);
+				const T N4 = rpwa::factorial<T>((J + M) / 2);
+				const T N5 = rpwa::factorial<T>((J - M) / 2);
+	
+				const T D0 = rpwa::factorial<T>((j1 + j2 + J) / 2 + 1);
+				const T D1 = rpwa::factorial<T>((j1 - m1) / 2);
+				const T D2 = rpwa::factorial<T>((j1 + m1) / 2);
+				const T D3 = rpwa::factorial<T>((j2 - m2) / 2);
+				const T D4 = rpwa::factorial<T>((j2 + m2) / 2);
+
+				const T A  = (J + 1) * N1 * N2 * N3 * N4 * N5 / (D0 * D1 * D2 * D3 * D4);
+	
+				clebschVal = rpwa::sqrt(A) * sum;
+				if (_useCache) {
+					cacheEntry  = new double;
+					*cacheEntry = clebschVal;
+				}
 			}
-
-			if (sum == 0)
-				return 0;
-
-			n1   = rpwa::factorial<T>((J  + j1 - j2) / 2);
-			n2   = rpwa::factorial<T>((J  - j1 + j2) / 2);
-			T n3 = rpwa::factorial<T>((j1 + j2 - J ) / 2);
-			T n4 = rpwa::factorial<T>((J + M) / 2);
-			T n5 = rpwa::factorial<T>((J - M) / 2);
-	
-			T d0 = rpwa::factorial<T>((j1 + j2 + J) / 2 + 1);
-			d1   = rpwa::factorial<T>((j1 - m1) / 2);
-			d2   = rpwa::factorial<T>((j1 + m1) / 2);
-			d3   = rpwa::factorial<T>((j2 - m2) / 2);
-			T d4 = rpwa::factorial<T>((j2 + m2) / 2);
-
-			T A = (J + 1) * n1 * n2 * n3 * n4 * n5 / (d0 * d1 * d2 * d3 * d4);
-	
-			return rpwa::sqrt(A) * sum;
+			
+			return clebschVal;
 		}
-    
+
+		static bool useCache()                              { return _useCache;     }  ///< returns caching flag
+		static void setUseCache(const bool useCache = true) { _useCache = useCache; }  ///< sets caching flag
+		static unsigned int cacheSize()  ///< returns cache size in bytes
+		{ 
+			unsigned int size = _maxJ * (2 * _maxJ - 1) * _maxJ * (2 * _maxJ - 1) * 2 * _maxJ * sizeof(T*);
+			for (int j1 = 0; j1 < _maxJ; ++j1)
+				for (int m1 = -j1; m1 <= j1; ++m1)
+					for (int j2 = 0; j2 < _maxJ; ++j2)
+						for (int m2 = -j2; m2 <= j2; ++m2)
+							for (int J = 0; J < 2 * _maxJ; ++J)
+								if (_cache[j1][m1][j2][m2][J])
+									size += sizeof(T);
+			return size;
+		}
+
 
 	private:
 
@@ -139,11 +167,18 @@ namespace rpwa {
 		clebschGordanCoeffCached& operator =(const clebschGordanCoeffCached&);
 
 		static clebschGordanCoeffCached _instance;  ///< singleton instance
+		static bool                     _useCache;  ///< if set to true, cache is used
 
+		static const int _maxJ = 18;  ///< maximum allowed angular momentum * 2 + 1
+		static T*        _cache[_maxJ][2 * _maxJ - 1][_maxJ][2 * _maxJ - 1][2 * _maxJ];  ///< cache for intermediate terms [j1][m1][j2][m2][J]
 	};
 
 
 	template<typename T> clebschGordanCoeffCached<T> clebschGordanCoeffCached<T>::_instance;
+	template<typename T> bool                        clebschGordanCoeffCached<T>::_useCache = true;
+
+	template<typename T> T*
+	clebschGordanCoeffCached<T>::_cache[_maxJ][2 * _maxJ - 1][_maxJ][2 * _maxJ - 1][2 * _maxJ];
 
 
 	template<typename T>

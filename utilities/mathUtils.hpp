@@ -140,26 +140,6 @@ namespace rpwa {
   // !NOTE! all angular momenta and spin projections are in units of hbar/2
   inline
   double
-  cgCoeff(const int  J1,
-          const int  M1,
-          const int  J2,
-          const int  M2,
-          const int  J,
-          const int  M,
-          const bool debug = false)  ///< Clebsch-Gordan coefficient (J1 M1, J2 M2 | J M)
-  {
-    const double cg = clebsch(J1, J2, J, M1, M2, M);
-    if (debug)
-      printInfo << "Clebsch-Gordan (J_1 = " << 0.5 * J1 << ", M_1 = " << 0.5 * M1 << "; "
-                << "J_2 = " << 0.5 * J2 << ", M_2 = " << 0.5 * M2
-                << " | J = " << 0.5 * J << ", M = " << 0.5 * M << ") = "
-                << maxPrecision(cg) << std::endl;
-    return cg;
-  }
-  
-  
-  inline
-  double
   barrierFactor(const int    L,
                 const double breakupMom,
                 const bool   debug = false)  ///< Blatt-Weisskopf barrier factor

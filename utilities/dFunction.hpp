@@ -166,10 +166,6 @@ namespace rpwa {
 				dFuncVal = constTerm * sumTerm;
 			}
 
-			if (_debug)
-				printInfo << "Wigner d^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
-				          << "M' = " << 0.5 * n << "}" << "(theta = " << theta << ") = "
-				          << maxPrecision(dFuncVal) << std::endl;
 			return dFuncVal;
 		}
 
@@ -191,9 +187,6 @@ namespace rpwa {
 					}
 			return size;
 		}
-
-		static bool debug()                           { return _debug;  }  ///< returns debug flag
-		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
     
 
 	private:
@@ -210,16 +203,14 @@ namespace rpwa {
 		dFunctionCached& operator =(const dFunctionCached&);
 
 		static dFunctionCached _instance;  ///< singleton instance
-		static bool            _debug;     ///< if set to true, debug messages are printed
 		static bool            _useCache;  ///< if set to true, cache is used
 
-		static const unsigned int _maxJ = 41;                           ///< 2 * maximum allowed angular momentum + 1
+		static const unsigned int _maxJ = 41;                           ///< maximum allowed angular momentum * 2 + 1
 		static cacheEntryType*    _cache[_maxJ][_maxJ + 1][_maxJ + 1];  ///< cache for intermediate terms [j][m][n]
 	};
 
 
 	template<typename T> dFunctionCached<T> dFunctionCached<T>::_instance;
-	template<typename T> bool               dFunctionCached<T>::_debug    = false;
 	template<typename T> bool               dFunctionCached<T>::_useCache = true;
 
 	template<typename T> typename dFunctionCached<T>::cacheEntryType*
@@ -229,11 +220,19 @@ namespace rpwa {
 	template<typename T>
 	inline
 	T
-	dFunction(const int j,
-	          const int m,
-	          const int n,
-	          const T&  theta)  ///< Wigner d-function d^j_{m n}(theta)
-	{	return dFunctionCached<T>::instance()(j, m, n, theta); }
+	dFunction(const int  j,
+	          const int  m,
+	          const int  n,
+	          const T&   theta,
+	          const bool debug = false)  ///< Wigner d-function d^j_{m n}(theta)
+	{
+		const T dFuncVal = dFunctionCached<T>::instance()(j, m, n, theta);
+		if (debug)
+			printInfo << "Wigner d^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
+			          << "M' = " << 0.5 * n << "}" << "(theta = " << theta << ") = "
+			          << maxPrecision(dFuncVal) << std::endl;
+		return dFuncVal;
+	}
 
 
 	template<typename complexT>

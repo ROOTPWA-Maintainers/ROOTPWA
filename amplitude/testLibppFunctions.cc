@@ -128,13 +128,14 @@ main(int argc, char** argv)
 		printInfo << "testing Clebsch-Gordan coefficients" << endl;
 
 		const unsigned int nmbIterations = 100;
-		const int          maxJ          = 7;
+		const int          maxJ          = 4;
 
     // determine size of data array
 		unsigned int nmbVals = maxJ * (2 * maxJ - 1);
-		nmbVals = nmbVals * nmbVals * nmbVals;
+		nmbVals = nmbVals * nmbVals * 2 * maxJ * (4 * maxJ - 1);
 
     // compute mathUtils values
+    clebschGordanCoeffCached<double>::instance().setUseCache(true);
     TStopwatch timer;
     timer.Reset();
     timer.Start();
@@ -145,7 +146,7 @@ main(int argc, char** argv)
 				for (int m1 = -j1; m1 <= j1; ++m1)
 					for (int j2 = 0; j2 < maxJ; ++j2)
 						for (int m2 = -j2; m2 <= j2; ++m2)
-							for (int J = 0; J < maxJ; ++J)
+							for (int J = 0; J < 2 * maxJ; ++J)
 								for (int M = -J; M <= J; ++M) {
 									newVals[valIndex] =
 										clebschGordanCoeff<double>(2 * j1, 2 * m1, 2 * j2, 2 * m2, 2 * J, 2 * M);
@@ -156,6 +157,9 @@ main(int argc, char** argv)
     printInfo << "calculated mathUtil Clebsch-Gordan coefficients for " << newVals.size()
               << " x " << nmbIterations << " calls " << endl << "    this consumed: ";
     timer.Print();
+    printInfo << "size of cache is "
+              << clebschGordanCoeffCached<double>::instance().cacheSize() / (1024. * 1024.)
+              << " MBytes" << endl;
 
     // compute libpp values
     timer.Reset();
@@ -167,9 +171,9 @@ main(int argc, char** argv)
 		    for (int m1 = -j1; m1 <= j1; ++m1)
 			    for (int j2 = 0; j2 < maxJ; ++j2)
 				    for (int m2 = -j2; m2 <= j2; ++m2)
-					    for (int J = 0; J < maxJ; ++J)
+					    for (int J = 0; J < 2 * maxJ; ++J)
 						    for (int M = -J; M <= J; ++M) {
-							    oldVals[valIndex] = cgCoeff(2 * j1, 2 * m1, 2 * j2, 2 * m2, 2 * J, 2 * M);
+							    oldVals[valIndex] = clebsch(2 * j1, 2 * j2, 2 * J, 2 * m1, 2 * m2, 2 * M);
 							    ++valIndex;
 						    }
     }
