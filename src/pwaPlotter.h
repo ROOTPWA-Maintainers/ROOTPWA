@@ -43,6 +43,9 @@ class TMultiGraph;
 
 namespace rpwa {
 
+  typedef std::pair<std::string,std::string> strpair;
+
+
   /// \brief Meta information for one fit
   /// Data class to store information that refers to a complete set of
   /// fitResults, eg a complete mass-independent fit over several bins
@@ -144,6 +147,7 @@ public:
   void writeAll(std::string filename);
   void writeAll(TFile* outfile);
 
+  void printStats();
   
 
 private:
@@ -155,9 +159,12 @@ private:
   
   ///< 2D-probability distributions (TH2D)
   std::map<std::string,TH2D*> mIntensityDensityPlots; 
+ 
   
   ///< TMultiGraphs
   std::map<std::string,TMultiGraph*> mIntensities;
+  std::map<strpair,TMultiGraph*> mPhases;
+
   std::map<std::string,TGraph*> mPhaseSpace;
 
   TMultiGraph* mLogLikelihood;

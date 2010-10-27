@@ -491,8 +491,8 @@ main(int    argc,
 	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
 #endif	  
 
-	// ---------------------------------------------------------------------------
-	// write out result
+// ---------------------------------------------------------------------------
+// write out result
 	printInfo << "writing result to '" << outFileName << "'" << endl;
 	{
 		// open output file and create tree for writing
@@ -530,7 +530,8 @@ main(int    argc,
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
-				L.getIntCMatrix(normIntegral, accIntegral);
+				vector<double> phaseSpaceIntegral;
+				L.getIntCMatrix(normIntegral, accIntegral, phaseSpaceIntegral);
 				const int normNmbEvents = useNormalizedAmps ? 1 : L.nmbEvents();  // number of events to normalize to
 
 				cout << "filling fitResult:" << endl
@@ -551,10 +552,11 @@ main(int    argc,
 				             prodAmpNames,
 				             fitParCovMatrix,
 				             fitParCovMatrixIndices,
-				             normIntegral);
+				             normIntegral,
+				             phaseSpaceIntegral);
 			}
-
-			if (1) { 
+			
+			if (1) {
 				// get data structures to construct TFitBin
 				vector<TComplex>       prodAmplitudes;  // production amplitudes
 				vector<pair<int,int> > indices;         // indices for error matrix access
@@ -580,15 +582,15 @@ main(int    argc,
 				// error matrix
 				TMatrixD errMatrix(nmbPar, nmbPar);
 				for(unsigned int i = 0; i < nmbPar; ++i)
-					for(unsigned int j = 0; j < nmbPar; ++j) {
-						errMatrix[i][j] = minimizer->CovMatrix(i,j);
-					}
-				// normalixation integral and acceptance Matrix
+					for(unsigned int j = 0; j < nmbPar; ++j)
+						errMatrix[i][j] = minimizer->CovMatrix(i, j);
+				// normalization integral and acceptance matrix
 				cout << " setting up integrals" << endl;
 				const unsigned int n = waveTitles.size();
 				TCMatrix integralMatrix(n, n);
 				TCMatrix accMatrix     (n, n);
-				L.getIntCMatrix(integralMatrix, accMatrix);
+				vector<double> phaseSpaceIntegral;
+				L.getIntCMatrix(integralMatrix, accMatrix, phaseSpaceIntegral);
 				//integralMatrix.Print();
 				// representation of number of events depends on whether normalization was done
 				const int nmbEvt = useNormalizedAmps ? 1 : L.nmbEvents();
@@ -621,7 +623,7 @@ main(int    argc,
 			outFile->Close();
 		}
 	}
-  
+	
 	if (minimizer)
 		delete minimizer;
 	return 0;

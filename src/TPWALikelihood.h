@@ -62,6 +62,10 @@ class TCMatrix;
 template<typename complexT>  // type of internal variables used for intermediate results
 class TPWALikelihood : public ROOT::Math::IGradientFunctionMultiDim {
 
+public:
+
+	typedef typename complexT::value_type value_type;
+
 private:
 
 	// define array types
@@ -72,11 +76,10 @@ private:
 	typedef boost::multi_array<boost::tuple<int, int>, 3> ampToParMapType;      // array for mapping of amplitudes to parameters
 	typedef boost::multi_array<complexT,               3> ampsArrayType;        // array for production and decay amplitudes
 	typedef boost::multi_array<complexT,               4> normMatrixArrayType;  // array for normalization matrices
+	typedef boost::multi_array<value_type,             2> phaseSpaceIntType;    // array for phase space integrals
 
 
 public:
-
-	typedef typename complexT::value_type value_type;
 
 	// enum for function call counters
 	enum functionCallEnum {
@@ -150,8 +153,9 @@ public:
 	          const std::string& ampDirName    = ".",
 	          const unsigned int numbAccEvents = 0);  ///< prepares all internal data structures
 
-	void getIntCMatrix(TCMatrix& normMatrix,
-	                   TCMatrix& accMatrix) const;
+	void getIntCMatrix(TCMatrix&            normMatrix,
+	                   TCMatrix&            accMatrix,
+	                   std::vector<double>& phaseSpaceIntegral) const;
   
 	// note: amplitudes which do not exist in higher ranks are NOT built!
 	void buildCAmps(const double*                       inPar,
@@ -212,10 +216,10 @@ private:
 	waveToListMapType        _waveToWaveList;       // maps wave to its index in wave list
 	std::vector<std::string> _parNames;             // function parameter names
 	std::vector<double>      _parThresholds;        // mass thresholds of parameters
-	ampToParMapType          _prodAmpToFuncParMap;  // maps each production amplitude to the indices of
-	// its real and imginary part in the parameter
-	// array; negative indices mean that the parameter
-	// is not existing due to rank restrictions
+	ampToParMapType          _prodAmpToFuncParMap;  // maps each production amplitude to the indices
+	                                                // of its real and imginary part in the parameter
+	                                                // array; negative indices mean that the parameter
+	                                                // is not existing due to rank restrictions
   
 	ampsArrayType _decayAmps;  // precalculated decay amplitudes [event index][reflectivity][wave index]
   
@@ -223,8 +227,9 @@ private:
 	mutable std::vector<double> _derivCache;  // cache for derivatives
   
 	// normalization integrals 
-	normMatrixArrayType _normMatrix;  // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
-	normMatrixArrayType _accMatrix;   // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+	normMatrixArrayType _normMatrix;          // normalization matrix w/o acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+	normMatrixArrayType _accMatrix;           // normalization matrix with acceptance [reflectivity 1][wave index 1][reflectivity 2][wave index 2]
+	phaseSpaceIntType   _phaseSpaceIntegral;  // phase space integrals 
   
 	mutable functionCallInfo _funcCallInfo[NMB_FUNCTIONCALLENUM];  // collects function call statistics
 	

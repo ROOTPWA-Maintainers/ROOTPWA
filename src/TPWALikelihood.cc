@@ -684,7 +684,14 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
 {
 	// get original matrix and list of wave names
 	const matrix<complex<double> > intMatrix    = integral.mat();
-	const list<string>             intWaveNames = integral.files();
+	list<string>                   intWaveNames = integral.files();
+  // "int" saves filenames with path, this must be treated here
+  for (list<string>::iterator it = intWaveNames.begin(); it != intWaveNames.end(); ++it) {
+	  // find the slash, if not available -> take the first position of the string
+	  const size_t slashPos = it->rfind('/');
+	  if (slashPos != string::npos)
+		  it->erase(0, slashPos + 1);
+  }
 	// build index lookup-table [reflectivity][wave index] to index in normalization integral
 	waveToIntMapType indexLookUp(extents[2][_nmbWavesReflMax]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -792,6 +799,12 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
 		}
 	printInfo << "loaded " << _nmbEvents << " events into memory" << endl;
 
+	// save phase space integrals
+	_phaseSpaceIntegral.resize(extents[2][_nmbWavesReflMax]);
+	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+			_phaseSpaceIntegral[iRefl][iWave] = sqrt(_normMatrix[iRefl][iWave][iRefl][iWave].real());
+
 	// rescale integrals, if necessary
 	if (_useNormalizedAmps) {
 		// matrices _normMatrix and _accMatrix are already normalized to number of Monte Carlo events
@@ -813,7 +826,6 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 				_normMatrix[iRefl][iWave][iRefl][iWave] = 1;  // diagonal term
-
 		if (_debug) {
 			printInfo << "normalized integral matrices" << endl;
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -838,23 +850,29 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::getIntCMatrix(TCMatrix& normMatrix,
-                                        TCMatrix& accMatrix) const
+TPWALikelihood<complexT>::getIntCMatrix(TCMatrix&       normMatrix,
+                                        TCMatrix&       accMatrix,
+                                        vector<double>& phaseSpaceIntegral) const
 {
+  phaseSpaceIntegral.clear();
+  phaseSpaceIntegral.resize(_nmbWaves + 1, 0);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
+			const unsigned int iIndex = _waveToWaveList[iRefl][iWave];
+			phaseSpaceIntegral[iIndex] = _phaseSpaceIntegral[iRefl][iWave];
 			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
 				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-					const unsigned int iIndex  = _waveToWaveList[iRefl][iWave];
 					const unsigned int jIndex  = _waveToWaveList[jRefl][jWave];
 					const complexT     normVal = _normMatrix[iRefl][iWave][jRefl][jWave];
 					const complexT     accVal  = _accMatrix [iRefl][iWave][jRefl][jWave];
 					normMatrix.set(iIndex, jIndex, complex<double>(normVal.real(), normVal.imag()));
 					accMatrix.set (iIndex, jIndex, complex<double>(accVal.real(),  accVal.imag() ));
 				}
+		}
 	// add flat
 	normMatrix.set(_nmbWaves, _nmbWaves, 1);
 	accMatrix.set (_nmbWaves, _nmbWaves, 1);
+  phaseSpaceIntegral[_nmbWaves] = 1;
 }
 
 

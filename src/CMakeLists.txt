@@ -60,6 +60,8 @@ set(SOURCES
   TLogMultiGaus.cc
   TCovEllipse.cc
   pwaPlotter.cc
+  pwacomponent.cc
+  massDepFitLikeli.cc
 )
 
 	    
@@ -95,7 +97,7 @@ make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
 make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
 make_executable(testArray         testArray.cc         ${THIS_LIB})
 make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
-
+make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB})
 
 # test executables
 add_test(testBuild        ${CMAKE_BUILD_TOOL})

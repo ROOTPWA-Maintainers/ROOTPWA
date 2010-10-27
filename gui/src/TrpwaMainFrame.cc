@@ -20,10 +20,11 @@
 #include <fstream>
 #include <cmath>
 #include "TrpwaSessionManager.h"
+#include "TrpwaJobManager.h"
 #include <TGFileDialog.h>
 #include <cstdlib>
 
-static const int nsteps = 11;
+static const int nsteps = 12;
 static const string step_titles[nsteps] = {
 		"      set up workspace        ",
 		" fill flat phase space events ",
@@ -32,6 +33,7 @@ static const string step_titles[nsteps] = {
 		"   filter MC data into bins   ",
 		"     generate PWA keyfiles    ",
 		"   calculate PWA amplitudes   ",
+		"   integrate PWA amplitudes   ",
 		"  specify amplitudes for fit  ",
 		"       fit partial waves      ",
 		"         show results         ",
@@ -44,8 +46,9 @@ static const string func_calls[nsteps] = {
 		"Dummy()",
 		"Dummy()",
 		"Dummy()",
-		"Dummy()",
-		"Dummy()",
+		"GenKeys()",
+		"CalcAmps()",
+		"IntAmps()",
 		"SelectWaves()",
 		"FitPartialWaves()",
 		"ShowFitResults()",
@@ -139,15 +142,20 @@ void TrpwaMainFrame::Build(){
 				kLHintsExpandX,1,1,1,1));
 		statusbar->ShowPos(true);
 		statusbar->SetBarColor("red");
+		/*
 		TGButtonGroup* buttongroup = new TGButtonGroup(frame_session," batch farm type ",kHorizontalFrame);
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
 		for (int ibatch = 0; ibatch < nbatches; ibatch++){
 			//if (steps_batchimplemented[istep][ibatch]){
 				TGRadioButton* radiobutton = new TGRadioButton(buttongroup, new TGHotString(step_batchnames[ibatch].c_str()));
-				if (ibatch == 0) radiobutton->SetState(kButtonDown);
-				if (!steps_batchimplemented[istep][ibatch])radiobutton->SetState(kButtonDisabled);
+				if (ibatch == 0) {
+					radiobutton->SetState(kButtonDown);
+				} else {
+					if (jobmanager->GetFarmType() != step_batchnames[ibatch])radiobutton->SetState(kButtonDisabled);
+				}
 			//}
 		}
-		frame_session->AddFrame(buttongroup);
+		frame_session->AddFrame(buttongroup);*/
 		steplist->AddFrame(frame_session, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
 		//buttongroup->Show();
@@ -194,12 +202,16 @@ void TrpwaMainFrame::CheckStatus() {
 				current_session->Check_PWA_MC_acc_data_amplitudes() +
 				current_session->Check_PWA_MC_data_amplitudes()
 				)/3.;
+		step_status[7]=(
+				current_session->Check_PWA_MC_acc_data_integrals()  +
+				current_session->Check_PWA_MC_data_integrals()
+				)/2.;
 
-		step_status[7]=current_session->Check_wave_lists();
-		step_status[8]=current_session->Check_fits();
+		step_status[8]=current_session->Check_wave_lists();
+		step_status[9]=current_session->Check_fits();
 
-		step_status[9]=0.;
 		step_status[10]=0.;
+		step_status[11]=0.;
 	}
 
 	for (int istep = 0; istep < nsteps; istep++){
@@ -257,7 +269,7 @@ void TrpwaMainFrame::SaveSessionAs(){
 		const char* filetypes[] = {"Session files","*.cfg"};
 		fileinfo.fFileTypes = filetypes;
 		TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fileinfo);
-		if (fileinfo.fFilename) {
+		if (filedialog && fileinfo.fFilename) {
 			if (!current_session->Save_Session(fileinfo.fFilename)){
 				cout << " Error while saving session occurred! " << endl;
 			}
@@ -270,7 +282,7 @@ void TrpwaMainFrame::LoadSession(){
 	const char* filetypes[] = {"Session files","*.cfg"};
 	fileinfo.fFileTypes = filetypes;
 	TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fileinfo);
-	if (fileinfo.fFilename) {
+	if (filedialog && fileinfo.fFilename) {
 		if (current_session){
 			SaveSession();
 			delete current_session;
@@ -358,9 +370,27 @@ void TrpwaMainFrame::FitPartialWaves(){
 		for (unsigned int i = 0; i < fitresultfiles.size(); i++){
 			stringstream command;
 			command << "mv " << fitresultfiles[i] << " " << fitresultfiles[i] << ".previous" << endl;
-			system(command.str().c_str());
+			cout << system(command.str().c_str()) << endl;
+		}
+		// send one job per bin
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		for (int i = 0; i < current_session->Get_n_bins(); i++){
+			string executedir;
+			string fitcommand = current_session->GetFitCommand(i, executedir);
+			stringstream command;
+			command << "cd " << executedir << ";\n";
+			command << fitcommand << ";\n";
+			cout << " sending fit job for bin " << i << endl;
+			if (!jobmanager->SendJob(command.str(), "fit")){
+				cout << " failed!" << endl;
+			} else {
+				cout << " done " << endl;
+			}
 		}
 
+
+/*
 		// write a script to submit it
 		ofstream script("/tmp/_fitpartialwaves.sh");
 		if (script.good()){
@@ -377,7 +407,8 @@ void TrpwaMainFrame::FitPartialWaves(){
 		stringstream command;
 		command << "source /tmp/_fitpartialwaves.sh";
 
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
+		*/
 	}
 }
 
@@ -412,7 +443,7 @@ void TrpwaMainFrame::ShowFitResults(){
 		stringstream command;
 		command << "source /tmp/_showresults.sh";
 
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
 	}
 	/*
 	# visualization must be performed in the rootscript folder containing all needed (logon) scripts
@@ -420,6 +451,181 @@ void TrpwaMainFrame::ShowFitResults(){
 	# hopefully a ps file was created containing all intensities
 	mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ${KPIPI_FIT_DIR}
 	# ps2pdf ${KPIPI_FIT_DIR}/waveintensities.ps*/
+}
+
+void TrpwaMainFrame::GenKeys() {
+	if (current_session){
+		cout << " calling the key file generator " << endl;
+		string keyfilegen = current_session->Get_key_file_generator_file();
+		string keyfilegendir = keyfilegen.substr( 0, keyfilegen.rfind("/")+1 );
+		// run the key generator within it's directory
+		stringstream command;
+		command << "cd "+keyfilegendir << "; ";
+		// move all keyfiles there
+		command << "mkdir guibackup;";
+		command << "mv *.key guibackup/;";
+		// create the new key files
+		command << "root -l -q "+keyfilegen << "+;";
+		// remove all keyfile in the destination directory
+		command << "rm " << current_session->Get_key_files_dir() << "/*.key;";
+		// move the key files to the destination directory
+		command << "mv *.key " << current_session->Get_key_files_dir() << "/ ;";
+		command << "cd -;";
+		//cout << command.str();
+		cout << system(command.str().c_str()) << endl;
+		Update();
+	}
+	//system();
+}
+
+void TrpwaMainFrame::CalcAmps(){
+	if (current_session){
+		cout << " sending jobs for amplitude calculation " << endl;
+		vector<string>  evt_real_miss;
+		vector<string>  key_real_miss;
+		vector<string>& amp_real_miss  = current_session->Get_PWA_real_data_amplitudes(true, &evt_real_miss, &key_real_miss);
+		//vector<string>& amp_real_avail = current_session->Get_PWA_real_data_amplitudes(false);
+		//cout << endl << " available amplitudes: " << endl;
+		/*
+		for (unsigned int i = 0; i < amp_real_avail.size(); i++){
+			cout << amp_real_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
+			cout << amp_real_miss[i] << endl;
+		}*/
+		vector<string>  evt_mc_miss;
+		vector<string>  key_mc_miss;
+		vector<string>& amp_mc_miss  = current_session->Get_PWA_MC_data_amplitudes(true, &evt_mc_miss, &key_mc_miss);
+		//vector<string>& amp_mc_avail = current_session->Get_PWA_MC_data_amplitudes(false);
+		/*
+		cout << endl << " available amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_avail.size(); i++){
+			cout << amp_mc_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
+			cout << amp_mc_miss[i] << endl;
+		}*/
+		vector<string>  evt_mc_acc_miss;
+		vector<string>  key_mc_acc_miss;
+		vector<string>& amp_mc_acc_miss  = current_session->Get_PWA_MC_acc_data_amplitudes(true, &evt_mc_acc_miss, &key_mc_acc_miss);
+		//vector<string>& amp_mc_acc_avail = current_session->Get_PWA_MC_acc_data_amplitudes(false);
+		/*
+		cout << endl << " available amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_acc_avail.size(); i++){
+			cout << amp_mc_acc_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
+			cout << amp_mc_acc_miss[i] << " " << evt_mc_acc_miss[i] << endl;
+		}*/
+
+		cout << " missing " <<  amp_real_miss.size() << " real data amplitudes " << endl;
+		cout << " missing " <<  amp_mc_miss.size() << " real mc data amplitudes " << endl;
+		cout << " missing " <<  amp_mc_acc_miss.size() << " real mc acc data amplitudes " << endl;
+
+		cout << " calculating missing amplitudes ... " << endl;
+
+		string pdg_table = current_session->Get_pdg_table();
+
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		stringstream batchcommand;
+
+		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;" << '\n';
+			cout << " calculating " << amp_real_miss[i] << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_real_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_data_amp");
+				batchcommand.str("");
+			}
+		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_data_amp");
+		//batchcommand.str("");
+
+		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_mc_miss[i] <<" || cat "<< evt_mc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_miss[i]<<" > "<< amp_mc_miss[i]<< " ;" << '\n';
+			cout << " calculating " << amp_mc_miss[i] << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_mc_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_mc_amp");
+				batchcommand.str("");
+			}
+		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_mc_amp");
+		//batchcommand.str("");
+
+		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_mc_acc_miss[i] <<" || cat "<< evt_mc_acc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_acc_miss[i]<<" > "<< amp_mc_acc_miss[i]<< " ;" << '\n';
+			cout << " calculating " << amp_mc_acc_miss[i] << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_mc_acc_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_mc_acc_amp");
+				batchcommand.str("");
+			}
+		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_mc_acc_amp");
+		//batchcommand.str("");
+
+		cout << " done " << endl;
+	}
+}
+
+void TrpwaMainFrame::IntAmps(){
+	if (current_session){
+		cout << " sending jobs for amplitude integration " << endl;
+		vector< vector<string> > amp_mc_avail;
+		vector< vector<string> > amp_mc_acc_avail;
+		vector<string>& int_mc_miss = current_session->Get_PWA_MC_data_integrals(true, &amp_mc_avail);
+		vector<string>& int_mc_acc_miss = current_session->Get_PWA_MC_acc_data_integrals(true, &amp_mc_acc_avail);
+
+		cout << " available " <<  int_mc_miss.size() << " real mc data integrals " << endl;
+		cout << " available " <<  int_mc_acc_miss.size() << " real mc acc data integrals " << endl;
+
+		cout << " integrating available amplitudes ... " << endl;
+
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		for (unsigned int i = 0; i < int_mc_miss.size(); i++){
+			if (amp_mc_avail[i].size() == 0) continue;
+			stringstream command;
+			command << "int ";
+			cout << " integrating " << int_mc_miss[i] << endl;// << " with " << endl;
+			for (unsigned int j = 0; j < amp_mc_avail[i].size(); j++){
+				command << amp_mc_avail[i][j] << " ";
+				//cout << amp_mc_avail[i][j] << endl;
+			}
+			command << " > " << int_mc_miss[i];
+			//cout << command.str() << endl;
+			jobmanager->SendJob(command.str(), "calintegral");
+		}
+
+		for (unsigned int i = 0; i < int_mc_acc_miss.size(); i++){
+			if (amp_mc_acc_avail[i].size() == 0) continue;
+			stringstream command;
+			command << "int ";
+			cout << " integrating " << int_mc_acc_miss[i] << endl;// << " with " << endl;
+			for (unsigned int j = 0; j < amp_mc_acc_avail[i].size(); j++){
+				command << amp_mc_acc_avail[i][j] << " ";
+				//cout << amp_mc_acc_avail[i][j] << endl;
+			}
+			command << " > " << int_mc_acc_miss[i];
+			//cout << command.str() << endl;
+			jobmanager->SendJob(command.str(), "calcintegral");
+		}
+		cout << " done " << endl;
+	}
 }
 
 TrpwaMainFrame::~TrpwaMainFrame() {
