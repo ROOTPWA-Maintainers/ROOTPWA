@@ -500,7 +500,8 @@ float TrpwaSessionManager::Check_binned_data_structure(){
 		}
 		if (complete) counter++;
 	}
-	cout << " found " << counter << " of " << _n_bins << " expected folders" << endl;
+	if ((int) counter != (int) _n_bins)
+		cout << " found " << counter << " of " << _n_bins << " expected folders" << endl;
 	result = (double) counter / ((double) _n_bins);
 
 	return result;
@@ -519,7 +520,8 @@ float TrpwaSessionManager::Check_flat_phase_space_events(){
 			counter++;
 		}
 	}
-	cout << " found " << counter << " of " << _n_bins << " expected .genbod.evt files" << endl;
+	if ((int) counter != (int) _n_bins)
+		cout << " found " << counter << " of " << _n_bins << " expected .genbod.evt files" << endl;
 	result = (double) counter / ((double) _n_bins);
 
 	return result;
@@ -538,7 +540,8 @@ float TrpwaSessionManager::Check_real_data_events(){
 			counter++;
 		}
 	}
-	cout << " found " << counter << " of " << _n_bins << " expected .evt files" << endl;
+	if ((int) counter != (int) _n_bins)
+		cout << " found " << counter << " of " << _n_bins << " expected .evt files" << endl;
 	result = (double) counter / ((double) _n_bins);
 
 	return result;
@@ -557,7 +560,8 @@ float TrpwaSessionManager::Check_MC_data_events(){
 			counter++;
 		}
 	}
-	cout << " found " << counter << " of " << _n_bins << " expected .acc.evt files" << endl;
+	if ((int) counter != (int) _n_bins)
+		cout << " found " << counter << " of " << _n_bins << " expected .acc.evt files" << endl;
 	result = (double) counter / ((double) _n_bins);
 
 	return result;
@@ -574,7 +578,7 @@ float TrpwaSessionManager::Check_PWA_keyfiles(){
 
 	if (_n_keyfiles > 0) result = 1.;
 
-	cout << " found " << _n_keyfiles << " .key files " << endl;
+	//cout << " found " << _n_keyfiles << " .key files " << endl;
 
 	return result;
 }
@@ -682,7 +686,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 	}
 */
 	// check now the consistency of this result
-	cout << " integrals before check " << result->size() << " missing " << missing << endl;
+	//cout << " integrals before check " << result->size() << " missing " << missing << endl;
 	if (corresponding_amplitudefiles->size() != result->size()){
 		cout << " Error in TrpwaSessionManager::Get_PWA_data_integrals: consistency of result not ensured! " << endl;
 		cout << corresponding_amplitudefiles->size() << " does not fit " << result->size() << endl;
@@ -700,7 +704,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 			it_pair++;
 		}
 	}
-	cout << " integrals after check " << result->size() << " missing " << missing << endl;
+	//cout << " integrals after check " << result->size() << " missing " << missing << endl;
 	if (corresponding_amplitudefiles->size() != result->size()){ cout << " noooooooo ! " << endl;}
 	if (delete_corresponding_ampsfiles) {
 		delete corresponding_amplitudefiles;
@@ -712,7 +716,8 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 float TrpwaSessionManager::Check_PWA_MC_acc_data_integrals(){
 	float result(0.);
 	result = Get_PWA_data_integrals("ACCAMPS",false).size();
-	cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
+	if ((int) result != (int) _n_bins)
+		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
 	return result;
 }
@@ -725,7 +730,8 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_acc_data_integrals(bool missing,
 float TrpwaSessionManager::Check_PWA_MC_data_integrals(){
 	float result(0.);
 	result = Get_PWA_data_integrals("PSPAMPS",false).size();
-	cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
+	if ((int) result != (int) _n_bins)
+		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
 	return result;
 }
@@ -769,13 +775,18 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_amplitudes(string folder, bool
 	return *result;
 }
 
-// returns the status [0-1] of calculated amplitudes
-// of real data
-// (comparing number of .amp files with .key files in the real data folder)
 float TrpwaSessionManager::Check_PWA_real_data_amplitudes(){
 	float result(0.);
-	result = Get_PWA_data_amplitudes("AMPS",false).size();
-	cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
+	vector<string> amps = Get_PWA_data_amplitudes("AMPS",false);
+	int i(0);
+	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
+		if (Is_valid_amplitude((*it))) result +=1. ;
+		i++;
+		DrawProgressBar(50, (i+1)/((double)amps.size()));
+	}
+	//result = amps.size();
+	if ((int) result != (int) _n_bins* (int) _keyfiles.size())
+		cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
 	result = (double) result / ((double) _n_bins*_keyfiles.size());
 	return result;
 	/*
@@ -833,8 +844,16 @@ vector<string>& TrpwaSessionManager::CompareLists(const vector<string>& list1, c
 // in the flat phase space data folder)
 float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
 	float result(0.);
-	result = Get_PWA_data_amplitudes("PSPAMPS",false).size();
-	cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
+	vector<string> amps = Get_PWA_data_amplitudes("PSPAMPS",false);
+	int i(0);
+	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
+		if (Is_valid_amplitude((*it))) result +=1. ;
+		i++;
+		DrawProgressBar(50, (i+1)/((double)amps.size()));
+	}
+	//result = Get_PWA_data_amplitudes("PSPAMPS",false).size();
+	if ((int) result != (int) _n_bins* (int) _keyfiles.size())
+		cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
 	result = (double) result / ((double) _n_bins*_keyfiles.size());
 	return result;
 	/*
@@ -875,8 +894,16 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_data_amplitudes(bool missing,
 // in the accpeted events data folder)
 float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(){
 	float result(0.);
-	result = Get_PWA_data_amplitudes("ACCAMPS",false).size();
-	cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
+	vector<string> amps = Get_PWA_data_amplitudes("ACCAMPS",false);
+	int i(0);
+	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
+		if (Is_valid_amplitude((*it))) result +=1. ;
+		i++;
+		DrawProgressBar(50, (i+1)/((double)amps.size()));
+	}
+	//result = Get_PWA_data_amplitudes("ACCAMPS",false).size();
+	if ((int) result != (int) _n_bins* (int) _keyfiles.size())
+		cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
 	result = (double) result / ((double) _n_bins*_keyfiles.size());
 	return result;
 	/*
@@ -924,7 +951,8 @@ float TrpwaSessionManager::Check_wave_lists(){
 			counter++;
 		}
 	}
-	cout << " found " << counter << " of " << _n_bins << " expected wave list files" << endl;
+	if ((int) counter != (int) _n_bins)
+		cout << " found " << counter << " of " << _n_bins << " expected wave list files" << endl;
 	result = (double) counter / ((double) _n_bins);
 
 	return result;
@@ -943,7 +971,8 @@ float TrpwaSessionManager::Check_fits(){
 			counter++;
 		}
 	}
-	cout << " found " << counter << " of " << _n_bins << " expected fit result files" << endl;
+	if ((int) counter != (int) _n_bins)
+		cout << " found " << counter << " of " << _n_bins << " expected fit result files" << endl;
 	result = (double) counter / ((double) _n_bins);
 
 	return result;
@@ -1115,6 +1144,7 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 		result = _result.str();
 		return result;
 	} else {
+		//_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
 		_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile;
 		result = _result.str();
 		return result;
@@ -1230,8 +1260,8 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 	integralfile >> nevents;
 	integralfile >> dimensionx >> dimensiony;
 
-	cout << norm_file << ": " << endl;
-	cout << " namps " << namps << " nevents " << nevents << endl;
+	//cout << norm_file << ": " << endl;
+	//cout << " namps " << namps << " nevents " << nevents << endl;
 
 	if (namps != (int) corresponding_amplitudefiles.size()){
 		cout << " Inonsystency of " << norm_file << " dimension is wrong " << endl;
@@ -1354,8 +1384,43 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 	return result;
 }
 
+bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
+{
+	bool result = true;
+	ifstream file(ampfile.c_str());
+	if (!file) {
+		cout << " Error: " << ampfile << " does not exist!" << endl;
+		return false;
+	}
+	int i(0);
+	while (1)
+	{
+		complex<double> value;
+		//file >> value;
+		file.read((char*)&value, sizeof(complex<double>));
+		//cout << value << endl;
+		if (!file.good()){
+			cout << " Error reading " << ampfile << " at line " << i << endl;
+			result = false;
+			break;
+		}
+		if (i > 10) break;
+		if (value.real() == 0. && value.imag() == 0.) {
+			// display once the error for a 0 entry
+			if (result){
+				cout << " Amplitudefile " << ampfile << " has a (0, 0) entry withing the first " << nlines << endl;
+			}
+			result = false;
+		}
+		i++;
+	}
+	//cout << " read " << i << " lines " << endl;
+	file.close();
+	return result;
+}
+
 vector<string> &TrpwaSessionManager::ReadWaveList(string filename){
-	cout << " reading wave list " << filename << endl;
+	//cout << " reading wave list " << filename << endl;
 	vector<string>* result = new vector<string>();
 
 	// Check whether the file exists, if not create it if possible
@@ -1392,7 +1457,7 @@ vector<string> &TrpwaSessionManager::ReadWaveList(string filename){
 				}
 			// skip waves with # in it
 			if (_wave.find('#')!=string::npos){
-				cout << " omitting line: " << _wave << endl;
+				//cout << " omitting line: " << _wave << endl;
 				continue;
 			}
 			// take only entries with .amp ending
@@ -1407,7 +1472,7 @@ vector<string> &TrpwaSessionManager::ReadWaveList(string filename){
 	} else {
 		cout << " Error in TrpwaSessionManager::ReadWaveList(): Could not read wave list "<< filename;
 	}
-	cout << " found " << result->size() << " waves " << endl;
+	//cout << " found " << result->size() << " waves " << endl;
 
 	return *result;
 }
@@ -1509,4 +1574,23 @@ void TrpwaSessionManager::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P,
 		cout << wavename[i] << " ";
 	}
 	cout << endl;
+}
+
+void TrpwaSessionManager::DrawProgressBar(int len, double percent) {
+	  static double last_percent(0.);
+	  if ((int)(last_percent*100) == (int)(percent*100)) return;
+	  //cout << " drawing " << endl;
+	  cout << "\x1B[2K"; // Erase the entire current line.
+	  cout << "\x1B[0E"; // Move to the beginning of the current line.
+	  string progress;
+	  for (int i = 0; i < len; ++i) {
+		if (i < static_cast<int>(len * percent)) {
+		  progress += "=";
+		} else {
+		  progress += " ";
+		}
+	  }
+	  cout << "[" << progress << "] " << (static_cast<int>(100 * percent)) << "%";
+	  flush(cout); // Required.
+	  last_percent = percent;
 }
