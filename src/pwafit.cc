@@ -441,21 +441,27 @@ main(int    argc,
 	// find minimum of likelihood function
 	printInfo << "performing minimization" << endl;
 	{
+		TStopwatch timer;
+		timer.Start();
 		bool success = minimizer->Minimize();
+		timer.Stop();
 		if (success)
-			printInfo << "minimization finished successfully" << endl;
+			printInfo << "minimization finished successfully. " << flush;
 		else
-			printWarn << "minimization failed" << endl;
+			printWarn << "minimization failed. " << flush;
+		cout << "used " << flush;
+		timer.Print();
 		printInfo << *minimizer;
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
-			TStopwatch timer;
 			timer.Start();
 			success = minimizer->Hesse();
-			if (not success)
-				printWarn << "calculation of Hessian matrix failed" << endl;
 			timer.Stop();
-			printInfo << "successfully calculated Hessian matrix. needed " << flush;
+			if (success)
+				printInfo << "successfully calculated Hessian matrix. " << flush;
+			else
+				printWarn << "calculation of Hessian matrix failed. " << flush;
+			cout << "used " << flush;
 			timer.Print();
 		}
 		printInfo << *minimizer;
