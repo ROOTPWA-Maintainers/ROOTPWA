@@ -57,7 +57,22 @@ integral::files(char** fileList)
 {
   list<string> fList;
   while (*fileList) {
-    fList.push_back(*fileList);
+    // check if filesize is nonzero.
+    ifstream in;in.open(*fileList);
+    bool isok=false;
+    if (in) {
+      in.seekg (0, ifstream::end);
+      int length = in.tellg ();
+      if(length>0)isok=true;
+      else {
+	cerr << "File "<< *fileList << " has zero length. Skipping." << endl;
+      }
+    } else {
+      cerr << "File "<< *fileList << " not found." << endl;
+    }
+    
+    if(isok)fList.push_back(*fileList);
+    in.close();
     ++fileList;
   }
   files(fList);
