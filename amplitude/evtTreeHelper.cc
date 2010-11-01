@@ -151,7 +151,7 @@ namespace rpwa {
 		long int fileLength = inEvt.tellg();
 		inEvt.seekg(0, ios::beg);
 		progress_display* progressIndicator = (not debug) ? new progress_display(fileLength, cout, "") : 0;
-		long int          lastPos           = inEvt.tellg();
+		streampos         lastPos           = inEvt.tellg();
 		while (inEvt.good()) {
 			string line;
 

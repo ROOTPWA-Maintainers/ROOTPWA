@@ -423,7 +423,7 @@ main(int argc, char** argv)
 				ev.setIOVersion(1);
 				timer.Reset();
 				timer.Start();
-				unsigned int countEvent = 0;
+				long int countEvent = 0;
 				while ((countEvent < maxNmbEvents) and (not (eventData >> ev).eof())) {
 					complex<double> pwa2kamp;
 					key.run(ev, pwa2kamp, true);
