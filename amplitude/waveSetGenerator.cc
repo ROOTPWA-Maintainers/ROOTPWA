@@ -36,6 +36,8 @@
 //-------------------------------------------------------------------------
 
 
+#include "mathUtils.hpp"
+#include "clebschGordanCoeff.hpp"
 #include "particleDataTable.h"
 #include "waveSetGenerator.h"
 
@@ -146,52 +148,61 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 					                                   (*daughterDecays[1])[iDaughter[1]]);
 	
 				// calculate parent quantum numbers fixed by daughter quantum numbers
-				const int baryonNmb   = daughters[0]->baryonNmb()   + daughters[1]->baryonNmb();
-				const int charge      = daughters[0]->charge()      + daughters[1]->charge();
-				const int strangeness = daughters[0]->strangeness() + daughters[1]->strangeness();
-				const int charm       = daughters[0]->charm()       + daughters[1]->charm();
-				const int beauty      = daughters[0]->beauty()      + daughters[1]->beauty();
-				const int G           = daughters[0]->G()           * daughters[1]->G();
+				const int parentBaryonNmb   = daughters[0]->baryonNmb()   + daughters[1]->baryonNmb();
+				const int parentCharge      = daughters[0]->charge()      + daughters[1]->charge();
+				const int parentStrangeness = daughters[0]->strangeness() + daughters[1]->strangeness();
+				const int parentCharm       = daughters[0]->charm()       + daughters[1]->charm();
+				const int parentBeauty      = daughters[0]->beauty()      + daughters[1]->beauty();
+				const int parentG           = daughters[0]->G()           * daughters[1]->G();
 				// daughter quantum numbers that define ranges of possible parent quantum numbers
-				const int spins   [2] = {daughters[0]->J(),       daughters[1]->J()      };
-				const int isospins[2] = {daughters[0]->isospin(), daughters[1]->isospin()};
+				const int daughterI  [2] = {daughters[0]->isospin(),     daughters[1]->isospin()    };
+				const int daughterI_z[2] = {daughters[0]->isospinProj(), daughters[1]->isospinProj()};
+				const int daughterJ  [2] = {daughters[0]->J(),           daughters[1]->J()          };
 
 				// loop over all allowed combinations of daughter quantum numbers
 				// loop over allowed total spins
-				for (int S = max(abs(spins[0] - spins[1]), _SRange.first);
-				     S <= min(spins[0] + spins[1], _SRange.second); S += 2) {
+				for (int S = max(abs(daughterJ[0] - daughterJ[1]), _SRange.first);
+				     S <= min(daughterJ[0] + daughterJ[1], _SRange.second); S += 2) {
 					// loop over allowed relative orbital angular momenta
 					for (int L = max(0, _LRange.first); L <= _LRange.second; L += 2) {
-						const int P = daughters[0]->P() * daughters[1]->P() * (L % 4 == 0 ? 1 : -1);  // parity
+						const int parentP = daughters[0]->P() * daughters[1]->P() * (L % 4 == 0 ? 1 : -1);
 						// loop over allowed total angular momenta
-						for (int J = max(abs(L - S), _JRange.first); J <= min(L + S, _JRange.second); J += 2) {
+						for (int parentJ = max(abs(L - S), _JRange.first);
+						     parentJ <= min(L + S, _JRange.second); parentJ += 2) {
 							// loop over allowed isospins
-							for (int I = max(abs(isospins[0] - isospins[1]), _isospinRange.first);
-							     I <= min(isospins[0] + isospins[1], _isospinRange.second); I += 2) {
-								// check whether charge state is allowed
-								// !!! the Gell-Mann-Nishijima formula cannot be used
-								//     here, because it employs the the z-component of
-								//     the isospin, I_z (not I); see PDG 2008 eq. 14.1
-								// if (abs(charge - 0.5 * (baryonNmb + strangeness + charm + beauty)) != 0.5 * I)
-								//   continue;
-								const int C = G * (I % 4 == 0 ? 1 : -1);  // C-parity
+							for (int parentI = max(abs(daughterI[0] - daughterI[1]), _isospinRange.first);
+							     parentI <= min(daughterI[0] + daughterI[1], _isospinRange.second); parentI += 2) {
+								// check whether charge state is allowed using
+								// Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
+								const int parentI_z = 2 * parentCharge - (parentBaryonNmb + parentStrangeness
+								                                          + parentCharm + parentBeauty);
+								if ((abs(parentI_z) > parentI) or isOdd(parentI - parentI_z))
+									continue;
+								// make sure that isospin Clebsch-Gordan is not zero
+								if (clebschGordanCoeff<double>(daughterI[0], daughterI_z[0],
+								                               daughterI[1], daughterI_z[1],
+								                               parentI, parentI_z) == 0)
+									continue;
+								const int parentC = parentG * (parentI % 4 == 0 ? 1 : -1);  // C-parity
 								if (not _allowJpcExotics)
 									// quark model restrictions: P == C is always allowed
 									// check that P = (-1)^(J + 1)
-									if ((P != C) and (   (C != (J % 4     == 0 ? 1 : -1))
-									                  or (P != (J + 2 % 4 == 0 ? 1 : -1)))) {
+									if ((parentP != parentC)
+									    and (   (parentC != (parentJ % 4     == 0 ? 1 : -1))
+									         or (parentP != (parentJ + 2 % 4 == 0 ? 1 : -1)))) {
 										if (_debug)
 											printInfo << "disregarding spin-exotic isobar with IG(JPC) = "
-											          << 0.5 * I << sign(G)
-											          << "(" << 0.5 * J << sign(P) << sign(C) << ")" << endl;
+											          << 0.5 * parentI << sign(parentG)
+											          << "(" << 0.5 * parentJ << sign(parentP) << sign(parentC) << ")"
+											          << endl;
 										continue;
 									}
 		
 								// find candidates for parent isobar in particle data table
 								particleProperties isobarProp(*parent);
-								isobarProp.setBaryonNmb(baryonNmb);
-								isobarProp.setSCB      (strangeness, charm, beauty);
-								isobarProp.setIGJPC    (I, G, J, P, C);
+								isobarProp.setBaryonNmb(parentBaryonNmb);
+								isobarProp.setSCB      (parentStrangeness, parentCharm, parentBeauty);
+								isobarProp.setIGJPC    (parentI, parentG, parentJ, parentP, parentC);
 								particleDataTable& pdt = particleDataTable::instance();
 								vector<const particleProperties*> isobarCandidates;
 								const string parentName    = parent->name();
@@ -224,7 +235,7 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 									// set parent particle
 									const particlePtr& parentCopy = parentVertexCopy->parent();
 									parentCopy->setProperties(*isobarCandidates[iIsobar]);
-									parentCopy->setCharge(charge);
+									parentCopy->setCharge(parentCharge);
 									if (_debug)
 										printInfo << "created decay topology for " << *parentVertexCopy << endl;
 									decayPossibilities[startNds[iStart]].push_back(*decayCopy);
@@ -268,14 +279,18 @@ waveSetGenerator::print(ostream& out) const
 	out << "    isobar black list:";
 	if (_isobarBlackList.size() == 0)
 		out << " empty" << endl;
-	else
+	else {
+		out << endl;
 		for (size_t i = 0; i < _isobarBlackList.size(); ++i)
 			out << "        " << _isobarBlackList[i] << endl;
+	}
 	out << "    isobar white list:";
 	if (_isobarWhiteList.size() == 0)
 		out << " all isobars" << endl;
-	else
+	else {
+		out << endl;
 		for (size_t i = 0; i < _isobarWhiteList.size(); ++i)
 			out << "        " << _isobarWhiteList[i] << endl;
+	}
 	return out;
 }

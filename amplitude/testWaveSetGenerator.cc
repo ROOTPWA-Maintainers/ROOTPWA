@@ -35,6 +35,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/assign/list_of.hpp>
+
 #include "TSystem.h"
 
 #include "particleDataTable.h"
@@ -43,6 +45,7 @@
 
 
 using namespace std;
+using namespace boost::assign;
 using namespace rpwa;
 
 
@@ -56,7 +59,7 @@ main(int argc, char** argv)
 	//decayTopologyGraphType::setDebug(true);
 	//isobarDecayVertex::setDebug(true);
 	//decayTopology::setDebug(true);
-	isobarDecayTopology::setDebug(true);
+	//isobarDecayTopology::setDebug(true);
 	waveSetGenerator::setDebug(true);
 
 	particleDataTable& pdt = particleDataTable::instance();
@@ -84,13 +87,18 @@ main(int argc, char** argv)
 	if (1) {
 		keyFileParser&         parser = keyFileParser::instance();
 		isobarDecayTopologyPtr topo;
-		if (not parser.parse("testTemplate.key") or not parser.constructDecayTopology(topo, false))
+		if (   not parser.parse("testWaveSetGenerator.key")
+		    or not parser.constructDecayTopology(topo, false))
 			throw;
 		topo->XParticle()->setMass(2.5);
 		topo->XParticle()->setWidth(0.3);
 		printInfo << "decay topology:" << *topo;
 		
 		waveSetGenerator waveSetGen;
+		const vector<string> isobarWhiteList = list_of("sigma")("rho(770)")("f2(1270)")
+			("pi(1300)")("a1(1260)")("a2(1320)")("pi2(1670)")
+			("f0(1500)")("f1(1285)")("rho(1450)")("rho(1700)")("rho3(1690)");
+		waveSetGen.setIsobarWhiteList(isobarWhiteList);
 		cout << waveSetGen;
 		waveSetGen.generateWaveSet(topo);
 		vector<isobarDecayTopology>& decays             = waveSetGen.waveSet();
@@ -113,6 +121,8 @@ main(int argc, char** argv)
 				++inconsistentDecays;
 			}
 		}
+		for (unsigned int i = 0; i < decays.size(); ++i)
+			cout << setw(4) << i << ": " << parser.keyFileNameFromTopology(decays[i]) << endl;
 		cout << "got " << inconsistentDecays << " inconsistent" << endl
 		     << "and " << consistentDecays << " valid decays" << endl
 		     << "out of " << decays.size() << " constructed decays" << endl;

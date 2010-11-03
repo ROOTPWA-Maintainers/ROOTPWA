@@ -94,6 +94,8 @@ namespace rpwa {
 		const TLorentzVector& lzVec       () const { return _lzVec;                      }  ///< returns Lorentz vector of particle
 		int                   index       () const { return _index;                      }  ///< returns index label assigned to particle; -1 means undefined
 		int                   reflectivity() const { return _refl;                       }  ///< returns particle's reflectivity; 0 means undefined
+		int                   isospinProj () const
+		{ return 2 * _charge - (baryonNmb() + strangeness() + charm() + beauty()); }  ///< returns z-component of isospin using Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
 
 		void setCharge      (const int             charge  ) { _charge   = charge;                                                            }  ///< sets particle's charge
 		void setSpinProj    (const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
