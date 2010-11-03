@@ -254,9 +254,11 @@ namespace rpwa {
 			   const int     beamCharge);
 
     // writes event to ascii file read by ComGeant fort.26 interface
+    // please don't use the binary file option yet since there seems
+    // to be a problem reading it in ComGeant
     bool writeComGeantAscii(
     		ostream& out,
-    		bool  formated = true); // true: text file ; false: binary file (not implemented yet)
+    		bool  formated = true); // true: text file ; false: binary file
   
     void  BuildDaughterList();
     // particle masses
