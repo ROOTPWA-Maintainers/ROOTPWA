@@ -47,6 +47,7 @@
 #include "TFile.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TSystem.h"
 
 #include "Vec.h"
 #include "lorentz.h"
@@ -285,7 +286,7 @@ main(int argc, char** argv)
 		//const long int maxNmbEvents   = 1000000;
 		const long int maxNmbEvents   = 2;
 
-		// const string   newKeyFileName = "test.key";
+		const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
 		// const string   rootInFileName = "testEvents.root";
 		// const string   evtInFileName  = "testTree.evt";
@@ -316,16 +317,19 @@ main(int argc, char** argv)
 		// const string   rootInFileName = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.root";
 		// const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
 		// const string   evtInFileName  = "1000.1060.evt";
-		const string   newKeyFileName = "../keyfiles/key2pip/SET1_new/11-1+f21270_13_p.key";
+		// const string   newKeyFileName = "../keyfiles/key2pip/SET1_new/11-1+f21270_13_p.key";
 		const string   rootInFileName = "1220.1240.root";
 
 		keyFileParser&     parser = keyFileParser::instance();
 		isobarAmplitudePtr amp;
 		if (parser.parse(newKeyFileName) and parser.constructAmplitude(amp)) {
 			isobarDecayTopologyPtr topo = amp->decayTopology();
-			topo->writeGraphViz("decay.dot");
 			printInfo << *amp;
+			topo->writeGraphViz("testAmplitude.dot");
+			gSystem->Exec("dot -Tps -o testAmplitude.ps testAmplitude.dot");
 			parser.writeKeyFile("testWrite.key", *amp);  // test key file creation
+
+			exit(1);
 			
 			// read data from tree
 			const string&            inTreeName                = "rootPwaEvtTree";

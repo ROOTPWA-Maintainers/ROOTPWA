@@ -65,28 +65,23 @@ namespace rpwa {
 		              const int M)  ///< returns Clebsch-Gordan coefficient (j1 m1 j2 m2 | J M)
 		{
 			// check input parameters
-			if ((j1 < 0) || (j2 < 0) || (J < 0)) {
-				printErr << "negative spins are not allowed (j1 = " << 0.5 * j1 << ", "
-				         << "j2 = " << 0.5 * j2 << ", J = " << 0.5 * J << "). aborting." << std::endl;
-				throw;
-			}
-			if (_useCache && ((j1 >= _maxJ) || (j2 >= _maxJ) || (J >= _maxJ))) {
+			if (_useCache and ((j1 >= _maxJ) or (j2 >= _maxJ) or (J >= _maxJ))) {
 				printErr << "spins are too large. maximum allowed spin is "
 				         << (_maxJ - 1) * 0.5 << ". aborting." << std::endl;
 				throw;
 			}
-			if (isOdd(j1 - m1) || isOdd(j2 - m2) || isOdd(J - M)) {
+			if (isOdd(j1 - m1) or isOdd(j2 - m2) or isOdd(J - M)) {
 				printErr << "integer spin projection for half integer spin or vice versa "
 				         << "(j1 = " << 0.5 * j1 << ", m1 = " << 0.5 * m1 << ", j2 = " << 0.5 * j2 << ", "
 				         << "m2 = " << 0.5 * m2 << ", J = " << 0.5 * J << ", M = " << 0.5 * M << "). "
 				         << "aborting." << std::endl;
 				throw;
 			}
-			if ((rpwa::abs(m1) > j1) || (rpwa::abs(m2) > j2) || (rpwa::abs(M) > J))
+			if (not angMomCanCouple(j1, j2, J))
+				return 0;
+			if ((rpwa::abs(m1) > j1) or (rpwa::abs(m2) > j2) or (rpwa::abs(M) > J))
 				return 0;
 			if (m1 + m2 != M)
-				return 0;
-			if ((J < rpwa::abs(j1 - j2)) || J > j1 + j2)
 				return 0;
 
 
@@ -99,14 +94,14 @@ namespace rpwa {
 				// calculate function value and put intermediate values into cache
 				int nu = 0;
 				while (    ((j1 - j2 - M) / 2 + nu < 0)
-				        || ((j1 - m1)     / 2 + nu < 0))
+				        or ((j1 - m1)     / 2 + nu < 0))
 					nu++;
 
 				T   sum = 0;
 				int d1, d2, n1;
-				while (    ((d1 = (J - j1 + j2) / 2 - nu) >= 0)
-				        && ((d2 = (J + M)       / 2 - nu) >= 0)
-				        && ((n1 = (j2 + J + m1) / 2 - nu) >= 0)) {
+				while (     ((d1 = (J - j1 + j2) / 2 - nu) >= 0)
+				        and ((d2 = (J + M)       / 2 - nu) >= 0)
+				        and ((n1 = (j2 + J + m1) / 2 - nu) >= 0)) {
 					const int d3 = (j1 - j2 - M) / 2 + nu;
 					const int n2 = (j1 - m1)     / 2 + nu;
 					sum +=   powMinusOne(nu + (j2 + m2) / 2) * rpwa::factorial<T>(n1) * rpwa::factorial<T>(n2)

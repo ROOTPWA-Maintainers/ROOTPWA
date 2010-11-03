@@ -396,7 +396,7 @@ keyFileParser::oldKeyFileNameFromTopology(isobarDecayTopology&        topo,
 			printWarn << "decay topology has issues. cannot construct key file name." << endl;
 			return "";
 		}
-		// X quantum numbers
+		// X quantum numbers and first decay
 		const particle& X = *(topo.XParticle());
 		fileName << 0.5 * X.isospin() << ((X.G() != 0) ? sign(X.G()) : "")
 		         << 0.5 * X.J() << ((X.P() != 0) ? sign(X.P()) : "") << ((X.C() != 0) ? sign(X.C()) : "")

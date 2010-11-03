@@ -193,7 +193,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const complex<double> bw = vertex->massDepAmplitude();
 
 	// calculate normalization factor
-	const double norm = normFactor(L, _debug);
+	const double norm = angMomNormFactor(L, _debug);
 
 	// calculate decay amplitude
 	complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;

@@ -190,7 +190,7 @@ main(int argc, char** argv)
 	    const double relDelta = absDelta / oldVals[i];
 	    if (abs(absDelta) > maxAbsDeviation)
 		    maxAbsDeviation = abs(absDelta);
-	    if ((newVals[i] != 0) && (abs(relDelta) > maxRelDeviation))
+	    if ((newVals[i] != 0) and (abs(relDelta) > maxRelDeviation))
 		    maxRelDeviation = abs(relDelta);
     }
     printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "

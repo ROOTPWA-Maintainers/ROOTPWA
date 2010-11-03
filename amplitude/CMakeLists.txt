@@ -56,7 +56,6 @@ set(SOURCES
 	particleProperties.cc
 	particleDataTable.cc
 	particle.cc
-	angMomCoupl.cc
 	interactionVertex.cc
 	fsVertex.cc
 	decayTopology.cc

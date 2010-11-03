@@ -40,8 +40,9 @@
 #include <sstream>
 
 #include "utilities.h"
+#include "mathUtils.hpp"
+#include "clebschGordanCoeff.hpp"
 #include "isobarDecayVertex.h"
-#include "angMomCoupl.h"
 
 	
 using namespace std;
@@ -235,12 +236,11 @@ isobarDecayVertex::checkConsistency()
 	if (not checkMultiplicativeQn(parent()->G(), daughter1()->G(), daughter2()->G(), "G-parity"))
 		vertexConsistent = false;
 	// C-parity
-	const int cParity = parent()->G() * (parent()->isospin() % 4 == 0 ? 1 : -1);
-	if (cParity != parent()->C()) {
+	const int C = parent()->G() * (parent()->isospin() % 4 == 0 ? 1 : -1);
+	if (C != parent()->C()) {
 		vertexConsistent = false;
-		printWarn << "C-parity mismatch: " << parent()->name() << " = " << parent()->C()
-		          << " != " << cParity  << " = "
-		          << "(" << parent()->G() << ")^" << parent()->isospin() << " = G^2I"<< endl;
+		printWarn << "C-parity mismatch: " << parent()->name() << " = " << parent()->C() << " != " << C
+		          << " = (" << parent()->G() << ")^" << parent()->isospin() << " = G^2I"<< endl;
 	} else if (_debug)
 		printInfo << *this << ": C-parity is consistent" << endl;
 	// parity
@@ -278,7 +278,7 @@ isobarDecayVertex::checkConsistency()
 		vertexConsistent = false;
 	// check angular momentum like quantum numbers
 	// spin coupling: S in {|s1 - s2|, ..., s1 + s2}
-	if (not angMomCoupl(daughter1()->J(), daughter2()->J()).inRange(_S)) {
+	if (not angMomCanCouple(daughter1()->J(), daughter2()->J(), _S)) {
 		printWarn << "spins "
 		          << "(" << daughter1()->name() << " J = " << daughter1()->J() * 0.5 << ") and "
 		          << "(" << daughter2()->name() << " J = " << daughter2()->J() * 0.5 << ") "
@@ -287,14 +287,14 @@ isobarDecayVertex::checkConsistency()
 	} else if (_debug)
 		printInfo << *this << ": spin-spin coupling is consistent" << endl;
 	// L-S coupling: J in {|L - S|, ..., L + S}
-	if (not angMomCoupl(_L, _S).inRange(parent()->J())) {
+	if (not angMomCanCouple(_L, _S, parent()->J())) {
 		printWarn << "orbital angular momentum L = " << _L * 0.5 << " and spin S = " << _S * 0.5
 		          << " cannot couple to angular momentum J = " << parent()->J() * 0.5 << endl;
 		vertexConsistent = false;
 	} else if (_debug)
 		printInfo << *this << ": L-S coupling is consistent" << endl;
 	// isospin coupling: I in {|I_1 - I_2|, ..., I_1 + I_2}
-	if (not angMomCoupl(daughter1()->isospin(), daughter2()->isospin()).inRange(parent()->isospin())) {
+	if (not angMomCanCouple(daughter1()->isospin(), daughter2()->isospin(), parent()->isospin())) {
 		printWarn << "isospins "
 		          << "(" << daughter1()->name() << " I = " << daughter1()->isospin() * 0.5 << ") and "
 		          << "(" << daughter2()->name() << " I = " << daughter2()->isospin() * 0.5 << ") "
@@ -302,13 +302,49 @@ isobarDecayVertex::checkConsistency()
 		vertexConsistent = false;
 	} else if (_debug)
 		printInfo << *this << ": isospin coupling is consistent" << endl;
+	// check, whether charge is consistent with isospin
+	if (   (abs(daughter1()->isospinProj()) > daughter1()->isospin())
+	    or isOdd(daughter1()->isospin() - daughter1()->isospinProj())
+	    or (abs(daughter2()->isospinProj()) > daughter2()->isospin())
+	    or isOdd(daughter2()->isospin() - daughter2()->isospinProj())
+	    or (abs(parent()->isospinProj()) > parent()->isospin())
+	    or isOdd(parent()->isospin() - parent()->isospinProj())) {
+		printWarn << "charges are inconsistent with isospin "
+		          << "(" << daughter1()->name() << " I = " << daughter1()->isospin() * 0.5 << "), "
+		          << "(" << daughter2()->name() << " I = " << daughter2()->isospin() * 0.5 << "), and "
+		          << "(" << parent   ()->name() << " I = " << parent   ()->isospin() * 0.5 << ")" << endl;
+		vertexConsistent = false;
+	} else if (_debug)
+		printInfo << *this << ": charges are consistent with isospin" << endl;
+	// check, whether isospin Clebsch-Gordan is not zero
+	if (clebschGordanCoeff<double>(daughter1()->isospin(), daughter1()->isospinProj(),
+	                               daughter2()->isospin(), daughter2()->isospinProj(),
+	                               parent   ()->isospin(), parent   ()->isospinProj()) == 0) {
+		printWarn << "isospin Clebsch-Gordan "
+		          << "("   << daughter1()->isospin() * 0.5 << ", " << daughter1()->isospinProj() * 0.5
+		          << "; "  << daughter2()->isospin() * 0.5 << ", " << daughter2()->isospinProj() * 0.5
+		          << " | " << parent   ()->isospin() * 0.5 << ", " << parent   ()->isospinProj() * 0.5
+		          << ") == 0" << endl;
+		vertexConsistent = false;
+	} else if (_debug)
+		printInfo << *this << ": isospin Clebsch-Gordan is not zero" << endl;
+	// check consistency of C-, G-parity, and isospin
+	if (   (daughter1()->C() != daughter1()->G() * (daughter1()->isospin() % 4 == 0 ? 1 : -1))
+	    or (daughter2()->C() != daughter2()->G() * (daughter2()->isospin() % 4 == 0 ? 1 : -1))
+	    or (parent   ()->C() != parent   ()->G() * (parent   ()->isospin() % 4 == 0 ? 1 : -1))) {
+		printWarn << "C-, G-parity, and isospin are inconsistent "
+		          << daughter1()->qnSummary() << ", " << daughter2()->qnSummary() << ", "
+		          << parent   ()->qnSummary() << endl;
+		vertexConsistent = false;
+	} else if (_debug)
+		printInfo << *this << ": C-, G-parity, and isospin are consistent" << endl;
+
 	//!!! missing: spin projections
 	if (vertexConsistent) {
 		if (_debug)
-			printInfo << "vertex data are consistent: " << *this << endl;
+			printInfo << "data for " << *this  << " are consistent: " << endl;
 	} else
-		printWarn << "vertex data are inconsistent (see warnings above): "
-		          << *this << endl;
+		printWarn << "data for " << *this << " are inconsistent (see warnings above)" << endl;
 	return vertexConsistent;
 }
 

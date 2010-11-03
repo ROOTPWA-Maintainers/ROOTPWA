@@ -112,13 +112,15 @@ main(int argc, char** argv)
 				++inconsistentDecays;
 			}
 		}
+
 		for (unsigned int i = 0; i < decays.size(); ++i)
 			cout << setw(4) << i << ": " << keyFileParser::keyFileNameFromTopology(decays[i]) << endl;
+
+		waveSetGen.writeKeyFiles("testWaveSetGenerator");
+
 		cout << "got " << inconsistentDecays << " inconsistent" << endl
 		     << "and " << consistentDecays << " valid decays" << endl
 		     << "out of " << decays.size() << " constructed decays" << endl;
-
-		waveSetGen.writeKeyFiles("testWaveSetGenerator");
 		
 		// decays.back().writeGraphViz("foo.dot");
 		// gSystem->Exec("dot -Tps -o foo.ps foo.dot");
