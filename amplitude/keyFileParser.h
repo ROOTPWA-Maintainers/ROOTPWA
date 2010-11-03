@@ -76,6 +76,9 @@ namespace rpwa {
 	  static std::string keyFileNameFromTopology
 	  (const isobarDecayTopology&  topo,
 	   const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive funstion that generates unique key file name for wave from decay topology
+	  static std::string oldKeyFileNameFromTopology
+	  (isobarDecayTopology&        topo,
+	   const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive funstion that generates unique key file name (old convention) for wave from decay topology
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

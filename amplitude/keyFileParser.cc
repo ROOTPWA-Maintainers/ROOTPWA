@@ -38,6 +38,8 @@
 #include <fstream>
 #include <map>
 
+#include <boost/algorithm/string.hpp>
+
 #include "utilities.h"
 #include "diffractiveDissVertex.h"
 #include "leptoProductionVertex.h"
@@ -360,24 +362,69 @@ keyFileParser::keyFileNameFromTopology(const isobarDecayTopology&  topo,
 		         << 0.5 * X.J() << ((X.P() != 0) ? sign(X.P()) : "") << ((X.C() != 0) ? sign(X.C()) : "")
 		         << 0.5 * X.spinProj() << ((X.reflectivity() != 0) ? sign(X.reflectivity()) : "");
 		// start traversing down decay chain
-		fileName << keyFileNameFromTopology(topo, topo.XIsobarDecayVertex());
+		fileName << keyFileNameFromTopology(topo, topo.XIsobarDecayVertex()) << ".key";
 	} else {
 		// recurse down decay chain
 		// first daughter
-		fileName << "={" << currentVertex->daughter1()->name();
+		fileName << "=[" << currentVertex->daughter1()->name();
 		if (not topo.isFsParticle(currentVertex->daughter1()))
 			fileName << keyFileNameFromTopology
 				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
 		// L, S
-		fileName << "[" << 0.5 * currentVertex->L() << "," << 0.5 * currentVertex->S() << "]";
+		fileName << "#" << 0.5 * currentVertex->L() << "," << 0.5 * currentVertex->S() << "#";
 		// second daughter
 		fileName << currentVertex->daughter2()->name();
 		if (not topo.isFsParticle(currentVertex->daughter2()))
 			fileName << keyFileNameFromTopology
 				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
-		fileName << "}";
+		fileName << "]";
 	}
-	return fileName.str();
+	string keyFileName = fileName.str();
+	replace_all(keyFileName, "(", "_");
+	replace_all(keyFileName, ")", "_");
+	return keyFileName;
+}
+
+
+string
+keyFileParser::oldKeyFileNameFromTopology(isobarDecayTopology&        topo,
+                                          const isobarDecayVertexPtr& currentVertex)
+{
+	ostringstream fileName;
+	if (currentVertex == interactionVertexPtr()) {  // null pointer
+		if (not topo.checkTopology() or not topo.checkConsistency()) {
+			printWarn << "decay topology has issues. cannot construct key file name." << endl;
+			return "";
+		}
+		// X quantum numbers
+		const particle& X = *(topo.XParticle());
+		fileName << 0.5 * X.isospin() << ((X.G() != 0) ? sign(X.G()) : "")
+		         << 0.5 * X.J() << ((X.P() != 0) ? sign(X.P()) : "") << ((X.C() != 0) ? sign(X.C()) : "")
+		         << 0.5 * X.spinProj() << ((X.reflectivity() != 0) ? sign(X.reflectivity()) : "")
+		         << oldKeyFileNameFromTopology(topo, static_pointer_cast<isobarDecayVertex>
+		                                       (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
+		         << "_" << 0.5 * topo.XIsobarDecayVertex()->L()
+		         << 0.5 * topo.XIsobarDecayVertex()->S() << "_"
+		         << oldKeyFileNameFromTopology(topo, static_pointer_cast<isobarDecayVertex>
+		                                       (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())))
+		         << ".key";
+	} else {
+		// recurse down decay chain
+		fileName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
+		             : currentVertex->parent()->bareName());
+		isobarDecayTopology subGraph = topo.subDecay(topo.node(currentVertex));
+		if (not topo.isFsVertex(currentVertex) and subGraph.nmbFsParticles() > 2)
+			fileName << "="
+			         << oldKeyFileNameFromTopology(topo, static_pointer_cast<isobarDecayVertex>
+			                                       (topo.toVertex(currentVertex->daughter1())))
+			         << "_" << 0.5 * currentVertex->L() << 0.5 * currentVertex->S() << "_"
+			         << oldKeyFileNameFromTopology(topo, static_pointer_cast<isobarDecayVertex>
+			                                       (topo.toVertex(currentVertex->daughter2())));
+	}
+	string keyFileName = fileName.str();
+	replace_all(keyFileName, "(", "");
+	replace_all(keyFileName, ")", "");
+	return keyFileName;
 }
 
 

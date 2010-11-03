@@ -85,22 +85,13 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		keyFileParser&         parser = keyFileParser::instance();
-		isobarDecayTopologyPtr topo;
-		if (   not parser.parse("testWaveSetGenerator.key")
-		    or not parser.constructDecayTopology(topo, false))
-			throw;
-		topo->XParticle()->setMass(2.5);
-		topo->XParticle()->setWidth(0.3);
-		printInfo << "decay topology:" << *topo;
-		
 		waveSetGenerator waveSetGen;
 		const vector<string> isobarWhiteList = list_of("sigma")("rho(770)")("f2(1270)")
 			("pi(1300)")("a1(1260)")("a2(1320)")("pi2(1670)")
 			("f0(1500)")("f1(1285)")("rho(1450)")("rho(1700)")("rho3(1690)");
 		waveSetGen.setIsobarWhiteList(isobarWhiteList);
 		cout << waveSetGen;
-		waveSetGen.generateWaveSet(topo);
+		waveSetGen.generateWaveSet("testWaveSetGenerator.key");
 		vector<isobarDecayTopology>& decays             = waveSetGen.waveSet();
 		unsigned int                 consistentDecays   = 0;
 		unsigned int                 inconsistentDecays = 0;
@@ -122,11 +113,12 @@ main(int argc, char** argv)
 			}
 		}
 		for (unsigned int i = 0; i < decays.size(); ++i)
-			cout << setw(4) << i << ": " << parser.keyFileNameFromTopology(decays[i]) << endl;
+			cout << setw(4) << i << ": " << keyFileParser::keyFileNameFromTopology(decays[i]) << endl;
 		cout << "got " << inconsistentDecays << " inconsistent" << endl
 		     << "and " << consistentDecays << " valid decays" << endl
 		     << "out of " << decays.size() << " constructed decays" << endl;
 
+		waveSetGen.writeKeyFiles("testWaveSetGenerator");
 		
 		// decays.back().writeGraphViz("foo.dot");
 		// gSystem->Exec("dot -Tps -o foo.ps foo.dot");

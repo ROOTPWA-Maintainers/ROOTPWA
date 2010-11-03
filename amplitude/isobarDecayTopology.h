@@ -84,11 +84,13 @@ namespace rpwa {
 
     void addDecay(const isobarDecayTopology& topo);  ///< returns sub-decay tree that starts at given vertex
 
-    static isobarDecayTopology joinDaughterDecays(const isobarDecayVertexPtr&             parentVertex,
-                                                  const std::vector<isobarDecayTopology>& daughterDecays);  ///< joins daughter decay graphs and connects them to a common parent vertex
-	  static isobarDecayTopology joinDaughterDecays(const isobarDecayVertexPtr& parentVertex,
-	                                                const isobarDecayTopology&  daughter1Decay,
-	                                                const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common parent vertex
+    static isobarDecayTopology joinDaughterDecays
+    (const isobarDecayVertexPtr&             parentVertex,
+     const std::vector<isobarDecayTopology>& daughterDecays);  ///< joins daughter decay graphs and connects them to a common parent vertex
+	  static isobarDecayTopology joinDaughterDecays
+	  (const isobarDecayVertexPtr& parentVertex,
+	   const isobarDecayTopology&  daughter1Decay,
+	   const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common parent vertex
 
 	  const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 	  

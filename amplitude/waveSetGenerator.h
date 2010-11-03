@@ -76,10 +76,13 @@ namespace rpwa {
 	  void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
 	  void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
-	  std::size_t generateWaveSet(const isobarDecayTopologyPtr& templateTopo);  ///< generates wave set from template topology
+	  std::size_t generateWaveSet(const std::string&            templateKeyFileName);  ///< generates wave set from template key file
+	  std::size_t generateWaveSet(const isobarDecayTopologyPtr& templateTopo       );  ///< generates wave set from template topology
 	  
 	  std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }  ///< returns wave set
 	  const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }  ///< returns wave set
+
+	  bool writeKeyFiles(const std::string& dirName = "");  ///< writes key files for wave set into given directory
 
 	  virtual void reset();  ///< resets parameters to default values and clears wave set
 	  

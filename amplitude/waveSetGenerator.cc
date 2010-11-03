@@ -39,6 +39,7 @@
 #include "mathUtils.hpp"
 #include "clebschGordanCoeff.hpp"
 #include "particleDataTable.h"
+#include "keyFileParser.h"
 #include "waveSetGenerator.h"
 
 	
@@ -60,23 +61,20 @@ waveSetGenerator::~waveSetGenerator()
 { }
 
 
-void
-waveSetGenerator::reset()
+size_t
+waveSetGenerator::generateWaveSet(const string& templateKeyFileName)
 {
-	// _isospinRange    = make_pair(0, 0);
-	// _JRange          = make_pair(0, 0);
-	// _LRange          = make_pair(0, 0);
-	// _SRange          = make_pair(0, 0);
-	_isospinRange          = make_pair(0, 2);
-	_JRange                = make_pair(0, 8);
-	_LRange                = make_pair(0, 6);
-	_SRange                = make_pair(0, 6);
-	_allowJpcExotics       = false;
-	_requireMinIsobarMass  = true;
-	_isobarMassWindowSigma = 1;
-	_isobarBlackList.clear();
-	_isobarWhiteList.clear();
-	_waveSet.clear();
+	keyFileParser&         parser = keyFileParser::instance();
+	isobarDecayTopologyPtr topo;
+	if (   not parser.parse(templateKeyFileName)
+	    or not parser.constructDecayTopology(topo, false)) {
+		printWarn << "problems constructing template decay topology from key file "
+		          << "'" << templateKeyFileName << "'. cannot generate wave set." << endl;
+		return 0;
+	}
+	if (_debug)
+		printInfo << "template " << *topo;
+	return generateWaveSet(topo);
 }
 
 
@@ -262,6 +260,44 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 	}
 
 	return _waveSet.size();
+}
+
+
+bool
+waveSetGenerator::writeKeyFiles(const string& dirName)
+{
+	size_t countSuccess = 0;
+	for (size_t i = 0; i < _waveSet.size(); ++i) {
+		const string keyFileName = dirName + "/" + keyFileParser::oldKeyFileNameFromTopology(_waveSet[i]);
+		if (keyFileParser::writeKeyFile(keyFileName, _waveSet[i]))
+			++countSuccess;
+	}
+	printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
+	if (countSuccess != _waveSet.size()) {
+		printWarn << "writing of " << _waveSet.size() - countSuccess << " key files failed" << endl;
+		return false;
+	}
+	return true;
+}
+
+
+void
+waveSetGenerator::reset()
+{
+	// _isospinRange    = make_pair(0, 0);
+	// _JRange          = make_pair(0, 0);
+	// _LRange          = make_pair(0, 0);
+	// _SRange          = make_pair(0, 0);
+	_isospinRange          = make_pair(0, 2);
+	_JRange                = make_pair(0, 8);
+	_LRange                = make_pair(0, 6);
+	_SRange                = make_pair(0, 6);
+	_allowJpcExotics       = false;
+	_requireMinIsobarMass  = true;
+	_isobarMassWindowSigma = 1;
+	_isobarBlackList.clear();
+	_isobarWhiteList.clear();
+	_waveSet.clear();
 }
 
 
