@@ -67,11 +67,13 @@ waveSetGenerator::reset()
 	// _JRange          = make_pair(0, 0);
 	// _LRange          = make_pair(0, 0);
 	// _SRange          = make_pair(0, 0);
-	_isospinRange    = make_pair(0, 2);
-	_JRange          = make_pair(0, 8);
-	_LRange          = make_pair(0, 6);
-	_SRange          = make_pair(0, 6);
-	_allowJpcExotics = false;
+	_isospinRange          = make_pair(0, 2);
+	_JRange                = make_pair(0, 8);
+	_LRange                = make_pair(0, 6);
+	_SRange                = make_pair(0, 6);
+	_allowJpcExotics       = false;
+	_requireMinIsobarMass  = true;
+	_isobarMassWindowSigma = 1;
 	_isobarBlackList.clear();
 	_isobarWhiteList.clear();
 	_waveSet.clear();
@@ -205,18 +207,18 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 								isobarProp.setIGJPC    (parentI, parentG, parentJ, parentP, parentC);
 								particleDataTable& pdt = particleDataTable::instance();
 								vector<const particleProperties*> isobarCandidates;
-								const string parentName    = parent->name();
-								const double minIsobarMass = daughters[0]->mass() + daughters[1]->mass();
+								const string parentName = parent->name();
 								if (   (parentName == "X-") or (parentName == "X0")
-								    or (parentName == "X+") or (parentName == "X")) {
-									if (parent->mass() + parent->width() < minIsobarMass) {
-										cout << isobarProp.qnSummary() << " mass too low. skipping candidate." << endl;
-										continue;
-									}
+								    or (parentName == "X+") or (parentName == "X"))
 									isobarCandidates.push_back(&isobarProp);
-								} else {
-									isobarCandidates = pdt.entriesMatching(isobarProp, "allQn", minIsobarMass,
-									                                       _isobarWhiteList, _isobarBlackList);
+								else {
+									const double minIsobarMass = (_requireMinIsobarMass) ?
+										  (daughters[0]->mass() - _isobarMassWindowSigma * daughters[0]->width())
+										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
+										: 0;
+									isobarCandidates
+										= pdt.entriesMatching(isobarProp, "allQn", minIsobarMass, _isobarMassWindowSigma,
+										                      _isobarWhiteList, _isobarBlackList);
 									if (_debug)
 										printInfo << "found " << isobarCandidates.size() << " isobar candidates for "
 										          << isobarProp.qnSummary() << " in particle data table" << endl;
@@ -267,15 +269,17 @@ ostream&
 waveSetGenerator::print(ostream& out) const
 {
 	out << "wave set generator:" << endl
-	    << "    isospin range ....... [" << 0.5 * _isospinRange.first << ", "
+	    << "    isospin range .............. [" << 0.5 * _isospinRange.first << ", "
 	    << 0.5 * _isospinRange.second << "]" << endl
-	    << "    J range ............. [" << 0.5 * _JRange.first       << ", "
+	    << "    J range .................... [" << 0.5 * _JRange.first       << ", "
 	    << 0.5 * _JRange.second       << "]" << endl
-	    << "    L range ............. [" << 0.5 * _LRange.first       << ", "
+	    << "    L range .................... [" << 0.5 * _LRange.first       << ", "
 	    << 0.5 * _LRange.second       << "]" << endl
-	    << "    S range ............. [" << 0.5 * _SRange.first       << ", "
+	    << "    S range .................... [" << 0.5 * _SRange.first       << ", "
 	    << 0.5 * _SRange.second       << "]" << endl
-	    << "    allow JPC exotics ... " << ((_allowJpcExotics) ? "true" : "false")  << endl;
+	    << "    allow JPC exotics .......... " << ((_allowJpcExotics)      ? "true" : "false") << endl
+	    << "    require min. isobar mass ... " << ((_requireMinIsobarMass) ? "true" : "false") << endl
+	    << "    isobar mass window par. .... " << _isobarMassWindowSigma << " [Gamma]" << endl;
 	out << "    isobar black list:";
 	if (_isobarBlackList.size() == 0)
 		out << " empty" << endl;

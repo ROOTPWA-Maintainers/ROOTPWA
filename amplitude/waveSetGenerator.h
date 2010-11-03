@@ -60,26 +60,28 @@ namespace rpwa {
 
 	  // filter criteria
 	  // !note! isospin and angular momentum quantum numbers are in units of hbar / 2
-	  void setIsospinRange   (const int maxI = 2,
-	                          const int minI = 0) { _isospinRange = std::make_pair(minI, maxI); }
-	  void setJRange         (const int maxJ = 6,
-	                          const int minJ = 0) { _JRange       = std::make_pair(minJ, maxJ); }
-	  void setLRange         (const int maxL = 6,
-	                          const int minL = 0) { _LRange       = std::make_pair(minL, maxL); }
-	  void setSRange         (const int maxS = 6,
-	                          const int minS = 0) { _SRange       = std::make_pair(minS, maxS); }
-	  void setIsobarBlackList(const std::vector<std::string>& isobarList)
+	  void setIsospinRange         (const int maxI = 2,
+	                                const int minI = 0) { _isospinRange = std::make_pair(minI, maxI); }
+	  void setJRange               (const int maxJ = 6,
+	                                const int minJ = 0) { _JRange       = std::make_pair(minJ, maxJ); }
+	  void setLRange               (const int maxL = 6,
+	                                const int minL = 0) { _LRange       = std::make_pair(minL, maxL); }
+	  void setSRange               (const int maxS = 6,
+	                                const int minS = 0) { _SRange       = std::make_pair(minS, maxS); }
+	  void setIsobarBlackList      (const std::vector<std::string>& isobarList)
 	  { _isobarBlackList = isobarList; }
-	  void setIsobarWhiteList(const std::vector<std::string>& isobarList)
+	  void setIsobarWhiteList      (const std::vector<std::string>& isobarList)
 	  { _isobarWhiteList = isobarList; }
-	  void allowJpcExotics(const bool flag) { _allowJpcExotics = flag; }
+	  void setAllowJpcExotics      (const bool   flag     ) { _allowJpcExotics       = flag;  }
+	  void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
+	  void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
-	  std::size_t generateWaveSet(const isobarDecayTopologyPtr& templateTopo);
+	  std::size_t generateWaveSet(const isobarDecayTopologyPtr& templateTopo);  ///< generates wave set from template topology
 	  
-	  std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }
-	  const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }
+	  std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }  ///< returns wave set
+	  const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }  ///< returns wave set
 
-	  virtual void reset();  ///<
+	  virtual void reset();  ///< resets parameters to default values and clears wave set
 	  
 	  virtual std::ostream& print(std::ostream& out) const;  ///< prints parameters
 	  
@@ -89,13 +91,15 @@ namespace rpwa {
 
   private:
 
-	  std::pair<int, int>      _isospinRange;
-	  std::pair<int, int>      _JRange;
-	  std::pair<int, int>      _LRange;
-	  std::pair<int, int>      _SRange;
-	  std::vector<std::string> _isobarBlackList;
-	  std::vector<std::string> _isobarWhiteList;
-	  bool                     _allowJpcExotics;
+	  std::pair<int, int>      _isospinRange;           ///< range of allowed isobar isospins
+	  std::pair<int, int>      _JRange;                 ///< range of allowed isobar spins
+	  std::pair<int, int>      _LRange;                 ///< range of allowed orbital angular momenta in isobar decays
+	  std::pair<int, int>      _SRange;                 ///< range of allowed total intrinsic spins in isobar decays
+	  std::vector<std::string> _isobarBlackList;        ///< list of particles not to be used as isobars
+	  std::vector<std::string> _isobarWhiteList;        ///< list of particles to be used as isobars
+	  bool                     _allowJpcExotics;        ///< flag that allows/forbids JPC exotics to be generated
+	  bool                     _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
+	  double                   _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
 
 	  std::vector<isobarDecayTopology> _waveSet;  ///< generated wave set
 	  

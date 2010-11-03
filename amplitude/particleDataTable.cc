@@ -78,7 +78,8 @@ particleDataTable::entry(const string& partName)
 vector<const particleProperties*> 
 particleDataTable::entriesMatching(const particleProperties& prototype,
                                    const string&             sel,
-                                   const double              minIsobarMass,
+                                   const double              minMass,
+                                   const double              minMassWidthFactor,
                                    const vector<string>&     whiteList,
                                    const vector<string>&     blackList)
 {
@@ -87,9 +88,8 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 	for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i) {
 		if (i->second != selector)
 			continue;
-		// limit isobar mass, if minIsobarMass > 0
-		// accept isobar candidate if its mass + width is larger than minIsobarMass
-		if ((minIsobarMass > 0) and (i->second.mass() + i->second.width() < minIsobarMass))
+		// limit isobar mass, if minMass > 0
+		if ((minMass > 0) and (i->second.mass() + minMassWidthFactor * i->second.width() < minMass))
 			continue;
 		// apply white list
 		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
@@ -112,8 +112,8 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		if (_debug) {
 			printInfo << "found entry " << i->second.name() << " matching " << prototype
 			          << " and '" << sel << "'" << flush;
-			if (minIsobarMass != 0)
-				cout << " with mass > " << minIsobarMass << " GeV";
+			if (minMass > 0)
+				cout << " with mass > " << minMass - minMassWidthFactor * i->second.width() << " GeV";
 			if (whiteList.size() > 0)
 				cout << " ; in white list";
 			if (blackList.size() > 0)

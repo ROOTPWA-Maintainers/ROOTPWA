@@ -63,9 +63,10 @@ namespace rpwa {
 		static std::vector<const particleProperties*>
 		entriesMatching(const particleProperties&       prototype,
 		                const std::string&              sel,
-		                const double                    minIsobarMass = 0,
-		                const std::vector<std::string>& whiteList     = std::vector<std::string>(),
-		                const std::vector<std::string>& blackList     = std::vector<std::string>());  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass > 0 isobar mass is limited
+		                const double                    minMass            = 0,
+		                const double                    minMassWidthFactor = 0,
+		                const std::vector<std::string>& whiteList          = std::vector<std::string>(),
+		                const std::vector<std::string>& blackList          = std::vector<std::string>());  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass > 0 isobar mass is limited
 
 		static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
 
