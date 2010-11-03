@@ -1,0 +1,119 @@
+///////////////////////////////////////////////////////////////////////////
+//
+//    Copyright 2010
+//
+//    This file is part of rootpwa
+//
+//    rootpwa is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    rootpwa is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with rootpwa. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
+//
+// Description:
+//      class that generates set of isobar decay topologies from a
+//      template and according to user defined criteria
+//
+//
+// Author List:
+//      Boris Grube          TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
+
+
+#ifndef WAVESETGENERATOR_H
+#define WAVESETGENERATOR_H
+
+
+#include "isobarDecayTopology.h"
+
+
+namespace rpwa {  
+
+
+  class waveSetGenerator {
+  
+  public:
+
+	  // some typedefs for convenience
+	  typedef isobarDecayTopology::nodeDesc    nodeDesc;
+	  typedef isobarDecayTopology::adjIterator adjIterator;
+
+      
+    waveSetGenerator();
+    virtual ~waveSetGenerator();
+
+	  // filter criteria
+	  // !note! isospin and angular momentum quantum numbers are in units of hbar / 2
+	  void setIsospinRange   (const int maxI = 2,
+	                          const int minI = 0) { _isospinRange = std::make_pair(minI, maxI); }
+	  void setJRange         (const int maxJ = 6,
+	                          const int minJ = 0) { _JRange       = std::make_pair(minJ, maxJ); }
+	  void setLRange         (const int maxL = 6,
+	                          const int minL = 0) { _LRange       = std::make_pair(minL, maxL); }
+	  void setSRange         (const int maxS = 6,
+	                          const int minS = 0) { _SRange       = std::make_pair(minS, maxS); }
+	  void setIsobarBlackList(const std::vector<std::string>& isobarList)
+	  { _isobarBlackList = isobarList; }
+	  void setIsobarWhiteList(const std::vector<std::string>& isobarList)
+	  { _isobarWhiteList = isobarList; }
+	  void allowJpcExotics(const bool flag) { _allowJpcExotics = flag; }
+
+	  std::size_t generateWaveSet(const isobarDecayTopologyPtr& templateTopo);
+	  
+	  std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }
+	  const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }
+
+	  virtual void reset();  ///<
+	  
+	  virtual std::ostream& print(std::ostream& out) const;  ///< prints parameters
+	  
+	  static bool debug() { return _debug; }                             ///< returns debug flag
+	  static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+	  
+
+  private:
+
+	  std::pair<int, int>      _isospinRange;
+	  std::pair<int, int>      _JRange;
+	  std::pair<int, int>      _LRange;
+	  std::pair<int, int>      _SRange;
+	  std::vector<std::string> _isobarBlackList;
+	  std::vector<std::string> _isobarWhiteList;
+	  bool                     _allowJpcExotics;
+
+	  std::vector<isobarDecayTopology> _waveSet;  ///< generated wave set
+	  
+    static bool _debug;  ///< if set to true, debug messages are printed
+
+  };
+	
+
+  inline
+  std::ostream&
+  operator <<(std::ostream&           out,
+              const waveSetGenerator& gen)
+  {
+    return gen.print(out);
+  }
+
+
+} // namespace rpwa
+
+
+#endif  // WAVESETGENERATOR_H

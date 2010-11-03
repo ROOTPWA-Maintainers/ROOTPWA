@@ -59,18 +59,23 @@ namespace rpwa {
   
     static bool parse(const std::string& keyFileName);  ///< parses key file and constructs decay topology
 
-    static bool constructDecayTopology(isobarDecayTopologyPtr& topo);  ///< construct isobar decay topology from keyfile
+	  static bool constructDecayTopology(isobarDecayTopologyPtr& topo,
+	                                     const bool              requireXQnKey = true);  ///< construct isobar decay topology from keyfile
 
 	  static bool constructAmplitude(isobarAmplitudePtr&           amplitude);   ///< construct isobar decay amplitude from keyfile
 	  static bool constructAmplitude(isobarAmplitudePtr&           amplitude,
 	                                 const isobarDecayTopologyPtr& topo);  ///< construct isobar amplitude using existing decay topology
 
-	  static bool writeKeyFile(const std::string&            keyFileName,
-	                           const isobarAmplitudePtr&     amplitude,
-	                           const bool                    writeProdVert = true);  ///< creates key file from amplitude
-	  static bool writeKeyFile(const std::string&            keyFileName,
-	                           const isobarDecayTopologyPtr& topo,
-	                           const bool                    writeProdVert = true);  ///< creates key file from decay topology
+	  static bool writeKeyFile(const std::string&         keyFileName,
+	                           const isobarAmplitude&     amplitude,
+	                           const bool                 writeProdVert = true);  ///< creates key file from amplitude
+	  static bool writeKeyFile(const std::string&         keyFileName,
+	                           const isobarDecayTopology& topo,
+	                           const bool                 writeProdVert = true);  ///< creates key file from decay topology
+
+	  static std::string keyFileNameFromTopology
+	  (const isobarDecayTopology&  topo,
+	   const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive funstion that generates unique key file name for wave from decay topology
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -93,8 +98,8 @@ namespace rpwa {
 
 	  static isobarAmplitudePtr mapAmplitudeType(const std::string&            formalismType,
 	                                             const isobarDecayTopologyPtr& topo);  ///< creates amplitude for specified formalism
-	  static bool setAmplitude(libconfig::Setting&       amplitudeKey,
-	                           const isobarAmplitudePtr& amplitude);  ///< puts amplitude specification into key
+	  static bool setAmplitude(libconfig::Setting&    amplitudeKey,
+	                           const isobarAmplitude& amplitude);  ///< puts amplitude specification into key
 
     static bool constructXParticle(const libconfig::Setting& XQnKey,
                                    particlePtr&              X);  ///< creates X particle with quantum numbers defined in X key
@@ -127,11 +132,11 @@ namespace rpwa {
 	                            const isobarDecayTopology& topo,
 	                            const isobarDecayVertex&   vert);  ///< recursive function that puts X decay chain into keys
 
-	  static bool writeKeyFile(libconfig::Setting&           rootKey,
-	                           const isobarAmplitudePtr&     amplitude);  ///< writes amplitude parameters to key file
-	  static bool writeKeyFile(libconfig::Setting&           rootKey,
-	                           const isobarDecayTopologyPtr& topo,
-	                           const bool                    writeProdVert = true);  ///< writes decay topology to key file
+	  static bool writeKeyFile(libconfig::Setting&        rootKey,
+	                           const isobarAmplitude&     amplitude);  ///< writes amplitude parameters to key file
+	  static bool writeKeyFile(libconfig::Setting&        rootKey,
+	                           const isobarDecayTopology& topo,
+	                           const bool                 writeProdVert = true);  ///< writes decay topology to key file
 
     static keyFileParser _instance;  ///< singleton instance
 

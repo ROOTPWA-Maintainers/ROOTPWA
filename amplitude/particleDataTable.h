@@ -49,72 +49,74 @@
 namespace rpwa {
 
 
-  class particleDataTable {
+	class particleDataTable {
 
-  public:
+	public:
 
-    static particleDataTable& instance() { return _instance; }  ///< get singleton instance
+		static particleDataTable& instance() { return _instance; }  ///< get singleton instance
 
-    static bool isInTable(const std::string& partName);  ///< returns, whether particle has a table entry
+		static bool isInTable(const std::string& partName);  ///< returns, whether particle has a table entry
 
-    static const particleProperties* entry(const std::string& partName);  ///< access properties by particle name
-    static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
+		static const particleProperties* entry(const std::string& partName);  ///< access properties by particle name
+		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
-    static std::vector<const particleProperties*>
-    entriesMatching(const particleProperties& prototype,
-		    const std::string&        sel,
-		    const double              minIsobarMass = 0);  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass != 0 isobar mass is limited
+		static std::vector<const particleProperties*>
+		entriesMatching(const particleProperties&       prototype,
+		                const std::string&              sel,
+		                const double                    minIsobarMass = 0,
+		                const std::vector<std::string>& whiteList     = std::vector<std::string>(),
+		                const std::vector<std::string>& blackList     = std::vector<std::string>());  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass > 0 isobar mass is limited
 
-    static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
+		static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
 
-    typedef std::map<std::string, particleProperties>::const_iterator dataIterator;
-    static dataIterator begin() { return _dataTable.begin(); }  ///< returns iterator pointing at first entry of particle data table
-    static dataIterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
+		typedef std::map<std::string, particleProperties>::const_iterator dataIterator;
+		static dataIterator begin() { return _dataTable.begin(); }  ///< returns iterator pointing at first entry of particle data table
+		static dataIterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
 
-    static std::ostream& print(std::ostream& out);  ///< prints particle data in human-readable form
-    static std::ostream& dump (std::ostream& out);  ///< dumps particle properties in format of data file
+		static std::ostream& print(std::ostream& out);  ///< prints particle data in human-readable form
+		static std::ostream& dump (std::ostream& out);  ///< dumps particle properties in format of data file
 
-    static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
-    static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
+		static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
+		static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
 
-    static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
+		static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
      
 
-  private:
+	private:
 
-    particleDataTable () { }
-    ~particleDataTable() { }
-    particleDataTable (const particleDataTable&);
-    particleDataTable& operator =(const particleDataTable&);
+		particleDataTable () { }
+		~particleDataTable() { }
+		particleDataTable (const particleDataTable&);
+		particleDataTable& operator =(const particleDataTable&);
 
-    static particleDataTable                         _instance;   ///< singleton instance
-    static std::map<std::string, particleProperties> _dataTable;  ///< map with particle data
+		static particleDataTable                         _instance;   ///< singleton instance
+		static std::map<std::string, particleProperties> _dataTable;  ///< map with particle data
 
-    static bool _debug;  ///< if set to true, debug messages are printed
+		static bool _debug;  ///< if set to true, debug messages are printed
 
-  };
+	};
 
   
-  inline
-  std::ostream&
-  operator <<(std::ostream&            out,
-	      const particleDataTable& dataTable)
-  {
-    return dataTable.print(out);
-  }
+	inline
+	std::ostream&
+	operator <<(std::ostream&            out,
+	            const particleDataTable& dataTable)
+	{
+		return dataTable.print(out);
+	}
 
 
-  inline
-  std::istream&
-  operator >>(std::istream&      in,
-	      particleDataTable& dataTable)
-  {
-    dataTable.read(in);
-    return in;
-  }
+	inline
+	std::istream&
+	operator >>(std::istream&      in,
+	            particleDataTable& dataTable)
+	{
+		dataTable.read(in);
+		return in;
+	}
 
 
 } // namespace rpwa

@@ -74,7 +74,7 @@ namespace rpwa {
 	  virtual void clear();  ///< deletes all information
 
 	  const std::vector<isobarDecayVertexPtr>& isobarDecayVertices() const { return _isobarVertices;    }  ///< returns all isobar decay vertices ordered by depth-first; first vertex is X-decay vertex
-	  const isobarDecayVertexPtr               XIsobarDecayVertex () const { return _isobarVertices[0]; }  ///< returns X-decay vertex
+	  const isobarDecayVertexPtr&              XIsobarDecayVertex () const { return _isobarVertices[0]; }  ///< returns X-decay vertex
 
     bool checkTopology   () const;  ///< returns whether decay has the correct topology
     bool checkConsistency() const;  ///< checks conservation rules on all vertices
@@ -90,16 +90,6 @@ namespace rpwa {
 	                                                const isobarDecayTopology&  daughter1Decay,
 	                                                const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common parent vertex
 
-    std::vector<isobarDecayTopology> possibleDecays(const int  minI           = 0,
-                                                    const int  maxI           = 2,
-                                                    const int  minJ           = 0,
-                                                    const int  maxJ           = 8,
-                                                    const int  minL           = 0,
-                                                    const int  maxL           = 6,
-                                                    const int  minS           = 0,
-                                                    const int  maxS           = 6,
-                                                    const bool allowJpcExotic = false);  ///< constructs set of all possible decays given the final state particles and the constraints on I, J, L, and S
-	  
 	  const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 	  
 	  void calcIsobarCharges   ();  ///< sets isobar charges as defined by final state particles

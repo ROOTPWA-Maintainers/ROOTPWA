@@ -325,7 +325,7 @@ main(int argc, char** argv)
 			isobarDecayTopologyPtr topo = amp->decayTopology();
 			topo->writeGraphViz("decay.dot");
 			printInfo << *amp;
-			parser.writeKeyFile("testWrite.key", amp);  // test key file creation
+			parser.writeKeyFile("testWrite.key", *amp);  // test key file creation
 			
 			// read data from tree
 			const string&            inTreeName                = "rootPwaEvtTree";

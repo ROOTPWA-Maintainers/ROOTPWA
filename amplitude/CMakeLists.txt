@@ -47,41 +47,54 @@ set(INCLUDE_DIRECTORIES
 	${UTILITIES_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-)
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  particleProperties.cc
-  particleDataTable.cc
-  particle.cc
-  angMomCoupl.cc
-  interactionVertex.cc
-  fsVertex.cc
-  decayTopology.cc
-  productionVertex.cc
-  diffractiveDissVertex.cc
-  leptoProductionVertex.cc
-  isobarDecayVertex.cc
-  isobarDecayTopology.cc
-  isobarAmplitude.cc
-  isobarHelicityAmplitude.cc
-  isobarCanonicalAmplitude.cc
-  massDependence.cc
-  keyFileParser.cc
-  evtTreeHelper.cc
-)
+	particleProperties.cc
+	particleDataTable.cc
+	particle.cc
+	angMomCoupl.cc
+	interactionVertex.cc
+	fsVertex.cc
+	decayTopology.cc
+	productionVertex.cc
+	diffractiveDissVertex.cc
+	leptoProductionVertex.cc
+	isobarDecayVertex.cc
+	isobarDecayTopology.cc
+	massDependence.cc
+	keyFileParser.cc
+	evtTreeHelper.cc
+	isobarAmplitude.cc
+	isobarHelicityAmplitude.cc
+	isobarCanonicalAmplitude.cc
+	amplitudeTreeLeaf.cc
+	waveSetGenerator.cc
+	)
+
+
+# ROOT dictionary
+set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
+root_generate_dictionary(
+  "${ROOTPWA_DICTIONARY}"
+  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "amplitudeTreeLeaf.h"
+  "rootPwaAmpLinkDef.h"
+	)
+set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwaAmp")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
- "${BOOST_LIBS}"
- "${ROOT_LIBS}"
- "${LIBCONFIG_LIBS}"
- "${PWA2000_LIBS}"
-)
+	"${BOOST_LIBS}"
+	"${ROOT_LIBS}"
+	"${LIBCONFIG_LIBS}"
+	"${PWA2000_LIBS}"
+	)
 
 
 # executables
@@ -94,4 +107,5 @@ make_executable(testParticle           testParticle.cc           ${THIS_LIB})
 make_executable(testDecayTopology      testDecayTopology.cc      ${THIS_LIB})
 make_executable(testDecayCombinatorics testDecayCombinatorics.cc ${THIS_LIB})
 make_executable(testAmplitude          testAmplitude.cc          ${THIS_LIB})
+make_executable(testAmplitudeTree      testAmplitudeTree.cc      ${THIS_LIB})
 make_executable(testLibppFunctions     testLibppFunctions.cc     ${THIS_LIB})

@@ -57,57 +57,57 @@ ClassImp(TFitResult);
 
 
 TFitResult::TFitResult()
-  : _nmbEvents    (0),
-    _normNmbEvents(0),
-    _massBinCenter(0),
-    _logLikelihood(0),
-    _rank         (0),
-    _hasErrors    (false)
+	: _nmbEvents    (0),
+	  _normNmbEvents(0),
+	  _massBinCenter(0),
+	  _logLikelihood(0),
+	  _rank         (0),
+	  _hasErrors    (false)
 { }
 
 
 TFitResult::TFitResult(const TFitBin& fitBin)
-  : _nmbEvents             (fitBin.nmbEvents()),
-    _normNmbEvents         (fitBin.normNmbEvents()),
-    _massBinCenter         (fitBin.massBinCenter()),
-    _logLikelihood         (fitBin.logLikelihood()),
-    _rank                  (fitBin.rank()),
-    _hasErrors             (fitBin.fitParCovMatrixValid()),
-    _fitParCovMatrix       (fitBin.fitParCovMatrix()),
-    _fitParCovMatrixIndices(fitBin.fitParCovIndices()),
-    _normIntegral          (fitBin.normIntegral()),
-    _normIntIndexMap       (fitBin.prodAmpIndexMap())
+	: _nmbEvents             (fitBin.nmbEvents()),
+	  _normNmbEvents         (fitBin.normNmbEvents()),
+	  _massBinCenter         (fitBin.massBinCenter()),
+	  _logLikelihood         (fitBin.logLikelihood()),
+	  _rank                  (fitBin.rank()),
+	  _hasErrors             (fitBin.fitParCovMatrixValid()),
+	  _fitParCovMatrix       (fitBin.fitParCovMatrix()),
+	  _fitParCovMatrixIndices(fitBin.fitParCovIndices()),
+	  _normIntegral          (fitBin.normIntegral()),
+	  _normIntIndexMap       (fitBin.prodAmpIndexMap())
 {
-  _prodAmps = fitBin.prodAmps();
-  {
-    const unsigned int nmbAmpNames = fitBin.prodAmpNames().size();
-    _prodAmpNames.resize(nmbAmpNames, "");
-    for (unsigned int i = 0; i < nmbAmpNames; ++i)
-      _prodAmpNames[i] = fitBin.prodAmpNames()[i].Data();
-  }
-  {
-    const unsigned int nmbWaveNames = fitBin.waveNames().size();
-    _waveNames.resize(nmbWaveNames, "");
-    for (unsigned int i = 0; i < nmbWaveNames; ++i)
-      _waveNames[i] = fitBin.waveNames()[i].Data();
-  }
+	_prodAmps = fitBin.prodAmps();
+	{
+		const unsigned int nmbAmpNames = fitBin.prodAmpNames().size();
+		_prodAmpNames.resize(nmbAmpNames, "");
+		for (unsigned int i = 0; i < nmbAmpNames; ++i)
+			_prodAmpNames[i] = fitBin.prodAmpNames()[i].Data();
+	}
+	{
+		const unsigned int nmbWaveNames = fitBin.waveNames().size();
+		_waveNames.resize(nmbWaveNames, "");
+		for (unsigned int i = 0; i < nmbWaveNames; ++i)
+			_waveNames[i] = fitBin.waveNames()[i].Data();
+	}
 }
 
 
 TFitResult::TFitResult(const TFitResult& result)
-  : _nmbEvents             (result.nmbEvents()),
-    _normNmbEvents         (result.normNmbEvents()),
-    _massBinCenter         (result.massBinCenter()),
-    _logLikelihood         (result.logLikelihood()),
-    _rank                  (result.rank()),
-    _prodAmps              (result.prodAmps()),
-    _prodAmpNames          (result.prodAmpNames()),
-    _waveNames             (result.waveNames()),
-    _hasErrors             (result.covMatrixValid()),
-    _fitParCovMatrix       (result.fitParCovMatrix()),
-    _fitParCovMatrixIndices(result.fitParCovIndices()),
-    _normIntegral          (result.normIntegralMatrix()),
-    _normIntIndexMap       (result.normIntIndexMap())
+	: _nmbEvents             (result.nmbEvents()),
+	  _normNmbEvents         (result.normNmbEvents()),
+	  _massBinCenter         (result.massBinCenter()),
+	  _logLikelihood         (result.logLikelihood()),
+	  _rank                  (result.rank()),
+	  _prodAmps              (result.prodAmps()),
+	  _prodAmpNames          (result.prodAmpNames()),
+	  _waveNames             (result.waveNames()),
+	  _hasErrors             (result.covMatrixValid()),
+	  _fitParCovMatrix       (result.fitParCovMatrix()),
+	  _fitParCovMatrixIndices(result.fitParCovIndices()),
+	  _normIntegral          (result.normIntegralMatrix()),
+	  _normIntIndexMap       (result.normIntIndexMap())
 { }
 
 
@@ -122,20 +122,20 @@ TFitResult::~TFitResult()
 /// that no single wave can have more than the total intensity measured
 double
 TFitResult::evidence() const {
-  double       l   = -logLikelihood();
-  double       det = _fitParCovMatrix.Determinant();
-  double       d   = (double)_fitParCovMatrix.GetNcols();
-  double       sum = 0;
-  unsigned int ni  = _normIntegral.ncols();
-  for(unsigned int i=0;i<ni;++i){
-    sum += 1. / _normIntegral(i, i).Re();
-  }
-  double occ  = TMath::Power(TMath::Pi(), d * 0.5 - 1.) * TMath::Sqrt(2 * det) / sum;
-  double locc = TMath::Log(occ);
-  cout << "TFitResult::evidence" << endl;
-  cout << "    LogLikeli: " << l;
-  cout << "  Occamfactor: " << locc;
-  return l + locc;
+	double       l   = -logLikelihood();
+	double       det = _fitParCovMatrix.Determinant();
+	double       d   = (double)_fitParCovMatrix.GetNcols();
+	double       sum = 0;
+	unsigned int ni  = _normIntegral.ncols();
+	for(unsigned int i=0;i<ni;++i){
+		sum += 1. / _normIntegral(i, i).Re();
+	}
+	double occ  = TMath::Power(TMath::Pi(), d * 0.5 - 1.) * TMath::Sqrt(2 * det) / sum;
+	double locc = TMath::Log(occ);
+	cout << "TFitResult::evidence" << endl;
+	cout << "    LogLikeli: " << l;
+	cout << "  Occamfactor: " << locc;
+	return l + locc;
 }
 
 
@@ -144,17 +144,17 @@ TFitResult::evidence() const {
 /// \f[ \rho_{AB} = \sum_r V_{Ar} V_{Br}^* \f]
 complex<double>
 TFitResult::spinDensityMatrixElem(const unsigned int waveIndexA,
-				  const unsigned int waveIndexB) const
+                                  const unsigned int waveIndexB) const
 {
-  // get pairs of amplitude indices with the same rank for waves A and B
-  const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
-  if (prodAmpIndexPairs.size() == 0)
-    return 0;
-  // sum up amplitude products
-  complex<double> spinDens = 0;
-  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i)
-    spinDens += prodAmp(prodAmpIndexPairs[i].first) * conj(prodAmp(prodAmpIndexPairs[i].second));
-  return spinDens;
+	// get pairs of amplitude indices with the same rank for waves A and B
+	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
+	if (prodAmpIndexPairs.size() == 0)
+		return 0;
+	// sum up amplitude products
+	complex<double> spinDens = 0;
+	for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i)
+		spinDens += prodAmp(prodAmpIndexPairs[i].first) * conj(prodAmp(prodAmpIndexPairs[i].second));
+	return spinDens;
 }
 
 
@@ -162,24 +162,24 @@ TFitResult::spinDensityMatrixElem(const unsigned int waveIndexA,
 double
 TFitResult::fitParameter(const string& parName) const
 {
-  // check if parameter corresponds to real or imaginary part of production amplitude
-  TString    name(parName);
-  const bool realPart = (name.Contains("RE") || name.Contains("flat"));
-  // find corresponding production amplitude
-  if (realPart)
-    name.ReplaceAll("_RE", "");
-  else
-    name.ReplaceAll("_IM", "");
-  for (unsigned int i = 0; i < nmbProdAmps(); ++i)
-    if (name == _prodAmpNames[i]) {
-      if (realPart)
-	return prodAmp(i).real();
-      else
-	return prodAmp(i).imag();
-    }
-  // not found
-  printWarn << "Could not find any parameter named '" << parName << "'." << endl;
-  return 0;
+	// check if parameter corresponds to real or imaginary part of production amplitude
+	TString    name(parName);
+	const bool realPart = (name.Contains("RE") || name.Contains("flat"));
+	// find corresponding production amplitude
+	if (realPart)
+		name.ReplaceAll("_RE", "");
+	else
+		name.ReplaceAll("_IM", "");
+	for (unsigned int i = 0; i < nmbProdAmps(); ++i)
+		if (name == _prodAmpNames[i]) {
+			if (realPart)
+				return prodAmp(i).real();
+			else
+				return prodAmp(i).imag();
+		}
+	// not found
+	printWarn << "Could not find any parameter named '" << parName << "'." << endl;
+	return 0;
 }
 
 
@@ -197,27 +197,27 @@ TFitResult::fitParameter(const string& parName) const
 TMatrixT<double>
 TFitResult::prodAmpCov(const vector<unsigned int>& prodAmpIndices) const
 {
-  const unsigned int dim = 2 * prodAmpIndices.size();
-  TMatrixT<double>   prodAmpCov(dim, dim);
-  if (!_hasErrors) {
-    printWarn << "TFitResult does not have a valid error matrix. Returning zero covariance matrix." << endl;
-    return prodAmpCov;
-  }
-  // get corresponding indices for parameter covariances
-  vector<int> parCovIndices;
-  for (unsigned int i = 0; i < prodAmpIndices.size(); ++i) {
-    parCovIndices.push_back(_fitParCovMatrixIndices[prodAmpIndices[i]].first);   // real part
-    parCovIndices.push_back(_fitParCovMatrixIndices[prodAmpIndices[i]].second);  // imaginary part
-  }
-  // build covariance matrix
-  for (unsigned int row = 0; row < dim; ++row)
-    for (unsigned int col = 0; col < dim; ++col) {
-      const int i = parCovIndices[row];
-      const int j = parCovIndices[col];
-      if ((i >= 0) && (j >= 0))
-	prodAmpCov[row][col] = fitParameterCov(i, j);
-    }
-  return prodAmpCov;
+	const unsigned int dim = 2 * prodAmpIndices.size();
+	TMatrixT<double>   prodAmpCov(dim, dim);
+	if (!_hasErrors) {
+		printWarn << "TFitResult does not have a valid error matrix. Returning zero covariance matrix." << endl;
+		return prodAmpCov;
+	}
+	// get corresponding indices for parameter covariances
+	vector<int> parCovIndices;
+	for (unsigned int i = 0; i < prodAmpIndices.size(); ++i) {
+		parCovIndices.push_back(_fitParCovMatrixIndices[prodAmpIndices[i]].first);   // real part
+		parCovIndices.push_back(_fitParCovMatrixIndices[prodAmpIndices[i]].second);  // imaginary part
+	}
+	// build covariance matrix
+	for (unsigned int row = 0; row < dim; ++row)
+		for (unsigned int col = 0; col < dim; ++col) {
+			const int i = parCovIndices[row];
+			const int j = parCovIndices[col];
+			if ((i >= 0) && (j >= 0))
+				prodAmpCov[row][col] = fitParameterCov(i, j);
+		}
+	return prodAmpCov;
 }
 
 
@@ -227,46 +227,46 @@ TFitResult::prodAmpCov(const vector<unsigned int>& prodAmpIndices) const
 // !!! possible optimization: make special case for waveIndexA == waveIndexB
 TMatrixT<double>
 TFitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
-				     const unsigned int waveIndexB) const
+                                     const unsigned int waveIndexB) const
 {
-  // get pairs of amplitude indices with the same rank for waves A and B
-  const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
-  if (!_hasErrors || (prodAmpIndexPairs.size() == 0)) {
-    TMatrixT<double> spinDensCov(2, 2);
-    return spinDensCov;
-  }
-  // build covariance matrix for amplitudes
-  const TMatrixT<double> prodAmpCov = this->prodAmpCov(prodAmpIndexPairs);
-  // build Jacobian for rho_AB, which is a 2 x 4m matrix composed of 2m sub-Jacobians:
-  // J = (JA0, ..., JA(m - 1), JB0, ..., JB(m - 1))
-  // m is the number of production amplitudes for waves A and B that have the same rank
-  const unsigned int dim = prodAmpCov.GetNcols();
-  TMatrixT<double>   jacobian(2, dim);
-  // build m sub-Jacobians for d rho_AB / d V_Ar = M(V_Br^*)
-  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
-    const unsigned int     ampIndexB    = prodAmpIndexPairs[i].second;
-    const TMatrixT<double> subJacobianA = matrixRepr(conj(prodAmp(ampIndexB)));
-    jacobian.SetSub(0, 2 * i, subJacobianA);
-  }
-  // build m sub-Jacobian for d rho_AB / d V_Br = M(V_Ar) {{1,  0},
-  //                                                       {0, -1}}
-  TMatrixT<double> M(2, 2);  // complex conjugation of V_Br is non-analytic operation
-  M[0][0] =  1;
-  M[1][1] = -1;
-  const unsigned int colOffset = 2 * prodAmpIndexPairs.size();
-  for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
-    const unsigned int ampIndexA    = prodAmpIndexPairs[i].first;
-    TMatrixT<double>   subJacobianB = matrixRepr(prodAmp(ampIndexA));
-    subJacobianB *= M;
-    jacobian.SetSub(0, colOffset + 2 * i, subJacobianB);
-  }
-  // calculate spin density covariance matrix cov(rho_AB) = J cov(V_A0, ..., V_A(m - 1), V_B0, ..., V_B(m - 1)) J^T
-  const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);
-  // binary operations are unavoidable, since matrices are not squared
-  // !!! possible optimaztion: use special TMatrixT constructors to perform the multiplication
-  const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;
-  const TMatrixT<double> spinDensCov  = jacobian   * prodAmpCovJT;
-  return spinDensCov;
+	// get pairs of amplitude indices with the same rank for waves A and B
+	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
+	if (!_hasErrors || (prodAmpIndexPairs.size() == 0)) {
+		TMatrixT<double> spinDensCov(2, 2);
+		return spinDensCov;
+	}
+	// build covariance matrix for amplitudes
+	const TMatrixT<double> prodAmpCov = this->prodAmpCov(prodAmpIndexPairs);
+	// build Jacobian for rho_AB, which is a 2 x 4m matrix composed of 2m sub-Jacobians:
+	// J = (JA0, ..., JA(m - 1), JB0, ..., JB(m - 1))
+	// m is the number of production amplitudes for waves A and B that have the same rank
+	const unsigned int dim = prodAmpCov.GetNcols();
+	TMatrixT<double>   jacobian(2, dim);
+	// build m sub-Jacobians for d rho_AB / d V_Ar = M(V_Br^*)
+	for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
+		const unsigned int     ampIndexB    = prodAmpIndexPairs[i].second;
+		const TMatrixT<double> subJacobianA = matrixRepr(conj(prodAmp(ampIndexB)));
+		jacobian.SetSub(0, 2 * i, subJacobianA);
+	}
+	// build m sub-Jacobian for d rho_AB / d V_Br = M(V_Ar) {{1,  0},
+	//                                                       {0, -1}}
+	TMatrixT<double> M(2, 2);  // complex conjugation of V_Br is non-analytic operation
+	M[0][0] =  1;
+	M[1][1] = -1;
+	const unsigned int colOffset = 2 * prodAmpIndexPairs.size();
+	for (unsigned int i = 0; i < prodAmpIndexPairs.size(); ++i) {
+		const unsigned int ampIndexA    = prodAmpIndexPairs[i].first;
+		TMatrixT<double>   subJacobianB = matrixRepr(prodAmp(ampIndexA));
+		subJacobianB *= M;
+		jacobian.SetSub(0, colOffset + 2 * i, subJacobianB);
+	}
+	// calculate spin density covariance matrix cov(rho_AB) = J cov(V_A0, ..., V_A(m - 1), V_B0, ..., V_B(m - 1)) J^T
+	const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);
+	// binary operations are unavoidable, since matrices are not squared
+	// !!! possible optimaztion: use special TMatrixT constructors to perform the multiplication
+	const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;
+	const TMatrixT<double> spinDensCov  = jacobian   * prodAmpCovJT;
+	return spinDensCov;
 }
 
 
@@ -276,38 +276,38 @@ TFitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 double
 TFitResult::intensity(const char* waveNamePattern) const
 {
-  vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
-  double intensity = 0;
-  for (unsigned int i = 0; i < waveIndices.size(); ++i) {
-    intensity += this->intensity(waveIndices[i]);
-    for (unsigned int j = 0; j < i; ++j)
-      intensity += overlap(waveIndices[i], waveIndices[j]);
-  }
-  return intensity;
+	vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
+	double intensity = 0;
+	for (unsigned int i = 0; i < waveIndices.size(); ++i) {
+		intensity += this->intensity(waveIndices[i]);
+		for (unsigned int j = 0; j < i; ++j)
+			intensity += overlap(waveIndices[i], waveIndices[j]);
+	}
+	return intensity;
 }
 
 
 /// finds wave indices for production amplitues A and B and returns the normalization integral of the two waves
 complex<double>
 TFitResult::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
-				   const unsigned int prodAmpIndexB) const
+                                   const unsigned int prodAmpIndexB) const
 {
-  // treat special case of flat wave which has no normalization integral
-  const bool flatWaveA = prodAmpName(prodAmpIndexA).Contains("flat");
-  const bool flatWaveB = prodAmpName(prodAmpIndexB).Contains("flat");
-  if (flatWaveA && flatWaveB)
-    return 1;
-  else if (flatWaveA || flatWaveB)
-    return 0;
-  else {
-    map<int, int>::const_iterator indexA = _normIntIndexMap.find(prodAmpIndexA);
-    map<int, int>::const_iterator indexB = _normIntIndexMap.find(prodAmpIndexB);
-    if ((indexA == _normIntIndexMap.end()) || (indexB == _normIntIndexMap.end())) {
-      printWarn << "Amplitude index " << prodAmpIndexA << " or " << prodAmpIndexB << " is out of bound." << endl;
-      return 0;
-    }
-    return normIntegral(indexA->second, indexB->second);
-  }
+	// treat special case of flat wave which has no normalization integral
+	const bool flatWaveA = prodAmpName(prodAmpIndexA).Contains("flat");
+	const bool flatWaveB = prodAmpName(prodAmpIndexB).Contains("flat");
+	if (flatWaveA && flatWaveB)
+		return 1;
+	else if (flatWaveA || flatWaveB)
+		return 0;
+	else {
+		map<int, int>::const_iterator indexA = _normIntIndexMap.find(prodAmpIndexA);
+		map<int, int>::const_iterator indexB = _normIntIndexMap.find(prodAmpIndexB);
+		if ((indexA == _normIntIndexMap.end()) || (indexB == _normIntIndexMap.end())) {
+			printWarn << "Amplitude index " << prodAmpIndexA << " or " << prodAmpIndexB << " is out of bound." << endl;
+			return 0;
+		}
+		return normIntegral(indexA->second, indexB->second);
+	}
 }
 
 
@@ -317,271 +317,271 @@ TFitResult::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 double 
 TFitResult::intensityErr(const char* waveNamePattern) const
 {
-  // get amplitudes that correspond to wave name pattern
-  const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);
-  const unsigned int         nmbAmps        = prodAmpIndices.size();
-  if (!_hasErrors || (nmbAmps == 0))
-    return 0;
-  // build Jacobian for intensity, which is a 1 x 2n matrix composed of n sub-Jacobians:
-  // J = (JA_0, ..., JA_{n - 1}), where n is the number of production amplitudes
-  TMatrixT<double> jacobian(1, 2 * nmbAmps);
-  for (unsigned int i = 0; i < nmbAmps; ++i) {
-    // build sub-Jacobian for each amplitude; intensity is real valued function, so J has only one row
-    // JA_ir = 2 * sum_j (A_jr Norm_ji)
-    complex<double>  ampNorm     = 0;  // sum_j (A_jr Norm_ji)
-    const int        currentRank = rankOfProdAmp(prodAmpIndices[i]);
-    for (unsigned int j = 0; j < nmbAmps; ++j) {
-      if (rankOfProdAmp(prodAmpIndices[j]) != currentRank)
-	continue;
-      ampNorm += prodAmp(prodAmpIndices[j]) * normIntegralForProdAmp(j, i);  // order of indices is essential
-    }
-    jacobian[0][2 * i    ] = ampNorm.real();
-    jacobian[0][2 * i + 1] = ampNorm.imag();
-  }
-  jacobian *= 2;
-  const TMatrixT<double> prodAmpCov   = this->prodAmpCov(prodAmpIndices);     // 2n x 2n matrix
-  const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);  // 2n x  1 matrix
-  const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;               // 2n x  1 matrix
-  const TMatrixT<double> intensityCov = jacobian * prodAmpCovJT;              //  1 x  1 matrix
-  return sqrt(intensityCov[0][0]);
+	// get amplitudes that correspond to wave name pattern
+	const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);
+	const unsigned int         nmbAmps        = prodAmpIndices.size();
+	if (!_hasErrors || (nmbAmps == 0))
+		return 0;
+	// build Jacobian for intensity, which is a 1 x 2n matrix composed of n sub-Jacobians:
+	// J = (JA_0, ..., JA_{n - 1}), where n is the number of production amplitudes
+	TMatrixT<double> jacobian(1, 2 * nmbAmps);
+	for (unsigned int i = 0; i < nmbAmps; ++i) {
+		// build sub-Jacobian for each amplitude; intensity is real valued function, so J has only one row
+		// JA_ir = 2 * sum_j (A_jr Norm_ji)
+		complex<double>  ampNorm     = 0;  // sum_j (A_jr Norm_ji)
+		const int        currentRank = rankOfProdAmp(prodAmpIndices[i]);
+		for (unsigned int j = 0; j < nmbAmps; ++j) {
+			if (rankOfProdAmp(prodAmpIndices[j]) != currentRank)
+				continue;
+			ampNorm += prodAmp(prodAmpIndices[j]) * normIntegralForProdAmp(j, i);  // order of indices is essential
+		}
+		jacobian[0][2 * i    ] = ampNorm.real();
+		jacobian[0][2 * i + 1] = ampNorm.imag();
+	}
+	jacobian *= 2;
+	const TMatrixT<double> prodAmpCov   = this->prodAmpCov(prodAmpIndices);     // 2n x 2n matrix
+	const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);  // 2n x  1 matrix
+	const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;               // 2n x  1 matrix
+	const TMatrixT<double> intensityCov = jacobian * prodAmpCovJT;              //  1 x  1 matrix
+	return sqrt(intensityCov[0][0]);
 }
 
 
 /// calculates phase difference between wave A and wave B
 double
 TFitResult::phase(const unsigned int waveIndexA,
-		  const unsigned int waveIndexB) const
+                  const unsigned int waveIndexB) const
 { 
-  if (waveIndexA == waveIndexB)
-    return 0;
-  return arg(spinDensityMatrixElem(waveIndexA, waveIndexB)) * TMath::RadToDeg();
+	if (waveIndexA == waveIndexB)
+		return 0;
+	return arg(spinDensityMatrixElem(waveIndexA, waveIndexB)) * TMath::RadToDeg();
 }
 
 
 /// calculates error of phase difference between wave A and wave B
 double
 TFitResult::phaseErr(const unsigned int waveIndexA,
-		     const unsigned int waveIndexB) const
+                     const unsigned int waveIndexB) const
 {
-  if (!_hasErrors || (waveIndexA == waveIndexB))
-    return 0;
-  // construct Jacobian for phi_AB = +- arctan(Im[rho_AB] / Re[rho_AB])
-  const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
-  TMatrixT<double>      jacobian(1, 2);  // phase is real valued function, so J has only one row
-  {
-    const double x = spinDens.real();
-    const double y = spinDens.imag();
-    if ((x != 0) || (y != 0)) {
-      jacobian[0][0] = 1 / (x + y * y / x);
-      jacobian[0][1] = -y / (x * x + y * y);
-    }
-  }
-  // calculate variance
-  const double phaseVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
-  return sqrt(phaseVariance) * TMath::RadToDeg();
+	if (!_hasErrors || (waveIndexA == waveIndexB))
+		return 0;
+	// construct Jacobian for phi_AB = +- arctan(Im[rho_AB] / Re[rho_AB])
+	const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
+	TMatrixT<double>      jacobian(1, 2);  // phase is real valued function, so J has only one row
+	{
+		const double x = spinDens.real();
+		const double y = spinDens.imag();
+		if ((x != 0) || (y != 0)) {
+			jacobian[0][0] = 1 / (x + y * y / x);
+			jacobian[0][1] = -y / (x * x + y * y);
+		}
+	}
+	// calculate variance
+	const double phaseVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
+	return sqrt(phaseVariance) * TMath::RadToDeg();
 }
 
 
 /// calculates coherence of wave A and wave B
 double
 TFitResult::coherence(const unsigned int waveIndexA,
-		      const unsigned int waveIndexB) const
+                      const unsigned int waveIndexB) const
 {
-  const double          rhoAA = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
-  const double          rhoBB = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
-  const complex<double> rhoAB = spinDensityMatrixElem(waveIndexA, waveIndexB);
+	const double          rhoAA = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
+	const double          rhoBB = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
+	const complex<double> rhoAB = spinDensityMatrixElem(waveIndexA, waveIndexB);
 
-  cout << "coherence("<<waveIndexA<<","<<waveIndexB<<"): "
-       <<rhoAA<<"  "
-       <<rhoBB<<"  "
-       <<rhoAB<<"  "
-       <<sqrt(std::norm(rhoAB))<<"  "
-       <<sqrt((rhoAA * rhoBB))<<endl;
+	cout << "coherence("<<waveIndexA<<","<<waveIndexB<<"): "
+	     <<rhoAA<<"  "
+	     <<rhoBB<<"  "
+	     <<rhoAB<<"  "
+	     <<sqrt(std::norm(rhoAB))<<"  "
+	     <<sqrt((rhoAA * rhoBB))<<endl;
     
 
 
-  return sqrt(std::norm(rhoAB) / (rhoAA * rhoBB));
+	return sqrt(std::norm(rhoAB) / (rhoAA * rhoBB));
 }
 
 
 /// calculates error of coherence of wave A and wave B
 double
 TFitResult::coherenceErr(const unsigned int waveIndexA,
-			 const unsigned int waveIndexB) const
+                         const unsigned int waveIndexB) const
 {
-  // get amplitude indices for waves A and B
-  const vector<unsigned int> prodAmpIndices[2] = {prodAmpIndicesForWave(waveIndexA),
-                                                  prodAmpIndicesForWave(waveIndexB)};
-  if (!_hasErrors || (prodAmpIndices[0].size() == 0) || (prodAmpIndices[1].size() == 0))
-    return 0;
-  // build Jacobian for coherence, which is a 1 x 2(n + m) matrix composed of (n + m) sub-Jacobians:
-  // J = (JA_0, ..., JA_{n - 1}, JB_0, ..., JB_{m - 1})
-  const unsigned int nmbAmps = prodAmpIndices[0].size() + prodAmpIndices[1].size();
-  TMatrixT<double>   jacobian(1, 2 * nmbAmps);
-  // precalculate some variables
-  const double          rhoAA     = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
-  const double          rhoBB     = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
-  const complex<double> rhoAB     = spinDensityMatrixElem(waveIndexA, waveIndexB);
-  const double          rhoABRe   = rhoAB.real();
-  const double          rhoABIm   = rhoAB.imag();
-  const double          rhoABNorm = std::norm(rhoAB);
-  const double          coh       = sqrt(rhoABNorm / (rhoAA * rhoBB));
-  if (coh == 0)
-    return 0;
-  // build m sub-Jacobians for JA_r = coh_AB / d V_Ar
-  for (unsigned int i = 0; i < prodAmpIndices[0].size(); ++i) {
-    const unsigned int    prodAmpIndexA = prodAmpIndices[0][i];
-    const complex<double> prodAmpA      = prodAmp(prodAmpIndexA);
-    const int             prodAmpRankA  = rankOfProdAmp(prodAmpIndexA);
-    // find production amplitude of wave B with same rank
-    complex<double> prodAmpB = 0;
-    for (unsigned int j = 0; j < prodAmpIndices[1].size(); ++j) {
-      const unsigned int prodAmpIndexB = prodAmpIndices[1][j];
-      if (rankOfProdAmp(prodAmpIndexB) == prodAmpRankA) {
-	prodAmpB = prodAmp(prodAmpIndexB);
-	break;
-      }
-    }
-    jacobian[0][2 * i    ] = rhoABRe * prodAmpB.real() - rhoABIm * prodAmpB.imag() - (rhoABNorm / rhoAA) * prodAmpA.real();
-    jacobian[0][2 * i + 1] = rhoABRe * prodAmpB.imag() + rhoABIm * prodAmpB.real() - (rhoABNorm / rhoAA) * prodAmpA.imag();
-  }
-// !!! possible optimization: join the loops for JA_r and JB_r
-  // build m sub-Jacobian for JB_r = d coh_AB / d V_Br
-  const unsigned int colOffset = 2 * prodAmpIndices[0].size();
-  for (unsigned int i = 0; i < prodAmpIndices[1].size(); ++i) {
-    const unsigned int    prodAmpIndexB = prodAmpIndices[1][i];
-    const complex<double> prodAmpB      = prodAmp(prodAmpIndexB);
-    const int             prodAmpRankB  = rankOfProdAmp(prodAmpIndexB);
-    // find production amplitude of wave A with same rank
-    complex<double> prodAmpA = 0;
-    for (unsigned int j = 0; j < prodAmpIndices[0].size(); ++j) {
-      const unsigned int prodAmpIndexA = prodAmpIndices[0][j];
-      if (rankOfProdAmp(prodAmpIndexA) == prodAmpRankB) {
-	prodAmpA = prodAmp(prodAmpIndexA);
-	break;
-      }
-    }
-    jacobian[0][colOffset + 2 * i    ] = rhoABRe * prodAmpA.real() + rhoABIm * prodAmpA.imag() - (rhoABNorm / rhoBB) * prodAmpB.real();
-    jacobian[0][colOffset + 2 * i + 1] = rhoABRe * prodAmpA.imag() - rhoABIm * prodAmpA.real() - (rhoABNorm / rhoBB) * prodAmpB.imag();
-  }
-  jacobian *= 1 / (coh * rhoAA * rhoBB);
-  // build covariance matrix for amplitudes and calculate coherence covariance matrix
-  const TMatrixT<double> prodAmpCov   = this->prodAmpCov(prodAmpIndices[0], prodAmpIndices[1]);  // 2(n + m) x 2(n + m) matrix
-  const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);                     // 2(n + m) x        1 matrix
-  const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;                                  // 2(n + m) x        1 matrix
-  const TMatrixT<double> cohCov       = jacobian   * prodAmpCovJT;                               //        1 x        1 matrix
-  return sqrt(cohCov[0][0]);
+	// get amplitude indices for waves A and B
+	const vector<unsigned int> prodAmpIndices[2] = {prodAmpIndicesForWave(waveIndexA),
+	                                                prodAmpIndicesForWave(waveIndexB)};
+	if (!_hasErrors || (prodAmpIndices[0].size() == 0) || (prodAmpIndices[1].size() == 0))
+		return 0;
+	// build Jacobian for coherence, which is a 1 x 2(n + m) matrix composed of (n + m) sub-Jacobians:
+	// J = (JA_0, ..., JA_{n - 1}, JB_0, ..., JB_{m - 1})
+	const unsigned int nmbAmps = prodAmpIndices[0].size() + prodAmpIndices[1].size();
+	TMatrixT<double>   jacobian(1, 2 * nmbAmps);
+	// precalculate some variables
+	const double          rhoAA     = spinDensityMatrixElem(waveIndexA, waveIndexA).real();  // rho_AA is real by definition
+	const double          rhoBB     = spinDensityMatrixElem(waveIndexB, waveIndexB).real();  // rho_BB is real by definition
+	const complex<double> rhoAB     = spinDensityMatrixElem(waveIndexA, waveIndexB);
+	const double          rhoABRe   = rhoAB.real();
+	const double          rhoABIm   = rhoAB.imag();
+	const double          rhoABNorm = std::norm(rhoAB);
+	const double          coh       = sqrt(rhoABNorm / (rhoAA * rhoBB));
+	if (coh == 0)
+		return 0;
+	// build m sub-Jacobians for JA_r = coh_AB / d V_Ar
+	for (unsigned int i = 0; i < prodAmpIndices[0].size(); ++i) {
+		const unsigned int    prodAmpIndexA = prodAmpIndices[0][i];
+		const complex<double> prodAmpA      = prodAmp(prodAmpIndexA);
+		const int             prodAmpRankA  = rankOfProdAmp(prodAmpIndexA);
+		// find production amplitude of wave B with same rank
+		complex<double> prodAmpB = 0;
+		for (unsigned int j = 0; j < prodAmpIndices[1].size(); ++j) {
+			const unsigned int prodAmpIndexB = prodAmpIndices[1][j];
+			if (rankOfProdAmp(prodAmpIndexB) == prodAmpRankA) {
+				prodAmpB = prodAmp(prodAmpIndexB);
+				break;
+			}
+		}
+		jacobian[0][2 * i    ] = rhoABRe * prodAmpB.real() - rhoABIm * prodAmpB.imag() - (rhoABNorm / rhoAA) * prodAmpA.real();
+		jacobian[0][2 * i + 1] = rhoABRe * prodAmpB.imag() + rhoABIm * prodAmpB.real() - (rhoABNorm / rhoAA) * prodAmpA.imag();
+	}
+	// !!! possible optimization: join the loops for JA_r and JB_r
+	// build m sub-Jacobian for JB_r = d coh_AB / d V_Br
+	const unsigned int colOffset = 2 * prodAmpIndices[0].size();
+	for (unsigned int i = 0; i < prodAmpIndices[1].size(); ++i) {
+		const unsigned int    prodAmpIndexB = prodAmpIndices[1][i];
+		const complex<double> prodAmpB      = prodAmp(prodAmpIndexB);
+		const int             prodAmpRankB  = rankOfProdAmp(prodAmpIndexB);
+		// find production amplitude of wave A with same rank
+		complex<double> prodAmpA = 0;
+		for (unsigned int j = 0; j < prodAmpIndices[0].size(); ++j) {
+			const unsigned int prodAmpIndexA = prodAmpIndices[0][j];
+			if (rankOfProdAmp(prodAmpIndexA) == prodAmpRankB) {
+				prodAmpA = prodAmp(prodAmpIndexA);
+				break;
+			}
+		}
+		jacobian[0][colOffset + 2 * i    ] = rhoABRe * prodAmpA.real() + rhoABIm * prodAmpA.imag() - (rhoABNorm / rhoBB) * prodAmpB.real();
+		jacobian[0][colOffset + 2 * i + 1] = rhoABRe * prodAmpA.imag() - rhoABIm * prodAmpA.real() - (rhoABNorm / rhoBB) * prodAmpB.imag();
+	}
+	jacobian *= 1 / (coh * rhoAA * rhoBB);
+	// build covariance matrix for amplitudes and calculate coherence covariance matrix
+	const TMatrixT<double> prodAmpCov   = this->prodAmpCov(prodAmpIndices[0], prodAmpIndices[1]);  // 2(n + m) x 2(n + m) matrix
+	const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);                     // 2(n + m) x        1 matrix
+	const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;                                  // 2(n + m) x        1 matrix
+	const TMatrixT<double> cohCov       = jacobian   * prodAmpCovJT;                               //        1 x        1 matrix
+	return sqrt(cohCov[0][0]);
 }
 
 
 /// calculates overlap of wave A and wave B
 double
 TFitResult::overlap(const unsigned int waveIndexA,
-		    const unsigned int waveIndexB) const
+                    const unsigned int waveIndexB) const
 {
-  const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
-  const complex<double> normInt  = normIntegral         (waveIndexA, waveIndexB);
-  return 2 * (spinDens * normInt).real();
+	const complex<double> spinDens = spinDensityMatrixElem(waveIndexA, waveIndexB);
+	const complex<double> normInt  = normIntegral         (waveIndexA, waveIndexB);
+	return 2 * (spinDens * normInt).real();
 }
 
 
 /// calculates error of overlap of wave A and wave B
 double
 TFitResult::overlapErr(const unsigned int waveIndexA,
-		       const unsigned int waveIndexB) const
+                       const unsigned int waveIndexB) const
 {
-  if (!_hasErrors)
-    return 0;
-  const complex<double> normInt = normIntegral(waveIndexA, waveIndexB);
-  TMatrixT<double> jacobian(1, 2);  // overlap is real valued function, so J has only one row
-  jacobian[0][0] =  2 * normInt.real();
-  jacobian[0][1] = -2 * normInt.imag();
-  const double overlapVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
-  return sqrt(overlapVariance);
+	if (!_hasErrors)
+		return 0;
+	const complex<double> normInt = normIntegral(waveIndexA, waveIndexB);
+	TMatrixT<double> jacobian(1, 2);  // overlap is real valued function, so J has only one row
+	jacobian[0][0] =  2 * normInt.real();
+	jacobian[0][1] = -2 * normInt.imag();
+	const double overlapVariance = realValVariance(waveIndexA, waveIndexB, jacobian);
+	return sqrt(overlapVariance);
 }
 
 
 void
 TFitResult::reset()
 {
-  _nmbEvents     = 0;
-  _normNmbEvents = 0;
-  _massBinCenter = 0;
-  _logLikelihood = 0;
-  _rank          = 0;
-  _prodAmps.clear();
-  _prodAmpNames.clear();
-  _waveNames.clear();
-  _hasErrors = false;
-  _fitParCovMatrix.ResizeTo(0, 0);
-  _fitParCovMatrixIndices.clear();
-  _normIntegral.ResizeTo(0, 0);
-  _normIntIndexMap.clear();
+	_nmbEvents     = 0;
+	_normNmbEvents = 0;
+	_massBinCenter = 0;
+	_logLikelihood = 0;
+	_rank          = 0;
+	_prodAmps.clear();
+	_prodAmpNames.clear();
+	_waveNames.clear();
+	_hasErrors = false;
+	_fitParCovMatrix.ResizeTo(0, 0);
+	_fitParCovMatrixIndices.clear();
+	_normIntegral.ResizeTo(0, 0);
+	_normIntIndexMap.clear();
 }
 
 
 void 
 TFitResult::fill(const unsigned int              nmbEvents,               // number of events in bin                     
-		 const unsigned int              normNmbEvents,            // number of events to normalize to            
-		 const double                    massBinCenter,            // center value of mass bin                    
-		 const double                    logLikelihood,            // log(likelihood) at maximum          
-		 const int                       rank,		          // rank of fit				 
-		 const vector<complex<double> >& prodAmps,	          // production amplitudes			 
-		 const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
-		 const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
-		 const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-		 const TCMatrix&                 normIntegral)            // normalization integral over full phase space without acceptance
+                 const unsigned int              normNmbEvents,            // number of events to normalize to            
+                 const double                    massBinCenter,            // center value of mass bin                    
+                 const double                    logLikelihood,            // log(likelihood) at maximum          
+                 const int                       rank,		          // rank of fit				 
+                 const vector<complex<double> >& prodAmps,	          // production amplitudes			 
+                 const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
+                 const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
+                 const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+                 const TCMatrix&                 normIntegral)            // normalization integral over full phase space without acceptance
 {
-  _nmbEvents     = nmbEvents;
-  _normNmbEvents = normNmbEvents;
-  _massBinCenter = massBinCenter;
-  _logLikelihood = logLikelihood;
-  _rank          = rank;
-  _prodAmps.resize(prodAmps.size());
-  for (unsigned int i = 0; i < prodAmps.size(); ++i)
-    _prodAmps[i] = TComplex(prodAmps[i].real(), prodAmps[i].imag());
-  _prodAmpNames  = prodAmpNames;
-  _fitParCovMatrix.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
-  _fitParCovMatrix        = fitParCovMatrix;
-  _fitParCovMatrixIndices = fitParCovMatrixIndices;
-  if (!(fitParCovMatrix.GetNrows() == 0) && !(fitParCovMatrix.GetNcols() == 0))  // check whether there really is an error matrix
-    _hasErrors = true;
-  else
-    _hasErrors = false;
-  _normIntegral.ResizeTo(normIntegral.nrows(), normIntegral.ncols());
-  _normIntegral = normIntegral;
+	_nmbEvents     = nmbEvents;
+	_normNmbEvents = normNmbEvents;
+	_massBinCenter = massBinCenter;
+	_logLikelihood = logLikelihood;
+	_rank          = rank;
+	_prodAmps.resize(prodAmps.size());
+	for (unsigned int i = 0; i < prodAmps.size(); ++i)
+		_prodAmps[i] = TComplex(prodAmps[i].real(), prodAmps[i].imag());
+	_prodAmpNames  = prodAmpNames;
+	_fitParCovMatrix.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
+	_fitParCovMatrix        = fitParCovMatrix;
+	_fitParCovMatrixIndices = fitParCovMatrixIndices;
+	if (!(fitParCovMatrix.GetNrows() == 0) && !(fitParCovMatrix.GetNcols() == 0))  // check whether there really is an error matrix
+		_hasErrors = true;
+	else
+		_hasErrors = false;
+	_normIntegral.ResizeTo(normIntegral.nrows(), normIntegral.ncols());
+	_normIntegral = normIntegral;
 
-  buildWaveMap();
+	buildWaveMap();
 
-  // check consistency
-  if (_prodAmps.size() != _prodAmpNames.size())
-    cout << "TFitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
-         << ") does not match number of production amplitude names (" << _prodAmpNames.size() << ")." << endl;
-  if (_prodAmps.size() != _fitParCovMatrixIndices.size())
-    cout << "TFitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
-         << ") does not match number of covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
-  if (((int)_waveNames.size() != _normIntegral.nrows()) || ((int)_waveNames.size() != _normIntegral.ncols()))
-    cout << "TFitResult::fill(): warning: number of waves (" << _waveNames.size()
-         << ") does not match size of normalization integral (" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
+	// check consistency
+	if (_prodAmps.size() != _prodAmpNames.size())
+		cout << "TFitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
+		     << ") does not match number of production amplitude names (" << _prodAmpNames.size() << ")." << endl;
+	if (_prodAmps.size() != _fitParCovMatrixIndices.size())
+		cout << "TFitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
+		     << ") does not match number of covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
+	if (((int)_waveNames.size() != _normIntegral.nrows()) || ((int)_waveNames.size() != _normIntegral.ncols()))
+		cout << "TFitResult::fill(): warning: number of waves (" << _waveNames.size()
+		     << ") does not match size of normalization integral (" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
 }
 
 
 void
 TFitResult::buildWaveMap() {
-  int n=_prodAmpNames.size();
-  for(int i=0;i<n;++i){
-    // strip rank
-    TString title=wavetitle(i);
-    if(find(_waveNames.begin(),_waveNames.end(),title.Data())==_waveNames.end())
-      _waveNames.push_back(title.Data());
+	int n=_prodAmpNames.size();
+	for(int i=0;i<n;++i){
+		// strip rank
+		TString title=wavetitle(i);
+		if(find(_waveNames.begin(),_waveNames.end(),title.Data())==_waveNames.end())
+			_waveNames.push_back(title.Data());
     
-    // look for index of first occurence
-    int j;
-    for(j=0;j<n;++j)
-      if(prodAmpName(j).Contains(title))
-	break;
-    _normIntIndexMap[i]=j;
-  }
+		// look for index of first occurence
+		int j;
+		for(j=0;j<n;++j)
+			if(prodAmpName(j).Contains(title))
+				break;
+		_normIntIndexMap[i]=j;
+	}
 }
 
 

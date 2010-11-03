@@ -81,7 +81,8 @@ keyFileParser::parse(const string& keyFileName)
 
 
 bool
-keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
+keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo,
+                                      const bool              requireXQnKey)
 {
 	if (topo)
 		topo.reset();
@@ -99,16 +100,23 @@ keyFileParser::constructDecayTopology(isobarDecayTopologyPtr& topo)
 
 	// find  X quantum numbers group
 	const Setting* XQnKey = findGroup(*waveKey, "XQuantumNumbers");
-	if (not XQnKey) {
-		printWarn << "cannot find 'XQuantumNumbers' group. cannot construct decay topology." << endl;
-		return false;
-	}
-	// create X particle
-	particlePtr X;
-	if (not constructXParticle(*XQnKey, X)) {
-		printWarn << "problems constructing X particle. cannot construct decay topology." << endl;
-		return false;
-	}
+	particlePtr    X;
+	if (not XQnKey)
+		if (requireXQnKey) {
+			printWarn << "cannot find 'XQuantumNumbers' group. cannot construct decay topology." << endl;
+			return false;
+		} else {
+			// create default X particle
+			printWarn << "cannot find 'XQuantumNumbers' group. "
+			          << "creating X particle with default properties." << endl;
+			X = createParticle("X");
+		}
+	else
+		// create X particle from key
+		if (not constructXParticle(*XQnKey, X)) {
+			printWarn << "problems constructing X particle. cannot construct decay topology." << endl;
+			return false;
+		}
   
 	// create production vertex
 	productionVertexPtr prodVert = productionVertexPtr();
@@ -172,11 +180,11 @@ keyFileParser::mapAmplitudeType(const string&                 formalismType,
 
 
 bool
-keyFileParser::setAmplitude(Setting&                  amplitudeKey,
-                            const isobarAmplitudePtr& amplitude)
+keyFileParser::setAmplitude(Setting&               amplitudeKey,
+                            const isobarAmplitude& amplitude)
 {
 	string       formalism     = "";
-	const string amplitudeName = amplitude->name();
+	const string amplitudeName = amplitude.name();
 	if (amplitudeName == "isobarCanonicalAmplitude") {
 		formalism = "canonical";
 	} else if (amplitudeName != "isobarHelicityAmplitude") {
@@ -189,10 +197,10 @@ keyFileParser::setAmplitude(Setting&                  amplitudeKey,
 			          << "'" << formalism << "'" << endl;
 		amplitudeKey.add("formalism", Setting::TypeString) = formalism;
 	}
-	if (not amplitude->boseSymmetrization())
-		amplitudeKey.add("boseSymmetrize", Setting::TypeBoolean) = amplitude->boseSymmetrization();
-	if (not amplitude->reflectivityBasis())
-		amplitudeKey.add("useReflectivityBasis", Setting::TypeBoolean) = amplitude->reflectivityBasis();
+	if (not amplitude.boseSymmetrization())
+		amplitudeKey.add("boseSymmetrize", Setting::TypeBoolean) = amplitude.boseSymmetrization();
+	if (not amplitude.reflectivityBasis())
+		amplitudeKey.add("useReflectivityBasis", Setting::TypeBoolean) = amplitude.reflectivityBasis();
 	return true;
 }
 
@@ -243,18 +251,14 @@ keyFileParser::constructAmplitude(isobarAmplitudePtr&           amplitude,
 
 
 bool
-keyFileParser::writeKeyFile(const string&             keyFileName,
-                            const isobarAmplitudePtr& amplitude,
-                            const bool                writeProdVert)
+keyFileParser::writeKeyFile(const string&          keyFileName,
+                            const isobarAmplitude& amplitude,
+                            const bool             writeProdVert)
 {
-	if (not amplitude) {
-		printWarn << "null pointer to decay amplitude. cannot write key file." << endl;
-		return false;
-	}
 	printInfo << "writing key file '" << keyFileName << "'" << endl;
-	Config key;
+	Config   key;
 	Setting& rootKey = key.getRoot();
-	if (not writeKeyFile(rootKey, amplitude->decayTopology(), writeProdVert)) {
+	if (not writeKeyFile(rootKey, *amplitude.decayTopology(), writeProdVert)) {
 		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
 		return false;
 	}
@@ -274,11 +278,11 @@ keyFileParser::writeKeyFile(const string&             keyFileName,
 
 
 bool
-keyFileParser::writeKeyFile(Setting&                  rootKey,
-                            const isobarAmplitudePtr& amplitude)
+keyFileParser::writeKeyFile(Setting&               rootKey,
+                            const isobarAmplitude& amplitude)
 {
 	printInfo << "writing ";
-	amplitude->printParameters(cout);
+	amplitude.printParameters(cout);
 	Setting& amplitudeKey = rootKey.add("amplitude", Setting::TypeGroup);
 	if (not setAmplitude(amplitudeKey, amplitude)) {
 		printWarn << "problems writing amplitude paramaters" << endl;
@@ -289,16 +293,12 @@ keyFileParser::writeKeyFile(Setting&                  rootKey,
 
 
 bool
-keyFileParser::writeKeyFile(const string&                 keyFileName,
-                            const isobarDecayTopologyPtr& topo,
-                            const bool                    writeProdVert)
+keyFileParser::writeKeyFile(const string&              keyFileName,
+                            const isobarDecayTopology& topo,
+                            const bool                 writeProdVert)
 {
-	if (not topo) {
-		printWarn << "null pointer to decay topology. cannot write key file." << endl;
-		return false;
-	}
 	printInfo << "writing key file '" << keyFileName << "'" << endl;
-	Config key;
+	Config   key;
 	Setting& rootKey = key.getRoot();
 	if (not writeKeyFile(rootKey, topo, writeProdVert)) {
 		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
@@ -316,27 +316,68 @@ keyFileParser::writeKeyFile(const string&                 keyFileName,
 
 
 bool
-keyFileParser::writeKeyFile(Setting&                      rootKey,
-                            const isobarDecayTopologyPtr& topo,
-                            const bool                    writeProdVert)
+keyFileParser::writeKeyFile(Setting&                   rootKey,
+                            const isobarDecayTopology& topo,
+                            const bool                 writeProdVert)
 {
-	printInfo << "writing " << *topo;
+	if (not topo.checkTopology() or not topo.checkConsistency()) {
+		printWarn << "decay topology has issues. cannot write key file." << endl;
+		return false;
+	}
+	printInfo << "writing " << topo;
 	if (writeProdVert) {
 		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
-		setProductionVertexKeys(prodVertKey, topo->productionVertex());
+		setProductionVertexKeys(prodVertKey, topo.productionVertex());
 	}
 	Setting& waveKey   = rootKey.add("wave",            Setting::TypeGroup);
 	Setting& XQnKey    = waveKey.add("XQuantumNumbers", Setting::TypeGroup);
 	Setting& XDecayKey = waveKey.add("XDecay",          Setting::TypeGroup);
-	if (not setXQuantumNumbersKeys(XQnKey, *(topo->XParticle()))) {
+	if (not setXQuantumNumbersKeys(XQnKey, *(topo.XParticle()))) {
 		printWarn << "problems writing X quantum numbers" << endl;
 		return false;
 	}
-	if (not setXDecayKeys(XDecayKey, *topo, *(topo->XIsobarDecayVertex()))) {
+	if (not setXDecayKeys(XDecayKey, topo, *(topo.XIsobarDecayVertex()))) {
 		printWarn << "problems writing X decay" << endl;
 		return false;
 	}
 	return true;
+}
+
+
+string
+keyFileParser::keyFileNameFromTopology(const isobarDecayTopology&  topo,
+                                       const isobarDecayVertexPtr& currentVertex)
+{
+	ostringstream fileName;
+	if (currentVertex == interactionVertexPtr()) {
+		if (not topo.checkTopology() or not topo.checkConsistency()) {
+			printWarn << "decay topology has issues. cannot construct key file name." << endl;
+			return "";
+		}
+		// X quantum numbers
+		const particle& X = *(topo.XParticle());
+		fileName << 0.5 * X.isospin() << ((X.G() != 0) ? sign(X.G()) : "")
+		         << 0.5 * X.J() << ((X.P() != 0) ? sign(X.P()) : "") << ((X.C() != 0) ? sign(X.C()) : "")
+		         << 0.5 * X.spinProj() << ((X.reflectivity() != 0) ? sign(X.reflectivity()) : "");
+		// start traversing down decay chain
+		fileName << keyFileNameFromTopology(topo, topo.XIsobarDecayVertex());
+	} else {
+		// recurse down decay chain
+		// first daughter
+		fileName << "={" << currentVertex->daughter1()->name();
+		if (not topo.isFsParticle(currentVertex->daughter1()))
+			fileName << keyFileNameFromTopology
+				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
+		// L, S
+		fileName << "[" << 0.5 * currentVertex->L() << "," << 0.5 * currentVertex->S() << "]";
+		// second daughter
+		fileName << currentVertex->daughter2()->name();
+		if (not topo.isFsParticle(currentVertex->daughter2()))
+			fileName << keyFileNameFromTopology
+				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
+		fileName << "}";
+	}
+	return fileName.str();
 }
 
 

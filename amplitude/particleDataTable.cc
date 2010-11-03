@@ -78,24 +78,50 @@ particleDataTable::entry(const string& partName)
 vector<const particleProperties*> 
 particleDataTable::entriesMatching(const particleProperties& prototype,
                                    const string&             sel,
-                                   const double              minIsobarMass)
+                                   const double              minIsobarMass,
+                                   const vector<string>&     whiteList,
+                                   const vector<string>&     blackList)
 {
 	const pair<particleProperties, string> selector(prototype, sel);
-	vector<const particleProperties*> matchingEntries;
-	for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i)
-		// limit isobar mass, if minIsobarMass != 0
+	vector<const particleProperties*>      matchingEntries;
+	for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i) {
+		if (i->second != selector)
+			continue;
+		// limit isobar mass, if minIsobarMass > 0
 		// accept isobar candidate if its mass + width is larger than minIsobarMass
-		if ((i->second == selector) and (   (i->second.mass() + i->second.width() > minIsobarMass)
-		                                 or (minIsobarMass == 0))) {
-			if (_debug) {
-				printInfo << "found entry " << i->second.name() << " matching " << prototype
-				          << " and '" << sel << "'" << flush;
-				if (minIsobarMass != 0)
-					cout << " with mass > " << minIsobarMass << " GeV";
-				cout << endl;
-			}      
-			matchingEntries.push_back(&(i->second));
-		}
+		if ((minIsobarMass > 0) and (i->second.mass() + i->second.width() < minIsobarMass))
+			continue;
+		// apply white list
+		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
+		for (size_t j = 0; j < whiteList.size(); ++j)
+			if (i->second.name() == whiteList[j]) {
+				whiteListMatch = true;
+				break;
+			}
+		if (not whiteListMatch)
+			continue;
+		// apply black list
+		bool blackListMatch = false;
+		for (size_t j = 0; j < blackList.size(); ++j)
+			if (i->second.name() == blackList[j]) {
+				blackListMatch = true;
+				break;
+			}
+		if (blackListMatch)
+			continue;
+		if (_debug) {
+			printInfo << "found entry " << i->second.name() << " matching " << prototype
+			          << " and '" << sel << "'" << flush;
+			if (minIsobarMass != 0)
+				cout << " with mass > " << minIsobarMass << " GeV";
+			if (whiteList.size() > 0)
+				cout << " ; in white list";
+			if (blackList.size() > 0)
+				cout << " ; not in black list";
+			cout << endl;
+		}      
+		matchingEntries.push_back(&(i->second));
+	}
 	return matchingEntries;
 }
 

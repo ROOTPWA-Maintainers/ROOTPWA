@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2010
+//    Copyright 2009 Sebastian Neubert
 //
 //    This file is part of rootpwa
 //
@@ -15,7 +15,7 @@
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with rootpwa. If not, see <http://www.gnu.org/licenses/>.
+//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      ROOT logon macro that loads libraries needed by other ROOT macros
+//      tells rootcint for which classes to generate method interface stubs
 //
 //
 // Author List:
@@ -34,13 +34,22 @@
 //
 //-------------------------------------------------------------------------
 
+#ifdef __CINT__
 
-{
-	gSystem->AddIncludePath("-I$BOOST_ROOT");
-	gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
-	gSystem->AddIncludePath("-I$ROOTPWA/src");
 
-	gSystem->Load("libpp.so");
-	gSystem->Load("libRootPwa.so");
-	gSystem->Load("libRootPwaAmp.so");
-}
+#pragma link off all globals;
+#pragma link off all classes;
+#pragma link off all functions;
+
+
+// std::complex is not supported as Tree leafs in ROOT versions below 5.27.06
+#include "RVersion.h"
+#if ROOT_VERSION_CODE >= 334598  // make sure ROOT version is at least 5.27.06
+//#pragma link C++ class std::complex<double>+;
+#pragma link C++ class std::vector<std::complex<double> >+;
+#pragma link C++ class std::vector<double>+;
+#pragma link C++ class rpwa::amplitudeTreeLeaf+;
+#endif 
+
+
+#endif

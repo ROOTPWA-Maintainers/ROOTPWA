@@ -35,7 +35,6 @@
 //      !NOTE! spin j and projections m and n are in units of hbar/2
 //
 //
-//
 // Author List:
 //      Boris Grube          TUM            (original author)
 //

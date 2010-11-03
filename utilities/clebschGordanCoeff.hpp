@@ -30,7 +30,6 @@
 //      !NOTE! spins and projection quantum numbers are in units of hbar/2
 //
 //
-//
 // Author List:
 //      Boris Grube          TUM            (original author)
 //

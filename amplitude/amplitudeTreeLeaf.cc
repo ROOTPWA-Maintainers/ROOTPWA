@@ -25,7 +25,8 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      ROOT logon macro that loads libraries needed by other ROOT macros
+//      TTree leaf persistency storage class for amplitude information
+//      needed by fit program
 //
 //
 // Author List:
@@ -35,12 +36,32 @@
 //-------------------------------------------------------------------------
 
 
-{
-	gSystem->AddIncludePath("-I$BOOST_ROOT");
-	gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
-	gSystem->AddIncludePath("-I$ROOTPWA/src");
+#include "amplitudeTreeLeaf.h"
 
-	gSystem->Load("libpp.so");
-	gSystem->Load("libRootPwa.so");
-	gSystem->Load("libRootPwaAmp.so");
-}
+	
+#if AMPLITUDETREELEAF_ENABLED
+
+
+using namespace std;
+using namespace rpwa;
+
+
+ClassImp(amplitudeTreeLeaf);
+
+
+amplitudeTreeLeaf::amplitudeTreeLeaf()
+	: TObject()
+{ }
+
+
+amplitudeTreeLeaf::~amplitudeTreeLeaf()
+{ }
+
+
+// void amplitudeTreeLeaf::clear()
+// {
+// 	_subAmps.clear();
+// }
+
+
+#endif  // AMPLITUDETREELEAF_ENABLED

@@ -35,17 +35,11 @@
 //-------------------------------------------------------------------------
 
 
-#include <fstream>
-
-#include "TVector3.h"
 #include "TSystem.h"
 
-#include "utilities.h"
 #include "particleDataTable.h"
-#include "particle.h"
-#include "diffractiveDissVertex.h"
-#include "isobarDecayVertex.h"
-#include "isobarDecayTopology.h"
+#include "keyFileParser.h"
+#include "waveSetGenerator.h"
 
 
 using namespace std;
@@ -63,6 +57,7 @@ main(int argc, char** argv)
 	//isobarDecayVertex::setDebug(true);
 	//decayTopology::setDebug(true);
 	isobarDecayTopology::setDebug(true);
+	waveSetGenerator::setDebug(true);
 
 	particleDataTable& pdt = particleDataTable::instance();
 	pdt.readFile();
@@ -87,46 +82,20 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		particlePtr pi0 = createParticle("pi-");
-		particlePtr pi1 = createParticle("pi+");
-		particlePtr pi2 = createParticle("pi-");
-		particlePtr pi3 = createParticle("pi+");
-		particlePtr pi4 = createParticle("pi-");
-		// define isobars
-		particlePtr i0 = createParticle("isobarA0");
-		particlePtr i1 = createParticle("isobarB-");
-		particlePtr i2 = createParticle("isobarC0");
-		// define X-system
-		particlePtr X = createParticle("X-");
-		X->setMass(2.5);
-		X->setWidth(0.3);
-		// define production vertex
-		particlePtr              beam     = createParticle("pi-");
-		particlePtr              target   = createParticle("p");
-		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
-		// define vertices
-		isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,  i0,  i1);
-		isobarDecayVertexPtr vert1 = createIsobarDecayVertex(i0, pi0, pi1);
-		isobarDecayVertexPtr vert2 = createIsobarDecayVertex(i1, pi2, i2);
-		isobarDecayVertexPtr vert3 = createIsobarDecayVertex(i2, pi3, pi4);
-		vector<particlePtr>  fsParticles;
-		fsParticles.push_back(pi0);
-		fsParticles.push_back(pi1);
-		fsParticles.push_back(pi2);
-		fsParticles.push_back(pi3);
-		fsParticles.push_back(pi4);
-		vector<isobarDecayVertexPtr> decayVertices;
-		decayVertices.push_back(vert3);
-		decayVertices.push_back(vert1);
-		decayVertices.push_back(vert2);
-		decayVertices.push_back(vert0);
-
-		isobarDecayTopology topo(prodVert, decayVertices, fsParticles);
-		cout << endl;
-		printInfo << "decay topology:" << topo;
-		vector<isobarDecayTopology> decays             = topo.possibleDecays();
-		unsigned int                consistentDecays   = 0;
-		unsigned int                inconsistentDecays = 0;
+		keyFileParser&         parser = keyFileParser::instance();
+		isobarDecayTopologyPtr topo;
+		if (not parser.parse("testTemplate.key") or not parser.constructDecayTopology(topo, false))
+			throw;
+		topo->XParticle()->setMass(2.5);
+		topo->XParticle()->setWidth(0.3);
+		printInfo << "decay topology:" << *topo;
+		
+		waveSetGenerator waveSetGen;
+		cout << waveSetGen;
+		waveSetGen.generateWaveSet(topo);
+		vector<isobarDecayTopology>& decays             = waveSetGen.waveSet();
+		unsigned int                 consistentDecays   = 0;
+		unsigned int                 inconsistentDecays = 0;
 		for (unsigned int i = 0; i < decays.size(); ++i) {
 			cout << decays[i];
 			// decays[i].printPointers(cout);
@@ -136,11 +105,10 @@ main(int argc, char** argv)
 			//isobarDecayVertex::setDebug(true);
 			bool isConsistent = decays[i].checkTopology() and decays[i].checkConsistency();
 			//isobarDecayVertex::setDebug(false);
-			if (isConsistent){
+			if (isConsistent) {
 				cout << "isobar decay topology is consistent" << endl;
 				++consistentDecays;
-			}
-			else {
+			} else {
 				cout << "isobar decay topology is NOT consistent" << endl;
 				++inconsistentDecays;
 			}
@@ -148,5 +116,10 @@ main(int argc, char** argv)
 		cout << "got " << inconsistentDecays << " inconsistent" << endl
 		     << "and " << consistentDecays << " valid decays" << endl
 		     << "out of " << decays.size() << " constructed decays" << endl;
+
+		
+		// decays.back().writeGraphViz("foo.dot");
+		// gSystem->Exec("dot -Tps -o foo.ps foo.dot");
+		// cout << parser.keyFileNameFromTopology(decays.back()) << endl;
 	}
 }
