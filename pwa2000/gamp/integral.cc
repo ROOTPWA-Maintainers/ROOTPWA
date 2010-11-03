@@ -311,6 +311,11 @@ integral::scan(istream& is)
   is >> _nwaves >> _nevents >> _sum >> indexSize;
   while (indexSize--) {
     is >> name >> index;
+    // get rid of an eventual path
+    int slashpos = name.rfind('/');
+    if (slashpos != (int) string::npos){
+    	name.erase(0, slashpos+1);
+    }
     _index[name] = index;
   }
   return *this;
