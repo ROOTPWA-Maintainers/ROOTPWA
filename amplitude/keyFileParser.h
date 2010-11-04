@@ -73,6 +73,18 @@ namespace rpwa {
 	                           const isobarDecayTopology& topo,
 	                           const bool                 writeProdVert = true);  ///< creates key file from decay topology
 
+    static const libconfig::Setting* findGroup(const libconfig::Setting& parent,
+                                               const std::string&        groupName,
+                                               const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a group
+
+    static const libconfig::Setting* findList(const libconfig::Setting& parent,
+                                              const std::string&        listName,
+                                              const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a non-empty list
+
+    static const libconfig::Setting* findArray(const libconfig::Setting& parent,
+                                               const std::string&        arrayName,
+                                               const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a non-empty array
+
 	  static std::string keyFileNameFromTopology
 	  (const isobarDecayTopology&  topo,
 	   const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive funstion that generates unique key file name for wave from decay topology
@@ -90,14 +102,6 @@ namespace rpwa {
     ~keyFileParser() { }
     keyFileParser (const keyFileParser&);
     keyFileParser& operator =(const keyFileParser&);
-
-    static const libconfig::Setting* findGroup(const libconfig::Setting& parent,
-                                               const std::string&        groupName,
-                                               const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a group
-
-    static const libconfig::Setting* findList(const libconfig::Setting& parent,
-                                              const std::string&        listName,
-                                              const bool                mustExist = true);  ///< finds field in keyfile and makes sure it is a non-empty list
 
 	  static isobarAmplitudePtr mapAmplitudeType(const std::string&            formalismType,
 	                                             const isobarDecayTopologyPtr& topo);  ///< creates amplitude for specified formalism

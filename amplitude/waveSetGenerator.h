@@ -55,10 +55,12 @@ namespace rpwa {
 	  typedef isobarDecayTopology::adjIterator adjIterator;
 
       
-    waveSetGenerator();
+    waveSetGenerator(const std::string& templateKeyFileName = "");
     virtual ~waveSetGenerator();
 
-	  // filter criteria
+	  bool setWaveSetParameters(const std::string& templateKeyFileName);  ///< constructs template topology and reads wave set parameters from key file
+
+	  // wave set parameter accessors
 	  // !note! isospin and angular momentum quantum numbers are in units of hbar / 2
 	  void setIsospinRange         (const int maxI = 2,
 	                                const int minI = 0) { _isospinRange = std::make_pair(minI, maxI); }
@@ -76,8 +78,7 @@ namespace rpwa {
 	  void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
 	  void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
-	  std::size_t generateWaveSet(const std::string&            templateKeyFileName);  ///< generates wave set from template key file
-	  std::size_t generateWaveSet(const isobarDecayTopologyPtr& templateTopo       );  ///< generates wave set from template topology
+	  std::size_t generateWaveSet();  ///< generates wave set from template topology
 	  
 	  std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }  ///< returns wave set
 	  const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }  ///< returns wave set
@@ -103,6 +104,8 @@ namespace rpwa {
 	  bool                     _allowJpcExotics;        ///< flag that allows/forbids JPC exotics to be generated
 	  bool                     _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
 	  double                   _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
+
+	  isobarDecayTopologyPtr _templateTopo;  ///< template topology
 
 	  std::vector<isobarDecayTopology> _waveSet;  ///< generated wave set
 	  

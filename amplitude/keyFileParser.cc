@@ -440,14 +440,14 @@ keyFileParser::findGroup(const Setting&     parent,
 			          << "of key file '" << parent.getSourceFile() << "'" << endl;
 		return 0;
 	}
-	const Setting* groupKey = &parent[groupName];
+	const Setting& groupKey = parent[groupName];
 	// check that it is a group
-	if (not groupKey->isGroup()) {
+	if (not groupKey.isGroup()) {
 		printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
 		          << "of key file '" << parent.getSourceFile() << "' is not a group" << endl;
 		return 0;
 	}
-	return groupKey;
+	return &groupKey;
 }
 
 
@@ -463,21 +463,51 @@ keyFileParser::findList(const Setting&     parent,
 			          << "of key file '" << parent.getSourceFile() << "'" << endl;
 		return 0;
 	}
-	const Setting* listKey = &parent[listName];
+	const Setting& listKey = parent[listName];
 	// check that it is a list
-	if (not listKey->isList()) {
+	if (not listKey.isList()) {
 		printWarn << "'" << listName << "' field in '" << parent.getPath() << "' "
 		          << "of key file '" << parent.getSourceFile() << "' is not a list. "
 		          << "check that braces are correct." << endl;
 		return 0;
 	}
 	// check that it is not empty
-	if (listKey->getLength() < 1) {
+	if (listKey.getLength() < 1) {
 		printWarn << "list '" << listName << "' in '" << parent.getPath() << "' "
 		          << "of key file '" << parent.getSourceFile() << "' is empty" << endl;
 		return 0;
 	}
-	return listKey;
+	return &listKey;
+}
+
+
+const Setting*
+keyFileParser::findArray(const Setting&     parent,
+                         const std::string& arrayName,
+                         const bool         mustExist)
+{
+	// find field
+	if (not parent.exists(arrayName)) {
+		if (mustExist)
+			printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
+			          << "of key file '" << parent.getSourceFile() << "'" << endl;
+		return 0;
+	}
+	const Setting& arrayKey = parent[arrayName];
+	// check that it is a list
+	if (not arrayKey.isArray()) {
+		printWarn << "'" << arrayName << "' field in '" << parent.getPath() << "' "
+		          << "of key file '" << parent.getSourceFile() << "' is not an array. "
+		          << "check that braces are correct." << endl;
+		return 0;
+	}
+	// check that it is not empty
+	if (arrayKey.getLength() < 1) {
+		printWarn << "array '" << arrayName << "' in '" << parent.getPath() << "' "
+		          << "of key file '" << parent.getSourceFile() << "' is empty" << endl;
+		return 0;
+	}
+	return &arrayKey;
 }
 
 

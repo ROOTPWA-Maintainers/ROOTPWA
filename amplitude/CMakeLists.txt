@@ -101,6 +101,7 @@ make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB})
 make_executable(checkKeyFile       checkKeyFile.cc       ${THIS_LIB})
 make_executable(ampDiff            ampDiff.cc            ${THIS_LIB})
 make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB})
+make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB})
 
 make_executable(testParticle         testParticle.cc         ${THIS_LIB})
 make_executable(testDecayTopology    testDecayTopology.cc    ${THIS_LIB})

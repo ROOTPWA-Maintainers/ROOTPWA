@@ -36,6 +36,8 @@
 //-------------------------------------------------------------------------
 
 
+#include "libconfig.h++"
+
 #include "mathUtils.hpp"
 #include "clebschGordanCoeff.hpp"
 #include "particleDataTable.h"
@@ -45,15 +47,18 @@
 	
 using namespace std;
 using namespace boost;
+using namespace libconfig;
 using namespace rpwa;
 
 
 bool waveSetGenerator::_debug = false;
 
 
-waveSetGenerator::waveSetGenerator()
+waveSetGenerator::waveSetGenerator(const string& templateKeyFileName)
 {
 	reset();
+	if (templateKeyFileName != "")
+		setWaveSetParameters(templateKeyFileName);
 }
 
 
@@ -61,41 +66,89 @@ waveSetGenerator::~waveSetGenerator()
 { }
 
 
-size_t
-waveSetGenerator::generateWaveSet(const string& templateKeyFileName)
+bool
+waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 {
-	keyFileParser&         parser = keyFileParser::instance();
-	isobarDecayTopologyPtr topo;
-	if (   not parser.parse(templateKeyFileName)
-	    or not parser.constructDecayTopology(topo, false)) {
+	// construct template decay topology
+	_templateTopo.reset();
+	if (   not keyFileParser::parse(templateKeyFileName)
+	    or not keyFileParser::constructDecayTopology(_templateTopo, false)) {
 		printWarn << "problems constructing template decay topology from key file "
 		          << "'" << templateKeyFileName << "'. cannot generate wave set." << endl;
-		return 0;
+		return false;
+	}
+	// read wave set parameters from template key file
+	printInfo << "reading wave set parameters from key file '" << templateKeyFileName << "'" << endl;
+	Config key;
+	try {
+		key.readFile(templateKeyFileName.c_str());
+	} catch(const FileIOException& ioEx) {
+		printWarn << "I/O error while reading key file '" << templateKeyFileName << "'. "
+		          << "cannot read wave set parameters." << endl;
+		return false;
+	} catch(const ParseException&  parseEx) {
+		printWarn << "parse error in '" << parseEx.getFile() << "' line " << parseEx.getLine()
+		          << ": " << parseEx.getError() << ". cannot read wave set parameters." << endl;
+		return false;
+	}
+	// find and parse group with wave set parameters
+	const Setting* waveSetParKey = keyFileParser::findGroup(key.getRoot(), "waveSetParameters", false);
+	if (waveSetParKey) {
+		const Setting* isoSpinRangeKey = keyFileParser::findArray(*waveSetParKey, "isospinRange", false);
+		if (isoSpinRangeKey)
+			_isospinRange = make_pair<int, int>((*isoSpinRangeKey)[0], (*isoSpinRangeKey)[1]);
+		const Setting* JRangeKey = keyFileParser::findArray(*waveSetParKey, "JRange", false);
+		if (JRangeKey)
+			_JRange = make_pair<int, int>((*JRangeKey)[0], (*JRangeKey)[1]);
+		const Setting* LRangeKey = keyFileParser::findArray(*waveSetParKey, "LRange", false);
+		if (LRangeKey)
+			_LRange = make_pair<int, int>((*LRangeKey)[0], (*LRangeKey)[1]);
+		const Setting* SRangeKey = keyFileParser::findArray(*waveSetParKey, "SRange", false);
+		if (SRangeKey)
+			_SRange = make_pair<int, int>((*SRangeKey)[0], (*SRangeKey)[1]);
+		const Setting* isobarBlackListKey = keyFileParser::findArray(*waveSetParKey,
+		                                                             "isobarBlackList", false);
+		if (isobarBlackListKey) {
+			_isobarBlackList.clear();
+			for (int i = 0; i < isobarBlackListKey->getLength(); ++i)
+				_isobarBlackList.push_back((*isobarBlackListKey)[i]);
+		}
+		const Setting* isobarWhiteListKey = keyFileParser::findArray(*waveSetParKey,
+		                                                             "isobarWhiteList", false);
+		if (isobarWhiteListKey) {
+			_isobarWhiteList.clear();
+			for (int i = 0; i < isobarWhiteListKey->getLength(); ++i)
+				_isobarWhiteList.push_back((*isobarWhiteListKey)[i]);
+		}
+		waveSetParKey->lookupValue("allowJpcExotics",       _allowJpcExotics      );
+		waveSetParKey->lookupValue("requireMinIsobarMass",  _requireMinIsobarMass );
+		waveSetParKey->lookupValue("isobarMassWindowSigma", _isobarMassWindowSigma);
 	}
 	if (_debug)
-		printInfo << "template " << *topo;
-	return generateWaveSet(topo);
+		printInfo << "parameters of " << *this;
+	return true;
 }
 
 
 size_t
-waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
+waveSetGenerator::generateWaveSet()
 {
-	if (not templateTopo) {
-		printErr << "null pointer to template graph topology. aborting." << endl;
-		throw;
+	if (not _templateTopo) {
+		printWarn << "template decay topology was not yet constructed. "
+		          << "did you call waveSetGenerator::setWaveSetParameters()?" << endl;
+		return 0;
 	}
-	if (not templateTopo->checkTopology()) {
-		printErr << "ill-formed template graph topology. aborting." << endl;
-		throw;
+	if (not _templateTopo->checkTopology()) {
+		printWarn << "ill-formed template decay topology. cannot generate wave set." << endl;
+		return 0;
 	}
 	// order nodes depth-first
 	vector<nodeDesc> startNds
-		= templateTopo->sortNodesDfs(templateTopo->XIsobarDecayVertex());
+		= _templateTopo->sortNodesDfs(_templateTopo->XIsobarDecayVertex());
 	// create decay topologies of all subdecays
 	vector<isobarDecayTopology> subDecays(startNds.size());
 	for (size_t i = 0; i < startNds.size(); ++i)
-		subDecays[i] = templateTopo->subDecay(startNds[i]);
+		subDecays[i] = _templateTopo->subDecay(startNds[i]);
 	// reverse order, because decay trees are build starting from the final state nodes
 	reverse(startNds.begin (), startNds.end ());
 	reverse(subDecays.begin(), subDecays.end());
@@ -108,7 +161,7 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 	for (size_t iStart = 0; iStart < startNds.size(); ++iStart) {
     
 		// special case for final state nodes
-		if (templateTopo->isFsVertex(templateTopo->vertex(startNds[iStart]))) {
+		if (_templateTopo->isFsVertex(_templateTopo->vertex(startNds[iStart]))) {
 			// final state vertices have no daughter tracks; subdecay
 			// topology consist of just the final state vertex
 			decayPossibilities[startNds[iStart]].push_back(subDecays[iStart]);
@@ -118,7 +171,7 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 		// get daughter decay topologies
 		vector<vector<isobarDecayTopology>* > daughterDecays;
 		adjIterator iNd, iNdEnd;
-		for (tie(iNd, iNdEnd) = templateTopo->adjacentVertices(startNds[iStart]); iNd != iNdEnd; ++iNd)
+		for (tie(iNd, iNdEnd) = _templateTopo->adjacentVertices(startNds[iStart]); iNd != iNdEnd; ++iNd)
 			daughterDecays.push_back(&decayPossibilities[*iNd]);
 
 		// loop over all combinations of daughter decays
@@ -129,7 +182,7 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 				// copy parent vertex
 				isobarDecayVertexPtr parentVertex
 					(new isobarDecayVertex(*static_pointer_cast<isobarDecayVertex>
-					                       (templateTopo->vertex(startNds[iStart]))));
+					                       (_templateTopo->vertex(startNds[iStart]))));
 				particlePtr parent = parentVertex->parent();
 				// get daughter particles from the respective decay topologies
 				const nodeDesc topNodes[2] = 
@@ -143,7 +196,7 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 				parentVertex->daughter2() = daughters[1];
 				// join daughter subdecays and parent vertex
 				isobarDecayTopology parentDecay
-					= templateTopo->joinDaughterDecays(parentVertex,
+					= _templateTopo->joinDaughterDecays(parentVertex,
 					                                   (*daughterDecays[0])[iDaughter[0]],
 					                                   (*daughterDecays[1])[iDaughter[1]]);
 	
@@ -252,7 +305,7 @@ waveSetGenerator::generateWaveSet(const isobarDecayTopologyPtr& templateTopo)
 	for (size_t i = 0; i < _waveSet.size(); ++i) {
 		// clone production vertex and set X-particle
 		const productionVertexPtr newProdVert(static_pointer_cast<rpwa::productionVertex>
-		                                      (templateTopo->productionVertex()->clone(false, false)));
+		                                      (_templateTopo->productionVertex()->clone(false, false)));
 		const particlePtr&        newX = _waveSet[i].XIsobarDecayVertex()->parent();
 		newProdVert->outParticles()[0] = newX;
 		// add production vertex
@@ -284,19 +337,16 @@ waveSetGenerator::writeKeyFiles(const string& dirName)
 void
 waveSetGenerator::reset()
 {
-	// _isospinRange    = make_pair(0, 0);
-	// _JRange          = make_pair(0, 0);
-	// _LRange          = make_pair(0, 0);
-	// _SRange          = make_pair(0, 0);
 	_isospinRange          = make_pair(0, 2);
-	_JRange                = make_pair(0, 8);
-	_LRange                = make_pair(0, 6);
-	_SRange                = make_pair(0, 6);
+	_JRange                = make_pair(0, 0);
+	_LRange                = make_pair(0, 0);
+	_SRange                = make_pair(0, 0);
 	_allowJpcExotics       = false;
-	_requireMinIsobarMass  = true;
-	_isobarMassWindowSigma = 1;
+	_requireMinIsobarMass  = false;
+	_isobarMassWindowSigma = 0;
 	_isobarBlackList.clear();
 	_isobarWhiteList.clear();
+	_templateTopo.reset();
 	_waveSet.clear();
 }
 
@@ -332,5 +382,7 @@ waveSetGenerator::print(ostream& out) const
 		for (size_t i = 0; i < _isobarWhiteList.size(); ++i)
 			out << "        " << _isobarWhiteList[i] << endl;
 	}
+	if (_templateTopo)
+		out << "template " << *_templateTopo;
 	return out;
 }
