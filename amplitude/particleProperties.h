@@ -82,8 +82,6 @@ namespace rpwa {
 		                        const std::pair<particleProperties, std::string>& rhsProp)
 		{ return not (lhsProp == rhsProp); }
     
-
-    
 		virtual std::string name()        const { return _name;         }  ///< returns particle name of the corresponding data table entry
 		double              mass()        const { return _mass;         }  ///< returns particle mass
 		double              mass2()       const { return _mass * _mass; }  ///< returns particle mass squared
@@ -97,6 +95,8 @@ namespace rpwa {
 		int                 J()           const { return _J;            }  ///< returns particle's spin * 2 (!!!)
 		int                 P()           const { return _P;            }  ///< returns particle's parity
 		int                 C()           const { return _C;            }  ///< returns particle's C-parity
+
+		bool isXParticle() const;  ///< returns whether particle's name is either of "X{,-,0,+}"
 
 		bool fillFromDataTable(const std::string& name);
 

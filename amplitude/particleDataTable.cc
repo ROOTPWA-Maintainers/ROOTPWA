@@ -72,8 +72,6 @@ particleDataTable::entry(const string& partName)
 		return &(i->second);
 }
 
-
-
     
 vector<const particleProperties*> 
 particleDataTable::entriesMatching(const particleProperties& prototype,
@@ -124,8 +122,6 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 	}
 	return matchingEntries;
 }
-
-
 
 
 bool

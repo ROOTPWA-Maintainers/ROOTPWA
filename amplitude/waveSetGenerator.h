@@ -97,11 +97,14 @@ namespace rpwa {
 
 	  std::pair<int, int>      _isospinRange;           ///< range of allowed isobar isospins
 	  std::pair<int, int>      _JRange;                 ///< range of allowed isobar spins
+	  std::pair<int, int>      _spinProjRange;          ///< range of allowed isobar spin projections
+	  int                      _reflectivity;           ///< if _useReflectivity is set, 0 means that both reflectivities are generated
+	  bool                     _useReflectivity;        ///< en/disables generation of waves with reflectivity
+	  bool                     _allowJpcExotics;        ///< flag that allows/forbids JPC exotics to be generated
 	  std::pair<int, int>      _LRange;                 ///< range of allowed orbital angular momenta in isobar decays
 	  std::pair<int, int>      _SRange;                 ///< range of allowed total intrinsic spins in isobar decays
 	  std::vector<std::string> _isobarBlackList;        ///< list of particles not to be used as isobars
 	  std::vector<std::string> _isobarWhiteList;        ///< list of particles to be used as isobars
-	  bool                     _allowJpcExotics;        ///< flag that allows/forbids JPC exotics to be generated
 	  bool                     _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
 	  double                   _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
 

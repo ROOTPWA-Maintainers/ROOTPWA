@@ -86,10 +86,10 @@ main(int argc, char** argv)
 
 	if (1) {
 		waveSetGenerator waveSetGen("testWaveSetGenerator.key");
-		const vector<string> isobarWhiteList = list_of("sigma")("rho(770)")("f2(1270)")
-			("pi(1300)")("a1(1260)")("a2(1320)")("pi2(1670)")
-			("f0(1500)")("f1(1285)")("rho(1450)")("rho(1700)")("rho3(1690)");
-		waveSetGen.setIsobarWhiteList(isobarWhiteList);
+		// const vector<string> isobarWhiteList = list_of("sigma")("rho(770)")("f2(1270)")
+		// 	("pi(1300)")("a1(1260)")("a2(1320)")("pi2(1670)")
+		// 	("f0(1500)")("f1(1285)")("rho(1450)")("rho(1700)")("rho3(1690)");
+		// waveSetGen.setIsobarWhiteList(isobarWhiteList);
 		cout << waveSetGen;
 		waveSetGen.generateWaveSet();
 		vector<isobarDecayTopology>& decays             = waveSetGen.waveSet();

@@ -166,6 +166,13 @@ rpwa::operator ==(const particleProperties&               lhsProp,
 
 
 bool
+particleProperties::isXParticle() const
+{
+	return (_name == "X") or (_name == "X-") or (_name == "X0") or (_name == "X+");
+}
+
+
+bool
 particleProperties::fillFromDataTable(const string& partName)
 {
 	string       name         = partName;
