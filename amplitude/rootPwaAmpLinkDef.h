@@ -42,12 +42,10 @@
 #pragma link off all functions;
 
 
-// std::complex is not supported as Tree leafs in ROOT versions below 5.27.06
+// std::complex is not supported as Tree leaf in ROOT versions below 5.27.06
 #include "RVersion.h"
 #if ROOT_VERSION_CODE >= 334598  // make sure ROOT version is at least 5.27.06
-//#pragma link C++ class std::complex<double>+;
 #pragma link C++ class std::vector<std::complex<double> >+;
-#pragma link C++ class std::vector<double>+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;
 #endif 
 

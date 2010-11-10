@@ -36,6 +36,8 @@
 //-------------------------------------------------------------------------
 
 
+#include "TClass.h"
+
 #include "amplitudeTreeLeaf.h"
 
 	
@@ -51,17 +53,20 @@ ClassImp(amplitudeTreeLeaf);
 
 amplitudeTreeLeaf::amplitudeTreeLeaf()
 	: TObject()
-{ }
+{
+	amplitudeTreeLeaf::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+	clear();
+}
 
 
 amplitudeTreeLeaf::~amplitudeTreeLeaf()
 { }
 
 
-// void amplitudeTreeLeaf::clear()
-// {
-// 	_subAmps.clear();
-// }
+void amplitudeTreeLeaf::clear()
+{
+	_incohSubAmps.clear();
+}
 
 
 #endif  // AMPLITUDETREELEAF_ENABLED

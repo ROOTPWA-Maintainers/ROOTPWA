@@ -35,8 +35,10 @@
 //-------------------------------------------------------------------------
 
 
+#include "TROOT.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "TRandom3.h"
 
 #include "svnVersion.h"
 #include "amplitudeTreeLeaf.h"
@@ -54,32 +56,33 @@ main(int argc, char** argv)
 
 #if AMPLITUDETREELEAF_ENABLED
 	
-	const unsigned int nmbEvents                 = 10;
-	const unsigned int nmbFsSpinProjCombinations = 3;
+	const unsigned int nmbEvents       = 1000000;
+	const unsigned int nmbIncohSubAmps = 3;
+	gRandom->SetSeed(123456789);
+	
+	// load predefined std::complex dictionary
+	gROOT->ProcessLine("#include <complex>");
 	
 	if (1) {
 		TFile*             outFile = TFile::Open("testAmplitudeTree.root", "RECREATE");
-		TTree*             tree    = new TTree("test", "test");
 		amplitudeTreeLeaf* ampLeaf = new amplitudeTreeLeaf();
+		TTree*             tree    = new TTree("test", "test");
 		tree->Branch("amp", &ampLeaf);
-		// ampLeaf->setNmbFsSpinProjCombinations(nmbFsSpinProjCombinations);
-		ampLeaf->_foo.resize(nmbFsSpinProjCombinations, 0);
 		for (unsigned int i = 0; i < nmbEvents; ++i) {
-			for (unsigned int j = 0; j < nmbFsSpinProjCombinations; ++j) {
-				// ampLeaf->setSubAmp(complex<double>(i, -(double)j), j);
-				ampLeaf->_foo[j] = (double)i - j;
-			}
+			ampLeaf->clear();
+			ampLeaf->setNmbIncohSubAmps(nmbIncohSubAmps);
+			for (unsigned int j = 0; j < nmbIncohSubAmps; ++j)
+				// ampLeaf->setIncohSubAmp(complex<double>(i, -(double)j), j);
+				ampLeaf->setIncohSubAmp(complex<double>(gRandom->Rndm(), gRandom->Rndm()), j);
 			tree->Fill();
-			cout << "event " << i << ": ";
-			// for (unsigned int j = 0; j < ampLeaf->nmbFsSpinProjCombinations(); ++j)
-			// 	cout << ampLeaf->subAmp(j) << "   ";
-			// cout << "|   ";
-			for (unsigned int j = 0; j < nmbFsSpinProjCombinations; ++j)
-				//for (unsigned int j = 0; j < ampLeaf->nmbFsSpinProjCombinations(); ++j)
-				cout << ampLeaf->_foo[j] << "   ";
-			cout << endl;
+			if (i < 10) {
+				cout << "written event " << i << ": ";
+				for (unsigned int j = 0; j < ampLeaf->nmbIncohSubAmps(); ++j)
+					cout << ampLeaf->incohSubAmp(j) << "   ";
+				cout << endl;
+			}
 		}
-		outFile->Write();
+		tree->Write();
 		outFile->Close();
 	}
 
@@ -91,14 +94,12 @@ main(int argc, char** argv)
 		tree->SetBranchAddress("amp", &ampLeaf);
 		for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);
-			cout << "event " << i << ": ";
-			// for (unsigned int j = 0; j < ampLeaf->nmbFsSpinProjCombinations(); ++j)
-			// 	cout << ampLeaf->subAmp(j) << "   ";
-			// cout << "|   ";
-			for (unsigned int j = 0; j < nmbFsSpinProjCombinations; ++j)
-				//for (unsigned int j = 0; j < ampLeaf->nmbFsSpinProjCombinations(); ++j)
-				cout << ampLeaf->_foo[j] << "   ";
-			cout << endl;
+			if (i < 10) {
+				cout << "read event " << i << ": ";
+				for (unsigned int j = 0; j < ampLeaf->nmbIncohSubAmps(); ++j)
+					cout << ampLeaf->incohSubAmp(j) << "   ";
+				cout << endl;
+			}
 		}
 	}
 

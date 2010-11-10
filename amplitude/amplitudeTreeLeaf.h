@@ -68,30 +68,24 @@ namespace rpwa {
 		amplitudeTreeLeaf();
     virtual ~amplitudeTreeLeaf();
 
-		// void clear();
+		void clear();
 
-		// unsigned int nmbFsSpinProjCombinations   () const { return _subAmps.size(); }
-		// void         setNmbFsSpinProjCombinations(const unsigned int nmb)
-		// { _subAmps.resize(nmb, 0); }
+		// accessors
+		unsigned int         nmbIncohSubAmps()                         const { return _incohSubAmps.size();  }
+		std::complex<double> incohSubAmp    (const unsigned int index) const { return _incohSubAmps[index];  }
 
-		// std::complex<double> subAmp(const unsigned int fsSpinProjIndex) const
-		// { return _subAmps[fsSpinProjIndex]; }
-		// void setSubAmp(const std::complex<double> amp,
-		//                const unsigned int         fsSpinProjIndex)
-		// { _subAmps[fsSpinProjIndex] = amp; }
+		void setNmbIncohSubAmps(const unsigned int         nmb)	  { _incohSubAmps.resize(nmb, 0); }
+		void setIncohSubAmp    (const std::complex<double> amp,
+		                        const unsigned int         index) { _incohSubAmps[index] = amp;   }
 
-		std::vector<double> _foo;
-    
-		//	private:
+	private:
 
-		std::vector<std::complex<double> > _subAmps;  ///< amplitudes for different spin projections of final state particles; to be added incoherently in cross section
+		std::vector<std::complex<double> > _incohSubAmps;  ///< sub amplitudes to be added incoherently in cross section
 
-	public:
-    
 		ClassDef(amplitudeTreeLeaf,1)
     
-	};
 
+	};
 
 #endif  // AMPLITUDETREELEAF_ENABLED
 
