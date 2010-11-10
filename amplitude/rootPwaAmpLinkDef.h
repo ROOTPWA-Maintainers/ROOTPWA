@@ -42,6 +42,8 @@
 #pragma link off all functions;
 
 
+#pragma link C++ class rpwa::waveDescription+;
+
 // std::complex is not supported as Tree leaf in ROOT versions below 5.27.06
 #include "RVersion.h"
 #if ROOT_VERSION_CODE >= 334598  // make sure ROOT version is at least 5.27.06
