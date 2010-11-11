@@ -82,47 +82,41 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 	// read wave set parameters from template key file
 	printInfo << "reading wave set parameters from key file '" << templateKeyFileName << "'" << endl;
 	Config key;
-	try {
-		key.readFile(templateKeyFileName.c_str());
-	} catch(const FileIOException& ioEx) {
-		printWarn << "I/O error while reading key file '" << templateKeyFileName << "'. "
-		          << "cannot read wave set parameters." << endl;
+	if (not parseLibConfigFile(templateKeyFileName, key, _debug)) {
+		printWarn << "problems reading wave set parameters from '" << templateKeyFileName << "'. "
+		          << "cannot generate wave set." << endl;
 		return false;
-	} catch(const ParseException&  parseEx) {
-		printWarn << "parse error in '" << parseEx.getFile() << "' line " << parseEx.getLine()
-		          << ": " << parseEx.getError() << ". cannot read wave set parameters." << endl;
-		return false;
-	}
+	}		
 	// find and parse group with wave set parameters
-	const Setting* waveSetParKey = findGroup(key.getRoot(), "waveSetParameters", false);
+	const Setting* waveSetParKey = findLibConfigGroup(key.getRoot(), "waveSetParameters", false);
 	if (waveSetParKey) {
-		const Setting* isoSpinRangeKey = findArray(*waveSetParKey, "isospinRange", false);
+		const Setting* isoSpinRangeKey = findLibConfigArray(*waveSetParKey, "isospinRange", false);
 		if (isoSpinRangeKey)
 			_isospinRange = make_pair<int, int>((*isoSpinRangeKey)[0], (*isoSpinRangeKey)[1]);
-		const Setting* JRangeKey = findArray(*waveSetParKey, "JRange", false);
+		const Setting* JRangeKey = findLibConfigArray(*waveSetParKey, "JRange", false);
 		if (JRangeKey)
 			_JRange = make_pair<int, int>((*JRangeKey)[0], (*JRangeKey)[1]);
-		const Setting* MRangeKey = findArray(*waveSetParKey, "MRange", false);
+		const Setting* MRangeKey = findLibConfigArray(*waveSetParKey, "MRange", false);
 		waveSetParKey->lookupValue("reflectivity",    _reflectivity   );
 		waveSetParKey->lookupValue("useReflectivity", _useReflectivity);
 		waveSetParKey->lookupValue("allowJpcExotics", _allowJpcExotics);
 		if (MRangeKey)
 			_spinProjRange = make_pair<int, int>((*MRangeKey)[0], (*MRangeKey)[1]);
-		const Setting* LRangeKey = findArray(*waveSetParKey, "LRange", false);
+		const Setting* LRangeKey = findLibConfigArray(*waveSetParKey, "LRange", false);
 		if (LRangeKey)
 			_LRange = make_pair<int, int>((*LRangeKey)[0], (*LRangeKey)[1]);
-		const Setting* SRangeKey = findArray(*waveSetParKey, "SRange", false);
+		const Setting* SRangeKey = findLibConfigArray(*waveSetParKey, "SRange", false);
 		if (SRangeKey)
 			_SRange = make_pair<int, int>((*SRangeKey)[0], (*SRangeKey)[1]);
-		const Setting* isobarBlackListKey = findArray(*waveSetParKey,
-		                                              "isobarBlackList", false);
+		const Setting* isobarBlackListKey = findLibConfigArray(*waveSetParKey,
+		                                                       "isobarBlackList", false);
 		if (isobarBlackListKey) {
 			_isobarBlackList.clear();
 			for (int i = 0; i < isobarBlackListKey->getLength(); ++i)
 				_isobarBlackList.push_back((*isobarBlackListKey)[i]);
 		}
-		const Setting* isobarWhiteListKey = findArray(*waveSetParKey,
-		                                              "isobarWhiteList", false);
+		const Setting* isobarWhiteListKey = findLibConfigArray(*waveSetParKey,
+		                                                       "isobarWhiteList", false);
 		if (isobarWhiteListKey) {
 			_isobarWhiteList.clear();
 			for (int i = 0; i < isobarWhiteListKey->getLength(); ++i)

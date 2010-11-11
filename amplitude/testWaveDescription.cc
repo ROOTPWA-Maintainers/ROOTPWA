@@ -84,8 +84,9 @@ main(int argc, char** argv)
 				inFile->GetObject(waveName.c_str(), waveDesc2);
 				if (not waveDesc2)
 					printErr << "cannot find wave description '" << waveName << "'" << endl;
-				// else
-				// 	printInfo << "key file:" << endl << waveDesc2->keyFileContents();
+				else
+					printInfo << "key file:" << endl;
+				waveDesc2->printKeyFileContents(cout);
 				waveDesc2->constructAmplitude(amp);
 				printInfo << *amp;
 				inFile->Close();

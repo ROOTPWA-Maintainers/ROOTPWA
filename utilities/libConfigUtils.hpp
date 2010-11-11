@@ -46,12 +46,54 @@
 
 namespace rpwa {
 
+	
+	inline
+	bool
+	parseLibConfigFile(const std::string& libConfigFileName,
+	                   libconfig::Config& config,
+	                   const bool         debug)  ///< lets config object parse a libConfig file
+	{
+		if (debug)
+			printInfo << "parsing libConfig file '" << libConfigFileName << "'" << std::endl;
+		try {
+			config.readFile(libConfigFileName.c_str());
+		} catch(const libconfig::FileIOException& ioEx) {
+			printWarn << "I/O error while reading libConfig file "
+			          << "'" << libConfigFileName << "'" << std::endl;
+			return false;
+		} catch(const libconfig::ParseException&  parseEx) {
+			printWarn << "parse error in '" << parseEx.getFile() << "' line " << parseEx.getLine()
+			          << ": " << parseEx.getError() << std::endl;
+			return false;
+		}
+		return true;
+	}
+
+
+	inline
+	bool
+	parseLibConfigString(const std::string& libConfigString,
+	                     libconfig::Config& config,
+	                     const bool         debug)  ///< lets config object parse a libConfig string
+	{
+		if (debug)
+			printInfo << "parsing libConfig string" << std::endl;
+		try {
+			config.readString(libConfigString);
+		} catch(const libconfig::ParseException&  parseEx) {
+			printWarn << "parse error in line " << parseEx.getLine() << " of libConfig string: "
+			          << parseEx.getError() << std::endl;
+			return false;
+		}
+		return true;
+	}
+
 
 	inline
 	const libconfig::Setting*
-	findGroup(const libconfig::Setting& parent,
-	          const std::string&        groupName,
-	          const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
+	findLibConfigGroup(const libconfig::Setting& parent,
+	                   const std::string&        groupName,
+	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
 	{
 		// find field
 		if (not parent.exists(groupName)) {
@@ -73,9 +115,9 @@ namespace rpwa {
 
 	inline
 	const libconfig::Setting*
-	findList(const libconfig::Setting& parent,
-	         const std::string&        listName,
-	         const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty list
+	findLibConfigList(const libconfig::Setting& parent,
+	                  const std::string&        listName,
+	                  const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty list
 	{
 		// find field
 		if (not parent.exists(listName)) {
@@ -104,9 +146,9 @@ namespace rpwa {
 	
 	inline
 	const libconfig::Setting*
-	findArray(const libconfig::Setting& parent,
-	          const std::string&        arrayName,
-	          const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty array
+	findLibConfigArray(const libconfig::Setting& parent,
+	                   const std::string&        arrayName,
+	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty array
 	{
 		// find field
 		if (not parent.exists(arrayName)) {

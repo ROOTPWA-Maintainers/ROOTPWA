@@ -41,6 +41,7 @@
 #include <map>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 
 #include "libConfigUtils.hpp"
 #include "diffractiveDissVertex.h"
@@ -83,23 +84,14 @@ waveDescription::parseKeyFile(const string& keyFileName)
 	if (not _key)
 		_key = new Config();
 	_amplitudeKey = 0;
-	printInfo << "parsing key file '" << keyFileName << "'" << endl;
-	try {
-		_key->readFile(keyFileName.c_str());
-	} catch(const FileIOException& ioEx) {
-		printWarn << "I/O error while reading key file '" << keyFileName << "'. "
+	if (not parseLibConfigFile(keyFileName, *_key, _debug)) {
+		printWarn << "problems reading key file '" << keyFileName << "'. "
 		          << "cannot construct decay topology." << endl;
 		delete _key;
 		_key = 0;
 		return false;
-	} catch(const ParseException&  parseEx) {
-		printWarn << "parse error in '" << parseEx.getFile() << "' line " << parseEx.getLine()
-		          << ": " << parseEx.getError() << ". cannot construct decay topology." << endl;
-		delete _key;
-		_key = 0;
-		return false;
-	}
-	// read in key file contents
+	}		
+	// read key file contents into string
 	{
 		ifstream keyFile(keyFileName.c_str());
     if (not keyFile or not keyFile.good()) {
@@ -113,8 +105,24 @@ waveDescription::parseKeyFile(const string& keyFileName)
 	}
 	// find amplitude group
 	const Setting& rootKey = _key->getRoot();
-	_amplitudeKey = findGroup(rootKey, "amplitude", false);
+	_amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
 	return true;
+}
+
+
+ostream&
+waveDescription::printKeyFileContents(ostream& out) const
+{
+	if (_keyFileContents != "") {
+		typedef tokenizer<char_separator<char> > tokenizer;
+		char_separator<char> separator("\n");
+		tokenizer            keyFileLines(_keyFileContents, separator);
+		unsigned int         lineNumber = 0;
+		for (tokenizer::iterator i = keyFileLines.begin(); i != keyFileLines.end(); ++i)
+			out << setw(5) << ++lineNumber << "  " << *i << endl;
+	} else
+		out << "key file contents string is empty" << endl;
+	return out;
 }
 
 
@@ -135,14 +143,14 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	printInfo << "constructing decay topology from key file" << endl;
 
 	// find wave group
-	const Setting* waveKey = findGroup(rootKey, "wave");
+	const Setting* waveKey = findLibConfigGroup(rootKey, "wave");
 	if (not waveKey) {
 		printWarn << "cannot find 'wave' group. cannot construct decay topology." << endl;
 		return false;
 	}
 
 	// find  X quantum numbers group
-	const Setting* XQnKey = findGroup(*waveKey, "XQuantumNumbers");
+	const Setting* XQnKey = findLibConfigGroup(*waveKey, "XQuantumNumbers");
 	particlePtr    X;
 	if (not XQnKey)
 		if (requireXQnKey) {
@@ -169,7 +177,7 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	}
   
 	// find X decay group
-	const Setting* XDecayKey = findGroup(*waveKey, "XDecay");
+	const Setting* XDecayKey = findLibConfigGroup(*waveKey, "XDecay");
 	if (not XDecayKey) {
 		printWarn << "cannot find 'XDecay' group. cannot construct decay topology." << endl;
 		return false;
@@ -386,20 +394,17 @@ waveDescription::parseKeyString()
 	if (not _key)
 		_key = new Config();
 	_amplitudeKey = 0;
-	if (_debug)
-		printInfo << "parsing key file contents string" << endl;
-	try {
-		_key->readString(_keyFileContents);
-	} catch(const ParseException&  parseEx) {
-		printWarn << "parse error in line " << parseEx.getLine() << " of key file string: "
-		          << parseEx.getError() << ". cannot construct decay topology." << endl;
+	if (not parseLibConfigString(_keyFileContents, *_key, _debug)) {
+		printWarn << "problems parsing key file string:" << endl;
+		printKeyFileContents(cout);
+		cout  << "    cannot construct decay topology." << endl;
 		delete _key;
 		_key = 0;
 		return;
 	}
 	// find amplitude group
 	const Setting& rootKey = _key->getRoot();
-	_amplitudeKey = findGroup(rootKey, "amplitude", false);
+	_amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
 }
 
 
@@ -459,8 +464,8 @@ waveDescription::mapProductionVertexType(const Setting&       prodVertKey,
 		const Setting* beamParticleKey = 0;  // needed for leptoproduction vertex
 		for (map<string, particlePtr>::iterator i = prodKinParticles.begin();
 		     i != prodKinParticles.end(); ++i) {
-			const Setting* particleKey = findGroup(prodVertKey, i->first,
-			                                       (i->first != "recoil") ? true : false);
+			const Setting* particleKey = findLibConfigGroup(prodVertKey, i->first,
+			                                                (i->first != "recoil") ? true : false);
 			if (particleKey) {
 				if (i->first == "beam")
 					beamParticleKey = particleKey;
@@ -505,7 +510,7 @@ waveDescription::constructProductionVertex(const Setting&       rootKey,
                                            productionVertexPtr& prodVert)
 {
 	// find production vertex group
-	const Setting* prodVertKey = findGroup(rootKey, "productionVertex");
+	const Setting* prodVertKey = findLibConfigGroup(rootKey, "productionVertex");
 	if (not prodVertKey) {
 		printWarn << "cannot find 'productionVertex' group" << endl;
 		return false;
@@ -590,7 +595,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 		printInfo << "reading decay vertex information from '" << parentKey.getPath() << "':" << endl;
 	bool success = true;
 
-	const Setting*      fsPartKeys = findList(parentKey, "fsParticles", false);
+	const Setting*      fsPartKeys = findLibConfigList(parentKey, "fsParticles", false);
 	vector<particlePtr> fsDaughters;
 	if (fsPartKeys)
 		for (int i = 0; i < fsPartKeys->getLength(); ++i) {
@@ -602,7 +607,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 				success = false;
 		}
   
-	const Setting*      isobarKeys = findList(parentKey, "isobars", false);
+	const Setting*      isobarKeys = findLibConfigList(parentKey, "isobars", false);
 	vector<particlePtr> isobarDaughters;
 	if (isobarKeys)
 		for (int i = 0; i < isobarKeys->getLength(); ++i) {
@@ -636,7 +641,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 	massDependencePtr massDep;
 	if (parentParticle->bareName() != "X") {
 		string         massDepType = "";
-		const Setting* massDepKey  = findGroup(parentKey, "massDep", false);
+		const Setting* massDepKey  = findLibConfigGroup(parentKey, "massDep", false);
 		if (massDepKey)
 			massDepKey->lookupValue("name", massDepType);
 		massDep = mapMassDependenceType(massDepType);

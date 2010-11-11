@@ -69,6 +69,7 @@ namespace rpwa {
 		// construction of decay topology and amplitude objects
 		bool parseKeyFile(const std::string& keyFileName);  ///< parses key file
 		std::string keyFileContents() const { return _keyFileContents; }  ///< returns contents of key file
+		std::ostream& printKeyFileContents(std::ostream& out) const;  ///< prints key file contents with line numbers
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,
 		                            const bool              requireXQnKey = true) const;  ///< construct isobar decay topology from keyfile
 	  bool constructAmplitude(isobarAmplitudePtr& amplitude) const;   ///< construct isobar decay amplitude from keyfile
