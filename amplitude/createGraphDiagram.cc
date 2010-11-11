@@ -49,7 +49,7 @@
 #include "svnVersion.h"
 #include "utilities.h"
 #include "particleDataTable.h"
-#include "keyFileParser.h"
+#include "waveDescription.h"
 
 
 using namespace std;
@@ -149,9 +149,10 @@ main(int    argc,
   for (unsigned int i = 0; i < keyFileNames.size(); ++i) {
 
     // parse key file and create decay topology
-    keyFileParser&         parser = keyFileParser::instance();
+    waveDescription        waveDesc;
     isobarDecayTopologyPtr decayTopo;
-    if (not parser.parse(keyFileNames[i]) or not parser.constructDecayTopology(decayTopo)) {
+    if (   not waveDesc.parseKeyFile(keyFileNames[i])
+        or not waveDesc.constructDecayTopology(decayTopo)) {
       printErr << "problems constructing decay topology from key file '" << keyFileNames[i] << "'. "
                << "skipping." << endl;
       continue;

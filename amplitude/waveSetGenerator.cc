@@ -39,9 +39,10 @@
 #include "libconfig.h++"
 
 #include "mathUtils.hpp"
+#include "libConfigUtils.hpp"
 #include "clebschGordanCoeff.hpp"
 #include "particleDataTable.h"
-#include "keyFileParser.h"
+#include "waveDescription.h"
 #include "waveSetGenerator.h"
 
 	
@@ -71,8 +72,9 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 {
 	// construct template decay topology
 	_templateTopo.reset();
-	if (   not keyFileParser::parse(templateKeyFileName)
-	    or not keyFileParser::constructDecayTopology(_templateTopo, false)) {
+	waveDescription waveDesc;
+	if (   not waveDesc.parseKeyFile(templateKeyFileName)
+	    or not waveDesc.constructDecayTopology(_templateTopo, false)) {
 		printWarn << "problems constructing template decay topology from key file "
 		          << "'" << templateKeyFileName << "'. cannot generate wave set." << endl;
 		return false;
@@ -92,35 +94,35 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 		return false;
 	}
 	// find and parse group with wave set parameters
-	const Setting* waveSetParKey = keyFileParser::findGroup(key.getRoot(), "waveSetParameters", false);
+	const Setting* waveSetParKey = findGroup(key.getRoot(), "waveSetParameters", false);
 	if (waveSetParKey) {
-		const Setting* isoSpinRangeKey = keyFileParser::findArray(*waveSetParKey, "isospinRange", false);
+		const Setting* isoSpinRangeKey = findArray(*waveSetParKey, "isospinRange", false);
 		if (isoSpinRangeKey)
 			_isospinRange = make_pair<int, int>((*isoSpinRangeKey)[0], (*isoSpinRangeKey)[1]);
-		const Setting* JRangeKey = keyFileParser::findArray(*waveSetParKey, "JRange", false);
+		const Setting* JRangeKey = findArray(*waveSetParKey, "JRange", false);
 		if (JRangeKey)
 			_JRange = make_pair<int, int>((*JRangeKey)[0], (*JRangeKey)[1]);
-		const Setting* MRangeKey = keyFileParser::findArray(*waveSetParKey, "MRange", false);
+		const Setting* MRangeKey = findArray(*waveSetParKey, "MRange", false);
 		waveSetParKey->lookupValue("reflectivity",    _reflectivity   );
 		waveSetParKey->lookupValue("useReflectivity", _useReflectivity);
 		waveSetParKey->lookupValue("allowJpcExotics", _allowJpcExotics);
 		if (MRangeKey)
 			_spinProjRange = make_pair<int, int>((*MRangeKey)[0], (*MRangeKey)[1]);
-		const Setting* LRangeKey = keyFileParser::findArray(*waveSetParKey, "LRange", false);
+		const Setting* LRangeKey = findArray(*waveSetParKey, "LRange", false);
 		if (LRangeKey)
 			_LRange = make_pair<int, int>((*LRangeKey)[0], (*LRangeKey)[1]);
-		const Setting* SRangeKey = keyFileParser::findArray(*waveSetParKey, "SRange", false);
+		const Setting* SRangeKey = findArray(*waveSetParKey, "SRange", false);
 		if (SRangeKey)
 			_SRange = make_pair<int, int>((*SRangeKey)[0], (*SRangeKey)[1]);
-		const Setting* isobarBlackListKey = keyFileParser::findArray(*waveSetParKey,
-		                                                             "isobarBlackList", false);
+		const Setting* isobarBlackListKey = findArray(*waveSetParKey,
+		                                              "isobarBlackList", false);
 		if (isobarBlackListKey) {
 			_isobarBlackList.clear();
 			for (int i = 0; i < isobarBlackListKey->getLength(); ++i)
 				_isobarBlackList.push_back((*isobarBlackListKey)[i]);
 		}
-		const Setting* isobarWhiteListKey = keyFileParser::findArray(*waveSetParKey,
-		                                                             "isobarWhiteList", false);
+		const Setting* isobarWhiteListKey = findArray(*waveSetParKey,
+		                                              "isobarWhiteList", false);
 		if (isobarWhiteListKey) {
 			_isobarWhiteList.clear();
 			for (int i = 0; i < isobarWhiteListKey->getLength(); ++i)
@@ -347,8 +349,8 @@ waveSetGenerator::writeKeyFiles(const string& dirName)
 {
 	size_t countSuccess = 0;
 	for (size_t i = 0; i < _waveSet.size(); ++i) {
-		const string keyFileName = dirName + "/" + keyFileParser::oldKeyFileNameFromTopology(_waveSet[i]);
-		if (keyFileParser::writeKeyFile(keyFileName, _waveSet[i]))
+		const string keyFileName = dirName + "/" + waveDescription::waveNameFromTopologyOld(_waveSet[i]);
+		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
 			++countSuccess;
 	}
 	printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;

@@ -52,7 +52,7 @@
 #include "utilities.h"
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
-#include "keyFileParser.h"
+#include "waveDescription.h"
 #include "isobarHelicityAmplitude.h"
 #include "massDependence.h"
 
@@ -95,9 +95,10 @@ bool testAmplitude(TTree&          tree,
                    const string&   decayKinMomentaLeafName   = "decayKinMomenta")
 {
 	// parse key file and create decay topology and amplitude instances
-	keyFileParser&         parser = keyFileParser::instance();
+	waveDescription        waveDesc;
 	isobarDecayTopologyPtr decayTopo;
-	if (not parser.parse(keyFileName) or not parser.constructDecayTopology(decayTopo)) {
+	if (   not waveDesc.parseKeyFile(keyFileName)
+	    or not waveDesc.constructDecayTopology(decayTopo)) {
 		printWarn << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		          << "skipping." << endl;
 		keyFileErrors.push_back("parsing errors");
@@ -126,7 +127,7 @@ bool testAmplitude(TTree&          tree,
 
 	// construct amplitude
 	isobarAmplitudePtr amplitude;
-	parser.constructAmplitude(amplitude, decayTopo);
+	waveDesc.constructAmplitude(amplitude, decayTopo);
 
 	// read data from tree and calculate amplitudes
 	vector<complex<double> > ampValues;
@@ -331,7 +332,7 @@ main(int    argc,
 
 	// set debug options
 	// if (debug) {
-	// 	keyFileParser::setDebug(true);
+	// 	waveDescription::setDebug(true);
 	// 	isobarHelicityAmplitude::setDebug(true);
 	// 	massDependence::setDebug(true);
 	// }

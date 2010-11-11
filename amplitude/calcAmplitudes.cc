@@ -53,7 +53,7 @@
 #include "utilities.h"
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
-#include "keyFileParser.h"
+#include "waveDescription.h"
 
 
 using namespace std;
@@ -229,10 +229,10 @@ main(int    argc,
 		printErr << "no key file specified. aborting." << endl;
 		usage(progName, 1);
 	}
-	keyFileParser&     parser = keyFileParser::instance();
+	waveDescription    waveDesc;
 	isobarAmplitudePtr amplitude;
-	if (   not parser.parse(keyFileName)
-	    or not parser.constructAmplitude(amplitude)) {
+	if (   not waveDesc.parseKeyFile(keyFileName)
+	    or not waveDesc.constructAmplitude(amplitude)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		         << "aborting." << endl;
 		exit(1);

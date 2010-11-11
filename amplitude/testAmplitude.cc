@@ -60,7 +60,7 @@
 #include "particleDataTable.h"
 #include "diffractiveDissVertex.h"
 #include "massDependence.h"
-#include "keyFileParser.h"
+#include "waveDescription.h"
 #include "isobarAmplitude.h"
 #include "isobarHelicityAmplitude.h"
 #include "isobarCanonicalAmplitude.h"
@@ -94,7 +94,7 @@ main(int argc, char** argv)
 	isobarAmplitude::setDebug(true);
 	isobarHelicityAmplitude::setDebug(true);
 	isobarCanonicalAmplitude::setDebug(true);
-	keyFileParser::setDebug(true);
+	waveDescription::setDebug(true);
 
 	if (0) {
 		{
@@ -320,16 +320,11 @@ main(int argc, char** argv)
 		// const string   newKeyFileName = "../keyfiles/key2pip/SET1_new/11-1+f21270_13_p.key";
 		const string   rootInFileName = "1220.1240.root";
 
-		keyFileParser&     parser = keyFileParser::instance();
+		waveDescription    waveDesc;
 		isobarAmplitudePtr amp;
-		if (parser.parse(newKeyFileName) and parser.constructAmplitude(amp)) {
+		if (waveDesc.parseKeyFile(newKeyFileName) and waveDesc.constructAmplitude(amp)) {
 			isobarDecayTopologyPtr topo = amp->decayTopology();
 			printInfo << *amp;
-			topo->writeGraphViz("testAmplitude.dot");
-			gSystem->Exec("dot -Tps -o testAmplitude.ps testAmplitude.dot");
-			parser.writeKeyFile("testWrite.key", *amp);  // test key file creation
-
-			exit(1);
 			
 			// read data from tree
 			const string&            inTreeName                = "rootPwaEvtTree";

@@ -40,7 +40,7 @@
 #include "TSystem.h"
 
 #include "particleDataTable.h"
-#include "keyFileParser.h"
+#include "waveDescription.h"
 #include "waveSetGenerator.h"
 
 
@@ -114,7 +114,7 @@ main(int argc, char** argv)
 		}
 
 		for (unsigned int i = 0; i < decays.size(); ++i)
-			cout << setw(4) << i << ": " << keyFileParser::keyFileNameFromTopology(decays[i]) << endl;
+			cout << setw(4) << i << ": " << waveDescription::waveNameFromTopology(decays[i]) << endl;
 
 		waveSetGen.writeKeyFiles("testWaveSetGenerator");
 
@@ -124,6 +124,5 @@ main(int argc, char** argv)
 		
 		// decays.back().writeGraphViz("foo.dot");
 		// gSystem->Exec("dot -Tps -o foo.ps foo.dot");
-		// cout << parser.keyFileNameFromTopology(decays.back()) << endl;
 	}
 }

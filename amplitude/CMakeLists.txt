@@ -65,7 +65,6 @@ set(SOURCES
 	isobarDecayVertex.cc
 	isobarDecayTopology.cc
 	massDependence.cc
-	keyFileParser.cc
 	waveDescription.cc
 	evtTreeHelper.cc
 	isobarAmplitude.cc
