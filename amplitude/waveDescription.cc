@@ -67,10 +67,7 @@ waveDescription::waveDescription()
 	  _key            (0),
 	  _amplitudeKey   (0),
 	  _keyFileContents("")
-{
-	if (_keyFileContents != "")
-		printInfo << "!!! HERE" << endl;
-}
+{ }
 
 
 waveDescription::~waveDescription()
@@ -85,16 +82,21 @@ waveDescription::parseKeyFile(const string& keyFileName)
 {
 	if (not _key)
 		_key = new Config();
+	_amplitudeKey = 0;
 	printInfo << "parsing key file '" << keyFileName << "'" << endl;
 	try {
 		_key->readFile(keyFileName.c_str());
 	} catch(const FileIOException& ioEx) {
 		printWarn << "I/O error while reading key file '" << keyFileName << "'. "
 		          << "cannot construct decay topology." << endl;
+		delete _key;
+		_key = 0;
 		return false;
 	} catch(const ParseException&  parseEx) {
 		printWarn << "parse error in '" << parseEx.getFile() << "' line " << parseEx.getLine()
 		          << ": " << parseEx.getError() << ". cannot construct decay topology." << endl;
+		delete _key;
+		_key = 0;
 		return false;
 	}
 	// read in key file contents
@@ -120,6 +122,11 @@ bool
 waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
                                         const bool              requireXQnKey) const
 {
+	if (not _key) {
+		printWarn << "null pointer to libconfig data structure. "
+		          << "cannot construct decay topology. was parsing successful?" << endl;
+	}
+
 	if (topo)
 		topo.reset();
 	topo = isobarDecayTopologyPtr();  // null pointer
@@ -373,6 +380,29 @@ waveDescription::waveNameFromTopologyOld(isobarDecayTopology&        topo,
 }
 
 
+void
+waveDescription::parseKeyString()
+{
+	if (not _key)
+		_key = new Config();
+	_amplitudeKey = 0;
+	if (_debug)
+		printInfo << "parsing key file contents string" << endl;
+	try {
+		_key->readString(_keyFileContents);
+	} catch(const ParseException&  parseEx) {
+		printWarn << "parse error in line " << parseEx.getLine() << " of key file string: "
+		          << parseEx.getError() << ". cannot construct decay topology." << endl;
+		delete _key;
+		_key = 0;
+		return;
+	}
+	// find amplitude group
+	const Setting& rootKey = _key->getRoot();
+	_amplitudeKey = findGroup(rootKey, "amplitude", false);
+}
+
+
 bool
 waveDescription::constructXParticle(const Setting& XQnKey,
                                     particlePtr&   X)
@@ -413,14 +443,13 @@ waveDescription::constructXParticle(const Setting& XQnKey,
 }
 
 
-bool
+productionVertexPtr
 waveDescription::mapProductionVertexType(const Setting&       prodVertKey,
                                          const string&        vertType,
-                                         const particlePtr&   X,
-                                         productionVertexPtr& prodVert)
+                                         const particlePtr&   X)
 {
-	prodVert = productionVertexPtr();
-	bool success = true;
+	productionVertexPtr prodVert;
+	bool                success = true;
 	if ((vertType == "diffractiveDissVertex") or (vertType == "leptoProductionVertex")) {
 		const string             prodKinParticleNames[] = {"beam", "target", "recoil"};
 		map<string, particlePtr> prodKinParticles;
@@ -444,7 +473,7 @@ waveDescription::mapProductionVertexType(const Setting&       prodVertKey,
 			if (vertType == "diffractiveDissVertex")
 				prodVert = createDiffractiveDissVertex(prodKinParticles["beam"], prodKinParticles["target"],
 				                                       X, prodKinParticles["recoil"]);
-			if (vertType == "leptoProductionVertex" ) {
+			else if (vertType == "leptoProductionVertex" ) {
 				prodVert = createLeptoProductionVertex(prodKinParticles["beam"], prodKinParticles["target"],
 				                                       X, prodKinParticles["recoil"]);
 				double beamLongPol = 0;
@@ -458,17 +487,15 @@ waveDescription::mapProductionVertexType(const Setting&       prodVertKey,
 				static_pointer_cast<leptoProductionVertex>(prodVert)->setBeamPol(beamLongPol);
 			}
 		}
-	} else {
+	} else
 		printWarn << "unknown production vertex type '" << vertType << "'" << endl;
-		return false;
-	}
 	if (_debug) {
 		if (success and prodVert)
 			printInfo << "constructed " << *prodVert << endl;
 		else
 			printWarn << "problems constructing production vertex of type '" << vertType << "'" << endl;
 	}
-	return success;
+	return prodVert;
 }
 
 
@@ -493,7 +520,8 @@ waveDescription::constructProductionVertex(const Setting&       rootKey,
 		success = false;
 	}
 	// create production vertex
-	return mapProductionVertexType(*prodVertKey, vertType, X, prodVert);
+	prodVert = mapProductionVertexType(*prodVertKey, vertType, X);
+	return (prodVert) ? true : false;
 }
 
 

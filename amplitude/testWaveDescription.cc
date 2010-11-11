@@ -63,7 +63,7 @@ main(int argc, char** argv)
 		isobarAmplitudePtr amp;
 		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
 			isobarDecayTopologyPtr topo = amp->decayTopology();
-			printInfo << "key file:" << endl << waveDesc.keyFileContents();
+			//printInfo << "key file:" << endl << waveDesc.keyFileContents();
 			printInfo << *amp;
 			topo->writeGraphViz("testAmplitude.dot");
 			gSystem->Exec("dot -Tps -o testAmplitude.ps testAmplitude.dot");
@@ -75,14 +75,19 @@ main(int argc, char** argv)
 				waveDesc.Write(waveName.c_str());
 				outFile->Close();
 			}
+			cout << endl
+			     << "--------------------------------------------------------------------------------"
+			     << endl << endl;
 			{
 				TFile*           inFile    = TFile::Open("testWaveDescription.root", "READ");
 				waveDescription* waveDesc2 = 0;
 				inFile->GetObject(waveName.c_str(), waveDesc2);
 				if (not waveDesc2)
 					printErr << "cannot find wave description '" << waveName << "'" << endl;
-				else
-					printInfo << "key file:" << endl << waveDesc2->keyFileContents();
+				// else
+				// 	printInfo << "key file:" << endl << waveDesc2->keyFileContents();
+				waveDesc2->constructAmplitude(amp);
+				printInfo << *amp;
 				inFile->Close();
 			}
 		}

@@ -67,7 +67,7 @@ namespace rpwa {
 #if !defined (__CINT__) || !defined (__MAKECINT__)
 
 		// construction of decay topology and amplitude objects
-		bool parseKeyFile(const std::string& keyFileName);  ///< parses key file and constructs decay topology
+		bool parseKeyFile(const std::string& keyFileName);  ///< parses key file
 		std::string keyFileContents() const { return _keyFileContents; }  ///< returns contents of key file
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,
 		                            const bool              requireXQnKey = true) const;  ///< construct isobar decay topology from keyfile
@@ -95,13 +95,14 @@ namespace rpwa {
 
   private:
 
+		void parseKeyString();  ///< parses _keyFileContents string
+
 		// helper functions for construction of decay topology and ampltiude
 		static bool constructXParticle(const libconfig::Setting& XQnKey,
 		                               particlePtr&              X);  ///< creates X particle with quantum numbers defined in X key
-    static bool mapProductionVertexType(const libconfig::Setting& prodVertKey,
-                                        const std::string&        vertType,
-                                        const particlePtr&        X,
-                                        productionVertexPtr&      prodVert);  ///< creates production vertex according to given type
+    static productionVertexPtr mapProductionVertexType(const libconfig::Setting& prodVertKey,
+                                                       const std::string&        vertType,
+                                                       const particlePtr&        X);  ///< creates production vertex according to given type
 		static bool constructProductionVertex(const libconfig::Setting& rootKey,
 		                                      const particlePtr&        X,
 		                                      productionVertexPtr&      prodVert);  ///< creates production vertex
