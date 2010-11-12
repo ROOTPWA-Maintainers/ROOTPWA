@@ -207,14 +207,14 @@ extern char* optarg;
   channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
   channels[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
   pwacomponent comp1("pi2(1880)",1880,150,channels);
-  comp1.setLimits(1700,1900,50,300);
+  comp1.setLimits(1870,1900,50,300);
   comp1.setFixed(0,0);
 
   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(1,0));
   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-  pwacomponent comp2("pi2(2300)",2300,400,channels);
-  comp2.setLimits(2000,2500,200,800);
-  comp2.setFixed(0,0);
+  pwacomponent comp2("pi2(2300)",2300,500,channels);
+  comp2.setLimits(2250,2500,100,800);
+  comp2.setFixed(1,0);
 
   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(50,0));
   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(50,0));
@@ -224,7 +224,7 @@ extern char* optarg;
 
   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(20,0));
   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-  pwacomponent comp4("pi2(2100)",2090,600,channels);
+  pwacomponent comp4("pi2(2100)",2090,200,channels);
   comp4.setLimits(2000,2200,100,800);
   comp4.setFixed(1,0);
 
@@ -240,26 +240,86 @@ extern char* optarg;
   channels0mp[ch5].setCoupling(std::complex<double>(5,0));
   pwacomponent comp6("pi(2070)",2070,310,channels0mp);
   comp6.setLimits(2000,2200,100,500);
-  comp5.setFixed(1,1);
+  comp6.setFixed(0,1);
 
 
   channels0mp.clear();
   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch6));
-  pwabkg bkg1=pwabkg("0-+Bkg",0,0.001,channels0mp);
+  pwabkg bkg1=pwabkg("0-+Bkg",0,0.0001,channels0mp);
   bkg1.setIsobars(770,1269);
   bkg1.setLimits(0,0,0,1);
   bkg1.setFixed(1,0);
 
+  std::map<std::string,pwachannel> channels2mp;
+  channels2mp[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
+  pwabkg bkg2=pwabkg("rhoa1bkg",0,0.0001,channels2mp);
+  bkg2.setIsobars(770,1269);
+  bkg2.setLimits(0,0,0,1);
+  bkg2.setFixed(1,0);
+
+  channels2mp.clear();
+  channels2mp[ch3]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch3));
+  pwabkg bkg3=pwabkg("pirho3",0,0.0001,channels2mp);
+  bkg3.setIsobars(139,1690);
+  bkg3.setLimits(0,0,0,1);
+  bkg3.setFixed(1,0);
+
+  std::map<std::string,pwachannel> channels1pp;
+  std::string anchorwave("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
+  string ch1ppsa1("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
+  string ch1ppra11("1-1++0+rho770_11_a11269=pi-_0_rho770.amp");
+  string ch1ppra12("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
+  string ch1ppf1pi("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
+		  
+  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
+				   getPhaseSpace(tree,ch1ppsa1));
+  channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
+				   getPhaseSpace(tree,ch1ppra11));
+  //channels1pp[ch1ppra12]=pwachannel(complex<double>(50,0),
+  //				   getPhaseSpace(tree,ch1ppra12));
+  channels1pp[ch1ppf1pi]=pwachannel(complex<double>(50,0),
+				   getPhaseSpace(tree,ch1ppf1pi));
+
+  pwacomponent comp7("a1(1640)",1647,254,channels1pp);
+  comp7.setLimits(1600,1700,100,500);
+  comp7.setFixed(1,1);
+  pwacomponent comp8("a1(1930)",1930,155,channels1pp);
+  comp8.setLimits(1900,1980,100,300);
+  comp8.setFixed(1,1);
+  pwacomponent comp9("a1(2095)",2069,451,channels1pp);
+  comp9.setLimits(1950,2150,200,600);
+  comp9.setFixed(0,0);
   
+  channels1pp.clear();
+  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
+				   getPhaseSpace(tree,ch1ppsa1));
+  pwabkg bkg4=pwabkg("sigmaa1",0,0.0001,channels1pp);
+  bkg4.setIsobars(600,1269);
+  bkg4.setLimits(0,0,0,1);
+  bkg4.setFixed(1,0);
+
+  channels1pp.clear();
+  channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
+				   getPhaseSpace(tree,ch1ppra11));
+  pwabkg bkg5=pwabkg("1pprhoa1bkg",0,0.0001,channels1pp);
+  bkg5.setIsobars(770,1269);
+  bkg5.setLimits(0,0,0,1);
+  bkg5.setFixed(1,0);
+
   pwacompset compset;
-  //compset.add(&comp1); // pi2(1880)
-  //compset.add(&comp2); // pi2(2300)
-  //compset.add(&comp3); // pi2(1670)
-  //compset.add(&comp4); // pi2(2100)
+  compset.add(&comp1); // pi2(1880)
+  compset.add(&bkg2);  
+  compset.add(&comp2); // pi2(2300)
+  compset.add(&comp3); // pi2(1670)
+  compset.add(&bkg3);
+  compset.add(&comp4); // pi2(2100)
   compset.add(&comp5); // pi(1800)
   compset.add(&comp6); // pi(2070)
   compset.add(&bkg1);
-
+  compset.add(&comp7);
+  //compset.add(&comp8);
+  compset.add(&comp9);
+  compset.add(&bkg4);
   
 
 
@@ -304,12 +364,17 @@ extern char* optarg;
     else minimizer->SetLimitedVariable(parcount++, 
 				       (name+"_Gamma").Data(), 
 				       comp.gamma(), 
-				       0.10,
+				       0.01,
 				       gmin,gmax);
     std::map<std::string,pwachannel >::const_iterator it=comp.channels().begin();
     while(it!=comp.channels().end()){
       minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.C().real(), 0.10);
-      minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);
+      
+      // fix one phase
+      if(it->first==anchorwave)minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
+	
+	else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
+      
       ++it;
     } // end loop over channels
 
@@ -380,11 +445,13 @@ extern char* optarg;
   cerr << "Fitting finished building graphs ... " << endl;
 
    std::vector<std::string> wl=compset.wavelist();
+   std::map<std::string, unsigned int> wmap;
    unsigned int ndatabins=tree->GetEntries();
 
    std::vector<TGraphErrors*> datagraphs;
    std::vector<TMultiGraph*> graphs;
    for(unsigned int iw=0; iw<wl.size();++iw){
+     wmap[wl[iw]]=iw;
      graphs.push_back(new TMultiGraph);
      graphs[iw]->SetName(wl[iw].c_str());
      graphs[iw]->SetTitle(wl[iw].c_str());
@@ -408,18 +475,44 @@ extern char* optarg;
    //double mmin=1200.;
    //double md=10.;
    std::vector<TGraph*> fitgraphs;
+  
+
    for(unsigned int iw=0; iw<wl.size();++iw){
      fitgraphs.push_back(new TGraph(nbins));
      string name("fit_");name.append(wl[iw]);
      fitgraphs[iw]->SetName(name.c_str());
      fitgraphs[iw]->SetTitle(name.c_str());
      fitgraphs[iw]->SetLineColor(kRed);
+     fitgraphs[iw]->SetLineWidth(2);
      fitgraphs[iw]->SetMarkerColor(kRed);
      fitgraphs[iw]->SetDrawOption("AP");
-     fitgraphs[iw]->SetMarkerStyle(22);
+     //fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
      graphs[iw]->Add(getPhaseSpace(tree,wl[iw]));
    }
+
+   std::vector<TGraph*> compgraphs; // individual components
+   // loop over components and build graphs
+     for(unsigned int ic=0;ic<compset.n();++ic){
+       const pwacomponent* c=compset[ic];
+       std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
+       while(it!=c->channels().end()){
+	 string name=c->name();name.append("__");
+	 name.append(it->first);
+	 TGraph* gcomp=new TGraph(nbins);
+	 gcomp->SetName(name.c_str());
+	 gcomp->SetTitle(name.c_str());
+	 unsigned int color=kBlue;
+	 if(dynamic_cast<const pwabkg*>(c)!=NULL)color=kMagenta;
+	 gcomp->SetLineColor(color);
+	 gcomp->SetMarkerColor(color);
+	 
+	 compgraphs.push_back(gcomp);
+	 graphs[wmap[it->first]]->Add(gcomp,"cp");
+	 ++it;
+       }// end loop over channels
+      
+     }// end loop over components
 
    std::vector<TGraphErrors*> phasedatagraphs;
    std::vector<TMultiGraph*> phasegraphs;
@@ -516,11 +609,26 @@ extern char* optarg;
 	 phasefitgraphs[c]->SetPoint(i,m,compset.phase(wl[iw],ps,
 						       wl[iw2],ps2,m)*TMath::RadToDeg());
 	 c++;
-       }
+       }// end inner loop over waves
 
-        prevps[iw]=ps;
+       prevps[iw]=ps;
+       
+        
      } // end loop over waves
-     
+
+     // loop over components to fill individual graphs
+     unsigned int compcount=0;
+       for(unsigned int ic=0;ic<compset.n();++ic){
+	 const pwacomponent* c=compset[ic];
+	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
+	 while(it!=c->channels().end()){
+	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*it->second.ps(m);
+	   compgraphs[compcount]->SetPoint(i,m,I);
+	   ++compcount;
+	   ++it;
+	 } // end loop over channels
+       }// end loop over components
+
      mprev=m;
    }
 

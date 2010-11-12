@@ -59,7 +59,22 @@ integral::files(char** fileList)
 {
 	list<string> fList;
 	while (*fileList) {
-		fList.push_back(*fileList);
+		// check if filesize is nonzero.
+		ifstream in;
+		in.open(*fileList);
+		bool isok = false;
+		if (in) {
+			in.seekg (0, ifstream::end);
+			int length = in.tellg();
+			if (length > 0)
+				isok = true;
+			else
+				cerr << "File "<< *fileList << " has zero length. Skipping." << endl;
+		} else
+			cerr << "File "<< *fileList << " not found." << endl;
+		if (isok)
+			fList.push_back(*fileList);
+		in.close();
 		++fileList;
 	}
 	files(fList);
@@ -297,12 +312,17 @@ integral::print_events(ostream& os) const
 integral&
 integral::scan(istream& is)
 {
-	int    indexSize = 0, index = 0;
-	string name;
-	is >> _nwaves >> _nevents >> _sum >> indexSize;
-	while (indexSize--) {
-		is >> name >> index;
-		_index[name] = index;
-	}
-	return *this;
+  int    indexSize = 0, index = 0;
+  string name;
+  is >> _nwaves >> _nevents >> _sum >> indexSize;
+  while (indexSize--) {
+    is >> name >> index;
+    // get rid of an eventual path
+    int slashpos = name.rfind('/');
+    if (slashpos != (int) string::npos) {
+    	name.erase(0, slashpos + 1);
+    }
+    _index[name] = index;
+  }
+  return *this;
 }

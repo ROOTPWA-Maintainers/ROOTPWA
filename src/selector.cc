@@ -56,16 +56,19 @@ main(int argc, char** argv){
     cerr << "Not enough fits to create " << nsurv << " survivors." << endl;
   }
 
-  TH2D* hWavesetSize=new TH2D("hWS","Waveset sizes evolution",20,-0.5,19.5,100,0,100);
-  TH2D* hEvidences=new TH2D("hEvi","Evidence evolution",20,-0.5,19.5,1000,1.75E6,1.9E6);
-   TH2D* hEviSize=new TH2D("hEviSize","Evidence vs Waveset size",100,0,100,1000,1.75E6,1.9E6);
+  double maxevi=1.83E6;
+  unsigned int ngen=45;
+
+  TH2D* hWavesetSize=new TH2D("hWS","Waveset sizes evolution",ngen,-0.5,(double)ngen-.5,100,0,100);
+  TH2D* hEvidences=new TH2D("hEvi","Evidence evolution",ngen,-0.5,(double)ngen-.5,1000,1.75E6,maxevi);
+   TH2D* hEviSize=new TH2D("hEviSize","Evidence vs Waveset size",100,0,100,1000,1.75E6,maxevi);
 
 TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100,1000,1.75E6,1.9E6);
 
   map<double,unsigned int> results; // <logli,index>
   unsigned int bestfit=0;
   double bestLogli=0;
-  fitResult* bin=new fitResult;
+  
   //loop over fits and extract quality information
   // we are using the sum of loglikelyhood per event for this
   for(unsigned int j=0; j<inputdirectories.size(); ++j){
@@ -76,38 +79,50 @@ TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100
     TString genS=inputdirectories[j](startgen,endgen-startgen);
     cerr << "generation=" << genS << endl;
     double gen=atof(genS.Data());
-
+    fitResult* bin=new fitResult;
     TChain* chain=new TChain("pwa");
+  
     TString f=inputdirectories[j];
     f+="/*.result.root";
+    cerr << "Loading " << f << endl;
     if(chain->Add(f)==0){
       cerr << "No fitoutput files found." << nbins 
 	   << ". Skipping fit!" << endl;
       delete chain;
+      delete bin;
       continue;
     }
+    //chain->Print();
+    cerr << "Set up Chain"<< endl;
+    
     chain->SetBranchAddress("fitResult_v2",&bin);
+     cerr << "Set Branch"<< endl;
+     
     unsigned int n=chain->GetEntries();
+    cerr << "Got Entries"<< endl;
     if(n!=nbins){
       cerr << n << " bins in this fit. Expected " << nbins 
 	   << ". Skipping fit!" << endl;
       delete chain;
+ delete bin;
       continue;
     }
     double sumlogli=0;
     double sumevi=0;
     unsigned int nwaves=0;
+     cerr << "Reading data..."<< endl;
     for(unsigned int k=0;k<n;++k){
       chain->GetEntry(k);
       if(k==0)nwaves=bin->nmbWaves();
       sumevi+=bin->evidence();
-      sumlogli+=-bin->logLikelihood();
+      sumlogli+=-bin->logLikelihood();//+bin->nmbEvents();
     }// end loop over bins
     cerr<<"SumLogli    ="<<setprecision(9)<<sumlogli<<endl;
     cerr<<"SumEvidence ="<<setprecision(9)<<sumevi<<endl;
     if(sumevi==0 || !(sumevi>std::numeric_limits<double>::min() && sumevi < std::numeric_limits<double>::max())){
       cerr<<"Invalid value. Skipping."<< endl;
       delete chain;
+ delete bin;
       continue;
     }
     
@@ -122,6 +137,7 @@ TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100
       bestfit=j;
     }
     delete chain;
+    delete bin;
   } // end loop over fits
   
 

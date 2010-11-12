@@ -106,92 +106,36 @@ pwaPlotter::pwaPlotter()
   mEvidencePerEvent->SetName("EvidencePerEvent");
   
 
+  std::vector<string> waves;
+  waves.push_back("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp");
+  waves.push_back("1-2-+0+pi-_22_f21270=pi-+_11_a11269=pi+-_01_rho770.amp");
+  waves.push_back("1-2-+0+rho770_02_a21320=pi-_2_rho770.amp");
+  waves.push_back("1-2-+0+rho770_02_a11269=pi-_0_rho770.amp");
+  waves.push_back("1-0-+0+pi-_00_f01500=rho770_00_rho770.amp");
+  waves.push_back("1-0-+0+pi-_00_f01500=sigma_0_sigma.amp");
+  waves.push_back("1-0-+0+rho770_00_a11269=pi-_0_rho770.amp");
+  waves.push_back("1-0-+0+rho770_22_a11269=pi-_01_rho770.amp");
+  waves.push_back("1-0-+0+pi-_22_f21270=sigma_2_sigma.amp");
+  waves.push_back("1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp");
+
+  waves.push_back("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
+  waves.push_back("1-1++0+sigma_01_a11269=pi-_1_sigma.amp");
+  waves.push_back("1-1++0+rho770_11_a11269=pi-_0_rho770.amp");
+  waves.push_back("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
+  waves.push_back("1-1++0+rho770_01_pi1300=pi-_1_rho770.amp");
+ 
+  waves.push_back("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
+  waves.push_back("1-1++0+pi-_01_rho1700=sigma_0_rho770.amp");
+  waves.push_back("1-1++0+pi-_10_f01370=rho770_00_rho770.amp");
+  waves.push_back("1-1++0+pi-_10_f01500=sigma_0_sigma.amp");
+  waves.push_back("1-1++0+pi-_12_b21800=pi-+_12_a21320=pi+-_21_rho770.amp");
+
   std::vector<strpair> phlist;
-  phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-0-+0+pi-_00_f01500=rho770_00_rho770.amp"));
-  
-phlist.push_back(
-    strpair("1-1++0+rho770_11_a11269=pi-_0_rho770.amp",
-	    "1-0-+0+pi-_00_f01500=rho770_00_rho770.amp"));
-  
-
-
-  phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-0-+0+rho770_11_pi1300=pi-_1_rho770.amp"));
-  phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"));
-
-  phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp"));
-
-  phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-1++0+rho770_11_a11269=pi-_0_rho770.amp"));
-
- phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-4++0-rho31690=rho770_03_f21270_23_pi-.amp"));
-
-phlist.push_back(
-    strpair("1-2++0-rho770_11_a11269=pi-_0_rho770.amp",
-	    "1-4++0-rho31690=rho770_03_f21270_23_pi-.amp"));
-
-
-
- phlist.push_back(
-    strpair("1-1++0+sigma_01_a11269=pi-_0_rho770.amp",
-	    "1-0-+0+rho770_11_pi1300=pi-_1_rho770.amp"));
-
- phlist.push_back(
-    strpair("1-1++0+sigma_01_a11269=pi-_0_rho770.amp",
-	    "1-1++0+sigma_10_pi1300=pi-_1_rho770.amp"));
-
- phlist.push_back(
-    strpair("1-1++0+rho770_11_a11269=pi-_0_rho770.amp",
-	    "1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"));
-
-
-
-phlist.push_back(
-    strpair("1-2-+0+rho770_02_a21320=pi-_2_rho770.amp",
-	    "1-1++0+sigma_10_pi1300=pi-_1_rho770.amp"));
-
-phlist.push_back(
-    strpair("1-1++0+sigma_22_a21320=pi-_2_rho770.amp",
-	    "1-1++0+sigma_10_pi1300=pi-_1_rho770.amp"));
-
-phlist.push_back(
-    strpair("1-1++0+sigma_22_a21320=pi-_2_rho770.amp",
-	    "1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"));
-
-phlist.push_back(
-    strpair("1-1++0+sigma_22_a21320=pi-_2_rho770.amp",
-	    "1-1++0+sigma_01_a11269=pi-_0_rho770.amp"));
-
-
- phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-1++0+sigma_01_a11269=pi-_0_rho770.amp"));
-
- phlist.push_back(
-    strpair("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp",
-	    "1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp"));
-
-
-phlist.push_back(
-    strpair("1-2-+0+rho770_02_a21320=pi-_2_rho770.amp",
-	    "1-2-+0+rho770_02_a11269=pi-_0_rho770.amp"));
- 
-phlist.push_back(
-    strpair("1-2-+0+rho770_02_a21320=pi-_2_rho770.amp",
-	    "1-4-+0+rho770_22_a11269=pi-_0_rho770.amp"));
- 
-
-
+  for(unsigned int i=0;i<waves.size();++i){
+    for(unsigned int j=i+1;j<waves.size();++j){
+      phlist.push_back(strpair(waves[i],waves[j]));
+    }
+  }
 
 
 
@@ -332,6 +276,8 @@ pwaPlotter::addFit(const std::string& filename,
     g->SetMarkerSize(0.5);
     g->SetMarkerColor(colour);
     g->SetLineColor(colour);
+    g->GetXaxis()->SetTitle("mass (GeV/c^{2})");
+    g->GetYaxis()->SetTitle("intensity");
     mIntensities[*it]->Add(g,"p");
     ++it;
   }
@@ -389,7 +335,7 @@ pwaPlotter::addFit(const std::string& filename,
     std::string w2=iph->first.second;
     if(wavesinthisfit.find(w1)!=wavesinthisfit.end() &&
        wavesinthisfit.find(w2)!=wavesinthisfit.end()  ){
-      TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins,ifit);
+      TPwaFitGraphErrors* g = new TPwaFitGraphErrors(nbins*3,ifit);
       stringstream graphName;
       graphName << "PHI"<<w1<<"---"<<"PHI"<<w2;
 
@@ -401,7 +347,9 @@ pwaPlotter::addFit(const std::string& filename,
       g->SetMarkerSize(0.5);
       g->SetMarkerColor(colour);
       g->SetLineColor(colour);
-      iph->second->Add(g);
+      g->GetXaxis()->SetTitle("mass (GeV/c^{2})");
+      g->GetYaxis()->SetTitle("#Delta #Phi");
+      iph->second->Add(g,"p");
 	
     } // endif both waves available
     ++iph;
@@ -416,6 +364,7 @@ pwaPlotter::addFit(const std::string& filename,
   //cout << "filling data" << endl;
 
   // loop again over fitResults and extract all info simultaneously
+  
   for(unsigned int i=0;i<nbins;++i){
     intree->GetEntry(i);
     // loop through waves
@@ -458,23 +407,42 @@ pwaPlotter::addFit(const std::string& filename,
 	double ph=result->phase(w1,w2);
 	// check if we should make a transformation by 2pi
 	// this is needed because of cyclical variable phi
-	if(i>0){
-	  //double mpre;
-	  //double phpre;
-	  //g->GetPoint(i-1,mpre,phpre);
-	  //double diff1=fabs(ph-phpre);
-	  //double diff2=fabs(ph+360-phpre);
-	  //double diff3=fabs(ph-360-phpre);
-	  //if(diff2<diff1 && diff2<diff3)ph+=360;
-	  //else if(diff3<diff1 && diff3<diff2)ph-=360;
+	if(i>11){
+	  double mpre;
+	  double phpre;
+	  g->GetPoint(i-3,mpre,phpre);
+	  double diff1=fabs(ph-phpre);
+	  double diff2=fabs(ph+360-phpre);
+	  double diff3=fabs(ph-360-phpre);
+	  if(diff2<diff1 && diff2<diff3)ph+=360;
+	  else if(diff3<diff1 && diff3<diff2)ph-=360;
 	}
 
-	g->SetPoint(i,
+	
+
+	g->SetPoint(i*3,
 		    result->massBinCenter()*0.001,
 		    ph);
-      g->SetPointError(i,
+      g->SetPointError(i*3,
 		       binwidth*0.5,
 		       result->phaseErr(w1,w2));
+
+      // add point +- 360 degree
+	g->SetPoint(i*3+1,
+		    result->massBinCenter()*0.001,
+		    ph+360);
+      g->SetPointError(i*3+1,
+		       binwidth*0.5,
+		       result->phaseErr(w1,w2));
+
+	g->SetPoint(i*3+2,
+		    result->massBinCenter()*0.001,
+		    ph-360);
+      g->SetPointError(i*3+2,
+		       binwidth*0.5,
+		       result->phaseErr(w1,w2));
+
+
       
       }
       ++iph;

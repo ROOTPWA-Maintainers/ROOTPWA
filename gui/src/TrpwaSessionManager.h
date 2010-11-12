@@ -243,6 +243,13 @@ public:
 			vector<string>* corresponding_eventfiles = NULL,
 			vector<string>* corresponding_keyfiles = NULL);
 
+	// check the entries of an amplitude file
+	// some files may have (0,0) entries that lead to 0 entries in the integral files
+	// ampfile = filename with full path to the ampfile
+	// nlines  = number of lines to be read and tested
+	// return true if no 0 entries found
+	bool Is_valid_amplitude(string ampfile, int nlines = 10);
+
 	// Get a list of (missing/available) calculated integrals of
 	// the available amplitudes with full path
 	// folder = PSPAMPS | ACCAMPS
@@ -405,6 +412,9 @@ private:
 	// if the wave list is not existing wavelist will be written
 	// in this case Check_PWA_keyfiles() is called to get a list of expected keyfiles
 	vector<string> &ReadWaveList(string filename);
+
+	// simple stats bar
+	void DrawProgressBar(int len, double percent);
 };
 
 
