@@ -59,7 +59,7 @@ set(SOURCES
 set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
 root_generate_dictionary(
   "${ROOTPWAGUI_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR};${ROOTPWA_INCLUDE_DIR}"
+  "${CMAKE_CURRENT_SOURCE_DIR}"
   "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h"
   "rootPwaGuiLinkDef.h"
 )

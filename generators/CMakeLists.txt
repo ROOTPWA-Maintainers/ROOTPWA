@@ -59,14 +59,14 @@ set(SOURCES
    
 
 # ROOT dictionary
-set(GEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
+set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
 root_generate_dictionary(
-  "${GEN_DICTIONARY}"
+  "${ROOTPWAGEN_DICTIONARY}"
   "${INCLUDE_DIRECTORIES}"
   "nBodyPhaseSpaceGen.h"
   "rootPwaGenLinkDef.h"
 )
-set(SOURCES ${SOURCES} ${GEN_DICTIONARY})
+set(SOURCES ${SOURCES} ${ROOTPWAGEN_DICTIONARY})
 
 
 # library
