@@ -38,6 +38,7 @@
 #include <map>
 #include <list>
 
+#include "TROOT.h"
 #include "TRandom3.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -56,13 +57,13 @@ usage(const string& progName,
 {
   cerr << "usage:" << endl
        << progName
-       << " -w wavelist [-d amplitude directory -o outfile -s seed -N -n normfile"
+       << " -w wavelist [-z # val -d amplitude directory -o outfile -s seed -N -n normfile"
        << " [-a normfile] -r rank -q -h]" << endl
        << "    where:" << endl
-       << "        -z #       number of likelihood values (default: 100)" << endl
        << "        -w file    path to wavelist file" << endl
+       << "        -z #       number of likelihood values (default: 100)" << endl
        << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-       << "        -o file    path to output file (default: 'fitresult.root')" << endl
+       << "        -o file    path to output file (default: 'testLikelihood.root')" << endl
        << "        -s #       seed for random start values (default: 1234567)" << endl
        << "        -N         use normalization of decay amplitudes (default: false)" << endl
        << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
@@ -80,6 +81,9 @@ int
 main(int    argc,
      char** argv)
 {
+	// force loading of predefined std::map dictionary
+	gROOT->ProcessLine("#include <map>");
+
 	const string progName          = argv[0];
 	unsigned int nmbLikelihoodVals = 100;                    // number of likelihood values to calculate
 	int          startValSeed      = 1234567;

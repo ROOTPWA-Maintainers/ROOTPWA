@@ -49,11 +49,6 @@
 #include "TH1.h"
 
 
-#ifdef __MAKECINT__
-#pragma link C++ class std::map<std::string, double>+;
-#endif
-
-
 using namespace std;
 
 
