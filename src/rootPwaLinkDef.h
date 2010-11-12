@@ -34,10 +34,6 @@
 #pragma link C++ class TCovEllipse+;
 //#pragma link C++ class TMCMCMeta+;
 
-// STL tree leafs
-#pragma link C++ class std::map<std::string, double>+;
-
-
 // TFitResult produces a name clash for ROOT versions from 5.25.0 on
 #include "RVersion.h"
 // rootcint has problems with this: #if ROOT_VERSION_CODE < ROOT_VERSION(5,25,0)

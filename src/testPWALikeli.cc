@@ -33,8 +33,8 @@
 #include "TString.h"
 #include "TComplex.h"
 #include "TRandom.h"
-#include "TFitBin.h"
 #include "TPWALikelihood.h"
+#include "TFitBin.h"
 
 using namespace std;
 
@@ -44,7 +44,7 @@ char *progname;
 
 int main(int argc, char** argv){
   
-  TPWALikelihood<double> L;
+	TPWALikelihood<complex<double> > L;
   L.useNormalizedAmps();
   //if(quiet)L.SetQuiet();
   int rank=2; // TODO: make this an option

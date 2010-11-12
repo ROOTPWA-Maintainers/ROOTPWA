@@ -46,7 +46,7 @@
 
 #include "libconfig.h++"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "TDiffractivePhaseSpace.h"
 #include "TPWWeight.h"
 #include "TProductionAmp.h"

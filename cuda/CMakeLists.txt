@@ -25,49 +25,43 @@
 #// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      build file for pwa library and amplitude executables
+#//      test build file for CUDA
 #//
 #//
 #// Author List:
-#//      Sebastian Neubert    TUM            (original author)
+#//      Boris Grube    TUM            (original author)
 #//
 #//
 #//-------------------------------------------------------------------------
 
 
-set(CMAKE_CXX_FLAGS   "-O2 -Wall")
-set(CMAKE_CXX_LDFLAGS "-O2")
+# -Wall reports warnings in system libraries; so we cannot use -Werror
+set(CMAKE_CXX_FLAGS "-Wall")
+message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for CUDA host code")
+message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${UTILITIES_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
+  ${CUDA_SDK_ROOT_DIR}/common/inc
+	${ROOT_INCLUDE_DIR}
+  ${UTILITIES_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-)
+  )
 include_directories(${INCLUDE_DIRECTORIES})
 
 
-# source files that are compiled into library
-set(SOURCES
-  integral.cc
-  keyParse.cc
-  keyfile.cc
-  keyScan.cc
-  wave.cc
-  Tgamp.cc
-)
+# compile CUDA library
+cuda_add_library(cuda likelihoodInterface.cu SHARED)
 
 
-# library
-set(THIS_LIB "pwa")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  pp
-)
+# compile CUDA executable
+make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
+target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda ${ROOT_LIBS})
 
+cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
 
-# executables
-make_executable(gamp gamp.cc ${THIS_LIB})
-make_executable(vamp vamp.cc ${THIS_LIB})
-make_executable(int  int.cc  ${THIS_LIB})
+cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
+target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})

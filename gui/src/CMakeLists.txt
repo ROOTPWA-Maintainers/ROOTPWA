@@ -34,7 +34,7 @@
 #//
 #//-------------------------------------------------------------------------
 
-set(THIS_INC "src")
+#set(THIS_INC "src")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
@@ -48,7 +48,6 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-  #rootpwa_gui.cpp
   TrpwaMainFrame.cc
   TrpwaSessionManager.cc
   TrpwaWaveSelectFrame.cc
@@ -57,16 +56,16 @@ set(SOURCES
 ) 
 
 # ROOT dictionary
-set(GEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rpwaDict.cc)
+set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
 root_generate_dictionary(
-  "${GEN_DICTIONARY}"
+  "${ROOTPWAGUI_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR};${ROOTPWA_INCLUDE_DIR}"
   "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h"
-  "rpwaLinkDef.h"
+  "rootPwaGuiLinkDef.h"
 )
-set(SOURCES ${SOURCES} ${GEN_DICTIONARY})
+set(SOURCES ${SOURCES} ${ROOTPWAGUI_DICTIONARY})
 
-message(" my sources are "${SOURCES})  
+#message(" my sources are "${SOURCES})  
 
 
 # library

@@ -25,25 +25,19 @@
 #// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      build file for pwa library and amplitude executables
+#//      build file for utilities
 #//
 #//
 #// Author List:
-#//      Sebastian Neubert    TUM            (original author)
+#//      Boris Grube          TUM            (original author)
 #//
 #//
 #//-------------------------------------------------------------------------
 
 
-set(CMAKE_CXX_FLAGS   "-O2 -Wall")
-set(CMAKE_CXX_LDFLAGS "-O2")
-
-
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${UTILITIES_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
@@ -51,23 +45,9 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-  integral.cc
-  keyParse.cc
-  keyfile.cc
-  keyScan.cc
-  wave.cc
-  Tgamp.cc
+  testSumAccumulators.cc
 )
 
-
-# library
-set(THIS_LIB "pwa")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  pp
-)
-
-
+	    
 # executables
-make_executable(gamp gamp.cc ${THIS_LIB})
-make_executable(vamp vamp.cc ${THIS_LIB})
-make_executable(int  int.cc  ${THIS_LIB})
+make_executable(testSumAccumulators testSumAccumulators.cc)

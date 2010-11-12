@@ -41,7 +41,7 @@ cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
 
 # set verbosity
 set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displayed during build
-                               # the same effect can be achieved by calling 'make VERBOSE=1'
+# the same effect can be achieved by calling 'make VERBOSE=1'
 
 
 # define project
@@ -74,7 +74,7 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 # common compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -pedantic")
 #set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS "-Wall -Werror")
 # flags for specific build types
@@ -90,6 +90,7 @@ foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
   message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
 endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
+
 
 # redirect output files
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
@@ -108,14 +109,14 @@ endif()
 
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
-#set(Boost_DEBUG 1)
-# find_package(Boost 1.42.0 REQUIRED)
-# if(Boost_FOUND)
-#   message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
-#   message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
-# else()
-#   message(SEND_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly?")
-# endif()
+# set(Boost_DEBUG 1)
+find_package(Boost 1.42.0 REQUIRED)
+if(Boost_FOUND)
+  message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
+  message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
+else()
+  message(SEND_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly?")
+endif()
 
 
 # setup libconfig
@@ -144,13 +145,64 @@ endif()
 find_package(ROOT 5.26 REQUIRED Minuit2)
 
 
+# setup CUDA
+set(USE_CUDA FALSE)
+#set(CUDA_SHADER_MODELS "13" "20")
+set(CUDA_SHADER_MODELS "13")
+if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
+  # use default SDK path, if not defined by user
+  set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
+endif()
+find_package(CUDA 3.0)
+if(NOT CUDA_FOUND)
+  message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
+  set(USE_CUDA FALSE)
+else()
+  message(STATUS "Found CUDA version ${CUDA_VERSION}")
+  message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'")
+  message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'")
+  message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
+  if(NOT CUDA_SDK_ROOT_DIR)
+    message(SEND_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
+  else()
+		# find cuda utility library
+		find_library(CUDA_CUTIL_LIBRARY
+			NAMES cutil_${CMAKE_SYSTEM_PROCESSOR}
+			PATHS ${CUDA_SDK_ROOT_DIR}/lib
+			NO_DEFAULT_PATH
+			)
+		if(NOT CUDA_CUTIL_LIBRARY)
+			message(SEND_ERROR "Could not find CUDA utility library 'cutil_${CMAKE_SYSTEM_PROCESSOR}' in '${CUDA_SDK_ROOT_DIR}/lib'")
+		else()
+			set(USE_CUDA TRUE)
+			message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
+			message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'")
+			message(STATUS "Enabling compilation of CUDA components")
+			# define for which shader models code is generated
+			message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
+			foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
+				list(APPEND CUDA_NVCC_FLAGS
+					"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
+			endforeach()
+			#list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
+			# set some global switches
+			set(CUDA_BUILD_CUBIN     OFF)
+			set(CUDA_BUILD_EMULATION OFF)
+			set(CUDA_VERBOSE_BUILD   OFF)
+			# enable CUDA code in other parts of the project
+			add_definitions(-DUSE_CUDA)
+		endif()
+  endif()
+endif()
+
+
 # make SVN version string accessible via predefined macro SVN_VERSION
 find_package(Subversion)
 if(Subversion_FOUND)
   # unfortunately CMAKE only parses 'svn info'
   find_program(SVNVERSION_EXECUTABLE
     svnversion
-  )
+		)
   if(NOT SVNVERSION_EXECUTABLE)
     message(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
   else()
@@ -189,7 +241,7 @@ else()
     COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
     DEPENDS ${DOXYGEN_CONF}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  )
+		)
 endif()
 
 
@@ -198,16 +250,36 @@ enable_testing()
 
 # build subprojects
 
+# Utilities
+set(UTILITIES_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/utilities
+	)
+add_subdirectory(utilities)
+
 # PWA2000
 add_subdirectory(pwa2000)
+
+# CUDA stuff
+if(USE_CUDA)
+	set(CUDA_INCLUDE_DIR
+		${CMAKE_SOURCE_DIR}/cuda
+		)
+	set(CUDA_LIBS
+		cuda
+		)
+	add_subdirectory(cuda)
+else()
+	set(CUDA_INCLUDE_DIR)
+	set(CUDA_LIBS)
+endif()
 
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src
-)
+	)
 set(ROOTPWA_LIBS
   RootPwa
-)
+	)
 add_subdirectory(src)
 
 # RootPwaAmp

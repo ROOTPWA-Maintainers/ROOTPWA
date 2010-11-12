@@ -54,7 +54,7 @@
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "fitResult.h"
 #include "pwacomponent.h"
 #include "massDepFitLikeli.h"
@@ -107,7 +107,7 @@ getPhaseSpace(TTree* tree, const std::string& wave){
   for(unsigned int i=0; i<n; ++i){
     tree->GetEntry(i);
     double m=res->massBinCenter();
-    double ps=res->phaseSpace(wave);
+    double ps=res->phaseSpaceIntegral(wave);
     graph->SetPoint(i,m,ps);
   }
   return graph;
@@ -584,13 +584,13 @@ extern char* optarg;
      double m=rho->massBinCenter();
      unsigned int c=0;
      for(unsigned int iw=0; iw<wl.size();++iw){
-       double ps=rho->phaseSpace(wl[iw].c_str());
+       double ps=rho->phaseSpaceIntegral(wl[iw].c_str());
        datagraphs[iw]->SetPoint(i,m,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
        fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);           
        // second loop to get phase differences
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-	 double ps2=rho->phaseSpace(wl[iw2].c_str());
+	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str());
 	 
 	 phasedatagraphs[c]->SetPoint(i,m,rho->phase(wl[iw].c_str(),
 						     wl[iw2].c_str()));

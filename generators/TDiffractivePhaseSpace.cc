@@ -32,7 +32,7 @@
 #include "TRandom3.h"
 #include "TFile.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "TDiffractivePhaseSpace.h"
 
 using namespace std;

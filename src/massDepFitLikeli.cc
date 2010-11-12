@@ -90,8 +90,8 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	    if((*_compset)[k]->channels().count(w2)>0)
 	      f2+=(*_compset)[k]->val(mass)* ((*_compset)[k]->channels()).find(w2)->second.C(); 
 	  }
-	  f1*=_rhom->phaseSpace(_index[i]);
-	  f2*=_rhom->phaseSpace(_index[j]);
+	  f1*=_rhom->phaseSpaceIntegral(_index[i]);
+	  f2*=_rhom->phaseSpaceIntegral(_index[j]);
 	  rho=f1*conj(f2);
 	  // compare to measured spin density matrix element
 	  complex<double> rhom=rho-_rhom->spinDensityMatrixElem(_index[i],_index[j]);
