@@ -58,8 +58,9 @@ main(int argc, char** argv){
     plotter.addFit(inputfiles[i],inputfiles[i],1,"pwa","fitResult_v2",nbins);
   }
 
+ 
   plotter.produceDensityPlots();
-
+  plotter.printStats();
   plotter.writeAll(outfilename);
 
   return 0;
