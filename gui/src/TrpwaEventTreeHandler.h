@@ -11,16 +11,35 @@
  */
 
 #include <iostream>
-#include <vector>
-#include <map>
-#include <TFile.h>
-#include <TTree.h>
+#include <fstream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sstream>
 #include <string>
+#include <map>
+#include <utility>
+#include <vector>
+#include <cmath>
+#include "TFile.h"
+#include "TTree.h"
+#include "TCanvas.h"
+#include "TClonesArray.h"
+#include "TLorentzVector.h"
+#include "TH1F.h"
 
 using namespace std;
 
 #ifndef TRPWAEVENTTREEHANDLER_H_
 #define TRPWAEVENTTREEHANDLER_H_
+
+struct TParticle{
+		int geantid;
+		int charge;
+		double px;
+		double py;
+		double pz;
+		double E;
+};
 
 class TrpwaEventTreeHandler {
 public:
@@ -52,7 +71,7 @@ public:
 	// folders must have the naming binlow.binhigh where
 	// binlow is included and binhigh is excluded
 	// bins must exist
-	bool Set_bin_paths(string dirnames);
+	bool Set_bin_path(string dirname);
 
 	// write the given events to the bin paths
 	// event files are written according
@@ -69,17 +88,49 @@ public:
 	//   before calling this method
 	bool Write_Trees_to_BNL_events(bool overwrite = false);
 
+	// reset all settings
+	void Reset();
+
 private:
 	// storage of trees containing the events
-	vector <TFile> _eventtreefiles;
+	vector <TFile*> _eventtreefiles;
+	// and the corresponding tree names
+	vector <string> _eventtreenames;
 	// binning is stored here: [binlow, binhigh[ MeV
 	map <int, int> _bins;
 	// the paths to the bins are stored here map key is the binlow
 	map <int, string> _bin_paths;
+	// directory containing bins
+	string _dir;
+	// needed for the progress bar
+	double last_percent;
 
 	// return the binning for a path
 	// in: path where the folder name is <binlow>.<binhigh>
-	void Path_to_bin(string path, int &binlow, int &binhigh);
+	// returns false if path is not matching the above's structure
+	// in this case binlow and binhigh are -1
+	bool Path_to_bin(string path, int &binlow, int &binhigh);
+
+	// check whether a file exists
+	bool FileExists(string filename);
+
+	// check whether a directory exists
+	bool DirExists(string dirname);
+
+	// check the contents of path
+	// return objects there as <files>
+	// filter for a filter extension given in <filterext>
+	// if <filterext> == "dir" only directories will be filtered
+	// if rmext then extentions will be removed
+	// returns the objects without the path
+	int GetDir (string path,
+			vector<string> &files, string filterext = "", bool rmext = false);
+
+	// writes one event into stream
+	void WriteEventToStream(vector<TParticle>& particles, ofstream& stream);
+
+	// draw a progress bar only when the length changes significantly
+	void DrawProgressBar(int len, double percent);
 
 };
 

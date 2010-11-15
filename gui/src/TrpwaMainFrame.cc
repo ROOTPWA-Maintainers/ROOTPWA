@@ -29,8 +29,8 @@ static const string step_titles[nsteps] = {
 		"      set up workspace        ",
 		" fill flat phase space events ",
 		"  run MC acceptance analysis  ",
-		"   filter RAW data into bins  ",
-		"   filter MC data into bins   ",
+		"     filter data into bins    ",
+		"           obsolete           ",
 		"     generate PWA keyfiles    ",
 		"   calculate PWA amplitudes   ",
 		"   integrate PWA amplitudes   ",
@@ -44,7 +44,7 @@ static const string func_calls[nsteps] = {
 		"Dummy()",
 		"Dummy()",
 		"Dummy()",
-		"Dummy()",
+		"FilterData()",
 		"Dummy()",
 		"GenKeys()",
 		"CalcAmps()",
@@ -632,4 +632,36 @@ TrpwaMainFrame::~TrpwaMainFrame() {
 	// Clean up used widgets: frames, buttons, layouthints
 	Cleanup();
 	delete current_session;
+}
+
+#include "TrpwaEventTreeHandler.h"
+void TrpwaMainFrame::FilterData(){
+	if (!current_session) {
+		cout << " no session loaded! " << endl;
+		return;
+	}
+	cout << " filtering data into bins " << endl;
+	TrpwaEventTreeHandler treehandler; // needed to filter data into bins
+	if (!treehandler.Set_bin_path(current_session->Get_binned_data_dir())){
+		cout << " Error setting up SET directory " << endl;
+		return;
+	}
+	vector<string> data_files = current_session->Get_data_files();
+	if (data_files.size() == 0){
+		cout << " Warning: no data files to filter specified! " << endl;
+	}
+	vector<string> mc_data_files = current_session->Get_MC_data_files();
+	if (mc_data_files.size() == 0){
+		cout << " Warning: no mc data files to filter specified! " << endl;
+	}
+	data_files.insert(data_files.end(), mc_data_files.begin(), mc_data_files.end());
+	//cout << " total number of files: " << data_files.size() << endl;
+	if (!treehandler.Add_eventtreefiles(data_files)){
+		cout << " Error loading data files " << endl;
+		return;
+	} else {
+		if (!treehandler.Write_Trees_to_BNL_events()){
+			cout << " Error filtering events from given trees! " << endl;
+		}
+	}
 }

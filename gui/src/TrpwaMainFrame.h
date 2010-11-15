@@ -10,6 +10,8 @@
  *      (24.08.2010)
  *      - Implementation of basic layout as singleton
  *      - since only one instance must exist
+ *      (15.11.2010)
+ *      - Implementation of tree filtering
  */
 #include <TGFrame.h>
 #include "TRootEmbeddedCanvas.h"
@@ -84,6 +86,8 @@ public:
 	void CalcAmps(); // send jobs to calculate amplitudes
 
 	void IntAmps(); // send jobs to integrate available amplitudes
+
+	void FilterData(); // filter data given by root files
 
 	void Dummy(); // will be called for every function not implemented yet
 

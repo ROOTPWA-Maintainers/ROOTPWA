@@ -344,6 +344,12 @@ public:
 	// the fit result file name with path that should be used is also returned
 	string GetWaveListFile(int ibin, int& bin_low, int& bin_high, string& fitresultfile);
 
+	// return (if specified) data files containing the PWA vectors
+	vector<string> Get_data_files(){return _data_files;};
+
+	// return (if specified) data files containing the MC PWA vectors
+	vector<string> Get_MC_data_files(){return _mc_data_files;};
+
 	// return the command to fit a certain bin
 	// executedir is the directory to execute this command in
 	string GetFitCommand(int ibin, string& executedir);
@@ -377,6 +383,8 @@ private:
 	string _config_file; // filename with path to the config file of this session
 	string _dir_ROOTPWA; // path to ROOTPWA (determined by ${ROOTPWA})
 	string _pdg_table; // filename with path to the PDG table needed for amplitude calculations
+	vector<string> _data_files; // files containing the analysis data trees
+	vector<string> _mc_data_files; // same as above for mc
 	string _dir_binned_data; // path to the bin folders (containing data, amplitudes and the integrals)
 	string _dir_key_files;   // path to the key files
 	string _dir_fit_results; // path to the fit results

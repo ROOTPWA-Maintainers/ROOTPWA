@@ -82,6 +82,21 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 		file << " dir_ROOTPWA = \"" << _dir_ROOTPWA << "\";" << endl;
 		file << " pdg_table = \"" << _pdg_table << "\";" << endl;
 		file << " dir_binned_data = \"" << _dir_binned_data << "\";" << endl;
+
+		file << " file_data = [";
+		for (unsigned int i = 0; i < _data_files.size(); i++){
+			file << "\"" << _data_files[i] << "\"";
+			if (i != _data_files.size()-1) file << " , ";
+		}
+		file << "]; " << endl;
+
+		file << " file_mc_data = [";
+		for (unsigned int i = 0; i < _mc_data_files.size(); i++){
+			file << "\"" << _mc_data_files[i] << "\"";
+			if (i != _mc_data_files.size()-1) file << " , ";
+		}
+		file << "]; " << endl;
+
 		file << " dir_key_files = \"" << _dir_key_files << "\";" << endl;
 		file << " dir_fit_results = \"" << _dir_fit_results << "\";" << endl;
 		file << " bin_low = " << _bin_low << ";" << endl;
@@ -275,6 +290,38 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 	} else {
 		cout << " No valid bins found: creating new bin structure! " << endl;
 		Initialize();
+	}
+
+	_data_files.clear();
+	if ( _config.exists("file_data")){
+		Setting& _setting_file_data    = _config.lookup("file_data");
+		if (!_setting_file_data.isArray()){
+			cout << " Error in TrpwaSessionManager::Load_Session(): check files with data in config file! " << endl;
+			return false;
+		}
+		int nfiles = _setting_file_data.getLength();
+		if (0 == nfiles){
+			cout << " Warning in TrpwaSessionManager::Load_Session(): no data files specified " << endl;
+		}
+		for (int i = 0; i < nfiles; i++){
+			_data_files.push_back((const char*) _setting_file_data[i]);
+		}
+	}
+
+	_mc_data_files.clear();
+	if ( _config.exists("file_mc_data")){
+		Setting& _setting_file_data    = _config.lookup("file_mc_data");
+		if (!_setting_file_data.isArray()){
+			cout << " Error in TrpwaSessionManager::Load_Session(): check files with mc data in config file! " << endl;
+			return false;
+		}
+		int nfiles = _setting_file_data.getLength();
+		if (0 == nfiles){
+			cout << " Warning in TrpwaSessionManager::Load_Session(): no mc data files specified " << endl;
+		}
+		for (int i = 0; i < nfiles; i++){
+			_mc_data_files.push_back((const char*) _setting_file_data[i]);
+		}
 	}
 	//Initialize();
 
