@@ -25,6 +25,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <limits>
 #include "TString.h"
@@ -40,18 +41,40 @@ int
 main(int argc, char** argv){
 
   if(argc<4){
-    cerr<<"Usage: selector nbins nsurvivors fitdir1 fitdir2 fitdir3 ..."<<endl;
+    cerr<<"Usage: selector nbins nsurvivors preselection fitdir1 fitdir2 fitdir3 ..."<<endl;
     return 1;
   }
 
   unsigned int nbins=atoi(argv[1]);
   unsigned int nsurv=atoi(argv[2]);
+  string pre=argv[3];
 
   vector<TString> inputdirectories;
-  for(int i=3; i<argc; ++i){
+  
+  map<double,TString> results; // <logli,index>
+  unsigned int bestfit=0;
+  double bestLogli=0;
+  unsigned int counter=0;
+  // load list with preselected waves
+  ifstream prefile(argv[3]);
+  cerr << "Opened Preselectionfile " << pre << endl;
+  while(!prefile.eof() && prefile.good()){
+    string dir;
+    double likeli;
+    prefile >> dir >> likeli;
+    if(dir=="")continue;
+    cerr << "Pre: " << dir << "  " << likeli << endl;
+    inputdirectories.push_back(dir);
+    results[likeli]=dir;
+  }
+  counter=inputdirectories.size();
+  prefile.close();
+
+  // register new fit directories
+  for(int i=4; i<argc; ++i){
     inputdirectories.push_back(argv[i]);
   }
-  
+
   if(nsurv>inputdirectories.size()){
     cerr << "Not enough fits to create " << nsurv << " survivors." << endl;
   }
@@ -65,13 +88,14 @@ main(int argc, char** argv){
 
 TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100,1000,1.75E6,1.9E6);
 
-  map<double,unsigned int> results; // <logli,index>
-  unsigned int bestfit=0;
-  double bestLogli=0;
+  
+ 
+ 
   
   //loop over fits and extract quality information
   // we are using the sum of loglikelyhood per event for this
-  for(unsigned int j=0; j<inputdirectories.size(); ++j){
+  // start at position counter-1! 
+  for(unsigned int j=counter; j<inputdirectories.size(); ++j){
     cerr << "Examining "<<inputdirectories[j]<<endl;
     // get generation
     unsigned int startgen=inputdirectories[j].Index("gen",0)+3;
@@ -131,7 +155,7 @@ TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100
     hEviSize->Fill(nwaves,sumevi);
     hLogliSize->Fill(nwaves,sumlogli);
 
-    results[sumevi]=j;    
+    results[sumevi]=inputdirectories[j];    
     if(sumevi>bestLogli){
       bestLogli=sumevi;
       bestfit=j;
@@ -141,20 +165,22 @@ TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100
   } // end loop over fits
   
 
-  map<double,unsigned int>::iterator mit=results.begin();
+  map<double,TString>::iterator mit=results.begin();
   while(mit!=results.end()){
-    cerr <<inputdirectories[mit->second]<<": "<<mit->first<<endl;
+    cerr <<mit->second<<": "<<mit->first<<endl;
     ++mit;
   }
 
   cerr <<  "Bestfit: "<<inputdirectories[bestfit]
        <<"  with loglikely/event: "<<bestLogli<<endl;
 
-  map<double,unsigned int>::iterator mrit=results.end();
+  map<double,TString>::iterator mrit=results.end();
   if(nsurv>results.size())nsurv=results.size();
   for(unsigned int i=0;i<nsurv;++i){
     --mrit;
-    cout << inputdirectories[mrit->second]<<"/wavelist "<<mrit->first << endl;
+    cout << mrit->second;
+    if(!(mrit->second).Contains("wavelist"))cout<<"/wavelist";
+    cout<<" "<<maxPrecision(mrit->first) << endl;
   }
   
   TFile* outfile=TFile::Open("genetic_stats.root","RECREATE");
