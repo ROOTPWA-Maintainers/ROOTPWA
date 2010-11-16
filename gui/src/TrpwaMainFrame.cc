@@ -58,7 +58,7 @@ static const bool step_disabable[nsteps] = {
 // list with functions to call when button pressed
 static const string func_calls[nsteps] = {
 		"SetupWorkspace()",
-		"Dummy()",
+		"FillFlatPhaseSpaceEvents()",
 		"Dummy()",
 		"FilterData()",
 //		"Dummy()",
@@ -691,6 +691,28 @@ void TrpwaMainFrame::SetupWorkspace(){
 	if (current_session){
 		// create the binned data folders if not already there
 		current_session->Check_binned_data_structure(true);
+		Update();
+	}
+}
+
+void TrpwaMainFrame::FillFlatPhaseSpaceEvents(){
+	if (current_session){
+		// send one job per bin
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		for (int i = 0; i < current_session->Get_n_bins(); i++){
+			string executedir;
+			string fitcommand = current_session->GetgenpwCommand(i, executedir);
+			stringstream command;
+			command << "cd " << executedir << ";\n";
+			command << fitcommand << ";\n";
+			cout << " sending fit job for bin " << i << endl;
+			if (!jobmanager->SendJob(command.str(), "genpw")){
+				cout << " failed!" << endl;
+			} else {
+				cout << " done " << endl;
+			}
+		}
 		Update();
 	}
 }

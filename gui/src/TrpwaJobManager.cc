@@ -171,7 +171,7 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 	}
 	batch_script << command << endl;
 	batch_script << " echo \"removing " << batch_script_name.str() << "\"" << endl;
-	//batch_script << "rm " << batch_script_name.str();
+	batch_script << "rm " << batch_script_name.str();
 	batch_script.close();
 
 	// send the jobs

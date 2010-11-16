@@ -357,6 +357,11 @@ public:
 	// executedir is the directory to execute this command in
 	string GetFitCommand(int ibin, string& executedir);
 
+	// return the command to generate flat phase space events
+	// into the specified bin with the number of events specified
+	// in the config file
+	string GetgenpwCommand(int ibin, string& executedir);
+
 	// retrieve a list of available fit results with path to it
 	vector<string>& GetFitResults();
 

@@ -95,6 +95,8 @@ public:
 
 	void SetupWorkspace(); // Setup workspace as specified in the init file
 
+	void FillFlatPhaseSpaceEvents(); // calling flat phase space generator bin by bin
+
 	void Dummy(); // will be called for every function not implemented yet
 
 	// call the root script for class definition

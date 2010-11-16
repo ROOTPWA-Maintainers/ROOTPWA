@@ -1260,6 +1260,27 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 	}
 }
 
+string TrpwaSessionManager::GetgenpwCommand(int ibin, string& executedir){
+	// genpw -n ${KPIPI_NPHASESPACE_MC_EVENTS} -M ${BINLOW} -B ${BINWIDTH} -c -r ${KPIPI_MC_CONFIG_FILE_FLAT}
+	string result = "";
+	int bincounter(0);
+	int bin_low = -1;
+	int bin_high = -1;
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			executedir = _dir_binned_data + "/" + it->second.bin_folder_name;
+			break;
+		}
+		bincounter++;
+	}
+	stringstream _result;
+	_result <<  "genpw -n " << _n_events_flat_phasespace << " -M " << bin_low << " -B " << bin_high-bin_low << " -c -r " << _file_flat_phasespace_config;
+	result = _result.str();
+	return result;
+}
+
 vector<string>& TrpwaSessionManager::GetFitResults(){
 	vector<string>* result = new vector<string>();
 	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
@@ -1286,7 +1307,7 @@ bool TrpwaSessionManager::FileExists(string filename){
 // check whether a directory exists
 bool TrpwaSessionManager::DirExists(string dirname){
 	struct stat st;
-	if(stat(dirname.c_str(),&st) == 0)
+	if(stat(dirname.c_str(),&st) == 0 && S_ISDIR(st.st_mode))
 		return true;
 	else
 		return false;
