@@ -60,7 +60,8 @@ main(int argc, char** argv)
 	const unsigned int nmbIncohSubAmps = 3;
 	gRandom->SetSeed(123456789);
 	
-	// load predefined std::complex dictionary
+	// force loading predefined std::complex dictionary
+	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
 	
 	if (1) {

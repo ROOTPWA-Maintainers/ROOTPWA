@@ -71,12 +71,12 @@ namespace rpwa {
 		void clear();
 
 		// accessors
-		unsigned int         nmbIncohSubAmps()                         const { return _incohSubAmps.size();  }
-		std::complex<double> incohSubAmp    (const unsigned int index) const { return _incohSubAmps[index];  }
+		unsigned int         nmbIncohSubAmps()                             const { return _incohSubAmps.size();  }
+		std::complex<double> incohSubAmp    (const unsigned int index = 0) const { return _incohSubAmps[index];  }
 
-		void setNmbIncohSubAmps(const unsigned int         nmb)	  { _incohSubAmps.resize(nmb, 0); }
+		void setNmbIncohSubAmps(const unsigned int         nmb)	      { _incohSubAmps.resize(nmb, 0); }
 		void setIncohSubAmp    (const std::complex<double> amp,
-		                        const unsigned int         index) { _incohSubAmps[index] = amp;   }
+		                        const unsigned int         index = 0) { _incohSubAmps[index] = amp;   }
 
 	private:
 

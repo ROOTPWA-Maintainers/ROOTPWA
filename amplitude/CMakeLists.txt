@@ -76,14 +76,14 @@ set(SOURCES
 
 
 # ROOT dictionary
-set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
+set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
-  "${ROOTPWA_DICTIONARY}"
+  "${ROOTPWAAMP_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
 	"waveDescription.h;amplitudeTreeLeaf.h"
   "rootPwaAmpLinkDef.h"
 	)
-set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
+set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
 
 # library
