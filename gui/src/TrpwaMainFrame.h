@@ -12,6 +12,8 @@
  *      - since only one instance must exist
  *      (15.11.2010)
  *      - Implementation of tree filtering
+ *      (16.11.2010)
+ *      - Some cosmetics
  */
 #include <TGFrame.h>
 #include "TRootEmbeddedCanvas.h"
@@ -19,6 +21,7 @@
 #include <vector>
 #include "TrpwaSessionManager.h"
 #include "TrpwaWaveSelectFrame.h"
+#include <TGButton.h>
 
 using namespace std;
 
@@ -42,6 +45,7 @@ private:
 	TGGroupFrame *frame_session_options;
 
 	vector <TGProgressBar*> progressbars; // references to the progress bars
+	vector <TGTextButton*>  stepbuttons;  // references to the buttons calling the step procedures
 
 	TrpwaSessionManager* current_session;
 
@@ -88,6 +92,8 @@ public:
 	void IntAmps(); // send jobs to integrate available amplitudes
 
 	void FilterData(); // filter data given by root files
+
+	void SetupWorkspace(); // Setup workspace as specified in the init file
 
 	void Dummy(); // will be called for every function not implemented yet
 

@@ -168,7 +168,10 @@ public:
 
 	// returns the status [0-1] of the folder structure
 	// (counting folders)
-	float Check_binned_data_structure();
+	// if create then missing folders will be created
+	// base folder _dir_binned_data must be set to an
+	// existing folder
+	float Check_binned_data_structure(bool create = false);
 
 	// returns the status [0-1] of flat phase space events
 	// (counting .genbod.evt files) + additional checks

@@ -10,7 +10,6 @@
 #include <TCanvas.h>
 #include <TF1.h>
 #include <TRandom.h>
-#include <TGButton.h>
 #include <TRootEmbeddedCanvas.h>
 #include "TrpwaMainFrame.h"
 #include <TGPack.h>
@@ -24,13 +23,13 @@
 #include <TGFileDialog.h>
 #include <cstdlib>
 
-static const int nsteps = 12;
+static const int nsteps = 11;
 static const string step_titles[nsteps] = {
 		"      set up workspace        ",
 		" fill flat phase space events ",
 		"  run MC acceptance analysis  ",
 		"     filter data into bins    ",
-		"           obsolete           ",
+//		"           obsolete           ",
 		"     generate PWA keyfiles    ",
 		"   calculate PWA amplitudes   ",
 		"   integrate PWA amplitudes   ",
@@ -39,13 +38,30 @@ static const string step_titles[nsteps] = {
 		"         show results         ",
 		"            predict           "
 };
+
+// specify if the user may rerun this step when finished
+// false if he may rerun it
+static const bool step_disabable[nsteps] = {
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		false,
+		false,
+		false,
+		false
+};
+
 // list with functions to call when button pressed
 static const string func_calls[nsteps] = {
-		"Dummy()",
+		"SetupWorkspace()",
 		"Dummy()",
 		"Dummy()",
 		"FilterData()",
-		"Dummy()",
+//		"Dummy()",
 		"GenKeys()",
 		"CalcAmps()",
 		"IntAmps()",
@@ -69,7 +85,7 @@ static const bool steps_batchimplemented[nsteps][nbatches] = {
 		{1,0,0,0,0},
 		{1,0,0,0,0},
 		{1,0,0,0,0},
-		{1,0,0,0,0},
+//		{1,0,0,0,0},
 		{1,0,0,0,0},
 		{1,0,0,0,0},
 		{1,0,0,0,0},
@@ -80,7 +96,7 @@ static const bool steps_batchimplemented[nsteps][nbatches] = {
 
 // status of each step [0..1] (0% till 100% finished)
 static float step_status[nsteps] = {
-		0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+		0., 0., 0., 0., 0., 0., 0., 0., 0., 0.//, 0.
 };
 
 TrpwaMainFrame* TrpwaMainFrame::pInstance = NULL;
@@ -138,6 +154,7 @@ void TrpwaMainFrame::Build(){
 		statusbar->SetMin(0.); statusbar->SetMax(1.);
 		statusbar->SetPosition(step_status[istep]);
 		progressbars.push_back(statusbar); // save for latter status update
+		stepbuttons.push_back(button); // save to change the status
 		subframe->AddFrame(statusbar, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
 		statusbar->ShowPos(true);
@@ -193,25 +210,25 @@ void TrpwaMainFrame::CheckStatus() {
 		step_status[0]=current_session->Check_binned_data_structure();
 		step_status[1]=current_session->Check_flat_phase_space_events();
 		step_status[2]=1.;
-		step_status[3]=current_session->Check_real_data_events();
-		step_status[4]=current_session->Check_MC_data_events();
-		step_status[5]=current_session->Check_PWA_keyfiles();
+		step_status[3]=(current_session->Check_real_data_events()+current_session->Check_MC_data_events())/2.;
+		//step_status[4]=current_session->Check_MC_data_events();
+		step_status[4]=current_session->Check_PWA_keyfiles();
 
-		step_status[6]=(
+		step_status[5]=(
 				current_session->Check_PWA_real_data_amplitudes()   +
 				current_session->Check_PWA_MC_acc_data_amplitudes() +
 				current_session->Check_PWA_MC_data_amplitudes()
 				)/3.;
-		step_status[7]=(
+		step_status[6]=(
 				current_session->Check_PWA_MC_acc_data_integrals()  +
 				current_session->Check_PWA_MC_data_integrals()
 				)/2.;
 
-		step_status[8]=current_session->Check_wave_lists();
-		step_status[9]=current_session->Check_fits();
+		step_status[7]=current_session->Check_wave_lists();
+		step_status[8]=current_session->Check_fits();
 
+		step_status[9]=0.;
 		step_status[10]=0.;
-		step_status[11]=0.;
 	}
 
 	for (int istep = 0; istep < nsteps; istep++){
@@ -220,8 +237,12 @@ void TrpwaMainFrame::CheckStatus() {
 		progressbars[istep]->SetPosition(step_status[istep]);
 		if (floor(step_status[istep]) >= 1.){
 			progressbars[istep]->SetBarColor("green");
+			if (step_disabable[istep])
+				stepbuttons[istep]->SetEnabled(false);
+
 		} else {
 			progressbars[istep]->SetBarColor("red");
+			stepbuttons[istep]->SetEnabled(true);
 		}
 	}
 	cout << " done " << endl;
@@ -663,5 +684,13 @@ void TrpwaMainFrame::FilterData(){
 		if (!treehandler.Write_Trees_to_BNL_events()){
 			cout << " Error filtering events from given trees! " << endl;
 		}
+	}
+}
+
+void TrpwaMainFrame::SetupWorkspace(){
+	if (current_session){
+		// create the binned data folders if not already there
+		current_session->Check_binned_data_structure(true);
+		Update();
 	}
 }

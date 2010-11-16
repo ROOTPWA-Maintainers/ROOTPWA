@@ -90,7 +90,7 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 			stringstream _filename;
 			stringstream _filekey;
 			_filekey << it->first << "." << it->second;
-			_filename << _bin_paths[it->first] << _filekey.str() << "/" << _filekey.str();
+			_filename << _dir << "/" << _bin_paths[it->first] << "/" << _filekey.str();
 			switch (j) {
 			case 0:
 				break;// do nothing
@@ -113,10 +113,13 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 		xbins[nbins] = it->second; // I know that only the last bin will be not overwritten
 	}
 	// create some crosscheck hists
-	TH1F* checkhist[3];
-	checkhist[0] = new TH1F("checkhist0","invariant mass distribution of reconstructed events", nbins, xbins);
-	checkhist[1] = new TH1F("checkhist1","invariant mass distribution of MC exact events", nbins, xbins);
-	checkhist[2] = new TH1F("checkhist2","invariant mass distribution of MC accepted events", nbins, xbins);
+	TH1I* checkhist[3];
+	checkhist[0] = new TH1I("checkhist0","invariant mass distribution of reconstructed events", nbins, xbins);
+	checkhist[1] = new TH1I("checkhist1","invariant mass distribution of MC exact events", nbins, xbins);
+	checkhist[2] = new TH1I("checkhist2","invariant mass distribution of MC accepted events", nbins, xbins);
+	checkhist[0]->SetDirectory(0); // to prevent root deleting this objects when closing files following
+	checkhist[1]->SetDirectory(0);
+	checkhist[2]->SetDirectory(0);
 
 	for (unsigned int i = 0; i < _eventtreefiles.size(); i++){
 		TFile& rootfile = *_eventtreefiles[i];
@@ -225,12 +228,13 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 	cout << " done " << endl;
 	// Draw a crosscheck histogram
 	TCanvas canvas("canvas", "canvas", 1000, 600);
+	canvas.cd();
 	for (int i=0; i<3; i++){
-		checkhist[i]->Draw("P Text");
+		checkhist[i]->DrawClone("P Text");
 		string addstring("");
 		if (i==1) addstring = ".genbod";
 		if (i==2) addstring = ".acc";
-		canvas.Print( (_dir+"checkhist"+addstring+".pdf").c_str());
+		canvas.Print( (_dir+"/checkhist"+addstring+".pdf").c_str());
 		delete checkhist[i];
 	}
 	return result;

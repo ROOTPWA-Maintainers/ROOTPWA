@@ -4,7 +4,9 @@
  *  Created on: Nov 11, 2010
  *      Author: Promme
  *
- *      Handling trees with events.
+ *      Handling trees with events and writing them into a binned structure.
+ *      If you provide trees containing the events and the folder structure
+ *      to write to, this class will filter the events into this folder structure.
  *
  *      (11.11.10)
  *      - first declarations and implementations
@@ -25,7 +27,7 @@
 #include "TCanvas.h"
 #include "TClonesArray.h"
 #include "TLorentzVector.h"
-#include "TH1F.h"
+#include "TH1I.h"
 
 using namespace std;
 
@@ -99,6 +101,7 @@ private:
 	// binning is stored here: [binlow, binhigh[ MeV
 	map <int, int> _bins;
 	// the paths to the bins are stored here map key is the binlow
+	// the paths are relative to _dir
 	map <int, string> _bin_paths;
 	// directory containing bins
 	string _dir;

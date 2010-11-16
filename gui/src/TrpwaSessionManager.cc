@@ -521,29 +521,75 @@ bool TrpwaSessionManager::Initialize(){
 
 // returns the status [0-1] of the folder structure
 // (counting folders)
-float TrpwaSessionManager::Check_binned_data_structure(){
+float TrpwaSessionManager::Check_binned_data_structure(bool create){
 	cout << " checking binned data structure in " << _dir_binned_data << endl;
+	if (create)
+		cout << " creating missing folders " << endl;
 	float result(0.);
 
+	if (!DirExists(_dir_binned_data)){
+		cout << " Error: Bin folder " << _dir_binned_data << " does not exist!" << endl;
+		return 0.;
+	}
 	if ( _n_bins <= 0 ) return result;
 	int counter(0);
 	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
 		bool complete(true);
 		string _bindir = _dir_binned_data + "/" + it->second.bin_folder_name;
-		if (!DirExists(_bindir)){
-			complete = false;
+		string _checkdir = _bindir;
+		if (!DirExists(_checkdir)){
+			if (create){
+				if((mkdir(_checkdir.c_str(),00777))==-1) {
+					cout << " Error: could not create " << _checkdir << endl;
+					return 0.;
+				}
+			} else {
+				complete = false;
+			}
 		}
-		if (!DirExists(_bindir + "/AMPS")){
-			complete = false;
+		_checkdir = _bindir + "/AMPS";
+		if (!DirExists(_checkdir)){
+			if (create){
+				if((mkdir(_checkdir.c_str(),00777))==-1) {
+					cout << " Error: could not create " << _checkdir << endl;
+					return 0.;
+				}
+			} else {
+				complete = false;
+			}
 		}
-		if (!DirExists(_bindir + "/PSPAMPS")){
-			complete = false;
+		_checkdir = _bindir + "/PSPAMPS";
+		if (!DirExists(_checkdir)){
+			if (create){
+				if((mkdir(_checkdir.c_str(),00777))==-1) {
+					cout << " Error: could not create " << _checkdir << endl;
+					return 0.;
+				}
+			} else {
+				complete = false;
+			}
 		}
-		if (!DirExists(_bindir + "/ACCAMPS")){
-			complete = false;
+		_checkdir = _bindir + "/ACCAMPS";
+		if (!DirExists(_checkdir)){
+			if (create){
+				if((mkdir(_checkdir.c_str(),00777))==-1) {
+					cout << " Error: could not create " << _checkdir << endl;
+					return 0.;
+				}
+			} else {
+				complete = false;
+			}
 		}
-		if (!DirExists(_bindir + "/MC")){
-			complete = false;
+		_checkdir = _bindir + "/MC";
+		if (!DirExists(_checkdir)){
+			if (create){
+				if((mkdir(_checkdir.c_str(),00777))==-1) {
+					cout << " Error: could not create " << _checkdir << endl;
+					return 0.;
+				}
+			} else {
+				complete = false;
+			}
 		}
 		if (complete) counter++;
 	}
@@ -791,7 +837,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_data_integrals(bool missing,
 vector<string>& TrpwaSessionManager::Get_PWA_data_amplitudes(string folder, bool missing,
 		vector<string>* corresponding_eventfiles, vector<string>* corresponding_keyfiles){
 	Check_PWA_keyfiles();
-	vector<string>* result = new vector<string>();
+	vector<string>* result = new vector<string>(0);
 	cout << " searching for amplitude files in "<< folder <<" folders " << endl;
 	if ( _n_bins <= 0 ) return *result;
 	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
@@ -834,7 +880,12 @@ float TrpwaSessionManager::Check_PWA_real_data_amplitudes(){
 	//result = amps.size();
 	if ((int) result != (int) _n_bins* (int) _keyfiles.size())
 		cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
-	result = (double) result / ((double) _n_bins*_keyfiles.size());
+	if (_n_bins*_keyfiles.size() == 0.){
+		cout << " no amplitudes found! " << endl;
+		result = 0.;
+	} else {
+		result = (double) result / ((double) _n_bins*_keyfiles.size());
+	}
 	return result;
 	/*
 	Check_PWA_keyfiles();
@@ -901,7 +952,12 @@ float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
 	//result = Get_PWA_data_amplitudes("PSPAMPS",false).size();
 	if ((int) result != (int) _n_bins* (int) _keyfiles.size())
 		cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
-	result = (double) result / ((double) _n_bins*_keyfiles.size());
+	if (_n_bins*_keyfiles.size() == 0.){
+		cout << " no amplitudes found! " << endl;
+		result = 0.;
+	} else {
+		result = (double) result / ((double) _n_bins*_keyfiles.size());
+	}
 	return result;
 	/*
 	Check_PWA_keyfiles();
@@ -951,7 +1007,12 @@ float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(){
 	//result = Get_PWA_data_amplitudes("ACCAMPS",false).size();
 	if ((int) result != (int) _n_bins* (int) _keyfiles.size())
 		cout << " found " << (int) result << " of " << _n_bins*_keyfiles.size() << " expected .amp files" << endl;
-	result = (double) result / ((double) _n_bins*_keyfiles.size());
+	if (_n_bins*_keyfiles.size() == 0.){
+		cout << " no amplitudes found! " << endl;
+		result = 0.;
+	} else {
+		result = (double) result / ((double) _n_bins*_keyfiles.size());
+	}
 	return result;
 	/*
 	Check_PWA_keyfiles();
@@ -1574,7 +1635,7 @@ bool TrpwaSessionManager::SaveSelectedWaves(){
 		string filename = _dir_fit_results + "/" + it->second.wave_list_file;		
 		ofstream _file(filename.c_str());
 		if (_file.good()){
-			cout << " bin " << it->first << " nwaves " << _wavelist.size() << endl;		
+			//cout << " bin " << it->first << " nwaves " << _wavelist.size() << endl;
 			for (unsigned int iwave = 0; iwave < _keyfiles.size(); iwave++){
 				// search for the wave in the selected waves to know whether it occurs
 				bool found(false);
