@@ -92,7 +92,7 @@ void TrpwaJobManager::CheckFarmType(){
 		// search for "atlas" when executing "bstat" command
 		// not tested yet!
 		stringstream command;
-		command << "bqstat | grep atlas > /tmp/_gridka_test;";
+		command << "qstat | grep atlas > /tmp/_gridka_test;";
 		cout << system(command.str().c_str()) << endl;
 		ifstream testfile("/tmp/_gridka_test");
 		if (testfile){
@@ -169,6 +169,11 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 		batch_script << "export PATH=$PBS_O_PATH" << endl;
 		batch_script << "cd $PBS_O_WORKDIR" << endl;
 	}
+	if (_available_farmtype == arrfarmtypes[2]){  // case gridka farm
+		batch_script << "#!/bin/bash" << endl;
+		// execute the login script
+		batch_script << "source "<< getenv("HOME") <<"/.bash_profile" << endl;
+	}
 	batch_script << command << endl;
 	batch_script << " echo \"removing " << batch_script_name.str() << "\"" << endl;
 	batch_script << "rm " << batch_script_name.str();
@@ -177,6 +182,9 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 	// send the jobs
 	if (_available_farmtype == arrfarmtypes[0]){  // case local
 		if (system(("source "+batch_script_name.str()).c_str()) == 0) return true; else return false;
+	}
+	if (_available_farmtype == arrfarmtypes[2]){  // case gridka farm
+		if (system(("qsub -q e-long -l max_test_run=1 "+batch_script_name.str()).c_str()) == 0) return true; else return false;
 	}
 	if (_available_farmtype == arrfarmtypes[3]){  // case mainz blaster
 		if (system(("qsub "+batch_script_name.str()).c_str()) == 0) return true; else return false;
