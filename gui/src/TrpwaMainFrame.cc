@@ -287,7 +287,7 @@ void TrpwaMainFrame::SaveSession(){
 void TrpwaMainFrame::SaveSessionAs(){
 	if (current_session){
 		TGFileInfo fileinfo;
-		const char* filetypes[] = {"Session files","*.cfg"};
+		const char* filetypes[] = {"Session files","*.cfg", 0, 0};
 		fileinfo.fFileTypes = filetypes;
 		TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fileinfo);
 		if (filedialog && fileinfo.fFilename) {
@@ -300,7 +300,7 @@ void TrpwaMainFrame::SaveSessionAs(){
 
 void TrpwaMainFrame::LoadSession(){
 	TGFileInfo fileinfo;
-	const char* filetypes[] = {"Session files","*.cfg"};
+	const char* filetypes[] = {"Session files","*.cfg", 0, 0};
 	fileinfo.fFileTypes = filetypes;
 	TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fileinfo);
 	if (filedialog && fileinfo.fFilename) {
@@ -685,6 +685,7 @@ void TrpwaMainFrame::FilterData(){
 			cout << " Error filtering events from given trees! " << endl;
 		}
 	}
+	Update();
 }
 
 void TrpwaMainFrame::SetupWorkspace(){
