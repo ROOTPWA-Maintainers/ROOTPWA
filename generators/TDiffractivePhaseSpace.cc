@@ -356,7 +356,6 @@ TDiffractivePhaseSpace::Get_inv_SlopePar(double invariant_M){
 	double invt_1 = _invSlopePar[i_1];
 	double invt_2 = _invSlopePar[i_2];
 	result = invt_1+(invt_2-invt_1)/(m_2-m_1)*(invariant_M-m_1);
-	cout << " i1 " << i_1 << " i2 " << i_2 << " of " << _ninvSlopePar << " gives " << result << endl;
 	return result;
 }
 
