@@ -38,7 +38,7 @@
 #include <fstream>
 #include <iomanip>
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "particleDataTable.h"
 
 	

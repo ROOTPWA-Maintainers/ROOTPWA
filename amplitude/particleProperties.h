@@ -47,8 +47,7 @@
 #include <iostream>
 #include <sstream>
 
-
-#include "utilities.h"
+#include "reportingUtils.hpp"
 
 
 namespace rpwa {

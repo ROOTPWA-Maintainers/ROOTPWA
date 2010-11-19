@@ -40,7 +40,7 @@
 #include "TTree.h"
 #include "TRandom3.h"
 
-#include "svnVersion.h"
+#include "reportingUtils.hpp"
 #include "amplitudeTreeLeaf.h"
 
 

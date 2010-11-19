@@ -41,8 +41,6 @@
 #include "TVector3.h"
 #include "TSystem.h"
 
-#include "svnVersion.h"
-#include "utilities.h"
 #include "particleDataTable.h"
 #include "particle.h"
 #include "decayGraph.hpp"

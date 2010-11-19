@@ -39,8 +39,8 @@
 
 #include <sstream>
 
-#include "utilities.h"
 #include "mathUtils.hpp"
+#include "reportingUtilsRoot.hpp"
 #include "clebschGordanCoeff.hpp"
 #include "isobarDecayVertex.h"
 

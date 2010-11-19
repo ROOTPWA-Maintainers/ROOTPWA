@@ -32,7 +32,7 @@
 #include "TRandom3.h"
 #include "TFile.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "TDiffractivePhaseSpace.h"
 
 using namespace std;
@@ -163,6 +163,47 @@ TDiffractivePhaseSpace::writeComGeantAscii(ostream& out, bool  formated){
 			<< hadron.Pz() << " "
 			<< hadron.Px() << " "
 			<< hadron.Py() << endl;// << " " << hadron->E() << endl;
+		}
+	} else {
+		int intval;
+		float floatval;
+		// total number of particles including recoil proton and beam particle
+		unsigned int nmbDaughters = _decayProducts.size();
+		//out << nmbDaughters+1+1 << endl;
+		intval = (int)nmbDaughters+1+1; out.write((char*)&intval,4);
+		// vertex position in cm
+		// note that Comgeant's coordinate system is different
+		floatval = (float)_vertex.Z(); out.write((char*)&floatval,4);
+		floatval = (float)_vertex.X(); out.write((char*)&floatval,4);
+		floatval = (float)_vertex.Y(); out.write((char*)&floatval,4);
+		//out << _vertex.Z() << " " << _vertex.X() << " " << _vertex.Y() << endl;
+		// beam particle: geant ID , -p_z, -p_x, -p_y must go the opposite direction upstream and should be defined as mulike with PID 44 in Comgeant
+		intval = 44; out.write((char*)&intval,4);
+		floatval = (float)-_beamLab.Pz(); out.write((char*)&floatval,4);
+		floatval = (float)-_beamLab.Px(); out.write((char*)&floatval,4);
+		floatval = (float)-_beamLab.Py(); out.write((char*)&floatval,4);
+		//out << setprecision(numeric_limits<double>::digits10 + 1)
+		//  << "44 " << -_beamLab.Pz() << " " << -_beamLab.Px() << " " << -_beamLab.Py() << endl;// << " " << beam.E() << endl;
+		// the recoil proton
+		intval = 14; out.write((char*)&intval,4);
+		floatval = (float)_recoilprotonLab.Pz(); out.write((char*)&floatval,4);
+		floatval = (float)_recoilprotonLab.Px(); out.write((char*)&floatval,4);
+		floatval = (float)_recoilprotonLab.Py(); out.write((char*)&floatval,4);
+		//out << setprecision(numeric_limits<double>::digits10 + 1)
+		//  << "14 " << _recoilprotonLab.Pz() << " " << _recoilprotonLab.Px() << " " << _recoilprotonLab.Py() << endl;// << " " << beam.E() << endl;
+
+		for (unsigned int i = 0; i < nmbDaughters; ++i) {
+			const TLorentzVector& hadron = _phaseSpace.daughter(i);
+			// hadron: geant ID, p_z, p_x, p_y
+			intval = (int)_decayProducts[i]._gId; out.write((char*)&intval,4);
+			floatval = (float)hadron.Pz(); out.write((char*)&floatval,4);
+			floatval = (float)hadron.Px(); out.write((char*)&floatval,4);
+			floatval = (float)hadron.Py(); out.write((char*)&floatval,4);
+			//out << setprecision(numeric_limits<double>::digits10 + 1)
+			//<< _decayProducts[i]._gId << " "
+			//<< hadron.Pz() << " "
+			//<< hadron.Px() << " "
+			//<< hadron.Py() << endl;// << " " << hadron->E() << endl;
 		}
 	}
 	return true;
@@ -481,7 +522,7 @@ TDiffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
   //writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
   // use the first particle as the beam particle
   writePwa2000Ascii(stream, _decayProducts[0]._gId, _decayProducts[0]._charge);
-  writeComGeantAscii(streamComGeant);
+  writeComGeantAscii(streamComGeant, true);
   return attempts;
 }
 

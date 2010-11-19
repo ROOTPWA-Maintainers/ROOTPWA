@@ -52,7 +52,8 @@
 #include "TString.h"
 #include "TRegexp.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
+#include "reportingUtilsRoot.hpp"
 #include "TCMatrix.h"
 #include "TFitBin.h"
 
@@ -105,16 +106,17 @@ namespace rpwa {
 		virtual ~fitResult();
 
 		void reset();
-		void fill(const unsigned int                        nmbEvents,               // number of events in bin			 
-		          const unsigned int                        normNmbEvents,	         // number of events to normalize to		 
-		          const double                              massBinCenter,	         // center value of mass bin			 
-		          const double                              logLikelihood,	         // log(likelihood) at maximum		 
-		          const int                                 rank,		         // rank of fit				 
-		          const std::vector<std::complex<double> >& prodAmps,	         // production amplitudes			 
-		          const std::vector<std::string>&           prodAmpNames,	         // names of production amplitudes used in fit
+		void fill(const unsigned int                        nmbEvents,               // number of events in bin
+		          const unsigned int                        normNmbEvents,	         // number of events to normalize to
+		          const double                              massBinCenter,	         // center value of mass bin
+		          const double                              logLikelihood,	         // log(likelihood) at maximum
+		          const int                                 rank,		                 // rank of fit
+		          const std::vector<std::complex<double> >& prodAmps,	               // production amplitudes
+		          const std::vector<std::string>&           prodAmpNames,	           // names of production amplitudes used in fit
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-		          const TCMatrix&                           normIntegral);           // normalization integral over full phase space without acceptance
+		          const TCMatrix&                           normIntegral,            // normalization integral matrix
+		          const std::vector<double>&                phaseSpaceIntegral);     // normalization integral over full phase space without acceptance
 
 		double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
 		double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
@@ -140,7 +142,8 @@ namespace rpwa {
 		inline void fitParameters  (double*            parArray)  const;  ///< copies fit parameters into array
 
 		/// returns production amplitude value at index
-		std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const { return std::complex<double>(_prodAmps[prodAmpIndex].Re(), _prodAmps[prodAmpIndex].Im()); }
+		std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const
+		{ return std::complex<double>(_prodAmps[prodAmpIndex].Re(), _prodAmps[prodAmpIndex].Im()); }
 		inline TMatrixT<double> prodAmpCov(const unsigned int prodAmpIndex) const;   ///< returns covariance matrix of production amplitude value at index
 		///< returns covariance matrix for a set of production amplitudes given by index list
 		TMatrixT<double>        prodAmpCov(const std::vector<unsigned int>&                           prodAmpIndices)    const;
@@ -154,6 +157,9 @@ namespace rpwa {
 		/// returns normalization integral for pair of waves at index A and B
 		inline std::complex<double> normIntegral(const unsigned int waveIndexA,
 		                                         const unsigned int waveIndexB) const;
+		/// returns phase space integral for given wave
+		double phaseSpaceIntegral(const unsigned int waveIndex) const { return _phaseSpaceIntegral[waveIndex];           }
+		double phaseSpaceIntegral(const std::string& waveName)  const { return _phaseSpaceIntegral[waveIndex(waveName)]; }
 
 		/// returns spin density matrix element for pair of waves at index A and B
 		std::complex<double> spinDensityMatrixElem   (const unsigned int waveIndexA,
@@ -175,6 +181,13 @@ namespace rpwa {
 		                    const unsigned int waveIndexB) const;  ///< returns phase difference between two waves at index A and B
 		double phaseErr    (const unsigned int waveIndexA,
 		                    const unsigned int waveIndexB) const;  ///< returns error of phase difference between two waves at index A and B
+		double phase       (const std::string waveNameA,
+		                    const std::string waveNameB) const 
+		{ return phase(waveIndex(waveNameA), waveIndex(waveNameB)); }
+		double phaseErr    (const std::string waveNameA,
+		                    const std::string waveNameB) const 
+		{ return phaseErr(waveIndex(waveNameA), waveIndex(waveNameB)); }
+
 		double coherence   (const unsigned int waveIndexA,
 		                    const unsigned int waveIndexB) const;  ///< returns coherence of two waves at index A and B
 		double coherenceErr(const unsigned int waveIndexA,
@@ -197,7 +210,7 @@ namespace rpwa {
 		inline std::ostream& printWaveNames   (std::ostream& out = std::cout) const;  ///< prints all wave names
 		inline std::ostream& printProdAmps    (std::ostream& out = std::cout) const;  ///< prints all production amplitudes and their covariance matrix
 		inline std::ostream& printWaves       (std::ostream& out = std::cout) const;  ///< prints all wave intensities and their errors
-		std::ostream& printAmpsGenPW(std::ostream& out = std::cout) const;
+		inline std::ostream& printAmpsGenPW   (std::ostream& out = std::cout) const;  ///< prints all amplitudes in format used for genpw	(rank 1 only at the moment)
 
 		virtual inline std::ostream& print(std::ostream& out = std::cout) const;
 		friend std::ostream& operator << (std::ostream&    out,
@@ -218,7 +231,7 @@ namespace rpwa {
 		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;  ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
 		TCMatrix                              _normIntegral;            ///< normalization integral over full phase space without acceptance
 		std::map<Int_t, Int_t>                _normIntIndexMap;         ///< maps production amplitude indices to indices in normalization integral
-
+		std::vector<double>                   _phaseSpaceIntegral;      ///< diagonals of phase space integrals (without acceptance)
 		// add more info about fit: quality of fit information, ndf, list of fixed parameters, ...
   
 		// helper functions
@@ -252,7 +265,7 @@ namespace rpwa {
     
 	public:
     
-		ClassDef(fitResult,1)
+		ClassDef(fitResult,2)
     
 	};  // class fitResult
   
@@ -339,7 +352,7 @@ namespace rpwa {
 		return std::complex<double>(norm.Re(), norm.Im());
 	}
 
-
+  
 	// prints all production amplitude names
 	inline
 	std::ostream&
@@ -391,6 +404,7 @@ namespace rpwa {
 		return out;
 	}
 
+
 	// prints all amplitudes in format used for genpw
 	// only supports rank 1 at the moment!!!
 	inline
@@ -403,8 +417,6 @@ namespace rpwa {
 		} 
 		return s;
 	}
-
-
 
 
 	/// dumps all raw data stored in object

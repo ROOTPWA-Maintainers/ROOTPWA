@@ -58,7 +58,7 @@
 #include <boost/graph/copy.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 
 
 // add custom vertex and edge properties to BGL graph

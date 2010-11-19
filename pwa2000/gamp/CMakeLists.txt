@@ -41,6 +41,8 @@ set(CMAKE_CXX_LDFLAGS "-O2")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+  ${UTILITIES_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/pwa2000/libpp
   ${CMAKE_CURRENT_SOURCE_DIR}
 )

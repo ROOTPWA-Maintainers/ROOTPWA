@@ -33,7 +33,7 @@
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/3Pi/fit8re
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/2008/fit1
-export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/LOWT/fit10
+export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/LOWT/NEWACC/fit24
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/MODELS/Model4/fit2
 export MYBATCH=1840.1960 # will be used of no array job is started
 
@@ -60,7 +60,7 @@ fi
 #export BINS=/afs/e18/compass/analysis/sneubert/5PiModels/M4cBatches/$BATCH
 export BINS=/afs/e18/compass/analysis/sneubert/5PiLTBatches3/$BATCH
 #export BINS=/lustre/e18/user/sneubert/2008/5PiBatches/$BATCH
-export OUTFILE=$BATCH.result.acc.root
+export OUTFILE=$BATCH.result.2.root
 export WLIST=wavelist
 export RANK=1
 export RENORM=-N

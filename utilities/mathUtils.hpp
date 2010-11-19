@@ -46,12 +46,21 @@
 #include <boost/math/tools/promotion.hpp>
 
 #include "pputil.h"
-#include "utilities.h"
+#include "reportingUtils.hpp"
 
 
 namespace rpwa {
 
 
+	// mathematical constants
+	const double pi     = 2 * asin((double)1);
+	const double piHalf = pi / 2;
+	const double twoPi  = 2 * pi;
+	const double fourPi = 4 * pi;
+
+	const std::complex<double> imag(0, 1);
+  
+  
 	//////////////////////////////////////////////////////////////////////////////
 	// define aliases for some math functions so implementations may be switched easliy
 	template<typename T> inline T abs(const T& x) { return std::abs (x); }

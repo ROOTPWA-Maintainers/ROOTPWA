@@ -35,7 +35,9 @@
 //-------------------------------------------------------------------------
 
 
-#include "utilities.h"
+#include <cstdlib>
+
+#include "conversionUtils.hpp"
 #include "particleDataTable.h"
 #include "particleProperties.h"
 

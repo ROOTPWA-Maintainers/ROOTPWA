@@ -37,8 +37,11 @@
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+  ${Boost_INCLUDE_DIRS}
   ${ROOT_INCLUDE_DIR}
+  ${UTILITIES_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
+  ${CUDA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
@@ -50,14 +53,15 @@ set(SOURCES
   TFitResult.cc
   fitResult.cc
   TCMatrix.cc
-  TPWALikelihood.h
+  TPWALikelihood.cc
   TPWALikelihoodC.cc
   TPWAAmp.cc
   TPWAPhaseConstraint.cc
   TLogMultiGaus.cc
   TCovEllipse.cc
-  utilities.cc
   pwaPlotter.cc
+  pwacomponent.cc
+  massDepFitLikeli.cc
 )
 
 	    
@@ -65,7 +69,7 @@ set(SOURCES
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
 root_generate_dictionary(
   "${ROOTPWA_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "${INCLUDE_DIRECTORIES}"
   "TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
   "rootPwaLinkDef.h"
 )
@@ -77,6 +81,7 @@ set(THIS_LIB "RootPwa")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
   "${PWA2000_LIBS}"
+  "${CUDA_LIBS}"
 )
 
 
@@ -84,12 +89,15 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 make_executable(listwaves         listwaves.cc         ${THIS_LIB})
 make_executable(pwafit            pwafit.cc            ${THIS_LIB})
 make_executable(pwaConstraintFit  pwaConstraintFit.cc  ${THIS_LIB})
-make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
-make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
-make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
 make_executable(selector          selector.cc          ${THIS_LIB})
 make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
 
+make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
+make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
+make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
+make_executable(testArray         testArray.cc         ${THIS_LIB})
+make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
+make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB})
 
 # test executables
 add_test(testBuild        ${CMAKE_BUILD_TOOL})

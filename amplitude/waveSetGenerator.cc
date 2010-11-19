@@ -39,6 +39,7 @@
 #include "libconfig.h++"
 
 #include "mathUtils.hpp"
+#include "conversionUtils.hpp"
 #include "libConfigUtils.hpp"
 #include "clebschGordanCoeff.hpp"
 #include "particleDataTable.h"

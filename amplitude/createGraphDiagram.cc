@@ -46,8 +46,6 @@
 
 #include "TSystem.h"
 
-#include "svnVersion.h"
-#include "utilities.h"
 #include "particleDataTable.h"
 #include "waveDescription.h"
 

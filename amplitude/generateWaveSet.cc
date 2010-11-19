@@ -42,7 +42,6 @@
 // #include <vector>
 // #include <complex>
 
-#include "svnVersion.h"
 // #include "particleDataTable.h"
 #include "waveSetGenerator.h"
 

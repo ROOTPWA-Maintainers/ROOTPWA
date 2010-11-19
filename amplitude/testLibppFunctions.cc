@@ -44,9 +44,8 @@
 
 #include "TRandom3.h"
 #include "TStopwatch.h"
+#include "TVector3.h"
 
-#include "svnVersion.h"
-#include "utilities.h"
 #include "factorial.hpp"
 #include "clebschGordanCoeff.hpp"
 #include "dFunction.hpp"

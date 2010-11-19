@@ -43,7 +43,7 @@
 #include <vector>
 #include <limits>
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 
 
 namespace rpwa {

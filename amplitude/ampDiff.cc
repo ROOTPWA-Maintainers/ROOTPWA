@@ -35,6 +35,7 @@
 //-------------------------------------------------------------------------
 
 
+#include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -46,11 +47,11 @@
 #include "TObjString.h"
 #include "TSystem.h"
 
-#include "svnVersion.h"
-#include "utilities.h"
+#include "reportingUtils.hpp"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 void

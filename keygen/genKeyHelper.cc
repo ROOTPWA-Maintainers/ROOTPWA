@@ -47,7 +47,7 @@
 #include "particleKey.h"
 #include "waveKey.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "genKeyHelper.h"
 
 

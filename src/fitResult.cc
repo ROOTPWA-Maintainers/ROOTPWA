@@ -37,14 +37,17 @@
 
 #include <algorithm>
 
+#include "Math/SpecFuncMathCore.h"
+#include "Math/ProbFuncMathCore.h"
+#include "TDecompChol.h"
+#include "TMath.h"
+#include "TMatrixDSym.h"
+
 // PWA2000 classes
 #include "integral.h"
 
 #include "fitResult.h"
-#include "Math/SpecFuncMathCore.h"
-#include "TDecompChol.h"
-#include "TMath.h"
-#include "TMatrixDSym.h"
+
 
 using namespace std;
 using namespace rpwa;
@@ -104,7 +107,8 @@ fitResult::fitResult(const fitResult& result)
 	  _fitParCovMatrix       (result.fitParCovMatrix()),
 	  _fitParCovMatrixIndices(result.fitParCovIndices()),
 	  _normIntegral          (result.normIntegralMatrix()),
-	  _normIntIndexMap       (result.normIntIndexMap())
+	  _normIntIndexMap       (result.normIntIndexMap()),
+	  _phaseSpaceIntegral    (result._phaseSpaceIntegral)
 { }
 
 
@@ -140,7 +144,9 @@ fitResult::~fitResult()
 double
 fitResult::evidence() const
 {
-	double       l   = -logLikelihood();
+
+	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
+	double       l   = -logLikelihood();// + nmbEvents();
  
 	double       det = _fitParCovMatrix.Determinant();
 	// simple determinant neglecting all off-diagonal entries
@@ -149,32 +155,55 @@ fitResult::evidence() const
 	//   for(unsigned int i=0;i<n;++i){
 	//    det2*=_fitParCovMatrix[i][i];
 	//   }
-  
-  
-
 
 	double       d   = (double)_fitParCovMatrix.GetNcols();
 	double       sum = 0;
 	unsigned int ni  = _normIntegral.ncols();
 	for (unsigned int i = 0; i < ni ; ++i)
 		sum += 1. / _normIntegral(i, i).Re();
-	double vad  = TMath::Power(2*TMath::Pi(), d * 0.5) * TMath::Sqrt(det);
-	double lvad = TMath::Log(vad);
+	// parameter-volume after observing data
+	//double vad  = TMath::Power(2*TMath::Pi(), d * 0.5) * TMath::Sqrt(det);
+	//double lvad = TMath::Log(vad);
+  
+	double lvad=0.5*(d*1.837877066+TMath::Log(det));
 
-	double lva = TMath::Log(d) + 0.5*(d*1.144729886+(d-1)*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
+	// parameter volume prior to observing the data
+	// n-Sphere:
+	double lva= TMath::Log(d) + 0.5*(d*1.144729886+(d-1)*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
   
+	// n-ball:
+	//  double lva = 0.5*(d*1.144729886+d*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
+
+	// finally we calculate the probability of single waves being negligible and
+	// take these reults into account
+
+	unsigned int nwaves=nmbWaves();
+	double logprob=0;
+	for(unsigned int iwaves=0;iwaves<nwaves;++iwaves){
+		double val=intensity(iwaves);
+		double err=intensityErr(iwaves);
+		// P(val>0); (assuming gaussian...) dirty!
+		// require 3simga significance!
+		double prob=ROOT::Math::normal_cdf_c(5.*err,err,val);
+		//cerr << "val="<<val<<"   err="<<err<<"   prob(val>0)="<<prob<<endl;
+		logprob+=TMath::Log(prob);
+	}
+
+
   
-  
-	//  cout << "fitResult::evidence()" << endl
+	//   cerr << "fitResult::evidence()" << endl
 	//        << "    det         : " << det << endl
-	//        << "    detsimple   : " << det2 << endl
+	//     //<< "    detsimple   : " << det2 << endl
 	//        << "    LogLikeli   : " << l << endl
 	//        << "    logVA       : " << lva << endl
+	//     //   << "    logVASphere : " << lvaS << endl
 	//        << "    logVA|D     : " << lvad << endl
+	//     //  << "    logVA|D2     : " << lvad2 << endl
 	//        << "    Occamfactor : " << -lva+lvad << endl
-	//        << "    evidence    : " << l + lvad - lva << endl;
+	//        << "    LogProb     : " << logprob << endl
+	//        << "    evidence    : " << l + lvad - lva + logprob<< endl;
   
-	return l + lvad - lva;
+	return l + lvad - lva + logprob;
 }
 
 
@@ -544,20 +573,23 @@ fitResult::reset()
 	_fitParCovMatrixIndices.clear();
 	_normIntegral.ResizeTo(0, 0);
 	_normIntIndexMap.clear();
+	_phaseSpaceIntegral.clear();
 }
 
 
 void 
-fitResult::fill(const unsigned int              nmbEvents,               // number of events in bin			 
-                const unsigned int              normNmbEvents,	          // number of events to normalize to		 
-                const double                    massBinCenter,	          // center value of mass bin			 
-                const double                    logLikelihood,	          // log(likelihood) at maximum		 
-                const int                       rank,		          // rank of fit				 
-                const vector<complex<double> >& prodAmps,	          // production amplitudes			 
-                const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
-                const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
-                const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-                const TCMatrix&                 normIntegral)            // normalization integral over full phase space without acceptance
+fitResult::fill
+(const unsigned int              nmbEvents,               // number of events in bin
+ const unsigned int              normNmbEvents,	          // number of events to normalize to
+ const double                    massBinCenter,	          // center value of mass bin
+ const double                    logLikelihood,	          // log(likelihood) at maximum
+ const int                       rank,		                // rank of fit
+ const vector<complex<double> >& prodAmps,	              // production amplitudes
+ const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
+ const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
+ const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+ const TCMatrix&                 normIntegral,            // normalization integral matrix
+ const vector<double>&           phaseSpaceIntegral)      // normalization integral over full phase space without acceptance
 {
 	_nmbEvents     = nmbEvents;
 	_normNmbEvents = normNmbEvents;
@@ -576,7 +608,8 @@ fitResult::fill(const unsigned int              nmbEvents,               // numb
 	else
 		_covMatrixValid = false;
 	_normIntegral.ResizeTo(normIntegral.nrows(), normIntegral.ncols());
-	_normIntegral = normIntegral;
+	_normIntegral       = normIntegral;
+	_phaseSpaceIntegral = phaseSpaceIntegral;
 
 	buildWaveMap();
 

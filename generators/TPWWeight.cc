@@ -4,10 +4,12 @@
 // C/C++ Headers ----------------------
 #include <list>
 #include <fstream>
-# include <string>
+#include <string>
+
+#include "TString.h"
 
 // Collaborating Class Headers --------
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "particle.h"
 
 using namespace std;

@@ -44,6 +44,7 @@
 #include <boost/tokenizer.hpp>
 
 #include "libConfigUtils.hpp"
+#include "conversionUtils.hpp"
 #include "diffractiveDissVertex.h"
 #include "leptoProductionVertex.h"
 #include "isobarHelicityAmplitude.h"

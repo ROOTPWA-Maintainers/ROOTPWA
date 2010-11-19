@@ -112,7 +112,9 @@ plotIntensity(TTree*             tree,                    // fitResult tree
 
 // .............................................................................
 // signatures with wave name
-inline
+// in contrast to other methods, it does not assume
+// to have all the same waves in all bins
+//inline
 TMultiGraph*
 plotIntensity(const unsigned int nmbTrees,               // number of fitResult trees
               TTree**            trees,                  // array of fitResult trees
@@ -126,7 +128,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
               const double       yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
               const std::string& selectExpr    = "",     // TTree::Draw() selection expression
               const std::string& branchName    = "fitResult_v2")  // fitResult branch name
-{
+;/*{
 	if (!trees[0]) {
 		printErr << "null pointer to tree[" << 0 << "]. aborting." << endl;
 		return 0;
@@ -142,7 +144,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
 	printErr << "cannot find wave '" << waveName << "' "
 	         << "in tree '" << trees[0]->GetName() << "'. aborting." << endl;
 	return 0;
-}
+}*/
 
 
 inline

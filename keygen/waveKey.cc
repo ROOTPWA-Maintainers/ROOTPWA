@@ -42,7 +42,8 @@
 
 #include "TMath.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
+#include "conversionUtils.hpp"
 #include "waveKey.h"
 
 

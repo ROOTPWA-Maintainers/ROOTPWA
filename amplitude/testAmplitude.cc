@@ -55,8 +55,9 @@
 #include "event.h"
 #include "wave.h"
 
-#include "svnVersion.h"
-#include "utilities.h"
+#include "mathUtils.hpp"
+#include "reportingUtilsRoot.hpp"
+#include "conversionUtils.hpp"
 #include "particleDataTable.h"
 #include "diffractiveDissVertex.h"
 #include "massDependence.h"

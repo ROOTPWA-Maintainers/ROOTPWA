@@ -60,8 +60,10 @@
 #include "TLorentzVector.h"
 #include "TRandom3.h"
 
-//#include "globalConstants.h"
-#include "utilities.h"
+#if !defined (__CINT__) || !defined (__MAKECINT__)
+#include "reportingUtils.hpp"
+#include "mathUtils.hpp"
+#endif
 
 
 #define DEBUG 0
@@ -240,7 +242,7 @@ rpwa::nBodyPhaseSpaceGen::pickAngles()
 {
   for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
     _cosTheta[i] = 2 * random() - 1;  // range [-1,    1]
-    _phi[i]      = twoPi * random();  // range [ 0, 2 pi]
+    _phi[i]      = rpwa::twoPi * random();  // range [ 0, 2 pi]
   }
 }
 

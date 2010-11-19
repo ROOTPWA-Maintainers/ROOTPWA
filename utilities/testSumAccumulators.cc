@@ -25,8 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      provides version number of the subversion repository used for compilation
-//      assumes that predefined macro SVN_VERSION is set to the output of svnversion
+//      simple test for sum accumulators
 //
 //
 // Author List:
@@ -36,48 +35,32 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef SVNVERSION_H
-#define SVNVERSION_H
-
-#include <iostream>
-#include <string>
-
-#include "utilities.h"
+#include "reportingUtils.hpp"
+#include "sumAccumulators.hpp"
 
 
-inline std::string svnVersion() { return SVN_VERSION; }
+using namespace std;
+using namespace rpwa;
+using namespace boost::accumulators;
 
 
-inline
-void
-printSvnVersion()
+int
+main(int argc,
+     char** argv)
 {
-  const std::string ver = svnVersion();
-  if (ver == "")
-    printInfo << "subversion repository revision is unknown." << std::endl;
-  else
-    printInfo << "subversion repository revision is '" << ver << "'" << std::endl;
+	const size_t nmbValues = 1000000;
+	const float  value     = 1e-6;
+	accumulator_set<float, stats<tag::sum> >              naiveSumAcc;
+	accumulator_set<float, stats<tag::sum(cascaded)> >    cascadedSumAcc
+		(tag::cascadedSum::nmbElements = nmbValues);
+	accumulator_set<float, stats<tag::sum(compensated)> > compensatedSumAcc;
+	for (size_t i = 0; i < nmbValues; ++i) {
+		naiveSumAcc      (value);
+		cascadedSumAcc   (value);
+		compensatedSumAcc(value);
+	}
+	printInfo << nmbValues << " * " << value << " = " << nmbValues * value << endl
+	          << "    naive sum ......... " << sum(naiveSumAcc)       << endl
+	          << "    cascaded sum ...... " << sum(cascadedSumAcc)    << endl
+	          << "    compensated sum ... " << sum(compensatedSumAcc) << endl;
 }
-
-
-inline std::string compileDir() { return CMAKE_SOURCE_DIR; }
-
-
-inline
-void
-printCompilerInfo()
-{
-  const std::string date = __DATE__;
-  const std::string time = __TIME__;
-  const std::string ver  = __VERSION__;
-  const std::string dir  = compileDir();
-  printInfo << "this executable was compiled in ";
-  if (dir != "")
-    std::cout << "'" << dir << "' ";
-  else
-    std::cout << "unknown directory ";
-  std::cout << date << " " << time << " by compiler " << ver << std::endl;
-}
-
-
-#endif  // SVNVERSION_H

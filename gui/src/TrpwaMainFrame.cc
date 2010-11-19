@@ -10,7 +10,6 @@
 #include <TCanvas.h>
 #include <TF1.h>
 #include <TRandom.h>
-#include <TGButton.h>
 #include <TRootEmbeddedCanvas.h>
 #include "TrpwaMainFrame.h"
 #include <TGPack.h>
@@ -20,6 +19,7 @@
 #include <fstream>
 #include <cmath>
 #include "TrpwaSessionManager.h"
+#include "TrpwaJobManager.h"
 #include <TGFileDialog.h>
 #include <cstdlib>
 
@@ -28,27 +28,46 @@ static const string step_titles[nsteps] = {
 		"      set up workspace        ",
 		" fill flat phase space events ",
 		"  run MC acceptance analysis  ",
-		"   filter RAW data into bins  ",
-		"   filter MC data into bins   ",
+		"     filter data into bins    ",
+//		"           obsolete           ",
 		"     generate PWA keyfiles    ",
 		"   calculate PWA amplitudes   ",
+		"   integrate PWA amplitudes   ",
 		"  specify amplitudes for fit  ",
 		"       fit partial waves      ",
 		"         show results         ",
 		"            predict           "
 };
+
+// specify if the user may rerun this step when finished
+// false if he may rerun it
+static const bool step_disabable[nsteps] = {
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		true,
+		false,
+		false,
+		false,
+		false
+};
+
 // list with functions to call when button pressed
 static const string func_calls[nsteps] = {
+		"SetupWorkspace()",
+		"FillFlatPhaseSpaceEvents()",
 		"Dummy()",
-		"Dummy()",
-		"Dummy()",
-		"Dummy()",
-		"Dummy()",
-		"Dummy()",
-		"Dummy()",
+		"FilterData()",
+//		"Dummy()",
+		"GenKeys()",
+		"CalcAmps()",
+		"IntAmps()",
 		"SelectWaves()",
 		"FitPartialWaves()",
-		"Dummy()",
+		"ShowFitResults()",
 		"Dummy()"
 };
 static const int nbatches = 5;
@@ -66,7 +85,7 @@ static const bool steps_batchimplemented[nsteps][nbatches] = {
 		{1,0,0,0,0},
 		{1,0,0,0,0},
 		{1,0,0,0,0},
-		{1,0,0,0,0},
+//		{1,0,0,0,0},
 		{1,0,0,0,0},
 		{1,0,0,0,0},
 		{1,0,0,0,0},
@@ -77,7 +96,7 @@ static const bool steps_batchimplemented[nsteps][nbatches] = {
 
 // status of each step [0..1] (0% till 100% finished)
 static float step_status[nsteps] = {
-		0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.
+		0., 0., 0., 0., 0., 0., 0., 0., 0., 0.//, 0.
 };
 
 TrpwaMainFrame* TrpwaMainFrame::pInstance = NULL;
@@ -135,19 +154,25 @@ void TrpwaMainFrame::Build(){
 		statusbar->SetMin(0.); statusbar->SetMax(1.);
 		statusbar->SetPosition(step_status[istep]);
 		progressbars.push_back(statusbar); // save for latter status update
+		stepbuttons.push_back(button); // save to change the status
 		subframe->AddFrame(statusbar, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
 		statusbar->ShowPos(true);
 		statusbar->SetBarColor("red");
+		/*
 		TGButtonGroup* buttongroup = new TGButtonGroup(frame_session," batch farm type ",kHorizontalFrame);
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
 		for (int ibatch = 0; ibatch < nbatches; ibatch++){
 			//if (steps_batchimplemented[istep][ibatch]){
 				TGRadioButton* radiobutton = new TGRadioButton(buttongroup, new TGHotString(step_batchnames[ibatch].c_str()));
-				if (ibatch == 0) radiobutton->SetState(kButtonDown);
-				if (!steps_batchimplemented[istep][ibatch])radiobutton->SetState(kButtonDisabled);
+				if (ibatch == 0) {
+					radiobutton->SetState(kButtonDown);
+				} else {
+					if (jobmanager->GetFarmType() != step_batchnames[ibatch])radiobutton->SetState(kButtonDisabled);
+				}
 			//}
 		}
-		frame_session->AddFrame(buttongroup);
+		frame_session->AddFrame(buttongroup);*/
 		steplist->AddFrame(frame_session, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
 		//buttongroup->Show();
@@ -185,21 +210,25 @@ void TrpwaMainFrame::CheckStatus() {
 		step_status[0]=current_session->Check_binned_data_structure();
 		step_status[1]=current_session->Check_flat_phase_space_events();
 		step_status[2]=1.;
-		step_status[3]=current_session->Check_real_data_events();
-		step_status[4]=current_session->Check_MC_data_events();
-		step_status[5]=current_session->Check_PWA_keyfiles();
+		step_status[3]=(current_session->Check_real_data_events()+current_session->Check_MC_data_events())/2.;
+		//step_status[4]=current_session->Check_MC_data_events();
+		step_status[4]=current_session->Check_PWA_keyfiles();
 
-		step_status[6]=(
+		step_status[5]=(
 				current_session->Check_PWA_real_data_amplitudes()   +
 				current_session->Check_PWA_MC_acc_data_amplitudes() +
 				current_session->Check_PWA_MC_data_amplitudes()
 				)/3.;
+		step_status[6]=(
+				current_session->Check_PWA_MC_acc_data_integrals()  +
+				current_session->Check_PWA_MC_data_integrals()
+				)/2.;
 
 		step_status[7]=current_session->Check_wave_lists();
 		step_status[8]=current_session->Check_fits();
 
-		step_status[9]=1.;
-		step_status[10]=1.;
+		step_status[9]=0.;
+		step_status[10]=0.;
 	}
 
 	for (int istep = 0; istep < nsteps; istep++){
@@ -208,8 +237,12 @@ void TrpwaMainFrame::CheckStatus() {
 		progressbars[istep]->SetPosition(step_status[istep]);
 		if (floor(step_status[istep]) >= 1.){
 			progressbars[istep]->SetBarColor("green");
+			if (step_disabable[istep])
+				stepbuttons[istep]->SetEnabled(false);
+
 		} else {
 			progressbars[istep]->SetBarColor("red");
+			stepbuttons[istep]->SetEnabled(true);
 		}
 	}
 	cout << " done " << endl;
@@ -257,7 +290,7 @@ void TrpwaMainFrame::SaveSessionAs(){
 		const char* filetypes[] = {"Session files","*.cfg"};
 		fileinfo.fFileTypes = filetypes;
 		TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fileinfo);
-		if (fileinfo.fFilename) {
+		if (filedialog && fileinfo.fFilename) {
 			if (!current_session->Save_Session(fileinfo.fFilename)){
 				cout << " Error while saving session occurred! " << endl;
 			}
@@ -270,7 +303,7 @@ void TrpwaMainFrame::LoadSession(){
 	const char* filetypes[] = {"Session files","*.cfg"};
 	fileinfo.fFileTypes = filetypes;
 	TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDOpen, &fileinfo);
-	if (fileinfo.fFilename) {
+	if (filedialog && fileinfo.fFilename) {
 		if (current_session){
 			SaveSession();
 			delete current_session;
@@ -353,6 +386,32 @@ void TrpwaMainFrame::FitPartialWaves(){
 		// calls will move to a separate class depending on the
 		// farm type given, but for now implemented here
 
+		// remove old results
+		vector<string> fitresultfiles = current_session->GetFitResults();
+		for (unsigned int i = 0; i < fitresultfiles.size(); i++){
+			stringstream command;
+			command << "mv " << fitresultfiles[i] << " " << fitresultfiles[i] << ".previous" << endl;
+			cout << system(command.str().c_str()) << endl;
+		}
+		// send one job per bin
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		for (int i = 0; i < current_session->Get_n_bins(); i++){
+			string executedir;
+			string fitcommand = current_session->GetFitCommand(i, executedir);
+			stringstream command;
+			command << "cd " << executedir << ";\n";
+			command << fitcommand << ";\n";
+			cout << " sending fit job for bin " << i << endl;
+			if (!jobmanager->SendJob(command.str(), "fit")){
+				cout << " failed!" << endl;
+			} else {
+				cout << " done " << endl;
+			}
+		}
+
+
+/*
 		// write a script to submit it
 		ofstream script("/tmp/_fitpartialwaves.sh");
 		if (script.good()){
@@ -369,7 +428,224 @@ void TrpwaMainFrame::FitPartialWaves(){
 		stringstream command;
 		command << "source /tmp/_fitpartialwaves.sh";
 
-		system(command.str().c_str());
+		cout << system(command.str().c_str()) << endl;
+		*/
+	}
+}
+
+void TrpwaMainFrame::ShowFitResults(){
+	if (current_session){
+		// calls will move to a separate class depending on the
+		// farm type given, but for now implemented here
+
+		// write a script to submit it
+		ofstream script("/tmp/_showresults.sh");
+		if (script.good()){
+			script << "# generated script to show fit results \n" << endl;
+			script << "cd ${ROOTPWA}/src/rootscripts" << endl;
+			ofstream rootmacro("/tmp/rootmacro.C");
+			if (rootmacro.good()){
+				rootmacro << "void rootmacro(){" << endl;
+				rootmacro << "TChain* tree = new TChain(\"pwa\",\"pwa\");" << endl;
+				vector<string> fitresultfiles = current_session->GetFitResults();
+				for (unsigned int i = 0; i < fitresultfiles.size(); i++){
+					rootmacro << "tree->Add(\"" << fitresultfiles[i] << "\");"<< endl;
+				}
+				rootmacro << "plotAllIntensities(tree, true);" << endl;
+				rootmacro << "};" << endl;
+			}
+			rootmacro.close();
+			script << "root -l -q /tmp/rootmacro.C" << endl;
+			//script << "rm /tmp/rootmacro.C" << endl;
+			script << "mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ~/" << endl;
+			script << "cd -" << endl;
+		}
+		script.close();
+		stringstream command;
+		command << "source /tmp/_showresults.sh";
+
+		cout << system(command.str().c_str()) << endl;
+	}
+	/*
+	# visualization must be performed in the rootscript folder containing all needed (logon) scripts
+	# run the lines of code
+	# hopefully a ps file was created containing all intensities
+	mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ${KPIPI_FIT_DIR}
+	# ps2pdf ${KPIPI_FIT_DIR}/waveintensities.ps*/
+}
+
+void TrpwaMainFrame::GenKeys() {
+	if (current_session){
+		cout << " calling the key file generator " << endl;
+		string keyfilegen = current_session->Get_key_file_generator_file();
+		string keyfilegendir = keyfilegen.substr( 0, keyfilegen.rfind("/")+1 );
+		// run the key generator within it's directory
+		stringstream command;
+		command << "cd "+keyfilegendir << "; ";
+		// move all keyfiles there
+		command << "mkdir guibackup;";
+		command << "mv *.key guibackup/;";
+		// create the new key files
+		command << "root -l -q "+keyfilegen << "+;";
+		// remove all keyfile in the destination directory
+		command << "rm " << current_session->Get_key_files_dir() << "/*.key;";
+		// move the key files to the destination directory
+		command << "mv *.key " << current_session->Get_key_files_dir() << "/ ;";
+		command << "cd -;";
+		//cout << command.str();
+		cout << system(command.str().c_str()) << endl;
+		Update();
+	}
+	//system();
+}
+
+void TrpwaMainFrame::CalcAmps(){
+	if (current_session){
+		cout << " sending jobs for amplitude calculation " << endl;
+		vector<string>  evt_real_miss;
+		vector<string>  key_real_miss;
+		vector<string>& amp_real_miss  = current_session->Get_PWA_real_data_amplitudes(true, &evt_real_miss, &key_real_miss);
+		//vector<string>& amp_real_avail = current_session->Get_PWA_real_data_amplitudes(false);
+		//cout << endl << " available amplitudes: " << endl;
+		/*
+		for (unsigned int i = 0; i < amp_real_avail.size(); i++){
+			cout << amp_real_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
+			cout << amp_real_miss[i] << endl;
+		}*/
+		vector<string>  evt_mc_miss;
+		vector<string>  key_mc_miss;
+		vector<string>& amp_mc_miss  = current_session->Get_PWA_MC_data_amplitudes(true, &evt_mc_miss, &key_mc_miss);
+		//vector<string>& amp_mc_avail = current_session->Get_PWA_MC_data_amplitudes(false);
+		/*
+		cout << endl << " available amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_avail.size(); i++){
+			cout << amp_mc_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
+			cout << amp_mc_miss[i] << endl;
+		}*/
+		vector<string>  evt_mc_acc_miss;
+		vector<string>  key_mc_acc_miss;
+		vector<string>& amp_mc_acc_miss  = current_session->Get_PWA_MC_acc_data_amplitudes(true, &evt_mc_acc_miss, &key_mc_acc_miss);
+		//vector<string>& amp_mc_acc_avail = current_session->Get_PWA_MC_acc_data_amplitudes(false);
+		/*
+		cout << endl << " available amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_acc_avail.size(); i++){
+			cout << amp_mc_acc_avail[i] << endl;
+		}
+		cout << endl << " missing amplitudes: " << endl;
+		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
+			cout << amp_mc_acc_miss[i] << " " << evt_mc_acc_miss[i] << endl;
+		}*/
+
+		cout << " missing " <<  amp_real_miss.size() << " real data amplitudes " << endl;
+		cout << " missing " <<  amp_mc_miss.size() << " real mc data amplitudes " << endl;
+		cout << " missing " <<  amp_mc_acc_miss.size() << " real mc acc data amplitudes " << endl;
+
+		cout << " calculating missing amplitudes ... " << endl;
+
+		string pdg_table = current_session->Get_pdg_table();
+
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		stringstream batchcommand;
+
+		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;" << '\n';
+			cout << " calculating " << amp_real_miss[i] << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_real_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_data_amp");
+				batchcommand.str("");
+			}
+		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_data_amp");
+		//batchcommand.str("");
+
+		for (unsigned int i = 0; i < amp_mc_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_mc_miss[i] <<" || cat "<< evt_mc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_miss[i]<<" > "<< amp_mc_miss[i]<< " ;" << '\n';
+			cout << " calculating " << amp_mc_miss[i] << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_mc_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_mc_amp");
+				batchcommand.str("");
+			}
+		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_mc_amp");
+		//batchcommand.str("");
+
+		for (unsigned int i = 0; i < amp_mc_acc_miss.size(); i++){
+			stringstream command;
+			command << "test -s "<< amp_mc_acc_miss[i] <<" || cat "<< evt_mc_acc_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_mc_acc_miss[i]<<" > "<< amp_mc_acc_miss[i]<< " ;" << '\n';
+			cout << " calculating " << amp_mc_acc_miss[i] << endl;
+			batchcommand << command.str();
+			//cout << system(command.str().c_str()) << endl;
+			if ((i%10) == 0 || i == amp_mc_acc_miss.size()-1){
+				jobmanager->SendJob(batchcommand.str(), "calc_mc_acc_amp");
+				batchcommand.str("");
+			}
+		}
+
+		//jobmanager->SendJob(batchcommand.str(), "calc_mc_acc_amp");
+		//batchcommand.str("");
+
+		cout << " done " << endl;
+	}
+}
+
+void TrpwaMainFrame::IntAmps(){
+	if (current_session){
+		cout << " sending jobs for amplitude integration " << endl;
+		vector< vector<string> > amp_mc_avail;
+		vector< vector<string> > amp_mc_acc_avail;
+		vector<string>& int_mc_miss = current_session->Get_PWA_MC_data_integrals(true, &amp_mc_avail);
+		vector<string>& int_mc_acc_miss = current_session->Get_PWA_MC_acc_data_integrals(true, &amp_mc_acc_avail);
+
+		cout << " available " <<  int_mc_miss.size() << " real mc data integrals " << endl;
+		cout << " available " <<  int_mc_acc_miss.size() << " real mc acc data integrals " << endl;
+
+		cout << " integrating available amplitudes ... " << endl;
+
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		for (unsigned int i = 0; i < int_mc_miss.size(); i++){
+			if (amp_mc_avail[i].size() == 0) continue;
+			stringstream command;
+			command << "int ";
+			cout << " integrating " << int_mc_miss[i] << endl;// << " with " << endl;
+			for (unsigned int j = 0; j < amp_mc_avail[i].size(); j++){
+				command << amp_mc_avail[i][j] << " ";
+				//cout << amp_mc_avail[i][j] << endl;
+			}
+			command << " > " << int_mc_miss[i];
+			//cout << command.str() << endl;
+			jobmanager->SendJob(command.str(), "calintegral");
+		}
+
+		for (unsigned int i = 0; i < int_mc_acc_miss.size(); i++){
+			if (amp_mc_acc_avail[i].size() == 0) continue;
+			stringstream command;
+			command << "int ";
+			cout << " integrating " << int_mc_acc_miss[i] << endl;// << " with " << endl;
+			for (unsigned int j = 0; j < amp_mc_acc_avail[i].size(); j++){
+				command << amp_mc_acc_avail[i][j] << " ";
+				//cout << amp_mc_acc_avail[i][j] << endl;
+			}
+			command << " > " << int_mc_acc_miss[i];
+			//cout << command.str() << endl;
+			jobmanager->SendJob(command.str(), "calcintegral");
+		}
+		cout << " done " << endl;
 	}
 }
 
@@ -377,4 +653,66 @@ TrpwaMainFrame::~TrpwaMainFrame() {
 	// Clean up used widgets: frames, buttons, layouthints
 	Cleanup();
 	delete current_session;
+}
+
+#include "TrpwaEventTreeHandler.h"
+void TrpwaMainFrame::FilterData(){
+	if (!current_session) {
+		cout << " no session loaded! " << endl;
+		return;
+	}
+	cout << " filtering data into bins " << endl;
+	TrpwaEventTreeHandler treehandler; // needed to filter data into bins
+	if (!treehandler.Set_bin_path(current_session->Get_binned_data_dir())){
+		cout << " Error setting up SET directory " << endl;
+		return;
+	}
+	vector<string> data_files = current_session->Get_data_files();
+	if (data_files.size() == 0){
+		cout << " Warning: no data files to filter specified! " << endl;
+	}
+	vector<string> mc_data_files = current_session->Get_MC_data_files();
+	if (mc_data_files.size() == 0){
+		cout << " Warning: no mc data files to filter specified! " << endl;
+	}
+	data_files.insert(data_files.end(), mc_data_files.begin(), mc_data_files.end());
+	//cout << " total number of files: " << data_files.size() << endl;
+	if (!treehandler.Add_eventtreefiles(data_files)){
+		cout << " Error loading data files " << endl;
+		return;
+	} else {
+		if (!treehandler.Write_Trees_to_BNL_events()){
+			cout << " Error filtering events from given trees! " << endl;
+		}
+	}
+}
+
+void TrpwaMainFrame::SetupWorkspace(){
+	if (current_session){
+		// create the binned data folders if not already there
+		current_session->Check_binned_data_structure(true);
+		Update();
+	}
+}
+
+void TrpwaMainFrame::FillFlatPhaseSpaceEvents(){
+	if (current_session){
+		// send one job per bin
+		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+
+		for (int i = 0; i < current_session->Get_n_bins(); i++){
+			string executedir;
+			string fitcommand = current_session->GetgenpwCommand(i, executedir);
+			stringstream command;
+			command << "cd " << executedir << ";\n";
+			command << fitcommand << ";\n";
+			cout << " sending fit job for bin " << i << endl;
+			if (!jobmanager->SendJob(command.str(), "genpw")){
+				cout << " failed!" << endl;
+			} else {
+				cout << " done " << endl;
+			}
+		}
+		Update();
+	}
 }

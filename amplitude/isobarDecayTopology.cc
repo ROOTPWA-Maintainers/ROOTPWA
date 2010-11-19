@@ -36,7 +36,6 @@
 //-------------------------------------------------------------------------
 
 
-#include "utilities.h"
 #include "diffractiveDissVertex.h"
 #include "isobarDecayTopology.h"
 #include "particleDataTable.h"

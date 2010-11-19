@@ -56,6 +56,10 @@ void TrpwaWaveSelectFrame::Build(){
 		//if (!steps_batchimplemented[istep][ibatch])radiobutton->SetState(kButtonDisabled);
 	}
 	frame_bin_selections->AddFrame(buttongroup);
+	// add a button to copy from one bin to another
+	_copybinbutton = new TGCheckButton(buttongroup, new TGHotString(" copy bin "));
+	_copybinbutton->SetState(kButtonUp);
+	buttongroup->AddFrame(_copybinbutton);
 
 	this->AddFrame(frame_bin_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
@@ -114,6 +118,10 @@ void TrpwaWaveSelectFrame::BinSelectClick(){
 	}
 	// found a new bin?
 	if (_selected_bin >= 0){
+		// copy from last bin?
+		if (_copybinbutton->GetState()==kButtonDown && _last_selected_bin >= 0){
+			CopyWaveSelection(_last_selected_bin, _selected_bin);
+		}
 		_buttons_binselection[_selected_bin]->SetState(kButtonDown);
 		_button_allbins->SetState(kButtonUp);
 	} else {
@@ -127,6 +135,7 @@ void TrpwaWaveSelectFrame::BinSelectClick(){
 			_button_allbins->SetState(kButtonDown);
 		}
 	}
+	_copybinbutton->SetState(kButtonUp);
 	UpdateWaveButtons();
 }
 
@@ -232,6 +241,41 @@ void TrpwaWaveSelectFrame::UpdateWaveButtons(){
 			}
 		}
 	}
+}
+
+void TrpwaWaveSelectFrame::CopyWaveSelection(int frombin, int tobin){
+	int nbins = (signed)  (*_waveselections).size();
+	if (frombin < 0 || frombin > nbins-1) {
+		cout << " frombin is out of range: " << frombin << endl;
+		return;
+	}
+	if (tobin < 0 || tobin > nbins-1){
+		cout << " tobin is out of range:" << tobin << endl;
+		return;
+	}
+	TWaveSelection& _frombin = (*_waveselections)[frombin];
+	TWaveSelection& _tobin   = (*_waveselections)[tobin];
+	if (_frombin.selected_waves.size() != _tobin.selected_waves.size()){
+		cout << " Error: number of waves does not match! " << endl;
+		return;
+	}
+	int found(0);
+	for (unsigned int iwave = 0; iwave < _frombin.selected_waves.size(); iwave++){
+		for (unsigned int jwave = 0; jwave < _tobin.selected_waves.size(); jwave++){
+			if (_frombin.available_waves[iwave] == _tobin.available_waves[jwave]){
+				_tobin.selected_waves[jwave] = _frombin.selected_waves[iwave];
+				found++;
+				break;
+			}
+		}
+	}
+	if ((signed)_frombin.available_waves.size() != found){
+		cout << " Error in TrpwaWaveSelectFrame::CopyWaveSelection(): not all waves were found!" << endl;
+	}
+	/*
+	for (unsigned ibin = 0; ibin < _waveselections.size(); ibin++){
+		;
+	}*/
 }
 
 

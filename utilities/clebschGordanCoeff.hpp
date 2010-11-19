@@ -44,7 +44,6 @@
 #include <vector>
 #include <limits>
 
-#include "utilities.h"
 #include "mathUtils.hpp"
 #include "factorial.hpp"
 

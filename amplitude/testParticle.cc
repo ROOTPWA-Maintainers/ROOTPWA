@@ -41,7 +41,9 @@
 #include "Vec.h"
 #include "lorentz.h"
 
-#include "utilities.h"
+#include "mathUtils.hpp"
+#include "reportingUtilsRoot.hpp"
+#include "conversionUtils.hpp"
 #include "particleDataTable.h"
 #include "particle.h"
 

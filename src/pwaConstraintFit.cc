@@ -34,13 +34,14 @@
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "TFitBin.h"
 #include "TPWALikelihoodC.h"
 
 
 using namespace std;
 using namespace ROOT::Math;
+using namespace rpwa;
 
 
 //int lineno = 1; // global variables needed for lex (not understood)

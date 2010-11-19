@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "TrpwaJobManager.h"
 
 using namespace std;
 
@@ -69,6 +70,11 @@ public:
 	// true if succeeded
 	bool Set_ROOTPWA_dir(string path = "");
 
+	// set the filename with path for the PDG table
+	// if no path given trying to find one in ${ROOTPWA}'s default destination
+	// true if succeeded
+	bool Set_pdg_table(string filename = "");
+
 	// set the path to the binned data
 	// true if succeeded
 	bool Set_binned_data_dir(string path);
@@ -123,6 +129,9 @@ public:
 	// get the path to ROOTPWA
 	string Get_ROOTPWA_dir(){return _dir_ROOTPWA;};
 
+	// get the file with the path to the pdg table
+	string Get_pdg_table(){return _pdg_table;};
+
 	// Get the path to the binned data
 	string Get_binned_data_dir(){return _dir_binned_data;};
 
@@ -159,7 +168,10 @@ public:
 
 	// returns the status [0-1] of the folder structure
 	// (counting folders)
-	float Check_binned_data_structure();
+	// if create then missing folders will be created
+	// base folder _dir_binned_data must be set to an
+	// existing folder
+	float Check_binned_data_structure(bool create = false);
 
 	// returns the status [0-1] of flat phase space events
 	// (counting .genbod.evt files) + additional checks
@@ -183,6 +195,15 @@ public:
 	// Check_PWA_keyfiles is called
 	float Check_PWA_real_data_amplitudes();
 
+	// Get a list of (missing/available) calculated amplitudes with full path
+	// if corresponding_eventfiles is given as an empty vector
+	// the filenames of the corresponding eventfiles are written out
+	// if corresponding_keyfiles is given as an empty vector
+	// the keyfiles with path are written out
+	vector<string>& Get_PWA_real_data_amplitudes(bool missing = true,
+			vector<string>* corresponding_eventfiles = NULL,
+			vector<string>* corresponding_keyfiles = NULL);
+
 	// returns the status [0-1] of calculated amplitudes
 	// of flat phase space data
 	// (comparing number of .amp files with .key files
@@ -190,12 +211,90 @@ public:
 	// Check_PWA_keyfiles is called
 	float Check_PWA_MC_data_amplitudes();
 
+	// Get a list of (missing/available) calculated amplitudes with full path
+	// if corresponding_eventfiles is given as an empty vector
+	// the filenames of the corresponding eventfiles are written out
+	// if corresponding_keyfiles is given as an empty vector
+	// the keyfiles with path are written out
+	vector<string>& Get_PWA_MC_data_amplitudes(bool missing = true,
+			vector<string>* corresponding_eventfiles = NULL,
+			vector<string>* corresponding_keyfiles = NULL);
+
 	// returns the status [0-1] of calculated amplitudes
 	// of accepted flat phase space data
 	// (comparing number of .amp files with .key files
 	// in the accpeted events data folder)
 	// Check_PWA_keyfiles is called
 	float Check_PWA_MC_acc_data_amplitudes();
+
+	// Get a list of (missing/available) calculated amplitudes with full path
+	// if corresponding_eventfiles is given as an empty vector
+	// the filenames of the corresponding eventfiles are written out
+	// if corresponding_keyfiles is given as an empty vector
+	// the keyfiles with path are written out
+	vector<string>& Get_PWA_MC_acc_data_amplitudes(bool missing = true,
+			vector<string>* corresponding_eventfiles = NULL,
+			vector<string>* corresponding_keyfiles = NULL);
+
+	// Get a list of (missing/available) calculated amplitudes with full path
+	// folder = AMPS | PSPAMPS | ACCAMPS
+	// if corresponding_eventfiles is given as an empty vector
+	// the filenames of the corresponding eventfiles are written out
+	// if corresponding_keyfiles is given as an empty vector
+	// the keyfiles with path are written out
+	vector<string>& Get_PWA_data_amplitudes(string folder, bool missing = true,
+			vector<string>* corresponding_eventfiles = NULL,
+			vector<string>* corresponding_keyfiles = NULL);
+
+	// check the entries of an amplitude file
+	// some files may have (0,0) entries that lead to 0 entries in the integral files
+	// ampfile = filename with full path to the ampfile
+	// nlines  = number of lines to be read and tested
+	// return true if no 0 entries found
+	bool Is_valid_amplitude(string ampfile, int nlines = 10);
+
+	// Get a list of (missing/available) calculated integrals of
+	// the available amplitudes with full path
+	// folder = PSPAMPS | ACCAMPS
+	// if corresponding_amplitudefiles is given as an empty vector
+	// the amplitude files with path are written out
+	vector<string>& Get_PWA_data_integrals(string folder, bool missing = true,
+			vector < vector<string> >* corresponding_amplitudefiles = NULL);
+
+	// same as above for one bin
+	string Get_PWA_data_integral(int bin, string folder, bool missing = true,
+			vector<string>* corresponding_amplitudefiles = NULL);
+
+	// returns the status [0-1] of calculated integrals
+	// of accepted flat phase space data
+	// (searching for .int files)
+	float Check_PWA_MC_acc_data_integrals();
+
+	// Get a list of (missing/available) calculated integrals of
+	// the available MC accepted amplitudes with full path
+	// if corresponding_amplitudefiles is given as an empty vector
+	// the amplitude files with path are written out
+	vector<string>& Get_PWA_MC_acc_data_integrals(bool missing = true,
+			vector < vector<string> >* corresponding_amplitudefiles = NULL);
+
+	// returns the status [0-1] of calculated integrals
+	// of flat phase space data
+	// (searching for .int files)
+	float Check_PWA_MC_data_integrals();
+
+	// Get a list of (missing/available) calculated integrals of
+	// the available MC amplitudes with full path
+	// if corresponding_amplitudefiles is given as an empty vector
+	// the amplitude files with path are written out
+	vector<string>& Get_PWA_MC_data_integrals(bool missing = true,
+			vector < vector<string> >* corresponding_amplitudefiles = NULL);
+
+	// Check a normalization integral for consistency
+	// current implementation checks the dimension and the amplitudes listed in it
+	// to do: check the number of events, and maybe the entries themselves
+	// writes detailed errors to cout
+	// all filenames have to be given with full path
+	bool Is_valid_norm_integral(const string norm_file, const vector<string>& corresponding_amplitudefiles);
 
 	// returns the status [0-1] of wave lists
 	// (searches for wave lists in the bins)
@@ -248,16 +347,30 @@ public:
 	// the fit result file name with path that should be used is also returned
 	string GetWaveListFile(int ibin, int& bin_low, int& bin_high, string& fitresultfile);
 
+	// return (if specified) data files containing the PWA vectors
+	vector<string> Get_data_files(){return _data_files;};
+
+	// return (if specified) data files containing the MC PWA vectors
+	vector<string> Get_MC_data_files(){return _mc_data_files;};
+
 	// return the command to fit a certain bin
 	// executedir is the directory to execute this command in
 	string GetFitCommand(int ibin, string& executedir);
+
+	// return the command to generate flat phase space events
+	// into the specified bin with the number of events specified
+	// in the config file
+	string GetgenpwCommand(int ibin, string& executedir);
+
+	// retrieve a list of available fit results with path to it
+	vector<string>& GetFitResults();
 
 	// set the selected Waves
 	// bin_lowedes are the low edges of the bins to be set
 	// selections are the corresponding waves for each bin
 	bool SetSelectedWaves(const vector<int>& bin_lowedes,const vector< vector<string> >& waves);
 
-	// save the wavelists
+	// save the wave lists
 	bool SaveSelectedWaves();
 
 	// sort by JPC iso1 iso2 M reflectivity
@@ -277,6 +390,9 @@ public:
 private:
 	string _config_file; // filename with path to the config file of this session
 	string _dir_ROOTPWA; // path to ROOTPWA (determined by ${ROOTPWA})
+	string _pdg_table; // filename with path to the PDG table needed for amplitude calculations
+	vector<string> _data_files; // files containing the analysis data trees
+	vector<string> _mc_data_files; // same as above for mc
 	string _dir_binned_data; // path to the bin folders (containing data, amplitudes and the integrals)
 	string _dir_key_files;   // path to the key files
 	string _dir_fit_results; // path to the fit results
@@ -292,10 +408,19 @@ private:
 	TBinMap _bins; // map with settings to each bin
 
 	vector<string> _keyfiles; // key files without the extension determined by accessing the keyfile folder
-	int _n_keyfiles; // will be determined by accessing the keyfile folder
+	int _n_keyfiles; // will be determined by accessing the key file folder
+
+	TrpwaJobManager* jobManager; // to send commands performing analysis on different farm types
 
 	// true if both lists are equal
 	bool AreListsEqual(const vector<string>& list1, const vector<string>& list2);
+
+	// gives the number of entries in list1 found in list2
+	int CompareLists(const vector<string>& list1, const vector<string>& list2);
+
+	// returns the entries of list1 (not if missing = true) found in list2
+	// does not check for dubletts
+	vector<string>& CompareLists(const vector<string>& list1, const vector<string>& list2, bool missing = true);
 
 	// read the wave list given
 	// put every entry with the ending .amp without the character# in it
@@ -303,6 +428,9 @@ private:
 	// if the wave list is not existing wavelist will be written
 	// in this case Check_PWA_keyfiles() is called to get a list of expected keyfiles
 	vector<string> &ReadWaveList(string filename);
+
+	// simple stats bar
+	void DrawProgressBar(int len, double percent);
 };
 
 

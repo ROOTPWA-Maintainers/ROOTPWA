@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 462                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-11-03 19:15:35 +0100 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      basic test program for wave description class
@@ -38,8 +38,6 @@
 #include "TFile.h"
 #include "TSystem.h"
 
-#include "svnVersion.h"
-#include "utilities.h"
 #include "particleDataTable.h"
 #include "waveDescription.h"
 

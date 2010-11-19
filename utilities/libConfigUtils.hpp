@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 462                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-11-03 19:15:35 +0100 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      collection of useful libConfig routines
@@ -41,7 +41,7 @@
 
 #include "libconfig.h++"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 
 
 namespace rpwa {

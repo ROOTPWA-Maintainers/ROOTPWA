@@ -43,6 +43,8 @@
 #include <vector>
 #include <complex>
 
+#include <boost/tokenizer.hpp>
+
 #include "TROOT.h"
 #include "TFile.h"
 #include "TChain.h"
@@ -51,8 +53,6 @@
 #include "TClonesArray.h"
 #include "TStopwatch.h"
 
-#include "svnVersion.h"
-#include "utilities.h"
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "waveDescription.h"
@@ -175,11 +175,14 @@ main(int    argc,
 	}
 
 	// get leaf names
-	const vector<string> leafNameTokens            = tokenizeString(leafNames, ";");
-	const string         prodKinParticlesLeafName  = leafNameTokens[0];
-	const string         prodKinMomentaLeafName    = leafNameTokens[1];
-	const string         decayKinParticlesLeafName = leafNameTokens[2];
-	const string         decayKinMomentaLeafName   = leafNameTokens[3];
+	typedef tokenizer<char_separator<char> > tokenizer;
+	char_separator<char> separator(";");
+	tokenizer            leafNameTokens(leafNames, separator);
+	tokenizer::iterator  leafNameToken             = leafNameTokens.begin();
+	const string         prodKinParticlesLeafName  = *leafNameToken;
+	const string         prodKinMomentaLeafName    = *(++leafNameToken);
+	const string         decayKinParticlesLeafName = *(++leafNameToken);
+	const string         decayKinMomentaLeafName   = *(++leafNameToken);
 	printInfo << "using the following leaf names:" << endl
 	          << "        production kinematics: "
 	          << "particle names = '" << prodKinParticlesLeafName << "', "

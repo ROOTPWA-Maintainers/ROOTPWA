@@ -43,7 +43,6 @@
 #include <map>
 #include <vector>
 
-#include "utilities.h"
 #include "isobarDecayTopology.h"
 
 

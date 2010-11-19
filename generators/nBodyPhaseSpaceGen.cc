@@ -40,8 +40,13 @@
 
 #include <algorithm>
 
-#include "nBodyPhaseSpaceGen.h"
 #include "TMath.h"
+
+#include "reportingUtilsRoot.hpp"
+#include "physUtils.hpp"
+#include "factorial.hpp"
+#include "nBodyPhaseSpaceGen.h"
+
 
 using namespace std;
 using namespace rpwa;
@@ -108,11 +113,11 @@ nBodyPhaseSpaceGen::setDecay(vector<double>& daughterMasses)  // array of daught
   switch (_weightType) {
   case S_U_CHUNG: case IMPORTANCE: 
     // S. U. Chung's normalization
-    _norm = 1 / (2 * pow(twoPi, 2 * (int)_n - 3) * factorial(_n - 2));
+	  _norm = 1 / (2 * pow(twoPi, 2 * (int)_n - 3) * rpwa::factorial<double>(_n - 2));
     break;
   case NUPHAZ: 
     {  // NUPHAZ's normalization: calculates phase space for massless daughters
-      const double fact = factorial(_n - 2);
+	    const double fact = rpwa::factorial<double>(_n - 2);
       _norm = 8 / (pow(fourPi, 2 * (int)_n + 1) * fact * fact * (_n - 1));
     }
     break;
