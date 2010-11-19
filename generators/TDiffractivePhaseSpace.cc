@@ -335,7 +335,7 @@ TDiffractivePhaseSpace::Get_inv_SlopePar(double invariant_M){
 		i_1 = 0;
 		i_2 = 1;
 	}
-	if (invariant_M >= _invM[_ninvSlopePar-1]){
+	if (invariant_M >= _invM[_ninvSlopePar-2]){
 		i_1 =_ninvSlopePar-2;
 		i_2 =_ninvSlopePar-1;
 	}
