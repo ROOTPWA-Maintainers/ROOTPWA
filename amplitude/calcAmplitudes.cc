@@ -336,8 +336,13 @@ main(int    argc,
 	if (ampFileRoot) {
 		ampTree->Write();
 		ampFileRoot->Close();
+		delete ampFileRoot;
 	}
 #endif
+	if (ampFilePlain) {
+		ampFilePlain->close();
+		delete ampFilePlain;
+	}
 	printInfo << "successfully wrote " << ampValues.size() << " amplitude values to "
 	          << "'" << ampFileName << "'";
 	if (not writeRootFormat)
