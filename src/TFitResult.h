@@ -69,7 +69,8 @@
 #include "TMatrixT.h"
 #include "TString.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
+#include "reportingUtilsRoot.hpp"
 #include "TCMatrix.h"
 #include "TFitBin.h"
 

@@ -10,6 +10,8 @@
  *
  *      (11.11.10)
  *      - first declarations and implementations
+ *      (22.11.10)
+ *      - keeping the number of entries per bin and the distribution histograms
  */
 
 #include <iostream>
@@ -107,6 +109,14 @@ private:
 	string _dir;
 	// needed for the progress bar
 	double last_percent;
+	// store the output distributions as histograms and the values them self
+	TH1I* _hist_data;
+	TH1I* _hist_data_mc;
+	TH1I* _hist_data_mc_acc;
+	// first is the bin low and second is the number of entries
+	//map <int, int> _nentries_data;
+	//map <int, int> _nentries_data_mc;
+	//map <int, int> _nentires_data_mc_acc;
 
 	// return the binning for a path
 	// in: path where the folder name is <binlow>.<binhigh>

@@ -78,7 +78,10 @@ namespace rpwa {
 	//////////////////////////////////////////////////////////////////////////////
   // functions to print version and compilation info
 
-	inline std::string svnVersion() { return SVN_VERSION; }  // SVN_VERSION set by Makefile
+#ifndef SVN_VERSION  // SVN_VERSION set by Makefile
+#define SVN_VERSION "undefined"
+#endif
+	inline std::string svnVersion() { return SVN_VERSION; }
 
 	inline
 	void
@@ -92,7 +95,10 @@ namespace rpwa {
 	}
 
 
-	inline std::string compileDir() { return CMAKE_SOURCE_DIR; }  // CMAKE_SOURCE_DIR set by Makefile
+#ifndef CMAKE_SOURCE_DIR  // CMAKE_SOURCE_DIR set by Makefile
+#define CMAKE_SOURCE_DIR "undefined"
+#endif
+	inline std::string compileDir() { return CMAKE_SOURCE_DIR; }
 
 	inline
 	void

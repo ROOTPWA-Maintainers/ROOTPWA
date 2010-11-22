@@ -42,7 +42,7 @@
 #include "TLegend.h"
 #include "TList.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "plotPhase.h"
 
 

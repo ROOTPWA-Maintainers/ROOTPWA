@@ -40,6 +40,7 @@
 
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 
@@ -121,6 +122,17 @@ namespace rpwa {
 	{
 		size = vec.size();
 		return &(*(vec.begin()));
+	}
+
+
+	template<typename T>
+	inline
+	std::string
+	toString(const T& fromValue)
+	{
+		std::ostringstream to;
+		to << fromValue;
+		return to.str();
 	}
 
 
