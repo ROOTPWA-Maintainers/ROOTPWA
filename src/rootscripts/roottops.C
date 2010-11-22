@@ -24,7 +24,7 @@ void roottops(const TString& infilename, const TString& normfilename=""){
   TString name=infilename;
   name.ReplaceAll(".root","");
 
-  const int    nmbPadsPerCanvMin = 6;            // minimum number of pads each canvas is subdivided into
+  const int    nmbPadsPerCanvMin = 12;            // minimum number of pads each canvas is subdivided into
 
   TFile* infile=TFile::Open(infilename,"READ");
 
@@ -55,13 +55,19 @@ void roottops(const TString& infilename, const TString& normfilename=""){
     }
     current->cd(padcounter);
     
-    TString type("TMultiGraph");
+    // TString type("TMultiGraph");
+    TString type("TH2D");
+    
 
     if(TString(((TKey*)keylist->At(i))->GetClassName())==type){
       cout << "Found " << type << endl; 
       TString keyname(((TKey*)keylist->At(i))->GetName());
       if(keyname.Contains("PHI"))continue;
-      if(type=="TH2D")((TKey*)keylist->At(i))->ReadObj()->Draw("COLZ");
+      if(type=="TH2D"){
+	((TKey*)keylist->At(i))->ReadObj()->Draw("COLZ");
+	if(keyname.Contains("rho1")){
+	  ((TH2D*)(((TKey*)keylist->At(i))->ReadObj()))->GetYaxis()->SetRangeUser(-100,15000);}
+      }
       else ((TKey*)keylist->At(i))->ReadObj()->Draw("AP");
       // plot normgraphs if available
       if(normfile!=0){
@@ -81,6 +87,7 @@ void roottops(const TString& infilename, const TString& normfilename=""){
 	  p2->cd();
 	  g->Draw("APC");
 	  g->GetXaxis()->SetRangeUser(xmin,xmax);
+	  g->GetXaxis()->SetTitle("Mass (GeV/c^{2}");
 	}
       }
       ++padcounter;
