@@ -300,6 +300,21 @@ int main(int argc, char** argv)
   unsigned int nmbWaves=waveNames.size();
   vector<ifstream*> ampfiles;
 
+  // reserve vector beforehand because Branch
+  // will take a pointer onto the elements
+  vector<double> weights((nmbWaves+1)*nmbWaves/2);
+  unsigned int wcount=0;
+  // create wheight vectors for individual intensities and interference terms
+   for(unsigned int iw=0;iw<nmbWaves;++iw){
+     for(unsigned int jw=iw;jw<nmbWaves;++jw){
+       TString weightname("W_");
+       if(iw==jw)weightname+=waveNames[iw];
+       else weightname+=waveNames[iw] +"_"+ waveNames[jw];
+       
+       outtree->Branch(weightname.Data(),&weights[wcount++],(weightname+"/d").Data());
+     }
+   }
+
  // open decay amplitude files --------------------------------------------
  for(unsigned int iw=0;iw<nmbWaves;++iw){
     ampfiles.push_back(new ifstream(waveNames[iw].c_str()));
