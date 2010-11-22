@@ -266,7 +266,7 @@ namespace rpwa {
     
 	public:
     
-		ClassDef(fitResult,2)
+		ClassDef(fitResult,3)
     
 	};  // class fitResult
   
