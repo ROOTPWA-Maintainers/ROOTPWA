@@ -15,6 +15,12 @@ const int PIDGEANTTOCHARGE[16]={0,0,+1,-1,0,+1,-1,0,+1,-1,0,+1,-1,0,+1,-1};
 
 TrpwaEventTreeHandler::TrpwaEventTreeHandler(){
 	last_percent = -1.;
+	_hist_data = NULL;
+	_hist_data_mc = NULL;
+	_hist_data_mc_acc = NULL;
+	//_nentries_data.clear();
+	//_nentries_data_mc.clear();
+	//_nentires_data_mc_acc.clear();
 }
 
 bool TrpwaEventTreeHandler::Add_eventtreefile(string filename, string treename){
@@ -61,6 +67,9 @@ bool TrpwaEventTreeHandler::Add_eventtreefiles(vector<string> filenames, string 
 
 
 bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
+	delete _hist_data;
+	delete _hist_data_mc;
+	delete _hist_data_mc_acc;
 	bool result = true;
 	cout << " Info: filtering events into bins " << endl;
 	// map of files that will be filled with streams to the text files
@@ -95,7 +104,7 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 			case 0:
 				break;// do nothing
 			case 1:
-				_filename << ".genbod.check";
+				_filename << ".genbod";
 				break;
 			case 2:
 				_filename << ".acc";
@@ -232,8 +241,17 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 	for (int i=0; i<3; i++){
 		checkhist[i]->DrawClone("P Text");
 		string addstring("");
-		if (i==1) addstring = ".genbod";
-		if (i==2) addstring = ".acc";
+		if (i==0){
+			_hist_data = (TH1I*)checkhist[i]->Clone("saved_hist_data");
+		}
+		if (i==1){
+			addstring = ".genbod";
+			_hist_data_mc = (TH1I*)checkhist[i]->Clone("saved_hist_data_mc");
+		}
+		if (i==2){
+			addstring = ".acc";
+			_hist_data_mc_acc = (TH1I*)checkhist[i]->Clone("saved_hist_data_mc_acc");
+		}
 		canvas.Print( (_dir+"/checkhist"+addstring+".pdf").c_str());
 		delete checkhist[i];
 	}

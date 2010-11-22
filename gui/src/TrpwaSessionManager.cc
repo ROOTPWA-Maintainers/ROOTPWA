@@ -86,14 +86,14 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 		file << " file_data = [";
 		for (unsigned int i = 0; i < _data_files.size(); i++){
 			file << "\"" << _data_files[i] << "\"";
-			if (i != _data_files.size()-1) file << " , ";
+			if (i != _data_files.size()-1) file << " ,\n ";
 		}
 		file << "]; " << endl;
 
 		file << " file_mc_data = [";
 		for (unsigned int i = 0; i < _mc_data_files.size(); i++){
 			file << "\"" << _mc_data_files[i] << "\"";
-			if (i != _mc_data_files.size()-1) file << " , ";
+			if (i != _mc_data_files.size()-1) file << " ,\n ";
 		}
 		file << "]; " << endl;
 
@@ -304,7 +304,13 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 			cout << " Warning in TrpwaSessionManager::Load_Session(): no data files specified " << endl;
 		}
 		for (int i = 0; i < nfiles; i++){
-			_data_files.push_back((const char*) _setting_file_data[i]);
+			string _file = (const char*) _setting_file_data[i];
+			if (FileExists(_file)){
+				_data_files.push_back(_file);
+			} else {
+				cout << " Error in TrpwaSessionManager::Load_Session(): File does not exist: " << _file << endl;
+				result = false;
+			}
 		}
 	}
 
@@ -320,7 +326,13 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 			cout << " Warning in TrpwaSessionManager::Load_Session(): no mc data files specified " << endl;
 		}
 		for (int i = 0; i < nfiles; i++){
-			_mc_data_files.push_back((const char*) _setting_file_data[i]);
+			string _file = (const char*) _setting_file_data[i];
+			if (FileExists(_file)){
+				_mc_data_files.push_back(_file);
+			} else {
+				cout << " Error in TrpwaSessionManager::Load_Session(): File does not exist: " << _file << endl;
+				result = false;
+			}
 		}
 	}
 	//Initialize();
