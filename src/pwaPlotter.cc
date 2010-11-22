@@ -105,7 +105,7 @@ pwaPlotter::pwaPlotter()
   mEvidencePerEvent->SetTitle("Evidence/Event");
   mEvidencePerEvent->SetName("EvidencePerEvent");
   
-
+  if(0){
   std::vector<string> waves;
   waves.push_back("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp");
   waves.push_back("1-2-+0+pi-_22_f21270=pi-+_11_a11269=pi+-_01_rho770.amp");
@@ -146,7 +146,7 @@ pwaPlotter::pwaPlotter()
     mPhases[phlist[i]]->SetTitle(name.str().c_str());
     mPhases[phlist[i]]->SetName(name.str().c_str());
   }
-
+  }
 
 }
 
