@@ -7,7 +7,7 @@
 #include "TMatrixT.h"
 #include "TComplex.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "TFitResult.h"
 #include "fitResult.h"
 

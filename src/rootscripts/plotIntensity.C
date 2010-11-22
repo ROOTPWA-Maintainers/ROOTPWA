@@ -43,6 +43,7 @@
 #include "TLegend.h"
 #include "TList.h"
 
+#include "reportingUtils.hpp"
 #include "plotIntensity.h"
 
 

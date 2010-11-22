@@ -122,6 +122,17 @@ namespace rpwa {
 	}
 
 
+	template<typename T>
+	inline
+	std::string
+	toString(const T& fromValue)
+	{
+		std::ostringstream to;
+		to << fromValue;
+		return to.str();
+	}
+
+
 	// converts bool to "true"/"false" string
 	std::string trueFalse(const bool val)
 	{

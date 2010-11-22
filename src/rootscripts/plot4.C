@@ -44,7 +44,7 @@
 #include "TTree.h"
 #include "TCanvas.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "plotIntensity.h"
 #include "plotPhase.h"
 #include "plotCoherence.h"
@@ -64,48 +64,48 @@ plot4(TTree*       tree,             // fitResult tree
       const string& branchName = "fitResult_v2",
       TCanvas* canvas_result = NULL) // fill a given canvas instead of creating one (name/title will be changed)
 {
-  if (!tree) {
-    printErr << "null pointer to tree. exiting." << endl;
-    return;
-  }
+	if (!tree) {
+		printErr << "null pointer to tree. exiting." << endl;
+		return;
+	}
 
-  // select mass range; convert from GeV/c^2 to MeV/c^2
-  stringstream selectExpr;
-  if ((massMin != 0) || (massMax != 0))
-    selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") && (massBinCenter() <= " << massMax * 1000 << ")";
+	// select mass range; convert from GeV/c^2 to MeV/c^2
+	stringstream selectExpr;
+	if ((massMin != 0) || (massMax != 0))
+		selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") && (massBinCenter() <= " << massMax * 1000 << ")";
 
-  stringstream canvName;
-  canvName << "4plot_" << waveIndexA << "_" << waveIndexB;
-  TCanvas* canv = canvas_result;
-  // create a new Canvas if no Canvas given to draw to
-  if (!canv){
-	  canv = new TCanvas(canvName.str().c_str(), canvName.str().c_str(), 10, 10, 1000, 800);
-  } else {
-	  canv->SetName(canvName.str().c_str());
-	  canv->SetTitle(canvName.str().c_str());
-	  canv->SetCanvasSize(1000,800);
-  }
-  canv->Divide(2, 2);
-  canvas_result = canv;
+	stringstream canvName;
+	canvName << "4plot_" << waveIndexA << "_" << waveIndexB;
+	TCanvas* canv = canvas_result;
+	// create a new Canvas if no Canvas given to draw to
+	if (!canv){
+		canv = new TCanvas(canvName.str().c_str(), canvName.str().c_str(), 10, 10, 1000, 800);
+	} else {
+		canv->SetName(canvName.str().c_str());
+		canv->SetTitle(canvName.str().c_str());
+		canv->SetCanvasSize(1000,800);
+	}
+	canv->Divide(2, 2);
+	canvas_result = canv;
  
-  // wave A intensity
-  canv->cd(1);
-  plotIntensity(tree, waveIndexA, false, kBlack, false, "", "APZ", 1, 0,
-		selectExpr.str(), branchName);
+	// wave A intensity
+	canv->cd(1);
+	plotIntensity(tree, waveIndexA, false, kBlack, false, "", "APZ", 1, 0,
+	              selectExpr.str(), branchName);
 
-  // wave A - wave B phase angle
-  canv->cd(2);
-  plotPhase(tree, waveIndexA, waveIndexB, false, kBlack, false, "", "APZ",
-            selectExpr.str(), branchName);
+	// wave A - wave B phase angle
+	canv->cd(2);
+	plotPhase(tree, waveIndexA, waveIndexB, false, kBlack, false, "", "APZ",
+	          selectExpr.str(), branchName);
 
-  // wave B intensity
-  canv->cd(3);
-  plotIntensity(tree, waveIndexB, false, kBlack, false, "", "APZ", 1, 0,
-		selectExpr.str(), branchName);
+	// wave B intensity
+	canv->cd(3);
+	plotIntensity(tree, waveIndexB, false, kBlack, false, "", "APZ", 1, 0,
+	              selectExpr.str(), branchName);
 
-  // wave A - wave B coherence
-  canv->cd(4);
-  plotCoherence(tree, waveIndexA, waveIndexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
+	// wave A - wave B coherence
+	canv->cd(4);
+	plotCoherence(tree, waveIndexA, waveIndexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
 }
  
 
@@ -118,17 +118,17 @@ plot4(TTree*        tree,            // fitResult tree
       const double  massMax    = 0,  // [GeV/c^2]
       const string& branchName = "fitResult_v2")
 {
-  if (!tree) {
-    printErr << "null pointer to tree. exiting." << endl;
-    return;
-  }
-  // get wave indices (assumes same wave set in all trees)
-  fitResult* massBin = new fitResult();
-  tree->SetBranchAddress(branchName.c_str(), &massBin);
-  tree->GetEntry(0);
-  const int indexA = massBin->waveIndex(waveNameA);
-  const int indexB = massBin->waveIndex(waveNameB);
-  if ((indexA >= 0) && (indexB >= 0))
-    return plot4(tree, indexA, indexB, massMin, massMax);
-  printErr << "cannot find wave(s) in tree '" << tree->GetName() << "'. exiting." << endl;
+	if (!tree) {
+		printErr << "null pointer to tree. exiting." << endl;
+		return;
+	}
+	// get wave indices (assumes same wave set in all trees)
+	fitResult* massBin = new fitResult();
+	tree->SetBranchAddress(branchName.c_str(), &massBin);
+	tree->GetEntry(0);
+	const int indexA = massBin->waveIndex(waveNameA);
+	const int indexB = massBin->waveIndex(waveNameB);
+	if ((indexA >= 0) && (indexB >= 0))
+		return plot4(tree, indexA, indexB, massMin, massMax);
+	printErr << "cannot find wave(s) in tree '" << tree->GetName() << "'. exiting." << endl;
 }

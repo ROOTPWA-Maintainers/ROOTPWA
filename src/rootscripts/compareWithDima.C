@@ -10,6 +10,7 @@
 
 #include "TFile.h"
 #include "TMultiGraph.h"
+#include "TGraphErrors.h"
 #include "TRegexp.h"
 #include "TPRegexp.h"
 #include "TH1.h"
@@ -19,7 +20,7 @@
 #include "TCanvas.h"
 #include "TPad.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 #include "fitResult.h"
 #include "plotAllIntensities.h"
 #include "plotSpinTotals.h"

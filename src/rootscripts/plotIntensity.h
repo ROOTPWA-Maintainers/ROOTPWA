@@ -49,7 +49,6 @@
 #include "TTree.h"
 #include "TMultiGraph.h"
 
-#include "utilities.h"
 #include "fitResult.h"
 
 
@@ -128,23 +127,23 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
               const double       yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
               const std::string& selectExpr    = "",     // TTree::Draw() selection expression
               const std::string& branchName    = "fitResult_v2")  // fitResult branch name
-;/*{
-	if (!trees[0]) {
-		printErr << "null pointer to tree[" << 0 << "]. aborting." << endl;
-		return 0;
-	}
-	// get wave index (assumes same wave set in all trees)
-	rpwa::fitResult* massBin = new rpwa::fitResult();
-	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
-	trees[0]->GetEntry(0);
-	const int index = massBin->waveIndex(waveName);
-	if (index >= 0)
-		return plotIntensity(nmbTrees, trees, index, saveEps, graphColors, drawLegend,  graphTitle,
-		                     drawOption, normalization, yAxisRangeMax, selectExpr, branchName);
-	printErr << "cannot find wave '" << waveName << "' "
-	         << "in tree '" << trees[0]->GetName() << "'. aborting." << endl;
-	return 0;
-}*/
+	;/*{
+	   if (!trees[0]) {
+	   printErr << "null pointer to tree[" << 0 << "]. aborting." << endl;
+	   return 0;
+	   }
+	   // get wave index (assumes same wave set in all trees)
+	   rpwa::fitResult* massBin = new rpwa::fitResult();
+	   trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+	   trees[0]->GetEntry(0);
+	   const int index = massBin->waveIndex(waveName);
+	   if (index >= 0)
+	   return plotIntensity(nmbTrees, trees, index, saveEps, graphColors, drawLegend,  graphTitle,
+	   drawOption, normalization, yAxisRangeMax, selectExpr, branchName);
+	   printErr << "cannot find wave '" << waveName << "' "
+	   << "in tree '" << trees[0]->GetName() << "'. aborting." << endl;
+	   return 0;
+	   }*/
 
 
 inline

@@ -41,28 +41,30 @@
 #include "TChain.h"
 #include "THashList.h"
 
-#include "utilities.h"
+#include "reportingUtils.hpp"
 
 
 using namespace std;
+using namespace rpwa;
 
 
 TChain*
 loadFitResult(const string& fileNamePattern,
-	      TChain*       chain    = 0,
-	      const string& treeName = "pwa")
+              TChain*       chain    = 0,
+              const string& treeName = "pwa")
 {
-  // use TFileCollection to expand file name pattern into file list,
-  // because TChain::Add() does support wildcards only for the root
-  // files themselves (not in directories)
-  printInfo << "constructing chain for '" << fileNamePattern << "' ..." << endl;
-  TFileCollection fileList("fitresults", "fitresults");
-  fileList.Add(fileNamePattern.c_str());
-  cout << "    file list contains " << fileList.GetNFiles() << " files." << endl;
-  if (!chain)
-    chain = new TChain(treeName.c_str(), treeName.c_str());
-  if (!chain->AddFileInfoList(fileList.GetList()))
-    printWarn << "chain has problems reading file list." << endl;
-  cout << "    chain '" << chain->GetName() << "' contains " << chain->GetEntries() << " entries." << endl;
-  return chain;
+	// use TFileCollection to expand file name pattern into file list,
+	// because TChain::Add() does support wildcards only for the root
+	// files themselves (not in directories)
+	printInfo << "constructing chain for '" << fileNamePattern << "' ..." << endl;
+	TFileCollection fileList("fitresults", "fitresults");
+	fileList.Add(fileNamePattern.c_str());
+	cout << "    file list contains " << fileList.GetNFiles() << " files." << endl;
+	if (!chain)
+		chain = new TChain(treeName.c_str(), treeName.c_str());
+	if (!chain->AddFileInfoList(fileList.GetList()))
+		printWarn << "chain has problems reading file list." << endl;
+	cout << "    chain '" << chain->GetName() << "' contains " << chain->GetEntries()
+	     << " entries." << endl;
+	return chain;
 }
