@@ -38,6 +38,20 @@ public:
 };
 
 
+class rhoPrime : public massDep {
+public:
+ rhoPrime() { }
+  virtual ~rhoPrime() { }
+ rhoPrime(const rhoPrime&) { }
+ rhoPrime* create() const { return new rhoPrime(); }
+ rhoPrime* clone() const { return new rhoPrime(*this); }
+
+  virtual void print() { std::cout << "rhoPrime"; }
+  std::complex<double> val(const particle& p);
+};
+
+
+
 class flat : public massDep {
 public:
   flat() { }
