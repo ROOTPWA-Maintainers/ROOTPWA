@@ -42,28 +42,30 @@ add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boo
 
 # set include directories
 set(INCLUDE_DIRECTORIES
- ${CMAKE_CURRENT_SOURCE_DIR}
-)
+  ${LIBCONFIG_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-TFracNum.cc
-ClebschGordanBox.cc
-TJwfTensor.cc
-TSpinWaveFunction.cc
-TLSAmpl.cc
-TFhh.cc
-)
+	TFracNum.cc
+	ClebschGordanBox.cc
+	TJwfTensor.cc
+	TSpinWaveFunction.cc
+	TLSAmpl.cc
+	TFhh.cc
+	)
 
 
 # library
 set(THIS_LIB "RelAmpl")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
-)
+	)
 
 
 # executables
-make_executable(calcAmpl CalcAmpl.cc ${THIS_LIB})
+make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
+make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB})
 
