@@ -389,7 +389,10 @@ runCalcAmplitudes "${MC_FILE}" "${MC_AMP_DIR}"
 # perform symmetrization for MC data
 runSymmetrization "${MC_AMP_DIR}" "${SYM_LIST}" MC_SYM_AMP_DIR
 # perform integration for MC data
-runInt "${MC_SYM_AMP_DIR}"
+runInt "${MC_AMP_DIR}"
+cd "${MC_SYM_AMP_DIR}"
+ln -s ../norm.int norm.int
+cd -
 echo
 
 
