@@ -43,6 +43,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 
+#include "TClass.h"
+
 #include "libConfigUtils.hpp"
 #include "conversionUtils.hpp"
 #include "diffractiveDissVertex.h"
@@ -69,7 +71,9 @@ waveDescription::waveDescription()
 	  _key            (0),
 	  _amplitudeKey   (0),
 	  _keyFileContents("")
-{ }
+{
+	waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+}
 
 
 waveDescription::~waveDescription()

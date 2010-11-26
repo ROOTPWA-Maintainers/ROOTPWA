@@ -57,6 +57,7 @@
 #if ROOT_VERSION_CODE >= 334598  // make sure ROOT version is at least 5.27.06
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;
+#pragma link C++ class rpwa::normalizationIntegral+;
 #endif 
 
 

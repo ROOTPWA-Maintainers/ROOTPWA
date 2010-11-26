@@ -41,11 +41,11 @@
 #include "amplitudeTreeLeaf.h"
 
 	
-#if AMPLITUDETREELEAF_ENABLED
-
-
 using namespace std;
 using namespace rpwa;
+
+
+#if AMPLITUDETREELEAF_ENABLED
 
 
 ClassImp(amplitudeTreeLeaf);

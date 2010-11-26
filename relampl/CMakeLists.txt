@@ -35,11 +35,6 @@
 #//-------------------------------------------------------------------------
 
 
-add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
-
-#set compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall")
-
 # set include directories
 set(INCLUDE_DIRECTORIES
   ${LIBCONFIG_INCLUDE_DIR}
@@ -68,4 +63,3 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 # executables
 make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
 make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB})
-

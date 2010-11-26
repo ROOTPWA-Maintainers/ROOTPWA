@@ -87,6 +87,7 @@ namespace rpwa {
 
 	};
 
+
 #endif  // AMPLITUDETREELEAF_ENABLED
 
 

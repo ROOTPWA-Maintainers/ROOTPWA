@@ -51,6 +51,11 @@
 
 #include "isobarDecayTopology.h"
 #include "isobarAmplitude.h"
+#else
+namespace libconfig {
+	class Config;
+	class Setting;
+}
 #endif
 
 
@@ -135,15 +140,16 @@ namespace rpwa {
 	  static bool writeKeyFile(libconfig::Setting&        rootKey,
 	                           const isobarAmplitude&     amplitude);  ///< writes amplitude parameters to key file
 
-		libconfig::Config*        _key;           ///< libConfig date structure constructed from key file
-		const libconfig::Setting* _amplitudeKey;  ///< pointer to amplitude options
+#endif  // __CINT__
+
+		libconfig::Config*        _key;           //! ///< libConfig date structure constructed from key file
+		const libconfig::Setting* _amplitudeKey;  //! ///< pointer to amplitude options
 
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
-#endif  // __CINT__
-
 		std::string _keyFileContents;  ///< copy of keyfile contents; can be written to .root file
 		
+
 		ClassDef(waveDescription,1)
 
   };
