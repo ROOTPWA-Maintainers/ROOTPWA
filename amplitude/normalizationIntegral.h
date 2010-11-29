@@ -49,9 +49,10 @@
 
 
 #include <vector>
-#include <complex>
 #include <map>
+#include <complex>
 #include <string>
+#include <iostream>
 
 #include "TObject.h"
 
@@ -72,7 +73,6 @@ namespace rpwa {
 	public:
         
 		normalizationIntegral();
-		// normalizationIntegral(char**          files);
 		normalizationIntegral(const normalizationIntegral& integral);
 		virtual ~normalizationIntegral();
 
@@ -94,28 +94,12 @@ namespace rpwa {
 		const std::complex<double>& element(const std::string& waveNameI,
 		                                    const std::string& waveNameJ)  const;
 
-
-		// normalizationIntegral& files(char**                        files);
-		// normalizationIntegral& files(const std::list<std::string>& files);
-		// std::list<std::string> files()       const;
-		// char**                 files_c_str() const;
-
 		bool integrate();
-		// normalizationIntegral& integrate();
-		// normalizationIntegral& renormalize(const int n);
-		// normalizationIntegral& events(const int n);
-
-		// std::complex<double> val(const std::string& iName,
-		//                          const std::string& jName);
-
-		// normalizationIntegral get(char**                        files);
-		// normalizationIntegral get(const std::list<std::string>& files);
-
-
-		// matrix<std::complex<double> > mat();
 
 		bool writeAscii(std::ostream& out = std::cout) const;
 		bool readAscii (std::istream& in  = std::cin );
+		bool writeAscii(const std::string& outFileName) const;
+		bool readAscii (const std::string& inFileName );
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag

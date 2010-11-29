@@ -273,19 +273,23 @@ normalizationIntegral::writeAscii(ostream& out) const
 bool
 normalizationIntegral::readAscii(istream& in)
 {
-	if (not (in >> _nmbWaves >> _nmbEvents))
+	if (not (in >> _nmbWaves >> _nmbEvents)) {
+		printWarn << "could not read number of waves and events" << endl;
 		return false;
+	}
   // read matrix elements
 	unsigned int nmbRows, nmbCols;
-	if (not (in >> nmbRows >> nmbCols))
+	if (not (in >> nmbRows >> nmbCols)) {
+		printWarn << "could not read number of rows and columns" << endl;
 		return false;
+	}
 	// resize integral matrix
 	_integrals.clear();
 	_integrals.resize(nmbRows, vector<complex<double> >(nmbCols, 0));
 	for (unsigned int i = 0; i < nmbRows; ++i)
     for (unsigned int j = 0; j < nmbCols; ++j) {
 	    if (not (in >> _integrals[i][j]) or in.eof()) {
-		    printErr << "could not read integral. stream seems trunkated." << endl;
+		    printErr << "could not read integral values. stream seems trunkated." << endl;
         throw;
 	    }
     }
@@ -295,12 +299,52 @@ normalizationIntegral::readAscii(istream& in)
   while ((mapSize > 0) and in) {
 	  string       waveName;
 	  unsigned int waveIndex;
-	  if (not (in >> waveName >> waveIndex))
+	  if (not (in >> waveName >> waveIndex)) {
+		  printErr << "could not read wave name -> index map. stream seems trunkated." << endl;
 		  return false;
+	  }
     _waveNameIndexMap[waveName] = waveIndex;
     --mapSize;
   }
   return true;
+}
+
+
+bool
+normalizationIntegral::writeAscii(const string& outFileName) const
+{
+	if (_debug)
+		printInfo << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
+	ofstream outFile(outFileName.c_str());
+	if (not outFile or not outFile.good()) {
+		printWarn << "cannot open file '" << outFileName << "' for writing of integral matrix" << endl;
+		return false;
+	}
+	const bool success = writeAscii(outFile);
+	if (success)
+		printInfo << "successfully wrote integral to ASCII file '" << outFileName << "'" << endl;
+	else
+		printWarn << "problems writing integral to ASCII file '" << outFileName << "'" << endl;
+	return success;
+}
+
+
+bool
+normalizationIntegral::readAscii(const string& inFileName)
+{
+	if (_debug)
+		printInfo << "opening ASCII file '" << inFileName << "' for reading of integral matrix" << endl;
+	ifstream inFile(inFileName.c_str());
+	if (not inFile or not inFile.good()) {
+		printWarn << "cannot open file '" << inFileName << "' for reading of integral matrix" << endl;
+		return false;
+	}
+	const bool success = readAscii(inFile);
+	if (success)
+		printInfo << "successfully read integral from ASCII file '" << inFileName << "'" << endl;
+	else
+		printWarn << "problems reading integral from ASCII file '" << inFileName << "'" << endl;
+	return success;
 }
 
 
