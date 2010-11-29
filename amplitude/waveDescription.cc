@@ -267,7 +267,8 @@ waveDescription::writeKeyFile(const string&              keyFileName,
                               const isobarDecayTopology& topo,
                               const bool                 writeProdVert)
 {
-	printInfo << "writing key file '" << keyFileName << "'" << endl;
+	if (_debug)
+		printInfo << "writing key file '" << keyFileName << "'" << endl;
 	Config   key;
 	Setting& rootKey = key.getRoot();
 	if (not writeKeyFile(rootKey, topo, writeProdVert)) {
@@ -290,7 +291,8 @@ waveDescription::writeKeyFile(const string&          keyFileName,
                               const isobarAmplitude& amplitude,
                               const bool             writeProdVert)
 {
-	printInfo << "writing key file '" << keyFileName << "'" << endl;
+	if (_debug)
+		printInfo << "writing key file '" << keyFileName << "'" << endl;
 	Config   key;
 	Setting& rootKey = key.getRoot();
 	if (not writeKeyFile(rootKey, *amplitude.decayTopology(), writeProdVert)) {
@@ -832,7 +834,8 @@ waveDescription::writeKeyFile(Setting&                   rootKey,
 		printWarn << "decay topology has issues. cannot write key file." << endl;
 		return false;
 	}
-	printInfo << "writing " << topo;
+	if (_debug)
+		printInfo << "writing " << topo;
 	if (writeProdVert) {
 		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
 		setProductionVertexKeys(prodVertKey, topo.productionVertex());
