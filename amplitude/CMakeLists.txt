@@ -40,9 +40,9 @@ add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boo
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
   ${LIBCONFIG_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
@@ -111,4 +111,3 @@ make_executable(testWaveSetGenerator testWaveSetGenerator.cc ${THIS_LIB})
 make_executable(testAmplitude        testAmplitude.cc        ${THIS_LIB})
 make_executable(testAmplitudeTree    testAmplitudeTree.cc    ${THIS_LIB})
 make_executable(testIntegral         testIntegral.cc         ${THIS_LIB})
-make_executable(testLibppFunctions   testLibppFunctions.cc   ${THIS_LIB})

@@ -79,14 +79,9 @@ namespace rpwa {
 		normalizationIntegral& operator =(const normalizationIntegral& integral);
 
 		// accessors
-		std::string  weightFileName() const { return _weightFileName; }
-		unsigned int maxNmbEvents  () const { return _maxNmbEvents;   }
-		unsigned int nmbWaves      () const { return _nmbWaves;       }
-		unsigned int nmbEvents     () const { return _nmbEvents;      }
+		unsigned int nmbWaves () const { return _nmbWaves;  }
+		unsigned int nmbEvents() const { return _nmbEvents; }
 		
-		void setWeightFileName(const std::string& fileName)     { _weightFileName = fileName;     }
-		void setMaxNmbevents  (const unsigned int maxNmbEvents) { _maxNmbEvents   = maxNmbEvents; }
-
 		unsigned int waveIndex(const std::string& waveName) const;
 
 		const std::complex<double>& element(const unsigned int waveIndexI,
@@ -94,7 +89,9 @@ namespace rpwa {
 		const std::complex<double>& element(const std::string& waveNameI,
 		                                    const std::string& waveNameJ)  const;
 
-		bool integrate();
+		bool integrate(const std::vector<std::string>& ampFileNames,
+		               const unsigned int              maxNmbEvents   = 0,
+		               const std::string&              weightFileName = "");
 
 		bool writeAscii(std::ostream& out = std::cout) const;
 		bool readAscii (std::istream& in  = std::cin );
@@ -108,9 +105,6 @@ namespace rpwa {
 	private:
 
 	  static bool _debug;  ///< if set to true, debug messages are printed
-
-		std::string  _weightFileName;  ///< path to file with weights used in MC importance sampling
-		unsigned int _maxNmbEvents;    ///< maximum number of events to process
 
 		unsigned int                        _nmbWaves;          ///< number of waves in integral
 		std::map<std::string, unsigned int> _waveNameIndexMap;  ///< maps wave names to wave indices

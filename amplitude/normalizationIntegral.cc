@@ -42,6 +42,7 @@
 #include "TClass.h"
 
 #include "reportingUtils.hpp"
+#include "fileUtils.hpp"
 #include "sumAccumulators.hpp"
 #include "normalizationIntegral.h"
 
@@ -62,11 +63,9 @@ bool normalizationIntegral::_debug = false;
 
     
 normalizationIntegral::normalizationIntegral()
-	: TObject          (),
-	  _weightFileName  (""),
-	  _maxNmbEvents    (0),
-	  _nmbWaves        (0),
-	  _nmbEvents       (0)
+	: TObject   (),
+	  _nmbWaves (0),
+	  _nmbEvents(0)
 {
 	normalizationIntegral::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
@@ -87,8 +86,6 @@ normalizationIntegral::operator =(const normalizationIntegral& integral)
 {
 	if (this != &integral) {
 		TObject::operator =(integral);
-		_weightFileName   = integral._weightFileName;
-		_maxNmbEvents     = integral._maxNmbEvents;
 		_nmbWaves         = integral._nmbWaves;
 		_waveNameIndexMap = integral._waveNameIndexMap;
 		_nmbEvents        = integral._nmbEvents;
@@ -139,71 +136,80 @@ normalizationIntegral::element(const std::string& waveNameI,
 
 
 bool
-normalizationIntegral::integrate()
+normalizationIntegral::integrate(const vector<string>& ampFileNames,
+                                 const unsigned int    maxNmbEvents,
+                                 const string&         weightFileName)
 {
-	if (_nmbWaves < 1) {
-		printWarn << "no waves to integrate over" << endl;
+	// open amplitude files
+	vector<ifstream*> ampFiles;
+	streampos         ampFileLength = 0; 
+	_nmbWaves = 0;  // counts waves
+	for (vector<string>::const_iterator i = ampFileNames.begin(); i != ampFileNames.end(); ++i) {
+		// get file path
+		const string& ampFilePath = *i;
+		// open amplitude file
+		if (_debug)
+			printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
+		ifstream* ampFile = new ifstream();
+		ampFile->open(ampFilePath.c_str());
+		if(not *ampFile) {
+			printWarn << "cannot open amplitude file '" << ampFilePath << "'. skipping." << endl;
+			continue;
+		}
+		// check that all files have the same size
+		const streampos fileSize = rpwa::fileSize(*ampFile);
+		if (fileSize == 0) {
+			printWarn << "amplitude file '" << ampFilePath << "' has zero size. skipping." << endl;
+			continue;
+    }
+    if (ampFileLength == 0)
+	    ampFileLength = fileSize;
+    else if (fileSize != ampFileLength) {
+			printWarn << "amplitude file '" << ampFilePath << "' has different size "
+			          << "than previous file. skipping." << endl;
+			continue;
+    }
+		ampFiles.push_back(ampFile);
+		// get wave name and fill name -> index map
+		const string waveName = fileNameFromPath(ampFilePath);
+		_waveNameIndexMap[waveName] = _nmbWaves;
+		++_nmbWaves;
+  }
+	if (ampFiles.size() > 0)
+		printInfo << "calculating integral from " << ampFiles.size() << " amplitude file(s)" << endl;
+	else {
+		printWarn << "could not open any amplitude files. cannot calculate integral." << endl;
 		return false;
 	}
+
+	// resize integral matrix
+	_integrals.clear();
+	_integrals.resize(_nmbWaves, vector<complex<double> >(_nmbWaves, 0));
 
 	// open importance sampling weight file
 	ifstream weightFile;
 	bool     useWeight = false;
-	if (_weightFileName != "") {
+	if (weightFileName != "") {
 		if (_debug)
-			printInfo << "opening importance sampling weight file '" << _weightFileName << "'" << endl;
-		weightFile.open(_weightFileName.c_str());
+			printInfo << "opening importance sampling weight file '" << weightFileName << "'" << endl;
+		weightFile.open(weightFileName.c_str());
 		if (not weightFile) { 
-			printWarn << "cannot open importance sampling weight file '" << _weightFileName << "' "
+			printWarn << "cannot open importance sampling weight file '" << weightFileName << "' "
 			          << "cannot calculate integral." << endl;
 			return false;
 		}
 		useWeight = true;
 	}
 
-	// open amplitude files
-	bool      success       = true;
-	ifstream* ampFiles      = new ifstream[_nmbWaves];
-	streampos ampFileLength = 0;
-	for (waveNameIndexMapIterator i = _waveNameIndexMap.begin(); i != _waveNameIndexMap.end(); ++i) {
-		const string       ampFileName = i->first;
-		const unsigned int waveIndex   = i->second;
-		if (_debug)
-			printInfo << "opening amplitude file '" << ampFileName << "'" << endl;
-		ampFiles[waveIndex].open((ampFileName).c_str());
-		if(not ampFiles[waveIndex]) {
-			printWarn << "cannot open amplitude file '" << ampFileName << "'" << endl;
-			success = false;
-		}
-		// check that all files have the same size
-    ampFiles[waveIndex].seekg(0, ios::end);
-    streampos fileSize = ampFiles[waveIndex].tellg();
-    ampFiles[waveIndex].seekg(0, ios::beg);
-    if (fileSize == 0) {
-			printWarn << "amplitude file '" << ampFileName << "' has zero size" << endl;
-			success = false;
-    }
-    if (ampFileLength == 0)
-	    ampFileLength = fileSize;
-    else if (fileSize != ampFileLength) {
-			printWarn << "amplitude file '" << ampFileName << "' has different than previous file" << endl;
-			success = false;
-    }
-	}
-	if (not success) {
-		printWarn << "problems opening amplitude file(s). cannot calculate integral." << endl;
-		return false;
-	}
-
 	// loop over events and calculate integral matrix
 	_nmbEvents = 0;
 	complex<double>* amps    = new complex<double>[_nmbWaves];
 	bool             ampEof  = false;
-	streampos        lastPos = ampFiles[0].tellg();
+	streampos        lastPos = ampFiles[0]->tellg();
 	progress_display progressIndicator(ampFileLength, cout, "");
 	accumulator_set<double,          stats<tag::sum(compensated)> > weightIntegral;
 	accumulator_set<complex<double>, stats<tag::sum(compensated)> > integrals[_nmbWaves][_nmbWaves];
-	while (not ampEof and ((_maxNmbEvents) ? _nmbEvents < _maxNmbEvents : true)) {
+	while (not ampEof and ((maxNmbEvents) ? _nmbEvents < maxNmbEvents : true)) {
 		// read importance sampling weight (no error handling yet!)
 		double w = 1;
 		if (useWeight)
@@ -212,15 +218,15 @@ normalizationIntegral::integrate()
 		weightIntegral(weight);
 		// read amplitude values for this event
 		for (unsigned int waveIndex = 0; waveIndex < _nmbWaves; ++waveIndex) {
-			ampFiles[waveIndex].read((char*)&amps[waveIndex], sizeof(complex<double>));
-			if ((ampEof = ampFiles[waveIndex].eof()))
+			ampFiles[waveIndex]->read((char*)&amps[waveIndex], sizeof(complex<double>));
+			if ((ampEof = ampFiles[waveIndex]->eof()))
 				break;
 		}
 		if (ampEof)
 			break;
 		++_nmbEvents;
-		progressIndicator += ampFiles[0].tellg() - lastPos;
-		lastPos            = ampFiles[0].tellg();
+		progressIndicator += ampFiles[0]->tellg() - lastPos;
+		lastPos            = ampFiles[0]->tellg();
 		// sum up integral matrix elements
 		for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
 			for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ) {
@@ -240,7 +246,10 @@ normalizationIntegral::integrate()
 				_integrals[waveIndexI][waveIndexJ] *= 1 / weightNorm;
 		}
 
-	delete [] ampFiles;
+
+	for (unsigned int waveIndex = 0; waveIndex < _nmbWaves; ++waveIndex)
+		delete ampFiles[waveIndex];
+	ampFiles.clear();
 	delete [] amps;
 	return true;
 }
@@ -315,7 +324,7 @@ normalizationIntegral::writeAscii(const string& outFileName) const
 {
 	if (_debug)
 		printInfo << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
-	ofstream outFile(outFileName.c_str());
+	std::ofstream outFile(outFileName.c_str());
 	if (not outFile or not outFile.good()) {
 		printWarn << "cannot open file '" << outFileName << "' for writing of integral matrix" << endl;
 		return false;
@@ -334,7 +343,7 @@ normalizationIntegral::readAscii(const string& inFileName)
 {
 	if (_debug)
 		printInfo << "opening ASCII file '" << inFileName << "' for reading of integral matrix" << endl;
-	ifstream inFile(inFileName.c_str());
+	std::fstream inFile(inFileName.c_str());
 	if (not inFile or not inFile.good()) {
 		printWarn << "cannot open file '" << inFileName << "' for reading of integral matrix" << endl;
 		return false;

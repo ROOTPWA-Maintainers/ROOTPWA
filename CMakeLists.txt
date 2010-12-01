@@ -252,14 +252,15 @@ enable_testing()
 
 # build subprojects
 
-# Utilities
 set(UTILITIES_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/utilities
 	)
-add_subdirectory(utilities)
 
 # PWA2000
 add_subdirectory(pwa2000)
+
+# Utilities
+add_subdirectory(utilities)
 
 # CUDA stuff
 if(USE_CUDA)
