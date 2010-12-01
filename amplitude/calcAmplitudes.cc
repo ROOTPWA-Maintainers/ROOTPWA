@@ -168,7 +168,6 @@ main(int    argc,
 			printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
 			          << "skipping." << endl;
 	}
-
 	if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
 		printErr << "none of the specified input files is a .root or .evt file. aborting.";
 		usage(progName, 1);

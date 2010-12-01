@@ -39,6 +39,10 @@
 
 #include <boost/assign/list_of.hpp>
 
+#include "TROOT.h"
+#include "TFile.h"
+
+#include "reportingUtils.hpp"
 #include "fileUtils.hpp"
 #include "normalizationIntegral.h"
 
@@ -68,15 +72,7 @@ main(int argc, char** argv)
 
 
 	if (0) {
-		normalizationIntegral integral;
-		
-		integral.readAscii("testIntegral.int");
-		normalizationIntegral integral2(integral);
-		integral2.writeAscii("testIntegral2.int");
-	}
-
-
-	if (1) {
+		// test integral calculation
 		// get file list
 		// vector<string> ampFileNames = filesMatchingGlobPattern("/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/*.amp", true);
 		// sort(ampFileNames.begin(), ampFileNames.end());
@@ -129,4 +125,34 @@ main(int argc, char** argv)
 		integral.integrate(ampFileNames);
 		integral.writeAscii("testIntegral2.int");
 	}
+
+
+	if (1) {
+		// test I/O and copying
+		normalizationIntegral integral;
+		// ascii I/O
+		integral.readAscii("testIntegral.int");
+		normalizationIntegral integral2(integral);
+		integral2.writeAscii("testIntegral2.int");
+		// root I/O
+		// force loading predefined std::complex dictionary
+		gROOT->ProcessLine("#include <complex>");
+		{
+			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
+			integral.Write("testIntegral");
+			outFile->Close();
+		}
+		{
+			TFile*                 inFile    = TFile::Open("testIntegral.root", "READ");
+			normalizationIntegral* integral3 = 0;
+			inFile->GetObject("testIntegral", integral3);
+			if (not integral3)
+				printErr << "cannot find integral 'testIntegral'" << endl;
+			else
+				integral3->writeAscii("testIntegral3.int");
+			inFile->Close();
+		}
+	}
+
+
 }
