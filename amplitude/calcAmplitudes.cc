@@ -53,6 +53,7 @@
 #include "TClonesArray.h"
 #include "TStopwatch.h"
 
+#include "fileUtils.hpp"
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "waveDescription.h"
@@ -160,9 +161,10 @@ main(int    argc,
 	vector<string> evtFileNames;
 	while (optind < argc) {
 		const string fileName = argv[optind++];
-		if (fileName.substr(fileName.length() - 5) == ".root")
+		const string fileExt  = extensionFromPath(fileName);
+		if (fileExt == "root")
 			rootFileNames.push_back(fileName);
-		else if (fileName.substr(fileName.length() - 4) == ".evt")
+		else if (fileExt == "evt")
 			evtFileNames.push_back(fileName);
 		else
 			printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
@@ -254,9 +256,10 @@ main(int    argc,
 	// create output file for amplitudes
 	bool writeRootFormat = false;
 #if AMPLITUDETREELEAF_ENABLED
-	if (ampFileName.substr(ampFileName.length() - 5) == ".root")
+	const string ampFileExt = extensionFromPath(ampFileName);
+	if (ampFileExt == "root")
 		writeRootFormat = true;
-	else if (ampFileName.substr(ampFileName.length() - 4) == ".amp")
+	else if (ampFileExt == "amp")
 		writeRootFormat = false;
 	else {
 		printErr << "specified amplitude file '" << ampFileName << "' is neither a .root "

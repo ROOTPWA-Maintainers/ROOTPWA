@@ -38,6 +38,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "TROOT.h"
+#include "TFile.h"
+
 #include "reportingUtils.hpp"
 #include "fileUtils.hpp"
 #include "normalizationIntegral.h"
@@ -58,11 +61,12 @@ usage(const string& progName,
 	     << " -o output file [-n max. # of events -r max. # of events -w weight file -v -h] "
 	     << "amplitude files" << endl
 	     << "    where:" << endl
-	     << "        -o path    path to output file (default: './norm.int')"           << endl
-	     << "        -n #       maximum number of events to process (default: all)"    << endl
-	     << "        -r #       number of events to renormalize to (default: no done)" << endl
-	     << "        -w path    path to MC weight file (default: none)"                << endl
-	     << "        -v         verbose; print debug output (default: false)"          << endl
+	     << "        -o path    path to output file (default: './norm.int')"                << endl
+	     << "        -i name    integral name (only for .root format, default: 'integral')" << endl
+	     << "        -n #       maximum number of events to process (default: all)"         << endl
+	     << "        -r #       number of events to renormalize to (default: no done)"      << endl
+	     << "        -w path    path to MC weight file (default: none)"                     << endl
+       << "        -v         verbose; print debug output (default: false)"               << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -75,10 +79,15 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printSvnVersion();
+
+	// force loading predefined std::complex dictionary
+	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
+	gROOT->ProcessLine("#include <complex>");
 	
 	// parse command line options
 	const string progName        = argv[0];
 	string       outFileName     = "./norm.int";
+	string       integralName    = "integral";
 	unsigned int maxNmbEvents    = 0;
 	unsigned int nmbEventsRenorm = 0;
 	string       weightFileName  = "";
@@ -86,10 +95,13 @@ main(int    argc,
 	extern char* optarg;
 	extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "o:n:r:w:vh")) != -1)
+	while ((c = getopt(argc, argv, "o:i:n:r:w:vh")) != -1)
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
+			break;
+		case 'i':
+			integralName = optarg;
 			break;
 		case 'n':
 			maxNmbEvents = atoi(optarg);
@@ -138,7 +150,31 @@ main(int    argc,
 	// calculate integral
 	normalizationIntegral integral;
 	integral.integrate(binAmpFileNames);
-	integral.writeAscii(outFileName);
 
+	// write out integral
+	const string outFileExt = extensionFromPath(outFileName);
+	if (outFileExt == "root") {
+		TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
+		if (not outFile) {
+			printErr << "cannot open output file '" << outFileName << "'. aborting." << endl;
+			return 1;
+		}
+		const int nmbBytes = integral.Write(integralName.c_str());
+		outFile->Close();
+		if (nmbBytes == 0) {
+			printErr << "problems writing integral to key '" << integralName << "' "
+			         << "in file '" << outFileName << "'" << endl;
+			return 1;
+		} else
+			printInfo << "successfully wrote integral to key '" << integralName << "' "
+			          << "in file '" << outFileName << "'" << endl;
+	} else if (outFileExt == "int")
+		integral.writeAscii(outFileName);
+	else {
+		printErr << "output file '" << outFileName << "' should be either a .root or a .int file. "
+		         << "aborting.";
+		return 1;
+	}
+	
 	return 0;
 }
