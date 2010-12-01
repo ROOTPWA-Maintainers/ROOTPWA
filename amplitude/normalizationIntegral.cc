@@ -54,9 +54,8 @@ using namespace rpwa;
 
 
 #if NORMALIZATIONINTEGRAL_ENABLED
-
-
 ClassImp(normalizationIntegral);
+#endif
 
 
 bool normalizationIntegral::_debug = false;
@@ -236,6 +235,8 @@ normalizationIntegral::integrate(const vector<string>& ampFileNames,
 				integrals[waveIndexI][waveIndexJ](val);
 			}
 	}
+	if (progressIndicator.count() < progressIndicator.expected_count())
+		cout << endl;
 	// copy values from accumulators and (if necessary) renormalize to
 	// integral of importance sampling weights
 	const double weightNorm = sum(weightIntegral) / (double)_nmbEvents;
@@ -246,12 +247,26 @@ normalizationIntegral::integrate(const vector<string>& ampFileNames,
 				_integrals[waveIndexI][waveIndexJ] *= 1 / weightNorm;
 		}
 
-
+	printInfo << "successfully calculated integrals of " << ampFiles.size() << " amplitude(s) "
+	          << "for " << _nmbEvents << " events" << endl;
 	for (unsigned int waveIndex = 0; waveIndex < _nmbWaves; ++waveIndex)
 		delete ampFiles[waveIndex];
 	ampFiles.clear();
 	delete [] amps;
 	return true;
+}
+
+
+void
+normalizationIntegral::renormalize(const unsigned int nmbEventsRenorm)
+{
+	if (_debug)
+		printInfo << "renormalizing integrals from " << _nmbEvents << " "
+		          << "to " << nmbEventsRenorm << " events." << endl;
+  for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
+	  for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
+		  _integrals[waveIndexI][waveIndexJ] *= (double)nmbEventsRenorm / _nmbEvents;
+  _nmbEvents = nmbEventsRenorm;
 }
 
 
@@ -357,4 +372,22 @@ normalizationIntegral::readAscii(const string& inFileName)
 }
 
 
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+ostream&
+normalizationIntegral::print(ostream&   out,
+                             const bool printIntegralValues) const
+{
+	out << "normalization integral:"  << endl
+	    << "    number of waves .... " << _nmbWaves  << endl
+	    << "    number of events ... " << _nmbEvents << endl
+	    << "    wave name -> index map:" << endl;
+	for (waveNameIndexMapIterator i = _waveNameIndexMap.begin(); i != _waveNameIndexMap.end(); ++i)
+		out << "        " << i->first << " -> " << i->second << endl;
+	if (printIntegralValues) {
+		out << "    integral matrix values:" << endl;
+		for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
+			for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
+				out << "        [" << setw(4) << waveIndexI << ", " << setw(4) << waveIndexJ << "] = "
+				    << maxPrecisionDouble(_integrals[waveIndexI][waveIndexJ]) << endl;
+	}
+	return out;
+}

@@ -307,6 +307,10 @@ add_subdirectory(relampl)
 add_subdirectory(gui/src)
 
 
+message(STATUS "Cmake did not find any errors. run 'make' to build the project.")
+message(STATUS "On multi-core machines 'make -j#', where # is the number of parallel jobs, can speedup compilation considerably.")
+
+
 # file(GLOB _CC_LIST ${CMAKE_CURRENT_SOURCE_DIR} "amplitude/*.cc")
 # #message("foo ${_CC_LIST}")
 # switch_file_extension("${_CC_LIST}" ".cc" ".h" _H_LIST)

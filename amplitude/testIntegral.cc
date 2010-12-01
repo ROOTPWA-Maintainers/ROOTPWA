@@ -127,7 +127,7 @@ main(int argc, char** argv)
 	}
 
 
-	if (1) {
+	if (0) {
 		// test I/O and copying
 		normalizationIntegral integral;
 		// ascii I/O
@@ -136,6 +136,7 @@ main(int argc, char** argv)
 		integral2.writeAscii("testIntegral2.int");
 		// root I/O
 		// force loading predefined std::complex dictionary
+#if NORMALIZATIONINTEGRAL_ENABLED
 		gROOT->ProcessLine("#include <complex>");
 		{
 			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
@@ -152,6 +153,20 @@ main(int argc, char** argv)
 				integral3->writeAscii("testIntegral3.int");
 			inFile->Close();
 		}
+#endif  // NORMALIZATIONINTEGRAL_ENABLED
+	}
+
+
+	if (1) {
+		// test renormalization
+		normalizationIntegral integral;
+		integral.readAscii("testIntegral.int");
+		const unsigned int nmbEvents = integral.nmbEvents();
+		integral.renormalize(10000);
+		integral.renormalize(nmbEvents);  // scale back to original
+		integral.writeAscii("testIntegral2.int");
+		cout << integral;
+		//integral.print(cout, true);
 	}
 
 

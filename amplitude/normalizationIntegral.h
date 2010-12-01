@@ -60,9 +60,6 @@
 namespace rpwa {
 
 
-#if NORMALIZATIONINTEGRAL_ENABLED
-
-
 	class normalizationIntegral : public TObject {
 
 
@@ -93,10 +90,15 @@ namespace rpwa {
 		               const unsigned int              maxNmbEvents   = 0,
 		               const std::string&              weightFileName = "");
 
+		void renormalize(const unsigned int nmbEventsRenorm);
+
 		bool writeAscii(std::ostream& out = std::cout) const;
 		bool readAscii (std::istream& in  = std::cin );
 		bool writeAscii(const std::string& outFileName) const;
 		bool readAscii (const std::string& inFileName );
+
+		std::ostream& print(std::ostream& out,
+		                    const bool    printIntegralValues = false) const;  ///< prints integral in human-readable form
 
     static bool debug() { return _debug; }                             ///< returns debug flag
     static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -112,12 +114,20 @@ namespace rpwa {
 		integralMatrixType                  _integrals;         ///< integral matrix
 
 
+#if NORMALIZATIONINTEGRAL_ENABLED
 		ClassDef(normalizationIntegral,1)
+#endif
 
 	};
 
 
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+	inline
+	std::ostream&
+	operator <<(std::ostream&                out,
+	            const normalizationIntegral& integral)
+	{
+		return integral.print(out);
+	}
 
 
 }  // namespace rpwa

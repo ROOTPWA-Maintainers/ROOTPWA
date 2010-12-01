@@ -65,7 +65,7 @@ usage(const string& progName,
 	     << "        -i name    integral name (only for .root format, default: 'integral')" << endl
 	     << "        -n #       maximum number of events to process (default: all)"         << endl
 	     << "        -r #       number of events to renormalize to (default: no done)"      << endl
-	     << "        -w path    path to MC weight file (default: none)"                     << endl
+	     << "        -w path    path to MC weight file for de-weighting (default: none)"    << endl
        << "        -v         verbose; print debug output (default: false)"               << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -134,9 +134,13 @@ main(int    argc,
 	while (optind < argc) {
 		const string fileName = argv[optind++];
 		const string fileExt  = extensionFromPath(fileName);
-		if (fileExt == "root")
+		if (fileExt == "root") {
+#if NORMALIZATIONINTEGRAL_ENABLED
 			rootAmpFileNames.push_back(fileName);
-		else if (fileExt == "amp")
+#else
+		  printErr << "reading of amplitudes in .root format not supported. skipping." << endl;
+#endif
+		} else if (fileExt == "amp")
 			binAmpFileNames.push_back(fileName);
 		else
 			printWarn << "input file '" << fileName << "' is neither a .root nor a .amp file. "
@@ -149,11 +153,14 @@ main(int    argc,
 
 	// calculate integral
 	normalizationIntegral integral;
-	integral.integrate(binAmpFileNames);
+	integral.integrate(binAmpFileNames, maxNmbEvents, weightFileName);
+	if (nmbEventsRenorm > 0)
+		integral.renormalize(nmbEventsRenorm);
 
 	// write out integral
 	const string outFileExt = extensionFromPath(outFileName);
 	if (outFileExt == "root") {
+#if NORMALIZATIONINTEGRAL_ENABLED
 		TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
 		if (not outFile) {
 			printErr << "cannot open output file '" << outFileName << "'. aborting." << endl;
@@ -168,6 +175,10 @@ main(int    argc,
 		} else
 			printInfo << "successfully wrote integral to key '" << integralName << "' "
 			          << "in file '" << outFileName << "'" << endl;
+#else
+		printErr << "writing of integrals in .root format not supported. aborting." << endl;
+		return 1;
+#endif  // NORMALIZATIONINTEGRAL_ENABLED
 	} else if (outFileExt == "int")
 		integral.writeAscii(outFileName);
 	else {
