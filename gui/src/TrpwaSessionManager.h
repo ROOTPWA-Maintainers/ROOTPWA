@@ -386,6 +386,9 @@ public:
 	    //return this;
 	};*/
 
+	// show the entries of _keyfiles_blacklist in the std::cout
+	void Print_problematic_waves();
+
 
 private:
 	string _config_file; // filename with path to the config file of this session
@@ -410,6 +413,8 @@ private:
 	vector<string> _keyfiles; // key files without the extension determined by accessing the keyfile folder
 	int _n_keyfiles; // will be determined by accessing the key file folder
 
+	map<string, vector<string> > _keyfiles_blacklist; // a map of key files containing files with reported problems
+
 	TrpwaJobManager* jobManager; // to send commands performing analysis on different farm types
 
 	// true if both lists are equal
@@ -431,6 +436,10 @@ private:
 
 	// simple stats bar
 	void DrawProgressBar(int len, double percent);
+
+	// you may provide a key file or amplitude file with path
+	// the key will be returned
+	string Get_key(string file);
 };
 
 

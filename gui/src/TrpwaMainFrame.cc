@@ -246,6 +246,8 @@ void TrpwaMainFrame::CheckStatus() {
 		}
 	}
 	cout << " done " << endl;
+
+	current_session->Print_problematic_waves();
 	/*
 	// Draws function graphics in randomly choosen interval
 	TCanvas *fCanvas = fEcanvas->GetCanvas();

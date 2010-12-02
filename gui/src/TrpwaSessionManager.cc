@@ -1437,8 +1437,8 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 			// no 0 entries in the diagonal allowed!
 			if (matrix_element.real() == 0. && matrix_element.imag() == 0.){
 				if (i == j){
-					cout << " Inconsistency of " << norm_file << " found: " << endl;
-					cout << " 0 entry in diagonal element! row " << i << " col " << j << " " << matrix_element << endl;
+					//cout << " Inconsistency of " << norm_file << " found: " << endl;
+					//cout << " 0 entry in diagonal element! row " << i << " col " << j << " " << matrix_element << endl;
 					result = false;
 					broken_entries.push_back(i); // store the broken entry for identification afterwards
 				}
@@ -1478,19 +1478,29 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 			}
 			//cout << " filtered: " << amplitudename << " pos " << snumber << endl;
 			integrated_ampslist.push_back(amplitudename);
-			// give amplitudes corresponding to entries with proplems
+			// give amplitudes corresponding to entries with problems
 			for (vector<int>::iterator it = broken_entries.begin(); it != broken_entries.end(); it++){
 				if (number == (*it)){
-					cout << " wave with broken entries: " << amplitudename << endl;
+					// Suppress output for amplitudes with known problems
+					if (_keyfiles_blacklist.find(amplitudename) != _keyfiles_blacklist.end()){
+						cout << " wave with broken entries: " << amplitudename << endl;
+					}
+					_keyfiles_blacklist[amplitudename].push_back(norm_file);
 					break;
 				}
 			}
 			if (zero_entries_x[number] == dimensionx){
-				cout << " all x entries are 0! for " << amplitudename << endl;
+				if (_keyfiles_blacklist.find(amplitudename) != _keyfiles_blacklist.end()){
+					cout << " all x entries are 0! for " << amplitudename << endl;
+				}
+				_keyfiles_blacklist[amplitudename].push_back(norm_file);
 				result = false;
 			}
 			if (zero_entries_y[number] == dimensiony){
-				cout << " all y entries are 0! for " << amplitudename << endl;
+				if (_keyfiles_blacklist.find(amplitudename) != _keyfiles_blacklist.end()){
+					cout << " all y entries are 0! for " << amplitudename << endl;
+				}
+				_keyfiles_blacklist[amplitudename].push_back(norm_file);
 				result = false;
 			}
 		}
@@ -1550,7 +1560,12 @@ bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
 		if (value.real() == 0. && value.imag() == 0.) {
 			// display once the error for a 0 entry
 			if (result){
-				cout << " Amplitudefile " << ampfile << " has a (0, 0) entry withing the first " << nlines << endl;
+				string key = Get_key(ampfile);
+				// Suppress output for amplitudes with known problems
+				if (_keyfiles_blacklist.find(key) != _keyfiles_blacklist.end()){
+					cout << " Amplitudefile " << ampfile << " has a (0, 0) entry within the first " << nlines << endl;
+				}
+				_keyfiles_blacklist[key].push_back(ampfile);
 			}
 			result = false;
 		}
@@ -1707,6 +1722,55 @@ void TrpwaSessionManager::SortWaves(vector<string>& wavelist){
 	//string iso1,iso2;
 	sort(wavelist.begin(), wavelist.end());
 	//cout << " sorted " << wavelist.size() << " waves " << endl;
+}
+
+string TrpwaSessionManager::Get_key(string file){
+	// remove the extension if available
+	if (file.find(".amp")!=string::npos){
+		int pos_amp = file.find(".amp");
+		// remove the .amp ending
+		file.erase(pos_amp, file.size()-pos_amp);
+	}
+	// remove the extension if available
+	if (file.find(".key")!=string::npos){
+		int pos_key = file.find(".key");
+		// remove the .amp ending
+		file.erase(pos_key, file.size()-pos_key);
+	}
+	// remove the path if given
+	int slashpos = file.rfind('/');
+	if (slashpos != (int) string::npos){
+		file.erase(0, slashpos+1);
+	}
+	return file;
+}
+
+void TrpwaSessionManager::Print_problematic_waves(){
+	cout << endl;
+	cout << " ********************************************************* " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " *                       wave report                     * " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " ********************************************************* " << endl;
+	cout << endl;
+	for (vector<string>::iterator it = _keyfiles.begin(); it != _keyfiles.end(); it++){
+		cout << " " << *it << " \t ";
+		if (_keyfiles_blacklist.find(*it) != _keyfiles_blacklist.end()){
+			cout << " gave " << _keyfiles_blacklist.find(*it)->second.size() << " times errors " << endl;
+		} else {
+			cout << " has no problems " << endl;
+		}
+	}
+	cout << endl;
+	cout << " ********************************************************* " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " *               list of problematic waves               * " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " ********************************************************* " << endl;
+	for (map<string, vector<string> >::iterator it = _keyfiles_blacklist.begin(); it != _keyfiles_blacklist.end(); it++){
+		cout << " " << it->first << endl;
+	}
+	cout << endl;
 }
 
 // get the corresponding variables to the coded wavename
