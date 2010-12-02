@@ -115,7 +115,7 @@ if(Boost_FOUND)
   message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
   message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
 else()
-  message(SEND_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
+  message(FATAL_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
 endif()
 
 
@@ -132,12 +132,12 @@ if(LIBCONFIG)
     PATHS ${LIBCONFIG_LIBRARY_DIR}
     NO_DEFAULT_PATH)
   if(NOT LIBCONFIG_LIBS)
-    message(SEND_ERROR "Cannot find libconfig library '${_LIBCONFIG_LIB_NAMES}' in '${LIBCONFIG_LIBRARY_DIR}'. Please read INSTALL.")
+    message(FATAL_ERROR "Cannot find libconfig library '${_LIBCONFIG_LIB_NAMES}' in '${LIBCONFIG_LIBRARY_DIR}'. Please read INSTALL.")
   else()
     message(STATUS "Using libconfig library '${LIBCONFIG_LIBS}'")
   endif()
 else()
-  message(SEND_ERROR "Environment variable LIBCONFIG='${LIBCONFIG}' is not set correctly. Please read INSTALL")
+  message(FATAL_ERROR "Environment variable LIBCONFIG='${LIBCONFIG}' is not set correctly. Please read INSTALL")
 endif()
 
 
@@ -163,7 +163,7 @@ else()
   message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'")
   message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
   if(NOT CUDA_SDK_ROOT_DIR)
-    message(SEND_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
+    message(FATAL_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
   else()
 		# find cuda utility library
 		find_library(CUDA_CUTIL_LIBRARY
@@ -172,7 +172,7 @@ else()
 			NO_DEFAULT_PATH
 			)
 		if(NOT CUDA_CUTIL_LIBRARY)
-			message(SEND_ERROR "Could not find CUDA utility library 'cutil_${CMAKE_SYSTEM_PROCESSOR}' in '${CUDA_SDK_ROOT_DIR}/lib'")
+			message(FATAL_ERROR "Could not find CUDA utility library 'cutil_${CMAKE_SYSTEM_PROCESSOR}' in '${CUDA_SDK_ROOT_DIR}/lib'")
 		else()
 			set(USE_CUDA TRUE)
 			message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
@@ -301,7 +301,7 @@ add_subdirectory(fortran)
 add_subdirectory(gui/src)
 
 
-message(STATUS "Cmake did not find any errors. run 'make' to build the project.")
+message(STATUS "Run 'make' to build the project.")
 message(STATUS "On multi-core machines 'make -j#', where # is the number of parallel jobs, can speedup compilation considerably.")
 
 

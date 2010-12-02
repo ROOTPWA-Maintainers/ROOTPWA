@@ -29,7 +29,7 @@
 #//      requires root-config to be in PATH
 #//      based on AliRoots's FindROOT.cmake (r41015)
 #//      in https://alisoft.cern.ch/AliRoot/trunk/cmake/modules
-#//
+#//	 
 #//      following variables are defined:
 #//      ROOT_CONFIG_EXECUTABLE - path to root-config program
 #//      ROOTSYS                - path to root installation directory
@@ -49,13 +49,21 @@
 #//      ROOT_MINOR_VERSION     - ROOT minor version
 #//      ROOT_PATCH_VERSION     - ROOT patch level
 #//      ROOT_LIBS              - list of ROOT library files
-#//
-#// Example usage:
-#//      find_package(ROOT 5.26 REQUIRED Minuit2)
-#//
-#//
-#// Author List:
-#//      Boris Grube    TUM            (original author)
+#//	 
+#//      Example usage:
+#//          find_package(ROOT 5.26 REQUIRED Minuit2)
+#//	 
+#//	 
+#//      The module also provides a function to generate ROOT dictionaries.
+#//      Example usage:
+#//          set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/someDict.cc)  # set dictionary path
+#//          root_generate_dictionary(
+#//            "${ROOTPWA_DICTIONARY}"            # path to dictionary to generate
+#//            "${INCLUDE_DIR1};${INCLUDE_DIR2}"  # list of includes
+#//            "class1.h;class2.h;class3.h"       # list of classes to process
+#//            "someLinkDef.h"                    # ROOT linkDef file
+#//          )
+#//          set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})  # append dictionary to sources
 #//
 #//
 #//-------------------------------------------------------------------------
@@ -161,7 +169,7 @@ else()
     ROOT_PATCH_VERSION "${ROOT_VERSION}")
   # make sure minor version is specified
   if(ROOT_FIND_VERSION AND NOT ROOT_FIND_VERSION_MINOR)
-    message(SEND_ERROR "When requesting a specific version of ROOT, you must provide at least the major and minor version numbers, e.g., 5.22")
+    message(FATAL_ERROR "When requesting a specific version of ROOT, you must provide at least the major and minor version numbers, e.g., 5.22")
   endif()
   # set patchlevel to 0, if not specified
   if(NOT ROOT_FIND_VERSION_PATCH)
@@ -271,11 +279,10 @@ if(ROOT_FOUND)
   message(STATUS "Using ROOT include dir ${ROOT_INCLUDE_DIR}")
   message(STATUS "Using ROOT library dir ${ROOT_LIBRARY_DIR}")
   message(STATUS "Using ROOT libraries: ${ROOT_LIBRARIES}")
-  #message(STATUS "Using ROOT libraries: ${ROOT_LIBS}")
   message(STATUS "Using ROOT additional components: ${ROOT_FIND_COMPONENTS}")
 else()
   if(ROOT_FIND_REQUIRED)
-    message(SEND_ERROR "Unable to find requested ROOT installation:${ROOT_ERROR_REASON}")
+    message(FATAL_ERROR "Unable to find requested ROOT installation:${ROOT_ERROR_REASON}")
   else()
     if(NOT ROOT_FIND_QUIETLY)
       message(STATUS "ROOT was not found.")
@@ -288,7 +295,7 @@ endif()
 function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FILE)
 
   if(NOT ROOT_FOUND)
-    message(SEND_ERROR "Impossible to generate dictionary ${DICT_FILE}, because no ROOT installation was found.")
+    message(FATAL_ERROR "Impossible to generate dictionary ${DICT_FILE}, because no ROOT installation was found.")
   endif()
  
   # prepare command line argument for compiler definitions (put -D in front)
