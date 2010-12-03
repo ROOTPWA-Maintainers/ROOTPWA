@@ -78,6 +78,8 @@ namespace rpwa {
 		void setIncohSubAmp    (const std::complex<double> amp,
 		                        const unsigned int         index = 0) { _incohSubAmps[index] = amp;   }
 
+		static std::string name;  ///< name of tree leaf
+
 	private:
 
 		std::vector<std::complex<double> > _incohSubAmps;  ///< sub amplitudes to be added incoherently in cross section

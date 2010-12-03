@@ -53,8 +53,15 @@
 #include <complex>
 #include <string>
 #include <iostream>
+#include <fstream>
 
 #include "TObject.h"
+
+
+class TTree;
+namespace rpwa {
+	class amplitudeTreeLeaf;
+}
 
 
 namespace rpwa {
@@ -64,7 +71,7 @@ namespace rpwa {
 
 
 		typedef std::vector<std::vector<std::complex<double> > >    integralMatrixType;
-		typedef std::map<std::string, unsigned int>::const_iterator waveNameIndexMapIterator;
+		typedef std::map<std::string, unsigned int>::const_iterator waveNameWaveIndexMapIterator;
 
 
 	public:
@@ -76,21 +83,23 @@ namespace rpwa {
 		normalizationIntegral& operator =(const normalizationIntegral& integral);
 
 		// accessors
-		unsigned int nmbWaves () const { return _nmbWaves;  }
-		unsigned int nmbEvents() const { return _nmbEvents; }
+		unsigned int  nmbWaves () const { return _nmbWaves;  }
+		unsigned long nmbEvents() const { return _nmbEvents; }
 		
-		unsigned int waveIndex(const std::string& waveName) const;
+		unsigned int       waveIndex(const std::string& waveName ) const;
+		const std::string& waveName (const unsigned int waveIndex) const;
 
 		const std::complex<double>& element(const unsigned int waveIndexI,
 		                                    const unsigned int waveIndexJ) const;
 		const std::complex<double>& element(const std::string& waveNameI,
 		                                    const std::string& waveNameJ)  const;
 
-		bool integrate(const std::vector<std::string>& ampFileNames,
-		               const unsigned int              maxNmbEvents   = 0,
+		bool integrate(const std::vector<std::string>& binAmpFileNames,
+		               const std::vector<std::string>& rootAmpFileNames,
+		               const unsigned long             maxNmbEvents   = 0,
 		               const std::string&              weightFileName = "");
 
-		void renormalize(const unsigned int nmbEventsRenorm);
+		void renormalize(const unsigned long nmbEventsRenorm);
 
 		bool writeAscii(std::ostream& out = std::cout) const;
 		bool readAscii (std::istream& in  = std::cin );
@@ -106,12 +115,22 @@ namespace rpwa {
 
 	private:
 
+		std::streampos openBinAmpFiles(std::vector<std::ifstream*>&    ampFiles,
+		                               const std::vector<std::string>& ampFileNames,
+		                               const unsigned int              waveIndexOffset = 0);
+		
+		unsigned long openRootAmpFiles(std::vector<TTree*>&                   ampTrees,
+		                               std::vector<rpwa::amplitudeTreeLeaf*>& ampTreeLeafs,
+		                               const std::vector<std::string>&        ampFileNames,
+		                               const unsigned int                     waveIndexOffset = 0);
+		
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
-		unsigned int                        _nmbWaves;          ///< number of waves in integral
-		std::map<std::string, unsigned int> _waveNameIndexMap;  ///< maps wave names to wave indices
-		unsigned int                        _nmbEvents;         ///< number of events in integral matrix
-		integralMatrixType                  _integrals;         ///< integral matrix
+		unsigned int                        _nmbWaves;              ///< number of waves in integral
+		std::map<std::string, unsigned int> _waveNameWaveIndexMap;  ///< maps wave names to wave indices
+		std::vector<std::string>            _waveIndexWaveNameMap;  ///< maps wave indices to wave names
+		unsigned long                       _nmbEvents;             ///< number of events in integral matrix
+		integralMatrixType                  _integrals;             ///< integral matrix
 
 
 #if NORMALIZATIONINTEGRAL_ENABLED

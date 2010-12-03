@@ -74,10 +74,10 @@ main(int argc, char** argv)
 	if (0) {
 		// test integral calculation
 		// get file list
-		// vector<string> ampFileNames = filesMatchingGlobPattern("/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/*.amp", true);
-		// sort(ampFileNames.begin(), ampFileNames.end());
+		// vector<string> binAmpFileNames = filesMatchingGlobPattern("/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/*.amp", true);
+		// sort(binAmpFileNames.begin(), binAmpFileNames.end());
 		// make sure order of waves is the same as used by int
-		vector<string> ampFileNames = list_of
+		vector<string> binAmpFileNames = list_of
 			("1-0-+0+f0980_00_pi-.amp"   )
 			("1-0-+0+rho770_11_pi-.amp"  )
 			("1-0-+0+sigma_00_pi-.amp"   )
@@ -119,10 +119,11 @@ main(int argc, char** argv)
 			("1-4++1+f21270_32_pi-.amp"  )
 			("1-4-+1+rho770_31_pi-.amp"  )
 			("1-4++1+rho770_41_pi-.amp"  );
-		for (size_t i = 0; i < ampFileNames.size(); ++i)
-			ampFileNames[i] = "/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/" + ampFileNames[i];
+		for (size_t i = 0; i < binAmpFileNames.size(); ++i)
+			binAmpFileNames[i] = "/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/" + binAmpFileNames[i];
+		vector<string> rootAmpFileNames;
 		normalizationIntegral integral;
-		integral.integrate(ampFileNames);
+		integral.integrate(binAmpFileNames, rootAmpFileNames);
 		integral.writeAscii("testIntegral2.int");
 	}
 

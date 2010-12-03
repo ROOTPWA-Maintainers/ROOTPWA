@@ -284,7 +284,7 @@ main(int    argc,
 		ampTreeLeaf->setNmbIncohSubAmps(1);
 		const string ampTreeName = waveName + ".amp";
 		ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
-		ampTree->Branch("amplitudes", &ampTreeLeaf);
+		ampTree->Branch(amplitudeTreeLeaf::name.c_str(), &ampTreeLeaf);
 	} else
 #endif
 	{

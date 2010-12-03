@@ -51,6 +51,9 @@ using namespace rpwa;
 ClassImp(amplitudeTreeLeaf);
 
 
+string amplitudeTreeLeaf::name = "amplitude";
+
+
 amplitudeTreeLeaf::amplitudeTreeLeaf()
 	: TObject()
 {

@@ -153,7 +153,7 @@ main(int    argc,
 
 	// calculate integral
 	normalizationIntegral integral;
-	integral.integrate(binAmpFileNames, maxNmbEvents, weightFileName);
+	integral.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
 	if (nmbEventsRenorm > 0)
 		integral.renormalize(nmbEventsRenorm);
 
