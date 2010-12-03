@@ -193,7 +193,7 @@ public:
 	// of real data
 	// (comparing number of .amp files with .key files in the real data folder)
 	// Check_PWA_keyfiles is called
-	float Check_PWA_real_data_amplitudes();
+	float Check_PWA_real_data_amplitudes(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated amplitudes with full path
 	// if corresponding_eventfiles is given as an empty vector
@@ -209,7 +209,7 @@ public:
 	// (comparing number of .amp files with .key files
 	// in the flat phase space data folder)
 	// Check_PWA_keyfiles is called
-	float Check_PWA_MC_data_amplitudes();
+	float Check_PWA_MC_data_amplitudes(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated amplitudes with full path
 	// if corresponding_eventfiles is given as an empty vector
@@ -225,7 +225,7 @@ public:
 	// (comparing number of .amp files with .key files
 	// in the accpeted events data folder)
 	// Check_PWA_keyfiles is called
-	float Check_PWA_MC_acc_data_amplitudes();
+	float Check_PWA_MC_acc_data_amplitudes(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated amplitudes with full path
 	// if corresponding_eventfiles is given as an empty vector
@@ -249,9 +249,10 @@ public:
 	// check the entries of an amplitude file
 	// some files may have (0,0) entries that lead to 0 entries in the integral files
 	// ampfile = filename with full path to the ampfile
+	// checkentries = whether to check the entries or only if the file exists
 	// nlines  = number of lines to be read and tested
 	// return true if no 0 entries found
-	bool Is_valid_amplitude(string ampfile, int nlines = 10);
+	bool Is_valid_amplitude(string ampfile, bool checkentries = true, int nlines = 10);
 
 	// Get a list of (missing/available) calculated integrals of
 	// the available amplitudes with full path

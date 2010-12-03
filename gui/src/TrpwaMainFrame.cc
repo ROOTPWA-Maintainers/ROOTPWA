@@ -215,10 +215,21 @@ void TrpwaMainFrame::CheckStatus() {
 		//step_status[4]=current_session->Check_MC_data_events();
 		step_status[4]=current_session->Check_PWA_keyfiles();
 
+		bool checkentries(false);
+		// ask the user whether to check the amplitude entries
+		// ask if to remove problematic waves if there are some
+		int returncode;
+		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "check amplitude entries",
+				"Do you want to check the amplitude entries as well?\n This may take some time.",
+				kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			checkentries = true;
+		}
 		step_status[5]=(
-				current_session->Check_PWA_real_data_amplitudes()   +
-				current_session->Check_PWA_MC_acc_data_amplitudes() +
-				current_session->Check_PWA_MC_data_amplitudes()
+				current_session->Check_PWA_real_data_amplitudes(checkentries)   +
+				current_session->Check_PWA_MC_acc_data_amplitudes(checkentries) +
+				current_session->Check_PWA_MC_data_amplitudes(checkentries)
 				)/3.;
 		step_status[6]=(
 				current_session->Check_PWA_MC_acc_data_integrals()  +

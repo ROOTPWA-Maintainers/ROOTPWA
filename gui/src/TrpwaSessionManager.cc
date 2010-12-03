@@ -880,12 +880,12 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_amplitudes(string folder, bool
 	return *result;
 }
 
-float TrpwaSessionManager::Check_PWA_real_data_amplitudes(){
+float TrpwaSessionManager::Check_PWA_real_data_amplitudes(bool checkentries){
 	float result(0.);
 	vector<string> amps = Get_PWA_data_amplitudes("AMPS",false);
 	int i(0);
 	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
-		if (Is_valid_amplitude((*it))) result +=1. ;
+		if (Is_valid_amplitude((*it),checkentries)) result +=1. ;
 		i++;
 		DrawProgressBar(50, (i+1)/((double)amps.size()));
 	}
@@ -952,12 +952,12 @@ vector<string>& TrpwaSessionManager::CompareLists(const vector<string>& list1, c
 // of flat phase space data
 // (comparing number of .amp files with .key files
 // in the flat phase space data folder)
-float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
+float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(bool checkentries){
 	float result(0.);
 	vector<string> amps = Get_PWA_data_amplitudes("PSPAMPS",false);
 	int i(0);
 	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
-		if (Is_valid_amplitude((*it))) result +=1. ;
+		if (Is_valid_amplitude((*it),checkentries)) result +=1. ;
 		i++;
 		DrawProgressBar(50, (i+1)/((double)amps.size()));
 	}
@@ -1007,12 +1007,12 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_data_amplitudes(bool missing,
 // of accepted flat phase space data
 // (comparing number of .amp files with .key files
 // in the accpeted events data folder)
-float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(){
+float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(bool checkentries){
 	float result(0.);
 	vector<string> amps = Get_PWA_data_amplitudes("ACCAMPS",false);
 	int i(0);
 	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
-		if (Is_valid_amplitude((*it))) result +=1. ;
+		if (Is_valid_amplitude((*it),checkentries)) result +=1. ;
 		i++;
 		DrawProgressBar(50, (i+1)/((double)amps.size()));
 	}
@@ -1536,7 +1536,7 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 	return result;
 }
 
-bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
+bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, bool checkentries, int nlines)
 {
 	bool result = true;
 	ifstream file(ampfile.c_str());
@@ -1544,6 +1544,7 @@ bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
 		cout << " Error: " << ampfile << " does not exist!" << endl;
 		return false;
 	}
+	if (!checkentries) return true;
 	int i(0);
 	while (1)
 	{
