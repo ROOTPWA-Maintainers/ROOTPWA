@@ -1745,7 +1745,8 @@ string TrpwaSessionManager::Get_key(string file){
 	return file;
 }
 
-void TrpwaSessionManager::Print_problematic_waves(){
+int TrpwaSessionManager::Print_problematic_waves(){
+	int result(0);
 	cout << endl;
 	cout << " ********************************************************* " << endl;
 	cout << " *                                                       *"  << endl;
@@ -1756,6 +1757,7 @@ void TrpwaSessionManager::Print_problematic_waves(){
 	for (vector<string>::iterator it = _keyfiles.begin(); it != _keyfiles.end(); it++){
 		cout << " " << *it << " \t ";
 		if (_keyfiles_blacklist.find(*it) != _keyfiles_blacklist.end()){
+			result += _keyfiles_blacklist.find(*it)->second.size();
 			cout << " gave " << _keyfiles_blacklist.find(*it)->second.size() << " times errors " << endl;
 		} else {
 			cout << " has no problems " << endl;
@@ -1770,7 +1772,29 @@ void TrpwaSessionManager::Print_problematic_waves(){
 	for (map<string, vector<string> >::iterator it = _keyfiles_blacklist.begin(); it != _keyfiles_blacklist.end(); it++){
 		cout << " " << it->first << endl;
 	}
+	cout << endl << " found " << result << " files with problems " << endl;
 	cout << endl;
+	return result;
+}
+
+bool TrpwaSessionManager::Remove_problematic_waves(){
+	bool result(true);
+	for (map<string, vector<string> >::iterator it = _keyfiles_blacklist.begin(); it != _keyfiles_blacklist.end(); it++){
+		for (vector<string>::iterator itfile = it->second.begin(); itfile != it->second.end(); itfile++){
+			if (FileExists(*itfile)){
+				cout << " Disabling " << (*itfile);
+				stringstream command;
+				command << "mv " << *itfile << " " << *itfile << ".disabled" << endl;
+				if (system(command.str().c_str())){
+					result = false;
+					cout << " ... error" << endl;
+				}
+			}
+		}
+	}
+	if (result)
+		_keyfiles_blacklist.clear();
+	return result;
 }
 
 // get the corresponding variables to the coded wavename

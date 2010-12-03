@@ -21,6 +21,7 @@
 #include "TrpwaSessionManager.h"
 #include "TrpwaJobManager.h"
 #include <TGFileDialog.h>
+#include <TGMsgBox.h>
 #include <cstdlib>
 
 static const int nsteps = 11;
@@ -247,7 +248,22 @@ void TrpwaMainFrame::CheckStatus() {
 	}
 	cout << " done " << endl;
 
-	current_session->Print_problematic_waves();
+	int nproblematicwaves = current_session->Print_problematic_waves();
+	if (nproblematicwaves){
+		// ask if to remove problematic waves if there are some
+		stringstream message;
+		message << "There are "<< nproblematicwaves <<" files marked to be problematic.\n";
+		message << "(see terminal output for details)\n";
+		message << "Do you want to disable these files during further analysis?";
+		int returncode;
+		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "remove problematic files",
+				message.str().c_str(),
+				kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			current_session->Remove_problematic_waves();
+		}
+	}
 	/*
 	// Draws function graphics in randomly choosen interval
 	TCanvas *fCanvas = fEcanvas->GetCanvas();

@@ -387,7 +387,14 @@ public:
 	};*/
 
 	// show the entries of _keyfiles_blacklist in the std::cout
-	void Print_problematic_waves();
+	// returns the total number of problematic waves
+	int Print_problematic_waves();
+
+	// problematic amplitude files and integral files are stored in the
+	// black list that will be used to disable these files for further analysis
+	// The corresponding key files if causing this troubles should be
+	// fixed by the user him self
+	bool Remove_problematic_waves();
 
 
 private:
