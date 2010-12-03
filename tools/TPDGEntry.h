@@ -44,14 +44,16 @@
 
 // Collaborating Class Declarations --
 
-enum PDG_AntiparticleFlag { B , F , blank };
-enum PDG_BaryonRank { NoBaryon, Poor , Fair , Likely , Certain };
-
-// Codes in pdg docu:         F             S                   D         R
-enum PDG_Status { NotDefined, FurtherMeson, NeedsConfirmation , Omitted , Established };
 
 class TPDGEntry : public TObject {
 public:
+
+  enum PDG_AntiparticleFlag { B , F , blank };
+  enum PDG_BaryonRank { NoBaryon, Poor , Fair , Likely , Certain };
+
+  // Codes in pdg docu:         F             S                   D         R
+  enum PDG_Status { NotDefined, FurtherMeson, NeedsConfirmation , Omitted , Established };
+
 
   // Constructors/Destructors ---------
   TPDGEntry(){}
@@ -71,6 +73,8 @@ public:
   void width_errors(double& lower, double& upper) const 
   {upper=_width_ep;lower=_width_en;}
   double I() const {return _I;}
+  double J() const {return _J;}
+  int G() const {return _G;}
   int P() const {return _P;}
   int C() const {return _C;}
   PDG_AntiparticleFlag aflag() const {return _aflag;}
@@ -80,6 +84,8 @@ public:
   PDG_Status status() const {return _status;}
   TString name() const {return _name;}
   TString quarks() const {return _quark_content;} 
+  bool isLightMeson() const;
+  bool isExotic() const;
 
   // Modifiers -----------------------
 

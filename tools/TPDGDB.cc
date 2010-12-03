@@ -34,6 +34,7 @@ using std::ifstream;
 #include "TString.h"
 #include "TPDGEntry.h"
 #include "TTree.h"
+#include "TFile.h"
 
 // Class Member definitions -----------
 
@@ -49,6 +50,8 @@ unsigned int
 TPDGDB::read(const TString& filename, int num){
   ifstream infile(filename.Data());
 
+  TString outname=filename+".root";
+  TFile* outfile=TFile::Open(outname,"RECREATE");
   _tree=new TTree("pdg","pdg");
 
   TPDGEntry* entry=new TPDGEntry();
@@ -67,14 +70,20 @@ TPDGDB::read(const TString& filename, int num){
       continue;
     }
     
+    
     infile >> (*entry) ;
     entry->Print();
+    
 
     _tree->Fill();
 
+    
     // discard rest of line
     infile.getline(line,500);
     if(num>0 && counter++>=num) break;
   }
-  return _tree->GetEntries();
+  _tree->Write();
+  outfile->Close();
+  return 0;//_tree->GetEntries();
+  
 }
