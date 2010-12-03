@@ -1482,7 +1482,7 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 			for (vector<int>::iterator it = broken_entries.begin(); it != broken_entries.end(); it++){
 				if (number == (*it)){
 					// Suppress output for amplitudes with known problems
-					if (_keyfiles_blacklist.find(amplitudename) != _keyfiles_blacklist.end()){
+					if (_keyfiles_blacklist.find(amplitudename) == _keyfiles_blacklist.end()){
 						cout << " wave with broken entries: " << amplitudename << endl;
 					}
 					_keyfiles_blacklist[amplitudename].push_back(norm_file);
@@ -1490,14 +1490,14 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 				}
 			}
 			if (zero_entries_x[number] == dimensionx){
-				if (_keyfiles_blacklist.find(amplitudename) != _keyfiles_blacklist.end()){
+				if (_keyfiles_blacklist.find(amplitudename) == _keyfiles_blacklist.end()){
 					cout << " all x entries are 0! for " << amplitudename << endl;
 				}
 				_keyfiles_blacklist[amplitudename].push_back(norm_file);
 				result = false;
 			}
 			if (zero_entries_y[number] == dimensiony){
-				if (_keyfiles_blacklist.find(amplitudename) != _keyfiles_blacklist.end()){
+				if (_keyfiles_blacklist.find(amplitudename) == _keyfiles_blacklist.end()){
 					cout << " all y entries are 0! for " << amplitudename << endl;
 				}
 				_keyfiles_blacklist[amplitudename].push_back(norm_file);
@@ -1562,7 +1562,7 @@ bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
 			if (result){
 				string key = Get_key(ampfile);
 				// Suppress output for amplitudes with known problems
-				if (_keyfiles_blacklist.find(key) != _keyfiles_blacklist.end()){
+				if (_keyfiles_blacklist.find(key) == _keyfiles_blacklist.end()){
 					cout << " Amplitudefile " << ampfile << " has a (0, 0) entry within the first " << nlines << endl;
 				}
 				_keyfiles_blacklist[key].push_back(ampfile);
