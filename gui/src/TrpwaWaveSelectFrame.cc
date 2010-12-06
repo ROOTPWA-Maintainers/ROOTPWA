@@ -87,6 +87,7 @@ void TrpwaWaveSelectFrame::Build(){
 			if (buttongroup){
 				//frame_wave_selections->AddFrame(buttongroup);
 				current_waveframe->AddFrame(buttongroup);
+				current_waveframe->Layout();
 			}
 			last_JPC = _jpc;
 			current_waveframe = frame_wave_tabs->AddTab(last_JPC.c_str());
@@ -107,11 +108,13 @@ void TrpwaWaveSelectFrame::Build(){
 		// create a new radio button group if a certain number of bins is exceeded
 		if (((wavecounter+1)%50)==0){
 			current_waveframe->AddFrame(buttongroup);
+			current_waveframe->Layout();
 			buttongroup = new TGButtonGroup(current_waveframe," available waves ",kVerticalFrame);
 		}
 	}
 	//frame_wave_selections->AddFrame(buttongroup);
 	current_waveframe->AddFrame(buttongroup);
+	current_waveframe->Layout();
 
 	//frame_wave_tabs->GetTabContainer(1)->AddFrame(frame_wave_selections);
 

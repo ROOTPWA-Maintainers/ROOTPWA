@@ -798,8 +798,11 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 		corresponding_amplitudefiles->clear();
 		result->clear();
 	} else {
+		int counter(0);
 		vector< vector<string> >::iterator it_pair = corresponding_amplitudefiles->begin();
 		for (vector<string>::iterator it = result->begin(); it != result->end(); ++it){
+			counter++;
+			if (!missing) DrawProgressBar(50, counter/((double)result->size()));
 			if (!missing&&!Is_valid_norm_integral((*it), (*it_pair))){
 				result->erase(it);
 				corresponding_amplitudefiles->erase(it_pair);
