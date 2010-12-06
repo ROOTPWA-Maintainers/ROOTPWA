@@ -133,11 +133,22 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 					particleKey X("X", isobar1[comb][i].second, isobar2[comb].second, lorb, spin);
 					for (unsigned int J = abs(lorb-spin); (J <= (unsigned) abs(lorb+spin) && J <= Jmax); J++){ // couple now spin and orbital angular momentum
 						for (unsigned int M = 0; (M <= J && M <= Mmax); M++){ // go through the J projections up to either the allowed value or Mmax
-							cout << "JPM LS: " << J << " " << parity << " " << M << " " << lorb << " " << spin << endl;
-							// create a wave of positive reflectivity if (1)
-							if (1){
-								//      wave(&X, J, P, M, refl);
-								waveKey wave(&X, J,parity,M,+1);
+							for (int reflectivity = -1; reflectivity < 2; reflectivity+=2){
+								// skip combinations that are forbidden in the reflectivity basis
+								if (J==0 && parity == -1 && reflectivity == -1) continue;
+								if (J==1 && parity == +1 && reflectivity == -1) continue;
+								if (J==1 && parity == -1 && reflectivity == +1) continue;
+								if (J==2 && parity == +1 && reflectivity == +1) continue;
+								if (J==2 && parity == -1 && reflectivity == -1) continue;
+								if (J==3 && parity == +1 && reflectivity == -1) continue;
+								if (J==3 && parity == -1 && reflectivity == +1) continue;
+								if (J==4 && parity == +1 && reflectivity == +1) continue;
+								if (J==4 && parity == -1 && reflectivity == -1) continue;
+								if (J==5 && parity == +1 && reflectivity == -1) continue;
+								if (J==5 && parity == -1 && reflectivity == +1) continue;
+
+								cout << "JPMe LS: " << J << " " << parity << " " << M << " " << reflectivity << " " << lorb << " " << spin << endl;
+								waveKey wave(&X, J,parity,M,reflectivity);
 								generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 								// move the .key file
 								/*
@@ -150,22 +161,6 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 								command << "rm -f " << wave.waveName(true) << ".C" << endl;
 								cout << " executing " << command.str() << endl;
 								system(command.str().c_str());*/
-								wavecounter++;
-							}
-							// create a wave of negative reflectivity if (1)
-							if (1){
-								//      wave(&X, J, P, M, refl);
-								waveKey wave(&X, J,parity,M,-1);
-								generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
-								/*
-								stringstream command;
-								command << "mv " << wave.waveName(true) << " " << movetoFilePath << "/";
-								cout << " executing " << command.str() << endl;
-								system(command.str().c_str());
-								command.str("");
-								command << "rm -f " << wave.waveName(true) << ".C" << endl;
-								cout << " executing " << command.str() << endl;
-								system(command.str().c_str()); */
 								wavecounter++;
 							}
 						}
