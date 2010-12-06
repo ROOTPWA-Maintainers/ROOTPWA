@@ -393,6 +393,7 @@ void TrpwaMainFrame::SelectWaves(){
 			cout << " error setting selected waves " << endl;
 		}
 		//waveselections;
+		current_session->Save_Session();
 	}
 }
 
@@ -486,7 +487,7 @@ void TrpwaMainFrame::ShowFitResults(){
 			rootmacro.close();
 			script << "root -l -q /tmp/rootmacro.C" << endl;
 			//script << "rm /tmp/rootmacro.C" << endl;
-			script << "mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ~/" << endl;
+			script << "mv ${ROOTPWA}/src/rootscripts/wave*.ps " << current_session->Get_fit_results_dir() << "/" << endl;
 			script << "cd -" << endl;
 		}
 		script.close();
@@ -494,6 +495,21 @@ void TrpwaMainFrame::ShowFitResults(){
 		command << "source /tmp/_showresults.sh";
 
 		cout << system(command.str().c_str()) << endl;
+
+		// ask whether to save the fit results separately
+		bool save(false);
+		int returncode;
+		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "save fit results",
+			"Do you want to save the fit constellation?",
+			kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			save = true;
+		}
+		if (save){
+			current_session->Save_Fit();
+			current_session->Save_Session();
+		}
 	}
 	/*
 	# visualization must be performed in the rootscript folder containing all needed (logon) scripts

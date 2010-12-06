@@ -397,6 +397,20 @@ public:
 	// fixed by the user him self
 	bool Remove_problematic_waves();
 
+	// save the current fit constellation to a specified sub folder
+	// if the folder name is not given a sub directory in the fit folder
+	// will be created
+	// returns true if succeeded
+	// folder will be put to the list of existing fit results
+	bool Save_Fit(string folder = "", string title = "", string description = "");
+
+	// load a Fit from the specified folder
+	// the existing fit will be overwritten!
+	bool Load_Fit(string folder);
+
+	void Get_List_of_Fits(vector<string>& folders, // list of folders with fits
+			vector<string>* titles = NULL, 		  // optional list of fit titles
+			vector<string>* descriptions = NULL); // optional list of fit descriptions
 
 private:
 	string _config_file; // filename with path to the config file of this session
@@ -415,6 +429,10 @@ private:
 	string _file_keyfile_generator; // filename with path to the key file generator
 	string _title; // the title of the session
 	string _description; // users description of this session
+
+	vector<string> _fit_folders; // absolute paths of fit folders
+	vector<string> _fit_titles ; // titles of the fits
+	vector<string> _fit_descriptions; // descriptions of the fits
 
 	TBinMap _bins; // map with settings to each bin
 

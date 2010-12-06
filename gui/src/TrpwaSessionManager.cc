@@ -141,6 +141,31 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 		}
 
+		if (_fit_folders.size() != _fit_titles.size() || _fit_titles.size() != _fit_descriptions.size()){
+			cout << " Error storing fit folders: vector sizes do not match! " << endl;
+			result = false;
+		} else {
+			file << " fit_folders = [ ";
+			for (vector<string>::iterator it = _fit_folders.begin(); it != _fit_folders.end(); it++){
+				if (it != _fit_folders.begin()) file << " ,\n ";
+					file << "\"" << (*it) << "\"";
+			}
+			file << " ]; " << endl;
+
+			file << " fit_titles = [ ";
+			for (vector<string>::iterator it = _fit_titles.begin(); it != _fit_titles.end(); it++){
+				if (it != _fit_titles.begin()) file << " ,\n ";
+					file << "\"" << (*it) << "\"";
+			}
+			file << " ]; " << endl;
+
+			file << " fit_descriptions = [ ";
+			for (vector<string>::iterator it = _fit_descriptions.begin(); it != _fit_descriptions.end(); it++){
+				if (it != _fit_descriptions.begin()) file << " ,\n ";
+					file << "\"" << (*it) << "\"";
+			}
+			file << " ]; " << endl;
+		}
 
 		//map <int, TrpwaBinInfo> _bins; // map with settings to each bin
 		result = true;
@@ -160,6 +185,10 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 		cout << " Error in TrpwaSessionManager::Load_Session(): " << config_file << " does not exist! " << endl;
 		return false;
 	}
+
+	_fit_folders.clear();
+	_fit_descriptions.clear();
+	_fit_titles.clear();
 
 	cout << " Loading session from " << config_file << endl;
 	Config _config;
@@ -331,6 +360,43 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 				_mc_data_files.push_back(_file);
 			} else {
 				cout << " Error in TrpwaSessionManager::Load_Session(): File does not exist: " << _file << endl;
+				result = false;
+			}
+		}
+	}
+
+	if ( _config.exists("fit_folders") &&
+		 _config.exists("fit_titles") &&
+		 _config.exists("fit_descriptions")){
+		Setting& _setting_fit_folders      = _config.lookup("fit_folders");
+		Setting& _setting_fit_titles       = _config.lookup("fit_titles");
+		Setting& _setting_fit_descriptions = _config.lookup("fit_descriptions");
+		if (!_setting_fit_folders.isArray() ||
+			!_setting_fit_descriptions.isArray() ||
+			!_setting_fit_titles.isArray()){
+			cout << " Error in TrpwaSessionManager::Load_Session(): check fit folders and descriptions! " << endl;
+			return false;
+		}
+		if (_setting_fit_folders.getLength() != _setting_fit_titles.getLength() ||
+		    _setting_fit_folders.getLength() != _setting_fit_descriptions.getLength()
+		    ){
+			cout << " Error in TrpwaSessionManager::Load_Session(): check fit folders: number of entries differs for titles or descriptions! " << endl;
+			return false;
+		}
+		int nfolders = _setting_fit_folders.getLength();
+		if (0 == nfolders){
+			cout << " Warning in TrpwaSessionManager::Load_Session(): no fit folders specified " << endl;
+		}
+		for (int i = 0; i < nfolders; i++){
+			string _dir         = (const char*) _setting_fit_folders[i];
+			string _description = (const char*) _setting_fit_descriptions[i];
+			string _title       = (const char*) _setting_fit_titles[i];
+			if (DirExists(_dir)){
+				_fit_folders.push_back(_dir);
+				_fit_descriptions.push_back(_description);
+				_fit_titles.push_back(_title);
+			} else {
+				cout << " Error in TrpwaSessionManager::Load_Session(): Directory does not exist: " << _dir << endl;
 				result = false;
 			}
 		}
@@ -824,7 +890,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 float TrpwaSessionManager::Check_PWA_MC_acc_data_integrals(){
 	float result(0.);
 	result = Get_PWA_data_integrals("ACCAMPS",false).size();
-	if ((int) result != (int) _n_bins)
+	//if ((int) result != (int) _n_bins)
 		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
 	return result;
@@ -838,7 +904,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_acc_data_integrals(bool missing,
 float TrpwaSessionManager::Check_PWA_MC_data_integrals(){
 	float result(0.);
 	result = Get_PWA_data_integrals("PSPAMPS",false).size();
-	if ((int) result != (int) _n_bins)
+	//if ((int) result != (int) _n_bins)
 		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
 	return result;
@@ -1802,6 +1868,69 @@ bool TrpwaSessionManager::Remove_problematic_waves(){
 		_keyfiles_blacklist.clear();
 	return result;
 }
+
+bool TrpwaSessionManager::Save_Fit(string folder, string title, string description){
+	bool result(true);
+	string _folder = folder;
+	if (_folder == ""){
+		// create a default folder by title and date time
+		// make a unique label by time and a counter
+		time_t rawtime;
+		time ( &rawtime );
+		string stime = ctime (&rawtime);
+		// replace empty spaces in time string by -
+		for (unsigned int i = 0; i < stime.size(); i++){
+			if (stime[i] == ' ' || stime[i] == '\n' || stime[i] == ':'){
+				stime[i]='_';
+			}
+			//cout << stime[i];
+		}
+		_folder = _dir_fit_results+"/fit_constellation_"+title+"_"+stime;
+	}
+	if (DirExists(_folder)){
+		cout << " Error in TrpwaSessionManager::Save_Fit(): folder " << _folder << " is already existing! " << endl;
+		return false;
+	} else {
+		cout << " creating fit directory " << system(("mkdir "+_folder).c_str()) << endl;
+	}
+	cout << " moving fit results " << system(("cp "+_dir_fit_results+"/* "+_folder).c_str()) << endl;
+	_fit_folders.push_back(_folder);
+	_fit_titles.push_back(title);
+	_fit_descriptions.push_back(description);
+	return result;
+}
+
+bool TrpwaSessionManager::Load_Fit(string folder){
+	bool result(true);
+	string _folder = folder;
+	if (!DirExists(_folder)) _folder = _dir_fit_results+"/"+folder;
+	if (DirExists(_folder)){
+		// create a backup folder
+		string backupfolder = _dir_fit_results+"/lastfit";
+		if (!DirExists(backupfolder))
+			cout << system(("mkdir "+backupfolder).c_str()) << endl;
+		//for (int ibin = 0; ibin < Get_n_bins(); ibin++){
+		//	string wavelistfile, fitresultfile;
+		//	int bin_low, bin_high;
+		//	wavelistfile = GetWaveListFile(ibin, bin_low, bin_high, fitresultfile);
+		//	if (FileExists(wavelistfile))
+		//		cout << system
+		cout << " creating backup of files " << system(("mv "+_dir_fit_results+"/* "+backupfolder+"/").c_str()) << endl;
+		cout << " moving files to fit directory " << system(("mv "+_folder+"/* "+_dir_fit_results+"/").c_str()) << endl;
+	} else {
+		cout << " Error in TrpwaSessionManager::Load_Fit(): directory " << folder << " does not exist " << endl;
+	}
+	return result;
+}
+
+void TrpwaSessionManager::Get_List_of_Fits(vector<string>& folders,
+		vector<string>* titles,
+		vector<string>* descriptions){
+	folders = _fit_folders;
+	if (titles) (*titles) = _fit_titles;
+	if (descriptions) (*descriptions) = _fit_descriptions;
+}
+
 
 // get the corresponding variables to the coded wavename
 void TrpwaSessionManager::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s){
