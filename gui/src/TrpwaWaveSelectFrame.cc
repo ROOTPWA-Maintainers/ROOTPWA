@@ -10,6 +10,7 @@
 #include <iostream>
 #include "TGButtonGroup.h"
 #include "TGButton.h"
+#include "TGTab.h"
 
 using namespace std;
 
@@ -60,36 +61,61 @@ void TrpwaWaveSelectFrame::Build(){
 	_copybinbutton = new TGCheckButton(buttongroup, new TGHotString(" copy bin "));
 	_copybinbutton->SetState(kButtonUp);
 	buttongroup->AddFrame(_copybinbutton);
+	buttongroup = NULL; // reset the pointer for the next frames
 
 	this->AddFrame(frame_bin_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 				kLHintsExpandX,1,1,1,1));
 
-	// horizontal frame containing check boxes with the waves to select for the bins
-	TGGroupFrame* frame_wave_selections = new TGGroupFrame(this, " waves ", kHorizontalFrame);
-
-	buttongroup = new TGButtonGroup(frame_wave_selections," available waves ",kVerticalFrame);
-	// add first the button to select all bins
-	//TGRadioButton* radiobutton = new TGRadioButton(buttongroup, new TGHotString(" all bins "));
-	//radiobutton->SetState(kButtonDown);
+	// provide tab frame to put different JPC waves in different tabs
+	TGTab* frame_wave_tabs = new TGTab(this);
+	TGCompositeFrame* current_waveframe = NULL;
+	//TGGroupFrame* frame_wave_selections = NULL;
+	string last_JPC = "";
 	// assuming that all selectable waves are the same for each bin
 	unsigned int nwaves(0);
 	if (nbins > 0)
 		nwaves = (*_waveselections)[0].available_waves.size();
+	unsigned wavecounter(0);
 	for (unsigned int iwave = 0; iwave < nwaves; iwave++){
+		// copy JPC digits to define the available tabs
+		// GIsoJPCMe
+		// 01  23456
+		//     ^^^
+		string _jpc = (*_waveselections)[0].available_waves[iwave].substr(2,3);
+		if (last_JPC != _jpc){
+			// store the last button group if available
+			if (buttongroup){
+				//frame_wave_selections->AddFrame(buttongroup);
+				current_waveframe->AddFrame(buttongroup);
+			}
+			last_JPC = _jpc;
+			current_waveframe = frame_wave_tabs->AddTab(last_JPC.c_str());
+			// horizontal frame containing check boxes with the waves to select for the bins
+			//frame_wave_selections = new TGGroupFrame(current_waveframe, " waves ", kHorizontalFrame);
+			buttongroup = new TGButtonGroup(current_waveframe," available waves ",kVerticalFrame);
+			// reset the wavecounter that is used to create a new button group
+			wavecounter = 0;
+		}
+
 		stringstream _text;
 		_text << (*_waveselections)[0].available_waves[iwave];
 		TGCheckButton* button = new TGCheckButton(buttongroup, new TGHotString(_text.str().c_str()));
 		_buttons_waveselection.push_back(button);
 		button->SetState(kButtonUp);
 		button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"WaveSelectClick()");
+		wavecounter++;
 		// create a new radio button group if a certain number of bins is exceeded
-		if (((iwave+1)%50)==0){
-			frame_wave_selections->AddFrame(buttongroup);
-			buttongroup = new TGButtonGroup(frame_wave_selections," available waves ",kVerticalFrame);
+		if (((wavecounter+1)%50)==0){
+			current_waveframe->AddFrame(buttongroup);
+			buttongroup = new TGButtonGroup(current_waveframe," available waves ",kVerticalFrame);
 		}
 	}
-	frame_wave_selections->AddFrame(buttongroup);
-	this->AddFrame(frame_wave_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+	//frame_wave_selections->AddFrame(buttongroup);
+	current_waveframe->AddFrame(buttongroup);
+
+	//frame_wave_tabs->GetTabContainer(1)->AddFrame(frame_wave_selections);
+
+	this->AddFrame(frame_wave_tabs, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 					kLHintsExpandX,1,1,1,1));
 
 

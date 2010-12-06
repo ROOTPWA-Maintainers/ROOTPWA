@@ -1789,6 +1789,8 @@ bool TrpwaSessionManager::Remove_problematic_waves(){
 				if (system(command.str().c_str())){
 					result = false;
 					cout << " ... error" << endl;
+				} else {
+					cout << endl;
 				}
 			}
 		}
