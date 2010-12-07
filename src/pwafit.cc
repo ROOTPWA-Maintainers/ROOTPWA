@@ -439,6 +439,8 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// find minimum of likelihood function
+	bool converged=false;
+	bool hashesse=false;
 	printInfo << "performing minimization" << endl;
 	{
 		TStopwatch timer;
@@ -451,6 +453,7 @@ main(int    argc,
 			printWarn << "minimization failed. " << flush;
 		cout << "used " << flush;
 		timer.Print();
+		converged=success;
 		printInfo << *minimizer;
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
@@ -463,6 +466,8 @@ main(int    argc,
 				printWarn << "calculation of Hessian matrix failed. " << flush;
 			cout << "used " << flush;
 			timer.Print();
+			hashesse=success;
+			
 		}
 		printInfo << *minimizer;
 	}
@@ -559,7 +564,9 @@ main(int    argc,
 				             fitParCovMatrix,
 				             fitParCovMatrixIndices,
 				             normIntegral,
-				             phaseSpaceIntegral);
+				             phaseSpaceIntegral,
+					     converged,
+					     hashesse);
 			}
 			
 			if (1) {

@@ -116,11 +116,15 @@ namespace rpwa {
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
 		          const TCMatrix&                           normIntegral,            // normalization integral matrix
-		          const std::vector<double>&                phaseSpaceIntegral);     // normalization integral over full phase space without acceptance
+		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
+			  bool converged, // fit has converged (as returned by minuit
+			  bool hashesse); // hesse has been called and was successful    
 
 		double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
 		double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
 		double       evidence     () const;                                ///< return the model evidence (OccamFactorMethod)
+	  bool         converged() const {return _converged;} ///< return convergence flag
+	  bool         hashesse() const {return _hashesse;} ///< return hashesse flag
 		unsigned int rank         () const { return _rank;              }  ///< returns rank of fit
 		unsigned int nmbEvents    () const { return _nmbEvents;         }  ///< returns number of events in bin
 		unsigned int normNmbEvents() const { return _normNmbEvents;     }  ///< returns number of events to normalize to
@@ -234,7 +238,9 @@ namespace rpwa {
 		std::map<Int_t, Int_t>                _normIntIndexMap;         ///< maps production amplitude indices to indices in normalization integral
 		std::vector<double>                   _phaseSpaceIntegral;      ///< diagonals of phase space integrals (without acceptance)
 		// add more info about fit: quality of fit information, ndf, list of fixed parameters, ...
-  
+	  bool                                  _converged;
+	  bool                                  _hashesse;
+
 		// helper functions
 		inline static TMatrixT<double> matrixRepr(const std::complex<double>& c);
 

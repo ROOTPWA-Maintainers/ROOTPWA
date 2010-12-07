@@ -62,7 +62,9 @@ fitResult::fitResult()
 	  _massBinCenter (0),
 	  _logLikelihood (0),
 	  _rank          (0),
-	  _covMatrixValid(false)
+	  _covMatrixValid(false),
+	  _converged(false),
+	  _hashesse(false)
 { }
 
 
@@ -76,7 +78,9 @@ fitResult::fitResult(const TFitBin& fitBin)
 	  _fitParCovMatrix       (fitBin.fitParCovMatrix()),
 	  _fitParCovMatrixIndices(fitBin.fitParCovIndices()),
 	  _normIntegral          (fitBin.normIntegral()),
-	  _normIntIndexMap       (fitBin.prodAmpIndexMap())
+	  _normIntIndexMap       (fitBin.prodAmpIndexMap()),
+	  _converged             (true),
+	  _hashesse              (false)
 {
 	_prodAmps = fitBin.prodAmps();
 	{
@@ -108,7 +112,10 @@ fitResult::fitResult(const fitResult& result)
 	  _fitParCovMatrixIndices(result.fitParCovIndices()),
 	  _normIntegral          (result.normIntegralMatrix()),
 	  _normIntIndexMap       (result.normIntIndexMap()),
-	  _phaseSpaceIntegral    (result._phaseSpaceIntegral)
+	  _phaseSpaceIntegral    (result._phaseSpaceIntegral),
+	  _converged             (result._converged),
+	  _hashesse              (result._hashesse)
+  
 { }
 
 
@@ -577,6 +584,8 @@ fitResult::reset()
 	_normIntegral.ResizeTo(0, 0);
 	_normIntIndexMap.clear();
 	_phaseSpaceIntegral.clear();
+	_converged=false;
+	_hashesse=false;
 }
 
 
@@ -592,8 +601,13 @@ fitResult::fill
  const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
  const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
  const TCMatrix&                 normIntegral,            // normalization integral matrix
- const vector<double>&           phaseSpaceIntegral)      // normalization integral over full phase space without acceptance
+ const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
+ bool converged,
+ bool hashesse)
+
 {
+        _converged     = converged;
+        _hashesse      = hashesse;
 	_nmbEvents     = nmbEvents;
 	_normNmbEvents = normNmbEvents;
 	_massBinCenter = massBinCenter;
