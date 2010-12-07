@@ -135,17 +135,17 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 						for (unsigned int M = 0; (M <= J && M <= Mmax); M++){ // go through the J projections up to either the allowed value or Mmax
 							for (int reflectivity = -1; reflectivity < 2; reflectivity+=2){
 								// skip combinations that are forbidden in the reflectivity basis
-								if (J==0 && parity == -1 && reflectivity == -1) continue;
-								if (J==1 && parity == +1 && reflectivity == -1) continue;
-								if (J==1 && parity == -1 && reflectivity == +1) continue;
-								if (J==2 && parity == +1 && reflectivity == +1) continue;
-								if (J==2 && parity == -1 && reflectivity == -1) continue;
-								if (J==3 && parity == +1 && reflectivity == -1) continue;
-								if (J==3 && parity == -1 && reflectivity == +1) continue;
-								if (J==4 && parity == +1 && reflectivity == +1) continue;
-								if (J==4 && parity == -1 && reflectivity == -1) continue;
-								if (J==5 && parity == +1 && reflectivity == -1) continue;
-								if (J==5 && parity == -1 && reflectivity == +1) continue;
+								if (J==0 && parity == -1 && M == 0 && reflectivity == -1) continue;
+								if (J==1 && parity == +1 && M == 0 && reflectivity == -1) continue;
+								if (J==1 && parity == -1 && M == 0 && reflectivity == +1) continue;
+								if (J==2 && parity == +1 && M == 0 && reflectivity == +1) continue;
+								if (J==2 && parity == -1 && M == 0 && reflectivity == -1) continue;
+								if (J==3 && parity == +1 && M == 0 && reflectivity == -1) continue;
+								if (J==3 && parity == -1 && M == 0 && reflectivity == +1) continue;
+								if (J==4 && parity == +1 && M == 0 && reflectivity == +1) continue;
+								if (J==4 && parity == -1 && M == 0 && reflectivity == -1) continue;
+								if (J==5 && parity == +1 && M == 0 && reflectivity == -1) continue;
+								if (J==5 && parity == -1 && M == 0 && reflectivity == +1) continue;
 
 								cout << "JPMe LS: " << J << " " << parity << " " << M << " " << reflectivity << " " << lorb << " " << spin << endl;
 								waveKey wave(&X, J,parity,M,reflectivity);
