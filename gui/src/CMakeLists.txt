@@ -53,6 +53,7 @@ set(SOURCES
   TrpwaWaveSelectFrame.cc
   TrpwaJobManager.cc
   TrpwaEventTreeHandler.cc
+  TrpwaCommonTools.cc
 ) 
 
 # ROOT dictionary

@@ -1220,6 +1220,9 @@ vector<bool>   &TrpwaSessionManager::GetSelectedWaves(int ibin, vector<string>& 
 				if (_selected_waves.size() != 0){
 					cout << " Error in TrpwaSessionManager::GetSelectedWaves(): there are " << _selected_waves.size() << " amps in ";
 					cout << (*it).second.wave_list_file << " specified that are not available in the list of keys! "  << endl;
+					for (unsigned int iwave = 0; iwave < _selected_waves.size(); iwave++){
+						cout << _selected_waves[iwave] << endl;
+					}
 					result->clear();
 					allwaves.clear();
 					return *result;
@@ -1794,24 +1797,11 @@ void TrpwaSessionManager::SortWaves(vector<string>& wavelist){
 	//cout << " sorted " << wavelist.size() << " waves " << endl;
 }
 
+#include "TrpwaCommonTools.h"
+
 string TrpwaSessionManager::Get_key(string file){
-	// remove the extension if available
-	if (file.find(".amp")!=string::npos){
-		int pos_amp = file.find(".amp");
-		// remove the .amp ending
-		file.erase(pos_amp, file.size()-pos_amp);
-	}
-	// remove the extension if available
-	if (file.find(".key")!=string::npos){
-		int pos_key = file.find(".key");
-		// remove the .amp ending
-		file.erase(pos_key, file.size()-pos_key);
-	}
-	// remove the path if given
-	int slashpos = file.rfind('/');
-	if (slashpos != (int) string::npos){
-		file.erase(0, slashpos+1);
-	}
+	file = TrpwaCommonTools::RemovePathExtension(file,".amp");
+	file = TrpwaCommonTools::RemovePathExtension(file,".key");
 	return file;
 }
 
@@ -1929,16 +1919,6 @@ void TrpwaSessionManager::Get_List_of_Fits(vector<string>& folders,
 	folders = _fit_folders;
 	if (titles) (*titles) = _fit_titles;
 	if (descriptions) (*descriptions) = _fit_descriptions;
-}
-
-
-// get the corresponding variables to the coded wavename
-void TrpwaSessionManager::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s){
-	cout << " TrpwaSessionManager::GetJPCMreflISO1lsISO2() not implemented yet " << endl;
-	for (unsigned int i = 0; i < wavename.size(); i++){
-		cout << wavename[i] << " ";
-	}
-	cout << endl;
 }
 
 void TrpwaSessionManager::DrawProgressBar(int len, double percent) {

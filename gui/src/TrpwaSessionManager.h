@@ -377,9 +377,6 @@ public:
 	// sort by JPC iso1 iso2 M reflectivity
 	void SortWaves(vector<string>& wavelist);
 
-	// get the corresponding variables to the coded wavename
-	void GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s);
-
 	/*
 	TrpwaSessionManager& operator=(const TrpwaSessionManager& copysource) const{
 		//Set_n_bins(copysource.Get_n_bins());

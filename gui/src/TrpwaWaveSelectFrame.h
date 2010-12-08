@@ -6,8 +6,10 @@
  */
 #include <TGFrame.h>
 #include <vector>
+#include <map>
 #include <string>
 #include "TGButton.h"
+#include "TGComboBox.h"
 
 using namespace std;
 
@@ -33,9 +35,20 @@ private:
 
 	TGButton* _button_allbins; // reference to button with all bins
 	TGButton* _copybinbutton;  // reference to button to copy bins
+	TGComboBox* _filter_box; // combobox with filters to select
 	vector<TGTextButton*> _buttons_binselection; // holds the buttons to all bins
 
 	vector<TGTextButton*> _buttons_waveselection; // holds the buttons to all waves
+
+	// references to the buttons are stored here by quantum numbers
+	map<int, vector< TGTextButton* > > _buttons_waveselection_by_JP;
+	map<int, vector< TGTextButton* > > _buttons_waveselection_by_Mrefl;
+	map<int, vector< TGTextButton* > > _buttons_waveselection_by_lorb;
+	map<string, vector< TGTextButton* > > _buttons_waveselection_by_iso1;
+	map<string, vector< TGTextButton* > > _buttons_waveselection_by_iso2;
+
+	TGTextButton* _select_button;
+	TGTextButton* _deselect_button;
 
 	// set the buttons according to the wave list in _selected bin
 	void UpdateWaveButtons();
@@ -58,6 +71,15 @@ public:
 
 	// action to be taken on wave selection click
 	void WaveSelectClick();
+
+	// filter the waves by the specified setting
+	void FilterSelectClick(int selection);
+
+	// select all waves that are selected by the filter_box
+	void SelectFiltered();
+
+	//un select all waves that are selected by the filter_box
+	void UnselectFiltered();
 
 	// call the root script for class definition
 	ClassDef(TrpwaWaveSelectFrame,0);
