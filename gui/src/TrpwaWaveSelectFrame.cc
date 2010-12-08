@@ -225,10 +225,10 @@ void TrpwaWaveSelectFrame::UnselectFiltered(){
 
 void TrpwaWaveSelectFrame::FilterSelectClick(int selection){
 	for (vector<TGTextButton*>::iterator it = _buttons_waveselection.begin(); it != _buttons_waveselection.end(); it++){
-		if (selection == -1) // so filter selected
-			(*it)->SetEnabled(true);
-		else // disable all to enable the selcted afterwards
-			(*it)->SetEnabled(false);
+		//if (selection == -1) // no filter selected
+			(*it)->SetTextColor(0x000000);// SetEnabled(true);
+		//else // disable all to enable the selected afterwards
+		//	(*it)->SetBackgroundColor(this->GetBackground());// SetEnabled(false);
 	}
 	// enable all buttons
 
@@ -239,7 +239,7 @@ void TrpwaWaveSelectFrame::FilterSelectClick(int selection){
 	vector<TGTextButton*> *wave_buttons_list = (vector<TGTextButton*> *) selection;
 	// enable the corresponding buttons
 	for (vector<TGTextButton*>::iterator it = wave_buttons_list->begin(); it != wave_buttons_list->end(); it++){
-		(*it)->SetEnabled(true);
+		(*it)->SetTextColor(0x00ff00);// SetEnabled(true);
 	}
 }
 
