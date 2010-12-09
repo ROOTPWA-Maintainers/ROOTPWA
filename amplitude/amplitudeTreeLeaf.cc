@@ -46,9 +46,8 @@ using namespace rpwa;
 
 
 #if AMPLITUDETREELEAF_ENABLED
-
-
 ClassImp(amplitudeTreeLeaf);
+#endif
 
 
 string amplitudeTreeLeaf::name = "amplitude";
@@ -70,6 +69,3 @@ void amplitudeTreeLeaf::clear()
 {
 	_incohSubAmps.clear();
 }
-
-
-#endif  // AMPLITUDETREELEAF_ENABLED

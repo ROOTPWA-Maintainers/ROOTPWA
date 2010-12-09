@@ -4,14 +4,25 @@
 
 #include "libconfig.h++"
 
+#include "libConfigUtils.hpp"
+
 #include "TFhh.h"
+
+bool ReadoutTestKeyfile();
 
 
 using namespace std;
+using namespace libconfig;
+using namespace rpwa;
 
 
 int main(int narg, char* carg[]) {
   
+	if (not ReadoutTestKeyfile()) {
+		cout << "ReadoutTestKexfile failed" << endl;
+	}
+
+	
   if (narg < 4) {
     cout << endl
 	 << "This program requires 3 input strings for the mother and "<<endl
@@ -65,3 +76,29 @@ int main(int narg, char* carg[]) {
   
 }
 
+bool ReadoutTestKeyfile() {
+	const string KeyfileName = "../relampl/test.key";
+	Config key;
+
+	bool debug = false;
+	
+	if(not parseLibConfigFile(KeyfileName, key, debug)) {
+		printWarn << "problems reading keyfile" << endl;
+		return false;
+	}
+	
+	const Setting& rootKey = key.getRoot();
+	const Setting* waveKey = findLibConfigGroup(rootKey, "wave");
+	const Setting* XWaveQn = findLibConfigGroup(*waveKey, "XQuantumNumbers");
+	int J_parent;
+	int P_parent;
+	(*XWaveQn).lookupValue("J",J_parent);
+	(*XWaveQn).lookupValue("P",P_parent);
+	
+	cout << "J: " << J_parent << endl;
+	cout << "P: " << P_parent << endl;
+	
+//	const Setting* XDecay = findLibConfigGroup(wave,"XDecay");
+	
+	return true;
+}

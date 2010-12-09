@@ -58,9 +58,6 @@
 namespace rpwa {
 
 
-#if AMPLITUDETREELEAF_ENABLED
-
-
 	class amplitudeTreeLeaf : public TObject {
 	
 	public:
@@ -84,13 +81,11 @@ namespace rpwa {
 
 		std::vector<std::complex<double> > _incohSubAmps;  ///< sub amplitudes to be added incoherently in cross section
 
+#if AMPLITUDETREELEAF_ENABLED
 		ClassDef(amplitudeTreeLeaf,1)
-    
+#endif
 
 	};
-
-
-#endif  // AMPLITUDETREELEAF_ENABLED
 
 
 }  // namespace rpwa

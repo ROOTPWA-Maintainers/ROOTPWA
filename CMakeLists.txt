@@ -155,7 +155,7 @@ if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
   # use default SDK path, if not defined by user
   set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
 endif()
-find_package(CUDA 3.0)
+#find_package(CUDA 3.0)
 if(NOT CUDA_FOUND)
   message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
   set(USE_CUDA FALSE)
@@ -164,7 +164,7 @@ else()
   message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'")
   message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'")
   message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
-  if(NOT CUDA_SDK_ROOT_DIR)
+   if(NOT CUDA_SDK_ROOT_DIR)
     message(SEND_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
   else()
 		# find cuda utility library
@@ -298,7 +298,7 @@ add_subdirectory(generators)
 add_subdirectory(keygen)
 
 # Fortran
-add_subdirectory(fortran)
+#add_subdirectory(fortran)
 
 # Relativic Amplitudes
 add_subdirectory(relampl)

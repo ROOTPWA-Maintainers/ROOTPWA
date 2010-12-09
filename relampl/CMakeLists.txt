@@ -38,6 +38,7 @@
 # set include directories
 set(INCLUDE_DIRECTORIES
   ${LIBCONFIG_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
@@ -62,4 +63,4 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 
 # executables
 make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
-make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB})
+make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${LIBCONFIG_LIBS})
