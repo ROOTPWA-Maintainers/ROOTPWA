@@ -62,6 +62,7 @@ cerr << "usage:" << endl
      << "        -w <file.root>  use TFitBin tree as input"<< endl 
      << "        -i <file>  integral file"<< endl 
      << "        -m mass  center of mass bin"<< endl   
+     << "        -b width  width of mass bin"<< endl   
      << endl;
  exit(errCode);
 }
@@ -143,6 +144,7 @@ int main(int argc, char** argv)
   string waveListFileName("wavelist");
   string evtfilename;
   double binCenter = 0;
+  double binWidth = 60; // MeV
 
   int c;
   while ((c = getopt(argc, argv, "e:o:w:i:m:h")) != -1)
@@ -164,6 +166,9 @@ int main(int argc, char** argv)
       break;
    case 'm':
      binCenter = atof(optarg);
+      break;
+    case 'b':
+      binWidth = atof(optarg);
       break;
     }
 
@@ -207,6 +212,7 @@ int main(int argc, char** argv)
     return 1;
   }
   // get tree with start values
+  bool hasfit=true;
   TTree* tree;
   fitresults->GetObject("pwa", tree);
   if (!tree)
@@ -224,8 +230,15 @@ int main(int argc, char** argv)
 	mBest = Bin->massBinCenter();
       }
     }  // end loop over TFitBins
-    cerr << "Using data from Mass bin m=" << mBest << endl;
-    tree->GetEntry(iBest); 
+    if(mBest<binCenter-binWidth/2. || mBest>binCenter+binWidth/2.){
+      cerr << "No fit found for Mass bin m=" << binCenter << endl;
+      Bin->reset();
+      hasfit=false;
+    }
+    else {
+      cerr << "Using data from Mass bin m=" << mBest << endl;
+      tree->GetEntry(iBest); 
+    }
     // write wavelist file for generator
     string tmpname("genamps.txt");
     ofstream tmpfile(tmpname.c_str());
@@ -237,6 +250,7 @@ int main(int argc, char** argv)
   vector<string> waveNames;
   vector<complex<double> > prodAmps; //production amplitudes
   vector<int> reflectivities;
+  vector<int> ms;
   vector<int> ranks;
   int maxrank=0;
   // if we have read in a TFitResult the the name of the file has been changed!
@@ -247,8 +261,10 @@ int main(int argc, char** argv)
     double RE, IM;
     int rank=0;
     int refl=0;
+    int m=0;
     wavefile >> wavename >> RE >> IM;
-    
+    //cerr << wavename << endl;
+
     if(wavename.Contains("flat") || wavename.Length()<2)continue;
     if(RE==0 && IM==0)continue;
     // check if there is rank information
@@ -257,16 +273,25 @@ int main(int argc, char** argv)
       rank=2*atoi(wavename(1,1).Data());
       // check reflecitivity to sort into correct production vector
       refl = wavename(9)=='+' ? 0 : 1;
+      m= wavename(8)=='0' ? 0 : 1;
+      //cerr << wavename(9) << endl;
       wavename=wavename(3,wavename.Length());
+    }
+    else {
+      refl = wavename(6)=='+' ? 0 : 1;
+      m= wavename(5)=='0' ? 0 : 1;
+      //cerr << wavename(6) << endl;
     }
 
     std::complex<double> amp(RE,IM);
     prodAmps.push_back(amp);
     cerr << wavename << " " << amp << " r=" << rank/2 
-	 << " eps=" << refl << endl;
+	 << " eps=" << refl 
+	 << " m="   << m << endl;
     wavefile.ignore(256,'\n');
     waveNames.push_back(wavename.Data());
     reflectivities.push_back(refl);
+    ms.push_back(m);
     ranks.push_back(rank);
     if(maxrank<rank)maxrank=rank;
   }
@@ -274,6 +299,21 @@ int main(int argc, char** argv)
   cerr << "Rank of fit was:" << maxrank+1 << endl;
   unsigned int nmbWaves=waveNames.size();
   vector<ifstream*> ampfiles;
+
+  // reserve vector beforehand because Branch
+  // will take a pointer onto the elements
+  vector<double> weights((nmbWaves+1)*nmbWaves/2);
+  unsigned int wcount=0;
+  // create wheight vectors for individual intensities and interference terms
+   for(unsigned int iw=0;iw<nmbWaves;++iw){
+     for(unsigned int jw=iw;jw<nmbWaves;++jw){
+       TString weightname("W_");
+       if(iw==jw)weightname+=waveNames[iw];
+       else weightname+=waveNames[iw] +"_"+ waveNames[jw];
+       
+       outtree->Branch(weightname.Data(),&weights[wcount++],(weightname+"/d").Data());
+     }
+   }
 
  // open decay amplitude files --------------------------------------------
  for(unsigned int iw=0;iw<nmbWaves;++iw){
@@ -284,8 +324,12 @@ int main(int argc, char** argv)
   event e;
   list<particle> f_mesons;
   ifstream evtfile(evtfilename.c_str());
-  while(!evtfile.eof()){
+  unsigned int counter=0;
+
+  while(!evtfile.eof() && evtfile.good()){
     // evt2tree
+    if(counter % 1000 ==0)std::cout<<".";
+    if(counter++ % 10000 ==0)std::cout<<counter;
     evtfile >> e;
     p->Delete(); // clear output arrays
     q.clear();
@@ -303,8 +347,11 @@ int main(int argc, char** argv)
     qbeam=e.beam().Charge();
     // weighting
 
-    vector<complex<double> > posamps(maxrank+1); // positive refl vector
-    vector<complex<double> > negamps(maxrank+1); // negative refl vector
+    vector<complex<double> > posm0amps(maxrank+1); // positive refl vector m=0
+    vector<complex<double> > posm1amps(maxrank+1); // positive refl vector m=1
+
+    vector<complex<double> > negm0amps(maxrank+1); // negative refl vector m=0
+    vector<complex<double> > negm1amps(maxrank+1); // negative refl vector m=1
     
     for(unsigned int iw=0;iw<nmbWaves;++iw){
       complex<double> decayamp;
@@ -313,20 +360,31 @@ int main(int argc, char** argv)
       //cerr << w1 << "  " << decayamp << endl;
       double nrm=sqrt(normInt.val(w1,w1).real());
       complex<double>amp=decayamp/nrm*prodAmps[iw];
-      if(reflectivities[iw]==1)posamps[ranks[iw]]+=amp;
-      else negamps[ranks[iw]]+=amp;
+      if(reflectivities[iw]==1){
+	if(ms[iw]==0)posm0amps[ranks[iw]]+=amp;
+	else if(ms[iw]==1)posm1amps[ranks[iw]]+=amp;
+      }
+      else {
+	if(ms[iw]==0)negm0amps[ranks[iw]]+=amp;
+	else if(ms[iw]==1)negm1amps[ranks[iw]]+=amp;
+      }
     } // end loop over waves
 
     // incoherent sum:
     weight=0;
+    if(hasfit){
     for(int ir=0;ir<maxrank+1;++ir){
-      weight+=norm(posamps[ir]);
-      weight+=norm(negamps[ir]);
+      weight+=norm(posm0amps[ir]);
+      weight+=norm(posm1amps[ir]);
+      weight+=norm(negm0amps[ir]);
+      weight+=norm(negm1amps[ir]);
+    }
     }
     hWeights->Fill(weight);
     outtree->Fill();
 
   } // end of event loop
+  cout << endl << "Processed " << counter << " events" << endl;
 
   outfile->cd();
   hWeights->Write();

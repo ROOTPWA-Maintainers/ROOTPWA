@@ -141,6 +141,31 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 		}
 
+		if (_fit_folders.size() != _fit_titles.size() || _fit_titles.size() != _fit_descriptions.size()){
+			cout << " Error storing fit folders: vector sizes do not match! " << endl;
+			result = false;
+		} else {
+			file << " fit_folders = [ ";
+			for (vector<string>::iterator it = _fit_folders.begin(); it != _fit_folders.end(); it++){
+				if (it != _fit_folders.begin()) file << " ,\n ";
+					file << "\"" << (*it) << "\"";
+			}
+			file << " ]; " << endl;
+
+			file << " fit_titles = [ ";
+			for (vector<string>::iterator it = _fit_titles.begin(); it != _fit_titles.end(); it++){
+				if (it != _fit_titles.begin()) file << " ,\n ";
+					file << "\"" << (*it) << "\"";
+			}
+			file << " ]; " << endl;
+
+			file << " fit_descriptions = [ ";
+			for (vector<string>::iterator it = _fit_descriptions.begin(); it != _fit_descriptions.end(); it++){
+				if (it != _fit_descriptions.begin()) file << " ,\n ";
+					file << "\"" << (*it) << "\"";
+			}
+			file << " ]; " << endl;
+		}
 
 		//map <int, TrpwaBinInfo> _bins; // map with settings to each bin
 		result = true;
@@ -160,6 +185,10 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 		cout << " Error in TrpwaSessionManager::Load_Session(): " << config_file << " does not exist! " << endl;
 		return false;
 	}
+
+	_fit_folders.clear();
+	_fit_descriptions.clear();
+	_fit_titles.clear();
 
 	cout << " Loading session from " << config_file << endl;
 	Config _config;
@@ -331,6 +360,43 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 				_mc_data_files.push_back(_file);
 			} else {
 				cout << " Error in TrpwaSessionManager::Load_Session(): File does not exist: " << _file << endl;
+				result = false;
+			}
+		}
+	}
+
+	if ( _config.exists("fit_folders") &&
+		 _config.exists("fit_titles") &&
+		 _config.exists("fit_descriptions")){
+		Setting& _setting_fit_folders      = _config.lookup("fit_folders");
+		Setting& _setting_fit_titles       = _config.lookup("fit_titles");
+		Setting& _setting_fit_descriptions = _config.lookup("fit_descriptions");
+		if (!_setting_fit_folders.isArray() ||
+			!_setting_fit_descriptions.isArray() ||
+			!_setting_fit_titles.isArray()){
+			cout << " Error in TrpwaSessionManager::Load_Session(): check fit folders and descriptions! " << endl;
+			return false;
+		}
+		if (_setting_fit_folders.getLength() != _setting_fit_titles.getLength() ||
+		    _setting_fit_folders.getLength() != _setting_fit_descriptions.getLength()
+		    ){
+			cout << " Error in TrpwaSessionManager::Load_Session(): check fit folders: number of entries differs for titles or descriptions! " << endl;
+			return false;
+		}
+		int nfolders = _setting_fit_folders.getLength();
+		if (0 == nfolders){
+			cout << " Warning in TrpwaSessionManager::Load_Session(): no fit folders specified " << endl;
+		}
+		for (int i = 0; i < nfolders; i++){
+			string _dir         = (const char*) _setting_fit_folders[i];
+			string _description = (const char*) _setting_fit_descriptions[i];
+			string _title       = (const char*) _setting_fit_titles[i];
+			if (DirExists(_dir)){
+				_fit_folders.push_back(_dir);
+				_fit_descriptions.push_back(_description);
+				_fit_titles.push_back(_title);
+			} else {
+				cout << " Error in TrpwaSessionManager::Load_Session(): Directory does not exist: " << _dir << endl;
 				result = false;
 			}
 		}
@@ -798,8 +864,11 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 		corresponding_amplitudefiles->clear();
 		result->clear();
 	} else {
+		int counter(0);
 		vector< vector<string> >::iterator it_pair = corresponding_amplitudefiles->begin();
 		for (vector<string>::iterator it = result->begin(); it != result->end(); ++it){
+			counter++;
+			if (!missing) DrawProgressBar(50, counter/((double)result->size()));
 			if (!missing&&!Is_valid_norm_integral((*it), (*it_pair))){
 				result->erase(it);
 				corresponding_amplitudefiles->erase(it_pair);
@@ -821,7 +890,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 float TrpwaSessionManager::Check_PWA_MC_acc_data_integrals(){
 	float result(0.);
 	result = Get_PWA_data_integrals("ACCAMPS",false).size();
-	if ((int) result != (int) _n_bins)
+	//if ((int) result != (int) _n_bins)
 		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
 	return result;
@@ -835,7 +904,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_acc_data_integrals(bool missing,
 float TrpwaSessionManager::Check_PWA_MC_data_integrals(){
 	float result(0.);
 	result = Get_PWA_data_integrals("PSPAMPS",false).size();
-	if ((int) result != (int) _n_bins)
+	//if ((int) result != (int) _n_bins)
 		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
 	return result;
@@ -880,12 +949,12 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_amplitudes(string folder, bool
 	return *result;
 }
 
-float TrpwaSessionManager::Check_PWA_real_data_amplitudes(){
+float TrpwaSessionManager::Check_PWA_real_data_amplitudes(bool checkentries){
 	float result(0.);
 	vector<string> amps = Get_PWA_data_amplitudes("AMPS",false);
 	int i(0);
 	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
-		if (Is_valid_amplitude((*it))) result +=1. ;
+		if (Is_valid_amplitude((*it),checkentries)) result +=1. ;
 		i++;
 		DrawProgressBar(50, (i+1)/((double)amps.size()));
 	}
@@ -952,12 +1021,12 @@ vector<string>& TrpwaSessionManager::CompareLists(const vector<string>& list1, c
 // of flat phase space data
 // (comparing number of .amp files with .key files
 // in the flat phase space data folder)
-float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(){
+float TrpwaSessionManager::Check_PWA_MC_data_amplitudes(bool checkentries){
 	float result(0.);
 	vector<string> amps = Get_PWA_data_amplitudes("PSPAMPS",false);
 	int i(0);
 	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
-		if (Is_valid_amplitude((*it))) result +=1. ;
+		if (Is_valid_amplitude((*it),checkentries)) result +=1. ;
 		i++;
 		DrawProgressBar(50, (i+1)/((double)amps.size()));
 	}
@@ -1007,12 +1076,12 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_data_amplitudes(bool missing,
 // of accepted flat phase space data
 // (comparing number of .amp files with .key files
 // in the accpeted events data folder)
-float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(){
+float TrpwaSessionManager::Check_PWA_MC_acc_data_amplitudes(bool checkentries){
 	float result(0.);
 	vector<string> amps = Get_PWA_data_amplitudes("ACCAMPS",false);
 	int i(0);
 	for (vector<string>::iterator it = amps.begin(); it != amps.end(); it++){
-		if (Is_valid_amplitude((*it))) result +=1. ;
+		if (Is_valid_amplitude((*it),checkentries)) result +=1. ;
 		i++;
 		DrawProgressBar(50, (i+1)/((double)amps.size()));
 	}
@@ -1151,6 +1220,9 @@ vector<bool>   &TrpwaSessionManager::GetSelectedWaves(int ibin, vector<string>& 
 				if (_selected_waves.size() != 0){
 					cout << " Error in TrpwaSessionManager::GetSelectedWaves(): there are " << _selected_waves.size() << " amps in ";
 					cout << (*it).second.wave_list_file << " specified that are not available in the list of keys! "  << endl;
+					for (unsigned int iwave = 0; iwave < _selected_waves.size(); iwave++){
+						cout << _selected_waves[iwave] << endl;
+					}
 					result->clear();
 					allwaves.clear();
 					return *result;
@@ -1437,8 +1509,8 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 			// no 0 entries in the diagonal allowed!
 			if (matrix_element.real() == 0. && matrix_element.imag() == 0.){
 				if (i == j){
-					cout << " Inconsistency of " << norm_file << " found: " << endl;
-					cout << " 0 entry in diagonal element! row " << i << " col " << j << " " << matrix_element << endl;
+					//cout << " Inconsistency of " << norm_file << " found: " << endl;
+					//cout << " 0 entry in diagonal element! row " << i << " col " << j << " " << matrix_element << endl;
 					result = false;
 					broken_entries.push_back(i); // store the broken entry for identification afterwards
 				}
@@ -1478,19 +1550,29 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 			}
 			//cout << " filtered: " << amplitudename << " pos " << snumber << endl;
 			integrated_ampslist.push_back(amplitudename);
-			// give amplitudes corresponding to entries with proplems
+			// give amplitudes corresponding to entries with problems
 			for (vector<int>::iterator it = broken_entries.begin(); it != broken_entries.end(); it++){
 				if (number == (*it)){
-					cout << " wave with broken entries: " << amplitudename << endl;
+					// Suppress output for amplitudes with known problems
+					if (_keyfiles_blacklist.find(amplitudename) == _keyfiles_blacklist.end()){
+						cout << " wave with broken entries: " << amplitudename << endl;
+					}
+					_keyfiles_blacklist[amplitudename].push_back(norm_file);
 					break;
 				}
 			}
 			if (zero_entries_x[number] == dimensionx){
-				cout << " all x entries are 0! for " << amplitudename << endl;
+				if (_keyfiles_blacklist.find(amplitudename) == _keyfiles_blacklist.end()){
+					cout << " all x entries are 0! for " << amplitudename << endl;
+				}
+				_keyfiles_blacklist[amplitudename].push_back(norm_file);
 				result = false;
 			}
 			if (zero_entries_y[number] == dimensiony){
-				cout << " all y entries are 0! for " << amplitudename << endl;
+				if (_keyfiles_blacklist.find(amplitudename) == _keyfiles_blacklist.end()){
+					cout << " all y entries are 0! for " << amplitudename << endl;
+				}
+				_keyfiles_blacklist[amplitudename].push_back(norm_file);
 				result = false;
 			}
 		}
@@ -1526,7 +1608,7 @@ bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const v
 	return result;
 }
 
-bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
+bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, bool checkentries, int nlines)
 {
 	bool result = true;
 	ifstream file(ampfile.c_str());
@@ -1534,6 +1616,7 @@ bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
 		cout << " Error: " << ampfile << " does not exist!" << endl;
 		return false;
 	}
+	if (!checkentries) return true;
 	int i(0);
 	while (1)
 	{
@@ -1550,7 +1633,12 @@ bool TrpwaSessionManager::Is_valid_amplitude(string ampfile, int nlines)
 		if (value.real() == 0. && value.imag() == 0.) {
 			// display once the error for a 0 entry
 			if (result){
-				cout << " Amplitudefile " << ampfile << " has a (0, 0) entry withing the first " << nlines << endl;
+				string key = Get_key(ampfile);
+				// Suppress output for amplitudes with known problems
+				if (_keyfiles_blacklist.find(key) == _keyfiles_blacklist.end()){
+					cout << " Amplitudefile " << ampfile << " has a (0, 0) entry within the first " << nlines << endl;
+				}
+				_keyfiles_blacklist[key].push_back(ampfile);
 			}
 			result = false;
 		}
@@ -1709,13 +1797,128 @@ void TrpwaSessionManager::SortWaves(vector<string>& wavelist){
 	//cout << " sorted " << wavelist.size() << " waves " << endl;
 }
 
-// get the corresponding variables to the coded wavename
-void TrpwaSessionManager::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s){
-	cout << " TrpwaSessionManager::GetJPCMreflISO1lsISO2() not implemented yet " << endl;
-	for (unsigned int i = 0; i < wavename.size(); i++){
-		cout << wavename[i] << " ";
+#include "TrpwaCommonTools.h"
+
+string TrpwaSessionManager::Get_key(string file){
+	file = TrpwaCommonTools::RemovePathExtension(file,".amp");
+	file = TrpwaCommonTools::RemovePathExtension(file,".key");
+	return file;
+}
+
+int TrpwaSessionManager::Print_problematic_waves(){
+	int result(0);
+	cout << endl;
+	cout << " ********************************************************* " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " *                       wave report                     * " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " ********************************************************* " << endl;
+	cout << endl;
+	for (vector<string>::iterator it = _keyfiles.begin(); it != _keyfiles.end(); it++){
+		cout << " " << *it << " \t ";
+		if (_keyfiles_blacklist.find(*it) != _keyfiles_blacklist.end()){
+			result += _keyfiles_blacklist.find(*it)->second.size();
+			cout << " gave " << _keyfiles_blacklist.find(*it)->second.size() << " times errors " << endl;
+		} else {
+			cout << " has no problems " << endl;
+		}
 	}
 	cout << endl;
+	cout << " ********************************************************* " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " *               list of problematic waves               * " << endl;
+	cout << " *                                                       *"  << endl;
+	cout << " ********************************************************* " << endl;
+	for (map<string, vector<string> >::iterator it = _keyfiles_blacklist.begin(); it != _keyfiles_blacklist.end(); it++){
+		cout << " " << it->first << endl;
+	}
+	cout << endl << " found " << result << " files with problems " << endl;
+	cout << endl;
+	return result;
+}
+
+bool TrpwaSessionManager::Remove_problematic_waves(){
+	bool result(true);
+	for (map<string, vector<string> >::iterator it = _keyfiles_blacklist.begin(); it != _keyfiles_blacklist.end(); it++){
+		for (vector<string>::iterator itfile = it->second.begin(); itfile != it->second.end(); itfile++){
+			if (FileExists(*itfile)){
+				cout << " Disabling " << (*itfile);
+				stringstream command;
+				command << "mv " << *itfile << " " << *itfile << ".disabled" << endl;
+				if (system(command.str().c_str())){
+					result = false;
+					cout << " ... error" << endl;
+				} else {
+					cout << endl;
+				}
+			}
+		}
+	}
+	if (result)
+		_keyfiles_blacklist.clear();
+	return result;
+}
+
+bool TrpwaSessionManager::Save_Fit(string folder, string title, string description){
+	bool result(true);
+	string _folder = folder;
+	if (_folder == ""){
+		// create a default folder by title and date time
+		// make a unique label by time and a counter
+		time_t rawtime;
+		time ( &rawtime );
+		string stime = ctime (&rawtime);
+		// replace empty spaces in time string by -
+		for (unsigned int i = 0; i < stime.size(); i++){
+			if (stime[i] == ' ' || stime[i] == '\n' || stime[i] == ':'){
+				stime[i]='_';
+			}
+			//cout << stime[i];
+		}
+		_folder = _dir_fit_results+"/fit_constellation_"+title+"_"+stime;
+	}
+	if (DirExists(_folder)){
+		cout << " Error in TrpwaSessionManager::Save_Fit(): folder " << _folder << " is already existing! " << endl;
+		return false;
+	} else {
+		cout << " creating fit directory " << system(("mkdir "+_folder).c_str()) << endl;
+	}
+	cout << " moving fit results " << system(("cp "+_dir_fit_results+"/* "+_folder).c_str()) << endl;
+	_fit_folders.push_back(_folder);
+	_fit_titles.push_back(title);
+	_fit_descriptions.push_back(description);
+	return result;
+}
+
+bool TrpwaSessionManager::Load_Fit(string folder){
+	bool result(true);
+	string _folder = folder;
+	if (!DirExists(_folder)) _folder = _dir_fit_results+"/"+folder;
+	if (DirExists(_folder)){
+		// create a backup folder
+		string backupfolder = _dir_fit_results+"/lastfit";
+		if (!DirExists(backupfolder))
+			cout << system(("mkdir "+backupfolder).c_str()) << endl;
+		//for (int ibin = 0; ibin < Get_n_bins(); ibin++){
+		//	string wavelistfile, fitresultfile;
+		//	int bin_low, bin_high;
+		//	wavelistfile = GetWaveListFile(ibin, bin_low, bin_high, fitresultfile);
+		//	if (FileExists(wavelistfile))
+		//		cout << system
+		cout << " creating backup of files " << system(("mv "+_dir_fit_results+"/* "+backupfolder+"/").c_str()) << endl;
+		cout << " moving files to fit directory " << system(("mv "+_folder+"/* "+_dir_fit_results+"/").c_str()) << endl;
+	} else {
+		cout << " Error in TrpwaSessionManager::Load_Fit(): directory " << folder << " does not exist " << endl;
+	}
+	return result;
+}
+
+void TrpwaSessionManager::Get_List_of_Fits(vector<string>& folders,
+		vector<string>* titles,
+		vector<string>* descriptions){
+	folders = _fit_folders;
+	if (titles) (*titles) = _fit_titles;
+	if (descriptions) (*descriptions) = _fit_descriptions;
 }
 
 void TrpwaSessionManager::DrawProgressBar(int len, double percent) {

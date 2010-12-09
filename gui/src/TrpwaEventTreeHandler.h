@@ -12,6 +12,8 @@
  *      - first declarations and implementations
  *      (22.11.10)
  *      - keeping the number of entries per bin and the distribution histograms
+ *      (25.11.10)
+ *      - switching to tree version 3 where mc vectors are stored separately
  */
 
 #include <iostream>
@@ -66,10 +68,10 @@ public:
 	//		tree_events->SetBranchAddress("pid" , &events_g3pids);
 	//		tree_events->SetBranchAddress("isMC", &events_isMC);
 	// with the passed tree name
-	bool Add_eventtreefile(string filename, string treename = "events/tree_events_v2");
+	bool Add_eventtreefile(string filename, string treename = "events/tree_events_v3");
 
 	// vector of files with the specified format as given above
-	bool Add_eventtreefiles(vector<string> filenames, string treename = "events/tree_events_v2");
+	bool Add_eventtreefiles(vector<string> filenames, string treename = "events/tree_events_v3");
 
 	// set the directories where to store the events into bins
 	// folders must have the naming binlow.binhigh where

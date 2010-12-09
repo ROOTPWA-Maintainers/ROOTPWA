@@ -21,6 +21,7 @@
 #include "TrpwaSessionManager.h"
 #include "TrpwaJobManager.h"
 #include <TGFileDialog.h>
+#include <TGMsgBox.h>
 #include <cstdlib>
 
 static const int nsteps = 11;
@@ -214,10 +215,21 @@ void TrpwaMainFrame::CheckStatus() {
 		//step_status[4]=current_session->Check_MC_data_events();
 		step_status[4]=current_session->Check_PWA_keyfiles();
 
+		bool checkentries(false);
+		// ask the user whether to check the amplitude entries
+		// ask if to remove problematic waves if there are some
+		int returncode;
+		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "check amplitude entries",
+				"Do you want to check the amplitude entries as well?\n This may take some time.",
+				kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			checkentries = true;
+		}
 		step_status[5]=(
-				current_session->Check_PWA_real_data_amplitudes()   +
-				current_session->Check_PWA_MC_acc_data_amplitudes() +
-				current_session->Check_PWA_MC_data_amplitudes()
+				current_session->Check_PWA_real_data_amplitudes(checkentries)   +
+				current_session->Check_PWA_MC_acc_data_amplitudes(checkentries) +
+				current_session->Check_PWA_MC_data_amplitudes(checkentries)
 				)/3.;
 		step_status[6]=(
 				current_session->Check_PWA_MC_acc_data_integrals()  +
@@ -246,6 +258,23 @@ void TrpwaMainFrame::CheckStatus() {
 		}
 	}
 	cout << " done " << endl;
+
+	int nproblematicwaves = current_session->Print_problematic_waves();
+	if (nproblematicwaves){
+		// ask if to remove problematic waves if there are some
+		stringstream message;
+		message << "There are "<< nproblematicwaves <<" files marked to be problematic.\n";
+		message << "(see terminal output for details)\n";
+		message << "Do you want to disable these files during further analysis?";
+		int returncode;
+		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "remove problematic files",
+				message.str().c_str(),
+				kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			current_session->Remove_problematic_waves();
+		}
+	}
 	/*
 	// Draws function graphics in randomly choosen interval
 	TCanvas *fCanvas = fEcanvas->GetCanvas();
@@ -364,6 +393,7 @@ void TrpwaMainFrame::SelectWaves(){
 			cout << " error setting selected waves " << endl;
 		}
 		//waveselections;
+		current_session->Save_Session();
 	}
 }
 
@@ -457,7 +487,7 @@ void TrpwaMainFrame::ShowFitResults(){
 			rootmacro.close();
 			script << "root -l -q /tmp/rootmacro.C" << endl;
 			//script << "rm /tmp/rootmacro.C" << endl;
-			script << "mv ${ROOTPWA}/src/rootscripts/waveIntensities.ps ~/" << endl;
+			script << "mv ${ROOTPWA}/src/rootscripts/wave*.ps " << current_session->Get_fit_results_dir() << "/" << endl;
 			script << "cd -" << endl;
 		}
 		script.close();
@@ -465,6 +495,21 @@ void TrpwaMainFrame::ShowFitResults(){
 		command << "source /tmp/_showresults.sh";
 
 		cout << system(command.str().c_str()) << endl;
+
+		// ask whether to save the fit results separately
+		bool save(false);
+		int returncode;
+		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "save fit results",
+			"Do you want to save the fit constellation?",
+			kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			save = true;
+		}
+		if (save){
+			current_session->Save_Fit();
+			current_session->Save_Session();
+		}
 	}
 	/*
 	# visualization must be performed in the rootscript folder containing all needed (logon) scripts

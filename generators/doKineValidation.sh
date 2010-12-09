@@ -1,8 +1,9 @@
 #!/bin/bash
 
 export WORKDIR=/afs/e18/compass/analysis/sneubert/
-export FITDIR=$WORKDIR/PWAFITS/LOWT/fit13/
-export FITFILE=$FITDIR/fit13.acc.root
+export FITDIR=$WORKDIR/PWAFITS/LOWT/NEWACC/fit17GenSelected
+#export FITDIR=$WORKDIR/PWAFITS/GENETICS/ltRUN21/gen39/set42
+export FITFILE=$FITDIR/fit17.root
 export PLOTFILE=${FITFILE/.root/.plots.root}
 export BOOKY=${FITFILE/.root/.booky.pdf}
 export DATADIR=$WORKDIR/5PiLTData3/
@@ -17,9 +18,10 @@ echo DATADIR=$DATADIR
 
 cd $DATADIR
 
+rm $PLOTFILE;
 
 for i in *; do
-    echo "$i";
+    echo "MassBin: $i";
     cd $i;
     # convert events to root tree if not already done
     test -s $i.root || cat $i.evt | evt2tree $i.root;

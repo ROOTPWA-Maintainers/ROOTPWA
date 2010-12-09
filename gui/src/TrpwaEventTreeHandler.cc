@@ -122,40 +122,48 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 		xbins[nbins] = it->second; // I know that only the last bin will be not overwritten
 	}
 	// create some crosscheck hists
-	TH1I* checkhist[3];
+	TH1I* checkhist[5];
 	checkhist[0] = new TH1I("checkhist0","invariant mass distribution of reconstructed events", nbins, xbins);
 	checkhist[1] = new TH1I("checkhist1","invariant mass distribution of MC exact events", nbins, xbins);
-	checkhist[2] = new TH1I("checkhist2","invariant mass distribution of MC accepted events", nbins, xbins);
+	checkhist[2] = new TH1I("checkhist2","invariant mass distribution of MC reconstructed events", nbins, xbins);
+	checkhist[3] = new TH1I("checkhist3","invariant mass distribution of MC truth reconstructed events", nbins, xbins);
+	checkhist[4] = new TH1I("checkhist4","invariant mass distribution of MC false reconstructed events", nbins, xbins);
 	checkhist[0]->SetDirectory(0); // to prevent root deleting this objects when closing files following
 	checkhist[1]->SetDirectory(0);
 	checkhist[2]->SetDirectory(0);
+	checkhist[3]->SetDirectory(0);
+	checkhist[4]->SetDirectory(0);
 
 	for (unsigned int i = 0; i < _eventtreefiles.size(); i++){
 		TFile& rootfile = *_eventtreefiles[i];
 		TTree* tree_events = (TTree*) rootfile.Get(_eventtreenames[i].c_str());
 		if (!tree_events){
-			cout << " Sorry, tree " << _eventtreenames[i] << " not found! " << endl;
+			cout << "\n Sorry, tree " << _eventtreenames[i] << " not found! " << endl;
 			result = false;
 		}
 		// in addition we do have 3 output streams for real data, MC generated and MC accepted events
 		int openfile[3] = {0,0,0}; // variable to store whether the file contains real data, MC generated data or MC accepted events
 		// search for entries in the tree
-		cout << " scanning events in tree # " << i << endl;
+		cout << "\n scanning events in tree # " << i+1 << " of " << _eventtreefiles.size() << endl;
 		openfile[0] = tree_events->GetEntries("isMC == 0");
 		cout << " found " << openfile[0] << " reconstructed events " << endl;
 		openfile[1] = tree_events->GetEntries("isMC > 0");
-		cout << " found " << openfile[1] << " MC generated  events " << endl;
+		cout << " found " << openfile[1] << " MC generated events " << endl;
 		openfile[2] = tree_events->GetEntries("isMC == 2");
-		cout << " found " << openfile[2] << " MC accepted   events " << endl;
+		cout << " found " << openfile[2] << " MC accepted events " << endl;
+		int false_events = tree_events->GetEntries("isMC == -1");
+		cout << " found " << false_events << " MC wrongly reconstructed events " << endl;
 
 		// set variables to the leaves
 		TClonesArray* events_lzvecs = NULL; // lz vectors of 0..X-1 particles out, X particle in, X+1 recoil particle
 		vector <int>* events_charges = NULL;
 		vector <int>* events_g3pids = NULL;
+		TClonesArray* events_lzvecs_mc = NULL;
 		int		events_id;
-		int		events_isMC; // 0 not a MC event; 1 MC event; 2 accepted MC event;
+		int		events_isMC; // 0 not a MC event; 1 MC event; 2 accepted MC event; -1 MC but falsely reconstructed (since tree version 3)
 		tree_events->SetBranchAddress("id"  , &events_id);
 		tree_events->SetBranchAddress("p"   , &events_lzvecs);
+		tree_events->SetBranchAddress("p_mc", &events_lzvecs_mc);
 		tree_events->SetBranchAddress("q"   , &events_charges);
 		tree_events->SetBranchAddress("pid" , &events_g3pids);
 		tree_events->SetBranchAddress("isMC", &events_isMC);
@@ -163,6 +171,7 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 		int events_id_cut(-1); // put a -1 if you want to filter the first or only event id in the tree
 		// we need the data structure to hold the particle information
 		vector<TParticle> particles;
+		vector<TParticle> particles_mc;
 		int nentries = tree_events->GetEntries();
 		cout << " running over " << nentries << " events " << endl;
 		for (int i = 0; i < nentries; i++){
@@ -176,7 +185,9 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 				continue;
 			}
 			particles.clear();
+			particles_mc.clear();
 			TLorentzVector sumlz(0.,0.,0.,0.);
+			TLorentzVector sumlz_mc(0.,0.,0.,0.);
 			// loop through the particles
 			// last two particles are the beam particle and the (neglected) recoil proton
 			// the loop starts with -1 which is a special case to retrieve the
@@ -199,14 +210,59 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 				if (i > -1) sumlz += *lzvec;
 				particles.push_back(particle);
 			}
-			int _M = (int) floor(sumlz.M() * 1000.); // (MeV)
+			for (int i = -1; i < events_lzvecs_mc->GetEntriesFast()-2; i++){
+				int ipart = i;
+				if (i < 0) ipart = events_lzvecs_mc->GetEntriesFast()-2; // case recoil proton
+				TLorentzVector* lzvec = (TLorentzVector*)(*events_lzvecs_mc)[ipart];
+				// store the new information available
+				TParticle particle;
+				particle.geantid = (*events_g3pids)[ipart];
+				particle.charge  = (*events_charges)[ipart];
+				particle.E       = lzvec->E();
+				particle.px      = lzvec->X();
+				particle.py      = lzvec->Y();
+				particle.pz      = lzvec->Z();
+				// reconstruct the invariant mass of the outgoing particle system
+				// to get the bin entry
+				if (i > -1) sumlz_mc += *lzvec;
+				particles_mc.push_back(particle);
+			}
+			int _M    = (int) floor(sumlz   .M() * 1000.); // (MeV)
+			int _M_mc = (int) floor(sumlz_mc.M() * 1000.); // (MeV)
 			// cut into the allowed range
-			if ((binlow <= _M) && (_M < binhigh)){
+			//if ((binlow <= _M) && (_M < binhigh)){
 				// write all particles to the file
-				if (events_isMC < 0 || events_isMC > 2){
+				if (events_isMC < -1 || events_isMC > 2){
 					cout << " error: not defined MC status: " << events_isMC << endl;
 					continue;
 				}
+				if (events_isMC == -1){ // falsely reconstructed events (mainly combinatorial background)
+					checkhist[4]->Fill(_M);
+				}
+				if (events_isMC == 0){ // data events are filled as reconstructed
+					checkhist[0]->Fill(_M);
+					// reference on pointer on pointer... yepp, it is still working ;)
+					if ((binlow <= _M) && (_M < binhigh)){
+						ofstream* _pstream = (*files.upper_bound(_M)).second[0];
+						WriteEventToStream(particles, *_pstream);
+					}
+				}
+				if (events_isMC == 1 || events_isMC == 2){ // mc exact events are filled as generated
+					checkhist[1]->Fill(_M_mc);
+					if ((binlow <= _M_mc) && (_M_mc < binhigh)){
+						ofstream* _pstream = (*files.upper_bound(_M_mc)).second[1];
+						WriteEventToStream(particles_mc, *_pstream);
+					}
+				}
+				if (events_isMC == 2){ // mc accepted events are filled as reconstructed
+					checkhist[2]->Fill(_M);
+					checkhist[3]->Fill(_M_mc); // check what the true distribution without moved bins was
+					if ((binlow <= _M) && (_M < binhigh)){
+						ofstream* _pstream = (*files.upper_bound(_M)).second[2];
+						WriteEventToStream(particles, *_pstream);
+					}
+				}
+				/*
 				for (int i = 0; i < 3; i++){
 					if ((i == events_isMC) || // not only the value it self is counted
 						(i == 1 && events_isMC == 2)){ // but also accepted events are MC exact events
@@ -215,8 +271,8 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 						WriteEventToStream(particles, *_pstream);
 						checkhist[i]->Fill(_M);
 					}
-				}
-			}
+				}*/
+			//}
 		}
 		rootfile.Close();
 	}
@@ -238,7 +294,7 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 	// Draw a crosscheck histogram
 	TCanvas canvas("canvas", "canvas", 1000, 600);
 	canvas.cd();
-	for (int i=0; i<3; i++){
+	for (int i=0; i<5; i++){
 		checkhist[i]->DrawClone("P Text");
 		string addstring("");
 		if (i==0){
@@ -252,7 +308,13 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 			addstring = ".acc";
 			_hist_data_mc_acc = (TH1I*)checkhist[i]->Clone("saved_hist_data_mc_acc");
 		}
-		canvas.Print( (_dir+"/checkhist"+addstring+".pdf").c_str());
+		if (i < 3){
+			canvas.Print( (_dir+"/checkhist"+addstring+".pdf").c_str());
+		}
+		else {
+			if (i==3) canvas.Print((_dir+"/checkhist_mc_truth.pdf").c_str());
+			if (i==4) canvas.Print((_dir+"/checkhist_mc_false_reconstructed.pdf").c_str());
+		}
 		delete checkhist[i];
 	}
 	return result;

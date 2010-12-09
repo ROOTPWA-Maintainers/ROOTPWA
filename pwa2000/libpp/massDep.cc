@@ -26,6 +26,36 @@ complex<double> breitWigner::val(const particle& p)
 }
 
 
+// rho(1450)/rho(1700)
+// see DOI: 10.1007/BF01552547
+complex<double> rhoPrime::val(const particle& p) 
+{
+  
+  const double m1     = 1.465;
+  const double Gamma1 = 0.235;
+  const double m2     = 1.720;
+  const double Gamma2 = 0.220;
+
+  const double q      = p.q ();
+  const double q0     = p.q0 ();   
+  const double m      = ~(p.get4P ());
+  const int    l      = p.Decay ()->L ();
+
+  const double    GammaV1 = Gamma1 * (m1 / m) * (q / q0) * (pow(F(l, q), 2) / pow(F(l, q0), 2));
+  const double    GammaV2 = Gamma2 * (m2 / m) * (q / q0) * (pow(F(l, q), 2) / pow(F(l, q0), 2));
+  
+  cout << m << "     " << GammaV1 << "    " << GammaV2 << endl;
+
+  complex<double> amp1    = (m1 * Gamma1) / (m1 * m1 - m * m - complex<double>(0, 1) * m1 * GammaV1);
+  complex<double> amp2    = (m2 * Gamma2) / (m2 * m2 - m * m - complex<double>(0, 1) * m2 * GammaV2);
+  
+
+  complex<double> ret= 1./7 * ( 4. * amp1 - 3. * amp2 );
+  return ret;
+
+}
+
+
 AMP_M::AMP_M() {
   ves_sheet = 0;
   _Pmax     = 2;

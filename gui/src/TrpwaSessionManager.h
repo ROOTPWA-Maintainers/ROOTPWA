@@ -193,7 +193,7 @@ public:
 	// of real data
 	// (comparing number of .amp files with .key files in the real data folder)
 	// Check_PWA_keyfiles is called
-	float Check_PWA_real_data_amplitudes();
+	float Check_PWA_real_data_amplitudes(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated amplitudes with full path
 	// if corresponding_eventfiles is given as an empty vector
@@ -209,7 +209,7 @@ public:
 	// (comparing number of .amp files with .key files
 	// in the flat phase space data folder)
 	// Check_PWA_keyfiles is called
-	float Check_PWA_MC_data_amplitudes();
+	float Check_PWA_MC_data_amplitudes(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated amplitudes with full path
 	// if corresponding_eventfiles is given as an empty vector
@@ -225,7 +225,7 @@ public:
 	// (comparing number of .amp files with .key files
 	// in the accpeted events data folder)
 	// Check_PWA_keyfiles is called
-	float Check_PWA_MC_acc_data_amplitudes();
+	float Check_PWA_MC_acc_data_amplitudes(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated amplitudes with full path
 	// if corresponding_eventfiles is given as an empty vector
@@ -249,9 +249,10 @@ public:
 	// check the entries of an amplitude file
 	// some files may have (0,0) entries that lead to 0 entries in the integral files
 	// ampfile = filename with full path to the ampfile
+	// checkentries = whether to check the entries or only if the file exists
 	// nlines  = number of lines to be read and tested
 	// return true if no 0 entries found
-	bool Is_valid_amplitude(string ampfile, int nlines = 10);
+	bool Is_valid_amplitude(string ampfile, bool checkentries = true, int nlines = 10);
 
 	// Get a list of (missing/available) calculated integrals of
 	// the available amplitudes with full path
@@ -376,9 +377,6 @@ public:
 	// sort by JPC iso1 iso2 M reflectivity
 	void SortWaves(vector<string>& wavelist);
 
-	// get the corresponding variables to the coded wavename
-	void GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s);
-
 	/*
 	TrpwaSessionManager& operator=(const TrpwaSessionManager& copysource) const{
 		//Set_n_bins(copysource.Get_n_bins());
@@ -386,6 +384,30 @@ public:
 	    //return this;
 	};*/
 
+	// show the entries of _keyfiles_blacklist in the std::cout
+	// returns the total number of problematic waves
+	int Print_problematic_waves();
+
+	// problematic amplitude files and integral files are stored in the
+	// black list that will be used to disable these files for further analysis
+	// The corresponding key files if causing this troubles should be
+	// fixed by the user him self
+	bool Remove_problematic_waves();
+
+	// save the current fit constellation to a specified sub folder
+	// if the folder name is not given a sub directory in the fit folder
+	// will be created
+	// returns true if succeeded
+	// folder will be put to the list of existing fit results
+	bool Save_Fit(string folder = "", string title = "", string description = "");
+
+	// load a Fit from the specified folder
+	// the existing fit will be overwritten!
+	bool Load_Fit(string folder);
+
+	void Get_List_of_Fits(vector<string>& folders, // list of folders with fits
+			vector<string>* titles = NULL, 		  // optional list of fit titles
+			vector<string>* descriptions = NULL); // optional list of fit descriptions
 
 private:
 	string _config_file; // filename with path to the config file of this session
@@ -405,10 +427,16 @@ private:
 	string _title; // the title of the session
 	string _description; // users description of this session
 
+	vector<string> _fit_folders; // absolute paths of fit folders
+	vector<string> _fit_titles ; // titles of the fits
+	vector<string> _fit_descriptions; // descriptions of the fits
+
 	TBinMap _bins; // map with settings to each bin
 
 	vector<string> _keyfiles; // key files without the extension determined by accessing the keyfile folder
 	int _n_keyfiles; // will be determined by accessing the key file folder
+
+	map<string, vector<string> > _keyfiles_blacklist; // a map of key files containing files with reported problems
 
 	TrpwaJobManager* jobManager; // to send commands performing analysis on different farm types
 
@@ -431,6 +459,10 @@ private:
 
 	// simple stats bar
 	void DrawProgressBar(int len, double percent);
+
+	// you may provide a key file or amplitude file with path
+	// the key will be returned
+	string Get_key(string file);
 };
 
 

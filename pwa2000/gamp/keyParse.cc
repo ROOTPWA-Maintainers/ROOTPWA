@@ -1422,6 +1422,9 @@ yyparse (std::complex<double>& result)
 	if (!strcmp(yyvsp[0].string,"bw")) {
 	  md = new breitWigner();
 	}
+	else if (!strcmp(yyvsp[0].string,"rhoprime")) {
+	  md = new rhoPrime();
+	}
 	else if (!strcmp(yyvsp[0].string,"amp")) {
 	  md = new AMP_M();
 	}

@@ -129,13 +129,14 @@ std::istream& operator>> (std::istream& s, TPDGEntry& me){
   s >> delim;
 
 // read C-Parity
-  s.get(buffer,10,',');
+  char buffer8[20];
+  s.get(buffer8,10,',');
   //cout<< "C:: "<<buffer<<"|"<<endl;
   // analyse isospin 
-  if(strpbrk(buffer4,"+-")==NULL){ // we have a integer number
+  if(strpbrk(buffer8,"+-")==NULL){ // we have a integer number
     me._C=0;
   }
-  else if(strpbrk(buffer4,"+")!=NULL){ // photon
+  else if(strpbrk(buffer8,"+")!=NULL){ // photon
     me._C=1;
   }
   else me._C=-1;
@@ -146,12 +147,12 @@ std::istream& operator>> (std::istream& s, TPDGEntry& me){
   char buffer5[20];
   s.get(buffer5,20,',');
   if(strpbrk(buffer5,"BF")==NULL){
-    me._aflag = blank;
+    me._aflag = TPDGEntry::blank;
   }
   else if(strpbrk(buffer5,"B")!=NULL){
-    me._aflag = B; 
+    me._aflag = TPDGEntry::B; 
   }
-  else  me._aflag = F;
+  else  me._aflag = TPDGEntry::F;
   s >> delim;
     
   // read pdg  
@@ -182,38 +183,39 @@ std::istream& operator>> (std::istream& s, TPDGEntry& me){
   char buffer10[20];
   s.get(buffer10,20,',');
   if(strpbrk(buffer10,"1234")==NULL){
-    me._R = NoBaryon;
+    me._R = TPDGEntry::NoBaryon;
   }
   else if(strpbrk(buffer10,"4")!=NULL){
-     me._R = Certain;
+     me._R = TPDGEntry::Certain;
   }
   else if(strpbrk(buffer10,"3")!=NULL){
-     me._R = Likely;
+     me._R = TPDGEntry::Likely;
   }
   else if(strpbrk(buffer10,"2")!=NULL){
-     me._R = Fair;
+     me._R = TPDGEntry::Fair;
   }
-  else  me._R = Poor;
+  else  me._R = TPDGEntry::Poor;
   s >> delim;
   
 
   char buffer9[20];
   s.get(buffer9,20,',');
   if(strpbrk(buffer9,"RDSF")==NULL){
-    me._status = NotDefined;
+    me._status = TPDGEntry::NotDefined;
   }
   else if(strpbrk(buffer9,"R")!=NULL){
-     me._status = Established;
+     me._status = TPDGEntry::Established;
   }
   else if(strpbrk(buffer9,"D")!=NULL){
-     me._status = Omitted;
+     me._status = TPDGEntry::Omitted;
   }
   else if(strpbrk(buffer9,"S")!=NULL){
-     me._status = NeedsConfirmation;
+     me._status = TPDGEntry::NeedsConfirmation;
   }
-  else  me._status = FurtherMeson;
+  else  me._status = TPDGEntry::FurtherMeson;
   s >> delim;
  
+  s >> me._name >> delim >> me._quark_content;
  return s;
  
 }
@@ -226,6 +228,7 @@ TPDGEntry::Print(const Option_t*) const {
   cout << "mass="<<_mass <<" +- ("<<_mass_ep<<","<< _mass_en << ")" << endl;
   cout << "width="<<_width <<" +- ("<<_width_ep<<","<< _width_en << ")" << endl;
   cout << "IGJPC="<<Istr()<<Gstr()<<Jstr()<<Pstr()<<Cstr()<<endl;
+  cout << "Quarks: "<<_quark_content<< endl;
   cout << "Status="<<Statstr() << endl;
 }
 
@@ -279,4 +282,33 @@ TPDGEntry::Statstr() const {
   default : {return "Undefined";}
   }
 
+}
+
+
+bool
+TPDGEntry::isLightMeson() const {
+  return _R == TPDGEntry::NoBaryon
+   //  && !_quark_content.Contains("s") 
+//     && !_quark_content.Contains("c") 
+//     && !_quark_content.Contains("t") 
+//     && !_quark_content.Contains("b") 
+//     && !_quark_content.Contains("S") 
+//     && !_quark_content.Contains("C") 
+//     && !_quark_content.Contains("T") 
+//     && !_quark_content.Contains("B")
+     && !_name.Contains("gamma") && !_name.Contains("W") && !_name.Contains("Z")
+    && (_I==0 || _I==1);
+}
+
+bool
+TPDGEntry::isExotic() const {
+  //cout << _J << (_P>0 ? "+" : "-") << (_C>0 ? "+" : "-") << endl;
+  bool result=false;
+  if(_J==0 && _P==-1 && _C==-1)result=true;
+  else if(((int)_J%2)==0){
+    if(_P==+1 && _C==-1)result=true;
+  }
+  else if(_P==-1 && _C==+1)result=true;
+  if(result)std::cout<< " is exotic!" << endl;
+  return result;
 }

@@ -135,30 +135,39 @@ TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100
     double sumevi=0;
     unsigned int nwaves=0;
      cerr << "Reading data..."<< endl;
-    for(unsigned int k=0;k<n;++k){
+     bool allconverged=true;
+     for(unsigned int k=0;k<n;++k){ // loop over bins
       chain->GetEntry(k);
+      if(!bin->converged()){
+	cerr<<"Fit not converged. Will skip this."<< endl;
+	allconverged=false;
+      }
       if(k==0)nwaves=bin->nmbWaves();
       sumevi+=bin->evidence();
       sumlogli+=-bin->logLikelihood();//+bin->nmbEvents();
     }// end loop over bins
+
     cerr<<"SumLogli    ="<<setprecision(9)<<sumlogli<<endl;
     cerr<<"SumEvidence ="<<setprecision(9)<<sumevi<<endl;
     if(sumevi==0 || !(sumevi>std::numeric_limits<double>::min() && sumevi < std::numeric_limits<double>::max())){
       cerr<<"Invalid value. Skipping."<< endl;
       delete chain;
- delete bin;
+      delete bin;
       continue;
     }
     
-    hWavesetSize->Fill(gen,nwaves);
-    hEvidences->Fill(gen,sumevi);
-    hEviSize->Fill(nwaves,sumevi);
-    hLogliSize->Fill(nwaves,sumlogli);
-
-    results[sumevi]=inputdirectories[j];    
-    if(sumevi>bestLogli){
-      bestLogli=sumevi;
-      bestfit=j;
+    // only register result if it all bins converged!
+    if(allconverged){
+      hWavesetSize->Fill(gen,nwaves);
+      hEvidences->Fill(gen,sumevi);
+      hEviSize->Fill(nwaves,sumevi);
+      hLogliSize->Fill(nwaves,sumlogli);
+      
+      results[sumevi]=inputdirectories[j];    
+      if(sumevi>bestLogli){
+	bestLogli=sumevi;
+	bestfit=j;
+      }
     }
     delete chain;
     delete bin;

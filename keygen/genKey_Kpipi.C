@@ -65,23 +65,25 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 
 	// K pi decay modes
 	// Daum et al. used a very controversial resonance, the kappa or K*(800)
-	particleKey kappa("kappa",  &K_minus, &pi_plus, 0, 0); //0+
-	particleKey Kstar892("Kstar(892)0", &K_minus, &pi_plus, 1, 0); // 1-
-	// probably I will have to treat both Kstar(1430) as a broad
-	// Kpi-P wave since they are overlapping, but it is also very
-	// likely that I'm talking bullshit
+	particleKey kappa     ("kappa"        , &K_minus, &pi_plus, 0, 0); //0+
+	particleKey Kstar892  ("Kstar(892)0"  , &K_minus, &pi_plus, 1, 0); // 1-
 	particleKey Kstar01430("Kstar0(1430)" , &K_minus, &pi_plus, 0, 0); // 0++
 	particleKey Kstar21430("Kstar2(1430)0", &K_minus, &pi_plus, 2, 0); // 2++
+	particleKey Kstar16800("Kstar(1680)"  , &K_minus, &pi_plus, 1, 0); // 1-
+	particleKey Kstar17800("Kstar3(1780)" , &K_minus, &pi_plus, 3, 0); // 3-
+
 
 	// pi pi decay modes
-	// f0(980) is also called as the epsilon in Daum et al. paper, I guess
-	particleKey f0980 ("f0(980)" , &pi_plus, &pi_minus, 0, 0); // 0++
-	// or rather the sigma ?
-	particleKey sigma ("sigma" , &pi_plus, &pi_minus, 0, 0); // 0++
-	particleKey rho770("rho(770)", &pi_plus, &pi_minus, 1, 0); // 1--
-	particleKey f21270("f2(1270)", &pi_plus, &pi_minus, 2, 0); // 2++
+	particleKey f0980   ("f0(980)"   , &pi_plus, &pi_minus, 0, 0); // 0++
+	particleKey sigma   ("sigma"     , &pi_plus, &pi_minus, 0, 0, "amp_kach"); // 0++
+	particleKey f01370  ("f0(1370)"  , &pi_plus, &pi_minus, 0, 0); // 0++
+	particleKey f01500  ("f0(1500)"  , &pi_plus, &pi_minus, 0, 0); // 0++
+	particleKey rho770  ("rho(770)"  , &pi_plus, &pi_minus, 1, 0); // 1--
+	particleKey rho1450 ("rho(1450)" , &pi_plus, &pi_minus, 1, 0); // 1--
+	particleKey f21270  ("f2(1270)"  , &pi_plus, &pi_minus, 2, 0); // 2++
+	particleKey rho31690("rho3(1690)", &pi_plus, &pi_minus, 3, 0); // 3--
 
-	if (0){
+	if (1){
 	// let's create all possible combinations of decays according
 	// to the rules of L,S coupling and parity
 
@@ -94,15 +96,25 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	isobar2[1] = make_pair(-1,&K_minus);
 
 	isobar1[0].push_back(make_pair(+1,&Kstar01430));
-	isobar1[0].push_back(make_pair(-1,&Kstar892));
+	isobar1[0].push_back(make_pair(-1,&Kstar892  ));
 	isobar1[0].push_back(make_pair(+1,&Kstar21430));
+	isobar1[0].push_back(make_pair(+1,&kappa     ));
+	isobar1[0].push_back(make_pair(-1,&Kstar16800));
+	isobar1[0].push_back(make_pair(-1,&Kstar17800));
 
-	isobar1[1].push_back(make_pair(+1,&f0980));
-	isobar1[1].push_back(make_pair(-1,&rho770));
-	isobar1[1].push_back(make_pair(+1,&f21270));
+	isobar1[1].push_back(make_pair(+1,&f0980   ));
+	isobar1[1].push_back(make_pair(-1,&rho770  ));
+	isobar1[1].push_back(make_pair(+1,&f21270  ));
+	isobar1[1].push_back(make_pair(+1,&sigma   ));
+	isobar1[1].push_back(make_pair(+1,&f01370  ));
+	isobar1[1].push_back(make_pair(+1,&f01500  ));
+	isobar1[1].push_back(make_pair(-1,&rho1450 ));
+	isobar1[1].push_back(make_pair(-1,&rho31690));
 
-	unsigned int Mmax = 1;
-	unsigned int lorbmax = 2;
+
+	unsigned int Mmax    = 1;
+	unsigned int lorbmax = 4;
+	unsigned int Jmax    = 5;
 
 	int wavecounter(0);
 
@@ -119,15 +131,27 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 					int parity = parity_isobar1 * parity_isobar2 * pow(-1,lorb);
 					// create the particle key
 					particleKey X("X", isobar1[comb][i].second, isobar2[comb].second, lorb, spin);
-					for (unsigned int J = abs(lorb-spin); J <= (unsigned) abs(lorb+spin); J++){ // couple now spin and orbital angular momentum
+					for (unsigned int J = abs(lorb-spin); (J <= (unsigned) abs(lorb+spin) && J <= Jmax); J++){ // couple now spin and orbital angular momentum
 						for (unsigned int M = 0; (M <= J && M <= Mmax); M++){ // go through the J projections up to either the allowed value or Mmax
-							cout << "JPM LS: " << J << " " << parity << " " << M << " " << lorb << " " << spin << endl;
-							// create a wave of positive reflectivity if (1)
-							if (1){
-								//      wave(&X, J, P, M, refl);
-								waveKey wave(&X, J,parity,M,+1);
+							for (int reflectivity = -1; reflectivity < 2; reflectivity+=2){
+								// skip combinations that are forbidden in the reflectivity basis
+								if (J==0 && parity == -1 && M == 0 && reflectivity == -1) continue;
+								if (J==1 && parity == +1 && M == 0 && reflectivity == -1) continue;
+								if (J==1 && parity == -1 && M == 0 && reflectivity == +1) continue;
+								if (J==2 && parity == +1 && M == 0 && reflectivity == +1) continue;
+								if (J==2 && parity == -1 && M == 0 && reflectivity == -1) continue;
+								if (J==3 && parity == +1 && M == 0 && reflectivity == -1) continue;
+								if (J==3 && parity == -1 && M == 0 && reflectivity == +1) continue;
+								if (J==4 && parity == +1 && M == 0 && reflectivity == +1) continue;
+								if (J==4 && parity == -1 && M == 0 && reflectivity == -1) continue;
+								if (J==5 && parity == +1 && M == 0 && reflectivity == -1) continue;
+								if (J==5 && parity == -1 && M == 0 && reflectivity == +1) continue;
+
+								cout << "JPMe LS: " << J << " " << parity << " " << M << " " << reflectivity << " " << lorb << " " << spin << endl;
+								waveKey wave(&X, J,parity,M,reflectivity);
 								generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 								// move the .key file
+								/*
 								stringstream command;
 								command << "mv " << wave.waveName(true) << " " << movetoFilePath << "/";
 								cout << " executing " << command.str() << endl;
@@ -136,22 +160,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 								// remove the .C file
 								command << "rm -f " << wave.waveName(true) << ".C" << endl;
 								cout << " executing " << command.str() << endl;
-								system(command.str().c_str());
-								wavecounter++;
-							}
-							// create a wave of negative reflectivity if (1)
-							if (0){
-								//      wave(&X, J, P, M, refl);
-								waveKey wave(&X, J,parity,M,-1);
-								generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
-								stringstream command;
-								command << "mv " << wave.waveName(true) << " " << movetoFilePath << "/";
-								cout << " executing " << command.str() << endl;
-								system(command.str().c_str());
-								command.str("");
-								command << "rm -f " << wave.waveName(true) << ".C" << endl;
-								cout << " executing " << command.str() << endl;
-								system(command.str().c_str());
+								system(command.str().c_str());*/
 								wavecounter++;
 							}
 						}
@@ -166,7 +175,7 @@ void genKey_Kpipi(const bool testKey = true, const string& dataFileName =
 	} // own wave set
 
 
-	if (1){
+	if (0){
 	// PWA wave set according to Daum et al.
 	// ..JPLMpartiyexchange(isobar1 isobar2)
 	{ // 0-P0+(K*pi)

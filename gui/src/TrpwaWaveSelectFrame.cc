@@ -10,6 +10,7 @@
 #include <iostream>
 #include "TGButtonGroup.h"
 #include "TGButton.h"
+#include "TGTab.h"
 
 using namespace std;
 
@@ -29,6 +30,8 @@ TrpwaWaveSelectFrame::TrpwaWaveSelectFrame(TWaveSelections& waveselections)
 TrpwaWaveSelectFrame::~TrpwaWaveSelectFrame(){
 	Cleanup();
 }
+
+#include "TrpwaCommonTools.h"
 
 void TrpwaWaveSelectFrame::Build(){
 	// horizontal frame containing check boxes with all available bins
@@ -60,38 +63,131 @@ void TrpwaWaveSelectFrame::Build(){
 	_copybinbutton = new TGCheckButton(buttongroup, new TGHotString(" copy bin "));
 	_copybinbutton->SetState(kButtonUp);
 	buttongroup->AddFrame(_copybinbutton);
+	buttongroup = NULL; // reset the pointer for the next frames
 
-	this->AddFrame(frame_bin_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
-				kLHintsExpandX,1,1,1,1));
-
-	// horizontal frame containing check boxes with the waves to select for the bins
-	TGGroupFrame* frame_wave_selections = new TGGroupFrame(this, " waves ", kHorizontalFrame);
-
-	buttongroup = new TGButtonGroup(frame_wave_selections," available waves ",kVerticalFrame);
-	// add first the button to select all bins
-	//TGRadioButton* radiobutton = new TGRadioButton(buttongroup, new TGHotString(" all bins "));
-	//radiobutton->SetState(kButtonDown);
+	// provide tab frame to put different JPC waves in different tabs
+	TGTab* frame_wave_tabs = new TGTab(this);
+	TGCompositeFrame* current_waveframe = NULL;
+	//TGGroupFrame* frame_wave_selections = NULL;
+	string last_JPCM = "";
 	// assuming that all selectable waves are the same for each bin
 	unsigned int nwaves(0);
 	if (nbins > 0)
 		nwaves = (*_waveselections)[0].available_waves.size();
+	unsigned wavecounter(0);
 	for (unsigned int iwave = 0; iwave < nwaves; iwave++){
+		// copy JPC digits to define the available tabs
+		// GIsoJPCMe
+		// 01  23456
+		//     ^^^^
+		int J,P,C,M,refl,l,s;
+		string iso1, iso2;
+		TrpwaCommonTools::GetJPCMreflISO1lsISO2((*_waveselections)[0].available_waves[iwave],J,P,C,M,refl,iso1,iso2,l,s);
+		string _jpcm = (*_waveselections)[0].available_waves[iwave].substr(2,4);
+		if (last_JPCM != _jpcm){
+			// store the last button group if available
+			if (buttongroup){
+				//frame_wave_selections->AddFrame(buttongroup);
+				current_waveframe->AddFrame(buttongroup);
+				current_waveframe->Layout();
+			}
+			last_JPCM = _jpcm;
+			current_waveframe = frame_wave_tabs->AddTab(last_JPCM.c_str());
+			// horizontal frame containing check boxes with the waves to select for the bins
+			//frame_wave_selections = new TGGroupFrame(current_waveframe, " waves ", kHorizontalFrame);
+			buttongroup = new TGButtonGroup(current_waveframe," available waves ",kVerticalFrame);
+			// reset the wavecounter that is used to create a new button group
+			wavecounter = 0;
+		}
+
 		stringstream _text;
 		_text << (*_waveselections)[0].available_waves[iwave];
 		TGCheckButton* button = new TGCheckButton(buttongroup, new TGHotString(_text.str().c_str()));
 		_buttons_waveselection.push_back(button);
+		_buttons_waveselection_by_JP[J*P].push_back(button);
+		_buttons_waveselection_by_Mrefl[M*refl].push_back(button);
+		_buttons_waveselection_by_lorb[l].push_back(button);
+		_buttons_waveselection_by_iso1[iso1].push_back(button);
+		_buttons_waveselection_by_iso2[iso2].push_back(button);
 		button->SetState(kButtonUp);
 		button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"WaveSelectClick()");
+		wavecounter++;
 		// create a new radio button group if a certain number of bins is exceeded
-		if (((iwave+1)%50)==0){
-			frame_wave_selections->AddFrame(buttongroup);
-			buttongroup = new TGButtonGroup(frame_wave_selections," available waves ",kVerticalFrame);
+		if (((wavecounter+1)%100)==0){ // does not work properly since it is vertical arranged
+			current_waveframe->AddFrame(buttongroup);
+			current_waveframe->Layout();
+			buttongroup = new TGButtonGroup(current_waveframe," available waves ",kVerticalFrame);
 		}
 	}
-	frame_wave_selections->AddFrame(buttongroup);
-	this->AddFrame(frame_wave_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
-					kLHintsExpandX,1,1,1,1));
+	//frame_wave_selections->AddFrame(buttongroup);
+	current_waveframe->AddFrame(buttongroup);
+	current_waveframe->Layout();
 
+	//frame_wave_tabs->GetTabContainer(1)->AddFrame(frame_wave_selections);
+
+	// wave filter
+	// vertical frame containing group field with all available quantum numbers to filter
+	TGGroupFrame* frame_filter_selections = new TGGroupFrame(this, " filter ", kVerticalFrame);
+
+
+	_filter_box = new TGComboBox(frame_filter_selections);
+	_filter_box->Connect("Selected(Int_t)", "TrpwaWaveSelectFrame", this, "FilterSelectClick(Int_t)");
+	_filter_box->AddEntry("NONE",-1);
+	for (map<int, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_JP.begin();
+		it != _buttons_waveselection_by_JP.end(); it++){
+		stringstream entry;
+		entry << "JP = " << abs(it->first);
+		if (it->first < 0) entry << "-";
+		if (it->first > 0) entry << "+";
+		if (it->first == 0) entry << "+/-";
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
+	}
+	for (map<int, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_Mrefl.begin();
+		it != _buttons_waveselection_by_Mrefl.end(); it++){
+		stringstream entry;
+		entry << "Me = " << abs(it->first);
+		if (it->first < 0) entry << "-";
+		if (it->first > 0) entry << "+";
+		if (it->first == 0) entry << "+/-";
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
+	}
+	for (map<int, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_lorb.begin();
+		it != _buttons_waveselection_by_lorb.end(); it++){
+		stringstream entry;
+		entry << "L = " << abs(it->first);
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
+	}
+	for (map<string, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_iso1.begin();
+		it != _buttons_waveselection_by_iso1.end(); it++){
+		stringstream entry;
+		entry << "Iso 1 = " << it->first;
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
+	}
+	for (map<string, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_iso2.begin();
+		it != _buttons_waveselection_by_iso2.end(); it++){
+		stringstream entry;
+		entry << "Iso 2 = " << it->first;
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
+	}
+	//filter_box->Layout();
+	_filter_box->SetWidth(200);
+	_filter_box->SetHeight(20);
+	frame_filter_selections->AddFrame(_filter_box);
+
+	// 2 buttons to select or deselect all filtered waves
+	_select_button = new TGTextButton(frame_filter_selections, new TGHotString("select all filtered"));
+	_deselect_button = new TGTextButton(frame_filter_selections, new TGHotString("unselect all filtered"));
+	_select_button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"SelectFiltered()");
+	_deselect_button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"UnselectFiltered()");
+	_select_button->SetWidth(200);
+	_deselect_button->SetWidth(200);
+	frame_filter_selections->AddFrame(_select_button);
+	frame_filter_selections->AddFrame(_deselect_button);
+
+	this->AddFrame(frame_bin_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft,1,1,1,1));
+	this->AddFrame(frame_filter_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft,1,1,1,1));
+	this->AddFrame(frame_wave_tabs, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+					kLHintsExpandX,1,1,1,1));
 
 	SetWindowName("Wave selection");
 	Resize(GetDefaultSize());
@@ -99,6 +195,52 @@ void TrpwaWaveSelectFrame::Build(){
 	CenterOnParent();
 	MapSubwindows();
 	MapWindow();
+}
+
+void TrpwaWaveSelectFrame::SelectFiltered(){
+	if (_filter_box->GetSelected()== -1) return; // nothing filtered
+	// retrieve the corresponding list of buttons
+	// the pointer was converted to an integer that is given by the selection
+	vector<TGTextButton*> *wave_buttons_list = (vector<TGTextButton*> *) _filter_box->GetSelected();
+	// enable the corresponding buttons
+	for (vector<TGTextButton*>::iterator it = wave_buttons_list->begin(); it != wave_buttons_list->end(); it++){
+		(*it)->SetState(kButtonDown);
+	}
+	// update now the selection
+	WaveSelectClick();
+}
+
+void TrpwaWaveSelectFrame::UnselectFiltered(){
+	if (_filter_box->GetSelected()== -1) return; // nothing filtered
+	// retrieve the corresponding list of buttons
+	// the pointer was converted to an integer that is given by the selection
+	vector<TGTextButton*> *wave_buttons_list = (vector<TGTextButton*> *) _filter_box->GetSelected();
+	// enable the corresponding buttons
+	for (vector<TGTextButton*>::iterator it = wave_buttons_list->begin(); it != wave_buttons_list->end(); it++){
+		(*it)->SetState(kButtonUp);
+	}
+	// update now the selection
+	WaveSelectClick();
+}
+
+void TrpwaWaveSelectFrame::FilterSelectClick(int selection){
+	for (vector<TGTextButton*>::iterator it = _buttons_waveselection.begin(); it != _buttons_waveselection.end(); it++){
+		//if (selection == -1) // no filter selected
+			(*it)->SetTextColor(0x000000);// SetEnabled(true);
+		//else // disable all to enable the selected afterwards
+		//	(*it)->SetBackgroundColor(this->GetBackground());// SetEnabled(false);
+	}
+	// enable all buttons
+
+	if (selection == -1) return;
+
+	// retrieve the corresponding list of buttons
+	// the pointer was converted to an integer that is given by the selection
+	vector<TGTextButton*> *wave_buttons_list = (vector<TGTextButton*> *) selection;
+	// enable the corresponding buttons
+	for (vector<TGTextButton*>::iterator it = wave_buttons_list->begin(); it != wave_buttons_list->end(); it++){
+		(*it)->SetTextColor(0x00ff00);// SetEnabled(true);
+	}
 }
 
 // action to be taken on bin selection
