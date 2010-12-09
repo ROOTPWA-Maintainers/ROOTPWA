@@ -140,7 +140,7 @@ void TrpwaWaveSelectFrame::Build(){
 		if (it->first < 0) entry << "-";
 		if (it->first > 0) entry << "+";
 		if (it->first == 0) entry << "+/-";
-		_filter_box->AddEntry(entry.str().c_str(),(int)&it->second);
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
 	}
 	for (map<int, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_Mrefl.begin();
 		it != _buttons_waveselection_by_Mrefl.end(); it++){
@@ -149,25 +149,25 @@ void TrpwaWaveSelectFrame::Build(){
 		if (it->first < 0) entry << "-";
 		if (it->first > 0) entry << "+";
 		if (it->first == 0) entry << "+/-";
-		_filter_box->AddEntry(entry.str().c_str(),(int)&it->second);
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
 	}
 	for (map<int, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_lorb.begin();
 		it != _buttons_waveselection_by_lorb.end(); it++){
 		stringstream entry;
 		entry << "L = " << abs(it->first);
-		_filter_box->AddEntry(entry.str().c_str(),(int)&it->second);
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
 	}
 	for (map<string, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_iso1.begin();
 		it != _buttons_waveselection_by_iso1.end(); it++){
 		stringstream entry;
 		entry << "Iso 1 = " << it->first;
-		_filter_box->AddEntry(entry.str().c_str(),(int)&it->second);
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
 	}
 	for (map<string, vector< TGTextButton* > >::iterator it = _buttons_waveselection_by_iso2.begin();
 		it != _buttons_waveselection_by_iso2.end(); it++){
 		stringstream entry;
 		entry << "Iso 2 = " << it->first;
-		_filter_box->AddEntry(entry.str().c_str(),(int)&it->second);
+		_filter_box->AddEntry(entry.str().c_str(),(long int)&it->second);
 	}
 	//filter_box->Layout();
 	_filter_box->SetWidth(200);
