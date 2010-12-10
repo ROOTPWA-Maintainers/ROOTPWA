@@ -279,7 +279,9 @@ pwaPlotter::addFit(const std::string& filename,
     g->GetXaxis()->SetTitle("mass (GeV/c^{2})");
     g->GetYaxis()->SetTitle("intensity");
     mIntensities[*it]->Add(g,"p");
+    mWaveEvidence[*it]+=evi;
     ++it;
+   
   }
 
   //cout << "building Likelihood graphs" << endl;
@@ -392,7 +394,9 @@ pwaPlotter::addFit(const std::string& filename,
       g->SetPointError(i,
 		       binwidth*0.5,
 		       result->intensityErr(it->c_str()));
+      
       ++it;
+      
     }// end loop through waves
 
     // loop through phase plots
@@ -496,6 +500,7 @@ pwaPlotter::registerWave(const std::string& wavename){
     string psname=wavename;psname.append("PS");
     mPhaseSpace[wavename]->SetTitle(psname.c_str());
     mPhaseSpace[wavename]->SetName(psname.c_str());
+    mWaveEvidence[wavename]=0;
   }
   
   return inserted.second;
@@ -518,7 +523,8 @@ pwaPlotter::printStats(){
   multimap<unsigned int, string>::iterator it2=m.begin();
   
   while(it2!=m.end()){
-    cout << it2->second << "    used " << it2->first << " times" << endl;
+    cout << it2->second << "    used " << it2->first << " times" 
+	 << " with average evidence " << mWaveEvidence[it2->second]/(double)it2->first<< endl;
     ++it2;
   }
 }
