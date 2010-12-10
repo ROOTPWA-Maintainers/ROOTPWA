@@ -79,14 +79,22 @@ main(int argc, char** argv){
     cerr << "Not enough fits to create " << nsurv << " survivors." << endl;
   }
 
-  double maxevi=1.83E6;
-  unsigned int ngen=45;
+  double minevi=1.78E6;
+  double maxevi=1.84E6;
+  
+  //double minevi=712000;
+  //double maxevi=700000;
+  
+  //double minevi=680000;
+  //double maxevi=715000;
+
+  unsigned int ngen=50;
 
   TH2D* hWavesetSize=new TH2D("hWS","Waveset sizes evolution",ngen,-0.5,(double)ngen-.5,100,0,100);
-  TH2D* hEvidences=new TH2D("hEvi","Evidence evolution",ngen,-0.5,(double)ngen-.5,1000,1.75E6,maxevi);
-   TH2D* hEviSize=new TH2D("hEviSize","Evidence vs Waveset size",100,0,100,1000,1.75E6,maxevi);
+  TH2D* hEvidences=new TH2D("hEvi","Evidence evolution",ngen,-0.5,(double)ngen-.5,1000,minevi,maxevi);
+   TH2D* hEviSize=new TH2D("hEviSize","Evidence vs Waveset size",100,0,100,1000,minevi,maxevi);
 
-TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100,1000,1.75E6,1.9E6);
+TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,-0.5,99.5,1000,minevi,minevi);
 
   
  
