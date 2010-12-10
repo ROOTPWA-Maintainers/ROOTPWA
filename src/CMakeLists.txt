@@ -53,7 +53,7 @@ set(SOURCES
   TFitResult.cc
   fitResult.cc
   TCMatrix.cc
-  TPWALikelihood.cc
+  #TPWALikelihood.cc
   TPWALikelihoodC.cc
   TPWAAmp.cc
   TPWAPhaseConstraint.cc
@@ -92,11 +92,11 @@ make_executable(pwaConstraintFit  pwaConstraintFit.cc  ${THIS_LIB})
 make_executable(selector          selector.cc          ${THIS_LIB})
 make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
 
-make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
+#make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
 make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
 make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
 make_executable(testArray         testArray.cc         ${THIS_LIB})
-make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
+#make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
 make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB})
 
 # test executables
