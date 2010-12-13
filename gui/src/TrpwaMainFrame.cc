@@ -465,6 +465,8 @@ void TrpwaMainFrame::FitPartialWaves(){
 
 void TrpwaMainFrame::ShowFitResults(){
 	if (current_session){
+		//frame_plot_amps = new TrpwaPlotAmpsFrame();
+
 		// calls will move to a separate class depending on the
 		// farm type given, but for now implemented here
 

@@ -181,12 +181,14 @@ void TrpwaWaveSelectFrame::Build(){
 	_deselect_button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"UnselectFiltered()");
 	_select_button->SetWidth(200);
 	_deselect_button->SetWidth(200);
-	frame_filter_selections->AddFrame(_select_button);
-	frame_filter_selections->AddFrame(_deselect_button);
+	frame_filter_selections->AddFrame(_select_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+			kLHintsExpandX,1,1,1,1));
+	frame_filter_selections->AddFrame(_deselect_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+			kLHintsExpandX,1,1,1,1));
 
-	this->AddFrame(frame_bin_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft,1,1,1,1));
-	this->AddFrame(frame_filter_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft,1,1,1,1));
-	this->AddFrame(frame_wave_tabs, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+	this->AddFrame(frame_bin_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandY,1,1,1,1));
+	this->AddFrame(frame_filter_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandY,1,1,1,1));
+	this->AddFrame(frame_wave_tabs, new TGLayoutHints(kLHintsTop | kLHintsLeft | kLHintsExpandY |
 					kLHintsExpandX,1,1,1,1));
 
 	SetWindowName("Wave selection");
