@@ -179,8 +179,6 @@ void TrpwaWaveSelectFrame::Build(){
 	_deselect_button = new TGTextButton(frame_filter_selections, new TGHotString("unselect all filtered"));
 	_select_button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"SelectFiltered()");
 	_deselect_button->Connect("Clicked()","TrpwaWaveSelectFrame",this,"UnselectFiltered()");
-	_select_button->SetWidth(200);
-	_deselect_button->SetWidth(200);
 	frame_filter_selections->AddFrame(_select_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
 	frame_filter_selections->AddFrame(_deselect_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |

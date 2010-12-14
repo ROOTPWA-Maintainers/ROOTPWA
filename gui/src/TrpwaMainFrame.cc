@@ -231,11 +231,19 @@ void TrpwaMainFrame::CheckStatus() {
 				current_session->Check_PWA_MC_acc_data_amplitudes(checkentries) +
 				current_session->Check_PWA_MC_data_amplitudes(checkentries)
 				)/3.;
+		userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "check Integral entries",
+				"Do you want to check the Integral entries as well?\n This may take some time.",
+				kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			checkentries = true;
+		} else {
+			checkentries = false;
+		}
 		step_status[6]=(
-				current_session->Check_PWA_MC_acc_data_integrals()  +
-				current_session->Check_PWA_MC_data_integrals()
+				current_session->Check_PWA_MC_acc_data_integrals(checkentries)  +
+				current_session->Check_PWA_MC_data_integrals(checkentries)
 				)/2.;
-
 		step_status[7]=current_session->Check_wave_lists();
 		step_status[8]=current_session->Check_fits();
 
@@ -465,8 +473,12 @@ void TrpwaMainFrame::FitPartialWaves(){
 
 void TrpwaMainFrame::ShowFitResults(){
 	if (current_session){
-		//frame_plot_amps = new TrpwaPlotAmpsFrame();
-
+		vector<string> fit_result_paths;
+		vector<string> fit_titles;
+		vector<string> fit_descriptions;
+		current_session->Get_List_of_Fits(fit_result_paths, &fit_titles, &fit_descriptions);
+		frame_plot_amps = new TrpwaPlotAmpsFrame(fit_result_paths, fit_titles, fit_descriptions);
+		return;
 		// calls will move to a separate class depending on the
 		// farm type given, but for now implemented here
 
