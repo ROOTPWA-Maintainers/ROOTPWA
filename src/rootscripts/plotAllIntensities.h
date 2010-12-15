@@ -51,6 +51,8 @@
 #include "TVirtualPad.h"
 #include "TTree.h"
 
+using namespace std;
+
 
 std::vector<std::pair<std::string, TVirtualPad*> >
 plotAllIntensities(const unsigned int nmbTrees,               // number of fitResult trees
