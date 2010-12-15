@@ -20,71 +20,65 @@
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
 #// File and Version Information:
-#// $Rev:: 266                         $: revision of last commit
-#// $Author:: promme                   $: author of last commit
-#// $Date:: 2010-06-17 10:35:01 +0200 #$: date of last commit
+#// $Rev:: 550                         $: revision of last commit
+#// $Author:: sneubert                 $: author of last commit
+#// $Date:: 2010-12-10 15:16:56 +0100 #$: date of last commit
 #//
 #// Description:
-#//      build file for RootPwaGen
+#//      build file for RootPwaScripts library
 #//
 #//
 #// Author List:
-#//      Sebastian Neubert    TUM            (original author)
+#//      Prometeusz Jasinski  KPH-MZ         (original author)
+#//      Sebastian Neubert    TUM            (reused from)
+#//      
 #//
 #//
 #//-------------------------------------------------------------------------
 
-#set(THIS_INC "src")
+ # gSystem->Load("libRootPwa.so");
+ # gSystem->AddIncludePath("-I$ROOTPWA/utilities");
+ # gSystem->AddIncludePath("-I$ROOTPWA/src");
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+#  ${Boost_INCLUDE_DIRS}
   ${ROOT_INCLUDE_DIR}
-  ${LIBCONFIG_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${ROOTPWA_DICTIONARY}
-  ${SCRIPTS_INCLUDE_DIR}
-#  ${PWA2000_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
+  ${ROOTPWA_INCLUDE_DIR}
+# ${CUDA_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
+
 # source files that are compiled into library
 set(SOURCES
-  TrpwaMainFrame.cc
-  TrpwaSessionManager.cc
-  TrpwaWaveSelectFrame.cc
-  TrpwaJobManager.cc
-  TrpwaEventTreeHandler.cc
-  TrpwaCommonTools.cc
-  TrpwaPlotAmpsFrame.cc
-) 
-
-# ROOT dictionary
-set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
-root_generate_dictionary(
-  "${ROOTPWAGUI_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h"
-  "rootPwaGuiLinkDef.h"
+	loadFitResult.C
+	convertTFitResultTree.C
+	plotIntensity.C
+	plotPhase.C
+	plotCoherence.C
+	plotAllIntensities.C
+	plotSpinTotals.C
+	# plot4.C
 )
-# message(" using rootpwa_dictionary "${ROOTPWA_DICTIONARY})
-# setting roopwa dictionary does not work yet since I'm too dumb to use cmake
-set(SOURCES ${SOURCES} ${ROOTPWAGUI_DICTIONARY} ${ROOTPWA_DICTIONARY})
 
-# message(" my sources are "${SOURCES})  
+	    
+# ROOT dictionary
+#set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
+#root_generate_dictionary(
+#  "${ROOTPWA_DICTIONARY}"
+#  "${INCLUDE_DIRECTORIES}"
+#  "TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
+#  "rootPwaLinkDef.h"
+#)
+#set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
 
 # library
-set(THIS_LIB "RootPwaGui")
+set(THIS_LIB "RootPwaScripts")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
-   "${LIBCONFIG_LIBS}"
-   "${ROOTPWASCRIPTS_LIBS}"
-#  "${PWA2000_LIBS}"
-   "${ROOTPWA_LIBS}"
+  "${ROOTPWA_LIBS}"
 )
-
-
-# executables
-make_executable(rootpwa_gui rootpwa_gui.cpp ${THIS_LIB})

@@ -32,7 +32,9 @@ private:
 	TGComboBox* box_available_waves;        // box with available waves to select, item is a pointer to the wave
 	TGComboBox* box_available_anchor_waves; // box with available waves to select, item is a pointer to the wave
 
-	Tfilemap available_fit_results; // map with title as key and a pointer to an opened file
+	Tfilemap available_fit_results; // map with title as key and a pointer to an opened Tree
+
+	Tfilemap selected_fit_results; // map with title as key and a pointer to an opened Tree selected by the user
 
 	// returns false if no fit results found
 	bool Add_Fit_Result(string fit_result_path, // path containing .root files with fit result trees
@@ -68,6 +70,9 @@ public:
 
 	// a wave will be selected for the anchor wave (phase determination)
 	void Select_Anchor_Wave(int pWave);
+
+	// plot all intensities in the list of selected fit results
+	void Plot_All_selected();
 
 	// call the root script for class definition
 	ClassDef(TrpwaPlotAmpsFrame,0);

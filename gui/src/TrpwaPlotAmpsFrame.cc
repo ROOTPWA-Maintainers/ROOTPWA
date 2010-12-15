@@ -16,6 +16,11 @@
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TChain.h"
+//#include "TFitBin.h"
+#include "plotIntensity.h"
+#include "plotPhase.h"
+#include "plotCoherence.h"
+#include "plotAllIntensities.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
@@ -106,6 +111,7 @@ void TrpwaPlotAmpsFrame::Build(){
 
 	// button to draw all intensities (external script will be called)
 	TGTextButton* plot_all_button = new TGTextButton(this, new TGHotString(" draw all waves "));
+	plot_all_button->Connect("Clicked()","TrpwaPlotAmpsFrame",this,"Plot_All_selected()");
 
 	// group with buttons to select specific (anchor) waves
 	TGGroupFrame* frame_partial_wave_selections = new TGGroupFrame(this, " select partial waves ", kHorizontalFrame);
@@ -193,8 +199,18 @@ bool TrpwaPlotAmpsFrame::Add_Fit_Result(string fit_result_path, // path containi
 // will be called when an available fit file was selected
 // an item will be added to the list of selected fit files
 void TrpwaPlotAmpsFrame::Add_Fit(int pFitFile){
-	cout << pFitFile << endl;
-	cout << " calling add fit " << endl;
+	if (pFitFile > 0){
+		// get the name and add the entry to the list of selected fits
+		TTree* selected_fit = (TTree*) pFitFile;
+		string fitname = selected_fit->GetName();
+		if (selected_fit_results.find(fitname)==selected_fit_results.end()){
+			selected_fit_results[fitname]=selected_fit;
+			box_selected_fits->AddEntry(fitname.c_str(), pFitFile);
+		}
+	//selected_fit_results[];
+	//cout << pFitFile << endl;
+	//cout << " calling add fit " << endl;
+	}
 }
 
 // will be called when an added fit file was selected
@@ -220,6 +236,15 @@ vector<string>& TrpwaPlotAmpsFrame::Scan_Fit_Result(TTree* fit_results){
 	vector<string>* result = new vector<string>();
 
 	return *result;
+}
+
+void TrpwaPlotAmpsFrame::Plot_All_selected(){
+	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+		TTree* selected_tree = (TTree*)it->second;
+		plotAllIntensities(selected_tree, true);
+		//box_available_fits->AddEntry(it->first.c_str(), (long int) it->second);
+	}
+
 }
 
 
