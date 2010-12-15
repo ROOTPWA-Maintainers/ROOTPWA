@@ -21,9 +21,13 @@
 #include "plotPhase.h"
 #include "plotCoherence.h"
 #include "plotAllIntensities.h"
+#include "fitResult.h"
+#include "TGTextEntry.h"
+#include "TGMsgBox.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
+using namespace rpwa;
 
 #ifndef TRPWAPLOTAMPSFRAME_CC_
 #define TRPWAPLOTAMPSFRAME_CC_
@@ -34,6 +38,11 @@ TrpwaPlotAmpsFrame::TrpwaPlotAmpsFrame(
 		vector<string> fit_result_descriptions      // descriptions of the fits
 	): TGTransientFrame(gClient->GetRoot(),0,600,600, kVerticalFrame){
 	available_fit_results.clear();
+	selected_fit_results.clear();
+	available_waves.clear();
+	current_wave = "";
+	current_anchor_wave = "";
+	current_fit_result = NULL;
 	if (fit_result_descriptions.size() == fit_result_paths.size() && fit_result_paths.size() == fit_result_titles.size()){
 		for (unsigned int i = 0; i < fit_result_paths.size(); i++){
 			//if (i < 5) continue;
@@ -96,7 +105,7 @@ void TrpwaPlotAmpsFrame::Build(){
 
 	TGVerticalFrame* subframe_selected_fits = new TGVerticalFrame(frame_rootfile_selections);
 	subframe_selected_fits->AddFrame(
-				new TGLabel(subframe_selected_fits, "selected fit results"));
+				new TGLabel(subframe_selected_fits, "list of selected fit results"));
 	box_selected_fits = new TGComboBox(subframe_selected_fits);
 	box_selected_fits->Connect("Selected(Int_t)", "TrpwaPlotAmpsFrame", this, "Remove_Fit(Int_t)");
 	box_selected_fits->AddEntry("NONE",-1);
@@ -143,6 +152,7 @@ void TrpwaPlotAmpsFrame::Build(){
 
 	// button to plot the selection
 	TGTextButton* plot_button = new TGTextButton(this, new TGHotString(" draw selected waves "));
+	plot_button->Connect("Clicked()","TrpwaPlotAmpsFrame",this,"Plot_selected_wave()");
 
 	// canvas where the results are drawn to
 	TRootEmbeddedCanvas* frame_selected_waves = new TRootEmbeddedCanvas(" canvas_selected_waves ",
@@ -206,6 +216,20 @@ void TrpwaPlotAmpsFrame::Add_Fit(int pFitFile){
 		if (selected_fit_results.find(fitname)==selected_fit_results.end()){
 			selected_fit_results[fitname]=selected_fit;
 			box_selected_fits->AddEntry(fitname.c_str(), pFitFile);
+			current_fit_result = selected_fit;
+			box_selected_fits->Select(pFitFile, false);
+
+			// search now for waves to add to the list of waves
+			vector<string> wavelist = Scan_Fit_Result(current_fit_result);
+			for (vector<string>::iterator it = wavelist.begin(); it != wavelist.end(); it++){
+				available_waves[*it]++;
+				if (available_waves[*it] == 1){ // new wave found
+					static int somecounter(0); // index is not used
+					somecounter++;
+					box_available_waves->AddEntry((*it).c_str(), somecounter);
+					box_available_anchor_waves->AddEntry((*it).c_str(), somecounter);
+				}
+			}
 		}
 	//selected_fit_results[];
 	//cout << pFitFile << endl;
@@ -222,29 +246,196 @@ void TrpwaPlotAmpsFrame::Remove_Fit(int pFitFile){
 
 // a wave will be selected from the list of available waves
 void TrpwaPlotAmpsFrame::Select_Wave(int pWave){
-	cout << pWave << endl;
-	cout << " calling select wave " << endl;
+	//cout << pWave << endl;
+	//cout << " calling select wave " << endl;
+	TGTextLBEntry *filePointer = (TGTextLBEntry *)box_available_waves->GetSelectedEntry();
+	string selected_wave = filePointer->GetTitle();
+	if (available_waves.find(selected_wave)!=available_waves.end()){
+		cout << " selected wave is " << selected_wave << endl;
+		current_wave = selected_wave;
+	} else {
+		current_wave = "";
+	}
 }
 
 // a wave will be selected for the anchor wave (phase determination)
 void TrpwaPlotAmpsFrame::Select_Anchor_Wave(int pWave){
-	cout << pWave << endl;
-	cout << " calling select anchor wave " << endl;
+	//string selected_wave = box_available_anchor_waves->GetTextEntry()->GetText();
+	TGTextLBEntry *filePointer = (TGTextLBEntry *)box_available_anchor_waves->GetSelectedEntry();
+	string selected_wave = filePointer->GetTitle();
+	if (available_waves.find(selected_wave)!=available_waves.end()){
+		cout << " selected anchor wave is " << selected_wave << endl;
+		current_anchor_wave = selected_wave;
+	} else {
+		current_anchor_wave = "";
+	}
 }
 
-vector<string>& TrpwaPlotAmpsFrame::Scan_Fit_Result(TTree* fit_results){
+vector<string>& TrpwaPlotAmpsFrame::Scan_Fit_Result(TTree* fit_results, string branchName){
 	vector<string>* result = new vector<string>();
+	if (fit_results <= 0) return *result;
+	cout << " scanning " << fit_results->GetName() << " for waves " << endl;
+	double totIntensity(0);
+	int nbinelements(0);
+	const double intensityThr      = 0;            // threshold for total intensity in mass bin
+	int nmbBinsAboveThr = 0;
+	map<string, int> wavelist; // map with counts of all available waves
+	map<string, double> totIntensities; // total intensities per wave name
+	fitResult* massBin = new fitResult();
+	fit_results->SetBranchAddress(branchName.c_str(), &massBin);
+	for (int imassbin = 0; imassbin < fit_results->GetEntries(); imassbin++){
+		fit_results->GetEntry(imassbin);
+		nbinelements++;
+		const double binIntensity = massBin->intensity();
+		totIntensity += binIntensity;
+		for (unsigned iwave = 0; iwave < massBin->waveNames().size(); iwave++){
+			wavelist[massBin->waveNames()[iwave]]++;
+			// found a new wave when the specific counter is 1
+			if (wavelist[massBin->waveNames()[iwave]] == 1){
+			}
+			// calculate the total wave intensities
+			// warning, several fit results per bin and wave name lead to a wrong calculation
+			if (binIntensity > intensityThr) {
+				totIntensities[massBin->waveNames()[iwave]]+=massBin->intensity(iwave);
+				if (iwave == 0)
+					++nmbBinsAboveThr;
+			}
+		}
+	}
+
+	for (map<string, int>::iterator it = wavelist.begin(); it != wavelist.end(); it++){
+		result->push_back(it->first);
+	}
+
 
 	return *result;
 }
 
 void TrpwaPlotAmpsFrame::Plot_All_selected(){
+	/*
 	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
 		TTree* selected_tree = (TTree*)it->second;
+		cout << " Drawing all results from " << it->first << ". Please be patient... " << endl;
 		plotAllIntensities(selected_tree, true);
+		cout << " done " << endl;
 		//box_available_fits->AddEntry(it->first.c_str(), (long int) it->second);
+	}*/
+	if (current_fit_result > 0){
+		cout << " Drawing all results from " << current_fit_result->GetName() << ". Please be patient... " << endl;
+		plotAllIntensities(current_fit_result, true);
+		cout << " done " << endl;
+	} else {
+		cout <<  " no fit selected " << endl;
 	}
+}
 
+void TrpwaPlotAmpsFrame::Plot_selected_wave(){
+	const string branchName = "fitResult_v2";
+	canvas_selected_waves->cd(1); gPad->Clear();
+	canvas_selected_waves->cd(2); gPad->Clear();
+	canvas_selected_waves->cd(3); gPad->Clear();
+	canvas_selected_waves->cd(4); gPad->Clear();
+	string drawsame("");
+	if (current_wave == "") return;
+	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+		TTree* selected_tree = (TTree*)it->second;
+		fitResult* massBin = new fitResult();
+		// search for the wave indexes and the valid mass bins
+		selected_tree->SetBranchAddress(branchName.c_str(), &massBin);
+		double masscutlowA(0), masscutlowB(0), masscuthighA(0), masscuthighB(0);
+		int indexA(0), indexB(0);
+		cout << " scanning fit result " << selected_tree->GetName() << endl;
+		stringstream selectExpr;
+		for (int ibin = 0; ibin < selected_tree->GetEntries(); ibin++){
+			selected_tree->GetEntry(ibin);
+			double mass = massBin->massBinCenter();
+			int _indexA = massBin->waveIndex(current_wave);
+			int _indexB = massBin->waveIndex(current_anchor_wave);
+			if (_indexA != 0){
+				if (indexA == 0) indexA = _indexA;
+				if (indexA != _indexA){
+					cout << " Warning in TrpwaPlotAmpsFrame::Plot_selected_wave():";
+					cout << "wave index differs for " << current_wave;
+					cout << ". Excluding from selection! " << endl;
+					selectExpr << "massBinCenter() != " << mass << " && ";
+				}
+				if (masscutlowA  == 0) masscutlowA  = mass;
+				if (masscuthighA == 0) masscuthighA = mass;
+				if (mass < masscutlowA ) masscutlowA  = mass;
+				if (mass > masscuthighA) masscuthighA = mass;
+			}
+			if (_indexB != 0){
+				if (indexB == 0) indexB = _indexB;
+				if (indexB != _indexB){
+					cout << " Warning in TrpwaPlotAmpsFrame::Plot_selected_wave():";
+					cout << "wave index differs for " << current_anchor_wave;
+					cout << ". Excluding from selection! " << endl;
+					selectExpr << "massBinCenter() != " << mass << " && ";
+				}
+				if (masscutlowB  == 0) masscutlowB  = mass;
+				if (masscuthighB == 0) masscuthighB = mass;
+				if (mass < masscutlowB ) masscutlowB  = mass;
+				if (mass > masscuthighB) masscuthighB = mass;
+			}
+		}
+		double masscutlow(0), masscuthigh(0);
+		if (indexA == 0) {
+			cout << current_wave << " not found in " << selected_tree->GetName() << endl;
+			continue;
+		}
+		masscutlow  = masscutlowA;
+		masscuthigh = masscuthighA;
+
+		if ((masscutlow != 0) || (masscuthigh != 0)){
+			selectExpr << "(massBinCenter() >= "<< masscutlow << ") && (massBinCenter() <= " << masscuthigh << ")";
+		} else {
+			cout << " mass range for " << current_wave << " in " << selected_tree->GetName() << " is bad! " << endl;
+			continue;
+		}
+		if (current_wave == "") continue; // should never happen due to cuts above
+		// wave A intensity
+		canvas_selected_waves->cd(1);
+		plotIntensity(selected_tree, indexA, false, kBlack, false, "", "APZ", 1, 0,
+				selectExpr.str(), branchName);
+
+		if (current_anchor_wave == "") return;
+		// determine the corresponding ranges
+		if (masscutlowB  > masscutlow ) masscutlow  = masscutlowB;
+		if (masscuthighB < masscuthigh) masscuthigh = masscuthighB;
+		if ((masscutlow != 0) || (masscuthigh != 0)){
+			selectExpr << "&& (massBinCenter() >= "<< masscutlow << ") && (massBinCenter() <= " << masscuthigh << ")";
+		} else {
+			cout << " mass range for " << current_anchor_wave << " in " << selected_tree->GetName() << " is bad! " << endl;
+			continue;
+		}
+		// wave A - wave B phase angle
+		canvas_selected_waves->cd(2);
+		plotPhase(selected_tree, indexA, indexB, false, kBlack, false, "", "APZ",
+				selectExpr.str(), branchName);
+
+		// wave B intensity
+		canvas_selected_waves->cd(3);
+		plotIntensity(selected_tree, indexB, false, kBlack, false, "", "APZ", 1, 0,
+				selectExpr.str(), branchName);
+
+		// wave A - wave B coherence
+		canvas_selected_waves->cd(4);
+		plotCoherence(selected_tree, indexA, indexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
+		//drawsame = "SAME";
+	}
+	int returncode;
+	stringstream filename;
+	filename << current_wave;
+	if (current_anchor_wave != "")
+		filename << "_vs_" << current_anchor_wave;
+	TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "save current output",
+			("Do you want to save this plot as\n"+filename.str()+".pdf/.C?").c_str(),
+			kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+	if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+	if (returncode == kMBYes){
+		canvas_selected_waves->Print((filename.str()+".pdf").c_str());
+		canvas_selected_waves->Print((filename.str()+".C").c_str());
+	}
 }
 
 

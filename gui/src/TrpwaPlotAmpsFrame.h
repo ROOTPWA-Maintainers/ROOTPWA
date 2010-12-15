@@ -22,6 +22,8 @@ using namespace std;
 
 typedef map<string, TTree*> Tfilemap;
 typedef Tfilemap::iterator  Tfilemapit;
+typedef map<string, int> Twavemap;
+typedef Twavemap::iterator Twavemapit;
 
 class TrpwaPlotAmpsFrame : public TGTransientFrame {
 private:
@@ -35,6 +37,10 @@ private:
 	Tfilemap available_fit_results; // map with title as key and a pointer to an opened Tree
 
 	Tfilemap selected_fit_results; // map with title as key and a pointer to an opened Tree selected by the user
+	TTree* current_fit_result; // pointer to the fit selected in the list of selected fit results
+
+	Twavemap available_waves; // map with the wave name as key and a counter for the number of found waves in the fit results
+	string current_wave , current_anchor_wave;
 
 	// returns false if no fit results found
 	bool Add_Fit_Result(string fit_result_path, // path containing .root files with fit result trees
@@ -42,7 +48,7 @@ private:
 			string fit_result_description);		// description of the fit
 
 	// searches for all available waves in the fit results
-	vector<string>& Scan_Fit_Result(TTree* fit_results);
+	vector<string>& Scan_Fit_Result(TTree* fit_results, string branchName = "fitResult_v2");
 
 public:
 
@@ -73,6 +79,9 @@ public:
 
 	// plot all intensities in the list of selected fit results
 	void Plot_All_selected();
+
+	// plot selected wave and compare (if given) to anchor wave
+	void Plot_selected_wave();
 
 	// call the root script for class definition
 	ClassDef(TrpwaPlotAmpsFrame,0);

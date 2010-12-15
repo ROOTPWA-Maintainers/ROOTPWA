@@ -473,14 +473,34 @@ void TrpwaMainFrame::FitPartialWaves(){
 
 void TrpwaMainFrame::ShowFitResults(){
 	if (current_session){
+		// ask whether to save the fit results separately
+		bool save(false);
+		int returncode;
+		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "save fit results",
+			"Do you want to save the current fit constellation?",
+			kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+		if (returncode == kMBYes){
+			save = true;
+		}
 		vector<string> fit_result_paths;
 		vector<string> fit_titles;
 		vector<string> fit_descriptions;
-		current_session->Get_List_of_Fits(fit_result_paths, &fit_titles, &fit_descriptions);
+		if (save){
+			current_session->Save_Fit();
+			current_session->Save_Session();
+			current_session->Get_List_of_Fits(fit_result_paths, &fit_titles, &fit_descriptions);
+		} else {
+			current_session->Get_List_of_Fits(fit_result_paths, &fit_titles, &fit_descriptions);
+			fit_result_paths.push_back(current_session->Get_fit_results_dir());
+			fit_titles.push_back("Current");
+			fit_descriptions.push_back("Current (not saved) fit constellation");
+		}
+
 		frame_plot_amps = new TrpwaPlotAmpsFrame(fit_result_paths, fit_titles, fit_descriptions);
 		return;
-		// calls will move to a separate class depending on the
-		// farm type given, but for now implemented here
+
+		// obsolete part
 
 		// write a script to submit it
 		ofstream script("/tmp/_showresults.sh");
@@ -509,21 +529,6 @@ void TrpwaMainFrame::ShowFitResults(){
 		command << "source /tmp/_showresults.sh";
 
 		cout << system(command.str().c_str()) << endl;
-
-		// ask whether to save the fit results separately
-		bool save(false);
-		int returncode;
-		TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "save fit results",
-			"Do you want to save the fit constellation?",
-			kMBIconQuestion, (kMBYes | kMBNo), &returncode);
-		if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
-		if (returncode == kMBYes){
-			save = true;
-		}
-		if (save){
-			current_session->Save_Fit();
-			current_session->Save_Session();
-		}
 	}
 	/*
 	# visualization must be performed in the rootscript folder containing all needed (logon) scripts
