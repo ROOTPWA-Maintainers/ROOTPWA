@@ -71,9 +71,9 @@ TrpwaPlotAmpsFrame::~TrpwaPlotAmpsFrame(){
 void TrpwaPlotAmpsFrame::Build(){
 	// set the root layout for the objects to draw
     gROOT->SetStyle("Plain");
-    gStyle->SetOptTitle(kFALSE);
+    //gStyle->SetOptTitle(kFALSE);
 
-    gStyle->SetOptStat(0);
+    //gStyle->SetOptStat(0);
     //gStyle->SetOptStat(111); // to see histogram statistics in plots
     //gStyle->SetOptFit(111);  // to see fit output in plots
     /*
