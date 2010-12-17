@@ -80,6 +80,9 @@ public:
 	// plot all intensities in the list of selected fit results
 	void Plot_All_selected();
 
+	// plot only the spin totals
+	void Plot_All_selected_Spin_totals();
+
 	// plot selected wave and compare (if given) to anchor wave
 	void Plot_selected_wave();
 

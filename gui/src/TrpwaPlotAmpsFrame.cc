@@ -21,6 +21,7 @@
 #include "plotPhase.h"
 #include "plotCoherence.h"
 #include "plotAllIntensities.h"
+#include "plotSpinTotals.h"
 #include "fitResult.h"
 #include "TGTextEntry.h"
 #include "TGMsgBox.h"
@@ -121,6 +122,9 @@ void TrpwaPlotAmpsFrame::Build(){
 	// button to draw all intensities (external script will be called)
 	TGTextButton* plot_all_button = new TGTextButton(this, new TGHotString(" draw all waves "));
 	plot_all_button->Connect("Clicked()","TrpwaPlotAmpsFrame",this,"Plot_All_selected()");
+	// Drawing of the spin totals only
+	TGTextButton* plot_spin_totals_button = new TGTextButton(this, new TGHotString(" draw all wave's spin totals "));
+	plot_spin_totals_button->Connect("Clicked()","TrpwaPlotAmpsFrame",this,"Plot_All_selected_Spin_totals()");
 
 	// group with buttons to select specific (anchor) waves
 	TGGroupFrame* frame_partial_wave_selections = new TGGroupFrame(this, " select partial waves ", kHorizontalFrame);
@@ -165,6 +169,8 @@ void TrpwaPlotAmpsFrame::Build(){
 			kLHintsExpandX,1,1,1,1));
 	this->AddFrame(plot_all_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
+	this->AddFrame(plot_spin_totals_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+				kLHintsExpandX,1,1,1,1));
 	this->AddFrame(frame_partial_wave_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
 	this->AddFrame(plot_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
@@ -323,6 +329,18 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 	if (current_fit_result > 0){
 		cout << " Drawing all results from " << current_fit_result->GetName() << ". Please be patient... " << endl;
 		plotAllIntensities(current_fit_result, true);
+		cout << " done " << endl;
+	} else {
+		cout <<  " no fit selected " << endl;
+	}
+}
+
+void TrpwaPlotAmpsFrame::Plot_All_selected_Spin_totals(){
+	cout << " does not work yet! " << endl;
+	return;
+	if (current_fit_result > 0){
+		cout << " Drawing all spin totals from " << current_fit_result->GetName() << ". Please be patient... " << endl;
+		plotSpinTotals(current_fit_result);
 		cout << " done " << endl;
 	} else {
 		cout <<  " no fit selected " << endl;
