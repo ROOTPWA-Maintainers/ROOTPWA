@@ -25,6 +25,7 @@
 #include "fitResult.h"
 #include "TGTextEntry.h"
 #include "TGMsgBox.h"
+#include "TAxis.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
@@ -44,6 +45,10 @@ TrpwaPlotAmpsFrame::TrpwaPlotAmpsFrame(
 	current_wave = "";
 	current_anchor_wave = "";
 	current_fit_result = NULL;
+	masscutlow  = 0;
+	masscuthigh = 0;
+	for (int ipad = 0; ipad < 5; ipad++)
+		plotted_graphs[ipad] = NULL;
 	if (fit_result_descriptions.size() == fit_result_paths.size() && fit_result_paths.size() == fit_result_titles.size()){
 		for (unsigned int i = 0; i < fit_result_paths.size(); i++){
 			//if (i < 5) continue;
@@ -164,6 +169,14 @@ void TrpwaPlotAmpsFrame::Build(){
 	canvas_selected_waves = frame_selected_waves->GetCanvas();
 	canvas_selected_waves->Divide(2,2);
 
+	// slider to select a mass range for all 4 plots
+	slider_mass_range = new TGDoubleHSlider(this);
+	slider_mass_range->Connect("Released()","TrpwaPlotAmpsFrame",this,"Set_Mass_range()");
+	slider_mass_range->SetPosition(0.,1.);
+
+	// button to save the plot
+	TGTextButton* save_plot_button = new TGTextButton(this, new TGHotString(" save current plot "));
+	save_plot_button->Connect("Clicked()","TrpwaPlotAmpsFrame",this,"Save_plot()");
 
 	this->AddFrame(frame_rootfile_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
@@ -176,6 +189,10 @@ void TrpwaPlotAmpsFrame::Build(){
 	this->AddFrame(plot_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
 	this->AddFrame(frame_selected_waves);
+	this->AddFrame(slider_mass_range, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+				kLHintsExpandX,1,1,1,1));
+	this->AddFrame(save_plot_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
+			kLHintsExpandX,1,1,1,1));
 
 	SetWindowName("Inspect Results");
 	Resize(GetDefaultSize());
@@ -347,21 +364,49 @@ void TrpwaPlotAmpsFrame::Plot_All_selected_Spin_totals(){
 	}
 }
 
+void TrpwaPlotAmpsFrame::Save_plot(){
+	int returncode;
+	stringstream filename;
+	filename << current_wave;
+	if (current_anchor_wave != "")
+		filename << "_vs_" << current_anchor_wave;
+	TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "save current output",
+			("Do you want to save this plot as\n"+filename.str()+".pdf/.root?").c_str(),
+			kMBIconQuestion, (kMBYes | kMBNo), &returncode);
+	if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
+	if (returncode == kMBYes){
+		canvas_selected_waves->Print((filename.str()+".pdf").c_str());
+		canvas_selected_waves->Print((filename.str()+".root").c_str());
+	}
+}
+
 void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 	const string branchName = "fitResult_v2";
 	canvas_selected_waves->cd(1); gPad->Clear();
 	canvas_selected_waves->cd(2); gPad->Clear();
 	canvas_selected_waves->cd(3); gPad->Clear();
 	canvas_selected_waves->cd(4); gPad->Clear();
+	for (int ipad = 0; ipad < 5; ipad++){
+		if (plotted_graphs[ipad]){
+			plotted_graphs[ipad]->Clear();
+			delete plotted_graphs[ipad];
+			plotted_graphs[ipad] = NULL;
+		}
+	}
+	masscutlow = -1.;
+	masscuthigh = -1.;
+	slider_mass_range->SetPosition(0.,1.);
 	string drawsame("");
 	if (current_wave == "") return;
+	int icolor(0);
 	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
 		TTree* selected_tree = (TTree*)it->second;
 		fitResult* massBin = new fitResult();
+		icolor++;
 		// search for the wave indexes and the valid mass bins
 		selected_tree->SetBranchAddress(branchName.c_str(), &massBin);
-		double masscutlowA(0), masscutlowB(0), masscuthighA(0), masscuthighB(0);
-		int indexA(0), indexB(0);
+		double masscutlowA(-1.), masscutlowB(-1.), masscuthighA(-1.), masscuthighB(-1.);
+		int indexA(-1), indexB(-1);
 		cout << " scanning fit result " << selected_tree->GetName() << endl;
 		stringstream selectExpr;
 		for (int ibin = 0; ibin < selected_tree->GetEntries(); ibin++){
@@ -369,42 +414,43 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 			double mass = massBin->massBinCenter();
 			int _indexA = massBin->waveIndex(current_wave);
 			int _indexB = massBin->waveIndex(current_anchor_wave);
-			if (_indexA != 0){
-				if (indexA == 0) indexA = _indexA;
+			if (_indexA != -1){
+				if (indexA == -1) indexA = _indexA;
 				if (indexA != _indexA){
 					cout << " Warning in TrpwaPlotAmpsFrame::Plot_selected_wave():";
 					cout << "wave index differs for " << current_wave;
 					cout << ". Excluding from selection! " << endl;
 					selectExpr << "massBinCenter() != " << mass << " && ";
 				}
-				if (masscutlowA  == 0) masscutlowA  = mass;
-				if (masscuthighA == 0) masscuthighA = mass;
+				if (masscutlowA  == -1.) masscutlowA  = mass;
+				if (masscuthighA == -1.) masscuthighA = mass;
 				if (mass < masscutlowA ) masscutlowA  = mass;
 				if (mass > masscuthighA) masscuthighA = mass;
 			}
-			if (_indexB != 0){
-				if (indexB == 0) indexB = _indexB;
+			if (_indexB != -1){
+				if (indexB == -1) indexB = _indexB;
 				if (indexB != _indexB){
 					cout << " Warning in TrpwaPlotAmpsFrame::Plot_selected_wave():";
 					cout << "wave index differs for " << current_anchor_wave;
 					cout << ". Excluding from selection! " << endl;
 					selectExpr << "massBinCenter() != " << mass << " && ";
 				}
-				if (masscutlowB  == 0) masscutlowB  = mass;
-				if (masscuthighB == 0) masscuthighB = mass;
+				if (masscutlowB  == -1.) masscutlowB  = mass;
+				if (masscuthighB == -1.) masscuthighB = mass;
 				if (mass < masscutlowB ) masscutlowB  = mass;
 				if (mass > masscuthighB) masscuthighB = mass;
 			}
 		}
-		double masscutlow(0), masscuthigh(0);
-		if (indexA == 0) {
+		masscutlow = 0;
+		masscuthigh = 0;
+		if (indexA == -1) {
 			cout << current_wave << " not found in " << selected_tree->GetName() << endl;
 			continue;
 		}
 		masscutlow  = masscutlowA;
 		masscuthigh = masscuthighA;
 
-		if ((masscutlow != 0) || (masscuthigh != 0)){
+		if ((masscutlow != -1.) && (masscuthigh != -1.)){
 			selectExpr << "(massBinCenter() >= "<< masscutlow << ") && (massBinCenter() <= " << masscuthigh << ")";
 		} else {
 			cout << " mass range for " << current_wave << " in " << selected_tree->GetName() << " is bad! " << endl;
@@ -413,14 +459,26 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 		if (current_wave == "") continue; // should never happen due to cuts above
 		// wave A intensity
 		canvas_selected_waves->cd(1);
-		plotIntensity(selected_tree, indexA, false, kBlack, false, "", "APZ", 1, 0,
+		TMultiGraph* _graph_pad1 =
+		plotIntensity(selected_tree, indexA, false, icolor, false, "", "APZ", 1, 0,
 				selectExpr.str(), branchName);
+		if (!plotted_graphs[1]){
+			plotted_graphs[1] = _graph_pad1;
+		} else {
+			plotted_graphs[1]->SetTitle(_graph_pad1->GetTitle());
+			plotted_graphs[1]->Add(_graph_pad1);
+		}
+		gPad->Clear();
+		plotted_graphs[1]->Draw("APZ");
 
-		if (current_anchor_wave == "") return;
+		if (current_anchor_wave == "" || indexB == -1){
+			cout << " no anchor wave found " << endl;
+			continue;
+		}
 		// determine the corresponding ranges
 		if (masscutlowB  > masscutlow ) masscutlow  = masscutlowB;
 		if (masscuthighB < masscuthigh) masscuthigh = masscuthighB;
-		if ((masscutlow != 0) || (masscuthigh != 0)){
+		if ((masscutlow != -1.) && (masscuthigh != -1.)){
 			selectExpr << "&& (massBinCenter() >= "<< masscutlow << ") && (massBinCenter() <= " << masscuthigh << ")";
 		} else {
 			cout << " mass range for " << current_anchor_wave << " in " << selected_tree->GetName() << " is bad! " << endl;
@@ -428,31 +486,62 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 		}
 		// wave A - wave B phase angle
 		canvas_selected_waves->cd(2);
-		plotPhase(selected_tree, indexA, indexB, false, kBlack, false, "", "APZ",
+		TMultiGraph* _graph_pad2 =
+		plotPhase(selected_tree, indexA, indexB, false, icolor, false, "", "APZ",
 				selectExpr.str(), branchName);
+		if (!plotted_graphs[2]){
+			plotted_graphs[2] = _graph_pad2;
+		} else {
+			plotted_graphs[2]->SetTitle(_graph_pad2->GetTitle());
+			plotted_graphs[2]->Add(_graph_pad2);
+		}
+		gPad->Clear();
+		plotted_graphs[2]->Draw("APZ");
 
 		// wave B intensity
 		canvas_selected_waves->cd(3);
-		plotIntensity(selected_tree, indexB, false, kBlack, false, "", "APZ", 1, 0,
+		TMultiGraph* _graph_pad3 =
+		plotIntensity(selected_tree, indexB, false, icolor, false, "", "APZ", 1, 0,
 				selectExpr.str(), branchName);
+		if (!plotted_graphs[3]){
+			plotted_graphs[3] = _graph_pad3;
+		} else {
+			plotted_graphs[3]->SetTitle(_graph_pad3->GetTitle());
+			plotted_graphs[3]->Add(_graph_pad3);
+		}
+		gPad->Clear();
+		plotted_graphs[3]->Draw("APZ");
 
 		// wave A - wave B coherence
 		canvas_selected_waves->cd(4);
-		plotCoherence(selected_tree, indexA, indexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
-		//drawsame = "SAME";
+		TGraphErrors* _graph_pad4 =
+		plotCoherence(selected_tree, indexA, indexB, selectExpr.str(), "", "APZ", icolor, false, branchName);
+		if (!plotted_graphs[4]){
+			plotted_graphs[4] = new TMultiGraph();
+		}
+		plotted_graphs[4]->SetTitle(_graph_pad4->GetTitle());
+		plotted_graphs[4]->Add(_graph_pad4);
+		gPad->Clear();
+		plotted_graphs[4]->Draw("APZ");
 	}
-	int returncode;
-	stringstream filename;
-	filename << current_wave;
-	if (current_anchor_wave != "")
-		filename << "_vs_" << current_anchor_wave;
-	TGMsgBox* userrespondbox = new TGMsgBox(gClient->GetRoot(), this, "save current output",
-			("Do you want to save this plot as\n"+filename.str()+".pdf/.C?").c_str(),
-			kMBIconQuestion, (kMBYes | kMBNo), &returncode);
-	if (!userrespondbox) cout << " this will be not executed " << endl; // to prevent compiler warnings
-	if (returncode == kMBYes){
-		canvas_selected_waves->Print((filename.str()+".pdf").c_str());
-		canvas_selected_waves->Print((filename.str()+".C").c_str());
+}
+
+void TrpwaPlotAmpsFrame::Set_Mass_range(){
+	float mass_min, mass_max;
+	slider_mass_range->GetPosition(mass_min, mass_max);
+	mass_min = mass_min * (masscuthigh-masscutlow) + masscutlow;
+	mass_max = mass_max * (masscuthigh-masscutlow) + masscutlow;
+	mass_min /= 1000.; // drawn in GeV
+	mass_max /= 1000.;
+	//cout << " setting from "<< mass_min << " to " << mass_max << endl;
+	for (int ipad = 0; ipad < 5; ipad++){
+		if (plotted_graphs[ipad]){
+			plotted_graphs[ipad]->GetXaxis()->SetRangeUser(mass_min, mass_max);
+			canvas_selected_waves->cd(ipad);
+			gPad->Clear();
+			plotted_graphs[ipad]->Draw("APZ");
+			gPad->Update();
+		}
 	}
 }
 

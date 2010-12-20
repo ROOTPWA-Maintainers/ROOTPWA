@@ -14,6 +14,8 @@
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TTree.h"
+#include "TGDoubleSlider.h"
+#include "TMultiGraph.h"
 
 using namespace std;
 
@@ -28,11 +30,17 @@ typedef Twavemap::iterator Twavemapit;
 class TrpwaPlotAmpsFrame : public TGTransientFrame {
 private:
 	TCanvas* canvas_selected_waves; // canvas with drawn objects divided into 4 pads
+	// keep the plotted graphs
+	TMultiGraph* plotted_graphs[5];
+	double masscutlow;  // current valid low  range cut of plotted waves
+	double masscuthigh; // current valid high range cut of plotted waves
 
 	TGComboBox* box_available_fits; // box with available fits, item index is a pointer to the file
 	TGComboBox* box_selected_fits;  // box with selected  fits, item index is a pointer to the file
 	TGComboBox* box_available_waves;        // box with available waves to select, item is a pointer to the wave
 	TGComboBox* box_available_anchor_waves; // box with available waves to select, item is a pointer to the wave
+
+	TGDoubleHSlider* slider_mass_range; // comman selected mass range for plotting
 
 	Tfilemap available_fit_results; // map with title as key and a pointer to an opened Tree
 
@@ -85,6 +93,12 @@ public:
 
 	// plot selected wave and compare (if given) to anchor wave
 	void Plot_selected_wave();
+
+	// save the current displayed plot
+	void Save_plot();
+
+	// method to be called when changing the mass range with a slider
+	void Set_Mass_range();
 
 	// call the root script for class definition
 	ClassDef(TrpwaPlotAmpsFrame,0);
