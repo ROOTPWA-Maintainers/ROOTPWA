@@ -232,16 +232,24 @@ extern char* optarg;
   std::map<std::string,pwachannel > channels0mp;
   std::string ch5="1-0-+0+pi-_00_f01500=rho770_00_rho770.amp";
   std::string ch6="1-0-+0+rho770_00_a11269=pi-_0_rho770.amp";
+  
+  
   channels0mp[ch5]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-  pwacomponent comp5("pi(1800)",1816,208,channels0mp);
-  comp5.setLimits(1750,18500,100,300);
-  comp5.setFixed(1,1);
-  channels0mp[ch5].setCoupling(std::complex<double>(5,0));
-  pwacomponent comp6("pi(2070)",2070,310,channels0mp);
-  comp6.setLimits(2000,2200,100,500);
-  comp6.setFixed(0,1);
-
+  channels0mp[ch6].setCoupling(std::complex<double>(0.1,0));
+  pwacomponent comp5("pi(1800)",1840,208,channels0mp);
+  comp5.setLimits(1750,1850,100,300);
+  comp5.setFixed(0,0);
+  //channels0mp.clear();
+  channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
+  channels0mp[ch5].setCoupling(std::complex<double>(0.5,0));
+  channels0mp[ch6].setCoupling(std::complex<double>(50,0));
+  pwacomponent comp6("pi(1700)",1700,200,channels0mp);
+  comp6.setLimits(1600,1750,100,500);
+  comp6.setFixed(0,0);
+  pwacomponent comp13("pi(2100)",2200,200,channels0mp);
+  comp13.setLimits(2000,2300,100,500);
+  comp13.setFixed(1,0);
 
   channels0mp.clear();
   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch6));
@@ -271,23 +279,23 @@ extern char* optarg;
   string ch1ppra12("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
   string ch1ppf1pi("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
 		  
-  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
-				   getPhaseSpace(tree,ch1ppsa1));
-  channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
-				   getPhaseSpace(tree,ch1ppra11));
-  //channels1pp[ch1ppra12]=pwachannel(complex<double>(50,0),
-  //				   getPhaseSpace(tree,ch1ppra12));
+  //  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
+  //				   getPhaseSpace(tree,ch1ppsa1));
+//channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
+  //			   getPhaseSpace(tree,ch1ppra11));
+// channels1pp[ch1ppra12]=pwachannel(complex<double>(50,0),
+  //			   getPhaseSpace(tree,ch1ppra12));
   channels1pp[ch1ppf1pi]=pwachannel(complex<double>(50,0),
 				   getPhaseSpace(tree,ch1ppf1pi));
 
   pwacomponent comp7("a1(1640)",1647,254,channels1pp);
   comp7.setLimits(1600,1700,100,500);
-  comp7.setFixed(1,1);
+  comp7.setFixed(0,0);
   pwacomponent comp8("a1(1930)",1930,155,channels1pp);
   comp8.setLimits(1900,1980,100,300);
   comp8.setFixed(1,1);
   pwacomponent comp9("a1(2095)",2069,451,channels1pp);
-  comp9.setLimits(1950,2150,200,600);
+  comp9.setLimits(1950,2150,100,300);
   comp9.setFixed(0,0);
   
   channels1pp.clear();
@@ -307,19 +315,20 @@ extern char* optarg;
   bkg5.setFixed(1,0);
 
   pwacompset compset;
-  compset.add(&comp1); // pi2(1880)
-  compset.add(&bkg2);  
-  compset.add(&comp2); // pi2(2300)
-  compset.add(&comp3); // pi2(1670)
-  compset.add(&bkg3);
-  compset.add(&comp4); // pi2(2100)
+  //compset.add(&comp1); // pi2(1880)
+  //compset.add(&bkg2);  
+  //compset.add(&comp2); // pi2(2300)
+  //compset.add(&comp3); // pi2(1670)
+  //compset.add(&bkg3);
+  //compset.add(&comp4); // pi2(2100)
   compset.add(&comp5); // pi(1800)
-  compset.add(&comp6); // pi(2070)
+  compset.add(&comp6); // pi(1700)
+ compset.add(&comp13); // pi(2100)
   compset.add(&bkg1);
-  compset.add(&comp7);
+  //compset.add(&comp7);
   //compset.add(&comp8);
-  compset.add(&comp9);
-  compset.add(&bkg4);
+  //compset.add(&comp9);
+  //compset.add(&bkg4);
   
 
 
@@ -442,7 +451,7 @@ extern char* optarg;
 
   cerr << compset << endl;
 
-  cerr << "Fitting finished building graphs ... " << endl;
+  cerr << "Fitting finished... Start building graphs ... " << endl;
 
    std::vector<std::string> wl=compset.wavelist();
    std::map<std::string, unsigned int> wmap;
@@ -526,12 +535,12 @@ extern char* optarg;
        name.append("---");name.append(wl[iw2]);
        phasegraphs[c]->SetName(name.c_str());
        phasegraphs[c]->SetTitle(name.c_str());
-       phasedatagraphs.push_back(new TGraphErrors(nbins));
+       phasedatagraphs.push_back(new TGraphErrors(3*nbins));
        name=("dPhi_data_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
        phasedatagraphs[c]->SetName(name.c_str());
        phasedatagraphs[c]->SetTitle(name.c_str());
-       phasegraphs[c]->Add(phasedatagraphs[c],"cp");
+       phasegraphs[c]->Add(phasedatagraphs[c],"p");
        ++c;
      }
    }
@@ -593,8 +602,11 @@ extern char* optarg;
 	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str());
 	 
 	 phasedatagraphs[c]->SetPoint(i,m,rho->phase(wl[iw].c_str(),
-						     wl[iw2].c_str()));
-	 
+	 					     wl[iw2].c_str()));
+	 phasedatagraphs[c]->SetPoint(i+ndatabins,m,rho->phase(wl[iw].c_str(),
+	 				     wl[iw2].c_str())-360);
+	 phasedatagraphs[c]->SetPoint(i+2*ndatabins,m,rho->phase(wl[iw].c_str(),
+	 					     wl[iw2].c_str())+360);
 	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
 					     wl[iw2].c_str())/TMath::RadToDeg());
 
@@ -663,32 +675,32 @@ extern char* optarg;
 
 /// rectivfy phase graphs
    
-   unsigned int refbin=4;
-   double m;
-   double predph;
-   phasedatagraphs[iw]->GetPoint(refbin,m,predph);
-   double prefph;
-   phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
-   for(unsigned int ib=refbin+1;ib<nbins;++ib){
-     double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
-     double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
-     double dp,dm;dp=dph+360;dm=dph-360;
-     double fp,fm;fp=fph+360;fm=fph-360;
-     if(0){
-       if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
-	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
-       else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
-	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
+   // unsigned int refbin=4;
+//    double m;
+//    double predph;
+//    phasedatagraphs[iw]->GetPoint(refbin,m,predph);
+//    double prefph;
+//    phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
+//    for(unsigned int ib=refbin+1;ib<nbins;++ib){
+//      double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
+//      double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
+//      double dp,dm;dp=dph+360;dm=dph-360;
+//      double fp,fm;fp=fph+360;fm=fph-360;
+//      if(0){
+//        if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
+// 	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
+//        else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
+// 	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
        
-       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
-	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
-       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
-	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
+//        if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
+// 	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
+//        else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
+// 	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
        
-       phasedatagraphs[iw]->GetPoint(ib,m,predph);
-       phasefitgraphs[iw]->GetPoint(ib,m,prefph);
-     }
-   }
+//        phasedatagraphs[iw]->GetPoint(ib,m,predph);
+//        phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+//      }
+//    }
    
      phasegraphs[iw]->Write();
      //phase2d[iw]->Write();
