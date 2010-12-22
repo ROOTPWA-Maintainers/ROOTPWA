@@ -181,7 +181,7 @@ rpwa::pwacompset::phase(const std::string& wave1,
       rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C();
     }
     if(_comp[ic]->channels().count(wave2)!=0){
-      rho2=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
+      rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
     }
   }
   rho1*=ps1;
