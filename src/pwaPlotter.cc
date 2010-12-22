@@ -105,7 +105,7 @@ pwaPlotter::pwaPlotter()
   mEvidencePerEvent->SetTitle("Evidence/Event");
   mEvidencePerEvent->SetName("EvidencePerEvent");
   
-  if(0){
+  if(1){
   std::vector<string> waves;
   waves.push_back("1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp");
   waves.push_back("1-2-+0+pi-_22_f21270=pi-+_11_a11269=pi+-_01_rho770.amp");
@@ -117,6 +117,7 @@ pwaPlotter::pwaPlotter()
   waves.push_back("1-0-+0+rho770_22_a11269=pi-_01_rho770.amp");
   waves.push_back("1-0-+0+pi-_22_f21270=sigma_2_sigma.amp");
   waves.push_back("1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp");
+  waves.push_back("1-1++0+pi-_01_eta11600=pi-+_01_a11269=pi+-_01_rho770.amp");
 
   waves.push_back("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
   waves.push_back("1-1++0+sigma_01_a11269=pi-_1_sigma.amp");
@@ -125,7 +126,7 @@ pwaPlotter::pwaPlotter()
   waves.push_back("1-1++0+rho770_01_pi1300=pi-_1_rho770.amp");
  
   waves.push_back("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
-  waves.push_back("1-1++0+pi-_01_rho1700=sigma_0_rho770.amp");
+  waves.push_back("1-1++0+pi-_01_rho1600=sigma_01_rho770.amp");
   waves.push_back("1-1++0+pi-_10_f01370=rho770_00_rho770.amp");
   waves.push_back("1-1++0+pi-_10_f01500=sigma_0_sigma.amp");
   waves.push_back("1-1++0+pi-_12_b21800=pi-+_12_a21320=pi+-_21_rho770.amp");
@@ -478,6 +479,11 @@ pwaPlotter::addFit(const std::string& filename,
   mResultMetaInfo.push_back(meta);
   mMinEvidence=(mMinEvidence*ifit+evi)/(ifit+1);
     
+  cout << "Fit Quality Summary: " << endl;
+  cout << "  LogLikelihood: " << logli << endl;
+  cout << "  Evidence:      " << evi << endl;
+  
+
   // cleanup
   infile->Close();
   cerr << endl;
@@ -496,6 +502,7 @@ pwaPlotter::registerWave(const std::string& wavename){
     mIntensities[wavename]=new TMultiGraph();
     mIntensities[wavename]->SetTitle(wavename.c_str());
     mIntensities[wavename]->SetName(wavename.c_str());
+    
     mPhaseSpace[wavename]=new TGraph();
     string psname=wavename;psname.append("PS");
     mPhaseSpace[wavename]->SetTitle(psname.c_str());

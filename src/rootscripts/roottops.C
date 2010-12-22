@@ -24,7 +24,7 @@ void roottops(const TString& infilename, const TString& normfilename=""){
   TString name=infilename;
   name.ReplaceAll(".root","");
 
-  const int    nmbPadsPerCanvMin = 12;            // minimum number of pads each canvas is subdivided into
+  const int    nmbPadsPerCanvMin = 6;            // minimum number of pads each canvas is subdivided into
 
   TFile* infile=TFile::Open(infilename,"READ");
 
@@ -122,8 +122,10 @@ void roottops(const TString& infilename, const TString& normfilename=""){
       else {
 
 	g->Draw("AN");
-	g->GetYaxis()->Set(8,-720,720);
-	g->GetYaxis()->SetRangeUser(-720,720);
+	//g->GetYaxis()->Set(8,-720,720);
+	//g->GetYaxis()->SetRangeUser(-720,720);
+	g->GetYaxis()->SetRangeUser(-200,200);
+	
 	g->Draw("A");
 	}
       // get waves
