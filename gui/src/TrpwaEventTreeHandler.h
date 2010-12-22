@@ -47,6 +47,19 @@ struct TParticle{
 		double E;
 };
 
+// we need to hold the 3 files,
+// 3 trees and the objects written to trees
+// for each bin
+struct TTree_bin{
+	bool initialized;
+	TFile* file[3];
+	TTree* tree[3];
+	TClonesArray* p[3];
+	TLorentzVector beam[3];
+	int qbeam[3];
+	vector<int> q[3]; // array of charges
+};
+
 class TrpwaEventTreeHandler {
 public:
 	// constructor
@@ -93,6 +106,21 @@ public:
 	//   real data, mc data and mc accepted data first
 	//   before calling this method
 	bool Write_Trees_to_BNL_events(bool overwrite = false);
+
+	// write the given events to the bin paths
+	// event files are written according
+	// to the data given by Add_eventtreefiles()
+	// with real, mc, mc accepted events
+	// attention:
+	// - specify the bin baths first
+	// - renames previous existing files into
+	//   <filename>.previous
+	// - if <filename>.previous is existing it will be
+	//   removed!
+	// - please add all files containing trees with
+	//   real data, mc data and mc accepted data first
+	//   before calling this method
+	bool Write_Trees_to_rootpwa_Trees(bool overwrite = false);
 
 	// reset all settings
 	void Reset();
@@ -143,6 +171,10 @@ private:
 
 	// writes one event into stream
 	void WriteEventToStream(vector<TParticle>& particles, ofstream& stream);
+
+	// writes one event into root files
+	// itree 0,1,2 is corresponding to real, mc, mc accepted data
+	void WriteEventToFile(vector<TParticle>& particles, TTree_bin& tree_bin, int itree);
 
 	// draw a progress bar only when the length changes significantly
 	void DrawProgressBar(int len, double percent);

@@ -320,6 +320,271 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 	return result;
 }
 
+bool TrpwaEventTreeHandler::Write_Trees_to_rootpwa_Trees(bool overwrite){
+	delete _hist_data;
+	delete _hist_data_mc;
+	delete _hist_data_mc_acc;
+	bool result = true;
+	cout << " Info: filtering events into bins " << endl;
+	// map of trees and the objects in it
+	map<int, TTree_bin> treebins;
+	// create the files and save upper and lower bounds
+	// ensure in addition that the range is covered
+	int binlow = -1;
+	int binhigh= -1;
+	int binhigh_previous = -1;
+	float* xbins = new float[_bins.size()+1];
+	int nbins(0);
+	for (map<int, int>::iterator it = _bins.begin(); it != _bins.end(); it++){
+		if (binlow == -1 || it->first < binlow ) binlow = it->first;
+		if (binhigh== -1 || it->second> binhigh) binhigh= it->second;
+		// check a closed range for binning
+		if (binhigh_previous != -1){
+			if (it->first != binhigh_previous){
+				result = false;
+				cout << " Error in TrpwaEventTreeHandler::Write_Trees_to_rootpwa_trees(): Not all expected bins are given! " << endl;
+				cout << "    Bin " << binhigh_previous << " to " << it->first << " is missing! " << endl;
+			}
+		}
+		binhigh_previous = it->second;
+		for (int j = 0; j < 3; j++){ // real, MC, MC accepted
+			stringstream _filename;
+			stringstream _filekey;
+			_filekey << it->first << "." << it->second;
+			_filename << _dir << "/" << _bin_paths[it->first] << "/" << _filekey.str();
+			switch (j) {
+			case 0:
+				break;// do nothing
+			case 1:
+				_filename << ".genbod";
+				break;
+			case 2:
+				_filename << ".acc";
+				break;
+			}
+			_filename << ".root";
+			cout << " opening file " << _filename.str() << endl;
+
+			treebins[it->second].file[j] = new TFile(_filename.str().c_str(), "RECREATE");
+			//cout << " creating a tree in " << _filename.str() << endl;
+			treebins[it->second].tree[j] = new TTree("events","events"); // the tree should be located now in this file
+			treebins[it->second].tree[j]->SetDirectory(treebins[it->second].file[j]);
+			treebins[it->second].p[j]= new TClonesArray("TLorentzVector");
+
+			treebins[it->second].tree[j]->Branch("p",&treebins[it->second].p[j]);
+			treebins[it->second].tree[j]->Branch("beam",&treebins[it->second].beam[j]);
+			treebins[it->second].tree[j]->Branch("q",&treebins[it->second].q[j]);
+			treebins[it->second].tree[j]->Branch("qbeam",&treebins[it->second].qbeam[j],"qbeam/I");
+		}
+		treebins[it->second].initialized = true;
+		// save the lower bound and in addition the last bin must have the upper bound
+		xbins[nbins] = it->first;
+		nbins++;
+		xbins[nbins] = it->second; // I know that only the last bin will be not overwritten
+	}
+	// create some crosscheck hists
+	TH1I* checkhist[5];
+	checkhist[0] = new TH1I("checkhist0","invariant mass distribution of reconstructed events", nbins, xbins);
+	checkhist[1] = new TH1I("checkhist1","invariant mass distribution of MC exact events", nbins, xbins);
+	checkhist[2] = new TH1I("checkhist2","invariant mass distribution of MC reconstructed events", nbins, xbins);
+	checkhist[3] = new TH1I("checkhist3","invariant mass distribution of MC truth reconstructed events", nbins, xbins);
+	checkhist[4] = new TH1I("checkhist4","invariant mass distribution of MC false reconstructed events", nbins, xbins);
+	checkhist[0]->SetDirectory(0); // to prevent root deleting this objects when closing files following
+	checkhist[1]->SetDirectory(0);
+	checkhist[2]->SetDirectory(0);
+	checkhist[3]->SetDirectory(0);
+	checkhist[4]->SetDirectory(0);
+
+	for (unsigned int i = 0; i < _eventtreefiles.size(); i++){
+		TFile& rootfile = *_eventtreefiles[i];
+		TTree* tree_events = (TTree*) rootfile.Get(_eventtreenames[i].c_str());
+		if (!tree_events){
+			cout << "\n Sorry, tree " << _eventtreenames[i] << " not found! " << endl;
+			result = false;
+		}
+		// in addition we do have 3 output streams for real data, MC generated and MC accepted events
+		int openfile[3] = {0,0,0}; // variable to store whether the file contains real data, MC generated data or MC accepted events
+		// search for entries in the tree
+		cout << "\n scanning events in tree # " << i+1 << " of " << _eventtreefiles.size() << endl;
+		openfile[0] = tree_events->GetEntries("isMC == 0");
+		cout << " found " << openfile[0] << " reconstructed events " << endl;
+		openfile[1] = tree_events->GetEntries("isMC > 0");
+		cout << " found " << openfile[1] << " MC generated events " << endl;
+		openfile[2] = tree_events->GetEntries("isMC == 2");
+		cout << " found " << openfile[2] << " MC accepted events " << endl;
+		int false_events = tree_events->GetEntries("isMC == -1");
+		cout << " found " << false_events << " MC wrongly reconstructed events " << endl;
+
+		// set variables to the leaves
+		TClonesArray* events_lzvecs = NULL; // lz vectors of 0..X-1 particles out, X particle in, X+1 recoil particle
+		vector <int>* events_charges = NULL;
+		vector <int>* events_g3pids = NULL;
+		TClonesArray* events_lzvecs_mc = NULL;
+		int		events_id;
+		int		events_isMC; // 0 not a MC event; 1 MC event; 2 accepted MC event; -1 MC but falsely reconstructed (since tree version 3)
+		tree_events->SetBranchAddress("id"  , &events_id);
+		tree_events->SetBranchAddress("p"   , &events_lzvecs);
+		tree_events->SetBranchAddress("p_mc", &events_lzvecs_mc);
+		tree_events->SetBranchAddress("q"   , &events_charges);
+		tree_events->SetBranchAddress("pid" , &events_g3pids);
+		tree_events->SetBranchAddress("isMC", &events_isMC);
+		// read the events and write the events to the file
+		int events_id_cut(-1); // put a -1 if you want to filter the first or only event id in the tree
+		// we need the data structure to hold the particle information
+		vector<TParticle> particles;
+		vector<TParticle> particles_mc;
+		int nentries = tree_events->GetEntries();
+		cout << " running over " << nentries << " events " << endl;
+		for (int i = 0; i < nentries; i++){
+			tree_events->GetEntry(i);
+			if (events_id_cut < 0){ // take the first events_id to cut on
+				events_id_cut = events_id;
+				cout << " filtering events with events_id " << events_id << endl;
+			}
+			DrawProgressBar(50, (i+1)/(float)nentries);
+			if (events_id_cut != events_id){
+				continue;
+			}
+			particles.clear();
+			particles_mc.clear();
+			TLorentzVector sumlz(0.,0.,0.,0.);
+			TLorentzVector sumlz_mc(0.,0.,0.,0.);
+			// loop through the particles
+			// last two particles are the beam particle and the (neglected) recoil proton
+			// the loop starts with -1 which is a special case to retrieve the
+			// beam particle first that is not the first element in events_lzvecs
+			// one could of course use also vector::insert but this would cost performance
+			for (int i = -1; i < events_lzvecs->GetEntriesFast()-2; i++){
+				int ipart = i;
+				if (i < 0) ipart = events_lzvecs->GetEntriesFast()-2; // case recoil proton
+				TLorentzVector* lzvec = (TLorentzVector*)(*events_lzvecs)[ipart];
+				// store the new information available
+				TParticle particle;
+				particle.geantid = (*events_g3pids)[ipart];
+				particle.charge  = (*events_charges)[ipart];
+				particle.E       = lzvec->E();
+				particle.px      = lzvec->X();
+				particle.py      = lzvec->Y();
+				particle.pz      = lzvec->Z();
+				// reconstruct the invariant mass of the outgoing particle system
+				// to get the bin entry
+				if (i > -1) sumlz += *lzvec;
+				particles.push_back(particle);
+			}
+			for (int i = -1; i < events_lzvecs_mc->GetEntriesFast()-2; i++){
+				int ipart = i;
+				if (i < 0) ipart = events_lzvecs_mc->GetEntriesFast()-2; // case recoil proton
+				TLorentzVector* lzvec = (TLorentzVector*)(*events_lzvecs_mc)[ipart];
+				// store the new information available
+				TParticle particle;
+				particle.geantid = (*events_g3pids)[ipart];
+				particle.charge  = (*events_charges)[ipart];
+				particle.E       = lzvec->E();
+				particle.px      = lzvec->X();
+				particle.py      = lzvec->Y();
+				particle.pz      = lzvec->Z();
+				// reconstruct the invariant mass of the outgoing particle system
+				// to get the bin entry
+				if (i > -1) sumlz_mc += *lzvec;
+				particles_mc.push_back(particle);
+			}
+			int _M    = (int) floor(sumlz   .M() * 1000.); // (MeV)
+			int _M_mc = (int) floor(sumlz_mc.M() * 1000.); // (MeV)
+			// cut into the allowed range
+			//if ((binlow <= _M) && (_M < binhigh)){
+				// write all particles to the file
+				if (events_isMC < -1 || events_isMC > 2){
+					cout << " error: not defined MC status: " << events_isMC << endl;
+					continue;
+				}
+				if (events_isMC == -1){ // falsely reconstructed events (mainly combinatorial background)
+					checkhist[4]->Fill(_M);
+				}
+				if (events_isMC == 0){ // data events are filled as reconstructed
+					checkhist[0]->Fill(_M);
+					if ((binlow <= _M) && (_M < binhigh)){
+						WriteEventToFile(particles, (*treebins.upper_bound(_M)).second, 0);
+					}
+				}
+				if (events_isMC == 1 || events_isMC == 2){ // mc exact events are filled as generated
+					checkhist[1]->Fill(_M_mc);
+					if ((binlow <= _M_mc) && (_M_mc < binhigh)){
+						WriteEventToFile(particles, (*treebins.upper_bound(_M_mc)).second, 1);
+					}
+				}
+				if (events_isMC == 2){ // mc accepted events are filled as reconstructed
+					checkhist[2]->Fill(_M);
+					checkhist[3]->Fill(_M_mc); // check what the true distribution without moved bins was
+					if ((binlow <= _M) && (_M < binhigh)){
+						WriteEventToFile(particles, (*treebins.upper_bound(_M)).second, 2);
+					}
+				}
+				/*
+				for (int i = 0; i < 3; i++){
+					if ((i == events_isMC) || // not only the value it self is counted
+						(i == 1 && events_isMC == 2)){ // but also accepted events are MC exact events
+						// reference on pointer on pointer... yepp, it is still working ;)
+						ofstream* _pstream = (*files.upper_bound(_M)).second[i];
+						WriteEventToStream(particles, *_pstream);
+						checkhist[i]->Fill(_M);
+					}
+				}*/
+			//}
+		}
+		/*
+		cout << " storing trees " << endl;
+		for (map<int, TTree_bin>::iterator it = treebins.begin(); it != treebins.end(); it++) {
+			TTree_bin& _treebin = it->second;
+			for (int j = 0; j < 3; j++){
+				_treebin.file[j]->Write();
+			}
+		}*/
+		rootfile.Close();
+	}
+
+	// close all files
+	cout << " deleting objects " << endl;
+	for (map<int, TTree_bin>::iterator it = treebins.begin(); it != treebins.end(); it++) {
+		TTree_bin& _treebin = it->second;
+		for (int j = 0; j < 3; j++){
+			//cout << i << " " << j << endl;
+			delete _treebin.p[j];
+			_treebin.file[j]->Write();
+			delete _treebin.tree[j];
+			_treebin.file[j]->Close();
+			delete _treebin.file[j];
+		}
+	}
+	cout << " done " << endl;
+	// Draw a crosscheck histogram
+	TCanvas canvas("canvas", "canvas", 1000, 600);
+	canvas.cd();
+	for (int i=0; i<5; i++){
+		checkhist[i]->DrawClone("P Text");
+		string addstring("");
+		if (i==0){
+			_hist_data = (TH1I*)checkhist[i]->Clone("saved_hist_data");
+		}
+		if (i==1){
+			addstring = ".genbod";
+			_hist_data_mc = (TH1I*)checkhist[i]->Clone("saved_hist_data_mc");
+		}
+		if (i==2){
+			addstring = ".acc";
+			_hist_data_mc_acc = (TH1I*)checkhist[i]->Clone("saved_hist_data_mc_acc");
+		}
+		if (i < 3){
+			canvas.Print( (_dir+"/checkhist"+addstring+".pdf").c_str());
+		}
+		else {
+			if (i==3) canvas.Print((_dir+"/checkhist_mc_truth.pdf").c_str());
+			if (i==4) canvas.Print((_dir+"/checkhist_mc_false_reconstructed.pdf").c_str());
+		}
+		delete checkhist[i];
+	}
+	return result;
+}
+
 int TrpwaEventTreeHandler::GetDir (string path,
 		vector<string> &files, string filterext, bool rmext){
     DIR *dp;
@@ -472,6 +737,24 @@ void TrpwaEventTreeHandler::WriteEventToStream(vector<TParticle>& particles, ofs
 		// use scientific output format to keep the maximum information
 		stream << scientific << particles[i].geantid << " " << particles[i].charge << " "  << particles[i].px << " "  << particles[i].py << " "  << particles[i].pz << " "  << particles[i].E << endl;
 	}
+}
+
+void TrpwaEventTreeHandler::WriteEventToFile(vector<TParticle>& particles, TTree_bin& tree_bin, int itree){
+	if (!tree_bin.initialized) {
+		cout << " unexpected error in TrpwaEventTreeHandler::WriteEventToFile() " << endl;
+		return;
+	}
+	if (particles.size() == 0) return;
+	if (itree < 0 || itree > 2) return;
+	tree_bin.p[itree]->Delete(); // clear output arrays
+	tree_bin.q[itree].clear();
+	tree_bin.beam[itree].SetPxPyPzE(particles[0].px, particles[0].py, particles[0].pz, particles[0].E);
+	tree_bin.qbeam[itree] = particles[0].charge;
+	for (unsigned int i = 1; i < particles.size(); i++){
+		new ((*tree_bin.p[itree])[tree_bin.p[itree]->GetEntries()]) TLorentzVector(particles[i].px, particles[i].py, particles[i].pz, particles[i].E);
+		tree_bin.q[itree].push_back(particles[i].charge);
+	}
+	tree_bin.tree[itree]->Fill();
 }
 
 void TrpwaEventTreeHandler::DrawProgressBar(int len, double percent) {
