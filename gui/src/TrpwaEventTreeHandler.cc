@@ -509,7 +509,7 @@ bool TrpwaEventTreeHandler::Write_Trees_to_rootpwa_Trees(bool overwrite){
 				if (events_isMC == 1 || events_isMC == 2){ // mc exact events are filled as generated
 					checkhist[1]->Fill(_M_mc);
 					if ((binlow <= _M_mc) && (_M_mc < binhigh)){
-						WriteEventToFile(particles, (*treebins.upper_bound(_M_mc)).second, 1);
+						WriteEventToFile(particles_mc, (*treebins.upper_bound(_M_mc)).second, 1);
 					}
 				}
 				if (events_isMC == 2){ // mc accepted events are filled as reconstructed
