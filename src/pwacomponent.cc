@@ -71,10 +71,10 @@ rpwa::pwacomponent::val(double m) const {
       double ps0=it->second.ps(_m0);
       ps=it->second.ps(m)/ps0;
     }
-    gamma+=_gamma*ps*ps/n;
+    gamma+=_gamma*ps/n; // ps*ps ???
     ++it;
   }
-
+  //std::cerr << m << "   " << gamma/_gamma << std::endl;
   //std::cerr << _name <<"  compval=" <<gamma*_m0/complex<double>(m*m-_m02,gamma*_m0) << std::endl;
   return _gamma*_m0/complex<double>(m*m-_m02,gamma*_m0);
 }
