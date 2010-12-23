@@ -204,7 +204,7 @@ extern char* optarg;
   std::string ch4="1-2-+0+rho770_02_a11269=pi-_0_rho770.amp";
   channels[ch1]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch1));
   channels[ch2]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch2));
-  channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
+  //channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
   channels[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
   pwacomponent comp1("pi2(1880)",1880,150,channels);
   comp1.setLimits(1870,1900,50,300);
@@ -315,12 +315,12 @@ extern char* optarg;
   bkg5.setFixed(1,0);
 
   pwacompset compset;
-  //compset.add(&comp1); // pi2(1880)
+  compset.add(&comp1); // pi2(1880)
   //compset.add(&bkg2);  
   //compset.add(&comp2); // pi2(2300)
-  //compset.add(&comp3); // pi2(1670)
+  compset.add(&comp3); // pi2(1670)
   //compset.add(&bkg3);
-  //compset.add(&comp4); // pi2(2100)
+  compset.add(&comp4); // pi2(2100)
   compset.add(&comp5); // pi(1800)
   compset.add(&comp6); // pi(1700)
  compset.add(&comp13); // pi(2100)
