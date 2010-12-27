@@ -8,6 +8,7 @@
 
 #include "TFhh.h"
 
+
 bool ReadoutTestKeyfile();
 
 
@@ -79,7 +80,7 @@ int main(int narg, char* carg[]) {
 bool ReadoutTestKeyfile() {
 	const string KeyfileName = "../relampl/test.key";
 	Config key;
-
+	
 	bool debug = false;
 	
 	if(not parseLibConfigFile(KeyfileName, key, debug)) {
@@ -97,8 +98,33 @@ bool ReadoutTestKeyfile() {
 	
 	cout << "J: " << J_parent << endl;
 	cout << "P: " << P_parent << endl;
+	cout << endl;
 	
-//	const Setting* XDecay = findLibConfigGroup(wave,"XDecay");
+	const Setting& XDecay = key.lookup("wave.XDecay");
+	const Setting& isobar = key.lookup("wave.XDecay.isobars.[0]");
 	
+	const char *iso_name = isobar["name"];
+
+	const char *iso_daughter1 = isobar["fsParticles"][0]["name"];
+	const char *iso_daughter2 = isobar["fsParticles"][1]["name"];
+	
+	int iso_L = isobar["L"];
+	int iso_S = isobar["S"];
+	
+	int XDecay_L = XDecay["L"];
+	int XDecay_S = XDecay["S"];
+	const char *particle = XDecay["fsParticles"][0]["name"];
+	
+	cout << "isobar name: " << iso_name << endl;
+	cout << "isobar 1. daughter name: " << iso_daughter1 << endl;
+	cout << "isobar 2. daughter name: " << iso_daughter2 << endl;
+	cout << "isobar L: " << iso_L << endl;
+	cout << "isobar S: " << iso_S << endl;
+	cout << endl;
+	cout << "XDecay L: " << XDecay_L << endl;
+	cout << "XDecay S: " << XDecay_S << endl;
+	cout << "XDecay 2nd particle: " << particle << endl;
+	
+
 	return true;
 }
