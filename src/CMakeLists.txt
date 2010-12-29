@@ -38,6 +38,7 @@
 # set include directories
 set(INCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIRS}
+   ${LIBCONFIG_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
@@ -97,7 +98,7 @@ make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
 make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
 make_executable(testArray         testArray.cc         ${THIS_LIB})
 #make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
-make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB})
+make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${LIBCONFIG_LIBS}")
 
 # test executables
 add_test(testBuild        ${CMAKE_BUILD_TOOL})

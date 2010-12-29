@@ -200,6 +200,7 @@ extern char* optarg;
   Config Conf;
   Conf.readFile(configFile.c_str());
   const Setting& root = Conf.getRoot();
+  bool check=true;
   // Resonances
   if(Conf.exists("components.resonances")){
     const Setting &bws = root["components"]["resonances"];
@@ -213,18 +214,18 @@ extern char* optarg;
       double mass=-1;double ml,mu;int mfix; 
       double width=-1;double wl,wu;int wfix;
      
-      bw.lookupValue("name",     name);
-      bw.lookupValue("jpc",       jpc);
+      check&=bw.lookupValue("name",     name);
+      check&=bw.lookupValue("jpc",       jpc);
       const Setting &massSet = bw["mass"];
-      massSet.lookupValue("val",        mass);
-      massSet.lookupValue("lower",        ml);
-      massSet.lookupValue("upper",        mu);
-      massSet.lookupValue("fix",        mfix);
+      check&=massSet.lookupValue("val",        mass);
+      check&=massSet.lookupValue("lower",        ml);
+      check&=massSet.lookupValue("upper",        mu);
+      check&=massSet.lookupValue("fix",        mfix);
       const Setting &widthSet = bw["width"];
-      widthSet.lookupValue("val",       width);
-      widthSet.lookupValue("lower",       wl);
-      widthSet.lookupValue("upper",       wu);
-      widthSet.lookupValue("fix",       wfix);
+      check&=widthSet.lookupValue("val",       width);
+      check&=widthSet.lookupValue("lower",       wl);
+      check&=widthSet.lookupValue("upper",       wu);
+      check&=widthSet.lookupValue("fix",       wfix);
       cout << "---------------------------------------------------------------------" << endl;
       cout << name << "    JPC = " << jpc << endl;
       cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
@@ -242,13 +243,17 @@ extern char* optarg;
 	string amp;
 	double cRe=0;
 	double cIm=0;
-	ch.lookupValue("amp",amp);
-	ch.lookupValue("coupling_Re",cRe);
-	ch.lookupValue("coupling_Im",cIm);
+	check&=ch.lookupValue("amp",amp);
+	check&=ch.lookupValue("coupling_Re",cRe);
+	check&=ch.lookupValue("coupling_Im",cIm);
 	complex<double> C(cRe,cIm);
 	cout << "   " << amp << "  " << C << endl;
 	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
       }// end loop over channels
+      if(!check){
+	printErr << "Bad config value lookup! Check your config file!" << endl;
+	return 1;
+      }
       pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
       comp1->setLimits(ml,mu,wl,wu);
       comp1->setFixed(mfix,wfix);
@@ -268,17 +273,17 @@ extern char* optarg;
       double mass=-1;double ml,mu;int mfix; 
       double width=-1;double wl,wu;int wfix;
      
-      bw.lookupValue("name",     name);
+      check&=bw.lookupValue("name",     name);
       const Setting &massSet = bw["m0"];
-      massSet.lookupValue("val",        mass);
-      massSet.lookupValue("lower",        ml);
-      massSet.lookupValue("upper",        mu);
-      massSet.lookupValue("fix",        mfix);
+      check&=massSet.lookupValue("val",        mass);
+      check&=massSet.lookupValue("lower",        ml);
+      check&=massSet.lookupValue("upper",        mu);
+      check&=massSet.lookupValue("fix",        mfix);
       const Setting &widthSet = bw["g"];
-      widthSet.lookupValue("val",       width);
-      widthSet.lookupValue("lower",       wl);
-      widthSet.lookupValue("upper",       wu);
-      widthSet.lookupValue("fix",       wfix);
+      check&=widthSet.lookupValue("val",       width);
+      check&=widthSet.lookupValue("lower",       wl);
+      check&=widthSet.lookupValue("upper",       wu);
+      check&=widthSet.lookupValue("fix",       wfix);
       cout << "---------------------------------------------------------------------" << endl;
       cout << name << endl;
       cout << "mass-offset(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
@@ -293,17 +298,21 @@ extern char* optarg;
       double cIm=0;
       double mIso1=0;
       double mIso2=0;
-      bw.lookupValue("amp",amp);
-      bw.lookupValue("coupling_Re",cRe);
-      bw.lookupValue("coupling_Im",cIm);
-      bw.lookupValue("mIsobar1",mIso1);
-      bw.lookupValue("mIsobar2",mIso2);
+      check&=bw.lookupValue("amp",amp);
+      check&=bw.lookupValue("coupling_Re",cRe);
+      check&=bw.lookupValue("coupling_Im",cIm);
+      check&=bw.lookupValue("mIsobar1",mIso1);
+      check&=bw.lookupValue("mIsobar2",mIso2);
       complex<double> C(cRe,cIm);
       cout << "Decaychannel (coupling):" << endl;
       cout << "   " << amp << "  " << C << endl;
       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
       channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
-      
+
+      if(!check){
+	printErr << "Bad config value lookup! Check your config file!" << endl;
+	return 1;
+      }
       pwabkg* bkg=new pwabkg(name,mass,width,channels);
       bkg->setIsobars(mIso1,mIso2);
       bkg->setLimits(ml,mu,wl,wu);
