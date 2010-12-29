@@ -73,15 +73,14 @@ usage(const string& progName,
 {
   cerr << "usage:" << endl
        << progName
-       << " -c configfile-i inputfile [-o outfile -n normfile"
+       << " -c configfile -i inputfile [-o outfile -l # -u #"
        << "  -M minimizer [-m algorithm] -t # -q -h]" << endl
        << "    where:" << endl
        << "        -c file    path to config File" << endl
        << "        -i file    path to input file" << endl
-       << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-       << "        -o file    path to output file (default: 'fitresult.root')" << endl
-       << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
+       << "        -o file    path to output file (default: 'mDep.result.root')" << endl
     //       << "        -r #       rank of spin density matrix (default: 1)" << endl
+       << "        -l # -u #  lower and upper mass range used for fit" << endl
        << "        -M name    minimizer (default: Minuit2)" << endl
        << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
        << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
@@ -138,17 +137,17 @@ main(int    argc,
   
   string       inFileName         = "fitresult.root";       // input filename
   string       outFileName        = "mDep.result.root";       // output filename
-  string       normIntFileName    = "";                     // file with normalization integrals
+  //string       normIntFileName    = "";                     // file with normalization integrals
   string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
   double       minimizerTolerance = 1e-10;                  // minimizer tolerance
   bool         quiet              = false;
   
-  string       configFile;
+  string       configFile;        // configuration file
 
 extern char* optarg;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:n:r:M:m:t:qh")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:M:m:t:qh")) != -1)
     switch (ca) {
     case 'c':
       configFile = optarg;
@@ -159,9 +158,6 @@ extern char* optarg;
      case 'i':
       inFileName = optarg;
       break;
-    case 'n':
-      normIntFileName = optarg;
-      break;
     case 'M':
       minimizerType[0] = optarg;
       break;
@@ -170,6 +166,12 @@ extern char* optarg;
       break;
     case 't':
       minimizerTolerance = atof(optarg);
+      break;
+   case 'l':
+      massBinMin = atof(optarg);
+      break;
+   case 'u':
+      massBinMax = atof(optarg);
       break;
     case 'q':
       quiet = true;
