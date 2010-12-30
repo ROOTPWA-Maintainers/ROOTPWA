@@ -144,6 +144,11 @@ namespace rpwa {
 		 const std::string& wave2,
 		 double ps2,
 		 double m);
+    std::complex<double> overlap(const std::string& wave1,
+		 double ps1,
+		 const std::string& wave2,
+		 double ps2,
+		 double m);
     
   private:
     std::vector<pwacomponent*> _comp;

@@ -655,23 +655,59 @@ extern char* optarg;
      }// end loop over components
 
    std::vector<TGraphErrors*> phasedatagraphs;
+   std::vector<TGraphErrors*> realdatagraphs;
+   std::vector<TGraphErrors*> imagdatagraphs;
+
+   std::vector<TGraph*> realfitgraphs;
+   std::vector<TGraph*> imagfitgraphs;
+
    std::vector<TMultiGraph*> phasegraphs;
+   std::vector<TMultiGraph*> overlapRegraphs;
+   std::vector<TMultiGraph*> overlapImgraphs;
+   //std::vector<TMultiGraph*> imaggraphs;
    std::vector<TGraph*> phasefitgraphs;
    unsigned int c=0;
 
   for(unsigned int iw=0; iw<wl.size();++iw){
      for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
        phasegraphs.push_back(new TMultiGraph);
+       overlapImgraphs.push_back(new TMultiGraph);
+       overlapRegraphs.push_back(new TMultiGraph);
        string name("dPhi_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
        phasegraphs[c]->SetName(name.c_str());
        phasegraphs[c]->SetTitle(name.c_str());
+       name="Re_";name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       overlapRegraphs[c]->SetName(name.c_str());
+       overlapRegraphs[c]->SetTitle(name.c_str());
+       name="Im_";name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       overlapImgraphs[c]->SetName(name.c_str());
+       overlapImgraphs[c]->SetTitle(name.c_str());
+
        phasedatagraphs.push_back(new TGraphErrors(3*nbins));
        name=("dPhi_data_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
        phasedatagraphs[c]->SetName(name.c_str());
        phasedatagraphs[c]->SetTitle(name.c_str());
        phasegraphs[c]->Add(phasedatagraphs[c],"p");
+
+       realdatagraphs.push_back(new TGraphErrors(nbins));
+       name=("RE_data_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       realdatagraphs[c]->SetName(name.c_str());
+       realdatagraphs[c]->SetTitle(name.c_str());
+       overlapRegraphs[c]->Add(realdatagraphs[c],"p");
+
+       imagdatagraphs.push_back(new TGraphErrors(nbins));
+       name=("IM_data_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       imagdatagraphs[c]->SetName(name.c_str());
+       imagdatagraphs[c]->SetTitle(name.c_str());
+       //imagdatagraphs[c]->SetLineStyle(2);
+       overlapImgraphs[c]->Add(imagdatagraphs[c],"p");
+
        ++c;
      }
    }
@@ -689,6 +725,30 @@ extern char* optarg;
        phasefitgraphs[c]->SetDrawOption("AP");
        phasefitgraphs[c]->SetMarkerStyle(22);
        phasegraphs[c]->Add(phasefitgraphs[c],"cp");
+
+       realfitgraphs.push_back(new TGraph(nbins));
+       name=("Re_fit_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       realfitgraphs[c]->SetName(name.c_str());
+       realfitgraphs[c]->SetTitle(name.c_str());
+       realfitgraphs[c]->SetLineColor(kRed);
+       realfitgraphs[c]->SetMarkerColor(kRed);
+       realfitgraphs[c]->SetDrawOption("AP");
+       realfitgraphs[c]->SetMarkerStyle(22);
+       overlapRegraphs[c]->Add(realfitgraphs[c],"cp");
+
+       imagfitgraphs.push_back(new TGraph(nbins));
+       name=("Im_fit_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       imagfitgraphs[c]->SetName(name.c_str());
+       imagfitgraphs[c]->SetTitle(name.c_str());
+       imagfitgraphs[c]->SetLineColor(kRed);
+       //imagfitgraphs[c]->SetLineStyle(2);
+       imagfitgraphs[c]->SetMarkerColor(kRed);
+       imagfitgraphs[c]->SetDrawOption("AP");
+       imagfitgraphs[c]->SetMarkerStyle(22);
+       overlapImgraphs[c]->Add(imagfitgraphs[c],"cp");
+
        ++c;
      }
    }
@@ -729,9 +789,32 @@ extern char* optarg;
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
        fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);           
        // second loop to get phase differences
+       unsigned int wi1=rho->waveIndex(wl[iw].c_str());
+       
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
 	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str());
-	 
+	  
+	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());
+	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
+	 TMatrixT<double> rCov=rho->spinDensityMatrixElemCov(wi1,wi2);
+	 realdatagraphs[c]->SetPoint(i,
+				     rho->massBinCenter(),
+				     r.real());
+	 realdatagraphs[c]->SetPointError(i,
+			    binwidth,
+			    sqrt(rCov[0][0]));
+	 imagdatagraphs[c]->SetPoint(i,
+		       rho->massBinCenter(),
+		       r.imag());
+     
+	 imagdatagraphs[c]->SetPointError(i,
+			    binwidth,
+			    sqrt(rCov[1][1]));
+     
+
+
+	 //realdatagraphs[c]-SSetPoint(i,m,rho-
+
 	 phasedatagraphs[c]->SetPoint(i,m,rho->phase(wl[iw].c_str(),
 	 					     wl[iw2].c_str()));
 	 phasedatagraphs[c]->SetPoint(i+ndatabins,m,rho->phase(wl[iw].c_str(),
@@ -751,6 +834,14 @@ extern char* optarg;
 							 wl[iw2].c_str()));
 	 phasefitgraphs[c]->SetPoint(i,m,compset.phase(wl[iw],ps,
 						       wl[iw2],ps2,m)*TMath::RadToDeg());
+
+	 complex<double> fitval=compset.overlap(wl[iw],ps,
+						wl[iw2],ps2,m);
+
+	 realfitgraphs[c]->SetPoint(i,m,fitval.real());
+	 imagfitgraphs[c]->SetPoint(i,m,fitval.imag());
+
+
 	 c++;
        }// end inner loop over waves
 
@@ -834,6 +925,8 @@ extern char* optarg;
 //    }
    
      phasegraphs[iw]->Write();
+     overlapRegraphs[iw]->Write();
+     overlapImgraphs[iw]->Write();
      //phase2d[iw]->Write();
    }
    outfile->Close();

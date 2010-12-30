@@ -189,6 +189,29 @@ rpwa::pwacompset::phase(const std::string& wave1,
   return arg(rho1*conj(rho2));
 }
 
+std::complex<double>
+rpwa::pwacompset::overlap(const std::string& wave1,
+			  double ps1,
+			  const std::string& wave2,
+			  double ps2,
+			  double m){
+  // loop over all components and pick up those that contribute to this channel
+  complex<double> rho1(0,0);
+  complex<double> rho2(0,0);
+
+  for(unsigned int ic=0;ic<n();++ic){
+    if(_comp[ic]->channels().count(wave1)!=0){
+      rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C();
+    }
+    if(_comp[ic]->channels().count(wave2)!=0){
+      rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
+    }
+  }
+  rho1*=ps1;
+  rho2*=ps2;
+  return rho1*conj(rho2);
+}
+
 
 std::ostream& rpwa::operator<< (std::ostream& o,const rpwa::pwacomponent& c){
   o << c.name() << endl
