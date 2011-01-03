@@ -9,4 +9,5 @@
 
 #pragma link C++ class TrpwaMainFrame;
 #pragma link C++ class TrpwaWaveSelectFrame;
+#pragma link C++ class TrpwaPlotAmpsFrame;
 //#pragma link C++ class TSessionDialogbox;

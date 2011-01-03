@@ -496,9 +496,11 @@ namespace rpwa {
   
 
 		std::vector<unsigned int> waveIndices;
-		for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex)
+		for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex){
+		  //std::cout<<waveName(waveIndex)<<std::endl;
 			if (waveName(waveIndex).Contains(TRegexp(Pattern)))
 				waveIndices.push_back(waveIndex);
+		}
 		return waveIndices;
 	}
 

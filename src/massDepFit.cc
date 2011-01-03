@@ -59,8 +59,10 @@
 #include "pwacomponent.h"
 #include "massDepFitLikeli.h"
 
+#include "libconfig.h++"
 
 using namespace std;
+using namespace libconfig;
 using namespace ROOT::Math;
 using namespace rpwa;
 
@@ -71,16 +73,14 @@ usage(const string& progName,
 {
   cerr << "usage:" << endl
        << progName
-       << " -l # -u # -i inputfile [-o outfile -n normfile"
+       << " -c configfile -i inputfile [-o outfile -l # -u #"
        << "  -M minimizer [-m algorithm] -t # -q -h]" << endl
        << "    where:" << endl
-       << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
-       << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
+       << "        -c file    path to config File" << endl
        << "        -i file    path to input file" << endl
-       << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-       << "        -o file    path to output file (default: 'fitresult.root')" << endl
-       << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
+       << "        -o file    path to output file (default: 'mDep.result.root')" << endl
     //       << "        -r #       rank of spin density matrix (default: 1)" << endl
+       << "        -l # -u #  lower and upper mass range used for fit" << endl
        << "        -M name    minimizer (default: Minuit2)" << endl
        << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
        << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
@@ -137,30 +137,26 @@ main(int    argc,
   
   string       inFileName         = "fitresult.root";       // input filename
   string       outFileName        = "mDep.result.root";       // output filename
-  string       normIntFileName    = "";                     // file with normalization integrals
+  //string       normIntFileName    = "";                     // file with normalization integrals
   string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
   double       minimizerTolerance = 1e-10;                  // minimizer tolerance
   bool         quiet              = false;
   
+  string       configFile;        // configuration file
+
 extern char* optarg;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "l:u:i:o:n:r:M:m:t:qh")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:M:m:t:qh")) != -1)
     switch (ca) {
-    case 'l':
-      massBinMin = atof(optarg);
+    case 'c':
+      configFile = optarg;
       break;
-    case 'u':
-      massBinMax = atof(optarg);
-      break;
-     case 'o':
+    case 'o':
       outFileName = optarg;
       break;
      case 'i':
       inFileName = optarg;
-      break;
-    case 'n':
-      normIntFileName = optarg;
       break;
     case 'M':
       minimizerType[0] = optarg;
@@ -170,6 +166,12 @@ extern char* optarg;
       break;
     case 't':
       minimizerTolerance = atof(optarg);
+      break;
+   case 'l':
+      massBinMin = atof(optarg);
+      break;
+   case 'u':
+      massBinMax = atof(optarg);
       break;
     case 'q':
       quiet = true;
@@ -195,131 +197,269 @@ extern char* optarg;
     return 1;
   }
 
-
-
-  std::map<std::string,pwachannel > channels;
-  std::string ch1="1-2-+0+rho770_02_a21320=pi-_2_rho770.amp";
-  std::string ch2="1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp";
-  std::string ch3="1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp";
-  std::string ch4="1-2-+0+rho770_02_a11269=pi-_0_rho770.amp";
-  channels[ch1]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch1));
-  channels[ch2]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch2));
-  channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
-  channels[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
-  pwacomponent comp1("pi2(1880)",1880,150,channels);
-  comp1.setLimits(1870,1900,50,300);
-  comp1.setFixed(0,0);
-
-  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(1,0));
-  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-  pwacomponent comp2("pi2(2300)",2300,500,channels);
-  comp2.setLimits(2250,2500,100,800);
-  comp2.setFixed(1,0);
-
-  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(50,0));
-  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(50,0));
-  pwacomponent comp3("pi2(1670)",1672,260,channels);
-  comp3.setLimits(1600,1700,200,400);
-  comp3.setFixed(1,1);
-
-  channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(20,0));
-  channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-  pwacomponent comp4("pi2(2100)",2090,200,channels);
-  comp4.setLimits(2000,2200,100,800);
-  comp4.setFixed(1,0);
-
-
-  std::map<std::string,pwachannel > channels0mp;
-  std::string ch5="1-0-+0+pi-_00_f01500=rho770_00_rho770.amp";
-  std::string ch6="1-0-+0+rho770_00_a11269=pi-_0_rho770.amp";
-  channels0mp[ch5]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-  channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-  pwacomponent comp5("pi(1800)",1816,208,channels0mp);
-  comp5.setLimits(1750,18500,100,300);
-  comp5.setFixed(1,1);
-  channels0mp[ch5].setCoupling(std::complex<double>(5,0));
-  pwacomponent comp6("pi(2070)",2070,310,channels0mp);
-  comp6.setLimits(2000,2200,100,500);
-  comp6.setFixed(0,1);
-
-
-  channels0mp.clear();
-  channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch6));
-  pwabkg bkg1=pwabkg("0-+Bkg",0,0.0001,channels0mp);
-  bkg1.setIsobars(770,1269);
-  bkg1.setLimits(0,0,0,1);
-  bkg1.setFixed(1,0);
-
-  std::map<std::string,pwachannel> channels2mp;
-  channels2mp[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
-  pwabkg bkg2=pwabkg("rhoa1bkg",0,0.0001,channels2mp);
-  bkg2.setIsobars(770,1269);
-  bkg2.setLimits(0,0,0,1);
-  bkg2.setFixed(1,0);
-
-  channels2mp.clear();
-  channels2mp[ch3]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch3));
-  pwabkg bkg3=pwabkg("pirho3",0,0.0001,channels2mp);
-  bkg3.setIsobars(139,1690);
-  bkg3.setLimits(0,0,0,1);
-  bkg3.setFixed(1,0);
-
-  std::map<std::string,pwachannel> channels1pp;
-  std::string anchorwave("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
-  string ch1ppsa1("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
-  string ch1ppra11("1-1++0+rho770_11_a11269=pi-_0_rho770.amp");
-  string ch1ppra12("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
-  string ch1ppf1pi("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
-		  
-  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
-				   getPhaseSpace(tree,ch1ppsa1));
-  channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
-				   getPhaseSpace(tree,ch1ppra11));
-  //channels1pp[ch1ppra12]=pwachannel(complex<double>(50,0),
-  //				   getPhaseSpace(tree,ch1ppra12));
-  channels1pp[ch1ppf1pi]=pwachannel(complex<double>(50,0),
-				   getPhaseSpace(tree,ch1ppf1pi));
-
-  pwacomponent comp7("a1(1640)",1647,254,channels1pp);
-  comp7.setLimits(1600,1700,100,500);
-  comp7.setFixed(1,1);
-  pwacomponent comp8("a1(1930)",1930,155,channels1pp);
-  comp8.setLimits(1900,1980,100,300);
-  comp8.setFixed(1,1);
-  pwacomponent comp9("a1(2095)",2069,451,channels1pp);
-  comp9.setLimits(1950,2150,200,600);
-  comp9.setFixed(0,0);
-  
-  channels1pp.clear();
-  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
-				   getPhaseSpace(tree,ch1ppsa1));
-  pwabkg bkg4=pwabkg("sigmaa1",0,0.0001,channels1pp);
-  bkg4.setIsobars(600,1269);
-  bkg4.setLimits(0,0,0,1);
-  bkg4.setFixed(1,0);
-
-  channels1pp.clear();
-  channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
-				   getPhaseSpace(tree,ch1ppra11));
-  pwabkg bkg5=pwabkg("1pprhoa1bkg",0,0.0001,channels1pp);
-  bkg5.setIsobars(770,1269);
-  bkg5.setLimits(0,0,0,1);
-  bkg5.setFixed(1,0);
-
+  // Setup Component Set (Resonances + Background)
   pwacompset compset;
-  compset.add(&comp1); // pi2(1880)
-  compset.add(&bkg2);  
-  compset.add(&comp2); // pi2(2300)
-  compset.add(&comp3); // pi2(1670)
-  compset.add(&bkg3);
-  compset.add(&comp4); // pi2(2100)
-  compset.add(&comp5); // pi(1800)
-  compset.add(&comp6); // pi(2070)
-  compset.add(&bkg1);
-  compset.add(&comp7);
-  //compset.add(&comp8);
-  compset.add(&comp9);
-  compset.add(&bkg4);
+  Config Conf;
+  Conf.readFile(configFile.c_str());
+  const Setting& root = Conf.getRoot();
+  bool check=true;
+  // Resonances
+  if(Conf.exists("components.resonances")){
+    const Setting &bws = root["components"]["resonances"];
+    // loop through breitwigners
+    int nbw=bws.getLength();
+    printInfo << "found " << nbw << " Resonances in config" << endl;
+    for(int ibw = 0; ibw < nbw; ++ibw) {
+      const Setting &bw = bws[ibw];
+      string jpc;
+      string name;
+      double mass=-1;double ml,mu;int mfix; 
+      double width=-1;double wl,wu;int wfix;
+     
+      check&=bw.lookupValue("name",     name);
+      check&=bw.lookupValue("jpc",       jpc);
+      const Setting &massSet = bw["mass"];
+      check&=massSet.lookupValue("val",        mass);
+      check&=massSet.lookupValue("lower",        ml);
+      check&=massSet.lookupValue("upper",        mu);
+      check&=massSet.lookupValue("fix",        mfix);
+      const Setting &widthSet = bw["width"];
+      check&=widthSet.lookupValue("val",       width);
+      check&=widthSet.lookupValue("lower",       wl);
+      check&=widthSet.lookupValue("upper",       wu);
+      check&=widthSet.lookupValue("fix",       wfix);
+      cout << "---------------------------------------------------------------------" << endl;
+      cout << name << "    JPC = " << jpc << endl;
+      cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
+      if(mfix==1)cout<<"  -- FIXED";
+      cout<< endl;
+      cout << "width(limits) = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
+      if(wfix==1)cout<<"  -- FIXED";
+      cout<< endl;
+      const Setting &channelSet = bw["decaychannels"];
+      unsigned int nCh=channelSet.getLength();
+      cout << "Decaychannels (coupling):" << endl;
+      std::map<std::string,pwachannel > channels;
+      for(unsigned int iCh=0;iCh<nCh;++iCh){
+	const Setting &ch = channelSet[iCh];
+	string amp;
+	double cRe=0;
+	double cIm=0;
+	check&=ch.lookupValue("amp",amp);
+	check&=ch.lookupValue("coupling_Re",cRe);
+	check&=ch.lookupValue("coupling_Im",cIm);
+	complex<double> C(cRe,cIm);
+	cout << "   " << amp << "  " << C << endl;
+	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+      }// end loop over channels
+      if(!check){
+	printErr << "Bad config value lookup! Check your config file!" << endl;
+	return 1;
+      }
+      pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
+      comp1->setLimits(ml,mu,wl,wu);
+      comp1->setFixed(mfix,wfix);
+      compset.add(comp1);
+    }// end loop over resonances
+  }
+  cout << endl;
+  // Background components
+  if(Conf.exists("components.background")){
+    const Setting &bws = root["components"]["background"];
+    // loop through breitwigners
+    int nbw=bws.getLength();
+    printInfo << "found " << nbw << " Background components in config" << endl;
+    for(int ibw = 0; ibw < nbw; ++ibw) {
+      const Setting &bw = bws[ibw];
+      string name;
+      double mass=-1;double ml,mu;int mfix; 
+      double width=-1;double wl,wu;int wfix;
+     
+      check&=bw.lookupValue("name",     name);
+      const Setting &massSet = bw["m0"];
+      check&=massSet.lookupValue("val",        mass);
+      check&=massSet.lookupValue("lower",        ml);
+      check&=massSet.lookupValue("upper",        mu);
+      check&=massSet.lookupValue("fix",        mfix);
+      const Setting &widthSet = bw["g"];
+      check&=widthSet.lookupValue("val",       width);
+      check&=widthSet.lookupValue("lower",       wl);
+      check&=widthSet.lookupValue("upper",       wu);
+      check&=widthSet.lookupValue("fix",       wfix);
+      cout << "---------------------------------------------------------------------" << endl;
+      cout << name << endl;
+      cout << "mass-offset(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
+      if(mfix==1)cout<<"  -- FIXED";
+      cout<< endl;
+      cout << "g(limits)            = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
+      if(wfix==1)cout<<"  -- FIXED";
+      cout<< endl;
+      std::map<std::string,pwachannel > channels;
+      string amp;
+      double cRe=0;
+      double cIm=0;
+      double mIso1=0;
+      double mIso2=0;
+      check&=bw.lookupValue("amp",amp);
+      check&=bw.lookupValue("coupling_Re",cRe);
+      check&=bw.lookupValue("coupling_Im",cIm);
+      check&=bw.lookupValue("mIsobar1",mIso1);
+      check&=bw.lookupValue("mIsobar2",mIso2);
+      complex<double> C(cRe,cIm);
+      cout << "Decaychannel (coupling):" << endl;
+      cout << "   " << amp << "  " << C << endl;
+      cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
+      channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+
+      if(!check){
+	printErr << "Bad config value lookup! Check your config file!" << endl;
+	return 1;
+      }
+      pwabkg* bkg=new pwabkg(name,mass,width,channels);
+      bkg->setIsobars(mIso1,mIso2);
+      bkg->setLimits(ml,mu,wl,wu);
+      bkg->setFixed(mfix,wfix);
+      compset.add(bkg);
+    }// end loop over background
+  }// endif
+
+
+    cout << "---------------------------------------------------------------------" << endl << endl;
+ 
+ 
+
+ //  std::map<std::string,pwachannel > channels;
+//   std::string ch1="1-2-+0+rho770_02_a21320=pi-_2_rho770.amp";
+//   std::string ch2="1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp";
+//   std::string ch3="1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp";
+//   std::string ch4="1-2-+0+rho770_02_a11269=pi-_0_rho770.amp";
+//   channels[ch1]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch1));
+//   channels[ch2]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch2));
+//   //channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
+//   channels[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
+//   pwacomponent comp1("pi2(1880)",1880,150,channels);
+//   comp1.setLimits(1870,1900,50,300);
+//   comp1.setFixed(0,0);
+
+//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(1,0));
+//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
+//   pwacomponent comp2("pi2(2300)",2300,500,channels);
+//   comp2.setLimits(2250,2500,100,800);
+//   comp2.setFixed(1,0);
+
+//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(50,0));
+//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(50,0));
+//   pwacomponent comp3("pi2(1670)",1672,260,channels);
+//   comp3.setLimits(1600,1700,200,400);
+//   comp3.setFixed(1,1);
+
+//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(20,0));
+//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
+//   pwacomponent comp4("pi2(2100)",2090,200,channels);
+//   comp4.setLimits(2000,2200,100,800);
+//   comp4.setFixed(1,0);
+
+
+//   std::map<std::string,pwachannel > channels0mp;
+//   std::string ch5="1-0-+0+pi-_00_f01500=rho770_00_rho770.amp";
+//   std::string ch6="1-0-+0+rho770_00_a11269=pi-_0_rho770.amp";
+  
+  
+//   channels0mp[ch5]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
+//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
+//   channels0mp[ch6].setCoupling(std::complex<double>(0.1,0));
+//   pwacomponent comp5("pi(1800)",1840,208,channels0mp);
+//   comp5.setLimits(1750,1850,100,300);
+//   comp5.setFixed(0,0);
+//   //channels0mp.clear();
+//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
+//   channels0mp[ch5].setCoupling(std::complex<double>(0.5,0));
+//   channels0mp[ch6].setCoupling(std::complex<double>(50,0));
+//   pwacomponent comp6("pi(1700)",1700,200,channels0mp);
+//   comp6.setLimits(1600,1750,100,500);
+//   comp6.setFixed(0,0);
+//   pwacomponent comp13("pi(2100)",2200,200,channels0mp);
+//   comp13.setLimits(2000,2300,100,500);
+//   comp13.setFixed(1,0);
+
+//   channels0mp.clear();
+//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch6));
+//   pwabkg bkg1=pwabkg("0-+Bkg",0,0.0001,channels0mp);
+//   bkg1.setIsobars(770,1269);
+//   bkg1.setLimits(0,0,0,1);
+//   bkg1.setFixed(1,0);
+
+//   std::map<std::string,pwachannel> channels2mp;
+//   channels2mp[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
+//   pwabkg bkg2=pwabkg("rhoa1bkg",0,0.0001,channels2mp);
+//   bkg2.setIsobars(770,1269);
+//   bkg2.setLimits(0,0,0,1);
+//   bkg2.setFixed(1,0);
+
+//   channels2mp.clear();
+//   channels2mp[ch3]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch3));
+//   pwabkg bkg3=pwabkg("pirho3",0,0.0001,channels2mp);
+//   bkg3.setIsobars(139,1690);
+//   bkg3.setLimits(0,0,0,1);
+//   bkg3.setFixed(1,0);
+
+//   std::map<std::string,pwachannel> channels1pp;
+//   std::string anchorwave("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
+//   string ch1ppsa1("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
+//   string ch1ppra11("1-1++0+rho770_11_a11269=pi-_0_rho770.amp");
+//   string ch1ppra12("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
+//   string ch1ppf1pi("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
+		  
+//   //  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
+//   //				   getPhaseSpace(tree,ch1ppsa1));
+// //channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
+//   //			   getPhaseSpace(tree,ch1ppra11));
+// // channels1pp[ch1ppra12]=pwachannel(complex<double>(50,0),
+//   //			   getPhaseSpace(tree,ch1ppra12));
+//   channels1pp[ch1ppf1pi]=pwachannel(complex<double>(50,0),
+// 				   getPhaseSpace(tree,ch1ppf1pi));
+
+//   pwacomponent comp7("a1(1640)",1647,254,channels1pp);
+//   comp7.setLimits(1600,1700,100,500);
+//   comp7.setFixed(0,0);
+//   pwacomponent comp8("a1(1930)",1930,155,channels1pp);
+//   comp8.setLimits(1900,1980,100,300);
+//   comp8.setFixed(1,1);
+//   pwacomponent comp9("a1(2095)",2069,451,channels1pp);
+//   comp9.setLimits(1950,2150,100,300);
+//   comp9.setFixed(0,0);
+  
+//   channels1pp.clear();
+//   channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
+// 				   getPhaseSpace(tree,ch1ppsa1));
+//   pwabkg bkg4=pwabkg("sigmaa1",0,0.0001,channels1pp);
+//   bkg4.setIsobars(600,1269);
+//   bkg4.setLimits(0,0,0,1);
+//   bkg4.setFixed(1,0);
+
+//   channels1pp.clear();
+//   channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
+// 				   getPhaseSpace(tree,ch1ppra11));
+//   pwabkg bkg5=pwabkg("1pprhoa1bkg",0,0.0001,channels1pp);
+//   bkg5.setIsobars(770,1269);
+//   bkg5.setLimits(0,0,0,1);
+//   bkg5.setFixed(1,0);
+
+//   pwacompset compset;
+//   compset.add(&comp1); // pi2(1880)
+//   //compset.add(&bkg2);  
+//   //compset.add(&comp2); // pi2(2300)
+//   compset.add(&comp3); // pi2(1670)
+//   //compset.add(&bkg3);
+//   compset.add(&comp4); // pi2(2100)
+//   compset.add(&comp5); // pi(1800)
+//   compset.add(&comp6); // pi(1700)
+//  compset.add(&comp13); // pi(2100)
+//   compset.add(&bkg1);
+//   //compset.add(&comp7);
+//   //compset.add(&comp8);
+//   //compset.add(&comp9);
+//   //compset.add(&bkg4);
   
 
 
@@ -371,9 +511,9 @@ extern char* optarg;
       minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.C().real(), 0.10);
       
       // fix one phase
-      if(it->first==anchorwave)minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
+      // if(it->first==anchorwave)minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
 	
-	else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
+	if(0);else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
       
       ++it;
     } // end loop over channels
@@ -442,7 +582,7 @@ extern char* optarg;
 
   cerr << compset << endl;
 
-  cerr << "Fitting finished building graphs ... " << endl;
+  cerr << "Fitting finished... Start building graphs ... " << endl;
 
    std::vector<std::string> wl=compset.wavelist();
    std::map<std::string, unsigned int> wmap;
@@ -515,23 +655,59 @@ extern char* optarg;
      }// end loop over components
 
    std::vector<TGraphErrors*> phasedatagraphs;
+   std::vector<TGraphErrors*> realdatagraphs;
+   std::vector<TGraphErrors*> imagdatagraphs;
+
+   std::vector<TGraph*> realfitgraphs;
+   std::vector<TGraph*> imagfitgraphs;
+
    std::vector<TMultiGraph*> phasegraphs;
+   std::vector<TMultiGraph*> overlapRegraphs;
+   std::vector<TMultiGraph*> overlapImgraphs;
+   //std::vector<TMultiGraph*> imaggraphs;
    std::vector<TGraph*> phasefitgraphs;
    unsigned int c=0;
 
   for(unsigned int iw=0; iw<wl.size();++iw){
      for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
        phasegraphs.push_back(new TMultiGraph);
+       overlapImgraphs.push_back(new TMultiGraph);
+       overlapRegraphs.push_back(new TMultiGraph);
        string name("dPhi_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
        phasegraphs[c]->SetName(name.c_str());
        phasegraphs[c]->SetTitle(name.c_str());
-       phasedatagraphs.push_back(new TGraphErrors(nbins));
+       name="Re_";name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       overlapRegraphs[c]->SetName(name.c_str());
+       overlapRegraphs[c]->SetTitle(name.c_str());
+       name="Im_";name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       overlapImgraphs[c]->SetName(name.c_str());
+       overlapImgraphs[c]->SetTitle(name.c_str());
+
+       phasedatagraphs.push_back(new TGraphErrors(3*nbins));
        name=("dPhi_data_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
        phasedatagraphs[c]->SetName(name.c_str());
        phasedatagraphs[c]->SetTitle(name.c_str());
-       phasegraphs[c]->Add(phasedatagraphs[c],"cp");
+       phasegraphs[c]->Add(phasedatagraphs[c],"p");
+
+       realdatagraphs.push_back(new TGraphErrors(nbins));
+       name=("RE_data_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       realdatagraphs[c]->SetName(name.c_str());
+       realdatagraphs[c]->SetTitle(name.c_str());
+       overlapRegraphs[c]->Add(realdatagraphs[c],"p");
+
+       imagdatagraphs.push_back(new TGraphErrors(nbins));
+       name=("IM_data_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       imagdatagraphs[c]->SetName(name.c_str());
+       imagdatagraphs[c]->SetTitle(name.c_str());
+       //imagdatagraphs[c]->SetLineStyle(2);
+       overlapImgraphs[c]->Add(imagdatagraphs[c],"p");
+
        ++c;
      }
    }
@@ -549,6 +725,30 @@ extern char* optarg;
        phasefitgraphs[c]->SetDrawOption("AP");
        phasefitgraphs[c]->SetMarkerStyle(22);
        phasegraphs[c]->Add(phasefitgraphs[c],"cp");
+
+       realfitgraphs.push_back(new TGraph(nbins));
+       name=("Re_fit_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       realfitgraphs[c]->SetName(name.c_str());
+       realfitgraphs[c]->SetTitle(name.c_str());
+       realfitgraphs[c]->SetLineColor(kRed);
+       realfitgraphs[c]->SetMarkerColor(kRed);
+       realfitgraphs[c]->SetDrawOption("AP");
+       realfitgraphs[c]->SetMarkerStyle(22);
+       overlapRegraphs[c]->Add(realfitgraphs[c],"cp");
+
+       imagfitgraphs.push_back(new TGraph(nbins));
+       name=("Im_fit_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       imagfitgraphs[c]->SetName(name.c_str());
+       imagfitgraphs[c]->SetTitle(name.c_str());
+       imagfitgraphs[c]->SetLineColor(kRed);
+       //imagfitgraphs[c]->SetLineStyle(2);
+       imagfitgraphs[c]->SetMarkerColor(kRed);
+       imagfitgraphs[c]->SetDrawOption("AP");
+       imagfitgraphs[c]->SetMarkerStyle(22);
+       overlapImgraphs[c]->Add(imagfitgraphs[c],"cp");
+
        ++c;
      }
    }
@@ -589,12 +789,38 @@ extern char* optarg;
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
        fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);           
        // second loop to get phase differences
+       unsigned int wi1=rho->waveIndex(wl[iw].c_str());
+       
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
 	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str());
-	 
+	  
+	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());
+	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
+	 TMatrixT<double> rCov=rho->spinDensityMatrixElemCov(wi1,wi2);
+	 realdatagraphs[c]->SetPoint(i,
+				     rho->massBinCenter(),
+				     r.real());
+	 realdatagraphs[c]->SetPointError(i,
+			    binwidth,
+			    sqrt(rCov[0][0]));
+	 imagdatagraphs[c]->SetPoint(i,
+		       rho->massBinCenter(),
+		       r.imag());
+     
+	 imagdatagraphs[c]->SetPointError(i,
+			    binwidth,
+			    sqrt(rCov[1][1]));
+     
+
+
+	 //realdatagraphs[c]-SSetPoint(i,m,rho-
+
 	 phasedatagraphs[c]->SetPoint(i,m,rho->phase(wl[iw].c_str(),
-						     wl[iw2].c_str()));
-	 
+	 					     wl[iw2].c_str()));
+	 phasedatagraphs[c]->SetPoint(i+ndatabins,m,rho->phase(wl[iw].c_str(),
+	 				     wl[iw2].c_str())-360);
+	 phasedatagraphs[c]->SetPoint(i+2*ndatabins,m,rho->phase(wl[iw].c_str(),
+	 					     wl[iw2].c_str())+360);
 	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
 					     wl[iw2].c_str())/TMath::RadToDeg());
 
@@ -608,6 +834,14 @@ extern char* optarg;
 							 wl[iw2].c_str()));
 	 phasefitgraphs[c]->SetPoint(i,m,compset.phase(wl[iw],ps,
 						       wl[iw2],ps2,m)*TMath::RadToDeg());
+
+	 complex<double> fitval=compset.overlap(wl[iw],ps,
+						wl[iw2],ps2,m);
+
+	 realfitgraphs[c]->SetPoint(i,m,fitval.real());
+	 imagfitgraphs[c]->SetPoint(i,m,fitval.imag());
+
+
 	 c++;
        }// end inner loop over waves
 
@@ -663,34 +897,36 @@ extern char* optarg;
 
 /// rectivfy phase graphs
    
-   unsigned int refbin=4;
-   double m;
-   double predph;
-   phasedatagraphs[iw]->GetPoint(refbin,m,predph);
-   double prefph;
-   phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
-   for(unsigned int ib=refbin+1;ib<nbins;++ib){
-     double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
-     double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
-     double dp,dm;dp=dph+360;dm=dph-360;
-     double fp,fm;fp=fph+360;fm=fph-360;
-     if(0){
-       if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
-	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
-       else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
-	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
+   // unsigned int refbin=4;
+//    double m;
+//    double predph;
+//    phasedatagraphs[iw]->GetPoint(refbin,m,predph);
+//    double prefph;
+//    phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
+//    for(unsigned int ib=refbin+1;ib<nbins;++ib){
+//      double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
+//      double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
+//      double dp,dm;dp=dph+360;dm=dph-360;
+//      double fp,fm;fp=fph+360;fm=fph-360;
+//      if(0){
+//        if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
+// 	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
+//        else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
+// 	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
        
-       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
-	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
-       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
-	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
+//        if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
+// 	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
+//        else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
+// 	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
        
-       phasedatagraphs[iw]->GetPoint(ib,m,predph);
-       phasefitgraphs[iw]->GetPoint(ib,m,prefph);
-     }
-   }
+//        phasedatagraphs[iw]->GetPoint(ib,m,predph);
+//        phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+//      }
+//    }
    
      phasegraphs[iw]->Write();
+     overlapRegraphs[iw]->Write();
+     overlapImgraphs[iw]->Write();
      //phase2d[iw]->Write();
    }
    outfile->Close();

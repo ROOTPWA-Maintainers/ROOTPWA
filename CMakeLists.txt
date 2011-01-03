@@ -284,6 +284,14 @@ set(ROOTPWA_LIBS
   RootPwa
 	)
 add_subdirectory(src)
+set(SCRIPTS_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/src/rootscripts
+	)
+# compile rootscripts into a library since they are linked by the gui
+add_subdirectory(src/rootscripts)
+set(ROOTPWASCRIPTS_LIBS
+  RootPwaScripts
+	)
 
 # RootPwaAmp
 add_subdirectory(amplitude)

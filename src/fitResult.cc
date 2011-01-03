@@ -153,7 +153,7 @@ fitResult::evidence() const
 {
 
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
-	double       l   = -logLikelihood();// + nmbEvents();
+  double       l   = -logLikelihood();// - intensity(".*");
  
 	double       det = _fitParCovMatrix.Determinant();
 	// simple determinant neglecting all off-diagonal entries
@@ -353,6 +353,8 @@ fitResult::intensity(const char* waveNamePattern) const
 	double intensity = 0;
 	for (unsigned int i = 0; i < waveIndices.size(); ++i) {
 		intensity += this->intensity(waveIndices[i]);
+		//std::cout << " Contribution from " << _waveNames[waveIndices[i]] 
+		//<< " = " << this->intensity(waveIndices[i]) << std::endl;
 		for (unsigned int j = 0; j < i; ++j)
 			intensity += overlap(waveIndices[i], waveIndices[j]);
 	}

@@ -42,6 +42,8 @@
 #include "TGraphErrors.h"
 #include "TTree.h"
 
+using namespace std;
+
 
 // signature with wave indices
 TGraphErrors*

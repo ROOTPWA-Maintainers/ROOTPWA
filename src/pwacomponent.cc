@@ -71,10 +71,10 @@ rpwa::pwacomponent::val(double m) const {
       double ps0=it->second.ps(_m0);
       ps=it->second.ps(m)/ps0;
     }
-    gamma+=_gamma*ps*ps/n;
+    gamma+=_gamma*ps/n; // ps*ps ???
     ++it;
   }
-
+  //std::cerr << m << "   " << gamma/_gamma << std::endl;
   //std::cerr << _name <<"  compval=" <<gamma*_m0/complex<double>(m*m-_m02,gamma*_m0) << std::endl;
   return _gamma*_m0/complex<double>(m*m-_m02,gamma*_m0);
 }
@@ -105,6 +105,7 @@ complex<double>
 rpwa::pwabkg::val(double m) const {
   m-=_m0; // shift baseline mass
   // calculate breakup momentum
+  if(m<_m1+_m2)return complex<double>(0,0);
   complex<double> p=q(m,_m1,_m2);
   //std::cerr << _name <<"  val=" << exp(-_gamma*p) << std::endl;
   return exp(-_gamma*p);
@@ -181,12 +182,35 @@ rpwa::pwacompset::phase(const std::string& wave1,
       rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C();
     }
     if(_comp[ic]->channels().count(wave2)!=0){
-      rho2=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
+      rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
     }
   }
   rho1*=ps1;
   rho2*=ps2;
   return arg(rho1*conj(rho2));
+}
+
+std::complex<double>
+rpwa::pwacompset::overlap(const std::string& wave1,
+			  double ps1,
+			  const std::string& wave2,
+			  double ps2,
+			  double m){
+  // loop over all components and pick up those that contribute to this channel
+  complex<double> rho1(0,0);
+  complex<double> rho2(0,0);
+
+  for(unsigned int ic=0;ic<n();++ic){
+    if(_comp[ic]->channels().count(wave1)!=0){
+      rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C();
+    }
+    if(_comp[ic]->channels().count(wave2)!=0){
+      rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
+    }
+  }
+  rho1*=ps1;
+  rho2*=ps2;
+  return rho1*conj(rho2);
 }
 
 

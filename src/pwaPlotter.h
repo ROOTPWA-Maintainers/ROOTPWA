@@ -166,6 +166,7 @@ private:
   std::map<strpair,TMultiGraph*> mPhases;
 
   std::map<std::string,TGraph*> mPhaseSpace;
+  std::map<std::string,double> mWaveEvidence;
 
   TMultiGraph* mLogLikelihood;
   TMultiGraph* mLogLikelihoodPerEvent;

@@ -8,6 +8,7 @@
 #include <string>
 #include <iostream>
 #include <cstdlib>
+#include <vector>
 
 using namespace std;
 
@@ -25,6 +26,17 @@ namespace TrpwaCommonTools{
 	void GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s);
 	// remove a given extension and the path (if it exists)
 	string RemovePathExtension(string filename, string extension = "");
+	// check whether a file exists
+	bool FileExists(string filename);
+	// check whether a directory exists
+	bool DirExists(string dirname);
+	// get all files in a given path
+	// returns the number of entries
+	// files is filled with the filenames in this directory
+	// filterext is the extension to be specified for filtering
+	// if rmext the files will be delivered without the extension
+	int GetDir (string path, vector<string> &files, string filterext = "", bool rmext = false);
+
 }
 
 #endif

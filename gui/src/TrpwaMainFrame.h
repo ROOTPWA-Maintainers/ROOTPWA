@@ -21,6 +21,7 @@
 #include <vector>
 #include "TrpwaSessionManager.h"
 #include "TrpwaWaveSelectFrame.h"
+#include "TrpwaPlotAmpsFrame.h"
 #include <TGButton.h>
 
 using namespace std;
@@ -50,6 +51,8 @@ private:
 	TrpwaSessionManager* current_session;
 
 	TrpwaWaveSelectFrame* frame_wave_select; // window for wave selection
+
+	TrpwaPlotAmpsFrame* frame_plot_amps; // window to look at results
 
 public:
 	// return the reference to the only instance of this class

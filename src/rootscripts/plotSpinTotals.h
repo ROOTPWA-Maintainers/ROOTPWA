@@ -43,6 +43,8 @@
 #include "TVirtualPad.h"
 #include "TTree.h"
 
+using namespace std;
+
 
 std::vector<std::pair<string, TVirtualPad*> >
 plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult trees

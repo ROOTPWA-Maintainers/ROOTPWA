@@ -18,6 +18,7 @@
 #include <sstream>
 #include <algorithm>
 #include <complex>
+#include "TrpwaCommonTools.h"
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -25,6 +26,7 @@
 
 using namespace std;
 using namespace libconfig;
+using namespace TrpwaCommonTools;
 //#include "TGInputDialog.h"
 /*
 TSessionDialogbox::TSessionDialogbox(const TGWindow* p,
@@ -800,7 +802,7 @@ string TrpwaSessionManager::Get_PWA_data_integral(int bin, string folder, bool m
 }
 
 vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool missing,
-		vector < vector<string> >* corresponding_amplitudefiles){
+		vector < vector<string> >* corresponding_amplitudefiles, bool checkentries){
 	vector<string>* result = new vector<string>();
 	// create a vector for corresponding_amplitudefiles if not given
 	// since it is needed internally for consistency checks
@@ -869,7 +871,7 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 		for (vector<string>::iterator it = result->begin(); it != result->end(); ++it){
 			counter++;
 			if (!missing) DrawProgressBar(50, counter/((double)result->size()));
-			if (!missing&&!Is_valid_norm_integral((*it), (*it_pair))){
+			if (!missing&&!Is_valid_norm_integral((*it), (*it_pair), checkentries)){
 				result->erase(it);
 				corresponding_amplitudefiles->erase(it_pair);
 				it--;
@@ -887,9 +889,9 @@ vector<string>& TrpwaSessionManager::Get_PWA_data_integrals(string folder, bool 
 	return *result;
 }
 
-float TrpwaSessionManager::Check_PWA_MC_acc_data_integrals(){
+float TrpwaSessionManager::Check_PWA_MC_acc_data_integrals(bool checkentries){
 	float result(0.);
-	result = Get_PWA_data_integrals("ACCAMPS",false).size();
+	result = Get_PWA_data_integrals("ACCAMPS",false,NULL,checkentries).size();
 	//if ((int) result != (int) _n_bins)
 		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
@@ -901,9 +903,9 @@ vector<string>& TrpwaSessionManager::Get_PWA_MC_acc_data_integrals(bool missing,
 	return Get_PWA_data_integrals("ACCAMPS", missing, corresponding_amplitudefiles);;
 }
 
-float TrpwaSessionManager::Check_PWA_MC_data_integrals(){
+float TrpwaSessionManager::Check_PWA_MC_data_integrals(bool checkentries){
 	float result(0.);
-	result = Get_PWA_data_integrals("PSPAMPS",false).size();
+	result = Get_PWA_data_integrals("PSPAMPS",false,NULL,checkentries).size();
 	//if ((int) result != (int) _n_bins)
 		cout << " found " << (int) result << " of " << _n_bins << " expected .int files" << endl;
 	result = (double) result / ((double) _n_bins);
@@ -1382,42 +1384,6 @@ vector<string>& TrpwaSessionManager::GetWaveList(int ibin){
 	return GetWaveList(ibin, bin_low, bin_high);
 }
 
-// check whether a file exists
-bool TrpwaSessionManager::FileExists(string filename){
-	  ifstream ifile(filename.c_str());
-	  return ifile;
-}
-
-// check whether a directory exists
-bool TrpwaSessionManager::DirExists(string dirname){
-	struct stat st;
-	if(stat(dirname.c_str(),&st) == 0 && S_ISDIR(st.st_mode))
-		return true;
-	else
-		return false;
-}
-
-int TrpwaSessionManager::GetDir (string path,
-		vector<string> &files, string filterext, bool rmext){
-    DIR *dp;
-    struct dirent *dirp;
-    files.clear();
-    if((dp  = opendir(path.c_str())) == NULL) {
-        cout << "Error(" << errno << ") opening " << path << endl;
-        return errno;
-    }
-
-    while ((dirp = readdir(dp)) != NULL) {
-    	string _filename = dirp->d_name;
-    	if ((_filename.size() <= filterext.size())||
-    		(filterext != "" && _filename.compare(_filename.size()-filterext.size(), filterext.size(), filterext) != 0)) continue;
-    	if (rmext) _filename.erase(_filename.size()-filterext.size(), filterext.size());
-    	files.push_back(_filename);
-    }
-    closedir(dp);
-    return (signed) files.size();
-}
-
 bool TrpwaSessionManager::AreListsEqual(const vector<string>& list1, const vector<string>& list2){
 	if (list1.size() != list2.size()) return false;
 	// prepare a list for ereasing
@@ -1457,12 +1423,13 @@ int TrpwaSessionManager::CompareLists(const vector<string>& list1, const vector<
 	return result;
 }
 
-bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const vector<string> & corresponding_amplitudefiles){
+bool TrpwaSessionManager::Is_valid_norm_integral(const string norm_file, const vector<string> & corresponding_amplitudefiles, bool checkentries){
 	bool result = true;
 	if (!FileExists(norm_file)){
 		cout << " Error in TrpwaSessionManager::Is_valid_norm_integral: " << norm_file << " does not exist " << endl;
 		return false;
 	}
+	if (!checkentries) return true;
 
 	ifstream integralfile(norm_file.c_str());
 	int namps(0);
@@ -1876,6 +1843,7 @@ bool TrpwaSessionManager::Save_Fit(string folder, string title, string descripti
 			//cout << stime[i];
 		}
 		_folder = _dir_fit_results+"/fit_constellation_"+title+"_"+stime;
+		if (title == "") title = stime;
 	}
 	if (DirExists(_folder)){
 		cout << " Error in TrpwaSessionManager::Save_Fit(): folder " << _folder << " is already existing! " << endl;

@@ -260,7 +260,7 @@ public:
 	// if corresponding_amplitudefiles is given as an empty vector
 	// the amplitude files with path are written out
 	vector<string>& Get_PWA_data_integrals(string folder, bool missing = true,
-			vector < vector<string> >* corresponding_amplitudefiles = NULL);
+			vector < vector<string> >* corresponding_amplitudefiles = NULL, bool checkentries = true);
 
 	// same as above for one bin
 	string Get_PWA_data_integral(int bin, string folder, bool missing = true,
@@ -269,7 +269,7 @@ public:
 	// returns the status [0-1] of calculated integrals
 	// of accepted flat phase space data
 	// (searching for .int files)
-	float Check_PWA_MC_acc_data_integrals();
+	float Check_PWA_MC_acc_data_integrals(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated integrals of
 	// the available MC accepted amplitudes with full path
@@ -281,7 +281,7 @@ public:
 	// returns the status [0-1] of calculated integrals
 	// of flat phase space data
 	// (searching for .int files)
-	float Check_PWA_MC_data_integrals();
+	float Check_PWA_MC_data_integrals(bool checkentries = true);
 
 	// Get a list of (missing/available) calculated integrals of
 	// the available MC amplitudes with full path
@@ -295,7 +295,7 @@ public:
 	// to do: check the number of events, and maybe the entries themselves
 	// writes detailed errors to cout
 	// all filenames have to be given with full path
-	bool Is_valid_norm_integral(const string norm_file, const vector<string>& corresponding_amplitudefiles);
+	bool Is_valid_norm_integral(const string norm_file, const vector<string>& corresponding_amplitudefiles, bool checkentries = true);
 
 	// returns the status [0-1] of wave lists
 	// (searches for wave lists in the bins)
@@ -304,19 +304,6 @@ public:
 	// returns the status [0-1] of the fits of the bins
 	// (searches and counts fit result files)
 	float Check_fits();
-
-	// check whether a file exists
-	bool FileExists(string filename);
-
-	// check whether a directory exists
-	bool DirExists(string dirname);
-
-	// get all files in a given path
-	// returns the number of entries
-	// files is filled with the filenames in this directory
-	// filterext is the extension to be specified for filtering
-	// if rmext the files will be delivered without the extension
-	int GetDir (string path, vector<string> &files, string filterext = "", bool rmext = false);
 
 	// return a list of the wavenames without an extension in the ith bin
 	vector<string> &GetSelectedWaves(int ibin);

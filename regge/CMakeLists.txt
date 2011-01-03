@@ -20,12 +20,12 @@
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
 #// File and Version Information:
-#// $Rev:: 266                         $: revision of last commit
-#// $Author:: promme                   $: author of last commit
-#// $Date:: 2010-06-17 10:35:01 +0200 #$: date of last commit
+#// $Rev:: 239                         $: revision of last commit
+#// $Author:: bgrube                   $: author of last commit
+#// $Date:: 2010-05-28 14:34:08 +0200 #$: date of last commit
 #//
 #// Description:
-#//      build file for RootPwaGen
+#//      build file for RootPwaTools library
 #//
 #//
 #// Author List:
@@ -34,57 +34,40 @@
 #//
 #//-------------------------------------------------------------------------
 
-#set(THIS_INC "src")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
-  ${LIBCONFIG_INCLUDE_DIR}
+  ${PWA2000_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${ROOTPWA_DICTIONARY}
-  ${SCRIPTS_INCLUDE_DIR}
-#  ${PWA2000_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
+
 # source files that are compiled into library
 set(SOURCES
-  TrpwaMainFrame.cc
-  TrpwaSessionManager.cc
-  TrpwaWaveSelectFrame.cc
-  TrpwaJobManager.cc
-  TrpwaEventTreeHandler.cc
-  TrpwaCommonTools.cc
-  TrpwaPlotAmpsFrame.cc
-) 
+  reggeprop.cc
+)
+   
 
 # ROOT dictionary
-set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
-root_generate_dictionary(
-  "${ROOTPWAGUI_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h"
-  "rootPwaGuiLinkDef.h"
-)
-# message(" using rootpwa_dictionary "${ROOTPWA_DICTIONARY})
-# setting roopwa dictionary does not work yet since I'm too dumb to use cmake
-set(SOURCES ${SOURCES} ${ROOTPWAGUI_DICTIONARY} ${ROOTPWA_DICTIONARY})
-
-# message(" my sources are "${SOURCES})  
+#set(REGGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaReggeDict.cc)
+#root_generate_dictionary(
+#  "${TOOLS_DICTIONARY}"
+##  "${CMAKE_CURRENT_SOURCE_DIR}"
+#  "rootPwaReggeLinkDef.h"
+#)
+#set(SOURCES ${SOURCES} ${TOOLS_DICTIONARY})
 
 
 # library
-set(THIS_LIB "RootPwaGui")
+set(THIS_LIB "RootPwaRegge")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
-   "${LIBCONFIG_LIBS}"
-   "${ROOTPWASCRIPTS_LIBS}"
-#  "${PWA2000_LIBS}"
-   "${ROOTPWA_LIBS}"
+  "${PWA2000_LIBS}"
 )
 
 
 # executables
-make_executable(rootpwa_gui rootpwa_gui.cpp ${THIS_LIB})
+make_executable(testRegge          testRegge.cc          ${THIS_LIB})
+

@@ -102,8 +102,9 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	  //cov.Print();
 	  if(i==j)dchi/=cov[0][0];
 	  else {
-	    dchi=rhom.real()*rhom.real()*cov[1][1]-(cov[1][0]+cov[0][1])*rhom.real()*rhom.imag()+cov[0][0]*rhom.imag()*rhom.imag();
-	    dchi/=cov[0][0]*cov[1][1]-cov[1][0]*cov[0][1];
+	    
+	    dchi=rhom.real()*rhom.real()*cov[1][1]-(2*cov[0][1])*rhom.real()*rhom.imag()+cov[0][0]*rhom.imag()*rhom.imag();
+	    dchi/=cov[0][0]*cov[1][1]-cov[0][1]*cov[0][1];
 
 	    //dchi=rhom.real()*rhom.real()/cov[0][0]+rhom.imag()*rhom.imag()/cov[1][1];
 

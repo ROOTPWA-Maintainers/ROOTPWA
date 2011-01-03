@@ -45,6 +45,8 @@
 
 #include "fitResult.h"
 
+using namespace std;
+
 
 // .............................................................................
 // signatures with wave indices

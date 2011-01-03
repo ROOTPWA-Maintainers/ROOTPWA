@@ -5,7 +5,16 @@
  *      Author: Promme
  */
 
+#ifndef TRPWACOMMONTOOLS_CC_
+#define TRPWACOMMONTOOLS_CC_
+
 #include "TrpwaCommonTools.h"
+#include <sys/types.h>
+#include <dirent.h>
+#include <errno.h>
+#include <fstream>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 // check if character is a sign and return the result
 bool TrpwaCommonTools::IsSign(char character, int& result){
@@ -45,6 +54,42 @@ string TrpwaCommonTools::RemovePathExtension(string filename, string extension){
 		filename.erase(0, slashpos+1);
 	}
 	return filename;
+}
+
+// check whether a file exists
+bool TrpwaCommonTools::FileExists(string filename){
+	  ifstream ifile(filename.c_str());
+	  return ifile;
+}
+
+// check whether a directory exists
+bool TrpwaCommonTools::DirExists(string dirname){
+	struct stat st;
+	if(stat(dirname.c_str(),&st) == 0 && S_ISDIR(st.st_mode))
+		return true;
+	else
+		return false;
+}
+
+int TrpwaCommonTools::GetDir (string path,
+		vector<string> &files, string filterext, bool rmext){
+    DIR *dp;
+    struct dirent *dirp;
+    files.clear();
+    if((dp  = opendir(path.c_str())) == NULL) {
+        cout << "Error(" << errno << ") opening " << path << endl;
+        return errno;
+    }
+
+    while ((dirp = readdir(dp)) != NULL) {
+    	string _filename = dirp->d_name;
+    	if ((_filename.size() <= filterext.size())||
+    		(filterext != "" && _filename.compare(_filename.size()-filterext.size(), filterext.size(), filterext) != 0)) continue;
+    	if (rmext) _filename.erase(_filename.size()-filterext.size(), filterext.size());
+    	files.push_back(_filename);
+    }
+    closedir(dp);
+    return (signed) files.size();
 }
 
 void TrpwaCommonTools::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s){
@@ -151,3 +196,5 @@ void TrpwaCommonTools::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, in
 	// read the second isobar
 	iso2 = key.substr(charposlow, stringsize-charposlow);
 }
+
+#endif
