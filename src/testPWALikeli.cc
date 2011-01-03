@@ -44,7 +44,8 @@ char *progname;
 
 int main(int argc, char** argv){
   
-	TPWALikelihood<complex<double> > L;
+ 	// TPWALikelihood<complex<double> > L;
+ 	TPWALikelihood<double> L;
   L.useNormalizedAmps();
   //if(quiet)L.SetQuiet();
   int rank=2; // TODO: make this an option
