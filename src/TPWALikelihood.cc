@@ -194,8 +194,8 @@ TPWALikelihood<complexT>::FdF
 				derivatives[iRank][iRefl][iWave] += sum(normFactorDerivAcc) * twiceNmbEvt;  // account for 2 * nmbEvents
 			}
 	// take care of flat wave
-	normFactorAcc(prodAmpFlat2);
-	derivativeFlat += prodAmpFlat * twiceNmbEvt;
+	normFactorAcc(prodAmpFlat2 * _totAcc);
+	derivativeFlat += prodAmpFlat * twiceNmbEvt * _totAcc;
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[FDF].normTime(timer.RealTime());
@@ -288,7 +288,7 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 					normFactorAcc(real((prodAmps[iRank][iRefl][iWave] * conj(prodAmps[iRank][iRefl][jWave]))
 					                   * _accMatrix[iRefl][iWave][iRefl][jWave]));
 	// take care of flat wave
-	normFactorAcc(prodAmpFlat2);
+	normFactorAcc(prodAmpFlat2 * _totAcc);
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[DOEVAL].normTime(timer.RealTime());
@@ -470,7 +470,7 @@ TPWALikelihood<complexT>::Gradient
 				derivatives[iRank][iRefl][iWave] += sum(normFactorDerivAcc) * twiceNmbEvt;  // account for 2 * nmbEvents
 			}
 	// take care of flat wave
-	derivativeFlat += prodAmpFlat * twiceNmbEvt;
+	derivativeFlat += prodAmpFlat * twiceNmbEvt * _totAcc;
 	// log time needed for normalization
 	timer.Stop();
 	_funcCallInfo[GRADIENT].normTime(timer.RealTime());
@@ -600,14 +600,14 @@ TPWALikelihood<complexT>::readWaveList(const string& waveListFileName)
 	          << "'" << waveListFileName << "'" << endl;
 	_nmbWaves        = _nmbWavesRefl[0] + _nmbWavesRefl[1];
 	_nmbWavesReflMax = max(_nmbWavesRefl[0], _nmbWavesRefl[1]);
-	_waveNames.resize     (extents[2][_nmbWavesReflMax]);
-	_waveThresholds.resize(extents[2][_nmbWavesReflMax]);
-	_waveToWaveList.resize(extents[2][_nmbWavesReflMax]);
+	_waveNames.resize      (extents[2][_nmbWavesReflMax]);
+	_waveThresholds.resize (extents[2][_nmbWavesReflMax]);
+	_waveToWaveIndex.resize(extents[2][_nmbWavesReflMax]);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			_waveNames     [iRefl][iWave] = waveNames     [iRefl][iWave];
-			_waveThresholds[iRefl][iWave] = waveThresholds[iRefl][iWave];
-			_waveToWaveList[iRefl][iWave] = waveIndices   [iRefl][iWave];
+			_waveNames      [iRefl][iWave] = waveNames     [iRefl][iWave];
+			_waveThresholds [iRefl][iWave] = waveThresholds[iRefl][iWave];
+			_waveToWaveIndex[iRefl][iWave] = waveIndices   [iRefl][iWave];
 		}
 }
 
@@ -748,8 +748,12 @@ TPWALikelihood<complexT>::readIntegrals
 	// !!! integral.scan() performs no error checks!
 	accInt.scan(intFile);
 	intFile.close();
-	if (_numbAccEvents != 0)
-		accInt.events(_numbAccEvents); 
+	if (_numbAccEvents != 0) {
+		_totAcc = ((double)accInt.nevents()) / (double)_numbAccEvents;
+		printInfo << "total acceptance in this bin: " << _totAcc << endl;
+		accInt.events(_numbAccEvents);
+	} else
+		_totAcc = 1;
 	reorderIntegralMatrix(accInt, _accMatrix);
 }
 
@@ -858,11 +862,11 @@ TPWALikelihood<complexT>::getIntCMatrix(TCMatrix&       normMatrix,
   phaseSpaceIntegral.resize(_nmbWaves + 1, 0);
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			const unsigned int iIndex = _waveToWaveList[iRefl][iWave];
+			const unsigned int iIndex = _waveToWaveIndex[iRefl][iWave];
 			phaseSpaceIntegral[iIndex] = _phaseSpaceIntegral[iRefl][iWave];
 			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
 				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-					const unsigned int jIndex  = _waveToWaveList[jRefl][jWave];
+					const unsigned int jIndex  = _waveToWaveIndex[jRefl][jWave];
 					const complexT     normVal = _normMatrix[iRefl][iWave][jRefl][jWave];
 					const complexT     accVal  = _accMatrix [iRefl][iWave][jRefl][jWave];
 					normMatrix.set(iIndex, jIndex, complex<double>(normVal.real(), normVal.imag()));
@@ -1070,7 +1074,7 @@ TPWALikelihood<complexT>::orderedParIndices() const
 			unsigned int iRefl, iWave;
 			for (iRefl = 0; iRefl < 2; ++iRefl)
 				for (iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-					if (_waveToWaveList[iRefl][iWave] == waveIndex)
+					if (_waveToWaveIndex[iRefl][iWave] == waveIndex)
 						goto found;
 			printWarn << "indices are inconsistent. cannot find wave with index " << waveIndex
 			          << " in wave list" << endl;
@@ -1101,7 +1105,7 @@ TPWALikelihood<complexT>::waveNames() const
 	vector<string> names(_nmbWaves, "");
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			const unsigned int index = _waveToWaveList[iRefl][iWave];
+			const unsigned int index = _waveToWaveIndex[iRefl][iWave];
 			names[index] = _waveNames[iRefl][iWave];
 		}
 	return names;

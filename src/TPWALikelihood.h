@@ -36,6 +36,7 @@
 #ifndef TPWALIKELIHOOD_H
 #define TPWALIKELIHOOD_H
 
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -210,10 +211,11 @@ private:
 	static bool _debug;              // if true debug messages are printed
 
 	unsigned int _numbAccEvents; // number of input events used for acceptance integrals (accepted + rejected!)
+	double       _totAcc;        // total acceptance in this bin
 
 	waveNameArrayType        _waveNames;            // wave names [reflectivity][wave index]
 	waveThrArrayType         _waveThresholds;       // mass thresholds of waves
-	waveToListMapType        _waveToWaveList;       // maps wave to its index in wave list
+	waveToListMapType        _waveToWaveIndex;      // maps wave to its index in wave list
 	std::vector<std::string> _parNames;             // function parameter names
 	std::vector<double>      _parThresholds;        // mass thresholds of parameters
 	ampToParMapType          _prodAmpToFuncParMap;  // maps each production amplitude to the indices
@@ -237,8 +239,3 @@ private:
 
 
 #endif  // TPWALIKELIHOOD_H
-
-
-//--------------------------------------------------------------
-// $Log$
-//--------------------------------------------------------------
