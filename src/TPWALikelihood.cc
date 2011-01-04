@@ -261,6 +261,8 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	// take care of flat wave
 	normFactor.real() += prodAmpFlat2 * _totAcc;
 
+	const double funcVal = logLikelihood + nmbEvt * normFactor.real();
+
 	// log consumed time
 	const double t2 = timer.RealTime();
 	timer.Stop();
@@ -268,13 +270,11 @@ TPWALikelihood<T>::DoEval(const double* par) const
 	_Ntime += t2;
   
 	if (_debug)
-		printInfo << "Log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
+		printInfo << "raw log likelihood =  " << maxPrecisionAlign(logLikelihood) << ", "
 		          << "normalization =  " << maxPrecisionAlign(normFactor.real()) << ", "
-		          << "normalized log likelihood = " << maxPrecisionAlign(logLikelihood + nmbEvt * normFactor.real()) << endl
-		          << "    Time for likelihood = " << t1 << ", time for normalization = " << t2 << endl;
-
-	const double funcVal = logLikelihood + nmbEvt * normFactor.real();
-
+		          << "normalized log likelihood = " << maxPrecisionAlign(funcVal) << endl
+		          << "    time for likelihood = " << t1 << " sec, "
+		          << "time for normalization = " << t2 << " sec" << endl;
 	if (0) {  // compare to FdF
 		double f;
 		double df[_nmbPars];
