@@ -262,13 +262,19 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
 					accumulator_set<complexT, stats<tag::sum(compensated)> > ampProdAcc;
-					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
+					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 						ampProdAcc(prodAmps[iRank][iRefl][iWave] * _decayAmps[iEvt][iRefl][iWave]);
+						// cout << "prodAmps[" << iRank << "][" << iRefl << "][" << iWave<< "] = "
+						//      << maxPrecisionDouble(prodAmps[iRank][iRefl][iWave]) << "; "
+						//      << "decayAmps[" << iEvt << "][" << iRefl << "][" << iWave << "] = "
+						//      << maxPrecisionDouble(_decayAmps[iEvt][iRefl][iWave]) << endl;
+					}
 					likelihoodAcc(norm(sum(ampProdAcc)));
 				}
 			}
 			likelihoodAcc(prodAmpFlat2);
 			logLikelihoodAcc(-log(sum(likelihoodAcc)));
+			// cout << endl;
 		}
 		logLikelihood = sum(logLikelihoodAcc);
 	}
@@ -301,9 +307,9 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 	_funcCallInfo[DOEVAL].totalTime(timerTot.RealTime());
 
 	if (_debug)
-		printInfo << "log likelihood =  "       << maxPrecisionAlign(logLikelihood     ) << ", "
-		          << "normalization =  "        << maxPrecisionAlign(sum(normFactorAcc)) << ", "
-		          << "normalized likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
+		printInfo << "raw log likelihood =  "       << maxPrecisionAlign(logLikelihood     ) << ", "
+		          << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
+		          << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
 	
 	return funcVal;
 	
@@ -703,7 +709,7 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
 			}
 			indexLookUp[iRefl][iWave] = integral.index(_waveNames[iRefl][iWave]);
 			if (_debug)
-				printInfo << "    mapping wave [" << setw(2) << (int)iRefl * 2 - 1 << ", "
+				printInfo << "    mapping wave [" << sign((int)iRefl * 2 - 1) << ", "
 				          << setw(3) << iWave << "] '" << _waveNames[iRefl][iWave] << "' "
 				          << "to index " << setw(3) << indexLookUp[iRefl][iWave] << " in integral." << endl;
 		}
@@ -836,8 +842,8 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
 						for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-							cout << "    normalization matrix [" << setw(2) << (int)iRefl * 2 - 1 << ", "
-							     << setw(3) << iWave << ", " << setw(2) << (int)jRefl * 2 - 1 << ", "
+							cout << "    normalization matrix [" << sign((int)iRefl * 2 - 1) << ", "
+							     << setw(3) << iWave << ", " << sign((int)jRefl * 2 - 1) << ", "
 							     << setw(3) << jWave << "] = "
 							     << "("  << maxPrecisionAlign(_normMatrix[iRefl][iWave][jRefl][jWave].real())
 							     << ", " << maxPrecisionAlign(_normMatrix[iRefl][iWave][jRefl][jWave].imag())
@@ -1036,7 +1042,7 @@ TPWALikelihood<complexT>::print(ostream& out) const
 	    << "list of waves: " << endl;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-			out << "        [" << setw(2) << sign(iRefl) << " " << setw(3) << iWave << "] "
+			out << "        [" << setw(2) << sign((int)iRefl * 2 - 1) << " " << setw(3) << iWave << "] "
 			    << _waveNames[iRefl][iWave] << "    threshold = "
 			    << _waveThresholds[iRefl][iWave] << " MeV/c^2" << endl;
 	out << "list of function parameters: " << endl;

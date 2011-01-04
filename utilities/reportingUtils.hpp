@@ -46,6 +46,7 @@
 #include <iomanip>
 #include <limits>
 #include <vector>
+#include <cmath>
 
 
 namespace rpwa {
@@ -218,6 +219,18 @@ namespace rpwa {
 		for (unsigned int i = 0; i < (vec.size() - 1); ++i)
 			out << "[" << i << "] = " << vec[i] << ", ";
 		return out << "[" << vec.size() - 1 << "] = " << vec[vec.size() - 1] << "}";
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// various stuff
+
+	template<typename T>
+	inline
+	unsigned int
+	nmbOfDigits(const T& val)
+	{
+		return (unsigned int)(log(abs(val)) / log(10)) + 1;
 	}
 
 

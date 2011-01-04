@@ -18,73 +18,106 @@
 //    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
-//test  program for rootpwa
-//#include <fitlog.h>
-//#include <integral.h>
-#include <iostream>
-#include <list>
-#include <vector>
-#include <string>
-#include <map>
-#include <complex>
-#include "TBranch.h"
-#include "TTree.h"
-#include "TFile.h"
-#include "TString.h"
-#include "TComplex.h"
-#include "TRandom.h"
+//-----------------------------------------------------------
+// File and Version Information:
+// $Id$
+//
+// Description:
+//      test likelihood calculation
+//      program should be executed in amplitude directory
+//
+//
+// Author List:
+//      Sebastian Neubert    TUM            (original author)
+//
+//
+//-----------------------------------------------------------
+
+
+#include "TRandom3.h"
+
 #include "TPWALikelihood.h"
-#include "TFitBin.h"
+
+#include "reportingUtils.hpp"
+
 
 using namespace std;
+using namespace rpwa;
 
 
-int lineno = 1; // global variables needed for lex (not understood)
-char *progname;
+int
+main(int    argc,
+     char** argv)
+{
+	if (argc < 2) {
+		printErr << "need wave list file name as argument. aborting." << endl;
+		throw;
+	}
+	const bool         useNormalizedAmps = false;       // if true normalized amplitudes are used
+	const unsigned int rank              = 2;           // rank of spin-density matrix
+	const string       waveListFileName  = argv[1];     // wavelist filename
+	const string       normIntFileName   = "norm.int";  // file with normalization integrals
+	const string       accIntFileName    = "norm.int";  // file with acceptance integrals
+	const string       ampDirName        = ".";         // decay amplitude directory name
+	const unsigned int numbAccEvents     = 0;           // number of events used for acceptance integrals
 
-int main(int argc, char** argv){
-  
 	TPWALikelihood<complex<double> > L;
   L.useNormalizedAmps();
-  //if(quiet)L.SetQuiet();
-  int rank=2; // TODO: make this an option
-  L.init(rank, argv[1], "norm.int", "norm.int");
-  cout<<L.NDim()<<endl;
+	L.useNormalizedAmps(useNormalizedAmps);
+	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
+	printInfo << L;
+	const unsigned int nmbPar = L.NDim();
+	cout << "number of parameters = " << nmbPar << endl;
 
-  // 12 parameters + flat
-  double x[13]={0.52707,0.21068,-0.604365,0.17596,-0.216668,-0.0990815,-0.348459,0.208961,0,0,0,0,0};
-  //double x[13]; for(int i=0;i<13;++i)x[i]=0.001;
+	// set random parameter values
+	//double par[13]={0.52707,0.21068,-0.604365,0.17596,-0.216668,-0.0990815,-0.348459,0.208961,0,0,0,0,0};
+  //double par[13]; for(int i=0;i<13;++i) par[i]=0.001;
   //string a[13]={"a","b","c","d","e","f","g","h","i","j","k","l","flat"};
-  std::cout<<L.DoEval(x)<<std::endl;
-
-
- // check derivatives:
-  // first numerical:
-  double L1=L.DoEval(x);
-  double h=1E-8;
-  double dxNum[13];
-  double dxAna[13];
-  for(unsigned int i=0; i<L.NDim();++i){
-    x[i]+=h;
-    double L2=L.DoEval(x);
-    dxNum[i]=(L2-L1)/h;
-    x[i]-=h;
+	double par[nmbPar];
+	gRandom->SetSeed(123456789);
+  vector<unsigned int> parIndices  = L.orderedParIndices();
+  for (unsigned int i = 0; i < parIndices.size(); ++i) {
+	  const unsigned int parIndex = parIndices[i];
+	  cout << "parameter[" << i << "] = " << L.parName(parIndex) << endl;
+	  par[parIndex] = gRandom->Rndm();
   }
-  double F;
-  L.FdF(x,F,dxAna);
-  for(unsigned int i=0; i<L.NDim();++i){
-    cout<< "dL/d"<<i<<"(num)="<<dxNum[i]<<endl;
-    cout<< "dL/d"<<i<<"(ana)="<<dxAna[i]<<endl;
+
+  // calculate log likelihood
+  const double logLikelihood = L.DoEval(par);
+  printInfo << "log likelihood = " << maxPrecision(logLikelihood) << endl;
+
+  // check derivatives
+  // calculate numerical derivatives
+  double numericalDerivates[nmbPar];
+  {
+	  const double delta = 1E-7;
+	  for (unsigned int i = 0; i < nmbPar; ++i) {
+		  const double oldParVal = par[i];
+		  par[i] += delta;
+		  const double logLikelihood2 = L.DoEval(par);
+		  numericalDerivates[i] = (logLikelihood2 - logLikelihood) / delta;
+		  par[i] = oldParVal;
+	  }
   }
+  // calculate analytical derivatives
+  double analyticalDerivates[nmbPar];
+  // double F;
+  // L.FdF(par, F, analyticalDerivates);
+  L.Gradient(par, analyticalDerivates);
+  double maxDelta = 0;
+  printInfo << "derivatives:" << endl;
+  for (unsigned int i = 0; i < parIndices.size(); ++i) {
+	  const unsigned int parIndex = parIndices[i];
+	  const double       delta    = numericalDerivates[parIndex] - analyticalDerivates[parIndex];
+	  if (abs(delta) > maxDelta)
+		  maxDelta = abs(delta);
+	  cout << "    dL / dPar[" << setw(nmbOfDigits(nmbPar - 1)) << parIndex << "]: numerical = "
+	       << maxPrecisionAlign(numericalDerivates[parIndex])
+	       << " vs. analytical = " << maxPrecisionAlign(analyticalDerivates[parIndex])
+	       << "; (numer. - analyt.) = "
+	       << maxPrecisionAlign(delta) << endl;
+  }
+  cout << "    maximum deviation = " << maxPrecision(maxDelta) << endl;
   
-    
-
   return 0;
-}
-
-// dummy function needed since we link to but do not use minuit.o
-int mnparm(int, string, double, double, double, double) {
-    cerr << "this is impossible" << endl;
-    throw "aFit";
-    return 0;
 }
