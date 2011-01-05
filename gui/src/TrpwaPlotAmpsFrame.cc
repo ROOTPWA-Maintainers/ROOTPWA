@@ -353,8 +353,8 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 }
 
 void TrpwaPlotAmpsFrame::Plot_All_selected_Spin_totals(){
-	cout << " does not work yet! " << endl;
-	return;
+	cout << " plotSpinTotals() macro does not work yet properly and may crash! " << endl;
+	//return;
 	if (current_fit_result > 0){
 		cout << " Drawing all spin totals from " << current_fit_result->GetName() << ". Please be patient... " << endl;
 		plotSpinTotals(current_fit_result);
