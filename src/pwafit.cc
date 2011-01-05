@@ -133,6 +133,7 @@ printMinimizerStatus(ostream&   out,
 	return out;
 }
 
+
 ostream&
 operator <<(ostream&   out,
             Minimizer& minimizer)
@@ -439,8 +440,8 @@ main(int    argc,
 
 	// ---------------------------------------------------------------------------
 	// find minimum of likelihood function
-	bool converged=false;
-	bool hashesse=false;
+	bool converged = false;
+	bool hasHesse  = false;
 	printInfo << "performing minimization" << endl;
 	{
 		TStopwatch timer;
@@ -453,7 +454,7 @@ main(int    argc,
 			printWarn << "minimization failed. " << flush;
 		cout << "used " << flush;
 		timer.Print();
-		converged=success;
+		converged = success;
 		printInfo << *minimizer;
 		if (runHesse) {
 			printInfo << "calculating Hessian matrix" << endl;
@@ -466,10 +467,9 @@ main(int    argc,
 				printWarn << "calculation of Hessian matrix failed. " << flush;
 			cout << "used " << flush;
 			timer.Print();
-			hashesse=success;
-			
+			hasHesse = success;
+			printInfo << *minimizer;
 		}
-		printInfo << *minimizer;
 	}
 
 	// ---------------------------------------------------------------------------
@@ -502,8 +502,8 @@ main(int    argc,
 	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
 #endif	  
 
-// ---------------------------------------------------------------------------
-// write out result
+	// ---------------------------------------------------------------------------
+	// write out result
 	printInfo << "writing result to '" << outFileName << "'" << endl;
 	{
 		// open output file and create tree for writing
@@ -565,8 +565,8 @@ main(int    argc,
 				             fitParCovMatrixIndices,
 				             normIntegral,
 				             phaseSpaceIntegral,
-					     converged,
-					     hashesse);
+				             converged,
+				             hasHesse);
 			}
 			
 			if (1) {

@@ -68,6 +68,7 @@ public:
 	typedef typename complexT::value_type value_type;
 
 private:
+public:
 
 	// define array types
 	typedef boost::multi_array<std::string,            2> waveNameArrayType;    // array for wave names
@@ -188,12 +189,14 @@ private:
   
 	void reorderIntegralMatrix(integral&            integral,
 	                           normMatrixArrayType& reorderedMatrix) const;
+public:
 	void copyFromParArray(const double*  inPar,              // input parameter array
 	                      ampsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
 	                      value_type&    outFlatVal) const;  // output value corresponding to flat wave
 	void copyToParArray(const ampsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
 	                    const value_type     inFlatVal,      // value corresponding to flat wave
 	                    double*              outPar) const;  // output parameter array
+private:
 
 	void resetFuncCallInfo() const;
 

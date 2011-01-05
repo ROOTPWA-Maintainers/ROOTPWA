@@ -82,6 +82,29 @@ main(int    argc,
 	  par[parIndex] = gRandom->Rndm();
   }
 
+  {
+	  // printInfo << "parameters:" << endl;
+	  // for (unsigned int i = 0; i < nmbPar; ++i)
+		//   cout << "par[" << i << "] = " << par[i] << endl;
+	  printInfo << "production amplitudes:" << endl;
+	  double                                          prodAmpFlat;
+	  TPWALikelihood<complex<double> >::ampsArrayType prodAmps;
+	  L.copyFromParArray(par, prodAmps, prodAmpFlat);
+	  for (unsigned int iRank = 0; iRank < L.rank(); ++iRank)
+		  for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+			  for (unsigned int iWave = 0; iWave < L.nmbWaves(2 * iRefl - 1); ++iWave)
+				  cout << "prodAmps[" << iRank << "][" << iRefl << "][" << iWave << "] = "
+				       << maxPrecisionDouble(prodAmps[iRank][iRefl][iWave]) << endl;
+	  printInfo << "parameters:" << endl;
+	  double par2[nmbPar];
+	  L.copyToParArray(prodAmps, prodAmpFlat, par2);
+	  // for (unsigned int i = 0; i < nmbPar; ++i)
+		//   cout << "par[" << i << "] = " << par[i] << endl;
+	  for (unsigned int i = 0; i < nmbPar; ++i)
+		  cout << "delta par[" << i << "] = " << maxPrecision(par[i] - par2[i]) << endl;
+  }
+	return 0;
+
   // calculate log likelihood
   const double logLikelihood = L.DoEval(par);
   printInfo << "log likelihood = " << maxPrecision(logLikelihood) << endl;
