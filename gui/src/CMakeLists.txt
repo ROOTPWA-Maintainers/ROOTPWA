@@ -88,3 +88,4 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 
 # executables
 make_executable(rootpwa_gui rootpwa_gui.cpp ${THIS_LIB})
+make_executable(rootpwa_fitresult_inspector_gui rootpwa_fitresult_inspector_gui.cpp ${THIS_LIB})

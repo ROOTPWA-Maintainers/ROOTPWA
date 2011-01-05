@@ -745,9 +745,14 @@ void TrpwaMainFrame::FilterData(){
 		cout << " Error loading data files " << endl;
 		return;
 	} else {
+
 		if (!treehandler.Write_Trees_to_BNL_events()){
 			cout << " Error filtering events from given trees! " << endl;
 		}
+		/*
+		if (!treehandler.Write_Trees_to_rootpwa_Trees()){
+			cout << " Error filtering events from given trees! " << endl;
+		}*/
 	}
 	Update();
 }
