@@ -312,7 +312,7 @@ add_subdirectory(keygen)
 add_subdirectory(relampl)
 
 # gui
-add_subdirectory(gui/src)
+#add_subdirectory(gui/src)
 
 
 message(STATUS "Run 'make' to build the project.")

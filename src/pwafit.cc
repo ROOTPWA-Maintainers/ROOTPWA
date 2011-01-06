@@ -390,7 +390,7 @@ main(int    argc,
 		}
 		const double         sqrtNmbEvts = sqrt((double)nmbEvts);
 		vector<unsigned int> parIndices  = L.orderedParIndices();
-		for (unsigned int i = 0; i< parIndices.size(); ++i) {
+		for (unsigned int i = 0; i < parIndices.size(); ++i) {
 			const unsigned int parIndex = parIndices[i];
 			double             startVal;
 			const string       parName = minimizer->VariableName(parIndex);
@@ -533,7 +533,7 @@ main(int    argc,
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
 				vector<pair<int,int> >        fitParCovMatrixIndices;  // indices of fit parameters for real and imaginary part in covariance matrix matrix
-				L.buildCAmps(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
+				L.buildProdAmpArrays(minimizer->X(), prodAmps, fitParCovMatrixIndices, prodAmpNames, true);
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
@@ -542,7 +542,7 @@ main(int    argc,
 				TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 				vector<double> phaseSpaceIntegral;
-				L.getIntCMatrix(normIntegral, accIntegral, phaseSpaceIntegral);
+				L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
 				const int normNmbEvents = useNormalizedAmps ? 1 : L.nmbEvents();  // number of events to normalize to
 
 				cout << "filling fitResult:" << endl
@@ -576,8 +576,8 @@ main(int    argc,
 				vector<TString>        waveNames;       // contains rank information 
 				{
 					vector<std::complex<double> > V;
-					vector<string>           names;
-					L.buildCAmps(minimizer->X(), V, indices, names, true);
+					vector<string>                names;
+					L.buildProdAmpArrays(minimizer->X(), V, indices, names, true);
 					// convert to TComplex;
 					for (unsigned int i = 0; i < V.size(); ++i)
 						prodAmplitudes.push_back(TComplex(V[i].real(), V[i].imag()));
@@ -600,10 +600,10 @@ main(int    argc,
 				// normalization integral and acceptance matrix
 				cout << " setting up integrals" << endl;
 				const unsigned int n = waveTitles.size();
-				TCMatrix integralMatrix(n, n);
-				TCMatrix accMatrix     (n, n);
-				vector<double> phaseSpaceIntegral;
-				L.getIntCMatrix(integralMatrix, accMatrix, phaseSpaceIntegral);
+				TCMatrix           integralMatrix(n, n);
+				TCMatrix           accMatrix     (n, n);
+				vector<double>     phaseSpaceIntegral;
+				L.getIntegralMatrices(integralMatrix, accMatrix, phaseSpaceIntegral);
 				//integralMatrix.Print();
 				// representation of number of events depends on whether normalization was done
 				const int nmbEvt = useNormalizedAmps ? 1 : L.nmbEvents();

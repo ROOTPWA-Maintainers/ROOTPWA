@@ -256,12 +256,12 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 	} else
 #else  // USE_CUDA
 	{
-		accumulator_set<value_type, stats<tag::sum> > logLikelihoodAcc;
+		accumulator_set<value_type, stats<tag::sum(compensated)> > logLikelihoodAcc;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-			accumulator_set<value_type, stats<tag::sum> > likelihoodAcc;
+			accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-					accumulator_set<complexT, stats<tag::sum> > ampProdAcc;
+					accumulator_set<complexT, stats<tag::sum(compensated)> > ampProdAcc;
 					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {  // coherent sum over waves
 						ampProdAcc(prodAmps[iRank][iRefl][iWave] * _decayAmps[iEvt][iRefl][iWave]);
 						// cout << "prodAmps[" << iRank << "][" << iRefl << "][" << iWave<< "] = "
@@ -285,7 +285,7 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 	
 	// compute normalization term of log likelihood
 	timer.Start();
-	accumulator_set<value_type, stats<tag::sum> > normFactorAcc;
+	accumulator_set<value_type, stats<tag::sum(compensated)> > normFactorAcc;
 	const value_type nmbEvt = (_useNormalizedAmps) ? 1 : _nmbEvents;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -416,16 +416,16 @@ TPWALikelihood<complexT>::Gradient
 	} else
 #else  // USE_CUDA
 	{
-		accumulator_set<value_type, stats<tag::sum> > derivativeFlatAcc;
-		multi_array<accumulator_set<complexT, stats<tag::sum> >, 3>
+		accumulator_set<value_type, stats<tag::sum(compensated)> > derivativeFlatAcc;
+		multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3>
 			derivativesAcc(derivShape);
 		const value_type prodAmpFlat2 = prodAmpFlat * prodAmpFlat;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
-			accumulator_set<value_type, stats<tag::sum> > likelihoodAcc;
+			accumulator_set<value_type, stats<tag::sum(compensated)> > likelihoodAcc;
 			ampsArrayType derivative(derivShape);  // likelihood derivatives for this event
 			for (unsigned int iRank = 0; iRank < _rank; ++iRank) {  // incoherent sum over ranks
 				for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {  // incoherent sum over reflectivities
-					accumulator_set<complexT, stats<tag::sum> > ampProdAcc;
+					accumulator_set<complexT, stats<tag::sum(compensated)> > ampProdAcc;
 					for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)  // coherent sum over waves
 						ampProdAcc(prodAmps[iRank][iRefl][iWave] * _decayAmps[iEvt][iRefl][iWave]);
 					const complexT ampProdSum = sum(ampProdAcc);
@@ -468,7 +468,7 @@ TPWALikelihood<complexT>::Gradient
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				accumulator_set<complexT, stats<tag::sum> > normFactorDerivAcc;
+				accumulator_set<complexT, stats<tag::sum(compensated)> > normFactorDerivAcc;
 				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[iRefl]; ++jWave) {  // inner loop over waves with same reflectivity
 					const complexT I = _accMatrix[iRefl][iWave][iRefl][jWave];
 					normFactorDerivAcc(prodAmps[iRank][iRefl][jWave] * conj(I));
@@ -860,25 +860,29 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::getIntCMatrix(TCMatrix&       normMatrix,
-                                        TCMatrix&       accMatrix,
-                                        vector<double>& phaseSpaceIntegral) const
+TPWALikelihood<complexT>::getIntegralMatrices(TCMatrix&       normMatrix,
+                                              TCMatrix&       accMatrix,
+                                              vector<double>& phaseSpaceIntegral) const
 {
   phaseSpaceIntegral.clear();
   phaseSpaceIntegral.resize(_nmbWaves + 1, 0);
-	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+  unsigned int iIndex = 0;
+  for (unsigned int iRefl = 0; iRefl < 2; ++iRefl) {
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			const unsigned int iIndex = _waveToWaveIndex[iRefl][iWave];
 			phaseSpaceIntegral[iIndex] = _phaseSpaceIntegral[iRefl][iWave];
-			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
+			unsigned int jIndex = 0;
+			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl) {
 				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-					const unsigned int jIndex  = _waveToWaveIndex[jRefl][jWave];
 					const complexT     normVal = _normMatrix[iRefl][iWave][jRefl][jWave];
 					const complexT     accVal  = _accMatrix [iRefl][iWave][jRefl][jWave];
 					normMatrix.set(iIndex, jIndex, complex<double>(normVal.real(), normVal.imag()));
 					accMatrix.set (iIndex, jIndex, complex<double>(accVal.real(),  accVal.imag() ));
+					++jIndex;
 				}
+			}
+			++iIndex;
 		}
+  }
 	// add flat
 	normMatrix.set(_nmbWaves, _nmbWaves, 1);
 	accMatrix.set (_nmbWaves, _nmbWaves, 1);
@@ -891,11 +895,11 @@ TPWALikelihood<complexT>::getIntCMatrix(TCMatrix&       normMatrix,
 // for both rank restrictions are taken into account
 template<typename complexT>
 void
-TPWALikelihood<complexT>::buildCAmps(const double*             inPar,
-                                     vector<complex<double> >& prodAmps,
-                                     vector<pair<int, int> >&  parIndices,
-                                     vector<string>&           prodAmpNames,
-                                     const bool                withFlat) const
+TPWALikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
+                                             vector<complex<double> >& prodAmps,
+                                             vector<pair<int, int> >&  parIndices,
+                                             vector<string>&           prodAmpNames,
+                                             const bool                withFlat) const
 {
 	prodAmps.clear();
 	parIndices.clear();

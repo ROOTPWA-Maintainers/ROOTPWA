@@ -155,16 +155,16 @@ public:
 	          const std::string& ampDirName    = ".",
 	          const unsigned int numbAccEvents = 0);  ///< prepares all internal data structures
 
-	void getIntCMatrix(TCMatrix&            normMatrix,
-	                   TCMatrix&            accMatrix,
-	                   std::vector<double>& phaseSpaceIntegral) const;
+	void getIntegralMatrices(TCMatrix&            normMatrix,
+	                         TCMatrix&            accMatrix,
+	                         std::vector<double>& phaseSpaceIntegral) const;
   
 	// note: amplitudes which do not exist in higher ranks are NOT built!
-	void buildCAmps(const double*                       inPar,
-	                std::vector<std::complex<double> >& prodAmps,
-	                std::vector<std::pair<int,int> >&   parIndices,
-	                std::vector<std::string>&           prodAmpNames,
-	                const bool                          withFlat = false) const;
+	void buildProdAmpArrays(const double*                       inPar,
+	                        std::vector<std::complex<double> >& prodAmps,
+	                        std::vector<std::pair<int,int> >&   parIndices,
+	                        std::vector<std::string>&           prodAmpNames,
+	                        const bool                          withFlat = false) const;
 	
 	std::ostream& print(std::ostream& out = std::cout) const;
 	std::ostream& printFuncInfo(std::ostream& out = std::cout) const;

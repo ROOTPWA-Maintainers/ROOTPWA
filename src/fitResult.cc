@@ -63,8 +63,8 @@ fitResult::fitResult()
 	  _logLikelihood (0),
 	  _rank          (0),
 	  _covMatrixValid(false),
-	  _converged(false),
-	  _hashesse(false)
+	  _converged     (false),
+	  _hasHessian    (false)
 { }
 
 
@@ -80,7 +80,7 @@ fitResult::fitResult(const TFitBin& fitBin)
 	  _normIntegral          (fitBin.normIntegral()),
 	  _normIntIndexMap       (fitBin.prodAmpIndexMap()),
 	  _converged             (true),
-	  _hashesse              (false)
+	  _hasHessian            (false)
 {
 	_prodAmps = fitBin.prodAmps();
 	{
@@ -114,7 +114,7 @@ fitResult::fitResult(const fitResult& result)
 	  _normIntIndexMap       (result.normIntIndexMap()),
 	  _phaseSpaceIntegral    (result._phaseSpaceIntegral),
 	  _converged             (result._converged),
-	  _hashesse              (result._hashesse)
+	  _hasHessian            (result._hasHessian)
   
 { }
 
@@ -153,7 +153,7 @@ fitResult::evidence() const
 {
 
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
-  double       l   = -logLikelihood();// - intensity(".*");
+	double       l   = -logLikelihood();// - intensity(".*");
  
 	double       det = _fitParCovMatrix.Determinant();
 	// simple determinant neglecting all off-diagonal entries
@@ -222,7 +222,8 @@ fitResult::spinDensityMatrixElem(const unsigned int waveIndexA,
                                  const unsigned int waveIndexB) const
 {
 	// get pairs of amplitude indices with the same rank for waves A and B
-	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
+	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs
+		= prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
 	if (prodAmpIndexPairs.size() == 0)
 		return 0;
 	// sum up amplitude products
@@ -350,13 +351,16 @@ double
 fitResult::intensity(const char* waveNamePattern) const
 {
 	vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
-	double intensity = 0;
+	double               intensity   = 0;
 	for (unsigned int i = 0; i < waveIndices.size(); ++i) {
 		intensity += this->intensity(waveIndices[i]);
-		//std::cout << " Contribution from " << _waveNames[waveIndices[i]] 
-		//<< " = " << this->intensity(waveIndices[i]) << std::endl;
-		for (unsigned int j = 0; j < i; ++j)
+		// cout << "    contribution from " << _waveNames[waveIndices[i]] 
+		//      << " = " << this->intensity(waveIndices[i]) << endl;
+		for (unsigned int j = 0; j < i; ++j) {
 			intensity += overlap(waveIndices[i], waveIndices[j]);
+			// cout << "        overlap with " << _waveNames[waveIndices[j]] 
+			//      << " = " << overlap(waveIndices[i], waveIndices[j]) << endl;
+		}
 	}
 	return intensity;
 }
@@ -378,7 +382,8 @@ fitResult::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 		map<int, int>::const_iterator indexA = _normIntIndexMap.find(prodAmpIndexA);
 		map<int, int>::const_iterator indexB = _normIntIndexMap.find(prodAmpIndexB);
 		if ((indexA == _normIntIndexMap.end()) || (indexB == _normIntIndexMap.end())) {
-			printWarn << "Amplitude index " << prodAmpIndexA << " or " << prodAmpIndexB << " is out of bound." << endl;
+			printWarn << "Amplitude index " << prodAmpIndexA << " or " << prodAmpIndexB
+			          << " is out of bound." << endl;
 			return 0;
 		}
 		return normIntegral(indexA->second, indexB->second);
@@ -583,8 +588,8 @@ fitResult::reset()
 	_normIntegral.ResizeTo(0, 0);
 	_normIntIndexMap.clear();
 	_phaseSpaceIntegral.clear();
-	_converged=false;
-	_hashesse=false;
+	_converged  = false;
+	_hasHessian = false;
 }
 
 
@@ -601,12 +606,11 @@ fitResult::fill
  const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
  const TCMatrix&                 normIntegral,            // normalization integral matrix
  const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
- bool converged,
- bool hashesse)
-
+ const bool                      converged,
+ const bool                      hasHessian)
 {
-        _converged     = converged;
-        _hashesse      = hashesse;
+	_converged     = converged;
+	_hasHessian    = hasHessian;
 	_nmbEvents     = nmbEvents;
 	_normNmbEvents = normNmbEvents;
 	_massBinCenter = massBinCenter;
@@ -619,7 +623,8 @@ fitResult::fill
 	_fitParCovMatrix.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
 	_fitParCovMatrix        = fitParCovMatrix;
 	_fitParCovMatrixIndices = fitParCovMatrixIndices;
-	if (!(fitParCovMatrix.GetNrows() == 0) && !(fitParCovMatrix.GetNcols() == 0))  // check whether there really is an error matrix
+	// check whether there really is an error matrix
+	if (!(fitParCovMatrix.GetNrows() == 0) && !(fitParCovMatrix.GetNcols() == 0))
 		_covMatrixValid = true;
 	else
 		_covMatrixValid = false;
@@ -631,14 +636,38 @@ fitResult::fill
 
 	// check consistency
 	if (_prodAmps.size() != _prodAmpNames.size())
-		cout << "fitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
-		     << ") does not match number of production amplitude names (" << _prodAmpNames.size() << ")." << endl;
+		cout << "fitResult::fill(): warning: number of production amplitudes "
+		     << "(" << _prodAmps.size() << ") does not match number of "
+		     << "production amplitude names (" << _prodAmpNames.size() << ")." << endl;
 	if (_prodAmps.size() != _fitParCovMatrixIndices.size())
-		cout << "fitResult::fill(): warning: number of production amplitudes (" << _prodAmps.size()
-		     << ") does not match number of covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
-	if (((int)_waveNames.size() != _normIntegral.nrows()) || ((int)_waveNames.size() != _normIntegral.ncols()))
+		cout << "fitResult::fill(): warning: number of production amplitudes "
+		     << "(" << _prodAmps.size() << ") does not match number of "
+		     << "covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
+	if (   ((int)_waveNames.size() != _normIntegral.nrows())
+	       || ((int)_waveNames.size() != _normIntegral.ncols()))
 		cout << "fitResult::fill(): warning: number of waves (" << _waveNames.size()
-		     << ") does not match size of normalization integral (" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
+		     << ") does not match size of normalization integral "
+		     << "(" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
+
+	if (0) {
+		map<string, complex<double> > V;
+		for (unsigned int i = 0; i < prodAmps.size(); ++i)
+			V[prodAmpNames[i]] = prodAmps[i];
+		printInfo << "production amplitudes:" << endl;
+		for (map<string, complex<double> >::const_iterator i = V.begin(); i != V.end(); ++i)
+			cout << "     " << i->first << " = " << i->second << endl;
+		map<string, unsigned int> waveIndexMap;
+		for (unsigned int i = 0; i < _waveNames.size(); ++i)
+			waveIndexMap[_waveNames[i]] = i;
+		printInfo << "normalization integral matrix:" << endl;
+		for (map<string, unsigned int>::const_iterator i = waveIndexMap.begin();
+		     i != waveIndexMap.end(); ++i)
+			for (map<string, unsigned int>::const_iterator j = waveIndexMap.begin();
+			     j != waveIndexMap.end(); ++j)
+				cout << "    [" << i->first << "][" << j->first << "] = "
+				     << "(" << _normIntegral(i->second, j->second).Re() << ", "
+				     << _normIntegral(i->second, j->second).Im() << ")" << endl;
+	}
 }
 
 
@@ -675,18 +704,18 @@ fitResult::prodAmpIndex(const string& prodAmpName) const
 void
 fitResult::buildWaveMap()
 {
-	int n=_prodAmpNames.size();
-	for(int i=0;i<n;++i){
+	const int n = _prodAmpNames.size();
+	for (int i = 0; i < n; ++i) {
 		// strip rank
-		TString title=wavetitle(i);
-		if(find(_waveNames.begin(),_waveNames.end(),title.Data())==_waveNames.end())
+		const TString title = wavetitle(i);
+		if (find(_waveNames.begin(), _waveNames.end(), title.Data()) == _waveNames.end())
 			_waveNames.push_back(title.Data());
     
 		// look for index of first occurence
 		int j;
-		for(j=0;j<n;++j)
+		for (j = 0; j < n; ++j)
 			if(prodAmpName(j).Contains(title))
 				break;
-		_normIntIndexMap[i]=j;
+		_normIntIndexMap[i] = j;
 	}
 }
