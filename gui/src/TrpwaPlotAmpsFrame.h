@@ -16,6 +16,7 @@
 #include "TTree.h"
 #include "TGDoubleSlider.h"
 #include "TMultiGraph.h"
+#include <TASImage.h>
 
 using namespace std;
 
@@ -24,8 +25,13 @@ using namespace std;
 
 typedef map<string, TTree*> Tfilemap;
 typedef Tfilemap::iterator  Tfilemapit;
-typedef map<string, int> Twavemap;
+typedef map<string, vector< int > > Twavemap;
 typedef Twavemap::iterator Twavemapit;
+
+struct TColor_struct{
+	int rootcolorindex;
+	string colorhexcode;
+};
 
 class TrpwaPlotAmpsFrame : public TGTransientFrame {
 private:
@@ -47,7 +53,7 @@ private:
 	Tfilemap selected_fit_results; // map with title as key and a pointer to an opened Tree selected by the user
 	TTree* current_fit_result; // pointer to the fit selected in the list of selected fit results
 
-	Twavemap available_waves; // map with the wave name as key and a counter for the number of found waves in the fit results
+	Twavemap available_waves; // map with the wave name as key and a vector with references to the selected_fit_results as indexes starting from 0
 	string current_wave , current_anchor_wave;
 
 	// returns false if no fit results found
@@ -57,6 +63,20 @@ private:
 
 	// searches for all available waves in the fit results
 	vector<string>& Scan_Fit_Result(TTree* fit_results, string branchName = "fitResult_v2");
+
+	// giving a vector of indexes referring to selected_fit_results
+	// an icon is created containing colors corresponding to the fit results
+	// if divide == true, empty spaces for missing references (in case the wave is not existing in the specific set)
+	// are being created
+	// to provide only one icon (for the fit result it self) provide only one entry in the vector
+	// with the index of this fit and set divide to false
+	const TGPicture* Get_Icon(vector<int>& fit_references, bool divide = true);
+
+	// available colors for index markers
+	vector<TColor_struct> available_colors;
+
+	// creates some available colors for markers in available_colors
+	void Create_available_colors();
 
 public:
 

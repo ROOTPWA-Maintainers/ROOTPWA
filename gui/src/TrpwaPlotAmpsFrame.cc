@@ -42,6 +42,8 @@ TrpwaPlotAmpsFrame::TrpwaPlotAmpsFrame(
 	available_fit_results.clear();
 	selected_fit_results.clear();
 	available_waves.clear();
+	available_colors.clear();
+	Create_available_colors();
 	current_wave = "";
 	current_anchor_wave = "";
 	current_fit_result = NULL;
@@ -212,7 +214,7 @@ bool TrpwaPlotAmpsFrame::Add_Fit_Result(string fit_result_path, // path containi
 		vector<string> rootfiles;
 		if (!(GetDir(fit_result_path, rootfiles, ".root", false) > 0)) result = false;
 		TTree* fitresulttree = new TChain(fit_result_title.c_str());
-		for (vector<string>::iterator it = rootfiles.begin(); it != rootfiles.end(); it++){
+	   	for (vector<string>::iterator it = rootfiles.begin(); it != rootfiles.end(); it++){
 			if (!((TChain*)fitresulttree)->AddFile((fit_result_path+"/"+(*it)).c_str(), -1, "pwa")){
 				cout << " Error in TrpwaPlotAmpsFrame::Add_Fit_Result(): Could not add file " << fit_result_path+"/"+(*it) << endl;
 			} else {
@@ -238,20 +240,48 @@ void TrpwaPlotAmpsFrame::Add_Fit(int pFitFile){
 		string fitname = selected_fit->GetName();
 		if (selected_fit_results.find(fitname)==selected_fit_results.end()){
 			selected_fit_results[fitname]=selected_fit;
-			box_selected_fits->AddEntry(fitname.c_str(), pFitFile);
+			vector<int> _one_fitresult;
+			_one_fitresult.push_back(selected_fit_results.size()-1);
+			TGIconLBEntry* entry = new TGIconLBEntry(box_selected_fits, pFitFile, fitname.c_str(), Get_Icon(_one_fitresult, false));
+			box_selected_fits->AddEntry(entry,new TGLayoutHints(kLHintsTop | kLHintsLeft |
+									kLHintsExpandX,1,1,1,1));
+			//box_selected_fits->AddEntry(fitname.c_str(), pFitFile);
 			current_fit_result = selected_fit;
 			box_selected_fits->Select(pFitFile, false);
+
+			/*
+			TImage *img = TImage::Create();
+			img->FillRectangle("#FFFFFF", 0, 0, 100, 100);
+			img->BeginPaint();
+			img->DrawCircle(50, 50, 35, "#FF0000", -1);
+			img->EndPaint();
+			img->Scale(16,16); // resize to create a smaller icon
+			// now create a TGPicture from our image
+			const TGPicture *pic = gClient->GetPicturePool()->GetPicture("pic_name", img->GetPixmap(), img->GetMask());
+			TGIconLBEntry* entry = new TGIconLBEntry(box_available_waves, -10, "testentry", pic);//, UInt_t w = 0, Style_t s = 0, UInt_t options = kHorizontalFrame, Pixel_t back = GetWhitePixel())
+			box_available_waves->AddEntry(entry,new TGLayoutHints(kLHintsTop | kLHintsLeft |
+					kLHintsExpandX,1,1,1,1));
+			delete img;*/
 
 			// search now for waves to add to the list of waves
 			vector<string> wavelist = Scan_Fit_Result(current_fit_result);
 			for (vector<string>::iterator it = wavelist.begin(); it != wavelist.end(); it++){
-				available_waves[*it]++;
-				if (available_waves[*it] == 1){ // new wave found
-					static int somecounter(0); // index is not used
-					somecounter++;
-					box_available_waves->AddEntry((*it).c_str(), somecounter);
-					box_available_anchor_waves->AddEntry((*it).c_str(), somecounter);
-				}
+				available_waves[*it].push_back((int)selected_fit_results.size()-1);
+			}
+			// renew the drop down boxes
+			box_available_waves->RemoveAll();
+			box_available_anchor_waves->RemoveAll();
+			current_anchor_wave = "";
+			current_wave = "";
+			int wavecounter(0);
+			for (Twavemapit it = available_waves.begin(); it != available_waves.end(); it++){
+				wavecounter++; // index is not used
+				TGIconLBEntry* entry = new TGIconLBEntry(box_available_waves, wavecounter, it->first.c_str(), Get_Icon(it->second));
+				box_available_waves->AddEntry(entry,new TGLayoutHints(kLHintsTop | kLHintsLeft |
+						kLHintsExpandX,1,1,1,1));
+				entry = new TGIconLBEntry(box_available_anchor_waves, wavecounter, it->first.c_str(), Get_Icon(it->second));
+				box_available_anchor_waves->AddEntry(entry,new TGLayoutHints(kLHintsTop | kLHintsLeft |
+				kLHintsExpandX,1,1,1,1));
 			}
 		}
 	//selected_fit_results[];
@@ -260,11 +290,66 @@ void TrpwaPlotAmpsFrame::Add_Fit(int pFitFile){
 	}
 }
 
+// available colors for index markers
+//vector<TColor_struct> available_colors;
+
+// creates some available colors for markers in available_colors
+void TrpwaPlotAmpsFrame::Create_available_colors(){
+	if (available_colors.size() > 0) return; // initialize only once
+	TColor_struct color;
+	for (int i = 0; i < 50; i++){ // thus colors will repeat 50 times
+		color.rootcolorindex = kBlack;
+		color.colorhexcode   = "#000000";
+		available_colors.push_back(color);
+		color.rootcolorindex = kRed;
+		color.colorhexcode   = "#FF0000";
+		available_colors.push_back(color);
+		color.rootcolorindex = kGreen;
+		color.colorhexcode   = "#00FF00";
+		available_colors.push_back(color);
+		color.rootcolorindex = kBlue;
+		color.colorhexcode   = "#0000FF";
+		available_colors.push_back(color);
+	}
+}
+
+const TGPicture* TrpwaPlotAmpsFrame::Get_Icon(vector<int>& fit_references, bool divide){
+	if ((divide && selected_fit_results.size() == 0) || (!divide && fit_references.size() < 1)){
+		cout << " Errot in TrpwaPlotAmpsFrame::Get_Icon(): no fit results are given to refer to! " << endl;
+		return NULL;
+	}
+	TImage *img = TImage::Create();
+	if (divide)
+		img->FillRectangle("#FFFFFF", 0, 0, 10 * selected_fit_results.size(), 12);
+	else
+		img->FillRectangle("#FFFFFF", 0, 0, 10 * fit_references.size(), 12);
+	img->BeginPaint();
+	for (unsigned int i = 0; i < fit_references.size(); i++){
+		int posx;
+		if (divide)
+			posx = 10 * fit_references[i] + 5;
+		else
+			posx = 10 * i + 5;
+		//cout << " drawing " << posx << " " << available_colors[fit_references[i]].colorhexcode << endl;
+		img->DrawCircle(posx, 6, 4, available_colors[fit_references[i]].colorhexcode.c_str(), -1);
+		//img->Scale(16,16); // resize to create a smaller icon
+	}
+	img->EndPaint();
+	// create an arbitrary name for the new icon in the pool of pictures
+	stringstream pic_name;
+	static int counter;
+	pic_name << "generated_reference_icon_" << counter++;
+	const TGPicture *pic = gClient->GetPicturePool()->GetPicture(pic_name.str().c_str(), img->GetPixmap(), img->GetMask());
+	delete img;
+	return pic;
+}
+
+
 // will be called when an added fit file was selected
 // if the user confirms the selected item will be removed from the list
 void TrpwaPlotAmpsFrame::Remove_Fit(int pFitFile){
 	cout << pFitFile << endl;
-	cout << " calling remove fit " << endl;
+	cout << " call to remove a fit is not implemented yet" << endl;
 }
 
 // a wave will be selected from the list of available waves
@@ -353,8 +438,8 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 }
 
 void TrpwaPlotAmpsFrame::Plot_All_selected_Spin_totals(){
-	cout << " does not work yet! " << endl;
-	return;
+	cout << " plotSpinTotals() macro does not work yet properly and may crash! " << endl;
+	//return;
 	if (current_fit_result > 0){
 		cout << " Drawing all spin totals from " << current_fit_result->GetName() << ". Please be patient... " << endl;
 		plotSpinTotals(current_fit_result);
@@ -398,11 +483,12 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 	slider_mass_range->SetPosition(0.,1.);
 	string drawsame("");
 	if (current_wave == "") return;
-	int icolor(0);
+	int iwave(0);
 	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
 		TTree* selected_tree = (TTree*)it->second;
 		fitResult* massBin = new fitResult();
-		icolor++;
+		int icolor = available_colors[iwave].rootcolorindex;
+		iwave++;
 		// search for the wave indexes and the valid mass bins
 		selected_tree->SetBranchAddress(branchName.c_str(), &massBin);
 		double masscutlowA(-1.), masscutlowB(-1.), masscuthighA(-1.), masscuthighB(-1.);
@@ -514,13 +600,15 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 
 		// wave A - wave B coherence
 		canvas_selected_waves->cd(4);
-		TGraphErrors* _graph_pad4 =
-		plotCoherence(selected_tree, indexA, indexB, selectExpr.str(), "", "APZ", icolor, false, branchName);
+		TMultiGraph* _graph_pad4 =
+		plotCoherence(selected_tree, indexA, indexB, false, icolor, false, "", "APZ",
+		              selectExpr.str(), branchName);
 		if (!plotted_graphs[4]){
-			plotted_graphs[4] = new TMultiGraph();
+			plotted_graphs[4] = _graph_pad4;
+		} else {
+			plotted_graphs[4]->SetTitle(_graph_pad4->GetTitle());
+			plotted_graphs[4]->Add(_graph_pad4);
 		}
-		plotted_graphs[4]->SetTitle(_graph_pad4->GetTitle());
-		plotted_graphs[4]->Add(_graph_pad4);
 		gPad->Clear();
 		plotted_graphs[4]->Draw("APZ");
 	}

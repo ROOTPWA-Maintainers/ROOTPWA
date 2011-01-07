@@ -304,7 +304,8 @@ fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
                                     const unsigned int waveIndexB) const
 {
 	// get pairs of amplitude indices with the same rank for waves A and B
-	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs = prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
+	const vector<pair<unsigned int, unsigned int> > prodAmpIndexPairs
+		= prodAmpIndexPairsForWaves(waveIndexA, waveIndexB);
 	if (!_covMatrixValid || (prodAmpIndexPairs.size() == 0)) {
 		TMatrixT<double> spinDensCov(2, 2);
 		return spinDensCov;
@@ -334,7 +335,8 @@ fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 		subJacobianB *= M;
 		jacobian.SetSub(0, colOffset + 2 * i, subJacobianB);
 	}
-	// calculate spin density covariance matrix cov(rho_AB) = J cov(V_A0, ..., V_A(m - 1), V_B0, ..., V_B(m - 1)) J^T
+	// calculate spin density covariance matrix
+	// cov(rho_AB) = J cov(V_A0, ..., V_A(m - 1), V_B0, ..., V_B(m - 1)) J^T
 	const TMatrixT<double> jacobianT(TMatrixT<double>::kTransposed, jacobian);
 	// binary operations are unavoidable, since matrices are not squared
 	// !!! possible optimaztion: use special TMatrixT constructors to perform the multiplication
@@ -650,23 +652,52 @@ fitResult::fill
 		     << "(" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
 
 	if (0) {
-		map<string, complex<double> > V;
-		for (unsigned int i = 0; i < prodAmps.size(); ++i)
-			V[prodAmpNames[i]] = prodAmps[i];
+		// print debug information that allows to check ordering of arrays
+		map<TString, complex<double> > V;
+		for (unsigned int i = 0; i < nmbProdAmps(); ++i)
+			V[prodAmpName(i)] = prodAmp(i);
 		printInfo << "production amplitudes:" << endl;
-		for (map<string, complex<double> >::const_iterator i = V.begin(); i != V.end(); ++i)
+		for (map<TString, complex<double> >::const_iterator i = V.begin(); i != V.end(); ++i)
 			cout << "     " << i->first << " = " << i->second << endl;
-		map<string, unsigned int> waveIndexMap;
-		for (unsigned int i = 0; i < _waveNames.size(); ++i)
-			waveIndexMap[_waveNames[i]] = i;
 		printInfo << "normalization integral matrix:" << endl;
-		for (map<string, unsigned int>::const_iterator i = waveIndexMap.begin();
+		map<TString, unsigned int> waveIndexMap;
+		for (unsigned int i = 0; i < nmbWaves(); ++i)
+			waveIndexMap[waveName(i)] = i;
+		for (map<TString, unsigned int>::const_iterator i = waveIndexMap.begin();
 		     i != waveIndexMap.end(); ++i)
-			for (map<string, unsigned int>::const_iterator j = waveIndexMap.begin();
-			     j != waveIndexMap.end(); ++j)
+			for (map<TString, unsigned int>::const_iterator j = waveIndexMap.begin();
+			     j != waveIndexMap.end(); ++j) {
 				cout << "    [" << i->first << "][" << j->first << "] = "
-				     << "(" << _normIntegral(i->second, j->second).Re() << ", "
-				     << _normIntegral(i->second, j->second).Im() << ")" << endl;
+				     << this->normIntegral(i->second, j->second) << endl;
+			}
+		printInfo << "covariance matrix:" << endl;
+		map<TString, unsigned int> prodAmpIndexMap;
+		for (unsigned int i = 0; i < nmbProdAmps(); ++i)
+			prodAmpIndexMap[prodAmpName(i)] = i;
+		for (map<TString, unsigned int>::const_iterator i = prodAmpIndexMap.begin();
+		     i != prodAmpIndexMap.end(); ++i) {
+			const int iIdx[2] = { _fitParCovMatrixIndices[i->second].first,    // real part index
+			                      _fitParCovMatrixIndices[i->second].second};  // imaginary part index
+			for (map<TString, unsigned int>::const_iterator j = prodAmpIndexMap.begin();
+			     j != prodAmpIndexMap.end(); ++j) {
+				const int jIdx[2] = { _fitParCovMatrixIndices[j->second].first,    // real part index
+				                      _fitParCovMatrixIndices[j->second].second};  // imaginary part index
+				cout << "    [" << i->first << "][" << j->first << "]: " << flush;
+				if (iIdx[0] >= 0) {
+					if (jIdx[0] >= 0)
+						cout << "ReRe = " << fitParameterCov(iIdx[0], jIdx[0]) << ", " << flush;
+					if (jIdx[1] >= 0)
+						cout << "ReIm = " << fitParameterCov(iIdx[0], jIdx[1]) << ", " << flush;
+				}
+				if (iIdx[1] >= 0) {
+					if (jIdx[0] >= 0)
+						cout << "ImRe = " << fitParameterCov(iIdx[1], jIdx[0]) << ", " << flush;
+					if (jIdx[1] >= 0)
+						cout << "ImIm = " << fitParameterCov(iIdx[1], jIdx[1]) << flush;
+				}
+				cout << endl;
+			}
+		}
 	}
 }
 
