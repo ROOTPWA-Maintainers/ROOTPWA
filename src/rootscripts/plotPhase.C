@@ -78,8 +78,8 @@ plotPhase(const unsigned int nmbTrees,     // number of fitResult trees
 		waveNameA = massBin->waveName(waveIndexA).Data();
 		waveNameB = massBin->waveName(waveIndexB).Data();
 	}
-	printInfo << "plotting phase between wave '" << waveNameA << "' [" << waveIndexA << "] "
-	          << "and wave '" << waveNameB << "' [" << waveIndexB << "]" << endl;
+	printInfo << "plotting phase between waves '" << waveNameA << "' [" << waveIndexA << "] "
+	          << "and '" << waveNameB << "' [" << waveIndexB << "]" << endl;
 	if (selectExpr != "")
 		cout << "    using selection criterion '" << selectExpr << "'" << endl;
 
@@ -120,7 +120,7 @@ plotPhase(const unsigned int nmbTrees,     // number of fitResult trees
 			continue;
 		}
 
-		// builf and run TTree::Draw() expression
+		// build and run TTree::Draw() expression
 		stringstream drawExpr;
 		drawExpr << branchName << ".phase("    << waveIndexAThisTree << "," << waveIndexBThisTree << "):"
 		         << branchName << ".phaseErr(" << waveIndexAThisTree << "," << waveIndexBThisTree << "):"
@@ -167,7 +167,7 @@ plotPhase(const unsigned int nmbTrees,     // number of fitResult trees
 
 	// add legend
 	if (drawLegend && (nmbTrees > 1)) {
-		TLegend* legend = new TLegend(0.65,0.80,0.99,0.99);
+		TLegend* legend = new TLegend(0.65, 0.80, 0.99, 0.99);
 		legend->SetFillColor(10);
 		legend->SetBorderSize(1);
 		legend->SetMargin(0.2);

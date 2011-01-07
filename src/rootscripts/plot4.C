@@ -54,81 +54,135 @@ using namespace std;
 using namespace rpwa;
 
 
+// .............................................................................
 // signature with wave indices
 void
-plot4(TTree*       tree,             // fitResult tree
-      const int    waveIndexA,       // index of first wave
-      const int    waveIndexB,       // index of second wave
-      const double massMin     = 0,  // [GeV/c^2]
-      const double massMax     = 0,  // [GeV/c^2]
-      const string& branchName = "fitResult_v2",
-      TCanvas* canvas_result = NULL) // fill a given canvas instead of creating one (name/title will be changed)
+plot4(const unsigned int nmbTrees,            // number of fitResult trees
+      TTree**            trees,               // array of fitResult trees
+      const int          waveIndexA,          // index of first wave
+      const int          waveIndexB,          // index of second wave
+      const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
+      const int*         graphColors = NULL,   // array of colors for graph line and marker
+      const bool         drawLegend  = true,   // if set legend is drawn
+      const std::string& graphTitle  = "",     // name and title of graph (default is wave IDs)
+      const char*        drawOption  = "AP",   // draw option for graph
+      const double       massMin     = 0,     // [GeV/c^2]
+      const double       massMax     = 0,     // [GeV/c^2]
+      const string&      branchName  = "fitResult_v2",
+      TCanvas*           canvas      = NULL)  // fill a given canvas instead of creating one (name/title will be changed)
 {
-	if (!tree) {
-		printErr << "null pointer to tree. exiting." << endl;
-		return;
-	}
+	for (unsigned int i = 0; i < nmbTrees; ++i)
+		if (!trees[i]) {
+			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
+			return;
+		}
 
 	// select mass range; convert from GeV/c^2 to MeV/c^2
 	stringstream selectExpr;
 	if ((massMin != 0) || (massMax != 0))
-		selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") && (massBinCenter() <= " << massMax * 1000 << ")";
+		selectExpr << "(massBinCenter() >= "<< massMin * 1000 << ") "
+		           << "&& (massBinCenter() <= " << massMax * 1000 << ")";
 
 	stringstream canvName;
 	canvName << "4plot_" << waveIndexA << "_" << waveIndexB;
-	TCanvas* canv = canvas_result;
-	// create a new Canvas if no Canvas given to draw to
-	if (!canv){
-		canv = new TCanvas(canvName.str().c_str(), canvName.str().c_str(), 10, 10, 1000, 800);
+	// create a new canvas if no canvas given to draw into
+	if (!canvas){
+		canvas = new TCanvas(canvName.str().c_str(), canvName.str().c_str(), 10, 10, 1000, 800);
 	} else {
-		canv->SetName(canvName.str().c_str());
-		canv->SetTitle(canvName.str().c_str());
-		canv->SetCanvasSize(1000,800);
+		canvas->SetName(canvName.str().c_str());
+		canvas->SetTitle(canvName.str().c_str());
+		canvas->SetCanvasSize(1000, 800);
 	}
-	canv->Divide(2, 2);
-	canvas_result = canv;
+	canvas->Divide(2, 2);
  
 	// wave A intensity
-	canv->cd(1);
-	plotIntensity(tree, waveIndexA, false, kBlack, false, "", "APZ", 1, 0,
-	              selectExpr.str(), branchName);
-
+	canvas->cd(1);
+	plotIntensity(nmbTrees, trees, waveIndexA, false, graphColors, drawLegend,
+	              graphTitle, drawOption, 1, 0, selectExpr.str(), branchName);
 	// wave A - wave B phase angle
-	canv->cd(2);
-	plotPhase(tree, waveIndexA, waveIndexB, false, kBlack, false, "", "APZ",
-	          selectExpr.str(), branchName);
-
+	canvas->cd(2);
+	plotPhase(nmbTrees, trees, waveIndexA, waveIndexB, false, graphColors, drawLegend,
+	          graphTitle, drawOption, selectExpr.str(), branchName);
 	// wave B intensity
-	canv->cd(3);
-	plotIntensity(tree, waveIndexB, false, kBlack, false, "", "APZ", 1, 0,
-	              selectExpr.str(), branchName);
-
+	canvas->cd(3);
+	plotIntensity(nmbTrees, trees, waveIndexB, false, graphColors, drawLegend,
+	              graphTitle, drawOption, 1, 0, selectExpr.str(), branchName);
 	// wave A - wave B coherence
-	canv->cd(4);
-	plotCoherence(tree, waveIndexA, waveIndexB, selectExpr.str(), "", "APZ", kBlack, false, branchName);
+	canvas->cd(4);
+	plotCoherence(nmbTrees, trees, waveIndexA, waveIndexB, false, graphColors, drawLegend,
+	              graphTitle, drawOption, selectExpr.str(), branchName);
+	
+	// create EPS file
+	if (saveEps)
+		gPad->SaveAs(((string)canvas->GetName() + ".eps").c_str());
 }
  
 
+void
+plot4(TTree*        tree,                 // fitResult tree
+      const int     waveIndexA,           // index of first wave
+      const int     waveIndexB,           // index of second wave
+      const bool    saveEps    = false,   // if set, EPS file with name wave ID is created
+      const int     graphColor = kBlack,  // array of colors for graph line and marker
+      const bool    drawLegend = false,   // if set legend is drawn
+      const string& graphTitle = "",      // name and title of graph (default is wave IDs)
+      const char*   drawOption = "AP",    // draw option for graph
+      const double  massMin    = 0,       // [GeV/c^2]
+      const double  massMax    = 0,       // [GeV/c^2]
+      const string& branchName = "fitResult_v2",
+      TCanvas*      canvas     = NULL)    // fill a given canvas instead of creating one (name/title will be changed)
+{
+	plot4(1, &tree, waveIndexA, waveIndexB, saveEps, &graphColor, drawLegend,
+	      graphTitle, drawOption, massMin, massMax, branchName, canvas);
+}
+
+
+// .............................................................................
 // signature with wave names
 void
-plot4(TTree*        tree,            // fitResult tree
-      const string& waveNameA,       // name of first wave
-      const string& waveNameB,       // name of second wave
-      const double  massMin    = 0,  // [GeV/c^2]
-      const double  massMax    = 0,  // [GeV/c^2]
-      const string& branchName = "fitResult_v2")
+plot4(const unsigned int nmbTrees,            // number of fitResult trees
+      TTree**            trees,               // array of fitResult trees
+      const string&      waveNameA,           // name of first wave
+      const string&      waveNameB,           // name of second wave
+      const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
+      const int*         graphColors = NULL,   // array of colors for graph line and marker
+      const bool         drawLegend  = true,   // if set legend is drawn
+      const std::string& graphTitle  = "",     // name and title of graph (default is wave IDs)
+      const char*        drawOption  = "AP",   // draw option for graph
+      const double       massMin     = 0,     // [GeV/c^2]
+      const double       massMax     = 0,     // [GeV/c^2]
+      const string&      branchName  = "fitResult_v2")
 {
-	if (!tree) {
+	if (!trees[0]) {
 		printErr << "null pointer to tree. exiting." << endl;
 		return;
 	}
 	// get wave indices (assumes same wave set in all trees)
 	fitResult* massBin = new fitResult();
-	tree->SetBranchAddress(branchName.c_str(), &massBin);
-	tree->GetEntry(0);
+	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+	trees[0]->GetEntry(0);
 	const int indexA = massBin->waveIndex(waveNameA);
 	const int indexB = massBin->waveIndex(waveNameB);
 	if ((indexA >= 0) && (indexB >= 0))
-		return plot4(tree, indexA, indexB, massMin, massMax);
-	printErr << "cannot find wave(s) in tree '" << tree->GetName() << "'. exiting." << endl;
+		return plot4(nmbTrees, trees, indexA, indexB, saveEps, graphColors, drawLegend,
+		             graphTitle, drawOption, massMin, massMax, branchName);
+	printErr << "cannot find wave(s) in tree '" << trees[0]->GetName() << "'. exiting." << endl;
+}
+
+
+void
+plot4(TTree*        tree,                 // fitResult tree
+      const string& waveNameA,            // name of first wave
+      const string& waveNameB,            // name of second wave
+      const bool    saveEps    = false,   // if set, EPS file with name wave ID is created
+      const int     graphColor = kBlack,  // array of colors for graph line and marker
+      const bool    drawLegend = false,   // if set legend is drawn
+      const string& graphTitle = "",      // name and title of graph (default is wave IDs)
+      const char*   drawOption = "AP",    // draw option for graph
+      const double  massMin    = 0,       // [GeV/c^2]
+      const double  massMax    = 0,       // [GeV/c^2]
+      const string& branchName = "fitResult_v2")
+{
+	plot4(1, &tree, waveNameA, waveNameB, saveEps, &graphColor, drawLegend,
+	      graphTitle, drawOption, massMin, massMax, branchName);
 }

@@ -600,13 +600,15 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 
 		// wave A - wave B coherence
 		canvas_selected_waves->cd(4);
-		TGraphErrors* _graph_pad4 =
-		plotCoherence(selected_tree, indexA, indexB, selectExpr.str(), "", "APZ", icolor, false, branchName);
+		TMultiGraph* _graph_pad4 =
+		plotCoherence(selected_tree, indexA, indexB, false, icolor, false, "", "APZ",
+		              selectExpr.str(), branchName);
 		if (!plotted_graphs[4]){
-			plotted_graphs[4] = new TMultiGraph();
+			plotted_graphs[4] = _graph_pad4;
+		} else {
+			plotted_graphs[4]->SetTitle(_graph_pad4->GetTitle());
+			plotted_graphs[4]->Add(_graph_pad4);
 		}
-		plotted_graphs[4]->SetTitle(_graph_pad4->GetTitle());
-		plotted_graphs[4]->Add(_graph_pad4);
 		gPad->Clear();
 		plotted_graphs[4]->Draw("APZ");
 	}
