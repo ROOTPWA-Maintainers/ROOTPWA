@@ -294,6 +294,12 @@ set(ROOTPWASCRIPTS_LIBS
 	)
 
 # RootPwaAmp
+set(AMPLITUDE_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/amplitude
+	)
+set(AMPLITUDE_LIBS
+  RootPwaAmp
+	)
 add_subdirectory(amplitude)
 
 # RootPwaTools

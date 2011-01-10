@@ -182,16 +182,14 @@ namespace rpwa {
 	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
 	{
 		// find field
-// 		if (not parent.exists(groupName)) {
-// 			if (mustExist)
-// 				printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
-// 				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
-// 			return 0;
-// 		}
+
 		const libconfig::Setting* groupKey = 0;
 		try {
 			groupKey = &(parent[groupName]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
+			if (mustExist)
+			 	printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
+						  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 		
@@ -212,16 +210,13 @@ namespace rpwa {
 	                  const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty list
 	{
 		// find field
-// 		if (not parent.exists(listName)) {
-// 			if (mustExist)
-// 				printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
-// 				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
-// 			return 0;
-// 		}
+
 		const libconfig::Setting* listKey = 0;
 		try {
 			listKey = &(parent[listName]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
+			printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
+			          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 		// check that it is a list
@@ -249,16 +244,13 @@ namespace rpwa {
 	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty array
 	{
 		// find field
-// 		if (not parent.exists(arrayName)) {
-// 			if (mustExist)
-// 				printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
-// 				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
-// 			return 0;
-// 		}
+
 		const libconfig::Setting* arrayKey = 0;
 		try {
 			arrayKey = &(parent[arrayName]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
+			printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
+					  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
 		
@@ -277,8 +269,8 @@ namespace rpwa {
 		}
 		return arrayKey;
 	}
-  
-  
+	
+	
 } // namespace rpwa
 
 
