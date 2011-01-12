@@ -105,8 +105,8 @@ complex<double>
 rpwa::pwabkg::val(double m) const {
   m-=_m0; // shift baseline mass
   // calculate breakup momentum
-  if(m<_m1+_m2)return complex<double>(0,0);
-  complex<double> p=q(m,_m1,_m2);
+  complex<double> p;
+  if(m<_m1+_m2)return complex<double>(1,0);
   //std::cerr << _name <<"  val=" << exp(-_gamma*p) << std::endl;
   return exp(-_gamma*p);
 }

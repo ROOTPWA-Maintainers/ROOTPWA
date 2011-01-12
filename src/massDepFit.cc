@@ -147,7 +147,7 @@ main(int    argc,
 extern char* optarg;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:M:m:t:qh")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qh")) != -1)
     switch (ca) {
     case 'c':
       configFile = optarg;
@@ -322,6 +322,17 @@ extern char* optarg;
       compset.add(bkg);
     }// end loop over background
   }// endif
+
+  // set anchorwave
+  string anchorwave_channel;
+  string anchorwave_reso;
+  if(Conf.exists("components.anchorwave")){
+    Conf.lookupValue("components.anchorwave.channel",anchorwave_channel);
+    Conf.lookupValue("components.anchorwave.resonance",anchorwave_reso);
+    cout << "Ancorwave: "<< endl;
+    cout << "    " << anchorwave_reso << endl;
+    cout << "    " << anchorwave_channel << endl;
+  }
 
 
     cout << "---------------------------------------------------------------------" << endl << endl;
@@ -511,9 +522,9 @@ extern char* optarg;
       minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.C().real(), 0.10);
       
       // fix one phase
-      // if(it->first==anchorwave)minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
+       if(name==anchorwave_reso && it->first==anchorwave_channel)minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
 	
-	if(0);else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
+      else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
       
       ++it;
     } // end loop over channels
