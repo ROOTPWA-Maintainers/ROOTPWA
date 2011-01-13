@@ -37,6 +37,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <complex>
 #include <cassert>
@@ -323,15 +324,26 @@ extern char* optarg;
     }// end loop over background
   }// endif
 
+ cout << "---------------------------------------------------------------------" << endl << endl;
+
   // set anchorwave
-  string anchorwave_channel;
-  string anchorwave_reso;
+  vector<string> anchorwave_channel;
+  vector<string> anchorwave_reso;
   if(Conf.exists("components.anchorwave")){
-    Conf.lookupValue("components.anchorwave.channel",anchorwave_channel);
-    Conf.lookupValue("components.anchorwave.resonance",anchorwave_reso);
-    cout << "Ancorwave: "<< endl;
-    cout << "    " << anchorwave_reso << endl;
-    cout << "    " << anchorwave_channel << endl;
+    const Setting &anc = root["components"]["anchorwave"];
+    // loop through breitwigners
+    unsigned int nanc=anc.getLength();
+    for(unsigned int ianc=0;ianc<nanc;++ianc){
+      string ch,re;
+      const Setting &anco = anc[ianc];
+      anco.lookupValue("channel",ch);
+      anco.lookupValue("resonance",re);
+      cout << "Ancorwave: "<< endl;
+      cout << "    " << re << endl;
+      cout << "    " << ch << endl;
+      anchorwave_channel.push_back(ch);
+      anchorwave_reso.push_back(re);
+    }
   }
 
 
@@ -522,8 +534,9 @@ extern char* optarg;
       minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.C().real(), 0.10);
       
       // fix one phase
-       if(name==anchorwave_reso && it->first==anchorwave_channel)minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
-	
+      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->first)!=anchorwave_channel.end()){
+	minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
+      }
       else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
       
       ++it;
