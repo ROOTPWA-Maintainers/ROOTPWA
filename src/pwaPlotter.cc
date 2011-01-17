@@ -204,7 +204,7 @@ pwaPlotter::addFit(const std::string& filename,
   double logliperevt=0;
   double evi=0;
   double eviperevt=0;
-  
+  unsigned int numwaves=0;
   set<string> wavesinthisfit;
   
   for(unsigned int i=0;i<nbins;++i){
@@ -229,8 +229,9 @@ pwaPlotter::addFit(const std::string& filename,
     // check fitResult for used waves
     // if not already registered -> register wave (will create TMultiGraph)
     const vector<string>& waveNames=result->waveNames();
-    unsigned int nwaves=waveNames.size();
-    for(unsigned int iw=0;iw<nwaves;++iw){
+    numwaves=waveNames.size();
+    // cout << "Number of Waves ="<< nwaves << endl;
+    for(unsigned int iw=0;iw<numwaves;++iw){
       registerWave(waveNames[iw]);
       wavesinthisfit.insert(waveNames[iw]);
       // spin totals...
@@ -476,13 +477,14 @@ pwaPlotter::addFit(const std::string& filename,
 			 branchname);
   meta.setLikelihoods(logli,logliperevt,evi,eviperevt);
   meta.setBinRange(mass_min-binwidth*0.5,mass_max+binwidth*0.5,nbins);
+  meta.setNWaves(numwaves);
   mResultMetaInfo.push_back(meta);
   mMinEvidence=(mMinEvidence*ifit+evi)/(ifit+1);
     
   cout << "Fit Quality Summary: " << endl;
-  cout << "  LogLikelihood: " << logli << endl;
-  cout << "  Evidence:      " << evi << endl;
-  
+  cout << "  LogLikelihood:   " << logli << endl;
+  cout << "  Evidence:        " << evi << endl;
+  cout << "  Number of waves: " << numwaves << endl;
 
   // cleanup
   infile->Close();
@@ -534,6 +536,14 @@ pwaPlotter::printStats(){
 	 << " with average evidence " << mWaveEvidence[it2->second]/(double)it2->first<< endl;
     ++it2;
   }
+
+  double numwave=0;
+  for(unsigned int i=0;i<mResultMetaInfo.size();++i){
+    numwave+=mResultMetaInfo[i].nWaves;
+  }
+  numwave/=(double)mResultMetaInfo.size();
+  cout << "Average number of waves: " << numwave << endl;
+  
 }
 
 
