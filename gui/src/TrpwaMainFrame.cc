@@ -448,9 +448,9 @@ void TrpwaMainFrame::FitPartialWaves(){
 			string executedir;
 			int seed = _fit_options.seed;
 			stringstream command;
-			command << "cd " << executedir << ";\n";
 			for (unsigned int ifit = 0; ifit < _fit_options.niterations; ifit++){
 				string fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed);
+				command << "cd " << executedir << ";\n";
 				if (seed > 0) seed++;
 				command << fitcommand << ";\n";
 			}
