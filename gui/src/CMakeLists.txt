@@ -58,6 +58,7 @@ set(SOURCES
   TrpwaEventTreeHandler.cc
   TrpwaCommonTools.cc
   TrpwaPlotAmpsFrame.cc
+  TrpwaFitOptionsFrame.cc
 ) 
 
 # ROOT dictionary
@@ -65,7 +66,7 @@ set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
 root_generate_dictionary(
   "${ROOTPWAGUI_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
-  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h"
+  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h;TrpwaFitOptionsFrame.h"
   "rootPwaGuiLinkDef.h"
 )
 # message(" using rootpwa_dictionary "${ROOTPWA_DICTIONARY})

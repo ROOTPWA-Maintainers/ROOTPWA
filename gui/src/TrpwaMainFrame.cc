@@ -20,6 +20,7 @@
 #include <cmath>
 #include "TrpwaSessionManager.h"
 #include "TrpwaJobManager.h"
+#include "TrpwaFitOptionsFrame.h"
 #include <TGFileDialog.h>
 #include <TGMsgBox.h>
 #include <cstdlib>
@@ -421,6 +422,15 @@ void TrpwaMainFrame::Dummy(){
 
 void TrpwaMainFrame::FitPartialWaves(){
 	if (current_session){
+		// ask the user for the fit settings he wants
+		Tfit_options _fit_options;
+		_fit_options.niterations = 1;
+		_fit_options.rank = 1;
+		_fit_options.seed = 12345;
+		_fit_options.use_normalization = current_session->Is_Normalization_available();
+		TrpwaFitOptionsFrame* frame_fit_options = new TrpwaFitOptionsFrame(_fit_options);
+		if (!frame_fit_options) cout << " dummy " << endl;
+
 		// calls will move to a separate class depending on the
 		// farm type given, but for now implemented here
 
@@ -436,10 +446,14 @@ void TrpwaMainFrame::FitPartialWaves(){
 
 		for (int i = 0; i < current_session->Get_n_bins(); i++){
 			string executedir;
-			string fitcommand = current_session->GetFitCommand(i, executedir);
+			int seed = _fit_options.seed;
 			stringstream command;
 			command << "cd " << executedir << ";\n";
-			command << fitcommand << ";\n";
+			for (unsigned int ifit = 0; ifit < _fit_options.niterations; ifit++){
+				string fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed);
+				if (seed > 0) seed++;
+				command << fitcommand << ";\n";
+			}
 			cout << " sending fit job for bin " << i << endl;
 			if (!jobmanager->SendJob(command.str(), "fit")){
 				cout << " failed!" << endl;

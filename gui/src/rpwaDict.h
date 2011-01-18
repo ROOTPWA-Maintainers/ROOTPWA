@@ -30,6 +30,7 @@ extern void G__set_cpp_environmentrpwaDict();
 
 #include "TObject.h"
 #include "TMemberInspector.h"
+#include "../src/TrpwaFitOptionsFrame.h"
 #include "../src/TrpwaMainFrame.h"
 #include "../src/TrpwaPlotAmpsFrame.h"
 #include "../src/TrpwaWaveSelectFrame.h"
@@ -59,6 +60,11 @@ extern G__linked_taginfo G__rpwaDictLN_TGVerticalFrame;
 extern G__linked_taginfo G__rpwaDictLN_TGMainFrame;
 extern G__linked_taginfo G__rpwaDictLN_TGTransientFrame;
 extern G__linked_taginfo G__rpwaDictLN_TGGroupFrame;
+extern G__linked_taginfo G__rpwaDictLN_TGButton;
+extern G__linked_taginfo G__rpwaDictLN_TGCheckButton;
+extern G__linked_taginfo G__rpwaDictLN_TGNumberEntry;
+extern G__linked_taginfo G__rpwaDictLN_Tfit_options;
+extern G__linked_taginfo G__rpwaDictLN_TrpwaFitOptionsFrame;
 extern G__linked_taginfo G__rpwaDictLN_TCanvas;
 extern G__linked_taginfo G__rpwaDictLN_TRootEmbeddedCanvas;
 extern G__linked_taginfo G__rpwaDictLN_vectorlEstringcOallocatorlEstringgRsPgR;
@@ -70,7 +76,6 @@ extern G__linked_taginfo G__rpwaDictLN_reverse_iteratorlEvectorlEvectorlEstringc
 extern G__linked_taginfo G__rpwaDictLN_vectorlEintcOallocatorlEintgRsPgR;
 extern G__linked_taginfo G__rpwaDictLN_reverse_iteratorlEvectorlEintcOallocatorlEintgRsPgRcLcLiteratorgR;
 extern G__linked_taginfo G__rpwaDictLN_maplEstringcOvectorlEstringcOallocatorlEstringgRsPgRcOlesslEstringgRcOallocatorlEpairlEconstsPstringcOvectorlEstringcOallocatorlEstringgRsPgRsPgRsPgRsPgR;
-extern G__linked_taginfo G__rpwaDictLN_TGButton;
 extern G__linked_taginfo G__rpwaDictLN_TGComboBox;
 extern G__linked_taginfo G__rpwaDictLN_vectorlETWaveSelectioncOallocatorlETWaveSelectiongRsPgR;
 extern G__linked_taginfo G__rpwaDictLN_reverse_iteratorlEvectorlETWaveSelectioncOallocatorlETWaveSelectiongRsPgRcLcLiteratorgR;

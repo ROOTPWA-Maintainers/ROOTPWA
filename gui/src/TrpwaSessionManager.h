@@ -343,7 +343,10 @@ public:
 
 	// return the command to fit a certain bin
 	// executedir is the directory to execute this command in
-	string GetFitCommand(int ibin, string& executedir);
+	string GetFitCommand(int ibin, string& executedir,
+			bool normalize = true, // use acceptance normalization integral if available
+			unsigned int rank = 1, // set the rank of the fit
+			int seed = 12345);// set the seed for the random number generator (-1 use a randomly generated number)
 
 	// return the command to generate flat phase space events
 	// into the specified bin with the number of events specified
@@ -395,6 +398,10 @@ public:
 	void Get_List_of_Fits(vector<string>& folders, // list of folders with fits
 			vector<string>* titles = NULL, 		  // optional list of fit titles
 			vector<string>* descriptions = NULL); // optional list of fit descriptions
+
+	// true if .int files are available
+	// if ibin < 0 then checking for all bins
+	bool Is_Normalization_available(int ibin = -1);
 
 private:
 	string _config_file; // filename with path to the config file of this session

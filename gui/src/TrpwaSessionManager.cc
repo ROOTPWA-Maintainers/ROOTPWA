@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <complex>
 #include "TrpwaCommonTools.h"
+#include "TRandom.h"
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -1297,12 +1298,38 @@ string TrpwaSessionManager::GetWaveListFile(int ibin, int& bin_low, int& bin_hig
 	return result;
 }
 
-string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
+bool TrpwaSessionManager::Is_Normalization_available(int ibin){
+	bool all_available = true;
+	if (ibin > _n_bins) return false;
+	int bincounter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin || ibin < 0){
+			string acceptancefile = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "ACCAMPS/" + "norm.int";
+			string normalizationfile = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "PSPAMPS/" + "norm.int";
+			if (!FileExists(acceptancefile)){
+				all_available = false;
+				break;
+			}
+			if (!FileExists(normalizationfile)){
+				all_available = false;
+				break;
+			}
+		}
+		bincounter++;
+	}
+	return all_available;
+}
+
+string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir,
+		bool normalize,
+		unsigned int rank, // set the rank of the fit
+		int seed){
 	string result = "";
 	string wavelistfile = "";
 	string normalizationfile = "";
 	string acceptancefile = "";
 	string fitresultfile = "";
+
 	int bincounter(0);
 	int bin_low = -1;
 	int bin_high = -1;
@@ -1330,17 +1357,18 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 		cout << " Error in TrpwaSessionManager::GetFitCommand(): normalization integral file " << normalizationfile << " does not exist! " << endl;
 		return result;
 	}
+	if (seed < 0) seed = gRandom->Uniform(1000,100000);
 	stringstream _result;
-	if (!FileExists(acceptancefile)){
-		cout << " Warning in TrpwaSessionManager::GetFitCommand(): acceptance integral file " << acceptancefile << " does not exist! " << endl;
+	if (!normalize || !FileExists(acceptancefile)){
+		cout << " Warning in TrpwaSessionManager::GetFitCommand(): no acceptance normalization used! " << endl;
 		cout << " Supplying fit command without normalization! " << endl;
 		//_result << " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
-		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< normalizationfile <<" -u " << bin_high << " -N -n " + normalizationfile;
+		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r "<< rank << " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< normalizationfile <<" -u " << bin_high << " -N -n " + normalizationfile << " -s " << seed;
 		result = _result.str();
 		return result;
 	} else {
 		//_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
-		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile;
+		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r "<< rank << " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile << " -s " << seed;
 		result = _result.str();
 		return result;
 	}
