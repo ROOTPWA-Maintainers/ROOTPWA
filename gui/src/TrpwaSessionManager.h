@@ -121,6 +121,18 @@ public:
 	// set the description of this session
 	bool Set_description(string description);
 
+	// Set the current fit title
+	bool Set_current_fit_title(string title){
+		_fit_title = title;
+		return true;
+	};
+
+	// Set the description of the current fit
+	bool Set_current_fit_description(string description){
+		_fit_description = description;
+		return true;
+	};
+
 	// Call after having set all Variables
 	// creates a map of variables for fast access
 	// true if succeeded
@@ -165,6 +177,13 @@ public:
 
 	// Get the description of this session
 	string Get_description(){return _description;};
+
+	// Get the title of the current fit
+	// note: Might be empty if not set1
+	string Get_current_fit_title(){return _fit_title;};
+
+	// Get the description of the current fit
+	string Get_current_fit_description(){return _fit_description;};
 
 	// returns the status [0-1] of the folder structure
 	// (counting folders)
@@ -389,6 +408,9 @@ public:
 	// will be created
 	// returns true if succeeded
 	// folder will be put to the list of existing fit results
+	// if title or description not given
+	// current_title and current_description will be used
+	// if title then still not set then title will be generated
 	bool Save_Fit(string folder = "", string title = "", string description = "");
 
 	// load a Fit from the specified folder
@@ -420,6 +442,9 @@ private:
 	string _file_keyfile_generator; // filename with path to the key file generator
 	string _title; // the title of the session
 	string _description; // users description of this session
+
+	string _fit_title; // name of current fit
+	string _fit_description; // description of current fit
 
 	vector<string> _fit_folders; // absolute paths of fit folders
 	vector<string> _fit_titles ; // titles of the fits

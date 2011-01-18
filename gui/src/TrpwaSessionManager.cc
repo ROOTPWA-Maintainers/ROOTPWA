@@ -170,6 +170,9 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 		}
 
+		file << " current_fit_title       = "<< "\"" << Get_current_fit_title()<< "\"" << endl;
+		file << " current_fit_description = "<< "\"" << Get_current_fit_description()<< "\"" << endl;
+
 		//map <int, TrpwaBinInfo> _bins; // map with settings to each bin
 		result = true;
 	}
@@ -276,6 +279,18 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 		result = false;
 	} else {
 		if (!Set_key_file_generator_file(_val_string)) result = false;
+	}
+
+	if (!_config.lookupValue("current_fit_title", _val_string)){
+		_fit_title = "";
+	} else {
+		if (!Set_current_fit_title(_val_string)) result = false;
+	}
+
+	if (!_config.lookupValue("current_fit_description", _val_string)){
+		_fit_description = "";
+	} else {
+		if (!Set_current_fit_description(_val_string)) result = false;
 	}
 
 	if (    _config.exists("bins_lowedge")&&
@@ -1871,7 +1886,14 @@ bool TrpwaSessionManager::Save_Fit(string folder, string title, string descripti
 			//cout << stime[i];
 		}
 		_folder = _dir_fit_results+"/fit_constellation_"+title+"_"+stime;
-		if (title == "") title = stime;
+		if (title == "") {
+			title = Get_current_fit_title();
+			if (title == "")
+				title = stime;
+		}
+		if (description == ""){
+			description = Get_current_fit_description();
+		}
 	}
 	if (DirExists(_folder)){
 		cout << " Error in TrpwaSessionManager::Save_Fit(): folder " << _folder << " is already existing! " << endl;
@@ -1879,10 +1901,30 @@ bool TrpwaSessionManager::Save_Fit(string folder, string title, string descripti
 	} else {
 		cout << " creating fit directory " << system(("mkdir "+_folder).c_str()) << endl;
 	}
-	cout << " moving fit results " << system(("cp "+_dir_fit_results+"/* "+_folder).c_str()) << endl;
+	for (int ifit = 0; ifit < Get_n_bins(); ifit++){
+		int bin_low, bin_high;
+		string fitresultfile;
+		string wavelistfile = GetWaveListFile(ifit, bin_low, bin_high, fitresultfile);
+		if (FileExists(fitresultfile)){
+			cout << " moving fit result " << fitresultfile;
+			cout << system(("mv "+fitresultfile+" "+_folder+"/").c_str()) << endl;
+		} else {
+			cout << " Warning: fit result file " << fitresultfile << " does not exist! " << endl;
+		}
+		if (FileExists(wavelistfile)){
+			cout << " copying corresponding wavelist file ";
+			cout << system(("cp "+wavelistfile+" "+_folder+"/").c_str()) << endl;
+		} else {
+			cout << " Warning: wave list file " << wavelistfile << " does not exist! " << endl;
+		}
+	}
+	//cout << " moving fit results " << system(("cp "+_dir_fit_results+"/* "+_folder).c_str()) << endl;
 	_fit_folders.push_back(_folder);
 	_fit_titles.push_back(title);
 	_fit_descriptions.push_back(description);
+	// reset the current fit description and title
+	_fit_title = "";
+	_fit_description = "";
 	return result;
 }
 

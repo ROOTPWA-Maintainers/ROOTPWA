@@ -62,6 +62,7 @@ extern G__linked_taginfo G__rpwaDictLN_TGTransientFrame;
 extern G__linked_taginfo G__rpwaDictLN_TGGroupFrame;
 extern G__linked_taginfo G__rpwaDictLN_TGButton;
 extern G__linked_taginfo G__rpwaDictLN_TGCheckButton;
+extern G__linked_taginfo G__rpwaDictLN_TGTextEntry;
 extern G__linked_taginfo G__rpwaDictLN_TGNumberEntry;
 extern G__linked_taginfo G__rpwaDictLN_Tfit_options;
 extern G__linked_taginfo G__rpwaDictLN_TrpwaFitOptionsFrame;

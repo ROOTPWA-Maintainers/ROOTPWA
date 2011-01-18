@@ -430,6 +430,8 @@ void TrpwaMainFrame::FitPartialWaves(){
 		_fit_options.use_normalization = current_session->Is_Normalization_available();
 		TrpwaFitOptionsFrame* frame_fit_options = new TrpwaFitOptionsFrame(_fit_options);
 		if (!frame_fit_options) cout << " dummy " << endl;
+		cout << current_session->Set_current_fit_title(_fit_options.title) << endl;
+		cout << current_session->Set_current_fit_description(_fit_options.description) << endl;
 
 		// calls will move to a separate class depending on the
 		// farm type given, but for now implemented here
@@ -461,6 +463,7 @@ void TrpwaMainFrame::FitPartialWaves(){
 				cout << " done " << endl;
 			}
 		}
+		cout << " saving current constellation " << current_session->Save_Session() << endl;
 
 
 /*
