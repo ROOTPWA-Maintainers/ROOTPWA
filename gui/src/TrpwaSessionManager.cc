@@ -170,8 +170,8 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 		}
 
-		file << " current_fit_title       = "<< "\"" << Get_current_fit_title()<< "\"" << endl;
-		file << " current_fit_description = "<< "\"" << Get_current_fit_description()<< "\"" << endl;
+		file << " current_fit_title       = "<< "\"" << Get_current_fit_title()<< "\";" << endl;
+		file << " current_fit_description = "<< "\"" << Get_current_fit_description()<< "\";" << endl;
 
 		//map <int, TrpwaBinInfo> _bins; // map with settings to each bin
 		result = true;

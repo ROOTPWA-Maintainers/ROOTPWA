@@ -19,7 +19,11 @@ TrpwaFitOptionsFrame::TrpwaFitOptionsFrame(Tfit_options& fit_options)
 	time ( &rawtime );
 	string stime = ctime (&rawtime);
 	if (_fit_options->title == ""){
-		cout << stime << endl;
+		//cout << stime << endl;
+		if (stime.find('\n') != string::npos){
+			//cout << " removing bad new line " << endl;
+			stime.erase(stime.find('\n'));
+		}
 		_fit_options->title = stime;
 	}
 	Build();
@@ -38,12 +42,12 @@ TrpwaFitOptionsFrame::~TrpwaFitOptionsFrame(){
 void TrpwaFitOptionsFrame::Build(){
 	TGLabel* label_title = new TGLabel(this, "fit title");
 	this->AddFrame(label_title, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
-	entry_title = new TGTextEntry(this);
+	entry_title = new TGTextEntry(this, _fit_options->title.c_str());
 	entry_title->SetWidth(200);
 	entry_title->SetHeight(20);
 	entry_title->Connect("TextChanged(const char *)","TrpwaFitOptionsFrame",this,"CallSetOptions(const char*)");
 	this->AddFrame(entry_title);
-	entry_title->SetText(_fit_options->title.c_str(), false);
+	//entry_title->SetText(_fit_options->title.c_str(), false);
 
 	TGLabel* label_description = new TGLabel(this, "fit description");
 	this->AddFrame(label_description, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
@@ -52,7 +56,7 @@ void TrpwaFitOptionsFrame::Build(){
 	entry_description->SetHeight(20);
 	entry_description->Connect("TextChanged(const char *)","TrpwaFitOptionsFrame",this,"CallSetOptions(const char*)");
 	this->AddFrame(entry_description);
-	entry_description->SetText(_fit_options->description.c_str(), false);
+	//entry_description->SetText(_fit_options->description.c_str(), false);
 
 
 	TGLabel* label_seed = new TGLabel(this, "seed (-1 == random)");
@@ -118,6 +122,10 @@ void TrpwaFitOptionsFrame::SetOptions(){
 	time_t rawtime;
 	time ( &rawtime );
 	string stime = ctime (&rawtime);
+	if (stime.find('\n') != string::npos){
+		//cout << " removing bad new line " << endl;
+		stime.erase(stime.find('\n'));
+	}
 	_description << " date: " << stime << ")";
 	_fit_options->description = _description.str();
 
