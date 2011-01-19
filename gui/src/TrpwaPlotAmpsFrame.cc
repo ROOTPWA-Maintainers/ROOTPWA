@@ -26,6 +26,7 @@
 #include "TGTextEntry.h"
 #include "TGMsgBox.h"
 #include "TAxis.h"
+#include "TGFileDialog.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
@@ -465,6 +466,24 @@ void TrpwaPlotAmpsFrame::Plot_All_selected_Spin_totals(){
 }
 
 void TrpwaPlotAmpsFrame::Save_plot(){
+	TGFileInfo fileinfo;
+	const char* filetypes[] = {"pdf","*.pdf","eps","*.eps","gif","*.gif","png","*.png","root","*.root", 0, 0};
+	fileinfo.fFileTypes = filetypes;
+	stringstream filename;
+	filename << current_wave;
+	if (current_anchor_wave != "")
+		filename << "_vs_" << current_anchor_wave;
+	char *cstr = new char [filename.str().size()+1];
+	strcpy (cstr, filename.str().c_str());
+	fileinfo.fFilename = cstr;
+	TGFileDialog* filedialog = new TGFileDialog(gClient->GetRoot(), this, kFDSave, &fileinfo);
+	if (filedialog && fileinfo.fFilename) {
+		filename.str("");
+		filename << fileinfo.fFilename;
+		filename << "." << fileinfo.fFileTypes[fileinfo.fFileTypeIdx];
+		canvas_selected_waves->Print(filename.str().c_str());
+	}
+	/*
 	int returncode;
 	stringstream filename;
 	filename << current_wave;
@@ -477,7 +496,7 @@ void TrpwaPlotAmpsFrame::Save_plot(){
 	if (returncode == kMBYes){
 		canvas_selected_waves->Print((filename.str()+".pdf").c_str());
 		canvas_selected_waves->Print((filename.str()+".root").c_str());
-	}
+	}*/
 }
 
 void TrpwaPlotAmpsFrame::Plot_selected_wave(){
