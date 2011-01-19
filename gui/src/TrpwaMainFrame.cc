@@ -428,6 +428,7 @@ void TrpwaMainFrame::FitPartialWaves(){
 		_fit_options.rank = 1;
 		_fit_options.seed = 12345;
 		_fit_options.use_normalization = current_session->Is_Normalization_available();
+		_fit_options.fit_consecutive = false;
 		TrpwaFitOptionsFrame* frame_fit_options = new TrpwaFitOptionsFrame(_fit_options);
 		if (!frame_fit_options) cout << " dummy " << endl;
 		cout << current_session->Set_current_fit_title(_fit_options.title) << endl;
@@ -443,24 +444,65 @@ void TrpwaMainFrame::FitPartialWaves(){
 			command << "mv " << fitresultfiles[i] << " " << fitresultfiles[i] << ".previous" << endl;
 			cout << system(command.str().c_str()) << endl;
 		}
-		// send one job per bin
+		
 		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
 
-		for (int i = 0; i < current_session->Get_n_bins(); i++){
+		// send one job per bin
+		if (!_fit_options.fit_consecutive){		
+			for (int i = 0; i < current_session->Get_n_bins(); i++){
+				string executedir;
+				int seed = _fit_options.seed;
+				stringstream command;
+				for (unsigned int ifit = 0; ifit < _fit_options.niterations; ifit++){
+					string fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed);
+					command << "cd " << executedir << ";\n";
+					if (seed > 0) seed++;
+					command << fitcommand << ";\n";
+				}
+				cout << " sending fit job for bin " << i << endl;
+				if (!jobmanager->SendJob(command.str(), "fit")){
+					cout << " failed!" << endl;
+				} else {
+					cout << " done " << endl;
+				}
+			}
+		} else {
 			string executedir;
 			int seed = _fit_options.seed;
 			stringstream command;
+			string fitcommand;
+			string initialfitresult = "";
+			string previousfitresult = "";
 			for (unsigned int ifit = 0; ifit < _fit_options.niterations; ifit++){
-				string fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed);
-				command << "cd " << executedir << ";\n";
-				if (seed > 0) seed++;
+				// start from 1/3 of the available fit range where the number
+				// of available events is usually the biggest
+				int nbins = current_session->Get_n_bins();
+				int ibinstart = nbins/3;
+				// perform the first fit with random start values
+				fitcommand = current_session->GetFitCommand(ibinstart, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed, &initialfitresult);
+				command << "cd " << executedir << ";\n";	
 				command << fitcommand << ";\n";
-			}
-			cout << " sending fit job for bin " << i << endl;
-			if (!jobmanager->SendJob(command.str(), "fit")){
-				cout << " failed!" << endl;
-			} else {
-				cout << " done " << endl;
+				// then move to higher values using the previous fit results
+				previousfitresult = initialfitresult;
+				for (int i = ibinstart+1; i < nbins; i++){
+					fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed, &previousfitresult);
+					command << "cd " << executedir << ";\n";
+					command << fitcommand << ";\n";
+				}
+				// and finaly to lower values
+				previousfitresult = initialfitresult;
+				for (int i = ibinstart-1; i > -1; i--){
+					fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed, &previousfitresult);
+					command << "cd " << executedir << ";\n";
+					command << fitcommand << ";\n";
+				}
+				cout << " sending fit job for iteration " << ifit << endl;
+				if (!jobmanager->SendJob(command.str(), "fit")){
+					cout << " failed!" << endl;
+				} else {
+					cout << " done " << endl;
+				}
+				if (seed > 0) seed++;
 			}
 		}
 		cout << " saving current constellation " << current_session->Save_Session() << endl;

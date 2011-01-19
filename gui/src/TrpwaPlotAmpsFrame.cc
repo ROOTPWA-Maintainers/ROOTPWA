@@ -78,6 +78,21 @@ TrpwaPlotAmpsFrame::~TrpwaPlotAmpsFrame(){
 void TrpwaPlotAmpsFrame::Build(){
 	// set the root layout for the objects to draw
     gROOT->SetStyle("Plain");
+    // this style is set to fit my phd thesis style:
+    if (1){
+		gStyle->SetTitleFont(10*13+2,"xyz");
+		gStyle->SetTitleSize(0.06, "xyz");
+		gStyle->SetTitleOffset(1.3,"y");
+		gStyle->SetLabelFont(10*13+2,"xyz");
+		gStyle->SetLabelSize(0.06,"xyz");
+		gStyle->SetLabelOffset(0.009,"xyz");
+		gStyle->SetPadBottomMargin(0.16);
+		gStyle->SetPadTopMargin(0.16);
+		gStyle->SetPadLeftMargin(0.16);
+		gStyle->SetPadRightMargin(0.16);
+		//gStyle->SetOptTitle(0);
+		//gStyle->SetOptStat(0);
+    }
     //gStyle->SetOptTitle(kFALSE);
 
     //gStyle->SetOptStat(0);
@@ -167,7 +182,7 @@ void TrpwaPlotAmpsFrame::Build(){
 
 	// canvas where the results are drawn to
 	TRootEmbeddedCanvas* frame_selected_waves = new TRootEmbeddedCanvas(" canvas_selected_waves ",
-			this, 600, 600, kSunkenFrame|kDoubleBorder , 0xffffff);
+			this, 1000, 600, kSunkenFrame|kDoubleBorder , 0xffffff);
 	canvas_selected_waves = frame_selected_waves->GetCanvas();
 	canvas_selected_waves->Divide(2,2);
 

@@ -29,6 +29,7 @@ struct Tfit_options{
 	unsigned int rank; // rank of fit
 	unsigned int niterations; // number of iterations per bin
 	bool use_normalization;	// use normalization integral
+	bool fit_consecutive; // use the fit result from previous bins
 	int seed; // -1 : random seed else as given
 	string title;
 	string description;
@@ -43,6 +44,7 @@ private:
 	TGTextEntry*   entry_title; // title of the fit
 	TGTextEntry*   entry_description; // description of the fit
 	TGCheckButton* button_use_normalization; // whether to use the normalization integral
+	TGCheckButton* button_fit_consecutive; //whether to use fit results from previous fit (one job per fit iteration)
 	// create all buttons etc.
 	void Build();
 public:

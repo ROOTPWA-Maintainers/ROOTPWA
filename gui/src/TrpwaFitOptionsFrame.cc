@@ -94,6 +94,18 @@ void TrpwaFitOptionsFrame::Build(){
 	this->AddFrame(button_use_normalization,new TGLayoutHints(kLHintsCenterX,1,1,1,1));
 	button_use_normalization->Connect("Clicked()","TrpwaFitOptionsFrame",this,"SetOptions()");
 
+	button_fit_consecutive = new TGCheckButton(this, new TGHotString("consecutive fit"));
+	// if use normalization not given then it is assumed not to be available
+	if (!_fit_options->fit_consecutive){
+		button_fit_consecutive->SetState(kButtonUp);
+		//button_fit_consecutive->SetEnabled(kFALSE);
+	} else {
+		button_fit_consecutive->SetState(kButtonDown);
+	}
+	this->AddFrame(button_fit_consecutive,new TGLayoutHints(kLHintsCenterX,1,1,1,1));
+	button_fit_consecutive->Connect("Clicked()","TrpwaFitOptionsFrame",this,"SetOptions()");
+
+
 	// Set a name to the main frame
 	SetWindowName("fit job options");
 	// Map all sub windows of main frame
@@ -111,6 +123,7 @@ void TrpwaFitOptionsFrame::SetOptions(){
 	_fit_options->rank	= (unsigned int)floor(entry_rank->GetNumber());
 	_fit_options->seed  = (unsigned int)floor(entry_seed->GetNumber());
 	_fit_options->use_normalization = button_use_normalization->GetState();
+	_fit_options->fit_consecutive = button_fit_consecutive->GetState();
 	_fit_options->title = entry_title->GetText();
 	stringstream _description;
 	_description << entry_description->GetText();
@@ -119,6 +132,7 @@ void TrpwaFitOptionsFrame::SetOptions(){
 	_description << " rank: "<< _fit_options->rank;
 	_description << " seed: "<< _fit_options->seed;
 	_description << " acc norm: " << _fit_options->use_normalization;
+	_description << " consec. fit: " << _fit_options->fit_consecutive;
 	time_t rawtime;
 	time ( &rawtime );
 	string stime = ctime (&rawtime);

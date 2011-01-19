@@ -365,7 +365,10 @@ public:
 	string GetFitCommand(int ibin, string& executedir,
 			bool normalize = true, // use acceptance normalization integral if available
 			unsigned int rank = 1, // set the rank of the fit
-			int seed = 12345);// set the seed for the random number generator (-1 use a randomly generated number)
+			int seed = 12345, // set the seed for the random number generator (-1 use a randomly generated number)
+			string* startvalues = NULL); // give the results from a previous fit as starting values
+			// startvalues may be "" then the start values will be ignored
+			// if variable for startvalues is given the fit result file name of this fit will be returned
 
 	// return the command to generate flat phase space events
 	// into the specified bin with the number of events specified

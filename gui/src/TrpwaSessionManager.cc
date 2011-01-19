@@ -1338,12 +1338,15 @@ bool TrpwaSessionManager::Is_Normalization_available(int ibin){
 string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir,
 		bool normalize,
 		unsigned int rank, // set the rank of the fit
-		int seed){
+		int seed,
+		string* startvalues){
 	string result = "";
 	string wavelistfile = "";
 	string normalizationfile = "";
 	string acceptancefile = "";
 	string fitresultfile = "";
+	string initvals = "";
+	if (startvalues) initvals = (*startvalues);
 
 	int bincounter(0);
 	int bin_low = -1;
@@ -1368,6 +1371,8 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir,
 	if (FileExists(fitresultfile)){
 		cout << " Warning in TrpwaSessionManager::GetFitCommand(): fit result " << fitresultfile << " exist already! " << endl;
 	}
+	if (startvalues) // set the fitresult as a return value for start values
+		(*startvalues) = fitresultfile;
 	if (!FileExists(normalizationfile)){
 		cout << " Error in TrpwaSessionManager::GetFitCommand(): normalization integral file " << normalizationfile << " does not exist! " << endl;
 		return result;
@@ -1379,11 +1384,15 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir,
 		cout << " Supplying fit command without normalization! " << endl;
 		//_result << " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
 		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r "<< rank << " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< normalizationfile <<" -u " << bin_high << " -N -n " + normalizationfile << " -s " << seed;
+		if (initvals != "")
+			_result << " -S " << initvals;
 		result = _result.str();
 		return result;
 	} else {
 		//_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
 		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r "<< rank << " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile << " -s " << seed;
+		if (initvals != "")
+			_result << " -S " << initvals;		
 		result = _result.str();
 		return result;
 	}
