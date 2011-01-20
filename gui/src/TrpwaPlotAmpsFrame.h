@@ -38,6 +38,10 @@ private:
 	TCanvas* canvas_selected_waves; // canvas with drawn objects divided into 4 pads
 	// keep the plotted graphs
 	TMultiGraph* plotted_graphs[5];
+	// keep the most likely graphs, too
+	TMultiGraph* plotted_most_likely_graphs[5];
+	// draw the most likely graph?
+	bool draw_most_likely;
 	double masscutlow;  // current valid low  range cut of plotted waves
 	double masscuthigh; // current valid high range cut of plotted waves
 
@@ -46,7 +50,9 @@ private:
 	TGComboBox* box_available_waves;        // box with available waves to select, item is a pointer to the wave
 	TGComboBox* box_available_anchor_waves; // box with available waves to select, item is a pointer to the wave
 
-	TGDoubleHSlider* slider_mass_range; // comman selected mass range for plotting
+	TGDoubleHSlider* slider_mass_range; // common selected mass range for plotting
+
+	TGCheckButton* button_show_most_likely; // set the state to draw the most likely solution
 
 	Tfilemap available_fit_results; // map with title as key and a pointer to an opened Tree
 
@@ -104,6 +110,9 @@ public:
 
 	// a wave will be selected for the anchor wave (phase determination)
 	void Select_Anchor_Wave(int pWave);
+
+	// set the most likely graph to be drawn
+	void Set_show_most_likely();
 
 	// plot all intensities in the list of selected fit results
 	void Plot_All_selected();
