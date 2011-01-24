@@ -64,6 +64,22 @@ NParticleEvent::p(){
 }
 
 
+double
+NParticleEvent::tprime(){
+  TLorentzVector beam=*_beam;
+  TLorentzVector p=this->p();
+  // recalibrate beam -- assumes exclusivity!
+  TVector3 dir=beam.Vect();
+  double const mpi=0.13957;
+  double k=sqrt(p.E()*p.E()-mpi*mpi)/dir.Mag();
+  dir*=k;
+  beam.SetVectM(dir,mpi);
+  return -(beam-p).M2();
+}
+
+
+
+
 void
 NParticleEvent::toGJ(){
   TLorentzVector tempX=p();

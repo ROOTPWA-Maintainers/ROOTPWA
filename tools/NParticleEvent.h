@@ -63,6 +63,7 @@ public:
   unsigned int build();
 
   TLorentzVector p(); //< returns total momentum of final state
+  double tprime(); //< returns effective momentum transfer
 
 
   /*** @brief transform into Gottfried Jackson frame

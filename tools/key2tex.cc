@@ -37,7 +37,7 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-  const unsigned int maxNmbWavesPerPage = 15;
+  const unsigned int maxNmbWavesPerPage = 20;
   
   // setup isobar dictionary key->tex
   map<TString, TString> isobars;
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
   isobars["a21320"  ] = "a_2(1320)";
 
   // print latex header
-  cout << "\\documentclass[12pt,a4paper]{article}" << endl
+  cout << "\\documentclass[10pt,a4paper]{article}" << endl
        << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
        << "\\begin{document}"                      << endl
        << "\\begin{align*}"                        << endl

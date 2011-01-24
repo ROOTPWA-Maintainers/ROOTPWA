@@ -87,6 +87,7 @@ void readWavelist(set<wsetentry>& result, const TString& input){
     getline(file,line);
     unsigned int pos=line.find(" ");
     string name=line.substr(0,pos);
+    if(name.length()<2)continue;
     double thres;
     if(pos<line.length()){
       thres=atof(line.substr(pos,line.length()).c_str());
@@ -102,10 +103,15 @@ void readWavelist(set<wsetentry>& result, const TString& input){
 
 set<wsetentry>::iterator
 randomEntry(set<wsetentry>& myset, unsigned int start=0){
-  if(start>myset.size()-1)throw;
-  unsigned int n=myset.size()-start;
+  if(start>=myset.size()){
+    cerr<<" Requesting randomEntry " << start <<" out of range!" << endl;
+    throw;
+  }
   unsigned int x=start;
-  if(n!=0)x=gRandom->Integer(n)+start;
+  if(start<myset.size()-1){
+    unsigned int n=myset.size()-start;
+    if(n!=0)x=gRandom->Integer(n)+start;
+  }
   //cerr << "x=" <<x << endl;
   set<wsetentry>::iterator it=myset.begin();
   for(unsigned i=0;i<x;++i)++it;
