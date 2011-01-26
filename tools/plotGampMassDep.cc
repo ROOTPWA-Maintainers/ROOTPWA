@@ -19,11 +19,39 @@ using namespace std;
 extern particleDataTable PDGtable;
 
 int main(int argc, char** argv){
+	string opt = "BW";
+	string part1 = "pi";
+	string part2 = "pi";
+	double mass(0.6);
+	double width(0.6);
+
+	if (argc < 2){
+		cout << " usage: plotGampMassDep AMP|VES|KACH|BW [inv_mass(def 600MeV)] [width(def 600MeV)] [pi|K (def pi)] [pi|K (def pi)] " << endl;
+		//return 0;
+	} else {
+		//cout << argc << endl;
+		if (argc > 1){
+			opt=(argv[1]);
+		}
+		if (argc > 2){
+			mass=atoi(argv[2])/1000.;
+		}
+		if (argc > 3){
+			width=atoi(argv[3])/1000.;
+		}
+		if (argc > 4){
+			part1=(argv[4]);
+		}
+		if (argc > 5){
+			part2=(argv[5]);
+		}
+	}
+  cout << " plotting " << opt << " with a mass of " << mass << " and width of " << width << " decaying into " << part1 << " " << part2 << endl;
 
   PDGtable.initialize();
   particle myp;
-  particle pi1;pi1.setMass(PDGtable.get("pi").Mass());pi1.setCharge(1);
-  particle pi2;pi2.setMass(PDGtable.get("pi").Mass());pi2.setCharge(-1);
+  particle pi1;pi1.setMass(PDGtable.get(part1).Mass());pi1.setCharge(1);
+  particle pi2;pi2.setMass(PDGtable.get(part2).Mass());pi2.setCharge(-1);
 
 
   decay mydec;
@@ -34,15 +62,14 @@ int main(int argc, char** argv){
 
 
   myp.setDecay(mydec);
-  myp.setWidth(0.6);
-  myp.setMass(0.6);
+  myp.setWidth(width);
+  myp.setMass(mass);
 
   massDep* dep;
-  string opt;
-  if(argc>1)opt=(argv[1]);
   if(opt=="AMP")dep=new AMP_M();
   else if(opt=="VES")dep=new AMP_ves();
   else if(opt=="KACH")dep=new AMP_kach();
+  else if(opt=="BW")dep=new breitWigner();
   else dep=new breitWigner();
   dep->print();
 
