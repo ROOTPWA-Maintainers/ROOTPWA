@@ -127,7 +127,7 @@ main(int    argc,
 //   bool               useFixedStartValues = false;
 //   double             startValStep        = 0.0005;
   const unsigned int maxNmbOfIterations  = 20000;
-  const bool         runHesse            = true;
+  const bool         runHesse            = false;//true;
   const bool         runMinos            = false;
   //unsigned int maxParNameLength = 20;       // maximum length of parameter names
 //   int                startValSeed        = 1234567;
@@ -351,141 +351,6 @@ extern char* optarg;
  
  
 
- //  std::map<std::string,pwachannel > channels;
-//   std::string ch1="1-2-+0+rho770_02_a21320=pi-_2_rho770.amp";
-//   std::string ch2="1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp";
-//   std::string ch3="1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp";
-//   std::string ch4="1-2-+0+rho770_02_a11269=pi-_0_rho770.amp";
-//   channels[ch1]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch1));
-//   channels[ch2]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch2));
-//   //channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
-//   channels[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
-//   pwacomponent comp1("pi2(1880)",1880,150,channels);
-//   comp1.setLimits(1870,1900,50,300);
-//   comp1.setFixed(0,0);
-
-//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(1,0));
-//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-//   pwacomponent comp2("pi2(2300)",2300,500,channels);
-//   comp2.setLimits(2250,2500,100,800);
-//   comp2.setFixed(1,0);
-
-//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(50,0));
-//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(50,0));
-//   pwacomponent comp3("pi2(1670)",1672,260,channels);
-//   comp3.setLimits(1600,1700,200,400);
-//   comp3.setFixed(1,1);
-
-//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(20,0));
-//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-//   pwacomponent comp4("pi2(2100)",2090,200,channels);
-//   comp4.setLimits(2000,2200,100,800);
-//   comp4.setFixed(1,0);
-
-
-//   std::map<std::string,pwachannel > channels0mp;
-//   std::string ch5="1-0-+0+pi-_00_f01500=rho770_00_rho770.amp";
-//   std::string ch6="1-0-+0+rho770_00_a11269=pi-_0_rho770.amp";
-  
-  
-//   channels0mp[ch5]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-//   channels0mp[ch6].setCoupling(std::complex<double>(0.1,0));
-//   pwacomponent comp5("pi(1800)",1840,208,channels0mp);
-//   comp5.setLimits(1750,1850,100,300);
-//   comp5.setFixed(0,0);
-//   //channels0mp.clear();
-//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-//   channels0mp[ch5].setCoupling(std::complex<double>(0.5,0));
-//   channels0mp[ch6].setCoupling(std::complex<double>(50,0));
-//   pwacomponent comp6("pi(1700)",1700,200,channels0mp);
-//   comp6.setLimits(1600,1750,100,500);
-//   comp6.setFixed(0,0);
-//   pwacomponent comp13("pi(2100)",2200,200,channels0mp);
-//   comp13.setLimits(2000,2300,100,500);
-//   comp13.setFixed(1,0);
-
-//   channels0mp.clear();
-//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch6));
-//   pwabkg bkg1=pwabkg("0-+Bkg",0,0.0001,channels0mp);
-//   bkg1.setIsobars(770,1269);
-//   bkg1.setLimits(0,0,0,1);
-//   bkg1.setFixed(1,0);
-
-//   std::map<std::string,pwachannel> channels2mp;
-//   channels2mp[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
-//   pwabkg bkg2=pwabkg("rhoa1bkg",0,0.0001,channels2mp);
-//   bkg2.setIsobars(770,1269);
-//   bkg2.setLimits(0,0,0,1);
-//   bkg2.setFixed(1,0);
-
-//   channels2mp.clear();
-//   channels2mp[ch3]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch3));
-//   pwabkg bkg3=pwabkg("pirho3",0,0.0001,channels2mp);
-//   bkg3.setIsobars(139,1690);
-//   bkg3.setLimits(0,0,0,1);
-//   bkg3.setFixed(1,0);
-
-//   std::map<std::string,pwachannel> channels1pp;
-//   std::string anchorwave("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
-//   string ch1ppsa1("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
-//   string ch1ppra11("1-1++0+rho770_11_a11269=pi-_0_rho770.amp");
-//   string ch1ppra12("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
-//   string ch1ppf1pi("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
-		  
-//   //  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
-//   //				   getPhaseSpace(tree,ch1ppsa1));
-// //channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
-//   //			   getPhaseSpace(tree,ch1ppra11));
-// // channels1pp[ch1ppra12]=pwachannel(complex<double>(50,0),
-//   //			   getPhaseSpace(tree,ch1ppra12));
-//   channels1pp[ch1ppf1pi]=pwachannel(complex<double>(50,0),
-// 				   getPhaseSpace(tree,ch1ppf1pi));
-
-//   pwacomponent comp7("a1(1640)",1647,254,channels1pp);
-//   comp7.setLimits(1600,1700,100,500);
-//   comp7.setFixed(0,0);
-//   pwacomponent comp8("a1(1930)",1930,155,channels1pp);
-//   comp8.setLimits(1900,1980,100,300);
-//   comp8.setFixed(1,1);
-//   pwacomponent comp9("a1(2095)",2069,451,channels1pp);
-//   comp9.setLimits(1950,2150,100,300);
-//   comp9.setFixed(0,0);
-  
-//   channels1pp.clear();
-//   channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
-// 				   getPhaseSpace(tree,ch1ppsa1));
-//   pwabkg bkg4=pwabkg("sigmaa1",0,0.0001,channels1pp);
-//   bkg4.setIsobars(600,1269);
-//   bkg4.setLimits(0,0,0,1);
-//   bkg4.setFixed(1,0);
-
-//   channels1pp.clear();
-//   channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
-// 				   getPhaseSpace(tree,ch1ppra11));
-//   pwabkg bkg5=pwabkg("1pprhoa1bkg",0,0.0001,channels1pp);
-//   bkg5.setIsobars(770,1269);
-//   bkg5.setLimits(0,0,0,1);
-//   bkg5.setFixed(1,0);
-
-//   pwacompset compset;
-//   compset.add(&comp1); // pi2(1880)
-//   //compset.add(&bkg2);  
-//   //compset.add(&comp2); // pi2(2300)
-//   compset.add(&comp3); // pi2(1670)
-//   //compset.add(&bkg3);
-//   compset.add(&comp4); // pi2(2100)
-//   compset.add(&comp5); // pi(1800)
-//   compset.add(&comp6); // pi(1700)
-//  compset.add(&comp13); // pi(2100)
-//   compset.add(&bkg1);
-//   //compset.add(&comp7);
-//   //compset.add(&comp8);
-//   //compset.add(&comp9);
-//   //compset.add(&bkg4);
-  
-
-
   massDepFitLikeli L;
   L.init(tree,&compset,massBinMin,massBinMax);
 
@@ -605,6 +470,219 @@ extern char* optarg;
   compset.setPar(par);
 
   cerr << compset << endl;
+ cout << "---------------------------------------------------------------------" << endl;
+
+
+  // write out results
+  // Setup Component Set (Resonances + Background)
+  const Setting& bws= root["components"]["resonances"];
+  const Setting& bkgs= root["components"]["background"];
+  unsigned int nbws=bws.getLength();
+  unsigned int nbkgs=bkgs.getLength();
+  // loop over components
+  unsigned int nc=compset.n();
+  for(unsigned int ic=0;ic<nc;++ic){
+    const pwacomponent* comp=compset[ic];
+    string name=comp->name();
+    // search corresponding setting
+   
+    string sname;
+    bool found=false;
+    for(unsigned int is=0;is<nbws;++is){
+      const Setting& bw = bws[is];
+      bw.lookupValue("name",     sname);
+      if(sname==name){
+	found=true;
+	// set values to this setting
+	Setting& sm = bw["mass"];
+	Setting& smval = sm["val"];
+	smval = comp->m0();
+	Setting& sw = bw["width"];
+	Setting& swval = sw["val"];
+	swval = comp->gamma();
+	
+	// loop through channel and fix couplings
+	const Setting& sChn=bw["decaychannels"];
+	unsigned int nCh=sChn.getLength();
+	const std::map<std::string,pwachannel >& ch=comp->channels();
+	std::map<std::string,pwachannel>::const_iterator it=ch.begin();
+	for(;it!=ch.end();++it){
+	  std::complex<double> c= it->second.C();
+	  string ampname=it->first;
+	  // loop through channels in setting
+	  for(unsigned int isc=0;isc<nCh;++isc){
+	    Setting& sCh=sChn[isc];
+	    string amp; sCh.lookupValue("amp",amp);
+	    if(amp==ampname){
+	      Setting& sRe=sCh["coupling_Re"];
+	      sRe=c.real();
+	      Setting& sIm=sCh["coupling_Im"];
+	       sIm=c.imag();
+	      break;
+	    } // endif
+	  } // end loop through cannels in setting
+	  
+	} // end loop through channels of component
+
+	break;
+      }
+    }
+
+    // loop over background settings
+    if(!found){
+      for(unsigned int is=0;is<nbkgs;++is){
+	const Setting& bw = bkgs[is];
+	bw.lookupValue("name",     sname);
+	if(sname==name){
+	  Setting& sm = bw["m0"];
+	  Setting& smval = sm["val"];
+	  smval = comp->m0();
+	  Setting& sw = bw["g"];
+	  Setting& swval = sw["val"];
+	  swval = comp->gamma();
+
+	  const pwachannel& ch=comp->channels().begin()->second;
+	  std::complex<double> c=ch.C();
+	  Setting& sRe=bw["coupling_Re"];
+	  sRe=c.real();
+	  Setting& sIm=bw["coupling_Im"];
+	  sIm=c.imag();
+	  break;
+	}
+      }
+    }
+    cout << name << "  --->  setting: " << sname << endl;
+
+    
+
+  }
+
+
+
+
+ //  bool check=true;
+//   // Resonances
+//   if(Conf.exists("components.resonances")){
+//     const Setting &bws = root["components"]["resonances"];
+//     // loop through breitwigners
+//     int nbw=bws.getLength();
+//     printInfo << "found " << nbw << " Resonances in config" << endl;
+//     for(int ibw = 0; ibw < nbw; ++ibw) {
+//       const Setting &bw = bws[ibw];
+//       string jpc;
+//       string name;
+//       double mass=-1;double ml,mu;int mfix; 
+//       double width=-1;double wl,wu;int wfix;
+     
+//       check&=bw.lookupValue("name",     name);
+//       check&=bw.lookupValue("jpc",       jpc);
+//       const Setting &massSet = bw["mass"];
+//       check&=massSet.lookupValue("val",        mass);
+//       check&=massSet.lookupValue("lower",        ml);
+//       check&=massSet.lookupValue("upper",        mu);
+//       check&=massSet.lookupValue("fix",        mfix);
+//       const Setting &widthSet = bw["width"];
+//       check&=widthSet.lookupValue("val",       width);
+//       check&=widthSet.lookupValue("lower",       wl);
+//       check&=widthSet.lookupValue("upper",       wu);
+//       check&=widthSet.lookupValue("fix",       wfix);
+//       cout << "---------------------------------------------------------------------" << endl;
+//       cout << name << "    JPC = " << jpc << endl;
+//       cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
+//       if(mfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       cout << "width(limits) = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
+//       if(wfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       const Setting &channelSet = bw["decaychannels"];
+//       unsigned int nCh=channelSet.getLength();
+//       cout << "Decaychannels (coupling):" << endl;
+//       std::map<std::string,pwachannel > channels;
+//       for(unsigned int iCh=0;iCh<nCh;++iCh){
+// 	const Setting &ch = channelSet[iCh];
+// 	string amp;
+// 	double cRe=0;
+// 	double cIm=0;
+// 	check&=ch.lookupValue("amp",amp);
+// 	check&=ch.lookupValue("coupling_Re",cRe);
+// 	check&=ch.lookupValue("coupling_Im",cIm);
+// 	complex<double> C(cRe,cIm);
+// 	cout << "   " << amp << "  " << C << endl;
+// 	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+//       }// end loop over channels
+//       if(!check){
+// 	printErr << "Bad config value lookup! Check your config file!" << endl;
+// 	return 1;
+//       }
+//       pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
+//       comp1->setLimits(ml,mu,wl,wu);
+//       comp1->setFixed(mfix,wfix);
+//       compset.add(comp1);
+//     }// end loop over resonances
+//   }
+//   cout << endl;
+//   // Background components
+//   if(Conf.exists("components.background")){
+//     const Setting &bws = root["components"]["background"];
+//     // loop through breitwigners
+//     int nbw=bws.getLength();
+//     printInfo << "found " << nbw << " Background components in config" << endl;
+//     for(int ibw = 0; ibw < nbw; ++ibw) {
+//       const Setting &bw = bws[ibw];
+//       string name;
+//       double mass=-1;double ml,mu;int mfix; 
+//       double width=-1;double wl,wu;int wfix;
+     
+//       check&=bw.lookupValue("name",     name);
+//       const Setting &massSet = bw["m0"];
+//       check&=massSet.lookupValue("val",        mass);
+//       check&=massSet.lookupValue("lower",        ml);
+//       check&=massSet.lookupValue("upper",        mu);
+//       check&=massSet.lookupValue("fix",        mfix);
+//       const Setting &widthSet = bw["g"];
+//       check&=widthSet.lookupValue("val",       width);
+//       check&=widthSet.lookupValue("lower",       wl);
+//       check&=widthSet.lookupValue("upper",       wu);
+//       check&=widthSet.lookupValue("fix",       wfix);
+//       cout << "---------------------------------------------------------------------" << endl;
+//       cout << name << endl;
+//       cout << "mass-offset(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
+//       if(mfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       cout << "g(limits)            = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
+//       if(wfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       std::map<std::string,pwachannel > channels;
+//       string amp;
+//       double cRe=0;
+//       double cIm=0;
+//       double mIso1=0;
+//       double mIso2=0;
+//       check&=bw.lookupValue("amp",amp);
+//       check&=bw.lookupValue("coupling_Re",cRe);
+//       check&=bw.lookupValue("coupling_Im",cIm);
+//       check&=bw.lookupValue("mIsobar1",mIso1);
+//       check&=bw.lookupValue("mIsobar2",mIso2);
+//       complex<double> C(cRe,cIm);
+//       cout << "Decaychannel (coupling):" << endl;
+//       cout << "   " << amp << "  " << C << endl;
+//       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
+//       channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+
+//       if(!check){
+// 	printErr << "Bad config value lookup! Check your config file!" << endl;
+// 	return 1;
+//       }
+//       pwabkg* bkg=new pwabkg(name,mass,width,channels);
+//       bkg->setIsobars(mIso1,mIso2);
+//       bkg->setLimits(ml,mu,wl,wu);
+//       bkg->setFixed(mfix,wfix);
+//       compset.add(bkg);
+//     }// end loop over background
+//   }// endif
+  
+  Conf.writeFile("result.conf");
+
 
   cerr << "Fitting finished... Start building graphs ... " << endl;
 
