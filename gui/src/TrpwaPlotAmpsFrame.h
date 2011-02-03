@@ -16,6 +16,7 @@
 #include "TTree.h"
 #include "TGDoubleSlider.h"
 #include "TMultiGraph.h"
+#include "TGraphErrors.h"
 #include <TASImage.h>
 
 using namespace std;
@@ -83,6 +84,13 @@ private:
 
 	// creates some available colors for markers in available_colors
 	void Create_available_colors();
+
+	// find the point next to 0 degree
+	// in case of many solutions take the one with
+	// the smallest error
+	// start from there to correct the phase of consecutive points
+	// to be in order and not to jump for example from +180 to -180 degree
+	void Rectify_phase(TGraphErrors* graph_phase);
 
 public:
 

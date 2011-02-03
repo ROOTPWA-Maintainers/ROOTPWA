@@ -27,7 +27,6 @@
 #include "TGMsgBox.h"
 #include "TAxis.h"
 #include "TGFileDialog.h"
-#include "TGraphErrors.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
@@ -761,6 +760,7 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 				}
 			}
 			TGraphErrors* most_likely = new TGraphErrors(nbins, x_val, y_val, NULL, y_val_err);
+			Rectify_phase(most_likely);
 			some_name.str(""); some_name << "graph_number_" << some_name_counter++;
 			most_likely->SetName(some_name.str().c_str());
 			most_likely->SetMarkerColor(icolor);
@@ -926,6 +926,53 @@ void TrpwaPlotAmpsFrame::Set_Mass_range(){
 			plotted_most_likely_graphs[ipad]->GetXaxis()->SetRangeUser(mass_min, mass_max);
 			gPad->Update();
 		}
+	}
+}
+
+void TrpwaPlotAmpsFrame::Rectify_phase(TGraphErrors* graph_phase){
+	if (!graph_phase) return;
+	int npoints = graph_phase->GetN();
+	double* m = graph_phase->GetX();
+	double* phase = graph_phase->GetY();
+	double* phase_err = graph_phase->GetEY();
+	int istart = 0;
+	// first iteration: find the closest point to 0 degree (taking the error into account)
+	for (int i = 0; i < npoints; i++){
+		if (fabs(phase[i])+phase_err[i] < fabs(phase[istart])+phase_err[istart]){
+			istart = i;
+		}
+	}
+	// make the point not jump in phase
+	for (int i = istart+1; i < npoints; i++){
+		do{
+			// define the "direction" to correct phase into
+			double phase_diff = phase[i-1]-phase[i];
+			int dir = (phase_diff < 0) ? -1 : +1;
+			// check that a change in phase of 360° would effect
+			// a point to sit nearer to the previous one
+			phase_diff = fabs(phase_diff);
+			if (phase_diff < 180) break;
+			// put the point nearer to the previous one
+			phase[i] = phase[i]+dir*360;
+			// set also the point of the graph
+			graph_phase->SetPoint(i, m[i], phase[i]);
+		}while (1); // continue to move points in case of many phase jumps
+	}
+	// now the other direction
+	for (int i = istart-1; i > -1; i--){
+		do{
+			// define the "direction" to correct phase into
+			double phase_diff = phase[i+1]-phase[i];
+			int dir = (phase_diff < 0) ? -1 : +1;
+			// check that a change in phase of 360° would effect
+			// a point to sit nearer to the previous one
+			phase_diff = fabs(phase_diff);
+			if (phase_diff < 180) break;
+			// put the point nearer to the previous one
+			phase[i] = phase[i]+dir*360;
+			// set also the point of the graph
+			graph_phase->SetPoint(i, m[i], phase[i]);
+		}while (1); // continue to move points in case of many phase jumps
 	}
 }
 
