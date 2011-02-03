@@ -92,6 +92,25 @@ int TrpwaCommonTools::GetDir (string path,
     return (signed) files.size();
 }
 
+void TrpwaCommonTools::DrawProgressBar(int len, double percent) {
+	  static double last_percent(0.);
+	  if ((int)(last_percent*100) == (int)(percent*100)) return;
+	  //cout << " drawing " << endl;
+	  cout << "\x1B[2K"; // Erase the entire current line.
+	  cout << "\x1B[0E"; // Move to the beginning of the current line.
+	  string progress;
+	  for (int i = 0; i < len; ++i) {
+		if (i < static_cast<int>(len * percent)) {
+		  progress += "=";
+		} else {
+		  progress += " ";
+		}
+	  }
+	  cout << "[" << progress << "] " << (static_cast<int>(100 * percent)) << "%";
+	  flush(cout); // Required.
+	  last_percent = percent;
+}
+
 void TrpwaCommonTools::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, int& C, int& M, int& refl, string& iso1, string& iso2, int& l, int& s){
 	// remove path and/or extension that might be .amp or .key if existent
 	string key = RemovePathExtension(wavename, ".amp");

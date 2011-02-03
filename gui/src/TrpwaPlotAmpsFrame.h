@@ -34,6 +34,103 @@ struct TColor_struct{
 	string colorhexcode;
 };
 
+// ****************************************************************
+// some type definitions to keep already scanned graphs and results
+// this part maybe will be moved to a class later
+
+// container to hold a phase difference
+struct Tphasegraph {
+	TGraphErrors* all_phases;
+	TGraphErrors* most_likely_phase;
+	TGraphErrors* all_coherences;
+	TGraphErrors* most_likely_coherence;
+	double mass_low; // valid range
+	double mass_high;
+};
+
+// to store phase differences vs an other one given by the wave name in the key
+typedef map<string, Tphasegraph>  	Tphasegraphmap;
+typedef Tphasegraphmap::iterator 	Tphasegraphmapit;
+
+// container to hold intensities and by request also phase differences vs other waves
+struct Twavegraph {
+	TGraphErrors* all_intensities;
+	TGraphErrors* most_likely_intensity;
+	Tphasegraphmap phase; // entries will be created on request only
+	double mass_low;
+	double mass_high;
+};
+
+typedef map<string, Twavegraph> Twavegraphmap;
+typedef Twavegraphmap::iterator	Twavegraphmapit;
+
+// multipurpose
+//typedef map<double, int> Tdoubleintmap;
+//typedef Tdoubleintmap::iterator Tdoubleintmapit;
+
+// container to hold created graphs from a fit result
+class Tfitresult{
+	// note for all returned Graphs:
+	// you get a reference to an existing one, don't delete it (TMultigraph does it, too!)
+public:
+	Twavegraphmap waves; // all waves available in this fit
+	TGraphErrors* all_loglikelihoods;
+	TGraphErrors* most_likely_likelihoods;
+	TGraphErrors* all_total_intensities;
+	TGraphErrors* most_likely_total_intensity;
+	double mass_low;
+	double mass_high;
+	TTree* fitresult;
+	string name;
+	TColor_struct graphcolor;
+	// to do: spin totals
+	// set all pointers, load intensities, initialize
+	Tfitresult(
+				string unique_name,	// needs a unique name
+				TTree* loadedfitresult, // needs a pointer to a loaded fit result
+				TColor_struct color		// common color to be used for all graphs
+			);
+	// delete all graphs
+	virtual ~Tfitresult();
+
+	TGraphErrors* Get_Intensity(
+					string wavename, // get an intensity of a given partial wave
+					bool most_likely = true // in case of many solutions only the most likely one
+				);
+	// the graph with a phase is created on request and then stored to
+	// access it faster
+	TGraphErrors* Get_Phase(
+					string wavename,   // get a phase of a given partial wave
+					string anchorwave, // to a corresponding anchor wave
+					bool most_likely = true // in case of many solutions only the most likely one
+				);
+
+	TGraphErrors* Get_Coherence(
+					string wavename,   // get a coherence of a given partial wave
+					string anchorwave, // to a corresponding anchor wave
+					bool most_likely = true // in case of many solutions only the most likely one
+				);
+	// this method is called by Get_Phase and Get_Coherence and
+	// does not have to be called individually
+	bool Create_Phase_Coherence_graph(
+					string wavename,   // between a given partial wave
+					string anchorwave // and a corresponding anchor wave
+				);
+
+	// searches for all available waves in the fit results
+	// and loads all intensities into graphs
+	// if graphs are already loaded only the existing wave list will be returned
+	vector<string>& Scan_Fit_Result(
+			string branchName = "fitResult_v2"
+		);
+
+};
+
+typedef map<string, Tfitresult*> Tfitresultmap;
+typedef Tfitresultmap::iterator Tfitresultmapit;
+
+// ****************************************************************
+
 class TrpwaPlotAmpsFrame : public TGTransientFrame {
 private:
 	TCanvas* canvas_selected_waves; // canvas with drawn objects divided into 4 pads
@@ -59,6 +156,7 @@ private:
 
 	Tfilemap selected_fit_results; // map with title as key and a pointer to an opened Tree selected by the user
 	TTree* current_fit_result; // pointer to the fit selected in the list of selected fit results
+	Tfitresultmap selected_fit_result_graphs; // map with title as key and the many created graphs with intensities, phases and so on
 
 	Twavemap available_waves; // map with the wave name as key and a vector with references to the selected_fit_results as indexes starting from 0
 	string current_wave , current_anchor_wave;
@@ -67,9 +165,6 @@ private:
 	bool Add_Fit_Result(string fit_result_path, // path containing .root files with fit result trees
 			string fit_result_title,			// (unique) title of the fit
 			string fit_result_description);		// description of the fit
-
-	// searches for all available waves in the fit results
-	vector<string>& Scan_Fit_Result(TTree* fit_results, string branchName = "fitResult_v2");
 
 	// giving a vector of indexes referring to selected_fit_results
 	// an icon is created containing colors corresponding to the fit results

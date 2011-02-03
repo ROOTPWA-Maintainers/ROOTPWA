@@ -36,7 +36,9 @@ namespace TrpwaCommonTools{
 	// filterext is the extension to be specified for filtering
 	// if rmext the files will be delivered without the extension
 	int GetDir (string path, vector<string> &files, string filterext = "", bool rmext = false);
-
+	// simple statsus bar
+	// percent is 0. to 1.
+	void DrawProgressBar(int len, double percent);
 }
 
 #endif
