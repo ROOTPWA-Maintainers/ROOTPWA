@@ -70,8 +70,8 @@ typedef Twavegraphmap::iterator	Twavegraphmapit;
 
 // container to hold created graphs from a fit result
 class Tfitresult{
-	// note for all returned Graphs:
-	// you get a reference to an existing one, don't delete it (TMultigraph does it, too!)
+	// note for all returned Graphs from Getters:
+	// you get a copy of an existing one, you may delete it
 public:
 	Twavegraphmap waves; // all waves available in this fit
 	TGraphErrors* all_loglikelihoods;
@@ -110,6 +110,16 @@ public:
 					string anchorwave, // to a corresponding anchor wave
 					bool most_likely = true // in case of many solutions only the most likely one
 				);
+
+	TGraphErrors* Get_Total_Intensity(
+					bool most_likely = true // in case of many solutions only the most likely one
+				);
+
+	TGraphErrors* Get_Likelihood(
+					bool most_likely = true // in case of many solutions only the most likely one
+				);
+
+
 	// this method is called by Get_Phase and Get_Coherence and
 	// does not have to be called individually
 	bool Create_Phase_Coherence_graph(
@@ -123,6 +133,14 @@ public:
 	vector<string>& Scan_Fit_Result(
 			string branchName = "fitResult_v2"
 		);
+
+private:
+	// find the point next to 0 degree
+	// in case of many solutions take the one with
+	// the smallest error
+	// start from there to correct the phase of consecutive points
+	// to be in order and not to jump for example from +180 to -180 degree
+	void Rectify_phase(TGraphErrors* graph_phase);
 
 };
 
@@ -179,13 +197,6 @@ private:
 
 	// creates some available colors for markers in available_colors
 	void Create_available_colors();
-
-	// find the point next to 0 degree
-	// in case of many solutions take the one with
-	// the smallest error
-	// start from there to correct the phase of consecutive points
-	// to be in order and not to jump for example from +180 to -180 degree
-	void Rectify_phase(TGraphErrors* graph_phase);
 
 public:
 

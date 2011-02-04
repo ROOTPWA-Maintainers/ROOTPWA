@@ -27,6 +27,7 @@
 #include "TGMsgBox.h"
 #include "TAxis.h"
 #include "TGFileDialog.h"
+#include "TText.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
@@ -48,8 +49,8 @@ TrpwaPlotAmpsFrame::TrpwaPlotAmpsFrame(
 	current_wave = "";
 	current_anchor_wave = "";
 	current_fit_result = NULL;
-	masscutlow  = 0;
-	masscuthigh = 0;
+	masscutlow  = -1;
+	masscuthigh = -1;
 	for (int ipad = 0; ipad < 5; ipad++){
 		plotted_graphs[ipad] = NULL;
 		plotted_most_likely_graphs[ipad] = NULL;
@@ -418,6 +419,267 @@ void TrpwaPlotAmpsFrame::Select_Anchor_Wave(int pWave){
 }
 
 void TrpwaPlotAmpsFrame::Plot_All_selected(){
+	const string branchName = "fitResult_v2";
+	static int some_name_counter(0); // due to shitty root implementation for unique names
+	stringstream some_name;
+	canvas_selected_waves->cd(1); gPad->Clear();
+	canvas_selected_waves->cd(2); gPad->Clear();
+	canvas_selected_waves->cd(3); gPad->Clear();
+	canvas_selected_waves->cd(4); gPad->Clear();
+	canvas_selected_waves->cd(1);
+	// to do set the pad values
+	TText label;
+	gPad->Range(0, 0, 1, 1);
+	label.DrawText(0.1,0.5, "likelihood distributions");
+	canvas_selected_waves->Print("Fit_overview.ps(");
+	gPad->Clear();
+	for (int ipad = 0; ipad < 5; ipad++){
+		if (plotted_graphs[ipad]){
+			plotted_graphs[ipad]->Clear();
+			delete plotted_graphs[ipad];
+			plotted_graphs[ipad] = NULL;
+		}
+		if (plotted_most_likely_graphs[ipad]){
+			plotted_most_likely_graphs[ipad]->Clear();
+			delete plotted_graphs[ipad];
+			plotted_most_likely_graphs[ipad]=NULL;
+		}
+	}
+	masscutlow = -1.;
+	masscuthigh = -1.;
+	slider_mass_range->SetPosition(0.,1.);
+
+	cout << " drawing all intensities into a file " << endl;
+
+	TGraphErrors* _graph;
+	vector<TMultiGraph*> _multi_graphs;
+
+	// draw the total intensities
+	int ipad(0);
+	for (int mostlikely = 0; mostlikely < 2; mostlikely++){
+		ipad++;
+		canvas_selected_waves->cd(ipad);
+		//string last_JPCM = "";
+		TMultiGraph* _graphs = NULL;
+		for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+			TTree* selected_tree = (TTree*)it->second;
+			Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+			_graph = fitresult->Get_Total_Intensity(mostlikely);
+			if (_graph){
+				if (!_graphs){
+					_graphs = new TMultiGraph();
+					some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+					_graphs->SetName(some_name.str().c_str());
+					_multi_graphs.push_back(_graphs);
+				}
+				_graphs->Add(_graph);
+				_graphs->SetTitle(_graph->GetTitle());
+				gPad->Clear();
+				_graphs->Draw("APZ");
+				_graphs->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+				_graphs->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+			} else {
+				cout << " no total intensity found in " << selected_tree->GetName()<< endl;
+			}
+		}
+	}
+
+	// draw the likelihood distributions
+	for (int mostlikely = 0; mostlikely < 2; mostlikely++){
+		ipad++;
+		canvas_selected_waves->cd(ipad);
+		//string last_JPCM = "";
+		TMultiGraph* _graphs = NULL;
+		vector<TGraphErrors*> _temp_container; // to keep the graphs temporary accessible
+		for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+			TTree* selected_tree = (TTree*)it->second;
+			Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+			_graph = fitresult->Get_Likelihood(mostlikely);
+			if (_graph){
+				if (!_graphs){
+					_graphs = new TMultiGraph();
+					some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+					_graphs->SetName(some_name.str().c_str());
+					_multi_graphs.push_back(_graphs);
+				}
+				_temp_container.push_back(_graph);
+				_graphs->Add(_graph);
+				_graphs->SetTitle(_graph->GetTitle());
+				gPad->Clear();
+				_graphs->Draw("APZ");
+				_graphs->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+				_graphs->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+			} else {
+				cout << " no likelihood distribution found in " << selected_tree->GetName()<< endl;
+			}
+		}
+		// show only the most likely distributions among several fit results
+		// by deleting points with lower likelihoods
+		if (mostlikely == 1 && _temp_container.size() > 1){
+			cout << " filtering only the most likely log likelihoods among all most likely" << endl;
+			for (unsigned int igraph = 0; igraph < _temp_container.size()-1; igraph++){
+				TGraphErrors* _graph = _temp_container[igraph];
+				_graph->Sort();
+				for (unsigned int jgraph = igraph+1; jgraph < _temp_container.size(); jgraph++){
+					TGraphErrors* _comp_graph = _temp_container[jgraph];
+					_comp_graph->Sort();
+					for (int i = 0; i < _graph->GetN(); i++){
+						for (int j = 0; j < _comp_graph->GetN(); j++){
+							if (_graph->GetX()[i] == _comp_graph->GetX()[j]){ // found to same mass bins
+								if (_graph->GetY()[i] < _comp_graph->GetY()[j]){ // _graph is more likely
+									_comp_graph->SetPoint(j, _comp_graph->GetX()[j], 0.);
+								} else { // _comp_graph is more likely
+									_graph->SetPoint(i, _graph->GetX()[i], 100.);
+								}
+								break; // only one entry per mass bin is expected here
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	canvas_selected_waves->Print("Fit_overview.ps");
+	for (ipad = 4; ipad > 0; ipad --){
+		canvas_selected_waves->cd(ipad);
+		gPad->Clear();
+	}
+	//sort(available_waves.begin(), available_waves.end());
+
+	// drawing all intensities
+	for (int mostlikely = 0; mostlikely < 2; mostlikely++){
+		int ipad(0);
+		string last_JPCM = "";
+		for (Twavemapit it = available_waves.begin(); it != available_waves.end(); it++){
+			string wavename = it->first;
+
+			int J,P,C,M,refl,l,s;
+			string iso1, iso2;
+			GetJPCMreflISO1lsISO2(wavename,J,P,C,M,refl,iso1,iso2,l,s);
+			stringstream _jpcm;// = (wavename.substr(2,4));
+			_jpcm << J << P;
+			if (last_JPCM != _jpcm.str()){
+				if (last_JPCM != ""){
+					ipad = 4;
+				}
+				last_JPCM = _jpcm.str();
+			}
+
+			ipad++;
+			if (ipad > 4){
+				canvas_selected_waves->Print("Fit_overview.ps");
+				for (ipad = 4; ipad > 0; ipad --){
+					canvas_selected_waves->cd(ipad);
+					gPad->Clear();
+				}
+				ipad = 1;
+			}
+			canvas_selected_waves->cd(ipad);
+			gPad->Clear();
+			// for all selected waves
+			TMultiGraph* _graphs = NULL;
+			for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+				TTree* selected_tree = (TTree*)it->second;
+				Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+				_graph = fitresult->Get_Intensity(wavename, mostlikely);
+				if (_graph){
+					if (!_graphs){
+						_graphs = new TMultiGraph();
+						some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+						_graphs->SetName(some_name.str().c_str());
+						_multi_graphs.push_back(_graphs);
+					}
+					_graphs->Add(_graph);
+					_graphs->SetTitle(_graph->GetTitle());
+					gPad->Clear();
+					_graphs->Draw("APZ");
+					_graphs->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+					_graphs->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+				} else {
+					cout << " no wave named " << wavename << " in " << selected_tree->GetName() << " found "<< endl;
+				}
+			}
+			gPad->Update();
+		}
+		canvas_selected_waves->Print("Fit_overview.ps");
+		for (ipad = 4; ipad > 0; ipad --){
+			canvas_selected_waves->cd(ipad);
+			gPad->Clear();
+		}
+	}
+
+	canvas_selected_waves->cd(1); gPad->Clear();
+	canvas_selected_waves->cd(2); gPad->Clear();
+	canvas_selected_waves->cd(3); gPad->Clear();
+	canvas_selected_waves->cd(4); gPad->Clear();
+	canvas_selected_waves->cd(1);
+	gPad->Range(0, 0, 1, 1);
+	label.DrawText(0.1,0.5, "to do: summary and spin totals");
+	canvas_selected_waves->Print("Fit_overview.ps)");
+	gPad->Clear();
+	// show the result
+	//if (system("acroread Fit_overview.pdf")){
+		if (system("evince Fit_overview.ps")){
+			if (system("gv Fit_overview.ps")){
+				cout << " no reader for Fit_overview.ps found! " << endl;
+			}
+		}
+	//}
+
+	// delete all multi graphs
+	for (vector<TMultiGraph*>::iterator it = _multi_graphs.begin(); it != _multi_graphs.end(); it++){
+		(*it)->Clear();
+		delete (*it);
+	}
+/*
+	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+		TTree* selected_tree = (TTree*)it->second;
+		Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+		if (!fitresult){
+			cout << " TrpwaPlotAmpsFrame::Plot_selected_wave(): Hm, no fit result found! " << endl;
+			continue;
+		}
+		if (current_wave == "") continue;
+		ipad++;
+		if ()
+		canvas_selected_waves->cd(ipad);
+		_graph = fitresult->Get_Intensity(current_wave, false);
+		if (_graph){
+			if (!plotted_graphs[ipad]){
+				plotted_graphs[ipad] = new TMultiGraph();
+				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+				plotted_graphs[ipad]->SetName(some_name.str().c_str());
+			}
+			if (masscutlow < 0 || fitresult->waves[current_wave].mass_low < masscutlow)
+				 masscutlow = fitresult->waves[current_wave].mass_low;
+			if (masscuthigh < 0 || fitresult->waves[current_wave].mass_high > masscuthigh)
+				masscuthigh = fitresult->waves[current_wave].mass_high;
+			plotted_graphs[ipad]->Add(_graph);
+			plotted_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_graphs[ipad]->Draw("APZ");
+			plotted_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+		} else {
+			cout << " no wave named " << current_wave << " in " << selected_tree->GetName() << " found "<< endl;
+		}
+		_graph = fitresult->Get_Intensity(current_wave, true);
+		if (_graph){
+			if (!plotted_most_likely_graphs[ipad]){
+				plotted_most_likely_graphs[ipad] = new TMultiGraph();
+				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+				plotted_most_likely_graphs[ipad]->SetName(some_name.str().c_str());
+			}
+			plotted_most_likely_graphs[ipad]->Add(_graph);
+			plotted_most_likely_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_most_likely_graphs[ipad]->Draw("APZ");
+			plotted_most_likely_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_most_likely_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+		}
+	}*/
+	return;
 	/*
 	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
 		TTree* selected_tree = (TTree*)it->second;
@@ -534,9 +796,6 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 		canvas_selected_waves->cd(ipad);
 		_graph = fitresult->Get_Intensity(current_wave, false);
 		if (_graph){
-			_graph = new TGraphErrors(*_graph); // copy the graph
-			some_name.str(""); some_name << "graph_number_" << some_name_counter++;
-			_graph->SetName(some_name.str().c_str());
 			if (!plotted_graphs[ipad]){
 				plotted_graphs[ipad] = new TMultiGraph();
 				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
@@ -547,54 +806,138 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 			if (masscuthigh < 0 || fitresult->waves[current_wave].mass_high > masscuthigh)
 				masscuthigh = fitresult->waves[current_wave].mass_high;
 			plotted_graphs[ipad]->Add(_graph);
+			plotted_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_graphs[ipad]->Draw("APZ");
+			plotted_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
 		} else {
 			cout << " no wave named " << current_wave << " in " << selected_tree->GetName() << " found "<< endl;
 		}
 		_graph = fitresult->Get_Intensity(current_wave, true);
 		if (_graph){
-			_graph = new TGraphErrors(*_graph); // copy the graph
-			some_name.str(""); some_name << "graph_number_" << some_name_counter++;
-			_graph->SetName(some_name.str().c_str());
 			if (!plotted_most_likely_graphs[ipad]){
 				plotted_most_likely_graphs[ipad] = new TMultiGraph();
 				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
 				plotted_most_likely_graphs[ipad]->SetName(some_name.str().c_str());
 			}
 			plotted_most_likely_graphs[ipad]->Add(_graph);
+			plotted_most_likely_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_most_likely_graphs[ipad]->Draw("APZ");
+			plotted_most_likely_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_most_likely_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
 		}
 		if (current_anchor_wave == "") continue;
 		ipad = 3;
 		canvas_selected_waves->cd(ipad);
 		_graph = fitresult->Get_Intensity(current_anchor_wave, false);
 		if (_graph){
-			_graph = new TGraphErrors(*_graph); // copy the graph
-			some_name.str(""); some_name << "graph_number_" << some_name_counter++;
-			_graph->SetName(some_name.str().c_str());
 			if (!plotted_graphs[ipad]){
 				plotted_graphs[ipad] = new TMultiGraph();
 				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
 				plotted_graphs[ipad]->SetName(some_name.str().c_str());
 			}
-			if (masscutlow < 0 || fitresult->waves[current_anchor_wave].mass_low < masscutlow)
-				 masscutlow = fitresult->waves[current_anchor_wave].mass_low;
-			if (masscuthigh < 0 || fitresult->waves[current_anchor_wave].mass_high > masscuthigh)
-				masscuthigh = fitresult->waves[current_anchor_wave].mass_high;
-			some_name.str(""); some_name << "graph_number_" << some_name_counter++;
+			//if (masscutlow < 0 || fitresult->waves[current_anchor_wave].mass_low < masscutlow)
+			//	 masscutlow = fitresult->waves[current_anchor_wave].mass_low;
+			//if (masscuthigh < 0 || fitresult->waves[current_anchor_wave].mass_high > masscuthigh)
+			//	masscuthigh = fitresult->waves[current_anchor_wave].mass_high;
 			plotted_graphs[ipad]->Add(_graph);
+			plotted_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_graphs[ipad]->Draw("APZ");
+			plotted_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
 		} else {
 			cout << " no wave named " << current_anchor_wave << " in " << selected_tree->GetName() << " found "<< endl;
 		}
 		_graph = fitresult->Get_Intensity(current_anchor_wave, true);
 		if (_graph){
-			_graph = new TGraphErrors(*_graph); // copy the graph
-			some_name.str(""); some_name << "graph_number_" << some_name_counter++;
-			_graph->SetName(some_name.str().c_str());
 			if (!plotted_most_likely_graphs[ipad]){
 				plotted_most_likely_graphs[ipad] = new TMultiGraph();
 				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
 				plotted_most_likely_graphs[ipad]->SetName(some_name.str().c_str());
 			}
 			plotted_most_likely_graphs[ipad]->Add(_graph);
+			plotted_most_likely_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_most_likely_graphs[ipad]->Draw("APZ");
+			plotted_most_likely_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_most_likely_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+		}
+
+		ipad = 2;
+		canvas_selected_waves->cd(ipad);
+		_graph = fitresult->Get_Phase(current_wave, current_anchor_wave, false);
+		if (_graph){
+			if (!plotted_graphs[ipad]){
+				plotted_graphs[ipad] = new TMultiGraph();
+				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+				plotted_graphs[ipad]->SetName(some_name.str().c_str());
+			}
+			//if (masscutlow < 0 || fitresult->waves[current_wave].mass_low < masscutlow)
+			//	 masscutlow = fitresult->waves[current_wave].mass_low;
+			//if (masscuthigh < 0 || fitresult->waves[current_wave].mass_high > masscuthigh)
+			//	masscuthigh = fitresult->waves[current_wave].mass_high;
+			plotted_graphs[ipad]->Add(_graph);
+			plotted_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_graphs[ipad]->Draw("APZ");
+			plotted_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+		} else {
+			cout << " no wave named " << current_wave << " in " << selected_tree->GetName() << " found "<< endl;
+		}
+		_graph = fitresult->Get_Phase(current_wave, current_anchor_wave, true);
+		if (_graph){
+			if (!plotted_most_likely_graphs[ipad]){
+				plotted_most_likely_graphs[ipad] = new TMultiGraph();
+				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+				plotted_most_likely_graphs[ipad]->SetName(some_name.str().c_str());
+			}
+			plotted_most_likely_graphs[ipad]->Add(_graph);
+			plotted_most_likely_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_most_likely_graphs[ipad]->Draw("APZ");
+			plotted_most_likely_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_most_likely_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+		}
+
+		ipad = 4;
+		canvas_selected_waves->cd(ipad);
+		_graph = fitresult->Get_Coherence(current_wave, current_anchor_wave, false);
+		if (_graph){
+			if (!plotted_graphs[ipad]){
+				plotted_graphs[ipad] = new TMultiGraph();
+				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+				plotted_graphs[ipad]->SetName(some_name.str().c_str());
+			}
+			//if (masscutlow < 0 || fitresult->waves[current_wave].mass_low < masscutlow)
+			//	 masscutlow = fitresult->waves[current_wave].mass_low;
+			//if (masscuthigh < 0 || fitresult->waves[current_wave].mass_high > masscuthigh)
+			//	masscuthigh = fitresult->waves[current_wave].mass_high;
+			plotted_graphs[ipad]->Add(_graph);
+			plotted_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_graphs[ipad]->Draw("APZ");
+			plotted_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+		} else {
+			cout << " no wave named " << current_wave << " in " << selected_tree->GetName() << " found "<< endl;
+		}
+		_graph = fitresult->Get_Coherence(current_wave, current_anchor_wave, true);
+		if (_graph){
+			if (!plotted_most_likely_graphs[ipad]){
+				plotted_most_likely_graphs[ipad] = new TMultiGraph();
+				some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+				plotted_most_likely_graphs[ipad]->SetName(some_name.str().c_str());
+			}
+			plotted_most_likely_graphs[ipad]->Add(_graph);
+			plotted_most_likely_graphs[ipad]->SetTitle(_graph->GetTitle());
+			gPad->Clear();
+			plotted_most_likely_graphs[ipad]->Draw("APZ");
+			plotted_most_likely_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+			plotted_most_likely_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
 		}
 	}
 
@@ -820,7 +1163,7 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 				}
 			}
 			TGraphErrors* most_likely = new TGraphErrors(nbins, x_val, y_val, NULL, y_val_err);
-			Rectify_phase(most_likely);
+			//Rectify_phase(most_likely);
 			some_name.str(""); some_name << "graph_number_" << some_name_counter++;
 			most_likely->SetName(some_name.str().c_str());
 			most_likely->SetMarkerColor(icolor);
@@ -968,8 +1311,8 @@ void TrpwaPlotAmpsFrame::Set_Mass_range(){
 	slider_mass_range->GetPosition(mass_min, mass_max);
 	mass_min = mass_min * (masscuthigh-masscutlow) + masscutlow;
 	mass_max = mass_max * (masscuthigh-masscutlow) + masscutlow;
-	mass_min /= 1000.; // drawn in GeV
-	mass_max /= 1000.;
+	//mass_min /= 1000.; // drawn in GeV
+	//mass_max /= 1000.;
 	//cout << " setting from "<< mass_min << " to " << mass_max << endl;
 	for (int ipad = 0; ipad < 5; ipad++){
 		if (!draw_most_likely && plotted_graphs[ipad]){
@@ -989,7 +1332,7 @@ void TrpwaPlotAmpsFrame::Set_Mass_range(){
 	}
 }
 
-void TrpwaPlotAmpsFrame::Rectify_phase(TGraphErrors* graph_phase){
+void Tfitresult::Rectify_phase(TGraphErrors* graph_phase){
 	if (!graph_phase) return;
 	int npoints = graph_phase->GetN();
 	double* m = graph_phase->GetX();
@@ -1075,21 +1418,78 @@ Tfitresult::~Tfitresult(){
 	cout << " done " << endl;
 }
 
+TGraphErrors* Tfitresult::Get_Total_Intensity(
+					bool most_likely
+				){
+	TGraphErrors* result = NULL;
+	TGraphErrors* _graph = NULL;
+	if (most_likely){
+		_graph = most_likely_total_intensity;
+	} else {
+		_graph = all_total_intensities;
+	}
+	if (_graph){
+		result = new TGraphErrors(*_graph); // copy the graph
+		stringstream some_name;
+		static int some_name_counter(0);
+		some_name << "total_intensity_graph_number_" << some_name_counter++;
+		result->SetName(some_name.str().c_str());
+		result->SetTitle(_graph->GetTitle());
+		result->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+		result->GetYaxis()->SetTitle("Total intensity");
+	}
+	return result;
+}
 
+TGraphErrors* Tfitresult::Get_Likelihood(
+					bool most_likely
+				){
+	TGraphErrors* result = NULL;
+	TGraphErrors* _graph = NULL;
+	if (most_likely){
+		_graph = most_likely_likelihoods;
+	} else {
+		_graph = all_loglikelihoods;
+	}
+	if (_graph){
+		result = new TGraphErrors(*_graph); // copy the graph
+		stringstream some_name;
+		static int some_name_counter(0);
+		some_name << "likelihood_graph_number_" << some_name_counter++;
+		result->SetName(some_name.str().c_str());
+		result->SetTitle(_graph->GetTitle());
+		result->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+		result->GetYaxis()->SetTitle("log likelihood");
+	}
+	return result;
+}
 
 TGraphErrors *Tfitresult::Get_Intensity(string wavename, // get an intensity of a given partial wave
 bool most_likely){
 	Twavegraphmapit it = waves.find(wavename);
+	TGraphErrors* result = NULL;
 	if (it == waves.end()){
 		cout << "Error in Tfitresult::Get_Intensity(): Intensity for " << wavename << " does not exist! " << endl;
-		return NULL;
+		return result;
 	} else {
+		TGraphErrors* _graph = NULL;
 		if (most_likely){
-			return it->second.most_likely_intensity;
+			_graph = it->second.most_likely_intensity;
 		} else {
-			return it->second.all_intensities;
+			_graph = it->second.all_intensities;
+		}
+		if (_graph){
+			result = new TGraphErrors(*_graph); // copy the graph
+			stringstream some_name;
+			static int some_name_counter(0);
+			some_name << "intensity_graph_number_" << some_name_counter++;
+			result->SetName(some_name.str().c_str());
+			result->SetTitle(_graph->GetTitle());
+			result->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+			result->GetYaxis()->SetTitle("Intensity");
 		}
 	}
+	return result;
 }
 
 
@@ -1097,18 +1497,31 @@ bool most_likely){
 TGraphErrors *Tfitresult::Get_Phase(string wavename, // get a phase of a given partial wave
 		string anchorwave, // to a corresponding anchor wave
 		bool most_likely){
-	if (!Create_Phase_Coherence_graph(wavename, anchorwave)) return NULL;
+	TGraphErrors* result = NULL;
+	if (!Create_Phase_Coherence_graph(wavename, anchorwave)) return result;
 	Tphasegraphmapit it = waves[wavename].phase.find(anchorwave);
 	if (it == waves[wavename].phase.end()){
 		cout << "Unexpected Error in Tfitresult::Get_Phase(): aborting!" << endl;
-		return NULL;
+		return result;
 	} else {
+		TGraphErrors* _graph = NULL;
 		if (most_likely){
-			return it->second.most_likely_phase;
+			_graph = it->second.most_likely_phase;
 		} else {
-			return it->second.all_phases;
+			_graph = it->second.all_phases;
+		}
+		if (_graph){
+			result = new TGraphErrors(*_graph); // copy the graph
+			stringstream some_name;
+			static int some_name_counter(0);
+			some_name << "phase_graph_number_" << some_name_counter++;
+			result->SetName(some_name.str().c_str());
+			result->SetTitle(_graph->GetTitle());
+			result->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+			result->GetYaxis()->SetTitle("Phase Angle [deg]");
 		}
 	}
+	return result;
 }
 
 
@@ -1117,23 +1530,37 @@ TGraphErrors *Tfitresult::Get_Coherence(
 		string wavename, // get a coherence of a given partial wave
 		string anchorwave, // to a corresponding anchor wave
 		bool most_likely){
-	if (!Create_Phase_Coherence_graph(wavename, anchorwave)) return NULL;
+	TGraphErrors* result = NULL;
+	if (!Create_Phase_Coherence_graph(wavename, anchorwave)) return result;
 	Tphasegraphmapit it = waves[wavename].phase.find(anchorwave);
 	if (it == waves[wavename].phase.end()){
 		cout << "Unexpected Error in Tfitresult::Get_Coherence(): aborting!" << endl;
-		return NULL;
+		return result;
 	} else {
+		TGraphErrors* _graph = NULL;
 		if (most_likely){
-			return it->second.most_likely_coherence;
+			_graph = it->second.most_likely_coherence;
 		} else {
-			return it->second.all_coherences;
+			_graph = it->second.all_coherences;
+		}
+		if (_graph){
+			result = new TGraphErrors(*_graph); // copy the graph
+			stringstream some_name;
+			static int some_name_counter(0);
+			some_name << "coherence_graph_number_" << some_name_counter++;
+			result->SetName(some_name.str().c_str());
+			result->SetTitle(_graph->GetTitle());
+			result->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+			result->GetYaxis()->SetTitle("Coherence");
 		}
 	}
+	return result;
 }
 
 bool Tfitresult::Create_Phase_Coherence_graph(
 		string wavename,
 		string anchorwave){
+	string branchName = "fitResult_v2";
 	if (waves.find(wavename) == waves.end()){
 		cout << " Error in Tfitresult::Create_Phase_Coherence_graph(): wave " << wavename << " does not exist! " << endl;
 		return false;
@@ -1146,8 +1573,8 @@ bool Tfitresult::Create_Phase_Coherence_graph(
 	if (it == waves[wavename].phase.end()){
 		// create a new graph else do nothing
 		Tphasegraph& phasegraph = waves[wavename].phase[anchorwave];
-		mass_low = -1;
-		mass_high = -1;
+		phasegraph.mass_low = -1;
+		phasegraph.mass_high = -1;
 		string graphname;
 		phasegraph.all_phases 				= new TGraphErrors(0);
 		graphname = name+wavename+"vs"+anchorwave+"all_phases";
@@ -1173,6 +1600,113 @@ bool Tfitresult::Create_Phase_Coherence_graph(
 		phasegraph.most_likely_coherence->SetMarkerColor(graphcolor.rootcolorindex);
 		phasegraph.most_likely_coherence->SetMarkerStyle(21);
 		phasegraph.most_likely_coherence->SetMarkerSize(0.5);
+
+		cout << " calculating phases and coherences " << endl;
+		map<double, int> massbin_positions;
+		map<double, double> smallest_loglikelihood;
+		fitResult* massBin = new fitResult();
+		fitresult->SetBranchAddress(branchName.c_str(), &massBin);
+		int nmassbins = fitresult->GetEntries();
+		int different_massbins(0);
+		// check all given mass bins
+		for (int imassbin = 0; imassbin < nmassbins; imassbin++){
+			DrawProgressBar(50, (double)(imassbin+1)/((double)nmassbins));
+			fitresult->GetEntry(imassbin);
+			double mass = massBin->massBinCenter()/1000.;
+			double loglike = massBin->logLikelihood();
+			bool found_newmassbin(false);
+			if (massbin_positions.find(mass) == massbin_positions.end()){
+				found_newmassbin = true;
+				massbin_positions[mass] = different_massbins;
+				different_massbins++;
+			}
+			bool found_morelikely(false);
+			if (smallest_loglikelihood[mass] > loglike){
+				found_morelikely = true;
+				smallest_loglikelihood[mass] = loglike;
+			}
+
+			int _indexA = -1;
+			if (wavename != "")
+			_indexA = massBin->waveIndex(wavename);
+			int _indexB = -1;
+			if (anchorwave != "")
+			_indexB = massBin->waveIndex(anchorwave);
+			if (_indexA < 0){
+				cout << " wave " << wavename << " not found in bin " << mass << endl;
+				continue;
+			}				
+			if (_indexB < 0){
+				cout << " anchor wave " << anchorwave << " not found in bin " << mass << endl;
+				continue;
+			}		
+			// both waves were found adjust the valid mass range
+			if (phasegraph.mass_low  == -1 || phasegraph.mass_low > mass ) phasegraph.mass_low  = mass;
+			if (phasegraph.mass_high == -1 || phasegraph.mass_high < mass) phasegraph.mass_high = mass;
+
+			// retrieve phases and coherences
+			double phase        =
+				massBin->phase       ((unsigned int) _indexA, (unsigned int) _indexB);
+			double phaseErr     =
+				massBin->phaseErr    ((unsigned int) _indexA, (unsigned int) _indexB);
+			double coherence    =
+				massBin->coherence   ((unsigned int) _indexA, (unsigned int) _indexB);
+			double coherenceErr =
+				massBin->coherenceErr((unsigned int) _indexA, (unsigned int) _indexB);				
+
+			// fill up all phases and coherences
+			int _n = phasegraph.all_phases->GetN();
+			phasegraph.all_phases->Set(_n+1);
+			phasegraph.all_phases->SetPoint(_n, mass, phase);
+			phasegraph.all_phases->SetPointError(_n, 0, phaseErr);
+
+			_n = phasegraph.all_coherences->GetN();
+			phasegraph.all_coherences->Set(_n+1);
+			phasegraph.all_coherences->SetPoint(_n, mass, coherence);
+			phasegraph.all_coherences->SetPointError(_n, 0, coherenceErr);
+			
+			// add a new for the most likely one in case of a new mass bin
+			if (found_newmassbin){
+				int _n = phasegraph.all_phases->GetN();
+				phasegraph.most_likely_phase->Set(_n+1);
+				phasegraph.most_likely_phase->SetPoint(_n, mass, phase);
+				phasegraph.most_likely_phase->SetPointError(_n, 0, phaseErr);
+
+				_n = phasegraph.all_coherences->GetN();
+				phasegraph.most_likely_coherence->Set(_n+1);
+				phasegraph.most_likely_coherence->SetPoint(_n, mass, coherence);
+				phasegraph.most_likely_coherence->SetPointError(_n, 0, coherenceErr);				
+			} else {
+				// check if found a more likely one
+				if (found_morelikely){
+					// search for the corresponding mass bin
+					double* _m = phasegraph.most_likely_phase->GetX();
+					int 	_n = phasegraph.most_likely_phase->GetN();
+					int _pos = -1;
+					for (int i = 0; i < _n; i++){
+						if (_m[i] == mass){
+							_pos = i;
+							break;
+						}
+					} 
+					if (_pos < 0){
+						cout << " Unexpected error in Tfitresult::Create_Phase_Coherence_graph(): corresponding mass not found! " << endl;
+						continue;
+					}
+					phasegraph.most_likely_phase->SetPoint(_pos, mass, phase);
+					phasegraph.most_likely_phase->SetPointError(_pos, 0, phaseErr);
+
+					phasegraph.most_likely_coherence->SetPoint(_pos, mass, coherence);
+					phasegraph.most_likely_coherence->SetPointError(_pos, 0, coherenceErr);						
+				}
+			}
+		}
+		cout << " done " << endl;
+		// now some cosmetics
+		phasegraph.most_likely_phase->Sort();
+		Rectify_phase(phasegraph.most_likely_phase);
+		phasegraph.most_likely_coherence->Sort();
+
 	}
 	return true;
 }
@@ -1282,7 +1816,7 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 			if (waves.find(wavename) != waves.end()){ // it exists already
 				Twavegraph& wavegraph = waves.find(wavename)->second;
 				if (wavegraph.mass_low  > mass) wavegraph.mass_low  = mass;
-				if (wavegraph.mass_high > mass) wavegraph.mass_high = mass;
+				if (wavegraph.mass_high < mass) wavegraph.mass_high = mass;
 				int _pos = wavegraph.all_intensities->GetN();
 				wavegraph.all_intensities->Set(_pos+1);
 				wavegraph.all_intensities->SetPoint(_pos, mass, intensity);
