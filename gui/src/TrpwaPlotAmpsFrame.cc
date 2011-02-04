@@ -527,7 +527,7 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 						for (int j = 0; j < _comp_graph->GetN(); j++){
 							if (_graph->GetX()[i] == _comp_graph->GetX()[j]){ // found to same mass bins
 								if (_graph->GetY()[i] < _comp_graph->GetY()[j]){ // _graph is more likely
-									_comp_graph->SetPoint(j, _comp_graph->GetX()[j], 0.);
+									_comp_graph->SetPoint(j, _comp_graph->GetX()[j], 100.);
 								} else { // _comp_graph is more likely
 									_graph->SetPoint(i, _graph->GetX()[i], 100.);
 								}
