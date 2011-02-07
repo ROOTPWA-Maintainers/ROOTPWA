@@ -1999,7 +1999,7 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 			double intensity = massBin->intensity(wavename.c_str());
 			double intensity_err = massBin->intensityErr(wavename.c_str());
 			totalintensity += intensity;
-			totalintensity_err += intensity_err;
+			totalintensity_err = sqrt(totalintensity_err*totalintensity_err + intensity_err*intensity_err);
 			if (waves.find(wavename) != waves.end()){ // it exists already
 				Twavegraph& wavegraph = waves.find(wavename)->second;
 				if (wavegraph.mass_low  > mass) wavegraph.mass_low  = mass;
@@ -2078,12 +2078,14 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 				return *result;
 			} else {
 				most_likely_total_intensity->SetPoint(_pos, mass, totalintensity);
+				most_likely_total_intensity->SetPointError(_pos, 0, totalintensity_err);
 				// error not treatet yet
 			}
 		}
 		_pos = all_total_intensities->GetN();
 		all_total_intensities->Set(_pos+1);
 		all_total_intensities->SetPoint(_pos, mass, totalintensity);
+		all_total_intensities->SetPointError(_pos, 0, totalintensity_err);
 	}
 	return *result;
 }
