@@ -60,6 +60,7 @@ plotAllIntensities(const unsigned int nmbTrees,               // number of fitRe
 		   const bool         createPsFile  = false,  // if true, plots are written to waves.ps
 		   const std::string& outPath       = "./",   // path for output files
 		   const int*         graphColors   = NULL,   // array of colors for graph line and marker
+		   const double*      graphScales   = NULL,   // array of scales for graph scaling (scales all graphs of one tree)
 		   const bool         drawLegend    = true,   // if set legend is drawn
 		   const double       yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
 		   const string&      branchName    = "fitResult_v2");
@@ -72,22 +73,23 @@ plotAllIntensities(TTree*             tree,                   // fitResult tree
 		   const double       yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
 		   const string&      branchName    = "fitResult_v2")
 {
-  return plotAllIntensities(1, &tree, createPsFile, outPath, NULL, false, yAxisRangeMax, branchName);
+  return plotAllIntensities(1, &tree, createPsFile, outPath, NULL, NULL, false, yAxisRangeMax, branchName);
 }
 
 
 inline
 std::vector<std::pair<std::string, TVirtualPad*> >
-plotAllIntensities(std::vector<TTree*>&    trees,                  // array of fitResult trees
-		   const bool              createPsFile  = false,  // if true, plots are written to waves.ps
-		   const std::string&      outPath       = "./",   // path for output files
-		   const std::vector<int>& graphColors   = std::vector<int>(),  // array of colors for graph line and marker
+plotAllIntensities(std::vector<TTree*>&    trees,                  // vector of fitResult trees
+		   const bool                 createPsFile  = false,  // if true, plots are written to waves.ps
+		   const std::string&         outPath       = "./",   // path for output files
+		   const std::vector<int>&    graphColors   = std::vector<int>(),  // vector of colors for graph line and marker
+		   const std::vector<double>& graphScales   = std::vector<double>(), // vector of scales for graphs
 		   const bool              drawLegend    = true,   // if set legend is drawn
 		   const double            yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
 		   const string&           branchName    = "fitResult_v2")
 {
   return plotAllIntensities(trees.size(), &(*(trees.begin())), createPsFile, outPath,
-			    &(*(graphColors.begin())), drawLegend, yAxisRangeMax, branchName);
+			    &(*(graphColors.begin())), &(*(graphScales.begin())), drawLegend, yAxisRangeMax, branchName);
 }
 
 
