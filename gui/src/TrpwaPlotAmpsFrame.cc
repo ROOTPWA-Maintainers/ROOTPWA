@@ -1498,7 +1498,7 @@ TGraphErrors *Tfitresult::Get_Phase(string wavename, // get a phase of a given p
 		string anchorwave, // to a corresponding anchor wave
 		bool most_likely){
 	TGraphErrors* result = NULL;
-	if (!Create_Phase_Coherence_graph(wavename, anchorwave)) return result;
+	if (!Create_Phase_Coherence_graph(anchorwave)) return result;
 	Tphasegraphmapit it = waves[wavename].phase.find(anchorwave);
 	if (it == waves[wavename].phase.end()){
 		cout << "Unexpected Error in Tfitresult::Get_Phase(): aborting!" << endl;
@@ -1531,7 +1531,7 @@ TGraphErrors *Tfitresult::Get_Coherence(
 		string anchorwave, // to a corresponding anchor wave
 		bool most_likely){
 	TGraphErrors* result = NULL;
-	if (!Create_Phase_Coherence_graph(wavename, anchorwave)) return result;
+	if (!Create_Phase_Coherence_graph(anchorwave)) return result;
 	Tphasegraphmapit it = waves[wavename].phase.find(anchorwave);
 	if (it == waves[wavename].phase.end()){
 		cout << "Unexpected Error in Tfitresult::Get_Coherence(): aborting!" << endl;
@@ -1667,12 +1667,12 @@ bool Tfitresult::Create_Phase_Coherence_graph(
 			
 			// add a new for the most likely one in case of a new mass bin
 			if (found_newmassbin){
-				int _n = phasegraph.all_phases->GetN();
+				int _n = phasegraph.most_likely_phase->GetN();
 				phasegraph.most_likely_phase->Set(_n+1);
 				phasegraph.most_likely_phase->SetPoint(_n, mass, phase);
 				phasegraph.most_likely_phase->SetPointError(_n, 0, phaseErr);
 
-				_n = phasegraph.all_coherences->GetN();
+				_n = phasegraph.most_likely_coherence->GetN();
 				phasegraph.most_likely_coherence->Set(_n+1);
 				phasegraph.most_likely_coherence->SetPoint(_n, mass, coherence);
 				phasegraph.most_likely_coherence->SetPointError(_n, 0, coherenceErr);				
@@ -1708,6 +1708,193 @@ bool Tfitresult::Create_Phase_Coherence_graph(
 		phasegraph.most_likely_coherence->Sort();
 
 	}
+	return true;
+}
+
+bool Tfitresult::Create_Phase_Coherence_graph(
+		string anchorwave){
+	string branchName = "fitResult_v2";
+	if (waves.find(anchorwave) == waves.end()){
+		cout << " Error in Tfitresult::Create_Phase_Coherence_graph(): anchor wave " << anchorwave << " does not exist! " << endl;
+		return false;
+	}
+	cout << " creating phase and coherence graphs for anchor wave " << anchorwave << endl;
+	//cout << " calculating phases and coherences " << endl;
+	map<double, int> massbin_positions;
+	map<double, double> smallest_loglikelihood;
+	fitResult* massBin = new fitResult();
+	fitresult->SetBranchAddress(branchName.c_str(), &massBin);
+	int nmassbins = fitresult->GetEntries();
+	int different_massbins(0);
+	map <string, bool> skipphase; // in case a graph exists
+	// check all given mass bins
+	for (int imassbin = 0; imassbin < nmassbins; imassbin++){
+		// after a first iteration searching for existing graphs
+		// it is decided if there are some to be filled or not
+		if (imassbin == 1 && skipphase.size() == waves.size()){
+			bool finish = true;
+			for (map <string, bool>::const_iterator itskip = skipphase.begin(); itskip != skipphase.end(); itskip++){
+				if (!itskip->second) {
+					finish = false; // at least one wave is not created yet
+					continue;
+				}
+			}
+			if (finish){
+				DrawProgressBar(50, 1.);
+				cout << " all phases had been already calculated. " << endl;
+				return true;
+			}
+		}
+		DrawProgressBar(50, (double)(imassbin+1)/((double)nmassbins));
+		fitresult->GetEntry(imassbin);
+		double mass = massBin->massBinCenter()/1000.;
+		double loglike = massBin->logLikelihood();
+		bool found_newmassbin(false);
+		if (massbin_positions.find(mass) == massbin_positions.end()){
+			found_newmassbin = true;
+			massbin_positions[mass] = different_massbins;
+			different_massbins++;
+		}
+		bool found_morelikely(false);
+		if (smallest_loglikelihood[mass] > loglike){
+			found_morelikely = true;
+			smallest_loglikelihood[mass] = loglike;
+		}
+
+		for (Twavegraphmapit itwave = waves.begin(); itwave != waves.end(); itwave++){
+			// create a graph if not existent
+			Tphasegraphmapit it = itwave->second.phase.find(anchorwave);
+			if (it == itwave->second.phase.end()){
+				// create a new graph
+				Tphasegraph& phasegraph = itwave->second.phase[anchorwave];
+				phasegraph.mass_low = -1;
+				phasegraph.mass_high = -1;
+				string graphname;
+				phasegraph.all_phases 				= new TGraphErrors(0);
+				graphname = name+itwave->first+"vs"+anchorwave+"all_phases";
+				phasegraph.all_phases->SetNameTitle(graphname.c_str(), ("#Delta #phi("+itwave->first+"_vs_"+anchorwave+")").c_str());
+				phasegraph.all_phases->SetMarkerColor(graphcolor.rootcolorindex);
+				phasegraph.all_phases->SetMarkerStyle(21);
+				phasegraph.all_phases->SetMarkerSize(0.5);
+				phasegraph.most_likely_phase 		= new TGraphErrors(0);
+				graphname = name+itwave->first+"vs"+anchorwave+"most_likely_phase";
+				phasegraph.most_likely_phase->SetNameTitle(graphname.c_str(), ("#Delta #phi("+itwave->first+"_vs_"+anchorwave+")").c_str());
+				phasegraph.most_likely_phase->SetMarkerColor(graphcolor.rootcolorindex);
+				phasegraph.most_likely_phase->SetMarkerStyle(21);
+				phasegraph.most_likely_phase->SetMarkerSize(0.5);
+				phasegraph.all_coherences 			= new TGraphErrors(0);
+				graphname = name+itwave->first+"vs"+anchorwave+"all_coherences";
+				phasegraph.all_coherences->SetNameTitle(graphname.c_str(), ("Coherence("+itwave->first+"_vs_"+anchorwave+")").c_str());
+				phasegraph.all_coherences->SetMarkerColor(graphcolor.rootcolorindex);
+				phasegraph.all_coherences->SetMarkerStyle(21);
+				phasegraph.all_coherences->SetMarkerSize(0.5);
+				phasegraph.most_likely_coherence 	= new TGraphErrors(0);
+				graphname = name+itwave->first+"vs"+anchorwave+"most_likely_coherence";
+				phasegraph.most_likely_coherence->SetNameTitle(graphname.c_str(), ("Coherence("+itwave->first+"_vs_"+anchorwave+")").c_str());
+				phasegraph.most_likely_coherence->SetMarkerColor(graphcolor.rootcolorindex);
+				phasegraph.most_likely_coherence->SetMarkerStyle(21);
+				phasegraph.most_likely_coherence->SetMarkerSize(0.5);
+			} else {
+				// checked if a graph exists already
+				if (imassbin == 0)
+					skipphase[itwave->first] = true;
+				else
+					skipphase[itwave->first] = false;
+			}
+			if (skipphase[itwave->first]) continue;
+			Tphasegraph& phasegraph = itwave->second.phase[anchorwave];
+			int _indexA = -1;
+			//if (wavename != "")
+			_indexA = massBin->waveIndex(itwave->first);
+			int _indexB = -1;
+			if (anchorwave != "")
+			_indexB = massBin->waveIndex(anchorwave);
+			//if (_indexA < 0){
+			//	cout << " wave " << wavename << " not found in bin " << mass << endl;
+			//	continue;
+			//}
+			if (_indexB < 0){
+				if (itwave == waves.begin())
+					cout << " anchor wave " << anchorwave << " not found in bin " << mass << endl;
+				continue;
+			}
+			// both waves were found adjust the valid mass range
+			if (phasegraph.mass_low  == -1 || phasegraph.mass_low > mass ) phasegraph.mass_low  = mass;
+			if (phasegraph.mass_high == -1 || phasegraph.mass_high < mass) phasegraph.mass_high = mass;
+
+			// retrieve phases and coherences
+			double phase        =
+				massBin->phase       ((unsigned int) _indexA, (unsigned int) _indexB);
+			double phaseErr     =
+				massBin->phaseErr    ((unsigned int) _indexA, (unsigned int) _indexB);
+			double coherence    =
+				massBin->coherence   ((unsigned int) _indexA, (unsigned int) _indexB);
+			double coherenceErr =
+				massBin->coherenceErr((unsigned int) _indexA, (unsigned int) _indexB);
+
+			// fill up all phases and coherences
+			int _n = phasegraph.all_phases->GetN();
+			phasegraph.all_phases->Set(_n+1);
+			phasegraph.all_phases->SetPoint(_n, mass, phase);
+			phasegraph.all_phases->SetPointError(_n, 0, phaseErr);
+
+			_n = phasegraph.all_coherences->GetN();
+			phasegraph.all_coherences->Set(_n+1);
+			phasegraph.all_coherences->SetPoint(_n, mass, coherence);
+			phasegraph.all_coherences->SetPointError(_n, 0, coherenceErr);
+
+			// add a new for the most likely one in case of a new mass bin
+			if (found_newmassbin){
+				int _n = phasegraph.most_likely_phase->GetN();
+				phasegraph.most_likely_phase->Set(_n+1);
+				phasegraph.most_likely_phase->SetPoint(_n, mass, phase);
+				phasegraph.most_likely_phase->SetPointError(_n, 0, phaseErr);
+
+				_n = phasegraph.most_likely_coherence->GetN();
+				phasegraph.most_likely_coherence->Set(_n+1);
+				phasegraph.most_likely_coherence->SetPoint(_n, mass, coherence);
+				phasegraph.most_likely_coherence->SetPointError(_n, 0, coherenceErr);
+			} else {
+				// check if found a more likely one
+				if (found_morelikely){
+					// search for the corresponding mass bin
+					double* _m = phasegraph.most_likely_phase->GetX();
+					int 	_n = phasegraph.most_likely_phase->GetN();
+					int _pos = -1;
+					for (int i = 0; i < _n; i++){
+						if (_m[i] == mass){
+							_pos = i;
+							break;
+						}
+					}
+					if (_pos < 0){
+						cout << " Unexpected error in Tfitresult::Create_Phase_Coherence_graph(): corresponding mass not found! " << endl;
+						continue;
+					}
+					phasegraph.most_likely_phase->SetPoint(_pos, mass, phase);
+					phasegraph.most_likely_phase->SetPointError(_pos, 0, phaseErr);
+
+					phasegraph.most_likely_coherence->SetPoint(_pos, mass, coherence);
+					phasegraph.most_likely_coherence->SetPointError(_pos, 0, coherenceErr);
+				}
+			}
+		}
+
+	}
+	// do some cosmetics
+	for (Twavegraphmapit itwave = waves.begin(); itwave != waves.end(); itwave++){
+		Tphasegraphmapit it = itwave->second.phase.find(anchorwave);
+		if (it == itwave->second.phase.end()){
+			cout << " Uups: should not happen! " << endl;
+			return false;
+		}
+		// now some cosmetics
+		it->second.most_likely_phase->Sort();
+		Rectify_phase(it->second.most_likely_phase);
+		it->second.most_likely_coherence->Sort();
+	}
+
+	cout << " done " << endl;
 	return true;
 }
 

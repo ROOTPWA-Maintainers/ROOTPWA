@@ -119,11 +119,16 @@ public:
 					bool most_likely = true // in case of many solutions only the most likely one
 				);
 
+	// creates phase and coherence for a given pair of waves
+	bool Create_Phase_Coherence_graph(
+					string wavename,   // between a given partial wave
+					string anchorwave // and a corresponding anchor wave
+				);
 
 	// this method is called by Get_Phase and Get_Coherence and
 	// does not have to be called individually
+	// creates phase and coherence for all waves vs the given anchor wave
 	bool Create_Phase_Coherence_graph(
-					string wavename,   // between a given partial wave
 					string anchorwave // and a corresponding anchor wave
 				);
 
