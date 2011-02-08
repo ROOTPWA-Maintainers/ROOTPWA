@@ -42,6 +42,7 @@
 #include <cassert>
 #include <time.h>
 
+#include "TROOT.h"
 #include "TTree.h"
 #include "TFile.h"
 #include "TString.h"
@@ -148,6 +149,11 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printSvnVersion  ();
+
+	// force loading predefined std::complex dictionary
+	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
+	gROOT->ProcessLine("#include <complex>");
+
 	// ---------------------------------------------------------------------------
 	// internal parameters
 	const string       valTreeName           = "pwa";

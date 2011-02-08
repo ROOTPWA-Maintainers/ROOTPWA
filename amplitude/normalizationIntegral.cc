@@ -123,7 +123,7 @@ normalizationIntegral::waveName(const unsigned int waveIndex) const
 }
 
 
-const complex<double>&
+complex<double>
 normalizationIntegral::element(const unsigned int waveIndexI,
                                const unsigned int waveIndexJ) const
 {
@@ -137,17 +137,15 @@ normalizationIntegral::element(const unsigned int waveIndexI,
 		         << "number of waves = " << _nmbWaves << endl;
 		throw;
 	}
-	return _integrals[waveIndexI][waveIndexJ];
-	// el(iName, jName) / ((double)_nmbEvents);
+	return _integrals[waveIndexI][waveIndexJ] / ((double)_nmbEvents);
 }
 
 
-const complex<double>&
+complex<double>
 normalizationIntegral::element(const std::string& waveNameI,
                                const std::string& waveNameJ) const
 {
-	return _integrals[waveIndex(waveNameI)][waveIndex(waveNameJ)];
-	// el(iName, jName) / ((double)_nmbEvents);
+	return _integrals[waveIndex(waveNameI)][waveIndex(waveNameJ)] / ((double)_nmbEvents);
 }
 
 
@@ -159,13 +157,13 @@ normalizationIntegral::integrate(const vector<string>& binAmpFileNames,
 {
 	// open amplitude files
 	vector<ifstream*>          binAmpFiles;
-	streampos                  binAmpFileSize = openBinAmpFiles(binAmpFiles,  binAmpFileNames, 0);
-	const unsigned int         nmbBinWaves    = binAmpFiles.size();
+	const unsigned long        nmbBinEvents  = openBinAmpFiles(binAmpFiles, binAmpFileNames, 0);
+	const unsigned int         nmbBinWaves   = binAmpFiles.size();
 	vector<TTree*>             ampTrees;
 	vector<amplitudeTreeLeaf*> ampTreeLeafs;
-	const unsigned long        nmbRootEvents  = openRootAmpFiles(ampTrees, ampTreeLeafs,
-	                                                             rootAmpFileNames, binAmpFiles.size());
-	const unsigned int         nmbRootWaves   = ampTrees.size();
+	const unsigned long        nmbRootEvents = openRootAmpFiles(ampTrees, ampTreeLeafs,
+	                                                            rootAmpFileNames, binAmpFiles.size());
+	const unsigned int         nmbRootWaves  = ampTrees.size();
 	_nmbWaves = nmbBinWaves + nmbRootWaves;
 	if (_nmbWaves > 0)
 		printInfo << "calculating integral for " << _nmbWaves << " amplitude(s)" << endl;
@@ -173,6 +171,22 @@ normalizationIntegral::integrate(const vector<string>& binAmpFileNames,
 		printWarn << "could not open any amplitude files. cannot calculate integral." << endl;
 		return false;
 	}
+	if ((nmbBinEvents > 0) and (nmbRootEvents > 0) and (nmbBinEvents != nmbRootEvents)) {
+		printWarn << ".bin and .root amplitude files contain different number of amplitudes "
+		          << "(" << nmbBinEvents << " vs. " << nmbRootEvents << "). "
+		          << "cannot calculate integral." << endl;
+		return false;
+	}
+	if ((nmbBinEvents == 0) and (nmbRootEvents == 0)) {
+		printWarn << "amplitude files contain no amplitudes. cannot calculate integral." << endl;
+		return false;
+	}
+	if (nmbBinEvents > 0)
+		_nmbEvents = nmbBinEvents;
+	else
+		_nmbEvents = nmbRootEvents;
+	_nmbEvents = (maxNmbEvents) ? min(_nmbEvents, maxNmbEvents) : _nmbEvents;
+
 	// update wave index -> wave name map
   _waveIndexWaveNameMap.resize(_nmbWaves);
   for (waveNameWaveIndexMapIterator i = _waveNameWaveIndexMap.begin();
@@ -202,7 +216,6 @@ normalizationIntegral::integrate(const vector<string>& binAmpFileNames,
 	accumulator_set<double,          stats<tag::sum(compensated)> > weightIntegral;
 	accumulator_set<complex<double>, stats<tag::sum(compensated)> > integrals[_nmbWaves][_nmbWaves];
 	// process weight file and binary amplitude files
-	_nmbEvents = (maxNmbEvents) ? min(nmbRootEvents, maxNmbEvents) : nmbRootEvents;
 	complex<double>  amps[_nmbWaves];
   progress_display progressIndicator(_nmbEvents, cout, "");
   for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
@@ -419,7 +432,7 @@ normalizationIntegral::print(ostream&   out,
 }
 
 
-streampos
+unsigned long
 normalizationIntegral::openBinAmpFiles(vector<ifstream*>&    ampFiles,
                                        const vector<string>& ampFileNames,
                                        const unsigned int    waveIndexOffset)
@@ -462,7 +475,7 @@ normalizationIntegral::openBinAmpFiles(vector<ifstream*>&    ampFiles,
 		_waveNameWaveIndexMap[waveName] = waveIndex + waveIndexOffset;
 		++waveIndex;
   }
-	return ampFileSize;
+	return ampFileSize / sizeof(complex<double>);  // number of amplitudes
 }
 
 
@@ -542,7 +555,7 @@ normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
 
 		// get wave name and fill name -> index map
 		string waveName = ampTree->GetName();
-		waveName = waveName.substr(0, waveName.length() - 5);  // cut off ".amp"
+		waveName = waveName.substr(0, waveName.length() - 5);  // chop off ".amp"
 		_waveNameWaveIndexMap[waveName] = waveIndex + waveIndexOffset;
 		++waveIndex;
   }

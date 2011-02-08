@@ -53,6 +53,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace rpwa;
 
 
 bool
@@ -103,10 +104,10 @@ plotAmpDiffs(const string&  inFileNamePattern,
 	// TH1F* hAmps1Im   = new TH1F("amps1Imag",   "amps1Imag;Event Number;#Jgothic[Amp 1]", nmbEvents, -0.5, nmbEvents - 0.5);
 	// TH1F* hAmps2Re   = new TH1F("amps2Real",   "amps2Real;Event Number;#Rgothic[Amp 2]", nmbEvents, -0.5, nmbEvents - 0.5);
 	// TH1F* hAmps2Im   = new TH1F("amps2Imag",   "amps2Imag;Event Number;#Jgothic[Amp 2]", nmbEvents, -0.5, nmbEvents - 0.5);
-	TH1F* hAbsDiffRe = new TH1F("absDiffReal", "absDiffReal;#Rgothic[Amp 1 - Amp 2];Count", 1000000, -1e-6, 1e-6);
-	TH1F* hAbsDiffIm = new TH1F("absDiffImag", "absDiffImag;#Jgothic[Amp 1 - Amp 2];Count", 1000000, -1e-6, 1e-6);
+	TH1F* hAbsDiffRe = new TH1F("absDiffReal", "absDiffReal;#Rgothic[Amp 1 - Amp 2];Count", 1000000, -1e-9, 1e-9);
+	TH1F* hAbsDiffIm = new TH1F("absDiffImag", "absDiffImag;#Jgothic[Amp 1 - Amp 2];Count", 1000000, -1e-8, 1e-8);
 	TH1F* hRelDiffRe = new TH1F("relDiffReal", "relDiffReal;(#Rgothic[Ampl 1] - #Rgothic[Ampl 2]) / #Rgothic[Ampl 1];Count", 1000000, -1e-4, 1e-4);
-	TH1F* hRelDiffIm = new TH1F("relDiffImag", "relDiffImam;(#Jgothic[Ampl 1] - #Jgothic[Ampl 2]) / #Jgothic[Ampl 1];Count", 1000000, -1e-4, 1e-4);
+	TH1F* hRelDiffIm = new TH1F("relDiffImag", "relDiffImag;(#Jgothic[Ampl 1] - #Jgothic[Ampl 2]) / #Jgothic[Ampl 1];Count", 1000000, -1e-4, 1e-4);
 	// TH2F* hCorrRe    = new TH2F("corrReal",    "corrReal;#Rgothic[Amp 1];#Rgothic[Amp 2]", 5000, -5, 5, 5000, -5, 5);
 	// TH2F* hCorrIm    = new TH2F("corrImag",    "corrImag;#Jgothic[Amp 1];#Jgothic[Amp 2]", 5000, -5, 5, 5000, -5, 5);
 

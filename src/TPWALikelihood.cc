@@ -47,6 +47,7 @@
 
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
+#include "fileUtils.hpp"
 #ifdef USE_CUDA
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"
@@ -726,41 +727,113 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
 }
 
 
+// returns integral matrix reordered according to _waveNames array
+template<typename complexT>
+void
+TPWALikelihood<complexT>::reorderIntegralMatrix(const normalizationIntegral& integral,
+                                                normMatrixArrayType&         reorderedMatrix) const
+{
+	// create reordered matrix
+	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
+	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
+			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
+				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
+					const complex<double> val = integral.element(_waveNames[iRefl][iWave],
+					                                             _waveNames[jRefl][jWave]);
+					reorderedMatrix[iRefl][iWave][jRefl][jWave] = complexT(val.real(), val.imag());
+				}
+}
+
+
 template<typename complexT>
 void
 TPWALikelihood<complexT>::readIntegrals
-(const string& normIntFileName,  // name of file with normalization integrals
- const string& accIntFileName)   // name of file with acceptance integrals
+(const string& normIntFileName,   // name of file with normalization integrals
+ const string& accIntFileName,    // name of file with acceptance integrals
+ const string& integralTKeyName)  // name of TKey which stores integral in .root file
 {
 	printInfo << "loading normalization integral from '" << normIntFileName << "'" << endl;
-	ifstream intFile(normIntFileName.c_str());
-	if (not intFile) {
-		printErr << "cannot open file '" << normIntFileName << "'. aborting." << endl;
+	const string normIntFileExt  = extensionFromPath(normIntFileName);
+	if (normIntFileExt == "root") {
+		TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
+		if (not intFile or intFile->IsZombie()) {
+			printErr << "could open normalization integral file '" << normIntFileName << "'. "
+			         << "aborting." << endl;
+			throw;
+		}
+		normalizationIntegral* integral = 0;
+		intFile->GetObject(integralTKeyName.c_str(), integral);
+		if (not integral) {
+			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
+			         << "'" << normIntFileName << "'. aborting." << endl;
+			throw;
+		}
+		reorderIntegralMatrix(*integral, _normMatrix);
+		intFile->Close();
+	} else if (normIntFileExt == "int") {
+		ifstream intFile(normIntFileName.c_str());
+		if (not intFile) {
+			printErr << "cannot open file '" << normIntFileName << "'. aborting." << endl;
+			throw;
+		}
+		integral integral;
+		// !!! integral.scan() performs no error checks!
+		integral.scan(intFile);
+		intFile.close();
+		reorderIntegralMatrix(integral, _normMatrix);
+	} else {
+		printErr << "unknown file type '" << normIntFileName << "'. "
+		         << "only .int and .root files are supported. aborting." << endl;
 		throw;
 	}
-	integral normInt;
-	// !!! integral.scan() performs no error checks!
-	normInt.scan(intFile);
-	intFile.close();
-	reorderIntegralMatrix(normInt, _normMatrix);
 
 	printInfo << "loading acceptance integral from '" << accIntFileName << "'" << endl;
-	intFile.open(accIntFileName.c_str());
-	if (not intFile) {
-		printErr << "cannot open file '" << accIntFileName << "'. exiting." << endl;
+	const string accIntFileExt  = extensionFromPath(accIntFileName);
+	if (accIntFileExt == "root") {
+		TFile* intFile  = TFile::Open(accIntFileName.c_str(), "READ");
+		if (not intFile or intFile->IsZombie()) {
+			printErr << "could open normalization integral file '" << accIntFileName << "'. "
+			         << "aborting." << endl;
+			throw;
+		}
+		normalizationIntegral* integral = 0;
+		intFile->GetObject(integralTKeyName.c_str(), integral);
+		if (not integral) {
+			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
+			         << "'" << accIntFileName << "'. aborting." << endl;
+			throw;
+		}
+		if (_numbAccEvents != 0) {
+			_totAcc = ((double)integral->nmbEvents()) / (double)_numbAccEvents;
+			printInfo << "total acceptance in this bin: " << _totAcc << endl;
+			integral->setNmbEvents(_numbAccEvents);
+		} else
+			_totAcc = 1;
+		reorderIntegralMatrix(*integral, _accMatrix);
+		intFile->Close();
+	} else if (accIntFileExt == "int") {
+		ifstream intFile(accIntFileName.c_str());
+		if (not intFile) {
+			printErr << "cannot open file '" << accIntFileName << "'. aborting." << endl;
+			throw;
+		}
+		integral integral;
+		// !!! integral.scan() performs no error checks!
+		integral.scan(intFile);
+		intFile.close();
+		if (_numbAccEvents != 0) {
+			_totAcc = ((double)integral.nevents()) / (double)_numbAccEvents;
+			printInfo << "total acceptance in this bin: " << _totAcc << endl;
+			integral.events(_numbAccEvents);
+		} else
+			_totAcc = 1;
+		reorderIntegralMatrix(integral, _accMatrix);
+	} else {
+		printErr << "unknown file type '" << accIntFileName << "'. "
+		         << "only .int and .root files are supported. exiting." << endl;
 		throw;
 	}
-	integral accInt;
-	// !!! integral.scan() performs no error checks!
-	accInt.scan(intFile);
-	intFile.close();
-	if (_numbAccEvents != 0) {
-		_totAcc = ((double)accInt.nevents()) / (double)_numbAccEvents;
-		printInfo << "total acceptance in this bin: " << _totAcc << endl;
-		accInt.events(_numbAccEvents);
-	} else
-		_totAcc = 1;
-	reorderIntegralMatrix(accInt, _accMatrix);
 }
 
 

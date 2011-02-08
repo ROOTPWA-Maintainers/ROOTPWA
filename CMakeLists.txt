@@ -276,6 +276,15 @@ else()
 	set(CUDA_LIBS)
 endif()
 
+# RootPwaAmp
+set(AMPLITUDE_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/amplitude
+	)
+set(AMPLITUDE_LIBS
+  RootPwaAmp
+	)
+add_subdirectory(amplitude)
+
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src
@@ -292,15 +301,6 @@ add_subdirectory(src/rootscripts)
 set(ROOTPWASCRIPTS_LIBS
   RootPwaScripts
 	)
-
-# RootPwaAmp
-set(AMPLITUDE_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/amplitude
-	)
-set(AMPLITUDE_LIBS
-  RootPwaAmp
-	)
-add_subdirectory(amplitude)
 
 # RootPwaTools
 add_subdirectory(tools)

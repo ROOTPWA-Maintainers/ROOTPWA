@@ -54,6 +54,7 @@
 #include "matrix.h"
 
 #include "sumAccumulators.hpp"
+#include "normalizationIntegral.h"
 
 
 class TString;
@@ -180,7 +181,9 @@ private:
 	void readWaveList       (const std::string& waveListFileName);  ///< reads wave names and thresholds from wave list file
 	void buildParDataStruct (const unsigned int rank);              ///< builds parameter data structures
 	void readIntegrals      (const std::string& normIntFileName,
-	                         const std::string& accIntFileName);    ///< reads normalization and acceptance integrals from file
+	                         const std::string& accIntFileName,
+	                         const std::string& integralTKeyName = "integral");  ///< reads normalization and acceptance integrals from file
+
 	void readDecayAmplitudes(const std::string& ampDirName = ".");  ///< reads decay amplitudes from files in specified directory
   
   
@@ -189,13 +192,18 @@ private:
   
 	void reorderIntegralMatrix(integral&            integral,
 	                           normMatrixArrayType& reorderedMatrix) const;
+	void reorderIntegralMatrix(const rpwa::normalizationIntegral& integral,
+	                           normMatrixArrayType&               reorderedMatrix) const;
+
 public:
+
 	void copyFromParArray(const double*  inPar,              // input parameter array
 	                      ampsArrayType& outVal,             // output values organized as 3D array of complex numbers with [rank][reflectivity][wave index]
 	                      value_type&    outFlatVal) const;  // output value corresponding to flat wave
 	void copyToParArray(const ampsArrayType& inVal,          // values corresponding to production amplitudes [rank][reflectivity][wave index]
 	                    const value_type     inFlatVal,      // value corresponding to flat wave
 	                    double*              outPar) const;  // output parameter array
+
 private:
 
 	void resetFuncCallInfo() const;

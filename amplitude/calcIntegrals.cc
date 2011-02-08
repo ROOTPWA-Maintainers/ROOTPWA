@@ -54,19 +54,19 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "generates set of all allowed waves given the constraints" << endl
+	cerr << "computes integral matrix for given amplitude files" << endl
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -o output file [-n max. # of events -r max. # of events -w weight file -v -h] "
+	     << " [-o output file -i TKey name -n max. # of events -r max. # of events -w weight file -v -h] "
 	     << "amplitude files" << endl
 	     << "    where:" << endl
-	     << "        -o path    path to output file (default: './norm.int')"                << endl
-	     << "        -i name    integral name (only for .root format, default: 'integral')" << endl
-	     << "        -n #       maximum number of events to process (default: all)"         << endl
-	     << "        -r #       number of events to renormalize to (default: no done)"      << endl
-	     << "        -w path    path to MC weight file for de-weighting (default: none)"    << endl
-       << "        -v         verbose; print debug output (default: false)"               << endl
+	     << "        -o path    path to output file (default: './norm.int')"                     << endl
+	     << "        -i name    integral TKey name (only for .root format, default: 'integral')" << endl
+	     << "        -n #       maximum number of events to process (default: all)"              << endl
+	     << "        -r #       number of events to renormalize to (default: not done)"          << endl
+	     << "        -w path    path to MC weight file for de-weighting (default: none)"         << endl
+       << "        -v         verbose; print debug output (default: false)"                    << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -82,7 +82,7 @@ main(int    argc,
 
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
-	gROOT->ProcessLine("#include <complex>");
+	//gROOT->ProcessLine("#include <complex>");
 	
 	// parse command line options
 	const string progName        = argv[0];
@@ -161,7 +161,7 @@ main(int    argc,
 	const string outFileExt = extensionFromPath(outFileName);
 	if (outFileExt == "root") {
 #if NORMALIZATIONINTEGRAL_ENABLED
-		TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
+		TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 		if (not outFile) {
 			printErr << "cannot open output file '" << outFileName << "'. aborting." << endl;
 			return 1;
@@ -169,11 +169,11 @@ main(int    argc,
 		const int nmbBytes = integral.Write(integralName.c_str());
 		outFile->Close();
 		if (nmbBytes == 0) {
-			printErr << "problems writing integral to key '" << integralName << "' "
+			printErr << "problems writing integral to TKey '" << integralName << "' "
 			         << "in file '" << outFileName << "'" << endl;
 			return 1;
 		} else
-			printInfo << "successfully wrote integral to key '" << integralName << "' "
+			printInfo << "successfully wrote integral to TKey '" << integralName << "' "
 			          << "in file '" << outFileName << "'" << endl;
 #else
 		printErr << "writing of integrals in .root format not supported. aborting." << endl;

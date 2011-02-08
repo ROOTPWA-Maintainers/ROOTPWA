@@ -83,16 +83,18 @@ namespace rpwa {
 		normalizationIntegral& operator =(const normalizationIntegral& integral);
 
 		// accessors
-		unsigned int  nmbWaves () const { return _nmbWaves;  }
-		unsigned long nmbEvents() const { return _nmbEvents; }
-		
-		unsigned int       waveIndex(const std::string& waveName ) const;
-		const std::string& waveName (const unsigned int waveIndex) const;
+		unsigned int  nmbWaves () const { return _nmbWaves;  }  ///< returns number of waves in integral
+		unsigned long nmbEvents() const { return _nmbEvents; }  ///< returns number of events in integral
 
-		const std::complex<double>& element(const unsigned int waveIndexI,
-		                                    const unsigned int waveIndexJ) const;
-		const std::complex<double>& element(const std::string& waveNameI,
-		                                    const std::string& waveNameJ)  const;
+		void setNmbEvents(const unsigned long nmbEvents) { _nmbEvents = nmbEvents; }  ///< sets number of events in integral
+		
+		unsigned int       waveIndex(const std::string& waveName ) const;  ///< returns wave index for a wave name
+		const std::string& waveName (const unsigned int waveIndex) const;  ///< returns wave name for a wave index
+
+		std::complex<double> element(const unsigned int waveIndexI,
+		                             const unsigned int waveIndexJ) const;  ///< returns integral matrix element defined by index pair
+		std::complex<double> element(const std::string& waveNameI,
+		                             const std::string& waveNameJ)  const;  ///< returns integral matrix element defined by pair of wave names
 
 		bool integrate(const std::vector<std::string>& binAmpFileNames,
 		               const std::vector<std::string>& rootAmpFileNames,
@@ -115,9 +117,9 @@ namespace rpwa {
 
 	private:
 
-		std::streampos openBinAmpFiles(std::vector<std::ifstream*>&    ampFiles,
-		                               const std::vector<std::string>& ampFileNames,
-		                               const unsigned int              waveIndexOffset = 0);
+		unsigned long openBinAmpFiles(std::vector<std::ifstream*>&    ampFiles,
+		                              const std::vector<std::string>& ampFileNames,
+		                              const unsigned int              waveIndexOffset = 0);
 		
 		unsigned long openRootAmpFiles(std::vector<TTree*>&                   ampTrees,
 		                               std::vector<rpwa::amplitudeTreeLeaf*>& ampTreeLeafs,

@@ -128,7 +128,7 @@ main(int argc, char** argv)
 	}
 
 
-	if (0) {
+	if (1) {
 		// test I/O and copying
 		normalizationIntegral integral;
 		// ascii I/O
@@ -158,7 +158,7 @@ main(int argc, char** argv)
 	}
 
 
-	if (1) {
+	if (0) {
 		// test renormalization
 		normalizationIntegral integral;
 		integral.readAscii("testIntegral.int");
