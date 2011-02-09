@@ -170,7 +170,7 @@ else()
   message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'")
   message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'")
   message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
-   if(NOT CUDA_SDK_ROOT_DIR)
+  if(NOT CUDA_SDK_ROOT_DIR)
     message(FATAL_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
   else()
 		# find cuda utility library
@@ -201,6 +201,48 @@ else()
 			add_definitions(-DUSE_CUDA)
 		endif()
   endif()
+endif()
+
+
+# setup MPI
+find_package(MPI)
+set(USE_MPI TRUE)
+if(NOT MPI_FOUND)
+  message(STATUS "Could not find MPI installation. No MPI components will be generated.")
+  set(USE_MPI FALSE)
+else()
+	if(USE_MPI)
+		if(FALSE)
+			message(STATUS "Using MPI compiler ............................... '${MPI_COMPILER}'")
+			message(STATUS "Using MPI compilation flags ...................... '${MPI_COMPILE_FLAGS}'")
+			message(STATUS "Using MPI include path(s) ........................ '${MPI_INCLUDE_PATH}'")
+			message(STATUS "Using MPI linking flags .......................... '${MPI_LINK_FLAGS}'")
+			message(STATUS "First MPI library to link against ................ '${MPI_LIBRARY}'")
+			message(STATUS "Extra MPI libraries to link against .............. '${MPI_EXTRA_LIBRARY}'")
+			message(STATUS "All libraries to link MPI programs against ....... '${MPI_LIBRARIES}'")
+			message(STATUS "Executable for running MPI programs .............. '${MPIEXEC}'")
+			message(STATUS "Flag to pass to MPIEXEC before # of processors ... '${MPIEXEC_NUMPROC_FLAG}'")
+			message(STATUS "Flags to pass to MPIEXEC before exe is run ....... '${MPIEXEC_PREFLAGS}'")
+			message(STATUS "Flags to pass to MPIEXEC after all other flags ... '${MPIEXEC_POSTFLAGS}'")
+		endif()
+		# setup Boost.MPI library
+		set(Boost_MPI_LIBRARY_DIR "${BOOST_ROOT}/stage/lib")
+		set(_Boost_MPI_LIB_NAMES "boost_mpi" "boost_serialization")
+		foreach(_Boost_MPI_LIB_NAME ${_Boost_MPI_LIB_NAMES})
+			find_library(_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}
+				NAMES ${_Boost_MPI_LIB_NAME}
+				PATHS ${Boost_MPI_LIBRARY_DIR}
+				NO_DEFAULT_PATH)
+			if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
+				message(FATAL_ERROR "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in '${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL.")
+			else()
+				list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
+			endif()
+		endforeach()
+		message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
+	else()
+		message(STATUS "Found MPI installation. But MPI is disabled (USE_MPI=FALSE). No MPI components will be generated.")
+	endif()
 endif()
 
 
@@ -325,6 +367,9 @@ add_subdirectory(relampl)
 
 # gui
 add_subdirectory(gui/src)
+
+# MPI
+add_subdirectory(mpi)
 
 
 message(STATUS "Run 'make' to build the project.")
