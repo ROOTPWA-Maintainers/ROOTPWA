@@ -40,12 +40,12 @@ add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boo
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
   ${Boost_INCLUDE_DIRS}
   ${LIBCONFIG_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
-  #${ROOTPWA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})

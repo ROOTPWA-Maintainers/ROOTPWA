@@ -73,8 +73,8 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 # common compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Wextra -Werror -pedantic")
-#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Wextra -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra")
 set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -114,11 +114,17 @@ endif()
 # set(Boost_DEBUG 1)
 find_package(Boost 1.42.0 REQUIRED)
 if(Boost_FOUND)
-  message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
-  message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
+  message(STATUS "Using Boost include directories '${Boost_INCLUDE_DIRS}'")
+  message(STATUS "Using Boost library directories '${Boost_LIBRARY_DIRS}'")
 else()
   message(FATAL_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
 endif()
+# setup uprooted Boost libraries
+set(uprootedBoost_INCLUDE_DIRS
+	# local copy of Boost Graph Library from V1.43.0; overides graph library in Boost supplied by user
+  ${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
+	)
+message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'")
 
 
 # setup libconfig
