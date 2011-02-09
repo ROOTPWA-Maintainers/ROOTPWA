@@ -94,6 +94,7 @@ usage(const string& progName,
        << "        -t #       minimizer tolerance (default: 1e-10)" << endl
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
+       << "        -P         plotting only - no fit" << endl
        << endl;
   exit(errCode);
 }
@@ -127,8 +128,9 @@ main(int    argc,
 //   bool               useFixedStartValues = false;
 //   double             startValStep        = 0.0005;
   const unsigned int maxNmbOfIterations  = 20000;
-  const bool         runHesse            = false;//true;
+  const bool         runHesse            = true;
   const bool         runMinos            = false;
+  bool               onlyPlotting        = false;
   //unsigned int maxParNameLength = 20;       // maximum length of parameter names
 //   int                startValSeed        = 1234567;
  // parse command line options
@@ -148,7 +150,7 @@ main(int    argc,
 extern char* optarg;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qh")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qhP")) != -1)
     switch (ca) {
     case 'c':
       configFile = optarg;
@@ -179,6 +181,9 @@ extern char* optarg;
       break;
     case 'h':
       usage(progName);
+      break;
+    case 'P':
+      onlyPlotting=true;
       break;
     }
 
@@ -413,12 +418,17 @@ extern char* optarg;
 
 
   // find minimum of likelihood function
-  printInfo << "performing minimization." << endl;
-  {
+  if(plottingMode) printInfo << "Plotting mode, skipping minimzation" << endl;
+  else {
+    printInfo << "performing minimization." << endl;
+    
     minimizer->SetMaxIterations(maxNmbOfIterations);
     minimizer->SetMaxFunctionCalls(maxNmbOfIterations*5);
     minimizer->SetTolerance    (minimizerTolerance);
     bool success = minimizer->Minimize();
+    const double* par=minimizer->X();
+    compset.setPar(par);
+    cerr << compset << endl;
     if (success)
       printInfo << "minimization finished successfully." << endl;
     else
@@ -429,31 +439,37 @@ extern char* optarg;
       if (!success)
 	printWarn << "calculation of Hessian matrix failed." << endl;
     }
-    printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. minimizer status summary:" << endl
-	      << "    total number of parameters .......................... " << minimizer->NDim()             << endl
-	      << "    number of free parameters ........................... " << minimizer->NFree()            << endl
-	      << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
-	      << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << endl
-	      << "    minimizer status .................................... " << minimizer->Status()           << endl
-	      << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << endl
-	      << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << endl
-	      << "    estimated distance to minimum ....................... " << minimizer->Edm()              << endl
-	      << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << endl
-	      << "    minimizer strategy .................................. " << minimizer->Strategy()         << endl
-	      << "    absolute tolerance .................................. " << minimizer->Tolerance()        << endl;
   }
+  printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. minimizer status summary:" << endl
+	    << "    total number of parameters .......................... " << minimizer->NDim()             << endl
+	    << "    number of free parameters ........................... " << minimizer->NFree()            << endl
+	    << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
+	    << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << endl
+	    << "    minimizer status .................................... " << minimizer->Status()           << endl
+	    << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << endl
+	    << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << endl
+	    << "    estimated distance to minimum ....................... " << minimizer->Edm()              << endl
+	    << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << endl
+	    << "    minimizer strategy .................................. " << minimizer->Strategy()         << endl
+	    << "    absolute tolerance .................................. " << minimizer->Tolerance()        << endl;
+  
 
   // ---------------------------------------------------------------------------
   // print results
+  //map<TString, double> errormap;
   printInfo << "minimization result:" << endl;
   for (unsigned int i = 0; i< nmbPar; ++i) {
     cout << "    parameter [" << setw(3) << i << "] ";
+    cout << minimizer->VariableName(i) << " " ;
       //	 << setw(maxParNameLength); //<< L.parName(i) << " = ";
     //if (parIsFixed[i])
     //  cout << minimizer->X()[i] << " (fixed)" << endl;
     //else {
       cout << setw(12) << maxPrecisionAlign(minimizer->X()[i]) << " +- "
 	   << setw(12) << maxPrecisionAlign(minimizer->Errors()[i]);
+      //errormap[minimizer]=minimizer->Errors()[i];
+      
+
       if (runMinos && (i == 156)) {  // does not work for all parameters
 	double minosErrLow = 0;
 	double minosErrUp  = 0;
@@ -464,12 +480,7 @@ extern char* optarg;
 	cout << endl;
   }
 
-  const double* par=minimizer->X();
-  // matrix of couplings
-
-  compset.setPar(par);
-
-  cerr << compset << endl;
+ 
  cout << "---------------------------------------------------------------------" << endl;
 
 
@@ -497,10 +508,19 @@ extern char* optarg;
 	Setting& sm = bw["mass"];
 	Setting& smval = sm["val"];
 	smval = comp->m0();
+	Setting& smerr = sm["error"];
+	TString merrname=name+"_M";
+	smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
+	
+
 	Setting& sw = bw["width"];
 	Setting& swval = sw["val"];
 	swval = comp->gamma();
-	
+
+	Setting& swerr = sw["error"];
+	TString werrname=name+"_Gamma";
+	swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
+
 	// loop through channel and fix couplings
 	const Setting& sChn=bw["decaychannels"];
 	unsigned int nCh=sChn.getLength();
