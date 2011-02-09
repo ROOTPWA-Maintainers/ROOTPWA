@@ -125,6 +125,8 @@ void TrpwaCommonTools::GetJPCMreflISO1lsISO2(string wavename, int& J, int& P, in
 	l = 0;
 	s = 0;
 
+	if (wavename == "flat") return;
+
 	// IGJPCMeIso1_ls_iso2
 
 	//cout << " TrpwaSessionManager::GetJPCMreflISO1lsISO2() not implemented yet" << endl;

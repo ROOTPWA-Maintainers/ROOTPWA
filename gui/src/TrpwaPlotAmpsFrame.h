@@ -52,6 +52,9 @@ struct Tphasegraph {
 typedef map<string, Tphasegraph>  	Tphasegraphmap;
 typedef Tphasegraphmap::iterator 	Tphasegraphmapit;
 
+typedef map<string, TGraphErrors*> 	Tgraphmap;
+typedef Tgraphmap::iterator			Tgraphmapit;
+
 // container to hold intensities and by request also phase differences vs other waves
 struct Twavegraph {
 	TGraphErrors* all_intensities;
@@ -59,6 +62,15 @@ struct Twavegraph {
 	Tphasegraphmap phase; // entries will be created on request only
 	double mass_low;
 	double mass_high;
+	int J; // total spin
+	int P; // parity
+	int C; // charge
+	int M; // spin projection
+	int e; // reflectivity
+	string iso1; // first isobar
+	string iso2; // second isobar
+	int l; // angular orbital momentum between both above
+	int s; // total spin of both above
 };
 
 typedef map<string, Twavegraph> Twavegraphmap;
@@ -78,6 +90,7 @@ public:
 	TGraphErrors* most_likely_likelihoods;
 	TGraphErrors* all_total_intensities;
 	TGraphErrors* most_likely_total_intensity;
+	Tgraphmap spin_totals; // only most likely are stored here
 	double mass_low;
 	double mass_high;
 	TTree* fitresult;
@@ -119,6 +132,13 @@ public:
 					bool most_likely = true // in case of many solutions only the most likely one
 				);
 
+	// most likely spin totals are returned
+	// the key is coded as JP(C)
+	TGraphErrors* Get_Spin_Total(string jpc = "flat");
+
+	// get a vector with the available spin totals
+	vector<string>& Get_available_Spin_Totals();
+
 	// creates phase and coherence for a given pair of waves
 	bool Create_Phase_Coherence_graph(
 					string wavename,   // between a given partial wave
@@ -146,6 +166,9 @@ private:
 	// start from there to correct the phase of consecutive points
 	// to be in order and not to jump for example from +180 to -180 degree
 	void Rectify_phase(TGraphErrors* graph_phase);
+
+	// as written
+	void Calculate_Spin_Totals();
 
 };
 
