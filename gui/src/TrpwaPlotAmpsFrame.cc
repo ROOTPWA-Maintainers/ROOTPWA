@@ -426,13 +426,29 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 	canvas_selected_waves->cd(2); gPad->Clear();
 	canvas_selected_waves->cd(3); gPad->Clear();
 	canvas_selected_waves->cd(4); gPad->Clear();
-	canvas_selected_waves->cd(1);
 	// to do set the pad values
 	TText label;
+	canvas_selected_waves->cd(1);
 	gPad->Range(0, 0, 1, 1);
 	label.DrawText(0.1,0.5, "likelihood distributions");
+
+	canvas_selected_waves->cd(2);
+	gPad->Range(0, 0, 1, 1);
+	int linecounter(0);
+	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+		TTree* selected_tree = (TTree*)it->second;
+		Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+		label.SetTextColor(fitresult->graphcolor.rootcolorindex);
+		label.DrawText(0.1,0.1+linecounter*0.06, fitresult->name.c_str());
+		linecounter++;
+	}
+	label.SetTextColor(kBlack);
 	canvas_selected_waves->Print("Fit_overview.ps(");
-	gPad->Clear();
+	canvas_selected_waves->cd(1); gPad->Clear();
+	canvas_selected_waves->cd(2); gPad->Clear();
+	canvas_selected_waves->cd(3); gPad->Clear();
+	canvas_selected_waves->cd(4); gPad->Clear();
+
 	for (int ipad = 0; ipad < 5; ipad++){
 		if (plotted_graphs[ipad]){
 			plotted_graphs[ipad]->Clear();
@@ -1809,10 +1825,10 @@ bool Tfitresult::Create_Phase_Coherence_graph(
 			int _indexB = -1;
 			if (anchorwave != "")
 			_indexB = massBin->waveIndex(anchorwave);
-			//if (_indexA < 0){
-			//	cout << " wave " << wavename << " not found in bin " << mass << endl;
-			//	continue;
-			//}
+			if (_indexA < 0){
+				cout << " wave " << itwave->first << " not found in bin " << mass << endl;
+				continue;
+			}
 			if (_indexB < 0){
 				if (itwave == waves.begin())
 					cout << " anchor wave " << anchorwave << " not found in bin " << mass << endl;
@@ -1953,6 +1969,7 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 	for (int imassbin = 0; imassbin < nmassbins; imassbin++){
 		DrawProgressBar(50, (double)(imassbin+1)/((double)nmassbins));
 		fitresult->GetEntry(imassbin);
+		//double evidence = massBin->evidence();
 		double mass = massBin->massBinCenter()/1000.;
 		if (mass_low  == -1 || mass_low > mass ) mass_low  = mass;
 		if (mass_high == -1 || mass_high < mass) mass_high = mass;
