@@ -1121,6 +1121,9 @@ Tfitresult::~Tfitresult(){
 			delete itphase->second.most_likely_phase;
 		}
 	}
+	for (Tgraphmapit it = spin_totals.begin(); it != spin_totals.end(); it++){
+		delete it->second;
+	}
 	cout << " done " << endl;
 }
 

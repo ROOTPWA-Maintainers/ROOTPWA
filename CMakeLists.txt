@@ -294,7 +294,13 @@ set(ROOTPWASCRIPTS_LIBS
 # add_subdirectory(amplitude)
 
 # RootPwaTools
+set(TOOLS_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/tools
+	)
 add_subdirectory(tools)
+set(ROOTPWATOOLS_LIBS # setting the library variable
+  RootPwaTools
+	)
 
 # RootPwaGen
 add_subdirectory(generators)

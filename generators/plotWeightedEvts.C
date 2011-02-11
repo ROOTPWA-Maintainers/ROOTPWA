@@ -222,6 +222,7 @@ hTY3[0]->Sumw2();
 
 
  TCanvas* cm=new TCanvas("PredictM"+massbin,"Weighted Events",20,20,600,800);
+ if (!cm) cout << " äh " << endl;
  hM[0]->SetLineColor(kRed);
  hM[0]->Draw();
  hM[1]->Draw("same");

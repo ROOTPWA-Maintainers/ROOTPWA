@@ -43,6 +43,7 @@ set(INCLUDE_DIRECTORIES
   ${PWA2000_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${TOOLS_INCLUDE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -55,6 +56,7 @@ set(SOURCES
   TPWWeight.cc
   TDiffractivePhaseSpace.cc
   TPrimaryVertexGen.cc
+  plotWeightedEvts.C # this helper is included to the library to make it available to the gui
 )
    
 
@@ -75,6 +77,7 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
   "${PWA2000_LIBS}"
   "${ROOTPWA_LIBS}"
+  "${ROOTPWATOOLS_LIBS}"
 )
 
 
