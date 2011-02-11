@@ -25,7 +25,7 @@
 #// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      test build file for CUDA
+#//      build file for CUDA code
 #//
 #//
 #// Author List:

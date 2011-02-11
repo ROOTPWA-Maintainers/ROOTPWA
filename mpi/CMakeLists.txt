@@ -20,12 +20,12 @@
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
 #// File and Version Information:
-#// $Rev:: 496                         $: revision of last commit
-#// $Author:: bgrube                   $: author of last commit
-#// $Date:: 2010-11-19 11:04:11 +0100 #$: date of last commit
+#// $Rev::                             $: revision of last commit
+#// $Author::                          $: author of last commit
+#// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      test build file for CUDA
+#//      build file for MPI code
 #//
 #//
 #// Author List:
@@ -35,7 +35,6 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "Building MPI code")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LDFLAGS "${CMAKE_CXX_LDFLAGS} ${MPI_LINK_FLAGS}")
 message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for MPI code")

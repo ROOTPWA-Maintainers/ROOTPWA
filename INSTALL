@@ -61,11 +61,28 @@ Before you can build ROOTPWA you need to install the following software:
 * Boost
   Part of the code relies on the Boost library which is available at
     http://www.boost.org
-  Version 1.42.00 or higher is required.
+  Version 1.43.00 or higher is required.
   Boost is a header-only library so that nothing has to be build. Just
   exract the source archive to some location of your choice.
 
 
+* CUDA (optional)
+  If you have a CUDA capable nvidia Graphics Card (Shader Model 1.3 or
+  higher) you may want to install the CUDA framework (version 3.0 or
+  higher). The build system tries to find your CUDA installation based
+  on the NVSDKCUDA_ROOT environment variable. If it is succesful the
+  CUDA features are enabled automatically.
+
+
+* MPI (optional, experimental)
+  In order take advantage of the parallel nature of the computing
+  problems in PWA, it is planned to make some of the executables
+  MPI-aware, so that they run on multi-core machines as well as on
+  PC-clusters. The build system tries to find your MPI installation
+  (openMPI recommended). In addition you also need to compile the
+  Boost.MPI library (e.g. using mpi/compileBoostMpi.sh). If the build
+  system found both the MPI and the Boost.MPI libraries, the MPI
+  features are automatically enabled.
 
 
 Building ROOTPWA
