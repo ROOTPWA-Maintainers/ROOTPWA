@@ -21,6 +21,7 @@
 #include "TrpwaSessionManager.h"
 #include "TrpwaJobManager.h"
 #include "TrpwaFitOptionsFrame.h"
+#include "plotWeightedEvts.h"
 #include <TGFileDialog.h>
 #include <TGMsgBox.h>
 #include <cstdlib>
@@ -70,7 +71,7 @@ static const string func_calls[nsteps] = {
 		"SelectWaves()",
 		"FitPartialWaves()",
 		"ShowFitResults()",
-		"Dummy()"
+		"Predict()"
 };
 static const int nbatches = 5;
 static const string step_batchnames[nbatches] = {
@@ -844,4 +845,95 @@ void TrpwaMainFrame::FillFlatPhaseSpaceEvents(){
 		}
 		Update();
 	}
+}
+
+void TrpwaMainFrame::Predict(){
+	TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+	int istep = 10;
+	if (current_session){
+		current_session->Convert_evt_to_roottree();
+		int nbins = current_session->Get_n_bins();
+		for (int ibin = 0; ibin < nbins; ibin++){
+			step_status[istep] = (ibin +1)/(double)nbins;
+			progressbars[istep]->SetPosition(step_status[istep]);
+			string executedir;
+			string predictcommand = current_session->GetPredictCommand(ibin, executedir);
+			stringstream command;
+			command << "cd " << executedir << ";\n";
+			command << predictcommand << ";\n";
+
+			if (!jobmanager->SendJob(command.str(), "predict")){
+				cout << " failed!" << endl;
+			} else {
+				cout << " done " << endl;
+			}
+/*
+			int bin_low, bin_high;
+			string eventfile;
+			string kinevalfile = current_session->GetKineValFile(ibin, bin_low, bin_high, &eventfile);
+			stringstream outputfilename;
+			outputfilename << "kinematics" << bin_low << "." << bin_high << ".root";
+			stringstream binname;
+			binname << bin_low << "." << bin_high;
+
+			TFile* file1=TFile::Open(eventfile.c_str(),"READ");
+			TFile* file2=TFile::Open(kinevalfile.c_str(),"READ");
+			TTree* data=(TTree*)file1->Get("events");
+			TTree* mc=(TTree*)file2->Get("pwevents");
+
+			plotWeightedEvts(mc,data,outputfilename.str(),binname.str());
+
+			file1->Close();
+			file2->Close();
+			//progressbars[istep]->Draw();
+
+			 */
+		}
+	}
+	//plotWeightedEvts(new TTree("test", "test"), new TTree("anothertest", "test"), "testfile.root", "800.1000");
+	/*
+#!/bin/bash
+
+export WORKDIR=/afs/e18/compass/analysis/sneubert/
+export FITDIR=$WORKDIR/PWAFITS/LOWT/NEWACC/fit17GenSelected
+#export FITDIR=$WORKDIR/PWAFITS/GENETICS/ltRUN21/gen39/set42
+export FITFILE=$FITDIR/fit17.root
+export PLOTFILE=${FITFILE/.root/.plots.root}
+export BOOKY=${FITFILE/.root/.booky.pdf}
+export DATADIR=$WORKDIR/5PiLTData3/
+
+echo WORKDIR=$WORKDIR
+echo FITDIR=$FITDIR
+echo FITFILE=$FITFILE
+echo PLOTFILE=$PLOTFILE
+echo BOOKY=$BOOKY
+echo DATADIR=$DATADIR
+
+
+cd $DATADIR
+
+rm $PLOTFILE;
+
+for i in *; do
+    echo "MassBin: $i";
+    cd $i;
+    # convert events to root tree if not already done
+    test -s $i.root || cat $i.evt | evt2tree $i.root;
+    # run evtweight on accepted events:
+    cd ACCAMPS
+    # cd PSPAMPS
+    WEIGHTEDFILE=${FITFILE/.root/.kineval.$i.root}
+    test -s $WEIGHTEDFILE || evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -m $i
+    # produce nice plots
+    root -b -q "$ROOTPWA/generators/doPlotWEvts.C(\"../$i.root\",\"$WEIGHTEDFILE\",\"$PLOTFILE\",\"$i\")"
+
+    cd $DATADIR;
+done;
+
+echo "CREATING BOOKY $BOOKY ..."
+# collect all plots into a booky:
+cd $FITDIR
+for i in *plots*.ps; do ps2pdf $i; rm -f $i; done;
+pdftk *plots*.pdf cat output $BOOKY
+for i in *plots*.pdf; do rm -f $i; done;*/
 }

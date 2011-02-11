@@ -1986,3 +1986,161 @@ void TrpwaSessionManager::DrawProgressBar(int len, double percent) {
 	  flush(cout); // Required.
 	  last_percent = percent;
 }
+
+void TrpwaSessionManager::Convert_evt_to_roottree(){
+	cout << " converting event files to root files " << endl;
+
+	if ( _n_bins <= 0 ) return;
+	int counter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		counter++;
+		DrawProgressBar(50, counter/((double)_n_bins));
+
+		// real data files
+		string eventfilename = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".evt";
+		string rootfilename  = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".root";
+		if (FileExists(eventfilename) && !FileExists(rootfilename)){
+			stringstream command;
+			command << "cat " << eventfilename << " | evt2tree " << rootfilename;
+			cout << system(command.str().c_str());
+		}
+
+		// acc events files
+		eventfilename = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".acc.evt";
+		rootfilename  = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".acc.root";
+		if (FileExists(eventfilename) && !FileExists(rootfilename)){
+			stringstream command;
+			command << "cat " << eventfilename << " | evt2tree " << rootfilename;
+			cout << system(command.str().c_str());
+		}
+
+		// flat phase phase files
+		eventfilename = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".genbod.evt";
+		rootfilename  = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".genbod.root";
+		if (FileExists(eventfilename) && !FileExists(rootfilename)){
+			stringstream command;
+			command << "cat " << eventfilename << " | evt2tree " << rootfilename;
+			cout << system(command.str().c_str());
+		}
+	}
+
+	cout << " done " << endl;
+}
+
+string TrpwaSessionManager::GetKineValFile(int ibin,
+		int& bin_low,
+		int& bin_high,
+		string* eventfile){
+	string result = "";
+	//doPlotWEvts.C(\"../$i.root\",\"$WEIGHTEDFILE\",\"$PLOTFILE\",\"$i\")"
+	int bincounter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			result    = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".kineval."+it->second.wave_list_file+".root";
+			if (eventfile){
+				string bindir = _dir_binned_data + "/" + it->second.bin_folder_name;
+				(*eventfile) = bindir + "/" + it->second.bin_folder_name + ".root";
+			}
+			break;
+		}
+		bincounter++;
+	}
+	return result;
+}
+
+string TrpwaSessionManager::GetPredictCommand(int ibin, string& executedir,
+		bool normalize){
+	string result = "";
+	//string wavelistfile = "";
+	string normalizationfile = "";
+	string fitresultfile = "";
+	string outputfile = "";
+	string accdatafile = "";
+	string datafile = "";
+	string plotresultfile = "";
+	//string initvals = "";
+
+	int bincounter(0);
+	int bin_low = -1;
+	int bin_high = -1;
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			string bindir = _dir_binned_data + "/" + it->second.bin_folder_name;
+			string accampsdir = bindir + "/" + "ACCAMPS";
+			string pspampsdir = bindir + "/" + "PSPAMPS";
+			accdatafile = bindir + "/" + it->second.bin_folder_name + ".acc.evt";
+			datafile = bindir + "/" + it->second.bin_folder_name + ".root";
+			executedir = accampsdir;
+			normalizationfile = accampsdir + "/" + "norm.int";
+			//wavelistfile = _dir_fit_results + "/" + (*it).second.wave_list_file;
+			fitresultfile = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".root";
+			outputfile    = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".kineval."+it->second.wave_list_file+".root";
+			plotresultfile = _dir_fit_results + "/" + "kineval_plots."+it->second.wave_list_file+".root";
+			if (!normalize || !FileExists(normalizationfile)){
+				cout << " TrpwaSessionManager::GetPredictCommand() Warning: not acceptance corrected data is used! " << endl;
+				accdatafile = bindir + "/" + it->second.bin_folder_name + ".genbod.evt";
+				executedir = pspampsdir;
+				normalizationfile = pspampsdir + "/" + "norm.int";
+			}
+			break;
+		}
+		bincounter++;
+	}
+	if (!FileExists(accdatafile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no acceptance data file found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (!FileExists(normalizationfile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no normalization file found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (!FileExists(fitresultfile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no fit result file found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (!FileExists(datafile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no data file (in root format) found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (FileExists(outputfile)){
+		cout << " Warning in TrpwaSessionManager::GetPredictCommand(): output file " << outputfile << " does already exist! " << endl;
+	}
+	if (FileExists(plotresultfile)){
+		cout << " Warning in TrpwaSessionManager::GetPredictCommand(): plot output file " << plotresultfile << " does already exist! " << endl;
+	}
+
+ //   cd ACCAMPS
+ //   # cd PSPAMPS
+ //   WEIGHTEDFILE=${FITFILE/.root/.kineval.$i.root}
+ //   test -s $WEIGHTEDFILE || evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -m $i
+
+	stringstream _result;
+	_result <<  "evtweight -e " << accdatafile << " -o " << outputfile << " -w " << fitresultfile << " -i " << normalizationfile << " -m " << bin_low << "." << bin_high << ";\n";
+	// add now the command for plotting, too
+	_result << "doPlotWEvts " << datafile << " " << outputfile << " " << plotresultfile << " " << bin_low << "." << bin_high;
+	//int bin_low, bin_high;
+	//string eventfile;
+	//string kinevalfile = current_session->GetKineValFile(ibin, bin_low, bin_high, &eventfile);
+	//stringstream outputfilename;
+	//outputfilename << "kinematics" << bin_low << "." << bin_high << ".root";
+	//stringstream binname;
+	//binname << bin_low << "." << bin_high;
+
+//	TFile* file1=TFile::Open(eventfile.c_str(),"READ");
+	//TFile* file2=TFile::Open(kinevalfile.c_str(),"READ");
+	//TTree* data=(TTree*)file1->Get("events");
+	//TTree* mc=(TTree*)file2->Get("pwevents");
+
+	//plotWeightedEvts(mc,data,outputfilename.str(),binname.str());
+
+	result = _result.str();
+	return result;
+}

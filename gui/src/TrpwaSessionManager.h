@@ -370,6 +370,17 @@ public:
 			// startvalues may be "" then the start values will be ignored
 			// if variable for startvalues is given the fit result file name of this fit will be returned
 
+	// return the command to predict fit results
+	// in a certain bin
+	string GetPredictCommand(int ibin, string& executedir,
+			bool normalize = true); // use acceptance corrected data (if available)
+
+	// return the kinematics validation file as predicted for the bin ibin
+	string GetKineValFile(int ibin,
+			int& bin_low,
+			int& bin_high,
+			string* eventfile = NULL); // get the corresponding event file by request
+
 	// return the command to generate flat phase space events
 	// into the specified bin with the number of events specified
 	// in the config file
@@ -427,6 +438,9 @@ public:
 	// true if .int files are available
 	// if ibin < 0 then checking for all bins
 	bool Is_Normalization_available(int ibin = -1);
+
+	// if not already done, event files ".evt" are copied to root trees
+	void Convert_evt_to_roottree();
 
 private:
 	string _config_file; // filename with path to the config file of this session

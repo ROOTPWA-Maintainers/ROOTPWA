@@ -85,3 +85,4 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 make_executable(genpw     genpw.cc     ${THIS_LIB} "${LIBCONFIG_LIBS}")
 make_executable(evtweight evtweight.cc ${THIS_LIB})
 make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})
+make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})

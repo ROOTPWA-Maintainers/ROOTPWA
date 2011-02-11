@@ -303,7 +303,13 @@ set(ROOTPWATOOLS_LIBS # setting the library variable
 	)
 
 # RootPwaGen
+set(GEN_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/generators
+	)
 add_subdirectory(generators)
+set(ROOTPWAGEN_LIBS # setting the library variable
+  RootPwaGen
+	)
 
 # RootPwaKey
 add_subdirectory(keygen)
