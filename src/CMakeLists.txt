@@ -38,11 +38,12 @@
 # set include directories
 set(INCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIRS}
-   ${LIBCONFIG_INCLUDE_DIR}
+	${LIBCONFIG_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
   ${CUDA_INCLUDE_DIR}
+  ${AMPLITUDE_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
@@ -54,7 +55,7 @@ set(SOURCES
   TFitResult.cc
   fitResult.cc
   TCMatrix.cc
-  #TPWALikelihood.cc
+  TPWALikelihood.cc
   TPWALikelihoodC.cc
   TPWAAmp.cc
   TPWAPhaseConstraint.cc
@@ -83,6 +84,7 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
   "${PWA2000_LIBS}"
   "${CUDA_LIBS}"
+	"${AMPLITUDE_LIBS}"
 )
 
 

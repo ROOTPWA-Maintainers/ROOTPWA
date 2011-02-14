@@ -1,9 +1,12 @@
 #include <iostream>
 #include <string>
+#include <stdio.h>
+#include <string.h>
 #include "TFracNum.h"
 using namespace std;
 
 Int_t debugFracNum=0;
+char factorial[] = {'f','a','c','t','o','r','i','a','l'};
 
 const char* SQUAREROOT_CHAR="#";
 
@@ -26,13 +29,13 @@ TFracNum::TFracNum(Int_t mN, Int_t mD, Int_t* N, Int_t* D, Int_t s) {
   this->SetINTs();
 }
 
-TFracNum::TFracNum(Int_t N, Int_t D, char* s) {
+TFracNum::TFracNum(Int_t N, Int_t D, const char* s) {
   maxPrimNom=0;
   maxPrimDen=0;
   NOM=0;
   DEN=0;
   sign_prefac=1;
-  if (s=="factorial") {
+  if (strcmp(s,"factorial")==0) {
     if (debugFracNum) cout << s << endl;
     if (N==D) return;
     Int_t Low=N;
@@ -404,8 +407,8 @@ TFracNum::HeaderString() {
   if (sign_prefac==0)     {sprintf(hstr, "{0,1}"); return hstr;}
   if (sign_prefac==-7777) {sprintf(hstr, "{1,0}"); return hstr;}
   if (sign_prefac==-6666) {sprintf(hstr, "{0,0}"); return hstr;}
-  if (sign_prefac==1) sprintf(hstr, "{%d,%d}",  NOM_INT, DEN_INT);
-  else                sprintf(hstr, "{%d,%d}", -NOM_INT, DEN_INT);
+  if (sign_prefac==1) sprintf(hstr, "{%lld,%lld}",  NOM_INT, DEN_INT);
+  else                sprintf(hstr, "{%lld,%lld}", -NOM_INT, DEN_INT);
   return hstr;
 };
 

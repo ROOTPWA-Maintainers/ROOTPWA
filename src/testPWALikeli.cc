@@ -61,7 +61,7 @@ main(int    argc,
 	const string       ampDirName        = ".";         // decay amplitude directory name
 	const unsigned int numbAccEvents     = 0;           // number of events used for acceptance integrals
 
- 	TPWALikelihood<double> L;
+	TPWALikelihood<complex<double> > L;
   L.useNormalizedAmps();
 	L.useNormalizedAmps(useNormalizedAmps);
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
@@ -75,8 +75,35 @@ main(int    argc,
   //string a[13]={"a","b","c","d","e","f","g","h","i","j","k","l","flat"};
 	double par[nmbPar];
 	gRandom->SetSeed(123456789);
-  for (unsigned int i = 0; i < nmbPar; ++i)
-	  par[i] = gRandom->Rndm();
+  vector<unsigned int> parIndices  = L.orderedParIndices();
+  for (unsigned int i = 0; i < parIndices.size(); ++i) {
+	  const unsigned int parIndex = parIndices[i];
+	  cout << "parameter[" << i << "] = " << L.parName(parIndex) << endl;
+	  par[parIndex] = gRandom->Rndm();
+  }
+
+  {
+	  // printInfo << "parameters:" << endl;
+	  // for (unsigned int i = 0; i < nmbPar; ++i)
+		//   cout << "par[" << i << "] = " << par[i] << endl;
+	  printInfo << "production amplitudes:" << endl;
+	  double                                          prodAmpFlat;
+	  TPWALikelihood<complex<double> >::ampsArrayType prodAmps;
+	  L.copyFromParArray(par, prodAmps, prodAmpFlat);
+	  for (unsigned int iRank = 0; iRank < L.rank(); ++iRank)
+		  for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
+			  for (unsigned int iWave = 0; iWave < L.nmbWaves(2 * iRefl - 1); ++iWave)
+				  cout << "prodAmps[" << iRank << "][" << iRefl << "][" << iWave << "] = "
+				       << maxPrecisionDouble(prodAmps[iRank][iRefl][iWave]) << endl;
+	  printInfo << "parameters:" << endl;
+	  double par2[nmbPar];
+	  L.copyToParArray(prodAmps, prodAmpFlat, par2);
+	  // for (unsigned int i = 0; i < nmbPar; ++i)
+		//   cout << "par[" << i << "] = " << par[i] << endl;
+	  for (unsigned int i = 0; i < nmbPar; ++i)
+		  cout << "delta par[" << i << "] = " << maxPrecision(par[i] - par2[i]) << endl;
+  }
+	return 0;
 
   // calculate log likelihood
   const double logLikelihood = L.DoEval(par);
@@ -100,16 +127,16 @@ main(int    argc,
   // double F;
   // L.FdF(par, F, analyticalDerivates);
   L.Gradient(par, analyticalDerivates);
-  const int nmbIndexDigits = (int)(log(nmbPar - 1) / log(10)) + 1;
-  double    maxDelta       = 0;
+  double maxDelta = 0;
   printInfo << "derivatives:" << endl;
-  for (unsigned int i = 0; i < nmbPar; ++i) {
-	  const double delta = numericalDerivates[i] - analyticalDerivates[i];
+  for (unsigned int i = 0; i < parIndices.size(); ++i) {
+	  const unsigned int parIndex = parIndices[i];
+	  const double       delta    = numericalDerivates[parIndex] - analyticalDerivates[parIndex];
 	  if (abs(delta) > maxDelta)
 		  maxDelta = abs(delta);
-	  cout << "    dL / dPar[" << setw(nmbIndexDigits) << i << "]: numerical = "
-	       << maxPrecisionAlign(numericalDerivates[i])
-	       << " vs. analytical = " << maxPrecisionAlign(analyticalDerivates[i])
+	  cout << "    dL / dPar[" << setw(nmbOfDigits(nmbPar - 1)) << parIndex << "]: numerical = "
+	       << maxPrecisionAlign(numericalDerivates[parIndex])
+	       << " vs. analytical = " << maxPrecisionAlign(analyticalDerivates[parIndex])
 	       << "; (numer. - analyt.) = "
 	       << maxPrecisionAlign(delta) << endl;
   }

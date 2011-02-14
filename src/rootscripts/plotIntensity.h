@@ -60,6 +60,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
               const int          waveIndex,              // wave index
               const bool         saveEps       = false,  // if set, EPS file with name wave ID is created
               const int*         graphColors   = NULL,   // array of colors for graph line and marker
+              const double*      graphScales   = NULL,   // array of scales for graphgroups
               const bool         drawLegend    = true,   // if set legend is drawn
               const std::string& graphTitle    = "",     // name and title of graph (default is wave ID)
               const char*        drawOption    = "AP",   // draw option for graph
@@ -71,20 +72,21 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
 
 inline
 TMultiGraph*
-plotIntensity(std::vector<TTree*>&    trees,                  // array of fitResult trees
-              const int               waveIndex,              // wave index
-              const bool              saveEps       = false,  // if set, EPS file with name wave ID is created
-              const std::vector<int>& graphColors   = std::vector<int>(),  // array of colors for graph line and marker
-              const bool              drawLegend    = true,   // if set legend is drawn
-              const std::string&      graphTitle    = "",     // name and title of graph (default is wave ID)
-              const char*             drawOption    = "AP",   // draw option for graph
-              const double            normalization = 1,      // scale factor for intensities
-              const double            yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
-              const std::string&      selectExpr    = "",     // TTree::Draw() selection expression
-              const std::string&      branchName    = "fitResult_v2")  // fitResult branch name
+plotIntensity(std::vector<TTree*>&        trees,                  // array of fitResult trees
+              const int                   waveIndex,              // wave index
+              const bool                  saveEps       = false,  // if set, EPS file with name wave ID is created
+              const std::vector<int>&     graphColors   = std::vector<int>(),  // array of colors for graph line and marker
+              const std::vector<double>&  graphScales   = std::vector<double>(),  // array of scales for graphgroups
+              const bool                  drawLegend    = true,   // if set legend is drawn
+              const std::string&          graphTitle    = "",     // name and title of graph (default is wave ID)
+              const char*                 drawOption    = "AP",   // draw option for graph
+              const double                normalization = 1,      // scale factor for intensities
+              const double                yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
+              const std::string&          selectExpr    = "",     // TTree::Draw() selection expression
+              const std::string&          branchName    = "fitResult_v2")  // fitResult branch name
 {
 	return plotIntensity(trees.size(), &(*(trees.begin())), waveIndex, saveEps,
-	                     &(*(graphColors.begin())), drawLegend, graphTitle, drawOption,
+	                     &(*(graphColors.begin())), &(*(graphScales.begin())), drawLegend, graphTitle, drawOption,
 	                     normalization, yAxisRangeMax, selectExpr, branchName);
 }
 
@@ -104,7 +106,7 @@ plotIntensity(TTree*             tree,                    // fitResult tree
               const std::string& selectExpr    = "",      // TTree::Draw() selection expression
               const std::string& branchName    = "fitResult_v2")  // fitResult branch name
 {
-	return plotIntensity(1, &tree, waveIndex, saveEps, &graphColor, drawLegend, graphTitle,
+	return plotIntensity(1, &tree, waveIndex, saveEps, &graphColor, NULL, drawLegend, graphTitle,
 	                     drawOption, normalization,  yAxisRangeMax, selectExpr, branchName);
 }
 
@@ -120,6 +122,7 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
               const std::string& waveName,               // wave name
               const bool         saveEps       = false,  // if set, EPS file with name wave ID is created
               const int*         graphColors   = NULL,   // array of colors for graph line and marker
+              const double*      graphScales   = NULL,   // array of scales for graphgroups
               const bool         drawLegend    = true,   // if set legend is drawn
               const std::string& graphTitle    = "",     // name and title of graph (default is wave ID)
               const char*        drawOption    = "AP",   // draw option for graph
@@ -148,20 +151,21 @@ plotIntensity(const unsigned int nmbTrees,               // number of fitResult 
 
 inline
 TMultiGraph*
-plotIntensity(std::vector<TTree*>&    trees,                  // array of fitResult trees
-              const std::string&      waveName,               // wave name
-              const bool              saveEps       = false,  // if set, EPS file with name wave ID is created
-              const std::vector<int>& graphColors   = std::vector<int>(),  // array of colors for graph line and marker
-              const bool              drawLegend    = true,   // if set legend is drawn
-              const std::string&      graphTitle    = "",     // name and title of graph (default is wave ID)
-              const char*             drawOption    = "AP",   // draw option for graph
-              const double            normalization = 1,      // scale factor for intensities
-              const double            yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
-              const std::string&      selectExpr    = "",     // TTree::Draw() selection expression
-              const std::string&      branchName    = "fitResult_v2")  // fitResult branch name
+plotIntensity(std::vector<TTree*>&        trees,                  // array of fitResult trees
+              const std::string&          waveName,               // wave name
+              const bool                  saveEps       = false,  // if set, EPS file with name wave ID is created
+              const std::vector<int>&     graphColors   = std::vector<int>(),  // array of colors for graph line and marker
+              const std::vector<double>&  graphScales   = std::vector<double>(),  // array of scales for graphgroups
+              const bool                  drawLegend    = true,   // if set legend is drawn
+              const std::string&          graphTitle    = "",     // name and title of graph (default is wave ID)
+              const char*                 drawOption    = "AP",   // draw option for graph
+              const double                normalization = 1,      // scale factor for intensities
+              const double                yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
+              const std::string&          selectExpr    = "",     // TTree::Draw() selection expression
+              const std::string&          branchName    = "fitResult_v2")  // fitResult branch name
 {
 	return plotIntensity(trees.size(), &(*(trees.begin())), waveName, saveEps,
-	                     &(*(graphColors.begin())), drawLegend, graphTitle, drawOption,
+	                     &(*(graphColors.begin())), &(*(graphScales.begin())), drawLegend, graphTitle, drawOption,
 	                     normalization, yAxisRangeMax, selectExpr, branchName);
 }
 
@@ -180,7 +184,7 @@ plotIntensity(TTree*             tree,                    // fitResult tree
               const std::string& selectExpr    = "",      // TTree::Draw() selection expression
               const std::string& branchName    = "fitResult_v2")  // fitResult branch name
 {
-	return plotIntensity(1, &tree, waveName, saveEps, &graphColor, drawLegend, graphTitle,
+	return plotIntensity(1, &tree, waveName, saveEps, &graphColor, NULL, drawLegend, graphTitle,
 	                     drawOption, normalization, yAxisRangeMax, selectExpr, branchName);
 }
 

@@ -221,7 +221,7 @@ std::istream& operator>> (std::istream& s, TPDGEntry& me){
 }
 
 void
-TPDGEntry::Print(){
+TPDGEntry::Print(const Option_t*) const {
   cout << "---------------------" << endl;
   cout << "PDG Entry: " << _name << "   ID: " << _pdgID << endl;
   cout << "Q=" << _q << endl;
@@ -234,7 +234,7 @@ TPDGEntry::Print(){
 
 
 TString 
-TPDGEntry::Istr(){
+TPDGEntry::Istr() const {
   if(_I<0)return "?";
   TString result;
   result+=_I;result.ReplaceAll(" ","");
@@ -242,7 +242,7 @@ TPDGEntry::Istr(){
 }
 
 TString 
-TPDGEntry::Gstr(){
+TPDGEntry::Gstr() const {
   if(_G==0)return "?";
   else if(_G>0) return "+";
   else return "-";
@@ -251,7 +251,7 @@ TPDGEntry::Gstr(){
 
 
 TString 
-TPDGEntry::Jstr(){
+TPDGEntry::Jstr() const {
   if(_J<0)return "?";
   TString result;
   result+=_J;result.ReplaceAll(" ","");
@@ -259,21 +259,21 @@ TPDGEntry::Jstr(){
 }
 
 TString 
-TPDGEntry::Pstr(){
+TPDGEntry::Pstr() const {
   if(_P==0)return "?";
   else if(_P>0) return "+";
   else return "-";
 }
 
 TString 
-TPDGEntry::Cstr(){
+TPDGEntry::Cstr() const {
   if(_C==0)return "?";
   else if(_C>0) return "+";
   else return "-";
 }
 
 TString 
-TPDGEntry::Statstr(){
+TPDGEntry::Statstr() const {
   switch (_status){
   case Established : {return "Established";}
   case Omitted : {return "Omitted";}

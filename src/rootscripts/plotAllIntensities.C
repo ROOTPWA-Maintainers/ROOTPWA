@@ -92,6 +92,7 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
                    const bool         createPsFile,   // if true, plots are written to waves.ps
                    const string&      outPath,        // path for output files
                    const int*         graphColors,    // array of colors for graph line and marker
+                   const double*      graphScales,    // array of colors for graph line and marker
                    const bool         drawLegend,     // if set legend is drawn
                    const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
                    const string&      branchName)
@@ -211,7 +212,7 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
 		++canvJpcCounter[jpc];
 
 		// draw intensity graph
-		TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, false, graphColors, drawLegend,
+		TMultiGraph* graph = plotIntensity(nmbTrees, trees, waveName, false, graphColors, graphScales, drawLegend,
 		                                   "", "AP", 1, yAxisRangeMax, "", branchName);
 		if (!graph)
 			continue;

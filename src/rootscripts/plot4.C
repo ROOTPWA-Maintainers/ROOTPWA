@@ -57,19 +57,20 @@ using namespace rpwa;
 // .............................................................................
 // signature with wave indices
 void
-plot4(const unsigned int nmbTrees,            // number of fitResult trees
-      TTree**            trees,               // array of fitResult trees
-      const int          waveIndexA,          // index of first wave
-      const int          waveIndexB,          // index of second wave
+plot4(const unsigned int nmbTrees,             // number of fitResult trees
+      TTree**            trees,                // array of fitResult trees
+      const int          waveIndexA,           // index of first wave
+      const int          waveIndexB,           // index of second wave
       const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
       const int*         graphColors = NULL,   // array of colors for graph line and marker
+      const double*      graphScales = NULL,   // array of scale factors that scale all graphs of one tree
       const bool         drawLegend  = true,   // if set legend is drawn
       const std::string& graphTitle  = "",     // name and title of graph (default is wave IDs)
       const char*        drawOption  = "AP",   // draw option for graph
-      const double       massMin     = 0,     // [GeV/c^2]
-      const double       massMax     = 0,     // [GeV/c^2]
+      const double       massMin     = 0,      // [GeV/c^2]
+      const double       massMax     = 0,      // [GeV/c^2]
       const string&      branchName  = "fitResult_v2",
-      TCanvas*           canvas      = NULL)  // fill a given canvas instead of creating one (name/title will be changed)
+      TCanvas*           canvas      = NULL)   // fill a given canvas instead of creating one (name/title will be changed)
 {
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
@@ -97,7 +98,7 @@ plot4(const unsigned int nmbTrees,            // number of fitResult trees
  
 	// wave A intensity
 	canvas->cd(1);
-	plotIntensity(nmbTrees, trees, waveIndexA, false, graphColors, drawLegend,
+	plotIntensity(nmbTrees, trees, waveIndexA, false, graphColors, graphScales, drawLegend,
 	              graphTitle, drawOption, 1, 0, selectExpr.str(), branchName);
 	// wave A - wave B phase angle
 	canvas->cd(2);
@@ -105,7 +106,7 @@ plot4(const unsigned int nmbTrees,            // number of fitResult trees
 	          graphTitle, drawOption, selectExpr.str(), branchName);
 	// wave B intensity
 	canvas->cd(3);
-	plotIntensity(nmbTrees, trees, waveIndexB, false, graphColors, drawLegend,
+	plotIntensity(nmbTrees, trees, waveIndexB, false, graphColors, graphScales, drawLegend,
 	              graphTitle, drawOption, 1, 0, selectExpr.str(), branchName);
 	// wave A - wave B coherence
 	canvas->cd(4);
@@ -132,7 +133,7 @@ plot4(TTree*        tree,                 // fitResult tree
       const string& branchName = "fitResult_v2",
       TCanvas*      canvas     = NULL)    // fill a given canvas instead of creating one (name/title will be changed)
 {
-	plot4(1, &tree, waveIndexA, waveIndexB, saveEps, &graphColor, drawLegend,
+	plot4(1, &tree, waveIndexA, waveIndexB, saveEps, &graphColor, NULL, drawLegend,
 	      graphTitle, drawOption, massMin, massMax, branchName, canvas);
 }
 
@@ -140,17 +141,18 @@ plot4(TTree*        tree,                 // fitResult tree
 // .............................................................................
 // signature with wave names
 void
-plot4(const unsigned int nmbTrees,            // number of fitResult trees
-      TTree**            trees,               // array of fitResult trees
-      const string&      waveNameA,           // name of first wave
-      const string&      waveNameB,           // name of second wave
+plot4(const unsigned int nmbTrees,             // number of fitResult trees
+      TTree**            trees,                // array of fitResult trees
+      const string&      waveNameA,            // name of first wave
+      const string&      waveNameB,            // name of second wave
       const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
       const int*         graphColors = NULL,   // array of colors for graph line and marker
+      const double*      graphScales = NULL,   // array of scale factors that scale all graphs of one tree
       const bool         drawLegend  = true,   // if set legend is drawn
       const std::string& graphTitle  = "",     // name and title of graph (default is wave IDs)
       const char*        drawOption  = "AP",   // draw option for graph
-      const double       massMin     = 0,     // [GeV/c^2]
-      const double       massMax     = 0,     // [GeV/c^2]
+      const double       massMin     = 0,      // [GeV/c^2]
+      const double       massMax     = 0,      // [GeV/c^2]
       const string&      branchName  = "fitResult_v2")
 {
 	if (!trees[0]) {
@@ -164,7 +166,7 @@ plot4(const unsigned int nmbTrees,            // number of fitResult trees
 	const int indexA = massBin->waveIndex(waveNameA);
 	const int indexB = massBin->waveIndex(waveNameB);
 	if ((indexA >= 0) && (indexB >= 0))
-		return plot4(nmbTrees, trees, indexA, indexB, saveEps, graphColors, drawLegend,
+		return plot4(nmbTrees, trees, indexA, indexB, saveEps, graphColors, graphScales, drawLegend,
 		             graphTitle, drawOption, massMin, massMax, branchName);
 	printErr << "cannot find wave(s) in tree '" << trees[0]->GetName() << "'. exiting." << endl;
 }
@@ -183,6 +185,6 @@ plot4(TTree*        tree,                 // fitResult tree
       const double  massMax    = 0,       // [GeV/c^2]
       const string& branchName = "fitResult_v2")
 {
-	plot4(1, &tree, waveNameA, waveNameB, saveEps, &graphColor, drawLegend,
+	plot4(1, &tree, waveNameA, waveNameB, saveEps, &graphColor, NULL, drawLegend,
 	      graphTitle, drawOption, massMin, massMax, branchName);
 }

@@ -60,9 +60,10 @@
 #include "TLorentzVector.h"
 #include "TRandom3.h"
 
-//#include "globalConstants.h"
+#if !defined (__CINT__) || !defined (__MAKECINT__)
 #include "reportingUtils.hpp"
 #include "mathUtils.hpp"
+#endif
 
 
 #define DEBUG 0

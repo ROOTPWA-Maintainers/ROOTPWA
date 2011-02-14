@@ -40,6 +40,7 @@
 
 
 #include <string>
+#include <sstream>
 #include <vector>
 
 
@@ -61,6 +62,7 @@ namespace rpwa {
 
 	// extracts sign string from a value
 	template<typename T>
+	inline
 	std::string
 	sign(const T& val)
 	{
@@ -74,6 +76,7 @@ namespace rpwa {
 
 	// extracts sign from value
 	template<typename T>
+	inline
 	T signum(const T& val)
 	{
 		if (val < 0)
@@ -134,6 +137,7 @@ namespace rpwa {
 
 
 	// converts bool to "true"/"false" string
+	inline
 	std::string trueFalse(const bool val)
 	{
 		if (val)
@@ -143,6 +147,7 @@ namespace rpwa {
 	}
 
 	// converts bool to "yes"/"no" string
+	inline
 	std::string yesNo(const bool val)
 	{
 		if (val)
@@ -152,6 +157,7 @@ namespace rpwa {
 	}
 
 	// converts bool to "on"/"off" string
+	inline
 	std::string onOff(const bool val)
 	{
 		if (val)
@@ -161,6 +167,7 @@ namespace rpwa {
 	}
 
 	// converts bool to "enabled"/"disabled" string
+	inline
 	std::string enDisabled(const bool val)
 	{
 		if (val)

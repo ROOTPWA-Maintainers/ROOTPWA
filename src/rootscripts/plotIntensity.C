@@ -54,9 +54,10 @@ using namespace rpwa;
 TMultiGraph*
 plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
               TTree**            trees,          // array of fitResult trees
-              const std::string& waveName,      // wave index
+              const std::string& waveName,       // wave index
               const bool         saveEps,        // if set, EPS file with name wave ID
               const int*         graphColors,    // array of colors for graph line and marker
+              const double*      graphScales,    // array of scales for graphgroups
               const bool         drawLegend,     // if set legend is drawn
               const string&      graphTitle,     // name and title of graph (default is wave IDs)
               const char*        drawOption,     // draw option for graph
@@ -127,15 +128,21 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 		const int nmbBins = trees[i]->GetSelectedRows();
 		vector<double> x, xErr;
 		vector<double> y, yErr;
+
+		double scale = normalization;
+		if(graphScales) {
+		  scale = scale * graphScales[i];
+		}
+
 		for (int j = 0; j < nmbBins; ++j) {
-			y	.push_back(trees[i]->GetV1()[j] * normalization);  // scale intensities
+			y	.push_back(trees[i]->GetV1()[j] * scale);  // scale intensities
 			// if (y[y.size()-1] == 0){ // remove 0 entries
 			// 	y.pop_back();
 			// 	continue;
 			// }
 			x	.push_back(trees[i]->GetV3()[j] * 0.001);  // convert mass to GeV
 			xErr.push_back(0);
-			yErr.push_back(trees[i]->GetV2()[j] * normalization);  // scale intensity errors
+			yErr.push_back(trees[i]->GetV2()[j] * scale);  // scale intensity errors
 		}
 		TGraphErrors* g = new TGraphErrors(x.size(),
 		                                   &(*(x.begin())),      // mass
@@ -205,6 +212,7 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
               const int          waveIndex,      // wave index
               const bool         saveEps,        // if set, EPS file with name wave ID
               const int*         graphColors,    // array of colors for graph line and marker
+              const double*      graphScales,    // array of scales for graphgroups
               const bool         drawLegend,     // if set legend is drawn
               const string&      graphTitle,     // name and title of graph (default is wave IDs)
               const char*        drawOption,     // draw option for graph
@@ -273,11 +281,17 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 		const int nmbBins = trees[i]->GetSelectedRows();
 		vector<double> x(nmbBins), xErr(nmbBins);
 		vector<double> y(nmbBins), yErr(nmbBins);
+
+		double scale = normalization;
+    if (graphScales) {
+      scale = scale * graphScales[i];
+    }
+
 		for (int j = 0; j < nmbBins; ++j) {
 			x   [j] = trees[i]->GetV3()[j] * 0.001;  // convert mass to GeV
 			xErr[j] = 0;
-			y   [j] = trees[i]->GetV1()[j] * normalization;  // scale intensities
-			yErr[j] = trees[i]->GetV2()[j] * normalization;  // scale intensity errors
+			y   [j] = trees[i]->GetV1()[j] * scale;  // scale intensities
+			yErr[j] = trees[i]->GetV2()[j] * scale;  // scale intensity errors
 		}
 		TGraphErrors* g = new TGraphErrors(nmbBins,
 		                                   &(*(x.begin())),      // mass

@@ -24,8 +24,7 @@
 #// $Author::                          $: author of last commit
 #// $Date::                            $: date of last commit
 #//
-#// Description:
-#//      main build file for ROOTPWA
+#// Description:#//      main build file for ROOTPWA
 #//
 #//
 #// Author List:
@@ -74,13 +73,15 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 # common compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror -pedantic")
-#set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
-set(CMAKE_CXX_FLAGS "-Wall -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
+set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
 # report global build settings
 foreach(_LANG "C" "CXX")
   message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'")
@@ -88,6 +89,7 @@ foreach(_LANG "C" "CXX")
 endforeach()
 foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
   message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
+  message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
 endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
 
@@ -110,13 +112,19 @@ endif()
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 # set(Boost_DEBUG 1)
-find_package(Boost 1.42.0 REQUIRED)
+find_package(Boost 1.43.0 REQUIRED)
 if(Boost_FOUND)
-  message(STATUS "Using Boost include directory '${Boost_INCLUDE_DIR}'")
-  message(STATUS "Using Boost library directory '${Boost_LIBRARY_DIRS}'")
+  message(STATUS "Using Boost include directories '${Boost_INCLUDE_DIRS}'")
+  message(STATUS "Using Boost library directories '${Boost_LIBRARY_DIRS}'")
 else()
   message(FATAL_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
 endif()
+# setup uprooted Boost libraries
+set(uprootedBoost_INCLUDE_DIRS
+	# local copy of Boost Graph Library from V1.43.0; overides graph library in Boost supplied by user
+  ${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
+	)
+message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'")
 
 
 # setup libconfig
@@ -196,6 +204,41 @@ else()
 endif()
 
 
+# setup MPI
+find_package(MPI)
+set(USE_MPI FALSE)
+if(NOT MPI_FOUND)
+  message(STATUS "Cannot find MPI installation. No MPI components will be generated.")
+  set(USE_MPI FALSE)
+else()
+	message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'")
+	message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'")
+	# setup Boost.MPI library
+  set(USE_MPI TRUE)
+	set(Boost_MPI_LIBRARY_DIR "${BOOST_ROOT}/stage/lib")
+	set(_Boost_MPI_LIB_NAMES "boost_mpi" "boost_serialization")
+	foreach(_Boost_MPI_LIB_NAME ${_Boost_MPI_LIB_NAMES})
+		find_library(_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}
+			NAMES ${_Boost_MPI_LIB_NAME}
+			PATHS ${Boost_MPI_LIBRARY_DIR}
+			NO_DEFAULT_PATH)
+		if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
+			set(USE_MPI FALSE)
+			message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in '${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
+		else()
+			list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
+		endif()
+	endforeach()
+	if(USE_MPI)
+		message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
+		message(STATUS "Enabling compilation of MPI components")
+		add_definitions(-DUSE_MPI)
+	else()
+		message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). No MPI components will be generated.")
+	endif()
+endif()
+
+
 # make SVN version string accessible via predefined macro SVN_VERSION
 find_package(Subversion)
 if(Subversion_FOUND)
@@ -250,14 +293,15 @@ enable_testing()
 
 # build subprojects
 
-# Utilities
 set(UTILITIES_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/utilities
 	)
-add_subdirectory(utilities)
 
 # PWA2000
 add_subdirectory(pwa2000)
+
+# Utilities
+add_subdirectory(utilities)
 
 # CUDA stuff
 if(USE_CUDA)
@@ -273,6 +317,15 @@ else()
 	set(CUDA_LIBS)
 endif()
 
+# RootPwaAmp
+set(AMPLITUDE_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/amplitude
+	)
+set(AMPLITUDE_LIBS
+  RootPwaAmp
+	)
+add_subdirectory(amplitude)
+
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src
@@ -281,24 +334,22 @@ set(ROOTPWA_LIBS
   RootPwa
 	)
 add_subdirectory(src)
+
+# compile rootscripts into a library since they are linked by the gui
 set(SCRIPTS_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src/rootscripts
 	)
-# compile rootscripts into a library since they are linked by the gui
 add_subdirectory(src/rootscripts)
 set(ROOTPWASCRIPTS_LIBS
   RootPwaScripts
 	)
-
-# RootPwaAmp
-# add_subdirectory(amplitude)
 
 # RootPwaTools
 set(TOOLS_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/tools
 	)
 add_subdirectory(tools)
-set(ROOTPWATOOLS_LIBS # setting the library variable
+set(ROOTPWATOOLS_LIBS
   RootPwaTools
 	)
 
@@ -307,7 +358,7 @@ set(GEN_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/generators
 	)
 add_subdirectory(generators)
-set(ROOTPWAGEN_LIBS # setting the library variable
+set(ROOTPWAGEN_LIBS
   RootPwaGen
 	)
 
@@ -315,10 +366,18 @@ set(ROOTPWAGEN_LIBS # setting the library variable
 add_subdirectory(keygen)
 
 # Fortran
-add_subdirectory(fortran)
+#add_subdirectory(fortran)
+
+# Relativic Amplitudes
+add_subdirectory(relampl)
 
 # gui
 add_subdirectory(gui/src)
+
+# MPI
+if(USE_MPI)
+	add_subdirectory(mpi)
+endif()
 
 
 message(STATUS "Run 'make' to build the project.")

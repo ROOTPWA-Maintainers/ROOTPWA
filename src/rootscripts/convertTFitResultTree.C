@@ -17,6 +17,7 @@
 #include "TObject.h"
 
 #include "reportingUtils.hpp"
+#include "fileUtils.hpp"
 #include "TFitResult.h"
 #include "fitResult.h"
 
@@ -50,7 +51,7 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
 	cout << "    writing to '" << _outDirName << "'" << endl;
 
 	// get file list
-	const vector<string> inFileNames = globFileList(inFileNamePattern);
+	const vector<string> inFileNames = filesMatchingGlobPattern(inFileNamePattern);
 	const unsigned int   nmbInFiles  = inFileNames.size();
 	cout << "    found " << nmbInFiles << " files." << endl;
 	if (inFileNames.size() == 0) {

@@ -38,16 +38,13 @@
 # set include directories
 set(INCLUDE_DIRECTORIES
   ${Boost_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${ROOT_INCLUDE_DIR}
+  ${PWA2000_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
 
-# source files that are compiled into library
-set(SOURCES
-  testSumAccumulators.cc
-)
-
-	    
 # executables
 make_executable(testSumAccumulators testSumAccumulators.cc)
+make_executable(testLibppFunctions  testLibppFunctions.cc "${ROOT_LIBS};${PWA2000_LIBS}")

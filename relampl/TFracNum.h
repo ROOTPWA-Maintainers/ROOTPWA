@@ -112,7 +112,7 @@ class TFracNum {
 	   Int_t D,  
 	   /*! control string. For described function, set to "factorial",
 	     otherwise the number is set to 1 */
-	   char* s);
+	   const char* s);
   
   //! Largest common divisor of numerator and denominator
   Int_t DenomCommonDivisor(const TFracNum &) const;
