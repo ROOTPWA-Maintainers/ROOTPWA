@@ -110,6 +110,7 @@ namespace rpwa {
     virtual std::complex<double> val(double m) const ;
 
     void setIsobars(double m1,double m2){_m1=m1;_m2=m2;}
+    void getIsobars(double& m1, double& m2){m1=_m1;m2=_m2;}
     
   private:
     // isobar masses

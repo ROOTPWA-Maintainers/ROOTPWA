@@ -46,6 +46,7 @@ set(INCLUDE_DIRECTORIES
 #  ${PWA2000_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
+  ${GEN_INCLUDE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -58,6 +59,7 @@ set(SOURCES
   TrpwaEventTreeHandler.cc
   TrpwaCommonTools.cc
   TrpwaPlotAmpsFrame.cc
+  TrpwaFitOptionsFrame.cc
 ) 
 
 # ROOT dictionary
@@ -65,7 +67,7 @@ set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
 root_generate_dictionary(
   "${ROOTPWAGUI_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
-  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h"
+  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h;TrpwaFitOptionsFrame.h"
   "rootPwaGuiLinkDef.h"
 )
 # message(" using rootpwa_dictionary "${ROOTPWA_DICTIONARY})
@@ -83,6 +85,7 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
    "${ROOTPWASCRIPTS_LIBS}"
 #  "${PWA2000_LIBS}"
    "${ROOTPWA_LIBS}"
+   "${ROOTPWAGEN_LIBS}"
 )
 
 

@@ -121,6 +121,18 @@ public:
 	// set the description of this session
 	bool Set_description(string description);
 
+	// Set the current fit title
+	bool Set_current_fit_title(string title){
+		_fit_title = title;
+		return true;
+	};
+
+	// Set the description of the current fit
+	bool Set_current_fit_description(string description){
+		_fit_description = description;
+		return true;
+	};
+
 	// Call after having set all Variables
 	// creates a map of variables for fast access
 	// true if succeeded
@@ -165,6 +177,13 @@ public:
 
 	// Get the description of this session
 	string Get_description(){return _description;};
+
+	// Get the title of the current fit
+	// note: Might be empty if not set1
+	string Get_current_fit_title(){return _fit_title;};
+
+	// Get the description of the current fit
+	string Get_current_fit_description(){return _fit_description;};
 
 	// returns the status [0-1] of the folder structure
 	// (counting folders)
@@ -343,7 +362,24 @@ public:
 
 	// return the command to fit a certain bin
 	// executedir is the directory to execute this command in
-	string GetFitCommand(int ibin, string& executedir);
+	string GetFitCommand(int ibin, string& executedir,
+			bool normalize = true, // use acceptance normalization integral if available
+			unsigned int rank = 1, // set the rank of the fit
+			int seed = 12345, // set the seed for the random number generator (-1 use a randomly generated number)
+			string* startvalues = NULL); // give the results from a previous fit as starting values
+			// startvalues may be "" then the start values will be ignored
+			// if variable for startvalues is given the fit result file name of this fit will be returned
+
+	// return the command to predict fit results
+	// in a certain bin
+	string GetPredictCommand(int ibin, string& executedir,
+			bool normalize = true); // use acceptance corrected data (if available)
+
+	// return the kinematics validation file as predicted for the bin ibin
+	string GetKineValFile(int ibin,
+			int& bin_low,
+			int& bin_high,
+			string* eventfile = NULL); // get the corresponding event file by request
 
 	// return the command to generate flat phase space events
 	// into the specified bin with the number of events specified
@@ -386,6 +422,9 @@ public:
 	// will be created
 	// returns true if succeeded
 	// folder will be put to the list of existing fit results
+	// if title or description not given
+	// current_title and current_description will be used
+	// if title then still not set then title will be generated
 	bool Save_Fit(string folder = "", string title = "", string description = "");
 
 	// load a Fit from the specified folder
@@ -395,6 +434,13 @@ public:
 	void Get_List_of_Fits(vector<string>& folders, // list of folders with fits
 			vector<string>* titles = NULL, 		  // optional list of fit titles
 			vector<string>* descriptions = NULL); // optional list of fit descriptions
+
+	// true if .int files are available
+	// if ibin < 0 then checking for all bins
+	bool Is_Normalization_available(int ibin = -1);
+
+	// if not already done, event files ".evt" are copied to root trees
+	void Convert_evt_to_roottree();
 
 private:
 	string _config_file; // filename with path to the config file of this session
@@ -413,6 +459,9 @@ private:
 	string _file_keyfile_generator; // filename with path to the key file generator
 	string _title; // the title of the session
 	string _description; // users description of this session
+
+	string _fit_title; // name of current fit
+	string _fit_description; // description of current fit
 
 	vector<string> _fit_folders; // absolute paths of fit folders
 	vector<string> _fit_titles ; // titles of the fits

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <complex>
 #include "TrpwaCommonTools.h"
+#include "TRandom.h"
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -169,6 +170,9 @@ bool TrpwaSessionManager::Save_Session(string config_file){
 			file << " ]; " << endl;
 		}
 
+		file << " current_fit_title       = "<< "\"" << Get_current_fit_title()<< "\";" << endl;
+		file << " current_fit_description = "<< "\"" << Get_current_fit_description()<< "\";" << endl;
+
 		//map <int, TrpwaBinInfo> _bins; // map with settings to each bin
 		result = true;
 	}
@@ -275,6 +279,18 @@ bool TrpwaSessionManager::Load_Session(string config_file){
 		result = false;
 	} else {
 		if (!Set_key_file_generator_file(_val_string)) result = false;
+	}
+
+	if (!_config.lookupValue("current_fit_title", _val_string)){
+		_fit_title = "";
+	} else {
+		if (!Set_current_fit_title(_val_string)) result = false;
+	}
+
+	if (!_config.lookupValue("current_fit_description", _val_string)){
+		_fit_description = "";
+	} else {
+		if (!Set_current_fit_description(_val_string)) result = false;
 	}
 
 	if (    _config.exists("bins_lowedge")&&
@@ -1297,12 +1313,41 @@ string TrpwaSessionManager::GetWaveListFile(int ibin, int& bin_low, int& bin_hig
 	return result;
 }
 
-string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
+bool TrpwaSessionManager::Is_Normalization_available(int ibin){
+	bool all_available = true;
+	if (ibin > _n_bins) return false;
+	int bincounter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin || ibin < 0){
+			string acceptancefile = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "ACCAMPS/" + "norm.int";
+			string normalizationfile = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + "PSPAMPS/" + "norm.int";
+			if (!FileExists(acceptancefile)){
+				all_available = false;
+				break;
+			}
+			if (!FileExists(normalizationfile)){
+				all_available = false;
+				break;
+			}
+		}
+		bincounter++;
+	}
+	return all_available;
+}
+
+string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir,
+		bool normalize,
+		unsigned int rank, // set the rank of the fit
+		int seed,
+		string* startvalues){
 	string result = "";
 	string wavelistfile = "";
 	string normalizationfile = "";
 	string acceptancefile = "";
 	string fitresultfile = "";
+	string initvals = "";
+	if (startvalues) initvals = (*startvalues);
+
 	int bincounter(0);
 	int bin_low = -1;
 	int bin_high = -1;
@@ -1326,21 +1371,28 @@ string TrpwaSessionManager::GetFitCommand(int ibin, string& executedir){
 	if (FileExists(fitresultfile)){
 		cout << " Warning in TrpwaSessionManager::GetFitCommand(): fit result " << fitresultfile << " exist already! " << endl;
 	}
+	if (startvalues) // set the fitresult as a return value for start values
+		(*startvalues) = fitresultfile;
 	if (!FileExists(normalizationfile)){
 		cout << " Error in TrpwaSessionManager::GetFitCommand(): normalization integral file " << normalizationfile << " does not exist! " << endl;
 		return result;
 	}
+	if (seed < 0) seed = gRandom->Uniform(1000,100000);
 	stringstream _result;
-	if (!FileExists(acceptancefile)){
-		cout << " Warning in TrpwaSessionManager::GetFitCommand(): acceptance integral file " << acceptancefile << " does not exist! " << endl;
+	if (!normalize || !FileExists(acceptancefile)){
+		cout << " Warning in TrpwaSessionManager::GetFitCommand(): no acceptance normalization used! " << endl;
 		cout << " Supplying fit command without normalization! " << endl;
 		//_result << " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
-		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< normalizationfile <<" -u " << bin_high << " -N -n " + normalizationfile;
+		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r "<< rank << " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< normalizationfile <<" -u " << bin_high << " -N -n " + normalizationfile << " -s " << seed;
+		if (initvals != "")
+			_result << " -S " << initvals;
 		result = _result.str();
 		return result;
 	} else {
 		//_result <<  " pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -N -u " << bin_high << " -n " + normalizationfile;
-		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r 1 " + " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile;
+		_result <<  "pwafit -q -w " + wavelistfile + " -o " + fitresultfile + " -r "<< rank << " -l " << bin_low << " -A " << _n_events_flat_phasespace << " -a "<< acceptancefile <<" -u " << bin_high << " -N -n " + normalizationfile << " -s " << seed;
+		if (initvals != "")
+			_result << " -S " << initvals;		
 		result = _result.str();
 		return result;
 	}
@@ -1843,7 +1895,14 @@ bool TrpwaSessionManager::Save_Fit(string folder, string title, string descripti
 			//cout << stime[i];
 		}
 		_folder = _dir_fit_results+"/fit_constellation_"+title+"_"+stime;
-		if (title == "") title = stime;
+		if (title == "") {
+			title = Get_current_fit_title();
+			if (title == "")
+				title = stime;
+		}
+		if (description == ""){
+			description = Get_current_fit_description();
+		}
 	}
 	if (DirExists(_folder)){
 		cout << " Error in TrpwaSessionManager::Save_Fit(): folder " << _folder << " is already existing! " << endl;
@@ -1851,10 +1910,30 @@ bool TrpwaSessionManager::Save_Fit(string folder, string title, string descripti
 	} else {
 		cout << " creating fit directory " << system(("mkdir "+_folder).c_str()) << endl;
 	}
-	cout << " moving fit results " << system(("cp "+_dir_fit_results+"/* "+_folder).c_str()) << endl;
+	for (int ifit = 0; ifit < Get_n_bins(); ifit++){
+		int bin_low, bin_high;
+		string fitresultfile;
+		string wavelistfile = GetWaveListFile(ifit, bin_low, bin_high, fitresultfile);
+		if (FileExists(fitresultfile)){
+			cout << " moving fit result " << fitresultfile;
+			cout << system(("mv "+fitresultfile+" "+_folder+"/").c_str()) << endl;
+		} else {
+			cout << " Warning: fit result file " << fitresultfile << " does not exist! " << endl;
+		}
+		if (FileExists(wavelistfile)){
+			cout << " copying corresponding wavelist file ";
+			cout << system(("cp "+wavelistfile+" "+_folder+"/").c_str()) << endl;
+		} else {
+			cout << " Warning: wave list file " << wavelistfile << " does not exist! " << endl;
+		}
+	}
+	//cout << " moving fit results " << system(("cp "+_dir_fit_results+"/* "+_folder).c_str()) << endl;
 	_fit_folders.push_back(_folder);
 	_fit_titles.push_back(title);
 	_fit_descriptions.push_back(description);
+	// reset the current fit description and title
+	_fit_title = "";
+	_fit_description = "";
 	return result;
 }
 
@@ -1906,4 +1985,162 @@ void TrpwaSessionManager::DrawProgressBar(int len, double percent) {
 	  cout << "[" << progress << "] " << (static_cast<int>(100 * percent)) << "%";
 	  flush(cout); // Required.
 	  last_percent = percent;
+}
+
+void TrpwaSessionManager::Convert_evt_to_roottree(){
+	cout << " converting event files to root files " << endl;
+
+	if ( _n_bins <= 0 ) return;
+	int counter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		counter++;
+		DrawProgressBar(50, counter/((double)_n_bins));
+
+		// real data files
+		string eventfilename = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".evt";
+		string rootfilename  = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".root";
+		if (FileExists(eventfilename) && !FileExists(rootfilename)){
+			stringstream command;
+			command << "cat " << eventfilename << " | evt2tree " << rootfilename;
+			cout << system(command.str().c_str());
+		}
+
+		// acc events files
+		eventfilename = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".acc.evt";
+		rootfilename  = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".acc.root";
+		if (FileExists(eventfilename) && !FileExists(rootfilename)){
+			stringstream command;
+			command << "cat " << eventfilename << " | evt2tree " << rootfilename;
+			cout << system(command.str().c_str());
+		}
+
+		// flat phase phase files
+		eventfilename = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".genbod.evt";
+		rootfilename  = _dir_binned_data + "/" + it->second.bin_folder_name + "/" + it->second.bin_folder_name + ".genbod.root";
+		if (FileExists(eventfilename) && !FileExists(rootfilename)){
+			stringstream command;
+			command << "cat " << eventfilename << " | evt2tree " << rootfilename;
+			cout << system(command.str().c_str());
+		}
+	}
+
+	cout << " done " << endl;
+}
+
+string TrpwaSessionManager::GetKineValFile(int ibin,
+		int& bin_low,
+		int& bin_high,
+		string* eventfile){
+	string result = "";
+	//doPlotWEvts.C(\"../$i.root\",\"$WEIGHTEDFILE\",\"$PLOTFILE\",\"$i\")"
+	int bincounter(0);
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			result    = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".kineval."+it->second.wave_list_file+".root";
+			if (eventfile){
+				string bindir = _dir_binned_data + "/" + it->second.bin_folder_name;
+				(*eventfile) = bindir + "/" + it->second.bin_folder_name + ".root";
+			}
+			break;
+		}
+		bincounter++;
+	}
+	return result;
+}
+
+string TrpwaSessionManager::GetPredictCommand(int ibin, string& executedir,
+		bool normalize){
+	string result = "";
+	//string wavelistfile = "";
+	string normalizationfile = "";
+	string fitresultfile = "";
+	string outputfile = "";
+	string accdatafile = "";
+	string datafile = "";
+	string plotresultfile = "";
+	//string initvals = "";
+
+	int bincounter(0);
+	int bin_low = -1;
+	int bin_high = -1;
+	for( TBinMap::const_iterator it = _bins.begin(); it != _bins.end(); ++it){
+		if (bincounter == ibin){
+			bin_low = (*it).second.bin_low;
+			bin_high= (*it).second.bin_high;
+			string bindir = _dir_binned_data + "/" + it->second.bin_folder_name;
+			string accampsdir = bindir + "/" + "ACCAMPS";
+			string pspampsdir = bindir + "/" + "PSPAMPS";
+			accdatafile = bindir + "/" + it->second.bin_folder_name + ".acc.evt";
+			datafile = bindir + "/" + it->second.bin_folder_name + ".root";
+			executedir = accampsdir;
+			normalizationfile = accampsdir + "/" + "norm.int";
+			//wavelistfile = _dir_fit_results + "/" + (*it).second.wave_list_file;
+			fitresultfile = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".root";
+			outputfile    = _dir_fit_results + "/" + "fit_result_" + it->second.wave_list_file + ".kineval."+it->second.wave_list_file+".root";
+			plotresultfile = _dir_fit_results + "/" + "kineval_plots."+it->second.wave_list_file+".root";
+			if (!normalize || !FileExists(normalizationfile)){
+				cout << " TrpwaSessionManager::GetPredictCommand() Warning: not acceptance corrected data is used! " << endl;
+				accdatafile = bindir + "/" + it->second.bin_folder_name + ".genbod.evt";
+				executedir = pspampsdir;
+				normalizationfile = pspampsdir + "/" + "norm.int";
+			}
+			break;
+		}
+		bincounter++;
+	}
+	if (!FileExists(accdatafile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no acceptance data file found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (!FileExists(normalizationfile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no normalization file found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (!FileExists(fitresultfile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no fit result file found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (!FileExists(datafile)){
+		cout << " Error in TrpwaSessionManager::GetPredictCommand(): no data file (in root format) found for bin " << ibin << endl;
+		executedir = "";
+		return result;
+	}
+	if (FileExists(outputfile)){
+		cout << " Warning in TrpwaSessionManager::GetPredictCommand(): output file " << outputfile << " does already exist! " << endl;
+	}
+	if (FileExists(plotresultfile)){
+		cout << " Warning in TrpwaSessionManager::GetPredictCommand(): plot output file " << plotresultfile << " does already exist! " << endl;
+	}
+
+ //   cd ACCAMPS
+ //   # cd PSPAMPS
+ //   WEIGHTEDFILE=${FITFILE/.root/.kineval.$i.root}
+ //   test -s $WEIGHTEDFILE || evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -m $i
+
+	stringstream _result;
+	_result <<  "evtweight -e " << accdatafile << " -o " << outputfile << " -w " << fitresultfile << " -i " << normalizationfile << " -m " << bin_low << "." << bin_high << ";\n";
+	// add now the command for plotting, too
+	_result << "doPlotWEvts " << datafile << " " << outputfile << " " << plotresultfile << " " << bin_low << "." << bin_high;
+	//int bin_low, bin_high;
+	//string eventfile;
+	//string kinevalfile = current_session->GetKineValFile(ibin, bin_low, bin_high, &eventfile);
+	//stringstream outputfilename;
+	//outputfilename << "kinematics" << bin_low << "." << bin_high << ".root";
+	//stringstream binname;
+	//binname << bin_low << "." << bin_high;
+
+//	TFile* file1=TFile::Open(eventfile.c_str(),"READ");
+	//TFile* file2=TFile::Open(kinevalfile.c_str(),"READ");
+	//TTree* data=(TTree*)file1->Get("events");
+	//TTree* mc=(TTree*)file2->Get("pwevents");
+
+	//plotWeightedEvts(mc,data,outputfilename.str(),binname.str());
+
+	result = _result.str();
+	return result;
 }

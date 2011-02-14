@@ -88,13 +88,13 @@ main(int argc, char** argv){
   //double minevi=680000;
   //double maxevi=715000;
 
-  unsigned int ngen=50;
+  unsigned int ngen=100;
 
   TH2D* hWavesetSize=new TH2D("hWS","Waveset sizes evolution",ngen,-0.5,(double)ngen-.5,100,0,100);
   TH2D* hEvidences=new TH2D("hEvi","Evidence evolution",ngen,-0.5,(double)ngen-.5,1000,minevi,maxevi);
    TH2D* hEviSize=new TH2D("hEviSize","Evidence vs Waveset size",100,0,100,1000,minevi,maxevi);
 
-TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,-0.5,99.5,1000,minevi,minevi);
+TH2D* hLogliSize=new TH2D("hLogliSize","LogLikelihood vs Waveset size",100,0,100,1000,minevi,minevi);
 
   
  

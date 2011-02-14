@@ -86,7 +86,8 @@ namespace rpwa {
     double mMin; // minimum mass bin in fit
     double mMax; // maximum mass bin in fit
     unsigned int mNumBins;
-   
+    void setNWaves(unsigned int n){nWaves=n;}
+    unsigned int nWaves;
     
 
   };

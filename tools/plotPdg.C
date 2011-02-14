@@ -77,7 +77,7 @@ plotPdg(TString file){
   mg->Add(gReggeI0Pm);
   mg->Add(gReggeI1Pp);
   mg->Add(gReggeI1Pm);
-  TLegend* leg=new TLegend(0.7,0.8,1,1);
+  TLegend* leg=new TLegend(0.58,0.15,0.88,0.4);
   leg->SetFillColor(0);
   leg->AddEntry(gReggeI0Pp,"I=0, P=+","P");
   leg->AddEntry(gReggeI0Pm,"I=0, P=-","P");
@@ -141,6 +141,8 @@ plotPdg(TString file){
   gReggeI1Pm->SetMarkerStyle(29);gReggeI1Pm->SetMarkerSize(1.5);
 
   mg->Draw("AP");
+  mg->GetXaxis()->SetTitle("J");
+  mg->GetYaxis()->SetTitle("m^{2} (GeV^{2}/c^{4})");
   leg->Draw();
   //hm->DrawClone();
 

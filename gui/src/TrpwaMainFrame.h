@@ -100,6 +100,8 @@ public:
 
 	void FillFlatPhaseSpaceEvents(); // calling flat phase space generator bin by bin
 
+	void Predict(); // check kinematic behavior of your current fit results
+
 	void Dummy(); // will be called for every function not implemented yet
 
 	// call the root script for class definition

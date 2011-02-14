@@ -176,10 +176,12 @@ void wavelist_to_latex(string wavelistname, string latexfilename = "wavelist.tex
 	int nisobars(0);
 	latexfile << "\\begin{table}" << endl;
 	latexfile << "  \\myfloatalign " << endl;
-	latexfile << " \\begin{tabularx}{\\textwidth}{XXX} \\toprule " << endl;
+	latexfile << " \\begin{tabularx}{\\textwidth}{ccrcl} \\toprule " << endl;
 	latexfile << " \\tableheadline{$J^{PC}$} &";
 	latexfile << " \\tableheadline{$M\\epsilon$} &";
-	latexfile << " \\tableheadline{$iso1 \\left[ ^l _s \\right] iso2$} \\\\ \\midrule" << endl;
+	latexfile << " \\tableheadline{$iso1$} &";
+	latexfile << " \\tableheadline{$\\left[ ^l _s \\right]$} &";
+	latexfile << " \\tableheadline{$iso2$} \\\\ \\midrule" << endl;
 	while (1){
 		char oneline[1024];
 		wavelistfile.getline(oneline, 1024);
@@ -245,8 +247,8 @@ void wavelist_to_latex(string wavelistname, string latexfilename = "wavelist.tex
 		signrefl = refl < 0 ? "-" : "+";
 		latexfile << " $" << J << "^{" << signP << signC << "}$ & $";
 		latexfile << M << signrefl << "$ & $";
-		latexfile << " " << iso1;
-		latexfile << " \\left[ ^" << l << " _" << s << " \\right]";
+		latexfile << " " << iso1 << "$ & $";
+		latexfile << " \\left[ ^" << l << " _" << s << " \\right]" << "$ & $";
 		latexfile << " " << iso2 << " $ \\\\ " << endl; 
 		nlines++;
 	}

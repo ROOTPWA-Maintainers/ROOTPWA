@@ -37,6 +37,7 @@
 #include <iostream>
 #include <iomanip>
 #include <vector>
+#include <algorithm>
 #include <string>
 #include <complex>
 #include <cassert>
@@ -93,6 +94,7 @@ usage(const string& progName,
        << "        -t #       minimizer tolerance (default: 1e-10)" << endl
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
+       << "        -P         plotting only - no fit" << endl
        << endl;
   exit(errCode);
 }
@@ -128,6 +130,7 @@ main(int    argc,
   const unsigned int maxNmbOfIterations  = 20000;
   const bool         runHesse            = true;
   const bool         runMinos            = false;
+  bool               onlyPlotting        = false;
   //unsigned int maxParNameLength = 20;       // maximum length of parameter names
 //   int                startValSeed        = 1234567;
  // parse command line options
@@ -147,7 +150,7 @@ main(int    argc,
 extern char* optarg;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:M:m:t:qh")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qhP")) != -1)
     switch (ca) {
     case 'c':
       configFile = optarg;
@@ -178,6 +181,9 @@ extern char* optarg;
       break;
     case 'h':
       usage(progName);
+      break;
+    case 'P':
+      onlyPlotting=true;
       break;
     }
 
@@ -323,145 +329,32 @@ extern char* optarg;
     }// end loop over background
   }// endif
 
+ cout << "---------------------------------------------------------------------" << endl << endl;
+
+  // set anchorwave
+  vector<string> anchorwave_channel;
+  vector<string> anchorwave_reso;
+  if(Conf.exists("components.anchorwave")){
+    const Setting &anc = root["components"]["anchorwave"];
+    // loop through breitwigners
+    unsigned int nanc=anc.getLength();
+    for(unsigned int ianc=0;ianc<nanc;++ianc){
+      string ch,re;
+      const Setting &anco = anc[ianc];
+      anco.lookupValue("channel",ch);
+      anco.lookupValue("resonance",re);
+      cout << "Ancorwave: "<< endl;
+      cout << "    " << re << endl;
+      cout << "    " << ch << endl;
+      anchorwave_channel.push_back(ch);
+      anchorwave_reso.push_back(re);
+    }
+  }
+
 
     cout << "---------------------------------------------------------------------" << endl << endl;
  
  
-
- //  std::map<std::string,pwachannel > channels;
-//   std::string ch1="1-2-+0+rho770_02_a21320=pi-_2_rho770.amp";
-//   std::string ch2="1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp";
-//   std::string ch3="1-2-+0+rho31690=rho770_03_f21270_13_pi-.amp";
-//   std::string ch4="1-2-+0+rho770_02_a11269=pi-_0_rho770.amp";
-//   channels[ch1]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch1));
-//   channels[ch2]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch2));
-//   //channels[ch3]=pwachannel(complex<double>(5,0),getPhaseSpace(tree,ch3));
-//   channels[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
-//   pwacomponent comp1("pi2(1880)",1880,150,channels);
-//   comp1.setLimits(1870,1900,50,300);
-//   comp1.setFixed(0,0);
-
-//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(1,0));
-//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-//   pwacomponent comp2("pi2(2300)",2300,500,channels);
-//   comp2.setLimits(2250,2500,100,800);
-//   comp2.setFixed(1,0);
-
-//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(50,0));
-//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(50,0));
-//   pwacomponent comp3("pi2(1670)",1672,260,channels);
-//   comp3.setLimits(1600,1700,200,400);
-//   comp3.setFixed(1,1);
-
-//   channels["1-2-+0+rho770_02_a21320=pi-_2_rho770.amp"].setCoupling(complex<double>(20,0));
-//   channels["1-2-+0+pi-_02_f21270=pi-+_1_a11269=pi+-_0_rho770.amp"].setCoupling(complex<double>(5,0));
-//   pwacomponent comp4("pi2(2100)",2090,200,channels);
-//   comp4.setLimits(2000,2200,100,800);
-//   comp4.setFixed(1,0);
-
-
-//   std::map<std::string,pwachannel > channels0mp;
-//   std::string ch5="1-0-+0+pi-_00_f01500=rho770_00_rho770.amp";
-//   std::string ch6="1-0-+0+rho770_00_a11269=pi-_0_rho770.amp";
-  
-  
-//   channels0mp[ch5]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-//   channels0mp[ch6].setCoupling(std::complex<double>(0.1,0));
-//   pwacomponent comp5("pi(1800)",1840,208,channels0mp);
-//   comp5.setLimits(1750,1850,100,300);
-//   comp5.setFixed(0,0);
-//   //channels0mp.clear();
-//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch5));
-//   channels0mp[ch5].setCoupling(std::complex<double>(0.5,0));
-//   channels0mp[ch6].setCoupling(std::complex<double>(50,0));
-//   pwacomponent comp6("pi(1700)",1700,200,channels0mp);
-//   comp6.setLimits(1600,1750,100,500);
-//   comp6.setFixed(0,0);
-//   pwacomponent comp13("pi(2100)",2200,200,channels0mp);
-//   comp13.setLimits(2000,2300,100,500);
-//   comp13.setFixed(1,0);
-
-//   channels0mp.clear();
-//   channels0mp[ch6]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch6));
-//   pwabkg bkg1=pwabkg("0-+Bkg",0,0.0001,channels0mp);
-//   bkg1.setIsobars(770,1269);
-//   bkg1.setLimits(0,0,0,1);
-//   bkg1.setFixed(1,0);
-
-//   std::map<std::string,pwachannel> channels2mp;
-//   channels2mp[ch4]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch4));
-//   pwabkg bkg2=pwabkg("rhoa1bkg",0,0.0001,channels2mp);
-//   bkg2.setIsobars(770,1269);
-//   bkg2.setLimits(0,0,0,1);
-//   bkg2.setFixed(1,0);
-
-//   channels2mp.clear();
-//   channels2mp[ch3]=pwachannel(complex<double>(50,0),getPhaseSpace(tree,ch3));
-//   pwabkg bkg3=pwabkg("pirho3",0,0.0001,channels2mp);
-//   bkg3.setIsobars(139,1690);
-//   bkg3.setLimits(0,0,0,1);
-//   bkg3.setFixed(1,0);
-
-//   std::map<std::string,pwachannel> channels1pp;
-//   std::string anchorwave("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
-//   string ch1ppsa1("1-1++0+sigma_01_a11269=pi-_0_rho770.amp");
-//   string ch1ppra11("1-1++0+rho770_11_a11269=pi-_0_rho770.amp");
-//   string ch1ppra12("1-1++0+rho770_12_a11269=pi-_0_rho770.amp");
-//   string ch1ppf1pi("1-1++0+pi-_11_f11285=pi-+_11_a11269=pi+-_0_rho770.amp");
-		  
-//   //  channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
-//   //				   getPhaseSpace(tree,ch1ppsa1));
-// //channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
-//   //			   getPhaseSpace(tree,ch1ppra11));
-// // channels1pp[ch1ppra12]=pwachannel(complex<double>(50,0),
-//   //			   getPhaseSpace(tree,ch1ppra12));
-//   channels1pp[ch1ppf1pi]=pwachannel(complex<double>(50,0),
-// 				   getPhaseSpace(tree,ch1ppf1pi));
-
-//   pwacomponent comp7("a1(1640)",1647,254,channels1pp);
-//   comp7.setLimits(1600,1700,100,500);
-//   comp7.setFixed(0,0);
-//   pwacomponent comp8("a1(1930)",1930,155,channels1pp);
-//   comp8.setLimits(1900,1980,100,300);
-//   comp8.setFixed(1,1);
-//   pwacomponent comp9("a1(2095)",2069,451,channels1pp);
-//   comp9.setLimits(1950,2150,100,300);
-//   comp9.setFixed(0,0);
-  
-//   channels1pp.clear();
-//   channels1pp[ch1ppsa1]=pwachannel(complex<double>(50,0),
-// 				   getPhaseSpace(tree,ch1ppsa1));
-//   pwabkg bkg4=pwabkg("sigmaa1",0,0.0001,channels1pp);
-//   bkg4.setIsobars(600,1269);
-//   bkg4.setLimits(0,0,0,1);
-//   bkg4.setFixed(1,0);
-
-//   channels1pp.clear();
-//   channels1pp[ch1ppra11]=pwachannel(complex<double>(50,0),
-// 				   getPhaseSpace(tree,ch1ppra11));
-//   pwabkg bkg5=pwabkg("1pprhoa1bkg",0,0.0001,channels1pp);
-//   bkg5.setIsobars(770,1269);
-//   bkg5.setLimits(0,0,0,1);
-//   bkg5.setFixed(1,0);
-
-//   pwacompset compset;
-//   compset.add(&comp1); // pi2(1880)
-//   //compset.add(&bkg2);  
-//   //compset.add(&comp2); // pi2(2300)
-//   compset.add(&comp3); // pi2(1670)
-//   //compset.add(&bkg3);
-//   compset.add(&comp4); // pi2(2100)
-//   compset.add(&comp5); // pi(1800)
-//   compset.add(&comp6); // pi(1700)
-//  compset.add(&comp13); // pi(2100)
-//   compset.add(&bkg1);
-//   //compset.add(&comp7);
-//   //compset.add(&comp8);
-//   //compset.add(&comp9);
-//   //compset.add(&bkg4);
-  
-
 
   massDepFitLikeli L;
   L.init(tree,&compset,massBinMin,massBinMax);
@@ -511,9 +404,10 @@ extern char* optarg;
       minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.C().real(), 0.10);
       
       // fix one phase
-      // if(it->first==anchorwave)minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
-	
-	if(0);else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
+      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->first)!=anchorwave_channel.end()){
+	minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
+      }
+      else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
       
       ++it;
     } // end loop over channels
@@ -524,12 +418,17 @@ extern char* optarg;
 
 
   // find minimum of likelihood function
-  printInfo << "performing minimization." << endl;
-  {
+  if(onlyPlotting) printInfo << "Plotting mode, skipping minimzation" << endl;
+  else {
+    printInfo << "performing minimization." << endl;
+    
     minimizer->SetMaxIterations(maxNmbOfIterations);
     minimizer->SetMaxFunctionCalls(maxNmbOfIterations*5);
     minimizer->SetTolerance    (minimizerTolerance);
     bool success = minimizer->Minimize();
+    const double* par=minimizer->X();
+    compset.setPar(par);
+    cerr << compset << endl;
     if (success)
       printInfo << "minimization finished successfully." << endl;
     else
@@ -540,31 +439,37 @@ extern char* optarg;
       if (!success)
 	printWarn << "calculation of Hessian matrix failed." << endl;
     }
-    printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. minimizer status summary:" << endl
-	      << "    total number of parameters .......................... " << minimizer->NDim()             << endl
-	      << "    number of free parameters ........................... " << minimizer->NFree()            << endl
-	      << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
-	      << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << endl
-	      << "    minimizer status .................................... " << minimizer->Status()           << endl
-	      << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << endl
-	      << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << endl
-	      << "    estimated distance to minimum ....................... " << minimizer->Edm()              << endl
-	      << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << endl
-	      << "    minimizer strategy .................................. " << minimizer->Strategy()         << endl
-	      << "    absolute tolerance .................................. " << minimizer->Tolerance()        << endl;
   }
+  printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. minimizer status summary:" << endl
+	    << "    total number of parameters .......................... " << minimizer->NDim()             << endl
+	    << "    number of free parameters ........................... " << minimizer->NFree()            << endl
+	    << "    maximum allowed number of iterations ................ " << minimizer->MaxIterations()    << endl
+	    << "    maximum allowed number of function calls ............ " << minimizer->MaxFunctionCalls() << endl
+	    << "    minimizer status .................................... " << minimizer->Status()           << endl
+	    << "    minimizer provides error and error matrix ........... " << minimizer->ProvidesError()    << endl
+	    << "    minimizer has performed detailed error validation ... " << minimizer->IsValidError()     << endl
+	    << "    estimated distance to minimum ....................... " << minimizer->Edm()              << endl
+	    << "    statistical scale used for error calculation ........ " << minimizer->ErrorDef()         << endl
+	    << "    minimizer strategy .................................. " << minimizer->Strategy()         << endl
+	    << "    absolute tolerance .................................. " << minimizer->Tolerance()        << endl;
+  
 
   // ---------------------------------------------------------------------------
   // print results
+  //map<TString, double> errormap;
   printInfo << "minimization result:" << endl;
   for (unsigned int i = 0; i< nmbPar; ++i) {
     cout << "    parameter [" << setw(3) << i << "] ";
+    cout << minimizer->VariableName(i) << " " ;
       //	 << setw(maxParNameLength); //<< L.parName(i) << " = ";
     //if (parIsFixed[i])
     //  cout << minimizer->X()[i] << " (fixed)" << endl;
     //else {
       cout << setw(12) << maxPrecisionAlign(minimizer->X()[i]) << " +- "
 	   << setw(12) << maxPrecisionAlign(minimizer->Errors()[i]);
+      //errormap[minimizer]=minimizer->Errors()[i];
+      
+
       if (runMinos && (i == 156)) {  // does not work for all parameters
 	double minosErrLow = 0;
 	double minosErrUp  = 0;
@@ -575,12 +480,229 @@ extern char* optarg;
 	cout << endl;
   }
 
-  const double* par=minimizer->X();
-  // matrix of couplings
+ 
+ cout << "---------------------------------------------------------------------" << endl;
 
-  compset.setPar(par);
 
-  cerr << compset << endl;
+  // write out results
+  // Setup Component Set (Resonances + Background)
+  const Setting& bws= root["components"]["resonances"];
+  const Setting& bkgs= root["components"]["background"];
+  unsigned int nbws=bws.getLength();
+  unsigned int nbkgs=bkgs.getLength();
+  // loop over components
+  unsigned int nc=compset.n();
+  for(unsigned int ic=0;ic<nc;++ic){
+    const pwacomponent* comp=compset[ic];
+    string name=comp->name();
+    // search corresponding setting
+   
+    string sname;
+    bool found=false;
+    for(unsigned int is=0;is<nbws;++is){
+      const Setting& bw = bws[is];
+      bw.lookupValue("name",     sname);
+      if(sname==name){
+	found=true;
+	// set values to this setting
+	Setting& sm = bw["mass"];
+	Setting& smval = sm["val"];
+	smval = comp->m0();
+	Setting& smerr = sm["error"];
+	TString merrname=name+"_M";
+	smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
+	
+
+	Setting& sw = bw["width"];
+	Setting& swval = sw["val"];
+	swval = comp->gamma();
+
+	Setting& swerr = sw["error"];
+	TString werrname=name+"_Gamma";
+	swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
+
+	// loop through channel and fix couplings
+	const Setting& sChn=bw["decaychannels"];
+	unsigned int nCh=sChn.getLength();
+	const std::map<std::string,pwachannel >& ch=comp->channels();
+	std::map<std::string,pwachannel>::const_iterator it=ch.begin();
+	for(;it!=ch.end();++it){
+	  std::complex<double> c= it->second.C();
+	  string ampname=it->first;
+	  // loop through channels in setting
+	  for(unsigned int isc=0;isc<nCh;++isc){
+	    Setting& sCh=sChn[isc];
+	    string amp; sCh.lookupValue("amp",amp);
+	    if(amp==ampname){
+	      Setting& sRe=sCh["coupling_Re"];
+	      sRe=c.real();
+	      Setting& sIm=sCh["coupling_Im"];
+	       sIm=c.imag();
+	      break;
+	    } // endif
+	  } // end loop through cannels in setting
+	  
+	} // end loop through channels of component
+
+	break;
+      }
+    }
+
+    // loop over background settings
+    if(!found){
+      for(unsigned int is=0;is<nbkgs;++is){
+	const Setting& bw = bkgs[is];
+	bw.lookupValue("name",     sname);
+	if(sname==name){
+	  Setting& sm = bw["m0"];
+	  Setting& smval = sm["val"];
+	  smval = comp->m0();
+	  Setting& sw = bw["g"];
+	  Setting& swval = sw["val"];
+	  swval = comp->gamma();
+
+	  const pwachannel& ch=comp->channels().begin()->second;
+	  std::complex<double> c=ch.C();
+	  Setting& sRe=bw["coupling_Re"];
+	  sRe=c.real();
+	  Setting& sIm=bw["coupling_Im"];
+	  sIm=c.imag();
+	  break;
+	}
+      }
+    }
+    cout << name << "  --->  setting: " << sname << endl;
+
+    
+
+  }
+
+
+
+
+ //  bool check=true;
+//   // Resonances
+//   if(Conf.exists("components.resonances")){
+//     const Setting &bws = root["components"]["resonances"];
+//     // loop through breitwigners
+//     int nbw=bws.getLength();
+//     printInfo << "found " << nbw << " Resonances in config" << endl;
+//     for(int ibw = 0; ibw < nbw; ++ibw) {
+//       const Setting &bw = bws[ibw];
+//       string jpc;
+//       string name;
+//       double mass=-1;double ml,mu;int mfix; 
+//       double width=-1;double wl,wu;int wfix;
+     
+//       check&=bw.lookupValue("name",     name);
+//       check&=bw.lookupValue("jpc",       jpc);
+//       const Setting &massSet = bw["mass"];
+//       check&=massSet.lookupValue("val",        mass);
+//       check&=massSet.lookupValue("lower",        ml);
+//       check&=massSet.lookupValue("upper",        mu);
+//       check&=massSet.lookupValue("fix",        mfix);
+//       const Setting &widthSet = bw["width"];
+//       check&=widthSet.lookupValue("val",       width);
+//       check&=widthSet.lookupValue("lower",       wl);
+//       check&=widthSet.lookupValue("upper",       wu);
+//       check&=widthSet.lookupValue("fix",       wfix);
+//       cout << "---------------------------------------------------------------------" << endl;
+//       cout << name << "    JPC = " << jpc << endl;
+//       cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
+//       if(mfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       cout << "width(limits) = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
+//       if(wfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       const Setting &channelSet = bw["decaychannels"];
+//       unsigned int nCh=channelSet.getLength();
+//       cout << "Decaychannels (coupling):" << endl;
+//       std::map<std::string,pwachannel > channels;
+//       for(unsigned int iCh=0;iCh<nCh;++iCh){
+// 	const Setting &ch = channelSet[iCh];
+// 	string amp;
+// 	double cRe=0;
+// 	double cIm=0;
+// 	check&=ch.lookupValue("amp",amp);
+// 	check&=ch.lookupValue("coupling_Re",cRe);
+// 	check&=ch.lookupValue("coupling_Im",cIm);
+// 	complex<double> C(cRe,cIm);
+// 	cout << "   " << amp << "  " << C << endl;
+// 	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+//       }// end loop over channels
+//       if(!check){
+// 	printErr << "Bad config value lookup! Check your config file!" << endl;
+// 	return 1;
+//       }
+//       pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
+//       comp1->setLimits(ml,mu,wl,wu);
+//       comp1->setFixed(mfix,wfix);
+//       compset.add(comp1);
+//     }// end loop over resonances
+//   }
+//   cout << endl;
+//   // Background components
+//   if(Conf.exists("components.background")){
+//     const Setting &bws = root["components"]["background"];
+//     // loop through breitwigners
+//     int nbw=bws.getLength();
+//     printInfo << "found " << nbw << " Background components in config" << endl;
+//     for(int ibw = 0; ibw < nbw; ++ibw) {
+//       const Setting &bw = bws[ibw];
+//       string name;
+//       double mass=-1;double ml,mu;int mfix; 
+//       double width=-1;double wl,wu;int wfix;
+     
+//       check&=bw.lookupValue("name",     name);
+//       const Setting &massSet = bw["m0"];
+//       check&=massSet.lookupValue("val",        mass);
+//       check&=massSet.lookupValue("lower",        ml);
+//       check&=massSet.lookupValue("upper",        mu);
+//       check&=massSet.lookupValue("fix",        mfix);
+//       const Setting &widthSet = bw["g"];
+//       check&=widthSet.lookupValue("val",       width);
+//       check&=widthSet.lookupValue("lower",       wl);
+//       check&=widthSet.lookupValue("upper",       wu);
+//       check&=widthSet.lookupValue("fix",       wfix);
+//       cout << "---------------------------------------------------------------------" << endl;
+//       cout << name << endl;
+//       cout << "mass-offset(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
+//       if(mfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       cout << "g(limits)            = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
+//       if(wfix==1)cout<<"  -- FIXED";
+//       cout<< endl;
+//       std::map<std::string,pwachannel > channels;
+//       string amp;
+//       double cRe=0;
+//       double cIm=0;
+//       double mIso1=0;
+//       double mIso2=0;
+//       check&=bw.lookupValue("amp",amp);
+//       check&=bw.lookupValue("coupling_Re",cRe);
+//       check&=bw.lookupValue("coupling_Im",cIm);
+//       check&=bw.lookupValue("mIsobar1",mIso1);
+//       check&=bw.lookupValue("mIsobar2",mIso2);
+//       complex<double> C(cRe,cIm);
+//       cout << "Decaychannel (coupling):" << endl;
+//       cout << "   " << amp << "  " << C << endl;
+//       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
+//       channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+
+//       if(!check){
+// 	printErr << "Bad config value lookup! Check your config file!" << endl;
+// 	return 1;
+//       }
+//       pwabkg* bkg=new pwabkg(name,mass,width,channels);
+//       bkg->setIsobars(mIso1,mIso2);
+//       bkg->setLimits(ml,mu,wl,wu);
+//       bkg->setFixed(mfix,wfix);
+//       compset.add(bkg);
+//     }// end loop over background
+//   }// endif
+  
+  Conf.writeFile("result.conf");
+
 
   cerr << "Fitting finished... Start building graphs ... " << endl;
 
@@ -723,7 +845,8 @@ extern char* optarg;
        phasefitgraphs[c]->SetLineColor(kRed);
        phasefitgraphs[c]->SetMarkerColor(kRed);
        phasefitgraphs[c]->SetDrawOption("AP");
-       phasefitgraphs[c]->SetMarkerStyle(22);
+       phasefitgraphs[c]->SetMarkerStyle(24);
+       phasefitgraphs[c]->SetMarkerSize(0.2);
        phasegraphs[c]->Add(phasefitgraphs[c],"cp");
 
        realfitgraphs.push_back(new TGraph(nbins));
@@ -832,6 +955,14 @@ extern char* optarg;
 	 phasedatagraphs[c]->SetPointError(i,binwidth,
 					   rho->phaseErr(wl[iw].c_str(),
 							 wl[iw2].c_str()));
+	 phasedatagraphs[c]->SetPointError(i+ndatabins,binwidth,
+					   rho->phaseErr(wl[iw].c_str(),
+							 wl[iw2].c_str()));
+	 phasedatagraphs[c]->SetPointError(i+2*ndatabins,binwidth,
+					   rho->phaseErr(wl[iw].c_str(),
+							 wl[iw2].c_str()));
+
+
 	 phasefitgraphs[c]->SetPoint(i,m,compset.phase(wl[iw],ps,
 						       wl[iw2],ps2,m)*TMath::RadToDeg());
 
@@ -897,32 +1028,32 @@ extern char* optarg;
 
 /// rectivfy phase graphs
    
-   // unsigned int refbin=4;
-//    double m;
-//    double predph;
-//    phasedatagraphs[iw]->GetPoint(refbin,m,predph);
-//    double prefph;
-//    phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
-//    for(unsigned int ib=refbin+1;ib<nbins;++ib){
-//      double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
-//      double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
-//      double dp,dm;dp=dph+360;dm=dph-360;
-//      double fp,fm;fp=fph+360;fm=fph-360;
-//      if(0){
-//        if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
-// 	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
-//        else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
-// 	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
+   // unsigned int refbin=6;
+   // double m;
+   // double predph;
+   // phasedatagraphs[iw]->GetPoint(refbin,m,predph);
+   // double prefph;
+   // phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
+   // for(unsigned int ib=refbin+1;ib<nbins;++ib){
+   //   double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
+   //   double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
+   //   double dp,dm;dp=dph+360;dm=dph-360;
+   //   double fp,fm;fp=fph+360;fm=fph-360;
+   //   if(0){
+   //     if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
+   // 	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
+   //     else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
+   // 	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
        
-//        if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
-// 	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
-//        else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
-// 	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
+   //     if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
+   // 	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
+   //     else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
+   // 	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
        
-//        phasedatagraphs[iw]->GetPoint(ib,m,predph);
-//        phasefitgraphs[iw]->GetPoint(ib,m,prefph);
-//      }
-//    }
+   //     phasedatagraphs[iw]->GetPoint(ib,m,predph);
+   //     phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+   //   }
+   // }
    
      phasegraphs[iw]->Write();
      overlapRegraphs[iw]->Write();

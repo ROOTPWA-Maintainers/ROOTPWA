@@ -17,12 +17,17 @@
 #include <iostream>
 #include <vector>
 #include "NParticleEvent.h"
+// #include "plotWeightedEvts.h" maybe you are missing this? not needed since declaration is not needed, too
 
 
 using namespace std; 
 
+// this moved to the header, this is a temporary solution
+// if you need the default values, try to include the header
+// I have no clue if it still compiles with ALIC compiler with root
+//void plotWeightedEvts(TTree* mctr, TTree* datatr, TString outfilename="kineplots.root", TString mass="000");
 
-void plotWeightedEvts(TTree* mctr, TTree* datatr, TString outfilename="kineplots.root", TString mass="000"){
+void plotWeightedEvts(TTree* mctr, TTree* datatr, TString outfilename, TString mass){
 
 gROOT->SetStyle("Plain");
 
@@ -222,6 +227,7 @@ hTY3[0]->Sumw2();
 
 
  TCanvas* cm=new TCanvas("PredictM"+massbin,"Weighted Events",20,20,600,800);
+ if (!cm) cout << " äh " << endl;
  hM[0]->SetLineColor(kRed);
  hM[0]->Draw();
  hM[1]->Draw("same");
@@ -504,4 +510,29 @@ TH1D* hGJ2DataGlob=(TH1D*)outfile->Get("hGJ2DataGlob");
  gROOT->cd();
 
  
+}
+
+//If I'm not wrong this script should compile for root even with a main in it
+// that will be simply ignored
+int main(int argc, char** argv){
+
+	if (argc != 5){
+		cout << " not enough arguments! " << endl;
+		return 1;
+	}
+
+	TString evtfile(argv[1]);
+	TString mcfile(argv[2]);
+	TString outfile(argv[3]);
+	TString mass(argv[4]);
+
+	TFile* file1=TFile::Open(evtfile,"READ");
+	TFile* file2=TFile::Open(mcfile,"READ");
+	TTree* data=(TTree*)file1->Get("events");
+	TTree* mc=(TTree*)file2->Get("pwevents");
+
+	plotWeightedEvts(mc,data,outfile,mass);
+
+	file1->Close();
+	file2->Close();
 }

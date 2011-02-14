@@ -161,7 +161,7 @@ if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
   # use default SDK path, if not defined by user
   set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
 endif()
-#find_package(CUDA 3.0)
+find_package(CUDA 3.0)
 if(NOT CUDA_FOUND)
   message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
   set(USE_CUDA FALSE)
@@ -334,20 +334,33 @@ set(ROOTPWA_LIBS
   RootPwa
 	)
 add_subdirectory(src)
+
+# compile rootscripts into a library since they are linked by the gui
 set(SCRIPTS_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src/rootscripts
 	)
-# compile rootscripts into a library since they are linked by the gui
 add_subdirectory(src/rootscripts)
 set(ROOTPWASCRIPTS_LIBS
   RootPwaScripts
 	)
 
 # RootPwaTools
+set(TOOLS_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/tools
+	)
 add_subdirectory(tools)
+set(ROOTPWATOOLS_LIBS
+  RootPwaTools
+	)
 
 # RootPwaGen
+set(GEN_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/generators
+	)
 add_subdirectory(generators)
+set(ROOTPWAGEN_LIBS
+  RootPwaGen
+	)
 
 # RootPwaKey
 add_subdirectory(keygen)

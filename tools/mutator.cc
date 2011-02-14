@@ -32,6 +32,9 @@ void usage(const char* progname){
   cerr << "[-E <number of waves to exchange> default: 5 ]" << endl;
   cerr << "[-D <number of waves to drop> ]" << endl;
   cerr << "[-A <number of waves to add> ]" << endl;
+  cerr << "[-V <range of number of waves to vay> ]" << endl;
+  cerr << "[-p 1 < selective pressure < 2,  default: 1.5 ]" << endl;
+  cerr << "[-c 0 < crossover probability < 1 default> 0.75 ]" << endl;
   cerr << progname << endl;
 }
 
@@ -55,8 +58,9 @@ main(int argc, char** argv){
   unsigned int Drop=0;      // number of waves to drop
   unsigned int Add=0;
   unsigned int Fix=1;
+  unsigned int Vary=0;      // range of waves to add or subtract
   unsigned int seed=0;
-
+  
   double sel=1.5; // selective pressure 1<c<2
   double pc=0.75;  // crossover probability;
 
@@ -64,7 +68,7 @@ extern char *optarg;
   // extern int optind;
   int c;
   unsigned int optcount=1;
-  while ((c = getopt(argc, argv, "hE:A:D:P:F:S:")) != -1){
+  while ((c = getopt(argc, argv, "hE:A:V:D:P:F:S:c:p:")) != -1){
     optcount+=1;
     switch (c) {
     case 'F':
@@ -82,6 +86,18 @@ extern char *optarg;
     case 'A':
       Add= atoi(optarg);
       //cerr << "Add=" << Add << endl;
+      break;
+    case 'V':
+      Vary= atoi(optarg);
+      //cerr << "Vary=" << Add << endl;
+      break;
+    case 'p':
+      sel = atof(optarg);
+      //cerr << "Vary=" << Add << endl;
+      break;
+    case 'c':
+      pc = atof(optarg);
+      //cerr << "Vary=" << Add << endl;
       break;
     case 'P':
       wavepoolFile=optarg;
@@ -130,6 +146,7 @@ extern char *optarg;
   
 
   // initialize Random number generator
+  cerr << "Seed =" << seed << endl;
   gRandom->SetSeed(time(NULL)+seed);
 
   
@@ -207,8 +224,22 @@ extern char *optarg;
 
     cerr << " crossing over ... ";
     // get two points in the genome
-    unsigned int cp1=gRandom->Integer(ancestor1->size()-Fix)+Fix;
-    unsigned int cp2=gRandom->Integer(ancestor1->size()-Fix)+Fix;
+    set<wsetentry>* smallancestor=NULL;
+    set<wsetentry>* largeancestor=NULL;
+
+    if(ancestor1->size()<=ancestor2->size()){
+     smallancestor = ancestor1;
+     largeancestor = ancestor2;
+    }
+    else {
+      smallancestor = ancestor2;
+      largeancestor = ancestor1;
+    }
+
+
+
+    unsigned int cp1=gRandom->Integer(smallancestor->size()-Fix)+Fix;
+    unsigned int cp2=gRandom->Integer(smallancestor->size()-Fix)+Fix;
 
     unsigned int cpp1 = cp1; // first point which is swapped
     unsigned int cpp2 = cp2; // second point ... 
@@ -268,12 +299,41 @@ extern char *optarg;
   
   set<wsetentry> mutantlist(motherlist);
 
-   
+  cerr << "Add =" << Add << endl;
+  cerr << "Drop=" << Drop << endl;
+  cerr << "Exch=" << Exch << endl;
+
+  // draw vary value
+  if(Vary>0){
+    int v= gRandom->Integer(2*Vary)-Vary;
+    cerr << "Var ="<<v<<  endl;
+    if(v>0)Add+=v;
+    if(v<0){
+      // frist reduce added
+      if((int)Add<-v){
+	Drop+=-Add-v;
+	Add=0;
+      }
+      else Add+=v;
+    }
+  }
+
+  cerr << "Add =" << Add << endl;
+  cerr << "Drop=" << Drop << endl;
+
+  unsigned int exchangable=mutantlist.size()-Fix;
+  if(Exch+Drop>exchangable){
+    Drop=exchangable-Exch;
+    cerr << "Adjusting drop to maximal value "<<Drop<<endl;
+  }
+
   // Step1: Remove waves. Prepare for exchange
   for(unsigned int ie=0;ie<Exch+Drop;++ie){
     // choose one wave to remove
-    mutantlist.erase(randomEntry(mutantlist,Fix+1));
+    mutantlist.erase(randomEntry(mutantlist,Fix));
   }
+
+  cerr << "removed " << Exch+Drop << " waves" << endl;
 
   // Setp2: Exchange and add
   for(unsigned int ie=0;ie<Exch+Add;++ie){
@@ -283,6 +343,8 @@ extern char *optarg;
     mutantlist.insert(anentry);
     redpool.erase(it); // remove from pool to avoid double waves
   }
+
+  cerr << "added " << Exch+Add << " waves" << endl;
 
   // output
   set<wsetentry>::iterator it=mutantlist.begin();

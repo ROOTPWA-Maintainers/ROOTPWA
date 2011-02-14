@@ -20,7 +20,10 @@ stack->Add(h4);
 
 
 
-stack->Draw("");
+//stack->Draw("");
+
+
+pdg->Draw("(_mass/1000)^2:_J","_mass<3000 && _R==0 && (_I==1 || _I==-1 || _I==0) ","GOFF");
 
 
 

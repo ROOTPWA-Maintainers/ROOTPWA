@@ -20,6 +20,8 @@
 #include <cmath>
 #include "TrpwaSessionManager.h"
 #include "TrpwaJobManager.h"
+#include "TrpwaFitOptionsFrame.h"
+#include "plotWeightedEvts.h"
 #include <TGFileDialog.h>
 #include <TGMsgBox.h>
 #include <cstdlib>
@@ -69,7 +71,7 @@ static const string func_calls[nsteps] = {
 		"SelectWaves()",
 		"FitPartialWaves()",
 		"ShowFitResults()",
-		"Dummy()"
+		"Predict()"
 };
 static const int nbatches = 5;
 static const string step_batchnames[nbatches] = {
@@ -421,6 +423,18 @@ void TrpwaMainFrame::Dummy(){
 
 void TrpwaMainFrame::FitPartialWaves(){
 	if (current_session){
+		// ask the user for the fit settings he wants
+		Tfit_options _fit_options;
+		_fit_options.niterations = 1;
+		_fit_options.rank = 1;
+		_fit_options.seed = 12345;
+		_fit_options.use_normalization = current_session->Is_Normalization_available();
+		_fit_options.fit_consecutive = false;
+		TrpwaFitOptionsFrame* frame_fit_options = new TrpwaFitOptionsFrame(_fit_options);
+		if (!frame_fit_options) cout << " dummy " << endl;
+		cout << current_session->Set_current_fit_title(_fit_options.title) << endl;
+		cout << current_session->Set_current_fit_description(_fit_options.description) << endl;
+
 		// calls will move to a separate class depending on the
 		// farm type given, but for now implemented here
 
@@ -431,22 +445,68 @@ void TrpwaMainFrame::FitPartialWaves(){
 			command << "mv " << fitresultfiles[i] << " " << fitresultfiles[i] << ".previous" << endl;
 			cout << system(command.str().c_str()) << endl;
 		}
-		// send one job per bin
+		
 		TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
 
-		for (int i = 0; i < current_session->Get_n_bins(); i++){
+		// send one job per bin
+		if (!_fit_options.fit_consecutive){		
+			for (int i = 0; i < current_session->Get_n_bins(); i++){
+				string executedir;
+				int seed = _fit_options.seed;
+				stringstream command;
+				for (unsigned int ifit = 0; ifit < _fit_options.niterations; ifit++){
+					string fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed);
+					command << "cd " << executedir << ";\n";
+					if (seed > 0) seed++;
+					command << fitcommand << ";\n";
+				}
+				cout << " sending fit job for bin " << i << endl;
+				if (!jobmanager->SendJob(command.str(), "fit")){
+					cout << " failed!" << endl;
+				} else {
+					cout << " done " << endl;
+				}
+			}
+		} else {
 			string executedir;
-			string fitcommand = current_session->GetFitCommand(i, executedir);
+			int seed = _fit_options.seed;
 			stringstream command;
-			command << "cd " << executedir << ";\n";
-			command << fitcommand << ";\n";
-			cout << " sending fit job for bin " << i << endl;
-			if (!jobmanager->SendJob(command.str(), "fit")){
-				cout << " failed!" << endl;
-			} else {
-				cout << " done " << endl;
+			string fitcommand;
+			string initialfitresult = "";
+			string previousfitresult = "";
+			for (unsigned int ifit = 0; ifit < _fit_options.niterations; ifit++){
+				// start from 1/3 of the available fit range where the number
+				// of available events is usually the biggest
+				int nbins = current_session->Get_n_bins();
+				int ibinstart = nbins/3;
+				// perform the first fit with random start values
+				fitcommand = current_session->GetFitCommand(ibinstart, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed, &initialfitresult);
+				command << "cd " << executedir << ";\n";	
+				command << fitcommand << ";\n";
+				// then move to higher values using the previous fit results
+				previousfitresult = initialfitresult;
+				for (int i = ibinstart+1; i < nbins; i++){
+					fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed, &previousfitresult);
+					command << "cd " << executedir << ";\n";
+					command << fitcommand << ";\n";
+				}
+				// and finaly to lower values
+				previousfitresult = initialfitresult;
+				for (int i = ibinstart-1; i > -1; i--){
+					fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed, &previousfitresult);
+					command << "cd " << executedir << ";\n";
+					command << fitcommand << ";\n";
+				}
+				cout << " sending fit job for iteration " << ifit << endl;
+				if (!jobmanager->SendJob(command.str(), "fit")){
+					cout << " failed!" << endl;
+				} else {
+					cout << " done " << endl;
+				}
+				if (seed > 0) seed++;
 			}
 		}
+		cout << " saving current constellation " << current_session->Save_Session() << endl;
 
 
 /*
@@ -785,4 +845,95 @@ void TrpwaMainFrame::FillFlatPhaseSpaceEvents(){
 		}
 		Update();
 	}
+}
+
+void TrpwaMainFrame::Predict(){
+	TrpwaJobManager* jobmanager = TrpwaJobManager::Instance();
+	int istep = 10;
+	if (current_session){
+		current_session->Convert_evt_to_roottree();
+		int nbins = current_session->Get_n_bins();
+		for (int ibin = 0; ibin < nbins; ibin++){
+			step_status[istep] = (ibin +1)/(double)nbins;
+			progressbars[istep]->SetPosition(step_status[istep]);
+			string executedir;
+			string predictcommand = current_session->GetPredictCommand(ibin, executedir);
+			stringstream command;
+			command << "cd " << executedir << ";\n";
+			command << predictcommand << ";\n";
+
+			if (!jobmanager->SendJob(command.str(), "predict")){
+				cout << " failed!" << endl;
+			} else {
+				cout << " done " << endl;
+			}
+/*
+			int bin_low, bin_high;
+			string eventfile;
+			string kinevalfile = current_session->GetKineValFile(ibin, bin_low, bin_high, &eventfile);
+			stringstream outputfilename;
+			outputfilename << "kinematics" << bin_low << "." << bin_high << ".root";
+			stringstream binname;
+			binname << bin_low << "." << bin_high;
+
+			TFile* file1=TFile::Open(eventfile.c_str(),"READ");
+			TFile* file2=TFile::Open(kinevalfile.c_str(),"READ");
+			TTree* data=(TTree*)file1->Get("events");
+			TTree* mc=(TTree*)file2->Get("pwevents");
+
+			plotWeightedEvts(mc,data,outputfilename.str(),binname.str());
+
+			file1->Close();
+			file2->Close();
+			//progressbars[istep]->Draw();
+
+			 */
+		}
+	}
+	//plotWeightedEvts(new TTree("test", "test"), new TTree("anothertest", "test"), "testfile.root", "800.1000");
+	/*
+#!/bin/bash
+
+export WORKDIR=/afs/e18/compass/analysis/sneubert/
+export FITDIR=$WORKDIR/PWAFITS/LOWT/NEWACC/fit17GenSelected
+#export FITDIR=$WORKDIR/PWAFITS/GENETICS/ltRUN21/gen39/set42
+export FITFILE=$FITDIR/fit17.root
+export PLOTFILE=${FITFILE/.root/.plots.root}
+export BOOKY=${FITFILE/.root/.booky.pdf}
+export DATADIR=$WORKDIR/5PiLTData3/
+
+echo WORKDIR=$WORKDIR
+echo FITDIR=$FITDIR
+echo FITFILE=$FITFILE
+echo PLOTFILE=$PLOTFILE
+echo BOOKY=$BOOKY
+echo DATADIR=$DATADIR
+
+
+cd $DATADIR
+
+rm $PLOTFILE;
+
+for i in *; do
+    echo "MassBin: $i";
+    cd $i;
+    # convert events to root tree if not already done
+    test -s $i.root || cat $i.evt | evt2tree $i.root;
+    # run evtweight on accepted events:
+    cd ACCAMPS
+    # cd PSPAMPS
+    WEIGHTEDFILE=${FITFILE/.root/.kineval.$i.root}
+    test -s $WEIGHTEDFILE || evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -m $i
+    # produce nice plots
+    root -b -q "$ROOTPWA/generators/doPlotWEvts.C(\"../$i.root\",\"$WEIGHTEDFILE\",\"$PLOTFILE\",\"$i\")"
+
+    cd $DATADIR;
+done;
+
+echo "CREATING BOOKY $BOOKY ..."
+# collect all plots into a booky:
+cd $FITDIR
+for i in *plots*.ps; do ps2pdf $i; rm -f $i; done;
+pdftk *plots*.pdf cat output $BOOKY
+for i in *plots*.pdf; do rm -f $i; done;*/
 }

@@ -130,14 +130,14 @@ main(int argc, char** argv){
 	  //double n1=sqrt(integrals[i].val(it2->first.Data(),it2->first.Data()).real());
 	  //double n2=sqrt(integrals[i].val(it3->first.Data(),it3->first.Data()).real());
 	  //double norm=n1*n2;
-	  double re=c.real();///norm;
+	  //double re=c.real();///norm;
 	  double im=c.imag();///norm;
 	  double val=integrals[i].val(it2->first.Data(),it3->first.Data()).real();///norm;
 	  if(it2!=it3){
 	    TString s=(it2->first);
 	    s+=it3->first;
 	    if(diaggraphs_re[s]!=NULL){
-	      diaggraphs_re[s]->SetPoint(i,masses[i],re);
+	      diaggraphs_re[s]->SetPoint(i,masses[i],arg(c));
 	      diaggraphs_re[s]->SetName(s);
 	      diaggraphs_im[s]->SetPoint(i,masses[i],im);
 	      diaggraphs_im[s]->SetName(s);
@@ -162,7 +162,7 @@ main(int argc, char** argv){
 	    
 	  }
 	}
-	catch(std::exception e){
+	catch(char const*){
 	  cerr<< "Cought exception" << endl;
 	}
 	++it3;
@@ -182,8 +182,9 @@ main(int argc, char** argv){
   TFile* file=TFile::Open("normgraphs.root","RECREATE");
   // create histos
   map<TString,TGraph*>::iterator git=diaggraphs_re.begin();
-  while(git!=diaggraphs_re.end()){
+  while(1 && git!=diaggraphs_re.end()){
     TGraph* g=git->second;
+    g->Write();
     double max=-1E6;
     double min=1E6;
     double mean=0;
@@ -197,7 +198,7 @@ main(int argc, char** argv){
       val[i]=y;
     }
     mean/=(double)masses.size();
-    double range=(max-min)*0.2;
+    //double range=(max-min)*0.2;
     //min/
     //double var=0;
     // for(unsigned int i=1; i<masses.size(); ++i){
@@ -209,13 +210,17 @@ main(int argc, char** argv){
     //cerr << min << "   " << max << endl;
     TString name=g->GetName();
     name.Prepend("h");
-    TH1D* histo=new TH1D(name,name,20,min-range,max+range);
-    histo->FillN(masses.size(),val,weights);
-    histo->Write();
+    //TH1D* histo=new TH1D(name,name,20,min-range,max+range);
+    //histo->FillN(masses.size(),val,weights);
+    //histo->Write();
     ++git;
   }
 
-
+ map<TString,TGraph*>::iterator grit=graphs.begin();
+  while(grit!=graphs.end()){
+    grit->second->Write();
+    ++grit;
+  }
 
   
   mg->Write("graphs");
