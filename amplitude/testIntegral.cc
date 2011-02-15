@@ -141,15 +141,15 @@ main(int argc, char** argv)
 		gROOT->ProcessLine("#include <complex>");
 		{
 			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
-			integral.Write("testIntegral");
+			integral.Write("integral");
 			outFile->Close();
 		}
 		{
 			TFile*                 inFile    = TFile::Open("testIntegral.root", "READ");
 			normalizationIntegral* integral3 = 0;
-			inFile->GetObject("testIntegral", integral3);
+			inFile->GetObject("integral", integral3);
 			if (not integral3)
-				printErr << "cannot find integral 'testIntegral'" << endl;
+				printErr << "cannot find integral 'integral'" << endl;
 			else
 				integral3->writeAscii("testIntegral3.int");
 			inFile->Close();

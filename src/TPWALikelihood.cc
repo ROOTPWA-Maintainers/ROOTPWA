@@ -755,6 +755,7 @@ TPWALikelihood<complexT>::readIntegrals
 {
 	printInfo << "loading normalization integral from '" << normIntFileName << "'" << endl;
 	const string normIntFileExt  = extensionFromPath(normIntFileName);
+#if NORMALIZATIONINTEGRAL_ENABLED
 	if (normIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
@@ -771,7 +772,9 @@ TPWALikelihood<complexT>::readIntegrals
 		}
 		reorderIntegralMatrix(*integral, _normMatrix);
 		intFile->Close();
-	} else if (normIntFileExt == "int") {
+	} else
+#endif  // NORMALIZATIONINTEGRAL_ENABLED
+		if (normIntFileExt == "int") {
 		ifstream intFile(normIntFileName.c_str());
 		if (not intFile) {
 			printErr << "cannot open file '" << normIntFileName << "'. aborting." << endl;
@@ -790,6 +793,7 @@ TPWALikelihood<complexT>::readIntegrals
 
 	printInfo << "loading acceptance integral from '" << accIntFileName << "'" << endl;
 	const string accIntFileExt  = extensionFromPath(accIntFileName);
+#if NORMALIZATIONINTEGRAL_ENABLED
 	if (accIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(accIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
@@ -812,7 +816,9 @@ TPWALikelihood<complexT>::readIntegrals
 			_totAcc = 1;
 		reorderIntegralMatrix(*integral, _accMatrix);
 		intFile->Close();
-	} else if (accIntFileExt == "int") {
+	} else
+#endif  // NORMALIZATIONINTEGRAL_ENABLED
+		if (accIntFileExt == "int") {
 		ifstream intFile(accIntFileName.c_str());
 		if (not intFile) {
 			printErr << "cannot open file '" << accIntFileName << "'. aborting." << endl;

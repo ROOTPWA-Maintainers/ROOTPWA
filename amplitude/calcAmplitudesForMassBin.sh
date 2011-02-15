@@ -207,6 +207,16 @@ function runInt {
 }
 
 
+function runCalcIntegrals {
+    local _AMP_DIR="${1}"
+    echo
+    echo ">>> info: generating integrals for '${_AMP_DIR}'"
+    local _CMD="${ROOTPWA_BIN}/calcIntegrals -o ${_AMP_DIR}/norm.root ${_AMP_DIR}/*.amp"
+    echo "${_CMD}"
+    time eval ${_CMD}
+}
+
+
 function runPhaseSpaceGen {
     local _NMB_EVENTS=50000
     local _SEED=1234567890
@@ -389,9 +399,17 @@ runCalcAmplitudes "${MC_FILE}" "${MC_AMP_DIR}"
 # perform symmetrization for MC data
 runSymmetrization "${MC_AMP_DIR}" "${SYM_LIST}" MC_SYM_AMP_DIR
 # perform integration for MC data
-runInt "${MC_AMP_DIR}"
+#runInt "${MC_AMP_DIR}"
+runCalcIntegrals "${MC_AMP_DIR}"
 cd "${MC_SYM_AMP_DIR}"
-ln -s ../norm.int norm.int
+if [[ -f ../norm.int ]]
+then
+		ln -s ../norm.int norm.int
+fi
+if [[ -f ../norm.root ]]
+then
+		ln -s ../norm.root norm.root
+fi
 cd -
 echo
 
