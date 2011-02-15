@@ -857,7 +857,8 @@ extern char* optarg;
        realfitgraphs[c]->SetLineColor(kRed);
        realfitgraphs[c]->SetMarkerColor(kRed);
        realfitgraphs[c]->SetDrawOption("AP");
-       realfitgraphs[c]->SetMarkerStyle(22);
+       realfitgraphs[c]->SetMarkerStyle(24);
+       realfitgraphs[c]->SetMarkerSize(0.2);
        overlapRegraphs[c]->Add(realfitgraphs[c],"cp");
 
        imagfitgraphs.push_back(new TGraph(nbins));
@@ -869,7 +870,8 @@ extern char* optarg;
        //imagfitgraphs[c]->SetLineStyle(2);
        imagfitgraphs[c]->SetMarkerColor(kRed);
        imagfitgraphs[c]->SetDrawOption("AP");
-       imagfitgraphs[c]->SetMarkerStyle(22);
+       imagfitgraphs[c]->SetMarkerStyle(24);
+       imagfitgraphs[c]->SetMarkerSize(0.2);
        overlapImgraphs[c]->Add(imagfitgraphs[c],"cp");
 
        ++c;
@@ -1024,43 +1026,71 @@ extern char* optarg;
      
      graphs[iw]->Write();
    }
-   for(unsigned int iw=0; iw<phasegraphs.size();++iw){
+
+
+ for(unsigned int iw=0; iw<phasegraphs.size();++iw){
 
 /// rectivfy phase graphs
    
-   // unsigned int refbin=6;
-   // double m;
-   // double predph;
-   // phasedatagraphs[iw]->GetPoint(refbin,m,predph);
-   // double prefph;
-   // phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
-   // for(unsigned int ib=refbin+1;ib<nbins;++ib){
-   //   double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
-   //   double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
-   //   double dp,dm;dp=dph+360;dm=dph-360;
-   //   double fp,fm;fp=fph+360;fm=fph-360;
-   //   if(0){
-   //     if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
-   // 	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
-   //     else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
-   // 	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
+   unsigned int refbin=6;
+   double m;
+   double predph;
+   phasedatagraphs[iw]->GetPoint(refbin,m,predph);
+   double prefph;
+   phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
+   for(unsigned int ib=refbin+1;ib<nbins;++ib){
+     double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
+     double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
+     double dp,dm;dp=dph+360;dm=dph-360;
+     double fp,fm;fp=fph+360;fm=fph-360;
+     if(1){
+       if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
+   	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
+       else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
+   	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
        
-   //     if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
-   // 	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
-   //     else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
-   // 	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
+       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
+   	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
+       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
+   	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
        
-   //     phasedatagraphs[iw]->GetPoint(ib,m,predph);
-   //     phasefitgraphs[iw]->GetPoint(ib,m,prefph);
-   //   }
-   // }
+       phasedatagraphs[iw]->GetPoint(ib,m,predph);
+       phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+     }
+   }
+   // backward:
+   phasedatagraphs[iw]->GetPoint(refbin,m,predph);
+   phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
+   for(unsigned int i=0;i<refbin;++i){
+       unsigned int ib=refbin-i-1;
+       double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
+     double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
+     double dp,dm;dp=dph+360;dm=dph-360;
+     double fp,fm;fp=fph+360;fm=fph-360;
+     if(1){
+       if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
+   	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
+       else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
+   	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
+       
+       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
+   	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
+       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
+   	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
+       
+       phasedatagraphs[iw]->GetPoint(ib,m,predph);
+       phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+     }
+   }
+
    
      phasegraphs[iw]->Write();
      overlapRegraphs[iw]->Write();
      overlapImgraphs[iw]->Write();
      //phase2d[iw]->Write();
-   }
-   outfile->Close();
+ } // end loop over waves
+
+outfile->Close();
    
    return 0;
    
