@@ -88,6 +88,8 @@ public:
 	Twavegraphmap waves; // all waves available in this fit
 	TGraphErrors* all_loglikelihoods;
 	TGraphErrors* most_likely_likelihoods;
+	TGraphErrors* all_evidences;
+	TGraphErrors* most_likely_evidence;
 	TGraphErrors* all_total_intensities;
 	TGraphErrors* most_likely_total_intensity;
 	Tgraphmap spin_totals; // only most likely are stored here
@@ -132,6 +134,10 @@ public:
 					bool most_likely = true // in case of many solutions only the most likely one
 				);
 
+	TGraphErrors* Get_Evidence(
+					bool most_likely = true // in case of many solutions only the most likely one
+				);
+
 	// most likely spin totals are returned
 	// the key is coded as JP(C)
 	TGraphErrors* Get_Spin_Total(string jpc = "flat");
@@ -166,9 +172,6 @@ private:
 	// start from there to correct the phase of consecutive points
 	// to be in order and not to jump for example from +180 to -180 degree
 	void Rectify_phase(TGraphErrors* graph_phase);
-
-	// as written
-	void Calculate_Spin_Totals();
 
 };
 

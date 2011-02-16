@@ -561,6 +561,122 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 		canvas_selected_waves->cd(ipad);
 		gPad->Clear();
 	}
+
+	// draw the evidence distributions
+	ipad = 0;
+	for (int mostlikely = 0; mostlikely < 2; mostlikely++){
+		ipad++;
+		canvas_selected_waves->cd(ipad);
+		//string last_JPCM = "";
+		TMultiGraph* _graphs = NULL;
+		vector<TGraphErrors*> _temp_container; // to keep the graphs temporary accessible
+		for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+			TTree* selected_tree = (TTree*)it->second;
+			Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+			_graph = fitresult->Get_Evidence(mostlikely);
+			if (_graph){
+				if (!_graphs){
+					_graphs = new TMultiGraph();
+					some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+					_graphs->SetName(some_name.str().c_str());
+					_multi_graphs.push_back(_graphs);
+				}
+				_temp_container.push_back(_graph);
+				_graphs->Add(_graph);
+				_graphs->SetTitle(_graph->GetTitle());
+				gPad->Clear();
+				_graphs->Draw("APZ");
+				_graphs->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+				_graphs->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+			} else {
+				cout << " no evidence distribution found in " << selected_tree->GetName()<< endl;
+			}
+		}
+		// show only the most evident distributions among several fit results
+		// by deleting points with lower likelihoods
+		if (mostlikely == 1 && _temp_container.size() > 1){
+			cout << " filtering only the most evident solutions among all evidences" << endl;
+			for (unsigned int igraph = 0; igraph < _temp_container.size()-1; igraph++){
+				TGraphErrors* _graph = _temp_container[igraph];
+				_graph->Sort();
+				for (unsigned int jgraph = igraph+1; jgraph < _temp_container.size(); jgraph++){
+					TGraphErrors* _comp_graph = _temp_container[jgraph];
+					_comp_graph->Sort();
+					for (int i = 0; i < _graph->GetN(); i++){
+						for (int j = 0; j < _comp_graph->GetN(); j++){
+							if (_graph->GetX()[i] == _comp_graph->GetX()[j]){ // found to same mass bins
+								if (_graph->GetY()[i] > _comp_graph->GetY()[j]){ // _graph is more likely
+									_comp_graph->SetPoint(j, _comp_graph->GetX()[j], -100.);
+								} else { // _comp_graph is more likely
+									_graph->SetPoint(i, _graph->GetX()[i], -1.e3);
+								}
+								break; // only one entry per mass bin is expected here
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	canvas_selected_waves->Print("Fit_overview.ps");
+	for (ipad = 4; ipad > 0; ipad --){
+		canvas_selected_waves->cd(ipad);
+		gPad->Clear();
+	}
+
+	// Collect the available spin totals
+	map<string, int> _available_jpcs; // list of available JPC
+	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
+		TTree* selected_tree = (TTree*)it->second;
+		Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+		vector<string>& result = fitresult->Get_available_Spin_Totals();
+		// view the available spin totals
+		for (vector<string>::iterator it = result.begin(); it != result.end(); it++){
+			_available_jpcs[*it]++;
+		}
+	}
+
+	// now draw the spin totals
+	ipad = 0;
+	for (map<string, int>::iterator it = _available_jpcs.begin(); it != _available_jpcs.end(); it++){
+		ipad++;
+		if (ipad > 4){
+			canvas_selected_waves->Print("Fit_overview.ps");
+			for (ipad = 4; ipad > 0; ipad --){
+				canvas_selected_waves->cd(ipad);
+				gPad->Clear();
+			}
+			ipad = 1;
+		}
+		canvas_selected_waves->cd(ipad);
+		TMultiGraph* _graphs = new TMultiGraph();
+		some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
+		_graphs->SetName(some_name.str().c_str());
+		_multi_graphs.push_back(_graphs);
+		// collect all spin totals from the available results
+		for (Tfilemapit itresult = selected_fit_results.begin(); itresult != selected_fit_results.end(); itresult++){
+			TTree* selected_tree = (TTree*)itresult->second;
+			Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
+			_graph = fitresult->Get_Spin_Total(it->first);
+			if(_graph){
+				_graphs->Add(_graph);
+				_graphs->SetTitle(_graph->GetTitle());
+				gPad->Clear();
+				_graphs->Draw("APZ");
+				_graphs->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
+				_graphs->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
+				gPad->Update();
+			}
+		}
+	}
+	canvas_selected_waves->Print("Fit_overview.ps");
+
+	canvas_selected_waves->cd(1); gPad->Clear();
+	canvas_selected_waves->cd(2); gPad->Clear();
+	canvas_selected_waves->cd(3); gPad->Clear();
+	canvas_selected_waves->cd(4); gPad->Clear();
+
 	//sort(available_waves.begin(), available_waves.end());
 
 	// drawing all intensities
@@ -625,57 +741,6 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 		}
 	}
 
-	// Collect the available spin totals
-	map<string, int> _available_jpcs; // list of available JPC
-	for (Tfilemapit it = selected_fit_results.begin(); it != selected_fit_results.end(); it++){
-		TTree* selected_tree = (TTree*)it->second;
-		Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
-		vector<string>& result = fitresult->Get_available_Spin_Totals();
-		// view the available spin totals
-		for (vector<string>::iterator it = result.begin(); it != result.end(); it++){
-			_available_jpcs[*it]++;
-		}
-	}
-	// now draw the spin totals
-	ipad = 0;
-	for (map<string, int>::iterator it = _available_jpcs.begin(); it != _available_jpcs.end(); it++){
-		ipad++;
-		if (ipad > 4){
-			canvas_selected_waves->Print("Fit_overview.ps");
-			for (ipad = 4; ipad > 0; ipad --){
-				canvas_selected_waves->cd(ipad);
-				gPad->Clear();
-			}
-			ipad = 1;
-		}
-		canvas_selected_waves->cd(ipad);
-		TMultiGraph* _graphs = new TMultiGraph();
-		some_name.str(""); some_name << "multi_graph_number_" << some_name_counter++;
-		_graphs->SetName(some_name.str().c_str());
-		_multi_graphs.push_back(_graphs);
-		// collect all spin totals from the available results
-		for (Tfilemapit itresult = selected_fit_results.begin(); itresult != selected_fit_results.end(); itresult++){
-			TTree* selected_tree = (TTree*)itresult->second;
-			Tfitresult* fitresult = selected_fit_result_graphs[selected_tree->GetName()];
-			_graph = fitresult->Get_Spin_Total(it->first);
-			if(_graph){
-				_graphs->Add(_graph);
-				_graphs->SetTitle(_graph->GetTitle());
-				gPad->Clear();
-				_graphs->Draw("APZ");
-				_graphs->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
-				_graphs->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
-				gPad->Update();
-			}
-		}
-	}
-	canvas_selected_waves->Print("Fit_overview.ps");
-
-
-	canvas_selected_waves->cd(1); gPad->Clear();
-	canvas_selected_waves->cd(2); gPad->Clear();
-	canvas_selected_waves->cd(3); gPad->Clear();
-	canvas_selected_waves->cd(4); gPad->Clear();
 	canvas_selected_waves->cd(1);
 	gPad->Range(0, 0, 1, 1);
 	label.DrawText(0.1,0.5, "to do: summary");
@@ -1098,6 +1163,8 @@ Tfitresult::Tfitresult(
 	most_likely_likelihoods = NULL;
 	all_total_intensities = NULL;
 	most_likely_total_intensity = NULL;
+	all_evidences = NULL;
+	most_likely_evidence = NULL;
 	mass_low = -1;
 	mass_high = -1;
 	if (fitresult) Scan_Fit_Result();
@@ -1111,6 +1178,8 @@ Tfitresult::~Tfitresult(){
 	delete most_likely_likelihoods;
 	delete all_total_intensities;
 	delete most_likely_total_intensity;
+	delete all_evidences;
+	delete most_likely_evidence;
 	for (Twavegraphmapit it = waves.begin(); it != waves.end(); it++){
 		delete it->second.all_intensities;
 		delete it->second.most_likely_intensity;
@@ -1169,6 +1238,29 @@ TGraphErrors* Tfitresult::Get_Likelihood(
 		result->SetTitle(_graph->GetTitle());
 		result->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
 		result->GetYaxis()->SetTitle("log likelihood");
+	}
+	return result;
+}
+
+TGraphErrors* Tfitresult::Get_Evidence(
+					bool most_likely
+				){
+	TGraphErrors* result = NULL;
+	TGraphErrors* _graph = NULL;
+	if (most_likely){
+		_graph = most_likely_evidence;
+	} else {
+		_graph = all_evidences;
+	}
+	if (_graph){
+		result = new TGraphErrors(*_graph); // copy the graph
+		stringstream some_name;
+		static int some_name_counter(0);
+		some_name << "evidence_graph_number_" << some_name_counter++;
+		result->SetName(some_name.str().c_str());
+		result->SetTitle(_graph->GetTitle());
+		result->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+		result->GetYaxis()->SetTitle("evidence");
 	}
 	return result;
 }
@@ -1645,80 +1737,6 @@ vector<string>& Tfitresult::Get_available_Spin_Totals(){
 	return *result;
 }
 
-void Tfitresult::Calculate_Spin_Totals(){
-	if (spin_totals.size() != 0){
-		cout << " Spin totals are already calculated " << endl;
-		return;
-	} else {
-		cout << " Calculating spin totals " << endl;
-	}
-	map<string, TGraphErrors*>* result = &spin_totals; // = new map<string, TGraphErrors*>();
-	for (Twavegraphmapit it = waves.begin(); it != waves.end(); it++){
-		Twavegraph& wavegraph = it->second;
-		//wavegraph.
-		stringstream _jpc;
-		if (it->first == "flat") _jpc << "flat";
-		else {
-			_jpc << wavegraph.J;
-			if (it->second.P < 0) _jpc << "-"; else _jpc << "+";
-			if (it->second.C < 0) _jpc << "-"; else _jpc << "+";
-		}
-		// does this JPC combination exist already?
-		if (result->find(_jpc.str())==result->end()){
-			// create a new graph as a copy of the old one to add the points
-			TGraphErrors* &_graph = (*result)[_jpc.str()];
-			_graph = new TGraphErrors(*wavegraph.most_likely_intensity);
-			stringstream _graphname;
-			static int graphcounter(0);
-			_graphname << "total_intensity_graph_"<< _jpc.str() << graphcounter++;
-			_graph->SetNameTitle(_graphname.str().c_str(), _jpc.str().c_str());
-			_graph->SetMarkerColor(graphcolor.rootcolorindex);
-			_graph->SetMarkerStyle(21);
-			_graph->SetMarkerSize(0.5);
-			//_graph->Draw("APZ");
-			//gPad->Update();
-			//_graph->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
-			//_graph->GetYaxis()->SetTitle("Intensity");
-			//gPad->Clear();
-		} else {
-			// retrieve the graph and add up the intensity
-			TGraphErrors* &_graph = (*result)[_jpc.str()];
-			//double* _m = _graph->GetX();
-			//double* _intensity = _graph->GetY();
-			//double* _intensityerr = _graph->GetEY();
-
-			double* _m            = wavegraph.most_likely_intensity->GetX();
-			int     _n            = wavegraph.most_likely_intensity->GetN();
-			double* _intensity    = wavegraph.most_likely_intensity->GetY();
-			double* _intensityerr = wavegraph.most_likely_intensity->GetEY();
-
-			for (int i = 0; i < _n; i++){
-				// find the corresponding mass bin (if it exists)
-				int pos(-1);
-				for (int j = 0; j < _graph->GetN(); j++){
-					if (_graph->GetX()[j] == _m[i]){
-						pos = j;
-						break;
-					}
-				}
-				if (pos < 0){
-					// create a new point
-					pos = _graph->GetN();
-					_graph->Set(pos+1);
-					_graph->SetPoint(pos, _m[i], _intensity[i]);
-					_graph->SetPointError(pos, 0,  _intensityerr[i]);
-				} else {
-					// add up the points
-					_graph->SetPoint(pos, _m[i], _graph->GetY()[pos]+_intensity[i]);
-					double err = _graph->GetEY()[pos];
-					_graph->SetPointError(pos, 0, sqrt(err*err+_intensityerr[i]*_intensityerr[i]));
-				}
-			}
-		}
-	}
-	//return (*result);
-}
-
 vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 	vector<string>* result = new vector<string>();
 	if (fitresult <= 0) return *result;
@@ -1767,6 +1785,18 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 	most_likely_total_intensity->SetMarkerColor(graphcolor.rootcolorindex);
 	most_likely_total_intensity->SetMarkerStyle(21);
 	most_likely_total_intensity->SetMarkerSize(0.5);
+	all_evidences = new TGraphErrors(0);
+	graphname = name+"all_evidences";
+	all_evidences->SetNameTitle(graphname.c_str(), "all evidences");
+	all_evidences->SetMarkerColor(graphcolor.rootcolorindex);
+	all_evidences->SetMarkerStyle(21);
+	all_evidences->SetMarkerSize(0.5);
+	most_likely_evidence = new TGraphErrors(0);
+	graphname = name+"most_likely_evidence";
+	most_likely_evidence->SetNameTitle(graphname.c_str(), "most likely evidence");
+	most_likely_evidence->SetMarkerColor(graphcolor.rootcolorindex);
+	most_likely_evidence->SetMarkerStyle(21);
+	most_likely_evidence->SetMarkerSize(0.5);
 	int nbinelements(0);
 	int different_massbins(0);
 	int nmassbins = fitresult->GetEntries();
@@ -1779,9 +1809,12 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 		if (mass_low  == -1 || mass_low > mass ) mass_low  = mass;
 		if (mass_high == -1 || mass_high < mass) mass_high = mass;
 		double loglike = massBin->logLikelihood();
+		double evidence= massBin->evidence();
 		int _pos = all_loglikelihoods->GetN();
 		all_loglikelihoods->Set(_pos+1);
 		all_loglikelihoods->SetPoint(_pos, mass, loglike);
+		all_evidences->Set(_pos+1);
+		all_evidences->SetPoint(_pos, mass, evidence);
 		bool found_newmassbin(false);
 		if (massbin_positions.find(mass) == massbin_positions.end()){
 			found_newmassbin = true;
@@ -1795,6 +1828,7 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 			// add the most likely likelihood
 			most_likely_likelihoods->Set(_pos+1); // will be filled later
 			most_likely_total_intensity->Set(_pos+1); // will be filled later
+			most_likely_evidence->Set(_pos+1);
 		}
 		bool found_morelikely(false);
 		if (smallest_loglikelihood[mass] > loglike){
@@ -1809,6 +1843,7 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 				return *result;
 			} else {
 				most_likely_likelihoods->SetPoint(_pos, mass, loglike);
+				most_likely_evidence->SetPoint(_pos, mass, evidence);
 			}
 		}
 		nbinelements++;
