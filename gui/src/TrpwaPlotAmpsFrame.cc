@@ -1940,7 +1940,14 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 				continue;
 			}
 			// replace the + by \+
-			string cutstring = it->first;
+			stringstream cutstring;
+			for (unsigned int i = 0; i < it->first.size(); i++){
+				if (it->first[i] == '+')
+					cutstring << '\\';
+				cutstring << it->first[i];
+			}
+
+			/*
 			unsigned int spos = 0;
 			while (1){
 				spos = cutstring.find("+", spos); // start the search from the previous position
@@ -1950,10 +1957,10 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 				cutstring.insert(spos,1, '\\');
 				spos++; spos++;
 				//cout << cutstring << endl;
-			}
+			}*/
 			//cout << cutstring << endl;
-			double intensity = massBin->intensity(cutstring.c_str());
-			double intensityErr = massBin->intensityErr(cutstring.c_str());
+			double intensity = massBin->intensity(cutstring.str().c_str());
+			double intensityErr = massBin->intensityErr(cutstring.str().c_str());
 
 			// find the corresponding mass bin (if it exists)
 			int _pos = -1;
