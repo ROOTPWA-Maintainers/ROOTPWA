@@ -1812,16 +1812,16 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 			}
 		}
 		nbinelements++;
-		double totalintensity(0);
-		double totalintensity_err(0);
+		double totalintensity        = massBin->intensity(".*");//(0);
+		double totalintensity_err    = massBin->intensityErr(".*");
 		// now go through all available waves in this bin
 		for (unsigned iwave = 0; iwave < massBin->waveNames().size(); iwave++){
 			// does this wave name exist already?
 			string wavename = massBin->waveNames()[iwave];
 			double intensity = massBin->intensity(wavename.c_str());
 			double intensity_err = massBin->intensityErr(wavename.c_str());
-			totalintensity += intensity;
-			totalintensity_err = sqrt(totalintensity_err*totalintensity_err + intensity_err*intensity_err);
+			//totalintensity += intensity;
+			//totalintensity_err = sqrt(totalintensity_err*totalintensity_err + intensity_err*intensity_err);
 			if (waves.find(wavename) != waves.end()){ // it exists already
 				Twavegraph& wavegraph = waves.find(wavename)->second;
 				if (wavegraph.mass_low  > mass) wavegraph.mass_low  = mass;
@@ -1888,6 +1888,28 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 				wavegraph.mass_high = mass;
 				// phase graphs are created by later request
 				// this would take too long to plot each graph against each
+
+				// see if it is a new spin total
+				stringstream _jpc;
+				if (wavename == "flat") _jpc << "flat";
+				else {
+					_jpc << wavegraph.J;
+					if (wavegraph.P < 0) _jpc << "-"; else _jpc << "+";
+					if (wavegraph.C < 0) _jpc << "-"; else _jpc << "+";
+				}
+				// does this JPC combination exist already?
+				if (spin_totals.find(_jpc.str())==spin_totals.end()){
+					// create a new graph
+					TGraphErrors* &_graph = spin_totals[_jpc.str()];
+					_graph = new TGraphErrors(0);//*wavegraph.most_likely_intensity);
+					stringstream _graphname;
+					static int graphcounter(0);
+					_graphname << "total_intensity_graph_"<< _jpc.str() << graphcounter++;
+					_graph->SetNameTitle(_graphname.str().c_str(), _jpc.str().c_str());
+					_graph->SetMarkerColor(graphcolor.rootcolorindex);
+					_graph->SetMarkerStyle(21);
+					_graph->SetMarkerSize(0.5);
+				}
 			}
 		}
 		// add the total intensities
@@ -1909,8 +1931,51 @@ vector<string>& Tfitresult::Scan_Fit_Result(string branchName){
 		all_total_intensities->Set(_pos+1);
 		all_total_intensities->SetPoint(_pos, mass, totalintensity);
 		all_total_intensities->SetPointError(_pos, 0, totalintensity_err);
+
+		// calculate the spin totals
+		for (map<string, TGraphErrors*>::iterator it = spin_totals.begin(); it != spin_totals.end(); it++){
+			TGraphErrors* &_graph = spin_totals[it->first];
+			if (!_graph){
+				cout << " Hä? Spin total graph does not exist? should not happen!" << endl;
+				continue;
+			}
+			// replace the + by \+
+			string cutstring = it->first;
+			unsigned int spos = 0;
+			while (1){
+				spos = cutstring.find("+", spos); // start the search from the previous position
+				if (spos == string::npos){
+					break;
+				}
+				cutstring.insert(spos,1, '\\');
+				spos++; spos++;
+				//cout << cutstring << endl;
+			}
+			//cout << cutstring << endl;
+			double intensity = massBin->intensity(cutstring.c_str());
+			double intensityErr = massBin->intensityErr(cutstring.c_str());
+
+			// find the corresponding mass bin (if it exists)
+			int _pos = -1;
+			for (int j = 0; j < _graph->GetN(); j++){
+				if (_graph->GetX()[j] == mass){
+					_pos = j;
+					break;
+				}
+			}
+			if (_pos < 0){
+				// create a new point
+				_pos = _graph->GetN();
+				_graph->Set(_pos+1);
+			}
+			// fill if no corresponding mass bin found or a more likely solution is given
+			if (_pos == _graph->GetN()-1 ||  found_morelikely){
+				_graph->SetPoint(_pos, mass, intensity);
+				_graph->SetPointError(_pos, 0,  intensityErr);
+			}
+		}
 	}
-	Calculate_Spin_Totals();
+	//Calculate_Spin_Totals();
 	return *result;
 }
 
