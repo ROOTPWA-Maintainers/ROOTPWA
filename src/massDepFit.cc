@@ -418,7 +418,7 @@ extern char* optarg;
 
 
   // find minimum of likelihood function
-  if(onlyPlotting) printInfo << "Plotting mode, skipping minimzation" << endl;
+  if(onlyPlotting) printInfo << "Plotting mode, skipping minimzation!" << endl;
   else {
     printInfo << "performing minimization." << endl;
     
