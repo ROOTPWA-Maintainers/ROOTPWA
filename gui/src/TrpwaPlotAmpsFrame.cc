@@ -28,6 +28,7 @@
 #include "TAxis.h"
 #include "TGFileDialog.h"
 #include "TText.h"
+#include "TColor.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
@@ -337,6 +338,7 @@ void TrpwaPlotAmpsFrame::Create_available_colors(){
 	if (available_colors.size() > 0) return; // initialize only once
 	TColor_struct color;
 	for (int i = 0; i < 50; i++){ // thus colors will repeat 50 times
+		/*
 		color.rootcolorindex = kBlack;
 		color.colorhexcode   = "#000000";
 		available_colors.push_back(color);
@@ -348,7 +350,18 @@ void TrpwaPlotAmpsFrame::Create_available_colors(){
 		available_colors.push_back(color);
 		color.rootcolorindex = kBlue;
 		color.colorhexcode   = "#0000FF";
-		available_colors.push_back(color);
+		available_colors.push_back(color);*/
+
+		//ULong_t RGB2Pixel(Float_t r, Float_t g, Float_t b)
+		//const char * PixelAsHexString(ULong_t pixel)
+		// Int_t GetColor(Int_t r, Int_t g, Int_t b)
+		for (int i = 1; i < 10; i++){
+			if (i == 5 || i == 7) i++; // skip yellow and magenta
+			TColor* rootcolor = gROOT->GetColor(i);
+			color.rootcolorindex = i;
+			color.colorhexcode   = rootcolor->AsHexString();
+			available_colors.push_back(color);
+		}
 	}
 }
 
