@@ -33,31 +33,39 @@
 #include <vector>
 #include <unistd.h>
 #include <stdlib.h>
-#include "TPWWeight.h"
+
 #include "TFile.h"
 #include "TString.h"
-#include "fitResult.h"
 #include "TH1.h"
 #include "TH1D.h"
 #include "TRandom3.h"
 #include "TTree.h"
 #include "TLorentzVector.h"
 #include "TClonesArray.h"
+
+#include "TPWWeight.h"
 #include "TDiffractivePhaseSpace.h"
-#include <event.h>
+
+#include "fitResult.h"
+#include "event.h"
+
+//#include "diffractiveDissVertex.h"
+#include "../amplitude/particle.h"
+#include "particleDataTable.h"
 #include "libconfig.h++"
 
 using namespace std;
 using namespace libconfig;
 using namespace rpwa;
 
-extern particleDataTable PDGtable;
+extern ::particleDataTable PDGtable;
 
 void printUsage(char* prog, int errCode=0) {
 cerr << "usage:" << endl
      << prog
      << " -e <file> -o <file> -w <file> -i <file> -m mass"
      << "    where:" << endl
+     << "        -e <file> acc or ps events in .evt or .root format"<< endl
      << "        -o <file>  ROOT output file"<< endl
      << "        -w <file.root>  use TFitBin tree as input"<< endl 
      << "        -i <file>  integral file"<< endl 
@@ -320,69 +328,176 @@ int main(int argc, char** argv)
     ampfiles.push_back(new ifstream(waveNames[iw].c_str()));
   }
 
+
   // event loop ------------------------------------------------------------
-  event e;
-  list<particle> f_mesons;
-  ifstream evtfile(evtfilename.c_str());
-  unsigned int counter=0;
+  unsigned int counter = 0;
+  if (evtfilename.find(".evt") > 0) {
+    event e;
+    list< ::particle> f_mesons;
+    ifstream evtfile(evtfilename.c_str());
 
-  while(!evtfile.eof() && evtfile.good()){
-    // evt2tree
-    if(counter % 1000 ==0)std::cout<<".";
-    if(counter++ % 10000 ==0)std::cout<<counter;
-    evtfile >> e;
-    p->Delete(); // clear output arrays
-    q.clear();
-    f_mesons=e.f_mesons();
-    fourVec pX;
-    list<particle>::iterator it = f_mesons.begin();
-    while (it != f_mesons.end() ) {
-      pX=it->get4P();
-      new ((*p)[p->GetEntries()]) TLorentzVector(pX.x(),pX.y(),pX.z(),pX.t());
-      q.push_back(it->Charge());
-      ++it;
-    }
-    fourVec evtbeam=e.beam().get4P();
-    beam.SetPxPyPzE(evtbeam.x(),evtbeam.y(),evtbeam.z(),evtbeam.t());
-    qbeam=e.beam().Charge();
-    // weighting
-
-    vector<complex<double> > posm0amps(maxrank+1); // positive refl vector m=0
-    vector<complex<double> > posm1amps(maxrank+1); // positive refl vector m=1
-
-    vector<complex<double> > negm0amps(maxrank+1); // negative refl vector m=0
-    vector<complex<double> > negm1amps(maxrank+1); // negative refl vector m=1
-    
-    for(unsigned int iw=0;iw<nmbWaves;++iw){
-      complex<double> decayamp;
-      ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double>));
-      string w1=waveNames[iw];
-      //cerr << w1 << "  " << decayamp << endl;
-      double nrm=sqrt(normInt.val(w1,w1).real());
-      complex<double>amp=decayamp/nrm*prodAmps[iw];
-      if(reflectivities[iw]==1){
-	if(ms[iw]==0)posm0amps[ranks[iw]]+=amp;
-	else if(ms[iw]==1)posm1amps[ranks[iw]]+=amp;
+    while (!evtfile.eof() && evtfile.good()) {
+      // evt2tree
+      if (counter % 1000 == 0)
+        std::cout << ".";
+      if (counter++ % 10000 == 0)
+        std::cout << counter;
+      evtfile >> e;
+      p->Delete(); // clear output arrays
+      q.clear();
+      f_mesons = e.f_mesons();
+      fourVec pX;
+      list< ::particle>::iterator it = f_mesons.begin();
+      while (it != f_mesons.end()) {
+        pX = it->get4P();
+        new ((*p)[p->GetEntries()]) TLorentzVector(pX.x(), pX.y(), pX.z(), pX.t());
+        q.push_back(it->Charge());
+        ++it;
       }
-      else {
-	if(ms[iw]==0)negm0amps[ranks[iw]]+=amp;
-	else if(ms[iw]==1)negm1amps[ranks[iw]]+=amp;
+      fourVec evtbeam = e.beam().get4P();
+      beam.SetPxPyPzE(evtbeam.x(), evtbeam.y(), evtbeam.z(), evtbeam.t());
+      qbeam = e.beam().Charge();
+      // weighting
+
+      vector<complex<double> > posm0amps(maxrank + 1); // positive refl vector m=0
+      vector<complex<double> > posm1amps(maxrank + 1); // positive refl vector m=1
+
+      vector<complex<double> > negm0amps(maxrank + 1); // negative refl vector m=0
+      vector<complex<double> > negm1amps(maxrank + 1); // negative refl vector m=1
+
+      for (unsigned int iw = 0; iw < nmbWaves; ++iw) {
+        complex<double> decayamp;
+        ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
+        string w1 = waveNames[iw];
+        //cerr << w1 << "  " << decayamp << endl;
+        double nrm = sqrt(normInt.val(w1, w1).real());
+        complex<double> amp = decayamp / nrm * prodAmps[iw];
+        if (reflectivities[iw] == 1) {
+          if (ms[iw] == 0)
+            posm0amps[ranks[iw]] += amp;
+          else if (ms[iw] == 1)
+            posm1amps[ranks[iw]] += amp;
+        }
+        else {
+          if (ms[iw] == 0)
+            negm0amps[ranks[iw]] += amp;
+          else if (ms[iw] == 1)
+            negm1amps[ranks[iw]] += amp;
+        }
       }
-    } // end loop over waves
+      // end loop over waves
 
-    // incoherent sum:
-    weight=0;
-    if(hasfit){
-    for(int ir=0;ir<maxrank+1;++ir){
-      weight+=norm(posm0amps[ir]);
-      weight+=norm(posm1amps[ir]);
-      weight+=norm(negm0amps[ir]);
-      weight+=norm(negm1amps[ir]);
-    }
-    }
-    hWeights->Fill(weight);
-    outtree->Fill();
+      // incoherent sum:
+      weight = 0;
+      if (hasfit) {
+        for (int ir = 0; ir < maxrank + 1; ++ir) {
+          weight += norm(posm0amps[ir]);
+          weight += norm(posm1amps[ir]);
+          weight += norm(negm0amps[ir]);
+          weight += norm(negm1amps[ir]);
+        }
+      }
+      hWeights->Fill(weight);
+      outtree->Fill();
 
+    }
+  }
+  else {
+    // Initialize PDGTable
+    rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
+    pdt.readFile();
+
+    TClonesArray prodKinPar("TObjString");
+    TClonesArray prodKinMom("TVector3");
+    TClonesArray decayKinPar("TObjString");
+    TClonesArray decayKinMom("TVector3");
+    TClonesArray *pprodKinPar = &prodKinPar;
+    TClonesArray *pprodKinMom = &prodKinMom;
+    TClonesArray *pdecayKinPar = &decayKinPar;
+    TClonesArray *pdecayKinMom = &decayKinMom;
+
+    TFile* infile = TFile::Open(evtfilename.c_str(), "READ");
+    TTree *evt_tree;
+    infile->GetObject("rootPwaEvtTree;1", evt_tree);
+
+    evt_tree->SetBranchAddress("prodKinParticles", &pprodKinPar);
+    evt_tree->SetBranchAddress("prodKinMomenta", &pprodKinMom);
+    evt_tree->SetBranchAddress("decayKinParticles", &pdecayKinPar);
+    evt_tree->SetBranchAddress("decayKinMomenta", &pdecayKinMom);
+
+    unsigned int counter = 0;
+    unsigned long entries = evt_tree->GetEntries();
+    for (unsigned long i = 0; i < entries; i++) {
+      // evt2tree
+      evt_tree->GetEntry(i);
+      if (counter % 1000 == 0)
+        std::cout << ".";
+      if (counter++ % 10000 == 0)
+        std::cout << counter;
+      p->Delete(); // clear output arrays
+      q.clear();
+
+      // we need 4 momentum and charge of beam and decay particles
+      // in rootPwaEvtTree the particle name plus the 3 momentum is stored
+      // so first get charge and particle mass from pdg table via particle name
+      // then construct the 4 momenta
+
+
+      // beam particle
+      rpwa::particle beampar(((TString*)prodKinPar[0])->Data()); // beam particle should be at first place -> 0
+      qbeam = beampar.charge();
+      beam.SetVectM(*(TVector3*)prodKinMom[0], pdt.entry(beampar.bareName())->mass());
+
+      // decay particles
+      for (int dp = 0; dp < decayKinPar.GetEntries(); dp++) {
+        rpwa::particle dpar(((TString*)prodKinPar[dp])->Data());
+        q.push_back(dpar.charge());
+        new ((*p)[p->GetEntries()]) TLorentzVector(*(TVector3*)decayKinMom[dp],
+            pdt.entry(dpar.bareName())->mass());
+      }
+
+      // weighting
+
+      vector<complex<double> > posm0amps(maxrank + 1); // positive refl vector m=0
+      vector<complex<double> > posm1amps(maxrank + 1); // positive refl vector m=1
+
+      vector<complex<double> > negm0amps(maxrank + 1); // negative refl vector m=0
+      vector<complex<double> > negm1amps(maxrank + 1); // negative refl vector m=1
+
+      for (unsigned int iw = 0; iw < nmbWaves; ++iw) {
+        complex<double> decayamp;
+        ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
+        string w1 = waveNames[iw];
+        //cerr << w1 << "  " << decayamp << endl;
+        double nrm = sqrt(normInt.val(w1, w1).real());
+        complex<double> amp = decayamp / nrm * prodAmps[iw];
+        if (reflectivities[iw] == 1) {
+          if (ms[iw] == 0)
+            posm0amps[ranks[iw]] += amp;
+          else if (ms[iw] == 1)
+            posm1amps[ranks[iw]] += amp;
+        }
+        else {
+          if (ms[iw] == 0)
+            negm0amps[ranks[iw]] += amp;
+          else if (ms[iw] == 1)
+            negm1amps[ranks[iw]] += amp;
+        }
+      } // end loop over waves
+
+      // incoherent sum:
+      weight = 0;
+      if (hasfit) {
+        for (int ir = 0; ir < maxrank + 1; ++ir) {
+          weight += norm(posm0amps[ir]);
+          weight += norm(posm1amps[ir]);
+          weight += norm(negm0amps[ir]);
+          weight += norm(negm1amps[ir]);
+        }
+      }
+      hWeights->Fill(weight);
+      outtree->Fill();
+    }
   } // end of event loop
   cout << endl << "Processed " << counter << " events" << endl;
 

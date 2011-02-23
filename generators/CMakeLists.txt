@@ -43,6 +43,7 @@ set(INCLUDE_DIRECTORIES
   ${UTILITIES_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
+  ${AMPLITUDE_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${TOOLS_INCLUDE_DIR}
 )
@@ -84,6 +85,6 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 
 # executables
 make_executable(genpw     genpw.cc     ${THIS_LIB} "${LIBCONFIG_LIBS}")
-make_executable(evtweight evtweight.cc ${THIS_LIB})
+make_executable(evtweight evtweight.cc ${THIS_LIB} "${AMPLITUDE_LIBS}")
 make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})
 make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})

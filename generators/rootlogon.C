@@ -35,8 +35,11 @@
 
 {
   // load ROOTPWA includes libraries
-	gSystem->Load("libRootPwaGen.so");
+  gSystem->Load("libRootPwaGen.so");
+  gSystem->Load("libRootPwaTools.so");
+
   gSystem->AddIncludePath("-I$ROOTPWA/utilities");
+  gSystem->AddIncludePath("-I$ROOTPWA/tools");
   gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
 
   gStyle->SetPadColor(0);
