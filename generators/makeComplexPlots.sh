@@ -9,7 +9,7 @@ echo FITFILE=$FITFILE
 echo PLOTFILE=$PLOTFILE
 
 cd $FITDIR
-root -l -b "$ROOTPWA/generators/rootlogon.C" "$ROOTPWA/generators/plotGlobalWeightedEvts_3pin.C+(\"fit.plots.root\", \"weightedMC.globalplots.root\")"
+root -l -b -q "$ROOTPWA/generators/rootlogon.C" "$ROOTPWA/generators/plotGlobalWeightedEvts_3pin.C+(\"fit.plots.root\", \"weightedMC.globalplots.root\")"
 
 exit
 

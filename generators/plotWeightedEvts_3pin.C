@@ -363,14 +363,40 @@ void makeDifferencePlots(TFile *outfile) {
   }
 }
 
+TH2D* createDalitzHistogram(TString name, TString title, double mass, unsigned int treeentries) {
+  double rangelow = 0.0;
+  double rangehigh = pow(mass-0.1, 2);
+  unsigned int nbins = 0;
+  nbins = 0.6*TMath::Sqrt(treeentries)*(rangehigh-rangelow);
+  std::cout<<"nbins for mass "<<mass<<": "<<nbins<<std::endl;
+  // lower bound is 20 bins
+  if(nbins < 20) nbins = 20;
+  // upper bound is 130 bins
+  if(nbins > 130) nbins = 130;
+  TH2D* phist = new TH2D(name, title, nbins, rangelow, rangehigh, nbins, rangelow, rangehigh);
+  return phist;
+}
+
+
 void plotWeightedEvts_3pin(TTree* mctr, TTree* datatr, TString outfilename = "kineplots.root",
     TString mass_ = "000") {
-
+  double massval = 0.0;
+  unsigned int datatreeentries = 0;
   mass = mass_;
   if (mass != "000") {
     massbin = ("_m") + mass;
     massbin.ReplaceAll(" ", "");
   }
+
+  std::string binname(mass.Data());
+  unsigned int pointpos = binname.find(".");
+  if(pointpos == 0 || pointpos == binname.size())
+    std::cout<<"Warning: Bad massbin name!"<<std::endl;
+  std::string masshigh = binname.substr(pointpos+1);
+  massval = atof(masshigh.c_str());
+  massval /=1000;
+  datatreeentries = datatr->GetEntries();
+
 
   gROOT->SetStyle("Plain");
   TFile* outfile = TFile::Open(outfilename, "UPDATE");
@@ -397,14 +423,14 @@ void plotWeightedEvts_3pin(TTree* mctr, TTree* datatr, TString outfilename = "ki
 
   // Dalitz plots
   std::vector<TH2D*> dalitz_neutral;
-  TH2D* dalitz = new TH2D("hDalitzMC", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (MC)",
-      nbinsang, 0.0, 6.3, nbinsang, 0.0, 6.3);
+  TH2D* dalitz = createDalitzHistogram("hDalitzMC",
+      "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (MC)", massval, datatreeentries);
   dalitz->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
   dalitz->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
   dalitz->SetStats(0);
   dalitz_neutral.push_back(dalitz);
-  dalitz = new TH2D("hDalitzData", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", nbinsang,
-      0.0, 6.3, nbinsang, 0.0, 6.3);
+  dalitz = createDalitzHistogram("hDalitzData",
+      "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", massval, datatreeentries);
   dalitz->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
   dalitz->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
   dalitz->SetStats(0);

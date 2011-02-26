@@ -30,11 +30,39 @@
 #include <vector>
 #include <algorithm>
 
+
+int massbinwidth = 0;
+
 // the make booky method will run through this map and create 1 booky for each map entry
 // all canvases in the vector will be appended to this booky ps file
 // key is the filename of the booky (without .ps), vector<TCanvas*> is the canvases that will be attached to this booky
 // we save pairs in the vector instead, to be able to sort the canvases with ascending mass order (the double is the mass)
-std::map<TString, std::vector<std::pair<double, TCanvas*> > > bookymap;
+std::map<TString, std::vector<std::pair<double, TCanvas*> > > booky_map;
+
+std::map<TString, std::vector<TString> > booky_setup_map;
+// here just fill a vector with Histogram names and add this to the booky_setup_map with the name of the booky
+void setupBookies() {
+  // lets create a booky for the the 5 1D projections (3 FS particle case)
+  std::vector<TString> histnames_neutral;
+  std::vector<TString> histnames_charged;
+  // neutral isobar decay
+  histnames_neutral.push_back(TString("hMIsobarMC_Neutral")); // Canvas spot 1
+  histnames_neutral.push_back(TString("spacer")); // Canvas spot 2
+  histnames_neutral.push_back(TString("hGJMC_Neutral")); // Canvas spot 3
+  histnames_neutral.push_back(TString("hTYMC_Neutral")); // Canvas spot 4
+  histnames_neutral.push_back(TString("hHThetaMC_Neutral")); // Canvas spot 5
+  histnames_neutral.push_back(TString("hHPhiMC_Neutral")); // Canvas spot 6
+  // charged isobar decay
+  histnames_charged.push_back(TString("hMIsobarMC_Charged")); // Canvas spot 1
+  histnames_charged.push_back(TString("spacer")); // Canvas spot 2
+  histnames_charged.push_back(TString("hGJMC_Charged")); // Canvas spot 3
+  histnames_charged.push_back(TString("hTYMC_Charged")); // Canvas spot 4
+  histnames_charged.push_back(TString("hHThetaMC_Charged")); // Canvas spot 5
+  histnames_charged.push_back(TString("hHPhiMC_Charged")); // Canvas spot 6
+
+  booky_setup_map.insert(std::pair<TString, std::vector<TString> >("Booky_neutral_isobar", histnames_neutral));
+  booky_setup_map.insert(std::pair<TString, std::vector<TString> >("Booky_charged_isobar", histnames_charged));
+}
 
 bool comparePairs (const std::pair<double, TCanvas*> &i, const std::pair<double, TCanvas*> &j) {
   return (i.first < j.first);
@@ -43,7 +71,7 @@ bool comparePairs (const std::pair<double, TCanvas*> &i, const std::pair<double,
 void makeBookies() {
   // loop through map
   std::map<TString, std::vector<std::pair<double, TCanvas*> > >::iterator it;
-  for(it = bookymap.begin(); it != bookymap.end(); it++) {
+  for(it = booky_map.begin(); it != booky_map.end(); it++) {
     TString psFileName(it->first);
     psFileName.Append(".ps");
     TCanvas dummyCanv("dummy", "dummy");
@@ -53,6 +81,18 @@ void makeBookies() {
     std::sort(vec.begin(), vec.end(), comparePairs);
     // loop through vector and append canvases
     for(unsigned int i = 0; i < vec.size(); i++) {
+      TString textlabel("#scale[0.5]{Mass Bin ");
+      textlabel += i+1;
+      textlabel += " [";
+      textlabel += (int)(vec[i].first*1000 - massbinwidth/2);
+      textlabel += " - ";
+      textlabel += ((int)(vec[i].first*1000) + massbinwidth/2);
+      textlabel += "] MeV/c^{2}}";
+
+      TLatex label(0.37, 1.0, textlabel);
+      label.SetTextAlign(23);
+      vec[i].second->cd();
+      label.Draw();
       vec[i].second->Print(psFileName);
     }
     dummyCanv.Print((psFileName + "]"));
@@ -111,6 +151,8 @@ void make2DOverviewCanvas(TH2D *mchist, TH2D *datahist, TH2D *diffhist, TH2D *re
     diffhist->GetYaxis()->SetRangeUser(0.0, pow(mass,2));
     reldiffhist->GetXaxis()->SetRangeUser(0.0, pow(mass,2));
     reldiffhist->GetYaxis()->SetRangeUser(0.0, pow(mass,2));
+    reldiffhist->SetMaximum(1.0);
+    reldiffhist->SetMinimum(-1.0);
 
 
     TString s("setDiffColorStyle(");
@@ -151,44 +193,99 @@ void make2DOverviewCanvas(TH2D *mchist, TH2D *datahist, TH2D *diffhist, TH2D *re
     c->Write();
 
     // now lets add this canvas to its corresponding booky
-    // first check if our bookymap already has an open booky for this type and get the vector
-    std::vector<std::pair<double, TCanvas*> >& tempvec = bookymap[mchist->GetName()];
+    // first check if our booky_map already has an open booky for this type and get the vector
+    std::vector<std::pair<double, TCanvas*> >& tempvec = booky_map[mchist->GetName()];
     // create new entry for this vector
     std::pair<double, TCanvas*> p(mass, c);
     tempvec.push_back(p);
   }
 }
 
-void make1DOverviewCanvas(TH1D *mchist, TH1D *datahist, TH1D *diffhist, TH1D *reldiffhist) {
-  if (mchist && datahist) {
-    double scale = datahist->Integral();
-    scale = scale / (mchist->Integral());
-    mchist->Scale(scale);
 
-    TCanvas c(mchist->GetName(), mchist->GetTitle());
-    if(reldiffhist) {
-      c.Divide(2,1);
-      c.cd(1);
+void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::string dirname) {
+  double mass = 0.0;
+  int massstart = 0;
+  int massend = 0;
+  // check if directory is mass bin dir
+  unsigned int pointpos = dirname.find(".");
+  if (!(pointpos == 0 || pointpos == dirname.size())) {
+    std::string masslow = dirname.substr(0, pointpos + 1);
+    std::string masshigh = dirname.substr(pointpos + 1);
+    massstart = atoi(masslow.c_str());
+    massend = atoi(masshigh.c_str());
+    mass = 1.0 * (massstart + massend) / 2 / 1000;
+  }
+
+  std::map<TString, std::vector<TString> >::iterator it;
+  for (it = booky_setup_map.begin(); it != booky_setup_map.end(); it++) {
+    TString name(it->first.Data());
+    name += dirname.c_str();
+
+    TCanvas *c = new TCanvas(name, "");
+    c->Divide(2,3);
+    std::vector<TString> histlist = it->second;
+
+    for (unsigned int i = 0; i < histlist.size(); i++) {
+      // CompareTo returns 0 if its a match....
+      if (histlist[i].CompareTo("spacer")) {
+        TIter histiter = TIter(mclist);
+        TH1D *reldiffhist, *diffhist, *mchist, *datahist;
+        // generate difference histograms
+        std::string hnamemc(histlist[i].Data());
+        // create new string with MC exchanged for Diff
+        std::string hnamediff(hnamemc);
+        int pos = hnamemc.find("MC");
+        hnamediff.erase(pos, 2);
+        hnamediff.insert(pos, "Diff");
+        // create new string with MC exchanged for RelDiff
+        std::string hnamereldiff(hnamemc);
+        hnamereldiff.erase(pos, 2);
+        hnamereldiff.insert(pos, "RelDiff");
+        // create new string with MC exchanged for Data
+        std::string hnamedata(hnamemc);
+        hnamedata.erase(pos, 2);
+        hnamedata.insert(pos, "Data");
+
+        infile->GetObject((dirname + "/" + hnamereldiff).c_str(), reldiffhist);
+        infile->GetObject((dirname + "/" + hnamediff).c_str(), diffhist);
+        infile->GetObject((dirname + "/" + hnamedata).c_str(), datahist);
+        infile->GetObject((dirname + "/" + hnamemc).c_str(), mchist);
+
+        outfile->cd(dirname.c_str());
+        if (mchist && datahist) {
+          c->cd(i + 1);
+
+          // std::cout<<i<<std::endl;
+          double scale = datahist->Integral();
+          scale = scale / (mchist->Integral());
+          mchist->Scale(scale);
+
+          mchist->SetLineColor(kRed);
+          mchist->SetFillColor(kRed);
+          mchist->Draw("E4");
+          datahist->Draw("same");
+          if (diffhist) {
+            diffhist->SetLineColor(kOrange - 3);
+            diffhist->Draw("same");
+          }
+          double max = mchist->GetMaximum();
+          double min = mchist->GetMinimum();
+          if (max < datahist->GetMaximum())
+            max = datahist->GetMaximum();
+          if (diffhist)
+            min = diffhist->GetMinimum();
+          mchist->GetYaxis()->SetRangeUser(diffhist->GetMinimum() * 1.5, max * 1.2);
+          c->Update();
+        }
+      }
     }
-    mchist->SetLineColor(kRed);
-    mchist->SetFillColor(kRed);
-    mchist->Draw("E4");
-    datahist->Draw("same");
-    if(diffhist) {
-      diffhist->SetLineColor(kOrange - 3);
-      diffhist->Draw("same");
-    }
-    double max = mchist->GetMaximum();
-    if(max < datahist->GetMaximum())
-      max = datahist->GetMaximum();
-    if(diffhist)
-      mchist->GetYaxis()->SetRangeUser(diffhist->GetMinimum() * 1.5, max * 1.2);
-    c.Update();
-    if(reldiffhist) {
-      c.cd(2);
-      reldiffhist->Draw();
-    }
-    c.Write();
+    c->Write();
+    // now lets add this canvas to its corresponding booky
+    // first check if our booky_map already has an open booky for this type and get the vector
+    std::vector<std::pair<double, TCanvas*> >& tempvec = booky_map[it->first];
+    // create new entry for this vector
+    std::pair<double, TCanvas*> p(mass, c);
+    tempvec.push_back(p);
   }
 }
 
@@ -202,6 +299,8 @@ void make1DOverviewCanvas(TH1D *mchist, TH1D *datahist, TH1D *diffhist, TH1D *re
  * -> etc...
  */
 void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename) {
+  setupBookies();
+
   int massbins =0;
   double mass= 0.0, massstart =1000.0, massend=0.0;
   std::map<std::string, std::pair<double, std::pair<double, double> > > diffbounds;
@@ -226,6 +325,8 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
     std::string masshigh = dirname.substr(pointpos+1);
     double massstarttemp = atof(masslow.c_str());
     double massendtemp = atof(masshigh.c_str());
+    if((int)(massendtemp - massstarttemp) != massbinwidth)
+      massbinwidth = (int)(massendtemp - massstarttemp);
     mass = (massstarttemp + massendtemp)/2/1000;
     if(massstart > massstarttemp) massstart = massstarttemp;
     if(massend < massendtemp) massend = massendtemp;
@@ -246,8 +347,9 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
       else if(s.Contains("MC_"))
         mclist.Add(obj);
     }
+    make1DOverviewCanvas(infile, outfile, &mclist, dirname);
     histiter = TIter(&mclist);
-    TH1D *reldiffhist, *diffhist, *mchist, *datahist;
+    TH1D *diffhist, *mchist;
     while ((mchist = (TH1D*)histiter())) {
       // generate difference histograms
       std::string hnamemc(mchist->GetName());
@@ -256,22 +358,8 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
       int pos = hnamemc.find("MC");
       hnamediff.erase(pos, 2);
       hnamediff.insert(pos, "Diff");
-      // create new string with MC exchanged for RelDiff
-      std::string hnamereldiff(hnamemc);
-      hnamereldiff.erase(pos, 2);
-      hnamereldiff.insert(pos, "RelDiff");
-      // create new string with MC exchanged for Data
-      std::string hnamedata(hnamemc);
-      hnamedata.erase(pos, 2);
-      hnamedata.insert(pos, "Data");
 
-      infile->GetObject((std::string(dir->GetName())+"/"+hnamereldiff).c_str(), reldiffhist);
       infile->GetObject((std::string(dir->GetName())+"/"+hnamediff).c_str(), diffhist);
-      infile->GetObject((std::string(dir->GetName())+"/"+hnamedata).c_str(), datahist);
-      infile->GetObject((std::string(dir->GetName())+"/"+hnamemc).c_str(), mchist);
-
-      outfile->cd(dir->GetName());
-      make1DOverviewCanvas(mchist, datahist, diffhist, reldiffhist);
 
       if (diffhist) {
         // get diff min max values
