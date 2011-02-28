@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 633                         $: revision of last commit
+// $Author:: bgrube                   $: author of last commit
+// $Date:: 2011-02-14 19:33:31 +0100 #$: date of last commit
 //
 // Description:
 //      program that converts standrad ASCII PWA2000 .evt files into
@@ -49,8 +49,7 @@
 #include "TVector3.h"
 
 #include "reportingUtils.hpp"
-#include "particleDataTable.h"
-#include "evtTreeHelper.h"
+#include "amplitudeTreeHelper.h"
 
 
 using namespace std;
@@ -58,16 +57,12 @@ using namespace rpwa;
 
 
 bool
-convertTreeToEvt(const string&  inFileNamePattern         = "testEvents.root",
-                 const string&  outFileName               = "testTree.evt",
-                 const string&  pdgTableFileName          = "./particleDataTable.txt",
-                 const long int maxNmbEvents              = -1,
-                 const string&  inTreeName                = "rootPwaEvtTree",
-                 const string&  prodKinParticlesLeafName  = "prodKinParticles",
-                 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
-                 const string&  decayKinParticlesLeafName = "decayKinParticles",
-                 const string&  decayKinMomentaLeafName   = "decayKinMomenta",
-                 const bool     debug                     = false)
+convertTreeToAmp(const string&  inFileNamePattern = "testAmpTree.root",
+                 const string&  inTreeName        = "1-1++1+rho770_21_pi-.amp",
+                 const string&  outFileName       = "1-1++1+rho770_21_pi-.test.amp",
+                 const long int maxNmbEvents      = -1,
+                 const string&  ampLeafName       = "amplitude",
+                 const bool     debug             = false)
 {
 	// open input file
 	printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
@@ -77,22 +72,10 @@ convertTreeToEvt(const string&  inFileNamePattern         = "testEvents.root",
 		return false;
 	}
 	chain.GetListOfFiles()->ls();
-
-	// create output file
-	printInfo << "creating output file '" << outFileName << "'" << endl;
-	ofstream outFile(outFileName.c_str());
-	if (!outFile) {
-		printWarn << "cannot open output file '" << outFileName << "'" << endl;
-		return false;
-	}
-
-	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
-	pdt.readFile(pdgTableFileName);
+	printInfo << "reading from tree '" << inTreeName << "'" << endl;
 
 	// doit
-	const bool success = writeEvtFromTree(chain, outFile, maxNmbEvents, inTreeName,
-	                                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
-	                                      decayKinParticlesLeafName, decayKinMomentaLeafName, debug);
+	const bool success = writeAmpFromTree(chain, outFileName, maxNmbEvents, ampLeafName, debug);
 
 	if (success)
 		printInfo << "wrote events to file '" << outFileName << "'" << endl;

@@ -483,7 +483,8 @@ unsigned long
 normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
                                         vector<amplitudeTreeLeaf*>& ampTreeLeafs,
                                         const vector<string>&       ampFileNames,
-                                        const unsigned int          waveIndexOffset)
+                                        const unsigned int          waveIndexOffset,
+                                        const string&               ampLeafName)
 {
 	ampTrees.clear    ();
 	ampTreeLeafs.clear();
@@ -507,7 +508,7 @@ normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
 			continue;
 		}
 
-		// find tree with name matching *.amp
+		// find amplitude tree with name matching *.amp
 		TTree*     ampTree = 0;
     TIterator* keys    = ampFile->GetListOfKeys()->MakeIterator();
     while (TKey* k = static_cast<TKey*>(keys->Next())) {
@@ -517,7 +518,7 @@ normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
       }
       const string keyName      = k->GetName();
       unsigned int countMatches = 0;
-      if (keyName.substr(keyName.length() - 4) == ".amp") {
+      if (extensionFromPath(keyName) == "amp") {
 	      ampFile->GetObject(keyName.c_str(), ampTree);
 	      ++countMatches;
       }
@@ -534,7 +535,7 @@ normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
 
     // connect tree leaf
 		amplitudeTreeLeaf* ampTreeLeaf = 0;
-		ampTree->SetBranchAddress(amplitudeTreeLeaf::name.c_str(), &ampTreeLeaf);
+		ampTree->SetBranchAddress(ampLeafName.c_str(), &ampTreeLeaf);
 
 		// check that all trees have the same number of entries
 		const unsigned long nmbEntries = numeric_cast<unsigned long>(ampTree->GetEntriesFast());

@@ -184,7 +184,8 @@ private:
 	                         const std::string& accIntFileName,
 	                         const std::string& integralTKeyName = "integral");  ///< reads normalization and acceptance integrals from file
 
-	void readDecayAmplitudes(const std::string& ampDirName = ".");  ///< reads decay amplitudes from files in specified directory
+	void readDecayAmplitudes(const std::string& ampDirName  = ".",
+	                         const std::string& ampLeafName = "amplitude");  ///< reads decay amplitudes from files in specified directory
   
   
 	void clear();

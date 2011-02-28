@@ -20,13 +20,13 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 633                         $: revision of last commit
+// $Author:: bgrube                   $: author of last commit
+// $Date:: 2011-02-14 19:33:31 +0100 #$: date of last commit
 //
 // Description:
-//      TTree leaf persistency storage class for amplitude information
-//      needed by fit program
+//      helper functions that convert between standard binary PWA2000
+//      .amp files and the new ROOT tree format
 //
 //
 // Author List:
@@ -36,33 +36,28 @@
 //-------------------------------------------------------------------------
 
 
-#include "TClass.h"
-
-#include "amplitudeTreeLeaf.h"
-
-	
-using namespace std;
-using namespace rpwa;
+#include <string>
 
 
-#if AMPLITUDETREELEAF_ENABLED
-ClassImp(amplitudeTreeLeaf);
-#endif
+class TTree;
+class TChain;
 
 
-amplitudeTreeLeaf::amplitudeTreeLeaf()
-	: TObject()
-{
-	amplitudeTreeLeaf::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
-	clear();
-}
+namespace rpwa {
 
 
-amplitudeTreeLeaf::~amplitudeTreeLeaf()
-{ }
+	bool fillTreeFromAmp(const std::string& inFileName,
+	                     TTree&             outTree,
+	                     const long int     maxNmbEvents = -1,
+	                     const std::string& ampLeafName  = "amplitude",
+	                     const bool         debug        = false);
+  
+
+	bool writeAmpFromTree(TChain&            inTree,
+	                      const std::string& outFileName,
+	                      const long int     maxNmbEvents = -1,
+	                      const std::string& ampLeafName  = "amplitude",
+	                      const bool         debug        = false);
 
 
-void amplitudeTreeLeaf::clear()
-{
-	_incohSubAmps.clear();
-}
+}  // namespace rpwa

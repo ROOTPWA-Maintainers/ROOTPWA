@@ -845,7 +845,8 @@ TPWALikelihood<complexT>::readIntegrals
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
+TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
+                                              const string& ampLeafName)
 {
 	// check that normalization integrals are loaded
 	if (_normMatrix.num_elements() == 0) {
@@ -857,26 +858,78 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
 
 	printInfo << "loading amplitude data" << endl;
 	// loop over amplitudes and read in data
+	unsigned int nmbEvents = 0;
+	bool         firstWave = true;
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			if (_debug)
-				printInfo << "loading amplitude data for wave '" << _waveNames[iRefl][iWave] << "'" << endl;
-			ifstream ampFile((ampDirName + "/" + _waveNames[iRefl][iWave]).c_str());
-			if (not ampFile) {
-				printErr << "cannot open file '" << _waveNames[iRefl][iWave] << "'. aborting." << endl;
-				throw;
-			}
 			// get normalization
 			const complexT   normInt = _normMatrix[iRefl][iWave][iRefl][iWave];
 			vector<complexT> amps;
-			complexT         amp;
-			amps.reserve(_nmbEvents);  // number of events is known except for first wave that is read in
-			while (ampFile.read((char*) &amp, sizeof(complexT))) {
-				if (_useNormalizedAmps)         // normalize data, if option is switched on
-					amp /= sqrt(normInt.real());  // rescale decay amplitude
-				amps.push_back(amp);
+			if (!firstWave)  // number of events is known except for first wave that is read in
+				amps.reserve(nmbEvents);
+			// read decay amplitudes
+			const string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
+			const string ampFileExt  = extensionFromPath(ampFilePath);
+			if (_debug)
+				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
+#if AMPLITUDETREELEAF_ENABLED
+			if (ampFileExt == "root") {
+				// open amplitude file
+				TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
+				if (not ampFile or ampFile->IsZombie()) {
+					printWarn << "cannot open amplitude file '" << ampFilePath << "'. skipping." << endl;
+					continue;
+				}
+				// find amplitude tree
+				TTree*       ampTree     = 0;
+				const string ampTreeName = changeFileExtension(_waveNames[iRefl][iWave], ".amp");
+				inFile->GetObject(ampTreeName.c_str(), ampTree);
+				if (not ampTree) {
+					printWarn << "cannot find tree '" << ampTreeName << "' in file "
+					          << "'" << ampFilePath << "'. skipping." << endl;
+					continue;
+				}
+				// connect tree leaf
+				amplitudeTreeLeaf* ampTreeLeaf = 0;
+				ampTree->SetBranchAddress(ampeafName.c_str(), &ampTreeLeaf);
+				for (long int eventIndex = 0; eventIndex < ampTree->GetEntriesFast(); ++eventIndex) {
+					ampTree->GetEntry(eventIndex);
+					if (!ampTreeLeaf) {
+						printWarn << "null pointer to amplitude leaf for event " << eventIndex << ". "
+						          << "skipping." << endl;
+						continue;
+					}
+					assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
+					complexT amp = ampTreeLeaf->incohSubAmp(0);
+					if (_useNormalizedAmps)         // normalize data, if option is switched on
+						amp /= sqrt(normInt.real());  // rescale decay amplitude
+					amps.push_back(amp);
+				}
+			} else
+#endif
+			{
+				ifstream ampFile(ampFilePath.c_str());
+				if (not ampFile) {
+					printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;
+					throw;
+				}
+				complexT amp;
+				while (ampFile.read((char*)&amp, sizeof(complexT))) {
+					if (_useNormalizedAmps)         // normalize data, if option is switched on
+						amp /= sqrt(normInt.real());  // rescale decay amplitude
+					amps.push_back(amp);
+				}
 			}
-			_nmbEvents = amps.size(); 
+			if (firstWave)
+				nmbEvents = _nmbEvents = amps.size();
+			else {
+				nmbEvents = amps.size();
+				if (nmbEvents != _nmbEvents)
+					printWarn << "size mismatch in amplitude files: this file contains " << nmbEvents
+					          << " events, previous file had " << _nmbEvents << " events." << endl;
+				nmbEvents = _nmbEvents;
+			}
+				
 			// copy decay amplitudes into array that is indexed [event index][reflectivity][wave index]
 			// this index scheme ensures a more linear memory access pattern in the likelihood function
 			_decayAmps.resize(extents[_nmbEvents][2][_nmbWavesReflMax]);
@@ -886,7 +939,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName)
 				printInfo << "read " << _nmbEvents << " events from file "
 				          << "'" << _waveNames[iRefl][iWave] << "'" << endl;
 		}
-	printInfo << "loaded " << _nmbEvents << " events into memory" << endl;
+	printInfo << "loaded decay amplitudes for " << _nmbEvents << " events into memory" << endl;
 
 	// save phase space integrals
 	_phaseSpaceIntegral.resize(extents[2][_nmbWavesReflMax]);

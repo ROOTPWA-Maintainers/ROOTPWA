@@ -71,6 +71,7 @@ set(SOURCES
 	isobarHelicityAmplitude.cc
 	isobarCanonicalAmplitude.cc
 	amplitudeTreeLeaf.cc
+	amplitudeTreeHelper.cc
 	normalizationIntegral.cc
 	waveSetGenerator.cc
 	)

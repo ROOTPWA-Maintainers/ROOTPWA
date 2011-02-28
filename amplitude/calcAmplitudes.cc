@@ -73,12 +73,15 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -k key file [-n max. # of events -p PDG file -o output file -a -t tree name -l leaf names -r target particle name -v -h] input data file(s) (.evt or .root format)" << endl
+	     << " -k key file [-n max. # of events -p PDG file -o output file -m amplitude leaf name "
+	     << "-a -t tree name -l leaf names -r target particle name -v -h] "
+	     << "input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
 	     << "        -k file    path to key file" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -o file    path to amplitude file (.amp or .root format; default: ./out.root)" << endl
+	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
 	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
 	     << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
@@ -109,6 +112,7 @@ main(int    argc,
 	long int     maxNmbEvents       = -1;
 	string       pdgFileName        = "./particleDataTable.txt";
 	string       ampFileName        = "./out.root";
+	string       ampLeafName        = "amplitude";
 	bool         asciiOutput        = false;
 	string       inTreeName         = "rootPwaEvtTree";
 	string       leafNames          = "prodKinParticles;prodKinMomenta;"
@@ -118,7 +122,7 @@ main(int    argc,
 	extern char* optarg;
 	extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "k:n:p:o:at:l:r:vh")) != -1)
+	while ((c = getopt(argc, argv, "k:n:p:o:m:at:l:r:vh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -131,6 +135,9 @@ main(int    argc,
 			break;
 		case 'o':
 			ampFileName = optarg;
+			break;
+		case 'm':
+			ampLeafName = optarg;
 			break;
 		case 'a':
 			asciiOutput = true;
@@ -284,7 +291,7 @@ main(int    argc,
 		ampTreeLeaf->setNmbIncohSubAmps(1);
 		const string ampTreeName = waveName + ".amp";
 		ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
-		ampTree->Branch(amplitudeTreeLeaf::name.c_str(), &ampTreeLeaf);
+		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf);
 	} else
 #endif
 	{

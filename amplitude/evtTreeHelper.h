@@ -92,17 +92,17 @@ namespace rpwa {
 	                      const bool         debug                     = false);
 
 
-// cint has problems parsing Boost stuff
+	// cint has problems parsing Boost stuff
 #if !defined (__CINT__) || !defined (__MAKECINT__)
-	long int processTree(TTree&                              tree,
-	                     const isobarAmplitudePtr&           amplitude,
-	                     std::vector<std::complex<double> >& ampValues,
-	                     const long int                      maxNmbEvents              = -1,
-	                     const std::string&                  prodKinParticlesLeafName  = "prodKinParticles",
-	                     const std::string&                  prodKinMomentaLeafName    = "prodKinMomenta",
-	                     const std::string&                  decayKinParticlesLeafName = "decayKinParticles",
-	                     const std::string&                  decayKinMomentaLeafName   = "decayKinMomenta",
-	                     const bool                          printProgress             = true);
+	bool processTree(TTree&                              tree,
+	                 const isobarAmplitudePtr&           amplitude,
+	                 std::vector<std::complex<double> >& ampValues,
+	                 const long int                      maxNmbEvents              = -1,
+	                 const std::string&                  prodKinParticlesLeafName  = "prodKinParticles",
+	                 const std::string&                  prodKinMomentaLeafName    = "prodKinMomenta",
+	                 const std::string&                  decayKinParticlesLeafName = "decayKinParticles",
+	                 const std::string&                  decayKinMomentaLeafName   = "decayKinMomenta",
+	                 const bool                          printProgress             = true);
 #endif
 
 

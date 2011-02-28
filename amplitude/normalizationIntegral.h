@@ -124,7 +124,8 @@ namespace rpwa {
 		unsigned long openRootAmpFiles(std::vector<TTree*>&                   ampTrees,
 		                               std::vector<rpwa::amplitudeTreeLeaf*>& ampTreeLeafs,
 		                               const std::vector<std::string>&        ampFileNames,
-		                               const unsigned int                     waveIndexOffset = 0);
+		                               const unsigned int                     waveIndexOffset = 0,
+		                               const std::string&                     ampLeafName     = "amplitude");
 		
 	  static bool _debug;  ///< if set to true, debug messages are printed
 

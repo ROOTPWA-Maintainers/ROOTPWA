@@ -61,8 +61,8 @@ namespace rpwa {
 	std::string
 	directoryFromPath(const std::string& path)
 	{
-	  return path.substr(0, path.find_last_of('/') + 1);
-  }
+		return path.substr(0, path.find_last_of('/') + 1);
+	}
 
 
 	inline
@@ -70,7 +70,7 @@ namespace rpwa {
 	fileNameFromPath(const std::string& path)
 	{
 		return path.substr(path.find_last_of('/') + 1);
-  }
+	}
 
 
 	inline
@@ -79,7 +79,7 @@ namespace rpwa {
 	{
 		const std::string fileName = fileNameFromPath(path);
 		return fileName.substr(0, fileName.find_last_of('.'));
-  }
+	}
 
 
 	inline
@@ -88,21 +88,21 @@ namespace rpwa {
 	{
 		const std::string fileName = fileNameFromPath(path);
 		return fileName.substr(fileName.find_last_of('.') + 1);
-  }
+	}
 
 
 	inline
 	std::string
 	changeFileExtension(const std::string& path,
 	                    const std::string& newExt = "")
-  {
-	  const std::string directory     = directoryFromPath    (path);
-	  const std::string fileNameNoExt = fileNameNoExtFromPath(path);
-	  if (newExt != "")
-		  return directory + fileNameNoExt + ((newExt[0] == '.') ? "" : ".") + newExt;
-	  else
-		  return directory + fileNameNoExt;
-  }
+	{
+		const std::string directory     = directoryFromPath    (path);
+		const std::string fileNameNoExt = fileNameNoExtFromPath(path);
+		if (newExt != "")
+			return directory + fileNameNoExt + ((newExt[0] == '.') ? "" : ".") + newExt;
+		else
+			return directory + fileNameNoExt;
+	}
 
 
 	inline
