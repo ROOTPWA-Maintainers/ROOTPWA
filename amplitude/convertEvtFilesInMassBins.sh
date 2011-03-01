@@ -102,27 +102,27 @@ then
     # rewrite real data files
     for MASS_BIN in ${MASS_BINS}
     do
-	DIR=${PWA_DATA_DIR}/${MASS_BIN}
-	EVT_FILE=${DIR}/${MASS_BIN}.evt
-	ROOT_FILE=${DIR}/${MASS_BIN}.root
-	echo ">>> info: rewriting '${EVT_FILE}' based on '${ROOT_FILE}'"
-	CMD="root -b -q rootlogon.C convertTreeToEvt.C+\(\\\"${ROOT_FILE}\\\",\\\"${EVT_FILE}\\\",\\\"${PDG_TABLE}\\\"\)"
-	echo ${CMD}
-	time eval ${CMD}
-	echo
+				DIR=${PWA_DATA_DIR}/${MASS_BIN}
+				EVT_FILE=${DIR}/${MASS_BIN}.evt
+				ROOT_FILE=${DIR}/${MASS_BIN}.root
+				echo ">>> info: rewriting '${EVT_FILE}' based on '${ROOT_FILE}'"
+				CMD="root -b -q rootlogon.C convertTreeToEvt.C+\(\\\"${ROOT_FILE}\\\",\\\"${EVT_FILE}\\\",\\\"${PDG_TABLE}\\\"\)"
+				echo ${CMD}
+				time eval ${CMD}
+				echo
     done
 
     # rewrite MC data files
     for MASS_BIN in ${MASS_BINS}
     do
-	DIR=${PWA_DATA_DIR}/${MASS_BIN}/MC
-	EVT_FILE=${DIR}/${MASS_BIN}.ps.evt
-	ROOT_FILE=${DIR}/${MASS_BIN}.ps.root
-	echo ">>> info: rewriting '${EVT_FILE}' based on '${ROOT_FILE}'"
-	CMD="root -b -q rootlogon.C convertTreeToEvt.C+\(\\\"${ROOT_FILE}\\\",\\\"${EVT_FILE}\\\",\\\"${PDG_TABLE}\\\"\)"
-	echo ${CMD}
-	time eval ${CMD}
-	echo
+				DIR=${PWA_DATA_DIR}/${MASS_BIN}/MC
+				EVT_FILE=${DIR}/${MASS_BIN}.ps.evt
+				ROOT_FILE=${DIR}/${MASS_BIN}.ps.root
+				echo ">>> info: rewriting '${EVT_FILE}' based on '${ROOT_FILE}'"
+				CMD="root -b -q rootlogon.C convertTreeToEvt.C+\(\\\"${ROOT_FILE}\\\",\\\"${EVT_FILE}\\\",\\\"${PDG_TABLE}\\\"\)"
+				echo ${CMD}
+				time eval ${CMD}
+				echo
     done
 
 fi
