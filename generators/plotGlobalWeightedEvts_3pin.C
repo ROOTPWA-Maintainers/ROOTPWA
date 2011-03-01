@@ -14,6 +14,7 @@
 #include "TLatex.h"
 #include "TH1D.h"
 #include "TH2D.h"
+#include "TLine.h"
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TColor.h"
@@ -32,12 +33,27 @@
 
 
 int massbinwidth = 0;
+const unsigned int numbercolors = 31;
+
+struct booky_page {
+    TCanvas *page_canvas; // canvas that will be print on that page
+    double mass; // mass value with can be used for sorting purposes
+    TString page_title; // title displayed on top of page
+};
+
+booky_page createBookyPage(TCanvas *c, double mass = 0.0, TString title = "") {
+  booky_page p;
+  p.page_canvas = c;
+  p.mass = mass;
+  p.page_title = title;
+  return p;
+}
 
 // the make booky method will run through this map and create 1 booky for each map entry
 // all canvases in the vector will be appended to this booky ps file
 // key is the filename of the booky (without .ps), vector<TCanvas*> is the canvases that will be attached to this booky
 // we save pairs in the vector instead, to be able to sort the canvases with ascending mass order (the double is the mass)
-std::map<TString, std::vector<std::pair<double, TCanvas*> > > booky_map;
+std::map<TString, std::vector<booky_page> > booky_map;
 
 std::map<TString, std::vector<TString> > booky_setup_map;
 // here just fill a vector with Histogram names and add this to the booky_setup_map with the name of the booky
@@ -64,36 +80,43 @@ void setupBookies() {
   booky_setup_map.insert(std::pair<TString, std::vector<TString> >("Booky_charged_isobar", histnames_charged));
 }
 
-bool comparePairs (const std::pair<double, TCanvas*> &i, const std::pair<double, TCanvas*> &j) {
-  return (i.first < j.first);
+bool comparePairs (const booky_page &i, const booky_page &j) {
+  return (i.mass < j.mass);
 }
 
 void makeBookies() {
   // loop through map
-  std::map<TString, std::vector<std::pair<double, TCanvas*> > >::iterator it;
+  std::map<TString, std::vector<booky_page> >::iterator it;
   for(it = booky_map.begin(); it != booky_map.end(); it++) {
     TString psFileName(it->first);
     psFileName.Append(".ps");
     TCanvas dummyCanv("dummy", "dummy");
     dummyCanv.Print((psFileName + "["));
     // sort vector
-    std::vector<std::pair<double, TCanvas*> > vec = it->second;
+    std::vector<booky_page> vec = it->second;
     std::sort(vec.begin(), vec.end(), comparePairs);
     // loop through vector and append canvases
-    for(unsigned int i = 0; i < vec.size(); i++) {
-      TString textlabel("#scale[0.5]{Mass Bin ");
-      textlabel += i+1;
-      textlabel += " [";
-      textlabel += (int)(vec[i].first*1000 - massbinwidth/2);
-      textlabel += " - ";
-      textlabel += ((int)(vec[i].first*1000) + massbinwidth/2);
-      textlabel += "] MeV/c^{2}}";
-
+    for (unsigned int i = 0; i < vec.size(); i++) {
+      TString textlabel;
+      if (vec[i].page_title.Length() == 0) {
+        textlabel = "#scale[0.5]{Mass Bin ";
+        textlabel += i + 1;
+        textlabel += " [";
+        textlabel += (int) (vec[i].mass * 1000 - massbinwidth / 2);
+        textlabel += " - ";
+        textlabel += ((int) (vec[i].mass * 1000) + massbinwidth / 2);
+        textlabel += "] MeV/c^{2}}";
+      }
+      else {
+        textlabel = vec[i].page_title;
+      }
       TLatex label(0.37, 1.0, textlabel);
+      label.SetNDC(true);
       label.SetTextAlign(23);
-      vec[i].second->cd();
+      vec[i].page_canvas->cd();
       label.Draw();
-      vec[i].second->Print(psFileName);
+
+      vec[i].page_canvas->Print(psFileName);
     }
     dummyCanv.Print((psFileName + "]"));
   }
@@ -107,18 +130,30 @@ void fillDiffvsMassPlot(const TH1D* hist, std::string dirname, int massbins, dou
   int pos = dirname.find(".");
   std::string masslow = dirname.substr(0, pos+1);
   std::string masshigh = dirname.substr(pos+1);
-  int mass = atoi(masslow.c_str()) + atoi(masshigh.c_str());
-  mass = mass/2;
+  double mass = atof(masslow.c_str()) + atof(masshigh.c_str());
+  mass = mass/2/1000;
   // then get or create 2d hist with number of bins in x equal to number of massbins
   std::string s(hist->GetName());
   std::map<std::string, std::pair<double, std::pair<double, double> > >::iterator iter = diffbounds.find(s);
   s.insert(s.size(), "vsMass");
   TH2D* hdiffvsmass = (TH2D*)ofile->Get((std::string("global/")+s).c_str());
   if(!hdiffvsmass) {
+    TCanvas *c = new TCanvas(s.c_str(), s.c_str());
     hdiffvsmass = new TH2D(s.c_str(), hist->GetTitle(), massbins, mass_start, mass_end,
         hist->GetNbinsX(), iter->second.second.first, iter->second.second.second);
+    hdiffvsmass->SetContour(numbercolors);
+    hdiffvsmass->SetXTitle("Resonance Mass [GeV/c^{2}]");
+    hdiffvsmass->SetYTitle(hist->GetXaxis()->GetTitle());
     hdiffvsmass->SetMaximum(iter->second.first);
     hdiffvsmass->SetMinimum(-iter->second.first);
+    hdiffvsmass->SetStats(0);
+    hdiffvsmass->Draw("colz");
+
+    // now lets add this canvas to its corresponding booky
+    // first check if our booky_map already has an open booky for this type and get the vector
+    std::vector<booky_page>& tempvec = booky_map["Booky_mass_overview"];
+    // create new entry for this vector
+    tempvec.push_back(createBookyPage(c, mass, TString(hist->GetName())));
   }
   // then loop over 1d hist bins -> corresponding value + get content and fill 2d hist
   for(int i = 0; i < hist->GetNbinsX(); i++) {
@@ -129,7 +164,7 @@ void fillDiffvsMassPlot(const TH1D* hist, std::string dirname, int massbins, dou
   }
 }
 
-const unsigned int numbercolors = 31;
+
 void make2DOverviewCanvas(TH2D *mchist, TH2D *datahist, TH2D *diffhist, TH2D *reldiffhist, double mass) {
   if (mchist && datahist && diffhist && reldiffhist) {
     double scale = datahist->Integral();
@@ -194,10 +229,9 @@ void make2DOverviewCanvas(TH2D *mchist, TH2D *datahist, TH2D *diffhist, TH2D *re
 
     // now lets add this canvas to its corresponding booky
     // first check if our booky_map already has an open booky for this type and get the vector
-    std::vector<std::pair<double, TCanvas*> >& tempvec = booky_map[mchist->GetName()];
+    std::vector<booky_page>& tempvec = booky_map[mchist->GetName()];
     // create new entry for this vector
-    std::pair<double, TCanvas*> p(mass, c);
-    tempvec.push_back(p);
+    tempvec.push_back(createBookyPage(c, mass));
   }
 }
 
@@ -265,6 +299,9 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
           mchist->Draw("E4");
           datahist->Draw("same");
           if (diffhist) {
+            TLine* line = new TLine(mchist->GetXaxis()->GetXmin(), 0, mchist->GetXaxis()->GetXmax(), 0);
+            line->SetLineStyle(3);
+            line->Draw();
             diffhist->SetLineColor(kOrange - 3);
             diffhist->Draw("same");
           }
@@ -282,10 +319,9 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
     c->Write();
     // now lets add this canvas to its corresponding booky
     // first check if our booky_map already has an open booky for this type and get the vector
-    std::vector<std::pair<double, TCanvas*> >& tempvec = booky_map[it->first];
+    std::vector<booky_page>& tempvec = booky_map[it->first];
     // create new entry for this vector
-    std::pair<double, TCanvas*> p(mass, c);
-    tempvec.push_back(p);
+    tempvec.push_back(createBookyPage(c, mass));
   }
 }
 
@@ -323,11 +359,11 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
     if(pointpos == 0 || pointpos == dirname.size()) continue;
     std::string masslow = dirname.substr(0, pointpos+1);
     std::string masshigh = dirname.substr(pointpos+1);
-    double massstarttemp = atof(masslow.c_str());
-    double massendtemp = atof(masshigh.c_str());
+    double massstarttemp = atof(masslow.c_str())/1000;
+    double massendtemp = atof(masshigh.c_str())/1000;
     if((int)(massendtemp - massstarttemp) != massbinwidth)
       massbinwidth = (int)(massendtemp - massstarttemp);
-    mass = (massstarttemp + massendtemp)/2/1000;
+    mass = (massstarttemp + massendtemp)/2;
     if(massstart > massstarttemp) massstart = massstarttemp;
     if(massend < massendtemp) massend = massendtemp;
 
@@ -445,14 +481,6 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
     unsigned int pointpos = dirname.find(".");
     if (pointpos == 0 || pointpos == dirname.size())
       continue;
-    std::string masslow = dirname.substr(0, pointpos + 1);
-    std::string masshigh = dirname.substr(pointpos);
-    double massstarttemp = atof(masslow.c_str());
-    double massendtemp = atof(masshigh.c_str());
-    if (massstart > massstarttemp)
-      massstart = massstarttemp;
-    if (massend < massendtemp)
-      massend = massendtemp;
 
     infile->cd(dir->GetName());
 
