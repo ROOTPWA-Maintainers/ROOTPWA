@@ -75,7 +75,7 @@ usage(const string& progName,
   cerr << "usage:" << endl
        << progName
        << " -c configfile -i inputfile [-o outfile -l # -u #"
-       << "  -M minimizer [-m algorithm] -t # -q -h]" << endl
+       << "  -M minimizer [-m algorithm] -t # -q -h] [-S fitResultFiles]" << endl
        << "    where:" << endl
        << "        -c file    path to config File" << endl
        << "        -i file    path to input file" << endl
@@ -95,6 +95,8 @@ usage(const string& progName,
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
        << "        -P         plotting only - no fit" << endl
+       << "        -S files   Systematic error plotting. give list of files" << endl
+
        << endl;
   exit(errCode);
 }
@@ -131,6 +133,8 @@ main(int    argc,
   const bool         runHesse            = true;
   const bool         runMinos            = false;
   bool               onlyPlotting        = false;
+  bool               sysPlotting         = false;
+
   //unsigned int maxParNameLength = 20;       // maximum length of parameter names
 //   int                startValSeed        = 1234567;
  // parse command line options
@@ -148,9 +152,10 @@ main(int    argc,
   string       configFile;        // configuration file
 
 extern char* optarg;
+ extern int optind;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qhP")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qhPS")) != -1)
     switch (ca) {
     case 'c':
       configFile = optarg;
@@ -185,8 +190,30 @@ extern char* optarg;
     case 'P':
       onlyPlotting=true;
       break;
+    case 'S':
+      sysPlotting=true;
+      break;
     }
 
+  vector<TTree*> sysTrees;
+  if(sysPlotting){
+    // open files with fits  
+    for(int i=optind;i<argc;++i){
+      // open input file and get results tree
+      TFile* infile=TFile::Open(argv[i]);
+      if(infile==NULL){
+	cerr << "Systematics Input file " << inFileName <<" not found."<< endl;
+	return 1;
+      }
+      TTree* tree=(TTree*)infile->Get(valTreeName.c_str());
+      if(tree==NULL){
+	cerr << "Input tree " << valTreeName <<" not found."<< endl;
+	return 1;
+      }
+      sysTrees.push_back(tree);
+    }
+    printInfo << sysTrees.size() << " files for systematics found " << endl;
+  }// end if sysPlotting
 
   printInfo << "creating and setting up likelihood function" << endl;
   
@@ -776,7 +803,11 @@ extern char* optarg;
       
      }// end loop over components
 
+
    std::vector<TGraphErrors*> phasedatagraphs;
+   std::vector<TGraphErrors*> phasesysgraphs;
+   
+
    std::vector<TGraphErrors*> realdatagraphs;
    std::vector<TGraphErrors*> imagdatagraphs;
 
@@ -792,6 +823,9 @@ extern char* optarg;
 
   for(unsigned int iw=0; iw<wl.size();++iw){
      for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
+
+  
+
        phasegraphs.push_back(new TMultiGraph);
        overlapImgraphs.push_back(new TMultiGraph);
        overlapRegraphs.push_back(new TMultiGraph);
@@ -808,12 +842,30 @@ extern char* optarg;
        overlapImgraphs[c]->SetName(name.c_str());
        overlapImgraphs[c]->SetTitle(name.c_str());
 
+       phasesysgraphs.push_back(new TGraphErrors(nbins));
+       name=("dPhi_sys_");name.append(wl[iw]);
+       name.append("---");name.append(wl[iw2]);
+       phasesysgraphs[c]->SetName(name.c_str());
+       phasesysgraphs[c]->SetTitle(name.c_str());
+       phasesysgraphs[c]->SetLineColor(kAzure+5);
+       phasesysgraphs[c]->SetFillColor(kAzure+5);
+       phasesysgraphs[c]->SetDrawOption("P");
+       phasesysgraphs[c]->SetLineWidth(2);
+       //phasesysgraphs[c]->SetFillStyle(1001);
+       
+       phasegraphs[c]->Add(phasesysgraphs[c],"P");
+
+
        phasedatagraphs.push_back(new TGraphErrors(3*nbins));
        name=("dPhi_data_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
        phasedatagraphs[c]->SetName(name.c_str());
        phasedatagraphs[c]->SetTitle(name.c_str());
        phasegraphs[c]->Add(phasedatagraphs[c],"p");
+
+    
+       
+
 
        realdatagraphs.push_back(new TGraphErrors(nbins));
        name=("RE_data_");name.append(wl[iw]);
@@ -844,7 +896,7 @@ extern char* optarg;
        phasefitgraphs[c]->SetTitle(name.c_str());
        phasefitgraphs[c]->SetLineColor(kRed);
        phasefitgraphs[c]->SetMarkerColor(kRed);
-       phasefitgraphs[c]->SetDrawOption("AP");
+       phasefitgraphs[c]->SetDrawOption("P");
        phasefitgraphs[c]->SetMarkerStyle(24);
        phasefitgraphs[c]->SetMarkerSize(0.2);
        phasegraphs[c]->Add(phasefitgraphs[c],"cp");
@@ -940,12 +992,14 @@ extern char* optarg;
 
 	 //realdatagraphs[c]-SSetPoint(i,m,rho-
 
-	 phasedatagraphs[c]->SetPoint(i,m,rho->phase(wl[iw].c_str(),
-	 					     wl[iw2].c_str()));
-	 phasedatagraphs[c]->SetPoint(i+ndatabins,m,rho->phase(wl[iw].c_str(),
-	 				     wl[iw2].c_str())-360);
-	 phasedatagraphs[c]->SetPoint(i+2*ndatabins,m,rho->phase(wl[iw].c_str(),
-	 					     wl[iw2].c_str())+360);
+	 double dataphi=rho->phase(wl[iw].c_str(),wl[iw2].c_str());
+
+	 phasedatagraphs[c]->SetPoint(i,m,dataphi);
+	 phasedatagraphs[c]->SetPoint(i+ndatabins,m,dataphi-360);
+	 phasedatagraphs[c]->SetPoint(i+2*ndatabins,m,dataphi+360);
+
+
+	   
 	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
 					     wl[iw2].c_str())/TMath::RadToDeg());
 
@@ -964,9 +1018,40 @@ extern char* optarg;
 					   rho->phaseErr(wl[iw].c_str(),
 							 wl[iw2].c_str()));
 
+	 double fitphase=compset.phase(wl[iw],ps,wl[iw2],ps2,m)*TMath::RadToDeg();
+	 if(sysPlotting){
+	   // loop over systematics files
+	   double maxPhase=-10000;
+	   double minPhase=10000;
+	   for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
+	   // get data
+	     fitResult* rhoSys=0;
+	     sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
+	     sysTrees[iSys]->GetEntry(i);
+	     // check if waves are in fit
+	     if(rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1)continue;
+	     double myphi=rhoSys->phase(wl[iw].c_str(),wl[iw2].c_str());
+	     double myphiplus=myphi+360;
+	     double myphiminus=myphi-360;
+	     // translate by 2pi to get closest solution to fit
+	     if(fabs(myphiplus-dataphi)<fabs(myphi-dataphi)){
+		 myphi=myphiplus;
+		 //cout << "myphiminus" << endl;
+	     }
+	     if(fabs(myphiminus-dataphi)<fabs(myphi-dataphi)){
+	       myphi=myphiminus;
+	       //cout << "myphiplus" << endl;
+	     }
 
-	 phasefitgraphs[c]->SetPoint(i,m,compset.phase(wl[iw],ps,
-						       wl[iw2],ps2,m)*TMath::RadToDeg());
+	     if(myphi>maxPhase)maxPhase=myphi;
+	     if(myphi<minPhase)minPhase=myphi;
+	   }// end loop over sys trees
+	   phasesysgraphs[c]->SetPoint(i,m,(maxPhase+minPhase)*0.5);
+	   phasesysgraphs[c]->SetPointError(i,0,maxPhase-minPhase);
+	 }// end if sysplotting
+
+
+	 phasefitgraphs[c]->SetPoint(i,m,fitphase);
 
 	 complex<double> fitval=compset.overlap(wl[iw],ps,
 						wl[iw2],ps2,m);
@@ -1056,6 +1141,17 @@ extern char* optarg;
        
        phasedatagraphs[iw]->GetPoint(ib,m,predph);
        phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+
+
+   // put systematic error closest to fit
+       double sph; phasesysgraphs[iw]->GetPoint(ib,m,sph);
+       double sp,sm;sp=sph+360;sm=sph-360;
+       if(fabs(sp-prefph)<fabs(sph-prefph) && fabs(sp-prefph)<fabs(sm-prefph))
+	 phasesysgraphs[iw]->SetPoint(ib,m,sp);
+       else if(fabs(sm-prefph)<fabs(sph-prefph) && fabs(sm-prefph)<fabs(sp-prefph))
+	 phasesysgraphs[iw]->SetPoint(ib,m,sm);
+
+
      }
    }
    // backward:
@@ -1068,23 +1164,41 @@ extern char* optarg;
      double dp,dm;dp=dph+360;dm=dph-360;
      double fp,fm;fp=fph+360;fm=fph-360;
      if(1){
-       if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph))
+       if(fabs(dp-predph)<fabs(dph-predph) && fabs(dp-predph)<fabs(dm-predph)){
    	 phasedatagraphs[iw]->SetPoint(ib,m,dp);
-       else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph))
+	     }
+
+       else if(fabs(dm-predph)<fabs(dph-predph) && fabs(dm-predph)<fabs(dp-predph)){
    	 phasedatagraphs[iw]->SetPoint(ib,m,dm);
+     }
        
-       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
+       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph)){
    	 phasefitgraphs[iw]->SetPoint(ib,m,fp);
-       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
+	
+       }
+       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph)){
    	 phasefitgraphs[iw]->SetPoint(ib,m,fm);
+
+       }
        
        phasedatagraphs[iw]->GetPoint(ib,m,predph);
        phasefitgraphs[iw]->GetPoint(ib,m,prefph);
+
+       // put systematic error closest to fit
+       double sph; phasesysgraphs[iw]->GetPoint(ib,m,sph);
+       double sp,sm;sp=sph+360;sm=sph-360;
+       if(fabs(sp-prefph)<fabs(sph-prefph) && fabs(sp-prefph)<fabs(sm-prefph))
+	 phasesysgraphs[iw]->SetPoint(ib,m,sp);
+       else if(fabs(sm-prefph)<fabs(sph-prefph) && fabs(sm-prefph)<fabs(sp-prefph))
+	 phasesysgraphs[iw]->SetPoint(ib,m,sm);
+
+      
      }
    }
 
    
      phasegraphs[iw]->Write();
+     phasesysgraphs[iw]->Write();
      overlapRegraphs[iw]->Write();
      overlapImgraphs[iw]->Write();
      //phase2d[iw]->Write();
