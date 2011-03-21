@@ -389,7 +389,7 @@ extern char* optarg;
   const unsigned int nmbPar  = L.NDim();
   
   printInfo << nmbPar << " Parameters in fit" << endl;
-
+ 
   // ---------------------------------------------------------------------------
   // setup minimizer
   printInfo << "creating and setting up minimizer " << minimizerType[0] << " using algorithm " << minimizerType[1] << endl;
@@ -441,10 +441,12 @@ extern char* optarg;
 
   }
  
-
+  const unsigned int nfree=minimizer->NFree();
+  printInfo <<  nfree  << " Free Parameters in fit" << endl;
 
 
   // find minimum of likelihood function
+  double chi2=0;
   if(onlyPlotting) printInfo << "Plotting mode, skipping minimzation!" << endl;
   else {
     printInfo << "performing minimization." << endl;
@@ -456,8 +458,10 @@ extern char* optarg;
     const double* par=minimizer->X();
     compset.setPar(par);
     cerr << compset << endl;
-    if (success)
+    if (success){
       printInfo << "minimization finished successfully." << endl;
+      chi2=minimizer->MinValue();
+    }
     else
       printWarn << "minimization failed." << endl;
     if (runHesse) {
@@ -507,11 +511,28 @@ extern char* optarg;
 	cout << endl;
   }
 
- 
+ cout << "---------------------------------------------------------------------" << endl;
+ // Reduced chi2
+ printInfo << chi2 << " chi2" << endl;
+ unsigned int numdata=L.NDataPoints();
+ // numDOF
+ unsigned int numDOF=numdata-nfree;
+ printInfo << numDOF << " degrees of freedom" << endl;
+ double redChi2 = chi2/(double)numDOF;
+ printInfo << redChi2 << " chi2/nDF" << endl;
  cout << "---------------------------------------------------------------------" << endl;
 
 
   // write out results
+  // Likelihood and such
+ const Setting& fitqualS= root["fitquality"];
+ Setting& chi2S=fitqualS["chi2"];
+ chi2S=chi2;
+ Setting& ndfS=fitqualS["ndf"];
+ ndfS=(int)numDOF;
+ Setting& redchi2S=fitqualS["redchi2"];
+ redchi2S=redChi2;
+
   // Setup Component Set (Resonances + Background)
   const Setting& bws= root["components"]["resonances"];
   const Setting& bkgs= root["components"]["background"];
@@ -728,8 +749,9 @@ extern char* optarg;
 //     }// end loop over background
 //   }// endif
   
-  Conf.writeFile("result.conf");
-
+  string outconfig(outFileName);
+  outconfig.append(".conf");
+  Conf.writeFile(outconfig.c_str());
 
   cerr << "Fitting finished... Start building graphs ... " << endl;
 
