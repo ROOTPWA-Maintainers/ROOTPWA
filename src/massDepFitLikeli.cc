@@ -12,6 +12,26 @@ using namespace std;
 unsigned int
 rpwa::massDepFitLikeli::NDim() const {return _compset->numPar();}
 
+unsigned int
+rpwa::massDepFitLikeli::NDataPoints() const {
+  // loop through input data an check how many bins are in massrange
+  unsigned int nbins=_tree->GetEntries();
+  cout << nbins << " mass bins in input data." << endl;
+  unsigned int nbinsInRange=0;
+  // loop over mass-bins
+  for(unsigned im=0;im<nbins;++im){
+    _tree->GetEntry(im);
+    double mass=_rhom->massBinCenter();
+    if(mass>=_mmin && mass<=_mmax)++nbinsInRange;
+  }
+  cout << nbinsInRange << " mass bins in allowed mass range {"
+       << _mmin<<","<<_mmax<<"}"<< endl;
+  
+  // calculate data points, remember (Re,Im)=> factor 2:
+  // a complex, symmetric matrix with real diagonal has n^2 elements:
+  return nbinsInRange*_wlist.size()*_wlist.size();
+}
+
 void
 rpwa::massDepFitLikeli::init(TTree* sp, pwacompset* compset,
 			     double mmin, double mmax){
@@ -62,7 +82,7 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
   
 
   // loop over mass-bins
-  for(unsigned im=0;im<nbins/2;++im){
+  for(unsigned im=0;im<nbins;++im){
     _tree->GetEntry(im);
     double mass=_rhom->massBinCenter();
     if(mass<_mmin)continue;
