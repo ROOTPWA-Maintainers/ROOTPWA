@@ -35,8 +35,8 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/"){
   c->Divide(nwaves,nwaves,0,0);
  TCanvas* cRe=new TCanvas("cRe","Spin Density Matrix - RealPart",10,10,1000,1000);
   cRe->Divide(nwaves,nwaves,0,0);
-   TCanvas* cIm=new TCanvas("cIm","Spin Density Matrix - ImagPart",10,10,1000,1000);
-  cIm->Divide(nwaves,nwaves,0,0);
+  // TCanvas* cIm=new TCanvas("cIm","Spin Density Matrix - ImagPart",10,10,1000,1000);
+  //cIm->Divide(nwaves,nwaves,0,0);
   
   // do plotting
   for(unsigned int ip=0;ip<nwaves;++ip){
@@ -77,7 +77,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/"){
 	  g->Draw("AN");
 	  double max=-1E6;
 	  double min=1E6;
-	  TGraphErrors* fitg=(TGraphErrors*)g->GetListOfGraphs()->At(1);
+	  TGraphErrors* fitg=(TGraphErrors*)g->GetListOfGraphs()->At(2);
 	  double* y=fitg->GetY();
 	  for(unsigned int i=0;i<fitg->GetN();++i){
 	    if(max<y[i])max=y[i];
@@ -108,7 +108,8 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/"){
 	  delete c2;
 	  key.ReplaceAll("Re","Im");
 	  TMultiGraph* g3=(TMultiGraph*)infile->Get(key);
-	  cIm->cd(jp+ip*nwaves+1);
+	  //cIm->cd(jp+ip*nwaves+1);
+	  cRe->cd(ip+jp*nwaves+1);
 	  g3->Draw("A");
 	  g3->GetXaxis()->SetTitle("mass (MeV/c^{2})");
 	  g3->GetYaxis()->SetTitle("Im(#rho_{ij})");
@@ -127,5 +128,5 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/"){
   } // end plotting loop
   c->SaveAs(TString(plotdir+"/spindensitymatrix.eps"));
   cRe->SaveAs(TString(plotdir+"/spindensitymatrixRe.eps"));
-  cIm->SaveAs(TString(plotdir+"/spindensitymatrixIm.eps"));
+  //cIm->SaveAs(TString(plotdir+"/spindensitymatrixIm.eps"));
 }
