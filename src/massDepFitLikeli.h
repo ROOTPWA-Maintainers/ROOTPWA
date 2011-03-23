@@ -44,7 +44,8 @@ namespace rpwa {
     
     // Accessors -----------------------
     virtual unsigned int NDim() const;
-    
+    unsigned int NDataPoints() const; /// number of data points in fit
+
     // Modifiers -----------------------
     void init(TTree* fitresulttree,
 	      pwacompset* compset,
