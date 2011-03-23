@@ -107,8 +107,9 @@ rpwa::pwabkg::val(double m) const {
   // calculate breakup momentum
   complex<double> p;
   if(m<_m1+_m2)return complex<double>(1,0);
+  p=q(m,_m1,_m2);
   //std::cerr << _name <<"  val=" << exp(-_gamma*p) << std::endl;
-  return exp(-_gamma*p);
+  return exp(-_gamma*p.real());
 }
 
 
