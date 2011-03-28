@@ -104,40 +104,46 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
    rho1->setFixedChannel(0);
    rho1->phasespace()->doCalc();
    rho1->store_ms(10,1000);
-   mr=1.269;
-   wr=0.25;
-   dynMassDep* a1=new dynMassDep(mr,wr,3,masses);
-   decay21* ch1=new decay21(rho1,1,1);
-   a1->setFixedChannel(0);
-   a1->addDecayChannel(ch1);
-   a1->phasespace()->doCalc();
+   // mr=1.269;
+   // wr=0.25;
+   // dynMassDep* a1=new dynMassDep(mr,wr,3,masses);
+//    decay21* ch1=new decay21(rho1,1,1);
+//    a1->setFixedChannel(0);
+//    a1->addDecayChannel(ch1);
+//    a1->phasespace()->doCalc();
 
-//    a1->phasespace()->setSubSystems21(rho1);
-//    a1->phasespace()->doCalc(0);
-   a1->store_ms(10,1000);
-  
-   //mr=1.275;
-   mr=1.7;
-   // wr=0.109;
-  wr=0.3;
+// //    a1->phasespace()->setSubSystems21(rho1);
+// //    a1->phasespace()->doCalc(0);
+//    a1->store_ms(10,1000);
+   dynMassDep* rho2=new dynMassDep(mr+0.05,wr*2,2,masses);
+   rho2->setFixedChannel(0);
+   rho2->phasespace()->doCalc();
+   rho2->store_ms(10,1000);
+
+
+   mr=1.275;
+   //mr=1.7;
+    wr=0.109;
+   //wr=0.3;
   //mr=0.77549;
   //wr=0.1462;
-  dynMassDep* myBW=new dynMassDep(mr,wr,4,masses);
-  decay22* ch2=new decay22(rho1,rho1,0,0.5);
-  decay23* ch3=new decay23(rho1,a1,1,0.5);
-  myBW->addDecayChannel(ch2);
-  myBW->addDecayChannel(ch3);
-  myBW->phasespace()->doCalc();
-  //myBW->phasespace()->setSubSystems132(rho1,a1);
-  //myBW->phasespace()->setSubSystems22(rho1,rho1);
-  //myBW->phasespace()->setSubSystems21(rho1);
-  //myBW->phasespace()->doCalc();
-  myBW->store_ms(10,1000);
+    dynMassDep* myBW=rho1;
+ //  dynMassDep* myBW=new dynMassDep(mr,wr,4,masses);
+//   decay22* ch2=new decay22(rho1,rho1,0,1);
+//   //decay23* ch3=new decay23(rho1,a1,1,0.75);
+//   //myBW->addDecayChannel(ch3);
+//   myBW->addDecayChannel(ch2);
+//   myBW->phasespace()->doCalc();
+//   //myBW->phasespace()->setSubSystems132(rho1,a1);
+//   //myBW->phasespace()->setSubSystems22(rho1,rho1);
+//   //myBW->phasespace()->setSubSystems21(rho1);
+//   //myBW->phasespace()->doCalc();
+//   myBW->store_ms(10,1000);
 
 
   unsigned int nsteps=500;
   double step=0.005;
-  double m0=0.58;
+  double m0=0.28;
 
   double mtwopi=2*gChargedPionMass;
 
@@ -147,17 +153,21 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   TGraph* intens=new TGraph(nsteps); // intensity
   TGraph* intens_static=new TGraph(nsteps); // intensity static breitwigner
   TGraph* intens_nodisp=new TGraph(nsteps); // intensity without dispersive term
-  
+  TGraph* intens_bnl=new TGraph(nsteps); // intensity
+
   TGraph* rho=new TGraph(nsteps);    // phase space
   TGraph* argand=new TGraph(nsteps); // argand plot
   TGraph* argand_static=new TGraph(nsteps); // argand plot
   TGraph* argand_nodisp=new TGraph(nsteps); // argand plot
 
-  TGraph* ms=new TGraph(nsteps); // dispersion
+  //TGraph* ms=new TGraph(nsteps); // dispersion
 
   TGraph* phase=new TGraph(nsteps);
   TGraph* phase_static=new TGraph(nsteps);
   TGraph* phase_nodisp=new TGraph(nsteps);
+  TGraph* phase_bnl=new TGraph(nsteps);
+
+  TGraph* phase_diff=new TGraph(nsteps);
 
 
   double rho0=myBW->get_rho0(0);
@@ -171,22 +181,29 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
     complex<double> amp=myBW->val(m,0);
     complex<double> amp_static=myBW->val_static(m,0);
     complex<double> amp_nodisp=myBW->val_nodisperse(m,0);
-
+    complex<double> amp_bnl=myBW->val_bnl(m,0);
 
     double r=myBW->get_rho(m,0)/rho0;
 
     intens->SetPoint(i,m,norm(amp));
     intens_static->SetPoint(i,m,norm(amp_static));
     intens_nodisp->SetPoint(i,m,norm(amp_nodisp));
+    intens_bnl->SetPoint(i,m,norm(amp_bnl));
 
     phase->SetPoint(i,m,arg(amp));
     phase_static->SetPoint(i,m,arg(amp_static));
     phase_nodisp->SetPoint(i,m,arg(amp_nodisp));
-    
+    phase_bnl->SetPoint(i,m,arg(amp_bnl));
+
     rho->SetPoint(i,m,r);
     argand->SetPoint(i,amp.real(),amp.imag());
     argand_static->SetPoint(i,amp_static.real(),amp_static.imag());
     argand_nodisp->SetPoint(i,amp_nodisp.real(),amp_nodisp.imag());
+
+    complex<double> amp2=rho2->val(m,0);
+
+    double phdiff=arg(amp)-arg(amp2);
+    phase_diff->SetPoint(i,m,phdiff);
 
     //ms->SetPoint(i,m,myBW->calc_ms(m*m,0));
 
@@ -215,6 +232,8 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   intens_static->Draw("AC");
   intens_nodisp->SetLineColor(kBlue);
   intens_nodisp->Draw("SAME C");
+  intens_bnl->SetLineColor(kMagenta);
+  intens_bnl->Draw("SAME C");
   intens->SetLineColor(kRed);
   intens->Draw("SAME C");
   ///intens->Print();
@@ -230,12 +249,13 @@ TF1* f=new TF1("f","x*x/(x-10)/(x-6)",-2,20);
   c->cd(3);
   phase_static->Draw("AC");
   phase_nodisp->SetLineColor(kBlue);phase_nodisp->Draw("SAME C");
+  phase_bnl->SetLineColor(kMagenta);phase_bnl->Draw("SAME C");
   phase->SetLineColor(kRed);phase->Draw("SAME C");  
 
   c->cd(4);
   
-  
-  ms->Draw("AC");
+  phase_diff->Draw("APC");
+  // ms->Draw("AC");
 
   c->cd(5);
   myBW->phasespace()->getGraph(0)->Draw("AC");

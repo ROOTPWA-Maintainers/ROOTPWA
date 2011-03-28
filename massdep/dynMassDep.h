@@ -50,6 +50,7 @@ namespace rpwa {
     cd val_static(double m, unsigned int i);
     cd val_nodisperse(double m){return val_nodisperse(m,_channel);}
     cd val_nodisperse(double m, unsigned int i);
+    cd val_bnl(double m, unsigned int i);
     mcPhaseSpace* phasespace() const {return ps;}
     double get_rho0(unsigned int i)const;
     double get_rho(double m, unsigned int i)const {return ps->eval(m,i);}
