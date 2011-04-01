@@ -4,6 +4,10 @@
 #include "TGraph.h"
 #include "TCanvas.h"
 #include "TMath.h"
+#include "TApplication.h"
+#include "TROOT.h"
+#include "TSystem.h"
+
 
 #include "TCMatrix.h"
 
@@ -13,6 +17,60 @@
 //typedef TMatrixT<std::complex<double> > TMatrixC;
 
 using namespace std;
+
+
+
+ // REMEMBER to update "lu.hpp" header includes from boost-CVS
+ #include <vector.hpp>
+ #include <vector_proxy.hpp>
+ #include <matrix.hpp>
+ #include <triangular.hpp>
+ #include <lu.hpp>
+ #include <io.hpp>
+
+ namespace ublas = boost::numeric::ublas;
+ typedef complex<double> cnum;
+ typedef ublas::matrix<cnum> cmatrix;
+
+ /* Matrix inversion routine.
+    Uses lu_factorize and lu_substitute in uBLAS to invert a matrix */
+ template<class T>
+ bool InvertMatrix (const ublas::matrix<T>& input, ublas::matrix<T>& inverse) {
+ 	using namespace boost::numeric::ublas;
+ 	typedef permutation_matrix<std::size_t> pmatrix;
+ 	// create a working copy of the input
+ 	matrix<T> A(input);
+ 	// create a permutation matrix for the LU-factorization
+ 	pmatrix pm(A.size1());
+
+ 	// perform LU-factorization
+ 	int res = lu_factorize(A,pm);
+        if( res != 0 ) return false;
+
+ 	// create identity matrix of "inverse"
+ 	inverse.assign(ublas::identity_matrix<T>(A.size1()));
+
+ 	// backsubstitute to get the inverse
+ 	lu_substitute(A, pm, inverse);
+
+ 	return true;
+ }
+
+void Dagger(const cmatrix& input, cmatrix& output){
+  unsigned int n1=input.size1();
+  unsigned int n2=input.size2();
+  output.resize(n1,n2);
+   for (unsigned i = 0; i < n1; ++ i)
+        for (unsigned j = 0; j < n2; ++ j)
+	  output (i, j) = conj(input(j,i));
+}
+
+
+
+
+
+
+
 
  // simple single channel K function with several poles:
 complex<double> K(double s, double f, double s0,
@@ -56,46 +114,47 @@ complex<double> BW(double s, double f, double s0,
 
 ///////////////////////// T-Matrix a'la Novoseller ///////////////
 
-TCMatrix SMatrix(){
-
-  //TMatrixT<complex<double> > Sc(2,2);
-  //Sc[0][0]=complex<double>(1,0);
-  //Sc[0][1]=complex<double>(2,1);
-  //Sc[1][0]=complex<double>(3,2);
-  //Sc[1][1]=complex<double>(-1,0);
-
-  //TMatrixT<complex<double> > ScInv=Sc.Invert();
+cmatrix SMatrix(){
 
   using namespace boost::numeric::ublas;
-  matrix<complex<double> > m (3, 3);
+  cmatrix m (3, 3);
     for (unsigned i = 0; i < m.size1 (); ++ i)
-        for (unsigned j = 0; j < m.size2 (); ++ j)
-	  m (i, j) = complex<double>(3 * i, + j);
+      //for (unsigned j = 0; j < m.size2 (); ++ j)
+	  m (i, i) = complex<double>(1+i, 0);
     std::cout << m << std::endl;
 
+    
+    cmatrix a(m);
+    
+    std::cout << (InvertMatrix(m,a) ? "inverse:" : "not invertible!") << std::endl;
+    std::cout << a << std::endl;
 
- 
-  TCMatrix S(2,2);
-  TCMatrix SB(2,2); // Background
-  TCMatrix SR(2,2); // Resonance
+
+  cmatrix S(2,2);
+  cmatrix SB(2,2); // Background
+  cmatrix SR(2,2); // Resonance
 
   // parameterize Background:
   // SB=(1+iKb)(1-iKb)^-1
 
-  SR.set(0,0,TComplex(1,0));
-  SR.set(0,1,TComplex(2,1));
-  SR.set(1,0,TComplex(3,2));
-  SR.set(1,1,TComplex(-1,0));
+  SR(0,0)=cnum(1,0);
+  SR(0,1)=cnum(2,1);
+  SR(1,0)=cnum(3,2);
+  SR(1,1)=cnum(-1,0);
 
-  SB.set(0,0,TComplex(1,0));
-  SB.set(1,1,TComplex(1,-1));
+  SB(0,0)=cnum(1,0);
+  SB(1,1)=cnum(1,-1);
   
-  SB.set(1,0,TComplex(5,2));
-  SB.set(0,1,TComplex(-5,2));
+  SB(1,0)=cnum(5,2);
+  SB(0,1)=cnum(-5,2);
 
-  TCMatrix SRT=SR.dagger();
+  cmatrix SRT=herm(SR);
   
-  return SRT*SB*SR;
+  std::cout << SR << std::endl;
+  std::cout << SRT << std::endl;
+
+  cmatrix SRTSB=prod(SRT,SB);
+  return prod(SRTSB,SR);
 
 }
 
@@ -104,10 +163,15 @@ TCMatrix SMatrix(){
 
 
 ///////////////////////// Main ///////////////////////////////////
+int
+main(int argc, char** argv)
+{
 
-void testKMatrix(){
+  TApplication app("", 0, 0);
+  gROOT->SetStyle("Plain");
 
-  SMatrix().Print();
+
+  std::cout << SMatrix() << std::endl;
 
   double mstart=0.9;
   double mstep=0.02;
@@ -167,6 +231,11 @@ void testKMatrix(){
   c->cd(6);
   gArgandBW->Draw("AP");
 
+
+  gApplication->SetReturnFromRun(kFALSE);
+  gSystem->Run();
+
+  return 0;
 }
 
 
