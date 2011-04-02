@@ -56,19 +56,6 @@ using namespace std;
  	return true;
  }
 
-void Dagger(const cmatrix& input, cmatrix& output){
-  unsigned int n1=input.size1();
-  unsigned int n2=input.size2();
-  output.resize(n1,n2);
-   for (unsigned i = 0; i < n1; ++ i)
-        for (unsigned j = 0; j < n2; ++ j)
-	  output (i, j) = conj(input(j,i));
-}
-
-
-
-
-
 
 
 
@@ -97,7 +84,7 @@ complex<double> BW(double s, double f, double s0,
 		  const vector<double>& mu2, const vector<double>& g){
   
    // pipi phasespace:
-  double rho=sqrt((s-0.784)/s);
+  double rho=sqrt((s-0.0784)/s);
 
   unsigned int npoles=mu2.size();
   complex<double> BW;
@@ -114,20 +101,7 @@ complex<double> BW(double s, double f, double s0,
 
 ///////////////////////// T-Matrix a'la Novoseller ///////////////
 
-cmatrix SMatrix(){
-
-  using namespace boost::numeric::ublas;
-  cmatrix m (3, 3);
-    for (unsigned i = 0; i < m.size1 (); ++ i)
-      //for (unsigned j = 0; j < m.size2 (); ++ j)
-	  m (i, i) = complex<double>(1+i, 0);
-    std::cout << m << std::endl;
-
-    
-    cmatrix a(m);
-    
-    std::cout << (InvertMatrix(m,a) ? "inverse:" : "not invertible!") << std::endl;
-    std::cout << a << std::endl;
+cmatrix SMatrix(double s){
 
 
   cmatrix S(2,2);
@@ -137,18 +111,45 @@ cmatrix SMatrix(){
   // parameterize Background:
   // SB=(1+iKb)(1-iKb)^-1
 
+  cmatrix Kb(2,2);
+  // Kb = \alpha rho O rho
+  cmatrix rho(2,2);
+  double rho0=sqrt((s-0.0784)/s);
+  double rho1=sqrt((s-0.1)/s);
+  rho(0,0)=cnum(rho0,0);
+  rho(1,1)=cnum(rho1,0);
+  cnum alpha(1,0); // could use a polynomial here
+  double theta=0.2; // mixing angle between backgrounds
+  cnum c1(cos(theta),0);
+  cnum s1(sin(theta),0);
+  cmatrix O(2,2);
+  O(0,0)=c1;O(0,1)=s1;O(1,0)=s1;O(1,1)=-c1;
+  cout << O << endl;
+
+  Kb=alpha* prod(cmatrix(prod(rho,O)),rho);
+
+  cmatrix uni(2,2);
+  uni(0,0)=cnum(1,0);
+  uni(1,1)=cnum(1,0);
+
+  cnum i(0,-1);
+
+  cmatrix A(2,2);
+  A=uni-i*Kb;
+  cmatrix Ai(2,2);
+  InvertMatrix(A,Ai);
+  cmatrix B(2,2);
+  B=uni+i*Kb;
+  
+  SB=prod(B,A);
+  std::cout<< SB << std::endl;
+
   SR(0,0)=cnum(1,0);
   SR(0,1)=cnum(2,1);
   SR(1,0)=cnum(3,2);
   SR(1,1)=cnum(-1,0);
 
-  SB(0,0)=cnum(1,0);
-  SB(1,1)=cnum(1,-1);
-  
-  SB(1,0)=cnum(5,2);
-  SB(0,1)=cnum(-5,2);
-
-  cmatrix SRT=herm(SR);
+ cmatrix SRT=herm(SR);
   
   std::cout << SR << std::endl;
   std::cout << SRT << std::endl;
@@ -171,7 +172,7 @@ main(int argc, char** argv)
   gROOT->SetStyle("Plain");
 
 
-  std::cout << SMatrix() << std::endl;
+  std::cout << SMatrix(1.0) << std::endl;
 
   double mstart=0.9;
   double mstep=0.02;
