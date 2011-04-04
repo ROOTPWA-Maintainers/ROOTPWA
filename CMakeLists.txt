@@ -101,14 +101,6 @@ set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 
 
-# make CMAKE_SOURCE_DIR accessible via predefined macro CMAKE_SOURCE_DIR
-if(CMAKE_SOURCE_DIR)
-  add_definitions(-D'CMAKE_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\"')
-else()
-  add_definitions(-D'CMAKE_SOURCE_DIR=\"\"')
-endif()
-
-
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 # set(Boost_DEBUG 1)
@@ -254,7 +246,7 @@ if(Subversion_FOUND)
       OUTPUT_VARIABLE SVN_VERSION
       RESULT_VARIABLE _SVNVERSION_RETURN
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-    if(NOT ${_SVNVERSION_RETURN})
+    if(NOT _SVNVERSION_RETURN)
       message(STATUS "Subversion repository revision is '${SVN_VERSION}'")
     else()
       message(STATUS "Error running 'svnversion'. Repository version unknown.")
@@ -286,6 +278,34 @@ else()
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		)
 endif()
+
+
+# make some environment variables accessible via predefined macro variables
+# to be added: CUDA, MPI
+execute_process(COMMAND hostname
+  OUTPUT_VARIABLE HOSTNAME
+  RESULT_VARIABLE _HOSTNAME_RETURN
+  OUTPUT_STRIP_TRAILING_WHITESPACE)  # HOSTNAME is a shell builtin, _not_ an environment variable
+if(_HOSTNAME_RETURN)
+  set(HOSTNAME "")
+endif()
+foreach(_CMAKEVAR "CMAKE_HOST_SYSTEM_NAME" "CMAKE_HOST_SYSTEM_PROCESSOR" "CMAKE_HOST_SYSTEM_VERSION" "HOSTNAME" "CMAKE_SOURCE_DIR" "CMAKE_BUILD_TYPE" "ROOTSYS" "Boost_LIB_VERSION" "Boost_INCLUDE_DIRS" "LIBCONFIG")
+	if(_CMAKEVAR)
+		#message(STATUS "${_CMAKEVAR}=${${_CMAKEVAR}}")
+		add_definitions(-D'${_CMAKEVAR}=\"${${_CMAKEVAR}}\"')
+	else()
+		add_definitions(-D'${_CMAKEVAR}=\"\"')
+	endif()
+endforeach()
+foreach(_ENVVAR "USER")
+	set(_ENVVARVAL $ENV{${_ENVVAR}})
+	if(_ENVVARVAL)
+		#message(STATUS "${_ENVVAR}=${_ENVVARVAL}")
+		add_definitions(-D'${_ENVVAR}=\"${_ENVVARVAL}\"')
+	else()
+		add_definitions(-D'${_ENVVAR}=\"\"')
+	endif()
+endforeach()
 
 
 enable_testing()

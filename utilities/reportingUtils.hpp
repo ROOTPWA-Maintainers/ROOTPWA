@@ -48,6 +48,8 @@
 #include <vector>
 #include <cmath>
 
+#include "RVersion.h"
+
 
 namespace rpwa {
 
@@ -79,42 +81,77 @@ namespace rpwa {
 	//////////////////////////////////////////////////////////////////////////////
   // functions to print version and compilation info
 
-#ifndef SVN_VERSION  // SVN_VERSION set by Makefile
+// check macro variables set by Makefile
+#ifndef CMAKE_HOST_SYSTEM_NAME
+#define CMAKE_HOST_SYSTEM_NAME "undefined"
+#endif
+#ifndef CMAKE_HOST_SYSTEM_PROCESSOR
+#define CMAKE_HOST_SYSTEM_PROCESSOR "undefined"
+#endif
+#ifndef CMAKE_HOST_SYSTEM_VERSION
+#define CMAKE_HOST_SYSTEM_VERSION "undefined"
+#endif
+#ifndef HOSTNAME
+#define HOSTNAME "undefined"
+#endif
+#ifndef USER
+#define USER "undefined"
+#endif
+#ifndef CMAKE_SOURCE_DIR
+#define CMAKE_SOURCE_DIR "undefined"
+#endif
+#ifndef CMAKE_BUILD_TYPE
+#define CMAKE_BUILD_TYPE "undefined"
+#endif
+#ifndef SVN_VERSION
 #define SVN_VERSION "undefined"
 #endif
-	inline std::string svnVersion() { return SVN_VERSION; }
+#ifndef ROOTSYS
+#define ROOTSYS "undefined"
+#endif
+#ifndef Boost_LIB_VERSION
+#define Boost_LIB_VERSION "undefined"
+#endif
+#ifndef Boost_INCLUDE_DIRS
+#define Boost_INCLUDE_DIRS "undefined"
+#endif
+#ifndef LIBCONFIG
+#define LIBCONFIG "undefined"
+#endif
+
 
 	inline
 	void
 	printSvnVersion()
 	{
-		const std::string ver = svnVersion();
-		if (ver == "")
-			printInfo << "subversion repository revision is unknown." << std::endl;
-		else
-			printInfo << "subversion repository revision is '" << ver << "'" << std::endl;
+		printInfo << "subversion repository revision is '" << SVN_VERSION << "'" << std::endl;
 	}
 
-
-#ifndef CMAKE_SOURCE_DIR  // CMAKE_SOURCE_DIR set by Makefile
-#define CMAKE_SOURCE_DIR "undefined"
-#endif
-	inline std::string compileDir() { return CMAKE_SOURCE_DIR; }
 
 	inline
 	void
 	printCompilerInfo()
 	{
-		const std::string date = __DATE__;
-		const std::string time = __TIME__;
-		const std::string ver  = __VERSION__;
-		const std::string dir  = compileDir();
-		printInfo << "this executable was compiled in ";
-		if (dir != "")
-			std::cout << "'" << dir << "'";
-		else
-			std::cout << "unknown directory";
-		std::cout << " on " << date << " " << time << " by compiler " << ver << std::endl;
+		printInfo << "this executable was compiled" << std::endl
+		          << "    on a '" << CMAKE_HOST_SYSTEM_NAME << " " << CMAKE_HOST_SYSTEM_VERSION << " "
+		          << CMAKE_HOST_SYSTEM_PROCESSOR << "' machine" << std::endl
+		          << "    in directory '" << USER << "@" << HOSTNAME ":"
+		          << CMAKE_SOURCE_DIR << "'" << std::endl
+		          << "    on " << __DATE__ << " " << __TIME__
+		          << " by compiler version " << __VERSION__ << ","
+		          << " build type is '" << CMAKE_BUILD_TYPE << "'" << std::endl;
+	}
+
+
+	inline
+	void
+	printLibraryInfo()
+	{
+		printInfo << "this executable was linked against" << std::endl
+		          << "    ROOT version " << ROOT_RELEASE << " in '" << ROOTSYS << "'"  << std::endl
+		          << "    BOOST version " << Boost_LIB_VERSION << " "
+		          << "in '" << Boost_INCLUDE_DIRS << "'"  << std::endl
+		          << "    libConfig in '" << LIBCONFIG << "'" << std::endl;
 	}
 
 

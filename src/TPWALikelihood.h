@@ -154,7 +154,8 @@ public:
 	          const std::string& normIntFileName,
 	          const std::string& accIntFileName,
 	          const std::string& ampDirName    = ".",
-	          const unsigned int numbAccEvents = 0);  ///< prepares all internal data structures
+	          const unsigned int numbAccEvents = 0,
+	          const bool         useRootAmps   = false);  ///< prepares all internal data structures
 
 	void getIntegralMatrices(TCMatrix&            normMatrix,
 	                         TCMatrix&            accMatrix,
@@ -185,6 +186,7 @@ private:
 	                         const std::string& integralTKeyName = "integral");  ///< reads normalization and acceptance integrals from file
 
 	void readDecayAmplitudes(const std::string& ampDirName  = ".",
+	                         const bool         useRootAmps = false,
 	                         const std::string& ampLeafName = "amplitude");  ///< reads decay amplitudes from files in specified directory
   
   

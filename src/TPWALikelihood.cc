@@ -44,6 +44,7 @@
 #include "TSystem.h"
 #include "TCMatrix.h"
 #include "TStopwatch.h"
+#include "TTree.h"
 
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
@@ -52,6 +53,7 @@
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"
 #endif
+#include "amplitudeTreeLeaf.h"
 #include "TPWALikelihood.h"
 
 
@@ -538,13 +540,14 @@ TPWALikelihood<complexT>::init(const unsigned int rank,
                                const std::string& normIntFileName,
                                const std::string& accIntFileName,
                                const std::string& ampDirName,
-                               const unsigned int numbAccEvents)
+                               const unsigned int numbAccEvents,
+                               const bool         useRootAmps)
 {
 	_numbAccEvents = numbAccEvents;
 	readWaveList(waveListFileName);
 	buildParDataStruct(rank);
 	readIntegrals(normIntFileName, accIntFileName);
-	readDecayAmplitudes(ampDirName);
+	readDecayAmplitudes(ampDirName, useRootAmps);
 #ifdef USE_CUDA
 	if (_cudaEnabled)
 		cuda::likelihoodInterface<cuda::complex<value_type> >::init
@@ -846,6 +849,7 @@ TPWALikelihood<complexT>::readIntegrals
 template<typename complexT>
 void
 TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
+                                              const bool    useRootAmps,
                                               const string& ampLeafName)
 {
 	// check that normalization integrals are loaded
@@ -856,7 +860,8 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 	}
 	clear();
 
-	printInfo << "loading amplitude data" << endl;
+	printInfo << "loading amplitude data from " << ((useRootAmps) ? ".root" : ".amp")
+	          << " files" << endl;
 	// loop over amplitudes and read in data
 	unsigned int nmbEvents = 0;
 	bool         firstWave = true;
@@ -868,12 +873,11 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 			if (!firstWave)  // number of events is known except for first wave that is read in
 				amps.reserve(nmbEvents);
 			// read decay amplitudes
-			const string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
-			const string ampFileExt  = extensionFromPath(ampFilePath);
-			if (_debug)
-				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
+			string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
 #if AMPLITUDETREELEAF_ENABLED
-			if (ampFileExt == "root") {
+			if (useRootAmps) {
+				ampFilePath = changeFileExtension(ampFilePath, ".root");
+				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
 				// open amplitude file
 				TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
 				if (not ampFile or ampFile->IsZombie()) {
@@ -883,7 +887,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				// find amplitude tree
 				TTree*       ampTree     = 0;
 				const string ampTreeName = changeFileExtension(_waveNames[iRefl][iWave], ".amp");
-				inFile->GetObject(ampTreeName.c_str(), ampTree);
+				ampFile->GetObject(ampTreeName.c_str(), ampTree);
 				if (not ampTree) {
 					printWarn << "cannot find tree '" << ampTreeName << "' in file "
 					          << "'" << ampFilePath << "'. skipping." << endl;
@@ -891,7 +895,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				}
 				// connect tree leaf
 				amplitudeTreeLeaf* ampTreeLeaf = 0;
-				ampTree->SetBranchAddress(ampeafName.c_str(), &ampTreeLeaf);
+				ampTree->SetBranchAddress(ampLeafName.c_str(), &ampTreeLeaf);
 				for (long int eventIndex = 0; eventIndex < ampTree->GetEntriesFast(); ++eventIndex) {
 					ampTree->GetEntry(eventIndex);
 					if (!ampTreeLeaf) {
@@ -900,7 +904,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 						continue;
 					}
 					assert(ampTreeLeaf->nmbIncohSubAmps() == 1);
-					complexT amp = ampTreeLeaf->incohSubAmp(0);
+					complexT amp(ampTreeLeaf->incohSubAmp(0).real(), ampTreeLeaf->incohSubAmp(0).imag());
 					if (_useNormalizedAmps)         // normalize data, if option is switched on
 						amp /= sqrt(normInt.real());  // rescale decay amplitude
 					amps.push_back(amp);
@@ -908,6 +912,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 			} else
 #endif
 			{
+				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
 				ifstream ampFile(ampFilePath.c_str());
 				if (not ampFile) {
 					printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;

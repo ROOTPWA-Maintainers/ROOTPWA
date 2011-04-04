@@ -1,9 +1,9 @@
 //
 // reads uDST tree and generates mass bin directory structure with .root files in ROOTPWA format
 //
-// $Rev:: 1907                                          $: revision of last commit
-// $Author:: bgrube                                     $: author of last commit
-// $Date:: 2010-08-12 19:55:14 +0200 (Thu, 12 Aug 2010) $: date of last commit
+// $Rev::                                               $: revision of last commit
+// $Author::                                            $: author of last commit
+// $Date::                                              $: date of last commit
 //
 
 

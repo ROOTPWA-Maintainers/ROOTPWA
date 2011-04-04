@@ -60,6 +60,7 @@
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"
 #endif
+#include "amplitudeTreeLeaf.h"
 
 
 using namespace std;
@@ -73,13 +74,18 @@ usage(const string& progName,
 {
 	cerr << "usage:" << endl
 	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -o outfile -S start value file -N -n normfile"
+	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
 	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
 	     << "    where:" << endl
 	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
 	     << "        -w file    path to wavelist file" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
+#if AMPLITUDETREELEAF_ENABLED
+	     << "        -R         use .root amplitude files (default: false)" << endl
+#else
+	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
+#endif
 	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
 	     << "        -S file    path to file with start values (default: none; highest priority)" << endl
 	     << "        -s #       seed for random start values (default: 1234567)" << endl
@@ -119,18 +125,18 @@ printMinimizerStatus(ostream&   out,
 {
 	out << "minimization stopped after " << minimizer.NCalls() << " function calls. "
 	    << "minimizer status summary:" << endl
-	    << "    total number of parameters .......................... " << minimizer.NDim()             << endl
-	    << "    number of free parameters ........................... " << minimizer.NFree()            << endl
-	    << "    maximum allowed number of iterations ................ " << minimizer.MaxIterations()    << endl
-	    << "    maximum allowed number of function calls ............ " << minimizer.MaxFunctionCalls() << endl
-	    << "    minimizer status .................................... " << minimizer.Status()           << endl
+	    << "    total number of parameters .......................... " << minimizer.NDim()                 << endl
+	    << "    number of free parameters ........................... " << minimizer.NFree()                << endl
+	    << "    maximum allowed number of iterations ................ " << minimizer.MaxIterations()        << endl
+	    << "    maximum allowed number of function calls ............ " << minimizer.MaxFunctionCalls()     << endl
+	    << "    minimizer status .................................... " << minimizer.Status()               << endl
 	    << "    minimizer provides error and error matrix ........... " << yesNo(minimizer.ProvidesError()) << endl
 	    << "    minimizer has performed detailed error validation ... " << yesNo(minimizer.IsValidError())  << endl
-	    << "    estimated distance to minimum ....................... " << minimizer.Edm()              << endl
-	    << "    statistical scale used for error calculation ........ " << minimizer.ErrorDef()         << endl
-	    << "    strategy ............................................ " << minimizer.Strategy()         << endl
-	    << "    absolute tolerance .................................. " << minimizer.Tolerance()        << endl
-	    << "    precision ........................................... " << minimizer.Precision()        << endl;
+	    << "    estimated distance to minimum ....................... " << minimizer.Edm()                  << endl
+	    << "    statistical scale used for error calculation ........ " << minimizer.ErrorDef()             << endl
+	    << "    strategy ............................................ " << minimizer.Strategy()             << endl
+	    << "    absolute tolerance .................................. " << minimizer.Tolerance()            << endl
+	    << "    precision ........................................... " << minimizer.Precision()            << endl;
 	return out;
 }
 
@@ -148,6 +154,7 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
+	printLibraryInfo ();
 	printSvnVersion  ();
 
 	// force loading predefined std::complex dictionary
@@ -174,6 +181,7 @@ main(int    argc,
 	double       massBinMax         = 0;                      // [MeV/c^2]
 	string       waveListFileName   = "";                     // wavelist filename
 	string       ampDirName         = ".";                    // decay amplitude directory name
+	bool         useRootAmps        = true;                   // if true .root amplitude files are read
 	string       outFileName        = "fitresult.root";       // output filename
 	string       startValFileName   = "";                     // file with start values
 	bool         useNormalizedAmps  = false;                  // if true normalized amplitudes are used
@@ -189,7 +197,7 @@ main(int    argc,
 	extern char* optarg;
 	// extern int optind;
 	int c;
-	while ((c = getopt(argc, argv, "l:u:w:d:o:S:s:x::Nn:a:A:r:M:m:g:t:cqh")) != -1)
+	while ((c = getopt(argc, argv, "l:u:w:d:Ro:S:s:x::Nn:a:A:r:M:m:g:t:cqh")) != -1)
 		switch (c) {
 		case 'l':
 			massBinMin = atof(optarg);
@@ -202,6 +210,11 @@ main(int    argc,
 			break;
 		case 'd':
 			ampDirName = optarg;
+			break;
+		case 'R':
+#if AMPLITUDETREELEAF_ENABLED
+			useRootAmps = true;
+#endif
 			break;
 		case 'o':
 			outFileName = optarg;
@@ -274,6 +287,7 @@ main(int    argc,
 	cout << "    mass bin [" <<  massBinMin << ", " <<  massBinMax << "] MeV/c^2" << endl
 	     << "    path to wave list file ......................... '" << waveListFileName << "'" << endl
 	     << "    path to amplitude directory .................... '" << ampDirName       << "'" << endl
+	     << "    use .root amplitude files ...................... "  << yesNo(useRootAmps)      << endl
 	     << "    path to output file ............................ '" << outFileName      << "'" << endl
 	     << "    path to file with start values ................. '" << startValFileName << "'" << endl
 	     << "    seed for random start values ................... "  << startValSeed            << endl;
@@ -300,7 +314,8 @@ main(int    argc,
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
 #endif  
-	L.init(rank, waveListFileName, normIntFileName, accIntFileName, ampDirName, numbAccEvents);
+	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
+	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
 		cout << L << endl;
 	const unsigned int nmbPar  = L.NDim();
