@@ -101,7 +101,15 @@ complex<double> BW(double s, double f, double s0,
 
 ///////////////////////// T-Matrix a'la Novoseller ///////////////
 
-cmatrix SMatrix(double s){
+double rhoPiPi(double s){
+  return sqrt((s-0.0784)/s);
+}
+double rho2(double s){
+  return sqrt((s-0.2)/s);
+}
+
+
+cmatrix TMatrix(double s){
 
 
   cmatrix S(2,2);
@@ -114,25 +122,33 @@ cmatrix SMatrix(double s){
   cmatrix Kb(2,2);
   // Kb = \alpha rho O rho
   cmatrix rho(2,2);
-  double rho0=sqrt((s-0.0784)/s);
-  double rho1=sqrt((s-0.1)/s);
+  double rho0=rhoPiPi(s);
+  double rho1=rho2(s);
   rho(0,0)=cnum(rho0,0);
   rho(1,1)=cnum(rho1,0);
   cnum alpha(1,0); // could use a polynomial here
-  double theta=0.2; // mixing angle between backgrounds
+  double theta=0.5; // mixing angle between backgrounds
   cnum c1(cos(theta),0);
   cnum s1(sin(theta),0);
   cmatrix O(2,2);
   O(0,0)=c1;O(0,1)=s1;O(1,0)=s1;O(1,1)=-c1;
-  cout << O << endl;
+  
 
-  Kb=alpha* prod(cmatrix(prod(rho,O)),rho);
+  Kb=alpha * prod(cmatrix(prod(rho,O)),rho);
 
   cmatrix uni(2,2);
   uni(0,0)=cnum(1,0);
   uni(1,1)=cnum(1,0);
+  uni(0,1)=cnum(0,0);
+  uni(1,0)=cnum(0,0);
+
 
   cnum i(0,-1);
+
+  
+  //Kb=uni;
+  //Kb(0,0)=cnum(0,0);
+  //Kb(1,1)=cnum(0,0);
 
   cmatrix A(2,2);
   A=uni-i*Kb;
@@ -141,22 +157,80 @@ cmatrix SMatrix(double s){
   cmatrix B(2,2);
   B=uni+i*Kb;
   
-  SB=prod(B,A);
-  std::cout<< SB << std::endl;
+  SB=prod(B,Ai);
 
-  SR(0,0)=cnum(1,0);
-  SR(0,1)=cnum(2,1);
-  SR(1,0)=cnum(3,2);
-  SR(1,1)=cnum(-1,0);
+  std::cout<< "SB=" << SB << std::endl;
+  std::cout<< "SB*SBT=" << prod(SB,herm(SB)) << std::endl;
 
- cmatrix SRT=herm(SR);
+  // two resonances:
+  // SR=S1*S2
+  // m2>m1
+  // Sk=1+[i-xk+sqrt(1+xk^2)]Tk
+  // xk=(mk-sqrt(s))/(0.5\Sum_r\gamma_rk)
+  // T_k(ij)=(0.5\epsik\epsjk\sqrt(\gamma_ik\gamma_jk))/(mk-sqrt(s)-0.5iSum_r \gamma_rk
+  // \gamma_ik=\Gamma_ik\frac{\rho(m)}{\rho(mk)\}
+
+  //channel 1
+  double m1=1.8;
+  double m2=2.4;
+  double G1=0.2;double G11=0.8*G1; double G12=(1.-0.8)*G1;
+  double G2=0.2;double G21=0.6*G2; double G22=(1.-0.6)*G2;
+  double eps11=1;double eps12=-1;double eps21=-1;double eps22=1;
+  double g11=G11*rhoPiPi(s)/rhoPiPi(m1*m1);
+  double g12=G12*rho2(s)/rho2(m1*m1);
+  double g21=G21*rhoPiPi(s)/rhoPiPi(m2*m2);
+  double g22=G22*rho2(s)/rho2(m2*m2);
+
+  // resonance 1:
+  double m=sqrt(s);
+  cnum denom1(m1-m,-0.5*(g11+g12));
+  cmatrix T1(2,2);
+  T1(0,0)=cnum(0.5*eps11*eps11*sqrt(g11*g11),0)/denom1;
+  T1(0,1)=cnum(0.5*eps11*eps12*sqrt(g11*g12),0)/denom1;
+  T1(1,0)=cnum(0.5*eps12*eps11*sqrt(g12*g11),0)/denom1;
+  T1(1,1)=cnum(0.5*eps12*eps12*sqrt(g12*g12),0)/denom1;
   
-  std::cout << SR << std::endl;
-  std::cout << SRT << std::endl;
+
+
+  double x1=2.*(m1-m)/(g11+g12);
+  cmatrix S1=uni+cnum(sqrt(1+x1*x1)-x1,1)*T1;
+
+  std::cout << "S1*S1T=" << prod(S1,herm(S1)) << std::endl;
+
+  // resonance 2:
+  cnum denom2(m2-m,-0.5*(g21+g22));
+  cmatrix T2(2,2);
+  T2(0,0)=cnum(0.5*eps21*eps21*sqrt(g21*g21),0)/denom2;
+  T2(0,1)=cnum(0.5*eps21*eps22*sqrt(g21*g22),0)/denom2;
+  T2(1,0)=cnum(0.5*eps22*eps21*sqrt(g22*g21),0)/denom2;
+  T2(1,1)=cnum(0.5*eps22*eps22*sqrt(g22*g22),0)/denom2;
+  
+  double x2=2.*(m2-m)/(g21+g22);
+  cmatrix S2=uni+cnum(sqrt(1+x2*x2)-x2,1)*T2;
+
+  SR=prod(S1,S2);
+  //SR=uni;
+  cmatrix SRT=herm(SR);
+  std::cout << "SR="<< SR << std::endl;
+  std::cout << "SRT="<<SRT << std::endl;
+  
+  // check unitarity
+  std::cout << "SR*SRT=" << prod(SR,SRT) << std::endl;
+
+  //std::cout << SR << std::endl;
+  //std::cout << SRT << std::endl;
 
   cmatrix SRTSB=prod(SRT,SB);
-  return prod(SRTSB,SR);
+  S=prod(SRTSB,SR);
 
+  // check unitarity
+  std::cout << "S="<< S << std::endl;
+  std::cout << "S*ST=" << prod(S,herm(S)) << std::endl;
+  cmatrix T=cnum(0,-0.5)*(S-uni);
+   std::cout << "T="<< T << std::endl;
+
+  return S;
+  
 }
 
 
@@ -172,11 +246,9 @@ main(int argc, char** argv)
   gROOT->SetStyle("Plain");
 
 
-  std::cout << SMatrix(1.0) << std::endl;
-
-  double mstart=0.9;
+  double mstart=1.4;
   double mstep=0.02;
-  unsigned int nsteps=100;
+  unsigned int nsteps=200;
   
   vector<double> mu2; 
   mu2.push_back(2.43*2.43);
@@ -198,9 +270,17 @@ main(int argc, char** argv)
   TGraph* gPhaseBW=new TGraph(nsteps);
   TGraph* gArgandBW=new TGraph(nsteps);
 
+  TGraph* gIS=new TGraph(nsteps);
+  TGraph* gPhaseS=new TGraph(nsteps);
+  TGraph* gArgandS=new TGraph(nsteps);
+
   for(unsigned int i=0;i<nsteps;++i){
     double m=mstart+(double)i*mstep;
     double s=m*m;
+    
+    std::cout << "m=" << m << "   ---------------------" <<  std::endl;
+
+
     complex<double> amp=K(s,f,s0,mu2,g);
     gI->SetPoint(i,m,norm(amp));
     double phi=arg(amp);
@@ -215,10 +295,16 @@ main(int argc, char** argv)
     gIBW->SetPoint(i,m,norm(ampBW));
     gPhaseBW->SetPoint(i,m,arg(ampBW));
     gArgandBW->SetPoint(i,ampBW.real(),ampBW.imag());
+
+    cnum ampT=(TMatrix(s))(1,0);
+    
+    gIS->SetPoint(i,m,norm(ampT));
+    gPhaseS->SetPoint(i,m,arg(ampT));
+    gArgandS->SetPoint(i,ampT.real(),ampT.imag());
   }
 	
-  TCanvas* c=new TCanvas("c","c",10,10,1000,600);
-  c->Divide(3,2);
+  TCanvas* c=new TCanvas("c","c",10,10,1000,1000);
+  c->Divide(3,3);
   c->cd(1);
   gI->Draw("APC");
   c->cd(2);
@@ -231,6 +317,13 @@ main(int argc, char** argv)
   gPhaseBW->Draw("AP");
   c->cd(6);
   gArgandBW->Draw("AP");
+ c->cd(7);
+  gIS->Draw("APC");
+  c->cd(8);
+  gPhaseS->Draw("AP");
+  c->cd(9);
+  gArgandS->Draw("AP");
+
 
 
   gApplication->SetReturnFromRun(kFALSE);
