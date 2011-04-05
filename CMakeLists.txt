@@ -147,8 +147,8 @@ find_package(ROOT 5.26 REQUIRED Minuit2)
 
 # setup CUDA
 set(USE_CUDA FALSE)
-#set(CUDA_SHADER_MODELS "13" "20")
-set(CUDA_SHADER_MODELS "13")
+set(CUDA_SHADER_MODELS "13" "20")
+#set(CUDA_SHADER_MODELS "13")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
   # use default SDK path, if not defined by user
   set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")

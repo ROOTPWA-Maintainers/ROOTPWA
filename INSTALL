@@ -56,6 +56,7 @@ Before you can build ROOTPWA you need to install the following software:
   without any problems. We recommend to install the library into the
   same directory as the source
   &> ./configure --prefix=/your/folder/to/intall/libconfig
+  &> make && make install
 
 
 * Boost

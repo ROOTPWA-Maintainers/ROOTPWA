@@ -181,7 +181,8 @@ main(int    argc,
 	double       massBinMax         = 0;                      // [MeV/c^2]
 	string       waveListFileName   = "";                     // wavelist filename
 	string       ampDirName         = ".";                    // decay amplitude directory name
-	bool         useRootAmps        = true;                   // if true .root amplitude files are read
+	bool         useRootAmps        = false;                  // if true .root amplitude files are read
+	//bool         useRootAmps        = true;                   // if true .root amplitude files are read
 	string       outFileName        = "fitresult.root";       // output filename
 	string       startValFileName   = "";                     // file with start values
 	bool         useNormalizedAmps  = false;                  // if true normalized amplitudes are used
@@ -572,7 +573,7 @@ main(int    argc,
 				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 				vector<double> phaseSpaceIntegral;
 				L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
-				const int normNmbEvents = useNormalizedAmps ? 1 : L.nmbEvents();  // number of events to normalize to
+				const int normNmbEvents = (useNormalizedAmps) ? 1 : L.nmbEvents();  // number of events to normalize to
 
 				cout << "filling fitResult:" << endl
 				     << "    number of fit parameters ............... " << nmbPar                        << endl
@@ -635,7 +636,7 @@ main(int    argc,
 				L.getIntegralMatrices(integralMatrix, accMatrix, phaseSpaceIntegral);
 				//integralMatrix.Print();
 				// representation of number of events depends on whether normalization was done
-				const int nmbEvt = useNormalizedAmps ? 1 : L.nmbEvents();
+				const int nmbEvt = (useNormalizedAmps) ? 1 : L.nmbEvents();
 	
 				cout << "filling TFitBin:" << endl
 				     << "    number of fit parameters ........... " << nmbPar                 << endl
