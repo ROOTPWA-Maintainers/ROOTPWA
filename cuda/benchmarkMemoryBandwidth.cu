@@ -58,6 +58,14 @@ using namespace std;
 using namespace rpwa;
 
 
+// increasing ALIGN from 8 to 16 doubles throughput for double scalars
+// in copy and write operations, but leaves read-only bandwidth unchanged
+// effective bandwitdth for floats drops to half
+// explicit specializations with correct alignment
+template struct ALIGN( 8) cuda::complexStruct<float >;
+template struct ALIGN(16) cuda::complexStruct<double>;
+
+
 typedef cuda::complexTest<float2,                      float > float2Complex;
 typedef cuda::complexTest<double2,                     double> double2Complex;
 typedef cuda::complexTest<cuda::complexStruct<float >, float > floatStructComplex;
@@ -321,7 +329,7 @@ int main()
 	// !!! somehow there seems to be a 512 MByte limit for textures
 	unsigned int nmbElements =
 		min((unsigned long)1 << 29,
-		    (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 10) / 4) / sizeof(float4);
+		    (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 8) / 4) / sizeof(float4);
 	const unsigned int nmbElementsPerThread = nmbElements / (nmbBlocks * nmbThreadsPerBlock);
 	nmbElements = nmbElementsPerThread * nmbBlocks * nmbThreadsPerBlock;
 	float4* deviceInData [2];
@@ -338,7 +346,7 @@ int main()
 	cutilSafeCall(cudaBindTexture(0, cuda::float2Texture, deviceInData[0], sizeof(float2) * nmbElements));
 	cutilSafeCall(cudaBindTexture(0, cuda::float4Texture, deviceInData[0], sizeof(float4) * nmbElements));
   
-	if (0) {
+	if (1) {
 		printInfo << "running global memory copy benchmarks ------------------------------------" << endl;
 		BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float,               2);
 		BENCHMARK(GLOBAL_MEM,   copyGlobalMemKernel,  float2,              2);
@@ -353,7 +361,7 @@ int main()
 		BENCHMARK(GLOBAL_MEM_2, copyGlobalMem2Kernel, double,              4);
 	}
 
-	if (0) {
+	if (1) {
 		printInfo << "running global memory write-only benchmarks ------------------------------" << endl;
 		BENCHMARK(GLOBAL_MEM,   writeOnlyGlobalMemKernel,  float,               1);
 		BENCHMARK(GLOBAL_MEM,   writeOnlyGlobalMemKernel,  float2,              1);
@@ -368,7 +376,7 @@ int main()
 		BENCHMARK(GLOBAL_MEM_2, writeOnlyGlobalMem2Kernel, double,              2);
 	}
 
-	if (0) {
+	if (1) {
 		printInfo << "running global memory read-only benchmarks -------------------------------" << endl;
 		BENCHMARK(GLOBAL_MEM,   readOnlyGlobalMemKernel,  float,               1);
 		BENCHMARK(GLOBAL_MEM,   readOnlyGlobalMemKernel,  float2,              1);
@@ -396,14 +404,14 @@ int main()
 		BENCHMARK(GLOBAL_MEM, readOnlySameLocGlobalMemKernel, doubleStructComplex, 1);
 	}
 
-	if (0) {
+	if (1) {
 		printInfo << "running texture memory copy benchmarks -----------------------------------" << endl;
 		BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float,  2);
 		BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float2, 2);
 		BENCHMARK(TEXTURE_MEM, copyTextureMemKernel, float4, 2);
 	}
 	
-	if (0) {
+	if (1) {
 		printInfo << "running texture memory read-only benchmarks ------------------------------" << endl;
 		BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float,  1);
 		BENCHMARK(TEXTURE_MEM, readOnlyTextureMemKernel, float2, 1);

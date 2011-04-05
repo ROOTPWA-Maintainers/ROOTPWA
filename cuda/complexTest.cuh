@@ -50,22 +50,14 @@
 #include "../utilities/cudaUtils.hpp"
 
 
-// boosting ALIGN from 8 to 16 doubles throughput for double scalars
-// in copy and write operations, but leaves read-only bandwidth unchanged
-// effective bandwitdth for floats drops to half
-#define COMPLEXTEST_ALIGN 8
-
-
 namespace rpwa {
 
 	namespace cuda {
 
 
 		// possible storage type
-		// without __align__ directive throughput drops to 50%
 		template<typename T>
 		struct
-		ALIGN(COMPLEXTEST_ALIGN)
 		complexStruct {
 			T x;
 			T y;

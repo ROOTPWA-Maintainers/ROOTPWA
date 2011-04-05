@@ -257,7 +257,7 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 			(reinterpret_cast<cuda::complex<value_type>*>(prodAmps.data()),
 			 prodAmps.num_elements(), prodAmpFlat, _rank);
 	} else
-#else  // USE_CUDA
+#endif
 	{
 		accumulator_set<value_type, stats<tag::sum(compensated)> > logLikelihoodAcc;
 		for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt) {
@@ -281,7 +281,6 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 		}
 		logLikelihood = sum(logLikelihoodAcc);
 	}
-#endif  // USE_CUDA
 	// log time needed for likelihood calculation
 	timer.Stop();
 	_funcCallInfo[DOEVAL].funcTime(timer.RealTime());
@@ -417,7 +416,7 @@ TPWALikelihood<complexT>::Gradient
 			 reinterpret_cast<cuda::complex<value_type>*>(derivatives.data()),
 			 derivativeFlat);
 	} else
-#else  // USE_CUDA
+#endif
 	{
 		accumulator_set<value_type, stats<tag::sum(compensated)> > derivativeFlatAcc;
 		multi_array<accumulator_set<complexT, stats<tag::sum(compensated)> >, 3>
@@ -459,7 +458,6 @@ TPWALikelihood<complexT>::Gradient
 					derivatives[iRank][iRefl][iWave] = sum(derivativesAcc[iRank][iRefl][iWave]);
 		derivativeFlat = sum(derivativeFlatAcc);
 	}
-#endif  // USE_CUDA
 	// log time needed for gradient calculation
 	timer.Stop();
 	_funcCallInfo[GRADIENT].funcTime(timer.RealTime());
