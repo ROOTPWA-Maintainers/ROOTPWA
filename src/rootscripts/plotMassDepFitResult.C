@@ -21,8 +21,10 @@
 #include <map>
 using namespace std;
 
+TString fitname;
 
-TString parseTitle(TString l){
+
+TString parseTitle(TString l, unsigned int level=10){
  // setup isobar dictionary key->tex
   map<TString, TString> isobars;
   isobars["pi+"     ] = "\\pi^{+}";
@@ -55,7 +57,6 @@ TString parseTitle(TString l){
   isobars["eta1440" ] = "\\eta(1420)";
   isobars["eta21645"] = "\\eta_{2}(1645)";
   isobars["rho31690"] = "\\rho_{3(1690)";
-  isobars["a21320"  ] = "a_{2}(1320)}";
 
    // remove file extension
     l.Remove(l.Length() - 4);
@@ -77,6 +78,7 @@ TString parseTitle(TString l){
      // tokenize input
     TObjArray* tokens = l.Tokenize("_=");
     int        mode   = 0;
+    unsigned int counter=0;
     for (int i = 0; i < tokens->GetEntries(); ++i) {
       const TString token = ((TObjString*)tokens->At(i))->GetString();
       cerr << "    " << mode << ": '" << token << "'" << endl;
@@ -101,6 +103,8 @@ TString parseTitle(TString l){
 	l.Remove(0, token.Length());
 	mode = 0;
       } else if (mode == 2) {
+	if(level<=counter) break;
+	++counter;
 	res << "\\rightarrow ";
 	if (isobars.find(token) != isobars.end())
 	  res << isobars[token];
@@ -117,6 +121,8 @@ TString parseTitle(TString l){
     }
     res;    
 
+    tokens->Delete();
+    delete tokens;
     TString result(res.str().c_str());
     return result;
 }
@@ -168,10 +174,10 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
     // 5 pi on pb
     xc=xcenter+0.05;
     //xc=xcenter+0.1;
-    yc=ycenter+0.32;
+    yc=ycenter+0.31;
     TLatex* react=new TLatex(xc,yc,"#pi^{-} Pb #rightarrow #pi^{-}#pi^{+}#pi^{-}#pi^{+}#pi^{-} Pb");
     react->SetNDC();
-    react->SetTextSize(0.0395);
+    react->SetTextSize(0.039);
     react->Draw();
     
     // add waves 
@@ -183,18 +189,64 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
     TString wave;
     if(!title.Contains("---")){
       cout << "Processing Intensity:" << endl;
-      wave=parseTitle(title);
+      wave=parseTitle(title,0);
       cout << wave << endl;
+      yc=ycenter+0.24;
+    }
+    else {
+      // Split
+      unsigned int i = title.Index("---");
+      TString wave1=title(3,i-3);
+      TString wave2=title(i+3,title.Length());
+      
+      cout << parseTitle(wave1,0) << endl;
+      cout << parseTitle(wave2,0) << endl;
+      
+      
+
+      wave="#splitline{Interference - ";
+      wave+= title.Contains("Re") ? "real part" : "imaginary part"; 
+      wave+="}{#splitline{";
+      wave+=parseTitle(wave1,0);
+      wave+="}{";
+      wave+=parseTitle(wave2,0);
+      wave+="}}";
+	   // check if we put text up or down
+     double max=gr->GetYaxis()->GetXmax();
+     double min=gr->GetYaxis()->GetXmin();
+     // get last data point
+     TGraph* g=(TGraph*)gr->GetListOfGraphs()->At(0);
+     double yg,xg;
+     g->GetPoint((int)(g->GetN()*0.6),xg,yg);
+     if(fabs(max-yg)>fabs(min-yg)){
+	yc=ycenter+0.24;
+     }
+     else{
+       yc=ycenter-0.25;
+     }
+
 
     }
 
-     xc=xcenter+-0.1;
+     xc=xcenter+0.05;
     //xc=xcenter+0.1;
-    yc=ycenter+0.28;
+  
     TLatex* waveL=new TLatex(xc,yc,wave);
     waveL->SetNDC();
-    waveL->SetTextSize(0.0295);
+    waveL->SetTextSize(0.03);
     waveL->Draw();
+
+
+     // fitname
+    xc=xcenter-0.4;
+    //if(right)xc=xcenter+0.1;
+     yc=ycenter+0.42;
+    TLatex* fitNameL=new TLatex(xc,yc,fitname);
+    fitNameL->SetNDC();
+    fitNameL->SetTextSize(0.025);
+    fitNameL->Draw();
+
+
     cpopup->UseCurrentStyle();
     cpopup->Update();
     //cpopup->Flush();
@@ -208,7 +260,9 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
 //------------------------------------------------------
 
 
-void plotMassDepFitResult(TString infilename, TString plotdir="plots/"){
+void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle=""){
+  if(fittitle.Length()<=1)fitname=infilename;
+  else fitname=fittitle;
   TFile* infile=TFile::Open(infilename);
   Int_t font=132;
   gStyle->SetTextFont(font);
