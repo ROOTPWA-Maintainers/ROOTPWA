@@ -1,0 +1,23 @@
+#!/bin/bash
+# Select queue
+#$ -l medium=TRUE,h_vmem=100M
+# Divert output
+#$ -o /afs/e18/compass/analysis/sneubert/LOGS
+# Write error in same file
+#$ -j y
+
+# this script requires KEY to be set to the keydirectory!
+# and BIN to be set to the mass bin directory
+
+#export OUTPATH=/lustre/e18/user/sneubert/5PiMC/Model4c
+OUTPATH=/afs/e18/compass/analysis/sneubert/5PiModels/Model4Data
+export MODEL=generators/5piModel4.list
+export CONF=generators/5piDiffractive2004.conf
+export NORMFILE=generators/5piIntegrals.dat
+export NUMEVT=20000
+
+
+cd $HOME/scratch/COMPASS/rootpwa/trunk
+. setup.sh
+
+genpw -n $NUMEVT -w $MODEL -s 12345$SGE_TASK_ID -k keyfiles/key5pi/ALL/ -i $NORMFILE  -r $CONF -o $OUTPATH/genpw.$SGE_TASK_ID.root > /dev/null

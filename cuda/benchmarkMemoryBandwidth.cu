@@ -328,8 +328,8 @@ int main()
 	// const unsigned int nmbElements          = nmbBlocks * nmbThreadsPerBlock * nmbElementsPerThread;
 	// !!! somehow there seems to be a 512 MByte limit for textures
 	unsigned int nmbElements =
-		min((unsigned long)1 << 29,
-		    (deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 8) / 4) / sizeof(float4);
+	  min((unsigned long)1 << 29,
+	      (unsigned long)(deviceProp.totalGlobalMem - deviceProp.totalGlobalMem / 8) / 4) / sizeof(float4);
 	const unsigned int nmbElementsPerThread = nmbElements / (nmbBlocks * nmbThreadsPerBlock);
 	nmbElements = nmbElementsPerThread * nmbBlocks * nmbThreadsPerBlock;
 	float4* deviceInData [2];

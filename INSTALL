@@ -55,7 +55,7 @@ Before you can build ROOTPWA you need to install the following software:
   The compilation and installation is straight forward and should work
   without any problems. We recommend to install the library into the
   same directory as the source
-  &> ./configure --prefix=/your/folder/to/intall/libconfig
+  &> ./configure --prefix=/your/folder/to/install/libconfig
   &> make && make install
 
 
@@ -71,8 +71,11 @@ Before you can build ROOTPWA you need to install the following software:
   If you have a CUDA capable nvidia Graphics Card (Shader Model 1.3 or
   higher) you may want to install the CUDA framework (version 3.0 or
   higher). The build system tries to find your CUDA installation based
-  on the NVSDKCUDA_ROOT environment variable. If it is succesful the
-  CUDA features are enabled automatically.
+  on the NVSDKCUDA_ROOT environment variable. This should point to
+  <your NVIDIA_GPU_Computing_SDK directory>/C. If NVSDKCUDA_ROOT is
+  not set the build system assumes the SDK to be located in
+  ${HOME}/NVIDIA_GPU_Computing_SDK/C. If a CUDA installation is found,
+  the CUDA features are enabled automatically.
 
 
 * MPI (optional, experimental)

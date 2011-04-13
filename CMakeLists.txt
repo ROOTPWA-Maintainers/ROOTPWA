@@ -113,9 +113,9 @@ else()
 endif()
 # setup uprooted Boost libraries
 set(uprootedBoost_INCLUDE_DIRS
-	# local copy of Boost Graph Library from V1.43.0; overides graph library in Boost supplied by user
+  # local copy of Boost Graph Library from V1.43.0; overides graph library in Boost supplied by user
   ${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
-	)
+  )
 message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'")
 
 
@@ -146,52 +146,57 @@ find_package(ROOT 5.26 REQUIRED Minuit2)
 
 
 # setup CUDA
-set(USE_CUDA FALSE)
 set(CUDA_SHADER_MODELS "13" "20")
-#set(CUDA_SHADER_MODELS "13")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
   # use default SDK path, if not defined by user
   set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
 endif()
 find_package(CUDA 3.0)
+set(USE_CUDA FALSE)
 if(NOT CUDA_FOUND)
-  message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
   set(USE_CUDA FALSE)
+  message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
 else()
   message(STATUS "Found CUDA version ${CUDA_VERSION}")
   message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'")
   message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'")
   message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
   if(NOT CUDA_SDK_ROOT_DIR)
-    message(FATAL_ERROR "Could not find CUDA SDK directory in '$ENV{NVSDKCUDA_ROOT}'. Is environment variable $NVSDKCUDA_ROOT set correctly.")
+    set(USE_CUDA FALSE)
+    message(STATUS "Found CUDA intallation, but could not find CUDA SDK in '$ENV{NVSDKCUDA_ROOT}'. Check that $NVSDKCUDA_ROOT is set correctly. No CUDA components will be generated.")
   else()
-		# find cuda utility library
-		find_library(CUDA_CUTIL_LIBRARY
-			NAMES cutil_${CMAKE_SYSTEM_PROCESSOR}
-			PATHS ${CUDA_SDK_ROOT_DIR}/lib
-			NO_DEFAULT_PATH
-			)
-		if(NOT CUDA_CUTIL_LIBRARY)
-			message(FATAL_ERROR "Could not find CUDA utility library 'cutil_${CMAKE_SYSTEM_PROCESSOR}' in '${CUDA_SDK_ROOT_DIR}/lib'")
-		else()
-			set(USE_CUDA TRUE)
-			message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
-			message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'")
-			message(STATUS "Enabling compilation of CUDA components")
-			# define for which shader models code is generated
-			message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
-			foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
-				list(APPEND CUDA_NVCC_FLAGS
-					"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
-			endforeach()
-			#list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
-			# set some global switches
-			set(CUDA_BUILD_CUBIN     OFF)
-			set(CUDA_BUILD_EMULATION OFF)
-			set(CUDA_VERBOSE_BUILD   OFF)
-			# enable CUDA code in other parts of the project
-			add_definitions(-DUSE_CUDA)
-		endif()
+    # find cuda utility library
+    set(CUDA_CUTIL_LIB_SUFFIX "i386")
+    if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
+      set(CUDA_CUTIL_LIB_SUFFIX ${CMAKE_SYSTEM_PROCESSOR})
+    endif()
+    find_library(CUDA_CUTIL_LIBRARY
+      NAMES cutil_${CUDA_CUTIL_LIB_SUFFIX}
+      PATHS ${CUDA_SDK_ROOT_DIR}/lib
+      NO_DEFAULT_PATH
+      )
+    if(NOT CUDA_CUTIL_LIBRARY)
+      set(USE_CUDA FALSE)
+      message(STATUS "Found CUDA intallation, but could not find CUDA utility library 'cutil_${CUDA_CUTIL_LIB_SUFFIX}' in '${CUDA_SDK_ROOT_DIR}/lib'. No CUDA components will be generated.")
+    else()
+      set(USE_CUDA TRUE)
+      message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
+      message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'")
+      message(STATUS "Enabling compilation of CUDA components")
+      # define for which shader models code is generated
+      message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
+      foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
+	list(APPEND CUDA_NVCC_FLAGS
+	  "--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
+      endforeach()
+      #list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
+      # set some global switches
+      set(CUDA_BUILD_CUBIN     OFF)
+      set(CUDA_BUILD_EMULATION OFF)
+      set(CUDA_VERBOSE_BUILD   OFF)
+      # enable CUDA code in other parts of the project
+      add_definitions(-DUSE_CUDA)
+    endif()
   endif()
 endif()
 
@@ -200,34 +205,34 @@ endif()
 find_package(MPI)
 set(USE_MPI FALSE)
 if(NOT MPI_FOUND)
-  message(STATUS "Cannot find MPI installation. No MPI components will be generated.")
   set(USE_MPI FALSE)
+  message(STATUS "Cannot find MPI installation. No MPI components will be generated.")
 else()
-	message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'")
-	message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'")
-	# setup Boost.MPI library
   set(USE_MPI TRUE)
-	set(Boost_MPI_LIBRARY_DIR "${BOOST_ROOT}/stage/lib")
-	set(_Boost_MPI_LIB_NAMES "boost_mpi" "boost_serialization")
-	foreach(_Boost_MPI_LIB_NAME ${_Boost_MPI_LIB_NAMES})
-		find_library(_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}
-			NAMES ${_Boost_MPI_LIB_NAME}
-			PATHS ${Boost_MPI_LIBRARY_DIR}
-			NO_DEFAULT_PATH)
-		if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
-			set(USE_MPI FALSE)
-			message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in '${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
-		else()
-			list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
-		endif()
-	endforeach()
-	if(USE_MPI)
-		message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
-		message(STATUS "Enabling compilation of MPI components")
-		add_definitions(-DUSE_MPI)
-	else()
-		message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). No MPI components will be generated.")
-	endif()
+  message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'")
+  message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'")
+  # setup Boost.MPI library
+  set(Boost_MPI_LIBRARY_DIR "${BOOST_ROOT}/stage/lib")
+  set(_Boost_MPI_LIB_NAMES "boost_mpi" "boost_serialization")
+  foreach(_Boost_MPI_LIB_NAME ${_Boost_MPI_LIB_NAMES})
+    find_library(_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}
+      NAMES ${_Boost_MPI_LIB_NAME}
+      PATHS ${Boost_MPI_LIBRARY_DIR}
+      NO_DEFAULT_PATH)
+    if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
+      set(USE_MPI FALSE)
+      message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in '${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
+    else()
+      list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
+    endif()
+  endforeach()
+  if(USE_MPI)
+    message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
+    message(STATUS "Enabling compilation of MPI components")
+    add_definitions(-DUSE_MPI)
+  else()
+    message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). No MPI components will be generated.")
+  endif()
 endif()
 
 
@@ -237,7 +242,7 @@ if(Subversion_FOUND)
   # unfortunately CMAKE only parses 'svn info'
   find_program(SVNVERSION_EXECUTABLE
     svnversion
-		)
+    )
   if(NOT SVNVERSION_EXECUTABLE)
     message(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
   else()
@@ -276,7 +281,7 @@ else()
     COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
     DEPENDS ${DOXYGEN_CONF}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-		)
+    )
 endif()
 
 
@@ -290,21 +295,21 @@ if(_HOSTNAME_RETURN)
   set(HOSTNAME "")
 endif()
 foreach(_CMAKEVAR "CMAKE_HOST_SYSTEM_NAME" "CMAKE_HOST_SYSTEM_PROCESSOR" "CMAKE_HOST_SYSTEM_VERSION" "HOSTNAME" "CMAKE_SOURCE_DIR" "CMAKE_BUILD_TYPE" "ROOTSYS" "Boost_LIB_VERSION" "Boost_INCLUDE_DIRS" "LIBCONFIG")
-	if(_CMAKEVAR)
-		#message(STATUS "${_CMAKEVAR}=${${_CMAKEVAR}}")
-		add_definitions(-D'${_CMAKEVAR}=\"${${_CMAKEVAR}}\"')
-	else()
-		add_definitions(-D'${_CMAKEVAR}=\"\"')
-	endif()
+  if(_CMAKEVAR)
+    #message(STATUS "${_CMAKEVAR}=${${_CMAKEVAR}}")
+    add_definitions(-D'${_CMAKEVAR}=\"${${_CMAKEVAR}}\"')
+  else()
+    add_definitions(-D'${_CMAKEVAR}=\"\"')
+  endif()
 endforeach()
 foreach(_ENVVAR "USER")
-	set(_ENVVARVAL $ENV{${_ENVVAR}})
-	if(_ENVVARVAL)
-		#message(STATUS "${_ENVVAR}=${_ENVVARVAL}")
-		add_definitions(-D'${_ENVVAR}=\"${_ENVVARVAL}\"')
-	else()
-		add_definitions(-D'${_ENVVAR}=\"\"')
-	endif()
+  set(_ENVVARVAL $ENV{${_ENVVAR}})
+  if(_ENVVARVAL)
+    #message(STATUS "${_ENVVAR}=${_ENVVARVAL}")
+    add_definitions(-D'${_ENVVAR}=\"${_ENVVARVAL}\"')
+  else()
+    add_definitions(-D'${_ENVVAR}=\"\"')
+  endif()
 endforeach()
 
 
@@ -315,7 +320,7 @@ enable_testing()
 
 set(UTILITIES_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/utilities
-	)
+  )
 
 # PWA2000
 add_subdirectory(pwa2000)
@@ -325,62 +330,62 @@ add_subdirectory(utilities)
 
 # CUDA stuff
 if(USE_CUDA)
-	set(CUDA_INCLUDE_DIR
-		${CMAKE_SOURCE_DIR}/cuda
-		)
-	set(CUDA_LIBS
-		cuda
-		)
-	add_subdirectory(cuda)
+  set(CUDA_INCLUDE_DIR
+    ${CMAKE_SOURCE_DIR}/cuda
+    )
+  set(CUDA_LIBS
+    cuda
+    )
+  add_subdirectory(cuda)
 else()
-	set(CUDA_INCLUDE_DIR)
-	set(CUDA_LIBS)
+  set(CUDA_INCLUDE_DIR)
+  set(CUDA_LIBS)
 endif()
 
 # RootPwaAmp
 set(AMPLITUDE_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/amplitude
-	)
+  )
 set(AMPLITUDE_LIBS
   RootPwaAmp
-	)
+  )
 add_subdirectory(amplitude)
 
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src
-	)
+  )
 set(ROOTPWA_LIBS
   RootPwa
-	)
+  )
 add_subdirectory(src)
 
 # compile rootscripts into a library since they are linked by the gui
 set(SCRIPTS_INCLUDE_DIR
   ${CMAKE_SOURCE_DIR}/src/rootscripts
-	)
+  )
 add_subdirectory(src/rootscripts)
 set(ROOTPWASCRIPTS_LIBS
   RootPwaScripts
-	)
+  )
 
 # RootPwaTools
 set(TOOLS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/tools
-	)
+  ${CMAKE_SOURCE_DIR}/tools
+  )
 add_subdirectory(tools)
 set(ROOTPWATOOLS_LIBS
   RootPwaTools
-	)
+  )
 
 # RootPwaGen
 set(GEN_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/generators
-	)
+  ${CMAKE_SOURCE_DIR}/generators
+  )
 add_subdirectory(generators)
 set(ROOTPWAGEN_LIBS
   RootPwaGen
-	)
+  )
 
 # RootPwaKey
 add_subdirectory(keygen)
@@ -396,7 +401,7 @@ add_subdirectory(gui/src)
 
 # MPI
 if(USE_MPI)
-	add_subdirectory(mpi)
+  add_subdirectory(mpi)
 endif()
 
 

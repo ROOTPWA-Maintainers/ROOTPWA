@@ -164,7 +164,7 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 		batch_script << "#PBS -j oe" << endl;
 		batch_script << "#PBS -o "<< batch_script_name.str() <<".out" << endl;
 		batch_script << "#PBS -V" <<endl;
-		batch_script << "#PBS -l nodes=1:x86_64" << endl;
+		batch_script << "#PBS -l nodes=1:x86_64,walltime=12:00:00" << endl;
 		batch_script << endl;
 		batch_script << "export PATH=$PBS_O_PATH" << endl;
 		batch_script << "cd $PBS_O_WORKDIR" << endl;
