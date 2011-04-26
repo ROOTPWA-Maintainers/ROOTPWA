@@ -127,21 +127,12 @@ TString parseTitle(TString l, unsigned int level=10){
     return result;
 }
 
-void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
-{
-  TCanvas *c = (TCanvas *) gTQSender;
-  //if(selected->IsA()->GetName())
-  //printf("Canvas %s: event=%d, x=%d, y=%d, selected=%s\n", c->GetName(),event, x, y, selected->IsA()->GetName());
-  
-  if(event==1){ // clicked
-
-    // figure out which pad we clicked onto
-    TVirtualPad* pad=c->GetClickSelectedPad();
-    
-    TCanvas* cpopup=(TCanvas*)gROOT->FindObjectAny("cpopup");
+void plotNice(TVirtualPad* pad, TString plotDir=""){
+   TCanvas* cpopup=(TCanvas*)gROOT->FindObjectAny("cpopup");
     cpopup->Clear("");
     cpopup->cd();
-    TVirtualPad* clone=(TVirtualPad*)pad->DrawClone();
+    TVirtualPad* clone=(TVirtualPad*)pad->Clone();
+    clone->Draw();
     clone->SetPad("pu","PopUp",0,0,1,1,0);
     cpopup->cd(1);
     cpopup->Update();
@@ -205,7 +196,9 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
       
 
       wave="#splitline{Interference - ";
-      wave+= title.Contains("Re") ? "real part" : "imaginary part"; 
+      if(title.Contains("Re"))wave+= "real part";
+      else if(title.Contains("Im"))wave+="imaginary part"; 
+      else wave+="phase difference";
       wave+="}{#splitline{";
       wave+=parseTitle(wave1,0);
       wave+="}{";
@@ -249,7 +242,33 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
 
     cpopup->UseCurrentStyle();
     cpopup->Update();
+
+    if(plotDir.Length()>1){
+      TString filename=plotDir+title+".eps";
+      filename.ReplaceAll(".amp","");
+      filename.ReplaceAll("+","p");
+      filename.ReplaceAll("---","___");
+      filename.ReplaceAll("-","m");
+      filename.ReplaceAll("=","_to_");
+      cpopup->SaveAs(filename);
+    }
+
     //cpopup->Flush();
+}// end plotnice
+
+
+void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
+{
+  TCanvas *c = (TCanvas *) gTQSender;
+  //if(selected->IsA()->GetName())
+  //printf("Canvas %s: event=%d, x=%d, y=%d, selected=%s\n", c->GetName(),event, x, y, selected->IsA()->GetName());
+  
+  if(event==1){ // clicked
+
+    // figure out which pad we clicked onto
+    TVirtualPad* pad=c->GetClickSelectedPad();
+    
+    plotNice(pad);
   }
 }
 
@@ -297,7 +316,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
  TCanvas* cRe=new TCanvas("cRe","Spin Density Matrix - RealImagPart",10,10,1000,1000);
   cRe->Divide(nwaves,nwaves,0,0);
   cRe->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,"exec3event(Int_t,Int_t,Int_t,TObject*)");
-  // c->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,"exec3event(Int_t,Int_t,Int_t,TObject*)");
+  c->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,"exec3event(Int_t,Int_t,Int_t,TObject*)");
 
   TCanvas* cpopup=new TCanvas("cpopup","PopUp",50,50,700,700);
 
@@ -328,14 +347,15 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	}
 	cout << min << "     " << max << endl;
 	g->GetYaxis()->SetRangeUser(0 < min ? -0.8*min : 1.2*min,1.2*max);
-	g->GetYaxis()->SetTitle("blubler");
+	g->GetYaxis()->SetTitle("intensity");
+	g->GetYaxis()->SetTitleOffset(1.2);
 	//g->GetHistogram()->Draw();//gPad->Update();
 	//g->Draw("APC");
 	cRe->cd(jp+ip*nwaves+1);
 	g->Draw("APC");
 
 
-
+	/*
 	TCanvas* c2=new TCanvas();
 	g->Draw("APC");
 	g->GetXaxis()->SetTitle("mass (MeV/c^{2})");
@@ -343,6 +363,8 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	g->GetYaxis()->SetTitleOffset(1.2);
 	g->SaveAs(TString(plotdir+wavenames[ip]+".eps"));
 	delete c2;
+	*/
+	plotNice(cRe->GetPad(jp+ip*nwaves+1),plotdir);
       }
       else {
 	TString key="dPhi_"+wavenames[ip]+"---"+wavenames[jp];
@@ -358,42 +380,50 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	    if(min>y[i])min=y[i];
 	  }
 	  TAxis* a=g->GetYaxis();
-	  if(a!=NULL)a->SetRangeUser(0.5*(max+min)-200,0.5*(max+min)+200);
+	  if(a!=NULL)a->SetRangeUser(0.5*(max+min)-220,0.5*(max+min)+220);
+	  a->SetTitle("#Delta#Phi");
+	  a->SetTitleOffset(1.2);
 	  g->Draw("A");
-	  TCanvas* c2=new TCanvas();
-	  g->Draw("A");
-	  g->GetXaxis()->SetTitle("mass (MeV/c^{2})");
-	  g->GetYaxis()->SetTitle("#Delta #phi");
+	  plotNice(cS->GetPad(jp+ip*nwaves+1),plotdir);
+	  //TCanvas* c2=new TCanvas();
+	  //g->Draw("A");
+	  //g->GetXaxis()->SetTitle("mass (MeV/c^{2})");
+	  //g->GetYaxis()->SetTitle("#Delta #phi");
 	  //g->GetYaxis()->SetTitleOffset(1.2);
-	  c2->SaveAs(TString(plotdir+key+".eps"));
-	  delete c2;
+	  //c2->SaveAs(TString(plotdir+key+".eps"));
+	  //delete c2;
 	  key.ReplaceAll("dPhi","Re");
 	  TMultiGraph* g2=(TMultiGraph*)infile->Get(key);
 	  cRe->cd(jp+ip*nwaves+1);
 	  g2->Draw("A");
 	  g2->GetXaxis()->SetTitle("mass (MeV/c^{2})");
-	  g2->GetYaxis()->SetTitle("Re(#rho_{ij})");
-	  c2=new TCanvas();
-	  g2->Draw("A");
-	  g2->GetXaxis()->SetTitle("mass (MeV/c^{2})");
-	  g2->GetYaxis()->SetTitle("Re(#rho_{ij})");
+	  g2->GetYaxis()->SetTitle("real part");
+	  g2->GetYaxis()->SetTitleOffset(1.2);
+	  
+	  plotNice(cRe->GetPad(jp+ip*nwaves+1),plotdir);
+	  //c2=new TCanvas();
+	  //g2->Draw("A");
+	  //g2->GetXaxis()->SetTitle("mass (MeV/c^{2})");
+	  //g2->GetYaxis()->SetTitle("Re(#rho_{ij})");
 	  //g2->GetYaxis()->SetTitleOffset(1.2);
-	  c2->SaveAs(TString(plotdir+key+".eps"));
-	  delete c2;
+	  //c2->SaveAs(TString(plotdir+key+".eps"));
+	  //delete c2;
 	  key.ReplaceAll("Re","Im");
 	  TMultiGraph* g3=(TMultiGraph*)infile->Get(key);
 	  //cIm->cd(jp+ip*nwaves+1);
 	  cRe->cd(ip+jp*nwaves+1);
 	  g3->Draw("A");
 	  g3->GetXaxis()->SetTitle("mass (MeV/c^{2})");
-	  g3->GetYaxis()->SetTitle("Im(#rho_{ij})");
-	  c2=new TCanvas();
-	  g3->Draw("A");
-	  g3->GetXaxis()->SetTitle("mass (MeV/c^{2})");
-	  g3->GetYaxis()->SetTitle("Im(#rho_{ij})");
+	  g3->GetYaxis()->SetTitle("imaginary part");
+	  g3->GetYaxis()->SetTitleOffset(1.2);
+	  plotNice(cRe->GetPad(ip+jp*nwaves+1),plotdir);
+	  //c2=new TCanvas();
+	  //g3->Draw("A");
+	  //g3->GetXaxis()->SetTitle("mass (MeV/c^{2})");
+	  // g3->GetYaxis()->SetTitle("Im(#rho_{ij})");
 	  //g2->GetYaxis()->SetTitleOffset(1.2);
-	  c2->SaveAs(TString(plotdir+key+".eps"));
-	  delete c2;
+	  //c2->SaveAs(TString(plotdir+key+".eps"));
+	  //delete c2;
 	  
 	}// end if g!=NULL
       } // end else
