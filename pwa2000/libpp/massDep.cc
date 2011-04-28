@@ -212,3 +212,112 @@ AMP_kach::AMP_kach(): AMP_M()
   _a[1].el(1, 0) = 0;
   _a[1].el(1, 1) = 0;
 }
+
+/*
+	SUBROUTINE KPIAMP(BW, W , W0 , G0 , P , P0)	! K+ pi- solution
+c-------
+c	K-PI S-WAVE PARAMETRISATION
+c       SOURCE:      NP B296 493
+c       Here used formula  exp(-i*a)*sin(a) + BW*exp(-2.*i*a)
+c       with BW parameters  M=1.437 and W=0.355 .
+c       That gives amplitude and phase which coincide rouphly
+c       with pictures from article
+c-------
+	REAL    W0, G0		! MASS AND WIDTH OF RES.
+	REAL    P, P0		! CURRENT MOM, RESONANCE MOM
+	REAL    W, S		! DIMESON MASS, MASS SQUARED (GEV**2)
+	COMPLEX BW		! AMPLITUDE
+	COMPLEX BG		! BACKGROUND
+	PARAMETER ( WPI  = 0.1395675)	! PI+- MASS
+	PARAMETER  ( WKC  = 0.493646 )	! K+-  MASS
+	PARAMETER  ( WETAP= 0.95775  )	! ETA_PRIME MASS
+	PARAMETER  ( WLOW = WPI+WKC )	! LOW LIMIT FOR PARAMETRISATION
+	PARAMETER  ( WUP  = 1.7  )		! UPPER LIMIT FOR PARAMETRISATION
+C---- Model parameters
+	PARAMETER  ( EPS  =  1.00 )	! ratio 
+	PARAMETER  ( A    =  1.93 ) ! 
+	PARAMETER (  B    =  2.66 ) ! 
+	PARAMETER  ( PHI  = -16.9 )	! 
+C----
+	BW = (0.,0.)
+	S  = W*W
+	IF ( S.LE.WLOW**2 ) RETURN
+	IF ( S.GE. WUP**2 ) RETURN
+C---- BW-PARAMETRISATION
+	GK   = G0*W0/W*P/P0	! WIDTH FOR K-PI CHANNEL
+	BWR = W0**2 - W**2	! REAL PART
+	BWI = W0*GK 		! IMAGE PART
+C-- C/(A-i*B) = (C*A/(A**2+B**2), C*B/(A**2+B**2))
+	DENOM = EPS*W0*GK / (BWR**2+BWI**2)
+ 	BW   = CMPLX(BWR*DENOM, BWI*DENOM)
+C---- Background parametrisation
+C---- sin(a)*exp(i*a)=(ctg(a)+i)/(ctg(a)**2+1.)
+	CTG   = 1.0/(A*P) + B*P/2.0
+C--  COS(ARCCTG(X) = X/SQRT(1+X**2)
+C--  SIN(ARCCTG(X) = 1/SQRT(1+X**2)
+	XX = SQRT(1.+CTG**2)
+	CS = CTG/XX
+	SN = 1. /XX
+	BG  = CMPLX( SN*CS , SN**2 )
+C---- AMP = BG + BW*EXP(I*2.*A)
+	BW  = BG + BW*CMPLX(CS**2-SN**2,2.*SN*CS)
+	RETURN
+	END
+ */
+complex<double> AMP_LASS::val(const particle& p) 
+{
+  /*
+  const double m0     = p.Mass ();
+  const double Gamma0 = p.Width ();
+  const double q      = p.q ();
+  const double q0     = p.q0 ();   
+  const double m      = ~(p.get4P ());
+  const int    l      = p.Decay ()->L ();
+
+  const double    GammaV = Gamma0 * (m0 / m) * (q / q0) * (pow(F(l, q), 2) / pow(F(l, q0), 2));
+  complex<double> ret    = (m0 * Gamma0) / (m0 * m0 - m * m - complex<double>(0, 1) * m0 * GammaV);
+  return ret;*/
+
+  //BW, W , W0 , G0 , P , P0)	! K+ pi- solution
+  double    W0 = 1.437;//p.Mass();
+  double    G0 = 0.355;//p.Width();	// MASS AND WIDTH OF RES.
+  double    P  = p.q();
+  double    P0 = p.q0();	// CURRENT MOM, RESONANCE MOM
+  double    W  = ~(p.get4P ());
+  double    S  ;		// DIMESON MASS, MASS SQUARED (GEV**2)
+  complex<double> BW;		// AMPLITUDE
+  complex<double> BG;		// BACKGROUND
+  double WPI  = 0.1395675;	// PI+- MASS
+  double WKC  = 0.493646 ;	// K+-  MASS
+  //double WETAP= 0.95775  ;	// ETA_PRIME MASS
+  double WLOW = WPI+WKC  ;	// LOW LIMIT FOR PARAMETRISATION
+  double WUP  = 1.7      ;	// UPPER LIMIT FOR PARAMETRISATION
+  //---- Model parameters
+  double EPS  =  1.00 ; // ratio 
+  double A    =  1.93 ; 
+  double B    =  2.66 ; 
+  //double PHI  = -16.9 ; 
+  //----
+  BW = complex<double>(0.,0.);
+  S  = W*W;
+  if ( S <= WLOW*WLOW ) return BW;
+  if ( S >= WUP*WUP  ) return BW;
+  //---- BW-PARAMETRISATION
+  double GK   = G0*W0/W*P/P0;	// WIDTH FOR K-PI CHANNEL
+  BW = complex<double>(W0*W0 - W*W, W0*GK);
+  // C/(A-i*B) = (C*A/(A**2+B**2), C*B/(A**2+B**2))
+  double DENOM = EPS*W0*GK / (real(BW)*real(BW)+imag(BW)*imag(BW));
+  BW   = complex<double>(real(BW)*DENOM, imag(BW)*DENOM);
+  //---- Background parametrisation
+  //---- sin(a)*exp(i*a)=(ctg(a)+i)/(ctg(a)**2+1.)
+  double CTG   = 1.0/(A*P) + B*P/2.0;
+  //--  COS(ARCCTG(X) = X/SQRT(1+X**2)
+  //--  SIN(ARCCTG(X) = 1/SQRT(1+X**2)
+  double XX = sqrt(1.+CTG*CTG);
+  double CS = CTG/XX;
+  double SN = 1. /XX;
+  BG = complex<double>( SN*CS , SN*SN );
+  //---- AMP = BG + BW*EXP(I*2.*A)
+  BW  = BG + BW*complex<double>(CS*CS-SN*SN,2.*SN*CS);
+  return BW;
+}

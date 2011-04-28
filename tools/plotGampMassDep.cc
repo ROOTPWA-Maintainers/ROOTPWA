@@ -26,7 +26,7 @@ int main(int argc, char** argv){
 	double width(0.6);
 
 	if (argc < 2){
-		cout << " usage: plotGampMassDep AMP|VES|KACH|BW [inv_mass(def 600MeV)] [width(def 600MeV)] [pi|K (def pi)] [pi|K (def pi)] " << endl;
+		cout << " usage: plotGampMassDep AMP|VES|KACH|LASS|BW [inv_mass(def 600MeV)] [width(def 600MeV)] [pi|K (def pi)] [pi|K (def pi)] " << endl;
 		//return 0;
 	} else {
 		//cout << argc << endl;
@@ -69,6 +69,7 @@ int main(int argc, char** argv){
   if(opt=="AMP")dep=new AMP_M();
   else if(opt=="VES")dep=new AMP_ves();
   else if(opt=="KACH")dep=new AMP_kach();
+  else if(opt=="KACH")dep=new AMP_LASS();
   else if(opt=="BW")dep=new breitWigner();
   else dep=new breitWigner();
   dep->print();

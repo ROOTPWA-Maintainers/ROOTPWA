@@ -1437,6 +1437,9 @@ yyparse (std::complex<double>& result)
 	else if (!strcmp(yyvsp[0].string,"flat")) {
 	  md = new flat();
 	}
+	else if (!strcmp(yyvsp[0].string,"amp_lass")) {
+	  md = new AMP_LASS();
+	}
 	else {
 	  cerr << "unknown mass dependence: " << yyvsp[0].string;
 	  cerr << " at line " << lineno << endl;

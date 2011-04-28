@@ -140,5 +140,27 @@ public:
   //std::complex<double> val(const particle& p);
 };
 
+//-------
+//	K-PI S-WAVE PARAMETRISATION
+//       SOURCE:      NP B296 493 (see also Dima's fortran code)
+//       Here used formula  exp(-i*a)*sin(a) + BW*exp(-2.*i*a)
+//       with BW parameters  M=1.437 and W=0.355 .
+//       That gives amplitude and phase which coincide rouphly
+//       with pictures from article
+//-------
+// not properly implemented, so please don't use it yet
+// take a simple BW for the K_0(1430) instead
+class AMP_LASS : public massDep {
+public:
+  AMP_LASS() { }
+  virtual ~AMP_LASS() { }
+  AMP_LASS(const AMP_LASS&) { }
+  AMP_LASS* create() const { return new AMP_LASS(); }
+  AMP_LASS* clone() const { return new AMP_LASS(*this); }
+
+  virtual void print() { std::cout << "AMP_LASS"; }
+  std::complex<double> val(const particle& p);
+};
+
 
 #endif
