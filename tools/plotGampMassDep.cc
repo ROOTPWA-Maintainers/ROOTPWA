@@ -69,7 +69,7 @@ int main(int argc, char** argv){
   if(opt=="AMP")dep=new AMP_M();
   else if(opt=="VES")dep=new AMP_ves();
   else if(opt=="KACH")dep=new AMP_kach();
-  else if(opt=="KACH")dep=new AMP_LASS();
+  else if(opt=="LASS")dep=new AMP_LASS();
   else if(opt=="BW")dep=new breitWigner();
   else dep=new breitWigner();
   dep->print();
