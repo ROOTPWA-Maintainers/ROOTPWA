@@ -36,7 +36,7 @@ using namespace std;
 TString massbin;
 TString mass;
 
-int nbninsm = 144;
+int nbninsm = 150;
 int nbinsang = 80;
 
 
@@ -96,12 +96,12 @@ TString getUnits(TString s) {
 
 GJHistBunch GJHistBunchFactory(TString name_prefix) {
   GJHistBunch temp;
-  TH1D* hMIsobarMC = new TH1D("hMIsobarMC_" + name_prefix, name_prefix + " Isobar Mass (MC)", nbninsm, 0.0, 1.5);
+  TH1D* hMIsobarMC = new TH1D("hMIsobarMC_" + name_prefix, name_prefix + " Isobar Mass (MC)", nbninsm, 0.0, 3.0);
   hMIsobarMC->SetXTitle("isobar mass [GeV]");
   hMIsobarMC->SetYTitle("# of events");
   temp.isobar_mass.push_back(hMIsobarMC);
   TH1D* hMIsobarData = new TH1D("hMIsobarData_" + name_prefix, name_prefix + " Isobar Mass (DATA)", nbninsm,
-      0.0, 1.5);
+      0.0, 3.0);
   hMIsobarData->SetXTitle("isobar mass [GeV]");
   hMIsobarData->SetYTitle("# of events");
   temp.isobar_mass.push_back(hMIsobarData);
@@ -152,23 +152,23 @@ GJHistBunch GJHistBunchFactory(TString name_prefix) {
 HelicityHistBunch HelicityHistBunchFactory(TString name_prefix) {
   HelicityHistBunch temp;
   TH1D* hHThetaMC = new TH1D("hHThetaMC_" + name_prefix, name_prefix + " Isobar Helicity Cos Theta (MC)", nbinsang, -1, 1);
-  hHThetaMC->SetXTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
+  hHThetaMC->SetXTitle("cos(#theta_{hel} of negative particle from isobar)");
   hHThetaMC->SetYTitle("# of events");
   temp.costheta_HF.push_back(hHThetaMC);
   TH1D* hHThetaData = new TH1D("hHThetaData_" + name_prefix, name_prefix + " Isobar Helicity Cos Theta (DATA)", nbinsang, -1,
       1);
-  hHThetaData->SetXTitle("cos(#theta_{hel}) of #pi^{0} from isobar");
+  hHThetaData->SetXTitle("cos(#theta_{hel}) of negative particle from isobar");
   hHThetaData->SetYTitle("# of events");
   temp.costheta_HF.push_back(hHThetaData);
   temp.costheta_HF[0]->Sumw2();
 
   TH1D* hHPhiMC = new TH1D("hHPhiMC_" + name_prefix, name_prefix + " Isobar Helicity Phi (MC)", nbinsang, -TMath::Pi(),
       TMath::Pi());
-  hHPhiMC->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
+  hHPhiMC->SetXTitle("#phi_{hel} [rad] of negative particle from isobar");
   hHPhiMC->SetYTitle("# of events");
   TH1D* hHPhiData = new TH1D("hHPhiData_" + name_prefix, name_prefix + " Isobar Helicity Phi (DATA)", nbinsang, -TMath::Pi(),
       TMath::Pi());
-  hHPhiData->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
+  hHPhiData->SetXTitle("#phi_{hel} [rad] of negative particle from isobar");
   hHPhiData->SetYTitle("# of events");
   temp.phi_HF.push_back(hHPhiMC);
   temp.phi_HF.push_back(hHPhiData);
@@ -208,7 +208,7 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 
   // boost NParticleState into isobar rest frame
   TLorentzVector particle;
-  if(isobar.getParticle(0)->q() == 0)
+  if(isobar.getParticle(0)->q() == -1)
     particle = isobar.getParticle(0)->p();
   else
     particle = isobar.getParticle(1)->p();
@@ -457,17 +457,17 @@ TH2D* dalitz = createDalitzHistogram("hDalitzMC",
   dalitz_charged.push_back(dalitz);*/
 
   // --------------- generate histogram bunches
-  // neutral isobar
+  // K-pi+ isobar
   // GJ Histogram Bunch
-  GJHistBunch GJHB_neutral_isobar = GJHistBunchFactory("Neutral");
+  GJHistBunch GJHB_Kpi_isobar = GJHistBunchFactory("Kpi");
   // Helicity Histogram Bunch
-  HelicityHistBunch HHB_neutral_isobar = HelicityHistBunchFactory("Neutral");
+  HelicityHistBunch HHB_Kpi_isobar = HelicityHistBunchFactory("Kpi");
 
-  // charged isobar
+  // pi-pi+ isobar
   // GJ Histogram Bunch MC
-  GJHistBunch GJHB_charged_isobar = GJHistBunchFactory("Charged");
+  GJHistBunch GJHB_pipi_isobar = GJHistBunchFactory("pipi");
   // Helicity Histogram Bunch
-  HelicityHistBunch HHB_charged_isobar = HelicityHistBunchFactory("Charged");
+  HelicityHistBunch HHB_pipi_isobar = HelicityHistBunchFactory("pipi");
 
   double avweight = 1;
 
@@ -688,17 +688,23 @@ TH2D* dalitz = createDalitzHistogram("hDalitzMC",
         const NParticleState& state = event.getState(is);
         if (state.n() == npart) {
           hM[itree]->Fill(state.p().M());
-        }
-        if (state.n() == npart - 1 && state.q() == 0) {
-          // this is a neutral isobar state with n-1 (here 2) final state particles
-          fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_neutral_isobar);
-          fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_neutral_isobar);
-        }
-        else if (state.n() == npart - 1 && state.q() == -1) {
-          // this is a negativly charged isobar state with n-1 (here 2) final state particles
-          fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_charged_isobar);
-          fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_charged_isobar);
-        }
+        
+	}
+	if (state.n() == 2 && state.q() == 0){
+	  float sum_mass = state.getParticle(0)->p().M()+state.getParticle(1)->p().M();
+	  if (fabs(sum_mass-0.633) < 0.010) {
+	    // this is an isobar decaying into K-pi+ final state particles
+	    fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_Kpi_isobar);
+	    fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_Kpi_isobar);
+	  }
+	  else { 
+	    if (fabs(sum_mass-0.279) < 0.010) {
+	      // this is an isobar decaying into pi-pi+ final state particles
+	      fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_pipi_isobar);
+	      fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_pipi_isobar);
+	    }
+	  }
+	}
       }
 
     }// end loop over events
