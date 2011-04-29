@@ -755,20 +755,37 @@ extern char* optarg;
 
   cerr << "Fitting finished... Start building graphs ... " << endl;
 
+  int syscolor=kAzure-9;
+
    std::vector<std::string> wl=compset.wavelist();
    std::map<std::string, unsigned int> wmap;
    unsigned int ndatabins=tree->GetEntries();
 
    std::vector<TGraphErrors*> datagraphs;
+   std::vector<TGraphErrors*> intenssysgraphs;
+
    std::vector<TMultiGraph*> graphs;
+
    for(unsigned int iw=0; iw<wl.size();++iw){
      wmap[wl[iw]]=iw;
      graphs.push_back(new TMultiGraph);
+
+     intenssysgraphs.push_back(new TGraphErrors(ndatabins));
+     string name=("sys_");name.append(wl[iw]);
+     intenssysgraphs[iw]->SetName(name.c_str());
+     intenssysgraphs[iw]->SetTitle(name.c_str());
+     intenssysgraphs[iw]->SetLineColor(syscolor);
+     intenssysgraphs[iw]->SetFillColor(syscolor);
+     intenssysgraphs[iw]->SetDrawOption("2");
+     graphs[iw]->Add(intenssysgraphs[iw],"2");
+
+
+
      graphs[iw]->SetName(wl[iw].c_str());
      graphs[iw]->SetTitle(wl[iw].c_str());
      graphs[iw]->SetDrawOption("AP");
      datagraphs.push_back(new TGraphErrors(ndatabins));
-     string name("data_");name.append(wl[iw]);
+     name="data_";name.append(wl[iw]);
      datagraphs[iw]->SetName(name.c_str());
      datagraphs[iw]->SetTitle(name.c_str());
      datagraphs[iw]->SetDrawOption("AP");
@@ -786,6 +803,7 @@ extern char* optarg;
    //double mmin=1200.;
    //double md=10.;
    std::vector<TGraph*> fitgraphs;
+   std::vector<TGraph*> absphasegraphs;
   
 
    for(unsigned int iw=0; iw<wl.size();++iw){
@@ -800,6 +818,18 @@ extern char* optarg;
      //fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
      graphs[iw]->Add(getPhaseSpace(tree,wl[iw]));
+
+     absphasegraphs.push_back(new TGraph(nbins));
+     name="absphase_";name.append(wl[iw]);
+     absphasegraphs[iw]->SetName(name.c_str());
+     absphasegraphs[iw]->SetTitle(name.c_str());
+     absphasegraphs[iw]->SetLineColor(kRed);
+     absphasegraphs[iw]->SetLineWidth(2);
+     absphasegraphs[iw]->SetMarkerColor(kRed);
+     absphasegraphs[iw]->SetDrawOption("AP");
+
+
+
    }
 
    std::vector<TGraph*> compgraphs; // individual components
@@ -838,9 +868,7 @@ extern char* optarg;
    std::vector<TGraph*> realfitgraphs;
    std::vector<TGraph*> imagfitgraphs;
    
-   int syscolor=kAzure-9;
-
-   std::vector<TMultiGraph*> phasegraphs;
+    std::vector<TMultiGraph*> phasegraphs;
    std::vector<TMultiGraph*> overlapRegraphs;
    std::vector<TMultiGraph*> overlapImgraphs;
 
@@ -991,6 +1019,8 @@ extern char* optarg;
      }
    }
 
+   
+
 
 
 
@@ -999,6 +1029,7 @@ extern char* optarg;
    tree->SetBranchAddress(valBranchName.c_str(),&rho);
    vector<double> prevps(wl.size());
    double mprev=0;
+   vector<double> prevphase(wl.size());
    double binwidth=30; // half binwidth
    //double w=2*30/10;
    for(unsigned int i=0;i<ndatabins;++i){
@@ -1009,7 +1040,40 @@ extern char* optarg;
        double ps=rho->phaseSpaceIntegral(wl[iw].c_str());
        datagraphs[iw]->SetPoint(i,m,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
-       fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);           
+      fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);      
+      double absphase=compset.phase(wl[iw],m)*TMath::RadToDeg();
+      if(i>0){
+	double absp=absphase+360;
+	double absm=absphase-360;
+	if(fabs(absphase-prevphase[iw])>fabs(absp-prevphase[iw])){
+	  absphase=absp;
+	}
+	else if(fabs(absphase-prevphase[iw])>fabs(absm-prevphase[iw])){
+	  absphase=absm;
+	}
+      }
+      prevphase[iw]=absphase;
+      absphasegraphs[iw]->SetPoint(i,m,absphase);      
+      if(sysPlotting){
+	double maxIntens=-10000000;
+	double minIntens=10000000;
+	for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
+	  // get data
+	  fitResult* rhoSys=0;
+	  sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
+	  sysTrees[iSys]->GetEntry(i);
+	  // check if waves are in fit
+	  if(rhoSys->waveIndex(wl[iw])==-1)continue;
+	  double myI=rhoSys->intensity(wl[iw].c_str());
+	  if(maxIntens<myI)maxIntens=myI;
+	  if(minIntens>myI)minIntens=myI;
+	} // end loop over systematic trees
+	
+	intenssysgraphs[iw]->SetPoint(i,m,(maxIntens+minIntens)*0.5);
+	intenssysgraphs[iw]->SetPointError(i,binwidth,(maxIntens-minIntens)*0.5);
+      }
+
+
        // second loop to get phase differences
        unsigned int wi1=rho->waveIndex(wl[iw].c_str());
        
@@ -1019,6 +1083,7 @@ extern char* optarg;
 	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());
 	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
 	 TMatrixT<double> rCov=rho->spinDensityMatrixElemCov(wi1,wi2);
+
 	 realdatagraphs[c]->SetPoint(i,
 				     rho->massBinCenter(),
 				     r.real());
@@ -1034,36 +1099,19 @@ extern char* optarg;
 			    sqrt(rCov[1][1]));
 
 
-
-	 //realdatagraphs[c]-SSetPoint(i,m,rho-
-
 	 double dataphi=rho->phase(wl[iw].c_str(),wl[iw2].c_str());
 
 	 phasedatagraphs[c]->SetPoint(i,m,dataphi);
-	 //phasedatagraphs[c]->SetPoint(i+ndatabins,m,dataphi-360);
-	 //phasedatagraphs[c]->SetPoint(i+2*ndatabins,m,dataphi+360);
-
-
 	   
 	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
 					     wl[iw2].c_str())/TMath::RadToDeg());
-
-	 //phasedatagraphs[c]->SetPoint(i,m*v.X(),m*v.Y());
-
 	 phase2d[c]->SetPoint(i,v.X(),v.Y(),m);
 
-	 
 	 phasedatagraphs[c]->SetPointError(i,binwidth,
 					   rho->phaseErr(wl[iw].c_str(),
 							 wl[iw2].c_str()));
-	 //phasedatagraphs[c]->SetPointError(i+ndatabins,binwidth,
-	 //				   rho->phaseErr(wl[iw].c_str(),
-	 //						 wl[iw2].c_str()));
-	 //phasedatagraphs[c]->SetPointError(i+2*ndatabins,binwidth,
-	 //				   rho->phaseErr(wl[iw].c_str(),
-	 //						 wl[iw2].c_str()));
-
 	 double fitphase=compset.phase(wl[iw],ps,wl[iw2],ps2,m)*TMath::RadToDeg();
+
 	 if(sysPlotting){
 	   // loop over systematics files
 	   double maxPhase=-10000;
@@ -1108,6 +1156,8 @@ extern char* optarg;
 	     if(maxIm<r.imag())maxIm=r.imag();
 	     if(minIm>r.imag())minIm=r.imag();
 	   }// end loop over sys trees
+
+
 	   phasesysgraphs[c]->SetPoint(i,m,(maxPhase+minPhase)*0.5);
 	   phasesysgraphs[c]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
 	   
@@ -1115,7 +1165,7 @@ extern char* optarg;
 	   realsysgraphs[c]->SetPointError(i,binwidth,(maxRe-minRe)*0.5);
 	   imagsysgraphs[c]->SetPoint(i,m,(maxIm+minIm)*0.5);
 	   imagsysgraphs[c]->SetPointError(i,binwidth,(maxIm-minIm)*0.5);
-	   
+	
 
 	 }// end if sysplotting
 
@@ -1172,13 +1222,14 @@ extern char* optarg;
 
    TFile* outfile=TFile::Open(outFileName.c_str(),"RECREATE");
    for(unsigned int iw=0; iw<wl.size();++iw){
-     TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(2);
-     for(unsigned int ib=0;ib<nbins;++ib){
-       double m,ps;g->GetPoint(ib,m,ps);
-       g->SetPoint(ib,m,ps*2000);
-     }
+     // TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(2);
+     //  for(unsigned int ib=0;ib<nbins;++ib){
+     //    double m,ps;g->GetPoint(ib,m,ps);
+     //    g->SetPoint(ib,m,ps*2000);
+     //   }
      
      graphs[iw]->Write();
+     //absphasegraphs[iw]->Write();
    }
 
 
@@ -1273,7 +1324,7 @@ extern char* optarg;
      }
    }
 
-   
+     
      phasegraphs[iw]->Write();
      phasesysgraphs[iw]->Write();
      overlapRegraphs[iw]->Write();
