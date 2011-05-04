@@ -22,11 +22,12 @@ int main(int argc, char** argv){
 	string opt = "BW";
 	string part1 = "pi";
 	string part2 = "pi";
+	string part  = "";
 	double mass(0.6);
 	double width(0.6);
 
 	if (argc < 2){
-		cout << " usage: plotGampMassDep AMP|VES|KACH|LASS|BW [inv_mass(def 600MeV)] [width(def 600MeV)] [pi|K (def pi)] [pi|K (def pi)] " << endl;
+		cout << " usage: plotGampMassDep AMP|VES|KACH|LASS|BW [inv_mass(def 600MeV)] [width(def 600MeV)] [pi|K (def pi)] [pi|K (def pi)] [PDG name (mass and width will be ignored)]" << endl;
 		//return 0;
 	} else {
 		//cout << argc << endl;
@@ -45,14 +46,22 @@ int main(int argc, char** argv){
 		if (argc > 5){
 			part2=(argv[5]);
 		}
+		if (argc > 6){
+		  part = (argv[6]);
+		  cout << " using PDG values for " << part << endl; 
+		}
 	}
-  cout << " plotting " << opt << " with a mass of " << mass << " and width of " << width << " decaying into " << part1 << " " << part2 << endl;
 
   PDGtable.initialize();
   particle myp;
   particle pi1;pi1.setMass(PDGtable.get(part1).Mass());pi1.setCharge(1);
   particle pi2;pi2.setMass(PDGtable.get(part2).Mass());pi2.setCharge(-1);
+  if (part != ""){
+    mass = PDGtable.get(part).Mass();
+    width= PDGtable.get(part).Width();
+  }
 
+ cout << " plotting " << opt << " with a mass of " << mass << " and width of " << width << " decaying into " << part1 << " " << part2 << endl;
 
   decay mydec;
   mydec.setL(0);
