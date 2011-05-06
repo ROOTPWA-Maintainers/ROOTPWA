@@ -70,7 +70,7 @@ NParticleEvent::tprime(){
   TLorentzVector p=this->p();
   // recalibrate beam -- assumes exclusivity!
   TVector3 dir=beam.Vect();
-  double const mpi=0.13957;
+  double const mpi=beam.M();// 0.13957; not always a pion!
   double k=sqrt(p.E()*p.E()-mpi*mpi)/dir.Mag();
   dir*=k;
   beam.SetVectM(dir,mpi);
