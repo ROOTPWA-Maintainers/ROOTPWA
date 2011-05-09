@@ -169,6 +169,21 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
 }
 
 double 
+rpwa::pwacompset::phase(const std::string& wave, double m){
+  // loop over all components and pick up those that contribute to this channel
+  complex<double> rho(0,0);
+  for(unsigned int ic=0;ic<n();++ic){
+    if(_comp[ic]->channels().count(wave)==0)continue;
+    else {
+      rho+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave)->second.C();
+    }
+
+  }
+  return arg(rho);
+}
+
+
+double 
 rpwa::pwacompset::phase(const std::string& wave1,
 			double ps1,
 			const std::string& wave2,
