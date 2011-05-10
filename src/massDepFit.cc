@@ -26,6 +26,8 @@
 //      fitting program for massdependent fit rootpwa
 //      minimizes massDepFitLikeli function
 //
+//      BE CAREFULL: Apart from the dynamic width the sqrts of the phase space factors are needed
+//                   So at most places in this code ps acctually is the sqrt!!! 
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -44,6 +46,7 @@
 #include <time.h>
 
 #include "TTree.h"
+#include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TGraph2D.h"
@@ -102,8 +105,9 @@ usage(const string& progName,
 }
 
 //  function loops through fitResults and puts phasespace values into a graph for interpolation
+//  THIS CONTAINS NOW THE RIGHT VALUE NOT!!! THE SQRT!!!
 TGraph*
-getPhaseSpace(TTree* tree, const std::string& wave){
+getPhaseSpace(TTree* tree, TF1* fsps,const std::string& wave){
   unsigned int n=tree->GetEntries();
   TGraph* graph=new TGraph(n);
   fitResult* res=0;
@@ -112,6 +116,8 @@ getPhaseSpace(TTree* tree, const std::string& wave){
     tree->GetEntry(i);
     double m=res->massBinCenter();
     double ps=res->phaseSpaceIntegral(wave);
+    ps*=ps; // remember that phaseSpaceIntegral returns sqrt of integral!!! 
+    ps*=fsps->Eval(m);
     graph->SetPoint(i,m,ps);
   }
   return graph;
@@ -194,6 +200,13 @@ extern char* optarg;
       sysPlotting=true;
       break;
     }
+
+
+  TF1* fPS=new TF1("fps","[3] * (x-[0])*exp( (x-[0])*([1]+(x-[0])*[2]) )",900,3000);
+  fPS->SetParameter(0,698); //5pi threshold
+  fPS->SetParameter(1,6.27068E-3); // slope
+  fPS->SetParameter(2,-0.939708E-6); // correction
+  fPS->SetParameter(3,1E-6); // Normalization
 
   vector<TTree*> sysTrees;
   if(sysPlotting){
@@ -283,7 +296,7 @@ extern char* optarg;
 	check&=ch.lookupValue("coupling_Im",cIm);
 	complex<double> C(cRe,cIm);
 	cout << "   " << amp << "  " << C << endl;
-	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+	channels[amp]=pwachannel(C,getPhaseSpace(tree,fPS,amp));
       }// end loop over channels
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -342,7 +355,7 @@ extern char* optarg;
       cout << "Decaychannel (coupling):" << endl;
       cout << "   " << amp << "  " << C << endl;
       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
-      channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+      channels[amp]=pwachannel(C,getPhaseSpace(tree,fPS,amp));
 
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -384,7 +397,7 @@ extern char* optarg;
  
 
   massDepFitLikeli L;
-  L.init(tree,&compset,massBinMin,massBinMax);
+  L.init(tree,fPS,&compset,massBinMin,massBinMax);
 
   const unsigned int nmbPar  = L.NDim();
   
@@ -513,6 +526,7 @@ extern char* optarg;
 
  cout << "---------------------------------------------------------------------" << endl;
  // Reduced chi2
+ 
  printInfo << chi2 << " chi2" << endl;
  unsigned int numdata=L.NDataPoints();
  // numDOF
@@ -817,7 +831,7 @@ extern char* optarg;
      fitgraphs[iw]->SetDrawOption("AP");
      //fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
-     graphs[iw]->Add(getPhaseSpace(tree,wl[iw]));
+     graphs[iw]->Add(getPhaseSpace(tree,fPS,wl[iw]));
 
      absphasegraphs.push_back(new TGraph(nbins));
      name="absphase_";name.append(wl[iw]);
@@ -1035,9 +1049,15 @@ extern char* optarg;
    for(unsigned int i=0;i<ndatabins;++i){
      tree->GetEntry(i);
      double m=rho->massBinCenter();
+     //cout << "MASS: "<<m << endl;
+     double fsps=sqrt(fPS->Eval(m));
      unsigned int c=0;
      for(unsigned int iw=0; iw<wl.size();++iw){
-       double ps=rho->phaseSpaceIntegral(wl[iw].c_str());
+
+       //cout << wl[iw] << endl;
+
+       double ps=rho->phaseSpaceIntegral(wl[iw].c_str())*fsps;
+    
        datagraphs[iw]->SetPoint(i,m,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
       fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);      
@@ -1067,18 +1087,20 @@ extern char* optarg;
 	  double myI=rhoSys->intensity(wl[iw].c_str());
 	  if(maxIntens<myI)maxIntens=myI;
 	  if(minIntens>myI)minIntens=myI;
+	  delete rhoSys;
 	} // end loop over systematic trees
 	
 	intenssysgraphs[iw]->SetPoint(i,m,(maxIntens+minIntens)*0.5);
 	intenssysgraphs[iw]->SetPointError(i,binwidth,(maxIntens-minIntens)*0.5);
       }
-
+      
+      //cout << "getting phases" << endl;
 
        // second loop to get phase differences
        unsigned int wi1=rho->waveIndex(wl[iw].c_str());
        
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str());
+	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str())*fsps;
 	  
 	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());
 	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
@@ -1113,6 +1135,7 @@ extern char* optarg;
 	 double fitphase=compset.phase(wl[iw],ps,wl[iw2],ps2,m)*TMath::RadToDeg();
 
 	 if(sysPlotting){
+	   //cout << "start sysplotting" << endl;
 	   // loop over systematics files
 	   double maxPhase=-10000;
 	   double minPhase=10000;
@@ -1120,7 +1143,9 @@ extern char* optarg;
 	   double minRe=10000000;
 	   double maxIm=-10000000;
 	   double minIm=10000000;
+	  
 	   for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
+	     // cerr << iSys;
 	   // get data
 	     fitResult* rhoSys=0;
 	     sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
@@ -1128,7 +1153,7 @@ extern char* optarg;
 	        
 
 	     // check if waves are in fit
-	     if(rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1)continue;
+	     if(rhoSys==NULL || rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1)continue;
 	     // get correct wave indices!!!
 	     unsigned int wi1Sys=rhoSys->waveIndex(wl[iw].c_str());
 	     unsigned int wi2Sys=rhoSys->waveIndex(wl[iw2].c_str());
@@ -1155,8 +1180,9 @@ extern char* optarg;
 	     if(minRe>r.real())minRe=r.real();
 	     if(maxIm<r.imag())maxIm=r.imag();
 	     if(minIm>r.imag())minIm=r.imag();
+	     delete rhoSys; rhoSys=0;
 	   }// end loop over sys trees
-
+	   //cerr << "loop over systrees finished" << endl;
 
 	   phasesysgraphs[c]->SetPoint(i,m,(maxPhase+minPhase)*0.5);
 	   phasesysgraphs[c]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
@@ -1168,7 +1194,7 @@ extern char* optarg;
 	
 
 	 }// end if sysplotting
-
+	 //cout << "sysplotting finished" << endl;
 
 	 phasefitgraphs[c]->SetPoint(i,m,fitphase);
 
@@ -1193,7 +1219,7 @@ extern char* optarg;
 	 const pwacomponent* c=compset[ic];
 	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
 	 while(it!=c->channels().end()){
-	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*it->second.ps(m);
+	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m);
 	   compgraphs[compcount]->SetPoint(i,m,I);
 	   ++compcount;
 	   ++it;
@@ -1222,11 +1248,11 @@ extern char* optarg;
 
    TFile* outfile=TFile::Open(outFileName.c_str(),"RECREATE");
    for(unsigned int iw=0; iw<wl.size();++iw){
-     // TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(2);
-     //  for(unsigned int ib=0;ib<nbins;++ib){
-     //    double m,ps;g->GetPoint(ib,m,ps);
-     //    g->SetPoint(ib,m,ps*2000);
-     //   }
+     TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(3);
+      for(unsigned int ib=0;ib<nbins;++ib){
+        double m,ps;g->GetPoint(ib,m,ps);
+        g->SetPoint(ib,m,ps*500.);
+       }
      
      graphs[iw]->Write();
      //absphasegraphs[iw]->Write();
