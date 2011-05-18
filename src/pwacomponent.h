@@ -72,10 +72,12 @@ namespace rpwa {
     {_m0min=mmin;_m0max=mmax;_gammamin=gmin;_gammamax=gmax;}
     void setFixed(bool mflag=true, bool gflag=true)
     {_fixm=mflag;_fixgamma=gflag;}
+    void setConstWidth(bool flag=true){_constWidth=flag;}
     void getLimits(double& mmin, double& mmax, double& gmin, double& gmax)const
     {mmin=_m0min;mmax=_m0max;gmin=_gammamin;gmax=_gammamax;}
     bool fixM() const {return _fixm;}
     bool fixGamma() const {return _fixgamma;}
+    bool constWidth() const {return _constWidth;}
 
     double m0() const {return _m0;}
     double gamma() const {return _gamma;}
@@ -92,6 +94,7 @@ namespace rpwa {
     double _gammamin,_gammamax;
     bool _fixm;
     bool _fixgamma;
+    bool _constWidth;
     std::map<std::string,pwachannel > _channels;
     
 

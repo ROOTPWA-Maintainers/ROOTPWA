@@ -30,7 +30,7 @@ using namespace std;
 rpwa::pwacomponent::pwacomponent(const string& name,
 				 double m0, double gamma,
 				 const map<string,pwachannel >& channels)
-  : _name(name), _m0(m0), _m02(m0*m0),_m0min(0),_m0max(5000),_gamma(gamma),_gammamin(0),_gammamax(1000),_fixm(false),_fixgamma(false), _channels(channels)
+  : _name(name), _m0(m0), _m02(m0*m0),_m0min(0),_m0max(5000),_gamma(gamma),_gammamin(0),_gammamax(1000),_fixm(false),_fixgamma(false), _constWidth(false),_channels(channels)
 {}
 
 
@@ -65,18 +65,26 @@ rpwa::pwacomponent::val(double m) const {
   double gamma=0;
   std::map<std::string,pwachannel >::const_iterator it=_channels.begin();
   double n=(double)numChannels();
-  while(it!=_channels.end()){
-    double ps=1;
-    if(it->second.ps()!=NULL){
-      double ps0=it->second.ps(_m0);
-      ps=it->second.ps(m)/ps0;
+  //cout << "NChannels : " << n << endl;
+  double ps=1;
+  if(!_constWidth){
+    ps=0; // no not forget to reset phase space here!
+    while(it!=_channels.end()){
+      double myps=1.;
+      if(it->second.ps()!=NULL){
+	double ps0=it->second.ps(_m0);
+	myps=(it->second.ps(m))/ps0;
+      }
+      ps+=myps;
+      ++it;
     }
-    gamma+=_gamma*ps/n; // ps*ps ???
-    ++it;
+    ps/=n;
   }
+  gamma=_gamma*ps;
+  
   //std::cerr << m << "   " << gamma/_gamma << std::endl;
   //std::cerr << _name <<"  compval=" <<gamma*_m0/complex<double>(m*m-_m02,gamma*_m0) << std::endl;
-  return _gamma*_m0/complex<double>(m*m-_m02,gamma*_m0);
+  return _gamma*_m0/complex<double>(_m02-m*m,-gamma*_m0);
 }
 
 
@@ -109,7 +117,7 @@ rpwa::pwabkg::val(double m) const {
   if(m<_m1+_m2)return complex<double>(1,0);
   p=q(m,_m1,_m2);
   //std::cerr << _name <<"  val=" << exp(-_gamma*p) << std::endl;
-  return exp(-_gamma*p.real());
+  return exp(-_gamma*p.real()*p.real());
 }
 
 

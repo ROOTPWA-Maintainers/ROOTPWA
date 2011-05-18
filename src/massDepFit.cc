@@ -205,8 +205,12 @@ extern char* optarg;
   TF1* fPS=new TF1("fps","[3] * (x-[0])*exp( (x-[0])*([1]+(x-[0])*[2]) )",900,3000);
   fPS->SetParameter(0,698); //5pi threshold
   fPS->SetParameter(1,6.27068E-3); // slope
-  fPS->SetParameter(2,-0.939708E-6); // correction
+  //fPS->SetParameter(2,-0.939708E-6); // correction
+  fPS->SetParameter(2,-2.5E-6); // correction
   fPS->SetParameter(3,1E-6); // Normalization
+  //fPS->SetParameter(3,10); // Normalization
+  //TF1* fPS=new TF1("fps","1.",900,4000);
+
 
   vector<TTree*> sysTrees;
   if(sysPlotting){
@@ -260,7 +264,7 @@ extern char* optarg;
       string jpc;
       string name;
       double mass=-1;double ml,mu;int mfix; 
-      double width=-1;double wl,wu;int wfix;
+      double width=-1;double wl,wu;int wfix;int wdyn;
      
       check&=bw.lookupValue("name",     name);
       check&=bw.lookupValue("jpc",       jpc);
@@ -274,6 +278,8 @@ extern char* optarg;
       check&=widthSet.lookupValue("lower",       wl);
       check&=widthSet.lookupValue("upper",       wu);
       check&=widthSet.lookupValue("fix",       wfix);
+      bool checkdyn=widthSet.lookupValue("dyn",       wdyn);
+      if(!checkdyn)wdyn=0;
       cout << "---------------------------------------------------------------------" << endl;
       cout << name << "    JPC = " << jpc << endl;
       cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
@@ -281,6 +287,8 @@ extern char* optarg;
       cout<< endl;
       cout << "width(limits) = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
       if(wfix==1)cout<<"  -- FIXED";
+      if(wdyn!=0)cout<<"  -- DYNAMIC WIDTH";
+      else cout<<"  -- CONST WIDTH";
       cout<< endl;
       const Setting &channelSet = bw["decaychannels"];
       unsigned int nCh=channelSet.getLength();
@@ -305,7 +313,9 @@ extern char* optarg;
       pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
       comp1->setLimits(ml,mu,wl,wu);
       comp1->setFixed(mfix,wfix);
+      if(wdyn==0)comp1->setConstWidth();
       compset.add(comp1);
+      cout << "CHECK val(m0)="<< comp1->val(mass) << endl;
     }// end loop over resonances
   }
   cout << endl;
@@ -574,7 +584,6 @@ extern char* optarg;
 	TString merrname=name+"_M";
 	smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
 	
-
 	Setting& sw = bw["width"];
 	Setting& swval = sw["val"];
 	swval = comp->gamma();
@@ -582,6 +591,10 @@ extern char* optarg;
 	Setting& swerr = sw["error"];
 	TString werrname=name+"_Gamma";
 	swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
+
+	cout << name 
+	     << "   mass="<<double(smval)<<" +- "<<double(smerr)
+	     << "   width="<<double(swval)<<" +- "<<double(swerr)<< endl;
 
 	// loop through channel and fix couplings
 	const Setting& sChn=bw["decaychannels"];
@@ -633,7 +646,7 @@ extern char* optarg;
 	}
       }
     }
-    cout << name << "  --->  setting: " << sname << endl;
+    
 
     
 
