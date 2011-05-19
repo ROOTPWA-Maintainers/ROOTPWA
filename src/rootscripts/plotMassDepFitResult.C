@@ -174,6 +174,11 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     // add waves 
     cout << "####### Title:" << endl;
     TMultiGraph* gr=(TMultiGraph*)clone->GetListOfPrimitives()->At(1);
+
+    // gr->GetListOfGraphs()->RemoveAt(2);
+    gr->GetXaxis()->SetTitle("mass (MeV/c^{2})");
+
+
     TString title=gr->GetName();
     cout << title << endl;
     // check if this is intensity or off diagonal
@@ -279,7 +284,7 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
 //------------------------------------------------------
 
 
-void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle=""){
+void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0 ){
   if(fittitle.Length()<=1)fitname=infilename;
   else fitname=fittitle;
   TFile* infile=TFile::Open(infilename);
@@ -291,7 +296,8 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
     gStyle->SetOptTitle(0);
     gStyle->SetStripDecimals(1);
     TGaxis::SetMaxDigits(4);
-   
+    gStyle->SetFrameFillStyle(0);
+
     gROOT->ForceStyle();
 
 
@@ -316,7 +322,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
  TCanvas* cRe=new TCanvas("cRe","Spin Density Matrix - RealImagPart",10,10,1000,1000);
   cRe->Divide(nwaves,nwaves,0,0);
   cRe->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,"exec3event(Int_t,Int_t,Int_t,TObject*)");
-  c->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,"exec3event(Int_t,Int_t,Int_t,TObject*)");
+  cS->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", 0, 0,"exec3event(Int_t,Int_t,Int_t,TObject*)");
 
   TCanvas* cpopup=new TCanvas("cpopup","PopUp",50,50,700,700);
 
@@ -335,9 +341,12 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
       cS->cd(jp+ip*nwaves+1);
       if(ip==jp){
 	TMultiGraph* g=(TMultiGraph*)infile->Get(wavenames[ip]);
+	//g->GetListOfGraphs()->RemoveAt(3); // remove black line
+	//g->GetListOfGraphs()->RemoveAt(2); // remove fit
 	g->Draw("APC");
+
 	// rescale
-	TGraphErrors* datag=(TGraphErrors*)g->GetListOfGraphs()->At(0);
+	TGraphErrors* datag=(TGraphErrors*)g->GetListOfGraphs()->At(1);
 	double* y=datag->GetY();
 	double max=-1E6;
 	double min=1E6;
@@ -349,6 +358,10 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	g->GetYaxis()->SetRangeUser(0 < min ? -0.8*min : 1.2*min,1.2*max);
 	g->GetYaxis()->SetTitle("intensity");
 	g->GetYaxis()->SetTitleOffset(1.2);
+	
+	if(mmin!=0 || mmax!=0){
+	  g->GetXaxis()->SetRangeUser(mmin,mmax);
+        }
 	//g->GetHistogram()->Draw();//gPad->Update();
 	//g->Draw("APC");
 	cRe->cd(jp+ip*nwaves+1);
@@ -370,7 +383,10 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	TString key="dPhi_"+wavenames[ip]+"---"+wavenames[jp];
 	TMultiGraph* g=(TMultiGraph*)infile->Get(key);
 	if(g!=NULL){
-	  g->Draw("AN");
+       	  g->Draw("AN");
+	  if(mmin!=0 || mmax!=0){
+	    g->GetXaxis()->SetRangeUser(mmin,mmax);
+	  }
 	  double max=-1E6;
 	  double min=1E6;
 	  TGraphErrors* fitg=(TGraphErrors*)g->GetListOfGraphs()->At(2);
@@ -394,12 +410,16 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  //delete c2;
 	  key.ReplaceAll("dPhi","Re");
 	  TMultiGraph* g2=(TMultiGraph*)infile->Get(key);
-	  cRe->cd(jp+ip*nwaves+1);
+	  //g2->GetListOfGraphs()->RemoveAt(2);
+	  TVirtualPad* pa= cRe->cd(jp+ip*nwaves+1);
+	  pa->SetFillColor(kYellow-9);
 	  g2->Draw("A");
+	  if(mmin!=0 || mmax!=0){
+	    g2->GetXaxis()->SetRangeUser(mmin,mmax);
+	  }
 	  g2->GetXaxis()->SetTitle("mass (MeV/c^{2})");
 	  g2->GetYaxis()->SetTitle("real part");
 	  g2->GetYaxis()->SetTitleOffset(1.2);
-	  
 	  plotNice(cRe->GetPad(jp+ip*nwaves+1),plotdir);
 	  //c2=new TCanvas();
 	  //g2->Draw("A");
@@ -410,9 +430,14 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  //delete c2;
 	  key.ReplaceAll("Re","Im");
 	  TMultiGraph* g3=(TMultiGraph*)infile->Get(key);
+	  //g3->GetListOfGraphs()->RemoveAt(2);
 	  //cIm->cd(jp+ip*nwaves+1);
-	  cRe->cd(ip+jp*nwaves+1);
+	  pa=cRe->cd(ip+jp*nwaves+1);
+	  pa->SetFillColor(kSpring+6);
 	  g3->Draw("A");
+	 if(mmin!=0 || mmax!=0){
+	    g3->GetXaxis()->SetRangeUser(mmin,mmax);
+	  }
 	  g3->GetXaxis()->SetTitle("mass (MeV/c^{2})");
 	  g3->GetYaxis()->SetTitle("imaginary part");
 	  g3->GetYaxis()->SetTitleOffset(1.2);
