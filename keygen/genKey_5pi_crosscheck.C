@@ -57,92 +57,104 @@ void genKey_5pi_crosscheck(const bool testKey = true, const string& dataFileName
 	const string thisFilePath = __FILE__;
 	const string movetoFilePath = "${ROOTPWA}/keyfiles/keyKpipi/SETX";
 	// define final state particles
-	particleKey pi_minus("pi-");
-	particleKey pi_plus("pi+");
+	particleKey pi_minus_1("pi-");
+	particleKey pi_plus_1("pi+");
+	particleKey pi_minus_2("pi-");
+	particleKey pi_plus_2("pi+");
+	particleKey pi_minus_3("pi-");
 
 	// define isobars: (name, daughter1, daughter2, L, S, mass dependence)
 
 	// pi pi decay modes
-	particleKey f0980   ("f0(980)"   , &pi_plus, &pi_minus, 0, 0); // 0++
-	particleKey sigma   ("sigma"     , &pi_plus, &pi_minus, 0, 0, "amp_kach"); // 0++
-	particleKey f01370  ("f0(1370)"  , &pi_plus, &pi_minus, 0, 0); // 0++
-	particleKey f01500  ("f0(1500)"  , &pi_plus, &pi_minus, 0, 0); // 0++
-	particleKey rho770  ("rho(770)"  , &pi_plus, &pi_minus, 1, 0); // 1--
-	particleKey rho1450 ("rho(1450)" , &pi_plus, &pi_minus, 1, 0); // 1--
-	particleKey f21270  ("f2(1270)"  , &pi_plus, &pi_minus, 2, 0); // 2++
-	particleKey rho31690("rho3(1690)", &pi_plus, &pi_minus, 3, 0); // 3--
+	particleKey f0980_1   ("f0(980)"   , &pi_plus_1, &pi_minus_1, 0, 0); // 0++
+	particleKey sigma_1   ("sigma"     , &pi_plus_1, &pi_minus_1, 0, 0, "amp_kach"); // 0++
+	particleKey f01370_1  ("f0(1370)"  , &pi_plus_1, &pi_minus_1, 0, 0); // 0++
+	particleKey f01500_1  ("f0(1500)"  , &pi_plus_1, &pi_minus_1, 0, 0); // 0++
+	particleKey rho770_1  ("rho(770)"  , &pi_plus_1, &pi_minus_1, 1, 0); // 1--
+	particleKey rho1450_1 ("rho(1450)" , &pi_plus_1, &pi_minus_1, 1, 0); // 1--
+	particleKey f21270_1  ("f2(1270)"  , &pi_plus_1, &pi_minus_1, 2, 0); // 2++
+	particleKey rho31690_1("rho3(1690)", &pi_plus_1, &pi_minus_1, 3, 0); // 3--
+
+	particleKey f0980_2   ("f0(980)"   , &pi_plus_2, &pi_minus_2, 0, 0); // 0++
+	particleKey sigma_2   ("sigma"     , &pi_plus_2, &pi_minus_2, 0, 0, "amp_kach"); // 0++
+	particleKey f01370_2  ("f0(1370)"  , &pi_plus_2, &pi_minus_2, 0, 0); // 0++
+	particleKey f01500_2  ("f0(1500)"  , &pi_plus_2, &pi_minus_2, 0, 0); // 0++
+	particleKey rho770_2  ("rho(770)"  , &pi_plus_2, &pi_minus_2, 1, 0); // 1--
+	particleKey rho1450_2 ("rho(1450)" , &pi_plus_2, &pi_minus_2, 1, 0); // 1--
+	particleKey f21270_2  ("f2(1270)"  , &pi_plus_2, &pi_minus_2, 2, 0); // 2++
+	particleKey rho31690_2("rho3(1690)", &pi_plus_2, &pi_minus_2, 3, 0); // 3--
 
 	// pi pi pi decay modes
 		// a1(1260) -> rho pi S-Wave
-   	particleKey a11260_rhopiplus   ("a1(1269)", &rho770, &pi_plus , 0, 1); // 1-(1++)
-	particleKey a11260_rhopiminus  ("a1(1269)", &rho770, &pi_minus, 0, 1); // 1-(1++)
+   	particleKey a11260_rhopiplus   ("a1(1269)", &rho770_1, &pi_plus_2 , 0, 1); // 1-(1++)
+	particleKey a11260_rhopiminus  ("a1(1269)", &rho770_1, &pi_minus_2, 0, 1); // 1-(1++)
 		// the same but the other way round
-	particleKey a11260_piplusrho   ("a1(1269)", &pi_plus, &rho770 , 0, 1); // 1-(1++)
-	particleKey a11260_piminusrho  ("a1(1269)", &pi_minus, &rho770, 0, 1); // 1-(1++)
+	particleKey a11260_piplusrho   ("a1(1269)", &pi_plus_2, &rho770_1 , 0, 1); // 1-(1++)
+	particleKey a11260_piminusrho  ("a1(1269)", &pi_minus_2, &rho770_1, 0, 1); // 1-(1++)
 		// a1(1260) -> sigma pi S-Wave
-	particleKey a11260_sigmapiplus ("a1(1269)", &sigma , &pi_plus , 0, 1); // 1-(1++)
-	particleKey a11260_sigmapiminus("a1(1269)", &sigma , &pi_minus, 0, 1); // 1-(1++)
+	particleKey a11260_sigmapiplus ("a1(1269)", &sigma_1 , &pi_plus_2 , 0, 1); // 1-(1++)
+	particleKey a11260_sigmapiminus("a1(1269)", &sigma_1 , &pi_minus_2, 0, 1); // 1-(1++)
 		// a2(1320) -> rho pi
-	particleKey a21320_rhopiplus   ("a2(1320)", &rho770, &pi_plus , 1, 1); // 1-(2++)
-	particleKey a21320_rhopiminus  ("a2(1320)", &rho770, &pi_minus, 1, 1); // 1-(2++)
+	particleKey a21320_rhopiplus   ("a2(1320)", &rho770_1, &pi_plus_2 , 1, 1); // 1-(2++)
+	particleKey a21320_rhopiminus  ("a2(1320)", &rho770_1, &pi_minus_2, 1, 1); // 1-(2++)
 		// pi(1300) -> rho pi
-	particleKey pi1300_rhopiplus   ("pi(1300)", &rho770, &pi_plus , 1, 1); // 1-(0-+)
-	particleKey pi1300_rhopiminus  ("pi(1300)", &rho770, &pi_minus, 1, 1); // 1-(0-+)
+	particleKey pi1300_rhopiplus   ("pi(1300)", &rho770_1, &pi_plus_2 , 1, 1); // 1-(0-+)
+	particleKey pi1300_rhopiminus  ("pi(1300)", &rho770_1, &pi_minus_2, 1, 1); // 1-(0-+)
 		// pi(1300) -> sigma pi
-	particleKey pi1300_sigmapiplus   ("pi(1300)", &sigma, &pi_plus , 0, 1); // 1-(0-+)
-	particleKey pi1300_sigmapiminus  ("pi(1300)", &sigma, &pi_minus, 0, 1); // 1-(0-+)
+	particleKey pi1300_sigmapiplus   ("pi(1300)", &sigma_1, &pi_plus_2 , 0, 1); // 1-(0-+)
+	particleKey pi1300_sigmapiminus  ("pi(1300)", &sigma_1, &pi_minus_2, 0, 1); // 1-(0-+)
 		// pi(1800) -> rho pi
-	particleKey pi1800_rhopiplus   ("pi(1300)", &rho770, &pi_plus , 0, 1); // 1-(0-+)
-	particleKey pi1800_rhopiminus  ("pi(1300)", &rho770, &pi_minus, 0, 1); // 1-(0-+)
+	particleKey pi1800_rhopiplus   ("pi(1300)", &rho770_1, &pi_plus_2 , 0, 1); // 1-(0-+)
+	particleKey pi1800_rhopiminus  ("pi(1300)", &rho770_1, &pi_minus_2, 0, 1); // 1-(0-+)
 		// pi(1800) -> sigma pi
-	particleKey pi1800_sigmapiplus   ("pi(1800)", &sigma, &pi_plus , 0, 1); // 1-(0-+)
-	particleKey pi1800_sigmapiminus  ("pi(1800)", &sigma, &pi_minus, 0, 1); // 1-(0-+)
+	particleKey pi1800_sigmapiplus   ("pi(1800)", &sigma_1, &pi_plus_2 , 0, 1); // 1-(0-+)
+	particleKey pi1800_sigmapiminus  ("pi(1800)", &sigma_1, &pi_minus_2, 0, 1); // 1-(0-+)
 		// pi(1600) and pi(1670) were not picked by the evolution algorithm of s.neubert
 
 	// pi pi pi pi decay modes
 		// f0(1370) -> rho rho
-	particleKey f01370_rhorho    ("f0(1370)", &rho770  , &rho770  , 0, 1); // 0+(0++)
+	particleKey f01370_rhorho    ("f0(1370)", &rho770_1  , &rho770_2  , 0, 1); // 0+(0++)
 		// f0(1370) -> sigma sigma
-	particleKey f01370_sigmasigma("f0(1370)", &sigma, &sigma, 0, 1); // 0+(0++)
+	particleKey f01370_sigmasigma("f0(1370)", &sigma_1, &sigma_2, 0, 1); // 0+(0++)
 		// f01500 f01700 same and the decay into pi1300 pi was anyhow not observed
 
 		// f2(1270) -> pi +/- a1(1260)->rho(770) pi -/+
-	particleKey f21270_a11260_rhopi_piminus("f2(1270)", &a11260_rhopiplus , &pi_minus, 1, 1); // 0+(2++)
-	particleKey f21270_a11260_rhopi_piplus ("f2(1270)", &a11260_rhopiminus, &pi_plus , 1, 1); // 0+(2++)
+	particleKey f21270_a11260_rhopi_piminus("f2(1270)", &a11260_rhopiplus , &pi_minus_2, 1, 1); // 0+(2++)
+	particleKey f21270_a11260_rhopi_piplus ("f2(1270)", &a11260_rhopiminus, &pi_plus_2 , 1, 1); // 0+(2++)
 		// the same but the other way round
-	particleKey f21270_piminusa11260_pirho("f2(1270)", &pi_minus, &a11260_piplusrho , 1, 1); // 0+(2++)
-	particleKey f21270_piplusa11260_pirho ("f2(1270)", &pi_plus , &a11260_piminusrho, 1, 1); // 0+(2++)
+	particleKey f21270_piminusa11260_pirho("f2(1270)", &pi_minus_2, &a11260_piplusrho , 1, 1); // 0+(2++)
+	particleKey f21270_piplusa11260_pirho ("f2(1270)", &pi_plus_2 , &a11260_piminusrho, 1, 1); // 0+(2++)
 
 if (1){ // reduced wave set
 	cout << " creating the reduced 5pi wave set " << endl;
 	{ 
-		particleKey X("X", &f21270_a11260_rhopi_piminus, &pi_minus, 0, 2);
+		particleKey X("X", &f21270_a11260_rhopi_piminus, &pi_minus_3, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ 
-		particleKey X("X", &f21270_a11260_rhopi_piplus, &pi_minus, 0, 2);
+		particleKey X("X", &f21270_a11260_rhopi_piplus, &pi_minus_3, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	// should give the same results as the previous
 	{ 
-		particleKey X("X", &pi_minus, &f21270_piminusa11260_pirho, 0, 2);
+		particleKey X("X", &pi_minus_3, &f21270_piminusa11260_pirho, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 	{ 
-		particleKey X("X", &pi_minus, &f21270_piplusa11260_pirho, 0, 2);
+		particleKey X("X", &pi_minus_3, &f21270_piplusa11260_pirho, 0, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 2,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
 	}
 
 	{ 
-		particleKey X("X", &rho770, &a11260_rhopiminus, 2, 2);
+		particleKey X("X", &rho770_2, &a11260_rhopiminus, 2, 2);
 		//      wave(&X, J, P, M, refl);
 		waveKey wave(&X, 0,-1, 0,+1);
 		generateKeyFile(wave, thisFilePath, testKey, dataFileName, false, pdgTableFileName);
