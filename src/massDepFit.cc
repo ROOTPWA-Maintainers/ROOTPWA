@@ -117,7 +117,7 @@ getPhaseSpace(TTree* tree, TF1* fsps,const std::string& wave){
     double m=res->massBinCenter();
     double ps=res->phaseSpaceIntegral(wave);
     ps*=ps; // remember that phaseSpaceIntegral returns sqrt of integral!!! 
-    ps*=fsps->Eval(m);
+    //ps*=fsps->Eval(m);
     graph->SetPoint(i,m,ps);
   }
   return graph;
@@ -204,10 +204,14 @@ extern char* optarg;
 
   TF1* fPS=new TF1("fps","[3] * (x-[0])*exp( (x-[0])*([1]+(x-[0])*[2]) )",900,3000);
   fPS->SetParameter(0,698); //5pi threshold
+  fPS->SetParLimits(0,698,698);
   fPS->SetParameter(1,6.27068E-3); // slope
+  fPS->SetParLimits(1,6.27068E-3,6.27068E-3); // slope
   //fPS->SetParameter(2,-0.939708E-6); // correction
   fPS->SetParameter(2,-2.5E-6); // correction
+  fPS->SetParLimits(2,-3E-6,0);
   fPS->SetParameter(3,1E-6); // Normalization
+  fPS->SetParLimits(3,1E-6,1E-6); // Normalization
   //fPS->SetParameter(3,10); // Normalization
   //TF1* fPS=new TF1("fps","1.",900,4000);
 
@@ -378,6 +382,10 @@ extern char* optarg;
       compset.add(bkg);
     }// end loop over background
   }// endif
+
+  // add phase space
+  compset.setPS(fPS);
+
 
  cout << "---------------------------------------------------------------------" << endl << endl;
 
@@ -1073,7 +1081,7 @@ extern char* optarg;
     
        datagraphs[iw]->SetPoint(i,m,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
-      fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);      
+      fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m));      
       double absphase=compset.phase(wl[iw],m)*TMath::RadToDeg();
       if(i>0){
 	double absp=absphase+360;
@@ -1113,7 +1121,7 @@ extern char* optarg;
        unsigned int wi1=rho->waveIndex(wl[iw].c_str());
        
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str())*fsps;
+	 //double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str())*fsps;
 	  
 	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());
 	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
@@ -1145,7 +1153,7 @@ extern char* optarg;
 	 phasedatagraphs[c]->SetPointError(i,binwidth,
 					   rho->phaseErr(wl[iw].c_str(),
 							 wl[iw2].c_str()));
-	 double fitphase=compset.phase(wl[iw],ps,wl[iw2],ps2,m)*TMath::RadToDeg();
+	 double fitphase=compset.phase(wl[iw],wl[iw2],m)*TMath::RadToDeg();
 
 	 if(sysPlotting){
 	   //cout << "start sysplotting" << endl;
@@ -1211,8 +1219,7 @@ extern char* optarg;
 
 	 phasefitgraphs[c]->SetPoint(i,m,fitphase);
 
-	 complex<double> fitval=compset.overlap(wl[iw],ps,
-						wl[iw2],ps2,m);
+	 complex<double> fitval=compset.overlap(wl[iw],wl[iw2],m);
 
 	 realfitgraphs[c]->SetPoint(i,m,fitval.real());
 	 imagfitgraphs[c]->SetPoint(i,m,fitval.imag());

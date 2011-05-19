@@ -27,6 +27,7 @@
 #include <TGraph.h>
 
 // Collaborating Class Declarations --
+class TF1;
 
 namespace rpwa {
 
@@ -129,7 +130,8 @@ namespace rpwa {
     ~pwacompset(){}
 
     void add(pwacomponent* comp){_comp.push_back(comp);_numpar+=comp->numPar();}
-    
+    void setPS(TF1* fPS);
+
     unsigned int n() const {return _comp.size();}
     unsigned int numPar() const {return _numpar;}
     
@@ -145,19 +147,17 @@ namespace rpwa {
     double intensity(const std::string& wave, double m);
     double phase(const std::string& wave, double m);
     double phase(const std::string& wave1,
-		 double ps1,
 		 const std::string& wave2,
-		 double ps2,
 		 double m);
     std::complex<double> overlap(const std::string& wave1,
-		 double ps1,
 		 const std::string& wave2,
-		 double ps2,
 		 double m);
     
   private:
     std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
+    TF1* _phasespace;
+    std::vector<unsigned int> _freePSpar; // parameters of phase space to keep floating
 
   };
 

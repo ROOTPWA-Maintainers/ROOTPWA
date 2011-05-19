@@ -72,6 +72,7 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
   // input values: m
   unsigned int nwaves=_index.size();
      
+  // set parameters for resonances, background and phase space
   _compset->setPar(par);
 
   // Breitwigner parameters
