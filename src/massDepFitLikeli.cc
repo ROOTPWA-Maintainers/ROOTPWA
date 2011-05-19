@@ -93,7 +93,7 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
     //if(mass>2000)continue;
     //cout << "Mass=" << mass << endl;
     // inpu values: measured spin density matrix
-    double FSPS=_finalStatePS->Eval(mass);
+    //double FSPS=_finalStatePS->Eval(mass);
        
     // sum over the contributions to chi2 -> rho_ij
       for(unsigned int i=0; i<nwaves; ++i){
@@ -107,15 +107,7 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	  const string w2=_wlist[j];
 	  // loop over components and look which contains these waves
 	  
-	  for(unsigned int k=0;k<_compset->n();++k){
-	    if((*_compset)[k]->channels().count(w1)>0)
-	      f1+=(*_compset)[k]->val(mass)* ((*_compset)[k]->channels()).find(w1)->second.C();
-	    if((*_compset)[k]->channels().count(w2)>0)
-	      f2+=(*_compset)[k]->val(mass)* ((*_compset)[k]->channels()).find(w2)->second.C(); 
-	  }
-	  f1*=_rhom->phaseSpaceIntegral(_index[i]); // remember that phaseSpaceIntegral returns sqrt(integral) !!!
-	  f2*=_rhom->phaseSpaceIntegral(_index[j]);
-	  rho=f1*conj(f2)*FSPS;
+	  rho=_compset->overlap(w1,w2,mass);
 	  // compare to measured spin density matrix element
 	  complex<double> rhom=rho-_rhom->spinDensityMatrixElem(_index[i],_index[j]);
 	    

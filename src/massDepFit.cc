@@ -383,6 +383,7 @@ extern char* optarg;
     }// end loop over background
   }// endif
 
+ cout << "---------------------------------------------------------------------" << endl << endl;
   // add phase space
   compset.setPS(fPS);
 
@@ -469,8 +470,20 @@ extern char* optarg;
       
       ++it;
     } // end loop over channels
-
+  }// end loop over components
+  // set phase space
+  unsigned int nfreePS=compset.nFreePSPar();
+  for(unsigned int ifreePS=0;ifreePS<nfreePS;++ifreePS){
+    double val,lower,upper;
+    val=compset.getFreePSPar(ifreePS);
+    compset.getFreePSLimits(ifreePS,lower,upper);
+    TString name("PSP_"); name+=+ifreePS;
+    minimizer->SetLimitedVariable(parcount++, 
+				  name.Data(), 
+				  val, 0.0001 ,lower,upper);
   }
+
+
  
   const unsigned int nfree=minimizer->NFree();
   printInfo <<  nfree  << " Free Parameters in fit" << endl;

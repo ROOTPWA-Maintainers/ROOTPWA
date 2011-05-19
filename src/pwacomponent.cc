@@ -148,7 +148,7 @@ rpwa::pwacompset::setPS(TF1* fPS){
   for(unsigned int i=0;i<nparPS;++i){
     double min,max;
     _phasespace->GetParLimits(i,min,max);
-    if(min==max){
+    if(min!=max){
       _freePSpar.push_back(i);
       cout << "PS parameter "<< i << " floating in ["
 	   << min  << "," << max << "]" << endl;
@@ -157,6 +157,20 @@ rpwa::pwacompset::setPS(TF1* fPS){
   _numpar+=_freePSpar.size();
 }
 
+double 
+rpwa::pwacompset::getFreePSPar(unsigned int i){
+  if(i<_freePSpar.size())
+    return _phasespace->GetParameter(_freePSpar[i]);
+  else return 0;
+}
+
+
+void 
+rpwa::pwacompset::getFreePSLimits(unsigned int i, double& lower, double& upper){
+  if(i<_freePSpar.size()){
+    _phasespace->GetParLimits(_freePSpar[i],lower,upper);
+  }
+}
 
 void
 rpwa::pwacompset::setPar(const double* par){ // set parameters
@@ -249,7 +263,7 @@ rpwa::pwacompset::overlap(const std::string& wave1,
       rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C()*sqrt(_comp[ic]->channels().find(wave2)->second.ps(m));
     }
   }
-  return rho1*conj(rho2);
+  return rho1*conj(rho2)*_phasespace->Eval(m);
 }
 
 

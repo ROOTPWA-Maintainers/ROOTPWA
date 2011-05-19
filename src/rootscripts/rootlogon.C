@@ -39,29 +39,44 @@
   gSystem->AddIncludePath("-I$ROOTPWA/utilities");
   gSystem->AddIncludePath("-I$ROOTPWA/src");
 
-  // basic tree routines
-  gROOT->ProcessLine(".L loadFitResult.C+");
-  gROOT->ProcessLine(".L convertTFitResultTree.C+");
 
-  // basic plotting routines
-  gROOT->ProcessLine(".L plotIntensity.C+");
-  gROOT->ProcessLine(".L plotPhase.C+");
-  gROOT->ProcessLine(".L plotCoherence.C+");
+//   // basic tree routines
+//   gROOT->ProcessLine(".L loadFitResult.C+");
+//   gROOT->ProcessLine(".L convertTFitResultTree.C+");
 
-  // summary plots
-  gROOT->ProcessLine(".L plotAllIntensities.C+");
-  gROOT->ProcessLine(".L plotSpinTotals.C+");
-  gROOT->ProcessLine(".L plot4.C+");
+//   // basic plotting routines
+//   gROOT->ProcessLine(".L plotIntensity.C+");
+//   gROOT->ProcessLine(".L plotPhase.C+");
+//   gROOT->ProcessLine(".L plotCoherence.C+");
+
+//   // summary plots
+//   gROOT->ProcessLine(".L plotAllIntensities.C+");
+//   gROOT->ProcessLine(".L plotSpinTotals.C+");
+//   gROOT->ProcessLine(".L plot4.C+");
 
   gStyle->SetPadColor(0);
   gStyle->SetCanvasColor(0);
 
   // define grey-scale palette
+ //  UInt_t   nmbColorEndPoints         = 2;
+//   Double_t red   [nmbColorEndPoints] = { 1, 0};
+//   Double_t green [nmbColorEndPoints] = { 1, 0};
+//   Double_t blue  [nmbColorEndPoints] = { 1, 0};
+//   Double_t length[nmbColorEndPoints] = { 0, 1};
+//   Int_t    nmbColors                 = 50;
+//   TColor::CreateGradientColorTable(nmbColorEndPoints, length, red, green, blue, nmbColors);
+
+
+
+
+// define grey-scale palette
   UInt_t   nmbColorEndPoints         = 2;
   Double_t red   [nmbColorEndPoints] = { 1, 0};
   Double_t green [nmbColorEndPoints] = { 1, 0};
-  Double_t blue  [nmbColorEndPoints] = { 1, 0};
+  Double_t blue  [nmbColorEndPoints] = { 1, 0.5};
   Double_t length[nmbColorEndPoints] = { 0, 1};
-  Int_t    nmbColors                 = 50;
+  Int_t    nmbColors                 = 150;
   TColor::CreateGradientColorTable(nmbColorEndPoints, length, red, green, blue, nmbColors);
+
+
 }

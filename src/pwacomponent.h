@@ -139,6 +139,10 @@ namespace rpwa {
 
     void setPar(const double* par); // set parameters
     void getPar(double* par);       // return parameters 
+    unsigned int nFreePSPar() const {return _freePSpar.size();}
+    double getFreePSPar(unsigned int i);
+    void getFreePSLimits(unsigned int i, double& lower, double& upper);
+
 
     const pwacomponent* operator[](unsigned int i) const {return _comp[i];}
 

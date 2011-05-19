@@ -1019,8 +1019,8 @@ TPWALikelihood<complexT>::getIntegralMatrices(TCMatrix&       normMatrix,
 		}
   }
 	// add flat
-	normMatrix.set(_nmbWaves, _nmbWaves, 1);
-	accMatrix.set (_nmbWaves, _nmbWaves, 1);
+  normMatrix.set(_nmbWaves, _nmbWaves, complexT(1,0));
+  accMatrix.set (_nmbWaves, _nmbWaves, complexT(1,0));
   phaseSpaceIntegral[_nmbWaves] = 1;
 }
 
