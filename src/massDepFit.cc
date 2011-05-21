@@ -202,16 +202,15 @@ extern char* optarg;
     }
 
 
-  TF1* fPS=new TF1("fps","[3] * (x-[0])*exp( (x-[0])*([1]+(x-[0])*[2]) )",900,3000);
+  TF1* fPS=new TF1("fps","[1] * ((x-[0])/1000.)^5*(1.+((x-[0])/1000.)*[2])*exp(-[3]* ((x-[0])/1000.)^2)",900,3000);
   fPS->SetParameter(0,698); //5pi threshold
   fPS->SetParLimits(0,698,698);
-  fPS->SetParameter(1,6.27068E-3); // slope
-  fPS->SetParLimits(1,6.27068E-3,6.27068E-3); // slope
-  //fPS->SetParameter(2,-0.939708E-6); // correction
-  fPS->SetParameter(2,-2.5E-6); // correction
-  fPS->SetParLimits(2,-3E-6,0);
-  fPS->SetParameter(3,1E-6); // Normalization
-  fPS->SetParLimits(3,1E-6,1E-6); // Normalization
+  fPS->SetParameter(1,308.7E-6); // normalization
+  fPS->SetParLimits(1,308.7E-6,308.7E-6); //
+  fPS->SetParameter(2,4.859); // correction
+  fPS->SetParLimits(2,4.859,4.859);
+  fPS->SetParameter(3,0); // Damping
+  fPS->SetParLimits(3,0,3);
   //fPS->SetParameter(3,10); // Normalization
   //TF1* fPS=new TF1("fps","1.",900,4000);
 
@@ -1252,7 +1251,7 @@ extern char* optarg;
 	 const pwacomponent* c=compset[ic];
 	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
 	 while(it!=c->channels().end()){
-	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m);
+	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*compset.ps(m);
 	   compgraphs[compcount]->SetPoint(i,m,I);
 	   ++compcount;
 	   ++it;
@@ -1390,6 +1389,8 @@ extern char* optarg;
      overlapImgraphs[iw]->Write();
      //phase2d[iw]->Write();
  } // end loop over waves
+
+ fPS->Write("fPS");
 
 outfile->Close();
    
