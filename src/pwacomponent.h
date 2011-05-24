@@ -147,7 +147,7 @@ namespace rpwa {
     const pwacomponent* operator[](unsigned int i) const {return _comp[i];}
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacompset& cs);
-    
+    double ps(double m);
     double intensity(const std::string& wave, double m);
     double phase(const std::string& wave, double m);
     double phase(const std::string& wave1,

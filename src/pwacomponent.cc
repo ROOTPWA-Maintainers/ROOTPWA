@@ -210,6 +210,8 @@ rpwa::pwacompset::getPar(double* par){       // return parameters
   }
 }
 
+double 
+rpwa::pwacompset::ps(double m){return _phasespace->Eval(m);}
 
 double 
 rpwa::pwacompset::intensity(const std::string& wave, double m){
