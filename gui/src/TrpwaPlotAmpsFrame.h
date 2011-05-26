@@ -189,6 +189,7 @@ private:
 	TMultiGraph* plotted_most_likely_graphs[5];
 	// draw the most likely graph?
 	bool draw_most_likely;
+	bool draw_datainfo;
 	double masscutlow;  // current valid low  range cut of plotted waves
 	double masscuthigh; // current valid high range cut of plotted waves
 
@@ -200,6 +201,7 @@ private:
 	TGDoubleHSlider* slider_mass_range; // common selected mass range for plotting
 
 	TGCheckButton* button_show_most_likely; // set the state to draw the most likely solution
+	TGCheckButton* 	button_draw_datainfo; // button to overlay data info as "preliminary"
 
 	Tfilemap available_fit_results; // map with title as key and a pointer to an opened Tree
 
@@ -258,6 +260,9 @@ public:
 
 	// set the most likely graph to be drawn
 	void Set_show_most_likely();
+
+	// plot "preliminary" and the data info
+	void Set_draw_datainfo();
 
 	// plot all intensities in the list of selected fit results
 	void Plot_All_selected();

@@ -156,7 +156,10 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 	stringstream batch_script_name;
 	batch_script_name << _temp_space << "/" << jobname << "_" << stime << jobcounter << ".sh";
 	ofstream batch_script(batch_script_name.str().c_str());
-	if (!batch_script) return false;
+	if (!batch_script) {
+		cout << " Error in TrpwaJobManager::SendJob(): could not write script file " <<  batch_script_name.str()<< endl;
+		return false;
+	}
 	if (_available_farmtype == arrfarmtypes[3]){  // case mainz blaster
 		batch_script << "#!/bin/bash" << endl;
 		batch_script << "#" << endl;

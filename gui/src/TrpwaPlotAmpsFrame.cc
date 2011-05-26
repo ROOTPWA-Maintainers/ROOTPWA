@@ -29,6 +29,7 @@
 #include "TGFileDialog.h"
 #include "TText.h"
 #include "TColor.h"
+#include "TPaveText.h"
 
 using namespace std;
 using namespace TrpwaCommonTools;
@@ -36,6 +37,64 @@ using namespace rpwa;
 
 #ifndef TRPWAPLOTAMPSFRAME_CC_
 #define TRPWAPLOTAMPSFRAME_CC_
+
+TPaveText* label_preliminary;
+TPaveText* label_data_info;
+TPaveText* label_analysis_info;
+
+void Create_Info(){
+	// "preliminary" to plot
+	label_preliminary = new TPaveText(0.,0.,1.,1.,"NDC");
+	if (1){
+		TText* text_preliminary = label_preliminary->AddText("preliminary");
+		//TText* text_preliminary = label_preliminary->AddText("ongoing analysis");
+		//TText* text_beam_info = label_preliminary->AddText(1,1,"COMPASS 2008 negative hadron beam");
+		text_preliminary->SetTextColor(17);
+		text_preliminary->SetTextSize(0.10);
+		text_preliminary->SetTextAngle(26.15998);
+		text_preliminary->SetTextAlign(22);
+	}
+	label_preliminary->SetFillStyle(4000);
+	label_preliminary->SetBorderSize(0);
+
+	label_analysis_info = new TPaveText(0.01,0.95,.99,.99,"NDC");
+	label_analysis_info->SetFillColor(0);
+	//TText* text_beam_info = label_analysis_info->AddText("COMPASS 2008 negative hadron beam");
+	//text_beam_info->SetTextSize(0.05);
+	label_analysis_info->SetBorderSize(2);
+
+	//label_data_info = new TPaveText(0.58, 0.78, 0.96, 0.87, "NDC");
+	//label_data_info = new TPaveText(0.58, 0.72, 0.96, 0.89, "NDC");
+	if (1)
+		label_data_info = new TPaveText(0.5, 0.72, 0.89, 0.89, "NDC");
+	else
+		label_data_info = new TPaveText(0.59, 0.72, 0.89, 0.89, "NDC");
+	if (1){
+		TText* text_beam_info = label_data_info->AddText("COMPASS 2008 negative hadron beam");
+		text_beam_info->SetTextSize(0.03);
+		TText* text_channel_info = label_data_info->AddText("K^{-} p #rightarrow K^{-} #pi^{+} #pi^{-} p_{recoil}");
+		text_channel_info->SetTextSize(0.04);
+		//TText* text_acc_info = label_data_info->AddText("w/o acceptance correction");
+		//text_acc_info->SetTextSize(0.03);
+		//TText* text_data_info = label_data_info->AddText("W37 = 55% of 2008 data");
+		/*
+		TText* text_data_info;
+		if (0){
+			text_data_info = label_data_info->AddText("");//title_MC.c_str());
+		} else {
+			text_data_info = label_data_info->AddText("");//title_data.c_str());
+		}
+		text_data_info->SetTextSize(0.03);
+		text_data_info->SetTextColor(2);*/
+		//text_beam_info->SetNDC();
+		//text_beam_info->SetTextAlign(11);
+		//label_data_info->SetFillStyle(4000);
+		label_data_info->SetFillColor(0);
+	} else {
+		label_data_info->SetFillStyle(4000);
+	}
+	label_data_info->SetBorderSize(0);
+}
 
 TrpwaPlotAmpsFrame::TrpwaPlotAmpsFrame(
 		vector<string> fit_result_paths, // paths containing fit results (all file with the ending .root will be used
@@ -52,11 +111,13 @@ TrpwaPlotAmpsFrame::TrpwaPlotAmpsFrame(
 	current_fit_result = NULL;
 	masscutlow  = -1;
 	masscuthigh = -1;
+	Create_Info();
 	for (int ipad = 0; ipad < 5; ipad++){
 		plotted_graphs[ipad] = NULL;
 		plotted_most_likely_graphs[ipad] = NULL;
 	}
 	draw_most_likely = true;
+	draw_datainfo    = false;
 	if (fit_result_descriptions.size() == fit_result_paths.size() && fit_result_paths.size() == fit_result_titles.size()){
 		cout << " loading fit results " << endl;
 		for (unsigned int i = 0; i < fit_result_paths.size(); i++){
@@ -102,6 +163,8 @@ void TrpwaPlotAmpsFrame::Build(){
 		gStyle->SetPadTopMargin(0.16);
 		gStyle->SetPadLeftMargin(0.16);
 		gStyle->SetPadRightMargin(0.16);
+		gStyle->SetFrameFillColor(0);
+	   	gStyle->SetFrameFillStyle(0);
 		//gStyle->SetOptTitle(0);
 		//gStyle->SetOptStat(0);
     }
@@ -197,6 +260,15 @@ void TrpwaPlotAmpsFrame::Build(){
 	}
 	button_show_most_likely->Connect("Clicked()","TrpwaPlotAmpsFrame",this,"Set_show_most_likely()");
 
+	button_draw_datainfo = new TGCheckButton(this, new TGHotString("draw data info"));
+	// if use normalization not given then it is assumed not to be available
+	if (!draw_datainfo){
+		button_draw_datainfo->SetState(kButtonUp);
+	} else {
+		button_draw_datainfo->SetState(kButtonDown);
+	}
+	button_draw_datainfo->Connect("Clicked()","TrpwaPlotAmpsFrame",this,"Set_draw_datainfo()");
+
 
 	// button to plot the selection
 	TGTextButton* plot_button = new TGTextButton(this, new TGHotString(" draw selected waves "));
@@ -226,6 +298,7 @@ void TrpwaPlotAmpsFrame::Build(){
 	this->AddFrame(frame_partial_wave_selections, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
 	this->AddFrame(button_show_most_likely,new TGLayoutHints(kLHintsCenterX,1,1,1,1));
+	this->AddFrame(button_draw_datainfo, new TGLayoutHints(kLHintsCenterX,1,1,1,1));
 	this->AddFrame(plot_button, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 			kLHintsExpandX,1,1,1,1));
 	this->AddFrame(frame_selected_waves);
@@ -511,6 +584,10 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 				cout << " no total intensity found in " << selected_tree->GetName()<< endl;
 			}
 		}
+		if (draw_datainfo){
+			label_preliminary->Draw();
+			label_data_info->Draw();
+		}
 	}
 
 	// draw the likelihood distributions
@@ -566,6 +643,10 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 					}
 				}
 			}
+		}
+		if (draw_datainfo){
+			label_preliminary->Draw();
+			label_data_info->Draw();
 		}
 	}
 
@@ -630,6 +711,10 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 				}
 			}
 		}
+		if (draw_datainfo){
+			label_preliminary->Draw();
+			label_data_info->Draw();
+		}
 	}
 
 	canvas_selected_waves->Print("Fit_overview.ps");
@@ -681,6 +766,10 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 				_graphs->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
 				gPad->Update();
 			}
+		}
+		if (draw_datainfo){
+			label_preliminary->Draw();
+			label_data_info->Draw();
 		}
 	}
 	canvas_selected_waves->Print("Fit_overview.ps");
@@ -744,6 +833,10 @@ void TrpwaPlotAmpsFrame::Plot_All_selected(){
 				} else {
 					cout << " no wave named " << wavename << " in " << selected_tree->GetName() << " found "<< endl;
 				}
+			}
+			if (draw_datainfo){
+				label_preliminary->Draw();
+				label_data_info->Draw();
 			}
 			gPad->Update();
 		}
@@ -969,6 +1062,7 @@ void TrpwaPlotAmpsFrame::Plot_selected_wave(){
 			plotted_most_likely_graphs[ipad]->GetXaxis()->SetTitle(_graph->GetXaxis()->GetTitle());
 			plotted_most_likely_graphs[ipad]->GetYaxis()->SetTitle(_graph->GetYaxis()->GetTitle());
 		}
+
 		if (current_anchor_wave == "") continue;
 		ipad = 3;
 		canvas_selected_waves->cd(ipad);
@@ -1090,6 +1184,11 @@ void TrpwaPlotAmpsFrame::Set_show_most_likely(){
 	Set_Mass_range();
 }
 
+void TrpwaPlotAmpsFrame::Set_draw_datainfo(){
+	draw_datainfo = button_draw_datainfo->GetState();
+	Set_Mass_range();
+}
+
 void TrpwaPlotAmpsFrame::Set_Mass_range(){
 	float mass_min, mass_max;
 	slider_mass_range->GetPosition(mass_min, mass_max);
@@ -1098,21 +1197,56 @@ void TrpwaPlotAmpsFrame::Set_Mass_range(){
 	//mass_min /= 1000.; // drawn in GeV
 	//mass_max /= 1000.;
 	//cout << " setting from "<< mass_min << " to " << mass_max << endl;
-	for (int ipad = 0; ipad < 5; ipad++){
+	for (int ipad = 1; ipad < 5; ipad++){
+		canvas_selected_waves->cd(ipad);
+		gPad->Clear();
 		if (!draw_most_likely && plotted_graphs[ipad]){
-			canvas_selected_waves->cd(ipad);
-			gPad->Clear();
 			plotted_graphs[ipad]->Draw("APZ");
 			plotted_graphs[ipad]->GetXaxis()->SetRangeUser(mass_min, mass_max);
-			gPad->Update();
+			//gPad->Update();
+			switch (ipad){
+			case 1: // intensity
+				plotted_graphs[ipad]->GetYaxis()->SetRangeUser(0.,plotted_graphs[ipad]->GetYaxis()->GetXmax());
+				break;
+			case 2: // phase
+				//plotted_graphs[ipad]->GetYaxis()->SetRangeUser(-600., 600);
+				break;
+			case 3: // anchor wave
+				plotted_graphs[ipad]->GetYaxis()->SetRangeUser(0.,plotted_graphs[ipad]->GetYaxis()->GetXmax());
+				break;
+			case 4:
+				plotted_graphs[ipad]->GetYaxis()->SetRangeUser(0., 1.);
+			default:
+				break; // do nothing
+			}
 		}
 		if (draw_most_likely && plotted_most_likely_graphs[ipad]){
-			canvas_selected_waves->cd(ipad);
-			gPad->Clear();
+			//canvas_selected_waves->cd(ipad);
+			//gPad->Clear();
 			plotted_most_likely_graphs[ipad]->Draw("APZ");
 			plotted_most_likely_graphs[ipad]->GetXaxis()->SetRangeUser(mass_min, mass_max);
-			gPad->Update();
+			switch (ipad){
+			case 1: // intensity
+				plotted_most_likely_graphs[ipad]->GetYaxis()->SetRangeUser(0.,plotted_most_likely_graphs[ipad]->GetYaxis()->GetXmax());
+				break;
+			case 2: // phase
+				//plotted_most_likely_graphs[ipad]->GetYaxis()->SetRangeUser(-600., 600);
+				break;
+			case 3: // anchor wave
+				plotted_most_likely_graphs[ipad]->GetYaxis()->SetRangeUser(0.,plotted_most_likely_graphs[ipad]->GetYaxis()->GetXmax());
+				break;
+			case 4:
+				plotted_most_likely_graphs[ipad]->GetYaxis()->SetRangeUser(0., 1.);
+			default:
+				break; // do nothing
+			}
+			//gPad->Update();
 		}
+		if (draw_datainfo){
+			label_preliminary->Draw();
+			label_data_info->Draw();
+		}
+		gPad->Update();
 	}
 }
 
