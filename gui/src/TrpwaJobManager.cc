@@ -181,10 +181,11 @@ bool TrpwaJobManager::SendJob(string command, string jobname, int duration){
 	batch_script << " echo \"removing " << batch_script_name.str() << "\"" << endl;
 	batch_script << "rm " << batch_script_name.str();
 	batch_script.close();
-
+	
 	// send the jobs
 	if (_available_farmtype == arrfarmtypes[0]){  // case local
-		if (system(("source "+batch_script_name.str()).c_str()) == 0) return true; else return false;
+
+		if (system((". "+batch_script_name.str()).c_str()) == 0) return true; else return false;
 	}
 	if (_available_farmtype == arrfarmtypes[2]){  // case gridka farm
 		if (system(("qsub -q e-long -l max_test_run=1 "+batch_script_name.str()).c_str()) == 0) return true; else return false;
