@@ -157,6 +157,18 @@ diffractiveDissVertex::productionAmp() const
 }
 
 
+void
+diffractiveDissVertex::setXFlavorQN()
+{
+	particle& X    = *XParticle();
+	particle& beam = *(this->beam());
+	X.setBaryonNmb  (beam.baryonNmb());
+	X.setStrangeness(beam.strangeness());
+	X.setCharm      (beam.charm());
+	X.setBeauty     (beam.beauty());
+}
+
+
 bool
 diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
                                 const TClonesArray& prodKinMomenta)

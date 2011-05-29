@@ -332,6 +332,19 @@ leptoProductionVertex::epsilon() const
 }
 
 
+void
+leptoProductionVertex::setXFlavorQN()
+{
+	//!!! check this
+	particle& X    = *XParticle();
+	particle& beam = *virtPhoton();
+	X.setBaryonNmb  (beam.baryonNmb());
+	X.setStrangeness(beam.strangeness());
+	X.setCharm      (beam.charm());
+	X.setBeauty     (beam.beauty());
+}
+
+
 bool
 leptoProductionVertex::readData(const TClonesArray& prodKinParticles,
                                 const TClonesArray& prodKinMomenta)

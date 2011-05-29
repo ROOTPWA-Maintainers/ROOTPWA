@@ -81,7 +81,10 @@ namespace rpwa {
 		// production specific accessors
 		virtual const TLorentzVector& referenceLzVec() const { return virtPhoton()->lzVec(); }  ///< returns Lorentz-vector that defines z-axis for angular distributions
 		virtual const particlePtr&    XParticle     () const { return outParticles()[0];     }  ///< returns X particle
-		virtual std::complex<double>  productionAmp () const;                                   ///< returns production amplitude
+
+		virtual std::complex<double> productionAmp() const;  ///< returns production amplitude
+
+		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
 		// leptoproduction specific accessors
 		inline const particlePtr& beamLepton     () const { return inParticles ()[0]; }  ///< returns incoming beam particle
@@ -91,7 +94,7 @@ namespace rpwa {
 		inline const particlePtr& recoil         () const { return outParticles()[1]; }  ///< returns recoil particle
 
 		inline double beamPol() const { return _longPol; }  ///< returns (longitudinal) beam polarization
-		inline void setBeamPol(const double longPol = 0) { _longPol = longPol; }  ///< sets (longitudinal) beam polarization
+		inline void   setBeamPol(const double longPol = 0) { _longPol = longPol; }  ///< sets (longitudinal) beam polarization
 
 		// leptoproduction kinematic variables
 		inline double Q2     () const { return -virtPhoton()->lzVec().Mag2();                                }  ///< returns Q^2 of virtual photon

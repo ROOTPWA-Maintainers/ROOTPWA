@@ -80,7 +80,10 @@ namespace rpwa {
 		// production specific accessors
 		virtual const TLorentzVector& referenceLzVec() const { return beam()->lzVec();   }  ///< returns Lorentz-vector that defines z-axis for angular distributions
 		virtual const particlePtr&    XParticle     () const { return outParticles()[0]; }  ///< returns X particle
-		virtual std::complex<double>  productionAmp () const;                                           ///< returns production amplitude
+
+		virtual std::complex<double> productionAmp() const;  ///< returns production amplitude
+
+		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
 		// diffractive dissociation specific accessors
 		inline const particlePtr& beam  () const { return inParticles ()[0]; }  ///< returns beam particle

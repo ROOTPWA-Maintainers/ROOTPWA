@@ -84,7 +84,7 @@ usage(const string& progName,
 }
 
 
-bool testAmplitude(TTree&          tree,
+bool testAmplitude(TTree*          tree,
                    const string&   keyFileName,
                    vector<string>& keyFileErrors,
                    const long int  maxNmbEvents              = -1,
@@ -119,6 +119,9 @@ bool testAmplitude(TTree&          tree,
 	if (not success)
 		return false;
 
+	if (!tree)
+		return true;  // no data; cannot check symmetry properties of amplitude
+
 	printInfo << "calculating amplitudes for ";
 	if (maxNmbEvents < 0)
 		cout << "all";
@@ -132,7 +135,7 @@ bool testAmplitude(TTree&          tree,
 
 	// read data from tree and calculate amplitudes
 	vector<complex<double> > ampValues;
-	if (not processTree(tree, amplitude, ampValues, maxNmbEvents,
+	if (not processTree(*tree, amplitude, ampValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
@@ -146,7 +149,7 @@ bool testAmplitude(TTree&          tree,
 	// calculate amplitudes for parity transformed decay daughters
 	vector<complex<double> > ampSpaceInvValues;
 	amplitude->enableSpaceInversion(true);
-	if (not processTree(tree, amplitude, ampSpaceInvValues, maxNmbEvents,
+	if (not processTree(*tree, amplitude, ampSpaceInvValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
@@ -157,7 +160,7 @@ bool testAmplitude(TTree&          tree,
 	vector<complex<double> > ampReflValues;
 	amplitude->enableSpaceInversion(false);
 	amplitude->enableReflection    (true);
-	if (not processTree(tree, amplitude, ampReflValues, maxNmbEvents,
+	if (not processTree(*tree, amplitude, ampReflValues, maxNmbEvents,
 	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
 	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
@@ -338,11 +341,6 @@ main(int    argc,
 	// 	massDependence::setDebug(true);
 	// }
 
-	// check command line args
-	if (dataFileName == "") {
-		printErr << "you need to specify a test data file (option -d). aborting." << endl;;
-		usage(progName, 1);
-	}
 	// get key file names
 	if (optind >= argc) {
 		printErr << "you need to specify at least one key file to process. aborting." << endl;;
@@ -372,41 +370,45 @@ main(int    argc,
 		          << "particle names = '" << decayKinParticlesLeafName << "', "
 		          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
   
-	// determine test data format
-	bool rootDataFormat = false;
-	if (dataFileName.substr(dataFileName.length() - 5) == ".root")
-		rootDataFormat = true;
-
 	TTree* tree = 0;
-	if (rootDataFormat) {
-		// open root file and build chain
-		TChain* chain = new TChain(inTreeName.c_str());
-		printInfo << "opening ROOT input file '" << dataFileName << "'" << endl;
-		if (chain->Add(dataFileName.c_str()) < 1)
-			printWarn << "no events in ROOT input file '" << dataFileName << "'" << endl;
-		chain->GetListOfFiles()->ls();
-		tree = chain;
-	} else {
-		// convert .evt file to root tree
-		printInfo << "opening .evt input file '" << dataFileName << "'" << endl;
-		ifstream evtFile(dataFileName.c_str());
-		if (not evtFile or not evtFile.good()) {
-			printErr << "cannot open .evt input file '" << dataFileName << "'. aborting." << endl;
-			exit(1);
-		}
-		// create tree
-		tree = new TTree(inTreeName.c_str(), inTreeName.c_str());
-		if (not tree) {
-			printErr << "problems creating tree '" << inTreeName << "'. aborting." << endl;
-			exit(1);
-		}
-		if (not fillTreeFromEvt(evtFile, *tree, -1,
-		                        prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		                        decayKinParticlesLeafName, decayKinMomentaLeafName,
-		                        targetParticleName, false)) {
-			printErr << "problems creating tree from .evt input file '" << dataFileName << "' "
-			         << "aborting." << endl;
-			exit(1);
+	if (dataFileName == "")
+		printInfo << "No test data file was specified (option -d). skipping symmetry checks of amplitude." << endl;
+	else {
+		// determine test data format
+		bool rootDataFormat = false;
+		if (dataFileName.substr(dataFileName.length() - 5) == ".root")
+			rootDataFormat = true;
+
+		if (rootDataFormat) {
+			// open root file and build chain
+			TChain* chain = new TChain(inTreeName.c_str());
+			printInfo << "opening ROOT input file '" << dataFileName << "'" << endl;
+			if (chain->Add(dataFileName.c_str()) < 1)
+				printWarn << "no events in ROOT input file '" << dataFileName << "'" << endl;
+			chain->GetListOfFiles()->ls();
+			tree = chain;
+		} else {
+			// convert .evt file to root tree
+			printInfo << "opening .evt input file '" << dataFileName << "'" << endl;
+			ifstream evtFile(dataFileName.c_str());
+			if (not evtFile or not evtFile.good()) {
+				printErr << "cannot open .evt input file '" << dataFileName << "'. aborting." << endl;
+				exit(1);
+			}
+			// create tree
+			tree = new TTree(inTreeName.c_str(), inTreeName.c_str());
+			if (not tree) {
+				printErr << "problems creating tree '" << inTreeName << "'. aborting." << endl;
+				exit(1);
+			}
+			if (not fillTreeFromEvt(evtFile, *tree, -1,
+			                        prodKinParticlesLeafName,  prodKinMomentaLeafName,
+			                        decayKinParticlesLeafName, decayKinMomentaLeafName,
+			                        targetParticleName, false)) {
+				printErr << "problems creating tree from .evt input file '" << dataFileName << "' "
+				         << "aborting." << endl;
+				exit(1);
+			}
 		}
 	}
 
@@ -421,7 +423,7 @@ main(int    argc,
 		cout << endl;
 		printInfo << "checking key file '" << keyFileNames[i] << "'" << endl;
 		vector<string> errors;
-		if (not testAmplitude(*tree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
+		if (not testAmplitude(tree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
 		                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
 		                      decayKinParticlesLeafName, decayKinMomentaLeafName))
 			++countKeyFileErr;
@@ -433,7 +435,8 @@ main(int    argc,
 	}
 
 	// clean up
-	delete tree;
+	if (tree)
+		delete tree;
 
 	// report final result and set exit status accordingly
 	cout << endl;

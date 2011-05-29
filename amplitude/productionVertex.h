@@ -66,10 +66,13 @@ namespace rpwa {
 		virtual ~productionVertex();
 
 		// production specific accessors
-		virtual const TLorentzVector& referenceLzVec() const = 0;           ///< returns Lorentz-vector that defines z-axis for angular distributions
-		virtual const particlePtr&    XParticle     () const = 0;           ///< returns X particle
-		virtual std::complex<double>  productionAmp () const { return 1; }  ///< returns production amplitude
+		virtual const TLorentzVector& referenceLzVec() const = 0;  ///< returns Lorentz-vector that defines z-axis for angular distributions
+		virtual const particlePtr&    XParticle     () const = 0;  ///< returns X particle
+
+		virtual std::complex<double> productionAmp() const { return 1; }  ///< returns production amplitude
     
+		virtual void setXFlavorQN() = 0;  ///< general interface to set flavor quantum numbers of X (baryon nmb., S, C, B) based on production mechanism
+
 		virtual bool readData(const TClonesArray& names,
 		                      const TClonesArray& momenta) = 0;  ///< general interface to read data from TClonesArrays
 
