@@ -186,6 +186,10 @@ private:
 	// to be in order and not to jump for example from +180 to -180 degree
 	void Rectify_phase(TGraphErrors* graph_phase);
 
+	// sets the graph color, marker style and marker color
+	// if title is "" then title provided by the graph is used
+	void SetGraphProperties(TGraph* graph, string name, string title = "");
+
 };
 
 typedef map<string, Tfitresult*> Tfitresultmap;

@@ -145,13 +145,17 @@ TrpwaPlotAmpsFrame::~TrpwaPlotAmpsFrame(){
 		delete it->second;
 	}
 	for (Tfitresultmapit it = selected_fit_result_graphs.begin(); it != selected_fit_result_graphs.end(); it++) {
-		/*
+		
 		Tdirmapit fit_result_path_it = available_fit_result_paths.find(it->first);
 		if (fit_result_path_it != available_fit_result_paths.end()){
+			if (it->first == "Current"){
+				cout << " graphs of temporary fit results will be not stored to file " << endl;
+				continue;
+			}
 			if (!it->second->Write_to_file(fit_result_path_it->second+"/fit_result_plots.root")){
 				cout << " Warning in TrpwaPlotAmpsFrame::~TrpwaPlotAmpsFrame(): could not save graphs to file " << endl;
 			}
-		}*/
+		}
 		delete it->second;
 	}
 	Cleanup();
@@ -2274,6 +2278,10 @@ bool Tfitresult::Write_to_file(string filename){
 				file.cd(it->first.c_str());
 				gDirectory->mkdir(itphase->first.c_str());
 				file.cd((it->first+"/"+itphase->first).c_str());
+				TParameter<int> _mass_low("mass_low",itphase->second.mass_low);
+				_mass_low.Write();
+				TParameter<int> _mass_high("mass_high",itphase->second.mass_high);
+				_mass_high.Write();
 				{
 					TGraphErrors _graph(*itphase->second.all_coherences);
 					_graph.SetName("all_coherences");
@@ -2328,9 +2336,19 @@ bool Tfitresult::Write_to_file(string filename){
 			_graph.SetName("most_likely_evidence");
 			_graph.Write();
 		}
+		TParameter<int> _mass_low("mass_low",mass_low);
+		_mass_low.Write();
+		TParameter<int> _mass_high("mass_high",mass_high);
+		_mass_high.Write();
 		// last step: store spin totals
+		TTree* tree_spintotallist = new TTree("tree_spintotallist", "spintotals");
+		char* spintotalname = new char[1000];
+		tree_spintotallist->Branch("spintotalname", spintotalname, "spintotalname[1000]/B");
 		for (Tgraphmapit it = spin_totals.begin(); it != spin_totals.end(); it++){
 			file.cd();
+			strcpy(spintotalname,it->first.c_str());
+			cout << " Filling " << it->first.c_str() << " as " << spintotalname << endl;
+			tree_spintotallist->Fill();
 			file.mkdir(it->first.c_str());
 			file.cd(it->first.c_str());
 			{
@@ -2339,6 +2357,9 @@ bool Tfitresult::Write_to_file(string filename){
 				_graph.Write();
 			}
 		}
+		file.cd();
+		tree_spintotallist->Write();
+		delete[] spintotalname;
 
 		file.Write();
 		file.Close();
@@ -2378,6 +2399,10 @@ bool Tfitresult::Read_from_file(string filename){
 				cout << " reading properties of " << wavenamestring << endl;
 				// read the graph it self
 				wavegraph.all_intensities = (TGraphErrors*) file.Get((wavenamestring+"/all_intensities").c_str());
+				SetGraphProperties(wavegraph.all_intensities, wavenamestring+"all_intensities");
+				wavegraph.most_likely_intensity = (TGraphErrors*) file.Get((wavenamestring+"/most_likely_intensity").c_str());
+				SetGraphProperties(wavegraph.most_likely_intensity, wavenamestring+"most_likely_intensity");
+				/*				
 				if (!wavegraph.all_intensities){
 					cout << " Error: could not find " << wavenamestring+"/all_intensities" << endl;
 					result = false;
@@ -2393,6 +2418,7 @@ bool Tfitresult::Read_from_file(string filename){
 					wavegraph.most_likely_intensity->SetName((wavenamestring+"most_likely_intensity").c_str());
 					//wavegraph.most_likely_intensity->SetDirectory(0);
 				}
+				*/
 
 				TParameter<int>* _J = (TParameter<int>*)file.Get((wavenamestring+"/J").c_str());
 				if (_J){
@@ -2474,10 +2500,145 @@ bool Tfitresult::Read_from_file(string filename){
 				//testlist[wavenamestring] = wavegraph;
 				//cout << " retrieving " << wavename << " as " << wavenamestring << endl;
 				//waves[]=wavegraph;
+				// finally the phase differences
+				for (int iphase = 0; iphase < tree_wavelist->GetEntries(); iphase++){
+					tree_wavelist->GetEntry(iphase);
+					string phasenamestring(wavename);
+					TParameter<int>* _mass_low = (TParameter<int>*)file.Get((wavenamestring+"/"+phasenamestring+"/mass_low").c_str());
+					TParameter<int>* _mass_high = (TParameter<int>*)file.Get((wavenamestring+"/"+phasenamestring+"/mass_high").c_str());
+					if (!_mass_low || !_mass_high){
+						continue;
+					} 
+					Tphasegraphmapit itphase = wavegraph.phase.find(phasenamestring);
+					if (itphase == wavegraph.phase.end()){
+						//if (!file.Get(it->first+"/"+phasenamestring+"/all_coherences").c_str())) continue; // no phase graph stored here
+						cout << " reading phase vs " << phasenamestring << endl;
+						Tphasegraph& phasegraph = wavegraph.phase[phasenamestring];
+						phasegraph.mass_low = _mass_low->GetVal();
+						phasegraph.mass_high = _mass_high->GetVal();
+						phasegraph.all_coherences = (TGraphErrors*) file.Get((wavenamestring+"/"+phasenamestring+"/all_coherences").c_str());
+						SetGraphProperties(phasegraph.all_coherences, wavenamestring+"/"+phasenamestring+"/all_coherences");
+						phasegraph.all_phases = (TGraphErrors*) file.Get((wavenamestring+"/"+phasenamestring+"/all_phases").c_str());
+						SetGraphProperties(phasegraph.all_phases, wavenamestring+"/"+phasenamestring+"/all_phases");
+						phasegraph.most_likely_coherence = (TGraphErrors*) file.Get((wavenamestring+"/"+phasenamestring+"/most_likely_coherence").c_str());
+						SetGraphProperties(phasegraph.most_likely_coherence, wavenamestring+"/"+phasenamestring+"/most_likely_coherence");
+						phasegraph.most_likely_phase = (TGraphErrors*) file.Get((wavenamestring+"/"+phasenamestring+"/most_likely_phase").c_str());
+						SetGraphProperties(phasegraph.most_likely_phase, wavenamestring+"/"+phasenamestring+"/most_likely_phase");
+					} else {
+						cout << " Error: phase graphs " << phasenamestring << " are already existing! " << endl;
+						result = false;
+					}
+				}
 			} else {
 				cout << " Error: wave " << wavenamestring << " does already exist! " << endl;
+				result = false;
 			}
 		}
+		file.cd();
+		all_loglikelihoods = (TGraphErrors*) file.Get("all_loglikelihoods");
+		SetGraphProperties(all_loglikelihoods, "all_loglikelihoods");
+		most_likely_likelihoods = (TGraphErrors*) file.Get("most_likely_likelihoods");
+		SetGraphProperties(most_likely_likelihoods, "most_likely_likelihoods");
+		all_total_intensities = (TGraphErrors*) file.Get("all_total_intensities");
+		SetGraphProperties(all_total_intensities, "all_total_intensities");
+		most_likely_total_intensity = (TGraphErrors*) file.Get("most_likely_total_intensity");
+		SetGraphProperties(most_likely_total_intensity, "most_likely_total_intensity");
+		all_evidences = (TGraphErrors*) file.Get("all_evidences");
+		SetGraphProperties(all_evidences, "all_evidences");
+		most_likely_evidence = (TGraphErrors*) file.Get("most_likely_evidence");
+		SetGraphProperties(most_likely_evidence, "most_likely_evidence");
+		TParameter<int>* _mass_low = (TParameter<int>*)file.Get("mass_low");
+		if (_mass_low){
+			mass_low = _mass_low->GetVal();
+		} else {
+			cout << " Error: could not find " << "mass_low" << endl;
+			result = false;
+		}
+		TParameter<int>* _mass_high = (TParameter<int>*)file.Get("mass_high");
+		if (_mass_high){
+			mass_high = _mass_high->GetVal();
+		} else {
+			cout << " Error: could not find " << "mass_high" << endl;
+			result = false;
+		}
+/*
+		if (!all_loglikelihoods){
+			cout << " Error: could not find " << "all_loglikelihoods" << endl;
+			result = false;
+		} else {
+			all_loglikelihoods->SetName("all_loglikelihoods");
+			//wavegraph.most_likely_intensity->SetDirectory(0);
+		}
+		most_likely_likelihoods = (TGraphErrors*) file.Get("most_likely_likelihoods");
+		if (!most_likely_likelihoods){
+			cout << " Error: could not find " << "most_likely_likelihoods" << endl;
+			result = false;
+		} else {
+			most_likely_likelihoods->SetName("most_likely_likelihoods");
+			//wavegraph.most_likely_intensity->SetDirectory(0);
+		}
+		all_total_intensities = (TGraphErrors*) file.Get("all_total_intensities");
+		if (!all_total_intensities){
+			cout << " Error: could not find " << "all_total_intensities" << endl;
+			result = false;
+		} else {
+			all_total_intensities->SetName("all_total_intensities");
+			//wavegraph.most_likely_intensity->SetDirectory(0);
+		}
+		most_likely_total_intensity = (TGraphErrors*) file.Get("most_likely_total_intensity");
+		if (!most_likely_total_intensity){
+			cout << " Error: could not find " << "most_likely_total_intensity" << endl;
+			result = false;
+		} else {
+			most_likely_total_intensity->SetName("most_likely_total_intensity");
+			//wavegraph.most_likely_intensity->SetDirectory(0);
+		}
+		all_evidences = (TGraphErrors*) file.Get("all_evidences");
+		if (!all_evidences){
+			cout << " Error: could not find " << "all_evidences" << endl;
+			result = false;
+		} else {
+			all_evidences->SetName("all_evidences");
+			//wavegraph.most_likely_intensity->SetDirectory(0);
+		}
+		most_likely_evidence = (TGraphErrors*) file.Get("most_likely_evidence");
+		if (!all_evidences){
+			cout << " Error: could not find " << "most_likely_evidence" << endl;
+			result = false;
+		} else {
+			most_likely_evidence->SetName("most_likely_evidence");
+			//wavegraph.most_likely_intensity->SetDirectory(0);
+		}*/
+		// reading the spin totals
+		TTree* tree_spintotallist = (TTree*) file.Get("tree_spintotallist");
+		if (tree_spintotallist){
+			char* _spintotalname = new char[1000];
+			tree_spintotallist->SetBranchAddress("spintotalname", _spintotalname);
+			for (int i = 0; i < tree_spintotallist->GetEntries(); i++){
+				tree_spintotallist->GetEntry(i);
+				string spintotalname(_spintotalname);
+				Tgraphmapit it = spin_totals.find(spintotalname);
+				if (it == spin_totals.end()){
+					
+					TGraphErrors* &spintotalgraph = spin_totals[spintotalname];
+					spintotalgraph = (TGraphErrors*) file.Get((spintotalname+"/spin_total").c_str());
+					SetGraphProperties(spintotalgraph, spintotalname+"spin_total");
+					/*					
+					if (!spintotalgraph){
+						cout << " Error: could not read spin total graph " << spintotalname+"/spin_total" << endl;
+						result = false;
+					} else {
+						spintotalgraph->SetName((spintotalname+"spin_total").c_str());
+					}*/
+				} else {
+					cout << " Error: spin total " << spintotalname << " already exists! " << endl;
+				}			
+			}
+			delete[] _spintotalname;
+		} else {
+			cout << " Error reading list of spin totals " << endl;
+		}
+
 		file.Close();
 		cout << " done " << endl;
 		delete[] wavename;
@@ -2489,31 +2650,19 @@ bool Tfitresult::Read_from_file(string filename){
 
 }
 
-/*
-
-
-{
-	cout << " reading the wavelist " << endl;
-	TFile testfile("testfile.root", "Read");
-	if (testfile.IsZombie()) return 0;
-	TTree* testtree = (TTree*) testfile.Get("tree_wavelist");
-	if (!testtree) return 0;
-	char* wavename = new char[1000];
-	testtree->SetBranchAddress("wavename", wavename);
-	for (int iwave = 0; iwave < testtree->GetEntries(); iwave++){
-		testtree->GetEntry(iwave);
-		string wavenamestring(wavename);
-		testlist[wavenamestring]++;
-		cout << " retrieving " << wavename << " as " << wavenamestring << endl;
+void Tfitresult::SetGraphProperties(TGraph* graph, string name, string title){
+	if (!graph){
+		cout << " Error: graph " << name << " does not exist " << endl;
+		return;	
 	}
-	testfile.Close();
-	cout << " done " << endl;
-	delete[] wavename;
+	if (title != "")
+		graph->SetNameTitle(name.c_str(), title.c_str());
+	else 
+		graph->SetName(name.c_str());
+	graph->SetMarkerColor(graphcolor.rootcolorindex);
+	graph->SetMarkerStyle(21);
+	graph->SetMarkerSize(0.5);
 }
 
-cout << " retrieving results " << endl;
-for (map<string, int>::iterator it = testlist.begin(); it != testlist.end(); it++){
-	cout << it->first.c_str() << endl;
-}*/
 
 #endif /* TRPWAPLOTAMPSFRAME_CC_ */
