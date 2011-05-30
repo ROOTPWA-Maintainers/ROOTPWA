@@ -26,6 +26,8 @@ using namespace std;
 
 typedef map<string, TTree*> Tfilemap;
 typedef Tfilemap::iterator  Tfilemapit;
+typedef map<string, string> Tdirmap;
+typedef Tdirmap::iterator   Tdirmapit;
 typedef map<string, vector< int > > Twavemap;
 typedef Twavemap::iterator Twavemapit;
 
@@ -165,6 +167,17 @@ public:
 			string branchName = "fitResult_v2"
 		);
 
+	// wavelist (if loaded the results from file or already scanned) will be returned
+	vector<string>& Get_available_waves();
+
+	// Write all graphs into a root file. If the file exists, it will be overwritten!
+	// false if file could not be written
+	bool Write_to_file(string filename);
+
+	// Read graphs from a root file
+	// false if file does not exist or could not be read
+	bool Read_from_file(string filename);
+
 private:
 	// find the point next to 0 degree
 	// in case of many solutions take the one with
@@ -204,6 +217,7 @@ private:
 	TGCheckButton* 	button_draw_datainfo; // button to overlay data info as "preliminary"
 
 	Tfilemap available_fit_results; // map with title as key and a pointer to an opened Tree
+	Tdirmap  available_fit_result_paths; // map with the title as a key and the path to the files containing the fit result trees
 
 	Tfilemap selected_fit_results; // map with title as key and a pointer to an opened Tree selected by the user
 	TTree* current_fit_result; // pointer to the fit selected in the list of selected fit results
