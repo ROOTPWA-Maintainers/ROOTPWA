@@ -65,3 +65,12 @@ target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
 
 cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
 target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
+
+cuda_add_executable(square square.cu)
+target_link_libraries(square ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
+
+cuda_add_executable(templtest templtest.cu)
+target_link_libraries(templtest ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
+
+cuda_add_executable(bwig bwig.cu)
+target_link_libraries(bwig ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
