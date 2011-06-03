@@ -56,14 +56,14 @@ T RandomInit(T* data, int n)
 }
  
 
-// Random mass entries for Breit-Wigner
+// Random mass and breakup-momenta entries for Breit-Wigner
 template<class T>
 T RanMassInit(T* mass, T* bum, int n)
 {
   for (int i=0;i<n;++i) {
-    mass[i] = gRandom->Rndm()*1000+500;
+    mass[i] = gRandom->Rndm()+0.2; //    0.75549;				/// rho(770)
 //     T scale = gRandom->Rndm()*0.00002+0.49999;
-    bum[i] = sqrt((mass[i]*mass[i]-(0.45*mass[i]+0.51*mass[i])*(0.45*mass[i]+0.51*mass[i]))*(mass[i]*mass[i]-(0.45*mass[i]-0.51*mass[i])*(0.45*mass[i]-0.51*mass[i]))) / (2000*mass[i]) ; // 2*1000 to be conform to GeV, also gaining q bu kinematics
+    bum[i] = sqrt((mass[i]*mass[i]-(0.18*mass[i]+0.18*mass[i])*(0.18*mass[i]+0.18*mass[i]))*(mass[i]*mass[i]-(0.18*mass[i]-0.18*mass[i])*(0.18*mass[i]-0.18*mass[i]))) / (2*mass[i]) ; /// pi+pi-, m(pi)/m(rho) = 0.17997...
   }
   return 0;
 }
