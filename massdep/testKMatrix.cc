@@ -126,8 +126,8 @@ cmatrix TMatrix(double s){
   double rho1=rho2(s);
   rho(0,0)=cnum(rho0,0);
   rho(1,1)=cnum(rho1,0);
-  cnum alpha(1,0); // could use a polynomial here
-  double theta=0.5; // mixing angle between backgrounds
+  cnum alpha(0.1,0); // could use a polynomial here
+  double theta=3.; // mixing angle between backgrounds
   cnum c1(cos(theta),0);
   cnum s1(sin(theta),0);
   cmatrix O(2,2);
@@ -173,9 +173,9 @@ cmatrix TMatrix(double s){
   //channel 1
   double m1=1.8;
   double m2=2.4;
-  double G1=0.2;double G11=0.8*G1; double G12=(1.-0.8)*G1;
-  double G2=0.2;double G21=0.6*G2; double G22=(1.-0.6)*G2;
-  double eps11=1;double eps12=-1;double eps21=-1;double eps22=1;
+  double G1=0.2;double G11=0.95*G1; double G12=(1.-0.95)*G1;
+  double G2=0.2;double G21=0.05*G2; double G22=(1.-0.05)*G2;
+  double eps11=1;double eps12=1;double eps21=1;double eps22=1;
   double g11=G11*rhoPiPi(s)/rhoPiPi(m1*m1);
   double g12=G12*rho2(s)/rho2(m1*m1);
   double g21=G21*rhoPiPi(s)/rhoPiPi(m2*m2);
@@ -222,14 +222,33 @@ cmatrix TMatrix(double s){
 
   cmatrix SRTSB=prod(SRT,SB);
   S=prod(SRTSB,SR);
+  cmatrix Sminus1=S-uni;
 
   // check unitarity
   std::cout << "S="<< S << std::endl;
-  std::cout << "S*ST=" << prod(S,herm(S)) << std::endl;
-  cmatrix T=cnum(0,-0.5)*(S-uni);
-   std::cout << "T="<< T << std::endl;
+  std::cout << "S-1="<< Sminus1 << std::endl;
 
-  return S;
+  std::cout << "S*ST=" << prod(S,herm(S)) << std::endl;
+ 
+  cmatrix Tp=(-0.5*i)*Sminus1;
+  cmatrix T=Tp;
+  std::cout << "T="<< T << std::endl;
+  
+  cmatrix Tt=herm(T);
+
+  cmatrix Tdiff=T - Tt;
+  cmatrix Tprod=(2.*i)*prod(Tt,T);
+
+  
+  std::cout << "Tdiff="<< Tdiff << std::endl;
+
+  std::cout << "Tprod="<< Tprod << std::endl;
+
+  cmatrix TUnitarity=Tdiff - Tprod;
+
+  std::cout << "(T-T^t) - 2iT^tT = "<< TUnitarity << std::endl;
+
+  return T;
   
 }
 
@@ -246,7 +265,7 @@ main(int argc, char** argv)
   gROOT->SetStyle("Plain");
 
 
-  double mstart=1.4;
+  double mstart=1.1;
   double mstep=0.02;
   unsigned int nsteps=200;
   
@@ -296,7 +315,7 @@ main(int argc, char** argv)
     gPhaseBW->SetPoint(i,m,arg(ampBW));
     gArgandBW->SetPoint(i,ampBW.real(),ampBW.imag());
 
-    cnum ampT=(TMatrix(s))(1,0);
+    cnum ampT=(TMatrix(s))(0,0);
     
     gIS->SetPoint(i,m,norm(ampT));
     gPhaseS->SetPoint(i,m,arg(ampT));

@@ -53,7 +53,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 set(SOURCES
   decayChannels.cc
   #mcPhaseSpace.cc
-  #cauchyIntegral.cc
+ cauchyIntegral.cc
   #dynMassDep.cc
 )
    
@@ -71,17 +71,19 @@ set(SOURCES
 
 # library
 set(THIS_LIB "RootPwaMassDep")
-#set(GSL_LIBS gsl.so
-#             gslcblas.so
-#)
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOTPWAGEN_LIBS}" 
+set(GSL_LIBS libgsl.so
+             libgslcblas.so
 )
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+  "${ROOTPWAGEN_LIBS}" "${GSL_LIBS}"
+)
+
 
 
 # executables
 #make_executable(testMassDep     testMassDep.cc  ${THIS_LIB} ${ROOT_LIBS} )
 make_executable(testKMatrix     testKMatrix.cc  ${THIS_LIB} ${ROOT_LIBS} )
+make_executable(testRescat     testRescat.cc  ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
 
 #make_executable(evtweight evtweight.cc ${THIS_LIB})
 #make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})

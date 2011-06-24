@@ -53,6 +53,8 @@ public:
   double eval_Hunter(unsigned int degree=4); /// degree>0
 
   void setRange(double low, double up){_rlow=low;_rup=up;}
+ 
+
 
 private:
   std::vector<realPole> _poles; /// Poles of the function
