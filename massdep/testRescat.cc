@@ -147,6 +147,7 @@ cnum H(cnum t, cnum z, cnum s){
 
 // analytic function J eqn 39
 cnum J(cnum z){
+  if(z.real()<4*mpi2)return 0;
   cnum zm=sqrt(z-4*mpi2);
   cnum term1=0.5*zm/sqrt(z);
   cnum num=sqrt(z)+zm;
@@ -180,9 +181,9 @@ cnum ampRho(cnum z){
 
 cmatrix Iso(cnum z){
   cmatrix result(2,2);
-  result(0,0)=ampRho(z);
+  result(0,0)=ampEps(z);
   result(0,1)=0;result(1,0)=0;
-  result(1,1)=ampEps(z);
+  result(1,1)=ampRho(z);
   return result;
 }
 
@@ -200,7 +201,7 @@ cnum PhiElem(cnum t, cnum z, cnum s,
    cnum K2=K(z,s); cnum K3=K(t,s);
    if(i==0 && j==0) return (R(t,z,s)*Delta(t,z,s)+2.*K2)/(3.*K3*K3);
    else if(i==0 && j==1) return (R23(t,z,s)*Delta(t,z,s)+K2*F(t,z,s))/(K3*K3);
-   else if(i==1 && j==0) return R23(t,z,s)*Delta(t,z,s)/3.;
+   else if(i==1 && j==0) return R32(t,z,s)*Delta(t,z,s)/3.;
    else if(i==1 && j==1) return 0.5*Q(t,z,s)*Delta(t,z,s);
    else return 0;
 }
@@ -349,8 +350,8 @@ main(int argc, char** argv)
   masses[2]=1.2;
   masses[3]=1.4;
   masses[4]=1.6;
-  double tstart=4*mpi2;
-  double dt=0.1;
+  double tstart=0;
+  double dt=0.0025;
 
   vector<TGraph*> gKRe(5);
   vector<TGraph*> gKIm(5);
@@ -358,18 +359,18 @@ main(int argc, char** argv)
   TMultiGraph* mgKIm=new TMultiGraph();
 
 
-  unsigned int nt=20;
-  for(unsigned is=0;is<5;++is){
-    gKRe[is]=new TGraph(nt);mgKRe->Add(gKRe[is],"PC");
-    gKIm[is]=new TGraph(nt);mgKIm->Add(gKIm[is],"PC");
+  unsigned int nt=450;
+  for(unsigned is=2;is<3;++is){
+    gKRe[is]=new TGraph(nt);mgKRe->Add(gKRe[is],"P");
+    gKIm[is]=new TGraph(nt);mgKIm->Add(gKIm[is],"P");
     
     cnum s(masses[is]*masses[is],0);
     for(unsigned it=0;it<nt;++it){
       cnum t(it*dt+tstart,0);
       cnum k(0,0);
-      if(t.real()<(masses[is]-mpi)*(masses[is]-mpi))k=kernInt1Elem(t,s,1,0);
-      gKRe[is]->SetPoint(it,sqrt(t.real()),k.real());
-      gKIm[is]->SetPoint(it,sqrt(t.real()),k.imag());
+      if(t.real()<(masses[is]-mpi)*(masses[is]-mpi))k=kernInt1Elem(t,s,0,1);
+      gKRe[is]->SetPoint(it,t.real(),k.real());
+      gKIm[is]->SetPoint(it,t.real(),k.imag());
     } // end loop over t
   } // end loop over s
 
@@ -390,9 +391,9 @@ main(int argc, char** argv)
   c->cd(4);
   gPhaseRho->Draw("APC");  
   c->cd(5);
-  mgKRe->Draw("APC");
+  mgKRe->Draw("AP");
   c->cd(6);
-  mgKIm->Draw("APC");
+  mgKIm->Draw("AP");
  
 
 
