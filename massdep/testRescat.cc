@@ -147,7 +147,7 @@ cnum H(cnum t, cnum z, cnum s){
 
 // analytic function J eqn 39
 cnum J(cnum z){
-  //if(z.real()<4*mpi2)return 0;
+  if(z.real()==0)return cnum(1,0);
   cnum zm=sqrt(z-4*mpi2);
   cnum term1=0.5*zm/sqrt(z);
   cnum num=sqrt(z)+zm;
@@ -159,6 +159,7 @@ cnum J(cnum z){
 
 // analytic amplitude
 cnum ampIso(cnum z, double a, double b, double c, double d, int l){
+  //if(z.real()<4*mpi2)return 0;
   cnum A=a+b*z+c/(z-d); // phase shift parameterization eqn 41/42
   cnum bar(1.,0);
   if(l==1)bar=z*(z-4*mpi2); // eqn 40
@@ -231,65 +232,6 @@ cnum Kern1Elem(cnum t, cnum z, cnum s,
   return dPhi*I;
 }
 
-
-
-
-///////////////// Kernel Integrals ///////////////////////////////
-
-/// we need to integrate the 2x2 kernel matrix element wise from 0->tmax
-/// tmax is upper boundary of dalitz plot tmax=(W-mpi)^2
-/// We also need the integrals convoluted with the basis funtions....
-
-/// using ROOT GSL Integrator to do the integrals
-
-/// Integrand Functor
-class kernIntegrand1: public ROOT::Math::IBaseFunctionOneDim {
-public:
-  kernIntegrand1():_s(0,0),_t(0,0),_i(0),_j(0),_ReIm(0){};
-  double DoEval(double x) const;
-  ROOT::Math::IBaseFunctionOneDim* Clone() const {return new kernIntegrand1(*this);}
-
-  void setST(cnum s, cnum t){_s=s;_t=t;}
-  void setElem(unsigned int i, unsigned int j){_i=i;_j=j;}
-  void setReIm(bool flag){_ReIm=flag;} // 0=re; 1=im
-  
-private:
-  cnum _s;
-  cnum _t;
-  unsigned int _i;
-  unsigned int _j;
-  bool _ReIm;
-
-};
-
-double
-kernIntegrand1::DoEval(double x) const {
-  // integration for real z only...
-  cnum z(x,0);
-  cnum result=Kern1Elem(_t,z,_s,_i,_j);
-  if(_ReIm==0)return result.real();
-  else return result.imag();
-}
-
-
-/// Integral Function 
-cnum kernInt1Elem(cnum t, cnum s, unsigned int i, unsigned int j){
-  // Set up Integrator
-   ROOT::Math::GSLIntegrator Integrator;
-   // set up function
-   kernIntegrand1 f;
-   f.setST(s,t);
-   f.setElem(i,j);
-   // do real part first:
-   f.setReIm(0);
-   Integrator.SetFunction(f);
-   double upper=(sqrt(s.real())-mpi);upper*=upper;
-   double Re=Integrator.Integral(f,0,upper);
-   f.setReIm(1);
-   double Im=Integrator.Integral(f,0,upper);
-   return cnum(Re,Im);
-}
-
 ////////// Basis Function Set /////////////////////////////////////
 
 cnum u(unsigned int a, cnum t){
@@ -304,7 +246,7 @@ cnum u(unsigned int a, cnum t){
 
 // expansion in u:
 cnum fu(cnum t, cmatrix lambda){
-  cnum result;
+  cnum result(0,0);
   for(unsigned int i=0;i<4;++i){
     result += lambda(i,0)*u(i,t);
   }
@@ -312,9 +254,94 @@ cnum fu(cnum t, cmatrix lambda){
 } 
 
 
+// matrix expansion in u see eqn (49)
+cmatrix fuM(cnum t, cmatrix Lambda){
+  cmatrix result(2,2);result(0,0)=0;result(0,1)=0;result(1,0)=0;result(1,1)=0;
+  for(unsigned int a=0;a<4;++a){
+    cmatrix I(2,2);
+    cnum ua=u(a,t);
+    for(unsigned int i=0;i<2;++i){
+      for(unsigned int j=0;j<2;++j){
+	I(i,j)=Lambda(a*2+i,j)*ua;
+      }
+    }
+    result+=I; 
+  }
+  return result;
+}
+
+
+///////////////// Kernel Integrals ///////////////////////////////
+
+/// we need to integrate the 2x2 kernel matrix element wise from 0->tmax
+/// tmax is upper boundary of dalitz plot tmax=(W-mpi)^2
+/// We also need the integrals convoluted with the basis funtions....
+
+/// using ROOT GSL Integrator to do the integrals
+
+/// Integrand Functor
+class kernIntegrand1: public ROOT::Math::IBaseFunctionOneDim {
+public:
+  kernIntegrand1():_s(0,0),_t(0,0),_i(0),_j(0),_a(0),_ReIm(0){};
+  double DoEval(double x) const;
+  ROOT::Math::IBaseFunctionOneDim* Clone() const {return new kernIntegrand1(*this);}
+
+  void setST(cnum s, cnum t){_s=s;_t=t;}
+  void setElem(unsigned int i, unsigned int j){_i=i;_j=j;}
+  void setReIm(bool flag){_ReIm=flag;} // 0=re; 1=im
+  void setU(unsigned int a){_a=a;}
+  
+private:
+  cnum _s;
+  cnum _t;
+  unsigned int _i;
+  unsigned int _j;
+  unsigned int _a; // basis function a=0 means no basis function
+  bool _ReIm;
+
+};
+
+double
+kernIntegrand1::DoEval(double x) const {
+  // integration for real z only...
+  cnum z(x,0);
+  cnum result=Kern1Elem(_t,z,_s,_i,_j);
+  if(_a!=0)result*=u(_a-1,z);
+  if(_ReIm==0)return result.real();
+  else return result.imag();
+}
+
+
+/// Integral Function 
+cnum kernInt1Elem(cnum t, cnum s, unsigned int i, unsigned int j, unsigned int b=0){
+  // Set up Integrator
+   ROOT::Math::GSLIntegrator Integrator;
+   // set up function
+   kernIntegrand1 f;
+   f.setST(s,t);
+   f.setElem(i,j);
+   f.setU(b);
+   // do real part first:
+   f.setReIm(0);
+   Integrator.SetFunction(f);
+   double upper=(sqrt(s.real())-mpi);upper*=upper;
+   double Re=Integrator.Integral(f,0.,upper);
+   f.setReIm(1);
+   double Im=Integrator.Integral(f,0.,upper);
+   return cnum(Re,Im);
+}
+
+cmatrix kernInt1(cnum t, cnum s,unsigned int b=0){
+  cmatrix result(2,2);
+  for(unsigned int i=0;i<2;++i)
+    for(unsigned int j=0;j<2;++j)result(i,j)=kernInt1Elem(t,s,i,j,b);
+  return result;
+}
+
 /////////// 4-Point Matching of basis functions ////////////////
 // returns column vector containing expansion coefficients
 cmatrix match(unsigned int i, unsigned int j, // element of kernel
+	      unsigned int b, // basis function
 	   cnum s, 
 	   const vector<double>& tm)  // matching points
 {
@@ -325,7 +352,7 @@ cmatrix match(unsigned int i, unsigned int j, // element of kernel
     cnum t(tm[k],0);
     cout << "t=" << tm[k] << endl;
      // calulate result vector at points;
-    res(k,0)=kernInt1Elem(t,s,i,j);
+    res(k,0)=kernInt1Elem(t,s,i,j,b);
      // calculate basis matrix at points;
      for(unsigned int h=0;h<4;++h){
        um(k,h)=u(h,t);
@@ -351,7 +378,7 @@ main(int argc, char** argv)
   gROOT->SetStyle("Plain");
 
 
-  double mstart=0.28;
+  double mstart=0.005;
   double mstep=0.005;
   unsigned int nsteps=200;
   
@@ -361,6 +388,8 @@ main(int argc, char** argv)
   TGraph* gIRho=new TGraph(nsteps);
   TGraph* gPhaseRho=new TGraph(nsteps);
 
+  TGraph* gJRe=new TGraph(nsteps);
+  TGraph* gJIm=new TGraph(nsteps);
    //double s0=4;
   //double f=0.2;
   
@@ -389,64 +418,210 @@ main(int argc, char** argv)
     gIRho->SetPoint(i,m,norm(aRho));
     gPhaseEps->SetPoint(i,m,arg(aEps));
     gPhaseRho->SetPoint(i,m,arg(aRho));
-
-
+    gJRe->SetPoint(i,m,J(z).real());
+    gJIm->SetPoint(i,m,J(z).imag());
+ 
   }
 	
  
   vector<double> masses(5);
   masses[0]=0.7;
   masses[1]=0.9;
-  masses[2]=1.1;
-  masses[3]=1.3;
-  masses[4]=1.5;
+  masses[2]=1.2;
+  masses[3]=1.4;
+  masses[4]=1.6;
   double tstart=0.001;
-  double dt=0.025;
+  double dt=0.01;
 
-  vector<TGraph*> gKRe(5);
-  vector<TGraph*> gKIm(5);
-  TMultiGraph* mgKRe=new TMultiGraph();
-  TMultiGraph* mgKIm=new TMultiGraph();
- 
+
+  TMultiGraph* mgKeeRe=new TMultiGraph();
+  TMultiGraph* mgKerRe=new TMultiGraph();
+  TMultiGraph* mgKreRe=new TMultiGraph();
+  TMultiGraph* mgKrrRe=new TMultiGraph();
+  TMultiGraph* mgKeeIm=new TMultiGraph();
+  TMultiGraph* mgKerIm=new TMultiGraph();
+  TMultiGraph* mgKreIm=new TMultiGraph();
+  TMultiGraph* mgKrrIm=new TMultiGraph();
+  
+  
+  TMultiGraph* mgIepsepsRe=new TMultiGraph();
+  TMultiGraph* mgIepsrhoRe=new TMultiGraph();
+  TMultiGraph* mgIrhoepsRe=new TMultiGraph();
+  TMultiGraph* mgIrhorhoRe=new TMultiGraph();
+  TMultiGraph* mgIepsepsIm=new TMultiGraph();
+  TMultiGraph* mgIepsrhoIm=new TMultiGraph();
+  TMultiGraph* mgIrhoepsIm=new TMultiGraph();
+  TMultiGraph* mgIrhorhoIm=new TMultiGraph();
+
+
   vector<double> tmatch(4);
-  tmatch[0]=mpi2;
+  tmatch[0]=0;
 
  
-  for(unsigned is=0;is<5;++is){
+  for(unsigned is=0;is<5;++is){ // loop over three pion masses s
+   
     cnum s(masses[is]*masses[is],0);
     double tHat=(masses[is]-mpi)*(masses[is]-mpi);
     unsigned int nt=(unsigned int)floor(tHat/(double)dt);
 
-    gKRe[is]=new TGraph(nt);mgKRe->Add(gKRe[is],"P");
-    gKIm[is]=new TGraph(nt);mgKIm->Add(gKIm[is],"P");
-    TGraph* gKReFit=new TGraph(nt);mgKRe->Add(gKReFit,"C");
-    gKReFit->SetLineColor(kRed);
-    TGraph* gKImFit=new TGraph(nt);mgKIm->Add(gKImFit,"C");
-    gKImFit->SetLineColor(kRed);
+    TGraph* gKeeRe=new TGraph(nt);mgKeeRe->Add(gKeeRe,"P");
+    TGraph* gKeeIm=new TGraph(nt);mgKeeIm->Add(gKeeIm,"P");
+    TGraph* gKeeReFit=new TGraph(nt);mgKeeRe->Add(gKeeReFit,"C");
+    gKeeReFit->SetLineColor(kRed);
+    TGraph* gKeeImFit=new TGraph(nt);mgKeeIm->Add(gKeeImFit,"C");
+    gKeeImFit->SetLineColor(kRed);
+
+    TGraph* gKerRe=new TGraph(nt);mgKerRe->Add(gKerRe,"P");
+    TGraph* gKerIm=new TGraph(nt);mgKerIm->Add(gKerIm,"P");
+    TGraph* gKerReFit=new TGraph(nt);mgKerRe->Add(gKerReFit,"C");
+    gKerReFit->SetLineColor(kRed);
+    TGraph* gKerImFit=new TGraph(nt);mgKerIm->Add(gKerImFit,"C");
+    gKerImFit->SetLineColor(kRed);
+
+    TGraph* gKreRe=new TGraph(nt);mgKreRe->Add(gKreRe,"P");
+    TGraph* gKreIm=new TGraph(nt);mgKreIm->Add(gKreIm,"P");
+    TGraph* gKreReFit=new TGraph(nt);mgKreRe->Add(gKreReFit,"C");
+    gKreReFit->SetLineColor(kRed);
+    TGraph* gKreImFit=new TGraph(nt);mgKreIm->Add(gKreImFit,"C");
+    gKreImFit->SetLineColor(kRed);
+
+    TGraph* gKrrRe=new TGraph(nt);mgKrrRe->Add(gKrrRe,"P");
+    TGraph* gKrrIm=new TGraph(nt);mgKrrIm->Add(gKrrIm,"P");
+    TGraph* gKrrReFit=new TGraph(nt);mgKrrRe->Add(gKrrReFit,"C");
+    gKrrReFit->SetLineColor(kRed);
+    TGraph* gKrrImFit=new TGraph(nt);mgKrrIm->Add(gKrrImFit,"C");
+    gKrrImFit->SetLineColor(kRed);
+
+
+    TGraph* gIeeRe=new TGraph(nt);mgIepsepsRe->Add(gIeeRe,"C");
+    TGraph* gIeeIm=new TGraph(nt);mgIepsepsIm->Add(gIeeIm,"C");
+    TGraph* gIerRe=new TGraph(nt);mgIepsrhoRe->Add(gIerRe,"C");
+    TGraph* gIerIm=new TGraph(nt);mgIepsrhoIm->Add(gIerIm,"C");
+    TGraph* gIreRe=new TGraph(nt);mgIrhoepsRe->Add(gIreRe,"C");
+    TGraph* gIreIm=new TGraph(nt);mgIrhoepsIm->Add(gIreIm,"C");
+    TGraph* gIrrRe=new TGraph(nt);mgIrhorhoRe->Add(gIrrRe,"C");
+    TGraph* gIrrIm=new TGraph(nt);mgIrhorhoIm->Add(gIrrIm,"C");
+
+    // matching points:
+    tmatch[1]=(4*mpi2*0.8+tHat*0.2);
+    tmatch[2]=0.5*(4*mpi2+tHat);
+    tmatch[3]=0.9*tHat;
+
+    // do matching:
+  
+    cmatrix lambda(8,2);
+    cmatrix R(8,8);
+    for(unsigned int i=0;i<2;++i){
+      for(unsigned int j=0;j<2;++j){
+	// I0 -> lambda
+	cmatrix lambdaij=match(i,j,0,s,tmatch);
+	for(unsigned int a=0;a<4;++a){
+	  lambda(i+a*2,j)=lambdaij(a,0);
+	}
+	//Expand Kernel in Basis functions
+        cmatrix LambdaAB(4,1);
+	for(unsigned int b=0;b<4;++b){
+	  LambdaAB=match(i,j,b+1,s,tmatch);
+	  for(unsigned int a=0;a<4;++a){
+	    R(i+a*2,j+b*2)=LambdaAB(a,0);
+	  }
+	}
+	
+	
+      }
+    }      
+  
+    ublas::identity_matrix<cnum> uni(8,8);
+    R=uni-R;
+    cout << R << endl;
+
+    ///// At this point we have set up everything and are ready to solve ////
+    ///// The linear system and thereby the system of integral equations ////
+    ////////// Invert R to solve  ////
+    cmatrix T(8,8);
+    
+    InvertMatrix(R,T);
+
+    cout << T << endl;
+    
+    /// construct expansion coefficients matrix
+    cmatrix IA=prod(T,lambda);
+
+    cmatrix lambda00=match(0,0,0,s,tmatch);
+    cmatrix lambda01=match(0,1,0,s,tmatch);
+    cmatrix lambda10=match(1,0,0,s,tmatch);
+    cmatrix lambda11=match(1,1,0,s,tmatch);
+
+    cout << lambda << endl;
+
+    cmatrix la(4,1);
+    for(unsigned int a=0;a<4;++a){
+      la(a,0)=lambda(0+a*2,1);
+    }
+    cout << "##### LA: " << endl;
+    cout << la << endl;
+    cout << lambda00 << endl;
+    cout << lambda01 << endl;
+    cout << lambda10 << endl;
+    cout << lambda11 << endl;
 
    
-    tmatch[1]=(4*mpi2*0.7+tHat*0.3);
-    tmatch[2]=0.5*(4*mpi2+tHat);
-    tmatch[3]=0.95*tHat;
-    // do matching
-    cmatrix lambda0=match(0,1,s,tmatch);
-    cout << lambda0 << endl;
-  
+    cerr << "Start loop over subenergy" << endl;
     for(unsigned it=0;it<nt;++it){ // loop over subenergy
       cnum t(it*dt+tstart,0);
-      cnum k(0,0);
       if(t.real()<tHat){
-	k=kernInt1Elem(t,s,0,1);
-	cnum kfit=fu(t,lambda0);
-	cout << kfit << endl;
-     	gKRe[is]->SetPoint(it,t.real(),k.real());
-	gKIm[is]->SetPoint(it,t.real(),k.imag());
-	gKReFit->SetPoint(it,t.real(),kfit.real());
-	gKImFit->SetPoint(it,t.real(),kfit.imag());
+	cmatrix k=kernInt1(t,s);
+	
+
+	//cnum kfit=fu(t,lambda00);
+	cnum kfit=fuM(t,lambda)(0,0);
+	
+	/// Kernel Integrals (inhomogenous term I0) 
+     	gKeeRe->SetPoint(it,t.real(),k(0,0).real());
+	gKeeIm->SetPoint(it,t.real(),k(0,0).imag());
+	gKeeReFit->SetPoint(it,t.real(),kfit.real());
+	gKeeImFit->SetPoint(it,t.real(),kfit.imag());
+
+
+	//kfit=fu(t,lambda01);
+	kfit=fuM(t,lambda)(0,1);
+
+	gKerRe->SetPoint(it,t.real(),k(0,1).real());
+	gKerIm->SetPoint(it,t.real(),k(0,1).imag());
+	gKerReFit->SetPoint(it,t.real(),kfit.real());
+	gKerImFit->SetPoint(it,t.real(),kfit.imag());
+
+
+	//kfit=fu(t,lambda10);
+	kfit=fuM(t,lambda)(1,0);
+
+	gKreRe->SetPoint(it,t.real(),k(1,0).real());
+	gKreIm->SetPoint(it,t.real(),k(1,0).imag());
+	gKreReFit->SetPoint(it,t.real(),kfit.real());
+	gKreImFit->SetPoint(it,t.real(),kfit.imag());
+
+
+	//kfit=fu(t,lambda11);
+	kfit=fuM(t,lambda)(1,1);
+	gKrrRe->SetPoint(it,t.real(),k(1,1).real());
+	gKrrIm->SetPoint(it,t.real(),k(1,1).imag());
+	gKrrReFit->SetPoint(it,t.real(),kfit.real());
+	gKrrImFit->SetPoint(it,t.real(),kfit.imag());
+	
+	/// Full rescattering
+	cmatrix I=fuM(t,IA);
+	gIeeRe->SetPoint(it,t.real(),I(0,0).real());
+	gIeeIm->SetPoint(it,t.real(),I(0,0).imag());
+	gIerRe->SetPoint(it,t.real(),I(0,1).real());
+	gIerIm->SetPoint(it,t.real(),I(0,1).imag());
+	gIreRe->SetPoint(it,t.real(),I(1,0).real());
+	gIreIm->SetPoint(it,t.real(),I(1,0).imag());
+	gIrrRe->SetPoint(it,t.real(),I(1,1).real());
+	gIrrIm->SetPoint(it,t.real(),I(1,1).imag());
       }
     } // end loop over t
 
-     cout << lambda0 << endl;
+  
 
   } // end loop over s
 
@@ -457,7 +632,7 @@ main(int argc, char** argv)
 
 
   TCanvas* c=new TCanvas("c","c",10,10,1000,1000);
-  c->Divide(4,3);
+  c->Divide(4,2);
   c->cd(1);
   gIEps->Draw("APC");  
   c->cd(2);
@@ -467,17 +642,47 @@ main(int argc, char** argv)
   c->cd(4);
   gPhaseRho->Draw("APC");  
   c->cd(5);
-  mgKRe->Draw("AP");
+  gJRe->Draw("APC");
   c->cd(6);
-  mgKIm->Draw("AP");
+  gJIm->Draw("APC");
  
- TCanvas* c2=new TCanvas("c2","c2",10,10,1000,1000);
-  c2->Divide(2,1);
-  
- c2->cd(1);
-  mgKRe->Draw("AP");
-  c2->cd(2);
-  mgKIm->Draw("AP");
+ TCanvas* cK=new TCanvas("cI0","cI0",10,10,1000,1000);
+ cK->Divide(4,2);
+ cK->cd(1);
+ mgKeeRe->Draw("AC");
+ cK->cd(2);
+ mgKeeIm->Draw("AC");
+ cK->cd(3);
+ mgKerRe->Draw("AC");
+ cK->cd(4);
+ mgKerIm->Draw("AC");
+ cK->cd(5);
+mgKreRe->Draw("AC");
+ cK->cd(6);
+ mgKreIm->Draw("AC");
+ cK->cd(7);
+mgKrrRe->Draw("AC");
+ cK->cd(8);
+ mgKrrIm->Draw("AC");
+
+ TCanvas* cI=new TCanvas("cI","cI",20,20,1000,1000);
+ cI->Divide(4,2);
+ cI->cd(1);
+ mgIepsepsRe->Draw("AC");
+ cI->cd(2);
+ mgIepsepsIm->Draw("AC");
+ cI->cd(3);
+ mgIepsrhoRe->Draw("AC");
+ cI->cd(4);
+ mgIepsrhoIm->Draw("AC");
+ cI->cd(5);
+mgIrhoepsRe->Draw("AC");
+ cI->cd(6);
+ mgIrhoepsIm->Draw("AC");
+ cI->cd(7);
+mgIrhorhoRe->Draw("AC");
+ cI->cd(8);
+ mgIrhorhoIm->Draw("AC");
 
   gApplication->SetReturnFromRun(kFALSE);
   gSystem->Run();
