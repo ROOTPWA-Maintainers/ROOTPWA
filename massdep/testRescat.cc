@@ -147,7 +147,7 @@ cnum H(cnum t, cnum z, cnum s){
 
 // analytic function J eqn 39
 cnum J(cnum z){
-  if(z.real()<4*mpi2)return 0;
+  //if(z.real()<4*mpi2)return 0;
   cnum zm=sqrt(z-4*mpi2);
   cnum term1=0.5*zm/sqrt(z);
   cnum num=sqrt(z)+zm;
@@ -290,6 +290,56 @@ cnum kernInt1Elem(cnum t, cnum s, unsigned int i, unsigned int j){
    return cnum(Re,Im);
 }
 
+////////// Basis Function Set /////////////////////////////////////
+
+cnum u(unsigned int a, cnum t){
+  if(a==0)return J(t);
+  cnum tt=t-4*mpi2;
+  if(a==1) return sqrt(tt);
+  else if(a==2) return tt;
+  else if(a==3) return tt*tt;
+  return 0;
+}
+
+
+// expansion in u:
+cnum fu(cnum t, cmatrix lambda){
+  cnum result;
+  for(unsigned int i=0;i<4;++i){
+    result += lambda(i,0)*u(i,t);
+  }
+  return result;
+} 
+
+
+/////////// 4-Point Matching of basis functions ////////////////
+// returns column vector containing expansion coefficients
+cmatrix match(unsigned int i, unsigned int j, // element of kernel
+	   cnum s, 
+	   const vector<double>& tm)  // matching points
+{
+  // calulate result vector at points;
+  cmatrix res(4,1);
+  cmatrix um(4,4);
+  for(unsigned int k=0;k<4;++k){
+    cnum t(tm[k],0);
+    cout << "t=" << tm[k] << endl;
+     // calulate result vector at points;
+    res(k,0)=kernInt1Elem(t,s,i,j);
+     // calculate basis matrix at points;
+     for(unsigned int h=0;h<4;++h){
+       um(k,h)=u(h,t);
+     }
+  }
+
+  cout << um << endl;
+  // invert basis matrix to obtain mathing coefficients
+  cmatrix umInv(4,4);
+  InvertMatrix(um,umInv);
+  
+  cmatrix result=prod(umInv,res);
+  return result;
+}
 
 
 ///////////////////////// Main ///////////////////////////////////
@@ -345,33 +395,59 @@ main(int argc, char** argv)
 	
  
   vector<double> masses(5);
-  masses[0]=0.8;
-  masses[1]=1.0;
-  masses[2]=1.2;
-  masses[3]=1.4;
-  masses[4]=1.6;
-  double tstart=0;
-  double dt=0.0025;
+  masses[0]=0.7;
+  masses[1]=0.9;
+  masses[2]=1.1;
+  masses[3]=1.3;
+  masses[4]=1.5;
+  double tstart=0.001;
+  double dt=0.025;
 
   vector<TGraph*> gKRe(5);
   vector<TGraph*> gKIm(5);
   TMultiGraph* mgKRe=new TMultiGraph();
   TMultiGraph* mgKIm=new TMultiGraph();
+ 
+  vector<double> tmatch(4);
+  tmatch[0]=mpi2;
 
+ 
+  for(unsigned is=0;is<5;++is){
+    cnum s(masses[is]*masses[is],0);
+    double tHat=(masses[is]-mpi)*(masses[is]-mpi);
+    unsigned int nt=(unsigned int)floor(tHat/(double)dt);
 
-  unsigned int nt=450;
-  for(unsigned is=2;is<3;++is){
     gKRe[is]=new TGraph(nt);mgKRe->Add(gKRe[is],"P");
     gKIm[is]=new TGraph(nt);mgKIm->Add(gKIm[is],"P");
-    
-    cnum s(masses[is]*masses[is],0);
-    for(unsigned it=0;it<nt;++it){
+    TGraph* gKReFit=new TGraph(nt);mgKRe->Add(gKReFit,"C");
+    gKReFit->SetLineColor(kRed);
+    TGraph* gKImFit=new TGraph(nt);mgKIm->Add(gKImFit,"C");
+    gKImFit->SetLineColor(kRed);
+
+   
+    tmatch[1]=(4*mpi2*0.7+tHat*0.3);
+    tmatch[2]=0.5*(4*mpi2+tHat);
+    tmatch[3]=0.95*tHat;
+    // do matching
+    cmatrix lambda0=match(0,1,s,tmatch);
+    cout << lambda0 << endl;
+  
+    for(unsigned it=0;it<nt;++it){ // loop over subenergy
       cnum t(it*dt+tstart,0);
       cnum k(0,0);
-      if(t.real()<(masses[is]-mpi)*(masses[is]-mpi))k=kernInt1Elem(t,s,0,1);
-      gKRe[is]->SetPoint(it,t.real(),k.real());
-      gKIm[is]->SetPoint(it,t.real(),k.imag());
+      if(t.real()<tHat){
+	k=kernInt1Elem(t,s,0,1);
+	cnum kfit=fu(t,lambda0);
+	cout << kfit << endl;
+     	gKRe[is]->SetPoint(it,t.real(),k.real());
+	gKIm[is]->SetPoint(it,t.real(),k.imag());
+	gKReFit->SetPoint(it,t.real(),kfit.real());
+	gKImFit->SetPoint(it,t.real(),kfit.imag());
+      }
     } // end loop over t
+
+     cout << lambda0 << endl;
+
   } // end loop over s
 
 
@@ -395,7 +471,13 @@ main(int argc, char** argv)
   c->cd(6);
   mgKIm->Draw("AP");
  
-
+ TCanvas* c2=new TCanvas("c2","c2",10,10,1000,1000);
+  c2->Divide(2,1);
+  
+ c2->cd(1);
+  mgKRe->Draw("AP");
+  c2->cd(2);
+  mgKIm->Draw("AP");
 
   gApplication->SetReturnFromRun(kFALSE);
   gSystem->Run();
