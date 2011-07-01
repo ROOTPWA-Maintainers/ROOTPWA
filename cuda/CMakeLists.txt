@@ -43,10 +43,12 @@ message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+  ${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
   ${Boost_INCLUDE_DIRS}
   ${CUDA_SDK_ROOT_DIR}/common/inc
-	${ROOT_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
+  ${AMPLITUDE_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 include_directories(${INCLUDE_DIRECTORIES})
@@ -60,7 +62,7 @@ cuda_add_library(cuda likelihoodInterface.cu SHARED)
 make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
 target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda ${ROOT_LIBS})
 
-cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+Cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
 target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
 
 cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)
@@ -74,3 +76,6 @@ target_link_libraries(templtest ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
 
 cuda_add_executable(bwig bwig.cu)
 target_link_libraries(bwig ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
+
+make_executable(testAmplitudeSpeed testAmplitudeSpeed.cc)
+target_link_libraries(testAmplitudeSpeed ${ROOT_LIBS} ${AMPLITUDE_LIBS})

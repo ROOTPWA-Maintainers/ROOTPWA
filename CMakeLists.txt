@@ -328,6 +328,15 @@ add_subdirectory(pwa2000)
 # Utilities
 add_subdirectory(utilities)
 
+# RootPwaAmp
+set(AMPLITUDE_INCLUDE_DIR
+  ${CMAKE_SOURCE_DIR}/amplitude
+  )
+set(AMPLITUDE_LIBS
+  RootPwaAmp
+  )
+add_subdirectory(amplitude)
+
 # CUDA stuff
 if(USE_CUDA)
   set(CUDA_INCLUDE_DIR
@@ -341,15 +350,6 @@ else()
   set(CUDA_INCLUDE_DIR)
   set(CUDA_LIBS)
 endif()
-
-# RootPwaAmp
-set(AMPLITUDE_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/amplitude
-  )
-set(AMPLITUDE_LIBS
-  RootPwaAmp
-  )
-add_subdirectory(amplitude)
 
 # RootPwa
 set(ROOTPWA_INCLUDE_DIR

@@ -1,3 +1,10 @@
+// ignore gcc optimization warning:
+// matrix.h:168:3: warning: assuming signed overflow does not occur when
+// assuming that (X + c) < X is always false
+// for more background see http://www.airs.com/blog/archives/120
+#pragma GCC diagnostic ignored "-Wstrict-overflow"
+
+
 #ifndef __MATRIX_H_
 #define __MATRIX_H_
 	
