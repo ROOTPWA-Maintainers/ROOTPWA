@@ -443,6 +443,12 @@ namespace rpwa {
 		conj(const complex<T>& z)
 		{ return complex<T>(z.real(), -z.imag()); }
 
+		template<typename T>
+		inline
+		HOST_DEVICE
+		complex<T>
+		exp(const complex<T>& z)
+		{ return std::exp(z.real()) * complex<T>(std::cos(z.imag()), std::sin(z.imag())); } /// do NOT listen to microsoft, never, please
 
 		//////////////////////////////////////////////////////////////////////////
 		// stream operators

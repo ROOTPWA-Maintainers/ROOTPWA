@@ -58,6 +58,7 @@
 #include "waveDescription.h"
 #include "isobarAmplitude.h"
 #include "isobarHelicityAmplitude.h"
+#include "helampltestInterface.cuh"
 // #include "isobarCanonicalAmplitude.h"
 // #include "evtTreeHelper.h"
 
@@ -65,6 +66,7 @@
 using namespace std;
 using namespace boost;
 using namespace rpwa;
+using namespace cupwa;
 
 
 int
@@ -80,7 +82,7 @@ main(int argc, char** argv)
   // isobarDecayVertex::setDebug(true);
   // decayTopology::setDebug(true);
   // isobarDecayTopology::setDebug(true);
-  // massDependence::setDebug(true);
+  massDependence::setDebug(true);
   // diffractiveDissVertex::setDebug(true);
   isobarAmplitude::setDebug(true);
   isobarHelicityAmplitude::setDebug(true);
@@ -89,8 +91,8 @@ main(int argc, char** argv)
 
   if (1) {
     const long int maxNmbEvents   = 1;
-    const string   keyFileName    = "../keyfiles/key3pi/SET1_new/1-2-+1+f21270_22_pi-.key";
-    const string   rootInFileName = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
+    const string   keyFileName    = "./1-2-+1+f21270_22_pi-.key";
+    const string   rootInFileName = "./1260.1300.root";
 
     waveDescription    waveDesc;
     isobarAmplitudePtr amp;
@@ -162,6 +164,42 @@ main(int argc, char** argv)
 	if (topo->readData(*prodKinParticles,  *prodKinMomenta,
 			   *decayKinParticles, *decayKinMomenta)) {
 	  cpuAmps.push_back((*amp)());
+	  
+	  {
+	    vector<isobarDecayVertexPtr> vertices = topo->isobarDecayVertices();
+	    double theta1 	= vertices[0]->daughter1()->lzVec().Theta();
+	    double phi1		= vertices[0]->daughter1()->lzVec().Phi();
+	    double theta2 	= vertices[1]->daughter1()->lzVec().Theta();
+	    double phi2		= vertices[1]->daughter1()->lzVec().Phi();
+	    int    JX		= vertices[0]->parent()->J();
+	    int    J1		= vertices[0]->daughter1()->J();
+	    int    J2		= vertices[0]->daughter2()->J();
+	    int    S1		= vertices[0]->S();
+	    int    S2		= vertices[1]->S();
+	    int    L1		= vertices[0]->L();
+	    int    L2		= vertices[1]->L();
+//	    int    lambda1	= vertices[0]->daughter1()->spinProj();
+//	    int    lambda2	= vertices[0]->daughter2()->spinProj();	    
+	    int    Lambda	= vertices[0]->parent()->spinProj();		// in my scope MX
+//	    int    P		= vertices[0]->parent()->P();
+//	    int    refl		= vertices[0]->parent()->reflectivity();
+	    double wf2		= vertices[1]->parent()->mass();
+	    double wX		= vertices[0]->parent()->lzVec().M();
+// // 	    for (unsigned int i = 0; i < vertices.size(); ++i) 
+// // 	    {
+// // 		cout << "\n" << i << ". parent width: " << maxPrecision(vertices[i]->parent()->width()) << endl;
+// // 		cout << "\n" << i << ". daughter1 mass: " << vertices[i]->daughter1()->mass() << endl;
+// // 		cout << "\n" << i << ". daughter2 mass: " << vertices[i]->daughter2()->mass() << endl;
+// //		cout << "\n" << i << ". : " << vertices[i]->daughter2()->mass() << endl;
+// // 		cout << "theta1 = " << theta1 << "     theta2 = " << theta2 << "  L1 = " << L1 << "   L2 = " << L2 << "  S1 = " << S1 << "   S2 = " << S2 << endl;
+// // 		cout << "5! = " << cufac(5) << endl;
+// // 	    }
+
+// //	    cout << "address of theta1 = " << &theta1 << endl;
+	    GPUAmpcall(theta1,phi1,theta2,phi2,wX,wf2,JX,Lambda,J1,L1,S1,J2,L2,S2);
+//	    cout << "\n\n\n TEST1: " << test1 << endl;
+	  }
+
 	  if ((cpuAmps.back().real() == 0) or (cpuAmps.back().imag() == 0))
 	    printWarn << "event " << eventIndex << ": " << cpuAmps.back() << endl;
 	}

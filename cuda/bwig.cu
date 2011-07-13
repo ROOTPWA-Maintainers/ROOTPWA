@@ -28,7 +28,7 @@
 #include <typeinfo>
 #include "templtest_kernel.cu"
 #include "complex.cuh"
-
+// #include "clebschGordanCoeff.hpp"
 
 
 
@@ -94,10 +94,10 @@ T BF( int L, T q)
     ret = 1.0;
     break;
   case 1:
-    ret = sqrt((2.0 * z)/(z + 1));
+    ret = sqrt( (2.0 * z)/(z + 1));
     break;
   case 2:
-    ret = sqrt((13.0 * z * z)/(pow(z - 3.0,2.0) + 9.0 * z));
+    ret = sqrt( (13.0 * z * z)/(pow(z - 3.0,2.0) + 9.0 * z));
     break;
   case 3:
     ret = sqrt( (277.0 * pow(z,3.0))/(z * pow(z - 15.0,2.0) + 9.0 * pow(2.0 * z - 5.0,2.0)));
@@ -106,7 +106,13 @@ T BF( int L, T q)
     ret = sqrt( (12746.0 * pow(z,4.0))/( pow(z * z - 45.0 * z + 105.0,2.0) + 25.0 * z * pow(2.0 * z - 21.0,2.0)));
     break;
   case 5:
-    ret =  sqrt(z*z*z*z*z/(893025.0 +99225.0*z +6300.0*z*z +315.0*z*z*z +15.0*z*z*z*z +z*z*z*z*z));
+    ret =  sqrt( (998881.0 * z*z*z*z*z)/(893025.0 +99225.0*z +6300.0*z*z +315.0*z*z*z +15.0*z*z*z*z +z*z*z*z*z));
+    break;
+  case 6:
+    ret =  sqrt( (118394977.0 * z*z*z*z*z*z)/(108056025.0 + z*(9823275.0 + z*(496125.0 + z*(18900.0 + z*(630.0 + z*(21.0 + z))))))) ;
+    break;
+  case 7:
+    ret =  sqrt( (19727003738.0 * z*z*z*z*z*z*z)/((T)18261468225.0 + z*((T)1404728325.0 + z*((T)58939650.0 + z*((T)1819125.0 + z*((T)47250.0 + z*((T)1134.0 + z*((T)28.0 + z)))))))) ;
     break;
   default:
     std::cerr << "Blatt-Weisskopf called for undefined L = " << L/2 << std::endl;
@@ -120,7 +126,8 @@ T BF( int L, T q)
 
 int main () {
   
-  
+//     double CGC = clebschGordanCoeff(0.5,0.5,0.5,0.5,1,0);
+//     printf("bla %f\n", CGC);
     printf("\nTesting template for doubles: BW-Gamma for %lu randomentries on GPU...\n", N);
     tmpltest<double>();
 
@@ -163,9 +170,10 @@ tmpltest()
     cutilSafeCall( cudaEventCreate(&start) );
     cutilSafeCall( cudaEventCreate(&stop)  );
 
-    size_t size = N * sizeof(T); 	// used for allocating memory on host and device
-    size_t sdoc = sizeof(T); 		// used for distinguishing from doubles, floats, ...
-    size_t sint = sizeof(int);		// used for L
+    size_t size 	= N * sizeof(T); 	// used for allocating memory on host and device
+    size_t scmplx 	= N * sizeof(cuda::complex<T>);
+    size_t sdoc 	= sizeof(T); 		// used for distinguishing from doubles, floats, ...
+//    size_t sint 	= sizeof(int);		// used for L
   
     // Allocate masses and width in host memory
 //     h_m = (T*)malloc(size);
@@ -178,7 +186,7 @@ tmpltest()
     // Testing page-locked memory here to speed up down and uploading; allocating values in host memory
     cutilSafeCall( cudaHostAlloc((void**)&h_m, size, cudaHostAllocDefault) );
     cutilSafeCall( cudaHostAlloc((void**)&h_q, size, cudaHostAllocDefault) ); 
-    cutilSafeCall( cudaHostAlloc((void**)&h_BW, 4*size, cudaHostAllocDefault) );    
+    cutilSafeCall( cudaHostAlloc((void**)&h_BW, scmplx, cudaHostAllocDefault) );    
     
     // Initialize masses, breakup momentum
     gRandom->SetSeed(111990);
@@ -188,7 +196,7 @@ tmpltest()
     // Allocate masses and width in device memory
     cutilSafeCall( cudaMalloc((void**)&d_m, size) );
     cutilSafeCall( cudaMalloc((void**)&d_q, size) );
-    cutilSafeCall( cudaMalloc((void**)&d_BW, 4*size) );    
+    cutilSafeCall( cudaMalloc((void**)&d_BW, scmplx) );    
   
     // Copy masses and width from host memory to device memory
     cutilSafeCall( cudaEventRecord( start, 0) );    
@@ -198,7 +206,7 @@ tmpltest()
     cutilSafeCall( cudaEventSynchronize( stop ) );
     cutilSafeCall( cudaEventElapsedTime( &t_htd, start, stop));
     printf("%.3f ms required for uploading\n",t_htd);
-    printf("%f GB/s Upload\n", ((2*size+N*sint)/(t_htd/1e3))/(1024*1024*1024) );    
+    printf("%f GB/s Upload\n", ((2*size)/(t_htd/1e3))/(1024*1024*1024) );    
     
     // Invoke kernel (BW-function)
     cutilSafeCall( cudaEventRecord( start, 0) );    
@@ -210,16 +218,16 @@ tmpltest()
     cutilSafeCall( cudaEventSynchronize( stop ) );
     cutilSafeCall( cudaEventElapsedTime( &t_cod, start, stop));
     printf("%.3f ms required for calculation on device\n", t_cod );
-    printf("Bandwidth: %f GB/s\n", ((size*4)/(t_cod/1e3))/(1024*1024*1024) );    ///  bandwidth = (bytes_read + bytes_written) / time 
+    printf("Bandwidth: %f GB/s\n", ((size*2+scmplx)/(t_cod/1e3))/(1024*1024*1024) );    ///  bandwidth = (bytes_read + bytes_written) / time 
     
     // Copy result from device memory to host memory
     cutilSafeCall( cudaEventRecord( start, 0) );
-    cutilSafeCall( cudaMemcpy(h_BW, d_BW, 4*size, cudaMemcpyDeviceToHost) );
+    cutilSafeCall( cudaMemcpy(h_BW, d_BW, scmplx, cudaMemcpyDeviceToHost) );
     cutilSafeCall( cudaEventRecord( stop, 0) );
     cutilSafeCall( cudaEventSynchronize( stop ) );
     cutilSafeCall( cudaEventElapsedTime( &t_dth, start, stop));
     printf("%.3f ms required for download\n", t_dth ); 
-    printf("%f GB/s Download\n", ((4*size)/(t_dth/1e3))/(1024*1024*1024) ); // because of complex numbers doubles the size of memory
+    printf("%f GB/s Download\n", ((scmplx)/(t_dth/1e3))/(1024*1024*1024) ); // because of complex numbers doubles the size of memory
     
     
 ///   Human Testing here ///   
@@ -280,7 +288,7 @@ tmpltest()
     // Distinction of cases for doubles(8) and floats(4)
     if (sdoc==8) {
           // Create a new ROOT file
-	  TFile *f = new TFile("errorsdoublebw.root","RECREATE");
+	  TFile *f = new TFile("errorsdoublebw.root","UPDATE");
 	  // Create a TTree
 	  TTree *tree = new TTree("T","Absolute und relative errors");
 	 // Create one branch with all information from the stucture
@@ -300,7 +308,7 @@ tmpltest()
     }
     else if (sdoc==4) {
           // Create a new ROOT file
-	  TFile *f = new TFile("errorsfloatbw.root","RECREATE");
+	  TFile *f = new TFile("errorsfloatbw.root","UPDATE");
 	  // Create a TTree
 	  TTree *tree = new TTree("T","Absolute und relative errors");
    	 tree->Branch("ErrorsF",&errors.abs_f,"abs_f/D:rel_f:q_f:masses_f:bwdata_f");

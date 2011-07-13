@@ -158,6 +158,13 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int    L         = vertex->L();
 	const int    S         = vertex->S();
 	const int    J         = parent->J();
+// 	cout << "\n\nparent mass mass = " << maxPrecision(parent->mass()) << " GeV\n\n" << endl;
+// 	cout << "\n\ndaughter1 mass mass = " << maxPrecision(daughter1->mass()) << " GeV\n\n" << endl;
+// 	cout << "\n\ndaughter2 mass mass = " << maxPrecision(daughter2->mass()) << " GeV\n\n" << endl;
+// 	cout << "\n\nparent mass lzvec= " << maxPrecision(parent->lzVec().M()) << " GeV\n\n" << endl;
+// 	cout << "\n\ndaughter1 mass lzvec= " << maxPrecision(daughter1->lzVec().M()) << " GeV\n\n" << endl;
+// 	cout << "\n\ndaughter2 mass lzvec= " << maxPrecision(daughter2->lzVec().M()) << " GeV\n\n" << endl;
+// 	cout << "\n\nq lzvec= " << maxPrecision(daughter1->lzVec().Vect().Mag()) << "\n" << endl;
 	const int    lambda1   = daughter1->spinProj();
 	const int    lambda2   = daughter2->spinProj();
 	const int    lambda    = lambda1 - lambda2;
@@ -196,6 +203,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 
 	// calculate decay amplitude
 	complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
+	
   
 	if (_debug)
 		printInfo << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;

@@ -56,6 +56,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # compile CUDA library
 cuda_add_library(cuda likelihoodInterface.cu SHARED)
+cuda_add_library(cupwa helampltestInterface.cu SHARED)
 
 
 # compile CUDA executable
@@ -71,6 +72,9 @@ target_link_libraries(benchmarkMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
 cuda_add_executable(square square.cu)
 target_link_libraries(square ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
 
+make_executable(helampltest helampltest.cc)
+target_link_libraries(helampltest ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS} ${AMPLITUDE_LIBS})
+
 cuda_add_executable(templtest templtest.cu)
 target_link_libraries(templtest ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
 
@@ -78,4 +82,4 @@ cuda_add_executable(bwig bwig.cu)
 target_link_libraries(bwig ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
 
 make_executable(testAmplitudeSpeed testAmplitudeSpeed.cc)
-target_link_libraries(testAmplitudeSpeed ${ROOT_LIBS} ${AMPLITUDE_LIBS})
+target_link_libraries(testAmplitudeSpeed ${ROOT_LIBS} ${AMPLITUDE_LIBS} ${CUDA_CUTIL_LIBRARY} cupwa cuda)

@@ -1,0 +1,141 @@
+>>> rpwa::printCompilerInfo(): info: this executable was compiled
+    on a 'Linux 2.6.32-5-686-bigmem i686' machine
+    in directory 'tsiegert@gpgpu:/nfs/hicran/home/tsiegert/private/nfsProject/rootpwa'
+    on Jul 13 2011 15:40:11 by compiler version 4.4.5, build type is 'Release'
+>>> rpwa::printSvnVersion(): info: subversion repository revision is '720M'
+>>> rpwa::particleDataTable::readFile(): info: reading particle data from file '../amplitude/particleDataTable.txt'
+>>> rpwa::particleDataTable::read(): info: successfully read 97 new entries into particle data table
+>>> rpwa::waveDescription::constructDecayTopology(): info: constructing decay topology from key file
+>>> rpwa::waveDescription::constructDecayTopology(): info: successfully constructed decay topology from key file
+>>> main(): info: isobarHelicityAmplitude: 
+    reflectivity basis ............... enabled
+    Bose-symmetrization .............. disabled
+    space inversion of FS momenta .... disabled
+    reflection through prod. plane ... disabled
+isobar decay topology '"X-[1-(2-+)1+]"' has 6 node(s):
+    production   node[0] = diffractiveDissVertex: beam pi-[1-(0-+)0]  +  target p+[0.5(0.5+)0]  --->  X-[1-(2-+)1+]  +  recoil p+[0.5(0.5+)0]
+    isobar decay node[2] = isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)0]  [L = 2, S = 2]  pi-[1-(0-+)0]
+    isobar decay node[1] = isobarDecayVertex: f2(1270)0[0+(2++)0]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0]
+    final state node[3] = fsVertex: pi-[1-(0-+)0]
+    final state node[4] = fsVertex: pi-[1-(0-+)0]
+    final state node[5] = fsVertex: pi+[1-(0-+)0]
+isobar decay topology '"X-[1-(2-+)1+]"' has 5 edge(s):
+    edge[(0,2)] = X-
+    edge[(2,1)] = f2(1270)0
+    edge[(2,3)] = pi-[2] (final state)
+    edge[(1,4)] = pi-[0] (final state)
+    edge[(1,5)] = pi+[1] (final state)
+>>> main(): info: opening input file(s) './1260.1300.root'
+OBJ: TObjArray	TObjArray	An array of objects : 0
+./1260.1300.root tree:rootPwaEvtTree entries=27459
+
+0%   10   20   30   40   50   60   70   80   90   100%
+|----|----|----|----|----|----|----|----|----|----|
+***************************************************
+>>> rpwa::isobarHelicityAmplitude::transformDaughters(): info: transforming outgoing particles of vertex isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)0]  [L = 2, S = 2]  pi-[1-(0-+)0] into X- Gottfried-Jackson RF
+>>> rpwa::isobarHelicityAmplitude::transformDaughters(): info: transforming outgoing particles of vertex isobarDecayVertex: f2(1270)0[0+(2++)0]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0] into f2(1270)0 Gottfried-Jackson RF
+>>> rpwa::isobarHelicityAmplitude::transformDaughters(): info: transforming all child particles of vertex isobarDecayVertex: f2(1270)0[0+(2++)0]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0] into f2(1270)0 helicity RF
+    transforming pi- into f2(1270)0 helicity RF
+    transforming pi+ into f2(1270)0 helicity RF
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: f2(1270)0[0+(2++)-2]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 0, m2 = 0 | J = 2, M = 0) = 1.0000000000000000e+00
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 0, m1 = 0; j2 = 0, m2 = 0 | J = 0, M = 0) = 1.0000000000000000e+00
+>>> rpwa::DFunctionConj(): info: Wigner D^{J = 2 *}_{M = -2, M' = 0}(alpha = -1.6509, beta = 1.11757, gamma = 0) = (-4.8862610807203199e-01,-7.8962829702549767e-02)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.258465 GeV) = 1.4966030959283319e+00
+>>> rpwa::relativisticBreitWigner::amp(): info: relativisticBreitWigner(m = 0.587483 GeV, m_0 = 1.2754 GeV, Gamma_0 = 0.1851 GeV, L = 2, q = 0.258465 GeV, 0.622239 GeV) = (1.8392546106926291e-01,7.3310132323066539e-03)
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (-2.9881591774596533e-01,-6.0589832139330016e-02)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : f2(1270)0 [lambda = -2] -> pi- [lambda = 0] + pi+ [lambda = 0] = parent amp. = (-2.9881591774596533e-01,-6.0589832139330016e-02) * daughter_1 amp = (1.0000000000000000e+00,0.0000000000000000e+00) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-2.9881591774596533e-01,-6.0589832139330016e-02)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: decay amplitude for isobarDecayVertex: f2(1270)0[0+(2++)-2]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0] = (-2.9881591774596533e-01,-6.0589832139330016e-02)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)-2]  [L = 2, S = 2]  pi-[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 2, m2 = -2 | J = 2, M = -2) = 5.3452248382484879e-01
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = -2; j2 = 0, m2 = 0 | J = 2, M = -2) = 1.0000000000000000e+00
+>>> rpwa::DFunctionReflConj(): info: Wigner D^{J = 2, P = -, refl = + *}_{M = 1, M' = -2}(alpha = -0.564732, beta = 1.29395, gamma = 0) = (1.5704377942099648e-01,3.6402593093461033e-01)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.505143 GeV) = 2.7924676598323908e+00
+>>> rpwa::flatMassDependence::amp(): info: flatMassDependence = 1
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (5.2415516614038138e-01,1.2149865025658395e+00)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : X- [lambda = 1] -> f2(1270)0 [lambda = -2] + pi- [lambda = 0] = parent amp. = (5.2415516614038138e-01,1.2149865025658395e+00) * daughter_1 amp = (-2.9881591774596533e-01,-6.0589832139330016e-02) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-8.3010078769511109e-02,-3.9481578034458031e-01)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: f2(1270)0[0+(2++)-1]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 0, m2 = 0 | J = 2, M = 0) = 1.0000000000000000e+00
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 0, m1 = 0; j2 = 0, m2 = 0 | J = 0, M = 0) = 1.0000000000000000e+00
+>>> rpwa::DFunctionConj(): info: Wigner D^{J = 2 *}_{M = -1, M' = 0}(alpha = -1.6509, beta = 1.11757, gamma = 0) = (-3.8581373196990211e-02,4.8058441584460931e-01)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.258465 GeV) = 1.4966030959283319e+00
+>>> rpwa::relativisticBreitWigner::amp(): info: relativisticBreitWigner(m = 0.587483 GeV, m_0 = 1.2754 GeV, Gamma_0 = 0.1851 GeV, L = 2, q = 0.258465 GeV, 0.622239 GeV) = (1.8392546106926291e-01,7.3310132323066539e-03)
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (-3.5537445362341817e-02,2.9485688385336178e-01)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : f2(1270)0 [lambda = -1] -> pi- [lambda = 0] + pi+ [lambda = 0] = parent amp. = (-3.5537445362341817e-02,2.9485688385336178e-01) * daughter_1 amp = (1.0000000000000000e+00,0.0000000000000000e+00) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-3.5537445362341817e-02,2.9485688385336178e-01)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: decay amplitude for isobarDecayVertex: f2(1270)0[0+(2++)-1]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0] = (-3.5537445362341817e-02,2.9485688385336178e-01)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)-1]  [L = 2, S = 2]  pi-[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 2, m2 = -1 | J = 2, M = -1) = -2.6726124191242440e-01
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = -1; j2 = 0, m2 = 0 | J = 2, M = -1) = 1.0000000000000000e+00
+>>> rpwa::DFunctionReflConj(): info: Wigner D^{J = 2, P = -, refl = + *}_{M = 1, M' = -1}(alpha = -0.564732, beta = 1.29395, gamma = 0) = (5.0807012299280463e-01,-1.0343537649152698e-01)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.505143 GeV) = 2.7924676598323908e+00
+>>> rpwa::flatMassDependence::amp(): info: flatMassDependence = 1
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (-8.4787688092487612e-01,1.7261488213540985e-01)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : X- [lambda = 1] -> f2(1270)0 [lambda = -1] + pi- [lambda = 0] = parent amp. = (-8.4787688092487612e-01,1.7261488213540985e-01) * daughter_1 amp = (-3.5537445362341817e-02,2.9485688385336178e-01) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-2.0765307923301689e-02,-2.5613662694343109e-01)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: f2(1270)0[0+(2++)0]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 0, m2 = 0 | J = 2, M = 0) = 1.0000000000000000e+00
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 0, m1 = 0; j2 = 0, m2 = 0 | J = 0, M = 0) = 1.0000000000000000e+00
+>>> rpwa::DFunctionConj(): info: Wigner D^{J = 2 *}_{M = 0, M' = 0}(alpha = -1.6509, beta = 1.11757, gamma = 0) = (-2.1241231096749036e-01,-0.0000000000000000e+00)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.258465 GeV) = 1.4966030959283319e+00
+>>> rpwa::relativisticBreitWigner::amp(): info: relativisticBreitWigner(m = 0.587483 GeV, m_0 = 1.2754 GeV, Gamma_0 = 0.1851 GeV, L = 2, q = 0.258465 GeV, 0.622239 GeV) = (1.8392546106926291e-01,7.3310132323066539e-03)
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (-1.3074141434385639e-01,-5.2111710526274412e-03)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : f2(1270)0 [lambda = 0] -> pi- [lambda = 0] + pi+ [lambda = 0] = parent amp. = (-1.3074141434385639e-01,-5.2111710526274412e-03) * daughter_1 amp = (1.0000000000000000e+00,0.0000000000000000e+00) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-1.3074141434385639e-01,-5.2111710526274412e-03)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: decay amplitude for isobarDecayVertex: f2(1270)0[0+(2++)0]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0] = (-1.3074141434385639e-01,-5.2111710526274412e-03)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)0]  [L = 2, S = 2]  pi-[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 2, m2 = 0 | J = 2, M = 0) = -5.3452248382484879e-01
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 0, m2 = 0 | J = 2, M = 0) = 1.0000000000000000e+00
+>>> rpwa::DFunctionReflConj(): info: Wigner D^{J = 2, P = -, refl = + *}_{M = 1, M' = 0}(alpha = -0.564732, beta = 1.29395, gamma = 0) = (-3.8467712685963462e-01,-0.0000000000000000e+00)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.505143 GeV) = 2.7924676598323908e+00
+>>> rpwa::flatMassDependence::amp(): info: flatMassDependence = 1
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (1.2839127030876760e+00,0.0000000000000000e+00)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : X- [lambda = 1] -> f2(1270)0 [lambda = 0] + pi- [lambda = 0] = parent amp. = (1.2839127030876760e+00,0.0000000000000000e+00) * daughter_1 amp = (-1.3074141434385639e-01,-5.2111710526274412e-03) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-1.6786056269572652e-01,-6.6906887124311481e-03)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: f2(1270)0[0+(2++)1]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 0, m2 = 0 | J = 2, M = 0) = 1.0000000000000000e+00
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 0, m1 = 0; j2 = 0, m2 = 0 | J = 0, M = 0) = 1.0000000000000000e+00
+>>> rpwa::DFunctionConj(): info: Wigner D^{J = 2 *}_{M = 1, M' = 0}(alpha = -1.6509, beta = 1.11757, gamma = 0) = (3.8581373196990211e-02,4.8058441584460931e-01)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.258465 GeV) = 1.4966030959283319e+00
+>>> rpwa::relativisticBreitWigner::amp(): info: relativisticBreitWigner(m = 0.587483 GeV, m_0 = 1.2754 GeV, Gamma_0 = 0.1851 GeV, L = 2, q = 0.258465 GeV, 0.622239 GeV) = (1.8392546106926291e-01,7.3310132323066539e-03)
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (1.1956819693459615e-02,2.9674993924416299e-01)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : f2(1270)0 [lambda = 1] -> pi- [lambda = 0] + pi+ [lambda = 0] = parent amp. = (1.1956819693459615e-02,2.9674993924416299e-01) * daughter_1 amp = (1.0000000000000000e+00,0.0000000000000000e+00) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (1.1956819693459615e-02,2.9674993924416299e-01)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: decay amplitude for isobarDecayVertex: f2(1270)0[0+(2++)1]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0] = (1.1956819693459615e-02,2.9674993924416299e-01)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)1]  [L = 2, S = 2]  pi-[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 2, m2 = 1 | J = 2, M = 1) = -2.6726124191242440e-01
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 1; j2 = 0, m2 = 0 | J = 2, M = 1) = 1.0000000000000000e+00
+>>> rpwa::DFunctionReflConj(): info: Wigner D^{J = 2, P = -, refl = + *}_{M = 1, M' = 1}(alpha = -0.564732, beta = 1.29395, gamma = 0) = (-5.0807012299280463e-01,-1.0343537649152698e-01)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.505143 GeV) = 2.7924676598323908e+00
+>>> rpwa::flatMassDependence::amp(): info: flatMassDependence = 1
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (8.4787688092487612e-01,1.7261488213540985e-01)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : X- [lambda = 1] -> f2(1270)0 [lambda = 1] + pi- [lambda = 0] = parent amp. = (8.4787688092487612e-01,1.7261488213540985e-01) * daughter_1 amp = (1.1956819693459615e-02,2.9674993924416299e-01) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-4.1085544798849551e-02,2.5367133792308832e-01)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: f2(1270)0[0+(2++)2]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 0, m2 = 0 | J = 2, M = 0) = 1.0000000000000000e+00
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 0, m1 = 0; j2 = 0, m2 = 0 | J = 0, M = 0) = 1.0000000000000000e+00
+>>> rpwa::DFunctionConj(): info: Wigner D^{J = 2 *}_{M = 2, M' = 0}(alpha = -1.6509, beta = 1.11757, gamma = 0) = (-4.8862610807203199e-01,7.8962829702549767e-02)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.258465 GeV) = 1.4966030959283319e+00
+>>> rpwa::relativisticBreitWigner::amp(): info: relativisticBreitWigner(m = 0.587483 GeV, m_0 = 1.2754 GeV, Gamma_0 = 0.1851 GeV, L = 2, q = 0.258465 GeV, 0.622239 GeV) = (1.8392546106926291e-01,7.3310132323066539e-03)
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (-3.0269035242920223e-01,3.6614628269600519e-02)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : f2(1270)0 [lambda = 2] -> pi- [lambda = 0] + pi+ [lambda = 0] = parent amp. = (-3.0269035242920223e-01,3.6614628269600519e-02) * daughter_1 amp = (1.0000000000000000e+00,0.0000000000000000e+00) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-3.0269035242920223e-01,3.6614628269600519e-02)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: decay amplitude for isobarDecayVertex: f2(1270)0[0+(2++)2]  --{relativisticBreitWigner}-->  pi-[1-(0-+)0]  [L = 2, S = 0]  pi+[1-(0-+)0] = (-3.0269035242920223e-01,3.6614628269600519e-02)
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: calculating two-body decay amplitude in helicity formalism for isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)2]  [L = 2, S = 2]  pi-[1-(0-+)0]
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 0; j2 = 2, m2 = 2 | J = 2, M = 2) = 5.3452248382484879e-01
+>>> rpwa::clebschGordanCoeff(): info: Clebsch-Gordan (j1 = 2, m1 = 2; j2 = 0, m2 = 0 | J = 2, M = 2) = 1.0000000000000000e+00
+>>> rpwa::DFunctionReflConj(): info: Wigner D^{J = 2, P = -, refl = + *}_{M = 1, M' = 2}(alpha = -0.564732, beta = 1.29395, gamma = 0) = (1.5704377942099648e-01,-3.6402593093461033e-01)
+>>> rpwa::barrierFactor(): info: Blatt-Weisskopf barrier factor(L = 2, q = 0.505143 GeV) = 2.7924676598323908e+00
+>>> rpwa::flatMassDependence::amp(): info: flatMassDependence = 1
+>>> rpwa::angMomNormFactor(): info: normalization factor sqrt(2 * L = 2 + 1) = 2.2360679774997898e+00
+>>> rpwa::isobarHelicityAmplitude::twoBodyDecayAmplitude(): info: two-body decay amplitude = (5.2415516614038138e-01,-1.2149865025658395e+00)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: amplitude term for : X- [lambda = 1] -> f2(1270)0 [lambda = 2] + pi- [lambda = 0] = parent amp. = (5.2415516614038138e-01,-1.2149865025658395e+00) * daughter_1 amp = (-3.0269035242920223e-01,3.6614628269600519e-02) * daughter_2 amp = (1.0000000000000000e+00,0.0000000000000000e+00) = (-1.1417043282258885e-01,3.8695643922219858e-01)
+>>> rpwa::isobarAmplitude::twoBodyDecayAmplitudeSum(): info: decay amplitude for isobarDecayVertex: X-[1-(2-+)1+]  --{flatMassDependence}-->  f2(1270)0[0+(2++)2]  [L = 2, S = 2]  pi-[1-(0-+)0] = (-4.2689192700997769e-01,-1.7015318855155670e-02)
+
+result: -0.43333639454564609750 + i*(0.17759189986498405411)
+
+>>> main(): info: successfully read 1 events from file(s) './1260.1300.root' and calculated amplitudes
+needed >>> main(): info: cpuAmps[0] = (-4.2689192700997769e-01,-1.7015318855155670e-02)
+Real time 0:00:00, CP time 0.080

@@ -1,37 +1,76 @@
-#include <stdio.h>
+///////////////////////////////////////////////////////////////////////////
+//
+//    Copyright 2010
+//
+//    This file is part of rootpwa
+//
+//    rootpwa is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    rootpwa is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with rootpwa. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev:: 633                         $: revision of last commit
+// $Author:: bgrube                   $: author of last commit
+// $Date:: 2011-02-14 19:33:31 +0100 #$: date of last commit
+//
+// Description:
+//      general isobar decay amplitude in helicity formalism
+//
+//
+// Author List:
+//      Boris Grube          TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
+
+
+#ifndef CUISOBARHELICITYAMPLITUDE_H
+#define CUISOBARHELICITYAMPLITUDE_H
+
 #include "complex.cuh"
+
 using namespace rpwa;
 
 #define FOURPI 4*3.1415926
 
-const long unsigned int N = 100000;
 
-
-// Variables... for the host
-const double m0 = 0.77549; 			// Gev/c^2, rho(770)
-const double q0 = 0.361755;  			// breakup momentum --> expected from kinematics, here pi+pi-
-const double Gamma0 = 0.1462; 			// GeV, rho(770)
-int L = 0;					// angular momentum
-const double Pr = 0.1973; 			// Gev/c, hbarc
-cuda::complex<double> imag(0.0,1.0);		// imaginary unit
-
-
-///Variables for the device functions are inside of them, such as m0, q0, Gamma0, L
+namespace cupwa {  
 
 
 
+    
+		inline double cuBreakUpMomentum(const double, double, double);
+		inline double BFactor(int, double);
+		inline int cufac(int);
+		inline double cuabs( double );
+		inline int cupmo(const int);
+		inline bool cuisOdd(const int);
+		inline void swap( int, int);
+		inline int cuReflFactor(const int, int, int, int);
+		inline double cucgc(int,int,int,int,int,int);
+		inline double cudfunc(int,int,int,double);
+		inline cuda::complex<double> cuDfunc(const int, int, int, double, double, double);
+		inline cuda::complex<double> cuSpherHarm(const int, int, double, double);
+		inline cuda::complex<double> cuDfuncRefl(const int, int, int, int, int, double, double, double);
+		inline cuda::complex<double> cuDfuncReflConj(const int, int, int, int, int, double, double, double);
+		inline double GammaFunc(double,double,double,double,double,int);
+		inline cuda::complex<double> bwig(double,double,double,double,double,int);
+		inline cuda::complex<double> cuHelAmplitude(double,double,double,double,double,double,int,int,int,int,int,int,int,int);
 
-/// ///////////////////////////////////// ///
-/// templated pow function (complex test) ///
-/// ///////////////////////////////////// ///
-template<class T>
-__global__ void 
-testPow( T* A, T* B, T* C) 
-{
-//  cuda::complex<T> imag(0.0,1.0);
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx<N) C[idx] = A[idx] / B[idx];
-}
+
+
+
 
 /// ////////////////////////////////////////////// ///
 /// templated pow function (interger exponentiate) ///
@@ -65,6 +104,7 @@ template<class T>
 __device__ T
 BFactor( int L, T q )
 {
+  T Pr = 0.1973;
   T z = (q * q)/(Pr * Pr);			// substitution
   T ret;					// return value
   int m = L/2;
@@ -100,88 +140,6 @@ BFactor( int L, T q )
     break;
   }
   return ret;
-}
-
-/// ////////////////////////////// ///
-/// Blatt-Weisskopf barrier factor ///
-/// ////////////////////////////// ///
-// note that for speed up purposes the barrier factor is defined without the squareroot here!
-template<class T>
-__device__ T
-BFactorTest( int L, T* q )
-{
-  T z = (*q * *q)/(Pr * Pr);			// substitution
-  T ret;					// return value
-  int m = L/2;
-  /// actually the return values are squarerooted, but in the GammaFunction they are squared again, so...
-  /// this implies a speedup-factor of 1.74 for every calculation
-  switch (m) {
-  case 0:
-    ret =  (T)1.0;
-    break;
-  case 1:
-    ret =  ((T)2.0 * z)/(z + 1) ;
-    break;
-  case 2:
-    ret =  ((T)13.0 * z * z)/( (T)9.0 + z*(z+(T)3.0) ) ;								//
-    break;
-  case 3:
-    ret =  ((T)277.0 * z*z*z)/((T)225.0 + z*((T)45.0 + z*((T)6.0 + z))) ;						//
-    break;
-  case 4:
-    ret =  ((T)12746.0 * z*z*z*z)/((T)11025.0 + z*((T)1575.0 + z*((T)135.0 + z*((T)10.0 + z))) ) ; 			//
-    break;
-  case 5:
-    ret =  ((T)998881.0 * z*z*z*z*z)/((T)893025.0 + z*((T)99225.0 + z*((T)6300.0 + z*((T)315.0 + z*((T)15.0 + z))))) ; 			//  
-    break;
-  case 6:
-    ret =  ((T)118394977.0 * z*z*z*z*z*z)/((T)108056025.0 + z*((T)9823275.0 + z*((T)496125.0 + z*((T)18900.0 + z*((T)630.0 + z*((T)21.0 + z)))))) ;
-    break;
-  case 7:
-    ret =  ((T)19727003738.0 * z*z*z*z*z*z*z)/((T)18261468225.0 + z*((T)1404728325.0 + z*((T)58939650.0 + z*((T)1819125.0 + z*((T)47250.0 + z*((T)1134.0 + z*((T)28.0 + z))))))) ;
-    break;
-  default:
-    ret =  1.0;
-    break;
-  }
-  return ret;
-}
-
-/// /////////////////////////////////////////////////////////////////////////////////////////// ///
-/// templated breit-wigner function (complex) with GammaFunc and Blatt-Weisskopf barrier factor ///
-/// /////////////////////////////////////////////////////////////////////////////////////////// ///
-
-template<class T>
-__global__ void
-imagtest(T* m, T* q, cuda::complex<T>* BW )
-{
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    T m0 = 0.77549;							/// insert expected peak for mass
-    T Gamma0 = 0.1462;							/// self explaining
-    cuda::complex<T> imag(0,1);
-
-  T GammaValue = GammaFuncTest(&m[idx],&q[idx]);
-   
-  if (idx<N) BW[idx] = ( Gamma0*m0) / ( (m0*m0 - m[idx]*m[idx]) - imag*m0*GammaValue) ; /// will test to calculate the brackets before adding an complex number ... no notable speedup
-}
-
-
-/// //////// ///
-/// Gamma(m) ///
-/// //////// ///
-template<class T>
-__device__ T
-GammaFuncTest( T* m, T* q) 
-{
-  int L = 0;								/// insert angular momentum
-  T q0 = 0.361755;
-    
-  T BFValue 	= BFactorTest(L,q);
-  T BF0 	= BFactorTest(L,&q0);
-  
-//  T Gamma = Gamma0 * (m0 / *m) * (*q / q0) * (BFValue / BF0) * (BFValue / BF0) ;
- T Gamma = ( Gamma0 * m0 * *q  * BFValue ) / ( *m * q0  * BF0 ) ; 	/// nearly 2 times (1.88) faster than the formula above, means first calculating the nominator and denominator and then dividing
- return Gamma;
 }
 
 /// ///////// ///
@@ -262,66 +220,7 @@ cuReflFactor(const int j,
 }
 
 
-
-
 ///      !NOTE! spins and projection quantum numbers are in units of hbar/2
-
-/// /////////////////////////////////////////// ///
-/// Clebsch-Gordan-Coefficients (wiki formulas) ///
-/// /////////////////////////////////////////// ///
-// doens't work properly till now
-__device__ double
-cucgcwiki(	int j1,
-		int m1,
-		int j2,
-		int m2,
-		int j,
-		int m)
-{
-  double clebschVal;
-  if ( cuisOdd(j1-m1) or cuisOdd(j2-m2) or cuisOdd(j-m) ) {
-    return 0;
-  }
-  if ( (cuabs(m1) > j1) or (cuabs(m2) > j2) or (cuabs(m) > j) ) {
-    return 0;
-  }
-  if ( m1 + m2 != m ) {
-    return 0;
-  }
-  else {
-    int k = 0;
-    while ( ((j - j2 + m1) / 2 + k < 0) or ((j - j1 - m2) / 2 + k < 0) ) {
-      k++;
-    }
-    double sum = 0;
-    int d1, d2, d3;
-    while ( ((d1 = (j1 + j2 - j) / 2 - k) >= 0) and ((d2 = (j1 - m1) / 2 - k) >= 0) and ((d3 = (j2 + m2) / 2 - k) >= 0) ) {
-      const int d4 = (j - j2 + m1) / 2 + k;
-      const int d5 = (j - j1 - m2) / 2 + k;
-      sum += ( cupmo(k) / ( cufac(k) * cufac(d1) * cufac(d2) * cufac(d3) * cufac(d4) * cufac(d5) ) );
-      k++;
-    }
-    if ( sum == 0 ) {
-      return 0;
-    }
-    const double N1 = cufac((j + j1 - j2) / 2);
-    const double N2 = cufac((j - j1 + j2) / 2);
-    const double N3 = cufac((j1 + j2 - j) / 2);
-    const double N4 = cufac((j + m) / 2);
-    const double N5 = cufac((j - m) / 2);
-    const double N6 = cufac((j1 - m1) / 2);
-    const double N7 = cufac((j1 + m1) / 2);
-    const double N8 = cufac((j2 - m2) / 2);
-    const double N9 = cufac((j2 + m2) / 2);
-    
-    const double D0 = cufac((j1 + j2 + j) / 2 + 1);
-    
-    double A = ( (j + 1) * N1 * N2 * N3 * N4 * N5 * N6 * N7 * N8 * N9 ) / D0 ;
-    clebschVal = sqrtf(A) * sum;
-  }
-  return clebschVal;
-}
-
 
 /// /////////////////////////// ///
 /// Clebsch-Gordan-Coefficients ///
@@ -554,20 +453,6 @@ cuDfuncReflConj(const int j,
   return DFuncVal;
 }
 
-/// //////////////////////////// ///
-/// breit-wigner function (real) ///
-/// //////////////////////////// ///
-/// ...well just for testing.... ///
-template<class T>
-__global__ void
-finBW( T* m, T* q, cuda::complex<T>* BW)
-{
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    cuda::complex<T> imag(0,1);
-    T GammaValue = GammaFunc(m,q);
-  if (idx<N) BW[idx] =  ( m0 * Gamma0) / pow(( pow((m0*m0 - m[idx]*m[idx]),2) + m0*m0*GammaValue*GammaValue),0.5)  ;
-}
-
 /// //////// ///
 /// Gamma(m) ///
 /// //////// ///
@@ -603,7 +488,7 @@ bwig(double m, double m0, double Gamma0, double q, double q0, int L)
   return BWVal;
 }
 
-/*
+
 /// ///////////////// ///
 /// Amplitude test... ///
 /// ///////////////// ///
@@ -626,15 +511,22 @@ cuHelAmplitude(	const double theta1,
   double wPIpm 	= 0.13957;
   double qX 	= cuBreakUpMomentum(wX,wf2,wPIpm);
   double qf2 	= cuBreakUpMomentum(wf2,wPIpm,wPIpm);
+  double Gamma0 = 1;
+  double q0 = 1;
   cuda::complex<double> amplsum(0,0);
   for(int lambda1 = -J1; lambda1 <= +J1; lambda1+=2) {
     for(int lambda2 = -J2; lambda2 <= +J2; lambda2+=2) {
-      amplsum += 	::sqrt(2.0*L1+1.0) * cucgc(J1,lambda1,J2,lambda2,J1,lambda1-lambda2) * cucgc(L1,0,S1,lambda1-lambda2,JX,lambda1-lambda2) * cuDfuncConj(JX,MX,lambda1,theta1,phi1,0) * ::sqrt((double)BFactor(L1,qX)) * 
-			::sqrt(2.0*L2+1.0) * cucgc(0,0,0,0,0,0) * cucgc(L2,0,0,0,L2,0) * cuDfuncConj(4,lambda1,0,theta2,phi2,0) * ::sqrt((double)BFactor(L2,qf2)) * bwig(wf2,qf2,L2);
+      amplsum += 	 ::sqrt(L1+1.0) * cucgc(J1,lambda1,J2,lambda2,J1,lambda1-lambda2) * cucgc(L1,0,S1,lambda1-lambda2,JX,lambda1-lambda2) * cuDfuncConj(JX,MX,lambda1,theta1,phi1,0) * ::sqrt((double)BFactor(L1,qX)) * 
+			 ::sqrt(L2+1.0) * cucgc(0,0,0,0,0,0) * cucgc(L2,0,0,0,L2,0) * cuDfuncConj(4,lambda1,0,theta2,phi2,0) * ::sqrt((double)BFactor(L2,qf2)) * bwig(wf2,1.2754,Gamma0,qf2,q0,L2);
     }
   }
   return amplsum;
 }
-*/
 
 
+// 	
+//	
+} // namespace cupwa
+
+
+#endif  // CUISOBARHELICITYAMPLITUDE_H
