@@ -9,6 +9,9 @@
 
 #include <complex>
 #include <vector>
+#include <fstream>
+#include <string>
+
 
 #include "TGraph.h"
 #include "TMultiGraph.h"
@@ -17,6 +20,8 @@
 #include "TApplication.h"
 #include "TROOT.h"
 #include "TSystem.h"
+#include "TStyle.h"
+
 #include "Math/GSLIntegrator.h"
 #include "Math/IFunction.h"
 
@@ -140,7 +145,34 @@ cnum H(cnum t, cnum z, cnum s){
 }
 
 
+////////////////////// A1 Resonance Breit Wigner ////////////
+cnum BWa1(cnum s){
+  double mA=1.26;
+  double mA2=mA*mA;
+  double GA=0.3;
+  cnum denom(mA2,-mA*GA);
+  denom-=s;
+  return mA*GA/denom;
 
+}
+
+
+//////////////// helper: rectify phase:
+
+void modPhi(unsigned int i, double m, double phi, TGraph* g){
+  if(i==0)g->SetPoint(i,m,phi);
+  double oldphi=g->GetY()[i-1];
+  //cout << "OldPhi="<<oldphi << endl; 
+  double best=phi;
+  for(int k=-4;k<6;++k){
+   
+    double mphi=phi+(double)k*pi;
+    //cout << mphi << endl;
+    if(fabs(mphi-oldphi)<fabs(best-oldphi))best=mphi;
+  } 
+  g->SetPoint(i,m,best);
+  //cout << "Best=" << best << endl; 
+}
 
 
 ///////////////////////// Isobars ///////////////////////////////////
@@ -376,11 +408,14 @@ main(int argc, char** argv)
 
   TApplication app("", 0, 0);
   gROOT->SetStyle("Plain");
+  gStyle->SetGridStyle(1);
 
+  ofstream outfile("rescat.dat");
+  
 
   double mstart=0.005;
   double mstep=0.005;
-  unsigned int nsteps=200;
+  unsigned int nsteps=400;
   
 
   TGraph* gIEps=new TGraph(nsteps);
@@ -416,20 +451,32 @@ main(int argc, char** argv)
     cnum aRho=ampRho(z);
     gIEps->SetPoint(i,m,norm(aEps));
     gIRho->SetPoint(i,m,norm(aRho));
-    gPhaseEps->SetPoint(i,m,arg(aEps));
-    gPhaseRho->SetPoint(i,m,arg(aRho));
+    double phiEps=arg(aEps);
+    double phiRho=arg(aRho);
+    modPhi(i,m,phiEps,gPhaseEps);
+    modPhi(i,m,phiRho,gPhaseRho);
     gJRe->SetPoint(i,m,J(z).real());
     gJIm->SetPoint(i,m,J(z).imag());
  
   }
 	
- 
-  vector<double> masses(5);
-  masses[0]=0.7;
-  masses[1]=0.9;
-  masses[2]=1.2;
-  masses[3]=1.4;
-  masses[4]=1.6;
+
+  unsigned int nIso=2;  // number of isobars
+  unsigned int nBase=4; // number of basis functions
+  vector<string> IsoNames(nIso);
+  IsoNames[0]="eps";
+  IsoNames[1]="rho";
+
+
+
+  unsigned int nm=75;
+  double m0=0.5;
+  double dm=0.02;
+  vector<double> masses(nm);
+  for(unsigned int im=0;im<nm;++im){
+    masses[im]=m0+(double)im*dm;
+  }
+
   double tstart=0.001;
   double dt=0.01;
 
@@ -453,12 +500,53 @@ main(int argc, char** argv)
   TMultiGraph* mgIrhoepsIm=new TMultiGraph();
   TMultiGraph* mgIrhorhoIm=new TMultiGraph();
 
+  TGraph* gsIeeRe = new TGraph(nm);
+  TGraph* gsIeeIm = new TGraph(nm);
+  gsIeeIm->SetLineStyle(2);
+  TMultiGraph* gsIee= new TMultiGraph();
+  gsIee->Add(gsIeeRe,"C");
+  gsIee->Add(gsIeeIm,"C");
+  TGraph* gsIerRe = new TGraph(nm);
+  TGraph* gsIerIm = new TGraph(nm);
+  gsIerIm->SetLineStyle(2);
+  TMultiGraph* gsIer= new TMultiGraph();
+  gsIer->Add(gsIerRe,"C");
+  gsIer->Add(gsIerIm,"C");
+  TGraph* gsIreRe = new TGraph(nm);
+  TGraph* gsIreIm = new TGraph(nm);
+  gsIreIm->SetLineStyle(2);
+  TMultiGraph* gsIre= new TMultiGraph();
+  gsIre->Add(gsIreRe,"C");
+  gsIre->Add(gsIreIm,"C");
+  TGraph* gsIrrRe = new TGraph(nm);
+  TGraph* gsIrrIm = new TGraph(nm);
+  gsIrrIm->SetLineStyle(2);
+  TMultiGraph* gsIrr= new TMultiGraph();
+  gsIrr->Add(gsIrrRe,"C");
+  gsIrr->Add(gsIrrIm,"C");
+
+
+
+  TMultiGraph* mgEpsA1Re=new TMultiGraph;
+  TMultiGraph* mgEpsA1Im=new TMultiGraph;
+  TMultiGraph* mgRhoA1Re=new TMultiGraph;
+  TMultiGraph* mgRhoA1Im=new TMultiGraph;
+  TGraph* gA1EpsI=new TGraph(nm);
+  TGraph* gA1EpsPhi= new TGraph(nm);
+  TGraph* gA1RhoI=new TGraph(nm);
+  TGraph* gA1RhoPhi= new TGraph(nm);
+
+  TGraph* gA1EpsI0=new TGraph(nm);gA1EpsI0->SetLineStyle(2);
+  TGraph* gA1EpsPhi0= new TGraph(nm);gA1EpsPhi0->SetLineStyle(2);
+  TGraph* gA1RhoI0=new TGraph(nm);gA1RhoI0->SetLineStyle(2);
+  TGraph* gA1RhoPhi0= new TGraph(nm); gA1RhoPhi0->SetLineStyle(2);
+
 
   vector<double> tmatch(4);
-  tmatch[0]=0;
+  tmatch[0]=0.01;
 
  
-  for(unsigned is=0;is<5;++is){ // loop over three pion masses s
+  for(unsigned is=0;is<nm;++is){ // loop over three pion masses s
    
     cnum s(masses[is]*masses[is],0);
     double tHat=(masses[is]-mpi)*(masses[is]-mpi);
@@ -501,29 +589,36 @@ main(int argc, char** argv)
     TGraph* gIreIm=new TGraph(nt);mgIrhoepsIm->Add(gIreIm,"C");
     TGraph* gIrrRe=new TGraph(nt);mgIrhorhoRe->Add(gIrrRe,"C");
     TGraph* gIrrIm=new TGraph(nt);mgIrhorhoIm->Add(gIrrIm,"C");
+    
+    TGraph* gEpsA1Re=new TGraph(nt);mgEpsA1Re->Add(gEpsA1Re,"C");
+    TGraph* gEpsA1Im=new TGraph(nt);mgEpsA1Im->Add(gEpsA1Im,"C");
+    TGraph* gRhoA1Re=new TGraph(nt);mgRhoA1Re->Add(gRhoA1Re,"C");
+    TGraph* gRhoA1Im=new TGraph(nt);mgRhoA1Im->Add(gRhoA1Im,"C");
 
     // matching points:
     tmatch[1]=(4*mpi2*0.8+tHat*0.2);
     tmatch[2]=0.5*(4*mpi2+tHat);
-    tmatch[3]=0.9*tHat;
+    tmatch[3]=0.99*tHat;
 
     // do matching:
   
-    cmatrix lambda(8,2);
-    cmatrix R(8,8);
-    for(unsigned int i=0;i<2;++i){
-      for(unsigned int j=0;j<2;++j){
+    
+
+    cmatrix lambda(nBase*nIso,nIso);
+    cmatrix R(nBase*nIso,nBase*nIso);
+    for(unsigned int i=0;i<nIso;++i){
+      for(unsigned int j=0;j<nIso;++j){
 	// I0 -> lambda
 	cmatrix lambdaij=match(i,j,0,s,tmatch);
-	for(unsigned int a=0;a<4;++a){
-	  lambda(i+a*2,j)=lambdaij(a,0);
+	for(unsigned int a=0;a<nBase;++a){
+	  lambda(i+a*nIso,j)=lambdaij(a,0);
 	}
 	//Expand Kernel in Basis functions
-        cmatrix LambdaAB(4,1);
-	for(unsigned int b=0;b<4;++b){
+        cmatrix LambdaAB(nBase,1);
+	for(unsigned int b=0;b<nBase;++b){
 	  LambdaAB=match(i,j,b+1,s,tmatch);
-	  for(unsigned int a=0;a<4;++a){
-	    R(i+a*2,j+b*2)=LambdaAB(a,0);
+	  for(unsigned int a=0;a<nBase;++a){
+	    R(i+a*nIso,j+b*nIso)=LambdaAB(a,0);
 	  }
 	}
 	
@@ -531,14 +626,14 @@ main(int argc, char** argv)
       }
     }      
   
-    ublas::identity_matrix<cnum> uni(8,8);
+    ublas::identity_matrix<cnum> uni(nBase*nIso,nBase*nIso);
     R=uni-R;
     cout << R << endl;
 
     ///// At this point we have set up everything and are ready to solve ////
     ///// The linear system and thereby the system of integral equations ////
     ////////// Invert R to solve  ////
-    cmatrix T(8,8);
+    cmatrix T(nBase*nIso,nBase*nIso);
     
     InvertMatrix(R,T);
 
@@ -554,18 +649,54 @@ main(int argc, char** argv)
 
     cout << lambda << endl;
 
-    cmatrix la(4,1);
-    for(unsigned int a=0;a<4;++a){
-      la(a,0)=lambda(0+a*2,1);
+    cmatrix la(nBase,1);
+    for(unsigned int a=0;a<nBase;++a){
+      la(a,0)=lambda(0+a*nIso,1);
     }
-    cout << "##### LA: " << endl;
-    cout << la << endl;
-    cout << lambda00 << endl;
-    cout << lambda01 << endl;
-    cout << lambda10 << endl;
-    cout << lambda11 << endl;
+    // cout << "##### LA: " << endl;
+//     cout << la << endl;
+//     cout << lambda00 << endl;
+//     cout << lambda01 << endl;
+//     cout << lambda10 << endl;
+//     cout << lambda11 << endl;
 
-   
+    
+    cmatrix Imid=fuM( tmatch[2],IA);
+    gsIeeRe->SetPoint(is,masses[is],Imid(0,0).real());
+    gsIeeIm->SetPoint(is,masses[is],Imid(0,0).imag());
+    gsIerRe->SetPoint(is,masses[is],Imid(0,1).real());
+    gsIerIm->SetPoint(is,masses[is],Imid(0,1).imag());
+    gsIreRe->SetPoint(is,masses[is],Imid(1,0).real());
+    gsIreIm->SetPoint(is,masses[is],Imid(1,0).imag());
+    gsIrrRe->SetPoint(is,masses[is],Imid(1,1).real());
+    gsIrrIm->SetPoint(is,masses[is],Imid(1,1).imag());
+
+
+    // construct a1eps amplitude
+    // branching ratios:
+    double fracRhoPi=sqrt(6./7.);
+    double fracEpsPi=sqrt(1./7.);
+    cmatrix f0(2,1);
+    f0(0,0)=fracEpsPi*BWa1(s);
+    f0(1,0)=fracRhoPi*BWa1(s);
+    
+    // famous formula: f=(1+I)f0
+    ublas::identity_matrix<cnum> uni22(2,2);
+    cmatrix f=prod(uni22+Imid,f0);
+    
+    // f(0,0) is the final epspi amplitude in the middle of dalitz plot
+    // f(1,0) is the final rhopi amplitude
+
+    gA1EpsI->SetPoint(is,masses[is],norm(f(0,0)));
+    modPhi(is,masses[is],arg(f(0,0)),gA1EpsPhi);
+    gA1RhoI->SetPoint(is,masses[is],norm(f(1,0)));
+    modPhi(is,masses[is],arg(f(1,0)),gA1RhoPhi);
+    
+    gA1EpsI0->SetPoint(is,masses[is],norm(f0(0,0)));
+    modPhi(is,masses[is],arg(f0(0,0)),gA1EpsPhi0);
+    gA1RhoI0->SetPoint(is,masses[is],norm(f0(1,0)));
+    modPhi(is,masses[is],arg(f0(1,0)),gA1RhoPhi0);
+
     cerr << "Start loop over subenergy" << endl;
     for(unsigned it=0;it<nt;++it){ // loop over subenergy
       cnum t(it*dt+tstart,0);
@@ -618,8 +749,33 @@ main(int argc, char** argv)
 	gIreIm->SetPoint(it,t.real(),I(1,0).imag());
 	gIrrRe->SetPoint(it,t.real(),I(1,1).real());
 	gIrrIm->SetPoint(it,t.real(),I(1,1).imag());
+
+	// t-dependence of isobar amplitudes
+	cmatrix f=prod(uni22+I,f0);
+	cnum feps=f(0,0)*ampEps(t);
+	gEpsA1Re->SetPoint(it,t.real(),norm(feps));
+	modPhi(it,t.real(),arg(feps),gEpsA1Im);
+	cnum frho=f(1,0)*ampRho(t);
+	gRhoA1Re->SetPoint(it,t.real(),norm(frho));
+	modPhi(it,t.real(),arg(frho),gRhoA1Im);
+	
+
       }
     } // end loop over t
+
+
+    // write out coefficients
+
+    outfile << s << endl;
+    // loop over rescattering matrix
+    for(unsigned int a=0;a<nIso;++a){
+      for(unsigned int b=0;b<nIso;++b){
+	outfile << IsoNames[a] << "_" << IsoNames[b] << endl;
+	for(unsigned int i=0; i<nBase;++i){
+	  outfile << IA(i*nIso+a,b) << endl;
+	} // end loop over basis functions
+      }
+    } // end loop over isobars
 
   
 
@@ -627,7 +783,7 @@ main(int argc, char** argv)
 
 
 
- 
+  outfile.close();
 
 
 
@@ -683,6 +839,48 @@ mgIrhoepsRe->Draw("AC");
 mgIrhorhoRe->Draw("AC");
  cI->cd(8);
  mgIrhorhoIm->Draw("AC");
+
+
+ TCanvas* cIs=new TCanvas("cIs","cIs",40,40,1000,1000);
+ cIs->Divide(2,2);
+ cIs->cd(1);
+ gsIee->Draw("AC");
+ 
+ cIs->cd(2);
+ gsIer->Draw("AC");
+ 
+cIs->cd(3);
+ gsIre->Draw("AC");
+ 
+ cIs->cd(4);
+ gsIrr->Draw("AC");
+ 
+ TCanvas* ca1=new TCanvas("ca1","ca1",50,50,1000,1000);
+ ca1->Divide(4,2);
+ ca1->cd(1);
+ gA1EpsI->Draw("AC");
+ gA1EpsI0->Draw("same C");
+  ca1->cd(2);
+ gA1EpsPhi->Draw("AC");
+ gA1EpsPhi0->Draw("same C");
+ ca1->cd(3);
+ gA1RhoI->Draw("AC");
+ gA1RhoI0->Draw("same C");
+  ca1->cd(4);
+ gA1RhoPhi->Draw("AC");
+ gA1RhoPhi0->Draw("same C");
+
+
+
+  ca1->cd(5);
+  mgEpsA1Re->Draw("AC");
+ ca1->cd(6);
+  mgEpsA1Im->Draw("AC");
+ ca1->cd(7);
+  mgRhoA1Re->Draw("AC");
+ ca1->cd(8);
+  mgRhoA1Im->Draw("AC");
+
 
   gApplication->SetReturnFromRun(kFALSE);
   gSystem->Run();
