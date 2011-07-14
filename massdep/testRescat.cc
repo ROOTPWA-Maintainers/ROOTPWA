@@ -250,6 +250,26 @@ cmatrix Phi(cnum t, cnum z, cnum s){
 }
 
 
+// 0-+ Kernel:  rho-epsilon rescattering
+cnum PsiElem(cnum t, cnum z, cnum s, 
+	       unsigned int i, unsigned int j){
+   cnum K2=K(z,s); cnum K3=K(t,s);
+   if(i==0 && j==0) return 1./3.*Delta(t,z,s);
+   else if(i==0 && j==1) return sqrt(3.)*z*r23(t,z,s)*Delta(t,z,s);
+   else if(i==1 && j==0) return (t*r32(t,z,s)*Delta(t,z,s)+K2*G(t,z,s))/(sqrt(3.)*K3*K3);
+   else if(i==1 && j==1) return 3./2.*z*(t*r32(t,z,s)*r23(t,z,s)*Delta(t,z,s)+K2*H(t,z,s))/(K3*K3);
+   else return 0;
+}
+
+
+cmatrix Psi(cnum t, cnum z, cnum s){
+  cmatrix result(2,2);
+  result(0,0)=PsiElem(t,z,s,0,0);
+  result(0,1)=PsiElem(t,z,s,0,1);
+  result(1,0)=PsiElem(t,z,s,1,0);
+  result(1,1)=PsiElem(t,z,s,1,1);
+  return result; 
+}
 
 
 cmatrix Kern1(cnum t, cnum z, cnum s){
@@ -262,6 +282,18 @@ cnum Kern1Elem(cnum t, cnum z, cnum s,
   cnum dPhi=PhiElem(t,z,s,i,j)-PhiElem(4.*mpi2,z,s,i,j);
   cnum I=(Iso(z))(j,j);
   return dPhi*I;
+}
+
+cmatrix Kern0(cnum t, cnum z, cnum s){
+  cmatrix dPsi=Psi(t,z,s)-Psi(4.*mpi2,z,s);
+  return prod(dPsi,Iso(z));
+}
+
+cnum Kern0Elem(cnum t, cnum z, cnum s,
+		  unsigned int i, unsigned int j){
+  cnum dPsi=PsiElem(t,z,s,i,j)-PsiElem(4.*mpi2,z,s,i,j);
+  cnum I=(Iso(z))(j,j);
+  return dPsi*I;
 }
 
 ////////// Basis Function Set /////////////////////////////////////
@@ -312,16 +344,17 @@ cmatrix fuM(cnum t, cmatrix Lambda){
 /// using ROOT GSL Integrator to do the integrals
 
 /// Integrand Functor
-class kernIntegrand1: public ROOT::Math::IBaseFunctionOneDim {
+class kernIntegrand: public ROOT::Math::IBaseFunctionOneDim {
 public:
-  kernIntegrand1():_s(0,0),_t(0,0),_i(0),_j(0),_a(0),_ReIm(0){};
+  kernIntegrand():_s(0,0),_t(0,0),_i(0),_j(0),_a(0),_ReIm(0){};
   double DoEval(double x) const;
-  ROOT::Math::IBaseFunctionOneDim* Clone() const {return new kernIntegrand1(*this);}
+  ROOT::Math::IBaseFunctionOneDim* Clone() const {return new kernIntegrand(*this);}
 
   void setST(cnum s, cnum t){_s=s;_t=t;}
   void setElem(unsigned int i, unsigned int j){_i=i;_j=j;}
   void setReIm(bool flag){_ReIm=flag;} // 0=re; 1=im
   void setU(unsigned int a){_a=a;}
+  void setJ(unsigned int J){_wave=J;} // 0 or 1
   
 private:
   cnum _s;
@@ -329,15 +362,18 @@ private:
   unsigned int _i;
   unsigned int _j;
   unsigned int _a; // basis function a=0 means no basis function
+  unsigned int _wave;
   bool _ReIm;
 
 };
 
 double
-kernIntegrand1::DoEval(double x) const {
+kernIntegrand::DoEval(double x) const {
   // integration for real z only...
   cnum z(x,0);
-  cnum result=Kern1Elem(_t,z,_s,_i,_j);
+  cnum result=0;
+  if(_wave==1)result=Kern1Elem(_t,z,_s,_i,_j);
+  else if(_wave==0)result=Kern0Elem(_t,z,_s,_i,_j);
   if(_a!=0)result*=u(_a-1,z);
   if(_ReIm==0)return result.real();
   else return result.imag();
@@ -345,14 +381,15 @@ kernIntegrand1::DoEval(double x) const {
 
 
 /// Integral Function 
-cnum kernInt1Elem(cnum t, cnum s, unsigned int i, unsigned int j, unsigned int b=0){
+cnum kernIntElem(cnum t, cnum s, unsigned int i, unsigned int j, unsigned int wave, unsigned int b=0){
   // Set up Integrator
    ROOT::Math::GSLIntegrator Integrator;
    // set up function
-   kernIntegrand1 f;
+   kernIntegrand f;
    f.setST(s,t);
    f.setElem(i,j);
    f.setU(b);
+   f.setJ(wave);
    // do real part first:
    f.setReIm(0);
    Integrator.SetFunction(f);
@@ -363,19 +400,19 @@ cnum kernInt1Elem(cnum t, cnum s, unsigned int i, unsigned int j, unsigned int b
    return cnum(Re,Im);
 }
 
-cmatrix kernInt1(cnum t, cnum s,unsigned int b=0){
+cmatrix kernInt(cnum t, cnum s, unsigned int wave, unsigned int b=0){
   cmatrix result(2,2);
   for(unsigned int i=0;i<2;++i)
-    for(unsigned int j=0;j<2;++j)result(i,j)=kernInt1Elem(t,s,i,j,b);
+    for(unsigned int j=0;j<2;++j)result(i,j)=kernIntElem(t,s,i,j,wave,b);
   return result;
 }
 
 /////////// 4-Point Matching of basis functions ////////////////
 // returns column vector containing expansion coefficients
-cmatrix match(unsigned int i, unsigned int j, // element of kernel
+cmatrix match(unsigned int i, unsigned int j, unsigned int wave, // element of kernel
 	      unsigned int b, // basis function
-	   cnum s, 
-	   const vector<double>& tm)  // matching points
+	      cnum s, 
+	      const vector<double>& tm)  // matching points
 {
   // calulate result vector at points;
   cmatrix res(4,1);
@@ -384,7 +421,7 @@ cmatrix match(unsigned int i, unsigned int j, // element of kernel
     cnum t(tm[k],0);
     cout << "t=" << tm[k] << endl;
      // calulate result vector at points;
-    res(k,0)=kernInt1Elem(t,s,i,j,b);
+    res(k,0)=kernIntElem(t,s,i,j,wave,b);
      // calculate basis matrix at points;
      for(unsigned int h=0;h<4;++h){
        um(k,h)=u(h,t);
@@ -411,7 +448,8 @@ main(int argc, char** argv)
   gStyle->SetGridStyle(1);
 
   ofstream outfile("rescat.dat");
-  
+
+  unsigned int wave=0;
 
   double mstart=0.005;
   double mstep=0.005;
@@ -469,9 +507,9 @@ main(int argc, char** argv)
 
 
 
-  unsigned int nm=75;
-  double m0=0.5;
-  double dm=0.02;
+  unsigned int nm=2;
+  double m0=0.9;
+  double dm=0.3;
   vector<double> masses(nm);
   for(unsigned int im=0;im<nm;++im){
     masses[im]=m0+(double)im*dm;
@@ -609,14 +647,14 @@ main(int argc, char** argv)
     for(unsigned int i=0;i<nIso;++i){
       for(unsigned int j=0;j<nIso;++j){
 	// I0 -> lambda
-	cmatrix lambdaij=match(i,j,0,s,tmatch);
+	cmatrix lambdaij=match(i,j,wave,0,s,tmatch);
 	for(unsigned int a=0;a<nBase;++a){
 	  lambda(i+a*nIso,j)=lambdaij(a,0);
 	}
 	//Expand Kernel in Basis functions
         cmatrix LambdaAB(nBase,1);
 	for(unsigned int b=0;b<nBase;++b){
-	  LambdaAB=match(i,j,b+1,s,tmatch);
+	  LambdaAB=match(i,j,wave,b+1,s,tmatch);
 	  for(unsigned int a=0;a<nBase;++a){
 	    R(i+a*nIso,j+b*nIso)=LambdaAB(a,0);
 	  }
@@ -642,10 +680,10 @@ main(int argc, char** argv)
     /// construct expansion coefficients matrix
     cmatrix IA=prod(T,lambda);
 
-    cmatrix lambda00=match(0,0,0,s,tmatch);
-    cmatrix lambda01=match(0,1,0,s,tmatch);
-    cmatrix lambda10=match(1,0,0,s,tmatch);
-    cmatrix lambda11=match(1,1,0,s,tmatch);
+    cmatrix lambda00=match(0,0,wave,0,s,tmatch);
+    cmatrix lambda01=match(0,1,wave,0,s,tmatch);
+    cmatrix lambda10=match(1,0,wave,0,s,tmatch);
+    cmatrix lambda11=match(1,1,wave,0,s,tmatch);
 
     cout << lambda << endl;
 
@@ -701,7 +739,7 @@ main(int argc, char** argv)
     for(unsigned it=0;it<nt;++it){ // loop over subenergy
       cnum t(it*dt+tstart,0);
       if(t.real()<tHat){
-	cmatrix k=kernInt1(t,s);
+	cmatrix k=kernInt(t,s,wave);
 	
 
 	//cnum kfit=fu(t,lambda00);
