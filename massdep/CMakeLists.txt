@@ -84,6 +84,6 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 #make_executable(testMassDep     testMassDep.cc  ${THIS_LIB} ${ROOT_LIBS} )
 make_executable(testKMatrix     testKMatrix.cc  ${THIS_LIB} ${ROOT_LIBS} )
 make_executable(testRescat     testRescat.cc  ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
-
+make_executable(mixingRes     mixingRes.cc  ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
 #make_executable(evtweight evtweight.cc ${THIS_LIB})
 #make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})

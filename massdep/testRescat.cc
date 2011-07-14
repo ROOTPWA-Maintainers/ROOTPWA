@@ -507,16 +507,16 @@ main(int argc, char** argv)
 
 
 
-  unsigned int nm=2;
-  double m0=0.9;
-  double dm=0.3;
+  unsigned int nm=75;
+  double m0=0.5;
+  double dm=0.02;
   vector<double> masses(nm);
   for(unsigned int im=0;im<nm;++im){
     masses[im]=m0+(double)im*dm;
   }
 
   double tstart=0.001;
-  double dt=0.01;
+  double dt=0.1;
 
 
   TMultiGraph* mgKeeRe=new TMultiGraph();
@@ -634,9 +634,9 @@ main(int argc, char** argv)
     TGraph* gRhoA1Im=new TGraph(nt);mgRhoA1Im->Add(gRhoA1Im,"C");
 
     // matching points:
-    tmatch[1]=(4*mpi2*0.8+tHat*0.2);
+    tmatch[1]=(4*mpi2*0.9+tHat*0.1);
     tmatch[2]=0.5*(4*mpi2+tHat);
-    tmatch[3]=0.99*tHat;
+    tmatch[3]=0.9*tHat;
 
     // do matching:
   
