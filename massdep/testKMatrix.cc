@@ -11,8 +11,8 @@
 
 #include "TCMatrix.h"
 
-#include "matrix.hpp"
-#include "io.hpp"
+//#include "matrix.hpp"
+//#include "io.hpp"
 
 //typedef TMatrixT<std::complex<double> > TMatrixC;
 
@@ -21,12 +21,12 @@ using namespace std;
 
 
  // REMEMBER to update "lu.hpp" header includes from boost-CVS
- #include <vector.hpp>
- #include <vector_proxy.hpp>
- #include <matrix.hpp>
- #include <triangular.hpp>
- #include <lu.hpp>
- #include <io.hpp>
+ #include <boost/numeric/ublas/vector.hpp>
+ #include <boost/numeric/ublas/vector_proxy.hpp>
+ #include <boost/numeric/ublas/matrix.hpp>
+ #include <boost/numeric/ublas/triangular.hpp>
+ #include <boost/numeric/ublas/lu.hpp>
+ #include <boost/numeric/ublas/io.hpp>
 
  namespace ublas = boost::numeric::ublas;
  typedef complex<double> cnum;
