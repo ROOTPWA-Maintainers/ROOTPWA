@@ -1437,6 +1437,21 @@ yyparse (std::complex<double>& result)
 	else if (!strcmp(yyvsp[0].string,"flat")) {
 	  md = new flat();
 	}
+	else if (!strncmp(yyvsp[0].string,"flatR",5)) {
+	  // extract Range from string
+	  // format : flatRXXXXtYYYY
+	  const char* expr=yyvsp[0].string;
+	  char dummy[4];
+	  strncpy(dummy,&expr[5],4);
+	  double low=atof(dummy);
+	  strncpy(dummy,&expr[10],4);
+	  // cerr << expr << endl;
+	  double high=atof(dummy);
+	  flatRange* r = new flatRange();
+	  r->setRange(low,high);
+	  //cerr << low << "-" << high << endl;
+	  md = r;
+	}
 	else if (!strcmp(yyvsp[0].string,"amp_lass")) {
 	  md = new AMP_LASS();
 	}
