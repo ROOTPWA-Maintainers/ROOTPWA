@@ -11,6 +11,14 @@ complex<double> flat::val(const particle& p)
 { return complex<double>(1,0); }
 
 
+complex<double> flatRange::val(const particle& p) 
+{ 
+ const double m      = ~(p.get4P ());
+ if(m>mlow && m<mhigh) return complex<double>(1,0); 
+ else return complex<double>(0,0); 
+}
+
+
 complex<double> breitWigner::val(const particle& p) 
 {
   const double m0     = p.Mass ();
@@ -44,7 +52,7 @@ complex<double> rhoPrime::val(const particle& p)
   const double    GammaV1 = Gamma1 * (m1 / m) * (q / q0) * (pow(F(l, q), 2) / pow(F(l, q0), 2));
   const double    GammaV2 = Gamma2 * (m2 / m) * (q / q0) * (pow(F(l, q), 2) / pow(F(l, q0), 2));
   
-  cout << m << "     " << GammaV1 << "    " << GammaV2 << endl;
+  //cout << m << "     " << GammaV1 << "    " << GammaV2 << endl;
 
   complex<double> amp1    = (m1 * Gamma1) / (m1 * m1 - m * m - complex<double>(0, 1) * m1 * GammaV1);
   complex<double> amp2    = (m2 * Gamma2) / (m2 * m2 - m * m - complex<double>(0, 1) * m2 * GammaV2);
