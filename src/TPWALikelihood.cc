@@ -39,6 +39,7 @@
 #include <fstream>
 #include <complex>
 #include <cassert>
+#include <limits>
 
 #include "TString.h"
 #include "TSystem.h"
@@ -280,6 +281,8 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 			// cout << endl;
 		}
 		logLikelihood = sum(logLikelihoodAcc);
+		assert(logLikelihood==logLikelihood);
+		if(numeric_limits<double>::has_infinity)assert(logLikelihood != numeric_limits<double>::infinity());
 	}
 	// log time needed for likelihood calculation
 	timer.Stop();
@@ -303,6 +306,9 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
   
 	// calculate and return log likelihood value
 	const double funcVal = logLikelihood + nmbEvt * sum(normFactorAcc);
+	assert(funcVal==funcVal);
+	if(numeric_limits<double>::has_infinity)assert(funcVal != numeric_limits<double>::infinity());
+
 
 	// log total consumed time
 	timerTot.Stop();
@@ -918,9 +924,12 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				}
 				complexT amp;
 				while (ampFile.read((char*)&amp, sizeof(complexT))) {
-					if (_useNormalizedAmps)         // normalize data, if option is switched on
-						amp /= sqrt(normInt.real());  // rescale decay amplitude
-					amps.push_back(amp);
+				  if (_useNormalizedAmps) {        // normalize data, if option is switched on
+					        value_type mynorm=normInt.real();
+					        if(mynorm==0)mynorm=1;
+ 						amp /= sqrt(mynorm);  // rescale decay amplitude
+				  }
+				  amps.push_back(amp);
 				}
 			}
 			if (firstWave)
@@ -957,10 +966,13 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 		// rescale normalization and acceptance integrals
 		for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-				const value_type norm_i = sqrt(_normMatrix[iRefl][iWave][iRefl][iWave].real());
+				value_type norm_i = sqrt(_normMatrix[iRefl][iWave][iRefl][iWave].real());
+				if(norm_i==0)norm_i=1;
 				for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
 					for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-						const value_type norm_j = sqrt(_normMatrix[jRefl][jWave][jRefl][jWave].real());
+						value_type norm_j = sqrt(_normMatrix[jRefl][jWave][jRefl][jWave].real());
+						// protect against empty amplitudes (which will not contribute anyway)
+						if(norm_j==0)norm_j=1;
 						if ((iRefl != jRefl) or (iWave != jWave))
 							// set diagonal terms later so that norm_i,j stay unaffected
 							_normMatrix[iRefl][iWave][jRefl][jWave] /= norm_i * norm_j;
