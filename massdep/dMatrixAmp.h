@@ -69,6 +69,22 @@ using namespace std;
  typedef complex<double> cnum;
  typedef ublas::matrix<cnum> cmatrix;
 
+class dMatrixPole {
+ public:
+  dMatrixPole(double m, double width);
+  ~dMatrixPole(){};
+
+  cnum M2(); // return complex pole position
+  cnum gProd(); // return production coupling
+  cnum gDec(unsigned int i); // return decay coupling (real) for channel i
+
+ private:
+
+};
+
+
+
+
 class dMatrixAmp {
  public:
   dMatrixAmp();
@@ -80,9 +96,13 @@ class dMatrixAmp {
   // then add poles
   void addPole(double m, double width, map<string, double>& branchings);
   
-  cnum amp(double m); /// full amplitude
+  // processor:
+  cnum amp(double m, unsigned int channel); /// amplitude in a channel
   
-
+  // helpers:
+  unsigned int nPoles();
+  cnum PoleM2(unsigned int i); /// returns complex poleposition (m2-i*m*Gamma)
+  
 
  private:
 
