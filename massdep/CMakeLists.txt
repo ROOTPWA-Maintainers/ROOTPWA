@@ -54,6 +54,7 @@ set(SOURCES
   decayChannels.cc
   #mcPhaseSpace.cc
  cauchyIntegral.cc
+ dMatrixAmp.cc
   #dynMassDep.cc
 )
    

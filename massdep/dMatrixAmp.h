@@ -38,6 +38,7 @@
 //-----------------------------------------------------------
 #include <complex>
 #include <vector>
+#include <map>
 #include <fstream>
 #include <string>
 
@@ -73,6 +74,12 @@ class dMatrixAmp {
   dMatrixAmp();
   ~dMatrixAmp();
   
+  // first add all channels
+  void addChannels(map<string, TF1*> channels);
+
+  // then add poles
+  void addPole(double m, double width, map<string, double>& branchings);
+  
   cnum amp(double m); /// full amplitude
   
 
@@ -81,4 +88,4 @@ class dMatrixAmp {
 
 
 
-}
+};
