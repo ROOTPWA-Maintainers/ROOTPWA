@@ -400,7 +400,7 @@ add_subdirectory(relampl)
 add_subdirectory(gui/src)
 
 # massdep
-add_subdirectory(massdep)
+#add_subdirectory(massdep)
 
 # MPI
 if(USE_MPI)
