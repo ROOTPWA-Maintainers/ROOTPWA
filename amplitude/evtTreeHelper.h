@@ -40,9 +40,9 @@
 #include <vector>
 #include <complex>
 
-// cint has problems parsing Boost stuff
-//#ifndef __CINT__
-#if !defined (__CINT__) || !defined (__MAKECINT__)
+
+#if !defined (__CINT__) && !defined (ROOT_CINT)
+// CINT and ACLiC have problems parsing Boost stuff; ROOT_CINT is set in rootlogon.C
 #include "isobarAmplitude.h"
 #endif
 
@@ -92,8 +92,8 @@ namespace rpwa {
 	                      const bool         debug                     = false);
 
 
-	// cint has problems parsing Boost stuff
-#if !defined (__CINT__) || !defined (__MAKECINT__)
+#if !defined (__CINT__) && !defined (ROOT_CINT)
+	// CINT and ACLiC have problems parsing Boost stuff; ROOT_CINT is set in rootlogon.C
 	bool processTree(TTree&                              tree,
 	                 const isobarAmplitudePtr&           amplitude,
 	                 std::vector<std::complex<double> >& ampValues,

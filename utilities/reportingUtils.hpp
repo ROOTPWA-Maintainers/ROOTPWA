@@ -55,23 +55,23 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-  // macros for printing errors, warnings, and infos
+	// macros for printing errors, warnings, and infos
 
-  // cuts out block "className::methodName" from __PRETTY_FUNCTION__ output
-  inline
-  std::string
-  getClassMethod__(std::string prettyFunction)
-  {
-    size_t pos = prettyFunction.find("(");
-    if (pos == std::string::npos)
-      return prettyFunction;           // something is not right
-    prettyFunction.erase(pos);         // cut away signature
-    pos = prettyFunction.rfind(" ");
-    if (pos == std::string::npos)
-      return prettyFunction;           // something is not right
-    prettyFunction.erase(0, pos + 1);  // cut away return type
-    return prettyFunction;
-  }
+	// cuts out block "className::methodName" from __PRETTY_FUNCTION__ output
+	inline
+	std::string
+	getClassMethod__(std::string prettyFunction)
+	{
+		size_t pos = prettyFunction.find("(");
+		if (pos == std::string::npos)
+			return prettyFunction;           // something is not right
+		prettyFunction.erase(pos);         // cut away signature
+		pos = prettyFunction.rfind(" ");
+		if (pos == std::string::npos)
+			return prettyFunction;           // something is not right
+		prettyFunction.erase(0, pos + 1);  // cut away return type
+		return prettyFunction;
+	}
 
 #define printErr  std::cerr << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << std::flush
 #define printWarn std::cerr << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << std::flush
@@ -79,9 +79,9 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-  // functions to print version and compilation info
+	// functions to print version and compilation info
 
-// check macro variables set by Makefile
+	// check macro variables set by Makefile
 #ifndef CMAKE_HOST_SYSTEM_NAME
 #define CMAKE_HOST_SYSTEM_NAME "undefined"
 #endif

@@ -49,10 +49,12 @@
 #include "TVector3.h"
 
 #include "reportingUtils.hpp"
+#include "reportingUtilsRoot.hpp"
 
 
 using namespace std;
 using namespace boost;
+using namespace rpwa;
 
 
 void
