@@ -240,7 +240,7 @@ main(int argc, char** argv)
 		}
 	}
 
-	if (0) {
+	if (1) {
 		// define final state particles
 		particlePtr pi0 = createParticle("pi-", 0);
 		particlePtr pi1 = createParticle("pi+", 0);
@@ -272,18 +272,24 @@ main(int argc, char** argv)
 			cout << *(amp[i]);
 		}
 		TChain chain("rootPwaEvtTree");
-		chain.Add("/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
+		chain.Add("../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
 		chain.GetListOfFiles()->ls();
 		vector<complex<double> > ampValues[2];
-		for (unsigned int i = 0; i < 2; ++i) {
-			processTree(chain, amp[i], ampValues[i], 2);
-		}		
+
+		TClonesArray* prodKinPartNames  = 0;
+		TClonesArray* decayKinPartNames = 0;
+		if (not getParticleNamesFromRootFile(*(chain.GetFile()), prodKinPartNames, decayKinPartNames,
+		                                     "rootPwaEvtTree"))
+			cout << "cannot find production and/or decay kinematics particle names "
+			     << "in input file '" << chain.GetFile()->GetName() << "'." << endl;
+		for (unsigned int i = 0; i < 2; ++i)
+			processTree(chain, *prodKinPartNames, *decayKinPartNames, amp[i], ampValues[i], 2);
  		for (unsigned int i = 0; i < ampValues[0].size(); ++i)
 			cout << "amplitude[" << i << "] = " << ampValues[0][i] << " vs. " << ampValues[1][i] << "; "
 			     << "ratio = " << ampValues[0][i] / ampValues[1][i] << endl;
 	}
 
-	if (1) {
+	if (0) {
 		//const long int maxNmbEvents   = 1000000;
 		const long int maxNmbEvents   = 2;
 

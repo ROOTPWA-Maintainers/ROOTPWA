@@ -142,7 +142,7 @@ endif()
 
 
 # setup ROOT includes and libraries
-find_package(ROOT 5.26 REQUIRED Minuit2 MathMore)
+find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
 
 
 # setup CUDA

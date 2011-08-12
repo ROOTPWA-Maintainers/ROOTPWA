@@ -50,11 +50,10 @@
 #include "TClonesArray.h"
 #include "TStopwatch.h"
 
+#include "fileUtils.hpp"
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "waveDescription.h"
-#include "isobarHelicityAmplitude.h"
-#include "massDependence.h"
 
 
 using namespace std;
@@ -84,16 +83,16 @@ usage(const string& progName,
 }
 
 
-bool testAmplitude(TTree*          tree,
-                   const string&   keyFileName,
-                   vector<string>& keyFileErrors,
-                   const long int  maxNmbEvents              = -1,
-                   const bool      debug                     = false,
-                   const double    maxDelta                  = 1e-6,
-                   const string&   prodKinParticlesLeafName  = "prodKinParticles",
-                   const string&   prodKinMomentaLeafName    = "prodKinMomenta",
-                   const string&   decayKinParticlesLeafName = "decayKinParticles",
-                   const string&   decayKinMomentaLeafName   = "decayKinMomenta")
+bool testAmplitude(TTree*              inTree,
+                   const string&       keyFileName,
+                   vector<string>&     keyFileErrors,
+                   const long int      maxNmbEvents            = -1,
+                   const bool          debug                   = false,
+                   const double        maxDelta                = 1e-6,
+                   const TClonesArray* prodKinPartNames        = 0,
+                   const TClonesArray* decayKinPartNames       = 0,
+                   const string&       prodKinMomentaLeafName  = "prodKinMomenta",
+                   const string&       decayKinMomentaLeafName = "decayKinMomenta")
 {
 	// parse key file and create decay topology and amplitude instances
 	waveDescription        waveDesc;
@@ -119,7 +118,7 @@ bool testAmplitude(TTree*          tree,
 	if (not success)
 		return false;
 
-	if (!tree)
+	if (not inTree or not prodKinPartNames or not decayKinPartNames)
 		return true;  // no data; cannot check symmetry properties of amplitude
 
 	printInfo << "calculating amplitudes for ";
@@ -133,11 +132,12 @@ bool testAmplitude(TTree*          tree,
 	isobarAmplitudePtr amplitude;
 	waveDesc.constructAmplitude(amplitude, decayTopo);
 
+
 	// read data from tree and calculate amplitudes
 	vector<complex<double> > ampValues;
-	if (not processTree(*tree, amplitude, ampValues, maxNmbEvents,
-	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
-	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
+	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
+	                    amplitude, ampValues, maxNmbEvents,
+	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
@@ -149,9 +149,9 @@ bool testAmplitude(TTree*          tree,
 	// calculate amplitudes for parity transformed decay daughters
 	vector<complex<double> > ampSpaceInvValues;
 	amplitude->enableSpaceInversion(true);
-	if (not processTree(*tree, amplitude, ampSpaceInvValues, maxNmbEvents,
-	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
-	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
+	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
+	                    amplitude, ampSpaceInvValues, maxNmbEvents,
+	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
@@ -160,9 +160,9 @@ bool testAmplitude(TTree*          tree,
 	vector<complex<double> > ampReflValues;
 	amplitude->enableSpaceInversion(false);
 	amplitude->enableReflection    (true);
-	if (not processTree(*tree, amplitude, ampReflValues, maxNmbEvents,
-	                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
-	                    decayKinParticlesLeafName, decayKinMomentaLeafName, false)) {
+	if (not processTree(*inTree, *prodKinPartNames, *decayKinPartNames,
+	                    amplitude, ampReflValues, maxNmbEvents,
+	                    prodKinMomentaLeafName, decayKinMomentaLeafName, false)) {
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
@@ -369,47 +369,36 @@ main(int    argc,
 		          << "        decay kinematics     : "
 		          << "particle names = '" << decayKinParticlesLeafName << "', "
 		          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
-  
-	TTree* tree = 0;
-	if (dataFileName == "")
-		printInfo << "No test data file was specified (option -d). skipping symmetry checks of amplitude." << endl;
-	else {
-		// determine test data format
-		bool rootDataFormat = false;
-		if (dataFileName.substr(dataFileName.length() - 5) == ".root")
-			rootDataFormat = true;
 
-		if (rootDataFormat) {
-			// open root file and build chain
-			TChain* chain = new TChain(inTreeName.c_str());
-			printInfo << "opening ROOT input file '" << dataFileName << "'" << endl;
-			if (chain->Add(dataFileName.c_str()) < 1)
-				printWarn << "no events in ROOT input file '" << dataFileName << "'" << endl;
-			chain->GetListOfFiles()->ls();
-			tree = chain;
-		} else {
-			// convert .evt file to root tree
-			printInfo << "opening .evt input file '" << dataFileName << "'" << endl;
-			ifstream evtFile(dataFileName.c_str());
-			if (not evtFile or not evtFile.good()) {
-				printErr << "cannot open .evt input file '" << dataFileName << "'. aborting." << endl;
-				exit(1);
-			}
-			// create tree
-			tree = new TTree(inTreeName.c_str(), inTreeName.c_str());
-			if (not tree) {
-				printErr << "problems creating tree '" << inTreeName << "'. aborting." << endl;
-				exit(1);
-			}
-			if (not fillTreeFromEvt(evtFile, *tree, -1,
-			                        prodKinParticlesLeafName,  prodKinMomentaLeafName,
-			                        decayKinParticlesLeafName, decayKinMomentaLeafName,
-			                        targetParticleName, false)) {
-				printErr << "problems creating tree from .evt input file '" << dataFileName << "' "
-				         << "aborting." << endl;
-				exit(1);
-			}
+	// open input file
+	TTree*        inTree            = 0;
+	TClonesArray* prodKinPartNames  = 0;
+	TClonesArray* decayKinPartNames = 0;
+	if (dataFileName == "")
+		printInfo << "No test data file was specified (option -d). "
+		          << "skipping symmetry checks of amplitude." << endl;
+	else {
+		vector<string> rootFileNames;
+		vector<string> evtFileNames;
+		const string   fileExt  = extensionFromPath(dataFileName);
+		if (fileExt == "root")
+			rootFileNames.push_back(dataFileName);
+		else if (fileExt == "evt")
+			evtFileNames.push_back(dataFileName);
+		else {
+			printErr << "specified input files is neither a .root nor a .evt file. aborting.";
+			usage(progName, 1);
 		}
+		vector<TTree*> inTrees;
+		if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
+		                         rootFileNames, evtFileNames,
+		                         inTreeName, prodKinParticlesLeafName, prodKinMomentaLeafName,
+		                         decayKinParticlesLeafName, decayKinMomentaLeafName,
+		                         targetParticleName, debug)) {
+			printErr << "problems opening input files . aborting." << endl;
+			exit(1);
+		}
+		inTree = inTrees[0];
 	}
 
 	// initialize particle data table
@@ -423,9 +412,9 @@ main(int    argc,
 		cout << endl;
 		printInfo << "checking key file '" << keyFileNames[i] << "'" << endl;
 		vector<string> errors;
-		if (not testAmplitude(tree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
-		                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		                      decayKinParticlesLeafName, decayKinMomentaLeafName))
+		if (not testAmplitude(inTree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
+		                      prodKinPartNames,  decayKinPartNames,
+		                      prodKinMomentaLeafName, decayKinMomentaLeafName))
 			++countKeyFileErr;
 		else
 			printInfo << "key file '" << keyFileNames[i] << "' successfully passed all tests" << endl;
@@ -435,8 +424,8 @@ main(int    argc,
 	}
 
 	// clean up
-	if (tree)
-		delete tree;
+	if (inTree)
+		delete inTree;
 
 	// report final result and set exit status accordingly
 	cout << endl;

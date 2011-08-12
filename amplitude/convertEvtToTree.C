@@ -94,13 +94,18 @@ convertEvtToTree(//const string&  evtFileName               = "1500.1540.3pi.evt
 		return false;
 	}
 
+
 	// doit
-	const bool success = fillTreeFromEvt(evtFile, *tree, maxNmbEvents,
-	                                     prodKinParticlesLeafName,  prodKinMomentaLeafName,
-	                                     decayKinParticlesLeafName, decayKinMomentaLeafName,
-	                                     targetParticleName, debug);
+	TClonesArray* prodKinPartNames  = new TClonesArray("TObjString");
+	TClonesArray* decayKinPartNames = new TClonesArray("TObjString");
+	const bool    success           = fillTreeFromEvt(evtFile, *tree,
+	                                                  *prodKinPartNames, *decayKinPartNames,
+	                                                  maxNmbEvents,
+	                                                  prodKinMomentaLeafName, decayKinMomentaLeafName,
+	                                                  targetParticleName, debug);
 	tree->Write();
-	tree->OptimizeBaskets(10000000, 1.1, "d");
+	prodKinPartNames->Write (prodKinParticlesLeafName.c_str (), TObject::kSingleKey);
+	decayKinPartNames->Write(decayKinParticlesLeafName.c_str(), TObject::kSingleKey);
 
 	outFile->Close();
 	if (success)

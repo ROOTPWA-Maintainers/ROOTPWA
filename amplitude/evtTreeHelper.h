@@ -49,6 +49,7 @@
 
 class TTree;
 class TChain;
+class TClonesArray;
 
 
 namespace rpwa {
@@ -70,16 +71,38 @@ namespace rpwa {
 	double getParticleMass(const std::string& name);
 
 
+	bool getParticleNamesFromRootFile(TFile&             inFile,
+	                                  TClonesArray*&     prodKinPartNames,   // array of particle names to be filled
+	                                  TClonesArray*&     decayKinPartNames,  // array of particle names to be filled
+	                                  const std::string& inTreeName                = "rootPwaEvtTree",
+	                                  const std::string& prodKinParticlesLeafName  = "prodKinParticles",
+	                                  const std::string& decayKinParticlesLeafName = "decayKinParticles");
+
+	bool openRootEvtFiles(std::vector<TTree*>&            inTrees,            // array of trees from .root and .evt files
+	                      TClonesArray*&                  prodKinPartNames,   // array of particle names to be filled
+	                      TClonesArray*&                  decayKinPartNames,  // array of particle names to be filled
+	                      const std::vector<std::string>& rootFileNames,      // .root files to be opened
+	                      const std::vector<std::string>& evtFileNames,       // .evt files to be converted to trees
+	                      const std::string&              inTreeName                = "rootPwaEvtTree",
+	                      const std::string&              prodKinParticlesLeafName  = "prodKinParticles",
+	                      const std::string&              prodKinMomentaLeafName    = "prodKinMomenta",
+	                      const std::string&              decayKinParticlesLeafName = "decayKinParticles",
+	                      const std::string&              decayKinMomentaLeafName   = "decayKinMomenta",
+	                      const std::string&              targetParticleName        = "p+",
+	                      const bool                      debug                     = false);
+
+
 	bool fillTreeFromEvt(std::istream&      inEvt,
-	                     TTree&             outTree,
-	                     const long int     maxNmbEvents              = -1,
-	                     const std::string& prodKinParticlesLeafName  = "prodKinParticles",
-	                     const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
-	                     const std::string& decayKinParticlesLeafName = "decayKinParticles",
-	                     const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
-	                     const std::string& targetParticleName        = "p+",
-	                     const bool         debug                     = false);
-  
+	                     TTree&             outTree,            // tree to be filled
+	                     TClonesArray&      prodKinPartNames,   // array of particle names to be filled
+	                     TClonesArray&      decayKinPartNames,  // array of particle names to be filled
+	                     const long int     maxNmbEvents            = -1,
+	                     const std::string& prodKinMomentaLeafName  = "prodKinMomenta",
+	                     const std::string& decayKinMomentaLeafName = "decayKinMomenta",
+	                     const std::string& targetParticleName      = "p+",
+	                     const bool         debug                   = false,
+	                     const long int     treeCacheSize           = 25000000);  // 25 MByte ROOT tree read cache
+
 
 	bool writeEvtFromTree(TChain&            inTree,
 	                      std::ostream&      outEvt,
@@ -94,15 +117,17 @@ namespace rpwa {
 
 #if !defined (__CINT__) && !defined (ROOT_CINT)
 	// CINT and ACLiC have problems parsing Boost stuff; ROOT_CINT is set in rootlogon.C
-	bool processTree(TTree&                              tree,
+	bool processTree(TTree&                              tree,               // tree to be read
+	                 const TClonesArray&                 prodKinPartNames,   // array of particle names
+	                 const TClonesArray&                 decayKinPartNames,  // array of particle names
 	                 const isobarAmplitudePtr&           amplitude,
 	                 std::vector<std::complex<double> >& ampValues,
-	                 const long int                      maxNmbEvents              = -1,
-	                 const std::string&                  prodKinParticlesLeafName  = "prodKinParticles",
-	                 const std::string&                  prodKinMomentaLeafName    = "prodKinMomenta",
-	                 const std::string&                  decayKinParticlesLeafName = "decayKinParticles",
-	                 const std::string&                  decayKinMomentaLeafName   = "decayKinMomenta",
-	                 const bool                          printProgress             = true);
+	                 const long int                      maxNmbEvents            = -1,
+	                 const std::string&                  prodKinMomentaLeafName  = "prodKinMomenta",
+	                 const std::string&                  decayKinMomentaLeafName = "decayKinMomenta",
+	                 const bool                          printProgress           = true,
+	                 const std::string&                  treePerfStatOutFileName = "",         // root file name for tree performance result
+	                 const long int                      treeCacheSize           = 25000000);  // 25 MByte ROOT tree read cache
 #endif
 
 
