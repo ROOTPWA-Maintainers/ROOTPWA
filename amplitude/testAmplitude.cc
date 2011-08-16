@@ -352,7 +352,7 @@ main(int argc, char** argv)
 				                         rootFileNames, evtFileNames,
 				                         inTreeName, prodKinParticlesLeafName, prodKinMomentaLeafName,
 				                         decayKinParticlesLeafName, decayKinMomentaLeafName, "p+", true)) {
-					printErr << "problems opening input files . aborting." << endl;
+					printErr << "problems opening input files. aborting." << endl;
 					exit(1);
 				}
 			}			
@@ -369,7 +369,10 @@ main(int argc, char** argv)
 			inTrees[0]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
 
 			// loop over events
-			topo->initKinematicData(*prodKinPartNames, *decayKinPartNames);
+			if (not topo->initKinematicsData(*prodKinPartNames, *decayKinPartNames)) {
+				printErr << "problems initializing input data. aborting." << endl;
+				exit(1);
+			}
 			const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
 			                              : nmbEventsChain);
 			progress_display progressIndicator(nmbEvents);
@@ -392,8 +395,7 @@ main(int argc, char** argv)
 					continue;
 				}
 	      
-				if (topo->readKinematicData(*prodKinPartNames,  *prodKinMomenta,
-				                            *decayKinPartNames, *decayKinMomenta)) {
+				if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
 					// topo->printProdKinParticles(cout);
 					// topo->printDecayKinParticles(cout);
 					// complex<double> A = (*amp)();

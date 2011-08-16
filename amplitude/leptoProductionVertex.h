@@ -107,8 +107,8 @@ namespace rpwa {
 		inline double W      () const { return sqrt(s());                                                    }  ///< returns total energy in (virtual photon, target) CM system
 		inline double delta(const double epsilon) const { return (2 * beamLepton()->mass2() / Q2()) * (1 - epsilon); }  ///< returns photon's mass correction parameter for known epsilon
     
-		virtual bool readData(const TClonesArray& prodKinParticles,
-		                      const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
+		virtual bool readKinematicsData(const TClonesArray& prodKinMomenta);    ///< reads input data
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 
@@ -132,6 +132,7 @@ namespace rpwa {
 
 		double _longPol;  ///< longitudinal beam polarization
 
+		int      _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
 		TVector3 _beamLeptonMomCache;       ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _targetMomCache;           ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _scatteredLeptonMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data

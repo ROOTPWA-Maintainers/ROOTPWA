@@ -628,7 +628,10 @@ namespace rpwa {
 			treePerfStats = new TTreePerfStats("ioPerf", &tree);
 
 		// loop over events
-		decayTopo->initKinematicData(prodKinPartNames, decayKinPartNames);
+		if (not decayTopo->initKinematicsData(prodKinPartNames, decayKinPartNames)) {
+			printWarn << "problems initializing input data. cannot read input data." << endl;
+			return false;
+		}
 		const long int    nmbEventsTree     = tree.GetEntries();
 		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
 		                                       : nmbEventsTree);
@@ -653,8 +656,7 @@ namespace rpwa {
 				continue;
 			}
 
-			if (decayTopo->readKinematicData(prodKinPartNames,  *prodKinMomenta,
-			                                 decayKinPartNames, *decayKinMomenta))
+			if (decayTopo->readKinematicsData(*prodKinMomenta, *decayKinMomenta))
 				ampValues.push_back((*amplitude)());
 			else {
 				printWarn << "problems reading event[" << eventIndex << "]" << endl;

@@ -90,8 +90,8 @@ namespace rpwa {
 		inline const particlePtr& target() const { return inParticles ()[1]; }  ///< returns target particle
 		inline const particlePtr& recoil() const { return outParticles()[1]; }  ///< returns recoil particle
     
-		virtual bool readData(const TClonesArray& prodKinParticles,
-		                      const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
+		virtual bool readKinematicsData(const TClonesArray& prodKinMomenta);    ///< reads input data
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 
@@ -113,6 +113,7 @@ namespace rpwa {
 
 	private:
 
+		int      _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
 		TVector3 _beamMomCache;    ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _recoilMomCache;  ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data

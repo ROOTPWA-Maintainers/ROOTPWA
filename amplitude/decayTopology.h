@@ -126,13 +126,11 @@ namespace rpwa {
 
 		void setProductionVertex(const productionVertexPtr& productionVertex);  ///< (re)defines production vertex
 
-		bool initKinematicData(const TClonesArray& prodKinParticles,
-		                       const TClonesArray& decayKinParticles);  ///< 
+		bool initKinematicsData(const TClonesArray& prodKinParticles,
+		                        const TClonesArray& decayKinParticles);  ///< initializes input data
 
-		bool readKinematicData(const TClonesArray& prodKinParticles,
-		                       const TClonesArray& prodKinMomenta,
-		                       const TClonesArray& decayKinParticles,
-		                       const TClonesArray& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
+		bool readKinematicsData(const TClonesArray& prodKinMomenta,
+		                        const TClonesArray& decayKinMomenta);    ///< reads production and decay kinematics data and sets respective 4-momenta
 
 		bool revertMomenta();  ///< resets momenta to the values of last event read
 		bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
