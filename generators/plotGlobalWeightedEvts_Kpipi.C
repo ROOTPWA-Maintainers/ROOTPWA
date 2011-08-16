@@ -23,8 +23,10 @@
 #include "TCollection.h"
 #include "TCanvas.h"
 #include "TExec.h"
+#include "TGaxis.h"
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <map>
 #include <stdlib.h>
 #include <cmath>
@@ -90,7 +92,7 @@ void makeBookies() {
   for(it = booky_map.begin(); it != booky_map.end(); it++) {
     TString psFileName(it->first);
     psFileName.Append(".ps");
-    TCanvas dummyCanv("dummy", "dummy");
+    TCanvas dummyCanv("dummy", "dummy", 800, 800);
     dummyCanv.Print((psFileName + "["));
     // sort vector
     std::vector<booky_page> vec = it->second;
@@ -138,7 +140,7 @@ void fillDiffvsMassPlot(const TH1D* hist, std::string dirname, int massbins, dou
   s.insert(s.size(), "vsMass");
   TH2D* hdiffvsmass = (TH2D*)ofile->Get((std::string("global/")+s).c_str());
   if(!hdiffvsmass) {
-    TCanvas *c = new TCanvas(s.c_str(), s.c_str());
+    TCanvas *c = new TCanvas(s.c_str(), s.c_str(), 800, 800);
     hdiffvsmass = new TH2D(s.c_str(), hist->GetTitle(), massbins, mass_start, mass_end,
         hist->GetNbinsX(), iter->second.second.first, iter->second.second.second);
     hdiffvsmass->SetContour(numbercolors);
@@ -196,7 +198,7 @@ void make2DOverviewCanvas(TH2D *mchist, TH2D *datahist, TH2D *diffhist, TH2D *re
 
     char name[200];
     sprintf(name, "%s_%f", mchist->GetName(), mass);
-    TCanvas *c = new TCanvas(name, mchist->GetTitle());
+    TCanvas *c = new TCanvas(name, mchist->GetTitle(), 800, 800);
     c->Divide(2,2);
     c->cd(1);
     mchist->Draw("colz");
@@ -254,8 +256,14 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
   for (it = booky_setup_map.begin(); it != booky_setup_map.end(); it++) {
     TString name(it->first.Data());
     name += dirname.c_str();
+	string isoname;
+	if (it->first == "Booky_Kpi_isobar"){
+		isoname = "(K^{-} #pi^{+})";	
+	} else {
+		isoname = "(#pi^{-} #pi^{+})";
+	}
 
-    TCanvas *c = new TCanvas(name, "");
+    TCanvas *c = new TCanvas(name, "", 800, 800);
     c->Divide(2,3);
     std::vector<TString> histlist = it->second;
 
@@ -287,6 +295,13 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
 
         outfile->cd(dirname.c_str());
         if (mchist && datahist) {
+			stringstream title;
+			title << isoname << " " << mchist->GetXaxis()->GetTitle();
+			mchist->GetXaxis()->SetTitle( title.str().c_str() );
+			title.str("");
+			title << isoname << " " << datahist->GetXaxis()->GetTitle();
+			datahist->GetXaxis()->SetTitle( title.str().c_str() );
+			title.str("");
           c->cd(i + 1);
 
           // std::cout<<i<<std::endl;
@@ -299,6 +314,14 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
           mchist->Draw("E4");
           datahist->Draw("same");
           if (diffhist) {
+			title << isoname << " " << diffhist->GetXaxis()->GetTitle();
+			diffhist->GetXaxis()->SetTitle( title.str().c_str() );
+			title.str("");
+			if (reldiffhist){
+				title << isoname << " " << reldiffhist->GetXaxis()->GetTitle();
+				reldiffhist->GetXaxis()->SetTitle( title.str().c_str() );
+				title.str("");
+			}
             TLine* line = new TLine(mchist->GetXaxis()->GetXmin(), 0, mchist->GetXaxis()->GetXmax(), 0);
             line->SetLineStyle(3);
             line->Draw();
@@ -336,6 +359,26 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
  */
 void plotGlobalWeightedEvts_Kpipi(TString input_filename, TString output_filename) {
   setupBookies();
+
+	gROOT->SetStyle("Plain");
+	gStyle->SetTitleFont(10*13+2,"xyz");
+	gStyle->SetTitleSize(0.06, "xyz");
+	gStyle->SetTitleOffset(1.3,"y");
+	gStyle->SetTitleOffset(1.3,"z");
+	gStyle->SetLabelFont(10*13+2,"xyz");
+	gStyle->SetLabelSize(0.06,"xyz");
+	gStyle->SetLabelOffset(0.009,"xyz");
+	gStyle->SetPadBottomMargin(0.16);
+	gStyle->SetPadTopMargin(0.16);
+	gStyle->SetPadLeftMargin(0.16);
+	gStyle->SetPadRightMargin(0.16);
+	gStyle->SetOptTitle(0);
+	gStyle->SetOptStat(0);
+	gROOT->ForceStyle();
+	gStyle->SetFrameFillColor(0);
+   	gStyle->SetFrameFillStyle(0);
+   	TGaxis::SetMaxDigits(3);
+	//IsPhDStyle = true;
 
   int massbins =0;
   double mass= 0.0, massstart =1000.0, massend=0.0;
