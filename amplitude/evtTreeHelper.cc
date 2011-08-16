@@ -608,7 +608,7 @@ namespace rpwa {
 			printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
 			return false;
 		}
-		// const isobarDecayTopologyPtr& decayTopo = amplitude->decayTopology();
+		const isobarDecayTopologyPtr& decayTopo = amplitude->decayTopology();
 
 		// create branch pointers and leaf variables
 		TBranch*      prodKinMomentaBr  = 0;
@@ -652,13 +652,13 @@ namespace rpwa {
 				continue;
 			}
 
-			// if (decayTopo->readData(prodKinPartNames,  *prodKinMomenta,
-			//                         decayKinPartNames, *decayKinMomenta))
-			// 	ampValues.push_back((*amplitude)());
-			// else {
-			// 	printWarn << "problems reading event[" << eventIndex << "]" << endl;
-			// 	success = false;
-			// }
+			if (decayTopo->readData(prodKinPartNames,  *prodKinMomenta,
+			                        decayKinPartNames, *decayKinMomenta))
+				ampValues.push_back((*amplitude)());
+			else {
+				printWarn << "problems reading event[" << eventIndex << "]" << endl;
+				success = false;
+			}
 		}
 
 		if (printProgress)
