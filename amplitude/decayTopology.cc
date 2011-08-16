@@ -71,7 +71,8 @@ decayTopology::decayTopology()
 	  _prodVertex           (),
 	  _decayVertices        (),
 	  _fsParticles          (),
-	  _fsPartMomCache       ()
+	  _fsDataPartIndexMap   (),
+	  _fsDataPartMomCache   ()
 {
 }
 
@@ -105,10 +106,11 @@ decayTopology::operator =(const decayTopology& topo)
 {
 	if (this != &topo) {
 		decayTopologyGraphType::operator =(topo);
-		_prodVertex     = topo._prodVertex;
-		_decayVertices  = topo._decayVertices;
-		_fsParticles    = topo._fsParticles;
-		_fsPartMomCache = topo._fsPartMomCache;
+		_prodVertex         = topo._prodVertex;
+		_decayVertices      = topo._decayVertices;
+		_fsParticles        = topo._fsParticles;
+		_fsDataPartIndexMap = topo._fsDataPartIndexMap;
+		_fsDataPartMomCache = topo._fsDataPartMomCache;
 	}
 	return *this;
 }
@@ -180,7 +182,8 @@ decayTopology::clear()
 	_prodVertex.reset();
 	_decayVertices.clear();
 	_fsParticles.clear();
-	_fsPartMomCache.clear();
+	_fsDataPartIndexMap.clear();
+	_fsDataPartMomCache.clear();
 }
 
 
@@ -525,10 +528,8 @@ void decayTopology::setProductionVertex(const productionVertexPtr& productionVer
 
 
 bool
-decayTopology::readData(const TClonesArray& prodKinParticles,
-                        const TClonesArray& prodKinMomenta,
-                        const TClonesArray& decayKinParticles,
-                        const TClonesArray& decayKinMomenta)
+decayTopology::initKinematicData(const TClonesArray& prodKinPartNames,
+                                 const TClonesArray& decayKinPartNames)
 {
 	// two modes are supported:
 	// i) all final state particles have indices at default value -1: in
@@ -540,17 +541,83 @@ decayTopology::readData(const TClonesArray& prodKinParticles,
 	// in case only part of the final state particles have non-default
 	// indices, the result is undefined
 	bool success = true;
+	// // init production kinematics
+	// if(not productionVertex()->initKinematicData(prodKinPartNames))
+	// 	success = false;
+	// check decay kinematics data
+	const string partClassName = decayKinPartNames.GetClass()->GetName();
+	if (partClassName != "TObjString") {
+		printWarn << "decay kinematics particle names are of type '" << partClassName
+		          << "' and not TObjString. cannot read decay kinematics." << endl;
+		success = false;
+	}
+	const int nmbFsPart = decayKinPartNames.GetEntriesFast();
+	if ((nmbFsPart < 0) or ((unsigned int)nmbFsPart != nmbFsParticles())) {
+		printWarn << "array of decay kinematics particle names has wrong size: "
+		          << nmbFsPart << " (expected " << nmbFsParticles() << ")" << endl;
+		success = false;
+	}
+	if (not success)
+		return false;
+	// sort decay kinematics particles w.r.t. particle name
+	map<string, vector<unsigned int> > fsDataPartIndices;
+	map<string, unsigned int>          fsDataPartCount;
+	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+		const string name = ((TObjString*)decayKinPartNames[i])->GetString().Data();
+		fsDataPartIndices[name].push_back(i);
+		fsDataPartCount[name] = 0;
+	}
+	// create index map: index of final state particle in decay graph -> index in data array
+	_fsDataPartIndexMap.clear();
+	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+		const particlePtr& part     = fsParticles()[i];
+		const string       partName = part->name();
+		map<string, vector<unsigned int> >::const_iterator entry = fsDataPartIndices.find(partName);
+		if (entry != fsDataPartIndices.end()) {
+			int partIndex = part->index();
+			if (partIndex < 0) {
+				partIndex = fsDataPartCount[partName];
+				++fsDataPartCount[partName];
+			}
+			if ((unsigned int)partIndex < entry->second.size()) {
+				if (_debug)
+					printInfo << "assigning decay kinematics data index [" << entry->second[partIndex] << "] "
+					          << "to final state particle " << partName << "[" << partIndex << "] "
+					          << "at index [" << i << "]" << endl;
+				_fsDataPartIndexMap[i] = entry->second[partIndex];
+			} else {
+				printWarn << "index [" << partIndex << "] for final state particle "
+				          << "'" << partName << "' out of range. input data contain only "
+				          << entry->second.size() << " entries for this particle type." << endl;
+				success = false;
+			}
+		} else {
+			printWarn << "cannot find entry for final state particle '" << part->name() << "' "
+			          << "in input data." << endl;
+			success = false;
+		}
+	}
+	if (_fsDataPartIndexMap.size() != nmbFsParticles()) {
+		printWarn << "could not find all final state particles in input data." << endl;
+		success = false;
+	}
+	// adjust cache size
+	_fsDataPartMomCache.resize(nmbFsParticles(), TVector3());
+	return success;
+}
+
+
+bool
+decayTopology::readKinematicData(const TClonesArray& prodKinParticles,
+                                 const TClonesArray& prodKinMomenta,
+                                 const TClonesArray& decayKinParticles,
+                                 const TClonesArray& decayKinMomenta)
+{
+	bool success = true;
 	// set production kinematics
 	// production vertex class has to implement readData()
 	if(not productionVertex()->readData(prodKinParticles, prodKinMomenta))
 		success = false;
-	// check decay kinematics data
-	const string partClassName = decayKinParticles.GetClass()->GetName();
-	if (partClassName != "TObjString") {
-		printWarn << "decay kinematics particle names are of type " << partClassName
-		          << " and not TObjString. cannot read decay kinematics." << endl;
-		success = false;
-	}
 	const string momClassName = decayKinMomenta.GetClass()->GetName();
 	if (momClassName != "TVector3") {
 		printWarn << "decay kinematics momenta are of type " << momClassName
@@ -558,53 +625,26 @@ decayTopology::readData(const TClonesArray& prodKinParticles,
 		success = false;
 	}
 	const int nmbFsPart = decayKinParticles.GetEntriesFast();
-	if (nmbFsPart != decayKinMomenta.GetEntriesFast()) {
-		printWarn << "arrays of decay kinematics particles and momenta have different sizes: "
-		          << nmbFsPart << " vs. " << decayKinMomenta.GetEntriesFast  () << endl;
+	if ((nmbFsPart < 0) or ((unsigned int)nmbFsPart != nmbFsParticles())) {
+		printWarn << "array of decay kinematics particle momenta has wrong size: "
+		          << nmbFsPart << " (expected " << nmbFsParticles() << ")" << endl;
 		success = false;
 	}
 	if (not success)
 		return false;
-	// sort decay kinematics momenta w.r.t. particle name
-	map<string, vector<const TVector3*> > fsMomenta;
-	map<string, int>                      countFsPart;  // counter for particles
-	for (int i = 0; i < nmbFsPart; ++i) {
-		const string    name = ((TObjString*)decayKinParticles[i])->GetString().Data();
-		const TVector3* mom  = (TVector3*)decayKinMomenta[i];
-		fsMomenta[name].push_back(mom);
-		countFsPart[name] = 0;
-	}
 	// set decay kinematics
-	_fsPartMomCache.resize(nmbFsParticles(), TVector3());
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
-		const particlePtr& part     = fsParticles()[i];
-		const string       partName = part->name();
-		map<string, vector<const TVector3*> >::const_iterator entry = fsMomenta.find(partName);
-		if (entry != fsMomenta.end()) {
-			int partIndex = part->index();
-			if (partIndex < 0) {
-				partIndex = countFsPart[partName];
-				++countFsPart[partName];
-			}
-			if ((unsigned int)partIndex < entry->second.size()) {
-				if (_debug)
-					printInfo << "setting momentum of final state particle " << partName << "["
-					          << partIndex << "] to " << *(entry->second[partIndex]) << " GeV" << endl;
-				part->setMomentum(*(entry->second[partIndex]));
-				_fsPartMomCache[i] = part->lzVec().Vect();
-			} else {
-				printWarn << "index [" << partIndex << "] for final state particle "
-				          << "'" << part->name() << "' out of range. data contain only "
-				          << entry->second.size() << " entries for this particle type." << endl;
-				success = false;
-			}
-		} else {
-			printWarn << "cannot find entry for final state particle '" << part->name() << "' "
-			          << "in data." << endl;
-			success = false;
-		}
-	}
-	return success;
+		const particlePtr& part      = fsParticles()[i];
+		const unsigned int partIndex = _fsDataPartIndexMap[i];
+		const TVector3*    mom       = (TVector3*)decayKinMomenta[partIndex];
+		if (_debug)
+			printInfo << "setting momentum of final state particle " << part->name()
+			          << " at index [" << i << "] to " << *mom << " GeV "
+			          << "at input data index [" << partIndex << "]" << endl;
+		part->setMomentum(*mom);
+		_fsDataPartMomCache[i] = part->momentum();
+	}	
+	return true;
 }
 
 
@@ -614,14 +654,14 @@ decayTopology::revertMomenta()
 	// revert production kinematics
 	bool success = productionVertex()->revertMomenta();
 	// revert decay kinematics
-	if (_fsPartMomCache.size() != nmbFsParticles())
+	if (_fsDataPartMomCache.size() != nmbFsParticles())
 		return false;
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part = fsParticles()[i];
-		part->setMomentum(_fsPartMomCache[i]);
+		part->setMomentum(_fsDataPartMomCache[i]);
 		if (_debug)
 			printInfo << "resetting momentum of final state particle " << part->name() << "[" << i << "] "
-			          << "to " << _fsPartMomCache[i] << " GeV" << endl;
+			          << "to " << _fsDataPartMomCache[i] << " GeV" << endl;
 	}
 	return success;
 }
@@ -633,16 +673,16 @@ decayTopology::revertMomenta(const vector<unsigned int>& indexMap)
 	// revert production kinematics
 	bool success = productionVertex()->revertMomenta();
 	// revert decay kinematics
-	if ((_fsPartMomCache.size() != nmbFsParticles()) or (indexMap.size() != nmbFsParticles()))
+	if ((_fsDataPartMomCache.size() != nmbFsParticles()) or (indexMap.size() != nmbFsParticles()))
 		return false;
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part     = fsParticles()[i];
 		const unsigned int newIndex = indexMap[i];
-		part->setMomentum(_fsPartMomCache[newIndex]);
+		part->setMomentum(_fsDataPartMomCache[newIndex]);
 		if (_debug)
 			printInfo << "(re)setting momentum of final state particle " << part->name() << "[" << i << "] "
 			          << "to that of " << fsParticles()[newIndex]->name()
-			          << "[" << newIndex << "] = " << _fsPartMomCache[newIndex] << " GeV" << endl;
+			          << "[" << newIndex << "] = " << _fsDataPartMomCache[newIndex] << " GeV" << endl;
 	}
 	return success;
 }

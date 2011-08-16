@@ -126,10 +126,13 @@ namespace rpwa {
 
 		void setProductionVertex(const productionVertexPtr& productionVertex);  ///< (re)defines production vertex
 
-		bool readData(const TClonesArray& prodKinParticles,
-		              const TClonesArray& prodKinMomenta,
-		              const TClonesArray& decayKinParticles,
-		              const TClonesArray& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
+		bool initKinematicData(const TClonesArray& prodKinParticles,
+		                       const TClonesArray& decayKinParticles);  ///< 
+
+		bool readKinematicData(const TClonesArray& prodKinParticles,
+		                       const TClonesArray& prodKinMomenta,
+		                       const TClonesArray& decayKinParticles,
+		                       const TClonesArray& decayKinMomenta);  ///< reads production and decay kinematics data and sets respective 4-momenta
 
 		bool revertMomenta();  ///< resets momenta to the values of last event read
 		bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
@@ -161,10 +164,12 @@ namespace rpwa {
 
 	private:
 
-		productionVertexPtr               _prodVertex;      ///< pointer to production vertex
-		std::vector<interactionVertexPtr> _decayVertices;   ///< array of decay vertices; ordered depth-first
-		std::vector<particlePtr>          _fsParticles;     ///< array of final state particles; ordered depth-first
-		std::vector<TVector3>             _fsPartMomCache;  ///< caches final state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		productionVertexPtr               _prodVertex;     ///< pointer to production vertex
+		std::vector<interactionVertexPtr> _decayVertices;  ///< array of decay vertices; ordered depth-first
+		std::vector<particlePtr>          _fsParticles;    ///< array of final state particles; ordered depth-first
+
+		std::map<unsigned int, unsigned int> _fsDataPartIndexMap;  ///< final state particle indices in input data array
+		std::vector<TVector3>                _fsDataPartMomCache;  ///< caches final state momenta of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
     
 		static bool _debug;  ///< if set to true, debug messages are printed
     
