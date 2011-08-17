@@ -71,9 +71,9 @@ leptoProductionVertex::leptoProductionVertex(const particlePtr& beamLepton,
 	: productionVertex        (),
 	  _longPol                (0),
 	  _beamLeptonMomCache     (),
-	  _targetMomCache         (),
 	  _scatteredLeptonMomCache(),
-	  _recoilMomCache         ()
+	  _recoilMomCache         (),
+	  _targetMomCache         ()
 {
 	if (not beamLepton) {
 		printErr << "null pointer to beam lepton particle. aborting." << endl;
@@ -119,8 +119,8 @@ leptoProductionVertex::operator =(const leptoProductionVertex& vert)
 		interactionVertex::operator =(vert);
 		_beamLeptonMomCache      = vert._beamLeptonMomCache;
 		_scatteredLeptonMomCache = vert._scatteredLeptonMomCache;
-		_targetMomCache          = vert._targetMomCache;
 		_recoilMomCache          = vert._recoilMomCache;
+		_targetMomCache          = vert._targetMomCache;
 	}
 	return *this;
 }
@@ -358,10 +358,11 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 		return false;
 	}
 	_nmbProdKinPart = prodKinPartNames.GetEntriesFast();
-	if (_nmbProdKinPart < 3) {
+	if (_nmbProdKinPart < 2) {
 		printWarn << "array of production kinematics particle names has wrong size: "
-		          << _nmbProdKinPart << ". need at least beam lepton (index 0), target (index 1), and "
-		          << "scattered lepton (index 2); recoil (index 3) is optional." << endl;
+		          << _nmbProdKinPart << ". need at least beam lepton (index 0) and "
+		          << "scattered lepton (index 1); "
+		          << "recoil (index 2) target (index 3) are optional." << endl;
 		return false;
 	}
 
@@ -375,31 +376,33 @@ leptoProductionVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
 		success = false;
 	}
 
-	// target at index 1
-	const string targetName = ((TObjString*)prodKinPartNames[1])->GetString().Data();
-	if (targetName != target()->name()) {
-		printWarn << "wrong particle at index 1 in production kinematics input data: "
-		          << "read '" << targetName << "', "
-		          << "expected target particle '" << target()->name() << "'" << endl;
-		success = false;
-	}
-
-	// scattered lepton at index 2
-	const string scatteredLeptonName = ((TObjString*)prodKinPartNames[2])->GetString().Data();
+	// scattered lepton at index 1
+	const string scatteredLeptonName = ((TObjString*)prodKinPartNames[1])->GetString().Data();
 	if (scatteredLeptonName != scatteredLepton()->name()) {
-		printWarn << "wrong particle at index 2 in production kinematics input data: "
+		printWarn << "wrong particle at index 1 in production kinematics input data: "
 		          << "read '" << scatteredLeptonName << "', "
 		          << "expected scattered lepton '" << scatteredLepton()->name() << "'" << endl;
 		success = false;
 	}
 
-	// recoil at index 3 (optional)
-	if (_nmbProdKinPart >= 4) {
-		const string recoilName = ((TObjString*)prodKinPartNames[3])->GetString().Data();
+	// recoil at index 2 (optional)
+	if (_nmbProdKinPart >= 3) {
+		const string recoilName = ((TObjString*)prodKinPartNames[2])->GetString().Data();
 		if (recoilName != recoil()->name()) {
-			printWarn << "wrong particle at index 3 in production kinematics input data: "
+			printWarn << "wrong particle at index 2 in production kinematics input data: "
 			          << "read '" << recoilName << "', "
 			          << "expected recoil particle '" << recoil()->name() << "'" << endl;
+			success = false;
+		}
+	}
+
+	// target at index 3 (optional)
+	if (_nmbProdKinPart >= 4) {
+		const string targetName = ((TObjString*)prodKinPartNames[3])->GetString().Data();
+		if (targetName != target()->name()) {
+			printWarn << "wrong particle at index 3 in production kinematics input data: "
+			          << "read '" << targetName << "', "
+			          << "expected target particle '" << target()->name() << "'" << endl;
 			success = false;
 		}
 	}
@@ -412,9 +415,9 @@ bool
 leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 {
 	_beamLeptonMomCache      = TVector3();
-	_targetMomCache          = TVector3();
 	_scatteredLeptonMomCache = TVector3();
 	_recoilMomCache          = TVector3();
+	_targetMomCache          = TVector3();
 
 	// check production vertex data
 	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
@@ -440,22 +443,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		success = false;
 	}
 
-	// set target
-	TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
-	if (targetMom) {
-		if (_debug)
-			printInfo << "setting momentum of target particle '" << target()->name()
-			          << "' to " << *targetMom << " GeV" << endl;
-		target()->setMomentum(*targetMom);
-		_targetMomCache = target()->momentum();
-	} else {
-		printWarn << "production kinematics data entry [1] is not of type TVector3. "
-		          << "cannot read target particle momentum." << endl;
-		success = false;
-	}
-
 	// set scattered lepton
-	TVector3* scatteredLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
+	TVector3* scatteredLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
 	if (scatteredLeptonMom) {
 		if (_debug)
 			printInfo << "setting momentum of scattered lepton '" << beamLepton()->name()
@@ -463,14 +452,15 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		scatteredLepton()->setMomentum(*scatteredLeptonMom);
 		_scatteredLeptonMomCache = scatteredLepton()->momentum();
 	} else {
-		printWarn << "production kinematics data entry [2] is not of type TVector3. "
+		printWarn << "production kinematics data entry [1] is not of type TVector3. "
 		          << "cannot read scattered lepton momentum." << endl;
 		success = false;
 	}
 
+
 	// set recoil (optional)
-	if (_nmbProdKinPart >= 4) {
-		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[3]);
+	if (_nmbProdKinPart >= 3) {
+		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
 		if (recoilMom) {
 			if (_debug)
 				printInfo << "setting momentum of recoil particle '" << recoil()->name()
@@ -478,8 +468,24 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 			recoil()->setMomentum(*recoilMom);
 			_recoilMomCache = recoil()->momentum();
 		} else {
-			printWarn << "production kinematics data entry [3] is not of type TVector3. "
+			printWarn << "production kinematics data entry [2] is not of type TVector3. "
 			          << "cannot read recoil particle momentum." << endl;
+			success = false;
+		}
+	}
+
+	// set target (optional); if not defined fixed target is assumed
+	if (_nmbProdKinPart >= 4) {
+		TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[3]);
+		if (targetMom) {
+			if (_debug)
+				printInfo << "setting momentum of target particle '" << target()->name()
+				          << "' to " << *targetMom << " GeV" << endl;
+			target()->setMomentum(*targetMom);
+			_targetMomCache = target()->momentum();
+		} else {
+			printWarn << "production kinematics data entry [3] is not of type TVector3. "
+			          << "cannot read target particle momentum." << endl;
 			success = false;
 		}
 	}
@@ -497,15 +503,15 @@ leptoProductionVertex::revertMomenta()
 		printInfo << "resetting beam lepton momentum to " << _beamLeptonMomCache << " GeV" << endl;
 	beamLepton()->setMomentum(_beamLeptonMomCache);
 	if (_debug)
-		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
-	target()->setMomentum(_targetMomCache);
-	if (_debug)
 		printInfo << "resetting scattered lepton momentum to " << _scatteredLeptonMomCache << " GeV"
 		          << endl;
 	scatteredLepton()->setMomentum(_scatteredLeptonMomCache);
 	if (_debug)
 		printInfo << "resetting recoil momentum to " << _recoilMomCache << " GeV" << endl;
 	recoil()->setMomentum(_recoilMomCache);
+	if (_debug)
+		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
+	target()->setMomentum(_targetMomCache);
 	// set virtual photon
 	virtPhoton()->setLzVec(beamLepton()->lzVec() - scatteredLepton()->lzVec());
 	return true;

@@ -88,7 +88,6 @@ namespace rpwa {
 	                      const std::string&              prodKinMomentaLeafName    = "prodKinMomenta",
 	                      const std::string&              decayKinParticlesLeafName = "decayKinParticles",
 	                      const std::string&              decayKinMomentaLeafName   = "decayKinMomenta",
-	                      const std::string&              targetParticleName        = "p+",
 	                      const bool                      debug                     = false);
 
 
@@ -99,7 +98,6 @@ namespace rpwa {
 	                     const long int     maxNmbEvents            = -1,
 	                     const std::string& prodKinMomentaLeafName  = "prodKinMomenta",
 	                     const std::string& decayKinMomentaLeafName = "decayKinMomenta",
-	                     const std::string& targetParticleName      = "p+",
 	                     const bool         debug                   = false,
 	                     const long int     treeCacheSize           = 25000000);  // 25 MByte ROOT tree read cache
 

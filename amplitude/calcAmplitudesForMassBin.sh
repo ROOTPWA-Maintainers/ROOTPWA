@@ -288,7 +288,7 @@ then
 fi
 if [[ -z "${PWA_ENV_SET}" ]]
 then
-    echo "!!! error: PWA environment is not setup. source setupThisProgDir.sh."
+    echo "!!! error: PWA environment is not setup. source setupThis.sh."
     exit 1
 fi
 

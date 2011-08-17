@@ -169,7 +169,6 @@ namespace rpwa {
 	                 const string&         prodKinMomentaLeafName,
 	                 const string&         decayKinParticlesLeafName,
 	                 const string&         decayKinMomentaLeafName,
-	                 const string&         targetParticleName,
 	                 const bool            debug)
 	{
 		// open root files and build chain
@@ -214,8 +213,7 @@ namespace rpwa {
 			TClonesArray prodNames ("TObjString");  // names of production kinematics particles read from .evt file
 			TClonesArray decayNames("TObjString");  // names of decay kinematics particles read from .evt file
 			if (fillTreeFromEvt(evtFile, *tree, prodNames, decayNames, -1,
-			                    prodKinMomentaLeafName, decayKinMomentaLeafName,
-			                    targetParticleName, debug))
+			                    prodKinMomentaLeafName, decayKinMomentaLeafName, debug))
 				inTrees.push_back(tree);
 			else {
 				printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "
@@ -303,7 +301,6 @@ namespace rpwa {
 	                const long int maxNmbEvents,
 	                const string&  prodKinMomentaLeafName,
 	                const string&  decayKinMomentaLeafName,
-	                const string&  targetParticleName,
 	                const bool     debug,
 	                const long int treeCacheSize)
 	{
@@ -374,8 +371,6 @@ namespace rpwa {
 				}
 			} else
 				break;
-			prodNames.push_back(targetParticleName);
-			new((*prodKinMomenta)[1]) TVector3(0, 0, 0);
 
 			// check consistency
 			const int nmbProdKinPart = prodNames.size();
@@ -477,7 +472,7 @@ namespace rpwa {
 
 		printInfo << "read " << countLines << " lines from input stream and wrote "
 		          << countEvents << " events to tree '" << outTree.GetName() << "' "
-		          << "assuming fixed " << targetParticleName << " target" << endl;
+		          << "assuming fixed target" << endl;
 		return success;
 	}
 

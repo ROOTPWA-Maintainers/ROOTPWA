@@ -25,11 +25,13 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      class that describes production vertex in diffractive dissociation
-//      the beam-Reggeon-X vertex has exactly one incoming beam and
-//      one outgoing particle (X), which unambiguously defines the Reggeon
-//      kinematics; in addition the target has to be specified; if the recoil
-//      particle is not specified, elastic scattering is assumed
+//      class that describes production vertex in diffractive
+//      dissociation the beam-Reggeon-X vertex has exactly one
+//      incoming beam and one outgoing particle (X), which
+//      unambiguously defines the Reggeon kinematics; if the target
+//      momentum is not specified, a fixed target is assumed; if the
+//      recoil particle is not specified, elastic scattering is
+//      assumed
 //
 //
 // Author List:
@@ -115,8 +117,8 @@ namespace rpwa {
 
 		int      _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
 		TVector3 _beamMomCache;    ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		TVector3 _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _recoilMomCache;  ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		TVector3 _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

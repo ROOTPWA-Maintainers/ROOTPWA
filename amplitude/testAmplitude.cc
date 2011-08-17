@@ -351,7 +351,7 @@ main(int argc, char** argv)
 				if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
 				                         rootFileNames, evtFileNames,
 				                         inTreeName, prodKinParticlesLeafName, prodKinMomentaLeafName,
-				                         decayKinParticlesLeafName, decayKinMomentaLeafName, "p+", true)) {
+				                         decayKinParticlesLeafName, decayKinMomentaLeafName, true)) {
 					printErr << "problems opening input files. aborting." << endl;
 					exit(1);
 				}

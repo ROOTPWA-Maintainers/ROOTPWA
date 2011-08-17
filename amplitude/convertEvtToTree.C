@@ -102,7 +102,7 @@ convertEvtToTree(//const string&  evtFileName               = "1500.1540.3pi.evt
 	                                                  *prodKinPartNames, *decayKinPartNames,
 	                                                  maxNmbEvents,
 	                                                  prodKinMomentaLeafName, decayKinMomentaLeafName,
-	                                                  targetParticleName, debug);
+	                                                  debug);
 	tree->Write();
 	prodKinPartNames->Write (prodKinParticlesLeafName.c_str (), TObject::kSingleKey);
 	decayKinPartNames->Write(decayKinParticlesLeafName.c_str(), TObject::kSingleKey);
