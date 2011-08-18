@@ -43,7 +43,7 @@
 #include <limits>
 #include <algorithm>
 
-#include "TChain.h"
+#include "TTree.h"
 #include "TClonesArray.h"
 #include "TObjString.h"
 #include "TVector3.h"
@@ -58,31 +58,41 @@ using namespace rpwa;
 
 
 bool
-convertTreeToEvt(const string&  inFileNamePattern         = "testEvents.root",
-                 const string&  outFileName               = "testTree.evt",
-                 const string&  pdgTableFileName          = "./particleDataTable.txt",
-                 const long int maxNmbEvents              = -1,
-                 const string&  inTreeName                = "rootPwaEvtTree",
-                 const string&  prodKinParticlesLeafName  = "prodKinParticles",
-                 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
-                 const string&  decayKinParticlesLeafName = "decayKinParticles",
-                 const string&  decayKinMomentaLeafName   = "decayKinMomenta",
-                 const bool     debug                     = false)
+convertTreeToEvt(const string&  inFileNamePattern        = "testEvents.root",
+                 const string&  outFileName              = "testTree.evt",
+                 const string&  pdgTableFileName         = "./particleDataTable.txt",
+                 const long int maxNmbEvents             = -1,
+                 const string&  inTreeName               = "rootPwaEvtTree",
+                 const string&  prodKinPartNamesObjName  = "prodKinParticles",
+                 const string&  prodKinMomentaLeafName   = "prodKinMomenta",
+                 const string&  decayKinPartNamesObjName = "decayKinParticles",
+                 const string&  decayKinMomentaLeafName  = "decayKinMomenta",
+                 const bool     debug                    = false)
 {
-	// open input file
-	printInfo << "opening input file(s) '" << inFileNamePattern << "'" << endl;
-	TChain chain(inTreeName.c_str());
-	if (chain.Add(inFileNamePattern.c_str()) < 1) {
-		printWarn << "no events in input file(s) '" << inFileNamePattern << "'" << endl;
-		return false;
+	// open input files
+	TTree*        inTree            = 0;
+	TClonesArray* prodKinPartNames  = 0;
+	TClonesArray* decayKinPartNames = 0;
+	{
+		vector<string> rootFileNames;
+		rootFileNames.push_back(inFileNamePattern);
+		vector<string> evtFileNames;
+		vector<TTree*> inTrees;
+		if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
+		                         rootFileNames, evtFileNames,
+		                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+		                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
+			printErr << "problems opening input file(s). exiting." << endl;
+			return false;
+		}
+		inTree = inTrees[0];
 	}
-	chain.GetListOfFiles()->ls();
 
 	// create output file
 	printInfo << "creating output file '" << outFileName << "'" << endl;
 	ofstream outFile(outFileName.c_str());
 	if (!outFile) {
-		printWarn << "cannot open output file '" << outFileName << "'" << endl;
+		printWarn << "cannot open output file '" << outFileName << "'. exiting." << endl;
 		return false;
 	}
 
@@ -90,9 +100,9 @@ convertTreeToEvt(const string&  inFileNamePattern         = "testEvents.root",
 	pdt.readFile(pdgTableFileName);
 
 	// doit
-	const bool success = writeEvtFromTree(chain, outFile, maxNmbEvents, inTreeName,
-	                                      prodKinParticlesLeafName,  prodKinMomentaLeafName,
-	                                      decayKinParticlesLeafName, decayKinMomentaLeafName, debug);
+	const bool success = writeEvtFromTree(*inTree, outFile, *prodKinPartNames, *decayKinPartNames,
+	                                      maxNmbEvents, inTreeName,
+	                                      prodKinMomentaLeafName, decayKinMomentaLeafName, debug);
 
 	if (success)
 		printInfo << "wrote events to file '" << outFileName << "'" << endl;

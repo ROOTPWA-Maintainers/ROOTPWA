@@ -76,6 +76,7 @@ namespace rpwa {
 #define printErr  std::cerr << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << std::flush
 #define printWarn std::cerr << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << std::flush
 #define printInfo std::cout << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "  << std::flush
+#define printDebug std::cout << "*** " << getClassMethod__(__PRETTY_FUNCTION__) << "(): debug: "  << std::flush
 
 
 	//////////////////////////////////////////////////////////////////////////////

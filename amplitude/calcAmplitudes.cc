@@ -84,8 +84,7 @@ usage(const string& progName,
 	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
 	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
-	     << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
-	     << "        -r         target particle name for .evt files (default: 'p+')" << endl
+	     << "        -l names   semicolon separated object/leaf names in input data (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -107,18 +106,16 @@ main(int    argc,
 #endif
 	
 	// parse command line options
-	const string progName           = argv[0];
-	string       keyFileName        = "";
-	long int     maxNmbEvents       = -1;
-	string       pdgFileName        = "./particleDataTable.txt";
-	string       ampFileName        = "./out.root";
-	string       ampLeafName        = "amplitude";
-	bool         asciiOutput        = false;
-	string       inTreeName         = "rootPwaEvtTree";
-	string       leafNames          = "prodKinParticles;prodKinMomenta;"
-		                                "decayKinParticles;decayKinMomenta";
-	string       targetParticleName = "p+";
-	bool         debug              = false;
+	const string progName     = argv[0];
+	string       keyFileName  = "";
+	long int     maxNmbEvents = -1;
+	string       pdgFileName  = "./particleDataTable.txt";
+	string       ampFileName  = "./out.root";
+	string       ampLeafName  = "amplitude";
+	bool         asciiOutput  = false;
+	string       inTreeName   = "rootPwaEvtTree";
+	string       leafNames    = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool         debug        = false;
 	extern char* optarg;
 	extern int   optind;
 	int          c;
@@ -147,9 +144,6 @@ main(int    argc,
 			break;
 		case 'l':
 			leafNames = optarg;
-			break;
-		case 'r':
-			targetParticleName = optarg;
 			break;
 		case 'v':
 			debug = true;
@@ -186,17 +180,17 @@ main(int    argc,
 	typedef tokenizer<char_separator<char> > tokenizer;
 	char_separator<char> separator(";");
 	tokenizer            leafNameTokens(leafNames, separator);
-	tokenizer::iterator  leafNameToken             = leafNameTokens.begin();
-	const string         prodKinParticlesLeafName  = *leafNameToken;
-	const string         prodKinMomentaLeafName    = *(++leafNameToken);
-	const string         decayKinParticlesLeafName = *(++leafNameToken);
-	const string         decayKinMomentaLeafName   = *(++leafNameToken);
-	printInfo << "using the following leaf names:" << endl
+	tokenizer::iterator  leafNameToken            = leafNameTokens.begin();
+	const string         prodKinPartNamesObjName  = *leafNameToken;
+	const string         prodKinMomentaLeafName   = *(++leafNameToken);
+	const string         decayKinPartNamesObjName = *(++leafNameToken);
+	const string         decayKinMomentaLeafName  = *(++leafNameToken);
+	printInfo << "using the following object/leaf names:" << endl
 	          << "        production kinematics: "
-	          << "particle names = '" << prodKinParticlesLeafName << "', "
+	          << "particle names = '" << prodKinPartNamesObjName << "', "
 	          << "momenta = '" << prodKinMomentaLeafName << "'" << endl
 	          << "        decay kinematics:      "
-	          << "particle names = '" << decayKinParticlesLeafName << "', "
+	          << "particle names = '" << decayKinPartNamesObjName << "', "
 	          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
 
 	// open .root and .evt files
@@ -205,9 +199,9 @@ main(int    argc,
 	TClonesArray*  decayKinPartNames = 0;
 	if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
 	                         rootFileNames, evtFileNames,
-	                         inTreeName, prodKinParticlesLeafName, prodKinMomentaLeafName,
-	                         decayKinParticlesLeafName, decayKinMomentaLeafName, debug)) {
-		printErr << "problems opening input files . aborting." << endl;
+	                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
+		printErr << "problems opening input file(s). aborting." << endl;
 		exit(1);
 	}
 

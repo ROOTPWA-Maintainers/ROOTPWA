@@ -56,19 +56,18 @@ using namespace rpwa;
 
 
 bool
-convertEvtToTree(//const string&  evtFileName               = "1500.1540.3pi.evt",
-                 const string&  evtFileName               = "1720.1840.5pi.evt",
-                 const string&  outFileName               = "testEvents.root",
-                 //const string&  evtFileName               = "testTree.evt",
-                 //const string&  outFileName               = "testEvents2.root",
-                 const long int maxNmbEvents              = -1,
-                 const string&  outTreeName               = "rootPwaEvtTree",
-                 const string&  prodKinParticlesLeafName  = "prodKinParticles",
-                 const string&  prodKinMomentaLeafName    = "prodKinMomenta",
-                 const string&  decayKinParticlesLeafName = "decayKinParticles",
-                 const string&  decayKinMomentaLeafName   = "decayKinMomenta",
-                 const string&  targetParticleName        = "p+",
-                 const bool     debug                     = false)
+convertEvtToTree(//const string&  evtFileName              = "1500.1540.3pi.evt",
+                 const string&  evtFileName              = "1720.1840.5pi.evt",
+                 const string&  outFileName              = "testEvents.root",
+                 //const string&  evtFileName              = "testTree.evt",
+                 //const string&  outFileName              = "testEvents2.root",
+                 const long int maxNmbEvents             = -1,
+                 const string&  outTreeName              = "rootPwaEvtTree",
+                 const string&  prodKinPartNamesObjName  = "prodKinParticles",
+                 const string&  prodKinMomentaLeafName   = "prodKinMomenta",
+                 const string&  decayKinPartNamesObjName = "decayKinParticles",
+                 const string&  decayKinMomentaLeafName  = "decayKinMomenta",
+                 const bool     debug                    = false)
 {
 	// open input file
 	printInfo << "opening input file '" << evtFileName << "'" << endl;
@@ -104,8 +103,8 @@ convertEvtToTree(//const string&  evtFileName               = "1500.1540.3pi.evt
 	                                                  prodKinMomentaLeafName, decayKinMomentaLeafName,
 	                                                  debug);
 	tree->Write();
-	prodKinPartNames->Write (prodKinParticlesLeafName.c_str (), TObject::kSingleKey);
-	decayKinPartNames->Write(decayKinParticlesLeafName.c_str(), TObject::kSingleKey);
+	prodKinPartNames->Write (prodKinPartNamesObjName.c_str (), TObject::kSingleKey);
+	decayKinPartNames->Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);
 
 	outFile->Close();
 	if (success)

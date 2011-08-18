@@ -122,12 +122,12 @@ namespace rpwa {
 	                             TClonesArray*& prodKinPartNames,   // array of particle names to be filled
 	                             TClonesArray*& decayKinPartNames,  // array of particle names to be filled
 	                             const string&  inTreeName,
-	                             const string&  prodKinParticlesLeafName,
-	                             const string&  decayKinParticlesLeafName)
+	                             const string&  prodKinPartNamesObjName,
+	                             const string&  decayKinPartNamesObjName)
 	{
 		// read particle names from first root file
-		inFile.GetObject(prodKinParticlesLeafName.c_str(),  prodKinPartNames );
-		inFile.GetObject(decayKinParticlesLeafName.c_str(), decayKinPartNames);
+		inFile.GetObject(prodKinPartNamesObjName.c_str(),  prodKinPartNames );
+		inFile.GetObject(decayKinPartNamesObjName.c_str(), decayKinPartNames);
 		if (prodKinPartNames and decayKinPartNames) {
 			TVector3::Class()->IgnoreTObjectStreamer(true);
 			return true;
@@ -137,7 +137,7 @@ namespace rpwa {
 		inFile.GetObject(inTreeName.c_str(), inTree);
 		if (not prodKinPartNames) {
 			TBranch* prodKinPartNamesBr = 0;
-			if (inTree->SetBranchAddress(prodKinParticlesLeafName.c_str(),
+			if (inTree->SetBranchAddress(prodKinPartNamesObjName.c_str(),
 			                             &prodKinPartNames, &prodKinPartNamesBr) >= 0)
 				if (inTree->GetEntries() > 0)
 					if (inTree->LoadTree(0) >= 0)
@@ -145,7 +145,7 @@ namespace rpwa {
 		}
 		if (not decayKinPartNames) {
 			TBranch* decayKinPartNamesBr = 0;
-			if (inTree->SetBranchAddress(decayKinParticlesLeafName.c_str(),
+			if (inTree->SetBranchAddress(decayKinPartNamesObjName.c_str(),
 			                             &decayKinPartNames, &decayKinPartNamesBr) >= 0)
 				if (inTree->GetEntries() > 0)
 					if (inTree->LoadTree(0) >= 0)
@@ -165,9 +165,9 @@ namespace rpwa {
 	                 const vector<string>& rootFileNames,      // .root files to be opened
 	                 const vector<string>& evtFileNames,       // .evt files to be converted to trees
 	                 const string&         inTreeName,
-	                 const string&         prodKinParticlesLeafName,
+	                 const string&         prodKinPartNamesObjName,
 	                 const string&         prodKinMomentaLeafName,
-	                 const string&         decayKinParticlesLeafName,
+	                 const string&         decayKinPartNamesObjName,
 	                 const string&         decayKinMomentaLeafName,
 	                 const bool            debug)
 	{
@@ -182,12 +182,17 @@ namespace rpwa {
 			}
 			inChain->GetListOfFiles()->ls();
 			// read particle names from first root file
-			if (not getParticleNamesFromRootFile(*(inChain->GetFile()), prodKinPartNames, decayKinPartNames,
-			                                     inTreeName,
-			                                     prodKinParticlesLeafName, decayKinParticlesLeafName)) {
-				printErr << "cannot find production and/or decay kinematics particle names "
-				         << "in input file '" << inChain->GetFile()->GetName() << "'." << endl;
-				return false;
+			TFile* inFile = inChain->GetFile();  // opens first file
+			if (not inFile)
+				printWarn << "could not open file '" << rootFileNames[0] << "'" << endl;
+			else {
+				if (not getParticleNamesFromRootFile(*inFile, prodKinPartNames, decayKinPartNames,
+				                                     inTreeName,
+				                                     prodKinPartNamesObjName, decayKinPartNamesObjName)) {
+					printErr << "cannot find production and/or decay kinematics particle names "
+					         << "in input file '" << inChain->GetFile()->GetName() << "'" << endl;
+					return false;
+				}
 			}
 		}
 		if (inChain)
@@ -227,8 +232,8 @@ namespace rpwa {
 				if (prodNames.GetEntriesFast() != prodKinPartNames->GetEntriesFast())
 					goto prodKinPartNamesInconsistent;
 				for (j = 0; j < prodNames.GetEntriesFast(); ++j) {
-					if (not ((TObjString*)prodNames[j])->GetString()
-					    .EqualTo(((TObjString*)(*prodKinPartNames)[j])->GetString()))
+					if (not (((TObjString*)prodNames[j])->GetString()
+					         == ((TObjString*)(*prodKinPartNames)[j])->GetString()))
 						goto prodKinPartNamesInconsistent;
 				prodKinPartNamesInconsistent:
 					{
@@ -255,8 +260,8 @@ namespace rpwa {
 				if (decayNames.GetEntriesFast() != decayKinPartNames->GetEntriesFast())
 					goto decayKinPartNamesInconsistent;
 				for (j = 0; j < decayNames.GetEntriesFast(); ++j) {
-					if (not ((TObjString*)decayNames[j])->GetString()
-					    .EqualTo(((TObjString*)(*decayKinPartNames)[j])->GetString()))
+					if (not (((TObjString*)decayNames[j])->GetString()
+					         == (((TObjString*)(*decayKinPartNames)[j])->GetString())))
 						goto decayKinPartNamesInconsistent;
 				decayKinPartNamesInconsistent:
 					{
@@ -280,16 +285,17 @@ namespace rpwa {
 		}  // loop over .evt files
 
 		// make sure particle names are specified
+		bool success = true;
 		if (not prodKinPartNames) {
 			printErr << "no production kinematics particle names were found in input files." << endl;
-			return false;
+			success = false;
 		}
 		if (not decayKinPartNames) {
 			printWarn << "no decay kinematics particle names were found in input files." << endl;
-			return false;
+			success = false;
 		}
 
-		return true;
+		return success;
 	}
 
 
@@ -351,7 +357,7 @@ namespace rpwa {
 				break;
 			assert(nmbParticles > 0);
 			if (debug)
-				printInfo << "# of particles = " << nmbParticles << endl;
+				printDebug << "# of particles = " << nmbParticles << endl;
     
 			// read production kinematics data (beam + fixed target)
 			prodNames.clear();
@@ -376,7 +382,7 @@ namespace rpwa {
 			const int nmbProdKinPart = prodNames.size();
 			assert((nmbProdKinPart > 0) and (nmbProdKinPart == prodKinMomenta->GetEntriesFast()));
 			if (debug) {
-				printInfo << nmbProdKinPart << " production kinematics particles:" << endl;
+				printDebug << nmbProdKinPart << " production kinematics particles:" << endl;
 				for (int i = 0; i < nmbProdKinPart; ++i)
 					cout << "        particle[" << i << "]: "
 					     << prodNames[i] << "; " << *((TVector3*)(*prodKinMomenta)[i]) << endl;
@@ -408,7 +414,7 @@ namespace rpwa {
 			const int nmbDecayKinPart = decayNames.size();
 			assert((nmbDecayKinPart > 0) and (nmbDecayKinPart == decayKinMomenta->GetEntriesFast()));
 			if (debug) {
-				printInfo << nmbDecayKinPart << " decay kinematics particles:" << endl;
+				printDebug << nmbDecayKinPart << " decay kinematics particles:" << endl;
 				for (int i = 0; i < nmbDecayKinPart; ++i)
 					cout << "        particle[" << i << "]: "
 					     << decayNames[i] << "; " << *((TVector3*) (*decayKinMomenta)[i]) << endl;
@@ -478,33 +484,41 @@ namespace rpwa {
 
 
 	bool
-	writeEvtFromTree(TChain&        inTree,
-	                 ostream&       outEvt,
-	                 const long int maxNmbEvents,
-	                 const string&  inTreeName,
-	                 const string&  prodKinParticlesLeafName,
-	                 const string&  prodKinMomentaLeafName,
-	                 const string&  decayKinParticlesLeafName,
-	                 const string&  decayKinMomentaLeafName,
-	                 const bool     debug)
+	writeEvtFromTree(TTree&              inTree,
+	                 ostream&            outEvt,
+	                 const TClonesArray& prodKinPartNames,
+	                 const TClonesArray& decayKinPartNames,
+	                 const long int      maxNmbEvents,
+	                 const string&       inTreeName,
+	                 const string&       prodKinMomentaLeafName,
+	                 const string&       decayKinMomentaLeafName,
+	                 const bool          debug)
 	{
 		const long int nmbEventsTree = inTree.GetEntries();
 		if (not outEvt) {
 			printWarn << "cannot write to output stream" << endl;
 			return false;
 		}
+		string partClassName = prodKinPartNames.GetClass()->GetName();
+		if (partClassName != "TObjString") {
+			printWarn << "production kinematics particle names are of type '" << partClassName
+			          << "' and not TObjString." << endl;
+			return false;
+		}
+		partClassName = decayKinPartNames.GetClass()->GetName();
+		if (partClassName != "TObjString") {
+			printWarn << "decay kinematics particle names are of type '" << partClassName
+			          << "' and not TObjString." << endl;
+			return false;
+		}
 
 		// create leaf variables
-		TClonesArray* prodKinParticles  = 0;
-		TClonesArray* prodKinMomenta    = 0;
-		TClonesArray* decayKinParticles = 0;
-		TClonesArray* decayKinMomenta   = 0;
+		TClonesArray* prodKinMomenta  = 0;
+		TClonesArray* decayKinMomenta = 0;
 
 		// connect leaf variables to tree branches
-		inTree.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles );
-		inTree.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta   );
-		inTree.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles);
-		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta  );
+		inTree.SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta );
+		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta);
 			 
 		// loop over events
 		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
@@ -518,17 +532,20 @@ namespace rpwa {
 				break;
 			inTree.GetEntry(eventIndex);
 
-			assert(prodKinParticles );
-			assert(prodKinMomenta   );
-			assert(decayKinParticles);
-			assert(decayKinMomenta  );
-			const int nmbProdKinPart  = prodKinParticles->GetEntriesFast ();
-			const int nmbDecayKinPart = decayKinParticles->GetEntriesFast();
+			assert(prodKinMomenta );
+			assert(decayKinMomenta);
+			const int nmbProdKinPart  = prodKinPartNames.GetEntriesFast ();
+			const int nmbDecayKinPart = decayKinPartNames.GetEntriesFast();
 			assert(nmbProdKinPart  == prodKinMomenta->GetEntriesFast ());
 			assert(nmbDecayKinPart == decayKinMomenta->GetEntriesFast());
 			if (nmbProdKinPart < 1) {
-				printWarn << "arrays for production kinematics particles do not have any entries. "
+				printWarn << "array of production kinematics particles does not have any entries. "
 				          << "at least entry for beam (index 0) is required. skipping event." << endl;
+				continue;
+			}
+			if (nmbDecayKinPart < 1) {
+				printWarn << "array of decay kinematics particles does not have any entries. "
+				          << "at least one final state particle is required. skipping event." << endl;
 				continue;
 			}
 
@@ -537,43 +554,45 @@ namespace rpwa {
 
 			// write production kinematics (beam only)
 			if (debug)
-				printInfo << "event[" << eventIndex << "]: " << nmbProdKinPart
-				          << " production kinematics particles:" << endl;
-			for (int i = 0; i < 1; ++i) {  // only beam
-				assert((*prodKinParticles)[i]);
-				assert((*prodKinMomenta  )[i]);
-				const string   name = ((TObjString*)(*prodKinParticles)[i])->GetString().Data();
-				const TVector3 mom  = *((TVector3*)(*prodKinMomenta)[i]);
-				const double   mass = getParticleMass(name);
+				printDebug << "event[" << eventIndex << "]: " << nmbProdKinPart
+				           << " production kinematics particles:" << endl;
+			{  // only beam
+				assert(prodKinPartNames [0]);
+				assert((*prodKinMomenta)[0]);
+				const string    name = ((TObjString*)prodKinPartNames[0])->GetString().Data();
+				const TVector3* mom  = dynamic_cast<TVector3*>((*prodKinMomenta)[0]);
+				assert(mom);
+				const double mass = getParticleMass(name);
 				int id, charge;
 				idAndChargeFromParticleName(name, id, charge);
 				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
-				       << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
-				       << sqrt(mass * mass + mom.Mag2()) << endl;
+				       << id << " " << charge << " " << mom->X() << " " << mom->Y() << " " << mom->Z() << " "
+				       << sqrt(mass * mass + mom->Mag2()) << endl;
 				if (debug) {
-					cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-					     << "charge = " << charge << "; " << mom << endl;
+					cout << "        particle[" << 0 << "]: " << name << ", id = " << id << ", "
+					     << "charge = " << charge << "; " << *mom << endl;
 				}
 			}
 
 			// write decay kinematics
 			if (debug)
-				printInfo << "event[" << eventIndex << "]: " << nmbDecayKinPart
-				          << " decay kinematics particles:" << endl;
-			for (int i = 0; i < nmbDecayKinPart; ++i) {
-				assert((*decayKinParticles  )[i]);
+				printDebug << "event[" << eventIndex << "]: " << nmbDecayKinPart
+				           << " decay kinematics particles:" << endl;
+			for (unsigned int i = 0; i < (unsigned int)nmbDecayKinPart; ++i) {
+				assert(decayKinPartNames [i]);
 				assert((*decayKinMomenta)[i]);
-				const string   name = ((TObjString*)(*decayKinParticles)[i])->GetString().Data();
-				const TVector3 mom  = *((TVector3*)(*decayKinMomenta)[i]);
-				const double   mass = getParticleMass(name);
+				const string    name = ((TObjString*)decayKinPartNames[i])->GetString().Data();
+				const TVector3* mom  = dynamic_cast<TVector3*>((*decayKinMomenta)[i]);
+				assert(mom);
+				const double mass = getParticleMass(name);
 				int id, charge;
 				idAndChargeFromParticleName(name, id, charge);
 				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
-				       << id << " " << charge << " " << mom.X() << " " << mom.Y() << " " << mom.Z() << " "
-				       << sqrt(mass * mass + mom.Mag2()) << endl;
+				       << id << " " << charge << " " << mom->X() << " " << mom->Y() << " " << mom->Z() << " "
+				       << sqrt(mass * mass + mom->Mag2()) << endl;
 				if (debug) {
 					cout << "        particle[" << i << "]: " << name << ", id = " << id << ", "
-					     << "charge = " << charge << "; " << mom << endl;
+					     << "charge = " << charge << "; " << *mom << endl;
 				}
 			}
     

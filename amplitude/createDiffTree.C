@@ -81,25 +81,24 @@ createDiffLeafs(TClonesArray*      partNames  [3],
 	}
 	new((*(partMomenta[2]))[index]) TVector3(diff);
   
-	if (debug) {
-		cout << "        particle[" << index << "]: " << names[0] << " vs. " << names[1] << ", "
-		     << momenta[0] << " vs. " << momenta[1] << endl;
-	}
+	if (debug)
+		printDebug << "particle[" << index << "]: " << names[0] << " vs. " << names[1] << ", "
+		           << momenta[0] << " vs. " << momenta[1] << endl;
 }
 
 
 bool
-createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
-               const string&  inFileNamePatternB        = "testEvents2.root",
-               const string&  outFileName               = "testDiffTree.root",
-               const bool     absoluteDiff              = true,
-               const long int maxNmbEvents              = -1,
-               const string&  inTreeName                = "rootPwaEvtTree",
-               const string&  prodKinParticlesLeafName  = "prodKinParticles",
-               const string&  prodKinMomentaLeafName    = "prodKinMomenta",
-               const string&  decayKinParticlesLeafName = "decayKinParticles",
-               const string&  decayKinMomentaLeafName   = "decayKinMomenta",
-               const bool     debug                     = false)
+createDiffTree(const string&  inFileNamePatternA       = "testEvents.root",
+               const string&  inFileNamePatternB       = "testEvents2.root",
+               const string&  outFileName              = "testDiffTree.root",
+               const bool     absoluteDiff             = true,
+               const long int maxNmbEvents             = -1,
+               const string&  inTreeName               = "rootPwaEvtTree",
+               const string&  prodKinPartNamesObjName  = "prodKinParticles",
+               const string&  prodKinMomentaLeafName   = "prodKinMomenta",
+               const string&  decayKinPartNamesObjName = "decayKinParticles",
+               const string&  decayKinMomentaLeafName  = "decayKinMomenta",
+               const bool     debug                    = false)
 {
   
 	// open input files
@@ -147,19 +146,19 @@ createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
 
 	// connect leaf variables to input tree branches
 	for (unsigned int i = 0; i < 2; ++i) {
-		chain[i].SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles [i]);
-		chain[i].SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta   [i]);
-		chain[i].SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles[i]);
-		chain[i].SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta  [i]);
+		chain[i].SetBranchAddress(prodKinPartNamesObjName.c_str(),  &prodKinParticles [i]);
+		chain[i].SetBranchAddress(prodKinMomentaLeafName.c_str(),   &prodKinMomenta   [i]);
+		chain[i].SetBranchAddress(decayKinPartNamesObjName.c_str(), &decayKinParticles[i]);
+		chain[i].SetBranchAddress(decayKinMomentaLeafName.c_str(),  &decayKinMomenta  [i]);
 	}
 
 	// connect leaf variables to output tree branches
 	const int split   = 0;
 	const int bufSize = 256000;
-	tree->Branch(prodKinParticlesLeafName.c_str(),  "TClonesArray", &prodKinParticles [2], bufSize, split);
-	tree->Branch(prodKinMomentaLeafName.c_str(),    "TClonesArray", &prodKinMomenta   [2], bufSize, split);
-	tree->Branch(decayKinParticlesLeafName.c_str(), "TClonesArray", &decayKinParticles[2], bufSize, split);
-	tree->Branch(decayKinMomentaLeafName.c_str(),   "TClonesArray", &decayKinMomenta  [2], bufSize, split);
+	tree->Branch(prodKinPartNamesObjName.c_str(),  "TClonesArray", &prodKinParticles [2], bufSize, split);
+	tree->Branch(prodKinMomentaLeafName.c_str(),  "TClonesArray",  &prodKinMomenta   [2], bufSize, split);
+	tree->Branch(decayKinPartNamesObjName.c_str(), "TClonesArray", &decayKinParticles[2], bufSize, split);
+	tree->Branch(decayKinMomentaLeafName.c_str(), "TClonesArray",  &decayKinMomenta  [2], bufSize, split);
 
 	// loop over events
 	long int nmbEvents = min(nmbEventsChain[0], nmbEventsChain[1]);
@@ -183,16 +182,16 @@ createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
 		assert(nmbDecayKinPart[0] == nmbDecayKinPart[1]);
 
 		if (debug)
-			printInfo << "event[" << eventIndex << "]: " << nmbProdKinPart[0]
-			          << " production kinematics particles:" << endl;
+			printDebug << "event[" << eventIndex << "]: " << nmbProdKinPart[0]
+			           << " production kinematics particles:" << endl;
 		prodKinParticles[2]->Clear();
 		prodKinMomenta  [2]->Clear();
 		for (unsigned int i = 0; i < nmbProdKinPart[0]; ++i)
 			createDiffLeafs(prodKinParticles, prodKinMomenta, i, absoluteDiff, debug);
     
 		if (debug)
-			printInfo << "event[" << eventIndex << "]: " << nmbDecayKinPart[0]
-			          << " decay kinematics particles:" << endl;
+			printDebug << "event[" << eventIndex << "]: " << nmbDecayKinPart[0]
+			           << " decay kinematics particles:" << endl;
 		decayKinParticles[2]->Clear();
 		decayKinMomenta  [2]->Clear();
 		for (unsigned int i = 0; i < nmbDecayKinPart[0]; ++i)

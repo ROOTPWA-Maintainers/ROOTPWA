@@ -335,11 +335,11 @@ main(int argc, char** argv)
 			printInfo << *amp;
 			
 			// read data from tree
-			const string&            inTreeName                = "rootPwaEvtTree";
-			const string&            prodKinParticlesLeafName  = "prodKinParticles";
-			const string&            prodKinMomentaLeafName    = "prodKinMomenta";
-			const string&            decayKinParticlesLeafName = "decayKinParticles";
-			const string&            decayKinMomentaLeafName   = "decayKinMomenta";
+			const string&            inTreeName               = "rootPwaEvtTree";
+			const string&            prodKinPartNamesObjName  = "prodKinParticles";
+			const string&            prodKinMomentaLeafName   = "prodKinMomenta";
+			const string&            decayKinPartNamesObjName = "decayKinParticles";
+			const string&            decayKinMomentaLeafName  = "decayKinMomenta";
 			vector<complex<double> > myAmps;
 			// open input file
 			vector<TTree*> inTrees;
@@ -350,8 +350,8 @@ main(int argc, char** argv)
 				vector<string> evtFileNames;
 				if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
 				                         rootFileNames, evtFileNames,
-				                         inTreeName, prodKinParticlesLeafName, prodKinMomentaLeafName,
-				                         decayKinParticlesLeafName, decayKinMomentaLeafName, true)) {
+				                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+				                         decayKinPartNamesObjName, decayKinMomentaLeafName, true)) {
 					printErr << "problems opening input files. aborting." << endl;
 					exit(1);
 				}

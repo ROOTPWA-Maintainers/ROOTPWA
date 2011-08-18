@@ -74,8 +74,7 @@ usage(const string& progName,
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
 	     << "        -e #       maximum deviation of amplitude ratios from 1 (default: 1E-6)" << endl
-	     << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
-	     << "        -r         target particle name for .evt files (default: 'p+')" << endl
+	     << "        -l names   semicolon separated object/leaf names in input data (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -193,7 +192,7 @@ bool testAmplitude(TTree*              inTree,
 		s.precision(nmbDigits);
 		s.setf(ios_base::scientific, ios_base::floatfield);
 		if (debug) {
-			printInfo << "amplitude " << i << ": " << endl;
+			printDebug << "amplitude " << i << ": " << endl;
 			s << "        ampl.            = " << ampValues[i];
 			if (ampZero)
 				s << " <! zero amplitude";
@@ -290,16 +289,14 @@ main(int    argc,
 	printSvnVersion();
 
 	// parse command line options
-	const string progName           = argv[0];
-	string       dataFileName       = "";
-	long int     maxNmbEvents       = -1;
-	string       pdgFileName        = "./particleDataTable.txt";
-	string       inTreeName         = "rootPwaEvtTree";
-	double       maxDelta           = 1e-6;
-	string       leafNames          = "prodKinParticles;prodKinMomenta;"
-		                                "decayKinParticles;decayKinMomenta";
-	string       targetParticleName = "p+";
-	bool         debug              = false;
+	const string progName     = argv[0];
+	string       dataFileName = "";
+	long int     maxNmbEvents = -1;
+	string       pdgFileName  = "./particleDataTable.txt";
+	string       inTreeName   = "rootPwaEvtTree";
+	double       maxDelta     = 1e-6;
+	string       leafNames    = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool         debug        = false;
 	extern char* optarg;
 	extern int   optind;
 	int          c;
@@ -322,9 +319,6 @@ main(int    argc,
 			break;
 		case 'l':
 			leafNames = optarg;
-			break;
-		case 'r':
-			targetParticleName = optarg;
 			break;
 		case 'v':
 			debug = true;
@@ -356,19 +350,19 @@ main(int    argc,
 	typedef tokenizer<char_separator<char> > tokenizer;
 	char_separator<char> separator(";");
 	tokenizer            leafNameTokens(leafNames, separator);
-	tokenizer::iterator  leafNameToken             = leafNameTokens.begin();
-	const string         prodKinParticlesLeafName  = *leafNameToken;
-	const string         prodKinMomentaLeafName    = *(++leafNameToken);
-	const string         decayKinParticlesLeafName = *(++leafNameToken);
-	const string         decayKinMomentaLeafName   = *(++leafNameToken);
+	tokenizer::iterator  leafNameToken            = leafNameTokens.begin();
+	const string         prodKinPartNamesObjName  = *leafNameToken;
+	const string         prodKinMomentaLeafName   = *(++leafNameToken);
+	const string         decayKinPartNamesObjName = *(++leafNameToken);
+	const string         decayKinMomentaLeafName  = *(++leafNameToken);
 	if (debug)
-		printInfo << "using the following leaf names:" << endl
-		          << "        production kinematics: "
-		          << "particle names = '" << prodKinParticlesLeafName << "', "
-		          << "momenta = '" << prodKinMomentaLeafName << "'" << endl
-		          << "        decay kinematics     : "
-		          << "particle names = '" << decayKinParticlesLeafName << "', "
-		          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
+		printDebug << "using the following leaf names:" << endl
+		           << "        production kinematics: "
+		           << "particle names = '" << prodKinPartNamesObjName << "', "
+		           << "momenta = '" << prodKinMomentaLeafName << "'" << endl
+		           << "        decay kinematics     : "
+		           << "particle names = '" << decayKinPartNamesObjName << "', "
+		           << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
 
 	// open input file
 	TTree*        inTree            = 0;
@@ -392,9 +386,9 @@ main(int    argc,
 		vector<TTree*> inTrees;
 		if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
 		                         rootFileNames, evtFileNames,
-		                         inTreeName, prodKinParticlesLeafName, prodKinMomentaLeafName,
-		                         decayKinParticlesLeafName, decayKinMomentaLeafName, debug)) {
-			printErr << "problems opening input files . aborting." << endl;
+		                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+		                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
+			printErr << "problems opening input file(s). aborting." << endl;
 			exit(1);
 		}
 		inTree = inTrees[0];

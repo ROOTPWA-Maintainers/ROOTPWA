@@ -48,7 +48,6 @@
 
 
 class TTree;
-class TChain;
 class TClonesArray;
 
 
@@ -74,21 +73,21 @@ namespace rpwa {
 	bool getParticleNamesFromRootFile(TFile&             inFile,
 	                                  TClonesArray*&     prodKinPartNames,   // array of particle names to be filled
 	                                  TClonesArray*&     decayKinPartNames,  // array of particle names to be filled
-	                                  const std::string& inTreeName                = "rootPwaEvtTree",
-	                                  const std::string& prodKinParticlesLeafName  = "prodKinParticles",
-	                                  const std::string& decayKinParticlesLeafName = "decayKinParticles");
+	                                  const std::string& inTreeName               = "rootPwaEvtTree",
+	                                  const std::string& prodKinPartNamesObjName  = "prodKinParticles",
+	                                  const std::string& decayKinPartNamesObjName = "decayKinParticles");
 
 	bool openRootEvtFiles(std::vector<TTree*>&            inTrees,            // array of trees from .root and .evt files
 	                      TClonesArray*&                  prodKinPartNames,   // array of particle names to be filled
 	                      TClonesArray*&                  decayKinPartNames,  // array of particle names to be filled
 	                      const std::vector<std::string>& rootFileNames,      // .root files to be opened
 	                      const std::vector<std::string>& evtFileNames,       // .evt files to be converted to trees
-	                      const std::string&              inTreeName                = "rootPwaEvtTree",
-	                      const std::string&              prodKinParticlesLeafName  = "prodKinParticles",
-	                      const std::string&              prodKinMomentaLeafName    = "prodKinMomenta",
-	                      const std::string&              decayKinParticlesLeafName = "decayKinParticles",
-	                      const std::string&              decayKinMomentaLeafName   = "decayKinMomenta",
-	                      const bool                      debug                     = false);
+	                      const std::string&              inTreeName               = "rootPwaEvtTree",
+	                      const std::string&              prodKinPartNamesObjName  = "prodKinParticles",
+	                      const std::string&              prodKinMomentaLeafName   = "prodKinMomenta",
+	                      const std::string&              decayKinPartNamesObjName = "decayKinParticles",
+	                      const std::string&              decayKinMomentaLeafName  = "decayKinMomenta",
+	                      const bool                      debug                    = false);
 
 
 	bool fillTreeFromEvt(std::istream&      inEvt,
@@ -102,15 +101,15 @@ namespace rpwa {
 	                     const long int     treeCacheSize           = 25000000);  // 25 MByte ROOT tree read cache
 
 
-	bool writeEvtFromTree(TChain&            inTree,
-	                      std::ostream&      outEvt,
-	                      const long int     maxNmbEvents              = -1,
-	                      const std::string& inTreeName                = "rootPwaEvtTree",
-	                      const std::string& prodKinParticlesLeafName  = "prodKinParticles",
-	                      const std::string& prodKinMomentaLeafName    = "prodKinMomenta",
-	                      const std::string& decayKinParticlesLeafName = "decayKinParticles",
-	                      const std::string& decayKinMomentaLeafName   = "decayKinMomenta",
-	                      const bool         debug                     = false);
+	bool writeEvtFromTree(TTree&              inTree,
+	                      std::ostream&       outEvt,
+	                      const TClonesArray& prodKinPartNames,
+	                      const TClonesArray& decayKinPartNames,
+	                      const long int      maxNmbEvents            = -1,
+	                      const std::string&  inTreeName              = "rootPwaEvtTree",
+	                      const std::string&  prodKinMomentaLeafName  = "prodKinMomenta",
+	                      const std::string&  decayKinMomentaLeafName = "decayKinMomenta",
+	                      const bool          debug                   = false);
 
 
 #if !defined (__CINT__) && !defined (ROOT_CINT)
