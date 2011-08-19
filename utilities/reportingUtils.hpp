@@ -139,7 +139,9 @@ namespace rpwa {
     }
 		return false;
 	}
+#ifndef __CINT__
 	const bool isColorTerminal = terminalSupportsColor();
+#endif
 	
 	inline
 	bool
