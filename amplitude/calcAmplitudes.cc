@@ -284,7 +284,7 @@ main(int    argc,
 		                    prodKinMomentaLeafName, decayKinMomentaLeafName))
 			printWarn << "problems reading tree" << endl;
 	}
-	printInfo << "successfully calculated amplitudes for " << ampValues.size() << " events" << endl;
+	printSucc << "calculated amplitudes for " << ampValues.size() << " events" << endl;
 	timer.Stop();
 	printInfo << "this job consumed: ";
 	timer.Print();
@@ -318,7 +318,7 @@ main(int    argc,
 		ampFilePlain->close();
 		delete ampFilePlain;
 	}
-	printInfo << "successfully wrote " << ampValues.size() << " amplitude values to "
+	printSucc << "wrote " << ampValues.size() << " amplitude values to "
 	          << "'" << ampFileName << "'";
 	if (not writeRootFormat)
 		cout << " in " << ((asciiOutput) ? "ASCII" : "binary")

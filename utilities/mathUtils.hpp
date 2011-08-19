@@ -87,22 +87,22 @@ namespace rpwa {
 	}
 
 	
-  template <typename T>
-  inline
-  bool
-  isOdd(const T val)  ///< returns whether val is an odd number (assuming T is integer type)
-  {
-    return val & 0x1;
-  }
+	template <typename T>
+	inline
+	bool
+	isOdd(const T val)  ///< returns whether val is an odd number (assuming T is integer type)
+	{
+		return val & 0x1;
+	}
   
 
-  template <typename T>
-  inline
-  bool
-  isEven(const T val)  ///< returns whether val is an even number (assuming T is integer type)
-  {
-    return val & 0x0;
-  }
+	template <typename T>
+	inline
+	bool
+	isEven(const T val)  ///< returns whether val is an even number (assuming T is integer type)
+	{
+		return val & 0x0;
+	}
 
 	
 	inline
@@ -144,55 +144,55 @@ namespace rpwa {
 	                   const int m,
 	                   const int refl)  ///< calculates prefactor for reflectibity symmetrization
 	{
-    if (rpwa::abs(P) != 1) {
-      printWarn << "parity value P = " << P << " != +-1 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
-    if (m < 0) {
-      printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
-    if (rpwa::abs(refl) != 1) {
-      printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
-                << "returning 0." << std::endl;
-      return 0;
-    }
-    return refl * P * powMinusOne((j - m) / 2);
+		if (rpwa::abs(P) != 1) {
+			printWarn << "parity value P = " << P << " != +-1 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
+		}
+		if (m < 0) {
+			printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
+		}
+		if (rpwa::abs(refl) != 1) {
+			printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
+		}
+		return refl * P * powMinusOne((j - m) / 2);
 	}
 
 
 	//////////////////////////////////////////////////////////////////////////////
-  // some wrappers for libpp functions
-  // !NOTE! all angular momenta and spin projections are in units of hbar/2
-  inline
-  double
-  barrierFactor(const int    L,
-                const double breakupMom,
-                const bool   debug = false)  ///< Blatt-Weisskopf barrier factor
-  {
-    const double bf = F(L, breakupMom);
-    if (debug)
-      printInfo << "Blatt-Weisskopf barrier factor(L = " << 0.5 * L << ", "
-                << "q = " << breakupMom << " GeV) = " << maxPrecision(bf) << std::endl;
-    return bf;
-  }
+	// some wrappers for libpp functions
+	// !NOTE! all angular momenta and spin projections are in units of hbar/2
+	inline
+	double
+	barrierFactor(const int    L,
+	              const double breakupMom,
+	              const bool   debug = false)  ///< Blatt-Weisskopf barrier factor
+	{
+		const double bf = F(L, breakupMom);
+		if (debug)
+			printInfo << "Blatt-Weisskopf barrier factor(L = " << 0.5 * L << ", "
+			          << "q = " << breakupMom << " GeV) = " << maxPrecision(bf) << std::endl;
+		return bf;
+	}
 
   
-  inline
-  std::complex<double>
-  breitWigner(const double m,
-              const double m0,
-              const double Gamma0,
-              const int    L,
-              const double q,
-              const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
-  {
-	  const double Gamma  =   Gamma0 * (m0 / m) * (q / q0)
-		                      * (rpwa::pow(F(L, q), 2) / rpwa::pow(F(L, q0), 2));
-    return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
-  }
+	inline
+	std::complex<double>
+	breitWigner(const double m,
+	            const double m0,
+	            const double Gamma0,
+	            const int    L,
+	            const double q,
+	            const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
+	{
+		const double Gamma  =   Gamma0 * (m0 / m) * (q / q0)
+			                    * (rpwa::pow(F(L, q), 2) / rpwa::pow(F(L, q0), 2));
+		return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
+	}
   
   
 } // namespace rpwa

@@ -410,7 +410,7 @@ main(int    argc,
 		                      prodKinMomentaLeafName, decayKinMomentaLeafName))
 			++countKeyFileErr;
 		else
-			printInfo << "key file '" << keyFileNames[i] << "' successfully passed all tests" << endl;
+			printSucc << "key file '" << keyFileNames[i] << "' passed all tests" << endl;
 		// collect errors
 		for (unsigned int j = 0; j < errors.size(); ++j)
 			keyFileErrors[errors[j]].push_back(keyFileNames[i]);
@@ -423,7 +423,7 @@ main(int    argc,
 	// report final result and set exit status accordingly
 	cout << endl;
 	if (countKeyFileErr == 0) {
-		printInfo << "success! all " << keyFileNames.size() << " keyfile(s) passed all tests" << endl;
+		printSucc << "all " << keyFileNames.size() << " keyfile(s) passed all tests" << endl;
 		return 0;
 	}
 

@@ -202,7 +202,7 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	//topo->calcIsobarBaryonNmbs();
 	topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
   
-	printInfo << "successfully constructed decay topology from key file" << endl;
+	printSucc << "constructed decay topology from key file" << endl;
 	return true;
 }
 
@@ -240,20 +240,20 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	bool   useReflectivityBasis = true;
 	if (_amplitudeKey) {
 		if (_amplitudeKey->lookupValue("formalism", formalism) and _debug)
-			printInfo << "setting amplitude formalism to '" << formalism << "'" << endl;
+			printDebug << "setting amplitude formalism to '" << formalism << "'" << endl;
 		if (_amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
-			printInfo << "setting amplitude option 'boseSymmetrize' to "
-			          << ((boseSymmetrize) ? "true" : "false") << endl;
+			printDebug << "setting amplitude option 'boseSymmetrize' to "
+			           << ((boseSymmetrize) ? "true" : "false") << endl;
 		if (_amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
-			printInfo << "setting amplitude option 'useReflectivityBasis' to "
-			          << ((useReflectivityBasis) ? "true" : "false") << endl;
+			printDebug << "setting amplitude option 'useReflectivityBasis' to "
+			           << ((useReflectivityBasis) ? "true" : "false") << endl;
 	}
 	// construct amplitude
 	amplitude = mapAmplitudeType(formalism, topo);
 	if (_debug)
-		printInfo << "constructed amplitude '"<< amplitude->name() << "': "
-		          << ((boseSymmetrize      ) ? "en" : "dis") << "abled Bose symmetrization, "
-		          << ((useReflectivityBasis) ? "en" : "dis") << "abled reflectivity basis" << endl;
+		printDebug << "constructed amplitude '"<< amplitude->name() << "': "
+		           << ((boseSymmetrize      ) ? "en" : "dis") << "abled Bose symmetrization, "
+		           << ((useReflectivityBasis) ? "en" : "dis") << "abled reflectivity basis" << endl;
 	if (not amplitude) {
 		printWarn << "problems constructing decay amplitude." << endl;
 		return false;
@@ -270,7 +270,7 @@ waveDescription::writeKeyFile(const string&              keyFileName,
                               const bool                 writeProdVert)
 {
 	if (_debug)
-		printInfo << "writing key file '" << keyFileName << "'" << endl;
+		printDebug << "writing key file '" << keyFileName << "'" << endl;
 	Config   key;
 	Setting& rootKey = key.getRoot();
 	if (not writeKeyFile(rootKey, topo, writeProdVert)) {
@@ -283,7 +283,7 @@ waveDescription::writeKeyFile(const string&              keyFileName,
 		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
 		return false;
 	}
-	printInfo << "successfully written key file '" << keyFileName << "'" << endl;
+	printSucc << "written key file '" << keyFileName << "'" << endl;
 	return true;
 }
 
@@ -294,7 +294,7 @@ waveDescription::writeKeyFile(const string&          keyFileName,
                               const bool             writeProdVert)
 {
 	if (_debug)
-		printInfo << "writing key file '" << keyFileName << "'" << endl;
+		printDebug << "writing key file '" << keyFileName << "'" << endl;
 	Config   key;
 	Setting& rootKey = key.getRoot();
 	if (not writeKeyFile(rootKey, *amplitude.decayTopology(), writeProdVert)) {
@@ -311,7 +311,7 @@ waveDescription::writeKeyFile(const string&          keyFileName,
 		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
 		return false;
 	}
-	printInfo << "successfully written key file '" << keyFileName << "'" << endl;
+	printSucc << "written key file '" << keyFileName << "'" << endl;
 	return true;
 }
 
@@ -422,7 +422,7 @@ waveDescription::constructXParticle(const Setting& XQnKey,
                                     particlePtr&   X)
 {
 	if (_debug)
-		printInfo << "reading X quantum numbers from '" << XQnKey.getPath() << "':" << endl;
+		printDebug << "reading X quantum numbers from '" << XQnKey.getPath() << "':" << endl;
 	// get X quantum numbers
 	map<string, int> mandatoryXQn, optionalXQn;
 	mandatoryXQn["isospin"];
@@ -452,7 +452,7 @@ waveDescription::constructXParticle(const Setting& XQnKey,
 	                   mandatoryXQn["J"], optionalXQn["P"], optionalXQn["C"],
 	                   mandatoryXQn["M"], optionalXQn["refl"]);
 	if (_debug)
-		printInfo << "constructed X particle: " << X->qnSummary() << endl;
+		printDebug << "constructed X particle: " << X->qnSummary() << endl;
 	return true;
 }
 
@@ -493,8 +493,8 @@ waveDescription::mapProductionVertexType(const Setting&       prodVertKey,
 				double beamLongPol = 0;
 				if ((beamParticleKey->lookupValue("longPol", beamLongPol))) {
 					if (_debug)
-						printInfo << "setting polarization of beam " << prodKinParticles["beam"]->qnSummary()
-						          << " to " << beamLongPol << endl;
+						printDebug << "setting polarization of beam " << prodKinParticles["beam"]->qnSummary()
+						           << " to " << beamLongPol << endl;
 				} else
 					printWarn << "no polarization is given for beam " << prodKinParticles["beam"]->qnSummary()
 					          << ". assuming unpolarized beam." << endl;
@@ -505,7 +505,7 @@ waveDescription::mapProductionVertexType(const Setting&       prodVertKey,
 		printWarn << "unknown production vertex type '" << vertType << "'" << endl;
 	if (_debug) {
 		if (success and prodVert)
-			printInfo << "constructed " << *prodVert << endl;
+			printDebug << "constructed " << *prodVert << endl;
 		else
 			printWarn << "problems constructing production vertex of type '" << vertType << "'" << endl;
 	}
@@ -525,7 +525,7 @@ waveDescription::constructProductionVertex(const Setting&       rootKey,
 		return false;
 	}
 	if (_debug)
-		printInfo << "reading production vertex from '" << prodVertKey->getPath() << "':" << endl;
+		printDebug << "reading production vertex from '" << prodVertKey->getPath() << "':" << endl;
 	bool success = true;
 	// get vertex type
 	string vertType;
@@ -544,7 +544,7 @@ waveDescription::constructParticle(const Setting& particleKey,
                                    particlePtr&   particle)
 {
 	if (_debug)
-		printInfo << "reading particle information from '" << particleKey.getPath() << "':" << endl;
+		printDebug << "reading particle information from '" << particleKey.getPath() << "':" << endl;
 	string name;
 	if (particleKey.lookupValue("name", name)) {
 		particle = createParticle(name);
@@ -559,7 +559,7 @@ waveDescription::constructParticle(const Setting& particleKey,
 		if (particleKey.lookupValue("spinProj", spinProj))
 			particle->setSpinProj(spinProj);
 		if (_debug)
-			printInfo << "created particle " << particle->qnSummary() << flush;
+			printDebug << "created particle " << particle->qnSummary() << flush;
 		int index;
 		if (particleKey.lookupValue("index", index)) {
 			particle->setIndex(index);
@@ -608,7 +608,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
                                       vector<particlePtr>&          fsParticles)
 {
 	if (_debug)
-		printInfo << "reading decay vertex information from '" << parentKey.getPath() << "':" << endl;
+		printDebug << "reading decay vertex information from '" << parentKey.getPath() << "':" << endl;
 	bool success = true;
 
 	const Setting*      fsPartKeys = findLibConfigList(parentKey, "fsParticles", false);
@@ -683,7 +683,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 	decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0],
 	                                                daughters[1], L, S, massDep));
 	if (_debug)
-		printInfo << "constructed " << *decayVertices.back() << endl;
+		printDebug << "constructed " << *decayVertices.back() << endl;
 	return true;
 }
 
@@ -713,7 +713,7 @@ waveDescription::setProductionVertexKeys(Setting&                   prodVertKey,
 	const string prodVertName = prodVert->name();
 	if ((prodVertName == "diffractiveDissVertex") or (prodVertName == "leptoProductionVertex")) {
 		if (_debug)
-			printInfo << "setting keys for " << *prodVert << endl;
+			printDebug << "setting keys for " << *prodVert << endl;
 		prodVertKey.add("type", Setting::TypeString) = prodVertName;
 		map<string, particlePtr> prodKinParticles;
 		if (prodVertName == "diffractiveDissVertex") {
@@ -755,7 +755,7 @@ waveDescription::setXQuantumNumbersKeys(Setting&        XQnKey,
                                         const particle& X)
 {
 	if (_debug)
-		printInfo << "setting quantum number keys for " << X.qnSummary() << endl;
+		printDebug << "setting quantum number keys for " << X.qnSummary() << endl;
 	XQnKey.add("isospin", Setting::TypeInt) = X.isospin();
 	if (X.G() != 0)
 		XQnKey.add("G",     Setting::TypeInt) = X.G();
@@ -784,8 +784,8 @@ waveDescription::setMassDependence(Setting&              isobarDecayKey,
 		return true;
 	else {
 		if (_debug)
-			printInfo << "setting key for '" << massDep << "' mass dependence to "
-			          << "'" << massDepName << "'" << endl;
+			printDebug << "setting key for '" << massDep << "' mass dependence to "
+			           << "'" << massDepName << "'" << endl;
 		Setting& massDepKey = isobarDecayKey.add("massDep", Setting::TypeGroup);
 		massDepKey.add("name", Setting::TypeString) = massDepName;
 	}
@@ -799,7 +799,7 @@ waveDescription::setXDecayKeys(Setting&                   parentDecayKey,
                                const isobarDecayVertex&   vert)
 {
 	if (_debug)
-		printInfo << "setting keys for decay " << vert << endl;
+		printDebug << "setting keys for decay " << vert << endl;
 	setMassDependence(parentDecayKey, *vert.massDependence());
 	vector<particlePtr> fsParticles;
 	vector<particlePtr> isobars;
@@ -844,7 +844,7 @@ waveDescription::writeKeyFile(Setting&                   rootKey,
 		return false;
 	}
 	if (_debug)
-		printInfo << "writing " << topo;
+		printDebug << "writing " << topo;
 	if (writeProdVert) {
 		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
 		setProductionVertexKeys(prodVertKey, topo.productionVertex());
@@ -878,8 +878,8 @@ waveDescription::setAmplitude(Setting&               amplitudeKey,
 	}
 	if (formalism != "") {
 		if (_debug)
-			printInfo << "setting 'formalism' key for '" << amplitudeName << "' to "
-			          << "'" << formalism << "'" << endl;
+			printDebug << "setting 'formalism' key for '" << amplitudeName << "' to "
+			           << "'" << formalism << "'" << endl;
 		amplitudeKey.add("formalism", Setting::TypeString) = formalism;
 	}
 	if (not amplitude.boseSymmetrization())

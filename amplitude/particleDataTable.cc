@@ -108,8 +108,8 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		if (blackListMatch)
 			continue;
 		if (_debug) {
-			printInfo << "found entry " << i->second.name() << " matching " << prototype
-			          << " and '" << sel << "'" << flush;
+			printDebug << "found entry " << i->second.name() << " matching " << prototype
+			           << " and '" << sel << "'" << flush;
 			if (minMass > 0)
 				cout << " with mass > " << minMass - minMassWidthFactor * i->second.width() << " GeV";
 			if (whiteList.size() > 0)
@@ -138,7 +138,7 @@ particleDataTable::addEntry(const particleProperties& partProp)
 	} else {
 		_dataTable[name] = partProp;
 		if (_debug)
-			printInfo << "added entry for '" << name << "' into particle data table" << endl;
+			printDebug << "added entry for '" << name << "' into particle data table" << endl;
 		return true;
 	}
 }
@@ -188,7 +188,7 @@ particleDataTable::read(istream& in)
 		return false;
 	}
 	if (_debug)
-		printInfo << "data table has " << nmbEntries() << " entries (before reading)" << endl;
+		printDebug << "data table has " << nmbEntries() << " entries (before reading)" << endl;
 	unsigned int countEntries = 0;
 	while (in.good()) {
 		particleProperties partProp;
@@ -196,7 +196,7 @@ particleDataTable::read(istream& in)
 			if(addEntry(partProp))
 				++countEntries;
 	}
-	printInfo << "successfully read " << countEntries << " new entries into particle data table" << endl;
+	printSucc << "read " << countEntries << " new entries into particle data table" << endl;
 	if (_debug)
 		cout << "    data table has " << nmbEntries() << " entries (after reading)" << endl;
 	return true;

@@ -93,7 +93,6 @@ convertEvtToTree(//const string&  evtFileName              = "1500.1540.3pi.evt"
 		return false;
 	}
 
-
 	// doit
 	TClonesArray* prodKinPartNames  = new TClonesArray("TObjString");
 	TClonesArray* decayKinPartNames = new TClonesArray("TObjString");
@@ -108,7 +107,7 @@ convertEvtToTree(//const string&  evtFileName              = "1500.1540.3pi.evt"
 
 	outFile->Close();
 	if (success)
-		printInfo << "wrote events to file '" << outFileName << "'" << endl;
+		printSucc << "wrote events to file '" << outFileName << "'" << endl;
 	else
 		printWarn << "problems processing events" << endl;
 	return success;

@@ -47,11 +47,175 @@
 #include <limits>
 #include <vector>
 #include <cmath>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
 #include "RVersion.h"
 
 
 namespace rpwa {
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// general output stream manipulator with one argument
+
+	template <typename T>
+	class omanip {
+
+	private:
+
+		typedef std::ostream& (*funcPointer)(std::ostream&, const T&);
+
+
+	public:
+
+		omanip(funcPointer func,
+		       const T&    val)
+			: _func(func),
+			  _val (val )
+		{	}
+		
+		friend
+		std::ostream&
+		operator << (std::ostream& out,
+		             const omanip& manip)
+		{	return manip._func(out, manip._val); }
+
+	private:
+		
+		funcPointer _func;
+		T           _val;
+	}; 
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// functions for colored output on interactive terminals
+
+	// based on code taken from cmake (www.cmake.org)
+	// Source/kwsys/Terminal.c
+	inline
+	bool
+	terminalSupportsColor()
+	{
+		// terminals running inside emacs do not support escape sequences
+		const char* envEmacs = getenv("EMACS");
+		if (envEmacs and (*envEmacs == 't'))
+			return false;
+
+		// check terminal name
+		const std::string colorTermNames[] = {
+	    "Eterm",
+	    "ansi",
+	    "color-xterm",
+	    "con132x25", "con132x30", "con132x43", "con132x60",
+	    "con80x25", "con80x28", "con80x30", "con80x43", "con80x50", "con80x60",
+	    "cons25",
+	    "console",
+	    "cygwin",
+	    "dtterm",
+	    "eterm-color",
+	    "gnome", "gnome-256color",
+	    "konsole", "konsole-256color",
+	    "kterm",
+	    "linux",
+	    "msys",
+	    "linux-c",
+	    "mach-color",
+	    "mlterm",
+	    "putty",
+	    "rxvt", "rxvt-256color", "rxvt-cygwin", "rxvt-cygwin-native",
+	    "rxvt-unicode", "rxvt-unicode-256color",
+	    "screen", "screen-256color", "screen-256color-bce", "screen-bce", "screen-w", "screen.linux",
+	    "vt100",
+	    "xterm", "xterm-16color", "xterm-256color", "xterm-88color", "xterm-color", "xterm-debian"
+    };
+    const char* envTerm = getenv("TERM");
+    if (envTerm) {
+	    const std::string t = envTerm;
+	    for (unsigned i = 0; i < sizeof(colorTermNames) / sizeof(std::string) ; ++i)
+		    if (colorTermNames[i] == t)
+			    return true;
+    }
+		return false;
+	}
+	const bool isColorTerminal = terminalSupportsColor();
+	
+	inline
+	bool
+	streamIsNotInteractive(const int fileDescriptor)
+	{
+		struct stat streamStatus;
+		if (fstat(fileDescriptor, &streamStatus) == 0)
+			// check wether stream is a regular file
+			if(streamStatus.st_mode & S_IFREG)
+				return true;
+		return false;
+	}
+
+	inline
+	bool
+	stdoutIsColorTerminal()
+	{
+		return isColorTerminal and (isatty(STDOUT_FILENO) == 1)
+			and not streamIsNotInteractive(STDOUT_FILENO);
+	}
+
+	inline
+	bool
+	stderrIsColorTerminal()
+	{
+		return isColorTerminal and (isatty(STDERR_FILENO) == 1)
+			and not streamIsNotInteractive(STDERR_FILENO);
+	}
+
+	
+	// VT100 escape sequences
+	enum vt100EscapeCodesEnum {
+		NORMAL     = 0,
+		BOLD       = 1,
+		UNDERLINE  = 4,
+		BLINK      = 5,
+		INVERSE    = 7,
+		FG_BLACK   = 30,
+		FG_RED     = 31,
+		FG_GREEN   = 32,
+		FG_YELLOW  = 33,
+		FG_BLUE    = 34,
+		FG_MAGENTA = 35,
+		FG_CYAN    = 36,
+		FG_WHITE   = 37,
+		BG_BLACK   = 40,
+		BG_RED     = 41,
+		BG_GREEN   = 42,
+		BG_YELLOW  = 43,
+		BG_BLUE    = 44,
+		BG_MAGENTA = 45,
+		BG_CYAN    = 46,
+		BG_WHITE   = 47
+	};
+	
+	// insert escape sequence into stream
+	inline
+	std::ostream&
+	vt100SequenceFor(std::ostream&               out,
+	                 const vt100EscapeCodesEnum& vt100Code)
+	{
+		bool isVt100 = false;
+		if (out == std::cout)
+			isVt100 = stdoutIsColorTerminal();
+		else if (out == std::cerr)
+			isVt100 = stderrIsColorTerminal();
+		if (isVt100)
+			out << "\33[" << vt100Code << "m";
+		return out;
+	}
+
+	// ostream manipulator for VT100 codes
+	inline
+	omanip<vt100EscapeCodesEnum>
+	setStreamTo(const vt100EscapeCodesEnum vt100Code)
+	{ return omanip<vt100EscapeCodesEnum>(&vt100SequenceFor, vt100Code); }
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -73,10 +237,11 @@ namespace rpwa {
 		return prettyFunction;
 	}
 
-#define printErr  std::cerr << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << std::flush
-#define printWarn std::cerr << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << std::flush
-#define printInfo std::cout << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "  << std::flush
-#define printDebug std::cout << "*** " << getClassMethod__(__PRETTY_FUNCTION__) << "(): debug: "  << std::flush
+#define printErr   std::cerr << setStreamTo(rpwa::FG_RED    ) << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << setStreamTo(rpwa::NORMAL) << std::flush
+#define printWarn  std::cerr << setStreamTo(rpwa::FG_YELLOW ) << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << setStreamTo(rpwa::NORMAL) << std::flush
+#define printSucc  std::cout << setStreamTo(rpwa::FG_GREEN  ) << "*** " << getClassMethod__(__PRETTY_FUNCTION__) << "(): success: " << setStreamTo(rpwa::NORMAL) << std::flush
+#define printInfo  std::cout << setStreamTo(rpwa::BOLD      ) << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "    << setStreamTo(rpwa::NORMAL) << std::flush
+#define printDebug std::cout << setStreamTo(rpwa::FG_MAGENTA) << "+++ " << getClassMethod__(__PRETTY_FUNCTION__) << "(): debug: "   << setStreamTo(rpwa::NORMAL) << std::flush
 
 
 	//////////////////////////////////////////////////////////////////////////////

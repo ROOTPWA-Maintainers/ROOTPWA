@@ -411,7 +411,7 @@ main(int argc, char** argv)
 			} // event loop
       
 			timer.Stop();
-			printInfo << "successfully read " << myAmps.size() << " events from file(s) "
+			printSucc << "read " << myAmps.size() << " events from file(s) "
 			          << "'" << rootInFileName << "' and calculated amplitudes" << endl;
 			cout << "needed ";
 			printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
@@ -438,7 +438,7 @@ main(int argc, char** argv)
 					++countEvent;
 				}
 				timer.Stop();
-				printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
+				printSucc << "read " << pwa2kAmps.size() << " events from file(s) "
 				          << "'" << evtInFileName << "' and calculated amplitudes" << endl;
 				cout << "needed ";
 				timer.Print();

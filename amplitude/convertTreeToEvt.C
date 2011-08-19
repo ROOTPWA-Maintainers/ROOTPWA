@@ -105,7 +105,7 @@ convertTreeToEvt(const string&  inFileNamePattern        = "testEvents.root",
 	                                      prodKinMomentaLeafName, decayKinMomentaLeafName, debug);
 
 	if (success)
-		printInfo << "wrote events to file '" << outFileName << "'" << endl;
+		printSucc << "wrote events to file '" << outFileName << "'" << endl;
 	else
 		printWarn << "problems processing events" << endl;
 	return success;
