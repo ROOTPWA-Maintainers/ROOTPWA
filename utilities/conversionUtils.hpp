@@ -177,6 +177,20 @@ namespace rpwa {
 	}
 
 
+	// convert internal spin quantum number into real quantum number in units of hbar
+	inline
+	double
+	spinQn(const int qn)
+	{	return 0.5 * qn; }
+
+
+	// convert parity quantum number into string (+, -, or empty string)
+	inline
+	std::string
+	parityQn(const int qn)
+	{ return (qn != 0) ? sign(qn) : ""; }
+
+
 }  // namespace rpwa
 
 

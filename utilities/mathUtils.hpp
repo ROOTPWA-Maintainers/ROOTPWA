@@ -101,7 +101,7 @@ namespace rpwa {
 	bool
 	isEven(const T val)  ///< returns whether val is an even number (assuming T is integer type)
 	{
-		return val & 0x0;
+		return not isOdd(val);
 	}
 
 	

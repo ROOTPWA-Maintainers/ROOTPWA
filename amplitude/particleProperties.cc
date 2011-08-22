@@ -226,8 +226,8 @@ string
 particleProperties::qnSummary() const
 {
 	ostringstream out;
-	out << name() << "[" << 0.5 * isospin() << ((G() != 0) ? sign(G()) : "")
-	    << "(" << 0.5 * J() << ((P() != 0) ? sign(P()) : "") << ((C() != 0) ? sign(C()) : "") << ")]";
+	out << name() << "[" << spinQn(isospin()) << parityQn(G())
+	    << "(" << spinQn(J()) << parityQn(P()) << parityQn(C()) << ")]";
 	return out.str();
 }
 
@@ -244,12 +244,12 @@ particleProperties::print(ostream& out) const
 		out << "^P" << ((C() != 0) ? "C" : "") << " = ";
   else
 		out << ((C() != 0) ? "^C" : "") << " = ";
-	out << 0.5 * isospin();
+	out << spinQn(isospin());
 	if (G() != 0)
 		out << "^" << sign(G());
-	out << " " << 0.5 * J();
+	out << " " << spinQn(J());
 	if (P() != 0)
-		out << "^" << sign(P()) << ((C() != 0) ? sign(C()) : "");
+		out << "^" << sign(P()) << parityQn(C());
 	else
 		if (C() != 0)
 			out << "^" << sign(C());

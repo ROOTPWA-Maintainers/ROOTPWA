@@ -39,13 +39,13 @@
 echo ">>> info: called ${0} ${*}"
 
 
-VALGRIND_TOOL="memcheck"
-#VALGRIND_TOOL="callgrind"
+#VALGRIND_TOOL="memcheck"
+VALGRIND_TOOL="callgrind"
 
-#PROGRAM="../build/bin/calcAmplitudes"
-#PROGRAM_OPT="-k test.key testEvents.5k.root"
-PROGRAM="../debugBuild/bin/testLibppFunctions"
-PROGRAM_OPT=""
+PROGRAM="../build/bin/calcAmplitudes"
+PROGRAM_OPT="-n 200000 -k 1-4++1+f21270_32_pi-.key -p ./particleDataTable.txt -o 1-4++1+f21270_32_pi-.amp /dev/shm/allBins.ps.noTarget.root"
+#PROGRAM="../debugBuild/bin/testLibppFunctions"
+#PROGRAM_OPT=""
 
 LOG_FILE="./"$(basename ${PROGRAM})"_${VALGRIND_TOOL}.log"
 OUT_FILE="./"$(basename ${PROGRAM})"_${VALGRIND_TOOL}.out"

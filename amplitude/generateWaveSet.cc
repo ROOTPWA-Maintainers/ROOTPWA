@@ -102,11 +102,17 @@ main(int    argc,
 			usage(progName);
 		}
 
+	waveSetGenerator::setDebug(debug);
+
 	// initialize particle data table
 	particleDataTable::readFile(pdgFileName);
 
 	printInfo << "generating wave set from '" << keyFileName << "'" << endl;
-	waveSetGenerator waveSetGen(keyFileName);
+	waveSetGenerator waveSetGen;
+	if (not waveSetGen.setWaveSetParameters(keyFileName)) {
+		printErr << "could not initialize wave set generator. aborting." << endl;
+		exit(1);
+	}
 	printInfo << waveSetGen;
 	waveSetGen.generateWaveSet();
 

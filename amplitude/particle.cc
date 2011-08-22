@@ -174,9 +174,9 @@ string
 particle::qnSummary() const
 {
 	ostringstream out;
-	out << name() << "[" << 0.5 * isospin() << ((G() != 0) ? sign(G()) : "")
-	    << "(" << 0.5 * J() << sign(P()) << ((C() != 0) ? sign(C()) : "") << ")" << 0.5 * spinProj() 
-	    << ((reflectivity() != 0) ? sign(reflectivity()) : "") << "]";
+	out << name() << "[" << spinQn(isospin()) << parityQn(G())
+	    << "(" << spinQn(J()) << parityQn(P()) << parityQn(C()) << ")"
+	    << spinQn(spinProj()) << parityQn(reflectivity()) << "]";
 	return out.str();
 }
 
@@ -186,10 +186,10 @@ particle::print(ostream& out) const
 {
 	particleProperties::print(out);
 	out << ", "
-	    << "charge = "         << _charge         << ", "
-	    << "spin proj. = "     << 0.5 * _spinProj << ", "
-	    << "reflectivity = "   << _refl           << ", "
-	    << "Lorentz-vector = " << _lzVec          << " GeV, "
+	    << "charge = "         << _charge           << ", "
+	    << "spin proj. = "     << spinQn(_spinProj) << ", "
+	    << "reflectivity = "   << _refl             << ", "
+	    << "Lorentz-vector = " << _lzVec            << " GeV, "
 	    << "index = "          << _index;
 	return out;
 }
@@ -199,7 +199,7 @@ string
 particle::label() const
 {
 	ostringstream out;
-	out << name() << "[" << 0.5 * isospin() << ((G() != 0) ? sign(G()) : "")
-	    << "(" << 0.5 * J() << ((P() != 0) ? sign(P()) : "") << ((C() != 0) ? sign(C()) : "") << ")]";
+	out << name() << "[" << spinQn(isospin()) << parityQn(G())
+	    << "(" << spinQn(J()) << parityQn(P()) << parityQn(C()) << ")]";
 	return out.str();
 }

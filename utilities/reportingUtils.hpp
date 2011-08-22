@@ -197,7 +197,7 @@ namespace rpwa {
 		BG_WHITE   = 47
 	};
 	
-	// insert escape sequence into stream
+	// ostream manipulator function that inserts VT100 escape sequence into stream
 	inline
 	std::ostream&
 	vt100SequenceFor(std::ostream&               out,

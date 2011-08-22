@@ -54,14 +54,14 @@ namespace rpwa {
 	                   const bool         debug)  ///< lets config object parse a libConfig file
 	{
 		if (debug)
-			printInfo << "parsing libConfig file '" << libConfigFileName << "'" << std::endl;
+			printDebug << "parsing libConfig file '" << libConfigFileName << "'" << std::endl;
 		try {
 			config.readFile(libConfigFileName.c_str());
-		} catch(const libconfig::FileIOException& ioEx) {
+		} catch (const libconfig::FileIOException& ioEx) {
 			printWarn << "I/O error while reading libConfig file "
 			          << "'" << libConfigFileName << "'" << std::endl;
 			return false;
-		} catch(const libconfig::ParseException&  parseEx) {
+		} catch (const libconfig::ParseException&  parseEx) {
 			printWarn << "parse error in '" << parseEx.getFile() << "' line " << parseEx.getLine()
 			          << ": " << parseEx.getError() << std::endl;
 			return false;
@@ -77,10 +77,10 @@ namespace rpwa {
 	                     const bool         debug)  ///< lets config object parse a libConfig string
 	{
 		if (debug)
-			printInfo << "parsing libConfig string" << std::endl;
+			printDebug << "parsing libConfig string" << std::endl;
 		try {
 			config.readString(libConfigString);
-		} catch(const libconfig::ParseException&  parseEx) {
+		} catch (const libconfig::ParseException&  parseEx) {
 			printWarn << "parse error in line " << parseEx.getLine() << " of libConfig string: "
 			          << parseEx.getError() << std::endl;
 			return false;

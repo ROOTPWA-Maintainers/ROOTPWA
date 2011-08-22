@@ -279,7 +279,7 @@ waveDescription::writeKeyFile(const string&              keyFileName,
 	}
 	try {
 		key.writeFile(keyFileName.c_str());
-	} catch(const FileIOException& ioEx) {
+	} catch (const FileIOException& ioEx) {
 		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
 		return false;
 	}
@@ -307,7 +307,7 @@ waveDescription::writeKeyFile(const string&          keyFileName,
 	}
 	try {
 		key.writeFile(keyFileName.c_str());
-	} catch(const FileIOException& ioEx) {
+	} catch (const FileIOException& ioEx) {
 		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
 		return false;
 	}
@@ -328,9 +328,9 @@ waveDescription::waveNameFromTopology(const isobarDecayTopology&  topo,
 		}
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
-		fileName << 0.5 * X.isospin() << ((X.G() != 0) ? sign(X.G()) : "")
-		         << 0.5 * X.J() << ((X.P() != 0) ? sign(X.P()) : "") << ((X.C() != 0) ? sign(X.C()) : "")
-		         << 0.5 * X.spinProj() << ((X.reflectivity() != 0) ? sign(X.reflectivity()) : "");
+		fileName << spinQn(X.isospin()) << parityQn(X.G())
+		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C())
+		         << spinQn(X.spinProj()) << parityQn(X.reflectivity());
 		// start traversing down decay chain
 		fileName << waveNameFromTopology(topo, topo.XIsobarDecayVertex());
 	} else {
@@ -341,7 +341,7 @@ waveDescription::waveNameFromTopology(const isobarDecayTopology&  topo,
 			fileName << waveNameFromTopology
 				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
 		// L, S
-		fileName << "#" << 0.5 * currentVertex->L() << "," << 0.5 * currentVertex->S() << "#";
+		fileName << "#" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "#";
 		// second daughter
 		fileName << currentVertex->daughter2()->name();
 		if (not topo.isFsParticle(currentVertex->daughter2()))
@@ -368,13 +368,13 @@ waveDescription::waveNameFromTopologyOld(isobarDecayTopology&        topo,
 		}
 		// X quantum numbers and first decay
 		const particle& X = *(topo.XParticle());
-		fileName << 0.5 * X.isospin() << ((X.G() != 0) ? sign(X.G()) : "")
-		         << 0.5 * X.J() << ((X.P() != 0) ? sign(X.P()) : "") << ((X.C() != 0) ? sign(X.C()) : "")
-		         << 0.5 * X.spinProj() << ((X.reflectivity() != 0) ? sign(X.reflectivity()) : "")
+		fileName << spinQn(X.isospin()) << parityQn(X.G())
+		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C())
+		         << spinQn(X.spinProj()) << parityQn(X.reflectivity())
 		         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
 		                                    (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
-		         << "_" << 0.5 * topo.XIsobarDecayVertex()->L()
-		         << 0.5 * topo.XIsobarDecayVertex()->S() << "_"
+		         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
+		         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
 		         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
 		                                    (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
 	} else {
@@ -386,7 +386,7 @@ waveDescription::waveNameFromTopologyOld(isobarDecayTopology&        topo,
 			fileName << "="
 			         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
 			                                    (topo.toVertex(currentVertex->daughter1())))
-			         << "_" << 0.5 * currentVertex->L() << 0.5 * currentVertex->S() << "_"
+			         << "_" << spinQn(currentVertex->L()) << spinQn(currentVertex->S()) << "_"
 			         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
 			                                    (topo.toVertex(currentVertex->daughter2())));
 	}
