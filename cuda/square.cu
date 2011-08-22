@@ -482,3 +482,5 @@ void waiter ( int seconds ) // ja kellner
 
 
 
+
+

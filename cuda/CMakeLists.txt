@@ -81,5 +81,8 @@ target_link_libraries(templtest ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
 cuda_add_executable(bwig bwig.cu)
 target_link_libraries(bwig ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
 
+cuda_add_executable(treesum treesum.cu)
+target_link_libraries(treesum ${CUDA_CUTIL_LIBRARY} ${ROOT_LIBS})
+
 make_executable(testAmplitudeSpeed testAmplitudeSpeed.cc)
 target_link_libraries(testAmplitudeSpeed ${ROOT_LIBS} ${AMPLITUDE_LIBS} ${CUDA_CUTIL_LIBRARY} cupwa cuda)

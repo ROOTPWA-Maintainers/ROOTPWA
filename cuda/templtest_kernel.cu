@@ -4,7 +4,7 @@ using namespace rpwa;
 
 #define FOURPI 4*3.1415926
 
-const long unsigned int N = 100000;
+//const long unsigned int N = 25000000;
 
 
 // Variables... for the host
@@ -26,11 +26,11 @@ cuda::complex<double> imag(0.0,1.0);		// imaginary unit
 /// ///////////////////////////////////// ///
 template<class T>
 __global__ void 
-testPow( T* A, T* B, T* C) 
+testPow( T* A, T* B, T* C, int N) 
 {
 //  cuda::complex<T> imag(0.0,1.0);
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx<N) C[idx] = A[idx] / B[idx];
+  if (idx<N) C[idx] = pow(A[idx],B[idx]);
 }
 
 /// ////////////////////////////////////////////// ///
@@ -161,7 +161,7 @@ imagtest(T* m, T* q, cuda::complex<T>* BW )
     cuda::complex<T> imag(0,1);
 
   T GammaValue = GammaFuncTest(&m[idx],&q[idx]);
-   
+  int N = 1;
   if (idx<N) BW[idx] = ( Gamma0*m0) / ( (m0*m0 - m[idx]*m[idx]) - imag*m0*GammaValue) ; /// will test to calculate the brackets before adding an complex number ... no notable speedup
 }
 
@@ -565,6 +565,7 @@ finBW( T* m, T* q, cuda::complex<T>* BW)
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
     cuda::complex<T> imag(0,1);
     T GammaValue = GammaFunc(m,q);
+  int N = 1;
   if (idx<N) BW[idx] =  ( m0 * Gamma0) / pow(( pow((m0*m0 - m[idx]*m[idx]),2) + m0*m0*GammaValue*GammaValue),0.5)  ;
 }
 

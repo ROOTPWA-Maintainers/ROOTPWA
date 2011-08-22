@@ -146,7 +146,8 @@ find_package(ROOT 5.26 REQUIRED Minuit2)
 
 
 # setup CUDA
-set(CUDA_SHADER_MODELS "13" "20")
+#set(CUDA_SHADER_MODELS "13" "20")
+set(CUDA_SHADER_MODELS "20")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
   # use default SDK path, if not defined by user
   set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
@@ -189,7 +190,7 @@ else()
 	list(APPEND CUDA_NVCC_FLAGS
 	  "--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
       endforeach()
-      #list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
+      list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
       # set some global switches
       set(CUDA_BUILD_CUBIN     OFF)
       set(CUDA_BUILD_EMULATION OFF)

@@ -1,7 +1,23 @@
 #include <stdio.h>
+#include <complex>
 #include "complex.cuh"
 #include <cuda.h>
 #include <cutil_inline.h>
+#include <TROOT.h>
+#include "TFile.h"
+#include "TH1.h"
+#include "TCanvas.h"
+#include <TGraph.h>
+#include <TLine.h>
+#include <TH2.h>
+#include <TH3F.h>
+#include <TCanvas.h>
+#include <TStyle.h>
+#include <TString.h>
+#include <TList.h>
+#include <TTree.h>
+#include <TRandom3.h>
+#include <time.h>
 //#include "helampltestInterface.cuh"
 //#include "helampltestKernel.cu"
 
@@ -368,6 +384,8 @@ namespace cupwa {
 		    const double phi2,
 		    const double wX,
 		    const double wf2,
+		    const double qX,
+		    const double qf2,
 		    const int JX,
 		    const int MX,
 		    const int J1,
@@ -378,33 +396,50 @@ namespace cupwa {
 		    const int S2)
     {
  //     double wPIpm 	= 0.13957;
-      double qX 	= 0.50514288800993423; //cuBreakUpMomentum(wX,0.587483,wPIpm);
-      double qf2 	= 0.25846533761461093; //cuBreakUpMomentum(0.587483,wPIpm,wPIpm);
+//      double qX 	= 0.50514288800993423; //cuBreakUpMomentum(wX,0.587483,wPIpm);
+//      double qf2 	= 0.25846533761461093; //cuBreakUpMomentum(0.587483,wPIpm,wPIpm);
       cuda::complex<double> amplsum(0,0);
 //      int lambda2 = 0;
       double Gamma0 = 0.1851;
       double q0 = 0.622239;
-      cuda::complex<double> bwigdat		(0.183925,0.007331);
+//      cuda::complex<double> bwigdat		(0.183925,0.007331);
       
 	for(int lambda1 = -4; lambda1 <= +4; lambda1+=2) {
 	  
 	      amplsum +=	sqrt(L1+1.0) * cucgc(J1,lambda1,J2,0,S1,lambda1) * cucgc(L1,0,S1,lambda1,JX,lambda1) * cuDfuncReflConj(JX,MX,lambda1,-1,1,phi1,theta1,0) * sqrt(BFactor(L1,qX)) * 
-				sqrt(L2+1.0) * cucgc(0,0,0,0,0,0) * cucgc(L2,0,S2,0,L2,0) * cuDfuncConj(4,lambda1,0,phi2,theta2,0) * sqrt(BFactor(L2,qf2)) * bwig(0.58748315940941132,wf2,Gamma0,qf2,q0,L2);
+				sqrt(L2+1.0) * cucgc(0,0,0,0,0,0) * cucgc(L2,0,S2,0,L2,0) * cuDfuncConj(4,lambda1,0,phi2,theta2,0) * sqrt(BFactor(L2,qf2)) * bwig(wf2,1.2754,Gamma0,qf2,q0,L2);
 
 	}
      
 
       return amplsum;
-      
+      /*
       for(int lambda1 = -4; lambda1 <= 4; lambda1+=2) {
 	amplsum += sqrt(L1+1.0) * cucgc(4,lambda1,0,0,4,lambda1)*cucgc(4,0,4,lambda1,4,lambda1)*cuDfuncReflConj(JX,MX,lambda1,-1,1,-0.564732,1.29395,0)*  sqrt(BFactor(L1,qX)) * 
 		   sqrt(L2+1.0) * cucgc(0,0,0,0,0,0) * cucgc(4,0,0,0,4,0) * cuDfuncConj(4,lambda1,0,-1.6509,1.11757,0) * sqrt(BFactor(L2,qf2)) * bwig(0.58748315940941132,wf2,Gamma0,qf2,q0,L2);
 			 
       }
       return   amplsum;
+      */
     }
+    
+        struct vertexdata {
+	    
+	    int JX, Lambda, J1, L1, S1, J2, L2, S2;
+	    double theta1, phi1, theta2, phi2, wX, wf2, massf2, massX, wpi, qX, qf2;
+	    
+	    };
   
-  
+      //Kernel for cuPWA using struct
+    __global__ void
+    GPUAmp2(vertexdata* data, cuda::complex<double>* result_GPUAmp, int N)
+    {
+
+      const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
+//       if(idx<N) { result_GPUAmp[idx] = 0;}
+     if(idx<N) { result_GPUAmp[idx] = cuHelAmplitude(data[idx].theta1,data[idx].phi1,data[idx].theta2,data[idx].phi2,data[idx].wX,data[idx].wf2,data[idx].qX,data[idx].qf2,data[idx].JX,data[idx].Lambda,data[idx].J1,data[idx].L1,data[idx].S1,data[idx].J2,data[idx].L2,data[idx].S2); }
+	  
+    }
 
 
     //Kernel for cuPWA
@@ -413,11 +448,171 @@ namespace cupwa {
     {
       int N = 1;
       const unsigned int idx = blockIdx.x * blockDim.x + threadIdx.x;
-       if(idx<N) { result_GPUAmp[idx] = cuHelAmplitude(theta1[idx],phi1[idx],theta2[idx],phi2[idx],wX[idx],wf2[idx],JX[idx],Lambda[idx],J1[idx],L1[idx],S1[idx],J2[idx],L2[idx],S2[idx]);  }
+       if(idx<N) { result_GPUAmp[idx] = cuHelAmplitude(theta1[idx],phi1[idx],theta2[idx],phi2[idx],wX[idx],wf2[idx],0.50514288800993423,0.25846533761461093,JX[idx],Lambda[idx],J1[idx],L1[idx],S1[idx],J2[idx],L2[idx],S2[idx]);  }
     }
+  
+  void DMAccess(vertexdata* data, int N)
+  {
+    printf("address0 before: %x\n",&data[0].JX);
+    cutilSafeCall( cudaHostAlloc((void**)&data, N*sizeof(vertexdata), cudaHostAllocDefault) );
+    printf("address0 after: %x\n",&data[0].JX);    
+  }
     
+  void GPUAmpcall2(vertexdata* data,int N, const vector<complex<double> >& cpudata)
+  {
+   
+    printf("\nNow calculating on device...\n");
+	  timespec bartime_beg, bartime_end; 
+	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bartime_beg);
+      cudaEvent_t start, stop;
+      cutilSafeCall( cudaEventCreate(&start) );
+      cutilSafeCall( cudaEventCreate(&stop)  );
+	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &bartime_end); 
+	  printf("\n\n%.3f ms required for creating cuda-events (timespec)\n", ( ( (bartime_end.tv_sec - bartime_beg.tv_sec) ) + (bartime_end.tv_nsec - bartime_beg.tv_nsec) / 1e9 ) * 1e3 ); 
+          
+	  float timer[10];
+      size_t sdata = sizeof(vertexdata);
+      size_t sres  = sizeof(cuda::complex<double>);
+    cuda::complex<double>* result_GPUAmp;
+    cuda::complex<double>* dev_result_GPUAmp;
+    vertexdata* dev_data; 
+	      
+	  cutilSafeCall( cudaEventRecord( start, 0) );
+	  timespec footime_beg, footime_end; 
+	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &footime_beg); 
+    cutilSafeCall( cudaHostAlloc((void**)&result_GPUAmp, N*sres, cudaHostAllocDefault) );
+// //    cutilSafeCall( cudaHostAlloc((void**)&data, N*sdata, cudaHostAllocDefault) ); //doesn't work properly
+	  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &footime_end); 
+	  printf("\n\n%.3f ms required for allocating memory (timespec)\n", ( ( (footime_end.tv_sec - footime_beg.tv_sec) ) + (footime_end.tv_nsec - footime_beg.tv_nsec) / 1e9 ) * 1e3 ); 
+          cutilSafeCall( cudaEventRecord( stop, 0) );
+	  cutilSafeCall( cudaEventSynchronize( stop ) );
+	  cutilSafeCall( cudaEventElapsedTime( &timer[0], start, stop));
+	  printf("%.3f ms required for allocating memory\n",timer[0]);
+     
+    cutilSafeCall( cudaMalloc((void**)&dev_result_GPUAmp, N*sres) );
+    cutilSafeCall( cudaMalloc((void**)&dev_data, N*sdata) );
+	  
+	  cutilSafeCall( cudaEventRecord( start, 0) );
+    cutilSafeCall( cudaMemcpy(dev_data, data, N*sdata, cudaMemcpyHostToDevice) );
+          cutilSafeCall( cudaEventRecord( stop, 0) );
+	  cutilSafeCall( cudaEventSynchronize( stop ) );
+	  cutilSafeCall( cudaEventElapsedTime( &timer[1], start, stop));
+	  printf("%.3f ms required for uploading\n",timer[1]);
+	  printf("%f GB/s bandwidth for upload\n",(N*(sdata/(timer[1]/1e3))/(1024*1024*1024)));
+	  
+    int threadsPerBlock = 512;
+    int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;    
+	  cutilSafeCall( cudaEventRecord( start, 0) );
+    GPUAmp2<<<blocksPerGrid, threadsPerBlock>>>(dev_data,dev_result_GPUAmp,N);
+	  cutilSafeCall( cudaThreadSynchronize() );
+	  cutilSafeCall( cudaEventRecord( stop, 0) );
+	  cutilSafeCall( cudaEventSynchronize( stop ) );
+	  cutilSafeCall( cudaEventElapsedTime( &timer[2], start, stop));
+	  printf("%.3f ms required for calculating on device\n",timer[2]);
+	  printf("%f GB/s Bandwidth\n", (N*(sdata+sres)/(timer[2]/1e3))/(1024*1024*1024) );
     
+          cutilSafeCall( cudaEventRecord( start, 0) );
+    cutilSafeCall( cudaMemcpy(result_GPUAmp, dev_result_GPUAmp, N*sres, cudaMemcpyDeviceToHost) );
+          cutilSafeCall( cudaEventRecord( stop, 0) );
+	  cutilSafeCall( cudaEventSynchronize( stop ) );
+	  cutilSafeCall( cudaEventElapsedTime( &timer[3], start, stop));
+	  printf("%.3f ms required for downloading\n",timer[3]);
+	  printf("%f GB/s bandwidth for download\n",(N*(sres/(timer[3]/1e3))/(1024*1024*1024)));
+	  printf("%.3f ms required for GPU call without malloc stuff, etc.\n",timer[1]+timer[2]+timer[3]);
+
+	  
+  if(0) {
+    for(int e=0;e<N;e++) {
+    printf("\nGPUAmp[%d]: %2.20f + i*(%2.20f)",e, result_GPUAmp[e].real(), result_GPUAmp[e].imag() );
+    printf("\nCPUAmp[%d]: %2.20f + i*(%2.20f)",e, cpudata[e].real(), cpudata[e].imag() );
+    }
+  }
+
+  if (1) {
+    timespec roottime_beg, roottime_end; 
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &roottime_beg); 
+    cutilSafeCall( cudaEventRecord( start, 0) );
+    // Visualize results via root
+    // Create a root file and a TTree
+    // Structure to hold the variables for the branch
+    struct output_t {
+      Double_t mass;
+      Double_t amplimag;
+      Double_t amplreal;
+      Double_t amplabs;
+      Double_t errrelimag;
+      Double_t errrelreal;
+      Double_t errabsimag;
+      Double_t errabsreal;
+      Double_t cpuimag;
+      Double_t cpureal;
+      Double_t cpuabs;
+    };
+    output_t output;
     
+
+    
+    // Create a new ROOT file
+    TFile *f = new TFile("Xtopipipi.root","RECREATE");
+    // Create a TTree
+    TTree *tree = new TTree("T","output");
+    // Create one branch with all information from the stucture
+    tree->Branch("Output",&output.mass,"mass/D:amplimag:amplreal:amplabs:errrelimag:errrelreal:errabsimag:errabsreal:cpuimag:cpureal:cpuabs");
+    // Fill the tree 
+    for (int i=0;i<N;i++) {
+      output.mass 	= data[i].wX;
+      output.amplimag 	= result_GPUAmp[i].imag();
+      output.amplreal 	= result_GPUAmp[i].real();
+      output.amplabs  	= abs(result_GPUAmp[i]);
+      output.errrelimag = 1 - (result_GPUAmp[i].imag() / cpudata[i].imag());
+      output.errrelreal = 1 - (result_GPUAmp[i].real() / cpudata[i].real());
+      output.errabsimag = result_GPUAmp[i].imag() - cpudata[i].imag();
+      output.errabsreal = result_GPUAmp[i].real() - cpudata[i].real();
+      output.cpuimag	= cpudata[i].imag();
+      output.cpureal	= cpudata[i].real();
+      output.cpuabs 	= abs(cpudata[i]);
+      tree->Fill();
+    }     
+    // Check what the tree looks like
+    tree->Print();
+    f->Write();
+    cutilSafeCall( cudaEventRecord( stop, 0) );
+    cutilSafeCall( cudaEventSynchronize( stop ) );
+    cutilSafeCall( cudaEventElapsedTime( &timer[4], start, stop));
+    printf("%.3f ms required for root stuff\n",timer[4]);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &roottime_end); 
+    printf("\n\n%.3f ms required for root stuff (time spec)\n", ( ( (roottime_end.tv_sec - roottime_beg.tv_sec) ) + (roottime_end.tv_nsec - roottime_beg.tv_nsec) / 1e9 ) * 1e3 ); 
+ 
+  }
+	
+    cutilSafeCall( cudaFreeHost(result_GPUAmp) );
+//    cutilSafeCall( cudaFreeHost(data) );
+    cudaFree(dev_result_GPUAmp);
+    cudaFree(dev_data);
+   
+    cutilSafeCall( cudaEventDestroy(start) );
+    cutilSafeCall( cudaEventDestroy(stop) );
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   void GPUAmpcall(double theta1, double phi1, double theta2, double phi2, double wX, double wf2, int JX, int Lambda, int J1, int L1, int S1, int J2, int L2, int S2)
   {

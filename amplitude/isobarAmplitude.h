@@ -83,6 +83,7 @@ namespace rpwa {
 		virtual std::string   name           ()                  const { return "isobarAmplitude"; }
 		virtual std::ostream& printParameters(std::ostream& out) const;  ///< prints amplitude parameters in human-readable form
 		virtual std::ostream& print          (std::ostream& out) const;  ///< prints amplitude in human-readable form
+		virtual void transformDaughters() const = 0;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
     
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -93,7 +94,7 @@ namespace rpwa {
 		void spaceInvertDecay() const;  ///< performs parity transformation on all decay three-momenta
 		void reflectDecay    () const;  ///< performs reflection through production plane on all decay three-momenta
 
-		virtual void transformDaughters() const = 0;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
+//		virtual void transformDaughters() const = 0;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
 
 		virtual std::complex<double> twoBodyDecayAmplitude
 		  (const isobarDecayVertexPtr& vertex,

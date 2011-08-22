@@ -1,5 +1,3 @@
-  
-// function template
 #include <math.h>
 #include <stdio.h>
 #include <cuda.h>
@@ -43,7 +41,7 @@ using namespace rpwa;
 // Declaration of functions//
 /////////////////////////////
 template <class T>
-void tmpltest();
+void tmpltest(int);
 
 // Allocates an array with random float entries.
 template<class T>
@@ -60,20 +58,22 @@ T RandomInit(T* data, int n)
 
 
 
-int main () {
-
+int main (int argc, char *argv[]) {
+ 
+    int N = atoi( argv[1] );
+  
     printf("\nTesting template for %lu doubles on GPU...\n", N);
-    tmpltest<double>();
+    tmpltest<double>(N);
 
     printf("\nTesting template for %lu floats on GPU...\n", N);
-    tmpltest<float>();
+    tmpltest<float>(N);
     
   
 }
 
 template<class T>
 void
-tmpltest() 
+tmpltest(int N) 
 {
 
     // Variables  
@@ -148,7 +148,7 @@ tmpltest()
     cutilSafeCall( cudaEventRecord( start, 0) );    
     int threadsPerBlock = 512;
     int blocksPerGrid = (N + threadsPerBlock - 1) / threadsPerBlock;
-    testPow<T><<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C);
+    testPow<T><<<blocksPerGrid, threadsPerBlock>>>(d_A, d_B, d_C, N);
     cutilSafeCall( cudaThreadSynchronize() );
     cutilSafeCall( cudaEventRecord( stop, 0) );
     cutilSafeCall( cudaEventSynchronize( stop ) );
@@ -182,7 +182,7 @@ tmpltest()
     timespec h_cal_beg_bw, h_cal_end_bw; 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &h_cal_beg_bw);     
 //    for (long unsigned int j = 0; j<N; j++) { CPUcmplxresult[j] = (m0*Gamma0)/(m0*m0 - h_m[j]*h_m[j] - imag*m0*(Gamma0 * (m0 / h_m[j]) * (h_q[j] / q0) * ( BF(L,h_q[j])*BF(L,h_q[j]) / ( BF(L,q0)*BF(L,q0) ) ) ) ) ;   }
-    for (long unsigned int j = 0; j<N; j++) { CPUresult[j] = h_A[j] / h_B[j] ;   }
+    for (long unsigned int j = 0; j<N; j++) { CPUresult[j] = pow(h_A[j],h_B[j]) ;   }
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &h_cal_end_bw); 
     printf("%.3f ms required for calculation on host\n", ( ( (h_cal_end_bw.tv_sec - h_cal_beg_bw.tv_sec) ) + (h_cal_end_bw.tv_nsec - h_cal_beg_bw.tv_nsec) / 1e9 ) * 1e3 );     
     printf("Pure calculation speed up: GPU is %3.1f times faster than the CPU.\n",  ( ( ( (h_cal_end_bw.tv_sec - h_cal_beg_bw.tv_sec) ) + (h_cal_end_bw.tv_nsec - h_cal_beg_bw.tv_nsec) / 1e9 ) * 1e3 ) / (t_cod) );
