@@ -69,10 +69,11 @@ namespace rpwa {
 		         const int                 refl     = 0,
 		         const TVector3&           momentum = TVector3());
 		particle(const std::string&        partName,
-		         const int                 index    = -1,
-		         const int                 spinProj = 0,
-		         const int                 refl     = 0,
-		         const TVector3&           momentum = TVector3());
+		         const bool                requirePartInTable = true,
+		         const int                 index              = -1,
+		         const int                 spinProj           = 0,
+		         const int                 refl               = 0,
+		         const TVector3&           momentum           = TVector3());
 		particle(const std::string&        partName,
 		         const int                 isospin,
 		         const int                 G,
@@ -168,12 +169,13 @@ namespace rpwa {
 	inline
 	particlePtr
 	createParticle(const std::string& partName,
-	               const int          index    = -1,
-	               const int          spinProj = 0,
-	               const int          refl     = 0,
-	               const TVector3&    momentum = TVector3())
+	               const bool         requirePartInTable = true,
+	               const int          index              = -1,
+	               const int          spinProj           = 0,
+	               const int          refl               = 0,
+	               const TVector3&    momentum           = TVector3())
 	{
-		particlePtr part(new particle(partName, index, spinProj, refl, momentum));
+		particlePtr part(new particle(partName, requirePartInTable, index, spinProj, refl, momentum));
 		return part;
 	}
 

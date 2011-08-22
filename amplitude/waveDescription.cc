@@ -133,7 +133,7 @@ waveDescription::printKeyFileContents(ostream& out) const
 
 bool
 waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
-                                        const bool              requireXQnKey) const
+                                        const bool              fromTemplate) const
 {
 	if (not _key) {
 		printWarn << "null pointer to libconfig data structure. "
@@ -155,17 +155,18 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	}
 
 	// find  X quantum numbers group
-	const Setting* XQnKey = findLibConfigGroup(*waveKey, "XQuantumNumbers");
+	const Setting* XQnKey = findLibConfigGroup(*waveKey, "XQuantumNumbers", not fromTemplate);
 	particlePtr    X;
 	if (not XQnKey)
-		if (requireXQnKey) {
+		if (not fromTemplate) {
 			printWarn << "cannot find 'XQuantumNumbers' group. cannot construct decay topology." << endl;
 			return false;
 		} else {
 			// create default X particle
-			printWarn << "cannot find 'XQuantumNumbers' group. "
-			          << "creating X particle with default properties." << endl;
-			X = createParticle("X");
+			if (_debug)
+				printDebug << "cannot find 'XQuantumNumbers' group. "
+				           << "creating X particle with default properties." << endl;
+			X = createParticle("X", not fromTemplate);
 		}
 	else
 		// create X particle from key
@@ -190,7 +191,7 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	// traverse decay chain and create final state particles and isobar decay vertices
 	vector<isobarDecayVertexPtr> decayVertices;
 	vector<particlePtr>          fsParticles;
-	if (not constructDecayVertex(*XDecayKey, X, decayVertices, fsParticles)) {
+	if (not constructDecayVertex(*XDecayKey, X, decayVertices, fsParticles, fromTemplate)) {
 		printWarn << "problems constructing decay chain. cannot construct decay topology." << endl;
 		return false;
 	}
@@ -541,13 +542,14 @@ waveDescription::constructProductionVertex(const Setting&       rootKey,
 
 bool
 waveDescription::constructParticle(const Setting& particleKey,
-                                   particlePtr&   particle)
+                                   particlePtr&   particle,
+                                   const bool     requirePartInTable)
 {
 	if (_debug)
 		printDebug << "reading particle information from '" << particleKey.getPath() << "':" << endl;
 	string name;
 	if (particleKey.lookupValue("name", name)) {
-		particle = createParticle(name);
+		particle = createParticle(name, requirePartInTable);
 		{
 			//!!! the following is just a quick hack for K^-
 			// the definition of flavor quantum numbers for particles and
@@ -605,7 +607,8 @@ bool
 waveDescription::constructDecayVertex(const Setting&                parentKey,
                                       const particlePtr&            parentParticle,
                                       vector<isobarDecayVertexPtr>& decayVertices,
-                                      vector<particlePtr>&          fsParticles)
+                                      vector<particlePtr>&          fsParticles,
+                                      const bool                    fromTemplate)
 {
 	if (_debug)
 		printDebug << "reading decay vertex information from '" << parentKey.getPath() << "':" << endl;
@@ -628,12 +631,12 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 	if (isobarKeys)
 		for (int i = 0; i < isobarKeys->getLength(); ++i) {
 			particlePtr p;
-			if (constructParticle((*isobarKeys)[i], p))
+			if (constructParticle((*isobarKeys)[i], p, not fromTemplate))
 				isobarDaughters.push_back(p);
 			else
 				success = false;
 			success &= constructDecayVertex((*isobarKeys)[i], isobarDaughters.back(),
-			                                decayVertices, fsParticles);
+			                                decayVertices, fsParticles, fromTemplate);
 		}
   
 	const unsigned int nmbDaughters = fsDaughters.size() + isobarDaughters.size();
@@ -648,8 +651,8 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
   
 	// get isobar vertex parameters
 	int L = 0, S = 0;
-	if (   not parentKey.lookupValue("L", L)
-	    or not parentKey.lookupValue("S", S))
+	if ((   not parentKey.lookupValue("L", L)
+	     or not parentKey.lookupValue("S", S)) and not fromTemplate)
 		printWarn << "Either L or S are not specified in '" << parentKey.getPath() << "'. "
 		          << "using zero." << endl;
   

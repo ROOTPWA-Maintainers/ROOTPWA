@@ -62,11 +62,13 @@ particleDataTable::isInTable(const string& partName)
 
 
 const particleProperties*
-particleDataTable::entry(const string& partName)
+particleDataTable::entry(const string& partName,
+                         const bool    warnIfNotExistent)
 {
 	dataIterator i = _dataTable.find(partName);
 	if (i == _dataTable.end()) {
-		printWarn << "could not find entry for particle '" << partName << "'" << endl;
+		if (warnIfNotExistent)
+			printWarn << "could not find entry for particle '" << partName << "'" << endl;
 		return 0;
 	} else
 		return &(i->second);

@@ -80,6 +80,7 @@ particle::particle(const particleProperties& partProp,
 
 	
 particle::particle(const string&   partName,
+                   const bool      requirePartInTable,
                    const int       index,
                    const int       spinProj,
                    const int       refl,
@@ -90,7 +91,7 @@ particle::particle(const string&   partName,
 {
 	// extract charge from name
 	chargeFromName(partName, _charge);
-	if (not fillFromDataTable(partName))
+	if (not fillFromDataTable(partName, requirePartInTable))
 		// set at least name
 		setName(partName);
 	_lzVec = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()));

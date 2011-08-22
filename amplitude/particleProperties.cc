@@ -175,22 +175,25 @@ particleProperties::isXParticle() const
 
 
 bool
-particleProperties::fillFromDataTable(const string& partName)
+particleProperties::fillFromDataTable(const string& partName,
+                                      const bool    warnIfNotExistent)
 {
 	string       name         = partName;
 	const string strippedName = stripChargeFromName(partName);
 	if (not particleDataTable::instance().isInTable(partName))
 		// try with charge stripped from name
 		name = strippedName;
-	const particleProperties* partProp = particleDataTable::instance().entry(name);
+	const particleProperties* partProp = particleDataTable::instance().entry(name, warnIfNotExistent);
 	if (not partProp) {
-		printWarn << "trying to fill particle properties for '" << partName << "' from non-existing table entry" << endl;
+		if (warnIfNotExistent)
+			printWarn << "trying to fill particle properties for '"
+			          << partName << "' from non-existing table entry" << endl;
 		return false;
 	} else {
 		*this = *partProp;
 		if (_debug)
-			printInfo << "succesfully filled particle properties for '" << partName << "': "
-			          << *this << endl;
+			printDebug << "succesfully filled particle properties for '" << partName << "': "
+			           << *this << endl;
 		return true;
 	}
 }
@@ -284,7 +287,7 @@ bool
 particleProperties::read(istringstream& line)
 {
 	if (_debug)
-		printInfo << "trying to read particle properties from line '" << line.str() << "' ... " << flush;
+		printDebug << "trying to read particle properties from line '" << line.str() << "' ... " << flush;
 	if (line >> _name
 	         >> _mass
 	         >> _width
@@ -299,7 +302,7 @@ particleProperties::read(istringstream& line)
 	         >> _C) {
 		if (_debug) {
 			cout << "success" << endl;
-			printInfo << "read "<< *this << endl;
+			printDebug << "read "<< *this << endl;
 		}
 		return true;
 	} else {
