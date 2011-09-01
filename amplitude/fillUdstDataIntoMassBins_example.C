@@ -1,10 +1,44 @@
+///////////////////////////////////////////////////////////////////////////
 //
-// reads uDST tree and generates mass bin directory structure with .root files in ROOTPWA format
+//    Copyright 2010
 //
-// $Rev::                                               $: revision of last commit
-// $Author::                                            $: author of last commit
-// $Date::                                              $: date of last commit
+//    This file is part of rootpwa
 //
+//    rootpwa is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    rootpwa is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with rootpwa. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
+//
+// Description:
+//      example macro that reads uDST tree and generates mass bin
+//      directory structure with .root files in ROOTPWA format
+//      parts that depend on the analyzed final state and the uDST
+//      tree structure are marked accordingly
+//
+//      to run this macro type
+//      root rootlogon.C fillUdstDataIntoMassBins_example.C+
+//
+//
+// Author List:
+//      Stefan Pflueger          TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
 
 
 #include <iostream>
@@ -14,6 +48,7 @@
 #include <vector>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <algorithm>
 
 #include <boost/progress.hpp>
 
@@ -24,23 +59,26 @@
 #include "TClonesArray.h"
 #include "TLorentzVector.h"
 
-//#include "reportingUtils.hpp"
+#include "reportingUtils.hpp"
 
 
 using namespace std;
 using namespace boost;
+using namespace rpwa;
 
 
-// creates mass bin directory structure and returns event files for mass bins
+// generic function that creates mass bin directory structure and
+// returns array of event files and trees, one for each mass bin
 bool
 createMassBinFiles(vector<TFile*>&    pwaFiles,
                    vector<TTree*>&    pwaTrees,
                    const string&      dirBaseName  = "/tmp/",
                    const unsigned int nmbMassBins  = 50,
-                   const double       massBinWidth = 50,  // [MeV/c^2]
-                   const double       massRangeMin = 500, // [MeV/c^2]
+                   const double       massBinWidth = 50,   // [MeV/c^2]
+                   const double       massRangeMin = 500,  // [MeV/c^2]
                    const string&      treeName     = "rootPwaEvtTree")
 {
+	printInfo << "creating mass bin directories/files in '" << dirBaseName << "':" << endl;
 	// cleanup
 	for (unsigned int i = 0; i < pwaTrees.size(); ++i)
 		if (pwaTrees[i])
@@ -67,19 +105,19 @@ createMassBinFiles(vector<TFile*>&    pwaFiles,
 		const string pwaFileName = dirName + "/" + n.str() + ".root";
 		TFile*       pwaFile     = TFile::Open(pwaFileName.c_str(), "RECREATE");
 		if (not pwaFile or pwaFile->IsZombie()) {
-			cout << "problems creating file '" << pwaFileName << "'" << endl;
+			printWarn << "problems creating file '" << pwaFileName << "'" << endl;
 			success = false;
 		} else {
 			pwaFiles[i] = pwaFile;
 			pwaTrees[i] = new TTree(treeName.c_str(), treeName.c_str());
 			if (not pwaTrees[i]) {
-				cout << "problems creating tree '" << treeName << "' " << "in file " << "'" << pwaFileName
-				     << "'" << endl;
+				printWarn << "problems creating tree '" << treeName << "' " << "in file "
+				          << "'" << pwaFileName << "'" << endl;
 				success = false;
 			} else {
 				pwaTrees[i]->SetDirectory(pwaFile);
-				cout << "successfully created tree '" << treeName << "' in file " << "'" << pwaFileName
-				     << "'" << endl;
+				printSucc << "created tree '" << treeName << "' in file " << "'" << pwaFileName
+				          << "'" << endl;
 			}
 		}
 	}
@@ -87,187 +125,218 @@ createMassBinFiles(vector<TFile*>&    pwaFiles,
 }
 
 
-// creates mass bin directory structure and returns event files for mass bins
+// fills event data into correct mass bin
 bool
-writeMassBinFile(vector<TTree*>&    pwaTrees,
-                 TLorentzVector&    beamLv,
-                 TLorentzVector&    targetLv,
-                 TLorentzVector&    pi01,
-                 TLorentzVector&    pi02,
-                 TLorentzVector&    pi_out,
-                 TLorentzVector&    resonance,
-                 const unsigned int nmbMassBins        = 50,
-                 const double       massBinWidth       = 50,  // [MeV/c^2]
-                 const double       massRangeMin       = 500, // [MeV/c^2]
-                 const string&      beamParticleName   = "pi-",
-                 const string&      targetParticleName = "p+",
-                 const bool         debug              = false)
+writeEvent(vector<TTree*>&       pwaTrees,
+           const TLorentzVector& beamLv,
+           // !!! <channel-dependent part> !!!
+           const TLorentzVector& piZero0,
+           const TLorentzVector& piZero1,
+           const TLorentzVector& piMinus,
+           // !!! </channel-dependent part> !!!
+           const double          XMass,                          // [GeV/c^2]
+           const unsigned int    nmbMassBins             = 50,
+           const double          massBinWidth            = 50,   // [MeV/c^2]
+           const double          massRangeMin            = 500,  // [MeV/c^2]
+           const string&         prodKinMomentaLeafName  = "prodKinMomenta",
+           const string&         decayKinMomentaLeafName = "decayKinMomenta",
+           const bool            debug                   = false)
 {
-	const double mass = 1000 * resonance.M(); // convert from GeV/c^2 to MeV/c^2
+
+	const double mass = 1000 * XMass; // convert from GeV/c^2 to MeV/c^2
 	// make sure that mass is in range
 	if ((mass < massRangeMin) or (mass > (massRangeMin + nmbMassBins * massBinWidth)))
 		return false;
 	const unsigned int bin = (unsigned int) ((mass - massRangeMin) / massBinWidth);
 	if (not pwaTrees[bin]) {
-		cout << "null pointer for tree for mass bin [" << massRangeMin + bin * massBinWidth << ", "
-		     << massRangeMin + (bin + 1) * massBinWidth << "]" << endl;
+		printWarn << "null pointer for tree for mass bin [" << massRangeMin + bin * massBinWidth << ", "
+		          << massRangeMin + (bin + 1) * massBinWidth << "]" << endl;
 		return false;
 	}
 	// fill tree
 	if (debug)
-		cout << "filling tree for bin " << bin << " = [" << massRangeMin + bin * massBinWidth << ", "
-		     << massRangeMin + (bin + 1) * massBinWidth << "] MeV/c^2" << endl;
+		printDebug << "filling tree for bin " << bin << " = ["
+		           << massRangeMin + bin * massBinWidth << ", "
+		           << massRangeMin + (bin + 1) * massBinWidth << "] MeV/c^2" << endl;
 
-	TTree *outTree = pwaTrees[bin];
-	//
-	// write leafs to tree
-	//
-	const std::string prodKinPartNamesObjName = "prodKinParticles";
-	const std::string prodKinMomentaLeafName = "prodKinMomenta";
-	const std::string decayKinPartNamesObjName = "decayKinParticles";
-	const std::string decayKinMomentaLeafName = "decayKinMomenta";
-	// static leafs speed up reading by factor of 2
-	static map<string, TClonesArray*> leafs;
-	static bool firstCall = true;
-	if (firstCall) {
-		leafs[prodKinPartNamesObjName] = new TClonesArray("TObjString");
-		leafs[prodKinMomentaLeafName] = new TClonesArray("TVector3");
-		leafs[decayKinPartNamesObjName] = new TClonesArray("TObjString");
-		leafs[decayKinMomentaLeafName] = new TClonesArray("TVector3");
-		firstCall = false;
-	}
-
-	// clear arrays
-	for (map<string, TClonesArray*>::const_iterator i = leafs.begin(); i != leafs.end(); ++i)
-		i->second->Clear();
+	// create tree leafs
+	static TClonesArray* prodKinMomenta  = new TClonesArray("TVector3");
+	static TClonesArray* decayKinMomenta = new TClonesArray("TVector3");
 
 	// connect leaf variables to tree branches or create branches, if they don't exist yet
-	const int split = 0;
-	const int bufSize = 256000;
-	for (map<string, TClonesArray*>::iterator i = leafs.begin(); i != leafs.end(); ++i)
-		if (outTree->GetListOfBranches()->FindObject(i->first.c_str()))
-			outTree->SetBranchAddress(i->first.c_str(), &i->second);
-		else
-			outTree->Branch(i->first.c_str(), "TClonesArray", &i->second, bufSize, split);
+	TTree* outTree = pwaTrees[bin];
+	if (outTree->SetBranchAddress(prodKinMomentaLeafName.c_str(), &prodKinMomenta) < 0) {
+		printWarn << "could not connect variable to branch '" << prodKinMomentaLeafName << "'. "
+		          << "skipping." << endl;
+		return false;
+	}
+	if (outTree->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta) < 0) {
+		printWarn << "could not connect variable to branch '" << prodKinMomentaLeafName << "'. "
+		          << "skipping." << endl;
+		return false;
+	}
+	
+	// clear arrays
+	prodKinMomenta->Clear ();
+	decayKinMomenta->Clear();
 
-	//!!
-	// beam
-	new ((*leafs[prodKinPartNamesObjName])[0]) TObjString(beamParticleName.c_str());
-	new ((*leafs[prodKinMomentaLeafName])[0]) TVector3(beamLv.Vect());
-	// target
-	new ((*leafs[prodKinPartNamesObjName])[1]) TObjString(targetParticleName.c_str());
-	new ((*leafs[prodKinMomentaLeafName])[1]) TVector3(targetLv.Vect());
+	// set leaf variables
+	// beam particle
+	new ((*prodKinMomenta)[0]) TVector3(beamLv.Vect());
 
+	// !!! <channel-dependent part> !!!
+	// for target particle elastic scattering is assumed
 	// outgoing hadrons
-	new ((*leafs[decayKinPartNamesObjName])[0]) TObjString("pi0");
-	new ((*leafs[decayKinMomentaLeafName])[0]) TVector3(pi01.Vect());
-	new ((*leafs[decayKinPartNamesObjName])[1]) TObjString("pi0");
-	new ((*leafs[decayKinMomentaLeafName])[1]) TVector3(pi02.Vect());
-	new ((*leafs[decayKinPartNamesObjName])[2]) TObjString("pi-");
-	new ((*leafs[decayKinMomentaLeafName])[2]) TVector3(pi_out.Vect());
-	/*unsigned int countHadrons = 0;
-	  for (int charge = -1; charge <= +1; charge += 2)
-	  for (unsigned int i = 0; i < nmbOfHadrons(charge); ++i) {
-	  new((*leafs[decayKinPartNamesObjName])[countHadrons])
-	  TObjString(("pi" + sign(charge)).c_str());
-	  new((*leafs[decayKinMomentaLeafName  ])[countHadrons])
-	  TVector3(hadronLv(charge, i).Vect());
-	  ++countHadrons;
-	  }*/
+	new ((*decayKinMomenta)[0]) TVector3(piZero0.Vect());
+	new ((*decayKinMomenta)[1]) TVector3(piZero1.Vect());
+	new ((*decayKinMomenta)[2]) TVector3(piMinus.Vect());
+	// !!! </channel-dependent part> !!!
 
-	// write to tree
+	// fill tree
 	outTree->Fill();
 	return true;
 }
 
 
 void
-fillUdstDataIntoMassBins_example(const string&      inFileNamePattern = "/home/spflueger/eventfilters/slot2_full_selection_4to4Gammas.root",
-                                 const string&      dirName           = "/home/spflueger/data/pwa/3pi_neutral/steve/",
+fillUdstDataIntoMassBins_example(const string&      inFileNamePattern = "fillUdstDataIntoMassBins_example.root",
+                                 const string&      dirName           = "./test",
                                  const long int     maxNmbEvents      = -1,
                                  const unsigned int nmbMassBins       = 50,
-                                 const double       massBinWidth      = 40, // [MeV/c^2]
-                                 const double       massRangeMin      = 500, // [MeV/c^2]
-                                 const string&      uDstTreeName      = "2pi0s_dM20MeV_4to4Gammas/2pi0s_dM20MeV_4to4Gammas", 
+                                 const double       massBinWidth      = 40,   // [MeV/c^2]
+                                 const double       massRangeMin      = 500,  // [MeV/c^2]
+                                 const string&      uDstTreeName      = "pwaDataTree", 
                                  const string&      pwaTreeName       = "rootPwaEvtTree",
+                                 const long int     treeCacheSize     = 25000000,  // 25 MByte ROOT tree read cache
                                  const bool         debug             = false)
 {
+	const string prodKinPartNamesObjName  = "prodKinParticles";
+	const string prodKinMomentaLeafName   = "prodKinMomenta";
+	const string decayKinPartNamesObjName = "decayKinParticles";
+	const string decayKinMomentaLeafName  = "decayKinMomenta";
+
 	TStopwatch timer;
 	timer.Start();
 
-	cout << inFileNamePattern << endl << dirName << endl << uDstTreeName << endl;
+	printInfo << "reading uDST file(s) '" << inFileNamePattern << "'" << endl
+	          << "    writing " << nmbMassBins << " mass bins in mass interval "
+	          << "[" << massRangeMin << ", " << massRangeMin + nmbMassBins * massBinWidth << "] "
+	          << "MeV/c^2 to '" << dirName << "'" << endl
+	          << "    reading uDST data from tree '" << uDstTreeName << "'" << endl
+	          << "    writing PWA data to tree '" << pwaTreeName << "'" << endl;
+
 	// create chain and connect tree leaf variables to branches
 	TChain uDstChain(uDstTreeName.c_str());
-	uDstChain.Add(inFileNamePattern.c_str());
+	if (uDstChain.Add(inFileNamePattern.c_str()) < 1)
+		printWarn << "no events in uDST input file(s) '" << inFileNamePattern << "'" << endl;
 	const long int nmbEventsUdstChain = uDstChain.GetEntries();
-	//uDstChain.GetListOfFiles()->ls();
+	uDstChain.GetListOfFiles()->ls();
 
+	// !!! <channel-dependent part> !!!
 	// connect tree leafs
-	// nHadronMuoProdEvent* uDstEvent = 0;
-	//uDstChain.SetBranchAddress("event", &uDstEvent);
-	double t, t_prime;
-	TLorentzVector g1, g2, g3, g4;
-	TLorentzVector pi01, pi02, pi_out, pi_in, pi_in_temp, proton, proton_rest, resonance;
-	TLorentzVector *pg1 = &g1, *pg2 = &g2, *pg3 = &g3, *pg4 = &g4;
-	TLorentzVector *ppi_out = &pi_out, *ppi_in = &pi_in, *pproton = &proton;
-	proton_rest.SetXYZM(0,0,0,0.938272);
-
-	uDstChain.SetBranchAddress("gamma1", &pg1);
-	uDstChain.SetBranchAddress("gamma2", &pg2);
-	uDstChain.SetBranchAddress("gamma3", &pg3);
-	uDstChain.SetBranchAddress("gamma4", &pg4);
-	uDstChain.SetBranchAddress("pi_out", &ppi_out);
-	uDstChain.SetBranchAddress("pi_in", &ppi_in);
-	uDstChain.SetBranchAddress("proton", &pproton);
+	TLorentzVector* photons[4] = {0, 0, 0, 0};
+	TLorentzVector* piMinus    = 0;
+	TLorentzVector* beam       = 0;
+	TLorentzVector* recoil     = 0;
+	uDstChain.SetBranchAddress("gamma1", &(photons[0]));
+	uDstChain.SetBranchAddress("gamma2", &(photons[1]));
+	uDstChain.SetBranchAddress("gamma3", &(photons[2]));
+	uDstChain.SetBranchAddress("gamma4", &(photons[3]));
+	uDstChain.SetBranchAddress("pi_out", &piMinus);
+	uDstChain.SetBranchAddress("pi_in",  &beam);
+	uDstChain.SetBranchAddress("proton", &recoil);
+	uDstChain.SetCacheSize(treeCacheSize);
+	uDstChain.AddBranchToCache("gamma1", true);
+	uDstChain.AddBranchToCache("gamma2", true);
+	uDstChain.AddBranchToCache("gamma3", true);
+	uDstChain.AddBranchToCache("gamma4", true);
+	uDstChain.AddBranchToCache("pi_out", true);
+	uDstChain.AddBranchToCache("pi_in",  true);
+	uDstChain.AddBranchToCache("proton", true);
+	uDstChain.StopCacheLearningPhase();
+	// !!! </channel-dependent part> !!!
 
 	// create directories and .root files
-	cout << "creating mass bin directories ..." << endl;
 	vector<TFile*> pwaDataFiles;
 	vector<TTree*> pwaDataTrees;
 	if (not createMassBinFiles(pwaDataFiles, pwaDataTrees, dirName, nmbMassBins, massBinWidth,
 	                           massRangeMin, pwaTreeName)) {
-		cout << "there were problems creating the mass bin files/directories. aborting." << endl;
+		printErr << "there were problems creating the mass bin directories/files. aborting." << endl;
 		return;
 	}
-	cout << "... done. created " << pwaDataFiles.size() << " directories." << endl;
+	printSucc << "created " << pwaDataFiles.size() << " directories/files" << endl;
+
+	// write arrays with production and decay particle names to root files
+	{
+		TClonesArray prodKinPartNames ("TObjString", 1);
+		TClonesArray decayKinPartNames("TObjString", 3);
+
+		// !!! <channel-dependent part> !!!
+		new (prodKinPartNames [0]) TObjString("pi-"); // beam particle
+		new (decayKinPartNames[0]) TObjString("pi0");
+		new (decayKinPartNames[1]) TObjString("pi0");
+		new (decayKinPartNames[2]) TObjString("pi-");
+		// !!! </channel-dependent part> !!!
+
+		for (unsigned int i = 0; i < pwaDataFiles.size(); ++i) {
+			pwaDataFiles[i]->cd();
+			prodKinPartNames.Write (prodKinPartNamesObjName.c_str (), TObject::kSingleKey);
+			decayKinPartNames.Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);			
+		}
+		printSucc << "wrote particle name arrays to all files. "
+		          << "beam = 'pi-', decay = {'pi0', 'pi0', 'pi-'}." << endl;
+	}
+
+	// create tree leafs
+	{
+		TClonesArray* prodKinMomenta  = new TClonesArray("TVector3");
+		TClonesArray* decayKinMomenta = new TClonesArray("TVector3");
+		const int     splitLevel      = 99;
+		const int     bufSize         = 256000;
+		for (unsigned int i = 0; i < pwaDataTrees.size(); ++i) {
+			pwaDataTrees[i]->Branch(prodKinMomentaLeafName.c_str(),  "TClonesArray", &prodKinMomenta,
+			                        bufSize, splitLevel);
+			pwaDataTrees[i]->Branch(decayKinMomentaLeafName.c_str(), "TClonesArray", &decayKinMomenta,
+			                        bufSize, splitLevel);
+		}
+		printSucc << "created branches for all trees" << endl;
+	}
 
 	// loop over events
-	cout << "writing events into mass bin directories ..." << endl;
 	const long int nmbEvents = ((maxNmbEvents > 0) ? maxNmbEvents : nmbEventsUdstChain);
+	printInfo << "writing events into mass bin files" << endl
+	          << "    looping over " << nmbEvents << " tree entries" << endl;
 	unsigned long int countEvWritten = 0;
-	unsigned int cutCount =0;
-	progress_display progressIndicator(nmbEvents, cout, "");
-	cout << "looping over " << nmbEvents << " entries" << endl;
+	progress_display  progressIndicator(nmbEvents, cout, "");
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 		++progressIndicator;
-		if (uDstChain.LoadTree(eventIndex) < 0)
-			break;
-		if(uDstChain.GetEntry(eventIndex) == 0) {
-			cout << "error reading from tree" << endl;
-			break;
-		}
-		// now just make some minor calculations before
-		// construct two pi0s
-		pi01 = g1 + g2;
-		pi02 = g3 + g4;
-		// calculate t'
-		resonance = pi01 + pi02 + pi_out;
-
-		double E_beam = resonance.E() + proton.E() - proton.M();
-		double scale = E_beam / pi_in.E();
-		pi_in_temp = pi_in;
-		pi_in_temp.SetVect(pi_in.Vect() * scale);
-		pi_in_temp.SetE(E_beam);
-
-		t = (pi_in - resonance) * (pi_in - resonance);
-		t_prime = fabs(t) - fabs((resonance.M()*resonance.M() - pi_in.M()*pi_in.M())/(4.0*(pi_in.Vect()*pi_in.Vect())));
-		if (0.1 > t_prime || 1.0 < t_prime) {
-			cutCount++;
+		if ((uDstChain.LoadTree(eventIndex) < 0) or (uDstChain.GetEntry(eventIndex) == 0)) {
+			printWarn << "error reading event " << eventIndex << " from tree. skipping." << endl;
 			continue;
 		}
-		if (writeMassBinFile(pwaDataTrees, pi_in_temp, proton_rest, pi01, pi02, pi_out, resonance, nmbMassBins,
-		                     massBinWidth, massRangeMin, "pi-", "p+", debug))
+
+		// !!! <channel-dependent part> !!!
+		// now just make some minor calculations before
+		// construct two pi0s
+		const TLorentzVector piZeros[2] = {*(photons[0]) + *(photons[1]), *(photons[2]) + *(photons[3])};
+		// construct intermediate state X
+		const TLorentzVector X = piZeros[0] + piZeros[1] + *piMinus;
+		// calculate t'
+		const double t      = (*beam - X) * (*beam - X);
+		const double tPrime = fabs(t) - fabs((X.M() * X.M() - beam->M() * beam->M())
+		                                     / (4 * (beam->Vect() * beam->Vect())));
+		// cut on t'
+		if ((tPrime < 0.1) or (tPrime > 1.0))
+			continue;
+		// write out PWA data
+		const double         fsEnergy    = X.E() + recoil->E() - recoil->M();  // measured total energy of final state
+		const double         scaleFactor = fsEnergy / beam->E();
+		const TLorentzVector beamScaled(beam->Vect() * scaleFactor, fsEnergy);
+		if (writeEvent(pwaDataTrees, beamScaled, piZeros[0], piZeros[1], *piMinus,
+		               X.M(), nmbMassBins, massBinWidth, massRangeMin,
+		               prodKinMomentaLeafName, decayKinMomentaLeafName, debug))
 			++countEvWritten;
+		// !!! </channel-dependent part> !!!
 	}
 
 	// write trees
@@ -275,18 +344,17 @@ fillUdstDataIntoMassBins_example(const string&      inFileNamePattern = "/home/s
 	for (unsigned int i = 0; i < nmbMassBins; ++i) {
 		pwaDataTrees[i]->GetCurrentFile()->Write();
 		long unsigned int nmbEvents = pwaDataTrees[i]->GetEntries();
-		cout << "successfully written " << setw(9) << nmbEvents << " events to file " << "'"
-		     << pwaDataTrees[i]->GetCurrentFile()->GetName() << "'" << endl;
+		printSucc << "written " << setw(10) << nmbEvents << " events to file " << "'"
+		          << pwaDataTrees[i]->GetCurrentFile()->GetName() << "'" << endl;
 		countTreeEvents += nmbEvents;
 		pwaDataTrees[i]->GetCurrentFile()->Close();
 	}
 	pwaDataFiles.clear();
 	pwaDataTrees.clear();
 
-	//printInfo << "... done. wrote " << min(countEvWritten, countTreeEvents)
-	cout << "... done. " << countTreeEvents << " out of " << nmbEvents
-	     << " events were in mass range." << cutCount<<endl;
+	printInfo << "wrote " << min(countEvWritten, countTreeEvents)
+	          << " out of " << nmbEvents << " events" <<endl;
 	timer.Stop();
-	cout << "this job consumed: ";
+	printInfo << "this job consumed: ";
 	timer.Print();
 }

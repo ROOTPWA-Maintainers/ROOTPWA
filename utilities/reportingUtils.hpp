@@ -239,11 +239,20 @@ namespace rpwa {
 		return prettyFunction;
 	}
 
-#define printErr   std::cerr << setStreamTo(rpwa::FG_RED    ) << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << setStreamTo(rpwa::NORMAL) << std::flush
-#define printWarn  std::cerr << setStreamTo(rpwa::FG_YELLOW ) << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << setStreamTo(rpwa::NORMAL) << std::flush
-#define printSucc  std::cout << setStreamTo(rpwa::FG_GREEN  ) << "*** " << getClassMethod__(__PRETTY_FUNCTION__) << "(): success: " << setStreamTo(rpwa::NORMAL) << std::flush
-#define printInfo  std::cout << setStreamTo(rpwa::BOLD      ) << ">>> " << getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "    << setStreamTo(rpwa::NORMAL) << std::flush
-#define printDebug std::cout << setStreamTo(rpwa::FG_MAGENTA) << "+++ " << getClassMethod__(__PRETTY_FUNCTION__) << "(): debug: "   << setStreamTo(rpwa::NORMAL) << std::flush
+#ifndef __CINT__
+#define printErr   std::cerr << rpwa::setStreamTo(rpwa::FG_RED    ) << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printWarn  std::cerr << rpwa::setStreamTo(rpwa::FG_YELLOW ) << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printSucc  std::cout << rpwa::setStreamTo(rpwa::FG_GREEN  ) << "*** " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): success: " << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printInfo  std::cout << rpwa::setStreamTo(rpwa::BOLD      ) << ">>> " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "    << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printDebug std::cout << rpwa::setStreamTo(rpwa::FG_MAGENTA) << "+++ " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): debug: "   << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#else
+// rootcint crashes in dictionary generation (sigh)
+#define printErr   std::cerr << std::flush
+#define printWarn  std::cerr << std::flush
+#define printSucc  std::cout << std::flush
+#define printInfo  std::cout << std::flush
+#define printDebug std::cout << std::flush
+#endif
 
 
 	//////////////////////////////////////////////////////////////////////////////
