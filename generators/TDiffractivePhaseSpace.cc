@@ -22,6 +22,7 @@
 
 #include <iomanip>
 #include <fstream>
+#include <limits>
 
 #include "TVector3.h"
 #include "TH1D.h"
@@ -65,7 +66,9 @@ using namespace rpwa;
 
 
 TDiffractivePhaseSpace::TDiffractivePhaseSpace()
-  : _tMin(0.001),
+  : _tMin(0.),
+    _tprimeMin(0.),
+    _tprimeMax(numeric_limits<double>::max()),
     _xMassMin(0),
     _xMassMax(0),
     _protonMass(0.938272013),
@@ -400,11 +403,22 @@ TDiffractivePhaseSpace::event()
   bool              done     = false;
   while (!done) {
     
-	const double xMass  = gRandom->Uniform(_xMassMin, _xMassMax);  // pick random X mass
-	// calculate the slope parameter depending on the invariant mass
-	const double calc_invSlopePar = Get_inv_SlopePar(xMass);
-	const double tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
-	//cout << " inv slope par " << _invSlopePar << " gradient " << _invSlopeParGradient << " t' is " << tPrime << endl;
+    // _xMassMin == _xMassMax
+    double xMass(_xMassMin);
+    if ( _xMassMin < _xMassMax ) {
+      xMass  = gRandom->Uniform(_xMassMin, _xMassMax); // pick random X mass
+    } else if ( _xMassMin > _xMassMax ) {
+      xMass = gRandom->Gaus( _xMassMin, _xMassMax); // pick random X mass arround _xMassMin
+    }
+
+    double tPrime(_tprimeMin);
+    if ( _tprimeMax > _tprimeMin ) {
+      // calculate the slope parameter depending on the invariant mass
+      const double calc_invSlopePar = Get_inv_SlopePar(xMass);
+      tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
+      //cout << " inv slope par " << _invSlopePar << " gradient " << _invSlopeParGradient << " t' is " << tPrime << endl;
+    }
+    
     // make sure that X mass is not larger than maximum allowed mass
     if (xMass + _recoilMass > overallCm.M())
       continue;
@@ -481,7 +495,8 @@ TDiffractivePhaseSpace::event()
     }
 
     // apply t cut
-    if (t > -_tMin)
+    if (t <= _tMin &&
+        _tprime >= _tprimeMin )
       continue;
     
     // generate n-body phase space for X system

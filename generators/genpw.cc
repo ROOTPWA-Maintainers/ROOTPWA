@@ -69,7 +69,7 @@ void printUsage(char* prog,
 {
 cerr << "usage:" << endl
      << prog
-     << " -n # [-a # -m # -M # -B #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
+     << " -n # [-a # -m # -M # -B # -s #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
      << "    where:" << endl
      << "        -n #       (max) number of events to generate (default: 100)" << endl
      << "        -a #       (max) number of attempts to do (default: infinity)" \
@@ -82,6 +82,7 @@ cerr << "usage:" << endl
      << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
      << "        -i <file>  integral file"<< endl 
      << "        -r <file>  reaction config file"<< endl
+     << "        -s #   set seed " << endl
      << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
      << "        -B #   width of mass bin in MeV" << endl
      << endl;
@@ -191,8 +192,10 @@ int main(int argc, char** argv)
   double targetr=reactConf.lookup("target.radius");
   double mrecoil=reactConf.lookup("target.mrecoil");
 
-  double tprime_min(0.); 
+  double tprime_min(0.);
+  double tprime_max(numeric_limits<double>::max());
   reactConf.lookupValue("finalstate.t_min", tprime_min);
+  reactConf.lookupValue("finalstate.t_max", tprime_max);
 
   double mmin= reactConf.lookup("finalstate.mass_min");
   double mmax= reactConf.lookup("finalstate.mass_max");
@@ -283,11 +286,12 @@ int main(int argc, char** argv)
   difPS.SetTPrimeSlope(tslope, inv_m, ntslope);
   difPS.SetMassRange(mmin,mmax);
   difPS.SetPrimaryVertexGen(primaryVertexGen);
-  if (tprime_min >= 0)  
-	difPS.SettMin(tprime_min);
+  if ( tprime_min >= 0.)  
+	difPS.SettprimeMin(tprime_min);
   else
-	cout << " Error: tprime_min must be positive " << endl;
-
+    cout << " Error: tprime_min must be positive " << tprime_min << endl;
+  if (tprime_max >= 0.)  
+     difPS.SettprimeMin(tprime_max);
 
   double impMass;
   double impWidth;
