@@ -41,6 +41,56 @@
 #include "dMatrixAmp.h"
 #include "cnumTools.h"
 
+
+cnum
+dMatrixPole::gDec(unsigned int i) {
+  return cnum(sqrt(fm*fgamma[i]),0);
+}
+
+ double
+ dMatrixPole::psp(double m, unsigned int i){
+   return fpsp[i]->Eval(m)/fpsp[i]->Eval(fm);
+ }
+
+ 
+void 
+dMatrixPole::addChannel(TF1* psp, double gamma){
+  fpsp.push_back(psp);
+  fgamma.push_back(gamma);
+}
+
+double 
+dMatrixPole::gammaTot(){
+  unsigned int n=fgamma.size();
+  double result=0;
+  for(unsigned int i=0;i<n;++i){
+    result+=fgamma[i];
+  }
+  return result;
+}
+
+double 
+dMatrixPole::gammaTot(double m){
+  unsigned int n=fgamma.size();
+  double result=0;
+  for(unsigned int i=0;i<n;++i){
+    result+=fgamma[i]*psp(m,i);
+  }
+  return result;
+}
+
+
+cnum 
+dMatrixPole::M2(double m){
+   double m2=fm*fm;
+   return cnum(m2,gammaTot(m));
+}
+
+
+
+
+
+
 dMatrixAmp::dMatrixAmp(){};
 
 dMatrixAmp::~dMatrixAmp(){};
@@ -52,15 +102,8 @@ dMatrixAmp::addChannels(map<string, TF1*> channels){}
 
 // then add poles
 void 
-dMatrixAmp::addPole(double m, double width, map<string, double>& branchings){}
+dMatrixAmp::addPole(const dMatrixPole& pole){}
 
-unsigned int 
-dMatrixAmp::nPoles(){return 0;}
-
-cnum
-dMatrixAmp::PoleM2(unsigned int i){
-  return 0;
-}
 
 cnum 
 dMatrixAmp::amp(double m, unsigned int channel){
@@ -73,16 +116,16 @@ dMatrixAmp::amp(double m, unsigned int channel){
   for(unsigned int i=0;i<n;++i){
     for(unsigned int j=0;j<n;++j){
       if(i==j){
-	Dinv(i,j)=GetPole(i).M2()-s;
+	Dinv(i,j)=getPole(i).M2(m)-s;
       } // end setting 
       else Dinv(i,j)=0; // no mixing at the moment
     }
     // build collumn vector of production amplitudes 
     // (complex, independent of channel)
-    AProd(i,0)=GetPole(i).gProd();
+    AProd(i,0)=getPole(i).gProd();
     // build row-vector of decay amplitudes
     // (real, depend on channel)
-    ADec(0,i)=GetPole(i).gDec(channel);
+    ADec(0,i)=getPole(i).gDec(channel);
   } // end loop over poles
   
   cmatrix D;

@@ -71,14 +71,28 @@ using namespace std;
 
 class dMatrixPole {
  public:
-  dMatrixPole(double m, double width);
+ dMatrixPole(double m):fm(m){};
   ~dMatrixPole(){};
 
-  cnum M2(); // return complex pole position
-  cnum gProd(); // return production coupling
-  cnum gDec(unsigned int i); // return decay coupling (real) for channel i
+  // Modifiers
+  void addChannel(TF1* psp, double gamma);
+  void setProdAmp(cnum a){fgProd=a;}
+  void setMass(double m){fm=m;}
 
+  // Accessors
+  cnum M2(double m); // return complex pole position
+  cnum gProd(){return fgProd;} // return production coupling
+  cnum gDec(unsigned int i);   // return decay coupling (real) for channel i
+  cnum gamma(unsigned int i){return cnum(fgamma[i],0);} // return partial width for channel i
+  double psp(double m, unsigned int i); // return phase space element normalized to pole position
+  double gammaTot(); // total width (at resonance)
+  double gammaTot(double m); // total mass dependent width
+  
  private:
+  double fm;
+  vector<double> fgamma; // partial widths
+  vector<TF1*> fpsp; // phase space functions for different channels
+  cnum fgProd; // production coupling of this state
 
 };
 
@@ -94,18 +108,17 @@ class dMatrixAmp {
   void addChannels(map<string, TF1*> channels);
 
   // then add poles
-  void addPole(double m, double width, map<string, double>& branchings);
+  void addPole(const dMatrixPole& pole);
   
   // processor:
   cnum amp(double m, unsigned int channel); /// amplitude in a channel
   
   // helpers:
-  unsigned int nPoles();
-  cnum PoleM2(unsigned int i); /// returns complex poleposition (m2-i*m*Gamma)
-  
+  unsigned int nPoles(){return fPoles.size();}
+  dMatrixPole& getPole(unsigned int i){return fPoles[i];}
 
  private:
-
+  vector<dMatrixPole> fPoles;
 
 
 };
