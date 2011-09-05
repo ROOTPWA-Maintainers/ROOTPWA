@@ -40,41 +40,37 @@
 
 #include "dMatrixAmp.h"
 #include "cnumTools.h"
-
+#include <iostream>
+using namespace ublas;
+using namespace std;
 
 cnum
 dMatrixPole::gDec(unsigned int i) {
-  return cnum(sqrt(fm*fgamma[i]),0);
+  return cnum(sqrt(fm*fgamma(0,i)),0);
 }
 
  double
  dMatrixPole::psp(double m, unsigned int i){
-   return fpsp[i]->Eval(m)/fpsp[i]->Eval(fm);
+   return (*fpsp)[i]->Eval(m)/(*fpsp)[i]->Eval(fm);
  }
 
  
-void 
-dMatrixPole::addChannel(TF1* psp, double gamma){
-  fpsp.push_back(psp);
-  fgamma.push_back(gamma);
-}
-
 double 
 dMatrixPole::gammaTot(){
-  unsigned int n=fgamma.size();
+  unsigned int n=fgamma.size2();
   double result=0;
   for(unsigned int i=0;i<n;++i){
-    result+=fgamma[i];
+    result+=fgamma(0,i);
   }
   return result;
 }
 
 double 
 dMatrixPole::gammaTot(double m){
-  unsigned int n=fgamma.size();
+  unsigned int n=fgamma.size2();
   double result=0;
   for(unsigned int i=0;i<n;++i){
-    result+=fgamma[i]*psp(m,i);
+    result+=fgamma(0,i)*psp(m,i);
   }
   return result;
 }
@@ -83,7 +79,7 @@ dMatrixPole::gammaTot(double m){
 cnum 
 dMatrixPole::M2(double m){
    double m2=fm*fm;
-   return cnum(m2,gammaTot(m));
+   return cnum(m2,-gammaTot(m));
 }
 
 
@@ -95,14 +91,34 @@ dMatrixAmp::dMatrixAmp(){};
 
 dMatrixAmp::~dMatrixAmp(){};
 
-
-// first add all channels
 void 
-dMatrixAmp::addChannels(map<string, TF1*> channels){}
+dMatrixAmp::addChannel(TF1* ch){
+  fChannels.push_back(ch);
+}
 
-// then add poles
 void 
-dMatrixAmp::addPole(const dMatrixPole& pole){}
+dMatrixAmp::setNPoles(unsigned int n){
+  fPoles.clear();
+  fPoles.resize(n);
+}
+
+
+void 
+dMatrixAmp::Setup( const rmatrix& mbare, 
+	     const rmatrix& gamma, 
+	     const cmatrix& production,
+	     const rmatrix& mixing){
+   unsigned int np=nPoles();
+   unsigned int nc=nChannels();
+   fprod=production;
+   for(unsigned int ip=0;ip<np;++ip){
+     cerr << "ip="<< ip << endl;
+     fPoles[ip].setMass(mbare(0,ip));
+     matrix_range<const rmatrix> gam(gamma,range(ip,ip+1),range(0,nc));
+      cerr << gam << endl;
+      fPoles[ip].setChannels(&fChannels,gam);
+   }// end loop over poles
+ }
 
 
 cnum 
@@ -111,7 +127,6 @@ dMatrixAmp::amp(double m, unsigned int channel){
   // build propagator matrix:
   unsigned int n=nPoles();
   cmatrix Dinv(n,n);
-  cmatrix AProd(n,1);
   cmatrix ADec(1,n);
   for(unsigned int i=0;i<n;++i){
     for(unsigned int j=0;j<n;++j){
@@ -120,18 +135,19 @@ dMatrixAmp::amp(double m, unsigned int channel){
       } // end setting 
       else Dinv(i,j)=0; // no mixing at the moment
     }
-    // build collumn vector of production amplitudes 
-    // (complex, independent of channel)
-    AProd(i,0)=getPole(i).gProd();
+  
     // build row-vector of decay amplitudes
     // (real, depend on channel)
     ADec(0,i)=getPole(i).gDec(channel);
   } // end loop over poles
   
-  cmatrix D;
+  cmatrix D(n,n);
+  ///cerr << "Inverting Matrix now" << endl;
   InvertMatrix(Dinv,D);
+  //cerr << "Matrix inverted" << endl;
 
- 
+  cmatrix DAProd=prod(D,fprod);
+  cmatrix ADecDAProd=prod(ADec,DAProd);
 
-  return 0;
+  return ADecDAProd(0,0);
 }; /// full amplitude

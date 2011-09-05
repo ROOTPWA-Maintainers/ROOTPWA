@@ -1,13 +1,15 @@
 #include <boost/numeric/ublas/vector.hpp>
 #include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+
 #include <boost/numeric/ublas/triangular.hpp>
 #include <boost/numeric/ublas/lu.hpp>
 #include <boost/numeric/ublas/io.hpp>
 
- namespace ublas = boost::numeric::ublas;
- typedef complex<double> cnum;
- typedef ublas::matrix<cnum> cmatrix;
+namespace ublas = boost::numeric::ublas;
+typedef std::complex<double> cnum;
+typedef ublas::matrix<cnum> cmatrix;
 
  /* Matrix inversion routine.
     Uses lu_factorize and lu_substitute in uBLAS to invert a matrix */

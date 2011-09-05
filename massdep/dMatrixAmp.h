@@ -57,7 +57,7 @@
 #include "TCanvas.h"
 #include "TF1.h"
 
-using namespace std;
+
  #include <boost/numeric/ublas/vector.hpp>
  #include <boost/numeric/ublas/vector_proxy.hpp>
  #include <boost/numeric/ublas/matrix.hpp>
@@ -66,32 +66,36 @@ using namespace std;
  #include <boost/numeric/ublas/io.hpp>
 
  namespace ublas = boost::numeric::ublas;
- typedef complex<double> cnum;
+typedef std::complex<double> cnum;
  typedef ublas::matrix<cnum> cmatrix;
+typedef ublas::matrix<double> rmatrix;
 
 class dMatrixPole {
  public:
- dMatrixPole(double m):fm(m){};
-  ~dMatrixPole(){};
+  dMatrixPole(){}
+ dMatrixPole(double m, cnum prodAmp):fm(m), fgProd(prodAmp) {}
+  ~dMatrixPole(){}
 
   // Modifiers
-  void addChannel(TF1* psp, double gamma);
+  void setChannels(std::vector<TF1*>* psp, const rmatrix& gammas)
+  {fpsp=psp;fgamma=gammas;}
   void setProdAmp(cnum a){fgProd=a;}
   void setMass(double m){fm=m;}
+  void setGamma(double gamma, unsigned int i){fgamma(0,i)=gamma;}
 
   // Accessors
   cnum M2(double m); // return complex pole position
   cnum gProd(){return fgProd;} // return production coupling
   cnum gDec(unsigned int i);   // return decay coupling (real) for channel i
-  cnum gamma(unsigned int i){return cnum(fgamma[i],0);} // return partial width for channel i
+  cnum gamma(unsigned int i){return cnum(fgamma(0,i),0);} // return partial width for channel i
   double psp(double m, unsigned int i); // return phase space element normalized to pole position
   double gammaTot(); // total width (at resonance)
   double gammaTot(double m); // total mass dependent width
   
  private:
   double fm;
-  vector<double> fgamma; // partial widths
-  vector<TF1*> fpsp; // phase space functions for different channels
+  rmatrix fgamma; // partial widths
+  const std::vector<TF1*>* fpsp; // phase space functions for different channels
   cnum fgProd; // production coupling of this state
 
 };
@@ -103,22 +107,29 @@ class dMatrixAmp {
  public:
   dMatrixAmp();
   ~dMatrixAmp();
-  
-  // first add all channels
-  void addChannels(map<string, TF1*> channels);
 
-  // then add poles
-  void addPole(const dMatrixPole& pole);
   
+  void setNPoles(unsigned int n);
+  void addChannel(TF1*);
+
+  void Setup( const rmatrix& mbare, 
+	     const rmatrix& gamma, 
+	     const cmatrix& production,
+	     const rmatrix& mixing);
+  
+
   // processor:
   cnum amp(double m, unsigned int channel); /// amplitude in a channel
   
   // helpers:
   unsigned int nPoles(){return fPoles.size();}
   dMatrixPole& getPole(unsigned int i){return fPoles[i];}
+  unsigned int nChannels(){return fChannels.size();}
+  TF1* getPS(unsigned int i){return fChannels[i];}
 
  private:
-  vector<dMatrixPole> fPoles;
-
+  std::vector<dMatrixPole> fPoles;
+  std::vector<TF1*> fChannels;
+  cmatrix fprod; // production amplitudes
 
 };
