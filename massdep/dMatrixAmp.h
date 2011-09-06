@@ -131,5 +131,6 @@ class dMatrixAmp {
   std::vector<dMatrixPole> fPoles;
   std::vector<TF1*> fChannels;
   cmatrix fprod; // production amplitudes
+  rmatrix fmixing;
 
 };

@@ -111,6 +111,7 @@ dMatrixAmp::Setup( const rmatrix& mbare,
    unsigned int np=nPoles();
    unsigned int nc=nChannels();
    fprod=production;
+   fmixing=mixing;
    for(unsigned int ip=0;ip<np;++ip){
      cerr << "ip="<< ip << endl;
      fPoles[ip].setMass(mbare(0,ip));
@@ -133,7 +134,7 @@ dMatrixAmp::amp(double m, unsigned int channel){
       if(i==j){
 	Dinv(i,j)=getPole(i).M2(m)-s;
       } // end setting 
-      else Dinv(i,j)=0; // no mixing at the moment
+      else Dinv(i,j)=-fmixing(i,j); // no mixing at the moment
     }
   
     // build row-vector of decay amplitudes

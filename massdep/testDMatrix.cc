@@ -56,7 +56,7 @@ main(int argc, char** argv){
   double mpi=0.13957018;
 
   double m1= 1.8;
-  double m2= 1.95;
+  // double m2= 1.95;
   // double bre=0.4;
   // double bim=0.4;
   // double gamma1=0.3;
@@ -74,28 +74,28 @@ main(int argc, char** argv){
  
   dMatrixAmp damp;
  
-  damp.setNPoles(2);
+  damp.setNPoles(1);
   damp.addChannel(fpipi); 
   //damp.addChannel(f4pi); 
 
   // Parameters of amplitude:
   // bare pole masses
   matrix<double> mbare(1,damp.nPoles());
-  mbare(0,0)=m1;mbare(0,1)=m2;
+  mbare(0,0)=m1;//mbare(0,1)=m2;
 
   // decay width
   matrix<double> gamma(damp.nPoles(),damp.nChannels());
   gamma(0,0)=0.3;//gamma(0,1)=0.2;
-  gamma(1,0)=0.3;//gamma(1,1)=0.2;
+  //gamma(1,0)=0.3;//gamma(1,1)=0.2;
 
   // production amplitudes (1 per pole)
   cmatrix production(damp.nPoles(),1);
   production(0,0)=cnum(1,0);
-  production(1,0)=cnum(1,0);
+  //production(1,0)=cnum(1,0);
 
   // mixing parameters (usually symmetric!)
   matrix<double> mixing(damp.nPoles(),damp.nPoles());
-  mixing(0,0)=1;mixing(0,1)=0;mixing(1,0);mixing(0,1)=1;
+  mixing(0,0)=1;//mixing(0,1)=0;mixing(1,0)=0;mixing(1,1)=1;
 
   damp.Setup(mbare,gamma,production, mixing);
 
