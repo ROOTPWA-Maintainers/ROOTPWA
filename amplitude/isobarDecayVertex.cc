@@ -41,7 +41,7 @@
 
 #include "mathUtils.hpp"
 #include "reportingUtilsRoot.hpp"
-#include "clebschGordanCoeff.hpp"
+#include "spinUtils.hpp"
 #include "isobarDecayVertex.h"
 
 	
@@ -287,7 +287,7 @@ isobarDecayVertex::checkConsistency()
 		printDebug << "success: " << *this
 		           << ": relative orbital angular momentum L = " << spinQn(_L) << " is integer" << endl;
 	// spin coupling: S in {|s1 - s2|, ..., s1 + s2}
-	if (not angMomCanCouple(daughter1()->J(), daughter2()->J(), _S)) {
+	if (not spinStatesCanCouple(daughter1()->J(), daughter2()->J(), _S)) {
 		printWarn << "spins "
 		          << "(" << daughter1()->name() << " J = " << spinQn(daughter1()->J()) << ") and "
 		          << "(" << daughter2()->name() << " J = " << spinQn(daughter2()->J()) << ") "
@@ -296,14 +296,14 @@ isobarDecayVertex::checkConsistency()
 	} else if (_debug)
 		printDebug << "success: " << *this << ": spin-spin coupling is consistent" << endl;
 	// L-S coupling: J in {|L - S|, ..., L + S}
-	if (not angMomCanCouple(_L, _S, parent()->J())) {
+	if (not spinStatesCanCouple(_L, _S, parent()->J())) {
 		printWarn << "orbital angular momentum L = " << spinQn(_L) << " and spin S = " << spinQn(_S)
 		          << " cannot couple to angular momentum J = " << spinQn(parent()->J()) << endl;
 		vertexConsistent = false;
 	} else if (_debug)
 		printDebug << "success: " << *this << ": L-S coupling is consistent" << endl;
 	// isospin coupling: I in {|I_1 - I_2|, ..., I_1 + I_2}
-	if (not angMomCanCouple(daughter1()->isospin(), daughter2()->isospin(), parent()->isospin())) {
+	if (not spinStatesCanCouple(daughter1()->isospin(), daughter2()->isospin(), parent()->isospin())) {
 		printWarn << "isospins "
 		          << "(" << daughter1()->name() << " I = " << spinQn(daughter1()->isospin()) << ") and "
 		          << "(" << daughter2()->name() << " I = " << spinQn(daughter2()->isospin()) << ") "

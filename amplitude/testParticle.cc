@@ -114,6 +114,27 @@ main(int argc, char** argv)
 		}
 	}
 
+	// checking spin-exotic
+	if (1) {
+		printInfo << "testing spin-exotic tag" << endl;
+		for (particleDataTable::dataIterator i = pdt.begin(); i != pdt.end(); ++i) {
+			const particleProperties& prop = i->second;
+			const bool jpc  = jpcIsExotic(prop.J(), prop.P(), prop.C());
+			const bool igjp = igjpIsExotic(prop.isospin(), prop.G(), prop.J(), prop.P());
+			cout << prop.name() << ": " << yesNo(jpc) << " vs. " << yesNo(igjp)
+			     << ((jpc != igjp) ? " <<<" : "") << endl;
+		}
+		for (int J = 0; J < 4; ++J)
+			for (int P = -1; P <= 1; P += 2)
+				for (int C = -1; C <= 1; C += 2) {
+					const bool jpc   = jpcIsExotic(2 * J, P, C);
+					const bool igjp1 = igjpIsExotic(0,  C, 2 * J, P);
+					const bool igjp2 = igjpIsExotic(2, -C, 2 * J, P);
+					cout << J << sign(P) << sign(C) << ": " << yesNo(jpc) << " vs. " << yesNo(igjp1)
+					     << ", " << yesNo(igjp2) << endl;
+				}
+	}
+
 	if (0) {
 		{
 			fourVec  p(2, threeVec(0.5, 0.75, 1));

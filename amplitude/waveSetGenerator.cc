@@ -38,10 +38,9 @@
 
 #include "libconfig.h++"
 
-#include "physUtils.hpp"
+#include "spinUtils.hpp"
 #include "conversionUtils.hpp"
 #include "libConfigUtils.hpp"
-#include "clebschGordanCoeff.hpp"
 #include "particleDataTable.h"
 #include "waveDescription.h"
 #include "waveSetGenerator.h"

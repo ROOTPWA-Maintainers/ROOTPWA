@@ -41,7 +41,7 @@
 #include "TLorentzRotation.h"
 #include "TMath.h"
 
-#include "clebschGordanCoeff.hpp"
+#include "spinUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"
 

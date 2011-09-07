@@ -46,8 +46,7 @@
 #include "TStopwatch.h"
 #include "TVector3.h"
 
-#include "factorial.hpp"
-#include "clebschGordanCoeff.hpp"
+#include "spinUtils.hpp"
 #include "dFunction.hpp"
 
 

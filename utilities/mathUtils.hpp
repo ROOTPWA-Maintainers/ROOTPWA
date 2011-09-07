@@ -103,25 +103,6 @@ namespace rpwa {
 	{
 		return not isOdd(val);
 	}
-
-	
-	inline
-	bool
-	angMomCanCouple(const int j1,
-	                const int j2,
-	                const int J)  ///< returns, whether j1 and j2 can couple to J; all in units of hbar / 2
-	{
-		if ((j1 < 0) or (j2 < 0) or (J < 0)) { // negative spins are not allowed
-			printErr << "negative spins are not allowed (j1 = " << 0.5 * j1 << ", "
-			         << "j2 = " << 0.5 * j2 << ", J = " << 0.5 * J << "). aborting." << std::endl;
-			throw;
-		}
-		if ((J < rpwa::abs(j1 - j2)) or (J > j1 + j2))  // make sure J is in physical allowed range
-			return false;
-		if (isOdd(j1 + j2 - J))  // check that J is in the half-integer or integer series, respectively
-			return false;
-		return true;
-	}
   
 
 	inline

@@ -49,7 +49,7 @@
 
 #include "reportingUtils.hpp"
 #include "mathUtils.hpp"
-#include "physUtils.hpp"
+#include "spinUtils.hpp"
 #include "conversionUtils.hpp"
 
 
@@ -248,7 +248,7 @@ namespace rpwa {
 	bool
 	particleProperties::isSpinExotic() const
 	{
-		return (isMeson() and jpgIsExotic(J(), P(), G()));
+		return (isMeson() and igjpIsExotic(isospin(), G(), J(), P()));
 	}
 
 

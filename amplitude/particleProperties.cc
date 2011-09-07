@@ -290,8 +290,10 @@ particleProperties::print(ostream& out) const
 	    << "strangeness = "             << strangeness()     << ", "
 	    << "charm = "                   << charm()           << ", "
 	    << "beauty = "                  << beauty()          << ", "
-	    << "is meson = "                << yesNo(isMeson())  << ", "
-	    << "is baryon = "               << yesNo(isBaryon()) << ", "
+	    << "is meson = "                << yesNo(isMeson())  << ", ";
+	if (isMeson())
+		out << "is spin-exotic = " << yesNo(isSpinExotic()) << ", ";
+	out << "is baryon = "               << yesNo(isBaryon()) << ", "
 	    << "is lepton = "               << yesNo(isLepton()) << ", "
 	    << "is photon = "               << yesNo(isPhoton()) << ", "
 	    << "antiparticle '"             << antiPartName()    << "', "
