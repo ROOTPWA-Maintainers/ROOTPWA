@@ -45,7 +45,7 @@
 
 #include <boost/math/tools/promotion.hpp>
 
-#include "pputil.h"
+#include "../pwa2000/libpp/pputil.h"
 #include "reportingUtils.hpp"
 
 
@@ -131,8 +131,8 @@ namespace rpwa {
 	{
 		const double norm = rpwa::sqrt(L + 1);
 		if (debug)
-			printInfo << "normalization factor sqrt(2 * L = " << 0.5 * L << " + 1) = "
-			          << maxPrecision(norm) << std::endl;
+			printDebug << "normalization factor sqrt(2 * L = " << 0.5 * L << " + 1) = "
+			           << maxPrecision(norm) << std::endl;
 		return norm;
 	}
 
@@ -174,8 +174,8 @@ namespace rpwa {
 	{
 		const double bf = F(L, breakupMom);
 		if (debug)
-			printInfo << "Blatt-Weisskopf barrier factor(L = " << 0.5 * L << ", "
-			          << "q = " << breakupMom << " GeV) = " << maxPrecision(bf) << std::endl;
+			printDebug << "Blatt-Weisskopf barrier factor(L = " << 0.5 * L << ", "
+			           << "q = " << breakupMom << " GeV) = " << maxPrecision(bf) << std::endl;
 		return bf;
 	}
 

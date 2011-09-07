@@ -94,7 +94,7 @@ main(int argc, char** argv)
 		mom = TVector3(1, 2, 3);
 		particlePtr beam = createParticle("pi-");
 		beam->setMomentum(mom);
-		particlePtr target = createParticle("p");
+		particlePtr target = createParticle("p+");
 		particlePtr X      = createParticle("X-");
 		printInfo << "created particles: " << endl
 		          << *beam   << endl
@@ -102,10 +102,10 @@ main(int argc, char** argv)
 		          << *X      << endl;
 		diffractiveDissVertexPtr vert1 = createDiffractiveDissVertex(beam, target, X);
 		printInfo << "created vertex: " << endl
-		          << *vert1;
+		          << *vert1 << endl;
 		diffractiveDissVertexPtr vert2(vert1);
 		printInfo << "copied vertex: " << endl
-		          << *vert2;
+		          << *vert2 << endl;
 
 		mom = TVector3(3, 4, 5);
 		particlePtr daughter1 = createParticle("pi-");
@@ -115,10 +115,10 @@ main(int argc, char** argv)
 		daughter2->setMomentum(mom);
 		isobarDecayVertexPtr vert3 = createIsobarDecayVertex(X, daughter1, daughter2, 1, 2);
 		printInfo << "created vertex: " << endl
-		          << *vert3;
+		          << *vert3 << endl;
 		isobarDecayVertexPtr vert4(vert3);
 		printInfo << "copied vertex: " << endl
-		          << *vert4;
+		          << *vert4 << endl;
 	}
 
 	if (1) {
@@ -136,7 +136,7 @@ main(int argc, char** argv)
 		particlePtr X = createParticle("X+", 2, +1, 4, +1, -1, 2);
 		// define production vertex
 		particlePtr              beam     = createParticle("pi-");
-		particlePtr              target   = createParticle("p");
+		particlePtr              target   = createParticle("p+");
 		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
 		// define vertices
 		isobarDecayVertexPtr vert0 = createIsobarDecayVertex(X,     pi4, f1,    0, 3);
@@ -151,7 +151,7 @@ main(int argc, char** argv)
 		g.addVertex(vert1);
 		g.addVertex(vert2);
 		g.addVertex(vert3);
-		cout << g;
+		printInfo << g;
 
 		for (graphType::nodeIterator i = g.nodes().first; i != g.nodes().second; ++i) {
 			const isobarDecayVertexPtr v = static_pointer_cast<isobarDecayVertex>(g.vertex(*i));
@@ -178,37 +178,37 @@ main(int argc, char** argv)
 			g2.data (*i).bar = *i + 0.5;
 			g2.name (*i)    += " !bar!";
 			g2.color(*i)     = white_color;
-			cout << "vert1 adjacent vertex[" << *i << "]: " << *g2[*i] << endl;
+			printInfo << "vert1 adjacent vertex[" << *i << "]: " << *g2[*i] << endl;
 		}
-		cout << "nmbInParticles(vert1): " << g2.nmbInEdges(vert1) << endl;
+		printInfo << "nmbInParticles(vert1): " << g2.nmbInEdges(vert1) << endl;
 		for (graphType::inEdgeIterator i = g2.incomingEdges(vert1).first;
 		     i != g2.incomingEdges(vert1).second; ++i) {
 			g2.data(*i).blah = g2.index(*i) + 2;
 			g2.name (*i)    += " !blah!";
 			g2.color(*i)     = gray_color;
-			cout << "vert1 in edge[" << *i << "]: " << *g2[*i] << endl;
+			printInfo << "vert1 in edge[" << *i << "]: " << *g2[*i] << endl;
 		}
-		cout << "nmbOutParticles(vert1): " << g2.nmbOutEdges(vert1) << endl;
+		printInfo << "nmbOutParticles(vert1): " << g2.nmbOutEdges(vert1) << endl;
 		for (graphType::outEdgeIterator i = g2.outgoingEdges(vert1).first;
 		     i != g2.outgoingEdges(vert1).second; ++i) {
 			g2.data(*i).blah = g2.index(*i) + 4;
 			g2.name (*i)    += " !blah2!";
 			g2.color(*i)     = black_color;
-			cout << "vert1 out edge[" << *i << "]: " << *g2[*i] << endl;
+			printInfo << "vert1 out edge[" << *i << "]: " << *g2[*i] << endl;
 		}
 		isobarDecayVertexPtr dummyVert = createIsobarDecayVertex(X, pi4, f1, 0, 3);
-		cout << "isNode(vert0) = "     << g2.isNode(vert0) << ", "
-		     << "isNode(dummyVert) = " << g2.isNode(dummyVert) << endl;
+		printInfo << "isNode(vert0) = "     << g2.isNode(vert0) << ", "
+		          << "isNode(dummyVert) = " << g2.isNode(dummyVert) << endl;
 		particlePtr dummyPart = createParticle("X+", 1, +1, 4, +1, -1, 2);
-		cout << "isEdge(f1) = "        << g2.isEdge(f1) << ", "
-		     << "isEdge(dummyPart) = " << g2.isEdge(dummyPart) << endl;
+		printInfo << "isEdge(f1) = "        << g2.isEdge(f1) << ", "
+		          << "isEdge(dummyPart) = " << g2.isEdge(dummyPart) << endl;
 		cout << "fromVertex(f1): " << *g2.fromVertex(f1) << endl;
 		cout << "toVertex(f1): "   << *g2.toVertex  (f1) << endl;
 		cout << "particleExists(vert0, vert1) = " << g2.particleExists(vert0, vert1) << ", "
 		     << "particleExists(vert1, vert0) = " << g2.particleExists(vert1, vert0) << endl;
 		cout << "particleConnects(f1, vert0, vert1) = " << g2.particleConnects(f1, vert0, vert1) << endl;
 		cout << "particleConnects(a1, vert0, vert1) = " << g2.particleConnects(a1, vert0, vert1) << endl;
-		cout << "graph data = " << g2.data().foo << endl;
+		printInfo << "graph data = " << g2.data().foo << endl;
 		for (graphType::nodeIterator i = g2.nodes().first; i != g2.nodes().second; ++i)
 			cout << "node " << *i << ": data = " << g2.data(*i).bar << ", "
 			     << "name = '"  << g2.name(*i)  << "', "
@@ -237,10 +237,10 @@ main(int argc, char** argv)
 		g3.addVertex(createFsVertex(pi2));
 		g3.addVertex(createFsVertex(pi3));
 		g3.addVertex(createFsVertex(pi4));
-		cout << g3;
+		printInfo << g3;
 		decayTopology topo(g3);
 		topo.name() = "topo graph copy";
-		cout << topo;
+		printInfo << topo;
 
 		vector<isobarDecayVertexPtr> decayVertices;
 		decayVertices.push_back(vert3);
@@ -255,13 +255,15 @@ main(int argc, char** argv)
 		fsParticles.push_back(pi4);
 		isobarDecayTopology topo2(prodVert, decayVertices, fsParticles);
 		topo2.name() = "topo";
-		cout << topo2;
+		printInfo << topo2;
 		const bool topologyOkay = topo2.checkTopology();
-		cout << "topology okay = " << topologyOkay << endl;
-		printInfo << endl << "performing consistency checks on isobar decay topology" << endl;
+		printInfo << "topology okay = " << topologyOkay << endl;
+		printInfo << "performing consistency checks on isobar decay topology" << endl;
 		const bool decayConsistent = topo2.checkConsistency();
-		cout << "decay consistent = " << decayConsistent << endl;
+		printInfo << "decay consistent = " << decayConsistent << endl;
 		topo2.calcIsobarLzVec();
+
+		exit(1);
 
 		{
 			cout << endl << "testing cloning" << endl;

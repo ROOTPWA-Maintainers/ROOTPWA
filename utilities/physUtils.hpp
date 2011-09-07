@@ -235,9 +235,23 @@ namespace rpwa {
 		// quark model restrictions for mesons: P == C is always allowed
 		// check that P = (-1)^(J + 1)
 		if (    (P != C)
-		    and (   (C != (J % 4     == 0 ? 1 : -1))
-		         or (P != (J + 2 % 4 == 0 ? 1 : -1))))
+		    and (   (C != ((J % 4     == 0) ? 1 : -1))
+		         or (P != ((J + 2 % 4 == 0) ? 1 : -1))))
 			return true;
+		return false;
+	}
+
+
+	// checks whether JPG combination is exotic
+	inline
+	bool
+	jpgIsExotic(const int J,
+	            const int P,
+	            const int G)
+	{
+		// for baryons all JPGs are allowed
+		if (isOdd(J))
+			return false;
 		return false;
 	}
 

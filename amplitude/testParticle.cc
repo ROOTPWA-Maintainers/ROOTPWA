@@ -107,7 +107,7 @@ main(int argc, char** argv)
 			//const particle p(c.str(), i);
 			int q;
 			const string n = particle::chargeFromName(c.str(), q);
-			cout << c.str() << ": charge = " << q << ", name = " << n << endl;
+			printInfo << c.str() << ": charge = " << q << ", bare name = " << n << endl;
 			const particle p(c.str());
 			cout << "name = " << p.name() << endl
 			     << endl;

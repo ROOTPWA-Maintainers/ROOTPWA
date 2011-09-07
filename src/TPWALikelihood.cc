@@ -216,9 +216,9 @@ TPWALikelihood<complexT>::FdF
 	_funcCallInfo[FDF].totalTime(timerTot.RealTime());
 	
 	if (_debug)
-		printInfo << "log likelihood =  "       << maxPrecisionAlign(sum(logLikelihoodAcc)) << ", "
-		          << "normalization =  "        << maxPrecisionAlign(sum(normFactorAcc)   ) << ", "
-		          << "normalized likelihood = " << maxPrecisionAlign(funcVal              ) << endl;
+		printDebug << "log likelihood =  "       << maxPrecisionAlign(sum(logLikelihoodAcc)) << ", "
+		           << "normalization =  "        << maxPrecisionAlign(sum(normFactorAcc)   ) << ", "
+		           << "normalized likelihood = " << maxPrecisionAlign(funcVal              ) << endl;
 }
 
 
@@ -315,9 +315,9 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 	_funcCallInfo[DOEVAL].totalTime(timerTot.RealTime());
 
 	if (_debug)
-		printInfo << "raw log likelihood =  "       << maxPrecisionAlign(logLikelihood     ) << ", "
-		          << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
-		          << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
+		printDebug << "raw log likelihood =  "       << maxPrecisionAlign(logLikelihood     ) << ", "
+		           << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
+		           << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
 	
 	return funcVal;
 	
@@ -590,8 +590,8 @@ TPWALikelihood<complexT>::readWaveList(const string& waveListFileName)
 			if (not (lineStream >> threshold))
 				threshold = 0;
 			if (_debug)
-				printInfo << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
-				          << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
+				printDebug << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
+				           << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
 			if (getReflectivity(waveName) > 0) {
 				++_nmbWavesRefl[1];  // positive reflectivity
 				waveNames     [1].push_back(waveName);
@@ -717,9 +717,9 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
 			}
 			indexLookUp[iRefl][iWave] = integral.index(_waveNames[iRefl][iWave]);
 			if (_debug)
-				printInfo << "    mapping wave [" << sign((int)iRefl * 2 - 1) << ", "
-				          << setw(3) << iWave << "] '" << _waveNames[iRefl][iWave] << "' "
-				          << "to index " << setw(3) << indexLookUp[iRefl][iWave] << " in integral." << endl;
+				printDebug << "    mapping wave [" << sign((int)iRefl * 2 - 1) << ", "
+				           << setw(3) << iWave << "] '" << _waveNames[iRefl][iWave] << "' "
+				           << "to index " << setw(3) << indexLookUp[iRefl][iWave] << " in integral." << endl;
 		}
 	// create reordered matrix
 	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
@@ -948,8 +948,8 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt)
 				_decayAmps[iEvt][iRefl][iWave] = amps[iEvt];
 			if (_debug)
-				printInfo << "read " << _nmbEvents << " events from file "
-				          << "'" << _waveNames[iRefl][iWave] << "'" << endl;
+				printDebug << "read " << _nmbEvents << " events from file "
+				           << "'" << _waveNames[iRefl][iWave] << "'" << endl;
 		}
 	printInfo << "loaded decay amplitudes for " << _nmbEvents << " events into memory" << endl;
 
@@ -984,7 +984,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 				_normMatrix[iRefl][iWave][iRefl][iWave] = 1;  // diagonal term
 		if (_debug) {
-			printInfo << "normalized integral matrices" << endl;
+			printDebug << "normalized integral matrices" << endl;
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
@@ -1111,8 +1111,8 @@ TPWALikelihood<complexT>::getReflectivity(const TString& waveName)
 		throw;
 	}
 	if (_debug)
-		printInfo << "extracted reflectivity = " << refl << " from parameter name "
-		          << "'" << waveName << "' (char position " << reflIndex << ")" << endl;
+		printDebug << "extracted reflectivity = " << refl << " from parameter name "
+		           << "'" << waveName << "' (char position " << reflIndex << ")" << endl;
 	return refl;
 }
 

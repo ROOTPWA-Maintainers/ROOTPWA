@@ -64,7 +64,7 @@ complex<double>
 flatMassDependence::amp(const isobarDecayVertex&)
 {
 	if (_debug)
-		printInfo << name() << " = 1" << endl;
+		printDebug << name() << " = 1" << endl;
 	return 1;
 }
 
@@ -103,9 +103,9 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 	if (_debug)
-		printInfo << name() << "(m = " << M << " GeV, m_0 = " << M0 << " GeV, "
-		          << "Gamma_0 = " << Gamma0 << " GeV, L = " << 0.5 * L << ", q = " << q << " GeV, "
-		          << q0 << " GeV) = " << maxPrecisionDouble(bw) << endl;
+		printDebug << name() << "(m = " << M << " GeV, m_0 = " << M0 << " GeV, "
+		           << "Gamma_0 = " << Gamma0 << " GeV, L = " << 0.5 * L << ", q = " << q << " GeV, "
+		           << q0 << " GeV) = " << maxPrecisionDouble(bw) << endl;
 	return bw;
 }
 
@@ -222,7 +222,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 	invertMatrix<complex<double> >(M - imag * rho, _T);
 	const complex<double> amp = _T(0, 0);
 	if (_debug)
-		printInfo << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
 
 	return amp;
 }
@@ -269,7 +269,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	const complex<double> amp = ampM - coupling * bw;
 	if (_debug)
-		printInfo << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
 
 	return amp;
 }

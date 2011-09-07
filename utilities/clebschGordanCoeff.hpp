@@ -187,10 +187,10 @@ namespace rpwa {
 	{
 		const T cgCoeff = clebschGordanCoeffCached<T>::instance()(j1, m1, j2, m2, J, M);
 		if (debug)
-		  printInfo << "Clebsch-Gordan (j1 = " << 0.5 * j1 << ", m1 = " << 0.5 * m1 << "; "
-		            << "j2 = " << 0.5 * j2 << ", m2 = " << 0.5 * m2 << " | "
-		            << "J = " << 0.5 * J << ", M = " << 0.5 * M << ") = "
-		            << maxPrecisionDouble(cgCoeff) << std::endl;
+		  printDebug << "Clebsch-Gordan (j1 = " << 0.5 * j1 << ", m1 = " << 0.5 * m1 << "; "
+		             << "j2 = " << 0.5 * j2 << ", m2 = " << 0.5 * m2 << " | "
+		             << "J = " << 0.5 * J << ", M = " << 0.5 * M << ") = "
+		             << maxPrecisionDouble(cgCoeff) << std::endl;
 		return cgCoeff;
 	}
 	

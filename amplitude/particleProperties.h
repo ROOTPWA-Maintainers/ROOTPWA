@@ -26,8 +26,8 @@
 //
 // Description:
 //      container class for particle properties
-//      !NOTE! all potentially half-integer quantum numbers like I and
-//             J are in units of hbar / 2 so that they are always integer
+//      !NOTE! all potentially half-integer quantum numbers (I, I_z, J)
+//      are in units of hbar / 2 so that they are always integer
 //
 //
 // Author List:
@@ -48,6 +48,9 @@
 #include <sstream>
 
 #include "reportingUtils.hpp"
+#include "mathUtils.hpp"
+#include "physUtils.hpp"
+#include "conversionUtils.hpp"
 
 
 namespace rpwa {
@@ -80,38 +83,54 @@ namespace rpwa {
 		friend bool operator !=(const particleProperties&                         lhsProp,
 		                        const std::pair<particleProperties, std::string>& rhsProp)
 		{ return not (lhsProp == rhsProp); }
-    
-		virtual std::string name()        const { return _name;         }  ///< returns particle name of the corresponding data table entry
-		double              mass()        const { return _mass;         }  ///< returns particle mass
-		double              mass2()       const { return _mass * _mass; }  ///< returns particle mass squared
-		double              width()       const { return _width;        }  ///< returns particle width
-		int                 baryonNmb()   const { return _baryonNmb;    }  ///< returns particle's baryon number
-		int                 isospin()     const { return _isospin;      }  ///< returns particle's isospin * 2 (!!!)
-		int                 strangeness() const { return _strangeness;  }  ///< returns particle's strangeness
-		int                 charm()       const { return _charm;        }  ///< returns particle's charm
-		int                 beauty()      const { return _beauty;       }  ///< returns particle's beauty
-		int                 G()           const { return _G;            }  ///< returns particle's G-parity
-		int                 J()           const { return _J;            }  ///< returns particle's spin * 2 (!!!)
-		int                 P()           const { return _P;            }  ///< returns particle's parity
-		int                 C()           const { return _C;            }  ///< returns particle's C-parity
+
+		std::string name            () const { return nameWithCharge(_name, _charge);          }  ///< returns particle name including charge
+		std::string bareName        () const { return _name;                                   }  ///< returns particle name w/o charge
+		std::string antiPartName    () const { return nameWithCharge(_antiPartName, -_charge); }  ///< returns antiparticle name including charge
+		std::string antiPartBareName() const { return _antiPartName;                           }  ///< returns antiparticle name w/o charge
+		int         charge          () const { return _charge;                                 }  ///< returns particle's charge
+		double      mass            () const { return _mass;                                   }  ///< returns particle mass
+		double      mass2           () const { return _mass2;                                  }  ///< returns particle mass squared
+		double      width           () const { return _width;                                  }  ///< returns particle width
+		int         baryonNmb       () const { return _baryonNmb;                              }  ///< returns particle's baryon number
+		int         isospin         () const { return _isospin;                                }  ///< returns particle's isospin [hbar/2]
+		int         isospinProj     () const { return 2 * _charge - (baryonNmb() + strangeness() + charm() + beauty()); }  ///< returns z-component of isospin using Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
+		int         strangeness     () const { return _strangeness;                            }  ///< returns particle's strangeness
+		int         charm           () const { return _charm;                                  }  ///< returns particle's charm
+		int         beauty          () const { return _beauty;                                 }  ///< returns particle's beauty
+		int         G               () const { return _G;                                      }  ///< returns particle's G-parity
+		int         J               () const { return _J;                                      }  ///< returns particle's spin [hbar/2]
+		int         P               () const { return _P;                                      }  ///< returns particle's parity
+		int         C               () const { return _C;                                      }  ///< returns particle's C-parity
 
 		bool isXParticle() const;  ///< returns whether particle's name is either of "X{,-,0,+}"
+		
+		bool isMeson () const;  ///< returns whether particle is a meson
+		bool isBaryon() const;  ///< returns whether particle is a baryon
+		bool isLepton() const;  ///< returns whether particle is a lepton
+		bool isPhoton() const;  ///< returns whether particle is a lepton
+
+		bool isItsOwnAntiPart() const;  ///< returns whether particle is its own antiparticle
+
+		bool isSpinExotic() const;  ///< returns whether particle is spin-exotic
 
 		bool fillFromDataTable(const std::string& name, 
 		                       const bool         warnIfNotExistent = true);
 
-		void setName       (const std::string& name)        { _name        = name;        }  ///< sets particle name
-		void setMass       (const double       mass)        { _mass        = mass;        }  ///< sets particle mass
-		void setWidth      (const double       width)       { _width       = width;       }  ///< sets particle width
-		void setBaryonNmb  (const int          baryonNmb)   { _baryonNmb   = baryonNmb;   }  ///< sets particle's baryon number
-		void setIsospin    (const int          isospin)     { _isospin     = isospin;     }  ///< sets particle's isospin * 2 (!!!)
-		void setStrangeness(const int          strangeness) { _strangeness = strangeness; }  ///< sets particle's strangeness
-		void setCharm      (const int          charm)       { _charm       = charm;       }  ///< sets particle's charm
-		void setBeauty     (const int          beauty)      { _beauty      = beauty;      }  ///< sets particle's beauty
-		void setG          (const int          G)           { _G           = G;           }  ///< sets particle's G-parity
-		void setJ          (const int          J)           { _J           = J;           }  ///< sets particle's spin * 2 (!!!)
-		void setP          (const int          P)           { _P           = P;           }  ///< sets particle's parity
-		void setC          (const int          C)           { _C           = C;           }  ///< sets particle's C-parity
+		void setName        (const std::string& name       );                                                ///< sets particle name and charge (if given in name)
+		void setAntiPartName(const std::string& name       ) { _antiPartName = stripChargeFromName(name); }  ///< sets antiparticle name (charge in name is ignored)
+		void setCharge      (const int          charge     );                                                ///< sets particle's charge (limited to |q| <= 9)
+		void setMass        (const double       mass       );                                                ///< sets particle mass
+		void setWidth       (const double       width      ) { _width        = width;                     }  ///< sets particle width
+		void setBaryonNmb   (const int          baryonNmb  ) { _baryonNmb    = baryonNmb;                 }  ///< sets particle's baryon number
+		void setIsospin     (const int          isospin    ) { _isospin      = abs(isospin);              }  ///< sets particle's isospin [hbar/2]
+		void setStrangeness (const int          strangeness) { _strangeness  = strangeness;               }  ///< sets particle's strangeness
+		void setCharm       (const int          charm      ) { _charm        = charm;                     }  ///< sets particle's charm
+		void setBeauty      (const int          beauty     ) { _beauty       = beauty;                    }  ///< sets particle's beauty
+		void setG           (const int          G          ) { _G            = signum(G);                 }  ///< sets particle's G-parity
+		void setJ           (const int          J          ) { _J            = abs(J);                    }  ///< sets particle's spin in [hbar/2]
+		void setP           (const int          P          ) { _P            = signum(P);                 }  ///< sets particle's parity
+		void setC           (const int          C          ) { _C            = signum(C);                 }  ///< sets particle's C-parity
 
 		void setSCB  (const int strangeness,
 		              const int charm,
@@ -122,12 +141,17 @@ namespace rpwa {
 		              const int P,
 		              const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
 
+		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle
+
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)]
 
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
 		virtual std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
 
 		bool read(std::istringstream& line);  ///< reads whitespace separated properties from single line
+
+		static std::string nameWithCharge(const std::string& bareName,
+		                                  const int          charge);  ///< appends charge information to bare particle name
 
 		static std::string chargeFromName(const std::string& name,
 		                                  int&               charge);  ///< checks whether last characters of particle name contain charge information and sets charge accordingly; returns name with charge stripped off
@@ -139,18 +163,21 @@ namespace rpwa {
 
 	private:
 
-		std::string _name;         ///< full PDG name
-		double      _mass;         ///< mass [GeV/c^]
-		double      _width;        ///< total width [GeV/c^2]
-		int         _baryonNmb;    ///< baryon number
-		int         _isospin;      ///< isospin * 2 (!!!)
-		int         _strangeness;  ///< strangeness
-		int         _charm;        ///< charm
-		int         _beauty;       ///< beauty
-		int         _G;            ///< G-parity (0 = undefined)
-		int         _J;            ///< spin * 2 (!!!)
-		int         _P;            ///< parity (0 = undefined)
-		int         _C;            ///< C-parity (0 = undefined)
+		std::string _name;          ///< full PDG name of particle w/o charge
+		std::string _antiPartName;  ///< full PDG name of antiparticle w/o charge
+		int         _charge;        ///< charge
+		double      _mass;          ///< mass [GeV/c^2]
+		double      _mass2;         ///< mass^2 [(GeV/c^2)^2]
+		double      _width;         ///< total width [GeV/c^2]
+		int         _baryonNmb;     ///< baryon number
+		int         _isospin;       ///< isospin [hbar/2]
+		int         _strangeness;   ///< strangeness
+		int         _charm;         ///< charm
+		int         _beauty;        ///< beauty
+		int         _G;             ///< G-parity (0 = undefined)
+		int         _J;             ///< spin [hbar/2]
+		int         _P;             ///< parity (0 = undefined)
+		int         _C;             ///< C-parity (0 = undefined)
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -158,11 +185,112 @@ namespace rpwa {
 
 
 	inline
+	bool
+	particleProperties::isXParticle() const
+	{
+		return ((_name == "X") or (_name == "X-") or (_name == "X0") or (_name == "X+"));
+	}
+
+
+	inline
+	bool
+	particleProperties::isMeson() const
+	{
+		return (    (abs(charge()) <= 1) and (baryonNmb() == 0)
+		        and (isospin() <= 2) and (abs(strangeness()) <= 1) and (abs(charm()) <= 1)
+		        and (abs(beauty()) <= 1) and isEven(J()) and (abs(P()) == 1) and (abs(C()) <= 1)
+		        and ((abs(charge()) != 0) or (G() == powMinusOne(isospin() / 2) * C())));
+	}
+
+
+	inline
+	bool
+	particleProperties::isBaryon() const
+	{
+		return (    (abs(charge()) <= 2) and (baryonNmb() == 1)
+		        and (isospin() <= 3) and (abs(strangeness()) <= 3) and (abs(charm()) <= 3)
+		        and (abs(beauty()) <= 3) and isOdd(J()) and (abs(P()) == 1)
+		        and (C() == 0) and (G() == 0));
+	}
+
+
+	inline
+	bool
+	particleProperties::isLepton() const
+	{
+		return (    (abs(charge()) <= 1) and (baryonNmb() == 0) and (isospin() == 0)
+		        and (strangeness() == 0) and (charm() == 0) and (beauty() == 0)
+		        and (J() == 1) and (abs(P()) == 1) and (C() == 0) and (G() == 0));
+	}
+
+
+	inline
+	bool
+	particleProperties::isPhoton() const
+	{
+		return (    (charge() == 0) and (baryonNmb() == 0) and (isospin() == 0)
+            and (strangeness() == 0) and (charm() == 0) and (beauty() == 0)
+            and (J() == 2) and (P() == -1) and (C() == -1) and (G() == 0));
+	}
+
+
+	inline
+	bool
+	particleProperties::isItsOwnAntiPart() const
+	{
+		return (    (isMeson() or isPhoton()) and (name() == antiPartName())
+		        and (charge() == 0) and (baryonNmb() == 0) and (isospinProj() == 0)
+		        and (strangeness() == 0) and (charm() == 0) and (beauty() == 0));
+	}
+
+
+	inline
+	bool
+	particleProperties::isSpinExotic() const
+	{
+		return (isMeson() and jpgIsExotic(J(), P(), G()));
+	}
+
+
+	inline
+	void
+	particleProperties::setName(const std::string& partName)
+	{
+		int charge;
+		_name = chargeFromName(partName, charge);
+		setCharge(charge);
+	}
+
+
+	inline
+	void
+	particleProperties::setCharge(const int charge)
+	{
+		if (abs(charge) < 10)
+			_charge = charge;
+		else {
+			printErr << "absolute value of charge " << charge << " is larger than 9. "
+			         << "aborting." << std::endl;
+			throw;
+		}
+	}
+
+
+	inline
+	void
+	particleProperties::setMass(const double mass)
+	{ 
+		_mass  = mass;
+		_mass2 = mass * mass;
+	}
+
+
+	inline
 	std::ostream&
 	operator <<(std::ostream&             out,
 	            const particleProperties& partProp)
 	{
-		return partProp.print(out);
+	 	return partProp.print(out);
 	}
 
 

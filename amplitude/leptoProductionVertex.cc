@@ -98,7 +98,7 @@ leptoProductionVertex::leptoProductionVertex(const particlePtr& beamLepton,
 	}
 	interactionVertex::addOutParticle(createParticle(*beamLepton));  // lepton scatters elastically
 	if (_debug)
-		printInfo << "constructed " << *this << endl;
+		printDebug << "constructed " << *this << endl;
 }
 
 
@@ -136,9 +136,9 @@ leptoProductionVertex::doClone(const bool cloneInParticles,
 	if (cloneOutParticles)
 		vertexClone->cloneOutParticles();
 	if (_debug)
-		printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-		          << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
-		          << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
+		printDebug << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
+		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
 	return vertexClone;
 }
 
@@ -433,8 +433,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 	TVector3* beamLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
 	if (beamLeptonMom) {
 		if (_debug)
-			printInfo << "setting momentum of beam lepton '" << beamLepton()->name()
-			          << "' to " << *beamLeptonMom << " GeV" << endl;
+			printDebug << "setting momentum of beam lepton '" << beamLepton()->name()
+			           << "' to " << *beamLeptonMom << " GeV" << endl;
 		beamLepton()->setMomentum(*beamLeptonMom);
 		_beamLeptonMomCache = beamLepton()->momentum();
 	} else {
@@ -447,8 +447,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 	TVector3* scatteredLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
 	if (scatteredLeptonMom) {
 		if (_debug)
-			printInfo << "setting momentum of scattered lepton '" << beamLepton()->name()
-			          << "' to " << *beamLeptonMom << " GeV" << endl;
+			printDebug << "setting momentum of scattered lepton '" << beamLepton()->name()
+			           << "' to " << *beamLeptonMom << " GeV" << endl;
 		scatteredLepton()->setMomentum(*scatteredLeptonMom);
 		_scatteredLeptonMomCache = scatteredLepton()->momentum();
 	} else {
@@ -463,8 +463,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
 		if (recoilMom) {
 			if (_debug)
-				printInfo << "setting momentum of recoil particle '" << recoil()->name()
-				          << "' to " << *recoilMom << " GeV" << endl;
+				printDebug << "setting momentum of recoil particle '" << recoil()->name()
+				           << "' to " << *recoilMom << " GeV" << endl;
 			recoil()->setMomentum(*recoilMom);
 			_recoilMomCache = recoil()->momentum();
 		} else {
@@ -479,8 +479,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[3]);
 		if (targetMom) {
 			if (_debug)
-				printInfo << "setting momentum of target particle '" << target()->name()
-				          << "' to " << *targetMom << " GeV" << endl;
+				printDebug << "setting momentum of target particle '" << target()->name()
+				           << "' to " << *targetMom << " GeV" << endl;
 			target()->setMomentum(*targetMom);
 			_targetMomCache = target()->momentum();
 		} else {
@@ -499,19 +499,17 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 bool
 leptoProductionVertex::revertMomenta()
 {
-	if (_debug)
-		printInfo << "resetting beam lepton momentum to " << _beamLeptonMomCache << " GeV" << endl;
-	beamLepton()->setMomentum(_beamLeptonMomCache);
-	if (_debug)
-		printInfo << "resetting scattered lepton momentum to " << _scatteredLeptonMomCache << " GeV"
-		          << endl;
+	if (_debug) {
+		printDebug << "resetting beam lepton momentum to " << _beamLeptonMomCache << " GeV" << endl
+		           << "    resetting scattered lepton momentum to "
+		           << _scatteredLeptonMomCache << " GeV" << endl
+		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
+		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
+	}
+	beamLepton     ()->setMomentum(_beamLeptonMomCache     );
 	scatteredLepton()->setMomentum(_scatteredLeptonMomCache);
-	if (_debug)
-		printInfo << "resetting recoil momentum to " << _recoilMomCache << " GeV" << endl;
-	recoil()->setMomentum(_recoilMomCache);
-	if (_debug)
-		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
-	target()->setMomentum(_targetMomCache);
+	recoil         ()->setMomentum(_recoilMomCache         );
+	target         ()->setMomentum(_targetMomCache         );
 	// set virtual photon
 	virtPhoton()->setLzVec(beamLepton()->lzVec() - scatteredLepton()->lzVec());
 	return true;

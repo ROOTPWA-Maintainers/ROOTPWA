@@ -117,10 +117,10 @@ isobarDecayTopology::doClone(const bool cloneFsParticles,
                              const bool cloneProdKinematics) const
 {
 	if (_debug)
-		printInfo << "cloning isobar decay topology '" << name() << "'; "
-		          << ((cloneFsParticles   ) ? "in" : "ex") << "cluding final state particles, "
-		          << ((cloneProdKinematics) ? "in" : "ex") << "cluding production kinematics particles"
-		          << endl;
+		printDebug << "cloning isobar decay topology '" << name() << "'; "
+		           << ((cloneFsParticles   ) ? "in" : "ex") << "cluding final state particles, "
+		           << ((cloneProdKinematics) ? "in" : "ex") << "cluding production kinematics particles"
+		           << endl;
 	decayTopology*       topoClone       = decayTopology::doClone(cloneFsParticles, cloneProdKinematics);
 	isobarDecayTopology* isobarTopoClone = new isobarDecayTopology(*topoClone);
 	isobarTopoClone->buildIsobarVertexArray();
@@ -143,9 +143,9 @@ isobarDecayTopology::constructDecay(const productionVertexPtr&          producti
 {
 	const unsigned int nmbVert = isobarDecayVertices.size();
 	if (_debug)
-		printInfo << "constructing isobar decay topology with "
-		          << fsParticles.size() << " final state particles and "
-		          << nmbVert            << " isobar decay vertices" << endl;
+		printDebug << "constructing isobar decay topology with "
+		           << fsParticles.size() << " final state particles and "
+		           << nmbVert            << " isobar decay vertices" << endl;
 	vector<interactionVertexPtr> intVertices(nmbVert);
 	for (unsigned int i = 0; i < nmbVert; ++i)
 		intVertices[i] = isobarDecayVertices[i];
@@ -195,8 +195,8 @@ isobarDecayTopology::checkTopology() const
 			          << nmbIn << " != 1" << endl;
 			topologyIsOkay = false;
 		} else if (_debug)
-			printInfo << "number of incoming edges of node[" << nd << "] = " << nmbIn
-			          << " is correct" << endl;
+			printDebug << "number of incoming edges of node[" << nd << "] = " << nmbIn
+			           << " is correct" << endl;
 		// check that for each isobar decay node the number of outgoing edges is 2
 		const unsigned int nmbOut = nmbOutEdges(_isobarVertices[i]);
 		if (nmbOut != 2) {
@@ -204,12 +204,15 @@ isobarDecayTopology::checkTopology() const
 			          << nmbOut << " != 2" << endl;
 			topologyIsOkay = false;
 		} else if (_debug)
-			printInfo << "number of outgoing edges of node[" << nd << "] = " << nmbOut
-			          << " is correct" << endl;
+			printDebug << "number of outgoing edges of node[" << nd << "] = " << nmbOut
+			           << " is correct" << endl;
 	}
-	if (_debug)
-		printInfo << "isobar decay topology " << ((topologyIsOkay) ? "passed" : "did not pass")
-		          << " all tests" << endl;
+	if (_debug) {
+		if (topologyIsOkay)
+			printDebug << "isobar decay topology passed all tests" << endl;
+		else
+			printWarn << "isobar decay topology did not pass all tests" << endl;
+	}
 	return topologyIsOkay;
 }
 
@@ -222,14 +225,21 @@ isobarDecayTopology::checkConsistency() const
 		const bool vertexConsistent = _isobarVertices[i]->checkConsistency();
 		if (not vertexConsistent) {
 			allVertConsistent = false;
-			if (_debug)
-				printInfo << "isobar decay vertex " << *_isobarVertices[i] << " is "
-				          << ((vertexConsistent) ? "" : "NOT ") << "consistent" << endl;
+			if (_debug) {
+				if (vertexConsistent)
+					printDebug << "success: isobar decay vertex " << *_isobarVertices[i]
+					           << " is consistent" << endl;
+				else
+					printWarn << "isobar decay vertex " << *_isobarVertices[i] << " is not consistent" << endl;
+			}
 		}
 	}
-	if (_debug)
-		printInfo << "information in isobar decay vertices is " << ((allVertConsistent) ? "" : "NOT ")
-		          << "consistent" << endl;
+	if (_debug) {
+		if (allVertConsistent)
+			printDebug << "success: information in isobar decay vertices is consistent" << endl;
+		else
+			printWarn << "information in isobar decay vertices is not consistent" << endl;
+	}
 	return allVertConsistent;
 }
 
@@ -240,9 +250,9 @@ isobarDecayTopology::calcIsobarLzVec()
 	// loop over isobar decay vertices and propagate Lorentz-vectors from final state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		if (_debug)
-			printInfo << "calculating Lorentz-vector of parent isobar '"
-			          << _isobarVertices[i]->parent()->name() << "' "
-			          << "of node[" << node(_isobarVertices[i]) << "]" << endl;
+			printDebug << "calculating Lorentz-vector of parent isobar '"
+			           << _isobarVertices[i]->parent()->name() << "' "
+			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
 		_isobarVertices[i]->calcParentLzVec();
 	}
 	return XIsobarDecayVertex()->parent()->lzVec();
@@ -255,9 +265,9 @@ isobarDecayTopology::calcIsobarCharges()
 	// loop over isobar decay vertices and propagate charges from final state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		if (_debug)
-			printInfo << "calculating charge of parent isobar '"
-			          << _isobarVertices[i]->parent()->name() << "' "
-			          << "of node[" << node(_isobarVertices[i]) << "]" << endl;
+			printDebug << "calculating charge of parent isobar '"
+			           << _isobarVertices[i]->parent()->name() << "' "
+			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
 		_isobarVertices[i]->calcParentCharge();
 	}
 	// update graph name
@@ -271,9 +281,9 @@ isobarDecayTopology::calcIsobarBaryonNmbs()
 	// loop over isobar decay vertices and propagate baryon numbers from final state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		if (_debug)
-			printInfo << "calculating baryon number of parent isobar '"
-			          << _isobarVertices[i]->parent()->name() << "' "
-			          << "of node[" << node(_isobarVertices[i]) << "]" << endl;
+			printDebug << "calculating baryon number of parent isobar '"
+			           << _isobarVertices[i]->parent()->name() << "' "
+			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
 		_isobarVertices[i]->calcParentBaryonNmb();
 	}
 }
@@ -315,7 +325,7 @@ ostream&
 isobarDecayTopology::writeGraphViz(ostream& out)
 {
 	if (_debug)
-		printInfo << "generating graphViz file for graph '" << name() << "'" << endl;
+		printDebug << "generating graphViz file for graph '" << name() << "'" << endl;
 	// set global properties
 	graphNodeAttribute()["style"    ] = "filled";
 	graphNodeAttribute()["fillcolor"] = "white";
@@ -326,7 +336,7 @@ isobarDecayTopology::writeGraphViz(ostream& out)
 		label << vertex(*iNd)->name();
 		const isobarDecayVertexPtr& vert = dynamic_pointer_cast<isobarDecayVertex>(vertex(*iNd));
 		if (vert)
-			label << ": L = " << vert->L() * 0.5 << ", S = " << vert->S() * 0.5;
+			label << ": L = " << spinQn(vert->L()) << ", S = " << spinQn(vert->S());
 		nodeAttribute(*iNd)["label"] = label.str();
 	}
 	// set node shapes
@@ -403,8 +413,8 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr&        paren
                                         const vector<isobarDecayTopology>& daughterDecays)  ///< joins daughter decay graphs and connects them to a common parent vertex
 {
 	if (_debug) {
-		printInfo << "joining " << daughterDecays.size() << " daughter graphs with parent "
-		          << *parentVertex << endl;
+		printDebug << "joining " << daughterDecays.size() << " daughter graphs with parent "
+		           << *parentVertex << endl;
 	}
 	isobarDecayTopology newTopo;
 	newTopo.addVertex(parentVertex);

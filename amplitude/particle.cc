@@ -50,7 +50,6 @@ bool particle::_debug = false;
 
 particle::particle()
 	: particleProperties(),
-	  _charge           (0),
 	  _spinProj         (0),
 	  _lzVec            (),
 	  _index            (-1),
@@ -65,13 +64,11 @@ particle::particle(const particle& part)
 
 
 particle::particle(const particleProperties& partProp,
-                   const int                 charge,
                    const int                 index,
                    const int                 spinProj,
                    const int                 refl,
                    const TVector3&           momentum)
 	: particleProperties(partProp),
-	  _charge           (charge),
 	  _spinProj         (spinProj),
 	  _lzVec            (TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass()))),
 	  _index            (index),
@@ -85,12 +82,11 @@ particle::particle(const string&   partName,
                    const int       spinProj,
                    const int       refl,
                    const TVector3& momentum)
-	: _spinProj(spinProj),
+	: particleProperties(),
+	  _spinProj(spinProj),
 	  _index   (index),
 	  _refl    (refl)
 {
-	// extract charge from name
-	chargeFromName(partName, _charge);
 	if (not fillFromDataTable(partName, requirePartInTable))
 		// set at least name
 		setName(partName);
@@ -111,10 +107,7 @@ particle::particle(const string& partName,
 	  _spinProj(spinProj),
 	  _index   (index),
 	  _refl    (refl)
-{
-	const string strippedName = chargeFromName(partName, _charge);
-	setName(strippedName);
-}
+{ }
 
 
 particle::~particle()
@@ -126,7 +119,6 @@ particle::operator =(const particle& part)
 {
 	if (this != &part) {
 		particleProperties::operator =(part);
-		_charge   = part._charge;
 		_spinProj = part._spinProj;
 		_lzVec    = part._lzVec;
 		_index    = part._index;
@@ -141,25 +133,8 @@ particle::doClone() const
 {
 	particle* particleClone(new particle(*this));
 	if (_debug)
-		printInfo << "cloned " << *this << "; " << this << " -> " << particleClone << endl;
+		printDebug << "cloned " << *this << "; " << this << " -> " << particleClone << endl;
 	return particleClone;
-}
-
-
-string
-particle::name() const
-{
-	const string entryName    = particleProperties::name();
-	const string strippedName = stripChargeFromName(entryName);
-	if (entryName == strippedName) {
-		stringstream n;  // append charge
-		n << entryName;
-		if (abs(_charge) > 1)
-			n << abs(_charge);
-		n << sign(_charge);
-		return n.str();
-	} else
-		return entryName;
 }
 
 
@@ -187,7 +162,6 @@ particle::print(ostream& out) const
 {
 	particleProperties::print(out);
 	out << ", "
-	    << "charge = "         << _charge           << ", "
 	    << "spin proj. = "     << spinQn(_spinProj) << ", "
 	    << "reflectivity = "   << _refl             << ", "
 	    << "Lorentz-vector = " << _lzVec            << " GeV, "
