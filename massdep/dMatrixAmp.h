@@ -73,6 +73,7 @@ typedef ublas::matrix<double> rmatrix;
 class dMatrixPole {
  public:
   dMatrixPole(){}
+ dMatrixPole(bool bkg): fBkg(bkg){}
  dMatrixPole(double m, cnum prodAmp):fm(m), fgProd(prodAmp) {}
   ~dMatrixPole(){}
 
@@ -82,6 +83,7 @@ class dMatrixPole {
   void setProdAmp(cnum a){fgProd=a;}
   void setMass(double m){fm=m;}
   void setGamma(double gamma, unsigned int i){fgamma(0,i)=gamma;}
+  void setBkg(bool flag=true){fBkg=flag;}
 
   // Accessors
   cnum M2(double m); // return complex pole position
@@ -97,10 +99,8 @@ class dMatrixPole {
   rmatrix fgamma; // partial widths
   const std::vector<TF1*>* fpsp; // phase space functions for different channels
   cnum fgProd; // production coupling of this state
-
+  bool fBkg;   // is background? -> purely real M2
 };
-
-
 
 
 class dMatrixAmp {
@@ -110,6 +110,7 @@ class dMatrixAmp {
 
   
   void setNPoles(unsigned int n);
+  void setNBkg(unsigned int n);
   void addChannel(TF1*);
 
   void Setup( const rmatrix& mbare, 
@@ -124,11 +125,14 @@ class dMatrixAmp {
   // helpers:
   unsigned int nPoles(){return fPoles.size();}
   dMatrixPole& getPole(unsigned int i){return fPoles[i];}
+  unsigned int nBkg(){return fBkg.size();}
+  dMatrixPole& getBkg(unsigned int i){return fBkg[i];}
   unsigned int nChannels(){return fChannels.size();}
   TF1* getPS(unsigned int i){return fChannels[i];}
 
  private:
   std::vector<dMatrixPole> fPoles;
+  std::vector<dMatrixPole> fBkg; // background terms
   std::vector<TF1*> fChannels;
   cmatrix fprod; // production amplitudes
   rmatrix fmixing;
