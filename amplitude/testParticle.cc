@@ -73,15 +73,17 @@ main(int argc, char** argv)
 	// test filling of particle properties
 	if (1) {
 		particleProperties partProp;
-		const string       partName = "pi";
+		const string       partName = "pi+";
 		partProp.fillFromDataTable(partName);
 		printInfo << "particle properties for '" << partName << "':" << endl
 		          << partProp << endl;
 		pdt.addEntry(partProp);
+		printInfo << "antiparticle properties for '" << partName << "':" << endl
+		          << partProp.antiPartProperties() << endl;
 	}
 
 	// test construction of particles
-	if (1) {
+	if (0) {
 		TVector3 mom;
 		mom = TVector3(1, 2, 3);
 		const particle p1("pi+", true, 0,  0, 0, mom);
@@ -97,7 +99,7 @@ main(int argc, char** argv)
 	}
 
 	// checking charge name handling
-	if (1) {
+	if (0) {
 		for (int i = -2; i < 3; ++i) {
 			stringstream c;
 			c << "pi";
@@ -115,7 +117,7 @@ main(int argc, char** argv)
 	}
 
 	// checking spin-exotic
-	if (1) {
+	if (0) {
 		printInfo << "testing spin-exotic tag" << endl;
 		for (particleDataTable::dataIterator i = pdt.begin(); i != pdt.end(); ++i) {
 			const particleProperties& prop = i->second;

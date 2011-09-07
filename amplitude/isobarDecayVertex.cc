@@ -236,14 +236,6 @@ isobarDecayVertex::checkConsistency()
 	// G-parity
 	if (not checkMultiplicativeQn(parent()->G(), daughter1()->G(), daughter2()->G(), "G-parity"))
 		vertexConsistent = false;
-	// C-parity
-	const int C = parent()->G() * (parent()->isospin() % 4 == 0 ? 1 : -1);
-	if (C != parent()->C()) {
-		vertexConsistent = false;
-		printWarn << "C-parity mismatch: " << parent()->name() << " = " << parent()->C() << " != " << C
-		          << " = (" << parent()->G() << ")^" << parent()->isospin() << " = G^2I"<< endl;
-	} else if (_debug)
-		printDebug << "success: " << *this << ": C-parity is consistent" << endl;
 	// parity
 	const int angMomParity = (_L % 4 == 0) ? 1 : -1;  // modulo 4 because L is in units of hbar / 2
 	if (parent()->P() != daughter1()->P() * daughter2()->P() * angMomParity) {
@@ -277,7 +269,7 @@ isobarDecayVertex::checkConsistency()
 	if (not checkAdditiveQn(parent()->beauty(), daughter1()->beauty(),
 	                        daughter2()->beauty(), "beauty"))
 		vertexConsistent = false;
-	// check angular momentum quantum numbers
+	// check orbital angular momentum
 	if (not isEven(_L)) {
 		printWarn << "relative orbital angular momentum L = " << spinQn(_L)
 		          << " is not an integer" << endl;
@@ -301,34 +293,10 @@ isobarDecayVertex::checkConsistency()
 		vertexConsistent = false;
 	} else if (_debug)
 		printDebug << "success: " << *this << ": L-S coupling is consistent" << endl;
-	// isospin coupling: I in {|I_1 - I_2|, ..., I_1 + I_2}
-	if (not spinStatesCanCouple(daughter1()->isospin(), daughter2()->isospin(), parent()->isospin())) {
-		printWarn << "isospins "
-		          << "(" << daughter1()->name() << " I = " << spinQn(daughter1()->isospin()) << ") and "
-		          << "(" << daughter2()->name() << " I = " << spinQn(daughter2()->isospin()) << ") "
-		          << "cannot couple to total isospin I = " << spinQn(parent()->isospin()) << endl;
-		vertexConsistent = false;
-	} else if (_debug)
-		printDebug << "success: " << *this << ": isospin coupling is consistent" << endl;
-	// check, whether charge is consistent with isospin
-	if (   (abs(daughter1()->isospinProj()) > daughter1()->isospin())
-	    or isOdd(daughter1()->isospin() - daughter1()->isospinProj())
-	    or (abs(daughter2()->isospinProj()) > daughter2()->isospin())
-	    or isOdd(daughter2()->isospin() - daughter2()->isospinProj())
-	    or (abs(parent()->isospinProj()) > parent()->isospin())
-	    or isOdd(parent()->isospin() - parent()->isospinProj())) {
-		printWarn << "charges are inconsistent with isospin "
-		          << "(" << daughter1()->name() << " I = " << spinQn(daughter1()->isospin()) << "), "
-		          << "(" << daughter2()->name() << " I = " << spinQn(daughter2()->isospin()) << "), and "
-		          << "(" << parent   ()->name() << " I = " << spinQn(parent   ()->isospin()) << ")"
-		          << endl;
-		vertexConsistent = false;
-	} else if (_debug)
-		printDebug << *this << ": charges are consistent with isospin" << endl;
-	// check, whether isospin Clebsch-Gordan is not zero
-	if (clebschGordanCoeff<double>(daughter1()->isospin(), daughter1()->isospinProj(),
-	                               daughter2()->isospin(), daughter2()->isospinProj(),
-	                               parent   ()->isospin(), parent   ()->isospinProj()) == 0) {
+	// check, whether isospins can couple
+	if (not spinStatesCanCouple(daughter1()->isospin(), daughter1()->isospinProj(),
+	                            daughter2()->isospin(), daughter2()->isospinProj(),
+	                            parent   ()->isospin(), parent   ()->isospinProj())) {
 		printWarn << "isospin Clebsch-Gordan "
 		          << "("   << spinQn(daughter1()->isospin()) << ", " << spinQn(daughter1()->isospinProj())
 		          << "; "  << spinQn(daughter2()->isospin()) << ", " << spinQn(daughter2()->isospinProj())
@@ -338,9 +306,18 @@ isobarDecayVertex::checkConsistency()
 	} else if (_debug)
 		printDebug << *this << ": isospin Clebsch-Gordan is not zero" << endl;
 	// check consistency of C-, G-parity, and isospin
-	if (   (daughter1()->C() != daughter1()->G() * (daughter1()->isospin() % 4 == 0 ? 1 : -1))
-	    or (daughter2()->C() != daughter2()->G() * (daughter2()->isospin() % 4 == 0 ? 1 : -1))
-	    or (parent   ()->C() != parent   ()->G() * (parent   ()->isospin() % 4 == 0 ? 1 : -1))) {
+	if (   (    (daughter1()->charge() == 0)
+	        and (daughter1()->C() != daughter1()->G() * (daughter1()->isospin() % 4 == 0 ? 1 : -1)))
+	    or (    (daughter1()->charge() != 0)
+	        and (daughter1()->C() != 0))
+	    or (    (daughter2()->charge() == 0)
+          and (daughter2()->C() != daughter2()->G() * (daughter2()->isospin() % 4 == 0 ? 1 : -1)))
+	    or (    (daughter2()->charge() != 0)
+	        and (daughter2()->C() != 0))
+	    or (    (parent   ()->charge() == 0)
+          and (parent   ()->C() != parent   ()->G() * (parent   ()->isospin() % 4 == 0 ? 1 : -1)))
+	    or (    (parent   ()->charge() != 0)
+	        and (parent   ()->C() != 0))) {
 		printWarn << "C-, G-parity, and isospin are inconsistent "
 		          << daughter1()->qnSummary() << ", " << daughter2()->qnSummary() << ", "
 		          << parent   ()->qnSummary() << endl;

@@ -168,10 +168,25 @@ namespace rpwa {
 
 
 	bool
+	spinStatesCanCouple(const int j1,
+	                    const int m1,
+	                    const int j2,
+	                    const int m2,
+	                    const int J,
+	                    const int M);  ///< checks whether two daughter spin states can couple to given parent spin state
+
+
+	inline
+	bool
 	spinStatesCanCouple(const int daughterSpins    [2],
 	                    const int daughterSpinProjs[2],
 	                    const int parentSpin,
-	                    const int parentSpinProj);  ///< checks whether two daughter spin states can couple to given parent spin state
+	                    const int parentSpinProj)  ///< checks whether two daughter spin states can couple to given parent spin state
+	{
+		return spinStatesCanCouple(daughterSpins[0], daughterSpinProjs[0],
+		                           daughterSpins[1], daughterSpinProjs[1],
+		                           parentSpin,       parentSpinProj);
+	}
 
 
 	inline
@@ -248,17 +263,25 @@ namespace rpwa {
 			if (   not spinAndProjAreCompatible(j1, m1)
 			    or not spinAndProjAreCompatible(j2, m2)
 			    or not spinAndProjAreCompatible(J,  M )) {
-				printErr << "spins and spin projections are inconsistent: "
-				         << "(j1 = " << spinQn(j1) << ", m1 = " << spinQn(m1) << ", "
-				         << "j2 = "  << spinQn(j2) << ", m2 = " << spinQn(m2) << ", "
-				         << "J = "   << spinQn(J)  << ", M = "  << spinQn(M)  << "). "
-				         << "aborting." << std::endl;
-				throw;
+				if (_debug)
+					printWarn << "spins and spin projections are inconsistent: "
+					          << "(j1 = " << spinQn(j1) << ", m1 = " << spinQn(m1) << ", "
+					          << "j2 = "  << spinQn(j2) << ", m2 = " << spinQn(m2) << ", "
+					          << "J = "   << spinQn(J)  << ", M = "  << spinQn(M)  << ")" << std::endl;
+				return 0;
 			}
-			if (not spinStatesCanCouple(j1, j2, J))
+			if (not spinStatesCanCouple(j1, j2, J)) {
+				if (_debug)
+					printWarn << "spins j1 = " << spinQn(j1) << " and j2 = " << spinQn(j2)
+					          << " cannot couple to J = "  << spinQn(J) << std::endl;
 				return 0;
-			if (m1 + m2 != M)
+			}
+			if (m1 + m2 != M) {
+				if (_debug)
+					printWarn << "spin projections m1 = " << spinQn(m1) << " and m2 = " << spinQn(m2)
+					          << " cannot couple to M = " << spinQn(M) << std::endl;
 				return 0;
+			}
 
 			T        clebschVal = 0;
 			double*& cacheEntry = _cache[j1][m1][j2][m2][J];
@@ -327,6 +350,8 @@ namespace rpwa {
 			return size;
 		}
 
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
 
 	private:
 
@@ -337,6 +362,7 @@ namespace rpwa {
 
 		static clebschGordanCoeffCached _instance;  ///< singleton instance
 		static bool                     _useCache;  ///< if set to true, cache is used
+		static bool                     _debug;     ///< if set to true, debug messages are printed
 
 		static const int _maxJ = 18;  ///< maximum allowed angular momentum * 2 + 1
 		static T*        _cache[_maxJ][2 * _maxJ - 1][_maxJ][2 * _maxJ - 1][2 * _maxJ];  ///< cache for intermediate terms [j1][m1][j2][m2][J]
@@ -345,6 +371,7 @@ namespace rpwa {
 
 	template<typename T> clebschGordanCoeffCached<T> clebschGordanCoeffCached<T>::_instance;
 	template<typename T> bool                        clebschGordanCoeffCached<T>::_useCache = true;
+	template<typename T> bool                        clebschGordanCoeffCached<T>::_debug    = false;
 
 	template<typename T> T*
 	clebschGordanCoeffCached<T>::_cache[_maxJ][2 * _maxJ - 1][_maxJ][2 * _maxJ - 1][2 * _maxJ];
@@ -375,20 +402,14 @@ namespace rpwa {
 	
 	inline
 	bool
-	spinStatesCanCouple(const int daughterSpins    [2],
-	                    const int daughterSpinProjs[2],
-	                    const int parentSpin,
-	                    const int parentSpinProj)
+	spinStatesCanCouple(const int j1,
+	                    const int m1,
+	                    const int j2,
+	                    const int m2,
+	                    const int J,
+	                    const int M)
 	{
-		//!!! the first two checks should probably be part of clebschGordanCoeff
-		for (unsigned i = 0; i < 2; ++i)
-			if (not spinAndProjAreCompatible(daughterSpins[i], daughterSpinProjs[i]))
-				return false;
-		if (not spinAndProjAreCompatible(parentSpin, parentSpinProj))
-			return false;
-		if (clebschGordanCoeff<double>(daughterSpins[0], daughterSpinProjs[0],
-		                               daughterSpins[1], daughterSpinProjs[1],
-		                               parentSpin,       parentSpinProj) == 0)
+		if (clebschGordanCoeff<double>(j1, m1, j2, m2, J, M) == 0)
 			return false;
 		return true;		
 	}

@@ -263,10 +263,10 @@ main(int argc, char** argv)
 		printInfo << "decay consistent = " << decayConsistent << endl;
 		topo2.calcIsobarLzVec();
 
-		exit(1);
-
 		{
-			cout << endl << "testing cloning" << endl;
+			cout << "-------------------------------------------------------------------------------"
+			     << endl;
+			printInfo << "testing cloning" << endl;
 			isobarDecayTopologyPtr topo3 = topo2.clone();
 			isobarDecayVertexPtr   v     = topo3->isobarDecayVertices()[0];
 			particlePtr            p     = v->inParticles()[0];
@@ -312,7 +312,9 @@ main(int argc, char** argv)
 		}
 
 		{
-			cout << endl << "testing subdecays and merge" << endl;
+			cout << "-------------------------------------------------------------------------------"
+			     << endl;
+			printInfo << "testing subdecays and merge" << endl;
 			isobarDecayTopology subDecay1 = topo2.subDecay(2);
 			subDecay1.decayTopologyGraphType::printPointers(cout);
 			subDecay1.decayTopology::print(cout);
@@ -325,8 +327,8 @@ main(int argc, char** argv)
 			subDecay1.addDecay(subDecay3);
 			cout << "subdecay from node[2] + subdecay from node[9]: " << subDecay1;
 			isobarDecayTopology decay;
-			//                                    2I  G  2J  P   C  2M
-			particlePtr X2 = createParticle("X-", 2, -1, 4, +1, +1, 2);
+			//                                    2I  G  2J  P  C  2M
+			particlePtr X2 = createParticle("X-", 2, -1, 4, +1, 0, 2);
 			isobarDecayVertexPtr vertX= createIsobarDecayVertex(X2, pi4, f1, 2, 2);
 			decay.addVertex(vertX);
 			subDecay1.addDecay(decay);
