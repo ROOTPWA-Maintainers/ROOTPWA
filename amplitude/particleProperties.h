@@ -48,9 +48,7 @@
 #include <sstream>
 
 #include "reportingUtils.hpp"
-#include "mathUtils.hpp"
 #include "spinUtils.hpp"
-#include "conversionUtils.hpp"
 
 
 namespace rpwa {

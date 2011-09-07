@@ -39,7 +39,6 @@
 
 #include <sstream>
 
-#include "mathUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "spinUtils.hpp"
 #include "isobarDecayVertex.h"

@@ -39,10 +39,10 @@
 #define PHYSUTILS_H
 
 
-#include <cmath>
-//#include <algorithm>
-
+#include "../pwa2000/libpp/pputil.h"
 #include "mathUtils.hpp"
+#include "reportingUtils.hpp"
+#include "conversionUtils.hpp"
 
 
 namespace rpwa {
@@ -95,6 +95,77 @@ namespace rpwa {
 	}
 
 
+	inline
+	double
+	angMomNormFactor(const int  L,
+	                 const bool debug = false)  ///< angular momentum normalization factor in amplitudes
+	{
+		const double norm = rpwa::sqrt(L + 1);
+		if (debug)
+			printDebug << "normalization factor sqrt(2 * L = " << spinQn(L) << " + 1) = "
+			           << maxPrecision(norm) << std::endl;
+		return norm;
+	}
+
+
+	inline
+	int
+	reflectivityFactor(const int J,
+	                   const int P,
+	                   const int M,
+	                   const int refl)  ///< calculates prefactor for reflectibity symmetrization
+	{
+		if (rpwa::abs(P) != 1) {
+			printWarn << "parity value P = " << P << " != +-1 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
+		}
+		if (M < 0) {
+			printWarn << "in reflectivity basis M = " << spinQn(M) << " < 0 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
+		}
+		if (rpwa::abs(refl) != 1) {
+			printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
+		}
+		return refl * P * powMinusOne((J - M) / 2);
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// some wrappers for libpp functions
+	// !NOTE! all angular momenta and spin projections are in units of hbar/2
+	inline
+	double
+	barrierFactor(const int    L,
+	              const double breakupMom,
+	              const bool   debug = false)  ///< Blatt-Weisskopf barrier factor
+	{
+		const double bf = F(L, breakupMom);
+		if (debug)
+			printDebug << "Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
+			           << "q = " << breakupMom << " GeV) = " << maxPrecision(bf) << std::endl;
+		return bf;
+	}
+
+  
+	inline
+	std::complex<double>
+	breitWigner(const double m,
+	            const double m0,
+	            const double Gamma0,
+	            const int    L,
+	            const double q,
+	            const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
+	{
+		const double Gamma  =   Gamma0 * (m0 / m) * (q / q0)
+			                    * (rpwa::pow(F(L, q), 2) / rpwa::pow(F(L, q0), 2));
+		return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
+	}
+  
+  
 } // namespace rpwa
 
 

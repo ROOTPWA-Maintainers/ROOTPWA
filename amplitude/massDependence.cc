@@ -35,7 +35,6 @@
 //-------------------------------------------------------------------------
 
 
-#include "mathUtils.hpp"
 #include "physUtils.hpp"
 #include "isobarDecayVertex.h"
 #include "particleDataTable.h"

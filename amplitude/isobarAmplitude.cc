@@ -41,7 +41,6 @@
 #include "TLorentzRotation.h"
 #include "TMath.h"
 
-#include "mathUtils.hpp"
 #include "conversionUtils.hpp"
 #include "isobarAmplitude.h"
 

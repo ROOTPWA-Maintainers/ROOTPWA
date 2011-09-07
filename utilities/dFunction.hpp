@@ -50,8 +50,7 @@
 #include <algorithm>
 #include <vector>
 
-#include "mathUtils.hpp"
-#include "conversionUtils.hpp"
+#include "physUtils.hpp"
 #include "factorial.hpp"
 
 
