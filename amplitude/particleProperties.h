@@ -47,8 +47,8 @@
 #include <iostream>
 #include <sstream>
 
+#include "mathUtils.hpp"
 #include "reportingUtils.hpp"
-#include "spinUtils.hpp"
 
 
 namespace rpwa {
@@ -239,14 +239,6 @@ namespace rpwa {
 		return (    (isMeson() or isPhoton()) and (name() == antiPartName())
 		        and (charge() == 0) and (baryonNmb() == 0) and (isospinProj() == 0)
 		        and (strangeness() == 0) and (charm() == 0) and (beauty() == 0));
-	}
-
-
-	inline
-	bool
-	particleProperties::isSpinExotic() const
-	{
-		return (isMeson() and igjpIsExotic(isospin(), G(), J(), P()));
 	}
 
 

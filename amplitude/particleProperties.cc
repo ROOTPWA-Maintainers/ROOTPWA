@@ -39,6 +39,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include "spinUtils.hpp"
 #include "conversionUtils.hpp"
 #include "particleDataTable.h"
 #include "particleProperties.h"
@@ -179,6 +180,13 @@ rpwa::operator ==(const particleProperties&               lhsProp,
 	             or (lhsProp.P()         == rhsProp.P()))
 	        and (   ((selector.find("C") == string::npos) and not checkAllQn)
 	             or (lhsProp.C()         == rhsProp.C())));
+}
+
+
+bool
+particleProperties::isSpinExotic() const
+{
+	return (isMeson() and igjpIsExotic(isospin(), G(), J(), P()));
 }
 
 

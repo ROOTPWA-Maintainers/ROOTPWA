@@ -102,6 +102,19 @@ namespace rpwa {
 	}
   
 
+	
+	template<typename T>
+	inline
+	T signum(const T& val)  ///< extracts sign from value
+	{
+		if (val < 0)
+			return -1;
+		if (val > 0)
+			return +1;
+		return 0;
+	}
+
+
 } // namespace rpwa
 
 

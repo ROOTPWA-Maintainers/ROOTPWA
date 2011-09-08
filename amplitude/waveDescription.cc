@@ -199,9 +199,9 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	// create decay isobar decay topology
 	topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
 	topo->calcIsobarCharges();
-	//!!! is this really necessary ??
+	//!!! user should correctly define quantum numbers
 	//topo->calcIsobarBaryonNmbs();
-	topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
+	//topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
   
 	printSucc << "constructed decay topology from key file" << endl;
 	return true;
@@ -426,13 +426,17 @@ waveDescription::constructXParticle(const Setting& XQnKey,
 		printDebug << "reading X quantum numbers from '" << XQnKey.getPath() << "':" << endl;
 	// get X quantum numbers
 	map<string, int> mandatoryXQn, optionalXQn;
-	mandatoryXQn["isospin"];
-	optionalXQn ["G"      ];
-	mandatoryXQn["J"      ];
-	optionalXQn ["P"      ];
-	optionalXQn ["C"      ];
-	mandatoryXQn["M"      ];
-	optionalXQn ["refl"   ];
+	mandatoryXQn["isospin"    ];
+	optionalXQn ["G"          ];
+	mandatoryXQn["J"          ];
+	mandatoryXQn["P"          ];
+	optionalXQn ["C"          ];
+	mandatoryXQn["M"          ];
+	optionalXQn ["refl"       ];
+	optionalXQn ["baryonNmb"  ];
+	optionalXQn ["strangeness"];
+	optionalXQn ["charm"      ];
+	optionalXQn ["beauty"     ];
 	bool success = true;
 	for (map<string, int>::iterator i = mandatoryXQn.begin(); i != mandatoryXQn.end(); ++i)
 		if (not XQnKey.lookupValue(i->first, i->second)) {
@@ -450,8 +454,10 @@ waveDescription::constructXParticle(const Setting& XQnKey,
 	// create X particle
 	X = createParticle("X",
 	                   mandatoryXQn["isospin"], optionalXQn["G"],
-	                   mandatoryXQn["J"], optionalXQn["P"], optionalXQn["C"],
+	                   mandatoryXQn["J"], mandatoryXQn["P"], optionalXQn["C"],
 	                   mandatoryXQn["M"], optionalXQn["refl"]);
+	X->setBaryonNmb(mandatoryXQn["baryonNmb"]);
+	X->setSCB(optionalXQn["strangeness"], optionalXQn["charm"], optionalXQn["beauty"]);
 	if (_debug)
 		printDebug << "constructed X particle: " << X->qnSummary() << endl;
 	return true;

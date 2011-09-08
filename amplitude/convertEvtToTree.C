@@ -56,11 +56,8 @@ using namespace rpwa;
 
 
 bool
-convertEvtToTree(//const string&  evtFileName              = "1500.1540.3pi.evt",
-                 const string&  evtFileName              = "1720.1840.5pi.evt",
+convertEvtToTree(const string&  evtFileName              = "testEvents.evt",
                  const string&  outFileName              = "testEvents.root",
-                 //const string&  evtFileName              = "testTree.evt",
-                 //const string&  outFileName              = "testEvents2.root",
                  const long int maxNmbEvents             = -1,
                  const string&  outTreeName              = "rootPwaEvtTree",
                  const string&  prodKinPartNamesObjName  = "prodKinParticles",

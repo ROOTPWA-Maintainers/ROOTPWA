@@ -49,7 +49,9 @@
 #include "TVector3.h"
 
 #include "reportingUtils.hpp"
+#ifndef __CINT__
 #include "particleDataTable.h"
+#endif
 #include "evtTreeHelper.h"
 
 
@@ -59,7 +61,7 @@ using namespace rpwa;
 
 bool
 convertTreeToEvt(const string&  inFileNamePattern        = "testEvents.root",
-                 const string&  outFileName              = "testTree.evt",
+                 const string&  outFileName              = "testEvents.evt",
                  const string&  pdgTableFileName         = "./particleDataTable.txt",
                  const long int maxNmbEvents             = -1,
                  const string&  inTreeName               = "rootPwaEvtTree",

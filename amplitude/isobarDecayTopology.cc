@@ -270,6 +270,12 @@ isobarDecayTopology::calcIsobarCharges()
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
 		_isobarVertices[i]->calcParentCharge();
 	}
+	// correct C-parity of X, if necessary
+	if ((abs(XParticle()->charge()) > 0) and (XParticle()->C() != 0)) {
+		printWarn << "intermediate state X is charged, but has C-parity = " << XParticle()->C()
+		          << ". setting C-parity to zero." << endl;
+		XParticle()->setC(0);
+	}
 	// update graph name
 	name() = "\"" + XParticle()->qnSummary() + "\"";
 }

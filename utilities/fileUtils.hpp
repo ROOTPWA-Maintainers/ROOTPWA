@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 503                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-11-22 12:28:07 +0100 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      some common routines for file (name) handling
