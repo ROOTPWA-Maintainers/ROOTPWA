@@ -129,7 +129,7 @@ main(int argc, char** argv)
 		particlePtr pi4 = createParticle("pi-");
 		// define isobars
 		particlePtr sigma = createParticle("sigma");
-		particlePtr a1    = createParticle("a1(1269)+");
+		particlePtr a1    = createParticle("a1(1260)+");
 		particlePtr f1    = createParticle("f1(1285)");
 		// define X-system
 		//                                   2I  G  2J  P   C  2M

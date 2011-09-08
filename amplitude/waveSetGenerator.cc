@@ -96,9 +96,9 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 		if (JRangeKey)
 			_JRange = make_tuple<int, int>((*JRangeKey)[0], (*JRangeKey)[1]);
 		const Setting* MRangeKey = findLibConfigArray(*waveSetParKey, "MRange", false);
-		waveSetParKey->lookupValue("reflectivity",    _reflectivity   );
-		waveSetParKey->lookupValue("useReflectivity", _useReflectivity);
-		waveSetParKey->lookupValue("allowJpcExotics", _allowJpcExotics);
+		waveSetParKey->lookupValue("reflectivity",     _reflectivity    );
+		waveSetParKey->lookupValue("useReflectivity",  _useReflectivity );
+		waveSetParKey->lookupValue("allowSpinExotics", _allowSpinExotics);
 		if (MRangeKey)
 			_spinProjRange = make_tuple<int, int>((*MRangeKey)[0], (*MRangeKey)[1]);
 		const Setting* LRangeKey = findLibConfigArray(*waveSetParKey, "LRange", false);
@@ -277,12 +277,13 @@ waveSetGenerator::generateWaveSet()
 										     << spinQn(parentI) << ", " << spinQn(parentI_z) << ")" << endl;
 									continue;
 								}
-								if (not _allowJpcExotics)
-									// check whether JPC is exotic
-									if (jpcIsExotic(parentJ, parentP, parentC)) {
+								if (not _allowSpinExotics)
+									// check whether quantum number combination is spin-exotic
+									if (igjpIsExotic(parentI, parentG, parentJ, parentP)) {
 										if (_debug)
-											cout << "        rejected beause quantum numbers JPC = " << spinQn(parentJ)
-											     << sign(parentP) << sign(parentC) << " are spin-exotic" << endl;
+											cout << "        rejected beause quantum number combination IG(JPC) = "
+											     << spinQn(parentI) << sign(parentG) << "(" << spinQn(parentJ)
+											     << sign(parentP) << sign(parentC) << ") is spin-exotic" << endl;
 										continue;
 									}
 		
@@ -414,7 +415,7 @@ waveSetGenerator::reset()
 	_spinProjRange         = make_tuple(0, 0);
 	_reflectivity          = 0;
 	_useReflectivity       = false;
-	_allowJpcExotics       = false;
+	_allowSpinExotics      = false;
 	_LRange                = make_tuple(0, 0);
 	_SRange                = make_tuple(0, 0);
 	_requireMinIsobarMass  = false;
@@ -436,7 +437,7 @@ waveSetGenerator::print(ostream& out) const
 	    << spinQn(get<1>(_JRange))        << "]" << endl
 	    << "    M range .................... [" << spinQn(get<0>(_spinProjRange)) << ", "
 	    << spinQn(get<1>(_spinProjRange)) << "]" << endl
-	    << "    allow JPC exotics .......... " << ((_allowJpcExotics)      ? "true" : "false") << endl;
+	    << "    allow spin-exotics ......... " << yesNo(_allowSpinExotics) << endl;
 	if (_useReflectivity)
 		out << "    generate reflectivity ...... " << ((_reflectivity == 0) ? "both"
 		                                               : sign(_reflectivity)) << endl;
@@ -444,7 +445,7 @@ waveSetGenerator::print(ostream& out) const
 	    << spinQn(get<1>(_LRange))        << "]" << endl
 	    << "    S range .................... [" << spinQn(get<0>(_SRange))        << ", "
 	    << spinQn(get<1>(_SRange))        << "]" << endl
-	    << "    require min. isobar mass ... " << ((_requireMinIsobarMass) ? "true" : "false") << endl
+	    << "    require min. isobar mass ... " << yesNo(_requireMinIsobarMass) << endl
 	    << "    isobar mass window par. .... " << _isobarMassWindowSigma << " [Gamma]" << endl;
 	out << "    isobar black list:";
 	if (_isobarBlackList.size() == 0)

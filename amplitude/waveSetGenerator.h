@@ -76,7 +76,7 @@ namespace rpwa {
 	  { _isobarBlackList = isobarList; }
 	  void setIsobarWhiteList      (const std::vector<std::string>& isobarList)
 	  { _isobarWhiteList = isobarList; }
-	  void setAllowJpcExotics      (const bool   flag     ) { _allowJpcExotics       = flag;  }
+	  void setAllowSpinExotics     (const bool   flag     ) { _allowSpinExotics      = flag;  }
 	  void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
 	  void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
@@ -102,7 +102,7 @@ namespace rpwa {
 	  boost::tuples::tuple<int, int> _spinProjRange;          ///< range of allowed isobar spin projections
 	  int                            _reflectivity;           ///< if _useReflectivity is set, 0 means that both reflectivities are generated
 	  bool                           _useReflectivity;        ///< en/disables generation of waves with reflectivity
-	  bool                           _allowJpcExotics;        ///< flag that allows/forbids JPC exotics to be generated
+	  bool                           _allowSpinExotics;       ///< flag that allows/forbids spin-exotics to be generated
 	  boost::tuples::tuple<int, int> _LRange;                 ///< range of allowed orbital angular momenta in isobar decays
 	  boost::tuples::tuple<int, int> _SRange;                 ///< range of allowed total intrinsic spins in isobar decays
 	  std::vector<std::string>       _isobarBlackList;        ///< list of particles not to be used as isobars
