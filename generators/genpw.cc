@@ -291,7 +291,7 @@ int main(int argc, char** argv)
   else
     cout << " Error: tprime_min must be positive " << tprime_min << endl;
   if (tprime_max >= 0.)  
-     difPS.SettprimeMin(tprime_max);
+     difPS.SettprimeMax(tprime_max);
 
   double impMass;
   double impWidth;
