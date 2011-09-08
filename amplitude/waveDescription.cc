@@ -198,6 +198,8 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 
 	// create decay isobar decay topology
 	topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
+	// backward compatibility: allow sloppy key files, where charges of
+	// isobars are not explicitely defined
 	topo->calcIsobarCharges();
 	//!!! user should correctly define quantum numbers
 	//topo->calcIsobarBaryonNmbs();

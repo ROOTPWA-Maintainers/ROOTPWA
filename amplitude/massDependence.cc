@@ -157,16 +157,16 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	_sP(0, 1) =  0.9828;
   
 	particleDataTable& pdt = particleDataTable::instance();
-	const string partList[] = {"pi", "pi0", "K", "K0"};
+	const string partList[] = {"pi+", "pi0", "K+", "K0"};
 	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
 		if (not pdt.isInTable(partList[i])) {
 			printErr << "cannot find particle " << partList[i] << " in particle data table. "
-			         << "was the table initiatlized properly?" << endl;
+			         << "aborting." << endl;
 			throw;
 		}
-	_piChargedMass   = pdt.entry("pi" )->mass();
+	_piChargedMass   = pdt.entry("pi+")->mass();
 	_piNeutralMass   = pdt.entry("pi0")->mass();
-	_kaonChargedMass = pdt.entry("K"  )->mass();
+	_kaonChargedMass = pdt.entry("K+" )->mass();
 	_kaonNeutralMass = pdt.entry("K0" )->mass();
 	_kaonMeanMass    = (_kaonChargedMass + _kaonNeutralMass) / 2;
 }

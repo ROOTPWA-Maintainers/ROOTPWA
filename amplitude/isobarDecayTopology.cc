@@ -264,16 +264,24 @@ isobarDecayTopology::calcIsobarCharges()
 {
 	// loop over isobar decay vertices and propagate charges from final state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
+		const particlePtr& isobar = _isobarVertices[i]->parent();
 		if (_debug)
 			printDebug << "calculating charge of parent isobar '"
-			           << _isobarVertices[i]->parent()->name() << "' "
+			           << isobar->name() << "' "
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
-		_isobarVertices[i]->calcParentCharge();
+		const int isobarCharge = isobar->charge();
+		if (isobarCharge != _isobarVertices[i]->calcParentCharge())
+			if (isobar != XParticle()) {
+				printWarn << "fixed charge of isobar '" << isobar->name() << "' "
+				          << "from " << isobarCharge << " to " << isobar->charge() << ". "
+				          << "please fix wave definition." << endl;
+				isobar->fillFromDataTable(isobar->name());
+			}
 	}
 	// correct C-parity of X, if necessary
 	if ((abs(XParticle()->charge()) > 0) and (XParticle()->C() != 0)) {
-		printWarn << "intermediate state X is charged, but has C-parity = " << XParticle()->C()
-		          << ". setting C-parity to zero." << endl;
+		printWarn << "X is charged, but has C-parity = " << XParticle()->C()
+		          << ". setting C-parity to zero. please fix wave definition." << endl;
 		XParticle()->setC(0);
 	}
 	// update graph name
