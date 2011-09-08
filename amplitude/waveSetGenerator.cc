@@ -252,7 +252,12 @@ waveSetGenerator::generateWaveSet()
 									printDebug << "setting parent isospin = " << spinQn(parentI) << " "
 									           << "(max isospin = " << spinQn(parentIMax) << ")" << endl;
 
-								const int parentC = parentG * (parentI % 4 == 0 ? 1 : -1);  // C-parity
+								// C-parity
+								int parentC;
+								if (abs(parentCharge) == 0)
+									parentC = parentG * (parentI % 4 == 0 ? 1 : -1);
+								else
+									parentC = 0;
 								if (_debug)
 									printDebug << "trying isobar quantum numbers IG(JPC) = "
 									           << spinQn(parentI) << sign(parentG)

@@ -94,7 +94,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		// apply white list
 		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
 		for (size_t j = 0; j < whiteList.size(); ++j)
-			if (i->second.name() == whiteList[j]) {
+			if ((i->second.name() == whiteList[j]) or (i->second.bareName() == whiteList[j])) {
 				whiteListMatch = true;
 				break;
 			}
@@ -103,7 +103,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		// apply black list
 		bool blackListMatch = false;
 		for (size_t j = 0; j < blackList.size(); ++j)
-			if (i->second.name() == blackList[j]) {
+			if ((i->second.name() == blackList[j]) or (i->second.bareName() == blackList[j])) {
 				blackListMatch = true;
 				break;
 			}
