@@ -329,11 +329,12 @@ main(int    argc,
 		}
 
 	// set debug options
-	// if (debug) {
-	// 	waveDescription::setDebug(true);
-	// 	isobarHelicityAmplitude::setDebug(true);
-	// 	massDependence::setDebug(true);
-	// }
+	if (debug) {
+		waveDescription::setDebug(true);
+		//particleProperties::setDebug(true);
+		//isobarHelicityAmplitude::setDebug(true);
+		//massDependence::setDebug(true);
+	}
 
 	// get key file names
 	if (optind >= argc) {

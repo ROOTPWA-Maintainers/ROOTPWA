@@ -558,13 +558,6 @@ waveDescription::constructParticle(const Setting& particleKey,
 	string name;
 	if (particleKey.lookupValue("name", name)) {
 		particle = createParticle(name, requirePartInTable);
-		{
-			//!!! the following is just a quick hack for K^-
-			// the definition of flavor quantum numbers for particles and
-			// antiparticles should be solved in general in the
-			// particle{,Properties} classes
-			particle->setStrangeness(-particle->strangeness());
-		}
 		int spinProj;
 		if (particleKey.lookupValue("spinProj", spinProj))
 			particle->setSpinProj(spinProj);

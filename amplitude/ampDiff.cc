@@ -181,9 +181,9 @@ main(int    argc,
 	TObjString*  ampName = new TObjString(gSystem->GetFromPipe(cmd.c_str()));
 	UInt_t       eventNmb;
 	UInt_t       massBinMin = 0, massBinMax = 0;  // [MeV/c^2]
-	double_t     valReal[2], valImag[2];
-	double_t     absDiffReal, absDiffImag;
-	double_t     relDiffReal, relDiffImag;
+	Double_t     valReal[2], valImag[2];
+	Double_t     absDiffReal, absDiffImag;
+	Double_t     relDiffReal, relDiffImag;
 
 	// get mass bin boundaries from file paths
 	if (not     massBinFromPath(ampFileNames[0], massBinMin, massBinMax)
