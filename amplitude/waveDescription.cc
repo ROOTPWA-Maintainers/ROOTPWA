@@ -458,7 +458,7 @@ waveDescription::constructXParticle(const Setting& XQnKey,
 	                   mandatoryXQn["isospin"], optionalXQn["G"],
 	                   mandatoryXQn["J"], mandatoryXQn["P"], optionalXQn["C"],
 	                   mandatoryXQn["M"], optionalXQn["refl"]);
-	X->setBaryonNmb(mandatoryXQn["baryonNmb"]);
+	X->setBaryonNmb(optionalXQn["baryonNmb"]);
 	X->setSCB(optionalXQn["strangeness"], optionalXQn["charm"], optionalXQn["beauty"]);
 	if (_debug)
 		printDebug << "constructed X particle: " << X->qnSummary() << endl;
@@ -760,17 +760,24 @@ waveDescription::setXQuantumNumbersKeys(Setting&        XQnKey,
 {
 	if (_debug)
 		printDebug << "setting quantum number keys for " << X.qnSummary() << endl;
-	XQnKey.add("isospin", Setting::TypeInt) = X.isospin();
+	XQnKey.add("isospin",       Setting::TypeInt) = X.isospin();
 	if (X.G() != 0)
-		XQnKey.add("G",     Setting::TypeInt) = X.G();
-	XQnKey.add("J",       Setting::TypeInt) = X.J();
-	if (X.P() != 0)
-		XQnKey.add("P",     Setting::TypeInt) = X.P();
+		XQnKey.add("G",           Setting::TypeInt) = X.G();
+	XQnKey.add("J",             Setting::TypeInt) = X.J();
+	XQnKey.add("P",             Setting::TypeInt) = X.P();
 	if (X.C() != 0)
-		XQnKey.add("C",     Setting::TypeInt) = X.C();
-	XQnKey.add("M",       Setting::TypeInt) = X.spinProj();
+		XQnKey.add("C",           Setting::TypeInt) = X.C();
+	XQnKey.add("M",             Setting::TypeInt) = X.spinProj();
 	if (X.reflectivity() != 0)
-		XQnKey.add("refl",  Setting::TypeInt) = X.reflectivity();
+		XQnKey.add("refl",        Setting::TypeInt) = X.reflectivity();
+	if (X.baryonNmb() != 0)
+		XQnKey.add("baryonNmb",   Setting::TypeInt) = X.baryonNmb();
+	if (X.strangeness() != 0)
+		XQnKey.add("strangeness", Setting::TypeInt) = X.strangeness();
+	if (X.charm() != 0)
+		XQnKey.add("charm",       Setting::TypeInt) = X.charm();
+	if (X.beauty() != 0)
+		XQnKey.add("beauty",      Setting::TypeInt) = X.beauty();
 	return true;
 }
 

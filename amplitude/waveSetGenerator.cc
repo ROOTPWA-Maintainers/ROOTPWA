@@ -378,10 +378,13 @@ waveSetGenerator::generateWaveSet()
 		// clone production vertex and set X-particle
 		const productionVertexPtr newProdVert(static_pointer_cast<rpwa::productionVertex>
 		                                      (_templateTopo->productionVertex()->clone(false, false)));
-		const particlePtr&        newX = _waveSet[i].XIsobarDecayVertex()->parent();
+		const particlePtr& newX = _waveSet[i].XIsobarDecayVertex()->parent();
 		newProdVert->outParticles()[0] = newX;
 		// add production vertex
 		_waveSet[i].setProductionVertex(newProdVert);
+		// correct quantum numbers
+		_waveSet[i].calcIsobarCharges();
+		_waveSet[i].productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
 	}
 
 	return _waveSet.size();
