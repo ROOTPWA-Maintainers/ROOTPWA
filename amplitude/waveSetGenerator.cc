@@ -392,12 +392,13 @@ waveSetGenerator::generateWaveSet()
 
 
 bool
-waveSetGenerator::writeKeyFiles(const string& dirName)
+waveSetGenerator::writeKeyFiles(const string& dirName,
+                                const bool    newKeyFileNameConvention)
 {
 	size_t countSuccess = 0;
 	for (size_t i = 0; i < _waveSet.size(); ++i) {
 		const string keyFileName = dirName + "/"
-			+ waveDescription::waveNameFromTopologyOld(_waveSet[i]) + ".key";
+			+ waveDescription::waveNameFromTopology(_waveSet[i], newKeyFileNameConvention) + ".key";
 		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
 			++countSuccess;
 	}

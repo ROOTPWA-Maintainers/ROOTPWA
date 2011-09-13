@@ -55,11 +55,12 @@ usage(const string& progName,
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -k template key file -o output directory [-p PDG file -v -h]" << endl
+	     << " -k template key file -o output directory [-p PDG file -n -v -h]" << endl
 	     << "    where:" << endl
 	     << "        -k file    path to template key file" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -o dir     path to directory where key files will be written (default: '.')" << endl
+	     << "        -n         use new key file name convention (default: false)" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -75,15 +76,16 @@ main(int    argc,
 	printSvnVersion();
 	
 	// parse command line options
-	const string progName    = argv[0];
-	string       keyFileName = "";
-	string       pdgFileName = "./particleDataTable.txt";
-	string       outDirName  = ".";
-	bool         debug       = false;
+	const string progName                 = argv[0];
+	string       keyFileName              = "";
+	string       pdgFileName              = "./particleDataTable.txt";
+	string       outDirName               = ".";
+	bool         newKeyFileNameConvention = false;
+	bool         debug                    = false;
 	extern char* optarg;
 	//extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "k:p:o:vh")) != -1)
+	while ((c = getopt(argc, argv, "k:p:o:nvh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -93,6 +95,9 @@ main(int    argc,
 			break;
 		case 'o':
 			outDirName = optarg;
+			break;
+		case 'n':
+			newKeyFileNameConvention = true;
 			break;
 		case 'v':
 			debug = true;
@@ -122,7 +127,7 @@ main(int    argc,
 	for (unsigned int i = 0; i < decayTopos.size(); ++i) {
 		bool isConsistent = decayTopos[i].checkTopology() and decayTopos[i].checkConsistency();
 		cout << "    " << setw(4) << i << ": "
-		     << waveDescription::waveNameFromTopologyOld(decayTopos[i]) << "... ";
+		     << waveDescription::waveNameFromTopology(decayTopos[i], newKeyFileNameConvention) << " ... ";
 		if (isConsistent)
 			cout << "okay" << endl;
 		else {
@@ -132,7 +137,7 @@ main(int    argc,
 	}
 
 	printInfo << "writing .key files for generated waves to '" << outDirName << "'" << endl;
-	waveSetGen.writeKeyFiles(outDirName);
+	waveSetGen.writeKeyFiles(outDirName, newKeyFileNameConvention);
 
 	printInfo << ((nmbInconsistentDecays == 0) ? "successfully " : "")
 	          << "generated " << decayTopos.size() << " waves";

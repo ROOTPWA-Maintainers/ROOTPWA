@@ -320,7 +320,8 @@ waveDescription::writeKeyFile(const string&          keyFileName,
 
 
 string
-waveDescription::waveNameFromTopology(const isobarDecayTopology&  topo,
+waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
+                                      const bool                  newConvention,
                                       const isobarDecayVertexPtr& currentVertex)
 {
 	ostringstream fileName;
@@ -331,71 +332,60 @@ waveDescription::waveNameFromTopology(const isobarDecayTopology&  topo,
 		}
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
-		fileName << spinQn(X.isospin()) << parityQn(X.G())
-		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C())
-		         << spinQn(X.spinProj()) << parityQn(X.reflectivity());
-		// start traversing down decay chain
-		fileName << waveNameFromTopology(topo, topo.XIsobarDecayVertex());
+		if (newConvention)
+			fileName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
+			         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
+			         << spinQn(X.spinProj()) << parityQn(X.reflectivity()) << "]"
+			         << waveNameFromTopology(topo, newConvention, topo.XIsobarDecayVertex());
+		else
+			fileName << spinQn(X.isospin()) << sign(X.G())
+			         << spinQn(X.J()) << sign(X.P()) << sign(X.C())
+			         << spinQn(X.spinProj()) << sign(X.reflectivity())
+			         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+			                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
+			         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
+			         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
+			         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+			                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
 	} else {
 		// recurse down decay chain
-		// first daughter
-		fileName << "=[" << currentVertex->daughter1()->name();
-		if (not topo.isFsParticle(currentVertex->daughter1()))
-			fileName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
-		// L, S
-		fileName << "#" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "#";
-		// second daughter
-		fileName << currentVertex->daughter2()->name();
-		if (not topo.isFsParticle(currentVertex->daughter2()))
-			fileName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
-		fileName << "]";
-	}
-	string keyFileName = fileName.str();
-	replace_all(keyFileName, "(", "_");
-	replace_all(keyFileName, ")", "_");
-	return keyFileName;
-}
-
-
-string
-waveDescription::waveNameFromTopologyOld(isobarDecayTopology&        topo,
-                                         const isobarDecayVertexPtr& currentVertex)
-{
-	ostringstream fileName;
-	if (currentVertex == interactionVertexPtr()) {  // null pointer
-		if (not topo.checkTopology() or not topo.checkConsistency()) {
-			printWarn << "decay topology has issues. cannot construct key file name." << endl;
-			return "";
+		if (newConvention) {
+			// first daughter
+			fileName << "=[" << currentVertex->daughter1()->name();
+			if (not topo.isFsParticle(currentVertex->daughter1()))
+				fileName << waveNameFromTopology
+					(topo, newConvention,
+					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
+			// L, S
+			fileName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
+			// second daughter
+			fileName << currentVertex->daughter2()->name();
+			if (not topo.isFsParticle(currentVertex->daughter2()))
+				fileName << waveNameFromTopology
+					(topo, newConvention,
+					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
+			fileName << "]";
+		} else {
+			fileName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
+			             : currentVertex->parent()->bareName());
+			isobarDecayTopology subGraph = topo.subDecay(topo.node(currentVertex));
+			if (not topo.isFsVertex(currentVertex) and subGraph.nmbFsParticles() > 2)
+				fileName << "="
+				         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+				                                 (topo.toVertex(currentVertex->daughter1())))
+				         << "_" << spinQn(currentVertex->L()) << spinQn(currentVertex->S()) << "_"
+				         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+				                                 (topo.toVertex(currentVertex->daughter2())));
 		}
-		// X quantum numbers and first decay
-		const particle& X = *(topo.XParticle());
-		fileName << spinQn(X.isospin()) << parityQn(X.G())
-		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C())
-		         << spinQn(X.spinProj()) << parityQn(X.reflectivity())
-		         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-		                                    (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
-		         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
-		         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
-		         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-		                                    (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
-	} else {
-		// recurse down decay chain
-		fileName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
-		             : currentVertex->parent()->bareName());
-		isobarDecayTopology subGraph = topo.subDecay(topo.node(currentVertex));
-		if (not topo.isFsVertex(currentVertex) and subGraph.nmbFsParticles() > 2)
-			fileName << "="
-			         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-			                                    (topo.toVertex(currentVertex->daughter1())))
-			         << "_" << spinQn(currentVertex->L()) << spinQn(currentVertex->S()) << "_"
-			         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-			                                    (topo.toVertex(currentVertex->daughter2())));
 	}
 	string keyFileName = fileName.str();
-	replace_all(keyFileName, "(", "");
-	replace_all(keyFileName, ")", "");
+	if (newConvention) {
+		replace_all(keyFileName, "(", "_");
+		replace_all(keyFileName, ")", "_");
+	} else {
+		replace_all(keyFileName, "(", "");
+		replace_all(keyFileName, ")", "");
+	}
 	return keyFileName;
 }
 

@@ -106,16 +106,17 @@ main(int    argc,
 #endif
 	
 	// parse command line options
-	const string progName     = argv[0];
-	string       keyFileName  = "";
-	long int     maxNmbEvents = -1;
-	string       pdgFileName  = "./particleDataTable.txt";
-	string       ampFileName  = "./out.root";
-	string       ampLeafName  = "amplitude";
-	bool         asciiOutput  = false;
-	string       inTreeName   = "rootPwaEvtTree";
-	string       leafNames    = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
-	bool         debug        = false;
+	const string progName                 = argv[0];
+	string       keyFileName              = "";
+	long int     maxNmbEvents             = -1;
+	string       pdgFileName              = "./particleDataTable.txt";
+	string       ampFileName              = "./out.root";
+	string       ampLeafName              = "amplitude";
+	bool         asciiOutput              = false;
+	string       inTreeName               = "rootPwaEvtTree";
+	string       leafNames                = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool         newKeyFileNameConvention = false;
+	bool         debug                    = false;
 	extern char* optarg;
 	extern int   optind;
 	int          c;
@@ -247,7 +248,8 @@ main(int    argc,
 		cout << endl;
 		ampFileRoot = TFile::Open(ampFileName.c_str(), "RECREATE");
 		// write wave description
-		const string waveName = waveDesc.waveNameFromTopologyOld(*(amplitude->decayTopology()));
+		const string waveName = waveDesc.waveNameFromTopology(*(amplitude->decayTopology()),
+		                                                      newKeyFileNameConvention);
 		waveDesc.Write((waveName + ".key").c_str());
 		// create output tree
 		ampTreeLeaf = new amplitudeTreeLeaf();

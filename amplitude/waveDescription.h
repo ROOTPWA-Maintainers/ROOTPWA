@@ -89,11 +89,9 @@ namespace rpwa {
 		                         const bool                 writeProdVert = true);  ///< creates key file from amplitude
 
 		static std::string waveNameFromTopology
-		(const isobarDecayTopology&  topo,
+		(isobarDecayTopology         topo,
+		 const bool                  newConvention = false,
 		 const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive function that generates unique wave name from decay topology
-		static std::string waveNameFromTopologyOld
-		(isobarDecayTopology&        topo,
-		 const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive function that generates unique wave name from decay topology (old convention)
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
