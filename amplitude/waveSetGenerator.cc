@@ -38,6 +38,7 @@
 
 #include "libconfig.h++"
 
+#include "physUtils.hpp"
 #include "spinUtils.hpp"
 #include "conversionUtils.hpp"
 #include "libConfigUtils.hpp"
@@ -270,8 +271,8 @@ waveSetGenerator::generateWaveSet()
 								                                          + parentCharm + parentBeauty);
 								if (not spinStatesCanCouple(daughterI, daughterI_z, parentI, parentI_z)) {
 									if (_debug)
-										cout << "        rejected because (I, I_z)[0] = (" << spinQn(daughterI[0]) << ", "
-										     << spinQn(daughterI_z[0]) << ") and (I, I_z)[1] = ("
+										cout << "        rejected, because (I, I_z)[0] = (" << spinQn(daughterI[0])
+										     << ", " << spinQn(daughterI_z[0]) << ") and (I, I_z)[1] = ("
 										     << spinQn(daughterI[1]) << ", " << spinQn(daughterI_z[1])
 										     << ") cannot couple to parent (I, I_z) = ("
 										     << spinQn(parentI) << ", " << spinQn(parentI_z) << ")" << endl;
@@ -281,88 +282,89 @@ waveSetGenerator::generateWaveSet()
 									// check whether quantum number combination is spin-exotic
 									if (igjpIsExotic(parentI, parentG, parentJ, parentP)) {
 										if (_debug)
-											cout << "        rejected beause quantum number combination IG(JPC) = "
+											cout << "        rejected, because quantum number combination IG(JPC) = "
 											     << spinQn(parentI) << sign(parentG) << "(" << spinQn(parentJ)
 											     << sign(parentP) << sign(parentC) << ") is spin-exotic" << endl;
 										continue;
 									}
-		
-								// find candidates for parent isobar in particle data table
+
+								// set isobar properties
 								particleProperties isobarProp(*parent);
 								isobarProp.setBaryonNmb(parentBaryonNmb);
 								isobarProp.setSCB      (parentStrangeness, parentCharm, parentBeauty);
 								isobarProp.setIGJPC    (parentI, parentG, parentJ, parentP, parentC);
-								vector<const particleProperties*> possibleIsobars;
-								const bool                        parentIsXParticle = parent->isXParticle();
-								if (not parentIsXParticle) {
-									const double minIsobarMass = (_requireMinIsobarMass) ?
-										  (daughters[0]->mass() - _isobarMassWindowSigma * daughters[0]->width())
-										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
-										: 0;
-									possibleIsobars
-										=	particleDataTable::entriesMatching(isobarProp, "allQn", minIsobarMass,
-											                                   _isobarMassWindowSigma, _isobarWhiteList,
-											                                   _isobarBlackList);
-									if (_debug)
-										printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
-										           << isobarProp.qnSummary() << " in particle data table" << endl;
-								}
 
 								// create all allowed decay topologies
-								// for X loop over allowed M and reflectivity states
-								// for intermediate decay vertices loop over isobar candidates
-								tuple<int, int> parentMRange   (0, 0);
-								tuple<int, int> parentReflRange(0, 0);
-								size_t          iIsobarMax = possibleIsobars.size();
-								if (parentIsXParticle) {
-									parentMRange =
+								if (parent->isXParticle()) {
+									// for X loop over allowed M and reflectivity states
+									tuple<int, int> parentMRange =
 										make_tuple(spinQnLargerEqual((_useReflectivity) ?
 										                             spinQnSmallerEqual(parentJ, 0) : -parentJ,
 										                             get<0>(_spinProjRange)),
 										           spinQnSmallerEqual(parentJ, get<1>(_spinProjRange)));
+									tuple<int, int> parentReflRange(0, 0);
 									if (_useReflectivity) {
 										if (_reflectivity == 0)
 											parentReflRange = make_tuple(-1, +1);
 										else
 											parentReflRange = make_tuple(signum(_reflectivity), signum(_reflectivity));
 									}
-									iIsobarMax = 1;
-								}
-								for (int parentM = get<0>(parentMRange); parentM <= get<1>(parentMRange);
-								     parentM += 2) {
-									if (_debug and parentIsXParticle)
-										printDebug << "setting parent spin projection = " << spinQn(parentM) << " "
-										           << "(max spin projection = " << spinQn(get<1>(parentMRange))
-										           << ")" << endl;
-									for (int parentRefl = get<0>(parentReflRange);
-									     parentRefl <= get<1>(parentReflRange); parentRefl += 2) {
-										if (_debug and parentIsXParticle and (parentRefl != 0))
-											printDebug << "setting parent reflectivity = " << parityQn(parentRefl) << endl;
-										for (size_t iIsobar = 0; iIsobar < iIsobarMax; ++iIsobar) {
-											const particleProperties& possibleIsobar
-												= (parentIsXParticle)	? isobarProp : *possibleIsobars[iIsobar];
-											if (_debug)
-												printDebug << "setting isobar = '" << possibleIsobar.name() << "'" << endl;
-											// clone topology
-											const isobarDecayTopologyPtr& decayCopy = parentDecay.clone(false, false);
-											// set parent vertex quantum numbers
-											const isobarDecayVertexPtr& parentVertexCopy =
-												static_pointer_cast<isobarDecayVertex>
-												(decayCopy->vertex(parentDecay.node(parentVertex)));
-											parentVertexCopy->setL(L);
-											parentVertexCopy->setS(S);
-											// set parent particle
-											const particlePtr& parentCopy = parentVertexCopy->parent();
-											parentCopy->setProperties(possibleIsobar);
-											parentCopy->setCharge(parentCharge);
-											if (parentIsXParticle) {
-												parentCopy->setSpinProj(parentM);
-												parentCopy->setReflectivity(parentRefl);
+									for (int parentM = get<0>(parentMRange); parentM <= get<1>(parentMRange);
+									     parentM += 2) {
+										if (_debug)
+											printDebug << "setting X spin projection to " << spinQn(parentM) << " "
+											           << "(max spin projection = " << spinQn(get<1>(parentMRange))
+											           << ")" << endl;
+										for (int parentRefl = get<0>(parentReflRange);
+										     parentRefl <= get<1>(parentReflRange); parentRefl += 2) {
+											if (_debug and (parentRefl != 0))
+												printDebug << "setting X reflectivity to "
+												           << parityQn(parentRefl) << endl;
+
+											// check whether amplitude would be zero for given reflectivity
+											if (    _useReflectivity and (parentM == 0)
+											    and (reflectivityFactor(parentJ, parentP, parentM, parentRefl) == +1)) {
+												if (_debug)
+													printDebug << "rejected, because for quantum number combination "
+													           << "JP(M refl) = " << spinQn(parentJ) << sign(parentP) << "("
+													           << spinQn(parentM) << sign(parentRefl) << ") "
+													           << "amplitude is always zero"<< endl;
+												continue;
 											}
-											if (_debug)
-												printDebug << "created decay topology for " << *parentVertexCopy << endl;
+
+											// clone topology
+											const isobarDecayTopologyPtr& decayCopy
+												= createNewDecayTopology(parentDecay, parentVertex, L, S,
+												                         isobarProp, parentCharge);
+											decayCopy->XDecayVertex()->inParticles()[0]->setSpinProj(parentM);
+											decayCopy->XDecayVertex()->inParticles()[0]->setReflectivity(parentRefl);
 											decayPossibilities[startNds[iStart]].push_back(*decayCopy);
 										}
+									}
+								} else {
+									// for intermediate decay vertices find isobar candidates in particle data table
+									const double minIsobarMass = (_requireMinIsobarMass) ?
+										  (daughters[0]->mass() - _isobarMassWindowSigma * daughters[0]->width())
+										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
+										: 0;
+									vector<const particleProperties*> possibleIsobars
+										=	particleDataTable::entriesMatching(isobarProp, "allQn", minIsobarMass,
+											                                   _isobarMassWindowSigma, _isobarWhiteList,
+											                                   _isobarBlackList);
+									if (_debug)
+										printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
+										           << isobarProp.qnSummary() << " in particle data table" << endl;
+
+									// loop over isobar candidates
+									for (size_t iIsobar = 0; iIsobar < possibleIsobars.size(); ++iIsobar) {
+										if (_debug)
+											printDebug << "setting isobar = '"
+											           << possibleIsobars[iIsobar]->name() << "'" << endl;
+										// clone topology
+										const isobarDecayTopologyPtr& decayCopy
+											= createNewDecayTopology(parentDecay, parentVertex, L, S,
+											                         *possibleIsobars[iIsobar], parentCharge);
+										decayPossibilities[startNds[iStart]].push_back(*decayCopy);
 									}
 								}
 							}  // isospin loop
@@ -470,4 +472,29 @@ waveSetGenerator::print(ostream& out) const
 	if (_templateTopo)
 		out << "template " << *_templateTopo;
 	return out;
+}
+
+
+const isobarDecayTopologyPtr
+waveSetGenerator::createNewDecayTopology(const isobarDecayTopology&  parentDecay,
+                                         const isobarDecayVertexPtr& parentVertex,
+                                         const int                   L,
+                                         const int                   S,
+                                         const particleProperties&   isobar,
+                                         const int                   parentCharge)
+{
+	// clone topology
+	const isobarDecayTopologyPtr& decayCopy = parentDecay.clone(false, false);
+	// set parent vertex quantum numbers
+	const isobarDecayVertexPtr& parentVertexCopy
+		= static_pointer_cast<isobarDecayVertex>(decayCopy->vertex(parentDecay.node(parentVertex)));
+	parentVertexCopy->setL(L);
+	parentVertexCopy->setS(S);
+	// set parent particle
+	const particlePtr& parentCopy = parentVertexCopy->parent();
+	parentCopy->setProperties(isobar);
+	parentCopy->setCharge(parentCharge);
+	if (_debug)
+		printDebug << "created decay topology for " << *parentVertexCopy << endl;
+	return decayCopy;
 }

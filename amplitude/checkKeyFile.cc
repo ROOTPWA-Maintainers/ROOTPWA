@@ -408,9 +408,11 @@ main(int    argc,
 		vector<string> errors;
 		if (not testAmplitude(inTree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
 		                      prodKinPartNames,  decayKinPartNames,
-		                      prodKinMomentaLeafName, decayKinMomentaLeafName))
+		                      prodKinMomentaLeafName, decayKinMomentaLeafName)) {
 			++countKeyFileErr;
-		else
+			printWarn << "key file '" << keyFileNames[i] << "' did not pass all tests. "
+			          << "see summary below." << endl;
+		} else
 			printSucc << "key file '" << keyFileNames[i] << "' passed all tests" << endl;
 		// collect errors
 		for (unsigned int j = 0; j < errors.size(); ++j)

@@ -98,6 +98,14 @@ namespace rpwa {
 
   private:
 
+	  const isobarDecayTopologyPtr createNewDecayTopology(const isobarDecayTopology&  parentDecay,
+	                                                      const isobarDecayVertexPtr& parentVertex,
+	                                                      const int                   L,
+	                                                      const int                   S,
+	                                                      const particleProperties&   isobar,
+	                                                      const int                   parentCharge);
+
+
 	  boost::tuples::tuple<int, int> _isospinRange;           ///< range of allowed isobar isospins
 	  boost::tuples::tuple<int, int> _JRange;                 ///< range of allowed isobar spins
 	  boost::tuples::tuple<int, int> _spinProjRange;          ///< range of allowed isobar spin projections
