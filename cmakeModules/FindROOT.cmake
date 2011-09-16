@@ -250,12 +250,12 @@ if(ROOT_FOUND)
       string(REGEX REPLACE "^-.(.*)$" "\\1" _LIBNAME "${_LIBNAME}")
       # check whether libraries exist
       find_library(_AUX_LIB_${_LIBNAME}
-	NAMES ${_LIBNAME})
+				NAMES ${_LIBNAME})
       if(NOT _AUX_LIB_${_LIBNAME})
-	set(ROOT_FOUND FALSE)
-	set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library ${_LIBNAME}.")
+				set(ROOT_FOUND FALSE)
+				set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library ${_LIBNAME}.")
       else()
-	list(APPEND ROOT_LIBS ${_AUX_LIB_${_LIBNAME}})
+				list(APPEND ROOT_LIBS ${_AUX_LIB_${_LIBNAME}})
       endif()
     endif()
   endforeach()
@@ -270,7 +270,7 @@ mark_as_advanced(
   ROOT_LIBRARIES
   ROOT_LIBS
   ROOT_DEFINITIONS
-)
+	)
 
 
 # report result
@@ -291,13 +291,13 @@ else()
 endif()
 
 
-# macro that generates ROOT dictionary
+# function that generates ROOT dictionary
 function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FILE)
 
   if(NOT ROOT_FOUND)
     message(FATAL_ERROR "Impossible to generate dictionary ${DICT_FILE}, because no ROOT installation was found.")
   endif()
- 
+	
   # prepare command line argument for compiler definitions (put -D in front)
   set(_DEFINITIONS)
   get_property(_DEFS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY COMPILE_DEFINITIONS)
@@ -311,7 +311,7 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
   foreach(_FILE ${INCLUDE_DIRS})
     set(_INCLUDES ${_INCLUDES} -I${_FILE})
   endforeach()
- 
+	
   # strip paths from header file names
   set(_HEADERS)
   foreach(_FILE ${HEADER_FILES})
@@ -327,6 +327,45 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
     COMMAND ${ROOTCINT_EXECUTABLE}
     ARGS -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${LINKDEF_FILE}
     DEPENDS ${HEADER_FILES} ${LINKDEF_FILE}
-  )
+		)
 
 endfunction(root_generate_dictionary)
+
+
+# function that checks whether ROOT version is equal to or larger than a given version
+function(root_version_is_at_least MIN_ROOT_VERSION ROOT_VERSION_IS_GT_EQ)
+
+	set(${ROOT_VERSION_IS_GT_EQ} FALSE PARENT_SCOPE)
+  if(ROOT_FOUND)
+		string(REGEX REPLACE "^([0-9]+)\\.[0-9][0-9]+\\.[0-9][0-9]+.*" "\\1"
+			_MIN_MAJOR_VERSION "${MIN_ROOT_VERSION}")
+		string(REGEX REPLACE "^[0-9]+\\.([0-9][0-9])+\\.[0-9][0-9]+.*" "\\1"
+			_MIN_MINOR_VERSION "${MIN_ROOT_VERSION}")
+		string(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\.([0-9][0-9]+).*" "\\1"
+			_MIN_PATCH_VERSION "${MIN_ROOT_VERSION}")
+		# compute an overall version number which can be compared at once
+		math(EXPR _MIN_ROOT_VERSION "${_MIN_MAJOR_VERSION} * 10000 + ${_MIN_MINOR_VERSION} * 100 + ${_MIN_PATCH_VERSION}")
+		math(EXPR _ROOT_VERSION "${ROOT_MAJOR_VERSION} * 10000 + ${ROOT_MINOR_VERSION} * 100 + ${ROOT_PATCH_VERSION}")
+		# compare version
+		if(_ROOT_VERSION LESS "${_MIN_ROOT_VERSION}")
+			set(${ROOT_VERSION_IS_GT_EQ} FALSE PARENT_SCOPE)
+		else()
+			set(${ROOT_VERSION_IS_GT_EQ} TRUE PARENT_SCOPE)
+		endif()
+  endif()
+
+endfunction(root_version_is_at_least)
+
+
+# function that checks whether ROOT version is smaller than a given version
+function(root_version_is_lower_than MIN_ROOT_VERSION ROOT_VERSION_IS_SMALLER)
+
+	set(_GT_EQ FALSE)
+	root_version_is_at_least("${MIN_ROOT_VERSION}" _GT_EQ FALSE)
+	if (_GT_EQ)
+		set(${ROOT_VERSION_IS_SMALLER} FALSE PARENT_SCOPE)
+	else()
+		set(${ROOT_VERSION_IS_SMALLER} TRUE PARENT_SCOPE)
+	endif()
+
+endfunction(root_version_is_lower_than)

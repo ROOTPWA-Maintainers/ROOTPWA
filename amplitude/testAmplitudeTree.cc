@@ -54,7 +54,7 @@ main(int argc, char** argv)
 	printCompilerInfo();
 	printSvnVersion();
 
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	
 	const unsigned int nmbEvents       = 1000000;
 	const unsigned int nmbIncohSubAmps = 3;
@@ -104,6 +104,6 @@ main(int argc, char** argv)
 		}
 	}
 
-#endif  // AMPLITUDETREELEAF_ENABLED
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 
 }

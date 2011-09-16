@@ -137,7 +137,7 @@ main(int argc, char** argv)
 		integral2.writeAscii("testIntegral2.int");
 		// root I/O
 		// force loading predefined std::complex dictionary
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		gROOT->ProcessLine("#include <complex>");
 		{
 			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
@@ -154,7 +154,7 @@ main(int argc, char** argv)
 				integral3->writeAscii("testIntegral3.int");
 			inFile->Close();
 		}
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 	}
 
 

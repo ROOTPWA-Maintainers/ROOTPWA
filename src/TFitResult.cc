@@ -47,7 +47,7 @@
 #include "TFitResult.h"
 
 
-#if TFITRESULT_ENABLED
+#ifdef USE_TFITRESULT
 
 
 using namespace std;
@@ -585,4 +585,4 @@ TFitResult::buildWaveMap() {
 }
 
 
-#endif  // TFITRESULT_ENABLED
+#endif  // USE_TFITRESULT

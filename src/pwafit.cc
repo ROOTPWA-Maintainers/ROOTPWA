@@ -81,7 +81,7 @@ usage(const string& progName,
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
 	     << "        -w file    path to wavelist file" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
 #else
 	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
@@ -213,7 +213,7 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'R':
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
 #endif
 			break;

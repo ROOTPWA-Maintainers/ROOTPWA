@@ -99,7 +99,7 @@ main(int    argc,
 	printCompilerInfo();
 	printSvnVersion();
 
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
@@ -217,7 +217,7 @@ main(int    argc,
 	waveDescription    waveDesc;
 	isobarAmplitudePtr amplitude;
 	if (   not waveDesc.parseKeyFile(keyFileName)
-	    or not waveDesc.constructAmplitude(amplitude)) {
+	       or not waveDesc.constructAmplitude(amplitude)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		         << "aborting." << endl;
 		exit(1);
@@ -226,7 +226,7 @@ main(int    argc,
 
 	// create output file for amplitudes
 	bool writeRootFormat = false;
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	const string ampFileExt = extensionFromPath(ampFileName);
 	if (ampFileExt == "root")
 		writeRootFormat = true;
@@ -241,7 +241,7 @@ main(int    argc,
 	printInfo << "creating amplitude file '" << ampFileName << "'";
 	ofstream*          ampFilePlain = 0;
 	TFile*             ampFileRoot  = 0;
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	amplitudeTreeLeaf* ampTreeLeaf  = 0;
 	TTree*             ampTree      = 0;
 	if (writeRootFormat) {
@@ -259,11 +259,11 @@ main(int    argc,
 		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, 256000, 99);
 	} else
 #endif
-	{
-		cout << "; " << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
-		ampFilePlain = new ofstream(ampFileName.c_str());
-	}
-	if ((writeRootFormat and not ampFileRoot)
+		{
+			cout << "; " << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
+			ampFilePlain = new ofstream(ampFileName.c_str());
+		}
+	if (   (writeRootFormat and not ampFileRoot)
 	    or (not writeRootFormat and not ampFilePlain and not *ampFilePlain)) {
 		printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
 		exit(1);
@@ -293,7 +293,7 @@ main(int    argc,
   
 	// write amplitudes to output file
 	for (unsigned int i = 0; i < ampValues.size(); ++i) {
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		if (ampFileRoot) {
 			ampTreeLeaf->setIncohSubAmp(ampValues[i]);
 			ampTree->Fill();
@@ -306,7 +306,7 @@ main(int    argc,
 				ampFilePlain->write((char*)(&ampValues[i]), sizeof(complex<double>));
 		}
 	}
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (ampFileRoot) {
 		ampTree->Print();
 		ampTree->OptimizeBaskets(10000000, 1, "d");

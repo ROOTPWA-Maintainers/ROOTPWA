@@ -81,12 +81,20 @@ namespace rpwa {
 		bool constructAmplitude(isobarAmplitudePtr&           amplitude,
 		                        const isobarDecayTopologyPtr& topo) const;  ///< construct isobar amplitude using existing decay topology
 
-		static bool writeKeyFile(const std::string&         keyFileName,
-		                         const isobarDecayTopology& topo,
-		                         const bool                 writeProdVert = true);  ///< creates key file from decay topology
-		static bool writeKeyFile(const std::string&         keyFileName,
-		                         const isobarAmplitude&     amplitude,
-		                         const bool                 writeProdVert = true);  ///< creates key file from amplitude
+		template<class T>
+		static bool writeKeyFile(std::ostream& out,
+		                         const T&      topoOrAmp,
+		                         const bool    writeProdVert = true);  ///< writes keys from decay topology or amplitude to stream
+		// static bool writeKeyFile(std::ostream&              out,
+		//                          const isobarAmplitude&     amplitude,
+		//                          const bool                 writeProdVert = true);  ///< creates key file from amplitude
+		template<class T>
+		static bool writeKeyFile(const std::string& keyFileName,
+		                         const T&           topoOrAmp,
+		                         const bool         writeProdVert = true);  ///< creates key file from decay topology or amplitude
+		// static bool writeKeyFile(const std::string&         keyFileName,
+		//                          const isobarAmplitude&     amplitude,
+		//                          const bool                 writeProdVert = true);  ///< creates key file from amplitude
 
 		static std::string waveNameFromTopology
 		(isobarDecayTopology         topo,
@@ -99,7 +107,7 @@ namespace rpwa {
 
 	private:
 
-		void parseKeyString();  ///< parses _keyFileContents string
+		bool parseKeyFileContents();  ///< parses _keyFileContents string
 
 		// helper functions for construction of decay topology and ampltiude
 		static bool constructXParticle(const libconfig::Setting& XQnKey,
@@ -132,27 +140,101 @@ namespace rpwa {
 		static bool setXDecayKeys(libconfig::Setting&        parentDecayKey,
 		                          const isobarDecayTopology& topo,
 		                          const isobarDecayVertex&   vert);  ///< recursive function that puts X decay chain into keys
-		static bool writeKeyFile(libconfig::Setting&        rootKey,
-		                         const isobarDecayTopology& topo,
-		                         const bool                 writeProdVert = true);  ///< writes decay topology to key file
+		static bool setKeysFromTopology(libconfig::Setting&        rootKey,
+		                                const isobarDecayTopology& topo,
+		                                const bool                 setProdVert = true);  ///< fills keys from decay topology
 		static bool setAmplitude(libconfig::Setting&    amplitudeKey,
 		                         const isobarAmplitude& amplitude);  ///< puts amplitude specification into key
-		static bool writeKeyFile(libconfig::Setting&        rootKey,
-		                         const isobarAmplitude&     amplitude);  ///< writes amplitude parameters to key file
+		static bool setKeysFromAmplitude(libconfig::Setting&    rootKey,
+		                                 const isobarAmplitude& amplitude,
+		                                 const bool             setProdVert = true);  ///< fills keys from amplitude
+		static bool writeKeyFile(FILE&                      outStream,
+		                         const isobarDecayTopology& topo,
+		                         const bool                 writeProdVert = true);  ///< creates key file from decay topology and writes it to output stream
+		static bool writeKeyFile(FILE&                      outStream,
+		                         const isobarAmplitude&     amplitude,
+		                         const bool                 writeProdVert = true);  ///< creates key file from amplitude and writes it to output stream
 
 #endif  // __CINT__
 
-		libconfig::Config*        _key;           //! ///< libConfig date structure constructed from key file
-		const libconfig::Setting* _amplitudeKey;  //! ///< pointer to amplitude options
+		libconfig::Config* _key;  //! ///< libConfig date structure constructed from key file
+
+		std::string _keyFileContents;  ///< copy of keyfile contents; can be written to .root file
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
-		std::string _keyFileContents;  ///< copy of keyfile contents; can be written to .root file
-		
 
 		ClassDef(waveDescription,1)
 
 	};
+
+
+	template<class T>
+	bool
+	waveDescription::writeKeyFile(std::ostream& out,
+	                              const T&      topoOrAmp,
+	                              const bool    writeProdVert)
+	{
+		// create pipe
+		int pipeFileDescriptors[2];
+		if (pipe(pipeFileDescriptors) == -1) {
+			printErr << "failed to create pipe. cannot write keys." << std::endl;
+			return false;
+		}
+		// open write end of pipe
+		FILE* pipeWriteEnd = fdopen(pipeFileDescriptors[1], "wt");
+		if (!pipeWriteEnd) {
+			printErr << "could not open write end of pipe. cannot write keys." << std::endl;
+			return false;
+		}
+		// write keys to pipe and close write end
+		if (not writeKeyFile(*pipeWriteEnd, topoOrAmp, writeProdVert)) {
+			printWarn << "problems writing keys for decay topology. cannot write keys." << std::endl;
+			fclose(pipeWriteEnd);
+			return false;
+		}
+		fclose(pipeWriteEnd);
+		// read keys from pipe  
+		char         buf;
+		unsigned int countChar = 0;
+		while (read(pipeFileDescriptors[0], &buf, 1) > 0) {
+			out << buf;
+			++countChar;
+		}
+		close(pipeFileDescriptors[0]);
+		if (countChar > 0) {
+			printSucc << "wrote " << countChar * sizeof(char) << " bytes" << std::endl;
+			return true;
+		} else {
+			printWarn << "nothing was written" << std::endl;
+			return false;
+		}
+	}
+
+
+	template<class T>
+	bool
+	waveDescription::writeKeyFile(const std::string& keyFileName,
+	                              const T&           topoOrAmp,
+	                              const bool         writeProdVert)
+	{
+		if (_debug)
+			printDebug << "writing key file '" << keyFileName << "'" << std::endl;
+		ofstream outFile(keyFileName.c_str());
+		if (not outFile) {
+			printErr << "cannot create key file '" << keyFileName << "'" << std::endl;
+			return false;
+		}
+		if (writeKeyFile(outFile, topoOrAmp, writeProdVert)) {
+			printSucc << "written key file '" << keyFileName << "'" << std::endl;
+			outFile.close();
+			return true;
+		} else {
+			printWarn << "problems writing keys for decay topology. cannot write key file." << std::endl;
+			outFile.close();
+			return false;
+		}
+	}
 
 
 }  // namespace rpwa

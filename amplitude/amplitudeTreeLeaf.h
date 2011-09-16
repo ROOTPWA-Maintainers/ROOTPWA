@@ -40,15 +40,6 @@
 #define AMPLITUDETREELEAF_H
 
 
-// std::complex is not supported as Tree leafs in ROOT versions below 5.27.06
-#include "RVersion.h"
-#if ROOT_VERSION_CODE >= 334598  // make sure ROOT version is at least 5.27.06
-#define AMPLITUDETREELEAF_ENABLED 1
-#else
-#define AMPLITUDETREELEAF_ENABLED 0
-#endif
-
-
 #include <vector>
 #include <complex>
 
@@ -63,7 +54,7 @@ namespace rpwa {
 	public:
 			
 		amplitudeTreeLeaf();
-    virtual ~amplitudeTreeLeaf();
+		virtual ~amplitudeTreeLeaf();
 
 		void clear();
 
@@ -79,7 +70,7 @@ namespace rpwa {
 
 		std::vector<std::complex<double> > _incohSubAmps;  ///< sub amplitudes to be added incoherently in cross section
 
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		ClassDef(amplitudeTreeLeaf,1)
 #endif
 

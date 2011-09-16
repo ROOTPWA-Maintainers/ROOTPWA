@@ -135,7 +135,7 @@ main(int    argc,
 		const string fileName = argv[optind++];
 		const string fileExt  = extensionFromPath(fileName);
 		if (fileExt == "root") {
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			rootAmpFileNames.push_back(fileName);
 #else
 		  printErr << "reading of amplitudes in .root format not supported. skipping." << endl;
@@ -160,7 +160,7 @@ main(int    argc,
 	// write out integral
 	const string outFileExt = extensionFromPath(outFileName);
 	if (outFileExt == "root") {
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 		if (not outFile) {
 			printErr << "cannot open output file '" << outFileName << "'. aborting." << endl;
@@ -178,7 +178,7 @@ main(int    argc,
 #else
 		printErr << "writing of integrals in .root format not supported. aborting." << endl;
 		return 1;
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 	} else if (outFileExt == "int")
 		integral.writeAscii(outFileName);
 	else {

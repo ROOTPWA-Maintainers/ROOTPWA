@@ -39,15 +39,6 @@
 #define NORMALIZATIONINTEGRAL_H
 
 
-// std::complex is not supported as Tree leafs in ROOT versions below 5.27.06
-#include "RVersion.h"
-#if ROOT_VERSION_CODE >= 334598  // make sure ROOT version is at least 5.27.06
-#define NORMALIZATIONINTEGRAL_ENABLED 1
-#else
-#define NORMALIZATIONINTEGRAL_ENABLED 0
-#endif
-
-
 #include <vector>
 #include <map>
 #include <complex>
@@ -136,7 +127,7 @@ namespace rpwa {
 		integralMatrixType                  _integrals;             ///< integral matrix
 
 
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		ClassDef(normalizationIntegral,1)
 #endif
 

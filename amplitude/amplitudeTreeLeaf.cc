@@ -45,7 +45,7 @@ using namespace std;
 using namespace rpwa;
 
 
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 ClassImp(amplitudeTreeLeaf);
 #endif
 

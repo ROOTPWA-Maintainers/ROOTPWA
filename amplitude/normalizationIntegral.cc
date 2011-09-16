@@ -57,7 +57,7 @@ using namespace boost::accumulators;
 using namespace rpwa;
 
 
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 ClassImp(normalizationIntegral);
 #endif
 
@@ -489,7 +489,7 @@ normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
 	ampTrees.clear    ();
 	ampTreeLeafs.clear();
 	unsigned long nmbAmps = 0;
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
@@ -560,6 +560,6 @@ normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
 		_waveNameWaveIndexMap[waveName] = waveIndex + waveIndexOffset;
 		++waveIndex;
   }
-#endif  // AMPLITUDETREELEAF_ENABLED
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 	return nmbAmps;
 }

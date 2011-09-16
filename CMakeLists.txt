@@ -143,6 +143,19 @@ endif()
 
 # setup ROOT includes and libraries
 find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
+# some code switches that depend on ROOT version
+# std::complex is not supported as TTree leaf in ROOT versions below 5.27.06
+set(USE_STD_COMPLEX_TREE_LEAFS FALSE)
+root_version_is_at_least("5.27.06" USE_STD_COMPLEX_TREE_LEAFS)
+if(USE_STD_COMPLEX_TREE_LEAFS)
+	add_definitions(-DUSE_STD_COMPLEX_TREE_LEAFS)
+endif()
+# TFitResult produces a name clash for ROOT versions from 5.25.0 on
+set(USE_TFITRESULT FALSE)
+root_version_is_lower_than("5.25.00" USE_TFITRESULT)
+if(USE_TFITRESULT)
+	add_definitions(-DUSE_TFITRESULT)
+endif()
 
 
 # setup CUDA
@@ -410,10 +423,3 @@ endif()
 
 message(STATUS "Run 'make' to build the project.")
 message(STATUS "On multi-core machines 'make -j#', where # is the number of parallel jobs, can speedup compilation considerably.")
-
-
-# file(GLOB _CC_LIST ${CMAKE_CURRENT_SOURCE_DIR} "amplitude/*.cc")
-# #message("foo ${_CC_LIST}")
-# switch_file_extension("${_CC_LIST}" ".cc" ".h" _H_LIST)
-# #message("bar ${_H_LIST}")
-# root_generate_dictionary("testDict.cc" "${ROOT_INCLUDE_DIR}" "${_H_LIST}" "testLinkDef.h")

@@ -39,6 +39,7 @@
 
 #include <fstream>
 #include <map>
+#include <cstdio>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
@@ -69,7 +70,6 @@ bool waveDescription::_debug = false;
 waveDescription::waveDescription()
 	: TObject         (),
 	  _key            (0),
-	  _amplitudeKey   (0),
 	  _keyFileContents("")
 {
 	waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
@@ -88,7 +88,6 @@ waveDescription::parseKeyFile(const string& keyFileName)
 {
 	if (not _key)
 		_key = new Config();
-	_amplitudeKey = 0;
 	if (not parseLibConfigFile(keyFileName, *_key, _debug)) {
 		printWarn << "problems reading key file '" << keyFileName << "'. "
 		          << "cannot construct decay topology." << endl;
@@ -108,9 +107,6 @@ waveDescription::parseKeyFile(const string& keyFileName)
     while(getline(keyFile, line))
 	    _keyFileContents += line + "\n";
 	}
-	// find amplitude group
-	const Setting& rootKey = _key->getRoot();
-	_amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
 	return true;
 }
 
@@ -241,13 +237,16 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	string formalism            = "helicity";
 	bool   boseSymmetrize       = true;
 	bool   useReflectivityBasis = true;
-	if (_amplitudeKey) {
-		if (_amplitudeKey->lookupValue("formalism", formalism) and _debug)
+	// find amplitude group
+	const Setting&            rootKey      = _key->getRoot();
+	const libconfig::Setting* amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
+	if (amplitudeKey) {
+		if (amplitudeKey->lookupValue("formalism", formalism) and _debug)
 			printDebug << "setting amplitude formalism to '" << formalism << "'" << endl;
-		if (_amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
+		if (amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
 			printDebug << "setting amplitude option 'boseSymmetrize' to "
 			           << ((boseSymmetrize) ? "true" : "false") << endl;
-		if (_amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
+		if (amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
 			printDebug << "setting amplitude option 'useReflectivityBasis' to "
 			           << ((useReflectivityBasis) ? "true" : "false") << endl;
 	}
@@ -263,58 +262,6 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	}
 	amplitude->enableBoseSymmetrization(boseSymmetrize      );
 	amplitude->enableReflectivityBasis (useReflectivityBasis);
-	return true;
-}
-
-
-bool
-waveDescription::writeKeyFile(const string&              keyFileName,
-                              const isobarDecayTopology& topo,
-                              const bool                 writeProdVert)
-{
-	if (_debug)
-		printDebug << "writing key file '" << keyFileName << "'" << endl;
-	Config   key;
-	Setting& rootKey = key.getRoot();
-	if (not writeKeyFile(rootKey, topo, writeProdVert)) {
-		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
-		return false;
-	}
-	try {
-		key.writeFile(keyFileName.c_str());
-	} catch (const FileIOException& ioEx) {
-		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
-		return false;
-	}
-	printSucc << "written key file '" << keyFileName << "'" << endl;
-	return true;
-}
-
-
-bool
-waveDescription::writeKeyFile(const string&          keyFileName,
-                              const isobarAmplitude& amplitude,
-                              const bool             writeProdVert)
-{
-	if (_debug)
-		printDebug << "writing key file '" << keyFileName << "'" << endl;
-	Config   key;
-	Setting& rootKey = key.getRoot();
-	if (not writeKeyFile(rootKey, *amplitude.decayTopology(), writeProdVert)) {
-		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
-		return false;
-	}
-	if (not writeKeyFile(rootKey, amplitude)) {
-		printWarn << "problems writing keys for amplitude. cannot write key file." << endl;
-		return false;
-	}
-	try {
-		key.writeFile(keyFileName.c_str());
-	} catch (const FileIOException& ioEx) {
-		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
-		return false;
-	}
-	printSucc << "written key file '" << keyFileName << "'" << endl;
 	return true;
 }
 
@@ -390,23 +337,20 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 }
 
 
-void
-waveDescription::parseKeyString()
+bool
+waveDescription::parseKeyFileContents()
 {
 	if (not _key)
 		_key = new Config();
-	_amplitudeKey = 0;
 	if (not parseLibConfigString(_keyFileContents, *_key, _debug)) {
 		printWarn << "problems parsing key file string:" << endl;
 		printKeyFileContents(cout);
 		cout  << "    cannot construct decay topology." << endl;
 		delete _key;
 		_key = 0;
-		return;
+		return false;
 	}
-	// find amplitude group
-	const Setting& rootKey = _key->getRoot();
-	_amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
+	return true;
 }
 
 
@@ -737,7 +681,7 @@ waveDescription::setProductionVertexKeys(Setting&                   prodVertKey,
 				= static_pointer_cast<leptoProductionVertex>(prodVert)->beamPol();
 		return true;
 	} else {
-		printWarn << "writing of keys for production vertex of this type is not yet implemented:"
+		printWarn << "setting of keys for production vertex of this type is not yet implemented:"
 		          << *prodVert << endl;
 		return false;
 	}
@@ -836,17 +780,17 @@ waveDescription::setXDecayKeys(Setting&                   parentDecayKey,
 
 
 bool
-waveDescription::writeKeyFile(Setting&                   rootKey,
-                              const isobarDecayTopology& topo,
-                              const bool                 writeProdVert)
+waveDescription::setKeysFromTopology(Setting&                   rootKey,
+                                     const isobarDecayTopology& topo,
+                                     const bool                 setProdVert)
 {
 	if (not topo.checkTopology() or not topo.checkConsistency()) {
 		printWarn << "decay topology has issues. cannot write key file." << endl;
 		return false;
 	}
 	if (_debug)
-		printDebug << "writing " << topo;
-	if (writeProdVert) {
+		printDebug << "setting keys for " << topo;
+	if (setProdVert) {
 		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
 		setProductionVertexKeys(prodVertKey, topo.productionVertex());
 	}
@@ -854,11 +798,11 @@ waveDescription::writeKeyFile(Setting&                   rootKey,
 	Setting& XQnKey    = waveKey.add("XQuantumNumbers", Setting::TypeGroup);
 	Setting& XDecayKey = waveKey.add("XDecay",          Setting::TypeGroup);
 	if (not setXQuantumNumbersKeys(XQnKey, *(topo.XParticle()))) {
-		printWarn << "problems writing X quantum numbers" << endl;
+		printWarn << "problems setting X quantum numbers" << endl;
 		return false;
 	}
 	if (not setXDecayKeys(XDecayKey, topo, *(topo.XIsobarDecayVertex()))) {
-		printWarn << "problems writing X decay" << endl;
+		printWarn << "problems setting X decay" << endl;
 		return false;
 	}
 	return true;
@@ -869,6 +813,8 @@ bool
 waveDescription::setAmplitude(Setting&               amplitudeKey,
                               const isobarAmplitude& amplitude)
 {
+	if (_debug)
+		printDebug << "setting amplitude keys." << endl;
 	string       formalism     = "";
 	const string amplitudeName = amplitude.name();
 	if (amplitudeName == "isobarCanonicalAmplitude") {
@@ -892,14 +838,61 @@ waveDescription::setAmplitude(Setting&               amplitudeKey,
 
 
 bool
-waveDescription::writeKeyFile(Setting&               rootKey,
-                              const isobarAmplitude& amplitude)
+waveDescription::setKeysFromAmplitude(Setting&               rootKey,
+                                      const isobarAmplitude& amplitude,
+                                      const bool             setProdVert)
 {
-	printInfo << "writing ";
-	amplitude.printParameters(cout);
+	if (_debug)
+		printInfo << "setting keys for "<< amplitude;
+	if (not setKeysFromTopology(rootKey, *amplitude.decayTopology(), setProdVert)) {
+		printWarn << "problems setting keys for decay topology" << endl;
+		return false;
+	}
 	Setting& amplitudeKey = rootKey.add("amplitude", Setting::TypeGroup);
 	if (not setAmplitude(amplitudeKey, amplitude)) {
-		printWarn << "problems writing amplitude paramaters" << endl;
+		printWarn << "problems setting amplitude paramaters" << endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool
+waveDescription::writeKeyFile(FILE&                      outStream,
+                              const isobarDecayTopology& topo,
+                              const bool                 writeProdVert)
+{
+	Config   key;
+	Setting& rootKey = key.getRoot();
+	if (not setKeysFromTopology(rootKey, topo, writeProdVert)) {
+		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
+		return false;
+	}
+	try {
+		key.write(&outStream);
+	} catch (const FileIOException& ioEx) {
+		printWarn << "I/O error while writing key file" << endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool
+waveDescription::writeKeyFile(FILE&                  outStream,
+                              const isobarAmplitude& amplitude,
+                              const bool             writeProdVert)
+{
+	Config   key;
+	Setting& rootKey = key.getRoot();
+	if (not setKeysFromAmplitude(rootKey, amplitude)) {
+		printWarn << "problems writing keys for amplitude. cannot write key file." << endl;
+		return false;
+	}
+	try {
+		key.write(&outStream);
+	} catch (const FileIOException& ioEx) {
+		printWarn << "I/O error while writing key file" << endl;
 		return false;
 	}
 	return true;

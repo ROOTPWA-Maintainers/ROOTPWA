@@ -120,7 +120,7 @@ fitResult::fitResult(const fitResult& result)
 
 
 // enable copying from TFitResult for older ROOT versions
-#if TFITRESULT_ENABLED
+#ifdef USE_TFITRESULT
 fitResult::fitResult(const TFitResult& result)
 	: _nmbEvents             (result.nmbEvents()),
 	  _normNmbEvents         (result.normNmbEvents()),
@@ -711,8 +711,8 @@ fitResult::waveIndex(const string& waveName) const
 			index = i;
 			break;  // assumes that waves have unique names
 		}
-		if (index == -1)
-	   printWarn << "could not find any wave named '" << waveName << "'." << endl;
+	if (index == -1)
+		printWarn << "could not find any wave named '" << waveName << "'." << endl;
 	return index;
 }
 

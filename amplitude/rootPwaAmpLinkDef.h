@@ -51,11 +51,9 @@
 #pragma read sourceClass="rpwa::waveDescription" version="[1-]"	  \
 	targetClass="rpwa::waveDescription" \
 	source="" target="" \
-	code="{ newObj->parseKeyString(); }"
+	code="{ newObj->parseKeyFileContents(); }"
 
-// std::complex is not supported as Tree leaf in ROOT versions below 5.27.06
-#include "RVersion.h"
-#if ROOT_VERSION_CODE >= 334598  // make sure ROOT version is at least 5.27.06
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;
 #pragma link C++ class rpwa::normalizationIntegral+;
