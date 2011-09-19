@@ -36,7 +36,7 @@
 #
 #      a typical command line to run this script locally looks like this:
 #      for i in $(seq 1 50);\
-#        do calcAmplitudesForMassBin.sh ${i} &> ${PWA_LOGS_DIR}/calcAmplitudes.${i}.log;\
+#        do calcAmplitudesForMassBin.sh ${i} &> ${PWA_LOGS_DIR}/calcAmplitudesForMassBin.${i}.log;\
 #      done
 #
 #      uses ROOTPWA environment variables
@@ -59,7 +59,7 @@ DT_AMP_DIR_NAME=AMPS
 PS_AMP_DIR_NAME=PSPAMPS
 PSACC_AMP_DIR_NAME=ACCAMPS
 SYM_AMP_DIR_NAME=SYM
-# extensions of data files; naming scheme is <mass bin><extension>
+# extensions of event data files; naming scheme is <mass bin><extension>
 DT_FILE_EXT=.evt
 PS_FILE_EXT=.genbod.evt
 #PS_FILE_EXT=.ps.evt
@@ -67,6 +67,12 @@ PSACC_FILE_EXT=.acc.evt
 #DT_FILE_EXT=.root
 #PS_FILE_EXT=.ps.root
 #PSACC_FILE_EXT=.acc.root
+# amplitude file format
+AMP_FILE_EXT=.amp
+#AMP_FILE_EXT=.root
+# integral file name
+INT_FILE_NAME=norm.int
+#INT_FILE_NAME=norm.root
 
 
 # SGE setup
@@ -93,8 +99,6 @@ echo ">>> info: called ${0} ${*}"
 function usage {
     cat << EOF
 usage: $(basename ${0}) [OPTIONS]... [MASS BIN INDEX]
-
-creates amplitude and normalization files for real and MC data in MASS BIN INDEX
 
 creates amplitude and integral files for real data, phase-space MC,
 and accepted phase-space MC in mass bin directory given by 1-based
@@ -140,7 +144,7 @@ function runCalcAmplitudes {
     for _KEY_FILE in ${KEY_PATTERN}
     do
 				local _KEY_NAME=$(basename ${_KEY_FILE})
-				local _AMP_FILE=${_AMP_DIR}/${_KEY_NAME/.key/.amp}
+				local _AMP_FILE=${_AMP_DIR}/${_KEY_NAME/.key/${AMP_FILE_EXT}}
 				(( ++_COUNT_KEY ))
 				echo
 				echo ">>> info: generating amplitudes for '${_KEY_NAME}' [${_COUNT_KEY}/${_NMB_OF_KEYS}]"
@@ -169,7 +173,7 @@ function runSymmetrization {
     echo ">>> info: linking all amplitude files in '${_AMP_DIR}' to '${_SYM_DIR}'"
     local _CURRENT_DIR=$(pwd)
     cd ${_SYM_DIR}
-    for _AMP in ${_AMP_DIR}/*.amp
+    for _AMP in ${_AMP_DIR}/*.amp  # works only with .amp files
     do
 				ln --symbolic --verbose "../$(basename ${_AMP})"
     done
@@ -220,7 +224,7 @@ function runInt {
     local _CURRENT_DIR=$(pwd)
     # avoid problems with full path names in pwa2000
     cd "${_AMP_DIR}"
-    local _CMD="${ROOTPWA_BIN}/int *.amp > norm.int"
+    local _CMD="${ROOTPWA_BIN}/int *.amp > ${INT_FILE_NAME}"  # works only with .amp and .int files
     echo "${_CMD}"
     time eval ${_CMD}
     cd ${_CURRENT_DIR}
@@ -231,7 +235,7 @@ function runCalcIntegrals {
     local _AMP_DIR="${1}"
     echo
     echo ">>> info: generating integrals for '${_AMP_DIR}'"
-    local _CMD="${ROOTPWA_BIN}/calcIntegrals -o ${_AMP_DIR}/norm.root ${_AMP_DIR}/*.amp"
+    local _CMD="${ROOTPWA_BIN}/calcIntegrals -o ${_AMP_DIR}/${INT_FILE_NAME} ${_AMP_DIR}/*${AMP_FILE_EXT}"
     echo "${_CMD}"
     time eval ${_CMD}
 }
@@ -241,13 +245,9 @@ function linkIntegralFiles {
     local _SYM_DIR="${1}"
 		_CURRENT_DIR=$(pwd)
 		cd "${_SYM_DIR}"
-		if [[ -f ../norm.int ]]
+		if [[ -f ../${INT_FILE_NAME} ]]
 		then
-				ln -s ../norm.int norm.int
-		fi
-		if [[ -f ../norm.root ]]
-		then
-				ln -s ../norm.root norm.root
+				ln -s ../${INT_FILE_NAME} ${INT_FILE_NAME}
 		fi
 		cd ${_CURRENT_DIR}
 }
@@ -324,7 +324,7 @@ then
 fi
 if [[ -z "${PWA_ENV_SET}" ]]
 then
-    echo "!!! error: PWA environment is not setup. source setupThis.sh."
+    echo "!!! error: PWA environment is not setup. did you source your setup script?"
     exit 1
 fi
 
@@ -365,7 +365,7 @@ fi
 # define mass bin file structure
 # name of mass bin
 MASS_BIN_NAME=$(basename ${MASS_BIN_DIR})
-# directory for .amp files from real data
+# directory for amplitude files from real data
 DT_AMP_DIR=${MASS_BIN_DIR}/${DT_AMP_DIR_NAME}
 # path of real data file
 DT_FILE=${MASS_BIN_DIR}/${MASS_BIN_NAME}${DT_FILE_EXT}
@@ -374,11 +374,11 @@ then
     echo "!!! error: data file '${DT_FILE}' does not exist. exiting."
     exit 1
 fi
-# directory for .amp files from Monte-Carlo
+# directory for amplitude files from Monte-Carlo
 PS_AMP_DIR=${MASS_BIN_DIR}/${PS_AMP_DIR_NAME}
 # path of Monte-Carlo data file
 PS_FILE=${MASS_BIN_DIR}/${MASS_BIN_NAME}${PS_FILE_EXT}
-# directory for .amp files from Monte-Carlo
+# directory for amplitude files from Monte-Carlo
 PSACC_AMP_DIR=${MASS_BIN_DIR}/${PSACC_AMP_DIR_NAME}
 # path of Monte-Carlo data file
 PSACC_FILE=${MASS_BIN_DIR}/${MASS_BIN_NAME}${PSACC_FILE_EXT}
@@ -412,7 +412,7 @@ if [[ ! -d "${DT_AMP_DIR}" ]]
 then
     mkdir --parents --verbose "${DT_AMP_DIR}"
 fi
-# generate .amp files for real data
+# generate amplitude files for real data
 runCalcAmplitudes "${DT_FILE}" "${DT_AMP_DIR}"
 # perform symmetrization for real data
 runSymmetrization "${DT_AMP_DIR}" "${SYM_LIST}" DUMMY
@@ -421,11 +421,11 @@ echo
 
 echo "------------------------------------------------------------"
 echo ">>> info: processing phase-space Monte Carlo data for mass bin '${MASS_BIN_DIR}'"
-# generate .amp files for phase-space Monte Carlo data
+# generate amplitude files for phase-space Monte Carlo data
 if [[ ! -s "${PS_FILE}" ]]
 then
-    # generate phase space for normalization
     echo "??? warning: phase-space MC data file '${PS_FILE}' does not exist"
+    # generate phase space for normalization integral
     #runPhaseSpaceGen "${PS_FILE}"
 fi
 # create directory if necessary
@@ -433,7 +433,7 @@ if [[ ! -d "${PS_AMP_DIR}" ]]
 then
     mkdir --parents --verbose "${PS_AMP_DIR}"
 fi
-# generate .amp files for phase-space MC data
+# generate amplitude files for phase-space MC data
 runCalcAmplitudes "${PS_FILE}" "${PS_AMP_DIR}"
 # perform symmetrization for phase-space MC data
 runSymmetrization "${PS_AMP_DIR}" "${SYM_LIST}" PS_SYM_AMP_DIR
@@ -446,10 +446,9 @@ echo
 
 echo "------------------------------------------------------------"
 echo ">>> info: processing accepted phase-space Monte-Carlo data for mass bin '${MASS_BIN_DIR}'"
-# generate .amp files for accepted phase-space Monte-Carlo data
+# generate amplitude files for accepted phase-space Monte-Carlo data
 if [[ ! -s "${PSACC_FILE}" ]]
 then
-    # generate phase space for normalization
     echo "??? warning: accepted phase-space MC data file '${PSACC_FILE}' does not exist"
 fi
 # create directory if necessary
@@ -457,7 +456,7 @@ if [[ ! -d "${PSACC_AMP_DIR}" ]]
 then
     mkdir --parents --verbose "${PSACC_AMP_DIR}"
 fi
-# generate .amp files for accepted phase-space MC data
+# generate amplitude files for accepted phase-space MC data
 runCalcAmplitudes "${PSACC_FILE}" "${PSACC_AMP_DIR}"
 # perform symmetrization for MC data
 runSymmetrization "${PSACC_AMP_DIR}" "${SYM_LIST}" PSACC_SYM_AMP_DIR
