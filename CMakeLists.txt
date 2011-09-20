@@ -62,8 +62,10 @@ enforce_out_of_source_build()
 if(NOT UNIX)
   message(FATAL_ERROR "This is an unsupported system.")
 endif()
-message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version '${CMAKE_HOST_SYSTEM_VERSION}' architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
-message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}' architecture '${CMAKE_SYSTEM_PROCESSOR}'")
+message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
+	"'${CMAKE_HOST_SYSTEM_VERSION}' architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
+message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}' "
+	"architecture '${CMAKE_SYSTEM_PROCESSOR}'")
 
 
 # define build types
@@ -88,8 +90,10 @@ foreach(_LANG "C" "CXX")
   message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'")
 endforeach()
 foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
-  message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
-  message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${_BUILD_TYPE}}' for build type ${_BUILD_TYPE}")
+  message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' "
+		"for build type ${_BUILD_TYPE}")
+  message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${_BUILD_TYPE}}' "
+		"for build type ${_BUILD_TYPE}")
 endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
 
@@ -106,10 +110,12 @@ message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 # set(Boost_DEBUG 1)
 find_package(Boost 1.43.0 REQUIRED)
 if(Boost_FOUND)
-  message(STATUS "Using Boost include directories '${Boost_INCLUDE_DIRS}'")
-  message(STATUS "Using Boost library directories '${Boost_LIBRARY_DIRS}'")
+	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
+  message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'")
+  message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'")
 else()
-  message(FATAL_ERROR "Could not find Boost installation. Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
+  message(FATAL_ERROR "Could not find Boost installation. "
+		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
 endif()
 # setup uprooted Boost libraries
 set(uprootedBoost_INCLUDE_DIRS
@@ -121,39 +127,20 @@ message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUD
 
 # setup libconfig
 # environment variable $LIBCONFIG is expected to point to libconfig location
-set(LIBCONFIG $ENV{LIBCONFIG})
-if(LIBCONFIG)
-  message(STATUS "Using libconfig in directory '${LIBCONFIG}'")
-  set(LIBCONFIG_INCLUDE_DIR "${LIBCONFIG}/include")
-  set(LIBCONFIG_LIBRARY_DIR "${LIBCONFIG}/lib")
-  set(_LIBCONFIG_LIB_NAMES "config++")
-  find_library(LIBCONFIG_LIBS
-    NAMES ${_LIBCONFIG_LIB_NAMES}
-    PATHS ${LIBCONFIG_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
-  if(NOT LIBCONFIG_LIBS)
-    message(FATAL_ERROR "Cannot find libconfig library '${_LIBCONFIG_LIB_NAMES}' in '${LIBCONFIG_LIBRARY_DIR}'. Please read INSTALL.")
-  else()
-    message(STATUS "Using libconfig library '${LIBCONFIG_LIBS}'")
-  endif()
-else()
-  message(FATAL_ERROR "Environment variable LIBCONFIG='${LIBCONFIG}' is not set correctly. Please read INSTALL")
-endif()
+find_package(Libconfig 1.4.7 REQUIRED)
 
 
 # setup ROOT includes and libraries
 find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
 # some code switches that depend on ROOT version
 # std::complex is not supported as TTree leaf in ROOT versions below 5.27.06
-set(USE_STD_COMPLEX_TREE_LEAFS FALSE)
-root_version_is_at_least("5.27.06" USE_STD_COMPLEX_TREE_LEAFS)
-if(USE_STD_COMPLEX_TREE_LEAFS)
+if(NOT ROOT_VERSION VERSION_LESS "5.27.06")
+	set(USE_STD_COMPLEX_TREE_LEAFS TRUE)
 	add_definitions(-DUSE_STD_COMPLEX_TREE_LEAFS)
 endif()
 # TFitResult produces a name clash for ROOT versions from 5.25.0 on
-set(USE_TFITRESULT FALSE)
-root_version_is_lower_than("5.25.00" USE_TFITRESULT)
-if(USE_TFITRESULT)
+if(ROOT_VERSION VERSION_LESS "5.25.00")
+	set(USE_TFITRESULT TRUE)
 	add_definitions(-DUSE_TFITRESULT)
 endif()
 
@@ -176,7 +163,8 @@ else()
   message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
   if(NOT CUDA_SDK_ROOT_DIR)
     set(USE_CUDA FALSE)
-    message(STATUS "Found CUDA intallation, but could not find CUDA SDK in '$ENV{NVSDKCUDA_ROOT}'. Check that $NVSDKCUDA_ROOT is set correctly. No CUDA components will be generated.")
+    message(STATUS "Found CUDA intallation, but could not find CUDA SDK in '$ENV{NVSDKCUDA_ROOT}'. "
+			"Check that $NVSDKCUDA_ROOT is set correctly. No CUDA components will be generated.")
   else()
     # find cuda utility library
     set(CUDA_CUTIL_LIB_SUFFIX "i386")
@@ -190,7 +178,9 @@ else()
       )
     if(NOT CUDA_CUTIL_LIBRARY)
       set(USE_CUDA FALSE)
-      message(STATUS "Found CUDA intallation, but could not find CUDA utility library 'cutil_${CUDA_CUTIL_LIB_SUFFIX}' in '${CUDA_SDK_ROOT_DIR}/lib'. No CUDA components will be generated.")
+      message(STATUS "Found CUDA intallation, but could not find CUDA utility library "
+				"'cutil_${CUDA_CUTIL_LIB_SUFFIX}' in '${CUDA_SDK_ROOT_DIR}/lib'. "
+				"No CUDA components will be generated.")
     else()
       set(USE_CUDA TRUE)
       message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
@@ -199,8 +189,8 @@ else()
       # define for which shader models code is generated
       message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
       foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
-	list(APPEND CUDA_NVCC_FLAGS
-	  "--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
+				list(APPEND CUDA_NVCC_FLAGS
+					"--generate-code=arch=compute_${_SHADER_MODEL},code=\\\"sm_${_SHADER_MODEL},compute_${_SHADER_MODEL}\\\"")
       endforeach()
       #list(APPEND CUDA_NVCC_FLAGS "--ptxas-options=-v") # prints kernel's resource usage
       # set some global switches
@@ -209,6 +199,7 @@ else()
       set(CUDA_VERBOSE_BUILD   OFF)
       # enable CUDA code in other parts of the project
       add_definitions(-DUSE_CUDA)
+			set(CUDA_LIB_DIRS "${CUDA_TOOLKIT_ROOT_DIR}, ${CUDA_SDK_ROOT_DIR}")
     endif()
   endif()
 endif()
@@ -234,7 +225,8 @@ else()
       NO_DEFAULT_PATH)
     if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
       set(USE_MPI FALSE)
-      message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in '${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
+      message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in "
+				"'${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
     else()
       list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
     endif()
@@ -244,7 +236,8 @@ else()
     message(STATUS "Enabling compilation of MPI components")
     add_definitions(-DUSE_MPI)
   else()
-    message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). No MPI components will be generated.")
+    message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). "
+			"No MPI components will be generated.")
   endif()
 endif()
 
@@ -289,7 +282,8 @@ else()
   set(DOXYGEN_TARGET  "doxygen")
   set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
   set(DOXYGEN_CONF    "${CMAKE_SOURCE_DIR}/rootpwaDoxyfile.conf")
-  message(STATUS "Run 'make ${DOXYGEN_TARGET}' to create Doxygen documentation files in '${DOXYGEN_DOC_DIR}'")
+  message(STATUS "Run 'make ${DOXYGEN_TARGET}' to create Doxygen documentation files "
+		"in '${DOXYGEN_DOC_DIR}'")
   add_custom_target(${DOXYGEN_TARGET}
     COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
     DEPENDS ${DOXYGEN_CONF}
@@ -299,7 +293,6 @@ endif()
 
 
 # make some environment variables accessible via predefined macro variables
-# to be added: CUDA, MPI
 execute_process(COMMAND hostname
   OUTPUT_VARIABLE HOSTNAME
   RESULT_VARIABLE _HOSTNAME_RETURN
@@ -307,7 +300,10 @@ execute_process(COMMAND hostname
 if(_HOSTNAME_RETURN)
   set(HOSTNAME "")
 endif()
-foreach(_CMAKEVAR "CMAKE_HOST_SYSTEM_NAME" "CMAKE_HOST_SYSTEM_PROCESSOR" "CMAKE_HOST_SYSTEM_VERSION" "HOSTNAME" "CMAKE_SOURCE_DIR" "CMAKE_BUILD_TYPE" "ROOTSYS" "Boost_LIB_VERSION" "Boost_INCLUDE_DIRS" "LIBCONFIG")
+foreach(_CMAKEVAR "CMAKE_HOST_SYSTEM_NAME" "CMAKE_HOST_SYSTEM_PROCESSOR" "CMAKE_HOST_SYSTEM_VERSION"
+		"CMAKE_SOURCE_DIR" "CMAKE_BUILD_TYPE" "HOSTNAME" "ROOTSYS"
+		"Boost_LIBRARY_VERSION" "Boost_INCLUDE_DIRS" "Boost_MPI_LIBRARY_DIR"
+		"Libconfig_VERSION" "Libconfig_DIR" "CUDA_VERSION" "CUDA_LIB_DIRS")
   if(_CMAKEVAR)
     #message(STATUS "${_CMAKEVAR}=${${_CMAKEVAR}}")
     add_definitions(-D'${_CMAKEVAR}=\"${${_CMAKEVAR}}\"')
@@ -422,4 +418,5 @@ endif()
 
 
 message(STATUS "Run 'make' to build the project.")
-message(STATUS "On multi-core machines 'make -j#', where # is the number of parallel jobs, can speedup compilation considerably.")
+message(STATUS "On multi-core machines 'make -j#', where # is the number of parallel jobs, "
+	"can speedup compilation considerably.")

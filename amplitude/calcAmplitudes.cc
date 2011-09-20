@@ -25,9 +25,9 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      reads in data files in .evt or tree format, calculates
+//      reads in data files in .evt or ROOT tree format, calculates
 //      amplitudes for each event based on given key file, and writes
-//      out amplitudes in PWA2000 binary or ascii format
+//      out amplitudes in ROOT tree or PWA2000 binary or ascii format
 //
 //
 // Author List:
@@ -42,8 +42,6 @@
 #include <unistd.h>
 #include <vector>
 #include <complex>
-
-#include <boost/tokenizer.hpp>
 
 #include "TROOT.h"
 #include "TFile.h"
@@ -61,7 +59,6 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace rpwa;
 
 
@@ -69,7 +66,9 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "calculates amplitudes for events in input data files and writes them to file" << endl
+
+	cerr << "calculates decay amplitudes for given wave for events in input data files and" << endl
+	     << "writes amplitudes to file" << endl
 	     << endl
 	     << "usage:" << endl
 	     << progName
@@ -84,7 +83,8 @@ usage(const string& progName,
 	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
 	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
-	     << "        -l names   semicolon separated object/leaf names in input data (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	     << "        -l names   semicolon separated object/leaf names in input data" << endl
+	     << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -97,7 +97,9 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 	// force loading predefined std::complex dictionary
@@ -106,20 +108,21 @@ main(int    argc,
 #endif
 	
 	// parse command line options
-	const string progName                 = argv[0];
-	string       keyFileName              = "";
-	long int     maxNmbEvents             = -1;
-	string       pdgFileName              = "./particleDataTable.txt";
-	string       ampFileName              = "./out.root";
-	string       ampLeafName              = "amplitude";
-	bool         asciiOutput              = false;
-	string       inTreeName               = "rootPwaEvtTree";
-	string       leafNames                = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
-	bool         newKeyFileNameConvention = false;
-	bool         debug                    = false;
-	extern char* optarg;
-	extern int   optind;
-	int          c;
+	const string   progName                 = argv[0];
+	string         keyFileName              = "";
+	long int       maxNmbEvents             = -1;
+	string         pdgFileName              = "./particleDataTable.txt";
+	string         ampFileName              = "./out.root";
+	string         ampLeafName              = "amplitude";
+	bool           asciiOutput              = false;
+	string         inTreeName               = "rootPwaEvtTree";
+	string         leafNames                = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool           newKeyFileNameConvention = false;
+	bool           debug                    = false;
+	const long int treeCacheSize            = 1000000;  // 1 MByte ROOT tree read cache size
+	extern char*   optarg;
+	extern int     optind;
+	int            c;
 	while ((c = getopt(argc, argv, "k:n:p:o:m:at:l:r:vh")) != -1)
 		switch (c) {
 		case 'k':
@@ -177,24 +180,13 @@ main(int    argc,
 		usage(progName, 1);
 	}
 
-	// get leaf names
-	typedef tokenizer<char_separator<char> > tokenizer;
-	char_separator<char> separator(";");
-	tokenizer            leafNameTokens(leafNames, separator);
-	tokenizer::iterator  leafNameToken            = leafNameTokens.begin();
-	const string         prodKinPartNamesObjName  = *leafNameToken;
-	const string         prodKinMomentaLeafName   = *(++leafNameToken);
-	const string         decayKinPartNamesObjName = *(++leafNameToken);
-	const string         decayKinMomentaLeafName  = *(++leafNameToken);
-	printInfo << "using the following object/leaf names:" << endl
-	          << "        production kinematics: "
-	          << "particle names = '" << prodKinPartNamesObjName << "', "
-	          << "momenta = '" << prodKinMomentaLeafName << "'" << endl
-	          << "        decay kinematics:      "
-	          << "particle names = '" << decayKinPartNamesObjName << "', "
-	          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
+	// get object and leaf names for event data
+	string prodKinPartNamesObjName,  prodKinMomentaLeafName;
+	string decayKinPartNamesObjName, decayKinMomentaLeafName;
+	parseLeafAndObjNames(leafNames, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                     decayKinPartNamesObjName, decayKinMomentaLeafName);
 
-	// open .root and .evt files
+	// open .root and .evt files for event data
 	vector<TTree*> inTrees;
 	TClonesArray*  prodKinPartNames  = 0;
 	TClonesArray*  decayKinPartNames = 0;
@@ -217,7 +209,7 @@ main(int    argc,
 	waveDescription    waveDesc;
 	isobarAmplitudePtr amplitude;
 	if (   not waveDesc.parseKeyFile(keyFileName)
-	       or not waveDesc.constructAmplitude(amplitude)) {
+	    or not waveDesc.constructAmplitude(amplitude)) {
 		printErr << "problems constructing decay topology from key file '" << keyFileName << "'. "
 		         << "aborting." << endl;
 		exit(1);
@@ -269,7 +261,7 @@ main(int    argc,
 		exit(1);
 	}
   
-	// read data from tree(s), calculate amplitudes
+	// read data from tree(s) and calculate decay amplitudes
 	TStopwatch timer;
 	timer.Reset();
 	timer.Start();
@@ -308,10 +300,11 @@ main(int    argc,
 	}
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (ampFileRoot) {
-		ampTree->Print();
-		ampTree->OptimizeBaskets(10000000, 1, "d");
+		printInfo << "optimizing tree" << endl;
+		//ampTree->Print();
+		ampTree->OptimizeBaskets(treeCacheSize, 1, "d");
 		ampTree->Write();
-		ampTree->Print();
+		//ampTree->Print();
 		ampFileRoot->Close();
 		delete ampFileRoot;
 	}

@@ -58,7 +58,9 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
+	cerr << "calculates difference of two amplitude files an writes result into tree" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
 	     << " [-o out file -v -h] .amp file 1 .amp file 2" << endl
 	     << "    where:" << endl
@@ -107,7 +109,9 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 
 	// parse command line options
 	const string progName        = argv[0];

@@ -286,14 +286,26 @@ namespace rpwa {
 #ifndef ROOTSYS
 #define ROOTSYS "undefined"
 #endif
-#ifndef Boost_LIB_VERSION
-#define Boost_LIB_VERSION "undefined"
+#ifndef Boost_LIBRARY_VERSION
+#define Boost_LIBRARY_VERSION "undefined"
 #endif
 #ifndef Boost_INCLUDE_DIRS
 #define Boost_INCLUDE_DIRS "undefined"
 #endif
-#ifndef LIBCONFIG
-#define LIBCONFIG "undefined"
+#ifndef Boost_MPI_LIBRARY_DIR
+#define Boost_MPI_LIBRARY_DIR "undefined"
+#endif
+#ifndef Libconfig_VERSION
+#define Libconfig_VERSION "undefined"
+#endif
+#ifndef Libconfig_DIR
+#define Libconfig_DIR "undefined"
+#endif
+#ifndef CUDA_VERSION
+#define CUDA_VERSION "undefined"
+#endif
+#ifndef CUDA_LIB_DIRS
+#define CUDA_LIB_DIRS "undefined"
 #endif
 
 
@@ -301,7 +313,8 @@ namespace rpwa {
 	void
 	printSvnVersion()
 	{
-		printInfo << "subversion repository revision is '" << SVN_VERSION << "'" << std::endl;
+		printInfo << "subversion repository revision at compile time was "
+		          << "'" << SVN_VERSION << "'" << std::endl;
 	}
 
 
@@ -326,9 +339,16 @@ namespace rpwa {
 	{
 		printInfo << "this executable was linked against" << std::endl
 		          << "    ROOT version " << ROOT_RELEASE << " in '" << ROOTSYS << "'"  << std::endl
-		          << "    BOOST version " << Boost_LIB_VERSION << " "
-		          << "in '" << Boost_INCLUDE_DIRS << "'"  << std::endl
-		          << "    libConfig in '" << LIBCONFIG << "'" << std::endl;
+		          << "    BOOST version " << Boost_LIBRARY_VERSION << " "
+		          << "in '" << Boost_INCLUDE_DIRS << "'"  << std::endl;
+#ifdef USE_MPI
+		std::cout << "    BOOST MPI in '" << Boost_MPI_LIBRARY_DIR << "'" << std::endl;
+#endif
+		std::cout << "    libConfig version " << Libconfig_VERSION << " in "
+		          << "'" << Libconfig_DIR << "'" << std::endl;
+#ifdef USE_CUDA
+		std::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_LIB_DIRS << "'" << std::endl;
+#endif
 	}
 
 

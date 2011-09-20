@@ -72,7 +72,10 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
+	
+	cerr << "performs PWA fit for given mass bin and list of waves" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
 	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
@@ -156,6 +159,7 @@ main(int    argc,
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();
+	cout << endl;
 
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164

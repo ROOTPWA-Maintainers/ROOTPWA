@@ -77,7 +77,7 @@ set(ROOT_LIBS)
 
 find_program(ROOT_CONFIG_EXECUTABLE root-config)
 if(NOT ROOT_CONFIG_EXECUTABLE)
-  set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find root-config.")
+  set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find root-config executable. Make sure ROOT is setup correctly.")
 else()
   
   set(ROOT_FOUND TRUE)
@@ -123,7 +123,7 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT EXISTS "${ROOT_BIN_DIR}")
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT executable directory ${ROOT_BIN_DIR} does not exist.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT executable directory '${ROOT_BIN_DIR}' does not exist.")
   endif()
 
   execute_process(
@@ -132,7 +132,7 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT EXISTS "${ROOT_INCLUDE_DIR}")
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT include directory ${ROOT_INCLUDE_DIR} does not exist.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT include directory '${ROOT_INCLUDE_DIR}' does not exist.")
   endif()
 
   execute_process(
@@ -141,7 +141,7 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT EXISTS "${ROOT_LIBRARY_DIR}")
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT library directory ${ROOT_LIBRARY_DIR} does not exist.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT library directory '${ROOT_LIBRARY_DIR}' does not exist.")
   endif()
 
   execute_process(
@@ -157,7 +157,7 @@ else()
   find_program(ROOTCINT_EXECUTABLE rootcint)
   if(NOT ROOTCINT_EXECUTABLE)
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcint.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcint. Make sure ROOT is setup correctly.")
   endif()
 
   # parse version string
@@ -167,27 +167,17 @@ else()
     ROOT_MINOR_VERSION "${ROOT_VERSION}")
   string(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\/([0-9][0-9]+).*" "\\1"
     ROOT_PATCH_VERSION "${ROOT_VERSION}")
-  # make sure minor version is specified
-  if(ROOT_FIND_VERSION AND NOT ROOT_FIND_VERSION_MINOR)
-    message(FATAL_ERROR "When requesting a specific version of ROOT, you must provide at least the major and minor version numbers, e.g., 5.22")
-  endif()
-  # set patchlevel to 0, if not specified
-  if(NOT ROOT_FIND_VERSION_PATCH)
-    set(ROOT_FIND_VERSION_PATCH 0)
-  endif()
-  # compute an overall version number which can be compared at once
-  math(EXPR _ROOT_FIND_VERSION "${ROOT_FIND_VERSION_MAJOR} * 10000 + ${ROOT_FIND_VERSION_MINOR} * 100 + ${ROOT_FIND_VERSION_PATCH}")
-  math(EXPR _ROOT_VERSION "${ROOT_MAJOR_VERSION} * 10000 + ${ROOT_MINOR_VERSION} * 100 + ${ROOT_PATCH_VERSION}")
+	set(ROOT_VERSION "${ROOT_MAJOR_VERSION}.${ROOT_MINOR_VERSION}.${ROOT_PATCH_VERSION}")
   # compare version
   if(ROOT_FIND_VERSION_EXACT)
-    if(NOT _ROOT_VERSION EQUAL "${_ROOT_FIND_VERSION}")
+    if(NOT ROOT_VERSION VERSION_EQUAL ROOT_FIND_VERSION)
       set(ROOT_FOUND FALSE)
-      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} does not match requested version ${ROOT_FIND_VERSION_MAJOR}.${ROOT_FIND_VERSION_MINOR}/${ROOT_FIND_VERSION_PATCH}.")
+      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} does not match requested version ${ROOT_FIND_VERSION}.")
     endif()
   else()
-    if(_ROOT_VERSION LESS "${_ROOT_FIND_VERSION}")
+    if(ROOT_VERSION LESS ROOT_FIND_VERSION)
       set(ROOT_FOUND FALSE)
-      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} is lower than requested version ${ROOT_FIND_VERSION_MAJOR}.${ROOT_FIND_VERSION_MINOR}/${ROOT_FIND_VERSION_PATCH}.")
+      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} is lower than requested version ${ROOT_FIND_VERSION}.")
     endif()
   endif()
 
@@ -230,7 +220,7 @@ if(ROOT_FOUND)
       NO_DEFAULT_PATH)
     if(NOT _ROOT_LIB_${_LIBNAME})
       set(ROOT_FOUND FALSE)
-      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library ${_LIBNAME} in ${ROOT_LIBRARY_DIR}.")
+      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library '${_LIBNAME}' in '${ROOT_LIBRARY_DIR}'.")
     else()
       list(APPEND ROOT_LIBS ${_ROOT_LIB_${_LIBNAME}})
     endif()
@@ -253,7 +243,7 @@ if(ROOT_FOUND)
 				NAMES ${_LIBNAME})
       if(NOT _AUX_LIB_${_LIBNAME})
 				set(ROOT_FOUND FALSE)
-				set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library ${_LIBNAME}.")
+				set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library '${_LIBNAME}'.")
       else()
 				list(APPEND ROOT_LIBS ${_AUX_LIB_${_LIBNAME}})
       endif()
@@ -275,11 +265,11 @@ mark_as_advanced(
 
 # report result
 if(ROOT_FOUND)
-  message(STATUS "Found ROOT version ${ROOT_VERSION} r${ROOT_SVN_REVISION} in ${ROOTSYS}")
-  message(STATUS "Using ROOT include dir ${ROOT_INCLUDE_DIR}")
-  message(STATUS "Using ROOT library dir ${ROOT_LIBRARY_DIR}")
-  message(STATUS "Using ROOT libraries: ${ROOT_LIBRARIES}")
-  message(STATUS "Using ROOT additional components: ${ROOT_FIND_COMPONENTS}")
+  message(STATUS "Found ROOT version ${ROOT_VERSION} r${ROOT_SVN_REVISION} in '${ROOTSYS}'.")
+  message(STATUS "Using ROOT include dir '${ROOT_INCLUDE_DIR}'.")
+  message(STATUS "Using ROOT library dir '${ROOT_LIBRARY_DIR}'.")
+  message(STATUS "Using ROOT libraries: ${ROOT_LIBRARIES}.")
+  message(STATUS "Using ROOT additional components: ${ROOT_FIND_COMPONENTS}.")
 else()
   if(ROOT_FIND_REQUIRED)
     message(FATAL_ERROR "Unable to find requested ROOT installation:${ROOT_ERROR_REASON}")
@@ -295,7 +285,8 @@ endif()
 function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FILE)
 
   if(NOT ROOT_FOUND)
-    message(FATAL_ERROR "Impossible to generate dictionary ${DICT_FILE}, because no ROOT installation was found.")
+    message(FATAL_ERROR "Impossible to generate dictionary '${DICT_FILE}', "
+			"because no ROOT installation was found.")
   endif()
 	
   # prepare command line argument for compiler definitions (put -D in front)
@@ -330,42 +321,3 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
 		)
 
 endfunction(root_generate_dictionary)
-
-
-# function that checks whether ROOT version is equal to or larger than a given version
-function(root_version_is_at_least MIN_ROOT_VERSION ROOT_VERSION_IS_GT_EQ)
-
-	set(${ROOT_VERSION_IS_GT_EQ} FALSE PARENT_SCOPE)
-  if(ROOT_FOUND)
-		string(REGEX REPLACE "^([0-9]+)\\.[0-9][0-9]+\\.[0-9][0-9]+.*" "\\1"
-			_MIN_MAJOR_VERSION "${MIN_ROOT_VERSION}")
-		string(REGEX REPLACE "^[0-9]+\\.([0-9][0-9])+\\.[0-9][0-9]+.*" "\\1"
-			_MIN_MINOR_VERSION "${MIN_ROOT_VERSION}")
-		string(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\.([0-9][0-9]+).*" "\\1"
-			_MIN_PATCH_VERSION "${MIN_ROOT_VERSION}")
-		# compute an overall version number which can be compared at once
-		math(EXPR _MIN_ROOT_VERSION "${_MIN_MAJOR_VERSION} * 10000 + ${_MIN_MINOR_VERSION} * 100 + ${_MIN_PATCH_VERSION}")
-		math(EXPR _ROOT_VERSION "${ROOT_MAJOR_VERSION} * 10000 + ${ROOT_MINOR_VERSION} * 100 + ${ROOT_PATCH_VERSION}")
-		# compare version
-		if(_ROOT_VERSION LESS "${_MIN_ROOT_VERSION}")
-			set(${ROOT_VERSION_IS_GT_EQ} FALSE PARENT_SCOPE)
-		else()
-			set(${ROOT_VERSION_IS_GT_EQ} TRUE PARENT_SCOPE)
-		endif()
-  endif()
-
-endfunction(root_version_is_at_least)
-
-
-# function that checks whether ROOT version is smaller than a given version
-function(root_version_is_lower_than MIN_ROOT_VERSION ROOT_VERSION_IS_SMALLER)
-
-	set(_GT_EQ FALSE)
-	root_version_is_at_least("${MIN_ROOT_VERSION}" _GT_EQ FALSE)
-	if (_GT_EQ)
-		set(${ROOT_VERSION_IS_SMALLER} FALSE PARENT_SCOPE)
-	else()
-		set(${ROOT_VERSION_IS_SMALLER} TRUE PARENT_SCOPE)
-	endif()
-
-endfunction(root_version_is_lower_than)

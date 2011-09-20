@@ -73,7 +73,9 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 	
 	// parse command line options
 	const string progName                 = argv[0];
