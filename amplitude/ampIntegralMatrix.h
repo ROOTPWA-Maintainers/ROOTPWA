@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      container class for complex normalization integral matrices
+//      container class for complex amplitude integral matrices
 //
 //
 // Author List:
@@ -35,8 +35,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef NORMALIZATIONINTEGRAL_H
-#define NORMALIZATIONINTEGRAL_H
+#ifndef AMPINTEGRALMATRIX_H
+#define AMPINTEGRALMATRIX_H
 
 
 #include <vector>
@@ -58,7 +58,7 @@ namespace rpwa {
 namespace rpwa {
 
 
-	class normalizationIntegral : public TObject {
+	class ampIntegralMatrix : public TObject {
 
 
 		typedef std::vector<std::vector<std::complex<double> > >    integralMatrixType;
@@ -67,11 +67,11 @@ namespace rpwa {
 
 	public:
         
-		normalizationIntegral();
-		normalizationIntegral(const normalizationIntegral& integral);
-		virtual ~normalizationIntegral();
+		ampIntegralMatrix();
+		ampIntegralMatrix(const ampIntegralMatrix& integral);
+		virtual ~ampIntegralMatrix();
 
-		normalizationIntegral& operator =(const normalizationIntegral& integral);
+		ampIntegralMatrix& operator =(const ampIntegralMatrix& integral);
 
 		// accessors
 		unsigned int  nmbWaves () const { return _nmbWaves;  }  ///< returns number of waves in integral
@@ -128,7 +128,7 @@ namespace rpwa {
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
-		ClassDef(normalizationIntegral,1)
+		ClassDef(ampIntegralMatrix,1)
 #endif
 
 	};
@@ -136,8 +136,8 @@ namespace rpwa {
 
 	inline
 	std::ostream&
-	operator <<(std::ostream&                out,
-	            const normalizationIntegral& integral)
+	operator <<(std::ostream&            out,
+	            const ampIntegralMatrix& integral)
 	{
 		return integral.print(out);
 	}
@@ -146,4 +146,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // NORMALIZATIONINTEGRAL_H
+#endif  // AMPINTEGRALMATRIX_H

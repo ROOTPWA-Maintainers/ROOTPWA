@@ -39,7 +39,6 @@
 #include <fstream>
 #include <sstream>
 #include <string>
-#include <cassert>
 
 #include "TFile.h"
 #include "TTree.h"

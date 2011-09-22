@@ -80,8 +80,10 @@ endif()
 set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O3 -g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
+# `gcc -march=native -Q --help=target` shows the relevant compiler switches
+# consider adding -DNODEBUG (disables all asserts) and -ffast-math
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
 # report global build settings

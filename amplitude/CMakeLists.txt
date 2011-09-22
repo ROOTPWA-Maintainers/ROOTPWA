@@ -72,7 +72,7 @@ set(SOURCES
 	isobarCanonicalAmplitude.cc
 	amplitudeTreeLeaf.cc
 	amplitudeTreeHelper.cc
-	normalizationIntegral.cc
+	ampIntegralMatrix.cc
 	waveSetGenerator.cc
 	)
 
@@ -82,7 +82,7 @@ set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
   "${ROOTPWAAMP_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
-	"waveDescription.h;amplitudeTreeLeaf.h;normalizationIntegral.h"
+	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
   "rootPwaAmpLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})

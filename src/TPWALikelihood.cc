@@ -737,8 +737,8 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
 // returns integral matrix reordered according to _waveNames array
 template<typename complexT>
 void
-TPWALikelihood<complexT>::reorderIntegralMatrix(const normalizationIntegral& integral,
-                                                normMatrixArrayType&         reorderedMatrix) const
+TPWALikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral,
+                                                normMatrixArrayType&     reorderedMatrix) const
 {
 	// create reordered matrix
 	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
@@ -770,7 +770,7 @@ TPWALikelihood<complexT>::readIntegrals
 			         << "aborting." << endl;
 			throw;
 		}
-		normalizationIntegral* integral = 0;
+		ampIntegralMatrix* integral = 0;
 		intFile->GetObject(integralTKeyName.c_str(), integral);
 		if (not integral) {
 			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
@@ -808,7 +808,7 @@ TPWALikelihood<complexT>::readIntegrals
 			         << "aborting." << endl;
 			throw;
 		}
-		normalizationIntegral* integral = 0;
+		ampIntegralMatrix* integral = 0;
 		intFile->GetObject(integralTKeyName.c_str(), integral);
 		if (not integral) {
 			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "

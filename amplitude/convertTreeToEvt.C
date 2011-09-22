@@ -38,7 +38,6 @@
 
 #include <fstream>
 #include <string>
-#include <cassert>
 #include <iomanip>
 #include <limits>
 #include <algorithm>

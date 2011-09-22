@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      container class for complex normalization integral matrices
+//      container class for complex amplitude integral matrices
 //
 //
 // Author List:
@@ -48,7 +48,7 @@
 #include "fileUtils.hpp"
 #include "sumAccumulators.hpp"
 #include "amplitudeTreeLeaf.h"
-#include "normalizationIntegral.h"
+#include "ampIntegralMatrix.h"
 
 
 using namespace std;
@@ -58,34 +58,34 @@ using namespace rpwa;
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
-ClassImp(normalizationIntegral);
+ClassImp(ampIntegralMatrix);
 #endif
 
 
-bool normalizationIntegral::_debug = false;
+bool ampIntegralMatrix::_debug = false;
 
     
-normalizationIntegral::normalizationIntegral()
+ampIntegralMatrix::ampIntegralMatrix()
 	: TObject   (),
 	  _nmbWaves (0),
 	  _nmbEvents(0)
 {
-	normalizationIntegral::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+	ampIntegralMatrix::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
 
 
-normalizationIntegral::normalizationIntegral(const normalizationIntegral& integral)
+ampIntegralMatrix::ampIntegralMatrix(const ampIntegralMatrix& integral)
 {
 	*this = integral;
 }
 
 
-normalizationIntegral::~normalizationIntegral()
+ampIntegralMatrix::~ampIntegralMatrix()
 { }
 
 
-normalizationIntegral&
-normalizationIntegral::operator =(const normalizationIntegral& integral)
+ampIntegralMatrix&
+ampIntegralMatrix::operator =(const ampIntegralMatrix& integral)
 {
 	if (this != &integral) {
 		TObject::operator     =(integral);
@@ -100,7 +100,7 @@ normalizationIntegral::operator =(const normalizationIntegral& integral)
 
 
 unsigned int
-normalizationIntegral::waveIndex(const std::string& waveName) const
+ampIntegralMatrix::waveIndex(const std::string& waveName) const
 {
 	waveNameWaveIndexMapIterator entry = _waveNameWaveIndexMap.find(waveName);
 	if (entry == _waveNameWaveIndexMap.end()) {
@@ -112,7 +112,7 @@ normalizationIntegral::waveIndex(const std::string& waveName) const
 
 
 const string&
-normalizationIntegral::waveName(const unsigned int waveIndex) const
+ampIntegralMatrix::waveName(const unsigned int waveIndex) const
 {
 	if (waveIndex < _waveIndexWaveNameMap.size())
 		return _waveIndexWaveNameMap[waveIndex];
@@ -124,8 +124,8 @@ normalizationIntegral::waveName(const unsigned int waveIndex) const
 
 
 complex<double>
-normalizationIntegral::element(const unsigned int waveIndexI,
-                               const unsigned int waveIndexJ) const
+ampIntegralMatrix::element(const unsigned int waveIndexI,
+                           const unsigned int waveIndexJ) const
 {
 	if (waveIndexI >= _nmbWaves) {
 		printErr << "wave index for i = " << waveIndexI << " out of range. "
@@ -142,18 +142,18 @@ normalizationIntegral::element(const unsigned int waveIndexI,
 
 
 complex<double>
-normalizationIntegral::element(const std::string& waveNameI,
-                               const std::string& waveNameJ) const
+ampIntegralMatrix::element(const std::string& waveNameI,
+                           const std::string& waveNameJ) const
 {
 	return _integrals[waveIndex(waveNameI)][waveIndex(waveNameJ)] / ((double)_nmbEvents);
 }
 
 
 bool
-normalizationIntegral::integrate(const vector<string>& binAmpFileNames,
-                                 const vector<string>& rootAmpFileNames,
-                                 const unsigned long   maxNmbEvents,
-                                 const string&         weightFileName)
+ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
+                             const vector<string>& rootAmpFileNames,
+                             const unsigned long   maxNmbEvents,
+                             const string&         weightFileName)
 {
 	// open amplitude files
 	vector<ifstream*>          binAmpFiles;
@@ -290,7 +290,7 @@ normalizationIntegral::integrate(const vector<string>& binAmpFileNames,
 
 
 void
-normalizationIntegral::renormalize(const unsigned long nmbEventsRenorm)
+ampIntegralMatrix::renormalize(const unsigned long nmbEventsRenorm)
 {
 	if (_debug)
 		printDebug << "renormalizing integrals from " << _nmbEvents << " "
@@ -303,7 +303,7 @@ normalizationIntegral::renormalize(const unsigned long nmbEventsRenorm)
 
 
 bool
-normalizationIntegral::writeAscii(ostream& out) const
+ampIntegralMatrix::writeAscii(ostream& out) const
 {
 	if (not out) {
 		printWarn << "cannot write to output stream. cannot write integral." << endl;
@@ -328,7 +328,7 @@ normalizationIntegral::writeAscii(ostream& out) const
 
 
 bool
-normalizationIntegral::readAscii(istream& in)
+ampIntegralMatrix::readAscii(istream& in)
 {
 	if (not (in >> _nmbWaves >> _nmbEvents)) {
 		printWarn << "could not read number of waves and events" << endl;
@@ -372,7 +372,7 @@ normalizationIntegral::readAscii(istream& in)
 
 
 bool
-normalizationIntegral::writeAscii(const string& outFileName) const
+ampIntegralMatrix::writeAscii(const string& outFileName) const
 {
 	if (_debug)
 		printDebug << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
@@ -391,7 +391,7 @@ normalizationIntegral::writeAscii(const string& outFileName) const
 
 
 bool
-normalizationIntegral::readAscii(const string& inFileName)
+ampIntegralMatrix::readAscii(const string& inFileName)
 {
 	if (_debug)
 		printDebug << "opening ASCII file '" << inFileName << "' for reading of integral matrix" << endl;
@@ -410,8 +410,8 @@ normalizationIntegral::readAscii(const string& inFileName)
 
 
 ostream&
-normalizationIntegral::print(ostream&   out,
-                             const bool printIntegralValues) const
+ampIntegralMatrix::print(ostream&   out,
+                         const bool printIntegralValues) const
 {
 	out << "normalization integral:"  << endl
 	    << "    number of waves .... " << _nmbWaves  << endl
@@ -433,9 +433,9 @@ normalizationIntegral::print(ostream&   out,
 
 
 unsigned long
-normalizationIntegral::openBinAmpFiles(vector<ifstream*>&    ampFiles,
-                                       const vector<string>& ampFileNames,
-                                       const unsigned int    waveIndexOffset)
+ampIntegralMatrix::openBinAmpFiles(vector<ifstream*>&    ampFiles,
+                                   const vector<string>& ampFileNames,
+                                   const unsigned int    waveIndexOffset)
 {
 	ampFiles.clear();
 	streampos    ampFileSize = 0;
@@ -480,11 +480,11 @@ normalizationIntegral::openBinAmpFiles(vector<ifstream*>&    ampFiles,
 
 
 unsigned long
-normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
-                                        vector<amplitudeTreeLeaf*>& ampTreeLeafs,
-                                        const vector<string>&       ampFileNames,
-                                        const unsigned int          waveIndexOffset,
-                                        const string&               ampLeafName)
+ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
+                                    vector<amplitudeTreeLeaf*>& ampTreeLeafs,
+                                    const vector<string>&       ampFileNames,
+                                    const unsigned int          waveIndexOffset,
+                                    const string&               ampLeafName)
 {
 	ampTrees.clear    ();
 	ampTreeLeafs.clear();

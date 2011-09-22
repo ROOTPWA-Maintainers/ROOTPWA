@@ -54,7 +54,7 @@
 #include "matrix.h"
 
 #include "sumAccumulators.hpp"
-#include "normalizationIntegral.h"
+#include "ampIntegralMatrix.h"
 
 
 class TString;
@@ -195,8 +195,8 @@ private:
   
 	void reorderIntegralMatrix(integral&            integral,
 	                           normMatrixArrayType& reorderedMatrix) const;
-	void reorderIntegralMatrix(const rpwa::normalizationIntegral& integral,
-	                           normMatrixArrayType&               reorderedMatrix) const;
+	void reorderIntegralMatrix(const rpwa::ampIntegralMatrix& integral,
+	                           normMatrixArrayType&           reorderedMatrix) const;
 
 public:
 

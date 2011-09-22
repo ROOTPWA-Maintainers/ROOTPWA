@@ -56,7 +56,7 @@
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;
 #pragma link C++ class rpwa::amplitudeTreeLeaf+;
-#pragma link C++ class rpwa::normalizationIntegral+;
+#pragma link C++ class rpwa::ampIntegralMatrix+;
 #endif 
 
 

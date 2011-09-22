@@ -36,7 +36,6 @@
 
 
 #include <algorithm>
-#include <cassert>
 
 #include "TLorentzRotation.h"
 #include "TMath.h"

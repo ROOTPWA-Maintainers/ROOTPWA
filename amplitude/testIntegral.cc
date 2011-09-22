@@ -44,7 +44,7 @@
 
 #include "reportingUtils.hpp"
 #include "fileUtils.hpp"
-#include "normalizationIntegral.h"
+#include "ampIntegralMatrix.h"
 
 
 using namespace std;
@@ -56,7 +56,7 @@ int
 main(int argc, char** argv)
 {
 	// switch on debug output
-	normalizationIntegral::setDebug(true);
+	ampIntegralMatrix::setDebug(true);
 
 	if (0) {
 		const string somePath = "/local/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/1-4++1+rho770_41_pi-.amp";
@@ -122,7 +122,7 @@ main(int argc, char** argv)
 		for (size_t i = 0; i < binAmpFileNames.size(); ++i)
 			binAmpFileNames[i] = "/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/" + binAmpFileNames[i];
 		vector<string> rootAmpFileNames;
-		normalizationIntegral integral;
+		ampIntegralMatrix integral;
 		integral.integrate(binAmpFileNames, rootAmpFileNames);
 		integral.writeAscii("testIntegral2.int");
 	}
@@ -130,10 +130,10 @@ main(int argc, char** argv)
 
 	if (1) {
 		// test I/O and copying
-		normalizationIntegral integral;
+		ampIntegralMatrix integral;
 		// ascii I/O
 		integral.readAscii("testIntegral.int");
-		normalizationIntegral integral2(integral);
+		ampIntegralMatrix integral2(integral);
 		integral2.writeAscii("testIntegral2.int");
 		// root I/O
 		// force loading predefined std::complex dictionary
@@ -146,7 +146,7 @@ main(int argc, char** argv)
 		}
 		{
 			TFile*                 inFile    = TFile::Open("testIntegral.root", "READ");
-			normalizationIntegral* integral3 = 0;
+			ampIntegralMatrix* integral3 = 0;
 			inFile->GetObject("integral", integral3);
 			if (not integral3)
 				printErr << "cannot find integral 'integral'" << endl;
@@ -160,7 +160,7 @@ main(int argc, char** argv)
 
 	if (0) {
 		// test renormalization
-		normalizationIntegral integral;
+		ampIntegralMatrix integral;
 		integral.readAscii("testIntegral.int");
 		const unsigned int nmbEvents = integral.nmbEvents();
 		integral.renormalize(10000);
