@@ -142,6 +142,20 @@ namespace rpwa {
 		return integral.print(out);
 	}
 
+	
+	bool
+	operator ==(const ampIntegralMatrix& lhsInt,
+	            const ampIntegralMatrix& rhsInt);
+	
+
+	inline
+	bool
+	operator !=(const ampIntegralMatrix& lhsInt,
+	            const ampIntegralMatrix& rhsInt)
+	{
+		return not(lhsInt == rhsInt);
+	}
+	
 
 }  // namespace rpwa
 

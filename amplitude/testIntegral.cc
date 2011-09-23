@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      basic test program for integral
+//      basic test program for amplitude integral matrix
 //
 //
 // Author List:
@@ -135,23 +135,30 @@ main(int argc, char** argv)
 		integral.readAscii("testIntegral.int");
 		ampIntegralMatrix integral2(integral);
 		integral2.writeAscii("testIntegral2.int");
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		// root I/O
 		// force loading predefined std::complex dictionary
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		gROOT->ProcessLine("#include <complex>");
 		{
 			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
+			printInfo << "writing integral to 'testIntegral.root'" << endl;
 			integral.Write("integral");
 			outFile->Close();
 		}
 		{
-			TFile*                 inFile    = TFile::Open("testIntegral.root", "READ");
+			TFile*             inFile    = TFile::Open("testIntegral.root", "READ");
 			ampIntegralMatrix* integral3 = 0;
+			printInfo << "reading integral from 'testIntegral.root'" << endl;
 			inFile->GetObject("integral", integral3);
 			if (not integral3)
 				printErr << "cannot find integral 'integral'" << endl;
-			else
+			else {
+				if (*integral3 == integral)
+					printSucc << "integrals are identical" << endl;
+				else
+					printErr << "intergrals differ" << endl;
 				integral3->writeAscii("testIntegral3.int");
+			}
 			inFile->Close();
 		}
 #endif  // USE_STD_COMPLEX_TREE_LEAFS

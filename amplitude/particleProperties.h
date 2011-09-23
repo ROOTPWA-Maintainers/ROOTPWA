@@ -74,7 +74,7 @@ namespace rpwa {
 		friend bool operator ==(const particleProperties& lhsProp,
 		                        const particleProperties& rhsProp);
 		friend bool operator !=(const particleProperties& lhsProp,
-		                        const particleProperties& rhsProp) { return !(lhsProp == rhsProp); }
+		                        const particleProperties& rhsProp) { return not(lhsProp == rhsProp); }
 		// comparison operators that check equality of fields selectable via string
 		friend bool operator ==(const particleProperties&                         lhsProp,
 		                        const std::pair<particleProperties, std::string>& rhsProp);

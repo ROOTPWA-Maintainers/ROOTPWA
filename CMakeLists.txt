@@ -24,7 +24,8 @@
 #// $Author::                          $: author of last commit
 #// $Date::                            $: date of last commit
 #//
-#// Description:#//      main build file for ROOTPWA
+#// Description:
+#//      main build file for ROOTPWA
 #//
 #//
 #// Author List:
@@ -129,7 +130,7 @@ message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUD
 
 # setup libconfig
 # environment variable $LIBCONFIG is expected to point to libconfig location
-find_package(Libconfig 1.4.7 REQUIRED)
+find_package(Libconfig 1.4 REQUIRED)
 
 
 # setup ROOT includes and libraries

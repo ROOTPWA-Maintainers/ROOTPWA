@@ -99,6 +99,25 @@ ampIntegralMatrix::operator =(const ampIntegralMatrix& integral)
 }
 
 
+bool
+rpwa::operator ==(const ampIntegralMatrix& lhsInt,
+                  const ampIntegralMatrix& rhsInt)
+{
+	if (   (lhsInt.nmbWaves () != rhsInt.nmbWaves ())
+	       or (lhsInt.nmbEvents() != rhsInt.nmbEvents()))
+		return false;
+	for (unsigned int i = 0; i < lhsInt.nmbWaves(); ++i) {
+		const std::string name_i = lhsInt.waveName(i);
+		for (unsigned int j = 0; j < lhsInt.nmbWaves(); ++j) {
+			const std::string name_j = lhsInt.waveName(j);
+			if (lhsInt.element(i, j) != rhsInt.element(name_i, name_j))
+				return false;
+		}
+	}
+	return true;
+}
+
+
 unsigned int
 ampIntegralMatrix::waveIndex(const std::string& waveName) const
 {
