@@ -128,7 +128,7 @@ main(int argc, char** argv)
 	}
 
 
-	if (1) {
+	if (0) {
 		// test I/O and copying
 		ampIntegralMatrix integral;
 		// ascii I/O
@@ -162,6 +162,28 @@ main(int argc, char** argv)
 			inFile->Close();
 		}
 #endif  // USE_STD_COMPLEX_TREE_LEAFS
+	}
+
+
+	if (1) {
+		// test arthmetic operations
+		ampIntegralMatrix  integral, integrals[6];
+		const unsigned int nmbInt = sizeof(integrals) / sizeof(integrals[0]);
+		integral.readAscii("testIntegral.int");
+		for (unsigned int i = 0; i < nmbInt; ++i)
+			integrals[i].readAscii("testIntegral.int");
+		integrals[0] = integral + integral;
+		integrals[1] = integrals[0] - integral;
+		integrals[2] = 2 * integral - integral;
+		integrals[3] = integral * 0.1 + integral * 0.9;
+		integrals[4] = integral / 2 + integral / 2;
+		integrals[5] = (integral + 2 * integral) / 3;
+		integrals[5].writeAscii("testIntegral1.int");
+		for (unsigned int i = 1; i < nmbInt; ++i)
+			if (integrals[i] == integral)
+				printSucc << "integrals[" << i << "] is identical" << endl;
+			else
+				printErr << "integrals[" << i << "] differs" << endl;
 	}
 
 

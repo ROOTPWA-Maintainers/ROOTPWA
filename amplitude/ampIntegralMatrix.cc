@@ -99,31 +99,82 @@ ampIntegralMatrix::operator =(const ampIntegralMatrix& integral)
 }
 
 
-bool
-rpwa::operator ==(const ampIntegralMatrix& lhsInt,
-                  const ampIntegralMatrix& rhsInt)
+ampIntegralMatrix&
+ampIntegralMatrix::operator +=(const ampIntegralMatrix& integral)
 {
-	if (   (lhsInt.nmbWaves () != rhsInt.nmbWaves ())
-	       or (lhsInt.nmbEvents() != rhsInt.nmbEvents()))
-		return false;
-	for (unsigned int i = 0; i < lhsInt.nmbWaves(); ++i) {
-		const std::string name_i = lhsInt.waveName(i);
-		for (unsigned int j = 0; j < lhsInt.nmbWaves(); ++j) {
-			const std::string name_j = lhsInt.waveName(j);
-			if (lhsInt.element(i, j) != rhsInt.element(name_i, name_j))
-				return false;
-		}
+	if (not hasIdenticalWaveSet(integral)) {
+		printErr << "cannot add " << *this << endl
+		         << "and " << integral << endl
+		         << "because the two integral matrices have different wave sets. aborting." << endl;
+		throw;
 	}
+	for (unsigned int i = 0; i < nmbWaves(); ++i) {
+		const string waveNameI = waveName(i);
+		for (unsigned int j = 0; j < nmbWaves(); ++j)
+			_integrals[i][j] += integral(waveIndex(waveNameI), waveIndex(waveName(j)));
+	}
+	_nmbEvents += integral.nmbEvents();
+	return *this;
+}
+
+
+ampIntegralMatrix&
+ampIntegralMatrix::operator -=(const ampIntegralMatrix& integral)
+{
+	if (not hasIdenticalWaveSet(integral)) {
+		printErr << "cannot subtract " << integral << endl
+		         << "from " << *this << endl
+		         << "because the two integral matrices have different wave sets. aborting." << endl;
+		throw;
+	}
+	for (unsigned int i = 0; i < nmbWaves(); ++i) {
+		const string waveNameI = waveName(i);
+		for (unsigned int j = 0; j < nmbWaves(); ++j)
+			_integrals[i][j] -= integral(waveIndex(waveNameI), waveIndex(waveName(j)));
+	}
+	_nmbEvents -= integral.nmbEvents();
+	return *this;
+}
+
+
+ampIntegralMatrix&
+ampIntegralMatrix::operator *=(const double factor)
+{
+	for (unsigned int i = 0; i < nmbWaves(); ++i)
+		for (unsigned int j = 0; j < nmbWaves(); ++j)
+			_integrals[i][j] *= factor;
+	_nmbEvents *= factor;
+	return *this;
+}
+
+
+ampIntegralMatrix&
+ampIntegralMatrix::operator /=(const double factor)
+{
+	for (unsigned int i = 0; i < nmbWaves(); ++i)
+		for (unsigned int j = 0; j < nmbWaves(); ++j)
+			_integrals[i][j] /= factor;
+	_nmbEvents /= factor;
+	return *this;
+}
+
+
+bool
+ampIntegralMatrix::containsWave(const string& waveName) const
+{
+	waveNameWaveIndexMapIterator entry = _waveNameWaveIndexMap.find(waveName);
+	if (entry == _waveNameWaveIndexMap.end())
+		return false;
 	return true;
 }
 
 
 unsigned int
-ampIntegralMatrix::waveIndex(const std::string& waveName) const
+ampIntegralMatrix::waveIndex(const string& waveName) const
 {
 	waveNameWaveIndexMapIterator entry = _waveNameWaveIndexMap.find(waveName);
 	if (entry == _waveNameWaveIndexMap.end()) {
-		printErr << "cannot find wave '" << waveName << "' in normalization integral" << endl;
+		printErr << "cannot find wave '" << waveName << "' in integral matrix. aborting." << endl;
 		throw;
 	}
 	return entry->second;
@@ -136,15 +187,15 @@ ampIntegralMatrix::waveName(const unsigned int waveIndex) const
 	if (waveIndex < _waveIndexWaveNameMap.size())
 		return _waveIndexWaveNameMap[waveIndex];
 	else {
-		printErr << "cannot find wave with index " << waveIndex << " in normalization integral" << endl;
+		printErr << "wave index " << waveIndex << " is out of range. aborting." << endl;
 		throw;
 	}
 }
 
 
-complex<double>
-ampIntegralMatrix::element(const unsigned int waveIndexI,
-                           const unsigned int waveIndexJ) const
+complex<double>&
+ampIntegralMatrix::operator ()(const unsigned int waveIndexI,
+                               const unsigned int waveIndexJ)
 {
 	if (waveIndexI >= _nmbWaves) {
 		printErr << "wave index for i = " << waveIndexI << " out of range. "
@@ -156,15 +207,25 @@ ampIntegralMatrix::element(const unsigned int waveIndexI,
 		         << "number of waves = " << _nmbWaves << endl;
 		throw;
 	}
-	return _integrals[waveIndexI][waveIndexJ] / ((double)_nmbEvents);
+	return _integrals[waveIndexI][waveIndexJ];
 }
 
 
-complex<double>
-ampIntegralMatrix::element(const std::string& waveNameI,
-                           const std::string& waveNameJ) const
+const complex<double>&
+ampIntegralMatrix::operator ()(const unsigned int waveIndexI,
+                               const unsigned int waveIndexJ) const
 {
-	return _integrals[waveIndex(waveNameI)][waveIndex(waveNameJ)] / ((double)_nmbEvents);
+	if (waveIndexI >= _nmbWaves) {
+		printErr << "wave index for i = " << waveIndexI << " out of range. "
+		         << "number of waves = " << _nmbWaves << endl;
+		throw;
+	}
+	if (waveIndexJ >= _nmbWaves) {
+		printErr << "wave index for j = " << waveIndexJ << " out of range. "
+		         << "number of waves = " << _nmbWaves << endl;
+		throw;
+	}
+	return _integrals[waveIndexI][waveIndexJ];
 }
 
 
@@ -395,7 +456,7 @@ ampIntegralMatrix::writeAscii(const string& outFileName) const
 {
 	if (_debug)
 		printDebug << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
-	std::ofstream outFile(outFileName.c_str());
+	ofstream outFile(outFileName.c_str());
 	if (not outFile or not outFile.good()) {
 		printWarn << "cannot open file '" << outFileName << "' for writing of integral matrix" << endl;
 		return false;
@@ -414,7 +475,7 @@ ampIntegralMatrix::readAscii(const string& inFileName)
 {
 	if (_debug)
 		printDebug << "opening ASCII file '" << inFileName << "' for reading of integral matrix" << endl;
-	std::fstream inFile(inFileName.c_str());
+	fstream inFile(inFileName.c_str());
 	if (not inFile or not inFile.good()) {
 		printWarn << "cannot open file '" << inFileName << "' for reading of integral matrix" << endl;
 		return false;
@@ -432,7 +493,7 @@ ostream&
 ampIntegralMatrix::print(ostream&   out,
                          const bool printIntegralValues) const
 {
-	out << "normalization integral:"  << endl
+	out << "amplitude integral matrix:"  << endl
 	    << "    number of waves .... " << _nmbWaves  << endl
 	    << "    number of events ... " << _nmbEvents << endl
 	    << "    wave name -> index map:" << endl;
@@ -581,4 +642,21 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
   }
 #endif  // USE_STD_COMPLEX_TREE_LEAFS
 	return nmbAmps;
+}
+
+
+bool
+ampIntegralMatrix::hasIdenticalWaveSet(const ampIntegralMatrix& integral) const
+{
+	if (nmbWaves() != integral.nmbWaves())
+		return false;
+	// check that all waves in this integral are also in other integral
+	for (unsigned int i = 0; i < nmbWaves(); ++i)
+		if (not integral.containsWave(waveName(i)))
+			return false;
+	// check that all waves in other integral are also in this integral
+	for (unsigned int i = 0; i < integral.nmbWaves(); ++i)
+		if (not containsWave(integral.waveName(i)))
+			return false;
+	return true;
 }

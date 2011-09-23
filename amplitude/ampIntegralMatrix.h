@@ -73,19 +73,36 @@ namespace rpwa {
 
 		ampIntegralMatrix& operator =(const ampIntegralMatrix& integral);
 
+		friend bool operator ==(const ampIntegralMatrix& lhsInt,
+		                        const ampIntegralMatrix& rhsInt);
+
+		// arithmetic operators for integrals
+		ampIntegralMatrix& operator +=(const ampIntegralMatrix& integral);
+		ampIntegralMatrix& operator -=(const ampIntegralMatrix& integral);
+		ampIntegralMatrix& operator *=(const double             factor);
+		ampIntegralMatrix& operator /=(const double             factor);
+		
 		// accessors
 		unsigned int  nmbWaves () const { return _nmbWaves;  }  ///< returns number of waves in integral
 		unsigned long nmbEvents() const { return _nmbEvents; }  ///< returns number of events in integral
 
 		void setNmbEvents(const unsigned long nmbEvents) { _nmbEvents = nmbEvents; }  ///< sets number of events in integral
 		
-		unsigned int       waveIndex(const std::string& waveName ) const;  ///< returns wave index for a wave name
-		const std::string& waveName (const unsigned int waveIndex) const;  ///< returns wave name for a wave index
+		bool               containsWave(const std::string& waveName ) const;  ///< returns whether wave is in integral matrix
+		unsigned int       waveIndex   (const std::string& waveName ) const;  ///< returns wave index for a wave name
+		const std::string& waveName    (const unsigned int waveIndex) const;  ///< returns wave name for a wave index
+
+		std::complex<double>&       operator ()(const unsigned int waveIndexI,
+		                                        const unsigned int waveIndexJ);        ///< returns integral matrix element defined by index pair
+		const std::complex<double>& operator ()(const unsigned int waveIndexI,
+		                                        const unsigned int waveIndexJ) const;  ///< returns integral matrix element defined by index pair
 
 		std::complex<double> element(const unsigned int waveIndexI,
-		                             const unsigned int waveIndexJ) const;  ///< returns integral matrix element defined by index pair
+		                             const unsigned int waveIndexJ) const  ///< returns integral matrix element devided by number of events defined by index pair
+		{	return (*this)(waveIndexI, waveIndexJ) / ((double)_nmbEvents); }
 		std::complex<double> element(const std::string& waveNameI,
-		                             const std::string& waveNameJ)  const;  ///< returns integral matrix element defined by pair of wave names
+		                             const std::string& waveNameJ)  const  ///< returns integral matrix element devided by number of events defined by pair of wave names
+		{ return (*this)(waveIndex(waveNameI), waveIndex(waveNameJ)) / ((double)_nmbEvents); }
 
 		bool integrate(const std::vector<std::string>& binAmpFileNames,
 		               const std::vector<std::string>& rootAmpFileNames,
@@ -94,8 +111,8 @@ namespace rpwa {
 
 		void renormalize(const unsigned long nmbEventsRenorm);
 
-		bool writeAscii(std::ostream& out = std::cout) const;
-		bool readAscii (std::istream& in  = std::cin );
+		bool writeAscii(std::ostream&      out = std::cout) const;
+		bool readAscii (std::istream&      in  = std::cin );
 		bool writeAscii(const std::string& outFileName) const;
 		bool readAscii (const std::string& inFileName );
 
@@ -117,6 +134,8 @@ namespace rpwa {
 		                               const std::vector<std::string>&        ampFileNames,
 		                               const unsigned int                     waveIndexOffset = 0,
 		                               const std::string&                     ampLeafName     = "amplitude");
+
+		bool hasIdenticalWaveSet(const ampIntegralMatrix& integral) const;  ///< checks whether other integral matrix has exactly the same set of waves
 		
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -135,6 +154,26 @@ namespace rpwa {
 
 
 	inline
+	bool
+	operator ==(const ampIntegralMatrix& lhsInt,
+	            const ampIntegralMatrix& rhsInt)
+	{
+		if (not lhsInt.hasIdenticalWaveSet(rhsInt)
+		    or (lhsInt.nmbEvents() != rhsInt.nmbEvents()))
+			return false;
+		for (unsigned int i = 0; i < lhsInt.nmbWaves(); ++i) {
+			const std::string waveNameI = lhsInt.waveName(i);
+			for (unsigned int j = 0; j < lhsInt.nmbWaves(); ++j) {
+				const std::string waveNameJ = lhsInt.waveName(j);
+				if (lhsInt(i, j) != rhsInt(rhsInt.waveIndex(waveNameI), rhsInt.waveIndex(waveNameJ)))
+					return false;
+			}
+		}
+		return true;
+	}
+
+
+	inline
 	std::ostream&
 	operator <<(std::ostream&            out,
 	            const ampIntegralMatrix& integral)
@@ -142,11 +181,61 @@ namespace rpwa {
 		return integral.print(out);
 	}
 
-	
+
+	// arithmetic operators for integrals
+	inline
+	ampIntegralMatrix
+	operator +(const ampIntegralMatrix& integralA,
+	           const ampIntegralMatrix& integralB)
+	{
+		ampIntegralMatrix result = integralA;
+		result += integralB;
+		return result;
+	}
+
+	inline
+	ampIntegralMatrix
+	operator -(const ampIntegralMatrix& integralA,
+	           const ampIntegralMatrix& integralB)
+	{
+		ampIntegralMatrix result = integralA;
+		result -= integralB;
+		return result;
+	}
+
+	inline
+	ampIntegralMatrix
+	operator *(const ampIntegralMatrix& integral,
+	           const double             factor)
+	{
+		ampIntegralMatrix result = integral;
+		result *= factor;
+		return result;
+	}
+
+	inline
+	ampIntegralMatrix
+	operator *(const double             factor,
+	           const ampIntegralMatrix& integral)
+	{
+		return integral * factor;
+	}
+
+	inline
+	ampIntegralMatrix
+	operator /(const ampIntegralMatrix& integral,
+	           const double             factor)
+	{
+		ampIntegralMatrix result = integral;
+		result /= factor;
+		return result;
+	}
+
+
+	// comparison operators
 	bool
 	operator ==(const ampIntegralMatrix& lhsInt,
 	            const ampIntegralMatrix& rhsInt);
-	
 
 	inline
 	bool
