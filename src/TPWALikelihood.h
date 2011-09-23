@@ -68,9 +68,6 @@ public:
 
 	typedef typename complexT::value_type value_type;
 
-private:
-public:
-
 	// define array types
 	typedef boost::multi_array<std::string,            2> waveNameArrayType;    // array for wave names
 	typedef boost::multi_array<double,                 2> waveThrArrayType;     // array for wave thresholds

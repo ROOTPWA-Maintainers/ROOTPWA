@@ -43,6 +43,7 @@
 #include "TKey.h"
 #include "TTree.h"
 #include "TROOT.h"
+#include "TBuffer.h"
 
 #include "reportingUtils.hpp"
 #include "fileUtils.hpp"
@@ -659,4 +660,28 @@ ampIntegralMatrix::hasIdenticalWaveSet(const ampIntegralMatrix& integral) const
 		if (not containsWave(integral.waveName(i)))
 			return false;
 	return true;
+}
+
+
+// custom streamer that triggers copying of multiarray into C struct
+// before writing and rebuilding of multiarrays after reading
+//
+// this might not work when ampIntegralMatrix is used as a TTree leaf
+//
+// a more elegant way would be to use read- and write-rule pragmas, but
+// write rules are not yet supported
+//
+// see
+//     http://root.cern.ch/phpBB3/viewtopic.php?f=3&t=12213&p=54249&hilit=TStreamerInfo
+//     http://root.cern.ch/phpBB3/viewtopic.php?f=3&t=7334&p=30634&hilit=streamer+custom
+void
+ampIntegralMatrix::Streamer(TBuffer& R__b)
+{
+	if (R__b.IsReading()) {
+		R__b.ReadClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
+		unpackMultiArray();
+	} else {
+		packMultiArray();
+		R__b.WriteClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
+	}
 }

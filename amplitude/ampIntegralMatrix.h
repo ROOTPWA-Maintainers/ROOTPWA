@@ -46,7 +46,17 @@
 #include <iostream>
 #include <fstream>
 
+
+#ifndef __CINT__
+#define BOOST_DISABLE_ASSERTS
+#include "boost/multi_array.hpp"
+#endif
+
 #include "TObject.h"
+
+#ifndef __CINT__
+#include "reportingUtils.hpp"
+#endif
 
 
 class TTree;
@@ -63,6 +73,9 @@ namespace rpwa {
 
 		typedef std::vector<std::vector<std::complex<double> > >    integralMatrixType;
 		typedef std::map<std::string, unsigned int>::const_iterator waveNameWaveIndexMapIterator;
+#ifndef __CINT__
+		typedef boost::multi_array<std::complex<double>, 2>         testType;
+#endif
 
 
 	public:
@@ -136,6 +149,9 @@ namespace rpwa {
 		                               const std::string&                     ampLeafName     = "amplitude");
 
 		bool hasIdenticalWaveSet(const ampIntegralMatrix& integral) const;  ///< checks whether other integral matrix has exactly the same set of waves
+
+		void packMultiArray  () { printDebug << std::endl; }  ///< copies multiarray into C struct so that it written to ROOT file
+		void unpackMultiArray() { printDebug << std::endl; }  ///< rebuilds multiarray from C struct read from ROOT file
 		
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -144,6 +160,10 @@ namespace rpwa {
 		std::vector<std::string>            _waveIndexWaveNameMap;  ///< maps wave indices to wave names
 		unsigned long                       _nmbEvents;             ///< number of events in integral matrix
 		integralMatrixType                  _integrals;             ///< integral matrix
+
+#ifndef __CINT__
+		testType _testIntegral;  //!
+#endif
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS

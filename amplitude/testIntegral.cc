@@ -128,7 +128,7 @@ main(int argc, char** argv)
 	}
 
 
-	if (0) {
+	if (1) {
 		// test I/O and copying
 		ampIntegralMatrix integral;
 		// ascii I/O
@@ -154,9 +154,9 @@ main(int argc, char** argv)
 				printErr << "cannot find integral 'integral'" << endl;
 			else {
 				if (*integral3 == integral)
-					printSucc << "integrals are identical" << endl;
+					printSucc << "ROOT file integral is identical" << endl;
 				else
-					printErr << "intergrals differ" << endl;
+					printErr << "ROOT file intergral differs" << endl;
 				integral3->writeAscii("testIntegral3.int");
 			}
 			inFile->Close();
@@ -165,7 +165,7 @@ main(int argc, char** argv)
 	}
 
 
-	if (1) {
+	if (0) {
 		// test arthmetic operations
 		ampIntegralMatrix  integral, integrals[6];
 		const unsigned int nmbInt = sizeof(integrals) / sizeof(integrals[0]);
