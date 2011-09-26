@@ -54,10 +54,6 @@
 
 #include "TObject.h"
 
-#ifndef __CINT__
-#include "reportingUtils.hpp"
-#endif
-
 
 class TTree;
 namespace rpwa {
@@ -71,20 +67,25 @@ namespace rpwa {
 	class ampIntegralMatrix : public TObject {
 
 
-		typedef std::vector<std::vector<std::complex<double> > >    integralMatrixType;
 		typedef std::map<std::string, unsigned int>::const_iterator waveNameWaveIndexMapIterator;
-#ifndef __CINT__
-		typedef boost::multi_array<std::complex<double>, 2>         testType;
-		typedef testType::size_type                                 sizeType;
-		typedef testType::value_type                                valueType;
-#endif
 
 
 	public:
         
+
+#ifndef __CINT__
+		typedef boost::multi_array<std::complex<double>, 2> integralMatrixType;
+	private:
+		typedef integralMatrixType::size_type               sizeType;
+	public:
+#endif
+
+
 		ampIntegralMatrix();
 		ampIntegralMatrix(const ampIntegralMatrix& integral);
 		virtual ~ampIntegralMatrix();
+
+		void clear();
 
 		ampIntegralMatrix& operator =(const ampIntegralMatrix& integral);
 
@@ -107,17 +108,17 @@ namespace rpwa {
 		unsigned int       waveIndex   (const std::string& waveName ) const;  ///< returns wave index for a wave name
 		const std::string& waveName    (const unsigned int waveIndex) const;  ///< returns wave name for a wave index
 
-		std::complex<double>&       operator ()(const unsigned int waveIndexI,
-		                                        const unsigned int waveIndexJ);        ///< returns integral matrix element defined by index pair
-		const std::complex<double>& operator ()(const unsigned int waveIndexI,
-		                                        const unsigned int waveIndexJ) const;  ///< returns integral matrix element defined by index pair
+#ifndef __CINT__
+		integralMatrixType&       matrix()       { return _integrals; }  ///< returns integral matrix
+		const integralMatrixType& matrix() const { return _integrals; }  ///< returns integral matrix
+#endif
 
 		std::complex<double> element(const unsigned int waveIndexI,
-		                             const unsigned int waveIndexJ) const  ///< returns integral matrix element devided by number of events defined by index pair
-		{	return (*this)(waveIndexI, waveIndexJ) / ((double)_nmbEvents); }
+		                             const unsigned int waveIndexJ) const;  ///< returns integral matrix element devided by number of events defined by index pair
 		std::complex<double> element(const std::string& waveNameI,
 		                             const std::string& waveNameJ)  const  ///< returns integral matrix element devided by number of events defined by pair of wave names
-		{ return (*this)(waveIndex(waveNameI), waveIndex(waveNameJ)) / ((double)_nmbEvents); }
+		{ return element(waveIndex(waveNameI), waveIndex(waveNameJ)); }
+
 
 		bool integrate(const std::vector<std::string>& binAmpFileNames,
 		               const std::vector<std::string>& rootAmpFileNames,
@@ -159,17 +160,15 @@ namespace rpwa {
 		std::map<std::string, unsigned int> _waveNameWaveIndexMap;  ///< maps wave names to wave indices
 		std::vector<std::string>            _waveIndexWaveNameMap;  ///< maps wave indices to wave names
 		unsigned long                       _nmbEvents;             ///< number of events in integral matrix
-		integralMatrixType                  _integrals;             ///< integral matrix
-
 
 		void storeMultiArray();  ///< copies multiarray into storage variables written to ROOT file
 		void readMultiArray ();  ///< rebuilds multiarray from storage variables read from ROOT file
 #ifndef __CINT__
-		testType _testIntegrals;  //!
+		integralMatrixType        _integrals;  ///< integral matrix
 #endif
-		std::vector<unsigned int> _intStorageShape;
-		unsigned int              _intStorageNmbElements;
-		std::complex<double>*     _intStorageData;  //[_intStorageNmbElements]
+		std::vector<unsigned int> _intStorageShape;        ///< array shape
+		unsigned int              _intStorageNmbElements;  ///< number of elements in array
+		std::complex<double>*     _intStorageData;         //[_intStorageNmbElements]
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
@@ -179,6 +178,7 @@ namespace rpwa {
 	};
 
 
+	// comparison operators
 	inline
 	bool
 	operator ==(const ampIntegralMatrix& lhsInt,
@@ -191,20 +191,20 @@ namespace rpwa {
 			const std::string waveNameI = lhsInt.waveName(i);
 			for (unsigned int j = 0; j < lhsInt.nmbWaves(); ++j) {
 				const std::string waveNameJ = lhsInt.waveName(j);
-				if (lhsInt(i, j) != rhsInt(rhsInt.waveIndex(waveNameI), rhsInt.waveIndex(waveNameJ)))
+				if (lhsInt.matrix()[i][j]
+				    != rhsInt.matrix()[rhsInt.waveIndex(waveNameI)][rhsInt.waveIndex(waveNameJ)])
 					return false;
 			}
 		}
 		return true;
 	}
 
-
 	inline
-	std::ostream&
-	operator <<(std::ostream&            out,
-	            const ampIntegralMatrix& integral)
+	bool
+	operator !=(const ampIntegralMatrix& lhsInt,
+	            const ampIntegralMatrix& rhsInt)
 	{
-		return integral.print(out);
+		return not(lhsInt == rhsInt);
 	}
 
 
@@ -258,19 +258,14 @@ namespace rpwa {
 	}
 
 
-	// comparison operators
-	bool
-	operator ==(const ampIntegralMatrix& lhsInt,
-	            const ampIntegralMatrix& rhsInt);
-
 	inline
-	bool
-	operator !=(const ampIntegralMatrix& lhsInt,
-	            const ampIntegralMatrix& rhsInt)
+	std::ostream&
+	operator <<(std::ostream&            out,
+	            const ampIntegralMatrix& integral)
 	{
-		return not(lhsInt == rhsInt);
+		return integral.print(out);
 	}
-	
+
 
 }  // namespace rpwa
 

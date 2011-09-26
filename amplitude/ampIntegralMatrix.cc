@@ -67,13 +67,13 @@ bool ampIntegralMatrix::_debug = false;
 
     
 ampIntegralMatrix::ampIntegralMatrix()
-	: TObject   (),
-	  _nmbWaves (0),
-	  _nmbEvents(0),
-	  _testIntegrals(),
-	  _intStorageShape(),
+	: TObject               (),
+	  _nmbWaves             (0),
+	  _nmbEvents            (0),
+	  _integrals            (),
+	  _intStorageShape      (),
 	  _intStorageNmbElements(0),
-	  _intStorageData(0)	  
+	  _intStorageData       (0)	  
 {
 	ampIntegralMatrix::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
@@ -89,6 +89,20 @@ ampIntegralMatrix::~ampIntegralMatrix()
 { }
 
 
+void
+ampIntegralMatrix::clear()
+{
+	_nmbWaves  = 0;
+	_nmbEvents = 0;
+	_waveNameWaveIndexMap.clear();
+	_waveIndexWaveNameMap.clear();;
+	_integrals.resize(extents[0][0]);
+	_intStorageShape.clear();
+	_intStorageNmbElements = 0;
+	_intStorageData        = 0;
+}
+
+
 ampIntegralMatrix&
 ampIntegralMatrix::operator =(const ampIntegralMatrix& integral)
 {
@@ -98,7 +112,11 @@ ampIntegralMatrix::operator =(const ampIntegralMatrix& integral)
 		_waveNameWaveIndexMap = integral._waveNameWaveIndexMap;
 		_waveIndexWaveNameMap = integral._waveIndexWaveNameMap;
 		_nmbEvents            = integral._nmbEvents;
-		_integrals            = integral._integrals;
+		// multiarray's = operator does not seem to set shape correctly
+		// setting manually prevents crash in glibc
+		const sizeType* shape = integral._integrals.shape();
+		_integrals.resize(extents[shape[0]][shape[1]]);
+		_integrals = integral._integrals;
 	}
 	return *this;
 }
@@ -113,10 +131,10 @@ ampIntegralMatrix::operator +=(const ampIntegralMatrix& integral)
 		         << "because the two integral matrices have different wave sets. aborting." << endl;
 		throw;
 	}
-	for (unsigned int i = 0; i < nmbWaves(); ++i) {
+	for (unsigned int i = 0; i < _nmbWaves; ++i) {
 		const string waveNameI = waveName(i);
-		for (unsigned int j = 0; j < nmbWaves(); ++j)
-			_integrals[i][j] += integral(waveIndex(waveNameI), waveIndex(waveName(j)));
+		for (unsigned int j = 0; j < _nmbWaves; ++j)
+			_integrals[i][j] += integral.matrix()[waveIndex(waveNameI)][waveIndex(waveName(j))];
 	}
 	_nmbEvents += integral.nmbEvents();
 	return *this;
@@ -132,10 +150,10 @@ ampIntegralMatrix::operator -=(const ampIntegralMatrix& integral)
 		         << "because the two integral matrices have different wave sets. aborting." << endl;
 		throw;
 	}
-	for (unsigned int i = 0; i < nmbWaves(); ++i) {
+	for (unsigned int i = 0; i < _nmbWaves; ++i) {
 		const string waveNameI = waveName(i);
-		for (unsigned int j = 0; j < nmbWaves(); ++j)
-			_integrals[i][j] -= integral(waveIndex(waveNameI), waveIndex(waveName(j)));
+		for (unsigned int j = 0; j < _nmbWaves; ++j)
+			_integrals[i][j] -= integral.matrix()[waveIndex(waveNameI)][waveIndex(waveName(j))];
 	}
 	_nmbEvents -= integral.nmbEvents();
 	return *this;
@@ -145,8 +163,8 @@ ampIntegralMatrix::operator -=(const ampIntegralMatrix& integral)
 ampIntegralMatrix&
 ampIntegralMatrix::operator *=(const double factor)
 {
-	for (unsigned int i = 0; i < nmbWaves(); ++i)
-		for (unsigned int j = 0; j < nmbWaves(); ++j)
+	for (unsigned int i = 0; i < _nmbWaves; ++i)
+		for (unsigned int j = 0; j < _nmbWaves; ++j)
 			_integrals[i][j] *= factor;
 	_nmbEvents *= factor;
 	return *this;
@@ -156,8 +174,8 @@ ampIntegralMatrix::operator *=(const double factor)
 ampIntegralMatrix&
 ampIntegralMatrix::operator /=(const double factor)
 {
-	for (unsigned int i = 0; i < nmbWaves(); ++i)
-		for (unsigned int j = 0; j < nmbWaves(); ++j)
+	for (unsigned int i = 0; i < _nmbWaves; ++i)
+		for (unsigned int j = 0; j < _nmbWaves; ++j)
 			_integrals[i][j] /= factor;
 	_nmbEvents /= factor;
 	return *this;
@@ -198,9 +216,9 @@ ampIntegralMatrix::waveName(const unsigned int waveIndex) const
 }
 
 
-complex<double>&
-ampIntegralMatrix::operator ()(const unsigned int waveIndexI,
-                               const unsigned int waveIndexJ)
+complex<double>
+ampIntegralMatrix::element(const unsigned int waveIndexI,
+                           const unsigned int waveIndexJ) const
 {
 	if (waveIndexI >= _nmbWaves) {
 		printErr << "wave index for i = " << waveIndexI << " out of range. "
@@ -212,25 +230,7 @@ ampIntegralMatrix::operator ()(const unsigned int waveIndexI,
 		         << "number of waves = " << _nmbWaves << endl;
 		throw;
 	}
-	return _integrals[waveIndexI][waveIndexJ];
-}
-
-
-const complex<double>&
-ampIntegralMatrix::operator ()(const unsigned int waveIndexI,
-                               const unsigned int waveIndexJ) const
-{
-	if (waveIndexI >= _nmbWaves) {
-		printErr << "wave index for i = " << waveIndexI << " out of range. "
-		         << "number of waves = " << _nmbWaves << endl;
-		throw;
-	}
-	if (waveIndexJ >= _nmbWaves) {
-		printErr << "wave index for j = " << waveIndexJ << " out of range. "
-		         << "number of waves = " << _nmbWaves << endl;
-		throw;
-	}
-	return _integrals[waveIndexI][waveIndexJ];
+	return _integrals[waveIndexI][waveIndexJ] / ((double)_nmbEvents);
 }
 
 
@@ -279,8 +279,8 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	  _waveIndexWaveNameMap[i->second] = i->first;
 
 	// resize integral matrix
-	_integrals.clear();
-	_integrals.resize(_nmbWaves, vector<complex<double> >(_nmbWaves, 0));
+	//_integrals.clear();
+	_integrals.resize(extents[_nmbWaves][_nmbWaves]);
 
 	// open importance sampling weight file
 	ifstream weightFile;
@@ -380,9 +380,7 @@ ampIntegralMatrix::renormalize(const unsigned long nmbEventsRenorm)
 	if (_debug)
 		printDebug << "renormalizing integrals from " << _nmbEvents << " "
 		           << "to " << nmbEventsRenorm << " events." << endl;
-  for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
-	  for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
-		  _integrals[waveIndexI][waveIndexJ] *= (double)nmbEventsRenorm / _nmbEvents;
+	*this *= (double)nmbEventsRenorm / _nmbEvents;
   _nmbEvents = nmbEventsRenorm;
 }
 
@@ -426,8 +424,8 @@ ampIntegralMatrix::readAscii(istream& in)
 		return false;
 	}
 	// resize integral matrix
-	_integrals.clear();
-	_integrals.resize(nmbRows, vector<complex<double> >(nmbCols, 0));
+	//_integrals.clear();
+	_integrals.resize(extents[nmbRows][nmbCols]);
 	for (unsigned int i = 0; i < nmbRows; ++i)
     for (unsigned int j = 0; j < nmbCols; ++j) {
 	    if (not (in >> _integrals[i][j]) or in.eof()) {
@@ -459,8 +457,10 @@ ampIntegralMatrix::readAscii(istream& in)
 bool
 ampIntegralMatrix::writeAscii(const string& outFileName) const
 {
+	cout << "!!!HERE1" << endl;
 	if (_debug)
 		printDebug << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
+	cout << "!!!HERE2" << endl;
 	ofstream outFile(outFileName.c_str());
 	if (not outFile or not outFile.good()) {
 		printWarn << "cannot open file '" << outFileName << "' for writing of integral matrix" << endl;
@@ -656,7 +656,7 @@ ampIntegralMatrix::hasIdenticalWaveSet(const ampIntegralMatrix& integral) const
 	if (nmbWaves() != integral.nmbWaves())
 		return false;
 	// check that all waves in this integral are also in other integral
-	for (unsigned int i = 0; i < nmbWaves(); ++i)
+	for (unsigned int i = 0; i < _nmbWaves; ++i)
 		if (not integral.containsWave(waveName(i)))
 			return false;
 	// check that all waves in other integral are also in this integral
@@ -670,46 +670,24 @@ ampIntegralMatrix::hasIdenticalWaveSet(const ampIntegralMatrix& integral) const
 void
 ampIntegralMatrix::storeMultiArray()
 {
-	printDebug << std::endl;
-	// copy over data from _integrals
-	const unsigned int nWaves = nmbWaves();
-	_testIntegrals.resize(extents[nWaves][nWaves]);
-	for (unsigned int i = 0; i < nWaves; ++i)
-		for (unsigned int j = 0; j < nWaves; ++j)
-			_testIntegrals[i][j] = _integrals[i][j];
 	// set storage variables
-	_intStorageShape.resize(_testIntegrals.num_dimensions());
-	for (sizeType i = 0; i < _testIntegrals.num_dimensions(); ++i)
-		_intStorageShape[i] = _testIntegrals.shape()[i];
-	_intStorageNmbElements = _testIntegrals.num_elements();
-	_intStorageData        = _testIntegrals.data();
+	_intStorageShape.resize(_integrals.num_dimensions());
+	for (sizeType i = 0; i < _integrals.num_dimensions(); ++i)
+		_intStorageShape[i] = _integrals.shape()[i];
+	_intStorageNmbElements = _integrals.num_elements();
+	_intStorageData        = _integrals.data();
 }
 
 
 void
 ampIntegralMatrix::readMultiArray()
 {
-	printDebug << std::endl;
 	// rebuild multiarray from storage variables
-	assert(_intStorageShape.size() == _testIntegrals.num_dimensions());
-	_testIntegrals.resize(extents[_intStorageShape[0]][_intStorageShape[1]]);
-	complex<double>* data = _testIntegrals.data();
+	assert(_intStorageShape.size() == _integrals.num_dimensions());
+	_integrals.resize(extents[_intStorageShape[0]][_intStorageShape[1]]);
+	complex<double>* integralData = _integrals.data();
   for (unsigned int i = 0; i < _intStorageNmbElements; ++i)
-	 	data[i] = _intStorageData[i];
-  // check multiarray
-  const unsigned int nWaves    = nmbWaves();
-  bool               identical = true;
-	for (unsigned int i = 0; i < nWaves; ++i)
-		for (unsigned int j = 0; j < nWaves; ++j)
-			if (_testIntegrals[i][j] != _integrals[i][j]) {
-				printErr << "(multi array[" << i << "][" << j << "] = " << _testIntegrals[i][j]
-				         << " != " << _integrals[i][j] << endl;
-				identical = false;
-			}
-  if (identical)
-	  printSucc << "multi array is identical" << endl;
-  else
-	  printErr << "multi array differs" << endl;
+	 	integralData[i] = _intStorageData[i];
 }
 
 

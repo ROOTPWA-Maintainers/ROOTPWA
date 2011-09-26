@@ -76,12 +76,8 @@ main(int argc, char** argv)
 				// ampLeaf->setIncohSubAmp(complex<double>(i, -(double)j), j);
 				ampLeaf->setIncohSubAmp(complex<double>(gRandom->Rndm(), gRandom->Rndm()), j);
 			tree->Fill();
-			if (i < 10) {
-				cout << "written event " << i << ": ";
-				for (unsigned int j = 0; j < ampLeaf->nmbIncohSubAmps(); ++j)
-					cout << ampLeaf->incohSubAmp(j) << "   ";
-				cout << endl;
-			}
+			if (i < 5)
+				cout << "written event " << i << ": " << *ampLeaf << endl;
 		}
 		tree->Write();
 		outFile->Close();
@@ -95,13 +91,20 @@ main(int argc, char** argv)
 		tree->SetBranchAddress("amp", &ampLeaf);
 		for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);
-			if (i < 10) {
-				cout << "read event " << i << ": ";
-				for (unsigned int j = 0; j < ampLeaf->nmbIncohSubAmps(); ++j)
-					cout << ampLeaf->incohSubAmp(j) << "   ";
-				cout << endl;
-			}
+			if (i < 5)
+				cout << "read event " << i << ": " << *ampLeaf << endl;
 		}
+		
+		// test arthmetic functions
+		printInfo << "original: " << *ampLeaf << endl;
+		amplitudeTreeLeaf ampLeaf2(*ampLeaf);
+		printInfo << "copy: "<< ampLeaf2 << endl;
+		if (ampLeaf2 != *ampLeaf)
+			printErr << "problem with assignment" << endl;
+		amplitudeTreeLeaf ampLeaf3 = 0.1 * (*ampLeaf) + 0.9 * ampLeaf2;
+		printInfo << "arithmetic test: " << ampLeaf3 << endl;
+		if (ampLeaf3 != *ampLeaf)
+			printErr << "problem with arithmetic" << endl;
 	}
 
 #endif  // USE_STD_COMPLEX_TREE_LEAFS

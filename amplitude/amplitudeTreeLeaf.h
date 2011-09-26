@@ -50,14 +50,27 @@ namespace rpwa {
 
 
 	class amplitudeTreeLeaf : public TObject {
-	
+
 	public:
-			
+
 		amplitudeTreeLeaf();
 		virtual ~amplitudeTreeLeaf();
 
 		void clear();
 
+		amplitudeTreeLeaf& operator =(const amplitudeTreeLeaf& amp);
+
+		// friend bool operator ==(const amplitudeTreeLeaf& lhsAmp,
+		//                         const amplitudeTreeLeaf& rhsAmp);
+
+		// arithmetic operators for integrals
+		amplitudeTreeLeaf& operator +=(const amplitudeTreeLeaf&   amp);
+		amplitudeTreeLeaf& operator -=(const amplitudeTreeLeaf&   amp);
+		amplitudeTreeLeaf& operator *=(const double               factor);
+		amplitudeTreeLeaf& operator /=(const double               factor);
+		amplitudeTreeLeaf& operator *=(const std::complex<double> factor);
+		amplitudeTreeLeaf& operator /=(const std::complex<double> factor);
+		
 		// accessors
 		unsigned int         nmbIncohSubAmps()                             const { return _incohSubAmps.size();  }
 		std::complex<double> incohSubAmp    (const unsigned int index = 0) const { return _incohSubAmps[index];  }
@@ -66,15 +79,135 @@ namespace rpwa {
 		void setIncohSubAmp    (const std::complex<double> amp,
 		                        const unsigned int         index = 0) { _incohSubAmps[index] = amp;   }
 
+		std::ostream& print(std::ostream& out) const;  ///< prints amplitudes in human-readable form
+
+    static bool debug() { return _debug; }                             ///< returns debug flag
+    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+
 	private:
 
+	  static bool _debug;  ///< if set to true, debug messages are printed
+
 		std::vector<std::complex<double> > _incohSubAmps;  ///< sub amplitudes to be added incoherently in cross section
+
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 		ClassDef(amplitudeTreeLeaf,1)
 #endif
 
 	};
+
+
+	// comparison operators
+	inline
+	bool
+	operator ==(const amplitudeTreeLeaf& lhsAmp,
+	            const amplitudeTreeLeaf& rhsAmp)
+	{
+		const unsigned int nmbSubAmps = lhsAmp.nmbIncohSubAmps();
+		if (nmbSubAmps != lhsAmp.nmbIncohSubAmps())
+			return false;
+		for (unsigned int i = 0; i < nmbSubAmps; ++i)
+			if (lhsAmp.incohSubAmp(i) != rhsAmp.incohSubAmp(i))
+				return false;
+		return true;
+	}
+
+	inline
+	bool
+	operator !=(const amplitudeTreeLeaf& lhsAmp,
+	            const amplitudeTreeLeaf& rhsAmp)
+	{
+		return not(lhsAmp == rhsAmp);
+	}
+
+
+	// arithmetic operators for integrals
+	inline
+	amplitudeTreeLeaf
+	operator +(const amplitudeTreeLeaf& ampA,
+	           const amplitudeTreeLeaf& ampB)
+	{
+		amplitudeTreeLeaf result = ampA;
+		result += ampB;
+		return result;
+	}
+
+	inline
+	amplitudeTreeLeaf
+	operator -(const amplitudeTreeLeaf& ampA,
+	           const amplitudeTreeLeaf& ampB)
+	{
+		amplitudeTreeLeaf result = ampA;
+		result -= ampB;
+		return result;
+	}
+
+	inline
+	amplitudeTreeLeaf
+	operator *(const amplitudeTreeLeaf& amp,
+	           const double             factor)
+	{
+		amplitudeTreeLeaf result = amp;
+		result *= factor;
+		return result;
+	}
+
+	inline
+	amplitudeTreeLeaf
+	operator *(const double             factor,
+	           const amplitudeTreeLeaf& amp)
+	{
+		return amp * factor;
+	}
+
+	inline
+	amplitudeTreeLeaf
+	operator /(const amplitudeTreeLeaf& amp,
+	           const double             factor)
+	{
+		amplitudeTreeLeaf result = amp;
+		result /= factor;
+		return result;
+	}
+
+	inline
+	amplitudeTreeLeaf
+	operator *(const amplitudeTreeLeaf&   amp,
+	           const std::complex<double> factor)
+	{
+		amplitudeTreeLeaf result = amp;
+		result *= factor;
+		return result;
+	}
+
+	inline
+	amplitudeTreeLeaf
+	operator *(const std::complex<double> factor,
+	           const amplitudeTreeLeaf&   amp)
+	{
+		return amp * factor;
+	}
+
+	inline
+	amplitudeTreeLeaf
+	operator /(const amplitudeTreeLeaf&   amp,
+	           const std::complex<double> factor)
+	{
+		amplitudeTreeLeaf result = amp;
+		result /= factor;
+		return result;
+	}
+
+
+	inline
+	std::ostream&
+	operator <<(std::ostream&            out,
+	            const amplitudeTreeLeaf& amp)
+	{
+		return amp.print(out);
+	}
 
 
 }  // namespace rpwa

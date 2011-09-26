@@ -38,6 +38,7 @@
 
 #include "TClass.h"
 
+#include "reportingUtils.hpp"
 #include "amplitudeTreeLeaf.h"
 
 	
@@ -50,11 +51,14 @@ ClassImp(amplitudeTreeLeaf);
 #endif
 
 
+bool amplitudeTreeLeaf::_debug = false;
+
+
 amplitudeTreeLeaf::amplitudeTreeLeaf()
-	: TObject()
+	: TObject      (),
+	  _incohSubAmps()
 {
 	amplitudeTreeLeaf::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
-	clear();
 }
 
 
@@ -65,4 +69,103 @@ amplitudeTreeLeaf::~amplitudeTreeLeaf()
 void amplitudeTreeLeaf::clear()
 {
 	_incohSubAmps.clear();
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator =(const amplitudeTreeLeaf& amp)
+{
+	if (this != &amp) {
+		TObject::operator =(amp);
+		_incohSubAmps     = amp._incohSubAmps;
+	}
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator +=(const amplitudeTreeLeaf& amp)
+{
+	const unsigned int nmbSubAmps = nmbIncohSubAmps();
+	if (nmbSubAmps != amp.nmbIncohSubAmps()) {
+		printErr << "cannot add " << *this << endl
+		         << "and " << amp << endl
+		         << "because the two amplitudes have different number of incoherent sub-amplitudes. "
+		         << "aborting." << endl;
+		throw;
+	}
+	for (unsigned int i = 0; i < nmbSubAmps; ++i)
+		_incohSubAmps[i] += amp.incohSubAmp(i);
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator -=(const amplitudeTreeLeaf& amp)
+{
+	const unsigned int nmbSubAmps = nmbIncohSubAmps();
+	if (nmbSubAmps != amp.nmbIncohSubAmps()) {
+		printErr << "cannot subtract " << amp << endl
+		         << "from " << *this << endl
+		         << "because the two amplitudes have different number of incoherent sub-amplitudes. "
+		         << "aborting." << endl;
+		throw;
+	}
+	for (unsigned int i = 0; i < nmbSubAmps; ++i)
+		_incohSubAmps[i] -= amp.incohSubAmp(i);
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator *=(const double factor)
+{
+	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+		_incohSubAmps[i] *= factor;
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator /=(const double factor)
+{
+	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+		_incohSubAmps[i] /= factor;
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator *=(const complex<double> factor)
+{
+	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+		_incohSubAmps[i] *= factor;
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator /=(const complex<double> factor)
+{
+	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+		_incohSubAmps[i] /= factor;
+	return *this;
+}
+
+
+ostream&
+amplitudeTreeLeaf::print(ostream& out) const
+{
+	out << "amplitude tree leaf:"  << endl;
+	const unsigned int nmbSubAmps = nmbIncohSubAmps();
+	if (nmbSubAmps > 1) {
+		out << "    number of incoherent sub-amps ... " << nmbSubAmps << endl;
+		out << "    amplitude value(s):" << endl;
+		for (unsigned int i = 0; i < nmbSubAmps; ++i)
+			out << "        [" << setw(4) << i << "] = " << maxPrecisionDouble(_incohSubAmps[i]) << endl;
+	} else if (nmbSubAmps == 1)
+		out << "    amplitude ... " << _incohSubAmps[0] << endl;
+	else
+		out << "    no amplitude value" << endl;
+	return out;
 }
