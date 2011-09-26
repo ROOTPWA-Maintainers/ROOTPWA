@@ -67,7 +67,7 @@ namespace rpwa {
 	class ampIntegralMatrix : public TObject {
 
 
-		typedef std::map<std::string, unsigned int>::const_iterator waveNameWaveIndexMapIterator;
+		typedef std::map<std::string, unsigned int>::const_iterator waveNameToWaveIndexMapIterator;
 
 
 	public:
@@ -156,10 +156,10 @@ namespace rpwa {
 
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
-		unsigned int                        _nmbWaves;              ///< number of waves in integral
-		std::map<std::string, unsigned int> _waveNameWaveIndexMap;  ///< maps wave names to wave indices
-		std::vector<std::string>            _waveIndexWaveNameMap;  ///< maps wave indices to wave names
-		unsigned long                       _nmbEvents;             ///< number of events in integral matrix
+		unsigned int                        _nmbWaves;                ///< number of waves in integral
+		std::map<std::string, unsigned int> _waveNameToWaveIndexMap;  ///< maps wave names to wave indices
+		std::vector<std::string>            _waveNames;               ///< maps wave indices to wave names
+		unsigned long                       _nmbEvents;               ///< number of events in integral matrix
 
 		void storeMultiArray();  ///< copies multiarray into storage variables written to ROOT file
 		void readMultiArray ();  ///< rebuilds multiarray from storage variables read from ROOT file

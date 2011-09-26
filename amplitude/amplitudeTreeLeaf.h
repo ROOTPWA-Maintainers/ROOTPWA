@@ -54,6 +54,10 @@ namespace rpwa {
 
 	class amplitudeTreeLeaf : public TObject {
 
+
+		typedef std::map<std::string, unsigned int>::const_iterator labelToIndexMapIterator;
+
+
 	public:
 
 		amplitudeTreeLeaf();
@@ -77,16 +81,23 @@ namespace rpwa {
 		// accessors
 		unsigned int nmbIncohSubAmps() const { return _incohSubAmps.size(); }  ///< returns number of incoherent subamps
 
-		const std::complex<double>& incohSubAmp(const unsigned int index = 0) const
-		{ return _incohSubAmps[index]; }  ///< returns incoherent subamp at index
-		const std::complex<double>& amp        ()                             const
-		{ return incohSubAmp(0);       }  ///< returns first incoherent subamp (meant for cases where there is only one amplitude)
+		bool               containsIncohSubAmp(const std::string& subAmpLabel) const; 
+		unsigned int       incohSubAmpIndex   (const std::string& subAmpLabel) const;
+		const std::string& incohSubAmpName    (const unsigned int subAmpIndex) const;
+
+		const std::complex<double>& incohSubAmp(const unsigned int index = 0  ) const
+		{ return _incohSubAmps[index];                         }  ///< returns incoherent subamp at index
+		const std::complex<double>& incohSubAmp(const std::string& subAmpLabel) const
+		{ return _incohSubAmps[incohSubAmpIndex(subAmpLabel)]; }  ///< returns incoherent subamp at index
+
+		const std::complex<double>& amp() const	{ return incohSubAmp(0);       }  ///< returns first incoherent subamp (meant for cases where there is only one amplitude)
 
 		void defineIncohSubAmps(const std::vector<std::string>& subAmpLabels);  ///< defines number of subamps for this amplitude and their labels; vector has to be more than one entry
 
 		void setIncohSubAmp(const std::complex<double>& amp,
 		                    const unsigned int          index = 0) { _incohSubAmps[index] = amp; }  ///< sets incoherent subamp defined by index
-		void setAmp        (const std::complex<double>& amp      ) { setIncohSubAmp(amp, 0);     }  ///< returns first incoherent subamp (meant for cases where there is only one amplitude)
+
+		void setAmp (const std::complex<double>& amp) { setIncohSubAmp(amp, 0); }  ///< returns first incoherent subamp (meant for cases where there is only one amplitude)
 
 		std::ostream& print(std::ostream& out) const;  ///< prints amplitudes in human-readable form
 

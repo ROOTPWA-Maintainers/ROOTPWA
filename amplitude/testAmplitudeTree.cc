@@ -82,10 +82,14 @@ main(int argc, char** argv)
 				ampLeaf->setIncohSubAmp(complex<double>(gRandom->Rndm(), gRandom->Rndm()), j);
 			tree->Fill();
 			if (i < 5)
-				cout << "written event " << i << ": " << *ampLeaf << endl;
+				cout << "written event " << i << ": " << *ampLeaf;
 		}
+		cout << endl;
 		tree->Write();
 		outFile->Close();
+		for (unsigned int i = 0; i < subAmpLabels.size(); ++i)
+			cout << subAmpLabels[i] << ": ["  << ampLeaf->incohSubAmpIndex(subAmpLabels[i]) << "]" << endl;
+		cout << endl;
 	}
 
 	if (1) {
@@ -97,8 +101,9 @@ main(int argc, char** argv)
 		for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);
 			if (i < 5)
-				cout << "read event " << i << ": " << *ampLeaf << endl;
+				cout << "read event " << i << ": " << *ampLeaf;
 		}
+		cout << endl;
 		
 		// test arthmetic functions
 		printInfo << "original: " << *ampLeaf << endl;

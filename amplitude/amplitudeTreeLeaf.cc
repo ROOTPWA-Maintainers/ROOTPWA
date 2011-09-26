@@ -160,6 +160,40 @@ amplitudeTreeLeaf::operator /=(const complex<double>& factor)
 }
 
 
+bool
+amplitudeTreeLeaf::containsIncohSubAmp(const string& subAmpLabel) const
+{
+	labelToIndexMapIterator entry = _labelToIndexMap.find(subAmpLabel);
+	if (entry == _labelToIndexMap.end())
+		return false;
+	return true;
+}
+
+
+unsigned int
+amplitudeTreeLeaf::incohSubAmpIndex(const string& subAmpLabel) const
+{
+	labelToIndexMapIterator entry = _labelToIndexMap.find(subAmpLabel);
+	if (entry == _labelToIndexMap.end()) {
+		printErr << "cannot find subamp '" << subAmpLabel << "'. aborting." << endl;
+		throw;
+	}
+	return entry->second;
+}
+
+
+const string&
+amplitudeTreeLeaf::incohSubAmpName(const unsigned int subAmpIndex) const
+{
+	if (subAmpIndex < _incohSubAmpLabels.size())
+		return _incohSubAmpLabels[subAmpIndex];
+	else {
+		printErr << "subamp index " << subAmpIndex << " is out of range. aborting." << endl;
+		throw;
+	}
+}
+
+
 void
 amplitudeTreeLeaf::defineIncohSubAmps(const vector<string>& subAmpLabels)
 {
