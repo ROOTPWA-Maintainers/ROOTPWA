@@ -69,7 +69,11 @@ bool ampIntegralMatrix::_debug = false;
 ampIntegralMatrix::ampIntegralMatrix()
 	: TObject   (),
 	  _nmbWaves (0),
-	  _nmbEvents(0)
+	  _nmbEvents(0),
+	  _testIntegrals(),
+	  _intStorageShape(),
+	  _intStorageNmbElements(0),
+	  _intStorageData(0)	  
 {
 	ampIntegralMatrix::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
@@ -663,6 +667,52 @@ ampIntegralMatrix::hasIdenticalWaveSet(const ampIntegralMatrix& integral) const
 }
 
 
+void
+ampIntegralMatrix::storeMultiArray()
+{
+	printDebug << std::endl;
+	// copy over data from _integrals
+	const unsigned int nWaves = nmbWaves();
+	_testIntegrals.resize(extents[nWaves][nWaves]);
+	for (unsigned int i = 0; i < nWaves; ++i)
+		for (unsigned int j = 0; j < nWaves; ++j)
+			_testIntegrals[i][j] = _integrals[i][j];
+	// set storage variables
+	_intStorageShape.resize(_testIntegrals.num_dimensions());
+	for (sizeType i = 0; i < _testIntegrals.num_dimensions(); ++i)
+		_intStorageShape[i] = _testIntegrals.shape()[i];
+	_intStorageNmbElements = _testIntegrals.num_elements();
+	_intStorageData        = _testIntegrals.data();
+}
+
+
+void
+ampIntegralMatrix::readMultiArray()
+{
+	printDebug << std::endl;
+	// rebuild multiarray from storage variables
+	assert(_intStorageShape.size() == _testIntegrals.num_dimensions());
+	_testIntegrals.resize(extents[_intStorageShape[0]][_intStorageShape[1]]);
+	complex<double>* data = _testIntegrals.data();
+  for (unsigned int i = 0; i < _intStorageNmbElements; ++i)
+	 	data[i] = _intStorageData[i];
+  // check multiarray
+  const unsigned int nWaves    = nmbWaves();
+  bool               identical = true;
+	for (unsigned int i = 0; i < nWaves; ++i)
+		for (unsigned int j = 0; j < nWaves; ++j)
+			if (_testIntegrals[i][j] != _integrals[i][j]) {
+				printErr << "(multi array[" << i << "][" << j << "] = " << _testIntegrals[i][j]
+				         << " != " << _integrals[i][j] << endl;
+				identical = false;
+			}
+  if (identical)
+	  printSucc << "multi array is identical" << endl;
+  else
+	  printErr << "multi array differs" << endl;
+}
+
+
 // custom streamer that triggers copying of multiarray into C struct
 // before writing and rebuilding of multiarrays after reading
 //
@@ -679,9 +729,9 @@ ampIntegralMatrix::Streamer(TBuffer& R__b)
 {
 	if (R__b.IsReading()) {
 		R__b.ReadClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
-		unpackMultiArray();
+		readMultiArray();
 	} else {
-		packMultiArray();
+		storeMultiArray();
 		R__b.WriteClassBuffer(rpwa::ampIntegralMatrix::Class(), this);
 	}
 }

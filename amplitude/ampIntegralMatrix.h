@@ -75,6 +75,8 @@ namespace rpwa {
 		typedef std::map<std::string, unsigned int>::const_iterator waveNameWaveIndexMapIterator;
 #ifndef __CINT__
 		typedef boost::multi_array<std::complex<double>, 2>         testType;
+		typedef testType::size_type                                 sizeType;
+		typedef testType::value_type                                valueType;
 #endif
 
 
@@ -150,9 +152,7 @@ namespace rpwa {
 
 		bool hasIdenticalWaveSet(const ampIntegralMatrix& integral) const;  ///< checks whether other integral matrix has exactly the same set of waves
 
-		void packMultiArray  () { printDebug << std::endl; }  ///< copies multiarray into C struct so that it written to ROOT file
-		void unpackMultiArray() { printDebug << std::endl; }  ///< rebuilds multiarray from C struct read from ROOT file
-		
+
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
 		unsigned int                        _nmbWaves;              ///< number of waves in integral
@@ -161,9 +161,15 @@ namespace rpwa {
 		unsigned long                       _nmbEvents;             ///< number of events in integral matrix
 		integralMatrixType                  _integrals;             ///< integral matrix
 
+
+		void storeMultiArray();  ///< copies multiarray into storage variables written to ROOT file
+		void readMultiArray ();  ///< rebuilds multiarray from storage variables read from ROOT file
 #ifndef __CINT__
-		testType _testIntegral;  //!
+		testType _testIntegrals;  //!
 #endif
+		std::vector<unsigned int> _intStorageShape;
+		unsigned int              _intStorageNmbElements;
+		std::complex<double>*     _intStorageData;  //[_intStorageNmbElements]
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
