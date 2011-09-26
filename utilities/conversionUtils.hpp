@@ -72,11 +72,10 @@ namespace rpwa {
 	}
 
 
-	// conversion functions from std::vector to C array
 	template<typename T>
 	inline
 	const T*
-	toArray(const std::vector<T>& vec)
+	toArray(const std::vector<T>& vec)  ///< returns underlying array of vector
 	{
 		return &(*(vec.begin()));
 	}
@@ -84,7 +83,7 @@ namespace rpwa {
 	template<typename T>
 	inline
 	T*
-	toArray(std::vector<T>& vec)
+	toArray(std::vector<T>& vec)  ///< returns underlying array of vector
 	{
 		return &(*(vec.begin()));
 	}
@@ -93,7 +92,7 @@ namespace rpwa {
 	inline
 	const T*
 	toArray(std::size_t&          size,
-	        const std::vector<T>& vec)
+	        const std::vector<T>& vec)  ///< returns underlying array of vector and its size
 	{
 		size = vec.size();
 		return &(*(vec.begin()));
@@ -103,7 +102,7 @@ namespace rpwa {
 	inline
 	T*
 	toArray(std::size_t&    size,
-	        std::vector<T>& vec)
+	        std::vector<T>& vec)  ///< returns underlying array of vector and its size
 	{
 		size = vec.size();
 		return &(*(vec.begin()));
@@ -113,7 +112,7 @@ namespace rpwa {
 	template<typename T>
 	inline
 	std::string
-	toString(const T& fromValue)
+	toString(const T& fromValue)  ///< converts any type into string that has output stream operator defined
 	{
 		std::ostringstream to;
 		to << fromValue;
@@ -172,7 +171,7 @@ namespace rpwa {
 	{
 		return (qn != 0) ? sign(qn) : "";
 	}
-
+	
 
 }  // namespace rpwa
 

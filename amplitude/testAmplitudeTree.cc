@@ -35,6 +35,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/assign/list_of.hpp>
+
 #include "TROOT.h"
 #include "TFile.h"
 #include "TTree.h"
@@ -45,6 +47,7 @@
 
 
 using namespace std;
+using namespace boost::assign;
 using namespace rpwa;
 
 
@@ -65,13 +68,15 @@ main(int argc, char** argv)
 	gROOT->ProcessLine("#include <complex>");
 	
 	if (1) {
-		TFile*             outFile = TFile::Open("testAmplitudeTree.root", "RECREATE");
-		amplitudeTreeLeaf* ampLeaf = new amplitudeTreeLeaf();
-		TTree*             tree    = new TTree("test", "test");
+		TFile*               outFile      = TFile::Open("testAmplitudeTree.root", "RECREATE");
+		amplitudeTreeLeaf*   ampLeaf      = new amplitudeTreeLeaf();
+		const vector<string> subAmpLabels = list_of("lambda=-1")("lambda=0")("lambda=+1");
+		TTree*               tree         = new TTree("test", "test");
+
 		tree->Branch("amp", &ampLeaf);
 		for (unsigned int i = 0; i < nmbEvents; ++i) {
 			ampLeaf->clear();
-			ampLeaf->setNmbIncohSubAmps(nmbIncohSubAmps);
+			ampLeaf->defineIncohSubAmps(subAmpLabels);
 			for (unsigned int j = 0; j < nmbIncohSubAmps; ++j)
 				// ampLeaf->setIncohSubAmp(complex<double>(i, -(double)j), j);
 				ampLeaf->setIncohSubAmp(complex<double>(gRandom->Rndm(), gRandom->Rndm()), j);

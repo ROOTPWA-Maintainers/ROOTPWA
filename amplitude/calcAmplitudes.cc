@@ -245,10 +245,11 @@ main(int    argc,
 		waveDesc.Write((waveName + ".key").c_str());
 		// create output tree
 		ampTreeLeaf = new amplitudeTreeLeaf();
-		ampTreeLeaf->setNmbIncohSubAmps(1);
 		const string ampTreeName = waveName + ".amp";
 		ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
-		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, 256000, 99);
+		const int splitLevel = 99;
+		const int bufSize    = 256000;
+		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, bufSize, splitLevel);
 	} else
 #endif
 		{
@@ -287,7 +288,7 @@ main(int    argc,
 	for (unsigned int i = 0; i < ampValues.size(); ++i) {
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 		if (ampFileRoot) {
-			ampTreeLeaf->setIncohSubAmp(ampValues[i]);
+			ampTreeLeaf->setAmp(ampValues[i]);
 			ampTree->Fill();
 		}
 #endif

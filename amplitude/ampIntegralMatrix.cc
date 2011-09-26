@@ -457,10 +457,8 @@ ampIntegralMatrix::readAscii(istream& in)
 bool
 ampIntegralMatrix::writeAscii(const string& outFileName) const
 {
-	cout << "!!!HERE1" << endl;
 	if (_debug)
 		printDebug << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
-	cout << "!!!HERE2" << endl;
 	ofstream outFile(outFileName.c_str());
 	if (not outFile or not outFile.good()) {
 		printWarn << "cannot open file '" << outFileName << "' for writing of integral matrix" << endl;

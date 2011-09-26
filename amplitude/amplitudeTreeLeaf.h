@@ -25,8 +25,10 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      TTree leaf persistency storage class for amplitude information
-//      needed by fit program
+//      TTree leaf storage class for amplitude information
+//
+//      class allows to define named subamplitudes that are summed
+//      incoherently in the intensity formula
 //
 //
 // Author List:
@@ -41,6 +43,7 @@
 
 
 #include <vector>
+#include <map>
 #include <complex>
 
 #include "TObject.h"
@@ -56,28 +59,34 @@ namespace rpwa {
 		amplitudeTreeLeaf();
 		virtual ~amplitudeTreeLeaf();
 
-		void clear();
+		void clear();  ///< clears all subamps and subamp labels
 
 		amplitudeTreeLeaf& operator =(const amplitudeTreeLeaf& amp);
 
-		// friend bool operator ==(const amplitudeTreeLeaf& lhsAmp,
-		//                         const amplitudeTreeLeaf& rhsAmp);
+		friend bool operator ==(const amplitudeTreeLeaf& lhsAmp,
+		                        const amplitudeTreeLeaf& rhsAmp);
 
 		// arithmetic operators for integrals
-		amplitudeTreeLeaf& operator +=(const amplitudeTreeLeaf&   amp);
-		amplitudeTreeLeaf& operator -=(const amplitudeTreeLeaf&   amp);
-		amplitudeTreeLeaf& operator *=(const double               factor);
-		amplitudeTreeLeaf& operator /=(const double               factor);
-		amplitudeTreeLeaf& operator *=(const std::complex<double> factor);
-		amplitudeTreeLeaf& operator /=(const std::complex<double> factor);
+		amplitudeTreeLeaf& operator +=(const amplitudeTreeLeaf&    amp);     ///< adds all subamps of two amplitudeTreeLeafs with same set of subamps
+		amplitudeTreeLeaf& operator -=(const amplitudeTreeLeaf&    amp);     ///< subtracts all subamps of two amplitudeTreeLeafs with same set of subamps
+		amplitudeTreeLeaf& operator *=(const double                factor);  ///< muliplies all subamps with factor
+		amplitudeTreeLeaf& operator /=(const double                factor);  ///< divides all subamps by factor
+		amplitudeTreeLeaf& operator *=(const std::complex<double>& factor);  ///< muliplies all subamps with factor
+		amplitudeTreeLeaf& operator /=(const std::complex<double>& factor);  ///< divides all subamps by factor
 		
 		// accessors
-		unsigned int         nmbIncohSubAmps()                             const { return _incohSubAmps.size();  }
-		std::complex<double> incohSubAmp    (const unsigned int index = 0) const { return _incohSubAmps[index];  }
+		unsigned int nmbIncohSubAmps() const { return _incohSubAmps.size(); }  ///< returns number of incoherent subamps
 
-		void setNmbIncohSubAmps(const unsigned int         nmb)	      { _incohSubAmps.resize(nmb, 0); }
-		void setIncohSubAmp    (const std::complex<double> amp,
-		                        const unsigned int         index = 0) { _incohSubAmps[index] = amp;   }
+		const std::complex<double>& incohSubAmp(const unsigned int index = 0) const
+		{ return _incohSubAmps[index]; }  ///< returns incoherent subamp at index
+		const std::complex<double>& amp        ()                             const
+		{ return incohSubAmp(0);       }  ///< returns first incoherent subamp (meant for cases where there is only one amplitude)
+
+		void defineIncohSubAmps(const std::vector<std::string>& subAmpLabels);  ///< defines number of subamps for this amplitude and their labels; vector has to be more than one entry
+
+		void setIncohSubAmp(const std::complex<double>& amp,
+		                    const unsigned int          index = 0) { _incohSubAmps[index] = amp; }  ///< sets incoherent subamp defined by index
+		void setAmp        (const std::complex<double>& amp      ) { setIncohSubAmp(amp, 0);     }  ///< returns first incoherent subamp (meant for cases where there is only one amplitude)
 
 		std::ostream& print(std::ostream& out) const;  ///< prints amplitudes in human-readable form
 
@@ -87,9 +96,13 @@ namespace rpwa {
 
 	private:
 
+		void rebuildSubAmpLabelMap();  ///< rebuilds label-to-index map for subamps
+
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
-		std::vector<std::complex<double> > _incohSubAmps;  ///< sub amplitudes to be added incoherently in cross section
+		std::vector<std::complex<double> >  _incohSubAmps;       ///< sub amplitudes to be added incoherently in cross section
+		std::vector<std::string>            _incohSubAmpLabels;  ///< labels for subamps
+		std::map<std::string, unsigned int> _labelToIndexMap;    //! ///< maps subamp labels to indices
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
@@ -174,8 +187,8 @@ namespace rpwa {
 
 	inline
 	amplitudeTreeLeaf
-	operator *(const amplitudeTreeLeaf&   amp,
-	           const std::complex<double> factor)
+	operator *(const amplitudeTreeLeaf&    amp,
+	           const std::complex<double>& factor)
 	{
 		amplitudeTreeLeaf result = amp;
 		result *= factor;
@@ -184,16 +197,16 @@ namespace rpwa {
 
 	inline
 	amplitudeTreeLeaf
-	operator *(const std::complex<double> factor,
-	           const amplitudeTreeLeaf&   amp)
+	operator *(const std::complex<double>& factor,
+	           const amplitudeTreeLeaf&    amp)
 	{
 		return amp * factor;
 	}
 
 	inline
 	amplitudeTreeLeaf
-	operator /(const amplitudeTreeLeaf&   amp,
-	           const std::complex<double> factor)
+	operator /(const amplitudeTreeLeaf&    amp,
+	           const std::complex<double>& factor)
 	{
 		amplitudeTreeLeaf result = amp;
 		result /= factor;
