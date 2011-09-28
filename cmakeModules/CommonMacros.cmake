@@ -72,9 +72,20 @@ endfunction(make_executable)
 
 macro(enforce_out_of_source_build)
   if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-    message(FATAL_ERROR "Building this project in the source directory is not allowed. Please remove CMakeCache.txt, create a build directory, and run cmake there, for example:
+    message(FATAL_ERROR "Building this project in the source directory is not allowed. "
+			"Please remove CMakeCache.txt, create a build directory, and run cmake there, for example:
 rm CMakeCache.txt
 mkdir build && cd build
 cmake ..")
   endif()
 endmacro(enforce_out_of_source_build)
+
+
+# removes item from property list of enabled features and adds it to the list of disabled ones
+function(disable_feature FEATURE_NAME)
+	set(${FEATURE_NAME}_FOUND FALSE)
+	get_property(_FEATURES GLOBAL PROPERTY ENABLED_FEATURES)
+	list(REMOVE_ITEM _FEATURES ${FEATURE_NAME})
+	set_property(GLOBAL PROPERTY ENABLED_FEATURES ${_FEATURES})
+	set_property(GLOBAL APPEND PROPERTY DISABLED_FEATURES ${FEATURE_NAME})
+endfunction(disable_feature)

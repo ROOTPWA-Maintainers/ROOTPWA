@@ -53,6 +53,7 @@ project(ROOTPWA)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
 message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'")
 include(CommonMacros)
+include(FeatureSummary)
 
 
 # force out-of-source builds.
@@ -63,8 +64,14 @@ enforce_out_of_source_build()
 if(NOT UNIX)
   message(FATAL_ERROR "This is an unsupported system.")
 endif()
+# requires Cmake V2.8.5
+#include(ProcessorCount)
+#ProcessorCount(NMB_CPU_CORES)
+# message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
+# 	"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
+# 	"number of CPU cores ${NMB_CPU_CORES}")
 message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-	"'${CMAKE_HOST_SYSTEM_VERSION}' architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
+	"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
 message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}' "
 	"architecture '${CMAKE_SYSTEM_PROCESSOR}'")
 
@@ -99,6 +106,7 @@ foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
 		"for build type ${_BUILD_TYPE}")
 endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
+#include(CMakePrintSystemInformation)
 
 
 # redirect output files
@@ -112,6 +120,7 @@ message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 # set(Boost_DEBUG 1)
 find_package(Boost 1.43.0 REQUIRED)
+set_feature_info(Boost "C++ Template Library" "http://www.boost.org/")
 if(Boost_FOUND)
 	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
   message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'")
@@ -131,10 +140,13 @@ message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUD
 # setup libconfig
 # environment variable $LIBCONFIG is expected to point to libconfig location
 find_package(Libconfig 1.4 REQUIRED)
+set_feature_info(Libconfig "simple C++ library for processing structured configuration files"
+	"http://www.hyperrealm.com/libconfig/")
 
 
 # setup ROOT includes and libraries
 find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
+set_feature_info(ROOT "C++ HEP analysis framework" "http://root.cern.ch/")
 # some code switches that depend on ROOT version
 # std::complex is not supported as TTree leaf in ROOT versions below 5.27.06
 if(NOT ROOT_VERSION VERSION_LESS "5.27.06")
@@ -154,7 +166,9 @@ if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
   # use default SDK path, if not defined by user
   set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
 endif()
-find_package(CUDA 3.0)
+find_package(CUDA 4.0)
+set_feature_info(CUDA "nvidia GPGPU framework" "http://developer.nvidia.com/category/zone/cuda-zone"
+	"optional")
 set(USE_CUDA FALSE)
 if(NOT CUDA_FOUND)
   set(USE_CUDA FALSE)
@@ -206,10 +220,15 @@ else()
     endif()
   endif()
 endif()
+if(NOT USE_CUDA)
+	disable_feature(CUDA)
+endif()
 
 
 # setup MPI
 find_package(MPI)
+set_feature_info(MPI "standardized and portable message-passing system for parallel computing"
+	"http://www.boost.org/doc/libs/1_47_0/doc/html/mpi.html" "optional")
 set(USE_MPI FALSE)
 if(NOT MPI_FOUND)
   set(USE_MPI FALSE)
@@ -239,6 +258,7 @@ else()
     message(STATUS "Enabling compilation of MPI components")
     add_definitions(-DUSE_MPI)
   else()
+		disable_feature(MPI)
     message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). "
 			"No MPI components will be generated.")
   endif()
@@ -247,6 +267,8 @@ endif()
 
 # make SVN version string accessible via predefined macro SVN_VERSION
 find_package(Subversion)
+set_feature_info(Subversion "software versioning and a revision control system"
+	"http://subversion.apache.org/" "needed only to determine repository revision")
 if(Subversion_FOUND)
   # unfortunately CMAKE only parses 'svn info'
   find_program(SVNVERSION_EXECUTABLE
@@ -279,6 +301,7 @@ endif()
 
 # setup doxygen
 find_package(Doxygen)
+set_feature_info(Doxygen "documentation generator" "http://www.doxygen.org/" "optional")
 if(NOT DOXYGEN_FOUND)
   message(WARNING "Cannot find Doxygen. No documentation will be generated.")
 else()
@@ -418,6 +441,11 @@ add_subdirectory(gui/src)
 if(USE_MPI)
   add_subdirectory(mpi)
 endif()
+
+
+print_enabled_features()
+print_disabled_features()
+#feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES) requires V2.8.5+
 
 
 message(STATUS "Run 'make' to build the project.")

@@ -66,6 +66,10 @@
 #//          set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})  # append dictionary to sources
 #//
 #//
+#// Author List:
+#//      Boris Grube          TUM            (original author)
+#//
+#//
 #//-------------------------------------------------------------------------
 
 
