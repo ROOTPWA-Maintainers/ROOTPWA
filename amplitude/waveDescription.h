@@ -85,16 +85,10 @@ namespace rpwa {
 		static bool writeKeyFile(std::ostream& out,
 		                         const T&      topoOrAmp,
 		                         const bool    writeProdVert = true);  ///< writes keys from decay topology or amplitude to stream
-		// static bool writeKeyFile(std::ostream&              out,
-		//                          const isobarAmplitude&     amplitude,
-		//                          const bool                 writeProdVert = true);  ///< creates key file from amplitude
 		template<class T>
 		static bool writeKeyFile(const std::string& keyFileName,
 		                         const T&           topoOrAmp,
 		                         const bool         writeProdVert = true);  ///< creates key file from decay topology or amplitude
-		// static bool writeKeyFile(const std::string&         keyFileName,
-		//                          const isobarAmplitude&     amplitude,
-		//                          const bool                 writeProdVert = true);  ///< creates key file from amplitude
 
 		static std::string waveNameFromTopology
 		(isobarDecayTopology         topo,
@@ -170,6 +164,7 @@ namespace rpwa {
 
 
 	template<class T>
+	inline
 	bool
 	waveDescription::writeKeyFile(std::ostream& out,
 	                              const T&      topoOrAmp,
@@ -213,6 +208,7 @@ namespace rpwa {
 
 
 	template<class T>
+	inline
 	bool
 	waveDescription::writeKeyFile(const std::string& keyFileName,
 	                              const T&           topoOrAmp,

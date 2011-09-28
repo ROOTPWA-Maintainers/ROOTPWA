@@ -71,12 +71,13 @@ namespace rpwa {
 		                        const amplitudeTreeLeaf& rhsAmp);
 
 		// arithmetic operators for integrals
-		amplitudeTreeLeaf& operator +=(const amplitudeTreeLeaf&    amp);     ///< adds all subamps of two amplitudeTreeLeafs with same set of subamps
-		amplitudeTreeLeaf& operator -=(const amplitudeTreeLeaf&    amp);     ///< subtracts all subamps of two amplitudeTreeLeafs with same set of subamps
-		amplitudeTreeLeaf& operator *=(const double                factor);  ///< muliplies all subamps with factor
-		amplitudeTreeLeaf& operator /=(const double                factor);  ///< divides all subamps by factor
-		amplitudeTreeLeaf& operator *=(const std::complex<double>& factor);  ///< muliplies all subamps with factor
-		amplitudeTreeLeaf& operator /=(const std::complex<double>& factor);  ///< divides all subamps by factor
+		amplitudeTreeLeaf& operator +=(const amplitudeTreeLeaf& amp);     ///< adds all subamps of two amplitudeTreeLeafs with same set of subamps
+		amplitudeTreeLeaf& operator -=(const amplitudeTreeLeaf& amp);     ///< subtracts all subamps of two amplitudeTreeLeafs with same set of subamps
+
+		template<typename T>
+		amplitudeTreeLeaf& operator *=(const T& factor);  ///< muliplies all subamps with factor
+		template<typename T>
+		amplitudeTreeLeaf& operator /=(const T& factor);  ///< divides all subamps by factor
 		
 		// accessors
 		unsigned int nmbIncohSubAmps() const { return _incohSubAmps.size(); }  ///< returns number of incoherent subamps
@@ -148,6 +149,28 @@ namespace rpwa {
 
 
 	// arithmetic operators for integrals
+	template<typename T>
+	inline
+	amplitudeTreeLeaf&
+	amplitudeTreeLeaf::operator *=(const T& factor)
+	{
+		for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+			_incohSubAmps[i] *= factor;
+		return *this;
+	}
+
+
+	template<typename T>
+	inline
+	amplitudeTreeLeaf&
+	amplitudeTreeLeaf::operator /=(const T& factor)
+	{
+		for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+			_incohSubAmps[i] /= factor;
+		return *this;
+	}
+
+
 	inline
 	amplitudeTreeLeaf
 	operator +(const amplitudeTreeLeaf& ampA,
@@ -168,56 +191,31 @@ namespace rpwa {
 		return result;
 	}
 
+	template<typename T>
 	inline
 	amplitudeTreeLeaf
 	operator *(const amplitudeTreeLeaf& amp,
-	           const double             factor)
+	           const T&                 factor)
 	{
 		amplitudeTreeLeaf result = amp;
 		result *= factor;
 		return result;
 	}
 
+	template<typename T>
 	inline
 	amplitudeTreeLeaf
-	operator *(const double             factor,
+	operator *(const T&                 factor,
 	           const amplitudeTreeLeaf& amp)
 	{
 		return amp * factor;
 	}
 
+	template<typename T>
 	inline
 	amplitudeTreeLeaf
 	operator /(const amplitudeTreeLeaf& amp,
-	           const double             factor)
-	{
-		amplitudeTreeLeaf result = amp;
-		result /= factor;
-		return result;
-	}
-
-	inline
-	amplitudeTreeLeaf
-	operator *(const amplitudeTreeLeaf&    amp,
-	           const std::complex<double>& factor)
-	{
-		amplitudeTreeLeaf result = amp;
-		result *= factor;
-		return result;
-	}
-
-	inline
-	amplitudeTreeLeaf
-	operator *(const std::complex<double>& factor,
-	           const amplitudeTreeLeaf&    amp)
-	{
-		return amp * factor;
-	}
-
-	inline
-	amplitudeTreeLeaf
-	operator /(const amplitudeTreeLeaf&    amp,
-	           const std::complex<double>& factor)
+	           const T&                 factor)
 	{
 		amplitudeTreeLeaf result = amp;
 		result /= factor;

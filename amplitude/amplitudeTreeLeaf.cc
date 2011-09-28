@@ -124,42 +124,6 @@ amplitudeTreeLeaf::operator -=(const amplitudeTreeLeaf& amp)
 }
 
 
-amplitudeTreeLeaf&
-amplitudeTreeLeaf::operator *=(const double factor)
-{
-	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
-		_incohSubAmps[i] *= factor;
-	return *this;
-}
-
-
-amplitudeTreeLeaf&
-amplitudeTreeLeaf::operator /=(const double factor)
-{
-	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
-		_incohSubAmps[i] /= factor;
-	return *this;
-}
-
-
-amplitudeTreeLeaf&
-amplitudeTreeLeaf::operator *=(const complex<double>& factor)
-{
-	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
-		_incohSubAmps[i] *= factor;
-	return *this;
-}
-
-
-amplitudeTreeLeaf&
-amplitudeTreeLeaf::operator /=(const complex<double>& factor)
-{
-	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
-		_incohSubAmps[i] /= factor;
-	return *this;
-}
-
-
 bool
 amplitudeTreeLeaf::containsIncohSubAmp(const string& subAmpLabel) const
 {
