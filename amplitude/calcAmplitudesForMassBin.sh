@@ -60,19 +60,19 @@ PS_AMP_DIR_NAME=PSPAMPS
 PSACC_AMP_DIR_NAME=ACCAMPS
 SYM_AMP_DIR_NAME=SYM
 # extensions of event data files; naming scheme is <mass bin><extension>
-DT_FILE_EXT=.evt
-PS_FILE_EXT=.genbod.evt
+#DT_FILE_EXT=.evt
+#PS_FILE_EXT=.genbod.evt
 #PS_FILE_EXT=.ps.evt
-PSACC_FILE_EXT=.acc.evt
-#DT_FILE_EXT=.root
-#PS_FILE_EXT=.ps.root
-#PSACC_FILE_EXT=.acc.root
+#PSACC_FILE_EXT=.acc.evt
+DT_FILE_EXT=.root
+PS_FILE_EXT=.ps.root
+PSACC_FILE_EXT=.acc.root
 # amplitude file format
-AMP_FILE_EXT=.amp
-#AMP_FILE_EXT=.root
+#AMP_FILE_EXT=.amp
+AMP_FILE_EXT=.root
 # integral file name
-INT_FILE_NAME=norm.int
-#INT_FILE_NAME=norm.root
+#INT_FILE_NAME=norm.int
+INT_FILE_NAME=norm.root
 
 
 # SGE setup
@@ -173,7 +173,7 @@ function runSymmetrization {
     echo ">>> info: linking all amplitude files in '${_AMP_DIR}' to '${_SYM_DIR}'"
     local _CURRENT_DIR=$(pwd)
     cd ${_SYM_DIR}
-    for _AMP in ${_AMP_DIR}/*.amp  # works only with .amp files
+    for _AMP in ${_AMP_DIR}/*${AMP_FILE_EXT}
     do
 				ln --symbolic --verbose "../$(basename ${_AMP})"
     done
@@ -201,6 +201,7 @@ function runSymmetrization {
 						_PHASES=( ${_PHASES[@]} ${_LINES[IDX+3]} )
 						_AMP_RATIOS=( ${_AMP_RATIOS[@]} ${_LINES[IDX+4]} )
 				done
+				#!!! works only with .amp files
 				_CURRENT_DIR=$(pwd)
 				cd "${_SYM_DIR}"
 				for (( IDX=0; IDX<"${#_SYM_AMPS[@]}"; IDX++ ))
@@ -450,20 +451,21 @@ echo ">>> info: processing accepted phase-space Monte-Carlo data for mass bin '$
 if [[ ! -s "${PSACC_FILE}" ]]
 then
     echo "??? warning: accepted phase-space MC data file '${PSACC_FILE}' does not exist"
+else
+    # create directory if necessary
+		if [[ ! -d "${PSACC_AMP_DIR}" ]]
+		then
+				mkdir --parents --verbose "${PSACC_AMP_DIR}"
+		fi
+    # generate amplitude files for accepted phase-space MC data
+		runCalcAmplitudes "${PSACC_FILE}" "${PSACC_AMP_DIR}"
+    # perform symmetrization for MC data
+		runSymmetrization "${PSACC_AMP_DIR}" "${SYM_LIST}" PSACC_SYM_AMP_DIR
+    # perform integration for accepted phase-space MC data
+    #runInt "${PSACC_AMP_DIR}"
+		runCalcIntegrals "${PSACC_AMP_DIR}"
+		linkIntegralFiles "${PSACC_SYM_AMP_DIR}"
 fi
-# create directory if necessary
-if [[ ! -d "${PSACC_AMP_DIR}" ]]
-then
-    mkdir --parents --verbose "${PSACC_AMP_DIR}"
-fi
-# generate amplitude files for accepted phase-space MC data
-runCalcAmplitudes "${PSACC_FILE}" "${PSACC_AMP_DIR}"
-# perform symmetrization for MC data
-runSymmetrization "${PSACC_AMP_DIR}" "${SYM_LIST}" PSACC_SYM_AMP_DIR
-# perform integration for accepted phase-space MC data
-#runInt "${PSACC_AMP_DIR}"
-runCalcIntegrals "${PSACC_AMP_DIR}"
-linkIntegralFiles "${PSACC_SYM_AMP_DIR}"
 echo
 
 

@@ -367,8 +367,9 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	printSucc << "calculated integrals of " << _nmbWaves << " amplitude(s) "
 	          << "for " << _nmbEvents << " events" << endl;
   // cleanup
-	for (unsigned int waveIndex = 0; waveIndex < _nmbWaves; ++waveIndex)
-		delete binAmpFiles[waveIndex];
+	for (unsigned int i = 0; i < binAmpFiles.size(); ++i)
+		if (binAmpFiles[i])
+			delete binAmpFiles[i];
 	binAmpFiles.clear();
 	return true;
 }
@@ -593,28 +594,33 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 		// find amplitude tree with name matching *.amp
 		TTree*     ampTree = 0;
     TIterator* keys    = ampFile->GetListOfKeys()->MakeIterator();
+    unsigned int countMatches = 0;
     while (TKey* k = static_cast<TKey*>(keys->Next())) {
       if (!k) {
         printWarn << "NULL pointer to TKey in file '" << ampFilePath << "'. skipping." << endl;
         continue;
       }
-      const string keyName      = k->GetName();
-      unsigned int countMatches = 0;
+      const string keyName = k->GetName();
       if (extensionFromPath(keyName) == "amp") {
 	      ampFile->GetObject(keyName.c_str(), ampTree);
+	      if (not ampTree) {
+		      printWarn << "cannot read key '" << keyName << "' in file '" << ampFilePath << "'. "
+		                << "skipping." << endl;
+		      continue;
+	      }
 	      ++countMatches;
       }
-      if (not ampTree) {
-	      printWarn << "no key in file '" << ampFilePath << "' matches '*.amp'. skipping." << endl;
-	      continue;
-      }
-      if (countMatches > 1) {
-	      printWarn << "more than one key in file '" << ampFilePath << "' matches '*.amp'. "
-	                << "skipping." << endl;
-	      continue;
-      }
     }
-
+    if (not ampTree) {
+	    printWarn << "no key in file '" << ampFilePath << "' matches '*.amp'. skipping." << endl;
+	    continue;
+    }
+    if (countMatches > 1) {
+	    printWarn << "more than one key in file '" << ampFilePath << "' matches '*.amp'. "
+	              << "skipping." << endl;
+	    continue;
+    }
+    
     // connect tree leaf
 		amplitudeTreeLeaf* ampTreeLeaf = 0;
 		ampTree->SetBranchAddress(ampLeafName.c_str(), &ampTreeLeaf);

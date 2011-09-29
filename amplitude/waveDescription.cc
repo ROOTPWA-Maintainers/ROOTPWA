@@ -68,9 +68,10 @@ bool waveDescription::_debug = false;
 
 
 waveDescription::waveDescription()
-	: TObject         (),
-	  _key            (0),
-	  _keyFileContents("")
+	: TObject          (),
+	  _key             (0),
+	  _keyFileParsed   (false),
+	  _keyFileLocalCopy("")
 {
 	waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
@@ -83,9 +84,32 @@ waveDescription::~waveDescription()
 }
 
 
+void
+waveDescription::clear()
+{
+	_key              = 0;
+	_keyFileParsed    = false;
+	_keyFileLocalCopy = "";
+}
+
+
+waveDescription&
+waveDescription::operator =(const waveDescription& waveDesc)
+{
+	if (this != &waveDesc) {
+		TObject::operator   =(waveDesc);
+		_key              = waveDesc._key;
+		_keyFileParsed    = waveDesc._keyFileParsed;
+		_keyFileLocalCopy = waveDesc._keyFileLocalCopy;
+	}
+	return *this;
+}
+
+
 bool
 waveDescription::parseKeyFile(const string& keyFileName)
 {
+	_keyFileParsed = false;
 	if (not _key)
 		_key = new Config();
 	if (not parseLibConfigFile(keyFileName, *_key, _debug)) {
@@ -102,11 +126,12 @@ waveDescription::parseKeyFile(const string& keyFileName)
 	    printWarn << "cannot read from file '"  << keyFileName << "'" << endl;
 	    return false;
     }
-		_keyFileContents = "";
+		_keyFileLocalCopy = "";
     string line;
     while(getline(keyFile, line))
-	    _keyFileContents += line + "\n";
+	    _keyFileLocalCopy += line + "\n";
 	}
+	_keyFileParsed = true;
 	return true;
 }
 
@@ -114,10 +139,10 @@ waveDescription::parseKeyFile(const string& keyFileName)
 ostream&
 waveDescription::printKeyFileContents(ostream& out) const
 {
-	if (_keyFileContents != "") {
+	if (_keyFileLocalCopy != "") {
 		typedef tokenizer<char_separator<char> > tokenizer;
 		char_separator<char> separator("\n");
-		tokenizer            keyFileLines(_keyFileContents, separator);
+		tokenizer            keyFileLines(_keyFileLocalCopy, separator);
 		unsigned int         lineNumber = 0;
 		for (tokenizer::iterator i = keyFileLines.begin(); i != keyFileLines.end(); ++i)
 			out << setw(5) << ++lineNumber << "  " << *i << endl;
@@ -131,9 +156,9 @@ bool
 waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
                                         const bool              fromTemplate) const
 {
-	if (not _key) {
-		printWarn << "null pointer to libconfig data structure. "
-		          << "cannot construct decay topology. was parsing successful?" << endl;
+	if (not _key or not _keyFileParsed) {
+		printWarn << "parsing was not successful. cannot construct decay topology." << endl;
+		return false;
 	}
 
 	if (topo)
@@ -338,11 +363,12 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 
 
 bool
-waveDescription::parseKeyFileContents()
+waveDescription::parseKeyFileLocalCopy()
 {
+	_keyFileParsed = false;
 	if (not _key)
 		_key = new Config();
-	if (not parseLibConfigString(_keyFileContents, *_key, _debug)) {
+	if (not parseLibConfigString(_keyFileLocalCopy, *_key, _debug)) {
 		printWarn << "problems parsing key file string:" << endl;
 		printKeyFileContents(cout);
 		cout  << "    cannot construct decay topology." << endl;
@@ -350,6 +376,7 @@ waveDescription::parseKeyFileContents()
 		_key = 0;
 		return false;
 	}
+	_keyFileParsed = true;
 	return true;
 }
 

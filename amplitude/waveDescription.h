@@ -66,14 +66,20 @@ namespace rpwa {
 
 	public:
 
-		waveDescription ();
+		waveDescription();
 		virtual ~waveDescription();
+
+		void clear();
+
+		waveDescription& operator =(const waveDescription& waveDesc);
 
 #ifndef __CINT__
 
 		// construction of decay topology and amplitude objects
-		bool parseKeyFile(const std::string& keyFileName);  ///< parses key file
-		std::string keyFileContents() const { return _keyFileContents; }  ///< returns contents of key file
+		bool parseKeyFile (const std::string& keyFileName);    ///< parses key file
+		bool keyFileParsed() const { return _keyFileParsed; }  ///< returns whether key file was successfully parsed
+
+		std::string keyFileContents() const { return _keyFileLocalCopy; }  ///< returns contents of key file
 		std::ostream& printKeyFileContents(std::ostream& out) const;  ///< prints key file contents with line numbers
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,
 		                            const bool              fromTemplate = false) const;  ///< construct isobar decay topology from keyfile
@@ -101,7 +107,7 @@ namespace rpwa {
 
 	private:
 
-		bool parseKeyFileContents();  ///< parses _keyFileContents string
+		bool parseKeyFileLocalCopy();  ///< parses _keyFileLocalCopy string
 
 		// helper functions for construction of decay topology and ampltiude
 		static bool constructXParticle(const libconfig::Setting& XQnKey,
@@ -151,9 +157,10 @@ namespace rpwa {
 
 #endif  // __CINT__
 
-		libconfig::Config* _key;  //! ///< libConfig date structure constructed from key file
+		libconfig::Config* _key;            //! ///< libConfig date structure constructed from key file
+		bool               _keyFileParsed;  //! ///< indicates whether key file was successfully parsed
 
-		std::string _keyFileContents;  ///< copy of keyfile contents; can be written to .root file
+		std::string _keyFileLocalCopy;  ///< copy of keyfile contents; is written to .root file
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

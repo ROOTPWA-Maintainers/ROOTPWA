@@ -51,7 +51,7 @@
 #pragma read sourceClass="rpwa::waveDescription" version="[1-]"	  \
 	targetClass="rpwa::waveDescription" \
 	source="" target="" \
-	code="{ newObj->parseKeyFileContents(); }"
+	code="{ newObj->parseKeyFileLocalCopy(); }"
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;
@@ -61,6 +61,7 @@
 	targetClass="rpwa::amplitudeTreeLeaf" \
 	source="" target="" \
 	code="{ newObj->rebuildSubAmpLabelMap(); }"
+//#pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class rpwa::ampIntegralMatrix-;
 #endif 
 

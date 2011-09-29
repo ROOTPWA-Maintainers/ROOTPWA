@@ -464,7 +464,12 @@ namespace rpwa {
 	unsigned int
 	nmbOfDigits(const T& val)
 	{
-		return (unsigned int)(log(abs(val)) / log(10)) + 1;
+		double logVal = 0;
+		if (val > 0)
+			logVal = log(val);
+		if (val < 0)
+			logVal = log(-val);
+		return (unsigned int)(logVal / log(10)) + 1;
 	}
 
 
