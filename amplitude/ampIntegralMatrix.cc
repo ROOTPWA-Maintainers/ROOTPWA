@@ -275,11 +275,11 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	_nmbEvents = (maxNmbEvents) ? min(_nmbEvents, maxNmbEvents) : _nmbEvents;
 
 	// update wave index -> wave name map
-  _waveNames.resize(_nmbWaves);
-  for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
+	_waveNames.resize(_nmbWaves);
+	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
 	     i != _waveNameToIndexMap.end(); ++i)
-	  _waveNames[i->second] = i->first;
-
+		_waveNames[i->second] = i->first;
+	
 	// make sure that either all or none of the waves have description
 	// if (not allWavesHaveDesc())
 	// 	_waveDescriptions.clear();
@@ -308,9 +308,9 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	accumulator_set<double,          stats<tag::sum(compensated)> > weightAcc;
 	accumulator_set<complex<double>, stats<tag::sum(compensated)> > ampProdAcc[_nmbWaves][_nmbWaves];
 	// process weight file and binary amplitude files
-	complex<double>  amps[_nmbWaves];
-  progress_display progressIndicator(_nmbEvents, cout, "");
-  bool             success = true;
+	vector<complex<double> > amps[_nmbWaves];
+  progress_display         progressIndicator(_nmbEvents, cout, "");
+  bool                     success = true;
   for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
 	  ++progressIndicator;
 	  
@@ -329,7 +329,8 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	  // read amplitude values for this event from binary files
 	  bool ampBinEof = false;
 	  for (unsigned int waveIndex = 0; waveIndex < nmbBinWaves; ++waveIndex) {
-		  binAmpFiles[waveIndex]->read((char*)&amps[waveIndex], sizeof(complex<double>));
+		  amps[waveIndex].resize(1);  // no subamps supported in .amp files
+		  binAmpFiles[waveIndex]->read((char*)&(amps[waveIndex][0]), sizeof(complex<double>));
 		  if ((ampBinEof = binAmpFiles[waveIndex]->eof())) {
 			  success = false;
 			  printWarn << "unexpected EOF while reading binary amplitude '"
@@ -343,21 +344,39 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 
 	  // read amplitude values for this event from root trees
 	  for (unsigned int waveIndex = nmbBinWaves; waveIndex < _nmbWaves; ++waveIndex) {
-		  const unsigned int index = waveIndex - nmbBinWaves;
+		  const unsigned int index = waveIndex - nmbBinWaves;  // zero based index
 		  ampTrees[index]->GetEntry(iEvent);
-		  if (ampTreeLeafs[index]->nmbIncohSubAmps() < 1) {
-			  printErr << "empty amplitude object for wave '" << _waveNames[waveIndex] << "' "
+		  const unsigned int nmbSubAmps = ampTreeLeafs[index]->nmbIncohSubAmps();
+		  if (nmbSubAmps < 1) {
+			  printErr << "amplitude object for wave '" << _waveNames[waveIndex] << "' "
+			           << "does not contain any amplitude values "
 			           << "at event " << iEvent << " of total " << _nmbEvents << ". aborting." << endl;
 			  throw;
 		  }
-		  //!!! at the moment only one amplitude per wave can be handled
-		  amps[waveIndex] = ampTreeLeafs[index]->incohSubAmp(0);
+		  // get all incoherent subamps
+		  amps[waveIndex].resize(nmbSubAmps);
+		  for (unsigned int subAmpIndex = 0; subAmpIndex < nmbSubAmps; ++subAmpIndex)
+			  amps[waveIndex][subAmpIndex] = ampTreeLeafs[index]->incohSubAmp(subAmpIndex);
 	  }
 
 	  // sum up integral matrix elements
 	  for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
 		  for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ) {
-			  complex<double> val = amps[waveIndexI] * conj(amps[waveIndexJ]);
+			  // sum over incoherent subamps
+			  const unsigned int nmbSubAmps = amps[waveIndexI].size();
+			  if (nmbSubAmps != amps[waveIndexJ].size()) {
+				  printErr << "number of incoherent sub-amplitudes for wave '"
+				           << _waveNames[waveIndexI] << "' = " << nmbSubAmps
+				           << " differs from that of wave '" << _waveNames[waveIndexJ] << "' = "
+				           << amps[waveIndexJ].size()
+				           << " at event " << iEvent << " of total " << _nmbEvents << ". aborting. "
+				           << "be sure to use only .root amplitude files, "
+				           << "if your channel has sub-amplitudes." << endl;
+				  throw;
+			  }
+			  complex<double> val = 0;
+			  for (unsigned int subAmpIndex = 0; subAmpIndex < nmbSubAmps; ++subAmpIndex)
+				  val += amps[waveIndexI][subAmpIndex] * conj(amps[waveIndexJ][subAmpIndex]);
 			  if (useWeight)
 				  val *= weight;
 			  ampProdAcc[waveIndexI][waveIndexJ](val);
