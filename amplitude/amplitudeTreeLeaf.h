@@ -112,7 +112,7 @@ namespace rpwa {
 
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
-		std::vector<std::complex<double> >  _incohSubAmps;       ///< sub amplitudes to be added incoherently in cross section
+		std::vector<std::complex<double> >  _incohSubAmps;       ///< sub-amplitudes to be added incoherently in intensity formula
 		std::vector<std::string>            _incohSubAmpLabels;  ///< labels for subamps
 		std::map<std::string, unsigned int> _labelToIndexMap;    //! ///< maps subamp labels to indices
 

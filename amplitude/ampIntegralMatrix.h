@@ -67,7 +67,7 @@ namespace rpwa {
 	class ampIntegralMatrix : public TObject {
 
 
-		typedef std::map<std::string, unsigned int>::const_iterator waveNameToWaveIndexMapIterator;
+		typedef std::map<std::string, unsigned int>::const_iterator waveNameToIndexMapIterator;
 
 
 	public:
@@ -143,28 +143,30 @@ namespace rpwa {
 
 		unsigned long openBinAmpFiles(std::vector<std::ifstream*>&    ampFiles,
 		                              const std::vector<std::string>& ampFileNames,
-		                              const unsigned int              waveIndexOffset = 0);
+		                              const unsigned int              waveIndexOffset = 0);  ///< opens array of .amp files, performs some scrunity checks and adds waves to name <-> index maps
 		
 		unsigned long openRootAmpFiles(std::vector<TTree*>&                   ampTrees,
 		                               std::vector<rpwa::amplitudeTreeLeaf*>& ampTreeLeafs,
 		                               const std::vector<std::string>&        ampFileNames,
 		                               const unsigned int                     waveIndexOffset = 0,
-		                               const std::string&                     ampLeafName     = "amplitude");
+		                               const std::string&                     ampLeafName     = "amplitude");  ///< opens array of .root files, performs some scrunity checks and adds waves to name <-> index maps
+
+		void rebuildWaveNameToIndexMap();  ///< rebuilds the wave name -> index map from _waveNames
 
 		bool hasIdenticalWaveSet(const ampIntegralMatrix& integral) const;  ///< checks whether other integral matrix has exactly the same set of waves
 
 
 	  static bool _debug;  ///< if set to true, debug messages are printed
 
-		unsigned int                        _nmbWaves;                ///< number of waves in integral
-		std::map<std::string, unsigned int> _waveNameToWaveIndexMap;  ///< maps wave names to wave indices
-		std::vector<std::string>            _waveNames;               ///< maps wave indices to wave names
-		unsigned long                       _nmbEvents;               ///< number of events in integral matrix
+		unsigned int                        _nmbWaves;            ///< number of waves in integral
+		std::map<std::string, unsigned int> _waveNameToIndexMap;  //! ///< maps wave names to wave indices
+		std::vector<std::string>            _waveNames;           ///< maps wave indices to wave names
+		unsigned long                       _nmbEvents;           ///< number of events in integral matrix
 
 		void storeMultiArray();  ///< copies multiarray into storage variables written to ROOT file
 		void readMultiArray ();  ///< rebuilds multiarray from storage variables read from ROOT file
 #ifndef __CINT__
-		integralMatrixType        _integrals;  ///< integral matrix
+		integralMatrixType        _integrals;  //! ///< integral matrix
 #endif
 		std::vector<unsigned int> _intStorageShape;        ///< array shape
 		unsigned int              _intStorageNmbElements;  ///< number of elements in array
