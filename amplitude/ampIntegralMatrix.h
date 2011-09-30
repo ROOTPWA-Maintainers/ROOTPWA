@@ -54,6 +54,8 @@
 
 #include "TObject.h"
 
+#include "waveDescription.h"
+
 
 class TTree;
 namespace rpwa {
@@ -107,6 +109,11 @@ namespace rpwa {
 		bool               containsWave(const std::string& waveName ) const;  ///< returns whether wave is in integral matrix
 		unsigned int       waveIndex   (const std::string& waveName ) const;  ///< returns wave index for a wave name
 		const std::string& waveName    (const unsigned int waveIndex) const;  ///< returns wave name for a wave index
+
+		const std::vector<rpwa::waveDescription>& waveDescriptions() const { return _waveDescriptions; }  ///< returns array of wave descriptions
+		const waveDescription* waveDesc(const unsigned int waveIndex) const;  ///< returns wave descriptuion for wave index, if existent
+		const waveDescription* waveDesc(const std::string& waveName ) const { return waveDesc(waveIndex(waveName)); }  ///< returns wave descriptuion for wave name, if existent
+		bool allWavesHaveDesc() const;  ///< returns whether all waves in integral have description object
 
 #ifndef __CINT__
 		integralMatrixType&       matrix()       { return _integrals; }  ///< returns integral matrix
@@ -171,6 +178,8 @@ namespace rpwa {
 		std::vector<unsigned int> _intStorageShape;        ///< array shape
 		unsigned int              _intStorageNmbElements;  ///< number of elements in array
 		std::complex<double>*     _intStorageData;         //[_intStorageNmbElements]
+
+		std::vector<rpwa::waveDescription> _waveDescriptions;  ///< wave descriptions of all waves
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS

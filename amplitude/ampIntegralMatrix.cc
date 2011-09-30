@@ -75,9 +75,10 @@ ampIntegralMatrix::ampIntegralMatrix()
 	  _integrals            (),
 	  _intStorageShape      (),
 	  _intStorageNmbElements(0),
-	  _intStorageData       (0)	  
+	  _intStorageData       (0),
+	  _waveDescriptions     ()
 {
-	ampIntegralMatrix::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+	//ampIntegralMatrix::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
 
 
@@ -102,6 +103,7 @@ ampIntegralMatrix::clear()
 	_intStorageShape.clear();
 	_intStorageNmbElements = 0;
 	_intStorageData        = 0;
+	_waveDescriptions.clear();
 }
 
 
@@ -118,7 +120,8 @@ ampIntegralMatrix::operator =(const ampIntegralMatrix& integral)
 		// setting manually prevents crash in glibc
 		const sizeType* shape = integral._integrals.shape();
 		_integrals.resize(extents[shape[0]][shape[1]]);
-		_integrals = integral._integrals;
+		_integrals        = integral._integrals;
+		_waveDescriptions = integral._waveDescriptions;
 	}
 	return *this;
 }
@@ -138,7 +141,8 @@ ampIntegralMatrix::operator +=(const ampIntegralMatrix& integral)
 		for (unsigned int j = 0; j < _nmbWaves; ++j)
 			_integrals[i][j] += integral.matrix()[waveIndex(waveNameI)][waveIndex(waveName(j))];
 	}
-	_nmbEvents += integral.nmbEvents();
+	_nmbEvents       += integral.nmbEvents();
+	_waveDescriptions = integral._waveDescriptions;
 	return *this;
 }
 
@@ -157,7 +161,8 @@ ampIntegralMatrix::operator -=(const ampIntegralMatrix& integral)
 		for (unsigned int j = 0; j < _nmbWaves; ++j)
 			_integrals[i][j] -= integral.matrix()[waveIndex(waveNameI)][waveIndex(waveName(j))];
 	}
-	_nmbEvents -= integral.nmbEvents();
+	_nmbEvents       -= integral.nmbEvents();
+	_waveDescriptions = integral._waveDescriptions;
 	return *this;
 }
 
@@ -218,6 +223,25 @@ ampIntegralMatrix::waveName(const unsigned int waveIndex) const
 }
 
 
+const waveDescription*
+ampIntegralMatrix::waveDesc(const unsigned int waveIndex) const
+{
+	if (waveIndex < _waveDescriptions.size())
+		return &(_waveDescriptions[waveIndex]);
+	return 0;
+}
+
+
+bool
+ampIntegralMatrix::allWavesHaveDesc() const
+{
+	for (unsigned i = 0; i < _waveDescriptions.size(); ++i)
+		if (not _waveDescriptions[i].keyFileParsed())
+			return false;
+	return true;
+}
+
+
 complex<double>
 ampIntegralMatrix::element(const unsigned int waveIndexI,
                            const unsigned int waveIndexJ) const
@@ -275,8 +299,8 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	_nmbEvents = (maxNmbEvents) ? min(_nmbEvents, maxNmbEvents) : _nmbEvents;
 
 	// make sure that either all or none of the waves have description
-	// if (not allWavesHaveDesc())
-	// 	_waveDescriptions.clear();
+	if (not allWavesHaveDesc())
+		_waveDescriptions.clear();
 
 	// resize integral matrix
 	//_integrals.clear();
@@ -607,7 +631,10 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
-	unsigned int waveIndex = waveIndexOffset;
+	unsigned int             waveIndex = waveIndexOffset;
+	vector<TTree*>           trees;
+	vector<waveDescription*> waveDescs;
+	vector<string>           keyNames;
 	for (unsigned int ampFileIndex = 0; ampFileIndex < ampFileNames.size(); ++ampFileIndex) {
 
 		// get file path
@@ -623,85 +650,80 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 		}
 
 		// find all amplitude trees with name matching *.amp and corresponding .key wave description
-		vector<TTree*>           trees;
-		//vector<waveDescription*> waveDescs;
-		vector<string>           keyNames;
-		TIterator*               keys = ampFile->GetListOfKeys()->MakeIterator();
+		TIterator* keys        = ampFile->GetListOfKeys()->MakeIterator();
+		bool       foundAmpKey = false;
     while (TKey* k = static_cast<TKey*>(keys->Next())) {
       if (!k) {
         printWarn << "NULL pointer to TKey in file '" << ampFilePath << "'. skipping TKey." << endl;
         continue;
       }
       TTree*           tree     = 0;
-      //waveDescription* waveDesc = 0;
+      waveDescription* waveDesc = 0;
       const string     keyName  = k->GetName();
       if (extensionFromPath(keyName) == "amp") {
+	      foundAmpKey = true;
 	      ampFile->GetObject(keyName.c_str(), tree);
 	      // get corresponding .key wave description
-	      //ampFile->GetObject((changeFileExtension(keyName, "key")).c_str(), waveDesc);
-	      trees.push_back    (tree );
-	      //waveDescs.push_back(waveDesc);
+	      ampFile->GetObject((changeFileExtension(keyName, "key")).c_str(), waveDesc);
+	      trees.push_back    (tree    );
+	      waveDescs.push_back(waveDesc);
 	      keyNames.push_back (keyName );
       }
     }
-
-    // check whether reading was successful
-    //assert((trees.size() == waveDescs.size()) and (trees.size() == keyNames.size()));
-    if (trees.size() < 1) {
+    if (not foundAmpKey)
 	    printWarn << "no TKey in file '" << ampFilePath << "' matches '*.amp'. skipping file." << endl;
-	    continue;
-    }
-    for (unsigned int i = 0; i < trees.size(); ++i)
-	    //if (not trees[i] or not waveDescs[i]) {
-	    if (not trees[i]) {
-		    printWarn << "could not read tree or wave description from TKeys '"
-		              << fileNameNoExtFromPath(keyNames[i]) << ".{amp,key}'. "
-		              << "skipping TKeys." << endl;
-		    trees.erase    (trees.begin    () + i);
-		    //waveDescs.erase(waveDescs.begin() + i);
-		    keyNames.erase (keyNames.begin () + i);
-	    }
-    //assert((trees.size() == waveDescs.size()) and (trees.size() == keyNames.size()));
-    const unsigned int nmbAmpTrees = trees.size();
+	}
 
-    // get amplitude leafs
-    for (unsigned int i = 0; i < nmbAmpTrees; ++i) {
-	    // connect tree leaf
-	    amplitudeTreeLeaf* treeLeaf = 0;
-	    trees[i]->SetBranchAddress(ampLeafName.c_str(), &treeLeaf);
+	// check whether reading was successful
+	assert((trees.size() == waveDescs.size()) and (trees.size() == keyNames.size()));
+	for (unsigned int i = 0; i < trees.size(); ++i)
+		if (not trees[i] or not waveDescs[i]) {
+			printWarn << "could not read tree or wave description from TKeys '"
+			          << fileNameNoExtFromPath(keyNames[i]) << ".{amp,key}'. "
+			          << "skipping TKeys." << endl;
+			trees.erase    (trees.begin    () + i);
+			waveDescs.erase(waveDescs.begin() + i);
+			keyNames.erase (keyNames.begin () + i);
+		}
+	assert((trees.size() == waveDescs.size()) and (trees.size() == keyNames.size()));
+	const unsigned int nmbAmpTrees = trees.size();
+
+	// get amplitude leafs
+	_waveNames.resize(waveIndex + nmbAmpTrees + 1);
+	_waveDescriptions.resize(waveIndex + nmbAmpTrees + 1);
+	for (unsigned int i = 0; i < nmbAmpTrees; ++i) {
+		// connect tree leaf
+		amplitudeTreeLeaf* treeLeaf = 0;
+		trees[i]->SetBranchAddress(ampLeafName.c_str(), &treeLeaf);
 	    
-	    // check that all trees have the same number of entries
-	    const unsigned long nmbEntries = numeric_cast<unsigned long>(trees[i]->GetEntriesFast());
-	    if (nmbEntries == 0) {
-		    printWarn << "amplitude tree '" << trees[i]->GetName() << "' in file '" << ampFilePath
-		              << "' has zero entries. skipping tree." << endl;
-		    continue;
-	    }
-	    if (nmbAmps == 0)
-		    nmbAmps = nmbEntries;
-	    else if (nmbEntries != nmbAmps) {
-		    printWarn << "amplitude tree '" << trees[i]->GetName() << "' in file '" << ampFilePath
-		              << "' has different number of entries than previous tree. skipping tree." << endl;
-		    continue;
-	    }
+		// check that all trees have the same number of entries
+		const unsigned long nmbEntries = numeric_cast<unsigned long>(trees[i]->GetEntriesFast());
+		if (nmbEntries == 0) {
+			printWarn << "amplitude tree '" << trees[i]->GetName() << "' has zero entries. "
+			          << "skipping tree." << endl;
+			continue;
+		}
+		if (nmbAmps == 0)
+			nmbAmps = nmbEntries;
+		else if (nmbEntries != nmbAmps) {
+			printWarn << "amplitude tree '" << trees[i]->GetName() << "' has different number "
+			          << "of entries than previous tree. skipping tree." << endl;
+			continue;
+		}
 
-	    // fill wave name into name-to-index map, if not already existent
-	    const string waveName = fileNameNoExtFromPath(trees[i]->GetName());
-	    if (not containsWave(waveName)) {
-		    _waveNameToIndexMap[waveName] = waveIndex;
-		    _waveNames.resize(waveIndex + 1);
-		    _waveNames[waveIndex] = waveName;
-		    //_waveDescriptions.resize(waveIndex + 1);
-		    //_waveDescriptions[waveIndex] = *(waveDescs[i]);
-		    ++waveIndex;
-		    ampTrees.push_back    (trees[i]);
-		    ampTreeLeafs.push_back(treeLeaf);
-	    } else
-		    printWarn << "wave '" << waveName << "' already exists in integral matrix. "
-		              << "ignoring tree '" << trees[i]->GetName() << "' in file '"
-		              << ampFilePath << "'." << endl;
-    }
-	}  // loop over amplitude files
+		// fill wave name into name-to-index map, if not already existent
+		const string waveName = fileNameNoExtFromPath(trees[i]->GetName());
+		if (not containsWave(waveName)) {
+			_waveNameToIndexMap[waveName] = waveIndex;
+			_waveNames       [waveIndex] = waveName;
+			_waveDescriptions[waveIndex] = *(waveDescs[i]);
+			++waveIndex;
+			ampTrees.push_back    (trees[i]);
+			ampTreeLeafs.push_back(treeLeaf);
+		} else
+			printWarn << "wave '" << waveName << "' already exists in integral matrix. "
+			          << "ignoring tree '" << trees[i]->GetName() << "'." << endl;
+	}
 #endif  // USE_STD_COMPLEX_TREE_LEAFS
 	return nmbAmps;
 }

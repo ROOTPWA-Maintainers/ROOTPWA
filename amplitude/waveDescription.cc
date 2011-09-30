@@ -73,7 +73,7 @@ waveDescription::waveDescription()
 	  _keyFileParsed   (false),
 	  _keyFileLocalCopy("")
 {
-	waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
 
 
