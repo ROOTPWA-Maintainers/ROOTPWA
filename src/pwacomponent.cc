@@ -17,11 +17,11 @@
 #include "pwacomponent.h"
 
 // C/C++ Headers ----------------------
-
-
-// Collaborating Class Headers --------
 #include <algorithm>
 #include <iostream>
+
+// Collaborating Class Headers --------
+#include "TF1.h"
 
 // Class Member definitions -----------
 
@@ -30,7 +30,7 @@ using namespace std;
 rpwa::pwacomponent::pwacomponent(const string& name,
 				 double m0, double gamma,
 				 const map<string,pwachannel >& channels)
-  : _name(name), _m0(m0), _m02(m0*m0),_m0min(0),_m0max(5000),_gamma(gamma),_gammamin(0),_gammamax(1000),_fixm(false),_fixgamma(false), _channels(channels)
+  : _name(name), _m0(m0), _m02(m0*m0),_m0min(0),_m0max(5000),_gamma(gamma),_gammamin(0),_gammamax(1000),_fixm(false),_fixgamma(false), _constWidth(false),_channels(channels)
 {}
 
 
@@ -65,18 +65,26 @@ rpwa::pwacomponent::val(double m) const {
   double gamma=0;
   std::map<std::string,pwachannel >::const_iterator it=_channels.begin();
   double n=(double)numChannels();
-  while(it!=_channels.end()){
-    double ps=1;
-    if(it->second.ps()!=NULL){
-      double ps0=it->second.ps(_m0);
-      ps=it->second.ps(m)/ps0;
+  //cout << "NChannels : " << n << endl;
+  double ps=1;
+  if(!_constWidth){
+    ps=0; // no not forget to reset phase space here!
+    while(it!=_channels.end()){
+      double myps=1.;
+      if(it->second.ps()!=NULL){
+	double ps0=it->second.ps(_m0);
+	myps=(it->second.ps(m))/ps0;
+      }
+      ps+=myps;
+      ++it;
     }
-    gamma+=_gamma*ps/n; // ps*ps ???
-    ++it;
+    ps/=n;
   }
+  gamma=_gamma*ps;
+  
   //std::cerr << m << "   " << gamma/_gamma << std::endl;
   //std::cerr << _name <<"  compval=" <<gamma*_m0/complex<double>(m*m-_m02,gamma*_m0) << std::endl;
-  return _gamma*_m0/complex<double>(m*m-_m02,gamma*_m0);
+  return _gamma*_m0/complex<double>(_m02-m*m,-gamma*_m0);
 }
 
 
@@ -109,7 +117,7 @@ rpwa::pwabkg::val(double m) const {
   if(m<_m1+_m2)return complex<double>(1,0);
   p=q(m,_m1,_m2);
   //std::cerr << _name <<"  val=" << exp(-_gamma*p) << std::endl;
-  return exp(-_gamma*p.real());
+  return exp(-_gamma*p.real()*p.real());
 }
 
 
@@ -130,13 +138,55 @@ rpwa::pwacompset::wavelist() const {
 
 
 void
+rpwa::pwacompset::setPS(TF1* fPS){
+  _phasespace=fPS;
+  // check if there are free parameters in the phase space that should be fitted
+  unsigned int nparPS=_phasespace->GetNpar();
+  // loop over parameters and check limits
+  // remember which parameters to let float
+  _freePSpar.clear();
+  for(unsigned int i=0;i<nparPS;++i){
+    double min,max;
+    _phasespace->GetParLimits(i,min,max);
+    if(min!=max){
+      _freePSpar.push_back(i);
+      cout << "PS parameter "<< i << " floating in ["
+	   << min  << "," << max << "]" << endl;
+    }
+  }// end loop over parameters
+  _numpar+=_freePSpar.size();
+}
+
+double 
+rpwa::pwacompset::getFreePSPar(unsigned int i){
+  if(i<_freePSpar.size())
+    return _phasespace->GetParameter(_freePSpar[i]);
+  else return 0;
+}
+
+
+void 
+rpwa::pwacompset::getFreePSLimits(unsigned int i, double& lower, double& upper){
+  if(i<_freePSpar.size()){
+    _phasespace->GetParLimits(_freePSpar[i],lower,upper);
+  }
+}
+
+void
 rpwa::pwacompset::setPar(const double* par){ // set parameters
   unsigned int parcount=0;
+  // components
   for(unsigned int i=0;i<n();++i){
     _comp[i]->setPar(par[parcount],par[parcount+1]);
     parcount+=2;
     _comp[i]->setCouplings(&par[parcount]);
     parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
+  } // end loop over components
+  // phase space
+  unsigned int nfreepar=_freePSpar.size();
+  for(unsigned int ipar=0;ipar<nfreepar;++ipar){
+    _phasespace->SetParameter(_freePSpar[ipar],par[parcount]);
+    ++parcount;
   }
 }
 
@@ -144,6 +194,7 @@ rpwa::pwacompset::setPar(const double* par){ // set parameters
 void 
 rpwa::pwacompset::getPar(double* par){       // return parameters 
   unsigned int parcount=0;
+  // components
   for(unsigned int i=0;i<n();++i){
     par[parcount]=_comp[i]->m0();
     par[parcount+1]=_comp[i]->gamma();
@@ -151,11 +202,33 @@ rpwa::pwacompset::getPar(double* par){       // return parameters
     _comp[i]->getCouplings(&par[parcount]);
     parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
   }
+ // phase space
+  unsigned int nfreepar=_freePSpar.size();
+  for(unsigned int ipar=0;ipar<nfreepar;++ipar){
+    par[parcount]=_phasespace->GetParameter(_freePSpar[ipar]);
+    ++parcount;
+  }
 }
 
+double 
+rpwa::pwacompset::ps(double m){return _phasespace->Eval(m);}
 
 double 
 rpwa::pwacompset::intensity(const std::string& wave, double m){
+  // loop over all components and pick up those that contribute to this channel
+  complex<double> rho(0,0);
+  for(unsigned int ic=0;ic<n();++ic){
+    if(_comp[ic]->channels().count(wave)==0)continue;
+    else {
+      rho+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave)->second.C()*sqrt(_comp[ic]->channels().find(wave)->second.ps(m));
+    }
+
+  }
+  return norm(rho)*_phasespace->Eval(m);
+}
+
+double 
+rpwa::pwacompset::phase(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
   complex<double> rho(0,0);
   for(unsigned int ic=0;ic<n();++ic){
@@ -165,53 +238,34 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
     }
 
   }
-  return norm(rho);
+  return arg(rho);
 }
+
 
 double 
 rpwa::pwacompset::phase(const std::string& wave1,
-			double ps1,
 			const std::string& wave2,
-			double ps2,
 			double m){
-  // loop over all components and pick up those that contribute to this channel
-  complex<double> rho1(0,0);
-  complex<double> rho2(0,0);
-
-  for(unsigned int ic=0;ic<n();++ic){
-    if(_comp[ic]->channels().count(wave1)!=0){
-      rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C();
-    }
-    if(_comp[ic]->channels().count(wave2)!=0){
-      rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
-    }
-  }
-  rho1*=ps1;
-  rho2*=ps2;
-  return arg(rho1*conj(rho2));
+  return arg(overlap(wave1,wave2,m));
 }
 
 std::complex<double>
 rpwa::pwacompset::overlap(const std::string& wave1,
-			  double ps1,
 			  const std::string& wave2,
-			  double ps2,
 			  double m){
-  // loop over all components and pick up those that contribute to this channel
+    // loop over all components and pick up those that contribute to this channel
   complex<double> rho1(0,0);
   complex<double> rho2(0,0);
 
   for(unsigned int ic=0;ic<n();++ic){
     if(_comp[ic]->channels().count(wave1)!=0){
-      rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C();
+      rho1+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave1)->second.C()*sqrt(_comp[ic]->channels().find(wave1)->second.ps(m));
     }
     if(_comp[ic]->channels().count(wave2)!=0){
-      rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C();
+      rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C()*sqrt(_comp[ic]->channels().find(wave2)->second.ps(m));
     }
   }
-  rho1*=ps1;
-  rho2*=ps2;
-  return rho1*conj(rho2);
+  return rho1*conj(rho2)*_phasespace->Eval(m);
 }
 
 

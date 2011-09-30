@@ -1,12 +1,51 @@
+///////////////////////////////////////////////////////////////////////////
+//
+//    Copyright 2010
+//
+//    This file is part of rootpwa
+//
+//    rootpwa is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation, either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    rootpwa is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with rootpwa. If not, see <http://www.gnu.org/licenses/>.
+//
+///////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
+//
+// Description:
 //
 // calculates n-body phase space (constant matrix element) using various algorithms
 //
 // the n-body decay is split up into (n - 2) successive 2-body decays
 // each 2-body decay is considered in its own center-of-mass frame thereby
-// seperating the mass from the (trivial) angular dependence
+// separating the mass from the (trivial) angular dependence
 //
 // the event is boosted into the same frame in which the n-body system is
 // given
+//
+// !Note! some of the implemented weights can be applied only in
+//        certain cases; if you are not sure, use the "S.U. Chung"
+//        weight
+//
+// !Note! in case this class is used to calculate the absolute value
+//        of the phase space integral, be sure to use the "S.U. Chung"
+//        weight; if in the integral the phase space is weighted with
+//        some amplitude with angular depdendence, the integral has to
+//        be divided by the correct power of (2) pi (the "S.U. Chung"
+//        already contains a factor (4 pi)^(n - 1) from (trivial)
+//        integration over all angles)
 // 
 // based on:
 // GENBOD (CERNLIB W515), see F. James, "Monte Carlo Phase Space", CERN 68-15 (1968)
@@ -35,7 +74,13 @@
 // = sum_0^(n - 1) m[i]               = m[2] + m[1] + m[0]   = m[1] + m[0]
 // breakUpMom[n - 1] ...              breakUpMom[2]          breakUpMom[1]          breakUpMom[0] = 0 (not used)
 // = q(M[n - 1], m[n - 1], M[n - 2])  = q(M[2], m[2], M[1])  = q(M[1], m[1], m[0])
-// 
+//
+//
+// Author List:
+//      Boris Grube          TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
 
 
 #include <algorithm>

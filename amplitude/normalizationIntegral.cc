@@ -202,7 +202,7 @@ normalizationIntegral::integrate(const vector<string>& binAmpFileNames,
 	bool     useWeight = false;
 	if (weightFileName != "") {
 		if (_debug)
-			printInfo << "opening importance sampling weight file '" << weightFileName << "'" << endl;
+			printDebug << "opening importance sampling weight file '" << weightFileName << "'" << endl;
 		weightFile.open(weightFileName.c_str());
 		if (not weightFile) { 
 			printWarn << "cannot open importance sampling weight file '" << weightFileName << "' "
@@ -279,7 +279,7 @@ normalizationIntegral::integrate(const vector<string>& binAmpFileNames,
 				_integrals[waveIndexI][waveIndexJ] *= 1 / weightNorm;
 		}
 
-	printInfo << "successfully calculated integrals of " << _nmbWaves << " amplitude(s) "
+	printSucc << "calculated integrals of " << _nmbWaves << " amplitude(s) "
 	          << "for " << _nmbEvents << " events" << endl;
   // cleanup
 	for (unsigned int waveIndex = 0; waveIndex < _nmbWaves; ++waveIndex)
@@ -293,8 +293,8 @@ void
 normalizationIntegral::renormalize(const unsigned long nmbEventsRenorm)
 {
 	if (_debug)
-		printInfo << "renormalizing integrals from " << _nmbEvents << " "
-		          << "to " << nmbEventsRenorm << " events." << endl;
+		printDebug << "renormalizing integrals from " << _nmbEvents << " "
+		           << "to " << nmbEventsRenorm << " events." << endl;
   for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
 	  for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
 		  _integrals[waveIndexI][waveIndexJ] *= (double)nmbEventsRenorm / _nmbEvents;
@@ -375,7 +375,7 @@ bool
 normalizationIntegral::writeAscii(const string& outFileName) const
 {
 	if (_debug)
-		printInfo << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
+		printDebug << "opening ASCII file '" << outFileName << "' for writing of integral matrix" << endl;
 	std::ofstream outFile(outFileName.c_str());
 	if (not outFile or not outFile.good()) {
 		printWarn << "cannot open file '" << outFileName << "' for writing of integral matrix" << endl;
@@ -383,7 +383,7 @@ normalizationIntegral::writeAscii(const string& outFileName) const
 	}
 	const bool success = writeAscii(outFile);
 	if (success)
-		printInfo << "successfully wrote integral to ASCII file '" << outFileName << "'" << endl;
+		printSucc << "wrote integral to ASCII file '" << outFileName << "'" << endl;
 	else
 		printWarn << "problems writing integral to ASCII file '" << outFileName << "'" << endl;
 	return success;
@@ -394,7 +394,7 @@ bool
 normalizationIntegral::readAscii(const string& inFileName)
 {
 	if (_debug)
-		printInfo << "opening ASCII file '" << inFileName << "' for reading of integral matrix" << endl;
+		printDebug << "opening ASCII file '" << inFileName << "' for reading of integral matrix" << endl;
 	std::fstream inFile(inFileName.c_str());
 	if (not inFile or not inFile.good()) {
 		printWarn << "cannot open file '" << inFileName << "' for reading of integral matrix" << endl;
@@ -402,7 +402,7 @@ normalizationIntegral::readAscii(const string& inFileName)
 	}
 	const bool success = readAscii(inFile);
 	if (success)
-		printInfo << "successfully read integral from ASCII file '" << inFileName << "'" << endl;
+		printSucc << "read integral from ASCII file '" << inFileName << "'" << endl;
 	else
 		printWarn << "problems reading integral from ASCII file '" << inFileName << "'" << endl;
 	return success;
@@ -447,7 +447,7 @@ normalizationIntegral::openBinAmpFiles(vector<ifstream*>&    ampFiles,
 
 		// open amplitude file
 		if (_debug)
-			printInfo << "opening binary amplitude file '" << ampFilePath << "'" << endl;
+			printDebug << "opening binary amplitude file '" << ampFilePath << "'" << endl;
 		ifstream* ampFile = new ifstream();
 		ampFile->open(ampFilePath.c_str());
 		if(not *ampFile) {
@@ -501,7 +501,7 @@ normalizationIntegral::openRootAmpFiles(vector<TTree*>&             ampTrees,
 
 		// open amplitude file
 		if (_debug)
-			printInfo << "opening .root amplitude file '" << ampFilePath << "'" << endl;
+			printDebug << "opening .root amplitude file '" << ampFilePath << "'" << endl;
 		TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
 		if (not ampFile or ampFile->IsZombie()) {
 			printErr << "could open amplitude file '" << ampFilePath << "'. skipping." << endl;

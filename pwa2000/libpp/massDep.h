@@ -51,6 +51,24 @@ public:
 };
 
 
+class flatRange : public massDep {
+public:
+  flatRange() { }
+  virtual ~flatRange() { }
+  flatRange(const flatRange&) { }
+  flatRange* create() const { return new flatRange(); }
+  flatRange* clone() const { return new flatRange(*this); }
+
+  virtual void print() { std::cout << "flatRange"; }
+  std::complex<double> val(const particle& p);
+
+  void setRange(double low, double high){mlow=low*0.001;mhigh=high*0.001;}
+
+ private:
+  double mlow;
+  double mhigh;
+};
+
 
 class flat : public massDep {
 public:
@@ -62,6 +80,7 @@ public:
 
   virtual void print() { std::cout << "flat"; }
   std::complex<double> val(const particle& p);
+    
 };
 
 
@@ -138,6 +157,28 @@ public:
 
   virtual void print() { std::cout << "AMP_kach"; }
   //std::complex<double> val(const particle& p);
+};
+
+//-------
+//	K-PI S-WAVE PARAMETRISATION
+//       SOURCE:      NP B296 493 (see also Dima's fortran code)
+//       Here used formula  exp(-i*a)*sin(a) + BW*exp(-2.*i*a)
+//       with BW parameters  M=1.437 and W=0.355 .
+//       That gives amplitude and phase which coincide rouphly
+//       with pictures from article
+//-------
+// not properly implemented, so please don't use it yet
+// take a simple BW for the K_0(1430) instead
+class AMP_LASS : public massDep {
+public:
+  AMP_LASS() { }
+  virtual ~AMP_LASS() { }
+  AMP_LASS(const AMP_LASS&) { }
+  AMP_LASS* create() const { return new AMP_LASS(); }
+  AMP_LASS* clone() const { return new AMP_LASS(*this); }
+
+  virtual void print() { std::cout << "AMP_LASS"; }
+  std::complex<double> val(const particle& p);
 };
 
 

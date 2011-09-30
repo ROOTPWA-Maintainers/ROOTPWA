@@ -81,7 +81,10 @@ namespace rpwa {
 		// production specific accessors
 		virtual const TLorentzVector& referenceLzVec() const { return virtPhoton()->lzVec(); }  ///< returns Lorentz-vector that defines z-axis for angular distributions
 		virtual const particlePtr&    XParticle     () const { return outParticles()[0];     }  ///< returns X particle
-		virtual std::complex<double>  productionAmp () const;                                   ///< returns production amplitude
+
+		virtual std::complex<double> productionAmp() const;  ///< returns production amplitude
+
+		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
 		// leptoproduction specific accessors
 		inline const particlePtr& beamLepton     () const { return inParticles ()[0]; }  ///< returns incoming beam particle
@@ -91,7 +94,7 @@ namespace rpwa {
 		inline const particlePtr& recoil         () const { return outParticles()[1]; }  ///< returns recoil particle
 
 		inline double beamPol() const { return _longPol; }  ///< returns (longitudinal) beam polarization
-		inline void setBeamPol(const double longPol = 0) { _longPol = longPol; }  ///< sets (longitudinal) beam polarization
+		inline void   setBeamPol(const double longPol = 0) { _longPol = longPol; }  ///< sets (longitudinal) beam polarization
 
 		// leptoproduction kinematic variables
 		inline double Q2     () const { return -virtPhoton()->lzVec().Mag2();                                }  ///< returns Q^2 of virtual photon
@@ -104,8 +107,8 @@ namespace rpwa {
 		inline double W      () const { return sqrt(s());                                                    }  ///< returns total energy in (virtual photon, target) CM system
 		inline double delta(const double epsilon) const { return (2 * beamLepton()->mass2() / Q2()) * (1 - epsilon); }  ///< returns photon's mass correction parameter for known epsilon
     
-		virtual bool readData(const TClonesArray& prodKinParticles,
-		                      const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
+		virtual bool readKinematicsData(const TClonesArray& prodKinMomenta);    ///< reads input data
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 
@@ -129,10 +132,11 @@ namespace rpwa {
 
 		double _longPol;  ///< longitudinal beam polarization
 
+		int      _nmbProdKinPart;           ///< number of production kinematics particles in input data arrays
 		TVector3 _beamLeptonMomCache;       ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		TVector3 _targetMomCache;           ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _scatteredLeptonMomCache;  ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _recoilMomCache;           ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		TVector3 _targetMomCache;           ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

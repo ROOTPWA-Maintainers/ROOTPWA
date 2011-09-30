@@ -288,7 +288,7 @@ then
 fi
 if [[ -z "${PWA_ENV_SET}" ]]
 then
-    echo "!!! error: PWA environment is not setup. source setupThisProgDir.sh."
+    echo "!!! error: PWA environment is not setup. source setupThis.sh."
     exit 1
 fi
 
@@ -363,7 +363,6 @@ echo ">>> info: $(eval ls -1 ${KEY_PATTERN} | wc -l) key files:"
 eval ls -l ${KEY_PATTERN}
 echo
 echo ">>> info: ${0} started on $(date)"
-CURRENT_DIR=$(pwd)
 
 
 echo "------------------------------------------------------------"
@@ -415,6 +414,5 @@ echo
 
 
 echo ">>> info: ${0} successfully finished on $(date)"
-cd ${CURRENT_DIR}
 
 exit 0

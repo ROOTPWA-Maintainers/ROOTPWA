@@ -26,6 +26,8 @@
 //      fitting program for massdependent fit rootpwa
 //      minimizes massDepFitLikeli function
 //
+//      BE CAREFULL: Apart from the dynamic width the sqrts of the phase space factors are needed
+//                   So at most places in this code ps acctually is the sqrt!!! 
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -44,6 +46,7 @@
 #include <time.h>
 
 #include "TTree.h"
+#include "TF1.h"
 #include "TFile.h"
 #include "TGraph.h"
 #include "TGraph2D.h"
@@ -102,8 +105,9 @@ usage(const string& progName,
 }
 
 //  function loops through fitResults and puts phasespace values into a graph for interpolation
+//  THIS CONTAINS NOW THE RIGHT VALUE NOT!!! THE SQRT!!!
 TGraph*
-getPhaseSpace(TTree* tree, const std::string& wave){
+getPhaseSpace(TTree* tree, TF1* fsps,const std::string& wave){
   unsigned int n=tree->GetEntries();
   TGraph* graph=new TGraph(n);
   fitResult* res=0;
@@ -112,6 +116,8 @@ getPhaseSpace(TTree* tree, const std::string& wave){
     tree->GetEntry(i);
     double m=res->massBinCenter();
     double ps=res->phaseSpaceIntegral(wave);
+    ps*=ps; // remember that phaseSpaceIntegral returns sqrt of integral!!! 
+    //ps*=fsps->Eval(m);
     graph->SetPoint(i,m,ps);
   }
   return graph;
@@ -195,6 +201,20 @@ extern char* optarg;
       break;
     }
 
+
+  TF1* fPS=new TF1("fps","[1] * ((x-[0])/1000.)^5*(1.+((x-[0])/1000.)*[2])*exp(-[3]* ((x-[0])/1000.)^2)",900,3000);
+  fPS->SetParameter(0,698); //5pi threshold
+  fPS->SetParLimits(0,698,698);
+  fPS->SetParameter(1,308.7E-6); // normalization
+  fPS->SetParLimits(1,308.7E-6,308.7E-6); //
+  fPS->SetParameter(2,4.859); // correction
+  fPS->SetParLimits(2,4.859,4.859);
+  fPS->SetParameter(3,0); // Damping
+  fPS->SetParLimits(3,0,3);
+  //fPS->SetParameter(3,10); // Normalization
+  //TF1* fPS=new TF1("fps","1.",900,4000);
+
+
   vector<TTree*> sysTrees;
   if(sysPlotting){
     // open files with fits  
@@ -247,7 +267,7 @@ extern char* optarg;
       string jpc;
       string name;
       double mass=-1;double ml,mu;int mfix; 
-      double width=-1;double wl,wu;int wfix;
+      double width=-1;double wl,wu;int wfix;int wdyn;
      
       check&=bw.lookupValue("name",     name);
       check&=bw.lookupValue("jpc",       jpc);
@@ -261,6 +281,8 @@ extern char* optarg;
       check&=widthSet.lookupValue("lower",       wl);
       check&=widthSet.lookupValue("upper",       wu);
       check&=widthSet.lookupValue("fix",       wfix);
+      bool checkdyn=widthSet.lookupValue("dyn",       wdyn);
+      if(!checkdyn)wdyn=0;
       cout << "---------------------------------------------------------------------" << endl;
       cout << name << "    JPC = " << jpc << endl;
       cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
@@ -268,6 +290,8 @@ extern char* optarg;
       cout<< endl;
       cout << "width(limits) = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
       if(wfix==1)cout<<"  -- FIXED";
+      if(wdyn!=0)cout<<"  -- DYNAMIC WIDTH";
+      else cout<<"  -- CONST WIDTH";
       cout<< endl;
       const Setting &channelSet = bw["decaychannels"];
       unsigned int nCh=channelSet.getLength();
@@ -283,7 +307,7 @@ extern char* optarg;
 	check&=ch.lookupValue("coupling_Im",cIm);
 	complex<double> C(cRe,cIm);
 	cout << "   " << amp << "  " << C << endl;
-	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+	channels[amp]=pwachannel(C,getPhaseSpace(tree,fPS,amp));
       }// end loop over channels
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -292,7 +316,9 @@ extern char* optarg;
       pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
       comp1->setLimits(ml,mu,wl,wu);
       comp1->setFixed(mfix,wfix);
+      if(wdyn==0)comp1->setConstWidth();
       compset.add(comp1);
+      cout << "CHECK val(m0)="<< comp1->val(mass) << endl;
     }// end loop over resonances
   }
   cout << endl;
@@ -342,7 +368,7 @@ extern char* optarg;
       cout << "Decaychannel (coupling):" << endl;
       cout << "   " << amp << "  " << C << endl;
       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
-      channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+      channels[amp]=pwachannel(C,getPhaseSpace(tree,fPS,amp));
 
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -355,6 +381,11 @@ extern char* optarg;
       compset.add(bkg);
     }// end loop over background
   }// endif
+
+ cout << "---------------------------------------------------------------------" << endl << endl;
+  // add phase space
+  compset.setPS(fPS);
+
 
  cout << "---------------------------------------------------------------------" << endl << endl;
 
@@ -384,7 +415,7 @@ extern char* optarg;
  
 
   massDepFitLikeli L;
-  L.init(tree,&compset,massBinMin,massBinMax);
+  L.init(tree,fPS,&compset,massBinMin,massBinMax);
 
   const unsigned int nmbPar  = L.NDim();
   
@@ -438,8 +469,20 @@ extern char* optarg;
       
       ++it;
     } // end loop over channels
-
+  }// end loop over components
+  // set phase space
+  unsigned int nfreePS=compset.nFreePSPar();
+  for(unsigned int ifreePS=0;ifreePS<nfreePS;++ifreePS){
+    double val,lower,upper;
+    val=compset.getFreePSPar(ifreePS);
+    compset.getFreePSLimits(ifreePS,lower,upper);
+    TString name("PSP_"); name+=+ifreePS;
+    minimizer->SetLimitedVariable(parcount++, 
+				  name.Data(), 
+				  val, 0.0001 ,lower,upper);
   }
+
+
  
   const unsigned int nfree=minimizer->NFree();
   printInfo <<  nfree  << " Free Parameters in fit" << endl;
@@ -513,6 +556,7 @@ extern char* optarg;
 
  cout << "---------------------------------------------------------------------" << endl;
  // Reduced chi2
+ 
  printInfo << chi2 << " chi2" << endl;
  unsigned int numdata=L.NDataPoints();
  // numDOF
@@ -560,7 +604,6 @@ extern char* optarg;
 	TString merrname=name+"_M";
 	smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
 	
-
 	Setting& sw = bw["width"];
 	Setting& swval = sw["val"];
 	swval = comp->gamma();
@@ -568,6 +611,10 @@ extern char* optarg;
 	Setting& swerr = sw["error"];
 	TString werrname=name+"_Gamma";
 	swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
+
+	cout << name 
+	     << "   mass="<<double(smval)<<" +- "<<double(smerr)
+	     << "   width="<<double(swval)<<" +- "<<double(swerr)<< endl;
 
 	// loop through channel and fix couplings
 	const Setting& sChn=bw["decaychannels"];
@@ -619,7 +666,7 @@ extern char* optarg;
 	}
       }
     }
-    cout << name << "  --->  setting: " << sname << endl;
+    
 
     
 
@@ -755,20 +802,37 @@ extern char* optarg;
 
   cerr << "Fitting finished... Start building graphs ... " << endl;
 
+  int syscolor=kAzure-9;
+
    std::vector<std::string> wl=compset.wavelist();
    std::map<std::string, unsigned int> wmap;
    unsigned int ndatabins=tree->GetEntries();
 
    std::vector<TGraphErrors*> datagraphs;
+   std::vector<TGraphErrors*> intenssysgraphs;
+
    std::vector<TMultiGraph*> graphs;
+
    for(unsigned int iw=0; iw<wl.size();++iw){
      wmap[wl[iw]]=iw;
      graphs.push_back(new TMultiGraph);
+
+     intenssysgraphs.push_back(new TGraphErrors(ndatabins));
+     string name=("sys_");name.append(wl[iw]);
+     intenssysgraphs[iw]->SetName(name.c_str());
+     intenssysgraphs[iw]->SetTitle(name.c_str());
+     intenssysgraphs[iw]->SetLineColor(syscolor);
+     intenssysgraphs[iw]->SetFillColor(syscolor);
+     intenssysgraphs[iw]->SetDrawOption("2");
+     graphs[iw]->Add(intenssysgraphs[iw],"2");
+
+
+
      graphs[iw]->SetName(wl[iw].c_str());
      graphs[iw]->SetTitle(wl[iw].c_str());
      graphs[iw]->SetDrawOption("AP");
      datagraphs.push_back(new TGraphErrors(ndatabins));
-     string name("data_");name.append(wl[iw]);
+     name="data_";name.append(wl[iw]);
      datagraphs[iw]->SetName(name.c_str());
      datagraphs[iw]->SetTitle(name.c_str());
      datagraphs[iw]->SetDrawOption("AP");
@@ -786,6 +850,7 @@ extern char* optarg;
    //double mmin=1200.;
    //double md=10.;
    std::vector<TGraph*> fitgraphs;
+   std::vector<TGraph*> absphasegraphs;
   
 
    for(unsigned int iw=0; iw<wl.size();++iw){
@@ -799,7 +864,19 @@ extern char* optarg;
      fitgraphs[iw]->SetDrawOption("AP");
      //fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
-     graphs[iw]->Add(getPhaseSpace(tree,wl[iw]));
+     graphs[iw]->Add(getPhaseSpace(tree,fPS,wl[iw]));
+
+     absphasegraphs.push_back(new TGraph(nbins));
+     name="absphase_";name.append(wl[iw]);
+     absphasegraphs[iw]->SetName(name.c_str());
+     absphasegraphs[iw]->SetTitle(name.c_str());
+     absphasegraphs[iw]->SetLineColor(kRed);
+     absphasegraphs[iw]->SetLineWidth(2);
+     absphasegraphs[iw]->SetMarkerColor(kRed);
+     absphasegraphs[iw]->SetDrawOption("AP");
+
+
+
    }
 
    std::vector<TGraph*> compgraphs; // individual components
@@ -838,9 +915,7 @@ extern char* optarg;
    std::vector<TGraph*> realfitgraphs;
    std::vector<TGraph*> imagfitgraphs;
    
-   int syscolor=kAzure-9;
-
-   std::vector<TMultiGraph*> phasegraphs;
+    std::vector<TMultiGraph*> phasegraphs;
    std::vector<TMultiGraph*> overlapRegraphs;
    std::vector<TMultiGraph*> overlapImgraphs;
 
@@ -991,6 +1066,8 @@ extern char* optarg;
      }
    }
 
+   
+
 
 
 
@@ -999,26 +1076,69 @@ extern char* optarg;
    tree->SetBranchAddress(valBranchName.c_str(),&rho);
    vector<double> prevps(wl.size());
    double mprev=0;
+   vector<double> prevphase(wl.size());
    double binwidth=30; // half binwidth
    //double w=2*30/10;
    for(unsigned int i=0;i<ndatabins;++i){
      tree->GetEntry(i);
      double m=rho->massBinCenter();
+     //cout << "MASS: "<<m << endl;
+     double fsps=sqrt(fPS->Eval(m));
      unsigned int c=0;
      for(unsigned int iw=0; iw<wl.size();++iw){
-       double ps=rho->phaseSpaceIntegral(wl[iw].c_str());
+
+       //cout << wl[iw] << endl;
+
+       double ps=rho->phaseSpaceIntegral(wl[iw].c_str())*fsps;
+    
        datagraphs[iw]->SetPoint(i,m,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
-       fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m)*ps*ps);           
+      fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m));      
+      double absphase=compset.phase(wl[iw],m)*TMath::RadToDeg();
+      if(i>0){
+	double absp=absphase+360;
+	double absm=absphase-360;
+	if(fabs(absphase-prevphase[iw])>fabs(absp-prevphase[iw])){
+	  absphase=absp;
+	}
+	else if(fabs(absphase-prevphase[iw])>fabs(absm-prevphase[iw])){
+	  absphase=absm;
+	}
+      }
+      prevphase[iw]=absphase;
+      absphasegraphs[iw]->SetPoint(i,m,absphase);      
+      if(sysPlotting){
+	double maxIntens=-10000000;
+	double minIntens=10000000;
+	for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
+	  // get data
+	  fitResult* rhoSys=0;
+	  sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
+	  sysTrees[iSys]->GetEntry(i);
+	  // check if waves are in fit
+	  if(rhoSys->waveIndex(wl[iw])==-1)continue;
+	  double myI=rhoSys->intensity(wl[iw].c_str());
+	  if(maxIntens<myI)maxIntens=myI;
+	  if(minIntens>myI)minIntens=myI;
+	  delete rhoSys;
+	} // end loop over systematic trees
+	
+	intenssysgraphs[iw]->SetPoint(i,m,(maxIntens+minIntens)*0.5);
+	intenssysgraphs[iw]->SetPointError(i,binwidth,(maxIntens-minIntens)*0.5);
+      }
+      
+      //cout << "getting phases" << endl;
+
        // second loop to get phase differences
        unsigned int wi1=rho->waveIndex(wl[iw].c_str());
        
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-	 double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str());
+	 //double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str())*fsps;
 	  
 	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());
 	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
 	 TMatrixT<double> rCov=rho->spinDensityMatrixElemCov(wi1,wi2);
+
 	 realdatagraphs[c]->SetPoint(i,
 				     rho->massBinCenter(),
 				     r.real());
@@ -1034,37 +1154,21 @@ extern char* optarg;
 			    sqrt(rCov[1][1]));
 
 
-
-	 //realdatagraphs[c]-SSetPoint(i,m,rho-
-
 	 double dataphi=rho->phase(wl[iw].c_str(),wl[iw2].c_str());
 
 	 phasedatagraphs[c]->SetPoint(i,m,dataphi);
-	 //phasedatagraphs[c]->SetPoint(i+ndatabins,m,dataphi-360);
-	 //phasedatagraphs[c]->SetPoint(i+2*ndatabins,m,dataphi+360);
-
-
 	   
 	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
 					     wl[iw2].c_str())/TMath::RadToDeg());
-
-	 //phasedatagraphs[c]->SetPoint(i,m*v.X(),m*v.Y());
-
 	 phase2d[c]->SetPoint(i,v.X(),v.Y(),m);
 
-	 
 	 phasedatagraphs[c]->SetPointError(i,binwidth,
 					   rho->phaseErr(wl[iw].c_str(),
 							 wl[iw2].c_str()));
-	 //phasedatagraphs[c]->SetPointError(i+ndatabins,binwidth,
-	 //				   rho->phaseErr(wl[iw].c_str(),
-	 //						 wl[iw2].c_str()));
-	 //phasedatagraphs[c]->SetPointError(i+2*ndatabins,binwidth,
-	 //				   rho->phaseErr(wl[iw].c_str(),
-	 //						 wl[iw2].c_str()));
+	 double fitphase=compset.phase(wl[iw],wl[iw2],m)*TMath::RadToDeg();
 
-	 double fitphase=compset.phase(wl[iw],ps,wl[iw2],ps2,m)*TMath::RadToDeg();
 	 if(sysPlotting){
+	   //cout << "start sysplotting" << endl;
 	   // loop over systematics files
 	   double maxPhase=-10000;
 	   double minPhase=10000;
@@ -1072,7 +1176,9 @@ extern char* optarg;
 	   double minRe=10000000;
 	   double maxIm=-10000000;
 	   double minIm=10000000;
+	  
 	   for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
+	     // cerr << iSys;
 	   // get data
 	     fitResult* rhoSys=0;
 	     sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
@@ -1080,7 +1186,7 @@ extern char* optarg;
 	        
 
 	     // check if waves are in fit
-	     if(rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1)continue;
+	     if(rhoSys==NULL || rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1)continue;
 	     // get correct wave indices!!!
 	     unsigned int wi1Sys=rhoSys->waveIndex(wl[iw].c_str());
 	     unsigned int wi2Sys=rhoSys->waveIndex(wl[iw2].c_str());
@@ -1107,7 +1213,10 @@ extern char* optarg;
 	     if(minRe>r.real())minRe=r.real();
 	     if(maxIm<r.imag())maxIm=r.imag();
 	     if(minIm>r.imag())minIm=r.imag();
+	     delete rhoSys; rhoSys=0;
 	   }// end loop over sys trees
+	   //cerr << "loop over systrees finished" << endl;
+
 	   phasesysgraphs[c]->SetPoint(i,m,(maxPhase+minPhase)*0.5);
 	   phasesysgraphs[c]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
 	   
@@ -1115,15 +1224,14 @@ extern char* optarg;
 	   realsysgraphs[c]->SetPointError(i,binwidth,(maxRe-minRe)*0.5);
 	   imagsysgraphs[c]->SetPoint(i,m,(maxIm+minIm)*0.5);
 	   imagsysgraphs[c]->SetPointError(i,binwidth,(maxIm-minIm)*0.5);
-	   
+	
 
 	 }// end if sysplotting
-
+	 //cout << "sysplotting finished" << endl;
 
 	 phasefitgraphs[c]->SetPoint(i,m,fitphase);
 
-	 complex<double> fitval=compset.overlap(wl[iw],ps,
-						wl[iw2],ps2,m);
+	 complex<double> fitval=compset.overlap(wl[iw],wl[iw2],m);
 
 	 realfitgraphs[c]->SetPoint(i,m,fitval.real());
 	 imagfitgraphs[c]->SetPoint(i,m,fitval.imag());
@@ -1143,7 +1251,7 @@ extern char* optarg;
 	 const pwacomponent* c=compset[ic];
 	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
 	 while(it!=c->channels().end()){
-	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*it->second.ps(m);
+	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*compset.ps(m);
 	   compgraphs[compcount]->SetPoint(i,m,I);
 	   ++compcount;
 	   ++it;
@@ -1172,13 +1280,14 @@ extern char* optarg;
 
    TFile* outfile=TFile::Open(outFileName.c_str(),"RECREATE");
    for(unsigned int iw=0; iw<wl.size();++iw){
-     TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(2);
-     for(unsigned int ib=0;ib<nbins;++ib){
-       double m,ps;g->GetPoint(ib,m,ps);
-       g->SetPoint(ib,m,ps*2000);
-     }
+     TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(3);
+      for(unsigned int ib=0;ib<nbins;++ib){
+        double m,ps;g->GetPoint(ib,m,ps);
+        g->SetPoint(ib,m,ps*500.);
+       }
      
      graphs[iw]->Write();
+     //absphasegraphs[iw]->Write();
    }
 
 
@@ -1273,13 +1382,15 @@ extern char* optarg;
      }
    }
 
-   
+     
      phasegraphs[iw]->Write();
      phasesysgraphs[iw]->Write();
      overlapRegraphs[iw]->Write();
      overlapImgraphs[iw]->Write();
      //phase2d[iw]->Write();
  } // end loop over waves
+
+ fPS->Write("fPS");
 
 outfile->Close();
    

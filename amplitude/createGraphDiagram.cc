@@ -157,7 +157,7 @@ main(int    argc,
     }
     const string dotFileName = keyFileNames[i].substr(0, keyFileNames[i].length() - 4) + ".dot";
     if (debug)
-	    printInfo << "writing graph to file '" << dotFileName << "'" << endl;
+	    printDebug << "writing graph to file '" << dotFileName << "'" << endl;
     if (not decayTopo->writeGraphViz(dotFileName)) {
 	    printWarn << "there were problems writing graph to file '" << dotFileName << "'. "
 	              << "skipping." << endl;
@@ -168,7 +168,7 @@ main(int    argc,
     const string outFileName = keyFileNames[i].substr(0, keyFileNames[i].length() - 4)
                                + "." + outFormat;
     if (debug)
-	    printInfo << "converting graph to file '" << outFileName << "'" << endl;
+	    printDebug << "converting graph to file '" << outFileName << "'" << endl;
     stringstream cmd;
     if (   (outFormat == "ps" ) or (outFormat == "eps")
         or (outFormat == "fig") or (outFormat == "dia")
@@ -176,7 +176,7 @@ main(int    argc,
         or (outFormat == "svg")) {
 	    cmd << "dot -T" << outFormat << " -o " << outFileName << " " << dotFileName;
 	    if (debug)
-		    printInfo << "executing command '" << cmd.str() << "'" << endl;
+		    printDebug << "executing command '" << cmd.str() << "'" << endl;
 	    if (gSystem->Exec(cmd.str().c_str()) != 0)
 		    printWarn << "command '" << cmd.str() << "' was not successful." << endl;
 	    else
@@ -189,7 +189,7 @@ main(int    argc,
     }
   }
 
-  printInfo << "successfully created " << countSuccess << " out of " << keyFileNames.size()
+  printSucc << "created " << countSuccess << " out of " << keyFileNames.size()
             << " diagram files" << endl;
   
   return 0;

@@ -84,8 +84,7 @@ usage(const string& progName,
 	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
 	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
-	     << "        -l names   semicolon separated tree leaf names (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
-	     << "        -r         target particle name for .evt files (default: 'p+')" << endl
+	     << "        -l names   semicolon separated object/leaf names in input data (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -107,18 +106,16 @@ main(int    argc,
 #endif
 	
 	// parse command line options
-	const string progName           = argv[0];
-	string       keyFileName        = "";
-	long int     maxNmbEvents       = -1;
-	string       pdgFileName        = "./particleDataTable.txt";
-	string       ampFileName        = "./out.root";
-	string       ampLeafName        = "amplitude";
-	bool         asciiOutput        = false;
-	string       inTreeName         = "rootPwaEvtTree";
-	string       leafNames          = "prodKinParticles;prodKinMomenta;"
-		                                "decayKinParticles;decayKinMomenta";
-	string       targetParticleName = "p+";
-	bool         debug              = false;
+	const string progName     = argv[0];
+	string       keyFileName  = "";
+	long int     maxNmbEvents = -1;
+	string       pdgFileName  = "./particleDataTable.txt";
+	string       ampFileName  = "./out.root";
+	string       ampLeafName  = "amplitude";
+	bool         asciiOutput  = false;
+	string       inTreeName   = "rootPwaEvtTree";
+	string       leafNames    = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool         debug        = false;
 	extern char* optarg;
 	extern int   optind;
 	int          c;
@@ -147,9 +144,6 @@ main(int    argc,
 			break;
 		case 'l':
 			leafNames = optarg;
-			break;
-		case 'r':
-			targetParticleName = optarg;
 			break;
 		case 'v':
 			debug = true;
@@ -186,60 +180,29 @@ main(int    argc,
 	typedef tokenizer<char_separator<char> > tokenizer;
 	char_separator<char> separator(";");
 	tokenizer            leafNameTokens(leafNames, separator);
-	tokenizer::iterator  leafNameToken             = leafNameTokens.begin();
-	const string         prodKinParticlesLeafName  = *leafNameToken;
-	const string         prodKinMomentaLeafName    = *(++leafNameToken);
-	const string         decayKinParticlesLeafName = *(++leafNameToken);
-	const string         decayKinMomentaLeafName   = *(++leafNameToken);
-	printInfo << "using the following leaf names:" << endl
+	tokenizer::iterator  leafNameToken            = leafNameTokens.begin();
+	const string         prodKinPartNamesObjName  = *leafNameToken;
+	const string         prodKinMomentaLeafName   = *(++leafNameToken);
+	const string         decayKinPartNamesObjName = *(++leafNameToken);
+	const string         decayKinMomentaLeafName  = *(++leafNameToken);
+	printInfo << "using the following object/leaf names:" << endl
 	          << "        production kinematics: "
-	          << "particle names = '" << prodKinParticlesLeafName << "', "
+	          << "particle names = '" << prodKinPartNamesObjName << "', "
 	          << "momenta = '" << prodKinMomentaLeafName << "'" << endl
 	          << "        decay kinematics:      "
-	          << "particle names = '" << decayKinParticlesLeafName << "', "
+	          << "particle names = '" << decayKinPartNamesObjName << "', "
 	          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
-  
-	// open root files and build chain
-	TChain* inChain = 0;
-	if (rootFileNames.size() > 0) {
-		inChain = new TChain(inTreeName.c_str());
-		for (unsigned int i = 0; i < rootFileNames.size(); ++i) {
-			printInfo << "opening ROOT input file '" << rootFileNames[i] << "'" << endl;
-			if (inChain->Add(rootFileNames[i].c_str()) < 1)
-				printWarn << "no events in ROOT input file '" << rootFileNames[i] << "'" << endl;
-		}
-		inChain->GetListOfFiles()->ls();
-	}
 
-	// convert .evt files to root trees
+	// open .root and .evt files
 	vector<TTree*> inTrees;
-	if (inChain)
-		inTrees.push_back(inChain);
-	for (unsigned int i = 0; i < evtFileNames.size(); ++i) {
-		printInfo << "opening .evt input file '" << evtFileNames[i] << "'" << endl;
-		ifstream evtFile(evtFileNames[i].c_str());
-		if (not evtFile or not evtFile.good()) {
-			printWarn << "cannot open .evt input file '" << evtFileNames[i] << "'. skipping." << endl;
-			continue;
-		}
-		printInfo << "converting .evt input file '" << evtFileNames[i] << "' "
-		          << "into memory resident tree. this might reduce performance. "
-		          << "ROOT input format is recommended." << endl;
-		// create tree
-		TTree* tree = new TTree(inTreeName.c_str(), inTreeName.c_str());
-		if (not tree) {
-			printErr << "problems creating tree '" << inTreeName << "'. skipping." << endl;
-			continue;
-		}
-		if (fillTreeFromEvt(evtFile, *tree, -1,
-		                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		                    decayKinParticlesLeafName, decayKinMomentaLeafName,
-		                    targetParticleName, debug))
-			inTrees.push_back(tree);
-		else {
-			printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "
-			          << "skipping." << endl;
-		}
+	TClonesArray*  prodKinPartNames  = 0;
+	TClonesArray*  decayKinPartNames = 0;
+	if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
+	                         rootFileNames, evtFileNames,
+	                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
+		printErr << "problems opening input file(s). aborting." << endl;
+		exit(1);
 	}
 
 	// initialize particle data table
@@ -291,7 +254,7 @@ main(int    argc,
 		ampTreeLeaf->setNmbIncohSubAmps(1);
 		const string ampTreeName = waveName + ".amp";
 		ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
-		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf);
+		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, 256000, 99);
 	} else
 #endif
 	{
@@ -311,17 +274,17 @@ main(int    argc,
 	vector<complex<double> > ampValues;
 	for (unsigned int i = 0; i < inTrees.size(); ++i) {
 		printInfo << "processing ";
-		if (inChain and (i == 0)) 
+		if ((rootFileNames.size() > 0) and (i == 0)) 
 			cout << "chain of .root files";
 		else
-			cout << ".evt tree[" << ((inChain) ? i : i + 1) << "]";
+			cout << ".evt tree[" << ((rootFileNames.size() > 0) ? i : i + 1) << "]";
 		cout << endl;
-		if (not processTree(*inTrees[i], amplitude, ampValues, maxNmbEvents - ampValues.size(),
-		                    prodKinParticlesLeafName,  prodKinMomentaLeafName,
-		                    decayKinParticlesLeafName, decayKinMomentaLeafName))
+		if (not processTree(*inTrees[i], *prodKinPartNames, *decayKinPartNames,
+		                    amplitude, ampValues, maxNmbEvents - ampValues.size(),
+		                    prodKinMomentaLeafName, decayKinMomentaLeafName))
 			printWarn << "problems reading tree" << endl;
 	}
-	printInfo << "successfully calculated amplitudes for " << ampValues.size() << " events" << endl;
+	printSucc << "calculated amplitudes for " << ampValues.size() << " events" << endl;
 	timer.Stop();
 	printInfo << "this job consumed: ";
 	timer.Print();
@@ -343,7 +306,10 @@ main(int    argc,
 	}
 #if AMPLITUDETREELEAF_ENABLED
 	if (ampFileRoot) {
+		ampTree->Print();
+		ampTree->OptimizeBaskets(10000000, 1, "d");
 		ampTree->Write();
+		ampTree->Print();
 		ampFileRoot->Close();
 		delete ampFileRoot;
 	}
@@ -352,7 +318,7 @@ main(int    argc,
 		ampFilePlain->close();
 		delete ampFilePlain;
 	}
-	printInfo << "successfully wrote " << ampValues.size() << " amplitude values to "
+	printSucc << "wrote " << ampValues.size() << " amplitude values to "
 	          << "'" << ampFileName << "'";
 	if (not writeRootFormat)
 		cout << " in " << ((asciiOutput) ? "ASCII" : "binary")

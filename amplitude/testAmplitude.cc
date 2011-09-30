@@ -272,12 +272,18 @@ main(int argc, char** argv)
 			cout << *(amp[i]);
 		}
 		TChain chain("rootPwaEvtTree");
-		chain.Add("/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
+		chain.Add("../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
 		chain.GetListOfFiles()->ls();
 		vector<complex<double> > ampValues[2];
-		for (unsigned int i = 0; i < 2; ++i) {
-			processTree(chain, amp[i], ampValues[i], 2);
-		}		
+
+		TClonesArray* prodKinPartNames  = 0;
+		TClonesArray* decayKinPartNames = 0;
+		if (not getParticleNamesFromRootFile(*(chain.GetFile()), prodKinPartNames, decayKinPartNames,
+		                                     "rootPwaEvtTree"))
+			cout << "cannot find production and/or decay kinematics particle names "
+			     << "in input file '" << chain.GetFile()->GetName() << "'." << endl;
+		for (unsigned int i = 0; i < 2; ++i)
+			processTree(chain, *prodKinPartNames, *decayKinPartNames, amp[i], ampValues[i], 2);
  		for (unsigned int i = 0; i < ampValues[0].size(); ++i)
 			cout << "amplitude[" << i << "] = " << ampValues[0][i] << " vs. " << ampValues[1][i] << "; "
 			     << "ratio = " << ampValues[0][i] / ampValues[1][i] << endl;
@@ -287,7 +293,8 @@ main(int argc, char** argv)
 		//const long int maxNmbEvents   = 1000000;
 		const long int maxNmbEvents   = 2;
 
-		const string   newKeyFileName = "test.key";
+		// const string   newKeyFileName = "test.key";
+		const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
 		// const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
 		// const string   rootInFileName = "testEvents.root";
 		// const string   evtInFileName  = "testTree.evt";
@@ -311,7 +318,7 @@ main(int argc, char** argv)
 		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
 		//const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
 		//const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
-		const string   evtInFileName  = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
+		const string   evtInFileName  = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
 		// const string   newKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/new/rho_sigma_set/1+1--1+rho770_01_sigma.key";
 		// const string   oldKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/rho_sigma_set/1+1--1+rho770_01_sigma.key";
 		// // const string   oldKeyFileName = "1+1--1+rho770_01_sigma.key";
@@ -319,7 +326,7 @@ main(int argc, char** argv)
 		// const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
 		// const string   evtInFileName  = "1000.1060.evt";
 		// const string   newKeyFileName = "../keyfiles/key2pip/SET1_new/11-1+f21270_13_p.key";
-		const string   rootInFileName = "1220.1240.root";
+		const string   rootInFileName = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
 
 		waveDescription    waveDesc;
 		isobarAmplitudePtr amp;
@@ -328,39 +335,44 @@ main(int argc, char** argv)
 			printInfo << *amp;
 			
 			// read data from tree
-			const string&            inTreeName                = "rootPwaEvtTree";
-			const string&            prodKinParticlesLeafName  = "prodKinParticles";
-			const string&            prodKinMomentaLeafName    = "prodKinMomenta";
-			const string&            decayKinParticlesLeafName = "decayKinParticles";
-			const string&            decayKinMomentaLeafName   = "decayKinMomenta";
+			const string&            inTreeName               = "rootPwaEvtTree";
+			const string&            prodKinPartNamesObjName  = "prodKinParticles";
+			const string&            prodKinMomentaLeafName   = "prodKinMomenta";
+			const string&            decayKinPartNamesObjName = "decayKinParticles";
+			const string&            decayKinMomentaLeafName  = "decayKinMomenta";
 			vector<complex<double> > myAmps;
 			// open input file
-			printInfo << "opening input file(s) '" << rootInFileName << "'" << endl;
-			TChain chain(inTreeName.c_str());
-			if (chain.Add(rootInFileName.c_str()) < 1) {
-				printWarn << "no events in input file(s) '" << rootInFileName << "'" << endl;
-				return false;
-			}
-			const long int nmbEventsChain = chain.GetEntries();
-			chain.GetListOfFiles()->ls();
+			vector<TTree*> inTrees;
+			TClonesArray*  prodKinPartNames  = 0;
+			TClonesArray*  decayKinPartNames = 0;
+			{
+				vector<string> rootFileNames(1, rootInFileName);
+				vector<string> evtFileNames;
+				if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
+				                         rootFileNames, evtFileNames,
+				                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+				                         decayKinPartNamesObjName, decayKinMomentaLeafName, true)) {
+					printErr << "problems opening input files. aborting." << endl;
+					exit(1);
+				}
+			}			
+			const long int nmbEventsChain = inTrees[0]->GetEntries();
 
 			// create branch pointers and leaf variables
-			TBranch*      prodKinParticlesBr  = 0;
-			TBranch*      prodKinMomentaBr    = 0;
-			TBranch*      decayKinParticlesBr = 0;
-			TBranch*      decayKinMomentaBr   = 0;
-			TClonesArray* prodKinParticles    = 0;
-			TClonesArray* prodKinMomenta      = 0;
-			TClonesArray* decayKinParticles   = 0;
-			TClonesArray* decayKinMomenta     = 0;
+			TBranch*      prodKinMomentaBr  = 0;
+			TBranch*      decayKinMomentaBr = 0;
+			TClonesArray* prodKinMomenta    = 0;
+			TClonesArray* decayKinMomenta   = 0;
   
 			// connect leaf variables to tree branches
-			chain.SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles,  &prodKinParticlesBr );
-			chain.SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta,    &prodKinMomentaBr   );
-			chain.SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles, &decayKinParticlesBr);
-			chain.SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta,   &decayKinMomentaBr  );
+			inTrees[0]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
+			inTrees[0]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
 
 			// loop over events
+			if (not topo->initKinematicsData(*prodKinPartNames, *decayKinPartNames)) {
+				printErr << "problems initializing input data. aborting." << endl;
+				exit(1);
+			}
 			const long int   nmbEvents = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsChain)
 			                              : nmbEventsChain);
 			progress_display progressIndicator(nmbEvents);
@@ -369,27 +381,21 @@ main(int argc, char** argv)
 			for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 				++progressIndicator;
     
-				if (chain.LoadTree(eventIndex) < 0)
+				if (inTrees[0]->LoadTree(eventIndex) < 0)
 					break;
 				// read only required branches
-				prodKinParticlesBr->GetEntry (eventIndex);
-				prodKinMomentaBr->GetEntry   (eventIndex);
-				decayKinParticlesBr->GetEntry(eventIndex);
-				decayKinMomentaBr->GetEntry  (eventIndex);
+				prodKinMomentaBr->GetEntry (eventIndex);
+				decayKinMomentaBr->GetEntry(eventIndex);
 	      
-				if (   not prodKinParticles  or not prodKinMomenta
-				       or not decayKinParticles or not decayKinMomenta) {
+				if (not prodKinMomenta or not decayKinMomenta) {
 					printWarn << "at least one data array is null pointer: "
-					          << "prodKinParticles = "  << prodKinParticles  << ", "
 					          << "prodKinMomenta = "    << prodKinMomenta    << ", "
-					          << "decayKinParticles = " << decayKinParticles << ", "
 					          << "decayKinMomenta = "   << decayKinMomenta   << ". "
 					          << "skipping event." << endl;
 					continue;
 				}
 	      
-				if (topo->readData(*prodKinParticles,  *prodKinMomenta,
-				                   *decayKinParticles, *decayKinMomenta)) {
+				if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
 					// topo->printProdKinParticles(cout);
 					// topo->printDecayKinParticles(cout);
 					// complex<double> A = (*amp)();
@@ -405,7 +411,7 @@ main(int argc, char** argv)
 			} // event loop
       
 			timer.Stop();
-			printInfo << "successfully read " << myAmps.size() << " events from file(s) "
+			printSucc << "read " << myAmps.size() << " events from file(s) "
 			          << "'" << rootInFileName << "' and calculated amplitudes" << endl;
 			cout << "needed ";
 			printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
@@ -432,7 +438,7 @@ main(int argc, char** argv)
 					++countEvent;
 				}
 				timer.Stop();
-				printInfo << "successfully read " << pwa2kAmps.size() << " events from file(s) "
+				printSucc << "read " << pwa2kAmps.size() << " events from file(s) "
 				          << "'" << evtInFileName << "' and calculated amplitudes" << endl;
 				cout << "needed ";
 				timer.Print();

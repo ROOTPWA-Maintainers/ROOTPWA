@@ -27,6 +27,7 @@
 #include <TGraph.h>
 
 // Collaborating Class Declarations --
+class TF1;
 
 namespace rpwa {
 
@@ -72,10 +73,12 @@ namespace rpwa {
     {_m0min=mmin;_m0max=mmax;_gammamin=gmin;_gammamax=gmax;}
     void setFixed(bool mflag=true, bool gflag=true)
     {_fixm=mflag;_fixgamma=gflag;}
+    void setConstWidth(bool flag=true){_constWidth=flag;}
     void getLimits(double& mmin, double& mmax, double& gmin, double& gmax)const
     {mmin=_m0min;mmax=_m0max;gmin=_gammamin;gmax=_gammamax;}
     bool fixM() const {return _fixm;}
     bool fixGamma() const {return _fixgamma;}
+    bool constWidth() const {return _constWidth;}
 
     double m0() const {return _m0;}
     double gamma() const {return _gamma;}
@@ -92,6 +95,7 @@ namespace rpwa {
     double _gammamin,_gammamax;
     bool _fixm;
     bool _fixgamma;
+    bool _constWidth;
     std::map<std::string,pwachannel > _channels;
     
 
@@ -126,7 +130,8 @@ namespace rpwa {
     ~pwacompset(){}
 
     void add(pwacomponent* comp){_comp.push_back(comp);_numpar+=comp->numPar();}
-    
+    void setPS(TF1* fPS);
+
     unsigned int n() const {return _comp.size();}
     unsigned int numPar() const {return _numpar;}
     
@@ -134,26 +139,29 @@ namespace rpwa {
 
     void setPar(const double* par); // set parameters
     void getPar(double* par);       // return parameters 
+    unsigned int nFreePSPar() const {return _freePSpar.size();}
+    double getFreePSPar(unsigned int i);
+    void getFreePSLimits(unsigned int i, double& lower, double& upper);
+
 
     const pwacomponent* operator[](unsigned int i) const {return _comp[i];}
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacompset& cs);
-    
+    double ps(double m);
     double intensity(const std::string& wave, double m);
+    double phase(const std::string& wave, double m);
     double phase(const std::string& wave1,
-		 double ps1,
 		 const std::string& wave2,
-		 double ps2,
 		 double m);
     std::complex<double> overlap(const std::string& wave1,
-		 double ps1,
 		 const std::string& wave2,
-		 double ps2,
 		 double m);
     
   private:
     std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
+    TF1* _phasespace;
+    std::vector<unsigned int> _freePSpar; // parameters of phase space to keep floating
 
   };
 

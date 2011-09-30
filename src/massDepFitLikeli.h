@@ -26,7 +26,7 @@
 
 // Collaborating Class Declarations --
 class TTree;
-
+class TF1;
 
 namespace rpwa {
 
@@ -48,6 +48,7 @@ namespace rpwa {
 
     // Modifiers -----------------------
     void init(TTree* fitresulttree,
+	      TF1* finalStatePhaseSpace,
 	      pwacompset* compset,
 	      double mmin=0, double mmax=5000);
     
@@ -64,6 +65,7 @@ namespace rpwa {
     
     // Private Data Members ------------
     TTree* _tree;
+    TF1* _finalStatePS;
     pwacompset* _compset;
     fitResult* _rhom; // measured spindensity matrix;
     std::vector<std::string> _wlist;

@@ -25,11 +25,13 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      class that describes production vertex in diffractive dissociation
-//      the beam-Reggeon-X vertex has exactly one incoming beam and
-//      one outgoing particle (X), which unambiguously defines the Reggeon
-//      kinematics; in addition the target has to be specified; if the recoil
-//      particle is not specified, elastic scattering is assumed
+//      class that describes production vertex in diffractive
+//      dissociation the beam-Reggeon-X vertex has exactly one
+//      incoming beam and one outgoing particle (X), which
+//      unambiguously defines the Reggeon kinematics; if the target
+//      momentum is not specified, a fixed target is assumed; if the
+//      recoil particle is not specified, elastic scattering is
+//      assumed
 //
 //
 // Author List:
@@ -80,15 +82,18 @@ namespace rpwa {
 		// production specific accessors
 		virtual const TLorentzVector& referenceLzVec() const { return beam()->lzVec();   }  ///< returns Lorentz-vector that defines z-axis for angular distributions
 		virtual const particlePtr&    XParticle     () const { return outParticles()[0]; }  ///< returns X particle
-		virtual std::complex<double>  productionAmp () const;                                           ///< returns production amplitude
+
+		virtual std::complex<double> productionAmp() const;  ///< returns production amplitude
+
+		virtual void setXFlavorQN();  ///< sets flavor quantum numbers of X (baryon nmb., S, C, B) to that of incoming beam particle (assumes Pomeron exchange)
 
 		// diffractive dissociation specific accessors
 		inline const particlePtr& beam  () const { return inParticles ()[0]; }  ///< returns beam particle
 		inline const particlePtr& target() const { return inParticles ()[1]; }  ///< returns target particle
 		inline const particlePtr& recoil() const { return outParticles()[1]; }  ///< returns recoil particle
     
-		virtual bool readData(const TClonesArray& prodKinParticles,
-		                      const TClonesArray& prodKinMomenta);  ///< reads data from TClonesArrays
+		virtual bool initKinematicsData(const TClonesArray& prodKinPartNames);  ///< initializes input data
+		virtual bool readKinematicsData(const TClonesArray& prodKinMomenta);    ///< reads input data
 
 		virtual bool revertMomenta();  ///< resets momenta to the values of last event read
 
@@ -110,9 +115,10 @@ namespace rpwa {
 
 	private:
 
+		int      _nmbProdKinPart;  ///< number of production kinematics particles in input data arrays
 		TVector3 _beamMomCache;    ///< caches beam momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
-		TVector3 _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 		TVector3 _recoilMomCache;  ///< caches recoil momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
+		TVector3 _targetMomCache;  ///< caches target momentum of last event read from input data; allows to "reset" kinematics for multiple passes over the same data
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

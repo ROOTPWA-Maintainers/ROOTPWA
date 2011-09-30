@@ -40,6 +40,8 @@
 #define WAVESETGENERATOR_H
 
 
+#include <boost/tuple/tuple.hpp>
+
 #include "isobarDecayTopology.h"
 
 
@@ -55,7 +57,7 @@ namespace rpwa {
 	  typedef isobarDecayTopology::adjIterator adjIterator;
 
       
-    waveSetGenerator(const std::string& templateKeyFileName = "");
+    waveSetGenerator();
     virtual ~waveSetGenerator();
 
 	  bool setWaveSetParameters(const std::string& templateKeyFileName);  ///< constructs template topology and reads wave set parameters from key file
@@ -63,13 +65,13 @@ namespace rpwa {
 	  // wave set parameter accessors
 	  // !note! isospin and angular momentum quantum numbers are in units of hbar / 2
 	  void setIsospinRange         (const int maxI = 2,
-	                                const int minI = 0) { _isospinRange = std::make_pair(minI, maxI); }
+	                                const int minI = 0) { _isospinRange = boost::tuples::make_tuple(minI, maxI); }
 	  void setJRange               (const int maxJ = 6,
-	                                const int minJ = 0) { _JRange       = std::make_pair(minJ, maxJ); }
+	                                const int minJ = 0) { _JRange       = boost::tuples::make_tuple(minJ, maxJ); }
 	  void setLRange               (const int maxL = 6,
-	                                const int minL = 0) { _LRange       = std::make_pair(minL, maxL); }
+	                                const int minL = 0) { _LRange       = boost::tuples::make_tuple(minL, maxL); }
 	  void setSRange               (const int maxS = 6,
-	                                const int minS = 0) { _SRange       = std::make_pair(minS, maxS); }
+	                                const int minS = 0) { _SRange       = boost::tuples::make_tuple(minS, maxS); }
 	  void setIsobarBlackList      (const std::vector<std::string>& isobarList)
 	  { _isobarBlackList = isobarList; }
 	  void setIsobarWhiteList      (const std::vector<std::string>& isobarList)
@@ -95,18 +97,18 @@ namespace rpwa {
 
   private:
 
-	  std::pair<int, int>      _isospinRange;           ///< range of allowed isobar isospins
-	  std::pair<int, int>      _JRange;                 ///< range of allowed isobar spins
-	  std::pair<int, int>      _spinProjRange;          ///< range of allowed isobar spin projections
-	  int                      _reflectivity;           ///< if _useReflectivity is set, 0 means that both reflectivities are generated
-	  bool                     _useReflectivity;        ///< en/disables generation of waves with reflectivity
-	  bool                     _allowJpcExotics;        ///< flag that allows/forbids JPC exotics to be generated
-	  std::pair<int, int>      _LRange;                 ///< range of allowed orbital angular momenta in isobar decays
-	  std::pair<int, int>      _SRange;                 ///< range of allowed total intrinsic spins in isobar decays
-	  std::vector<std::string> _isobarBlackList;        ///< list of particles not to be used as isobars
-	  std::vector<std::string> _isobarWhiteList;        ///< list of particles to be used as isobars
-	  bool                     _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
-	  double                   _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
+	  boost::tuples::tuple<int, int> _isospinRange;           ///< range of allowed isobar isospins
+	  boost::tuples::tuple<int, int> _JRange;                 ///< range of allowed isobar spins
+	  boost::tuples::tuple<int, int> _spinProjRange;          ///< range of allowed isobar spin projections
+	  int                            _reflectivity;           ///< if _useReflectivity is set, 0 means that both reflectivities are generated
+	  bool                           _useReflectivity;        ///< en/disables generation of waves with reflectivity
+	  bool                           _allowJpcExotics;        ///< flag that allows/forbids JPC exotics to be generated
+	  boost::tuples::tuple<int, int> _LRange;                 ///< range of allowed orbital angular momenta in isobar decays
+	  boost::tuples::tuple<int, int> _SRange;                 ///< range of allowed total intrinsic spins in isobar decays
+	  std::vector<std::string>       _isobarBlackList;        ///< list of particles not to be used as isobars
+	  std::vector<std::string>       _isobarWhiteList;        ///< list of particles to be used as isobars
+	  bool                           _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
+	  double                         _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
 
 	  isobarDecayTopologyPtr _templateTopo;  ///< template topology
 

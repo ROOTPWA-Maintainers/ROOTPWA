@@ -36,16 +36,25 @@ class TCMatrix : public TObject {
 public:
 
   TCMatrix(){}
+ TCMatrix(TMatrixD re, TMatrixD im):_re(re),_im(im){}
   TCMatrix(const int i, const int j);
   ~TCMatrix(){};
 
   void ResizeTo(const int i, const int j) { _re.ResizeTo(i,j); _im.ResizeTo(i,j); }
   void set(const int i, const int j, const std::complex<double>& c);
+  void set(const int i, const int j, const TComplex& c);
   TComplex get(const int i, const int j) const { return TComplex(_re[i][j], _im[i][j]); }
   TComplex operator() (const int i, const int j) const { return this->get(i, j); }
   int nrows() const { return _re.GetNrows(); }
   int ncols() const { return _re.GetNcols(); }
   virtual void Print(const Option_t* = "") const { _re.Print(); _im.Print(); }
+
+  TCMatrix t() const ; // return transpose matrix
+  TCMatrix dagger() const; // return adjoint matrix
+
+  friend TCMatrix operator*(const TCMatrix& c1, const TCMatrix& c2);
+  friend TCMatrix operator-(const TCMatrix& c1, const TCMatrix& c2);
+  friend TCMatrix operator+(const TCMatrix& c1, const TCMatrix& c2);
 
 private:
 

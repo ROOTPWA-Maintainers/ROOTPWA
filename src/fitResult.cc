@@ -711,8 +711,8 @@ fitResult::waveIndex(const string& waveName) const
 			index = i;
 			break;  // assumes that waves have unique names
 		}
-	//	if (index == -1)
-	  // printWarn << "could not find any wave named '" << waveName << "'." << endl;
+		if (index == -1)
+	   printWarn << "could not find any wave named '" << waveName << "'." << endl;
 	return index;
 }
 

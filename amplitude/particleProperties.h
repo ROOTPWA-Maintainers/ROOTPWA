@@ -97,7 +97,8 @@ namespace rpwa {
 
 		bool isXParticle() const;  ///< returns whether particle's name is either of "X{,-,0,+}"
 
-		bool fillFromDataTable(const std::string& name);
+		bool fillFromDataTable(const std::string& name, 
+		                       const bool         warnIfNotExistent = true);
 
 		void setName       (const std::string& name)        { _name        = name;        }  ///< sets particle name
 		void setMass       (const double       mass)        { _mass        = mass;        }  ///< sets particle mass
@@ -175,7 +176,7 @@ namespace rpwa {
 			// skip comments and empty lines
 			while ((line == "") or (line[0] == '#')) {
 				if (partProp.debug())
-					printInfo << "ignoring line '" << line << "'" << std::endl;
+					printDebug << "ignoring line '" << line << "'" << std::endl;
 				if (not getline(in, line)) {
 					printWarn << "could not find valid particle entry before end of file" << std::endl;
 					return in;

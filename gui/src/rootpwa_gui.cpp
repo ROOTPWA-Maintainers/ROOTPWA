@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 	cout << " __________________________________________" << endl;
 	cout << endl;
 	cout << "                rootpwa GUI                " << endl;
-	cout << "                 vers.0.20                 " << endl;
+	cout << "                 vers.0.21                 " << endl;
 	cout << endl;
 	cout << " __________________________________________" << endl;
 	TApplication app("App", &argc, argv);

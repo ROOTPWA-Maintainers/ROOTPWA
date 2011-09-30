@@ -2125,7 +2125,8 @@ string TrpwaSessionManager::GetPredictCommand(int ibin, string& executedir,
 	stringstream _result;
 	_result <<  "evtweight -e " << accdatafile << " -o " << outputfile << " -w " << fitresultfile << " -i " << normalizationfile << " -m " << bin_low << "." << bin_high << ";\n";
 	// add now the command for plotting, too
-	_result << "doPlotWEvts " << datafile << " " << outputfile << " " << plotresultfile << " " << bin_low << "." << bin_high;
+	//_result << "doPlotWEvts " << datafile << " " << outputfile << " " << plotresultfile << " " << bin_low << "." << bin_high;
+	_result << "root -b -q \"$ROOTPWA/generators/rootlogon.C\" \"$ROOTPWA/generators/doPlotWEvts_Kpipi.C(\\\""<< datafile <<"\\\",\\\""<< outputfile <<"\\\",\\\""<< plotresultfile <<"\\\",\\\""<< bin_low << "." << bin_high <<"\\\")\"";
 	//int bin_low, bin_high;
 	//string eventfile;
 	//string kinevalfile = current_session->GetKineValFile(ibin, bin_low, bin_high, &eventfile);

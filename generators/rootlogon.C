@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2009 Sebastian Neubert
+//    Copyright 2010
 //
 //    This file is part of rootpwa
 //
@@ -15,33 +15,36 @@
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
+//    along with rootpwa. If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
-//-----------------------------------------------------------
+//-------------------------------------------------------------------------
 // File and Version Information:
-// $Id$
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
-//      ROOT logon script that sets up environment
+//      ROOT logon script that sets up environment for ROOT macros
 //
 //
 // Author List:
-//      Boris Grube    TUM            (original author)
+//      Boris Grube          TUM            (original author)
 //
 //
-//-----------------------------------------------------------
+//-------------------------------------------------------------------------
 
 
 {
-  // load ROOTPWA includes libraries
-  gSystem->Load("libRootPwaGen.so");
-  gSystem->Load("libRootPwaTools.so");
+	// set include paths
+	gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
+	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
+	gSystem->AddIncludePath("-I$ROOTPWA/tools");
 
-  gSystem->AddIncludePath("-I$ROOTPWA/utilities");
-  gSystem->AddIncludePath("-I$ROOTPWA/tools");
-  gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
+	// load shared libraries
+	gSystem->Load("libRootPwaTools.so");
+	gSystem->Load("libRootPwaGen.so");
 
-  gStyle->SetPadColor(0);
-  gStyle->SetCanvasColor(0);
+	gStyle->SetPadColor(0);
+	gStyle->SetCanvasColor(0);
 }

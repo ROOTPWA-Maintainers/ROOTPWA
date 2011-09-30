@@ -69,10 +69,11 @@ namespace rpwa {
 		         const int                 refl     = 0,
 		         const TVector3&           momentum = TVector3());
 		particle(const std::string&        partName,
-		         const int                 index    = -1,
-		         const int                 spinProj = 0,
-		         const int                 refl     = 0,
-		         const TVector3&           momentum = TVector3());
+		         const bool                requirePartInTable = true,
+		         const int                 index              = -1,
+		         const int                 spinProj           = 0,
+		         const int                 refl               = 0,
+		         const TVector3&           momentum           = TVector3());
 		particle(const std::string&        partName,
 		         const int                 isospin,
 		         const int                 G,
@@ -91,6 +92,7 @@ namespace rpwa {
 		std::string           bareName    () const { return stripChargeFromName(name()); }  ///< returns particle name w/o charge
 		int                   charge      () const { return _charge;                     }  ///< returns particle's charge
 		int                   spinProj    () const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
+		TVector3              momentum    () const { return _lzVec.Vect();               }  ///< returns three-momentum of particle
 		const TLorentzVector& lzVec       () const { return _lzVec;                      }  ///< returns Lorentz vector of particle
 		int                   index       () const { return _index;                      }  ///< returns index label assigned to particle; -1 means undefined
 		int                   reflectivity() const { return _refl;                       }  ///< returns particle's reflectivity; 0 means undefined
@@ -167,12 +169,13 @@ namespace rpwa {
 	inline
 	particlePtr
 	createParticle(const std::string& partName,
-	               const int          index    = -1,
-	               const int          spinProj = 0,
-	               const int          refl     = 0,
-	               const TVector3&    momentum = TVector3())
+	               const bool         requirePartInTable = true,
+	               const int          index              = -1,
+	               const int          spinProj           = 0,
+	               const int          refl               = 0,
+	               const TVector3&    momentum           = TVector3())
 	{
-		particlePtr part(new particle(partName, index, spinProj, refl, momentum));
+		particlePtr part(new particle(partName, requirePartInTable, index, spinProj, refl, momentum));
 		return part;
 	}
 
