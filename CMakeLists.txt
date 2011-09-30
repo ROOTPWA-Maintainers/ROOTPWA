@@ -220,7 +220,7 @@ else()
     endif()
   endif()
 endif()
-if(NOT USE_CUDA)
+if(CUDA_FOUND AND NOT USE_CUDA)
 	disable_feature(CUDA)
 endif()
 
