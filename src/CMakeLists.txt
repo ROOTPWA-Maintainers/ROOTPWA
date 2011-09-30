@@ -66,12 +66,15 @@ set(SOURCES
   massDepFitLikeli.cc
 )
 
-	    
+	   
+set(INCL ${INCLUDE_DIRECTORIES})
+LIST(REMOVE_ITEM INCL -I/usr/include)
+ 
 # ROOT dictionary
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
 root_generate_dictionary(
   "${ROOTPWA_DICTIONARY}"
-  "${INCLUDE_DIRECTORIES}"
+  "${INCL}"
   "TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
   "rootPwaLinkDef.h"
 )

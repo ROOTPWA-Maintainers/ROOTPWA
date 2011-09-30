@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      ROOT logon macro that loads libraries needed by other ROOT macros
+//      ROOT logon script that sets up environment for ROOT macros
 //
 //
 // Author List:
@@ -36,10 +36,15 @@
 
 
 {
+	// set include paths
 	gSystem->AddIncludePath("-I$BOOST_ROOT");
 	gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
 	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
 
+	// define macro ROOT_CINT; used to exclude code parts from ACLiC compilation
+	gSystem->AddIncludePath("-DROOT_CINT");
+
+	// load shared libraries
 	gSystem->Load("libpp.so");
 	gSystem->Load("libRootPwa.so");
 	gSystem->Load("libRootPwaAmp.so");

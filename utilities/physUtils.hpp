@@ -40,6 +40,12 @@
 
 
 #include <cmath>
+#include <algorithm>
+
+#include <boost/tuple/tuple.hpp>
+
+#include "mathUtils.hpp"
+#include "clebschGordanCoeff.hpp"
 
 
 namespace rpwa {
@@ -89,6 +95,150 @@ namespace rpwa {
 			return Esum_2 - (p1 + p2) * (p1 + p2);
 		else
 			return Esum_2 - (p1 - p2) * (p1 - p2);
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// functions related to spin algebra
+	// !NOTE! all spin quantum numbers are in units of hbar/2
+
+	// computes minimum and maximum possible spins that can be made by
+	// coupling spin A and spin B
+	inline
+	boost::tuples::tuple<int, int>
+	getSpinRange(const int spinA,
+	             const int spinB, 
+	             bool*     valid = 0)
+	{
+		// make sure that allowedRange can always be directly used in for loops
+		boost::tuples::tuple<int, int> allowedRange(0, -1);
+		if ((spinA < 0) or (spinB < 0)) {
+			if (valid)
+				*valid = false;
+			return allowedRange;
+		}
+		allowedRange = boost::tuples::make_tuple(std::abs(spinA - spinB), spinA + spinB);
+		if (valid)
+			*valid = true;
+		return allowedRange;
+	}
+
+	// computes spin quantum number larger than or equal to lowerBound
+	// in spin series defined by spinQn
+	inline
+	int
+	spinQnLargerEqual(const int spinQn,
+	                  const int lowerBound)
+	{
+		if (isOdd(spinQn))
+			if (isOdd(lowerBound))
+				return std::max(spinQn, lowerBound);
+			else
+				return std::max(spinQn, lowerBound + 1);
+		else
+			if (isEven(lowerBound))
+				return std::max(spinQn, lowerBound);
+			else
+				return std::max(spinQn, lowerBound + 1);
+	}
+
+	// computes spin quantum number smaller than or equal to upperBound in
+	// spin series defined by spinQn
+	inline
+	int
+	spinQnSmallerEqual(const int spinQn,
+	                   const int upperBound)
+	{
+		if (isOdd(spinQn))
+			if (isOdd(upperBound))
+				return std::min(spinQn, upperBound);
+			else
+				return std::min(spinQn, upperBound - 1);
+		else
+			if (isEven(upperBound))
+				return std::min(spinQn, upperBound);
+			else
+				return std::min(spinQn, upperBound - 1);
+	}
+
+	// computes minimum and maximum possible spins that can be made by
+	// coupling spin A and spin B taking into account externally defined
+	// spin range
+	inline
+	boost::tuples::tuple<int, int>
+	getSpinRange(const int                             spinA,
+	             const int                             spinB,
+	             const boost::tuples::tuple<int, int>& demandedRange,
+	             bool*                                 valid = 0)
+	{
+		bool validRange;
+		boost::tuples::tuple<int, int> allowedRange = getSpinRange(spinA, spinB, &validRange);
+		if (not validRange) {
+			if (valid)
+				*valid = false;
+			return allowedRange;
+		}
+		boost::tuples::get<0>(allowedRange) = spinQnLargerEqual (boost::tuples::get<0>(allowedRange),
+		                                                         boost::tuples::get<0>(demandedRange));
+		boost::tuples::get<1>(allowedRange) = spinQnSmallerEqual(boost::tuples::get<1>(allowedRange),
+		                                                         boost::tuples::get<1>(demandedRange));
+		if (valid) {
+			if (boost::tuples::get<0>(allowedRange) <= boost::tuples::get<1>(allowedRange))
+				*valid = true;
+			else
+				*valid = false;
+		}
+		return allowedRange;
+	}
+
+
+	// checks that spin and its projection quantum number are consistent
+	inline
+	bool
+	spinAndProjAreCompatible(const int spin,
+	                         const int spinProj)
+	{ return (abs(spinProj) <= spin) and isEven(spin - spinProj); }
+
+
+	// checks whether to daughter spin states can couple to given parent spin state
+	inline
+	bool
+	spinStatesCanCouple(const int daughterSpins    [2],
+	                    const int daughterSpinProjs[2],
+	                    const int parentSpin,
+	                    const int parentSpinProj)
+	{
+		//!!! the first two checks should probably be part of clebschGordanCoeff
+		for (unsigned i = 0; i < 2; ++i)
+			if (not spinAndProjAreCompatible(daughterSpins[i], daughterSpinProjs[i]))
+				return false;
+		if (not spinAndProjAreCompatible(parentSpin, parentSpinProj))
+			return false;
+		if (clebschGordanCoeff<double>(daughterSpins[0], daughterSpinProjs[0],
+		                               daughterSpins[1], daughterSpinProjs[1],
+		                               parentSpin,       parentSpinProj) == 0)
+			return false;
+		return true;		
+	}
+
+
+	// checks whether JPC combination is exotic
+	inline
+	bool
+	jpcIsExotic(const int J,
+	            const int P,
+	            const int C)
+	{
+		// for baryons all JPCs are allowed
+		if (isOdd(J))
+			return false;
+		// quark model restrictions for mesons: P == C is always allowed
+		// check that P = (-1)^(J + 1)
+		if (    (P != C)
+		    and (   (C != (J % 4     == 0 ? 1 : -1))
+		         or (P != (J + 2 % 4 == 0 ? 1 : -1))))
+			return true;
+		return false;
 	}
 
 

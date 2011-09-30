@@ -55,9 +55,11 @@ void roottops(const TString& infilename, const TString& normfilename=""){
     }
     current->cd(padcounter);
     
+
     // TString type("TMultiGraph");
     TString type("TH2D");
     
+
 
     if(TString(((TKey*)keylist->At(i))->GetClassName())==type){
       cout << "Found " << type << endl; 
@@ -99,7 +101,7 @@ void roottops(const TString& infilename, const TString& normfilename=""){
   for(unsigned int i=0;i<num;++i){ // loop over keys
     TString keyname(((TKey*)keylist->At(i))->GetName());
     if(keyname.Contains("PHI")){
-      
+      continue;
       TMultiGraph* g=(TMultiGraph*)((TKey*)keylist->At(i))->ReadObj();
       if(g==NULL)continue;
       cout << "found Phase Graph!" << TString(((TKey*)keylist->At(i))->GetName()) << endl;

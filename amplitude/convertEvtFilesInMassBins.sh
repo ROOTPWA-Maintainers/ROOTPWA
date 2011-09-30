@@ -51,7 +51,8 @@ then
 fi
 
 
-REGENERATE_EVT_FILES="true"
+#REGENERATE_EVT_FILES="true"
+REGENERATE_EVT_FILES="false"
 PDG_TABLE="${ROOTPWA}/amplitude/particleDataTable.txt"
 
 
@@ -79,7 +80,8 @@ done
 # convert MC data files
 for MASS_BIN in ${MASS_BINS}
 do
-    DIR=${PWA_DATA_DIR}/${MASS_BIN}/MC
+    #DIR=${PWA_DATA_DIR}/${MASS_BIN}/MC
+    DIR=${PWA_DATA_DIR}/${MASS_BIN}
     EVT_FILE=${DIR}/${MASS_BIN}.ps.evt
     ROOT_FILE=${DIR}/${MASS_BIN}.ps.root
     echo ">>> info: converting '${EVT_FILE}' to '${ROOT_FILE}'"

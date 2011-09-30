@@ -25,11 +25,13 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      class that describes production vertex in diffractive dissociation
-//      the beam-Reggeon-X vertex has exactly one incoming beam and
-//      one outgoing particle (X), which unambiguously defines the Reggeon
-//      kinematics; in addition the target has to be specified; if the recoil
-//      particle is not specified, elastic scattering is assumed
+//      class that describes production vertex in diffractive
+//      dissociation the beam-Reggeon-X vertex has exactly one
+//      incoming beam and one outgoing particle (X), which
+//      unambiguously defines the Reggeon kinematics; if the target
+//      momentum is not specified, a fixed target is assumed; if the
+//      recoil particle is not specified, elastic scattering is
+//      assumed
 //
 //
 // Author List:
@@ -62,8 +64,8 @@ diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
                                              const particlePtr& recoil)
 	: productionVertex(),
 	  _beamMomCache   (),
-	  _targetMomCache (),
-	  _recoilMomCache ()
+	  _recoilMomCache (),
+	  _targetMomCache ()
 {
 	if (not beam) {
 		printErr << "null pointer to beam particle. aborting." << endl;
@@ -108,8 +110,8 @@ diffractiveDissVertex::operator =(const diffractiveDissVertex& vert)
 	if (this != &vert) {
 		interactionVertex::operator =(vert);
 		_beamMomCache   = vert._beamMomCache;
-		_targetMomCache = vert._targetMomCache;
 		_recoilMomCache = vert._recoilMomCache;
+		_targetMomCache = vert._targetMomCache;
 	}
 	return *this;
 }
@@ -157,82 +159,137 @@ diffractiveDissVertex::productionAmp() const
 }
 
 
-bool
-diffractiveDissVertex::readData(const TClonesArray& prodKinParticles,
-                                const TClonesArray& prodKinMomenta)
+void
+diffractiveDissVertex::setXFlavorQN()
 {
-	_beamMomCache   = TVector3();
-	_targetMomCache = TVector3();
-	_recoilMomCache = TVector3();
+	particle& X    = *XParticle();
+	particle& beam = *(this->beam());
+	X.setBaryonNmb  (beam.baryonNmb());
+	X.setStrangeness(beam.strangeness());
+	X.setCharm      (beam.charm());
+	X.setBeauty     (beam.beauty());
+}
+
+
+bool
+diffractiveDissVertex::initKinematicsData(const TClonesArray& prodKinPartNames)
+{
+	_nmbProdKinPart = 0;
+
 	// check production vertex data
-	bool         success       = true;
-	const string partClassName = prodKinParticles.GetClass()->GetName();
+	const string partClassName = prodKinPartNames.GetClass()->GetName();
 	if (partClassName != "TObjString") {
-		printWarn << "production kinematics particle names are of type " << partClassName
-		          << " and not TObjString. cannot read production kinematics." << endl;
-		success = false;
-	}
-	const string momClassName = prodKinMomenta.GetClass()->GetName();
-	if (momClassName != "TVector3") {
-		printWarn << "production kinematics momenta are of type " << momClassName
-		          << " and not TVector3. cannot read production kinematics." << endl;
-		success = false;
-	}
-	const int nmbEntries = prodKinParticles.GetEntriesFast();
-	if (nmbEntries != prodKinMomenta.GetEntriesFast()) {
-		printWarn << "arrays of production kinematics particles and momenta have different sizes: "
-		          << nmbEntries << " vs. " << prodKinMomenta.GetEntriesFast  () << endl;
-		success = false;
-	}
-	if (nmbEntries < 2) {
-		printWarn << "arrays of production kinematics particles and momenta have " << nmbEntries
-		          << " entry/ies. need at least beam (index 0) and target (index 1); "
-		          << "recoil (index 2) is optional." << endl;
-		success = false;
-	}
-	if (not success)
+		printWarn << "production kinematics particle names are of type '" << partClassName
+		          << "' and not TObjString." << endl;
 		return false;
-	// set beam
-	const string beamName = ((TObjString*)prodKinParticles[0])->GetString().Data();
+	}
+	_nmbProdKinPart = prodKinPartNames.GetEntriesFast();
+	if (_nmbProdKinPart < 1) {
+		printWarn << "array of production kinematics particle names has wrong size: "
+		          << _nmbProdKinPart << ". need at least beam (index 0); recoil (index 1) and "
+		          << "target (index 2) are optional." << endl;
+		return false;
+	}
+
+	// beam at index 0
+	bool success = true;
+	const string beamName = ((TObjString*)prodKinPartNames[0])->GetString().Data();
 	if (beamName != beam()->name()) {
-		printWarn << "cannot find entry for beam particle '" << beam()->name() << "' "
-		          << "at index 0 in data." << endl;
+		printWarn << "wrong particle at index 0 in production kinematics input data: "
+		          << "read '" << beamName << "', "
+		          << "expected beam particle '" << beam()->name() << "'" << endl;
 		success = false;
-	} else {
-		if (_debug)
-			printInfo << "setting momentum of beam particle " << beamName
-			          << " to " << *((TVector3*)prodKinMomenta[0]) << " GeV" << endl;
-		beam()->setMomentum(*((TVector3*)prodKinMomenta[0]));
-		_beamMomCache = beam()->lzVec().Vect();
 	}
-	// set target
-	const string targetName = ((TObjString*)prodKinParticles[1])->GetString().Data();
-	if (targetName != target()->name()) {
-		printWarn << "cannot find entry for target particle '" << target()->name() << "' "
-		          << "at index 1 in data." << endl;
-		success = false;
-	} else {
-		if (_debug)
-			printInfo << "setting momentum of target particle " << targetName
-			          << " to " << *((TVector3*)prodKinMomenta[1]) << " GeV" << endl;
-		target()->setMomentum(*((TVector3*)prodKinMomenta[1]));
-		_targetMomCache = target()->lzVec().Vect();
-	}
-	// set recoil (optional)
-	if (nmbEntries >= 3) {
-		const string recoilName = ((TObjString*)prodKinParticles[2])->GetString().Data();
+
+	// recoil at index 1 (optional)
+	if (_nmbProdKinPart >= 2) {
+		const string recoilName = ((TObjString*)prodKinPartNames[1])->GetString().Data();
 		if (recoilName != recoil()->name()) {
-			printWarn << "cannot find entry for recoil particle '" << recoil()->name() << "' "
-			          << "at index 2 in data." << endl;
+			printWarn << "wrong particle at index 1 in production kinematics input data: "
+			          << "read '" << recoilName << "', "
+			          << "expected recoil particle '" << recoil()->name() << "'" << endl;
 			success = false;
-		} else {
-			if (_debug)
-				printInfo << "setting momentum of recoil particle " << recoilName
-				          << " to " << *((TVector3*)prodKinMomenta[2]) << " GeV" << endl;
-			recoil()->setMomentum(*((TVector3*)prodKinMomenta[2]));
-			_recoilMomCache = recoil()->lzVec().Vect();
 		}
 	}
+
+	// target at index 2 (optional)
+	if (_nmbProdKinPart >= 3) {
+		const string targetName = ((TObjString*)prodKinPartNames[2])->GetString().Data();
+		if (targetName != target()->name()) {
+			printWarn << "wrong particle at index 2 in production kinematics input data: "
+			          << "read '" << targetName << "', "
+			          << "expected target particle '" << target()->name() << "'" << endl;
+			success = false;
+		}
+	}
+
+	return success;
+}
+
+
+bool
+diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
+{
+	_beamMomCache   = TVector3();
+	_recoilMomCache = TVector3();
+	_targetMomCache = TVector3();
+
+	// check production vertex data
+	const int nmbProdKinMom = prodKinMomenta.GetEntriesFast();
+	if (nmbProdKinMom != _nmbProdKinPart) {
+		printWarn << "array of production kinematics particle momenta has wrong size: "
+		          << nmbProdKinMom << " (expected " << _nmbProdKinPart << "). "
+		          << "cannot read production kinematics." << endl;
+		return false;
+	}
+
+	// set beam
+	bool      success = true;
+	TVector3* beamMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
+	if (beamMom) {
+		if (_debug)
+			printInfo << "setting momentum of beam particle '" << beam()->name()
+			          << "' to " << *beamMom << " GeV" << endl;
+		beam()->setMomentum(*beamMom);
+		_beamMomCache = beam()->momentum();
+	} else {
+		printWarn << "production kinematics data entry [0] is not of type TVector3. "
+		          << "cannot read beam particle momentum." << endl;
+		success = false;
+	}
+
+	// set recoil (optional)
+	if (_nmbProdKinPart >= 2) {
+		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
+		if (recoilMom) {
+			if (_debug)
+				printInfo << "setting momentum of recoil particle '" << recoil()->name()
+				          << "' to " << *recoilMom << " GeV" << endl;
+			recoil()->setMomentum(*recoilMom);
+			_recoilMomCache = recoil()->momentum();
+		} else {
+			printWarn << "production kinematics data entry [1] is not of type TVector3. "
+			          << "cannot read recoil particle momentum." << endl;
+			success = false;
+		}
+	}
+
+	// set target (optional); if not defined fixed target is assumed
+	if (_nmbProdKinPart >= 3) {
+		TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
+		if (targetMom) {
+			if (_debug)
+				printInfo << "setting momentum of target particle '" << target()->name()
+				          << "' to " << *targetMom << " GeV" << endl;
+			target()->setMomentum(*targetMom);
+			_targetMomCache = target()->momentum();
+		} else {
+			printWarn << "production kinematics data entry [2] is not of type TVector3. "
+			          << "cannot read target particle momentum." << endl;
+			success = false;
+		}
+	}
+
 	return success;
 }
 
@@ -244,11 +301,11 @@ diffractiveDissVertex::revertMomenta()
 		printInfo << "resetting beam momentum to " << _beamMomCache << " GeV" << endl;
 	beam()->setMomentum(_beamMomCache);
 	if (_debug)
-		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
-	target()->setMomentum(_targetMomCache);
-	if (_debug)
 		printInfo << "resetting recoil momentum to " << _recoilMomCache << " GeV" << endl;
 	recoil()->setMomentum(_recoilMomCache);
+	if (_debug)
+		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
+	target()->setMomentum(_targetMomCache);
 	return true;
 }
 

@@ -229,13 +229,19 @@ int main(int argc, char** argv)
     Bin = new fitResult();
     tree->SetBranchAddress("fitResult_v2", &Bin);
     // find entry which is closest to mass bin center
+    // and has the lowest likelihood
     unsigned int iBest = 0;
     double mBest = 0;
+    double loglike = 0;
     for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
       tree->GetEntry(i);
       if (fabs(binCenter - Bin->massBinCenter()) <= fabs(binCenter - mBest)) {
-	iBest = i;
-	mBest = Bin->massBinCenter();
+	// check also if this bin is more likely in case of many fits per bin
+	if (loglike == 0 || Bin->logLikelihood() < loglike){
+	  iBest = i;
+	  mBest = Bin->massBinCenter();
+	  loglike = Bin->logLikelihood();
+	}
       }
     }  // end loop over TFitBins
     if(mBest<binCenter-binWidth/2. || mBest>binCenter+binWidth/2.){
@@ -244,7 +250,7 @@ int main(int argc, char** argv)
       hasfit=false;
     }
     else {
-      cerr << "Using data from Mass bin m=" << mBest << endl;
+      cerr << "Using data from Mass bin m=" << mBest << " bin " << iBest << endl;
       tree->GetEntry(iBest); 
     }
     // write wavelist file for generator

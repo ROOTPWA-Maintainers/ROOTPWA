@@ -456,11 +456,13 @@ void TrpwaMainFrame::FitPartialWaves(){
 				stringstream command;
 				for (unsigned int ifit = 0; ifit < _fit_options.niterations; ifit++){
 					string fitcommand = current_session->GetFitCommand(i, executedir, _fit_options.use_normalization, _fit_options.rank, _fit_options.seed);
+					cout << fitcommand << endl;
 					command << "cd " << executedir << ";\n";
 					if (seed > 0) seed++;
 					command << fitcommand << ";\n";
 				}
 				cout << " sending fit job for bin " << i << endl;
+				
 				if (!jobmanager->SendJob(command.str(), "fit")){
 					cout << " failed!" << endl;
 				} else {
@@ -642,6 +644,7 @@ void TrpwaMainFrame::CalcAmps(){
 		vector<string>  evt_mc_miss;
 		vector<string>  key_mc_miss;
 		vector<string>& amp_mc_miss  = current_session->Get_PWA_MC_data_amplitudes(true, &evt_mc_miss, &key_mc_miss);
+
 		//vector<string>& amp_mc_avail = current_session->Get_PWA_MC_data_amplitudes(false);
 		/*
 		cout << endl << " available amplitudes: " << endl;
@@ -681,6 +684,7 @@ void TrpwaMainFrame::CalcAmps(){
 		for (unsigned int i = 0; i < amp_real_miss.size(); i++){
 			stringstream command;
 			command << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;" << '\n';
+			//out  << "test -s "<< amp_real_miss[i] <<" || cat "<< evt_real_miss[i] <<" | gamp -P "<< pdg_table <<" "<<key_real_miss[i]<<" > "<< amp_real_miss[i]<< " ;" << '\n' << endl;
 			cout << " calculating " << amp_real_miss[i] << endl;
 			batchcommand << command.str();
 			//cout << system(command.str().c_str()) << endl;

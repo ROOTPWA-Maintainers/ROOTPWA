@@ -175,22 +175,25 @@ particleProperties::isXParticle() const
 
 
 bool
-particleProperties::fillFromDataTable(const string& partName)
+particleProperties::fillFromDataTable(const string& partName,
+                                      const bool    warnIfNotExistent)
 {
 	string       name         = partName;
 	const string strippedName = stripChargeFromName(partName);
 	if (not particleDataTable::instance().isInTable(partName))
 		// try with charge stripped from name
 		name = strippedName;
-	const particleProperties* partProp = particleDataTable::instance().entry(name);
+	const particleProperties* partProp = particleDataTable::instance().entry(name, warnIfNotExistent);
 	if (not partProp) {
-		printWarn << "trying to fill particle properties for '" << partName << "' from non-existing table entry" << endl;
+		if (warnIfNotExistent)
+			printWarn << "trying to fill particle properties for '"
+			          << partName << "' from non-existing table entry" << endl;
 		return false;
 	} else {
 		*this = *partProp;
 		if (_debug)
-			printInfo << "succesfully filled particle properties for '" << partName << "': "
-			          << *this << endl;
+			printDebug << "succesfully filled particle properties for '" << partName << "': "
+			           << *this << endl;
 		return true;
 	}
 }
@@ -226,8 +229,8 @@ string
 particleProperties::qnSummary() const
 {
 	ostringstream out;
-	out << name() << "[" << 0.5 * isospin() << ((G() != 0) ? sign(G()) : "")
-	    << "(" << 0.5 * J() << ((P() != 0) ? sign(P()) : "") << ((C() != 0) ? sign(C()) : "") << ")]";
+	out << name() << "[" << spinQn(isospin()) << parityQn(G())
+	    << "(" << spinQn(J()) << parityQn(P()) << parityQn(C()) << ")]";
 	return out.str();
 }
 
@@ -244,12 +247,12 @@ particleProperties::print(ostream& out) const
 		out << "^P" << ((C() != 0) ? "C" : "") << " = ";
   else
 		out << ((C() != 0) ? "^C" : "") << " = ";
-	out << 0.5 * isospin();
+	out << spinQn(isospin());
 	if (G() != 0)
 		out << "^" << sign(G());
-	out << " " << 0.5 * J();
+	out << " " << spinQn(J());
 	if (P() != 0)
-		out << "^" << sign(P()) << ((C() != 0) ? sign(C()) : "");
+		out << "^" << sign(P()) << parityQn(C());
 	else
 		if (C() != 0)
 			out << "^" << sign(C());
@@ -284,7 +287,7 @@ bool
 particleProperties::read(istringstream& line)
 {
 	if (_debug)
-		printInfo << "trying to read particle properties from line '" << line.str() << "' ... " << flush;
+		printDebug << "trying to read particle properties from line '" << line.str() << "' ... " << flush;
 	if (line >> _name
 	         >> _mass
 	         >> _width
@@ -299,7 +302,7 @@ particleProperties::read(istringstream& line)
 	         >> _C) {
 		if (_debug) {
 			cout << "success" << endl;
-			printInfo << "read "<< *this << endl;
+			printDebug << "read "<< *this << endl;
 		}
 		return true;
 	} else {

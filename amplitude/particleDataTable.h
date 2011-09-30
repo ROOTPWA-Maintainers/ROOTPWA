@@ -57,7 +57,8 @@ namespace rpwa {
 
 		static bool isInTable(const std::string& partName);  ///< returns, whether particle has a table entry
 
-		static const particleProperties* entry(const std::string& partName);  ///< access properties by particle name
+		static const particleProperties* entry(const std::string& partName,
+		                                       const bool         warnIfNotExistent = true);  ///< access properties by particle name
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>

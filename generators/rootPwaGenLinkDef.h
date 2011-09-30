@@ -1,6 +1,6 @@
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Copyright 2009 Sebastian Neubert
+//    Copyright 2010
 //
 //    This file is part of rootpwa
 //
@@ -15,9 +15,26 @@
 //    GNU General Public License for more details.
 //
 //    You should have received a copy of the GNU General Public License
-//    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
+//    along with rootpwa. If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev:: 633                         $: revision of last commit
+// $Author:: bgrube                   $: author of last commit
+// $Date:: 2011-02-14 19:33:31 +0100 #$: date of last commit
+//
+// Description:
+//      tells rootcint for which classes to generate method interface stubs
+//
+//
+// Author List:
+//      Boris Grube          TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
+
+
 #ifdef __CINT__
 
 #pragma link off all globals;

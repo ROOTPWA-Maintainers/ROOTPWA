@@ -161,7 +161,7 @@ namespace rpwa {
 		/// returns normalization integral for pair of waves at index A and B
 		inline std::complex<double> normIntegral(const unsigned int waveIndexA,
 		                                         const unsigned int waveIndexB) const;
-		/// returns phase space integral for given wave
+		/// returns the sqrt(!) of the phase space integral for given wave
 		double phaseSpaceIntegral(const unsigned int waveIdx)  const { return _phaseSpaceIntegral[waveIdx];             }
 		double phaseSpaceIntegral(const std::string& waveName) const { return _phaseSpaceIntegral[waveIndex(waveName)]; }
 

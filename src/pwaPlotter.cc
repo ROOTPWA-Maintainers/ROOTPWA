@@ -274,7 +274,7 @@ pwaPlotter::addFit(const std::string& filename,
 
     g->SetName (graphName.str().c_str());
     g->SetTitle(graphName.str().c_str());
-    g->SetMarkerStyle(21);
+    //g->SetMarkerStyle(21);
     g->SetMarkerSize(0.5);
     g->SetMarkerColor(colour);
     g->SetLineColor(colour);

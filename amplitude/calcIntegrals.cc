@@ -173,7 +173,7 @@ main(int    argc,
 			         << "in file '" << outFileName << "'" << endl;
 			return 1;
 		} else
-			printInfo << "successfully wrote integral to TKey '" << integralName << "' "
+			printSucc << "wrote integral to TKey '" << integralName << "' "
 			          << "in file '" << outFileName << "'" << endl;
 #else
 		printErr << "writing of integrals in .root format not supported. aborting." << endl;

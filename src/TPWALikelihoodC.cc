@@ -778,8 +778,8 @@ TPWALikelihoodC::getIntCMatrix(TCMatrix& integr, TCMatrix& acceptance){
      }// end inner loop
    } // end outere loop over parameters;
    // add flat
-   integr.set(_nwaves,_nwaves,1);
-   acceptance.set(_nwaves,_nwaves,1);
+   integr.set(_nwaves,_nwaves,complex<double>(1,0));
+   acceptance.set(_nwaves,_nwaves,complex<double>(1,0));
 }
 
 // A simple factory for creating contraint objects

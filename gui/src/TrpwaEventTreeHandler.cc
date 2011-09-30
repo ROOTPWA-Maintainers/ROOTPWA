@@ -254,12 +254,18 @@ bool TrpwaEventTreeHandler::Write_Trees_to_BNL_events(bool overwrite){
 						WriteEventToStream(particles_mc, *_pstream);
 					}
 				}
-				if (events_isMC == 2){ // mc accepted events are filled as reconstructed
+				if (events_isMC == 2){ // mc accepted events
 					checkhist[2]->Fill(_M);
 					checkhist[3]->Fill(_M_mc); // check what the true distribution without moved bins was
+					/*// are filled as reconstructed
 					if ((binlow <= _M) && (_M < binhigh)){
 						ofstream* _pstream = (*files.upper_bound(_M)).second[2];
 						WriteEventToStream(particles, *_pstream);
+					}*/
+					// are filled as generated
+					if ((binlow <= _M_mc) && (_M_mc < binhigh)){
+						ofstream* _pstream = (*files.upper_bound(_M_mc)).second[2];
+						WriteEventToStream(particles_mc, *_pstream);
 					}
 				}
 				/*
@@ -512,11 +518,16 @@ bool TrpwaEventTreeHandler::Write_Trees_to_rootpwa_Trees(bool overwrite){
 						WriteEventToFile(particles_mc, (*treebins.upper_bound(_M_mc)).second, 1);
 					}
 				}
-				if (events_isMC == 2){ // mc accepted events are filled as reconstructed
+				if (events_isMC == 2){ // mc accepted events are filled
 					checkhist[2]->Fill(_M);
 					checkhist[3]->Fill(_M_mc); // check what the true distribution without moved bins was
+					/* // as reconstructed
 					if ((binlow <= _M) && (_M < binhigh)){
 						WriteEventToFile(particles, (*treebins.upper_bound(_M)).second, 2);
+					}*/
+					// as generated
+					if ((binlow <= _M_mc) && (_M_mc < binhigh)){
+						WriteEventToFile(particles_mc, (*treebins.upper_bound(_M_mc)).second, 2);
 					}
 				}
 				/*

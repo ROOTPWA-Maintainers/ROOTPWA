@@ -49,77 +49,94 @@
 #include "TVector3.h"
 
 #include "reportingUtils.hpp"
+#include "reportingUtilsRoot.hpp"
+#include "evtTreeHelper.h"
 
 
 using namespace std;
 using namespace boost;
+using namespace rpwa;
 
 
 void
-createDiffLeafs(TClonesArray*      partNames  [3],
-                TClonesArray*      partMomenta[3],
-                const unsigned int index,
-                const bool         absoluteDiff,
-                const bool         debug = false)
+fillDiffLeafs(const TClonesArray& partNames,
+              TClonesArray*       partMomenta[3],
+              const unsigned int  index,
+              const bool          absoluteDiff,
+              const bool          debug = false)
 {
-	const string   names  [2] = {((TObjString*)(*(partNames[0]))[index])->GetString().Data(),
-	                             ((TObjString*)(*(partNames[1]))[index])->GetString().Data()};
-	const TVector3 momenta[2] = {*((TVector3*)(*(partMomenta[0]))[index]),
-	                             *((TVector3*)(*(partMomenta[1]))[index])};
-	assert(names[0] == names[1]);
-	new((*(partNames[2]))[index]) TObjString(names[0].c_str());
-  
+	const TVector3* momenta[2] = {((TVector3*)(*(partMomenta[0]))[index]),
+	                              ((TVector3*)(*(partMomenta[1]))[index])};
 	TVector3 diff;
 	if (absoluteDiff)
-		diff = momenta[0] - momenta[1];
+		diff = *(momenta[0]) - *(momenta[1]);
 	else {
-		diff.SetX((momenta[0].X() - momenta[1].X()) / momenta[0].X());
-		diff.SetY((momenta[0].Y() - momenta[1].Y()) / momenta[0].Y());
-		diff.SetZ((momenta[0].Z() - momenta[1].Z()) / momenta[0].Z());
+		diff.SetX((momenta[0]->X() - momenta[1]->X()) / momenta[0]->X());
+		diff.SetY((momenta[0]->Y() - momenta[1]->Y()) / momenta[0]->Y());
+		diff.SetZ((momenta[0]->Z() - momenta[1]->Z()) / momenta[0]->Z());
 	}
 	new((*(partMomenta[2]))[index]) TVector3(diff);
   
 	if (debug) {
-		cout << "        particle[" << index << "]: " << names[0] << " vs. " << names[1] << ", "
-		     << momenta[0] << " vs. " << momenta[1] << endl;
+		const TObjString name = *((TObjString*)partNames[index]);
+		printDebug << "particle[" << index << "]: '" << name.GetString().Data() << "', "
+		           << *(momenta[0]) << " vs. " << *(momenta[1]) << ", "
+		           << ((absoluteDiff) ? "absolute" : "relative" ) << " difference " << diff << endl;
 	}
 }
 
 
 bool
-createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
-               const string&  inFileNamePatternB        = "testEvents2.root",
-               const string&  outFileName               = "testDiffTree.root",
-               const bool     absoluteDiff              = true,
-               const long int maxNmbEvents              = -1,
-               const string&  inTreeName                = "rootPwaEvtTree",
-               const string&  prodKinParticlesLeafName  = "prodKinParticles",
-               const string&  prodKinMomentaLeafName    = "prodKinMomenta",
-               const string&  decayKinParticlesLeafName = "decayKinParticles",
-               const string&  decayKinMomentaLeafName   = "decayKinMomenta",
-               const bool     debug                     = false)
+createDiffTree(const string&  inFileNamePatternA       = "testEvents.root",
+               const string&  inFileNamePatternB       = "testEvents2.root",
+               const string&  outFileName              = "testDiffTree.root",
+               const bool     absoluteDiff             = true,
+               const long int maxNmbEvents             = -1,
+               const string&  inTreeName               = "rootPwaEvtTree",
+               const string&  prodKinPartNamesObjName  = "prodKinParticles",
+               const string&  prodKinMomentaLeafName   = "prodKinMomenta",
+               const string&  decayKinPartNamesObjName = "decayKinParticles",
+               const string&  decayKinMomentaLeafName  = "decayKinMomenta",
+               const bool     debug                    = false,
+               const long int treeCacheSize            = 25000000)  // 25 MByte ROOT tree read cache
 {
-  
 	// open input files
-	TChain chain[2];
-	printInfo << "opening input file(s) '" << inFileNamePatternA << "'" << endl;
-	chain[0].SetName(inTreeName.c_str());
-	if (chain[0].Add(inFileNamePatternA.c_str()) < 1) {
-		printWarn << "no events in input file(s) '" << inFileNamePatternA << "'" << endl;
-		return false;
+	const string  inFileNamePatterns[2] = {inFileNamePatternA, inFileNamePatternB};
+	TTree*        inTrees           [2] = {0, 0};
+	TClonesArray* prodKinPartNames  [2] = {0, 0};
+	TClonesArray* decayKinPartNames [2] = {0, 0};
+	for (unsigned int i = 0; i < 2; ++i) {
+		vector<string> rootFileNames;
+		rootFileNames.push_back(inFileNamePatterns[i]);
+		vector<string> evtFileNames;
+		vector<TTree*> trees;
+		if (not openRootEvtFiles(trees, prodKinPartNames[i], decayKinPartNames[i],
+		                         rootFileNames, evtFileNames,
+		                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+		                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
+			printErr << "problems opening input file(s). exiting." << endl;
+			return false;
+		}
+		inTrees[i] = trees[0];
 	}
-	printInfo << "opening input file(s) '" << inFileNamePatternB << "'" << endl;
-	chain[1].SetName(inTreeName.c_str());
-	if (chain[1].Add(inFileNamePatternB.c_str()) < 1) {
-		printWarn << "no events in input file(s) '" << inFileNamePatternB << "'" << endl;
-		return false;
-	}
-	const long int nmbEventsChain[2] = {chain[0].GetEntries(), chain[1].GetEntries()};
-	if (nmbEventsChain[0] != nmbEventsChain[1])
-		printWarn << "trees have different number of events: " << nmbEventsChain[0] << " vs. "
-		          << nmbEventsChain[1] << endl;
-	chain[0].GetListOfFiles()->ls();
-	chain[1].GetListOfFiles()->ls();
+
+	// check compatibility of input data
+	const long int nmbEventsInTrees[2] = {inTrees[0]->GetEntries(), inTrees[1]->GetEntries()};
+	if (nmbEventsInTrees[0] != nmbEventsInTrees[1])
+		printWarn << "trees have different number of events: " << nmbEventsInTrees[0] << " vs. "
+		          << nmbEventsInTrees[1] << endl;
+	const int nmbProdKinPart [2] = {prodKinPartNames [0]->GetEntriesFast(),
+	                                prodKinPartNames [1]->GetEntriesFast()};
+	const int nmbDecayKinPart[2] = {decayKinPartNames[0]->GetEntriesFast(),
+	                                decayKinPartNames[1]->GetEntriesFast()};
+	assert(nmbProdKinPart [0] == nmbProdKinPart [1]);
+	assert(nmbDecayKinPart[0] == nmbDecayKinPart[1]);
+	for (int i = 0; i < nmbProdKinPart[0]; i++)
+		assert(   ((TObjString*)(*(prodKinPartNames[0]))[i])->GetString()
+		       == ((TObjString*)(*(prodKinPartNames[1]))[i])->GetString());
+	for (int i = 0; i < nmbDecayKinPart[0]; i++)
+		assert(   ((TObjString*)(*(decayKinPartNames[0]))[i])->GetString()
+		       == ((TObjString*)(*(decayKinPartNames[1]))[i])->GetString());
 
 	// create output file
 	printInfo << "creating output file '" << outFileName << "'" << endl;
@@ -128,6 +145,10 @@ createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
 		printWarn << "cannot open output file '" << outFileName << "'" << endl;
 		return false;
 	}
+
+	// copy particle names to output file
+	prodKinPartNames [0]->Write(prodKinPartNamesObjName.c_str (), TObject::kSingleKey);
+	decayKinPartNames[0]->Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);
 
 	// create output tree
 	TTree* tree = new TTree(inTreeName.c_str(), inTreeName.c_str());
@@ -138,29 +159,23 @@ createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
 	}
 
 	// create leaf variables
-	TClonesArray* prodKinParticles [3] = {0, 0, new TClonesArray("TObjString", 0)};
-	TClonesArray* prodKinMomenta   [3] = {0, 0, new TClonesArray("TVector3",   0)};
-	TClonesArray* decayKinParticles[3] = {0, 0, new TClonesArray("TObjString", 0)};
-	TClonesArray* decayKinMomenta  [3] = {0, 0, new TClonesArray("TVector3",   0)};
+	TClonesArray* prodKinMomenta [3] = {0, 0, new TClonesArray("TVector3", 0)};
+	TClonesArray* decayKinMomenta[3] = {0, 0, new TClonesArray("TVector3", 0)};
 
 	// connect leaf variables to input tree branches
 	for (unsigned int i = 0; i < 2; ++i) {
-		chain[i].SetBranchAddress(prodKinParticlesLeafName.c_str(),  &prodKinParticles [i]);
-		chain[i].SetBranchAddress(prodKinMomentaLeafName.c_str(),    &prodKinMomenta   [i]);
-		chain[i].SetBranchAddress(decayKinParticlesLeafName.c_str(), &decayKinParticles[i]);
-		chain[i].SetBranchAddress(decayKinMomentaLeafName.c_str(),   &decayKinMomenta  [i]);
+		inTrees[i]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta [i]);
+		inTrees[i]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta[i]);
 	}
 
 	// connect leaf variables to output tree branches
-	const int split   = 0;
-	const int bufSize = 256000;
-	tree->Branch(prodKinParticlesLeafName.c_str(),  "TClonesArray", &prodKinParticles [2], bufSize, split);
-	tree->Branch(prodKinMomentaLeafName.c_str(),    "TClonesArray", &prodKinMomenta   [2], bufSize, split);
-	tree->Branch(decayKinParticlesLeafName.c_str(), "TClonesArray", &decayKinParticles[2], bufSize, split);
-	tree->Branch(decayKinMomentaLeafName.c_str(),   "TClonesArray", &decayKinMomenta  [2], bufSize, split);
+	const int splitLevel = 99;
+	const int bufSize    = 256000;
+	tree->Branch(prodKinMomentaLeafName.c_str(),  "TClonesArray", &prodKinMomenta [2], bufSize, splitLevel);
+	tree->Branch(decayKinMomentaLeafName.c_str(), "TClonesArray", &decayKinMomenta[2], bufSize, splitLevel);
 
 	// loop over events
-	long int nmbEvents = min(nmbEventsChain[0], nmbEventsChain[1]);
+	long int nmbEvents = min(nmbEventsInTrees[0], nmbEventsInTrees[1]);
 	if (maxNmbEvents > 0)
 		nmbEvents = min(maxNmbEvents, nmbEvents);
 	progress_display* progressIndicator = (not debug) ? new progress_display(nmbEvents, cout, "") : 0;
@@ -168,42 +183,37 @@ createDiffTree(const string&  inFileNamePatternA        = "testEvents.root",
 		if (progressIndicator)
 			++(*progressIndicator);
 
-		if ((chain[0].LoadTree(eventIndex) < 0) or (chain[1].LoadTree(eventIndex) < 0))
+		if ((inTrees[0]->LoadTree(eventIndex) < 0) or (inTrees[1]->LoadTree(eventIndex) < 0))
 			break;
-		chain[0].GetEntry(eventIndex);
-		chain[1].GetEntry(eventIndex);
+		inTrees[0]->GetEntry(eventIndex);
+		inTrees[1]->GetEntry(eventIndex);
 
-		const unsigned int nmbProdKinPart[2]  = {prodKinParticles[0]->GetEntriesFast(),
-		                                         prodKinParticles[1]->GetEntriesFast()};
-		const unsigned int nmbDecayKinPart[2] = {decayKinParticles[0]->GetEntriesFast(),
-		                                         decayKinParticles[1]->GetEntriesFast()};
-		assert(nmbProdKinPart [0] == nmbProdKinPart [1]);
-		assert(nmbDecayKinPart[0] == nmbDecayKinPart[1]);
-
+		assert(    (prodKinMomenta[0]->GetEntriesFast() == nmbProdKinPart[0])
+		       and (prodKinMomenta[1]->GetEntriesFast() == nmbProdKinPart[0]));
 		if (debug)
-			printInfo << "event[" << eventIndex << "]: " << nmbProdKinPart[0]
-			          << " production kinematics particles:" << endl;
-		prodKinParticles[2]->Clear();
-		prodKinMomenta  [2]->Clear();
-		for (unsigned int i = 0; i < nmbProdKinPart[0]; ++i)
-			createDiffLeafs(prodKinParticles, prodKinMomenta, i, absoluteDiff, debug);
+			printDebug << "event[" << eventIndex << "]: " << nmbProdKinPart[0]
+			           << " production kinematics particles:" << endl;
+		prodKinMomenta[2]->Clear();
+		for (int i = 0; i < nmbProdKinPart[0]; ++i)
+			fillDiffLeafs(*(prodKinPartNames[0]), prodKinMomenta, i, absoluteDiff, debug);
     
+		assert(    (decayKinMomenta[0]->GetEntriesFast() == nmbDecayKinPart[0])
+		       and (decayKinMomenta[1]->GetEntriesFast() == nmbDecayKinPart[0]));
 		if (debug)
-			printInfo << "event[" << eventIndex << "]: " << nmbDecayKinPart[0]
-			          << " decay kinematics particles:" << endl;
-		decayKinParticles[2]->Clear();
-		decayKinMomenta  [2]->Clear();
-		for (unsigned int i = 0; i < nmbDecayKinPart[0]; ++i)
-			createDiffLeafs(decayKinParticles, decayKinMomenta, i, absoluteDiff, debug);
+			printDebug << "event[" << eventIndex << "]: " << nmbDecayKinPart[0]
+			           << " decay kinematics particles:" << endl;
+		decayKinMomenta[2]->Clear();
+		for (int i = 0; i < nmbDecayKinPart[0]; ++i)
+			fillDiffLeafs(*(decayKinPartNames[0]), decayKinMomenta, i, absoluteDiff, debug);
 
 		tree->Fill();
 		if (debug)
 			cout << endl;
 	}
 
+	tree->OptimizeBaskets(treeCacheSize, 1, "d");
 	tree->Write();
-	tree->OptimizeBaskets(10000000, 1.1, "d");
 	outFile->Close();
-	printInfo << "wrote " << nmbEvents << " events to file '" << outFileName << "'" << endl;
+	printSucc << "wrote " << nmbEvents << " events to file '" << outFileName << "'" << endl;
 	return true;
 }
