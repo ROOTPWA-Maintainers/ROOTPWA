@@ -77,10 +77,11 @@ message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYS
 
 
 # define build types
+# predefined build types: "DEBUG" "RELEASE" "RELWITHDEBINFO" "MINSIZEREL"
 # set a default build type for single-configuration CMake generators, if no build type is set.
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-  message(STATUS "No build type was specified. Setting build type to 'Release'.")
-  set(CMAKE_BUILD_TYPE Release)
+  message(STATUS "No build type was specified. Setting build type to 'RELEASE'.")
+  set(CMAKE_BUILD_TYPE RELEASE)
 endif()
 # common compiler flags
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
@@ -99,13 +100,11 @@ foreach(_LANG "C" "CXX")
   message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'")
   message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'")
 endforeach()
-foreach(_BUILD_TYPE "DEBUG" "MINSIZEREL" "RELEASE" "RELWITHDEBINFO")
-  message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${_BUILD_TYPE}}' "
-		"for build type ${_BUILD_TYPE}")
-  message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${_BUILD_TYPE}}' "
-		"for build type ${_BUILD_TYPE}")
-endforeach()
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
+message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
+	"for build type ${CMAKE_BUILD_TYPE}")
+message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
+	"for build type ${CMAKE_BUILD_TYPE}")
 #include(CMakePrintSystemInformation)
 
 
