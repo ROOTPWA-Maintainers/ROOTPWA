@@ -79,11 +79,9 @@ dMatrixPole::gammaTot(double m){
 cnum 
 dMatrixPole::M2(double m){
    double m2=fm*fm;
-   return cnum(m2,-gammaTot(m));
+   if(fBkg)return cnum(m2);
+   else return cnum(m2,-gammaTot(m));
 }
-
-
-
 
 
 
@@ -101,6 +99,12 @@ dMatrixAmp::setNPoles(unsigned int n){
   fPoles.clear();
   fPoles.resize(n);
 }
+void 
+dMatrixAmp::setNBkg(unsigned int n){
+  fBkg.clear();
+  fBkg.resize(n,dMatrixPole(true));
+}
+
 
 
 void 
@@ -126,20 +130,22 @@ cnum
 dMatrixAmp::amp(double m, unsigned int channel){
   cnum s(m*m,0);
   // build propagator matrix:
-  unsigned int n=nPoles();
+  unsigned int n=nPoles()+nBkg();
   cmatrix Dinv(n,n);
   cmatrix ADec(1,n);
   for(unsigned int i=0;i<n;++i){
     for(unsigned int j=0;j<n;++j){
       if(i==j){
-	Dinv(i,j)=getPole(i).M2(m)-s;
+	if(i<nPoles())Dinv(i,j)=getPole(i).M2(m)-s;
+	else Dinv(i,j)=getBkg(i-nPoles()).M2(m);
       } // end setting 
       else Dinv(i,j)=-fmixing(i,j); // no mixing at the moment
     }
   
     // build row-vector of decay amplitudes
     // (real, depend on channel)
-    ADec(0,i)=getPole(i).gDec(channel);
+    	if(i<nPoles())ADec(0,i)=getPole(i).gDec(channel);
+	else ADec(0,i)=getBkg(i-nPoles()).gDec(channel);
   } // end loop over poles
   
   cmatrix D(n,n);

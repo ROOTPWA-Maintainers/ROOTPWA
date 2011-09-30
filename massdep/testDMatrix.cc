@@ -75,6 +75,7 @@ main(int argc, char** argv){
   dMatrixAmp damp;
  
   damp.setNPoles(1);
+  damp.setNBkg(1);
   damp.addChannel(fpipi); 
   //damp.addChannel(f4pi); 
 
