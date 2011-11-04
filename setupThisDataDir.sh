@@ -88,12 +88,20 @@ else
 		fi
 
     # check paths
-		PATHS_TO_CHECK=( ${ROOTPWA_DATA_DIR} ${ROOTPWA_KEYS_DIR} ${ROOTPWA_WAVE_LIST} ${ROOTPWA_FITS_DIR} ${ROOTPWA_LOGS_DIR} )
+		PATHS_TO_CHECK=( ${ROOTPWA_DATA_DIR} ${ROOTPWA_KEYS_DIR} ${ROOTPWA_FITS_DIR} ${ROOTPWA_LOGS_DIR} )
 		for (( IDX=0; IDX<"${#PATHS_TO_CHECK[@]}"; IDX+=1 ))
 		do
-				if [[ -d ${PATHS_TO_CHECK[IDX]} ]]
+				if [[ ! -d ${PATHS_TO_CHECK[IDX]} ]]
 				then
 						echo "??? warning: directory '${PATHS_TO_CHECK[IDX]}' does not exist. ROOTPWA scripts may not work as expected."
+				fi
+		done
+		PATHS_TO_CHECK=( ${ROOTPWA_WAVE_LIST} )
+		for (( IDX=0; IDX<"${#PATHS_TO_CHECK[@]}"; IDX+=1 ))
+		do
+				if [[ ! -f ${PATHS_TO_CHECK[IDX]} ]]
+				then
+						echo "??? warning: file '${PATHS_TO_CHECK[IDX]}' does not exist. ROOTPWA scripts may not work as expected."
 				fi
 		done
 

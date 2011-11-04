@@ -211,7 +211,8 @@ function runCalcIntegrals {
     local _AMP_DIR="${1}"
     echo
     echo ">>> info: generating integrals for '${_AMP_DIR}'"
-    local _CMD="${ROOTPWA_BIN}/calcIntegrals -o ${_AMP_DIR}/norm.root ${_AMP_DIR}/*.amp"
+    #local _CMD="${ROOTPWA_BIN}/calcIntegrals -o ${_AMP_DIR}/norm.root ${_AMP_DIR}/*.amp"
+    local _CMD="${ROOTPWA_BIN}/calcIntegrals -o ${_AMP_DIR}/norm.int ${_AMP_DIR}/*.amp"
     echo "${_CMD}"
     time eval ${_CMD}
 }
