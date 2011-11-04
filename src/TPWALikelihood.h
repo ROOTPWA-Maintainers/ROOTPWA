@@ -54,7 +54,7 @@
 #include "matrix.h"
 
 #include "sumAccumulators.hpp"
-#include "normalizationIntegral.h"
+#include "ampIntegralMatrix.h"
 
 
 class TString;
@@ -67,9 +67,6 @@ class TPWALikelihood : public ROOT::Math::IGradientFunctionMultiDim {
 public:
 
 	typedef typename complexT::value_type value_type;
-
-private:
-public:
 
 	// define array types
 	typedef boost::multi_array<std::string,            2> waveNameArrayType;    // array for wave names
@@ -195,8 +192,8 @@ private:
   
 	void reorderIntegralMatrix(integral&            integral,
 	                           normMatrixArrayType& reorderedMatrix) const;
-	void reorderIntegralMatrix(const rpwa::normalizationIntegral& integral,
-	                           normMatrixArrayType&               reorderedMatrix) const;
+	void reorderIntegralMatrix(const rpwa::ampIntegralMatrix& integral,
+	                           normMatrixArrayType&           reorderedMatrix) const;
 
 public:
 

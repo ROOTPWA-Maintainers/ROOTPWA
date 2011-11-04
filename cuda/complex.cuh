@@ -96,13 +96,13 @@ namespace rpwa {
 
 			//////////////////////////////////////////////////////////////////////////
 			// assignment operator for scalars
-      HOST_DEVICE complex<T>& operator =(const T& t)
-      {
-	      _real = t;
-	      _imag = T();
-	      return *this;
-      } 
-      
+			HOST_DEVICE complex<T>& operator =(const T& t)
+			{
+				_real = t;
+				_imag = T();
+				return *this;
+			} 
+			
 			HOST_DEVICE complex<T>& operator +=(const T& t)
 			{
 				_real += t;
@@ -179,7 +179,7 @@ namespace rpwa {
 		
 		//////////////////////////////////////////////////////////////////////////
 		// operators with scalars
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -190,7 +190,8 @@ namespace rpwa {
 			result += t;
 			return result;
 		}
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -202,7 +203,8 @@ namespace rpwa {
 			return result;
 		}
 
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -213,7 +215,8 @@ namespace rpwa {
 			result -= t;
 			return result;
 		}
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -225,7 +228,8 @@ namespace rpwa {
 			return result;
 		}
 
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -236,7 +240,8 @@ namespace rpwa {
 			result *= t;
 			return result;
 		}
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -248,7 +253,8 @@ namespace rpwa {
 			return result;
 		}
 
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -259,7 +265,8 @@ namespace rpwa {
 			result /= t;
 			return result;
 		}
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -271,6 +278,7 @@ namespace rpwa {
 			return result;
 		}
 
+
 		template<typename T>
 		inline
 		HOST_DEVICE
@@ -278,7 +286,8 @@ namespace rpwa {
 		operator ==(const complex<T>& z,
 		            const T&          t)
 		{ return (z.real() == t) and (z.imag() == T()); }
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		bool
@@ -286,14 +295,16 @@ namespace rpwa {
 		            const complex<T>& z)
 		{ return (t == z.real()) and (T() == z.imag()); }
 
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		bool
 		operator !=(const complex<T>& z,
 		            const T&          t)
 		{ return (z.real() != t) or (z.imag() != T()); }
- 		template<typename T>
+
+		template<typename T>
 		inline
 		HOST_DEVICE
 		bool
@@ -301,9 +312,10 @@ namespace rpwa {
 		            const complex<T>& z)
 		{ return (t != z.real()) or (T() != z.imag()); }
 
+
 		//////////////////////////////////////////////////////////////////////////
 		// operators with complex numbers
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -315,7 +327,7 @@ namespace rpwa {
 			return result;
 		}
   
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -339,7 +351,7 @@ namespace rpwa {
 			return result;
 		}
 
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
@@ -351,7 +363,7 @@ namespace rpwa {
 			return result;
 		}
 
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		bool
@@ -359,7 +371,7 @@ namespace rpwa {
 		            const complex<T>& y)
 		{ return (x.real() == y.real()) and (x.imag() == y.imag()); }
 
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		bool
@@ -367,22 +379,24 @@ namespace rpwa {
 		            const complex<T>& y)
 		{ return (x.real() != y.real()) or (x.imag() != y.imag()); }
 
+
 		//////////////////////////////////////////////////////////////////////////
 		// sign operators
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
 		operator +(const complex<T>& z)
 		{ return z; }
   
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>
 		operator -(const complex<T>& z)
 		{ return complex<T>(-z.real(), -z.imag()); }
 			
+
 		//////////////////////////////////////////////////////////////////////////
 		// accessor functions
 		template<typename T> inline HOST_DEVICE T&       real(complex<T>&       z) { return z.real(); }
@@ -390,9 +404,10 @@ namespace rpwa {
 		template<typename T> inline HOST_DEVICE T&       imag(complex<T>&       z) { return z.imag(); }
 		template<typename T> inline HOST_DEVICE const T& imag(const complex<T>& z) { return z.imag(); }
 
+
 		//////////////////////////////////////////////////////////////////////////
 		// other functions
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		T
@@ -408,14 +423,14 @@ namespace rpwa {
 			return s * std::sqrt(real * real + imag * imag);
 		}
 
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		T
 		arg(const complex<T>& z)
 		{	return std::atan2(z.imag(), z.real());	}
 
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		T
@@ -436,7 +451,7 @@ namespace rpwa {
 		      const T& phi)
 		{ return complex<T>(rho * std::cos(phi), rho * std::sin(phi)); }
 
- 		template<typename T>
+		template<typename T>
 		inline
 		HOST_DEVICE
 		complex<T>

@@ -78,8 +78,10 @@ int
 main(int    argc,
      char** argv)
 {
-  printCompilerInfo();
-  printSvnVersion();
+	printCompilerInfo();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 
   // parse command line options
   const string progName     = argv[0];

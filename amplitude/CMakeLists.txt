@@ -42,7 +42,7 @@ add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boo
 set(INCLUDE_DIRECTORIES
   ${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
   ${Boost_INCLUDE_DIRS}
-  ${LIBCONFIG_INCLUDE_DIR}
+  ${Libconfig_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
@@ -53,28 +53,28 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-  particleProperties.cc
-  particleDataTable.cc
-  particle.cc
-  interactionVertex.cc
-  fsVertex.cc
-  decayTopology.cc
-  productionVertex.cc
-  diffractiveDissVertex.cc
-  leptoProductionVertex.cc
-  isobarDecayVertex.cc
-  isobarDecayTopology.cc
-  massDependence.cc
-  waveDescription.cc
-  evtTreeHelper.cc
-  isobarAmplitude.cc
-  isobarHelicityAmplitude.cc
-  isobarCanonicalAmplitude.cc
-  amplitudeTreeLeaf.cc
-  amplitudeTreeHelper.cc
-  normalizationIntegral.cc
-  waveSetGenerator.cc
-  )
+	particleProperties.cc
+	particleDataTable.cc
+	particle.cc
+	interactionVertex.cc
+	fsVertex.cc
+	decayTopology.cc
+	productionVertex.cc
+	diffractiveDissVertex.cc
+	leptoProductionVertex.cc
+	isobarDecayVertex.cc
+	isobarDecayTopology.cc
+	massDependence.cc
+	waveDescription.cc
+	evtTreeHelper.cc
+	isobarAmplitude.cc
+	isobarHelicityAmplitude.cc
+	isobarCanonicalAmplitude.cc
+	amplitudeTreeLeaf.cc
+	amplitudeTreeHelper.cc
+	ampIntegralMatrix.cc
+	waveSetGenerator.cc
+	)
 
 
 # ROOT dictionary
@@ -82,7 +82,7 @@ set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
   "${ROOTPWAAMP_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
-  "waveDescription.h;amplitudeTreeLeaf.h;normalizationIntegral.h"
+	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
   "rootPwaAmpLinkDef.h"
   )
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
@@ -91,11 +91,11 @@ set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 # library
 set(THIS_LIB "RootPwaAmp")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${BOOST_LIBS}"
-  "${ROOT_LIBS}"
-  "${LIBCONFIG_LIBS}"
-  "${PWA2000_LIBS}"
-  )
+	"${BOOST_LIBS}"
+	"${ROOT_LIBS}"
+	"${Libconfig_LIBS}"
+	"${PWA2000_LIBS}"
+	)
 
 
 # executables

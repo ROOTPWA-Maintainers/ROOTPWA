@@ -34,10 +34,7 @@
 #pragma link C++ class TCovEllipse+;
 //#pragma link C++ class TMCMCMeta+;
 
-// TFitResult produces a name clash for ROOT versions from 5.25.0 on
-#include "RVersion.h"
-// rootcint has problems with this: #if ROOT_VERSION_CODE < ROOT_VERSION(5,25,0)
-#if ROOT_VERSION_CODE < 334080  // make sure ROOT version is below 5.25.0
+#ifdef USE_TFITRESULT
 #pragma link C++ class TFitResult+;
 #endif 
 

@@ -85,9 +85,9 @@ interactionVertex::doClone(const bool cloneInParticles,
 	if (cloneOutParticles)
 		vertexClone->cloneOutParticles();
 	if (_debug)
-		printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-		          << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
-		          << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
+		printDebug << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
+		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
 	return vertexClone;
 }
 
@@ -108,7 +108,7 @@ interactionVertex::addInParticle(const particlePtr& part)
 		throw;
 	}
 	if (_debug)
-		printInfo << "adding incoming " << *part << endl;
+		printDebug << "adding incoming " << *part << endl;
 	_inParticles.push_back(part);
 	return true;
 }
@@ -122,7 +122,7 @@ interactionVertex::addOutParticle(const particlePtr& part)
 		throw;
 	}
 	if (_debug)
-		printInfo << "adding outgoing " << *part << endl;
+		printDebug << "adding outgoing " << *part << endl;
 	_outParticles.push_back(part);
 	return true;
 }

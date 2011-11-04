@@ -42,6 +42,7 @@
 #include <cassert>
 #include <algorithm>
 
+#include <boost/tokenizer.hpp>
 #include <boost/progress.hpp>
 
 #include "TFile.h"
@@ -114,6 +115,31 @@ namespace rpwa {
 			return 0;
 		}
 		return prop->mass();
+	}
+
+
+	void
+	parseLeafAndObjNames(const string& cmdLineString,
+	                     string&       prodKinPartNamesObjName,
+	                     string&       prodKinMomentaLeafName,
+	                     string&       decayKinPartNamesObjName,
+	                     string&       decayKinMomentaLeafName)
+	{
+		typedef tokenizer<char_separator<char> > tokenizer;
+		char_separator<char> separator(";");
+		tokenizer            nameTokens(cmdLineString, separator);
+		tokenizer::iterator  nameToken = nameTokens.begin();
+		prodKinPartNamesObjName  = *nameToken;
+		prodKinMomentaLeafName   = *(++nameToken);
+		decayKinPartNamesObjName = *(++nameToken);
+		decayKinMomentaLeafName  = *(++nameToken);
+		printInfo << "using the following object/leaf names:" << endl
+		          << "        production kinematics: "
+		          << "particle names = '" << prodKinPartNamesObjName << "', "
+		          << "momenta = '" << prodKinMomentaLeafName << "'" << endl
+		          << "        decay kinematics:      "
+		          << "particle names = '" << decayKinPartNamesObjName << "', "
+		          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
 	}
 
 

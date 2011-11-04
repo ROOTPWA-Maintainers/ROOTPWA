@@ -37,15 +37,16 @@
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
   ${Boost_INCLUDE_DIRS}
-	${LIBCONFIG_INCLUDE_DIR}
+	${Libconfig_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
   ${CUDA_INCLUDE_DIR}
   ${AMPLITUDE_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-)
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
@@ -64,12 +65,14 @@ set(SOURCES
   pwaPlotter.cc
   pwacomponent.cc
   massDepFitLikeli.cc
-)
+	)
 
-	   
+
+# ??? workaround for what ???
 set(INCL ${INCLUDE_DIRECTORIES})
-LIST(REMOVE_ITEM INCL -I/usr/include)
- 
+list(REMOVE_ITEM INCL -I/usr/include)
+
+
 # ROOT dictionary
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
 root_generate_dictionary(
@@ -77,7 +80,7 @@ root_generate_dictionary(
   "${INCL}"
   "TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
   "rootPwaLinkDef.h"
-)
+	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
 
@@ -88,7 +91,7 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${PWA2000_LIBS}"
   "${CUDA_LIBS}"
 	"${AMPLITUDE_LIBS}"
-)
+	)
 
 
 # executables
@@ -103,7 +106,7 @@ make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
 make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
 make_executable(testArray         testArray.cc         ${THIS_LIB})
 make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
-make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${LIBCONFIG_LIBS}")
+make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${Libconfig_LIBS}")
 
 # test executables
 add_test(testBuild        ${CMAKE_BUILD_TOOL})

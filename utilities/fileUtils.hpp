@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 503                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2010-11-22 12:28:07 +0100 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      some common routines for file (name) handling
@@ -45,6 +45,7 @@
 #ifndef __CINT__
 #include <glob.h>
 #else
+//  dummies for CINT
 struct glob_t;
 int glob(const char *,
          int,
@@ -59,7 +60,7 @@ namespace rpwa {
 
 	inline
 	std::string
-	directoryFromPath(const std::string& path)
+	directoryFromPath(const std::string& path)  ///< returns everything before und including last '/'
 	{
 		return path.substr(0, path.find_last_of('/') + 1);
 	}
@@ -67,7 +68,7 @@ namespace rpwa {
 
 	inline
 	std::string
-	fileNameFromPath(const std::string& path)
+	fileNameFromPath(const std::string& path)  ///< returns everything after last '/'
 	{
 		return path.substr(path.find_last_of('/') + 1);
 	}
@@ -75,7 +76,7 @@ namespace rpwa {
 
 	inline
 	std::string
-	fileNameNoExtFromPath(const std::string& path)
+	fileNameNoExtFromPath(const std::string& path)  ///< returns everything after last '/' with everything after and including last '.' stripped off
 	{
 		const std::string fileName = fileNameFromPath(path);
 		return fileName.substr(0, fileName.find_last_of('.'));
@@ -84,7 +85,7 @@ namespace rpwa {
 
 	inline
 	std::string
-	extensionFromPath(const std::string& path)
+	extensionFromPath(const std::string& path)  ///< returns everything after last '.'
 	{
 		const std::string fileName = fileNameFromPath(path);
 		return fileName.substr(fileName.find_last_of('.') + 1);
@@ -94,7 +95,7 @@ namespace rpwa {
 	inline
 	std::string
 	changeFileExtension(const std::string& path,
-	                    const std::string& newExt = "")
+	                    const std::string& newExt = "")  ///< replaces everythin after last '.' with given string
 	{
 		const std::string directory     = directoryFromPath    (path);
 		const std::string fileNameNoExt = fileNameNoExtFromPath(path);
@@ -107,7 +108,7 @@ namespace rpwa {
 
 	inline
 	std::streampos
-	fileSize(std::istream& file)
+	fileSize(std::istream& file)  ///< returns number of bytes in istream
 	{
 		if (not file)
 			return 0;
@@ -119,11 +120,10 @@ namespace rpwa {
 	}
 
 
-	// expands glob pattern into list of file names
 	inline
 	std::vector<std::string>
 	filesMatchingGlobPattern(const std::string& globPattern,
-	                         const bool         sortList = false)
+	                         const bool         sortList = false)  ///< expands glob pattern into list of matching file names
 	{
 		std::vector<std::string> fileList;
 		glob_t globBuffer;

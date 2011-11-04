@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      basic test program for integral
+//      basic test program for amplitude integral matrix
 //
 //
 // Author List:
@@ -44,7 +44,7 @@
 
 #include "reportingUtils.hpp"
 #include "fileUtils.hpp"
-#include "normalizationIntegral.h"
+#include "ampIntegralMatrix.h"
 
 
 using namespace std;
@@ -56,7 +56,7 @@ int
 main(int argc, char** argv)
 {
 	// switch on debug output
-	normalizationIntegral::setDebug(true);
+	ampIntegralMatrix::setDebug(true);
 
 	if (0) {
 		const string somePath = "/local/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/1-4++1+rho770_41_pi-.amp";
@@ -122,7 +122,7 @@ main(int argc, char** argv)
 		for (size_t i = 0; i < binAmpFileNames.size(); ++i)
 			binAmpFileNames[i] = "/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/SYM/" + binAmpFileNames[i];
 		vector<string> rootAmpFileNames;
-		normalizationIntegral integral;
+		ampIntegralMatrix integral;
 		integral.integrate(binAmpFileNames, rootAmpFileNames);
 		integral.writeAscii("testIntegral2.int");
 	}
@@ -130,37 +130,66 @@ main(int argc, char** argv)
 
 	if (1) {
 		// test I/O and copying
-		normalizationIntegral integral;
+		ampIntegralMatrix integral;
 		// ascii I/O
 		integral.readAscii("testIntegral.int");
-		normalizationIntegral integral2(integral);
+		ampIntegralMatrix integral2(integral);
 		integral2.writeAscii("testIntegral2.int");
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		// root I/O
 		// force loading predefined std::complex dictionary
-#if NORMALIZATIONINTEGRAL_ENABLED
 		gROOT->ProcessLine("#include <complex>");
 		{
 			TFile* outFile = TFile::Open("testIntegral.root", "RECREATE");
+			printInfo << "writing integral to 'testIntegral.root'" << endl;
 			integral.Write("integral");
 			outFile->Close();
 		}
 		{
-			TFile*                 inFile    = TFile::Open("testIntegral.root", "READ");
-			normalizationIntegral* integral3 = 0;
+			TFile*             inFile    = TFile::Open("testIntegral.root", "READ");
+			ampIntegralMatrix* integral3 = 0;
+			printInfo << "reading integral from 'testIntegral.root'" << endl;
 			inFile->GetObject("integral", integral3);
 			if (not integral3)
 				printErr << "cannot find integral 'integral'" << endl;
-			else
+			else {
+				if (*integral3 == integral)
+					printSucc << "ROOT file integral is identical" << endl;
+				else
+					printErr << "ROOT file intergral differs" << endl;
 				integral3->writeAscii("testIntegral3.int");
+			}
 			inFile->Close();
 		}
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
+	}
+
+
+	if (0) {
+		// test arthmetic operations
+		ampIntegralMatrix  integral, integrals[6];
+		const unsigned int nmbInt = sizeof(integrals) / sizeof(integrals[0]);
+		integral.readAscii("testIntegral.int");
+		for (unsigned int i = 0; i < nmbInt; ++i)
+			integrals[i].readAscii("testIntegral.int");
+		integrals[0] = integral + integral;
+		integrals[1] = integrals[0] - integral;
+		integrals[2] = 2 * integral - integral;
+		integrals[3] = integral * 0.1 + integral * 0.9;
+		integrals[4] = integral / 2 + integral / 2;
+		integrals[5] = (integral + 2 * integral) / 3;
+		integrals[5].writeAscii("testIntegral1.int");
+		for (unsigned int i = 1; i < nmbInt; ++i)
+			if (integrals[i] == integral)
+				printSucc << "integrals[" << i << "] is identical" << endl;
+			else
+				printErr << "integrals[" << i << "] differs" << endl;
 	}
 
 
 	if (0) {
 		// test renormalization
-		normalizationIntegral integral;
+		ampIntegralMatrix integral;
 		integral.readAscii("testIntegral.int");
 		const unsigned int nmbEvents = integral.nmbEvents();
 		integral.renormalize(10000);

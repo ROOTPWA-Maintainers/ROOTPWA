@@ -34,7 +34,7 @@
 
 using namespace rpwa;
 // #include "sharedmem.cuh" // later on for shared memory
-// #define N 10
+#define N 10
 
 
 

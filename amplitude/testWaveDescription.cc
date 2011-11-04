@@ -56,16 +56,16 @@ main(int argc, char** argv)
 	particleDataTable::readFile();
 
 	if (1) {
-		const string       keyFileName = "test.key";
+		const string       keyFileName = "testWaveDescription.key";
 		waveDescription    waveDesc;
 		isobarAmplitudePtr amp;
 		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
 			isobarDecayTopologyPtr topo = amp->decayTopology();
-			//printInfo << "key file:" << endl << waveDesc.keyFileContents();
 			printInfo << *amp;
-			topo->writeGraphViz("testAmplitude.dot");
-			gSystem->Exec("dot -Tps -o testAmplitude.ps testAmplitude.dot");
-			waveDesc.writeKeyFile("testWrite.key", *amp);  // test key file creation
+			topo->writeGraphViz("testWaveDescription.dot");
+			gSystem->Exec("dot -Tps -o testWaveDescription.ps testWaveDescription.dot");
+			waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *amp);  // test key file creation
+			//waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *(amp->decayTopology()));  // test key file creation
 			// test file I/O of waveDescription
 			const string waveName = waveDesc.waveNameFromTopology(*topo);
 			{
@@ -73,6 +73,7 @@ main(int argc, char** argv)
 				waveDesc.Write(waveName.c_str());
 				outFile->Close();
 			}
+			amp.reset();
 			cout << endl
 			     << "--------------------------------------------------------------------------------"
 			     << endl << endl;
@@ -86,6 +87,8 @@ main(int argc, char** argv)
 					printInfo << "key file:" << endl;
 				waveDesc2->printKeyFileContents(cout);
 				waveDesc2->constructAmplitude(amp);
+				waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *amp);  // test key file creation
+				//waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *(amp->decayTopology()));  // test key file creation
 				printInfo << *amp;
 				inFile->Close();
 			}
