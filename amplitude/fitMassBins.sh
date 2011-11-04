@@ -37,16 +37,15 @@
 #
 #      a typical command line to run this script locally looks like this:
 #      for i in $(seq 1 50);\
-#        do fitMassBins.sh -r 2 -N ${i} &> ${PWA_LOGS_DIR}/fitMassBins.${i}.log;\
+#        do fitMassBins.sh -r 2 -N ${i} &> ${ROOTPWA_LOGS_DIR}/fitMassBins.${i}.log;\
 #      done
 #
 #      uses PWA environment variable(s)
-#      PWA_ENV_SET
-#      PWA_WAVE_LIST
-#      PWA_DATA_DIR
-#      PWA_FITS_DIR
-#      PWA_ENV_SET
+#      ROOTPWA_ENV_SET
 #      ROOTPWA_BIN
+#      ROOTPWA_WAVE_LIST
+#      ROOTPWA_DATA_DIR
+#      ROOTPWA_FITS_DIR
 #
 #
 # Author List:
@@ -174,7 +173,7 @@ HELP_OPT="h"
 # use default values, if variables are not defined in environment
 if [[ -z "${WAVE_LIST}" ]]
 then
-    WAVE_LIST="${PWA_WAVE_LIST}"
+    WAVE_LIST="${ROOTPWA_WAVE_LIST}"
 fi
 if [[ -z "${RANK}" ]]
 then
@@ -186,11 +185,11 @@ then
 fi
 if [[ -z "${MASS_BINS_DIR}" ]]
 then
-    MASS_BINS_DIR="${PWA_DATA_DIR}"
+    MASS_BINS_DIR="${ROOTPWA_DATA_DIR}"
 fi
 if [[ -z "${FITS_DIR}" ]]
 then
-    FITS_DIR="${PWA_FITS_DIR}"
+    FITS_DIR="${ROOTPWA_FITS_DIR}"
 fi
 if [[ -z "${NORM}" || "${NORM}" != "-N" ]]
 then
@@ -234,9 +233,9 @@ if [[ -z "${WAVE_LIST}" || -z "${RANK}" || -z "${NMB_BINS_TO_COMBINE}" || -z "${
 then
     usage 1
 fi
-if [[ -z "${PWA_ENV_SET}" ]]
+if [[ "${ROOTPWA_ENV_SET}" != "true" ]]
 then
-    echo "!!! error: PWA environment is not setup. did you source your setup script?"
+    echo "!!! error: ROOTPWA environment is not setup. please source the ROOTPWA setup script first."
     exit 1
 fi
 

@@ -36,14 +36,14 @@
 #
 #      a typical command line to run this script locally looks like this:
 #      for i in $(seq 1 50);\
-#        do calcAmplitudesForMassBin.sh ${i} &> ${PWA_LOGS_DIR}/calcAmplitudesForMassBin.${i}.log;\
+#        do calcAmplitudesForMassBin.sh ${i} &> ${ROOTPWA_LOGS_DIR}/calcAmplitudes.${i}.log;\
 #      done
 #
 #      uses ROOTPWA environment variables
-#      PWA_ENV_SET
+#      ROOTPWA_ENV_SET
 #      ROOTPWA_BIN
-#      PWA_KEYS_DIR
-#      PWA_DATA_DIR
+#      ROOTPWA_KEYS_DIR
+#      ROOTPWA_DATA_DIR
 #
 #
 # Author List:
@@ -278,9 +278,9 @@ PDG_TABLE_OPT="p"
 SYM_LIST_OPT="s"
 HELP_OPT="h"
 # use default values, if variables are not defined in environment
-if [[ -z "${KEY_PATTERN}" && ! -z "${PWA_KEYS_DIR}" ]]
+if [[ -z "${KEY_PATTERN}" && ! -z "${ROOTPWA_KEYS_DIR}" ]]
 then
-    KEY_PATTERN="${PWA_KEYS_DIR}/*.key"
+    KEY_PATTERN="${ROOTPWA_KEYS_DIR}/*.key"
 fi
 if [[ -z "${MASS_BIN_INDEX}" ]]
 then
@@ -293,7 +293,7 @@ then
 fi
 if [[ -z "${MASS_BINS_DIR}" ]]
 then
-    MASS_BINS_DIR="${PWA_DATA_DIR}"
+    MASS_BINS_DIR="${ROOTPWA_DATA_DIR}"
 fi
 if [[ -z "${PDG_TABLE}" ]]
 then
@@ -323,9 +323,9 @@ if [[ -z "${KEY_PATTERN}" || -z "${MASS_BINS_DIR}" || -z "${PDG_TABLE}" || -z "$
 then
     usage 1
 fi
-if [[ -z "${PWA_ENV_SET}" ]]
+if [[ "${ROOTPWA_ENV_SET}" != "true" ]]
 then
-    echo "!!! error: PWA environment is not setup. did you source your setup script?"
+    echo "!!! error: ROOTPWA environment is not setup. please source the ROOTPWA setup script first."
     exit 1
 fi
 
