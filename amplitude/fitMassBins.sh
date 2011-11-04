@@ -26,8 +26,9 @@
 # $Date::                            $: date of last commit
 #
 # Description:
-#      performs PWA fit of a number of mass bins specified by (1-based)
-#      start index MASS_BIN_INDEX and the number of bins
+#      performs PWA fit of a number of consecutive mass bins specified
+#      by (1-based) start index MASS_BIN_INDEX and the number of bins
+#      NMB_BINS_TO_COMBINE
 #
 #      runs locally as well as on a batch system
 #
@@ -36,7 +37,7 @@
 #
 #      a typical command line to run this script locally looks like this:
 #      for i in $(seq 1 50);\
-#        do fitBins.sh -r 2 -N ${i} &> ${PWA_LOGS_DIR}/fitBins.${i}.log;\
+#        do fitMassBins.sh -r 2 -N ${i} &> ${PWA_LOGS_DIR}/fitMassBins.${i}.log;\
 #      done
 #
 #      uses PWA environment variable(s)
@@ -96,7 +97,7 @@ function usage {
     cat << EOF
 usage: $(basename ${0}) [OPTIONS]... [BATCH INDEX]
 
-performs PWA fit for batch of mass bins, by running pwafit of the ROOTpwa package
+performs PWA fit for a number of consecutive mass bins, by running pwafit of the ROOTPWA package
 
 options:
   -${WAVE_LIST_OPT} <FILE>         path to wave list file
@@ -144,7 +145,7 @@ function printPar {
 parameter values:
     path to wave list file ..................... -${WAVE_LIST_OPT} ${WAVE_LIST}
     rank of spin density matrix ................ -${RANK_OPT} ${RANK}
-    number of mass bins in batch ............... -${NMB_BINS_TO_COMBINE_OPT} ${NMB_BINS_TO_COMBINE}
+    number of mass bins to fit ................. -${NMB_BINS_TO_COMBINE_OPT} ${NMB_BINS_TO_COMBINE}
     path to directory with mass bins ........... -${MASS_BINS_DIR_OPT} ${MASS_BINS_DIR}
     path to output directory for fit results ... -${FITS_DIR_OPT} ${FITS_DIR}
     normalize amplitudes ....................... ${NORM_STATE}
@@ -306,8 +307,8 @@ do
     # check whether directory with accepted phase space amplitudes exists
     if [[ ! -d "${PSACC_AMP_DIR}" ]]
     then
-				echo "!!! error: directory '${PSACC_AMP_DIR}' with accepted phase-space amplitudes does not exist! exiting."
-				exit 1
+				echo "??? warning: directory '${PSACC_AMP_DIR}' with accepted phase-space amplitudes does not exist. using phase space integrals in '${PS_AMP_DIR}'."
+				PSACC_AMP_DIR=${PS_AMP_DIR}
     fi
     # set path to phase-space integrals
     PS_INT_FILE="${PS_AMP_DIR}/${INT_FILE_NAME}"
