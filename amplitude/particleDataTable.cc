@@ -94,7 +94,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		// apply white list
 		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
 		for (size_t j = 0; j < whiteList.size(); ++j)
-			if (i->second.name() == whiteList[j]) {
+			if ((i->second.name() == whiteList[j]) or (i->second.bareName() == whiteList[j])) {
 				whiteListMatch = true;
 				break;
 			}
@@ -103,7 +103,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		// apply black list
 		bool blackListMatch = false;
 		for (size_t j = 0; j < blackList.size(); ++j)
-			if (i->second.name() == blackList[j]) {
+			if ((i->second.name() == blackList[j]) or (i->second.bareName() == blackList[j])) {
 				blackListMatch = true;
 				break;
 			}
@@ -135,7 +135,8 @@ particleDataTable::addEntry(const particleProperties& partProp)
 		printWarn << "trying to add entry for particle '" << name << "' "
 		          << "which already exists in table"     << endl
 		          << "    existing entry: " << i->second << endl
-		          << "    conflicts with: " << partProp  << endl;
+		          << "    conflicts with: " << partProp  << endl
+		          << "    entry was not added to table." << endl;
 		return false;
 	} else {
 		_dataTable[name] = partProp;
@@ -194,9 +195,12 @@ particleDataTable::read(istream& in)
 	unsigned int countEntries = 0;
 	while (in.good()) {
 		particleProperties partProp;
-		if (in >> partProp)
-			if(addEntry(partProp))
+		if (in >> partProp) {
+			if (addEntry(partProp))
 				++countEntries;
+			if (not partProp.isItsOwnAntiPart() and addEntry(partProp.antiPartProperties()))
+				++countEntries;
+		}
 	}
 	printSucc << "read " << countEntries << " new entries into particle data table" << endl;
 	if (_debug)

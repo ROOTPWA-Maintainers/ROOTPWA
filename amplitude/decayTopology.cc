@@ -603,8 +603,6 @@ decayTopology::initKinematicsData(const TClonesArray& prodKinPartNames,
 		success = false;
 	}
 
-	// adjust cache size
-	_fsDataPartMomCache.resize(nmbFsParticles(), TVector3());
 	return success;
 }
 
@@ -644,9 +642,23 @@ decayTopology::readKinematicsData(const TClonesArray& prodKinMomenta,
 			           << "at index [" << i << "] to " << *mom << " GeV "
 			           << "at input data index [" << partIndex << "]" << endl;
 		part->setMomentum(*mom);
-		_fsDataPartMomCache[i] = part->momentum();
-	}	
+	}
+	fillKinematicsDataCache();
+
 	return success;
+}
+
+
+void
+decayTopology::fillKinematicsDataCache()
+{
+	// adjust cache size
+	_fsDataPartMomCache.resize(nmbFsParticles(), TVector3());
+	// set decay kinematics
+	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+		const particlePtr& part = fsParticles()[i];
+		_fsDataPartMomCache[i] = part->momentum();
+	}
 }
 
 
@@ -656,8 +668,13 @@ decayTopology::revertMomenta()
 	// revert production kinematics
 	bool success = productionVertex()->revertMomenta();
 	// revert decay kinematics
-	if (_fsDataPartMomCache.size() != nmbFsParticles())
+	if (_fsDataPartMomCache.size() != nmbFsParticles()) {
+		if (_debug)
+			printWarn << "cache for final-state particle momenta has size "
+			          << _fsDataPartMomCache.size() << " != # of final-state particles = "
+			          << nmbFsParticles() << endl;
 		return false;
+	}
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part = fsParticles()[i];
 		part->setMomentum(_fsDataPartMomCache[i]);
@@ -675,8 +692,14 @@ decayTopology::revertMomenta(const vector<unsigned int>& indexMap)
 	// revert production kinematics
 	bool success = productionVertex()->revertMomenta();
 	// revert decay kinematics
-	if ((_fsDataPartMomCache.size() != nmbFsParticles()) or (indexMap.size() != nmbFsParticles()))
+	if ((_fsDataPartMomCache.size() != nmbFsParticles()) or (indexMap.size() != nmbFsParticles())) {
+		if (_debug)
+			printWarn << "cache size for final-state particle momenta (= "
+			          << _fsDataPartMomCache.size() << ") or size of index map (= " << indexMap.size()
+			          << ") do not match # of final-state particles (= "
+			          << nmbFsParticles() << ")" << endl;
 		return false;
+	}
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const particlePtr& part     = fsParticles()[i];
 		const unsigned int newIndex = indexMap[i];

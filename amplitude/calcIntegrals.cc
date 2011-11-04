@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      Calculates integral matrix for set of amplitudes
+//      calculates integral matrix for set of amplitudes
 //
 //
 // Author List:
@@ -43,7 +43,7 @@
 
 #include "reportingUtils.hpp"
 #include "fileUtils.hpp"
-#include "normalizationIntegral.h"
+#include "ampIntegralMatrix.h"
 
 
 using namespace std;
@@ -61,12 +61,12 @@ usage(const string& progName,
 	     << " [-o output file -i TKey name -n max. # of events -r max. # of events -w weight file -v -h] "
 	     << "amplitude files" << endl
 	     << "    where:" << endl
-	     << "        -o path    path to output file (default: './norm.int')"                     << endl
-	     << "        -i name    integral TKey name (only for .root format, default: 'integral')" << endl
-	     << "        -n #       maximum number of events to process (default: all)"              << endl
-	     << "        -r #       number of events to renormalize to (default: not done)"          << endl
-	     << "        -w path    path to MC weight file for de-weighting (default: none)"         << endl
-       << "        -v         verbose; print debug output (default: false)"                    << endl
+	     << "        -o path    path to output file (default: './norm.int')"                      << endl
+	     << "        -i name    integral TKey name (only for .root format, default: 'integral')"  << endl
+	     << "        -n #       maximum number of events to process (default: all)"               << endl
+	     << "        -r #       number of events to renormalize to (default: no renormalization)" << endl
+	     << "        -w path    path to MC weight file for de-weighting (default: none)"          << endl
+       << "        -v         verbose; print debug output (default: false)"                     << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -78,7 +78,9 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
@@ -121,8 +123,7 @@ main(int    argc,
 		}
 	
 	// switch debug output
-	if (debug)
-		normalizationIntegral::setDebug(true);
+	ampIntegralMatrix::setDebug(debug);
 	
 	// get input file names
 	if (optind >= argc) {
@@ -135,10 +136,11 @@ main(int    argc,
 		const string fileName = argv[optind++];
 		const string fileExt  = extensionFromPath(fileName);
 		if (fileExt == "root") {
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			rootAmpFileNames.push_back(fileName);
 #else
-		  printErr << "reading of amplitudes in .root format not supported. skipping." << endl;
+		  printErr << "reading of amplitudes in .root format not supported. "
+		           << "upgrade your ROOT installation. skipping." << endl;
 #endif
 		} else if (fileExt == "amp")
 			binAmpFileNames.push_back(fileName);
@@ -152,7 +154,7 @@ main(int    argc,
 	}
 
 	// calculate integral
-	normalizationIntegral integral;
+	ampIntegralMatrix integral;
 	integral.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
 	if (nmbEventsRenorm > 0)
 		integral.renormalize(nmbEventsRenorm);
@@ -160,31 +162,32 @@ main(int    argc,
 	// write out integral
 	const string outFileExt = extensionFromPath(outFileName);
 	if (outFileExt == "root") {
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
 		if (not outFile) {
 			printErr << "cannot open output file '" << outFileName << "'. aborting." << endl;
-			return 1;
+			exit(1);
 		}
 		const int nmbBytes = integral.Write(integralName.c_str());
 		outFile->Close();
 		if (nmbBytes == 0) {
 			printErr << "problems writing integral to TKey '" << integralName << "' "
 			         << "in file '" << outFileName << "'" << endl;
-			return 1;
+			exit(1);
 		} else
 			printSucc << "wrote integral to TKey '" << integralName << "' "
 			          << "in file '" << outFileName << "'" << endl;
 #else
-		printErr << "writing of integrals in .root format not supported. aborting." << endl;
-		return 1;
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+		printErr << "writing of integrals in .root format not supported. "
+		         << "upgrade your ROOT installation. aborting." << endl;
+		exit(1);
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 	} else if (outFileExt == "int")
 		integral.writeAscii(outFileName);
 	else {
 		printErr << "output file '" << outFileName << "' should be either a .root or a .int file. "
 		         << "aborting.";
-		return 1;
+		exit(1);
 	}
 	
 	return 0;

@@ -39,6 +39,7 @@
 
 #include <fstream>
 #include <map>
+#include <cstdio>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
@@ -67,12 +68,12 @@ bool waveDescription::_debug = false;
 
 
 waveDescription::waveDescription()
-	: TObject         (),
-	  _key            (0),
-	  _amplitudeKey   (0),
-	  _keyFileContents("")
+	: TObject          (),
+	  _key             (0),
+	  _keyFileParsed   (false),
+	  _keyFileLocalCopy("")
 {
-	waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
 
 
@@ -83,12 +84,34 @@ waveDescription::~waveDescription()
 }
 
 
+void
+waveDescription::clear()
+{
+	_key              = 0;
+	_keyFileParsed    = false;
+	_keyFileLocalCopy = "";
+}
+
+
+waveDescription&
+waveDescription::operator =(const waveDescription& waveDesc)
+{
+	if (this != &waveDesc) {
+		TObject::operator   =(waveDesc);
+		_key              = waveDesc._key;
+		_keyFileParsed    = waveDesc._keyFileParsed;
+		_keyFileLocalCopy = waveDesc._keyFileLocalCopy;
+	}
+	return *this;
+}
+
+
 bool
 waveDescription::parseKeyFile(const string& keyFileName)
 {
+	_keyFileParsed = false;
 	if (not _key)
 		_key = new Config();
-	_amplitudeKey = 0;
 	if (not parseLibConfigFile(keyFileName, *_key, _debug)) {
 		printWarn << "problems reading key file '" << keyFileName << "'. "
 		          << "cannot construct decay topology." << endl;
@@ -103,14 +126,12 @@ waveDescription::parseKeyFile(const string& keyFileName)
 	    printWarn << "cannot read from file '"  << keyFileName << "'" << endl;
 	    return false;
     }
-		_keyFileContents = "";
+		_keyFileLocalCopy = "";
     string line;
     while(getline(keyFile, line))
-	    _keyFileContents += line + "\n";
+	    _keyFileLocalCopy += line + "\n";
 	}
-	// find amplitude group
-	const Setting& rootKey = _key->getRoot();
-	_amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
+	_keyFileParsed = true;
 	return true;
 }
 
@@ -118,10 +139,10 @@ waveDescription::parseKeyFile(const string& keyFileName)
 ostream&
 waveDescription::printKeyFileContents(ostream& out) const
 {
-	if (_keyFileContents != "") {
+	if (_keyFileLocalCopy != "") {
 		typedef tokenizer<char_separator<char> > tokenizer;
 		char_separator<char> separator("\n");
-		tokenizer            keyFileLines(_keyFileContents, separator);
+		tokenizer            keyFileLines(_keyFileLocalCopy, separator);
 		unsigned int         lineNumber = 0;
 		for (tokenizer::iterator i = keyFileLines.begin(); i != keyFileLines.end(); ++i)
 			out << setw(5) << ++lineNumber << "  " << *i << endl;
@@ -135,9 +156,9 @@ bool
 waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
                                         const bool              fromTemplate) const
 {
-	if (not _key) {
-		printWarn << "null pointer to libconfig data structure. "
-		          << "cannot construct decay topology. was parsing successful?" << endl;
+	if (not _key or not _keyFileParsed) {
+		printWarn << "parsing was not successful. cannot construct decay topology." << endl;
+		return false;
 	}
 
 	if (topo)
@@ -198,10 +219,12 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 
 	// create decay isobar decay topology
 	topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
+	// backward compatibility: allow sloppy key files, where charges of
+	// isobars are not explicitely defined
 	topo->calcIsobarCharges();
-	//!!! is this really necessary ??
+	//!!! user should correctly define quantum numbers
 	//topo->calcIsobarBaryonNmbs();
-	topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
+	//topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
   
 	printSucc << "constructed decay topology from key file" << endl;
 	return true;
@@ -239,13 +262,16 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	string formalism            = "helicity";
 	bool   boseSymmetrize       = true;
 	bool   useReflectivityBasis = true;
-	if (_amplitudeKey) {
-		if (_amplitudeKey->lookupValue("formalism", formalism) and _debug)
+	// find amplitude group
+	const Setting&            rootKey      = _key->getRoot();
+	const libconfig::Setting* amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
+	if (amplitudeKey) {
+		if (amplitudeKey->lookupValue("formalism", formalism) and _debug)
 			printDebug << "setting amplitude formalism to '" << formalism << "'" << endl;
-		if (_amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
+		if (amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
 			printDebug << "setting amplitude option 'boseSymmetrize' to "
 			           << ((boseSymmetrize) ? "true" : "false") << endl;
-		if (_amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
+		if (amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
 			printDebug << "setting amplitude option 'useReflectivityBasis' to "
 			           << ((useReflectivityBasis) ? "true" : "false") << endl;
 	}
@@ -265,60 +291,9 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 }
 
 
-bool
-waveDescription::writeKeyFile(const string&              keyFileName,
-                              const isobarDecayTopology& topo,
-                              const bool                 writeProdVert)
-{
-	if (_debug)
-		printDebug << "writing key file '" << keyFileName << "'" << endl;
-	Config   key;
-	Setting& rootKey = key.getRoot();
-	if (not writeKeyFile(rootKey, topo, writeProdVert)) {
-		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
-		return false;
-	}
-	try {
-		key.writeFile(keyFileName.c_str());
-	} catch (const FileIOException& ioEx) {
-		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
-		return false;
-	}
-	printSucc << "written key file '" << keyFileName << "'" << endl;
-	return true;
-}
-
-
-bool
-waveDescription::writeKeyFile(const string&          keyFileName,
-                              const isobarAmplitude& amplitude,
-                              const bool             writeProdVert)
-{
-	if (_debug)
-		printDebug << "writing key file '" << keyFileName << "'" << endl;
-	Config   key;
-	Setting& rootKey = key.getRoot();
-	if (not writeKeyFile(rootKey, *amplitude.decayTopology(), writeProdVert)) {
-		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
-		return false;
-	}
-	if (not writeKeyFile(rootKey, amplitude)) {
-		printWarn << "problems writing keys for amplitude. cannot write key file." << endl;
-		return false;
-	}
-	try {
-		key.writeFile(keyFileName.c_str());
-	} catch (const FileIOException& ioEx) {
-		printWarn << "I/O error while writing key file '" << keyFileName << "'" << endl;
-		return false;
-	}
-	printSucc << "written key file '" << keyFileName << "'" << endl;
-	return true;
-}
-
-
 string
-waveDescription::waveNameFromTopology(const isobarDecayTopology&  topo,
+waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
+                                      const bool                  newConvention,
                                       const isobarDecayVertexPtr& currentVertex)
 {
 	ostringstream fileName;
@@ -329,92 +304,80 @@ waveDescription::waveNameFromTopology(const isobarDecayTopology&  topo,
 		}
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
-		fileName << spinQn(X.isospin()) << parityQn(X.G())
-		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C())
-		         << spinQn(X.spinProj()) << parityQn(X.reflectivity());
-		// start traversing down decay chain
-		fileName << waveNameFromTopology(topo, topo.XIsobarDecayVertex());
+		if (newConvention)
+			fileName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
+			         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
+			         << spinQn(X.spinProj()) << parityQn(X.reflectivity()) << "]"
+			         << waveNameFromTopology(topo, newConvention, topo.XIsobarDecayVertex());
+		else
+			fileName << spinQn(X.isospin()) << sign(X.G())
+			         << spinQn(X.J()) << sign(X.P()) << sign(X.C())
+			         << spinQn(X.spinProj()) << sign(X.reflectivity())
+			         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+			                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
+			         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
+			         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
+			         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+			                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
 	} else {
 		// recurse down decay chain
-		// first daughter
-		fileName << "=[" << currentVertex->daughter1()->name();
-		if (not topo.isFsParticle(currentVertex->daughter1()))
-			fileName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
-		// L, S
-		fileName << "#" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "#";
-		// second daughter
-		fileName << currentVertex->daughter2()->name();
-		if (not topo.isFsParticle(currentVertex->daughter2()))
-			fileName << waveNameFromTopology
-				(topo, static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
-		fileName << "]";
-	}
-	string keyFileName = fileName.str();
-	replace_all(keyFileName, "(", "_");
-	replace_all(keyFileName, ")", "_");
-	return keyFileName;
-}
-
-
-string
-waveDescription::waveNameFromTopologyOld(isobarDecayTopology&        topo,
-                                         const isobarDecayVertexPtr& currentVertex)
-{
-	ostringstream fileName;
-	if (currentVertex == interactionVertexPtr()) {  // null pointer
-		if (not topo.checkTopology() or not topo.checkConsistency()) {
-			printWarn << "decay topology has issues. cannot construct key file name." << endl;
-			return "";
+		if (newConvention) {
+			// first daughter
+			fileName << "=[" << currentVertex->daughter1()->name();
+			if (not topo.isFsParticle(currentVertex->daughter1()))
+				fileName << waveNameFromTopology
+					(topo, newConvention,
+					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
+			// L, S
+			fileName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
+			// second daughter
+			fileName << currentVertex->daughter2()->name();
+			if (not topo.isFsParticle(currentVertex->daughter2()))
+				fileName << waveNameFromTopology
+					(topo, newConvention,
+					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
+			fileName << "]";
+		} else {
+			fileName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
+			             : currentVertex->parent()->bareName());
+			isobarDecayTopology subGraph = topo.subDecay(topo.node(currentVertex));
+			if (not topo.isFsVertex(currentVertex) and subGraph.nmbFsParticles() > 2)
+				fileName << "="
+				         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+				                                 (topo.toVertex(currentVertex->daughter1())))
+				         << "_" << spinQn(currentVertex->L()) << spinQn(currentVertex->S()) << "_"
+				         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
+				                                 (topo.toVertex(currentVertex->daughter2())));
 		}
-		// X quantum numbers and first decay
-		const particle& X = *(topo.XParticle());
-		fileName << spinQn(X.isospin()) << parityQn(X.G())
-		         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C())
-		         << spinQn(X.spinProj()) << parityQn(X.reflectivity())
-		         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-		                                    (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
-		         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
-		         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
-		         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-		                                    (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
-	} else {
-		// recurse down decay chain
-		fileName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
-		             : currentVertex->parent()->bareName());
-		isobarDecayTopology subGraph = topo.subDecay(topo.node(currentVertex));
-		if (not topo.isFsVertex(currentVertex) and subGraph.nmbFsParticles() > 2)
-			fileName << "="
-			         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-			                                    (topo.toVertex(currentVertex->daughter1())))
-			         << "_" << spinQn(currentVertex->L()) << spinQn(currentVertex->S()) << "_"
-			         << waveNameFromTopologyOld(topo, static_pointer_cast<isobarDecayVertex>
-			                                    (topo.toVertex(currentVertex->daughter2())));
 	}
 	string keyFileName = fileName.str();
-	replace_all(keyFileName, "(", "");
-	replace_all(keyFileName, ")", "");
+	if (newConvention) {
+		replace_all(keyFileName, "(", "_");
+		replace_all(keyFileName, ")", "_");
+	} else {
+		replace_all(keyFileName, "(", "");
+		replace_all(keyFileName, ")", "");
+	}
 	return keyFileName;
 }
 
 
-void
-waveDescription::parseKeyString()
+bool
+waveDescription::parseKeyFileLocalCopy()
 {
+	_keyFileParsed = false;
 	if (not _key)
 		_key = new Config();
-	_amplitudeKey = 0;
-	if (not parseLibConfigString(_keyFileContents, *_key, _debug)) {
+	if (not parseLibConfigString(_keyFileLocalCopy, *_key, _debug)) {
 		printWarn << "problems parsing key file string:" << endl;
 		printKeyFileContents(cout);
 		cout  << "    cannot construct decay topology." << endl;
 		delete _key;
 		_key = 0;
-		return;
+		return false;
 	}
-	// find amplitude group
-	const Setting& rootKey = _key->getRoot();
-	_amplitudeKey = findLibConfigGroup(rootKey, "amplitude", false);
+	_keyFileParsed = true;
+	return true;
 }
 
 
@@ -426,13 +389,17 @@ waveDescription::constructXParticle(const Setting& XQnKey,
 		printDebug << "reading X quantum numbers from '" << XQnKey.getPath() << "':" << endl;
 	// get X quantum numbers
 	map<string, int> mandatoryXQn, optionalXQn;
-	mandatoryXQn["isospin"];
-	optionalXQn ["G"      ];
-	mandatoryXQn["J"      ];
-	optionalXQn ["P"      ];
-	optionalXQn ["C"      ];
-	mandatoryXQn["M"      ];
-	optionalXQn ["refl"   ];
+	mandatoryXQn["isospin"    ];
+	optionalXQn ["G"          ];
+	mandatoryXQn["J"          ];
+	mandatoryXQn["P"          ];
+	optionalXQn ["C"          ];
+	mandatoryXQn["M"          ];
+	optionalXQn ["refl"       ];
+	optionalXQn ["baryonNmb"  ];
+	optionalXQn ["strangeness"];
+	optionalXQn ["charm"      ];
+	optionalXQn ["beauty"     ];
 	bool success = true;
 	for (map<string, int>::iterator i = mandatoryXQn.begin(); i != mandatoryXQn.end(); ++i)
 		if (not XQnKey.lookupValue(i->first, i->second)) {
@@ -450,8 +417,10 @@ waveDescription::constructXParticle(const Setting& XQnKey,
 	// create X particle
 	X = createParticle("X",
 	                   mandatoryXQn["isospin"], optionalXQn["G"],
-	                   mandatoryXQn["J"], optionalXQn["P"], optionalXQn["C"],
+	                   mandatoryXQn["J"], mandatoryXQn["P"], optionalXQn["C"],
 	                   mandatoryXQn["M"], optionalXQn["refl"]);
+	X->setBaryonNmb(optionalXQn["baryonNmb"]);
+	X->setSCB(optionalXQn["strangeness"], optionalXQn["charm"], optionalXQn["beauty"]);
 	if (_debug)
 		printDebug << "constructed X particle: " << X->qnSummary() << endl;
 	return true;
@@ -550,13 +519,6 @@ waveDescription::constructParticle(const Setting& particleKey,
 	string name;
 	if (particleKey.lookupValue("name", name)) {
 		particle = createParticle(name, requirePartInTable);
-		{
-			//!!! the following is just a quick hack for K^-
-			// the definition of flavor quantum numbers for particles and
-			// antiparticles should be solved in general in the
-			// particle{,Properties} classes
-			particle->setStrangeness(-particle->strangeness());
-		}
 		int spinProj;
 		if (particleKey.lookupValue("spinProj", spinProj))
 			particle->setSpinProj(spinProj);
@@ -746,7 +708,7 @@ waveDescription::setProductionVertexKeys(Setting&                   prodVertKey,
 				= static_pointer_cast<leptoProductionVertex>(prodVert)->beamPol();
 		return true;
 	} else {
-		printWarn << "writing of keys for production vertex of this type is not yet implemented:"
+		printWarn << "setting of keys for production vertex of this type is not yet implemented:"
 		          << *prodVert << endl;
 		return false;
 	}
@@ -759,17 +721,24 @@ waveDescription::setXQuantumNumbersKeys(Setting&        XQnKey,
 {
 	if (_debug)
 		printDebug << "setting quantum number keys for " << X.qnSummary() << endl;
-	XQnKey.add("isospin", Setting::TypeInt) = X.isospin();
+	XQnKey.add("isospin",       Setting::TypeInt) = X.isospin();
 	if (X.G() != 0)
-		XQnKey.add("G",     Setting::TypeInt) = X.G();
-	XQnKey.add("J",       Setting::TypeInt) = X.J();
-	if (X.P() != 0)
-		XQnKey.add("P",     Setting::TypeInt) = X.P();
+		XQnKey.add("G",           Setting::TypeInt) = X.G();
+	XQnKey.add("J",             Setting::TypeInt) = X.J();
+	XQnKey.add("P",             Setting::TypeInt) = X.P();
 	if (X.C() != 0)
-		XQnKey.add("C",     Setting::TypeInt) = X.C();
-	XQnKey.add("M",       Setting::TypeInt) = X.spinProj();
+		XQnKey.add("C",           Setting::TypeInt) = X.C();
+	XQnKey.add("M",             Setting::TypeInt) = X.spinProj();
 	if (X.reflectivity() != 0)
-		XQnKey.add("refl",  Setting::TypeInt) = X.reflectivity();
+		XQnKey.add("refl",        Setting::TypeInt) = X.reflectivity();
+	if (X.baryonNmb() != 0)
+		XQnKey.add("baryonNmb",   Setting::TypeInt) = X.baryonNmb();
+	if (X.strangeness() != 0)
+		XQnKey.add("strangeness", Setting::TypeInt) = X.strangeness();
+	if (X.charm() != 0)
+		XQnKey.add("charm",       Setting::TypeInt) = X.charm();
+	if (X.beauty() != 0)
+		XQnKey.add("beauty",      Setting::TypeInt) = X.beauty();
 	return true;
 }
 
@@ -838,17 +807,17 @@ waveDescription::setXDecayKeys(Setting&                   parentDecayKey,
 
 
 bool
-waveDescription::writeKeyFile(Setting&                   rootKey,
-                              const isobarDecayTopology& topo,
-                              const bool                 writeProdVert)
+waveDescription::setKeysFromTopology(Setting&                   rootKey,
+                                     const isobarDecayTopology& topo,
+                                     const bool                 setProdVert)
 {
 	if (not topo.checkTopology() or not topo.checkConsistency()) {
 		printWarn << "decay topology has issues. cannot write key file." << endl;
 		return false;
 	}
 	if (_debug)
-		printDebug << "writing " << topo;
-	if (writeProdVert) {
+		printDebug << "setting keys for " << topo;
+	if (setProdVert) {
 		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
 		setProductionVertexKeys(prodVertKey, topo.productionVertex());
 	}
@@ -856,11 +825,11 @@ waveDescription::writeKeyFile(Setting&                   rootKey,
 	Setting& XQnKey    = waveKey.add("XQuantumNumbers", Setting::TypeGroup);
 	Setting& XDecayKey = waveKey.add("XDecay",          Setting::TypeGroup);
 	if (not setXQuantumNumbersKeys(XQnKey, *(topo.XParticle()))) {
-		printWarn << "problems writing X quantum numbers" << endl;
+		printWarn << "problems setting X quantum numbers" << endl;
 		return false;
 	}
 	if (not setXDecayKeys(XDecayKey, topo, *(topo.XIsobarDecayVertex()))) {
-		printWarn << "problems writing X decay" << endl;
+		printWarn << "problems setting X decay" << endl;
 		return false;
 	}
 	return true;
@@ -871,6 +840,8 @@ bool
 waveDescription::setAmplitude(Setting&               amplitudeKey,
                               const isobarAmplitude& amplitude)
 {
+	if (_debug)
+		printDebug << "setting amplitude keys." << endl;
 	string       formalism     = "";
 	const string amplitudeName = amplitude.name();
 	if (amplitudeName == "isobarCanonicalAmplitude") {
@@ -894,14 +865,61 @@ waveDescription::setAmplitude(Setting&               amplitudeKey,
 
 
 bool
-waveDescription::writeKeyFile(Setting&               rootKey,
-                              const isobarAmplitude& amplitude)
+waveDescription::setKeysFromAmplitude(Setting&               rootKey,
+                                      const isobarAmplitude& amplitude,
+                                      const bool             setProdVert)
 {
-	printInfo << "writing ";
-	amplitude.printParameters(cout);
+	if (_debug)
+		printInfo << "setting keys for "<< amplitude;
+	if (not setKeysFromTopology(rootKey, *amplitude.decayTopology(), setProdVert)) {
+		printWarn << "problems setting keys for decay topology" << endl;
+		return false;
+	}
 	Setting& amplitudeKey = rootKey.add("amplitude", Setting::TypeGroup);
 	if (not setAmplitude(amplitudeKey, amplitude)) {
-		printWarn << "problems writing amplitude paramaters" << endl;
+		printWarn << "problems setting amplitude paramaters" << endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool
+waveDescription::writeKeyFile(FILE&                      outStream,
+                              const isobarDecayTopology& topo,
+                              const bool                 writeProdVert)
+{
+	Config   key;
+	Setting& rootKey = key.getRoot();
+	if (not setKeysFromTopology(rootKey, topo, writeProdVert)) {
+		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
+		return false;
+	}
+	try {
+		key.write(&outStream);
+	} catch (const FileIOException& ioEx) {
+		printWarn << "I/O error while writing key file" << endl;
+		return false;
+	}
+	return true;
+}
+
+
+bool
+waveDescription::writeKeyFile(FILE&                  outStream,
+                              const isobarAmplitude& amplitude,
+                              const bool             writeProdVert)
+{
+	Config   key;
+	Setting& rootKey = key.getRoot();
+	if (not setKeysFromAmplitude(rootKey, amplitude)) {
+		printWarn << "problems writing keys for amplitude. cannot write key file." << endl;
+		return false;
+	}
+	try {
+		key.write(&outStream);
+	} catch (const FileIOException& ioEx) {
+		printWarn << "I/O error while writing key file" << endl;
 		return false;
 	}
 	return true;

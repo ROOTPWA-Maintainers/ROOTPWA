@@ -70,6 +70,13 @@ namespace rpwa {
 	double getParticleMass(const std::string& name);
 
 
+	void parseLeafAndObjNames(const std::string& cmdLineString,
+	                          std::string&       prodKinPartNamesObjName,
+	                          std::string&       prodKinMomentaLeafName,
+	                          std::string&       decayKinPartNamesObjName,
+	                          std::string&       decayKinMomentaLeafName);  // parses leaf and object names from ;-delimited command line string
+
+
 	bool getParticleNamesFromRootFile(TFile&             inFile,
 	                                  TClonesArray*&     prodKinPartNames,   // array of particle names to be filled
 	                                  TClonesArray*&     decayKinPartNames,  // array of particle names to be filled

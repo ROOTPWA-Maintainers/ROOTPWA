@@ -72,7 +72,10 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
+	
+	cerr << "performs PWA fit for given mass bin and list of waves" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
 	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
@@ -81,7 +84,7 @@ usage(const string& progName,
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
 	     << "        -w file    path to wavelist file" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
 #else
 	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
@@ -156,6 +159,7 @@ main(int    argc,
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();
+	cout << endl;
 
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
@@ -213,7 +217,7 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'R':
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
 #endif
 			break;

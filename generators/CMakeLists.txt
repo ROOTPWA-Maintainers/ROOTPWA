@@ -39,14 +39,14 @@
 set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
-  ${LIBCONFIG_INCLUDE_DIR}
+  ${Libconfig_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
   ${AMPLITUDE_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${TOOLS_INCLUDE_DIR}
-)
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
@@ -58,9 +58,9 @@ set(SOURCES
   TPWWeight.cc
   TDiffractivePhaseSpace.cc
   TPrimaryVertexGen.cc
-  plotWeightedEvts.C # this helper is included to the library to make it available to the gui
-)
-   
+  plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
+	)
+
 
 # ROOT dictionary
 set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
@@ -69,7 +69,7 @@ root_generate_dictionary(
   "${INCLUDE_DIRECTORIES}"
   "nBodyPhaseSpaceGen.h"
   "rootPwaGenLinkDef.h"
-)
+	)
 set(SOURCES ${SOURCES} ${ROOTPWAGEN_DICTIONARY})
 
 
@@ -80,11 +80,11 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${PWA2000_LIBS}"
   "${ROOTPWA_LIBS}"
   "${ROOTPWATOOLS_LIBS}"
-)
+	)
 
 
 # executables
-make_executable(genpw     genpw.cc     ${THIS_LIB} "${LIBCONFIG_LIBS}")
-make_executable(evtweight evtweight.cc ${THIS_LIB} "${AMPLITUDE_LIBS}")
-make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})
+make_executable(genpw       genpw.cc           ${THIS_LIB} "${Libconfig_LIBS}")
+make_executable(evtweight   evtweight.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}")
+make_executable(plotBWAmp   plotBWAmp.cc       ${THIS_LIB})
 make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})

@@ -50,7 +50,7 @@ productionVertex::productionVertex()
 	: interactionVertex()
 {
 	if (_debug)
-		printInfo << "constructed " << *this << endl;
+		printDebug << "constructed " << *this << endl;
 }
 
 

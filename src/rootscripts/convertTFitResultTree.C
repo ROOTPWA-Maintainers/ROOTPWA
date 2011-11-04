@@ -26,7 +26,7 @@ using namespace std;
 using namespace rpwa;
 
 
-#if TFITRESULT_ENABLED
+#ifdef USE_TFITRESULT
 
 
 void
@@ -157,4 +157,4 @@ convertTFitResultTree(const string&           inFileNamePattern = "./*.root",
 }
 
 
-#endif  // TFITRESULT_ENABLED
+#endif  // USE_TFITRESULT

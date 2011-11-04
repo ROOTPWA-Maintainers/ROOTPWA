@@ -1,11 +1,11 @@
 #!/bin/bash
 
-export FITDIR=$PWA_DATA_DIR/fits
+export FITDIR=$ROOTPWA_DATA_DIR/fits
 #export FITDIR=$WORKDIR/PWAFITS/GENETICS/ltRUN21/gen39/set42
 export FITFILE=$FITDIR/fit.root
 export PLOTFILE=${FITFILE/.root/.plots.root}
 export BOOKY=${FITFILE/.root/.booky.pdf}
-export DATADIR=$PWA_DATA_DIR
+export DATADIR=$ROOTPWA_DATA_DIR
 
 echo FITDIR=$FITDIR
 echo FITFILE=$FITFILE
