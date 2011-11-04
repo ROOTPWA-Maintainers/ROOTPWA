@@ -26,12 +26,12 @@
 # $Date::                            $: date of last commit
 #
 # Description:
-#      converts all .evt files in mass bin directories into ROOT files
+#      converts all .evt files in the given mass bin directories into ROOT files
 #
 #      uses PWA environment variable(s)
-#      PWA_ENV_SET
+#      ROOTPWA_ENV_SET
 #      ROOTPWA
-#      PWA_DATA_DIR
+#      ROOTPWA_DATA_DIR
 #
 #
 # Author List:
@@ -42,32 +42,33 @@
 
 
 echo ">>> info: ${0} started on $(date)"
-echo ">>> info: converting .evt files in ${PWA_DATA_DIR}"
+echo ">>> info: converting .evt files in ${ROOTPWA_DATA_DIR}"
 echo
-if [[ -z "${PWA_ENV_SET}" ]]
+if [[ "${ROOTPWA_DATA_ENV_SET}" != "true" ]]
 then
-    echo "!!! error: PWA environment is not setup. source setupThis.sh!"
+    echo "!!! error: ROOTPWA data environment is not setup. cannot convert .evt files. please source the setup script for the data environment first."
     exit 1
 fi
 
 
+#internal parameters
 #REGENERATE_EVT_FILES="true"
 REGENERATE_EVT_FILES="false"
 PDG_TABLE="${ROOTPWA}/amplitude/particleDataTable.txt"
 
 
 # find mass bin directories
-MASS_BINS=$(find ${PWA_DATA_DIR} -type d -regex '.*/[0-9]+.[0-9]+' -printf '%f\n' | sort -n)
+MASS_BINS=$(find ${ROOTPWA_DATA_DIR} -type d -regex '.*/[0-9]+.[0-9]+' -printf '%f\n' | sort -n)
 if [[ -z "${MASS_BINS}" ]]
 then
-    echo "!!! error: cannot find any mass bins in ${PWA_DATA_DIR}"
+    echo "!!! error: cannot find any mass bins in ${ROOTPWA_DATA_DIR}"
     exit 1
 fi
 
 # convert real data files
 for MASS_BIN in ${MASS_BINS}
 do
-    DIR=${PWA_DATA_DIR}/${MASS_BIN}
+    DIR=${ROOTPWA_DATA_DIR}/${MASS_BIN}
     EVT_FILE=${DIR}/${MASS_BIN}.evt
     ROOT_FILE=${DIR}/${MASS_BIN}.root
     echo ">>> info: converting '${EVT_FILE}' to '${ROOT_FILE}'"
@@ -80,8 +81,8 @@ done
 # convert MC data files
 for MASS_BIN in ${MASS_BINS}
 do
-    #DIR=${PWA_DATA_DIR}/${MASS_BIN}/MC
-    DIR=${PWA_DATA_DIR}/${MASS_BIN}
+    #DIR=${ROOTPWA_DATA_DIR}/${MASS_BIN}/MC
+    DIR=${ROOTPWA_DATA_DIR}/${MASS_BIN}
     EVT_FILE=${DIR}/${MASS_BIN}.ps.evt
     ROOT_FILE=${DIR}/${MASS_BIN}.ps.root
     echo ">>> info: converting '${EVT_FILE}' to '${ROOT_FILE}'"
@@ -104,7 +105,7 @@ then
     # rewrite real data files
     for MASS_BIN in ${MASS_BINS}
     do
-				DIR=${PWA_DATA_DIR}/${MASS_BIN}
+				DIR=${ROOTPWA_DATA_DIR}/${MASS_BIN}
 				EVT_FILE=${DIR}/${MASS_BIN}.evt
 				ROOT_FILE=${DIR}/${MASS_BIN}.root
 				echo ">>> info: rewriting '${EVT_FILE}' based on '${ROOT_FILE}'"
@@ -117,7 +118,7 @@ then
     # rewrite MC data files
     for MASS_BIN in ${MASS_BINS}
     do
-				DIR=${PWA_DATA_DIR}/${MASS_BIN}/MC
+				DIR=${ROOTPWA_DATA_DIR}/${MASS_BIN}/MC
 				EVT_FILE=${DIR}/${MASS_BIN}.ps.evt
 				ROOT_FILE=${DIR}/${MASS_BIN}.ps.root
 				echo ">>> info: rewriting '${EVT_FILE}' based on '${ROOT_FILE}'"

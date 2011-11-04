@@ -87,15 +87,17 @@ main(int argc, char** argv)
 	pdt.readFile();
 	TStopwatch timer;
   
-	isobarDecayVertex::setDebug(true);
-	decayTopology::setDebug(true);
-	isobarDecayTopology::setDebug(true);
-	massDependence::setDebug(true);
-	diffractiveDissVertex::setDebug(true);
-	isobarAmplitude::setDebug(true);
-	isobarHelicityAmplitude::setDebug(true);
-	isobarCanonicalAmplitude::setDebug(true);
-	waveDescription::setDebug(true);
+	if (0) {
+		isobarDecayVertex::setDebug(true);
+		decayTopology::setDebug(true);
+		isobarDecayTopology::setDebug(true);
+		massDependence::setDebug(true);
+		diffractiveDissVertex::setDebug(true);
+		isobarAmplitude::setDebug(true);
+		isobarHelicityAmplitude::setDebug(true);
+		isobarCanonicalAmplitude::setDebug(true);
+		waveDescription::setDebug(true);
+	}
 
 	if (0) {
 		{
@@ -182,8 +184,8 @@ main(int argc, char** argv)
 		particlePtr a1    = createParticle("a1(1269)+");
 		particlePtr f1    = createParticle("f1(1285)");
 		// define X-system
-		//                                   2I  G  2J  P   C  2M
-		particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2);
+		//                                   2I  G  2J  P   C  2M  refl
+		particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2, +1);
 		// define production vertex
 		particlePtr              beam     = createParticle("pi-");
 		particlePtr              target   = createParticle("p");
@@ -216,6 +218,7 @@ main(int argc, char** argv)
 		isobarDecayTopologyPtr topo = createIsobarDecayTopology(prodVert, decayVertices, fsParticles);
 		// topo->checkTopology();
 		// topo->checkConsistency();
+		topo->fillKinematicsDataCache();
 		isobarHelicityAmplitude amp(topo);
 		cout << topo;
 		complex<double>         decayAmp = amp.amplitude();
@@ -290,8 +293,8 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		//const long int maxNmbEvents   = 1000000;
-		const long int maxNmbEvents   = 2;
+		const long int maxNmbEvents   = 1000000;
+		//const long int maxNmbEvents   = 2;
 
 		// const string   newKeyFileName = "test.key";
 		const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
@@ -417,8 +420,6 @@ main(int argc, char** argv)
 			printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
 			timer.Print();
 
-			exit(1);
-      
 			vector<complex<double> > pwa2kAmps;
 			if (1) {  // compare to PWA2000
 				PDGtable.initialize();
@@ -457,8 +458,8 @@ main(int argc, char** argv)
 					TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
 					TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
 					TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-					TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
-					TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -3e-5, 3e-5);
+					TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -1e-9, 1e-9);
+					TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -1e-9, 1e-9);
 					TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 					TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 					for (unsigned int i = 0; i < myAmps.size(); ++i) {
