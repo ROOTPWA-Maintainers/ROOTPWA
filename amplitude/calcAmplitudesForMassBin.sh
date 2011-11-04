@@ -68,11 +68,11 @@ DT_FILE_EXT=.root
 PS_FILE_EXT=.ps.root
 PSACC_FILE_EXT=.acc.root
 # amplitude file format
-#AMP_FILE_EXT=.amp
-AMP_FILE_EXT=.root
+AMP_FILE_EXT=.amp
+#AMP_FILE_EXT=.root
 # integral file name
-#INT_FILE_NAME=norm.int
-INT_FILE_NAME=norm.root
+INT_FILE_NAME=norm.int
+#INT_FILE_NAME=norm.root
 
 
 # SGE setup

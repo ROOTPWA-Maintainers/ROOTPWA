@@ -119,7 +119,7 @@ message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 # set(Boost_DEBUG 1)
 find_package(Boost 1.43.0 REQUIRED)
-set_feature_info(Boost "C++ Template Library" "http://www.boost.org/")
+set_feature_info(Boost "C++ Template Library" "http://www.boost.org/" "required")
 if(Boost_FOUND)
 	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
   message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'")
@@ -140,12 +140,12 @@ message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUD
 # environment variable $LIBCONFIG is expected to point to libconfig location
 find_package(Libconfig 1.4 REQUIRED)
 set_feature_info(Libconfig "simple C++ library for processing structured configuration files"
-	"http://www.hyperrealm.com/libconfig/")
+	"http://www.hyperrealm.com/libconfig/" "required")
 
 
 # setup ROOT includes and libraries
 find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
-set_feature_info(ROOT "C++ HEP analysis framework" "http://root.cern.ch/")
+set_feature_info(ROOT "C++ HEP analysis framework" "http://root.cern.ch/" "required")
 # some code switches that depend on ROOT version
 # std::complex is not supported as TTree leaf in ROOT versions below 5.27.06
 if(NOT ROOT_VERSION VERSION_LESS "5.27.06")
@@ -266,7 +266,7 @@ endif()
 
 # make SVN version string accessible via predefined macro SVN_VERSION
 find_package(Subversion)
-set_feature_info(Subversion "software versioning and a revision control system"
+set_feature_info(Subversion "software versioning and revision control system"
 	"http://subversion.apache.org/" "needed only to determine repository revision")
 if(Subversion_FOUND)
   # unfortunately CMAKE only parses 'svn info'
