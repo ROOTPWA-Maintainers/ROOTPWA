@@ -100,7 +100,7 @@ namespace rpwa {
 		fitResult(const fitResult& result);
 		fitResult(const TFitBin&   fitBin);
 		// enable copying from TFitResult for older ROOT versions
-#if TFITRESULT_ENABLED
+#ifdef USE_TFITRESULT
 		fitResult(const TFitResult& result);
 #endif
 		virtual ~fitResult();

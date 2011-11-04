@@ -66,6 +66,10 @@
 #//          set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})  # append dictionary to sources
 #//
 #//
+#// Author List:
+#//      Boris Grube          TUM            (original author)
+#//
+#//
 #//-------------------------------------------------------------------------
 
 
@@ -77,7 +81,7 @@ set(ROOT_LIBS)
 
 find_program(ROOT_CONFIG_EXECUTABLE root-config)
 if(NOT ROOT_CONFIG_EXECUTABLE)
-  set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find root-config.")
+  set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find root-config executable. Make sure ROOT is setup correctly.")
 else()
   
   set(ROOT_FOUND TRUE)
@@ -123,7 +127,7 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT EXISTS "${ROOT_BIN_DIR}")
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT executable directory ${ROOT_BIN_DIR} does not exist.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT executable directory '${ROOT_BIN_DIR}' does not exist.")
   endif()
 
   execute_process(
@@ -132,7 +136,7 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT EXISTS "${ROOT_INCLUDE_DIR}")
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT include directory ${ROOT_INCLUDE_DIR} does not exist.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT include directory '${ROOT_INCLUDE_DIR}' does not exist.")
   endif()
 
   execute_process(
@@ -141,7 +145,7 @@ else()
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT EXISTS "${ROOT_LIBRARY_DIR}")
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT library directory ${ROOT_LIBRARY_DIR} does not exist.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT library directory '${ROOT_LIBRARY_DIR}' does not exist.")
   endif()
 
   execute_process(
@@ -157,7 +161,7 @@ else()
   find_program(ROOTCINT_EXECUTABLE rootcint)
   if(NOT ROOTCINT_EXECUTABLE)
     set(ROOT_FOUND FALSE)
-    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcint.")
+    set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find rootcint. Make sure ROOT is setup correctly.")
   endif()
 
   # parse version string
@@ -167,27 +171,17 @@ else()
     ROOT_MINOR_VERSION "${ROOT_VERSION}")
   string(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\/([0-9][0-9]+).*" "\\1"
     ROOT_PATCH_VERSION "${ROOT_VERSION}")
-  # make sure minor version is specified
-  if(ROOT_FIND_VERSION AND NOT ROOT_FIND_VERSION_MINOR)
-    message(FATAL_ERROR "When requesting a specific version of ROOT, you must provide at least the major and minor version numbers, e.g., 5.22")
-  endif()
-  # set patchlevel to 0, if not specified
-  if(NOT ROOT_FIND_VERSION_PATCH)
-    set(ROOT_FIND_VERSION_PATCH 0)
-  endif()
-  # compute an overall version number which can be compared at once
-  math(EXPR _ROOT_FIND_VERSION "${ROOT_FIND_VERSION_MAJOR} * 10000 + ${ROOT_FIND_VERSION_MINOR} * 100 + ${ROOT_FIND_VERSION_PATCH}")
-  math(EXPR _ROOT_VERSION "${ROOT_MAJOR_VERSION} * 10000 + ${ROOT_MINOR_VERSION} * 100 + ${ROOT_PATCH_VERSION}")
+	set(ROOT_VERSION "${ROOT_MAJOR_VERSION}.${ROOT_MINOR_VERSION}.${ROOT_PATCH_VERSION}")
   # compare version
   if(ROOT_FIND_VERSION_EXACT)
-    if(NOT _ROOT_VERSION EQUAL "${_ROOT_FIND_VERSION}")
+    if(NOT ROOT_VERSION VERSION_EQUAL ROOT_FIND_VERSION)
       set(ROOT_FOUND FALSE)
-      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} does not match requested version ${ROOT_FIND_VERSION_MAJOR}.${ROOT_FIND_VERSION_MINOR}/${ROOT_FIND_VERSION_PATCH}.")
+      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} does not match requested version ${ROOT_FIND_VERSION}.")
     endif()
   else()
-    if(_ROOT_VERSION LESS "${_ROOT_FIND_VERSION}")
+    if(ROOT_VERSION LESS ROOT_FIND_VERSION)
       set(ROOT_FOUND FALSE)
-      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} is lower than requested version ${ROOT_FIND_VERSION_MAJOR}.${ROOT_FIND_VERSION_MINOR}/${ROOT_FIND_VERSION_PATCH}.")
+      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} is lower than requested version ${ROOT_FIND_VERSION}.")
     endif()
   endif()
 
@@ -230,7 +224,7 @@ if(ROOT_FOUND)
       NO_DEFAULT_PATH)
     if(NOT _ROOT_LIB_${_LIBNAME})
       set(ROOT_FOUND FALSE)
-      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library ${_LIBNAME} in ${ROOT_LIBRARY_DIR}.")
+      set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library '${_LIBNAME}' in '${ROOT_LIBRARY_DIR}'.")
     else()
       list(APPEND ROOT_LIBS ${_ROOT_LIB_${_LIBNAME}})
     endif()
@@ -250,12 +244,12 @@ if(ROOT_FOUND)
       string(REGEX REPLACE "^-.(.*)$" "\\1" _LIBNAME "${_LIBNAME}")
       # check whether libraries exist
       find_library(_AUX_LIB_${_LIBNAME}
-	NAMES ${_LIBNAME})
+				NAMES ${_LIBNAME})
       if(NOT _AUX_LIB_${_LIBNAME})
-	set(ROOT_FOUND FALSE)
-	set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library ${_LIBNAME}.")
+				set(ROOT_FOUND FALSE)
+				set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library '${_LIBNAME}'.")
       else()
-	list(APPEND ROOT_LIBS ${_AUX_LIB_${_LIBNAME}})
+				list(APPEND ROOT_LIBS ${_AUX_LIB_${_LIBNAME}})
       endif()
     endif()
   endforeach()
@@ -270,16 +264,16 @@ mark_as_advanced(
   ROOT_LIBRARIES
   ROOT_LIBS
   ROOT_DEFINITIONS
-)
+	)
 
 
 # report result
 if(ROOT_FOUND)
-  message(STATUS "Found ROOT version ${ROOT_VERSION} r${ROOT_SVN_REVISION} in ${ROOTSYS}")
-  message(STATUS "Using ROOT include dir ${ROOT_INCLUDE_DIR}")
-  message(STATUS "Using ROOT library dir ${ROOT_LIBRARY_DIR}")
-  message(STATUS "Using ROOT libraries: ${ROOT_LIBRARIES}")
-  message(STATUS "Using ROOT additional components: ${ROOT_FIND_COMPONENTS}")
+  message(STATUS "Found ROOT version ${ROOT_VERSION} r${ROOT_SVN_REVISION} in '${ROOTSYS}'.")
+  message(STATUS "Using ROOT include dir '${ROOT_INCLUDE_DIR}'.")
+  message(STATUS "Using ROOT library dir '${ROOT_LIBRARY_DIR}'.")
+  message(STATUS "Using ROOT libraries: ${ROOT_LIBRARIES}.")
+  message(STATUS "Using ROOT additional components: ${ROOT_FIND_COMPONENTS}.")
 else()
   if(ROOT_FIND_REQUIRED)
     message(FATAL_ERROR "Unable to find requested ROOT installation:${ROOT_ERROR_REASON}")
@@ -291,13 +285,14 @@ else()
 endif()
 
 
-# macro that generates ROOT dictionary
+# function that generates ROOT dictionary
 function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FILE)
 
   if(NOT ROOT_FOUND)
-    message(FATAL_ERROR "Impossible to generate dictionary ${DICT_FILE}, because no ROOT installation was found.")
+    message(FATAL_ERROR "Impossible to generate dictionary '${DICT_FILE}', "
+			"because no ROOT installation was found.")
   endif()
- 
+	
   # prepare command line argument for compiler definitions (put -D in front)
   set(_DEFINITIONS)
   get_property(_DEFS DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY COMPILE_DEFINITIONS)
@@ -311,7 +306,7 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
   foreach(_FILE ${INCLUDE_DIRS})
     set(_INCLUDES ${_INCLUDES} -I${_FILE})
   endforeach()
- 
+	
   # strip paths from header file names
   set(_HEADERS)
   foreach(_FILE ${HEADER_FILES})
@@ -327,6 +322,6 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
     COMMAND ${ROOTCINT_EXECUTABLE}
     ARGS -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${LINKDEF_FILE}
     DEPENDS ${HEADER_FILES} ${LINKDEF_FILE}
-  )
+		)
 
 endfunction(root_generate_dictionary)

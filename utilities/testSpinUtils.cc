@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 633                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2011-02-14 19:33:31 +0100 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      test some functions
@@ -37,7 +37,7 @@
 
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
-#include "physUtils.hpp"
+#include "spinUtils.hpp"
 
 
 using namespace std;

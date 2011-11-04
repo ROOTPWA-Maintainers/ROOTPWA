@@ -275,8 +275,8 @@ namespace rpwa {
 		        const bool) const  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 		{
 			if (_debug)
-				printInfo << "cloning graph '" << name() << "' "
-				          << ((cloneParticles   ) ? "in" : "ex") << "cluding particles" << std::endl;
+				printDebug << "cloning graph '" << name() << "' "
+				           << ((cloneParticles   ) ? "in" : "ex") << "cluding particles" << std::endl;
 			// copy graph data structure
 			decayGraph*  graphClone = new decayGraph(*this);
 			nodeIterator iNd, iNdEnd;
@@ -326,8 +326,8 @@ namespace rpwa {
 			vertex        (newNd)   = newVert;
 			_vertexNodeMap[newVert] = newNd;
 			if (_debug)
-				printInfo << "adding " << *newVert << " to graph '" << name() << "'"
-				          << " as node [" << newNd << "]" << std::endl;
+				printDebug << "adding " << *newVert << " to graph '" << name() << "'"
+				           << " as node [" << newNd << "]" << std::endl;
 			// create edges for particles coming into vertex
 			for (unsigned int iInPart = 0; iInPart < newVert->nmbInParticles(); ++iInPart) {
 				const PPtr& part = newVert->inParticles()[iInPart];
@@ -351,9 +351,9 @@ namespace rpwa {
 								particle        (ed)   = part;
 								_particleEdgeMap[part] = ed;
 								if (_debug)
-									printInfo << "added edge for particle '" << part->name() << "' "
-									          << "from node [" << *iNd << "] to node ["
-									          << newNd << "] of graph '" << name() << "'" << std::endl;
+									printDebug << "added edge for particle '" << part->name() << "' "
+									           << "from node [" << *iNd << "] to node ["
+									           << newNd << "] of graph '" << name() << "'" << std::endl;
 							} else {
 								printErr << "could not add edge for particle " << *part << " "
 								         << "to graph '" << name() << "'. aborting." << std::endl;
@@ -385,9 +385,9 @@ namespace rpwa {
 								particle        (ed)   = part;
 								_particleEdgeMap[part] = ed;
 								if (_debug)
-									printInfo << "added edge for particle '" << part->name() << "' "
-									          << "from node [" << *iNd << "] to node ["
-									          << newNd << "] of graph '" << name() << "'" << std::endl;
+									printDebug << "added edge for particle '" << part->name() << "' "
+									           << "from node [" << *iNd << "] to node ["
+									           << newNd << "] of graph '" << name() << "'" << std::endl;
 							} else {
 								printErr << "could not add edge for particle " << *part << " "
 								         << "to graph '" << name() << "'. aborting." << std::endl;
@@ -641,8 +641,8 @@ namespace rpwa {
 			                         boost::make_iterator_property_map(colors.begin(),
 			                                                           nodeIndexMap(), colors[0]));
 			if (_debug) {
-				printInfo << "depth-first node order of graph '" << name() 
-				          << "' starting at node[" << startNd << "]: ";
+				printDebug << "depth-first node order of graph '" << name() 
+				           << "' starting at node[" << startNd << "]: ";
 				for (unsigned int i = 0; i < sortedNds.size(); ++i)
 					std::cout << sortedNds[i] << ((i < sortedNds.size() - 1) ? ", " : "");
 				std::cout << std::endl;
@@ -684,7 +684,7 @@ namespace rpwa {
 			// find all nodes connected to startNd via depth-first search
 			std::vector<nodeDesc> subGraphNds = sortNodesDfs(startNd);
 			if (_debug)
-				printInfo << "creating subgraph of graph '" << name() << "' starting at node " << startNd;
+				printDebug << "creating subgraph of graph '" << name() << "' starting at node " << startNd;
 			decayGraph subDecayGraph;
 			if (linkToMotherGraph) {
 				//!!! with the current design of the decayGraph class
@@ -753,8 +753,8 @@ namespace rpwa {
 		addGraph(const decayGraph& graph)  ///< copies all nodes and edges (including properties) in graph into this graph and creates additional edges for the possible connections between graph and this _graph
 		{
 			if (_debug)
-				printInfo << "adding graph '" << graph.name() << "' "
-				          << "to graph '" << name() << "'" << std::endl;
+				printDebug << "adding graph '" << graph.name() << "' "
+				           << "to graph '" << name() << "'" << std::endl;
 			boost::copy_graph(graph._graph, _graph);
 			buildReverseMaps();
 			createEdgesFromParticles();
@@ -857,9 +857,9 @@ namespace rpwa {
 										particle(ed)              = outPart;
 										_particleEdgeMap[outPart] = ed;
 										if (_debug)
-											printInfo << "added edge for particle '" << outPart->name() << "' "
-											          << "from node [" << *iFromNode << "] to node ["
-											          << *iToNode << "] of graph '" << name() << "'" << std::endl;
+											printDebug << "added edge for particle '" << outPart->name() << "' "
+											           << "from node [" << *iFromNode << "] to node ["
+											           << *iToNode << "] of graph '" << name() << "'" << std::endl;
 									} else {
 										printErr << "could not add edge for particle " << *outPart << " "
 										         << "to graph '" << name() << "'. aborting." << std::endl;

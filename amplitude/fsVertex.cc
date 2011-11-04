@@ -56,7 +56,7 @@ fsVertex::fsVertex(const particlePtr& fsParticle)
 	}
 	interactionVertex::addInParticle(fsParticle);
 	if (_debug)
-		printInfo << "constructed " << *this << endl;
+		printDebug << "constructed " << *this << endl;
 }
 
 
@@ -78,8 +78,8 @@ fsVertex::doClone(const bool cloneInParticles,
 	if (cloneInParticles)
 		vertexClone->cloneInParticles();
 	if (_debug)
-		printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-		          << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles" << std::endl;
+		printDebug << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles" << std::endl;
 	return vertexClone;
 }
 

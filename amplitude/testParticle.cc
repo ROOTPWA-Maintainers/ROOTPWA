@@ -41,7 +41,7 @@
 #include "Vec.h"
 #include "lorentz.h"
 
-#include "mathUtils.hpp"
+#include "spinUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
 #include "particleDataTable.h"
@@ -73,15 +73,17 @@ main(int argc, char** argv)
 	// test filling of particle properties
 	if (1) {
 		particleProperties partProp;
-		const string       partName = "pi";
+		const string       partName = "pi+";
 		partProp.fillFromDataTable(partName);
 		printInfo << "particle properties for '" << partName << "':" << endl
 		          << partProp << endl;
 		pdt.addEntry(partProp);
+		printInfo << "antiparticle properties for '" << partName << "':" << endl
+		          << partProp.antiPartProperties() << endl;
 	}
 
 	// test construction of particles
-	if (1) {
+	if (0) {
 		TVector3 mom;
 		mom = TVector3(1, 2, 3);
 		const particle p1("pi+", true, 0,  0, 0, mom);
@@ -97,7 +99,7 @@ main(int argc, char** argv)
 	}
 
 	// checking charge name handling
-	if (1) {
+	if (0) {
 		for (int i = -2; i < 3; ++i) {
 			stringstream c;
 			c << "pi";
@@ -107,11 +109,32 @@ main(int argc, char** argv)
 			//const particle p(c.str(), i);
 			int q;
 			const string n = particle::chargeFromName(c.str(), q);
-			cout << c.str() << ": charge = " << q << ", name = " << n << endl;
+			printInfo << c.str() << ": charge = " << q << ", bare name = " << n << endl;
 			const particle p(c.str());
 			cout << "name = " << p.name() << endl
 			     << endl;
 		}
+	}
+
+	// checking spin-exotic
+	if (0) {
+		printInfo << "testing spin-exotic tag" << endl;
+		for (particleDataTable::dataIterator i = pdt.begin(); i != pdt.end(); ++i) {
+			const particleProperties& prop = i->second;
+			const bool jpc  = jpcIsExotic(prop.J(), prop.P(), prop.C());
+			const bool igjp = igjpIsExotic(prop.isospin(), prop.G(), prop.J(), prop.P());
+			cout << prop.name() << ": " << yesNo(jpc) << " vs. " << yesNo(igjp)
+			     << ((jpc != igjp) ? " <<<" : "") << endl;
+		}
+		for (int J = 0; J < 4; ++J)
+			for (int P = -1; P <= 1; P += 2)
+				for (int C = -1; C <= 1; C += 2) {
+					const bool jpc   = jpcIsExotic(2 * J, P, C);
+					const bool igjp1 = igjpIsExotic(0,  C, 2 * J, P);
+					const bool igjp2 = igjpIsExotic(2, -C, 2 * J, P);
+					cout << J << sign(P) << sign(C) << ": " << yesNo(jpc) << " vs. " << yesNo(igjp1)
+					     << ", " << yesNo(igjp2) << endl;
+				}
 	}
 
 	if (0) {

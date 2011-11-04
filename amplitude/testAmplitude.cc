@@ -86,7 +86,7 @@ main(int argc, char** argv)
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
 	pdt.readFile();
 	TStopwatch timer;
-  
+
 	if (0) {
 		isobarDecayVertex::setDebug(true);
 		decayTopology::setDebug(true);
@@ -181,14 +181,14 @@ main(int argc, char** argv)
 		particlePtr pi4 = createParticle("pi-", 2);
 		// define isobars
 		particlePtr sigma = createParticle("sigma");
-		particlePtr a1    = createParticle("a1(1269)+");
+		particlePtr a1    = createParticle("a1(1260)+");
 		particlePtr f1    = createParticle("f1(1285)");
 		// define X-system
-		//                                   2I  G  2J  P   C  2M  refl
-		particlePtr X = createParticle("X-", 2, -1, 4, +1, +1, 2, +1);
+		//                                   2I  G  2J  P  C  2M  refl
+		particlePtr X = createParticle("X-", 2, -1, 4, +1, 0, 2, +1);
 		// define production vertex
 		particlePtr              beam     = createParticle("pi-");
-		particlePtr              target   = createParticle("p");
+		particlePtr              target   = createParticle("p+");
 		diffractiveDissVertexPtr prodVert = createDiffractiveDissVertex(beam, target, X);
 		// define vertices
 		massDependencePtr    massDep = createRelativisticBreitWigner();
@@ -222,7 +222,7 @@ main(int argc, char** argv)
 		isobarHelicityAmplitude amp(topo);
 		cout << topo;
 		complex<double>         decayAmp = amp.amplitude();
-		cout << "!!!< decay amplitude = " << decayAmp << endl;
+		cout << "!!! decay amplitude = " << decayAmp << endl;
     
 		if (1) {  // compare to PWA2000
 			PDGtable.initialize();
@@ -231,7 +231,7 @@ main(int argc, char** argv)
 			ev.setIOVersion(1);
 			if (not (eventData >> ev).eof()) {
 				keyfile key;
-				key.open("1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key");
+				key.open("testAmplitude.key");
 				complex<double> pwa2000amp;
 				key.run(ev, pwa2000amp, true);
 				key.rewind();
@@ -297,38 +297,11 @@ main(int argc, char** argv)
 		//const long int maxNmbEvents   = 2;
 
 		// const string   newKeyFileName = "test.key";
+		// const string   oldKeyFileName = "testAmplitude.key";
+
 		const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
-		// const string   oldKeyFileName = "1-2++1+pi-_11_f11285=pi-_11_a11269=pi+_1_sigma.key";
-		// const string   rootInFileName = "testEvents.root";
-		// const string   evtInFileName  = "testTree.evt";
-		// const string   evtInFileName  = "testTree.evt.1";
-		// const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-0-+0+f0980_00_pi-.key";
-		// const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-0-+0+f0980_00_pi-.key";
-		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+rho770_01_pi-.key";
-		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+rho770_01_pi-.key";
-		// const string   newKeyFileName = "1-1++0+f21270_12_pi-.key.new";
-		// const string   oldKeyFileName = "1-1++0+f21270_12_pi-.key";
-		// const string   rootInFileName = "testEvents.3pic.root";
-		// const string   evtInFileName  = "testEvents.3pic.evt";
-		// const string   rootInFileName = "500.540.ps.root";
-		// const string   evtInFileName  = "500.540.ps.evt";
-		//const string   newKeyFileName = "../keyfiles/key3pi/SET2_new/1-4++1+rho770_41_pi-.key";
-		// const string   newKeyFileName = "1-4++1+rho770_41_pi-.key";
-		// const string   oldKeyFileName = "../keyfiles/key3pi/SET2/1-4++1+rho770_41_pi-.key";
-		//const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
-		//const string   newKeyFileName = "1-0-+0+rho770_11_pi-.key";
 		const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-0-+0+rho770_11_pi-.key";
-		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-1++0+sigma_10_pi-.key";
-		//const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-1++0+sigma_10_pi-.key";
-		//const string   rootInFileName = "/local/data/compass/hadronData/massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
 		const string   evtInFileName  = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
-		// const string   newKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/new/rho_sigma_set/1+1--1+rho770_01_sigma.key";
-		// const string   oldKeyFileName = "../../4PionMuoProdPwa/rootPwa/keyfiles/4PionCharged/rho_sigma_set/1+1--1+rho770_01_sigma.key";
-		// // const string   oldKeyFileName = "1+1--1+rho770_01_sigma.key";
-		// const string   rootInFileName = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.root";
-		// const string   evtInFileName  = "/data/compass/muonData/massBins/2004/test/1000.1060/1000.1060.evt";
-		// const string   evtInFileName  = "1000.1060.evt";
-		// const string   newKeyFileName = "../keyfiles/key2pip/SET1_new/11-1+f21270_13_p.key";
 		const string   rootInFileName = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
 
 		waveDescription    waveDesc;
@@ -399,13 +372,6 @@ main(int argc, char** argv)
 				}
 	      
 				if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
-					// topo->printProdKinParticles(cout);
-					// topo->printDecayKinParticles(cout);
-					// complex<double> A = (*amp)();
-					// complex<double> B = (*amp)();
-					// topo->revertMomenta();
-					// complex<double> C = (*amp)();
-					// cout << "A = " << A << ", B = " << B << ", C = " << C << ", A - C = " << A - C << endl;
 					myAmps.push_back((*amp)());
 					if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
 						printWarn << "event " << eventIndex << ": " << myAmps.back() << endl;
@@ -420,7 +386,6 @@ main(int argc, char** argv)
 			printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
 			timer.Print();
 
-			vector<complex<double> > pwa2kAmps;
 			if (1) {  // compare to PWA2000
 				PDGtable.initialize();
 				ifstream eventData(evtInFileName.c_str());
@@ -430,7 +395,8 @@ main(int argc, char** argv)
 				ev.setIOVersion(1);
 				timer.Reset();
 				timer.Start();
-				long int countEvent = 0;
+				long int                 countEvent = 0;
+				vector<complex<double> > pwa2kAmps;
 				while ((countEvent < maxNmbEvents) and (not (eventData >> ev).eof())) {
 					complex<double> pwa2kamp;
 					key.run(ev, pwa2kamp, true);
@@ -451,7 +417,7 @@ main(int argc, char** argv)
 				          << ")" << endl;
 	      
 				if (1) {
-					const string outFileName = "testDiff.root";
+					const string outFileName = "testAmplitudeDiff.root";
 					printInfo << "writing comparison plots to " << outFileName << endl;
 					TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
 					TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);

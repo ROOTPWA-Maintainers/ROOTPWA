@@ -42,7 +42,7 @@ add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boo
 set(INCLUDE_DIRECTORIES
 	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
   ${Boost_INCLUDE_DIRS}
-  ${LIBCONFIG_INCLUDE_DIR}
+  ${Libconfig_INCLUDE_DIR}
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
@@ -72,7 +72,7 @@ set(SOURCES
 	isobarCanonicalAmplitude.cc
 	amplitudeTreeLeaf.cc
 	amplitudeTreeHelper.cc
-	normalizationIntegral.cc
+	ampIntegralMatrix.cc
 	waveSetGenerator.cc
 	)
 
@@ -82,7 +82,7 @@ set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
   "${ROOTPWAAMP_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
-	"waveDescription.h;amplitudeTreeLeaf.h;normalizationIntegral.h"
+	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
   "rootPwaAmpLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
@@ -93,7 +93,7 @@ set(THIS_LIB "RootPwaAmp")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
 	"${BOOST_LIBS}"
 	"${ROOT_LIBS}"
-	"${LIBCONFIG_LIBS}"
+	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	)
 

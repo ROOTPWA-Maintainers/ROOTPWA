@@ -38,7 +38,7 @@
 # set include directories
 set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
-  ${LIBCONFIG_INCLUDE_DIR}
+  ${Libconfig_INCLUDE_DIR}
   ${ROOTPWATOOLS_INCLUDE_DIR}
   ${GEN_INCLUDE_DIR}
   ${UTILITIES_INCLUDE_DIR}
@@ -46,7 +46,7 @@ set(INCLUDE_DIRECTORIES
   ${ROOTPWA_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
   /home/sneubert/Projects/boost_1_45_0/boost/numeric/ublas/
-)
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
@@ -54,11 +54,11 @@ include_directories(${INCLUDE_DIRECTORIES})
 set(SOURCES
   decayChannels.cc
   #mcPhaseSpace.cc
- cauchyIntegral.cc
- dMatrixAmp.cc
+	cauchyIntegral.cc
+	dMatrixAmp.cc
   #dynMassDep.cc
-)
-   
+	)
+
 
 # ROOT dictionary
 #set(GEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaMassDepDict.cc)
@@ -74,19 +74,19 @@ set(SOURCES
 # library
 set(THIS_LIB "RootPwaMassDep")
 set(GSL_LIBS libgsl.so
-             libgslcblas.so
-)
+  libgslcblas.so
+	)
 make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOTPWAGEN_LIBS}" "${GSL_LIBS}"
-)
+	)
 
 
 
 # executables
-#make_executable(testMassDep     testMassDep.cc  ${THIS_LIB} ${ROOT_LIBS} )
-make_executable(testKMatrix     testKMatrix.cc  ${THIS_LIB} ${ROOT_LIBS} )
-make_executable(testRescat     testRescat.cc  ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
-make_executable(testDMatrix     testDMatrix.cc  ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
-make_executable(mixingRes     mixingRes.cc  ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
-#make_executable(evtweight evtweight.cc ${THIS_LIB})
-#make_executable(plotBWAmp plotBWAmp.cc ${THIS_LIB})
+#make_executable(testMassDep testMassDep.cc ${THIS_LIB} ${ROOT_LIBS} )
+make_executable(testKMatrix testKMatrix.cc ${THIS_LIB} ${ROOT_LIBS} )
+make_executable(testRescat  testRescat.cc  ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
+make_executable(testDMatrix testDMatrix.cc ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
+make_executable(mixingRes   mixingRes.cc   ${THIS_LIB} ${ROOT_LIBS} ${GSL_LIBS})
+#make_executable(evtweight   evtweight.cc   ${THIS_LIB})
+#make_executable(plotBWAmp   plotBWAmp.cc   ${THIS_LIB})

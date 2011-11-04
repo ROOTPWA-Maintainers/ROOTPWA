@@ -55,7 +55,7 @@ main(int argc, char** argv)
 	// switch on debug output
 	//particleProperties::setDebug(true);
 	//particleDataTable::setDebug(true);
-	particle::setDebug(true);
+	//particle::setDebug(true);
 	//decayTopologyGraphType::setDebug(true);
 	//isobarDecayVertex::setDebug(true);
 	//decayTopology::setDebug(true);
@@ -120,6 +120,7 @@ main(int argc, char** argv)
 		for (unsigned int i = 0; i < decays.size(); ++i)
 			cout << setw(4) << i << ": " << waveDescription::waveNameFromTopology(decays[i]) << endl;
 
+		gSystem->Exec("mkdir testWaveSetGenerator");
 		waveSetGen.writeKeyFiles("testWaveSetGenerator");
 
 		cout << "got " << inconsistentDecays << " inconsistent" << endl

@@ -42,8 +42,6 @@
 #include <vector>
 #include <complex>
 
-#include <boost/tokenizer.hpp>
-
 #include "TChain.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -57,7 +55,6 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace rpwa;
 
 
@@ -65,9 +62,11 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
+	cerr << "verify that given .key files do not violate physics" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
-	     << " -d test data [-n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
+	     << " [-d test data -n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
 	     << "    where:" << endl
 	     << "        -d file    path to file with test data (.evt or .root format)" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
@@ -286,7 +285,9 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 
 	// parse command line options
 	const string progName     = argv[0];
@@ -329,11 +330,12 @@ main(int    argc,
 		}
 
 	// set debug options
-	// if (debug) {
-	// 	waveDescription::setDebug(true);
-	// 	isobarHelicityAmplitude::setDebug(true);
-	// 	massDependence::setDebug(true);
-	// }
+	if (debug) {
+		waveDescription::setDebug(true);
+		//particleProperties::setDebug(true);
+		//isobarHelicityAmplitude::setDebug(true);
+		//massDependence::setDebug(true);
+	}
 
 	// get key file names
 	if (optind >= argc) {
@@ -346,23 +348,11 @@ main(int    argc,
 		keyFileNames.push_back(fileName);
 	}
 
-	// get leaf names
-	typedef tokenizer<char_separator<char> > tokenizer;
-	char_separator<char> separator(";");
-	tokenizer            leafNameTokens(leafNames, separator);
-	tokenizer::iterator  leafNameToken            = leafNameTokens.begin();
-	const string         prodKinPartNamesObjName  = *leafNameToken;
-	const string         prodKinMomentaLeafName   = *(++leafNameToken);
-	const string         decayKinPartNamesObjName = *(++leafNameToken);
-	const string         decayKinMomentaLeafName  = *(++leafNameToken);
-	if (debug)
-		printDebug << "using the following leaf names:" << endl
-		           << "        production kinematics: "
-		           << "particle names = '" << prodKinPartNamesObjName << "', "
-		           << "momenta = '" << prodKinMomentaLeafName << "'" << endl
-		           << "        decay kinematics     : "
-		           << "particle names = '" << decayKinPartNamesObjName << "', "
-		           << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
+	// get object and leaf names for event data
+	string prodKinPartNamesObjName,  prodKinMomentaLeafName;
+	string decayKinPartNamesObjName, decayKinMomentaLeafName;
+	parseLeafAndObjNames(leafNames, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                     decayKinPartNamesObjName, decayKinMomentaLeafName);
 
 	// open input file
 	TTree*        inTree            = 0;
@@ -395,8 +385,7 @@ main(int    argc,
 	}
 
 	// initialize particle data table
-	particleDataTable& pdt = particleDataTable::instance();
-	pdt.readFile(pdgFileName);
+	particleDataTable::readFile(pdgFileName);
 
 	// loop over key files
 	map<string, vector<string> > keyFileErrors;  // maps error description to key files
@@ -407,9 +396,11 @@ main(int    argc,
 		vector<string> errors;
 		if (not testAmplitude(inTree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
 		                      prodKinPartNames,  decayKinPartNames,
-		                      prodKinMomentaLeafName, decayKinMomentaLeafName))
+		                      prodKinMomentaLeafName, decayKinMomentaLeafName)) {
 			++countKeyFileErr;
-		else
+			printWarn << "key file '" << keyFileNames[i] << "' did not pass all tests. "
+			          << "see summary below." << endl;
+		} else
 			printSucc << "key file '" << keyFileNames[i] << "' passed all tests" << endl;
 		// collect errors
 		for (unsigned int j = 0; j < errors.size(); ++j)
@@ -438,6 +429,6 @@ main(int    argc,
 				cout << "            " << entry->second[i] << endl;
 		}
 	}
-	return 1;
+	exit(1);
   
 }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export FITDIR=$PWA_DATA_DIR/fits
+export FITDIR=$ROOTPWA_DATA_DIR/fits
 export FITFILE=$FITDIR/fit.root
 export PLOTFILE=${FITFILE/.root/.plots.root}
 

@@ -41,7 +41,6 @@
 #include "TLorentzRotation.h"
 #include "TMath.h"
 
-#include "mathUtils.hpp"
 #include "conversionUtils.hpp"
 #include "isobarAmplitude.h"
 
@@ -149,7 +148,7 @@ void
 isobarAmplitude::spaceInvertDecay() const
 {
 	if (_debug)
-		printInfo << "space inverting final state momenta." << endl;
+		printDebug << "space inverting final state momenta." << endl;
 	// transform final state particles into X rest frame
 	const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
 	const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
@@ -170,7 +169,7 @@ void
 isobarAmplitude::reflectDecay() const
 {
 	if (_debug)
-		printInfo << "reflecting final state momenta through production plane." << endl;
+		printDebug << "reflecting final state momenta through production plane." << endl;
 	// transform final state particles into X rest frame
 	const TLorentzVector&  beamLv  = _decay->productionVertex()->referenceLzVec();
 	const TLorentzVector&  XLv     = _decay->XParticle()->lzVec();
@@ -226,19 +225,19 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
 			complex<double> parentAmp = twoBodyDecayAmplitude(vertex, topVertex);
 			complex<double> amp       = parentAmp * daughter1Amp * daughter2Amp;
 			if (_debug)
-				printInfo << "amplitude term for : "
-				          << parent->name()    << " [lambda = " << 0.5 * parent->spinProj() << "] -> "
-				          << daughter1->name() << " [lambda = " << 0.5 * lambda1 << "] + "
-				          << daughter2->name() << " [lambda = " << 0.5 * lambda2 << "] = "
-				          << "parent amp. = " << maxPrecisionDouble(parentAmp)
-				          << " * daughter_1 amp = " << maxPrecisionDouble(daughter1Amp)
-				          << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp) << " = "
-				          << maxPrecisionDouble(amp) << endl;
+				printDebug << "amplitude term for : "
+				           << parent->name()    << " [lambda = " << spinQn(parent->spinProj()) << "] -> "
+				           << daughter1->name() << " [lambda = " << spinQn(lambda1           ) << "] + "
+				           << daughter2->name() << " [lambda = " << spinQn(lambda2           ) << "] = "
+				           << "parent amp. = " << maxPrecisionDouble(parentAmp)
+				           << " * daughter_1 amp = " << maxPrecisionDouble(daughter1Amp)
+				           << " * daughter_2 amp = " << maxPrecisionDouble(daughter2Amp) << " = "
+				           << maxPrecisionDouble(amp) << endl;
 			ampSum += amp;
 		}
 	}
 	if (_debug)
-		printInfo << "decay amplitude for " << *vertex << " = " << maxPrecisionDouble(ampSum) << endl;
+		printDebug << "decay amplitude for " << *vertex << " = " << maxPrecisionDouble(ampSum) << endl;
 	return ampSum;
 }
 
@@ -260,7 +259,7 @@ isobarAmplitude::sumBoseSymTerms
 			// build final state index map for this permutation
 			vector<unsigned int> fsPartIndexMap(_decay->nmbFsParticles(), 0);
 			if (_debug)
-				printInfo << "calculating amplitude for Bose term final state permutation ";
+				printDebug << "calculating amplitude for Bose term final state permutation ";
 			for (map<string, vector<unsigned int> >::const_iterator i = origFsPartIndices.begin();
 			     i != origFsPartIndices.end(); ++i) {
 				const string partName = i->first;
@@ -300,8 +299,8 @@ isobarAmplitude::boseSymmetrizedAmp() const
 	typedef map<string, unsigned int>::const_iterator indistFsPartIt;
 	const map<string, unsigned int> indistFsPart = _decay->nmbIndistFsParticles();
 	if (_debug) {
-		printInfo << "Bose-symmetrizing amplitude: indistinguishable final state particle "
-		          << "multiplicities (marked FS particles will be Bose-symmetrized): ";
+		printDebug << "Bose-symmetrizing amplitude: indistinguishable final state particle "
+		           << "multiplicities (marked FS particles will be Bose-symmetrized): ";
 		for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
 			cout << i->first << " = " << i->second << ((i->second) >= 2 ? " <<<  " : "  ");
 		cout << endl;
@@ -325,7 +324,7 @@ isobarAmplitude::boseSymmetrizedAmp() const
   
 	// Bose-symmetrize amplitudes
 	if (_debug)
-		printInfo << "Bose-symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
+		printDebug << "Bose-symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
 	map<string, vector<unsigned int> >::iterator firstEntry = newFsPartIndices.begin();
 	return normFactor * sumBoseSymTerms(origFsPartIndices, newFsPartIndices, firstEntry);
 }
