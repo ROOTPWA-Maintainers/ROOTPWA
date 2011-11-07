@@ -399,6 +399,9 @@ add_subdirectory(relampl)
 # gui
 add_subdirectory(gui/src)
 
+# plotgui
+add_subdirectory(plotgui)
+
 # massdep
 #add_subdirectory(massdep)
 
