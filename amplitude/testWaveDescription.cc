@@ -64,8 +64,8 @@ main(int argc, char** argv)
 			printInfo << *amp;
 			topo->writeGraphViz("testWaveDescription.dot");
 			gSystem->Exec("dot -Tps -o testWaveDescription.ps testWaveDescription.dot");
-			waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *amp);  // test key file creation
-			//waveDesc.writeKeyFile("testWaveDescriptionWrite.key", *(amp->decayTopology()));  // test key file creation
+			waveDesc.writeKeyFile(*amp, "testWaveDescriptionWrite.key");  // test key file creation
+			//waveDesc.writeKeyFile(*(amp->decayTopology()), "testWaveDescriptionWrite.key");  // test key file creation
 			// test file I/O of waveDescription
 			const string waveName = waveDesc.waveNameFromTopology(*topo);
 			{
@@ -86,9 +86,11 @@ main(int argc, char** argv)
 				else
 					printInfo << "key file:" << endl;
 				waveDesc2->printKeyFileContents(cout);
+				printDebug << "writeKeyFile" << endl;
+				waveDesc2->writeKeyFile(cout);
 				waveDesc2->constructAmplitude(amp);
-				waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *amp);  // test key file creation
-				//waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *(amp->decayTopology()));  // test key file creation
+				waveDesc2->writeKeyFile(*amp, "testWaveDescriptionWrite2.key");  // test key file creation
+				//waveDesc2->writeKeyFile(*(amp->decayTopology()), "testWaveDescriptionWrite2.key");  // test key file creation
 				printInfo << *amp;
 				inFile->Close();
 			}

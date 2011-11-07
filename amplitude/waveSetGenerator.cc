@@ -401,7 +401,7 @@ waveSetGenerator::writeKeyFiles(const string& dirName,
 	for (size_t i = 0; i < _waveSet.size(); ++i) {
 		const string keyFileName = dirName + "/"
 			+ waveDescription::waveNameFromTopology(_waveSet[i], newKeyFileNameConvention) + ".key";
-		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
+		if (waveDescription::writeKeyFile(_waveSet[i], keyFileName))
 			++countSuccess;
 	}
 	printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;

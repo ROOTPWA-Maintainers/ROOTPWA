@@ -61,7 +61,6 @@ main(int argc, char** argv)
 	
 	const unsigned int nmbEvents       = 1000000;
 	const unsigned int nmbIncohSubAmps = 3;
-	gRandom->SetSeed(123456789);
 	
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
@@ -73,19 +72,29 @@ main(int argc, char** argv)
 		const vector<string> subAmpLabels = list_of("lambda=-1")("lambda=0")("lambda=+1");
 		TTree*               tree         = new TTree("test", "test");
 
-		tree->Branch("amp", &ampLeaf);
+		waveDescription waveDesc;
+		waveDesc.parseKeyFile("testWaveDescription.key");
+		tree->GetUserInfo()->AddFirst(&waveDesc);
+
+		gRandom->SetSeed(123456789);
+		tree->Branch("amp", &ampLeaf, 256000, 99);
 		for (unsigned int i = 0; i < nmbEvents; ++i) {
 			ampLeaf->clear();
 			ampLeaf->defineIncohSubAmps(subAmpLabels);
-			for (unsigned int j = 0; j < nmbIncohSubAmps; ++j)
+			for (unsigned int j = 0; j < nmbIncohSubAmps; ++j) {
 				// ampLeaf->setIncohSubAmp(complex<double>(i, -(double)j), j);
 				ampLeaf->setIncohSubAmp(complex<double>(gRandom->Rndm(), gRandom->Rndm()), j);
+				//ampLeaf->_waveDesc = &waveDesc;
+			}
 			tree->Fill();
 			if (i < 5)
 				cout << "written event " << i << ": " << *ampLeaf;
 		}
 		cout << endl;
+		tree->Print();
+ 		tree->OptimizeBaskets(1000000, 1, "d");
 		tree->Write();
+		tree->Print();
 		outFile->Close();
 		for (unsigned int i = 0; i < subAmpLabels.size(); ++i)
 			cout << subAmpLabels[i] << ": ["  << ampLeaf->incohSubAmpIndex(subAmpLabels[i]) << "]" << endl;
@@ -94,15 +103,34 @@ main(int argc, char** argv)
 
 	if (1) {
 		TFile* inFile = TFile::Open("testAmplitudeTree.root", "READ");
+
+		gRandom->SetSeed(123456789);
 		TTree* tree;
 		inFile->GetObject("test", tree);
+		tree->GetUserInfo()->Print();
+		tree->GetUserInfo()->ls();
+
+		TList*           userInfo = tree->GetUserInfo();
+		waveDescription* waveDesc = static_cast<waveDescription*>(userInfo->FindObject("rpwa::waveDescription"));
+		waveDesc->printKeyFileContents();
+		
 		amplitudeTreeLeaf* ampLeaf = 0;
 		tree->SetBranchAddress("amp", &ampLeaf);
+		tree->SetCacheSize(1000000);
+		tree->AddBranchToCache("amp",  true);
+		tree->StopCacheLearningPhase();
 		for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);
 			if (i < 5)
 				cout << "read event " << i << ": " << *ampLeaf;
+			for (unsigned int j = 0; j < ampLeaf->nmbIncohSubAmps(); ++j) {
+				const complex<double> amp      = ampLeaf->incohSubAmp(j);
+				const complex<double> expected = complex<double>(gRandom->Rndm(), gRandom->Rndm());
+				if (amp != expected)
+					printWarn << "mismatch: read " << amp << " expected " << expected << endl;
+			}
 		}
+		tree->PrintCacheStats();
 		cout << endl;
 		
 		// test arthmetic functions

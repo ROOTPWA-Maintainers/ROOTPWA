@@ -885,16 +885,9 @@ waveDescription::setKeysFromAmplitude(Setting&               rootKey,
 
 
 bool
-waveDescription::writeKeyFile(FILE&                      outStream,
-                              const isobarDecayTopology& topo,
-                              const bool                 writeProdVert)
+waveDescription::writeKeyFile(const Config& key,
+                              FILE&         outStream)
 {
-	Config   key;
-	Setting& rootKey = key.getRoot();
-	if (not setKeysFromTopology(rootKey, topo, writeProdVert)) {
-		printWarn << "problems writing keys for decay topology. cannot write key file." << endl;
-		return false;
-	}
 	try {
 		key.write(&outStream);
 	} catch (const FileIOException& ioEx) {
@@ -906,21 +899,144 @@ waveDescription::writeKeyFile(FILE&                      outStream,
 
 
 bool
-waveDescription::writeKeyFile(FILE&                  outStream,
-                              const isobarAmplitude& amplitude,
-                              const bool             writeProdVert)
+waveDescription::writeKeyFile(const Config& key,
+                              ostream&      out)
+{
+	// create pipe
+	int pipeFileDescriptors[2];
+	if (pipe(pipeFileDescriptors) == -1) {
+		printErr << "failed to create pipe. cannot write keys." << endl;
+		return false;
+	}
+	// open write end of pipe
+	FILE* pipeWriteEnd = fdopen(pipeFileDescriptors[1], "wt");
+	if (!pipeWriteEnd) {
+		printErr << "could not open write end of pipe. cannot write keys." << endl;
+		return false;
+	}
+	// write keys to pipe and close write end
+	if (not writeKeyFile(key, *pipeWriteEnd)) {
+		printWarn << "problems writing keys." << endl;
+		fclose(pipeWriteEnd);
+		return false;
+	}
+	fclose(pipeWriteEnd);
+	// read keys from pipe  
+	char         buf;
+	unsigned int countChar = 0;
+	while (read(pipeFileDescriptors[0], &buf, 1) > 0) {
+		out << buf;
+		++countChar;
+	}
+	close(pipeFileDescriptors[0]);
+	if (countChar > 0) {
+		printSucc << "wrote " << countChar * sizeof(char) << " bytes" << endl;
+		return true;
+	} else {
+		printWarn << "nothing was written" << endl;
+		return false;
+	}
+}
+
+
+bool
+waveDescription::writeKeyFile(const Config& key,
+                              const string& keyFileName)
+{
+	if (_debug)
+		printDebug << "writing key file '" << keyFileName << "'" << endl;
+	ofstream outFile(keyFileName.c_str());
+	if (not outFile) {
+		printErr << "cannot create key file '" << keyFileName << "'" << endl;
+		return false;
+	}
+	if (writeKeyFile(key, outFile)) {
+		printSucc << "written key file '" << keyFileName << "'" << endl;
+		outFile.close();
+		return true;
+	} else {
+		printWarn << "problems writing keys." << endl;
+		outFile.close();
+		return false;
+	}
+}
+
+
+bool
+waveDescription::writeKeyFile(ostream& out)
+{
+	if (not _key or not _keyFileParsed) {
+		printWarn << "parsing was not successful. cannot write keys." << endl;
+		return false;
+	}
+	return writeKeyFile(*_key, out);
+}
+
+
+bool
+waveDescription::writeKeyFile(const string& keyFileName)
+{
+	if (not _key or not _keyFileParsed) {
+		printWarn << "parsing was not successful. cannot write keys." << endl;
+		return false;
+	}
+	return writeKeyFile(*_key, keyFileName);
+}
+
+
+bool
+waveDescription::writeKeyFile(const isobarDecayTopology& topo,
+                              ostream&                   out,
+                              const bool                 writeProdVert)
+{
+	Config   key;
+	Setting& rootKey = key.getRoot();
+	if (not setKeysFromTopology(rootKey, topo, writeProdVert)) {
+		printWarn << "problems writing keys for decay topology." << endl;
+		return false;
+	}
+	return writeKeyFile(key, out);
+}
+
+
+bool
+waveDescription::writeKeyFile(const isobarAmplitude& amplitude,
+                              ostream&               out)
 {
 	Config   key;
 	Setting& rootKey = key.getRoot();
 	if (not setKeysFromAmplitude(rootKey, amplitude)) {
-		printWarn << "problems writing keys for amplitude. cannot write key file." << endl;
+		printWarn << "problems writing keys for amplitude." << endl;
 		return false;
 	}
-	try {
-		key.write(&outStream);
-	} catch (const FileIOException& ioEx) {
-		printWarn << "I/O error while writing key file" << endl;
+	return writeKeyFile(key, out);
+}
+
+
+bool
+waveDescription::writeKeyFile(const isobarDecayTopology& topo,
+                              const string&              keyFileName,
+                              const bool                 writeProdVert)
+{
+	Config   key;
+	Setting& rootKey = key.getRoot();
+	if (not setKeysFromTopology(rootKey, topo, writeProdVert)) {
+		printWarn << "problems writing keys for decay topology." << endl;
 		return false;
 	}
-	return true;
+	return writeKeyFile(key, keyFileName);
+}
+
+
+bool
+waveDescription::writeKeyFile(const isobarAmplitude& amplitude,
+                              const string&          keyFileName)
+{
+	Config   key;
+	Setting& rootKey = key.getRoot();
+	if (not setKeysFromAmplitude(rootKey, amplitude)) {
+		printWarn << "problems writing keys for amplitude." << endl;
+		return false;
+	}
+	return writeKeyFile(key, keyFileName);
 }

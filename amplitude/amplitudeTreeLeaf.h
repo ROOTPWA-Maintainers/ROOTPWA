@@ -48,6 +48,8 @@
 
 #include "TObject.h"
 
+#include "waveDescription.h"
+
 
 namespace rpwa {
 
@@ -115,6 +117,9 @@ namespace rpwa {
 		std::vector<std::complex<double> >  _incohSubAmps;       ///< sub-amplitudes to be added incoherently in intensity formula
 		std::vector<std::string>            _incohSubAmpLabels;  ///< labels for subamps
 		std::map<std::string, unsigned int> _labelToIndexMap;    //! ///< maps subamp labels to indices
+
+	public:
+		waveDescription* _waveDesc;  //!
 
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS

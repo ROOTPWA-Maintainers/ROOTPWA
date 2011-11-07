@@ -60,7 +60,8 @@ amplitudeTreeLeaf::amplitudeTreeLeaf()
 	: TObject           (),
 	  _incohSubAmps     (1, 0),
 	  _incohSubAmpLabels(),
-	  _labelToIndexMap  ()
+	  _labelToIndexMap  (),
+	  _waveDesc         (0)
 {
 	amplitudeTreeLeaf::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
