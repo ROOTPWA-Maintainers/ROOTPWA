@@ -52,7 +52,8 @@
 	targetClass="rpwa::waveDescription" \
 	source="" target="" \
 	code="{ newObj->parseKeyFileLocalCopy(); }"
-#pragma link C++ class std::vector<rpwa::waveDescription>+;
+//#pragma link C++ class std::vector<rpwa::waveDescription>+;
+#pragma link C++ class std::vector<rpwa::waveDescription*>+;
 #pragma link C++ class rpwa::amplitudeName+;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS

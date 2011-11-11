@@ -45,6 +45,12 @@
 #include "TObject.h"
 
 
+class TTree;
+namespace rpwa {
+	class waveDescription;
+}
+
+
 namespace rpwa {
 
 
@@ -61,6 +67,10 @@ namespace rpwa {
 
 		bool parseWaveSetFile(const std::string& waveSetFileName);  ///< reads wave set parameters from libconfig file
 
+		bool getDecayAmplitudeTrees(const std::vector<std::string>& ampFileNames);  ///< opens given list of files and creates an array of decay amplitude trees ordered according to wave set file; assumes that in the given set of files there are no two trees with the same name
+
+		unsigned int nmbDecayAmps() const { return decayAmpTreeNames.size(); }  ///< returns number of decay amplitudes in wave set
+
 		std::ostream& print(std::ostream& out) const;  ///< prints wave set parameters in human-readable form
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
@@ -69,8 +79,10 @@ namespace rpwa {
 
 	private:
 
-		std::vector<std::string>                decayAmpTreeNames;    ///< array of tree names with decay amplitude values
-		std::vector<std::pair<double, double> > decayAmpMassRanges;   ///< array with mass ranges in which decay amplitude should be used [MeV/c^2]
+		std::vector<std::string>                decayAmpTreeNames;   ///< array of tree names with decay amplitude values
+		std::vector<std::pair<double, double> > decayAmpMassRanges;  ///< array with mass ranges in which decay amplitude should be used [MeV/c^2]
+		std::vector<TTree*>                     decayAmpTrees;       //! ///< array with decay amplitude trees
+		std::vector<waveDescription*>           decayAmpWaveDescs;   ///< array with decay amplitude wave descriptions
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

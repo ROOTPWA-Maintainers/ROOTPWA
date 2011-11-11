@@ -37,7 +37,13 @@
 
 #include "libconfig.h++"
 
+#include "TROOT.h"
+#include "TFile.h"
+#include "TTree.h"
+#include "TList.h"
+
 #include "libConfigUtils.hpp"
+#include "waveDescription.h"
 #include "waveSet.h"
 
   
@@ -56,7 +62,9 @@ bool waveSet::_debug = false;
 waveSet::waveSet()
 	: TObject           (),
 	  decayAmpTreeNames (),
-	  decayAmpMassRanges()
+	  decayAmpMassRanges(),
+	  decayAmpTrees     (),
+	  decayAmpWaveDescs ()
 {
 	//waveSet::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
@@ -71,6 +79,8 @@ waveSet::clear()
 {
 	decayAmpTreeNames.clear ();
 	decayAmpMassRanges.clear();
+	decayAmpTrees.clear     ();
+	decayAmpWaveDescs.clear ();
 }
 
 
@@ -81,6 +91,8 @@ waveSet::operator =(const waveSet& set)
 		TObject::operator  =(set);
 		decayAmpTreeNames  = set.decayAmpTreeNames;
 		decayAmpMassRanges = set.decayAmpMassRanges;
+		decayAmpTrees      = set.decayAmpTrees;
+		decayAmpWaveDescs  = set.decayAmpWaveDescs;
 	}
 	return *this;
 }
@@ -150,6 +162,121 @@ waveSet::parseWaveSetFile(const string& waveSetFileName)
 		printSucc << "constructed wave set from file '" << waveSetFileName << "'" << endl;
 	else
 		printSucc << "problems constructing wave set from file '" << waveSetFileName << "'" << endl;
+	return success;
+}
+
+
+bool
+waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
+{
+	decayAmpTrees.clear    ();
+	decayAmpWaveDescs.clear();
+	bool success = true;
+
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
+	// force loading predefined std::complex dictionary
+	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
+	gROOT->ProcessLine("#include <complex>");
+
+	// get trees from .root files
+	decayAmpTrees.resize    (nmbDecayAmps(), 0);
+	decayAmpWaveDescs.resize(nmbDecayAmps(), 0);
+	unsigned int countOpenFails = 0;
+	unsigned int countDuplTrees = 0;
+	for (unsigned int ampFileIndex = 0; ampFileIndex < ampFileNames.size(); ++ampFileIndex) {
+		// open .root file
+		if (_debug)
+			printDebug << "opening .root decay amplitude file '" << ampFileNames[ampFileIndex] << "'"
+			           << endl;
+		TFile* ampFile = TFile::Open(ampFileNames[ampFileIndex].c_str(), "READ");
+		if (not ampFile or ampFile->IsZombie()) {
+			printWarn << "cannot open decay amplitude file '" << ampFileNames[ampFileIndex] << "'. "
+			          << "skipping file." << endl;
+			++countOpenFails;
+			continue;			
+		}
+		// get all amplitude trees from file
+		vector<pair<TTree*, unsigned int> > trees;
+		for (unsigned int i = 0; i < nmbDecayAmps(); ++i) {
+			TTree* tree = 0;
+			ampFile->GetObject(decayAmpTreeNames[i].c_str(), tree);
+			if (tree) {
+				trees.push_back(make_pair(tree, i));
+				if (_debug)
+					printDebug << "found decay amplitude tree '" << decayAmpTreeNames[i] << "' "
+					           << "in file '" << ampFileNames[ampFileIndex] << "'" << endl;
+			}
+		}
+		// store tree pointers and make sure trees do not already exist
+		for (unsigned int i = 0; i < trees.size(); ++i) {
+			if (decayAmpTrees[trees[i].second]) {
+				printWarn << "tree '" << trees[i].first->GetName() << "' exists in file '"
+				          << decayAmpTrees[trees[i].second]->GetDirectory()->GetName() << "' and in file '"
+					// GetCurrentFile()
+				          << trees[i].first->GetDirectory()->GetName() << "'. skipping tree from latter file."
+				          << endl;
+				++countDuplTrees;
+				continue;
+			}
+			decayAmpTrees[trees[i].second] = trees[i].first;
+		}		
+	}
+
+	// get corresponding wave descriptions from trees
+	unsigned int countMissingTrees     = 0;
+	unsigned int countMissingWaveDescs = 0;
+	for (unsigned int i = 0; i < nmbDecayAmps(); ++i) {
+		if (not decayAmpTrees[i]) {
+			printWarn << "did not find decay amplitude tree '" << decayAmpTreeNames[i] << "' "
+			          << "in any of the given decay amplitude files" << endl;
+			++countMissingTrees;
+			continue;
+		}
+		TList* userInfo = decayAmpTrees[i]->GetUserInfo();
+		if (not userInfo) {
+			printWarn << "tree '" << decayAmpTreeNames[i] << "' does not have user info." << endl;
+			++countMissingWaveDescs;
+			continue;
+		}
+		waveDescription* waveDesc
+			= static_cast<waveDescription*>(userInfo->FindObject("rpwa::waveDescription"));
+		if (not waveDesc) {
+			printInfo << "user info of tree '" << decayAmpTreeNames[i] << "' "
+			          << "does not contain wave description." << endl;
+			++countMissingWaveDescs;
+			continue;
+		}
+		decayAmpWaveDescs[i] = waveDesc;
+	}
+
+	// report
+	if (countOpenFails > 0) {
+		success = false;
+		printWarn << "problems opening " << countOpenFails << " out of " << ampFileNames.size()
+		          << " decay amplitude files." << endl;
+	}
+	if (countDuplTrees > 0) {
+		success = false;
+		printWarn << "found " << countDuplTrees << " duplicate trees. "
+		          << "decay amplitude data were ignored." << endl;
+	}
+	if (countMissingTrees > 0) {
+		success = false;
+		printWarn << "there are " << countMissingTrees << " trees missing. "
+		          << "decay amplitude data incomplete." << endl;
+	}
+	if (countMissingWaveDescs > 0) {
+		success = false;
+		printWarn << "there are " << countMissingWaveDescs << " wave descriptions missing. "
+		          << "wave set data incomplete." << endl;
+	}
+	if (    (countOpenFails    == 0) and (countDuplTrees        == 0)
+	    and (countMissingTrees == 0) and (countMissingWaveDescs == 0))
+		printSucc << "could open all " << ampFileNames.size() << " decay amplitude files "
+		          << "and found all " << nmbDecayAmps() << " trees and wave descriptions" << endl;
+
+#endif
+
 	return success;
 }
 
