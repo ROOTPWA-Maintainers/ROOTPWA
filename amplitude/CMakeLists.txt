@@ -66,6 +66,7 @@ set(SOURCES
 	isobarDecayTopology.cc
 	massDependence.cc
 	waveDescription.cc
+	waveSet.cc
 	evtTreeHelper.cc
 	isobarAmplitude.cc
 	isobarHelicityAmplitude.cc
@@ -83,7 +84,7 @@ set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 root_generate_dictionary(
   "${ROOTPWAAMP_DICTIONARY}"
   "${CMAKE_CURRENT_SOURCE_DIR}"
-	"waveDescription.h;amplitudeName.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
+	"waveDescription.h;waveSet.h;amplitudeName.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
   "rootPwaAmpLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
@@ -110,6 +111,7 @@ make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB})
 make_executable(testParticle         testParticle.cc         ${THIS_LIB})
 make_executable(testDecayTopology    testDecayTopology.cc    ${THIS_LIB})
 make_executable(testWaveDescription  testWaveDescription.cc  ${THIS_LIB})
+make_executable(testWaveSet          testWaveSet.cc          ${THIS_LIB})
 make_executable(testWaveSetGenerator testWaveSetGenerator.cc ${THIS_LIB})
 make_executable(testAmplitude        testAmplitude.cc        ${THIS_LIB})
 make_executable(testAmplitudeTree    testAmplitudeTree.cc    ${THIS_LIB})

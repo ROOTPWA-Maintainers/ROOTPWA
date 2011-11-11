@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      tells rootcint for which classes to generate method interface stubs
+//      basic test program for wave set class
 //
 //
 // Author List:
@@ -35,37 +35,27 @@
 //-------------------------------------------------------------------------
 
 
-#ifdef __CINT__
+#include "reportingUtils.hpp"
+#include "waveSet.h"
 
 
-#pragma link off all globals;
-#pragma link off all classes;
-#pragma link off all functions;
+using namespace std;
+using namespace rpwa;
 
 
-#pragma link C++ class rpwa::waveDescription+;
-// data model evolution rule that triggers parsing of key file string
-// whenever waveDescription is read from file
-// see http://root.cern.ch/root/html/io/DataModelEvolution.html
-// and http://indico.cern.ch/contributionDisplay.py?contribId=210&sessionId=59&confId=35523
-#pragma read sourceClass="rpwa::waveDescription" version="[1-]"	  \
-	targetClass="rpwa::waveDescription" \
-	source="" target="" \
-	code="{ newObj->parseKeyFileLocalCopy(); }"
-#pragma link C++ class std::vector<rpwa::waveDescription>+;
-#pragma link C++ class rpwa::amplitudeName+;
+int
+main(int argc, char** argv)
+{
+	waveSet::setDebug(true);
 
-#ifdef USE_STD_COMPLEX_TREE_LEAFS
-#pragma link C++ class std::vector<std::complex<double> >+;
-#pragma link C++ class std::vector<std::string>+;
-#pragma link C++ class rpwa::amplitudeTreeLeaf+;
-#pragma read sourceClass="rpwa::amplitudeTreeLeaf" version="[1-]"	  \
-	targetClass="rpwa::amplitudeTreeLeaf" \
-	source="" target="" \
-	code="{ newObj->rebuildSubAmpLabelMap(); }"
-#pragma link C++ class rpwa::ampIntegralMatrix-;
-#pragma link C++ class rpwa::waveSet+;
-#endif 
+	printCompilerInfo();
+	printSvnVersion  ();
 
+	if (1) {
+		const string waveSetFileName = "testWaveSet.waveset";
+		waveSet      set;
+		set.parseWaveSetFile(waveSetFileName);
+		printDebug << set;
+	}
 
-#endif
+}

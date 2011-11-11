@@ -93,23 +93,51 @@ namespace rpwa {
 	const libconfig::Setting*
 	findLibConfigGroup(const libconfig::Setting& parent,
 	                   const std::string&        groupName,
-	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
+	                   const bool                mustExist = true)  ///< finds field in setting and makes sure it is a group
 	{
 		// find field
 		if (not parent.exists(groupName)) {
 			if (mustExist)
-				printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
-				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+				printWarn << "cannot find field '" << groupName << "' in setting "
+				          << "'" << parent.getPath() << "' in file "
+				          << "'" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
-		const libconfig::Setting& groupKey = parent[groupName];
+		const libconfig::Setting& group = parent[groupName];
 		// check that it is a group
-		if (not groupKey.isGroup()) {
-			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not a group" << std::endl;
+		if (not group.isGroup()) {
+			printWarn << "field '" << groupName << "' in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is not a group" << std::endl;
 			return 0;
 		}
-		return &groupKey;
+		return &group;
+	}
+
+
+	inline
+	const libconfig::Setting*
+	findLibConfigGroupAtIndex(const libconfig::Setting& parent,
+	                          const int                 index,
+	                          const bool                mustExist = true)  ///< finds field in group, array, or list and makes sure it is a group
+	{
+		// find field
+		const libconfig::Setting* group = 0;
+		try {
+			group = &(parent[index]);
+		} catch (const libconfig::SettingNotFoundException&) {
+			if (mustExist)
+				printWarn << "no entry at index [" << index << "] in setting "
+				          << "'" << parent.getPath() << "' in file "
+				          << "'" << parent.getSourceFile() << "'" << std::endl;
+			return 0;
+		}
+		// check that it is a group
+		if (not (*group).isGroup()) {
+			printWarn << "entry [" << index << "] in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is not a group" << std::endl;
+			return 0;
+		}
+		return group;
 	}
 
 
@@ -117,30 +145,63 @@ namespace rpwa {
 	const libconfig::Setting*
 	findLibConfigList(const libconfig::Setting& parent,
 	                  const std::string&        listName,
-	                  const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty list
+	                  const bool                mustExist = true)  ///< finds field in setting and makes sure it is a non-empty list
 	{
 		// find field
 		if (not parent.exists(listName)) {
 			if (mustExist)
-				printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
-				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+				printWarn << "cannot find field '" << listName << "' in setting '" << parent.getPath() << "' "
+				          << "in file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
-		const libconfig::Setting& listKey = parent[listName];
+		const libconfig::Setting& list = parent[listName];
 		// check that it is a list
-		if (not listKey.isList()) {
-			printWarn << "'" << listName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not a list. "
+		if (not list.isList()) {
+			printWarn << "field '" << listName << "' in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is not a list. "
 			          << "check that braces are correct." << std::endl;
 			return 0;
 		}
 		// check that it is not empty
-		if (listKey.getLength() < 1) {
-			printWarn << "list '" << listName << "' in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
+		if (list.getLength() < 1) {
+			printWarn << "list '" << listName << "' in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is empty" << std::endl;
 			return 0;
 		}
-		return &listKey;
+		return &list;
+	}
+
+
+	inline
+	const libconfig::Setting*
+	findLibConfigListAtIndex(const libconfig::Setting& parent,
+	                         const int                 index,
+	                         const bool                mustExist = true)  ///< finds field in group, array, or list and makes sure it is a non-empty list
+	{
+		// find field
+		const libconfig::Setting* list = 0;
+		try {
+			list = &(parent[index]);
+		} catch (const libconfig::SettingNotFoundException& notFound) {
+			printWarn << "no entry at index [" << index << "] in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "'" << std::endl;
+			return 0;
+		}
+		// check that it is a list
+		if (not (*list).isList()) {
+			printWarn << "entry [" << index << "] in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is not a list. "
+			          << "check that braces are correct." << std::endl;
+			return 0;
+		}
+		
+		// check that it is not empty
+		if ((*list).getLength() < 1) {
+			printWarn << "list at [" << index << "] in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is empty" << std::endl;
+			return 0;
+		}
+		return list;
 	}
 
 	
@@ -148,126 +209,63 @@ namespace rpwa {
 	const libconfig::Setting*
 	findLibConfigArray(const libconfig::Setting& parent,
 	                   const std::string&        arrayName,
-	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty array
+	                   const bool                mustExist = true)  ///< finds field in setting and makes sure it is a non-empty array
 	{
 		// find field
 		if (not parent.exists(arrayName)) {
 			if (mustExist)
-				printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
-				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+				printWarn << "cannot find field '" << arrayName << "' in setting "
+				          << "'" << parent.getPath() << "' in file "
+				          << "'" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
-		const libconfig::Setting& arrayKey = parent[arrayName];
+		const libconfig::Setting& array = parent[arrayName];
 		// check that it is a list
-		if (not arrayKey.isArray()) {
-			printWarn << "'" << arrayName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not an array. "
+		if (not array.isArray()) {
+			printWarn << "field '" << arrayName << "' in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is not an array. "
 			          << "check that braces are correct." << std::endl;
 			return 0;
 		}
 		// check that it is not empty
-		if (arrayKey.getLength() < 1) {
-			printWarn << "array '" << arrayName << "' in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
+		if (array.getLength() < 1) {
+			printWarn << "array '" << arrayName << "' in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is empty" << std::endl;
 			return 0;
 		}
-		return &arrayKey;
-	}
-
-
-	inline
-	const libconfig::Setting*
-	findLibConfigGroup(const libconfig::Setting& parent,
-	                   const int                 groupName,
-	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
-	{
-		// find field
-
-		const libconfig::Setting* groupKey = 0;
-		try {
-			groupKey = &(parent[groupName]);
-		} catch (const libconfig::SettingNotFoundException& NotFound) {
-			if (mustExist)
-			 	printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
-						  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
-			return 0;
-		}
-		
-		// check that it is a group
-		if (not (*groupKey).isGroup()) {
-			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not a group" << std::endl;
-			return 0;
-		}
-		return groupKey;
-	}
-
-
-	inline
-	const libconfig::Setting*
-	findLibConfigList(const libconfig::Setting& parent,
-	                  const int                 listName,
-	                  const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty list
-	{
-		// find field
-
-		const libconfig::Setting* listKey = 0;
-		try {
-			listKey = &(parent[listName]);
-		} catch (const libconfig::SettingNotFoundException& NotFound) {
-			printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
-			return 0;
-		}
-		// check that it is a list
-		if (not (*listKey).isList()) {
-			printWarn << "'" << listName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not a list. "
-			          << "check that braces are correct." << std::endl;
-			return 0;
-		}
-		
-		// check that it is not empty
-		if ((*listKey).getLength() < 1) {
-			printWarn << "list '" << listName << "' in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
-			return 0;
-		}
-		return listKey;
+		return &array;
 	}
 
 	
 	inline
 	const libconfig::Setting*
-	findLibConfigArray(const libconfig::Setting& parent,
-	                   const int                 arrayName,
-	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty array
+	findLibConfigArrayAtIndex(const libconfig::Setting& parent,
+	                          const int                 index,
+	                          const bool                mustExist = true)  ///< finds field in group, array, or list and makes sure it is a non-empty array
 	{
 		// find field
-
-		const libconfig::Setting* arrayKey = 0;
+		const libconfig::Setting* array = 0;
 		try {
-			arrayKey = &(parent[arrayName]);
+			array = &(parent[index]);
 		} catch (const libconfig::SettingNotFoundException& NotFound) {
-			printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
-					  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+			printWarn << "no entry at index [" << index << "] in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
-		
 		// check that it is a list
-		if (not (*arrayKey).isArray()) {
-			printWarn << "'" << arrayName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not an array. "
+		if (not (*array).isArray()) {
+			printWarn << "entry [" << index << "] in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is not an array. "
 			          << "check that braces are correct." << std::endl;
 			return 0;
 		}
 		// check that it is not empty
-		if ((*arrayKey).getLength() < 1) {
-			printWarn << "array '" << arrayName << "' in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
+		if ((*array).getLength() < 1) {
+			printWarn << "array at [" << index << "] in setting '" << parent.getPath() << "' "
+			          << "in file '" << parent.getSourceFile() << "' is empty" << std::endl;
 			return 0;
 		}
-		return arrayKey;
+		return array;
 	}
 	
 	

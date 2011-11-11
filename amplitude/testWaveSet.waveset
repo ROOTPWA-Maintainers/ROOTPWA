@@ -1,0 +1,25 @@
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
+//
+// Description:
+//      test wave set
+//
+//
+// Author List:
+//      Boris Grube          TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
+
+
+waveSet :
+{
+	decayAmplitudes = (
+		{treeName  = "foo1", massRange = [1000., 2000.]},  // [MeV/c^2]
+		{treeName  = "foo2", massRange = [3000.]},         // [MeV/c^2]
+		{treeName  = "foo3"}
+	)
+};

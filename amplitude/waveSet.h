@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      tells rootcint for which classes to generate method interface stubs
+//      handles wave sets for fitting
 //
 //
 // Author List:
@@ -35,37 +35,63 @@
 //-------------------------------------------------------------------------
 
 
-#ifdef __CINT__
+#ifndef WAVESET_H
+#define WAVESET_H
 
 
-#pragma link off all globals;
-#pragma link off all classes;
-#pragma link off all functions;
+#include <string>
+#include <vector>
+
+#include "TObject.h"
 
 
-#pragma link C++ class rpwa::waveDescription+;
-// data model evolution rule that triggers parsing of key file string
-// whenever waveDescription is read from file
-// see http://root.cern.ch/root/html/io/DataModelEvolution.html
-// and http://indico.cern.ch/contributionDisplay.py?contribId=210&sessionId=59&confId=35523
-#pragma read sourceClass="rpwa::waveDescription" version="[1-]"	  \
-	targetClass="rpwa::waveDescription" \
-	source="" target="" \
-	code="{ newObj->parseKeyFileLocalCopy(); }"
-#pragma link C++ class std::vector<rpwa::waveDescription>+;
-#pragma link C++ class rpwa::amplitudeName+;
+namespace rpwa {
+
+
+	class waveSet : public TObject {
+
+	public:
+
+		waveSet();
+		virtual ~waveSet();
+
+		void clear();
+
+		waveSet& operator =(const waveSet& set);
+
+		bool parseWaveSetFile(const std::string& waveSetFileName);  ///< reads wave set parameters from libconfig file
+
+		std::ostream& print(std::ostream& out) const;  ///< prints wave set parameters in human-readable form
+
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+
+	private:
+
+		std::vector<std::string>                decayAmpTreeNames;    ///< array of tree names with decay amplitude values
+		std::vector<std::pair<double, double> > decayAmpMassRanges;   ///< array with mass ranges in which decay amplitude should be used [MeV/c^2]
+
+		static bool _debug;  ///< if set to true, debug messages are printed
+
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
-#pragma link C++ class std::vector<std::complex<double> >+;
-#pragma link C++ class std::vector<std::string>+;
-#pragma link C++ class rpwa::amplitudeTreeLeaf+;
-#pragma read sourceClass="rpwa::amplitudeTreeLeaf" version="[1-]"	  \
-	targetClass="rpwa::amplitudeTreeLeaf" \
-	source="" target="" \
-	code="{ newObj->rebuildSubAmpLabelMap(); }"
-#pragma link C++ class rpwa::ampIntegralMatrix-;
-#pragma link C++ class rpwa::waveSet+;
-#endif 
-
-
+		ClassDef(waveSet,1)
 #endif
+
+	};
+
+
+	inline
+	std::ostream&
+	operator <<(std::ostream&  out,
+	            const waveSet& set)
+	{
+		return set.print(out);
+	}
+
+
+}  // namespace rpwa
+
+
+#endif  // WAVESET_H

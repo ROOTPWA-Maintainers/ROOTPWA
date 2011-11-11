@@ -109,29 +109,24 @@ waveDescription::operator =(const waveDescription& waveDesc)
 bool
 waveDescription::parseKeyFile(const string& keyFileName)
 {
-	_keyFileParsed = false;
+	_keyFileLocalCopy = "";
+	_keyFileParsed    = false;
 	if (not _key)
 		_key = new Config();
 	if (not parseLibConfigFile(keyFileName, *_key, _debug)) {
-		printWarn << "problems reading key file '" << keyFileName << "'. "
-		          << "cannot construct decay topology." << endl;
+		printWarn << "problems reading key file '" << keyFileName << "'" << endl;
 		delete _key;
 		_key = 0;
 		return false;
-	}		
-	// read key file contents into string
-	{
-		ifstream keyFile(keyFileName.c_str());
-    if (not keyFile or not keyFile.good()) {
-	    printWarn << "cannot read from file '"  << keyFileName << "'" << endl;
-	    return false;
-    }
-		_keyFileLocalCopy = "";
-    string line;
-    while(getline(keyFile, line))
-	    _keyFileLocalCopy += line + "\n";
 	}
-	_keyFileParsed = true;
+	// read key file contents into member variable
+	ostringstream keyFile;
+	if (not writeKeyFile(keyFile)) {
+		printWarn << "cannot write contents of key file '"  << keyFileName << "' to local cache" << endl;
+		return false;
+	}
+	_keyFileLocalCopy = keyFile.str();
+	_keyFileParsed    = true;
 	return true;
 }
 
@@ -169,14 +164,14 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	printInfo << "constructing decay topology from key file" << endl;
 
 	// find wave group
-	const Setting* waveKey = findLibConfigGroup(rootKey, "wave");
-	if (not waveKey) {
+	const Setting* decayVertKey = findLibConfigGroup(rootKey, "decayVertex");
+	if (not decayVertKey) {
 		printWarn << "cannot find 'wave' group. cannot construct decay topology." << endl;
 		return false;
 	}
 
 	// find  X quantum numbers group
-	const Setting* XQnKey = findLibConfigGroup(*waveKey, "XQuantumNumbers", not fromTemplate);
+	const Setting* XQnKey = findLibConfigGroup(*decayVertKey, "XQuantumNumbers", not fromTemplate);
 	particlePtr    X;
 	if (not XQnKey)
 		if (not fromTemplate) {
@@ -204,7 +199,7 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	}
   
 	// find X decay group
-	const Setting* XDecayKey = findLibConfigGroup(*waveKey, "XDecay");
+	const Setting* XDecayKey = findLibConfigGroup(*decayVertKey, "XDecay");
 	if (not XDecayKey) {
 		printWarn << "cannot find 'XDecay' group. cannot construct decay topology." << endl;
 		return false;
@@ -821,9 +816,9 @@ waveDescription::setKeysFromTopology(Setting&                   rootKey,
 		Setting& prodVertKey = rootKey.add("productionVertex", Setting::TypeGroup);
 		setProductionVertexKeys(prodVertKey, topo.productionVertex());
 	}
-	Setting& waveKey   = rootKey.add("wave",            Setting::TypeGroup);
-	Setting& XQnKey    = waveKey.add("XQuantumNumbers", Setting::TypeGroup);
-	Setting& XDecayKey = waveKey.add("XDecay",          Setting::TypeGroup);
+	Setting& decayVertKey = rootKey.add     ("decayVertex",     Setting::TypeGroup);
+	Setting& XQnKey       = decayVertKey.add("XQuantumNumbers", Setting::TypeGroup);
+	Setting& XDecayKey    = decayVertKey.add("XDecay",          Setting::TypeGroup);
 	if (not setXQuantumNumbersKeys(XQnKey, *(topo.XParticle()))) {
 		printWarn << "problems setting X quantum numbers" << endl;
 		return false;
