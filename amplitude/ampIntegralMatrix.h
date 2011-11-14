@@ -156,7 +156,8 @@ namespace rpwa {
 		                               std::vector<rpwa::amplitudeTreeLeaf*>& ampTreeLeafs,
 		                               const std::vector<std::string>&        ampFileNames,
 		                               const unsigned int                     waveIndexOffset = 0,
-		                               const std::string&                     ampLeafName     = "amplitude");  ///< opens array of .root files, performs some scrunity checks and adds waves to name <-> index maps
+		                               const std::string&                     ampLeafName     = "decayAmp",
+		                               const long int                         treeCacheSize   = 1000000);  ///< opens array of .root files, performs some scrunity checks and adds waves to name <-> index maps
 
 		void rebuildWaveNameToIndexMap();  ///< rebuilds the wave name -> index map from _waveNames
 

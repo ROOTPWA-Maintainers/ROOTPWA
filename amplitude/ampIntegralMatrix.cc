@@ -277,19 +277,20 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	const unsigned int         nmbRootWaves  = ampTrees.size();
 	_nmbWaves = nmbBinWaves + nmbRootWaves;
 	if (_nmbWaves > 0)
-		printInfo << "calculating integral for " << _nmbWaves << " amplitude(s)" << endl;
+		printInfo << "calculating integral for " << _nmbWaves << " decay amplitude(s)" << endl;
 	else {
-		printWarn << "could not open any amplitude files. cannot calculate integral." << endl;
+		printWarn << "could not open any decay amplitude files. cannot calculate integral." << endl;
 		return false;
 	}
 	if ((nmbBinEvents > 0) and (nmbRootEvents > 0) and (nmbBinEvents != nmbRootEvents)) {
-		printWarn << ".bin and .root amplitude files contain different number of amplitude values "
+		printWarn << ".bin and .root decay amplitude files contain different number of amplitude values "
 		          << "(" << nmbBinEvents << " vs. " << nmbRootEvents << "). "
 		          << "cannot calculate integral." << endl;
 		return false;
 	}
 	if ((nmbBinEvents == 0) and (nmbRootEvents == 0)) {
-		printWarn << "amplitude files contain no amplitudes values. cannot calculate integral." << endl;
+		printWarn << "decay amplitude files contain no amplitudes values. "
+		          << "cannot calculate integral." << endl;
 		return false;
 	}
 	if (nmbBinEvents > 0)
@@ -366,8 +367,8 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 		  ampTrees[index]->GetEntry(iEvent);
 		  const unsigned int nmbSubAmps = ampTreeLeafs[index]->nmbIncohSubAmps();
 		  if (nmbSubAmps < 1) {
-			  printErr << "amplitude object for wave '" << _waveNames[waveIndex] << "' "
-			           << "does not contain any amplitude values "
+			  printErr << "decay amplitude object for wave '" << _waveNames[waveIndex] << "' "
+			           << "does not contain any decay amplitude values "
 			           << "at event " << iEvent << " of total " << _nmbEvents << ". aborting." << endl;
 			  throw;
 		  }
@@ -383,12 +384,12 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 			  // sum over incoherent subamps
 			  const unsigned int nmbSubAmps = amps[waveIndexI].size();
 			  if (nmbSubAmps != amps[waveIndexJ].size()) {
-				  printErr << "number of incoherent sub-amplitudes for wave '"
+				  printErr << "number of incoherent decay sub-amplitudes for wave '"
 				           << _waveNames[waveIndexI] << "' = " << nmbSubAmps
 				           << " differs from that of wave '" << _waveNames[waveIndexJ] << "' = "
 				           << amps[waveIndexJ].size()
 				           << " at event " << iEvent << " of total " << _nmbEvents << ". aborting. "
-				           << "be sure to use only .root amplitude files, "
+				           << "be sure to use only .root decay amplitude files, "
 				           << "if your channel has sub-amplitudes." << endl;
 				  throw;
 			  }
@@ -411,7 +412,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 				_integrals[waveIndexI][waveIndexJ] *= 1 / weightNorm;
 		}
 
-	printSucc << "calculated integrals of " << _nmbWaves << " amplitude(s) "
+	printSucc << "calculated integrals of " << _nmbWaves << " decay amplitude(s) "
 	          << "for " << _nmbEvents << " events" << endl;
   // cleanup
 	for (unsigned int i = 0; i < binAmpFiles.size(); ++i)
@@ -581,20 +582,21 @@ ampIntegralMatrix::openBinAmpFiles(vector<ifstream*>&    ampFiles,
 		ifstream* ampFile = new ifstream();
 		ampFile->open(ampFilePath.c_str());
 		if(not *ampFile) {
-			printWarn << "cannot open amplitude file '" << ampFilePath << "'. skipping file." << endl;
+			printWarn << "cannot open decay amplitude file '" << ampFilePath << "'. skipping file." << endl;
 			continue;
 		}
 
 		// check that all files have the same size
 		const streampos fileSize = rpwa::fileSize(*ampFile);
 		if (fileSize == 0) {
-			printWarn << "amplitude file '" << ampFilePath << "' has zero size. skipping file." << endl;
+			printWarn << "decay amplitude file '" << ampFilePath << "' has zero size. "
+			          << "skipping file." << endl;
 			continue;
     }
     if (ampFileSize == 0)
 	    ampFileSize = fileSize;
     else if (fileSize != ampFileSize) {
-			printWarn << "amplitude file '" << ampFilePath << "' has different size "
+			printWarn << "decay amplitude file '" << ampFilePath << "' has different size "
 			          << "than previous file. skipping file." << endl;
 			continue;
     }
@@ -622,7 +624,8 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
                                     vector<amplitudeTreeLeaf*>& ampTreeLeafs,
                                     const vector<string>&       ampFileNames,
                                     const unsigned int          waveIndexOffset,
-                                    const string&               ampLeafName)
+                                    const string&               ampLeafName,
+                                    const long int              treeCacheSize)
 {
 	ampTrees.clear    ();
 	ampTreeLeafs.clear();
@@ -642,48 +645,55 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 
 		// open amplitude file
 		if (_debug)
-			printDebug << "opening .root amplitude file '" << ampFilePath << "'" << endl;
+			printDebug << "opening .root decay amplitude file '" << ampFilePath << "'" << endl;
 		TFile* ampFile = TFile::Open(ampFilePath.c_str(), "READ");
 		if (not ampFile or ampFile->IsZombie()) {
-			printErr << "could open amplitude file '" << ampFilePath << "'. skipping file." << endl;
+			printErr << "could not open decay amplitude file '" << ampFilePath << "'. "
+			         << "skipping file." << endl;
 			continue;
 		}
 
-		// find all amplitude trees with name matching *.amp and corresponding .key wave description
+		// find all amplitude trees with name matching *.amp
 		TIterator* keys        = ampFile->GetListOfKeys()->MakeIterator();
 		bool       foundAmpKey = false;
     while (TKey* k = static_cast<TKey*>(keys->Next())) {
       if (!k) {
-        printWarn << "NULL pointer to TKey in file '" << ampFilePath << "'. skipping TKey." << endl;
+        printWarn << "NULL pointer to TKey in decay amplitude file '" << ampFilePath << "'. "
+                  << "skipping TKey." << endl;
         continue;
       }
-      TTree*           tree     = 0;
-      waveDescription* waveDesc = 0;
-      const string     keyName  = k->GetName();
+      TTree*       tree    = 0;
+      const string keyName = k->GetName();
       if (extensionFromPath(keyName) == "amp") {
 	      foundAmpKey = true;
 	      ampFile->GetObject(keyName.c_str(), tree);
-	      // get corresponding .key wave description
-	      ampFile->GetObject((changeFileExtension(keyName, "key")).c_str(), waveDesc);
-	      trees.push_back    (tree    );
-	      waveDescs.push_back(waveDesc);
-	      keyNames.push_back (keyName );
+	      trees.push_back(tree);
+	      // read corresponding wave description
+	      TList* userInfo = tree->GetUserInfo();
+	      if (userInfo) {
+		       waveDescription* waveDesc
+			       = static_cast<waveDescription*>(userInfo->FindObject("rpwa::waveDescription"));
+		       waveDescs.push_back(waveDesc);
+	      } else
+		      waveDescs.push_back(0);
+	      keyNames.push_back(keyName);
       }
     }
     if (not foundAmpKey)
-	    printWarn << "no TKey in file '" << ampFilePath << "' matches '*.amp'. skipping file." << endl;
+	    printWarn << "no TKey in decay amplitude file '" << ampFilePath << "' matches '*.amp'. "
+	              << "skipping file." << endl;
 	}
 
 	// check whether reading was successful
 	assert((trees.size() == waveDescs.size()) and (trees.size() == keyNames.size()));
 	for (unsigned int i = 0; i < trees.size(); ++i)
 		if (not trees[i] or not waveDescs[i]) {
-			printWarn << "could not read tree or wave description from TKeys '"
-			          << fileNameNoExtFromPath(keyNames[i]) << ".{amp,key}'. "
-			          << "skipping TKeys." << endl;
+			printWarn << "could not read decay amplitude tree or wave description from TKey '"
+			          << fileNameNoExtFromPath(keyNames[i]) << ".amp'. skipping." << endl;
 			trees.erase    (trees.begin    () + i);
 			waveDescs.erase(waveDescs.begin() + i);
 			keyNames.erase (keyNames.begin () + i);
+			--i;
 		}
 	assert((trees.size() == waveDescs.size()) and (trees.size() == keyNames.size()));
 	const unsigned int nmbAmpTrees = trees.size();
@@ -695,18 +705,24 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 		// connect tree leaf
 		amplitudeTreeLeaf* treeLeaf = 0;
 		trees[i]->SetBranchAddress(ampLeafName.c_str(), &treeLeaf);
+		trees[i]->SetCacheSize(treeCacheSize);
+		trees[i]->AddBranchToCache(ampLeafName.c_str(), true);
+		trees[i]->StopCacheLearningPhase();
 	    
 		// check that all trees have the same number of entries
 		const unsigned long nmbEntries = numeric_cast<unsigned long>(trees[i]->GetEntriesFast());
+		if (_debug)
+			printDebug << "using tree leaf '" << ampLeafName << "' of tree '" << trees[i]->GetName() << "' "
+			           << "with " << nmbEntries << " entries" << endl;
 		if (nmbEntries == 0) {
-			printWarn << "amplitude tree '" << trees[i]->GetName() << "' has zero entries. "
+			printWarn << "decay amplitude tree '" << trees[i]->GetName() << "' has zero entries. "
 			          << "skipping tree." << endl;
 			continue;
 		}
 		if (nmbAmps == 0)
 			nmbAmps = nmbEntries;
 		else if (nmbEntries != nmbAmps) {
-			printWarn << "amplitude tree '" << trees[i]->GetName() << "' has different number "
+			printWarn << "decay amplitude tree '" << trees[i]->GetName() << "' has different number "
 			          << "of entries than previous tree. skipping tree." << endl;
 			continue;
 		}
@@ -723,7 +739,15 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 		} else
 			printWarn << "wave '" << waveName << "' already exists in integral matrix. "
 			          << "ignoring tree '" << trees[i]->GetName() << "'." << endl;
+
+//!!! prevents crash in garbage collection at end of program
+//!!! in general cleanup needs to be improved: trees, wave descriptions
+//!!! and root files are never deleted/closed
+		trees[i]->GetUserInfo()->Clear();
 	}
+
+	printSucc << "read " << nmbAmpTrees << " decay amplitude trees from " << ampFileNames.size()
+	          << " decay amplitude files" << endl;
 #endif  // USE_STD_COMPLEX_TREE_LEAFS
 	return nmbAmps;
 }

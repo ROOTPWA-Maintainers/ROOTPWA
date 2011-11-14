@@ -56,6 +56,12 @@ main(int argc, char** argv)
 		waveSet      set;
 		set.parseWaveSetFile(waveSetFileName);
 		printDebug << set;
+
+		vector<string> fileNames(3);
+		fileNames[0] = "testAmp1.root";
+		fileNames[1] = "testAmp2.root";
+		fileNames[2] = "testAmp3.root";
+		set.getDecayAmplitudeTrees(fileNames);
 	}
 
 }

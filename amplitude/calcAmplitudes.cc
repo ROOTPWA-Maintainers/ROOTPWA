@@ -67,23 +67,24 @@ usage(const string& progName,
       const int     errCode = 0)
 {
 
-	cerr << "calculates decay amplitudes for given wave for events in input data files and" << endl
-	     << "writes amplitudes to file" << endl
+	cerr << "calculates decay amplitudes for the given wave and the events in input data files " << endl
+	     << "and writes decay amplitudes to output file" << endl
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " -k key file [-n max. # of events -p PDG file -o output file -m amplitude leaf name "
-	     << "-a -t tree name -l leaf names -r target particle name -v -h] "
-	     << "input data file(s) (.evt or .root format)" << endl
+	     << " -k key file [-n max. # of events -p PDG file -o amplitude file -d amplitude tree name "
+	     << "-m amplitude leaf name -a -t event data tree name -l event data leaf names "
+	     << "-v -h] input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
 	     << "        -k file    path to key file" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-	     << "        -o file    path to amplitude file (.amp or .root format; default: ./out.root)" << endl
-	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
+	     << "        -o file    path to decay amplitude file (.amp or .root format; default: ./decayAmp.root)" << endl
+	     << "        -d         decay amplitude tree name (default: determined from wave)" << endl
+	     << "        -m         decay amplitude leaf name (default: 'decayAmp')" << endl
 	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
-	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
-	     << "        -l names   semicolon separated object/leaf names in input data" << endl
+	     << "        -t name    name of event data tree in ROOT files (default: rootPwaEvtTree)" << endl
+	     << "        -l names   semicolon separated object/leaf names in event data" << endl
 	     << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
@@ -112,8 +113,9 @@ main(int    argc,
 	string         keyFileName              = "";
 	long int       maxNmbEvents             = -1;
 	string         pdgFileName              = "./particleDataTable.txt";
-	string         ampFileName              = "./out.root";
-	string         ampLeafName              = "amplitude";
+	string         ampFileName              = "./decayAmp.root";
+	string         ampTreeName              = "";
+	string         ampLeafName              = "decayAmp";
 	bool           asciiOutput              = false;
 	string         inTreeName               = "rootPwaEvtTree";
 	string         leafNames                = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
@@ -123,7 +125,7 @@ main(int    argc,
 	extern char*   optarg;
 	extern int     optind;
 	int            c;
-	while ((c = getopt(argc, argv, "k:n:p:o:m:at:l:r:vh")) != -1)
+	while ((c = getopt(argc, argv, "k:n:p:o:d:m:at:l:vh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -136,6 +138,9 @@ main(int    argc,
 			break;
 		case 'o':
 			ampFileName = optarg;
+			break;
+		case 'd':
+			ampTreeName = optarg;
 			break;
 		case 'm':
 			ampLeafName = optarg;
@@ -172,11 +177,11 @@ main(int    argc,
 		else if (fileExt == "evt")
 			evtFileNames.push_back(fileName);
 		else
-			printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
+			printWarn << "event data file '" << fileName << "' is neither a .root nor a .evt file. "
 			          << "skipping." << endl;
 	}
 	if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
-		printErr << "none of the specified input files is a .root or .evt file. aborting.";
+		printErr << "none of the specified event data files are .root or .evt files. aborting.";
 		usage(progName, 1);
 	}
 
@@ -194,7 +199,7 @@ main(int    argc,
 	                         rootFileNames, evtFileNames,
 	                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
 	                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
-		printErr << "problems opening input file(s). aborting." << endl;
+		printErr << "problems opening event data file(s). aborting." << endl;
 		exit(1);
 	}
 
@@ -225,12 +230,12 @@ main(int    argc,
 	else if (ampFileExt == "amp")
 		writeRootFormat = false;
 	else {
-		printErr << "specified amplitude file '" << ampFileName << "' is neither a .root "
+		printErr << "specified decay amplitude file '" << ampFileName << "' is neither a .root "
 		         << "nor a .amp file. aborting." << endl;
 		usage(progName);
 	}
 #endif
-	printInfo << "creating amplitude file '" << ampFileName << "'";
+	printInfo << "creating decay amplitude file '" << ampFileName << "'";
 	ofstream*          ampFilePlain = 0;
 	TFile*             ampFileRoot  = 0;
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
@@ -239,13 +244,12 @@ main(int    argc,
 	if (writeRootFormat) {
 		cout << endl;
 		ampFileRoot = TFile::Open(ampFileName.c_str(), "RECREATE");
-		// write wave description
+		// create output tree
 		const string waveName = waveDesc.waveNameFromTopology(*(amplitude->decayTopology()),
 		                                                      newKeyFileNameConvention);
-		waveDesc.Write((waveName + ".key").c_str());
-		// create output tree
 		ampTreeLeaf = new amplitudeTreeLeaf();
-		const string ampTreeName = waveName + ".amp";
+		if (ampTreeName == "")
+			ampTreeName = waveName + ".amp";
 		ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
 		const int splitLevel = 99;
 		const int bufSize    = 256000;
@@ -258,7 +262,7 @@ main(int    argc,
 		}
 	if (   (writeRootFormat and not ampFileRoot)
 	    or (not writeRootFormat and not ampFilePlain and not *ampFilePlain)) {
-		printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
+		printErr << "cannot create decay amplitude file '" << ampFileName << "'. aborting." << endl;
 		exit(1);
 	}
   
@@ -277,9 +281,9 @@ main(int    argc,
 		if (not processTree(*inTrees[i], *prodKinPartNames, *decayKinPartNames,
 		                    amplitude, ampValues, maxNmbEvents - ampValues.size(),
 		                    prodKinMomentaLeafName, decayKinMomentaLeafName))
-			printWarn << "problems reading tree" << endl;
+			printWarn << "problems reading event data tree" << endl;
 	}
-	printSucc << "calculated amplitudes for " << ampValues.size() << " events" << endl;
+	printSucc << "calculated decay amplitudes for " << ampValues.size() << " events" << endl;
 	timer.Stop();
 	printInfo << "this job consumed: ";
 	timer.Print();
@@ -301,7 +305,15 @@ main(int    argc,
 	}
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (ampFileRoot) {
-		printInfo << "optimizing tree" << endl;
+		// write wave description to tree user info
+		TList* userInfo = ampTree->GetUserInfo();
+		if (userInfo)
+			userInfo->AddFirst(&waveDesc);
+		else
+			printErr << "could not get user info list from decay amplitude tree "
+			         << "'" << ampTree->GetName() << "'. cannot write wave description." << endl;
+		
+		printInfo << "optimizing decay amplitude tree" << endl;
 		//ampTree->Print();
 		ampTree->OptimizeBaskets(treeCacheSize, 1, "d");
 		ampTree->Write();
@@ -314,8 +326,8 @@ main(int    argc,
 		ampFilePlain->close();
 		delete ampFilePlain;
 	}
-	printSucc << "wrote " << ampValues.size() << " amplitude values to "
-	          << "'" << ampFileName << "'";
+	printSucc << "wrote " << ampValues.size() << " decay amplitude values to "
+	          << "file '" << ampFileName << "'";
 	if (not writeRootFormat)
 		cout << " in " << ((asciiOutput) ? "ASCII" : "binary")
 		     << " mode";

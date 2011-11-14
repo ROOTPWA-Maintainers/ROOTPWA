@@ -66,7 +66,7 @@ main(int argc, char** argv)
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
 	
-	if (1) {
+	if (0) {
 		TFile*               outFile      = TFile::Open("testAmplitudeTree.root", "RECREATE");
 		amplitudeTreeLeaf*   ampLeaf      = new amplitudeTreeLeaf();
 		const vector<string> subAmpLabels = list_of("lambda=-1")("lambda=0")("lambda=+1");
@@ -77,7 +77,7 @@ main(int argc, char** argv)
 		tree->GetUserInfo()->AddFirst(&waveDesc);
 
 		gRandom->SetSeed(123456789);
-		tree->Branch("amp", &ampLeaf, 256000, 99);
+		tree->Branch("decayAmp", &ampLeaf, 256000, 99);
 		for (unsigned int i = 0; i < nmbEvents; ++i) {
 			ampLeaf->clear();
 			ampLeaf->defineIncohSubAmps(subAmpLabels);
@@ -102,10 +102,12 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
+		//TFile* inFile = TFile::Open("testAmp1.root", "READ");
 		TFile* inFile = TFile::Open("testAmplitudeTree.root", "READ");
 
 		gRandom->SetSeed(123456789);
 		TTree* tree;
+		//inFile->GetObject("1-4+01+rho770_41_pi-.amp", tree);
 		inFile->GetObject("test", tree);
 		tree->GetUserInfo()->Print();
 		tree->GetUserInfo()->ls();
@@ -115,9 +117,9 @@ main(int argc, char** argv)
 		waveDesc->printKeyFileContents();
 		
 		amplitudeTreeLeaf* ampLeaf = 0;
-		tree->SetBranchAddress("amp", &ampLeaf);
+		tree->SetBranchAddress("decayAmp", &ampLeaf);
 		tree->SetCacheSize(1000000);
-		tree->AddBranchToCache("amp",  true);
+		tree->AddBranchToCache("decayAmp",  true);
 		tree->StopCacheLearningPhase();
 		for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);

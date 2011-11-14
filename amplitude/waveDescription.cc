@@ -109,6 +109,7 @@ waveDescription::operator =(const waveDescription& waveDesc)
 bool
 waveDescription::parseKeyFile(const string& keyFileName)
 {
+	printInfo << "parsing key file '" << keyFileName << "'" << endl;
 	_keyFileLocalCopy = "";
 	_keyFileParsed    = false;
 	if (not _key)
@@ -119,14 +120,15 @@ waveDescription::parseKeyFile(const string& keyFileName)
 		_key = 0;
 		return false;
 	}
-	// read key file contents into member variable
+	_keyFileParsed = true;
+	// read key file contents into local cache
+	printInfo << "writing contents of key file '" << keyFileName << "' to local cache" << endl;
 	ostringstream keyFile;
 	if (not writeKeyFile(keyFile)) {
 		printWarn << "cannot write contents of key file '"  << keyFileName << "' to local cache" << endl;
 		return false;
 	}
 	_keyFileLocalCopy = keyFile.str();
-	_keyFileParsed    = true;
 	return true;
 }
 
@@ -294,7 +296,7 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 	ostringstream fileName;
 	if (currentVertex == interactionVertexPtr()) {
 		if (not topo.checkTopology() or not topo.checkConsistency()) {
-			printWarn << "decay topology has issues. cannot construct key file name." << endl;
+			printWarn << "decay topology has issues. cannot construct wave name." << endl;
 			return "";
 		}
 		// X quantum numbers
@@ -361,12 +363,16 @@ bool
 waveDescription::parseKeyFileLocalCopy()
 {
 	_keyFileParsed = false;
+	if (_keyFileLocalCopy == "") {
+		printWarn << "local key file cache is empty. cannot rebuild wave description." << endl;
+		return false;
+	}
 	if (not _key)
 		_key = new Config();
 	if (not parseLibConfigString(_keyFileLocalCopy, *_key, _debug)) {
-		printWarn << "problems parsing key file string:" << endl;
+		printWarn << "problems parsing local key file cache:" << endl;
 		printKeyFileContents(cout);
-		cout  << "    cannot construct decay topology." << endl;
+		cout  << "    cannot rebuild wave description." << endl;
 		delete _key;
 		_key = 0;
 		return false;

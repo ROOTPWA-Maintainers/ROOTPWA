@@ -129,6 +129,20 @@ main(int argc, char** argv)
 
 
 	if (1) {
+		// test integral calculation
+		vector<string> binAmpFileNames;
+		vector<string> rootAmpFileNames(3);
+		rootAmpFileNames[0] = "testAmp1.root";
+		rootAmpFileNames[1] = "testAmp2.root";
+		rootAmpFileNames[2] = "testAmp3.root";
+		ampIntegralMatrix integral;
+		integral.integrate(binAmpFileNames, rootAmpFileNames);
+		integral.writeAscii("testIntegral2.int");
+		printDebug << "FOO" << endl;
+	}
+
+
+	if (0) {
 		// test I/O and copying
 		ampIntegralMatrix integral;
 		// ascii I/O

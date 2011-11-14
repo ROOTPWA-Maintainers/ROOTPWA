@@ -198,6 +198,9 @@ waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 		// get all amplitude trees from file
 		vector<pair<TTree*, unsigned int> > trees;
 		for (unsigned int i = 0; i < nmbDecayAmps(); ++i) {
+			if (_debug)
+				printDebug << "looking for tree '" << decayAmpTreeNames[i] << "' "
+				           << "in file '" << ampFileNames[ampFileIndex] << "'" << endl;
 			TTree* tree = 0;
 			ampFile->GetObject(decayAmpTreeNames[i].c_str(), tree);
 			if (tree) {
@@ -205,7 +208,9 @@ waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 				if (_debug)
 					printDebug << "found decay amplitude tree '" << decayAmpTreeNames[i] << "' "
 					           << "in file '" << ampFileNames[ampFileIndex] << "'" << endl;
-			}
+			} else if (_debug)
+				printDebug << "did not find decay amplitude tree '" << decayAmpTreeNames[i] << "' "
+				           << "in file '" << ampFileNames[ampFileIndex] << "'" << endl;
 		}
 		// store tree pointers and make sure trees do not already exist
 		for (unsigned int i = 0; i < trees.size(); ++i) {
@@ -262,18 +267,19 @@ waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 	}
 	if (countMissingTrees > 0) {
 		success = false;
-		printWarn << "there are " << countMissingTrees << " trees missing. "
+		printWarn << countMissingTrees << " out of " << nmbDecayAmps() << " trees are missing. "
 		          << "decay amplitude data incomplete." << endl;
 	}
 	if (countMissingWaveDescs > 0) {
 		success = false;
-		printWarn << "there are " << countMissingWaveDescs << " wave descriptions missing. "
-		          << "wave set data incomplete." << endl;
+		printWarn << countMissingWaveDescs << " out of " << nmbDecayAmps() << " wave descriptions "
+		          << "are missing. wave set data incomplete." << endl;
 	}
 	if (    (countOpenFails    == 0) and (countDuplTrees        == 0)
 	    and (countMissingTrees == 0) and (countMissingWaveDescs == 0))
 		printSucc << "could open all " << ampFileNames.size() << " decay amplitude files "
-		          << "and found all " << nmbDecayAmps() << " trees and wave descriptions" << endl;
+		          << "and found all " << nmbDecayAmps() << " decay amplitude trees "
+		          << "and wave descriptions" << endl;
 
 #endif
 
