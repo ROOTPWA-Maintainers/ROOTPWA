@@ -35,7 +35,11 @@
 //-------------------------------------------------------------------------
 
 
+#include "TROOT.h"
+#include "TTree.h"
+
 #include "reportingUtils.hpp"
+#include "amplitudeTreeLeaf.h"
 #include "waveSet.h"
 
 
@@ -54,7 +58,7 @@ main(int argc, char** argv)
 	if (1) {
 		const string waveSetFileName = "testWaveSet.waveset";
 		waveSet      set;
-		set.parseWaveSetFile(waveSetFileName);
+		set.buildWaveSet(waveSetFileName);
 		printDebug << set;
 
 		vector<string> fileNames(3);
@@ -62,6 +66,26 @@ main(int argc, char** argv)
 		fileNames[1] = "testAmp2.root";
 		fileNames[2] = "testAmp3.root";
 		set.getDecayAmplitudeTrees(fileNames);
+
+		gROOT->ProcessLine("#include <complex>");
+		const string   ampLeafName   = "decayAmp";
+		const long int treeCacheSize = 1000000;
+		const vector<TTree*>& ampTrees = set.decayAmpTrees();
+		for (unsigned int i = 0; i < ampTrees.size(); ++i) {
+			amplitudeTreeLeaf* ampLeaf = 0;
+			ampTrees[i]->SetBranchAddress(ampLeafName.c_str(), &ampLeaf);
+			ampTrees[i]->SetCacheSize(treeCacheSize);
+			ampTrees[i]->AddBranchToCache(ampLeafName.c_str(), true);
+			ampTrees[i]->StopCacheLearningPhase();
+			for (unsigned int j = 0; j < ampTrees[i]->GetEntriesFast(); ++j) {
+				ampTrees[i]->GetEntry(j);
+				if (j < 5)
+					printDebug << "read event " << j << " from tree '" << ampTrees[i]->GetName()
+					           << "': " << *ampLeaf;
+			}
+			ampTrees[i]->PrintCacheStats();
+			cout << endl;			
+		}
 	}
 
 }

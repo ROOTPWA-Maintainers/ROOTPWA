@@ -60,11 +60,11 @@ bool waveSet::_debug = false;
 
 
 waveSet::waveSet()
-	: TObject           (),
-	  decayAmpTreeNames (),
-	  decayAmpMassRanges(),
-	  decayAmpTrees     (),
-	  decayAmpWaveDescs ()
+	: TObject            (),
+	  _decayAmpTreeNames (),
+	  _decayAmpMassRanges(),
+	  _decayAmpTrees     (),
+	  _decayAmpWaveDescs ()
 {
 	//waveSet::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
@@ -77,10 +77,10 @@ waveSet::~waveSet()
 void
 waveSet::clear()
 {
-	decayAmpTreeNames.clear ();
-	decayAmpMassRanges.clear();
-	decayAmpTrees.clear     ();
-	decayAmpWaveDescs.clear ();
+	_decayAmpTreeNames.clear ();
+	_decayAmpMassRanges.clear();
+	_decayAmpTrees.clear     ();
+	_decayAmpWaveDescs.clear ();
 }
 
 
@@ -88,18 +88,18 @@ waveSet&
 waveSet::operator =(const waveSet& set)
 {
 	if (this != &set) {
-		TObject::operator  =(set);
-		decayAmpTreeNames  = set.decayAmpTreeNames;
-		decayAmpMassRanges = set.decayAmpMassRanges;
-		decayAmpTrees      = set.decayAmpTrees;
-		decayAmpWaveDescs  = set.decayAmpWaveDescs;
+		TObject::operator   =(set);
+		_decayAmpTreeNames  = set._decayAmpTreeNames;
+		_decayAmpMassRanges = set._decayAmpMassRanges;
+		_decayAmpTrees      = set._decayAmpTrees;
+		_decayAmpWaveDescs  = set._decayAmpWaveDescs;
 	}
 	return *this;
 }
 
 
 bool
-waveSet::parseWaveSetFile(const string& waveSetFileName)
+waveSet::buildWaveSet(const string& waveSetFileName)
 {
 	libconfig::Config config;
 	if (not parseLibConfigFile(waveSetFileName, config, _debug)) {
@@ -127,10 +127,10 @@ waveSet::parseWaveSetFile(const string& waveSetFileName)
 
 	// read decay amplitude list
 	const int nmbEntries = configDecayAmps->getLength();
-	decayAmpTreeNames.clear ();
-	decayAmpMassRanges.clear();
-	decayAmpTreeNames.resize (nmbEntries);
-	decayAmpMassRanges.resize(nmbEntries);
+	_decayAmpTreeNames.clear ();
+	_decayAmpMassRanges.clear();
+	_decayAmpTreeNames.resize (nmbEntries);
+	_decayAmpMassRanges.resize(nmbEntries);
 	bool success = true;
 	for (int i = 0; i < nmbEntries; ++i) {
 		// get tree name
@@ -139,7 +139,7 @@ waveSet::parseWaveSetFile(const string& waveSetFileName)
 			printWarn << "entry [" << i << "] in decay amplitude list does not specify a tree name.";
 			success = false;
 		}
-		decayAmpTreeNames[i] = treeName;
+		_decayAmpTreeNames[i] = treeName;
 		// get mass range
 		pair<double, double> massRange(0, numeric_limits<double>::infinity());
 		const Setting*       configMassRange = findLibConfigArray((*configDecayAmps)[i], "massRange", false);
@@ -155,13 +155,13 @@ waveSet::parseWaveSetFile(const string& waveSetFileName)
 				success = false;
 			}
 		}
-		decayAmpMassRanges[i] = massRange;
+		_decayAmpMassRanges[i] = massRange;
 	}	
 
 	if (success)
 		printSucc << "constructed wave set from file '" << waveSetFileName << "'" << endl;
 	else
-		printSucc << "problems constructing wave set from file '" << waveSetFileName << "'" << endl;
+		printWarn << "problems constructing wave set from file '" << waveSetFileName << "'" << endl;
 	return success;
 }
 
@@ -169,8 +169,8 @@ waveSet::parseWaveSetFile(const string& waveSetFileName)
 bool
 waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 {
-	decayAmpTrees.clear    ();
-	decayAmpWaveDescs.clear();
+	_decayAmpTrees.clear    ();
+	_decayAmpWaveDescs.clear();
 	bool success = true;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
@@ -179,8 +179,8 @@ waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 	gROOT->ProcessLine("#include <complex>");
 
 	// get trees from .root files
-	decayAmpTrees.resize    (nmbDecayAmps(), 0);
-	decayAmpWaveDescs.resize(nmbDecayAmps(), 0);
+	_decayAmpTrees.resize    (nmbDecayAmps(), 0);
+	_decayAmpWaveDescs.resize(nmbDecayAmps(), 0);
 	unsigned int countOpenFails = 0;
 	unsigned int countDuplTrees = 0;
 	for (unsigned int ampFileIndex = 0; ampFileIndex < ampFileNames.size(); ++ampFileIndex) {
@@ -199,31 +199,31 @@ waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 		vector<pair<TTree*, unsigned int> > trees;
 		for (unsigned int i = 0; i < nmbDecayAmps(); ++i) {
 			if (_debug)
-				printDebug << "looking for tree '" << decayAmpTreeNames[i] << "' "
+				printDebug << "looking for tree '" << _decayAmpTreeNames[i] << "' "
 				           << "in file '" << ampFileNames[ampFileIndex] << "'" << endl;
 			TTree* tree = 0;
-			ampFile->GetObject(decayAmpTreeNames[i].c_str(), tree);
+			ampFile->GetObject(_decayAmpTreeNames[i].c_str(), tree);
 			if (tree) {
 				trees.push_back(make_pair(tree, i));
 				if (_debug)
-					printDebug << "found decay amplitude tree '" << decayAmpTreeNames[i] << "' "
+					printDebug << "found decay amplitude tree '" << _decayAmpTreeNames[i] << "' "
 					           << "in file '" << ampFileNames[ampFileIndex] << "'" << endl;
 			} else if (_debug)
-				printDebug << "did not find decay amplitude tree '" << decayAmpTreeNames[i] << "' "
+				printDebug << "did not find decay amplitude tree '" << _decayAmpTreeNames[i] << "' "
 				           << "in file '" << ampFileNames[ampFileIndex] << "'" << endl;
 		}
 		// store tree pointers and make sure trees do not already exist
 		for (unsigned int i = 0; i < trees.size(); ++i) {
-			if (decayAmpTrees[trees[i].second]) {
+			if (_decayAmpTrees[trees[i].second]) {
 				printWarn << "tree '" << trees[i].first->GetName() << "' exists in file '"
-				          << decayAmpTrees[trees[i].second]->GetDirectory()->GetName() << "' and in file '"
+				          << _decayAmpTrees[trees[i].second]->GetDirectory()->GetName() << "' and in file '"
 					// GetCurrentFile()
 				          << trees[i].first->GetDirectory()->GetName() << "'. skipping tree from latter file."
 				          << endl;
 				++countDuplTrees;
 				continue;
 			}
-			decayAmpTrees[trees[i].second] = trees[i].first;
+			_decayAmpTrees[trees[i].second] = trees[i].first;
 		}		
 	}
 
@@ -231,27 +231,27 @@ waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 	unsigned int countMissingTrees     = 0;
 	unsigned int countMissingWaveDescs = 0;
 	for (unsigned int i = 0; i < nmbDecayAmps(); ++i) {
-		if (not decayAmpTrees[i]) {
-			printWarn << "did not find decay amplitude tree '" << decayAmpTreeNames[i] << "' "
+		if (not _decayAmpTrees[i]) {
+			printWarn << "did not find decay amplitude tree '" << _decayAmpTreeNames[i] << "' "
 			          << "in any of the given decay amplitude files" << endl;
 			++countMissingTrees;
 			continue;
 		}
-		TList* userInfo = decayAmpTrees[i]->GetUserInfo();
+		TList* userInfo = _decayAmpTrees[i]->GetUserInfo();
 		if (not userInfo) {
-			printWarn << "tree '" << decayAmpTreeNames[i] << "' does not have user info." << endl;
+			printWarn << "tree '" << _decayAmpTreeNames[i] << "' does not have user info." << endl;
 			++countMissingWaveDescs;
 			continue;
 		}
 		waveDescription* waveDesc
 			= static_cast<waveDescription*>(userInfo->FindObject("rpwa::waveDescription"));
 		if (not waveDesc) {
-			printInfo << "user info of tree '" << decayAmpTreeNames[i] << "' "
+			printInfo << "user info of tree '" << _decayAmpTreeNames[i] << "' "
 			          << "does not contain wave description." << endl;
 			++countMissingWaveDescs;
 			continue;
 		}
-		decayAmpWaveDescs[i] = waveDesc;
+		_decayAmpWaveDescs[i] = waveDesc;
 	}
 
 	// report
@@ -277,7 +277,7 @@ waveSet::getDecayAmplitudeTrees(const vector<string>& ampFileNames)
 	}
 	if (    (countOpenFails    == 0) and (countDuplTrees        == 0)
 	    and (countMissingTrees == 0) and (countMissingWaveDescs == 0))
-		printSucc << "could open all " << ampFileNames.size() << " decay amplitude files "
+		printSucc << "opened all " << ampFileNames.size() << " decay amplitude files "
 		          << "and found all " << nmbDecayAmps() << " decay amplitude trees "
 		          << "and wave descriptions" << endl;
 
@@ -291,9 +291,9 @@ ostream&
 waveSet::print(ostream& out) const
 {
 	out << "wave set" << endl;
-	for (unsigned int i = 0; i < decayAmpTreeNames.size(); ++i)
-		out << "    [" << i << "]: tree name = '" << decayAmpTreeNames[i] << "', mass range = "
-		    << "[" << decayAmpMassRanges[i].first << ", " << decayAmpMassRanges[i].second << "] MeV/c^2"
+	for (unsigned int i = 0; i < nmbDecayAmps(); ++i)
+		out << "    [" << i << "]: tree name = '" << _decayAmpTreeNames[i] << "', mass range = "
+		    << "[" << _decayAmpMassRanges[i].first << ", " << _decayAmpMassRanges[i].second << "] MeV/c^2"
 		    << endl;
 	return out;
 }

@@ -190,10 +190,10 @@ amplitudeTreeLeaf::print(ostream& out) const
 		out << "    number of incoherent sub-amps ... " << nmbSubAmps << endl;
 		out << "    amplitude value(s):" << endl;
 		for (unsigned int i = 0; i < nmbSubAmps; ++i)
-			out << "        [" << setw(4) << i << "] = '" << _incohSubAmpLabels[i]
-			    << "' = " << maxPrecisionDouble(_incohSubAmps[i]) << endl;
+			out << "        [" << setw(4) << i << "] (label = '" << _incohSubAmpLabels[i]
+			    << "') " << maxPrecisionDouble(_incohSubAmps[i]) << endl;
 	} else if (nmbSubAmps == 1)
-		out << "    amplitude ... " << _incohSubAmps[0] << endl;
+		out << "    amplitude = " << _incohSubAmps[0] << endl;
 	else
 		out << "    no amplitude value" << endl;
 	return out;
