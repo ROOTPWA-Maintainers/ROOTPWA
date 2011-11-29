@@ -40,17 +40,18 @@
 set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${ROOTPWA_INCLUDE_DIR}
+  ${UTILITIES_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into executable
 set(SOURCES
-	FortranPwaFileBase.cc
-	FortranPwaFileFitResults.cc
-	FortranPwaFileNormIntegrals.cc
-	FortranPwaFilePhaseSpaceIntegrals.cc
-	FortranPwaFileObject.cc
+	CompassPwaFileBase.cc
+	CompassPwaFileFitResults.cc
+	CompassPwaFileNormIntegrals.cc
+	CompassPwaFilePhaseSpaceIntegrals.cc
+	CompassPwaFileObject.cc
 	)
 
 # library
@@ -61,4 +62,4 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 	)
 
 # executables
-make_executable(plotgui     main.cc   ${THIS_LIB}  )
+make_executable(TestCompassPwaFileparsers     TestCompassPwaFileparsers.cc   ${THIS_LIB}  )

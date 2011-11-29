@@ -36,25 +36,29 @@
 
 #include <iostream>
 
-#include "FortranPwaFileObject.h"
+#include "reportingUtils.hpp"
 
-using  namespace std;
+#include "CompassPwaFileObject.h"
+
+using namespace std;
+using namespace rpwa;
 
 int main(int argc, char *argv[]){
 
 	//create instance of class Option
-	FortranPwaFileObject FileObject;
+	CompassPwaFileObject FileObject;
 
-//	FileObject.ReadFromFile( "/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWAPhaseSpaceIntegrals_2500_2510_0000_1000.txt" );
-//	FileObject.ReadFromFile( "/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWANormIntegralsAcc_1670_1680_0100_1000.txt" );
-	FileObject.ReadFromFile( "/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/fits/fit_2008_W37_acc_53waves_new/PWAfitresults_fit_2008_W37_acc_53waves_new_1040_1060_0100_1000_0_fit3.txt" );
-/*	if( 1 < argc ){
-		FileObject.ReadFromFile( argv[1] );
-	}
-	if( 1 == argc ){
+	printInfo << "Starting test of CompassPWA parser to root\n";
+	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWAPhaseSpaceIntegrals_2500_2510_0000_1000.txt") );
+	FileObject.Clear();
+	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWANormIntegralsNAcc_1670_1680_0100_1000.txt") );
+	FileObject.Clear();
+	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWANormIntegralsAcc_1670_1680_0100_1000.txt") );
+	FileObject.Clear();
+	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/fits/fit_2008_W37_acc_53waves_new/PWAfitresults_fit_2008_W37_acc_53waves_new_1040_1060_0100_1000_0_fit3.txt") );
+	FileObject.Clear();
 
-	}
-*/
+	printInfo << "End of test of CompassPWA parser to root\n";
+
 	return 0;
 }
-
