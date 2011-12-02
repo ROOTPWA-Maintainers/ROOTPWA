@@ -108,11 +108,6 @@ make_executable(ampDiff            ampDiff.cc            ${THIS_LIB})
 make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB})
 make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB})
 
-make_executable(testParticle         testParticle.cc         ${THIS_LIB})
-make_executable(testDecayTopology    testDecayTopology.cc    ${THIS_LIB})
-make_executable(testWaveDescription  testWaveDescription.cc  ${THIS_LIB})
-make_executable(testWaveSet          testWaveSet.cc          ${THIS_LIB})
-make_executable(testWaveSetGenerator testWaveSetGenerator.cc ${THIS_LIB})
-make_executable(testAmplitude        testAmplitude.cc        ${THIS_LIB})
-make_executable(testAmplitudeTree    testAmplitudeTree.cc    ${THIS_LIB})
-make_executable(testIntegral         testIntegral.cc         ${THIS_LIB})
+
+# build test stuff
+add_subdirectory(test)

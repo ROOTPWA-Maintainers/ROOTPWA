@@ -45,7 +45,7 @@
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
 #include "particleDataTable.h"
-#include "particle.h"
+#include "../particle.h"
 
 
 using namespace std;
