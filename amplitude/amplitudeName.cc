@@ -66,7 +66,7 @@ bool amplitudeName::_debug = false;
 
 
 amplitudeName::amplitudeName()
-	: TObject       (),
+	: TObject            (),
 	  _commonCohQnLabel  (""),
 		_commonIncohQnLabel(""),
 		_incohQnLabel      ("")
@@ -79,7 +79,7 @@ amplitudeName::amplitudeName(const isobarAmplitudePtr& amp,
                              const string&             incohQnLabel)
 	: _incohQnLabel(incohQnLabel)
 {
-	setCommonQnFrom(amp);
+	setCommonQn(amp);
 }
 
 
@@ -117,7 +117,7 @@ amplitudeName::fullName() const
 
 
 void
-amplitudeName::setCommonQnFrom(const isobarAmplitudePtr& amp)
+amplitudeName::setCommonQn(const isobarAmplitudePtr& amp)
 {
 	if (not amp) {
 		printWarn << "null pointer for amplitude. cannot construct amplitude name." << endl;
@@ -150,8 +150,8 @@ amplitudeName::setCommonQnFrom(const isobarAmplitudePtr& amp)
 	      << "M=" << spinQn(X.spinProj());
 
 	// X decay chain
-	const string decayChain = decayChainFrom(*topo, *(topo->XIsobarDecayVertex()));
-	cohQn << "[X" << decayChain << "]";
+	const string chain = decayChain(*topo, *(topo->XIsobarDecayVertex()));
+	cohQn << "[X" << chain << "]";
 
 	// set common coherent quantum numbers for T and A
 	_commonCohQnLabel = cohQn.str  ();
@@ -173,23 +173,23 @@ amplitudeName::setCommonQnFrom(const isobarAmplitudePtr& amp)
 
 
 string
-amplitudeName::decayChainFrom(const isobarDecayTopology& topo,
-                              const isobarDecayVertex&   currentVertex)
+amplitudeName::decayChain(const isobarDecayTopology& topo,
+                          const isobarDecayVertex&   currentVertex)
 {
 	// recurse down decay chain
 	ostringstream chain;
 	// first daughter
 	chain << "=[" << currentVertex.daughter1()->name();
 	if (not topo.isFsParticle(currentVertex.daughter1()))
-		chain << decayChainFrom(topo,
-			 *static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex.daughter1())));
+		chain << decayChain(topo,
+		  *static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex.daughter1())));
 	// L, S
 	chain << "[" << spinQn(currentVertex.L()) << "," << spinQn(currentVertex.S()) << "]";
 	// second daughter
 	chain << currentVertex.daughter2()->name();
 	if (not topo.isFsParticle(currentVertex.daughter2()))
-		chain << decayChainFrom(topo,
-			 *static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex.daughter2())));
+		chain << decayChain(topo,
+			*static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex.daughter2())));
 	chain << "]";
 	return chain.str();
 }

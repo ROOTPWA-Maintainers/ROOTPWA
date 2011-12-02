@@ -44,6 +44,10 @@
 
 #include "TObject.h"
 
+#ifndef __CINT__
+#include "isobarAmplitude.h"
+#endif
+
 
 class TTree;
 namespace rpwa {
@@ -65,14 +69,23 @@ namespace rpwa {
 
 		waveSet& operator =(const waveSet& set);
 
-		bool buildWaveSet(const std::string& waveSetFileName);  ///< constructs wave set from libconfig file
-
-		bool getDecayAmplitudeTrees(const std::vector<std::string>& ampFileNames);  ///< opens given list of files and creates an array of decay amplitude trees ordered according to wave set file; assumes that in the given set of files there are no two trees with the same name
-
-		unsigned int                                  nmbDecayAmps      () const { return _decayAmpTreeNames.size(); }  ///< returns number of decay amplitudes in wave set
-		const std::vector<TTree*>&                    decayAmpTrees     () const { return _decayAmpTrees;            }  ///< returns array of decay amplitude trees
-		const std::vector<rpwa::waveDescription*>&    decayAmpWaveDescs () const { return _decayAmpWaveDescs;        }  ///< returns array of wave descriptions
+		unsigned int                                  nmbWaves          () const { return _decayAmpTreeNames.size(); }  ///< returns number of decay amplitudes in wave set
 		const std::vector<std::pair<double, double> > decayAmpMassRanges() const { return _decayAmpMassRanges;       }  ///< returns array with mass ranges in which decay amplitude should be used [MeV/c^2]
+		const std::vector<std::string>&               decayAmpFileNames () const { return _decayAmpFileNames;        }  ///< returns array of amplitude file names
+		const std::vector<TTree*>&                    decayAmpTrees     () const { return _decayAmpTrees;            }  ///< returns array of decay amplitude trees
+		const std::vector<rpwa::waveDescription*>&    waveDescs         () const { return _waveDescs;                }  ///< returns array of wave descriptions
+#ifndef __CINT__
+		const std::vector<rpwa::isobarAmplitudePtr>&  decayAmps         () const { return _decayAmps;                }  ///< returns array of decay amplitudes
+#endif
+
+		void setDecayAmpFileNames(const std::vector<std::string>& ampFileNames);  ///< sets list of amplitude file names
+
+
+		bool buildWaveSet(const std::string& waveSetFileName);  ///< constructs wave set from libconfig file
+		bool getDecayAmplitudeTrees();  ///< opens list of ROOT files and creates an array of decay amplitude trees ordered according to wave set file; assumes that in the given set of files there are no two trees with the same name
+		bool constructDecayAmps();  ///< constructs isobar decay amplitude objects from wave descriptions
+		bool buildWaveNames();  ///< constructs wave names from isobar decay amplitude objects
+
 
 		std::ostream& print(std::ostream& out) const;  ///< prints wave set parameters in human-readable form
 
@@ -84,8 +97,13 @@ namespace rpwa {
 
 		std::vector<std::string>                _decayAmpTreeNames;   ///< array of tree names with decay amplitude values
 		std::vector<std::pair<double, double> > _decayAmpMassRanges;  ///< array with mass ranges in which decay amplitude should be used [MeV/c^2]
+		std::vector<std::string>                _decayAmpFileNames;   ///< array with decay amplitude file names
 		std::vector<TTree*>                     _decayAmpTrees;       //! ///< array with decay amplitude trees
-		std::vector<waveDescription*>           _decayAmpWaveDescs;   ///< array with decay amplitude wave descriptions
+		std::vector<waveDescription*>           _waveDescs;           ///< array with decay amplitude wave descriptions
+#ifndef __CINT__
+		std::vector<isobarAmplitudePtr>         _decayAmps;           ///< array of decay amplitudes
+#endif
+		//std::vector<waveName>                   _waveNames;           ///< array of decay amplitude names
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

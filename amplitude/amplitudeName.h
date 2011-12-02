@@ -95,9 +95,9 @@ namespace rpwa {
 		std::string incohQnLabel      () const { return _incohQnLabel;       }  ///< returns quantum numbers that are summed incoherently for either T or A
 
 #ifndef __CINT__
-		void setCommonQnFrom(const isobarAmplitudePtr& amp);
+		void setCommonQn(const isobarAmplitudePtr& amp);  ///< sets strings for quantum numbers that are common for T and A from isobar decay amplitude
 #endif
-		void setIncohQn(const std::string& incohQnLabel) { _incohQnLabel = incohQnLabel; }  ///< sets string for quantum numbers that are summed incoherently for either T or A
+		void setIncohQn (const std::string& incohQnLabel) { _incohQnLabel = incohQnLabel; }  ///< sets string for quantum numbers that are summed incoherently for either T or A
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -112,8 +112,8 @@ namespace rpwa {
 
 	private:
 
-		static std::string decayChainFrom(const isobarDecayTopology& topo,
-		                                  const isobarDecayVertex&   currentVertex);
+		static std::string decayChain(const isobarDecayTopology& topo,
+		                              const isobarDecayVertex&   currentVertex);
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

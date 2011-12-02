@@ -40,6 +40,7 @@
 
 #include "reportingUtils.hpp"
 #include "amplitudeTreeLeaf.h"
+#include "particleDataTable.h"
 #include "waveSet.h"
 
 
@@ -65,7 +66,8 @@ main(int argc, char** argv)
 		fileNames[0] = "testAmp1.root";
 		fileNames[1] = "testAmp2.root";
 		fileNames[2] = "testAmp3.root";
-		set.getDecayAmplitudeTrees(fileNames);
+		set.setDecayAmpFileNames(fileNames);
+		set.getDecayAmplitudeTrees();
 
 		gROOT->ProcessLine("#include <complex>");
 		const string   ampLeafName   = "decayAmp";
@@ -86,6 +88,12 @@ main(int argc, char** argv)
 			ampTrees[i]->PrintCacheStats();
 			cout << endl;			
 		}
+
+		particleDataTable::readFile("./particleDataTable.txt");
+		set.constructDecayAmps();
+		const vector<isobarAmplitudePtr>& amps = set.decayAmps();
+		for (unsigned int i = 0; i < amps.size(); ++i)
+			printDebug << "[" << i << "] = " << *(amps[i]) << endl;
 	}
 
 }
