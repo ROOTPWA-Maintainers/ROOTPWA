@@ -134,6 +134,14 @@ set(uprootedBoost_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
   )
 message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'")
+set(origBoost_INCLUDE_DIRS
+	${Boost_INCLUDE_DIRS}
+	)
+# use uprooted Boost libraries by default
+set(Boost_INCLUDE_DIRS
+	${uprootedBoost_INCLUDE_DIRS}
+	${origBoost_INCLUDE_DIRS}
+	)
 
 
 # setup libconfig
