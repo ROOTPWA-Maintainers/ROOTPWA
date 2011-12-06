@@ -85,7 +85,7 @@ NParticleState::p() const
 }
 
 double
-NParticleState::Q2()
+NParticleState::Q2() const
 {
   TLorentzVector beam=_beam;
   // recalibrate beam -- assumes exclusivity!
@@ -99,7 +99,7 @@ NParticleState::Q2()
 
 
 double
-NParticleState::rapidity()
+NParticleState::rapidity() const
 {
   return 0.5*TMath::Log((_p.E()+_p.Vect().Z())/(_p.E()-_p.Vect().Z()));
 }
@@ -144,7 +144,7 @@ NParticleState::Exclusive(double d){
 
 
 bool 
-NParticleState::isSubstate(NParticleState* motherstate){
+NParticleState::isSubstate(const NParticleState* motherstate)const { 
   // check if all fspart in this state are also part of the mother
   for(unsigned int i=0;i<_n;++i){//loop over fspart
     FSParticle* myp=getParticle(i);
@@ -169,7 +169,7 @@ NParticleState::isSubstate(NParticleState* motherstate){
 }
 
 bool 
-NParticleState::isDisjunctFrom(NParticleState* isobar){
+NParticleState::isDisjunctFrom(const NParticleState* isobar) const {
   // check if all fspart in this state are not equal from partner
   for(unsigned int i=0;i<_n;++i){//loop over fspart
     FSParticle* myp=getParticle(i);
