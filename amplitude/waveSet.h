@@ -82,9 +82,10 @@ namespace rpwa {
 
 
 		bool buildWaveSet(const std::string& waveSetFileName);  ///< constructs wave set from libconfig file
-		bool getDecayAmplitudeTrees();  ///< opens list of ROOT files and creates an array of decay amplitude trees ordered according to wave set file; assumes that in the given set of files there are no two trees with the same name
+		bool getDecayAmpTrees();    ///< opens list of ROOT files and creates an array of decay amplitude trees ordered as in wave set definition; assumes that in the given set of files there are no two trees with the same name
+		bool getWaveDescs();        ///< reads wave descriptions from decay amplitude trees
 		bool constructDecayAmps();  ///< constructs isobar decay amplitude objects from wave descriptions
-		bool buildWaveNames();  ///< constructs wave names from isobar decay amplitude objects
+		bool buildWaveNames();      ///< constructs wave names from isobar decay amplitude objects
 
 
 		std::ostream& print(std::ostream& out) const;  ///< prints wave set parameters in human-readable form

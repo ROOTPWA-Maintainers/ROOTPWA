@@ -67,7 +67,8 @@ main(int argc, char** argv)
 		fileNames[1] = "testAmp2.root";
 		fileNames[2] = "testAmp3.root";
 		set.setDecayAmpFileNames(fileNames);
-		set.getDecayAmplitudeTrees();
+		set.getDecayAmpTrees();
+		set.getWaveDescs();
 
 		gROOT->ProcessLine("#include <complex>");
 		const string   ampLeafName   = "decayAmp";

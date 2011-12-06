@@ -197,10 +197,9 @@ waveSet::buildWaveSet(const string& waveSetFileName)
 
 
 bool
-waveSet::getDecayAmplitudeTrees()
+waveSet::getDecayAmpTrees()
 {
 	_decayAmpTrees.clear();
-	_waveDescs.clear    ();
 	if (_decayAmpFileNames.size() == 0) {
 		printWarn << "array with decay amplitude file names is empty. cannot get amplitude trees." << endl;
 		return false;
@@ -215,7 +214,6 @@ waveSet::getDecayAmplitudeTrees()
 
 	// get trees from .root files
 	_decayAmpTrees.resize(nmbWaves(), 0);
-	_waveDescs.resize    (nmbWaves(), 0);
 	unsigned int countOpenFails = 0;
 	unsigned int countDuplTrees = 0;
 	for (unsigned int ampFileIndex = 0; ampFileIndex < _decayAmpFileNames.size(); ++ampFileIndex) {
@@ -252,7 +250,6 @@ waveSet::getDecayAmplitudeTrees()
 			if (_decayAmpTrees[trees[i].second]) {
 				printWarn << "tree '" << trees[i].first->GetName() << "' exists in file '"
 				          << _decayAmpTrees[trees[i].second]->GetDirectory()->GetName() << "' and in file '"
-					// GetCurrentFile()
 				          << trees[i].first->GetDirectory()->GetName() << "'. skipping tree from latter file."
 				          << endl;
 				++countDuplTrees;
@@ -262,7 +259,48 @@ waveSet::getDecayAmplitudeTrees()
 		}		
 	}
 
-	// get corresponding wave descriptions from trees
+	// report
+	if (countOpenFails > 0) {
+		success = false;
+		printWarn << "problems opening " << countOpenFails << " out of " << _decayAmpFileNames.size()
+		          << " decay amplitude files." << endl;
+	}
+	if (countDuplTrees > 0) {
+		success = false;
+		printWarn << "found " << countDuplTrees << " duplicate trees. "
+		          << "decay amplitude data were ignored." << endl;
+	}
+	if ((countOpenFails    == 0) and (countDuplTrees        == 0))
+		printSucc << "opened all " << _decayAmpFileNames.size() << " decay amplitude files "
+		          << "and found all " << nmbWaves() << " decay amplitude trees" << endl;
+
+	return success;
+
+#else
+
+	printWarn << "cannot read trees, because your ROOT version does not support "
+	          << "std::complex tree leafs. please consider updating your ROOT installation.";
+	return false;
+
+#endif
+}
+
+
+bool
+waveSet::getWaveDescs()
+{
+	_waveDescs.clear();
+	if (_decayAmpTrees.size() != nmbWaves()) {
+		printWarn << "size of decay amplitude tree array (= " << _decayAmpTrees.size() << ") "
+		          << "!= number of waves (= " << nmbWaves() << "). "
+		          << "cannot read wave descriptions." << endl;
+		return false;
+	}
+
+	bool success = true;
+
+	// get wave descriptions from decay amplitude trees
+	_waveDescs.resize(nmbWaves(), 0);
 	unsigned int countMissingTrees     = 0;
 	unsigned int countMissingWaveDescs = 0;
 	for (unsigned int i = 0; i < nmbWaves(); ++i) {
@@ -290,41 +328,20 @@ waveSet::getDecayAmplitudeTrees()
 	}
 
 	// report
-	if (countOpenFails > 0) {
-		success = false;
-		printWarn << "problems opening " << countOpenFails << " out of " << _decayAmpFileNames.size()
-		          << " decay amplitude files." << endl;
-	}
-	if (countDuplTrees > 0) {
-		success = false;
-		printWarn << "found " << countDuplTrees << " duplicate trees. "
-		          << "decay amplitude data were ignored." << endl;
-	}
 	if (countMissingTrees > 0) {
 		success = false;
 		printWarn << countMissingTrees << " out of " << nmbWaves() << " trees are missing. "
-		          << "decay amplitude data incomplete." << endl;
+		          << "decay amplitude data are incomplete." << endl;
 	}
 	if (countMissingWaveDescs > 0) {
 		success = false;
 		printWarn << countMissingWaveDescs << " out of " << nmbWaves() << " wave descriptions "
 		          << "are missing. wave set data incomplete." << endl;
 	}
-	if (    (countOpenFails    == 0) and (countDuplTrees        == 0)
-	    and (countMissingTrees == 0) and (countMissingWaveDescs == 0))
-		printSucc << "opened all " << _decayAmpFileNames.size() << " decay amplitude files "
-		          << "and found all " << nmbWaves() << " decay amplitude trees "
-		          << "and wave descriptions" << endl;
+	if ((countMissingTrees == 0) and (countMissingWaveDescs == 0))
+		printSucc << "read wave descriptions from all " << nmbWaves() << " decay amplitude tree" << endl;
 
 	return success;
-
-#else
-
-	printWarn << "cannot read trees, because your ROOT version does not support "
-	          << "std::complex tree leafs. please consider updating your ROOT installation.";
-	return false;
-
-#endif
 }
 
 
@@ -335,7 +352,7 @@ waveSet::constructDecayAmps()
 	if (_waveDescs.size() != nmbWaves()) {
 		printWarn << "size of wave description array (= " << _waveDescs.size() << ") "
 		          << "!= number of waves (= " << nmbWaves() << "). "
-		          << "cannot construct isobar decay amplitudes" << endl;
+		          << "cannot construct isobar decay amplitudes." << endl;
 		return false;
 	}
 	unsigned int countFail = 0;
