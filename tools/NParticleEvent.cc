@@ -18,6 +18,9 @@
 // C/C++ Headers ----------------------
 #include "TVector3.h"
 #include <iomanip>
+#include <iostream>
+
+using namespace std;
 
 // Collaborating Class Headers --------
 #include "FSParticle.h"
@@ -29,27 +32,28 @@ NParticleEvent::NParticleEvent(TClonesArray* fs_momenta,
 			       int* beam_charge,
 			       TVector3* vertex)
   : _fsmomenta(fs_momenta), _fs_charges(fs_charges),
-    _beam(beam),_qbeam(beam_charge),_vertex(vertex)
+    _beam(beam),_pbeam(*beam),_qbeam(beam_charge),_vertex(vertex)
 {}  
 
 
 
 void
-NParticleEvent::refresh(){
+NParticleEvent::refresh(bool doBuild){
   // clear
-  _NPStates.clear();
-  _fsparticles.clear();
+  if(doBuild)_NPStates.clear();
+  if(doBuild)_fsparticles.clear();
 
   // build FSParticles
   unsigned int nfs=_fsmomenta->GetEntries();
+  if(doBuild)_fsparticles.resize(nfs);
   for(unsigned int ifs=0;ifs<nfs;++ifs){
-    _fsparticles.push_back(FSParticle(*(TLorentzVector*)_fsmomenta->At(ifs),
+    _fsparticles[ifs]=(FSParticle(*(TLorentzVector*)_fsmomenta->At(ifs),
 				      *_vertex,
 				      _fs_charges->at(ifs)));
 
   }
-
-  build();
+  _pbeam=*_beam;
+  if(doBuild)build();
 }
 
 
@@ -79,6 +83,72 @@ NParticleEvent::tprime(){
 
 
 
+TLorentzVector
+NParticleEvent::getHelicityFrame(TLorentzVector pMother, TLorentzVector pX, TLorentzVector p1){
+ 
+  TLorentzVector tempX=pX;
+  TLorentzVector p2=pX-p1;
+
+ // cerr << "Going to Helicityframe ------------- " << endl; 
+ //  pMother.Vect().Print();
+ //  pX.Vect().Print();
+ //  p1.Vect().Print();
+ //  p2.Vect().Print();
+
+  // rotate event into production plane of X
+  // get normal vector
+  TVector3 y(0,1,0);
+  TVector3 N=pMother.Vect().Cross(tempX.Vect());
+  TVector3 rot=N.Cross(y);
+  TRotation t;
+  double a=N.Angle(y);
+  t.Rotate(a,rot);
+  //t.SetXEulerAngles(N.Phi(),N.Theta()-TMath::Pi()*0.5,-TMath::Pi()*0.5);
+  TLorentzRotation T(t);
+  TLorentzRotation L1(T);
+  tempX*=T;
+  p1*=T;
+  p2*=T;
+  // cerr << "After rotation into xz-plane" << endl;
+  // tempX.Vect().Print();
+  // p1.Vect().Print();
+  // p2.Vect().Print();
+
+  // put X  along z-axis
+  TVector3 Xdir=tempX.Vect();
+  //std::cout<<"beamDir before rotation:";beamdir.Print();
+  a=Xdir.Angle(TVector3(0,0,1));
+  //std::cout<<"angle="<<a<<std::endl;
+  TRotation t2;
+  t2.Rotate(-a,TVector3(0,1,0));
+  T=TLorentzRotation(t2);
+  tempX*=T;
+  p1*=T;
+  p2*=T;
+
+  // cerr << "After rotation to z-axis" << endl;
+  // tempX.Vect().Print();
+  // p1.Vect().Print();
+  // p2.Vect().Print();
+
+
+  // boost to X rest frame
+  TVector3 boost=-tempX.BoostVector();
+  TLorentzRotation b;
+  b.Boost(boost);
+  tempX*=b;
+  //tempX.Vect().Print();
+  p1*=b;
+  p2*=b;
+
+  // cerr << "After Boost:" << endl;
+  // tempX.Vect().Print();
+  // p1.Vect().Print();
+  // p2.Vect().Print();
+
+  return p1;
+}
+
 
 void
 NParticleEvent::toGJ(){
@@ -86,7 +156,7 @@ NParticleEvent::toGJ(){
   // rotate event into scattering plane
   // get normal vector
   TVector3 y(0,1,0);
-  TVector3 N=_beam->Vect().Cross(tempX.Vect());
+  TVector3 N=_pbeam.Vect().Cross(tempX.Vect());
   TVector3 rot=N.Cross(y);
   TRotation t;
   double a=N.Angle(y);
@@ -96,7 +166,7 @@ NParticleEvent::toGJ(){
   TLorentzRotation L1(T);
   tempX*=T;
   //tempX.Vect().Print();
-  _beam->Transform(T);
+  _pbeam.Transform(T);
   //_beamPi.p().Vect().Print();
 
   // boost to X rest frame
@@ -105,17 +175,20 @@ NParticleEvent::toGJ(){
   b.Boost(boost);
   tempX*=b;
   //tempX.Vect().Print();
-  _beam->Transform(b);
+  _pbeam.Transform(b);
 
   // put beam along z-axis
-  TVector3 beamdir=_beam->Vect();
+  TVector3 beamdir=_pbeam.Vect();
   //std::cout<<"beamDir before rotation:";beamdir.Print();
   a=beamdir.Angle(TVector3(0,0,1));
   //std::cout<<"angle="<<a<<std::endl;
   TRotation t2;
   t2.Rotate(a,TVector3(0,1,0));
   T=TLorentzRotation(t2);
-  _beam->Transform(T);
+  _pbeam.Transform(T);
+
+  //cerr << "******* Beam in GJ frame: **********" << endl;
+  //_pbeam.Vect().Print();
 
   // transform pions
   unsigned int npart=_fsparticles.size();
@@ -168,7 +241,7 @@ NParticleEvent::permute(int n, int k, int* permu, int x, int i){
     NParticleEvent::permute(n,k,permu,y,i+1);
     if(i==k){
       NParticleState s;
-      s.setBeam(*_beam);
+      s.setBeam(_pbeam);
       // add particles to state
       bool ok=true;
       for(int j=0;j<k;++j){

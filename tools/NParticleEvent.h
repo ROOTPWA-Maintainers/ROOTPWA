@@ -53,9 +53,10 @@ public:
   /*** @brief Refresh event
    * clears all data and builds particles new from 
    * Input arrays (can be used together with a root tree)
-   * Calls build() to create substates
+   * Calls build() to create substates if needed (doBuild)
+   * doBuild=false only refreshes the momenta
    */
-  void refresh();
+  void refresh(bool doBuild=true);
   
 
    /*** @brief Create all possible substates
@@ -69,6 +70,12 @@ public:
   /*** @brief transform into Gottfried Jackson frame
    */
   void toGJ();
+  
+  /*** @brief get vector of a decay product p1
+   *   in the helicity frame of pX
+   *   which itself has been produced from pMother
+   */
+  TLorentzVector getHelicityFrame(TLorentzVector pMother, TLorentzVector pX, TLorentzVector p1);
 
   /*** @brief Dump evt format */
   void writeGAMP(ostream& out); //< dump event to PWA200 input format (txt file)
@@ -87,7 +94,8 @@ private:
    */
   TClonesArray* _fsmomenta; 
   std::vector<int>* _fs_charges;
-  TLorentzVector* _beam;
+  TLorentzVector* _beam; // original pointer to beam
+  TLorentzVector _pbeam; // beam momentum (possibly in a different frame)
   int* _qbeam;
   TVector3* _vertex;
 
