@@ -50,7 +50,7 @@ TGraphErrors* buildGraph(vector<TH1D*> histo, unsigned int n){
 
 
 // routine to make a nice, accumulated plot
-TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsigned int nsamples,TFile* infile){
+TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsigned int nsamples,TFile* infile, TString plotdir){
   
   TString mcname=histoname+"MC";
   TString dataname=histoname+"Data";
@@ -99,7 +99,7 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   g->SetFillColor(kOrange);
   g->SetMarkerColor(kOrange);
 
-  TCanvas* c=new TCanvas(histoname+range,histoname+range,10,10,800,800);
+  TCanvas* c=new TCanvas(histoname+range,histoname+range,10,10,700,700);
   dataplot->Draw("E");
   g->Draw("same p2");
   //for(unsigned int is=0;is<nsamples;++is)mcplots[is]->Draw("same");
@@ -111,7 +111,7 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   double xcenter=0.5;
   double ycenter=0.5;
    // compass 2004
-  double xc=xcenter+0.1;
+  double xc=xcenter+0.05;
   //if(right)xc=xcenter+0.1;
   double yc=ycenter+0.35;
   TLatex* com04=new TLatex(xc,yc,"COMPASS 2004");
@@ -120,7 +120,7 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   com04->Draw();
   
   // 5 pi on pb
-  xc=xcenter+0.1;
+  xc=xcenter+0.05;
   //xc=xcenter+0.1;
   yc=ycenter+0.31;
   TLatex* react=new TLatex(xc,yc,"#pi^{-} Pb #rightarrow #pi^{-}#pi^{+}#pi^{-}#pi^{+}#pi^{-} Pb");
@@ -133,7 +133,7 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   dat->SetTextSize(0.039);
   dat->Draw();
   //yc=ycenter+0.23;
-  TLatex* mc=new TLatex(xc+0.095,yc,"weighted MC");
+  TLatex* mc=new TLatex(xc+0.115,yc,"weighted MC");
   mc->SetNDC();
   mc->SetTextSize(0.039);
   mc->SetTextColor(kOrange);
@@ -145,8 +145,8 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   bin->SetTextSize(0.032);
   bin->Draw();
 
-
-
+  range.ReplaceAll(".","_");
+  c->SaveAs(plotdir+histoname+range+".eps");
 
   return c;
 }
@@ -159,7 +159,7 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
 
 
 
-void accumKinePlots(TString plotsfile, unsigned int bin){
+void accumKinePlots(TString plotsfile, TString outdir){
 
   TFile* infile=TFile::Open(plotsfile.Data(),"READ");
   Int_t font=132;
@@ -192,19 +192,20 @@ void accumKinePlots(TString plotsfile, unsigned int bin){
     }
   }
 
-  plotAccu("hMIsobar","invariant mass of #pi^{-}#pi^{+}#pi^{-}#pi^{+} system (GeV/c^{2})", bins[bin],100,infile);
-  plotAccu("hMIsobar2","invariant mass of #pi^{-}#pi^{+}#pi^{-} system (GeV/c^{2})", bins[bin],100,infile);
-plotAccu("hMIsobar3","invariant mass of #pi^{-}#pi^{+} system (GeV/c^{2})", bins[bin],100,infile);
-
-  plotAccu("hGJ","cos #theta_{GJ}^{14}", bins[bin],100,infile);
-  plotAccu("hGJ2","cos #theta_{GJ}^{23}" ,bins[bin],100,infile);
-  plotAccu("hHe22Th","cos #theta_{Hel}^{22}" ,bins[bin],100,infile);
-  plotAccu("hHe21Th","cos #theta_{Hel}^{21}" ,bins[bin],100,infile);
-  plotAccu("hHe31Th","cos #theta_{Hel}^{31}" ,bins[bin],100,infile);
-  plotAccu("hHe22Phi","#phi_{Hel}^{22}" ,bins[bin],100,infile);
-  plotAccu("hHe21Phi","#phi_{Hel}^{21}" ,bins[bin],100,infile);
-  plotAccu("hHe31Phi","#phi_{Hel}^{31}" ,bins[bin],100,infile);
-  
+  for(unsigned int bin=0;bin<nbins;++bin){
+    plotAccu("hMIsobar","invariant mass of #pi^{-}#pi^{+}#pi^{-}#pi^{+} system (GeV/c^{2})", bins[bin],100,infile,outdir);
+    plotAccu("hMIsobar2","invariant mass of #pi^{-}#pi^{+}#pi^{-} system (GeV/c^{2})", bins[bin],100,infile,outdir);
+    plotAccu("hMIsobar3","invariant mass of #pi^{-}#pi^{+} system (GeV/c^{2})", bins[bin],100,infile,outdir);
+    
+    plotAccu("hGJ","cos #theta_{GJ}^{14}", bins[bin],100,infile,outdir);
+    plotAccu("hGJ2","cos #theta_{GJ}^{23}" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe22Th","cos #theta_{Hel}^{22}" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe21Th","cos #theta_{Hel}^{21}" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe31Th","cos #theta_{Hel}^{31}" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe22Phi","#phi_{Hel}^{22}" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe21Phi","#phi_{Hel}^{21}" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe31Phi","#phi_{Hel}^{31}" ,bins[bin],100,infile,outdir);
+  }  
 
   
 
