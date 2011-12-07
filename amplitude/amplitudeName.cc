@@ -66,21 +66,25 @@ bool amplitudeName::_debug = false;
 
 
 amplitudeName::amplitudeName()
-	: TObject            (),
-	  _commonCohQnLabel  (""),
-		_commonIncohQnLabel(""),
-		_incohQnLabel      ("")
+	: rpwa::waveName  (),
+		_incohAmpQnLabel("")
 {
 	//amplitudeName::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
 
 
+amplitudeName::amplitudeName(const rpwa::waveName& name,
+                             const string&         incohAmpQnLabel)
+	: rpwa::waveName  (name),
+	  _incohAmpQnLabel(incohAmpQnLabel)
+{ }
+
+
 amplitudeName::amplitudeName(const isobarAmplitudePtr& amp,
-                             const string&             incohQnLabel)
-	: _incohQnLabel(incohQnLabel)
-{
-	setCommonQn(amp);
-}
+                             const string&             incohAmpQnLabel)
+	: rpwa::waveName  (amp),
+	  _incohAmpQnLabel(incohAmpQnLabel)
+{ }
 
 
 amplitudeName::~amplitudeName()
@@ -90,9 +94,8 @@ amplitudeName::~amplitudeName()
 void
 amplitudeName::clear()
 {
-	_commonCohQnLabel   = "";
-	_commonIncohQnLabel = "";
-	_incohQnLabel       = "";
+	waveName::clear();
+	_incohAmpQnLabel = "";
 }
 
 
@@ -100,96 +103,8 @@ amplitudeName&
 amplitudeName::operator =(const amplitudeName& ampName)
 {
 	if (this != &ampName) {
-		TObject::operator =(ampName);
-		_commonCohQnLabel   = ampName._commonCohQnLabel;
-		_commonIncohQnLabel = ampName._commonIncohQnLabel;
-		_incohQnLabel       = ampName._incohQnLabel;
+		waveName::operator =(ampName);
+		_incohAmpQnLabel   = ampName._incohAmpQnLabel;
 	}
 	return *this;
-}
-
-
-string
-amplitudeName::fullName() const
-{
-	return commonCohQnLabel() + commonIncohQnLabel() + incohQnLabel();
-}
-
-
-void
-amplitudeName::setCommonQn(const isobarAmplitudePtr& amp)
-{
-	if (not amp) {
-		printWarn << "null pointer for amplitude. cannot construct amplitude name." << endl;
-		_commonCohQnLabel   = "";
-		_commonIncohQnLabel = "";
-		return;
-	} 
-	const isobarDecayTopologyPtr& topo = amp->decayTopology();
-	if (not topo) {
-		printWarn << "null pointer for topology. cannot construct amplitude name." << endl;
-		_commonCohQnLabel   = "";
-		_commonIncohQnLabel = "";
-		return;
-	} 
-	if (not topo->checkTopology() or not topo->checkConsistency()) {
-		printWarn << "decay topology has issues. cannot construct amplitude name." << endl;
-		_commonCohQnLabel   = "";
-		_commonIncohQnLabel = "";
-		return;
-	}
-	const particle& X = *(topo->XParticle());
-
-	// X quantum numbers that are coherently summed for T and A
-	ostringstream cohQn;
-	cohQn << "I=" << spinQn(X.isospin())                   << ","
-	      << ((X.G() == 0) ? "" : "G=") << parityQn(X.G()) << ","
-	      << "J=" << spinQn(X.J())                         << ","
-	      << "P=" << parityQn(X.P())                       << ","
-	      << ((X.C() == 0) ? "" : "C=") << parityQn(X.C()) << ","
-	      << "M=" << spinQn(X.spinProj());
-
-	// X decay chain
-	const string chain = decayChain(*topo, *(topo->XIsobarDecayVertex()));
-	cohQn << "[X" << chain << "]";
-
-	// set common coherent quantum numbers for T and A
-	_commonCohQnLabel = cohQn.str  ();
-
-	// set quantum numbers that are coherently summed for T and A
-	if (amp->reflectivityBasis()) {
-		ostringstream incohQnLabel;
-		incohQnLabel << "refl=" << parityQn(X.reflectivity());
-		_commonIncohQnLabel = incohQnLabel.str();
-	} else
-		_commonIncohQnLabel = "";
-
-	//replace_all(_commonCohQnLabel,   "(", "_");
-	//replace_all(_commonCohQnLabel,   ")", "_");
-	//replace_all(_commonIncohQnLabel, "(", "_");
-	//replace_all(_commonIncohQnLabel, ")", "_");
-	return;
-}
-
-
-string
-amplitudeName::decayChain(const isobarDecayTopology& topo,
-                          const isobarDecayVertex&   currentVertex)
-{
-	// recurse down decay chain
-	ostringstream chain;
-	// first daughter
-	chain << "=[" << currentVertex.daughter1()->name();
-	if (not topo.isFsParticle(currentVertex.daughter1()))
-		chain << decayChain(topo,
-		  *static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex.daughter1())));
-	// L, S
-	chain << "[" << spinQn(currentVertex.L()) << "," << spinQn(currentVertex.S()) << "]";
-	// second daughter
-	chain << currentVertex.daughter2()->name();
-	if (not topo.isFsParticle(currentVertex.daughter2()))
-		chain << decayChain(topo,
-			*static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex.daughter2())));
-	chain << "]";
-	return chain.str();
 }

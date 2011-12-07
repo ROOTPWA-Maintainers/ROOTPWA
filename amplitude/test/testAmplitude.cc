@@ -66,6 +66,7 @@
 #include "isobarHelicityAmplitude.h"
 #include "isobarCanonicalAmplitude.h"
 #include "evtTreeHelper.h"
+#include "amplitudeName.h"
 
 
 extern particleDataTable PDGtable;
@@ -292,7 +293,7 @@ main(int argc, char** argv)
 			     << "ratio = " << ampValues[0][i] / ampValues[1][i] << endl;
 	}
 
-	if (1) {
+	if (0) {
 		const long int maxNmbEvents   = 1000000;
 		//const long int maxNmbEvents   = 2;
 
@@ -446,5 +447,18 @@ main(int argc, char** argv)
 			} // compare to PWA2000
 		}  // parsing of key file successful
     
+	}
+
+	if (1) {
+		const string       keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		waveDescription    waveDesc;
+		isobarAmplitudePtr amp;
+		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
+			isobarDecayTopologyPtr topo = amp->decayTopology();
+			amplitudeName          ampName(amp, "foo=bar");
+			waveName&              wName = ampName;
+			printInfo << "amplitude name of '" << keyFileName << "' is '" << ampName << "'" << endl;
+			printInfo << "wave name of '" << keyFileName << "' is '" << wName << "'" << endl;
+		}
 	}
 }

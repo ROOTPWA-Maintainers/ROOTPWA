@@ -25,8 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      base class that encapsulates naming scheme for production and
-//      decay amplitudes
+//      base class that encapsulates naming scheme for partial waves
 //
 //      in the general case the intensity is parameterized by
 //
@@ -43,6 +42,12 @@
 //      so both T and A are defined by 3 sets of quantum numbers
 //      the total amplitude name thus consists of 3 substrings
 //
+//      the spin-density matrix is given by
+//
+//      rho^j_{i, i'} = sum_l T_i^{j l} T*_{i'}^{j l}
+//
+//      so partial waves are characterized by i and j only
+//
 //
 // Author List:
 //      Boris Grube          TUM            (original author)
@@ -51,49 +56,50 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef AMPLITUDENAME_H
-#define AMPLITUDENAME_H
+#ifndef WAVENAME_H
+#define WAVENAME_H
 
 
 #include <string>
 
 #include "TObject.h"
 
-#include "waveName.h"
+#ifndef __CINT__
+#include "isobarAmplitude.h"
+#endif
 
 
 namespace rpwa {
 
 
-	class amplitudeName : public waveName {
+	class waveName : public TObject {
 
 	public:
 
-		amplitudeName();
-		amplitudeName(const waveName&     name,
-		              const std::string&  incohAmpQnLabel = "");
+		waveName();
 #ifndef __CINT__
-		amplitudeName(const isobarAmplitudePtr& amp,
-		              const std::string&        incohAmpQnLabel = "");
+		waveName(const isobarAmplitudePtr& amp);
 #endif
-		virtual ~amplitudeName();
+		virtual ~waveName();
 
 		void clear();
 
-		amplitudeName& operator =(const amplitudeName& ampName);
+		waveName& operator =(const waveName& name);
 
-		friend bool operator ==(const amplitudeName& lhsName,
-		                        const amplitudeName& rhsName);
-		friend bool operator !=(const amplitudeName& lhsName,
-		                        const amplitudeName& rhsName) { return not(lhsName == rhsName); }
+		friend bool operator ==(const waveName& lhsName,
+		                        const waveName& rhsName);
+		friend bool operator !=(const waveName& lhsName,
+		                        const waveName& rhsName) { return not(lhsName == rhsName); }
 
-		std::string waveName()    const { return waveName::fullName();                 }  ///< returns full wave name
-		std::string fullName()    const { return waveName() + "," + incohAmpQnLabel(); }  ///< returns full amplitude name
-		std::string operator ()() const { return fullName();                           }  ///< returns full wave name
+		std::string fullName   () const { return cohQnLabel() + "," + incohQnLabel(); }  ///< returns full wave name
+		std::string operator ()() const { return fullName();                          }  ///< returns full wave name
 
-		std::string incohAmpQnLabel() const { return _incohAmpQnLabel; }  ///< returns quantum numbers that are summed incoherently for either T or A
+		std::string cohQnLabel  () const { return _cohQnLabel;   }  ///< returns quantum numbers that are summed coherently for T and A
+		std::string incohQnLabel() const { return _incohQnLabel; }  ///< returns quantum numbers that are summed incoherently for T and A
 
-		void setIncohAmpQnLabel(const std::string& incohAmpQnLabel) { _incohAmpQnLabel = incohAmpQnLabel; }  ///< sets string for quantum numbers that are summed incoherently for either T or A
+#ifndef __CINT__
+		void setQnLabel(const isobarAmplitudePtr& amp);  ///< sets strings for quantum numbers that are common for T and A from isobar decay amplitude
+#endif
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
@@ -101,33 +107,39 @@ namespace rpwa {
 
 	protected:
 
-		std::string _incohAmpQnLabel;  ///< quantum numbers that are summed incoherently for either T or A
+		std::string _cohQnLabel;    ///< quantum numbers that are summed coherently for T and A
+		std::string _incohQnLabel;  ///< quantum numbers that are summed incoherently for T and A
 
 
 	private:
 
+#ifndef __CINT__
+		static std::string decayChain(const isobarDecayTopology& topo,
+		                              const isobarDecayVertex&   currentVertex);
+#endif
+
 		static bool _debug;  ///< if set to true, debug messages are printed
 
 
-		ClassDef(amplitudeName,1)
+		ClassDef(waveName,1)
 
 	};
 
 
 	inline
 	bool
-	operator ==(const amplitudeName& lhsName,
-	            const amplitudeName& rhsName)
+	operator ==(const waveName& lhsName,
+	            const waveName& rhsName)
 	{
-		return (    (lhsName.waveName       () == rhsName.waveName       ())
-		        and (lhsName.incohAmpQnLabel() == rhsName.incohAmpQnLabel()));
+		return (    (lhsName.cohQnLabel  () == rhsName.cohQnLabel  ())
+		        and (lhsName.incohQnLabel() == rhsName.incohQnLabel()));
 	}
 
 
 	inline
 	std::ostream&
-	operator <<(std::ostream&        out,
-	            const amplitudeName& name)
+	operator <<(std::ostream&   out,
+	            const waveName& name)
 	{
 		return out << name();
 	}
@@ -136,4 +148,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // AMPLITUDENAME_H
+#endif  // WAVENAME_H

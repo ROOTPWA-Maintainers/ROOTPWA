@@ -43,6 +43,8 @@
 #pragma link off all functions;
 
 
+#pragma link C++ class rpwa::waveName+;
+#pragma link C++ class rpwa::amplitudeName+;
 #pragma link C++ class rpwa::waveDescription+;
 // data model evolution rule that triggers parsing of key file string
 // whenever waveDescription is read from file
@@ -54,7 +56,6 @@
 	code="{ newObj->parseKeyFileLocalCopy(); }"
 #pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class std::vector<rpwa::waveDescription*>+;
-#pragma link C++ class rpwa::amplitudeName+;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 #pragma link C++ class std::vector<std::complex<double> >+;
