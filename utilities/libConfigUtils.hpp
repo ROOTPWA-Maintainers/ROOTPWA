@@ -267,6 +267,26 @@ namespace rpwa {
 		}
 		return array;
 	}
+
+
+	inline
+	bool
+	readDoubleOrIntLibConfigSetting(const libconfig::Setting& setting,
+	                                double&                   val)  ///< reads value of double or int setting into double
+	{
+		try {
+			val = setting;
+		} catch (const libconfig::SettingTypeException&) {
+			try {  // accept also integer values
+				val = (int)setting;
+			} catch (const libconfig::SettingTypeException& settingEx) {
+				printWarn << "value at '" << settingEx.getPath() << "' "
+				          << "is neither of type double nor of type int. cannot read value." << std::endl;
+				return false;
+			}
+		}
+		return true;
+	}
 	
 	
 } // namespace rpwa

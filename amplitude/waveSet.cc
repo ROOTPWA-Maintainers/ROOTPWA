@@ -152,41 +152,41 @@ waveSet::buildWaveSet(const string& waveSetFileName)
 	_decayAmpMassRanges.resize(nmbEntries, make_pair(0, numeric_limits<double>::infinity()));
 	bool success = true;
 	for (int i = 0; i < nmbEntries; ++i) {
-		// get tree name
+		// get tree name (required)
 		if (not (*configDecayAmps)[i].lookupValue("treeName", _decayAmpTreeNames[i])) {
 			printWarn << "entry [" << i << "] in decay amplitude list does not specify a tree name";
 			success = false;
 		}
-		// get mass range
+		// get mass range (optional)
 		const Setting* configMassRange = findLibConfigArray((*configDecayAmps)[i], "massRange", false);
 		if (configMassRange) {
-			try {
-				if (configMassRange->getLength() == 1)
-					_decayAmpMassRanges[i].first  = (*configMassRange)[0];
-				else if (configMassRange->getLength() == 2) {
-					_decayAmpMassRanges[i].first  = (*configMassRange)[0];
-					_decayAmpMassRanges[i].second = (*configMassRange)[1];
-				} else {
-					printWarn << "cannot read mass range from entry [" << i << "] in decay amplitude list. "
-					          << "array length is neither 1 nor 2." << endl;
+			if (configMassRange->getLength() == 1) {
+				if (not readDoubleOrIntLibConfigSetting((*configMassRange)[0], _decayAmpMassRanges[i].first))
 					success = false;
-				}
-			} catch (const SettingTypeException&) {
-				try {  // accept also integer values
-					if (configMassRange->getLength() == 1)
-						_decayAmpMassRanges[i].first  = (unsigned int)(*configMassRange)[0];
-					else if (configMassRange->getLength() == 2) {
-						_decayAmpMassRanges[i].first  = (unsigned int)(*configMassRange)[0];
-						_decayAmpMassRanges[i].second = (unsigned int)(*configMassRange)[1];
-					}
-				} catch (const SettingTypeException& settingEx) {
-					printWarn << "mass range value at '" << settingEx.getPath() << "' is not of type double. "
-					          << "using default mass range." << endl;
+			} else if (configMassRange->getLength() == 2) {
+				if (not readDoubleOrIntLibConfigSetting((*configMassRange)[0], _decayAmpMassRanges[i].first))
 					success = false;
-				}
+				if (not readDoubleOrIntLibConfigSetting((*configMassRange)[1], _decayAmpMassRanges[i].second))
+					success = false;
+			} else {
+				printWarn << "cannot read mass range from entry [" << i << "] in decay amplitude list. "
+				          << "array length is neither 1 nor 2." << endl;
+				success = false;
 			}
 		}
 	}
+
+	// check that tree names are unique
+	for (unsigned int i = 0; i < _decayAmpTreeNames.size(); ++i)
+		for (unsigned int j = i + 1; j < _decayAmpTreeNames.size(); ++j)
+			if (_decayAmpTreeNames[i] == _decayAmpTreeNames[j]) {
+				printWarn << "duplicate tree name entry '" << _decayAmpTreeNames[i] << "' "
+				          << "in decay amplitude list in wave set file "
+				          << "'" << waveSetFileName << "'. cannot construct wave set." << endl;
+				_decayAmpTreeNames.clear ();
+				_decayAmpMassRanges.clear();
+				success = false;
+			}
 
 	if (success)
 		printSucc << "constructed wave set from file '" << waveSetFileName << "'" << endl;
@@ -200,6 +200,10 @@ bool
 waveSet::getDecayAmpTrees()
 {
 	_decayAmpTrees.clear();
+	if (nmbWaves() == 0) {
+		printWarn << "empty wave set. cannot get amplitude trees." << endl;
+		return false;
+	}
 	if (_decayAmpFileNames.size() == 0) {
 		printWarn << "array with decay amplitude file names is empty. cannot get amplitude trees." << endl;
 		return false;
@@ -290,6 +294,10 @@ bool
 waveSet::getWaveDescs()
 {
 	_waveDescs.clear();
+	if (_decayAmpTrees.size() == 0) {
+		printWarn << "decay amplitude tree array is empty. cannot read wave descriptions." << endl;
+		return false;
+	}
 	if (_decayAmpTrees.size() != nmbWaves()) {
 		printWarn << "size of decay amplitude tree array (= " << _decayAmpTrees.size() << ") "
 		          << "!= number of waves (= " << nmbWaves() << "). "
@@ -349,6 +357,10 @@ bool
 waveSet::constructDecayAmps()
 {
 	_decayAmps.clear();
+	if (_waveDescs.size() == 0) {
+		printWarn << "wave description array is empty. cannot construct isobar decay amplitudes." << endl;
+		return false;
+	}
 	if (_waveDescs.size() != nmbWaves()) {
 		printWarn << "size of wave description array (= " << _waveDescs.size() << ") "
 		          << "!= number of waves (= " << nmbWaves() << "). "
