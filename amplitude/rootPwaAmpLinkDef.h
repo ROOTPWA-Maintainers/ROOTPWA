@@ -54,6 +54,8 @@
 	targetClass="rpwa::waveDescription" \
 	source="" target="" \
 	code="{ newObj->parseKeyFileLocalCopy(); }"
+#pragma link C++ class std::vector<rpwa::waveName>+;
+#pragma link C++ class std::vector<rpwa::amplitudeName>+;
 #pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class std::vector<rpwa::waveDescription*>+;
 

@@ -307,30 +307,34 @@ ostream&
 isobarDecayTopology::print(ostream& out) const
 {
 	// print nodes
-	out << "isobar decay topology '" << name() << "' has " << nmbNodes() << " node(s):" << endl;
+	out << "isobar decay topology '" << name() << "' has " << nmbNodes() << " node(s):" << endl
+	    << indentIn;
 	if (productionVertex())
-		out << "    production   node[" << node(productionVertex()) << "] = "
+		out << "production   node[" << node(productionVertex()) << "] = "
 		    << *productionVertex() << endl;
 	else
-		out << "    topology has no production node." << endl;
+		out << "topology has no production node." << endl;
 	for (unsigned int i = 0; i < nmbDecayVertices(); ++i)
-		out << "    isobar decay node[" << node(decayVertices()[i]) << "] = "
+		out << "isobar decay node[" << node(decayVertices()[i]) << "] = "
 		    << *decayVertices()[i] << endl;
 	nodeIterator iNd, iNdEnd;
 	for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd)
 		if (isFsVertex(vertex(*iNd)))
-			out << "    final state node[" << *iNd << "] = " << *vertex(*iNd) << endl;
+			out << "final state  node[" << *iNd << "] = " << *vertex(*iNd) << endl;
 	// print edges
-	out << "isobar decay topology '" << name() << "' has " << nmbEdges() << " edge(s):" << endl;
+	out << indentOut
+	    << "isobar decay topology '" << name() << "' has " << nmbEdges() << " edge(s):" << endl
+	    << indentIn;
 	edgeIterator iEd, iEdEnd;
 	for (tie(iEd, iEdEnd) = edges(); iEd != iEdEnd; ++iEd) {
 		const particlePtr part = particle(*iEd);
-		out << "    edge[" << *iEd << "] = " << part->name();
+		out << "edge[" << *iEd << "] = " << part->name();
 		const int fsIndex = fsParticlesIndex(part);
 		if (fsIndex >= 0)
 			out << "[" << fsIndex << "] (final state)";
 		out << endl;
 	}
+	out << indentOut;
 	return out;
 }
 

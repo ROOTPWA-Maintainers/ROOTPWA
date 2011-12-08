@@ -334,10 +334,12 @@ ostream&
 isobarAmplitude::printParameters(ostream& out) const
 {
 	out << name() << ": " << endl
-	    << "    reflectivity basis ............... " << ((_useReflectivityBasis) ? "en" : "dis") << "abled" << endl
-	    << "    Bose-symmetrization .............. " << ((_boseSymmetrize      ) ? "en" : "dis") << "abled" << endl
-	    << "    space inversion of FS momenta .... " << ((_doSpaceInversion    ) ? "en" : "dis") << "abled" << endl
-	    << "    reflection through prod. plane ... " << ((_doReflection        ) ? "en" : "dis") << "abled" << endl;
+	    << indentIn
+	    << "reflectivity basis ............... " << enDisabled(_useReflectivityBasis) << endl
+	    << "Bose-symmetrization .............. " << enDisabled(_boseSymmetrize      ) << endl
+	    << "space inversion of FS momenta .... " << enDisabled(_doSpaceInversion    ) << endl
+	    << "reflection through prod. plane ... " << enDisabled(_doReflection        ) << endl
+	    << indentOut;
 	return out;
 }
 
@@ -346,6 +348,8 @@ ostream&
 isobarAmplitude::print(ostream& out) const
 {
 	printParameters(out);
-	out << *_decay;
+	out << indentIn
+	    << *_decay
+	    << indentOut;
 	return out;
 }

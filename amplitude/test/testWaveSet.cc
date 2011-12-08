@@ -62,7 +62,7 @@ main(int argc, char** argv)
 	if (1) {
 		const string waveSetFileName = "testWaveSet.waveset";
 		waveSet      set;
-		set.buildWaveSet(waveSetFileName);
+		set.parseWaveSetFile(waveSetFileName);
 
 		printDebug << set;
 
@@ -96,17 +96,17 @@ main(int argc, char** argv)
 
 		particleDataTable::readFile("./particleDataTable.txt");
 		set.constructDecayAmps();
-		const vector<isobarAmplitudePtr>& amps = set.decayAmps();
-		for (unsigned int i = 0; i < amps.size(); ++i)
-			printDebug << "[" << i << "] = " << *(amps[i]) << endl;
+		// const vector<isobarAmplitudePtr>& amps = set.decayAmps();
+		// for (unsigned int i = 0; i < amps.size(); ++i)
+		// 	printDebug << "amplitude[" << i << "] = " << *(amps[i]) << endl;
 
+		set.constructWaveNames();
+		const vector<waveName>& waveNames = set.waveNames();
+		for (unsigned int i = 0; i < waveNames.size(); ++i)
+			printDebug << "wave name[" << i << "] = " << waveNames[i] << endl;
+		
 		printDebug << set;
-
-		cout << "foo\n"
-		     << indentIn
-		     << "bar\n"
-		     << indentOut
-		     << "sanfu\n";
+		printDebug << "test" << endl;
 	}
 
 }

@@ -64,6 +64,7 @@
 
 #include "TObject.h"
 
+#include "waveDescription.h"
 #ifndef __CINT__
 #include "isobarAmplitude.h"
 #endif
@@ -77,6 +78,7 @@ namespace rpwa {
 	public:
 
 		waveName();
+		waveName(const waveDescription&    waveDesc);
 #ifndef __CINT__
 		waveName(const isobarAmplitudePtr& amp);
 #endif
@@ -97,8 +99,9 @@ namespace rpwa {
 		std::string cohQnLabel  () const { return _cohQnLabel;   }  ///< returns quantum numbers that are summed coherently for T and A
 		std::string incohQnLabel() const { return _incohQnLabel; }  ///< returns quantum numbers that are summed incoherently for T and A
 
+		bool setQnLabel(const waveDescription&    waveDesc);  ///< sets strings for quantum numbers that are common for T and A from wave description
 #ifndef __CINT__
-		void setQnLabel(const isobarAmplitudePtr& amp);  ///< sets strings for quantum numbers that are common for T and A from isobar decay amplitude
+		bool setQnLabel(const isobarAmplitudePtr& amp     );  ///< sets strings for quantum numbers that are common for T and A from decay amplitude
 #endif
 
 		static bool debug() { return _debug; }                             ///< returns debug flag

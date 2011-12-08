@@ -80,6 +80,13 @@ amplitudeName::amplitudeName(const rpwa::waveName& name,
 { }
 
 
+amplitudeName::amplitudeName(const waveDescription& waveDesc,
+                             const string&          incohAmpQnLabel)
+	: rpwa::waveName  (waveDesc),
+	  _incohAmpQnLabel(incohAmpQnLabel)
+{ }
+
+
 amplitudeName::amplitudeName(const isobarAmplitudePtr& amp,
                              const string&             incohAmpQnLabel)
 	: rpwa::waveName  (amp),

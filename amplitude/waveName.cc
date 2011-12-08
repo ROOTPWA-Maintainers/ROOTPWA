@@ -79,9 +79,22 @@ waveName::waveName()
 }
 
 
+waveName::waveName(const waveDescription& waveDesc)
+{
+	if (not setQnLabel(waveDesc)) {
+		printErr << "problems constructing wave name from wave description. aborting." << endl;
+		throw;
+	}
+		
+}
+
+
 waveName::waveName(const isobarAmplitudePtr& amp)
 {
-	setQnLabel(amp);
+	if (not setQnLabel(amp)) {
+		printErr << "problems constructing wave name from decay amplitude. aborting." << endl;
+		throw;
+	}
 }
 
 
@@ -109,27 +122,42 @@ waveName::operator =(const waveName& ampName)
 }
 
 
-void
+bool
+waveName::setQnLabel(const waveDescription& waveDesc)
+{
+	isobarAmplitudePtr amp;
+	if (not waveDesc.constructAmplitude(amp)) {
+		printErr << "problems constructing decay amplitude from wave description. "
+		         << "cannot set wave name." << endl;
+		_cohQnLabel   = "";
+		_incohQnLabel = "";
+		return false;
+	}
+	return setQnLabel(amp);	
+}
+
+
+bool
 waveName::setQnLabel(const isobarAmplitudePtr& amp)
 {
 	if (not amp) {
-		printWarn << "null pointer for amplitude. cannot construct amplitude name." << endl;
+		printWarn << "null pointer for amplitude. cannot set wave name." << endl;
 		_cohQnLabel   = "";
 		_incohQnLabel = "";
-		return;
+		return false;
 	} 
 	const isobarDecayTopologyPtr& topo = amp->decayTopology();
 	if (not topo) {
-		printWarn << "null pointer for topology. cannot construct amplitude name." << endl;
+		printWarn << "null pointer for topology. cannot set wave name." << endl;
 		_cohQnLabel   = "";
 		_incohQnLabel = "";
-		return;
+		return false;
 	} 
 	if (not topo->checkTopology() or not topo->checkConsistency()) {
-		printWarn << "decay topology has issues. cannot construct amplitude name." << endl;
+		printWarn << "decay topology has issues. cannot set wave name." << endl;
 		_cohQnLabel   = "";
 		_incohQnLabel = "";
-		return;
+		return false;
 	}
 	const particle& X = *(topo->XParticle());
 
@@ -163,7 +191,10 @@ waveName::setQnLabel(const isobarAmplitudePtr& amp)
 	//replace_all(_cohQnLabel,   ")", "_");
 	//replace_all(_incohQnLabel, "(", "_");
 	//replace_all(_incohQnLabel, ")", "_");
-	return;
+	if (_debug)
+		printDebug << "set coherent label to '" << _cohQnLabel   << "', "
+		           << "incoherent label to '"   << _incohQnLabel << "'" << endl;
+	return true;
 }
 
 

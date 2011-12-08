@@ -70,8 +70,10 @@ namespace rpwa {
 	public:
 
 		amplitudeName();
-		amplitudeName(const waveName&     name,
-		              const std::string&  incohAmpQnLabel = "");
+		amplitudeName(const waveName&        name,
+		              const std::string&     incohAmpQnLabel = "");
+		amplitudeName(const waveDescription& waveDesc,
+		              const std::string&     incohAmpQnLabel = "");
 #ifndef __CINT__
 		amplitudeName(const isobarAmplitudePtr& amp,
 		              const std::string&        incohAmpQnLabel = "");

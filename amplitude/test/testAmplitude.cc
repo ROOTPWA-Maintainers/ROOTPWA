@@ -453,15 +453,27 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		const string       keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
-		waveDescription    waveDesc;
-		isobarAmplitudePtr amp;
-		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
-			isobarDecayTopologyPtr topo = amp->decayTopology();
-			amplitudeName          ampName(amp, "foo=bar");
-			waveName&              wName = ampName;
-			printInfo << "amplitude name of '" << keyFileName << "' is '" << ampName << "'" << endl;
-			printInfo << "wave name of '" << keyFileName << "' is '" << wName << "'" << endl;
+		waveName::setDebug(true);
+
+		const string    keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		waveDescription waveDesc;
+		{
+			if (waveDesc.parseKeyFile(keyFileName)) {
+				amplitudeName ampName(waveDesc, "foo=bar");
+				waveName&     wName = ampName;
+				printInfo << "amplitude name of '" << keyFileName << "' is '" << ampName << "'" << endl;
+				printInfo << "wave name of '" << keyFileName << "' is '" << wName << "'" << endl;
+			}
+		}
+		{
+			isobarAmplitudePtr amp;
+			if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
+				isobarDecayTopologyPtr topo = amp->decayTopology();
+				amplitudeName          ampName(amp, "foo=bar");
+				waveName&              wName = ampName;
+				printInfo << "amplitude name of '" << keyFileName << "' is '" << ampName << "'" << endl;
+				printInfo << "wave name of '" << keyFileName << "' is '" << wName << "'" << endl;
+			}
 		}
 	}
 }

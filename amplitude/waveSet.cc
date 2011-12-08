@@ -66,7 +66,8 @@ waveSet::waveSet()
 	  _decayAmpFileNames (),
 	  _decayAmpTrees     (),
 	  _waveDescs         (),
-	  _decayAmps         ()
+	  _decayAmps         (),
+	  _waveNames         ()
 {
 	//waveSet::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
 }
@@ -85,6 +86,7 @@ waveSet::clear()
 	_decayAmpTrees.clear     ();
 	_waveDescs.clear         ();
 	_decayAmps.clear         ();
+	_waveNames.clear         ();
 }
 
 
@@ -99,6 +101,7 @@ waveSet::operator =(const waveSet& set)
 		_decayAmpTrees      = set._decayAmpTrees;
 		_waveDescs          = set._waveDescs;
 		_decayAmps          = set._decayAmps;
+		_waveNames          = set._waveNames;
 	}
 	return *this;
 }
@@ -113,7 +116,7 @@ waveSet::setDecayAmpFileNames(const vector<string>& ampFileNames)
 
 
 bool
-waveSet::buildWaveSet(const string& waveSetFileName)
+waveSet::parseWaveSetFile(const string& waveSetFileName)
 {
 	if (waveSetFileName == "") {
 		printWarn << "empty wave set file name. cannot build wave set." << endl;
@@ -358,13 +361,14 @@ waveSet::constructDecayAmps()
 {
 	_decayAmps.clear();
 	if (_waveDescs.size() == 0) {
-		printWarn << "wave description array is empty. cannot construct isobar decay amplitudes." << endl;
+		printWarn << "wave description array is empty. "
+		          << "cannot construct decay amplitude objects." << endl;
 		return false;
 	}
 	if (_waveDescs.size() != nmbWaves()) {
 		printWarn << "size of wave description array (= " << _waveDescs.size() << ") "
 		          << "!= number of waves (= " << nmbWaves() << "). "
-		          << "cannot construct isobar decay amplitudes." << endl;
+		          << "cannot construct decay amplitude objects." << endl;
 		return false;
 	}
 	unsigned int countFail = 0;
@@ -373,7 +377,8 @@ waveSet::constructDecayAmps()
 		if (_waveDescs[i])
 			if (not _waveDescs[i]->constructAmplitude(_decayAmps[i])) {
 //!!! improve reporting
-				printWarn << "problems constructing decay amplitude for wave description[" << i << "]" << endl;
+				printWarn << "problems constructing decay amplitude object "
+				          << "for wave description[" << i << "]" << endl;
 				++countFail;
 			}
 	}
@@ -388,8 +393,36 @@ waveSet::constructDecayAmps()
 
 
 bool
-waveSet::buildWaveNames()
+waveSet::constructWaveNames()
 {
+	_waveNames.clear();
+	if (_decayAmps.size() == 0) {
+		printWarn << "decay amplitude object array is empty. "
+		          << "cannot construct wave names." << endl;
+		return false;
+	}
+	if (_decayAmps.size() != nmbWaves()) {
+		printWarn << "size of decay amplitude object array (= " << _decayAmps.size() << ") "
+		          << "!= number of waves (= " << nmbWaves() << "). "
+		          << "cannot construct wave names." << endl;
+		return false;
+	}
+	unsigned int countFail = 0;
+	_waveNames.resize(nmbWaves());
+	for (unsigned int i = 0; i < nmbWaves(); ++i) {
+		if (_decayAmps[i])
+			if (not _waveNames[i].setQnLabel(_decayAmps[i])) {
+				printWarn << "problems constructing wave name "
+				          << "from decay amplitude object[" << i << "]" << endl;
+				++countFail;
+			}
+	}
+	if (countFail == 0) {
+		printSucc << "constructed wave names for all " << nmbWaves() << " waves" << endl;
+		return true;
+	}
+	printWarn << "failed to construct " << countFail << " out of " << nmbWaves()
+	          << " wave names" << endl;
 	return false;
 }
 
@@ -429,10 +462,23 @@ waveSet::print(ostream& out) const
 			out << endl
 			    << indentIn;
 			for (unsigned int i = 0; i < _decayAmps.size(); ++i)
-				out << "[" << i << "]: " << *(_decayAmps[i]) << endl;
+				out << "[" << i << "]: " << *(_decayAmps[i]);
 			out << indentOut;
 		} else
 			out << _decayAmps.size() << endl;
+	}
+	out << "wave names: ";
+	if (_waveNames.size() == 0)
+		out << "none" << endl;
+	else {
+		if (debug) {
+			out << endl
+			    << indentIn;
+			for (unsigned int i = 0; i < _waveNames.size(); ++i)
+				out << "[" << i << "]: " << _waveNames[i] << endl;
+			out << indentOut;
+		} else
+			out << _waveNames.size() << endl;
 	}
 	out << indentOut;
 	return out;
