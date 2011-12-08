@@ -197,14 +197,16 @@ void accumKinePlots(TString plotsfile, TString outdir){
     plotAccu("hMIsobar2","invariant mass of #pi^{-}#pi^{+}#pi^{-} system (GeV/c^{2})", bins[bin],100,infile,outdir);
     plotAccu("hMIsobar3","invariant mass of #pi^{-}#pi^{+} system (GeV/c^{2})", bins[bin],100,infile,outdir);
     
-    plotAccu("hGJ","cos #theta_{GJ}^{14}", bins[bin],100,infile,outdir);
-    plotAccu("hGJ2","cos #theta_{GJ}^{23}" ,bins[bin],100,infile,outdir);
-    plotAccu("hHe22Th","cos #theta_{Hel}^{22}" ,bins[bin],100,infile,outdir);
-    plotAccu("hHe21Th","cos #theta_{Hel}^{21}" ,bins[bin],100,infile,outdir);
-    plotAccu("hHe31Th","cos #theta_{Hel}^{31}" ,bins[bin],100,infile,outdir);
-    plotAccu("hHe22Phi","#phi_{Hel}^{22}" ,bins[bin],100,infile,outdir);
-    plotAccu("hHe21Phi","#phi_{Hel}^{21}" ,bins[bin],100,infile,outdir);
-    plotAccu("hHe31Phi","#phi_{Hel}^{31}" ,bins[bin],100,infile,outdir);
+    plotAccu("hGJ","cos #theta_{GJ}(#pi^{-}#pi^{+}#pi^{-}#pi^{+})", bins[bin],100,infile,outdir);
+  plotAccu("hTY","#phi_{TY}(#pi^{-}#pi^{+}#pi^{-}#pi^{+})", bins[bin],100,infile,outdir);
+
+    plotAccu("hGJ2","cos #theta_{GJ}(#pi^{+}#pi^{-}#pi^{-})" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe22Th","cos #theta_{Hel}(#pi^{-}#pi^{+})(#pi^{-}#pi^{+})" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe21Th","cos #theta_{Hel}(#pi^{-}#pi^{+})(#pi^{-})" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe31Th","cos #theta_{Hel}(#pi^{-}#pi^{+}#pi^{-})(#pi^{+})" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe22Phi","#phi_{Hel}(#pi^{-}#pi^{+})(#pi^{-}#pi^{+})" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe21Phi","#phi_{Hel}(#pi^{-}#pi^{+})(#pi^{-})" ,bins[bin],100,infile,outdir);
+    plotAccu("hHe31Phi","#phi_{Hel}(#pi^{-}#pi^{+}#pi^{-})(#pi^{+})" ,bins[bin],100,infile,outdir);
   }  
 
   

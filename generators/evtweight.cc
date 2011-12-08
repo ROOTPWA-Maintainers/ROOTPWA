@@ -63,13 +63,14 @@ extern ::particleDataTable PDGtable;
 void printUsage(char* prog, int errCode=0) {
 cerr << "usage:" << endl
      << prog
-     << " -e <file> -o <file> -w <file> -i <file> -m mass"
+     << " -e <file> -o <file> -w <file> -i <file> -n samples  -m mass"
      << "    where:" << endl
      << "        -e <file> acc or ps events in .evt or .root format"<< endl
      << "        -o <file>  ROOT output file"<< endl
      << "        -w <file.root>  use TFitBin tree as input"<< endl 
      << "        -i <file>  integral file"<< endl 
      << "        -m mass  center of mass bin"<< endl   
+     << "        -n samples  sampling of the model parameters (default=1)"<< endl   
      << "        -b width  width of mass bin"<< endl   
      << endl;
  exit(errCode);
@@ -153,9 +154,10 @@ int main(int argc, char** argv)
   string evtfilename;
   double binCenter = 0;
   double binWidth = 60; // MeV
+  unsigned int nsamples = 1;
 
   int c;
-  while ((c = getopt(argc, argv, "e:o:w:i:m:h")) != -1)
+  while ((c = getopt(argc, argv, "e:o:w:i:m:n:h")) != -1)
     switch (c) {
     case 'e':
       evtfilename = optarg;
@@ -175,12 +177,15 @@ int main(int argc, char** argv)
    case 'm':
      binCenter = atof(optarg);
       break;
+   case 'n':
+     nsamples = atoi(optarg);
+      break;
     case 'b':
       binWidth = atof(optarg);
       break;
     }
 
- 
+  binCenter+=0.5*binWidth;
 
   TFile* outfile=TFile::Open(output_file.c_str(),"RECREATE");
   TH1D* hWeights=new TH1D("hWeights","PW Weights",100,0,100);
@@ -237,39 +242,65 @@ int main(int argc, char** argv)
       tree->GetEntry(i);
       if (fabs(binCenter - Bin->massBinCenter()) <= fabs(binCenter - mBest)) {
 	// check also if this bin is more likely in case of many fits per bin
-	if (loglike == 0 || Bin->logLikelihood() < loglike){
+	//if (loglike == 0 || Bin->logLikelihood() < loglike){
 	  iBest = i;
 	  mBest = Bin->massBinCenter();
 	  loglike = Bin->logLikelihood();
-	}
+	  //}
+	  //else cerr << "This is a redundant fit" << endl;
       }
     }  // end loop over TFitBins
+    cerr << "mBest= " << mBest << endl;
+
+
     if(mBest<binCenter-binWidth/2. || mBest>binCenter+binWidth/2.){
       cerr << "No fit found for Mass bin m=" << binCenter << endl;
       Bin->reset();
       hasfit=false;
+      return 1;
     }
     else {
       cerr << "Using data from Mass bin m=" << mBest << " bin " << iBest << endl;
       tree->GetEntry(iBest); 
     }
-    // write wavelist file for generator
-    string tmpname("genamps.txt");
-    ofstream tmpfile(tmpname.c_str());
-    Bin->printAmpsGenPW(tmpfile);
-    tmpfile.close();
-    waveListFileName=tmpname;
+    // write wavelist files for generator
+    // string tmpname("genamps.txt");
+    // create slightly modified versions of the model according to covariances
+    for(unsigned int isamples=0; isamples<nsamples; ++isamples){
+      // enumerate genamps files
+      TString tmpname("genamps");tmpname+=isamples;tmpname+=".txt";
+      ofstream tmpfile(tmpname.Data());
+      if(isamples==0)Bin->printAmpsGenPW(tmpfile);
+      else {
+	fitResult* clone=Bin->cloneVar();
+	clone->printAmpsGenPW(tmpfile);
+	delete clone;
+      }
+      tmpfile.close();
+      waveListFileName="genamps0.txt";
+    } // end loop over model versions
   }
 
   vector<string> waveNames;
-  vector<complex<double> > prodAmps; //production amplitudes
+
+  
+  vector<vector<complex<double> >*> prodAmps(nsamples); //production amplitudes
+  for(unsigned int isamples=0; isamples<nsamples; ++isamples){
+    prodAmps[isamples]=new vector<complex<double> >();
+  }
+  
   vector<int> reflectivities;
   vector<int> ms;
   vector<int> ranks;
   int maxrank=0;
   // if we have read in a TFitResult the the name of the file has been changed!
   // so it is ok to use the same variable here. See above!
-  ifstream wavefile(waveListFileName.c_str());
+
+  // read in a list of waveListFiles
+  for(unsigned int isamples=0; isamples<nsamples; ++isamples){
+    TString tmpname("genamps");tmpname+=isamples;tmpname+=".txt";
+    cerr << "Reading back file " << tmpname << endl;
+    ifstream wavefile(tmpname);
   while(wavefile.good()){
     TString wavename;
     double RE, IM;
@@ -279,6 +310,7 @@ int main(int argc, char** argv)
     wavefile >> wavename >> RE >> IM;
     //cerr << wavename << endl;
 
+    
     if(wavename.Contains("flat") || wavename.Length()<2)continue;
     if(RE==0 && IM==0)continue;
     // check if there is rank information
@@ -298,35 +330,48 @@ int main(int argc, char** argv)
     }
 
     std::complex<double> amp(RE,IM);
-    prodAmps.push_back(amp);
+    prodAmps[isamples]->push_back(amp);
     cerr << wavename << " " << amp << " r=" << rank/2 
 	 << " eps=" << refl 
 	 << " m="   << m << endl;
     wavefile.ignore(256,'\n');
-    waveNames.push_back(wavename.Data());
-    reflectivities.push_back(refl);
-    ms.push_back(m);
-    ranks.push_back(rank);
-    if(maxrank<rank)maxrank=rank;
-  }
+    // for first file store info on waves
+    if(isamples==0){
+      waveNames.push_back(wavename.Data());
+      reflectivities.push_back(refl);
+      ms.push_back(m);
+      ranks.push_back(rank);
+      if(maxrank<rank)maxrank=rank;
+    }
+  } // loop over file
   
-  cerr << "Rank of fit was:" << maxrank+1 << endl;
-  unsigned int nmbWaves=waveNames.size();
-  vector<ifstream*> ampfiles;
+    cerr << "Rank of fit was:" << maxrank+1 << endl;
+  } // end loop over samples
 
+  unsigned int nmbWaves=waveNames.size();
+  // TODO reserve list of wheight branches!
+
+  vector<ifstream*> ampfiles;
   // reserve vector beforehand because Branch
   // will take a pointer onto the elements
-  vector<double> weights((nmbWaves+1)*nmbWaves/2);
-  unsigned int wcount=0;
+  //vector<double> weights((nmbWaves+1)*nmbWaves/2);
+  //unsigned int wcount=0;
   // create wheight vectors for individual intensities and interference terms
-   for(unsigned int iw=0;iw<nmbWaves;++iw){
-     for(unsigned int jw=iw;jw<nmbWaves;++jw){
-       TString weightname("W_");
-       if(iw==jw)weightname+=waveNames[iw];
-       else weightname+=waveNames[iw] +"_"+ waveNames[jw];
+  // for(unsigned int iw=0;iw<nmbWaves;++iw){
+  //   for(unsigned int jw=iw;jw<nmbWaves;++jw){
+  //     TString weightname("W_");
+  //     if(iw==jw)weightname+=waveNames[iw];
+  //     else weightname+=waveNames[iw] +"_"+ waveNames[jw];
        
-       outtree->Branch(weightname.Data(),&weights[wcount++],(weightname+"/d").Data());
-     }
+  //     outtree->Branch(weightname.Data(),&weights[wcount++],(weightname+"/d").Data());
+  //   }
+  // }
+
+   // create branches for the weights of the different model variants
+   vector<double> modelweights(nsamples);
+   for(unsigned int isamples=0;isamples<nsamples;++isamples){
+     TString weightname("W");weightname+=isamples;
+     outtree->Branch(weightname.Data(),&modelweights[isamples],(weightname+"/d").Data());
    }
 
  // open decay amplitude files --------------------------------------------
@@ -363,8 +408,19 @@ int main(int argc, char** argv)
       fourVec evtbeam = e.beam().get4P();
       beam.SetPxPyPzE(evtbeam.x(), evtbeam.y(), evtbeam.z(), evtbeam.t());
       qbeam = e.beam().Charge();
-      // weighting
+      
 
+      // read decay amps for this event
+      vector<complex<double> > decayamps(nmbWaves);
+      for (unsigned int iw = 0; iw < nmbWaves; ++iw) {
+	complex<double> decayamp;
+	 ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
+	 decayamps[iw]=decayamp;
+      }
+
+      // weighting - do this for each model-sample
+      for(unsigned int isample=0;isample<nsamples;++isample){
+ 
       vector<complex<double> > posm0amps(maxrank + 1); // positive refl vector m=0
       vector<complex<double> > posm1amps(maxrank + 1); // positive refl vector m=1
 
@@ -372,12 +428,11 @@ int main(int argc, char** argv)
       vector<complex<double> > negm1amps(maxrank + 1); // negative refl vector m=1
 
       for (unsigned int iw = 0; iw < nmbWaves; ++iw) {
-        complex<double> decayamp;
-        ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
+        complex<double> decayamp=decayamps[iw];
         string w1 = waveNames[iw];
         //cerr << w1 << "  " << decayamp << endl;
         double nrm = sqrt(normInt.val(w1, w1).real());
-        complex<double> amp = decayamp / nrm * prodAmps[iw];
+        complex<double> amp = decayamp / nrm * prodAmps[isample]->at(iw);
         if (reflectivities[iw] == 1) {
           if (ms[iw] == 0)
             posm0amps[ranks[iw]] += amp;
@@ -393,21 +448,25 @@ int main(int argc, char** argv)
       }
       // end loop over waves
 
-      // incoherent sum:
+      // incoherent sum over rank and diffrerent reflectivities
       weight = 0;
       if (hasfit) {
         for (int ir = 0; ir < maxrank + 1; ++ir) {
-          weight += norm(posm0amps[ir]);
-          weight += norm(posm1amps[ir]);
-          weight += norm(negm0amps[ir]);
-          weight += norm(negm1amps[ir]);
+          weight += norm(posm0amps[ir]+posm1amps[ir]);
+          //weight += norm(posm1amps[ir]);
+          weight += norm(negm0amps[ir]+negm1amps[ir]);
+	  // weight += norm(negm1amps[ir]);
         }
       }
-      hWeights->Fill(weight);
+
+      if(isample==0)hWeights->Fill(weight);
+      modelweights[isample]=weight;
+
+      }// end loop over model samples
       outtree->Fill();
 
-    }
-  }
+    } // end loop over events
+  } // end we have an eventfile with decay amplitudes
   else {
     // Initialize PDGTable
     rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
@@ -476,7 +535,7 @@ int main(int argc, char** argv)
         string w1 = waveNames[iw];
         //cerr << w1 << "  " << decayamp << endl;
         double nrm = sqrt(normInt.val(w1, w1).real());
-        complex<double> amp = decayamp / nrm * prodAmps[iw];
+        complex<double> amp = decayamp / nrm * prodAmps[0]->at(iw);
         if (reflectivities[iw] == 1) {
           if (ms[iw] == 0)
             posm0amps[ranks[iw]] += amp;
@@ -495,10 +554,10 @@ int main(int argc, char** argv)
       weight = 0;
       if (hasfit) {
         for (int ir = 0; ir < maxrank + 1; ++ir) {
-          weight += norm(posm0amps[ir]);
-          weight += norm(posm1amps[ir]);
-          weight += norm(negm0amps[ir]);
-          weight += norm(negm1amps[ir]);
+          weight += norm(posm0amps[ir]+posm1amps[ir]);
+          //weight += norm(posm1amps[ir]);
+          weight += norm(negm0amps[ir]+negm1amps[ir]);
+          //weight += norm(negm1amps[ir]);
         }
       }
       hWeights->Fill(weight);
@@ -517,6 +576,10 @@ int main(int argc, char** argv)
     delete ampfiles[iw];
   }
   ampfiles.clear();
+  for(unsigned int isamples=0;isamples<nsamples;++isamples){
+    delete prodAmps[isamples];
+  }
+  prodAmps.clear();
 
   return 0;
 

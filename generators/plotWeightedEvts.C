@@ -104,6 +104,8 @@ gROOT->SetStyle("Plain");
  vector<TH1D*> hMIsobar2; // 3pi
  vector<TH1D*> hMIsobar3; // 2pi
  vector<TH1D*> hGJ; // 4pi/1pi
+ vector<TH1D*> hTY; // 4pi/1pi
+ 
  vector<TH1D*> hGJ2; // 3pi/2pi
  vector<TH1D*> hHe22; // 2pi2pi helicity frame
  vector<TH1D*> hHe22Phi;
@@ -131,12 +133,17 @@ gROOT->SetStyle("Plain");
     TH1D* hGJMC=new TH1D(name,"Cos Gottfried-Jackson Theta (MC)",nbinsang,-1,1);
     hGJ.push_back(hGJMC);
     hGJMC->Sumw2();
+ 
+    TH1D* hTYMC=new TH1D("hTYMC"+blub,"Treiman-Yang Phi (MC)",nbinsang,-TMath::Pi(),TMath::Pi());
+    hTY.push_back(hTYMC);
+    hTYMC->Sumw2();
+
 
     TH1D* hGJ2MC=new TH1D("hGJ2MC"+blub,"Cos Gottfried-Jackson Theta (MC)",nbinsang,-1,1);
     hGJ2.push_back(hGJ2MC);
     hGJ2MC->Sumw2();
 
-    TH1D* hHe22MC=new TH1D("hHe22ThMC"+blub,"Helicity Theta 2pi2pi (MC)",nbinsang,1,1);
+    TH1D* hHe22MC=new TH1D("hHe22ThMC"+blub,"Helicity Theta 2pi2pi (MC)",nbinsang,-1,1);
     hHe22.push_back(hHe22MC);
     hHe22MC->Sumw2();
 
@@ -144,7 +151,7 @@ gROOT->SetStyle("Plain");
     hHe22Phi.push_back(hHe22PhiMC);
     hHe22PhiMC->Sumw2();
 
- TH1D* hHe31MC=new TH1D("hHe31ThMC"+blub,"Helicity Theta 3pi1pi (MC)",nbinsang,1,1);
+ TH1D* hHe31MC=new TH1D("hHe31ThMC"+blub,"Helicity Theta 3pi1pi (MC)",nbinsang,-1,1);
     hHe31.push_back(hHe31MC);
     hHe31MC->Sumw2();
 
@@ -153,7 +160,7 @@ gROOT->SetStyle("Plain");
     hHe31PhiMC->Sumw2();
 
 
-TH1D* hHe21MC=new TH1D("hHe21ThMC"+blub,"Helicity Theta 2pi1pi (MC)",nbinsang,1,1);
+TH1D* hHe21MC=new TH1D("hHe21ThMC"+blub,"Helicity Theta 2pi1pi (MC)",nbinsang,-1,1);
     hHe21.push_back(hHe21MC);
     hHe21MC->Sumw2();
 
@@ -183,21 +190,21 @@ TH1D* hDiffMIsobar3;
 
  TH1D* hGJMCraw=new TH1D("hGJMCraw"+massbin,"Cos Gottfried-Jackson Theta (MC raw)",nbinsang,-1,1);
  
- TH1D* hHe22Data=new TH1D("hHe22ThData"+massbin,"Helicity Theta 2pi2pi (Data)",nbinsang,1,1);
+ TH1D* hHe22Data=new TH1D("hHe22ThData"+massbin,"Helicity Theta 2pi2pi (Data)",nbinsang,-1,1);
     hHe22.push_back(hHe22Data);
 
 
     TH1D* hHe22PhiData=new TH1D("hHe22PhiData"+massbin,"Helicity Phi 2pi2pi (Data)",nbinsang,-TMath::Pi(),TMath::Pi());
     hHe22Phi.push_back(hHe22PhiData);
 
- TH1D* hHe31Data=new TH1D("hHe31ThData"+massbin,"Helicity Theta 3pi1pi (Data)",nbinsang,1,1);
+ TH1D* hHe31Data=new TH1D("hHe31ThData"+massbin,"Helicity Theta 3pi1pi (Data)",nbinsang,-1,1);
     hHe31.push_back(hHe31Data);
 
 
     TH1D* hHe31PhiData=new TH1D("hHe31PhiData"+massbin,"Helicity Phi 3pi1pi (Data)",nbinsang,-TMath::Pi(),TMath::Pi());
     hHe31Phi.push_back(hHe31PhiData);
 
- TH1D* hHe21Data=new TH1D("hHe21ThData"+massbin,"Helicity Theta 2pi1pi (Data)",nbinsang,1,1);
+ TH1D* hHe21Data=new TH1D("hHe21ThData"+massbin,"Helicity Theta 2pi1pi (Data)",nbinsang,-1,1);
     hHe21.push_back(hHe21Data);
 
 
@@ -237,12 +244,10 @@ TH1D* hDiffMIsobar3;
  //TH1D* hGJ3Data=new TH1D("hGJ3Data"+massbin,"Cos Gottfried-Jackson Theta (DATA)",nbinsang,-1,1); hGJ3.push_back(hGJ3Data);
  //hGJ3[0]->Sumw2();
  
- vector<TH1D*> hTY;
- TH1D* hTYMC=new TH1D("hTYMC"+massbin,"Treiman-Yang Phi (MC)",nbinsang,-TMath::Pi(),TMath::Pi());
- TH1D* hTYData=new TH1D("hTYMC"+massbin,"Treiman-Yang Phi (DATA)",nbinsang,-TMath::Pi(),TMath::Pi());
- hTY.push_back(hTYMC);
- hTY.push_back(hTYData);
-hTY[0]->Sumw2();
+
+ TH1D* hTYData=new TH1D("hTYData"+massbin,"Treiman-Yang Phi (DATA)",nbinsang,-TMath::Pi(),TMath::Pi());
+  hTY.push_back(hTYData);
+ 
 
 vector<TH1D*> hTY2;
  TH1D* hTY2MC=new TH1D("hTY2MC"+massbin,"Treiman-Yang Phi (MC)",nbinsang,-TMath::Pi(),TMath::Pi());
@@ -341,6 +346,7 @@ hTY3[0]->Sumw2();
 	   hGJMCraw->Fill(state.p().CosTheta());
 	   for(unsigned int isamples=0;isamples<nsamples;++isamples){
 	     hGJ[isamples]->Fill(state.p().CosTheta(),weights[isamples]);
+	     hTY[isamples]->Fill(state.p().Phi(),weights[isamples]);
 	     hMIsobar[isamples]->Fill(state.p().M(),weights[isamples]); 
 	   } // end loop over sample models
 	 }
@@ -348,7 +354,7 @@ hTY3[0]->Sumw2();
 	   hGJ[nsamples+itree-1]->Fill(state.p().CosTheta(),1);
 	   hMIsobar[nsamples+itree-1]->Fill(state.p().M(),1); 
 	   //hGJt[itree]->Fill(state.p().CosTheta(),tprime,1);
-	   //hTY[itree]->Fill(state.p().Phi(),weight);
+	   hTY[nsamples+itree-1]->Fill(state.p().Phi(),1);
 	   //hM1vsGJ[itree]->Fill(state.p().CosTheta(),state.p().M(),weight); 
 	 }
        }
@@ -481,7 +487,7 @@ hTY3[0]->Sumw2();
 
 
  TCanvas* c=new TCanvas("KineValidate"+massbin,"Weighted Events",10,10,600,800);
- c->Divide(4,4);
+ c->Divide(3,4);
 
  // plot MC predictions
  double totMC=hMIsobar[0]->Integral();
@@ -516,7 +522,7 @@ hTY3[0]->Sumw2();
  //hMIsobar3[isamples]->SetFillColor(kRed);
  hMIsobar3[isamples]->Draw(opt);
 
- c->cd(5);
+ c->cd(4);
  totDATA=hGJ[nsamples]->Integral();
  totMC=hGJ[isamples]->Integral();
  if(totMC!=0)hGJ[isamples]->Scale(totDATA/totMC);
@@ -524,6 +530,14 @@ hTY3[0]->Sumw2();
  //hGJ[isamples]->SetFillColor(kRed);
 hGJ[isamples]->Draw(opt);
   
+
+c->cd(5);
+ totDATA=hTY[nsamples]->Integral();
+ totMC=hTY[isamples]->Integral();
+ if(totMC!=0)hTY[isamples]->Scale(totDATA/totMC);
+ hTY[isamples]->SetLineColor(kRed);
+ //hGJ[isamples]->SetFillColor(kRed);
+hTY[isamples]->Draw(opt);
 
  c->cd(6);
  totMC=hGJ2[isamples]->Integral();
@@ -544,7 +558,7 @@ hGJ[isamples]->Draw(opt);
  // hHe[isamples]->SetFillColor(kRed);
  hHe22[isamples]->Draw(opt);
 
- c->cd(8);
+ c->cd(10);
   totMC=hHe22Phi[isamples]->Integral();
  totDATA=hHe22Phi[nsamples]->Integral();
  //hGJ2[isamples]->Sumw2();
@@ -554,7 +568,7 @@ hGJ[isamples]->Draw(opt);
  hHe22Phi[isamples]->Draw(opt);
 
 
- c->cd(9);
+ c->cd(8);
   totMC=hHe31[isamples]->Integral();
  totDATA=hHe31[nsamples]->Integral();
  //hGJ2[isamples]->Sumw2();
@@ -563,7 +577,7 @@ hGJ[isamples]->Draw(opt);
  // hHe[isamples]->SetFillColor(kRed);
  hHe31[isamples]->Draw(opt);
 
- c->cd(10);
+ c->cd(11);
   totMC=hHe31Phi[isamples]->Integral();
  totDATA=hHe31Phi[nsamples]->Integral();
  //hGJ2[isamples]->Sumw2();
@@ -572,7 +586,7 @@ hGJ[isamples]->Draw(opt);
  // hHePhi[isamples]->SetFillColor(kRed);
  hHe31Phi[isamples]->Draw(opt);
 
- c->cd(11);
+ c->cd(9);
   totMC=hHe21[isamples]->Integral();
  totDATA=hHe21[nsamples]->Integral();
  //hGJ2[isamples]->Sumw2();
@@ -603,22 +617,22 @@ hGJ[isamples]->Draw(opt);
  hHe22[0]->GetYaxis()->SetRangeUser(0,hHe22[0]->GetMaximum()*1.5);
  gPad->Update();
 
-c->cd(8);
+c->cd(10);
  hHe22Phi[nsamples]->Draw("same E");
  hHe22Phi[0]->GetYaxis()->SetRangeUser(0,hHe22Phi[0]->GetMaximum()*1.5);
  gPad->Update();
 
- c->cd(9);
+ c->cd(8);
  hHe31[nsamples]->Draw("same E");
  hHe31[0]->GetYaxis()->SetRangeUser(0,hHe31[0]->GetMaximum()*1.5);
  gPad->Update();
 
-c->cd(10);
+c->cd(11);
  hHe31Phi[nsamples]->Draw("same E");
  hHe31Phi[0]->GetYaxis()->SetRangeUser(0,hHe31Phi[0]->GetMaximum()*1.5);
  gPad->Update();
 
- c->cd(11);
+ c->cd(9);
  hHe21[nsamples]->Draw("same E");
  hHe21[0]->GetYaxis()->SetRangeUser(0,hHe21[0]->GetMaximum()*1.5);
  gPad->Update();
@@ -736,7 +750,7 @@ hMIsobar3[nsamples]->Draw("same E");
  hMIsobar3[0]->GetYaxis()->SetRangeUser(hDiffMIsobar3->GetMinimum()*1.5,hMIsobar3[0]->GetMaximum()*1.2);
  gPad->Update();
 
- c->cd(5);
+ c->cd(4);
  TGraphErrors* gGJ=buildGraph(hGJ,nsamples);
  gGJ->SetLineColor(kMagenta);
  gGJ->SetFillColor(kMagenta);
@@ -745,6 +759,11 @@ hMIsobar3[nsamples]->Draw("same E");
  hGJ[nsamples]->Draw("same E");
 
  hGJ[0]->GetYaxis()->SetRangeUser(0,hGJ[0]->GetMaximum()*1.5);
+ gPad->Update();
+
+ c->cd(5);
+ hTY[nsamples]->Draw("same E");
+ hTY[0]->GetYaxis()->SetRangeUser(0,hTY[0]->GetMaximum()*1.5);
  gPad->Update();
 
 c->Update();
@@ -813,25 +832,25 @@ TH1D* hGJ2DataGlob=(TH1D*)outfile->Get("hGJ2DataGlob");
  hGJ2DataGlob->Write();
  
 
- c->cd(13);
- hMIsobarMCGlob->SetLineColor(kRed);
- hMIsobarMCGlob->SetFillColor(kRed);
- hMIsobarMCGlob->Draw("E");
- hMIsobarDataGlob->Draw("E SAME");
+ // c->cd(13);
+ // hMIsobarMCGlob->SetLineColor(kRed);
+ // hMIsobarMCGlob->SetFillColor(kRed);
+ // hMIsobarMCGlob->Draw("E");
+ // hMIsobarDataGlob->Draw("E SAME");
 
- c->cd(14);
- hMIsobar2MCGlob->SetLineColor(kRed);
- hMIsobar2MCGlob->SetFillColor(kRed);
- hMIsobar2MCGlob->Draw("E");
- hMIsobar2DataGlob->Draw("E SAME");
+ // c->cd(14);
+ // hMIsobar2MCGlob->SetLineColor(kRed);
+ // hMIsobar2MCGlob->SetFillColor(kRed);
+ // hMIsobar2MCGlob->Draw("E");
+ // hMIsobar2DataGlob->Draw("E SAME");
 
 
- c->cd(15);
- hGJMCGlob->SetLineColor(kRed);
- hGJMCGlob->SetFillColor(kRed);
- hGJMCGlob->GetYaxis()->SetRangeUser(0,hGJMCGlob->GetMaximum()*1.5);
- hGJMCGlob->Draw("E");
- hGJDataGlob->Draw("E SAME");
+ // c->cd(15);
+ // hGJMCGlob->SetLineColor(kRed);
+ // hGJMCGlob->SetFillColor(kRed);
+ // hGJMCGlob->GetYaxis()->SetRangeUser(0,hGJMCGlob->GetMaximum()*1.5);
+ // hGJMCGlob->Draw("E");
+ // hGJDataGlob->Draw("E SAME");
 
  // c->cd(10);
  // hM1vsGJMC->Scale(totDATA/totMC);

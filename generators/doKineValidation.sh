@@ -1,12 +1,14 @@
 #!/bin/bash
-
-export WORKDIR=/afs/e18/compass/analysis/sneubert/
-export FITDIR=$WORKDIR/PWAFITS/LOWT/NEWACC/fit17GenSelected
+export WORKDIR=/nfs/hicran/project/compass/analysis/sneubert/
+export WORKDIR2=/nfs/nas/user/sneubert/
+export FITDIR=$WORKDIR2/PWAFITS/FINAL/fitF2/
 #export FITDIR=$WORKDIR/PWAFITS/GENETICS/ltRUN21/gen39/set42
-export FITFILE=$FITDIR/fit17.root
-export PLOTFILE=${FITFILE/.root/.plots.root}
-export BOOKY=${FITFILE/.root/.booky.pdf}
+export FITFILE=$FITDIR/fitF2.result.root
+export PLOTFILE=${FITFILE/.root/.plots2.root}
+export BOOKY=${FITFILE/.root/.booky2.pdf}
 export DATADIR=$WORKDIR/5PiLTData3/
+export SAMPLES=100
+
 
 echo WORKDIR=$WORKDIR
 echo FITDIR=$FITDIR
@@ -18,9 +20,9 @@ echo DATADIR=$DATADIR
 
 cd $DATADIR
 
-rm $PLOTFILE;
+#rm $PLOTFILE;
 
-for i in *; do
+for i in 298*; do
     echo "MassBin: $i";
     cd $i;
     # convert events to root tree if not already done
@@ -29,9 +31,9 @@ for i in *; do
     cd ACCAMPS
     # cd PSPAMPS
     WEIGHTEDFILE=${FITFILE/.root/.kineval.$i.root}
-    test -s $WEIGHTEDFILE || evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -m $i  
+    test -s $WEIGHTEDFILE || time evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -n $SAMPLES -m $i  
     # produce nice plots
-    root -b -q "$ROOTPWA/generators/doPlotWEvts.C(\"../$i.root\",\"$WEIGHTEDFILE\",\"$PLOTFILE\",\"$i\")"
+    root -b -q "$ROOTPWA/generators/doPlotWEvts.C(\"../$i.root\",\"$WEIGHTEDFILE\",\"$PLOTFILE\",\"$i\",$SAMPLES)"
 
     cd $DATADIR;
 done;
