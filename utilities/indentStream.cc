@@ -43,5 +43,10 @@
 #include "indentStream.h"
 
 
+#ifndef ROOT_CINT
 rpwa::indentStream rpwa::cout(std::cout);
 rpwa::indentStream rpwa::cerr(std::cerr);
+#else
+std::ostream rpwa::cout = std::cout;
+std::ostream rpwa::cerr = std::cerr;
+#endif

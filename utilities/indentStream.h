@@ -42,6 +42,7 @@
 #define INDENTSTREAM_H
 
 
+#ifndef ROOT_CINT
 #include <ios>
 
 #include <boost/iostreams/filtering_stream.hpp>
@@ -201,6 +202,23 @@ namespace rpwa {
 
 
 }  // namespace rpwa
+
+
+#else
+
+
+#include <iostream>
+
+
+namespace rpwa {
+
+	extern std::ostream cout;
+	extern std::ostream cerr;
+
+}
+
+
+#endif  // ROOT_CINT
 
 
 // override STL streams

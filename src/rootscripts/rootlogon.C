@@ -39,6 +39,8 @@
   gSystem->AddIncludePath("-I$ROOTPWA/utilities");
   gSystem->AddIncludePath("-I$ROOTPWA/src");
 
+	// define macro ROOT_CINT; used to exclude code parts from ACLiC compilation
+	gSystem->AddIncludePath("-DROOT_CINT");
 
 //   // basic tree routines
 //   gROOT->ProcessLine(".L loadFitResult.C+");
@@ -67,8 +69,6 @@
 //   TColor::CreateGradientColorTable(nmbColorEndPoints, length, red, green, blue, nmbColors);
 
 
-
-
 // define grey-scale palette
   UInt_t   nmbColorEndPoints         = 2;
   Double_t red   [nmbColorEndPoints] = { 1, 0};
@@ -77,6 +77,4 @@
   Double_t length[nmbColorEndPoints] = { 0, 1};
   Int_t    nmbColors                 = 150;
   TColor::CreateGradientColorTable(nmbColorEndPoints, length, red, green, blue, nmbColors);
-
-
 }
