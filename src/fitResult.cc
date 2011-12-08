@@ -46,6 +46,8 @@
 // PWA2000 classes
 #include "integral.h"
 
+#include "reportingUtils.hpp"
+#include "reportingUtilsRoot.hpp"
 #include "fitResult.h"
 
 
@@ -749,4 +751,92 @@ fitResult::buildWaveMap()
 				break;
 		_normIntIndexMap[i] = j;
 	}
+}
+
+
+// prints all production amplitude names
+std::ostream&
+fitResult::printProdAmpNames(std::ostream& out) const
+{
+	out << "    Production amplitude names:" << std::endl;
+	for (unsigned int i = 0; i < nmbProdAmps(); ++i)
+		out << "        " << std::setw(3) << i << " " << _prodAmpNames[i] << std::endl;
+	return out;
+}
+
+
+// prints all wave names
+std::ostream&
+fitResult::printWaveNames(std::ostream& out) const
+{
+	out << "    Wave names:" << std::endl;
+	for (unsigned int i = 0; i < nmbWaves(); ++i)
+		out << "        " << std::setw(3) << i << " " << _waveNames[i] << std::endl;
+	return out;
+}
+
+
+// prints all production amplitudes and their covariance matrix
+std::ostream&
+fitResult::printProdAmps(std::ostream& out) const
+{
+	out << "Production amplitudes:" << std::endl;
+	for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
+		out << "    " << std::setw(3) << i << " " << _prodAmpNames[i] << " = "  << prodAmp(i)
+		    << ", cov = " << prodAmpCov(i) << std::endl;
+	}
+	return out;
+}
+
+
+// prints all wave intensities and their errors
+std::ostream&
+fitResult::printWaves(std::ostream& out) const
+{
+	out << "Waves:" << std::endl;
+	for (unsigned int i = 0; i < nmbWaves(); ++i) {
+		out << "    " << std::setw(3) << i << " " << _waveNames[i] << " = "  << intensity(i)
+		    << " +- " << intensityErr(i) << std::endl;
+	}
+	return out;
+}
+
+
+// prints all amplitudes in format used for genpw
+// only supports rank 1 at the moment!!!
+std::ostream&
+fitResult::printAmpsGenPW(std::ostream& s) const {
+	for(unsigned int i=0;i<_waveNames.size();++i){
+		s << _waveNames[i] << " "  
+		  << prodAmp(i).real() << " "
+		  << prodAmp(i).imag() << std::endl;
+	} 
+	return s;
+}
+
+
+/// dumps all raw data stored in object
+std::ostream&
+fitResult::print(std::ostream& out) const
+{
+	out << "fitResult dump:" << std::endl
+	    << "    number of events .................... " << _nmbEvents      << std::endl
+	    << "    number of events to normalize to .... " << _normNmbEvents  << std::endl
+	    << "    center value of mass bin ............ " << _massBinCenter  << std::endl
+	    << "    log(likelihood) at maximum .......... " << _logLikelihood  << std::endl
+	    << "    rank of fit ......................... " << _rank           << std::endl
+	    << "    bin has a valid covariance matrix ... " << _covMatrixValid << std::endl;
+	printProdAmps(out);
+	printWaveNames(out);
+	out << "    covariance matrix:" << std::endl << _fitParCovMatrix << std::endl;
+	out << "    covariance matrix indices:" << std::endl;
+	for (unsigned int i = 0; i < _fitParCovMatrixIndices.size(); ++i)
+		out << "        index " << std::setw(3) << i << " = (" << std::setw(3) << _fitParCovMatrixIndices[i].first
+		    << ", " << std::setw(3) << _fitParCovMatrixIndices[i].second << ")" << std::endl;
+	out << "    normalization integral (w/o acceptance):" << std::endl << _normIntegral << std::endl;
+	out << "    map of production amplitude indices to indices in normalization integral:" << std::endl;
+	for (std::map<Int_t, Int_t>::const_iterator i = _normIntIndexMap.begin(); i != _normIntIndexMap.end(); ++i)
+		out << "        prod. amp [" << std::setw(3) << i->first << "] "
+		    << "-> norm. int. [" << std::setw(3) << i->second << "]" << std::endl;
+	return out;
 }

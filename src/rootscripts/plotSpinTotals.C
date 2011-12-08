@@ -66,6 +66,7 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
                const string&      outFileName,
                const string&      branchName)
 {
+	using rpwa::cout;
 	vector<pair<string, TVirtualPad*> > wavePads;
 
 	for (unsigned int i = 0; i < nmbTrees; ++i)

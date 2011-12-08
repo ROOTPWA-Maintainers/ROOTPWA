@@ -54,21 +54,21 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "computes integral matrix for given amplitude files" << endl
-	     << endl
-	     << "usage:" << endl
-	     << progName
-	     << " [-o output file -i TKey name -n max. # of events -r max. # of events -w weight file -v -h] "
-	     << "amplitude files" << endl
-	     << "    where:" << endl
-	     << "        -o path    path to output file (default: './norm.int')"                      << endl
-	     << "        -i name    integral TKey name (only for .root format, default: 'integral')"  << endl
-	     << "        -n #       maximum number of events to process (default: all)"               << endl
-	     << "        -r #       number of events to renormalize to (default: no renormalization)" << endl
-	     << "        -w path    path to MC weight file for de-weighting (default: none)"          << endl
-       << "        -v         verbose; print debug output (default: false)"                     << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	rpwa::cerr << "computes integral matrix for given amplitude files" << endl
+	           << endl
+	           << "usage:" << endl
+	           << progName
+	           << " [-o output file -i TKey name -n max. # of events -r max. # of events -w weight file -v -h] "
+	           << "amplitude files" << endl
+	           << "    where:" << endl
+	           << "        -o path    path to output file (default: './norm.int')"                      << endl
+	           << "        -i name    integral TKey name (only for .root format, default: 'integral')"  << endl
+	           << "        -n #       maximum number of events to process (default: all)"               << endl
+	           << "        -r #       number of events to renormalize to (default: no renormalization)" << endl
+	           << "        -w path    path to MC weight file for de-weighting (default: none)"          << endl
+	           << "        -v         verbose; print debug output (default: false)"                     << endl
+	           << "        -h         print help" << endl
+	           << endl;
 	exit(errCode);
 }
 
@@ -77,6 +77,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();

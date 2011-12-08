@@ -67,31 +67,33 @@ extern particleDataTable PDGtable;
 void printUsage(char* prog,
 		int   errCode = 0)
 {
-cerr << "usage:" << endl
-     << prog
-     << " -n # [-a # -m # -M # -B # -s #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
-     << "    where:" << endl
-     << "        -n #       (max) number of events to generate (default: 100)" << endl
-     << "        -a #       (max) number of attempts to do (default: infinity)" \
-     << endl
-     << "        -m #       maxWeight" << endl
-     << "        -o <file>  ROOT output file (if not specified, generated automatically)"<< endl
-     << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
-     << "        -w <file.root>  to use TFitBin tree as input"<< endl 
-     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 1)" << endl
-     << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
-     << "        -i <file>  integral file"<< endl 
-     << "        -r <file>  reaction config file"<< endl
-     << "        -s #   set seed " << endl
-     << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
-     << "        -B #   width of mass bin in MeV" << endl
-     << endl;
- exit(errCode);
+	rpwa::cerr << "usage:" << endl
+	           << prog
+	           << " -n # [-a # -m # -M # -B # -s #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
+	           << "    where:" << endl
+	           << "        -n #       (max) number of events to generate (default: 100)" << endl
+	           << "        -a #       (max) number of attempts to do (default: infinity)" \
+	           << endl
+	           << "        -m #       maxWeight" << endl
+	           << "        -o <file>  ROOT output file (if not specified, generated automatically)"<< endl
+	           << "        -w <file>  wavelist file (contains production amplitudes)"<< endl 
+	           << "        -w <file.root>  to use TFitBin tree as input"<< endl 
+	           << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 1)" << endl
+	           << "        -k <path>  path to keyfile directory (all keyfiles have to be there)"<< endl 
+	           << "        -i <file>  integral file"<< endl 
+	           << "        -r <file>  reaction config file"<< endl
+	           << "        -s #   set seed " << endl
+	           << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
+	           << "        -B #   width of mass bin in MeV" << endl
+	           << endl;
+	exit(errCode);
 }
 
 
 int main(int argc, char** argv)
 {
+	using rpwa::cout;
+	using rpwa::cerr;
 
   unsigned int nevents=100;
   unsigned int max_attempts=0;

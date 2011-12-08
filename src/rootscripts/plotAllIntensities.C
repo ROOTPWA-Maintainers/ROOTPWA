@@ -49,6 +49,7 @@
 #include "TPostScript.h"
 #include "TSystem.h"
 
+#include "reportingUtils.hpp"
 #include "fitResult.h"
 #include "plotIntensity.h"
 #include "plotAllIntensities.h"
@@ -97,6 +98,7 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
                    const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
                    const string&      branchName)
 {
+	using rpwa::cout;
 	const double intensityThr      = 0;            // threshold for total intensity in mass bin
 	const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
 	vector<pair<string, TVirtualPad*> > wavePads;  // return value

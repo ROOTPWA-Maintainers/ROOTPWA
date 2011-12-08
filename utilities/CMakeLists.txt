@@ -45,7 +45,22 @@ set(INCLUDE_DIRECTORIES
 include_directories(${INCLUDE_DIRECTORIES})
 
 
+# source files that are compiled into library
+set(SOURCES
+	indentStream.cc
+	)
+
+
+# library
+set(THIS_LIB "RootPwaUtil")
+make_shared_library("${THIS_LIB}" "${SOURCES}"
+	"${BOOST_LIBS}"
+	"${ROOT_LIBS}"
+	"${PWA2000_LIBS}"
+	)
+
+
 # executables
-make_executable(testSumAccumulators testSumAccumulators.cc)
-make_executable(testLibppFunctions  testLibppFunctions.cc "${ROOT_LIBS};${PWA2000_LIBS}")
-make_executable(testSpinUtils       testSpinUtils.cc)
+make_executable(testSumAccumulators testSumAccumulators.cc "${THIS_LIB}")
+make_executable(testLibppFunctions  testLibppFunctions.cc  "${THIS_LIB}")
+make_executable(testSpinUtils       testSpinUtils.cc       "${THIS_LIB}")

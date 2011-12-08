@@ -61,6 +61,7 @@ plotCoherence(const unsigned int nmbTrees,             // number of fitResult tr
               const std::string& branchName  = "fitResult_v2");  // fitResult branch name
 
 
+inline
 TMultiGraph*
 plotCoherence(TTree*             tree,                 // fitResult tree
               const int          waveIndexA,           // index of first wave
@@ -91,26 +92,10 @@ plotCoherence(const unsigned int nmbTrees,             // number of fitResult tr
               const std::string& graphTitle  = "",     // name and title of graph (default is wave IDs)
               const char*        drawOption  = "AP",   // draw option for graph
               const std::string& selectExpr  = "",     // TTree::Draw() selection expression
-              const std::string& branchName  = "fitResult_v2")  // fitResult branch name
-{
-	if (!trees[0]) {
-		printErr << "null pointer to tree. exiting." << std::endl;
-		return 0;
-	}
-	// get wave indices (assumes same wave set in all trees)
-	rpwa::fitResult* massBin = new rpwa::fitResult();
-	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
-	trees[0]->GetEntry(0);
-	const int indexA = massBin->waveIndex(waveNameA);
-	const int indexB = massBin->waveIndex(waveNameB);
-	if ((indexA >= 0) && (indexB >= 0))
-		return plotCoherence(nmbTrees, trees, indexA, indexB, saveEps, graphColors, drawLegend,
-		                     graphTitle, drawOption, selectExpr, branchName);
-	printErr << "cannot find wave(s) in tree '" << trees[0]->GetName() << "'. exiting." << std::endl;
-	return 0;
-}
+              const std::string& branchName  = "fitResult_v2");  // fitResult branch name
 
 
+inline
 TMultiGraph*
 plotCoherence(TTree*             tree,                 // fitResult tree
               const std::string& waveNameA,            // name of first wave

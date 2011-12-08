@@ -21,6 +21,8 @@ using namespace rpwa;
 
 int main(int argc, char** argv)
 {
+	using rpwa::cout;
+
   double a[2][3][4];
   for (unsigned int i = 0; i < 2; ++i)
     for (unsigned int j = 0; j < 3; ++j)

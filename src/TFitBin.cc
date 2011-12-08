@@ -40,7 +40,7 @@
 // PWA2000 classes
 #include "integral.h"
 
-#include "reportingUtils.hpp"
+//#include "reportingUtils.hpp"
 #include "TFitBin.h"
 
 
@@ -133,7 +133,7 @@ TFitBin::getInt(int i, int j) const {
     map<int, int>::const_iterator indexA = _wavemap.find(i);
     map<int, int>::const_iterator indexB = _wavemap.find(j);
     if ((indexA == _wavemap.end()) || (indexB == _wavemap.end())) {
-      printWarn << "Amplitude index " << i << " or " << j << " is out of bound." << endl;
+      cerr << "Amplitude index " << i << " or " << j << " is out of bound." << endl;
       return 0;
     }
     return _int(indexA->second, indexB->second);

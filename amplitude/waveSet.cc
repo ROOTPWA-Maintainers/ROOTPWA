@@ -397,10 +397,43 @@ waveSet::buildWaveNames()
 ostream&
 waveSet::print(ostream& out) const
 {
-	out << "wave set" << endl;
+	out << "wave set:" << endl
+	    << indentIn
+	    << "decay amplitude trees and mass ranges:" << endl
+	    << indentIn;
 	for (unsigned int i = 0; i < nmbWaves(); ++i)
-		out << "    [" << i << "]: tree name = '" << _decayAmpTreeNames[i] << "', mass range = "
+		out << "[" << i << "]: tree name = '" << _decayAmpTreeNames[i] << "', mass range = "
 		    << "[" << _decayAmpMassRanges[i].first << ", " << _decayAmpMassRanges[i].second << "] MeV/c^2"
 		    << endl;
+	out << indentOut
+	    << "decay amplitude files: ";
+	if (_decayAmpFileNames.size() == 0)
+		out << "none" << endl;
+	else { 
+		out << endl
+		    << indentIn;
+		for (unsigned int i = 0; i < _decayAmpFileNames.size(); ++i)
+			out << "[" << i << "]: file name = '" << _decayAmpFileNames[i] << "'" << endl;
+		out << indentOut;
+	}
+	out << "wave descriptions: ";
+	if (_waveDescs.size() == 0)
+		out << "none" << endl;
+	else
+		out << _waveDescs.size() << endl;
+	out << "decay amplitude objects: ";
+	if (_decayAmps.size() == 0)
+		out << "none" << endl;
+	else {
+		if (debug) {
+			out << endl
+			    << indentIn;
+			for (unsigned int i = 0; i < _decayAmps.size(); ++i)
+				out << "[" << i << "]: " << *(_decayAmps[i]) << endl;
+			out << indentOut;
+		} else
+			out << _decayAmps.size() << endl;
+	}
+	out << indentOut;
 	return out;
 }

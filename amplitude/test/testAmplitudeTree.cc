@@ -54,8 +54,11 @@ using namespace rpwa;
 int
 main(int argc, char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 	

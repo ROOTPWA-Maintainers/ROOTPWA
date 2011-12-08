@@ -97,6 +97,7 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
+	"${UTILITIES_LIBS}"
 	)
 
 

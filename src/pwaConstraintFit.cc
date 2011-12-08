@@ -51,28 +51,29 @@ using namespace rpwa;
 void usage(const char* progName,
 	   const int   errCode = 0)
 {
-  cerr << "usage:" << endl
-       << progName << " -l # -u # [-i -h -q -N] [-n normfile -s start values -r rank] -w wavelist [-o outfile] " << endl
-       << "    where:" << endl
-       << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
-       << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
-       << "        -w file    path to wavelist file" << endl
-       << "        -c file    path to constraint config file" << endl
-       << "        -o file    path to output file (default: 'fitresult.root')" << endl
-       << "        -a file    path to acceptance file" << endl
-       << "        -n file    path to normalization file" << endl
-       << "        -N         use normalization of decay amplitudes (default: false)" << endl
-       << "        -S file    path to file with start values" <<endl
-       << "        -r #       rank of spin density matrix (default: 1)" <<endl
-       << "        -q         run quietly" << endl
-       << "        -h         print help" << endl
-       << endl;
+	rpwa::cerr << "usage:" << endl
+	           << progName << " -l # -u # [-i -h -q -N] [-n normfile -s start values -r rank] -w wavelist [-o outfile] " << endl
+	           << "    where:" << endl
+	           << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
+	           << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
+	           << "        -w file    path to wavelist file" << endl
+	           << "        -c file    path to constraint config file" << endl
+	           << "        -o file    path to output file (default: 'fitresult.root')" << endl
+	           << "        -a file    path to acceptance file" << endl
+	           << "        -n file    path to normalization file" << endl
+	           << "        -N         use normalization of decay amplitudes (default: false)" << endl
+	           << "        -S file    path to file with start values" <<endl
+	           << "        -r #       rank of spin density matrix (default: 1)" <<endl
+	           << "        -q         run quietly" << endl
+	           << "        -h         print help" << endl
+	           << endl;
   exit(errCode);
 }
 
 
 int main(int argc, char** argv)
 {
+	using rpwa::cout;
   // ---------------------------------------------------------------------------
   // internal parameters
   const TString      valTreeName        = "pwa";

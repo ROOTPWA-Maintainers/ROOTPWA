@@ -45,6 +45,9 @@ char *progname;
 
 int main(int argc, char** argv){
   
+	using rpwa::cout;
+	using rpwa::cerr;
+
   TPWALikelihoodC LC;
   TPWALikelihoodC L;
   unsigned int rank=1; 
@@ -142,9 +145,10 @@ int main(int argc, char** argv){
  
 }
 
+
 // dummy function needed since we link to but do not use minuit.o
 int mnparm(int, string, double, double, double, double) {
-    cerr << "this is impossible" << endl;
-    throw "aFit";
-    return 0;
+	rpwa::cerr << "this is impossible" << endl;
+	throw "aFit";
+	return 0;
 }

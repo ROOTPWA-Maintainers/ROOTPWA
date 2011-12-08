@@ -66,7 +66,7 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
               const string&      selectExpr,     // TTree::Draw() selection expression
               const string&      branchName)     // fitResult branch name
 {
-
+	using rpwa::cout;
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
 			printErr << "null pointer to tree[" << i << "]. aborting." << endl;
@@ -221,6 +221,7 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
               const string&      selectExpr,     // TTree::Draw() selection expression
               const string&      branchName)     // fitResult branch name
 {
+	using rpwa::cout;
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
 			printErr << "null pointer to tree[" << i << "]. aborting." << endl;

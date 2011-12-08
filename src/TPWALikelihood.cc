@@ -856,6 +856,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
                                               const bool    useRootAmps,
                                               const string& ampLeafName)
 {
+	using rpwa::cout;
 	// check that normalization integrals are loaded
 	if (_normMatrix.num_elements() == 0) {
 		printErr << "normalization integrals have to be loaded before loading the amplitudes. "

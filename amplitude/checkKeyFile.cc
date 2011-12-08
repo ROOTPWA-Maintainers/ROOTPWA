@@ -62,21 +62,21 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "verify that given .key files do not violate physics" << endl
-	     << endl
-	     << "usage:" << endl
-	     << progName
-	     << " [-d test data -n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
-	     << "    where:" << endl
-	     << "        -d file    path to file with test data (.evt or .root format)" << endl
-	     << "        -n #       maximum number of events to read (default: all)" << endl
-	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
-	     << "        -e #       maximum deviation of amplitude ratios from 1 (default: 1E-6)" << endl
-	     << "        -l names   semicolon separated object/leaf names in input data (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
-	     << "        -v         verbose; print debug output (default: false)" << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	rpwa::cerr << "verify that given .key files do not violate physics" << endl
+	           << endl
+	           << "usage:" << endl
+	           << progName
+	           << " [-d test data -n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
+	           << "    where:" << endl
+	           << "        -d file    path to file with test data (.evt or .root format)" << endl
+	           << "        -n #       maximum number of events to read (default: all)" << endl
+	           << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
+	           << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
+	           << "        -e #       maximum deviation of amplitude ratios from 1 (default: 1E-6)" << endl
+	           << "        -l names   semicolon separated object/leaf names in input data (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	           << "        -v         verbose; print debug output (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << endl;
 	exit(errCode);
 }
 
@@ -92,6 +92,7 @@ bool testAmplitude(TTree*              inTree,
                    const string&       prodKinMomentaLeafName  = "prodKinMomenta",
                    const string&       decayKinMomentaLeafName = "decayKinMomenta")
 {
+	using rpwa::cout;
 	// parse key file and create decay topology and amplitude instances
 	waveDescription        waveDesc;
 	isobarDecayTopologyPtr decayTopo;
@@ -284,6 +285,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();

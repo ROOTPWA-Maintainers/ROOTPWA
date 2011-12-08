@@ -33,12 +33,18 @@
 #include "TH2D.h"
 #include "TFile.h"
 #include "fitResult.h"
+#include "reportingUtils.hpp"
+
+
 using namespace std;
 using namespace rpwa;
 
 
 int
 main(int argc, char** argv){
+
+	using rpwa::cout;
+	using rpwa::cerr;
 
   if(argc<4){
     cerr<<"Usage: selector nbins nsurvivors preselection fitdir1 fitdir2 fitdir3 ..."<<endl;

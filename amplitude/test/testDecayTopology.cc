@@ -73,7 +73,11 @@ typedef decayGraph<interactionVertex, particle, graphBundleData,
 int
 main(int argc, char** argv)
 {
-	printSvnVersion();
+	using rpwa::cout;
+	printCompilerInfo();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
 
 	// switch on debug output
 	particle::setDebug(true);

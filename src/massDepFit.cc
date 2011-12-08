@@ -55,6 +55,7 @@
 #include "TString.h"
 #include "TComplex.h"
 #include "TRandom3.h"
+#include "TVector2.h"
 #include "Math/Minimizer.h"
 #include "Math/Factory.h"
 
@@ -75,32 +76,32 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-  cerr << "usage:" << endl
-       << progName
-       << " -c configfile -i inputfile [-o outfile -l # -u #"
-       << "  -M minimizer [-m algorithm] -t # -q -h] [-S fitResultFiles]" << endl
-       << "    where:" << endl
-       << "        -c file    path to config File" << endl
-       << "        -i file    path to input file" << endl
-       << "        -o file    path to output file (default: 'mDep.result.root')" << endl
-    //       << "        -r #       rank of spin density matrix (default: 1)" << endl
-       << "        -l # -u #  lower and upper mass range used for fit" << endl
-       << "        -M name    minimizer (default: Minuit2)" << endl
-       << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
-       << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
-       << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
-       << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
-       << "                                         GSLMultiFit: -" << endl
-       << "                                         GSLSimAn:    -" << endl
-       << "                                         Linear:      Robust" << endl
-       << "                                         Fumili:      -" << endl
-       << "        -t #       minimizer tolerance (default: 1e-10)" << endl
-       << "        -q         run quietly (default: false)" << endl
-       << "        -h         print help" << endl
-       << "        -P         plotting only - no fit" << endl
-       << "        -S files   Systematic error plotting. give list of files" << endl
+	rpwa::cerr << "usage:" << endl
+	           << progName
+	           << " -c configfile -i inputfile [-o outfile -l # -u #"
+	           << "  -M minimizer [-m algorithm] -t # -q -h] [-S fitResultFiles]" << endl
+	           << "    where:" << endl
+	           << "        -c file    path to config File" << endl
+	           << "        -i file    path to input file" << endl
+	           << "        -o file    path to output file (default: 'mDep.result.root')" << endl
+		//       << "        -r #       rank of spin density matrix (default: 1)" << endl
+	           << "        -l # -u #  lower and upper mass range used for fit" << endl
+	           << "        -M name    minimizer (default: Minuit2)" << endl
+	           << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
+	           << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
+	           << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
+	           << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
+	           << "                                         GSLMultiFit: -" << endl
+	           << "                                         GSLSimAn:    -" << endl
+	           << "                                         Linear:      Robust" << endl
+	           << "                                         Fumili:      -" << endl
+	           << "        -t #       minimizer tolerance (default: 1e-10)" << endl
+	           << "        -q         run quietly (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << "        -P         plotting only - no fit" << endl
+	           << "        -S files   Systematic error plotting. give list of files" << endl
 
-       << endl;
+	           << endl;
   exit(errCode);
 }
 
@@ -128,6 +129,8 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
+	using rpwa::cerr;
   // --------------------------------------------------------------------------
    // internal parameters
   const string       valTreeName         = "pwa";

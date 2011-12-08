@@ -24,6 +24,7 @@ TPWWeight::addWave(const std::string& keyfilename,
 		   TProductionAmp* amp,
 		   const std::complex<double>& branching,
 		   unsigned int vectori){
+	using rpwa::cerr;
   
   if(vectori<=m_waves.size()){
     m_waves.resize(vectori+1);

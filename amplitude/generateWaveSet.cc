@@ -51,19 +51,19 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "generates set of all allowed waves given by template .key file" << endl
-	     << endl
-	     << "usage:" << endl
-	     << progName
-	     << " -k template key file -o output directory [-p PDG file -n -v -h]" << endl
-	     << "    where:" << endl
-	     << "        -k file    path to template key file" << endl
-	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-	     << "        -o dir     path to directory where key files will be written (default: '.')" << endl
-	     << "        -n         use new key file name convention (default: false)" << endl
-	     << "        -v         verbose; print debug output (default: false)" << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	rpwa::cerr << "generates set of all allowed waves given by template .key file" << endl
+	           << endl
+	           << "usage:" << endl
+	           << progName
+	           << " -k template key file -o output directory [-p PDG file -n -v -h]" << endl
+	           << "    where:" << endl
+	           << "        -k file    path to template key file" << endl
+	           << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
+	           << "        -o dir     path to directory where key files will be written (default: '.')" << endl
+	           << "        -n         use new key file name convention (default: false)" << endl
+	           << "        -v         verbose; print debug output (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << endl;
 	exit(errCode);
 }
 
@@ -72,6 +72,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();

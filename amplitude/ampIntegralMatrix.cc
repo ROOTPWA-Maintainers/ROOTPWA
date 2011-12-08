@@ -578,7 +578,7 @@ ampIntegralMatrix::openBinAmpFiles(vector<ifstream*>&    ampFiles,
 
 		// open amplitude file
 		if (_debug)
-			printDebug << "opening binary amplitude file '" << ampFilePath << "'" << endl;
+			printDebug << "opening binary decay amplitude file '" << ampFilePath << "'" << endl;
 		ifstream* ampFile = new ifstream();
 		ampFile->open(ampFilePath.c_str());
 		if(not *ampFile) {

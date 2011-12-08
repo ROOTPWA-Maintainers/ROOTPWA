@@ -367,7 +367,10 @@ set(UTILITIES_INCLUDE_DIR
 # PWA2000
 add_subdirectory(pwa2000)
 
-# Utilities
+# RootPwaUtil
+set(UTILITIES_LIBS
+  RootPwaUtil
+  )
 add_subdirectory(utilities)
 
 # CUDA stuff

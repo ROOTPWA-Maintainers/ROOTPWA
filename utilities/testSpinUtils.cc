@@ -49,6 +49,12 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
+	printCompilerInfo();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
+
 	// test spin range
 	tuple<int, int> demandedRange = make_tuple(0, 10);
 	printInfo << "demanded range: [" << spinQn(get<0>(demandedRange)) << ", "

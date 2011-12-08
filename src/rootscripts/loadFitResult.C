@@ -53,6 +53,7 @@ loadFitResult(const string& fileNamePattern,
               TChain*       chain    = 0,
               const string& treeName = "pwa")
 {
+	using rpwa::cout;
 	// use TFileCollection to expand file name pattern into file list,
 	// because TChain::Add() does support wildcards only for the root
 	// files themselves (not in directories)

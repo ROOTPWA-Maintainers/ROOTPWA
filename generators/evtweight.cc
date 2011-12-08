@@ -61,18 +61,18 @@ using namespace rpwa;
 extern ::particleDataTable PDGtable;
 
 void printUsage(char* prog, int errCode=0) {
-cerr << "usage:" << endl
-     << prog
-     << " -e <file> -o <file> -w <file> -i <file> -m mass"
-     << "    where:" << endl
-     << "        -e <file> acc or ps events in .evt or .root format"<< endl
-     << "        -o <file>  ROOT output file"<< endl
-     << "        -w <file.root>  use TFitBin tree as input"<< endl 
-     << "        -i <file>  integral file"<< endl 
-     << "        -m mass  center of mass bin"<< endl   
-     << "        -b width  width of mass bin"<< endl   
-     << endl;
- exit(errCode);
+	rpwa::cerr << "usage:" << endl
+	           << prog
+	           << " -e <file> -o <file> -w <file> -i <file> -m mass"
+	           << "    where:" << endl
+	           << "        -e <file> acc or ps events in .evt or .root format"<< endl
+	           << "        -o <file>  ROOT output file"<< endl
+	           << "        -w <file.root>  use TFitBin tree as input"<< endl 
+	           << "        -i <file>  integral file"<< endl 
+	           << "        -m mass  center of mass bin"<< endl   
+	           << "        -b width  width of mass bin"<< endl   
+	           << endl;
+	exit(errCode);
 }
 
 
@@ -100,6 +100,7 @@ void parseWaveList(const string& waveListFileName,
 		   vector<string>& waveNames,
 		   vector<double>& waveThresholds,
 		   vector<int>& refl){
+	using rpwa::cout;
   unsigned int _nmbWavesPosRefl=0;
   unsigned int _nmbWavesNegRefl=0;
   bool _debug=false;
@@ -144,7 +145,8 @@ void parseWaveList(const string& waveListFileName,
 
 int main(int argc, char** argv)
 {
-
+	using rpwa::cout;
+	using rpwa::cerr;
   if(argc<3)printUsage(argv[0],1);
 
   string output_file("genpw.root");

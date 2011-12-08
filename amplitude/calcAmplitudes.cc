@@ -67,28 +67,28 @@ usage(const string& progName,
       const int     errCode = 0)
 {
 
-	cerr << "calculates decay amplitudes for the given wave and the events in input data files " << endl
-	     << "and writes decay amplitudes to output file" << endl
-	     << endl
-	     << "usage:" << endl
-	     << progName
-	     << " -k key file [-n max. # of events -p PDG file -o amplitude file -d amplitude tree name "
-	     << "-m amplitude leaf name -a -t event data tree name -l event data leaf names "
-	     << "-v -h] input data file(s) (.evt or .root format)" << endl
-	     << "    where:" << endl
-	     << "        -k file    path to key file" << endl
-	     << "        -n #       maximum number of events to read (default: all)" << endl
-	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-	     << "        -o file    path to decay amplitude file (.amp or .root format; default: ./decayAmp.root)" << endl
-	     << "        -d         decay amplitude tree name (default: determined from wave)" << endl
-	     << "        -m         decay amplitude leaf name (default: 'decayAmp')" << endl
-	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
-	     << "        -t name    name of event data tree in ROOT files (default: rootPwaEvtTree)" << endl
-	     << "        -l names   semicolon separated object/leaf names in event data" << endl
-	     << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
-	     << "        -v         verbose; print debug output (default: false)" << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	rpwa::cerr << "calculates decay amplitudes for the given wave and the events in input data files " << endl
+	           << "and writes decay amplitudes to output file" << endl
+	           << endl
+	           << "usage:" << endl
+	           << progName
+	           << " -k key file [-n max. # of events -p PDG file -o amplitude file -d amplitude tree name "
+	           << "-m amplitude leaf name -a -t event data tree name -l event data leaf names "
+	           << "-v -h] input data file(s) (.evt or .root format)" << endl
+	           << "    where:" << endl
+	           << "        -k file    path to key file" << endl
+	           << "        -n #       maximum number of events to read (default: all)" << endl
+	           << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
+	           << "        -o file    path to decay amplitude file (.amp or .root format; default: ./decayAmp.root)" << endl
+	           << "        -d         decay amplitude tree name (default: determined from wave)" << endl
+	           << "        -m         decay amplitude leaf name (default: 'decayAmp')" << endl
+	           << "        -a         write .amp files in ASCII format (default: binary)" << endl
+	           << "        -t name    name of event data tree in ROOT files (default: rootPwaEvtTree)" << endl
+	           << "        -l names   semicolon separated object/leaf names in event data" << endl
+	           << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	           << "        -v         verbose; print debug output (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << endl;
 	exit(errCode);
 }
 
@@ -97,6 +97,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();

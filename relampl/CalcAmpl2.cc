@@ -25,13 +25,14 @@ int lookupP(const char* name);
 // main function:
 int main(){
 	if (not ReadoutTestKeyfile("../relampl/test.key")) {
-		cout << "ReadoutTestKexfile failed" << endl;
+		rpwa::cout << "ReadoutTestKexfile failed" << endl;
 	}
 	
 	return 0;
 }
 
 int JansRelAmpl(int narg, char* carg[]) {
+	using rpwa::cout;
   
 	if (not ReadoutTestKeyfile("../relampl/test.key")) {
 		cout << "ReadoutTestKexfile failed" << endl;
@@ -123,7 +124,7 @@ bool ReadoutTestKeyfile(const char* filename) {
 }
 
 bool buildDecayTopologyRelAmpl(const Setting* parent, int p_J = 0, int p_P = 0) {
-
+	using rpwa::cout;
 	int d1_J = 0, d1_P = 0, d2_J = 0, d2_P = 0, L = 0, S = 0;
 	//	const char* name;
 	//	const char* fsParticle1;
@@ -194,6 +195,7 @@ bool buildDecayTopologyRelAmpl(const Setting* parent, int p_J = 0, int p_P = 0) 
 }
 
 bool RelAmplDummy (int p_J, int p_P, int d1_J, int d1_P, int d2_J, int d2_P, int L, int S, const Setting* parent) {
+	using rpwa::cout;
 	// This dummy doesn't calculate the amplitudes, it just returns constants
 	// This function calcuates the relativistic amplitudes and writes them into the key file
 	//	cout << "RelAmplDummy running" << endl;

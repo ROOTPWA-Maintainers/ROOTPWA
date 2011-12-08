@@ -55,6 +55,12 @@ using namespace rpwa;
 int
 main(int argc, char** argv)
 {
+	using rpwa::cout;
+	printCompilerInfo();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
+
 	// switch on debug output
 	ampIntegralMatrix::setDebug(true);
 

@@ -73,51 +73,51 @@ usage(const string& progName,
       const int     errCode = 0)
 {
 	
-	cerr << "performs PWA fit for given mass bin and list of waves" << endl
-	     << endl
-	     << "usage:" << endl
-	     << progName
-	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
-	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
-	     << "    where:" << endl
-	     << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
-	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
-	     << "        -w file    path to wavelist file" << endl
-	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
+	rpwa::cerr << "performs PWA fit for given mass bin and list of waves" << endl
+	           << endl
+	           << "usage:" << endl
+	           << progName
+	           << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
+	           << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
+	           << "    where:" << endl
+	           << "        -l #       lower edge of mass bin [MeV/c^2]" << endl
+	           << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
+	           << "        -w file    path to wavelist file" << endl
+	           << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
-	     << "        -R         use .root amplitude files (default: false)" << endl
+	           << "        -R         use .root amplitude files (default: false)" << endl
 #else
-	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
+	           << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
 #endif
-	     << "        -o file    path to output file (default: 'fitresult.root')" << endl
-	     << "        -S file    path to file with start values (default: none; highest priority)" << endl
-	     << "        -s #       seed for random start values (default: 1234567)" << endl
-	     << "        -x #       use fixed instead of random start values (default: 0.01)" << endl
+	           << "        -o file    path to output file (default: 'fitresult.root')" << endl
+	           << "        -S file    path to file with start values (default: none; highest priority)" << endl
+	           << "        -s #       seed for random start values (default: 1234567)" << endl
+	           << "        -x #       use fixed instead of random start values (default: 0.01)" << endl
 
-	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
-	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
-	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
-	     << "        -A #       number of input events to normalize acceptance to" << endl
-	     << "        -r #       rank of spin density matrix (default: 1)" << endl
-	     << "        -M name    minimizer (default: Minuit2)" << endl
-	     << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
-	     << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
-	     << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
-	     << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
-	     << "                                         GSLMultiFit: -" << endl
-	     << "                                         GSLSimAn:    -" << endl
-	     << "                                         Linear:      Robust" << endl
-	     << "                                         Fumili:      -" << endl
-	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
-	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
+	           << "        -N         use normalization of decay amplitudes (default: false)" << endl
+	           << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
+	           << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
+	           << "        -A #       number of input events to normalize acceptance to" << endl
+	           << "        -r #       rank of spin density matrix (default: 1)" << endl
+	           << "        -M name    minimizer (default: Minuit2)" << endl
+	           << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
+	           << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
+	           << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
+	           << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
+	           << "                                         GSLMultiFit: -" << endl
+	           << "                                         GSLSimAn:    -" << endl
+	           << "                                         Linear:      Robust" << endl
+	           << "                                         Fumili:      -" << endl
+	           << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
+	           << "        -t #       minimizer tolerance (default: 1e-10)" << endl
 #ifdef USE_CUDA
-	     << "        -c         enable CUDA acceleration (default: off)" << endl
+	           << "        -c         enable CUDA acceleration (default: off)" << endl
 #else
-	     << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
+	           << "        -c         enable CUDA acceleration [not supported by your platform]" << endl
 #endif
-	     << "        -q         run quietly (default: false)" << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	           << "        -q         run quietly (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << endl;
 	exit(errCode);
 }
 
@@ -156,6 +156,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();

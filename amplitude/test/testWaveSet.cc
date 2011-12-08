@@ -51,15 +51,19 @@ using namespace rpwa;
 int
 main(int argc, char** argv)
 {
-	waveSet::setDebug(true);
-
+	using rpwa::cout;
 	printCompilerInfo();
+	printLibraryInfo ();
 	printSvnVersion  ();
+	cout << endl;
+
+	waveSet::setDebug(true);
 
 	if (1) {
 		const string waveSetFileName = "testWaveSet.waveset";
 		waveSet      set;
 		set.buildWaveSet(waveSetFileName);
+
 		printDebug << set;
 
 		vector<string> fileNames(3);
@@ -95,6 +99,14 @@ main(int argc, char** argv)
 		const vector<isobarAmplitudePtr>& amps = set.decayAmps();
 		for (unsigned int i = 0; i < amps.size(); ++i)
 			printDebug << "[" << i << "] = " << *(amps[i]) << endl;
+
+		printDebug << set;
+
+		cout << "foo\n"
+		     << indentIn
+		     << "bar\n"
+		     << indentOut
+		     << "sanfu\n";
 	}
 
 }

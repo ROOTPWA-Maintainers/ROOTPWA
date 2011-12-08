@@ -49,10 +49,14 @@ using namespace rpwa;
 int
 main(int argc, char** argv)
 {
+	using rpwa::cout;
+	printCompilerInfo();
+	printLibraryInfo ();
+	printSvnVersion  ();
+	cout << endl;
+
 	waveDescription::setDebug(true);
 
-	printCompilerInfo();
-	printSvnVersion();
 	particleDataTable::readFile();
 
 	if (1) {

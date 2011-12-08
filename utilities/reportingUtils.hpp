@@ -53,6 +53,8 @@
 
 #include "RVersion.h"
 
+#include "indentStream.h"
+
 
 namespace rpwa {
 
@@ -204,9 +206,9 @@ namespace rpwa {
 	                 const vt100EscapeCodesEnum& vt100Code)
 	{
 		bool isVt100 = false;
-		if (out == std::cout)
+		if ((out == std::cout) or (out == rpwa::cout))
 			isVt100 = stdoutIsColorTerminal();
-		else if (out == std::cerr)
+		else if ((out == std::cerr) or (out == rpwa::cerr))
 			isVt100 = stderrIsColorTerminal();
 		if (isVt100)
 			out << "\33[" << vt100Code << "m";
@@ -240,11 +242,11 @@ namespace rpwa {
 	}
 
 #ifndef __CINT__
-#define printErr   std::cerr << rpwa::setStreamTo(rpwa::FG_RED    ) << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
-#define printWarn  std::cerr << rpwa::setStreamTo(rpwa::FG_YELLOW ) << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
-#define printSucc  std::cout << rpwa::setStreamTo(rpwa::FG_GREEN  ) << "*** " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): success: " << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
-#define printInfo  std::cout << rpwa::setStreamTo(rpwa::BOLD      ) << ">>> " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "    << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
-#define printDebug std::cout << rpwa::setStreamTo(rpwa::FG_MAGENTA) << "+++ " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): debug: "   << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printErr   rpwa::cerr << rpwa::setStreamTo(rpwa::FG_RED    ) << "!!! " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: error: "   << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printWarn  rpwa::cerr << rpwa::setStreamTo(rpwa::FG_YELLOW ) << "??? " << __PRETTY_FUNCTION__ << " [" << __FILE__ << ":" << __LINE__ << "]: warning: " << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printSucc  rpwa::cout << rpwa::setStreamTo(rpwa::FG_GREEN  ) << "*** " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): success: " << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printInfo  rpwa::cout << rpwa::setStreamTo(rpwa::BOLD      ) << ">>> " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): info: "    << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
+#define printDebug rpwa::cout << rpwa::setStreamTo(rpwa::FG_MAGENTA) << "+++ " << rpwa::getClassMethod__(__PRETTY_FUNCTION__) << "(): debug: "   << rpwa::setStreamTo(rpwa::NORMAL) << std::flush
 #else
 // rootcint crashes in dictionary generation (sigh)
 #define printErr   std::cerr << std::flush
@@ -342,12 +344,12 @@ namespace rpwa {
 		          << "    BOOST version " << Boost_LIBRARY_VERSION << " "
 		          << "in '" << Boost_INCLUDE_DIRS << "'"  << std::endl;
 #ifdef USE_MPI
-		std::cout << "    BOOST MPI in '" << Boost_MPI_LIBRARY_DIR << "'" << std::endl;
+		rpwa::cout << "    BOOST MPI in '" << Boost_MPI_LIBRARY_DIR << "'" << std::endl;
 #endif
-		std::cout << "    libConfig version " << Libconfig_VERSION << " in "
+		rpwa::cout << "    libConfig version " << Libconfig_VERSION << " in "
 		          << "'" << Libconfig_DIR << "'" << std::endl;
 #ifdef USE_CUDA
-		std::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_LIB_DIRS << "'" << std::endl;
+		rpwa::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_LIB_DIRS << "'" << std::endl;
 #endif
 	}
 

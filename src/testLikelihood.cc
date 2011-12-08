@@ -55,24 +55,24 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
-	     << progName
-	     << " -w wavelist [-z # val -d amplitude directory -o outfile -s seed -N -n normfile"
-	     << " [-a normfile] -r rank -q -h]" << endl
-	     << "    where:" << endl
-	     << "        -w file    path to wavelist file" << endl
-	     << "        -z #       number of likelihood values (default: 100)" << endl
-	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-	     << "        -o file    path to output file (default: 'testLikelihood.root')" << endl
-	     << "        -s #       seed for random start values (default: 1234567)" << endl
-	     << "        -N         use normalization of decay amplitudes (default: false)" << endl
-	     << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
-	     << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
-	     << "        -A #       number of input events to normalize acceptance to" << endl
-	     << "        -r #       rank of spin density matrix (default: 1)" << endl
-	     << "        -q         run quietly (default: false)" << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	rpwa::cerr << "usage:" << endl
+	           << progName
+	           << " -w wavelist [-z # val -d amplitude directory -o outfile -s seed -N -n normfile"
+	           << " [-a normfile] -r rank -q -h]" << endl
+	           << "    where:" << endl
+	           << "        -w file    path to wavelist file" << endl
+	           << "        -z #       number of likelihood values (default: 100)" << endl
+	           << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
+	           << "        -o file    path to output file (default: 'testLikelihood.root')" << endl
+	           << "        -s #       seed for random start values (default: 1234567)" << endl
+	           << "        -N         use normalization of decay amplitudes (default: false)" << endl
+	           << "        -n file    path to normalization integral file (default: 'norm.int')" << endl
+	           << "        -a file    path to acceptance integral file (default: 'norm.int')" << endl
+	           << "        -A #       number of input events to normalize acceptance to" << endl
+	           << "        -r #       rank of spin density matrix (default: 1)" << endl
+	           << "        -q         run quietly (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << endl;
 	exit(errCode);
 }
 
@@ -81,6 +81,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	// force loading of predefined std::map dictionary
 	gROOT->ProcessLine("#include <map>");
 

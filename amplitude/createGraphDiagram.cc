@@ -58,18 +58,18 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-  cerr << "creates graphical representation of decay graph(s) specified in given key file(s)" << endl
-       << "output files will have the same name as the corresponding key files" << endl
-       << endl
-       << "usage:" << endl
-       << progName
-       << " [-p PDG file -f output format -v -h] key file(s)" << endl
-       << "    where:" << endl
-       << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
-       << "        -f format  output format: dot, ps, eps (default), svg, fig, dia, png, gif" << endl
-       << "        -v         verbose; print debug output (default: false)" << endl
-       << "        -h         print help" << endl
-       << endl;
+	rpwa::cerr << "creates graphical representation of decay graph(s) specified in given key file(s)" << endl
+	           << "output files will have the same name as the corresponding key files" << endl
+	           << endl
+	           << "usage:" << endl
+	           << progName
+	           << " [-p PDG file -f output format -v -h] key file(s)" << endl
+	           << "    where:" << endl
+	           << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
+	           << "        -f format  output format: dot, ps, eps (default), svg, fig, dia, png, gif" << endl
+	           << "        -v         verbose; print debug output (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << endl;
   exit(errCode);
 }
 
@@ -78,6 +78,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();

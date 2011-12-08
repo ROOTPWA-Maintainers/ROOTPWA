@@ -58,16 +58,16 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "calculates difference of two amplitude files an writes result into tree" << endl
-	     << endl
-	     << "usage:" << endl
-	     << progName
-	     << " [-o out file -v -h] .amp file 1 .amp file 2" << endl
-	     << "    where:" << endl
-	     << "        -o file    path to output ROOT file (default: none)" << endl
-	     << "        -v         verbose; print debug output (default: false)" << endl
-	     << "        -h         print help" << endl
-	     << endl;
+	rpwa::cerr << "calculates difference of two amplitude files an writes result into tree" << endl
+	           << endl
+	           << "usage:" << endl
+	           << progName
+	           << " [-o out file -v -h] .amp file 1 .amp file 2" << endl
+	           << "    where:" << endl
+	           << "        -o file    path to output ROOT file (default: none)" << endl
+	           << "        -v         verbose; print debug output (default: false)" << endl
+	           << "        -h         print help" << endl
+	           << endl;
 	exit(errCode);
 }
 
@@ -108,6 +108,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	printCompilerInfo();
 	printLibraryInfo ();
 	printSvnVersion  ();

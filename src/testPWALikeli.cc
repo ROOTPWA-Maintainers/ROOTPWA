@@ -49,6 +49,7 @@ int
 main(int    argc,
      char** argv)
 {
+	using rpwa::cout;
 	if (argc < 2) {
 		printErr << "need wave list file name as argument. aborting." << endl;
 		throw;
