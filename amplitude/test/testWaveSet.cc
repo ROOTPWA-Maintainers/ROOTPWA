@@ -37,6 +37,7 @@
 
 #include "TROOT.h"
 #include "TTree.h"
+#include "TFile.h"
 
 #include "reportingUtils.hpp"
 #include "amplitudeTreeLeaf.h"
@@ -106,7 +107,30 @@ main(int argc, char** argv)
 			printDebug << "wave name[" << i << "] = " << waveNames[i] << endl;
 		
 		printDebug << set;
-		printDebug << "test" << endl;
+
+		const string waveSetName = "testWaveSet";
+		{
+			printDebug << "write test" << endl;
+			TFile* f = TFile::Open("testWaveSet.root", "RECREATE");
+			set.Write(waveSetName.c_str());
+			f->Close();
+			delete f;
+		}
+		set.clear();
+		printDebug << "after clear(): " << set;
+		{
+			TFile*   f    = TFile::Open("testWaveSet.root", "READ");
+			waveSet* set2 = 0;
+			f->GetObject(waveSetName.c_str(), set2);
+			if (not set2)
+				printErr << "cannot find wave set '" << waveSetName << "'" << endl;
+			else {
+				printInfo << "wave set read from file: " << *set2;
+			}
+			f->Close();
+			delete f;
+		}
+		
 	}
 
 }

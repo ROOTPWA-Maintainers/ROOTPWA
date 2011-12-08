@@ -432,14 +432,19 @@ waveSet::print(ostream& out) const
 {
 	out << "wave set:" << endl
 	    << indentIn
-	    << "decay amplitude trees and mass ranges:" << endl
-	    << indentIn;
-	for (unsigned int i = 0; i < nmbWaves(); ++i)
-		out << "[" << i << "]: tree name = '" << _decayAmpTreeNames[i] << "', mass range = "
-		    << "[" << _decayAmpMassRanges[i].first << ", " << _decayAmpMassRanges[i].second << "] MeV/c^2"
-		    << endl;
-	out << indentOut
-	    << "decay amplitude files: ";
+	    << "decay amplitude trees and mass ranges: ";
+	if (nmbWaves() == 0)
+		out << "none" << endl;
+	else { 
+		out << endl
+		    << indentIn;
+		for (unsigned int i = 0; i < nmbWaves(); ++i)
+			out << "[" << i << "]: tree name = '" << _decayAmpTreeNames[i] << "', mass range = "
+			    << "[" << _decayAmpMassRanges[i].first << ", " << _decayAmpMassRanges[i].second << "] "
+			    << "MeV/c^2" << endl;
+		out << indentOut;
+	}
+	out << "decay amplitude files: ";
 	if (_decayAmpFileNames.size() == 0)
 		out << "none" << endl;
 	else { 
