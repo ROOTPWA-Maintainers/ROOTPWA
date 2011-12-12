@@ -21,8 +21,8 @@
 #include <map>
 using namespace std;
 
-#define RECOLOR kPink-9
-#define IMCOLOR kTeal-9
+#define RECOLOR kYellow-9
+#define IMCOLOR kSpring-9
 
 
 TString fitname;
@@ -142,6 +142,56 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     clone->SetPad("pu","PopUp",0,0,1,1,0);
     cpopup->cd(1);
     cpopup->Update();
+
+    TMultiGraph* gr=(TMultiGraph*)clone->GetListOfPrimitives()->At(1);
+    TString title=gr->GetName();
+
+    TGraphErrors* gdata=(TGraphErrors*)gr->GetListOfGraphs()->At(1);
+    double xmax=gr->GetXaxis()->GetXmax();
+    double xmin=gr->GetXaxis()->GetXmin();
+    double max=-1E6;
+    double min=1E6;
+    TGraphErrors* fitg=(TGraphErrors*)gr->GetListOfGraphs()->At(2);
+    double* yp=fitg->GetY();
+    for(unsigned int i=0;i<fitg->GetN();++i){
+      if(max<yp[i])max=yp[i];
+      if(min>yp[i])min=yp[i];
+    }
+    
+    // this works nly for phase plots
+    double ymin=0.5*(max+min)-220;
+    double ymax=0.5*(max+min)+220;
+
+    if(title.Contains("dPhi")){
+      cerr << "Ymin: " << ymin << "   Ymax: " << ymax << endl;  
+      // for phase plots manually cut the systematic errors!
+      TGraphErrors* gsys=(TGraphErrors*)gr->GetListOfGraphs()->At(0);
+      //gsys->GetYaxis()->SetRangeUser(ymin,ymax);
+      unsigned int n=gsys->GetN();
+      for(unsigned int i=0;i<n;++i){
+	double y, x, ey, ex;
+	gsys->GetPoint(i,x,y);
+	ey=gsys->GetErrorY(i);
+	ex=gsys->GetErrorX(i);
+	
+	// check if error band is in limits
+	if(y+ey>ymax){
+	  cerr << "correcting upper" << endl;
+	  double dy=0.5*(y+ey-ymax);
+	  y-=dy;
+	  ey-=dy; 
+	}
+	if(y-ey<ymin){
+	  double dy=0.5*(ymin-y+ey);
+	  y+=dy;
+	  ey-=dy;
+	}
+	gsys->SetPoint(i,x,y);
+	gsys->SetPointError(i,ex,ey);
+      }
+    }
+
+    clone->Draw();
     clone->cd();
     clone->GetFrame()->Draw();
     clone->SetBorderMode(0);
@@ -186,19 +236,20 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     // add waves 
     //cout << "####### Title:" << endl;
 
-    TMultiGraph* gr=(TMultiGraph*)clone->GetListOfPrimitives()->At(1);
-    double xmax=gr->GetXaxis()->GetXmax();
-    double xmin=gr->GetXaxis()->GetXmin();
-    TLine* zeroline=new TLine(xmin,0,xmax,0);
-    zeroline->SetLineStyle(7);
-    zeroline->Draw();
+  
+
+    if(ymax > 0 || ymin < 0){
+      TLine* zeroline=new TLine(xmin,0,xmax,0);
+      zeroline->SetLineStyle(7);
+      zeroline->Draw();
+    }
 
     // gr->GetListOfGraphs()->RemoveAt(2);
     gr->GetXaxis()->SetTitle("mass (MeV/c^{2})");
     gr->GetXaxis()->Draw();
     gr->GetYaxis()->Draw();
 
-    TString title=gr->GetName();
+  
     //cout << title << endl;
     // check if this is intensity or off diagonal
     TString wave;
@@ -241,7 +292,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
      double max=gr->GetYaxis()->GetXmax();
      double min=gr->GetYaxis()->GetXmin();
      // get last data point
-     TGraph* g=(TGraph*)gr->GetListOfGraphs()->At(0);
+     TGraph* g=(TGraph*)gr->GetListOfGraphs()->At(1);
      double yg,xg;
      g->GetPoint((int)(g->GetN()*0.6),xg,yg);
      if(fabs(max-yg)>fabs(min-yg)){
@@ -433,14 +484,14 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  }
 	  double max=-1E6;
 	  double min=1E6;
-	  TGraphErrors* fitg=(TGraphErrors*)g->GetListOfGraphs()->At(0);
+	  TGraphErrors* fitg=(TGraphErrors*)g->GetListOfGraphs()->At(2);
 	  double* y=fitg->GetY();
 	  for(unsigned int i=0;i<fitg->GetN();++i){
 	    if(max<y[i])max=y[i];
 	    if(min>y[i])min=y[i];
 	  }
 	  TAxis* a=g->GetYaxis();
-	  //if(a!=NULL)a->SetRangeUser(0.5*(max+min)-220,0.5*(max+min)+220);
+	  if(a!=NULL)a->SetRangeUser(0.5*(max+min)-220,0.5*(max+min)+220);
 	  a->SetTitle("#Delta#phi");
 	  a->SetTitleOffset(1.3);
 	  g->Draw("A");
