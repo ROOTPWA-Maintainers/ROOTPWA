@@ -92,6 +92,15 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
+# workaround for bug concerning -march=native switch in gcc 4.2.1 shipped with MacOS 10.7
+# see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33144
+if(CMAKE_COMPILER_IS_GNUCXX)
+  execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	if(GCC_VERSION VERSION_EQUAL "4.2.1")
+		message(STATUS "Detected gcc version 4.2.1; -march=native switch is disabled because of gcc bug")
+		set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+	endif()
+endif()
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
