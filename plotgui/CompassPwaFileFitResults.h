@@ -55,9 +55,12 @@ namespace rpwa{
 		// Variables
 		unsigned int _NumEvents;
 		double _LogLikelihood;
+		int _FitStatus;
 		unsigned int _Rank;
 		std::vector<std::string> _WaveNames;
 		TCMatrix _FitResults;
+		unsigned int _CovMatrixSize;
+		TMatrixT<double> _CovMatrix;
 
 		static bool _Debug; ///< if set to true, debug messages are printed
 
@@ -73,7 +76,12 @@ namespace rpwa{
 		double LogLikelihood() const; ///< Returns _LogLikelihood
 		unsigned int Rank() const; ///< Returns _Rank
 		const std::vector<std::string>& WaveNames() const; ///< Returns _WaveNames
+		std::vector<std::string>& WaveNamesRootPwa( std::vector<std::string>& Destination ) const; ///< Returns _WaveNames in rootpwa style
 		const TCMatrix& FitResults() const; ///< Returns _FitResults
+		std::vector< std::complex<double> >& ProdAmpsRootPwa( std::vector< std::complex<double> >& Destination ) const; ///< Returns _FitResults in rootpwa style
+		const TMatrixT<double>& CovMatrix() const; ///< Returns _CovMatrix
+		std::vector<std::pair<int, int> >& CovMatrixMapRootPwa( std::vector<std::pair<int, int> >& Destination ) const; ///< Returns a map for the covariance matrix as it is needed for root pwa
+
 
 		static bool Debug() { return _Debug; } ///< returns debug flag
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
@@ -81,6 +89,9 @@ namespace rpwa{
 		// Functions
 		bool ReadIn( std::istream& File ); ///< Reads the rest of the information from a fit result file stream and returns 0 if no error occurred or a negative number as the error code
 		std::ostream& Print(std::ostream& Out) const; ///< Prints all important variables of class
+
+		static bool IsNumber( char CharToCheck ); ///< Returns true if CharToCheck is a Number or false if it isn't
+		static bool CompassPwaNameToRootPwaName( std::string& RootPwaDestination, const std::string& CompassPwaSource, unsigned int AddedRank = 0 ); ///< Converts a CompassPWA wavename into a rootpwa wavename and since rootpwa wavenames additionally include the rank it has to be provided separately
 	};
 
 	inline std::ostream& operator <<( std::ostream& Out, const CompassPwaFileFitResults& FitResult ){

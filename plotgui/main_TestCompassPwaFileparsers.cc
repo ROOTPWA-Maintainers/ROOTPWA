@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      Main file for pwa gui
+//      Test the parsers for the different CompassPWA files
 //
 //
 // Author List:
@@ -44,19 +44,17 @@ using namespace std;
 using namespace rpwa;
 
 int main(int argc, char *argv[]){
-
-	//create instance of class Option
 	CompassPwaFileObject FileObject;
 
 	printInfo << "Starting test of CompassPWA parser to root\n";
-	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWAPhaseSpaceIntegrals_2500_2510_0000_1000.txt") );
-	FileObject.Clear();
-	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWANormIntegralsNAcc_1670_1680_0100_1000.txt") );
-	FileObject.Clear();
-	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals_new/PWANormIntegralsAcc_1670_1680_0100_1000.txt") );
-	FileObject.Clear();
-	FileObject.ReadFromFile( string("/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/fits/fit_2008_W37_acc_53waves_new/PWAfitresults_fit_2008_W37_acc_53waves_new_1040_1060_0100_1000_0_fit3.txt") );
-	FileObject.Clear();
+	FileObject.ReadFromFile( "/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals/PWAPhaseSpaceIntegrals_2500_2510_0000_1000.txt" );
+	FileObject.Empty();
+	FileObject.ReadFromFile( "/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals/PWANormIntegralsNAcc_1670_1680_0100_1000.txt" );
+	FileObject.Empty();
+	FileObject.ReadFromFile( "/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals/PWANormIntegralsAcc_1670_1680_0100_1000.txt" );
+	FileObject.Empty();
+	FileObject.ReadFromFile( "/nfs/hicran/project/compass/analysis/sschmeing/PWA/work/fits/fit_2008_W37_acc_53waves/PWAfitresults_fit_2008_W37_acc_53waves_1040_1060_0100_1000_0_fit3.txt" );
+	FileObject.Empty();
 
 	printInfo << "End of test of CompassPWA parser to root\n";
 

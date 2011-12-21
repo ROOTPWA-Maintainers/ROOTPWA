@@ -67,15 +67,10 @@ namespace rpwa{
 		///< (const CompassPwaFileFitResults *) for fit results
 		///< (const CompassPwaFilePhaseSpaceIntegrals *) for phase space integrals
 		///< (const CompassPwaFileNormIntegrals *) for norm integrals ( acceptance corrected and not acceptance corrected)
-		double _MassBinStart;
-		double _MassBinEnd;
-		double _tBinStart;
-		double _tBinEnd;
 
 		static bool _Debug; ///< if set to true, debug messages are printed
 
 		// Functions
-		bool ReadBin( std::istream& File ); ///< Reads the mass and t' bin from file stream
 		template<class T, CompassPwaFileObjectStatus ReturnValue> CompassPwaFileObjectStatus Read( std::istream& File ); ///< Reads the rest of the information a file specified in the template and returns -1 if an error occurred or ReturnValue if no error occurred
 
 	public:
@@ -86,18 +81,19 @@ namespace rpwa{
 		// Get && Set
 		CompassPwaFileObjectStatus Status() const; ///< Returns _Status;
 		std::string StatusMessage() const; ///< Returns _Status as a string containing the corresponding message
+		const CompassPwaFileBase *DataObject() const; ///< Returns _DataObject;
 		double MassBinStart() const; ///< Returns _MassBinStart;
 		double MassBinEnd() const; ///< Returns _MassBinEnd;
 		double tBinStart() const; ///< Returns _tBinStart;
 		double tBinEnd() const; ///< Returns _tBinEnd;
-		const CompassPwaFileBase *DataObject() const; ///< Returns _DataObject;
 
 		static bool Debug() { return _Debug; } ///< returns debug flag
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
 		CompassPwaFileObjectStatus ReadFromFile( std::string FileString ); ///< Reading in the given file by determining it's type and calling the appropriate function to read in this type
-		void Clear(); ///< Clears the file object and calls destructor of the _DataObject
+		void Clear(); ///< Clears the file object without calling destructor of the _DataObject
+		void Empty(); ///< Clears the file object and calls destructor of the _DataObject
 		std::ostream& Print( std::ostream& Out ) const; ///< Prints all important variables of class
 	};
 

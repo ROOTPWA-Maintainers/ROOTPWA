@@ -49,6 +49,11 @@ namespace rpwa{
 	class CompassPwaFileBase{
 	private:
 		// Variables
+		double _MassBinStart;
+		double _MassBinEnd;
+		double _tBinStart;
+		double _tBinEnd;
+
 		static bool _Debug; ///< if set to true, debug messages are printed
 
 		// Functions
@@ -60,15 +65,22 @@ namespace rpwa{
 
 	public:
 		// Constructors + Destructors
+		CompassPwaFileBase(); ///< Constructor
 		virtual ~CompassPwaFileBase(){}; ///< Virtual destructor
 
 		// Get && Set
+		double MassBinStart() const; ///< Returns _MassBinStart;
+		double MassBinEnd() const; ///< Returns _MassBinEnd;
+		double tBinStart() const; ///< Returns _tBinStart;
+		double tBinEnd() const; ///< Returns _tBinEnd;
+
 		static bool Debug() { return _Debug; } ///< returns debug flag
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
+		bool ReadBin( std::istream& File ); ///< Reads the mass and t' bin from file stream
 		virtual bool ReadIn( std::istream& File ) = 0; ///< Reads the rest of the information from a specific file and returns 0 if no error occurred or a negative number as the error code
-		virtual std::ostream& Print( std::ostream& Out ) const = 0; ///< Prints all important variables of class
+		virtual std::ostream& Print( std::ostream& Out ) const; ///< Prints all important variables of class
 
 		static bool GetNextValidLine( std::istream& File, std::string& Line); ///< Reads the next line of File which has no "//" as the first two letters into Line and returns true if it was successful
 		static bool GetNextValidLine( std::istream& File, std::stringstream& Line); ///< Reads the next line of File which has no "//" as the first two letters into Line and returns true if it was successful

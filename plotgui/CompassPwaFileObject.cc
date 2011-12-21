@@ -48,78 +48,6 @@ using namespace rpwa;
 
 bool CompassPwaFileObject::_Debug = false;
 
-// Reads the mass and t' bin from file
-bool CompassPwaFileObject::ReadBin( istream& File ){
-	bool Succesful = true; // Is set to false if an error occurs and returned at the end of the function
-	stringstream LineStream;
-	char semicolon = 0; // Takes the separating character, which should be a semicolon
-
-	if( CompassPwaFileBase::GetNextValidLine( File, LineStream ) ){
-		// Line example between "": "2.50000;2.51000"
-		LineStream >> _MassBinStart >> semicolon >> _MassBinEnd;
-
-		if( LineStream.fail() ){
-			printErr << "Mass bin not valid \n";
-			Succesful = false;
-			if( _Debug ){
-				printDebug << "MassBin: "<< LineStream.str() << '\n';
-			}
-		}
-		else{
-			if( !LineStream.eof() ){
-				printWarn << "Mass bin entry longer than expected\n";
-				if( _Debug ){
-					printDebug << "MassBin: "<< LineStream.str() << '\n';
-				}
-			}
-			if( semicolon != ';' ){
-				printWarn << "Mass bin separator not a semicolon\n";
-				if( _Debug ){
-					printDebug << "Separator: '" << semicolon << "'\n";
-				}
-			}
-		}
-	}
-	else{
-		Succesful = false;
-		printErr << "No valid line could be found anymore, but the mass bin was expected\n";
-	}
-
-	semicolon = 0;
-	if( CompassPwaFileBase::GetNextValidLine( File, LineStream ) ){
-		// Line example between "": "0.00000;1.00000"
-		LineStream >> _tBinStart >> semicolon >> _tBinEnd;
-
-		if( LineStream.fail() ){
-			printErr << "t' bin not valid \n";
-			Succesful = false;
-			if( _Debug ){
-				printDebug << "t 'Bin: "<< LineStream.str() << '\n';
-			}
-		}
-		else{
-			if( !LineStream.eof() ){
-				printWarn << "t' bin entry longer than expected\n";
-				if( _Debug ){
-					printDebug << "t 'Bin: "<< LineStream.str() << '\n';
-				}
-			}
-			if( semicolon != ';' ){
-				printWarn << "t' bin separator not a semicolon\n";
-				if( _Debug ){
-					printDebug << "Separator: '" << semicolon << "'\n";
-				}
-			}
-		}
-	}
-	else{
-		Succesful = false;
-		printErr << "No valid line could be found anymore, but the t' bin was expected\n";
-	}
-
-	return Succesful;
-}
-
 // Reads the rest of the information a file specified in the template and returns -1 if an error occurred or ReturnValue if no error occurred
 template<class T, CompassPwaFileObjectStatus ReturnValue> CompassPwaFileObjectStatus CompassPwaFileObject::Read( istream& File ){
 	T *Data = new T();
@@ -128,9 +56,18 @@ template<class T, CompassPwaFileObjectStatus ReturnValue> CompassPwaFileObjectSt
 		return Error;
 	}
 
+	// Reads bin information from file
+	bool ReadBinSuccesful = Data->ReadBin( File );
+
 	if( Data->ReadIn( File ) ){
-		_DataObject = Data;
-		return ReturnValue;
+		if( ReadBinSuccesful ){
+			_DataObject = Data;
+			return ReturnValue;
+		}
+		else{
+			// Overwrites return with error if it occurred during reading of the bin
+			return Error;
+		}
 	}
 	else{
 		delete Data;
@@ -141,11 +78,7 @@ template<class T, CompassPwaFileObjectStatus ReturnValue> CompassPwaFileObjectSt
 // Default constructor
 CompassPwaFileObject::CompassPwaFileObject():
 	_Status(NotLoaded),
-	_DataObject(0),
-	_MassBinStart(0),
-	_MassBinEnd(0),
-	_tBinStart(0),
-	_tBinEnd(0){
+	_DataObject(0){
 }
 
 // Destructor
@@ -178,29 +111,49 @@ string CompassPwaFileObject::StatusMessage() const{
 	}
 }
 
+// Returns _DataObject;
+const CompassPwaFileBase *CompassPwaFileObject::DataObject() const{
+	return _DataObject;
+}
+
 // Returns _MassBinStart;
 double CompassPwaFileObject::MassBinStart() const{
-	return _MassBinStart;
+	if( _DataObject ){
+		return _DataObject->MassBinStart();
+	}
+	else{
+		return -1.0;
+	}
 }
 
 // Returns _MassBinEnd;
 double CompassPwaFileObject::MassBinEnd() const{
-	return _MassBinEnd;
+	if( _DataObject ){
+		return _DataObject->MassBinEnd();
+	}
+	else{
+		return -1.0;
+	}
 }
 
 // Returns _tBinStart;
 double CompassPwaFileObject::tBinStart() const{
-	return _tBinStart;
+	if( _DataObject ){
+		return _DataObject->tBinStart();
+	}
+	else{
+		return -1.0;
+	}
 }
 
 // Returns _tBinEnd;
 double CompassPwaFileObject::tBinEnd() const{
-	return _tBinEnd;
-}
-
-// Returns _DataObject;
-const CompassPwaFileBase *CompassPwaFileObject::DataObject() const{
-	return _DataObject;
+	if( _DataObject ){
+		return _DataObject->tBinEnd();
+	}
+	else{
+		return -1.0;
+	}
 }
 
 // Reading in the given file by determining it's type and calling the appropriate function to read in this type
@@ -223,29 +176,21 @@ CompassPwaFileObjectStatus CompassPwaFileObject::ReadFromFile( string FileString
 	else{
 		// Determine file type by looking at the first line
 		if( CompassPwaFileBase::GetNextValidLine( File, TypeString ) ){
-			// Reads bin information from file
-			bool ReadBinSuccesful = ReadBin( File );
-
 			// Calls the function to read in the
 			if( "PWA fit results" == TypeString ){
-				_Status = Read<CompassPwaFileFitResults, FitResult>( File ); //ReadFitResultFromFile( File );
+				_Status = Read<CompassPwaFileFitResults, FitResult>( File );
 			}
 			else if( "PWA phase space integrals" == TypeString ){
-				_Status = Read<CompassPwaFilePhaseSpaceIntegrals, PhaseSpaceIntegral>( File ); //ReadPhaseSpaceIntegralsFromFile( File );
+				_Status = Read<CompassPwaFilePhaseSpaceIntegrals, PhaseSpaceIntegral>( File );
 			}
 			else if( "PWA acceptance corrected norm integrals" == TypeString ){
-				_Status = Read<CompassPwaFileNormIntegrals, AcceptanceCorrectedNormIntegral>( File ); //ReadAcceptanceCorrectedNormIntegralsFromFile( File );
+				_Status = Read<CompassPwaFileNormIntegrals, AcceptanceCorrectedNormIntegral>( File );
 			}
 			else if( "PWA not acceptance corrected norm integrals" == TypeString ){
-				_Status = Read<CompassPwaFileNormIntegrals, NotAcceptanceCorrectedNormIntegral>( File ); //ReadNotAcceptanceCorrectedNormIntegralsFromFile( File );
+				_Status = Read<CompassPwaFileNormIntegrals, NotAcceptanceCorrectedNormIntegral>( File );
 			}
 			else{
 				printErr << "File not of any known type \n";
-				_Status = Error;
-			}
-
-			// Overwrites _Status with error if occurred during reading of the bin
-			if( !ReadBinSuccesful ){
 				_Status = Error;
 			}
 		}
@@ -262,22 +207,23 @@ CompassPwaFileObjectStatus CompassPwaFileObject::ReadFromFile( string FileString
 	}
 
 	if( _Debug ){
-//		printDebug << *this;
+		printDebug << *this;
 	}
 
 	return _Status;
 }
 
-// Clears the file object and calls destructor of the _DataObject;
+// Clears the file object without calling destructor of the _DataObject;
 void CompassPwaFileObject::Clear(){
-	delete _DataObject;
-
 	_Status = NotLoaded;
 	_DataObject = 0;
-	_MassBinStart = 0;
-	_MassBinEnd = 0;
-	_tBinStart = 0;
-	_tBinEnd = 0;
+}
+
+// Clears the file object and calls destructor of the _DataObject;
+void CompassPwaFileObject::Empty(){
+	delete _DataObject;
+
+	Clear();
 }
 
 // Prints all important variables of class
@@ -285,9 +231,6 @@ ostream& CompassPwaFileObject::Print( ostream& Out ) const{
 	Out << StatusMessage() << '\n';
 
 	if( _Status > 0 ){
-		Out << "Mass bin: " << _MassBinStart << ';' << _MassBinEnd << '\n';
-		Out << "t' bin: " << _tBinStart << ';' << _tBinEnd << '\n';
-
 		_DataObject->Print( Out );
 	}
 

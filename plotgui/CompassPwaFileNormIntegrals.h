@@ -41,6 +41,7 @@
 
 #include <fstream>
 #include <string>
+#include <deque>
 #include <map>
 
 #include "TCMatrix.h"
@@ -65,13 +66,16 @@ namespace rpwa{
 		~CompassPwaFileNormIntegrals(); ///< Destructor
 
 		// Get && Set
+		bool Position( unsigned int &Destination, const std::string &WaveName ) const; ///< Fills the position in the integral matrix of the wave with name WaveName into Destination and returns false if WaveName could not be found
+		const std::complex<double> NormIntegral( unsigned int i, unsigned int j) const; ///< Returns the normalization integral at position (i,j) in the matrix
+
 		static bool Debug() { return _Debug; } ///< returns debug flag
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
-		bool ReadIn( std::istream& File ); ///< Reads the rest of the information from a norm integral file stream and returns 0 if no error occurred or a negative number as the error code
+		bool ReadIn( std::istream& File ); ///< Reads the rest of the information from a norm integral file stream and returns whether it was successful
 		std::ostream& Print( std::ostream& Out ) const; ///< Prints all important variables of class
-	//	static TCMatrix& Combine( TCMatrix& Destination, const std::map<const double, const CompassPwaFileObject *>& Integrals, const std::vector<std::string>& WaveNames, const double MassBinStart, const double MassBinEnd ); ///< Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
+		static bool Combine( TCMatrix& Destination, const std::deque<const CompassPwaFileNormIntegrals *>& Integrals, const std::vector<std::string>& WaveNames, double MassBinStart, double MassBinEnd ); ///< Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
 	};
 
 	inline std::ostream& operator <<( std::ostream& Out, const CompassPwaFileNormIntegrals& NormIntegral ){

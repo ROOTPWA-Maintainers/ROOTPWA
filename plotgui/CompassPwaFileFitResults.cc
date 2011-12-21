@@ -37,13 +37,20 @@
 //-------------------------------------------------------------------------
 
 #include <iostream>
+#include <map>
+
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/replace.hpp>
 
 #include "reportingUtils.hpp"
+#include "conversionUtils.hpp"
+#include "particleDataTable.h"
 
 #include "CompassPwaFileFitResults.h"
 
 using namespace std;
 using namespace rpwa;
+using namespace boost;
 
 bool CompassPwaFileFitResults::_Debug = false;
 
@@ -78,11 +85,76 @@ const std::vector<std::string>& CompassPwaFileFitResults::WaveNames() const{
 	return _WaveNames;
 }
 
+// Returns _WaveNames in rootpwa style
+vector<string>& CompassPwaFileFitResults::WaveNamesRootPwa( vector<string>& Destination ) const{
+	Destination.clear();
+	Destination.resize( _WaveNames.size() * _Rank - _Rank + 1 ); // Each rank for each wave has an entry, but the flatwave has only one entry
+
+	if( _Debug ){
+		printDebug << "Reserved " << _WaveNames.size() * _Rank - _Rank + 1 << " strings in Destination\n";
+	}
+
+	unsigned int j=0; // Next free position in Destination
+	for( unsigned int i=0; i < _WaveNames.size(); ++i ){
+		if( _Debug ){
+			printDebug << "Accessing " << j << '\n';
+		}
+		if( "FLAT" == _WaveNames[i] ){
+			CompassPwaNameToRootPwaName( Destination[j++], "FLAT" );
+		}
+		else{
+			for( unsigned int k=0; k < _Rank; ++k ){
+				CompassPwaNameToRootPwaName( Destination[j++], _WaveNames[i], k );
+			}
+		}
+	}
+
+	return Destination;
+}
+
 // Returns _FitResults
 const TCMatrix& CompassPwaFileFitResults::FitResults() const{
 	return _FitResults;
 }
 
+// Returns _FitResults in rootpwa style
+vector< complex<double> >& CompassPwaFileFitResults::ProdAmpsRootPwa( vector< complex<double> >& Destination ) const{
+	Destination.clear();
+	Destination.resize( _WaveNames.size() * _Rank - _Rank + 1 ); // Each rank for each wave has an entry, but the flatwave has only one entry
+
+	unsigned int j=0; // Next free position in Destination
+	for( unsigned int i=0; i < _WaveNames.size(); ++i ){
+		if( "FLAT" == _WaveNames[i] ){
+			Destination[j++] = _FitResults.get(i,0);
+		}
+		else{
+			for( unsigned int k=0; k < _Rank; ++k ){
+				Destination[j++] = _FitResults.get(i,k);;
+			}
+		}
+		// Doing normalization with events, that in principle should be done before displaying and not here (just for testing)
+		Destination[j - 1] *= sqrt(_NumEvents);
+	}
+
+	return Destination;
+}
+
+///< Returns _CovMatrix
+const TMatrixT<double>& CompassPwaFileFitResults::CovMatrix() const{
+	return _CovMatrix;
+}
+
+///< Returns a map for the covariance matrix as it is needed for root pwa
+vector<pair<int, int> >& CompassPwaFileFitResults::CovMatrixMapRootPwa( vector<pair<int, int> >& Destination ) const{
+	Destination.clear();
+	Destination.reserve( _CovMatrixSize/2 );
+
+	for( unsigned int i=0; i < _CovMatrixSize/2; ++i ){
+		Destination.push_back( pair<int,int>( i*2, i*2+1 ) );
+	}
+
+	return Destination;
+}
 
 // Reads the rest of the information from a fit result file stream and returns 0 if no error occurred or a negative number as the error code
 bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
@@ -111,7 +183,7 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 
 	// Get log(likelihood)
 	if( GetNextValidLine( File, LineStream ) ){
-		// Line example between "": "  -73063.303374602852"
+		// Line example between "": ""
 		LineStream >> _LogLikelihood;
 
 		if( !_LogLikelihood ){
@@ -125,6 +197,25 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 	else{
 		printErr << "No valid line could be found anymore, but the log(likelihood) was expected\n";
+		Succesful = false;
+	}
+
+	// Get fit status
+	if( GetNextValidLine( File, LineStream ) ){
+		// Line example between "": "           0"
+		LineStream >> _FitStatus;
+
+		if( LineStream.fail() ){
+			printErr << "fit status could not be read\n";
+			Succesful = false;
+		}
+
+		if( !LineStream.eof() ){
+			printWarn << "log(likelihood) entry longer than expected\n";
+		}
+	}
+	else{
+		printErr << "No valid line could be found anymore, but the fit status was expected\n";
 		Succesful = false;
 	}
 
@@ -167,7 +258,7 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 			}
 			else{
 				if( semicolon != ';' ){
-					printWarn << "Rank separator not a semicolon\n";
+					printWarn << "Number of waves separator not a semicolon\n";
 					if( _Debug ){
 						printDebug << "Separator: '" << semicolon << "'\n";
 					}
@@ -201,7 +292,7 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 			LineStream >> SecRank[i] >> semicolon;
 
 			if( !SecRank[i] ){
-				printErr << "Rank either 0 or not a unsigned int\n";
+				printErr << "Rank either 0 or not a int\n";
 				Succesful = false;
 			}
 			else{
@@ -259,9 +350,11 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	unsigned int l=0; // Loop variable equal to j except that it is not reseted to 0 for each section and therefore addresses _FitResults correctly
 	unsigned int k; // Loop variable that is needed unchanged in a second loop
 	_FitResults.ResizeTo(NumWaves,_Rank);
-	std::complex<double> FitResultParameter;
+	complex<double> FitResultParameter;
 	char apostrophe1; // Takes the first bracket character, which should be a apostrophe
 	char apostrophe2; // Takes the second bracket character, which should be a apostrophe
+
+	double RankSumProdAmpsSquared;
 
 	for( unsigned i = 0; i < NumSections; ++i){
 		for( unsigned j = 0; j < SecNumWaves[i]; ++j){
@@ -275,11 +368,14 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 				LineStream.get( WaveNameCStr, 61 );
 				LineStream >> apostrophe2;
 
+				RankSumProdAmpsSquared = 0;
+
 				// Fill the corresponding row of the matrix with the values from the file
 				CurRank = min(SecRank[i],j+1);
 				for( k = 0; k < CurRank; ++k){
 					LineStream >> FitResultParameter;
 					_FitResults.set( l, k, FitResultParameter );
+					RankSumProdAmpsSquared += norm(FitResultParameter);
 				}
 
 				// Fill the rest of the row of the matrix with (0,0), since in the Compass code result parameter that are always 0 are not included
@@ -289,7 +385,7 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 				}
 
 				if( LineStream.fail() ){
-					printErr << "Reading error in a line that is supposed to contain a fit result\n";
+					printErr << "Reading error in line " << l << " that is supposed to contain a fit result\n";
 					Succesful = false;
 				}
 				else{
@@ -312,6 +408,8 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 					WaveName.resize(LastNonEmptyCharacter + 1);
 
 					_WaveNames.push_back( WaveName );
+
+					printDebug << MassBinStart() << '-' << MassBinEnd() << '_' << WaveName << ':' << RankSumProdAmpsSquared * _NumEvents << '\n';
 				}
 
 				++l;
@@ -337,11 +435,42 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 
 	}
 
+	// Get covariance matrix
+	_CovMatrixSize = NumWaves*_Rank*2; // Real and imaginary entry for each rank of each wave
+	if( RankException ){
+		// Data contains flat wave with rank 1, therefore the size must be corrected
+		_CovMatrixSize -= (_Rank-1)*2;
+	}
+	_CovMatrix.ResizeTo( _CovMatrixSize, _CovMatrixSize );
+
+	for( unsigned int i = 0; i<_CovMatrixSize; ++i ){
+		if( GetNextValidLine( File, LineStream ) ){
+			// Line example between "": ""
+			for( unsigned int j = 0; j<_CovMatrixSize; ++j ){
+				LineStream >> _CovMatrix( i, j );
+			}
+
+			if( LineStream.fail() ){
+				printErr << "Reading error in a line " << i+1 << " that is supposed to contain covariance matrix values (probably not enough entries)\n";
+				Succesful = false;
+			}
+
+			if( !LineStream.eof() ){
+				printErr << "Row of covariance matrix has too many entries\n";
+				Succesful = false;
+			}
+		}
+		else{
+			printErr << "Covariance matrix has not enough rows\n";
+			Succesful = false;
+		}
+	}
+
 	// If there are still valid lines, the number of waves in the last section is not correct
 	if( GetNextValidLine( File, Line ) ){
 		// Some editors put automatically an empty line at the end, so this error has to be caught
 		if( !Line.empty() || GetNextValidLine( File, Line ) ){
-			printErr << "More wave names found than specified\n";
+			printErr << "Covariance matrix has too many rows\n";
 			Succesful = false;
 		}
 	}
@@ -351,6 +480,8 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 
 // Prints all important variables of class
 ostream& CompassPwaFileFitResults::Print(ostream& Out) const{
+	CompassPwaFileBase::Print( Out );
+
 	Out << "Number of events: " << _NumEvents << '\n';
 	Out << "log(likelihood): " << _LogLikelihood << '\n';
 	Out << "Rank: " << _Rank << '\n';
@@ -364,4 +495,192 @@ ostream& CompassPwaFileFitResults::Print(ostream& Out) const{
 	}
 
 	return Out;
+}
+
+///< Returns true if CharToCheck is a Number or false if it isn't
+bool CompassPwaFileFitResults::IsNumber( char CharToCheck ){
+	return ( 47 < CharToCheck ) && ( CharToCheck < 58 );
+}
+
+// Converts a CompassPWA wavename into a rootpwa wavename and since rootpwa wavenames additionally include the rank it has to be provided separately (for the flatwave this value does not matter and can be left out)
+bool CompassPwaFileFitResults::CompassPwaNameToRootPwaName( std::string& RootPwaDestination, const std::string& CompassPwaSource, unsigned int AddedRank ){
+	bool Successful = true;
+
+	if( _Debug ){
+		printDebug << "Parsing name \"" << CompassPwaSource << "\"\n";
+	}
+
+	if ( "FLAT" == CompassPwaSource ){
+		RootPwaDestination = "V_flat";
+	}
+	else{
+		RootPwaDestination = CompassPwaSource;
+
+		if( _Debug ){
+			printDebug << "Check first 10 characters\n";
+		}
+
+		// Check if first 10 characters are valid
+		if( !IsNumber(CompassPwaSource[0]) ){
+			printErr << "At first position of the wave name is no number\n";
+			Successful = false;
+		}
+		if( !sign(CompassPwaSource[1]) ){
+			printErr << "At second position of the wave name is no sign\n";
+			Successful = false;
+		}
+		if( '(' != CompassPwaSource[2] ){
+			printWarn << "At third position of the wave name is no bracket\n";
+		}
+		if( !IsNumber(CompassPwaSource[3]) ){
+			printErr << "At fourth position of the wave name is no number\n";
+			Successful = false;
+		}
+		if( !sign(CompassPwaSource[4]) ){
+			printErr << "At fifth position of the wave name is no sign\n";
+			Successful = false;
+		}
+		if( !sign(CompassPwaSource[5]) ){
+			printErr << "At sixth position of the wave name is no sign\n";
+			Successful = false;
+		}
+		if( ')' != CompassPwaSource[6] ){
+			printWarn << "At seventh position of the wave name is no bracket\n";
+		}
+		if( !IsNumber(CompassPwaSource[7]) ){
+			printErr << "At eighth position of the wave name is no number\n";
+			Successful = false;
+		}
+		if( !sign(CompassPwaSource[8]) ){
+			printErr << "At ninth position of the wave name is no sign\n";
+			Successful = false;
+		}
+		if( ' ' != CompassPwaSource[9] ){
+			printWarn << "At tenth position of the wave name is no space\n";
+		}
+
+		if( _Debug ){
+			printDebug << "Delete brackets and space in them\n";
+		}
+
+		// Remove braces and space in first 10 characters
+		RootPwaDestination.erase(9,1);
+		RootPwaDestination.erase(6,1);
+		RootPwaDestination.erase(2,1);
+
+		if( _Debug ){
+			printDebug << "Find and replace isobar\n";
+		}
+
+		string Isobar;
+		// Translate isobars
+		unsigned int NumIsobars = 0;
+		const unsigned int nmbDict = 6;
+		vector<string> FindVec;
+
+		// {rootpwa, CompassPWA}
+		const string IsobarDictionary[nmbDict][2] = {
+				{"sigma",    "f0(1400)"},
+				{"f0(980)",    "f0(980)"},
+				{"rho(770)",   "rho"},
+				{"f2(1270)",   "f2"},
+				{"rho3(1690)", "rho3"},
+				{"f0(1500)", "f0(1500)"} };
+
+		for (unsigned int i = 0; i < nmbDict; ++i){
+			FindVec.clear();
+			find_all( FindVec, RootPwaDestination, IsobarDictionary[i][1] );
+
+			if( _Debug ){
+				printDebug << RootPwaDestination << '\n';
+				printDebug << "Find: \"" << IsobarDictionary[i][1] << "\" Found: " << FindVec.size() << '\n';
+			}
+
+			NumIsobars += FindVec.size();
+
+			if( FindVec.size() > 0 ){
+				Isobar = IsobarDictionary[i][0];
+				if( IsobarDictionary[i][1] != IsobarDictionary[i][0] ){
+					replace_all(RootPwaDestination, IsobarDictionary[i][1], IsobarDictionary[i][0] );
+				}
+			}
+		}
+
+		// Since root has problems with brackets they are deleted
+		replace_all(RootPwaDestination, "(", "" );
+		replace_all(RootPwaDestination, ")", "" );
+
+		if( NumIsobars != 1 ){
+			printErr << "Isobar of wave \"" << CompassPwaSource << "\" is not well-defined\n";
+			Successful = false;
+		}
+
+		if( _Debug ){
+			printDebug << "Isobar: \"" << Isobar << "\"\n";
+			printDebug << "Find and replace L\n";
+		}
+
+		// Get && Translate L
+		char L = 0;
+
+		map<char, char> LDictionary;
+		LDictionary['S'] = '0';
+		LDictionary['P'] = '1';
+		LDictionary['D'] = '2';
+		LDictionary['F'] = '3';
+		LDictionary['G'] = '4';
+		LDictionary['H'] = '5';
+		LDictionary['I'] = '6';
+		LDictionary['K'] = '7';
+		LDictionary['L'] = '8';
+
+		int PosL = RootPwaDestination.find_last_of(' ') + 1;
+		map<char,char>::iterator it = LDictionary.find( RootPwaDestination[PosL] );
+		if( it == LDictionary.end() ){
+			printErr << "L of wave is not well-defined\n";
+			Successful = false;
+		}
+		else{
+			L = it->second;
+		}
+		RootPwaDestination.erase(PosL-1);
+
+		PosL = RootPwaDestination.find_last_of(' ');
+		RootPwaDestination.erase( PosL, 1 );
+		RootPwaDestination.insert( PosL, "_00_" ); // The 0s are just place holders
+		RootPwaDestination[PosL+1] = L;
+		const particleProperties *IsobarParticle = particleDataTable::entry( Isobar );
+		if( !IsobarParticle ){
+			printErr << "Spin of particle " << Isobar << " could not be determined\n";
+			Successful = false;
+		}
+		else{
+			if( IsobarParticle->J() > 9 ){
+				printErr << "Particle spins with more than one digit have not been implemented into the wave name conversion yet";
+				Successful = false;
+			}
+			else{
+				RootPwaDestination[PosL+2] = 48 + IsobarParticle->J();
+			}
+		}
+
+		if( _Debug ){
+			printDebug << "Add rank\n";
+		}
+
+		// Insert the rank at the beginning of the wave name
+		RootPwaDestination.insert( 0, "V0_" ); // The 0 is just a place holder
+		if( AddedRank > 9 ){
+			printErr << "Ranks with more than one digit have not been implemented into the wave name conversion yet";
+			Successful = false;
+		}
+		else{
+			RootPwaDestination[1] = 48 + AddedRank;
+		}
+
+		// At the end rootpwa always writes this
+		RootPwaDestination.append(".amp");
+	}
+
+	return Successful;
 }

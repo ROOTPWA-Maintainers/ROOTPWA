@@ -37,6 +37,8 @@
 //
 //-------------------------------------------------------------------------
 
+#include <sstream>
+
 #include "reportingUtils.hpp"
 
 #include "CompassPwaFileBase.h"
@@ -45,6 +47,114 @@ using namespace std;
 using namespace rpwa;
 
 bool CompassPwaFileBase::_Debug = false;
+
+// Constructor
+CompassPwaFileBase::CompassPwaFileBase():
+		_MassBinStart(0),
+		_MassBinEnd(0),
+		_tBinStart(0),
+		_tBinEnd(0){
+}
+
+// Returns _MassBinStart;
+double CompassPwaFileBase::MassBinStart() const{
+	return _MassBinStart;
+}
+
+// Returns _MassBinEnd;
+double CompassPwaFileBase::MassBinEnd() const{
+	return _MassBinEnd;
+}
+
+// Returns _tBinStart;
+double CompassPwaFileBase::tBinStart() const{
+	return _tBinStart;
+}
+
+// Returns _tBinEnd;
+double CompassPwaFileBase::tBinEnd() const{
+	return _tBinEnd;
+}
+// Prints all important variables of class
+std::ostream& CompassPwaFileBase::Print( std::ostream& Out ) const{
+	Out << "Mass bin: " << _MassBinStart << ';' << _MassBinEnd << '\n';
+	Out << "t' bin: " << _tBinStart << ';' << _tBinEnd << '\n';
+
+	return Out;
+}
+
+
+// Reads the mass and t' bin from file
+bool CompassPwaFileBase::ReadBin( istream& File ){
+	bool Succesful = true; // Is set to false if an error occurs and returned at the end of the function
+	stringstream LineStream;
+	char semicolon = 0; // Takes the separating character, which should be a semicolon
+
+	if( CompassPwaFileBase::GetNextValidLine( File, LineStream ) ){
+		// Line example between "": "2.50000;2.51000"
+		LineStream >> _MassBinStart >> semicolon >> _MassBinEnd;
+
+		if( LineStream.fail() ){
+			printErr << "Mass bin not valid \n";
+			Succesful = false;
+			if( _Debug ){
+				printDebug << "MassBin: "<< LineStream.str() << '\n';
+			}
+		}
+		else{
+			if( !LineStream.eof() ){
+				printWarn << "Mass bin entry longer than expected\n";
+				if( _Debug ){
+					printDebug << "MassBin: "<< LineStream.str() << '\n';
+				}
+			}
+			if( semicolon != ';' ){
+				printWarn << "Mass bin separator not a semicolon\n";
+				if( _Debug ){
+					printDebug << "Separator: '" << semicolon << "'\n";
+				}
+			}
+		}
+	}
+	else{
+		Succesful = false;
+		printErr << "No valid line could be found anymore, but the mass bin was expected\n";
+	}
+
+	semicolon = 0;
+	if( CompassPwaFileBase::GetNextValidLine( File, LineStream ) ){
+		// Line example between "": "0.00000;1.00000"
+		LineStream >> _tBinStart >> semicolon >> _tBinEnd;
+
+		if( LineStream.fail() ){
+			printErr << "t' bin not valid \n";
+			Succesful = false;
+			if( _Debug ){
+				printDebug << "t 'Bin: "<< LineStream.str() << '\n';
+			}
+		}
+		else{
+			if( !LineStream.eof() ){
+				printWarn << "t' bin entry longer than expected\n";
+				if( _Debug ){
+					printDebug << "t 'Bin: "<< LineStream.str() << '\n';
+				}
+			}
+			if( semicolon != ';' ){
+				printWarn << "t' bin separator not a semicolon\n";
+				if( _Debug ){
+					printDebug << "Separator: '" << semicolon << "'\n";
+				}
+			}
+		}
+	}
+	else{
+		Succesful = false;
+		printErr << "No valid line could be found anymore, but the t' bin was expected\n";
+	}
+
+	return Succesful;
+}
 
 // Reads the next line of File which has no "//" as the first two letters and returns true if it was successful
 bool CompassPwaFileBase::GetNextValidLine( istream& File, string& Line ){

@@ -56,7 +56,26 @@ CompassPwaFileNormIntegrals::CompassPwaFileNormIntegrals(){
 CompassPwaFileNormIntegrals::~CompassPwaFileNormIntegrals(){
 }
 
-// Reads the rest of the information from a norm integral file stream and returns 0 if no error occurred or a negative number as the error code
+// Fills the position in the integral matrix of the wave with name WaveName into Destination and returns false if WaveName could not be found
+bool CompassPwaFileNormIntegrals::Position( unsigned int &Destination, const std::string &WaveName ) const{
+	map<const string,const unsigned int>::const_iterator it = _WaveNameIndexMap.find( WaveName );
+	if( it != _WaveNameIndexMap.end() ){
+		Destination = it->second;
+		return true;
+	}
+	else{
+		printErr << "WaveName \"" << WaveName << "\" could not be found in normalization integral for mass bin (" << MassBinStart() << '-' << MassBinEnd() <<")\n";
+		return false;
+	}
+}
+// Returns the normalization integral at position (i,j) in the matrix
+const std::complex<double> CompassPwaFileNormIntegrals::NormIntegral( unsigned int i, unsigned int j) const{
+	TComplex tmp = _NormIntegrals.get( i, j );
+
+	return complex<double>( tmp.Re(), tmp.Im() );
+}
+
+// Reads the rest of the information from a norm integral file stream and returns whether it was successful
 bool CompassPwaFileNormIntegrals::ReadIn( std::istream& File ){
 	bool Succesful = true; // Is set to false if an error occurs and returned at the end of the function
 	stringstream LineStream;
@@ -175,6 +194,8 @@ bool CompassPwaFileNormIntegrals::ReadIn( std::istream& File ){
 
 // Prints all important variables of class
 ostream& CompassPwaFileNormIntegrals::Print( ostream& Out ) const{
+	CompassPwaFileBase::Print( Out );
+
 	Out << "Number of waves: " << _WaveNameIndexMap.size() << '\n';
 
 	for ( map<const string,const unsigned int>::const_iterator it = _WaveNameIndexMap.begin() ; it != _WaveNameIndexMap.end(); it++ ){
@@ -187,7 +208,43 @@ ostream& CompassPwaFileNormIntegrals::Print( ostream& Out ) const{
 }
 
 // Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
-/*TCMatrix& CompassPwaFileNormIntegrals::Combine( TCMatrix& Destination, const std::map<const double, const CompassPwaFileObject *>& Integrals, const std::vector<std::string>& WaveNames, const double MassBinStart, const double MassBinEnd ){
-	return Destination;
+bool CompassPwaFileNormIntegrals::Combine( TCMatrix& Destination, const deque<const CompassPwaFileNormIntegrals *>& Integrals, const vector<string>& WaveNames, double MassBinStart, double MassBinEnd ){
+	bool Succesful = true;
+
+	// For now it just returns the integral in the middle of the mass bin specified
+	unsigned int middle = Integrals.size() / 2;
+
+	// First the WaveNames are mapped to their positions
+	if( _Debug ){
+		printDebug << "Map position to wave names\n";
+	}
+	unsigned int PositionMap[ WaveNames.size() ];
+	for( unsigned int i = 0; i < WaveNames.size(); ++i ){
+		Succesful = Succesful && Integrals[middle]->Position( PositionMap[i], WaveNames[i] );
+	}
+
+	// And then Destination is filled
+	if( _Debug ){
+		printDebug << "Map\n";
+		for( unsigned int i = 0; i < WaveNames.size(); ++i ){
+			printDebug << i << ':' << PositionMap[i] << '\n';
+		}
+		printDebug << "Fill matrix\n";
+	}
+
+	if( Succesful ){
+		Destination.ResizeTo( WaveNames.size(),WaveNames.size() );
+		for( unsigned int i = 0; i < WaveNames.size(); ++i ){
+			for( unsigned int j = 0; j < WaveNames.size(); ++j ){
+				Destination.set( i, j, Integrals[middle]->NormIntegral( PositionMap[i], PositionMap[j] ) );
+			}
+		}
+	}
+
+	if( _Debug ){
+		printDebug << "Matrix filled\n";
+	}
+
+	return Succesful;
 }
-*/
+

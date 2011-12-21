@@ -38,9 +38,12 @@
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
+	${uprootedBoost_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
+	${ROOT_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -52,14 +55,17 @@ set(SOURCES
 	CompassPwaFileNormIntegrals.cc
 	CompassPwaFilePhaseSpaceIntegrals.cc
 	CompassPwaFileObject.cc
+	CompassPwaFileLoader.cc
 	)
 
 # library
 set(THIS_LIB "RootPwaPlotGui")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
+	"${BOOST_LIBS}"
 	"${ROOT_LIBS}"
 	"${ROOTPWA_LIBS}"
 	)
 
 # executables
-make_executable(TestCompassPwaFileparsers     TestCompassPwaFileparsers.cc   ${THIS_LIB}  )
+make_executable(TestCompassPwaFileparsers     main_TestCompassPwaFileparsers.cc   ${THIS_LIB}  )
+make_executable(CompassPwaFilesToRoot     main_CompassPwaFilesToRootTree.cc   ${THIS_LIB}  )

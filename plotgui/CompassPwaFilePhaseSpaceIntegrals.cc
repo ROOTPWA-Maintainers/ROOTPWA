@@ -56,6 +56,19 @@ CompassPwaFilePhaseSpaceIntegrals::CompassPwaFilePhaseSpaceIntegrals(){
 CompassPwaFilePhaseSpaceIntegrals::~CompassPwaFilePhaseSpaceIntegrals(){
 }
 
+// Fills the PhaseSpaceIntegral of the wave with name WaveName into Destination and returns false if WaveName could not be found
+bool CompassPwaFilePhaseSpaceIntegrals::PhaseSpaceIntegral( double &Destination, const std::string &WaveName ) const{
+	map<const string,const double>::const_iterator it = _PhaseSpaceIntegralsMap.find( WaveName );
+	if( it != _PhaseSpaceIntegralsMap.end() ){
+		Destination = it->second;
+		return true;
+	}
+	else{
+		printErr << "WaveName \"" << WaveName << "\" could not be found in phase space integral for mass bin (" << MassBinStart() << '-' << MassBinEnd() <<")\n";
+		return false;
+	}
+}
+
 // Reads the rest of the information from a phase space integral file stream and returns 0 if no error occurred or a negative number as the error code
 bool CompassPwaFilePhaseSpaceIntegrals::ReadIn( std::istream& File ){
 	bool Succesful = true; // Is set to false if an error occurs and returned at the end of the function
@@ -145,6 +158,8 @@ bool CompassPwaFilePhaseSpaceIntegrals::ReadIn( std::istream& File ){
 
 // Prints all important variables of class
 ostream& CompassPwaFilePhaseSpaceIntegrals::Print( ostream& Out ) const{
+	CompassPwaFileBase::Print( Out );
+
 	Out << "Number of waves: " << _PhaseSpaceIntegralsMap.size() << '\n';
 
 	for ( map<const string,const double>::const_iterator it = _PhaseSpaceIntegralsMap.begin() ; it != _PhaseSpaceIntegralsMap.end(); it++ ){
@@ -152,4 +167,20 @@ ostream& CompassPwaFilePhaseSpaceIntegrals::Print( ostream& Out ) const{
 	}
 
 	return Out;
+}
+
+// Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
+bool CompassPwaFilePhaseSpaceIntegrals::Combine( vector<double>& Destination, const deque<const CompassPwaFilePhaseSpaceIntegrals *>& Integrals, const vector<string>& WaveNames, double MassBinStart, double MassBinEnd ){
+	bool Succesful = true;
+
+	Destination.clear();
+	Destination.resize( WaveNames.size() );
+
+	// For now it just returns the integral in the middle of the mass bin specified
+	unsigned int middle = Integrals.size() / 2;
+	for( unsigned int i = 0; i < WaveNames.size(); ++i ){
+		Succesful = Succesful && Integrals[middle]->PhaseSpaceIntegral( Destination[i], WaveNames[i] );
+	}
+
+	return Succesful;
 }
