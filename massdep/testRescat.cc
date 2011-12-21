@@ -507,7 +507,7 @@ main(int argc, char** argv)
 
 
 
-  unsigned int nm=75;
+  unsigned int nm=1;//75;
   double m0=0.5;
   double dm=0.02;
   vector<double> masses(nm);

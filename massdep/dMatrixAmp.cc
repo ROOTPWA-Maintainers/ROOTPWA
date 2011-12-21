@@ -79,7 +79,7 @@ dMatrixPole::gammaTot(double m){
 cnum 
 dMatrixPole::M2(double m){
    double m2=fm*fm;
-   if(fBkg)return cnum(m2);
+   if(fBkg)return cnum(m2,0);
    else return cnum(m2,-gammaTot(m));
 }
 
@@ -112,16 +112,19 @@ dMatrixAmp::Setup( const rmatrix& mbare,
 	     const rmatrix& gamma, 
 	     const cmatrix& production,
 	     const rmatrix& mixing){
-   unsigned int np=nPoles();
-   unsigned int nc=nChannels();
-   fprod=production;
+  unsigned int np=nPoles();
+  unsigned int nb=nBkg();
+  unsigned int nc=nChannels();
+  fprod=production;
    fmixing=mixing;
-   for(unsigned int ip=0;ip<np;++ip){
+   for(unsigned int ip=0;ip<np+nb;++ip){
      cerr << "ip="<< ip << endl;
-     fPoles[ip].setMass(mbare(0,ip));
-     matrix_range<const rmatrix> gam(gamma,range(ip,ip+1),range(0,nc));
-      cerr << gam << endl;
-      fPoles[ip].setChannels(&fChannels,gam);
+     if(ip<np)fPoles[ip].setMass(mbare(0,ip));
+     else fBkg[ip-np].setMass(mbare(0,ip));
+       matrix_range<const rmatrix> gam(gamma,range(ip,ip+1),range(0,nc));
+       cerr << gam << endl;
+     if(ip<np)fPoles[ip].setChannels(&fChannels,gam);
+     else fBkg[ip-np].setChannels(&fChannels,gam);
    }// end loop over poles
  }
 
@@ -137,7 +140,7 @@ dMatrixAmp::amp(double m, unsigned int channel){
     for(unsigned int j=0;j<n;++j){
       if(i==j){
 	if(i<nPoles())Dinv(i,j)=getPole(i).M2(m)-s;
-	else Dinv(i,j)=getBkg(i-nPoles()).M2(m);
+	else Dinv(i,j)=-getBkg(i-nPoles()).M2(m);
       } // end setting 
       else Dinv(i,j)=-fmixing(i,j); // no mixing at the moment
     }

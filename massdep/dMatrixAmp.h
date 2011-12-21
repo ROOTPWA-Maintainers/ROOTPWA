@@ -72,7 +72,7 @@ typedef ublas::matrix<double> rmatrix;
 
 class dMatrixPole {
  public:
-  dMatrixPole(){}
+ dMatrixPole(): fBkg(false){}
  dMatrixPole(bool bkg): fBkg(bkg){}
  dMatrixPole(double m, cnum prodAmp):fm(m), fgProd(prodAmp) {}
   ~dMatrixPole(){}
