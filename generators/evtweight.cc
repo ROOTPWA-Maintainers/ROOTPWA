@@ -311,7 +311,7 @@ int main(int argc, char** argv)
     //cerr << wavename << endl;
 
     
-    if(wavename.Contains("flat") || wavename.Length()<2)continue;
+    if(wavename.Length()<2)continue;
     if(RE==0 && IM==0)continue;
     // check if there is rank information
     if(wavename(0)=='V'){
@@ -323,11 +323,12 @@ int main(int argc, char** argv)
       //cerr << wavename(9) << endl;
       wavename=wavename(3,wavename.Length());
     }
-    else {
+    else if(wavename!="flat") {
       refl = wavename(6)=='+' ? 0 : 1;
       m= wavename(5)=='0' ? 0 : 1;
       //cerr << wavename(6) << endl;
     }
+   
 
     std::complex<double> amp(RE,IM);
     prodAmps[isamples]->push_back(amp);
@@ -355,8 +356,9 @@ int main(int argc, char** argv)
   // reserve vector beforehand because Branch
   // will take a pointer onto the elements
   //vector<double> weights((nmbWaves+1)*nmbWaves/2);
+  vector<double> weights(nmbWaves);
   //unsigned int wcount=0;
-  // create wheight vectors for individual intensities and interference terms
+  //create wheight vectors for individual intensities and interference terms
   // for(unsigned int iw=0;iw<nmbWaves;++iw){
   //   for(unsigned int jw=iw;jw<nmbWaves;++jw){
   //     TString weightname("W_");
@@ -366,7 +368,12 @@ int main(int argc, char** argv)
   //     outtree->Branch(weightname.Data(),&weights[wcount++],(weightname+"/d").Data());
   //   }
   // }
-
+  for(unsigned int iw=0;iw<nmbWaves;++iw){
+    TString weightname("Wintens_");
+    weightname+=waveNames[iw];
+    outtree->Branch(weightname.Data(),&weights[iw],(weightname+"/d").Data());
+  }
+   
    // create branches for the weights of the different model variants
    vector<double> modelweights(nsamples);
    for(unsigned int isamples=0;isamples<nsamples;++isamples){
@@ -427,19 +434,29 @@ int main(int argc, char** argv)
       vector<complex<double> > negm0amps(maxrank + 1); // negative refl vector m=0
       vector<complex<double> > negm1amps(maxrank + 1); // negative refl vector m=1
 
+      complex<double> flatamp;
+
       for (unsigned int iw = 0; iw < nmbWaves; ++iw) {
         complex<double> decayamp=decayamps[iw];
         string w1 = waveNames[iw];
+	if(w1=="flat"){
+	  flatamp=prodAmps[isample]->at(iw);
+	  continue;
+	}
         //cerr << w1 << "  " << decayamp << endl;
         double nrm = sqrt(normInt.val(w1, w1).real());
         complex<double> amp = decayamp / nrm * prodAmps[isample]->at(iw);
-        if (reflectivities[iw] == 1) {
+	if(isample==0){// fill wheights of individual waves
+	  weights[iw]=norm(amp);
+	}
+	
+        if (reflectivities[iw] == 0) {
           if (ms[iw] == 0)
             posm0amps[ranks[iw]] += amp;
           else if (ms[iw] == 1)
             posm1amps[ranks[iw]] += amp;
         }
-        else {
+        else if(reflectivities[iw] == 1) {
           if (ms[iw] == 0)
             negm0amps[ranks[iw]] += amp;
           else if (ms[iw] == 1)
@@ -458,6 +475,9 @@ int main(int argc, char** argv)
 	  // weight += norm(negm1amps[ir]);
         }
       }
+      // add flat
+      weight += norm(flatamp);
+
 
       if(isample==0)hWeights->Fill(weight);
       modelweights[isample]=weight;
