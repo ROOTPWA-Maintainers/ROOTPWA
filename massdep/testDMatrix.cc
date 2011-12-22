@@ -107,6 +107,29 @@ main(int argc, char** argv){
 
   cerr << " Setup sucessfull" << endl;
   
+  unsigned int nPar=damp.getNPar();
+  double par1[nPar];
+  double par2[nPar];
+  damp.getPar(par1);
+
+  cerr << "got par1" << endl;
+
+  damp.setPar(par1);
+
+  cerr << "set par1" << endl;
+
+  damp.getPar(par2);
+
+ cerr << "got par2" << endl;
+
+  for(unsigned int ip=0;ip<nPar;++ip){
+    if(par1[ip]!=par2[ip]){
+      cerr << "Problem with parameter setter/getter i=" << ip << endl;
+      cerr << "par1=" << par1[ip] << "    par2="<<par2[ip] << endl;
+    }
+  }
+
+
 
   unsigned int n=200;
   TGraph* gIntens=new TGraph(n);
