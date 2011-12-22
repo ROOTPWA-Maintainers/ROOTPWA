@@ -56,6 +56,7 @@ set(SOURCES
   #mcPhaseSpace.cc
 	cauchyIntegral.cc
 	dMatrixAmp.cc
+ dMatrixSet.cc
   #dynMassDep.cc
 	)
 
