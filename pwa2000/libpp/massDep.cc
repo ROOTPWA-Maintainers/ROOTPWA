@@ -13,7 +13,9 @@ complex<double> flat::val(const particle& p)
 
 complex<double> flatRange::val(const particle& p) 
 { 
+ 
  const double m      = ~(p.get4P ());
+ //cerr << m << "   " << mlow << "   " << mhigh << endl;
  if(m>mlow && m<mhigh) return complex<double>(1,0); 
  else return complex<double>(0,0); 
 }

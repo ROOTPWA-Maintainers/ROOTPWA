@@ -53,16 +53,21 @@ public:
 
 class flatRange : public massDep {
 public:
-  flatRange() { }
+ flatRange() : mlow(0),mhigh(10) { }
   virtual ~flatRange() { }
-  flatRange(const flatRange&) { }
-  flatRange* create() const { return new flatRange(); }
+  flatRange(const flatRange& b) {mlow=b.mlow;mhigh=b.mhigh; }
+
+  flatRange* create() const { std::cerr << "flatRange::create " << std::endl;return new flatRange(); }
   flatRange* clone() const { return new flatRange(*this); }
 
   virtual void print() { std::cout << "flatRange"; }
   std::complex<double> val(const particle& p);
 
-  void setRange(double low, double high){mlow=low*0.001;mhigh=high*0.001;}
+  void setRange(double low, double high){
+    //std::cerr << low << "..." << high << std::endl;
+    mlow=low*0.001;mhigh=high*0.001;
+    //std::cerr << mlow << "..." << mhigh << std::endl;
+  }
 
  private:
   double mlow;
