@@ -34,7 +34,13 @@
 #//
 #//-------------------------------------------------------------------------
 
-#set(THIS_INC "src")
+
+# this is just a quick-hack to get rid of the compiler warnings
+# "cast to pointer from integer of different size [-Werror=int-to-pointer-cast]"
+# that are triggered by casting IDs to pointers
+# !!!this should be fixed in the code!!!
+add_definitions(-Wno-int-to-pointer-cast)
+
 
 # set include directories
 set(INCLUDE_DIRECTORIES

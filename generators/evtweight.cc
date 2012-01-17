@@ -237,7 +237,7 @@ int main(int argc, char** argv)
     // and has the lowest likelihood
     unsigned int iBest = 0;
     double mBest = 0;
-    double loglike = 0;
+    //double loglike = 0;
     for (unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
       tree->GetEntry(i);
       if (fabs(binCenter - Bin->massBinCenter()) <= fabs(binCenter - mBest)) {
@@ -245,7 +245,7 @@ int main(int argc, char** argv)
 	//if (loglike == 0 || Bin->logLikelihood() < loglike){
 	  iBest = i;
 	  mBest = Bin->massBinCenter();
-	  loglike = Bin->logLikelihood();
+	  //loglike = Bin->logLikelihood();
 	  //}
 	  //else cerr << "This is a redundant fit" << endl;
       }

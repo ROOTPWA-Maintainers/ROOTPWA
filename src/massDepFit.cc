@@ -1075,7 +1075,7 @@ extern char* optarg;
    fitResult* rho=0;
    tree->SetBranchAddress(valBranchName.c_str(),&rho);
    vector<double> prevps(wl.size());
-   double mprev=0;
+   //double mprev=0;
    vector<double> prevphase(wl.size());
    double binwidth=30; // half binwidth
    //double w=2*30/10;
@@ -1258,7 +1258,7 @@ extern char* optarg;
 	 } // end loop over channels
        }// end loop over components
 
-     mprev=m;
+       //mprev=m;
    }
 
 

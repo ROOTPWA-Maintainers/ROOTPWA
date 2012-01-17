@@ -496,12 +496,12 @@ waveDescription::constructProductionVertex(const Setting&       rootKey,
 	}
 	if (_debug)
 		printDebug << "reading production vertex from '" << prodVertKey->getPath() << "':" << endl;
-	bool success = true;
+	//bool success = true;
 	// get vertex type
 	string vertType;
 	if (not prodVertKey->lookupValue("type", vertType)) {
 		printWarn << "cannot find 'type' entry in '" << prodVertKey->getPath() << "'" << endl;
-		success = false;
+		//success = false;
 	}
 	// create production vertex
 	prodVert = mapProductionVertexType(*prodVertKey, vertType, X);

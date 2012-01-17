@@ -67,8 +67,9 @@ main(int argc, char** argv){
     //getline(0);
     config.ignore(255,'\n');
   }
-  double weights[masses.size()];
-  for(unsigned int i=0;i<masses.size();++i)weights[i]=1;
+  //double weights[masses.size()];
+  //for(unsigned int i=0;i<masses.size();++i)
+  //  weights[i]=1;
 
 
   list<string> waves=integrals[0].files();
@@ -188,14 +189,14 @@ main(int argc, char** argv){
     double max=-1E6;
     double min=1E6;
     double mean=0;
-    double val[masses.size()];
+    //double val[masses.size()];
     for(unsigned int i=1; i<masses.size(); ++i){
       double x,y;
       g->GetPoint(i,x,y);
       if(max<y)max=y;
       if(min>y)min=y;
       mean+=y;
-      val[i]=y;
+      //val[i]=y;
     }
     mean/=(double)masses.size();
     //double range=(max-min)*0.2;
