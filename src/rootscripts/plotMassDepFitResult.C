@@ -17,6 +17,7 @@
 //#include "TQSender.h"
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <map>
 using namespace std;
@@ -134,9 +135,20 @@ TString parseTitle(TString l, unsigned int level=10){
 
 void plotNice(TVirtualPad* pad, TString plotDir=""){
    TCanvas* cpopup=(TCanvas*)gROOT->FindObjectAny("cpopup");
+   if(cpopup==NULL){
+     cerr << "Popupo Window not found!" << endl;
+     return;
+   }
+
     cpopup->Clear("");
     cpopup->cd();
     TVirtualPad* clone=(TVirtualPad*)pad->Clone();
+    if(clone==NULL){
+        cerr << "Cloning pad failed!" << endl;
+     return;
+    }
+
+
     clone->SetFillStyle(1);
     clone->Draw();
     clone->SetPad("pu","PopUp",0,0,1,1,0);
@@ -144,20 +156,40 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     cpopup->Update();
 
     TMultiGraph* gr=(TMultiGraph*)clone->GetListOfPrimitives()->At(1);
+    if(gr==NULL){
+        cerr << "Cloning graphs failed!" << endl;
+     return;
+    }
+
+    TH1* hx=(TH1*)clone->GetListOfPrimitives()->At(2);
+   
+
     TString title=gr->GetName();
 
     TGraphErrors* gdata=(TGraphErrors*)gr->GetListOfGraphs()->At(1);
-    double xmax=gr->GetXaxis()->GetXmax();
-    double xmin=gr->GetXaxis()->GetXmin();
+    if(gdata==NULL){
+        cerr << "Cloning data failed!" << endl;
+     return;
+    }
+
+
+    
+    double xmax=gdata->GetXaxis()->GetXmax();
+    double xmin=gdata->GetXaxis()->GetXmin();
     double max=-1E6;
     double min=1E6;
     TGraphErrors* fitg=(TGraphErrors*)gr->GetListOfGraphs()->At(2);
-    double* yp=fitg->GetY();
-    for(unsigned int i=0;i<fitg->GetN();++i){
-      if(max<yp[i])max=yp[i];
-      if(min>yp[i])min=yp[i];
+    if(fitg!=NULL){
+      double* yp=fitg->GetY();
+      for(unsigned int i=0;i<fitg->GetN();++i){
+	if(max<yp[i])max=yp[i];
+	if(min>yp[i])min=yp[i];
+      }
     }
-    
+    else {
+      max=0;
+      min=0;
+    }
     // this works nly for phase plots
     double ymin=0.5*(max+min)-220;
     double ymax=0.5*(max+min)+220;
@@ -190,14 +222,13 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
 	gsys->SetPointError(i,ex,ey);
       }
     }
-
+    hx->SetLineColor(kMagenta);
     clone->Draw();
     clone->cd();
     clone->GetFrame()->Draw();
     clone->SetBorderMode(0);
 
-
- 
+  
 
    
     double xcenter=0.5;
@@ -324,8 +355,8 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     fitNameL->SetTextSize(0.025);
     fitNameL->Draw();
 
-
     cpopup->UseCurrentStyle();
+    hx->SetLineColor(kMagenta);
     cpopup->Update();
 
     if(plotDir.Length()>1){
@@ -364,7 +395,7 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
 //------------------------------------------------------
 
 
-void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0, bool plotDataOnly=true ){
+void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0, bool plotDataOnly=true , TString xcheckfile="", bool onlyDiag=false){
   if(fittitle.Length()<=1)fitname=infilename;
   else fitname=fittitle;
   TFile* infile=TFile::Open(infilename);
@@ -381,9 +412,25 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 
     gROOT->ForceStyle();
 
+    TFile* xcheck=NULL;
+    ifstream xcheckmapfile;
+    map<TString,TString> xcheckmap;
+    if(xcheckfile.Length()>2){
+      cerr << "Found XCheck File " << xcheckfile << endl;
+      xcheck=TFile::Open(xcheckfile);
+      xcheckfile.ReplaceAll(".root",".map");
+      xcheckmapfile.open(xcheckfile.Data());
+      TString wave, key;
+      while(xcheckmapfile.good()){
+	xcheckmapfile >> wave >> key;
+	xcheckmap[wave]=key;
+	cerr << wave << " ---> " << key << endl;
+      }
+    }
+    
 
-  TList* keylist=infile->GetListOfKeys();
-  unsigned int num=keylist->GetEntries();
+    TList* keylist=infile->GetListOfKeys();
+    unsigned int num=keylist->GetEntries();
 
   // loop over keys and count waves
   vector<TString> wavenames;
@@ -432,7 +479,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	if(plotDataOnly)g->GetListOfGraphs()->RemoveAt(2); // remove fit
 	g->Draw("APC");
 
-	// rescale
+// rescale
 	TGraphErrors* datag=(TGraphErrors*)g->GetListOfGraphs()->At(1);
 	double* y=datag->GetY();
 	double max=-1E6;
@@ -454,7 +501,19 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	cRe->cd(jp+ip*nwaves+1);
 	g->Draw("APC");
 
-
+	if(xcheck!=NULL){
+	  // get key
+	  TString xcheckkey=xcheckmap[wavenames[ip]];
+	  cerr << "Adding xcheckplot " << xcheckkey << endl;
+	  if(xcheckkey!=""){
+	    TH1* xh=(TH1*)xcheck->Get(xcheckkey);
+	    if(xh!=NULL){
+	      xh->SetLineColor(kMagenta);
+	      xh->Draw("same");
+	    }
+	    else cerr << "Did not find xcheckPlot!" << endl;
+	  }
+	}
 	/*
 	TCanvas* c2=new TCanvas();
 	g->Draw("APC");
@@ -467,6 +526,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	plotNice(cRe->GetPad(jp+ip*nwaves+1),plotdir);
       }
       else {
+	if(onlyDiag)continue;
 	TString key="dPhi_"+wavenames[ip]+"---"+wavenames[jp];
 	TMultiGraph* g=(TMultiGraph*)infile->Get(key);
 	if(g!=NULL){
@@ -485,10 +545,12 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  double max=-1E6;
 	  double min=1E6;
 	  TGraphErrors* fitg=(TGraphErrors*)g->GetListOfGraphs()->At(2);
-	  double* y=fitg->GetY();
-	  for(unsigned int i=0;i<fitg->GetN();++i){
-	    if(max<y[i])max=y[i];
-	    if(min>y[i])min=y[i];
+	  if(fitg!=NULL){
+	    double* y=fitg->GetY();
+	    for(unsigned int i=0;i<fitg->GetN();++i){
+	      if(max<y[i])max=y[i];
+	      if(min>y[i])min=y[i];
+	    }
 	  }
 	  TAxis* a=g->GetYaxis();
 	  if(a!=NULL)a->SetRangeUser(0.5*(max+min)-220,0.5*(max+min)+220);
