@@ -65,6 +65,9 @@
 
 #include "libconfig.h++"
 
+#define MASSSCALE 0.001
+
+
 using namespace std;
 using namespace libconfig;
 using namespace ROOT::Math;
@@ -202,43 +205,7 @@ extern char* optarg;
     }
 
 
-  TF1* fPS=new TF1("fps","[1] * ((x-[0])/1000.)^5*(1.+((x-[0])/1000.)*[2])*exp(-[3]* ((x-[0])/1000.)^2)",900,3000);
-  fPS->SetParameter(0,698); //5pi threshold
-  fPS->SetParLimits(0,698,698);
-  fPS->SetParameter(1,308.7E-6); // normalization
-  fPS->SetParLimits(1,308.7E-6,308.7E-6); //
-  fPS->SetParameter(2,4.859); // correction
-  fPS->SetParLimits(2,4.859,4.859);
-  fPS->SetParameter(3,0); // Damping
-  fPS->SetParLimits(3,0,3);
-  //fPS->SetParameter(3,10); // Normalization
-  //TF1* fPS=new TF1("fps","1.",900,4000);
-
-
-  vector<TTree*> sysTrees;
-  if(sysPlotting){
-    // open files with fits  
-    for(int i=optind;i<argc;++i){
-      // open input file and get results tree
-      TFile* infile=TFile::Open(argv[i]);
-      if(infile==NULL){
-	cerr << "Systematics Input file " << inFileName <<" not found."<< endl;
-	return 1;
-      }
-      TTree* tree=(TTree*)infile->Get(valTreeName.c_str());
-      if(tree==NULL){
-	cerr << "Input tree " << valTreeName <<" not found."<< endl;
-	return 1;
-      }
-      sysTrees.push_back(tree);
-    }
-    printInfo << sysTrees.size() << " files for systematics found " << endl;
-  }// end if sysPlotting
-
-  printInfo << "creating and setting up likelihood function" << endl;
-  
-
-  // open input file and get results tree
+ // open input file and get results tree
   TFile* infile=TFile::Open(inFileName.c_str());
   if(infile==NULL){
     cerr << "Input file " << inFileName <<" not found."<< endl;
@@ -250,12 +217,66 @@ extern char* optarg;
     return 1;
   }
 
+
+  vector<TTree*> sysTrees;
+  if(sysPlotting){
+    // add this fit
+    sysTrees.push_back(tree);
+    // open files with fits  
+    for(int i=optind;i<argc;++i){
+      // open input file and get results tree
+      TFile* infile=TFile::Open(argv[i]);
+      if(infile==NULL){
+	cerr << "Systematics Input file " << inFileName <<" not found."<< endl;
+	return 1;
+      }
+      TTree* systree=(TTree*)infile->Get(valTreeName.c_str());
+      if(systree==NULL){
+	cerr << "Input tree " << valTreeName <<" not found."<< endl;
+	return 1;
+      }
+      sysTrees.push_back(systree);
+    }
+    printInfo << sysTrees.size() << " files for systematics found " << endl;
+  }// end if sysPlotting
+
+  printInfo << "creating and setting up likelihood function" << endl;
+  
+
+  
+
   // Setup Component Set (Resonances + Background)
   pwacompset compset;
   Config Conf;
   Conf.readFile(configFile.c_str());
   const Setting& root = Conf.getRoot();
   bool check=true;
+
+  // overall Phasespace
+  double gps=0;
+  double pslower=0;
+  double psupper=0;
+  if(Conf.exists("ps")){
+    const Setting &pss = root["ps"];
+    check&=pss.lookupValue("formfactor",gps);
+    check&=pss.lookupValue("lower",pslower);
+    check&=pss.lookupValue("upper",psupper);
+   
+  }
+ // add overall phase space
+ TF1* fPS=new TF1("fps","[1] * ((x-[0])/1000.)^5*(1.+((x-[0])/1000.)*[2])*exp(-[3]* ((x-[0])/1000.)^2)",900,3000);
+  fPS->SetParameter(0,698); //5pi threshold
+  fPS->SetParLimits(0,698,698);
+  fPS->SetParameter(1,308.7E-6); // normalization
+  fPS->SetParLimits(1,308.7E-6,308.7E-6); //
+  fPS->SetParameter(2,4.859); // correction
+  fPS->SetParLimits(2,4.859,4.859);
+  fPS->SetParameter(3,gps); // Damping
+  fPS->SetParLimits(3,pslower,psupper);
+  //fPS->SetParameter(3,10); // Normalization
+  //TF1* fPS=new TF1("fps","1.",900,4000);
+
+
   // Resonances
   if(Conf.exists("components.resonances")){
     const Setting &bws = root["components"]["resonances"];
@@ -382,9 +403,10 @@ extern char* optarg;
     }// end loop over background
   }// endif
 
+
  cout << "---------------------------------------------------------------------" << endl << endl;
-  // add phase space
-  compset.setPS(fPS);
+
+   compset.setPS(fPS);
 
 
  cout << "---------------------------------------------------------------------" << endl << endl;
@@ -576,7 +598,15 @@ extern char* optarg;
  ndfS=(int)numDOF;
  Setting& redchi2S=fitqualS["redchi2"];
  redchi2S=redChi2;
+ const Setting& psS= root["ps"];
+ Setting& ffS=psS["formfactor"];
+ ffS=(double)fPS->GetParameter(3);
 
+ if(nfreePS>0){
+   Setting& ffeS=psS["error"];
+   ffeS=minimizer->Errors()[minimizer->VariableIndex("PSP_0")];
+ }
+ 
   // Setup Component Set (Resonances + Background)
   const Setting& bws= root["components"]["resonances"];
   const Setting& bkgs= root["components"]["background"];
@@ -1075,15 +1105,15 @@ extern char* optarg;
    fitResult* rho=0;
    tree->SetBranchAddress(valBranchName.c_str(),&rho);
    vector<double> prevps(wl.size());
-   //double mprev=0;
+   double mprev=0;
    vector<double> prevphase(wl.size());
-   double binwidth=30; // half binwidth
+   double binwidth=MASSSCALE*30; // half binwidth
    //double w=2*30/10;
    for(unsigned int i=0;i<ndatabins;++i){
      tree->GetEntry(i);
-     double m=rho->massBinCenter();
+     double m=rho->massBinCenter()*MASSSCALE;
      //cout << "MASS: "<<m << endl;
-     double fsps=sqrt(fPS->Eval(m));
+     double fsps=sqrt(fPS->Eval(rho->massBinCenter()));
      unsigned int c=0;
      for(unsigned int iw=0; iw<wl.size();++iw){
 
@@ -1113,14 +1143,20 @@ extern char* optarg;
 	for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
 	  // get data
 	  fitResult* rhoSys=0;
-	  sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
-	  sysTrees[iSys]->GetEntry(i);
+	  if(iSys==0)rhoSys=rho;
+	  else {
+	    sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
+	    sysTrees[iSys]->GetEntry(i);
+	  }
 	  // check if waves are in fit
-	  if(rhoSys->waveIndex(wl[iw])==-1)continue;
+	  if(rhoSys->waveIndex(wl[iw])==-1){
+	    delete rhoSys;
+	    continue;
+	  }
 	  double myI=rhoSys->intensity(wl[iw].c_str());
 	  if(maxIntens<myI)maxIntens=myI;
 	  if(minIntens>myI)minIntens=myI;
-	  delete rhoSys;
+	  if(iSys>0)delete rhoSys;
 	} // end loop over systematic trees
 	
 	intenssysgraphs[iw]->SetPoint(i,m,(maxIntens+minIntens)*0.5);
@@ -1168,7 +1204,7 @@ extern char* optarg;
 	 double fitphase=compset.phase(wl[iw],wl[iw2],m)*TMath::RadToDeg();
 
 	 if(sysPlotting){
-	   //cout << "start sysplotting" << endl;
+	   //cerr << "start sysplotting" << endl;
 	   // loop over systematics files
 	   double maxPhase=-10000;
 	   double minPhase=10000;
@@ -1178,15 +1214,24 @@ extern char* optarg;
 	   double minIm=10000000;
 	  
 	   for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
-	     // cerr << iSys;
+	     //cerr << iSys;
 	   // get data
 	     fitResult* rhoSys=0;
-	     sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
-	     sysTrees[iSys]->GetEntry(i);
-	        
+	     if(iSys==0)rhoSys=rho;
+	     else {
+	       sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
+	       if(i<sysTrees[iSys]->GetEntries()) sysTrees[iSys]->GetEntry(i);
+	       else{
+		 delete rhoSys;
+		 continue;
+	       }
+	     }
 
 	     // check if waves are in fit
-	     if(rhoSys==NULL || rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1)continue;
+	     if(rhoSys==NULL || rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1){ 
+	       delete rhoSys;
+	       continue;
+	     }
 	     // get correct wave indices!!!
 	     unsigned int wi1Sys=rhoSys->waveIndex(wl[iw].c_str());
 	     unsigned int wi2Sys=rhoSys->waveIndex(wl[iw2].c_str());
@@ -1213,9 +1258,10 @@ extern char* optarg;
 	     if(minRe>r.real())minRe=r.real();
 	     if(maxIm<r.imag())maxIm=r.imag();
 	     if(minIm>r.imag())minIm=r.imag();
-	     delete rhoSys; rhoSys=0;
+	     if(iSys>0)delete rhoSys;
+	     rhoSys=0;
 	   }// end loop over sys trees
-	   //cerr << "loop over systrees finished" << endl;
+	   // cerr << "loop over systrees finished" << endl;
 
 	   phasesysgraphs[c]->SetPoint(i,m,(maxPhase+minPhase)*0.5);
 	   phasesysgraphs[c]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
@@ -1258,9 +1304,10 @@ extern char* optarg;
 	 } // end loop over channels
        }// end loop over components
 
-       //mprev=m;
+       cerr << "Finished plotting mass-bin " << m << endl;  
+     mprev=m;
    }
-
+   cerr << "Finished Loop Over DataBins" << endl;
 
 
 
