@@ -62,7 +62,7 @@
 #include "fitResult.h"
 #include "pwacomponent.h"
 #include "massDepFitLikeli.h"
-
+#include "TStopwatch.h"
 #include "libconfig.h++"
 
 #define MASSSCALE 0.001
@@ -81,7 +81,7 @@ usage(const string& progName,
   cerr << "usage:" << endl
        << progName
        << " -c configfile -i inputfile [-o outfile -l # -u #"
-       << "  -M minimizer [-m algorithm] -t # -q -h] [-S fitResultFiles]" << endl
+       << "  -M minimizer [-m algorithm] -t # -q -h -P -C] [-S fitResultFiles]" << endl
        << "    where:" << endl
        << "        -c file    path to config File" << endl
        << "        -i file    path to input file" << endl
@@ -101,6 +101,7 @@ usage(const string& progName,
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
        << "        -P         plotting only - no fit" << endl
+       << "        -C         switch OFF covariances between real and imag part" << endl
        << "        -S files   Systematic error plotting. give list of files" << endl
 
        << endl;
@@ -126,6 +127,86 @@ getPhaseSpace(TTree* tree, TF1* fsps,const std::string& wave){
   return graph;
 }
 
+// changes status of variables (fixed/released)
+// fixed values from config remain fixed
+// parameters are taken from current status of fitter
+// level 
+// 0 = release only couplings
+// 1 = release couplings and masses
+// 2 = release couplings, masses and widths
+void releasePars(Minimizer* minimizer, const pwacompset& compset, 
+		 const vector<string>& anchorwave_reso,
+		 const vector<string>& anchorwave_channel,
+		 int level){
+  // copy state
+  unsigned int npar=minimizer->NDim();
+  double par[npar];
+  for(unsigned int i=0;i<npar;++i)par[i]=minimizer->X()[i];
+  minimizer->Clear();
+
+  unsigned int parcount=0;
+  for(unsigned int ic=0;ic<compset.n();++ic){
+    const pwacomponent& comp=*compset[ic];
+    TString name(comp.name());
+    double mmin,mmax,gmin,gmax;
+    comp.getLimits(mmin,mmax,gmin,gmax);
+    if(comp.fixM() || level==0)minimizer->SetFixedVariable(parcount,
+					       (name+"_M").Data() ,
+					       par[parcount]);
+    else minimizer->SetLimitedVariable(parcount, 
+				       (name+"_M").Data(), 
+				       par[parcount], 
+				       5.0,
+				       mmin,mmax);
+    if(level==0 && !comp.fixM()) printInfo << minimizer->VariableName(parcount) 
+			   << " fixed to " << par[parcount] << endl;
+    ++parcount;
+    if(comp.fixGamma() || level < 2)minimizer->SetFixedVariable(parcount,
+						   (name+"_Gamma").Data() ,
+						    par[parcount]);
+    else minimizer->SetLimitedVariable(parcount, 
+				       (name+"_Gamma").Data(), 
+				       par[parcount], 
+				       5.0,
+				       gmin,gmax);
+    if(level<2 && !comp.fixGamma()) printInfo << minimizer->VariableName(parcount) 
+			  << " fixed to " << par[parcount] << endl;
+    ++parcount;
+
+    std::map<std::string,pwachannel >::const_iterator it=comp.channels().begin();
+    while(it!=comp.channels().end()){
+      minimizer->SetVariable(parcount,(name + "_ReC" + it->first).Data() , par[parcount], 10.0);
+      ++parcount;
+      // fix one phase
+      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->first)!=anchorwave_channel.end()){
+	minimizer->SetFixedVariable(parcount,(name + "_ImC" + it->first).Data() , 0.0);
+      }
+      else {minimizer->SetVariable(parcount,(name + "_ImC" + it->first).Data() , par[parcount], 0.10);}
+      ++parcount;
+      ++it;
+    } // end loop over channels
+  }// end loop over components
+  // set phase space
+  unsigned int nfreePS=compset.nFreePSPar();
+  for(unsigned int ifreePS=0;ifreePS<nfreePS;++ifreePS){
+    double val,lower,upper;
+    val=par[parcount];
+    compset.getFreePSLimits(ifreePS,lower,upper);
+    TString name("PSP_"); name+=+ifreePS;
+    minimizer->SetLimitedVariable(parcount, 
+				  name.Data(), 
+				  val, 0.0001 ,lower,upper);
+  }
+
+
+ 
+  const unsigned int nfree=minimizer->NFree();
+  printInfo <<  nfree  << " Free Parameters in fit" << endl;
+
+
+}
+
+
 
 int
 main(int    argc,
@@ -143,6 +224,7 @@ main(int    argc,
   const bool         runMinos            = false;
   bool               onlyPlotting        = false;
   bool               sysPlotting         = false;
+  bool               doCov               = true;
 
   //unsigned int maxParNameLength = 20;       // maximum length of parameter names
 //   int                startValSeed        = 1234567;
@@ -164,7 +246,7 @@ extern char* optarg;
  extern int optind;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qhPS")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qhPCS")) != -1)
     switch (ca) {
     case 'c':
       configFile = optarg;
@@ -198,6 +280,9 @@ extern char* optarg;
       break;
     case 'P':
       onlyPlotting=true;
+      break;
+    case 'C':
+      doCov=false;
       break;
     case 'S':
       sysPlotting=true;
@@ -241,7 +326,7 @@ extern char* optarg;
   }// end if sysPlotting
 
   printInfo << "creating and setting up likelihood function" << endl;
-  
+  printInfo << "doCovariances = " << doCov << endl;
 
   
 
@@ -335,6 +420,7 @@ extern char* optarg;
 	return 1;
       }
       pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
+      cerr << "created component" << endl;
       comp1->setLimits(ml,mu,wl,wu);
       comp1->setFixed(mfix,wfix);
       if(wdyn==0)comp1->setConstWidth();
@@ -407,7 +493,7 @@ extern char* optarg;
  cout << "---------------------------------------------------------------------" << endl << endl;
 
    compset.setPS(fPS);
-
+   compset.doMapping();
 
  cout << "---------------------------------------------------------------------" << endl << endl;
 
@@ -437,9 +523,19 @@ extern char* optarg;
  
 
   massDepFitLikeli L;
-  L.init(tree,fPS,&compset,massBinMin,massBinMax);
+  L.init(tree,fPS,&compset,massBinMin,massBinMax,doCov);
 
-  const unsigned int nmbPar  = L.NDim();
+   const unsigned int nmbPar  = L.NDim();
+  // double par[nmbPar];
+  // for(unsigned int ip=0;ip<nmbPar;++ip)par[ip]=1.4;
+
+
+  // TStopwatch watch;
+  // L.DoEval(par);
+  // watch.Stop();
+
+  
+  //printInfo << "TESTCALL TO LIKELIHOOD takes " <<  maxPrecisionAlign(watch.CpuTime()) << " s" << endl;
   
   printInfo << nmbPar << " Parameters in fit" << endl;
  
@@ -514,12 +610,33 @@ extern char* optarg;
   double chi2=0;
   if(onlyPlotting) printInfo << "Plotting mode, skipping minimzation!" << endl;
   else {
-    printInfo << "performing minimization." << endl;
+    printInfo << "performing minimization. MASSES AND WIDTHS FIXED" << endl;
     
     minimizer->SetMaxIterations(maxNmbOfIterations);
     minimizer->SetMaxFunctionCalls(maxNmbOfIterations*5);
     minimizer->SetTolerance    (minimizerTolerance);
+    // only do couplings
+    TStopwatch fitW;
+    // releasePars(minimizer,compset,anchorwave_reso,anchorwave_channel,0);
     bool success = minimizer->Minimize();
+    if(!success)printWarn << "minimization failed." << endl;
+    else printInfo << "minimization successful." << endl;
+    printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
+    //release masses
+    releasePars(minimizer,compset,anchorwave_reso,anchorwave_channel,1);
+    printInfo << "performing minimization. MASSES RELEASED" << endl;
+    fitW.Start();
+    success &= minimizer->Minimize();
+    if(!success)printWarn << "minimization failed." << endl;
+    else printInfo << "minimization successful." << endl;
+    printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
+    //release widths
+    releasePars(minimizer,compset,anchorwave_reso,anchorwave_channel,2);
+    printInfo << "performing minimization. ALL RELEASED" << endl;
+    fitW.Start();
+    success &= minimizer->Minimize();
+    printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
+
     const double* par=minimizer->X();
     compset.setPar(par);
     cerr << compset << endl;
@@ -1111,7 +1228,8 @@ extern char* optarg;
    //double w=2*30/10;
    for(unsigned int i=0;i<ndatabins;++i){
      tree->GetEntry(i);
-     double m=rho->massBinCenter()*MASSSCALE;
+     double m=rho->massBinCenter();
+     double mScaled=m*MASSSCALE;
      //cout << "MASS: "<<m << endl;
      double fsps=sqrt(fPS->Eval(rho->massBinCenter()));
      unsigned int c=0;
@@ -1121,9 +1239,9 @@ extern char* optarg;
 
        double ps=rho->phaseSpaceIntegral(wl[iw].c_str())*fsps;
     
-       datagraphs[iw]->SetPoint(i,m,rho->intensity(wl[iw].c_str()));
+       datagraphs[iw]->SetPoint(i,mScaled,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
-      fitgraphs[iw]->SetPoint(i,m,compset.intensity(wl[iw],m));      
+      fitgraphs[iw]->SetPoint(i,mScaled,compset.intensity(wl[iw],m));      
       double absphase=compset.phase(wl[iw],m)*TMath::RadToDeg();
       if(i>0){
 	double absp=absphase+360;
@@ -1136,7 +1254,7 @@ extern char* optarg;
 	}
       }
       prevphase[iw]=absphase;
-      absphasegraphs[iw]->SetPoint(i,m,absphase);      
+      absphasegraphs[iw]->SetPoint(i,mScaled,absphase);      
       if(sysPlotting){
 	double maxIntens=-10000000;
 	double minIntens=10000000;
@@ -1148,18 +1266,24 @@ extern char* optarg;
 	    sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
 	    sysTrees[iSys]->GetEntry(i);
 	  }
+// rename one wave
+	  string mywave1=wl[iw];
+	 
+
+	  if(mywave1=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave1="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
+	  
 	  // check if waves are in fit
-	  if(rhoSys->waveIndex(wl[iw])==-1){
+	  if(rhoSys->waveIndex(mywave1)==-1){
 	    delete rhoSys;
 	    continue;
 	  }
-	  double myI=rhoSys->intensity(wl[iw].c_str());
+	  double myI=rhoSys->intensity(mywave1.c_str());
 	  if(maxIntens<myI)maxIntens=myI;
 	  if(minIntens>myI)minIntens=myI;
 	  if(iSys>0)delete rhoSys;
 	} // end loop over systematic trees
 	
-	intenssysgraphs[iw]->SetPoint(i,m,(maxIntens+minIntens)*0.5);
+	intenssysgraphs[iw]->SetPoint(i,mScaled,(maxIntens+minIntens)*0.5);
 	intenssysgraphs[iw]->SetPointError(i,binwidth,(maxIntens-minIntens)*0.5);
       }
       
@@ -1176,13 +1300,13 @@ extern char* optarg;
 	 TMatrixT<double> rCov=rho->spinDensityMatrixElemCov(wi1,wi2);
 
 	 realdatagraphs[c]->SetPoint(i,
-				     rho->massBinCenter(),
+				     mScaled,
 				     r.real());
 	 realdatagraphs[c]->SetPointError(i,
 			    binwidth,
 			    sqrt(rCov[0][0]));
 	 imagdatagraphs[c]->SetPoint(i,
-		       rho->massBinCenter(),
+		       mScaled,
 		       r.imag());
      
 	 imagdatagraphs[c]->SetPointError(i,
@@ -1192,11 +1316,11 @@ extern char* optarg;
 
 	 double dataphi=rho->phase(wl[iw].c_str(),wl[iw2].c_str());
 
-	 phasedatagraphs[c]->SetPoint(i,m,dataphi);
+	 phasedatagraphs[c]->SetPoint(i,mScaled,dataphi);
 	   
 	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
 					     wl[iw2].c_str())/TMath::RadToDeg());
-	 phase2d[c]->SetPoint(i,v.X(),v.Y(),m);
+	 phase2d[c]->SetPoint(i,v.X(),v.Y(),mScaled);
 
 	 phasedatagraphs[c]->SetPointError(i,binwidth,
 					   rho->phaseErr(wl[iw].c_str(),
@@ -1226,17 +1350,23 @@ extern char* optarg;
 		 continue;
 	       }
 	     }
+	     // rename one wave
+	     string mywave1=wl[iw];
+	     string mywave2=wl[iw2];
 
+if(mywave1=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave1="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
+if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave2="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
+	     
 	     // check if waves are in fit
-	     if(rhoSys==NULL || rhoSys->waveIndex(wl[iw])==-1 || rhoSys->waveIndex(wl[iw2]) ==-1){ 
+ if(rhoSys==NULL || rhoSys->waveIndex(mywave1.c_str())==-1 || rhoSys->waveIndex(mywave2.c_str()) ==-1){ 
 	       delete rhoSys;
 	       continue;
 	     }
 	     // get correct wave indices!!!
-	     unsigned int wi1Sys=rhoSys->waveIndex(wl[iw].c_str());
-	     unsigned int wi2Sys=rhoSys->waveIndex(wl[iw2].c_str());
+	     unsigned int wi1Sys=rhoSys->waveIndex(mywave1.c_str());
+	     unsigned int wi2Sys=rhoSys->waveIndex(mywave2.c_str());
 
-	     double myphi=rhoSys->phase(wl[iw].c_str(),wl[iw2].c_str());
+	     double myphi=rhoSys->phase(mywave1.c_str(),mywave2.c_str());
 	     double myphiplus=myphi+360;
 	     double myphiminus=myphi-360;
 	     // translate by 2pi to get closest solution to fit
@@ -1263,24 +1393,24 @@ extern char* optarg;
 	   }// end loop over sys trees
 	   // cerr << "loop over systrees finished" << endl;
 
-	   phasesysgraphs[c]->SetPoint(i,m,(maxPhase+minPhase)*0.5);
+	   phasesysgraphs[c]->SetPoint(i,mScaled,(maxPhase+minPhase)*0.5);
 	   phasesysgraphs[c]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
 	   
-	   realsysgraphs[c]->SetPoint(i,m,(maxRe+minRe)*0.5);
+	   realsysgraphs[c]->SetPoint(i,mScaled,(maxRe+minRe)*0.5);
 	   realsysgraphs[c]->SetPointError(i,binwidth,(maxRe-minRe)*0.5);
-	   imagsysgraphs[c]->SetPoint(i,m,(maxIm+minIm)*0.5);
+	   imagsysgraphs[c]->SetPoint(i,mScaled,(maxIm+minIm)*0.5);
 	   imagsysgraphs[c]->SetPointError(i,binwidth,(maxIm-minIm)*0.5);
 	
 
 	 }// end if sysplotting
-	 //cout << "sysplotting finished" << endl;
+	 //cerr << "sysplotting finished" << endl;
 
-	 phasefitgraphs[c]->SetPoint(i,m,fitphase);
+	 phasefitgraphs[c]->SetPoint(i,mScaled,fitphase);
 
 	 complex<double> fitval=compset.overlap(wl[iw],wl[iw2],m);
 
-	 realfitgraphs[c]->SetPoint(i,m,fitval.real());
-	 imagfitgraphs[c]->SetPoint(i,m,fitval.imag());
+	 realfitgraphs[c]->SetPoint(i,mScaled,fitval.real());
+	 imagfitgraphs[c]->SetPoint(i,mScaled,fitval.imag());
 
 
 	 c++;
@@ -1290,7 +1420,7 @@ extern char* optarg;
        
         
      } // end loop over waves
-
+     //cerr << "outer loop over waves finished" << endl;
      // loop over components to fill individual graphs
      unsigned int compcount=0;
        for(unsigned int ic=0;ic<compset.n();++ic){
@@ -1298,7 +1428,7 @@ extern char* optarg;
 	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
 	 while(it!=c->channels().end()){
 	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*compset.ps(m);
-	   compgraphs[compcount]->SetPoint(i,m,I);
+	   compgraphs[compcount]->SetPoint(i,mScaled,I);
 	   ++compcount;
 	   ++it;
 	 } // end loop over channels
