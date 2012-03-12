@@ -39,8 +39,10 @@
 # "cast to pointer from integer of different size [-Werror=int-to-pointer-cast]"
 # that are triggered by casting IDs to pointers
 # !!!this should be fixed in the code!!!
-add_definitions(-Wno-int-to-pointer-cast)
-
+# unfortunately gcc 4.4.5 gives an error using -Wno-int-to-pointer-cast
+if(CMAKE_COMPILER_IS_GNUCXX AND GCC_VERSION VERSION_GREATER "4.6.0")
+	add_definitions(-Wno-int-to-pointer-cast)
+endif()
 
 # set include directories
 set(INCLUDE_DIRECTORIES

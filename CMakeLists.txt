@@ -92,10 +92,19 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
-# workaround for bug concerning -march=native switch in gcc 4.2.1 shipped with MacOS 10.7
-# see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33144
+if(NOT CMAKE_COMPILER_IS_GNUCXX)
+	# use gcc instead of llvm compiler on MacOS 10.7
+	if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin" AND ${CMAKE_HOST_SYSTEM_VERSION} STREQUAL "11.3.0")
+		message(STATUS "Detected MacOS 10.7: using gcc instead of llvm compiler")
+		set(CMAKE_C_COMPILER gcc-4.2)
+		set(CMAKE_CXX_COMPILER g++-4.2)
+		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
+	endif()
+endif()
 if(CMAKE_COMPILER_IS_GNUCXX)
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+	# workaround for bug concerning -march=native switch in gcc 4.2.1 shipped with MacOS 10.7
+	# see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33144
 	if(GCC_VERSION VERSION_EQUAL "4.2.1")
 		message(STATUS "Detected gcc version 4.2.1; -march=native switch is disabled because of gcc bug")
 		set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -311,7 +320,7 @@ endif()
 find_package(Doxygen)
 set_feature_info(Doxygen "documentation generator" "http://www.doxygen.org/" "optional")
 if(NOT DOXYGEN_FOUND)
-  message(WARNING "Cannot find Doxygen. No documentation will be generated.")
+  message(WARNING "Cannot find Doxygen. Documentation cannot be generated.")
 else()
   set(DOXYGEN_TARGET  "doxygen")
   set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
