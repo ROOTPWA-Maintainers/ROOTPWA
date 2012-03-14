@@ -1222,7 +1222,7 @@ extern char* optarg;
    fitResult* rho=0;
    tree->SetBranchAddress(valBranchName.c_str(),&rho);
    vector<double> prevps(wl.size());
-   double mprev=0;
+   //double mprev=0;
    vector<double> prevphase(wl.size());
    double binwidth=MASSSCALE*30; // half binwidth
    //double w=2*30/10;
@@ -1435,7 +1435,7 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
        }// end loop over components
 
        cerr << "Finished plotting mass-bin " << m << endl;  
-     mprev=m;
+       //mprev=m;
    }
    cerr << "Finished Loop Over DataBins" << endl;
 

@@ -151,7 +151,7 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	  // loop over components and look which contains these waves
 	  modelW.Start(0);
 	  rho=_compset->overlap(i,j,mass);
-	  complex<double> rho2=_compset->overlap(w1,w2,mass);
+	  //complex<double> rho2=_compset->overlap(w1,w2,mass);
 	  //if(norm(rho-rho2)>1E-4)cerr<< " ##### " << norm(rho-rho2) << endl;
 	  modelW.Stop();
 	  // compare to measured spin density matrix element
