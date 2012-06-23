@@ -136,8 +136,8 @@ TString parseTitle(TString l, unsigned int level=10){
 void plotNice(TVirtualPad* pad, TString plotDir=""){
    TCanvas* cpopup=(TCanvas*)gROOT->FindObjectAny("cpopup");
    if(cpopup==NULL){
-     cerr << "Popupo Window not found!" << endl;
-     return;
+     cerr << "Popupo Window not found! RESPAWNING" << endl;
+     cpopup=new TCanvas("cpopup","PopUp",50,50,700,700);
    }
 
     cpopup->Clear("");
@@ -161,25 +161,31 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
      return;
     }
 
-    TH1* hx=(TH1*)clone->GetListOfPrimitives()->At(2);
+   
    
 
     TString title=gr->GetName();
+    TH1* hx=NULL;
+    if(!title.Contains("dPhi") && !title.Contains("Re") && !title.Contains("Im"))hx=(TH1*)clone->GetListOfPrimitives()->At(2);
+
+
 
     TGraphErrors* gdata=(TGraphErrors*)gr->GetListOfGraphs()->At(1);
     if(gdata==NULL){
         cerr << "Cloning data failed!" << endl;
      return;
     }
-
+    gdata->SetLineWidth(2);
 
     
-    double xmax=gdata->GetXaxis()->GetXmax();
-    double xmin=gdata->GetXaxis()->GetXmin();
+    double xmax=gr->GetXaxis()->GetBinCenter(gr->GetXaxis()->GetLast());
+    double xmin=gr->GetXaxis()->GetBinCenter(gr->GetXaxis()->GetFirst());
     double max=-1E6;
     double min=1E6;
     TGraphErrors* fitg=(TGraphErrors*)gr->GetListOfGraphs()->At(2);
+    
     if(fitg!=NULL){
+      fitg->SetLineWidth(2);
       double* yp=fitg->GetY();
       for(unsigned int i=0;i<fitg->GetN();++i){
 	if(max<yp[i])max=yp[i];
@@ -222,7 +228,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
 	gsys->SetPointError(i,ex,ey);
       }
     }
-    hx->SetLineColor(kMagenta);
+    if(hx!=NULL)hx->SetLineColor(kMagenta);
     clone->Draw();
     clone->cd();
     clone->GetFrame()->Draw();
@@ -238,12 +244,12 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     double y=xcenter-0.2;
     
     // preliminary
-    //  TLatex* prelim=new TLatex(x,y,"preliminary");
-    //prelim->SetNDC();
-    //prelim->SetTextColor(kGray);
-    //prelim->SetTextSize(0.1);
-    //prelim->SetTextAngle(20);
-    //prelim->Draw();
+     TLatex* prelim=new TLatex(x,y,"preliminary");
+    prelim->SetNDC();
+    prelim->SetTextColor(kGray);
+    prelim->SetTextSize(0.1);
+    prelim->SetTextAngle(20);
+    prelim->Draw();
     
     // compass 2004
     //double xc=xcenter+0.05;
@@ -269,14 +275,14 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
 
   
 
-    if(ymax > 0 || ymin < 0){
+    if(ymax > 0 && ymin < 0){
       TLine* zeroline=new TLine(xmin,0,xmax,0);
       zeroline->SetLineStyle(7);
       zeroline->Draw();
     }
 
     // gr->GetListOfGraphs()->RemoveAt(2);
-    gr->GetXaxis()->SetTitle("mass (MeV/c^{2})");
+    gr->GetXaxis()->SetTitle("mass (GeV/c^{2})");
     gr->GetXaxis()->Draw();
     gr->GetYaxis()->Draw();
 
@@ -347,16 +353,16 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
 
 
      // fitname
-    xc=xcenter-0.4;
+    xc=xcenter-0.03;
     //if(right)xc=xcenter+0.1;
-     yc=ycenter+0.5;
+     yc=ycenter+0.35;
     TLatex* fitNameL=new TLatex(xc,yc,fitname);
     fitNameL->SetNDC();
-    fitNameL->SetTextSize(0.025);
+    fitNameL->SetTextSize(0.05);
     fitNameL->Draw();
 
     cpopup->UseCurrentStyle();
-    hx->SetLineColor(kMagenta);
+    if(hx!=NULL)hx->SetLineColor(kMagenta);
     cpopup->Update();
 
     if(plotDir.Length()>1){
@@ -370,6 +376,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     }
 
     //cpopup->Flush();
+	cerr << "###### end of plotnice" << endl;
 }// end plotnice
 
 
@@ -394,8 +401,12 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
 //------------------------------------------------------
 //------------------------------------------------------
 
+// plotlevel:
+// 0 = data + fit + component
+// 1 = data + fit
+// 2 = data only 
 
-void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0, bool plotDataOnly=true , TString xcheckfile="", bool onlyDiag=false){
+void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0, unsigned int plotLevel=0 , TString xcheckfile="", bool onlyDiag=false){
   if(fittitle.Length()<=1)fitname=infilename;
   else fitname=fittitle;
   TFile* infile=TFile::Open(infilename);
@@ -428,6 +439,8 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
       }
     }
     
+     
+
 
     TList* keylist=infile->GetListOfKeys();
     unsigned int num=keylist->GetEntries();
@@ -442,8 +455,28 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
   }
 
 
+
   unsigned int nwaves=wavenames.size();
   std::cout << nwaves << " waves used in fit" << endl;
+
+  map<TString,TString> xcheckmapReIm;
+  for(unsigned int i=0;i<nwaves;++i){
+TString map1=xcheckmap[wavenames[i]];
+ unsigned int index1=atoi(map1(1,2).Data());
+    for(unsigned int j=i+1;j<nwaves;++j){
+      TString keyRe="Re_"+wavenames[i]+"---"+wavenames[j];
+      TString keyIm="Im_"+wavenames[i]+"---"+wavenames[j];
+      TString map2=xcheckmap[wavenames[j]];
+      // extract index number
+      unsigned int index2=atoi(map2(1,2).Data());
+      TString ReMapper="h";ReMapper+= 10000+100*index1+index2;
+      TString ImMapper="h";ImMapper+= 20000+100*index1+index2;
+      xcheckmapReIm[keyRe]=ReMapper;
+      xcheckmapReIm[keyIm]=ImMapper;
+    }
+  } // end loop to build xcheckmap
+
+
 
   TCanvas* cS=new TCanvas("cS","Spin Density Matrix",10,10,1000,1000);
   cS->Divide(nwaves,nwaves,0,0);
@@ -467,16 +500,26 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
   for(unsigned int ip=0;ip<nwaves;++ip){
     for(unsigned int jp=ip;jp<nwaves;++jp){
       cS->cd(jp+ip*nwaves+1);
+      cerr << " ##### " << ip << "-" << jp << " ###### " << endl;
       if(ip==jp){
 	TMultiGraph* g=(TMultiGraph*)infile->Get(wavenames[ip]);
       
 	// remove components and phase space graphs
+	// plotlevel:
+	// 0 = data + fit + component
+	// 1 = data + fit
+	// 2 = data only 
+	if(plotLevel>0){
 	  for(unsigned int i=g->GetListOfGraphs()->GetSize()-1;i>2;--i){
 	    g->GetListOfGraphs()->RemoveAt(i);
 	  }
+	}
+	// remove only ps
+	else g->GetListOfGraphs()->RemoveAt(3);
+	
 
 	
-	if(plotDataOnly)g->GetListOfGraphs()->RemoveAt(2); // remove fit
+	if(plotLevel>1)g->GetListOfGraphs()->RemoveAt(2); // remove fit
 	g->Draw("APC");
 
 // rescale
@@ -528,6 +571,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
       else {
 	if(onlyDiag)continue;
 	TString key="dPhi_"+wavenames[ip]+"---"+wavenames[jp];
+	cerr << key << endl;
 	TMultiGraph* g=(TMultiGraph*)infile->Get(key);
 	if(g!=NULL){
 	  TString title=g->GetName();
@@ -537,7 +581,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  // check for same reflectivity
 	  if(wave1(6)!=wave2(6)) continue;
 
-	  if(plotDataOnly)g->GetListOfGraphs()->RemoveAt(2); // remove fit
+	  if(plotLevel>1)g->GetListOfGraphs()->RemoveAt(2); // remove fit
        	  g->Draw("AN");
 	  if(mmin!=0 || mmax!=0){
 	    g->GetXaxis()->SetRangeUser(mmin,mmax);
@@ -567,7 +611,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  //delete c2;
 	  key.ReplaceAll("dPhi","Re");
 	  TMultiGraph* g2=(TMultiGraph*)infile->Get(key);
-	  if(plotDataOnly)g2->GetListOfGraphs()->RemoveAt(2);
+	  if(plotLevel>1)g2->GetListOfGraphs()->RemoveAt(2);
 	  TVirtualPad* pa= cRe->cd(jp+ip*nwaves+1);
 	  pa->SetFillColor(RECOLOR);
 	  g2->Draw("A");
@@ -577,6 +621,22 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  g2->GetXaxis()->SetTitle("mass (MeV/c^{2})");
 	  g2->GetYaxis()->SetTitle("real part");
 	  g2->GetYaxis()->SetTitleOffset(1.3);
+
+	if(xcheck!=NULL){
+	  // get key
+	  TString xcheckkey=xcheckmapReIm[key];
+	  cerr << "Adding xcheckplot " << xcheckkey << endl;
+	  if(xcheckkey!=""){
+	    TH1* xh=(TH1*)xcheck->Get(xcheckkey);
+	    if(xh!=NULL){
+	      xh->SetLineColor(kMagenta);
+	      xh->Draw("same");
+	    }
+	    else cerr << "Did not find xcheckPlot!" << endl;
+	  }
+	}
+
+
 	  plotNice(cRe->GetPad(jp+ip*nwaves+1),plotdir);
 	  //c2=new TCanvas();
 	  //g2->Draw("A");
@@ -587,7 +647,7 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  //delete c2;
 	  key.ReplaceAll("Re","Im");
 	  TMultiGraph* g3=(TMultiGraph*)infile->Get(key);
-	  if(plotDataOnly)g3->GetListOfGraphs()->RemoveAt(2);
+	  if(plotLevel>1)g3->GetListOfGraphs()->RemoveAt(2);
 	  //cIm->cd(jp+ip*nwaves+1);
 	  pa=cRe->cd(ip+jp*nwaves+1);
 	  pa->SetFillColor(IMCOLOR);
@@ -598,6 +658,24 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  g3->GetXaxis()->SetTitle("mass (MeV/c^{2})");
 	  g3->GetYaxis()->SetTitle("imaginary part");
 	  g3->GetYaxis()->SetTitleOffset(1.3);
+
+if(xcheck!=NULL){
+	  // get key
+	  TString xcheckkey=xcheckmapReIm[key];
+	  cerr << "Adding xcheckplot " << xcheckkey << endl;
+	  if(xcheckkey!=""){
+	    TH1* xh=(TH1*)xcheck->Get(xcheckkey);
+	    
+	    if(xh!=NULL){
+	      xh->Scale(-1);
+	      xh->SetLineColor(kMagenta);
+	      xh->Draw("same");
+	    }
+	    else cerr << "Did not find xcheckPlot!" << endl;
+	  }
+	}
+
+
 	  plotNice(cRe->GetPad(ip+jp*nwaves+1),plotdir);
 	  //c2=new TCanvas();
 	  //g3->Draw("A");
