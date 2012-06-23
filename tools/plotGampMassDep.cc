@@ -11,6 +11,7 @@
 #include "TGraph.h"
 #include "TAxis.h"
 #include "TGaxis.h"
+#include "TMath.h"
 #include "TStyle.h"
 #include "TCanvas.h"
 #include "TApplication.h"
@@ -119,7 +120,9 @@ int main(int argc, char** argv){
     complex<double> amp=dep->val(myp);
     //cout << amp << endl;
     intens->SetPoint(i,mass,norm(amp));
-    phase->SetPoint(i,mass,arg(amp));
+    double phaseval=arg(amp);
+    if(phaseval<0)phaseval+=2*TMath::Pi();
+    phase->SetPoint(i,mass,phaseval);
     double rho=2*myp.q()/mass;
     
     argand->SetPoint(i,rho*amp.real(),rho*amp.imag());
