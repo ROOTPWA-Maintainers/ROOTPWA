@@ -27,6 +27,8 @@ public:
   event& addinitial(const particle& p);
   event& erase();
 
+  bool isValid();
+  
   particle beam  () const { return *_beam;   }
   particle target() const { return *_target; }
   event&   beam  (const particle&);
