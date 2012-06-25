@@ -1,11 +1,12 @@
 #!/bin/bash
 export WORKDIR=/nfs/hicran/project/compass/analysis/sneubert/
 export WORKDIR2=/nfs/nas/user/sneubert/
+#export FITDIR=$WORKDIR2/PWAFITS/FINAL/fitF2/
 export FITDIR=$WORKDIR2/PWAFITS/FINAL/fitF2/
 #export FITDIR=$WORKDIR/PWAFITS/GENETICS/ltRUN21/gen39/set42
 export FITFILE=$FITDIR/fitF2.result.root
-export PLOTFILE=${FITFILE/.root/.plots2.root}
-export BOOKY=${FITFILE/.root/.booky2.pdf}
+export PLOTFILE=${FITFILE/.root/.plots.root}
+export BOOKY=${FITFILE/.root/.booky.pdf}
 export DATADIR=$WORKDIR/5PiLTData3/
 export SAMPLES=100
 
@@ -22,7 +23,7 @@ cd $DATADIR
 
 #rm $PLOTFILE;
 
-for i in 298*; do
+for i in *; do
     echo "MassBin: $i";
     cd $i;
     # convert events to root tree if not already done

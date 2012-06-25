@@ -115,7 +115,7 @@ namespace rpwa {
     //----------------------------------------------------------------------------
     // generator setup
     /// sets decay constants and prepares internal variables
-    bool setDecay(std::vector<double>& daughterMasses);  // daughter particle masses
+    bool setDecay(const std::vector<double>& daughterMasses);  // daughter particle masses
     bool setDecay(const unsigned int   nmbOfDaughters,   // number of daughter particles
 		  const double*        daughterMasses);  // array of daughter particle masses
   

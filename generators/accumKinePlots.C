@@ -2,7 +2,7 @@
 #include "TFile.h"
 #include "TList.h"
 #include "TLatex.h"
-
+#include "TPaveText.h"
 #include "TLorentzVector.h"
 #include "TVector3.h"
 #include "TLorentzRotation.h"
@@ -22,6 +22,8 @@
 #include <vector>
 
 using namespace std;
+
+#define MCOLOR kOrange-3
 
 TGraphErrors* buildGraph(vector<TH1D*> histo, unsigned int n){
   unsigned int nbins=histo[0]->GetNbinsX();
@@ -54,26 +56,39 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   
   TString mcname=histoname+"MC";
   TString dataname=histoname+"Data";
+  TString apsname=histoname+"APS";
   TString range=bins[0](2,4)+"."+bins.back()(7,4);
 
 
   // vector of samples
   vector<TH1D*> mcplots(nsamples);
   TH1D* dataplot;
-  
+  TH1D* apsplot;
+
   // loop over bins
   for(unsigned int ib=0;ib<bins.size();++ib){
     // data object
     TString name=dataname+bins[ib];
     //cout << "Searching for " << name << endl;
     TH1D* datahisto=(TH1D*)infile->Get(name);
-    if(datahisto==NULL)return NULL;
+    name=apsname+bins[ib];
+    //cout << "Searching for " << name << endl;
+    TH1D* apshisto=(TH1D*)infile->Get(name);
+    
+    if(datahisto==NULL || apshisto==NULL){
+      
+
+      return NULL;
+    }
     if(ib==0){ // create clone, rename and acccumulate into this
       TString accname=dataname+range;
       dataplot=(TH1D*)datahisto->Clone(accname);
+      TString accuapsname=apsname+range;
+      apsplot=(TH1D*)apshisto->Clone(accuapsname);
     }
     else {
       dataplot->Add(datahisto);
+      apsplot->Add(apshisto);
     }
 
     // loop over mc samples
@@ -95,9 +110,9 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   }// end loop over bins
 
   TGraphErrors* g=buildGraph(mcplots,nsamples);
-  g->SetLineColor(kOrange);
-  g->SetFillColor(kOrange);
-  g->SetMarkerColor(kOrange);
+  g->SetLineColor(MCOLOR);
+  g->SetFillColor(MCOLOR);
+  g->SetMarkerColor(MCOLOR);
 
   TCanvas* c=new TCanvas(histoname+range,histoname+range,10,10,700,700);
   dataplot->Draw("E");
@@ -133,11 +148,20 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   dat->SetTextSize(0.039);
   dat->Draw();
   //yc=ycenter+0.23;
-  TLatex* mc=new TLatex(xc+0.115,yc,"weighted MC");
-  mc->SetNDC();
+  //TLatex* mc=new TLatex(xc+0.115,yc,"weighted MC");
+  //mc->SetNDC();
+  //mc->SetTextSize(0.039);
+  //mc->SetTextColor(MCOLOR);
+  //mc->Draw();
+  TPaveText* mc= new TPaveText(xc+0.114,yc-0.009,xc+0.325,yc+0.031,"NDC");
+  //mc->SetX1NDC(xc+0.112);mc->SetX2NDC(xc+0.48);mc->SetY1NDC(yc);mc->SetY2NDC(yc+0.04);
+  mc->SetBorderSize(0);
   mc->SetTextSize(0.039);
-  mc->SetTextColor(kOrange);
+  //mc->SetTextAlign(1);
+  mc->SetFillColor(MCOLOR);
+  mc->AddText("weighted MC");
   mc->Draw();
+
   yc=ycenter+0.23;
   TString rangelable("m_{5#pi} #in [");rangelable+=range;rangelable+="] MeV/c^{2}";rangelable.ReplaceAll(".",",");
   TLatex* bin=new TLatex(xc,yc,rangelable);
@@ -147,6 +171,22 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
 
   range.ReplaceAll(".","_");
   c->SaveAs(plotdir+histoname+range+".eps");
+
+  TCanvas* c2=new TCanvas(apsname+range,apsname+range,10,10,700,700);
+  apsplot->Draw();
+  apsplot->SetFillColor(MCOLOR);
+  apsplot->GetYaxis()->SetRangeUser(0,apsplot->GetMaximum()*1.5);
+  apsplot->GetXaxis()->SetTitle(xtitle);
+  com04->Draw();
+  react->Draw();
+  yc=ycenter+0.27;
+  TLatex* dat2=new TLatex(xc,yc,"accepted phase-space MC");
+  dat2->SetNDC();
+  dat2->SetTextSize(0.034);
+  dat2->Draw();
+  yc=ycenter+0.23;
+  bin->Draw();
+  c2->SaveAs(plotdir+apsname+range+".eps");
 
   return c;
 }
@@ -171,7 +211,7 @@ void accumKinePlots(TString plotsfile, TString outdir){
   gStyle->SetStripDecimals(1);
   TGaxis::SetMaxDigits(4);
   gStyle->SetFrameFillStyle(0);
-  
+  gStyle->SetFrameBorderMode(0);
   
   gROOT->ForceStyle();
 
@@ -207,6 +247,7 @@ void accumKinePlots(TString plotsfile, TString outdir){
     plotAccu("hHe22Phi","#phi_{Hel}(#pi^{-}#pi^{+})(#pi^{-}#pi^{+})" ,bins[bin],100,infile,outdir);
     plotAccu("hHe21Phi","#phi_{Hel}(#pi^{-}#pi^{+})(#pi^{-})" ,bins[bin],100,infile,outdir);
     plotAccu("hHe31Phi","#phi_{Hel}(#pi^{-}#pi^{+}#pi^{-})(#pi^{+})" ,bins[bin],100,infile,outdir);
+    //break;
   }  
 
   

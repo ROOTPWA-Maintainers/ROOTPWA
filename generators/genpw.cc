@@ -112,7 +112,7 @@ int main(int argc, char** argv)
   bool writeComGeantout=false;
 
   int c;
-  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h:c")) != -1)
+  while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:hc")) != -1)
     switch (c) {
     case 'n':
       nevents = atoi(optarg);
@@ -486,13 +486,15 @@ int main(int argc, char** argv)
       evtwht << impweight << endl;
       istr.close();
 
-      // cerr << e <<endl;
+      //cerr << e <<endl;
       
       weight=weighter.weight(e);
       if(weight>maxweight)maxweight=weight;
       hWeights->Fill(weight);
 
+      
       if(maxWeight>0){ // do weighting
+	cout << weight << endl;
 	//if(weight>maxWeight)maxWeight=weight;
 	if(gRandom->Uniform()>weight/maxWeight)continue;
       }

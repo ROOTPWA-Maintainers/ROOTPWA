@@ -42,5 +42,5 @@
 #pragma link off all functions;
 
 #pragma link C++ class rpwa::nBodyPhaseSpaceGen+;
-
+//#pragma link C++ class rpwa::diffractivePhaseSpace+;
 #endif
