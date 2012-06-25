@@ -36,7 +36,7 @@ public:
  
 
   // Accessors -----------------------
-  std::complex<double> amp(double t, double s)
+  std::complex<double> amp(double t, double s);
 
   // Modifiers -----------------------
 

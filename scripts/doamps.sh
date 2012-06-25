@@ -4,6 +4,10 @@ WORKDIR=$PWD
 echo $KEYDIR
 cd $KEYDIR
 
+COUNTER=0;
+
+echo "MAXKEYPERJOB = $MAXKEYPERJOB"
+
 for i in *.key ; 
   do echo "Processing keyfile: $i" ;
      date;
@@ -13,7 +17,18 @@ for i in *.key ;
      test -s $AMPDIR/$outfile && continue;
      test -s $AMPDIR/OLD/$outfile && echo "File $AMPDIR/OLD/$outfile already exists! Skipping!"
      test -s $AMPDIR/OLD/$outfile && continue;
-     test -s $AMPDIR/$outfile || cat $1 | gamp -P ../pdgTable.txt $i > $AMPDIR/$outfile ;
+
+     test -s $AMPDIR/$outfile.inprogress && echo "File $AMPDIR/$outfile is being processed already! Skipping!"
+     test -s $AMPDIR/$outfile.inprogress && continue;
+     date > $AMPDIR/$outfile.inprogress
+     test -s $AMPDIR/$outfile || cat $1 | gamp -P $PDG $i > $AMPDIR/$outfile ;
+     rm -f $AMPDIR/$outfile.inprogress
+     let COUNTER=$COUNTER+1;
+     if [ $COUNTER -ge $MAXKEYPERJOB ] ; then 
+	 echo "Reached max key per job limit! Aborting";
+	 break; 
+     fi;
+
      #test -s $AMPDIR/$outfile || echo do it > $AMPDIR/$outfile;
 done
 
