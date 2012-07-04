@@ -287,7 +287,7 @@ main(int argc, char** argv)
 			     << "in input file '" << chain.GetFile()->GetName() << "'." << endl;
 		for (unsigned int i = 0; i < 2; ++i)
 			processTree(chain, *prodKinPartNames, *decayKinPartNames, amp[i], ampValues[i], 2);
- 		for (unsigned int i = 0; i < ampValues[0].size(); ++i)
+		for (unsigned int i = 0; i < ampValues[0].size(); ++i)
 			cout << "amplitude[" << i << "] = " << ampValues[0][i] << " vs. " << ampValues[1][i] << "; "
 			     << "ratio = " << ampValues[0][i] / ampValues[1][i] << endl;
 	}

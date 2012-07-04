@@ -71,8 +71,8 @@ namespace rpwa {
 		                        const amplitudeTreeLeaf& rhsAmp);
 
 		// arithmetic operators for integrals
-		amplitudeTreeLeaf& operator +=(const amplitudeTreeLeaf& amp);     ///< adds all subamps of two amplitudeTreeLeafs with same set of subamps
-		amplitudeTreeLeaf& operator -=(const amplitudeTreeLeaf& amp);     ///< subtracts all subamps of two amplitudeTreeLeafs with same set of subamps
+		amplitudeTreeLeaf& operator +=(const amplitudeTreeLeaf& amp);  ///< adds all subamps of two amplitudeTreeLeafs with same set of subamps
+		amplitudeTreeLeaf& operator -=(const amplitudeTreeLeaf& amp);  ///< subtracts all subamps of two amplitudeTreeLeafs with same set of subamps
 
 		template<typename T>
 		amplitudeTreeLeaf& operator *=(const T& factor);  ///< muliplies all subamps with factor
@@ -102,15 +102,15 @@ namespace rpwa {
 
 		std::ostream& print(std::ostream& out) const;  ///< prints amplitudes in human-readable form
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
 	private:
 
 		void rebuildSubAmpLabelMap();  ///< rebuilds label-to-index map for subamps
 
-	  static bool _debug;  ///< if set to true, debug messages are printed
+		static bool _debug;  ///< if set to true, debug messages are printed
 
 		std::vector<std::complex<double> >  _incohSubAmps;       ///< sub-amplitudes to be added incoherently in intensity formula
 		std::vector<std::string>            _incohSubAmpLabels;  ///< labels for subamps

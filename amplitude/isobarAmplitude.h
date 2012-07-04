@@ -96,17 +96,17 @@ namespace rpwa {
 		virtual void transformDaughters() const = 0;  ///< boosts Lorentz-vectors of decay daughters into frames where angular distributions are defined
 
 		virtual std::complex<double> twoBodyDecayAmplitude
-		  (const isobarDecayVertexPtr& vertex,
-		   const bool                  topVertex) const = 0;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
+		(const isobarDecayVertexPtr& vertex,
+		 const bool                  topVertex) const = 0;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
     
 		virtual std::complex<double> twoBodyDecayAmplitudeSum
-		  (const isobarDecayVertexPtr& vertex,
-		   const bool                  topVertex = false) const;  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
+		(const isobarDecayVertexPtr& vertex,
+		 const bool                  topVertex = false) const;  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
 
 		virtual std::complex<double> sumBoseSymTerms
-		  (const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
-		   const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
-		   std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< function that sums up amplitudes of all permutations of indistinguishable final state particles
+		(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
+		 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
+		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< function that sums up amplitudes of all permutations of indistinguishable final state particles
 		virtual std::complex<double> boseSymmetrizedAmp() const;  ///< performs Bose symmetrization
 
 

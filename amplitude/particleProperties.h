@@ -280,7 +280,7 @@ namespace rpwa {
 	operator <<(std::ostream&             out,
 	            const particleProperties& partProp)
 	{
-	 	return partProp.print(out);
+		return partProp.print(out);
 	}
 
 

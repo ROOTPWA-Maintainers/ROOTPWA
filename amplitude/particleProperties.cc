@@ -162,7 +162,7 @@ rpwa::operator ==(const particleProperties&               lhsProp,
 	const bool                checkAllQn = (selector.find("allQn") != string::npos);
 	return (    (   ((selector.find("charge") == string::npos) and not checkAllQn)
 	             or (lhsProp.charge()         == rhsProp.charge()))
-          and (   ((selector.find("baryonNmb") == string::npos) and not checkAllQn)
+	        and (   ((selector.find("baryonNmb") == string::npos) and not checkAllQn)
 	             or (lhsProp.baryonNmb()         == rhsProp.baryonNmb()))
 	        and (   ((selector.find("I") == string::npos) and not checkAllQn)
 	             or (lhsProp.isospin()   == rhsProp.isospin()))
@@ -283,7 +283,7 @@ particleProperties::print(ostream& out) const
 	    << "I" << ((G() != 0) ? "^G" : "") << " J";
 	if (P() != 0)
 		out << "^P" << ((C() != 0) ? "C" : "") << " = ";
-  else
+	else
 		out << ((C() != 0) ? "^C" : "") << " = ";
 	out << spinQn(isospin());
 	if (G() != 0)

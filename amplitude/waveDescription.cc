@@ -122,14 +122,14 @@ waveDescription::parseKeyFile(const string& keyFileName)
 	// read key file contents into string
 	{
 		ifstream keyFile(keyFileName.c_str());
-    if (not keyFile or not keyFile.good()) {
-	    printWarn << "cannot read from file '"  << keyFileName << "'" << endl;
-	    return false;
-    }
+		if (not keyFile or not keyFile.good()) {
+			printWarn << "cannot read from file '"  << keyFileName << "'" << endl;
+			return false;
+		}
 		_keyFileLocalCopy = "";
-    string line;
-    while(getline(keyFile, line))
-	    _keyFileLocalCopy += line + "\n";
+		string line;
+		while(getline(keyFile, line))
+			_keyFileLocalCopy += line + "\n";
 	}
 	_keyFileParsed = true;
 	return true;

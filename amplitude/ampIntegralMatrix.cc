@@ -327,79 +327,79 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	accumulator_set<complex<double>, stats<tag::sum(compensated)> > ampProdAcc[_nmbWaves][_nmbWaves];
 	// process weight file and binary amplitude files
 	vector<complex<double> > amps[_nmbWaves];
-  progress_display         progressIndicator(_nmbEvents, cout, "");
-  bool                     success = true;
-  for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
-	  ++progressIndicator;
+	progress_display         progressIndicator(_nmbEvents, cout, "");
+	bool                     success = true;
+	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
+		++progressIndicator;
 	  
-	  // sum up importance sampling weight
-	  double w = 1;
-	  if (useWeight)
-		  if (not(weightFile >> w)) {
-			  success = false;
-			  printWarn << "error reading weight file. stopping integration "
-			            << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
-			  break;
-		  }
-	  const double weight = 1 / w; // we have to undo the weighting of the events!
-	  weightAcc(weight);
+		// sum up importance sampling weight
+		double w = 1;
+		if (useWeight)
+			if (not(weightFile >> w)) {
+				success = false;
+				printWarn << "error reading weight file. stopping integration "
+				          << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
+				break;
+			}
+		const double weight = 1 / w; // we have to undo the weighting of the events!
+		weightAcc(weight);
 
-	  // read amplitude values for this event from binary files
-	  bool ampBinEof = false;
-	  for (unsigned int waveIndex = 0; waveIndex < nmbBinWaves; ++waveIndex) {
-		  amps[waveIndex].resize(1);  // no subamps supported in .amp files
-		  binAmpFiles[waveIndex]->read((char*)&(amps[waveIndex][0]), sizeof(complex<double>));
-		  if ((ampBinEof = binAmpFiles[waveIndex]->eof())) {
-			  success = false;
-			  printWarn << "unexpected EOF while reading binary amplitude '"
-			            << _waveNames[waveIndex] << "'. stopping integration "
-			            << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
-			  break;
-		  }
-	  }
-	  if (ampBinEof)
-		  break;
+		// read amplitude values for this event from binary files
+		bool ampBinEof = false;
+		for (unsigned int waveIndex = 0; waveIndex < nmbBinWaves; ++waveIndex) {
+			amps[waveIndex].resize(1);  // no subamps supported in .amp files
+			binAmpFiles[waveIndex]->read((char*)&(amps[waveIndex][0]), sizeof(complex<double>));
+			if ((ampBinEof = binAmpFiles[waveIndex]->eof())) {
+				success = false;
+				printWarn << "unexpected EOF while reading binary amplitude '"
+				          << _waveNames[waveIndex] << "'. stopping integration "
+				          << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
+				break;
+			}
+		}
+		if (ampBinEof)
+			break;
 
-	  // read amplitude values for this event from root trees
-	  for (unsigned int waveIndex = nmbBinWaves; waveIndex < _nmbWaves; ++waveIndex) {
-		  const unsigned int index = waveIndex - nmbBinWaves;  // zero based index
-		  ampTrees[index]->GetEntry(iEvent);
-		  const unsigned int nmbSubAmps = ampTreeLeafs[index]->nmbIncohSubAmps();
-		  if (nmbSubAmps < 1) {
-			  printErr << "amplitude object for wave '" << _waveNames[waveIndex] << "' "
-			           << "does not contain any amplitude values "
-			           << "at event " << iEvent << " of total " << _nmbEvents << ". aborting." << endl;
-			  throw;
-		  }
-		  // get all incoherent subamps
-		  amps[waveIndex].resize(nmbSubAmps);
-		  for (unsigned int subAmpIndex = 0; subAmpIndex < nmbSubAmps; ++subAmpIndex)
-			  amps[waveIndex][subAmpIndex] = ampTreeLeafs[index]->incohSubAmp(subAmpIndex);
-	  }
+		// read amplitude values for this event from root trees
+		for (unsigned int waveIndex = nmbBinWaves; waveIndex < _nmbWaves; ++waveIndex) {
+			const unsigned int index = waveIndex - nmbBinWaves;  // zero based index
+			ampTrees[index]->GetEntry(iEvent);
+			const unsigned int nmbSubAmps = ampTreeLeafs[index]->nmbIncohSubAmps();
+			if (nmbSubAmps < 1) {
+				printErr << "amplitude object for wave '" << _waveNames[waveIndex] << "' "
+				         << "does not contain any amplitude values "
+				         << "at event " << iEvent << " of total " << _nmbEvents << ". aborting." << endl;
+				throw;
+			}
+			// get all incoherent subamps
+			amps[waveIndex].resize(nmbSubAmps);
+			for (unsigned int subAmpIndex = 0; subAmpIndex < nmbSubAmps; ++subAmpIndex)
+				amps[waveIndex][subAmpIndex] = ampTreeLeafs[index]->incohSubAmp(subAmpIndex);
+		}
 
-	  // sum up integral matrix elements
-	  for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
-		  for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ) {
-			  // sum over incoherent subamps
-			  const unsigned int nmbSubAmps = amps[waveIndexI].size();
-			  if (nmbSubAmps != amps[waveIndexJ].size()) {
-				  printErr << "number of incoherent sub-amplitudes for wave '"
-				           << _waveNames[waveIndexI] << "' = " << nmbSubAmps
-				           << " differs from that of wave '" << _waveNames[waveIndexJ] << "' = "
-				           << amps[waveIndexJ].size()
-				           << " at event " << iEvent << " of total " << _nmbEvents << ". aborting. "
-				           << "be sure to use only .root amplitude files, "
-				           << "if your channel has sub-amplitudes." << endl;
-				  throw;
-			  }
-			  complex<double> val = 0;
-			  for (unsigned int subAmpIndex = 0; subAmpIndex < nmbSubAmps; ++subAmpIndex)
-				  val += amps[waveIndexI][subAmpIndex] * conj(amps[waveIndexJ][subAmpIndex]);
-			  if (useWeight)
-				  val *= weight;
-			  ampProdAcc[waveIndexI][waveIndexJ](val);
-		  }
-  }  // event loop
+		// sum up integral matrix elements
+		for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI)
+			for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ) {
+				// sum over incoherent subamps
+				const unsigned int nmbSubAmps = amps[waveIndexI].size();
+				if (nmbSubAmps != amps[waveIndexJ].size()) {
+					printErr << "number of incoherent sub-amplitudes for wave '"
+					         << _waveNames[waveIndexI] << "' = " << nmbSubAmps
+					         << " differs from that of wave '" << _waveNames[waveIndexJ] << "' = "
+					         << amps[waveIndexJ].size()
+					         << " at event " << iEvent << " of total " << _nmbEvents << ". aborting. "
+					         << "be sure to use only .root amplitude files, "
+					         << "if your channel has sub-amplitudes." << endl;
+					throw;
+				}
+				complex<double> val = 0;
+				for (unsigned int subAmpIndex = 0; subAmpIndex < nmbSubAmps; ++subAmpIndex)
+					val += amps[waveIndexI][subAmpIndex] * conj(amps[waveIndexJ][subAmpIndex]);
+				if (useWeight)
+					val *= weight;
+				ampProdAcc[waveIndexI][waveIndexJ](val);
+			}
+	}  // event loop
 
 	// copy values from accumulators and (if necessary) renormalize to
 	// integral of importance sampling weights
@@ -413,7 +413,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 
 	printSucc << "calculated integrals of " << _nmbWaves << " amplitude(s) "
 	          << "for " << _nmbEvents << " events" << endl;
-  // cleanup
+	// cleanup
 	for (unsigned int i = 0; i < binAmpFiles.size(); ++i)
 		if (binAmpFiles[i])
 			delete binAmpFiles[i];
@@ -429,7 +429,7 @@ ampIntegralMatrix::renormalize(const unsigned long nmbEventsRenorm)
 		printDebug << "renormalizing integrals from " << _nmbEvents << " "
 		           << "to " << nmbEventsRenorm << " events." << endl;
 	*this *= (double)nmbEventsRenorm / _nmbEvents;
-  _nmbEvents = nmbEventsRenorm;
+	_nmbEvents = nmbEventsRenorm;
 }
 
 
@@ -443,13 +443,13 @@ ampIntegralMatrix::writeAscii(ostream& out) const
 	out << _nmbWaves << endl
 	    << _nmbEvents << endl;
 	// write integral matrix
-  out << _nmbWaves << " " << _nmbWaves << endl;
-  for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI) {
-	  for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
-		  out << maxPrecisionDouble(_integrals[waveIndexI][waveIndexJ]) << "\t";
-	  out << endl;
-  }
-  // write wave name -> index map
+	out << _nmbWaves << " " << _nmbWaves << endl;
+	for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI) {
+		for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
+			out << maxPrecisionDouble(_integrals[waveIndexI][waveIndexJ]) << "\t";
+		out << endl;
+	}
+	// write wave name -> index map
 	out << _waveNameToIndexMap.size() << endl;
 	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
 	     i != _waveNameToIndexMap.end(); ++i)
@@ -465,7 +465,7 @@ ampIntegralMatrix::readAscii(istream& in)
 		printWarn << "could not read number of waves and events" << endl;
 		return false;
 	}
-  // read matrix elements
+	// read matrix elements
 	unsigned int nmbRows, nmbCols;
 	if (not (in >> nmbRows >> nmbCols)) {
 		printWarn << "could not read number of rows and columns" << endl;
@@ -475,30 +475,30 @@ ampIntegralMatrix::readAscii(istream& in)
 	//_integrals.clear();
 	_integrals.resize(extents[nmbRows][nmbCols]);
 	for (unsigned int i = 0; i < nmbRows; ++i)
-    for (unsigned int j = 0; j < nmbCols; ++j) {
-	    if (not (in >> _integrals[i][j]) or in.eof()) {
-		    printErr << "could not read integral values. stream seems trunkated." << endl;
-        throw;
-	    }
-    }
-  // read wave name -> index map
-  unsigned int mapSize;
-  in >> mapSize;
-  while ((mapSize > 0) and in) {
-	  string       waveName;
-	  unsigned int waveIndex;
-	  if (not (in >> waveName >> waveIndex)) {
-		  printErr << "could not read wave name -> index map. stream seems trunkated." << endl;
-		  return false;
-	  }
-    _waveNameToIndexMap[waveName] = waveIndex;
-    --mapSize;
-  }
-  _waveNames.resize(_nmbWaves);
-  for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
+		for (unsigned int j = 0; j < nmbCols; ++j) {
+			if (not (in >> _integrals[i][j]) or in.eof()) {
+				printErr << "could not read integral values. stream seems trunkated." << endl;
+				throw;
+			}
+		}
+	// read wave name -> index map
+	unsigned int mapSize;
+	in >> mapSize;
+	while ((mapSize > 0) and in) {
+		string       waveName;
+		unsigned int waveIndex;
+		if (not (in >> waveName >> waveIndex)) {
+			printErr << "could not read wave name -> index map. stream seems trunkated." << endl;
+			return false;
+		}
+		_waveNameToIndexMap[waveName] = waveIndex;
+		--mapSize;
+	}
+	_waveNames.resize(_nmbWaves);
+	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
 	     i != _waveNameToIndexMap.end(); ++i)
-	  _waveNames[i->second] = i->first;
-  return true;
+		_waveNames[i->second] = i->first;
+	return true;
 }
 
 
@@ -590,14 +590,14 @@ ampIntegralMatrix::openBinAmpFiles(vector<ifstream*>&    ampFiles,
 		if (fileSize == 0) {
 			printWarn << "amplitude file '" << ampFilePath << "' has zero size. skipping file." << endl;
 			continue;
-    }
-    if (ampFileSize == 0)
-	    ampFileSize = fileSize;
-    else if (fileSize != ampFileSize) {
+		}
+		if (ampFileSize == 0)
+			ampFileSize = fileSize;
+		else if (fileSize != ampFileSize) {
 			printWarn << "amplitude file '" << ampFilePath << "' has different size "
 			          << "than previous file. skipping file." << endl;
 			continue;
-    }
+		}
 
 		// fill wave name into name-to-index map, if not already existent
 		const string waveName = fileNameFromPath(ampFilePath);
@@ -652,26 +652,26 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 		// find all amplitude trees with name matching *.amp and corresponding .key wave description
 		TIterator* keys        = ampFile->GetListOfKeys()->MakeIterator();
 		bool       foundAmpKey = false;
-    while (TKey* k = static_cast<TKey*>(keys->Next())) {
-      if (!k) {
-        printWarn << "NULL pointer to TKey in file '" << ampFilePath << "'. skipping TKey." << endl;
-        continue;
-      }
-      TTree*           tree     = 0;
-      waveDescription* waveDesc = 0;
-      const string     keyName  = k->GetName();
-      if (extensionFromPath(keyName) == "amp") {
-	      foundAmpKey = true;
-	      ampFile->GetObject(keyName.c_str(), tree);
-	      // get corresponding .key wave description
-	      ampFile->GetObject((changeFileExtension(keyName, "key")).c_str(), waveDesc);
-	      trees.push_back    (tree    );
-	      waveDescs.push_back(waveDesc);
-	      keyNames.push_back (keyName );
-      }
-    }
-    if (not foundAmpKey)
-	    printWarn << "no TKey in file '" << ampFilePath << "' matches '*.amp'. skipping file." << endl;
+		while (TKey* k = static_cast<TKey*>(keys->Next())) {
+			if (!k) {
+				printWarn << "NULL pointer to TKey in file '" << ampFilePath << "'. skipping TKey." << endl;
+				continue;
+			}
+			TTree*           tree     = 0;
+			waveDescription* waveDesc = 0;
+			const string     keyName  = k->GetName();
+			if (extensionFromPath(keyName) == "amp") {
+				foundAmpKey = true;
+				ampFile->GetObject(keyName.c_str(), tree);
+				// get corresponding .key wave description
+				ampFile->GetObject((changeFileExtension(keyName, "key")).c_str(), waveDesc);
+				trees.push_back    (tree    );
+				waveDescs.push_back(waveDesc);
+				keyNames.push_back (keyName );
+			}
+		}
+		if (not foundAmpKey)
+			printWarn << "no TKey in file '" << ampFilePath << "' matches '*.amp'. skipping file." << endl;
 	}
 
 	// check whether reading was successful
@@ -778,8 +778,8 @@ ampIntegralMatrix::readMultiArray()
 	assert(_intStorageShape.size() == _integrals.num_dimensions());
 	_integrals.resize(extents[_intStorageShape[0]][_intStorageShape[1]]);
 	complex<double>* integralData = _integrals.data();
-  for (unsigned int i = 0; i < _intStorageNmbElements; ++i)
-	 	integralData[i] = _intStorageData[i];
+	for (unsigned int i = 0; i < _intStorageNmbElements; ++i)
+		integralData[i] = _intStorageData[i];
 }
 
 

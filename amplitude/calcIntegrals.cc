@@ -66,7 +66,7 @@ usage(const string& progName,
 	     << "        -n #       maximum number of events to process (default: all)"               << endl
 	     << "        -r #       number of events to renormalize to (default: no renormalization)" << endl
 	     << "        -w path    path to MC weight file for de-weighting (default: none)"          << endl
-       << "        -v         verbose; print debug output (default: false)"                     << endl
+	     << "        -v         verbose; print debug output (default: false)"                     << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -139,8 +139,8 @@ main(int    argc,
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 			rootAmpFileNames.push_back(fileName);
 #else
-		  printErr << "reading of amplitudes in .root format not supported. "
-		           << "upgrade your ROOT installation. skipping." << endl;
+			printErr << "reading of amplitudes in .root format not supported. "
+			         << "upgrade your ROOT installation. skipping." << endl;
 #endif
 		} else if (fileExt == "amp")
 			binAmpFileNames.push_back(fileName);

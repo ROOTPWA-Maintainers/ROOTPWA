@@ -207,8 +207,8 @@ waveSetGenerator::generateWaveSet()
 				// join daughter subdecays and parent vertex
 				isobarDecayTopology parentDecay
 					= _templateTopo->joinDaughterDecays(parentVertex,
-					                                   (*daughterDecays[0])[iDaughter[0]],
-					                                   (*daughterDecays[1])[iDaughter[1]]);
+					                                    (*daughterDecays[0])[iDaughter[0]],
+					                                    (*daughterDecays[1])[iDaughter[1]]);
 	
 				// calculate parent quantum numbers fixed by daughter quantum numbers
 				const int parentBaryonNmb   = daughters[0]->baryonNmb()   + daughters[1]->baryonNmb();
