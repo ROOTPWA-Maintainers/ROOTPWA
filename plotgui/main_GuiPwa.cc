@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      Main file for converter from CompassPWA files to root tree
+//      Main file for pwa gui
 //
 //
 // Author List:
@@ -36,58 +36,17 @@
 
 #include <iostream>
 
-#include "TFile.h"
-#include "TTree.h"
-
 #include "reportingUtils.hpp"
 
-#include "CompassPwaFileLoader.h"
+#include "GuiPwaMain.h"
 
 using namespace std;
 using namespace rpwa;
 
-int main(int argc, char *argv[]){ //[1]name of particleDataTable file, [2]name of root output file and [3] to [x] at least one destination of input files
-//	CompassPwaFileLoader::SetDebug(true);
-//	CompassPwaFileFitResults::SetDebug(true);
+int main(int argc, char *argv[]){
+	QApplication app(argc, argv);
+	GuiPwaMain *widget = new GuiPwaMain;
 
-	if( argc > 3){
-		TFile *ResultFile = new TFile( argv[2],"RECREATE","PWA fit results");
-	
-		if( ResultFile ){
-			CompassPwaFileLoader FileLoader( argv[1] );
-
-			printInfo << "Begin loading data from CompassPWA files\n";
-			for( int i = 3; i < argc; ++i ){
-				FileLoader.ReadFiles( argv[i] );
-			}
-			printInfo << "Done loading data from CompassPWA files\n";
-
-			printInfo << "Merging CompassPWA data into root tree\n";
-			TTree *data = FileLoader.Merge();
-			if( data ){
-				printInfo << "Done merging CompassPWA data into root tree\n";
-
-				if( ResultFile->Write() ){
-					printSucc << "Root Tree successfully written to " << "rootTree.root" << '\n';
-				}
-				else{
-					printErr << "File could not be written\n";
-				}
-			}
-			else{
-				printErr << "Merging failed\n";
-			}
-
-			ResultFile->Close();
-			delete ResultFile;
-		}
-		else{
-			printErr << "Could not create new TFile\n";
-		}
-	}
-	else{
-		printErr << "Not enough arguments (name of particleDataTable file, name of root output file and at least one destination of input files is needed)\n";
-	}
-
-	return 0;
+	widget->show();
+	return app.exec();
 }

@@ -49,20 +49,21 @@
 
 namespace rpwa{
 
-	enum CompassPwaFileObjectStatus{
-		Error = -1,							///< An error has occurred during read in process
-		NotLoaded,							///< ReadFromFile has not been run yet
-		///< Types
-		FitResult,							///< PWA fit results
-		PhaseSpaceIntegral,					///< PWA phase space integrals
-		AcceptanceCorrectedNormIntegral,	///< PWA acceptance corrected norm integrals
-		NotAcceptanceCorrectedNormIntegral	///< PWA not acceptance corrected norm integrals
-	};
-
 	class CompassPwaFileObject{
+	public:
+		enum E_Status{
+			Error = -1,							///< An error has occurred during read in process
+			NotLoaded,							///< ReadFromFile has not been run yet
+			///< Types
+			FitResult,							///< PWA fit results
+			PhaseSpaceIntegral,					///< PWA phase space integrals
+			AcceptanceCorrectedNormIntegral,	///< PWA acceptance corrected norm integrals
+			NotAcceptanceCorrectedNormIntegral	///< PWA not acceptance corrected norm integrals
+		};
+
 	private:
 		// Variables
-		CompassPwaFileObjectStatus _Status; ///< Status of the Data
+		E_Status _Status; ///< Status of the Data
 		const CompassPwaFileBase *_DataObject;
 		///< (const CompassPwaFileFitResults *) for fit results
 		///< (const CompassPwaFilePhaseSpaceIntegrals *) for phase space integrals
@@ -71,7 +72,7 @@ namespace rpwa{
 		static bool _Debug; ///< if set to true, debug messages are printed
 
 		// Functions
-		template<class T, CompassPwaFileObjectStatus ReturnValue> CompassPwaFileObjectStatus Read( std::istream& File ); ///< Reads the rest of the information a file specified in the template and returns -1 if an error occurred or ReturnValue if no error occurred
+		template<class T, E_Status ReturnValue> E_Status Read( std::istream& File ); ///< Reads the rest of the information a file specified in the template and returns -1 if an error occurred or ReturnValue if no error occurred
 
 	public:
 		// Constructors + Destructors
@@ -79,7 +80,7 @@ namespace rpwa{
 		~CompassPwaFileObject(); ///< Destructor
 
 		// Get && Set
-		CompassPwaFileObjectStatus Status() const; ///< Returns _Status;
+		E_Status Status() const; ///< Returns _Status;
 		std::string StatusMessage() const; ///< Returns _Status as a string containing the corresponding message
 		const CompassPwaFileBase *DataObject() const; ///< Returns _DataObject;
 		double MassBinStart() const; ///< Returns _MassBinStart;
@@ -91,7 +92,7 @@ namespace rpwa{
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
-		CompassPwaFileObjectStatus ReadFromFile( std::string FileString ); ///< Reading in the given file by determining it's type and calling the appropriate function to read in this type
+		E_Status ReadFromFile( const std::string& FileString ); ///< Reading in the given file by determining it's type and calling the appropriate function to read in this type
 		void Clear(); ///< Clears the file object without calling destructor of the _DataObject
 		void Empty(); ///< Clears the file object and calls destructor of the _DataObject
 		std::ostream& Print( std::ostream& Out ) const; ///< Prints all important variables of class

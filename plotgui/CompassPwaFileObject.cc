@@ -49,7 +49,7 @@ using namespace rpwa;
 bool CompassPwaFileObject::_Debug = false;
 
 // Reads the rest of the information a file specified in the template and returns -1 if an error occurred or ReturnValue if no error occurred
-template<class T, CompassPwaFileObjectStatus ReturnValue> CompassPwaFileObjectStatus CompassPwaFileObject::Read( istream& File ){
+template<class T, CompassPwaFileObject::E_Status ReturnValue> CompassPwaFileObject::E_Status CompassPwaFileObject::Read( istream& File ){
 	T *Data = new T();
 	if( !Data ){
 		printErr << "Could not allocate new data object\n";
@@ -87,7 +87,7 @@ CompassPwaFileObject::~CompassPwaFileObject(){
 }
 
 // Returns _Status;
-CompassPwaFileObjectStatus CompassPwaFileObject::Status() const{
+CompassPwaFileObject::E_Status CompassPwaFileObject::Status() const{
 	return _Status;
 }
 
@@ -157,7 +157,7 @@ double CompassPwaFileObject::tBinEnd() const{
 }
 
 // Reading in the given file by determining it's type and calling the appropriate function to read in this type
-CompassPwaFileObjectStatus CompassPwaFileObject::ReadFromFile( string FileString ) {
+CompassPwaFileObject::E_Status CompassPwaFileObject::ReadFromFile( const string& FileString ) {
 	printInfo << "Reading from File " << FileString << '\n';
 
 	if( _Status ){

@@ -79,6 +79,7 @@ namespace rpwa{
 
 		// Functions
 		void Clear(); ///< Deletes all objects stored in the three maps
+		void ReadFile( const std::string& GlobPattern ); ///< Takes a filename as parameter and reads in this file, sort and store it by its type, can be called multiple times and the new file is added, but since overlapping bins are not allowed for the integrals, reading multiple times the same file will cause an error in the merging function
 		void ReadFiles( const std::string& GlobPattern ); ///< Takes a glob pattern as parameter and reads in all matching files, sorts and stores them by their type, can be called multiple times and the new files are added, but since overlapping bins are not allowed for the integrals, reading multiple times the same file will cause an error in the merging function
 		TTree *Merge(); ///< Merges all previously read files to a tree containing objects of fitResult class
 	};

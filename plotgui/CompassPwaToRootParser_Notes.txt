@@ -1,0 +1,33 @@
+All important changes in the CompassPWA programm to write out the txt files are between lines like this, with variing dates:
+
+c---start-INSERT-STEPHAN-SCHMEING-10Nov11---------------------------------------------------------------
+c---end---INSERT-STEPHAN-SCHMEING-10Nov11---------------------------------------------------------------
+
+Basically it is always a function declaration at the end of the file and a call to this function at the right place in the original function
+
+Changes in the following files(you can find my version of CompassPWA under /nfs/hicran/project/compass/analysis/sschmeing/COMPASSPWA):
+pwa/pwatools/pwamain/pwamain_new.f (for the output of the fit result text files)
+pwa/pwatools/integrals_read_write_separ.f (for the output of the normalization integrals)
+pwa/pwatools/integrator/integr_routines.f (for the output of the phase space integrals)
+pwa/pwatools/pwamain/fit3sum_new.f (A common variable (G2) is set for the output in the pwamain_new.f)
+
+The text files are self-explaining. The output name convention is
+fit results:
+(specified fit folder)/(specified fit file name)/PWAfitresults_(specified fit file name)_(mass bin start in MeV)_(mass bin end in MeV)_(t' bin start in Mev^2)_(t' bin start in MeV^2)_(specified random seed, 0 if none was specified)_fit(counter of fit attemps, beginning with 1).txt
+
+acceptance corrected normalization integrals:
+(specified integral folder)/PWANormIntegralsAcc_(mass bin start in MeV)_(mass bin end in MeV)_(t' bin start in Mev^2)_(t' bin start in MeV^2).txt
+
+not acceptance corrected normalization integrals:
+(specified integral folder)/PWANormIntegralsNAcc_(mass bin start in MeV)_(mass bin end in MeV)_(t' bin start in Mev^2)_(t' bin start in MeV^2).txt
+
+phase space integrals (contains the integral informations from diag_integrals.dat):
+(specified integral folder)/PWAPhaseSpaceIntegrals__(mass bin start in MeV)_(mass bin end in MeV)_(t' bin start in Mev^2)_(t' bin start in MeV^2).txt
+
+
+
+
+To create a root tree from the text files use:
+/nfs/hicran/home/sschmeing/private/Compass_projekt/rootpwa/branches/gui/plotgui/CompassPwaFilesToRoot (particleDataTable) (desired output file) (as many file patterns for input files as needed)
+example:
+./CompassPwaFilesToRoot /nfs/hicran/project/compass/analysis/sschmeing/rootpwa/branches/gui/amplitude/particleDataTable.txt ./CompassPwaFilesToRoot.root /nfs/hicran/project/compass/analysis/sschmeing/PWA/work/fits/fit_2008_W37_acc_53waves/PWAfitresults*.txt /nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals/PWAPhaseSpaceIntegrals*.txt /nfs/hicran/project/compass/analysis/sschmeing/PWA/work/integrals/PWANormIntegralsNAcc*.txt >Parser.log 2>&1

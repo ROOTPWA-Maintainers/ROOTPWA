@@ -34,38 +34,79 @@
 #//
 #//-------------------------------------------------------------------------
 
-
-
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${uprootedBoost_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
+	$ENV{QTROOTSYSDIR}/include
 	${ROOTPWA_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
+	${CMAKE_CURRENT_BINARY_DIR} #needed for Qt uis
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
+# setup Qt
+FIND_PACKAGE(Qt4 REQUIRED)
+INCLUDE(${QT_USE_FILE})
+
+# set form files from Qt (.ui)
+set(FORMS
+	Qt-DesignerFiles/GuiPwaMain.ui
+	)
+
+# prozessing Qt Forms (.ui) with uic
+QT4_WRAP_UI(FORMS_HEADERS ${FORMS})
+
+# set header files that contain Q_OBJECT macro
+set(HEADERS
+	GuiPwaMain.h
+	GuiWaveTreeModel.h
+	)
+
+# prozessing Q_OBJECT headers with moc
+QT4_WRAP_CPP(HEADERS_MOC ${HEADERS})
 
 # source files that are compiled into executable
 set(SOURCES
 	CompassPwaFileBase.cc
 	CompassPwaFileFitResults.cc
-	CompassPwaFileNormIntegrals.cc
-	CompassPwaFilePhaseSpaceIntegrals.cc
-	CompassPwaFileObject.cc
 	CompassPwaFileLoader.cc
+	CompassPwaFileNormIntegrals.cc
+	CompassPwaFileObject.cc
+	CompassPwaFilePhaseSpaceIntegrals.cc
+	GuiPwaMain.cc
+	GuiWaveTreeModel.cc
+	GuiWaveTreeModelItem.cc
+	RootPwaDataObject.cc
+	${HEADERS_MOC}
+	${FORMS_HEADERS}
 	)
 
 # library
+set(QTROOT_LIBDIR $ENV{QTROOTSYSDIR}/lib)
+set(QTROOT_LIBS
+	${QTROOT_LIBDIR}/libGQt.so
+	${QTROOT_LIBDIR}/libQGLViewer.so
+	${QTROOT_LIBDIR}/libQtGed.so
+	${QTROOT_LIBDIR}/libQtImage.so
+	${QTROOT_LIBDIR}/libQtRootGui.so
+	${QTROOT_LIBDIR}/libQtRoot.so
+	${QTROOT_LIBDIR}/libQtThread.so
+	${QTROOT_LIBDIR}/libRQTGL.so
+	)
+
 set(THIS_LIB "RootPwaPlotGui")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
 	"${BOOST_LIBS}"
 	"${ROOT_LIBS}"
+	"${QTROOT_LIBS}"
 	"${ROOTPWA_LIBS}"
+	"${QT_LIBRARIES}"
 	)
 
 # executables
-make_executable(TestCompassPwaFileparsers     main_TestCompassPwaFileparsers.cc   ${THIS_LIB}  )
-make_executable(CompassPwaFilesToRoot     main_CompassPwaFilesToRootTree.cc   ${THIS_LIB}  )
+make_executable(TestCompassPwaFileparsers	main_TestCompassPwaFileparsers.cc   ${THIS_LIB})
+make_executable(CompassPwaFilesToRoot		main_CompassPwaFilesToRootTree.cc  	${THIS_LIB})
+make_executable(GuiPwa						main_GuiPwa.cc						${THIS_LIB})

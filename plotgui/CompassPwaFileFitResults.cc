@@ -122,18 +122,20 @@ vector< complex<double> >& CompassPwaFileFitResults::ProdAmpsRootPwa( vector< co
 	Destination.clear();
 	Destination.resize( _WaveNames.size() * _Rank - _Rank + 1 ); // Each rank for each wave has an entry, but the flatwave has only one entry
 
+	TComplex ProdAmpTmp(0,0);
+
 	unsigned int j=0; // Next free position in Destination
 	for( unsigned int i=0; i < _WaveNames.size(); ++i ){
 		if( "FLAT" == _WaveNames[i] ){
-			Destination[j++] = _FitResults.get(i,0);
+			ProdAmpTmp = _FitResults.get(i,0);
+			Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() );
 		}
 		else{
 			for( unsigned int k=0; k < _Rank; ++k ){
-				Destination[j++] = _FitResults.get(i,k);;
+				ProdAmpTmp = _FitResults.get(i,k);
+				Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() );
 			}
 		}
-		// Doing normalization with events, that in principle should be done before displaying and not here (just for testing)
-		Destination[j - 1] *= sqrt(_NumEvents);
 	}
 
 	return Destination;
@@ -354,7 +356,9 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	char apostrophe1; // Takes the first bracket character, which should be a apostrophe
 	char apostrophe2; // Takes the second bracket character, which should be a apostrophe
 
+	// if( _Debug ){ // Not always including it leads to compiler errors, even if it is not needed
 	double RankSumProdAmpsSquared;
+	// }
 
 	for( unsigned i = 0; i < NumSections; ++i){
 		for( unsigned j = 0; j < SecNumWaves[i]; ++j){
@@ -368,14 +372,27 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 				LineStream.get( WaveNameCStr, 61 );
 				LineStream >> apostrophe2;
 
+				if( _Debug ){
+					printDebug << "Name: "<< WaveNameCStr << '\n';
+				}
+
+				// if( _Debug ){ // Not always including it leads to compiler errors, even if it is not needed
 				RankSumProdAmpsSquared = 0;
+				// }
 
 				// Fill the corresponding row of the matrix with the values from the file
 				CurRank = min(SecRank[i],j+1);
 				for( k = 0; k < CurRank; ++k){
 					LineStream >> FitResultParameter;
 					_FitResults.set( l, k, FitResultParameter );
-					RankSumProdAmpsSquared += norm(FitResultParameter);
+					if( _Debug ){
+						printDebug << "Rank"<<k<<": " << FitResultParameter << '\n';
+						RankSumProdAmpsSquared += norm(FitResultParameter);
+					}
+				}
+
+				if( _Debug ){
+					printDebug << '\n';
 				}
 
 				// Fill the rest of the row of the matrix with (0,0), since in the Compass code result parameter that are always 0 are not included
@@ -408,8 +425,9 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 					WaveName.resize(LastNonEmptyCharacter + 1);
 
 					_WaveNames.push_back( WaveName );
-
-					printDebug << MassBinStart() << '-' << MassBinEnd() << '_' << WaveName << ':' << RankSumProdAmpsSquared * _NumEvents << '\n';
+					if( _Debug ){
+						printDebug << MassBinStart() << '-' << MassBinEnd() << '_' << WaveName << ':' << RankSumProdAmpsSquared * _NumEvents << '\n';
+					}
 				}
 
 				++l;

@@ -174,41 +174,46 @@ void CompassPwaFileLoader::Clear(){
 	_FitResults.clear();
 }
 
+// Takes a filename as parameter and reads in this file, sort and store it by its type, can be called multiple times and the new file is added, but since overlapping bins are not allowed for the integrals, reading multiple times the same file will cause an error in the merging function
+void CompassPwaFileLoader::ReadFile( const string& FileName ){
+	CompassPwaFileObject FileObject;
+	CompassPwaFileObject::E_Status Status = CompassPwaFileObject::NotLoaded;
+
+	Status = FileObject.ReadFromFile( FileName );
+
+	switch( Status ){
+	case CompassPwaFileObject::FitResult:
+		_FitResults.push_back( static_cast<const CompassPwaFileFitResults *>( FileObject.DataObject() ) );
+		break;
+	case CompassPwaFileObject::PhaseSpaceIntegral:
+		if( !( _PhaseSpaceIntegrals.insert( pair<double, const CompassPwaFilePhaseSpaceIntegrals *>(FileObject.MassBinStart(), static_cast<const CompassPwaFilePhaseSpaceIntegrals *>( FileObject.DataObject() ) ) ).second ) ){
+			printErr << "Two phase space integral files with the same starting value are given to read in, but overlapping integrals are not allowed [mass bin>(" << FileObject.MassBinStart() << ',' << FileObject.MassBinEnd() << ")]\n";
+		}
+		break;
+	case CompassPwaFileObject::AcceptanceCorrectedNormIntegral:
+		// Acceptance corrected integrals are ignored
+		delete FileObject.DataObject();
+		break;
+	case CompassPwaFileObject::NotAcceptanceCorrectedNormIntegral:
+		if( !( _NormIntegrals.insert( pair<double, const CompassPwaFileNormIntegrals *>(FileObject.MassBinStart(), static_cast<const CompassPwaFileNormIntegrals *>( FileObject.DataObject() ) ) ).second ) ){
+			printErr << "Two normalization integral files with the same starting value are given to read in, but overlapping integrals are not allowed [mass bin>(" << FileObject.MassBinStart() << ',' << FileObject.MassBinEnd() << ")]\n";
+		}
+		break;
+	default:
+		printErr << "Error reading file " << FileName << '\n';
+		break;
+	}
+
+	// Ownership of DataObject passes with clearing to this class (CompassPwaFileLoader)
+	FileObject.Clear();
+}
+
 // Takes a glob pattern as parameter and reads in all matching files, sorts and stores them by their type, can be called multiple times and the new files are added, but since overlapping bins are not allowed for the integrals, reading multiple times the same file will cause an error in the merging function
 void CompassPwaFileLoader::ReadFiles( const std::string& GlobPattern ){
 	vector<string> FileNames = filesMatchingGlobPattern( GlobPattern );
 
-	CompassPwaFileObject FileObject;
-	CompassPwaFileObjectStatus Status = NotLoaded;
-
 	for( unsigned int i = 0; i < FileNames.size(); ++i ){
-		Status = FileObject.ReadFromFile( FileNames[i].c_str() );
-
-		switch( Status ){
-		case FitResult:
-			_FitResults.push_back( static_cast<const CompassPwaFileFitResults *>( FileObject.DataObject() ) );
-			break;
-		case PhaseSpaceIntegral:
-			if( !( _PhaseSpaceIntegrals.insert( pair<double, const CompassPwaFilePhaseSpaceIntegrals *>(FileObject.MassBinStart(), static_cast<const CompassPwaFilePhaseSpaceIntegrals *>( FileObject.DataObject() ) ) ).second ) ){
-				printErr << "Two phase space integral files with the same starting value are given to read in, but overlapping integrals are not allowed [mass bin>(" << FileObject.MassBinStart() << ',' << FileObject.MassBinEnd() << ")]\n";
-			}
-			break;
-		case AcceptanceCorrectedNormIntegral:
-			// Acceptance corrected integrals are ignored
-			delete FileObject.DataObject();
-			break;
-		case NotAcceptanceCorrectedNormIntegral:
-			if( !( _NormIntegrals.insert( pair<double, const CompassPwaFileNormIntegrals *>(FileObject.MassBinStart(), static_cast<const CompassPwaFileNormIntegrals *>( FileObject.DataObject() ) ) ).second ) ){
-				printErr << "Two normalization integral files with the same starting value are given to read in, but overlapping integrals are not allowed [mass bin>(" << FileObject.MassBinStart() << ',' << FileObject.MassBinEnd() << ")]\n";
-			}
-			break;
-		default:
-			printErr << "Error reading file " << FileNames[i] << '\n';
-			break;
-		}
-
-		// Ownership of DataObject passes with clearing to this class (CompassPwaFileLoader)
-		FileObject.Clear();
+		ReadFile( FileNames[i] );
 	}
 }
 
@@ -278,7 +283,7 @@ TTree *CompassPwaFileLoader::Merge(){
 						}
 
 						FitResult->fill(	_FitResults[i]->NumEvents(),
-											1,
+											_FitResults[i]->NumEvents(),
 											(_FitResults[i]->MassBinStart() + _FitResults[i]->MassBinEnd() )/2,
 											_FitResults[i]->LogLikelihood(),
 											(int)(_FitResults[i]->Rank()),
@@ -290,6 +295,12 @@ TTree *CompassPwaFileLoader::Merge(){
 											PhaseSpaceIntegralValues,
 											true,
 											true );
+
+						if( _Debug ){
+							if( 0 == i ){
+								printDebug << (*FitResult);
+							}
+						}
 
 						// Fill FitResult into root tree
 						if( _Debug ){
