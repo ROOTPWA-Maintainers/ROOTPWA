@@ -37,9 +37,24 @@
 
 add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
 
+find_package(PythonLibs 3.2)
+message(STATUS "${PYTHONLIBS_FOUND}")
+message(STATUS "${PYTHON_LIBRARIES}")
+message(STATUS "${PYTHON_INCLUDE_PATH}")
+message(STATUS "${PYTHON_INCLUDE_DIRS}")
+message(STATUS "${PYTHON_DEBUG_LIBRARIES}")
+message(STATUS "${Python_ADDITIONAL_VERSIONS}")
+
+SET(Boost_USE_STATIC_LIBS OFF)
+SET(Boost_USE_MULTITHREADED ON)
+SET(Boost_USE_STATIC_RUNTIME OFF)
+FIND_PACKAGE(Boost 1.45.0 COMPONENTS python)
+message(STATUS "boost found ${Boost_FOUND}")
+
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+  ${PYTHON_INCLUDE_DIRS}
 	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
   ${Boost_INCLUDE_DIRS}
   ${Libconfig_INCLUDE_DIR}
@@ -76,6 +91,10 @@ set(SOURCES
 	waveSetGenerator.cc
 	)
 
+set(PYSOURCES
+	python_stuff.cc
+   )
+
 
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
@@ -97,6 +116,14 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 	"${PWA2000_LIBS}"
 	)
 
+make_shared_library("pylib" "${PYSOURCES}"
+	"${PYTHON_LIBRARIES}"
+	"${Boost_Libraries}"
+	"${BOOST_LIBS}"
+	"${ROOT_LIBS}"
+	"${Libconfig_LIBS}"
+	"${PWA2000_LIBS}"
+	)
 
 # executables
 make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB})

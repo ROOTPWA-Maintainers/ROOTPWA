@@ -86,7 +86,7 @@ endif()
 # common compiler flags
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra")
-set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
+set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
@@ -132,11 +132,10 @@ message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
 
-
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 # set(Boost_DEBUG 1)
-find_package(Boost 1.43.0 REQUIRED)
+find_package(Boost 1.43.0 COMPONENTS python REQUIRED)
 set_feature_info(Boost "C++ Template Library" "http://www.boost.org/" "required")
 if(Boost_FOUND)
 	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
