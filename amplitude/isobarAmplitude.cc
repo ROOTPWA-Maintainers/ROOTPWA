@@ -34,7 +34,6 @@
 //
 //-------------------------------------------------------------------------
 
-
 #include <algorithm>
 #include <cassert>
 
@@ -57,6 +56,7 @@ isobarAmplitude::isobarAmplitude()
 	: _decay               (),
 	  _useReflectivityBasis(true),
 	  _boseSymmetrize      (true),
+	  _isospinSymmetrize   (true),
 	  _doSpaceInversion    (false),
 	  _doReflection        (false)
 { }
@@ -65,6 +65,7 @@ isobarAmplitude::isobarAmplitude()
 isobarAmplitude::isobarAmplitude(const isobarDecayTopologyPtr& decay)
 	: _useReflectivityBasis(true),
 	  _boseSymmetrize      (true),
+	  _isospinSymmetrize   (true),
 	  _doSpaceInversion    (false),
 	  _doReflection        (false)
 {
@@ -103,9 +104,11 @@ isobarAmplitude::amplitude() const
 {
 	// recursively sum over all possible helicities of the decay particles
 	complex<double> amp = 0;
-	if (_boseSymmetrize)
+	if(_isospinSymmetrize) {
+		amp = isospinSymmetrizedAmp();
+	} else if (_boseSymmetrize) {
 		amp = boseSymmetrizedAmp();
-	else {
+	} else {
 		// transform daughters into their respective RFs
 		transformDaughters();
 		// calculate amplitude
@@ -327,6 +330,58 @@ isobarAmplitude::boseSymmetrizedAmp() const
 		printDebug << "Bose-symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
 	map<string, vector<unsigned int> >::iterator firstEntry = newFsPartIndices.begin();
 	return normFactor * sumBoseSymTerms(origFsPartIndices, newFsPartIndices, firstEntry);
+}
+
+
+complex<double>
+isobarAmplitude::isospinSymmetrizedAmp() const
+{
+
+	printDebug<<"entering isospinSymmetrizedAmp"<<std::endl;
+	const vector<isobarDecayVertexPtr> isobarDecayVertices = _decay->isobarDecayVertices();
+	for(unsigned int iDecayVertex = 0; iDecayVertex < isobarDecayVertices.size(); ++iDecayVertex) {
+		const isobarDecayVertexPtr& vertex = isobarDecayVertices[iDecayVertex];
+		if(vertex->parent()->charge() != 0) {
+			continue;
+		}
+		printDebug<<"Survived first"<<std::endl;
+		const particlePtr& daughter1 = vertex->daughter1();
+		const particlePtr& daughter2 = vertex->daughter2();
+		if(daughter1->charge() == 0 ||
+		   (
+		    _decay->isFsParticle(daughter1) &&
+		    _decay->isFsParticle(daughter2)
+		   )
+		  )
+		{
+			continue;
+		}
+		printDebug<<"Survived second"<<std::endl;
+		const isobarDecayVertexPtr& daughterVertex1 = static_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
+		const isobarDecayVertexPtr& daughterVertex2 = static_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
+		if(_decay->isFsParticle(daughter2) == false) {
+			printDebug<<"First outer if"<<std::endl;
+			if(daughter1->name() == daughterVertex2->daughter1()->antiPartName()) {
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+			}
+			if(daughter1->name() == daughterVertex2->daughter2()->antiPartName()) {
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+			}
+		} 
+		if (_decay->isFsParticle(daughter1) == false) {
+			printDebug<<"Second outer if"<<std::endl;
+			if(daughter2->name() == daughterVertex1->daughter1()->antiPartName()) {
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+			}
+			if(daughter2->name() == daughterVertex1->daughter2()->antiPartName()) {
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+			}
+		}
+	}
+	transformDaughters();
+	printDebug<<"exiting isospinSymmetrizedAmp"<<std::endl;
+	return twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
+
 }
 
 
