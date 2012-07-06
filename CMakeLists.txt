@@ -243,43 +243,43 @@ endif()
 
 
 # setup MPI
-find_package(MPI)
-set_feature_info(MPI "standardized and portable message-passing system for parallel computing"
-	"http://www.boost.org/doc/libs/1_47_0/doc/html/mpi.html" "optional")
-set(USE_MPI FALSE)
-if(NOT MPI_FOUND)
-  set(USE_MPI FALSE)
-  message(STATUS "Cannot find MPI installation. No MPI components will be generated.")
-else()
-  set(USE_MPI TRUE)
-  message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'")
-  message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'")
-  # setup Boost.MPI library
-  set(Boost_MPI_LIBRARY_DIR "${BOOST_ROOT}/stage/lib")
-  set(_Boost_MPI_LIB_NAMES "boost_mpi" "boost_serialization")
-  foreach(_Boost_MPI_LIB_NAME ${_Boost_MPI_LIB_NAMES})
-    find_library(_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}
-      NAMES ${_Boost_MPI_LIB_NAME}
-      PATHS ${Boost_MPI_LIBRARY_DIR}
-      NO_DEFAULT_PATH)
-    if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
-      set(USE_MPI FALSE)
-      message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in "
-				"'${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
-    else()
-      list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
-    endif()
-  endforeach()
-  if(USE_MPI)
-    message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
-    message(STATUS "Enabling compilation of MPI components")
-    add_definitions(-DUSE_MPI)
-  else()
-		disable_feature(MPI)
-    message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). "
-			"No MPI components will be generated.")
-  endif()
-endif()
+#find_package(MPI)
+#set_feature_info(MPI "standardized and portable message-passing system for parallel computing"
+#	"http://www.boost.org/doc/libs/1_47_0/doc/html/mpi.html" "optional")
+#set(USE_MPI FALSE)
+#if(NOT MPI_FOUND)
+#  set(USE_MPI FALSE)
+#  message(STATUS "Cannot find MPI installation. No MPI components will be generated.")
+#else()
+#  set(USE_MPI TRUE)
+#  message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'")
+#  message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'")
+#  # setup Boost.MPI library
+#  set(Boost_MPI_LIBRARY_DIR "${BOOST_ROOT}/stage/lib")
+#  set(_Boost_MPI_LIB_NAMES "boost_mpi" "boost_serialization")
+#  foreach(_Boost_MPI_LIB_NAME ${_Boost_MPI_LIB_NAMES})
+#    find_library(_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}
+#      NAMES ${_Boost_MPI_LIB_NAME}
+#      PATHS ${Boost_MPI_LIBRARY_DIR}
+#      NO_DEFAULT_PATH)
+#    if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
+#      set(USE_MPI FALSE)
+#      message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in "
+#				"'${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
+#    else()
+#      list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
+#    endif()
+#  endforeach()
+#  if(USE_MPI)
+#    message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
+#    message(STATUS "Enabling compilation of MPI components")
+#    add_definitions(-DUSE_MPI)
+#  else()
+#		disable_feature(MPI)
+#    message(STATUS "Found MPI installation, but Boost.MPI is not built correctly (consult INSTALL). "
+#			"No MPI components will be generated.")
+#  endif()
+#endif()
 
 
 # make SVN version string accessible via predefined macro SVN_VERSION
