@@ -40,6 +40,8 @@ private:
 
 	vector<TGTextButton*> _buttons_waveselection; // holds the buttons to all waves
 
+	vector< vector< TGTextButton* >* > _addresses_for_ids;
+
 	// references to the buttons are stored here by quantum numbers
 	map<int, vector< TGTextButton* > > _buttons_waveselection_by_JP;
 	map<int, vector< TGTextButton* > > _buttons_waveselection_by_Mrefl;

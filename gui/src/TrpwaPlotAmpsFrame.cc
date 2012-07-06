@@ -207,7 +207,8 @@ void TrpwaPlotAmpsFrame::Build(){
 	box_available_fits->Connect("Selected(Int_t)", "TrpwaPlotAmpsFrame", this, "Add_Fit(Int_t)");
 	box_available_fits->AddEntry("NONE",-1);
 	for (Tfilemapit it = available_fit_results.begin(); it != available_fit_results.end(); it++){
-		box_available_fits->AddEntry(it->first.c_str(), (long int) it->second);
+		_available_fit_ids.push_back(it->second);
+		box_available_fits->AddEntry(it->first.c_str(), (long int)(_available_fit_ids.size() - 1));
 	}
 
 	box_available_fits->SetHeight(20);
@@ -361,7 +362,7 @@ bool TrpwaPlotAmpsFrame::Add_Fit_Result(string fit_result_path, // path containi
 void TrpwaPlotAmpsFrame::Add_Fit(int pFitFile){
 	if (pFitFile > 0){
 		// get the name and add the entry to the list of selected fits
-		TTree* selected_fit = (TTree*) pFitFile;
+		TTree* selected_fit = _available_fit_ids.at(pFitFile);
 		string fitname = selected_fit->GetName();
 		if (selected_fit_results.find(fitname)==selected_fit_results.end()){
 			selected_fit_results[fitname]=selected_fit;
