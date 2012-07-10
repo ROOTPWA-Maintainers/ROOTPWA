@@ -336,9 +336,9 @@ isobarAmplitude::boseSymmetrizedAmp() const
 complex<double>
 isobarAmplitude::isospinSymmetrizedAmp() const
 {
-
 	printDebug<<"entering isospinSymmetrizedAmp"<<std::endl;
 	const vector<isobarDecayVertexPtr> isobarDecayVertices = _decay->isobarDecayVertices();
+	vector< vector<int> > maps;
 	for(unsigned int iDecayVertex = 0; iDecayVertex < isobarDecayVertices.size(); ++iDecayVertex) {
 		const isobarDecayVertexPtr& vertex = isobarDecayVertices[iDecayVertex];
 		if(vertex->parent()->charge() != 0) {
@@ -346,34 +346,55 @@ isobarAmplitude::isospinSymmetrizedAmp() const
 		}
 		printDebug<<"Survived first"<<std::endl;
 		const particlePtr& daughter1 = vertex->daughter1();
+		if(daughter1->charge() == 0) {
+			continue;
+		}
 		const particlePtr& daughter2 = vertex->daughter2();
-		if(daughter1->charge() == 0 ||
-		   (
-		    _decay->isFsParticle(daughter1) &&
-		    _decay->isFsParticle(daughter2)
-		   )
-		  )
-		{
+		if(_decay->isFsParticle(daughter1) && _decay->isFsParticle(daughter2)) {
 			continue;
 		}
 		printDebug<<"Survived second"<<std::endl;
 		const isobarDecayVertexPtr& daughterVertex1 = static_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
 		const isobarDecayVertexPtr& daughterVertex2 = static_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
+		vector<int> map(_decay->nmbFsParticles(), 0);
+		for(unsigned int i = 0; i < map.size(); ++i) {
+			map.at(i) = i;
+		}
 		if(_decay->isFsParticle(daughter2) == false) {
 			printDebug<<"First outer if"<<std::endl;
 			if(daughter1->name() == daughterVertex2->daughter1()->antiPartName()) {
+				int first = _decay->traceCharge(daughter1);
+				int second = _decay->traceCharge(daughterVertex2->daughter1());
+				map.at(first) = second;
+				map.at(second) = first;
+				maps.push_back(map);
 				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
 			}
 			if(daughter1->name() == daughterVertex2->daughter2()->antiPartName()) {
+				int first = _decay->traceCharge(daughter1);
+				int second = _decay->traceCharge(daughterVertex2->daughter2());
+				map.at(first) = second;
+				map.at(second) = first;
+				maps.push_back(map);
 				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
 			}
 		} 
 		if (_decay->isFsParticle(daughter1) == false) {
 			printDebug<<"Second outer if"<<std::endl;
 			if(daughter2->name() == daughterVertex1->daughter1()->antiPartName()) {
+				int first = _decay->traceCharge(daughter2);
+				int second = _decay->traceCharge(daughterVertex1->daughter1());
+				map.at(first) = second;
+				map.at(second) = first;
+				maps.push_back(map);
 				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
 			}
 			if(daughter2->name() == daughterVertex1->daughter2()->antiPartName()) {
+				int first = _decay->traceCharge(daughter2);
+				int second = _decay->traceCharge(daughterVertex1->daughter2());
+				map.at(first) = second;
+				map.at(second) = first;
+				maps.push_back(map);
 				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
 			}
 		}
