@@ -448,3 +448,20 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& parentVertex
 	daughterDecays[1] = daughter2Decay;
 	return joinDaughterDecays(parentVertex, daughterDecays);
 }
+
+int
+isobarDecayTopology::traceCharge(const particlePtr& particle)
+{
+	assert(particle->charge() != 0);
+	isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(toVertex(particle));
+	particlePtr daughter = vertex->daughter1();
+	if(daughter->charge() == 0) {
+		daughter = vertex->daughter2();
+	}
+	int fsIndex = fsParticlesIndex(daughter);
+	if(fsIndex < 0) {
+		return traceCharge(daughter);
+	} else {
+		return fsIndex;
+	}
+}
