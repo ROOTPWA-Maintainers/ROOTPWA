@@ -363,39 +363,40 @@ isobarAmplitude::isospinSymmetrizedAmp() const
 		if(_decay->isFsParticle(daughter2) == false) {
 			printDebug<<"First outer if"<<std::endl;
 			if(daughter1->name() == daughterVertex2->daughter1()->antiPartName()) {
-				int first = _decay->traceCharge(daughter1);
-				int second = _decay->traceCharge(daughterVertex2->daughter1());
-				map.at(first) = second;
-				map.at(second) = first;
-				maps.push_back(map);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+				int i1;
+				int i2;
+				double cleb1;
+				double cleb2;
+				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
+
 			}
 			if(daughter1->name() == daughterVertex2->daughter2()->antiPartName()) {
-				int first = _decay->traceCharge(daughter1);
-				int second = _decay->traceCharge(daughterVertex2->daughter2());
-				map.at(first) = second;
-				map.at(second) = first;
-				maps.push_back(map);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+				int i1;
+				int i2;
+				double cleb1;
+				double cleb2;
+				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
 			}
 		} 
 		if (_decay->isFsParticle(daughter1) == false) {
 			printDebug<<"Second outer if"<<std::endl;
 			if(daughter2->name() == daughterVertex1->daughter1()->antiPartName()) {
-				int first = _decay->traceCharge(daughter2);
-				int second = _decay->traceCharge(daughterVertex1->daughter1());
-				map.at(first) = second;
-				map.at(second) = first;
-				maps.push_back(map);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+				int i1;
+				int i2;
+				double cleb1;
+				double cleb2;
+				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
 			}
 			if(daughter2->name() == daughterVertex1->daughter2()->antiPartName()) {
-				int first = _decay->traceCharge(daughter2);
-				int second = _decay->traceCharge(daughterVertex1->daughter2());
-				map.at(first) = second;
-				map.at(second) = first;
-				maps.push_back(map);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl;
+				int i1;
+				int i2;
+				double cleb1;
+				double cleb2;
+				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
+				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
 			}
 		}
 	}

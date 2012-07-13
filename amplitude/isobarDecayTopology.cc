@@ -40,6 +40,7 @@
 #include "isobarDecayTopology.h"
 #include "particleDataTable.h"
 
+#include "spinUtils.hpp"
 	
 using namespace std;
 using namespace boost;
@@ -449,6 +450,7 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& parentVertex
 	return joinDaughterDecays(parentVertex, daughterDecays);
 }
 
+/*
 int
 isobarDecayTopology::traceCharge(const particlePtr& particle)
 {
@@ -460,8 +462,82 @@ isobarDecayTopology::traceCharge(const particlePtr& particle)
 	}
 	int fsIndex = fsParticlesIndex(daughter);
 	if(fsIndex < 0) {
-		return traceCharge(daughter);
+		return traceCharge(dau  ghter);
 	} else {
 		return fsIndex;
 	}
+}
+*/
+
+void
+isobarDecayTopology::traceChargeIsoClebsch(const isobarDecayVertexPtr& vertex,
+                                           int& fsIndex1,
+										   int& fsIndex2,
+                                           double& clebsch,
+                                           double& clebschInv,
+										   bool topVertex) // = false
+const
+{
+
+	const particlePtr& daughter1 = vertex->daughter1();
+	const particlePtr& daughter2 = vertex->daughter2();
+	const particlePtr& parent = vertex->parent();
+
+	int daughterFsIndex1 = fsParticlesIndex(daughter1);
+	int daughterFsIndex2 = fsParticlesIndex(daughter2);
+	
+	int tmpFsIndex1D1 = -1;
+	int tmpFsIndex2D1 = -1;
+	int tmpFsIndex1D2 = -1;
+	int tmpFsIndex2D2 = -1;
+
+	double tmpClebsch = clebschGordanCoeff<double>(daughter1->isospin(),
+	                                                daughter1->isospinProj(),
+	                                                daughter2->isospin(),
+	                                                daughter2->isospinProj(),
+	                                                parent->isospin(),
+	                                                parent->isospinProj());
+	double tmpClebschInv = clebschGordanCoeff<double>(daughter1->isospin(),
+	                                                  -daughter1->isospinProj(),
+	                                                  daughter2->isospin(),
+	                                                  -daughter2->isospinProj(),
+	                                                  parent->isospin(),
+	                                                  -parent->isospinProj());
+
+	double tmpClebsch1 = 1.;
+	double tmpClebsch2 = 1.;
+	double tmpClebsch1Inv = 1.;
+	double tmpClebsch2Inv = 1.;
+
+	if(daughterFsIndex1 < 0) {
+		isobarDecayVertexPtr daughterVertex1 = static_pointer_cast<isobarDecayVertex>(toVertex(daughter1));
+		traceChargeIsoClebsch(daughterVertex1, tmpFsIndex1D1, tmpFsIndex2D1, tmpClebsch1, tmpClebsch1Inv);
+	} else {
+		tmpFsIndex1D1 = daughterFsIndex1;
+	}
+	if(daughterFsIndex2 < 0) {
+		isobarDecayVertexPtr daughterVertex2 = static_pointer_cast<isobarDecayVertex>(toVertex(daughter2));
+		traceChargeIsoClebsch(daughterVertex2, tmpFsIndex1D2, tmpFsIndex2D2, tmpClebsch2, tmpClebsch2Inv);
+	} else {
+		tmpFsIndex1D2 = daughterFsIndex2;
+	}
+
+	if(topVertex) {
+		fsIndex1 = tmpFsIndex1D1;
+		fsIndex2 = tmpFsIndex1D2;
+		clebsch = tmpClebsch * tmpClebsch1 * tmpClebsch2;
+		clebschInv = tmpClebschInv * tmpClebsch1Inv * tmpClebsch2Inv;
+	} else {
+		if(daughter1->charge() != 0) {
+			fsIndex1 = tmpFsIndex1D1;
+			clebsch = tmpClebsch * tmpClebsch1;
+			clebschInv = tmpClebschInv * tmpClebsch1Inv;
+		} else {
+			fsIndex1 = tmpFsIndex1D2;
+			clebsch = tmpClebsch * tmpClebsch2;
+			clebschInv = tmpClebschInv * tmpClebsch2Inv;
+		}
+	}
+
+
 }
