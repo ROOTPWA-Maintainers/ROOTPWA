@@ -39,6 +39,7 @@
 #ifndef ISOBARDECAYTOPOLOGY_H
 #define ISOBARDECAYTOPOLOGY_H
 
+#include <boost/tuple/tuple.hpp>
 
 #include "isobarDecayVertex.h"
 #include "decayTopology.h"
@@ -94,8 +95,8 @@ namespace rpwa {
 
 		const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
 	  
-		void calcIsobarCharges   ();  ///< sets isobar charges as defined by final state particles
-		void calcIsobarBaryonNmbs();  ///< sets isobar baryon numbers as defined by final state particles
+		void calcIsobarCharges   (bool quiet = false);  ///< sets isobar charges as defined by final state particles
+		void calcIsobarBaryonNmbs();                    ///< sets isobar baryon numbers as defined by final state particles
 	  
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 	  
@@ -104,8 +105,9 @@ namespace rpwa {
 	  
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-	  
-		void doStuff();
+	 
+	 	double getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex = isobarDecayVertexPtr()) const;
+		std::vector< boost::tuple<double, std::vector<unsigned int> > > getIsospinSymmetrization();
 
 
 	private:

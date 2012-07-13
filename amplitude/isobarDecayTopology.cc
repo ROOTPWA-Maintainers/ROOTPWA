@@ -35,12 +35,12 @@
 //
 //-------------------------------------------------------------------------
 
-
 #include "diffractiveDissVertex.h"
 #include "isobarDecayTopology.h"
 #include "particleDataTable.h"
+#include "spinUtils.hpp"
 
-	
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -260,29 +260,33 @@ isobarDecayTopology::calcIsobarLzVec()
 
 
 void
-isobarDecayTopology::calcIsobarCharges()
+isobarDecayTopology::calcIsobarCharges(const bool warnIfNotExistent)
 {
 	// loop over isobar decay vertices and propagate charges from final state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		const particlePtr& isobar = _isobarVertices[i]->parent();
-		if (_debug)
+		if (_debug && warnIfNotExistent)
 			printDebug << "calculating charge of parent isobar '"
 			           << isobar->name() << "' "
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
 		const int isobarCharge = isobar->charge();
 		if (isobarCharge != _isobarVertices[i]->calcParentCharge())
 			if (isobar != XParticle()) {
-				printWarn << "fixed charge of isobar '" << isobar->name() << "' "
-				          << "from " << isobarCharge << " to " << isobar->charge() << ". "
-				          << "please fix wave definition." << endl;
-				isobar->fillFromDataTable(isobar->name());
+				if(warnIfNotExistent) {
+					printWarn << "fixed charge of isobar '" << isobar->name() << "' "
+					          << "from " << isobarCharge << " to " << isobar->charge() << ". "
+					          << "please fix wave definition." << endl;
+				}
+				isobar->fillFromDataTable(isobar->name(), warnIfNotExistent);
 			}
 	}
 	// correct C-parity of X, if necessary
 	if ((abs(XParticle()->charge()) > 0) and (XParticle()->C() != 0)) {
-		printWarn << "X is charged, but has C-parity = " << XParticle()->C()
-		          << ". setting C-parity to zero. please fix wave definition." << endl;
-		XParticle()->setC(0);
+		if(warnIfNotExistent) {
+			printWarn << "X is charged, but has C-parity = " << XParticle()->C()
+			          << ". setting C-parity to zero. please fix wave definition." << endl;
+			XParticle()->setC(0);
+		}
 	}
 	// update graph name
 	name() = "\"" + XParticle()->qnSummary() + "\"";
@@ -449,7 +453,35 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& parentVertex
 	return joinDaughterDecays(parentVertex, daughterDecays);
 }
 
-void isobarDecayTopology::doStuff() {
+double
+isobarDecayTopology::getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex) const
+{
+
+	if(!vertex) {
+		vertex = static_pointer_cast<isobarDecayVertex>(XDecayVertex());
+	}
+
+	const particlePtr daughter1 = vertex->daughter1();
+	const particlePtr daughter2 = vertex->daughter2();
+	const particlePtr parent    = vertex->parent();
+
+	double clebsch = clebschGordanCoeff<double>(daughter1->isospin(), daughter1->isospinProj(),
+	                                            daughter2->isospin(), daughter2->isospinProj(),
+												parent->isospin(), parent->isospinProj());
+	double clebschDaughter1 = 1.;
+	double clebschDaughter2 = 1.;
+	if(!isFsParticle(daughter1)) {
+		clebschDaughter1 = getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter1)));
+	}
+	if(!isFsParticle(daughter2)) {
+		clebschDaughter2 = getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter2)));
+	}
+	return (clebsch * clebschDaughter1 * clebschDaughter2);
+}
+
+std::vector< boost::tuple<double, std::vector<unsigned int> > >
+isobarDecayTopology::getIsospinSymmetrization()
+{
 
 	const std::vector<particlePtr> fsParts = fsParticles();
 
@@ -462,9 +494,9 @@ void isobarDecayTopology::doStuff() {
 			const particlePtr& compPart = fsParts.at(groups.at(j).at(0));
 			if(particle->isospin() == compPart->isospin() &&
 			   particle->J() == compPart->J() &&
-			   particle->P() == compPart->P() &&
-//			   particle->isospinProj() == compPart->isospinProj() &&
-			   particle->C() == compPart->C())
+			   particle->P() == compPart->P())
+//			   fromVertex(particle) != fromVertex(compPart) &&
+//			   particle->C() == compPart->C())
 			{
 				groups.at(j).push_back(i);
 				inserted = true;
@@ -489,6 +521,9 @@ void isobarDecayTopology::doStuff() {
 		isospinProjs.push_back(fsParts.at(j)->isospinProj());
 	}
 
+	// A vector of tuples to save the found permutations and their Clebsch-Gordans
+	std::vector< boost::tuple<double, std::vector<unsigned int> > > symAmplitudes;
+
 	// Permutating all the particles and checking if the permutation makes sense	
 	for(unsigned int i = 0; i < groups.size(); ++i) {
 		std::vector<unsigned int> group = groups.at(i);
@@ -502,7 +537,6 @@ void isobarDecayTopology::doStuff() {
 		}
 		// Permutate the permutations
 		do {
-//			printDebug<<"New Permutation"<<std::endl;
 			// Create an virgin map
 			std::vector<unsigned int> map;
 			for(unsigned int j = 0; j < fsParts.size(); ++j) {
@@ -522,55 +556,78 @@ void isobarDecayTopology::doStuff() {
 				}
 				if(fsParts.at(j)->name() == fsParts.at(map.at(j))->name()) {
 					breaking = true;
-//					printDebug<<"Swapping same particles ("<<j<<"<->"<<map.at(j)<<" | "<<fsParts.at(j)->name()<<"<->"<<fsParts.at(map.at(j))->name()<<")"<<std::endl;
 					break;
 				}
 			}
 			if(breaking) {
 				continue;
 			}
+
+			// Set the isospin in the final state particles
+			for(unsigned int j = 0; j < map.size(); ++j) {
+				fsParts.at(j)->setIsospinProj(isospinProjs.at(map.at(j)));
+			}
+			calcIsobarCharges(false);
+
+			// Check for isospin consistency
+			for(unsigned int j = 0; j < _isobarVertices.size(); ++j) {
+				const particlePtr d1 = _isobarVertices.at(j)->daughter1();
+				const particlePtr d2 = _isobarVertices.at(j)->daughter2();
+				const particlePtr p  = _isobarVertices.at(j)->parent();
+				if(!spinStatesCanCouple(d1->isospin(), d1->isospinProj(),
+				                        d2->isospin(), d2->isospinProj(),
+				                        p->isospin(),  p->isospinProj())) {
+					breaking = true;
+				}
+			}
+
+			// Check if two particles from the same isobar are being swapped
+//PROBABLY WRONG!!!!!!!!!!!!
+			for(unsigned int j = 0; j < map.size(); ++j) {
+				if(map.at(j) == j) continue;
+				for(unsigned int k = 0; k < map.size(); ++k) {
+					if((map.at(k) == k) || (j == k)) continue;
+					if(fromVertex(fsParts.at(j)) == fromVertex(fsParts.at(k))) {
+						breaking = true;
+					}
+				}
+			}
+//END PROBABLY WRONG!!!!!!!!!!!!
+
+			if(breaking) {
+				for(unsigned int j = 0; j < fsParts.size(); ++j) {
+					fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
+				}
+				calcIsobarCharges();
+				continue;
+			}
+
+			double clebsch = getIsospinClebschGordanProduct();
+		
+			// Survived all the criteria, saving to be symmetrized
+			boost::tuple<double, std::vector<unsigned int> > symAmp(getIsospinClebschGordanProduct(), map);
+			symAmplitudes.push_back(symAmp);
+
 			printDebug<<"Found valid permutation: ";
 			for(unsigned int j = 0; j < map.size(); ++j) {
 				std::cout<<map.at(j);
 			}
-			std::cout<<std::endl;
-
-			// Set the isospin in the final state particles
+			std::cout<<" (";
 			for(unsigned int j = 0; j < map.size(); ++j) {
+				std::cout<<fsParts.at(j)->name();
+			}
+			std::cout<<"), clebsch-gordan="<<clebsch<<std::endl;
+
+			// Resetting isospins for the next pass
+			for(unsigned int j = 0; j < fsParts.size(); ++j) {
 				fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
 			}
-
-
+			calcIsobarCharges();
 
 		} while(next_permutation(permutations.begin(), permutations.end()));
 
-
-
 	}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	return symAmplitudes;
 
 }

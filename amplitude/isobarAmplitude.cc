@@ -337,10 +337,21 @@ complex<double>
 isobarAmplitude::isospinSymmetrizedAmp() const
 {
 	printDebug<<"entering isospinSymmetrizedAmp"<<std::endl;
-	_decay->doStuff();
+	std::vector< boost::tuple<double, std::vector<unsigned int> > > symAmps = _decay->getIsospinSymmetrization();
+	complex<double> amp;
+	for(unsigned int i = 0; i < symAmps.size(); ++i) {
+		double clebsch = symAmps.at(i).get<0>(); 
+		std::vector<unsigned int> map = symAmps.at(i).get<1>();
+		_decay->revertMomenta(map);
+		if(_boseSymmetrize) {
+			amp +=  signum<double>(clebsch) * boseSymmetrizedAmp();
+		} else {
+			amp +=  signum<double>(clebsch) * twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
+		}
+	}
+	amp /= std::sqrt(symAmps.size());
 	printDebug<<"exiting isospinSymmetrizedAmp"<<std::endl;
-	return twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
-
+	return amp;
 }
 
 
