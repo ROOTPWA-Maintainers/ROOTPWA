@@ -122,6 +122,7 @@ namespace rpwa {
 		void setWidth       (const double       width      ) { _width        = width;                     }  ///< sets particle width
 		void setBaryonNmb   (const int          baryonNmb  ) { _baryonNmb    = baryonNmb;                 }  ///< sets particle's baryon number
 		void setIsospin     (const int          isospin    ) { _isospin      = abs(isospin);              }  ///< sets particle's isospin [hbar/2]
+		void setIsospinProj (const int          isospinProj) { _charge       = 0.5 * (isospinProj + baryonNmb() + strangeness() + charm() + beauty()); }  ///< sets particle's z component of the isospin [hbar/2]
 		void setStrangeness (const int          strangeness) { _strangeness  = strangeness;               }  ///< sets particle's strangeness
 		void setCharm       (const int          charm      ) { _charm        = charm;                     }  ///< sets particle's charm
 		void setBeauty      (const int          beauty     ) { _beauty       = beauty;                    }  ///< sets particle's beauty

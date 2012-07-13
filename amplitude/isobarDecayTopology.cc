@@ -40,7 +40,6 @@
 #include "isobarDecayTopology.h"
 #include "particleDataTable.h"
 
-#include "spinUtils.hpp"
 	
 using namespace std;
 using namespace boost;
@@ -450,94 +449,128 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& parentVertex
 	return joinDaughterDecays(parentVertex, daughterDecays);
 }
 
-/*
-int
-isobarDecayTopology::traceCharge(const particlePtr& particle)
-{
-	assert(particle->charge() != 0);
-	isobarDecayVertexPtr vertex = static_pointer_cast<isobarDecayVertex>(toVertex(particle));
-	particlePtr daughter = vertex->daughter1();
-	if(daughter->charge() == 0) {
-		daughter = vertex->daughter2();
-	}
-	int fsIndex = fsParticlesIndex(daughter);
-	if(fsIndex < 0) {
-		return traceCharge(dau  ghter);
-	} else {
-		return fsIndex;
-	}
-}
-*/
+void isobarDecayTopology::doStuff() {
 
-void
-isobarDecayTopology::traceChargeIsoClebsch(const isobarDecayVertexPtr& vertex,
-                                           int& fsIndex1,
-										   int& fsIndex2,
-                                           double& clebsch,
-                                           double& clebschInv,
-										   bool topVertex) // = false
-const
-{
+	const std::vector<particlePtr> fsParts = fsParticles();
 
-	const particlePtr& daughter1 = vertex->daughter1();
-	const particlePtr& daughter2 = vertex->daughter2();
-	const particlePtr& parent = vertex->parent();
-
-	int daughterFsIndex1 = fsParticlesIndex(daughter1);
-	int daughterFsIndex2 = fsParticlesIndex(daughter2);
-	
-	int tmpFsIndex1D1 = -1;
-	int tmpFsIndex2D1 = -1;
-	int tmpFsIndex1D2 = -1;
-	int tmpFsIndex2D2 = -1;
-
-	double tmpClebsch = clebschGordanCoeff<double>(daughter1->isospin(),
-	                                                daughter1->isospinProj(),
-	                                                daughter2->isospin(),
-	                                                daughter2->isospinProj(),
-	                                                parent->isospin(),
-	                                                parent->isospinProj());
-	double tmpClebschInv = clebschGordanCoeff<double>(daughter1->isospin(),
-	                                                  -daughter1->isospinProj(),
-	                                                  daughter2->isospin(),
-	                                                  -daughter2->isospinProj(),
-	                                                  parent->isospin(),
-	                                                  -parent->isospinProj());
-
-	double tmpClebsch1 = 1.;
-	double tmpClebsch2 = 1.;
-	double tmpClebsch1Inv = 1.;
-	double tmpClebsch2Inv = 1.;
-
-	if(daughterFsIndex1 < 0) {
-		isobarDecayVertexPtr daughterVertex1 = static_pointer_cast<isobarDecayVertex>(toVertex(daughter1));
-		traceChargeIsoClebsch(daughterVertex1, tmpFsIndex1D1, tmpFsIndex2D1, tmpClebsch1, tmpClebsch1Inv);
-	} else {
-		tmpFsIndex1D1 = daughterFsIndex1;
-	}
-	if(daughterFsIndex2 < 0) {
-		isobarDecayVertexPtr daughterVertex2 = static_pointer_cast<isobarDecayVertex>(toVertex(daughter2));
-		traceChargeIsoClebsch(daughterVertex2, tmpFsIndex1D2, tmpFsIndex2D2, tmpClebsch2, tmpClebsch2Inv);
-	} else {
-		tmpFsIndex1D2 = daughterFsIndex2;
-	}
-
-	if(topVertex) {
-		fsIndex1 = tmpFsIndex1D1;
-		fsIndex2 = tmpFsIndex1D2;
-		clebsch = tmpClebsch * tmpClebsch1 * tmpClebsch2;
-		clebschInv = tmpClebschInv * tmpClebsch1Inv * tmpClebsch2Inv;
-	} else {
-		if(daughter1->charge() != 0) {
-			fsIndex1 = tmpFsIndex1D1;
-			clebsch = tmpClebsch * tmpClebsch1;
-			clebschInv = tmpClebschInv * tmpClebsch1Inv;
-		} else {
-			fsIndex1 = tmpFsIndex1D2;
-			clebsch = tmpClebsch * tmpClebsch2;
-			clebschInv = tmpClebschInv * tmpClebsch2Inv;
+	//Get a vector of groups of particles which have to be permutated.
+	std::vector< std::vector<unsigned int> > groups;
+	for(unsigned int i = 0; i < fsParts.size(); ++i) {
+		const particlePtr& particle = fsParts.at(i);
+		bool inserted = false;
+		for(unsigned int j = 0; j < groups.size(); ++j) {
+			const particlePtr& compPart = fsParts.at(groups.at(j).at(0));
+			if(particle->isospin() == compPart->isospin() &&
+			   particle->J() == compPart->J() &&
+			   particle->P() == compPart->P() &&
+//			   particle->isospinProj() == compPart->isospinProj() &&
+			   particle->C() == compPart->C())
+			{
+				groups.at(j).push_back(i);
+				inserted = true;
+			}
+		}
+		if(!inserted) {
+			groups.push_back(std::vector<unsigned int>(1,i));
 		}
 	}
+
+	printDebug<<"Doing stuff"<<std::endl;
+	for(unsigned int i = 0; i < groups.size(); ++i) {
+		printDebug<<"Group "<<i<<std::endl;
+		for(unsigned int j = 0; j < groups.at(i).size(); ++j) {
+			printDebug<<j<<": "<<groups.at(i).at(j)<<" ("<<fsParts.at(groups.at(i).at(j))->name()<<")"<<std::endl;
+		}
+	}
+
+	// Saving all the isospins
+	std::vector<int> isospinProjs;
+	for(unsigned int j = 0; j < fsParts.size(); ++j) {
+		isospinProjs.push_back(fsParts.at(j)->isospinProj());
+	}
+
+	// Permutating all the particles and checking if the permutation makes sense	
+	for(unsigned int i = 0; i < groups.size(); ++i) {
+		std::vector<unsigned int> group = groups.at(i);
+
+		printDebug<<"Group permutations "<<i<<std::endl;
+
+		// The unity permutation of the right lenght
+		std::vector<unsigned int> permutations;
+		for(unsigned int j = 0; j < group.size(); ++j) {
+			permutations.push_back(j);
+		}
+		// Permutate the permutations
+		do {
+//			printDebug<<"New Permutation"<<std::endl;
+			// Create an virgin map
+			std::vector<unsigned int> map;
+			for(unsigned int j = 0; j < fsParts.size(); ++j) {
+				map.push_back(j);
+			}
+
+			// Swap stuff in the map
+			for(unsigned int j = 0; j < group.size(); ++j) {
+				map.at(group.at(j)) = group.at(permutations.at(j));
+			}
+
+			// Make sure we are not swapping two indistinguishable particles.
+			bool breaking = false;
+			for(unsigned int j = 0; j < map.size(); ++j) {
+				if(j == map.at(j)) {
+					continue;
+				}
+				if(fsParts.at(j)->name() == fsParts.at(map.at(j))->name()) {
+					breaking = true;
+//					printDebug<<"Swapping same particles ("<<j<<"<->"<<map.at(j)<<" | "<<fsParts.at(j)->name()<<"<->"<<fsParts.at(map.at(j))->name()<<")"<<std::endl;
+					break;
+				}
+			}
+			if(breaking) {
+				continue;
+			}
+			printDebug<<"Found valid permutation: ";
+			for(unsigned int j = 0; j < map.size(); ++j) {
+				std::cout<<map.at(j);
+			}
+			std::cout<<std::endl;
+
+			// Set the isospin in the final state particles
+			for(unsigned int j = 0; j < map.size(); ++j) {
+				fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
+			}
+
+
+
+		} while(next_permutation(permutations.begin(), permutations.end()));
+
+
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 }

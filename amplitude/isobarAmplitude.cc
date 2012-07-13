@@ -337,70 +337,7 @@ complex<double>
 isobarAmplitude::isospinSymmetrizedAmp() const
 {
 	printDebug<<"entering isospinSymmetrizedAmp"<<std::endl;
-	const vector<isobarDecayVertexPtr> isobarDecayVertices = _decay->isobarDecayVertices();
-	vector< vector<int> > maps;
-	for(unsigned int iDecayVertex = 0; iDecayVertex < isobarDecayVertices.size(); ++iDecayVertex) {
-		const isobarDecayVertexPtr& vertex = isobarDecayVertices[iDecayVertex];
-		if(vertex->parent()->charge() != 0) {
-			continue;
-		}
-		printDebug<<"Survived first"<<std::endl;
-		const particlePtr& daughter1 = vertex->daughter1();
-		if(daughter1->charge() == 0) {
-			continue;
-		}
-		const particlePtr& daughter2 = vertex->daughter2();
-		if(_decay->isFsParticle(daughter1) && _decay->isFsParticle(daughter2)) {
-			continue;
-		}
-		printDebug<<"Survived second"<<std::endl;
-		const isobarDecayVertexPtr& daughterVertex1 = static_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter1));
-		const isobarDecayVertexPtr& daughterVertex2 = static_pointer_cast<isobarDecayVertex>(_decay->toVertex(daughter2));
-		vector<int> map(_decay->nmbFsParticles(), 0);
-		for(unsigned int i = 0; i < map.size(); ++i) {
-			map.at(i) = i;
-		}
-		if(_decay->isFsParticle(daughter2) == false) {
-			printDebug<<"First outer if"<<std::endl;
-			if(daughter1->name() == daughterVertex2->daughter1()->antiPartName()) {
-				int i1;
-				int i2;
-				double cleb1;
-				double cleb2;
-				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
-
-			}
-			if(daughter1->name() == daughterVertex2->daughter2()->antiPartName()) {
-				int i1;
-				int i2;
-				double cleb1;
-				double cleb2;
-				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
-			}
-		} 
-		if (_decay->isFsParticle(daughter1) == false) {
-			printDebug<<"Second outer if"<<std::endl;
-			if(daughter2->name() == daughterVertex1->daughter1()->antiPartName()) {
-				int i1;
-				int i2;
-				double cleb1;
-				double cleb2;
-				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
-			}
-			if(daughter2->name() == daughterVertex1->daughter2()->antiPartName()) {
-				int i1;
-				int i2;
-				double cleb1;
-				double cleb2;
-				_decay->traceChargeIsoClebsch(vertex, i1, i2, cleb1, cleb2, true);
-				printDebug<<"Found it"<<std::endl<<*this<<std::endl<<"Data: charged1="<<i1<<" charged2="<<i2<<" cleb="<<cleb1<<" clebInv="<<cleb2<<std::endl;
-			}
-		}
-	}
-	transformDaughters();
+	_decay->doStuff();
 	printDebug<<"exiting isospinSymmetrizedAmp"<<std::endl;
 	return twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
 

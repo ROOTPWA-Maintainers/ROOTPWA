@@ -104,9 +104,9 @@ namespace rpwa {
 	  
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-
-		void traceChargeIsoClebsch(const isobarDecayVertexPtr& vertex, int& fsIndex1, int& fsIndex2, double& clebsch, double& clebschInv, bool topVertex = false) const;
 	  
+		void doStuff();
+
 
 	private:
 
