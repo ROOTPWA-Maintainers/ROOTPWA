@@ -360,7 +360,7 @@ bool TrpwaPlotAmpsFrame::Add_Fit_Result(string fit_result_path, // path containi
 // will be called when an available fit file was selected
 // an item will be added to the list of selected fit files
 void TrpwaPlotAmpsFrame::Add_Fit(int pFitFile){
-	if (pFitFile > 0){
+	if (pFitFile >= 0){
 		// get the name and add the entry to the list of selected fits
 		TTree* selected_fit = _available_fit_ids.at(pFitFile);
 		string fitname = selected_fit->GetName();
