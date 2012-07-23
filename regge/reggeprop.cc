@@ -32,7 +32,7 @@ using namespace std;
 
 
 std::complex<double> 
-reggeprop::amp(double t, double s, double tin, double tout, double s1, double s2 ){
+reggeprop::ampHarris(double t, double s, double tin, double tout, double s1, double s2 ){
   
 
   double a=alphapi(t);
@@ -54,7 +54,31 @@ reggeprop::amp(double t, double s, double tin, double tout, double s1, double s2
   return term1*term3*term2;
 }
 
+std::complex<double> 
+reggeprop::ampPDK(double t, double s, double tin, double tout, double s1, double s2 ){
+  return TMath::Exp(_a*t)/(t-spi);
+}
 
+std::complex<double> 
+reggeprop::ampFULL(double t, double s, double tin, double tout, double s1, double s2 ){
+  double alpha=alphapi(t);
+  std::complex<double> i(0,1);
+  std::complex<double> num=TMath::Power(s,alpha)*TMath::Exp(_a*t)*std::exp(-i*TMath::PiOver2()*alpha);
+  double denom=1./(t-spi);
+  return num*denom;					
+}
+
+std::complex<double> 
+reggeprop::ampSMU(double t, double s, double tin, double tout, double s1, double s2 ){
+
+  double smu=s+0.5*(tin-tout-s1)-spi;
+ double alpha=alphapi(t);
+  std::complex<double> i(0,1);
+  std::complex<double> num=TMath::Power(smu,alpha)*TMath::Exp(_a*t)*std::exp(-i*TMath::PiOver2()*alpha);
+  double denom=1./(t-spi);
+  return num*denom;	
+ 
+}
 
 double
 reggeprop::S(double tin,double t, double tout, double s1, double s, double s2){ // multiparticle kinematic function
@@ -66,12 +90,17 @@ reggeprop::S(double tin,double t, double tout, double s1, double s, double s2){ 
 
 
 
+// pion regge trajectory - for a reggeon t has to be negative t<0
+// here: curved regge trajectory ala Pignotti
 double 
-reggeprop::alphapi(double t){
-  return (t-spi)/(1.-0.5*(t-spi));
+reggeprop::alphapi(double t) const {
+  // spi=m_pi^2
+  return (t-spi)/(1.-0.5*(t-spi)); 
+  // factor 0.5 appears in Harris paper
+  // but not in Berger paper
 }
 
 double 
-reggeprop::alphapiprime(){
-  return 1.+1./(1.-spi);
+reggeprop::alphapiprime() const{
+  return _alphapiprime;
 }

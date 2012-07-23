@@ -47,20 +47,22 @@ int main(int argc, char** argv){
 
   TGraph* kineS=new TGraph(n);kineS->SetName("S");
 
-  double tin=0.019479835;
-  double tout=0.01;
+  double tin=-0.019479835;
+  double tout=-0.01;
   double s1=0.5; // roughly rhos
   double s2=0.5;
   double s=2.5;
  
-  double t=-0; double tstep=0.0001;
+  double t=-0.; double tstep=0.0001;
   for(unsigned int i=0; i<n; ++i){
-    t+=tstep;
+    t-=tstep;
     piontrajectory->SetPoint(i,t,pionProp.alphapi(t));
-    pionpropRe->SetPoint(i,t,pionProp.amp(t,s,tin,tout,s1,s2).real());
-    pionpropIm->SetPoint(i,t,pionProp.amp(t,s,tin,tout,s1,s2).imag());
-    pionprop->SetPoint(i,t,norm(pionProp.amp(t,s,tin,tout,s1,s2)));
-    kineS->SetPoint(i,t,pionProp.S(tin,t,tout,s1,s,s2));
+    std::complex<double> amp=pionProp.ampSMU(t,s,tin,tout,s1,s2);
+
+    pionpropRe->SetPoint(i,t,amp.real());
+    pionpropIm->SetPoint(i,t,amp.imag());
+    pionprop->SetPoint(i,t,norm(amp));
+    //kineS->SetPoint(i,t,pionProp.S(tin,t,tout,s1,s,s2));
   }
 
   TFile* outfile=TFile::Open("reggetest.root","RECREATE");
