@@ -47,17 +47,19 @@ int main(int argc, char** argv){
 
   TGraph* kineS=new TGraph(n);kineS->SetName("S");
 
-  double tin=-0.019479835;
-  double tout=-0.01;
-  double s1=0.5; // roughly rhos
-  double s2=0.5;
-  double s=2.5;
+  
+  // setup for classic deck effect
+  double tin=0.019479835; // incoming pion
+  double tout=-0.01; // pomeron
+  double s1=0.5; // roughly rho
+  double s2=tin; // outgoing scattered pion
+  double s=1.5;  // mass squared of 3-pion system
  
   double t=-0.; double tstep=0.0001;
   for(unsigned int i=0; i<n; ++i){
     t-=tstep;
     piontrajectory->SetPoint(i,t,pionProp.alphapi(t));
-    std::complex<double> amp=pionProp.ampSMU(t,s,tin,tout,s1,s2);
+    std::complex<double> amp=pionProp.ampBCP(t,s,tin,tout,s1,s2);
 
     pionpropRe->SetPoint(i,t,amp.real());
     pionpropIm->SetPoint(i,t,amp.imag());

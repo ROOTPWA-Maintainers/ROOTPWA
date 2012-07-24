@@ -42,28 +42,6 @@ public:
   // Operators
  
 
-  // Accessors -----------------------
-  /// t : mass^2 of reggeon t<0 for scattering
-  /// s : mass^2 of dipion system with reggeon between
-  /// tout : momentum transfer below reggeon
-  /// sin : mass^2 of system above
-  /// s1,s2 : mass^2 of forward out going particles
-  /* Sketch:
-
-     sin --
-           --
-             --*-------s1   +
-               |            |
-	       t            s
-	       |            |
-	     --*-------s2   +
-	   --
-    tout --
-
-
-   */
-
-
  
  std::complex<double> ampHarris(double t, double s, double sin, double tout, double s1, double s2);
  // Nomenclature following Ascoli
@@ -72,9 +50,37 @@ public:
 std::complex<double> ampSMU(double t, double s, double sin, double tout, double s1, double s2);
    
 
+// merged version of Ascoli full with Bali Chew Pignotti Kinematics (see Harris Paper)
+// this can be used for a general regge exchange (atm: pion trajectory)
+// 
+  /* Sketch:
+     tin --
+           --
+             --[1]-------s1   +
+                |             |
+	        t             s
+	        |             |
+	     --[2]-------s2   +
+	   --
+    tout --
+   */
+/// t : squared momentum transfer between cluster [1] and [2] t<0
+/// s : invariant mass^2 of clusters [1] and [2]
+  /// tout : momentum transfer below reggeon t<0
+  /// tin :  momentum transfer above reggeon t<0
+  /// IMPORTANT: for top/bottom cluster in multiperipheral graph
+  /// tin/tout are set to beam/target particle mass^2 > 0
+  /// s1,s2 : mass^2 of clusters
+
+std::complex<double> ampBCP(double t, double s, double tin, double tout, double s1, double s2);
+   
+
+
+
   double alphapi(double t) const; // pion trajectory
   double alphapiprime() const; // slope of pion trajectory at 1GeV
-  double S(double tin,double t, double tout, double s1, double s, double s2); // multiparticle kinematic function
+
+  double S(double tin,double t, double tout, double s1, double s, double s2); // multiparticle kinematic function ala Bali Chew Pinotti (see Harris Paper)
 
   // Modifiers -----------------------
   void setA(double a){_a=a;}

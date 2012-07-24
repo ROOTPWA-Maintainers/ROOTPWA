@@ -80,6 +80,31 @@ reggeprop::ampSMU(double t, double s, double tin, double tout, double s1, double
  
 }
 
+
+
+std::complex<double> 
+reggeprop::ampBCP(double t, double s, double tin, double tout, double s1, double s2 ){
+  
+ double alpha=alphapi(t);
+ double ss=S(tin,t,tout,s1,s,s2);
+ if(ss<0){
+   std::cerr << "Problem in S calculation\n" 
+	     << " S="<<ss << std::endl
+	     << " tin="<<tin << std::endl
+	     << " t="<<t << std::endl
+	     << " tout="<<tout << std::endl
+	     << " s1="<<s1 << std::endl
+	     << " s="<<s << std::endl
+	     << " s2="<<s2 << std::endl;
+   return 0;
+ }
+  std::complex<double> i(0,1);
+  std::complex<double> num=TMath::Power(ss,alpha)*TMath::Exp(_a*t)*std::exp(-i*TMath::PiOver2()*alpha);
+  double denom=1./(t-spi);
+  return num*denom;	
+ 
+}
+
 double
 reggeprop::S(double tin,double t, double tout, double s1, double s, double s2){ // multiparticle kinematic function
   return s-tin-tout+(s1-tin-t)*(s2-tout-t)/(2.*t);
