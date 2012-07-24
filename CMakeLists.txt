@@ -44,6 +44,10 @@ set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displ
 # the same effect can be achieved by calling 'make VERBOSE=1'
 
 
+# en/disable debug output
+set(DEBUG_OUTPUT FALSE)
+
+
 # define project
 project(ROOTPWA)
 
@@ -64,15 +68,17 @@ enforce_out_of_source_build()
 if(NOT UNIX)
   message(FATAL_ERROR "This is an unsupported system.")
 endif()
-# requires Cmake V2.8.5
-#include(ProcessorCount)
-#ProcessorCount(NMB_CPU_CORES)
-# message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-# 	"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
-# 	"number of CPU cores ${NMB_CPU_CORES}")
-message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-	"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
-message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}' "
+if(CMAKE_VERSION VERSION_GREATER 2.8.4)
+	include(ProcessorCount)  # requires Cmake V2.8.5
+	ProcessorCount(NMB_CPU_CORES)
+	message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
+ 		"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
+ 		"${NMB_CPU_CORES} CPU core(s)")
+else()
+	message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
+		"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
+endif()
+message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}', "
 	"architecture '${CMAKE_SYSTEM_PROCESSOR}'")
 
 
