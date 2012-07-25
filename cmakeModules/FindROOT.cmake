@@ -179,7 +179,7 @@ else()
       set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} does not match requested version ${ROOT_FIND_VERSION}.")
     endif()
   else()
-    if(ROOT_VERSION LESS ROOT_FIND_VERSION)
+    if(ROOT_VERSION VERSION_LESS ROOT_FIND_VERSION)
       set(ROOT_FOUND FALSE)
       set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT version ${ROOT_VERSION} is lower than requested version ${ROOT_FIND_VERSION}.")
     endif()
@@ -288,6 +288,14 @@ endif()
 # function that generates ROOT dictionary
 function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FILE)
 
+	if(DEBUG_OUTPUT)
+		message(STATUS "root_generate_dictionary was called with the following arguments:
+        DICT_FILE    = '${DICT_FILE}'
+        INCLUDE_DIRS = '${INCLUDE_DIRS}'
+        HEADER_FILES = '${HEADER_FILES}'
+        LINKDEF_FILE = '${LINKDEF_FILE}'")
+	endif()
+		
   if(NOT ROOT_FOUND)
     message(FATAL_ERROR "Impossible to generate dictionary '${DICT_FILE}', "
 			"because no ROOT installation was found.")
@@ -317,11 +325,18 @@ function(root_generate_dictionary DICT_FILE INCLUDE_DIRS HEADER_FILES LINKDEF_FI
   # add dictionary header file to output files
   string(REGEX REPLACE "^(.*)\\.(.*)$" "\\1.h" _DICT_HEADER "${DICT_FILE}")
   set(OUTPUT_FILES ${DICT_FILE} ${_DICT_HEADER})
+	if(DEBUG_OUTPUT)
+		message(STATUS "root_generate_dictionary will create output files '${OUTPUT_FILES}'")
+	endif()
 
   add_custom_command(OUTPUT ${OUTPUT_FILES}
     COMMAND ${ROOTCINT_EXECUTABLE}
     ARGS -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${LINKDEF_FILE}
     DEPENDS ${HEADER_FILES} ${LINKDEF_FILE}
 		)
+	if(DEBUG_OUTPUT)
+		message(STATUS "root_generate_dictionary will execute
+        '${ROOTCINT_EXECUTABLE} -f ${DICT_FILE} -c -DHAVE_CONFIG_H ${_DEFINITIONS} ${_INCLUDES} ${_HEADERS} ${LINKDEF_FILE}'")
+	endif()
 
 endfunction(root_generate_dictionary)

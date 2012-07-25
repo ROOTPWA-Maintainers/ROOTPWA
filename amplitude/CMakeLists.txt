@@ -45,23 +45,17 @@ message(STATUS "${PYTHON_INCLUDE_DIRS}")
 message(STATUS "${PYTHON_DEBUG_LIBRARIES}")
 message(STATUS "${Python_ADDITIONAL_VERSIONS}")
 
-SET(Boost_USE_STATIC_LIBS OFF)
-SET(Boost_USE_MULTITHREADED ON)
-SET(Boost_USE_STATIC_RUNTIME OFF)
-FIND_PACKAGE(Boost 1.45.0 COMPONENTS python)
-message(STATUS "boost found ${Boost_FOUND}")
-
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${PYTHON_INCLUDE_DIRS}
+	${PYTHON_INCLUDE_DIRS}
 	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
-  ${Boost_INCLUDE_DIRS}
-  ${Libconfig_INCLUDE_DIR}
-  ${ROOT_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
+	${Boost_INCLUDE_DIRS}
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -93,16 +87,19 @@ set(SOURCES
 
 set(PYSOURCES
 	python_stuff.cc
-   )
+	)
 
 
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
+set(ROOTPWAAMP_DICT_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 root_generate_dictionary(
-  "${ROOTPWAAMP_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+	"${ROOTPWAAMP_DICTIONARY}"
+	"${ROOTPWAAMP_DICT_INCLUDE_DIRS}"
 	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
-  "rootPwaAmpLinkDef.h"
+	"rootPwaAmpLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
@@ -124,6 +121,7 @@ make_shared_library("pylib" "${PYSOURCES}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	)
+
 
 # executables
 make_executable(calcAmplitudes     calcAmplitudes.cc     ${THIS_LIB})

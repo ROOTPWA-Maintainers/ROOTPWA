@@ -20,6 +20,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
+#include "TFile.h"
+#include "TGraph.h"
+#include "TMath.h"
+
+
 #include <iostream>
 using namespace std;
 
@@ -31,13 +36,47 @@ int main(int argc, char** argv){
 
 
 
-  reggeprop pionProp();
+  reggeprop pionProp;
+
+
+  unsigned int n=2000;
+  TGraph* piontrajectory=new TGraph(n);piontrajectory->SetName("AlphaPi");
+  TGraph* pionpropRe=new TGraph(n);pionpropRe->SetName("PiPropagRe");
+  TGraph* pionpropIm=new TGraph(n);pionpropIm->SetName("PiPropagIm");
+  TGraph* pionprop=new TGraph(n);pionprop->SetName("PiPropag");
+
+  TGraph* kineS=new TGraph(n);kineS->SetName("S");
 
   
+  // setup for classic deck effect
+  double tin=0.019479835; // incoming pion
+  double tout=-0.01; // pomeron
+  double s1=0.5; // roughly rho
+  double s2=tin; // outgoing scattered pion
+  double s=1.5;  // mass squared of 3-pion system
+ 
+  double t=-0.; double tstep=0.0001;
+  for(unsigned int i=0; i<n; ++i){
+    t-=tstep;
+    piontrajectory->SetPoint(i,t,pionProp.alphapi(t));
+    std::complex<double> amp=pionProp.ampBCP(t,s,tin,tout,s1,s2);
 
+    pionpropRe->SetPoint(i,t,amp.real());
+    pionpropIm->SetPoint(i,t,amp.imag());
+    pionprop->SetPoint(i,t,norm(amp));
+    //kineS->SetPoint(i,t,pionProp.S(tin,t,tout,s1,s,s2));
+  }
 
+  TFile* outfile=TFile::Open("reggetest.root","RECREATE");
 
+  piontrajectory->Write();
 
+  pionpropRe->Write();
+  pionpropIm->Write();
+  pionprop->Write();
+  kineS->Write();
+
+  outfile->Close();
 
   return 0;
 
