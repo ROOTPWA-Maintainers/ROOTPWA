@@ -48,17 +48,19 @@ option(DEBUG_OUTPUT "en/disable debug output" OFF)
 
 
 # define project
+message(STATUS "")
+message(STATUS ">>> Setting up project")
 project(ROOTPWA)
-message("")
 
 
 # load some common cmake macros
 # set path, where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
+message(STATUS "")
+message(STATUS ">>> Setting up Cmake modules")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
 message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'")
 include(CommonMacros)
 include(FeatureSummary)
-message("")
 
 
 # force out-of-source builds.
@@ -66,6 +68,8 @@ enforce_out_of_source_build()
 
 
 # warn user if system is not UNIX
+message(STATUS "")
+message(STATUS ">>> Setting up system environment")
 if(NOT UNIX)
   message(FATAL_ERROR "This is an unsupported system.")
 endif()
@@ -81,12 +85,13 @@ else()
 endif()
 message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}', "
 	"architecture '${CMAKE_SYSTEM_PROCESSOR}'")
-message("")
 
 
 # define build types
 # predefined build types: "DEBUG" "RELEASE" "RELWITHDEBINFO" "MINSIZEREL"
 # set a default build type for single-configuration CMake generators, if no build type is set.
+message(STATUS "")
+message(STATUS ">>> Setting up compiler environment")
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type was specified. Setting build type to 'RELEASE'.")
   set(CMAKE_BUILD_TYPE RELEASE)
@@ -132,20 +137,49 @@ message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}
 message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
 	"for build type ${CMAKE_BUILD_TYPE}")
 #include(CMakePrintSystemInformation)
-message("")
 
 
 # redirect output files
+message(STATUS "")
+message(STATUS ">>> Setting up output paths")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
-message("")
 
 
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
+message(STATUS "")
+message(STATUS ">>> Setting up Boost library")
+set(_BOOST_COMPONENTS "mpi" "serialization" "python")
 # set(Boost_DEBUG 1)
+set(Boost_USE_STATIC_LIBS    OFF)
+set(Boost_USE_MULTITHREADED  OFF)
+set(Boost_USE_STATIC_RUNTIME OFF)
+if(    ("$ENV{BOOST_ROOT}"       STREQUAL "")
+	 AND ("$ENV{BOOSTROOT}"        STREQUAL "")
+	 AND ("$ENV{Boost_DIR}"        STREQUAL "")
+	 AND ("$ENV{BOOST_INCLUDEDIR}" STREQUAL "")
+	 AND ("$ENV{BOOST_LIBRARYDIR}" STREQUAL ""))
+	set(Boost_NO_SYSTEM_PATHS OFF)
+else()
+	set(Boost_NO_SYSTEM_PATHS ON)
+endif()
+# this is a somewhat ugly hack
+# the problem is that components cannot be defined as optional while
+# at the same time the library is required. the third line is needed
+# in case the components are not found, because Boost_FOUND is set to
+# FALSE.
+find_package(Boost 1.43.0 REQUIRED)
+find_package(Boost 1.43.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
+foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
+	string(TOUPPER ${_BOOST_COMPONENT} _BOOST_COMPONENT)
+  if(Boost_${_BOOST_COMPONENT}_FOUND)
+    message(STATUS "    Found Boost component ${_BOOST_COMPONENT} at "
+			"'${Boost_${_BOOST_COMPONENT}_LIBRARY}'")
+  endif()
+endforeach()
 find_package(Boost 1.43.0 REQUIRED)
 set_feature_info(Boost
 	"C++ Template Library"
@@ -166,21 +200,23 @@ set(uprootedBoost_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
   )
 message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'")
-message("")
 
 
 # setup libconfig
 # environment variable $LIBCONFIG is expected to point to libconfig location
+message(STATUS "")
+message(STATUS ">>> Setting up libconfig library")
 find_package(Libconfig 1.4 REQUIRED)
 set_feature_info(Libconfig
 	"Simple C++ library for processing structured configuration files"
 	"http://www.hyperrealm.com/libconfig/"
 	"required"
 	)
-message("")
 
 
 # setup ROOT includes and libraries
+message(STATUS "")
+message(STATUS ">>> Setting up ROOT")
 find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
 set_feature_info(ROOT
 	"C++ HEP analysis framework"
@@ -198,10 +234,11 @@ if(ROOT_VERSION VERSION_LESS "5.25.00")
 	set(USE_TFITRESULT TRUE)
 	add_definitions(-DUSE_TFITRESULT)
 endif()
-message("")
 
 
 # setup CUDA
+message(STATUS "")
+message(STATUS ">>> Setting up CUDA")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
 set(CUDA_SHADER_MODELS "13" "20")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
@@ -267,10 +304,11 @@ endif()
 if(CUDA_FOUND AND NOT USE_CUDA)
 	disable_feature(CUDA)
 endif()
-message("")
 
 
 # setup MPI
+message(STATUS "")
+message(STATUS ">>> Setting up MPI")
 option(USE_MPI "En/Disables compilation of MPI components" OFF)
 find_package(MPI)
 set_feature_info(MPI
@@ -285,22 +323,18 @@ else()
   set(USE_MPI ON)
   message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'")
   message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'")
-  # setup Boost.MPI library
-  set(Boost_MPI_LIBRARY_DIR "${BOOST_ROOT}/stage/lib")
-  set(_Boost_MPI_LIB_NAMES "boost_mpi" "boost_serialization")
-  foreach(_Boost_MPI_LIB_NAME ${_Boost_MPI_LIB_NAMES})
-    find_library(_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}
-      NAMES ${_Boost_MPI_LIB_NAME}
-      PATHS ${Boost_MPI_LIBRARY_DIR} ${Boost_LIBRARY_DIRS}
-      NO_DEFAULT_PATH)
-    if(NOT _Boost_MPI_LIB_${_Boost_MPI_LIB_NAME})
+  # check that Boost.MPI library was found
+	set(_BOOST_MPI_COMPONENTS "mpi" "serialization")
+	foreach(_BOOST_MPI_COMPONENT ${_BOOST_MPI_COMPONENTS})
+		string(TOUPPER ${_BOOST_MPI_COMPONENT} _BOOST_MPI_COMPONENT)
+		if(NOT Boost_${_BOOST_MPI_COMPONENT}_FOUND)
       set(USE_MPI OFF)
-      message(STATUS "Cannot find Boost.MPI library '${_Boost_MPI_LIB_NAME}' in "
-				"'${Boost_MPI_LIBRARY_DIR}'. Please read INSTALL on how to build Boost.MPI.")
+      message(STATUS "Cannot find Boost.MPI library '${_BOOST_MPI_COMPONENT}' in "
+				"'${Boost_LIBRARY_DIRS}'. Please read INSTALL on how to build Boost.MPI.")
     else()
-      list(APPEND Boost_MPI_LIBS ${_Boost_MPI_LIB_${_Boost_MPI_LIB_NAME}})
-    endif()
-  endforeach()
+      list(APPEND Boost_MPI_LIBS ${Boost_${_BOOST_MPI_COMPONENT}_LIBRARY})
+		endif()
+	endforeach()
   if(USE_MPI)
     message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
     message(STATUS "Enabling compilation of MPI components")
@@ -311,10 +345,11 @@ else()
 			"No MPI components will be generated.")
   endif()
 endif()
-message("")
 
 
 # make SVN version string accessible via predefined macro SVN_VERSION
+message(STATUS "")
+message(STATUS ">>> Setting up Subversion")
 find_package(Subversion)
 set_feature_info(Subversion
 	"Software versioning and revision control system"
@@ -349,10 +384,11 @@ if(SVN_VERSION)
 else()
   add_definitions(-D'SVN_VERSION=\"\"')
 endif()
-message("")
 
 
 # setup doxygen
+message(STATUS "")
+message(STATUS ">>> Setting up Doxygen")
 find_package(Doxygen)
 set_feature_info(Doxygen
 	"Documentation generator"
@@ -373,7 +409,6 @@ else()
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
 endif()
-message("")
 
 
 # make some environment variables accessible via predefined macro variables
