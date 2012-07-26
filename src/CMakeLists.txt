@@ -68,16 +68,18 @@ set(SOURCES
 	)
 
 
-# ??? workaround for what ???
-set(INCL ${INCLUDE_DIRECTORIES})
-list(REMOVE_ITEM INCL -I/usr/include)
-
-
 # ROOT dictionary
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
+set(ROOTPWA_DICT_INCLUDE_DIRS
+  ${ROOT_INCLUDE_DIR}
+  ${UTILITIES_INCLUDE_DIR}
+  ${PWA2000_INCLUDE_DIR}
+  ${AMPLITUDE_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+	)
 root_generate_dictionary(
   "${ROOTPWA_DICTIONARY}"
-  "${INCL}"
+  "${ROOTPWA_DICT_INCLUDE_DIRS}"
   "TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
   "rootPwaLinkDef.h"
 	)

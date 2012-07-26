@@ -79,9 +79,12 @@ set(SOURCES
 
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
+set(ROOTPWAAMP_DICT_INCLUDE_DIRS
+  ${CMAKE_CURRENT_SOURCE_DIR}
+	)
 root_generate_dictionary(
   "${ROOTPWAAMP_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+  "${ROOTPWAAMP_DICT_INCLUDE_DIRS}"
 	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
   "rootPwaAmpLinkDef.h"
 	)
