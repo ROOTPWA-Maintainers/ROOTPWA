@@ -485,7 +485,11 @@ isobarDecayTopology::getIsospinSymmetrization()
 
 	const std::vector<particlePtr> fsParts = fsParticles();
 
-	//Get a vector of groups of particles which have to be permutated.
+	// Get a vector of groups of particles which have to be permutated.
+	// 
+	// The group is defined as all particles with the same J, P and I. A group
+	// consists of a vector where the indices of all particles belonging to the
+	// group are saved.
 	std::vector< std::vector<unsigned int> > groups;
 	for(unsigned int i = 0; i < fsParts.size(); ++i) {
 		const particlePtr& particle = fsParts.at(i);
@@ -495,8 +499,6 @@ isobarDecayTopology::getIsospinSymmetrization()
 			if(particle->isospin() == compPart->isospin() &&
 			   particle->J() == compPart->J() &&
 			   particle->P() == compPart->P())
-//			   fromVertex(particle) != fromVertex(compPart) &&
-//			   particle->C() == compPart->C())
 			{
 				groups.at(j).push_back(i);
 				inserted = true;
@@ -507,6 +509,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 		}
 	}
 
+	// Debug output, remove or put into a if(_debug).
 	printDebug<<"Doing stuff"<<std::endl;
 	for(unsigned int i = 0; i < groups.size(); ++i) {
 		printDebug<<"Group "<<i<<std::endl;
@@ -515,7 +518,9 @@ isobarDecayTopology::getIsospinSymmetrization()
 		}
 	}
 
-	// Saving all the isospins
+	// Saving all the isospins z-projections.
+	//
+	// Needed to reset everything as it was at the end.
 	std::vector<int> isospinProjs;
 	for(unsigned int j = 0; j < fsParts.size(); ++j) {
 		isospinProjs.push_back(fsParts.at(j)->isospinProj());
@@ -524,52 +529,78 @@ isobarDecayTopology::getIsospinSymmetrization()
 	// A vector of tuples to save the found permutations and their Clebsch-Gordans
 	std::vector< boost::tuple<double, std::vector<unsigned int> > > symAmplitudes;
 
-	// Permutating all the particles and checking if the permutation makes sense	
+	// Permutating all the particles and checking if the permutation makes sense
+	//
+	// First, loop over all the groups.
 	for(unsigned int i = 0; i < groups.size(); ++i) {
 		std::vector<unsigned int> group = groups.at(i);
 
+		// Again debug output
 		printDebug<<"Group permutations "<<i<<std::endl;
 
-		// The unity permutation of the right lenght
+		// First we need a vector with the unity permutation, which will 
+		// subsequently be permutated.
 		std::vector<unsigned int> permutations;
 		for(unsigned int j = 0; j < group.size(); ++j) {
 			permutations.push_back(j);
 		}
-		// Permutate the permutations
+
+		// Now loop over all permutations for the current group.
 		do {
-			// Create an virgin map
+			// Create a unity map. The map has one entry per final state particle
+			// (unlike the group, which only holds the indices of the final state
+			// particles in the group).
 			std::vector<unsigned int> map;
 			for(unsigned int j = 0; j < fsParts.size(); ++j) {
 				map.push_back(j);
 			}
 
-			// Swap stuff in the map
+			// Now apply the permutation to the map. We get the index of the particle
+			// we want to swap from the group vector and the index of the particle we
+			// want to swap it with from the permutations vector. The whole thing is
+			// applied to the map vector.
 			for(unsigned int j = 0; j < group.size(); ++j) {
 				map.at(group.at(j)) = group.at(permutations.at(j));
 			}
 
-			// Make sure we are not swapping two indistinguishable particles.
+			// Some first checks if the permutation makes sense.
 			bool breaking = false;
 			for(unsigned int j = 0; j < map.size(); ++j) {
+
 				if(j == map.at(j)) {
 					continue;
 				}
+
+				// Make sure we are not swapping two indistinguishable particles.
 				if(fsParts.at(j)->name() == fsParts.at(map.at(j))->name()) {
 					breaking = true;
 					break;
 				}
+
+				// Check if two particles from the same isobar are being swapped.
+				for(unsigned int k = 0; k < map.size(); ++k) {
+					if((map.at(k) == k) || (j == k)) continue;
+					if(fromVertex(fsParts.at(j)) == fromVertex(fsParts.at(k))) {
+						breaking = true;
+						break;
+					}
+				}
+				if(breaking) {
+					break;
+				}
 			}
+
 			if(breaking) {
 				continue;
 			}
 
-			// Set the isospin in the final state particles
+			// Set the isospin of the final state particles as given by the premutation.
 			for(unsigned int j = 0; j < map.size(); ++j) {
 				fsParts.at(j)->setIsospinProj(isospinProjs.at(map.at(j)));
 			}
 			calcIsobarCharges(false);
 
-			// Check for isospin consistency
+			// Check for isospin consistency in all vertices.
 			for(unsigned int j = 0; j < _isobarVertices.size(); ++j) {
 				const particlePtr d1 = _isobarVertices.at(j)->daughter1();
 				const particlePtr d2 = _isobarVertices.at(j)->daughter2();
@@ -581,19 +612,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 				}
 			}
 
-			// Check if two particles from the same isobar are being swapped
-//PROBABLY WRONG!!!!!!!!!!!!
-			for(unsigned int j = 0; j < map.size(); ++j) {
-				if(map.at(j) == j) continue;
-				for(unsigned int k = 0; k < map.size(); ++k) {
-					if((map.at(k) == k) || (j == k)) continue;
-					if(fromVertex(fsParts.at(j)) == fromVertex(fsParts.at(k))) {
-						breaking = true;
-					}
-				}
-			}
-//END PROBABLY WRONG!!!!!!!!!!!!
-
+			// If something is amiss, reset everything and proceed to the next permutation.
 			if(breaking) {
 				for(unsigned int j = 0; j < fsParts.size(); ++j) {
 					fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
@@ -604,10 +623,11 @@ isobarDecayTopology::getIsospinSymmetrization()
 
 			double clebsch = getIsospinClebschGordanProduct();
 		
-			// Survived all the criteria, saving to be symmetrized
+			// Survived all the criteria, saving to be returned
 			boost::tuple<double, std::vector<unsigned int> > symAmp(getIsospinClebschGordanProduct(), map);
 			symAmplitudes.push_back(symAmp);
 
+			// More debug output
 			printDebug<<"Found valid permutation: ";
 			for(unsigned int j = 0; j < map.size(); ++j) {
 				std::cout<<map.at(j);
@@ -618,15 +638,16 @@ isobarDecayTopology::getIsospinSymmetrization()
 			}
 			std::cout<<"), clebsch-gordan="<<clebsch<<std::endl;
 
-			// Resetting isospins for the next pass
+			// Resetting isospins for the next permutation
 			for(unsigned int j = 0; j < fsParts.size(); ++j) {
 				fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
 			}
 			calcIsobarCharges();
 
 		} while(next_permutation(permutations.begin(), permutations.end()));
+		// End of the loop over permutations.
 
-	}
+	} // End of the loop over the groups.
 
 	return symAmplitudes;
 
