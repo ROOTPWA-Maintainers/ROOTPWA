@@ -43,12 +43,12 @@ message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${Boost_INCLUDE_DIRS}
-  ${CUDA_SDK_ROOT_DIR}/common/inc
+	${Boost_INCLUDE_DIRS}
+	${CUDA_SDK_ROOT_DIR}/common/inc
 	${ROOT_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+	${UTILITIES_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 

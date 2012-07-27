@@ -38,7 +38,7 @@
 #//-------------------------------------------------------------------------
 
 
-set(LLVM_BIN_DIR "/opt/llvm/build/bin")
+set(LLVM_BIN_DIR       "/opt/llvm/build/bin"    )
 set(CMAKE_C_COMPILER   "${LLVM_BIN_DIR}/clang"  )
 set(CMAKE_CXX_COMPILER "${LLVM_BIN_DIR}/clang++")
 

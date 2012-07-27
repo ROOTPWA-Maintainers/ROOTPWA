@@ -37,14 +37,6 @@
 
 add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
 
-find_package(PythonLibs 3.2)
-message(STATUS "${PYTHONLIBS_FOUND}")
-message(STATUS "${PYTHON_LIBRARIES}")
-message(STATUS "${PYTHON_INCLUDE_PATH}")
-message(STATUS "${PYTHON_INCLUDE_DIRS}")
-message(STATUS "${PYTHON_DEBUG_LIBRARIES}")
-message(STATUS "${Python_ADDITIONAL_VERSIONS}")
-
 
 # set include directories
 set(INCLUDE_DIRECTORIES
@@ -106,14 +98,18 @@ set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
 # library
 set(THIS_LIB "RootPwaAmp")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
 	"${BOOST_LIBS}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	)
 
-make_shared_library("pylib" "${PYSOURCES}"
+make_shared_library(
+	"pylib"
+	"${PYSOURCES}"
 	"${PYTHON_LIBRARIES}"
 	"${Boost_Libraries}"
 	"${BOOST_LIBS}"

@@ -37,53 +37,55 @@
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${Libconfig_INCLUDE_DIR}
-  ${ROOT_INCLUDE_DIR}
-  ${ROOTPWA_DICTIONARY}
-  ${SCRIPTS_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${GEN_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${ROOTPWA_DICTIONARY}
+	${SCRIPTS_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  TrpwaMainFrame.cc
-  TrpwaSessionManager.cc
-  TrpwaWaveSelectFrame.cc
-  TrpwaJobManager.cc
-  TrpwaEventTreeHandler.cc
-  TrpwaCommonTools.cc
-  TrpwaPlotAmpsFrame.cc
-  TrpwaFitOptionsFrame.cc
+	TrpwaMainFrame.cc
+	TrpwaSessionManager.cc
+	TrpwaWaveSelectFrame.cc
+	TrpwaJobManager.cc
+	TrpwaEventTreeHandler.cc
+	TrpwaCommonTools.cc
+	TrpwaPlotAmpsFrame.cc
+	TrpwaFitOptionsFrame.cc
 	) 
 
 
 # ROOT dictionary
 set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
 set(ROOTPWAGUI_DICT_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 root_generate_dictionary(
-  "${ROOTPWAGUI_DICTIONARY}"
-  "${ROOTPWAGUI_DICT_INCLUDE_DIRS}"
-  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h;TrpwaFitOptionsFrame.h"
-  "rootPwaGuiLinkDef.h"
+	"${ROOTPWAGUI_DICTIONARY}"
+	"${ROOTPWAGUI_DICT_INCLUDE_DIRS}"
+	"TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h;TrpwaFitOptionsFrame.h"
+	"rootPwaGuiLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAGUI_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwaGui")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOT_LIBS}"
-  "${Libconfig_LIBS}"
-  "${ROOTPWASCRIPTS_LIBS}"
-  "${ROOTPWA_LIBS}"
-  "${ROOTPWAGEN_LIBS}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${Libconfig_LIBS}"
+	"${ROOTPWASCRIPTS_LIBS}"
+	"${ROOTPWA_LIBS}"
+	"${ROOTPWAGEN_LIBS}"
 	)
 
 

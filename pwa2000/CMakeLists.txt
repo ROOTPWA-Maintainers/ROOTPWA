@@ -36,14 +36,16 @@
 
 
 set(PWA2000_INCLUDE_DIR
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_SOURCE_DIR}/pwa2000/gamp
-  PARENT_SCOPE
-)
+	${CMAKE_SOURCE_DIR}/pwa2000/libpp
+	${CMAKE_SOURCE_DIR}/pwa2000/gamp
+	PARENT_SCOPE
+	)
 set(PWA2000_LIBS
-  pp
-  pwa
-  PARENT_SCOPE
-)
+	pp
+	pwa
+	PARENT_SCOPE
+	)
+
+
 add_subdirectory(libpp)
 add_subdirectory(gamp)

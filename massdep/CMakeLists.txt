@@ -37,27 +37,27 @@
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR}
-  ${Libconfig_INCLUDE_DIR}
-  ${ROOTPWATOOLS_INCLUDE_DIR}
-  ${GEN_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${MASSDEP_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  /home/sneubert/Projects/boost_1_45_0/boost/numeric/ublas/
+	${ROOT_INCLUDE_DIR}
+	${Libconfig_INCLUDE_DIR}
+	${ROOTPWATOOLS_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${MASSDEP_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	/home/sneubert/Projects/boost_1_45_0/boost/numeric/ublas/
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  decayChannels.cc
-  #mcPhaseSpace.cc
+	decayChannels.cc
+	#mcPhaseSpace.cc
 	cauchyIntegral.cc
 	dMatrixAmp.cc
- dMatrixSet.cc
-  #dynMassDep.cc
+	dMatrixSet.cc
+	#dynMassDep.cc
 	)
 
 
@@ -74,11 +74,15 @@ set(SOURCES
 
 # library
 set(THIS_LIB "RootPwaMassDep")
-set(GSL_LIBS libgsl.so
-  libgslcblas.so
+set(GSL_LIBS
+	libgsl.so
+	libgslcblas.so
 	)
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOTPWAGEN_LIBS}" "${GSL_LIBS}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOTPWAGEN_LIBS}"
+	"${GSL_LIBS}"
 	)
 
 

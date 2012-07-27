@@ -44,9 +44,9 @@ message(STATUS "Using CXX linker flags '${CMAKE_CXX_LDFLAGS}' for MPI code")
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${MPI_INCLUDE_PATH}
-  ${Boost_INCLUDE_DIRS}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+	${Boost_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
