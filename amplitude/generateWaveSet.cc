@@ -59,6 +59,7 @@ usage(const string& progName,
 	     << "    where:" << endl
 	     << "        -k file    path to template key file" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
+	     << "        -d file    path to decay config file (default: decay info will not be used)" << endl
 	     << "        -o dir     path to directory where key files will be written (default: '.')" << endl
 	     << "        -n         use new key file name convention (default: false)" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
@@ -81,19 +82,25 @@ main(int    argc,
 	const string progName                 = argv[0];
 	string       keyFileName              = "";
 	string       pdgFileName              = "./particleDataTable.txt";
+	string       decayFileName            = "";
+	bool         useDecays                = false;
 	string       outDirName               = ".";
 	bool         newKeyFileNameConvention = false;
 	bool         debug                    = false;
 	extern char* optarg;
 	//extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "k:p:o:nvh")) != -1)
+	while ((c = getopt(argc, argv, "k:p:d:o:nvh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
 			break;
 		case 'p':
 			pdgFileName = optarg;
+			break;
+		case 'd':
+			decayFileName = optarg;
+			useDecays = true;
 			break;
 		case 'o':
 			outDirName = optarg;
@@ -113,6 +120,12 @@ main(int    argc,
 
 	// initialize particle data table
 	particleDataTable::readFile(pdgFileName);
+	if(useDecays)particleDataTable::readDecayFile(decayFileName);
+	particleDataTable::setDebug(debug);
+
+	if(debug){
+	  printInfo << particleDataTable::instance();
+	}
 
 	printInfo << "generating wave set from '" << keyFileName << "'" << endl;
 	waveSetGenerator waveSetGen;

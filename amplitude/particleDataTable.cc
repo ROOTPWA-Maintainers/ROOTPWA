@@ -38,8 +38,10 @@
 #include <fstream>
 #include <iomanip>
 
+#include "libConfigUtils.hpp"
 #include "reportingUtils.hpp"
 #include "particleDataTable.h"
+#include "libconfig.h++"
 
 	
 using namespace std;
@@ -90,7 +92,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 			continue;
 		// limit isobar mass, if minMass > 0
 		if ((minMass > 0) and (i->second.mass() + minMassWidthFactor * i->second.width() < minMass))
+		  { printDebug << i->second.name() << " not in mass window " << flush;
 			continue;
+		  }
 		// apply white list
 		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
 		for (size_t j = 0; j < whiteList.size(); ++j)
@@ -99,7 +103,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (not whiteListMatch)
+		  { printDebug << i->second.name() << " not in whitelist " << flush;
 			continue;
+		  }
 		// apply black list
 		bool blackListMatch = false;
 		for (size_t j = 0; j < blackList.size(); ++j)
@@ -108,7 +114,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (blackListMatch)
+		  { printDebug << i->second.name() << " on blacklist " << flush;
 			continue;
+		  }
 		if (_debug) {
 			printDebug << "found entry " << i->second.name() << " matching " << prototype
 			           << " and '" << sel << "'" << flush;
@@ -181,6 +189,17 @@ particleDataTable::readFile(const string& fileName)
 	}
 	return read(file);
 }
+
+bool
+particleDataTable::readDecayFile(const string& fileName)
+{
+  libconfig::Config config;
+  bool result=false;
+  parseLibConfigFile(fileName,config,result);
+  return result;
+}
+
+
 
 
 bool

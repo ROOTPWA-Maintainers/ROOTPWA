@@ -310,6 +310,10 @@ particleProperties::print(ostream& out) const
 }
 
 
+
+
+
+
 ostream&
 particleProperties::dump(ostream& out) const
 {
@@ -438,4 +442,10 @@ particleProperties::stripChargeFromName(const string& partName)
 {
 	int dummy;
 	return chargeFromName(partName, dummy);
+}
+
+
+bool 
+particleProperties::hasDecay(const set<string>& daughters) const {
+  return (find(_decaymodes.begin(),_decaymodes.end(),daughters)!=_decaymodes.end());
 }

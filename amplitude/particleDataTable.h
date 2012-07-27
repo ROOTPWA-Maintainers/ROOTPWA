@@ -80,6 +80,8 @@ namespace rpwa {
 
 		static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
 		static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
+		static bool readDecayFile(const std::string& fileName); ///< reads in data on decay modes from file (can only be called after particle data has been read)
+
 
 		static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 

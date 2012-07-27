@@ -1,0 +1,19 @@
+particles = (
+{ name = "a1(1260)-";
+  decays = (
+  	 {products = [ "pi-", "rho(770)" ];}, 
+  	 {products = [ "pi-", "sigma" ];}
+	 );
+},
+{ name = "a2(1320)-";
+  decays = (
+  	 {products = [ "pi-", "rho(770)" ];}
+	 );
+},
+{ name = "pi2(1670)-";
+  decays = (
+  	 {products = [ "pi-", "rho(770)" ];},
+	 {products = [ "pi-", "f2(1270)" ];}
+	 );
+}
+);
