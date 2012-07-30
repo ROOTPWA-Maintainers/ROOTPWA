@@ -95,7 +95,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 			continue;
 		// limit isobar mass, if minMass > 0
 		if ((minMass > 0) and (i->second.mass() + minMassWidthFactor * i->second.width() < minMass))
-		  { printDebug << i->second.name() << " not in mass window " << flush;
+		  { if(_debug)printDebug << i->second.name() << " not in mass window " << flush;
 			continue;
 		  }
 		// apply white list
@@ -106,7 +106,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (not whiteListMatch)
-		  { printDebug << i->second.name() << " not in whitelist " << endl;
+		  { if(_debug)printDebug << i->second.name() << " not in whitelist " << endl;
 			continue;
 		  }
 		// apply black list
@@ -117,7 +117,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (blackListMatch)
-		  { printDebug << i->second.name() << " on blacklist " << endl;
+		  { if(_debug)printDebug << i->second.name() << " on blacklist " << endl;
 			continue;
 		  }
 		// apply list of decays
@@ -129,9 +129,11 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		else if(forceDecayCheck)decaymatch = false;
 
 		if (!decaymatch)
-		  { printDebug << i->second.name() << " does not have a decay into ";
-		     std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
-		     cout << endl;
+		  { if(_debug){
+		      printDebug << i->second.name() << " does not have a decay into ";
+		      std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
+		      cout << endl;
+		    }
 		     continue;
 		  }
 

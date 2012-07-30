@@ -409,10 +409,12 @@ waveSetGenerator::writeKeyFiles(const string& dirName,
 		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
 			++countSuccess;
 	}
-	printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
+	
+	 printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
+	
 	if (countSuccess != _waveSet.size()) {
-		printWarn << "writing of " << _waveSet.size() - countSuccess << " key files failed" << endl;
-		return false;
+	  printWarn << "writing of " << _waveSet.size() - countSuccess << " key files failed" << endl;
+	  return false;
 	}
 	return true;
 }
