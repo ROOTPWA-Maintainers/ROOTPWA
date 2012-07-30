@@ -37,6 +37,7 @@
 
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 
 #include "libConfigUtils.hpp"
 #include "reportingUtils.hpp"
@@ -83,7 +84,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
                                    const double              minMass,
                                    const double              minMassWidthFactor,
                                    const vector<string>&     whiteList,
-                                   const vector<string>&     blackList)
+                                   const vector<string>&     blackList,
+				   const set<string>&        decayproducts,
+				   const bool& forceDecayCheck)
 {
 	const pair<particleProperties, string> selector(prototype, sel);
 	vector<const particleProperties*>      matchingEntries;
@@ -103,7 +106,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (not whiteListMatch)
-		  { printDebug << i->second.name() << " not in whitelist " << flush;
+		  { printDebug << i->second.name() << " not in whitelist " << endl;
 			continue;
 		  }
 		// apply black list
@@ -114,9 +117,25 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (blackListMatch)
-		  { printDebug << i->second.name() << " on blacklist " << flush;
+		  { printDebug << i->second.name() << " on blacklist " << endl;
 			continue;
 		  }
+		// apply list of decays
+		bool decaymatch = true;
+		// check if there are decays defined at all
+		if(decayproducts.size()>0 && i->second.nDecays()>0){
+		  if(!i->second.hasDecay(decayproducts))decaymatch=false;
+		}
+		else if(forceDecayCheck)decaymatch = false;
+
+		if (!decaymatch)
+		  { printDebug << i->second.name() << " does not have a decay into ";
+		     std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
+		     cout << endl;
+		     continue;
+		  }
+
+
 		if (_debug) {
 			printDebug << "found entry " << i->second.name() << " matching " << prototype
 			           << " and '" << sel << "'" << flush;
@@ -126,7 +145,10 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				cout << " ; in white list";
 			if (blackList.size() > 0)
 				cout << " ; not in black list";
-			cout << endl;
+			if(decaymatch)
+			  cout << " ; with allowed decay " ;
+			 std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
+		         cout << endl;
 		}      
 		matchingEntries.push_back(&(i->second));
 	}

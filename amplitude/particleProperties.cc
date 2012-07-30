@@ -314,8 +314,8 @@ particleProperties::print(ostream& out) const
 	  out << "\n Known decay modes: " << endl;
 	  for(unsigned int idec=0;idec<ndec;++idec){
 	    std::copy(_decaymodes[idec].begin(), _decaymodes[idec].end(), std::ostream_iterator<string>(std::cout, " "));
-	    
-	      }
+	    out << endl;
+	  }
 	}
 
 	return out;

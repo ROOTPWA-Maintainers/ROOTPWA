@@ -60,6 +60,8 @@ usage(const string& progName,
 	     << "        -k file    path to template key file" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -d file    path to decay config file (default: decay info will not be used)" << endl
+             << "                   isobars without defined decays will be allowed to decay to all possibilities" << endl
+	     << "        -f         force decay check (only works with -d option); isobars without defined decay modes will be ignored" << endl
 	     << "        -o dir     path to directory where key files will be written (default: '.')" << endl
 	     << "        -n         use new key file name convention (default: false)" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
@@ -87,10 +89,11 @@ main(int    argc,
 	string       outDirName               = ".";
 	bool         newKeyFileNameConvention = false;
 	bool         debug                    = false;
+	bool         forceDecayCheck          = false;
 	extern char* optarg;
 	//extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "k:p:d:o:nvh")) != -1)
+	while ((c = getopt(argc, argv, "k:p:d:o:fnvh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -111,16 +114,19 @@ main(int    argc,
 		case 'v':
 			debug = true;
 			break;
+		case 'f':
+			forceDecayCheck = true;
+			break;
 		case 'h':
 		default:
 			usage(progName);
 		}
 
 	waveSetGenerator::setDebug(debug);
-
 	// initialize particle data table
 	particleDataTable::readFile(pdgFileName);
 	if(useDecays)particleDataTable::readDecayFile(decayFileName);
+
 	particleDataTable::setDebug(debug);
 
 	if(debug){
@@ -133,6 +139,8 @@ main(int    argc,
 		printErr << "could not initialize wave set generator. aborting." << endl;
 		exit(1);
 	}
+
+	if(useDecays)waveSetGen.setForceDecayCheck(forceDecayCheck);
 	printInfo << waveSetGen;
 	waveSetGen.generateWaveSet();
 
