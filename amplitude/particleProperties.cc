@@ -36,6 +36,7 @@
 
 
 #include <cstdlib>
+#include <iterator>
 
 #include <boost/lexical_cast.hpp>
 
@@ -306,6 +307,17 @@ particleProperties::print(ostream& out) const
 	    << "is photon = "               << yesNo(isPhoton()) << ", "
 	    << "antiparticle '"             << antiPartName()    << "', "
 	    << "is its own antiparticle = " << yesNo(isItsOwnAntiPart());
+
+	// decay products
+	unsigned int ndec=nDecays();
+	if(ndec > 0){
+	  out << "\n Known decay modes: " << endl;
+	  for(unsigned int idec=0;idec<ndec;++idec){
+	    std::copy(_decaymodes[idec].begin(), _decaymodes[idec].end(), std::ostream_iterator<string>(std::cout, " "));
+	    
+	      }
+	}
+
 	return out;
 }
 

@@ -59,6 +59,7 @@ namespace rpwa {
 
 		static const particleProperties* entry(const std::string& partName,
 		                                       const bool         warnIfNotExistent = true);  ///< access properties by particle name
+	
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>
