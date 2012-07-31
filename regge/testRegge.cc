@@ -23,7 +23,10 @@
 #include "TFile.h"
 #include "TGraph.h"
 #include "TMath.h"
-
+#include "NParticleEvent.h"
+#include "TTree.h"
+#include "TClonesArray.h"
+#include "TLorentzVector.h"
 
 #include <iostream>
 using namespace std;
@@ -33,13 +36,24 @@ using namespace std;
 
 int main(int argc, char** argv){
 
+  TFile* infile=TFile::Open(argv[1]);
+  if(infile==NULL)return 1;
 
+  TTree* tr= (TTree*)infile->Get("pwevents");
+  //. double impweight=1;
+   TClonesArray* p=new TClonesArray("TLorentzVector");
+   TLorentzVector* beam=NULL;
+   int qbeam;
+   std::vector<int>* q=NULL; 
+   tr->SetBranchAddress("p",&p);
+   tr->SetBranchAddress("beam",&beam);
+   tr->SetBranchAddress("qbeam",&qbeam);
+   tr->SetBranchAddress("q",&q);
+ 
+   TVector3 vertex;
+   NParticleEvent event(p,q,beam,&qbeam,&vertex);
 
-
-  reggeprop pionProp;
-
-
-  unsigned int n=2000;
+  unsigned int n=tr->GetEntries();
   TGraph* piontrajectory=new TGraph(n);piontrajectory->SetName("AlphaPi");
   TGraph* pionpropRe=new TGraph(n);pionpropRe->SetName("PiPropagRe");
   TGraph* pionpropIm=new TGraph(n);pionpropIm->SetName("PiPropagIm");
@@ -47,18 +61,41 @@ int main(int argc, char** argv){
 
   TGraph* kineS=new TGraph(n);kineS->SetName("S");
 
-  
-  // setup for classic deck effect
-  double tin=0.019479835; // incoming pion
-  double tout=-0.01; // pomeron
-  double s1=0.5; // roughly rho
-  double s2=tin; // outgoing scattered pion
-  double s=1.5;  // mass squared of 3-pion system
  
-  double t=-0.; double tstep=0.0001;
+
+  reggeprop pionProp;
+ 
+ 
+ 
+  // loop over phasespace events
+  
   for(unsigned int i=0; i<n; ++i){
-    t-=tstep;
+    tr->GetEntry(i);
+   event.refresh();
+    // get kinematic variables 
+    // CAREFUL with definitions of momentum transfer t, q2 etc
+    // in the regge classes momentum transfer from scattering is always negative
+
+
+    // setup for classic deck effect (only use first three pions for this exercise)
+
+    double tin=0.019479835; // incoming pion (beam)
+    TLorentzVector  pq=event.getBeam() - event.p();
+    double tout = pq.M2();
+
+    TLorentzVector p12=event.getParticle(0).p()+event.getParticle(1).p();
+
+    TLorentzVector pRegge = event.getBeam() - p12;
+    double t=pRegge.M2();
+
+    double s1=p12.M2(); // mass of upper 2pion system
+
+    double s2=tin; // outgoing scattered pion
+    TLorentzVector pCM=event.getBeam()+TLorentzVector(0,0,0,0.93827);
+    double s=pCM.M2();
+
     piontrajectory->SetPoint(i,t,pionProp.alphapi(t));
+    
     std::complex<double> amp=pionProp.ampBCP(t,s,tin,tout,s1,s2);
 
     pionpropRe->SetPoint(i,t,amp.real());
