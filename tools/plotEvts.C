@@ -53,7 +53,7 @@ gROOT->SetStyle("Plain");
 
    TF1* acc=new TF1("acc","1-exp([0]*(1-x))",0,2000); // artificial acceptance function
    
-   TH1D* hMass=new TH1D("hmass","Mass",500,0,5);
+   TH1D* hMass=new TH1D("hmass","Mass",1000,0,20);
 
    TH1D* hGJ=new TH1D("hGJ","Cos GJ-Theta",20,-1,1);
    TH1D* hGJacc=new TH1D("hGJacc","acc Cos GJ-Theta",20,-1,1);
@@ -95,8 +95,8 @@ gROOT->SetStyle("Plain");
        hPXY->Fill(momenta[ip].Vect().X()/mag,
 		  momenta[ip].Vect().Y()/mag);
        // cut away events with small momentum particles:
-       double w=acc->Eval(mag);
-       accept &= gRandom->Uniform()<w;
+       //double w=acc->Eval(mag);
+       //accept &= gRandom->Uniform()<w;
        
      } // end loop over particles
 
@@ -113,7 +113,13 @@ gROOT->SetStyle("Plain");
        const NParticleState& state=event.getState(is);
        if(state.qabs()==5 && state.n()==5){
 	 double t=state.t();
-	 hT->Fill(t);
+	 double m=state.p().M();
+	 double p2=state.beam().Vect()*state.beam().Vect();
+	 double term=m*m-0.019479835;
+	 double tmin=term*term*0.25/p2;
+	 //cout << "t="<<t<<"     tmin= " << tmin << endl;
+	 double tprime=t-tmin;
+	 hT->Fill(tprime);
        }
 
        if(state.n()==npart){
