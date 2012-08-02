@@ -53,7 +53,6 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
   nBodyPhaseSpaceGen.cc
-  diffractivePhaseSpace.cc
   TProductionAmp.cc
   TBWProductionAmp.cc
   TPWWeight.cc
@@ -78,7 +77,6 @@ root_generate_dictionary(
   "${ROOTPWAGEN_DICTIONARY}"
   "${ROOTPWAGEN_DICT_INCLUDE_DIRS}"
   "nBodyPhaseSpaceGen.h"
-  #"diffractivePhaseSpace.h"
   "rootPwaGenLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAGEN_DICTIONARY})
@@ -99,4 +97,3 @@ make_executable(genpw       genpw.cc           ${THIS_LIB} "${Libconfig_LIBS}")
 make_executable(evtweight   evtweight.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}")
 make_executable(plotBWAmp   plotBWAmp.cc       ${THIS_LIB})
 make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})
-make_executable(diffractivePhaseSpace diffractivePhaseSpaceGen.cc ${THIS_LIB})
