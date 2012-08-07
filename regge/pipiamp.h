@@ -69,23 +69,35 @@ public:
 			 unsigned int I=0) const {return f(std::complex<double>(s,0),l,I);}
   
   /// Phase shifts
-  double cotPhi(std::complex<double> s,
+  double cotDelta(std::complex<double> s,
 		unsigned int l=0,
 		unsigned int I=0) const;
 
 
-  double cotPhi(double s,
+  double cotDelta(double s,
 		unsigned int l=0,
-		unsigned int I=0) const;
+		  unsigned int I=0) const  {return cotDelta(s,l,I);}
+
+
+  double eta(std::complex<double> s,
+		  unsigned int l=0,
+		  unsigned int I=0) const;
+
+
+  double eta(double s,
+	     unsigned int l=0,
+	     unsigned int I=0) const {return eta(s,l,I);}
 
 
 private:
 
   // Private Data Members ------------
-  unsigned int _lmax;   //< parameterizations are available up to this
-  
+  unsigned int _lmax;   /// parameterizations are available up to this
+  double _mpic2;         /// charged pion mass^2
+  double _mpi02;         /// neutral pion mass^2
 
   // Private Methods -----------------
+  std::complex<double> kpipi(const std::complex<double>& s) const {return sqrt(s*0.25-_mpic2);} /// breakup momentum
 
 };
 
