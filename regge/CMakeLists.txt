@@ -48,6 +48,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
   reggeprop.cc
+  pipiamp.cc
 )
    
 
