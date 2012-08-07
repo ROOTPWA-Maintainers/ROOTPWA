@@ -46,6 +46,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'fortran' directory.")
+
+
 # enable Fortran support
 enable_language(Fortran)
 

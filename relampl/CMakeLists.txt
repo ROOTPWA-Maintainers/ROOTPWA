@@ -35,6 +35,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'relampl' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${Boost_INCLUDE_DIRS}

@@ -49,16 +49,16 @@ option(DEBUG_OUTPUT "en/disable debug output" OFF)
 
 # define project
 message(STATUS "")
-message(STATUS ">>> Setting up project")
+message(STATUS ">>> Setting up project 'ROOTPWA'.")
 project(ROOTPWA)
 
 
 # load some common cmake macros
 # set path, where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 message(STATUS "")
-message(STATUS ">>> Setting up Cmake modules")
+message(STATUS ">>> Setting up Cmake modules.")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
-message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'")
+message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
 include(CommonMacros)
 include(FeatureSummary)
 
@@ -69,7 +69,7 @@ enforce_out_of_source_build()
 
 # warn user if system is not UNIX
 message(STATUS "")
-message(STATUS ">>> Setting up system environment")
+message(STATUS ">>> Setting up system environment.")
 if(NOT UNIX)
 	message(FATAL_ERROR "This is an unsupported system.")
 endif()
@@ -78,20 +78,20 @@ if(CMAKE_VERSION VERSION_GREATER 2.8.4)
 	ProcessorCount(NMB_CPU_CORES)
 	message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
 		"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
-		"${NMB_CPU_CORES} CPU core(s)")
+		"${NMB_CPU_CORES} CPU core(s).")
 else()
 	message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-		"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'")
+		"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'.")
 endif()
 message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}', "
-	"architecture '${CMAKE_SYSTEM_PROCESSOR}'")
+	"architecture '${CMAKE_SYSTEM_PROCESSOR}'.")
 
 
 # define build types
 # predefined build types: "DEBUG" "RELEASE" "RELWITHDEBINFO" "MINSIZEREL"
 # set a default build type for single-configuration CMake generators, if no build type is set.
 message(STATUS "")
-message(STATUS ">>> Setting up compiler environment")
+message(STATUS ">>> Setting up compiler environment.")
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type was specified. Setting build type to 'RELEASE'.")
 	set(CMAKE_BUILD_TYPE RELEASE)
@@ -108,7 +108,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 if(NOT CMAKE_COMPILER_IS_GNUCXX)
 	# use gcc instead of llvm compiler on MacOS 10.7
 	if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin" AND ${CMAKE_HOST_SYSTEM_VERSION} STREQUAL "11.3.0")
-		message(STATUS "Detected MacOS 10.7: using gcc instead of llvm compiler")
+		message(STATUS "Detected MacOS 10.7: using gcc instead of llvm compiler.")
 		set(CMAKE_C_COMPILER gcc-4.2)
 		set(CMAKE_CXX_COMPILER g++-4.2)
 		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
@@ -119,7 +119,7 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 	# workaround for bug concerning -march=native switch in gcc 4.2.1 shipped with MacOS 10.7
 	# see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33144
 	if(GCC_VERSION VERSION_EQUAL "4.2.1")
-		message(STATUS "Detected gcc version 4.2.1; -march=native switch is disabled because of gcc bug")
+		message(STATUS "Detected gcc version 4.2.1; -march=native switch is disabled because of gcc bug.")
 		set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 	endif()
 endif()
@@ -128,36 +128,36 @@ set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
 # report global build settings
 foreach(_LANG "C" "CXX")
-	message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'")
-	message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'")
+	message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'.")
+	message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'.")
 endforeach()
 unset(_LANG)
-message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'")
+message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'.")
 message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
-	"for build type ${CMAKE_BUILD_TYPE}")
+	"for build type ${CMAKE_BUILD_TYPE}.")
 message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
-	"for build type ${CMAKE_BUILD_TYPE}")
+	"for build type ${CMAKE_BUILD_TYPE}.")
 #include(CMakePrintSystemInformation)
 
 
 # redirect output files
 message(STATUS "")
-message(STATUS ">>> Setting up output paths")
+message(STATUS ">>> Setting up output paths.")
 set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
-message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'")
+message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'.")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
-message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'")
+message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
 
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 message(STATUS "")
-message(STATUS ">>> Setting up Boost library")
+message(STATUS ">>> Setting up Boost library.")
 set(_BOOST_COMPONENTS "mpi" "serialization" "python")
 # set(Boost_DEBUG 1)
 set(Boost_USE_STATIC_LIBS    OFF)
 set(Boost_USE_MULTITHREADED  OFF)
 set(Boost_USE_STATIC_RUNTIME OFF)
-if(    ("$ENV{BOOST_ROOT}"       STREQUAL "")
+if(     ("$ENV{BOOST_ROOT}"       STREQUAL "")
 		AND ("$ENV{BOOSTROOT}"        STREQUAL "")
 		AND ("$ENV{Boost_DIR}"        STREQUAL "")
 		AND ("$ENV{BOOST_INCLUDEDIR}" STREQUAL "")
@@ -177,7 +177,7 @@ foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
 	string(TOUPPER ${_BOOST_COMPONENT} _BOOST_COMPONENT)
 	if(Boost_${_BOOST_COMPONENT}_FOUND)
 		message(STATUS "    Found Boost component ${_BOOST_COMPONENT} at "
-			"'${Boost_${_BOOST_COMPONENT}_LIBRARY}'")
+			"'${Boost_${_BOOST_COMPONENT}_LIBRARY}'.")
 	endif()
 endforeach()
 unset(_BOOST_COMPONENT)
@@ -190,8 +190,8 @@ set_feature_info(Boost
 	)
 if(Boost_FOUND)
 	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
-	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'")
-	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'")
+	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
+	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
 else()
 	message(FATAL_ERROR "Could not find Boost installation. "
 		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
@@ -201,13 +201,13 @@ set(uprootedBoost_INCLUDE_DIRS
 	# local copy of Boost Graph Library from V1.43.0; overides graph library in Boost supplied by user
 	${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
 	)
-message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'")
+message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'.")
 
 
 # setup libconfig
 # environment variable $LIBCONFIG is expected to point to libconfig location
 message(STATUS "")
-message(STATUS ">>> Setting up libconfig library")
+message(STATUS ">>> Setting up libconfig library.")
 find_package(Libconfig 1.4 REQUIRED)
 set_feature_info(Libconfig
 	"Simple C++ library for processing structured configuration files"
@@ -218,7 +218,7 @@ set_feature_info(Libconfig
 
 # setup ROOT includes and libraries
 message(STATUS "")
-message(STATUS ">>> Setting up ROOT")
+message(STATUS ">>> Setting up ROOT.")
 find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
 set_feature_info(ROOT
 	"C++ HEP analysis framework"
@@ -240,7 +240,7 @@ endif()
 
 # setup CUDA
 message(STATUS "")
-message(STATUS ">>> Setting up CUDA")
+message(STATUS ">>> Setting up CUDA.")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
 set(CUDA_SHADER_MODELS "13" "20")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
@@ -258,9 +258,9 @@ if(NOT CUDA_FOUND)
 	message(STATUS "Cannot find CUDA installation. No CUDA components will be generated.")
 else()
 	message(STATUS "Found CUDA version ${CUDA_VERSION}")
-	message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'")
-	message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'")
-	message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'")
+	message(STATUS "Using CUDA toolkit root directory '${CUDA_TOOLKIT_ROOT_DIR}'.")
+	message(STATUS "Using CUDA include directories '${CUDA_INCLUDE_DIRS}'.")
+	message(STATUS "Using CUDA libraries '${CUDA_LIBRARIES}'.")
 	if(NOT CUDA_SDK_ROOT_DIR)
 		set(USE_CUDA OFF)
 		message(STATUS "Found CUDA intallation, but could not find CUDA SDK in '$ENV{NVSDKCUDA_ROOT}'. "
@@ -283,9 +283,9 @@ else()
 				"No CUDA components will be generated.")
 		else()
 			set(USE_CUDA ON)
-			message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'")
-			message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'")
-			message(STATUS "Enabling compilation of CUDA components")
+			message(STATUS "Using CUDA utility library '${CUDA_CUTIL_LIBRARY}'.")
+			message(STATUS "Using CUDA SDK root directory '${CUDA_SDK_ROOT_DIR}'.")
+			message(STATUS "Enabling compilation of CUDA components.")
 			# define for which shader models code is generated
 			message(STATUS "Generating binary files for shader model(s): ${CUDA_SHADER_MODELS}")
 			foreach(_SHADER_MODEL ${CUDA_SHADER_MODELS})
@@ -311,12 +311,12 @@ endif()
 
 # setup MPI
 message(STATUS "")
-message(STATUS ">>> Setting up MPI")
+message(STATUS ">>> Setting up MPI.")
 option(USE_MPI "En/Disables compilation of MPI components" OFF)
 find_package(MPI)
 set_feature_info(MPI
 	"Standardized and portable message-passing system for parallel computing"
-	"http://www.boost.org/doc/libs/1_47_0/doc/html/mpi.html"
+	"http://www.boost.org/doc/libs/1_50_0/doc/html/mpi.html"
 	"optional"
 	)
 if(NOT MPI_FOUND)
@@ -324,8 +324,8 @@ if(NOT MPI_FOUND)
 	message(STATUS "Cannot find MPI installation. No MPI components will be generated.")
 else()
 	set(USE_MPI ON)
-	message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'")
-	message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'")
+	message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'.")
+	message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'.")
 	# check that Boost.MPI library was found
 	set(_BOOST_MPI_COMPONENTS "mpi" "serialization")
 	foreach(_BOOST_MPI_COMPONENT ${_BOOST_MPI_COMPONENTS})
@@ -340,8 +340,8 @@ else()
 	endforeach()
 	unset(_BOOST_MPI_COMPONENTS)
 	if(USE_MPI)
-		message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'")
-		message(STATUS "Enabling compilation of MPI components")
+		message(STATUS "Using Boost.MPI libraries '${Boost_MPI_LIBS}'.")
+		message(STATUS "Enabling compilation of MPI components.")
 		add_definitions(-DUSE_MPI)
 	else()
 		disable_feature(MPI)
@@ -353,23 +353,47 @@ endif()
 
 # setup Python
 message(STATUS "")
-message(STATUS ">>> Setting up Python")
+message(STATUS ">>> Setting up Python.")
+option(USE_PYTHON "En/Disables Python bindings" OFF)
 find_package(Python 2.3)
-message(STATUS "PYTHONINTERP_FOUND        = ${PYTHONINTERP_FOUND}")
-message(STATUS "PYTHON_EXECUTABLE         = ${PYTHON_EXECUTABLE}")
-message(STATUS "PYTHON_VERSION_STRING     = ${PYTHON_VERSION_STRING}")
-message(STATUS "PYTHON_VERSION_MAJOR      = ${PYTHON_VERSION_MAJOR}")
-message(STATUS "PYTHON_VERSION_MINOR      = ${PYTHON_VERSION_MINOR}")
-message(STATUS "PYTHON_VERSION_PATCH      = ${PYTHON_VERSION_PATCH}")
-message(STATUS "PYTHONLIBS_FOUND          = ${PYTHONLIBS_FOUND}")
-message(STATUS "PYTHON_INCLUDE_DIRS       = ${PYTHON_INCLUDE_DIRS}")
-message(STATUS "PYTHON_LIBRARIES          = ${PYTHON_LIBRARIES}")
-message(STATUS "PYTHONLIBS_VERSION_STRING = ${PYTHONLIBS_VERSION_STRING}")
+set_feature_info(Python
+	"General-purpose, high-level programming language"
+	"http://www.python.org"
+	"optional"
+	)
+if(NOT PYTHONLIBS_FOUND)
+	set(USE_PYTHON OFF)
+	message(STATUS "Cannot find Python libraries. No Python bindings will be generated.")
+else()
+	set(USE_PYTHON ON)
+	# check that Boost.Python library was found
+	set(_BOOST_PYTHON_COMPONENTS "python")
+	foreach(_BOOST_PYTHON_COMPONENT ${_BOOST_PYTHON_COMPONENTS})
+		string(TOUPPER ${_BOOST_PYTHON_COMPONENT} _BOOST_PYTHON_COMPONENT)
+		if(NOT Boost_${_BOOST_PYTHON_COMPONENT}_FOUND)
+			set(USE_PYTHON OFF)
+			message(STATUS "Cannot find Boost.Python library '${_BOOST_PYTHON_COMPONENT}' in "
+				"'${Boost_LIBRARY_DIRS}'. Please read INSTALL on how to build Boost.Python.")
+		else()
+			list(APPEND Boost_PYTHON_LIBS ${Boost_${_BOOST_PYTHON_COMPONENT}_LIBRARY})
+		endif()
+	endforeach()
+	unset(_BOOST_PYTHON_COMPONENTS)
+	if(USE_PYTHON)
+		message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
+		message(STATUS "Enabling compilation of Python components.")
+		add_definitions(-DUSE_PYTHON)
+	else()
+		disable_feature(Python)
+		message(STATUS "Found Python installation, but Boost.Python is not built correctly (consult INSTALL). "
+			"No Python bindings will be generated.")
+	endif()
+endif()
 
 
 # make SVN version string accessible via predefined macro SVN_VERSION
 message(STATUS "")
-message(STATUS ">>> Setting up Subversion")
+message(STATUS ">>> Setting up Subversion.")
 find_package(Subversion)
 set_feature_info(Subversion
 	"Software versioning and revision control system"
@@ -390,7 +414,7 @@ if(Subversion_FOUND)
 			RESULT_VARIABLE _SVNVERSION_RETURN
 			OUTPUT_STRIP_TRAILING_WHITESPACE)
 		if(NOT _SVNVERSION_RETURN)
-			message(STATUS "Subversion repository revision is '${SVN_VERSION}'")
+			message(STATUS "Subversion repository revision is '${SVN_VERSION}'.")
 		else()
 			message(STATUS "Error running 'svnversion'. Repository version unknown.")
 			set(SVN_VERSION "")
@@ -408,7 +432,7 @@ endif()
 
 # setup doxygen
 message(STATUS "")
-message(STATUS ">>> Setting up Doxygen")
+message(STATUS ">>> Setting up Doxygen.")
 find_package(Doxygen)
 set_feature_info(Doxygen
 	"Documentation generator"
@@ -422,7 +446,7 @@ else()
 	set(DOXYGEN_DOC_DIR "${CMAKE_SOURCE_DIR}/html-doc")
 	set(DOXYGEN_CONF    "${CMAKE_SOURCE_DIR}/rootpwaDoxyfile.conf")
 	message(STATUS "Run 'make ${DOXYGEN_TARGET}' to create Doxygen documentation files "
-		"in '${DOXYGEN_DOC_DIR}'")
+		"in '${DOXYGEN_DOC_DIR}'.")
 	add_custom_target(${DOXYGEN_TARGET}
 		COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_CONF}
 		DEPENDS ${DOXYGEN_CONF}
@@ -585,6 +609,8 @@ endif()
 
 
 # print feature summary
+message(STATUS "")
+message(STATUS ">>> Feature summary:")
 #if(CMAKE_VERSION VERSION_GREATER 2.8.4)
 #	feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)  # requires Cmake V2.8.5+
 #else()
@@ -593,6 +619,8 @@ print_disabled_features()
 #endif()
 
 
+message(STATUS "")
+message(STATUS ">>> Done.")
 message(STATUS "Run 'make' to build the project.")
 message(STATUS "On multi-core machines 'make -j#', where # is the number of parallel jobs, "
 	"can speedup compilation considerably.")

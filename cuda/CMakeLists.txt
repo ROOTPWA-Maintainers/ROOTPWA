@@ -35,6 +35,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'cuda' directory.")
+
+
 # -Wall reports warnings in system libraries; so we cannot use -Werror
 set(CMAKE_CXX_FLAGS "-Wall")
 message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for CUDA host code")

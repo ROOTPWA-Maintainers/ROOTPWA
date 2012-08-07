@@ -35,7 +35,11 @@
 #//-------------------------------------------------------------------------
 
 
-add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
+message(STATUS "")
+message(STATUS ">>> Setting up 'amplitude' directory.")
+
+
+#add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
 
 
 # set include directories
@@ -101,22 +105,24 @@ set(THIS_LIB "RootPwaAmp")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
-	"${BOOST_LIBS}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	)
 
-make_shared_library(
-	"pylib"
-	"${PYSOURCES}"
-	"${PYTHON_LIBRARIES}"
-	"${Boost_Libraries}"
-	"${BOOST_LIBS}"
-	"${ROOT_LIBS}"
-	"${Libconfig_LIBS}"
-	"${PWA2000_LIBS}"
-	)
+if(USE_PYTHON)
+	message(STATUS "!!!HERE PYTHON_LIBRARIES     = ${PYTHON_LIBRARIES}")
+	message(STATUS "!!!HERE Boost_PYTHON_LIBRARY = ${Boost_PYTHON_LIBRARY}")
+	make_shared_library(
+		"pylib"
+		"${PYSOURCES}"
+		"${PYTHON_LIBRARIES}"
+		"${Boost_PYTHON_LIBRARY}"
+		"${ROOT_LIBS}"
+		"${Libconfig_LIBS}"
+		"${PWA2000_LIBS}"
+		)
+endif()
 
 
 # executables

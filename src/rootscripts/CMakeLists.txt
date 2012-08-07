@@ -41,6 +41,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'rootscripts' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}

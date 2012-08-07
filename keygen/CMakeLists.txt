@@ -35,6 +35,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'keygen' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}

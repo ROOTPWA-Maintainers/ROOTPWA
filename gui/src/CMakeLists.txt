@@ -35,6 +35,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'gui/src' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${Libconfig_INCLUDE_DIR}

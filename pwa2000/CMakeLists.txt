@@ -35,6 +35,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'pwa2000' directory.")
+
+
 set(PWA2000_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/pwa2000/libpp
 	${CMAKE_SOURCE_DIR}/pwa2000/gamp

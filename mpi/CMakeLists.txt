@@ -35,6 +35,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'mpi' directory.")
+
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
 set(CMAKE_CXX_LDFLAGS "${CMAKE_CXX_LDFLAGS} ${MPI_LINK_FLAGS}")
 message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for MPI code")
