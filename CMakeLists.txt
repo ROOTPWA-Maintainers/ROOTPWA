@@ -319,13 +319,17 @@ set_feature_info(MPI
 	"http://www.boost.org/doc/libs/1_50_0/doc/html/mpi.html"
 	"optional"
 	)
-if(NOT MPI_FOUND)
+if(NOT MPI_CXX_FOUND)
 	set(USE_MPI OFF)
 	message(STATUS "Cannot find MPI installation. No MPI components will be generated.")
 else()
 	set(USE_MPI ON)
-	message(STATUS "Using MPI include directories '${MPI_INCLUDE_PATH}'.")
-	message(STATUS "Using MPI libraries '${MPI_LIBRARIES}'.")
+	message(STATUS "Using MPI compiler wrapper '${MPI_CXX_COMPILER}'.")
+	message(STATUS "Using CXX compiler flags '${MPI_CXX_COMPILE_FLAGS}' for MPI code.")
+	message(STATUS "Using CXX linker flags '${MPI_CXX_LINK_FLAGS}' for MPI code.")
+	message(STATUS "Using MPI include directories '${MPI_CXX_INCLUDE_PATH}'.")
+	message(STATUS "Use '${MPIEXEC}' executable to run MPI programs.")
+	#message(STATUS "Using MPI libraries '${MPI_CXX_LIBRARIES}'.")
 	# check that Boost.MPI library was found
 	set(_BOOST_MPI_COMPONENTS "mpi" "serialization")
 	foreach(_BOOST_MPI_COMPONENT ${_BOOST_MPI_COMPONENTS})
@@ -355,7 +359,7 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up Python.")
 option(USE_PYTHON "En/Disables Python bindings" OFF)
-find_package(Python 2.3)
+find_package(Python 3.2)
 set_feature_info(Python
 	"General-purpose, high-level programming language"
 	"http://www.python.org"
@@ -471,17 +475,19 @@ foreach(_CMAKEVAR
 		"CMAKE_HOST_SYSTEM_NAME"
 		"CMAKE_HOST_SYSTEM_PROCESSOR"
 		"CMAKE_HOST_SYSTEM_VERSION"
+		"NMB_CPU_CORES"
+		"HOSTNAME"
 		"CMAKE_SOURCE_DIR"
 		"CMAKE_BUILD_TYPE"
-		"HOSTNAME"
-		"ROOTSYS"
 		"Boost_LIBRARY_VERSION"
 		"Boost_INCLUDE_DIRS"
-		"Boost_MPI_LIBRARY_DIR"
 		"Libconfig_VERSION"
 		"Libconfig_DIR"
+		"ROOTSYS"
 		"CUDA_VERSION"
 		"CUDA_LIB_DIRS"
+		"PYTHONLIBS_VERSION_STRING"
+		"PYTHON_INCLUDE_DIRS"
 		)
 	if(_CMAKEVAR)
 		if(DEBUG_OUTPUT)

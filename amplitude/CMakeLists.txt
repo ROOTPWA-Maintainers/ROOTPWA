@@ -111,8 +111,6 @@ make_shared_library(
 	)
 
 if(USE_PYTHON)
-	message(STATUS "!!!HERE PYTHON_LIBRARIES     = ${PYTHON_LIBRARIES}")
-	message(STATUS "!!!HERE Boost_PYTHON_LIBRARY = ${Boost_PYTHON_LIBRARY}")
 	make_shared_library(
 		"pylib"
 		"${PYSOURCES}"

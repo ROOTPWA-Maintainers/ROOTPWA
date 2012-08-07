@@ -39,15 +39,13 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'mpi' directory.")
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_COMPILE_FLAGS}")
-set(CMAKE_CXX_LDFLAGS "${CMAKE_CXX_LDFLAGS} ${MPI_LINK_FLAGS}")
-message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for MPI code")
-message(STATUS "Using CXX linker flags '${CMAKE_CXX_LDFLAGS}' for MPI code")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
+set(CMAKE_CXX_LDFLAGS "${CMAKE_CXX_LDFLAGS} ${MPI_CXX_LINK_FLAGS}")
 
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${MPI_INCLUDE_PATH}
+	${MPI_CXX_INCLUDE_PATH}
 	${Boost_INCLUDE_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
@@ -55,4 +53,4 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testMpiPerformance.cpp testMpiPerformance.cpp ${MPI_LIBRARIES} ${Boost_MPI_LIBS})
+make_executable(testMpiPerformance.cpp testMpiPerformance.cpp ${MPI_CXX_LIBRARIES} ${Boost_MPI_LIBS})
