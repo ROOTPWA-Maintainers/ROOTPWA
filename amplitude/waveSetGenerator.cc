@@ -348,10 +348,15 @@ waveSetGenerator::generateWaveSet()
 										  (daughters[0]->mass() - _isobarMassWindowSigma * daughters[0]->width())
 										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
 										: 0;
+									set<string> decayproducts;
+								        decayproducts.insert(daughters[0]->name());
+								        decayproducts.insert(daughters[1]->name());
 									vector<const particleProperties*> possibleIsobars
 										=	particleDataTable::entriesMatching(isobarProp, "allQn", minIsobarMass,
 											                                   _isobarMassWindowSigma, _isobarWhiteList,
-											                                   _isobarBlackList);
+											                                   _isobarBlackList,
+															   decayproducts,
+															   _forceDecayCheck);
 									if (_debug)
 										printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
 										           << isobarProp.qnSummary() << " in particle data table" << endl;
@@ -405,10 +410,12 @@ waveSetGenerator::writeKeyFiles(const string& dirName,
 		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
 			++countSuccess;
 	}
-	printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
+	
+	 printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
+	
 	if (countSuccess != _waveSet.size()) {
-		printWarn << "writing of " << _waveSet.size() - countSuccess << " key files failed" << endl;
-		return false;
+	  printWarn << "writing of " << _waveSet.size() - countSuccess << " key files failed" << endl;
+	  return false;
 	}
 	return true;
 }
@@ -426,6 +433,7 @@ waveSetGenerator::reset()
 	_LRange                = make_tuple(0, 0);
 	_SRange                = make_tuple(0, 0);
 	_requireMinIsobarMass  = false;
+	_forceDecayCheck       = false;
 	_isobarMassWindowSigma = 0;
 	_isobarBlackList.clear();
 	_isobarWhiteList.clear();
@@ -453,7 +461,8 @@ waveSetGenerator::print(ostream& out) const
 	    << "    S range .................... [" << spinQn(get<0>(_SRange))        << ", "
 	    << spinQn(get<1>(_SRange))        << "]" << endl
 	    << "    require min. isobar mass ... " << yesNo(_requireMinIsobarMass) << endl
-	    << "    isobar mass window par. .... " << _isobarMassWindowSigma << " [Gamma]" << endl;
+ 	    << "    isobar mass window par. .... " << _isobarMassWindowSigma << " [Gamma]" << endl
+	    << "    force decay checks ......... " << yesNo(_forceDecayCheck) << endl;
 	out << "    isobar black list:";
 	if (_isobarBlackList.size() == 0)
 		out << " empty" << endl;

@@ -43,6 +43,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <iostream>
 #include <sstream>
@@ -115,6 +116,9 @@ namespace rpwa {
 		bool fillFromDataTable(const std::string& name, 
 		                       const bool         warnIfNotExistent = true);
 
+		int  nDecays() const {return _decaymodes.size();}
+		bool hasDecay(const std::set<std::string>& daughters) const ; ///< returns true if decay is in list
+
 		void setName        (const std::string& name       );                                                ///< sets particle name and charge (if given in name)
 		void setAntiPartName(const std::string& name       ) { _antiPartName = stripChargeFromName(name); }  ///< sets antiparticle name (charge in name is ignored)
 		void setCharge      (const int          charge     );                                                ///< sets particle's charge (limited to |q| <= 9)
@@ -138,6 +142,10 @@ namespace rpwa {
 		              const int J,
 		              const int P,
 		              const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
+		void addDecayMode(const std::set<std::string>& daughters) {_decaymodes.push_back(daughters);}
+		///< adds a set of particles into which the particle can decay  
+
+
 
 		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle
 
@@ -177,7 +185,12 @@ namespace rpwa {
 		int         _P;             ///< parity (0 = undefined)
 		int         _C;             ///< C-parity (0 = undefined)
 
+		std::vector<std::set<std::string> > _decaymodes; ///< decaymodes OPTIONAL
+
 		static bool _debug;  ///< if set to true, debug messages are printed
+
+
+
 
 	};
 

@@ -78,6 +78,7 @@ namespace rpwa {
 		{ _isobarWhiteList = isobarList; }
 		void setAllowSpinExotics     (const bool   flag     ) { _allowSpinExotics      = flag;  }
 		void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
+		void setForceDecayCheck      (const bool   flag     ) { _forceDecayCheck  = flag;  }
 		void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
 		std::size_t generateWaveSet();  ///< generates wave set from template topology
@@ -118,12 +119,14 @@ namespace rpwa {
 		std::vector<std::string>       _isobarWhiteList;        ///< list of particles to be used as isobars
 		bool                           _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
 		double                         _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
+		bool                           _forceDecayCheck;        ///< enables strict decay checking. Particles without defined decays will be discarded
 
 		isobarDecayTopologyPtr _templateTopo;  ///< template topology
 
 		std::vector<isobarDecayTopology> _waveSet;  ///< generated wave set
 	  
 		static bool _debug;  ///< if set to true, debug messages are printed
+	       
 
 	};
 	

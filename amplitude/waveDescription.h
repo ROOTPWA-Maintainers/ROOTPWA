@@ -205,7 +205,7 @@ namespace rpwa {
 		}
 		close(pipeFileDescriptors[0]);
 		if (countChar > 0) {
-			printSucc << "wrote " << countChar * sizeof(char) << " bytes" << std::endl;
+		  //printSucc << "wrote " << countChar * sizeof(char) << " bytes" << std::endl;
 			return true;
 		} else {
 			printWarn << "nothing was written" << std::endl;
@@ -229,7 +229,7 @@ namespace rpwa {
 			return false;
 		}
 		if (writeKeyFile(outFile, topoOrAmp, writeProdVert)) {
-			printSucc << "written key file '" << keyFileName << "'" << std::endl;
+		  //printSucc << "written key file '" << keyFileName << "'" << std::endl;
 			outFile.close();
 			return true;
 		} else {

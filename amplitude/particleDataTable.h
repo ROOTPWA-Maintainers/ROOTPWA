@@ -42,6 +42,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
+
 
 #include "particleProperties.h"
 
@@ -59,6 +61,7 @@ namespace rpwa {
 
 		static const particleProperties* entry(const std::string& partName,
 		                                       const bool         warnIfNotExistent = true);  ///< access properties by particle name
+	
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>
@@ -67,7 +70,9 @@ namespace rpwa {
 		                const double                    minMass            = 0,
 		                const double                    minMassWidthFactor = 0,
 		                const std::vector<std::string>& whiteList          = std::vector<std::string>(),
-		                const std::vector<std::string>& blackList          = std::vector<std::string>());  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass > 0 isobar mass is limited
+		                const std::vector<std::string>& blackList          = std::vector<std::string>(),
+				const std::set<std::string>& decayproducts         = std::set<std::string>(),
+				const bool& forceDecayCheck=true);  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass > 0 isobar mass is limited; and checks allowed decays if those are defined; Decay checks can be forced, then particles which do not have decays defined will be discarded
 
 		static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
 
@@ -80,6 +85,8 @@ namespace rpwa {
 
 		static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
 		static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
+		static bool readDecayFile(const std::string& fileName); ///< reads in data on decay modes from file (can only be called after particle data has been read)
+
 
 		static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
