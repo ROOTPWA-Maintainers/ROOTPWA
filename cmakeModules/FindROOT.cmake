@@ -81,49 +81,40 @@ set(ROOT_LIBS)
 
 find_program(ROOT_CONFIG_EXECUTABLE root-config)
 if(NOT ROOT_CONFIG_EXECUTABLE)
-	set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find root-config executable in path. "
-		"Make sure ROOT is setup correctly.")
+	set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find root-config executable in path. Make sure ROOT is setup correctly.")
 else()
 
 	set(ROOT_FOUND TRUE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --prefix 
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --prefix 
 		OUTPUT_VARIABLE ROOTSYS 
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --arch
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --arch
 		OUTPUT_VARIABLE ROOT_TARGET
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --f77 
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --f77 
 		OUTPUT_VARIABLE ROOT_F77 
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --cc
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --cc
 		OUTPUT_VARIABLE ROOT_CC 
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --cxx
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --cxx
 		OUTPUT_VARIABLE ROOT_CPP
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --version
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --version
 		OUTPUT_VARIABLE ROOT_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --svn-revision
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --svn-revision
 		OUTPUT_VARIABLE ROOT_SVN_REVISION
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --bindir
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --bindir
 		OUTPUT_VARIABLE ROOT_BIN_DIR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT EXISTS "${ROOT_BIN_DIR}")
@@ -131,8 +122,7 @@ else()
 		set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT executable directory '${ROOT_BIN_DIR}' does not exist.")
 	endif()
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --incdir
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --incdir
 		OUTPUT_VARIABLE ROOT_INCLUDE_DIR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT EXISTS "${ROOT_INCLUDE_DIR}")
@@ -140,8 +130,7 @@ else()
 		set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT include directory '${ROOT_INCLUDE_DIR}' does not exist.")
 	endif()
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --libdir
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --libdir
 		OUTPUT_VARIABLE ROOT_LIBRARY_DIR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 	if(NOT EXISTS "${ROOT_LIBRARY_DIR}")
@@ -149,13 +138,11 @@ else()
 		set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} ROOT library directory '${ROOT_LIBRARY_DIR}' does not exist.")
 	endif()
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --noauxlibs --glibs
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --noauxlibs --glibs
 		OUTPUT_VARIABLE ROOT_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${ROOT_CONFIG_EXECUTABLE} --auxlibs
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --auxlibs
 		OUTPUT_VARIABLE ROOT_AUX_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -289,7 +276,7 @@ else()
 		message(FATAL_ERROR "Unable to find requested ROOT installation:${ROOT_ERROR_REASON}")
 	else()
 		if(NOT ROOT_FIND_QUIETLY)
-			message(STATUS "ROOT version ${ROOT_FIND_VERSION}+ was not found.")
+			message(STATUS "ROOT version ${ROOT_FIND_VERSION}+ was not found:${ROOT_ERROR_REASON}")
 		endif()
 	endif()
 endif()

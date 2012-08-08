@@ -61,24 +61,20 @@ set(PYTHON_ERROR_REASON "")
 find_program(PYTHON_EXECUTABLE python)
 
 if(NOT PYTHON_EXECUTABLE)
-	set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find 'python' executable in path. "
-		"Make sure Python is setup correctly.")
+	set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find 'python' executable in path. Make sure Python is setup correctly.")
 else()
 
 	set(PYTHONINTERP_FOUND TRUE)
 	
-	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[0])"
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[0])"
 		OUTPUT_VARIABLE PYTHON_VERSION_MAJOR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[1])"
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[1])"
 		OUTPUT_VARIABLE PYTHON_VERSION_MINOR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[2])"
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[2])"
 		OUTPUT_VARIABLE PYTHON_VERSION_PATCH
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -106,25 +102,20 @@ endif()
 if(PYTHONINTERP_FOUND)
 
 	# get file name of shared library
-	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY'))"
-		OUTPUT_VARIABLE _PYTHON_LIBRARY_FILE_NAME
-		OUTPUT_STRIP_TRAILING_WHITESPACE)
-	# get search path for shared library
-	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))"
+	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LIBDEST'))"
 		OUTPUT_VARIABLE _PYTHON_LIBRARY_PATH
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
+	# split path into directory and file name
+	get_filename_component(_PYTHON_LIBRARY_FILE_NAME "${_PYTHON_LIBRARY_PATH}" NAME)
+	get_filename_component(_PYTHON_LIBRARY_DIR       "${_PYTHON_LIBRARY_PATH}" PATH)
 
 	find_library(PYTHON_LIBRARIES
 		NAMES ${_PYTHON_LIBRARY_FILE_NAME}
-		PATHS ${_PYTHON_LIBRARY_PATH}
+		PATHS ${_PYTHON_LIBRARY_DIR}
 		NO_DEFAULT_PATH)
 
 	if(NOT PYTHON_LIBRARIES)
-		set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find Python shared library "
-			"'${_PYTHON_LIBRARY_FILE_NAME}' in '${_PYTHON_LIBRARY_PATH}'. "
-			"Make sure Python is setup correctly.")
+		set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find Python shared library '${_PYTHON_LIBRARY_FILE_NAME}' in '${_PYTHON_LIBRARY_DIR}'. Make sure Python is setup correctly.")
 	else()
 
 		set(PYTHONLIBS_FOUND TRUE)
@@ -139,8 +130,7 @@ if(PYTHONINTERP_FOUND)
 		foreach(_PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_DIRS})
 			if(NOT EXISTS "${_PYTHON_INCLUDE_DIR}")
 				set(PYTHONLIBS_FOUND FALSE)
-				set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python include directory "
-					"'${_PYTHON_INCLUDE_DIR}' does not exist.")
+				set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python include directory '${_PYTHON_INCLUDE_DIR}' does not exist.")
 			endif()
 		endforeach()
 		unset(_PYTHON_INCLUDE_DIR)
@@ -164,8 +154,9 @@ if(PYTHONINTERP_FOUND)
 		endif()
 
 	endif()
-	unset(_PYTHON_LIBRARY_FILE_NAME)
 	unset(_PYTHON_LIBRARY_PATH)
+	unset(_PYTHON_LIBRARY_FILE_NAME)
+	unset(_PYTHON_LIBRARY_DIR)
 
 endif()
 	
@@ -185,7 +176,7 @@ else()
 		message(FATAL_ERROR "Unable to find requested Python interpreter:${PYTHON_ERROR_REASON}")
 	else()
 		if(NOT Python_FIND_QUIETLY)
-			message(STATUS "Python interpreter version ${Python_FIND_VERSION}+ was not found.")
+			message(STATUS "Python interpreter version ${Python_FIND_VERSION}+ was not found:${PYTHON_ERROR_REASON}")
 		endif()
 	endif()
 endif()
@@ -198,7 +189,7 @@ else()
 		message(FATAL_ERROR "Unable to find requested Python libraries:${PYTHON_ERROR_REASON}")
 	else()
 		if(NOT Python_FIND_QUIETLY)
-			message(STATUS "Python library version ${Python_FIND_VERSION}+ was not found.")
+			message(STATUS "Python library version ${Python_FIND_VERSION}+ was not found:${PYTHON_ERROR_REASON}")
 		endif()
 	endif()
 endif()
