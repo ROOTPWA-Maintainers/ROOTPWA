@@ -113,6 +113,17 @@ if(PYTHONINTERP_FOUND)
 		NAMES ${_PYTHON_LIBRARY_FILE_NAME}
 		PATHS ${_PYTHON_LIBRARY_DIR}
 		NO_DEFAULT_PATH)
+	if(NOT PYTHON_LIBRARIES)
+		# try again using info from LDLIBRARY variable; needed for installs from source
+		execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY'))"
+			OUTPUT_VARIABLE _PYTHON_LIBRARY_PATH
+			OUTPUT_STRIP_TRAILING_WHITESPACE)
+		get_filename_component(_PYTHON_LIBRARY_FILE_NAME "${_PYTHON_LIBRARY_PATH}" NAME)
+		find_library(PYTHON_LIBRARIES
+			NAMES ${_PYTHON_LIBRARY_FILE_NAME}
+			PATHS ${_PYTHON_LIBRARY_DIR}
+			NO_DEFAULT_PATH)
+	endif()
 
 	if(NOT PYTHON_LIBRARIES)
 		set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find Python shared library '${_PYTHON_LIBRARY_FILE_NAME}' in '${_PYTHON_LIBRARY_DIR}'. Make sure Python is setup correctly.")
