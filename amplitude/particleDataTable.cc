@@ -37,9 +37,12 @@
 
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 
+#include "libConfigUtils.hpp"
 #include "reportingUtils.hpp"
 #include "particleDataTable.h"
+#include "libconfig.h++"
 
 	
 using namespace std;
@@ -81,7 +84,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
                                    const double              minMass,
                                    const double              minMassWidthFactor,
                                    const vector<string>&     whiteList,
-                                   const vector<string>&     blackList)
+                                   const vector<string>&     blackList,
+				   const set<string>&        decayproducts,
+				   const bool& forceDecayCheck)
 {
 	const pair<particleProperties, string> selector(prototype, sel);
 	vector<const particleProperties*>      matchingEntries;
@@ -90,7 +95,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 			continue;
 		// limit isobar mass, if minMass > 0
 		if ((minMass > 0) and (i->second.mass() + minMassWidthFactor * i->second.width() < minMass))
+		  { if(_debug)printDebug << i->second.name() << " not in mass window " << flush;
 			continue;
+		  }
 		// apply white list
 		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
 		for (size_t j = 0; j < whiteList.size(); ++j)
@@ -99,7 +106,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (not whiteListMatch)
+		  { if(_debug)printDebug << i->second.name() << " not in whitelist " << endl;
 			continue;
+		  }
 		// apply black list
 		bool blackListMatch = false;
 		for (size_t j = 0; j < blackList.size(); ++j)
@@ -108,7 +117,27 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				break;
 			}
 		if (blackListMatch)
+		  { if(_debug)printDebug << i->second.name() << " on blacklist " << endl;
 			continue;
+		  }
+		// apply list of decays
+		bool decaymatch = true;
+		// check if there are decays defined at all
+		if(decayproducts.size()>0 && i->second.nDecays()>0){
+		  if(!i->second.hasDecay(decayproducts))decaymatch=false;
+		}
+		else if(forceDecayCheck)decaymatch = false;
+
+		if (!decaymatch)
+		  { if(_debug){
+		      printDebug << i->second.name() << " does not have a decay into ";
+		      std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
+		      cout << endl;
+		    }
+		     continue;
+		  }
+
+
 		if (_debug) {
 			printDebug << "found entry " << i->second.name() << " matching " << prototype
 			           << " and '" << sel << "'" << flush;
@@ -118,7 +147,10 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				cout << " ; in white list";
 			if (blackList.size() > 0)
 				cout << " ; not in black list";
-			cout << endl;
+			if(decaymatch)
+			  cout << " ; with allowed decay " ;
+			 std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
+		         cout << endl;
 		}      
 		matchingEntries.push_back(&(i->second));
 	}
@@ -181,6 +213,54 @@ particleDataTable::readFile(const string& fileName)
 	}
 	return read(file);
 }
+
+bool
+particleDataTable::readDecayFile(const string& fileName)
+{
+  libconfig::Config config;
+  bool result=false;
+  parseLibConfigFile(fileName,config,result);
+    
+  const libconfig::Setting& particles=config.lookup("particles");
+  unsigned int npart=particles.getLength();
+  if(_debug)printInfo << npart << " Particles found in decay file." << endl;
+
+  // loop through decay entries and add decays to particleDataTable
+  for(unsigned int ipart=0; ipart<npart;++ipart){
+    const libconfig::Setting& part=particles[ipart];
+    std::string name;part.lookupValue("name",name);
+    // lookup particle in database
+    // convert to modifiable entry
+    particleProperties* particleProp=const_cast<particleProperties*>(entry(name));
+    if(particleProp==NULL)continue;
+    if(_debug){
+      printInfo << name << endl;
+      printInfo << "decays into: "<< endl;
+    }
+
+    // get and loop over decay modesfor this particle
+    const libconfig::Setting& decays=part["decays"];
+    unsigned int ndec=decays.getLength();
+    for(unsigned int idec=0;idec<ndec;++idec){
+      // get list of decay products
+      const libconfig::Setting& prod=decays[idec]["products"];
+      unsigned int n=prod.getLength();
+      set<string> daughters;
+      // loop over decay products
+      for(unsigned int i=0;i<n;++i){
+	string prodname=prod[i];
+        if(_debug)cout << prodname << " ";
+	daughters.insert(prodname);
+      }// end loop over decay products
+      if(_debug)cout << endl;
+      particleProp->addDecayMode(daughters);
+    }// end loop over decay modes of this particle
+   }// end loop over entries in decaytable
+
+  return result;
+}
+
+
 
 
 bool

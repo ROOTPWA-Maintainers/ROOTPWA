@@ -89,6 +89,8 @@ public:
   FSParticle& getParticle(unsigned int i) //< returns final state particle
   { return _fsparticles[i];}
 
+  const TLorentzVector& getBeam() const {return *_beam;}
+
 private:
   /*** @brief Final state particle momenta
    */

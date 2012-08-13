@@ -4,7 +4,7 @@
 //
 // Description:
 //      Reggeized propagator
-//      Literatur:
+//      Literature:
 //      Berger Phys Rev 166 (1968) 1525
 //      Ascoli Phys Rev D9 (1974) 1963
 //      Harris Z. Phys C9 (1981) 275

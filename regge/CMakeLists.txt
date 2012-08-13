@@ -39,6 +39,7 @@
 set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
+  ${TOOLS_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 include_directories(${INCLUDE_DIRECTORIES})
@@ -47,6 +48,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
   reggeprop.cc
+  pipiamp.cc
 )
    
 
@@ -65,6 +67,7 @@ set(THIS_LIB "RootPwaRegge")
 make_shared_library("${THIS_LIB}" "${SOURCES}"
   "${ROOT_LIBS}"
   "${PWA2000_LIBS}"
+  "${ROOTPWATOOLS_LIBS}"
 )
 
 
