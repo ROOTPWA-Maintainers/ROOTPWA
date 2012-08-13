@@ -7,7 +7,7 @@
 
 #include <isobarHelicityAmplitude.h>
 
-BOOST_PYTHON_MODULE(isobarAmplitude_py)
+BOOST_PYTHON_MODULE(libRootPwaPy)
 {
 using namespace boost::python;
 //class_<rpwa::isobarAmplitude, boost::noncopyable>("isobarAmplitude", no_init);

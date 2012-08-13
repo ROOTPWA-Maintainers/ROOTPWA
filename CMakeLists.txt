@@ -366,7 +366,7 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up Python.")
 option(USE_PYTHON "En/Disables Python bindings" OFF)
-find_package(Python 3.2)
+find_package(Python 2.7)
 set_feature_info(Python
 	"General-purpose, high-level programming language"
 	"http://www.python.org"
@@ -618,6 +618,14 @@ add_subdirectory(gui/src)
 # MPI
 if(USE_MPI)
 	add_subdirectory(mpi)
+endif()
+
+# Python bindings
+if(USE_PYTHON)
+	set(PYINTERFACE_LIBS
+		RootPwaPy
+		)
+	add_subdirectory(pyInterface)
 endif()
 
 

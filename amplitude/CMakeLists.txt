@@ -81,10 +81,6 @@ set(SOURCES
 	waveSetGenerator.cc
 	)
 
-set(PYSOURCES
-	python_stuff.cc
-	)
-
 
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
@@ -109,18 +105,6 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	)
-
-if(USE_PYTHON)
-	make_shared_library(
-		"pylib"
-		"${PYSOURCES}"
-		"${PYTHON_LIBRARIES}"
-		"${Boost_PYTHON_LIBRARY}"
-		"${ROOT_LIBS}"
-		"${Libconfig_LIBS}"
-		"${PWA2000_LIBS}"
-		)
-endif()
 
 
 # executables
