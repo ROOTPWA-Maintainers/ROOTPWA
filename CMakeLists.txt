@@ -366,7 +366,7 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up Python.")
 option(USE_PYTHON "En/Disables Python bindings" OFF)
-find_package(Python 2.7)
+find_package(Python 3.2)
 set_feature_info(Python
 	"General-purpose, high-level programming language"
 	"http://www.python.org"

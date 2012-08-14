@@ -27,7 +27,8 @@
 #// Description:
 #//      cmake module for finding PYTHON installation
 #//      replaces the official FindPython that comes with Cmake which for several reasons is unusable
-#//      requires python to be in PATH
+#//      requires executable of Python interpreter to be in PATH
+#//      if both Pyhton 2 and 3 are found, Python 3 will be preferred
 #//	 
 #//      following variables are defined:
 #//      PYTHONINTERP_FOUND        - Was the Python executable found
@@ -58,10 +59,19 @@ set(PYTHON_ERROR_REASON "")
 
 
 # find Python interpreter
-find_program(PYTHON_EXECUTABLE python)
+set(_PYTHON_EXEC_NAMES "python3" "python")  # defines search order for python executable
+foreach(_PYTHON_EXEC_NAME ${_PYTHON_EXEC_NAMES})
+	find_program(PYTHON_EXECUTABLE ${_PYTHON_EXEC_NAME})
+	if(PYTHON_EXECUTABLE)
+		break()
+	endif()
+endforeach()
+unset(_PYTHON_EXEC_NAMES)
+
+#find_program(PYTHON_EXECUTABLE python)
 
 if(NOT PYTHON_EXECUTABLE)
-	set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find 'python' executable in path. Make sure Python is setup correctly.")
+	set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find executable of Python interpreter in path. Make sure Python is setup correctly.")
 else()
 
 	set(PYTHONINTERP_FOUND TRUE)
