@@ -46,12 +46,13 @@ function(switch_file_extension IN_FILE_LIST OLD_EXT NEW_EXT OUT_FILE_LIST)
         NEW_EXT       = '${NEW_EXT}'
         OUT_FILE_LIST = '${OUT_FILE_LIST}'")
 	endif()
-  set(NEW_FILE_LIST)
-  foreach(_OLD_FILE ${IN_FILE_LIST})
-    string(REGEX REPLACE "^(.*)${OLD_EXT}$" "\\1${NEW_EXT}" _NEW_FILE ${_OLD_FILE})
-    set(NEW_FILE_LIST ${NEW_FILE_LIST} ${_NEW_FILE})
-  endforeach()
-  set(${OUT_FILE_LIST} ${NEW_FILE_LIST})
+	set(NEW_FILE_LIST)
+	foreach(_OLD_FILE ${IN_FILE_LIST})
+		string(REGEX REPLACE "^(.*)${OLD_EXT}$" "\\1${NEW_EXT}" _NEW_FILE ${_OLD_FILE})
+		set(NEW_FILE_LIST ${NEW_FILE_LIST} ${_NEW_FILE})
+	endforeach()
+	unset(_OLD_FILE)
+	set(${OUT_FILE_LIST} ${NEW_FILE_LIST})
 endfunction(switch_file_extension)
 
 
@@ -64,11 +65,12 @@ function(make_shared_library LIB_NAME SOURCES)
         SOURCES  = '${SOURCES}'
         ARGN     = '${ARGN}'")
 	endif()
-  add_library(${LIB_NAME} SHARED ${SOURCES})
-  # proccess link libraries in additional arguments
-  foreach(_LIB ${ARGN})
-    target_link_libraries(${LIB_NAME} ${_LIB})
-  endforeach()
+	add_library(${LIB_NAME} SHARED ${SOURCES})
+	# proccess link libraries in additional arguments
+	foreach(_LIB ${ARGN})
+		target_link_libraries(${LIB_NAME} ${_LIB})
+	endforeach()
+	unset(_LIB)
 endfunction(make_shared_library)
 
 
@@ -81,22 +83,23 @@ function(make_executable EXE_NAME SOURCES)
         SOURCES  = '${SOURCES}'
         ARGN     = '${ARGN}'")
 	endif()
-  add_executable(${EXE_NAME} ${SOURCES})
-  # proccess link libraries in additional arguments
-  foreach(_LIB ${ARGN})
-    target_link_libraries(${EXE_NAME} ${_LIB})
-  endforeach()
+	add_executable(${EXE_NAME} ${SOURCES})
+	# proccess link libraries in additional arguments
+	foreach(_LIB ${ARGN})
+		target_link_libraries(${EXE_NAME} ${_LIB})
+	endforeach()
+	unset(_LIB)
 endfunction(make_executable)
 
 
 macro(enforce_out_of_source_build)
-  if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
-    message(FATAL_ERROR "Building this project in the source directory is not allowed. "
+	if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+		message(FATAL_ERROR "Building this project in the source directory is not allowed. "
 			"Please remove CMakeCache.txt, create a build directory, and run cmake there, for example:
         rm CMakeCache.txt
         mkdir build && cd build
         cmake ..")
-  endif()
+	endif()
 endmacro(enforce_out_of_source_build)
 
 
@@ -117,4 +120,6 @@ function(disable_feature FEATURE_NAME)
 		set_property(GLOBAL PROPERTY ENABLED_FEATURES ${_FEATURES})
 		set_property(GLOBAL APPEND PROPERTY DISABLED_FEATURES ${FEATURE_NAME})
 	endif()
+	unset(_FEATURES)
+	unset(_FEATURES_SIZE)
 endfunction(disable_feature)

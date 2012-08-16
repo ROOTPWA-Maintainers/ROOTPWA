@@ -35,18 +35,23 @@
 #//-------------------------------------------------------------------------
 
 
-add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
+message(STATUS "")
+message(STATUS ">>> Setting up 'amplitude' directory.")
+
+
+#add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
 
 
 # set include directories
 set(INCLUDE_DIRECTORIES
+	${PYTHON_INCLUDE_DIRS}
 	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
-  ${Boost_INCLUDE_DIRS}
-  ${Libconfig_INCLUDE_DIR}
-  ${ROOT_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
+	${Boost_INCLUDE_DIRS}
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -80,21 +85,22 @@ set(SOURCES
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
 set(ROOTPWAAMP_DICT_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 root_generate_dictionary(
-  "${ROOTPWAAMP_DICTIONARY}"
-  "${ROOTPWAAMP_DICT_INCLUDE_DIRS}"
+	"${ROOTPWAAMP_DICTIONARY}"
+	"${ROOTPWAAMP_DICT_INCLUDE_DIRS}"
 	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
-  "rootPwaAmpLinkDef.h"
+	"rootPwaAmpLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwaAmp")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-	"${BOOST_LIBS}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"

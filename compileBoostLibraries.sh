@@ -27,7 +27,7 @@ fi
 
 
 echo "    view result in ${LOG_FILE}"
-./bootstrap.sh --with-libraries=mpi,python --prefix=. &> ${LOG_FILE}
+./bootstrap.sh --with-libraries=mpi,python --with-python=python3 --prefix=. &> ${LOG_FILE}
 ./bjam >> ${LOG_FILE} 2>&1
 
 

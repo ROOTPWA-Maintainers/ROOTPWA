@@ -35,6 +35,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'cuda' directory.")
+
+
 # -Wall reports warnings in system libraries; so we cannot use -Werror
 set(CMAKE_CXX_FLAGS "-Wall")
 message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for CUDA host code")
@@ -43,12 +47,12 @@ message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${Boost_INCLUDE_DIRS}
-  ${CUDA_SDK_ROOT_DIR}/common/inc
+	${Boost_INCLUDE_DIRS}
+	${CUDA_SDK_ROOT_DIR}/common/inc
 	${ROOT_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+	${UTILITIES_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
