@@ -32,6 +32,7 @@
 using namespace std;
 
 #include "reggeprop.h"
+#include "pipiphaseshift.h"
 
 
 int main(int argc, char** argv){
@@ -104,6 +105,31 @@ int main(int argc, char** argv){
     //kineS->SetPoint(i,t,pionProp.S(tin,t,tout,s1,s,s2));
   }
 
+
+
+  //// test pipiamp
+  n=3000;
+  TGraph* s0wavePhase=new TGraph(n);s0wavePhase->SetName("s0waveDelta"); 
+  TGraph* s0waveEta=new TGraph(n);s0waveEta->SetName("s0waveEta");
+  s0wave* s0w=new s0wave();
+  double s=4*0.01947983515;
+  double step=0.0005;
+  double offset=0;
+  double pre=0;
+  for(unsigned int i=0;i<n;++i){
+    s+=step;
+    double d=TMath::RadToDeg()*TMath::ATan(1./s0w->cotDelta(s));
+    double e=s0w->eta(s);
+    if(d<0 && pre>0)offset+=180;
+    pre=d;
+    d+=offset;				  
+    s0wavePhase->SetPoint(i,sqrt(s),d);
+    s0waveEta->SetPoint(i,sqrt(s),e);
+  }
+
+  delete s0w;
+
+
   TFile* outfile=TFile::Open("reggetest.root","RECREATE");
 
   piontrajectory->Write();
@@ -112,6 +138,11 @@ int main(int argc, char** argv){
   pionpropIm->Write();
   pionprop->Write();
   kineS->Write();
+
+  s0wavePhase->Write();
+  s0waveEta->Write();
+
+
 
   outfile->Close();
 

@@ -53,6 +53,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 set(SOURCES
 	reggeprop.cc
 	pipiamp.cc
+	pipiphaseshift.cc
 	)
 
 
