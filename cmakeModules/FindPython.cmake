@@ -59,7 +59,7 @@ set(PYTHON_ERROR_REASON "")
 
 
 # find Python interpreter
-set(_PYTHON_EXEC_NAMES "python3" "python")  # defines search order for python executable
+set(_PYTHON_EXEC_NAMES "python")  # defines search order for python executable
 foreach(_PYTHON_EXEC_NAME ${_PYTHON_EXEC_NAMES})
 	find_program(PYTHON_EXECUTABLE ${_PYTHON_EXEC_NAME})
 	if(PYTHON_EXECUTABLE)

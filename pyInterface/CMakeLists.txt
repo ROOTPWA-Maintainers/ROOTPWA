@@ -57,7 +57,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-	isobarAmplitude_py.cc
+	rootPwaPy.cc
 	)
 
 
