@@ -99,7 +99,7 @@ endif()
 # common compiler flags
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra")
-set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual")
+set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")

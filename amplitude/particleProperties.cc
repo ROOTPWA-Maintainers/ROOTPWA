@@ -39,6 +39,7 @@
 #include <iterator>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "spinUtils.hpp"
 #include "conversionUtils.hpp"
@@ -265,6 +266,49 @@ particleProperties::antiPartProperties() const
 
 
 string
+particleProperties::bareNameLaTeX() const
+{
+	// split name into mass and symbol parts
+	// const string name = bareName();
+	// typename boost::iterator_range<std::string> startPos;
+	// find_first(name, "(");
+	// iterator_range<string> endPos   = find_last (name, ")");
+	// iterator_range<string> range    = make_iterator_range(startPos, endPos);
+	// const string mass = copy_range(range);
+	// printDebug << "!!!HERE " << name << ": " << mass << "; " << range << endl;
+	// // handle antiparticle
+	// if ()
+	// // handle * particles
+	
+	// // setup particle-name dictionary
+	// map<string, string> partNameDict;
+	// isobars["gamma"  ] = "\\gamma";
+	// isobars["mu"     ] = "\\mu";
+	// isobars["pi"     ] = "\\pi";
+	// isobars["eta"    ] = "\\eta";
+	// isobars["sigma"  ] = "\\sigma";
+	// isobars["rho"    ] = "\\rho";
+	// isobars["omega"  ] = "\\omega";
+	// isobars["phi"    ] = "\\phi";
+	// isobars["kappa"  ] = "\\kappa";
+	// isobars["nucleon"] = "N";
+	// isobars["Delta"  ] = "\\Delta";
+	// isobars["Lambda" ] = "\\Lambda";
+
+
+	// vector<iterator_range<string::iterator> > foundPos;
+	// find_all(foundPos, name, "(");
+	// if (foundPos.size() > 1) {
+	// 	printErr << "particle name '" << name << "' contains more than one '('. "
+	// 	         << "cannot construct LaTeX name" << endl;
+	// 	return "";
+	// }
+	return "";
+}
+
+
+
+string
 particleProperties::qnSummary() const
 {
 	ostringstream out;
@@ -320,10 +364,6 @@ particleProperties::print(ostream& out) const
 
 	return out;
 }
-
-
-
-
 
 
 ostream&

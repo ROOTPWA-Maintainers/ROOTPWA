@@ -151,6 +151,10 @@ namespace rpwa {
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)]
 
+		// std::string         nameLaTeX     () const;  ///< returns particle name including charge in LaTeX markup
+		std::string         bareNameLaTeX () const;  ///< returns particle name w/o charge in LaTeX markup
+		// virtual std::string qnSummaryLaTeX() const;  ///< returns particle's quantum number summary in form name[IG(JPC)] in LaTeX markup
+
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
 		virtual std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
 

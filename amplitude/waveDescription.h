@@ -101,6 +101,10 @@ namespace rpwa {
 		 const bool                  newConvention = false,
 		 const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive function that generates unique wave name from decay topology
 
+		static std::string waveLaTeXFromTopology
+		(isobarDecayTopology         topo,
+		 const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive function that generates unique wave name from decay topology
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 

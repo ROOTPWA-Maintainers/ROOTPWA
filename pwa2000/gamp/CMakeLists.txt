@@ -39,7 +39,7 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'gamp' directory.")
 
 
-set(CMAKE_CXX_FLAGS   "-O2 -Wall")
+set(CMAKE_CXX_FLAGS   "-O2 -Wall -Werror")
 set(CMAKE_CXX_LDFLAGS "-O2")
 
 
