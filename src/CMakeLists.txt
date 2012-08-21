@@ -35,63 +35,69 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'src' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
-  ${Boost_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
-  ${ROOT_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
-  ${CUDA_INCLUDE_DIR}
-  ${AMPLITUDE_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${CUDA_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  TFitBin.cc
-  TFitResult.cc
-  fitResult.cc
-  TCMatrix.cc
-  TPWALikelihood.cc
-  TPWALikelihoodC.cc
-  TPWAAmp.cc
-  TPWAPhaseConstraint.cc
-  TLogMultiGaus.cc
-  TCovEllipse.cc
-  pwaPlotter.cc
-  pwacomponent.cc
-  massDepFitLikeli.cc
+	TFitBin.cc
+	TFitResult.cc
+	fitResult.cc
+	TCMatrix.cc
+	TPWALikelihood.cc
+	TPWALikelihoodC.cc
+	TPWAAmp.cc
+	TPWAPhaseConstraint.cc
+	TLogMultiGaus.cc
+	TCovEllipse.cc
+	pwaPlotter.cc
+	pwacomponent.cc
+	massDepFitLikeli.cc
 	)
 
 
 # ROOT dictionary
 set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
 set(ROOTPWA_DICT_INCLUDE_DIRS
-  ${ROOT_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
-  ${AMPLITUDE_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 root_generate_dictionary(
-  "${ROOTPWA_DICTIONARY}"
-  "${ROOTPWA_DICT_INCLUDE_DIRS}"
-  "TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
-  "rootPwaLinkDef.h"
+	"${ROOTPWA_DICTIONARY}"
+	"${ROOTPWA_DICT_INCLUDE_DIRS}"
+	"TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
+	"rootPwaLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwa")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOT_LIBS}"
-  "${PWA2000_LIBS}"
-  "${CUDA_LIBS}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${PWA2000_LIBS}"
+	"${CUDA_LIBS}"
 	"${AMPLITUDE_LIBS}"
 	)
 

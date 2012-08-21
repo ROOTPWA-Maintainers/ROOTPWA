@@ -17,8 +17,8 @@
 //-----------------------------------------------------------
 
 
-#ifndef REGGEPROP_HH
-#define REGGEPROP_HH
+#ifndef PIPIAMP_HH
+#define PIPIAMP_HH
 
 // Base Class Headers ----------------
 
@@ -78,7 +78,7 @@ public:
 		unsigned int l=0,
 		  unsigned int I=0) const  {return cotDelta(s,l,I);}
 
-
+  /// Elasticities
   double eta(std::complex<double> s,
 		  unsigned int l=0,
 		  unsigned int I=0) const;

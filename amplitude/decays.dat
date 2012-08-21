@@ -39,6 +39,15 @@ particles = (
 	 {products = [ "pi-", "a1(1260)+" ];}
 	 );
 },
+{ name = "rho3(1690)0";
+  decays = (
+  	 {products = [ "pi-", "pi+" ];},
+	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a2(1320)-" ];},
+	 {products = [ "pi-", "a1(1320)+" ];}
+	 );
+},
 // Three pion system -------------------------------------------
 
 { name = "a1(1260)-";
@@ -157,13 +166,58 @@ particles = (
 { name = "f1(1285)0";
   decays = (
   	 {products = [ "pi-", "a1(1260)+" ];},
-	 {products = [ "pi+", "a1(1260)-" ];}
+	 {products = [ "pi+", "a1(1260)-" ];},
+ 	 {products = [ "rho(770)0", "rho(770)0" ];}
+	 );
+},
+{ name = "b1(1235)0";
+  decays = (
+  	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},	
+	 {products = [ "sigma0", "rho(770)0" ];}	
+	 );
+},
+{ name = "b1(1800)0";
+  decays = (
+  	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},	
+ 	 {products = [ "pi-", "a2(1320)+" ];},
+	 {products = [ "pi+", "a2(1320)-" ];},
+	 {products = [ "sigma0", "rho(770)0" ];}	
+	 );
+},
+{ name = "b0(1800)0";
+  decays = (
+  	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},	
+ 	 {products = [ "pi-", "a2(1320)+" ];},
+	 {products = [ "pi+", "a2(1320)-" ];},
+	 {products = [ "sigma0", "rho(770)0" ];}	
+	 );
+},
+{ name = "b1(1800)0";
+  decays = (
+  	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a1(1260)-" ];},
+ 	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},	
+ 	 {products = [ "pi-", "a2(1320)+" ];},
+	 {products = [ "pi+", "a2(1320)-" ];},
+	 {products = [ "sigma0", "rho(770)0" ];}	
 	 );
 },
 { name = "f0(1370)0";
   decays = (
   	 {products = [ "pi-", "a1(1260)+" ];},
 	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},	
 	 {products = [ "sigma0", "sigma0" ];},
 	 {products = [ "rho(770)0", "rho(770)0" ];}
 	 );
@@ -172,6 +226,8 @@ particles = (
   decays = (
   	 {products = [ "pi-", "a1(1260)+" ];},
 	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},	
 	 {products = [ "sigma0", "sigma0" ];},
 	 {products = [ "rho(770)0", "rho(770)0" ];}
 	 );
@@ -180,6 +236,11 @@ particles = (
   decays = (
   	 {products = [ "pi-", "a2(1320)+" ];},
 	 {products = [ "pi+", "a2(1320)-" ];},
+	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a2(1260)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},	
+	 {products = [ "sigma0", "sigma0" ];},	  
 	 {products = [ "rho(770)0", "rho(770)0" ];}
 	 );
 },
@@ -189,13 +250,37 @@ particles = (
 	 {products = [ "pi+", "a1(1260)-" ];},
 	 {products = [ "pi-", "pi(1300)+" ];},
 	 {products = [ "pi+", "pi(1300)-" ];},
-	 {products = [ "rho(770)0", "rho(770)0" ];}	  
+	 {products = [ "rho(770)0", "rho(770)0" ];}
+	 );
+},
+{ name = "eta2(1645)0";
+  decays = (
+  	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "a2(1320)+" ];},
+	 {products = [ "pi+", "a2(1320)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},
+	 {products = [ "rho(770)0", "rho(770)0" ];}
 	 );
 },
 { name = "rho(1700)0";
   decays = (
   	 {products = [ "pi-", "a1(1260)+" ];},
 	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "a2(1320)+" ];},
+	 {products = [ "pi+", "a2(1320)-" ];},
+	 {products = [ "pi-", "pi(1300)+" ];},
+	 {products = [ "pi+", "pi(1300)-" ];},
+	 {products = [ "sigma0", "rho(770)0" ];}
+	 );
+},
+{ name = "rho(1600)0";
+  decays = (
+  	 {products = [ "pi-", "a1(1260)+" ];},
+	 {products = [ "pi+", "a1(1260)-" ];},
+	 {products = [ "pi-", "a2(1320)+" ];},
+	 {products = [ "pi+", "a2(1320)-" ];},
 	 {products = [ "pi-", "pi(1300)+" ];},
 	 {products = [ "pi+", "pi(1300)-" ];},
 	 {products = [ "sigma0", "rho(770)0" ];}

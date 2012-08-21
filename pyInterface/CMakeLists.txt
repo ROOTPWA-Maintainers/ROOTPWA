@@ -20,23 +20,12 @@
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
 #// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
+#// $Rev:: 908                         $: revision of last commit
+#// $Author:: bgrube                   $: author of last commit
+#// $Date:: 2012-08-07 20:48:35 +0200 #$: date of last commit
 #//
 #// Description:
-#//      build file for Fortran library 
-#//
-#// !!! important !!!
-#//
-#// Beware that ccmake seems to have problems parsing comment lines in
-#// fixed-format sources, so it may pick up 'use' or 'module' keywords
-#// from the comments that generate stray dependencies and leading to
-#// make errors. One (ugly) workaround is to edit comments in the
-#// Fortran sources.
-#//
-#// As far as I can tell the problem is not yet solved. See
-#// http://public.kitware.com/Bug/view.php?id=8785
+#//      build file for amplitude library 
 #//
 #//
 #// Author List:
@@ -47,33 +36,41 @@
 
 
 message(STATUS "")
-message(STATUS ">>> Setting up 'fortran' directory.")
+message(STATUS ">>> Setting up 'pyInterface' directory.")
 
 
-# enable Fortran support
-enable_language(Fortran)
 
-
-# add compiler options
-#set(CMAKE_Fortran_FLAGS "-O2 -m32 -fno-automatic -ffixed-line-length-none -finit-local-zero")
-#set(CMAKE_Fortran_FLAGS "-O2 -m32 -fno-automatic -ffixed-line-length-none")
-set(CMAKE_Fortran_FLAGS "-O2 -fno-automatic -ffixed-line-length-none")
-message(STATUS "Using Fortran compiler '${CMAKE_Fortran_COMPILER}'")
-message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
+# set include directories
+set(INCLUDE_DIRECTORIES
+	${PYTHON_INCLUDE_DIRS}
+	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
+	${Boost_INCLUDE_DIRS}
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
+include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-	eps_k1.f
-	eps_k1p.f
-	eps_m.f
-	eps_mx.f
+	rootPwaPy.cc
 	)
 
 
 # library
-set(THIS_LIB "Fortran")
+set(THIS_LIB "RootPwaPy")
 make_shared_library(
 	"${THIS_LIB}"
 	"${SOURCES}"
+	"${PYTHON_LIBRARIES}"
+	"${Boost_PYTHON_LIBRARY}"
+	"${ROOT_LIBS}"
+	"${Libconfig_LIBS}"
+	"${PWA2000_LIBS}"
+	"${AMPLITUDE_LIBS}"
 	)
+

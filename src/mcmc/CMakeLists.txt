@@ -1,3 +1,7 @@
+message(STATUS "")
+message(STATUS ">>> Setting up 'mcmc' directory.")
+
+
 ADD_EXECUTABLE(hamMCpwa hamMCpwa.cc)
 TARGET_LINK_LIBRARIES(hamMCpwa rootpwa)
 TARGET_LINK_LIBRARIES(hamMCpwa ${PWA_LIBS})
