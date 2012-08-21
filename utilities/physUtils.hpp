@@ -146,7 +146,7 @@ namespace rpwa {
 		const double bf = F(L, breakupMom);
 		if (debug)
 			printDebug << "Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
-			           << "q = " << breakupMom << " GeV) = " << maxPrecision(bf) << std::endl;
+			           << "q = " << maxPrecision(breakupMom) << " GeV) = " << maxPrecision(bf) << std::endl;
 		return bf;
 	}
 

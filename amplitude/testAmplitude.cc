@@ -225,7 +225,7 @@ main(int argc, char** argv)
 		cout << "!!! decay amplitude = " << decayAmp << endl;
     
 		if (1) {  // compare to PWA2000
-			PDGtable.initialize();
+			PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
 			event    ev;
 			ifstream eventData("testEvents.evt");
 			ev.setIOVersion(1);
@@ -293,8 +293,8 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		const long int maxNmbEvents   = 10000;
-		// const long int maxNmbEvents   = 1;
+		//const long int maxNmbEvents = 10000;
+		const long int maxNmbEvents = 1;
 
 		// const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "testAmplitude.key";
@@ -304,35 +304,44 @@ main(int argc, char** argv)
 		// const string   evtInFileName  = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
 		// const string   rootInFileName = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
 
-		// // rel. delta = (-1.1237951106813549e+01, 1.8540178922884870e-01)
-		// const string   newKeyFileName = "test5pi/charly/nosym/1-0-00+f01500=sigma_00_sigma_00_pi-.key";
-		// const string   oldKeyFileName = "test5pi/sebastian/nosym/1-0-+0+pi-_00_f01500=sigma_0_sigma.key";
+		// rel. delta = (1.4218332033726580e-09, 1.4065747228912715e-09)
+		// rms 1.44e-9, 8.34e-10
+		const string newKeyFileName = "test5pi/charly/nosym/1-0-00+f01500=sigma_00_sigma_00_pi-.key";
+		const string oldKeyFileName = "test5pi/sebastian/nosym/1-0-+0+pi-_00_f01500=sigma_0_sigma.key";
 
-		// // rel. delta = (4.1444188776840801e-01, 9.0137310502669751e-02)
-		// const string   newKeyFileName = "test5pi/charly/nosym/1-1+00+sigma_22_a21320-=rho770_21_pi-.key";
-		// const string   oldKeyFileName = "test5pi/sebastian/nosym/1-1++0+sigma_22_a21320=pi-_2_rho770.key";
+		// // rel. delta = (1.3390541006872489e-09, 1.3820297766255656e-09)
+		// // rms 1.15e-9, 1.19e-9
+		// const string newKeyFileName = "test5pi/charly/nosym/1-1+00+sigma_22_a21320-=rho770_21_pi-.key";
+		// const string oldKeyFileName = "test5pi/sebastian/nosym/1-1++0+sigma_22_a21320=pi-_2_rho770.key";
 
-		// // rel. delta = (-4.1325797791610221e-05, -7.6240426650453142e-05)
-		// const string   newKeyFileName = "test5pi/charly/nosym/1-2-00+rho770_02_a21320-=rho770_21_pi-.key";
-		// const string   oldKeyFileName = "test5pi/sebastian/nosym/1-2-+0+rho770_02_a21320=pi-_2_rho770.key";
+		// // rel. delta = (1.3969833147493598e-09, 1.3631710002893191e-09)
+		// // rms 1.71e-9, 1.46e-9
+		// const string newKeyFileName = "test5pi/charly/nosym/1-2-00+rho770_02_a21320-=rho770_21_pi-.key";
+		// const string oldKeyFileName = "test5pi/sebastian/nosym/1-2-+0+rho770_02_a21320=pi-_2_rho770.key";
 
 		// rel. delta = (4.2414900268409422e-01, -3.7760164904837606e-01)
 		// rel. delta = (-1.1363857545500716e-01, 1.1934564489491958e-03)
 		// rel. delta = (-2.1179976175700090e-05, 3.5535687503020203e-06)
-		// rel. delta = (-3.4768493036075876e-09, 3.5819563781228545e-07)
-		const string   newKeyFileName = "test5pi/charly/nosym/1-2-00+sigma_20_pi1800-=sigma_00_pi-.key";
-		const string   oldKeyFileName = "test5pi/sebastian/nosym/1-2-+0+sigma_20_pi1800=pi-_0_sigma_noBose_noRefl.key";
+		// rel. delta = (-3.4768493036075876e-09, 3.5819563781228545e-07) noBose noRefl
+		// rel. delta = (-1.3114336807010326e-07, 3.4071135025521628e-07) full sym
+		// rel. delta = (-4.2926706747269698e-05, -6.5415181989729538e-06) full sym; orig .evt
+		// rel. delta = (-7.1429252866706858e-13, -8.0913804091617701e-12) noBose noRefl; fixed PDG table
+		// rel. delta = (1.3880163165229989e-09, 1.3994113453639803e-09) full sym
+		// rel. delta = (-4.2794189442389053e-05, -6.8808316461363639e-06) full sym; orig  .evt
+		// rms 1.21e-9, 2.92e-10
+		// const string newKeyFileName = "test5pi/charly/nosym/1-2-00+sigma_20_pi1800-=sigma_00_pi-.key";
+		// const string oldKeyFileName = "test5pi/sebastian/nosym/1-2-+0+sigma_20_pi1800=pi-_0_sigma.key";
 
-		//const string   evtInFileName  = "test5pi/1900.1960.genbod.evt";
-		//const string   rootInFileName = "test5pi/1900.1960.genbod.root";
-		const string   evtInFileName  = "test5pi/foo.evt";
-		const string   rootInFileName = "test5pi/foo.root";
+		const string evtInFileName  = "test5pi/1900.1960.genbod.regen.evt";
+		const string rootInFileName = "test5pi/1900.1960.genbod.root";
+		// const string evtInFileName  = "test5pi/foo.evt";
+		// const string rootInFileName = "test5pi/foo.root";
 
-		decayTopology::setDebug(true);
-		isobarDecayTopology::setDebug(true);
-		massDependence::setDebug(true);
+		// decayTopology::setDebug(true);
+		// isobarDecayTopology::setDebug(true);
+		//massDependence::setDebug(true);
 		isobarAmplitude::setDebug(true);
-		isobarHelicityAmplitude::setDebug(true);
+		//isobarHelicityAmplitude::setDebug(true);
 
 		waveDescription    waveDesc;
 		isobarAmplitudePtr amp;
@@ -417,7 +426,7 @@ main(int argc, char** argv)
 			timer.Print();
 
 			if (1) {  // compare to PWA2000
-				PDGtable.initialize();
+				PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
 				ifstream eventData(evtInFileName.c_str());
 				keyfile  key;
 				event    ev;
@@ -457,8 +466,8 @@ main(int argc, char** argv)
 					TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
 					TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
 					TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-					TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -1e-1, 1e-1);
-					TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -1e-1, 1e-1);
+					TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -1e-7, 1e-7);
+					TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -1e-7, 1e-7);
 					TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 					TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 					for (unsigned int i = 0; i < myAmps.size(); ++i) {

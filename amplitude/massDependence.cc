@@ -104,9 +104,10 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 
 	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 	if (_debug)
-		printDebug << name() << "(m = " << M << " GeV, m_0 = " << M0 << " GeV, "
-		           << "Gamma_0 = " << Gamma0 << " GeV, L = " << 0.5 * L << ", q = " << q << " GeV, "
-		           << q0 << " GeV) = " << maxPrecisionDouble(bw) << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV, m_0 = " << maxPrecision(M0)
+		           << " GeV, Gamma_0 = " << maxPrecision(Gamma0) << " GeV, L = " << 0.5 * L
+		           << ", q = " << maxPrecision(q) << " GeV, "
+		           << maxPrecision(q0) << " GeV) = " << maxPrecisionDouble(bw) << endl;
 	return bw;
 }
 
@@ -177,15 +178,6 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 complex<double>
 piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 {
-	// printSucc << "_a[0] = " << _a[0] << endl;
-	// printSucc << "_a[1] = " << _a[1] << endl;
-	// printSucc << "_c[0] = " << _c[0] << endl;
-	// printSucc << "_c[1] = " << _c[1] << endl;
-	// printSucc << "_c[2] = " << _c[2] << endl;
-	// printSucc << "_c[3] = " << _c[3] << endl;
-	// printSucc << "_c[4] = " << _c[4] << endl;
-	// printSucc << "_sP   = " << _sP << endl;
-
 	const complex<double> imag(0, 1);
 
 	double mass = v.parent()->lzVec().M();
@@ -195,25 +187,11 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		s     = mass * mass;
 	}
 
-  // cout << "!!!HERE 1 "
-  //      << "pi_mass = "    << maxPrecisionDouble(_piChargedMass) << ", "
-  //      << "pi0_mass = "   << maxPrecisionDouble(_piNeutralMass) << ", "
-  //      << "K_mass = "     << maxPrecisionDouble(_kaonChargedMass) << ", "
-  //      << "K0_mass = "    << maxPrecisionDouble(_kaonNeutralMass) << ", "
-  //      << "Kmean_mass = " << maxPrecisionDouble(_kaonMeanMass) << ", "
-  //      << "My_mass = "    << maxPrecisionDouble(mass) << endl;
-
 	const complex<double> qPiPi   = q(mass, _piChargedMass,   _piChargedMass  );
 	const complex<double> qPi0Pi0 = q(mass, _piNeutralMass,   _piNeutralMass  );
 	const complex<double> qKK     = q(mass, _kaonChargedMass, _kaonChargedMass);
 	const complex<double> qK0K0   = q(mass, _kaonNeutralMass, _kaonNeutralMass);
 	complex<double>       qKmKm   = q(mass, _kaonMeanMass,    _kaonMeanMass   );
-  // cout << "!!!HERE 2 "
-  //      << "q_pipi = "   << maxPrecisionDouble(qPiPi) << ", "
-  //      << "q_pi0pi0 = " << maxPrecisionDouble(qPi0Pi0) << ", "
-  //      << "q_KK = "     << maxPrecisionDouble(qKK) << ", "
-  //      << "q_K0K0 = "   << maxPrecisionDouble(qK0K0) << ", "
-  //      << "q_KmKm = "   << maxPrecisionDouble(qKmKm) << endl;
 
 	matrix<complex<double> > rho(2, 2);
 	if (_vesSheet) {
@@ -226,32 +204,28 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		rho(1, 1) = ((2. * qKK)   / mass + (2. * qK0K0)   / mass) / 2.;
 	}
 	rho(0, 1) = rho(1, 0) = 0;
-	// printSucc << rho << endl;
 
 	const double scale = (s / (4 * _kaonMeanMass * _kaonMeanMass)) - 1;
 
 	matrix<complex<double> > M(zero_matrix<complex<double> >(2, 2));
 	for (unsigned int i = 0; i < _sP.size2(); ++i) {
 		const complex<double> fa = 1. / (s - _sP(0, i));
-		// cout << "fa[" << i <<"] = "<< fa << "; a[" << i << "] = " << _a[i] << endl;
 		M += fa * _a[i];
 	}
 	for (unsigned int i = 0; i < _c.size(); ++i) {
 		const complex<double> sc = pow(scale, (int)i);
-    // cout << "sc[" << i <<"] = "<< sc << "; c[" << i << "] = " << _c[i] << endl;
 		M += sc *_c[i];
 	}
 	
 	// modification: off-diagonal terms set to 0
 	M(0, 1) = 0;
 	M(1, 0) = 0;
-	// printSucc << M << endl;
 
 	invertMatrix<complex<double> >(M - imag * rho, _T);
-	// printSucc << _T << endl;
 	const complex<double> amp = _T(0, 0);
 	if (_debug)
-		printDebug << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
+		           << maxPrecisionDouble(amp) << endl;
 
 	return amp;
 }
@@ -298,7 +272,8 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	const complex<double> amp = ampM - coupling * bw;
 	if (_debug)
-		printDebug << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
+		           << maxPrecisionDouble(amp) << endl;
 
 	return amp;
 }
