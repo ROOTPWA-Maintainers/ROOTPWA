@@ -66,10 +66,10 @@ namespace rpwa {
 
 		bool reflectivityBasis () const { return _useReflectivityBasis; }  ///< returns whether reflectivity basis is used
 		bool boseSymmetrization() const { return _boseSymmetrize;       }  ///< returns whether Bose symmetrization is used
-		bool isospinSymmetrization() const { return _isospinSymmetrize;       }  ///< returns whether isospin symmetrization is used
+		bool isospinSymmetrization() const { return _isospinSymmetrize; }  ///< returns whether isospin symmetrization is used
 		void enableReflectivityBasis (const bool flag = true) { _useReflectivityBasis = flag; }  ///< en/disables use of reflectivity basis
 		void enableBoseSymmetrization(const bool flag = true) { _boseSymmetrize       = flag; }  ///< en/disables use of Bose symmetrization
-		void enableIsospinSymmetrization(const bool flag = true) { _isospinSymmetrize       = flag; }  ///< en/disables use of isospin symmetrization
+		void enableIsospinSymmetrization(const bool flag = true) { _isospinSymmetrize = flag; }  ///< en/disables use of isospin symmetrization
 
 		bool doSpaceInversion() const { return _doSpaceInversion; }  ///< returns whether parity transformation is performed on decay
 		bool doReflection    () const { return _doReflection;     }  ///< returns whether decay is reflected through production plane
@@ -115,8 +115,8 @@ namespace rpwa {
 
 		isobarDecayTopologyPtr _decay;                 ///< isobar decay topology with all external information
 		bool                   _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
-		bool                   _boseSymmetrize;        ///< if set, amplitudes are Bose-symmetrized
-		bool                   _isospinSymmetrize;     ///< if set, amplitudes are Isospin-symmetrized
+		bool                   _boseSymmetrize;        ///< if set, amplitudes are Bose symmetrized
+		bool                   _isospinSymmetrize;     ///< if set, amplitudes are isospin symmetrized
 		bool                   _doSpaceInversion;      ///< is set, all three-momenta of the decay particles are parity transformed (for test purposes)
 		bool                   _doReflection;          ///< is set, all three-momenta of the decay particles are reflected through production plane (for test purposes)
     

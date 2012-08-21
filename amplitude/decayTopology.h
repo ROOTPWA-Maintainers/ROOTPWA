@@ -132,7 +132,7 @@ namespace rpwa {
 		bool readKinematicsData(const TClonesArray& prodKinMomenta,
 		                        const TClonesArray& decayKinMomenta);    ///< reads production and decay kinematics data and sets respective 4-momenta
 
-		void fillKinematicsDataCache();  ///< copies kinematics data into cache; needed for Bose-symmetrization
+		void fillKinematicsDataCache();  ///< copies kinematics data into cache; needed for Bose symmetrization
 
 		bool revertMomenta();  ///< resets momenta to the values of last event read
 		bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map

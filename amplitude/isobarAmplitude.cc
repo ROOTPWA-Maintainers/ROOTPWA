@@ -25,7 +25,7 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      base class for isobar decay amplitude independent of formalism
+//      virtual base class for isobar decay amplitude independent of formalism
 //
 //
 // Author List:
@@ -251,7 +251,6 @@ isobarAmplitude::sumBoseSymTerms
  const map<string, vector<unsigned int> >&     newFsPartIndices,
  map<string, vector<unsigned int> >::iterator& newFsPartIndicesEntry) const
 {
-  
 	complex<double> amp = 0;
 	do {
 		map<string, vector<unsigned int> >::iterator nextFsPartIndicesEntry = newFsPartIndicesEntry;
@@ -302,8 +301,8 @@ isobarAmplitude::boseSymmetrizedAmp() const
 	typedef map<string, unsigned int>::const_iterator indistFsPartIt;
 	const map<string, unsigned int> indistFsPart = _decay->nmbIndistFsParticles();
 	if (_debug) {
-		printDebug << "Bose-symmetrizing amplitude: indistinguishable final state particle "
-		           << "multiplicities (marked FS particles will be Bose-symmetrized): ";
+		printDebug << "Bose symmetrizing amplitude: indistinguishable final state particle "
+		           << "multiplicities (marked FS particles will be Bose symmetrized): ";
 		for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
 			cout << i->first << " = " << i->second << ((i->second) >= 2 ? " <<<  " : "  ");
 		cout << endl;
@@ -325,9 +324,9 @@ isobarAmplitude::boseSymmetrizedAmp() const
 		newFsPartIndices [partName].push_back(i);
 	}
   
-	// Bose-symmetrize amplitudes
+	// Bose symmetrize amplitudes
 	if (_debug)
-		printDebug << "Bose-symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
+		printDebug << "Bose symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
 	map<string, vector<unsigned int> >::iterator firstEntry = newFsPartIndices.begin();
 	return normFactor * sumBoseSymTerms(origFsPartIndices, newFsPartIndices, firstEntry);
 }
@@ -374,10 +373,11 @@ ostream&
 isobarAmplitude::printParameters(ostream& out) const
 {
 	out << name() << ": " << endl
-	    << "    reflectivity basis ............... " << ((_useReflectivityBasis) ? "en" : "dis") << "abled" << endl
-	    << "    Bose-symmetrization .............. " << ((_boseSymmetrize      ) ? "en" : "dis") << "abled" << endl
-	    << "    space inversion of FS momenta .... " << ((_doSpaceInversion    ) ? "en" : "dis") << "abled" << endl
-	    << "    reflection through prod. plane ... " << ((_doReflection        ) ? "en" : "dis") << "abled" << endl;
+	    << "    reflectivity basis ............... " << enDisabled(_useReflectivityBasis) << endl
+	    << "    Bose symmetrization .............. " << enDisabled(_boseSymmetrize      ) << endl
+	    << "    isospin symmetrization ........... " << enDisabled(_isospinSymmetrize   ) << endl
+	    << "    space inversion of FS momenta .... " << enDisabled(_doSpaceInversion    ) << endl
+	    << "    reflection through prod. plane ... " << enDisabled(_doReflection        ) << endl;
 	return out;
 }
 

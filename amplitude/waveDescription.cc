@@ -261,6 +261,7 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	// default values
 	string formalism            = "helicity";
 	bool   boseSymmetrize       = true;
+	bool   isospinSymmetrize    = true;
 	bool   useReflectivityBasis = true;
 	// find amplitude group
 	const Setting&            rootKey      = _key->getRoot();
@@ -270,23 +271,28 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 			printDebug << "setting amplitude formalism to '" << formalism << "'" << endl;
 		if (amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
 			printDebug << "setting amplitude option 'boseSymmetrize' to "
-			           << ((boseSymmetrize) ? "true" : "false") << endl;
+			           << trueFalse(boseSymmetrize) << endl;
+		if (amplitudeKey->lookupValue("isospinSymmetrize", isospinSymmetrize) and _debug)
+			printDebug << "setting amplitude option 'isospinSymmetrize' to "
+			           << trueFalse(isospinSymmetrize) << endl;
 		if (amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
 			printDebug << "setting amplitude option 'useReflectivityBasis' to "
-			           << ((useReflectivityBasis) ? "true" : "false") << endl;
+			           << trueFalse(useReflectivityBasis) << endl;
 	}
 	// construct amplitude
 	amplitude = mapAmplitudeType(formalism, topo);
 	if (_debug)
 		printDebug << "constructed amplitude '"<< amplitude->name() << "': "
-		           << ((boseSymmetrize      ) ? "en" : "dis") << "abled Bose symmetrization, "
-		           << ((useReflectivityBasis) ? "en" : "dis") << "abled reflectivity basis" << endl;
+		           << enDisabled(boseSymmetrize      ) << " Bose symmetrization, "
+		           << enDisabled(isospinSymmetrize   ) << " isospin symmetrization, "
+		           << enDisabled(useReflectivityBasis) << " reflectivity basis" << endl;
 	if (not amplitude) {
 		printWarn << "problems constructing decay amplitude." << endl;
 		return false;
 	}
-	amplitude->enableBoseSymmetrization(boseSymmetrize      );
-	amplitude->enableReflectivityBasis (useReflectivityBasis);
+	amplitude->enableBoseSymmetrization   (boseSymmetrize      );
+	amplitude->enableIsospinSymmetrization(isospinSymmetrize   );
+	amplitude->enableReflectivityBasis    (useReflectivityBasis);
 	return true;
 }
 
@@ -897,9 +903,11 @@ waveDescription::setAmplitude(Setting&               amplitudeKey,
 		amplitudeKey.add("formalism", Setting::TypeString) = formalism;
 	}
 	if (not amplitude.boseSymmetrization())
-		amplitudeKey.add("boseSymmetrize", Setting::TypeBoolean) = amplitude.boseSymmetrization();
+		amplitudeKey.add("boseSymmetrize", Setting::TypeBoolean) = false;
+	if (not amplitude.isospinSymmetrization())
+		amplitudeKey.add("isospinSymmetrize", Setting::TypeBoolean) = false;
 	if (not amplitude.reflectivityBasis())
-		amplitudeKey.add("useReflectivityBasis", Setting::TypeBoolean) = amplitude.reflectivityBasis();
+		amplitudeKey.add("useReflectivityBasis", Setting::TypeBoolean) = false;
 	return true;
 }
 
