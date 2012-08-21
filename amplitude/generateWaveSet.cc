@@ -41,6 +41,7 @@
 #include "particleDataTable.h"
 #include "waveSetGenerator.h"
 #include "waveDescription.h"
+#include <fstream>
 
 
 using namespace std;
@@ -63,6 +64,7 @@ usage(const string& progName,
              << "                   isobars without defined decays will be allowed to decay to all possibilities" << endl
 	     << "        -f         force decay check (only works with -d option); isobars without defined decay modes will be ignored" << endl
 	     << "        -o dir     path to directory where key files will be written (default: '.')" << endl
+	     << "        -t file    path to waveset LaTeX output file" << endl
 	     << "        -n         use new key file name convention (default: false)" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
@@ -82,9 +84,12 @@ main(int    argc,
 	
 	// parse command line options
 	const string progName                 = argv[0];
+	unsigned int entriesPerPage           = 20;
 	string       keyFileName              = "";
 	string       pdgFileName              = "./particleDataTable.txt";
 	string       decayFileName            = "";
+	string       texFileName              = "waveset.tex";
+	bool         doTeX                    = false;
 	bool         useDecays                = false;
 	string       outDirName               = ".";
 	bool         newKeyFileNameConvention = false;
@@ -93,7 +98,7 @@ main(int    argc,
 	extern char* optarg;
 	//extern int   optind;
 	int          c;
-	while ((c = getopt(argc, argv, "k:p:d:o:fnvh")) != -1)
+	while ((c = getopt(argc, argv, "k:p:d:o:t:fnvh")) != -1)
 		switch (c) {
 		case 'k':
 			keyFileName = optarg;
@@ -104,6 +109,10 @@ main(int    argc,
 		case 'd':
 			decayFileName = optarg;
 			useDecays = true;
+			break;
+		case 't':
+			texFileName = optarg;
+			doTeX = true;
 			break;
 		case 'o':
 			outDirName = optarg;
@@ -132,6 +141,21 @@ main(int    argc,
 	particleDataTable::setDebug(debug);
 	
 
+	ofstream wavelistTeX;
+	if(doTeX){
+	  wavelistTeX.open(texFileName.c_str());
+	
+	  // print latex header
+	  wavelistTeX << "\\documentclass[10pt,a4paper]{article}" << endl
+		      << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
+		      << "\\begin{document}"                      << endl
+		      << "\\begin{align*} \n \\begin{aligned}"    << endl;
+	  
+
+	} // end if doTeX
+       
+
+
 	printInfo << "generating wave set from '" << keyFileName << "'" << endl;
 	waveSetGenerator waveSetGen;
 	waveSetGenerator::setDebug(debug);
@@ -151,8 +175,17 @@ main(int    argc,
 		bool isConsistent = decayTopos[i].checkTopology() and decayTopos[i].checkConsistency();
 		cout << "    " << setw(4) << i << ": "
 		     << waveDescription::waveNameFromTopology(decayTopos[i], newKeyFileNameConvention) << " ... ";
-		if (isConsistent)
-			cout << "okay" << endl;
+		if (isConsistent){
+		  cout << "okay" << endl;
+		  if(doTeX){
+		     wavelistTeX << waveDescription::waveLaTeXFromTopology(decayTopos[i]) << "\\\\" << endl;
+		     if((i+1)%entriesPerPage==0){
+		       wavelistTeX << "\\end{aligned} \n \\end{align*}"
+				   << "\\pagebreak\n"
+				   << "\\begin{align*} \n \\begin{aligned}"    << endl;
+		     } // end entriePerPage==0
+		  } // endif doTeX
+		}
 		else {
 			cout << "problems!" << endl;
 			++nmbInconsistentDecays;
@@ -167,6 +200,11 @@ main(int    argc,
 	if (nmbInconsistentDecays != 0)
 		cout << ". " << nmbInconsistentDecays << " waves have problems.";
 	cout<< endl;
-	
+
+	if(doTeX){
+	  wavelistTeX << "\\end{aligned} \n \\end{align*}"    << endl;
+	  wavelistTeX << "\\end{document}" << endl;
+	  wavelistTeX.close();
+	}
 	return 0;
 }
