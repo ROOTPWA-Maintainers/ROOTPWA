@@ -90,6 +90,8 @@ map<string,string> waveDescription::isobars = map_list_of ("pi+","\\pi^+")
   ("f1(1420)0"  , "f_1^0(1420)")
   ("b1(1235)0"  , "b_1^0(1235)")
   ("b1(1800)0"  , "b_1^0(1800)")
+  ("b0(1800)0"  , "b_0^0(1800)")
+  ("b2(1800)0"  , "b_2^0(1800)")
   ("b1(1500)0"  , "b_1^0(1500)")
   ("f2(1270)0"  , "f_2^0(1270)")
   ("f2(1950)0"  , "f_2^0(1950)")
@@ -98,6 +100,7 @@ map<string,string> waveDescription::isobars = map_list_of ("pi+","\\pi^+")
   ("eta(1440)0" , "\\eta^0(1420)")
   ("eta2(1645)0", "\\eta_2^0(1645)")
   ("eta1(1600)0", "\\eta_1^0(1600)")
+  ("pi1(1600)-", "\\pi_1^-(1600)")
   ("rho3(1690)0", "\\rho_3^0(1690)")
   ("rho(1600)0", "\\rho^0(1600)");
 
@@ -425,7 +428,11 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 	  
 
 		// first daughter
-	        waveLaTeX << "\\rightarrow\\left\\{ " << isobars[currentVertex->daughter1()->name()];
+	  string dau1=isobars[currentVertex->daughter1()->name()];
+	  if(dau1.length()<2){
+	    dau1="{\\bf ";dau1+=currentVertex->daughter1()->name();dau1+="}";
+	  }
+	        waveLaTeX << "\\rightarrow\\left\\{ " << dau1;
 		if (not topo.isFsParticle(currentVertex->daughter1()))
 			waveLaTeX << waveLaTeXFromTopology
 				(topo,
@@ -433,7 +440,10 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 		// L, S
 		waveLaTeX << "\\left[\\begin{array}{c}" << spinQn(currentVertex->L()) << "\\\\" << spinQn(currentVertex->S()) << "\\end{array}\\right]";
 		// second daughter
-		waveLaTeX << isobars[currentVertex->daughter2()->name()];
+		string dau2=isobars[currentVertex->daughter2()->name()];
+		if(dau2.length()<2){
+		  dau2="{\\bf ";dau2+=currentVertex->daughter2()->name();dau2+="}";		}
+		waveLaTeX << dau2;
 		if (not topo.isFsParticle(currentVertex->daughter2()))
 			waveLaTeX << waveLaTeXFromTopology
 				(topo,
