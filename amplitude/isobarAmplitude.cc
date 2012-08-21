@@ -336,13 +336,26 @@ isobarAmplitude::boseSymmetrizedAmp() const
 complex<double>
 isobarAmplitude::isospinSymmetrizedAmp() const
 {
-	printDebug<<"entering isospinSymmetrizedAmp"<<std::endl;
+	if(_debug) {
+		printDebug<<"entering isospinSymmetrizedAmp"<<std::endl;
+	}
 	std::vector< boost::tuple<double, std::vector<unsigned int> > > symAmps = _decay->getIsospinSymmetrization();
-	complex<double> amp;
+	complex<double> amp = 0;
 	for(unsigned int i = 0; i < symAmps.size(); ++i) {
 		double clebsch = symAmps.at(i).get<0>(); 
 		std::vector<unsigned int> map = symAmps.at(i).get<1>();
-		_decay->revertMomenta(map);
+		if (_debug) {
+			printDebug<<"clebsch="<<clebsch<<std::endl;
+			printDebug<<"map=";
+			for(unsigned int y = 0; y < map.size(); ++y) {
+				std::cout<<map.at(y);
+			}
+			std::cout<<std::endl;
+		}
+		if (not _decay->revertMomenta(map)) {
+			printWarn << "problems reverting momenta in decay topology. returning 0." << endl;
+			return 0;
+		}
 		if(_boseSymmetrize) {
 			amp +=  signum<double>(clebsch) * boseSymmetrizedAmp();
 		} else {
@@ -350,7 +363,9 @@ isobarAmplitude::isospinSymmetrizedAmp() const
 		}
 	}
 	amp /= std::sqrt(symAmps.size());
-	printDebug<<"exiting isospinSymmetrizedAmp"<<std::endl;
+	if(_debug) {
+		printDebug<<"exiting isospinSymmetrizedAmp"<<std::endl;
+	}
 	return amp;
 }
 

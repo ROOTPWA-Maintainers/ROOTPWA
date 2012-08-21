@@ -509,12 +509,13 @@ isobarDecayTopology::getIsospinSymmetrization()
 		}
 	}
 
-	// Debug output, remove or put into a if(_debug).
-	printDebug<<"Doing stuff"<<std::endl;
-	for(unsigned int i = 0; i < groups.size(); ++i) {
-		printDebug<<"Group "<<i<<std::endl;
-		for(unsigned int j = 0; j < groups.at(i).size(); ++j) {
-			printDebug<<j<<": "<<groups.at(i).at(j)<<" ("<<fsParts.at(groups.at(i).at(j))->name()<<")"<<std::endl;
+	if(_debug) {
+		printDebug<<"Doing stuff"<<std::endl;
+		for(unsigned int i = 0; i < groups.size(); ++i) {
+			printDebug<<"Group "<<i<<std::endl;
+			for(unsigned int j = 0; j < groups.at(i).size(); ++j) {
+				printDebug<<j<<": "<<groups.at(i).at(j)<<" ("<<fsParts.at(groups.at(i).at(j))->name()<<")"<<std::endl;
+			}
 		}
 	}
 
@@ -536,7 +537,9 @@ isobarDecayTopology::getIsospinSymmetrization()
 		std::vector<unsigned int> group = groups.at(i);
 
 		// Again debug output
-		printDebug<<"Group permutations "<<i<<std::endl;
+		if(_debug) {
+			printDebug<<"Group permutations "<<i<<std::endl;
+		}
 
 		// First we need a vector with the unity permutation, which will 
 		// subsequently be permutated.
@@ -627,16 +630,17 @@ isobarDecayTopology::getIsospinSymmetrization()
 			boost::tuple<double, std::vector<unsigned int> > symAmp(getIsospinClebschGordanProduct(), map);
 			symAmplitudes.push_back(symAmp);
 
-			// More debug output
-			printDebug<<"Found valid permutation: ";
-			for(unsigned int j = 0; j < map.size(); ++j) {
-				std::cout<<map.at(j);
+			if(_debug) {
+				printDebug<<"Found valid permutation: ";
+				for(unsigned int j = 0; j < map.size(); ++j) {
+					std::cout<<map.at(j);
+				}
+				std::cout<<" (";
+				for(unsigned int j = 0; j < map.size(); ++j) {
+					std::cout<<fsParts.at(j)->name();
+				}
+				std::cout<<"), clebsch-gordan="<<clebsch<<std::endl;
 			}
-			std::cout<<" (";
-			for(unsigned int j = 0; j < map.size(); ++j) {
-				std::cout<<fsParts.at(j)->name();
-			}
-			std::cout<<"), clebsch-gordan="<<clebsch<<std::endl;
 
 			// Resetting isospins for the next permutation
 			for(unsigned int j = 0; j < fsParts.size(); ++j) {
