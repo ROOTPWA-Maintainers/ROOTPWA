@@ -293,8 +293,8 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		//const long int maxNmbEvents = 10000;
-		const long int maxNmbEvents = 1;
+		const long int maxNmbEvents = 10000;
+		//const long int maxNmbEvents = 1;
 
 		// const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "testAmplitude.key";
@@ -304,10 +304,12 @@ main(int argc, char** argv)
 		// const string   evtInFileName  = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
 		// const string   rootInFileName = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
 
-		// rel. delta = (1.4218332033726580e-09, 1.4065747228912715e-09)
-		// rms 1.44e-9, 8.34e-10
-		const string newKeyFileName = "test5pi/charly/nosym/1-0-00+f01500=sigma_00_sigma_00_pi-.key";
-		const string oldKeyFileName = "test5pi/sebastian/nosym/1-0-+0+pi-_00_f01500=sigma_0_sigma.key";
+		// waves w/o isospin symmetrization
+
+		// // rel. delta = (1.4218332033726580e-09, 1.4065747228912715e-09)
+		// // rms 1.44e-9, 8.34e-10
+		// const string newKeyFileName = "test5pi/charly/nosym/1-0-00+f01500=sigma_00_sigma_00_pi-.key";
+		// const string oldKeyFileName = "test5pi/sebastian/nosym/1-0-+0+pi-_00_f01500=sigma_0_sigma.key";
 
 		// // rel. delta = (1.3390541006872489e-09, 1.3820297766255656e-09)
 		// // rms 1.15e-9, 1.19e-9
@@ -332,6 +334,16 @@ main(int argc, char** argv)
 		// const string newKeyFileName = "test5pi/charly/nosym/1-2-00+sigma_20_pi1800-=sigma_00_pi-.key";
 		// const string oldKeyFileName = "test5pi/sebastian/nosym/1-2-+0+sigma_20_pi1800=pi-_0_sigma.key";
 
+		// waves with isospin symmetrization
+
+		// rel. delta = (1.4271813795388615e-09, 1.3774171038156871e-09)
+		// rms 1.51e-9, 1.91e-9
+		// phi = 0, R = 1 ---> 1 / sqrt(2) * (a1 + a2)
+		// const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260-=rho770_01_pi-_01_pi+_01_pi-.key";
+		// const string oldKeyFileName = "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+.key";
+		const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260+=rho770_01_pi+_01_pi-_01_pi-.key";
+		const string oldKeyFileName = "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-.key";
+
 		const string evtInFileName  = "test5pi/1900.1960.genbod.regen.evt";
 		const string rootInFileName = "test5pi/1900.1960.genbod.root";
 		// const string evtInFileName  = "test5pi/foo.evt";
@@ -340,7 +352,7 @@ main(int argc, char** argv)
 		// decayTopology::setDebug(true);
 		// isobarDecayTopology::setDebug(true);
 		//massDependence::setDebug(true);
-		isobarAmplitude::setDebug(true);
+		//isobarAmplitude::setDebug(true);
 		//isobarHelicityAmplitude::setDebug(true);
 
 		waveDescription    waveDesc;
