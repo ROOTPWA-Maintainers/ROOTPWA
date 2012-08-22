@@ -80,7 +80,7 @@ main(int argc, char** argv)
 	complex<double> amp = vertex->massDepAmplitude();
 
 	// compare to PWA2000
-	PDGtable.initialize();
+	PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
 	AMP_kach pwa2kMassDep;
 	printDebug << "PWA2000: ";
 	pwa2kMassDep.print();

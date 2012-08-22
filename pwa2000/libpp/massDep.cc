@@ -113,24 +113,11 @@ AMP_M::AMP_M() {
 	_sP = matrix<double>(1, 2);
 	_sP.el(0, 0) = -0.0074;
 	_sP.el(0, 1) = 0.9828;
-
-	// cout << "!!!HERE AMP_M _a[0] = " << _a[0] << endl;
 }
 
 
 complex<double> AMP_M::val(const particle& p) 
 {
-	// cout << "_a[0] = " << _a[0] << endl;
-	// cout << "_a[1] = " << _a[1] << endl;
-	// cout << "_c[0] = " << _c[0] << endl;
-	// cout << "_c[1] = " << _c[1] << endl;
-	// cout << "_c[2] = " << _c[2] << endl;
-	// cout << "_c[3] = " << _c[3] << endl;
-	// cout << "_c[4] = " << _c[4] << endl;
-	// cout << "_sP   = " << _sP << endl;
-	// print();
-	// cout << endl;
-
 	extern particleDataTable PDGtable;
 
 	_M.el(0, 0) = 0;
@@ -147,13 +134,6 @@ complex<double> AMP_M::val(const particle& p)
 	double K0_mass    = PDGtable.get("K0").Mass();
 	double Kmean_mass = 0.5 * (K_mass + K0_mass);
 	double My_mass    = ~(p.get4P());
-	// cout << "!!!HERE 1 "
-	//      << "pi_mass = "    << MAXPRECISION(pi_mass) << ", "
-	//      << "pi0_mass = "   << MAXPRECISION(pi0_mass) << ", "
-	//      << "K_mass = "     << MAXPRECISION(K_mass) << ", "
-	//      << "K0_mass = "    << MAXPRECISION(K0_mass) << ", "
-	//      << "Kmean_mass = " << MAXPRECISION(Kmean_mass) << ", "
-	//      << "My_mass = "    << MAXPRECISION(My_mass) << endl;
 	double s          = My_mass * My_mass;
 	if (fabs(s - _sP.el(0, 1)) < 1e-6) {
 		My_mass += 1e-6;
@@ -167,12 +147,6 @@ complex<double> AMP_M::val(const particle& p)
 	complex<double> q_KmKm   = q(My_mass, Kmean_mass, Kmean_mass);
 	_rho.el(0, 0) = 0.5 * ((2.0 * q_pipi) / My_mass + (2.0 * q_pi0pi0) / My_mass);
 	_rho.el(1, 1) = 0.5 * ((2.0 * q_KK)   / My_mass + (2.0 * q_K0K0)   / My_mass);
-	// cout << "!!!HERE 2 "
-	//      << "q_pipi = "   << MAXPRECISION(q_pipi) << ", "
-	//      << "q_pi0pi0 = " << MAXPRECISION(q_pi0pi0) << ", "
-	//      << "q_KK = "     << MAXPRECISION(q_KK) << ", "
-	//      << "q_K0K0 = "   << MAXPRECISION(q_K0K0) << ", "
-	//      << "q_KmKm = "   << MAXPRECISION(q_KmKm) << endl;
 
 	if (ves_sheet) {
 		if (q_KmKm.imag() > 0.0)
@@ -250,8 +224,6 @@ AMP_kach::AMP_kach(): AMP_M()
 	_a[1].el(0, 1) = 0;
 	_a[1].el(1, 0) = 0;
 	_a[1].el(1, 1) = 0;
-
-	// cout << "!!!HERE AMP_kach _a[0] = " << _a[0] << endl;
 }
 
 
@@ -269,8 +241,6 @@ AMP_kach::AMP_kach(const AMP_kach&): AMP_M()
 	_a[1].el(0, 1) = 0;
 	_a[1].el(1, 0) = 0;
 	_a[1].el(1, 1) = 0;
-
-	// cout << "!!!HERE AMP_kach _a[0] = " << _a[0] << endl;
 }
 
 

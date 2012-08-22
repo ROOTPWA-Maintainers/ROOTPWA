@@ -43,6 +43,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "TObject.h"
 
@@ -111,6 +112,7 @@ namespace rpwa {
 
 	private:
 
+		
 		bool parseKeyFileLocalCopy();  ///< parses _keyFileLocalCopy string
 
 		// helper functions for construction of decay topology and ampltiude
@@ -167,9 +169,10 @@ namespace rpwa {
 		std::string _keyFileLocalCopy;  ///< copy of keyfile contents; is written to .root file
 
 		static bool _debug;  ///< if set to true, debug messages are printed
+		static std::map<std::string, std::string> isobars; ///< LaTeX names of isobars
 
 
-		ClassDef(waveDescription,1)
+		ClassDef(waveDescription,2)
 
 	};
 

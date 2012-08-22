@@ -54,6 +54,7 @@
 #include "isobarCanonicalAmplitude.h"
 #include "waveDescription.h"
 
+
   
 using namespace std;
 using namespace boost;
@@ -66,6 +67,42 @@ ClassImp(waveDescription);
 
 bool waveDescription::_debug = false;
 
+#include "boost/assign.hpp"
+using namespace boost::assign;
+
+map<string,string> waveDescription::isobars = map_list_of ("pi+","\\pi^+")
+  ("pi-"     , "\\pi^-")
+  ("pi+-"    , "\\pi^\\pm")
+  ("pi-+"    , "\\pi^\\mp")
+  ("sigma0"   , "\\sigma")
+  ("rho(770)0"  , "\\rho^0(770)")
+  ("a1(1260)-"  , "a_1^-(1269)")
+  ("a2(1320)-"  , "a_2^-(1320)")
+  ("rho(1450)0" , "\\rho^0(1450)")
+  ("rho(1700)0" , "\\rho^0(1700)")
+  ("pi(1300)-"  , "\\pi^-(1300)")
+  ("pi(1800)-"  , "\\pi^-(1800)")
+  ("pi2(1670)-" , "\\pi^-_2(1670)")
+  ("f0(1370)0"  , "f_0^0(1370)")
+  ("f0(1500)0"  , "f_0^0(1500)")
+  ("f0(1700)0"  , "f_0^0(1700)")
+  ("f1(1285)0"  , "f_1^0(1285)")
+  ("f1(1420)0"  , "f_1^0(1420)")
+  ("b1(1235)0"  , "b_1^0(1235)")
+  ("b1(1800)0"  , "b_1^0(1800)")
+  ("b0(1800)0"  , "b_0^0(1800)")
+  ("b2(1800)0"  , "b_2^0(1800)")
+  ("b1(1500)0"  , "b_1^0(1500)")
+  ("f2(1270)0"  , "f_2^0(1270)")
+  ("f2(1950)0"  , "f_2^0(1950)")
+  ("f2(1565)0"  , "f_2^0(1565)")
+  ("f2(2010)0"  , "f_2^0(2010)")
+  ("eta(1440)0" , "\\eta^0(1420)")
+  ("eta2(1645)0", "\\eta_2^0(1645)")
+  ("eta1(1600)0", "\\eta_1^0(1600)")
+  ("pi1(1600)-", "\\pi_1^-(1600)")
+  ("rho3(1690)0", "\\rho_3^0(1690)")
+  ("rho(1600)0", "\\rho^0(1600)");
 
 waveDescription::waveDescription()
 	: TObject          (),
@@ -74,6 +111,11 @@ waveDescription::waveDescription()
 	  _keyFileLocalCopy("")
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
+
+// setup isobar dictionary key->tex
+  
+
+
 }
 
 
@@ -382,27 +424,37 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 		}
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
-		waveLaTeX << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
-		          << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
-		          << spinQn(X.spinProj()) << parityQn(X.reflectivity()) << "]"
-		          << waveNameFromTopology(topo, topo.XIsobarDecayVertex());
-	} else {
+		waveLaTeX <<  spinQn(X.isospin()) << "^{"<< parityQn(X.G()) << "}"
+		          << spinQn(X.J()) << "^{" << parityQn(X.P()) << parityQn(X.C()) << "}"
+		          << spinQn(X.spinProj()) << "^{" << parityQn(X.reflectivity()) << "} & "
+		          << waveLaTeXFromTopology(topo, topo.XIsobarDecayVertex());
+	} else if(!(topo.isFsParticle(currentVertex->daughter1()) && topo.isFsParticle(currentVertex->daughter1()))){
 		// recurse down decay chain
+	  // do this only if not both daughters are fs partiles
+	  
+
 		// first daughter
-		waveLaTeX << "=[" << currentVertex->daughter1()->name();
+	  string dau1=isobars[currentVertex->daughter1()->name()];
+	  if(dau1.length()<2){
+	    dau1="{\\bf ";dau1+=currentVertex->daughter1()->name();dau1+="}";
+	  }
+	        waveLaTeX << "\\rightarrow\\left\\{ " << dau1;
 		if (not topo.isFsParticle(currentVertex->daughter1()))
-			waveLaTeX << waveNameFromTopology
+			waveLaTeX << waveLaTeXFromTopology
 				(topo,
 				 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
 		// L, S
-		waveLaTeX << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
+		waveLaTeX << "\\left[\\begin{array}{c}" << spinQn(currentVertex->L()) << "\\\\" << spinQn(currentVertex->S()) << "\\end{array}\\right]";
 		// second daughter
-		waveLaTeX << currentVertex->daughter2()->name();
+		string dau2=isobars[currentVertex->daughter2()->name()];
+		if(dau2.length()<2){
+		  dau2="{\\bf ";dau2+=currentVertex->daughter2()->name();dau2+="}";		}
+		waveLaTeX << dau2;
 		if (not topo.isFsParticle(currentVertex->daughter2()))
-			waveLaTeX << waveNameFromTopology
+			waveLaTeX << waveLaTeXFromTopology
 				(topo,
 				 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
-		waveLaTeX << "]";
+		waveLaTeX << "\\right\\} ";
 	}
 	return waveLaTeX.str();
 }

@@ -252,13 +252,14 @@ isobarAmplitude::sumBoseSymTerms
  map<string, vector<unsigned int> >::iterator& newFsPartIndicesEntry) const
 {
 	complex<double> amp = 0;
+	// loop over all permutations for current final-state particle species
 	do {
 		map<string, vector<unsigned int> >::iterator nextFsPartIndicesEntry = newFsPartIndicesEntry;
 		if (++nextFsPartIndicesEntry != newFsPartIndices.end())
-			// recurse to other permutations
+			// recurse to permutations of other final-state particle species
 			amp += sumBoseSymTerms(origFsPartIndices, newFsPartIndices, nextFsPartIndicesEntry);
 		else {
-			// build final state index map for this permutation
+			// build final-state index map for current permutation
 			vector<unsigned int> fsPartIndexMap(_decay->nmbFsParticles(), 0);
 			if (_debug)
 				printDebug << "calculating amplitude for Bose term final state permutation ";
@@ -317,12 +318,12 @@ isobarAmplitude::boseSymmetrizedAmp() const
 	// initialize indices used to generate final state permutations
 	// in order to get all permutations with std::next_permutation
 	// indices have to be sorted ascending
-	map<string, vector<unsigned int> > origFsPartIndices, newFsPartIndices;
+	map<string, vector<unsigned int> > origFsPartIndices;
 	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
 		const string partName = _decay->fsParticles()[i]->name();
 		origFsPartIndices[partName].push_back(i);
-		newFsPartIndices [partName].push_back(i);
 	}
+	map<string, vector<unsigned int> > newFsPartIndices = origFsPartIndices;
   
 	// Bose symmetrize amplitudes
 	if (_debug)
