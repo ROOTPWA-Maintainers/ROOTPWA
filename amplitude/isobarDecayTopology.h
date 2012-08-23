@@ -107,7 +107,7 @@ namespace rpwa {
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 	 
 	 	double getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex = isobarDecayVertexPtr()) const;
-		std::vector< boost::tuple<double, std::vector<unsigned int> > > getIsospinSymmetrization();
+		std::vector<boost::tuple<double, std::vector<unsigned int> > > getIsospinSymmetrization();
 
 
 	private:

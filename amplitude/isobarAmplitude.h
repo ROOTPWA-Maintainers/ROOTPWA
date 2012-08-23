@@ -103,14 +103,19 @@ namespace rpwa {
     
 		virtual std::complex<double> twoBodyDecayAmplitudeSum
 		(const isobarDecayVertexPtr& vertex,
-		 const bool                  topVertex = false) const;  ///< recursively sums up decay amplitudes for all allowed helicitities for all vertices below given vertex
+		 const bool                  topVertex = false) const;  ///< recursive function that sums up decay amplitudes for all allowed helicitities for all vertices below the given vertex
+
+		virtual std::complex<double> unSymmetrizedAmp() const;                                                 ///< returns bare unsymmetrized amplitude
+		virtual std::complex<double> unSymmetrizedAmp(const std::vector<unsigned int>& fsPartIndexMap) const;  ///< returns bare unsymmetrized amplitude, but with momenta reordered according to index map
+
+		virtual std::complex<double> isospinSymmetrizedAmp() const;  ///< performs isospin symmetrization
 
 		virtual std::complex<double> sumBoseSymTerms
 		(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
 		 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
-		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< function that sums up amplitudes of all permutations of indistinguishable final state particles
-		virtual std::complex<double> isospinSymmetrizedAmp() const;  ///< performs isospin symmetrization
+		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< recursive function that sums up amplitudes of all permutations of indistinguishable final state particles
 		virtual std::complex<double> boseSymmetrizedAmp() const;  ///< performs Bose symmetrization
+
 
 
 		isobarDecayTopologyPtr _decay;                 ///< isobar decay topology with all external information

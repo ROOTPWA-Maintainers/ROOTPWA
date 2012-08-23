@@ -102,18 +102,13 @@ isobarAmplitude::setDecayTopology(const isobarDecayTopologyPtr& decay)
 complex<double>
 isobarAmplitude::amplitude() const
 {
-	// recursively sum over all possible helicities of the decay particles
 	complex<double> amp = 0;
-	if(_isospinSymmetrize) {
+	if (_isospinSymmetrize)
 		amp = isospinSymmetrizedAmp();
-	} else if (_boseSymmetrize) {
+	else if (_boseSymmetrize)
 		amp = boseSymmetrizedAmp();
-	} else {
-		// transform daughters into their respective RFs
-		transformDaughters();
-		// calculate amplitude
-		amp = twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
-	}
+	else
+		amp = unSymmetrizedAmp();
 	return amp;
 }
 
@@ -246,6 +241,65 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,
 
 
 complex<double>
+isobarAmplitude::unSymmetrizedAmp() const
+{
+	// transform daughters into their respective RFs
+	transformDaughters();
+	// calculate amplitude
+	return twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
+}
+
+
+complex<double>
+isobarAmplitude::unSymmetrizedAmp(const std::vector<unsigned int>& fsPartIndexMap) const
+{
+	// (re)set final state momenta
+	if (not _decay->revertMomenta(fsPartIndexMap)) {
+		printWarn << "problems reverting momenta in decay topology. returning 0." << endl;
+		return 0;
+	}
+	return unSymmetrizedAmp();
+}
+
+
+complex<double>
+isobarAmplitude::isospinSymmetrizedAmp() const
+{
+	vector<tuple<double, vector<unsigned int> > > symMaps = _decay->getIsospinSymmetrization();
+	const unsigned int nmbSymTerms = symMaps.size();
+	if (nmbSymTerms < 1) {
+		printWarn << "array of isospin symmetrization terms is empty. returning 0." << endl;
+		return 0;
+	}
+	if (nmbSymTerms == 1) {
+		printDebug << "no isospin symmetrization needed for this amplitude." << endl;
+		return unSymmetrizedAmp();
+	}
+	// if (_debug)
+		printDebug << "symmetrizing amplitude w.r.t. isospin using " << nmbSymTerms << " terms." << endl;
+	complex<double> amp = 0;
+	for(unsigned int i = 0; i < nmbSymTerms; ++i) {
+		const double                clebsch        = symMaps[i].get<0>(); 
+		const vector<unsigned int>& fsPartIndexMap = symMaps[i].get<1>();
+		// if (_debug) {
+			printDebug << "calculating amplitude for isospin-symmetrization term "
+			           << "with Clebsch-Gordan coefficient = " << clebsch << " "
+			           << "and final state permutation ";
+			for (unsigned int j = 0; j < fsPartIndexMap.size(); ++j)
+				cout << _decay->fsParticles()[j]->name() << "[" << j << " -> " << fsPartIndexMap[j] << "]  ";
+			cout << endl;
+		// }
+		complex<double> foo = unSymmetrizedAmp(fsPartIndexMap);
+		cout << "    term[" << i << "] = " << maxPrecisionDouble(foo) << ", clebsch = " << clebsch
+		     << ", " << signum(clebsch) << endl;
+		amp += signum(clebsch) * foo;
+		// amp += signum(clebsch) * unSymmetrizedAmp(fsPartIndexMap);
+	}
+	return amp / sqrt(nmbSymTerms);
+}
+
+
+complex<double>
 isobarAmplitude::sumBoseSymTerms
 (const map<string, vector<unsigned int> >&     origFsPartIndices,
  const map<string, vector<unsigned int> >&     newFsPartIndices,
@@ -279,15 +333,7 @@ isobarAmplitude::sumBoseSymTerms
 			}
 			if (_debug)
 				cout << endl;
-			// (re)set final state momenta
-			if (not _decay->revertMomenta(fsPartIndexMap)) {
-				printWarn << "problems reverting momenta in decay topology. returning 0." << endl;
-				return 0;
-			}
-			// transform daughters into their respective RFs
-			transformDaughters();
-			// calculate amplitude
-			amp += twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
+			amp += unSymmetrizedAmp(fsPartIndexMap);
 		}
 	} while (next_permutation(newFsPartIndicesEntry->second.begin(),
 	                          newFsPartIndicesEntry->second.end()));
@@ -330,43 +376,6 @@ isobarAmplitude::boseSymmetrizedAmp() const
 		printDebug << "Bose symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
 	map<string, vector<unsigned int> >::iterator firstEntry = newFsPartIndices.begin();
 	return normFactor * sumBoseSymTerms(origFsPartIndices, newFsPartIndices, firstEntry);
-}
-
-
-complex<double>
-isobarAmplitude::isospinSymmetrizedAmp() const
-{
-	if(_debug) {
-		printDebug<<"entering isospinSymmetrizedAmp"<<std::endl;
-	}
-	std::vector< boost::tuple<double, std::vector<unsigned int> > > symAmps = _decay->getIsospinSymmetrization();
-	complex<double> amp = 0;
-	for(unsigned int i = 0; i < symAmps.size(); ++i) {
-		double clebsch = symAmps.at(i).get<0>(); 
-		std::vector<unsigned int> map = symAmps.at(i).get<1>();
-		if (_debug) {
-			printDebug<<"clebsch="<<clebsch<<std::endl;
-			printDebug<<"map=";
-			for(unsigned int y = 0; y < map.size(); ++y) {
-				std::cout<<map.at(y);
-			}
-			std::cout<<std::endl;
-		}
-		if (not _decay->revertMomenta(map)) {
-			printWarn << "problems reverting momenta in decay topology. returning 0." << endl;
-			return 0;
-		}
-		if(_boseSymmetrize) {
-			amp +=  signum<double>(clebsch) * boseSymmetrizedAmp();
-		} else {
-			amp +=  signum<double>(clebsch) * twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
-		}
-	}
-	amp /= std::sqrt(symAmps.size());
-	if(_debug) {
-		printDebug<<"exiting isospinSymmetrizedAmp"<<std::endl;
-	}
-	return amp;
 }
 
 

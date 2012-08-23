@@ -293,8 +293,8 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		const long int maxNmbEvents = 10000;
-		//const long int maxNmbEvents = 1;
+		//const long int maxNmbEvents = 10000;
+		const long int maxNmbEvents = 1;
 
 		// const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "testAmplitude.key";
@@ -337,6 +337,7 @@ main(int argc, char** argv)
 		// waves with isospin symmetrization
 
 		// rel. delta = (1.4271813795388615e-09, 1.3774171038156871e-09)
+		// rel. delta = (1.4319815006796074e-09, 1.4120124973618052e-09)
 		// rms 1.51e-9, 1.91e-9
 		// phi = 0, R = 1 ---> 1 / sqrt(2) * (a1 + a2)
 		// const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260-=rho770_01_pi-_01_pi+_01_pi-.key";
@@ -346,8 +347,8 @@ main(int argc, char** argv)
 
 		const string evtInFileName  = "test5pi/1900.1960.genbod.regen.evt";
 		const string rootInFileName = "test5pi/1900.1960.genbod.root";
-		// const string evtInFileName  = "test5pi/foo.evt";
-		// const string rootInFileName = "test5pi/foo.root";
+		// const string evtInFileName  = "test5pi/oneEvent.evt";
+		// const string rootInFileName = "test5pi/oneEvent.root";
 
 		// decayTopology::setDebug(true);
 		// isobarDecayTopology::setDebug(true);

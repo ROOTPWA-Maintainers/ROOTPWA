@@ -453,36 +453,35 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& parentVertex
 	return joinDaughterDecays(parentVertex, daughterDecays);
 }
 
+
 double
 isobarDecayTopology::getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex) const
 {
-
-	if(!vertex) {
+	if (not vertex)
 		vertex = static_pointer_cast<isobarDecayVertex>(XDecayVertex());
-	}
 
 	const particlePtr daughter1 = vertex->daughter1();
 	const particlePtr daughter2 = vertex->daughter2();
-	const particlePtr parent    = vertex->parent();
+	const particlePtr parent    = vertex->parent   ();
 
-	double clebsch = clebschGordanCoeff<double>(daughter1->isospin(), daughter1->isospinProj(),
-	                                            daughter2->isospin(), daughter2->isospinProj(),
-												parent->isospin(), parent->isospinProj());
+	const double clebsch = clebschGordanCoeff<double>(daughter1->isospin(), daughter1->isospinProj(),
+	                                                  daughter2->isospin(), daughter2->isospinProj(),
+	                                                  parent->isospin   (), parent->isospinProj   ());
 	double clebschDaughter1 = 1.;
 	double clebschDaughter2 = 1.;
-	if(!isFsParticle(daughter1)) {
-		clebschDaughter1 = getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter1)));
-	}
-	if(!isFsParticle(daughter2)) {
-		clebschDaughter2 = getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter2)));
-	}
-	return (clebsch * clebschDaughter1 * clebschDaughter2);
+	if (not isFsParticle(daughter1))
+		clebschDaughter1
+			= getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter1)));
+	if (not isFsParticle(daughter2))
+		clebschDaughter2
+			= getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter2)));
+	return clebsch * clebschDaughter1 * clebschDaughter2;
 }
 
-std::vector< boost::tuple<double, std::vector<unsigned int> > >
+
+std::vector<boost::tuple<double, std::vector<unsigned int> > >
 isobarDecayTopology::getIsospinSymmetrization()
 {
-
 	const std::vector<particlePtr> fsParts = fsParticles();
 
 	// Get a vector of groups of particles which have to be permutated.
@@ -654,5 +653,4 @@ isobarDecayTopology::getIsospinSymmetrization()
 	} // End of the loop over the groups.
 
 	return symAmplitudes;
-
 }
