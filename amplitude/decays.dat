@@ -136,7 +136,7 @@ particles = (
 { name = "pi2(1670)0";
   decays = (
   	 {products = [ "pi-", "rho(770)+" ];},
-  	 {products = [ "pi+", "rho(770)-" ];}
+  	 {products = [ "pi+", "rho(770)-" ];},
 	 {products = [ "pi0", "f2(1270)0" ];}	  
 	 );
 },
@@ -167,9 +167,8 @@ particles = (
 	 {products = [ "pi-", "a1(1260)+" ];},
 	 {products = [ "pi+", "a2(1320)-" ];},
 	 {products = [ "pi-", "a1(1320)+" ];},
-	 {products = [ "rho(770)0", "rho(770)0" ];}
-	 {products = [ "f2(1270)0", "rho(770)0" ];}
-	 {products = [ "f2(1270)0", "sigma0" ];}
+	 {products = [ "f2(1270)0", "rho(770)0" ];},
+	 {products = [ "sigma0", "rho(770)0" ];}
 	 );
 },
 
