@@ -135,7 +135,7 @@ namespace rpwa {
 		void fillKinematicsDataCache();  ///< copies kinematics data into cache; needed for Bose symmetrization
 
 		bool revertMomenta();  ///< resets momenta to the values of last event read
-		bool revertMomenta(const std::vector<unsigned int>& indexMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
+		bool revertMomenta(const std::vector<unsigned int>& fsPartPermMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
 
 
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form

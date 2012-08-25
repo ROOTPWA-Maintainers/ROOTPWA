@@ -479,7 +479,7 @@ isobarDecayTopology::getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex)
 }
 
 
-std::vector<boost::tuple<double, std::vector<unsigned int> > >
+vector<symTermMap>
 isobarDecayTopology::getIsospinSymmetrization()
 {
 	const std::vector<particlePtr> fsParts = fsParticles();
@@ -527,7 +527,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 	}
 
 	// A vector of tuples to save the found permutations and their Clebsch-Gordans
-	std::vector< boost::tuple<double, std::vector<unsigned int> > > symAmplitudes;
+	vector<symTermMap> symAmplitudes;
 
 	// Permutating all the particles and checking if the permutation makes sense
 	//
@@ -626,8 +626,8 @@ isobarDecayTopology::getIsospinSymmetrization()
 			double clebsch = getIsospinClebschGordanProduct();
 		
 			// Survived all the criteria, saving to be returned
-			boost::tuple<double, std::vector<unsigned int> > symAmp(getIsospinClebschGordanProduct(), map);
-			symAmplitudes.push_back(symAmp);
+			symTermMap symTerm(getIsospinClebschGordanProduct(), map);
+			symAmplitudes.push_back(symTerm);
 
 			if(_debug) {
 				printDebug<<"Found valid permutation: ";

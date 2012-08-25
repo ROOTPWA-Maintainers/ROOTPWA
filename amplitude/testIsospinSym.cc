@@ -78,6 +78,8 @@ calcNewAmps(const string&             rootInFileName,
 	}
 	isobarDecayTopologyPtr topo = amp->decayTopology();
 	printInfo << *amp;
+	amp->init();
+	exit(1);
 			
 	// open input file
 	vector<TTree*>       inTrees;
@@ -206,10 +208,10 @@ main(int argc, char** argv)
 	const string evtInFileName  = "test5pi/oneEvent.evt";
 	const string rootInFileName = "test5pi/oneEvent.root";
 
-	decayTopology::setDebug          (true);
+	//decayTopology::setDebug          (true);
 	//isobarDecayTopology::setDebug    (true);
 	//massDependence::setDebug         (true);
-	//isobarAmplitude::setDebug        (true);
+	isobarAmplitude::setDebug        (true);
 	//isobarHelicityAmplitude::setDebug(true);
 
 	timer.Reset();

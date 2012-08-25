@@ -687,28 +687,31 @@ decayTopology::revertMomenta()
 
 
 bool
-decayTopology::revertMomenta(const vector<unsigned int>& indexMap)
+decayTopology::revertMomenta(const vector<unsigned int>& fsPartPermMap)  // final-state permutation map
 {
 	// revert production kinematics
 	bool success = productionVertex()->revertMomenta();
 	// revert decay kinematics
-	if ((_fsDataPartMomCache.size() != nmbFsParticles()) or (indexMap.size() != nmbFsParticles())) {
+	if (   (_fsDataPartMomCache.size() != nmbFsParticles())
+	    or (fsPartPermMap.size      () != nmbFsParticles())) {
 		if (_debug)
 			printWarn << "cache size for final-state particle momenta (= "
-			          << _fsDataPartMomCache.size() << ") or size of index map (= " << indexMap.size()
-			          << ") do not match # of final-state particles (= "
+			          << _fsDataPartMomCache.size() << ") or size of permutation map (= "
+			          << fsPartPermMap.size() << ") do not match # of final-state particles (= "
 			          << nmbFsParticles() << ")" << endl;
 		return false;
 	}
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
-		const particlePtr& part     = fsParticles()[i];
-		const unsigned int newIndex = indexMap[i];
-		part->setMomentum(_fsDataPartMomCache[newIndex]);
-		if (_debug)
-			printDebug << "(re)setting momentum of final state particle "
-			           << "'" << part->name() << "'[" << i << "] "
-			           << "to that of '" << fsParticles()[newIndex]->name()
-			           << "'[" << newIndex << "] = " << _fsDataPartMomCache[newIndex] << " GeV" << endl;
+		const unsigned int newIndex = fsPartPermMap[i];
+		if (newIndex != i) {
+			const particlePtr& part = fsParticles()[i];
+			part->setMomentum(_fsDataPartMomCache[newIndex]);
+			if (_debug)
+				printDebug << "(re)setting momentum of final state particle "
+				           << "'" << part->name() << "'[" << i << "] "
+				           << "to that of '" << fsParticles()[newIndex]->name()
+				           << "'[" << newIndex << "] = " << _fsDataPartMomCache[newIndex] << " GeV" << endl;
+		}
 	}
 	return success;
 }

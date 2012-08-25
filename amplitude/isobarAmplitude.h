@@ -64,6 +64,8 @@ namespace rpwa {
 		const isobarDecayTopologyPtr& decayTopology   () const { return _decay; }              ///< returns pointer to decay topology
 		void                          setDecayTopology(const isobarDecayTopologyPtr& decay);   ///< sets decay topology
 
+		virtual void init();  ///< initializes amplitude; needs to be called when decay topology was changed
+
 		bool reflectivityBasis () const { return _useReflectivityBasis; }  ///< returns whether reflectivity basis is used
 		bool boseSymmetrization() const { return _boseSymmetrize;       }  ///< returns whether Bose symmetrization is used
 		bool isospinSymmetrization() const { return _isospinSymmetrize; }  ///< returns whether isospin symmetrization is used
@@ -105,8 +107,8 @@ namespace rpwa {
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex = false) const;  ///< recursive function that sums up decay amplitudes for all allowed helicitities for all vertices below the given vertex
 
-		virtual std::complex<double> unSymmetrizedAmp() const;                                                 ///< returns bare unsymmetrized amplitude
-		virtual std::complex<double> unSymmetrizedAmp(const std::vector<unsigned int>& fsPartIndexMap) const;  ///< returns bare unsymmetrized amplitude, but with momenta reordered according to index map
+		virtual std::complex<double> unSymmetrizedAmp() const;                                                 ///< returns decay amplitude without any reordering of final-state particles
+		virtual std::complex<double> unSymmetrizedAmp(const std::vector<unsigned int>& fsPartPermMap) const;  ///< returns decay amplitude for a certain permutation of final-state particles
 
 		virtual std::complex<double> isospinSymmetrizedAmp() const;  ///< performs isospin symmetrization
 
@@ -116,14 +118,23 @@ namespace rpwa {
 		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< recursive function that sums up amplitudes of all permutations of indistinguishable final state particles
 		virtual std::complex<double> boseSymmetrizedAmp() const;  ///< performs Bose symmetrization
 
+		virtual void genBoseSymTermMaps
+		(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
+		 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
+		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry,
+		 const std::vector<unsigned int>&                             baseFsPartPermMap,
+		 std::vector<symTermMap>&                                     symTermMaps) const;  ///< recursive function that generates all permutation maps of indistinguishable final state particles
+		virtual void initBoseSymTermMaps();  ///< generates final-state permutation maps for Bose symmetrization
 
 
-		isobarDecayTopologyPtr _decay;                 ///< isobar decay topology with all external information
-		bool                   _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
-		bool                   _boseSymmetrize;        ///< if set, amplitudes are Bose symmetrized
-		bool                   _isospinSymmetrize;     ///< if set, amplitudes are isospin symmetrized
-		bool                   _doSpaceInversion;      ///< is set, all three-momenta of the decay particles are parity transformed (for test purposes)
-		bool                   _doReflection;          ///< is set, all three-momenta of the decay particles are reflected through production plane (for test purposes)
+
+		isobarDecayTopologyPtr  _decay;                 ///< isobar decay topology with all external information
+		bool                    _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
+		bool                    _boseSymmetrize;        ///< if set, amplitudes are Bose symmetrized
+		bool                    _isospinSymmetrize;     ///< if set, amplitudes are isospin symmetrized
+		bool                    _doSpaceInversion;      ///< is set, all three-momenta of the decay particles are parity transformed (for test purposes)
+		bool                    _doReflection;          ///< is set, all three-momenta of the decay particles are reflected through production plane (for test purposes)
+		std::vector<symTermMap> _symTermMaps;           ///< array of factors and permutation maps for symmetrization terms
     
 		static bool _debug;  ///< if set to true, debug messages are printed
     
