@@ -49,7 +49,7 @@ namespace rpwa {
 
 	// amplitude symmetrization info
 	struct symTermMap {
-		symTermMap(const double                     f,
+		symTermMap(const std::complex<double>&      f,
 		           const std::vector<unsigned int>& m)
 			: factor       (f),
 			  fsPartPermMap(m)
