@@ -66,12 +66,12 @@ namespace rpwa {
 
 		virtual void init();  ///< initializes amplitude; needs to be called when decay topology was changed
 
-		bool reflectivityBasis () const { return _useReflectivityBasis; }  ///< returns whether reflectivity basis is used
-		bool boseSymmetrization() const { return _boseSymmetrize;       }  ///< returns whether Bose symmetrization is used
-		bool isospinSymmetrization() const { return _isospinSymmetrize; }  ///< returns whether isospin symmetrization is used
-		void enableReflectivityBasis (const bool flag = true) { _useReflectivityBasis = flag; }  ///< en/disables use of reflectivity basis
-		void enableBoseSymmetrization(const bool flag = true) { _boseSymmetrize       = flag; }  ///< en/disables use of Bose symmetrization
-		void enableIsospinSymmetrization(const bool flag = true) { _isospinSymmetrize = flag; }  ///< en/disables use of isospin symmetrization
+		bool reflectivityBasis    () const { return _useReflectivityBasis; }  ///< returns whether reflectivity basis is used
+		bool boseSymmetrization   () const { return _boseSymmetrize;       }  ///< returns whether Bose symmetrization is used
+		bool isospinSymmetrization() const { return _isospinSymmetrize;    }  ///< returns whether isospin symmetrization is used
+		void enableReflectivityBasis    (const bool flag = true) { _useReflectivityBasis = flag; }  ///< en/disables use of reflectivity basis
+		void enableBoseSymmetrization   (const bool flag = true) { _boseSymmetrize       = flag; }  ///< en/disables use of Bose symmetrization
+		void enableIsospinSymmetrization(const bool flag = true) { _isospinSymmetrize    = flag; }  ///< en/disables use of isospin symmetrization
 
 		bool doSpaceInversion() const { return _doSpaceInversion; }  ///< returns whether parity transformation is performed on decay
 		bool doReflection    () const { return _doReflection;     }  ///< returns whether decay is reflected through production plane
@@ -107,16 +107,7 @@ namespace rpwa {
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex = false) const;  ///< recursive function that sums up decay amplitudes for all allowed helicitities for all vertices below the given vertex
 
-		virtual std::complex<double> unSymmetrizedAmp() const;                                                 ///< returns decay amplitude without any reordering of final-state particles
-		virtual std::complex<double> unSymmetrizedAmp(const std::vector<unsigned int>& fsPartPermMap) const;  ///< returns decay amplitude for a certain permutation of final-state particles
-
-		virtual std::complex<double> isospinSymmetrizedAmp() const;  ///< performs isospin symmetrization
-
-		virtual std::complex<double> sumBoseSymTerms
-		(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
-		 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
-		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry) const;  ///< recursive function that sums up amplitudes of all permutations of indistinguishable final state particles
-		virtual std::complex<double> boseSymmetrizedAmp() const;  ///< performs Bose symmetrization
+		virtual std::complex<double> symTermAmp(const std::vector<unsigned int>& fsPartPermMap) const;  ///< returns decay amplitude for a certain permutation of final-state particles
 
 		virtual void genBoseSymTermMaps
 		(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
@@ -126,6 +117,7 @@ namespace rpwa {
 		 std::vector<symTermMap>&                                     symTermMaps) const;  ///< recursive function that generates all permutation maps of indistinguishable final state particles
 		virtual void initBoseSymTermMaps();  ///< generates final-state permutation maps for Bose symmetrization
 
+		virtual void initIsospinSymTermMaps();  ///< generates final-state permutation maps for isospin symmetrization
 
 
 		isobarDecayTopologyPtr  _decay;                 ///< isobar decay topology with all external information

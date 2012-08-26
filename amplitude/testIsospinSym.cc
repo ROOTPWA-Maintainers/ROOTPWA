@@ -210,7 +210,7 @@ main(int argc, char** argv)
 	//decayTopology::setDebug          (true);
 	//isobarDecayTopology::setDebug    (true);
 	//massDependence::setDebug         (true);
-	isobarAmplitude::setDebug        (true);
+	//isobarAmplitude::setDebug        (true);
 	//isobarHelicityAmplitude::setDebug(true);
 
 	timer.Reset();

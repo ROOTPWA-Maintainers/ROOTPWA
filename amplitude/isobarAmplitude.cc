@@ -107,10 +107,11 @@ isobarAmplitude::init()
 	for (unsigned int i = 0; i < _decay->nmbFsParticles() ; ++i)
 		identityPermMap.push_back(i);
 	_symTermMaps.push_back(symTermMap(1, identityPermMap));
+	// create final-state symmetriztion terms
 	if (_boseSymmetrize)
 		initBoseSymTermMaps();
-	// if (_isospinSymmetrize)
-	// 	genIsospinSymTermMaps();
+	if (_isospinSymmetrize)
+		initIsospinSymTermMaps();
 }
 
 
@@ -128,20 +129,8 @@ isobarAmplitude::amplitude() const
 	}
 	// loop over all symmetrization terms; assumes that init() was called before
 	complex<double> amp = 0;
-	for (unsigned int i = 0; i < nmbSymTerms; ++i) {
-		// const complex<double> foo = unSymmetrizedAmp(_symTermMaps[i].fsPartPermMap);
-		// printSucc << foo << endl;
-		// amp += _symTermMaps[i].factor * foo;
-		amp += _symTermMaps[i].factor * unSymmetrizedAmp(_symTermMaps[i].fsPartPermMap);
-	}
-
-	// complex<double> amp = 0;
-	// if (_isospinSymmetrize)
-	// 	amp = isospinSymmetrizedAmp();
-	// else if (_boseSymmetrize)
-	// 	amp = boseSymmetrizedAmp();
-	// else
-	// 	amp = unSymmetrizedAmp();
+	for (unsigned int i = 0; i < nmbSymTerms; ++i)
+		amp += _symTermMaps[i].factor * symTermAmp(_symTermMaps[i].fsPartPermMap);
 	return amp;
 }
 
@@ -274,17 +263,7 @@ isobarAmplitude::twoBodyDecayAmplitudeSum(const isobarDecayVertexPtr& vertex,   
 
 
 complex<double>
-isobarAmplitude::unSymmetrizedAmp() const
-{
-	// transform daughters into their respective RFs
-	transformDaughters();
-	// calculate amplitude
-	return twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
-}
-
-
-complex<double>
-isobarAmplitude::unSymmetrizedAmp(const std::vector<unsigned int>& fsPartPermMap) const
+isobarAmplitude::symTermAmp(const std::vector<unsigned int>& fsPartPermMap) const
 {
 	// (re)set final state momenta
 	if (not _decay->revertMomenta(fsPartPermMap)) {
@@ -292,125 +271,10 @@ isobarAmplitude::unSymmetrizedAmp(const std::vector<unsigned int>& fsPartPermMap
 		         << "returning 0." << endl;
 		return 0;
 	}
-	return unSymmetrizedAmp();
-}
-
-
-complex<double>
-isobarAmplitude::isospinSymmetrizedAmp() const
-{
-	vector<symTermMap> symMaps = _decay->getIsospinSymmetrization();
-	const unsigned int nmbSymTerms = symMaps.size();
-	if (nmbSymTerms < 1) {
-		printErr << "array of isospin symmetrization terms is empty. cannot calculate amplitude. "
-		         << "returning 0." << endl;
-		return 0;
-	}
-	if (nmbSymTerms == 1) {
-		printDebug << "no isospin symmetrization needed for this amplitude." << endl;
-		return unSymmetrizedAmp();
-	}
-	// if (_debug)
-		printDebug << "symmetrizing amplitude w.r.t. isospin using " << nmbSymTerms << " terms." << endl;
-	complex<double> amp = 0;
-	for(unsigned int i = 0; i < nmbSymTerms; ++i) {
-		const double                clebsch       = symMaps[i].factor.real();
-		const vector<unsigned int>& fsPartPermMap = symMaps[i].fsPartPermMap;
-		// if (_debug) {
-			printDebug << "calculating amplitude for isospin-symmetrization term "
-			           << "with Clebsch-Gordan coefficient = " << clebsch << " "
-			           << "and final state permutation ";
-			for (unsigned int j = 0; j < fsPartPermMap.size(); ++j)
-				cout << _decay->fsParticles()[j]->name() << "[" << j << " -> " << fsPartPermMap[j] << "]  ";
-			cout << endl;
-		// }
-		complex<double> foo = unSymmetrizedAmp(fsPartPermMap);
-		cout << "    term[" << i << "] = " << maxPrecisionDouble(foo) << ", clebsch = " << clebsch
-		     << ", " << signum(clebsch) << endl;
-		amp += signum(clebsch) * foo;
-		// amp += signum(clebsch) * unSymmetrizedAmp(fsPartPermMap);
-	}
-	return amp / sqrt(nmbSymTerms);
-}
-
-
-complex<double>
-isobarAmplitude::sumBoseSymTerms
-(const map<string, vector<unsigned int> >&     origFsPartIndices,
- const map<string, vector<unsigned int> >&     newFsPartIndices,
- map<string, vector<unsigned int> >::iterator& newFsPartIndicesEntry) const
-{
-	complex<double> amp = 0;
-	// loop over all permutations for current final-state particle species
-	do {
-		map<string, vector<unsigned int> >::iterator nextFsPartIndicesEntry = newFsPartIndicesEntry;
-		if (++nextFsPartIndicesEntry != newFsPartIndices.end())
-			// recurse to permutations of other final-state particle species
-			amp += sumBoseSymTerms(origFsPartIndices, newFsPartIndices, nextFsPartIndicesEntry);
-		else {
-			// build final-state index map for current permutation
-			vector<unsigned int> fsPartPermMap(_decay->nmbFsParticles(), 0);
-			if (_debug)
-				printDebug << "calculating amplitude for Bose term final state permutation ";
-			for (map<string, vector<unsigned int> >::const_iterator i = origFsPartIndices.begin();
-			     i != origFsPartIndices.end(); ++i) {
-				const string partName = i->first;
-				map<string, vector<unsigned int> >::const_iterator entry = newFsPartIndices.find(partName);
-				assert(entry != newFsPartIndices.end());
-				for (unsigned int j = 0; j < i->second.size(); ++j) {
-					assert(entry->second.size() == i->second.size());
-					const unsigned int origFsPartIndex = i->second[j];
-					const unsigned int newFsPartIndex  = entry->second[j];
-					if (_debug)
-						cout << partName << "[" << origFsPartIndex << " -> " << newFsPartIndex << "]  ";
-					fsPartPermMap[origFsPartIndex] = newFsPartIndex;
-				}
-			}
-			if (_debug)
-				cout << endl;
-			amp += unSymmetrizedAmp(fsPartPermMap);
-		}
-	} while (next_permutation(newFsPartIndicesEntry->second.begin(),
-	                          newFsPartIndicesEntry->second.end()));
-	return amp;
-}
-
-
-complex<double>
-isobarAmplitude::boseSymmetrizedAmp() const
-{
-	// get final state indistinguishable particles
-	typedef map<string, unsigned int>::const_iterator indistFsPartIt;
-	const map<string, unsigned int> indistFsPart = _decay->nmbIndistFsParticles();
-	if (_debug) {
-		printDebug << "Bose symmetrizing amplitude: indistinguishable final state particle "
-		           << "multiplicities (marked FS particles will be Bose symmetrized): ";
-		for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
-			cout << i->first << " = " << i->second << ((i->second) >= 2 ? " <<<  " : "  ");
-		cout << endl;
-	}
-
-	// calculate normalization factor
-	double nmbCombinations = 1;
-	for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
-		nmbCombinations *= TMath::Factorial(i->second);
-	const double normFactor = 1 / sqrt(nmbCombinations);
-  
-	// initialize indices used to generate final state permutations
-	// in order to get all permutations with std::next_permutation
-	// indices have to be sorted ascending
-	map<string, vector<unsigned int> > origFsPartIndices;
-	for (unsigned int i = 0; i < _decay->nmbFsParticles(); ++i) {
-		const string partName = _decay->fsParticles()[i]->name();
-		origFsPartIndices[partName].push_back(i);
-	}
-	map<string, vector<unsigned int> > newFsPartIndices = origFsPartIndices;
-  
-	// Bose symmetrize amplitudes
-	if (_debug)
-		printDebug << "Bose symmetrizing amplitude using " << nmbCombinations << " terms" << endl;
-	map<string, vector<unsigned int> >::iterator firstEntry = newFsPartIndices.begin();
-	return normFactor * sumBoseSymTerms(origFsPartIndices, newFsPartIndices, firstEntry);
+	// transform daughters into their respective RFs
+	transformDaughters();
+	// calculate amplitude
+	return twoBodyDecayAmplitudeSum(_decay->XIsobarDecayVertex(), true);
 }
 
 
@@ -455,18 +319,12 @@ isobarAmplitude::genBoseSymTermMaps
 			if (_debug) {
 				printDebug << "effective Bose-symmetrization final-state permutation map for "
 				           << "base permutation map " << baseFsPartPermMap << " is ";
-				// printDebug << "eff. perm. base permutation (" << baseFsPartPermMap[0];
-				// for (unsigned int i = 1; i < baseFsPartPermMap.size(); ++i)
-				// 	cout << ", " << baseFsPartPermMap[i];
-				// cout << "): ";
 			}
 			vector<unsigned int> fsPartPermMap(permMap.size(), 0);
 			assert(fsPartPermMap.size() == baseFsPartPermMap.size());
 			for (unsigned int i = 0; i < fsPartPermMap.size(); ++i) {
 				const unsigned int newIndex = baseFsPartPermMap[i];
 				fsPartPermMap[i] = permMap[newIndex];
-				// if (_debug)
-				// 	cout << _decay->fsParticles()[i]->name() << "[" << i << " -> " << fsPartPermMap[i] << "]  ";
 			}
 			if (_debug)
 				cout << fsPartPermMap << endl;
@@ -514,12 +372,6 @@ isobarAmplitude::initBoseSymTermMaps()
 		          << "Bose-symmetrization terms with base symmetrization term [" << i << " / "
 		          << nmbSymTerms << "]: factor = " << maxPrecisionDouble(_symTermMaps[i].factor) << "; "
 		          << "final-state permutation map = " << _symTermMaps[i].fsPartPermMap << endl;
-			//            << "factor = " << _symTermMaps[i].factor << "; (";
-			// vector<unsigned int>& permMap = _symTermMaps[i].fsPartPermMap;
-			// cout << permMap[0];
-			// for (unsigned int j = 1; j < permMap.size(); ++j)
-			// 	cout << ", " << permMap[j];
-			// cout << ")" << endl;
 		
 		map<string, vector<unsigned int> >::iterator firstEntry        = newFsPartIndices.begin();
 		const vector<unsigned int>&                  baseFsPartPermMap = _symTermMaps[i].fsPartPermMap;
@@ -535,17 +387,44 @@ isobarAmplitude::initBoseSymTermMaps()
 	for (unsigned int i = 0; i < nmbSymTerms; ++i)
 		for (unsigned int j = 0; j < newSymTermMaps[i].size(); ++j)
 			_symTermMaps.push_back(newSymTermMaps[i][j]);
+}
 
 
-	printInfo << "!!!HERE" << endl;
-	for (unsigned int i = 0; i < _symTermMaps.size(); ++i) {
-		cout << "term[" << i << "]: factor = " << _symTermMaps[i].factor << "; (";
-		vector<unsigned int>& fsPartPermMap = _symTermMaps[i].fsPartPermMap;
-		cout << fsPartPermMap[0];
-		for (unsigned int j = 1; j < fsPartPermMap.size(); ++j)
-			cout << ", " << fsPartPermMap[j];
-		cout << ")" << endl;
-	}
+void
+isobarAmplitude::initIsospinSymTermMaps()
+{
+	// vector<symTermMap> symMaps = _decay->getIsospinSymmetrization();
+	// const unsigned int nmbSymTerms = symMaps.size();
+	// if (nmbSymTerms < 1) {
+	// 	printErr << "array of isospin symmetrization terms is empty. cannot calculate amplitude. "
+	// 	         << "returning 0." << endl;
+	// 	return 0;
+	// }
+	// if (nmbSymTerms == 1) {
+	// 	printDebug << "no isospin symmetrization needed for this amplitude." << endl;
+	// 	return unSymmetrizedAmp();
+	// }
+	// // if (_debug)
+	// 	printDebug << "symmetrizing amplitude w.r.t. isospin using " << nmbSymTerms << " terms." << endl;
+	// complex<double> amp = 0;
+	// for(unsigned int i = 0; i < nmbSymTerms; ++i) {
+	// 	const double                clebsch       = symMaps[i].factor.real();
+	// 	const vector<unsigned int>& fsPartPermMap = symMaps[i].fsPartPermMap;
+	// 	// if (_debug) {
+	// 		printDebug << "calculating amplitude for isospin-symmetrization term "
+	// 		           << "with Clebsch-Gordan coefficient = " << clebsch << " "
+	// 		           << "and final state permutation ";
+	// 		for (unsigned int j = 0; j < fsPartPermMap.size(); ++j)
+	// 			cout << _decay->fsParticles()[j]->name() << "[" << j << " -> " << fsPartPermMap[j] << "]  ";
+	// 		cout << endl;
+	// 	// }
+	// 	complex<double> foo = unSymmetrizedAmp(fsPartPermMap);
+	// 	cout << "    term[" << i << "] = " << maxPrecisionDouble(foo) << ", clebsch = " << clebsch
+	// 	     << ", " << signum(clebsch) << endl;
+	// 	amp += signum(clebsch) * foo;
+	// 	// amp += signum(clebsch) * unSymmetrizedAmp(fsPartPermMap);
+	// }
+	// return amp / sqrt(nmbSymTerms);
 }
 
 
