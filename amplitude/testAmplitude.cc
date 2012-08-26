@@ -293,8 +293,8 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		//const long int maxNmbEvents = 10000;
-		const long int maxNmbEvents = 1;
+		const long int maxNmbEvents = 10000;
+		//const long int maxNmbEvents = 1;
 
 		// const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "testAmplitude.key";
@@ -361,6 +361,7 @@ main(int argc, char** argv)
 		if (waveDesc.parseKeyFile(newKeyFileName) and waveDesc.constructAmplitude(amp)) {
 			isobarDecayTopologyPtr topo = amp->decayTopology();
 			printInfo << *amp;
+			amp->init();
 			
 			// read data from tree
 			const string&            inTreeName               = "rootPwaEvtTree";

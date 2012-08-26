@@ -79,7 +79,6 @@ calcNewAmps(const string&             rootInFileName,
 	isobarDecayTopologyPtr topo = amp->decayTopology();
 	printInfo << *amp;
 	amp->init();
-	exit(1);
 			
 	// open input file
 	vector<TTree*>       inTrees;

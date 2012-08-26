@@ -703,15 +703,13 @@ decayTopology::revertMomenta(const vector<unsigned int>& fsPartPermMap)  // fina
 	}
 	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
 		const unsigned int newIndex = fsPartPermMap[i];
-		if (newIndex != i) {
-			const particlePtr& part = fsParticles()[i];
-			part->setMomentum(_fsDataPartMomCache[newIndex]);
-			if (_debug)
-				printDebug << "(re)setting momentum of final state particle "
-				           << "'" << part->name() << "'[" << i << "] "
-				           << "to that of '" << fsParticles()[newIndex]->name()
-				           << "'[" << newIndex << "] = " << _fsDataPartMomCache[newIndex] << " GeV" << endl;
-		}
+		const particlePtr& part     = fsParticles()[i];
+		part->setMomentum(_fsDataPartMomCache[newIndex]);
+		if (_debug)
+			printDebug << "(re)setting momentum of final state particle "
+			           << "'" << part->name() << "'[" << i << "] "
+			           << "to that of '" << fsParticles()[newIndex]->name()
+			           << "'[" << newIndex << "] = " << _fsDataPartMomCache[newIndex] << " GeV" << endl;
 	}
 	return success;
 }

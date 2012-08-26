@@ -648,6 +648,8 @@ namespace rpwa {
 			printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
 			return false;
 		}
+		// initialize amplitude
+		amplitude->init();
 		const isobarDecayTopologyPtr& decayTopo = amplitude->decayTopology();
 
 		// create branch pointers and leaf variables
