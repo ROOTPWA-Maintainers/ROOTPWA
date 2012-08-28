@@ -156,10 +156,9 @@ main(int    argc,
 	 
 
 	} // end if doTeX
-       
 
 
-	printInfo << "generating wave set from '" << keyFileName << "'" << endl;
+	printInfo << "generating wave set from template key file '" << keyFileName << "'" << endl;
 	waveSetGenerator waveSetGen;
 	waveSetGenerator::setDebug(debug);
 	if (not waveSetGen.setWaveSetParameters(keyFileName)) {

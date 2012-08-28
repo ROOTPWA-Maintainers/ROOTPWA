@@ -61,15 +61,40 @@
 #include "reportingUtils.hpp"
 
 
-// add custom vertex and edge properties to BGL graph
+// typdefs and custom vertex and edge properties
 namespace boost {
-	enum graph_bundle_t { graph_bundle };
-	BOOST_INSTALL_PROPERTY(graph,  bundle);
+
 	enum vertex_VPtr_t  { vertex_VPtr  };
 	BOOST_INSTALL_PROPERTY(vertex, VPtr);
 	enum edge_PPtr_t    { edge_PPtr    };
 	BOOST_INSTALL_PROPERTY(edge,   PPtr);
-}
+
+	// disabled code from graphviz.hpp
+	typedef std::map<std::string, std::string> GraphvizAttrList;
+  
+	typedef property<vertex_attribute_t, GraphvizAttrList> GraphvizVertexProperty;
+  
+	typedef property<edge_attribute_t, GraphvizAttrList,
+	                 property<edge_index_t, int> > GraphvizEdgeProperty;
+  
+	typedef property<graph_graph_attribute_t, GraphvizAttrList,
+	                 property<graph_vertex_attribute_t, GraphvizAttrList,
+	                          property<graph_edge_attribute_t, GraphvizAttrList,
+	                                   property<graph_name_t, std::string> > > > GraphvizGraphProperty;
+  
+	typedef subgraph<adjacency_list<vecS,
+	                                vecS, directedS,
+	                                GraphvizVertexProperty,
+	                                GraphvizEdgeProperty,
+	                                GraphvizGraphProperty> > GraphvizDigraph;
+  
+	typedef subgraph<adjacency_list<vecS,
+	                                vecS, undirectedS,
+	                                GraphvizVertexProperty,
+	                                GraphvizEdgeProperty,
+	                                GraphvizGraphProperty> > GraphvizGraph;
+
+}  // namespace boost
 
 
 namespace rpwa {	

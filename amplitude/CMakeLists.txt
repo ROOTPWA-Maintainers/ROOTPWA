@@ -45,7 +45,6 @@ message(STATUS ">>> Setting up 'amplitude' directory.")
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${PYTHON_INCLUDE_DIRS}
-	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}

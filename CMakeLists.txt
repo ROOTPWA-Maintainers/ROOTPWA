@@ -178,8 +178,8 @@ endif()
 # at the same time the library is required. the third find_package
 # line is needed in case the components are not found, because
 # Boost_FOUND is set to FALSE.
-find_package(Boost 1.43.0 REQUIRED)
-find_package(Boost 1.43.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
+find_package(Boost 1.50.0 REQUIRED)
+find_package(Boost 1.50.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
 foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
 	string(TOUPPER ${_BOOST_COMPONENT} _BOOST_COMPONENT)
 	if(Boost_${_BOOST_COMPONENT}_FOUND)
@@ -189,7 +189,7 @@ foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
 endforeach()
 unset(_BOOST_COMPONENT)
 unset(_BOOST_COMPONENTS)
-find_package(Boost 1.43.0 REQUIRED)
+find_package(Boost 1.50.0 REQUIRED)
 set_feature_info(Boost
 	"C++ Template Library"
 	"http://www.boost.org/"
@@ -203,12 +203,6 @@ else()
 	message(FATAL_ERROR "Could not find Boost installation. "
 		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
 endif()
-# setup uprooted Boost libraries
-set(uprootedBoost_INCLUDE_DIRS
-	# local copy of Boost Graph Library from V1.43.0; overides graph library in Boost supplied by user
-	${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
-	)
-message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'.")
 
 
 # setup libconfig

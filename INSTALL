@@ -64,7 +64,7 @@ Before you can build ROOTPWA you need to install the following software:
 * Boost
   Part of the code relies on the Boost library which is available at
     http://www.boost.org
-  Version 1.43.00 or higher is required.
+  Version 1.50.00 or higher is required.
   Boost is to a large extend a header-only library so that usually
   nothing has to be build. Just install the respective package for
   your platform or, in case you do not have administrator privileges,
