@@ -43,7 +43,11 @@ void exportParticleProperties()
 		.add_property("isItsOwnAntiPart", &rpwa::particleProperties::isItsOwnAntiPart)
 		.add_property("isSpinExotic", &rpwa::particleProperties::isSpinExotic)
 
-		.def("fillFromDataTable", &rpwa::particleProperties::fillFromDataTable)
+		.def(
+				"fillFromDataTable"
+				, &rpwa::particleProperties::fillFromDataTable
+				, (bp::arg("name"), bp::arg("warnIfNotExistent")=(bool const)(true))
+		)
 
 		.add_property("nDecays", &rpwa::particleProperties::nDecays)
 //		.def("hasDecays", &rpwa::particleProperties::hasDecay)

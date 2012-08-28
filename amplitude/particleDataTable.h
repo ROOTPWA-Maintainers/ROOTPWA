@@ -76,9 +76,9 @@ namespace rpwa {
 
 		static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
 
-		typedef std::map<std::string, particleProperties>::const_iterator dataIterator;
-		static dataIterator begin() { return _dataTable.begin(); }  ///< returns iterator pointing at first entry of particle data table
-		static dataIterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
+		typedef std::map<std::string, particleProperties>::const_iterator iterator;
+		static iterator begin() { return _dataTable.begin(); }  ///< returns iterator pointing at first entry of particle data table
+		static iterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
 
 		static std::ostream& print(std::ostream& out);  ///< prints particle data in human-readable form
 		static std::ostream& dump (std::ostream& out);  ///< dumps particle properties in format of data file

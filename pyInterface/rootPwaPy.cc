@@ -4,11 +4,13 @@
 
 #include "particleProperties_py.h"
 #include "particleDataTable_py.h"
+#include "stlcontainers_py.h"
 
 namespace bp = boost::python;
 
 BOOST_PYTHON_MODULE(libRootPwaPy){
 
+	exportStdPairs();
 	exportParticleProperties();
 	exportParticleDataTable();
 
