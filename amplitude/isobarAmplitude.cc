@@ -112,6 +112,16 @@ isobarAmplitude::init()
 		initBoseSymTermMaps();
 	if (_isospinSymmetrize)
 		initIsospinSymTermMaps();
+
+	// printSucc << "!!!HERE" << endl;
+	// for (unsigned int i = 0; i < _symTermMaps.size(); ++i) {
+	// 	cout << "term[" << i << "]: factor = " << _symTermMaps[i].factor << "; (";
+	// 	vector<unsigned int>& fsPartPermMap = _symTermMaps[i].fsPartPermMap;
+	// 	cout << fsPartPermMap[0];
+	// 	for (unsigned int j = 1; j < fsPartPermMap.size(); ++j)
+	// 		cout << ", " << fsPartPermMap[j];
+	// 	cout << ")" << endl;
+	// }
 }
 
 
@@ -295,7 +305,7 @@ isobarAmplitude::genBoseSymTermMaps
 			                   baseFsPartPermMap, newSymTermMaps);
 		else {
 			// build map for current permutation
-			vector<unsigned int> permMap(_decay->nmbFsParticles(), 0);
+			vector<unsigned int> bosePermMap(_decay->nmbFsParticles(), 0);
 			if (_debug)
 				printDebug << "Bose-symmetrization final-state permutation: ";
 			for (map<string, vector<unsigned int> >::const_iterator i = origFsPartIndices.begin();
@@ -309,17 +319,18 @@ isobarAmplitude::genBoseSymTermMaps
 					const unsigned int newFsPartIndex  = entry->second[j];
 					if (_debug)
 						cout << partName << "[" << origFsPartIndex << " -> " << newFsPartIndex << "]  ";
-					permMap[origFsPartIndex] = newFsPartIndex;
+					bosePermMap[origFsPartIndex] = newFsPartIndex;
 				}
 			}
 			if (_debug)
 				cout << endl;
-			// compute effective permutation map taking into account base permutation map
-			assert(baseFsPartPermMap.size() == permMap.size());
-			vector<unsigned int> fsPartPermMap(permMap.size(), 0);
+			// compute effective permutation map by reshuffling Bose
+			// symmetrization permuation map according to base permutation map
+			assert(baseFsPartPermMap.size() == bosePermMap.size());
+			vector<unsigned int> fsPartPermMap(bosePermMap.size(), 0);
 			for (unsigned int i = 0; i < fsPartPermMap.size(); ++i) {
 				const unsigned int newIndex = baseFsPartPermMap[i];
-				fsPartPermMap[i] = permMap[newIndex];
+				fsPartPermMap[i] = bosePermMap[newIndex];
 			}
 			if (_debug)
 				printDebug << "effective Bose-symmetrization for base permutation map "
@@ -360,7 +371,7 @@ isobarAmplitude::initBoseSymTermMaps()
 	}
 	map<string, vector<unsigned int> > newFsPartIndices = origFsPartIndices;
 
-	// generate new Bose-permutation maps for all existing final-state maps
+	// generate new Bose-permutation maps for all existing final-state permutation maps
 	const unsigned int nmbSymTerms = _symTermMaps.size();
 	vector<symTermMap> newSymTermMaps[nmbSymTerms];
 	for (unsigned int i = 0; i < nmbSymTerms; ++i) {
@@ -414,7 +425,7 @@ isobarAmplitude::initIsospinSymTermMaps()
 	if (not isoPermMapsOkay)
 		return;
 
-	// generate new isospin-permutation maps for all existing final-state maps
+	// generate new isospin-permutation maps for all existing final-state permutation maps
 	const unsigned int nmbSymTerms = _symTermMaps.size();
 	vector<symTermMap> newSymTermMaps[nmbSymTerms];
 	for (unsigned int i = 0; i < nmbSymTerms; ++i) {
@@ -426,15 +437,16 @@ isobarAmplitude::initIsospinSymTermMaps()
 		          << nmbSymTerms << "]: factor = " << maxPrecisionDouble(_symTermMaps[i].factor) << "; "
 		          << "final-state permutation map = " << baseFsPartPermMap << endl;
 		for (unsigned int j = 0; j < nmbIsoSymTerms; ++j) {
-			// compute effective permutation map taking into account base permutation map
+			// compute effective permutation map by reshuffling base permutation map
+			// according to isospin symmetrization permuation map
 			const vector<unsigned int>& isoPermMap = isoSymTermMaps[j].fsPartPermMap;
 			const double                isoFactor
 				= signum(isoSymTermMaps[j].factor.real()) / sqrt(nmbIsoSymTerms);
 			assert(baseFsPartPermMap.size() == isoPermMap.size());
 			vector<unsigned int> fsPartPermMap(isoPermMap.size(), 0);
 			for (unsigned int k = 0; k < fsPartPermMap.size(); ++k) {
-				const unsigned int newIndex = baseFsPartPermMap[k];
-				fsPartPermMap[k] = isoPermMap[newIndex];
+				const unsigned int newIndex = isoPermMap[k];
+				fsPartPermMap[k] = baseFsPartPermMap[newIndex];
 			}
 			if (_debug)
 				printDebug << "effective isospin-symmetrization for base permutation map "

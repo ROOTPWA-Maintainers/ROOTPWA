@@ -178,7 +178,7 @@ main(int argc, char** argv)
 	printCompilerInfo();
 	printSvnVersion();
 	
-	// const long int maxNmbEvents = 10000;
+	//const long int maxNmbEvents = 10000;
 	const long int maxNmbEvents = 1;
 
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
@@ -194,23 +194,23 @@ main(int argc, char** argv)
 	// const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260-=rho770_01_pi-_01_pi+_01_pi-.key";
 	const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260+=rho770_01_pi+_01_pi-_01_pi-.key";
 	const string pwa2kKeyFileName[2] = {
-		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-.key",
-		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+.key"
-		"test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-_noBose.key",
-		"test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+_noBose.key"
+		"test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-.key",
+		"test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+.key"
+		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-_noBose.key",
+		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+_noBose.key"
 	};
 	const double phi   = 0;
 	const double ratio = 1;
 
-	// const string evtInFileName  = "test5pi/1900.1960.genbod.regen.evt";
-	// const string rootInFileName = "test5pi/1900.1960.genbod.root";
-	const string evtInFileName  = "test5pi/oneEvent.evt";
-	const string rootInFileName = "test5pi/oneEvent.root";
+	const string evtInFileName  = "test5pi/1900.1960.genbod.regen.evt";
+	const string rootInFileName = "test5pi/1900.1960.genbod.root";
+	// const string evtInFileName  = "test5pi/oneEvent.evt";
+	// const string rootInFileName = "test5pi/oneEvent.root";
 
 	//decayTopology::setDebug          (true);
 	//isobarDecayTopology::setDebug    (true);
 	//massDependence::setDebug         (true);
-	isobarAmplitude::setDebug        (true);
+	//isobarAmplitude::setDebug        (true);
 	//isobarHelicityAmplitude::setDebug(true);
 
 	timer.Reset();
