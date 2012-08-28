@@ -50,6 +50,8 @@
 #include "keyfile.h"
 #include "event.h"
 
+#include "mathUtils.hpp"
+#include "fileUtils.hpp"
 #include "particleDataTable.h"
 #include "waveDescription.h"
 #include "isobarHelicityAmplitude.h"
@@ -172,14 +174,57 @@ calcPwa2kAmps(const string&             evtInFileName,
 }
 
 
+struct symInfo {
+	string waveNames[2];
+	string symWaveName;
+	double phi;
+	double ratio;
+};
+
+
+vector<symInfo>
+readDatFile(const string& fileName, 
+            const bool    debug = false)
+{
+	ifstream        datFile(fileName.c_str());
+	vector<symInfo> symInfos;
+	while (datFile.good()) {
+		symInfo s;
+		getline(datFile, s.waveNames[0]);
+		getline(datFile, s.waveNames[1]);
+		getline(datFile, s.symWaveName);
+		string phi;
+		getline(datFile, phi);
+		if ((phi == "pi") or (phi == "3.1416") or (phi == "1"))
+			s.phi = rpwa::pi;
+		else
+			s.phi = atof(phi.c_str());
+		string ratio;
+		getline(datFile, ratio);
+		s.ratio = atof(ratio.c_str());
+		symInfos.push_back(s);
+
+		if (debug)
+			printDebug << "read " << symInfos.size() << ". symInfo from file '" << fileName << "'" << endl
+			           << "    name1   = '" << s.waveNames[0] << "'" << endl
+			           << "    name1   = '" << s.waveNames[1] << "'" << endl
+			           << "    symName = '" << s.symWaveName  << "'" << endl
+			           << "    phi     = "  << maxPrecision(s.phi)   << endl
+			           << "    ratio   = "  << maxPrecision(s.ratio) << endl;
+
+	}	
+	return symInfos;
+}
+
+
 int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
 	printSvnVersion();
 	
-	//const long int maxNmbEvents = 10000;
-	const long int maxNmbEvents = 1;
+	const long int maxNmbEvents = 1000;
+	//const long int maxNmbEvents = 1;
 
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
 	pdt.readFile();
@@ -187,20 +232,54 @@ main(int argc, char** argv)
 	TStopwatch timer;
 
 	// waves with isospin symmetrization
-
-	// rel. delta = (1.4319815006796074e-09, 1.4120124973618052e-09)
-	// rms 1.51e-9, 1.91e-9
-	// phi = 0, R = 1 ---> 1 / sqrt(2) * (a1 + a2)
+	// rel. delta = (1.4396529281641782e-09, 1.4018652315552070e-09)
+	// rms 4.88e-10, 1.56e-9
 	// const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260-=rho770_01_pi-_01_pi+_01_pi-.key";
-	const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260+=rho770_01_pi+_01_pi-_01_pi-.key";
+	// const string newKeyFileName = "test5pi/charly/sym/1-1+00+rho1700=a11260+=rho770_01_pi+_01_pi-_01_pi-.key";
+	// rel. delta = (1.3916463537100299e-09, 1.3553984601344382e-09)
+	// rms 5.65e-10, 1.89e-9
+	const string newKeyFileName = "test5pi/charly/sym/1-1+00+f11285=a11260-=rho770_01_pi-_11_pi+_11_pi-.key";
+	// const string newKeyFileName = "test5pi/charly/sym/1-1+00+f11285=a11260+=rho770_01_pi+_11_pi-_11_pi-.key";
+	// rel. delta = (1.4267325099126538e-09, 1.4274825765880905e-09)
+	// rms 1.50e-9, 3.18e-9
+	// const string newKeyFileName = "test5pi/charly/sym/1-2-00+f21270=a11260-=rho770_01_pi-_11_pi+_02_pi-.key";
+	// rel. delta = (1.3479408700334261e-09, 1.3596883619015898e-09)
+	// rms 2.48e-9, 6.67e-10
+	// const string newKeyFileName = "test5pi/charly/sym/1-2-00+f21270=a11260-=rho770_01_pi-_11_pi+_22_pi-.key";
 	const string pwa2kKeyFileName[2] = {
-		"test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-.key",
-		"test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+.key"
+		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-.key",
+		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+.key"
 		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi+_0_rho770_0_pi-_noBose.key",
 		// "test5pi/sebastian/sym/1-1++0+pi-_01_rho1700=a11269=pi-_0_rho770_0_pi+_noBose.key"
+		"test5pi/sebastian/sym/1-1++0+pi-_11_f11285=pi-_11_a11269=pi+_0_rho770.key",
+		"test5pi/sebastian/sym/1-1++0+pi-_11_f11285=pi+_11_a11269=pi-_0_rho770.key"
+		// "test5pi/sebastian/sym/1-2-+0+pi-_02_f21270=pi-_1_a11269=pi+_0_rho770.key",
+		// "test5pi/sebastian/sym/1-2-+0+pi-_02_f21270=pi+_1_a11269=pi-_0_rho770.key"
+		// "test5pi/sebastian/sym/1-2-+0+pi-_22_f21270=pi-_1_a11269=pi+_0_rho770.key",
+		// "test5pi/sebastian/sym/1-2-+0+pi-_22_f21270=pi+_1_a11269=pi-_0_rho770.key"
 	};
-	const double phi   = 0;
-	const double ratio = 1;
+
+	// read symmetrization info from .dat files
+	vector<string>  datFiles = filesMatchingGlobPattern("test5pi/sebastian/sym/*.dat");
+	vector<symInfo> symInfos;
+	for (unsigned int i = 0; i < datFiles.size(); ++i) {
+		vector<symInfo> s = readDatFile(datFiles[i]);
+		symInfos.insert(symInfos.end(), s.begin(), s.end());
+	}
+	// get symmetrization parameters from .dat files
+	double phi   = 0;
+	double ratio = 0;
+	for (unsigned int i = 0; i < symInfos.size(); ++i) {
+		const string waveName = fileNameNoExtFromPath(pwa2kKeyFileName[0]) + ".amp";
+		if (   (symInfos[i].waveNames[0] == waveName)
+		    or (symInfos[i].waveNames[1] == waveName)) {
+			phi   = symInfos[i].phi;
+			ratio = symInfos[i].ratio;
+			break;
+		}
+	}
+	printInfo << "using phi = " << maxPrecision(phi) << " and ratio = " << maxPrecision(ratio)
+	          << " for symmetrization" << endl;
 
 	const string evtInFileName  = "test5pi/1900.1960.genbod.regen.evt";
 	const string rootInFileName = "test5pi/1900.1960.genbod.root";
@@ -246,12 +325,20 @@ main(int argc, char** argv)
 	          << "'" << evtInFileName << "' and calculated amplitudes" << endl;
 	cout << "needed ";
 	timer.Print();
-	printInfo << "newAmps[0] = " << maxPrecisionDouble(newAmps[0]) << " vs. pwa2kAmps[0] = "
-	          << maxPrecisionDouble(pwa2kAmps[0]) << ", abs. delta = "
-	          << maxPrecisionDouble(newAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
-	          << "(" << maxPrecision((newAmps[0].real() - pwa2kAmps[0].real()) / newAmps[0].real())
-	          << ", " << maxPrecision((newAmps[0].imag() - pwa2kAmps[0].imag()) / newAmps[0].imag())
-	          << ")" << endl;
+	{
+		double relDiff[2] = {(pwa2kAmps[0].real() - newAmps[0].real()) / pwa2kAmps[0].real(),
+		                     (pwa2kAmps[0].imag() - newAmps[0].imag()) / pwa2kAmps[0].imag()};
+		for (unsigned int i = 0; i < 2; ++i) {
+			if (relDiff[i] < 1)
+				relDiff[i] += 2;
+			else if (relDiff[i] > 1)
+				relDiff[i] -= 2;
+		}
+		printInfo << "newAmps[0] = " << maxPrecisionDouble(newAmps[0]) << " vs. pwa2kAmps[0] = "
+		          << maxPrecisionDouble(pwa2kAmps[0]) << ", abs. delta = "
+		          << maxPrecisionDouble(newAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
+		          << "(" << maxPrecision(relDiff[0]) << ", " << maxPrecision(relDiff[1]) << ")" << endl;
+	}
 	
 	if (1) {
 		const string outFileName = "testAmplitudeDiff.root";
@@ -266,12 +353,20 @@ main(int argc, char** argv)
 		TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 		TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
 		for (unsigned int i = 0; i < newAmps.size(); ++i) {
+			double relDiff[2] = {(pwa2kAmps[i].real() - newAmps[i].real()) / pwa2kAmps[i].real(),
+			                     (pwa2kAmps[i].imag() - newAmps[i].imag()) / pwa2kAmps[i].imag()};
+			for (unsigned int j = 0; j < 2; ++j) {
+				if (relDiff[j] < 1)
+					relDiff[j] += 2;
+				else if (relDiff[j] > 1)
+					relDiff[j] -= 2;
+			}
 			hMyAmpsReal->SetBinContent   (i + 1, newAmps[i].real());
 			hMyAmpsImag->SetBinContent   (i + 1, newAmps[i].imag());
 			hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
 			hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
-			hDiffReal->Fill((pwa2kAmps[i].real() - newAmps[i].real()) / pwa2kAmps[i].real());
-			hDiffImag->Fill((pwa2kAmps[i].imag() - newAmps[i].imag()) / pwa2kAmps[i].imag());
+			hDiffReal->Fill(relDiff[0]);
+			hDiffImag->Fill(relDiff[1]);
 			// hDiffReal->Fill(pwa2kAmps[i].real() - newAmps[i].real());
 			// hDiffImag->Fill(pwa2kAmps[i].imag() - newAmps[i].imag());
 			hCorrReal->Fill(newAmps[i].real(), pwa2kAmps[i].real());

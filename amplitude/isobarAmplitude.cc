@@ -108,20 +108,10 @@ isobarAmplitude::init()
 		identityPermMap.push_back(i);
 	_symTermMaps.push_back(symTermMap(1, identityPermMap));
 	// create final-state symmetriztion terms
-	if (_boseSymmetrize)
-		initBoseSymTermMaps();
 	if (_isospinSymmetrize)
 		initIsospinSymTermMaps();
-
-	// printSucc << "!!!HERE" << endl;
-	// for (unsigned int i = 0; i < _symTermMaps.size(); ++i) {
-	// 	cout << "term[" << i << "]: factor = " << _symTermMaps[i].factor << "; (";
-	// 	vector<unsigned int>& fsPartPermMap = _symTermMaps[i].fsPartPermMap;
-	// 	cout << fsPartPermMap[0];
-	// 	for (unsigned int j = 1; j < fsPartPermMap.size(); ++j)
-	// 		cout << ", " << fsPartPermMap[j];
-	// 	cout << ")" << endl;
-	// }
+	if (_boseSymmetrize)
+		initBoseSymTermMaps();
 }
 
 
@@ -448,10 +438,9 @@ isobarAmplitude::initIsospinSymTermMaps()
 				const unsigned int newIndex = isoPermMap[k];
 				fsPartPermMap[k] = baseFsPartPermMap[newIndex];
 			}
-			if (_debug)
-				printDebug << "effective isospin-symmetrization for base permutation map "
-				           << baseFsPartPermMap << " is: factor = " << maxPrecision(isoFactor)
-				           << "; final-state permutation map = " << fsPartPermMap << endl;
+			printInfo << "effective isospin-symmetrization for base permutation map "
+			          << baseFsPartPermMap << " is: factor = " << maxPrecision(isoFactor)
+			          << "; final-state permutation map = " << fsPartPermMap << endl;
 			symTermMap symTerm(isoFactor * baseFactor, fsPartPermMap);
 			newSymTermMaps[i].push_back(symTerm);
 		}
