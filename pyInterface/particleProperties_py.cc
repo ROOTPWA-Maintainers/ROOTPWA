@@ -7,10 +7,13 @@ void exportParticleProperties()
 
 	bp::class_< rpwa::particleProperties >( "particleProperties" )
 
+		.def(bp::init<rpwa::particleProperties>())
+		.def(bp::init<std::string, int, int, int, int, int>())
+
 		.def(bp::self == bp::self)
 		.def(bp::self != bp::self)
-		.def(bp::self == bp::other< std::pair< rpwa::particleProperties, std::string > >())
-		.def(bp::self != bp::other< std::pair< rpwa::particleProperties, std::string > >())
+//		.def(bp::self == bp::other< std::pair< rpwa::particleProperties, std::string > >())
+//		.def(bp::self != bp::other< std::pair< rpwa::particleProperties, std::string > >())
 		.def(bp::self_ns::str(bp::self))
 
 		.add_property("name", &rpwa::particleProperties::name, &rpwa::particleProperties::setName)
@@ -41,28 +44,27 @@ void exportParticleProperties()
 		.add_property("isSpinExotic", &rpwa::particleProperties::isSpinExotic)
 
 		.def("fillFromDataTable", &rpwa::particleProperties::fillFromDataTable)
-		.staticmethod("fillFromDataTable")
 
-		.def("nDecays", &rpwa::particleProperties::nDecays)
-		.def("hasDecays", &rpwa::particleProperties::hasDecay)
+		.add_property("nDecays", &rpwa::particleProperties::nDecays)
+//		.def("hasDecays", &rpwa::particleProperties::hasDecay)
+//		.def("addDecayMode", &rpwa::particleProperties::addDecayMode)
 
 		.def("setSCB", &rpwa::particleProperties::setSCB)
 		.def("setIGJPC", &rpwa::particleProperties::setIGJPC)
 
-		.def("addDecayMode", &rpwa::particleProperties::addDecayMode)
 
-		.def("antiPartProperties", &rpwa::particleProperties::antiPartProperties)
+		.add_property("antiPartProperties", &rpwa::particleProperties::antiPartProperties)
 
-		.def("qnSummary", &rpwa::particleProperties::qnSummary)
+		.add_property("qnSummary", &rpwa::particleProperties::qnSummary)
 
-		.def("bareNameLaTeX", &rpwa::particleProperties::bareNameLaTeX)
+		.add_property("bareNameLaTeX", &rpwa::particleProperties::bareNameLaTeX)
 
-		.def("read", &rpwa::particleProperties::read)
+//		.def("read", &rpwa::particleProperties::read)
 
 		.def("nameWithCharge", &rpwa::particleProperties::nameWithCharge)
 		.staticmethod("nameWithCharge")
-		.def("chargeFromName", &rpwa::particleProperties::chargeFromName)
-		.staticmethod("chargeFromName")
+/*		.def("chargeFromName", &rpwa::particleProperties::chargeFromName)
+		.staticmethod("chargeFromName")*/
 		.def("stripChargeFromName", &rpwa::particleProperties::stripChargeFromName)
 		.staticmethod("stripChargeFromName")
 
