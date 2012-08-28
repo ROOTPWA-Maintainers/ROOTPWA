@@ -56,6 +56,9 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	rootPwaPy.cc
+	stlcontainers_py.cc
+	particleProperties_py.cc
+	particleDataTable_py.cc
 	)
 
 

@@ -68,7 +68,7 @@ const particleProperties*
 particleDataTable::entry(const string& partName,
                          const bool    warnIfNotExistent)
 {
-	dataIterator i = _dataTable.find(partName);
+	iterator i = _dataTable.find(partName);
 	if (i == _dataTable.end()) {
 		if (warnIfNotExistent)
 			printWarn << "could not find entry for particle '" << partName << "'" << endl;
@@ -90,7 +90,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 {
 	const pair<particleProperties, string> selector(prototype, sel);
 	vector<const particleProperties*>      matchingEntries;
-	for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i) {
+	for (iterator i = _dataTable.begin(); i != _dataTable.end(); ++i) {
 		if (i->second != selector)
 			continue;
 		// limit isobar mass, if minMass > 0
@@ -162,7 +162,7 @@ bool
 particleDataTable::addEntry(const particleProperties& partProp)
 {
 	const string name = partProp.name();
-	dataIterator i    = _dataTable.find(name);
+	iterator i    = _dataTable.find(name);
 	if (i != _dataTable.end()) {
 		printWarn << "trying to add entry for particle '" << name << "' "
 		          << "which already exists in table"     << endl
@@ -183,7 +183,7 @@ ostream&
 particleDataTable::print(ostream& out)
 {
 	unsigned int countEntries = 0;
-	for (dataIterator i = begin(); i != end(); ++i) {
+	for (iterator i = begin(); i != end(); ++i) {
 		++countEntries;
 		out << "entry " << setw(3) << countEntries << ": " << i->second << endl;
 	}
@@ -194,7 +194,7 @@ particleDataTable::print(ostream& out)
 ostream&
 particleDataTable::dump(ostream& out)
 {
-	for (dataIterator i = begin(); i != end(); ++i) {
+	for (iterator i = begin(); i != end(); ++i) {
 		i->second.dump(out);
 		out << endl;
 	}

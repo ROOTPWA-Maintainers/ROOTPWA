@@ -119,7 +119,7 @@ main(int argc, char** argv)
 	// checking spin-exotic
 	if (0) {
 		printInfo << "testing spin-exotic tag" << endl;
-		for (particleDataTable::dataIterator i = pdt.begin(); i != pdt.end(); ++i) {
+		for (particleDataTable::iterator i = pdt.begin(); i != pdt.end(); ++i) {
 			const particleProperties& prop = i->second;
 			const bool jpc  = jpcIsExotic(prop.J(), prop.P(), prop.C());
 			const bool igjp = igjpIsExotic(prop.isospin(), prop.G(), prop.J(), prop.P());
