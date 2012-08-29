@@ -58,15 +58,14 @@
 DT_AMP_DIR_NAME=AMPS
 PS_AMP_DIR_NAME=PSPAMPS
 PSACC_AMP_DIR_NAME=ACCAMPS
-SYM_AMP_DIR_NAME=SYM
 # extensions of event data files; naming scheme is <mass bin><extension>
-#DT_FILE_EXT=.evt
-#PS_FILE_EXT=.genbod.evt
+DT_FILE_EXT=.evt
+PS_FILE_EXT=.genbod.evt
 #PS_FILE_EXT=.ps.evt
-#PSACC_FILE_EXT=.acc.evt
-DT_FILE_EXT=.root
-PS_FILE_EXT=.ps.root
-PSACC_FILE_EXT=.acc.root
+PSACC_FILE_EXT=.acc.evt
+#DT_FILE_EXT=.root
+#PS_FILE_EXT=.ps.root
+#PSACC_FILE_EXT=.acc.root
 # amplitude file format
 AMP_FILE_EXT=.amp
 #AMP_FILE_EXT=.root
@@ -79,14 +78,14 @@ INT_FILE_NAME=norm.int
 # if SGE is used as batch system, job arrays can be conveniently used
 # to run this script; MASS_BIN_INDEX is set to SGE_TASK_ID
 # define queue
-#$ -l medium=TRUE,h_vmem=200M
+##$ -l medium=TRUE,h_vmem=200M
 # path for stdout files
-#$ -o /afs/e18.ph.tum.de/user/bgrube/compass/pwa/4PionMuoProdPwa/logs
+##$ -o /afs/e18.ph.tum.de/user/bgrube/compass/pwa/4PionMuoProdPwa/logs
 # merge sterr into stdout
 #$ -j yes
 # send mail when job is aborted, rescheduled, or suspended
-#$ -M bgrube
-#$ -m as
+##$ -M bgrube
+##$ -m as
 # enable path aliasing
 #$ -cwd
 # export all environment variables to job
@@ -108,7 +107,6 @@ options:
   -${KEY_PATTERN_OPT} '<PATTERN>'    glob pattern that defines set of key files to be processed
   -${MASS_BINS_DIR_OPT} <DIR>          path to directory with mass bins
   -${PDG_TABLE_OPT} <FILE>         path to PDG table file
-  -${SYM_LIST_OPT} <FILE>         path to list with amplitudes to symmetrize
   -${HELP_OPT}                display this help and exit
 EOF
 echo
@@ -128,7 +126,6 @@ parameter values:
     glob pattern that defines set of key files ... -${KEY_PATTERN_OPT} '${KEY_PATTERN}'
     path to directory with mass bins ............. -${MASS_BINS_DIR_OPT} '${MASS_BINS_DIR}'
     path to PDG table file ....................... -${PDG_TABLE_OPT} '${PDG_TABLE}'
-    path to list with amplitudes to symmetrize ... -${SYM_LIST_OPT} '${SYM_LIST}'
 
     mass bin index ............................... ${MASS_BIN_INDEX}
 EOF
@@ -161,63 +158,6 @@ function runCalcAmplitudes {
 }
 
 
-function runSymmetrization {
-    local _AMP_DIR="${1}"
-    local _SYM_LIST="${2}"
-    local _SYM_DIR="${_AMP_DIR}/${SYM_AMP_DIR_NAME}"
-    if [[ ! -d "${_SYM_DIR}" ]]
-    then
-				mkdir --parents --verbose "${_SYM_DIR}"
-    fi
-    echo
-    echo ">>> info: linking all amplitude files in '${_AMP_DIR}' to '${_SYM_DIR}'"
-    local _CURRENT_DIR=$(pwd)
-    cd ${_SYM_DIR}
-    for _AMP in ${_AMP_DIR}/*${AMP_FILE_EXT}
-    do
-				ln --symbolic --verbose "../$(basename ${_AMP})"
-    done
-    cd ${_CURRENT_DIR}
-    if [[ -n "${_SYM_LIST}" && -s "${_SYM_LIST}" ]]
-    then
-				echo
-				echo ">>> info: symmetrizing amplitudes in '${_AMP_DIR}' using '${_SYM_LIST}'"
-				echo "    writing results to '${_SYM_DIR}'"
-	# read list into arrays
-				IFS_OLD=${IFS}
-				IFS=$'\n'
-				local _LINES=( $(cat ${_SYM_LIST}) )
-				IFS=${IFS_OLD}
-				local _AMPS1=()       # array of input amplitude 1 names
-				local _AMPS2=()       # array of input amplitude 2 names
-				local _SYM_AMPS=()    # array of output amplitude names
-				local _PHASES=()      # array of relative phases
-				local _AMP_RATIOS=()  # array of amplitude ratios
-				for (( IDX=0; IDX<"${#_LINES[@]}"; IDX+=5 ))
-				do
-						_AMPS1=( ${_AMPS1[@]} ${_LINES[IDX]} )
-						_AMPS2=( ${_AMPS2[@]} ${_LINES[IDX+1]} )
-						_SYM_AMPS=( ${_SYM_AMPS[@]} ${_LINES[IDX+2]} )
-						_PHASES=( ${_PHASES[@]} ${_LINES[IDX+3]} )
-						_AMP_RATIOS=( ${_AMP_RATIOS[@]} ${_LINES[IDX+4]} )
-				done
-				#!!! works only with .amp files
-				_CURRENT_DIR=$(pwd)
-				cd "${_SYM_DIR}"
-				for (( IDX=0; IDX<"${#_SYM_AMPS[@]}"; IDX++ ))
-				do
-						local _CMD="${ROOTPWA_BIN}/addamp ${_AMPS1[IDX]} ${_AMPS2[IDX]} ${_SYM_AMPS[IDX]} ${_PHASES[IDX]} ${_AMP_RATIOS[IDX]}"
-						echo "${_CMD}"
-            eval ${_CMD}
-						rm ${_AMPS1[IDX]} ${_AMPS2[IDX]}
-				done
-				cd ${_CURRENT_DIR}
-    fi
-    # deference third argument
-    eval "${3}=${_SYM_DIR}"
-}
-
-
 function runInt {
     local _AMP_DIR="${1}"
     echo
@@ -242,18 +182,6 @@ function runCalcIntegrals {
 }
 
 
-function linkIntegralFiles {
-    local _SYM_DIR="${1}"
-		_CURRENT_DIR=$(pwd)
-		cd "${_SYM_DIR}"
-		if [[ -f ../${INT_FILE_NAME} ]]
-		then
-				ln -s ../${INT_FILE_NAME} ${INT_FILE_NAME}
-		fi
-		cd ${_CURRENT_DIR}
-}
-
-
 function runPhaseSpaceGen {
     local _NMB_EVENTS=50000
     local _SEED=1234567890
@@ -275,7 +203,6 @@ function runPhaseSpaceGen {
 KEY_PATTERN_OPT="k"
 MASS_BINS_DIR_OPT="m"
 PDG_TABLE_OPT="p"
-SYM_LIST_OPT="s"
 HELP_OPT="h"
 # use default values, if variables are not defined in environment
 if [[ -z "${KEY_PATTERN}" && ! -z "${ROOTPWA_KEYS_DIR}" ]]
@@ -299,10 +226,6 @@ if [[ -z "${PDG_TABLE}" ]]
 then
     PDG_TABLE="${ROOTPWA}/amplitude/particleDataTable.txt"
 fi
-if [[ -z "${SYM_LIST}" ]]
-then
-    SYM_LIST=""
-fi
 # parse command line options
 while getopts "${KEY_PATTERN_OPT}:${MASS_BINS_DIR_OPT}:${PDG_TABLE_OPT}:${HELP_OPT}" OPTION
 do
@@ -310,7 +233,6 @@ do
         ${KEY_PATTERN_OPT})   KEY_PATTERN=${OPTARG};;
         ${MASS_BINS_DIR_OPT}) MASS_BINS_DIR=${OPTARG};;
         ${PDG_TABLE_OPT})     PDG_TABLE=${OPTARG};;
-        ${SYM_LIST_OPT})      SYM_LIST=${OPTARG};;
         ${HELP_OPT})          usage 0;;
     esac
 done
@@ -334,7 +256,6 @@ fi
 KEY_PATTERN=$(readlink --canonicalize-missing "${KEY_PATTERN}")
 MASS_BINS_DIR=$(readlink --canonicalize-missing "${MASS_BINS_DIR}")
 PDG_TABLE=$(readlink --canonicalize-missing "${PDG_TABLE}")
-SYM_LIST=$(readlink --canonicalize-missing "${SYM_LIST}")
 
 
 echo ">>> info: ${0} started on $(date)"
@@ -415,8 +336,6 @@ then
 fi
 # generate amplitude files for real data
 runCalcAmplitudes "${DT_FILE}" "${DT_AMP_DIR}"
-# perform symmetrization for real data
-runSymmetrization "${DT_AMP_DIR}" "${SYM_LIST}" DUMMY
 echo
 
 
@@ -436,12 +355,9 @@ then
 fi
 # generate amplitude files for phase-space MC data
 runCalcAmplitudes "${PS_FILE}" "${PS_AMP_DIR}"
-# perform symmetrization for phase-space MC data
-runSymmetrization "${PS_AMP_DIR}" "${SYM_LIST}" PS_SYM_AMP_DIR
 # perform integration for phase-space MC data
 #runInt "${PS_AMP_DIR}"
 runCalcIntegrals "${PS_AMP_DIR}"
-linkIntegralFiles "${PS_SYM_AMP_DIR}"
 echo
 
 
@@ -459,12 +375,9 @@ else
 		fi
     # generate amplitude files for accepted phase-space MC data
 		runCalcAmplitudes "${PSACC_FILE}" "${PSACC_AMP_DIR}"
-    # perform symmetrization for MC data
-		runSymmetrization "${PSACC_AMP_DIR}" "${SYM_LIST}" PSACC_SYM_AMP_DIR
     # perform integration for accepted phase-space MC data
     #runInt "${PSACC_AMP_DIR}"
 		runCalcIntegrals "${PSACC_AMP_DIR}"
-		linkIntegralFiles "${PSACC_SYM_AMP_DIR}"
 fi
 echo
 
