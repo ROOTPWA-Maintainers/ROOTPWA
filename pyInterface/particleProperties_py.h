@@ -5,6 +5,10 @@
 
 #include "particleProperties.h"
 
-void exportParticleProperties();
+namespace rpwa {
+	namespace py {
+		void exportParticleProperties();
+	}
+}
 
 #endif

@@ -7,6 +7,10 @@
 
 #include "particleDataTable.h"
 
-void exportParticleDataTable();
+namespace rpwa {
+	namespace py {
+		void exportParticleDataTable();
+	}
+}
 
 #endif

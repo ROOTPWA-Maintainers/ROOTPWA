@@ -8,6 +8,14 @@
 #include<utility>
 #include<vector>
 
-void exportStdPairs();
+namespace rpwa {
+	namespace py {
+
+		void exportStdPairs();
+
+		std::set<std::string> converBPObjectToStrSet(boost::python::object list);
+
+	}
+}
 
 #endif

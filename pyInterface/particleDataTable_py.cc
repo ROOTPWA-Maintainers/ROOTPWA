@@ -2,7 +2,7 @@
 
 namespace bp = boost::python;
 
-void exportParticleDataTable()
+void rpwa::py::exportParticleDataTable()
 {
 
 	bp::class_< rpwa::particleDataTable, boost::noncopyable >( "particleDataTable", bp::no_init )    
