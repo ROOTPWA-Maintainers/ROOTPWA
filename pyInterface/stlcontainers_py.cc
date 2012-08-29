@@ -13,6 +13,12 @@ void rpwa::py::exportStdPairs() {
 
 };
 
+void rpwa::py::exportParticlePropertiesVector() {
+	bp::class_<std::vector<rpwa::particleProperties> >("__vector_particleProperties")
+		.def(
+			bp::vector_indexing_suite<std::vector<rpwa::particleProperties> >()
+		);
+};
 
 std::set<std::string> rpwa::py::converBPObjectToStrSet(bp::object list) {
 

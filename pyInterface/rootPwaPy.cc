@@ -11,6 +11,7 @@ namespace bp = boost::python;
 BOOST_PYTHON_MODULE(libRootPwaPy){
 
 	rpwa::py::exportStdPairs();
+	rpwa::py::exportParticlePropertiesVector();
 	rpwa::py::exportParticleProperties();
 	rpwa::py::exportParticleDataTable();
 

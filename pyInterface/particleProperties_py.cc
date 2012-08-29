@@ -25,7 +25,7 @@ namespace {
 			: rpwa::particleProperties(partName, isospin, G, J, P, C),
 			  bp::wrapper<rpwa::particleProperties>() { };
 
-		bool equal__(const bp::object rhsObj) {
+		bool equal__(const bp::object& rhsObj) {
 			bp::extract<particleProperties> get_partProp(rhsObj);
 			if(get_partProp.check()) {
 				return (*(this) == get_partProp());
@@ -39,17 +39,17 @@ namespace {
 			return (*(this) == rhsPair);
 		}
 
-		bool nequal__(const bp::object rhsObj) {
+		bool nequal__(const bp::object& rhsObj) {
 			return not (*(this) == rhsObj);
 		}
 
-		bool hasDecay(bp::object pyDaughters) const {
+		bool hasDecay(bp::object& pyDaughters) const {
 			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
 			std::set<std::string> daughters = rpwa::py::converBPObjectToStrSet(pyDaughters);
 			return rpwa::particleProperties::hasDecay(daughters);
 		}
 
-		void addDecayMode(bp::object pyDaughters) {
+		void addDecayMode(bp::object& pyDaughters) {
 			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
 			std::set<std::string> daughters = rpwa::py::converBPObjectToStrSet(pyDaughters);
 			rpwa::particleProperties::addDecayMode(daughters);
@@ -66,7 +66,7 @@ namespace {
 			return rpwa::particleProperties::qnSummary();
 		}
 
-		bool read__(bp::object pyLine) {
+		bool read__(bp::object& pyLine) {
 			std::string strLine = bp::extract<std::string>(pyLine);
 			std::istringstream sstrLine(strLine, std::istringstream::in);
 			return rpwa::particleProperties::read(sstrLine);
@@ -123,9 +123,9 @@ void rpwa::py::exportParticleProperties()
 		.add_property("isSpinExotic", &particlePropertiesWrapper::isSpinExotic)
 
 		.def(
-				"fillFromDataTable"
-				, &particlePropertiesWrapper::fillFromDataTable
-				, (bp::arg("name"), bp::arg("warnIfNotExistent")=(bool const)(true))
+			"fillFromDataTable"
+			, &particlePropertiesWrapper::fillFromDataTable
+			, (bp::arg("name"), bp::arg("warnIfNotExistent")=(bool const)(true))
 		)
 
 		.add_property("nDecays", &particlePropertiesWrapper::nDecays)

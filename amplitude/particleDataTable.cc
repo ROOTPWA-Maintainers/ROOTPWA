@@ -85,8 +85,8 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
                                    const double              minMassWidthFactor,
                                    const vector<string>&     whiteList,
                                    const vector<string>&     blackList,
-				   const set<string>&        decayproducts,
-				   const bool& forceDecayCheck)
+                                   const set<string>&        decayProducts,
+                                   const bool&               forceDecayCheck)
 {
 	const pair<particleProperties, string> selector(prototype, sel);
 	vector<const particleProperties*>      matchingEntries;
@@ -95,9 +95,10 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 			continue;
 		// limit isobar mass, if minMass > 0
 		if ((minMass > 0) and (i->second.mass() + minMassWidthFactor * i->second.width() < minMass))
-		  { if(_debug)printDebug << i->second.name() << " not in mass window " << flush;
+		{ 
+			if(_debug)printDebug << i->second.name() << " not in mass window " << flush;
 			continue;
-		  }
+		}
 		// apply white list
 		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
 		for (size_t j = 0; j < whiteList.size(); ++j)
@@ -105,10 +106,10 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				whiteListMatch = true;
 				break;
 			}
-		if (not whiteListMatch)
-		  { if(_debug)printDebug << i->second.name() << " not in whitelist " << endl;
+		if (not whiteListMatch){
+			if(_debug)printDebug << i->second.name() << " not in whitelist " << endl;
 			continue;
-		  }
+		}
 		// apply black list
 		bool blackListMatch = false;
 		for (size_t j = 0; j < blackList.size(); ++j)
@@ -116,31 +117,31 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				blackListMatch = true;
 				break;
 			}
-		if (blackListMatch)
-		  { if(_debug)printDebug << i->second.name() << " on blacklist " << endl;
+		if (blackListMatch) {
+			if(_debug)printDebug << i->second.name() << " on blacklist " << endl;
 			continue;
-		  }
+		}
 		// apply list of decays
 		bool decaymatch = true;
 		// check if there are decays defined at all
-		if(decayproducts.size()>0 && i->second.nDecays()>0){
-		  if(!i->second.hasDecay(decayproducts))decaymatch=false;
+		if(decayProducts.size()>0 && i->second.nDecays()>0){
+			if(!i->second.hasDecay(decayProducts))decaymatch=false;
 		}
 		else if(forceDecayCheck)decaymatch = false;
 
-		if (!decaymatch)
-		  { if(_debug){
-		      printDebug << i->second.name() << " does not have a decay into ";
-		      std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
-		      cout << endl;
-		    }
-		     continue;
-		  }
+		if (!decaymatch) {
+			if(_debug){
+				printDebug << i->second.name() << " does not have a decay into ";
+				std::copy(decayProducts.begin(), decayProducts.end(), std::ostream_iterator<string>(std::cout, " "));
+				cout << endl;
+			}
+			continue;
+		}
 
 
 		if (_debug) {
 			printDebug << "found entry " << i->second.name() << " matching " << prototype
-			           << " and '" << sel << "'" << flush;
+				<< " and '" << sel << "'" << flush;
 			if (minMass > 0)
 				cout << " with mass > " << minMass - minMassWidthFactor * i->second.width() << " GeV";
 			if (whiteList.size() > 0)
@@ -148,9 +149,9 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 			if (blackList.size() > 0)
 				cout << " ; not in black list";
 			if(decaymatch)
-			  cout << " ; with allowed decay " ;
-			 std::copy(decayproducts.begin(), decayproducts.end(), std::ostream_iterator<string>(std::cout, " "));
-		         cout << endl;
+				cout << " ; with allowed decay " ;
+			std::copy(decayProducts.begin(), decayProducts.end(), std::ostream_iterator<string>(std::cout, " "));
+			cout << endl;
 		}      
 		matchingEntries.push_back(&(i->second));
 	}
