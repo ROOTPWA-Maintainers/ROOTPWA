@@ -25,6 +25,24 @@ namespace {
 			: rpwa::particleProperties(partName, isospin, G, J, P, C),
 			  bp::wrapper<rpwa::particleProperties>() { };
 
+		bool equal__(const bp::object rhsObj) {
+			bp::extract<particleProperties> get_partProp(rhsObj);
+			if(get_partProp.check()) {
+				return (*(this) == get_partProp());
+			}
+			bp::tuple rhs = bp::extract<bp::tuple>(rhsObj);
+			rpwa::particleProperties rhsProp = bp::extract<rpwa::particleProperties>(rhs[0]);
+			std::string rhsString = bp::extract<std::string>(rhs[1]);
+			std::pair<rpwa::particleProperties, std::string> rhsPair;
+			rhsPair.first = rhsProp;
+			rhsPair.second = rhsString;
+			return (*(this) == rhsPair);
+		}
+
+		bool nequal__(const bp::object rhsObj) {
+			return not (*(this) == rhsObj);
+		}
+
 		bool hasDecay(bp::object pyDaughters) const {
 			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
 			std::set<std::string> daughters = rpwa::py::converBPObjectToStrSet(pyDaughters);
@@ -42,17 +60,23 @@ namespace {
 				return qnSummary();
 			}
 			return rpwa::particleProperties::qnSummary();
-		};
+		}
 
 		std::string default_qnSummary() const {
 			return rpwa::particleProperties::qnSummary();
-		};
+		}
 
-		bool read(bp::object pyLine) {
+		bool read__(bp::object pyLine) {
 			std::string strLine = bp::extract<std::string>(pyLine);
 			std::istringstream sstrLine(strLine, std::istringstream::in);
 			return rpwa::particleProperties::read(sstrLine);
-		};
+		}
+
+		static bp::tuple chargeFromName__(const std::string& name) {
+			int charge;
+			std::string new_name = rpwa::particleProperties::chargeFromName(name, charge);
+			return bp::make_tuple(new_name, charge);
+		}
 
 	};
 
@@ -66,10 +90,9 @@ void rpwa::py::exportParticleProperties()
 		.def(bp::init<particlePropertiesWrapper>())
 		.def(bp::init<std::string, int, int, int, int, int>())
 
-		.def(bp::self == bp::self)
-		.def(bp::self != bp::self)
-//		.def(bp::self == bp::other< std::pair< particlePropertiesWrapper, std::string > >())
-//		.def(bp::self != bp::other< std::pair< particlePropertiesWrapper, std::string > >())
+		.def("__eq__", &particlePropertiesWrapper::equal__)
+		.def("__neq__", &particlePropertiesWrapper::nequal__)
+
 		.def(bp::self_ns::str(bp::self))
 
 		.add_property("name", &particlePropertiesWrapper::name, &particlePropertiesWrapper::setName)
@@ -119,12 +142,14 @@ void rpwa::py::exportParticleProperties()
 
 		.add_property("bareNameLaTeX", &particlePropertiesWrapper::bareNameLaTeX)
 
-		.def("read", &particlePropertiesWrapper::read)
+		.def("read", &particlePropertiesWrapper::read__)
 
 		.def("nameWithCharge", &particlePropertiesWrapper::nameWithCharge)
 		.staticmethod("nameWithCharge")
-/*		.def("chargeFromName", &particlePropertiesWrapper::chargeFromName)
-		.staticmethod("chargeFromName")*/
+
+		.def("chargeFromName", &particlePropertiesWrapper::chargeFromName__)
+		.staticmethod("chargeFromName")
+
 		.def("stripChargeFromName", &particlePropertiesWrapper::stripChargeFromName)
 		.staticmethod("stripChargeFromName")
 

@@ -2,50 +2,67 @@
 
 namespace bp = boost::python;
 
+namespace {
+
+	struct particleDataTableWrapper : public rpwa::particleDataTable {
+
+		static bool read__(bp::object pyLine){
+			std::string strLine = bp::extract<std::string>(pyLine);
+			std::istringstream sstrLine(strLine, std::istringstream::in);
+			return rpwa::particleDataTable::read(sstrLine);
+		}
+
+	};
+
+}
+
 void rpwa::py::exportParticleDataTable()
 {
 
-	bp::class_< rpwa::particleDataTable, boost::noncopyable >( "particleDataTable", bp::no_init )    
+	bp::class_< particleDataTableWrapper, boost::noncopyable >( "particleDataTable", bp::no_init )    
 
 		.def( bp::self_ns::str( bp::self ) )
 
 		.add_static_property(
 				"instance"
-				, bp::make_function( &rpwa::particleDataTable::instance,  bp::return_value_policy<bp::reference_existing_object>() )
+				, bp::make_function( &particleDataTableWrapper::instance,  bp::return_value_policy<bp::reference_existing_object>() )
 		)
 
-		.def("isInTable",&rpwa::particleDataTable::isInTable)
+		.def("isInTable",&particleDataTableWrapper::isInTable)
 		.staticmethod("isInTable") 
 
 		.def( 
-				"entry", &::rpwa::particleDataTable::entry
+				"entry", &particleDataTableWrapper::entry
 				, ( bp::arg("partName"), bp::arg("warnIfNotExistent")=(bool const)(true) )
 				, bp::return_value_policy<bp::reference_existing_object>()
 		)
 		.staticmethod( "entry" )    
 
-		.def("addEntry", &rpwa::particleDataTable::addEntry)
+		.def("addEntry", &particleDataTableWrapper::addEntry)
 		.staticmethod("addEntry")    
-		.def("nmbEntries", &rpwa::particleDataTable::nmbEntries) 
+
+//		.def("entriesMatching")
+
+		.def("nmbEntries", &particleDataTableWrapper::nmbEntries) 
 		.staticmethod("nmbEntries")
 
-		.def("__iter__", bp::iterator< rpwa::particleDataTable >())
+		.def("__iter__", bp::iterator< particleDataTableWrapper >())
 
 		.def( 
 				"readFile"
-				, &rpwa::particleDataTable::readFile
+				, &particleDataTableWrapper::readFile
 				, ( bp::arg("fileName")="./particleDataTable.txt" )
 		)
 		.staticmethod("readFile")
-/*		.def("read", &rpwa::particleDataTable::read)
+		.def("read", &particleDataTableWrapper::read__)
 		.staticmethod("read")
-*/		.def("readDecayFile", &rpwa::particleDataTable::readDecayFile)
+		.def("readDecayFile", &particleDataTableWrapper::readDecayFile)
 		.staticmethod("readDecayFile")
 
-		.def("clear", &rpwa::particleDataTable::clear)
+		.def("clear", &particleDataTableWrapper::clear)
 		.staticmethod("clear")    
 
-		.add_static_property("debug", &rpwa::particleDataTable::debug, &rpwa::particleDataTable::setDebug);
+		.add_static_property("debug", &particleDataTableWrapper::debug, &particleDataTableWrapper::setDebug);
 
 }
 
