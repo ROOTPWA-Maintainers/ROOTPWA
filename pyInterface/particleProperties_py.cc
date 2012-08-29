@@ -31,6 +31,12 @@ namespace {
 			return rpwa::particleProperties::hasDecay(daughters);
 		}
 
+		void addDecayMode(bp::object pyDaughters) {
+			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
+			std::set<std::string> daughters = rpwa::py::converBPObjectToStrSet(pyDaughters);
+			rpwa::particleProperties::addDecayMode(daughters);
+		}
+
 		std::string qnSummary() const {
 			if(bp::override qnSummary = this->get_override("qnSummary")) {
 				return qnSummary();
@@ -40,6 +46,12 @@ namespace {
 
 		std::string default_qnSummary() const {
 			return rpwa::particleProperties::qnSummary();
+		};
+
+		bool read(bp::object pyLine) {
+			std::string strLine = bp::extract<std::string>(pyLine);
+			std::istringstream sstrLine(strLine, std::istringstream::in);
+			return rpwa::particleProperties::read(sstrLine);
 		};
 
 	};
@@ -95,7 +107,7 @@ void rpwa::py::exportParticleProperties()
 
 		.add_property("nDecays", &particlePropertiesWrapper::nDecays)
 		.def("hasDecay", &particlePropertiesWrapper::hasDecay)
-//		.def("addDecayMode", &particlePropertiesWrapper::addDecayMode)
+		.def("addDecayMode", &particlePropertiesWrapper::addDecayMode)
 
 		.def("setSCB", &particlePropertiesWrapper::setSCB)
 		.def("setIGJPC", &particlePropertiesWrapper::setIGJPC)
@@ -107,7 +119,7 @@ void rpwa::py::exportParticleProperties()
 
 		.add_property("bareNameLaTeX", &particlePropertiesWrapper::bareNameLaTeX)
 
-//		.def("read", &particlePropertiesWrapper::read)
+		.def("read", &particlePropertiesWrapper::read)
 
 		.def("nameWithCharge", &particlePropertiesWrapper::nameWithCharge)
 		.staticmethod("nameWithCharge")

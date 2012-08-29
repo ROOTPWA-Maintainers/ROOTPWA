@@ -14,7 +14,7 @@ void rpwa::py::exportStdPairs() {
 };
 
 
-std::set<std::string> rpwa::py::converBPObjectToStrSet(boost::python::object list) {
+std::set<std::string> rpwa::py::converBPObjectToStrSet(bp::object list) {
 
 			bp::list pyList = bp::extract<bp::list>(list);
 			std::set<std::string> set;
