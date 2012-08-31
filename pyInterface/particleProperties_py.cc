@@ -138,7 +138,7 @@ void rpwa::py::exportParticleProperties()
 
 		.add_property("antiPartProperties", &particlePropertiesWrapper::antiPartProperties)
 
-		.add_property("qnSummary", &particlePropertiesWrapper::qnSummary, &particlePropertiesWrapper::default_qnSummary)
+		.def("qnSummary", &particlePropertiesWrapper::qnSummary, &particlePropertiesWrapper::default_qnSummary)
 
 		.add_property("bareNameLaTeX", &particlePropertiesWrapper::bareNameLaTeX)
 
