@@ -87,7 +87,7 @@ void rpwa::py::exportParticleProperties()
 
 	bp::class_< particlePropertiesWrapper >( "particleProperties" )
 
-		.def(bp::init<particlePropertiesWrapper>())
+		.def(bp::init<particlePropertiesWrapper&>())
 		.def(bp::init<std::string, int, int, int, int, int>())
 
 		.def("__eq__", &particlePropertiesWrapper::equal__)
