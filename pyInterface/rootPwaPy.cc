@@ -2,7 +2,7 @@
 
 #include "boost/python/suite/indexing/vector_indexing_suite.hpp"
 
-#include "stlcontainers_py.h"
+#include "stlContainers_py.h"
 #include "rootConverters_py.h"
 #include "particleProperties_py.h"
 #include "particleDataTable_py.h"
