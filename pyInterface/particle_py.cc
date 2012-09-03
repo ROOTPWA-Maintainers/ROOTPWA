@@ -61,6 +61,24 @@ namespace {
 			: rpwa::particle(partName, isospin, G, J, P, C, spinProj, refl, index),
 			  bp::wrapper<rpwa::particle>() { };
 
+		bool equal__(const bp::object& rhsObj) {
+			bp::extract<particleProperties> get_partProp(rhsObj);
+			if(get_partProp.check()) {
+				return (*(this) == get_partProp());
+			}
+			bp::tuple rhs = bp::extract<bp::tuple>(rhsObj);
+			rpwa::particleProperties rhsProp = bp::extract<rpwa::particleProperties>(rhs[0]);
+			std::string rhsString = bp::extract<std::string>(rhs[1]);
+			std::pair<rpwa::particleProperties, std::string> rhsPair;
+			rhsPair.first = rhsProp;
+			rhsPair.second = rhsString;
+			return (*(this) == rhsPair);
+		}
+
+		bool nequal__(const bp::object& rhsObj) {
+			return not (*(this) == rhsObj);
+		}
+
 		bool read__(bp::object& pyLine) {
 			std::string strLine = bp::extract<std::string>(pyLine);
 			std::istringstream sstrLine(strLine, std::istringstream::in);
@@ -143,6 +161,9 @@ void rpwa::py::exportParticle() {
 		.def(bp::init<std::string, int, int, int, int, int, int, bp::optional<int, int> >())
 
 		.def(bp::self_ns::str(bp::self))
+
+		.def("__eq__", &particleWrapper::equal__)
+		.def("__neq__", &particleWrapper::nequal__)
 
 		.def("clone", &particleWrapper::clone)
 

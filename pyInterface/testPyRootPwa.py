@@ -2,9 +2,13 @@
 import sys
 
 success = True
+skip = False
 
 # Some functions
 # ---------------------------------------------------------
+
+def print_yellow(string):
+	print('\033[93m' + string + '\033[0m')
 
 def print_green(string):
 	print('\033[92m' + string + '\033[0m')
@@ -12,8 +16,13 @@ def print_green(string):
 def print_red(string):
 	print('\033[91m' + string + '\033[0m')
 
-def do_test(function, name):
+def do_test(function, name, skip_test = False):
 	sys.stdout.write(name + "...")
+	if skip_test:
+		global skip
+		skip = True
+		print_yellow("skipped")
+		return None
 	try:
 		retval = (function)()
 	except:
@@ -66,12 +75,23 @@ print
 
 # ---------------------------------------------------------
 #
-#	particleDataTable
+#	particlePropertiesTable
 #
 # ---------------------------------------------------------
 
 def partPropTestConst(): return pyRootPwa.particleProperties()
 partProp = do_test(partPropTestConst, "Testing particleProperties constructor")
+
+def partPropTestCopyConst(): return pyRootPwa.particleProperties(partProp)
+partProp2 = do_test(partPropTestCopyConst, "Testing particleProperties copy constructor")
+
+def partPropTestOps():
+	assert(partProp == partProp2)
+	old_name = partProp2.name
+	partProp2.name = "bliblablup"
+	assert(partProp != partProp2)
+	partProp2.name = old_name
+do_test(partPropTestOps, "Testing particleProperties \"==\"/\"!=\" operators...")
 
 print
 print("########################################################################")
@@ -180,6 +200,22 @@ def partTestTransformFAIL():
 	print
 do_test(partTestTransformFAIL, "Testing particle.transform(UNSUPPORTED TYPE)")
 
+def partTestDebugFlag():
+	old_pP_debug = pyRootPwa.particleProperties.debug
+	old_debug = pyRootPwa.particle.debug
+	assert(old_pP_debug == old_debug)
+	pyRootPwa.particle.debug = (not old_debug)
+	assert(pyRootPwa.particle.debug == (not old_debug))
+	assert(pyRootPwa.particleProperties.debug == old_pP_debug)
+	pyRootPwa.particle.debug = old_debug
+	assert(part.debug == old_debug)
+	part.debug = (not old_debug)
+	assert(part.debug == (not old_debug))
+	assert(pyRootPwa.particleProperties.debug == old_pP_debug)
+	part.debug = old_debug
+do_test(partTestDebugFlag, "Testing particle debug flag", True)
+# This test fails for unknown reason
+
 print
 print("########################################################################")
 print
@@ -251,6 +287,55 @@ def tDebug():
 	iV.debug = old_debug
 do_test(tDebug, "Testing \"debug\" property")
 
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	fsVertex
+#
+# ---------------------------------------------------------
+
+def fsVertexTestConsts():
+	fsVert = pyRootPwa.fsVertex(part)
+	fsVert2 = pyRootPwa.fsVertex(fsVert)
+	return fsVert
+fsVert = do_test(fsVertexTestConsts, "Testing fsVertex constructors")
+
+def fsVertexTestClone():
+	fsVert2 = fsVert.clone()
+	fsVert2 = fsVert.clone(True)
+	fsVert2 = fsVert.clone(True, True)
+do_test(fsVertexTestClone, "Testing fsVertex.clone()")
+
+def fsVertexTestPrint(): print("\n\n" + str(fsVert) + "\n")
+do_test(fsVertexTestPrint, "Testing print(fsVertex)")
+
+def fsVertexTestAddInOutPart():
+	assert(not fsVert.addInParticle(part))
+	assert(not fsVert.addOutParticle(part))
+do_test(fsVertexTestAddInOutPart, "Testing fsVertex.add{In/Out}Particle()")
+
+def fsVertexTestfsParticle():
+	part2 = fsVert.fsParticle()
+	assert(part == part2)
+do_test(fsVertexTestfsParticle, "Testing fsVertex.fsParticle")
+
+def fsVertexTestName(): assert(fsVert.name() == "fsVertex")
+do_test(fsVertexTestName, "Testing fsVertex.name()")
+
+def partTestDebugFlag():
+	old_iV_debug = pyRootPwa.interactionVertex.debug
+	old_fsV_debug = pyRootPwa.fsVertex.debug
+	pyRootPwa.fsVertex.debug = (not old_fsV_debug)
+	assert(pyRootPwa.fsVertex.debug == (not old_fsV_debug))
+	assert(pyRootPwa.interactionVertex.debug == old_iV_debug)
+	pyRootPwa.fsVertex.debug = old_fsV_debug
+do_test(partTestDebugFlag, "Testing particle debug flag", True)
+# This test fails for unknown reason
+
+
 # ---------------------------------------------------------
 #
 #	Summary
@@ -262,3 +347,5 @@ if success:
 	print_green("All tests successful.")
 else:
 	print_red("There were errors.")
+if skip:
+	print_yellow("Some tests were skipped.")

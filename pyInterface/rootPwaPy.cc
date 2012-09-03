@@ -8,6 +8,7 @@
 #include "particleDataTable_py.h"
 #include "particle_py.h"
 #include "interactionVertex_py.h"
+#include "fsVertex_py.h"
 
 namespace bp = boost::python;
 
@@ -21,6 +22,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportParticleDataTable();
 	rpwa::py::exportParticle();
 	rpwa::py::exportInteractionVertex();
+	rpwa::py::exportFsVertex();
 
 }
 
