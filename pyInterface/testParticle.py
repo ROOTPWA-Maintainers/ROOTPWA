@@ -169,6 +169,61 @@ print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
 print
 
 print
+print("p.lzVec")
+print("---------------------------------")
+print
+
+lz = ROOT.TLorentzVector(1., 1., 1., 1.)
+p.lzVec.Print()
+p.lzVec = lz
+p.lzVec.Print()
+
+print
+print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+print
+
+print
+print("p.index")
+print("---------------------------------")
+print
+
+print(p.index)
+p.index = 12
+print(p.index)
+
+print
+print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+print
+
+print
+print("p.reflectivity")
+print("---------------------------------")
+print
+
+print(p.reflectivity)
+p.reflectivity = 1
+print(p.reflectivity)
+
+print
+print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+print
+
+print
+print("p.setProperties()")
+print("---------------------------------")
+print
+
+print(p.name)
+pP = pyRootPwa.particleProperties()
+pP.read("Kstar2(1430)+    Kstar2bar(1430)- 1.4256      0.0985      0            1   +1    0    0     0     4    +1     0")
+p.setProperties(pP)
+print(p.name)
+
+print
+print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+print
+
+print
 print("p.transform(TVector3)")
 print("---------------------------------")
 print

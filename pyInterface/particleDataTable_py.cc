@@ -1,4 +1,4 @@
-#include<particleDataTable_py.h>
+#include "particleDataTable_py.h"
 
 #include<particleProperties.h>
 
@@ -22,8 +22,8 @@ namespace {
 		                                  const bp::object& pyWhiteList = bp::object(),
 		                                  const bp::object& pyBlackList = bp::object(),
 		                                  const bp::object& pyDecayProducts = bp::object(),
-		                                  const bool& forceDecayCheck = true) {
-
+		                                  const bool& forceDecayCheck = true)
+		{
 			bp::list pyListWhiteList = bp::extract<bp::list>(pyWhiteList);
 			bp::list pyListBlackList = bp::extract<bp::list>(pyBlackList);
 			bp::list pyListDecayProducts = bp::extract<bp::list>(pyDecayProducts);
@@ -54,10 +54,7 @@ namespace {
 			}
 
 			bp::object iter = bp::iterator<std::vector<rpwa::particleProperties> >()(retVec);
-			bp::list retval = bp::list(iter);
-
-			return retval;
-
+			return bp::list(iter);
 		}
 
 	};

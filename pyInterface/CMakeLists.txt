@@ -63,6 +63,7 @@ set(SOURCES
 	particleProperties_py.cc
 	particleDataTable_py.cc
 	particle_py.cc
+	interactionVertex_py.cc
 	)
 
 

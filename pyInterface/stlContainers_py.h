@@ -15,6 +15,7 @@ namespace rpwa {
 		void exportStdPairs();
 
 		void exportParticlePropertiesVector();
+		void exportParticlePtrVector();
 
 		std::set<std::string> converBPObjectToStrSet(boost::python::object list);
 

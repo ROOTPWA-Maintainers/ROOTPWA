@@ -6,13 +6,9 @@
 #include<particle.h>
 
 namespace rpwa {
-
 	namespace py {
-
 		void exportParticle();
-
 	}
-
 }
 
 #endif

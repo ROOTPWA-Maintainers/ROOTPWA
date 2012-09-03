@@ -1,10 +1,10 @@
-#include<particle_py.h>
+#include "particle_py.h"
 
 #include<TLorentzRotation.h>
 #include<TPython.h>
 #include<TVector3.h>
 
-#include<rootConverters_py.h>
+#include "rootConverters_py.h"
 
 namespace bp = boost::python;
 
@@ -80,6 +80,20 @@ namespace {
 			}
 		};
 
+		PyObject* lzVec() const {
+			return rpwa::py::convertToPy<TLorentzVector>(particle::lzVec());
+		};
+
+		void setLzVec(PyObject* pyLzVec) {
+			TLorentzVector* newLzVec = rpwa::py::convertFromPy<TLorentzVector*>(pyLzVec);
+			if(newLzVec == NULL) {
+				printErr<<"Got invalid input when executing rpwa::particle::setLzVec()."<<std::endl;
+			} else {
+				rpwa::particle::setLzVec(*newLzVec);
+			}
+		};
+
+
 		PyObject* transform__(PyObject* pyTrafo) {
 			TVector3* trafoTV3 = rpwa::py::convertFromPy<TVector3*>(pyTrafo);
 			if(trafoTV3 != NULL) {
@@ -130,13 +144,15 @@ void rpwa::py::exportParticle() {
 
 		.def(bp::self_ns::str(bp::self))
 
-		.def(
-			"clone"
-			, &particleWrapper::clone
-		)
+		.def("clone", &particleWrapper::clone)
 
 		.add_property("spinProj", &particleWrapper::spinProj, &particleWrapper::setSpinProj)
 		.add_property("momentum", &particleWrapper::momentum, &particleWrapper::setMomentum)
+		.add_property("lzVec", &particleWrapper::lzVec, &particleWrapper::setLzVec)
+		.add_property("index", &particleWrapper::index, &particleWrapper::setIndex)
+		.add_property("reflectivity", &particleWrapper::reflectivity, &particleWrapper::setReflectivity)
+
+		.def("setProperties", &particleWrapper::setProperties)
 
 		.def("transform", &particleWrapper::transform__)
 

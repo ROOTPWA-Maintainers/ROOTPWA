@@ -1,5 +1,8 @@
-#include<stlContainers_py.h>
+#include "stlContainers_py.h"
 
+#include "boost/python/suite/indexing/vector_indexing_suite.hpp"
+
+#include<particle.h>
 #include<particleProperties.h>
 
 namespace bp = boost::python;
@@ -17,6 +20,13 @@ void rpwa::py::exportParticlePropertiesVector() {
 	bp::class_<std::vector<rpwa::particleProperties> >("__vector_particleProperties")
 		.def(
 			bp::vector_indexing_suite<std::vector<rpwa::particleProperties> >()
+		);
+};
+
+void rpwa::py::exportParticlePtrVector() {
+	bp::class_<std::vector<rpwa::particlePtr> >("__vector_particlePtr")
+		.def(
+			bp::vector_indexing_suite<std::vector<rpwa::particlePtr> >()
 		);
 };
 
