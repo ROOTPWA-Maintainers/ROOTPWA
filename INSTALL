@@ -69,6 +69,17 @@ Before you can build ROOTPWA you need to install the following software:
   nothing has to be build. Just install the respective package for
   your platform or, in case you do not have administrator privileges,
   extract the source archive to a location of your choice.
+  A more convenient way than downloading and extracting the tarball of
+  a certain Boost version is to clone the Boost git repository
+  &> git clone https://github.com/ryppl/boost-svn.git
+  and then to checkout the wanted release version via
+  &> cd boost-svn
+  &> git checkout Boost_1_50_0
+  This way one can easily switch to any existing Boost version and also
+  updates are much more convenient:
+  &> git checkout master
+  &> git pull
+  &> git checkout Boost_1_51_0
 
 
 * CUDA (optional)
