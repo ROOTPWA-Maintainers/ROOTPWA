@@ -325,16 +325,155 @@ do_test(fsVertexTestfsParticle, "Testing fsVertex.fsParticle")
 def fsVertexTestName(): assert(fsVert.name() == "fsVertex")
 do_test(fsVertexTestName, "Testing fsVertex.name()")
 
-def partTestDebugFlag():
+def fsVertexTestDebugFlag():
 	old_iV_debug = pyRootPwa.interactionVertex.debug
 	old_fsV_debug = pyRootPwa.fsVertex.debug
 	pyRootPwa.fsVertex.debug = (not old_fsV_debug)
 	assert(pyRootPwa.fsVertex.debug == (not old_fsV_debug))
 	assert(pyRootPwa.interactionVertex.debug == old_iV_debug)
 	pyRootPwa.fsVertex.debug = old_fsV_debug
-do_test(partTestDebugFlag, "Testing particle debug flag", True)
+do_test(fsVertexTestDebugFlag, "Testing particle debug flag", True)
 # This test fails for unknown reason
 
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	massDependence
+#
+# ---------------------------------------------------------
+
+def flatMassDepTestConst(): return pyRootPwa.flatMassDependence()
+flatMassDep = do_test(flatMassDepTestConst, "Testing flatMassDependence default constructor")
+
+def flatMassDepTestAmp():
+	pass
+do_test(flatMassDepTestAmp, "Testing flatMassDependence.amp()", True)
+# isobarDecayVertex is missing at the time of this being written.
+
+def flatMassDepTestName(): assert(flatMassDep.name() == "flatMassDependence")
+do_test(flatMassDepTestName, "Testing flatMassDependence.name()")
+
+def relBreitWigTestConst(): return pyRootPwa.relativisticBreitWigner()
+relBreitWig = do_test(relBreitWigTestConst, "Testing relativisticBreitWigner default constructor")
+
+def relBreitWigTestAmp():
+	pass
+do_test(relBreitWigTestAmp, "Testing relativisticBreitWigner.amp()", True)
+# isobarDecayVertex is missing at the time of this being written.
+
+def relBreitWigTestName(): assert(relBreitWig.name() == "relativisticBreitWigner")
+do_test(relBreitWigTestName, "Testing relativisticBreitWigner.name()")
+
+def SAuMoPenMTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonM()
+SAuMoPenM = do_test(SAuMoPenMTestConst, "Testing piPiSWaveAuMorganPenningtonM default constructor")
+
+def SAuMoPenMTestAmp():
+	pass
+do_test(SAuMoPenMTestAmp, "Testing piPiSWaveAuMorganPenningtonM.amp()", True)
+# isobarDecayVertex is missing at the time of this being written.
+
+def SAuMoPenMTestName(): assert(SAuMoPenM.name() == "piPiSWaveAuMorganPenningtonM")
+do_test(SAuMoPenMTestName, "Testing piPiSWaveAuMorganPenningtonM.name()")
+
+def SAuMoPenVesTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonVes()
+SAuMoPenVes = do_test(SAuMoPenVesTestConst, "Testing piPiSWaveAuMorganPenningtonVes default constructor")
+
+def SAuMoPenVesTestAmp():
+	pass
+do_test(SAuMoPenVesTestAmp, "Testing piPiSWaveAuMorganPenningtonVes.amp()", True)
+# isobarDecayVertex is missing at the time of this being written.
+
+def SAuMoPenVesTestName(): assert(SAuMoPenVes.name() == "piPiSWaveAuMorganPenningtonVes")
+do_test(SAuMoPenVesTestName, "Testing piPiSWaveAuMorganPenningtonVes.name()")
+
+def SAuMoPenKachaevTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonKachaev()
+SAuMoPenKachaev = do_test(SAuMoPenKachaevTestConst, "Testing piPiSWaveAuMorganPennigtonKachaev default constructor")
+
+def SAuMoPenKachaevTestAmp():
+	pass
+do_test(SAuMoPenKachaevTestAmp, "Testing piPiSWaveAuMorganPennigtonKachaev.amp()", True)
+# isobarDecayVertex is missing at the time of this being written.
+
+def SAuMoPenKachaevTestName(): assert(SAuMoPenKachaev.name() == "piPiSWaveAuMorganPenningtonKachaev")
+do_test(SAuMoPenKachaevTestName, "Testing piPiSWaveAuMorganPennigtonKachaev.name()")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	isobarDecayVertex
+#
+# ---------------------------------------------------------
+
+def isobDecVtxTestConstructor():
+	lz = pyRootPwa.ROOT.TLorentzVector(1., 1., 1., 1.)
+	part.lzVec = lz
+	return pyRootPwa.isobarDecayVertex(part, part, part)
+isobDecVtx = do_test(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
+
+def isobarDecVtxTestPrint(): print("\n\n" + str(isobDecVtx) + "\n")
+do_test(isobarDecVtxTestPrint, "Testing print(isobarDecayVertex)")
+
+def isobarDecVtxTestClone():
+	v2 = isobDecVtx.clone()
+	v2 = isobDecVtx.clone(True)
+	v2 = isobDecVtx.clone(True, True)
+do_test(isobarDecVtxTestClone, "Testing isobarDecayVertex.clone()")
+
+def isobarDecVtxTestAddInOutPart():
+	assert(not isobDecVtx.addInParticle(part))
+	assert(not isobDecVtx.addOutParticle(part))
+do_test(isobarDecVtxTestAddInOutPart, "Testing isobarDecayVertex.add{In/Out}Particle()")
+
+def isobarDecVtxTestParent(): assert(part == isobDecVtx.parent())
+do_test(isobarDecVtxTestParent, "Testing isobarDecayVertex.parent()")
+
+def isobarDecVtxTestDaughters():
+	assert(part == isobDecVtx.daughter1())
+	assert(part == isobDecVtx.daughter2())
+do_test(isobarDecVtxTestDaughters, "Testing isobarDecayVertex.daughter{1/2}()")
+
+def isobarDecVtxTestCalcLZ():
+	lz = isobDecVtx.calcParentLzVec()
+	lz2 = pyRootPwa.ROOT.TLorentzVector(2., 2., 2., 2.)
+	assert(lz == lz2)
+do_test(isobarDecVtxTestCalcLZ, "Testing isobarDecayVertex.calcParentLzVec()")
+
+def isobarDecVtxTestParC(): assert(isobDecVtx.calcParentCharge() == 2)
+do_test(isobarDecVtxTestParC, "Testing isobarDecayVertex.calcParentCharge()")
+
+def isobarDecVtxTestBNC(): assert(isobDecVtx.calcParentBaryonNmb() == 0)
+do_test(isobarDecVtxTestBNC, "Testing isobarDecayVertex.calcParentBaryonNmb()")
+
+def isobarDecVtxTestL():
+	old_L = isobDecVtx.L
+	isobDecVtx.L = 12
+	assert(isobDecVtx.L == 12)
+	isobDecVtx.L = old_L
+do_test(isobarDecVtxTestL, "Testing isobarDecayVertex.L")
+
+def isobarDecVtxTestS():
+	old_S = isobDecVtx.S
+	isobDecVtx.S = 12
+	assert(isobDecVtx.S == 12)
+	isobDecVtx.S = old_S
+do_test(isobarDecVtxTestS, "Testing isobarDecayVertex.S")
+
+def isobarDecVtxTestMDA(): assert(isobDecVtx.massDepAmplitude() == (1+0j))
+do_test(isobarDecVtxTestMDA, "Testing isobarDecayVertex.massDepAmplitude()")
+
+def isobarDecVtxTestMD():
+	mDname = isobDecVtx.massDependence().name() 
+do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()")
+
+print
+print("########################################################################")
+print
 
 # ---------------------------------------------------------
 #

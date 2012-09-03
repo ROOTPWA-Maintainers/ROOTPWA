@@ -66,7 +66,7 @@ void rpwa::py::exportFsVertex() {
 		.def(bp::init<rpwa::particlePtr>())
 		.def(bp::init<rpwa::fsVertex&>())
 
-		.def( bp::self_ns::str( bp::self ) )
+		.def(bp::self_ns::str(bp::self))
 
 		.def(
 			"clone"

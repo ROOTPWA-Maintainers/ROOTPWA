@@ -99,7 +99,7 @@ namespace {
 		};
 
 		PyObject* lzVec() const {
-			return rpwa::py::convertToPy<TLorentzVector>(particle::lzVec());
+			return rpwa::py::convertToPy<TLorentzVector>(rpwa::particle::lzVec());
 		};
 
 		void setLzVec(PyObject* pyLzVec) {

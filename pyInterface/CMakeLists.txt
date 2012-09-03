@@ -65,6 +65,8 @@ set(SOURCES
 	particle_py.cc
 	interactionVertex_py.cc
 	fsVertex_py.cc
+	massDependence_py.cc
+	isobarDecayVertex_py.cc
 	)
 
 

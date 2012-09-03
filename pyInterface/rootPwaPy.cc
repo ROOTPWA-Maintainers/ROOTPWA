@@ -9,6 +9,8 @@
 #include "particle_py.h"
 #include "interactionVertex_py.h"
 #include "fsVertex_py.h"
+#include "massDependence_py.h"
+#include "isobarDecayVertex_py.h"
 
 namespace bp = boost::python;
 
@@ -23,6 +25,8 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportParticle();
 	rpwa::py::exportInteractionVertex();
 	rpwa::py::exportFsVertex();
+	rpwa::py::exportMassDependence();
+	rpwa::py::exportIsobarDecayVertex();
 
 }
 
