@@ -105,16 +105,16 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
-if(NOT CMAKE_COMPILER_IS_GNUCXX)
+if(NOT CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
 	# use gcc instead of llvm compiler on MacOS 10.7
-	if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin" AND ${CMAKE_HOST_SYSTEM_VERSION} STREQUAL "11.3.0")
+	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "10.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "12.0.0")
 		message(STATUS "Detected MacOS 10.7: using gcc instead of llvm compiler.")
 		set(CMAKE_C_COMPILER gcc-4.2)
 		set(CMAKE_CXX_COMPILER g++-4.2)
 		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
 	endif()
 	# use gcc instead of llvm compiler on MacOS 10.8
-	if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin" AND ${CMAKE_HOST_SYSTEM_VERSION} STREQUAL "12.0.0")
+	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "11.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "13.0.0")
 		message(STATUS "Detected MacOS 10.8: using gcc instead of llvm compiler.")
 		set(CMAKE_C_COMPILER gcc)
 		set(CMAKE_CXX_COMPILER g++)
