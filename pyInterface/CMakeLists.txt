@@ -83,3 +83,10 @@ make_shared_library(
 	"${AMPLITUDE_LIBS}"
 	)
 
+# Link the library to have a directory to point PYTHONPATH to
+add_custom_command(
+	TARGET RootPwaPy
+	POST_BUILD
+	COMMAND ln -s -f ${CMAKE_SOURCE_DIR}/pyInterface/pyRootPwa.py ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa.py
+	COMMAND ln -s -f ${LIBRARY_OUTPUT_PATH}/libRootPwaPy.so	${PYTHON_LIBRARY_OUTPUT_PATH}/libRootPwaPy.so
+)
