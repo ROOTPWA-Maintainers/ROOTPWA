@@ -80,7 +80,9 @@ void rpwa::py::exportFsVertex() {
 
 		.def("fsParticle", &fsVertexWrapper::fsParticle__)
 
-		.def("name", &fsVertexWrapper::name, &fsVertexWrapper::default_name);
+		.def("name", &fsVertexWrapper::name, &fsVertexWrapper::default_name)
+
+		.add_static_property("debugFsVertex", &fsVertexWrapper::debug, &fsVertexWrapper::setDebug);
 
 	bp::register_ptr_to_python<rpwa::fsVertexPtr>();
 

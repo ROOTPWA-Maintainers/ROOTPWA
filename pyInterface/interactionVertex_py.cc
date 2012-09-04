@@ -121,7 +121,7 @@ void rpwa::py::exportInteractionVertex() {
 
 		.def("name", &interactionVertexWrapper::name, &interactionVertexWrapper::default_name)
 
-		.add_static_property("debug", &interactionVertexWrapper::debug, &interactionVertexWrapper::setDebug);
+		.add_static_property("debugInteractionVertex", &interactionVertexWrapper::debug, &interactionVertexWrapper::setDebug);
 
 	bp::register_ptr_to_python<rpwa::interactionVertexPtr>();
 

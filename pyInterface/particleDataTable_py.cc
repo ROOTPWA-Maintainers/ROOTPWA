@@ -120,7 +120,7 @@ void rpwa::py::exportParticleDataTable()
 		.def("clear", &particleDataTableWrapper::clear)
 		.staticmethod("clear")    
 
-		.add_static_property("debug", &particleDataTableWrapper::debug, &particleDataTableWrapper::setDebug);
+		.add_static_property("debugParticleDataTable", &particleDataTableWrapper::debug, &particleDataTableWrapper::setDebug);
 
 }
 

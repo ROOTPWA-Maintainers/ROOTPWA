@@ -127,7 +127,9 @@ void rpwa::py::exportIsobarDecayVertex() {
 		.def("massDepAmplitude", &isobarDecayVertexWrapper::massDepAmplitude)
 		.def("massDependence", &isobarDecayVertexWrapper::massDependence, bp::return_value_policy<bp::return_by_value>())
 
-		.def("name", &isobarDecayVertexWrapper::name, &isobarDecayVertexWrapper::default_name);
+		.def("name", &isobarDecayVertexWrapper::name, &isobarDecayVertexWrapper::default_name)
+		
+		.add_static_property("debugIsobarDecayVertex", &isobarDecayVertexWrapper::debug, &isobarDecayVertex::setDebug);
 
 	bp::register_ptr_to_python<rpwa::isobarDecayVertexPtr>();
 

@@ -235,7 +235,7 @@ void rpwa::py::exportMassDependence() {
 			, (::std::complex< double > ( massDependenceWrapper::* )( ::rpwa::isobarDecayVertex const & ) )(&massDependenceWrapper::default___call__)
 		)
 		.def("name", &massDependenceWrapper::name, &massDependenceWrapper::default_name)
-		.add_static_property("debug", &massDependenceWrapper::debug, &massDependenceWrapper::setDebug);
+		.add_static_property("debugMassDependence", &massDependenceWrapper::debug, &massDependenceWrapper::setDebug);
 
 	bp::class_<flatMassDependenceWrapper, bp::bases<rpwa::massDependence> >("flatMassDependence")
 		.def(bp::self_ns::str(bp::self))

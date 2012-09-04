@@ -154,7 +154,7 @@ void rpwa::py::exportParticleProperties()
 		.def("stripChargeFromName", &particlePropertiesWrapper::stripChargeFromName)
 		.staticmethod("stripChargeFromName")
 
-		.add_static_property("debug", &particlePropertiesWrapper::debug, &particlePropertiesWrapper::setDebug);
+		.add_static_property("debugParticleProperties", &particlePropertiesWrapper::debug, &particlePropertiesWrapper::setDebug);
 
 };
 

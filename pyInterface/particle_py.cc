@@ -181,7 +181,9 @@ void rpwa::py::exportParticle() {
 
 		.def("read", &particleWrapper::read__)
 
-		.def("label", &particleWrapper::label, &particleWrapper::default_label);
+		.def("label", &particleWrapper::label, &particleWrapper::default_label)
+		
+		.add_static_property("debugParticle", &particleWrapper::debug, &particleWrapper::setDebug);
 
 	bp::register_ptr_to_python< rpwa::particlePtr >();
 

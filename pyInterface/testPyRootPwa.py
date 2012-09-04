@@ -1,4 +1,5 @@
 
+import os
 import sys
 
 success = True
@@ -65,9 +66,16 @@ particleTable = do_test( getpDTinstance, "Testing particleDataTable.instance")
 
 def tPDTreadFile():
 	print("\n")
-	pyRootPwa.particleDataTable.readFile("../../amplitude/particleDataTable.txt")
+	pyRootPwa.particleDataTable.readFile(os.environ['ROOTPWA'] + "/amplitude/particleDataTable.txt")
 	print
 do_test(tPDTreadFile, "Testing particleDataTable.readFile()")
+
+def tPDDebug():
+	old_debug = particleTable.debugParticleDataTable
+	particleTable.debugParticleDataTable = (not old_debug)
+	assert(particleTable.debugParticleDataTable == (not old_debug))
+	particleTable.debugParticleDataTable = old_debug
+do_test(tPDDebug, "Testing particleDataTable debug flag")
 
 print
 print("########################################################################")
@@ -75,7 +83,7 @@ print
 
 # ---------------------------------------------------------
 #
-#	particlePropertiesTable
+#	particleProperties
 #
 # ---------------------------------------------------------
 
@@ -201,19 +209,19 @@ def partTestTransformFAIL():
 do_test(partTestTransformFAIL, "Testing particle.transform(UNSUPPORTED TYPE)")
 
 def partTestDebugFlag():
-	old_pP_debug = pyRootPwa.particleProperties.debug
-	old_debug = pyRootPwa.particle.debug
+	old_pP_debug = pyRootPwa.particleProperties.debugParticleProperties
+	old_debug = pyRootPwa.particle.debugParticle
 	assert(old_pP_debug == old_debug)
-	pyRootPwa.particle.debug = (not old_debug)
-	assert(pyRootPwa.particle.debug == (not old_debug))
-	assert(pyRootPwa.particleProperties.debug == old_pP_debug)
-	pyRootPwa.particle.debug = old_debug
-	assert(part.debug == old_debug)
-	part.debug = (not old_debug)
-	assert(part.debug == (not old_debug))
-	assert(pyRootPwa.particleProperties.debug == old_pP_debug)
-	part.debug = old_debug
-do_test(partTestDebugFlag, "Testing particle debug flag", True)
+	pyRootPwa.particle.debugParticle = (not old_debug)
+	assert(pyRootPwa.particle.debugParticle == (not old_debug))
+	assert(pyRootPwa.particleProperties.debugParticleProperties == old_pP_debug)
+	pyRootPwa.particle.debugParticle = old_debug
+	assert(part.debugParticle == old_debug)
+	part.debugParticle = (not old_debug)
+	assert(part.debugParticle == (not old_debug))
+	assert(pyRootPwa.particleProperties.debugParticleProperties == old_pP_debug)
+	part.debugParticle = old_debug
+do_test(partTestDebugFlag, "Testing particle debug flag")
 # This test fails for unknown reason
 
 print
@@ -236,7 +244,7 @@ def tClone():
 	iV2 = iV.clone()
 	iV2 = iV.clone(True)
 	iV2 = iV.clone(True, True)
-do_test(tClone, "Testing interactionVertex::clone")
+do_test(tClone, "Testing interactionVertex.clone")
 
 def tPrint(): print("\n\n" + str(iV) + "\n")
 do_test(tPrint, "Testing \"print(interactionVertex)\"")
@@ -248,44 +256,44 @@ def tClear():
 	iV.clear()
 	iV2 = tiV(iV)
 	assert(iV2.clear() == "testString")
-do_test(tClear, "Testing interactionVertex::clear()")
+do_test(tClear, "Testing interactionVertex.clear()")
 
 def tAiP():
 	p = pyRootPwa.particle()
 	assert(iV.addInParticle(p))
-do_test(tAiP, "Testing interactionVertex::addInParticle()")
+do_test(tAiP, "Testing interactionVertex.addInParticle()")
 
 def tAoP():
 	p = pyRootPwa.particle()
 	assert(iV.addOutParticle(p))
-do_test(tAoP, "Testing interactionVertex::addOutParticle()")
+do_test(tAoP, "Testing interactionVertex.addOutParticle()")
 
 def ttOP():
 	rot = pyRootPwa.ROOT.TLorentzRotation(1, 1, 1)
 	iV.transformOutParticles(rot)
-do_test(ttOP, "Testing interactionVertex::transformOutParticles()")
+do_test(ttOP, "Testing interactionVertex.transformOutParticles()")
 
 def tNmbIP(): assert(iV.nmbInParticles == 1)
-do_test(tNmbIP, "Testing interactionVertex::nmbInParticles")
+do_test(tNmbIP, "Testing interactionVertex.nmbInParticles")
 
 def tNmbOP(): assert(iV.nmbOutParticles == 1)
-do_test(tNmbOP, "Testing interactionVertex::nmbOutParticles")
+do_test(tNmbOP, "Testing interactionVertex.nmbOutParticles")
 
 def tInParts(): assert(len(iV.inParticles()) == 1)
-do_test(tInParts, "Testing interactionVertex::inParticles()")
+do_test(tInParts, "Testing interactionVertex.inParticles()")
 
 def tOutParts(): assert(len(iV.outParticles()) == 1)
-do_test(tOutParts, "Testing interactionVertex::outParticles()")
+do_test(tOutParts, "Testing interactionVertex.outParticles()")
 
 def tName(): assert(iV.name() == "interactionVertex")
-do_test(tName, "Testing interactionVertex::name()")
+do_test(tName, "Testing interactionVertex.name()")
 
 def tDebug():
-	old_debug = iV.debug
-	iV.debug = (not old_debug)
-	assert(iV.debug == (not old_debug))
-	iV.debug = old_debug
-do_test(tDebug, "Testing \"debug\" property")
+	old_debug = iV.debugInteractionVertex
+	iV.debugInteractionVertex = (not old_debug)
+	assert(iV.debugInteractionVertex == (not old_debug))
+	iV.debugInteractionVertex = old_debug
+do_test(tDebug, "Testing interactionVertex debug flag")
 
 print
 print("########################################################################")
@@ -326,14 +334,13 @@ def fsVertexTestName(): assert(fsVert.name() == "fsVertex")
 do_test(fsVertexTestName, "Testing fsVertex.name()")
 
 def fsVertexTestDebugFlag():
-	old_iV_debug = pyRootPwa.interactionVertex.debug
-	old_fsV_debug = pyRootPwa.fsVertex.debug
-	pyRootPwa.fsVertex.debug = (not old_fsV_debug)
-	assert(pyRootPwa.fsVertex.debug == (not old_fsV_debug))
-	assert(pyRootPwa.interactionVertex.debug == old_iV_debug)
-	pyRootPwa.fsVertex.debug = old_fsV_debug
-do_test(fsVertexTestDebugFlag, "Testing particle debug flag", True)
-# This test fails for unknown reason
+	old_iV_debug = pyRootPwa.interactionVertex.debugInteractionVertex
+	old_fsV_debug = pyRootPwa.fsVertex.debugFsVertex
+	pyRootPwa.fsVertex.debugFsVertex = (not old_fsV_debug)
+	assert(pyRootPwa.fsVertex.debugFsVertex == (not old_fsV_debug))
+	assert(pyRootPwa.interactionVertex.debugInteractionVertex == old_iV_debug)
+	pyRootPwa.fsVertex.debugFsVertex = old_fsV_debug
+do_test(fsVertexTestDebugFlag, "Testing fsVertex debug flag")
 
 print
 print("########################################################################")
@@ -347,6 +354,13 @@ print
 
 def flatMassDepTestConst(): return pyRootPwa.flatMassDependence()
 flatMassDep = do_test(flatMassDepTestConst, "Testing flatMassDependence default constructor")
+
+def flatMassDepTestDebug():
+	old_debug = flatMassDep.debugMassDependence
+	flatMassDep.debugMassDependence = (not old_debug)
+	assert(flatMassDep.debugMassDependence == (not old_debug))
+	flatMassDep.debugMassDependence = old_debug
+do_test(flatMassDepTestDebug, "Testing flatMassDependence debug flag.")
 
 def flatMassDepTestAmp():
 	pass
@@ -470,6 +484,16 @@ do_test(isobarDecVtxTestMDA, "Testing isobarDecayVertex.massDepAmplitude()")
 def isobarDecVtxTestMD():
 	mDname = isobDecVtx.massDependence().name() 
 do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()")
+
+def isobarDecayVertexTestDebugFlag():
+	old_iV_debug = pyRootPwa.interactionVertex.debugInteractionVertex
+	old_fsV_debug = pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex
+	pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex = (not old_fsV_debug)
+	assert(pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex == (not old_fsV_debug))
+	assert(pyRootPwa.interactionVertex.debugInteractionVertex == old_iV_debug)
+	pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex = old_fsV_debug
+do_test(isobarDecayVertexTestDebugFlag, "Testing isobarDecayVertex debug flag")
+
 
 print
 print("########################################################################")
