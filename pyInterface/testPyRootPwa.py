@@ -1,4 +1,5 @@
 
+import math
 import os
 import sys
 
@@ -349,78 +350,6 @@ print
 
 # ---------------------------------------------------------
 #
-#	massDependence
-#
-# ---------------------------------------------------------
-
-def flatMassDepTestConst(): return pyRootPwa.flatMassDependence()
-flatMassDep = do_test(flatMassDepTestConst, "Testing flatMassDependence default constructor")
-
-def flatMassDepTestDebug():
-	old_debug = flatMassDep.debugMassDependence
-	flatMassDep.debugMassDependence = (not old_debug)
-	assert(flatMassDep.debugMassDependence == (not old_debug))
-	flatMassDep.debugMassDependence = old_debug
-do_test(flatMassDepTestDebug, "Testing flatMassDependence debug flag.")
-
-def flatMassDepTestAmp():
-	pass
-do_test(flatMassDepTestAmp, "Testing flatMassDependence.amp()", True)
-# isobarDecayVertex is missing at the time of this being written.
-
-def flatMassDepTestName(): assert(flatMassDep.name() == "flatMassDependence")
-do_test(flatMassDepTestName, "Testing flatMassDependence.name()")
-
-def relBreitWigTestConst(): return pyRootPwa.relativisticBreitWigner()
-relBreitWig = do_test(relBreitWigTestConst, "Testing relativisticBreitWigner default constructor")
-
-def relBreitWigTestAmp():
-	pass
-do_test(relBreitWigTestAmp, "Testing relativisticBreitWigner.amp()", True)
-# isobarDecayVertex is missing at the time of this being written.
-
-def relBreitWigTestName(): assert(relBreitWig.name() == "relativisticBreitWigner")
-do_test(relBreitWigTestName, "Testing relativisticBreitWigner.name()")
-
-def SAuMoPenMTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonM()
-SAuMoPenM = do_test(SAuMoPenMTestConst, "Testing piPiSWaveAuMorganPenningtonM default constructor")
-
-def SAuMoPenMTestAmp():
-	pass
-do_test(SAuMoPenMTestAmp, "Testing piPiSWaveAuMorganPenningtonM.amp()", True)
-# isobarDecayVertex is missing at the time of this being written.
-
-def SAuMoPenMTestName(): assert(SAuMoPenM.name() == "piPiSWaveAuMorganPenningtonM")
-do_test(SAuMoPenMTestName, "Testing piPiSWaveAuMorganPenningtonM.name()")
-
-def SAuMoPenVesTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonVes()
-SAuMoPenVes = do_test(SAuMoPenVesTestConst, "Testing piPiSWaveAuMorganPenningtonVes default constructor")
-
-def SAuMoPenVesTestAmp():
-	pass
-do_test(SAuMoPenVesTestAmp, "Testing piPiSWaveAuMorganPenningtonVes.amp()", True)
-# isobarDecayVertex is missing at the time of this being written.
-
-def SAuMoPenVesTestName(): assert(SAuMoPenVes.name() == "piPiSWaveAuMorganPenningtonVes")
-do_test(SAuMoPenVesTestName, "Testing piPiSWaveAuMorganPenningtonVes.name()")
-
-def SAuMoPenKachaevTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonKachaev()
-SAuMoPenKachaev = do_test(SAuMoPenKachaevTestConst, "Testing piPiSWaveAuMorganPennigtonKachaev default constructor")
-
-def SAuMoPenKachaevTestAmp():
-	pass
-do_test(SAuMoPenKachaevTestAmp, "Testing piPiSWaveAuMorganPennigtonKachaev.amp()", True)
-# isobarDecayVertex is missing at the time of this being written.
-
-def SAuMoPenKachaevTestName(): assert(SAuMoPenKachaev.name() == "piPiSWaveAuMorganPenningtonKachaev")
-do_test(SAuMoPenKachaevTestName, "Testing piPiSWaveAuMorganPennigtonKachaev.name()")
-
-print
-print("########################################################################")
-print
-
-# ---------------------------------------------------------
-#
 #	isobarDecayVertex
 #
 # ---------------------------------------------------------
@@ -485,9 +414,19 @@ do_test(isobarDecVtxTestS, "Testing isobarDecayVertex.S")
 def isobarDecVtxTestMDA(): assert(isobDecVtx.massDepAmplitude() == (1+0j))
 do_test(isobarDecVtxTestMDA, "Testing isobarDecayVertex.massDepAmplitude()")
 
-def isobarDecVtxTestMD():
-	mDname = isobDecVtx.massDependence().name() 
-do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()")
+def isobarDecVtxTestMD(): mDname = isobDecVtx.massDependence().name() 
+do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()", True)
+
+def isobarDecVtxTestSetMD():
+	isobDecVtx.setMassDependence(pyRootPwa.flatMassDependence())
+	assert(isobDecVtx.massDependence().name() == "flatMassDependence")
+do_test(isobarDecVtxTestSetMD, "Testing isobarDecayVertex.setMassDependence()")
+
+def isobarDecVtxTestCC():
+	print("\n")
+	assert(not isobDecVtx.checkConsistency())
+	print
+do_test(isobarDecVtxTestCC, "Testing isobarDecayVertex.checkConsistency()")
 
 def isobarDecayVertexTestDebugFlag():
 	old_iV_debug = pyRootPwa.interactionVertex.debugInteractionVertex
@@ -498,6 +437,82 @@ def isobarDecayVertexTestDebugFlag():
 	pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex = old_fsV_debug
 do_test(isobarDecayVertexTestDebugFlag, "Testing isobarDecayVertex debug flag")
 
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	massDependence
+#
+# ---------------------------------------------------------
+
+def flatMassDepTestConst(): return pyRootPwa.flatMassDependence()
+flatMassDep = do_test(flatMassDepTestConst, "Testing flatMassDependence default constructor")
+
+def flatMassDepTestDebug():
+	old_debug = flatMassDep.debugMassDependence
+	flatMassDep.debugMassDependence = (not old_debug)
+	assert(flatMassDep.debugMassDependence == (not old_debug))
+	flatMassDep.debugMassDependence = old_debug
+do_test(flatMassDepTestDebug, "Testing flatMassDependence debug flag.")
+
+def flatMassDepTestAmp(): assert(flatMassDep.amp(isobDecVtx) == (1+0j))
+do_test(flatMassDepTestAmp, "Testing flatMassDependence.amp()")
+
+def flatMassDepTestName(): assert(flatMassDep.name() == "flatMassDependence")
+do_test(flatMassDepTestName, "Testing flatMassDependence.name()")
+
+def relBreitWigTestConst(): return pyRootPwa.relativisticBreitWigner()
+relBreitWig = do_test(relBreitWigTestConst, "Testing relativisticBreitWigner default constructor")
+
+def relBreitWigTestAmp():
+	amp = relBreitWig.amp(isobDecVtx)
+	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+do_test(relBreitWigTestAmp, "Testing relativisticBreitWigner.amp()")
+
+def relBreitWigTestName(): assert(relBreitWig.name() == "relativisticBreitWigner")
+do_test(relBreitWigTestName, "Testing relativisticBreitWigner.name()")
+
+def SAuMoPenMTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonM()
+SAuMoPenM = do_test(SAuMoPenMTestConst, "Testing piPiSWaveAuMorganPenningtonM default constructor")
+
+def SAuMoPenMTestAmp():
+	amp = SAuMoPenM.amp(isobDecVtx)
+	zero = amp - (0.00349779419823-1.21769219865e-05j)
+	assert(zero.real < 10e-15)
+	assert(zero.imag < 10e-15)
+do_test(SAuMoPenMTestAmp, "Testing piPiSWaveAuMorganPenningtonM.amp()")
+
+def SAuMoPenMTestName(): assert(SAuMoPenM.name() == "piPiSWaveAuMorganPenningtonM")
+do_test(SAuMoPenMTestName, "Testing piPiSWaveAuMorganPenningtonM.name()")
+
+def SAuMoPenVesTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonVes()
+SAuMoPenVes = do_test(SAuMoPenVesTestConst, "Testing piPiSWaveAuMorganPenningtonVes default constructor")
+
+def SAuMoPenVesTestAmp():
+	amp = SAuMoPenVes.amp(isobDecVtx)
+	zero = amp - (0.00349779421172-1.2174984393e-05j)
+	assert(zero.real < 10e-15)
+	assert(zero.imag < 10e-15)
+do_test(SAuMoPenVesTestAmp, "Testing piPiSWaveAuMorganPenningtonVes.amp()")
+
+def SAuMoPenVesTestName(): assert(SAuMoPenVes.name() == "piPiSWaveAuMorganPenningtonVes")
+do_test(SAuMoPenVesTestName, "Testing piPiSWaveAuMorganPenningtonVes.name()")
+
+def SAuMoPenKachaevTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonKachaev()
+SAuMoPenKachaev = do_test(SAuMoPenKachaevTestConst, "Testing piPiSWaveAuMorganPennigtonKachaev default constructor")
+
+def SAuMoPenKachaevTestAmp():
+	amp = SAuMoPenKachaev.amp(isobDecVtx)
+	zero = amp - (-0.00448845210035-2.00514420305e-05j)
+	assert(zero.real < 10e-15)
+	assert(zero.imag < 10e-15)
+do_test(SAuMoPenKachaevTestAmp, "Testing piPiSWaveAuMorganPennigtonKachaev.amp()")
+
+def SAuMoPenKachaevTestName(): assert(SAuMoPenKachaev.name() == "piPiSWaveAuMorganPenningtonKachaev")
+do_test(SAuMoPenKachaevTestName, "Testing piPiSWaveAuMorganPennigtonKachaev.name()")
 
 print
 print("########################################################################")
