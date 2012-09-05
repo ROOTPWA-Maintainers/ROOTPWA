@@ -3,8 +3,8 @@ import math
 import os
 import sys
 
-success = True
-skip = False
+errors = 0
+skip = 0
 
 # Some functions
 # ---------------------------------------------------------
@@ -22,15 +22,15 @@ def do_test(function, name, skip_test = False):
 	sys.stdout.write(name + "...")
 	if skip_test:
 		global skip
-		skip = True
+		skip += 1
 		print_yellow("skipped")
 		return None
 	try:
 		retval = (function)()
 	except:
 		print_red("error")
-		global success
-		success = False
+		global errors
+		errors += 1
 		return None
 	print_green("success")
 	return retval
@@ -520,14 +520,105 @@ print
 
 # ---------------------------------------------------------
 #
+#	diffractiveDissVertex
+#
+# ---------------------------------------------------------
+
+def diDiVtxTestConsts():
+	part2 = part.clone()
+	part3 = part.clone()
+	part4 = part.clone()
+	v = pyRootPwa.diffractiveDissVertex(part, part2, part3, part4)
+	v2 = pyRootPwa.diffractiveDissVertex(v)
+	return v
+diDiVtx = do_test(diDiVtxTestConsts, "Testing diffractiveDissVertex constructors")
+
+def diDiVtxTestPrint(): print("\n\n" + str(diDiVtx) + "\n")
+do_test(diDiVtxTestPrint, "Testing print(diffractiveDissVertex)")
+
+def diDiVtxTestclone(): return diDiVtx.clone()
+do_test(diDiVtxTestclone, "Testing diffractiveDissVertex.clone()")
+
+def diDiVtxTestAddInOutPart():
+	assert(not diDiVtx.addInParticle(part))
+	assert(not diDiVtx.addOutParticle(part))
+do_test(diDiVtxTestAddInOutPart, "Testing diffractiveDissVertex.add{In/Out}Particle()")
+
+def diDiVtxTestrefLZVec(): assert(diDiVtx.referenceLzVec() == part.lzVec)
+do_test(diDiVtxTestrefLZVec, "Testing diffractiveDissVertex.referenceLzVec()")
+
+def diDiVtxTestXP(): assert(diDiVtx.XParticle() == part)
+do_test(diDiVtxTestXP, "Testing diffractiveDissVertex.XParticle()")
+
+def diDiVtxTestsXFXN():
+	diDiVtx.XParticle().strangeness = 0
+	diDiVtx.setXFlavorQN()
+	assert(diDiVtx.XParticle().strangeness == 1)
+do_test(diDiVtxTestsXFXN, "Testing diffractiveDissVertex.setXFlavorQN()")
+
+def diDiVtxTestbeam():
+	assert(diDiVtx.beam().name == "Kstar2(1430)2+")
+	assert(diDiVtx.target().name == "Kstar2(1430)2+")
+	assert(diDiVtx.recoil().name == "Kstar2(1430)2+")
+do_test(diDiVtxTestbeam, "Testing diffractiveDissVertex.{beam/target/recoil}()")
+
+def diDiVtxTestiKD():
+	tCA = pyRootPwa.ROOT.TClonesArray("TObjString", 1)
+	tCA[0] = pyRootPwa.ROOT.TObjString("Kstar2(1430)2+") 
+	assert(diDiVtx.initKinematicsData(tCA))
+do_test(diDiVtxTestiKD, "Testing diffractiveDissVertex.initKinematicsData()")
+
+def diDiVtxTestiKD2(): 
+	print("\n")
+	assert(not diDiVtx.initKinematicsData("bla"))
+	print
+do_test(diDiVtxTestiKD2, "Testing diffractiveDissVertex.initKinematicsData(UNSUPPORTED TYPE)")
+
+def diDiVtxTestrKD():
+	tCA = pyRootPwa.ROOT.TClonesArray("TVector3", 1)
+	tCA[0] = pyRootPwa.ROOT.TVector3(12, 12, 12)
+	assert(diDiVtx.readKinematicsData(tCA))
+do_test(diDiVtxTestrKD, "Testing diffractiveDissVertex.readKinematicsData()")
+
+def diDiVtxTestrKD2():
+	print("\n")
+	assert(not diDiVtx.readKinematicsData([0, 1, 2]))
+	print
+do_test(diDiVtxTestrKD2, "Testing diffractiveDissVertex.readKinematicsData(UNSUPPORTED TYPE)")
+
+def diDiVtxTestRM(): assert(diDiVtx.revertMomenta())
+do_test(diDiVtxTestRM, "Testing diffractiveDissVertex.revertMomenta()")
+
+def diDiVtxTestName(): assert(diDiVtx.name() == "diffractiveDissVertex")
+do_test(diDiVtxTestName, "Testing diffractiveDissVertex.name()")
+
+def diDiVtxTestDebug():
+	old_debug = diDiVtx.debugDiffractiveDissVertex
+	diDiVtx.debugDiffractiveDissVertex = (not old_debug)
+	assert(diDiVtx.debugDiffractiveDissVertex == (not old_debug))
+	diDiVtx.debugDiffractiveDissVertex = old_debug
+do_test(diDiVtxTestDebug, "Testing diffractiveDissVertex debug flag")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
 #	Summary
 #
 # ---------------------------------------------------------
 
 print
-if success:
+if errors == 0:
 	print_green("All tests successful.")
+elif errors == 1:
+	print_red("There was " + str(errors) + " error.")
 else:
-	print_red("There were errors.")
-if skip:
-	print_yellow("Some tests were skipped.")
+	print_red("There were " + str(errors) + " errors.")
+if skip > 0:
+	if skip == 1:
+		outstring = " test was skipped."
+	else:
+		outstring = " tests were skipped."
+	print_yellow(str(skip) + outstring)

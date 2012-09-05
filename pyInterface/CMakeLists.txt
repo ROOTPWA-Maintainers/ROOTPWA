@@ -67,6 +67,8 @@ set(SOURCES
 	fsVertex_py.cc
 	massDependence_py.cc
 	isobarDecayVertex_py.cc
+	productionVertex_py.cc
+	diffractiveDissVertex_py.cc
 	)
 
 

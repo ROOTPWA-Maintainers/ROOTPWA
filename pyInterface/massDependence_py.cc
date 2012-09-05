@@ -228,7 +228,7 @@ void rpwa::py::exportMassDependence() {
 
 	bp::class_<massDependenceWrapper, boost::noncopyable>("massDependence", bp::no_init)
 		.def(bp::self_ns::str(bp::self))
-		.def("amp", bp::pure_virtual(&massDependence::amp))
+		.def("amp", bp::pure_virtual(&rpwa::massDependence::amp))
 		.def(
 			"__call__"
 			, &massDependenceWrapper::operator()

@@ -64,10 +64,6 @@ namespace {
 			return rpwa::py::convertToPy<TLorentzVector>(rpwa::isobarDecayVertex::calcParentLzVec());
 		};
 
-		const rpwa::massDependencePtr massDependence() const {
-			return rpwa::isobarDecayVertex::massDependence();
-		};
-
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();

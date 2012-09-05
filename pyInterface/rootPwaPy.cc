@@ -11,6 +11,8 @@
 #include "fsVertex_py.h"
 #include "massDependence_py.h"
 #include "isobarDecayVertex_py.h"
+#include "productionVertex_py.h"
+#include "diffractiveDissVertex_py.h"
 
 namespace bp = boost::python;
 
@@ -24,7 +26,8 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportFsVertex();
 	rpwa::py::exportMassDependence();
 	rpwa::py::exportIsobarDecayVertex();
+	rpwa::py::exportProductionVertex();
+	rpwa::py::exportDiffractiveDissVertex();
 
 }
-
 

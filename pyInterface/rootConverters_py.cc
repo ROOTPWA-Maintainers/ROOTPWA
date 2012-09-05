@@ -1,5 +1,6 @@
 #include "rootConverters_py.h"
 
+#include<TClonesArray.h>
 #include<TLorentzRotation.h>
 #include<TPython.h>
 #include<TVector3.h>
@@ -36,6 +37,12 @@ void rpwa::py::exportRootConverters() {
 	bp::def("__RootConverters_convertToPy_TLorentzVector", &rpwa::py::convertToPy<TLorentzVector>);
 	bp::def(
 		"__RootConverters_convertFromPy_TLorentzVector", &rpwa::py::convertFromPy<TLorentzVector*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def("__RootConverters_convertToPy_TClonesArray", &rpwa::py::convertToPy<TClonesArray>);
+	bp::def(
+		"__RootConverters_convertFromPy_TClonesArray", &rpwa::py::convertFromPy<TClonesArray*>
 		, bp::return_internal_reference<1>()
 	);
 
