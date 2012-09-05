@@ -7,23 +7,21 @@
 
 namespace bp = boost::python;
 
-void rpwa::py::exportStdPairs() {
+void rpwa::py::exportStlContainers() {
 
+	// std::pair<std::string, rpwa::particleProperties>
 	typedef std::pair< const std::string, rpwa::particleProperties > stdpair_int_particleProperties;
 	bp::class_< stdpair_int_particleProperties >("__stdpair_int_particleProperties")
 		.add_property("first", &stdpair_int_particleProperties::first)
 		.def_readwrite("second", &stdpair_int_particleProperties::second);
 
-};
-
-void rpwa::py::exportParticlePropertiesVector() {
+	// std::vector<rpwa::particleProperties>
 	bp::class_<std::vector<rpwa::particleProperties> >("__vector_particleProperties")
 		.def(
 			bp::vector_indexing_suite<std::vector<rpwa::particleProperties> >()
 		);
-};
 
-void rpwa::py::exportParticlePtrVector() {
+	// std::vector<rpwa::particlePtr>
 	bp::class_<std::vector<rpwa::particlePtr> >("__vector_particlePtr")
 		.def(
 			bp::vector_indexing_suite<std::vector<rpwa::particlePtr> >()

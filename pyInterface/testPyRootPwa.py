@@ -37,6 +37,7 @@ def do_test(function, name, skip_test = False):
 def do_test_raw(function, name):
 	print(name)
 	retval = (function)()
+	return retval
 
 # ---------------------------------------------------------
 
@@ -427,8 +428,11 @@ print
 def isobDecVtxTestConstructor():
 	lz = pyRootPwa.ROOT.TLorentzVector(1., 1., 1., 1.)
 	part.lzVec = lz
-	return pyRootPwa.isobarDecayVertex(part, part, part)
-isobDecVtx = do_test(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
+#	retval = pyRootPwa.isobarDecayVertex(part, part, part, 0, 0, pyRootPwa.flatMassDependence())
+#	retval = pyRootPwa.isobarDecayVertex(part, part, part, 0, 0, [0, 1, 2])
+	retval = pyRootPwa.isobarDecayVertex(part, part, part)
+	return retval
+isobDecVtx = do_test_raw(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
 
 def isobarDecVtxTestPrint(): print("\n\n" + str(isobDecVtx) + "\n")
 do_test(isobarDecVtxTestPrint, "Testing print(isobarDecayVertex)")

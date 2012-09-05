@@ -79,7 +79,7 @@ namespace {
 	};
 
 	struct relativisticBreitWignerWrapper : public rpwa::relativisticBreitWigner,
-	                                          bp::wrapper<rpwa::relativisticBreitWigner>
+	                                               bp::wrapper<rpwa::relativisticBreitWigner>
 	{
 
 		relativisticBreitWignerWrapper()
@@ -115,7 +115,7 @@ namespace {
 	};
 
 	struct piPiSWaveAuMorganPenningtonMWrapper : public rpwa::piPiSWaveAuMorganPenningtonM,
-	                                          bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonM>
+	                                                    bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonM>
 	{
 
 		piPiSWaveAuMorganPenningtonMWrapper()
@@ -151,7 +151,7 @@ namespace {
 	};
 
 	struct piPiSWaveAuMorganPenningtonVesWrapper : public rpwa::piPiSWaveAuMorganPenningtonVes,
-	                                          bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonVes>
+	                                                      bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonVes>
 	{
 
 		piPiSWaveAuMorganPenningtonVesWrapper()
@@ -187,7 +187,7 @@ namespace {
 	};
 
 	struct piPiSWaveAuMorganPenningtonKachaevWrapper : public rpwa::piPiSWaveAuMorganPenningtonKachaev,
-	                                          bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonKachaev>
+	                                                          bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonKachaev>
 	{
 
 		piPiSWaveAuMorganPenningtonKachaevWrapper()

@@ -156,7 +156,7 @@ void rpwa::py::exportParticle() {
 	bp::class_<particleWrapper, bp::bases<rpwa::particleProperties> >("particle")
 
 		.def(bp::init<particleWrapper&>())
-		.def(bp::init<rpwa::particleProperties&, bp::optional<int, int, int, const bp::object&> >())
+		.def(bp::init<rpwa::particleProperties&, bp::optional<int, int, int, bp::object&> >())
 		.def(bp::init<std::string, bp::optional<bool, int, int, int, bp::object&> >())
 		.def(bp::init<std::string, int, int, int, int, int, int, bp::optional<int, int> >())
 
