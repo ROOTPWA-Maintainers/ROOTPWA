@@ -53,8 +53,8 @@ namespace {
 				retVec[i] = *(retPtrVec[i]);
 			}
 
-			bp::object iter = bp::iterator<std::vector<rpwa::particleProperties> >()(retVec);
-			return bp::list(iter);
+			return bp::list(retVec);
+
 		}
 
 	};

@@ -36,8 +36,9 @@ def do_test(function, name, skip_test = False):
 	return retval
 
 def do_test_raw(function, name):
-	print(name)
+	sys.stdout.write(name + "...")
 	retval = (function)()
+	print_green("success")
 	return retval
 
 # ---------------------------------------------------------
@@ -71,6 +72,14 @@ def tPDTreadFile():
 	pyRootPwa.particleDataTable.readFile(os.environ['ROOTPWA'] + "/amplitude/particleDataTable.txt")
 	print
 do_test(tPDTreadFile, "Testing particleDataTable.readFile()")
+
+def tPDTentriesMatching():
+	pP = particleTable.entry("rho(770)0")
+	parts = pyRootPwa.particleDataTable.entriesMatching(pP, "allQn", 0, 0, [], [], [], False)
+	assert(len(parts) == 4)
+	for part in parts:
+		assert(part.name[:part.name.find("(")] == "rho")
+do_test(tPDTentriesMatching, "Testing particleDataTable.entriesMatching()")
 
 def tPDDebug():
 	old_debug = particleTable.debugParticleDataTable
@@ -598,6 +607,143 @@ def diDiVtxTestDebug():
 	assert(diDiVtx.debugDiffractiveDissVertex == (not old_debug))
 	diDiVtx.debugDiffractiveDissVertex = old_debug
 do_test(diDiVtxTestDebug, "Testing diffractiveDissVertex debug flag")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	decayTopology
+#
+# ---------------------------------------------------------
+
+def dTTestConsts():
+	t = pyRootPwa.decayTopology()
+#	t = pyRootPwa.decayTopology(diDiVtx, [isobDecVtx], [part])
+# There needs to be some work to produce a consistent topology
+	t2 = pyRootPwa.decayTopology(t)
+	return t
+decTo = do_test(dTTestConsts, "Testing decayTopology constructors")
+
+def dTTestPrint(): print("\n\n" + str(decTo) + "\n")
+do_test(dTTestPrint, "Testing print(decayTopology)")
+
+def dTTestClone(): return decTo.clone()
+do_test(dTTestClone, "Testing decayTopology.clone()")
+
+def dTTestnDV(): assert(decTo.nmbDecayVertices() == 0)
+do_test(dTTestnDV, "Testing decayTopology.nmbDecayVertices()")
+
+def dTTestnFP(): assert(decTo.nmbFsParticles() == 0)
+do_test(dTTestnFP, "Testing decayTopology.nmbFsParticles()")
+
+def dTTestnIFP(): assert(decTo.nmbIndistFsParticles() == {})
+do_test_raw(dTTestnIFP, "Testing decayTopology.nmbIndistFsParticles()")
+
+def dTTestfPIP(): assert(decTo.fsParticlesIntrinsicParity() == 1)
+do_test(dTTestfPIP, "Testing decayTopology.fsParticlesIntrinsicParity()")
+
+def dTTestsIEV(): print(decTo.spaceInvEigenValue())
+do_test(dTTestsIEV, "Testing decayTopology.spaceInvEigenValue()", True)
+# needs a consistent topology
+
+def dTTestrEV(): print(decTo.reflectionEigenValue())
+do_test(dTTestrEV, "Testing decayTopology.reflectionEigenValue()", True)
+# needs a consistent topology
+
+def dTTestfP(): assert(decTo.fsParticles() == [])
+do_test(dTTestfP, "Testing decayTopology.fsParticles()")
+
+def dTTestdV(): assert(decTo.decayVertices() == [])
+do_test(dTTestdV, "Testing decayTopology.decayVertices()")
+
+def dTTestXpar(): print(decTo.XParticle())
+do_test(dTTestXpar, "Testing decayTopology.XParticle()", True)
+# needs a consistent topology
+
+def dTTestprodVert(): assert(decTo.productionVertex() is None)
+do_test(dTTestprodVert, "Testing decayTopology.productionVertex()")
+
+def dTTestXDV(): print(decTo.XDecayVertex())
+do_test(dTTestXDV, "Testing decayTopology.XDecayVertex()", True)
+# needs a consistent topology
+
+def dTTesttransFSP():
+	L = pyRootPwa.ROOT.TLorentzRotation(1, 1, 1)
+	decTo.transformFsParticles(L)
+do_test(dTTesttransFSP, "Testing decayTopology.transformFsParticles()")
+
+def dTTesttransFSPUnsupT():
+	print("\n")
+	decTo.transformFsParticles([1, 2, 3])
+	print
+do_test(dTTesttransFSPUnsupT, "Testing decayTopology.transformFsParticles(UNSUPPORTED TYPE)")
+
+def dTTestisbla():
+	assert(not decTo.isProductionVertex(isobDecVtx))
+	assert(decTo.isDecayVertex(isobDecVtx))
+	assert(not decTo.isFsVertex(isobDecVtx))
+	assert(not decTo.isFsParticle(part))
+do_test(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()")
+
+def dTTestfPInd():
+	assert(decTo.fsParticlesIndex(part))
+do_test(dTTestfPInd, "Testing decayTopology.fsParticlesIndex()")
+
+def tTTestCheckbla(): print(not decTo.checkTopology())
+do_test(tTTestCheckbla, "Testing decayTopology.checkTopology()", True)
+# needs a consistent topology
+
+def tTTestCheckCons(): assert(decTo.checkConsistency())
+do_test(tTTestCheckCons, "Testing decayTopology.checkConsistency()")
+
+def tTTestAdDec(): decTo.addDecay(decTo)
+do_test(tTTestAdDec, "Testing decayTopology.addDecay()", True)
+# needs a consistent topology
+
+def tTTestSPV(): decTo.setProductionVertex(diDiVtx)
+do_test(tTTestSPV, "Testing decayTopology.setProductionVertex()")
+
+def tTTestiKD():
+	tCA = pyRootPwa.ROOT.TClonesArray("TObjString", 1)
+	tCA2 = pyRootPwa.ROOT.TClonesArray("TObjString", 0)
+	tCA[0] = pyRootPwa.ROOT.TObjString("Kstar2(1430)2+")
+	assert(decTo.initKinematicsData(tCA, tCA2))
+do_test(tTTestiKD, "Testing decayTopology.initKinematicsData()")
+
+def tTTestiKDUnsuT():
+	print("\n")
+	decTo.initKinematicsData("12", [])
+	print
+do_test(tTTestiKDUnsuT, "Testing decayTopology.initKinematicsData(UNSUPPORTED TYPE)")
+
+def tTTestrKD():
+	tCA = pyRootPwa.ROOT.TClonesArray("TVector3", 1)
+	tCA[0] = pyRootPwa.ROOT.TVector3(1., 1., 1.)
+	tCA2= pyRootPwa.ROOT.TClonesArray("TVector3", 0)
+	assert(decTo.readKinematicsData(tCA, tCA2))
+do_test(tTTestrKD, "Testing decayTopology.readKinematicsData()")
+
+def tTTestrKDUnsT():
+	print("\n")
+	decTo.readKinematicsData("123", [])
+	print
+do_test(tTTestrKDUnsT, "Testing decayTopology.readKinematicsData(UNSUPPORTED TYPE)")
+
+def tTTestFKD(): decTo.fillKinematicsDataCache
+do_test(tTTestFKD, "Testing decayTopology.fillKinematicsDataCache()")
+
+def tTTestRM():
+	assert(decTo.revertMomenta())
+	assert(not decTo.revertMomenta([1,3,2]))
+	try:
+		decTo.revertMomenta(1)
+	except TypeError:
+		pass
+	else:
+		raise Exception("That shouldn't work.")
+do_test_raw(tTTestRM, "Testing decayTopology.revertMomenta{()/(list)/(UNSUPPORTED TYPE)}")
 
 print
 print("########################################################################")

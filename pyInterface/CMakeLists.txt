@@ -69,6 +69,7 @@ set(SOURCES
 	isobarDecayVertex_py.cc
 	productionVertex_py.cc
 	diffractiveDissVertex_py.cc
+	decayTopology_py.cc
 	)
 
 
