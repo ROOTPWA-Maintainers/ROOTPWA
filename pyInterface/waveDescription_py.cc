@@ -22,12 +22,16 @@ namespace {
 			return sstr.str();
 		};
 
-		bool constructAmplitude__1(rpwa::isobarAmplitudePtr& amplitude) const {
-			return rpwa::waveDescription::constructAmplitude(amplitude);
+		bp::tuple constructAmplitude__1() const {
+			rpwa::isobarAmplitudePtr amplitude;
+			bool result = rpwa::waveDescription::constructAmplitude(amplitude);
+			return bp::make_tuple(result, amplitude);
 		};
 
-		bool constructAmplitude__2(rpwa::isobarAmplitudePtr& amplitude, rpwa::isobarDecayTopologyPtr& topo) const {
-			return rpwa::waveDescription::constructAmplitude(amplitude, topo);
+		bp::tuple constructAmplitude__2(rpwa::isobarDecayTopologyPtr& topo) const {
+			rpwa::isobarAmplitudePtr amplitude;
+			bool result = rpwa::waveDescription::constructAmplitude(amplitude, topo);
+			return bp::make_tuple(result, amplitude);
 		};
 
 		static bool writeKeyFile__(const std::string& keyFileName,
@@ -41,6 +45,10 @@ namespace {
 			}
 			rpwa::isobarAmplitude* topoOrAmp = bp::extract<rpwa::isobarAmplitude*>(pyTopoOrAmp);
 			return rpwa::waveDescription::writeKeyFile(keyFileName, *topoOrAmp, writeProdVert);
+		};
+
+		int Write__(std::string name) {
+			return this->Write(name.c_str());
 		};
 
 	};
@@ -74,21 +82,26 @@ void rpwa::py::exportWaveDescription() {
 			   bp::arg("topoOrAmp"),
 			   bp::arg("writeProdVert")=false)
 		)
+		.staticmethod("writeKeyFile")
 
 		.def(
 			"waveNameFromTopology"
 			, &waveDescriptionWrapper::waveNameFromTopology
 			, (bp::arg("topo"),
 			   bp::arg("newConvention")=false,
-			   bp::arg("currentVertex")=isobarDecayVertexPtr())
+			   bp::arg("currentVertex")=rpwa::isobarDecayVertexPtr())
 		)
+		.staticmethod("waveNameFromTopology")
 
 		.def(
 			"waveLaTeXFromTopology"
 			, &waveDescriptionWrapper::waveLaTeXFromTopology
 			, (bp::arg("topo"),
-			   bp::arg("currentVertex")=isobarDecayVertexPtr())
+			   bp::arg("currentVertex")=rpwa::isobarDecayVertexPtr())
 		)
+		.staticmethod("waveLaTeXFromTopology")
+
+		.def("Write", &waveDescriptionWrapper::Write__)
 
 		.add_static_property("debugWaveDescription", &waveDescriptionWrapper::debug, &waveDescriptionWrapper::setDebug);
 

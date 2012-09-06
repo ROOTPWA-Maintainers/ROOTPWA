@@ -97,7 +97,6 @@ if __name__ == "__main__":
 	parser.add_argument("infile", help="The .evt file to be read")
 	parser.add_argument("-o", "--output", help="The .evt file to be written")
 
-	parser.parse_args()
 	args = parser.parse_args()
 
 	input_file = args.infile
