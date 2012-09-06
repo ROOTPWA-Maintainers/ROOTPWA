@@ -370,7 +370,7 @@ def isobDecVtxTestConstructor():
 #	retval = pyRootPwa.isobarDecayVertex(part, part, part, 0, 0, [0, 1, 2])
 	retval = pyRootPwa.isobarDecayVertex(part, part, part)
 	return retval
-isobDecVtx = do_test_raw(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
+isobDecVtx = do_test(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
 
 def isobarDecVtxTestPrint(): print("\n\n" + str(isobDecVtx) + "\n")
 do_test(isobarDecVtxTestPrint, "Testing print(isobarDecayVertex)")
@@ -639,7 +639,7 @@ def dTTestnFP(): assert(decTo.nmbFsParticles() == 0)
 do_test(dTTestnFP, "Testing decayTopology.nmbFsParticles()")
 
 def dTTestnIFP(): assert(decTo.nmbIndistFsParticles() == {})
-do_test_raw(dTTestnIFP, "Testing decayTopology.nmbIndistFsParticles()")
+do_test(dTTestnIFP, "Testing decayTopology.nmbIndistFsParticles()")
 
 def dTTestfPIP(): assert(decTo.fsParticlesIntrinsicParity() == 1)
 do_test(dTTestfPIP, "Testing decayTopology.fsParticlesIntrinsicParity()")
@@ -743,7 +743,98 @@ def tTTestRM():
 		pass
 	else:
 		raise Exception("That shouldn't work.")
-do_test_raw(tTTestRM, "Testing decayTopology.revertMomenta{()/(list)/(UNSUPPORTED TYPE)}")
+do_test(tTTestRM, "Testing decayTopology.revertMomenta{()/(list)/(UNSUPPORTED TYPE)}")
+
+def tTTestDebug():
+	old_debug = decTo.debugDecayTopology
+	decTo.debugDecayTopology = (not old_debug)
+	assert(decTo.debugDecayTopology == (not old_debug))
+	decTo.debugDecayTopology = old_debug
+do_test(tTTestDebug, "Testing decayTopology debug flag")
+
+def tTTestClear(): decTo.clear()
+do_test(tTTestClear, "Testing decayTopology.clear()")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	isobarDecayTopology
+#
+# ---------------------------------------------------------
+
+def iDTTestConsts():
+	t = pyRootPwa.isobarDecayTopology()
+	t2 = pyRootPwa.isobarDecayTopology(t)
+	t2 = pyRootPwa.isobarDecayTopology(decTo)
+#	t = pyRootPwa.isobarDecayTopology(diDiVtx, [isobDecVtx], [part])
+# Need a consistent topology for that
+	return t
+isoDecTop = do_test(iDTTestConsts, "Testing isobarDecayTopology constructors")
+
+def iDTTestPrint(): print("\n\n" + str(isoDecTop) + "\n")
+do_test(iDTTestPrint, "Testing print(isobarDecayTopology")
+
+def iDTTestClone():
+	t = isoDecTop.clone()
+	t = isoDecTop.clone(True)
+	t = isoDecTop.clone(True, True)
+do_test(iDTTestClone, "Testing isobarDecayTopology.clone()")
+
+def iDTTestiDV(): assert(isoDecTop.isobarDecayVertices() == [])
+do_test(iDTTestiDV, "Testing isobarDecayTopology.isobarDecayVertices()")
+
+def iDTTestiXDV(): print(isoDecTop.XIsobarDecayVertex())
+do_test(iDTTestiXDV, "Testing isobarDecayTopology.XIsobarDecayVertex()", True)
+# need a consistent topology for that
+
+def iDTTestcC(): assert(isoDecTop.checkTopology())
+do_test(iDTTestcC, "Testing isobareDecayTopology.checkTopology()", True)
+
+def iDTTestcCon(): assert(isoDecTop.checkConsistency())
+do_test(iDTTestcCon, "Testing isobarDecayTopology.checkConsistency()")
+
+def iDTTestAddDec(): isoDecTop.addDecay(isoDecTop)
+do_test(iDTTestAddDec, "Testing isobarDecayTopology.addDecay()", True)
+# need a consistent topology for that
+
+def iDTTestJDD(): pyRootPwa.isobarDecayTopology.joinDaughterDecays(isobDecVtx, isoDecTop, isoDecTop)
+do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()", True)
+# need a consistent topology for that
+
+def iDTTestCILV(): print(isoDecTop.calcIsobarLzVec())
+do_test(iDTTestCILV, "Tessting isobarDecayTopology.calcIsobarLzVec()", True)
+# need a consistent topology for that
+
+def iDTTestCIC(): print(isoDecTop.calcIsobarCharges())
+do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarCharges()", True)
+# need a consistent topology for that
+
+def iDTTestCIBN(): print(isoDecTop.calcIsobarBaryonNmbs())
+do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarBaryonNmbs()", True)
+# need a consistent topology for that
+
+def iDTTestWGV(): print(isoDecTop.writeGraphViz())
+do_test(iDTTestWGV, "Testing isobarDecayTopology.writeGraphViz()", True)
+# need a consistent topology for that
+
+def iDTTestWGVtoFile():
+	print(isoDecTop.writeGraphViz("test.out"))
+	# Check if the file is there and if it is, remove it
+do_test(iDTTestWGVtoFile, "Testing isobarDecayTopology.writeGraphViz(outFileNmae)", True)
+# need a consistent topology for that
+
+def iDTTestDebug():
+	old_debug = isoDecTop.debugIsobarDecayTopology
+	isoDecTop.debugIsobarDecayTopology = (not old_debug)
+	assert(isoDecTop.debugIsobarDecayTopology == (not old_debug))
+	isoDecTop.debugIsobarDecayTopology = old_debug
+do_test(iDTTestDebug, "Testing isobarDecayTopology debug flag")
+
+def iDTTestClear(): isoDecTop.clear()
+do_test(iDTTestClear, "Testing isobarDecayTopology.clear()")
 
 print
 print("########################################################################")

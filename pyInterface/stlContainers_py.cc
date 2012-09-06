@@ -6,6 +6,7 @@
 #include<particle.h>
 #include<particleProperties.h>
 #include<interactionVertex.h>
+#include<isobarDecayVertex.h>
 
 namespace bp = boost::python;
 
@@ -32,6 +33,10 @@ void rpwa::py::exportStlContainers() {
 	// std::vector<rpwa::interactionVertexPtr>
 	bp::class_<std::vector<rpwa::interactionVertexPtr> >("__vector_interactionVertexPtr")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::interactionVertexPtr> >());
+
+	// std::vector<rpwa::isobarDecayVertexPtr>
+	bp::class_<std::vector<rpwa::isobarDecayVertexPtr> >("__vector_isobarDecayVertexPtr")
+		.def(bp::vector_indexing_suite<std::vector<rpwa::isobarDecayVertexPtr> >());
 
 };
 

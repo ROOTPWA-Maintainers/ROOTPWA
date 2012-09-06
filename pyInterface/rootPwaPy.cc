@@ -14,6 +14,7 @@
 #include "productionVertex_py.h"
 #include "diffractiveDissVertex_py.h"
 #include "decayTopology_py.h"
+#include "isobarDecayTopology_py.h"
 
 namespace bp = boost::python;
 
@@ -30,6 +31,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportProductionVertex();
 	rpwa::py::exportDiffractiveDissVertex();
 	rpwa::py::exportDecayTopology();
+	rpwa::py::exportIsobarDecayTopology();
 
 }
 

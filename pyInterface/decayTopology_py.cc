@@ -32,11 +32,11 @@ namespace {
 
 			for(unsigned int i = 0; i < bp::len(pyListDecayVertices); ++i) {
 				decayVertices[i] = bp::extract<rpwa::interactionVertexPtr>(pyListDecayVertices[i]);
-			};
+			}
 
 			for(unsigned int i = 0; i < bp::len(pyListFsParticles); ++i) {
 				fsParticles[i] = bp::extract<rpwa::particlePtr>(pyListFsParticles[i]);
-			};
+			}
 
 			rpwa::decayTopology::constructDecay(productionVertex, decayVertices, fsParticles);
 		};
@@ -45,6 +45,17 @@ namespace {
 		decayTopologyWrapper(const rpwa::decayTopology& topo)
 			: rpwa::decayTopology(topo),
 			  bp::wrapper<rpwa::decayTopology>() { };
+
+		void clear() {
+			if(bp::override clear = this->get_override("clear")) {
+				clear();
+			}
+			rpwa::decayTopology::clear();
+		};
+
+		void default_clear() {
+			rpwa::decayTopology::clear();
+		};
 
 		bp::dict nmbIndistFsParticles__() const {
 			return bp::dict(rpwa::decayTopology::nmbIndistFsParticles());
@@ -120,7 +131,7 @@ void rpwa::py::exportDecayTopology() {
 			   bp::arg("cloneProdKinematics")=false)
 		)
 
-		.def("clear", &decayTopologyWrapper::clear)
+		.def("clear", &decayTopologyWrapper::clear, &decayTopologyWrapper::default_clear)
 
 		.def("nmbDecayVertices", &decayTopologyWrapper::nmbDecayVertices)
 		.def("nmbFsParticles", &decayTopologyWrapper::nmbFsParticles)
