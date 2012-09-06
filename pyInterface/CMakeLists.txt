@@ -71,6 +71,9 @@ set(SOURCES
 	diffractiveDissVertex_py.cc
 	decayTopology_py.cc
 	isobarDecayTopology_py.cc
+	isobarAmplitude_py.cc
+	isobarCanonicalAmplitude_py.cc
+	isobarHelicityAmplitude_py.cc
 	)
 
 

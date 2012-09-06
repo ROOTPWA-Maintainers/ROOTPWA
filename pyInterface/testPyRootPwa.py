@@ -842,6 +842,60 @@ print
 
 # ---------------------------------------------------------
 #
+#	isobarCanonicalAmplitude
+#
+# ---------------------------------------------------------
+
+def iCATestConst():
+	t = pyRootPwa.isobarCanonicalAmplitude()
+	# t2 = pyRootPwa.isobarCanonicalAmplitude(isoDecTop)
+	# needs consistent topology
+	return t
+iCA = do_test(iCATestConst, "Testing isobarCanonicalAmplitude constructors")
+
+def iCATestName(): assert(iCA.name() == "isobarCanonicalAmplitude")
+do_test(iCATestName, "Testing isobarCanonicalAmplitude.name()")
+
+def iCATestDebug():
+	old_debug = iCA.debugIsobarCanonicalAmplitude
+	iCA.debugIsobarCanonicalAmplitude = (not old_debug)
+	assert(iCA.debugIsobarCanonicalAmplitude == (not old_debug))
+	iCA.debugIsobarCanonicalAmplitude = old_debug
+do_test(iCATestDebug, "Testing isobarCanonicalAmplitude debug flag")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	isobarHelicityAmplitude
+#
+# ---------------------------------------------------------
+
+def iHATestConst():
+	t = pyRootPwa.isobarHelicityAmplitude()
+	# t2 = pyRootPwa.isobarHelicityAmplitude(isoDecTop)
+	# needs consistent topology
+	return t
+iHA = do_test(iHATestConst, "Testing isobarHelicityAmplitude constructors")
+
+def iHATestName(): assert(iHA.name() == "isobarHelicityAmplitude")
+do_test(iHATestName, "Testing isobarHelicityAmplitude.name()")
+
+def iHATestDebug():
+	old_debug = iHA.debugIsobarHelicityAmplitude
+	iHA.debugIsobarHelicityAmplitude = (not old_debug)
+	assert(iHA.debugIsobarHelicityAmplitude == (not old_debug))
+	iHA.debugIsobarHelicityAmplitude = old_debug
+do_test(iHATestDebug, "Testing isobarHelicityAmplitude debug flag")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
 #	Summary
 #
 # ---------------------------------------------------------

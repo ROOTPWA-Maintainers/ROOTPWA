@@ -15,6 +15,9 @@
 #include "diffractiveDissVertex_py.h"
 #include "decayTopology_py.h"
 #include "isobarDecayTopology_py.h"
+#include "isobarAmplitude_py.h"
+#include "isobarCanonicalAmplitude_py.h"
+#include "isobarHelicityAmplitude_py.h"
 
 namespace bp = boost::python;
 
@@ -32,6 +35,9 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportDiffractiveDissVertex();
 	rpwa::py::exportDecayTopology();
 	rpwa::py::exportIsobarDecayTopology();
+	rpwa::py::exportIsobarAmplitude();
+	rpwa::py::exportIsobarCanonicalAmplitude();
+	rpwa::py::exportIsobarHelicityAmplitude();
 
 }
 
