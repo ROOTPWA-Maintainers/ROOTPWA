@@ -18,6 +18,7 @@
 #include "isobarAmplitude_py.h"
 #include "isobarCanonicalAmplitude_py.h"
 #include "isobarHelicityAmplitude_py.h"
+#include "waveDescription_py.h"
 
 namespace bp = boost::python;
 
@@ -38,6 +39,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportIsobarAmplitude();
 	rpwa::py::exportIsobarCanonicalAmplitude();
 	rpwa::py::exportIsobarHelicityAmplitude();
+	rpwa::py::exportWaveDescription();
 
 }
 

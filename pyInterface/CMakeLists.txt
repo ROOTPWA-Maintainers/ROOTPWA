@@ -74,6 +74,7 @@ set(SOURCES
 	isobarAmplitude_py.cc
 	isobarCanonicalAmplitude_py.cc
 	isobarHelicityAmplitude_py.cc
+	waveDescription_py.cc
 	)
 
 

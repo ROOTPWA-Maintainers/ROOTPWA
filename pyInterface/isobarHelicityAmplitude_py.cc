@@ -1,5 +1,7 @@
 #include "isobarHelicityAmplitude_py.h"
 
+#include "rootConverters_py.h"
+
 namespace bp = boost::python;
 
 namespace {
@@ -20,6 +22,14 @@ namespace {
 			: rpwa::isobarHelicityAmplitude(amp),
 			  bp::wrapper<rpwa::isobarHelicityAmplitude>() { };
 
+		static PyObject* hfTransform__(PyObject* pyDaughterLv) {
+			TLorentzVector* daughterLv = rpwa::py::convertFromPy<TLorentzVector*>(pyDaughterLv);
+			if(daughterLv == NULL) {
+				printErr<<"Got invalid input when executing rpwa::isobarHelicityAmplitude::hfTransform()."<<std::endl;
+				return bp::object().ptr();
+			}
+			return rpwa::py::convertToPy<TLorentzRotation>(rpwa::isobarHelicityAmplitude::hfTransform(*daughterLv));
+		};
 
 	};
 
@@ -34,6 +44,8 @@ void rpwa::py::exportIsobarHelicityAmplitude() {
 		.def(bp::self_ns::str(bp::self))
 
 		.def("name", &isobarHelicityAmplitudeWrapper::name)
+
+		.def("hfTransform", &isobarHelicityAmplitudeWrapper::hfTransform__)
 
 		.add_static_property("debugIsobarHelicityAmplitude", &isobarHelicityAmplitudeWrapper::debug, &isobarHelicityAmplitudeWrapper::setDebug);
 
