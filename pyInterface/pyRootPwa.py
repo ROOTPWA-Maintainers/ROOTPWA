@@ -4,6 +4,7 @@ import ROOT
 from libRootPwaPy import *
 
 import inspect
+import sys
 
 __terminalColorStrings = {}
 __terminalColorStrings['normal']     = "\033[0m"
@@ -37,34 +38,44 @@ def __printFormatted(msg, level):
 		function = "__main__"
 	string = ""
 	if level == "err":
-		string += __terminalColorStrings['fgRed']
+		if sys.stderr.isatty(): string += __terminalColorStrings['fgRed']
 		string += "!!! "
 		string += function + " [" + filename + ":" + str(lineno) + "]: "
-		string += "error: " + __terminalColorStrings['normal'] + msg
+		string += "error: "
+		if sys.stderr.isatty(): string += __terminalColorStrings['normal']
+		string += msg
 	elif level == "warn":
-		string += __terminalColorStrings['fgYellow']
+		if sys.stderr.isatty(): string += __terminalColorStrings['fgYellow']
 		string += "??? "
 		string += function + " [" + filename + ":" + str(lineno) + "]: "
-		string += "warning: " + __terminalColorStrings['normal'] + msg
+		string += "warning: "
+		if sys.stderr.isatty(): string += __terminalColorStrings['normal']
+		string += msg
 	elif level == "suc":
-		string += __terminalColorStrings['fgGreen']
+		if sys.stdout.isatty(): string += __terminalColorStrings['fgGreen']
 		string += "*** "
 		string += function + ": success: "
-		string += __terminalColorStrings['normal'] + msg
+		if sys.stdout.isatty(): string += __terminalColorStrings['normal']
+		string += msg
 	elif level == "info":
-		string += __terminalColorStrings['bold']
+		if sys.stdout.isatty(): string += __terminalColorStrings['bold']
 		string += ">>> "
 		string += function + ": info: "
-		string += __terminalColorStrings['normal'] + msg
+		if sys.stdout.isatty(): string += __terminalColorStrings['normal']
+		string += msg
 	elif level == "debug":
-		string += __terminalColorStrings['fgMangenta']
+		if sys.stdout.isatty(): string += __terminalColorStrings['fgMangenta']
 		string += "+++ "
 		string += function + ": debug: "
-		string += __terminalColorStrings['normal'] + msg
+		string += __terminalColorStrings['normal']
+		string += msg
 	else:
 		printErr("Invalid level string.")
 		raise Exception()
-	print(string)
+	if level == "err" or level == "warn":
+		sys.stderr.write(string + "\n")
+	else:
+		sys.stdout.write(string + "\n")
 
 
 def printErr(msg): __printFormatted(msg, "err")

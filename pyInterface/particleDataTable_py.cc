@@ -66,7 +66,7 @@ void rpwa::py::exportParticleDataTable()
 
 	bp::class_< particleDataTableWrapper, boost::noncopyable >( "particleDataTable", bp::no_init )    
 
-		.def( bp::self_ns::str( bp::self ) )
+		.def(bp::self_ns::str(bp::self))
 
 		.add_static_property(
 			"instance"

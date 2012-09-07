@@ -10,7 +10,7 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(
 	                                 description="calculates decay amplitudes "
 	                                             "for given wave for events in "
-	                                             "input data files and"
+	                                             "input data files and "
 	                                             "writes amplitudes to file",
 	                                 formatter_class=argparse.RawTextHelpFormatter
 	                                )

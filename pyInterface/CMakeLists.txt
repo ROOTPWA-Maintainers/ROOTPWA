@@ -75,6 +75,7 @@ set(SOURCES
 	isobarCanonicalAmplitude_py.cc
 	isobarHelicityAmplitude_py.cc
 	waveDescription_py.cc
+	amplitudeTreeLeaf_py.cc
 	utils_py.cc
 	)
 
