@@ -3,4 +3,5 @@ import ROOT
 
 from libRootPwaPy import *
 
-import utils
+config = None
+

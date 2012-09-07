@@ -76,9 +76,9 @@ def __printFormatted(msg, level):
 		sys.stdout.write(string + "\n")
 
 
-def printErr(msg): __printFormatted(msg, "err")
-def printWarn(msg): __printFormatted(msg, "warn")
-def printSucc(msg): __printFormatted(msg, "suc")
-def printInfo(msg): __printFormatted(msg, "info")
-def printDebug(msg): __printFormatted(msg, "debug")
+def printErr(msg): __printFormatted(str(msg), "err")
+def printWarn(msg): __printFormatted(str(msg), "warn")
+def printSucc(msg): __printFormatted(str(msg), "suc")
+def printInfo(msg): __printFormatted(str(msg), "info")
+def printDebug(msg): __printFormatted(str(msg), "debug")
 
