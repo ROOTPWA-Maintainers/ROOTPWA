@@ -1,10 +1,8 @@
 
-import ROOT
-
-from libRootPwaPy import *
-
 import inspect
 import sys
+
+config = None
 
 __terminalColorStrings = {}
 __terminalColorStrings['normal']     = "\033[0m"

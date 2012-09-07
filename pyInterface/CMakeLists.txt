@@ -93,10 +93,17 @@ make_shared_library(
 	"${AMPLITUDE_LIBS}"
 	)
 
-# Link the library to have a directory to point PYTHONPATH to
-add_custom_command(
-	TARGET RootPwaPy
-	POST_BUILD
-	COMMAND ln -s -f ${CMAKE_SOURCE_DIR}/pyInterface/pyRootPwa.py ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa.py
-	COMMAND ln -s -f ${LIBRARY_OUTPUT_PATH}/libRootPwaPy.so	${PYTHON_LIBRARY_OUTPUT_PATH}/libRootPwaPy.so
+# link the shared library with the python bindings
+add_custom_target(
+	libRootPwaPyLink ALL
+	COMMAND ${CMAKE_COMMAND} -E create_symlink ${LIBRARY_OUTPUT_PATH}/libRootPwaPy.so	${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/libRootPwaPy.so
 )
+
+# produce python byte-code and move it to the build directory
+add_custom_target(
+	pyRootPwaPackageLinks ALL
+	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/python_compiler.py ${CMAKE_SOURCE_DIR}/pyInterface/package ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa
+)
+
+add_dependencies(libRootPwaPyLink RootPwaPy pyRootPwaPackageLinks)
+

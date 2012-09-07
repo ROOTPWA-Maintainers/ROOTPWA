@@ -39,31 +39,25 @@ if __name__ == "__main__":
 	# check input file extensions
 	for filename in arguments.input_files:
 		if filename.rfind(".") < 0:
-			pyRootPwa.printWarn('file extension missing in filename "' + filename + '".')
+			pyRootPwa.utils.printWarn('file extension missing in filename "' + filename + '".')
 			continue
 		fileExt = filename[filename.rfind(".")+1:]
 		if (fileExt != "root") and (fileExt != "evt"):
-			pyRootPwa.printWarn('input file "' + filename + '" is neither a .root nor a .evt file. skipping.')
+			pyRootPwa.utils.printWarn('input file "' + filename + '" is neither a .root nor a .evt file. skipping.')
 			continue
 		inputFiles.append(filename)
 
 	# check output file extension
 	if arguments.ampFileName.rfind(".") < 0:
-		pyRootPwa.printErr('amplitude file "' + arguments.ampFileName + '" has no file extension. aborting.')
+		pyRootPwa.utils.printErr('amplitude file "' + arguments.ampFileName + '" has no file extension. aborting.')
 		sys.exit(1)
 	fileExt = arguments.ampFileName[arguments.ampFileName.rfind(".")+1:]
 	writeRootFile = False
 	if fileExt == "root":
 		writeRootFile = True
 	elif fileExt != "amp":
-		pyRootPwa.printErr('amplitude file "' + arguments.ampFileName + '" is neither a .root nor a .amp file. aborting.')
+		pyRootPwa.utils.printErr('amplitude file "' + arguments.ampFileName + '" is neither a .root nor a .amp file. aborting.')
 		sys.exit(1)
-
-	# get object and leaf names
-	(prodKinPartNamesObjName,
-	 prodKinMomentaLeafName,
-	 decayKinPartNamesObjName,
-	 decayKinMomentaLeafName) = arguments.leafNames.split(";")
 
 #	# open .root and .evt input files
 #	inTrees = []
@@ -71,9 +65,9 @@ if __name__ == "__main__":
 #
 #	for filename in inputFiles:
 #		if(filename[filename.rfind(".")+1:] == "root"):
-#			pyRootPwa.printInfo('opening ROOT input file "' + filename + '".')
+#			pyRootPwa.utils.printInfo('opening ROOT input file "' + filename + '".')
 #			if(inChain.Add(filename) < 1):
-#				pyRootPwa.printWarn('no events in ROOT input file "' + filename + '".')
+#				pyRootPwa.utils.printWarn('no events in ROOT input file "' + filename + '".')
 #		else:
 #			with open(filename, "r") is infile:
 #				prodNames = pyRootPwa.ROOT.TClonesArray("TObjString")
@@ -81,22 +75,22 @@ if __name__ == "__main__":
 
 
 	# initialize the particleDataTable
-	pyRootPwa.particleDataTable.readFile(arguments.pdgFileName)
+	pyRootPwa.particleDataTable.readFile(pdgFileName)
 
 	# Parse the keyfile and get the amplitude
 	waveDesc = pyRootPwa.waveDescription()
 	if not waveDesc.parseKeyFile(arguments.keyFileName):
-		pyRootPwa.printErr('problems reading key file "' + arguments.keyFileName + '". aborting')
+		pyRootPwa.utils.printErr('problems reading key file "' + arguments.keyFileName + '". aborting')
 		sys.exit(1)
 
 	(waveDescConstructionSuccess, amplitude) = waveDesc.constructAmplitude()
 	if not waveDescConstructionSuccess:
-		pyRootPwa.printErr('problems constructing decay topology from key file. aborting.')
+		pyRootPwa.utils.printErr('problems constructing decay topology from key file. aborting.')
 		sys.exit(1)
 
 	printString = 'creating amplitude file "' + arguments.ampFileName + '"'
 	if writeRootFile:
-		pyRootPwa.printInfo(printString)
+		pyRootPwa.utils.printInfo(printString)
 		pyRootPwa.ROOT.TFile.Open(arguments.ampFileName, "RECREATE")
 		amplitude.decayTopology()
 		waveName = waveDesc.waveNameFromTopology(amplitude.decayTopology(), arguments.newKeyFileNameConvention, None)
@@ -107,6 +101,6 @@ if __name__ == "__main__":
 		else:
 			printString += "; binary mode"
 
-		pyRootPwa.printInfo(printString)
+		pyRootPwa.utils.printInfo(printString)
 		pass
 
