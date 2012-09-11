@@ -7,6 +7,7 @@ import os
 import sys
 
 import pyRootPwa
+import pyRootPwa.configuration
 import pyRootPwa.utils
 
 if __name__ == "__main__":
@@ -33,140 +34,16 @@ if __name__ == "__main__":
 	arguments = parser.parse_args()
 
 	# config file
-	pyRootPwa.config = ConfigParser.ConfigParser()
-	try:
-		with open(arguments.configFileName, 'r') as configFile:
-			pyRootPwa.config.readfp(configFile)
-	except IOError:
-		pyRootPwa.utils.printErr("config file could not be opened. Aborting...")
-		sys.exit(1)
-	except ConfigParser.Error:
-		pyRootPwa.utils.printErr("config file could not be parsed. Aborting...")
-		sys.exit(1)
+	pyRootPwa.config = pyRootPwa.configuration.rootPwaConfig(arguments.configFileName)
 
-	try:
-		pdgFileName                 = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('general', 'particleDataTable')))
-
-		if pyRootPwa.config.has_option('general', 'dataDirectory'):
-			dataDirectory = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('general', 'dataDirectory')))
-			if dataDirectory == "":
-				dataDirectory = os.path.abspath(os.path.dirname((arguments.configFileName)))
-		else:
-			dataDirectory = os.path.abspath(os.path.dirname((arguments.configFileName)))
-
-		if not pyRootPwa.config.has_option('general', 'dataFileExtensionQualifier'):
-			dataFileExtensionQualifier = ""
-		else:
-			dataFileExtensionQualifier = pyRootPwa.config.get('general', 'dataFileExtensionQualifier')
-
-		phaseSpaceEventFileExtenisonQualifier = pyRootPwa.config.get('general', 'phaseSpaceEventFileExtenisonQualifier')
-		accCorrPSEventFileExtensionQualifier  = pyRootPwa.config.get('general', 'accCorrPSEventFileExtensionQualifier')
-		massBinDirectoryNamePattern           = pyRootPwa.config.get('general', 'massBinDirectoryNamePattern')
-		keyfilePattern                        = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('amplitudes', 'keyfiles')))
-		prodKinPartNamesObjName               = pyRootPwa.config.get('amplitudes', 'prodKinPartNamesObjName')
-		prodKinMomentaLeafName                = pyRootPwa.config.get('amplitudes', 'prodKinMomentaLeafName')
-		decayKinPartNamesObjName              = pyRootPwa.config.get('amplitudes', 'decayKinPartNamesObjName')
-		decayKinMomentaLeafName               = pyRootPwa.config.get('amplitudes', 'decayKinMomentaLeafName')
-	except ConfigParser.Error:
-		pyRootPwa.utils.printErr("a required entry was missing from the config file. Aborting...")
-		sys.exit(1)
-
-	if not os.path.isdir(dataDirectory):
-		pyRootPwa.utils.printErr("Data directory invalid. Aborting...")
-		sys.exit(1)
-
-	if phaseSpaceEventFileExtenisonQualifier == "":
-		pyRootPwa.utils.printWarn("File extension qualifier for the phase space events is empty, no phase space events will be calculated...")
-	if accCorrPSEventFileExtensionQualifier == "":
-		pyRootPwa.utils.printWarn("File extension qualifier for the acceptance corrected phase space events is empty, no acc. cor. phase space events will be calculated...")
 	# get the massBins as specified on the command line
-	allMassBins = sorted(glob.glob(dataDirectory + '/' + massBinDirectoryNamePattern))
-	massBins = []
-	massBinIndizesProblem = False
-	if arguments.massBins == "all":
-		massBins = allMassBins
-	elif arguments.massBins.find("-") > 0 or arguments.massBins.find(",") > 0:
-		rawMassBinIndizes = arguments.massBins.split(",")
-		massBinIndizes = []
-		for massBinIndex in rawMassBinIndizes:
-			if massBinIndex.find("-") > 0:
-				(lb, tmp, ub) = massBinIndex.partition("-")
-				try:
-					lb = int(lb)
-					ub = int(ub)
-				except ValueError:
-					massBinIndizesProblem = True
-					break
-				for i in range(lb, ub+1):
-					massBinIndizes.append(i)
-			else:
-				try:
-					mbi = int(massBinIndex)
-				except ValueError:
-					massBinIndizesProblem = True
-					break
-				massBinIndizes.append(mbi)
-		for index in massBinIndizes:
-			try:
-				massBins.append(allMassBins[index-1])
-			except IndexError:
-				pyRootPwa.utils.printErr("Mass bin command line option out of range. Aborting...")
-				sys.exit(1)
-		print(massBinIndizes)
-	else:
-		try:
-			mbi = int(arguments.massBins)
-			massBins.append(allMassBins[mbi-1])
-		except ValueError:
-			massBinIndizesProblem = True
-		except IndexError:
-			pyRootPwa.utils.printErr("Mass bin command line option out of range. Aborting...")
-			sys.exit(1)
-	if massBinIndizesProblem:
+	allMassBins = sorted(glob.glob(pyRootPwa.config.dataDirectory + '/' + pyRootPwa.config.massBinDirectoryNamePattern))
+	massBins = pyRootPwa.utils.parseMassBinArgs(allMassBins, arguments.massBins)
+	if not massBins:
 		pyRootPwa.utils.printErr("Mass bin command line option was invalid. Aborting...")
 		sys.exit(1)
 
-	# collect all the input files
-	inputDataFiles = []
-	inputPSFiles = []
-	inputAccPSFiles = []
-	for massBin in massBins:
-		inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1]
-		if dataFileExtensionQualifier != "":
-			inputFile += "." + dataFileExtensionQualifier
-		if os.path.isfile(inputFile + ".root"):
-			inputFile += ".root"
-		elif os.path.isfile(inputFile + ".evt"):
-			inputFile += ".evt"
-		else:
-			pyRootPwa.utils.printErr('Mass bin "' + massBin + '" does not contain data input file "' + inputFile + '{.root/.evt}". Aborting...')
-			sys.exit(1)
-		inputDataFiles.append(inputFile)
-		if phaseSpaceEventFileExtenisonQualifier != "":
-			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + phaseSpaceEventFileExtenisonQualifier
-			if os.path.isfile(inputFile + ".root"):
-				inputFile += ".root"
-				inputPSFiles.append(inputFile)
-			elif os.path.isfile(inputFile + ".evt"):
-				inputFile += ".evt"
-				inputPSFiles.append(inputFile)
-			else:
-				pass
-#				pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not contain phase space input file "' + inputFile + '{.root/.evt}".')
-		if accCorrPSEventFileExtensionQualifier != "":
-			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + accCorrPSEventFileExtensionQualifier
-			if os.path.isfile(inputFile + ".root"):
-				inputFile += ".root"
-				inputAccPSFiles.append(inputFile)
-			elif os.path.isfile(inputFile + ".evt"):
-				inputFile += ".evt"
-				inputAccPSFiles.append(inputFile)
-			else:
-				pass
-#				pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not data contain acc. cor. phase space input file "' + inputFile + '{.root/.evt}".')
-
-
-
+	(inputDataFiles, inputPSFiles, inputAccPSFiles) = pyRootPwa.utils.getListOfInputFiles(massBins)
 
 	sys.exit(1)
 

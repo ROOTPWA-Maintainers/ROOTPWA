@@ -1,5 +1,6 @@
 
 import pyRootPwa
+import pyRootPwa.utils
 
 def calcAmplitudes(inFile, keyfile, outfile):
 
@@ -8,20 +9,26 @@ def calcAmplitudes(inFile, keyfile, outfile):
 
 	inTree = inFile.Get(pyRootPwa.config.get('amplitudes', 'inTreeName'))
 
-	prodKinMomenta = pyRootPwa.ROOT.TVector3()
-	decayKinMomenta = pyRootPwa.ROOT.TVector3()
+	prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
+	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 
 	inTree.SetBranchAddress(pyRootPwa.config.get('amplitudes', 'prodKinMomentaLeafName'), prodKinMomenta)
 	inTree.SetBranchAddress(pyRootPwa.config.get('amplitudes', 'decayKinMomentaLeafName'), decayKinMomenta)
 
-	waveDesc = pyRootPwa.waveDescription()
-	waveDesc.parseKeyFile(keyfile)
-	(waveDescConstructionSuccess, amplitude) = waveDesc.constructAmplitude()
-
-	amplitude.decayTopology().initKinematicsData(prodKinParticles, decayKinParticles)
+	pythonAdmin = pyRootPwa.pythonAdministrator()
+	if not pythonAdmin.constructAmplitude(keyfile):
+		pyRootPwa.utils.printWarn('Could not construct amplitude for keyfile "' + keyfile + '".')
+		return False
+	if not pythonAdmin.initKinematicsData(prodKinParticles, decayKinParticles):
+		pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
+		return False
 
 	for treeIndex in range(inTree.GetEntries()):
-		inTree.getEntry(treeIndex)
-		amplitude.decayTopology().readKinematicsData(prodKinMomenta, decayKinMomenta)
-		print(amplitude())
+		inTree.GetEntry(treeIndex)
+		if not pythonAdmin.readKinematicsData(prodKinMomenta, decayKinMomenta):
+			pyRootPwa.utils.printErr('Could not read kinematics data.')
+			return False
+		amp = pythonAdmin()
+		outfile.write("(" + str(amp.real) + ", " + str(amp.imag) + ")\n")
+	return True
 
