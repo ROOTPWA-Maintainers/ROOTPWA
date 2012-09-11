@@ -77,6 +77,7 @@ set(SOURCES
 	waveDescription_py.cc
 	amplitudeTreeLeaf_py.cc
 	utils_py.cc
+	pythonAdministrator_py.cc
 	)
 
 

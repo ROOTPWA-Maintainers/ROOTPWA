@@ -21,6 +21,7 @@
 #include "waveDescription_py.h"
 #include "amplitudeTreeLeaf_py.h"
 #include "utils_py.h"
+#include "pythonAdministrator_py.h"
 
 namespace bp = boost::python;
 
@@ -44,6 +45,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportWaveDescription();
 	rpwa::py::exportAmplitudeTreeLeaf();
 	rpwa::py::exportUtils();
+	rpwa::py::exportPythonAdministrator();
 
 }
 
