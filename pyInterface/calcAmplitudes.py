@@ -11,6 +11,12 @@ import pyRootPwa.utils
 
 if __name__ == "__main__":
 
+	# print some info
+	pyRootPwa.printCompilerInfo()
+	pyRootPwa.printLibraryInfo()
+	pyRootPwa.printSvnVersion()
+
+	# parse command line arguments
 	parser = argparse.ArgumentParser(
 	                                 description="calculates decay amplitudes "
 	                                             "for given wave for events in "
@@ -21,9 +27,8 @@ if __name__ == "__main__":
 
 	parser.add_argument("-c", type=str, metavar="file", default="rootpwa.config", dest="configFileName", help="path ot config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
-	parser.add_argument("-o", type=str, metavar="file", default="./out.root", dest="ampFileName", help="path to amplitude file (.amp or .root format; default: ./out.root)")
+	parser.add_argument("-mb", type=str, metavar="massBin(s)", default="all", dest="massBins", help="mass bins to be calculated (default: all)")
 	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
-	parser.add_argument("input_files", nargs="+", help="input data file(s) (.evt or .root format)")
 
 	arguments = parser.parse_args()
 
@@ -40,33 +45,134 @@ if __name__ == "__main__":
 		sys.exit(1)
 
 	try:
-		pdgFileName              = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('general', 'particleDataTable')))
-		keyfilePattern           = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('amplitudes', 'keyfiles')))
-		prodKinPartNamesObjName  = pyRootPwa.config.get('amplitudes', 'prodKinPartNamesObjName')
-		prodKinMomentaLeafName   = pyRootPwa.config.get('amplitudes', 'prodKinMomentaLeafName')
-		decayKinPartNamesObjName = pyRootPwa.config.get('amplitudes', 'decayKinPartNamesObjName')
-		decayKinMomentaLeafName  = pyRootPwa.config.get('amplitudes', 'decayKinMomentaLeafName')
+		pdgFileName                 = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('general', 'particleDataTable')))
+
+		if pyRootPwa.config.has_option('general', 'dataDirectory'):
+			dataDirectory = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('general', 'dataDirectory')))
+			if dataDirectory == "":
+				dataDirectory = os.path.abspath(os.path.dirname((arguments.configFileName)))
+		else:
+			dataDirectory = os.path.abspath(os.path.dirname((arguments.configFileName)))
+
+		if not pyRootPwa.config.has_option('general', 'dataFileExtensionQualifier'):
+			dataFileExtensionQualifier = ""
+		else:
+			dataFileExtensionQualifier = pyRootPwa.config.get('general', 'dataFileExtensionQualifier')
+
+		phaseSpaceEventFileExtenisonQualifier = pyRootPwa.config.get('general', 'phaseSpaceEventFileExtenisonQualifier')
+		accCorrPSEventFileExtensionQualifier  = pyRootPwa.config.get('general', 'accCorrPSEventFileExtensionQualifier')
+		massBinDirectoryNamePattern           = pyRootPwa.config.get('general', 'massBinDirectoryNamePattern')
+		keyfilePattern                        = os.path.expanduser(os.path.expandvars(pyRootPwa.config.get('amplitudes', 'keyfiles')))
+		prodKinPartNamesObjName               = pyRootPwa.config.get('amplitudes', 'prodKinPartNamesObjName')
+		prodKinMomentaLeafName                = pyRootPwa.config.get('amplitudes', 'prodKinMomentaLeafName')
+		decayKinPartNamesObjName              = pyRootPwa.config.get('amplitudes', 'decayKinPartNamesObjName')
+		decayKinMomentaLeafName               = pyRootPwa.config.get('amplitudes', 'decayKinMomentaLeafName')
 	except ConfigParser.Error:
 		pyRootPwa.utils.printErr("a required entry was missing from the config file. Aborting...")
 		sys.exit(1)
 
-	keyfiles = []
-	if os.path.isdir(keyfilePattern):
-		keyfiles = glob.glob(keyfilePattern + "/*.key")
-	elif os.path.isfile(keyfilePattern) and keyfilePattern.find(".key") > 0:
-		keyfiles.append(keyfilePattern)
+	if not os.path.isdir(dataDirectory):
+		pyRootPwa.utils.printErr("Data directory invalid. Aborting...")
+		sys.exit(1)
+
+	if phaseSpaceEventFileExtenisonQualifier == "":
+		pyRootPwa.utils.printWarn("File extension qualifier for the phase space events is empty, no phase space events will be calculated...")
+	if accCorrPSEventFileExtensionQualifier == "":
+		pyRootPwa.utils.printWarn("File extension qualifier for the acceptance corrected phase space events is empty, no acc. cor. phase space events will be calculated...")
+	# get the massBins as specified on the command line
+	allMassBins = sorted(glob.glob(dataDirectory + '/' + massBinDirectoryNamePattern))
+	massBins = []
+	massBinIndizesProblem = False
+	if arguments.massBins == "all":
+		massBins = allMassBins
+	elif arguments.massBins.find("-") > 0 or arguments.massBins.find(",") > 0:
+		rawMassBinIndizes = arguments.massBins.split(",")
+		massBinIndizes = []
+		for massBinIndex in rawMassBinIndizes:
+			if massBinIndex.find("-") > 0:
+				(lb, tmp, ub) = massBinIndex.partition("-")
+				try:
+					lb = int(lb)
+					ub = int(ub)
+				except ValueError:
+					massBinIndizesProblem = True
+					break
+				for i in range(lb, ub+1):
+					massBinIndizes.append(i)
+			else:
+				try:
+					mbi = int(massBinIndex)
+				except ValueError:
+					massBinIndizesProblem = True
+					break
+				massBinIndizes.append(mbi)
+		for index in massBinIndizes:
+			try:
+				massBins.append(allMassBins[index-1])
+			except IndexError:
+				pyRootPwa.utils.printErr("Mass bin command line option out of range. Aborting...")
+				sys.exit(1)
+		print(massBinIndizes)
 	else:
-		pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
+		try:
+			mbi = int(arguments.massBins)
+			massBins.append(allMassBins[mbi-1])
+		except ValueError:
+			massBinIndizesProblem = True
+		except IndexError:
+			pyRootPwa.utils.printErr("Mass bin command line option out of range. Aborting...")
+			sys.exit(1)
+	if massBinIndizesProblem:
+		pyRootPwa.utils.printErr("Mass bin command line option was invalid. Aborting...")
+		sys.exit(1)
 
-	# print some info
-	pyRootPwa.printCompilerInfo()
-	pyRootPwa.printLibraryInfo()
-	pyRootPwa.printSvnVersion()
+	# collect all the input files
+	inputDataFiles = []
+	inputPSFiles = []
+	inputAccPSFiles = []
+	for massBin in massBins:
+		inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1]
+		if dataFileExtensionQualifier != "":
+			inputFile += "." + dataFileExtensionQualifier
+		if os.path.isfile(inputFile + ".root"):
+			inputFile += ".root"
+		elif os.path.isfile(inputFile + ".evt"):
+			inputFile += ".evt"
+		else:
+			pyRootPwa.utils.printErr('Mass bin "' + massBin + '" does not contain data input file "' + inputFile + '{.root/.evt}". Aborting...')
+			sys.exit(1)
+		inputDataFiles.append(inputFile)
+		if phaseSpaceEventFileExtenisonQualifier != "":
+			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + phaseSpaceEventFileExtenisonQualifier
+			if os.path.isfile(inputFile + ".root"):
+				inputFile += ".root"
+				inputPSFiles.append(inputFile)
+			elif os.path.isfile(inputFile + ".evt"):
+				inputFile += ".evt"
+				inputPSFiles.append(inputFile)
+			else:
+				pass
+#				pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not contain phase space input file "' + inputFile + '{.root/.evt}".')
+		if accCorrPSEventFileExtensionQualifier != "":
+			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + accCorrPSEventFileExtensionQualifier
+			if os.path.isfile(inputFile + ".root"):
+				inputFile += ".root"
+				inputAccPSFiles.append(inputFile)
+			elif os.path.isfile(inputFile + ".evt"):
+				inputFile += ".evt"
+				inputAccPSFiles.append(inputFile)
+			else:
+				pass
+#				pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not data contain acc. cor. phase space input file "' + inputFile + '{.root/.evt}".')
 
-	inputFiles = []
 
-	# check input file extensions
-	for filename in arguments.input_files:
+
+
+	sys.exit(1)
+
+
+
+	for filename in inputFiles:
 		if filename.rfind(".") < 0:
 			pyRootPwa.utils.printWarn('file extension missing in filename "' + filename + '". Skipping...')
 			continue
@@ -78,6 +184,31 @@ if __name__ == "__main__":
 
 	if len(inputFiles) <= 0:
 		pyRootPwa.utils.printErr("no valid input files found. Aborting...")
+		sys.exit(1)
+
+
+	# get list of keyfiles
+	keyfiles = []
+	if os.path.isdir(keyfilePattern):
+		keyfiles = glob.glob(keyfilePattern + "/*.key")
+	elif os.path.isfile(keyfilePattern) and keyfilePattern.find(".key") > 0:
+		keyfiles.append(keyfilePattern)
+	else:
+		globbedKeyfiles = glob.glob(keyfilePattern)
+		for keyfile in globbedKeyfiles:
+			if os.path.isfile(keyfile) and keyfile.find(".key") > 0:
+				keyfiles.append(keyfile)
+			else:
+				pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
+	if len(keyfiles) == 0:
+		pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
+		sys.exit(1)
+
+	#get list of input files
+	inputFiles = []
+
+
+
 
 	# check output file extension
 	if arguments.ampFileName.rfind(".") < 0:
@@ -94,21 +225,20 @@ if __name__ == "__main__":
 	# initialize the particleDataTable
 	pyRootPwa.particleDataTable.readFile(pdgFileName)
 
-#	# open .root and .evt input files
-#	inTrees = []
-#	inChain = pyRootPwa.ROOT.TChain(arguments.inTreeName)
-#
-#	for filename in inputFiles:
-#		if(filename[filename.rfind(".")+1:] == "root"):
-#			pyRootPwa.utils.printInfo('opening ROOT input file "' + filename + '".')
-#			if(inChain.Add(filename) < 1):
-#				pyRootPwa.utils.printWarn('no events in ROOT input file "' + filename + '".')
-#		else:
-#			with open(filename, "r") is infile:
-#				prodNames = pyRootPwa.ROOT.TClonesArray("TObjString")
-#				decayNames = pyRootPwa.ROOT.TClonesArray("TObjString")
-#
-#
+	# open .root and .evt input files
+	dataTrees = []
+	for filename in inputFiles:
+		if(filename[filename.rfind(".")+1:] == "root"):
+			pyRootPwa.printErr("Root files not yet supported. Aborting...")
+			sys.exit(1)
+		else:
+			dataTrees.append(pyRootPwa.utils.getTreeFromEvtFile(filename))
+
+
+
+
+
+
 #	# Parse the keyfile and get the amplitude
 #	waveDesc = pyRootPwa.waveDescription()
 #	if not waveDesc.parseKeyFile(arguments.keyFileName):
