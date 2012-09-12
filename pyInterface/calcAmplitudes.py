@@ -7,6 +7,7 @@ import os
 import sys
 
 import pyRootPwa
+import pyRootPwa.amplitude
 import pyRootPwa.configuration
 import pyRootPwa.utils
 
@@ -43,103 +44,67 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("Mass bin command line option was invalid. Aborting...")
 		sys.exit(1)
 
+	# get the lists of input files
 	(inputDataFiles, inputPSFiles, inputAccPSFiles) = pyRootPwa.utils.getListOfInputFiles(massBins)
-
-	sys.exit(1)
-
-
-
-	for filename in inputFiles:
-		if filename.rfind(".") < 0:
-			pyRootPwa.utils.printWarn('file extension missing in filename "' + filename + '". Skipping...')
-			continue
-		fileExt = filename[filename.rfind(".")+1:]
-		if (fileExt != "root") and (fileExt != "evt"):
-			pyRootPwa.utils.printWarn('input file "' + filename + '" is neither a .root nor a .evt file. Skipping...')
-			continue
-		inputFiles.append(filename)
-
-	if len(inputFiles) <= 0:
-		pyRootPwa.utils.printErr("no valid input files found. Aborting...")
+	if not inputDataFiles:
+		pyRootPwa.utils.printErr('No input data files found. Aborting...')
 		sys.exit(1)
+	if len(inputDataFiles) != len(massBins):
+		pyRootPwa.utils.printErr('Not all data input files are present (should have ' + str(len(massBins)) + ', found ' + str(len(inputDataFiles)) + '). Aborting...')
+		sys.exit(1)
+	if len(inputPSFiles) != len(massBins):
+		pyRootPwa.utils.printWarn('Not all phase space input files are present (should have ' + str(len(massBins)) + ', found ' + str(len(inputPSFiles)) + ').')
+	if len(inputAccPSFiles) != len(massBins):
+		pyRootPwa.utils.printWarn('Not all acceptance corrected phase space input files are present (should have ' + str(len(massBins)) + ', found ' + str(len(inputAccPSFiles)) + ').')
 
 
 	# get list of keyfiles
-	keyfiles = []
-	if os.path.isdir(keyfilePattern):
-		keyfiles = glob.glob(keyfilePattern + "/*.key")
-	elif os.path.isfile(keyfilePattern) and keyfilePattern.find(".key") > 0:
-		keyfiles.append(keyfilePattern)
-	else:
-		globbedKeyfiles = glob.glob(keyfilePattern)
-		for keyfile in globbedKeyfiles:
-			if os.path.isfile(keyfile) and keyfile.find(".key") > 0:
-				keyfiles.append(keyfile)
-			else:
-				pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
+	keyfiles = pyRootPwa.utils.getListOfKeyfiles(pyRootPwa.config.keyfilePattern)
 	if len(keyfiles) == 0:
 		pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
 		sys.exit(1)
 
-	#get list of input files
-	inputFiles = []
-
-
-
-
-	# check output file extension
-	if arguments.ampFileName.rfind(".") < 0:
-		pyRootPwa.utils.printErr('amplitude file "' + arguments.ampFileName + '" has no file extension. aborting.')
-		sys.exit(1)
-	fileExt = arguments.ampFileName[arguments.ampFileName.rfind(".")+1:]
-	writeRootFile = False
-	if fileExt == "root":
-		writeRootFile = True
-	elif fileExt != "amp":
-		pyRootPwa.utils.printErr('amplitude file "' + arguments.ampFileName + '" is neither a .root nor a .amp file. Aborting...')
-		sys.exit(1)
-
 	# initialize the particleDataTable
-	pyRootPwa.particleDataTable.readFile(pdgFileName)
+	pyRootPwa.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
 
-	# open .root and .evt input files
-	dataTrees = []
-	for filename in inputFiles:
-		if(filename[filename.rfind(".")+1:] == "root"):
-			pyRootPwa.printErr("Root files not yet supported. Aborting...")
-			sys.exit(1)
+	for inputFile in (inputDataFiles + inputPSFiles + inputAccPSFiles):
+
+		# check and if necessary create the output direcotries
+		outDir = inputFile.rsplit('/', 1)[0] + '/'
+		if inputFile in inputDataFiles:
+			outDir += pyRootPwa.config.dataAmplitudeDirectoryName
+		elif inputFile in inputPSFiles:
+			outDir += pyRootPwa.config.phaseSpaceAmpDirectoryName
+		elif inputFile in inputAccPSFiles:
+			outDir += pyRootPwa.config.accCorrPSAmpDirectoryName
+		if not os.path.exists(outDir):
+			os.mkdir(outDir)
 		else:
-			dataTrees.append(pyRootPwa.utils.getTreeFromEvtFile(filename))
+			if not os.path.isdir(outDir):
+				pyRootPwa.utils.printErr('Output data directory does not appear to be a directory. Aborting...')
+				sys.exit(1)
 
+		for keyfile in keyfiles:
 
+			if pyRootPwa.config.outputFileFormat == 'root':
+				outFileExtension = '.root'
+			else:
+				outFileExtension = '.amp'
 
+			outFileName = outDir + '/' + keyfile.rsplit('/',1)[-1].replace('.key', outFileExtension)
 
+			if os.path.exists(outFileName):
+				pyRootPwa.utils.printInfo('Output file "' + outFileName + '" already present. Skipping...')
+				continue
 
+			if outFileExtension == '.amp':
+				with open(outFileName, 'w') as outputFile:
+					inFile = pyRootPwa.ROOT.TFile.Open(inputFile)
+					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outputFile)
+				if success:
+					pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '".')
+				else:
+					pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".')
+					if os.path.exists(outFileName):
+						os.remove(outFileName)
 
-#	# Parse the keyfile and get the amplitude
-#	waveDesc = pyRootPwa.waveDescription()
-#	if not waveDesc.parseKeyFile(arguments.keyFileName):
-#		pyRootPwa.utils.printErr('problems reading key file "' + arguments.keyFileName + '". aborting')
-#		sys.exit(1)
-#
-#	(waveDescConstructionSuccess, amplitude) = waveDesc.constructAmplitude()
-#	if not waveDescConstructionSuccess:
-#		pyRootPwa.utils.printErr('problems constructing decay topology from key file. aborting.')
-#		sys.exit(1)
-#
-#	printString = 'creating amplitude file "' + arguments.ampFileName + '"'
-#	if writeRootFile:
-#		pyRootPwa.utils.printInfo(printString)
-#		pyRootPwa.ROOT.TFile.Open(arguments.ampFileName, "RECREATE")
-#		amplitude.decayTopology()
-#		waveName = waveDesc.waveNameFromTopology(amplitude.decayTopology(), arguments.newKeyFileNameConvention, None)
-#		waveDesc.Write(waveName)
-#	else:
-#		if arguments.asciiOutput:
-#			printString += "; ASCII mode"
-#		else:
-#			printString += "; binary mode"
-#
-#		pyRootPwa.utils.printInfo(printString)
-#		pass
-#

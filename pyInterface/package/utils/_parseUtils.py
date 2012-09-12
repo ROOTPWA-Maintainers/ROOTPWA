@@ -1,4 +1,5 @@
 
+import glob
 import os
 
 import pyRootPwa
@@ -70,24 +71,35 @@ def getListOfInputFiles(massBins):
 		if dataFileExtensionQualifier != "":
 			inputFile += "." + dataFileExtensionQualifier
 		inputFile = _evtOrRoot(inputFile)
-		if not inputFile:
-			pyRootPwa.utils.printErr('Mass bin "' + massBin + '" does not contain data input file "' + inputFile + '{.root/.evt}". Aborting...')
-			sys.exit(1)
-		inputDataFiles.append(inputFile)
+		if inputFile:
+			inputDataFiles.append(inputFile)
+		else:
+			pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not contain data input file "' + inputFile + '{.root/.evt}".')
 		if phaseSpaceEventFileExtenisonQualifier != "":
 			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + phaseSpaceEventFileExtenisonQualifier
 			inputFile = _evtOrRoot(inputFile)
 			if inputFile:
 				inputPSFiles.append(inputFile)
-			else:
-				pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not contain phase space input file "' + inputFile + '{.root/.evt}".')
 		if accCorrPSEventFileExtensionQualifier != "":
 			inputFile = massBin + "/" + massBin.rsplit('/', 1)[-1] + "." + accCorrPSEventFileExtensionQualifier
 			inputFile = _evtOrRoot(inputFile)
 			if inputFile:
 				inputAccPSFiles.append(inputFile)
-			else:
-				pyRootPwa.utils.printWarn('Mass bin "' + massBin + '" does not data contain acc. cor. phase space input file "' + inputFile + '{.root/.evt}".')
 
 	return (inputDataFiles, inputPSFiles, inputAccPSFiles)
+
+def getListOfKeyfiles(keyfilePattern):
+	keyfiles = []
+	if os.path.isdir(keyfilePattern):
+		keyfiles = glob.glob(keyfilePattern + "/*.key")
+	elif os.path.isfile(keyfilePattern) and keyfilePattern.find(".key") > 0:
+		keyfiles.append(keyfilePattern)
+	else:
+		globbedKeyfiles = glob.glob(keyfilePattern)
+		for keyfile in globbedKeyfiles:
+			if os.path.isfile(keyfile) and keyfile.find(".key") > 0:
+				keyfiles.append(keyfile)
+			else:
+				pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
+	return keyfiles
 

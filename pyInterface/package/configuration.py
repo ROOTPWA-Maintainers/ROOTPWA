@@ -84,7 +84,7 @@ class rootPwaConfig:
 				sys.exit(1)
 
 			self.outputFileFormat                    = self.config.get('amplitudes', 'outputFileFormat').lower()
-			if not self.outputFileFormat in ['binary', 'ascii']:
+			if not self.outputFileFormat in ['binary', 'ascii', 'root']:
 				pyRootPwa.utils.printErr('"outputFileFormat" option of the "amplitude" section has to be either "binary" or "ascii" (found "' + self.outputFileFormat + '). Aborting...')
 				sys.exit(1)
 

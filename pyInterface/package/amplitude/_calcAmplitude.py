@@ -36,6 +36,9 @@ def calcAmplitudes(inFile, keyfile, outfile):
 		elif pyRootPwa.config.outputFileFormat == "binary":
 			arrayAmp = array.array('d', [amp.real, amp.imag])
 			arrayAmp.tofile(outfile)
+		elif pyRootPwa.config.outputFileFormat == "root":
+			pyRootPwa.utils.printErr('Root output file format not implemented yet!')
+			sys.exit(1)
 		else:
 			raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
 	return True
