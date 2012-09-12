@@ -32,7 +32,7 @@ def calcAmplitudes(inFile, keyfile, outfile):
 			return False
 		amp = pythonAdmin()
 		if pyRootPwa.config.outputFileFormat == "ascii":
-			outfile.write("(" + str(amp.real) + ", " + str(amp.imag) + ")\n")
+			outfile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
 		elif pyRootPwa.config.outputFileFormat == "binary":
 			arrayAmp = array.array('d', [amp.real, amp.imag])
 			arrayAmp.tofile(outfile)
