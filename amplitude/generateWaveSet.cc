@@ -61,7 +61,7 @@ usage(const string& progName,
 	     << "        -k file    path to template key file" << endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -d file    path to decay config file (default: decay info will not be used)" << endl
-             << "                   isobars without defined decays will be allowed to decay to all possibilities" << endl
+	     << "                   isobars without defined decays will be allowed to decay to all possibilities" << endl
 	     << "        -f         force decay check (only works with -d option); isobars without defined decay modes will be ignored" << endl
 	     << "        -o dir     path to directory where key files will be written (default: '.')" << endl
 	     << "        -t file    path to waveset LaTeX output file" << endl

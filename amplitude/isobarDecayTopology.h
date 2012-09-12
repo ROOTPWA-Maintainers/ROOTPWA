@@ -64,9 +64,9 @@ namespace rpwa {
 	
 
 	class isobarDecayTopology : public decayTopology {
-  
+
 	public:
-      
+
 		isobarDecayTopology();
 		isobarDecayTopology(const productionVertexPtr&               productionVertex,
 		                    const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
@@ -110,15 +110,15 @@ namespace rpwa {
 		 const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common parent vertex
 
 		const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final-state particles and returns Lorentz-vector of X-system
-	  
+
 		void calcIsobarCharges   (bool quiet = false);  ///< sets isobar charges as defined by final-state particles
 		void calcIsobarBaryonNmbs();                    ///< sets isobar baryon numbers as defined by final-state particles
-	  
+
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
-	  
+
 		virtual std::ostream& writeGraphViz(std::ostream&      out);          ///< writes graph in GraphViz DOT format
 		virtual bool          writeGraphViz(const std::string& outFileName);  ///< writes graph in GraphViz DOT format
-	  
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 	 
@@ -129,10 +129,7 @@ namespace rpwa {
 		std::vector<isobarDecayVertexPtr> findIsobarBoseSymVertices() const;  ///< returns all isobar vertices that have isobar daughters that decay into the same final state
 
 
-	private:
-
-		virtual isobarDecayTopology* doClone(const bool cloneFsParticles,
-		                                     const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+	protected:
 
 		isobarDecayTopology& constructDecay(const productionVertexPtr&               productionVertex,
 		                                    const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
@@ -142,15 +139,21 @@ namespace rpwa {
 		                                    const std::vector<interactionVertexPtr>& isobarDecayVertices,
 		                                    const std::vector<particlePtr>&          fsParticles,
 		                                    const bool                               performTopologyCheck = true);  ///< constructs the decay graph based on final-state particles and vertices
-	  
+
+
+	private:
+
+		virtual isobarDecayTopology* doClone(const bool cloneFsParticles,
+		                                     const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
 		void buildIsobarVertexArray();  ///< (re)builds array of isobar decay vertices
-	  
+
 		std::vector<isobarDecayVertexPtr> _isobarVertices;  ///< array of isobar-decay vertices excluding production vertex; ordered depth-first; this is a copy of the respective array in decayTopology
-	  
+
 		static bool _debug;  ///< if set to true, debug messages are printed
 
 	};
-	
+
 
 	inline
 	isobarDecayTopologyPtr

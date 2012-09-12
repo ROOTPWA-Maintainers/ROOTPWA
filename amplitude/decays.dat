@@ -163,6 +163,7 @@ particles = (
 
 { name = "rho3(1690)0";
   decays = (
+  	 {products = [ "pi+", "pi-" ];},
 	 {products = [ "pi+", "a1(1260)-" ];},
 	 {products = [ "pi-", "a1(1260)+" ];},
 	 {products = [ "pi+", "a2(1320)-" ];},
@@ -250,7 +251,8 @@ particles = (
 	 {products = [ "pi-", "pi(1300)+" ];},
 	 {products = [ "pi+", "pi(1300)-" ];},	
 	 {products = [ "sigma0", "sigma0" ];},	  
-	 {products = [ "rho(770)0", "rho(770)0" ];}
+	 {products = [ "rho(770)0", "rho(770)0" ];},
+	 {products = [ "sigma0", "f2(1270)0" ];}
 	 );
 },
 { name = "eta1(1600)0";

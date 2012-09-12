@@ -45,7 +45,7 @@ set(INCLUDE_DIRECTORIES
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
-	${PWA2000_INCLUDE_DIR}
+#	${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -56,9 +56,26 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	rootPwaPy.cc
-	stlcontainers_py.cc
+	stlContainers_py.cc
+	rootConverters_py.cc
 	particleProperties_py.cc
 	particleDataTable_py.cc
+	particle_py.cc
+	interactionVertex_py.cc
+	fsVertex_py.cc
+	massDependence_py.cc
+	isobarDecayVertex_py.cc
+	productionVertex_py.cc
+	diffractiveDissVertex_py.cc
+	decayTopology_py.cc
+	isobarDecayTopology_py.cc
+	isobarAmplitude_py.cc
+	isobarCanonicalAmplitude_py.cc
+	isobarHelicityAmplitude_py.cc
+	waveDescription_py.cc
+	amplitudeTreeLeaf_py.cc
+	utils_py.cc
+	pythonAdministrator_py.cc
 	)
 
 
@@ -74,4 +91,18 @@ make_shared_library(
 	"${PWA2000_LIBS}"
 	"${AMPLITUDE_LIBS}"
 	)
+
+# link the shared library with the python bindings
+add_custom_target(
+	libRootPwaPyLink ALL
+	COMMAND ${CMAKE_COMMAND} -E create_symlink ${LIBRARY_OUTPUT_PATH}/libRootPwaPy.so	${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa/libRootPwaPy.so
+)
+
+# produce python byte-code and move it to the build directory
+add_custom_target(
+	pyRootPwaPackageLinks ALL
+	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/python_compiler.py ${CMAKE_SOURCE_DIR}/pyInterface/package ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa
+)
+
+add_dependencies(libRootPwaPyLink RootPwaPy pyRootPwaPackageLinks)
 

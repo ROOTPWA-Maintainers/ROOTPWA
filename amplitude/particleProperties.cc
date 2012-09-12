@@ -355,11 +355,11 @@ particleProperties::print(ostream& out) const
 	// decay products
 	unsigned int ndec=nDecays();
 	if(ndec > 0){
-	  out << "\n Known decay modes: " << endl;
-	  for(unsigned int idec=0;idec<ndec;++idec){
-	    std::copy(_decaymodes[idec].begin(), _decaymodes[idec].end(), std::ostream_iterator<string>(std::cout, " "));
-	    out << endl;
-	  }
+		out << "\n Known decay modes: " << endl;
+		for(unsigned int idec=0;idec<ndec;++idec){
+			std::copy(_decaymodes[idec].begin(), _decaymodes[idec].end(), std::ostream_iterator<string>(std::cout, " "));
+			out << endl;
+		}
 	}
 
 	return out;

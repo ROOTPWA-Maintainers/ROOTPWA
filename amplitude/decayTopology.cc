@@ -146,36 +146,11 @@ decayTopology::doClone(const bool cloneFsParticles,
 	for (tie(iNd, iNdEnd) = topoClone->nodes(); iNd != iNdEnd; ++iNd) {
 		const interactionVertexPtr& vert = topoClone->vertex(*iNd);
 		// clone vertex
-		// {
-		// 	printWarn << "HERE 1" << endl;
-		// 	nodeIterator iNdXXX, iNdEndXXX;
-		// 	for (tie(iNdXXX, iNdEndXXX) = nodes(); iNdXXX != iNdEndXXX; ++iNdXXX)
-		// 		cout << "    " << vertex(*iNdXXX);
-		// 	cout << endl;
-		// 	for (tie(iNdXXX, iNdEndXXX) = topoClone->nodes(); iNdXXX != iNdEndXXX; ++iNdXXX)
-		// 		cout << "    " << topoClone->vertex(*iNdXXX);
-		// 	cout << endl;
-		// 	{
-		// 		if (not vert)
-		// 			cout << "    FALSE!" << endl;
-		// 		for (tie(iNdXXX, iNdEndXXX) = topoClone->nodes(); iNdXXX != iNdEndXXX; ++iNdXXX) {
-		// 			cout << "    " << vert << " == " << topoClone->vertex(*iNdXXX) << "    ";
-		// 			if (vert == topoClone->vertex(*iNdXXX))
-		// 				cout << "TRUE!" << endl;
-		// 			else
-		// 				cout << "FALSE!" << endl;
-		// 		}
-		// 	}
-		// 	printWarn << "HERE 2" << endl;
-		// 	topoClone->isDecayVertex(vert);
-		// }
 		if (   isDecayVertex(vert)
 		    or isProductionVertex(vert)
 		    or (cloneFsParticles and isFsVertex(vert)))
-			// printWarn << "HERE 3" << endl;
 			topoClone->isDecayVertex(vert);
 			newVerts.push_back(topoClone->cloneNode(*iNd));
-			// printWarn << "HERE 5" << endl << endl;
 	}
 	// looping over incoming particles of respective vertices and clone them
 	// this also clones dangling particles that have no associated edge
@@ -273,15 +248,9 @@ decayTopology::isVertex(const interactionVertexPtr& vert) const
 	if (not vert)
 		return false;
 	nodeIterator iNd, iNdEnd;
-	for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd) {
-		// cout << "    " << vert << " == " << vertex(*iNd) << "    "
-		//      << trueFalse(vert == vertex(*iNd)) << endl;
-		if (vert == vertex(*iNd)) {
-			// cout << "YES!!!" << endl;
+	for (tie(iNd, iNdEnd) = nodes(); iNd != iNdEnd; ++iNd)
+		if (vert == vertex(*iNd))
 			return true;
-		}
-	}
-	// cout << "NO!!!" << endl;
 	return false;
 }
 
@@ -315,8 +284,6 @@ decayTopology::isDecayVertex(const interactionVertexPtr& vert) const
 		return false;
 	if (not isVertex(vert))
 		return false;
-	// if (not isVertex(vert))
-	// 	printErr << "isVertex() = " << trueFalse(isVertex(vert)) << endl;
 	if (isProductionVertex(vert) or isFsVertex(vert))
 		return false;
 	return true;
@@ -326,7 +293,6 @@ decayTopology::isDecayVertex(const interactionVertexPtr& vert) const
 int
 decayTopology::decayVertexIndex(const interactionVertexPtr& vert) const
 {
-	// printWarn << "HERE" << endl;
 	if (not vert or not isDecayVertex(vert))
 		return -1;
 	for (unsigned int i = 0; i < nmbDecayVertices(); ++i)
@@ -1014,7 +980,6 @@ decayTopology::buildInternalData()
 	_decayVertices.clear();
 	for (unsigned int i = 0; i < sortedNds.size(); ++i) {
 		const interactionVertexPtr& vert = vertex(sortedNds[i]);
-		// printWarn << "HERE" << endl;
 		if (isDecayVertex(vert))
 			_decayVertices.push_back(vert);
 	}
@@ -1030,16 +995,6 @@ decayTopology::cloneNode(const nodeDesc& nd,
 	const bool                  isProdVert  = isProductionVertex(vert);
 	const bool                  isDecayVert = isDecayVertex(vert);
 	const interactionVertexPtr& newVert = decayTopologyGraphType::cloneNode(nd);  // created new vertex for this node
-	// {
-	// 	printWarn << "HERE 4 " << vert << " = " << *vert << endl;
-	// 	nodeIterator iNdXXX, iNdEndXXX;
-	// 	for (tie(iNdXXX, iNdEndXXX) = nodes(); iNdXXX != iNdEndXXX; ++iNdXXX)
-	// 		cout << "    " << vertex(*iNdXXX);
-	// 	cout << endl;
-	// 	for (unsigned int i = 0; i < nmbDecayVertices(); ++i)
-	// 		cout << "    " << _decayVertices[i];
-	// 	cout << endl;
-	// }
 	// update member variables
 	if (isProdVert)
 		_prodVertex = static_pointer_cast<rpwa::productionVertex>(newVert);

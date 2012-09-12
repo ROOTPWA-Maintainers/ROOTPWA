@@ -3,10 +3,12 @@
 
 #include "boost/python.hpp"
 
-#include "boost/python/suite/indexing/vector_indexing_suite.hpp"
-
 #include "particleDataTable.h"
 
-void exportParticleDataTable();
+namespace rpwa {
+	namespace py {
+		void exportParticleDataTable();
+	}
+}
 
 #endif

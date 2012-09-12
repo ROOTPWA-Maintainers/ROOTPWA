@@ -348,14 +348,14 @@ waveSetGenerator::generateWaveSet()
 										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
 										: 0;
 									set<string> decayproducts;
-								        decayproducts.insert(daughters[0]->name());
-								        decayproducts.insert(daughters[1]->name());
+									decayproducts.insert(daughters[0]->name());
+									decayproducts.insert(daughters[1]->name());
 									vector<const particleProperties*> possibleIsobars
-										=	particleDataTable::entriesMatching(isobarProp, "allQn", minIsobarMass,
-											                                   _isobarMassWindowSigma, _isobarWhiteList,
-											                                   _isobarBlackList,
-															   decayproducts,
-															   _forceDecayCheck);
+									    = particleDataTable::entriesMatching(isobarProp, "allQn", minIsobarMass,
+									                                         _isobarMassWindowSigma, _isobarWhiteList,
+									                                         _isobarBlackList,
+									                                         decayproducts,
+									                                         _forceDecayCheck);
 									if (_debug)
 										printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
 										           << isobarProp.qnSummary() << " in particle data table" << endl;
