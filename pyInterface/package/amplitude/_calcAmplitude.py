@@ -1,5 +1,6 @@
 
 import array
+import sys
 
 import pyRootPwa
 import pyRootPwa.utils
@@ -33,6 +34,7 @@ def calcAmplitudes(inFile, keyfile, outFile):
 	if not pythonAdmin.constructAmplitude(keyfile):
 		pyRootPwa.utils.printWarn('Could not construct amplitude for keyfile "' + keyfile + '".')
 		return False
+	sys.stdout.write(str(pythonAdmin))
 	if not pythonAdmin.initKinematicsData(prodKinParticles, decayKinParticles):
 		pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
 		return False

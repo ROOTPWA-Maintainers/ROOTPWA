@@ -53,6 +53,12 @@ namespace rpwa {
 
 		};
 
+		inline std::ostream& operator << (std::ostream& out,
+		                                  const rpwa::py::pythonAdministrator& pyAdmin)
+		{
+			return pyAdmin._amplitude->print(out);
+		};
+
 		void exportPythonAdministrator();
 
 	}

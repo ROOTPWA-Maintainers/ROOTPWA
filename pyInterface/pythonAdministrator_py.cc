@@ -37,6 +37,7 @@ bool rpwa::py::pythonAdministrator::readKinematicsData(PyObject* pyProdKinMoment
 void rpwa::py::exportPythonAdministrator() {
 
 	bp::class_<rpwa::py::pythonAdministrator>("pythonAdministrator")
+		.def(bp::self_ns::str(bp::self))
 		.def("__call__", &rpwa::py::pythonAdministrator::operator())
 		.def("constructAmplitude", &rpwa::py::pythonAdministrator::constructAmplitude)
 		.def("initKinematicsData", &rpwa::py::pythonAdministrator::initKinematicsData)
