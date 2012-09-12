@@ -11,11 +11,11 @@ def parseMassBinArgs(allMassBins, massBinArg):
 	massBins = []
 	if massBinArg == "all":
 		massBins = allMassBins
-	elif massBinArg.find("-") > 0 or massBinArg.find(",") > 0:
+	elif ("-" in massBinArg) or ("," in massBinArg):
 		rawMassBinIndices = massBinArg.split(",")
 		massBinIndices = []
 		for massBinIndex in rawMassBinIndices:
-			if massBinIndex.find("-") > 0:
+			if "-" in massBinIndex:
 				(lb, tmp, ub) = massBinIndex.partition("-")
 				try:
 					lb = int(lb)
@@ -93,12 +93,12 @@ def getListOfKeyfiles(keyfilePattern):
 	keyfiles = []
 	if os.path.isdir(keyfilePattern):
 		keyfiles = glob.glob(keyfilePattern + "/*.key")
-	elif os.path.isfile(keyfilePattern) and keyfilePattern.find(".key") > 0:
+	elif os.path.isfile(keyfilePattern) and keyfilePattern.endswith(".key"):
 		keyfiles.append(keyfilePattern)
 	else:
 		globbedKeyfiles = glob.glob(keyfilePattern)
 		for keyfile in globbedKeyfiles:
-			if os.path.isfile(keyfile) and keyfile.find(".key") > 0:
+			if os.path.isfile(keyfile) and keyfile.endswith(".key"):
 				keyfiles.append(keyfile)
 			else:
 				pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
