@@ -5,21 +5,13 @@ import sys
 import pyRootPwa
 import pyRootPwa.utils
 
-def calcAmplitudes(inFileName, keyfile, outFile):
-
-	if inFileName.endswith('.root'):
-		inFile = pyRootPwa.ROOT.TFile.Open(inFileName)
-		prodKinParticles = inFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
-		decayKinParticles = inFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
-		inTree = inFile.Get(pyRootPwa.config.inTreeName)
-	else:
-		(prodKinParticles, decayKinParticles, inTree) = pyRootPwa.utils.getTreeFromEvtFile(inFileName, inFileName)
+def calcAmplitudes(inFile, keyfile, outFile):
 
 	prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 
-	inTree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, prodKinMomenta)
-	inTree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
+	inFile.tree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, prodKinMomenta)
+	inFile.tree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
 
 	pythonAdmin = pyRootPwa.pythonAdministrator()
 
@@ -38,14 +30,14 @@ def calcAmplitudes(inFileName, keyfile, outFile):
 		pyRootPwa.utils.printWarn('Could not construct amplitude for keyfile "' + keyfile + '".')
 		return False
 	sys.stdout.write(str(pythonAdmin))
-	if not pythonAdmin.initKinematicsData(prodKinParticles, decayKinParticles):
+	if not pythonAdmin.initKinematicsData(inFile.prodKinParticles, inFile.decayKinParticles):
 		pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
 		return False
 
-	progressbar = pyRootPwa.utils.progressBar(0, inTree.GetEntries())
+	progressbar = pyRootPwa.utils.progressBar(0, inFile.tree.GetEntries())
 	progressbar.start()
-	for treeIndex in range(inTree.GetEntries()):
-		inTree.GetEntry(treeIndex)
+	for treeIndex in range(inFile.tree.GetEntries()):
+		inFile.tree.GetEntry(treeIndex)
 		if not pythonAdmin.readKinematicsData(prodKinMomenta, decayKinMomenta):
 			progressbar.cancel()
 			pyRootPwa.utils.printErr('Could not read kinematics data.')

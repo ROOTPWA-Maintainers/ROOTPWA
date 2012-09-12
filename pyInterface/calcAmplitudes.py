@@ -9,6 +9,7 @@ import sys
 import pyRootPwa
 import pyRootPwa.amplitude
 import pyRootPwa.configuration
+import pyRootPwa.infile
 import pyRootPwa.utils
 
 if __name__ == "__main__":
@@ -81,8 +82,14 @@ if __name__ == "__main__":
 			os.mkdir(outDir)
 		else:
 			if not os.path.isdir(outDir):
-				pyRootPwa.utils.printErr('Output data directory does not appear to be a directory. Aborting...')
-				sys.exit(1)
+				pyRootPwa.utils.printErr('Output data directory "' + outDir + '" does not appear to be a directory. Skipping...')
+				continue
+
+		try:
+			inFile = pyRootPwa.infile.inputFile(inputFile)
+		except pyRootPwa.exception.pyRootPwaException as exc:
+			pyRootPwa.utils.printErr('Could not open input file "' + inputFile + '": ' + str(exc) + '. Skipping...')
+			continue
 
 		for keyfile in keyfiles:
 
@@ -101,11 +108,10 @@ if __name__ == "__main__":
 
 			success = False
 			if outFileExtension == '.amp':
-				with open(outFileName, 'w') as outputFile:
-					success = pyRootPwa.amplitude.calcAmplitudes(inputFile, keyfile, outputFile)
+				with open(outFileName, 'w') as outFile:
+					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
 			else:
 				outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
-				inFile = pyRootPwa.ROOT.TFile.Open(inputFile)
 				success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
 
 			if success:
