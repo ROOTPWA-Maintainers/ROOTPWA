@@ -70,10 +70,12 @@ namespace rpwa {
 		isobarDecayTopology();
 		isobarDecayTopology(const productionVertexPtr&               productionVertex,
 		                    const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
-		                    const std::vector<particlePtr>&          fsParticles);
+		                    const std::vector<particlePtr>&          fsParticles,
+		                    const bool                               performTopologyCheck = true);
 		isobarDecayTopology(const productionVertexPtr&               productionVertex,
 		                    const std::vector<interactionVertexPtr>& isobarDecayVertices,
-		                    const std::vector<particlePtr>&          fsParticles);
+		                    const std::vector<particlePtr>&          fsParticles,
+		                    const bool                               performTopologyCheck = true);
 		isobarDecayTopology(const isobarDecayTopology&               topo);
 		isobarDecayTopology(const decayTopology&                     topo);
 		virtual ~isobarDecayTopology();
@@ -92,7 +94,10 @@ namespace rpwa {
 		bool checkConsistency() const;  ///< checks conservation rules on all vertices
 
 		isobarDecayTopology subDecay(const nodeDesc& startNd,
-		                             const bool      linkToParentTopo = false);  ///< returns sub-decay tree that starts at given vertex
+		                             const bool      linkToParentTopo = false);  ///< returns sub-decay tree that starts at given node
+		isobarDecayTopology subDecay(const isobarDecayVertexPtr& startVert,
+		                             const bool                  linkToParentTopo = false)
+		{ return subDecay(node(startVert), linkToParentTopo); }  ///< returns sub-decay tree that starts at given vertex
 
 		void addDecay(const isobarDecayTopology& topo);  ///< returns sub-decay tree that starts at given vertex
 
@@ -104,10 +109,10 @@ namespace rpwa {
 		 const isobarDecayTopology&  daughter1Decay,
 		 const isobarDecayTopology&  daughter2Decay);  ///< joins daughter decay graphs and connects them to a common parent vertex
 
-		const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final state particles and returns Lorentz-vector of X-system
+		const TLorentzVector& calcIsobarLzVec();  ///< (re)calculates Lorentz-vectors of all isobars in the decay from final-state particles and returns Lorentz-vector of X-system
 	  
-		void calcIsobarCharges   (bool quiet = false);  ///< sets isobar charges as defined by final state particles
-		void calcIsobarBaryonNmbs();                    ///< sets isobar baryon numbers as defined by final state particles
+		void calcIsobarCharges   (bool quiet = false);  ///< sets isobar charges as defined by final-state particles
+		void calcIsobarBaryonNmbs();                    ///< sets isobar baryon numbers as defined by final-state particles
 	  
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 	  
@@ -121,6 +126,8 @@ namespace rpwa {
 
 		std::vector<symTermMap> getIsospinSymmetrization();  ///< returns all final-state permutations needed for isospin symmetrization
 
+		std::vector<isobarDecayVertexPtr> findIsobarBoseSymVertices() const;  ///< returns all isobar vertices that have isobar daughters that decay into the same final state
+
 
 	private:
 
@@ -129,10 +136,12 @@ namespace rpwa {
 
 		isobarDecayTopology& constructDecay(const productionVertexPtr&               productionVertex,
 		                                    const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
-		                                    const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on final state particles and vertices
+		                                    const std::vector<particlePtr>&          fsParticles,
+		                                    const bool                               performTopologyCheck = true);  ///< constructs the decay graph based on final-state particles and vertices
 		isobarDecayTopology& constructDecay(const productionVertexPtr&               productionVertex,
 		                                    const std::vector<interactionVertexPtr>& isobarDecayVertices,
-		                                    const std::vector<particlePtr>&          fsParticles);  ///< constructs the decay graph based on final state particles and vertices
+		                                    const std::vector<particlePtr>&          fsParticles,
+		                                    const bool                               performTopologyCheck = true);  ///< constructs the decay graph based on final-state particles and vertices
 	  
 		void buildIsobarVertexArray();  ///< (re)builds array of isobar decay vertices
 	  
@@ -147,10 +156,11 @@ namespace rpwa {
 	isobarDecayTopologyPtr
 	createIsobarDecayTopology(const productionVertexPtr&               productionVertex,
 	                          const std::vector<isobarDecayVertexPtr>& isobarDecayVertices,
-	                          const std::vector<particlePtr>&          fsParticles)
+	                          const std::vector<particlePtr>&          fsParticles,
+	                          const bool                               performTopologyCheck = true)
 	{
-		isobarDecayTopologyPtr topo(new isobarDecayTopology(productionVertex,
-		                                                    isobarDecayVertices, fsParticles));
+		isobarDecayTopologyPtr topo(new isobarDecayTopology(productionVertex, isobarDecayVertices,
+		                                                    fsParticles, performTopologyCheck));
 		return topo;
 	}
 
@@ -159,10 +169,11 @@ namespace rpwa {
 	isobarDecayTopologyPtr
 	createIsobarDecayTopology(const productionVertexPtr&               productionVertex,
 	                          const std::vector<interactionVertexPtr>& isobarDecayVertices,
-	                          const std::vector<particlePtr>&          fsParticles)
+	                          const std::vector<particlePtr>&          fsParticles,
+	                          const bool                               performTopologyCheck = true)
 	{
-		isobarDecayTopologyPtr topo(new isobarDecayTopology(productionVertex,
-		                                                    isobarDecayVertices, fsParticles));
+		isobarDecayTopologyPtr topo(new isobarDecayTopology(productionVertex, isobarDecayVertices,
+		                                                    fsParticles, performTopologyCheck));
 		return topo;
 	}
 	

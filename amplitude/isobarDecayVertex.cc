@@ -128,6 +128,19 @@ isobarDecayVertex::doClone(const bool cloneInParticles,
 
 
 bool
+isobarDecayVertex::isEqualTo(const isobarDecayVertex& vert) const
+{
+	if (not interactionVertex::isEqualTo(vert))
+		return false;
+	if (   (L()              != vert.L())
+	    or (S()              != vert.S())
+	    or (massDependence() != vert.massDependence()))
+		return false;
+	return true;
+}
+
+
+bool
 isobarDecayVertex::addInParticle(const particlePtr&)
 {
 	if (_debug)

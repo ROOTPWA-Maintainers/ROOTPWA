@@ -166,7 +166,8 @@ main(int    argc,
 		exit(1);
 	}
 
-	if(useDecays)waveSetGen.setForceDecayCheck(forceDecayCheck);
+	if (useDecays)
+		waveSetGen.setForceDecayCheck(forceDecayCheck);
 	printInfo << waveSetGen;
 	waveSetGen.generateWaveSet();
 

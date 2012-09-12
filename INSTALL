@@ -22,8 +22,14 @@ Before you can build ROOTPWA you need to install the following software:
 * CMake
   CMake is a cross platform build system available from
     http://cmake.org
-  Some help can also be found here
-    http://www.vtk.org/Wiki/CMake_FAQ
+  In addition to the documentation further information about CMake can be
+  found at
+    http://www.cmake.org/cmake/help/cmake_tutorial.html
+    http://www.cmake.org/cmake/help/runningcmake.html
+    http://www.cmake.org/cmake/help/syntax.html
+    http://www.cmake.org/Wiki/CMake
+    http://rachid.koucha.free.fr/tech_corner/cmake_manual.html
+    http://mash-project.eu/wiki/index.php/CMake%3a_Getting_Started
   The minimum required version of CMake is 2.8.0. In case your Linux
   distribution offers only outdated packages, you can quite easily
   compile CMake yourself:

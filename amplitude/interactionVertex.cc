@@ -101,6 +101,22 @@ interactionVertex::clear()
 
 
 bool
+interactionVertex::isEqualTo(const interactionVertex& vert) const
+{
+	if (   (nmbInParticles () != vert.nmbInParticles ())
+	    or (nmbOutParticles() != vert.nmbOutParticles()))
+		return false;
+	for (unsigned int i = 0; i < nmbInParticles(); ++i)
+		if (*(inParticles()[i]) != *(vert.inParticles()[i]))
+			return false;
+	for (unsigned int i = 0; i < nmbOutParticles(); ++i)
+		if (*(outParticles()[i]) != *(vert.outParticles()[i]))
+			return false;
+	return true;
+}
+
+
+bool
 interactionVertex::addInParticle(const particlePtr& part)
 {
 	if (not part) {

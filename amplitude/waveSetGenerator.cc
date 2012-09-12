@@ -394,6 +394,98 @@ waveSetGenerator::generateWaveSet()
 		_waveSet[i].productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
 	}
 
+	// filter out decays which are related by Bose symmetrization
+	if (0) {
+		printInfo << "removing Bose duplicates..." << endl;
+		unsigned int countRemovedBose = 0;
+		for (size_t waveSetIndex = 0; waveSetIndex < _waveSet.size(); ++waveSetIndex) {
+			// get Bose-symmetric vertices
+			isobarDecayTopologyPtr       topoSym         = _waveSet[waveSetIndex].clone();
+			vector<isobarDecayVertexPtr> boseSymVertices = topoSym->findIsobarBoseSymVertices();
+			if (boseSymVertices.size() > 1) {
+				printErr << "the code does not yet support decay topologies with " << boseSymVertices.size()
+				         << " Bose symmetric decay vertices. aborting." << endl;
+				throw;
+			}
+			// construct topology where the two isobars are swapped
+			if (boseSymVertices.size() == 1) {
+				const isobarDecayVertex& vertSym = *(boseSymVertices[0]);
+				printSucc << vertSym << endl;
+				// get decay trees of the two isobars
+				isobarDecayVertexPtr daughterVertices[2]
+					= {static_pointer_cast<isobarDecayVertex>(topoSym->toVertex(vertSym.daughter1())),
+					   static_pointer_cast<isobarDecayVertex>(topoSym->toVertex(vertSym.daughter2()))};
+				isobarDecayTopology  daughterDecays  [2] = {topoSym->subDecay(daughterVertices[0]),
+				                                            topoSym->subDecay(daughterVertices[1])};
+				printDebug << daughterDecays[0];
+				printDebug << daughterDecays[1];
+				// get isobar decay vertices not in daughter decays
+				vector<nodeDesc> daughterDecayNodes[2] = {topoSym->sortNodesDfs(daughterVertices[0]),
+				                                          topoSym->sortNodesDfs(daughterVertices[1])};
+				vector<isobarDecayVertexPtr> otherDecayVertices;
+				for (size_t i = 0; i < topoSym->nmbDecayVertices(); ++i) {
+					isobarDecayVertexPtr vert                  = topoSym->isobarDecayVertices()[i];
+					bool                 vertexInDaughterDecay = false;
+					for (size_t j = 0; j < 2; ++j)
+						for (size_t k = 0; k < daughterDecayNodes[j].size(); ++k)
+							if (topoSym->vertex(daughterDecayNodes[j][k]) == vert)
+								vertexInDaughterDecay = true;
+					if (not vertexInDaughterDecay)
+						otherDecayVertices.push_back(vert);
+				}
+				for (size_t i = 0; i < otherDecayVertices.size(); ++i)
+					printSucc << *(otherDecayVertices[i]) << endl;
+				// get final state particles not in 
+				vector<particlePtr> otherFsParticles;
+				for (size_t i = 0; i < otherDecayVertices.size(); ++i) {
+					particlePtr parts[2] = {otherDecayVertices[i]->daughter1(),
+					                        otherDecayVertices[i]->daughter2()};
+					for (size_t j = 0; j < 2; ++j)
+						if (topoSym->isFsParticle(parts[j]))
+							otherFsParticles.push_back(parts[j]);
+				}
+				for (size_t i = 0; i < otherFsParticles.size(); ++i)
+					printWarn << *(otherFsParticles[i]) << endl;
+				// construct topology with all vertices that are not in daughter decays
+				isobarDecayTopologyPtr newTopo
+					= createIsobarDecayTopology(topoSym->productionVertex(),
+					                            otherDecayVertices, otherFsParticles, false);
+				printSucc << *newTopo;
+				++countRemovedBose;
+				cout << endl;
+			}
+		}
+		printInfo << "removed " << countRemovedBose << " Bose duplicates" << endl;
+
+
+		// // look for all Bose-partner decays
+		// for (size_t i1 = 0; i1 < boseSymVertices.size(); ++i1) {
+		// 	const size_t nmbSymVertices = boseSymVertices[i1].size();
+		// 	for (size_t j = 0; j < nmbSymVertices; ++j)
+		// 		for (size_t i2 = 0; i2 < i1; ++i2) {
+		// 			if (boseSymVertices[i2].size() != nmbSymVertices)
+		// 				continue;
+		// 			const particlePtr daughters[2][2] = {{boseSymVertices[i1][j]->daughter1(),
+		// 			                                      boseSymVertices[i1][j]->daughter2()},
+		// 			                                     {boseSymVertices[i2][j]->daughter1(),
+		// 			                                      boseSymVertices[i2][j]->daughter2()}};
+		// 			if (*(_waveSet[i1].XParticle()) ==*( _waveSet[i2].XParticle()))
+		// 				printSucc << "!!!HERE "
+		// 				          << _waveSet[i1].XParticle()->qnSummary()
+		// 				          << "    VS    "
+		// 				          << _waveSet[i2].XParticle()->qnSummary()
+		// 				          << endl;
+		// 			if ((*(_waveSet[i1].XParticle()) == *(_waveSet[i2].XParticle()))
+		// 			    and (    (*(daughters[0][0]) == *(daughters[1][1]))
+		// 			         and (*(daughters[0][1]) == *(daughters[1][0]))))
+		// 				printSucc << "found Bose-duplicates:" << endl
+		// 				          << _waveSet[i1]
+		// 				          << _waveSet[i2];
+		// 		}
+		// }
+
+	}
+
 	return _waveSet.size();
 }
 
