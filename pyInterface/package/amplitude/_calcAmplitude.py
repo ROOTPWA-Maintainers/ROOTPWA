@@ -25,9 +25,12 @@ def calcAmplitudes(inFile, keyfile, outfile):
 		pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
 		return False
 
+	progressbar = pyRootPwa.utils.progressBar(0, inTree.GetEntries())
+	progressbar.start()
 	for treeIndex in range(inTree.GetEntries()):
 		inTree.GetEntry(treeIndex)
 		if not pythonAdmin.readKinematicsData(prodKinMomenta, decayKinMomenta):
+			progressbar.cancel()
 			pyRootPwa.utils.printErr('Could not read kinematics data.')
 			return False
 		amp = pythonAdmin()
@@ -41,5 +44,7 @@ def calcAmplitudes(inFile, keyfile, outfile):
 			sys.exit(1)
 		else:
 			raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
+		progressbar.update(treeIndex)
+
 	return True
 
