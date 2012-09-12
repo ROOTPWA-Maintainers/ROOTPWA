@@ -31,15 +31,29 @@ _geantParticleCodes[45] = "d"
 class _EventFile:
 
 	evtfile = None
+	lineCounter = 0
+	nLines = 0
 
 	def __init__(self, infile):
 		self.evtfile = infile
+		beginning = self.evtfile.tell()
+		nLinesPerParticle = int(self.evtfile.readline()[:-1]) + 1
+		i = 1
+		while self.evtfile.readline() != "":
+			i += 1
+		self.nLines = int(i / nLinesPerParticle)
+		self.evtfile.seek(beginning)
 
+	def __iter__(self):
+		return self
 
-	def get_event(self):
+	def __len__(self):
+		return self.nLines
+
+	def next(self):
 		n_lines_to_read = self.evtfile.readline()[:-1]
 		if n_lines_to_read == "":
-			return None
+			raise StopIteration()
 		lines = [n_lines_to_read]
 		for i in range(0, int(n_lines_to_read)):
 			lines.append(self.evtfile.readline()[:-1])
@@ -48,11 +62,9 @@ class _EventFile:
 				sys.exit(1)
 		return _Event(lines)
 
-
-	def write_event(self, event):
+	def writeEvent(self, event):
 		for line in event.lines:
 			self.evtfile.write(line + "\n")
-
 
 
 class _Event:
@@ -60,15 +72,17 @@ class _Event:
 	lines = []
 
 	particleNames = []
+	physicsEvent = []
 
 	def __init__(self, lines):
 		self.lines = lines
-
 
 	def sort(self):
 		new_lines = self.lines[2:]
 		new_lines = sorted(new_lines, key=lambda entry: int(entry.split()[0]))
 		self.lines = self.lines[0:2] + new_lines
+		self.physicsEvent = []
+		self.particleNames = []
 
 	def __convertLineToPartProps(self, line):
 		part = line.split(' ')
@@ -87,11 +101,12 @@ class _Event:
 		part.pop(len(part)-1)
 		return part
 
-	def get_physics_event(self):
-		retval = []
+	def getPhysicsEvent(self):
+		if self.physicsEvent:
+			return self.physicsEvent
 		nmbParticles = int(self.lines[0])
 		part = self.__convertLineToPartProps(self.lines[1])
-		retval.append(pyRootPwa.ROOT.TVector3(part[1], part[2], part[3]))
+		self.physicsEvent.append(pyRootPwa.ROOT.TVector3(part[1], part[2], part[3]))
 		fillPN = False
 		if self.particleNames == []:
 			fillPN = True
@@ -100,12 +115,12 @@ class _Event:
 			part = self.__convertLineToPartProps(self.lines[i])
 			if fillPN:
 				self.particleNames.append(part[0])
-			retval.append(pyRootPwa.ROOT.TVector3(part[1], part[2], part[3]))
-		return retval
+			self.physicsEvent.append(pyRootPwa.ROOT.TVector3(part[1], part[2], part[3]))
+		return self.physicsEvent
 
-	def get_particle_names(self):
-		if self.particleNames == []:
-			self.get_physics_event()
+	def getParticleNames(self):
+		if not self.particleNames:
+			self.getPhysicsEvent()
 		return self.particleNames
 
 	def __str__(self):
@@ -132,42 +147,54 @@ def getTreeFromEvtFile(filename, treename = ""):
 	prodKinPartName = pyRootPwa.ROOT.TClonesArray("TObjString")
 	decayKinPartName = pyRootPwa.ROOT.TClonesArray("TObjString")
 
-	prodKinMomentaLeafName = pyRootPwa.config.get('amplitudes', 'prodKinMomentaLeafName')
-	decayKinMomentaLeafName= pyRootPwa.config.get('amplitudes', 'decayKinMomentaLeafName')
+	prodKinMomentaLeafName = pyRootPwa.config.prodKinMomentaLeafName
+	decayKinMomentaLeafName= pyRootPwa.config.decayKinMomentaLeafName
 
 	outTree.Branch(prodKinMomentaLeafName, "TClonesArray", prodKinMomenta)
 	outTree.Branch(decayKinMomentaLeafName, "TClonesArray", decayKinMomenta)
 
-	first = True
+	pyRootPwa.utils.printInfo('Converting "' + filename + '" to memory residing TTree...')
+
 	with open(filename, 'r') as infile:
 
 		inEventFile = _EventFile(infile)
-		event = inEventFile.get_event()
-		while event is not None:
+		index = 0
+		events = len(inEventFile)
+		progressbar = pyRootPwa.utils.progressBar(0, events)
+		progressbar.start()
+		first = True
+		for event in inEventFile:
 
 			event.sort()
-			physicsVectors = event.get_physics_event()
+			physicsVectors = event.getPhysicsEvent()
 
 			# check for the correct ordering of the names
-			particleNames = event.get_particle_names()
-			assert(len(physicsVectors) == len(particleNames))
+			particleNames = event.getParticleNames()
 			if first:
 				prodKinPartName[0] = pyRootPwa.ROOT.TObjString(particleNames[0])
 				for i in range(1, len(particleNames)):
 					decayKinPartName[i-1] = pyRootPwa.ROOT.TObjString(particleNames[i])
 			else:
-				assert(len(particleNames) == prodKinPartName.GetEntriesFast() + decayKinPartName.GetEntriesFast())
-				assert(prodKinPartName[0].GetString() == particleNames[0])
+				if len(particleNames) != prodKinPartName.GetEntriesFast() + decayKinPartName.GetEntriesFast():
+					progressbar.cancel()
+					raise pyRootPwa.exception.pyRootPwaException("Mismatch between number of particle names in TClonesArray and number of particles in event.")
+				if prodKinPartName[0].GetString() != particleNames[0]:
+					progressbar.cancel()
+					raise pyRootPwa.exception.pyRootPwaException("Inconsistent production particle types.")
 				for i in range(1, len(particleNames)):
-					assert(decayKinPartName[i-1].GetString() == particleNames[i])
+					if decayKinPartName[i-1].GetString() != particleNames[i]:
+						progressbar.cancel()
+						raise pyRootPwa.exception.pyRootPwaException("Inconsistent decay particle types.")
 
 			# set the physics vectors in the tree
 			prodKinMomenta[0] = physicsVectors[0]
 			for i in range(len(physicsVectors[1:])):
 				decayKinMomenta[i] = physicsVectors[i+1]
 			outTree.Fill()
-			event = inEventFile.get_event()
+			index += 1
+			progressbar.update(index)
 
+	pyRootPwa.utils.printSucc('Successfully created TTree with ' + str(events) + ' events.')
 	return (prodKinPartName, decayKinPartName, outTree)
 
 

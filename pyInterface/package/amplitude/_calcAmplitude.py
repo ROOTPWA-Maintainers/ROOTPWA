@@ -5,12 +5,15 @@ import sys
 import pyRootPwa
 import pyRootPwa.utils
 
-def calcAmplitudes(inFile, keyfile, outFile):
+def calcAmplitudes(inFileName, keyfile, outFile):
 
-	prodKinParticles = inFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
-	decayKinParticles = inFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
-
-	inTree = inFile.Get(pyRootPwa.config.inTreeName)
+	if inFileName.endswith('.root'):
+		inFile = pyRootPwa.ROOT.TFile.Open(inFileName)
+		prodKinParticles = inFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
+		decayKinParticles = inFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
+		inTree = inFile.Get(pyRootPwa.config.inTreeName)
+	else:
+		(prodKinParticles, decayKinParticles, inTree) = pyRootPwa.utils.getTreeFromEvtFile(inFileName, inFileName)
 
 	prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")

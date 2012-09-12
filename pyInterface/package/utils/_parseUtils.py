@@ -1,6 +1,7 @@
 
 import glob
 import os
+import sys
 
 import pyRootPwa
 import pyRootPwa.utils

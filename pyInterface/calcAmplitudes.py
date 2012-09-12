@@ -102,8 +102,7 @@ if __name__ == "__main__":
 			success = False
 			if outFileExtension == '.amp':
 				with open(outFileName, 'w') as outputFile:
-					inFile = pyRootPwa.ROOT.TFile.Open(inputFile)
-					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outputFile)
+					success = pyRootPwa.amplitude.calcAmplitudes(inputFile, keyfile, outputFile)
 			else:
 				outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
 				inFile = pyRootPwa.ROOT.TFile.Open(inputFile)
