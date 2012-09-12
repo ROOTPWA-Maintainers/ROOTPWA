@@ -163,39 +163,42 @@ def getTreeFromEvtFile(filename, treename = ""):
 		events = len(inEventFile)
 		progressbar = pyRootPwa.utils.progressBar(0, events)
 		progressbar.start()
-		first = True
-		for event in inEventFile:
+		try:
+			first = True
+			for event in inEventFile:
 
-			event.sort()
-			physicsVectors = event.getPhysicsEvent()
+				event.sort()
+				physicsVectors = event.getPhysicsEvent()
 
-			# check for the correct ordering of the names
-			particleNames = event.getParticleNames()
-			if first:
-				prodKinPartName[0] = pyRootPwa.ROOT.TObjString(particleNames[0])
-				for i in range(1, len(particleNames)):
-					decayKinPartName[i-1] = pyRootPwa.ROOT.TObjString(particleNames[i])
-			else:
-				if len(particleNames) != prodKinPartName.GetEntriesFast() + decayKinPartName.GetEntriesFast():
-					progressbar.cancel()
-					raise pyRootPwa.exception.pyRootPwaException("Mismatch between number of particle names in TClonesArray and number of particles in event")
-				if prodKinPartName[0].GetString() != particleNames[0]:
-					progressbar.cancel()
-					raise pyRootPwa.exception.pyRootPwaException("Inconsistent production particle types")
-				for i in range(1, len(particleNames)):
-					if decayKinPartName[i-1].GetString() != particleNames[i]:
+				# check for the correct ordering of the names
+				particleNames = event.getParticleNames()
+				if first:
+					prodKinPartName[0] = pyRootPwa.ROOT.TObjString(particleNames[0])
+					for i in range(1, len(particleNames)):
+						decayKinPartName[i-1] = pyRootPwa.ROOT.TObjString(particleNames[i])
+				else:
+					if len(particleNames) != prodKinPartName.GetEntriesFast() + decayKinPartName.GetEntriesFast():
 						progressbar.cancel()
-						raise pyRootPwa.exception.pyRootPwaException("Inconsistent decay particle types")
+						raise pyRootPwa.exception.pyRootPwaException("Mismatch between number of particle names in TClonesArray and number of particles in event")
+					if prodKinPartName[0].GetString() != particleNames[0]:
+						progressbar.cancel()
+						raise pyRootPwa.exception.pyRootPwaException("Inconsistent production particle types")
+					for i in range(1, len(particleNames)):
+						if decayKinPartName[i-1].GetString() != particleNames[i]:
+							progressbar.cancel()
+							raise pyRootPwa.exception.pyRootPwaException("Inconsistent decay particle types")
 
-			# set the physics vectors in the tree
-			prodKinMomenta[0] = physicsVectors[0]
-			for i in range(len(physicsVectors[1:])):
-				decayKinMomenta[i] = physicsVectors[i+1]
-			outTree.Fill()
-			index += 1
-			progressbar.update(index)
+				# set the physics vectors in the tree
+				prodKinMomenta[0] = physicsVectors[0]
+				for i in range(len(physicsVectors[1:])):
+					decayKinMomenta[i] = physicsVectors[i+1]
+				outTree.Fill()
+				index += 1
+				progressbar.update(index)
+		except:
+			progressbar.cancel()
+			raise
 
 	pyRootPwa.utils.printSucc('Successfully created TTree with ' + str(events) + ' events.')
 	return (prodKinPartName, decayKinPartName, outTree)
-
 

@@ -40,24 +40,28 @@ def calcAmplitudes(inFile, keyfile, outFile):
 
 	progressbar = pyRootPwa.utils.progressBar(0, inFile.tree.GetEntries())
 	progressbar.start()
-	for treeIndex in range(inFile.tree.GetEntries()):
-		inFile.tree.GetEntry(treeIndex)
-		if not pythonAdmin.readKinematicsData(prodKinMomenta, decayKinMomenta):
-			progressbar.cancel()
-			pyRootPwa.utils.printErr('Could not read kinematics data.')
-			return False
-		amp = pythonAdmin()
-		if pyRootPwa.config.outputFileFormat == "ascii":
-			outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
-		elif pyRootPwa.config.outputFileFormat == "binary":
-			arrayAmp = array.array('d', [amp.real, amp.imag])
-			arrayAmp.tofile(outFile)
-		elif writeRootFile:
-			amplitudeTreeLeaf.setAmp(amp)
-			outTree.Fill()
-		else:
-			raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
-		progressbar.update(treeIndex)
+	try:
+		for treeIndex in range(inFile.tree.GetEntries()):
+			inFile.tree.GetEntry(treeIndex)
+			if not pythonAdmin.readKinematicsData(prodKinMomenta, decayKinMomenta):
+				progressbar.cancel()
+				pyRootPwa.utils.printErr('Could not read kinematics data.')
+				return False
+			amp = pythonAdmin()
+			if pyRootPwa.config.outputFileFormat == "ascii":
+				outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
+			elif pyRootPwa.config.outputFileFormat == "binary":
+				arrayAmp = array.array('d', [amp.real, amp.imag])
+				arrayAmp.tofile(outFile)
+			elif writeRootFile:
+				amplitudeTreeLeaf.setAmp(amp)
+				outTree.Fill()
+			else:
+				raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
+			progressbar.update(treeIndex)
+	except:
+		progressbar.cancel()
+		raise
 
 	if writeRootFile:
 		outTree.Write()

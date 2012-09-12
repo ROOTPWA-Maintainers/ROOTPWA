@@ -5,6 +5,7 @@ import ConfigParser
 import glob
 import os
 import sys
+import traceback
 
 import pyRootPwa
 import pyRootPwa.amplitude
@@ -90,6 +91,9 @@ if __name__ == "__main__":
 		except pyRootPwa.exception.pyRootPwaException as exc:
 			pyRootPwa.utils.printErr('Could not open input file "' + inputFile + '": ' + str(exc) + '. Skipping...')
 			continue
+		except KeyboardInterrupt:
+			pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
+			sys.exit(1)
 
 		for keyfile in keyfiles:
 
@@ -107,12 +111,24 @@ if __name__ == "__main__":
 			pyRootPwa.utils.printInfo('Opening input file "' + inputFile + '".')
 
 			success = False
-			if outFileExtension == '.amp':
-				with open(outFileName, 'w') as outFile:
+			try:
+				if outFileExtension == '.amp':
+					with open(outFileName, 'w') as outFile:
+						success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
+				else:
+					outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
 					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
-			else:
-				outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
-				success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
+			except KeyboardInterrupt:
+				pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
+				if os.path.exists(outFileName):
+					os.remove(outFileName)
+				sys.exit(1)
+			except:
+				pyRootPwa.utils.printErr('Unknown exception during amplitude calculation. Aborting...')
+				traceback.print_exc()
+				if os.path.exists(outFileName):
+					os.remove(outFileName)
+				sys.exit(1)
 
 			if success:
 				pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '".')
@@ -120,4 +136,6 @@ if __name__ == "__main__":
 				pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".')
 				if os.path.exists(outFileName):
 					os.remove(outFileName)
+
 			print
+
