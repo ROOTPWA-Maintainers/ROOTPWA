@@ -2,6 +2,8 @@
 import sys
 
 import pyRootPwa
+import pyRootPwa.exception
+import pyRootPwa.utils
 
 _geantParticleCodes = {}
 _geantParticleCodes[0] = "unknown"
@@ -133,8 +135,7 @@ class _Event:
 def getTreeFromEvtFile(filename, treename = ""):
 
 	if pyRootPwa.config is None:
-		pyRootPwa.utils.printErr("Config singleton not initialized. Aborting...")
-		sys.exit(1)
+		raise pyRootPwa.exception.pyRootPwaException("pyRootPwa configuration not initialized")
 
 	if treename == "":
 		treename = str(hash(filename))
@@ -177,14 +178,14 @@ def getTreeFromEvtFile(filename, treename = ""):
 			else:
 				if len(particleNames) != prodKinPartName.GetEntriesFast() + decayKinPartName.GetEntriesFast():
 					progressbar.cancel()
-					raise pyRootPwa.exception.pyRootPwaException("Mismatch between number of particle names in TClonesArray and number of particles in event.")
+					raise pyRootPwa.exception.pyRootPwaException("Mismatch between number of particle names in TClonesArray and number of particles in event")
 				if prodKinPartName[0].GetString() != particleNames[0]:
 					progressbar.cancel()
-					raise pyRootPwa.exception.pyRootPwaException("Inconsistent production particle types.")
+					raise pyRootPwa.exception.pyRootPwaException("Inconsistent production particle types")
 				for i in range(1, len(particleNames)):
 					if decayKinPartName[i-1].GetString() != particleNames[i]:
 						progressbar.cancel()
-						raise pyRootPwa.exception.pyRootPwaException("Inconsistent decay particle types.")
+						raise pyRootPwa.exception.pyRootPwaException("Inconsistent decay particle types")
 
 			# set the physics vectors in the tree
 			prodKinMomenta[0] = physicsVectors[0]

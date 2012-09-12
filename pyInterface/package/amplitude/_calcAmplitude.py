@@ -3,9 +3,13 @@ import array
 import sys
 
 import pyRootPwa
+import pyRootPwa.exception
 import pyRootPwa.utils
 
 def calcAmplitudes(inFile, keyfile, outFile):
+
+	if pyRootPwa.config is None:
+		raise pyRootPwa.exception.pyRootPwaException("pyRootPwa configuration not initialized")
 
 	prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")

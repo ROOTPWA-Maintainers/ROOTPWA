@@ -12,6 +12,8 @@ class inputFile():
 	_inFileName = ""
 
 	def __init__(self, inFileName):
+		if pyRootPwa.config is None:
+			raise pyRootPwa.exception.pyRootPwaException("pyRootPwa configuration not initialized")
 		self._inFileName = inFileName
 		if inFileName.endswith('.root'):
 			self._inFile = pyRootPwa.ROOT.TFile.Open(inFileName)
