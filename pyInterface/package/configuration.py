@@ -10,18 +10,27 @@ class rootPwaConfig:
 	config = None
 	configFileName = ""
 
-	pdgFileName = ""
-	dataDirectory = ""
-	dataFileExtensionQualifier = ""
-
+	# general section
+	pdgFileName                           = ""
+	massBinDirectoryNamePattern           = ""
+	dataDirectory                         = ""
+	dataFileExtensionQualifier            = ""
 	phaseSpaceEventFileExtenisonQualifier = ""
 	accCorrPSEventFileExtensionQualifier  = ""
-	massBinDirectoryNamePattern           = ""
+
+	# amplitude section
 	keyfilePattern                        = ""
+	dataAmplitudeDirectoryName            = ""
+	phaseSpaceAmpDirectoryName            = ""
+	accCorrPSAmpDirectoryName             = ""
+	amplitudeLeafName                     = ""
+	inTreeName                            = ""
 	prodKinPartNamesObjName               = ""
 	prodKinMomentaLeafName                = ""
 	decayKinPartNamesObjName              = ""
 	decayKinMomentaLeafName               = ""
+	fileNameConvention                    = ""
+	outputFileFormat                      = ""
 
 
 	def __init__(self, configFileName):
@@ -57,10 +66,28 @@ class rootPwaConfig:
 			self.accCorrPSEventFileExtensionQualifier  = self.config.get('general', 'accCorrPSEventFileExtensionQualifier')
 			self.massBinDirectoryNamePattern           = self.config.get('general', 'massBinDirectoryNamePattern')
 			self.keyfilePattern                        = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
+
+			self.dataAmplitudeDirectoryName            = self.config.get('amplitudes', 'dataAmplitudeDirectoryName')
+			self.phaseSpaceAmpDirectoryName            = self.config.get('amplitudes', 'phaseSpaceAmpDirectoryName')
+			self.accCorrPSAmpDirectoryName             = self.config.get('amplitudes', 'accCorrPSAmpDirectoryName')
+			self.amplitudeLeafName                     = self.config.get('amplitudes', 'amplitudeLeafName')
+			self.inTreeName                            = self.config.get('amplitudes', 'inTreeName')
+
 			self.prodKinPartNamesObjName               = self.config.get('amplitudes', 'prodKinPartNamesObjName')
 			self.prodKinMomentaLeafName                = self.config.get('amplitudes', 'prodKinMomentaLeafName')
 			self.decayKinPartNamesObjName              = self.config.get('amplitudes', 'decayKinPartNamesObjName')
 			self.decayKinMomentaLeafName               = self.config.get('amplitudes', 'decayKinMomentaLeafName')
+
+			self.fileNameConvention                    = self.config.get('amplitudes', 'fileNameConvention').lower()
+			if not self.fileNameConvention in ['old', 'new']:
+				pyRootPwa.utils.printErr('"fileNameConvention" option of the "amplitude" section has to be either "old" or "new" (found "' + self.fileNameConvention + '). Aborting...')
+				sys.exit(1)
+
+			self.outputFileFormat                    = self.config.get('amplitudes', 'outputFileFormat').lower()
+			if not self.outputFileFormat in ['binary', 'ascii']:
+				pyRootPwa.utils.printErr('"outputFileFormat" option of the "amplitude" section has to be either "binary" or "ascii" (found "' + self.outputFileFormat + '). Aborting...')
+				sys.exit(1)
+
 		except ConfigParser.Error:
 			pyRootPwa.utils.printErr("a required entry was missing from the config file. Aborting...")
 			sys.exit(1)

@@ -1,19 +1,21 @@
 
+import array
+
 import pyRootPwa
 import pyRootPwa.utils
 
 def calcAmplitudes(inFile, keyfile, outfile):
 
-	prodKinParticles = inFile.Get(pyRootPwa.config.get('amplitudes', 'prodKinPartNamesObjName'))
-	decayKinParticles = inFile.Get(pyRootPwa.config.get('amplitudes', 'decayKinPartNamesObjName'))
+	prodKinParticles = inFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
+	decayKinParticles = inFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
 
-	inTree = inFile.Get(pyRootPwa.config.get('amplitudes', 'inTreeName'))
+	inTree = inFile.Get(pyRootPwa.config.inTreeName)
 
 	prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 	decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 
-	inTree.SetBranchAddress(pyRootPwa.config.get('amplitudes', 'prodKinMomentaLeafName'), prodKinMomenta)
-	inTree.SetBranchAddress(pyRootPwa.config.get('amplitudes', 'decayKinMomentaLeafName'), decayKinMomenta)
+	inTree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, prodKinMomenta)
+	inTree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
 
 	pythonAdmin = pyRootPwa.pythonAdministrator()
 	if not pythonAdmin.constructAmplitude(keyfile):
@@ -29,6 +31,12 @@ def calcAmplitudes(inFile, keyfile, outfile):
 			pyRootPwa.utils.printErr('Could not read kinematics data.')
 			return False
 		amp = pythonAdmin()
-		outfile.write("(" + str(amp.real) + ", " + str(amp.imag) + ")\n")
+		if pyRootPwa.config.outputFileFormat == "ascii":
+			outfile.write("(" + str(amp.real) + ", " + str(amp.imag) + ")\n")
+		elif pyRootPwa.config.outputFileFormat == "binary":
+			arrayAmp = array.array('d', [amp.real, amp.imag])
+			arrayAmp.tofile(outfile)
+		else:
+			raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
 	return True
 
