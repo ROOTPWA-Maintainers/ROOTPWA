@@ -4,6 +4,7 @@
 #include<TLorentzRotation.h>
 #include<TPython.h>
 #include<TVector3.h>
+#include<TTree.h>
 
 namespace bp = boost::python;
 
@@ -43,6 +44,11 @@ void rpwa::py::exportRootConverters() {
 	bp::def("__RootConverters_convertToPy_TClonesArray", &rpwa::py::convertToPy<TClonesArray>);
 	bp::def(
 		"__RootConverters_convertFromPy_TClonesArray", &rpwa::py::convertFromPy<TClonesArray*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_TTree", &rpwa::py::convertFromPy<TTree*>
 		, bp::return_internal_reference<1>()
 	);
 

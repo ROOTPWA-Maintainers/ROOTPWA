@@ -4,7 +4,7 @@ import array
 import pyRootPwa
 import pyRootPwa.utils
 
-def calcAmplitudes(inFile, keyfile, outfile):
+def calcAmplitudes(inFile, keyfile, outFile):
 
 	prodKinParticles = inFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
 	decayKinParticles = inFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
@@ -18,6 +18,18 @@ def calcAmplitudes(inFile, keyfile, outfile):
 	inTree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
 
 	pythonAdmin = pyRootPwa.pythonAdministrator()
+
+	writeRootFile = False
+	if pyRootPwa.config.outputFileFormat == "root":
+		writeRootFile = True
+
+	if writeRootFile:
+		outFile.cd()
+		ampTreeName = keyfile.rsplit('/',1)[-1].replace('.key', '.amp')
+		outTree = pyRootPwa.ROOT.TTree(ampTreeName, ampTreeName)
+		amplitudeTreeLeaf = pyRootPwa.amplitudeTreeLeaf()
+		pythonAdmin.branch(outTree, amplitudeTreeLeaf, pyRootPwa.config.amplitudeLeafName)
+
 	if not pythonAdmin.constructAmplitude(keyfile):
 		pyRootPwa.utils.printWarn('Could not construct amplitude for keyfile "' + keyfile + '".')
 		return False
@@ -35,16 +47,20 @@ def calcAmplitudes(inFile, keyfile, outfile):
 			return False
 		amp = pythonAdmin()
 		if pyRootPwa.config.outputFileFormat == "ascii":
-			outfile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
+			outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
 		elif pyRootPwa.config.outputFileFormat == "binary":
 			arrayAmp = array.array('d', [amp.real, amp.imag])
-			arrayAmp.tofile(outfile)
-		elif pyRootPwa.config.outputFileFormat == "root":
-			pyRootPwa.utils.printErr('Root output file format not implemented yet!')
-			sys.exit(1)
+			arrayAmp.tofile(outFile)
+		elif writeRootFile:
+			amplitudeTreeLeaf.setAmp(amp)
+			outTree.Fill()
 		else:
 			raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
 		progressbar.update(treeIndex)
+
+	if writeRootFile:
+		outTree.Write()
+		outFile.Close()
 
 	return True
 

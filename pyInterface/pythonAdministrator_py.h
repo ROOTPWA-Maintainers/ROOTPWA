@@ -3,10 +3,12 @@
 
 #include<boost/python.hpp>
 
+#include<TTree.h>
+
+#include<amplitudeTreeLeaf.h>
 #include<waveDescription.h>
 
 #include "rootConverters_py.h"
-#include<TClonesArray.h>
 
 namespace rpwa {
 
@@ -36,6 +38,18 @@ namespace rpwa {
 				_waveDescription.clear();
 				_amplitude = rpwa::isobarAmplitudePtr();
 			};
+
+			static int setBranchAddress(PyObject* pyTree, PyObject* pyAmplitudeTreeLeaf, std::string branchName) {
+				rpwa::amplitudeTreeLeaf& amplitudeTreeLeaf = boost::python::extract<rpwa::amplitudeTreeLeaf&>(pyAmplitudeTreeLeaf);
+				TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+				return tree->SetBranchAddress(branchName.c_str(), &amplitudeTreeLeaf);
+			};
+
+			static void branch(PyObject* pyTree, PyObject* pyAmplitudeTreeLeaf, std::string name, int bufsize = 32000, int splitlevel = 99) {
+				rpwa::amplitudeTreeLeaf& amplitudeTreeLeaf = boost::python::extract<rpwa::amplitudeTreeLeaf&>(pyAmplitudeTreeLeaf);
+				TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+				tree->Branch(name.c_str(), &amplitudeTreeLeaf, bufsize, splitlevel);
+			}
 
 		};
 

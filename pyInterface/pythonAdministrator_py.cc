@@ -34,7 +34,6 @@ bool rpwa::py::pythonAdministrator::readKinematicsData(PyObject* pyProdKinMoment
 	return topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta);
 };
 
-
 void rpwa::py::exportPythonAdministrator() {
 
 	bp::class_<rpwa::py::pythonAdministrator>("pythonAdministrator")
@@ -42,6 +41,18 @@ void rpwa::py::exportPythonAdministrator() {
 		.def("constructAmplitude", &rpwa::py::pythonAdministrator::constructAmplitude)
 		.def("initKinematicsData", &rpwa::py::pythonAdministrator::initKinematicsData)
 		.def("readKinematicsData", &rpwa::py::pythonAdministrator::readKinematicsData)
-		.def("reset", &rpwa::py::pythonAdministrator::reset);
+		.def("reset", &rpwa::py::pythonAdministrator::reset)
+		.def("setBranchAddress", &rpwa::py::pythonAdministrator::setBranchAddress)
+		.staticmethod("setBranchAddress")
+		.def(
+			"branch"
+			, &rpwa::py::pythonAdministrator::branch
+			, (bp::arg("pyTree"),
+			   bp::arg("pyAmplitudeTreeLeaf"),
+			   bp::arg("name"),
+			   bp::arg("bufsize")=32000,
+			   bp::arg("splitlevel")=99)
+		)
+		.staticmethod("branch");
 
 };

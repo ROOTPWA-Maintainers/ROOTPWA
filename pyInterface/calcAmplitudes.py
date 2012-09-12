@@ -97,14 +97,22 @@ if __name__ == "__main__":
 				pyRootPwa.utils.printInfo('Output file "' + outFileName + '" already present. Skipping...')
 				continue
 
+			pyRootPwa.utils.printInfo('Opening input file "' + inputFile + '".')
+
+			success = False
 			if outFileExtension == '.amp':
 				with open(outFileName, 'w') as outputFile:
 					inFile = pyRootPwa.ROOT.TFile.Open(inputFile)
 					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outputFile)
-				if success:
-					pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '".')
-				else:
-					pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".')
-					if os.path.exists(outFileName):
-						os.remove(outFileName)
+			else:
+				outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
+				inFile = pyRootPwa.ROOT.TFile.Open(inputFile)
+				success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
 
+			if success:
+				pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '".')
+			else:
+				pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".')
+				if os.path.exists(outFileName):
+					os.remove(outFileName)
+			print
