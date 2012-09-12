@@ -65,7 +65,7 @@ class rootPwaConfig:
 			self.phaseSpaceEventFileExtenisonQualifier = self.config.get('general', 'phaseSpaceEventFileExtenisonQualifier')
 			self.accCorrPSEventFileExtensionQualifier  = self.config.get('general', 'accCorrPSEventFileExtensionQualifier')
 			self.massBinDirectoryNamePattern           = self.config.get('general', 'massBinDirectoryNamePattern')
-			self.keyfilePattern                        = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
+			rawKeyfilePattern                          = os.path.expanduser(os.path.expandvars(self.config.get('amplitudes', 'keyfiles')))
 
 			self.dataAmplitudeDirectoryName            = self.config.get('amplitudes', 'dataAmplitudeDirectoryName')
 			self.phaseSpaceAmpDirectoryName            = self.config.get('amplitudes', 'phaseSpaceAmpDirectoryName')
@@ -87,6 +87,14 @@ class rootPwaConfig:
 			if not self.outputFileFormat in ['binary', 'ascii', 'root']:
 				pyRootPwa.utils.printErr('"outputFileFormat" option of the "amplitude" section has to be either "binary" or "ascii" (found "' + self.outputFileFormat + '). Aborting...')
 				sys.exit(1)
+
+			rawKeyfilePattern = rawKeyfilePattern.replace('\n', '').replace(' ', '')
+			if ';' in rawKeyfilePattern:
+				self.keyfilePattern = rawKeyfilePattern.split(';')
+			elif ',' in rawKeyfilePattern:
+				self.keyfilePattern = rawKeyfilePattern.split(',')
+			else:
+				self.keyfilePattern = [rawKeyfilePattern]
 
 		except ConfigParser.Error:
 			pyRootPwa.utils.printErr("a required entry was missing from the config file. Aborting...")

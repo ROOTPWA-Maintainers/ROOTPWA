@@ -89,18 +89,20 @@ def getListOfInputFiles(massBins):
 
 	return (inputDataFiles, inputPSFiles, inputAccPSFiles)
 
-def getListOfKeyfiles(keyfilePattern):
+def getListOfKeyfiles(keyfilePatterns):
 	keyfiles = []
-	if os.path.isdir(keyfilePattern):
-		keyfiles = glob.glob(keyfilePattern + "/*.key")
-	elif os.path.isfile(keyfilePattern) and keyfilePattern.endswith(".key"):
-		keyfiles.append(keyfilePattern)
-	else:
-		globbedKeyfiles = glob.glob(keyfilePattern)
-		for keyfile in globbedKeyfiles:
-			if os.path.isfile(keyfile) and keyfile.endswith(".key"):
-				keyfiles.append(keyfile)
-			else:
-				pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
+	for keyfilePattern in keyfilePatterns:
+		keyfilePattern = os.path.expanduser(os.path.expandvars(keyfilePattern))
+		if os.path.isdir(keyfilePattern):
+			keyfiles += glob.glob(keyfilePattern + "/*.key")
+		elif os.path.isfile(keyfilePattern) and keyfilePattern.endswith(".key"):
+			keyfiles.append(keyfilePattern)
+		else:
+			globbedKeyfiles = glob.glob(keyfilePattern)
+			for keyfile in globbedKeyfiles:
+				if os.path.isfile(keyfile) and keyfile.endswith(".key"):
+					keyfiles.append(keyfile)
+				else:
+					pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
 	return keyfiles
 
