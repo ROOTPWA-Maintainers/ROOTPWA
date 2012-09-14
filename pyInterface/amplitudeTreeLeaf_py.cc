@@ -37,8 +37,19 @@ void rpwa::py::exportAmplitudeTreeLeaf() {
 	bp::class_<amplitudeTreeLeafWrapper>("amplitudeTreeLeaf")
 
 		.def(bp::self == bp::self)
+		.def(bp::self != bp::self)
+
+		.def(bp::self + bp::self)
+		.def(bp::self - bp::self)
 		.def(bp::self += bp::self)
 		.def(bp::self -= bp::self)
+
+		.def(bp::self * int())
+		.def(bp::self * double())
+		.def(int() * bp::self)
+		.def(double() * bp::self)
+		.def(bp::self / double())
+		.def(bp::self / int())
 
 		.def(bp::self *= int())
 		.def(bp::self *= double())
