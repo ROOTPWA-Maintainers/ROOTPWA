@@ -5,11 +5,11 @@ import sys
 
 import pyRootPwa.utils
 
-stdoutLock = multiprocessing.Lock()
 stdoutisatty = None
 stderrisatty = None
 
 def printPrintingSummary(printingCounter):
+	print
 	print("Number of errors printed:    " + str(printingCounter[0]))
 	print("Number of warnings printed:  " + str(printingCounter[1]))
 	print("Number of infos printed:     " + str(printingCounter[2]))

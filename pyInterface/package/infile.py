@@ -8,18 +8,10 @@ import pyRootPwa.utils
 
 class inputFile():
 
-	lock = multiprocessing.Lock()
-
 	tree = None
 	prodKinParticles = None
 	decayKinParticles = None
 
-	inFileName = ""
-	_prodKinMomentaLeafName = ""
-	_decayKinMomentaLeafName = ""
-	_prodKinPartNamesObjName = ""
-	_decayKinPartNamesObjName = ""
-	_inTreeName = ""
 	_readRootFile = None
 	_first = None
 	_entriesInTree = 0
@@ -28,18 +20,12 @@ class inputFile():
 		self.inFileName = inFileName
 		if pyRootPwa.config is None:
 			raise pyRootPwa.exception.pyRootPwaException("pyRootPwa configuration not initialized")
-		with pyRootPwa.config.lock:
-			self._prodKinMomentaLeafName =  pyRootPwa.config.prodKinMomentaLeafName
-			self._decayKinMomentaLeafName = pyRootPwa.config.decayKinMomentaLeafName
-			self._prodKinPartNamesObjName = pyRootPwa.config.prodKinPartNamesObjName
-			self._decayKinPartNamesObjName = pyRootPwa.config.decayKinPartNamesObjName
-			self._inTreeName = pyRootPwa.config.inTreeName
 		if inFileName.endswith('.root'):
 			self._readRootFile = True
 			self._inFile = pyRootPwa.ROOT.TFile.Open(inFileName)
-			self.prodKinParticles = self._inFile.Get(self._prodKinPartNamesObjName)
-			self.decayKinParticles = self._inFile.Get(self._decayKinPartNamesObjName)
-			self.tree = self._inFile.Get(self._inTreeName)
+			self.prodKinParticles = self._inFile.Get(pyRootPwa.config.prodKinPartNamesObjName)
+			self.decayKinParticles = self._inFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
+			self.tree = self._inFile.Get(pyRootPwa.config.inTreeName)
 			self._entriesInTree = int(self.tree.GetEntries())
 		elif inFileName.endswith('.evt'):
 			self._readRootFile = False
@@ -51,8 +37,8 @@ class inputFile():
 
 		self._prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 		self._decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
-		self.tree.SetBranchAddress(self._prodKinMomentaLeafName, self._prodKinMomenta)
-		self.tree.SetBranchAddress(self._decayKinMomentaLeafName, self._decayKinMomenta)
+		self.tree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, self._prodKinMomenta)
+		self.tree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, self._decayKinMomenta)
 
 	def __len__(self):
 		return self._entriesInTree
@@ -62,12 +48,12 @@ class inputFile():
 		for index in range(inslice.start, inslice.stop):
 			if self._readRootFile and not self._inFile.IsOpen():
 				self._inFile = pyRootPwa.ROOT.TFile.Open(self.inFileName)
-				self.tree = self._inFile.Get(self._inTreeName)
-				self.tree.SetBranchAddress(self._prodKinMomentaLeafName, self._prodKinMomenta)
-				self.tree.SetBranchAddress(self._decayKinMomentaLeafName, self._decayKinMomenta)
+				self.tree = self._inFile.Get(pyRootPwa.config.inTreeName)
+				self.tree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, self._prodKinMomenta)
+				self.tree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, self._decayKinMomenta)
 			elif self._first:
-				self.tree.SetBranchAddress(self._prodKinMomentaLeafName, self._prodKinMomenta)
-				self.tree.SetBranchAddress(self._decayKinMomentaLeafName, self._decayKinMomenta)
+				self.tree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, self._prodKinMomenta)
+				self.tree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, self._decayKinMomenta)
 				self._first = False
 			self.tree.GetEntry(index)
 			retval.append((self._prodKinMomenta.Clone(), self._decayKinMomenta.Clone()))

@@ -121,7 +121,7 @@ if __name__ == "__main__":
 			else:
 				outFileExtension = '.amp'
 
-			outFileName = outDir + '/' + str(keyfile).rsplit('/',1)[-1].replace('.key', outFileExtension)
+			outFileName = outDir + '/' + keyfile.rsplit('/',1)[-1].replace('.key', outFileExtension)
 
 			if os.path.exists(outFileName):
 				pyRootPwa.utils.printInfo('Output file "' + outFileName + '" already present. Skipping...')

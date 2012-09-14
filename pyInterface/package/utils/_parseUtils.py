@@ -4,7 +4,6 @@ import os
 import sys
 
 import pyRootPwa
-import pyRootPwa.keyfile
 import pyRootPwa.utils
 
 def parseMassBinArgs(allMassBins, massBinArg):
@@ -105,8 +104,5 @@ def getListOfKeyfiles(keyfilePatterns):
 					keyfiles.append(keyfile)
 				else:
 					pyRootPwa.utils.printWarn("Keyfile " + keyfile + " is not valid. Skipping...")
-	newKeyfiles = []
-	for keyfile in keyfiles:
-		newKeyfiles.append(pyRootPwa.keyfile.Keyfile(keyfile))
-	return newKeyfiles
+	return keyfiles
 

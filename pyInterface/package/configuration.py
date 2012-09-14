@@ -8,8 +8,6 @@ import pyRootPwa.utils
 
 class rootPwaConfig:
 
-	lock = multiprocessing.Lock()
-
 	config = None
 	configFileName = ""
 
