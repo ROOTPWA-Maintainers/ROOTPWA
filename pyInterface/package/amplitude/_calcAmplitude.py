@@ -108,5 +108,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 			outTree.Write()
 			outFile.Close()
 
+		pyRootPwa.utils.printSucc('Created amplitude file for ' + str(nEntries) + ' events.')
+
 		return True
 
