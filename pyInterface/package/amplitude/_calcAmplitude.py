@@ -1,7 +1,9 @@
 
 import array
 import multiprocessing
+import os
 import sys
+import traceback
 
 import pyRootPwa
 import pyRootPwa.exception
@@ -17,27 +19,42 @@ class AmplitudeCalculator(multiprocessing.Process):
 
 	def run(self):
 		while True:
-			inTuple = self.queue.get()
-			with pyRootPwa.utils.Silencer() as silencer:
-				processedEvents = 0
-				outFileName = inTuple[2]
-				pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
-				if outFileName.endswith('.amp'):
-					with open(outFileName, 'w') as outFile:
-						outTuple = (inTuple[0], inTuple[1], outFile)
-						processedEvents = self.calcAmplitudes(outTuple)
-				else:
-					outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
-					outTuple = (inTuple[0], inTuple[1], outFile)
-					processedEvents = self.calcAmplitudes(outTuple)
-			with pyRootPwa.utils.stdoutLock:
-				sys.stdout.write(silencer.output)
-				if processedEvents > 0:
-					pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '" with ' + str(processedEvents) + ' events.\n')
-				elif processedEvents == 0:
-					pyRootPwa.utils.printWarn('Created amplitude file "' + outFileName + '", but wrote 0 events to it.\n')
-				else:
-					pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".\n')
+			try:
+				inTuple = self.queue.get()
+				with pyRootPwa.utils.Silencer() as silencer:
+					processedEvents = 0
+					outFileName = inTuple[2]
+					pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
+					try:
+						if outFileName.endswith('.amp'):
+							with open(outFileName, 'w') as outFile:
+								outTuple = (inTuple[0], inTuple[1], outFile)
+								processedEvents = self.calcAmplitudes(outTuple)
+						else:
+							outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
+							outTuple = (inTuple[0], inTuple[1], outFile)
+							processedEvents = self.calcAmplitudes(outTuple)
+					except:
+						processedEvents = -1
+						if os.path.exists(outFileName):
+							os.remove(outFileName)
+						raise
+				with pyRootPwa.utils.stdoutLock:
+					sys.stdout.write(silencer.output)
+					if processedEvents > 0:
+						pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '" with ' + str(processedEvents) + ' events.\n')
+					elif processedEvents == 0:
+						pyRootPwa.utils.printWarn('Created amplitude file "' + outFileName + '", but wrote 0 events to it.\n')
+					else:
+						if os.path.exists(outFileName):
+							os.remove(outFileName)
+						pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".\n')
+			except KeyboardInterrupt:
+				pyRootPwa.utils.printInfo('Process ' + str(self.pid) + ' caught keyboard interrupt. Terminating...')
+			except:
+				pyRootPwa.utils.printErr('Process ' + str(self.pid) + ' caught exception. Terminating...')
+				traceback.print_exc()
+				break
 			self.queue.task_done()
 
 	def calcAmplitudes(self, inTuple):

@@ -5,6 +5,7 @@ import ConfigParser
 import glob
 import multiprocessing
 import os
+import Queue
 import sys
 import traceback
 
@@ -137,36 +138,28 @@ if __name__ == "__main__":
 		job.daemon = True
 		job.start()
 
-	processQueue.join()
+	try:
+		processQueue.join()
+		processQueue.close()
+	except KeyboardInterrupt:
+		pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
+		while True:
+			try:
+				processQueue.get(True, 2)
+			except IOError:
+				pass
+			except Queue.Empty:
+				break
+	except:
+		pyRootPwa.utils.printErr('Unknown exception during amplitude calculation. Aborting...')
+		traceback.print_exc()
+		while True:
+			try:
+				processQueue.get(True, 2)
+			except IOError:
+				pass
+			except Queue.Empty:
+				break
 
 	pyRootPwa.utils.printPrintingSummary()
 
-#			success = False
-#			try:
-#				if outFileExtension == '.amp':
-#					with open(outFileName, 'w') as outFile:
-#						success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
-#				else:
-#					outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
-#					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
-#			except KeyboardInterrupt:
-#				pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
-#				if os.path.exists(outFileName):
-#					os.remove(outFileName)
-#				sys.exit(1)
-#			except:
-#				pyRootPwa.utils.printErr('Unknown exception during amplitude calculation. Aborting...')
-#				traceback.print_exc()
-#				if os.path.exists(outFileName):
-#					os.remove(outFileName)
-#				sys.exit(1)
-#
-#			if success:
-#				pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '".')
-#			else:
-#				pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".')
-#				if os.path.exists(outFileName):
-#					os.remove(outFileName)
-#
-#			print
-#
