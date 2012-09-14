@@ -1,8 +1,13 @@
 
 import inspect
+import multiprocessing
 import sys
 
-config = None
+import pyRootPwa.utils
+
+stdoutLock = multiprocessing.Lock()
+stdoutisatty = None
+stderrisatty = None
 
 __terminalColorStrings = {}
 __terminalColorStrings['normal']     = "\033[0m"
@@ -36,33 +41,33 @@ def __printFormatted(msg, level):
 		function = "__main__"
 	string = ""
 	if level == "err":
-		if sys.stderr.isatty(): string += __terminalColorStrings['fgRed']
+		if pyRootPwa.utils.stderrisatty: string += __terminalColorStrings['fgRed']
 		string += "!!! "
 		string += function + " [" + filename + ":" + str(lineno) + "]: "
 		string += "error: "
-		if sys.stderr.isatty(): string += __terminalColorStrings['normal']
+		if pyRootPwa.utils.stderrisatty: string += __terminalColorStrings['normal']
 		string += msg
 	elif level == "warn":
-		if sys.stderr.isatty(): string += __terminalColorStrings['fgYellow']
+		if pyRootPwa.utils.stderrisatty: string += __terminalColorStrings['fgYellow']
 		string += "??? "
 		string += function + " [" + filename + ":" + str(lineno) + "]: "
 		string += "warning: "
-		if sys.stderr.isatty(): string += __terminalColorStrings['normal']
+		if pyRootPwa.utils.stderrisatty: string += __terminalColorStrings['normal']
 		string += msg
 	elif level == "suc":
-		if sys.stdout.isatty(): string += __terminalColorStrings['fgGreen']
+		if pyRootPwa.utils.stdoutisatty: string += __terminalColorStrings['fgGreen']
 		string += "*** "
 		string += function + ": success: "
-		if sys.stdout.isatty(): string += __terminalColorStrings['normal']
+		if pyRootPwa.utils.stdoutisatty: string += __terminalColorStrings['normal']
 		string += msg
 	elif level == "info":
-		if sys.stdout.isatty(): string += __terminalColorStrings['bold']
+		if pyRootPwa.utils.stdoutisatty: string += __terminalColorStrings['bold']
 		string += ">>> "
 		string += function + ": info: "
-		if sys.stdout.isatty(): string += __terminalColorStrings['normal']
+		if pyRootPwa.utils.stdoutisatty: string += __terminalColorStrings['normal']
 		string += msg
 	elif level == "debug":
-		if sys.stdout.isatty(): string += __terminalColorStrings['fgMangenta']
+		if pyRootPwa.utils.stdoutisatty: string += __terminalColorStrings['fgMangenta']
 		string += "+++ "
 		string += function + ": debug: "
 		string += __terminalColorStrings['normal']

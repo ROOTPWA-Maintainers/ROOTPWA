@@ -18,15 +18,26 @@ class AmplitudeCalculator(multiprocessing.Process):
 	def run(self):
 		while True:
 			inTuple = self.queue.get()
-			outFileName = inTuple[2]
-			pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
-			if outFileName.endswith('.amp'):
-				with open(outFileName, 'w') as outFile:
+			with pyRootPwa.utils.Silencer() as silencer:
+				processedEvents = 0
+				outFileName = inTuple[2]
+				pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
+				if outFileName.endswith('.amp'):
+					with open(outFileName, 'w') as outFile:
+						outTuple = (inTuple[0], inTuple[1], outFile)
+						processedEvents = self.calcAmplitudes(outTuple)
+				else:
+					outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
 					outTuple = (inTuple[0], inTuple[1], outFile)
-					self.calcAmplitudes(outTuple)
-			else:
-				outTuple = (inTuple[0], inTuple[1], outFile)
-				self.calcAmplitudes(outTuple)
+					processedEvents = self.calcAmplitudes(outTuple)
+			with pyRootPwa.utils.stdoutLock:
+				sys.stdout.write(silencer.output)
+				if processedEvents > 0:
+					pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '" with ' + str(processedEvents) + ' events.\n')
+				elif processedEvents == 0:
+					pyRootPwa.utils.printWarn('Created amplitude file "' + outFileName + '", but wrote 0 events to it.\n')
+				else:
+					pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".\n')
 			self.queue.task_done()
 
 	def calcAmplitudes(self, inTuple):
@@ -60,7 +71,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 		with keyfile.lock:
 			if not pythonAdmin.constructAmplitude(str(keyfile)):
 				pyRootPwa.utils.printWarn('Could not construct amplitude for keyfile "' + keyfile + '".')
-				return False
+				return -1
 		sys.stdout.write(str(pythonAdmin))
 
 		prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
@@ -70,9 +81,9 @@ class AmplitudeCalculator(multiprocessing.Process):
 			nEntries = len(inFile)
 			if not pythonAdmin.initKinematicsData(inFile.prodKinParticles, inFile.decayKinParticles):
 				pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
-				return False
+				return -1
 
-		progressbar = pyRootPwa.utils.progressBar(0, nEntries)
+		progressbar = pyRootPwa.utils.progressBar(0, nEntries, sys.stdout)
 		progressbar.start()
 		try:
 			treeIndex = 0
@@ -87,7 +98,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 					if not pythonAdmin.readKinematicsData(datum[0], datum[1]):
 						progressbar.cancel()
 						pyRootPwa.utils.printErr('Could not read kinematics data.')
-						return False
+						return -1
 					amp = pythonAdmin()
 					if outputFileFormat == "ascii":
 						outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
@@ -108,7 +119,5 @@ class AmplitudeCalculator(multiprocessing.Process):
 			outTree.Write()
 			outFile.Close()
 
-		pyRootPwa.utils.printSucc('Created amplitude file for ' + str(nEntries) + ' events.')
-
-		return True
+		return nEntries
 
