@@ -139,6 +139,8 @@ if __name__ == "__main__":
 
 	processQueue.join()
 
+	pyRootPwa.utils.printPrintingSummary()
+
 #			success = False
 #			try:
 #				if outFileExtension == '.amp':
