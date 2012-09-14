@@ -70,7 +70,7 @@ class inputFile():
 				self.tree.SetBranchAddress(self._decayKinMomentaLeafName, self._decayKinMomenta)
 				self._first = False
 			self.tree.GetEntry(index)
-			retval.append((self._prodKinMomenta, self._decayKinMomenta))
+			retval.append((self._prodKinMomenta.Clone(), self._decayKinMomenta.Clone()))
 		return retval
 
 	def __str__(self):
