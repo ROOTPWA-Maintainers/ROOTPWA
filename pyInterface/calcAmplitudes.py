@@ -3,6 +3,7 @@
 import argparse
 import ConfigParser
 import glob
+import multiprocessing
 import os
 import sys
 import traceback
@@ -32,6 +33,7 @@ if __name__ == "__main__":
 	parser.add_argument("-c", type=str, metavar="file", default="rootpwa.config", dest="configFileName", help="path ot config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
 	parser.add_argument("-mb", type=str, metavar="massBin(s)", default="all", dest="massBins", help="mass bins to be calculated (default: all)")
+	parser.add_argument("-j", type=int, metavar=("jobs"), default=1, dest="nJobs", help="EXPERIMENTAL: number of jobs used (default: 1)")
 	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
 
 	arguments = parser.parse_args()
@@ -69,40 +71,42 @@ if __name__ == "__main__":
 	# initialize the particleDataTable
 	pyRootPwa.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
 
-	for inputFile in (inputDataFiles + inputPSFiles + inputAccPSFiles):
+	processQueue = multiprocessing.JoinableQueue()
 
-		# check and if necessary create the output direcotries
-		outDir = inputFile.rsplit('/', 1)[0] + '/'
-		if inputFile in inputDataFiles:
-			outDir += pyRootPwa.config.dataAmplitudeDirectoryName
-		elif inputFile in inputPSFiles:
-			outDir += pyRootPwa.config.phaseSpaceAmpDirectoryName
-		elif inputFile in inputAccPSFiles:
-			outDir += pyRootPwa.config.accCorrPSAmpDirectoryName
-		if not os.path.exists(outDir):
-			os.mkdir(outDir)
-		else:
-			if not os.path.isdir(outDir):
-				pyRootPwa.utils.printErr('Output data directory "' + outDir + '" does not appear to be a directory. Skipping...')
+	for keyfile in keyfiles:
+
+		for inputFile in (inputDataFiles + inputPSFiles + inputAccPSFiles):
+
+			# check and if necessary create the output direcotries
+			outDir = inputFile.rsplit('/', 1)[0] + '/'
+			if inputFile in inputDataFiles:
+				outDir += pyRootPwa.config.dataAmplitudeDirectoryName
+			elif inputFile in inputPSFiles:
+				outDir += pyRootPwa.config.phaseSpaceAmpDirectoryName
+			elif inputFile in inputAccPSFiles:
+				outDir += pyRootPwa.config.accCorrPSAmpDirectoryName
+			if not os.path.exists(outDir):
+				os.mkdir(outDir)
+			else:
+				if not os.path.isdir(outDir):
+					pyRootPwa.utils.printErr('Output data directory "' + outDir + '" does not appear to be a directory. Skipping...')
+					continue
+
+			try:
+				inFile = pyRootPwa.infile.inputFile(inputFile)
+			except pyRootPwa.exception.pyRootPwaException as exc:
+				pyRootPwa.utils.printErr('Could not open input file "' + inputFile + '": ' + str(exc) + '. Skipping...')
 				continue
-
-		try:
-			inFile = pyRootPwa.infile.inputFile(inputFile)
-		except pyRootPwa.exception.pyRootPwaException as exc:
-			pyRootPwa.utils.printErr('Could not open input file "' + inputFile + '": ' + str(exc) + '. Skipping...')
-			continue
-		except KeyboardInterrupt:
-			pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
-			sys.exit(1)
-
-		for keyfile in keyfiles:
+			except KeyboardInterrupt:
+				pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
+				sys.exit(1)
 
 			if pyRootPwa.config.outputFileFormat == 'root':
 				outFileExtension = '.root'
 			else:
 				outFileExtension = '.amp'
 
-			outFileName = outDir + '/' + keyfile.rsplit('/',1)[-1].replace('.key', outFileExtension)
+			outFileName = outDir + '/' + str(keyfile).rsplit('/',1)[-1].replace('.key', outFileExtension)
 
 			if os.path.exists(outFileName):
 				pyRootPwa.utils.printInfo('Output file "' + outFileName + '" already present. Skipping...')
@@ -110,32 +114,44 @@ if __name__ == "__main__":
 
 			pyRootPwa.utils.printInfo('Opening input file "' + inputFile + '".')
 
-			success = False
-			try:
-				if outFileExtension == '.amp':
-					with open(outFileName, 'w') as outFile:
-						success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
-				else:
-					outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
-					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
-			except KeyboardInterrupt:
-				pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
-				if os.path.exists(outFileName):
-					os.remove(outFileName)
-				sys.exit(1)
-			except:
-				pyRootPwa.utils.printErr('Unknown exception during amplitude calculation. Aborting...')
-				traceback.print_exc()
-				if os.path.exists(outFileName):
-					os.remove(outFileName)
-				sys.exit(1)
+			print((inFile, keyfile, outFileName))
+			processQueue.put((inFile, keyfile, outFileName))
 
-			if success:
-				pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '".')
-			else:
-				pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".')
-				if os.path.exists(outFileName):
-					os.remove(outFileName)
+	jobs = []
+	for i in range(arguments.nJobs):
+		jobs.append(pyRootPwa.amplitude.AmplitudeCalculator(processQueue))
+	for job in jobs:
+		job.daemon = True
+		job.start()
 
-			print
+	processQueue.join()
 
+#			success = False
+#			try:
+#				if outFileExtension == '.amp':
+#					with open(outFileName, 'w') as outFile:
+#						success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
+#				else:
+#					outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
+#					success = pyRootPwa.amplitude.calcAmplitudes(inFile, keyfile, outFile)
+#			except KeyboardInterrupt:
+#				pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
+#				if os.path.exists(outFileName):
+#					os.remove(outFileName)
+#				sys.exit(1)
+#			except:
+#				pyRootPwa.utils.printErr('Unknown exception during amplitude calculation. Aborting...')
+#				traceback.print_exc()
+#				if os.path.exists(outFileName):
+#					os.remove(outFileName)
+#				sys.exit(1)
+#
+#			if success:
+#				pyRootPwa.utils.printSucc('Created amplitude file "' + outFileName + '".')
+#			else:
+#				pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inputFile + '" and keyfile "' + keyfile + '".')
+#				if os.path.exists(outFileName):
+#					os.remove(outFileName)
+#
+#			print
+#

@@ -1,11 +1,14 @@
 
 import ConfigParser
+import multiprocessing
 import os
 import sys
 
 import pyRootPwa.utils
 
 class rootPwaConfig:
+
+	lock = multiprocessing.Lock()
 
 	config = None
 	configFileName = ""
@@ -31,6 +34,7 @@ class rootPwaConfig:
 	decayKinMomentaLeafName               = ""
 	fileNameConvention                    = ""
 	outputFileFormat                      = ""
+	nTreeEntriesToCache                   = 0
 
 
 	def __init__(self, configFileName):
@@ -77,6 +81,7 @@ class rootPwaConfig:
 			self.prodKinMomentaLeafName                = self.config.get('amplitudes', 'prodKinMomentaLeafName')
 			self.decayKinPartNamesObjName              = self.config.get('amplitudes', 'decayKinPartNamesObjName')
 			self.decayKinMomentaLeafName               = self.config.get('amplitudes', 'decayKinMomentaLeafName')
+			self.nTreeEntriesToCache                   = int(self.config.get('amplitudes', 'nTreeEntriesToCache'))
 
 			self.fileNameConvention                    = self.config.get('amplitudes', 'fileNameConvention').lower()
 			if not self.fileNameConvention in ['old', 'new']:
