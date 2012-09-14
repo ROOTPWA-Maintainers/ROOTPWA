@@ -22,8 +22,17 @@ if __name__ == "__main__":
 	pyRootPwa.printLibraryInfo()
 	pyRootPwa.printSvnVersion()
 
+	# making the output nice for multi-threading
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
 	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
+
+	printingCounter = multiprocessing.Array('i', [0]*5)
+
+	pyRootPwa.utils.printErr = pyRootPwa.utils.printErrClass(printingCounter)
+	pyRootPwa.utils.printWarn = pyRootPwa.utils.printWarnClass(printingCounter)
+	pyRootPwa.utils.printSucc = pyRootPwa.utils.printSuccClass(printingCounter)
+	pyRootPwa.utils.printInfo = pyRootPwa.utils.printInfoClass(printingCounter)
+	pyRootPwa.utils.printDebug = pyRootPwa.utils.printDebugClass(printingCounter)
 
 	# parse command line arguments
 	parser = argparse.ArgumentParser(
@@ -122,6 +131,7 @@ if __name__ == "__main__":
 
 	processQueue = multiprocessing.JoinableQueue()
 
+	# Fill the queue, reorder so different input files come after each other
 	while inputDataDict:
 		for inFl in inputDataDict.keys():
 			val = inputDataDict[inFl]
@@ -161,5 +171,5 @@ if __name__ == "__main__":
 			except Queue.Empty:
 				break
 
-	pyRootPwa.utils.printPrintingSummary()
+	pyRootPwa.utils.printPrintingSummary(printingCounter)
 

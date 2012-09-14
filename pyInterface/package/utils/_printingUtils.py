@@ -9,16 +9,14 @@ stdoutLock = multiprocessing.Lock()
 stdoutisatty = None
 stderrisatty = None
 
-def printPrintingSummary():
-	print("Number of errors printed:    " + str(pyRootPwa.utils.printErr.count))
-	print("Number of warnings printed:  " + str(pyRootPwa.utils.printWarn.count))
-	print("Number of infos printed:     " + str(pyRootPwa.utils.printInfo.count))
-	print("Number of successes printed: " + str(pyRootPwa.utils.printSucc.count))
-	print("Number of debugs printed:    " + str(pyRootPwa.utils.printDebug.count))
+def printPrintingSummary(printingCounter):
+	print("Number of errors printed:    " + str(printingCounter[0]))
+	print("Number of warnings printed:  " + str(printingCounter[1]))
+	print("Number of infos printed:     " + str(printingCounter[2]))
+	print("Number of successes printed: " + str(printingCounter[3]))
+	print("Number of debugs printed:    " + str(printingCounter[4]))
 
 class printClass:
-
-	count = 0
 
 	_terminalColorStrings = {}
 	_terminalColorStrings['normal']     = "\033[0m"
@@ -96,37 +94,52 @@ class printClass:
 
 class printErrClass(printClass):
 
+	def __init__(self, counter):
+		self.counter = counter
+
 	def __call__(self, msg):
-		self.count += 1
+		self.counter[0] += 1
 		self.printFormatted(str(msg), "err")
 
 class printWarnClass(printClass):
 
+	def __init__(self, counter):
+		self.counter = counter
+
 	def __call__(self, msg):
-		self.count += 1
+		self.counter[1] += 1
 		self.printFormatted(str(msg), "warn")
 
 class printSuccClass(printClass):
 
+	def __init__(self, counter):
+		self.counter = counter
+
 	def __call__(self, msg):
-		self.count += 1
+		self.counter[2] += 1
 		self.printFormatted(str(msg), "suc")
 
 class printInfoClass(printClass):
 
+	def __init__(self, counter):
+		self.counter = counter
+
 	def __call__(self, msg):
-		self.count += 1
+		self.counter[3] += 1
 		self.printFormatted(str(msg), "info")
 
 class printDebugClass(printClass):
 
+	def __init__(self, counter):
+		self.counter = counter
+
 	def __call__(self, msg):
-		self.count += 1
+		self.counter[4] += 1
 		self.printFormatted(str(msg), "debug")
 
-printErr = printErrClass()
-printWarn = printWarnClass()
-printSucc = printSuccClass()
-printInfo = printInfoClass()
-printDebug = printDebugClass()
+printErr = None
+printWarn = None
+printSucc = None
+printInfo = None
+printDebug = None
 
