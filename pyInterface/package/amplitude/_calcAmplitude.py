@@ -19,6 +19,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 		while True:
 			inTuple = self.queue.get()
 			outFileName = inTuple[2]
+			pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
 			if outFileName.endswith('.amp'):
 				with open(outFileName, 'w') as outFile:
 					outTuple = (inTuple[0], inTuple[1], outFile)
@@ -66,7 +67,6 @@ class AmplitudeCalculator(multiprocessing.Process):
 		decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 
 		with inFile.lock:
-			inFile.readTree()
 			nEntries = len(inFile)
 			if not pythonAdmin.initKinematicsData(inFile.prodKinParticles, inFile.decayKinParticles):
 				pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
@@ -77,54 +77,29 @@ class AmplitudeCalculator(multiprocessing.Process):
 		try:
 			treeIndex = 0
 			while treeIndex < nEntries:
+				upperBound = treeIndex + nTreeEntriesToCache
+				if upperBound > nEntries:
+					upperBound = nEntries
 				with inFile.lock:
-					data = inFile[treeIndex]
-				treeIndex += 1
-				if not pythonAdmin.readKinematicsData(data[0], data[1]):
-					progressbar.cancel()
-					pyRootPwa.utils.printErr('Could not read kinematics data.')
-					return False
-				amp = pythonAdmin()
-				if outputFileFormat == "ascii":
-					outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
-				elif outputFileFormat == "binary":
-					arrayAmp = array.array('d', [amp.real, amp.imag])
-					arrayAmp.tofile(outFile)
-				elif writeRootFile:
-					amplitudeTreeLeaf.setAmp(amp)
-					outTree.Fill()
-				else:
-					raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
+					data = inFile[treeIndex:upperBound]
+				treeIndex = upperBound
+				for datum in data:
+					if not pythonAdmin.readKinematicsData(datum[0], datum[1]):
+						progressbar.cancel()
+						pyRootPwa.utils.printErr('Could not read kinematics data.')
+						return False
+					amp = pythonAdmin()
+					if outputFileFormat == "ascii":
+						outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
+					elif outputFileFormat == "binary":
+						arrayAmp = array.array('d', [amp.real, amp.imag])
+						arrayAmp.tofile(outFile)
+					elif writeRootFile:
+						amplitudeTreeLeaf.setAmp(amp)
+						outTree.Fill()
+					else:
+						raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
 				progressbar.update(treeIndex)
-
-#				for cacheIndex in range(nTreeEntriesToCache):
-#					with inFile.lock:
-##						print(inFile.tree.GetEntry(treeIndex))
-##						prodKinMomentaCache = pyRootPwa.ROOT.TClonesArray(prodKinMomenta)
-##						decayKinMomentaCache = pyRootPwa.ROOT.TClonesArray(decayKinMomenta)
-#						data = inFile[treeIndex]
-#					treeIndex += 1
-#					data[0].Print()
-#					dataCache.append(data)
-#
-#				while len(dataCache) > 0:
-#					data = dataCache.pop(0)
-#					if not pythonAdmin.readKinematicsData(data[0], data[1]):
-#						progressbar.cancel()
-#						pyRootPwa.utils.printErr('Could not read kinematics data.')
-#						return False
-#					amp = pythonAdmin()
-#					if outputFileFormat == "ascii":
-#						outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
-#					elif outputFileFormat == "binary":
-#						arrayAmp = array.array('d', [amp.real, amp.imag])
-#						arrayAmp.tofile(outFile)
-#					elif writeRootFile:
-#						amplitudeTreeLeaf.setAmp(amp)
-#						outTree.Fill()
-#					else:
-#						raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
-#				progressbar.update(treeIndex)
 		except:
 			progressbar.cancel()
 			raise

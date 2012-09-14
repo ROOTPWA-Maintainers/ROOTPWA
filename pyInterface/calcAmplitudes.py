@@ -71,11 +71,22 @@ if __name__ == "__main__":
 	# initialize the particleDataTable
 	pyRootPwa.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
 
-	processQueue = multiprocessing.JoinableQueue()
+	inputDataDict = {}
 
-	for keyfile in keyfiles:
+	for inputFile in (inputDataFiles + inputPSFiles + inputAccPSFiles):
 
-		for inputFile in (inputDataFiles + inputPSFiles + inputAccPSFiles):
+		try:
+			inFile = pyRootPwa.infile.inputFile(inputFile)
+		except pyRootPwa.exception.pyRootPwaException as exc:
+			pyRootPwa.utils.printErr('Could not open input file "' + inputFile + '": ' + str(exc) + '. Skipping...')
+			continue
+		except KeyboardInterrupt:
+			pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
+			sys.exit(1)
+
+		inputDataDict[inFile] = []
+
+		for keyfile in keyfiles:
 
 			# check and if necessary create the output direcotries
 			outDir = inputFile.rsplit('/', 1)[0] + '/'
@@ -92,15 +103,6 @@ if __name__ == "__main__":
 					pyRootPwa.utils.printErr('Output data directory "' + outDir + '" does not appear to be a directory. Skipping...')
 					continue
 
-			try:
-				inFile = pyRootPwa.infile.inputFile(inputFile)
-			except pyRootPwa.exception.pyRootPwaException as exc:
-				pyRootPwa.utils.printErr('Could not open input file "' + inputFile + '": ' + str(exc) + '. Skipping...')
-				continue
-			except KeyboardInterrupt:
-				pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
-				sys.exit(1)
-
 			if pyRootPwa.config.outputFileFormat == 'root':
 				outFileExtension = '.root'
 			else:
@@ -112,10 +114,18 @@ if __name__ == "__main__":
 				pyRootPwa.utils.printInfo('Output file "' + outFileName + '" already present. Skipping...')
 				continue
 
-			pyRootPwa.utils.printInfo('Opening input file "' + inputFile + '".')
+			inputDataDict[inFile].append((keyfile, outFileName))
 
-			print((inFile, keyfile, outFileName))
-			processQueue.put((inFile, keyfile, outFileName))
+	processQueue = multiprocessing.JoinableQueue()
+
+	while inputDataDict:
+		for inFl in inputDataDict.keys():
+			val = inputDataDict[inFl]
+			if not val:
+				del inputDataDict[inFl]
+				continue
+			(keyfile, outFileName) = val.pop(0)
+			processQueue.put((inFl, keyfile, outFileName))
 
 	jobs = []
 	for i in range(arguments.nJobs):
