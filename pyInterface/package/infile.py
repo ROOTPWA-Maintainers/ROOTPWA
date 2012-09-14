@@ -8,6 +8,8 @@ import pyRootPwa.utils
 
 class inputFile():
 
+	inFileName = ""
+
 	tree = None
 	prodKinParticles = None
 	decayKinParticles = None
