@@ -47,7 +47,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 				else:
 					if os.path.exists(outFileName):
 						os.remove(outFileName)
-					pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inTuple[0].inFileName + '" and keyfile "' + keyfile + '".\n')
+					pyRootPwa.utils.printErr('Amplitude calculation failed for input file "' + inTuple[0].inFileName + '" and keyfile "' + inTuple[1] + '".\n')
 			except KeyboardInterrupt:
 				pyRootPwa.utils.printInfo('Process ' + str(self.pid) + ' caught keyboard interrupt. Terminating...')
 			except:
