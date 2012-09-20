@@ -15,7 +15,7 @@ class Silencer():
 
 	def __enter__(self):
 		sys.stdout.flush()
-		self._outputStream = tempfile.SpooledTemporaryFile(1000000, 'rw')
+		self._outputStream = tempfile.TemporaryFile().__enter__()
 		self._save = os.dup(1), os.dup(2)
 		os.dup2(self._outputStream.fileno(), 1)
 		os.dup2(self._outputStream.fileno(), 2)
@@ -24,8 +24,10 @@ class Silencer():
 	def __exit__(self, *args):
 		os.dup2(self._save[0], 1)
 		os.dup2(self._save[1], 2)
+		os.close(self._save[0])
+		os.close(self._save[1])
 		self.output = ""
 		self._outputStream.seek(0)
 		for line in self._outputStream.readlines():
 			self.output += line
-		self._outputStream.close()
+		self._outputStream.__exit__()

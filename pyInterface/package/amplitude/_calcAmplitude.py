@@ -26,14 +26,16 @@ class AmplitudeCalculator(multiprocessing.Process):
 					outFileName = inTuple[2]
 					pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
 					try:
-						if outFileName.endswith('.amp'):
-							with open(outFileName, 'w') as outFile:
+						with inTuple[0]:
+							if outFileName.endswith('.amp'):
+								with open(outFileName, 'w') as outFile:
+									outTuple = (inTuple[0], inTuple[1], outFile)
+									processedEvents = self.calcAmplitudes(outTuple)
+							else:
+								outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
 								outTuple = (inTuple[0], inTuple[1], outFile)
 								processedEvents = self.calcAmplitudes(outTuple)
-						else:
-							outFile = pyRootPwa.ROOT.TFile.Open(outFileName, 'RECREATE')
-							outTuple = (inTuple[0], inTuple[1], outFile)
-							processedEvents = self.calcAmplitudes(outTuple)
+								outFile.Close()
 					except:
 						processedEvents = -1
 						if os.path.exists(outFileName):
