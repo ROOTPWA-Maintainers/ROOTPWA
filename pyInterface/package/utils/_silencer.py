@@ -5,15 +5,18 @@ import tempfile
 
 class Silencer():
 
-	_outputStream = None
-	_save = None
-
 	output = ""
 
-	def __init__(self):
-		pass
+	_outputStream = None
+	_save = None
+	_silence = True
+
+	def __init__(self, silence = True):
+		self._silence = silence
 
 	def __enter__(self):
+		if not self._silence:
+			return self
 		sys.stdout.flush()
 		self._outputStream = tempfile.TemporaryFile().__enter__()
 		self._save = os.dup(1), os.dup(2)
@@ -22,6 +25,9 @@ class Silencer():
 		return self
 
 	def __exit__(self, *args):
+		if not self._silence:
+			self.output = ""
+			return
 		os.dup2(self._save[0], 1)
 		os.dup2(self._save[1], 2)
 		os.close(self._save[0])

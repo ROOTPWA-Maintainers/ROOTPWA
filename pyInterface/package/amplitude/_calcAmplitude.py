@@ -12,16 +12,18 @@ import pyRootPwa.utils
 class AmplitudeCalculator(multiprocessing.Process):
 
 	queue = None
+	silence = True
 
-	def __init__(self, queue):
+	def __init__(self, queue, silence):
 		self.queue = queue
+		self.silence = silence
 		multiprocessing.Process.__init__(self)
 
 	def run(self):
 		while True:
 			try:
 				inTuple = self.queue.get()
-				with pyRootPwa.utils.Silencer() as silencer:
+				with pyRootPwa.utils.Silencer(self.silence) as silencer:
 					processedEvents = 0
 					outFileName = inTuple[2]
 					pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
