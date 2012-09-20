@@ -24,7 +24,7 @@ namespace {
 			// Translate the fsParticles
 			bp::list pyListFsParticles = bp::extract<bp::list>(pyFsParticles);
 			std::vector<rpwa::particlePtr> fsParticles(bp::len(pyListFsParticles), rpwa::particlePtr());
-			for(unsigned int i = 0; i < bp::len(pyListFsParticles); ++i) {
+			for(int i = 0; i < bp::len(pyListFsParticles); ++i) {
 				fsParticles[i] = bp::extract<rpwa::particlePtr>(pyListFsParticles[i]);
 			}
 
@@ -38,7 +38,7 @@ namespace {
 			bp::extract<rpwa::isobarDecayVertexPtr> get_iDVP(pyListIsobarDecayVertices[0]);
 			if(get_iDVP.check()) {
 				std::vector<rpwa::isobarDecayVertexPtr> isobarDecayVerticesIDV(bp::len(pyListIsobarDecayVertices), rpwa::isobarDecayVertexPtr());
-				for(unsigned int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
+				for(int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
 					isobarDecayVerticesIDV[i] = bp::extract<rpwa::isobarDecayVertexPtr>(pyListIsobarDecayVertices[i]);
 				}
 				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIDV, fsParticles);
@@ -48,7 +48,7 @@ namespace {
 			bp::extract<rpwa::interactionVertexPtr> get_iVP(pyListIsobarDecayVertices[0]);
 			if(get_iVP.check()) {
 				std::vector<rpwa::interactionVertexPtr> isobarDecayVerticesIV(bp::len(pyListIsobarDecayVertices), rpwa::isobarDecayVertexPtr());
-				for(unsigned int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
+				for(int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
 					isobarDecayVerticesIV[i] = bp::extract<rpwa::interactionVertexPtr>(pyListIsobarDecayVertices[i]);
 				}
 				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIV, fsParticles);

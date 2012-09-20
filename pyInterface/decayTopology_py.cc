@@ -30,11 +30,11 @@ namespace {
 			std::vector<rpwa::interactionVertexPtr> decayVertices(bp::len(pyListDecayVertices), rpwa::interactionVertexPtr());
 			std::vector<rpwa::particlePtr> fsParticles(bp::len(pyListFsParticles), rpwa::particlePtr());
 
-			for(unsigned int i = 0; i < bp::len(pyListDecayVertices); ++i) {
+			for(int i = 0; i < bp::len(pyListDecayVertices); ++i) {
 				decayVertices[i] = bp::extract<rpwa::interactionVertexPtr>(pyListDecayVertices[i]);
 			}
 
-			for(unsigned int i = 0; i < bp::len(pyListFsParticles); ++i) {
+			for(int i = 0; i < bp::len(pyListFsParticles); ++i) {
 				fsParticles[i] = bp::extract<rpwa::particlePtr>(pyListFsParticles[i]);
 			}
 
@@ -105,7 +105,7 @@ namespace {
 		bool revertMomenta__2(PyObject* pyIndexMap) {
 			bp::list pyListIndexMap = bp::extract<bp::list>(pyIndexMap);
 			std::vector<unsigned int> indexMap(bp::len(pyListIndexMap), 0);
-			for(unsigned int i = 0; i < bp::len(pyListIndexMap); ++i) {
+			for(int i = 0; i < bp::len(pyListIndexMap); ++i) {
 				indexMap[i] = bp::extract<unsigned int>(pyListIndexMap[i]);
 			}
 			return rpwa::decayTopology::revertMomenta(indexMap);
