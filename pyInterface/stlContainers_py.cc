@@ -44,7 +44,7 @@ std::set<std::string> rpwa::py::converBPObjectToStrSet(bp::object list) {
 
 			bp::list pyList = bp::extract<bp::list>(list);
 			std::set<std::string> set;
-			for(unsigned int i = 0; i < bp::len(pyList); ++i) {
+			for(int i = 0; i < bp::len(pyList); ++i) {
 				std::string entry = bp::extract<std::string>(pyList[i]);
 				set.insert(entry);
 			}
