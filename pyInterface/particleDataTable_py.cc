@@ -104,7 +104,7 @@ void rpwa::py::exportParticleDataTable()
 		.def("nmbEntries", &particleDataTableWrapper::nmbEntries) 
 		.staticmethod("nmbEntries")
 
-		.def("__iter__", bp::iterator< particleDataTableWrapper >())
+		.def("__iter__", bp::iterator< rpwa::particleDataTable >())
 
 		.def( 
 			"readFile"
