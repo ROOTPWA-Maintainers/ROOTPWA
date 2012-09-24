@@ -79,7 +79,6 @@ class rootPwaConfig:
 			self.prodKinMomentaLeafName                = self.config.get('amplitudes', 'prodKinMomentaLeafName')
 			self.decayKinPartNamesObjName              = self.config.get('amplitudes', 'decayKinPartNamesObjName')
 			self.decayKinMomentaLeafName               = self.config.get('amplitudes', 'decayKinMomentaLeafName')
-			self.nTreeEntriesToCache                   = int(self.config.get('amplitudes', 'nTreeEntriesToCache'))
 
 			self.fileNameConvention                    = self.config.get('amplitudes', 'fileNameConvention').lower()
 			if not self.fileNameConvention in ['old', 'new']:

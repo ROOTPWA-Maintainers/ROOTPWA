@@ -108,27 +108,23 @@ class AmplitudeCalculator(multiprocessing.Process):
 		try:
 			treeIndex = 0
 			while treeIndex < nEntries:
-				upperBound = treeIndex + nTreeEntriesToCache
-				if upperBound > nEntries:
-					upperBound = nEntries
-				data = inFile[treeIndex:upperBound]
-				treeIndex = upperBound
-				for datum in data:
-					if not pythonAdmin.readKinematicsData(datum[0], datum[1]):
-						progressbar.cancel()
-						pyRootPwa.utils.printErr('Could not read kinematics data.')
-						return -1
-					amp = pythonAdmin()
-					if outputFileFormat == "ascii":
-						outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
-					elif outputFileFormat == "binary":
-						arrayAmp = array.array('d', [amp.real, amp.imag])
-						arrayAmp.tofile(outFile)
-					elif writeRootFile:
-						amplitudeTreeLeaf.setAmp(amp)
-						outTree.Fill()
-					else:
-						raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
+				data = inFile[treeIndex]
+				treeIndex += 1
+				if not pythonAdmin.readKinematicsData(data[0], data[1]):
+					progressbar.cancel()
+					pyRootPwa.utils.printErr('Could not read kinematics data.')
+					return -1
+				amp = pythonAdmin()
+				if outputFileFormat == "ascii":
+					outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
+				elif outputFileFormat == "binary":
+					arrayAmp = array.array('d', [amp.real, amp.imag])
+					arrayAmp.tofile(outFile)
+				elif writeRootFile:
+					amplitudeTreeLeaf.setAmp(amp)
+					outTree.Fill()
+				else:
+					raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
 				progressbar.update(treeIndex)
 		except:
 			progressbar.cancel()

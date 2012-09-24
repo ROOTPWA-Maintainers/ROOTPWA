@@ -59,14 +59,11 @@ class inputFile():
 			self._inFile.Close()
 		self._inWith = False
 
-	def __getitem__(self, inslice):
+	def __getitem__(self, index):
 		if not self._inWith:
 			raise pyRootPwa.exception.pyRootPwaException("Not in with statement")
-		retval = []
-		for index in range(inslice.start, inslice.stop):
-			self.tree.GetEntry(index)
-			retval.append((self._prodKinMomenta.Clone(), self._decayKinMomenta.Clone()))
-		return retval
+		self.tree.GetEntry(index)
+		return (self._prodKinMomenta, self._decayKinMomenta)
 
 	def __str__(self):
 		retval = ""

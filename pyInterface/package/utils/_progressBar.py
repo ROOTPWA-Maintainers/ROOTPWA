@@ -16,6 +16,7 @@ class progressBar:
 	def reset(self, minimum = 0, maximum = 100):
 		self.minimum = float(minimum)
 		self.maximum = float(maximum)
+		self.range_ = self.maximum - self.minimum
 		self.stars = 0
 		self.full = False
 
@@ -28,7 +29,7 @@ class progressBar:
 
 	def update(self, prog):
 		if not self.full:
-			percent = (prog - self.minimum) / (self.maximum - self.minimum)
+			percent = (prog - self.minimum) / self.range_
 			stars = int(round(percent * 51.))
 			diff = stars - self.stars
 			if diff + self.stars > 51:
