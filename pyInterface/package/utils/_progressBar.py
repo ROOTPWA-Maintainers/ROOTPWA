@@ -15,16 +15,23 @@ class progressBar:
 		self.reset(minimum, maximum)
 
 	def reset(self, minimum = 0, maximum = 100):
+		self.full = False
 		self.minimum = float(minimum)
 		self.maximum = float(maximum)
-		self.effRange = 51. / (self.maximum - self.minimum)
+		try:
+			self.effRange = 51. / (self.maximum - self.minimum)
+		except ZeroDivisionError:
+			self.effRange = 1.
+			self.full = True
 		self.minimum = self.minimum - (0.5 / self.effRange)
 		self.stars = 0
-		self.full = False
 
 	def start(self):
 		self.fp.write("0%   10   20   30   40   50   60   70   80   90   100%\n")
 		self.fp.write("|----|----|----|----|----|----|----|----|----|----|\n")
+		if self.full:
+			self.fp.write(51 * "*" + "\n")
+			self.fp.flush()
 
 	def cancel(self):
 		self.fp.write("<!\n")

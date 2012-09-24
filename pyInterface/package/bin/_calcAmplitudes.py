@@ -46,6 +46,9 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 			pyRootPwa.utils.printErr('Profiler cannot be run with nJobs > 1. Aborting...')
 			return
 		proFile = str(arguments['proFile'])
+	maxNmbEvents = -1
+	if 'maxNmbEvents' in arguments:
+		maxNmbEvents = int(arguments['maxNmbEvents'])
 
 	# config file
 	pyRootPwa.config = pyRootPwa.configuration.rootPwaConfig(configFileName)
@@ -140,7 +143,7 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 	jobs = []
 	silence = (nJobs != 1)
 	for i in range(nJobs):
-		jobs.append(pyRootPwa.amplitude.AmplitudeCalculator(processQueue, silence, progressBar))
+		jobs.append(pyRootPwa.amplitude.AmplitudeCalculator(processQueue, silence, progressBar, maxNmbEvents))
 	for job in jobs:
 		job.daemon = True
 		if proFile != '':

@@ -15,11 +15,13 @@ class AmplitudeCalculator(multiprocessing.Process):
 	queue = None
 	silence = True
 	progressBar = True
+	maxNmbEvents = -1
 
-	def __init__(self, queue, silence, progressBar):
+	def __init__(self, queue, silence, progressBar, maxNmbEvents):
 		self.queue = queue
 		self.silence = silence
 		self.progressBar = progressBar
+		self.maxNmbEvents = maxNmbEvents
 		multiprocessing.Process.__init__(self)
 
 	def run(self, runDirectly=False):
@@ -110,6 +112,8 @@ class AmplitudeCalculator(multiprocessing.Process):
 		decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 
 		nEntries = len(inFile)
+		if self.maxNmbEvents > 0:
+			nEntries = min(nEntries, self.maxNmbEvents)
 		inTree = inFile.tree
 		prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 		decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
