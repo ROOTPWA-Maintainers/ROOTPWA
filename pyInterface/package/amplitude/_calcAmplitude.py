@@ -77,7 +77,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 		decayKinMomentaLeafName = pyRootPwa.config.decayKinMomentaLeafName
 		outputFileFormat = pyRootPwa.config.outputFileFormat
 		amplitudeLeafName = pyRootPwa.config.amplitudeLeafName
-		nTreeEntriesToCache = pyRootPwa.config.nTreeEntriesToCache
+		outputCacheSize = pyRootPwa.config.outputCacheSize
 
 		pythonAdmin = pyRootPwa.pythonAdministrator()
 
@@ -114,6 +114,10 @@ class AmplitudeCalculator(multiprocessing.Process):
 		if self.progressBar:
 			progressbar = pyRootPwa.utils.progressBar(0, nEntries-1, sys.stdout)
 			progressbar.start()
+		vals = []
+		if outputFileFormat == "binary":
+			arrayAmp = array.array('d')
+
 		try:
 			for treeIndex in range(nEntries):
 				inTree.GetEntry(treeIndex)
@@ -123,16 +127,22 @@ class AmplitudeCalculator(multiprocessing.Process):
 					pyRootPwa.utils.printErr('Could not read kinematics data.')
 					return -1
 				amp = pythonAdmin()
-				if outputFileFormat == "ascii":
-					outFile.write("(" + str(amp.real) + "," + str(amp.imag) + ")\n")
-				elif outputFileFormat == "binary":
-					arrayAmp = array.array('d', [amp.real, amp.imag])
-					arrayAmp.tofile(outFile)
-				elif writeRootFile:
-					amplitudeTreeLeaf.setAmp(amp)
-					outTree.Fill()
-				else:
-					raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
+				vals += [amp.real, amp.imag]
+				if len(vals) > outputCacheSize:
+					if outputFileFormat == "binary":
+						arrayAmp.extend(vals)
+						arrayAmp.tofile(outFile)
+						arrayAmp = array.array('d')
+					elif outputFileFormat == "ascii":
+						for val in vals:
+							outFile.write("(" + str(val.real) + "," + str(val.imag) + ")\n")
+					elif writeRootFile:
+						for val in vals:
+							amplitudeTreeLeaf.setAmp(val)
+							outTree.Fill()
+					else:
+						raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
+					vals = []
 				if self.progressBar:
 					progressbar.update(treeIndex)
 		except:
@@ -140,9 +150,20 @@ class AmplitudeCalculator(multiprocessing.Process):
 				progressbar.cancel()
 			raise
 
-		if writeRootFile:
+		if outputFileFormat == "binary":
+			arrayAmp.extend(vals)
+			arrayAmp.tofile(outFile)
+		elif outputFileFormat == "ascii":
+			for val in vals:
+				outFile.write("(" + str(val.real) + "," + str(val.imag) + ")\n")
+		elif writeRootFile:
+			for val in vals:
+				amplitudeTreeLeaf.setAmp(val)
+				outTree.Fill()
 			outTree.Write()
 			outFile.Close()
+		else:
+			raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
 
 		return nEntries
 
