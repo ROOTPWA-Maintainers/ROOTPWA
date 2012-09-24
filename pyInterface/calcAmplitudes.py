@@ -13,17 +13,16 @@ if __name__ == "__main__":
 	                                 description="calculates decay amplitudes "
 	                                             "for given wave for events in "
 	                                             "input data files and "
-	                                             "writes amplitudes to file",
-	                                 formatter_class=argparse.RawTextHelpFormatter
+	                                             "writes amplitudes to file"
 	                                )
 
-	parser.add_argument("-c", type=str, metavar="file", default="rootpwa.config", dest="configFileName", help="path ot config file (default: ./rootpwa.config)")
+	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-n", type=int, metavar="#", default=-1, dest="maxNmbEvents",  help="maximum number of events to read (default: all)")
 	parser.add_argument("-b", type=str, metavar="massBin(s)", default="all", dest="massBins", help="mass bins to be calculated (default: all)")
-	parser.add_argument("-j", type=int, metavar=("jobs"), default=1, dest="nJobs", help="EXPERIMENTAL: number of jobs used (default: 1)")
+	parser.add_argument("-j", type=int, metavar=("jobs"), default=1, dest="nJobs", help="number of jobs (default: 1)")
 	parser.add_argument("-f", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
 #	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
-	parser.add_argument("--profiler", type=str, metavar="profiler output file", dest="proFile", help="use profiler (causes significant runtime increase)")
+	parser.add_argument("--profiler", type=str, metavar="profiler-output", dest="proFile", help="path to profiler output file")
 
 	arguments = parser.parse_args()
 
