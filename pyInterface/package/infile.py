@@ -29,13 +29,12 @@ class inputFile():
 		elif inFileName.endswith('.evt'):
 			self._readRootFile = False
 			(self.prodKinParticles, self.decayKinParticles, self.tree) = pyRootPwa.utils.getTreeFromEvtFile(inFileName, inFileName)
-			self._entriesInTree = int(self.tree.GetEntries())
 		else:
 			raise pyRootPwa.exception.pyRootPwaException("Unknown file extension")
-		self._prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
-		self._decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 
 	def __len__(self):
+		if not self._inWith:
+			raise pyRootPwa.exception.pyRootPwaException("Not in with statement")
 		return self._entriesInTree
 
 	def __enter__(self):
@@ -45,12 +44,8 @@ class inputFile():
 			self.decayKinParticles = self._inFile.Get(pyRootPwa.config.decayKinPartNamesObjName)
 			self.tree = self._inFile.Get(pyRootPwa.config.inTreeName)
 			self._entriesInTree = int(self.tree.GetEntries())
-			self.tree = self._inFile.Get(pyRootPwa.config.inTreeName)
-			self.tree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, self._prodKinMomenta)
-			self.tree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, self._decayKinMomenta)
 		else:
-			self.tree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, self._prodKinMomenta)
-			self.tree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, self._decayKinMomenta)
+			self._entriesInTree = int(self.tree.GetEntries())
 		self._inWith = True
 		return self._inFile
 
@@ -58,12 +53,6 @@ class inputFile():
 		if self._readRootFile:
 			self._inFile.Close()
 		self._inWith = False
-
-	def __getitem__(self, index):
-		if not self._inWith:
-			raise pyRootPwa.exception.pyRootPwaException("Not in with statement")
-		self.tree.GetEntry(index)
-		return (self._prodKinMomenta, self._decayKinMomenta)
 
 	def __str__(self):
 		retval = ""
@@ -74,3 +63,4 @@ class inputFile():
 		retval += str(self.prodKinParticles) + "\n"
 		retval += str(self.decayKinParticles) + "\n\n"
 		return retval
+

@@ -101,6 +101,12 @@ class AmplitudeCalculator(multiprocessing.Process):
 		decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 
 		nEntries = len(inFile)
+		inTree = inFile.tree
+		prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
+		decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
+		inTree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, prodKinMomenta)
+		inTree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
+
 		if not pythonAdmin.initKinematicsData(inFile.prodKinParticles, inFile.decayKinParticles):
 			pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
 			return -1
@@ -109,12 +115,11 @@ class AmplitudeCalculator(multiprocessing.Process):
 			progressbar = pyRootPwa.utils.progressBar(0, nEntries-1, sys.stdout)
 			progressbar.start()
 		try:
-			treeIndex = 0
-			while treeIndex < nEntries:
-				data = inFile[treeIndex]
-				treeIndex += 1
-				if not pythonAdmin.readKinematicsData(data[0], data[1]):
-					progressbar.cancel()
+			for treeIndex in range(nEntries):
+				inTree.GetEntry(treeIndex)
+				if not pythonAdmin.readKinematicsData(prodKinMomenta, decayKinMomenta):
+					if self.progressBar:
+						progressbar.cancel()
 					pyRootPwa.utils.printErr('Could not read kinematics data.')
 					return -1
 				amp = pythonAdmin()
