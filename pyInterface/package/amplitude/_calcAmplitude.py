@@ -13,10 +13,12 @@ class AmplitudeCalculator(multiprocessing.Process):
 
 	queue = None
 	silence = True
+	progressBar = True
 
-	def __init__(self, queue, silence):
+	def __init__(self, queue, silence, progressBar):
 		self.queue = queue
 		self.silence = silence
+		self.progressBar = progressBar
 		multiprocessing.Process.__init__(self)
 
 	def run(self):
@@ -103,8 +105,9 @@ class AmplitudeCalculator(multiprocessing.Process):
 			pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
 			return -1
 
-		progressbar = pyRootPwa.utils.progressBar(0, nEntries, sys.stdout)
-		progressbar.start()
+		if self.progressBar:
+			progressbar = pyRootPwa.utils.progressBar(0, nEntries-1, sys.stdout)
+			progressbar.start()
 		try:
 			treeIndex = 0
 			while treeIndex < nEntries:
@@ -125,9 +128,11 @@ class AmplitudeCalculator(multiprocessing.Process):
 					outTree.Fill()
 				else:
 					raise Exception('Something is wrong, this should have been checked in the initialization of the configuration!')
-				progressbar.update(treeIndex)
+				if self.progressBar:
+					progressbar.update(treeIndex)
 		except:
-			progressbar.cancel()
+			if self.progressBar:
+				progressbar.cancel()
 			raise
 
 		if writeRootFile:

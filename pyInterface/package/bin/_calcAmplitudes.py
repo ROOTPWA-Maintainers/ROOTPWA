@@ -12,7 +12,7 @@ import pyRootPwa.configuration
 import pyRootPwa.infile
 import pyRootPwa.utils
 
-def calcAmplitudes(configFileName, massBins, nJobs):
+def calcAmplitudes(configFileName, massBins, nJobs=1, progressBar=True):
 
 	# print some info
 	pyRootPwa.printCompilerInfo()
@@ -124,7 +124,7 @@ def calcAmplitudes(configFileName, massBins, nJobs):
 	jobs = []
 	silence = (nJobs != 1)
 	for i in range(nJobs):
-		jobs.append(pyRootPwa.amplitude.AmplitudeCalculator(processQueue, silence))
+		jobs.append(pyRootPwa.amplitude.AmplitudeCalculator(processQueue, silence, progressBar))
 	for job in jobs:
 		job.daemon = True
 		job.start()

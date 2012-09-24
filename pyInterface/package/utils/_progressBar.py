@@ -8,6 +8,7 @@ class progressBar:
 	stars = 0
 	fp = None
 	full = False
+	effRange = 0.
 
 	def __init__(self, minimum = 0, maximum = 100, fp=sys.stdout):
 		self.fp = fp
@@ -16,7 +17,8 @@ class progressBar:
 	def reset(self, minimum = 0, maximum = 100):
 		self.minimum = float(minimum)
 		self.maximum = float(maximum)
-		self.range_ = self.maximum - self.minimum
+		self.effRange = 51. / (self.maximum - self.minimum)
+		self.minimum = self.minimum - (0.5 / self.effRange)
 		self.stars = 0
 		self.full = False
 
@@ -29,17 +31,13 @@ class progressBar:
 
 	def update(self, prog):
 		if not self.full:
-			percent = (prog - self.minimum) / self.range_
-			stars = int(round(percent * 51.))
+			stars = int((prog - self.minimum) * self.effRange)
 			diff = stars - self.stars
-			if diff + self.stars > 51:
-				diff = 51 - self.stars
 			if diff > 0:
 				self.fp.write(diff * "*")
 				self.fp.flush()
-			self.stars += diff
-			if self.stars == 51:
-				self.fp.write('\n')
-				self.full = True
-
+				self.stars += diff
+				if self.stars == 51:
+					self.fp.write('\n')
+					self.full = True
 
