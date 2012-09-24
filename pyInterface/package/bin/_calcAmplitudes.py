@@ -12,7 +12,7 @@ import pyRootPwa.configuration
 import pyRootPwa.infile
 import pyRootPwa.utils
 
-def calcAmplitudes(configFileName, massBins, nJobs=1, progressBar=True):
+def calcAmplitudes(configFileName, massBins, **arguments):
 
 	# print some info
 	pyRootPwa.printCompilerInfo()
@@ -23,13 +23,29 @@ def calcAmplitudes(configFileName, massBins, nJobs=1, progressBar=True):
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
 	pyRootPwa.utils.stderrisatty = sys.stderr.isatty()
 
+	#initialize the printing functors
 	printingCounter = multiprocessing.Array('i', [0]*5)
-
 	pyRootPwa.utils.printErr = pyRootPwa.utils.printErrClass(printingCounter)
 	pyRootPwa.utils.printWarn = pyRootPwa.utils.printWarnClass(printingCounter)
 	pyRootPwa.utils.printSucc = pyRootPwa.utils.printSuccClass(printingCounter)
 	pyRootPwa.utils.printInfo = pyRootPwa.utils.printInfoClass(printingCounter)
 	pyRootPwa.utils.printDebug = pyRootPwa.utils.printDebugClass(printingCounter)
+
+	# Check and get the arguments
+	nJobs = 1
+	if 'nJobs' in arguments:
+		nJobs = int(arguments['nJobs'])
+		if nJobs < 1:
+			nJobs = 1
+	progressBar = True
+	if 'progressBar' in arguments:
+		progressBar = bool(arguments['progressBar'])
+	proFile = ''
+	if 'proFile' in arguments:
+		if nJobs != 1:
+			pyRootPwa.utils.printErr('Profiler cannot be run with nJobs > 1. Aborting...')
+			return
+		proFile = str(arguments['proFile'])
 
 	# config file
 	pyRootPwa.config = pyRootPwa.configuration.rootPwaConfig(configFileName)
@@ -127,7 +143,10 @@ def calcAmplitudes(configFileName, massBins, nJobs=1, progressBar=True):
 		jobs.append(pyRootPwa.amplitude.AmplitudeCalculator(processQueue, silence, progressBar))
 	for job in jobs:
 		job.daemon = True
-		job.start()
+		if proFile != '':
+			job.run(True)
+		else:
+			job.start()
 
 	try:
 		processQueue.join()

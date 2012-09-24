@@ -1,8 +1,10 @@
 #!/usr/bin/python2.7
 
 import argparse
+import sys
 
 import pyRootPwa.bin
+import pyRootPwa.utils
 
 if __name__ == "__main__":
 
@@ -21,11 +23,38 @@ if __name__ == "__main__":
 	parser.add_argument("-j", type=int, metavar=("jobs"), default=1, dest="nJobs", help="EXPERIMENTAL: number of jobs used (default: 1)")
 	parser.add_argument("-f", action="store_true", dest="noProgressBar", help="disable progress bars (decreases computing time)")
 #	parser.add_argument("-v", action="store_true", dest="debug", help="verbose; print debug output (default: false)")
+	parser.add_argument("--profiler", type=str, metavar="profiler output file", dest="proFile", help="use profiler (causes significant runtime increase)")
 
 	arguments = parser.parse_args()
 
-	pyRootPwa.bin.calcAmplitudes(configFileName=arguments.configFileName,
-	                             massBins=arguments.massBins,
-	                             nJobs=arguments.nJobs,
-	                             progressBar=(not arguments.noProgressBar))
+	if arguments.proFile is None:
+
+		pyRootPwa.bin.calcAmplitudes(configFileName=arguments.configFileName,
+		                             massBins=arguments.massBins,
+		                             nJobs=arguments.nJobs,
+		                             progressBar=(not arguments.noProgressBar))
+
+	else:
+
+		import profile
+		import time
+		print("Profiler activated.")
+		print("WARNING: runtime will increase significantly, use this only for debug purposes!")
+		print
+		print("To view the generated profile, do:")
+		print("$> python")
+		print(">>> import pstats")
+		print(">>> p = pstats.Stats('<profile file>')")
+		print(">>> p.strip_dirs().sort_stats('time').print_stats()")
+		print
+		print("Sleeping for 10 seconds...")
+		try:
+			time.sleep(10)
+		except KeyboardInterrupt:
+			print('\nRecieved KeyboardInterrupt. Aborting...')
+			sys.exit(1)
+		print("Starting now...")
+		print
+		print
+		profile.run('pyRootPwa.bin.calcAmplitudes(configFileName=arguments.configFileName, massBins=arguments.massBins, nJobs=arguments.nJobs, proFile=arguments.proFile)', arguments.proFile)
 

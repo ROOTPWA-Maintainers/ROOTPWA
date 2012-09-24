@@ -4,6 +4,7 @@ import multiprocessing
 import os
 import sys
 import traceback
+import Queue
 
 import pyRootPwa
 import pyRootPwa.exception
@@ -21,10 +22,18 @@ class AmplitudeCalculator(multiprocessing.Process):
 		self.progressBar = progressBar
 		multiprocessing.Process.__init__(self)
 
-	def run(self):
+	def run(self, runDirectly=False):
 		while True:
 			try:
-				inTuple = self.queue.get()
+				if not runDirectly:
+					inTuple = self.queue.get()
+				else:
+					# This is needed for the profiler
+					try:
+						inTuple = self.queue.get(True, 5)
+					except Queue.Empty:
+						pyRootPwa.utils.printInfo('Queue seems to be empty and I was called directly. Terminating now...')
+						break
 				with pyRootPwa.utils.Silencer(self.silence) as silencer:
 					processedEvents = 0
 					outFileName = inTuple[2]
