@@ -3,7 +3,7 @@ import os
 import sys
 import tempfile
 
-class Silencer():
+class silencer():
 
 	output = ""
 

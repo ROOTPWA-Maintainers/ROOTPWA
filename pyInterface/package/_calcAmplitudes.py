@@ -6,18 +6,16 @@ import Queue
 import sys
 import traceback
 
-import pyRootPwa
 import pyRootPwa.amplitude
-import pyRootPwa.configuration
-import pyRootPwa.infile
+import pyRootPwa.core
 import pyRootPwa.utils
 
 def calcAmplitudes(configFileName, massBins, **arguments):
 
 	# print some info
-	pyRootPwa.printCompilerInfo()
-	pyRootPwa.printLibraryInfo()
-	pyRootPwa.printSvnVersion()
+	pyRootPwa.core.printCompilerInfo()
+	pyRootPwa.core.printLibraryInfo()
+	pyRootPwa.core.printSvnVersion()
 
 	# making the output nice for multi-threading
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()
@@ -51,7 +49,7 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 		maxNmbEvents = int(arguments['maxNmbEvents'])
 
 	# config file
-	pyRootPwa.config = pyRootPwa.configuration.rootPwaConfig(configFileName)
+	pyRootPwa.config = pyRootPwa.rootPwaConfig(configFileName)
 
 	# get the massBins as specified on the command line
 	allMassBins = sorted(glob.glob(pyRootPwa.config.dataDirectory + '/' + pyRootPwa.config.massBinDirectoryNamePattern))
@@ -81,15 +79,15 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 		sys.exit(1)
 
 	# initialize the particleDataTable
-	pyRootPwa.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
+	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
 
 	inputDataDict = {}
 
 	for inputFile in (inputDataFiles + inputPSFiles + inputAccPSFiles):
 
 		try:
-			inFile = pyRootPwa.infile.inputFile(inputFile)
-		except pyRootPwa.exception.pyRootPwaException as exc:
+			inFile = pyRootPwa.amplitude.inputFile(inputFile)
+		except pyRootPwa.rootPwaException as exc:
 			pyRootPwa.utils.printErr('Could not open input file "' + inputFile + '": ' + str(exc) + '. Skipping...')
 			continue
 		except KeyboardInterrupt:
@@ -143,7 +141,7 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 	jobs = []
 	silence = (nJobs != 1)
 	for i in range(nJobs):
-		jobs.append(pyRootPwa.amplitude.AmplitudeCalculator(processQueue, silence, progressBar, maxNmbEvents))
+		jobs.append(pyRootPwa.amplitude.amplitudeCalculator(processQueue, silence, progressBar, maxNmbEvents))
 	for job in jobs:
 		job.daemon = True
 		if proFile != '':

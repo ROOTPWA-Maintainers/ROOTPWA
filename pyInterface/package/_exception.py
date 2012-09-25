@@ -1,5 +1,5 @@
 
-class pyRootPwaException(Exception):
+class rootPwaException(Exception):
 
 	value = ""
 

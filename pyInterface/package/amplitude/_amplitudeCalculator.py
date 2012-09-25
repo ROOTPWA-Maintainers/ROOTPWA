@@ -6,11 +6,10 @@ import sys
 import traceback
 import Queue
 
-import pyRootPwa
-import pyRootPwa.exception
+import pyRootPwa.core
 import pyRootPwa.utils
 
-class AmplitudeCalculator(multiprocessing.Process):
+class amplitudeCalculator(multiprocessing.Process):
 
 	queue = None
 	silence = True
@@ -36,7 +35,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 					except Queue.Empty:
 						pyRootPwa.utils.printInfo('Queue seems to be empty and I was called directly. Terminating now...')
 						break
-				with pyRootPwa.utils.Silencer(self.silence) as silencer:
+				with pyRootPwa.utils.silencer(self.silence) as silencer:
 					processedEvents = 0
 					outFileName = inTuple[2]
 					pyRootPwa.utils.printInfo('Calculating amplitutes with inuput file "' + inTuple[0].inFileName + '" and key file "' + str(inTuple[1]) + '".')
@@ -82,7 +81,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 		outFile = inTuple[2]
 
 		if pyRootPwa.config is None:
-			raise pyRootPwa.exception.pyRootPwaException("pyRootPwa configuration not initialized")
+			raise pyRootPwa.rootPwaException("pyRootPwa configuration not initialized")
 
 		prodKinMomentaLeafName = pyRootPwa.config.prodKinMomentaLeafName
 		decayKinMomentaLeafName = pyRootPwa.config.decayKinMomentaLeafName
@@ -90,7 +89,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 		amplitudeLeafName = pyRootPwa.config.amplitudeLeafName
 		outputCacheSize = pyRootPwa.config.outputCacheSize
 
-		pythonAdmin = pyRootPwa.pythonAdministrator()
+		pythonAdmin = pyRootPwa.core.pythonAdministrator()
 
 		writeRootFile = False
 		if outputFileFormat == "root":
@@ -100,7 +99,7 @@ class AmplitudeCalculator(multiprocessing.Process):
 			outFile.cd()
 			ampTreeName = keyfile.rsplit('/',1)[-1].replace('.key', '.amp')
 			outTree = pyRootPwa.ROOT.TTree(ampTreeName, ampTreeName)
-			amplitudeTreeLeaf = pyRootPwa.amplitudeTreeLeaf()
+			amplitudeTreeLeaf = pyRootPwa.core.amplitudeTreeLeaf()
 			pythonAdmin.branch(outTree, amplitudeTreeLeaf, amplitudeLeafName)
 
 		if not pythonAdmin.constructAmplitude(keyfile):

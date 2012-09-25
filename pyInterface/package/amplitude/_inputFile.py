@@ -3,7 +3,6 @@ import collections
 import multiprocessing
 
 import pyRootPwa
-import pyRootPwa.exception
 import pyRootPwa.utils
 
 class inputFile():
@@ -23,18 +22,18 @@ class inputFile():
 	def __init__(self, inFileName):
 		self.inFileName = inFileName
 		if pyRootPwa.config is None:
-			raise pyRootPwa.exception.pyRootPwaException("pyRootPwa configuration not initialized")
+			raise pyRootPwa.rootPwaException("pyRootPwa configuration not initialized")
 		if inFileName.endswith('.root'):
 			self._readRootFile = True
 		elif inFileName.endswith('.evt'):
 			self._readRootFile = False
 			(self.prodKinParticles, self.decayKinParticles, self.tree) = pyRootPwa.utils.getTreeFromEvtFile(inFileName, inFileName)
 		else:
-			raise pyRootPwa.exception.pyRootPwaException("Unknown file extension")
+			raise pyRootPwa.rootPwaException("Unknown file extension")
 
 	def __len__(self):
 		if not self._inWith:
-			raise pyRootPwa.exception.pyRootPwaException("Not in with statement")
+			raise pyRootPwa.rootPwaException("Not in with statement")
 		return self._entriesInTree
 
 	def __enter__(self):

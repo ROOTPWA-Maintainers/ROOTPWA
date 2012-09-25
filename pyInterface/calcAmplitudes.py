@@ -3,7 +3,7 @@
 import argparse
 import sys
 
-import pyRootPwa.bin
+import pyRootPwa
 import pyRootPwa.utils
 
 if __name__ == "__main__":
@@ -28,11 +28,11 @@ if __name__ == "__main__":
 
 	if arguments.proFile is None:
 
-		pyRootPwa.bin.calcAmplitudes(configFileName=arguments.configFileName,
-		                             massBins=arguments.massBins,
-		                             nJobs=arguments.nJobs,
-		                             progressBar=(not arguments.noProgressBar),
-		                             maxNmbEvents=arguments.maxNmbEvents)
+		pyRootPwa.calcAmplitudes(configFileName=arguments.configFileName,
+		                         massBins=arguments.massBins,
+		                         nJobs=arguments.nJobs,
+		                         progressBar=(not arguments.noProgressBar),
+		                         maxNmbEvents=arguments.maxNmbEvents)
 
 	else:
 
@@ -56,5 +56,5 @@ if __name__ == "__main__":
 		print("Starting now...")
 		print
 		print
-		profile.run('pyRootPwa.bin.calcAmplitudes(configFileName=arguments.configFileName, massBins=arguments.massBins, nJobs=arguments.nJobs, proFile=arguments.proFile)', arguments.proFile)
+		profile.run('pyRootPwa.calcAmplitudes(configFileName=arguments.configFileName, massBins=arguments.massBins, nJobs=arguments.nJobs, proFile=arguments.proFile)', arguments.proFile)
 

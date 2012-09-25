@@ -1,7 +1,6 @@
 
-import inspect
-import multiprocessing
-import sys
+import inspect as _inspect
+import sys as _sys
 
 import pyRootPwa.utils
 
@@ -16,7 +15,7 @@ def printPrintingSummary(printingCounter):
 	print("Number of successes printed: " + str(printingCounter[3]))
 	print("Number of debugs printed:    " + str(printingCounter[4]))
 
-class printClass:
+class _printClass:
 
 	_terminalColorStrings = {}
 	_terminalColorStrings['normal']     = "\033[0m"
@@ -45,10 +44,10 @@ class printClass:
 		self.count = 0
 
 	def printFormatted(self, msg, level):
-		frame = inspect.currentframe().f_back.f_back
+		frame = _inspect.currentframe().f_back.f_back
 		if frame is None:
 			printErr("This method cannot be called directly.")
-		(filename, lineno, function, code_contex, index) = inspect.getframeinfo(frame)
+		(filename, lineno, function, code_contex, index) = _inspect.getframeinfo(frame)
 		if function == "<module>":
 			function = "__main__"
 		string = ""
@@ -88,11 +87,11 @@ class printClass:
 			printErr("Invalid level string.")
 			raise Exception()
 		if level == "err" or level == "warn":
-			sys.stderr.write(string + "\n")
+			_sys.stderr.write(string + "\n")
 		else:
-			sys.stdout.write(string + "\n")
+			_sys.stdout.write(string + "\n")
 
-class printErrClass(printClass):
+class printErrClass(_printClass):
 
 	def __init__(self, counter):
 		self.counter = counter
@@ -101,7 +100,7 @@ class printErrClass(printClass):
 		self.counter[0] += 1
 		self.printFormatted(str(msg), "err")
 
-class printWarnClass(printClass):
+class printWarnClass(_printClass):
 
 	def __init__(self, counter):
 		self.counter = counter
@@ -110,7 +109,7 @@ class printWarnClass(printClass):
 		self.counter[1] += 1
 		self.printFormatted(str(msg), "warn")
 
-class printSuccClass(printClass):
+class printSuccClass(_printClass):
 
 	def __init__(self, counter):
 		self.counter = counter
@@ -119,7 +118,7 @@ class printSuccClass(printClass):
 		self.counter[2] += 1
 		self.printFormatted(str(msg), "suc")
 
-class printInfoClass(printClass):
+class printInfoClass(_printClass):
 
 	def __init__(self, counter):
 		self.counter = counter
@@ -128,7 +127,7 @@ class printInfoClass(printClass):
 		self.counter[3] += 1
 		self.printFormatted(str(msg), "info")
 
-class printDebugClass(printClass):
+class printDebugClass(_printClass):
 
 	def __init__(self, counter):
 		self.counter = counter
