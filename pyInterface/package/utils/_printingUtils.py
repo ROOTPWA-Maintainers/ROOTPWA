@@ -11,8 +11,8 @@ def printPrintingSummary(printingCounter):
 	print
 	print("Number of errors printed:    " + str(printingCounter[0]))
 	print("Number of warnings printed:  " + str(printingCounter[1]))
-	print("Number of infos printed:     " + str(printingCounter[2]))
-	print("Number of successes printed: " + str(printingCounter[3]))
+	print("Number of infos printed:     " + str(printingCounter[3]))
+	print("Number of successes printed: " + str(printingCounter[2]))
 	print("Number of debugs printed:    " + str(printingCounter[4]))
 
 class _printClass:
