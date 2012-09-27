@@ -64,18 +64,18 @@ print
 #
 # ---------------------------------------------------------
 
-def getpDTinstance(): return pyRootPwa.particleDataTable.instance
+def getpDTinstance(): return pyRootPwa.core.particleDataTable.instance
 particleTable = do_test( getpDTinstance, "Testing particleDataTable.instance")
 
 def tPDTreadFile():
 	print("\n")
-	pyRootPwa.particleDataTable.readFile(os.environ['ROOTPWA'] + "/amplitude/particleDataTable.txt")
+	pyRootPwa.core.particleDataTable.readFile(os.environ['ROOTPWA'] + "/amplitude/particleDataTable.txt")
 	print
 do_test(tPDTreadFile, "Testing particleDataTable.readFile()")
 
 def tPDTentriesMatching():
 	pP = particleTable.entry("rho(770)0")
-	parts = pyRootPwa.particleDataTable.entriesMatching(pP, "allQn", 0, 0, [], [], [], False)
+	parts = pyRootPwa.core.particleDataTable.entriesMatching(pP, "allQn", 0, 0, [], [], [], False)
 	assert(len(parts) == 4)
 	for part in parts:
 		assert(part.name[:part.name.find("(")] == "rho")
@@ -98,10 +98,10 @@ print
 #
 # ---------------------------------------------------------
 
-def partPropTestConst(): return pyRootPwa.particleProperties()
+def partPropTestConst(): return pyRootPwa.core.particleProperties()
 partProp = do_test(partPropTestConst, "Testing particleProperties constructor")
 
-def partPropTestCopyConst(): return pyRootPwa.particleProperties(partProp)
+def partPropTestCopyConst(): return pyRootPwa.core.particleProperties(partProp)
 partProp2 = do_test(partPropTestCopyConst, "Testing particleProperties copy constructor")
 
 def partPropTestOps():
@@ -122,7 +122,7 @@ print
 #
 # ---------------------------------------------------------
 
-def particleConst(): return pyRootPwa.particle()
+def particleConst(): return pyRootPwa.core.particle()
 part = do_test(particleConst, "Testing particle default constructor")
 
 def particleRead(): part.read("Delta(1910)+     Deltabar(1910)-  1.91        0.25        +1           3    0    0    0     0     1    +1     0")
@@ -133,33 +133,33 @@ def printPart():
 do_test(printPart, "Testing print(particle)")
 
 def partCopyConst():
-	p2 = pyRootPwa.particle(part)
+	p2 = pyRootPwa.core.particle(part)
 	assert(part == p2)
 do_test(partCopyConst, "Testing particle copy constructor")
 
 def partTestConsts():
-	pP = pyRootPwa.particleProperties()
+	pP = pyRootPwa.core.particleProperties()
 	pP.read("Delta(1910)+     Deltabar(1910)-  1.91        0.25        +1           3    0    0    0     0     1    +1     0")
 	t = pyRootPwa.ROOT.TVector3(1., 1., 1.)
 	
-	p3 = pyRootPwa.particle(pP)
-	p3 = pyRootPwa.particle(pP, -1)
-	p3 = pyRootPwa.particle(pP, -1, 0)
-	p3 = pyRootPwa.particle(pP, -1, 0, 0)
-	p3 = pyRootPwa.particle(pP, -1, 0, 0, t)
+	p3 = pyRootPwa.core.particle(pP)
+	p3 = pyRootPwa.core.particle(pP, -1)
+	p3 = pyRootPwa.core.particle(pP, -1, 0)
+	p3 = pyRootPwa.core.particle(pP, -1, 0, 0)
+	p3 = pyRootPwa.core.particle(pP, -1, 0, 0, t)
 	
-	p3 = pyRootPwa.particle("pi+")
-	p3 = pyRootPwa.particle("pi+", True)
-	p3 = pyRootPwa.particle("pi+", True, -1)
-	p3 = pyRootPwa.particle("pi+", True, -1, 0)
-	p3 = pyRootPwa.particle("pi+", True, -1, 0, 0)
-	p3 = pyRootPwa.particle("pi+", True, -1, 0, 0, t)
+	p3 = pyRootPwa.core.particle("pi+")
+	p3 = pyRootPwa.core.particle("pi+", True)
+	p3 = pyRootPwa.core.particle("pi+", True, -1)
+	p3 = pyRootPwa.core.particle("pi+", True, -1, 0)
+	p3 = pyRootPwa.core.particle("pi+", True, -1, 0, 0)
+	p3 = pyRootPwa.core.particle("pi+", True, -1, 0, 0, t)
 	
-	p3 = pyRootPwa.particle("pi-", 0, 1, 2, 3, 4, 5)
+	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5)
 	p3.qnSummary()
-	p3 = pyRootPwa.particle("pi-", 0, 1, 2, 3, 4, 5, 6)
-	p3 = pyRootPwa.particle("pi-", 0, 1, 2, 3, 4, 5, 6, 7)
-do_test(partTestConsts, "Testing particle other constructors")
+	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5, 6)
+	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5, 6, 7)
+do_test_raw(partTestConsts, "Testing particle other constructors")
 
 def partTestClone(): p2 = part.clone()
 do_test(partTestClone, "Testing particle.clone()")
@@ -192,7 +192,7 @@ def partTestReflectivity():
 do_test(partTestReflectivity, "Testing part.reflectivity")
 
 def partTestSetProperties():
-	pP = pyRootPwa.particleProperties()
+	pP = pyRootPwa.core.particleProperties()
 	pP.read("Kstar2(1430)+    Kstar2bar(1430)- 1.4256      0.0985      0            1   +1    0    0     0     4    +1     0")
 	part.setProperties(pP)
 	assert(part.name == "Kstar2(1430)+")
@@ -220,17 +220,17 @@ def partTestTransformFAIL():
 do_test(partTestTransformFAIL, "Testing particle.transform(UNSUPPORTED TYPE)")
 
 def partTestDebugFlag():
-	old_pP_debug = pyRootPwa.particleProperties.debugParticleProperties
-	old_debug = pyRootPwa.particle.debugParticle
+	old_pP_debug = pyRootPwa.core.particleProperties.debugParticleProperties
+	old_debug = pyRootPwa.core.particle.debugParticle
 	assert(old_pP_debug == old_debug)
-	pyRootPwa.particle.debugParticle = (not old_debug)
-	assert(pyRootPwa.particle.debugParticle == (not old_debug))
-	assert(pyRootPwa.particleProperties.debugParticleProperties == old_pP_debug)
-	pyRootPwa.particle.debugParticle = old_debug
+	pyRootPwa.core.particle.debugParticle = (not old_debug)
+	assert(pyRootPwa.core.particle.debugParticle == (not old_debug))
+	assert(pyRootPwa.core.particleProperties.debugParticleProperties == old_pP_debug)
+	pyRootPwa.core.particle.debugParticle = old_debug
 	assert(part.debugParticle == old_debug)
 	part.debugParticle = (not old_debug)
 	assert(part.debugParticle == (not old_debug))
-	assert(pyRootPwa.particleProperties.debugParticleProperties == old_pP_debug)
+	assert(pyRootPwa.core.particleProperties.debugParticleProperties == old_pP_debug)
 	part.debugParticle = old_debug
 do_test(partTestDebugFlag, "Testing particle debug flag")
 # This test fails for unknown reason
@@ -245,10 +245,10 @@ print
 #
 # ---------------------------------------------------------
 
-def defConst(): return pyRootPwa.interactionVertex()
+def defConst(): return pyRootPwa.core.interactionVertex()
 iV = do_test(defConst, "Testing interactionVertex default constructor")
 
-def copyConst(): return pyRootPwa.interactionVertex(iV)
+def copyConst(): return pyRootPwa.core.interactionVertex(iV)
 do_test(copyConst, "Testing interactionVertex copy constructor")
 
 def tClone():
@@ -261,7 +261,7 @@ def tPrint(): print("\n\n" + str(iV) + "\n")
 do_test(tPrint, "Testing \"print(interactionVertex)\"")
 
 def tClear():
-	class tiV(pyRootPwa.interactionVertex):
+	class tiV(pyRootPwa.core.interactionVertex):
 		def clear(self):
 			return "testString"
 	iV.clear()
@@ -270,12 +270,12 @@ def tClear():
 do_test(tClear, "Testing interactionVertex.clear()")
 
 def tAiP():
-	p = pyRootPwa.particle()
+	p = pyRootPwa.core.particle()
 	assert(iV.addInParticle(p))
 do_test(tAiP, "Testing interactionVertex.addInParticle()")
 
 def tAoP():
-	p = pyRootPwa.particle()
+	p = pyRootPwa.core.particle()
 	assert(iV.addOutParticle(p))
 do_test(tAoP, "Testing interactionVertex.addOutParticle()")
 
@@ -317,8 +317,8 @@ print
 # ---------------------------------------------------------
 
 def fsVertexTestConsts():
-	fsVert = pyRootPwa.fsVertex(part)
-	fsVert2 = pyRootPwa.fsVertex(fsVert)
+	fsVert = pyRootPwa.core.fsVertex(part)
+	fsVert2 = pyRootPwa.core.fsVertex(fsVert)
 	return fsVert
 fsVert = do_test(fsVertexTestConsts, "Testing fsVertex constructors")
 
@@ -345,12 +345,12 @@ def fsVertexTestName(): assert(fsVert.name() == "fsVertex")
 do_test(fsVertexTestName, "Testing fsVertex.name()")
 
 def fsVertexTestDebugFlag():
-	old_iV_debug = pyRootPwa.interactionVertex.debugInteractionVertex
-	old_fsV_debug = pyRootPwa.fsVertex.debugFsVertex
-	pyRootPwa.fsVertex.debugFsVertex = (not old_fsV_debug)
-	assert(pyRootPwa.fsVertex.debugFsVertex == (not old_fsV_debug))
-	assert(pyRootPwa.interactionVertex.debugInteractionVertex == old_iV_debug)
-	pyRootPwa.fsVertex.debugFsVertex = old_fsV_debug
+	old_iV_debug = pyRootPwa.core.interactionVertex.debugInteractionVertex
+	old_fsV_debug = pyRootPwa.core.fsVertex.debugFsVertex
+	pyRootPwa.core.fsVertex.debugFsVertex = (not old_fsV_debug)
+	assert(pyRootPwa.core.fsVertex.debugFsVertex == (not old_fsV_debug))
+	assert(pyRootPwa.core.interactionVertex.debugInteractionVertex == old_iV_debug)
+	pyRootPwa.core.fsVertex.debugFsVertex = old_fsV_debug
 do_test(fsVertexTestDebugFlag, "Testing fsVertex debug flag")
 
 print
@@ -366,9 +366,9 @@ print
 def isobDecVtxTestConstructor():
 	lz = pyRootPwa.ROOT.TLorentzVector(1., 1., 1., 1.)
 	part.lzVec = lz
-#	retval = pyRootPwa.isobarDecayVertex(part, part, part, 0, 0, pyRootPwa.flatMassDependence())
-#	retval = pyRootPwa.isobarDecayVertex(part, part, part, 0, 0, [0, 1, 2])
-	retval = pyRootPwa.isobarDecayVertex(part, part, part)
+#	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, pyRootPwa.core.flatMassDependence())
+#	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, [0, 1, 2])
+	retval = pyRootPwa.core.isobarDecayVertex(part, part, part)
 	return retval
 isobDecVtx = do_test(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
 
@@ -427,7 +427,7 @@ def isobarDecVtxTestMD(): mDname = isobDecVtx.massDependence().name()
 do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()", True)
 
 def isobarDecVtxTestSetMD():
-	isobDecVtx.setMassDependence(pyRootPwa.flatMassDependence())
+	isobDecVtx.setMassDependence(pyRootPwa.core.flatMassDependence())
 	assert(isobDecVtx.massDependence().name() == "flatMassDependence")
 do_test(isobarDecVtxTestSetMD, "Testing isobarDecayVertex.setMassDependence()")
 
@@ -438,12 +438,12 @@ def isobarDecVtxTestCC():
 do_test(isobarDecVtxTestCC, "Testing isobarDecayVertex.checkConsistency()")
 
 def isobarDecayVertexTestDebugFlag():
-	old_iV_debug = pyRootPwa.interactionVertex.debugInteractionVertex
-	old_fsV_debug = pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex
-	pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex = (not old_fsV_debug)
-	assert(pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex == (not old_fsV_debug))
-	assert(pyRootPwa.interactionVertex.debugInteractionVertex == old_iV_debug)
-	pyRootPwa.isobarDecayVertex.debugIsobarDecayVertex = old_fsV_debug
+	old_iV_debug = pyRootPwa.core.interactionVertex.debugInteractionVertex
+	old_fsV_debug = pyRootPwa.core.isobarDecayVertex.debugIsobarDecayVertex
+	pyRootPwa.core.isobarDecayVertex.debugIsobarDecayVertex = (not old_fsV_debug)
+	assert(pyRootPwa.core.isobarDecayVertex.debugIsobarDecayVertex == (not old_fsV_debug))
+	assert(pyRootPwa.core.interactionVertex.debugInteractionVertex == old_iV_debug)
+	pyRootPwa.core.isobarDecayVertex.debugIsobarDecayVertex = old_fsV_debug
 do_test(isobarDecayVertexTestDebugFlag, "Testing isobarDecayVertex debug flag")
 
 
@@ -457,7 +457,7 @@ print
 #
 # ---------------------------------------------------------
 
-def flatMassDepTestConst(): return pyRootPwa.flatMassDependence()
+def flatMassDepTestConst(): return pyRootPwa.core.flatMassDependence()
 flatMassDep = do_test(flatMassDepTestConst, "Testing flatMassDependence default constructor")
 
 def flatMassDepTestDebug():
@@ -473,7 +473,7 @@ do_test(flatMassDepTestAmp, "Testing flatMassDependence.amp()")
 def flatMassDepTestName(): assert(flatMassDep.name() == "flatMassDependence")
 do_test(flatMassDepTestName, "Testing flatMassDependence.name()")
 
-def relBreitWigTestConst(): return pyRootPwa.relativisticBreitWigner()
+def relBreitWigTestConst(): return pyRootPwa.core.relativisticBreitWigner()
 relBreitWig = do_test(relBreitWigTestConst, "Testing relativisticBreitWigner default constructor")
 
 def relBreitWigTestAmp():
@@ -484,7 +484,7 @@ do_test(relBreitWigTestAmp, "Testing relativisticBreitWigner.amp()")
 def relBreitWigTestName(): assert(relBreitWig.name() == "relativisticBreitWigner")
 do_test(relBreitWigTestName, "Testing relativisticBreitWigner.name()")
 
-def SAuMoPenMTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonM()
+def SAuMoPenMTestConst(): return pyRootPwa.core.piPiSWaveAuMorganPenningtonM()
 SAuMoPenM = do_test(SAuMoPenMTestConst, "Testing piPiSWaveAuMorganPenningtonM default constructor")
 
 def SAuMoPenMTestAmp():
@@ -497,7 +497,7 @@ do_test(SAuMoPenMTestAmp, "Testing piPiSWaveAuMorganPenningtonM.amp()")
 def SAuMoPenMTestName(): assert(SAuMoPenM.name() == "piPiSWaveAuMorganPenningtonM")
 do_test(SAuMoPenMTestName, "Testing piPiSWaveAuMorganPenningtonM.name()")
 
-def SAuMoPenVesTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonVes()
+def SAuMoPenVesTestConst(): return pyRootPwa.core.piPiSWaveAuMorganPenningtonVes()
 SAuMoPenVes = do_test(SAuMoPenVesTestConst, "Testing piPiSWaveAuMorganPenningtonVes default constructor")
 
 def SAuMoPenVesTestAmp():
@@ -510,7 +510,7 @@ do_test(SAuMoPenVesTestAmp, "Testing piPiSWaveAuMorganPenningtonVes.amp()")
 def SAuMoPenVesTestName(): assert(SAuMoPenVes.name() == "piPiSWaveAuMorganPenningtonVes")
 do_test(SAuMoPenVesTestName, "Testing piPiSWaveAuMorganPenningtonVes.name()")
 
-def SAuMoPenKachaevTestConst(): return pyRootPwa.piPiSWaveAuMorganPenningtonKachaev()
+def SAuMoPenKachaevTestConst(): return pyRootPwa.core.piPiSWaveAuMorganPenningtonKachaev()
 SAuMoPenKachaev = do_test(SAuMoPenKachaevTestConst, "Testing piPiSWaveAuMorganPennigtonKachaev default constructor")
 
 def SAuMoPenKachaevTestAmp():
@@ -537,8 +537,8 @@ def diDiVtxTestConsts():
 	part2 = part.clone()
 	part3 = part.clone()
 	part4 = part.clone()
-	v = pyRootPwa.diffractiveDissVertex(part, part2, part3, part4)
-	v2 = pyRootPwa.diffractiveDissVertex(v)
+	v = pyRootPwa.core.diffractiveDissVertex(part, part2, part3, part4)
+	v2 = pyRootPwa.core.diffractiveDissVertex(v)
 	return v
 diDiVtx = do_test(diDiVtxTestConsts, "Testing diffractiveDissVertex constructors")
 
@@ -619,10 +619,10 @@ print
 # ---------------------------------------------------------
 
 def dTTestConsts():
-	t = pyRootPwa.decayTopology()
-#	t = pyRootPwa.decayTopology(diDiVtx, [isobDecVtx], [part])
+	t = pyRootPwa.core.decayTopology()
+#	t = pyRootPwa.core.decayTopology(diDiVtx, [isobDecVtx], [part])
 # There needs to be some work to produce a consistent topology
-	t2 = pyRootPwa.decayTopology(t)
+	t2 = pyRootPwa.core.decayTopology(t)
 	return t
 decTo = do_test(dTTestConsts, "Testing decayTopology constructors")
 
@@ -766,10 +766,10 @@ print
 # ---------------------------------------------------------
 
 def iDTTestConsts():
-	t = pyRootPwa.isobarDecayTopology()
-	t2 = pyRootPwa.isobarDecayTopology(t)
-	t2 = pyRootPwa.isobarDecayTopology(decTo)
-#	t = pyRootPwa.isobarDecayTopology(diDiVtx, [isobDecVtx], [part])
+	t = pyRootPwa.core.isobarDecayTopology()
+	t2 = pyRootPwa.core.isobarDecayTopology(t)
+	t2 = pyRootPwa.core.isobarDecayTopology(decTo)
+#	t = pyRootPwa.core.isobarDecayTopology(diDiVtx, [isobDecVtx], [part])
 # Need a consistent topology for that
 	return t
 isoDecTop = do_test(iDTTestConsts, "Testing isobarDecayTopology constructors")
@@ -800,7 +800,7 @@ def iDTTestAddDec(): isoDecTop.addDecay(isoDecTop)
 do_test(iDTTestAddDec, "Testing isobarDecayTopology.addDecay()", True)
 # need a consistent topology for that
 
-def iDTTestJDD(): pyRootPwa.isobarDecayTopology.joinDaughterDecays(isobDecVtx, isoDecTop, isoDecTop)
+def iDTTestJDD(): pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, isoDecTop, isoDecTop)
 do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()", True)
 # need a consistent topology for that
 
@@ -847,8 +847,8 @@ print
 # ---------------------------------------------------------
 
 def iCATestConst():
-	t = pyRootPwa.isobarCanonicalAmplitude()
-	# t2 = pyRootPwa.isobarCanonicalAmplitude(isoDecTop)
+	t = pyRootPwa.core.isobarCanonicalAmplitude()
+	# t2 = pyRootPwa.core.isobarCanonicalAmplitude(isoDecTop)
 	# needs consistent topology
 	return t
 iCA = do_test(iCATestConst, "Testing isobarCanonicalAmplitude constructors")
@@ -874,8 +874,8 @@ print
 # ---------------------------------------------------------
 
 def iHATestConst():
-	t = pyRootPwa.isobarHelicityAmplitude()
-	# t2 = pyRootPwa.isobarHelicityAmplitude(isoDecTop)
+	t = pyRootPwa.core.isobarHelicityAmplitude()
+	# t2 = pyRootPwa.core.isobarHelicityAmplitude(isoDecTop)
 	# needs consistent topology
 	return t
 iHA = do_test(iHATestConst, "Testing isobarHelicityAmplitude constructors")
