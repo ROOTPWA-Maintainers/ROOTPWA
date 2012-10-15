@@ -31,13 +31,13 @@ namespace {
 			std::vector<std::string> blackList(bp::len(pyListBlackList), "");
 			std::set<std::string> decayProducts;
 
-			for(unsigned int i = 0; i < bp::len(pyListWhiteList); ++i) {
+			for(int i = 0; i < bp::len(pyListWhiteList); ++i) {
 				whiteList[i] = bp::extract<std::string>(pyListWhiteList[i]);
 			}
-			for(unsigned int i = 0; i < bp::len(pyListBlackList); ++i) {
+			for(int i = 0; i < bp::len(pyListBlackList); ++i) {
 				blackList[i] = bp::extract<std::string>(pyListBlackList[i]);
 			}
-			for(unsigned int i = 0; i < bp::len(pyListDecayProducts); ++i) {
+			for(int i = 0; i < bp::len(pyListDecayProducts); ++i) {
 				decayProducts.insert(bp::extract<std::string>(pyListDecayProducts[i]));
 			}
 			std::vector<const rpwa::particleProperties*> retPtrVec = rpwa::particleDataTable::entriesMatching(prototype,
@@ -104,7 +104,7 @@ void rpwa::py::exportParticleDataTable()
 		.def("nmbEntries", &particleDataTableWrapper::nmbEntries) 
 		.staticmethod("nmbEntries")
 
-		.def("__iter__", bp::iterator< particleDataTableWrapper >())
+		.def("__iter__", bp::iterator< rpwa::particleDataTable >())
 
 		.def( 
 			"readFile"

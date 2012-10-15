@@ -74,6 +74,7 @@ set(SOURCES
 	isobarHelicityAmplitude_py.cc
 	waveDescription_py.cc
 	amplitudeTreeLeaf_py.cc
+	ampIntegralMatrix_py.cc
 	utils_py.cc
 	pythonAdministrator_py.cc
 	)
