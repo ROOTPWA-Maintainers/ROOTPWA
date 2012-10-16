@@ -660,27 +660,27 @@ isobarDecayTopology::getIsospinSymmetrization()
 }
 
 
-vector<isobarDecayVertexPtr>
+vector<unsigned int>
 isobarDecayTopology::findIsobarBoseSymVertices() const
 {
-	vector<isobarDecayVertexPtr> boseSymVertices;
-	isobarDecayTopologyPtr       topo = this->clone();  // needed, because subDecay below is not const
+	vector<unsigned int>   boseSymVertices;
+	isobarDecayTopologyPtr topo = this->clone();  // needed, because subDecay below is not const
 	for (unsigned int i = 0; i < topo->nmbDecayVertices(); ++i) {
 		// find decay vertex with two isobars as daughters
-		isobarDecayVertexPtr vert = topo->isobarDecayVertices()[i];
-		const particlePtr daughters[2] = {vert->daughter1(), vert->daughter2()};
+		isobarDecayVertexPtr vert         = topo->isobarDecayVertices()[i];
+		const particlePtr    daughters[2] = {vert->daughter1(), vert->daughter2()};
 		if (topo->isFsParticle(daughters[0]) or topo->isFsParticle(daughters[1]))
 			continue;
 		// make sure the two daughters have the same final state
-		decayTopology isobarTopos[2] = {topo->subDecay(topo->toNode(daughters[0])),
-		                                topo->subDecay(topo->toNode(daughters[1]))};
-		if (isobarTopos[0].nmbIndistFsParticles() == isobarTopos[0].nmbIndistFsParticles()) {
+		const decayTopology isobarTopos[2] = {topo->subDecay(topo->toNode(daughters[0])),
+		                                      topo->subDecay(topo->toNode(daughters[1]))};
+		if (isobarTopos[0].nmbIndistFsParticles() == isobarTopos[1].nmbIndistFsParticles()) {
 			if (_debug)
 				printDebug << "found isobar decay vertex " << *vert << " "
 				           << "that has two isobar daughters which decay into the same final state: " << endl
-				           << isobarTopos[0]
-				           << isobarTopos[1];
-			boseSymVertices.push_back(isobarDecayVertices()[i]);
+				           << "daughter 1 " << isobarTopos[0]
+				           << "daughter 2 " << isobarTopos[1];
+			boseSymVertices.push_back(i);
 		}
 	}
 	return boseSymVertices;

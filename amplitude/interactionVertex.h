@@ -106,7 +106,7 @@ namespace rpwa {
 		virtual interactionVertex* doClone(const bool cloneInParticles,
 		                                   const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
-		bool isEqualTo(const interactionVertex& vert) const;  ///< returns whether vertex is equal to this by checking equality of all member variables
+		bool isEqualTo(const interactionVertex& vert) const;  ///< returns whether vert is equal to this by checking equality of all member variables
 
 		void cloneInParticles ();  ///< clones all incoming particles
 		void cloneOutParticles();  ///< clones all outgoing particles

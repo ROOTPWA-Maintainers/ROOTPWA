@@ -126,7 +126,7 @@ namespace rpwa {
 
 		std::vector<symTermMap> getIsospinSymmetrization();  ///< returns all final-state permutations needed for isospin symmetrization
 
-		std::vector<isobarDecayVertexPtr> findIsobarBoseSymVertices() const;  ///< returns all isobar vertices that have isobar daughters that decay into the same final state
+		std::vector<unsigned int> findIsobarBoseSymVertices() const;  ///< returns indices of all isobar vertices that have isobar daughters that decay into the same final state
 
 
 	protected:

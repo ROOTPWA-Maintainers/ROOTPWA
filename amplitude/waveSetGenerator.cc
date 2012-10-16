@@ -347,15 +347,14 @@ waveSetGenerator::generateWaveSet()
 										  (daughters[0]->mass() - _isobarMassWindowSigma * daughters[0]->width())
 										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
 										: 0;
-									set<string> decayproducts;
-									decayproducts.insert(daughters[0]->name());
-									decayproducts.insert(daughters[1]->name());
+									multiset<string> decayProducts;
+									decayProducts.insert(daughters[0]->name());
+									decayProducts.insert(daughters[1]->name());
 									vector<const particleProperties*> possibleIsobars
-									    = particleDataTable::entriesMatching(isobarProp, "allQn", minIsobarMass,
-									                                         _isobarMassWindowSigma, _isobarWhiteList,
-									                                         _isobarBlackList,
-									                                         decayproducts,
-									                                         _forceDecayCheck);
+									    = particleDataTable::entriesMatching(isobarProp, "allQn",
+									                                         minIsobarMass, _isobarMassWindowSigma,
+									                                         _isobarWhiteList, _isobarBlackList,
+									                                         decayProducts, _forceDecayCheck);
 									if (_debug)
 										printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
 										           << isobarProp.qnSummary() << " in particle data table" << endl;
@@ -395,67 +394,165 @@ waveSetGenerator::generateWaveSet()
 	}
 
 	// filter out decays which are related by Bose symmetrization
-	if (0) {
+	if (1) {
 		printInfo << "removing Bose duplicates..." << endl;
 		unsigned int countRemovedBose = 0;
 		for (size_t waveSetIndex = 0; waveSetIndex < _waveSet.size(); ++waveSetIndex) {
+			isobarDecayTopologyPtr topo = _waveSet[waveSetIndex].clone();  // needed, because subDecay below is not const
 			// get Bose-symmetric vertices
-			isobarDecayTopologyPtr       topoSym         = _waveSet[waveSetIndex].clone();
-			vector<isobarDecayVertexPtr> boseSymVertices = topoSym->findIsobarBoseSymVertices();
-			if (boseSymVertices.size() > 1) {
-				printErr << "the code does not yet support decay topologies with " << boseSymVertices.size()
-				         << " Bose symmetric decay vertices. aborting." << endl;
+			const vector<unsigned int> boseSymVertIds    = topo->findIsobarBoseSymVertices();
+			const size_t               nmbBoseSymVertIds = boseSymVertIds.size();
+			if (nmbBoseSymVertIds > 1) {
+				printErr << "the code has not yet been tested for decay topologies with "
+				         << nmbBoseSymVertIds << " Bose-symmetric decay vertices. aborting." << endl;
 				throw;
 			}
-			// construct topology where the two isobars are swapped
-			if (boseSymVertices.size() == 1) {
-				const isobarDecayVertex& vertSym = *(boseSymVertices[0]);
-				printSucc << vertSym << endl;
-				// get decay trees of the two isobars
-				isobarDecayVertexPtr daughterVertices[2]
-					= {static_pointer_cast<isobarDecayVertex>(topoSym->toVertex(vertSym.daughter1())),
-					   static_pointer_cast<isobarDecayVertex>(topoSym->toVertex(vertSym.daughter2()))};
-				isobarDecayTopology  daughterDecays  [2] = {topoSym->subDecay(daughterVertices[0]),
-				                                            topoSym->subDecay(daughterVertices[1])};
-				printDebug << daughterDecays[0];
-				printDebug << daughterDecays[1];
-				// get isobar decay vertices not in daughter decays
-				vector<nodeDesc> daughterDecayNodes[2] = {topoSym->sortNodesDfs(daughterVertices[0]),
-				                                          topoSym->sortNodesDfs(daughterVertices[1])};
-				vector<isobarDecayVertexPtr> otherDecayVertices;
-				for (size_t i = 0; i < topoSym->nmbDecayVertices(); ++i) {
-					isobarDecayVertexPtr vert                  = topoSym->isobarDecayVertices()[i];
-					bool                 vertexInDaughterDecay = false;
-					for (size_t j = 0; j < 2; ++j)
-						for (size_t k = 0; k < daughterDecayNodes[j].size(); ++k)
-							if (topoSym->vertex(daughterDecayNodes[j][k]) == vert)
-								vertexInDaughterDecay = true;
-					if (not vertexInDaughterDecay)
-						otherDecayVertices.push_back(vert);
+			if (nmbBoseSymVertIds == 1) {
+				isobarDecayVertexPtr vert         = topo->isobarDecayVertices()[boseSymVertIds[0]];
+				const particlePtr    daughters[2] = {vert->daughter1(), vert->daughter2()};
+				// make sure the two daughters are not the same particle
+				if (*(daughters[0]) == *(daughters[1]))
+					continue;
+				const decayTopology daughterTopos[2] = {topo->subDecay(topo->toNode(daughters[0])),
+				                                        topo->subDecay(topo->toNode(daughters[1]))};
+				// find indices of all decay vertices that are not below the Bose-symmetric vertex
+				vector<unsigned int> nonSymVertIds;
+				{
+					// get graph nodes below Bose-symmetric vertex
+					const vector<nodeDesc> nodes = topo->sortNodesDfs(vert);
+					for (unsigned int i = 0; i < topo->nmbDecayVertices(); ++i) {
+						const nodeDesc nd        = topo->node(topo->isobarDecayVertices()[i]);
+						bool           isSymNode = false;
+						for (unsigned int j = 0; j < nodes.size(); ++j)
+							if (nd == nodes[j]) {
+								isSymNode = true;
+								break;
+							}
+						if (not isSymNode)
+							nonSymVertIds.push_back(i);
+					}
 				}
-				for (size_t i = 0; i < otherDecayVertices.size(); ++i)
-					printSucc << *(otherDecayVertices[i]) << endl;
-				// get final state particles not in 
-				vector<particlePtr> otherFsParticles;
-				for (size_t i = 0; i < otherDecayVertices.size(); ++i) {
-					particlePtr parts[2] = {otherDecayVertices[i]->daughter1(),
-					                        otherDecayVertices[i]->daughter2()};
-					for (size_t j = 0; j < 2; ++j)
-						if (topoSym->isFsParticle(parts[j]))
-							otherFsParticles.push_back(parts[j]);
-				}
-				for (size_t i = 0; i < otherFsParticles.size(); ++i)
-					printWarn << *(otherFsParticles[i]) << endl;
-				// construct topology with all vertices that are not in daughter decays
-				isobarDecayTopologyPtr newTopo
-					= createIsobarDecayTopology(topoSym->productionVertex(),
-					                            otherDecayVertices, otherFsParticles, false);
-				printSucc << *newTopo;
-				++countRemovedBose;
+
+				printDebug << "vertices:" << endl;
+				for (unsigned int i = 0; i < topo->nmbDecayVertices(); ++i)
+					cout << "    vertex[" << i << "] = " << *(topo->isobarDecayVertices()[i]) << endl;
+				printDebug << "daughter 1 " << topo->subDecay(topo->toNode(daughters[0]))
+				           << "daughter 2 " << topo->subDecay(topo->toNode(daughters[1]));
+				printDebug << "non-sym vertex IDs = ";
+				for (size_t i = 0; i < nonSymVertIds.size(); ++i)
+					cout << nonSymVertIds[i] << "   ";
 				cout << endl;
+
+				// look for Bose-symmetric topology
+				vector<size_t> symTopoIds;
+				for (size_t i = 0; i < _waveSet.size(); ++i) {
+					if (i == waveSetIndex)
+						continue;
+					isobarDecayTopologyPtr symTopo = _waveSet[i].clone();  // needed, because subDecay below is not const
+					// compare vertices that are not below the Bose-symmetric vertex
+					bool foundSymTopo = true;
+					for (size_t j = 0; j < nonSymVertIds.size(); ++j)
+						if (*(topo->isobarDecayVertices()[j]) != *(symTopo->isobarDecayVertices()[j]))
+							foundSymTopo = false;
+					// compare Bose-symmetric vertex
+					if (foundSymTopo) {
+						isobarDecayVertexPtr symVert         = symTopo->isobarDecayVertices()[boseSymVertIds[0]];
+						const particlePtr    symDaughters[2] = {symVert->daughter2(), symVert->daughter1()};  // !NOTE! reversed order
+						if (   (*(vert->parent()) != *(symVert->parent()))
+						    or (*(daughters[0])   != *(symDaughters[0]))
+						    or (*(daughters[1])   != *(symDaughters[1])))
+							foundSymTopo = false;
+						// compare daughter topologies
+						if (foundSymTopo) {
+							const decayTopology symDaughterTopos[2]
+								= {symTopo->subDecay(symTopo->toNode(symDaughters[0])),
+								   symTopo->subDecay(symTopo->toNode(symDaughters[1]))};
+							for (unsigned int k = 0; k < 2; ++k)
+								for (unsigned int l = 0; l < daughterTopos[k].nmbDecayVertices(); ++l)
+									if (   *(daughterTopos   [k].decayVertices()[l])
+									    != *(symDaughterTopos[k].decayVertices()[l]))
+										foundSymTopo = false;
+						}
+					}
+					if (foundSymTopo)
+						symTopoIds.push_back(i);
+				}
+				
+				printDebug << "symmetric topos = ";
+				for (size_t i = 0; i < symTopoIds.size(); ++i)
+					cout << symTopoIds[i] << "   ";
+				cout << endl << endl;
+				
+				
+				++countRemovedBose;
 			}
 		}
 		printInfo << "removed " << countRemovedBose << " Bose duplicates" << endl;
+	}
+	
+
+
+	// if (0) {
+	// 	printInfo << "removing Bose duplicates..." << endl;
+	// 	unsigned int countRemovedBose = 0;
+	// 	for (size_t waveSetIndex = 0; waveSetIndex < _waveSet.size(); ++waveSetIndex) {
+	// 		// get Bose-symmetric vertices
+	// 		isobarDecayTopologyPtr       topoSym         = _waveSet[waveSetIndex].clone();
+	// 		vector<isobarDecayVertexPtr> boseSymVertices = topoSym->findIsobarBoseSymVertices();
+	// 		if (boseSymVertices.size() > 1) {
+	// 			printErr << "the code does not yet support decay topologies with " << boseSymVertices.size()
+	// 			         << " Bose symmetric decay vertices. aborting." << endl;
+	// 			throw;
+	// 		}
+	// 		// construct topology where the two isobars are swapped
+	// 		if (boseSymVertices.size() == 1) {
+	// 			const isobarDecayVertex& vertSym = *(boseSymVertices[0]);
+	// 			printSucc << vertSym << endl;
+	// 			// get decay trees of the two isobars
+	// 			isobarDecayVertexPtr daughterVertices[2]
+	// 				= {static_pointer_cast<isobarDecayVertex>(topoSym->toVertex(vertSym.daughter1())),
+	// 				   static_pointer_cast<isobarDecayVertex>(topoSym->toVertex(vertSym.daughter2()))};
+	// 			isobarDecayTopology  daughterDecays  [2] = {topoSym->subDecay(daughterVertices[0]),
+	// 			                                            topoSym->subDecay(daughterVertices[1])};
+	// 			printDebug << daughterDecays[0];
+	// 			printDebug << daughterDecays[1];
+	// 			// get isobar decay vertices not in daughter decays
+	// 			vector<nodeDesc> daughterDecayNodes[2] = {topoSym->sortNodesDfs(daughterVertices[0]),
+	// 			                                          topoSym->sortNodesDfs(daughterVertices[1])};
+	// 			vector<isobarDecayVertexPtr> otherDecayVertices;
+	// 			for (size_t i = 0; i < topoSym->nmbDecayVertices(); ++i) {
+	// 				isobarDecayVertexPtr vert                  = topoSym->isobarDecayVertices()[i];
+	// 				bool                 vertexInDaughterDecay = false;
+	// 				for (size_t j = 0; j < 2; ++j)
+	// 					for (size_t k = 0; k < daughterDecayNodes[j].size(); ++k)
+	// 						if (topoSym->vertex(daughterDecayNodes[j][k]) == vert)
+	// 							vertexInDaughterDecay = true;
+	// 				if (not vertexInDaughterDecay)
+	// 					otherDecayVertices.push_back(vert);
+	// 			}
+	// 			for (size_t i = 0; i < otherDecayVertices.size(); ++i)
+	// 				printSucc << *(otherDecayVertices[i]) << endl;
+	// 			// get final state particles not in 
+	// 			vector<particlePtr> otherFsParticles;
+	// 			for (size_t i = 0; i < otherDecayVertices.size(); ++i) {
+	// 				particlePtr parts[2] = {otherDecayVertices[i]->daughter1(),
+	// 				                        otherDecayVertices[i]->daughter2()};
+	// 				for (size_t j = 0; j < 2; ++j)
+	// 					if (topoSym->isFsParticle(parts[j]))
+	// 						otherFsParticles.push_back(parts[j]);
+	// 			}
+	// 			for (size_t i = 0; i < otherFsParticles.size(); ++i)
+	// 				printWarn << *(otherFsParticles[i]) << endl;
+	// 			// construct topology with all vertices that are not in daughter decays
+	// 			isobarDecayTopologyPtr newTopo
+	// 				= createIsobarDecayTopology(topoSym->productionVertex(),
+	// 				                            otherDecayVertices, otherFsParticles, false);
+	// 			printSucc << *newTopo;
+	// 			++countRemovedBose;
+	// 			cout << endl;
+	// 		}
+	// 	}
+	// 	printInfo << "removed " << countRemovedBose << " Bose duplicates" << endl;
 
 
 		// // look for all Bose-partner decays
@@ -484,7 +581,7 @@ waveSetGenerator::generateWaveSet()
 		// 		}
 		// }
 
-	}
+	// }
 
 	return _waveSet.size();
 }

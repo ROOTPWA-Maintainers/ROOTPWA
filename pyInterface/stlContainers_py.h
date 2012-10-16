@@ -14,7 +14,8 @@ namespace rpwa {
 
 		void exportStlContainers();
 
-		std::set<std::string> converBPObjectToStrSet(boost::python::object list);
+		std::set     <std::string> convertBPObjectToStrSet     (boost::python::object list);
+		std::multiset<std::string> convertBPObjectToStrMultiSet(boost::python::object list);
 
 	}
 }

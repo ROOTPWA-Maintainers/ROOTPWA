@@ -136,6 +136,7 @@ bool
 rpwa::operator ==(const particleProperties& lhsProp,
                   const particleProperties& rhsProp)
 {
+	// printDebug << "!!!particleProperties::==" << endl;
 	return (    (lhsProp.name()         == rhsProp.name()        )
 	        and (lhsProp.antiPartName() == rhsProp.antiPartName())
 	        and (lhsProp.charge()       == rhsProp.charge()      )
@@ -189,6 +190,13 @@ bool
 particleProperties::isSpinExotic() const
 {
 	return (isMeson() and igjpIsExotic(isospin(), G(), J(), P()));
+}
+
+
+bool 
+particleProperties::hasDecay(const multiset<string>& daughters) const
+{
+  return find(_decayModes.begin(), _decayModes.end(), daughters) != _decayModes.end();
 }
 
 
@@ -351,14 +359,15 @@ particleProperties::print(ostream& out) const
 	    << "is photon = "               << yesNo(isPhoton()) << ", "
 	    << "antiparticle '"             << antiPartName()    << "', "
 	    << "is its own antiparticle = " << yesNo(isItsOwnAntiPart());
-
 	// decay products
-	unsigned int ndec=nDecays();
-	if(ndec > 0){
-		out << "\n Known decay modes: " << endl;
-		for(unsigned int idec=0;idec<ndec;++idec){
-			std::copy(_decaymodes[idec].begin(), _decaymodes[idec].end(), std::ostream_iterator<string>(std::cout, " "));
-			out << endl;
+	const unsigned int nmbDecays = this->nmbDecays();
+	if (nmbDecays > 0) {
+		out << endl << "    decay modes:" << endl;
+		for (unsigned int i = 0; i < nmbDecays; ++i) {
+			out << "        -> ";
+			copy(_decayModes[i].begin(), _decayModes[i].end(), ostream_iterator<string>(out, "  "));
+			if (i < nmbDecays - 1)
+				out << endl;
 		}
 	}
 
@@ -494,10 +503,4 @@ particleProperties::stripChargeFromName(const string& partName)
 {
 	int dummy;
 	return chargeFromName(partName, dummy);
-}
-
-
-bool 
-particleProperties::hasDecay(const set<string>& daughters) const {
-  return (find(_decaymodes.begin(),_decaymodes.end(),daughters)!=_decaymodes.end());
 }

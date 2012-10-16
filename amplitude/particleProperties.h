@@ -113,11 +113,13 @@ namespace rpwa {
 
 		bool isSpinExotic() const;  ///< returns whether particle is spin-exotic
 
-		bool fillFromDataTable(const std::string& name, 
-		                       const bool         warnIfNotExistent = true);
+		const std::vector<std::multiset<std::string> >& decayModes() const { return _decayModes; }  ///< returns defined decay modes for this particle
+		int  nmbDecays   () const { return _decayModes.size(); }  ///< returns number of defined decay modes for this particle
+		bool hasDecay    (const std::multiset<std::string>& daughters) const; ///< returns whether given decay mode is in list of decays
+		void addDecayMode(const std::multiset<std::string>& daughters) { _decayModes.push_back(daughters); }  ///< adds decay channel into list of allowed decay modes
 
-		int  nDecays() const {return _decaymodes.size();}
-		bool hasDecay(const std::set<std::string>& daughters) const ; ///< returns true if decay is in list
+		bool fillFromDataTable(const std::string& name, 
+		                       const bool         warnIfNotExistent = true);  ///< sets particle properties from entry in particle data table
 
 		void setName        (const std::string& name       );                                                ///< sets particle name and charge (if given in name)
 		void setAntiPartName(const std::string& name       ) { _antiPartName = stripChargeFromName(name); }  ///< sets antiparticle name (charge in name is ignored)
@@ -143,12 +145,8 @@ namespace rpwa {
 		              const int J,
 		              const int P,
 		              const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
-		void addDecayMode(const std::set<std::string>& daughters) {_decaymodes.push_back(daughters);}
-		///< adds a set of particles into which the particle can decay  
 
-
-
-		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle
+		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle; !NOTE! decay modes are not (yet) handled
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)]
 
@@ -190,14 +188,11 @@ namespace rpwa {
 		int         _P;             ///< parity (0 = undefined)
 		int         _C;             ///< C-parity (0 = undefined)
 
-		std::vector<std::set<std::string> > _decaymodes; ///< decaymodes OPTIONAL
+		std::vector<std::multiset<std::string> > _decayModes; ///< allowed decay modes
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
-
-
-
-	};
+	};  // particleProperties
 
 
 	inline

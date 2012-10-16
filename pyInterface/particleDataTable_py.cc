@@ -29,7 +29,7 @@ namespace {
 			bp::list pyListDecayProducts = bp::extract<bp::list>(pyDecayProducts);
 			std::vector<std::string> whiteList(bp::len(pyListWhiteList), "");
 			std::vector<std::string> blackList(bp::len(pyListBlackList), "");
-			std::set<std::string> decayProducts;
+			std::multiset<std::string> decayProducts;
 
 			for(int i = 0; i < bp::len(pyListWhiteList); ++i) {
 				whiteList[i] = bp::extract<std::string>(pyListWhiteList[i]);
@@ -114,8 +114,8 @@ void rpwa::py::exportParticleDataTable()
 		.staticmethod("readFile")
 		.def("read", &particleDataTableWrapper::read__)
 		.staticmethod("read")
-		.def("readDecayFile", &particleDataTableWrapper::readDecayFile)
-		.staticmethod("readDecayFile")
+		.def("readDecayModeFile", &particleDataTableWrapper::readDecayModeFile)
+		.staticmethod("readDecayModeFile")
 
 		.def("clear", &particleDataTableWrapper::clear)
 		.staticmethod("clear")    

@@ -89,14 +89,11 @@ main(int    argc,
 	string       pdgFileName              = "./particleDataTable.txt";
 	string       decayFileName            = "";
 	string       texFileName              = "waveset.tex";
-	bool         doTeX                    = false;
-	bool         useDecays                = false;
 	string       outDirName               = ".";
 	bool         newKeyFileNameConvention = false;
 	bool         debug                    = false;
 	bool         forceDecayCheck          = false;
 	extern char* optarg;
-	//extern int   optind;
 	int          c;
 	while ((c = getopt(argc, argv, "k:p:d:o:t:fnvh")) != -1)
 		switch (c) {
@@ -108,11 +105,9 @@ main(int    argc,
 			break;
 		case 'd':
 			decayFileName = optarg;
-			useDecays = true;
 			break;
 		case 't':
 			texFileName = optarg;
-			doTeX = true;
 			break;
 		case 'o':
 			outDirName = optarg;
@@ -132,30 +127,35 @@ main(int    argc,
 		}
 
 	// initialize particle data table
-	particleDataTable::readFile(pdgFileName);
-	if(useDecays)particleDataTable::readDecayFile(decayFileName);
-
-	if(debug){
-	  printInfo << particleDataTable::instance();
+	particleDataTable::readFile(pdgFileName);	
+	bool useDecays = false;
+	if (decayFileName != "") {
+		if (particleDataTable::readDecayModeFile(decayFileName))
+			useDecays = true;
+		else {
+			printErr << "could not read particle decay modes from file '" << decayFileName << "'. "
+			         << "aborting." << endl;
+			exit(1);
+		}
 	}
+	if (debug)
+		printDebug << "particle data table:" << endl << particleDataTable::instance();
 	particleDataTable::setDebug(debug);
-	
 
+	// print latex header
 	ofstream wavelistTeX;
-	if(doTeX){
-	  wavelistTeX.open(texFileName.c_str());
-	
-	  // print latex header
+	bool     doTeX = false;
+	if (texFileName != "") {
+		doTeX = true;
+	  wavelistTeX.open(texFileName.c_str());	
 	  wavelistTeX << "\\documentclass[10pt,a4paper]{article}" << endl
-		      << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
-		      << "\\def\\dst{\\displaystyle}"             << endl
-		      << "\\def\\vsp{\\hbox{\\vrule height12.5pt depth3.5pt width0pt}}" << endl
-		      << "\\def\\ells#1#2{\\Big[\\hskip-5pt\\vsp\\begin{array}{c}\\dst#1\\\\[-4pt]\\dst#2\\end{array}\\vsp\\hskip-5pt\\Big]}" << endl
-		      << "\\begin{document}"                      << endl
-		      << "\\begin{align*} \n \\begin{aligned}"    << endl;
-	 
-
-	} // end if doTeX
+	              << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
+	              << "\\def\\dst{\\displaystyle}"             << endl
+	              << "\\def\\vsp{\\hbox{\\vrule height12.5pt depth3.5pt width0pt}}" << endl
+	              << "\\def\\ells#1#2{\\Big[\\hskip-5pt\\vsp\\begin{array}{c}\\dst#1\\\\[-4pt]\\dst#2\\end{array}\\vsp\\hskip-5pt\\Big]}" << endl
+	              << "\\begin{document}"                      << endl
+	              << "\\begin{align*} \n \\begin{aligned}"    << endl;
+	}
 
 
 	printInfo << "generating wave set from template key file '" << keyFileName << "'" << endl;
@@ -178,18 +178,17 @@ main(int    argc,
 		bool isConsistent = decayTopos[i].checkTopology() and decayTopos[i].checkConsistency();
 		cout << "    " << setw(4) << i << ": "
 		     << waveDescription::waveNameFromTopology(decayTopos[i], newKeyFileNameConvention) << " ... ";
-		if (isConsistent){
+		if (isConsistent) {
 		  cout << "okay" << endl;
-		  if(doTeX){
+		  if (doTeX) {
 		     wavelistTeX << waveDescription::waveLaTeXFromTopology(decayTopos[i]) << "\\\\" << endl;
-		     if((i+1)%entriesPerPage==0){
-		       wavelistTeX << "\\end{aligned} \n \\end{align*}"
-				   << "\\pagebreak\n"
-				   << "\\begin{align*} \n \\begin{aligned}"    << endl;
-		     } // end entriePerPage==0
-		  } // endif doTeX
-		}
-		else {
+		     if ((i + 1) % entriesPerPage ==0 ) {
+			     wavelistTeX << "\\end{aligned} \n \\end{align*}"
+			                 << "\\pagebreak\n"
+			                 << "\\begin{align*} \n \\begin{aligned}" << endl;
+		     }
+		  }
+		}	else {
 			cout << "problems!" << endl;
 			++nmbInconsistentDecays;
 		}
@@ -204,8 +203,8 @@ main(int    argc,
 		cout << ". " << nmbInconsistentDecays << " waves have problems.";
 	cout<< endl;
 
-	if(doTeX){
-	  wavelistTeX << "\\end{aligned} \n \\end{align*}"    << endl;
+	if (doTeX) {
+	  wavelistTeX << "\\end{aligned} \n \\end{align*}" << endl;
 	  wavelistTeX << "\\end{document}" << endl;
 	  wavelistTeX.close();
 	}

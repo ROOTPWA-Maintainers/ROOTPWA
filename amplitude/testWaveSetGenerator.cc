@@ -65,26 +65,48 @@ main(int argc, char** argv)
 	particleDataTable& pdt = particleDataTable::instance();
 	pdt.readFile();
 
+	// test selective comparision of particle properties
 	if (0) {
 		particleProperties prop1("bla",  2, -1, 0, +1, +1);
 		particleProperties prop2("blub", 2, +1, 2, -1, -1);
   
 		string opt="IGJPC";
  
-		cout << "Comparison  result: " << (prop1 == prop2) << endl;
-		cout << "Comparison with opt = " << opt << "  result: "
-		     << (prop1 ==  pair<particleProperties, string>(prop2, opt)) << endl;
+		printDebug << "Comparison  result: " << (prop1 == prop2) << endl;
+		printDebug << "Comparison with opt = " << opt << "  result: "
+		           << (prop1 ==  pair<particleProperties, string>(prop2, opt)) << endl;
 
 		vector<const particleProperties*> selection = pdt.entriesMatching(prop2, opt);
-		cout << "Matching entries in pdt with prototype: " << endl;
-		cout << prop2 << endl;
-		cout << " with option " << opt << endl;
+		printDebug << "Matching entries in pdt with prototype: " << endl
+		           << prop2 << endl
+		           << " with option " << opt << endl;
 
 		for(unsigned int i = 0; i < selection.size(); ++i)
 			cout << *selection[i] << endl;
 	}
 
+
+	// test particle comparison
 	if (1) {
+		particleProperties partProp1;
+		partProp1.fillFromDataTable("pi+");
+		particleProperties partProp2 = partProp1;
+
+		particlePtr part1 = createParticle(partProp1);
+		particlePtr part2 = createParticle(partProp2, 1, 2, +1);
+		printDebug << "particle properties" << endl
+		           << partProp1 << endl
+		           << partProp2 << endl
+		           << "are equal = "
+		           << trueFalse(partProp1 == partProp2) << endl;
+		printDebug << "particles" << endl
+		           << *part1 << endl
+		           << *part2 << endl
+		           << "are equal = " << trueFalse(*part1 == *part2) << endl;
+	}
+	
+
+	if (0) {
 		waveSetGenerator waveSetGen;
 		if (not waveSetGen.setWaveSetParameters("testWaveSetGenerator.key")) {
 			cout << "could not initialize wave set generator. aborting." << endl;
