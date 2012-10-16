@@ -100,7 +100,7 @@ public:
   void listwaves() const;
   void Reset();
   void PrintParameters() const;
-  void printAmpsGenPW(ostream& s) const;
+  void printAmpsGenPW(std::ostream& s) const;
 
   // accessors that allow copying of TFitBin
   const std::vector<TComplex>&             prodAmps()         const { return _amps;       }

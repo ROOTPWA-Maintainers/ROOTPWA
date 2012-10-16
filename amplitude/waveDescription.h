@@ -230,7 +230,7 @@ namespace rpwa {
 	{
 		if (_debug)
 			printDebug << "writing key file '" << keyFileName << "'" << std::endl;
-		ofstream outFile(keyFileName.c_str());
+		std::ofstream outFile(keyFileName.c_str());
 		if (not outFile) {
 			printErr << "cannot create key file '" << keyFileName << "'" << std::endl;
 			return false;
