@@ -420,7 +420,7 @@ TDiffractivePhaseSpace::event()
     }
 
     double tPrime(_tprimeMin);
-    if ( _tprimeMax > _tprimeMin ) {
+    if ( _tprimeMax < _tprimeMin ) {
       // calculate the slope parameter depending on the invariant mass
       const double calc_invSlopePar = Get_inv_SlopePar(xMass);
       tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
@@ -503,8 +503,7 @@ TDiffractivePhaseSpace::event()
     }
 
     // apply t cut
-    if (t <= _tMin &&
-        _tprime >= _tprimeMin )
+    if (t > _tMin || _tprime > _tprimeMin || _tprime < _tprimeMax)
       continue;
     
     // generate n-body phase space for X system
