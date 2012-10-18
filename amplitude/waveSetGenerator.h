@@ -106,6 +106,7 @@ namespace rpwa {
 		                                                    const particleProperties&   isobar,
 		                                                    const int                   parentCharge);
 
+		void removeBoseSymDecays();  ///< filters out decays from wave set that are related by Bose symmetrization
 
 		boost::tuples::tuple<int, int> _isospinRange;           ///< range of allowed isobar isospins
 		boost::tuples::tuple<int, int> _JRange;                 ///< range of allowed isobar spins

@@ -40,6 +40,7 @@
 
 
 #include <vector>
+#include <set>
 #include <algorithm>
 
 #include "cudaUtils.hpp"
@@ -53,9 +54,9 @@ namespace rpwa {
 									 // into single string; required for more complex types T
 #define protect__(x...) x
 #endif
-#define vector2(T) std::vector<std::vector<T> >
-#define vector3(T) std::vector<std::vector<std::vector<T> > >
-#define vector4(T) std::vector<std::vector<std::vector<std::vector<T> > > >
+#define vector2D(T) std::vector<std::vector<T> >
+#define vector3D(T) std::vector<std::vector<std::vector<T> > >
+#define vector4D(T) std::vector<std::vector<std::vector<std::vector<T> > > >
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -261,6 +262,38 @@ namespace rpwa {
 		indices[0] = index;
 	}
 
+
+	//////////////////////////////////////////////////////////////////////////////
+	// predicate for vector algorithms (in particular remove_if) that
+	// flags vector elements that are in the given set of indices
+	template<typename T>
+	class isInListOfIndices {
+
+	public:
+
+		isInListOfIndices(const typename std::vector<T>::const_iterator& begin,
+		                  const std::set<std::size_t>&                   indices)
+			: _begin  (begin),
+			  _indices(indices)
+		{	}
+		virtual ~isInListOfIndices() { }
+
+		bool
+		operator()(const T& val)
+		{
+			// this assumes that the algorithm reads all elements consecutively from begin to end
+			const int index = std::distance(&(*_begin), &val);
+			std::set<std::size_t>::const_iterator indexEntry = _indices.find(index);
+			return indexEntry != _indices.end();
+		}
+
+	private:
+
+		const typename std::vector<T>::const_iterator& _begin;    ///< start of range
+		const std::set<std::size_t>&                   _indices;  ///< indices to check against
+
+	};
+	
 
 }  // namespace rpwa
 

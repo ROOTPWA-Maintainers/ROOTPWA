@@ -266,11 +266,11 @@ particleDataTable::readDecayModeFile(const string& fileName)
 	             << "'" << fileName << "'" << endl;
   // loop over decay list entries and add decays to particleDataTable
   unsigned int countEntries = 0;
-  for (unsigned int i = 0; i < nmbEntries; ++i) {
-	  const Setting& partDecayEntry = (*partDecayList)[i];
+  for (unsigned int entryIndex = 0; entryIndex < nmbEntries; ++entryIndex) {
+	  const Setting& partDecayEntry = (*partDecayList)[entryIndex];
     string         partName;
     if (not partDecayEntry.lookupValue("name", partName)) {
-	    printWarn << "particle decay list entry [" << i << "] does not hava a 'name' field. "
+	    printWarn << "particle decay list entry [" << entryIndex << "] does not hava a 'name' field. "
 	              << "ignoring entry." << endl;
 	    continue;
     }
@@ -280,26 +280,26 @@ particleDataTable::readDecayModeFile(const string& fileName)
     const Setting* partDecays = findLibConfigList(partDecayEntry, "decays");
     if (not partDecays) {
 	    printWarn << "cannot find 'decays' list for " << partName
-	              << " particle decay (list entry [" << i << "]). "
+	              << " particle decay (list entry [" << entryIndex << "]). "
 	              << "ignoring entry." << endl;
 	    continue;
     }
     // lookup particle in database
-    map<string, particleProperties>::iterator i = _dataTable.find(partName);
-    if (i == _dataTable.end()) {
+    map<string, particleProperties>::iterator dataTableEntry = _dataTable.find(partName);
+    if (dataTableEntry == _dataTable.end()) {
 	    printWarn << "could not find particle " << partName << " in data table. "
 	              << "ignoring entry." << endl;
 	    continue;
     }
-    particleProperties& particleProp = i->second;
+    particleProperties& particleProp = dataTableEntry->second;
     // loop over decay modes for this particle
     const unsigned int nmbDecays = partDecays->getLength();
-    for (unsigned int j = 0; j < nmbDecays; ++j) {
+    for (unsigned int decayIndex = 0; decayIndex < nmbDecays; ++decayIndex) {
       // get string array of decay daughters
-	    const Setting* decayDaughters = findLibConfigArray((*partDecays)[j], "products");
+	    const Setting* decayDaughters = findLibConfigArray((*partDecays)[decayIndex], "products");
 	    if (not decayDaughters) {
 		    printWarn << "cannot find 'products' array for " << partName
-		              << " particle decay list entry [" << j << "]. "
+		              << " particle decay list entry [" << decayIndex << "]. "
 		              << "ignoring entry." << endl;
 		    continue;
 	    }
@@ -308,11 +308,11 @@ particleDataTable::readDecayModeFile(const string& fileName)
 	    // loop over decay products
       const unsigned int nmbDaughters = decayDaughters->getLength();
       multiset<string>   daughters;
-      for (unsigned int k = 0; k < nmbDaughters; ++k) {
-	      const string daughterName = (*decayDaughters)[k];
+      for (unsigned int daughterIndex = 0; daughterIndex < nmbDaughters; ++daughterIndex) {
+	      const string daughterName = (*decayDaughters)[daughterIndex];
 	      daughters.insert(daughterName);
 	      if (_debug)
-		      cout << daughterName << ((k < nmbDaughters - 1) ? "  " : "");
+		      cout << daughterName << ((daughterIndex < nmbDaughters - 1) ? "  " : "");
       }
       if(_debug)
 	      cout << endl;
