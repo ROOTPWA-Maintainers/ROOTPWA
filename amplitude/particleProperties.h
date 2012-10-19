@@ -72,16 +72,14 @@ namespace rpwa {
 
 		particleProperties& operator =(const particleProperties& partProp);
 		// comparison operators that check equality of all fields
-		friend bool operator ==(const particleProperties& lhsProp,
-		                        const particleProperties& rhsProp);
-		friend bool operator !=(const particleProperties& lhsProp,
-		                        const particleProperties& rhsProp) { return not(lhsProp == rhsProp); }
+		bool operator ==(const particleProperties& rhsProp) const { return this->isEqualTo(rhsProp); }
+		bool operator !=(const particleProperties& rhsProp) const { return not (*this == rhsProp);   }
 		// comparison operators that check equality of fields selectable via string
 		friend bool operator ==(const particleProperties&                         lhsProp,
-		                        const std::pair<particleProperties, std::string>& rhsProp);
+		                        const std::pair<particleProperties, std::string>& rhsPropSel);
 		friend bool operator !=(const particleProperties&                         lhsProp,
-		                        const std::pair<particleProperties, std::string>& rhsProp)
-		{ return not (lhsProp == rhsProp); }
+		                        const std::pair<particleProperties, std::string>& rhsPropSel)
+		{ return not (lhsProp == rhsPropSel); }
 
 		std::string name            () const { return nameWithCharge(_name, _charge);          }  ///< returns particle name including charge
 		std::string bareName        () const { return _name;                                   }  ///< returns particle name w/o charge
@@ -169,6 +167,11 @@ namespace rpwa {
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
+
+	protected:
+
+		virtual bool isEqualTo(const particleProperties& partProp) const;  ///< returns whether partProp is equal to this by checking equality of all member variables
+		
 
 	private:
 

@@ -43,6 +43,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/assign.hpp>
 
 #include "TClass.h"
 
@@ -58,6 +59,7 @@
   
 using namespace std;
 using namespace boost;
+using namespace boost::assign;
 using namespace libconfig;
 using namespace rpwa;
 
@@ -67,42 +69,42 @@ ClassImp(waveDescription);
 
 bool waveDescription::_debug = false;
 
-#include "boost/assign.hpp"
-using namespace boost::assign;
 
-map<string,string> waveDescription::isobars = map_list_of ("pi+","\\pi^+")
-  ("pi-"     , "\\pi^-")
-  ("pi+-"    , "\\pi^\\pm")
-  ("pi-+"    , "\\pi^\\mp")
-  ("sigma0"   , "\\sigma")
-  ("rho(770)0"  , "\\rho^0(770)")
-  ("a1(1260)-"  , "a_1^-(1260)")
-  ("a2(1320)-"  , "a_2^-(1320)")
-  ("rho(1450)0" , "\\rho^0(1450)")
-  ("rho(1700)0" , "\\rho^0(1700)")
-  ("pi(1300)-"  , "\\pi^-(1300)")
-  ("pi(1800)-"  , "\\pi^-(1800)")
-  ("pi2(1670)-" , "\\pi^-_2(1670)")
-  ("f0(1370)0"  , "f_0^0(1370)")
-  ("f0(1500)0"  , "f_0^0(1500)")
-  ("f0(1700)0"  , "f_0^0(1700)")
-  ("f1(1285)0"  , "f_1^0(1285)")
-  ("f1(1420)0"  , "f_1^0(1420)")
-  ("b1(1235)0"  , "b_1^0(1235)")
-  ("b1(1800)0"  , "b_1^0(1800)")
-  ("b0(1800)0"  , "b_0^0(1800)")
-  ("b2(1800)0"  , "b_2^0(1800)")
-  ("b1(1500)0"  , "b_1^0(1500)")
-  ("f2(1270)0"  , "f_2^0(1270)")
-  ("f2(1950)0"  , "f_2^0(1950)")
-  ("f2(1565)0"  , "f_2^0(1565)")
-  ("f2(2010)0"  , "f_2^0(2010)")
+map<string,string> waveDescription::isobars = map_list_of
+	("pi+",         "\\pi^+")
+	("pi-",         "\\pi^-")
+  ("pi+-",        "\\pi^\\pm")
+  ("pi-+",        "\\pi^\\mp")
+  ("sigma0",      "\\sigma")
+  ("rho(770)0",   "\\rho^0(770)")
+  ("a1(1260)-",   "a_1^-(1260)")
+  ("a2(1320)-",   "a_2^-(1320)")
+  ("rho(1450)0",  "\\rho^0(1450)")
+  ("rho(1700)0",  "\\rho^0(1700)")
+  ("pi(1300)-",   "\\pi^-(1300)")
+  ("pi(1800)-",   "\\pi^-(1800)")
+  ("pi2(1670)-",  "\\pi^-_2(1670)")
+  ("f0(1370)0",   "f_0^0(1370)")
+  ("f0(1500)0",   "f_0^0(1500)")
+  ("f0(1700)0",   "f_0^0(1700)")
+  ("f1(1285)0",   "f_1^0(1285)")
+  ("f1(1420)0",   "f_1^0(1420)")
+  ("b1(1235)0",   "b_1^0(1235)")
+  ("b1(1800)0",   "b_1^0(1800)")
+  ("b0(1800)0",   "b_0^0(1800)")
+  ("b2(1800)0",   "b_2^0(1800)")
+  ("b1(1500)0",   "b_1^0(1500)")
+  ("f2(1270)0",   "f_2^0(1270)")
+  ("f2(1950)0",   "f_2^0(1950)")
+  ("f2(1565)0",   "f_2^0(1565)")
+  ("f2(2010)0",   "f_2^0(2010)")
   ("eta(1440)0" , "\\eta^0(1420)")
   ("eta2(1645)0", "\\eta_2^0(1645)")
   ("eta1(1600)0", "\\eta_1^0(1600)")
-  ("pi1(1600)-", "\\pi_1^-(1600)")
+  ("pi1(1600)-",  "\\pi_1^-(1600)")
   ("rho3(1690)0", "\\rho_3^0(1690)")
-  ("rho(1600)0", "\\rho^0(1600)");
+  ("rho(1600)0",  "\\rho^0(1600)");
+
 
 waveDescription::waveDescription()
 	: TObject          (),
@@ -111,11 +113,6 @@ waveDescription::waveDescription()
 	  _keyFileLocalCopy("")
 {
 	//waveDescription::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
-
-// setup isobar dictionary key->tex
-  
-
-
 }
 
 
@@ -160,7 +157,7 @@ waveDescription::parseKeyFile(const string& keyFileName)
 		delete _key;
 		_key = 0;
 		return false;
-	}		
+	}
 	// read key file contents into string
 	{
 		ifstream keyFile(keyFileName.c_str());
@@ -237,14 +234,14 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 			printWarn << "problems constructing X particle. cannot construct decay topology." << endl;
 			return false;
 		}
-  
+
 	// create production vertex
 	productionVertexPtr prodVert = productionVertexPtr();
 	if (not constructProductionVertex(rootKey, X, prodVert)) {
 		printWarn << "problems constructing production vertex. cannot construct decay topology." << endl;
 		return false;
 	}
-  
+
 	// find X decay group
 	const Setting* XDecayKey = findLibConfigGroup(*decayVertKey, "XDecay");
 	if (not XDecayKey) {
@@ -267,7 +264,7 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	//!!! user should correctly define quantum numbers
 	//topo->calcIsobarBaryonNmbs();
 	//topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
-  
+
 	printSucc << "constructed decay topology from key file" << endl;
 	return true;
 }
@@ -424,15 +421,16 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 		}
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
-		waveLaTeX <<  spinQn(X.isospin()) << "^{"<< parityQn(X.G()) << "}"
+		waveLaTeX << spinQn(X.isospin()) << "^{"<< parityQn(X.G()) << "}"
 		          << spinQn(X.J()) << "^{" << parityQn(X.P()) << parityQn(X.C()) << "}"
 		          << spinQn(X.spinProj()) << "^{" << parityQn(X.reflectivity()) << "}\\quad & "
 		          << waveLaTeXFromTopology(topo, topo.XIsobarDecayVertex());
-	} 
-	else if(!(topo.isFsParticle(currentVertex->daughter1()) && topo.isFsParticle(currentVertex->daughter1()))){
+	}
+	else if(not (topo.isFsParticle(currentVertex->daughter1())
+	             and topo.isFsParticle(currentVertex->daughter1()))){
 	  // recurse down decay chain
 	  // do this only if not both daughters are fs partiles
-	  
+
 	  bool isXdecay= ( currentVertex ==  topo.XIsobarDecayVertex() );
 
 		// first daughter
@@ -688,7 +686,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 			} else
 				success = false;
 		}
-  
+
 	const Setting*      isobarKeys = findLibConfigList(parentKey, "isobars", false);
 	vector<particlePtr> isobarDaughters;
 	if (isobarKeys)
@@ -701,7 +699,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 			success &= constructDecayVertex((*isobarKeys)[i], isobarDaughters.back(),
 			                                decayVertices, fsParticles, fromTemplate);
 		}
-  
+
 	const unsigned int nmbDaughters = fsDaughters.size() + isobarDaughters.size();
 	if (nmbDaughters != 2) {
 		printWarn << "cannot construct isobar vertex, because number of daughters "
@@ -711,14 +709,14 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 	}
 	if (not success)
 		return false;
-  
+
 	// get isobar vertex parameters
 	int L = 0, S = 0;
 	if ((   not parentKey.lookupValue("L", L)
 	     or not parentKey.lookupValue("S", S)) and not fromTemplate)
 		printWarn << "Either L or S are not specified in '" << parentKey.getPath() << "'. "
 		          << "using zero." << endl;
-  
+
 	// get mass dependence
 	massDependencePtr massDep;
 	if (parentParticle->bareName() != "X") {
@@ -728,7 +726,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 			massDepKey->lookupValue("name", massDepType);
 		massDep = mapMassDependenceType(massDepType);
 	}
-  
+
 	// if there is 1 final state particle and 1 isobar put them in the
 	// same order as in the key file
 	vector<particlePtr> daughters(2, particlePtr());
@@ -744,7 +742,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 		daughters = fsDaughters;
 	else if (isobarDaughters.size() == 2)
 		daughters = isobarDaughters;
-  
+
 	// construct isobar decay vertex
 	decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0],
 	                                                daughters[1], L, S, massDep));
@@ -883,7 +881,7 @@ waveDescription::setXDecayKeys(Setting&                   parentDecayKey,
 		else
 			isobars.push_back(part);
 	}
-	bool success = true;	
+	bool success = true;
 	if (isobars.size() > 0) {
 		Setting& isobarsKey = parentDecayKey.add("isobars", Setting::TypeList);
 		for (unsigned int i = 0; i < isobars.size(); ++i) {

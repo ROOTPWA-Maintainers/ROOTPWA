@@ -45,6 +45,7 @@
 
 
 using namespace std;
+using namespace boost;
 using namespace boost::assign;
 using namespace rpwa;
 
@@ -69,9 +70,9 @@ main(int argc, char** argv)
 	if (0) {
 		particleProperties prop1("bla",  2, -1, 0, +1, +1);
 		particleProperties prop2("blub", 2, +1, 2, -1, -1);
-  
+
 		string opt="IGJPC";
- 
+
 		printDebug << "Comparison  result: " << (prop1 == prop2) << endl;
 		printDebug << "Comparison with opt = " << opt << "  result: "
 		           << (prop1 ==  pair<particleProperties, string>(prop2, opt)) << endl;
@@ -96,21 +97,33 @@ main(int argc, char** argv)
 		particlePtr part2 = createParticle(partProp2, 1, 2, +1);
 		printDebug << "particle properties" << endl
 		           << partProp1 << endl
-		           << partProp2 << endl
-		           << "are equal = "
-		           << trueFalse(partProp1 == partProp2) << endl;
+		           << partProp2 << endl;
+		printInfo << "comparing particle properties" << endl;
+		partProp1 == partProp2;
 		printDebug << "particles" << endl
 		           << *part1 << endl
-		           << *part2 << endl
-		           << "are equal = " << trueFalse(*part1 == *part2) << endl;
+		           << *part2 << endl;
+		printInfo << "comparing particles" << endl;
+		*part1 == *part2;
 
-		const string       keyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		// const string       keyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		const string       keyFileName = "testWaveDescription.key";
 		waveDescription    waveDesc;
 		isobarAmplitudePtr amp;
 		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
-			isobarDecayTopologyPtr topo = amp->decayTopology();
-			printInfo << *amp;
-			amp->init();
+			isobarDecayTopologyPtr isoTopo = amp->decayTopology();
+			decayTopologyPtr       topo    = static_pointer_cast<decayTopology>(isoTopo);
+			// printInfo << *isoTopo << endl;
+			// printInfo << *topo    << endl;
+			isobarDecayVertexPtr isoVert = isoTopo->XIsobarDecayVertex();
+			interactionVertexPtr vert    = topo->XDecayVertex();
+			printInfo << "isobar decay vertex: " << *isoVert << endl;
+			printInfo << "interaction vertex:  " << *vert    << endl;
+
+			printInfo << "comparing isobar decay vertices" << endl;
+			*isoVert == *isoVert;
+			printInfo << "comparing interaction vertices" << endl;
+			*vert == *vert;
 		}
 
 	}

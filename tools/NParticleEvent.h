@@ -78,7 +78,7 @@ public:
   TLorentzVector getHelicityFrame(TLorentzVector pMother, TLorentzVector pX, TLorentzVector p1);
 
   /*** @brief Dump evt format */
-  void writeGAMP(ostream& out); //< dump event to PWA200 input format (txt file)
+  void writeGAMP(std::ostream& out); //< dump event to PWA200 input format (txt file)
   unsigned int nStates() const {return _NPStates.size();} //< returns number of states
   unsigned int nParticles() const {return _fsparticles.size();} //< returns number of final state particles
   

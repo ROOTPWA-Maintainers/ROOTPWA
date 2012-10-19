@@ -62,7 +62,7 @@ namespace rpwa {
 	class massDependence {
 
 	public:
-  
+
 		massDependence()          { }
 		virtual ~massDependence() { }
 
@@ -71,17 +71,17 @@ namespace rpwa {
 		virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
 
 		virtual std::string name() const { return "massDependence"; }  ///< returns label used in graph visualization, reporting, and key file
-    
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
+
 
 	protected:
-    
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
 
 
@@ -102,14 +102,14 @@ namespace rpwa {
 	class flatMassDependence : public massDependence {
 
 	public:
-  
+
 		flatMassDependence() : massDependence() { }
 		virtual ~flatMassDependence()           { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
 		virtual std::string name() const { return "flatMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
-    
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 	};
@@ -139,7 +139,7 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
-    
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 	};
@@ -172,7 +172,7 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }  ///< returns label used in graph visualization, reporting, and key file
-    
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 	protected:
@@ -188,7 +188,7 @@ namespace rpwa {
 		double _kaonChargedMass;
 		double _kaonNeutralMass;
 		double _kaonMeanMass;
-    
+
 	};
 
 
@@ -218,7 +218,7 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }  ///< returns label used in graph visualization, reporting, and key file
-    
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 	};
@@ -258,7 +258,7 @@ namespace rpwa {
 		virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }  ///< returns label used in graph visualization, reporting, and key file
-    
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 	};
@@ -303,7 +303,7 @@ namespace rpwa {
 	ublas::matrix<T>
 	invertMatrix(const ublas::matrix<T>& A,
 	             bool&                   isSingular)
-	{ 
+	{
 		ublas::matrix<T> inverseA(A.size1(), A.size2());
 		isSingular = !invert(A, inverseA);
 		return inverseA;

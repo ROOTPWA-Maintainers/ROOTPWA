@@ -132,57 +132,39 @@ particleProperties::operator =(const particleProperties& partProp)
 }
 
 
-bool
-rpwa::operator ==(const particleProperties& lhsProp,
-                  const particleProperties& rhsProp)
-{
-	// printDebug << "!!!particleProperties::==" << endl;
-	return (    (lhsProp.name()         == rhsProp.name()        )
-	        and (lhsProp.antiPartName() == rhsProp.antiPartName())
-	        and (lhsProp.charge()       == rhsProp.charge()      )
-	        and (lhsProp.mass()         == rhsProp.mass()        )
-	        and (lhsProp.width()        == rhsProp.width()       )
-	        and (lhsProp.baryonNmb()    == rhsProp.baryonNmb()   )
-	        and (lhsProp.isospin()      == rhsProp.isospin()     )
-	        and (lhsProp.strangeness()  == rhsProp.strangeness() )
-	        and (lhsProp.charm()        == rhsProp.charm()       )
-	        and (lhsProp.beauty()       == rhsProp.beauty()      )
-	        and (lhsProp.G()            == rhsProp.G()           )
-	        and (lhsProp.J()            == rhsProp.J()           )
-	        and (lhsProp.P()            == rhsProp.P()           )
-	        and (lhsProp.C()            == rhsProp.C()           ));
-}
+namespace rpwa {
 
+	// selector string can contain any of the following:
+	// I, G, J, P, C, strangeness, charm, beauty, baryonNmb, or allQn
+	bool 
+	operator ==(const particleProperties&               lhsProp,
+	            const pair<particleProperties, string>& rhsPropSel)
+	{
+		const particleProperties& rhsProp    = rhsPropSel.first;
+		const string&             selector   = rhsPropSel.second;
+		const bool                checkAllQn = (selector.find("allQn") != string::npos);
+		return (    (   ((selector.find("charge")      == string::npos) and not checkAllQn)
+		             or (lhsProp.charge()              == rhsProp.charge()))
+		        and (   ((selector.find("baryonNmb")   == string::npos) and not checkAllQn)
+		             or (lhsProp.baryonNmb()           == rhsProp.baryonNmb()))
+		        and (   ((selector.find("I")           == string::npos) and not checkAllQn)
+		             or (lhsProp.isospin()             == rhsProp.isospin()))
+		        and (   ((selector.find("strangeness") == string::npos) and not checkAllQn)
+		             or (lhsProp.strangeness()         == rhsProp.strangeness()))
+		        and (   ((selector.find("charm")       == string::npos) and not checkAllQn)
+		             or (lhsProp.charm()               == rhsProp.charm()))
+		        and (   ((selector.find("beauty")      == string::npos) and not checkAllQn)
+		             or (lhsProp.beauty()              == rhsProp.beauty()))
+		        and (   ((selector.find("G")           == string::npos) and not checkAllQn)
+		             or (lhsProp.G()                   == rhsProp.G()))
+		        and (   ((selector.find("J")           == string::npos) and not checkAllQn)
+		             or (lhsProp.J()                   == rhsProp.J()))
+		        and (   ((selector.find("P")           == string::npos) and not checkAllQn)
+		             or (lhsProp.P()                   == rhsProp.P()))
+		        and (   ((selector.find("C")           == string::npos) and not checkAllQn)
+		             or (lhsProp.C()                   == rhsProp.C())));
+	}
 
-// selector string can contain any of the following:
-// I, G, J, P, C, strangeness, charm, beauty, baryonNmb, or allQn
-bool 
-rpwa::operator ==(const particleProperties&               lhsProp,
-                  const pair<particleProperties, string>& rhs)
-{
-	const particleProperties& rhsProp    = rhs.first;
-	const string&             selector   = rhs.second;
-	const bool                checkAllQn = (selector.find("allQn") != string::npos);
-	return (    (   ((selector.find("charge") == string::npos) and not checkAllQn)
-	             or (lhsProp.charge()         == rhsProp.charge()))
-	        and (   ((selector.find("baryonNmb") == string::npos) and not checkAllQn)
-	             or (lhsProp.baryonNmb()         == rhsProp.baryonNmb()))
-	        and (   ((selector.find("I") == string::npos) and not checkAllQn)
-	             or (lhsProp.isospin()   == rhsProp.isospin()))
-	        and (   ((selector.find("strangeness") == string::npos) and not checkAllQn)
-	             or (lhsProp.strangeness()         == rhsProp.strangeness()))
-	        and (   ((selector.find("charm") == string::npos) and not checkAllQn)
-	             or (lhsProp.charm()         == rhsProp.charm()))
-	        and (   ((selector.find("beauty") == string::npos) and not checkAllQn)
-	             or (lhsProp.beauty()         == rhsProp.beauty()))
-	        and (   ((selector.find("G") == string::npos) and not checkAllQn)
-	             or (lhsProp.G()         == rhsProp.G()))
-	        and (   ((selector.find("J") == string::npos) and not checkAllQn)
-	             or (lhsProp.J()         == rhsProp.J()))
-	        and (   ((selector.find("P") == string::npos) and not checkAllQn)
-	             or (lhsProp.P()         == rhsProp.P()))
-	        and (   ((selector.find("C") == string::npos) and not checkAllQn)
-	             or (lhsProp.C()         == rhsProp.C())));
 }
 
 
@@ -503,4 +485,25 @@ particleProperties::stripChargeFromName(const string& partName)
 {
 	int dummy;
 	return chargeFromName(partName, dummy);
+}
+
+
+bool
+particleProperties::isEqualTo(const particleProperties& rhsProp) const
+{
+	// printErr << "!!!particleProperties ==" << endl;
+	return (    (name        () == rhsProp.name        ())
+	        and (antiPartName() == rhsProp.antiPartName())
+	        and (charge      () == rhsProp.charge      ())
+	        and (mass        () == rhsProp.mass        ())
+	        and (width       () == rhsProp.width       ())
+	        and (baryonNmb   () == rhsProp.baryonNmb   ())
+	        and (isospin     () == rhsProp.isospin     ())
+	        and (strangeness () == rhsProp.strangeness ())
+	        and (charm       () == rhsProp.charm       ())
+	        and (beauty      () == rhsProp.beauty      ())
+	        and (G           () == rhsProp.G           ())
+	        and (J           () == rhsProp.J           ())
+	        and (P           () == rhsProp.P           ())
+	        and (C           () == rhsProp.C           ()));
 }

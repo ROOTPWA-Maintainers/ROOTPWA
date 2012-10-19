@@ -173,7 +173,7 @@ int main(int argc, char** argv)
   TLorentzVector beam;
   TVector3 vertex;
   double tprime(0.);
-  double qbeam;
+  int qbeam;
   vector<int> q; // array of charges
 
   double Mom=reactConf.lookup("beam.momentum");

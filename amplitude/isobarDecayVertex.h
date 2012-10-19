@@ -70,12 +70,6 @@ namespace rpwa {
 		                           const bool cloneOutParticles = false) const  ///< creates copy of isobar decay vertex; must not be virtual
 		{ return isobarDecayVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
 
-		// comparison operators that check equality of all fields
-		friend bool operator ==(const isobarDecayVertex& lhsVert,
-		                        const isobarDecayVertex& rhsVert) { return lhsVert.isEqualTo(rhsVert); }
-		friend bool operator !=(const isobarDecayVertex& lhsVert,
-		                        const isobarDecayVertex& rhsVert) { return not(lhsVert == rhsVert); }
-
 		virtual bool addInParticle (const particlePtr&);  ///< disabled; parent particle has to be specified at construction
 		virtual bool addOutParticle(const particlePtr&);  ///< disabled; daughter particles have to be specified at construction
 
@@ -119,7 +113,7 @@ namespace rpwa {
 		virtual isobarDecayVertex* doClone(const bool cloneInParticles,
 		                                   const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
-		bool isEqualTo(const isobarDecayVertex& vert) const;  ///< returns whether vertex is equal to this by checking equality of all member variables
+		virtual bool isEqualTo(const interactionVertex& vert) const;  ///< returns whether vertex is equal to this by checking equality of all member variables
 
 	private:
 

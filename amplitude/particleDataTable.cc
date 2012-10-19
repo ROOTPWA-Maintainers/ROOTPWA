@@ -152,7 +152,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 				cout << " ; with allowed decay into " ;
 			copy(decayProducts.begin(), decayProducts.end(), ostream_iterator<string>(cout, "  "));
 			cout << endl;
-		}      
+		}
 		matchingEntries.push_back(&partProp);
 	}
 	return matchingEntries;

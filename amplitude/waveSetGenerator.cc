@@ -47,7 +47,7 @@
 #include "waveDescription.h"
 #include "waveSetGenerator.h"
 
-	
+
 using namespace std;
 using namespace boost;
 using namespace boost::tuples;
@@ -87,7 +87,7 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 		printWarn << "problems reading wave set parameters from '" << templateKeyFileName << "'. "
 		          << "cannot generate wave set." << endl;
 		return false;
-	}		
+	}
 	// find and parse group with wave set parameters
 	const Setting* waveSetParKey = findLibConfigGroup(key.getRoot(), "waveSetParameters", false);
 	if (waveSetParKey) {
@@ -170,7 +170,7 @@ waveSetGenerator::generateWaveSet()
 		if (_debug)
 			printDebug << "generating decay topologies for subdecay[" << iStart << "]: "
 			           << subDecays[iStart];
-		
+
 		// get daughter decay topologies
 		vector<vector<isobarDecayTopology>* > daughterDecays;
 		adjIterator iNd, iNdEnd;
@@ -183,10 +183,10 @@ waveSetGenerator::generateWaveSet()
 			for (iDaughter[1] = 0; iDaughter[1] < daughterDecays[1]->size(); ++iDaughter[1]) {
 
 				// get daughter particles from the respective decay topologies
-				const nodeDesc topNodes[2] = 
+				const nodeDesc topNodes[2] =
 					{(*daughterDecays[0])[iDaughter[0]].topNode(),
 					 (*daughterDecays[1])[iDaughter[1]].topNode()};
-				const particlePtr daughters[2] = 
+				const particlePtr daughters[2] =
 					{(*daughterDecays[0])[iDaughter[0]].vertex(topNodes[0])->inParticles()[0],
 					 (*daughterDecays[1])[iDaughter[1]].vertex(topNodes[1])->inParticles()[0]};
 				if (_debug)
@@ -196,7 +196,7 @@ waveSetGenerator::generateWaveSet()
 					           << "'" << daughters[1]->name() << "'" << endl
 					           << (*daughterDecays[0])[iDaughter[0]]
 					           << (*daughterDecays[1])[iDaughter[1]];
-				
+
 				// copy parent vertex
 				isobarDecayVertexPtr parentVertex
 					(new isobarDecayVertex(*static_pointer_cast<isobarDecayVertex>
@@ -210,7 +210,7 @@ waveSetGenerator::generateWaveSet()
 					= _templateTopo->joinDaughterDecays(parentVertex,
 					                                    (*daughterDecays[0])[iDaughter[0]],
 					                                    (*daughterDecays[1])[iDaughter[1]]);
-	
+
 				// calculate parent quantum numbers fixed by daughter quantum numbers
 				const int parentBaryonNmb   = daughters[0]->baryonNmb()   + daughters[1]->baryonNmb();
 				const int parentCharge      = daughters[0]->charge()      + daughters[1]->charge();
@@ -378,7 +378,7 @@ waveSetGenerator::generateWaveSet()
 				}  // S loop
 			}  // loop over daughter decays
 	}  // loop over all start nodes
-	
+
 	// extract decays for X-decay vertex and add production vertex
 	_waveSet = decayPossibilities[startNds.back()];
 	for (size_t i = 0; i < _waveSet.size(); ++i) {
@@ -411,9 +411,7 @@ waveSetGenerator::writeKeyFiles(const string& dirName,
 		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
 			++countSuccess;
 	}
-	
-	 printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
-	
+	printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
 	if (countSuccess != _waveSet.size()) {
 	  printWarn << "writing of " << _waveSet.size() - countSuccess << " key files failed" << endl;
 	  return false;
@@ -583,6 +581,8 @@ waveSetGenerator::findBoseSymDecays() const
 			if (i == waveIndex)
 				continue;
 			isobarDecayTopologyPtr symTopo = _waveSet[i].clone();  // needed, because subDecay below is not const
+			cout << "        !!!HERE1 " << i << endl;
+
 			// compare vertices that are not below the Bose-symmetric vertex
 			bool foundSymTopo = true;
 			for (size_t j = 0; j < nonSymVertIds.size(); ++j)
@@ -591,6 +591,7 @@ waveSetGenerator::findBoseSymDecays() const
 					foundSymTopo = false;
 			if (not foundSymTopo)
 				continue;
+			cout << "        !!!HERE2 " << i << endl;
 			// compare Bose-symmetric vertex
 			isobarDecayVertexPtr symVert         = symTopo->isobarDecayVertices()[boseSymVertIds[0]];
 			const particlePtr    symDaughters[2] = {symVert->daughter2(), symVert->daughter1()};  // !NOTE! reversed order
@@ -603,15 +604,24 @@ waveSetGenerator::findBoseSymDecays() const
 				foundSymTopo = false;
 			if (not foundSymTopo)
 				continue;
+			cout << "        !!!HERE3 " << i << endl;
 			// compare daughter topologies
 			const decayTopology symDaughterTopos[2]
 				= {symTopo->subDecay(symTopo->toNode(symDaughters[0])),
 				   symTopo->subDecay(symTopo->toNode(symDaughters[1]))};
+			interactionVertex::setDebug(true);
+			isobarDecayVertex::setDebug(true);
 			for (unsigned int k = 0; k < 2; ++k)
 				for (unsigned int l = 0; l < daughterTopos[k].nmbDecayVertices(); ++l)
 					if (   *(daughterTopos   [k].decayVertices()[l])
-					    != *(symDaughterTopos[k].decayVertices()[l]))
+					    != *(symDaughterTopos[k].decayVertices()[l])) {
 						foundSymTopo = false;
+						cout << "        !!!HERE4 " << i << " topo " << k << " verts[" << l << "]: "
+						     << *(daughterTopos   [k].decayVertices()[l]) << "  vs  "
+						     << *(symDaughterTopos[k].decayVertices()[l]) << endl;
+					}
+			interactionVertex::setDebug(false);
+			isobarDecayVertex::setDebug(false);
 			if (foundSymTopo) {
 				if (_debug)
 					printDebug << "found Bose-partner wave[" << i << "] "
@@ -644,7 +654,7 @@ waveSetGenerator::findBoseSymDecays() const
 				}
 			}
 		}  // inner loop over wave set
-				
+
 	}  // outer loop over wave set
 
 	printDebug << "symmetric topos to be removed = ";

@@ -58,9 +58,9 @@ namespace rpwa {
 
 
 	class particle : public particleProperties {
-	
+
 	public:
-			
+
 		particle();
 		particle(const particle&           part);
 		particle(const particleProperties& partProp,
@@ -118,11 +118,12 @@ namespace rpwa {
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
-    
+
 	protected:
-    
+
 		virtual particle* doClone() const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
-			
+
+		virtual bool isEqualTo(const particleProperties& partProp) const;  ///< returns whether partProp is equal to this by checking equality of all member variables (except Lorentz-vector)
 
 	private:
 

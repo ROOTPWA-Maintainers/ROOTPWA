@@ -128,14 +128,31 @@ isobarDecayVertex::doClone(const bool cloneInParticles,
 
 
 bool
-isobarDecayVertex::isEqualTo(const isobarDecayVertex& vert) const
+isobarDecayVertex::isEqualTo(const interactionVertex& vert) const
 {
+	if (_debug)
+		printErr << "!!!isobarDecayVertex ==" << endl;
+	const isobarDecayVertex* isoVert = dynamic_cast<const isobarDecayVertex*>(&vert);
+	if (not isoVert) {
+		if (_debug)
+			printErr << "no isobarDecayVertex!" << endl;
+		return false;
+	}
 	if (not interactionVertex::isEqualTo(vert))
 		return false;
-	if (   (L()              != vert.L())
-	    or (S()              != vert.S())
-	    or (massDependence() != vert.massDependence()))
+	if (   (L()              != isoVert->L())
+	    or (S()              != isoVert->S())
+	    or (massDependence() != isoVert->massDependence())) {
+		if (_debug)
+			printSucc << "HUH?: "
+			          << "L = " << L() << "  vs  " << isoVert->L() << ", "
+			          << "S = " << S() << "  vs  " << isoVert->S() << ", "
+			          << "m = " << massDependence() << "  vs  " << isoVert->massDependence()
+			          << endl;
 		return false;
+	}
+	if (_debug)
+		printSucc << "YEAH!" << endl;
 	return true;
 }
 
