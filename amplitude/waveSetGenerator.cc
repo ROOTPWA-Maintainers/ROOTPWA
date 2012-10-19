@@ -395,7 +395,7 @@ waveSetGenerator::generateWaveSet()
 	}
 
 	// post process wave set
-	removeBoseSymDecays();
+	set<size_t> boseSymWaveIndices = findBoseSymDecays();
 	return _waveSet.size();
 }
 
@@ -511,20 +511,20 @@ waveSetGenerator::createNewDecayTopology(const isobarDecayTopology&  parentDecay
 }
 
 
-void
-waveSetGenerator::removeBoseSymDecays()
+set<size_t>
+waveSetGenerator::findBoseSymDecays() const
 {
-	printInfo << "removing Bose duplicates..." << endl;
-	set<size_t> wavesSetIndicesToRemove;
-	for (size_t waveSetIndex = 0; waveSetIndex < _waveSet.size(); ++waveSetIndex) {
+	printInfo << "looking for Bose duplicates in wave set..." << endl;
+	set<size_t> boseSymWaveIndices;
+	for (size_t waveIndex = 0; waveIndex < _waveSet.size(); ++waveIndex) {
 
 		// don't consider entries that are already tagged for removal
-		set<size_t>::const_iterator indexEntry = wavesSetIndicesToRemove.find(waveSetIndex);
-		if (indexEntry != wavesSetIndicesToRemove.end())
+		set<size_t>::const_iterator boseSymIndexEntry = boseSymWaveIndices.find(waveIndex);
+		if (boseSymIndexEntry != boseSymWaveIndices.end())
 			continue;
 
 		// get Bose-symmetric vertices
-		isobarDecayTopologyPtr     topo              = _waveSet[waveSetIndex].clone();  // needed, because subDecay below is not const
+		isobarDecayTopologyPtr     topo              = _waveSet[waveIndex].clone();  // needed, because subDecay below is not const
 		const vector<unsigned int> boseSymVertIds    = topo->findIsobarBoseSymVertices();
 		const size_t               nmbBoseSymVertIds = boseSymVertIds.size();
 		if (nmbBoseSymVertIds > 1) {
@@ -543,9 +543,10 @@ waveSetGenerator::removeBoseSymDecays()
 		const decayTopology daughterTopos[2] = {topo->subDecay(topo->toNode(daughters[0])),
 		                                        topo->subDecay(topo->toNode(daughters[1]))};
 		if (_debug)
-			printDebug << "wave " << waveDescription::waveNameFromTopology(*topo, true)
-			           << " has Bose-symmetric vertex " << *vert << "." << endl
-			           << "    looking for partner waves in wave set." << endl;
+			printDebug << "wave[" << waveIndex << "] "
+			           << waveDescription::waveNameFromTopology(*topo, true)
+			           << " has Bose-symmetric vertex " << *vert << ". "
+			           << "looking for partner waves in wave set." << endl;
 
 		// find indices of all decay vertices that are not below the Bose-symmetric vertex
 		vector<unsigned int> nonSymVertIds;
@@ -579,7 +580,7 @@ waveSetGenerator::removeBoseSymDecays()
 		// this uses the fact that all waves have the same decay toplogy,
 		// because they were generated from the same template
 		for (size_t i = 0; i < _waveSet.size(); ++i) {
-			if (i == waveSetIndex)
+			if (i == waveIndex)
 				continue;
 			isobarDecayTopologyPtr symTopo = _waveSet[i].clone();  // needed, because subDecay below is not const
 			// compare vertices that are not below the Bose-symmetric vertex
@@ -613,27 +614,33 @@ waveSetGenerator::removeBoseSymDecays()
 						foundSymTopo = false;
 			if (foundSymTopo) {
 				if (_debug)
-					printDebug << "found Bose-symmetric wave "
+					printDebug << "found Bose-partner wave[" << i << "] "
 					           << waveDescription::waveNameFromTopology(*symTopo, true) << endl;
 				// keep topology with the heavier first particle
 				if (daughters[0]->mass() > daughters[1]->mass()) {
-					if (not wavesSetIndicesToRemove.insert(i).second) {
-						printErr << "wave [" << i << "] was tagged for removal twice. "
+					if (not boseSymWaveIndices.insert(i).second) {
+						printErr << "wave[" << i << "] "
+						         << waveDescription::waveNameFromTopology(*symTopo, true)
+						         << " was tagged for removal twice. "
 						         << "this should never happen. aborting." << endl;
 						throw;
 					}
 					if (_debug)
-						printDebug << "tagged wave " << waveDescription::waveNameFromTopology(*symTopo, true)
-						           << " for removal" << endl;
+						printDebug << "tagged wave[" << i << "] "
+						           << waveDescription::waveNameFromTopology(*symTopo, true)
+						           << " as superfluous" << endl;
 				} else {
-					if (not wavesSetIndicesToRemove.insert(waveSetIndex).second) {
-						printErr << "wave [" << waveSetIndex << "] was tagged for removal twice. "
+					if (not boseSymWaveIndices.insert(waveIndex).second) {
+						printErr << "wave[" << waveIndex << "] "
+						         << waveDescription::waveNameFromTopology(*topo, true)
+						         << " was tagged as superfluous twice. "
 						         << "this should never happen. aborting." << endl;
 						throw;
 					}
 					if (_debug)
-						printDebug << "tagged wave " << waveDescription::waveNameFromTopology(*topo, true)
-						           << " for removal" << endl;
+						printDebug << "tagged wave[" << waveIndex << "] "
+						           << waveDescription::waveNameFromTopology(*topo, true)
+						           << " as superfluous" << endl;
 				}
 			}
 		}  // inner loop over wave set
@@ -641,11 +648,12 @@ waveSetGenerator::removeBoseSymDecays()
 	}  // outer loop over wave set
 
 	printDebug << "symmetric topos to be removed = ";
-	for (set<size_t>::const_iterator i = wavesSetIndicesToRemove.begin();
-	     i != wavesSetIndicesToRemove.end(); ++i)
+	for (set<size_t>::const_iterator i = boseSymWaveIndices.begin();
+	     i != boseSymWaveIndices.end(); ++i)
 		cout << *i << "   ";
 	cout << endl << endl;
 
-	printSucc << "found and removed " << wavesSetIndicesToRemove.size() << " Bose duplicates "
-	          << "from wave set" << endl;
+	printSucc << "found " << boseSymWaveIndices.size() << " Bose duplicates "
+	          << "in wave set" << endl;
+	return boseSymWaveIndices;
 }

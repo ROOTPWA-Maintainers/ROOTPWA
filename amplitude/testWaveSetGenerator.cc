@@ -103,6 +103,16 @@ main(int argc, char** argv)
 		           << *part1 << endl
 		           << *part2 << endl
 		           << "are equal = " << trueFalse(*part1 == *part2) << endl;
+
+		const string       keyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		waveDescription    waveDesc;
+		isobarAmplitudePtr amp;
+		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
+			isobarDecayTopologyPtr topo = amp->decayTopology();
+			printInfo << *amp;
+			amp->init();
+		}
+
 	}
 	
 
