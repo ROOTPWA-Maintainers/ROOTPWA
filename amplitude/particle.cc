@@ -141,7 +141,6 @@ particle::doClone() const
 bool
 particle::isEqualTo(const particleProperties& partProp) const
 {
-	// printErr << "!!!particle ==" << endl;
 	const particle* part = dynamic_cast<const particle*>(&partProp);
 	if (not part)
 		return false;

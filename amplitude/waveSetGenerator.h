@@ -45,18 +45,18 @@
 #include "isobarDecayTopology.h"
 
 
-namespace rpwa {  
+namespace rpwa {
 
 
 	class waveSetGenerator {
-  
+
 	public:
 
 		// some typedefs for convenience
 		typedef isobarDecayTopology::nodeDesc    nodeDesc;
 		typedef isobarDecayTopology::adjIterator adjIterator;
 
-      
+
 		waveSetGenerator();
 		virtual ~waveSetGenerator();
 
@@ -82,7 +82,7 @@ namespace rpwa {
 		void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
 		std::size_t generateWaveSet();  ///< generates wave set from template topology
-	  
+
 		std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }  ///< returns wave set
 		const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }  ///< returns wave set
 
@@ -90,12 +90,12 @@ namespace rpwa {
 		                   const bool         newKeyFileNameConvention = false);  ///< writes key files for wave set into given directory
 
 		virtual void reset();  ///< resets parameters to default values and clears wave set
-	  
+
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints parameters
-	  
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-	  
+
 
 	private:
 
@@ -125,12 +125,11 @@ namespace rpwa {
 		isobarDecayTopologyPtr _templateTopo;  ///< template topology
 
 		std::vector<isobarDecayTopology> _waveSet;  ///< generated wave set
-	  
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-	       
 
 	};
-	
+
 
 	inline
 	std::ostream&

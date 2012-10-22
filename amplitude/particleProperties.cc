@@ -491,7 +491,6 @@ particleProperties::stripChargeFromName(const string& partName)
 bool
 particleProperties::isEqualTo(const particleProperties& rhsProp) const
 {
-	// printErr << "!!!particleProperties ==" << endl;
 	return (    (name        () == rhsProp.name        ())
 	        and (antiPartName() == rhsProp.antiPartName())
 	        and (charge      () == rhsProp.charge      ())

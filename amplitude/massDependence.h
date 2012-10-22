@@ -72,6 +72,9 @@ namespace rpwa {
 
 		virtual std::string name() const { return "massDependence"; }  ///< returns label used in graph visualization, reporting, and key file
 
+		bool operator ==(const massDependence& rhsMassDep) const { return this->isEqualTo(rhsMassDep); }
+		bool operator !=(const massDependence& rhsMassDep) const { return not (*this == rhsMassDep);   }
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
@@ -79,6 +82,9 @@ namespace rpwa {
 
 
 	protected:
+
+		virtual bool isEqualTo(const massDependence& massDep) const
+		{ return typeid(massDep) == typeid(*this); }  ///< returns whether massDep is of same type as this
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 

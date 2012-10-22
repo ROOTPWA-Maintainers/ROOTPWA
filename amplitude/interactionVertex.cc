@@ -103,8 +103,6 @@ interactionVertex::clear()
 bool
 interactionVertex::isEqualTo(const interactionVertex& vert) const
 {
-	if (_debug)
-		printErr << "!!!interactionVertex ==" << endl;
 	if (   (nmbInParticles () != vert.nmbInParticles ())
 	    or (nmbOutParticles() != vert.nmbOutParticles()))
 		return false;
@@ -120,8 +118,6 @@ interactionVertex::isEqualTo(const interactionVertex& vert) const
 				printSucc << *(outParticles()[i]) << "  vs.  " << *(vert.outParticles()[i]) << endl;
 			return false;
 		}
-	if (_debug)
-		printSucc << "YEAH!" << endl;
 	return true;
 }
 
