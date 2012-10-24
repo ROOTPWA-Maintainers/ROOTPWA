@@ -270,7 +270,7 @@ particleDecayList = (
 			{products = ["pi+",    "pi(1300)-"];},
 			{products = ["sigma0", "rho(770)0"];}
 		);
-	}
+	},
 	{ name = "rho3(1690)0";
 		decays = (
 			{products = ["pi+",       "a1(1260)-"];},
@@ -324,6 +324,6 @@ particleDecayList = (
 			{products = ["pi+",    "a2(1320)-"];},
 			{products = ["sigma0", "rho(770)0"];}
 		);
-	},
+	}
 
 );
