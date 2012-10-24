@@ -1,3 +1,20 @@
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
+//
+// Description:
+//      allowed decay modes for isobars in the pi-pi+pi-pi+pi- system
+//
+//
+// Author List:
+//      Sebastian Neubert    TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
+
+
 particleDecayList = (
 
 // -----------------------------------------------------------------
@@ -7,14 +24,6 @@ particleDecayList = (
 			{products = ["pi-",    "pi+"   ];},
 			{products = ["pi0",    "pi0"   ];},
 			{products = ["sigma0", "sigma0"];}
-		);
-	},
-	{ name = "f0(980)0";
-		decays = (
-			{products = ["pi-", "pi+"  ];},
-			{products = ["pi0", "pi0"  ];},
-			{products = ["K-",  "K+"   ];},
-			{products = ["K0",  "Kbar0"];}
 		);
 	},
 	{ name = "rho(770)0";
@@ -32,10 +41,23 @@ particleDecayList = (
 			{products = ["pi+", "pi0"];}
 		);
 	},
+	{ name = "f0(980)0";
+		decays = (
+			{products = ["pi-", "pi+"  ];},
+			{products = ["pi0", "pi0"  ];},
+			{products = ["K-",  "K+"   ];},
+			{products = ["K0",  "Kbar0"];}
+		);
+	},
 	{ name = "f2(1270)0";
 		decays = (
 			{products = ["pi+", "pi-"];},
 			{products = ["pi0", "pi0"];}
+		);
+	},
+	{ name = "rho3(1690)0";
+		decays = (
+			{products = ["pi+", "pi-"];}
 		);
 	},
 
@@ -159,18 +181,6 @@ particleDecayList = (
 
 // -----------------------------------------------------------------
 // four-pion decays
-	{ name = "rho3(1690)0";
-		decays = (
-			{products = ["pi+",       "pi-"      ];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a2(1320)-"];},
-			{products = ["pi-",       "a1(1320)+"];},
-			{products = ["f2(1270)0", "rho(770)0"];},
-			{products = ["sigma0",    "rho(770)0"];}
-		);
-	},
-
 	{ name = "f1(1285)0";
 		decays = (
 			{products = ["pi-",       "a1(1260)+"];},
@@ -187,37 +197,12 @@ particleDecayList = (
 			{products = ["sigma0", "rho(770)0"];}
 		);
 	},
-	{ name = "b1(1800)0";
+	{ name = "f2(1270)0";
 		decays = (
-			{products = ["pi-",    "a1(1260)+"];},
-			{products = ["pi+",    "a1(1260)-"];},
-			{products = ["pi-",    "pi(1300)+"];},
-			{products = ["pi+",    "pi(1300)-"];},
-			{products = ["pi-",    "a2(1320)+"];},
-			{products = ["pi+",    "a2(1320)-"];},
-			{products = ["sigma0", "rho(770)0"];}
-		);
-	},
-	{ name = "b0(1800)0";
-		decays = (
-			{products = ["pi-",    "a1(1260)+"];},
-			{products = ["pi+",    "a1(1260)-"];},
-			{products = ["pi-",    "pi(1300)+"];},
-			{products = ["pi+",    "pi(1300)-"];},
-			{products = ["pi-",    "a2(1320)+"];},
-			{products = ["pi+",    "a2(1320)-"];},
-			{products = ["sigma0", "rho(770)0"];}
-		);
-	},
-	{ name = "b2(1800)0";
-		decays = (
-			{products = ["pi-",    "a1(1260)+"];},
-			{products = ["pi+",    "a1(1260)-"];},
-			{products = ["pi-",    "pi(1300)+"];},
-			{products = ["pi+",    "pi(1300)-"];},
-			{products = ["pi-",    "a2(1320)+"];},
-			{products = ["pi+",    "a2(1320)-"];},
-			{products = ["sigma0", "rho(770)0"];}
+			{products = ["pi+",       "a1(1260)-"];},
+			{products = ["pi-",       "a1(1260)+"];},
+			{products = ["rho(770)0", "rho(770)0"];},
+			{products = ["sigma0",    "sigma0"   ];}
 		);
 	},
 	{ name = "f0(1370)0";
@@ -238,14 +223,6 @@ particleDecayList = (
 			{products = ["pi+",       "pi(1300)-"];},
 			{products = ["sigma0",    "sigma0"   ];},
 			{products = ["rho(770)0", "rho(770)0"];}
-		);
-	},
-	{ name = "f2(1270)0";
-		decays = (
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["sigma0",    "sigma0"   ];}
 		);
 	},
 	{ name = "f2(1565)0";
@@ -283,17 +260,6 @@ particleDecayList = (
 			{products = ["rho(770)0", "rho(770)0"];}
 		);
 	},
-	{ name = "rho(1700)0";
-		decays = (
-			{products = ["pi-",    "a1(1260)+"];},
-			{products = ["pi+",    "a1(1260)-"];},
-			{products = ["pi-",    "a2(1320)+"];},
-			{products = ["pi+",    "a2(1320)-"];},
-			{products = ["pi-",    "pi(1300)+"];},
-			{products = ["pi+",    "pi(1300)-"];},
-			{products = ["sigma0", "rho(770)0"];}
-		);
-	},
 	{ name = "rho(1600)0";
 		decays = (
 			{products = ["pi-",    "a1(1260)+"];},
@@ -305,5 +271,59 @@ particleDecayList = (
 			{products = ["sigma0", "rho(770)0"];}
 		);
 	}
+	{ name = "rho3(1690)0";
+		decays = (
+			{products = ["pi+",       "a1(1260)-"];},
+			{products = ["pi-",       "a1(1260)+"];},
+			{products = ["pi+",       "a2(1320)-"];},
+			{products = ["pi-",       "a1(1320)+"];},
+			{products = ["f2(1270)0", "rho(770)0"];},
+			{products = ["sigma0",    "rho(770)0"];}
+		);
+	},
+	{ name = "rho(1700)0";
+		decays = (
+			{products = ["pi-",    "a1(1260)+"];},
+			{products = ["pi+",    "a1(1260)-"];},
+			{products = ["pi-",    "a2(1320)+"];},
+			{products = ["pi+",    "a2(1320)-"];},
+			{products = ["pi-",    "pi(1300)+"];},
+			{products = ["pi+",    "pi(1300)-"];},
+			{products = ["sigma0", "rho(770)0"];}
+		);
+	},
+	{ name = "b0(1800)0";
+		decays = (
+			{products = ["pi-",    "a1(1260)+"];},
+			{products = ["pi+",    "a1(1260)-"];},
+			{products = ["pi-",    "pi(1300)+"];},
+			{products = ["pi+",    "pi(1300)-"];},
+			{products = ["pi-",    "a2(1320)+"];},
+			{products = ["pi+",    "a2(1320)-"];},
+			{products = ["sigma0", "rho(770)0"];}
+		);
+	},
+	{ name = "b1(1800)0";
+		decays = (
+			{products = ["pi-",    "a1(1260)+"];},
+			{products = ["pi+",    "a1(1260)-"];},
+			{products = ["pi-",    "pi(1300)+"];},
+			{products = ["pi+",    "pi(1300)-"];},
+			{products = ["pi-",    "a2(1320)+"];},
+			{products = ["pi+",    "a2(1320)-"];},
+			{products = ["sigma0", "rho(770)0"];}
+		);
+	},
+	{ name = "b2(1800)0";
+		decays = (
+			{products = ["pi-",    "a1(1260)+"];},
+			{products = ["pi+",    "a1(1260)-"];},
+			{products = ["pi-",    "pi(1300)+"];},
+			{products = ["pi+",    "pi(1300)-"];},
+			{products = ["pi-",    "a2(1320)+"];},
+			{products = ["pi+",    "a2(1320)-"];},
+			{products = ["sigma0", "rho(770)0"];}
+		);
+	},
 
 );
