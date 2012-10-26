@@ -1,9 +1,9 @@
 #!/bin/sh
 #-------------------------------------------------------------------------
 # File and Version Information:
-# $Rev:: 1050                        $: revision of last commit
-# $Author:: bgrube                   $: author of last commit
-# $Date:: 2012-10-24 21:04:26 +0200 #$: date of last commit
+# $Rev::                             $: revision of last commit
+# $Author::                          $: author of last commit
+# $Date::                            $: date of last commit
 #
 # Description:
 #      sed script that adds keys necessary for amplitude calculation
