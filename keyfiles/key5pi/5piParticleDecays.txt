@@ -21,9 +21,8 @@ particleDecayList = (
 // two-pion decays
 	{ name = "sigma0";
 		decays = (
-			{products = ["pi-",    "pi+"   ];},
-			{products = ["pi0",    "pi0"   ];},
-			{products = ["sigma0", "sigma0"];}
+			{products = ["pi-", "pi+"];},
+			{products = ["pi0", "pi0"];}
 		);
 	},
 	{ name = "rho(770)0";
@@ -181,6 +180,11 @@ particleDecayList = (
 
 // -----------------------------------------------------------------
 // four-pion decays
+	{ name = "sigma0";
+		decays = (
+			{products = ["sigma0", "sigma0"];}
+		);
+	},
 	{ name = "f1(1285)0";
 		decays = (
 			{products = ["pi-",       "a1(1260)+"];},
