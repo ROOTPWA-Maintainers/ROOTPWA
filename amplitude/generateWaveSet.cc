@@ -194,7 +194,7 @@ main(int    argc,
 		}
 	}
 
-	printInfo << "writing .key files for generated waves to '" << outDirName << "'" << endl;
+	printInfo << "writing .key files for generated waves to directory '" << outDirName << "'" << endl;
 	waveSetGen.writeKeyFiles(outDirName, newKeyFileNameConvention);
 
 	printInfo << ((nmbInconsistentDecays == 0) ? "successfully " : "")
