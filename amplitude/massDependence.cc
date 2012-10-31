@@ -42,8 +42,6 @@
 #include "particleDataTable.h"
 #include "massDependence.h"
 
-#include "../pwa2000/libpp/pputil.h"
-
 
 using namespace std;
 using namespace boost::numeric::ublas;
@@ -86,30 +84,23 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const double M       = parent->lzVec().M();          // parent mass
-	const double m1      = v.daughter1()->lzVec().M();   // daughter 1 mass
-	const double m2      = v.daughter2()->lzVec().M();   // daughter 2 mass
-	const double M0      = parent->mass();               // resonance peak position
-	const double Gamma0  = parent->width();              // resonance peak width
-	const double q       = breakupMomentum(M,  m1, m2);  // breakup momentum
-	//const double q0      = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
+	// get Breit-Wigner parameters
+	const double M       = parent->lzVec().M();                 // parent mass
+	const double m1      = v.daughter1()->lzVec().M();          // daughter 1 mass
+	const double m2      = v.daughter2()->lzVec().M();          // daughter 2 mass
+	const double M0      = parent->mass();                      // resonance peak position
+	const double Gamma0  = parent->width();                     // resonance peak width
+	const double q       = breakupMomentum       (M,  m1, m2);  // breakup momentum
+	const double q02     = breakupMomentumSquared(M0, m1, m2);  // squared breakup momentum at peak position
+	const double q0      = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
 	const unsigned int L = v.L();
-
-	// this is how it is done in PWA2000
-	const double M02    = M0 * M0;
-	const double m12    = m1 * m1;
-	const double m22    = m2 * m2;
-	// const double m12    = v.daughter1()->mass() * v.daughter1()->mass();
-	// const double m22    = v.daughter2()->mass() * v.daughter2()->mass();
-	const double lambda = M02 * M02 + m12 * m12 + m22 * m22 - 2 * (M02 * m12 + m12 * m22 + m22 * M02);
-	const double q0     = sqrt(fabs(lambda / (4 * M02)));  //!!! the fabs is probably wrong
 
 	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV, m_0 = " << maxPrecision(M0)
-		           << " GeV, Gamma_0 = " << maxPrecision(Gamma0) << " GeV, L = " << 0.5 * L
-		           << ", q = " << maxPrecision(q) << " GeV, "
-		           << maxPrecision(q0) << " GeV) = " << maxPrecisionDouble(bw) << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
+		           << ", q = " << maxPrecision(q) << " GeV/c, "
+		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
 	return bw;
 }
 
@@ -189,11 +180,11 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		s     = mass * mass;
 	}
 
-	const complex<double> qPiPi   = q(mass, _piChargedMass,   _piChargedMass  );
-	const complex<double> qPi0Pi0 = q(mass, _piNeutralMass,   _piNeutralMass  );
-	const complex<double> qKK     = q(mass, _kaonChargedMass, _kaonChargedMass);
-	const complex<double> qK0K0   = q(mass, _kaonNeutralMass, _kaonNeutralMass);
-	complex<double>       qKmKm   = q(mass, _kaonMeanMass,    _kaonMeanMass   );
+	const complex<double> qPiPi   = breakupMomentumComplex(mass, _piChargedMass,   _piChargedMass  );
+	const complex<double> qPi0Pi0 = breakupMomentumComplex(mass, _piNeutralMass,   _piNeutralMass  );
+	const complex<double> qKK     = breakupMomentumComplex(mass, _kaonChargedMass, _kaonChargedMass);
+	const complex<double> qK0K0   = breakupMomentumComplex(mass, _kaonNeutralMass, _kaonNeutralMass);
+	complex<double>       qKmKm   = breakupMomentumComplex(mass, _kaonMeanMass,    _kaonMeanMass   );
 
 	matrix<complex<double> > rho(2, 2);
 	if (_vesSheet) {
@@ -262,8 +253,8 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	complex<double> bw;
 	if (mass > 2 * _piChargedMass) {
-		const double p     = q(mass,   _piChargedMass, _piChargedMass).real();
-		const double p0    = q(f0Mass, _piChargedMass, _piChargedMass).real();
+		const double p     = breakupMomentum(mass,   _piChargedMass, _piChargedMass);
+		const double p0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
 		const double Gamma = f0Width * (p / p0);
 		const double A     = f0Mass * f0Mass - mass * mass;
 		const double B     = f0Mass * Gamma;

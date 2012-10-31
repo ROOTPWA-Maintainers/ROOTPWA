@@ -52,9 +52,10 @@ namespace rpwa {
 	double
 	breakupMomentumSquared(const double M,   // mass of mother particle
 	                       const double m1,  // mass of daughter particle 1
-	                       const double m2)  // mass of daughter particle 2
+	                       const double m2,  // mass of daughter particle 2
+	                       const bool   allowSubThr = false)  // if set sub-threshold decays with negative return values are allowed
 	{
-		if (M < m1 + m2)
+		if (not allowSubThr and (M < m1 + m2))
 			return 0;
 		return (M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2) / (4 * M * M);
 	}
@@ -67,9 +68,23 @@ namespace rpwa {
 	                const double m1,  // mass of daughter particle 1
 	                const double m2)  // mass of daughter particle 2
 	{
-		if (M < m1 + m2)
-			return 0;
 		return rpwa::sqrt(breakupMomentumSquared(M, m1, m2));
+	}
+
+
+	// computes breakup momentum of 2-body decay
+	// complex version with analytic continuation below threshold as used in K-matrix formalism
+	inline
+	std::complex<double>
+	breakupMomentumComplex(const double M,   // mass of mother particle
+	                       const double m1,  // mass of daughter particle 1
+	                       const double m2)  // mass of daughter particle 2
+	{
+		const double q2 = rpwa::breakupMomentumSquared(M, m1, m2, true);
+		const double q  = sqrt(fabs(q2));
+		if (q2 < 0)
+			return std::complex<double>(0, q);
+		return std::complex<double>(q, 0);
 	}
 
 
@@ -151,7 +166,7 @@ namespace rpwa {
 	inline
 	double
 	barrierFactorSquared(const int    L,               // relative orbital angular momentum
-	                     const double breakupMom,      // breakup momentum of 2-body decay
+	                     const double breakupMom,      // breakup momentum of 2-body decay [GeV/c]
 	                     const bool   debug = false,
 	                     const double Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
 	{
@@ -215,10 +230,10 @@ namespace rpwa {
 	// !NOTE! L is units of hbar/2
 	inline
 	double
-	barrierFactor(const int    L,
-	              const double breakupMom,
+	barrierFactor(const int    L,               // relative orbital angular momentum
+	              const double breakupMom,      // breakup momentum of 2-body decay [GeV/c]
 	              const bool   debug = false,
-	              const double Pr    = 0.1973)
+	              const double Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
 	{
 		const double bf = rpwa::sqrt(barrierFactorSquared(L, breakupMom, false, Pr));
 		if (debug)
@@ -229,20 +244,20 @@ namespace rpwa {
 	}
 
   
-	// computes relativistic Breit-Wigner with mass-dependent width
+	// computes relativistic Breit-Wigner amplitude with mass-dependent width for 2-body decay
 	// !NOTE! L is units of hbar/2
 	inline
 	std::complex<double>
-	breitWigner(const double m,
-	            const double m0,
-	            const double Gamma0,
-	            const int    L,
-	            const double q,
-	            const double q0)
+	breitWigner(const double M,       // mass
+	            const double M0,      // peak position 
+	            const double Gamma0,  // total width
+	            const int    L,       // relative orbital angular momentum
+	            const double q,       // 2-body breakup momentum
+	            const double q0)      // 2-body breakup momentum at peak position
 	{
-		const double Gamma  =   Gamma0 * (m0 / m) * (q / q0)
+		const double Gamma  =   Gamma0 * (M0 / M) * (q / q0)
 			                    * (barrierFactorSquared(L, q) / barrierFactorSquared(L, q0));
-		return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
+		return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	}
   
   

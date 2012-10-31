@@ -83,12 +83,12 @@ void
 compareValues(vector<T>& newVals,
               vector<T>& oldVals)
 {
-	T maxAbsDeviation = 0;
-	T maxRelDeviation = 0;
 	if (newVals.size() != oldVals.size()) {
 		printErr << "arrays have different size" << endl;
 		return;
 	}
+	T maxAbsDeviation = 0;
+	T maxRelDeviation = 0;
 	for (size_t i = 0; i < newVals.size(); ++i) {
 		const T absDelta = oldVals[i] - newVals[i];
 		const T relDelta = absDelta / oldVals[i];
@@ -96,6 +96,32 @@ compareValues(vector<T>& newVals,
 			maxAbsDeviation = abs(absDelta);
 		if ((newVals[i] != 0) and (abs(relDelta) > maxRelDeviation))
 			maxRelDeviation = abs(relDelta);
+	}
+	printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
+	          << "maximum relative deviation is " << maxRelDeviation << endl;
+}
+
+
+template<typename T>
+void
+compareValues(vector<complex<T> >& newVals,
+              vector<complex<T> >& oldVals)
+{
+	if (newVals.size() != oldVals.size()) {
+		printErr << "arrays have different size" << endl;
+		return;
+	}
+	T maxAbsDeviation = 0;
+	T maxRelDeviation = 0;
+	for (unsigned int i = 0; i < newVals.size(); ++i) {
+		const complex<T> delta    = oldVals[i] - newVals[i];
+		const T          absDelta = abs(delta);
+		const T          absVal   = abs(newVals[i]);
+		const T          relDelta = absDelta / absVal;
+		if (absDelta > abs(maxAbsDeviation))
+			maxAbsDeviation = absDelta;
+		if ((absVal != 0) and (relDelta  > maxRelDeviation))
+			maxRelDeviation = relDelta;
 	}
 	printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
 	          << "maximum relative deviation is " << maxRelDeviation << endl;
@@ -150,8 +176,50 @@ main(int    argc,
 	
 
 	//////////////////////////////////////////////////////////////////////////////
-	// Blatt-Weisskopf barrier factor
+	// break-up momentum
 	if (1) {
+		printInfo << "testing breakup momentum" << endl;
+
+		const size_t nmbArgs = 50000000;
+
+		vector<double> M (nmbArgs, 0);
+		vector<double> m1(nmbArgs, 0);
+		vector<double> m2(nmbArgs, 0);
+		TRandom3       random(1234567890);
+		for (size_t i = 0; i < nmbArgs; ++i) {
+			M [i] = (random.Uniform(0, 5));
+			m1[i] = (random.Uniform(0, 2.5));
+			m2[i] = (random.Uniform(0, 2.5));
+		}
+
+		TStopwatch timer;
+		timer.Reset();
+		timer.Start();
+		vector<complex<double> > newVals(nmbArgs, 0);
+		for (size_t i = 0; i < nmbArgs; ++i)
+			newVals[i] = rpwa::breakupMomentumComplex(M[i], m1[i], m2[i]);
+		timer.Stop();
+		printInfo << "calculated physUtils breakup momentum for " << nmbArgs << " values" << endl
+		          << "    this consumed: ";
+		timer.Print();
+
+		timer.Reset();
+		timer.Start();
+		vector<complex<double> > oldVals(nmbArgs, 0);
+		for (size_t i = 0; i < nmbArgs; ++i)
+			oldVals[i] = q(M[i], m1[i], m2[i]);
+		timer.Stop();
+		printInfo << "calculated libpp breakup momentum for " << nmbArgs << " values" << endl
+		          << "    this consumed: ";
+		timer.Print();
+
+		compareValues(newVals, oldVals);
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// Blatt-Weisskopf barrier factor
+	if (0) {
 		printInfo << "testing Blatt-Weisskopf barrier factor" << endl;
 
 		const size_t nmbArgs = 10000000;
@@ -441,14 +509,7 @@ main(int    argc,
 		          << "    this consumed: ";
     timer.Print();
 
-    // check values
-    complex<double> maxDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const complex<double> delta = boostVals[i] - myVals[i];
-	    if (abs(delta) > abs(maxDeviation))
-		    maxDeviation = abs(delta);
-    }
-    printInfo << "maximum deviation is " << maxDeviation << endl;
+		compareValues(myVals, boostVals);
 	}
 
 
@@ -520,14 +581,7 @@ main(int    argc,
 		          << "    this consumed: ";
     timer.Print();
 
-    // check values
-    complex<double> maxDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const complex<double> delta = oldVals[i] - newVals[i];
-	    if (abs(delta) > abs(maxDeviation))
-		    maxDeviation = abs(delta);
-    }
-    printInfo << "maximum deviation is " << maxDeviation << endl;
+		compareValues(newVals, oldVals);
 	}
 
 
@@ -611,14 +665,7 @@ main(int    argc,
 		          << "    this consumed: ";
     timer.Print();
 
-    // check values
-    complex<double> maxDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const complex<double> delta = oldVals[i] - newVals[i];
-	    if (abs(delta) > abs(maxDeviation))
-		    maxDeviation = abs(delta);
-    }
-    printInfo << "maximum deviation is " << maxDeviation << endl;
+		compareValues(newVals, oldVals);
 	}
 
 }
