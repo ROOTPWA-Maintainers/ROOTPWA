@@ -42,6 +42,8 @@
 #include "particleDataTable.h"
 #include "massDependence.h"
 
+#include "../pwa2000/libpp/pputil.h"
+
 
 using namespace std;
 using namespace boost::numeric::ublas;

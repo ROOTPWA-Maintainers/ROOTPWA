@@ -39,13 +39,25 @@
 #define PHYSUTILS_H
 
 
-#include "../pwa2000/libpp/pputil.h"
 #include "mathUtils.hpp"
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
 
 
 namespace rpwa {
+
+
+	// computes squared breakup momentum of 2-body decay
+	inline
+	double
+	breakupMomentumSquared(const double M,   // mass of mother particle
+	                       const double m1,  // mass of daughter particle 1
+	                       const double m2)  // mass of daughter particle 2
+	{
+		if (M < m1 + m2)
+			return 0;
+		return (M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2) / (4 * M * M);
+	}
 
 
 	// computes breakup momentum of 2-body decay
@@ -57,7 +69,7 @@ namespace rpwa {
 	{
 		if (M < m1 + m2)
 			return 0;
-		return rpwa::sqrt((M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2)) / (2 * M);
+		return rpwa::sqrt(breakupMomentumSquared(M, m1, m2));
 	}
 
 
@@ -134,23 +146,91 @@ namespace rpwa {
 	}
 
 
-	//////////////////////////////////////////////////////////////////////////////
-	// some wrappers for libpp functions
-	// !NOTE! all angular momenta and spin projections are in units of hbar/2
+	// computes square of Blatt-Weisskopf barrier factor for 2-body decay
+	// !NOTE! L is units of hbar/2
+	inline
+	double
+	barrierFactorSquared(const int    L,               // relative orbital angular momentum
+	                     const double breakupMom,      // breakup momentum of 2-body decay
+	                     const bool   debug = false,
+	                     const double Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
+	{
+		const double z   = (breakupMom * breakupMom) / (Pr * Pr);
+		double       bf2 = 0;
+		switch (L) {
+		case 0:  // L = 0
+			bf2 = 1;
+			break;
+		case 2:  // L = 1
+			bf2 = (2 * z) / (z + 1);
+			break;
+		case 4:  // L = 2
+			bf2 = (13 * z * z) / (z * (z + 3) + 9);
+			break;
+		case 6:  // L = 3
+			bf2 = (277 * z * z * z) / (z * (z * (z + 6) + 45) + 225);
+			break;
+		case 8:  // L = 4
+			{
+				const double z2 = z * z;
+				bf2 = (12746 * z2 * z2) / (z * (z * (z * (z + 10) + 135) + 1575) + 11025);
+			}
+			break;
+		case 10:  // L = 5
+			{
+				const double z2 = z * z;
+				bf2 = (998881 * z2 * z2 * z)
+					/ (z * (z * (z * (z * (z + 15) + 315) + 6300) + 99225) + 893025);
+			}
+			break;
+		case 12:  // L = 6
+			{
+				const double z3 = z * z * z;
+				bf2 = (118394977 * z3 * z3)
+					/ (z * (z * (z * (z * (z * (z + 21) + 630) + 18900) + 496125) + 9823275) + 108056025);
+			}
+			break;
+		case 14:  // L = 7
+			{
+				const double z3 = z * z * z;
+				bf2 = (19727003738 * z3 * z3 * z)
+					/ (z * (z * (z * (z * (z * (z * (z + 28) + 1134) + 47250) + 1819125) + 58939650)
+					        + 1404728325) + 18261468225);
+			}
+			break;
+		default:
+			printDebug << "calculation of Blatt-Weisskopf barrier factor is not (yet) implemented for L = "
+			           << spinQn(L) << ". returning 0." << std::endl;
+			return 0;
+		}
+		if (debug)
+			printDebug << "squared Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
+			           << "q = " << maxPrecision(breakupMom) << " GeV/c; P_r = " << Pr << " GeV/c) = "
+			           << maxPrecision(bf2) << std::endl;
+		return bf2;
+	}
+
+
+	// computes Blatt-Weisskopf barrier factor for 2-body decay
+	// !NOTE! L is units of hbar/2
 	inline
 	double
 	barrierFactor(const int    L,
 	              const double breakupMom,
-	              const bool   debug = false)  ///< Blatt-Weisskopf barrier factor
+	              const bool   debug = false,
+	              const double Pr    = 0.1973)
 	{
-		const double bf = F(L, breakupMom);
+		const double bf = rpwa::sqrt(barrierFactorSquared(L, breakupMom, false, Pr));
 		if (debug)
 			printDebug << "Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
-			           << "q = " << maxPrecision(breakupMom) << " GeV) = " << maxPrecision(bf) << std::endl;
+			           << "q = " << maxPrecision(breakupMom) << " GeV/c; P_r = " << Pr << " GeV/c) = "
+			           << maxPrecision(bf) << std::endl;
 		return bf;
 	}
 
   
+	// computes relativistic Breit-Wigner with mass-dependent width
+	// !NOTE! L is units of hbar/2
 	inline
 	std::complex<double>
 	breitWigner(const double m,
@@ -158,10 +238,10 @@ namespace rpwa {
 	            const double Gamma0,
 	            const int    L,
 	            const double q,
-	            const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
+	            const double q0)
 	{
 		const double Gamma  =   Gamma0 * (m0 / m) * (q / q0)
-			                    * (rpwa::pow(F(L, q), 2) / rpwa::pow(F(L, q0), 2));
+			                    * (barrierFactorSquared(L, q) / barrierFactorSquared(L, q0));
 		return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
 	}
   
