@@ -68,7 +68,7 @@ public:
   void        print      () const;
   void        printFrames() const;
 
-  void debug(const int d = 1) { _particle_debug = d; }
+  static void debug(const int d = 1) { _particle_debug = d; }
 
 private:
 			

@@ -50,6 +50,7 @@ set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
@@ -118,7 +119,7 @@ make_executable(testParticle         testParticle.cc         ${THIS_LIB})
 make_executable(testDecayTopology    testDecayTopology.cc    ${THIS_LIB})
 make_executable(testWaveDescription  testWaveDescription.cc  ${THIS_LIB})
 make_executable(testWaveSetGenerator testWaveSetGenerator.cc ${THIS_LIB})
-make_executable(testMassDependence   testMassDependence.cc   ${THIS_LIB})
+make_executable(testMassDependence   testMassDependence.cc   "${THIS_LIB};${ROOTPWAGEN_LIBS}")
 make_executable(testAmplitude        testAmplitude.cc        ${THIS_LIB})
 make_executable(testAmplitudeTree    testAmplitudeTree.cc    ${THIS_LIB})
 make_executable(testIsospinSym       testIsospinSym.cc       ${THIS_LIB})

@@ -528,11 +528,67 @@ unset(_ENVVAR)
 enable_testing()
 
 
-# build subprojects
-
+# set include and library paths
 set(UTILITIES_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/utilities
 	)
+
+set(TOOLS_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/tools
+	)
+set(ROOTPWATOOLS_LIBS
+	RootPwaTools
+	)
+
+set(AMPLITUDE_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/amplitude
+	)
+set(AMPLITUDE_LIBS
+	RootPwaAmp
+	)
+
+set(ROOTPWA_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/src
+	)
+set(ROOTPWA_LIBS
+	RootPwa
+	)
+
+set(GEN_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/generators
+	)
+set(ROOTPWAGEN_LIBS
+	RootPwaGen
+	)
+
+if(USE_PYTHON)
+	set(PYINTERFACE_LIBS
+		RootPwaPy
+		)
+endif()
+
+if(USE_CUDA)
+	set(CUDA_INCLUDE_DIR
+		${CMAKE_SOURCE_DIR}/cuda
+		)
+	set(CUDA_LIBS
+		cuda
+		)
+else()
+	set(CUDA_INCLUDE_DIR)
+	set(CUDA_LIBS)
+endif()
+
+#!!! this should be removed
+set(SCRIPTS_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/src/rootscripts
+	)
+set(ROOTPWASCRIPTS_LIBS
+	RootPwaScripts
+	)
+
+
+# build subprojects
 
 # PWA2000
 add_subdirectory(pwa2000)
@@ -542,62 +598,24 @@ add_subdirectory(utilities)
 
 # CUDA stuff
 if(USE_CUDA)
-	set(CUDA_INCLUDE_DIR
-		${CMAKE_SOURCE_DIR}/cuda
-		)
-	set(CUDA_LIBS
-		cuda
-		)
 	add_subdirectory(cuda)
-else()
-	set(CUDA_INCLUDE_DIR)
-	set(CUDA_LIBS)
 endif()
 
 # RootPwaAmp
-set(AMPLITUDE_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/amplitude
-	)
-set(AMPLITUDE_LIBS
-	RootPwaAmp
-	)
 add_subdirectory(amplitude)
 
 # RootPwa
-set(ROOTPWA_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/src
-	)
-set(ROOTPWA_LIBS
-	RootPwa
-	)
 add_subdirectory(src)
 
 # compile rootscripts into a library since they are linked by the gui
-set(SCRIPTS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/src/rootscripts
-	)
+#!!! this should be removed
 add_subdirectory(src/rootscripts)
-set(ROOTPWASCRIPTS_LIBS
-	RootPwaScripts
-	)
 
 # RootPwaTools
-set(TOOLS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/tools
-	)
 add_subdirectory(tools)
-set(ROOTPWATOOLS_LIBS
-	RootPwaTools
-	)
 
 # RootPwaGen
-set(GEN_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/generators
-	)
 add_subdirectory(generators)
-set(ROOTPWAGEN_LIBS
-	RootPwaGen
-	)
 
 # RootPwaKey
 add_subdirectory(keygen)
@@ -621,9 +639,6 @@ endif()
 
 # Python bindings
 if(USE_PYTHON)
-	set(PYINTERFACE_LIBS
-		RootPwaPy
-		)
 	add_subdirectory(pyInterface)
 endif()
 
