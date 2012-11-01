@@ -70,14 +70,6 @@ flatMassDependence::amp(const isobarDecayVertex&)
 }
 
 
-ostream&
-flatMassDependence::print(ostream& out) const
-{
-	out << name();
-	return out;
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
@@ -105,14 +97,6 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 }
 
 
-ostream&
-relativisticBreitWigner::print(ostream& out) const
-{
-	out << name();
-	return out;
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	: massDependence(),
@@ -122,35 +106,35 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	  _sP      (1, 2),
 	  _vesSheet(0)
 {
-	const double f[2] = {0.1968, -0.0154};
+	const double f[2] = {0.1968, -0.0154};  // AMP Table 1, M solution: f_1^1 and f_2^1
 
-	_a[0](0, 0) =  0.1131;
-	_a[0](0, 1) =  0.0150;
-	_a[0](1, 0) =  0.0150;
-	_a[0](1, 1) = -0.3216;
+	_a[0](0, 0) =  0.1131;  // AMP Table 1, M solution: f_2^2
+	_a[0](0, 1) =  0.0150;  // AMP Table 1, M solution: f_1^3
+	_a[0](1, 0) =  0.0150;  // AMP Table 1, M solution: f_1^3
+	_a[0](1, 1) = -0.3216;  // AMP Table 1, M solution: f_2^3
 	_a[1](0, 0) = f[0] * f[0];
 	_a[1](0, 1) = f[0] * f[1];
 	_a[1](1, 0) = f[1] * f[0];
 	_a[1](1, 1) = f[1] * f[1];
 	
-	_c[0](0, 0) =  0.0337;
-	_c[1](0, 0) = -0.3185;
-	_c[2](0, 0) = -0.0942;
-	_c[3](0, 0) = -0.5927;
-	_c[4](0, 0) =  0.1957; 
-	_c[0](0, 1) = _c[0](1, 0) = -0.2826;
-	_c[1](0, 1) = _c[1](1, 0) =  0.0918;
-	_c[2](0, 1) = _c[2](1, 0) =  0.1669;
-	_c[3](0, 1) = _c[3](1, 0) = -0.2082;
-	_c[4](0, 1) = _c[4](1, 0) = -0.1386;
-	_c[0](1, 1) =  0.3010;
-	_c[1](1, 1) = -0.5140;
-	_c[2](1, 1) =  0.1176;
-	_c[3](1, 1) =  0.5204;
-	_c[4](1, 1) = -0.3977; 
+	_c[0](0, 0) =  0.0337;                // AMP Table 1, M solution: c_11^0
+	_c[1](0, 0) = -0.3185;                // AMP Table 1, M solution: c_11^1
+	_c[2](0, 0) = -0.0942;                // AMP Table 1, M solution: c_11^2
+	_c[3](0, 0) = -0.5927;                // AMP Table 1, M solution: c_11^3
+	_c[4](0, 0) =  0.1957;                // AMP Table 1, M solution: c_11^4
+	_c[0](0, 1) = _c[0](1, 0) = -0.2826;  // AMP Table 1, M solution: c_12^0
+	_c[1](0, 1) = _c[1](1, 0) =  0.0918;  // AMP Table 1, M solution: c_12^1
+	_c[2](0, 1) = _c[2](1, 0) =  0.1669;  // AMP Table 1, M solution: c_12^2
+	_c[3](0, 1) = _c[3](1, 0) = -0.2082;  // AMP Table 1, M solution: c_12^3
+	_c[4](0, 1) = _c[4](1, 0) = -0.1386;  // AMP Table 1, M solution: c_12^4
+	_c[0](1, 1) =  0.3010;                // AMP Table 1, M solution: c_22^0
+	_c[1](1, 1) = -0.5140;                // AMP Table 1, M solution: c_12^1
+	_c[2](1, 1) =  0.1176;                // AMP Table 1, M solution: c_12^2
+	_c[3](1, 1) =  0.5204;                // AMP Table 1, M solution: c_12^3
+	_c[4](1, 1) = -0.3977;                // AMP Table 1, M solution: c_12^4
 
-	_sP(0, 0) = -0.0074;
-	_sP(0, 1) =  0.9828;
+	_sP(0, 0) = -0.0074;  // AMP Table 1, M solution: s_0
+	_sP(0, 1) =  0.9828;  // AMP Table 1, M solution: s_1
   
 	particleDataTable& pdt = particleDataTable::instance();
 	const string partList[] = {"pi+", "pi0", "K+", "K0"};
@@ -224,14 +208,6 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 }
 
 
-ostream&
-piPiSWaveAuMorganPenningtonM::print(ostream& out) const
-{
-	out << name();
-	return out;
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 	: piPiSWaveAuMorganPenningtonM()
@@ -272,14 +248,6 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 }
 
 
-ostream&
-piPiSWaveAuMorganPenningtonVes::print(ostream& out) const
-{
-	out << name();
-	return out;
-}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 	: piPiSWaveAuMorganPenningtonM()
@@ -299,9 +267,35 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 }
 
 
-ostream&
-piPiSWaveAuMorganPenningtonKachaev::print(ostream& out) const
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 {
-	out << name();
-	return out;
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M   = parent->lzVec().M();                 // parent mass
+	const double m1  = v.daughter1()->lzVec().M();          // daughter 1 mass
+	const double m2  = v.daughter2()->lzVec().M();          // daughter 2 mass
+	const double M0  = parent->mass();                      // resonance peak position
+	const double q   = breakupMomentum       (M,  m1, m2);  // breakup momentum
+	const double q02 = breakupMomentumSquared(M0, m1, m2);  // squared breakup momentum at peak position
+	const double q0  = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
+	const unsigned int L = v.L();
+
+	// rho' parameters
+	const double M01     = 1.465;  // [GeV/c^]
+	const double Gamma01 = 0.235;  // [GeV/c^]
+	const double M02     = 1.720;  // [GeV/c^]
+	const double Gamma02 = 0.220;  // [GeV/c^]
+
+	const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
+	const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
+	const complex<double> amp  =  (1. / 7.) * (4 * bw1 - 3 * bw2);
+
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
+		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
+	return amp;
 }

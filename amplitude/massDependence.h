@@ -44,8 +44,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
-#include <boost/numeric/ublas/lu.hpp>
 
 
 namespace ublas = boost::numeric::ublas;
@@ -116,8 +114,6 @@ namespace rpwa {
 
 		virtual std::string name() const { return "flatMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
 
-		virtual std::ostream& print(std::ostream& out) const;
-
 	};
 
 
@@ -145,8 +141,6 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
-
-		virtual std::ostream& print(std::ostream& out) const;
 
 	};
 
@@ -178,8 +172,6 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }  ///< returns label used in graph visualization, reporting, and key file
-
-		virtual std::ostream& print(std::ostream& out) const;
 
 	protected:
 
@@ -225,8 +217,6 @@ namespace rpwa {
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }  ///< returns label used in graph visualization, reporting, and key file
 
-		virtual std::ostream& print(std::ostream& out) const;
-
 	};
 
 
@@ -248,7 +238,7 @@ namespace rpwa {
 	/// from the original fortran code:
 	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
 	/// 04-Mar-2003 See eps_k1.for for description.
-	/// here matrix M=K^{-1} is parametrized with one pole.
+	/// here matrix M = K^{-1} is parametrized with one pole.
 	/// misprint in the article (other than in K1--K3 solutions)
 	/// was corrected.
 	///
@@ -264,8 +254,6 @@ namespace rpwa {
 		virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }  ///< returns label used in graph visualization, reporting, and key file
-
-		virtual std::ostream& print(std::ostream& out) const;
 
 	};
 
@@ -283,36 +271,31 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-	// http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
-	// matrix inversion routine using lu_factorize and lu_substitute
-	template<typename T>
-	bool
-	invertMatrix(const ublas::matrix<T>& A,
-	             ublas::matrix<T>&       inverseA)
-	{
-		// create working copy of input
-		ublas::matrix<T> M(A);
-		// create permutation matrix for LU-factorization
-		ublas::permutation_matrix<std::size_t> pM(M.size1());
-		// perform LU-factorization
-		if (ublas::lu_factorize(M, pM) != 0)
-			return false;
-		// create identity matrix of "inverse"
-		inverseA.assign(ublas::identity_matrix<T>(M.size1()));
-		// backsubstitute to get the inverse
-		ublas::lu_substitute(M, pM, inverseA);
-		return true;
-	}
+	/// combined amplitude for rho(1450)/rho(1700)
+	/// see DOI: 10.1007/BF01552547
+	class rhoPrimeMassDep : public massDependence {
+
+	public:
+
+		rhoPrimeMassDep() : massDependence() { }
+		virtual ~rhoPrimeMassDep()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "rhoPrimeMassDep"; }  ///< returns label used in graph visualization, reporting, and key file
+
+	};
 
 
-	template<typename T>
-	ublas::matrix<T>
-	invertMatrix(const ublas::matrix<T>& A,
-	             bool&                   isSingular)
+	typedef boost::shared_ptr<rhoPrimeMassDep> rhoPrimeMassDepPtr;
+
+
+	inline
+	rhoPrimeMassDepPtr
+	createRhoPrimeMassDep()
 	{
-		ublas::matrix<T> inverseA(A.size1(), A.size2());
-		isSingular = !invert(A, inverseA);
-		return inverseA;
+		rhoPrimeMassDepPtr massDep(new rhoPrimeMassDep());
+		return massDep;
 	}
 
 

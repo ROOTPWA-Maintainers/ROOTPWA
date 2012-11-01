@@ -35,9 +35,12 @@
 //-------------------------------------------------------------------------
 
 
-#include <list>
+#include <boost/timer/timer.hpp>
 
-#include "TStopwatch.h"
+#include "TFile.h"
+#include "TH1.h"
+#include "TH2.h"
+#include "TMath.h"
 
 #include "particleDataTable.h"
 #include "massDependence.h"
@@ -54,6 +57,7 @@ extern particleDataTable PDGtable;
 
 using namespace std;
 using namespace boost;
+using namespace boost::timer;
 using namespace rpwa;
 
 
@@ -77,79 +81,46 @@ constructParent(TRandom3&    random,
 }
 
 
-int
-main(int argc, char** argv)
+void
+compareAmplitudes(const size_t          nmbEvents,
+                  const unsigned int    seed,
+                  massDependencePtr&    massDep,
+                  isobarDecayVertexPtr& vertex,
+                  ::massDep*            pwa2kMassDep,
+                  ::particle&           pwa2kParent,
+                  const string&         name = "")
 {
-	printCompilerInfo();
-	printSvnVersion();
-
-	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
-	pdt.readFile();
-	
-	massDependence::setDebug(true);
-
-	// define parameters
-	const size_t       nmbEvents = 5;
-	const unsigned int seed      = 123456789;
-	
-	massDependencePtr massDep = createRelativisticBreitWigner();
-	// massDependencePtr massDep = createPiPiSWaveAuMorganPenningtonKachaev();
-	printDebug << *massDep << endl;
-
-	particlePtr daughter1 = createParticle("pi+");
-	particlePtr daughter2 = createParticle("pi-");
-	particlePtr parent    = createParticle("rho(770)0");
-	// particlePtr parent    = createParticle("sigma");
-
-	const unsigned int L = 2;
-	const unsigned int S = 0;
-
-	isobarDecayVertexPtr vertex = createIsobarDecayVertex(parent, daughter1, daughter2, L, S, massDep);
+	vertex->setMassDependence(massDep);
+	pwa2kParent.setMassDep(pwa2kMassDep);
+	printInfo << "comparing '" << name << "' dynamic amplitudes" << endl
+	          << "        " << *(vertex->massDependence()) << endl
+	          << "        ";
+	pwa2kMassDep->print();
+	cout << endl
+	     << "    using decays" << endl
+	     << "        " << *vertex << endl;
+	pwa2kParent.print();
 
 	// setup phase-space generator
-	nBodyPhaseSpaceGen psGen;
+	particlePtr  daughter1         = vertex->daughter1();
+	particlePtr  daughter2         = vertex->daughter2();
 	const double daughterMasses[2] = {daughter1->mass(), daughter2->mass()};
 	const double massRange     [2] = {daughterMasses[0] + daughterMasses[1], 3};    // [GeV/c^2]
+	nBodyPhaseSpaceGen psGen;
 	psGen.setWeightType(nBodyPhaseSpaceGen::S_U_CHUNG);
 	psGen.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
 	psGen.setDecay(2, daughterMasses);
 	psGen.setSeed(seed);
 	psGen.setMaxWeight(1.01 * psGen.estimateMaxWeight(massRange[1]));
 
-	// setup PWA2000
-	PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
-	::particle::debug();
-	::particle pwa2kDaughter1(PDGtable.get("pi"),      +1);
-	::particle pwa2kDaughter2(PDGtable.get("pi"),      -1);
-	::particle pwa2kParent   (PDGtable.get("rho(770)"), 0);
-	pwa2kDaughter1.print();
-	pwa2kDaughter2.print();
-	cout << endl;
-	::decay pwa2kDecay;
-	pwa2kDecay.addChild(pwa2kDaughter1);
-	pwa2kDecay.addChild(pwa2kDaughter2);
-	pwa2kDecay.setL(L);
-	pwa2kDecay.setS(S);
-	pwa2kDecay.print();
-	cout << endl;
-	::massDep* pwa2kMassDep = new breitWigner();
-	// ::massDep* pwa2kMassDep = new AMP_kach();
-	printDebug << "PWA2000: ";
-	pwa2kMassDep->print();
-	cout << endl;
-	pwa2kParent.setDecay(pwa2kDecay);
-	pwa2kParent.setMassDep(pwa2kMassDep);
-	pwa2kParent.print();
-	cout << endl;
-
 	// loop over events
-	TRandom3   random(seed);
-	TStopwatch timer;
-	timer.Reset();
-	timer.Start();
-	vector<complex<double> > newAmps(nmbEvents, 0);
-	vector<complex<double> > oldAmps(nmbEvents, 0);
+	TRandom3                 random(seed);
+	cpu_timer                timer, timerPwa2k;
+	vector<complex<double> > newAmps   (nmbEvents, 0);
+	vector<complex<double> > oldAmps   (nmbEvents, 0);
+	vector<double>           parentMass(nmbEvents, 0);
 	size_t                   countEvts = 0;
+	bool                     firstCall = true;
 	while (countEvts < nmbEvents) {
 		const TLorentzVector parentLv
 			= constructParent(random, massRange[0] + random.Rndm() * (massRange[1] - massRange[0]));
@@ -159,10 +130,13 @@ main(int argc, char** argv)
 		daughter1->setMomentum(psGen.daughter(0).Vect());
 		daughter2->setMomentum(psGen.daughter(1).Vect());
 		vertex->calcParentLzVec();
-		printDebug << *vertex << endl;
-		const TLorentzVector mom = parent->lzVec();
-		printDebug << "parent = " << mom << "; m = " << mom.M() << endl;
+		if (firstCall)
+			timer.start();
+		else
+			timer.resume();
 		newAmps[countEvts] = vertex->massDepAmplitude();
+		timer.stop();
+		parentMass[countEvts] = parentLv.M();
 		// calculate PWA2000 amplitude
 		assert(pwa2kParent.Decay()->_children.size() == 2);
 		list< ::particle>::iterator child = pwa2kParent.Decay()->_children.begin();
@@ -176,26 +150,51 @@ main(int argc, char** argv)
 		pwa2kMom.set(daughter2->lzVec().E(), daughter2->lzVec().X(),
 		             daughter2->lzVec().Y(), daughter2->lzVec().Z());
 		d2.set4P(pwa2kMom);
-		pwa2kMom.set(parent->lzVec().E(), parent->lzVec().X(), parent->lzVec().Y(), parent->lzVec().Z());
+		pwa2kMom.set(vertex->parent()->lzVec().E(), vertex->parent()->lzVec().X(),
+		             vertex->parent()->lzVec().Y(), vertex->parent()->lzVec().Z());
 		pwa2kParent.set4P(pwa2kMom);
-		pwa2kParent.print();
+		if (firstCall)
+			timerPwa2k.start();
+		else
+			timerPwa2k.resume();
 		oldAmps[countEvts] = pwa2kMassDep->val(pwa2kParent);
-		cout << endl;
+		timerPwa2k.stop();
 		++countEvts;
+		if (firstCall)
+			firstCall = false;
 	}
-	timer.Stop();
 	printInfo << "calculated mass dependence for " << nmbEvents << " events" << endl
-	          << "    this consumed: ";
-	timer.Print();
+	          << "    this consumed: " << timer.format(3, "[%u sec user] + [%s sec sys] = [%t sec]")
+	          << " vs. " << timerPwa2k.format(3, "[%u sec user] + [%s sec sys] = [%t sec]") << endl;
 
-
+	// compare amplitude values
+	TH2D* hAmp         = new TH2D(("h" + name + "Amp"        ).c_str(), (name + " Amplitude"                 ).c_str(), 1000, -1, 1, 1000, -0.5, 1.5);
+	TH1D* hAmpReal     = new TH1D(("h" + name + "AmpReal"    ).c_str(), (name + " Amplitude (Real Part)"     ).c_str(), 1000, -1.2, 1.2);
+	TH1D* hAmpImag     = new TH1D(("h" + name + "AmpImag"    ).c_str(), (name + " Amplitude (Imag Part)"     ).c_str(), 1000, -1.2, 1.2);
+	TH2D* hInt         = new TH2D(("h" + name + "Int"        ).c_str(), (name + " Intensity"                 ).c_str(), 1000, 0, 3, 1000,   0, 1.2);
+	TH2D* hPhase       = new TH2D(("h" + name + "Phase"      ).c_str(), (name + " Phase"                     ).c_str(), 1000, 0, 3, 1000, -200, 200);
+	TH1D* hAbsDiffReal = new TH1D(("h" + name + "AbsDiffReal").c_str(), (name + " Absolute Diff. (Real Part)").c_str(), 100000, -1e-12, 1e-12);
+	TH1D* hAbsDiffImag = new TH1D(("h" + name + "AbsDiffImag").c_str(), (name + " Absolute Diff. (Imag Part)").c_str(), 100000, -1e-12, 1e-12);
+	TH1D* hRelDiffReal = new TH1D(("h" + name + "RelDiffReal").c_str(), (name + " Relative Diff. (Real Part)").c_str(), 100000, -1e-12, 1e-12);
+	TH1D* hRelDiffImag = new TH1D(("h" + name + "RelDiffImag").c_str(), (name + " Relative Diff. (Imag Part)").c_str(), 100000, -1e-12, 1e-12);
 	double maxAbsDeviation = 0;
 	double maxRelDeviation = 0;
 	for (unsigned int i = 0; i < newAmps.size(); ++i) {
-		const complex<double> delta    = oldAmps[i] - newAmps[i];
-		const double          absDelta = abs(delta);
-		const double          absVal   = abs(newAmps[i]);
+		const complex<double> diff    = oldAmps[i] - newAmps[i];
+		const complex<double> relDiff = complex<double>(diff.real() / oldAmps[i].real(),
+		                                                diff.imag() / oldAmps[i].imag());
+		const double          absDelta = abs(diff);
+		const double          absVal   = abs(oldAmps[i]);
 		const double          relDelta = absDelta / absVal;
+		hAmpReal->Fill(newAmps[i].real());
+		hAmpImag->Fill(newAmps[i].imag());
+		hAmp->Fill(newAmps[i].real(), newAmps[i].imag());
+		hInt->Fill(parentMass[i], abs(newAmps[i]));
+		hPhase->Fill(parentMass[i], TMath::RadToDeg() * arg(newAmps[i]));
+		hAbsDiffReal->Fill(diff.real());
+		hAbsDiffImag->Fill(diff.imag());
+		hRelDiffReal->Fill(relDiff.real());
+		hRelDiffImag->Fill(relDiff.imag());
 		if (absDelta > abs(maxAbsDeviation))
 			maxAbsDeviation = absDelta;
 		if ((absVal != 0) and (relDelta  > maxRelDeviation))
@@ -203,7 +202,78 @@ main(int argc, char** argv)
 	}
 	printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
 	          << "maximum relative deviation is " << maxRelDeviation << endl;
+}
+
+
+int
+main(int argc, char** argv)
+{
+	printCompilerInfo();
+	printSvnVersion();
+
+	// define parameters
+	const size_t       nmbEvents = 1000000;
+	const unsigned int seed      = 123456789;
 	
-	// printInfo << maxPrecisionDouble(amp) << " vs. PWA2000 " << maxPrecisionDouble(pwa2kAmp)
-	//           << "; Delta = " << maxPrecisionDouble(pwa2kAmp - amp) << endl;
+	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
+	pdt.readFile();
+	PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
+	
+	// massDependence::setDebug(true);
+	// ::particle::debug();
+
+	// define decay
+	const unsigned int L = 2;
+	const unsigned int S = 0;
+	particlePtr daughter1  = createParticle("pi+");
+	::particle  pwa2kDaughter1(PDGtable.get("pi"), +1);
+	particlePtr daughter2  = createParticle("pi-");
+	::particle  pwa2kDaughter2(PDGtable.get("pi"), -1);
+	particlePtr parent  = createParticle("rho(770)0");
+	::particle  pwa2kParent(PDGtable.get("rho(770)"), 0);
+	// particlePtr parent  = createParticle("sigma");
+	// ::particle  pwa2kParent(PDGtable.get("sigma"), 0);
+
+	// setup data structures
+	isobarDecayVertexPtr vertex = createIsobarDecayVertex(parent, daughter1, daughter2, L, S);
+	::decay pwa2kDecay;
+	pwa2kDecay.addChild(pwa2kDaughter1);
+	pwa2kDecay.addChild(pwa2kDaughter2);
+	pwa2kDecay.setL(L);
+	pwa2kDecay.setS(S);
+	pwa2kParent.setDecay(pwa2kDecay);
+
+	// compare amplitudes
+	TFile*       outFile = TFile::Open("testMassDependence.root", "RECREATE");
+	const size_t nmbMassDep = 6;
+	const string names[nmbMassDep] = {
+		"FLAT",
+		"BW",
+		"AMP_M",
+		"AMP_VES",
+		"AMP_KACH",
+		"RHO_PRIME"
+	};
+	massDependencePtr massDep[nmbMassDep] = {
+		createFlatMassDependence(),
+		createRelativisticBreitWigner(),
+		createPiPiSWaveAuMorganPenningtonM(),
+		createPiPiSWaveAuMorganPenningtonVes(),
+		createPiPiSWaveAuMorganPenningtonKachaev(),
+		createRhoPrimeMassDep()
+	};
+	::massDep* pwa2kMassDep[nmbMassDep] = {
+		new flat       (),
+		new breitWigner(),
+		new AMP_M      (),
+		new AMP_ves    (),
+		new AMP_kach   (),
+		new rhoPrime   ()
+	};
+	for (size_t i = 0; i < nmbMassDep; ++i) {
+		compareAmplitudes(nmbEvents, seed, massDep[i], vertex, pwa2kMassDep[i], pwa2kParent, names[i]);	
+		cout << endl;
+	}
+	outFile->Write();
+	outFile->Close();
 }

@@ -160,7 +160,7 @@ message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 message(STATUS "")
 message(STATUS ">>> Setting up Boost library.")
-set(_BOOST_COMPONENTS "mpi" "serialization" "python")
+set(_BOOST_COMPONENTS "mpi" "serialization" "python" "timer" "system")
 # set(Boost_DEBUG 1)
 set(Boost_USE_STATIC_LIBS    OFF)
 set(Boost_USE_MULTITHREADED  OFF)
