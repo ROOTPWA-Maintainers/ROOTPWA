@@ -272,7 +272,7 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// combined amplitude for rho(1450)/rho(1700)
-	/// see DOI: 10.1007/BF01552547
+	/// see http://dx.doi.org/10.1007/BF01552547, sec. 4
 	class rhoPrimeMassDep : public massDependence {
 
 	public:

@@ -49,11 +49,15 @@
 #include "TH2.h"
 #include "TSystem.h"
 
+#ifdef USE_PWA2000
 #include "Vec.h"
 #include "lorentz.h"
 #include "keyfile.h"
 #include "event.h"
 #include "wave.h"
+extern particleDataTable PDGtable;
+extern wave              gWave;
+#endif
 
 #include "mathUtils.hpp"
 #include "reportingUtilsRoot.hpp"
@@ -68,10 +72,6 @@
 #include "evtTreeHelper.h"
 
 
-extern particleDataTable PDGtable;
-extern wave              gWave;
-
-
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -82,7 +82,7 @@ main(int argc, char** argv)
 {
 	printCompilerInfo();
 	printSvnVersion();
-	
+
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
 	pdt.readFile();
 	TStopwatch timer;
@@ -100,6 +100,7 @@ main(int argc, char** argv)
 	}
 
 	if (0) {
+#ifdef USE_PWA2000
 		{
 			fourVec  p(2, threeVec(0.5, 0.75, 1));
 			threeVec n = threeVec(0, 0, 1) / p.V();
@@ -126,6 +127,9 @@ main(int argc, char** argv)
 			p *= L;
 			cout << "L -> " << p << endl;
 		}
+#else
+		printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
+#endif
 
 		{
 			TLorentzVector p(0.5, 0.75, 1, 2);
@@ -223,8 +227,9 @@ main(int argc, char** argv)
 		cout << topo;
 		complex<double>         decayAmp = amp.amplitude();
 		cout << "!!! decay amplitude = " << decayAmp << endl;
-    
+
 		if (1) {  // compare to PWA2000
+#ifdef USE_PWA2000
 			PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
 			event    ev;
 			ifstream eventData("testEvents.evt");
@@ -240,6 +245,9 @@ main(int argc, char** argv)
 				cout << "!!! my amplitude = " << decayAmp << " vs. PWA2000 amplitude = " << pwa2000amp << ", "
 				     << "delta = " << decayAmp - pwa2000amp << endl;
 			}
+#else
+			printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
+#endif
 		}
 	}
 
@@ -362,7 +370,7 @@ main(int argc, char** argv)
 			isobarDecayTopologyPtr topo = amp->decayTopology();
 			printInfo << *amp;
 			amp->init();
-			
+
 			// read data from tree
 			const string&            inTreeName               = "rootPwaEvtTree";
 			const string&            prodKinPartNamesObjName  = "prodKinParticles";
@@ -384,7 +392,7 @@ main(int argc, char** argv)
 					printErr << "problems opening input files. aborting." << endl;
 					exit(1);
 				}
-			}			
+			}
 			const long int nmbEventsChain = inTrees[0]->GetEntries();
 
 			// create branch pointers and leaf variables
@@ -392,7 +400,7 @@ main(int argc, char** argv)
 			TBranch*      decayKinMomentaBr = 0;
 			TClonesArray* prodKinMomenta    = 0;
 			TClonesArray* decayKinMomenta   = 0;
-  
+
 			// connect leaf variables to tree branches
 			inTrees[0]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
 			inTrees[0]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
@@ -409,13 +417,13 @@ main(int argc, char** argv)
 			timer.Start();
 			for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 				++progressIndicator;
-    
+
 				if (inTrees[0]->LoadTree(eventIndex) < 0)
 					break;
 				// read only required branches
 				prodKinMomentaBr->GetEntry (eventIndex);
 				decayKinMomentaBr->GetEntry(eventIndex);
-	      
+
 				if (not prodKinMomenta or not decayKinMomenta) {
 					printWarn << "at least one data array is null pointer: "
 					          << "prodKinMomenta = "    << prodKinMomenta    << ", "
@@ -423,7 +431,7 @@ main(int argc, char** argv)
 					          << "skipping event." << endl;
 					continue;
 				}
-	      
+
 				if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
 					myAmps.push_back((*amp)());
 					if ((myAmps.back().real() == 0) or (myAmps.back().imag() == 0))
@@ -431,7 +439,7 @@ main(int argc, char** argv)
 					topo->productionVertex()->productionAmp();
 				}
 			} // event loop
-      
+
 			timer.Stop();
 			printSucc << "read " << myAmps.size() << " events from file(s) "
 			          << "'" << rootInFileName << "' and calculated amplitudes" << endl;
@@ -440,6 +448,7 @@ main(int argc, char** argv)
 			timer.Print();
 
 			if (1) {  // compare to PWA2000
+#ifdef USE_PWA2000
 				PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
 				ifstream eventData(evtInFileName.c_str());
 				keyfile  key;
@@ -471,7 +480,7 @@ main(int argc, char** argv)
 				          << "(" << maxPrecision((myAmps[0].real() - pwa2kAmps[0].real()) / myAmps[0].real())
 				          << ", " << maxPrecision((myAmps[0].imag() - pwa2kAmps[0].imag()) / myAmps[0].imag())
 				          << ")" << endl;
-	      
+
 				if (1) {
 					const string outFileName = "testAmplitudeDiff.root";
 					printInfo << "writing comparison plots to " << outFileName << endl;
@@ -499,8 +508,11 @@ main(int argc, char** argv)
 					f->Write();
 					f->Close();
 				}
+#else
+				printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
+#endif
 			} // compare to PWA2000
 		}  // parsing of key file successful
-    
+
 	}
 }

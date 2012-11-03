@@ -47,8 +47,11 @@
 #include "TH2.h"
 #include "TStopwatch.h"
 
+#ifdef USE_PWA2000
 #include "keyfile.h"
 #include "event.h"
+extern particleDataTable PDGtable;
+#endif
 
 #include "mathUtils.hpp"
 #include "fileUtils.hpp"
@@ -56,9 +59,6 @@
 #include "waveDescription.h"
 #include "isobarHelicityAmplitude.h"
 #include "evtTreeHelper.h"
-
-
-extern particleDataTable PDGtable;
 
 
 using namespace std;
@@ -81,7 +81,7 @@ calcNewAmps(const string&             rootInFileName,
 	isobarDecayTopologyPtr topo = amp->decayTopology();
 	printInfo << *amp;
 	amp->init();
-			
+
 	// open input file
 	vector<TTree*>       inTrees;
 	TClonesArray*        prodKinPartNames  = 0;
@@ -107,7 +107,7 @@ calcNewAmps(const string&             rootInFileName,
 	TBranch*      decayKinMomentaBr = 0;
 	TClonesArray* prodKinMomenta    = 0;
 	TClonesArray* decayKinMomenta   = 0;
-  
+
 	// connect leaf variables to tree branches
 	inTrees[0]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
 	inTrees[0]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
@@ -122,13 +122,13 @@ calcNewAmps(const string&             rootInFileName,
 	progress_display progressIndicator(nmbEvents);
 	for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 		++progressIndicator;
-    
+
 		if (inTrees[0]->LoadTree(eventIndex) < 0)
 			break;
 		// read only required branches
 		prodKinMomentaBr->GetEntry (eventIndex);
 		decayKinMomentaBr->GetEntry(eventIndex);
-	      
+
 		if (not prodKinMomenta or not decayKinMomenta) {
 			printWarn << "at least one data array is null pointer: "
 			          << "prodKinMomenta = "    << prodKinMomenta    << ", "
@@ -136,7 +136,7 @@ calcNewAmps(const string&             rootInFileName,
 			          << "skipping event." << endl;
 			continue;
 		}
-	      
+
 		if (topo->readKinematicsData(*prodKinMomenta, *decayKinMomenta)) {
 			amps.push_back((*amp)());
 			if ((amps.back().real() == 0) or (amps.back().imag() == 0))
@@ -154,6 +154,7 @@ calcPwa2kAmps(const string&             evtInFileName,
               vector<complex<double> >& amps,
               const long int            maxNmbEvents)
 {
+#ifdef USE_PWA2000
 	ifstream eventData(evtInFileName.c_str());
 	keyfile  key;
 	event    ev;
@@ -171,6 +172,10 @@ calcPwa2kAmps(const string&             evtInFileName,
 			cout << "    " << countEvent << endl;
 	}
 	return countEvent;
+#else
+	return 0;
+	printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
+#endif
 }
 
 
@@ -183,7 +188,7 @@ struct symInfo {
 
 
 vector<symInfo>
-readDatFile(const string& fileName, 
+readDatFile(const string& fileName,
             const bool    debug = false)
 {
 	ifstream        datFile(fileName.c_str());
@@ -212,7 +217,7 @@ readDatFile(const string& fileName,
 			           << "    phi     = "  << maxPrecision(s.phi)   << endl
 			           << "    ratio   = "  << maxPrecision(s.ratio) << endl;
 
-	}	
+	}
 	return symInfos;
 }
 
@@ -222,13 +227,12 @@ main(int argc, char** argv)
 {
 	printCompilerInfo();
 	printSvnVersion();
-	
+
 	const long int maxNmbEvents = 1000;
 	//const long int maxNmbEvents = 1;
 
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
 	pdt.readFile();
-	PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
 	TStopwatch timer;
 
 	// waves with isospin symmetrization
@@ -303,6 +307,9 @@ main(int argc, char** argv)
 	printInfo << "newAmps[0] = " << maxPrecisionDouble(newAmps[0]) << endl;
 	timer.Print();
 
+#ifdef USE_PWA2000
+	PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
+
 	timer.Reset();
 	timer.Start();
 	vector<complex<double> > pwa2kAmps;
@@ -339,7 +346,7 @@ main(int argc, char** argv)
 		          << maxPrecisionDouble(newAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
 		          << "(" << maxPrecision(relDiff[0]) << ", " << maxPrecision(relDiff[1]) << ")" << endl;
 	}
-	
+
 	if (1) {
 		const string outFileName = "testAmplitudeDiff.root";
 		printInfo << "writing comparison plots to " << outFileName << endl;
@@ -375,4 +382,7 @@ main(int argc, char** argv)
 		f->Write();
 		f->Close();
 	}
+#else
+		printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
+#endif
 }

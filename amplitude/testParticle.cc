@@ -38,8 +38,10 @@
 #include "TVector3.h"
 #include "TLorentzRotation.h"
 
+#ifdef USE_PWA2000
 #include "Vec.h"
 #include "lorentz.h"
+#endif
 
 #include "spinUtils.hpp"
 #include "reportingUtilsRoot.hpp"
@@ -138,6 +140,7 @@ main(int argc, char** argv)
 	}
 
 	if (0) {
+#ifdef USE_PWA2000
 		{
 			fourVec  p(2, threeVec(0.5, 0.75, 1));
 			threeVec n = threeVec(0, 0, 1) / p.V();
@@ -164,6 +167,9 @@ main(int argc, char** argv)
 			p *= L;
 			cout << "L -> " << p << endl;
 		}
+#else
+		printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
+#endif
 
 		{
 			TLorentzVector p(0.5, 0.75, 1, 2);

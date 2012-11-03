@@ -82,8 +82,8 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 	const double m2      = v.daughter2()->lzVec().M();          // daughter 2 mass
 	const double M0      = parent->mass();                      // resonance peak position
 	const double Gamma0  = parent->width();                     // resonance peak width
-	const double q       = breakupMomentum       (M,  m1, m2);  // breakup momentum
-	const double q02     = breakupMomentumSquared(M0, m1, m2);  // squared breakup momentum at peak position
+	const double q       = breakupMomentum       (M,  m1, m2);
+	const double q02     = breakupMomentumSquared(M0, m1, m2, true);
 	const double q0      = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
 	const unsigned int L = v.L();
 
@@ -275,27 +275,39 @@ rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 
 	// get Breit-Wigner parameters
 	const double M   = parent->lzVec().M();                 // parent mass
-	const double m1  = v.daughter1()->lzVec().M();          // daughter 1 mass
-	const double m2  = v.daughter2()->lzVec().M();          // daughter 2 mass
-	const double M0  = parent->mass();                      // resonance peak position
-	const double q   = breakupMomentum       (M,  m1, m2);  // breakup momentum
-	const double q02 = breakupMomentumSquared(M0, m1, m2);  // squared breakup momentum at peak position
-	const double q0  = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
+	const double m1  = v.daughter1()->lzVec().M();          // daughter 1 measured/assumed mass
+	const double m2  = v.daughter2()->lzVec().M();          // daughter 2 measured/assumed mass
+	const double q   = breakupMomentum(M, m1, m2);
+	// const double M0  = parent->mass();                      // resonance peak position
+	// const double q02 = breakupMomentumSquared(M0, m1, m2, true);
+	// const double q0  = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
 	const unsigned int L = v.L();
 
 	// rho' parameters
-	const double M01     = 1.465;  // [GeV/c^]
-	const double Gamma01 = 0.235;  // [GeV/c^]
-	const double M02     = 1.720;  // [GeV/c^]
-	const double Gamma02 = 0.220;  // [GeV/c^]
+	const double M01     = 1.465;  // rho(1450) mass [GeV/c^]
+	const double Gamma01 = 0.235;  // rho(1450) width [GeV/c^]
+	const double M02     = 1.700;  // rho(1700) mass [GeV/c^]
+	const double Gamma02 = 0.220;  // rho(1700) width [GeV/c^]
+	// const double M02     = 1.720;  // rho(1700) mass; PDG12 [GeV/c^]
+	// const double Gamma02 = 0.250;  // rho(1700) width; PDG12 [GeV/c^]
+	const double q102    = breakupMomentumSquared(M01, m1, m2, true);
+	const double q10     = sqrt(fabs(q102));
+	const double q202    = breakupMomentumSquared(M02, m1, m2, true);
+	const double q20     = sqrt(fabs(q202));
 
-	const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
-	const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
-	const complex<double> amp  =  (1. / 7.) * (4 * bw1 - 3 * bw2);
+	// const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
+	// const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
+	const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q10);
+	const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q20);
+	const complex<double> amp = (4 * bw1 - 3 * bw2) / 7;
 
 	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-		           << " GeV/c^2, L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
-		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
+		// printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		//            << " GeV/c^2, L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
+		//            << "q_0 = " << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
+		           << "L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
+		           << "q1_0 = " << maxPrecision(q10) << " GeV/c, "
+		           << "q2_0 = " << maxPrecision(q20) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
 	return amp;
 }

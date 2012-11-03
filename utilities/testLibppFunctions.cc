@@ -49,7 +49,7 @@
 #include "spinUtils.hpp"
 #include "dFunction.hpp"
 
-#include "../pwa2000/libpp/pputil.h"
+#include "pputil.h"
 
 
 using namespace std;

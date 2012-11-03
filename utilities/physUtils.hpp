@@ -68,7 +68,7 @@ namespace rpwa {
 	                const double m1,  // mass of daughter particle 1
 	                const double m2)  // mass of daughter particle 2
 	{
-		return rpwa::sqrt(breakupMomentumSquared(M, m1, m2));
+		return rpwa::sqrt(breakupMomentumSquared(M, m1, m2, false));
 	}
 
 
@@ -255,9 +255,16 @@ namespace rpwa {
 	            const double q,       // 2-body breakup momentum
 	            const double q0)      // 2-body breakup momentum at peak position
 	{
+		if (q0 == 0)
+			return 0;
 		const double Gamma  =   Gamma0 * (M0 / M) * (q / q0)
 			                    * (barrierFactorSquared(L, q) / barrierFactorSquared(L, q0));
-		return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
+		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+		const double A = M0 * Gamma0;
+		const double B = M0 * M0 - M * M;
+		const double C = M0 * Gamma;
+		return (A / (B * B + C * C)) * std::complex<double>(B, C);
+		// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	}
   
   

@@ -591,7 +591,10 @@ set(ROOTPWASCRIPTS_LIBS
 # build subprojects
 
 # PWA2000
-add_subdirectory(pwa2000)
+option(USE_PWA2000 "En/Disables compilation of PWA2000 components" ON)
+if(USE_PWA2000)
+	add_subdirectory(pwa2000)
+endif()
 
 # Utilities
 add_subdirectory(utilities)
