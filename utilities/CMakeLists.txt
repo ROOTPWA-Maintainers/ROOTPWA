@@ -51,5 +51,9 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # executables
 make_executable(testSumAccumulators testSumAccumulators.cc)
-make_executable(testLibppFunctions  testLibppFunctions.cc "${ROOT_LIBS};${PWA2000_LIBS}")
 make_executable(testSpinUtils       testSpinUtils.cc)
+if(USE_PWA2000)
+	make_executable(testLibppFunctions testLibppFunctions.cc "${ROOT_LIBS};${PWA2000_LIBS}")
+else()
+	message(STATUS "PWA2000 disabled. Skipping build of testLibppFunctions.")
+endif()

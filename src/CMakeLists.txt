@@ -41,7 +41,6 @@ message(STATUS ">>> Setting up 'src' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}

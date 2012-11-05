@@ -42,11 +42,12 @@
 #include "spinUtils.hpp"
 #include "conversionUtils.hpp"
 #include "libConfigUtils.hpp"
+#include "arrayUtils.hpp"
 #include "particleDataTable.h"
 #include "waveDescription.h"
 #include "waveSetGenerator.h"
 
-	
+
 using namespace std;
 using namespace boost;
 using namespace boost::tuples;
@@ -86,7 +87,7 @@ waveSetGenerator::setWaveSetParameters(const string& templateKeyFileName)
 		printWarn << "problems reading wave set parameters from '" << templateKeyFileName << "'. "
 		          << "cannot generate wave set." << endl;
 		return false;
-	}		
+	}
 	// find and parse group with wave set parameters
 	const Setting* waveSetParKey = findLibConfigGroup(key.getRoot(), "waveSetParameters", false);
 	if (waveSetParKey) {
@@ -169,7 +170,7 @@ waveSetGenerator::generateWaveSet()
 		if (_debug)
 			printDebug << "generating decay topologies for subdecay[" << iStart << "]: "
 			           << subDecays[iStart];
-		
+
 		// get daughter decay topologies
 		vector<vector<isobarDecayTopology>* > daughterDecays;
 		adjIterator iNd, iNdEnd;
@@ -182,10 +183,10 @@ waveSetGenerator::generateWaveSet()
 			for (iDaughter[1] = 0; iDaughter[1] < daughterDecays[1]->size(); ++iDaughter[1]) {
 
 				// get daughter particles from the respective decay topologies
-				const nodeDesc topNodes[2] = 
+				const nodeDesc topNodes[2] =
 					{(*daughterDecays[0])[iDaughter[0]].topNode(),
 					 (*daughterDecays[1])[iDaughter[1]].topNode()};
-				const particlePtr daughters[2] = 
+				const particlePtr daughters[2] =
 					{(*daughterDecays[0])[iDaughter[0]].vertex(topNodes[0])->inParticles()[0],
 					 (*daughterDecays[1])[iDaughter[1]].vertex(topNodes[1])->inParticles()[0]};
 				if (_debug)
@@ -195,7 +196,7 @@ waveSetGenerator::generateWaveSet()
 					           << "'" << daughters[1]->name() << "'" << endl
 					           << (*daughterDecays[0])[iDaughter[0]]
 					           << (*daughterDecays[1])[iDaughter[1]];
-				
+
 				// copy parent vertex
 				isobarDecayVertexPtr parentVertex
 					(new isobarDecayVertex(*static_pointer_cast<isobarDecayVertex>
@@ -209,7 +210,7 @@ waveSetGenerator::generateWaveSet()
 					= _templateTopo->joinDaughterDecays(parentVertex,
 					                                    (*daughterDecays[0])[iDaughter[0]],
 					                                    (*daughterDecays[1])[iDaughter[1]]);
-	
+
 				// calculate parent quantum numbers fixed by daughter quantum numbers
 				const int parentBaryonNmb   = daughters[0]->baryonNmb()   + daughters[1]->baryonNmb();
 				const int parentCharge      = daughters[0]->charge()      + daughters[1]->charge();
@@ -235,7 +236,7 @@ waveSetGenerator::generateWaveSet()
 						if (_debug)
 							printDebug << "setting relative orbital angular momentum = " << spinQn(L) << " "
 							           << "(max L = " << spinQn(get<1>(_LRange)) << ")" << endl;
-						const int parentP = daughters[0]->P() * daughters[1]->P() * (L % 4 == 0 ? 1 : -1);
+						const int parentP = daughters[0]->P() * daughters[1]->P() * powMinusOne(L / 2);
 
 						// loop over allowed total angular momenta
 						int parentJ, parentJMax;
@@ -253,12 +254,16 @@ waveSetGenerator::generateWaveSet()
 									printDebug << "setting parent isospin = " << spinQn(parentI) << " "
 									           << "(max isospin = " << spinQn(parentIMax) << ")" << endl;
 
+								// get I_z from Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
+								const int parentI_z = 2 * parentCharge - (parentBaryonNmb + parentStrangeness
+								                                          + parentCharm + parentBeauty);
+
 								// C-parity
-								int parentC;
-								if (abs(parentCharge) == 0)
-									parentC = parentG * (parentI % 4 == 0 ? 1 : -1);
-								else
-									parentC = 0;
+								// defined only for mesons with zero flavor quantum numbers
+								int parentC = 0;
+								if ((parentBaryonNmb == 0) and (parentI_z == 0) and (parentStrangeness == 0)
+								    and (parentCharm == 0) and (parentBeauty == 0))
+									parentC = parentG * powMinusOne(parentI / 2);
 								if (_debug)
 									printDebug << "trying isobar quantum numbers IG(JPC) = "
 									           << spinQn(parentI) << sign(parentG)
@@ -266,9 +271,6 @@ waveSetGenerator::generateWaveSet()
 									           << ", with L = " << spinQn(L) << ", S = " << spinQn(S) << endl;
 
 								// check whether charge state is allowed using
-								// Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
-								const int parentI_z = 2 * parentCharge - (parentBaryonNmb + parentStrangeness
-								                                          + parentCharm + parentBeauty);
 								if (not spinStatesCanCouple(daughterI, daughterI_z, parentI, parentI_z)) {
 									if (_debug)
 										cout << "        rejected, because (I, I_z)[0] = (" << spinQn(daughterI[0])
@@ -285,6 +287,46 @@ waveSetGenerator::generateWaveSet()
 											cout << "        rejected, because quantum number combination IG(JPC) = "
 											     << spinQn(parentI) << sign(parentG) << "(" << spinQn(parentJ)
 											     << sign(parentP) << sign(parentC) << ") is spin-exotic" << endl;
+										continue;
+									}
+
+								// enforce rules for particle-antiparticle systems
+								if (   daughters[1]->antiPartProperties()
+								    == *(static_pointer_cast<particleProperties>(daughters[0]))) {
+									// !NOTE! since equality test function is virtual,
+									// order in the above comparison is essential
+									// (see S.U. Chung: "C- and G-Parity: a New Definition and Applications, Version V"
+									//  eq. 32)
+									if (parentG != powMinusOne((parentI + L + S) / 2)) {
+										if (_debug)
+											cout << "        rejected, because I[= " << spinQn(parentI) << "], "
+											     << "L[= " << spinQn(L) << "], and S[= " << spinQn(S) << "] "
+											     << "are not consistent with G-parity[= " << sign(parentG) << "]. "
+											     << "for particle-antiparticle system ["
+											     << daughters[0]->name() << ", " << daughters[1]->name() << "] "
+											     << "(-)^(I + L + S) = " << sign(powMinusOne((parentI + L + S) / 2))
+											     << " must be equal to G-parity." << endl;
+										continue;
+									}
+									// I_z of the parent and C = (-)^(L + S) should be fulfilled automatically
+									// (see S.U. Chung: "C- and G-Parity: a New Definition and Applications, Version V"
+									//  eq. 31)
+									assert(parentI_z == 0);
+									assert(parentC == powMinusOne((L + S) / 2));
+								}
+
+								// enforce rules for particle-particle systems
+								// (see S.U. Chung: "C- and G-Parity: a New Definition and Applications, Version V"
+								//  eq. 36)
+								if (*(daughters[0]) == *(daughters[1]))
+									if (powMinusOne((parentI + L + S) / 2) != powMinusOne(daughterI[0])) {
+										if (_debug)
+											cout << "        rejected, because system with two identical particles ["
+											     << daughters[0]->name() << ", " << daughters[1]->name() << "] must have "
+											     << ((powMinusOne(daughterI[0]) == +1) ? "even" : "odd")
+											     << " (I[= " << spinQn(parentI) << "] + L[= " << spinQn(L) << "] "
+											     << "+ S[= " << spinQn(S) << "]) = "
+											     << spinQn(parentI) + spinQn(L) + spinQn(S) << endl;
 										continue;
 									}
 
@@ -347,15 +389,14 @@ waveSetGenerator::generateWaveSet()
 										  (daughters[0]->mass() - _isobarMassWindowSigma * daughters[0]->width())
 										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
 										: 0;
-									set<string> decayproducts;
-									decayproducts.insert(daughters[0]->name());
-									decayproducts.insert(daughters[1]->name());
+									multiset<string> decayProducts;
+									decayProducts.insert(daughters[0]->name());
+									decayProducts.insert(daughters[1]->name());
 									vector<const particleProperties*> possibleIsobars
-									    = particleDataTable::entriesMatching(isobarProp, "allQn", minIsobarMass,
-									                                         _isobarMassWindowSigma, _isobarWhiteList,
-									                                         _isobarBlackList,
-									                                         decayproducts,
-									                                         _forceDecayCheck);
+									    = particleDataTable::entriesMatching(isobarProp, "allQn",
+									                                         minIsobarMass, _isobarMassWindowSigma,
+									                                         _isobarWhiteList, _isobarBlackList,
+									                                         decayProducts, _forceDecayCheck);
 									if (_debug)
 										printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
 										           << isobarProp.qnSummary() << " in particle data table" << endl;
@@ -378,7 +419,7 @@ waveSetGenerator::generateWaveSet()
 				}  // S loop
 			}  // loop over daughter decays
 	}  // loop over all start nodes
-	
+
 	// extract decays for X-decay vertex and add production vertex
 	_waveSet = decayPossibilities[startNds.back()];
 	for (size_t i = 0; i < _waveSet.size(); ++i) {
@@ -394,6 +435,16 @@ waveSetGenerator::generateWaveSet()
 		_waveSet[i].productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
 	}
 
+	// post process wave set
+	set<size_t> boseSymWaveIndices = findBoseSymDecays();
+	if (boseSymWaveIndices.size() > 0) {
+		_waveSet.erase(remove_if(_waveSet.begin(), _waveSet.end(),
+		                         rpwa::isInListOfIndices<isobarDecayTopology>(_waveSet.begin(),
+			boseSymWaveIndices)),
+		               _waveSet.end());
+		printSucc << "removed " << boseSymWaveIndices.size() << " Bose duplicates "
+		          << "from wave set" << endl;
+	}
 	return _waveSet.size();
 }
 
@@ -409,9 +460,7 @@ waveSetGenerator::writeKeyFiles(const string& dirName,
 		if (waveDescription::writeKeyFile(keyFileName, _waveSet[i]))
 			++countSuccess;
 	}
-	
-	 printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
-	
+	printInfo << "wrote " << countSuccess << " out of " << _waveSet.size() << " key files" << endl;
 	if (countSuccess != _waveSet.size()) {
 	  printWarn << "writing of " << _waveSet.size() - countSuccess << " key files failed" << endl;
 	  return false;
@@ -506,4 +555,135 @@ waveSetGenerator::createNewDecayTopology(const isobarDecayTopology&  parentDecay
 	if (_debug)
 		printDebug << "created decay topology for " << *parentVertexCopy << endl;
 	return decayCopy;
+}
+
+
+set<size_t>
+waveSetGenerator::findBoseSymDecays() const
+{
+	printInfo << "looking for Bose duplicates in wave set..." << endl;
+	set<size_t> waveIndicesToRemove;
+	set<size_t> waveIndicesToKeep;
+	for (size_t waveIndex = 0; waveIndex < _waveSet.size(); ++waveIndex) {
+
+		// don't consider entries that are already tagged
+		set<size_t>::const_iterator indexEntry = waveIndicesToRemove.find(waveIndex);
+		if (indexEntry != waveIndicesToRemove.end())
+			continue;
+		indexEntry = waveIndicesToKeep.find(waveIndex);
+		if (indexEntry != waveIndicesToKeep.end())
+			continue;
+
+		// get Bose-symmetric vertices
+		isobarDecayTopologyPtr     topo              = _waveSet[waveIndex].clone();
+		const vector<unsigned int> boseSymVertIds    = topo->findIsobarBoseSymVertices();
+		const size_t               nmbBoseSymVertIds = boseSymVertIds.size();
+		if (nmbBoseSymVertIds > 1) {
+			printErr << "the code has not yet been tested for decay topologies with "
+			         << nmbBoseSymVertIds << " Bose-symmetric decay vertices. aborting." << endl;
+			throw;
+		}
+		if (nmbBoseSymVertIds != 1)
+			continue;
+
+		// make sure the two daughters are not the same particle
+		isobarDecayVertexPtr vert         = topo->isobarDecayVertices()[boseSymVertIds[0]];
+		const particlePtr    daughters[2] = {vert->daughter1(), vert->daughter2()};
+		if (*(daughters[0]) == *(daughters[1]))
+			continue;
+		const decayTopology daughterTopos[2] = {topo->subDecay(topo->toNode(daughters[0])),
+		                                        topo->subDecay(topo->toNode(daughters[1]))};
+		if (_debug)
+			printDebug << "wave[" << waveIndex << "] "
+			           << waveDescription::waveNameFromTopology(*topo, true)
+			           << " has Bose-symmetric vertex " << *vert << ". "
+			           << "looking for partner waves in wave set." << endl;
+
+		// find indices of all decay vertices that are not below the Bose-symmetric vertex
+		vector<unsigned int> nonSymVertIds;
+		{
+			// get graph nodes below Bose-symmetric vertex
+			const vector<nodeDesc> nodes = topo->sortNodesDfs(vert);
+			for (unsigned int i = 0; i < topo->nmbDecayVertices(); ++i) {
+				const nodeDesc nd        = topo->node(topo->isobarDecayVertices()[i]);
+				bool           isSymNode = false;
+				for (unsigned int j = 0; j < nodes.size(); ++j)
+					if (nd == nodes[j]) {
+						isSymNode = true;
+						break;
+					}
+				if (not isSymNode)
+					nonSymVertIds.push_back(i);
+			}
+		}
+
+		// look for Bose-symmetric topology
+		// this uses the fact that all waves have the same decay toplogy,
+		// because they were generated from the same template
+		for (size_t i = 0; i < _waveSet.size(); ++i) {
+			if (i == waveIndex)
+				continue;
+			isobarDecayTopologyPtr symTopo = _waveSet[i].clone();
+
+			// compare vertices that are not below the Bose-symmetric vertex
+			bool foundSymTopo = true;
+			for (size_t j = 0; j < nonSymVertIds.size(); ++j)
+				if (   *(topo->isobarDecayVertices   ()[nonSymVertIds[j]])
+				    != *(symTopo->isobarDecayVertices()[nonSymVertIds[j]])) {
+					foundSymTopo = false;
+					break;
+				}
+			if (not foundSymTopo)
+				continue;
+			// compare Bose-symmetric vertex
+			isobarDecayVertexPtr symVert = symTopo->isobarDecayVertices()[boseSymVertIds[0]];
+			// swap daughters 1 and 2
+			swap(symVert->outParticles()[0], symVert->outParticles()[1]);
+			if (*symVert != *vert)
+				continue;
+			swap(symVert->outParticles()[1], symVert->outParticles()[0]);  // swap back, because otherwise printout is confusing
+			// compare daughter topologies
+			const particlePtr   symDaughters    [2] = {symVert->daughter2(), symVert->daughter1()};  // !NOTE! reversed order
+			const decayTopology symDaughterTopos[2]
+				= {symTopo->subDecay(symTopo->toNode(symDaughters[0])),
+				   symTopo->subDecay(symTopo->toNode(symDaughters[1]))};
+			for (unsigned int k = 0; k < 2; ++k)
+				for (unsigned int l = 0; l < daughterTopos[k].nmbDecayVertices(); ++l)
+					if (   *(daughterTopos   [k].decayVertices()[l])
+					    != *(symDaughterTopos[k].decayVertices()[l])) {
+						foundSymTopo = false;
+						break;
+					}
+			if (not foundSymTopo)
+				continue;
+			if (_debug)
+				printDebug << "found Bose-partner wave[" << i << "] "
+				           << waveDescription::waveNameFromTopology(*symTopo, true) << endl;
+			// keep topology with the heavier first particle
+			if (daughters[0]->mass() > daughters[1]->mass()) {
+				if (   not waveIndicesToRemove.insert(i).second
+				    or not waveIndicesToKeep.insert(waveIndex).second) {
+					printErr << "wave[" << i << "]([" << waveIndex << "]) was tagged for "
+					         << "removal(for keeping) twice. this should never happen. aborting." << endl;
+					throw;
+				}
+				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*symTopo, true)
+				          << " as superfluous" << endl;
+			} else {
+				if (   not waveIndicesToRemove.insert(waveIndex).second
+				    or not waveIndicesToKeep.insert(i).second) {
+					printErr << "wave[" << waveIndex << "]([" << i << "]) was tagged for "
+					         << "removal(for keeping) twice. this should never happen. aborting." << endl;
+					throw;
+				}
+				printInfo << "tagged wave " << waveDescription::waveNameFromTopology(*topo, true)
+				          << " as superfluous" << endl;
+			}
+		}  // inner loop over wave set
+
+	}  // outer loop over wave set
+
+	printSucc << "found " << waveIndicesToRemove.size() << " Bose duplicates "
+	          << "in wave set" << endl;
+	return waveIndicesToRemove;
 }

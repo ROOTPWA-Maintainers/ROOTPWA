@@ -45,12 +45,12 @@ message(STATUS ">>> Setting up 'amplitude' directory.")
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${PYTHON_INCLUDE_DIRS}
-	${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
@@ -119,7 +119,17 @@ make_executable(testParticle         testParticle.cc         ${THIS_LIB})
 make_executable(testDecayTopology    testDecayTopology.cc    ${THIS_LIB})
 make_executable(testWaveDescription  testWaveDescription.cc  ${THIS_LIB})
 make_executable(testWaveSetGenerator testWaveSetGenerator.cc ${THIS_LIB})
-make_executable(testMassDependence   testMassDependence.cc   ${THIS_LIB})
 make_executable(testAmplitude        testAmplitude.cc        ${THIS_LIB})
 make_executable(testAmplitudeTree    testAmplitudeTree.cc    ${THIS_LIB})
+make_executable(testIsospinSym       testIsospinSym.cc       ${THIS_LIB})
 make_executable(testIntegral         testIntegral.cc         ${THIS_LIB})
+if(USE_PWA2000)
+	if(Boost_TIMER_FOUND)
+		make_executable(testMassDependence testMassDependence.cc
+			"${THIS_LIB};${ROOTPWAGEN_LIBS};${Boost_TIMER_LIBRARY};${Boost_SYSTEM_LIBRARY}")
+	else()
+		message(STATUS "Cannot find Boost::timer shared library. Skipping build of testMassDependence.")
+	endif()
+else()
+	message(STATUS "PWA2000 disabled. Skipping build of testMassDependence.")
+endif()

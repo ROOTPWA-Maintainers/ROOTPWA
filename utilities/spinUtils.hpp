@@ -57,7 +57,7 @@ namespace rpwa {
 	inline
 	boost::tuples::tuple<int, int>
 	getSpinRange(const int spinA,
-	             const int spinB, 
+	             const int spinB,
 	             bool*     valid = 0)  ///< computes minimum and maximum possible spins that can be made by coupling spin A and spin B
 	{
 		// make sure that allowedRange can always be directly used in for loops
@@ -146,7 +146,7 @@ namespace rpwa {
 		return (spin >= 0) and (rpwa::abs(spinProj) <= spin) and isEven(spin - spinProj);
 	}
 
-	
+
 	inline
 	bool
 	spinStatesCanCouple(const int j1,
@@ -243,9 +243,9 @@ namespace rpwa {
 	// Clebsch-Gordan coefficient functor
 	template<typename T>
 	class clebschGordanCoeffCached {
-	
+
 	public:
-			
+
 		static clebschGordanCoeffCached& instance() { return _instance; }  ///< get singleton instance
 		T operator ()(const int j1,
 		              const int m1,
@@ -316,7 +316,7 @@ namespace rpwa {
 				const T N3 = rpwa::factorial<T>((j1 + j2 - J ) / 2);
 				const T N4 = rpwa::factorial<T>((J + M) / 2);
 				const T N5 = rpwa::factorial<T>((J - M) / 2);
-	
+
 				const T D0 = rpwa::factorial<T>((j1 + j2 + J) / 2 + 1);
 				const T D1 = rpwa::factorial<T>((j1 - m1) / 2);
 				const T D2 = rpwa::factorial<T>((j1 + m1) / 2);
@@ -324,21 +324,21 @@ namespace rpwa {
 				const T D4 = rpwa::factorial<T>((j2 + m2) / 2);
 
 				const T A  = (J + 1) * N1 * N2 * N3 * N4 * N5 / (D0 * D1 * D2 * D3 * D4);
-	
+
 				clebschVal = rpwa::sqrt(A) * sum;
 				if (_useCache) {
 					cacheEntry  = new double;
 					*cacheEntry = clebschVal;
 				}
 			}
-			
+
 			return clebschVal;
 		}
 
 		static bool useCache()                              { return _useCache;     }  ///< returns caching flag
 		static void setUseCache(const bool useCache = true) { _useCache = useCache; }  ///< sets caching flag
 		static unsigned int cacheSize()  ///< returns cache size in bytes
-		{ 
+		{
 			unsigned int size = _maxJ * (2 * _maxJ - 1) * _maxJ * (2 * _maxJ - 1) * 2 * _maxJ * sizeof(T*);
 			for (int j1 = 0; j1 < _maxJ; ++j1)
 				for (int m1 = -j1; m1 <= j1; ++m1)
@@ -399,7 +399,7 @@ namespace rpwa {
 	//
 	//////////////////////////////////////////////////////////////////////////////
 
-	
+
 	inline
 	bool
 	spinStatesCanCouple(const int j1,
@@ -411,7 +411,7 @@ namespace rpwa {
 	{
 		if (clebschGordanCoeff<double>(j1, m1, j2, m2, J, M) == 0)
 			return false;
-		return true;		
+		return true;
 	}
 
 

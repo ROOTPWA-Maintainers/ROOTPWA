@@ -48,6 +48,8 @@
 #include "diffractiveDissVertex.h"
 #include "isobarDecayVertex.h"
 #include "isobarDecayTopology.h"
+#include "waveDescription.h"
+#include "isobarHelicityAmplitude.h"
 
 
 using namespace std;
@@ -55,19 +57,7 @@ using namespace rpwa;
 using namespace boost;
 
 
-struct graphBundleData {
-	string foo;
-};
-struct nodeBundleData {
-	double bar;
-};
-struct edgeBundleData {
-	int blah;
-};
-
-
-typedef decayGraph<interactionVertex, particle, graphBundleData,
-                   nodeBundleData, edgeBundleData> graphType;
+typedef decayGraph<interactionVertex, particle> graphType;
 
 
 int
@@ -76,14 +66,14 @@ main(int argc, char** argv)
 	printSvnVersion();
 
 	// switch on debug output
-	particle::setDebug(true);
-	graphType::setDebug(true);
-	decayTopologyGraphType::setDebug(true);
-	decayTopology::setDebug(true);
-	interactionVertex::setDebug(true);
-	diffractiveDissVertex::setDebug(true);
-	isobarDecayVertex::setDebug(true);
-	isobarDecayTopology::setDebug(true);
+	// particle::setDebug(true);
+	// graphType::setDebug(true);
+	// decayTopologyGraphType::setDebug(true);
+	// decayTopology::setDebug(true);
+	// interactionVertex::setDebug(true);
+	// diffractiveDissVertex::setDebug(true);
+	// isobarDecayVertex::setDebug(true);
+	// isobarDecayTopology::setDebug(true);
 
 	particleDataTable& pdt = particleDataTable::instance();
 	pdt.readFile();
@@ -121,7 +111,7 @@ main(int argc, char** argv)
 		          << *vert4 << endl;
 	}
 
-	if (1) {
+	if (0) {
 		particlePtr pi0 = createParticle("pi-");
 		particlePtr pi1 = createParticle("pi+");
 		particlePtr pi2 = createParticle("pi-");
@@ -172,10 +162,8 @@ main(int argc, char** argv)
 
 		graphType g2  = g;
 		g2.name()     = "graph copy";
-		g2.data().foo = "foo";
 		for (graphType::adjIterator i = g2.adjacentVertices(vert1).first;
 		     i != g2.adjacentVertices(vert1).second; ++i) {
-			g2.data (*i).bar = *i + 0.5;
 			g2.name (*i)    += " !bar!";
 			g2.color(*i)     = white_color;
 			printInfo << "vert1 adjacent vertex[" << *i << "]: " << *g2[*i] << endl;
@@ -183,7 +171,6 @@ main(int argc, char** argv)
 		printInfo << "nmbInParticles(vert1): " << g2.nmbInEdges(vert1) << endl;
 		for (graphType::inEdgeIterator i = g2.incomingEdges(vert1).first;
 		     i != g2.incomingEdges(vert1).second; ++i) {
-			g2.data(*i).blah = g2.index(*i) + 2;
 			g2.name (*i)    += " !blah!";
 			g2.color(*i)     = gray_color;
 			printInfo << "vert1 in edge[" << *i << "]: " << *g2[*i] << endl;
@@ -191,7 +178,6 @@ main(int argc, char** argv)
 		printInfo << "nmbOutParticles(vert1): " << g2.nmbOutEdges(vert1) << endl;
 		for (graphType::outEdgeIterator i = g2.outgoingEdges(vert1).first;
 		     i != g2.outgoingEdges(vert1).second; ++i) {
-			g2.data(*i).blah = g2.index(*i) + 4;
 			g2.name (*i)    += " !blah2!";
 			g2.color(*i)     = black_color;
 			printInfo << "vert1 out edge[" << *i << "]: " << *g2[*i] << endl;
@@ -208,16 +194,14 @@ main(int argc, char** argv)
 		     << "particleExists(vert1, vert0) = " << g2.particleExists(vert1, vert0) << endl;
 		cout << "particleConnects(f1, vert0, vert1) = " << g2.particleConnects(f1, vert0, vert1) << endl;
 		cout << "particleConnects(a1, vert0, vert1) = " << g2.particleConnects(a1, vert0, vert1) << endl;
-		printInfo << "graph data = " << g2.data().foo << endl;
+		printInfo << endl;
 		for (graphType::nodeIterator i = g2.nodes().first; i != g2.nodes().second; ++i)
-			cout << "node " << *i << ": data = " << g2.data(*i).bar << ", "
-			     << "name = '"  << g2.name(*i)  << "', "
+			cout << "node " << *i << ": name = '"  << g2.name(*i)  << "', "
 			     << "index = " << g2.index(*i) << ", "
 			     << "color = " << g2.color(*i) << ", "
 			     << endl;
 		for (graphType::edgeIterator i = g2.edges().first; i != g2.edges().second; ++i)
-			cout << "edge " << *i << ": data = " << g2.data(*i).blah << ", "
-			     << "name = '"  << g2.name(*i)  << "', "
+			cout << "edge " << *i << ": name = '"  << g2.name(*i)  << "', "
 			     << "index = " << g2.index(*i) << ", "
 			     << "color = " << g2.color(*i) << ", "
 			     << endl;
@@ -341,5 +325,20 @@ main(int argc, char** argv)
 			newDecay.checkTopology();
 			newDecay.checkConsistency();
 		}
+	}
+
+	if (1) {
+		const string keyFileName = "foo/1-0-00+rho1700=rho770_01_sigma_11_pi-.key";
+
+		waveDescription    waveDesc;
+		isobarAmplitudePtr amp;
+		if (not waveDesc.parseKeyFile(keyFileName) or not waveDesc.constructAmplitude(amp)) {
+			printErr << "problems constructing amplitude. exiting." << endl;
+			exit(1);
+		}
+		isobarDecayTopologyPtr topo = amp->decayTopology();
+		printInfo << *topo;
+
+		topo->findIsobarBoseSymVertices();
 	}
 }

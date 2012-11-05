@@ -99,6 +99,7 @@ endif()
 # common compiler flags
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn")
 set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
@@ -159,7 +160,7 @@ message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
 message(STATUS "")
 message(STATUS ">>> Setting up Boost library.")
-set(_BOOST_COMPONENTS "mpi" "serialization" "python")
+set(_BOOST_COMPONENTS "mpi" "serialization" "python" "timer" "system")
 # set(Boost_DEBUG 1)
 set(Boost_USE_STATIC_LIBS    OFF)
 set(Boost_USE_MULTITHREADED  OFF)
@@ -178,8 +179,8 @@ endif()
 # at the same time the library is required. the third find_package
 # line is needed in case the components are not found, because
 # Boost_FOUND is set to FALSE.
-find_package(Boost 1.43.0 REQUIRED)
-find_package(Boost 1.43.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
+find_package(Boost 1.50.0 REQUIRED)
+find_package(Boost 1.50.0 QUIET COMPONENTS ${_BOOST_COMPONENTS})
 foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
 	string(TOUPPER ${_BOOST_COMPONENT} _BOOST_COMPONENT)
 	if(Boost_${_BOOST_COMPONENT}_FOUND)
@@ -189,7 +190,7 @@ foreach(_BOOST_COMPONENT ${_BOOST_COMPONENTS})
 endforeach()
 unset(_BOOST_COMPONENT)
 unset(_BOOST_COMPONENTS)
-find_package(Boost 1.43.0 REQUIRED)
+find_package(Boost 1.50.0 REQUIRED)
 set_feature_info(Boost
 	"C++ Template Library"
 	"http://www.boost.org/"
@@ -203,12 +204,6 @@ else()
 	message(FATAL_ERROR "Could not find Boost installation. "
 		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
 endif()
-# setup uprooted Boost libraries
-set(uprootedBoost_INCLUDE_DIRS
-	# local copy of Boost Graph Library from V1.43.0; overides graph library in Boost supplied by user
-	${CMAKE_SOURCE_DIR}/uprootedBoost/boost_1_43_0
-	)
-message(STATUS "using uprooted Boost include directories '${uprootedBoost_INCLUDE_DIRS}'.")
 
 
 # setup libconfig
@@ -533,19 +528,45 @@ unset(_ENVVAR)
 enable_testing()
 
 
-# build subprojects
-
+# set include and library paths
 set(UTILITIES_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/utilities
 	)
 
-# PWA2000
-add_subdirectory(pwa2000)
+set(TOOLS_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/tools
+	)
+set(ROOTPWATOOLS_LIBS
+	RootPwaTools
+	)
 
-# Utilities
-add_subdirectory(utilities)
+set(AMPLITUDE_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/amplitude
+	)
+set(AMPLITUDE_LIBS
+	RootPwaAmp
+	)
 
-# CUDA stuff
+set(ROOTPWA_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/src
+	)
+set(ROOTPWA_LIBS
+	RootPwa
+	)
+
+set(GEN_INCLUDE_DIR
+	${CMAKE_SOURCE_DIR}/generators
+	)
+set(ROOTPWAGEN_LIBS
+	RootPwaGen
+	)
+
+if(USE_PYTHON)
+	set(PYINTERFACE_LIBS
+		RootPwaPy
+		)
+endif()
+
 if(USE_CUDA)
 	set(CUDA_INCLUDE_DIR
 		${CMAKE_SOURCE_DIR}/cuda
@@ -553,56 +574,51 @@ if(USE_CUDA)
 	set(CUDA_LIBS
 		cuda
 		)
-	add_subdirectory(cuda)
 else()
 	set(CUDA_INCLUDE_DIR)
 	set(CUDA_LIBS)
 endif()
 
-# RootPwaAmp
-set(AMPLITUDE_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/amplitude
-	)
-set(AMPLITUDE_LIBS
-	RootPwaAmp
-	)
-add_subdirectory(amplitude)
-
-# RootPwa
-set(ROOTPWA_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/src
-	)
-set(ROOTPWA_LIBS
-	RootPwa
-	)
-add_subdirectory(src)
-
-# compile rootscripts into a library since they are linked by the gui
+#!!! this should be removed
 set(SCRIPTS_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/src/rootscripts
 	)
-add_subdirectory(src/rootscripts)
 set(ROOTPWASCRIPTS_LIBS
 	RootPwaScripts
 	)
 
+
+# build subprojects
+
+# PWA2000
+option(USE_PWA2000 "En/Disables compilation of PWA2000 components" ON)
+if(USE_PWA2000)
+	add_subdirectory(pwa2000)
+endif()
+
+# Utilities
+add_subdirectory(utilities)
+
+# CUDA stuff
+if(USE_CUDA)
+	add_subdirectory(cuda)
+endif()
+
+# RootPwaAmp
+add_subdirectory(amplitude)
+
+# RootPwa
+add_subdirectory(src)
+
+# compile rootscripts into a library since they are linked by the gui
+#!!! this should be removed
+add_subdirectory(src/rootscripts)
+
 # RootPwaTools
-set(TOOLS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/tools
-	)
 add_subdirectory(tools)
-set(ROOTPWATOOLS_LIBS
-	RootPwaTools
-	)
 
 # RootPwaGen
-set(GEN_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/generators
-	)
 add_subdirectory(generators)
-set(ROOTPWAGEN_LIBS
-	RootPwaGen
-	)
 
 # RootPwaKey
 add_subdirectory(keygen)
@@ -626,9 +642,6 @@ endif()
 
 # Python bindings
 if(USE_PYTHON)
-	set(PYINTERFACE_LIBS
-		RootPwaPy
-		)
 	add_subdirectory(pyInterface)
 endif()
 

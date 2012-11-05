@@ -49,7 +49,7 @@
 
 #ifndef __CINT__
 #define BOOST_DISABLE_ASSERTS
-#include "boost/multi_array.hpp"
+#include <boost/multi_array.hpp>
 #endif
 
 #include "TObject.h"

@@ -109,7 +109,7 @@ isobarDecayVertex::operator =(const isobarDecayVertex& vert)
 	return *this;
 }
 
-    
+
 isobarDecayVertex*
 isobarDecayVertex::doClone(const bool cloneInParticles,
                            const bool cloneOutParticles) const
@@ -124,6 +124,22 @@ isobarDecayVertex::doClone(const bool cloneInParticles,
 		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
 		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
 	return vertexClone;
+}
+
+
+bool
+isobarDecayVertex::isEqualTo(const interactionVertex& vert) const
+{
+	const isobarDecayVertex* isoVert = dynamic_cast<const isobarDecayVertex*>(&vert);
+	if (not isoVert)
+		return false;
+	if (not interactionVertex::isEqualTo(vert))
+		return false;
+	if (   (L()                 != isoVert->L())
+	    or (S()                 != isoVert->S())
+	    or (*(massDependence()) != *(isoVert->massDependence())))
+		return false;
+	return true;
 }
 
 

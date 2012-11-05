@@ -45,6 +45,7 @@
 
 
 using namespace std;
+using namespace boost;
 using namespace boost::assign;
 using namespace rpwa;
 
@@ -65,26 +66,70 @@ main(int argc, char** argv)
 	particleDataTable& pdt = particleDataTable::instance();
 	pdt.readFile();
 
+	// test selective comparision of particle properties
 	if (0) {
 		particleProperties prop1("bla",  2, -1, 0, +1, +1);
 		particleProperties prop2("blub", 2, +1, 2, -1, -1);
-  
+
 		string opt="IGJPC";
- 
-		cout << "Comparison  result: " << (prop1 == prop2) << endl;
-		cout << "Comparison with opt = " << opt << "  result: "
-		     << (prop1 ==  pair<particleProperties, string>(prop2, opt)) << endl;
+
+		printDebug << "Comparison  result: " << (prop1 == prop2) << endl;
+		printDebug << "Comparison with opt = " << opt << "  result: "
+		           << (prop1 ==  pair<particleProperties, string>(prop2, opt)) << endl;
 
 		vector<const particleProperties*> selection = pdt.entriesMatching(prop2, opt);
-		cout << "Matching entries in pdt with prototype: " << endl;
-		cout << prop2 << endl;
-		cout << " with option " << opt << endl;
+		printDebug << "Matching entries in pdt with prototype: " << endl
+		           << prop2 << endl
+		           << " with option " << opt << endl;
 
 		for(unsigned int i = 0; i < selection.size(); ++i)
 			cout << *selection[i] << endl;
 	}
 
+
+	// test particle comparison
 	if (1) {
+		particleProperties partProp1;
+		partProp1.fillFromDataTable("pi+");
+		particleProperties partProp2 = partProp1;
+
+		particlePtr part1 = createParticle(partProp1);
+		particlePtr part2 = createParticle(partProp2, 1, 2, +1);
+		printDebug << "particle properties" << endl
+		           << partProp1 << endl
+		           << partProp2 << endl;
+		printInfo << "comparing particle properties" << endl;
+		partProp1 == partProp2;
+		printDebug << "particles" << endl
+		           << *part1 << endl
+		           << *part2 << endl;
+		printInfo << "comparing particles" << endl;
+		*part1 == *part2;
+
+		// const string       keyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		const string       keyFileName = "testWaveDescription.key";
+		waveDescription    waveDesc;
+		isobarAmplitudePtr amp;
+		if (waveDesc.parseKeyFile(keyFileName) and waveDesc.constructAmplitude(amp)) {
+			isobarDecayTopologyPtr isoTopo = amp->decayTopology();
+			decayTopologyPtr       topo    = static_pointer_cast<decayTopology>(isoTopo);
+			// printInfo << *isoTopo << endl;
+			// printInfo << *topo    << endl;
+			isobarDecayVertexPtr isoVert = isoTopo->XIsobarDecayVertex();
+			interactionVertexPtr vert    = topo->XDecayVertex();
+			printInfo << "isobar decay vertex: " << *isoVert << endl;
+			printInfo << "interaction vertex:  " << *vert    << endl;
+
+			printInfo << "comparing isobar decay vertices" << endl;
+			*isoVert == *isoVert;
+			printInfo << "comparing interaction vertices" << endl;
+			*vert == *vert;
+		}
+
+	}
+	
+
+	if (0) {
 		waveSetGenerator waveSetGen;
 		if (not waveSetGen.setWaveSetParameters("testWaveSetGenerator.key")) {
 			cout << "could not initialize wave set generator. aborting." << endl;

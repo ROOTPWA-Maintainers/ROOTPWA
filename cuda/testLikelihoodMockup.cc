@@ -47,7 +47,7 @@
 
 #include "sumAccumulators.hpp"
 #include "reportingUtils.hpp"
-#include "nDimArrayUtils.hpp"
+#include "arrayUtils.hpp"
 
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"

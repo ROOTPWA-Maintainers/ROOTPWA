@@ -72,16 +72,14 @@ namespace rpwa {
 
 		particleProperties& operator =(const particleProperties& partProp);
 		// comparison operators that check equality of all fields
-		friend bool operator ==(const particleProperties& lhsProp,
-		                        const particleProperties& rhsProp);
-		friend bool operator !=(const particleProperties& lhsProp,
-		                        const particleProperties& rhsProp) { return not(lhsProp == rhsProp); }
+		bool operator ==(const particleProperties& rhsProp) const { return this->isEqualTo(rhsProp); }
+		bool operator !=(const particleProperties& rhsProp) const { return not (*this == rhsProp);   }
 		// comparison operators that check equality of fields selectable via string
 		friend bool operator ==(const particleProperties&                         lhsProp,
-		                        const std::pair<particleProperties, std::string>& rhsProp);
+		                        const std::pair<particleProperties, std::string>& rhsPropSel);
 		friend bool operator !=(const particleProperties&                         lhsProp,
-		                        const std::pair<particleProperties, std::string>& rhsProp)
-		{ return not (lhsProp == rhsProp); }
+		                        const std::pair<particleProperties, std::string>& rhsPropSel)
+		{ return not (lhsProp == rhsPropSel); }
 
 		std::string name            () const { return nameWithCharge(_name, _charge);          }  ///< returns particle name including charge
 		std::string bareName        () const { return _name;                                   }  ///< returns particle name w/o charge
@@ -113,11 +111,13 @@ namespace rpwa {
 
 		bool isSpinExotic() const;  ///< returns whether particle is spin-exotic
 
-		bool fillFromDataTable(const std::string& name, 
-		                       const bool         warnIfNotExistent = true);
+		const std::vector<std::multiset<std::string> >& decayModes() const { return _decayModes; }  ///< returns defined decay modes for this particle
+		int  nmbDecays   () const { return _decayModes.size(); }  ///< returns number of defined decay modes for this particle
+		bool hasDecay    (const std::multiset<std::string>& daughters) const; ///< returns whether given decay mode is in list of decays
+		void addDecayMode(const std::multiset<std::string>& daughters) { _decayModes.push_back(daughters); }  ///< adds decay channel into list of allowed decay modes
 
-		int  nDecays() const {return _decaymodes.size();}
-		bool hasDecay(const std::set<std::string>& daughters) const ; ///< returns true if decay is in list
+		bool fillFromDataTable(const std::string& name, 
+		                       const bool         warnIfNotExistent = true);  ///< sets particle properties from entry in particle data table
 
 		void setName        (const std::string& name       );                                                ///< sets particle name and charge (if given in name)
 		void setAntiPartName(const std::string& name       ) { _antiPartName = stripChargeFromName(name); }  ///< sets antiparticle name (charge in name is ignored)
@@ -126,6 +126,7 @@ namespace rpwa {
 		void setWidth       (const double       width      ) { _width        = width;                     }  ///< sets particle width
 		void setBaryonNmb   (const int          baryonNmb  ) { _baryonNmb    = baryonNmb;                 }  ///< sets particle's baryon number
 		void setIsospin     (const int          isospin    ) { _isospin      = abs(isospin);              }  ///< sets particle's isospin [hbar/2]
+		void setIsospinProj (const int          isospinProj) { _charge       = 0.5 * (isospinProj + baryonNmb() + strangeness() + charm() + beauty()); }  ///< sets particle's z component of the isospin [hbar/2]
 		void setStrangeness (const int          strangeness) { _strangeness  = strangeness;               }  ///< sets particle's strangeness
 		void setCharm       (const int          charm      ) { _charm        = charm;                     }  ///< sets particle's charm
 		void setBeauty      (const int          beauty     ) { _beauty       = beauty;                    }  ///< sets particle's beauty
@@ -142,12 +143,8 @@ namespace rpwa {
 		              const int J,
 		              const int P,
 		              const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
-		void addDecayMode(const std::set<std::string>& daughters) {_decaymodes.push_back(daughters);}
-		///< adds a set of particles into which the particle can decay  
 
-
-
-		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle
+		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle; !NOTE! decay modes are not (yet) handled
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)]
 
@@ -171,6 +168,11 @@ namespace rpwa {
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
+	protected:
+
+		virtual bool isEqualTo(const particleProperties& partProp) const;  ///< returns whether partProp is equal to this by checking equality of all member variables
+		
+
 	private:
 
 		std::string _name;          ///< full PDG name of particle w/o charge
@@ -189,14 +191,11 @@ namespace rpwa {
 		int         _P;             ///< parity (0 = undefined)
 		int         _C;             ///< C-parity (0 = undefined)
 
-		std::vector<std::set<std::string> > _decaymodes; ///< decaymodes OPTIONAL
+		std::vector<std::multiset<std::string> > _decayModes; ///< allowed decay modes
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
-
-
-
-	};
+	};  // particleProperties
 
 
 	inline

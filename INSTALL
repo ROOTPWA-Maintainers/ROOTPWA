@@ -22,8 +22,14 @@ Before you can build ROOTPWA you need to install the following software:
 * CMake
   CMake is a cross platform build system available from
     http://cmake.org
-  Some help can also be found here
-    http://www.vtk.org/Wiki/CMake_FAQ
+  In addition to the documentation further information about CMake can be
+  found at
+    http://www.cmake.org/cmake/help/cmake_tutorial.html
+    http://www.cmake.org/cmake/help/runningcmake.html
+    http://www.cmake.org/cmake/help/syntax.html
+    http://www.cmake.org/Wiki/CMake
+    http://rachid.koucha.free.fr/tech_corner/cmake_manual.html
+    http://mash-project.eu/wiki/index.php/CMake%3a_Getting_Started
   The minimum required version of CMake is 2.8.0. In case your Linux
   distribution offers only outdated packages, you can quite easily
   compile CMake yourself:
@@ -39,9 +45,9 @@ Before you can build ROOTPWA you need to install the following software:
   3) Compile CMake
      &> make && make install
   4) Add <install directory>/bin to your path or make an alias for cmake
-  
+
   or
-  
+
   1) Download the latest CMake binary (.tar.gz) from
      http://www.cmake.org/cmake/resources/software.html
      and unpack it to ~/bin/
@@ -64,7 +70,7 @@ Before you can build ROOTPWA you need to install the following software:
 * Boost
   Part of the code relies on the Boost library which is available at
     http://www.boost.org
-  Version 1.43.00 or higher is required.
+  Version 1.50.00 or higher is required.
   Boost is to a large extend a header-only library so that usually
   nothing has to be build. Just install the respective package for
   your platform or, in case you do not have administrator privileges,
@@ -80,6 +86,8 @@ Before you can build ROOTPWA you need to install the following software:
   &> git checkout master
   &> git pull
   &> git checkout Boost_1_51_0
+  The current branch tag is printed by
+  &> git describe --tags
 
 
 * CUDA (optional)

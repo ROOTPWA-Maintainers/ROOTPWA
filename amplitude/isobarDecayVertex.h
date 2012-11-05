@@ -113,6 +113,7 @@ namespace rpwa {
 		virtual isobarDecayVertex* doClone(const bool cloneInParticles,
 		                                   const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
+		virtual bool isEqualTo(const interactionVertex& vert) const;  ///< returns whether vertex is equal to this by checking equality of all member variables
 
 	private:
 

@@ -65,14 +65,14 @@ namespace rpwa {
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>
-		entriesMatching(const particleProperties&       prototype,
-		                const std::string&              sel,
-		                const double                    minMass            = 0,
-		                const double                    minMassWidthFactor = 0,
-		                const std::vector<std::string>& whiteList          = std::vector<std::string>(),
-		                const std::vector<std::string>& blackList          = std::vector<std::string>(),
-		                const std::set<std::string>& decayProducts         = std::set<std::string>(),
-		                const bool& forceDecayCheck                        = true);  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass > 0 isobar mass is limited; and checks allowed decays if those are defined; Decay checks can be forced, then particles which do not have decays defined will be discarded
+		entriesMatching(const particleProperties&         prototype,
+		                const std::string&                sel,
+		                const double                      minMass            = 0,
+		                const double                      minMassWidthFactor = 0,
+		                const std::vector<std::string>&   whiteList          = std::vector<std::string>(),
+		                const std::vector<std::string>&   blackList          = std::vector<std::string>(),
+		                const std::multiset<std::string>& decayProducts      = std::multiset<std::string>(),
+		                const bool&                       forceDecayCheck    = true);  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers to be compared are selected by sel string; if minMass > 0 the isobar mass is limited; checks for allowed decays if they are defined; decay checks can be forced, then particles which have no specified decays will be discarded
 
 		static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
 
@@ -85,7 +85,8 @@ namespace rpwa {
 
 		static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
 		static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
-		static bool readDecayFile(const std::string& fileName); ///< reads in data on decay modes from file (can only be called after particle data has been read)
+
+		static bool readDecayModeFile(const std::string& fileName);  ///< reads in decay modes for list of particles from file; requires particle properties
 
 
 		static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table

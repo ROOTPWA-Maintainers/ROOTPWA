@@ -29,9 +29,6 @@
 //      the Boost Graph Library
 //      * each graph node is associated with a pointer to a vertex of type V
 //      * each graph edge is associated with a pointer to a particle of type P
-//      * optionally aribtrary structs of type GBundleData,
-//        NBundleData, and EBundleData can be assigned to the graph,
-//        each node, and each edge, respectively
 //
 //
 // Author List:
@@ -61,29 +58,47 @@
 #include "reportingUtils.hpp"
 
 
-// add custom vertex and edge properties to BGL graph
+// typdefs and custom vertex and edge properties
 namespace boost {
-	enum graph_bundle_t { graph_bundle };
-	BOOST_INSTALL_PROPERTY(graph,  bundle);
+
 	enum vertex_VPtr_t  { vertex_VPtr  };
 	BOOST_INSTALL_PROPERTY(vertex, VPtr);
 	enum edge_PPtr_t    { edge_PPtr    };
 	BOOST_INSTALL_PROPERTY(edge,   PPtr);
-}
+
+	// disabled code from graphviz.hpp
+	typedef std::map<std::string, std::string> GraphvizAttrList;
+  
+	typedef property<vertex_attribute_t, GraphvizAttrList> GraphvizVertexProperty;
+  
+	typedef property<edge_attribute_t, GraphvizAttrList,
+	                 property<edge_index_t, int> > GraphvizEdgeProperty;
+  
+	typedef property<graph_graph_attribute_t, GraphvizAttrList,
+	                 property<graph_vertex_attribute_t, GraphvizAttrList,
+	                          property<graph_edge_attribute_t, GraphvizAttrList,
+	                                   property<graph_name_t, std::string> > > > GraphvizGraphProperty;
+  
+	typedef subgraph<adjacency_list<vecS,
+	                                vecS, directedS,
+	                                GraphvizVertexProperty,
+	                                GraphvizEdgeProperty,
+	                                GraphvizGraphProperty> > GraphvizDigraph;
+  
+	typedef subgraph<adjacency_list<vecS,
+	                                vecS, undirectedS,
+	                                GraphvizVertexProperty,
+	                                GraphvizEdgeProperty,
+	                                GraphvizGraphProperty> > GraphvizGraph;
+
+}  // namespace boost
 
 
 namespace rpwa {	
 
 
-	struct emptyGraphBundleData {
-	};  ///< empty default structure for graph, node, and edge bundled properties
-
-
 	template<class V,
-	         class P,
-	         class GBundleData = emptyGraphBundleData,
-	         class NBundleData = emptyGraphBundleData,
-	         class EBundleData = emptyGraphBundleData>
+	         class P>
 	class decayGraph {
 
 	public:
@@ -97,22 +112,19 @@ namespace rpwa {
     
 		// node and edge properties
 		typedef typename boost::default_color_type color_t;
-		typedef typename boost::property<boost::graph_bundle_t, GBundleData,
-		                                   boost::GraphvizGraphProperty> graphProperties;
-		typedef typename boost::property<boost::vertex_bundle_t,                        NBundleData,
-		                                   boost::property<boost::vertex_VPtr_t,        VPtr,
-		                                     boost::property<boost::vertex_index_t,     std::size_t,
-		                                       boost::property<boost::vertex_name_t,    std::string,
-		                                         boost::property<boost::vertex_color_t, color_t,
-		                                           boost::GraphvizVertexProperty> > > > > nodeProperties;
-		typedef typename boost::property<boost::edge_bundle_t,                      EBundleData,
-		                                   boost::property<boost::edge_PPtr_t,      PPtr,
-		                                     boost::property<boost::edge_name_t,    std::string,
-		                                       boost::property<boost::edge_color_t, color_t,
-		                                         boost::GraphvizEdgeProperty> > > > edgeProperties;
+		typedef typename boost::property<boost::vertex_VPtr_t,                        VPtr,
+		                                   boost::property<boost::vertex_index_t,     std::size_t,
+		                                     boost::property<boost::vertex_name_t,    std::string,
+		                                       boost::property<boost::vertex_color_t, color_t,
+		                                         boost::GraphvizVertexProperty> > > > nodeProperties;
+		typedef typename boost::property<boost::edge_PPtr_t,                      PPtr,
+		                                   boost::property<boost::edge_name_t,    std::string,
+		                                     boost::property<boost::edge_color_t, color_t,
+		                                       boost::GraphvizEdgeProperty> > > edgeProperties;
 		// graph definition
-		typedef typename boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
-		                                       nodeProperties, edgeProperties, graphProperties> graphType;
+		typedef typename boost::adjacency_list<
+			boost::vecS, boost::vecS, boost::bidirectionalS,
+			nodeProperties, edgeProperties, boost::GraphvizGraphProperty> graphType;
 		typedef typename boost::subgraph<graphType> graph;
 		typedef typename boost::graph_traits<graph> graphTraits;
 
@@ -134,7 +146,6 @@ namespace rpwa {
 		typedef typename graphTraits::in_edge_iterator   inEdgeIterator;   ///< edge iterator type for edges going into a node
 		typedef typename graphTraits::out_edge_iterator  outEdgeIterator;  ///< edge iterator type for edges coming out of a node
 		// node property types
-		typedef typename boost::property_map<graph, boost::vertex_bundle_t   >::type       nodeDataMapType;         ///< type of map [node descriptor] -> [node bundled property           ]
 		typedef typename boost::property_map<graph, boost::vertex_VPtr_t     >::type       nodeVertexMapType;       ///< type of map [node descriptor] -> [vertex pointer property         ]
 		typedef typename boost::property_map<graph, boost::vertex_VPtr_t     >::const_type nodeVertexMapConstType;  ///< type of map [node descriptor] -> [vertex pointer property         ]
 		typedef typename boost::property_map<graph, boost::vertex_index_t    >::type       nodeIndexMapType;        ///< type of map [node descriptor] -> [node index property             ]
@@ -144,7 +155,6 @@ namespace rpwa {
 		typedef typename boost::property_map<graph, boost::vertex_color_t    >::type       nodeColorMapType;        ///< type of map [node descriptor] -> [node color property             ]
 		typedef typename boost::property_map<graph, boost::vertex_attribute_t>::type       nodeAttributeMapType;    ///< type of map [node descriptor] -> [node graphVis attribute property]
 		// node edge property types
-		typedef typename boost::property_map<graph, boost::edge_bundle_t   >::type       edgeDataMapType;           ///< type of map [edge descriptor] -> [edge bundled property           ]
 		typedef typename boost::property_map<graph, boost::edge_PPtr_t     >::type       edgeParticleMapType;       ///< type of map [edge descriptor] -> [particle pointer property       ]
 		typedef typename boost::property_map<graph, boost::edge_PPtr_t     >::const_type edgeParticleMapConstType;  ///< type of map [edge descriptor] -> [particle pointer property       ]
 		typedef typename boost::property_map<graph, boost::edge_name_t     >::type       edgeNameMapType;           ///< type of map [edge descriptor] -> [edge name property              ]
@@ -471,7 +481,7 @@ namespace rpwa {
 			}
 			particleEdgeMapConstIt entry = _particleEdgeMap.find(p);
 			if (entry == _particleEdgeMap.end()) {
-				printErr << "particle " << *p << " is not an edge in graph '" << name() << "'. "
+				printErr << *p << " is not an edge in graph '" << name() << "'. "
 				         << "aborting." << std::endl;
 				throw;
 			}
@@ -577,11 +587,6 @@ namespace rpwa {
 		edgeIndexMapConstType    edgeIndexMap   () const { return boost::get(boost::edge_index,   _graph); }  ///< returns map [edge descriptor] -> [edge index property           ]
 		edgeNameMapConstType     edgeNameMap    () const { return boost::get(boost::edge_name,    _graph); }  ///< returns map [edge descriptor] -> [edge name property            ]
 
-		inline const GBundleData& data ()                   const { return boost::get_property(_graph, boost::graph_bundle); }  ///< returns bundled graph property structure
-		inline const NBundleData& data (const nodeDesc& nd) const { return boost::get(boost::vertex_bundle,   _graph)[nd];   }  ///< returns bundled property structure for given node
-		inline const NBundleData& data (const VPtr&     v ) const { return data(node(v));                                    }  ///< returns bundled property structure for given vertex
-		inline const EBundleData& data (const edgeDesc& ed) const { return boost::get(boost::edge_bundle,     _graph)[ed];   }  ///< returns bundled property structure for given edge
-		inline const EBundleData& data (const PPtr&     p ) const { return date(edge(p));                                    }  ///< returns bundled property structure for given particle
 		inline std::size_t        index(const nodeDesc& nd) const { return boost::get(boost::vertex_index,    _graph)[nd];   }  ///< returns index property for given node
 		inline std::size_t        index(const VPtr&     v ) const { return index(node(v));                                   }  ///< returns index property for given vertex
 		inline std::size_t        index(const edgeDesc& ed) const { return boost::get(boost::edge_index,      _graph)[ed];   }  ///< returns index property for given edge
@@ -605,11 +610,6 @@ namespace rpwa {
 		inline const boost::GraphvizAttrList& edgeAttribute(const edgeDesc& ed) const { return boost::get(boost::edge_attribute,  _graph)[ed];  }  ///< returns graphViz attribute property for given edge
 		inline const boost::GraphvizAttrList& edgeAttribute(const PPtr&     p ) const { return edgeAttribute(edge(p));                          }  ///< returns graphViz attribute property for given particle
     
-		inline GBundleData& data ()                   { return boost::get_property(_graph, boost::graph_bundle); }  ///< returns bundled graph property structure
-		inline NBundleData& data (const nodeDesc& nd) { return boost::get(boost::vertex_bundle,   _graph)[nd];   }  ///< returns bundled property structure for given node
-		inline NBundleData& data (const VPtr&     v ) { return data(node(v));                                    }  ///< returns bundled property structure for given vertex
-		inline EBundleData& data (const edgeDesc& ed) { return boost::get(boost::edge_bundle,     _graph)[ed];   }  ///< returns bundled property structure for given edge
-		inline EBundleData& data (const PPtr&     p ) { return date(edge(p));                                    }  ///< returns bundled property structure for given particle
 		inline std::string& name ()                   { return boost::get_property(_graph, boost::graph_name);   }  ///< returns graph name property
 		inline std::string& name (const nodeDesc& nd) { return boost::get(boost::vertex_name,     _graph)[nd];   }  ///< returns name property for given node
 		inline std::string& name (const VPtr&     v ) { return name(node(v));                                    }  ///< returns name property for given vertex
@@ -925,23 +925,14 @@ namespace rpwa {
 	};
   
 
-	template<class V,
-	         class P,
-	         class GBundleData,
-	         class NBundleData,
-	         class EBundleData>
-	bool decayGraph<V, P, GBundleData, NBundleData, EBundleData>::_debug = false;
+	template<class V, class P> bool decayGraph<V, P>::_debug = false;
 
 
-	template<class V,
-	         class P,
-	         class GBundleData,
-	         class NBundleData,
-	         class EBundleData>
+	template<class V, class P>
 	inline
 	std::ostream&
 	operator <<(std::ostream& out,
-	            const decayGraph<V, P, GBundleData, NBundleData, EBundleData>& graph)
+	            const decayGraph<V, P>& graph)
 	{
 		return graph.print(out);
 	}

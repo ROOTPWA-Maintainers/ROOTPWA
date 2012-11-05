@@ -46,13 +46,13 @@ namespace {
 
 		bool hasDecay(bp::object& pyDaughters) const {
 			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
-			std::set<std::string> daughters = rpwa::py::converBPObjectToStrSet(pyDaughters);
+			std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
 			return rpwa::particleProperties::hasDecay(daughters);
 		}
 
 		void addDecayMode(bp::object& pyDaughters) {
 			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
-			std::set<std::string> daughters = rpwa::py::converBPObjectToStrSet(pyDaughters);
+			std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
 			rpwa::particleProperties::addDecayMode(daughters);
 		}
 
@@ -129,7 +129,7 @@ void rpwa::py::exportParticleProperties()
 			, (bp::arg("name"), bp::arg("warnIfNotExistent")=(bool const)(true))
 		)
 
-		.add_property("nDecays", &particlePropertiesWrapper::nDecays)
+		.add_property("nmbDecays", &particlePropertiesWrapper::nmbDecays)
 		.def("hasDecay", &particlePropertiesWrapper::hasDecay)
 		.def("addDecayMode", &particlePropertiesWrapper::addDecayMode)
 
