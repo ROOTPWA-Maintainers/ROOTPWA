@@ -293,17 +293,19 @@ waveSetGenerator::generateWaveSet()
 								// enforce rules for particle-antiparticle systems
 								if (   daughters[1]->antiPartProperties()
 								    == *(static_pointer_cast<particleProperties>(daughters[0]))) {
-									// !NOTE! since equality test is virtual, order in the above expression is essential
+									// !NOTE! since equality test function is virtual,
+									// order in the above comparison is essential
 									// (see S.U. Chung: "C- and G-Parity: a New Definition and Applications, Version V"
 									//  eq. 32)
 									if (parentG != powMinusOne((parentI + L + S) / 2)) {
-										cout << "        rejected, because I[= " << spinQn(parentI) << "], "
-										     << "L[= " << spinQn(L) << "], and S[= " << spinQn(S) << "] "
-										     << "are not consistent with G-parity[= " << sign(parentG) << "]. "
-										     << "for particle-antiparticle system ["
-										     << daughters[0]->name() << ", " << daughters[1]->name() << "] "
-										     << "(-)^(I + L + S) = " << sign(powMinusOne((parentI + L + S) / 2))
-										     << " must be equal to G-parity." << endl;
+										if (_debug)
+											cout << "        rejected, because I[= " << spinQn(parentI) << "], "
+											     << "L[= " << spinQn(L) << "], and S[= " << spinQn(S) << "] "
+											     << "are not consistent with G-parity[= " << sign(parentG) << "]. "
+											     << "for particle-antiparticle system ["
+											     << daughters[0]->name() << ", " << daughters[1]->name() << "] "
+											     << "(-)^(I + L + S) = " << sign(powMinusOne((parentI + L + S) / 2))
+											     << " must be equal to G-parity." << endl;
 										continue;
 									}
 									// I_z of the parent and C = (-)^(L + S) should be fulfilled automatically

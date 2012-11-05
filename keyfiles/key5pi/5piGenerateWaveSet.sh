@@ -50,9 +50,9 @@ if [[ -f "${TEST_DATA}" ]]
 then
 		for TEMPLATE_KEY_FILE in ${TEMPLATE_KEY_FILES}
 		do
-				DEST_DIR=${TEMPLATE_KEY_FILE%.template.key}
+				KEY_DIR=${TEMPLATE_KEY_FILE%.template.key}
 				LOG_FILE=${DEST_DIR}/${TEMPLATE_KEY_FILE}.check.log
-				CMD="checkKeyFile -d \"${TEST_DATA}\" -p \"${PARTICLE_DATA_TABLE}\" \"${DEST_DIR}\"/*.key &> \"${LOG_FILE}\""
+				CMD="checkKeyFile -d \"${TEST_DATA}\" -p \"${PARTICLE_DATA_TABLE}\" \"${KEY_DIR}\"/*.key &> \"${LOG_FILE}\""
 				echo "${CMD}"
 				eval ${CMD}
 		done
