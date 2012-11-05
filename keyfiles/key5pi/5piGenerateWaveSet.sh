@@ -37,7 +37,7 @@ do
 		# postprocess key files
 		for KEY_FILE in ${DEST_DIR}/*.key
 		do
-				./5piPostProcessKeyFiles.sed "${KEY_FILE}"
+				./5piPostProcessKeyFiles.sh "${KEY_FILE}"
 		done
 		# create backup copy of template key file
 		cp --verbose --force "${TEMPLATE_KEY_FILE}" "${DEST_DIR}/${TEMPLATE_KEY_FILE}.bak"
