@@ -27,11 +27,11 @@ do
 
 		DEST_DIR=${TEMPLATE_KEY_FILE%.template.key}
 		if [[ ! -d ${DEST_DIR} ]]
-				then 
+				then
 				mkdir --verbose ${DEST_DIR}
 		fi
 		LOG_FILE=${DEST_DIR}/${TEMPLATE_KEY_FILE}.log
-		CMD="generateWaveSet -p \"${PARTICLE_DATA_TABLE}\" -d \"${PARTICLE_DECAY_LIST}\" -f -o \"${DEST_DIR}\" -n -k \"${TEMPLATE_KEY_FILE}\" &> \"${LOG_FILE}\""
+		CMD="generateWaveSet -p \"${PARTICLE_DATA_TABLE}\" -d \"${PARTICLE_DECAY_LIST}\" -f -o \"${DEST_DIR}\" -k \"${TEMPLATE_KEY_FILE}\" &> \"${LOG_FILE}\""
 		echo "${CMD}"
 		eval ${CMD}
 		# postprocess key files
@@ -41,7 +41,7 @@ do
 		done
 		# create backup copy of template key file
 		cp --verbose --force "${TEMPLATE_KEY_FILE}" "${DEST_DIR}/${TEMPLATE_KEY_FILE}.bak"
-		
+
 done
 
 

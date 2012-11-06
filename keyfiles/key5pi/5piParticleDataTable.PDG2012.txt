@@ -33,15 +33,15 @@
 #      states have slightly different masses
 #
 #      naming scheme: <bare name>XY
-#      
+#
 #      for singly charged particles the charge is designated by the last
 #      character Y in the particle name (e.g. 'pi0', 'rho-', 'p+'). If Y
 #      is neither of '-', '0', or '+', the particle charge is set to 0.
-#      
+#
 #      for multiply charged particles the absolute value of the charge
 #      is defined by the second-to-last character X, the sign by the
 #      last character Y (e.g. 'Delta(1232)2+').
-#      
+#
 #      !NOTE! <bare name> should not end on a digit, as this would be
 #      interpreted as the absolute value of the charge, so instead of
 #      e.g. 'pi2+' one should use 'pi2(1670)+'
