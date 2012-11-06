@@ -116,7 +116,7 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	_a[1](0, 1) = f[0] * f[1];
 	_a[1](1, 0) = f[1] * f[0];
 	_a[1](1, 1) = f[1] * f[1];
-	
+
 	_c[0](0, 0) =  0.0337;                // AMP Table 1, M solution: c_11^0
 	_c[1](0, 0) = -0.3185;                // AMP Table 1, M solution: c_11^1
 	_c[2](0, 0) = -0.0942;                // AMP Table 1, M solution: c_11^2
@@ -135,7 +135,7 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 
 	_sP(0, 0) = -0.0074;  // AMP Table 1, M solution: s_0
 	_sP(0, 1) =  0.9828;  // AMP Table 1, M solution: s_1
-  
+
 	particleDataTable& pdt = particleDataTable::instance();
 	const string partList[] = {"pi+", "pi0", "K+", "K0"};
 	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
@@ -193,7 +193,7 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		const complex<double> sc = pow(scale, (int)i);
 		M += sc *_c[i];
 	}
-	
+
 	// modification: off-diagonal terms set to 0
 	M(0, 1) = 0;
 	M(1, 0) = 0;
@@ -258,7 +258,7 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 
 	_a[0](0, 1) = 0; // was 0.0150
 	_a[0](1, 0) = 0; // was 0.0150
- 
+
 	// _a[1] are the f's from the AMP paper
 	_a[1](0, 0) = 0;
 	_a[1](0, 1) = 0;

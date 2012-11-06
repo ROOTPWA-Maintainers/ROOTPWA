@@ -42,19 +42,19 @@
 
 #include <vector>
 
-#include "boost/accumulators/framework/accumulator_base.hpp"
-#include "boost/accumulators/framework/parameters/sample.hpp"
-#include "boost/accumulators/framework/depends_on.hpp"
-#include "boost/accumulators/framework/extractor.hpp"
-#include "boost/accumulators/accumulators.hpp"
-#include "boost/accumulators/statistics/stats.hpp"
-#include "boost/accumulators/statistics/sum.hpp"
+#include <boost/accumulators/framework/accumulator_base.hpp>
+#include <boost/accumulators/framework/parameters/sample.hpp>
+#include <boost/accumulators/framework/depends_on.hpp>
+#include <boost/accumulators/framework/extractor.hpp>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/sum.hpp>
 
 
 namespace boost {
 	namespace accumulators {
-		
-		
+
+
 		///////////////////////////////////////////////////////////////////////////////
 		// named parameter for cascaded sum
 		BOOST_PARAMETER_NESTED_KEYWORD(tag, cascadedSumNmbElements, nmbElements)
@@ -73,7 +73,7 @@ namespace boost {
 			struct cascadedSumAccumulator : accumulator_base	{
 
 				typedef sampleT result_type;
-    
+
 				// constructor takes an Boost.Paramter argument pack there might be an initial value in
 				// the argument pack; 'sample' is defined in sample.hpp
 				template<typename argsT>
@@ -90,7 +90,7 @@ namespace boost {
 						_partialSums[0] = args[sample | sampleT()];
 					}
 				}
-				
+
 				template<typename argsT>
 				void
 				operator ()(const argsT& args)  // accumulate function also accepts an argument pack
@@ -106,7 +106,7 @@ namespace boost {
 					}
 					_sumNextElement = !_sumNextElement;
 				}
-				
+
 				result_type
 				result(dont_care) const  // passed argument pack is not used
 				{
@@ -139,15 +139,15 @@ namespace boost {
 					}
 					return sum[0] + sum[1];
 				}
-				
+
 			private:
-				
+
 				bool                 _sumNextElement;
 				std::size_t          _partialSumsIndex;
 				std::vector<sampleT> _partialSums;
-				
+
 			};
-			
+
 
 			// compensated (or Kahan) sum reduces (random) round-off errors form O[eps * sqrt(n)] (for
 			// naive accumulation) to O[eps] at the cost of 4 summations (instead of 1) for each entry;
@@ -157,7 +157,7 @@ namespace boost {
 			struct compensatedSumAccumulator : accumulator_base	{
 
 				typedef sampleT result_type;
-    
+
 				// constructor takes an Boost.Paramter argument pack there might be an initial value in
 				// the argument pack; 'sample' is defined in sample.hpp
 				template<typename argsT>
@@ -165,7 +165,7 @@ namespace boost {
 					: _sum(args[sample | sampleT()]),
 					  _compensation(sampleT())
 				{	}
-    
+
 				template<typename argsT>
 				void
 				operator ()(const argsT& args)  // accumulate function also accepts an argument pack
@@ -186,13 +186,13 @@ namespace boost {
 				{
 					return _sum;
 				}
-				
+
 
 			private:
-				
+
 				sampleT _sum;
 				sampleT _compensation;  // running compensation for lost low-order bits
-				
+
 			};
 
 		}  // namespace impl
@@ -251,7 +251,7 @@ namespace boost {
 		struct feature_of<tag::cascadedSum> : feature_of<tag::sum>
     { };
 
-		
+
 		// sum(compensated) -> compensatedSum
 		struct compensated {};
 		template<>
@@ -264,7 +264,7 @@ namespace boost {
 		struct feature_of<tag::compensatedSum> : feature_of<tag::sum>
     { };
 
-		
+
 	}  // namespace accumulators
 }  // namespace boost
 

@@ -243,13 +243,13 @@ namespace rpwa {
 		return bf;
 	}
 
-  
+
 	// computes relativistic Breit-Wigner amplitude with mass-dependent width for 2-body decay
 	// !NOTE! L is units of hbar/2
 	inline
 	std::complex<double>
 	breitWigner(const double M,       // mass
-	            const double M0,      // peak position 
+	            const double M0,      // peak position
 	            const double Gamma0,  // total width
 	            const int    L,       // relative orbital angular momentum
 	            const double q,       // 2-body breakup momentum
@@ -266,8 +266,8 @@ namespace rpwa {
 		return (A / (B * B + C * C)) * std::complex<double>(B, C);
 		// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	}
-  
-  
+
+
 } // namespace rpwa
 
 

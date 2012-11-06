@@ -67,7 +67,6 @@
 using namespace std;
 using namespace boost;
 using namespace boost::bimaps;
-using namespace boost::assign;
 
 
 namespace rpwa {
@@ -85,7 +84,7 @@ namespace rpwa {
 		nameGeantIdMap initNameGeantIdTranslator()
 		{
 			nameGeantIdMap translator;
-			insert(translator)
+			boost::assign::insert(translator)
 				(nameGeantIdMap::value_type("gamma",       1))
 				(nameGeantIdMap::value_type("e+",          2))
 				(nameGeantIdMap::value_type("e-",          3))
