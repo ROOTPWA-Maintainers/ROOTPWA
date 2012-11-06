@@ -16,13 +16,13 @@
 #-------------------------------------------------------------------------
 
 
-if [[ "${1}" = *sigma0*sigma0*sigma0* ]]
+if [[ "${1}" = *sigma*sigma*sigma* ]]
 then
-
+		echo "!!!HERE $1"
     # special treatment for sigma -> sigma sigma decays
 		sed --in-place=.bak 's/\(^[[:blank:]]*\)name = "sigma0";/\1name = "sigma0";\n\1massDep : { name = "piPiSWaveAuMorganPenningtonKachaev"; };/' "${1}"
 		# use Breit-Wigner for 4-body decay mode
-		sed --in-place=.bak 's/^        massDep : { name = "piPiSWaveAuMorganPenningtonKachaev"; };/        massDep : { name = "BreitWigner"; };/' ${1}
+		sed --in-place 's/^        massDep : { name = "piPiSWaveAuMorganPenningtonKachaev"; };/        massDep : { name = "BreitWigner"; };/' "${1}"
 
 else
 
