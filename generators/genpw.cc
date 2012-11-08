@@ -459,13 +459,12 @@ int main(int argc, char** argv)
       
       p->Delete(); // clear output array
 
-      ofstream str("tmpevent.evt");
+      stringstream str;
       if (writeComGeantout)
     	  difPS.event(str, evtgeant);
       else
     	  difPS.event(str);
       impweight=difPS.impWeight();
-      str.close();
       
       for(int ip=0; ip<nparticles;++ip){
 	new((*p)[ip]) TLorentzVector(*difPS.GetDecay(ip));
@@ -480,11 +479,9 @@ int main(int argc, char** argv)
       e.setIOVersion(1);
       
       
-      ifstream istr("tmpevent.evt");
-      istr >> e;
+      str >> e;
       evtout << e;
       evtwht << impweight << endl;
-      istr.close();
 
       //cerr << e <<endl;
       
