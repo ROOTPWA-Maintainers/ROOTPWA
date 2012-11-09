@@ -49,10 +49,9 @@
 #include <boost/numeric/ublas/lu.hpp>
 
 
-namespace ublas = boost::numeric::ublas;
-
-
 namespace rpwa {
+
+	namespace ublas = boost::numeric::ublas;
 
 
 	// mathematical constants
@@ -62,8 +61,8 @@ namespace rpwa {
 	const double fourPi = 4 * pi;
 
 	const std::complex<double> imag(0, 1);
-  
-  
+
+
 	//////////////////////////////////////////////////////////////////////////////
 	// define aliases for some math functions so implementations may be switched easliy
 	template<typename T> inline T abs(const T& x) { return std::abs (x); }
@@ -89,7 +88,7 @@ namespace rpwa {
 			return +1;
 	}
 
-	
+
 	template <typename T>
 	inline
 	bool
@@ -97,7 +96,7 @@ namespace rpwa {
 	{
 		return val & 0x1;
 	}
-  
+
 
 	template <typename T>
 	inline
@@ -106,9 +105,8 @@ namespace rpwa {
 	{
 		return not isOdd(val);
 	}
-  
 
-	
+
 	template<typename T>
 	inline
 	T signum(const T& val)  ///< extracts sign from value

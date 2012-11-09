@@ -656,6 +656,8 @@ waveDescription::mapMassDependenceType(const string& massDepType)
 		massDep = createPiPiSWaveAuMorganPenningtonVes();
 	else if (massDepType == "piPiSWaveAuMorganPenningtonKachaev")
 		massDep = createPiPiSWaveAuMorganPenningtonKachaev();
+	else if (massDepType == "rhoPrime")
+		massDep = createRhoPrimeMassDep();
 	else {
 		printWarn << "unknown mass dependence '" << massDepType << "'. using Breit-Wigner." << endl;
 		massDep = createRelativisticBreitWigner();
