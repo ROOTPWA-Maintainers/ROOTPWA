@@ -25,7 +25,7 @@
 #// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      build file for amplitude library 
+#//      build file for amplitude library
 #//
 #//
 #// Author List:
@@ -115,21 +115,6 @@ make_executable(ampDiff            ampDiff.cc            ${THIS_LIB})
 make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB})
 make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB})
 
-make_executable(testParticle         testParticle.cc         ${THIS_LIB})
-make_executable(testDecayTopology    testDecayTopology.cc    ${THIS_LIB})
-make_executable(testWaveDescription  testWaveDescription.cc  ${THIS_LIB})
-make_executable(testWaveSetGenerator testWaveSetGenerator.cc ${THIS_LIB})
-make_executable(testAmplitude        testAmplitude.cc        ${THIS_LIB})
-make_executable(testAmplitudeTree    testAmplitudeTree.cc    ${THIS_LIB})
-make_executable(testIsospinSym       testIsospinSym.cc       ${THIS_LIB})
-make_executable(testIntegral         testIntegral.cc         ${THIS_LIB})
-if(USE_PWA2000)
-	if(Boost_TIMER_FOUND)
-		make_executable(testMassDependence testMassDependence.cc
-			"${THIS_LIB};${ROOTPWAGEN_LIBS};${Boost_TIMER_LIBRARY};${Boost_SYSTEM_LIBRARY}")
-	else()
-		message(STATUS "Cannot find Boost::timer shared library. Skipping build of testMassDependence.")
-	endif()
-else()
-	message(STATUS "PWA2000 disabled. Skipping build of testMassDependence.")
-endif()
+
+# build tests
+add_subdirectory(test)

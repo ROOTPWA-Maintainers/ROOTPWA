@@ -225,11 +225,11 @@ main(int argc, char** argv)
 	const size_t       nmbEvents = 1000000;
 	//const size_t       nmbEvents = 10;
 	const unsigned int seed      = 123456789;
-	
+
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
 	pdt.readFile();
-	PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
-	
+	PDGtable.initialize("../../keyfiles/key5pi/pdgTable.txt");
+
 	// massDependence::setDebug(true);
 	// ::particle::debug();
 
@@ -297,7 +297,7 @@ main(int argc, char** argv)
 		new rhoPrime   ()
 	};
 	for (size_t i = 0; i < nmbMassDep; ++i) {
-		compareAmplitudes(nmbEvents, seed, massDep[i], vertex, pwa2kMassDep[i], pwa2kParent, names[i]);	
+		compareAmplitudes(nmbEvents, seed, massDep[i], vertex, pwa2kMassDep[i], pwa2kParent, names[i]);
 		cout << endl;
 	}
 	outFile->Write();

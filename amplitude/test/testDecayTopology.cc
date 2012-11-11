@@ -41,8 +41,8 @@
 #include "TVector3.h"
 #include "TSystem.h"
 
-#include "particleDataTable.h"
-#include "particle.h"
+#include "../particleDataTable.h"
+#include "../particle.h"
 #include "decayGraph.hpp"
 #include "decayTopology.h"
 #include "diffractiveDissVertex.h"
@@ -328,7 +328,7 @@ main(int argc, char** argv)
 	}
 
 	if (1) {
-		const string keyFileName = "foo/1-0-00+rho1700=rho770_01_sigma_11_pi-.key";
+		const string keyFileName = "testFindIsobarBoseSymVertices.key";
 
 		waveDescription    waveDesc;
 		isobarAmplitudePtr amp;

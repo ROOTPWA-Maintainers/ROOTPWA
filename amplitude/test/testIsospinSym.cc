@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev:: 932                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2012-08-22 21:38:53 +0200 #$: date of last commit
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
 //
 // Description:
 //      test program for amplitude isospin symmetrization
@@ -308,7 +308,7 @@ main(int argc, char** argv)
 	timer.Print();
 
 #ifdef USE_PWA2000
-	PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
+	PDGtable.initialize("../../keyfiles/key5pi/pdgTable.txt");
 
 	timer.Reset();
 	timer.Start();

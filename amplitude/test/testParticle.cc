@@ -46,8 +46,8 @@
 #include "spinUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
-#include "particleDataTable.h"
-#include "particle.h"
+#include "../particleDataTable.h"
+#include "../particle.h"
 
 
 using namespace std;

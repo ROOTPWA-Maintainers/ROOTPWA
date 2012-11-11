@@ -58,15 +58,15 @@ main(int argc, char** argv)
 	printSvnVersion();
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
-	
+
 	const unsigned int nmbEvents       = 1000000;
 	const unsigned int nmbIncohSubAmps = 3;
 	gRandom->SetSeed(123456789);
-	
+
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
-	
+
 	if (1) {
 		TFile*               outFile      = TFile::Open("testAmplitudeTree.root", "RECREATE");
 		amplitudeTreeLeaf*   ampLeaf      = new amplitudeTreeLeaf();
@@ -104,7 +104,7 @@ main(int argc, char** argv)
 				cout << "read event " << i << ": " << *ampLeaf;
 		}
 		cout << endl;
-		
+
 		// test arthmetic functions
 		printInfo << "original: " << *ampLeaf << endl;
 		amplitudeTreeLeaf ampLeaf2(*ampLeaf);

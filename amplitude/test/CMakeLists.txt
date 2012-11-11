@@ -25,7 +25,7 @@
 #// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      build file for utilities
+#//      build file for amplitude library tests
 #//
 #//
 #// Author List:
@@ -35,26 +35,35 @@
 #//-------------------------------------------------------------------------
 
 
-message(STATUS "")
-message(STATUS ">>> Setting up 'utilities' directory.")
-
-
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${Boost_INCLUDE_DIRS}
-	${ROOT_INCLUDE_DIR}
-	${PWA2000_INCLUDE_DIR}
-	${CMAKE_CURRENT_SOURCE_DIR}
+  ${Boost_INCLUDE_DIRS}
+  ${Libconfig_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIR}
+  ${PWA2000_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testSumAccumulators testSumAccumulators.cc)
-make_executable(testSpinUtils       testSpinUtils.cc)
-make_executable(testFileUtils       testFileUtils.cc)
+make_executable(testParticle         testParticle.cc         "${AMPLITUDE_LIBS}")
+make_executable(testDecayTopology    testDecayTopology.cc    "${AMPLITUDE_LIBS}")
+make_executable(testWaveDescription  testWaveDescription.cc  "${AMPLITUDE_LIBS}")
+make_executable(testWaveSetGenerator testWaveSetGenerator.cc "${AMPLITUDE_LIBS}")
+make_executable(testAmplitude        testAmplitude.cc        "${AMPLITUDE_LIBS}")
+make_executable(testAmplitudeTree    testAmplitudeTree.cc    "${AMPLITUDE_LIBS}")
+make_executable(testIsospinSym       testIsospinSym.cc       "${AMPLITUDE_LIBS}")
+make_executable(testIntegral         testIntegral.cc         "${AMPLITUDE_LIBS}")
 if(USE_PWA2000)
-	make_executable(testLibppFunctions testLibppFunctions.cc "${ROOT_LIBS};${PWA2000_LIBS}")
+	if(Boost_TIMER_FOUND)
+		make_executable(testMassDependence testMassDependence.cc
+			"${AMPLITUDE_LIBS};${ROOTPWAGEN_LIBS};${Boost_TIMER_LIBRARY};${Boost_SYSTEM_LIBRARY}")
+	else()
+		message(STATUS "Cannot find Boost::timer shared library. Skipping build of testMassDependence.")
+	endif()
 else()
-	message(STATUS "PWA2000 disabled. Skipping build of testLibppFunctions.")
+	message(STATUS "PWA2000 disabled. Skipping build of testMassDependence.")
 endif()

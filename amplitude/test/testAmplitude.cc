@@ -230,7 +230,7 @@ main(int argc, char** argv)
 
 		if (1) {  // compare to PWA2000
 #ifdef USE_PWA2000
-			PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
+			PDGtable.initialize("../../keyfiles/key5pi/pdgTable.txt");
 			event    ev;
 			ifstream eventData("testEvents.evt");
 			ev.setIOVersion(1);
@@ -283,7 +283,7 @@ main(int argc, char** argv)
 			cout << *(amp[i]);
 		}
 		TChain chain("rootPwaEvtTree");
-		chain.Add("../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
+		chain.Add("../../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root");
 		chain.GetListOfFiles()->ls();
 		vector<complex<double> > ampValues[2];
 
@@ -307,10 +307,10 @@ main(int argc, char** argv)
 		// const string   newKeyFileName = "test.key";
 		// const string   oldKeyFileName = "testAmplitude.key";
 
-		// const string   newKeyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
-		// const string   oldKeyFileName = "../keyfiles/key3pi/SET1/1-0-+0+rho770_11_pi-.key";
-		// const string   evtInFileName  = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
-		// const string   rootInFileName = "../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
+		// const string   newKeyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		// const string   oldKeyFileName = "../../keyfiles/key3pi/SET1/1-0-+0+rho770_11_pi-.key";
+		// const string   evtInFileName  = "../../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.evt";
+		// const string   rootInFileName = "../../../massBins/2004/Q3PiData/template.both/1260.1300/1260.1300.root";
 
 		// waves w/o isospin symmetrization
 
@@ -449,7 +449,7 @@ main(int argc, char** argv)
 
 			if (1) {  // compare to PWA2000
 #ifdef USE_PWA2000
-				PDGtable.initialize("../keyfiles/key5pi/pdgTable.txt");
+				PDGtable.initialize("../../keyfiles/key5pi/pdgTable.txt");
 				ifstream eventData(evtInFileName.c_str());
 				keyfile  key;
 				event    ev;

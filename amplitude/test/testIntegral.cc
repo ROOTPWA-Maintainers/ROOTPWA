@@ -43,7 +43,6 @@
 #include "TFile.h"
 
 #include "reportingUtils.hpp"
-#include "fileUtils.hpp"
 #include "ampIntegralMatrix.h"
 
 
@@ -53,23 +52,11 @@ using namespace rpwa;
 
 
 int
-main(int argc, char** argv)
+main(int    argc,
+     char** argv)
 {
 	// switch on debug output
 	ampIntegralMatrix::setDebug(true);
-
-	if (0) {
-		const string somePath = "/local/data/compass/hadronData/massBins/2004/Q3PiData/r481.trunk/1260.1300/PSPAMPS/1-4++1+rho770_41_pi-.amp";
-		cout << somePath << endl
-		     << directoryFromPath(somePath) << endl
-		     << fileNameFromPath(somePath) << endl
-		     << fileNameNoExtFromPath(somePath) << endl
-		     << extensionFromPath(somePath) << endl
-		     << changeFileExtension(somePath, ".root") << endl
-		     << changeFileExtension(somePath, "root") << endl
-		     << changeFileExtension(somePath) << endl;
-	}
-
 
 	if (0) {
 		// test integral calculation

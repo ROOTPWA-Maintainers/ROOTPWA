@@ -106,7 +106,7 @@ main(int argc, char** argv)
 		printInfo << "comparing particles" << endl;
 		*part1 == *part2;
 
-		// const string       keyFileName = "../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
+		// const string       keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
 		const string       keyFileName = "testWaveDescription.key";
 		waveDescription    waveDesc;
 		isobarAmplitudePtr amp;
@@ -127,7 +127,7 @@ main(int argc, char** argv)
 		}
 
 	}
-	
+
 
 	if (0) {
 		waveSetGenerator waveSetGen;
@@ -171,7 +171,7 @@ main(int argc, char** argv)
 		cout << "got " << inconsistentDecays << " inconsistent" << endl
 		     << "and " << consistentDecays << " valid decays" << endl
 		     << "out of " << decays.size() << " constructed decays" << endl;
-		
+
 		// decays.back().writeGraphViz("foo.dot");
 		// gSystem->Exec("dot -Tps -o foo.ps foo.dot");
 	}
