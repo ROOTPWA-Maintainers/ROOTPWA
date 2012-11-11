@@ -62,7 +62,7 @@ main(int    argc,
 			          << "valid = " << trueFalse(valid) << endl;
 		}
 	cout << endl;
-	
+
 	demandedRange = make_tuple(1, 2);
 	printInfo << "demanded range: [" << spinQn(get<0>(demandedRange)) << ", "
 	          << spinQn(get<1>(demandedRange)) << "]" << endl;

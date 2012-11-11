@@ -173,7 +173,7 @@ main(int    argc,
 			cout << endl;
 		}
 	}
-	
+
 
 	//////////////////////////////////////////////////////////////////////////////
 	// break-up momentum
@@ -381,7 +381,7 @@ main(int    argc,
 
     compareValues(newVals, oldVals);
 	}
-	
+
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Wigner d-function d^j_{m n}(theta)
@@ -395,7 +395,7 @@ main(int    argc,
 		TRandom3       random(1234567890);
 		for (unsigned int i = 0; i < nmbAngles; ++i)
 			angles[i] = (random.Uniform(-piHalf, +piHalf));
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int j = 0; j < maxJ; ++j)
@@ -445,7 +445,7 @@ main(int    argc,
 
     compareValues(newVals, oldVals);
 	}
-	
+
 
 	//////////////////////////////////////////////////////////////////////////////
 	// spherical harmonics Y_l^m(theta, phi)
@@ -463,7 +463,7 @@ main(int    argc,
 			angles[0][i] = (random.Uniform(-piHalf, +piHalf));  // theta
 			angles[1][i] = (random.Uniform(-pi,     +pi    ));  // phi
 		}
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int l = 0; l < maxL; ++l)
@@ -528,7 +528,7 @@ main(int    argc,
 			angles[i].SetY(random.Uniform(-piHalf, +piHalf));
 			angles[i].SetZ(random.Uniform(-pi,     +pi    ));
 		}
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int j = 0; j < maxJ; ++j)
@@ -600,7 +600,7 @@ main(int    argc,
 			angles[i].SetY(random.Uniform(-piHalf, +piHalf));
 			angles[i].SetZ(random.Uniform(-pi,     +pi    ));
 		}
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int j = 0; j < maxJ; ++j)

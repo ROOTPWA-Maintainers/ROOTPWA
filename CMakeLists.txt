@@ -532,6 +532,9 @@ enable_testing()
 set(UTILITIES_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/utilities
 	)
+set(UTILITIES_LIBS
+#  RootPwaUtil
+  )
 
 set(TOOLS_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/tools
