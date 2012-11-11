@@ -165,13 +165,21 @@ namespace rpwa {
     _phaseSpace.setWeightType(nBodyPhaseSpaceGen::IMPORTANCE);
   }
 
-  void SettMin(double tMin){
+  void SettMin(double tMin)
+  {
     _tMin = tMin;
-    if  ( tMin > 0 )
-      _tMin = -tMin;   
+    if (tMin > 0) _tMin = -tMin;   
   };
-  void SettprimeMin(double tprimeMin) { _tprimeMin = tprimeMin; };
-  void SettprimeMax(double tprimeMax) { _tprimeMax = tprimeMax; };
+  void SettprimeMin(double tprimeMin)
+  {
+    _tprimeMin = tprimeMin;
+    if (tprimeMin > 0) _tprimeMin = -tprimeMin;
+  };
+  void SettprimeMax(double tprimeMax)
+  {
+    _tprimeMax = tprimeMax;
+    if (tprimeMax > 0) _tprimeMax = -tprimeMax;
+  };
   /*
    * If you set the Primary Vertex Generator (create it first)
    * Vertex position, Beam Energy and Direction will be

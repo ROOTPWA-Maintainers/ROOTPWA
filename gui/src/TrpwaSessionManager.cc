@@ -1462,12 +1462,12 @@ int TrpwaSessionManager::CompareLists(const vector<string>& list1, const vector<
 	int result(0);
 	vector<string> _templist = list2;
 	for (unsigned int i = 0; i < list1.size(); i++){
-		bool found(false);
+		//bool found(false);
 		for (vector<string>::iterator j = _templist.begin(); j != _templist.end(); ++j){
 			if (list1[i] == *j){
 				result++;
 				_templist.erase(j);
-				found = true;
+				//found = true;
 				break;
 			}
 		}

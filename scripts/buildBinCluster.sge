@@ -1,18 +1,22 @@
 #!/bin/bash
 # Select queue
-#$ -l long=TRUE,h_vmem=100M
+#$ -l medium=TRUE,h_vmem=100M
 # Divert output
-#$ -o /afs/e18/compass/analysis/sneubert/LOGS/
+#$ -o /nfs/hicran/project/compass/analysis/sneubert/LOGS/
 # Write error in same file
 #$ -j y
 
 # this script requires KEY to be set to the keydirectory!
 # and BIN to be set to the mass bin directory
 
-export DIARYFILE=$HOME/scratch/COMPASS/rootpwa/trunk/scripts/bindiary.txt
+export WORK=/nfs/nas/user/sneubert/
+export DIARYFILE=$WORK/scratch/COMPASS/rootpwa/trunk/scripts/bindiary.txt
 
-export SET=SELECTION1
-export KEY=$HOME/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/$SET
+export MAXKEYPERJOB=1;
+
+export SET=F21565SET
+export KEY=$WORK/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/$SET
+export PDG=$WORK/scratch/COMPASS/rootpwa/trunk/keyfiles/key5pi/pdgTable.txt
 echo "---- STARTING AMPLITUDE CALCULATIONS"; 
 echo "---- WAVESET: $KEY";
 echo;
@@ -21,15 +25,17 @@ test -s $KEY || exit
 ls $KEY
 
 #export DATADIR=/nfs/data/user/sneubert/5PiData2
-cd ~/scratch/COMPASS/rootpwa/trunk
+cd $WORK/scratch/COMPASS/rootpwa/trunk
 source setup.sh
 cd scripts/
 
 # find bin
 TEMPLIST=`mktemp -t dirlist.XXXXXX`
 #ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiData
-ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiLTData3
+#ROOTDIR=/nfs/hicran/project/compass/analysis/sneubert/5PiLTData3
+ROOTDIR=/nfs/nas/user/sneubert/2004/5PiLTData3/
 #ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiMTData
+#ROOTDIR=/afs/e18/compass/analysis/sneubert/2008/5PiBins
 #ROOTDIR=/afs/e18/compass/analysis/sneubert/5PiModels/ImpTest/pieces3
 #ROOTDIR=/lustre/e18/user/sneubert/2008/5PiBins
 #ROOTDIR=/lustre/e18/user/sneubert/5PiMC/ACC_HT

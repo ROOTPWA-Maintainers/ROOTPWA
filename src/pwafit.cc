@@ -339,6 +339,10 @@ main(int    argc,
 	minimizer->SetFunction        (L);
 	minimizer->SetStrategy        (minimizerStrategy);
 	minimizer->SetTolerance       (minimizerTolerance);
+
+	// setting the ErrorDef to 1 since the ROOT interface does not
+	// Propagate the value. Will do the error rescaling by hand below.
+	minimizer->SetErrorDef(1); 
 	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
 	minimizer->SetMaxIterations   (maxNmbOfIterations);
 	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
@@ -572,7 +576,12 @@ main(int    argc,
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
-						fitParCovMatrix[i][j] = minimizer->CovMatrix(i, j);
+					  // The factor 0.5 is needed because
+					  // MINUIT by default assumes a Chi2
+					  // function and not a loglikeli
+					  // (see Minuit manual!)
+					  // Note: SetErrorDef in ROOT does not work
+						fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance

@@ -123,7 +123,7 @@ nBodyPhaseSpaceGen::~nBodyPhaseSpaceGen()
 
 // sets decay constants and prepares internal variables
 bool
-nBodyPhaseSpaceGen::setDecay(vector<double>& daughterMasses)  // array of daughter particle masses
+nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of daughter particle masses
 {
   _n = daughterMasses.size();
   if (_n < 2) {

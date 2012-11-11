@@ -35,9 +35,9 @@ echo -e "Mass-Bin \t Num \t NumPSP  NumAcc \t FileSize \t PSPFileSize \t AccFile
 
 for i in $1*; do
 
-    export NUMAMP=`ls $i/AMPS | grep .amp | wc -l`
-    export NUMPSPAMP=`ls $i/PSPAMPS | grep .amp | wc -l`
-    export NUMACCAMP=`ls $i/ACCAMPS | grep .amp | wc -l`
+    export NUMAMP=`ls $i/AMPS/*.amp | wc -l`
+    export NUMPSPAMP=`ls $i/PSPAMPS/*.amp | wc -l`
+    export NUMACCAMP=`ls $i/ACCAMPS/*.amp | wc -l`
 
     MAXN=0;
     MINN=100000000;

@@ -154,7 +154,7 @@ extern char *optarg;
   vector<set<wsetentry>*> ancestorlist;
   unsigned int na=inputlistFiles.size();
   unsigned int mingenes=1000;
-  unsigned int mini=0;
+  //unsigned int mini=0;
   for(unsigned int ia=0;ia<na;++ia){
     ancestorlist.push_back(new set<wsetentry>());
     readWavelist(*(ancestorlist[ia]),inputlistFiles[ia]);
@@ -163,7 +163,7 @@ extern char *optarg;
     //	 << " with "<<n<<" genes." << endl;
     if(n<mingenes){
       mingenes=n;
-      mini=ia;
+      //mini=ia;
     }
     if(n<Fix){
       cerr << "Ancestor has not enough genes to fix "
@@ -225,15 +225,15 @@ extern char *optarg;
     cerr << " crossing over ... ";
     // get two points in the genome
     set<wsetentry>* smallancestor=NULL;
-    set<wsetentry>* largeancestor=NULL;
+    //set<wsetentry>* largeancestor=NULL;
 
     if(ancestor1->size()<=ancestor2->size()){
      smallancestor = ancestor1;
-     largeancestor = ancestor2;
+     //largeancestor = ancestor2;
     }
     else {
       smallancestor = ancestor2;
-      largeancestor = ancestor1;
+      //largeancestor = ancestor1;
     }
 
 

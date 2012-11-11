@@ -46,8 +46,11 @@
 #include "TStopwatch.h"
 #include "TVector3.h"
 
+#include "reportingUtils.hpp"
 #include "spinUtils.hpp"
 #include "dFunction.hpp"
+
+#include "pputil.h"
 
 
 using namespace std;
@@ -55,11 +58,209 @@ using namespace rpwa;
 using namespace boost::math;
 
 
-int
-main(int argc, char** argv)
+template<typename T>
+T
+powInt(const T&  arg,
+       const int N)
 {
+	if (N == 2)
+		return arg * arg;
+	else if (N == 1)
+		return arg;
+	else if (N == 0)
+		return 1;
+	else if (N == -1)
+		return 1 / arg;
+	else if (N == -2)
+		return 1 / (arg * arg);
+	else
+		// recurse down
+		return powInt(arg, N / 2) * powInt(arg, N / 2 + N % 2);
+}
+
+
+template<typename T>
+void
+compareValues(vector<T>& newVals,
+              vector<T>& oldVals)
+{
+	if (newVals.size() != oldVals.size()) {
+		printErr << "arrays have different size" << endl;
+		return;
+	}
+	T maxAbsDeviation = 0;
+	T maxRelDeviation = 0;
+	for (size_t i = 0; i < newVals.size(); ++i) {
+		const T absDelta = oldVals[i] - newVals[i];
+		const T relDelta = absDelta / oldVals[i];
+		if (abs(absDelta) > maxAbsDeviation)
+			maxAbsDeviation = abs(absDelta);
+		if ((newVals[i] != 0) and (abs(relDelta) > maxRelDeviation))
+			maxRelDeviation = abs(relDelta);
+	}
+	printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
+	          << "maximum relative deviation is " << maxRelDeviation << endl;
+}
+
+
+template<typename T>
+void
+compareValues(vector<complex<T> >& newVals,
+              vector<complex<T> >& oldVals)
+{
+	if (newVals.size() != oldVals.size()) {
+		printErr << "arrays have different size" << endl;
+		return;
+	}
+	T maxAbsDeviation = 0;
+	T maxRelDeviation = 0;
+	for (unsigned int i = 0; i < newVals.size(); ++i) {
+		const complex<T> delta    = oldVals[i] - newVals[i];
+		const T          absDelta = abs(delta);
+		const T          absVal   = abs(newVals[i]);
+		const T          relDelta = absDelta / absVal;
+		if (absDelta > abs(maxAbsDeviation))
+			maxAbsDeviation = absDelta;
+		if ((absVal != 0) and (relDelta  > maxRelDeviation))
+			maxRelDeviation = relDelta;
+	}
+	printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
+	          << "maximum relative deviation is " << maxRelDeviation << endl;
+}
+
+
+int
+main(int    argc,
+     char** argv)
+{
+	using rpwa::cout;
 	printCompilerInfo();
 	printSvnVersion  ();
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// compare pow speed
+	if (0) {
+		const size_t nmbArgs = 100000000;
+		const int    maxN    = 7;
+
+		vector<double> args(nmbArgs, 0);
+		TRandom3       random(1234567890);
+		for (size_t i = 0; i < nmbArgs; ++i)
+			args[i] = (random.Uniform(0, 10));
+
+		TStopwatch timer;
+		for (int N = 0; N <= maxN; ++N) {
+			timer.Reset();
+			timer.Start();
+			vector<double> newVals(nmbArgs, 0);
+			for (size_t i = 0; i < nmbArgs; ++i)
+					newVals[i] = powInt(args[i], N);
+			timer.Stop();
+			printInfo << "calculated powInt(x, " << N << ") for " << nmbArgs << " values" << endl
+			          << "    this consumed: ";
+			timer.Print();
+
+			timer.Reset();
+			timer.Start();
+			vector<double> oldVals(nmbArgs, 0);
+			for (size_t i = 0; i < nmbArgs; ++i)
+					oldVals[i] = std::pow(args[i], N);
+			timer.Stop();
+			printInfo << "calculated std::pow(x, " << N << ") for " << nmbArgs << " values" << endl
+			          << "    this consumed: ";
+			timer.Print();
+
+			compareValues(newVals, oldVals);
+			cout << endl;
+		}
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// break-up momentum
+	if (1) {
+		printInfo << "testing breakup momentum" << endl;
+
+		const size_t nmbArgs = 50000000;
+
+		vector<double> M (nmbArgs, 0);
+		vector<double> m1(nmbArgs, 0);
+		vector<double> m2(nmbArgs, 0);
+		TRandom3       random(1234567890);
+		for (size_t i = 0; i < nmbArgs; ++i) {
+			M [i] = (random.Uniform(0, 5));
+			m1[i] = (random.Uniform(0, 2.5));
+			m2[i] = (random.Uniform(0, 2.5));
+		}
+
+		TStopwatch timer;
+		timer.Reset();
+		timer.Start();
+		vector<complex<double> > newVals(nmbArgs, 0);
+		for (size_t i = 0; i < nmbArgs; ++i)
+			newVals[i] = rpwa::breakupMomentumComplex(M[i], m1[i], m2[i]);
+		timer.Stop();
+		printInfo << "calculated physUtils breakup momentum for " << nmbArgs << " values" << endl
+		          << "    this consumed: ";
+		timer.Print();
+
+		timer.Reset();
+		timer.Start();
+		vector<complex<double> > oldVals(nmbArgs, 0);
+		for (size_t i = 0; i < nmbArgs; ++i)
+			oldVals[i] = q(M[i], m1[i], m2[i]);
+		timer.Stop();
+		printInfo << "calculated libpp breakup momentum for " << nmbArgs << " values" << endl
+		          << "    this consumed: ";
+		timer.Print();
+
+		compareValues(newVals, oldVals);
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// Blatt-Weisskopf barrier factor
+	if (0) {
+		printInfo << "testing Blatt-Weisskopf barrier factor" << endl;
+
+		const size_t nmbArgs = 10000000;
+		const int    maxL    = 5;  // max. L implemented in libpp
+
+		vector<double> args(nmbArgs, 0);
+		TRandom3       random(1234567890);
+		for (size_t i = 0; i < nmbArgs; ++i)
+			args[i] = (random.Uniform(0, 10));
+
+		TStopwatch timer;
+		for (int L = 0; L <= maxL; ++L) {
+			timer.Reset();
+			timer.Start();
+			vector<double> newVals(nmbArgs, 0);
+			for (size_t i = 0; i < nmbArgs; ++i)
+				newVals[i] = rpwa::barrierFactor(2 * L, args[i]);
+			timer.Stop();
+			printInfo << "calculated physUtils Blatt-Weisskopf barrier factors for L = " << L << " for "
+			          << nmbArgs << " values" << endl
+			          << "    this consumed: ";
+			timer.Print();
+
+			timer.Reset();
+			timer.Start();
+			vector<double> oldVals(nmbArgs, 0);
+			for (size_t i = 0; i < nmbArgs; ++i)
+				oldVals[i] = F(2 * L, args[i]);
+			timer.Stop();
+			printInfo << "calculated libpp Blatt-Weisskopf barrier factors for L = " << L << " for "
+			          << nmbArgs << " values" << endl
+			          << "    this consumed: ";
+			timer.Print();
+
+			compareValues(newVals, oldVals);
+			cout << endl;
+		}
+	}
+
 
 	//////////////////////////////////////////////////////////////////////////////
 	// factorial
@@ -122,7 +323,7 @@ main(int argc, char** argv)
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Clebsch-Gordan coefficients (j1 m1 j2 m2 | J M)
-	if (1) {
+	if (0) {
 		printInfo << "testing Clebsch-Gordan coefficients" << endl;
 
 		const unsigned int nmbIterations = 100;
@@ -180,21 +381,9 @@ main(int argc, char** argv)
               << " x " << nmbIterations << " calls " << endl << "    this consumed: ";
     timer.Print();
 
-    // check values
-    double maxAbsDeviation = 0;
-    double maxRelDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const double absDelta = oldVals[i] - newVals[i];
-	    const double relDelta = absDelta / oldVals[i];
-	    if (abs(absDelta) > maxAbsDeviation)
-		    maxAbsDeviation = abs(absDelta);
-	    if ((newVals[i] != 0) and (abs(relDelta) > maxRelDeviation))
-		    maxRelDeviation = abs(relDelta);
-    }
-    printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
-              << "maximum relative deviation is " << maxRelDeviation << endl;
+    compareValues(newVals, oldVals);
 	}
-	
+
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Wigner d-function d^j_{m n}(theta)
@@ -208,7 +397,7 @@ main(int argc, char** argv)
 		TRandom3       random(1234567890);
 		for (unsigned int i = 0; i < nmbAngles; ++i)
 			angles[i] = (random.Uniform(-piHalf, +piHalf));
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int j = 0; j < maxJ; ++j)
@@ -256,21 +445,9 @@ main(int argc, char** argv)
 		          << "    this consumed: ";
     timer.Print();
 
-    // check values
-    double maxAbsDeviation = 0;
-    double maxRelDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const double absDelta = oldVals[i] - newVals[i];
-	    const double relDelta = absDelta / oldVals[i];
-	    if (abs(absDelta) > maxAbsDeviation)
-		    maxAbsDeviation = abs(absDelta);
-	    if (abs(relDelta) > maxRelDeviation)
-		    maxRelDeviation = abs(relDelta);
-    }
-    printInfo << "maximum absolute deviation is " << maxAbsDeviation << "; "
-              << "maximum relative deviation is " << maxRelDeviation << endl;
+    compareValues(newVals, oldVals);
 	}
-	
+
 
 	//////////////////////////////////////////////////////////////////////////////
 	// spherical harmonics Y_l^m(theta, phi)
@@ -288,7 +465,7 @@ main(int argc, char** argv)
 			angles[0][i] = (random.Uniform(-piHalf, +piHalf));  // theta
 			angles[1][i] = (random.Uniform(-pi,     +pi    ));  // phi
 		}
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int l = 0; l < maxL; ++l)
@@ -334,14 +511,7 @@ main(int argc, char** argv)
 		          << "    this consumed: ";
     timer.Print();
 
-    // check values
-    complex<double> maxDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const complex<double> delta = boostVals[i] - myVals[i];
-	    if (abs(delta) > abs(maxDeviation))
-		    maxDeviation = abs(delta);
-    }
-    printInfo << "maximum deviation is " << maxDeviation << endl;
+		compareValues(myVals, boostVals);
 	}
 
 
@@ -360,7 +530,7 @@ main(int argc, char** argv)
 			angles[i].SetY(random.Uniform(-piHalf, +piHalf));
 			angles[i].SetZ(random.Uniform(-pi,     +pi    ));
 		}
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int j = 0; j < maxJ; ++j)
@@ -413,14 +583,7 @@ main(int argc, char** argv)
 		          << "    this consumed: ";
     timer.Print();
 
-    // check values
-    complex<double> maxDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const complex<double> delta = oldVals[i] - newVals[i];
-	    if (abs(delta) > abs(maxDeviation))
-		    maxDeviation = abs(delta);
-    }
-    printInfo << "maximum deviation is " << maxDeviation << endl;
+		compareValues(newVals, oldVals);
 	}
 
 
@@ -439,7 +602,7 @@ main(int argc, char** argv)
 			angles[i].SetY(random.Uniform(-piHalf, +piHalf));
 			angles[i].SetZ(random.Uniform(-pi,     +pi    ));
 		}
-		
+
     // determine size of data array
     unsigned int nmbVals = 0;
     for (int j = 0; j < maxJ; ++j)
@@ -454,8 +617,8 @@ main(int argc, char** argv)
     TStopwatch timer;
     timer.Reset();
     timer.Start();
-    unsigned int             valIndex = 0;
     vector<complex<double> > newVals(nmbVals, 0);
+    unsigned int             valIndex = 0;
     for (int j = 0; j < maxJ; ++j)
 	    for (int m = 0; m <= j; ++m)
 		    for (int n = -j; n <= j; ++n)
@@ -480,8 +643,8 @@ main(int argc, char** argv)
     // compute libpp values
     timer.Reset();
     timer.Start();
-    valIndex = 0;
     vector<complex<double> > oldVals(nmbVals, 0);
+    valIndex = 0;
     for (int j = 0; j < maxJ; ++j)
 	    for (int m = 0; m <= j; ++m)
 		    for (int n = -j; n <= j; ++n)
@@ -504,14 +667,7 @@ main(int argc, char** argv)
 		          << "    this consumed: ";
     timer.Print();
 
-    // check values
-    complex<double> maxDeviation = 0;
-    for (unsigned int i = 0; i < nmbVals; ++i) {
-	    const complex<double> delta = oldVals[i] - newVals[i];
-	    if (abs(delta) > abs(maxDeviation))
-		    maxDeviation = abs(delta);
-    }
-    printInfo << "maximum deviation is " << maxDeviation << endl;
+		compareValues(newVals, oldVals);
 	}
 
 }

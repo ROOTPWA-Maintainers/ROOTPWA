@@ -10,7 +10,7 @@
 
 #include "boost/multi_array.hpp"
 
-#include "nDimArrayUtils.hpp"
+#include "arrayUtils.hpp"
 #include "reportingUtils.hpp"
 
 

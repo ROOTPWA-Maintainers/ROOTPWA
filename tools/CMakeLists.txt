@@ -35,42 +35,51 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'tools' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
+	${ROOT_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  TPDGEntry.cc
-  TPDGDB.cc
-  FSParticle.cc
-  NParticleState.cc
-  NParticleEvent.cc
-)
-   
+	TPDGEntry.cc
+	TPDGDB.cc
+	FSParticle.cc
+	NParticleState.cc
+	NParticleEvent.cc
+	)
+
 
 # ROOT dictionary
-set(TOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaToolsDict.cc)
+set(ROOTPWATOOLS_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaToolsDict.cc)
+set(ROOTPWATOOLS_DICT_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 root_generate_dictionary(
-  "${TOOLS_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "TPDGEntry.h;TPDGDB.h"
-  "rootPwaToolsLinkDef.h"
-)
-set(SOURCES ${SOURCES} ${TOOLS_DICTIONARY})
+	"${ROOTPWATOOLS_DICTIONARY}"
+	"${ROOTPWATOOLS_DICT_INCLUDE_DIRS}"
+	"TPDGEntry.h;TPDGDB.h"
+	"rootPwaToolsLinkDef.h"
+	)
+set(SOURCES ${SOURCES} ${ROOTPWATOOLS_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwaTools")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOT_LIBS}"
-  "${PWA2000_LIBS}"
-)
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${PWA2000_LIBS}"
+	)
 
 
 # executables

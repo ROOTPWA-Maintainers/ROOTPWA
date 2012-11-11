@@ -60,7 +60,6 @@
 DT_AMP_DIR_NAME=AMPS
 PS_AMP_DIR_NAME=PSPAMPS
 PSACC_AMP_DIR_NAME=ACCAMPS
-SYM_AMP_DIR_NAME=SYM
 # amplitude file format
 AMP_FILE_EXT=.amp
 #AMP_FILE_EXT=.root
@@ -77,12 +76,12 @@ FIT_FILE_EXT=.result.root
 # define queue
 ##$ -l medium=TRUE,h_vmem=200M
 # path for stdout files
-#$ -o /afs/e18.ph.tum.de/user/bgrube/compass/pwa/4PionMuoProdPwa/logs
+##$ -o /afs/e18.ph.tum.de/user/bgrube/compass/pwa/4PionMuoProdPwa/logs
 # merge sterr into stdout
 #$ -j yes
 # send mail when job aborted, rescheduled, or suspended
-#$ -M bgrube
-#$ -m as
+##$ -M bgrube
+##$ -m as
 # enable path aliasing
 #$ -cwd
 # export all environment variables to job
@@ -286,7 +285,7 @@ for (( IDX=BIN_SEQ_IDX_MIN; IDX<=BIN_SEQ_IDX_MAX; IDX++ ))
 do
     MASS_BIN_NAME=${MASS_BINS[${IDX}]}
     # path to mass bin data
-    AMP_DIR="${MASS_BINS_DIR}/${MASS_BIN_NAME}/${DT_AMP_DIR_NAME}/${SYM_AMP_DIR_NAME}"
+    AMP_DIR="${MASS_BINS_DIR}/${MASS_BIN_NAME}/${DT_AMP_DIR_NAME}"
     BIN_M_MIN=${MASS_BIN_NAME%.*}
     BIN_M_MAX=${MASS_BIN_NAME#*.}
     # check whether amplitude directory exists
@@ -295,14 +294,14 @@ do
 				echo "!!! error: amplitude directory '${AMP_DIR}' does not exist! exiting."
 				exit 1
     fi
-    PS_AMP_DIR="${MASS_BINS_DIR}/${MASS_BIN_NAME}/${PS_AMP_DIR_NAME}/${SYM_AMP_DIR_NAME}"
+    PS_AMP_DIR="${MASS_BINS_DIR}/${MASS_BIN_NAME}/${PS_AMP_DIR_NAME}"
     # check whether directory with phase-space amplitudes exists
     if [[ ! -d "${PS_AMP_DIR}" ]]
     then
 				echo "!!! error: directory '${PS_AMP_DIR}' with phase-space amplitudes does not exist! exiting."
 				exit 1
     fi
-    PSACC_AMP_DIR="${MASS_BINS_DIR}/${MASS_BIN_NAME}/${PSACC_AMP_DIR_NAME}/${SYM_AMP_DIR_NAME}"
+    PSACC_AMP_DIR="${MASS_BINS_DIR}/${MASS_BIN_NAME}/${PSACC_AMP_DIR_NAME}"
     # check whether directory with accepted phase space amplitudes exists
     if [[ ! -d "${PSACC_AMP_DIR}" ]]
     then

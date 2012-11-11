@@ -138,6 +138,20 @@ particle::doClone() const
 }
 
 
+bool
+particle::isEqualTo(const particleProperties& partProp) const
+{
+	const particle* part = dynamic_cast<const particle*>(&partProp);
+	if (not part)
+		return false;
+	if (not particleProperties::isEqualTo(partProp))
+		return false;
+	return (    (spinProj    () == part->spinProj    ())
+	        and (index       () == part->index       ())
+	        and (reflectivity() == part->reflectivity()));
+}
+
+
 void
 particle::setProperties(const particleProperties& prop)
 {

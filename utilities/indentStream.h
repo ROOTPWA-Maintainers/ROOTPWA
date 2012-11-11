@@ -99,25 +99,25 @@ namespace rpwa {
 				}
 			return boost::iostreams::put(dest, c);
 		}
-    
+
 		template<typename sink>
 		void close(sink&)
 		{
 			indent_    = 0;
 			lineStart_ = true;
 		}
-    
+
 		void indentIn()
 		{
 			++indent_;
 		}
-    
+
 		void indentOut()
 		{
 			if (indent_ > 0)
 				--indent_;
 		}
-    
+
 		// of course it would be more elegant to modify the
 		// filtering_ostream push function instead, ...
 		static void push(boost::iostreams::filtering_ostream& out,
@@ -128,14 +128,14 @@ namespace rpwa {
 			out.pword(pwordIndex__<int>()()) = filter;
 			filter->out_ = &out;
 		}
-    
+
 		// when the filter is destroyed, it must be deregistered.
 		~indentFilter()
 		{
 			if (out_)
 				out_->pword(pwordIndex__<int>()()) = 0;
 		}
-    
+
 	private:
 
 		explicit indentFilter(int width)
@@ -163,9 +163,9 @@ namespace rpwa {
 	indentIn(std::basic_ostream<charT, traits>& out)
 	{
 		indentFilter* filter = (indentFilter*)out.pword(pwordIndex__<int>()());
-		if (filter) { 
-			out.flush(); 
-			filter->indentIn(); 
+		if (filter) {
+			out.flush();
+			filter->indentIn();
 		}
 		return out;
 	}
@@ -176,9 +176,9 @@ namespace rpwa {
 	indentOut(std::basic_ostream<charT, traits>& out)
 	{
 		indentFilter* filter = (indentFilter*)out.pword(pwordIndex__<int>()());
-		if (out) { 
-			out.flush(); 
-			filter->indentOut(); 
+		if (out) {
+			out.flush();
+			filter->indentOut();
 		}
 		return out;
 	}
@@ -186,16 +186,16 @@ namespace rpwa {
 
 	// define indentable versions of cout end cerr
 	class indentStream : public boost::iostreams::filtering_ostream {
-		
+
 	public:
-		
+
 		indentStream(std::ostream& out)
 			: boost::iostreams::filtering_ostream()
 		{
 			indentFilter::push(*this, 4);
 			this->push(out);
 		}
-		
+
 	};
 	extern indentStream cout;
 	extern indentStream cerr;

@@ -37,13 +37,17 @@
 
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 
+#include "libConfigUtils.hpp"
 #include "reportingUtils.hpp"
 #include "particleDataTable.h"
+#include "libconfig.h++"
 
 	
 using namespace std;
 using namespace rpwa;
+using namespace libconfig;
 
 
 particleDataTable               particleDataTable::_instance;
@@ -65,7 +69,7 @@ const particleProperties*
 particleDataTable::entry(const string& partName,
                          const bool    warnIfNotExistent)
 {
-	dataIterator i = _dataTable.find(partName);
+	iterator i = _dataTable.find(partName);
 	if (i == _dataTable.end()) {
 		if (warnIfNotExistent)
 			printWarn << "could not find entry for particle '" << partName << "'" << endl;
@@ -81,46 +85,75 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
                                    const double              minMass,
                                    const double              minMassWidthFactor,
                                    const vector<string>&     whiteList,
-                                   const vector<string>&     blackList)
+                                   const vector<string>&     blackList,
+                                   const multiset<string>&   decayProducts,
+                                   const bool&               forceDecayCheck)
 {
 	const pair<particleProperties, string> selector(prototype, sel);
 	vector<const particleProperties*>      matchingEntries;
-	for (dataIterator i = _dataTable.begin(); i != _dataTable.end(); ++i) {
+	for (iterator i = _dataTable.begin(); i != _dataTable.end(); ++i) {
 		if (i->second != selector)
 			continue;
+		const particleProperties& partProp = i->second;
 		// limit isobar mass, if minMass > 0
-		if ((minMass > 0) and (i->second.mass() + minMassWidthFactor * i->second.width() < minMass))
+		if ((minMass > 0) and (partProp.mass() + minMassWidthFactor * partProp.width() < minMass))
+		{ 
+			if(_debug)printDebug << partProp.name() << " not in mass window " << flush;
 			continue;
+		}
 		// apply white list
 		bool whiteListMatch = (whiteList.size() == 0) ? true : false;
 		for (size_t j = 0; j < whiteList.size(); ++j)
-			if ((i->second.name() == whiteList[j]) or (i->second.bareName() == whiteList[j])) {
+			if ((partProp.name() == whiteList[j]) or (partProp.bareName() == whiteList[j])) {
 				whiteListMatch = true;
 				break;
 			}
-		if (not whiteListMatch)
+		if (not whiteListMatch){
+			if(_debug)printDebug << partProp.name() << " not in whitelist " << endl;
 			continue;
+		}
 		// apply black list
 		bool blackListMatch = false;
 		for (size_t j = 0; j < blackList.size(); ++j)
-			if ((i->second.name() == blackList[j]) or (i->second.bareName() == blackList[j])) {
+			if ((partProp.name() == blackList[j]) or (partProp.bareName() == blackList[j])) {
 				blackListMatch = true;
 				break;
 			}
-		if (blackListMatch)
+		if (blackListMatch) {
+			if(_debug)printDebug << partProp.name() << " on blacklist " << endl;
 			continue;
+		}
+		// apply list of decays
+		bool decayMatch = true;
+		if ((decayProducts.size() > 0) and partProp.nmbDecays() > 0) {
+			if (not partProp.hasDecay(decayProducts))
+				decayMatch = false;
+		} else if (forceDecayCheck)
+			decayMatch = false;
+		if (not decayMatch) {
+			if (_debug) {
+				printDebug << partProp.name() << " does not have a decay into ";
+				copy(decayProducts.begin(), decayProducts.end(), ostream_iterator<string>(cout, "  "));
+				cout << endl;
+			}
+			continue;
+		}
+
 		if (_debug) {
-			printDebug << "found entry " << i->second.name() << " matching " << prototype
-			           << " and '" << sel << "'" << flush;
+			printDebug << "found entry " << partProp.name() << " matching " << prototype
+				<< " and '" << sel << "'" << flush;
 			if (minMass > 0)
-				cout << " with mass > " << minMass - minMassWidthFactor * i->second.width() << " GeV";
+				cout << " with mass > " << minMass - minMassWidthFactor * partProp.width() << " GeV";
 			if (whiteList.size() > 0)
 				cout << " ; in white list";
 			if (blackList.size() > 0)
 				cout << " ; not in black list";
+			if (decayMatch)
+				cout << " ; with allowed decay into " ;
+			copy(decayProducts.begin(), decayProducts.end(), ostream_iterator<string>(cout, "  "));
 			cout << endl;
-		}      
-		matchingEntries.push_back(&(i->second));
+		}
+		matchingEntries.push_back(&partProp);
 	}
 	return matchingEntries;
 }
@@ -130,7 +163,7 @@ bool
 particleDataTable::addEntry(const particleProperties& partProp)
 {
 	const string name = partProp.name();
-	dataIterator i    = _dataTable.find(name);
+	iterator i    = _dataTable.find(name);
 	if (i != _dataTable.end()) {
 		printWarn << "trying to add entry for particle '" << name << "' "
 		          << "which already exists in table"     << endl
@@ -151,7 +184,7 @@ ostream&
 particleDataTable::print(ostream& out)
 {
 	unsigned int countEntries = 0;
-	for (dataIterator i = begin(); i != end(); ++i) {
+	for (iterator i = begin(); i != end(); ++i) {
 		++countEntries;
 		out << "entry " << setw(3) << countEntries << ": " << i->second << endl;
 	}
@@ -162,7 +195,7 @@ particleDataTable::print(ostream& out)
 ostream&
 particleDataTable::dump(ostream& out)
 {
-	for (dataIterator i = begin(); i != end(); ++i) {
+	for (iterator i = begin(); i != end(); ++i) {
 		i->second.dump(out);
 		out << endl;
 	}
@@ -206,4 +239,88 @@ particleDataTable::read(istream& in)
 	if (_debug)
 		cout << "    data table has " << nmbEntries() << " entries (after reading)" << endl;
 	return true;
+}
+
+
+bool
+particleDataTable::readDecayModeFile(const string& fileName)
+{
+	printInfo << "reading particle decay modes from file '" << fileName << "'" << endl;
+	// parse decay mode file
+  Config file;
+	if (not parseLibConfigFile(fileName, file, _debug)) {
+		printWarn << "problems reading file with decay modes '" << fileName << "'. "
+		          << "cannot set decay modes." << endl;
+		return false;
+	}
+	const Setting& root = file.getRoot();
+	// find list of particle decays
+	const Setting* partDecayList = findLibConfigList(root, "particleDecayList");
+	if (not partDecayList) {
+		printWarn << "cannot find 'particleDecayList' list. cannot set decay modes." << endl;
+		return false;
+	}
+  const unsigned int nmbEntries = partDecayList->getLength();
+  if (_debug)
+	  printDebug << "found particle decay list with " << nmbEntries << " entries in file "
+	             << "'" << fileName << "'" << endl;
+  // loop over decay list entries and add decays to particleDataTable
+  unsigned int countEntries = 0;
+  for (unsigned int entryIndex = 0; entryIndex < nmbEntries; ++entryIndex) {
+	  const Setting& partDecayEntry = (*partDecayList)[entryIndex];
+    string         partName;
+    if (not partDecayEntry.lookupValue("name", partName)) {
+	    printWarn << "particle decay list entry [" << entryIndex << "] does not hava a 'name' field. "
+	              << "ignoring entry." << endl;
+	    continue;
+    }
+    if (_debug)
+	    printDebug << "setting decays for '" << partName << "':" << endl;
+    // get list of decay modes for this particle
+    const Setting* partDecays = findLibConfigList(partDecayEntry, "decays");
+    if (not partDecays) {
+	    printWarn << "cannot find 'decays' list for " << partName
+	              << " particle decay (list entry [" << entryIndex << "]). "
+	              << "ignoring entry." << endl;
+	    continue;
+    }
+    // lookup particle in database
+    map<string, particleProperties>::iterator dataTableEntry = _dataTable.find(partName);
+    if (dataTableEntry == _dataTable.end()) {
+	    printWarn << "could not find particle " << partName << " in data table. "
+	              << "ignoring entry." << endl;
+	    continue;
+    }
+    particleProperties& particleProp = dataTableEntry->second;
+    // loop over decay modes for this particle
+    const unsigned int nmbDecays = partDecays->getLength();
+    for (unsigned int decayIndex = 0; decayIndex < nmbDecays; ++decayIndex) {
+      // get string array of decay daughters
+	    const Setting* decayDaughters = findLibConfigArray((*partDecays)[decayIndex], "products");
+	    if (not decayDaughters) {
+		    printWarn << "cannot find 'products' array for " << partName
+		              << " particle decay list entry [" << decayIndex << "]. "
+		              << "ignoring entry." << endl;
+		    continue;
+	    }
+	    if (_debug)
+		    cout << "    -> ";
+	    // loop over decay products
+      const unsigned int nmbDaughters = decayDaughters->getLength();
+      multiset<string>   daughters;
+      for (unsigned int daughterIndex = 0; daughterIndex < nmbDaughters; ++daughterIndex) {
+	      const string daughterName = (*decayDaughters)[daughterIndex];
+	      daughters.insert(daughterName);
+	      if (_debug)
+		      cout << daughterName << ((daughterIndex < nmbDaughters - 1) ? "  " : "");
+      }
+      if(_debug)
+	      cout << endl;
+      particleProp.addDecayMode(daughters);
+      ++countEntries;
+    }
+  }  // end loop over decay list entries
+
+  printSucc << "read " << countEntries << " particle decays into particle data table" << endl;
+  return true;
 }

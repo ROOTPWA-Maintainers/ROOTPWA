@@ -43,6 +43,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include "TObject.h"
 
@@ -90,7 +91,7 @@ namespace rpwa {
 
 		bool writeKeyFile(std::ostream&      out);          ///< writes keys to output stream
 		bool writeKeyFile(const std::string& keyFileName);  ///< writes keys to output file
-		
+
 		static bool writeKeyFile(const isobarDecayTopology& topo,
 		                         std::ostream&              out,
 		                         const bool                 writeProdVert = true);  ///< creates keys from decay topology and writes them to output stream
@@ -107,11 +108,16 @@ namespace rpwa {
 		 const bool                  newConvention = false,
 		 const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive function that generates unique wave name from decay topology
 
+		static std::string waveLaTeXFromTopology
+		(isobarDecayTopology         topo,
+		 const isobarDecayVertexPtr& currentVertex = isobarDecayVertexPtr());  ///< recursive function that generates unique wave name from decay topology
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
 	private:
+
 
 		bool parseKeyFileLocalCopy();  ///< parses _keyFileLocalCopy string
 
@@ -170,9 +176,10 @@ namespace rpwa {
 		std::string _keyFileLocalCopy;  ///< copy of keyfile contents; is written to .root file
 
 		static bool _debug;  ///< if set to true, debug messages are printed
+		static std::map<std::string, std::string> isobars; ///< LaTeX names of isobars
 
 
-		ClassDef(waveDescription,1)
+		ClassDef(waveDescription,2)
 
 	};
 

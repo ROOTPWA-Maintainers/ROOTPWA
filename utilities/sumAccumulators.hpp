@@ -42,13 +42,13 @@
 
 #include <vector>
 
-#include "boost/accumulators/framework/accumulator_base.hpp"
-#include "boost/accumulators/framework/parameters/sample.hpp"
-#include "boost/accumulators/framework/depends_on.hpp"
-#include "boost/accumulators/framework/extractor.hpp"
-#include "boost/accumulators/accumulators.hpp"
-#include "boost/accumulators/statistics/stats.hpp"
-#include "boost/accumulators/statistics/sum.hpp"
+#include <boost/accumulators/framework/accumulator_base.hpp>
+#include <boost/accumulators/framework/parameters/sample.hpp>
+#include <boost/accumulators/framework/depends_on.hpp>
+#include <boost/accumulators/framework/extractor.hpp>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/sum.hpp>
 
 
 namespace boost {

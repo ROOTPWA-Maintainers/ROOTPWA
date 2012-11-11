@@ -104,6 +104,11 @@ namespace rpwa {
 		fitResult(const TFitResult& result);
 #endif
 		virtual ~fitResult();
+		
+		// create a copy of the current object with slightly modified
+		// parameters according to the distribution described by the
+		// covariance matrix
+		fitResult* cloneVar();
 
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin

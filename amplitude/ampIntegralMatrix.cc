@@ -65,7 +65,7 @@ ClassImp(ampIntegralMatrix);
 
 bool ampIntegralMatrix::_debug = false;
 
-    
+
 ampIntegralMatrix::ampIntegralMatrix()
 	: TObject               (),
 	  _nmbWaves             (0),
@@ -315,7 +315,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 		if (_debug)
 			printDebug << "opening importance sampling weight file '" << weightFileName << "'" << endl;
 		weightFile.open(weightFileName.c_str());
-		if (not weightFile) { 
+		if (not weightFile) {
 			printWarn << "cannot open importance sampling weight file '" << weightFileName << "' "
 			          << "cannot calculate integral." << endl;
 			return false;
@@ -328,38 +328,38 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	accumulator_set<complex<double>, stats<tag::sum(compensated)> > ampProdAcc[_nmbWaves][_nmbWaves];
 	// process weight file and binary amplitude files
 	vector<complex<double> > amps[_nmbWaves];
-  progress_display         progressIndicator(_nmbEvents, cout, "");
-  bool                     success = true;
-  for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
-	  ++progressIndicator;
-	  
-	  // sum up importance sampling weight
-	  double w = 1;
-	  if (useWeight)
-		  if (not(weightFile >> w)) {
-			  success = false;
-			  printWarn << "error reading weight file. stopping integration "
-			            << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
-			  break;
-		  }
-	  const double weight = 1 / w; // we have to undo the weighting of the events!
-	  weightAcc(weight);
+	progress_display         progressIndicator(_nmbEvents, cout, "");
+	bool                     success = true;
+	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
+		++progressIndicator;
 
-	  // read amplitude values for this event from binary files
-	  bool ampBinEof = false;
-	  for (unsigned int waveIndex = 0; waveIndex < nmbBinWaves; ++waveIndex) {
-		  amps[waveIndex].resize(1);  // no subamps supported in .amp files
-		  binAmpFiles[waveIndex]->read((char*)&(amps[waveIndex][0]), sizeof(complex<double>));
-		  if ((ampBinEof = binAmpFiles[waveIndex]->eof())) {
-			  success = false;
-			  printWarn << "unexpected EOF while reading binary amplitude '"
-			            << _waveNames[waveIndex] << "'. stopping integration "
-			            << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
-			  break;
-		  }
-	  }
-	  if (ampBinEof)
-		  break;
+		// sum up importance sampling weight
+		double w = 1;
+		if (useWeight)
+			if (not(weightFile >> w)) {
+				success = false;
+				printWarn << "error reading weight file. stopping integration "
+				          << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
+				break;
+			}
+		const double weight = 1 / w; // we have to undo the weighting of the events!
+		weightAcc(weight);
+
+		// read amplitude values for this event from binary files
+		bool ampBinEof = false;
+		for (unsigned int waveIndex = 0; waveIndex < nmbBinWaves; ++waveIndex) {
+			amps[waveIndex].resize(1);  // no subamps supported in .amp files
+			binAmpFiles[waveIndex]->read((char*)&(amps[waveIndex][0]), sizeof(complex<double>));
+			if ((ampBinEof = binAmpFiles[waveIndex]->eof())) {
+				success = false;
+				printWarn << "unexpected EOF while reading binary amplitude '"
+				          << _waveNames[waveIndex] << "'. stopping integration "
+				          << "at event " << iEvent << " of total " << _nmbEvents << "." << endl;
+				break;
+			}
+		}
+		if (ampBinEof)
+			break;
 
 	  // read amplitude values for this event from root trees
 	  for (unsigned int waveIndex = nmbBinWaves; waveIndex < _nmbWaves; ++waveIndex) {
@@ -414,7 +414,7 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 
 	printSucc << "calculated integrals of " << _nmbWaves << " decay amplitude(s) "
 	          << "for " << _nmbEvents << " events" << endl;
-  // cleanup
+	// cleanup
 	for (unsigned int i = 0; i < binAmpFiles.size(); ++i)
 		if (binAmpFiles[i])
 			delete binAmpFiles[i];
@@ -430,7 +430,7 @@ ampIntegralMatrix::renormalize(const unsigned long nmbEventsRenorm)
 		printDebug << "renormalizing integrals from " << _nmbEvents << " "
 		           << "to " << nmbEventsRenorm << " events." << endl;
 	*this *= (double)nmbEventsRenorm / _nmbEvents;
-  _nmbEvents = nmbEventsRenorm;
+	_nmbEvents = nmbEventsRenorm;
 }
 
 
@@ -444,13 +444,13 @@ ampIntegralMatrix::writeAscii(ostream& out) const
 	out << _nmbWaves << endl
 	    << _nmbEvents << endl;
 	// write integral matrix
-  out << _nmbWaves << " " << _nmbWaves << endl;
-  for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI) {
-	  for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
-		  out << maxPrecisionDouble(_integrals[waveIndexI][waveIndexJ]) << "\t";
-	  out << endl;
-  }
-  // write wave name -> index map
+	out << _nmbWaves << " " << _nmbWaves << endl;
+	for (unsigned int waveIndexI = 0; waveIndexI < _nmbWaves; ++waveIndexI) {
+		for (unsigned int waveIndexJ = 0; waveIndexJ < _nmbWaves; ++waveIndexJ)
+			out << maxPrecisionDouble(_integrals[waveIndexI][waveIndexJ]) << "\t";
+		out << endl;
+	}
+	// write wave name -> index map
 	out << _waveNameToIndexMap.size() << endl;
 	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
 	     i != _waveNameToIndexMap.end(); ++i)
@@ -466,7 +466,7 @@ ampIntegralMatrix::readAscii(istream& in)
 		printWarn << "could not read number of waves and events" << endl;
 		return false;
 	}
-  // read matrix elements
+	// read matrix elements
 	unsigned int nmbRows, nmbCols;
 	if (not (in >> nmbRows >> nmbCols)) {
 		printWarn << "could not read number of rows and columns" << endl;
@@ -476,30 +476,30 @@ ampIntegralMatrix::readAscii(istream& in)
 	//_integrals.clear();
 	_integrals.resize(extents[nmbRows][nmbCols]);
 	for (unsigned int i = 0; i < nmbRows; ++i)
-    for (unsigned int j = 0; j < nmbCols; ++j) {
-	    if (not (in >> _integrals[i][j]) or in.eof()) {
-		    printErr << "could not read integral values. stream seems trunkated." << endl;
-        throw;
-	    }
-    }
-  // read wave name -> index map
-  unsigned int mapSize;
-  in >> mapSize;
-  while ((mapSize > 0) and in) {
-	  string       waveName;
-	  unsigned int waveIndex;
-	  if (not (in >> waveName >> waveIndex)) {
-		  printErr << "could not read wave name -> index map. stream seems trunkated." << endl;
-		  return false;
-	  }
-    _waveNameToIndexMap[waveName] = waveIndex;
-    --mapSize;
-  }
-  _waveNames.resize(_nmbWaves);
-  for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
+		for (unsigned int j = 0; j < nmbCols; ++j) {
+			if (not (in >> _integrals[i][j]) or in.eof()) {
+				printErr << "could not read integral values. stream seems trunkated." << endl;
+				throw;
+			}
+		}
+	// read wave name -> index map
+	unsigned int mapSize;
+	in >> mapSize;
+	while ((mapSize > 0) and in) {
+		string       waveName;
+		unsigned int waveIndex;
+		if (not (in >> waveName >> waveIndex)) {
+			printErr << "could not read wave name -> index map. stream seems trunkated." << endl;
+			return false;
+		}
+		_waveNameToIndexMap[waveName] = waveIndex;
+		--mapSize;
+	}
+	_waveNames.resize(_nmbWaves);
+	for (waveNameToIndexMapIterator i = _waveNameToIndexMap.begin();
 	     i != _waveNameToIndexMap.end(); ++i)
-	  _waveNames[i->second] = i->first;
-  return true;
+		_waveNames[i->second] = i->first;
+	return true;
 }
 
 
@@ -592,14 +592,14 @@ ampIntegralMatrix::openBinAmpFiles(vector<ifstream*>&    ampFiles,
 			printWarn << "decay amplitude file '" << ampFilePath << "' has zero size. "
 			          << "skipping file." << endl;
 			continue;
-    }
-    if (ampFileSize == 0)
-	    ampFileSize = fileSize;
-    else if (fileSize != ampFileSize) {
+		}
+		if (ampFileSize == 0)
+			ampFileSize = fileSize;
+		else if (fileSize != ampFileSize) {
 			printWarn << "decay amplitude file '" << ampFilePath << "' has different size "
 			          << "than previous file. skipping file." << endl;
 			continue;
-    }
+		}
 
 		// fill wave name into name-to-index map, if not already existent
 		const string waveName = fileNameFromPath(ampFilePath);
@@ -708,7 +708,7 @@ ampIntegralMatrix::openRootAmpFiles(vector<TTree*>&             ampTrees,
 		trees[i]->SetCacheSize(treeCacheSize);
 		trees[i]->AddBranchToCache(ampLeafName.c_str(), true);
 		trees[i]->StopCacheLearningPhase();
-	    
+
 		// check that all trees have the same number of entries
 		const unsigned long nmbEntries = numeric_cast<unsigned long>(trees[i]->GetEntriesFast());
 		if (_debug)
@@ -802,8 +802,8 @@ ampIntegralMatrix::readMultiArray()
 	assert(_intStorageShape.size() == _integrals.num_dimensions());
 	_integrals.resize(extents[_intStorageShape[0]][_intStorageShape[1]]);
 	complex<double>* integralData = _integrals.data();
-  for (unsigned int i = 0; i < _intStorageNmbElements; ++i)
-	 	integralData[i] = _intStorageData[i];
+	for (unsigned int i = 0; i < _intStorageNmbElements; ++i)
+		integralData[i] = _intStorageData[i];
 }
 
 

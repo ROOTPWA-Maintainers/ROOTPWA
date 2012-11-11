@@ -43,6 +43,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/assign.hpp>
 
 #include "TClass.h"
 
@@ -54,9 +55,10 @@
 #include "isobarCanonicalAmplitude.h"
 #include "waveDescription.h"
 
-  
+
 using namespace std;
 using namespace boost;
+using namespace boost::assign;
 using namespace libconfig;
 using namespace rpwa;
 
@@ -65,6 +67,42 @@ ClassImp(waveDescription);
 
 
 bool waveDescription::_debug = false;
+
+
+map<string,string> waveDescription::isobars = map_list_of
+	("pi+",         "\\pi^+")
+	("pi-",         "\\pi^-")
+  ("pi+-",        "\\pi^\\pm")
+  ("pi-+",        "\\pi^\\mp")
+  ("sigma0",      "\\sigma")
+  ("rho(770)0",   "\\rho^0(770)")
+  ("a1(1260)-",   "a_1^-(1260)")
+  ("a2(1320)-",   "a_2^-(1320)")
+  ("rho(1450)0",  "\\rho^0(1450)")
+  ("rho(1700)0",  "\\rho^0(1700)")
+  ("pi(1300)-",   "\\pi^-(1300)")
+  ("pi(1800)-",   "\\pi^-(1800)")
+  ("pi2(1670)-",  "\\pi^-_2(1670)")
+  ("f0(1370)0",   "f_0^0(1370)")
+  ("f0(1500)0",   "f_0^0(1500)")
+  ("f0(1700)0",   "f_0^0(1700)")
+  ("f1(1285)0",   "f_1^0(1285)")
+  ("f1(1420)0",   "f_1^0(1420)")
+  ("b1(1235)0",   "b_1^0(1235)")
+  ("b1(1800)0",   "b_1^0(1800)")
+  ("b0(1800)0",   "b_0^0(1800)")
+  ("b2(1800)0",   "b_2^0(1800)")
+  ("b1(1500)0",   "b_1^0(1500)")
+  ("f2(1270)0",   "f_2^0(1270)")
+  ("f2(1950)0",   "f_2^0(1950)")
+  ("f2(1565)0",   "f_2^0(1565)")
+  ("f2(2010)0",   "f_2^0(2010)")
+  ("eta(1440)0" , "\\eta^0(1420)")
+  ("eta2(1645)0", "\\eta_2^0(1645)")
+  ("eta1(1600)0", "\\eta_1^0(1600)")
+  ("pi1(1600)-",  "\\pi_1^-(1600)")
+  ("rho3(1690)0", "\\rho_3^0(1690)")
+  ("rho(1600)0",  "\\rho^0(1600)");
 
 
 waveDescription::waveDescription()
@@ -192,14 +230,14 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 			printWarn << "problems constructing X particle. cannot construct decay topology." << endl;
 			return false;
 		}
-  
+
 	// create production vertex
 	productionVertexPtr prodVert = productionVertexPtr();
 	if (not constructProductionVertex(rootKey, X, prodVert)) {
 		printWarn << "problems constructing production vertex. cannot construct decay topology." << endl;
 		return false;
 	}
-  
+
 	// find X decay group
 	const Setting* XDecayKey = findLibConfigGroup(*decayVertKey, "XDecay");
 	if (not XDecayKey) {
@@ -222,7 +260,7 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	//!!! user should correctly define quantum numbers
 	//topo->calcIsobarBaryonNmbs();
 	//topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
-  
+
 	printSucc << "constructed decay topology from key file" << endl;
 	return true;
 }
@@ -258,6 +296,7 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 	// default values
 	string formalism            = "helicity";
 	bool   boseSymmetrize       = true;
+	bool   isospinSymmetrize    = true;
 	bool   useReflectivityBasis = true;
 	// find amplitude group
 	const Setting&            rootKey      = _key->getRoot();
@@ -267,23 +306,28 @@ waveDescription::constructAmplitude(isobarAmplitudePtr&           amplitude,
 			printDebug << "setting amplitude formalism to '" << formalism << "'" << endl;
 		if (amplitudeKey->lookupValue("boseSymmetrize", boseSymmetrize) and _debug)
 			printDebug << "setting amplitude option 'boseSymmetrize' to "
-			           << ((boseSymmetrize) ? "true" : "false") << endl;
+			           << trueFalse(boseSymmetrize) << endl;
+		if (amplitudeKey->lookupValue("isospinSymmetrize", isospinSymmetrize) and _debug)
+			printDebug << "setting amplitude option 'isospinSymmetrize' to "
+			           << trueFalse(isospinSymmetrize) << endl;
 		if (amplitudeKey->lookupValue("useReflectivityBasis", useReflectivityBasis) and _debug)
 			printDebug << "setting amplitude option 'useReflectivityBasis' to "
-			           << ((useReflectivityBasis) ? "true" : "false") << endl;
+			           << trueFalse(useReflectivityBasis) << endl;
 	}
 	// construct amplitude
 	amplitude = mapAmplitudeType(formalism, topo);
 	if (_debug)
 		printDebug << "constructed amplitude '"<< amplitude->name() << "': "
-		           << ((boseSymmetrize      ) ? "en" : "dis") << "abled Bose symmetrization, "
-		           << ((useReflectivityBasis) ? "en" : "dis") << "abled reflectivity basis" << endl;
+		           << enDisabled(boseSymmetrize      ) << " Bose symmetrization, "
+		           << enDisabled(isospinSymmetrize   ) << " isospin symmetrization, "
+		           << enDisabled(useReflectivityBasis) << " reflectivity basis" << endl;
 	if (not amplitude) {
 		printWarn << "problems constructing decay amplitude." << endl;
 		return false;
 	}
-	amplitude->enableBoseSymmetrization(boseSymmetrize      );
-	amplitude->enableReflectivityBasis (useReflectivityBasis);
+	amplitude->enableBoseSymmetrization   (boseSymmetrize      );
+	amplitude->enableIsospinSymmetrization(isospinSymmetrize   );
+	amplitude->enableReflectivityBasis    (useReflectivityBasis);
 	return true;
 }
 
@@ -293,7 +337,7 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
                                       const bool                  newConvention,
                                       const isobarDecayVertexPtr& currentVertex)
 {
-	ostringstream fileName;
+	ostringstream waveName;
 	if (currentVertex == interactionVertexPtr()) {
 		if (not topo.checkTopology() or not topo.checkConsistency()) {
 			printWarn << "decay topology has issues. cannot construct wave name." << endl;
@@ -302,12 +346,12 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		// X quantum numbers
 		const particle& X = *(topo.XParticle());
 		if (newConvention)
-			fileName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
+			waveName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
 			         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
 			         << spinQn(X.spinProj()) << parityQn(X.reflectivity()) << "]"
 			         << waveNameFromTopology(topo, newConvention, topo.XIsobarDecayVertex());
 		else
-			fileName << spinQn(X.isospin()) << sign(X.G())
+			waveName << spinQn(X.isospin()) << sign(X.G())
 			         << spinQn(X.J()) << sign(X.P()) << sign(X.C())
 			         << spinQn(X.spinProj()) << sign(X.reflectivity())
 			         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
@@ -320,26 +364,26 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 		// recurse down decay chain
 		if (newConvention) {
 			// first daughter
-			fileName << "=[" << currentVertex->daughter1()->name();
+			waveName << "=[" << currentVertex->daughter1()->name();
 			if (not topo.isFsParticle(currentVertex->daughter1()))
-				fileName << waveNameFromTopology
+				waveName << waveNameFromTopology
 					(topo, newConvention,
 					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
 			// L, S
-			fileName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
+			waveName << "[" << spinQn(currentVertex->L()) << "," << spinQn(currentVertex->S()) << "]";
 			// second daughter
-			fileName << currentVertex->daughter2()->name();
+			waveName << currentVertex->daughter2()->name();
 			if (not topo.isFsParticle(currentVertex->daughter2()))
-				fileName << waveNameFromTopology
+				waveName << waveNameFromTopology
 					(topo, newConvention,
 					 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
-			fileName << "]";
+			waveName << "]";
 		} else {
-			fileName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
+			waveName << ((currentVertex->parent()->charge() != 0) ? currentVertex->parent()->name()
 			             : currentVertex->parent()->bareName());
 			isobarDecayTopology subGraph = topo.subDecay(topo.node(currentVertex));
 			if (not topo.isFsVertex(currentVertex) and subGraph.nmbFsParticles() > 2)
-				fileName << "="
+				waveName << "="
 				         << waveNameFromTopology(topo, newConvention, static_pointer_cast<isobarDecayVertex>
 				                                 (topo.toVertex(currentVertex->daughter1())))
 				         << "_" << spinQn(currentVertex->L()) << spinQn(currentVertex->S()) << "_"
@@ -347,15 +391,69 @@ waveDescription::waveNameFromTopology(isobarDecayTopology         topo,
 				                                 (topo.toVertex(currentVertex->daughter2())));
 		}
 	}
-	string keyFileName = fileName.str();
-	if (newConvention) {
-		replace_all(keyFileName, "(", "_");
-		replace_all(keyFileName, ")", "_");
-	} else {
-		replace_all(keyFileName, "(", "");
-		replace_all(keyFileName, ")", "");
+	{
+		string name = waveName.str();
+		if (newConvention) {
+			replace_all(name, "(", "_");
+			replace_all(name, ")", "_");
+		} else {
+			replace_all(name, "(", "");
+			replace_all(name, ")", "");
+		}
+		return name;
 	}
-	return keyFileName;
+}
+
+
+string
+waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
+                                       const isobarDecayVertexPtr& currentVertex)
+{
+	ostringstream waveLaTeX;
+	if (currentVertex == interactionVertexPtr()) {
+		if (not topo.checkTopology() or not topo.checkConsistency()) {
+			printWarn << "decay topology has issues. cannot construct wave LaTeX." << endl;
+			return "";
+		}
+		// X quantum numbers
+		const particle& X = *(topo.XParticle());
+		waveLaTeX << spinQn(X.isospin()) << "^{"<< parityQn(X.G()) << "}"
+		          << spinQn(X.J()) << "^{" << parityQn(X.P()) << parityQn(X.C()) << "}"
+		          << spinQn(X.spinProj()) << "^{" << parityQn(X.reflectivity()) << "}\\quad & "
+		          << waveLaTeXFromTopology(topo, topo.XIsobarDecayVertex());
+	}
+	else if(not (topo.isFsParticle(currentVertex->daughter1())
+	             and topo.isFsParticle(currentVertex->daughter1()))){
+	  // recurse down decay chain
+	  // do this only if not both daughters are fs partiles
+
+	  bool isXdecay= ( currentVertex ==  topo.XIsobarDecayVertex() );
+
+		// first daughter
+	  string dau1=isobars[currentVertex->daughter1()->name()];
+	  if(dau1.length()<2){
+	    dau1="{\\bf ";dau1+=currentVertex->daughter1()->name();dau1+="}";
+	  }
+	    if(!isXdecay)waveLaTeX << "\\rightarrow\\left\\{ ";
+	    waveLaTeX << dau1;
+		if (not topo.isFsParticle(currentVertex->daughter1()))
+			waveLaTeX << waveLaTeXFromTopology
+				(topo,
+				 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter1())));
+		// L, S
+		waveLaTeX << "\\ells{" << spinQn(currentVertex->L()) << "}{" << spinQn(currentVertex->S()) << "}";
+		// second daughter
+		string dau2=isobars[currentVertex->daughter2()->name()];
+		if(dau2.length()<2){
+		  dau2="{\\bf ";dau2+=currentVertex->daughter2()->name();dau2+="}";		}
+		waveLaTeX << dau2;
+		if (not topo.isFsParticle(currentVertex->daughter2()))
+			waveLaTeX << waveLaTeXFromTopology
+				(topo,
+				 static_pointer_cast<isobarDecayVertex>(topo.toVertex(currentVertex->daughter2())));
+		if(!isXdecay)waveLaTeX << "\\right\\} ";
+	}
+	return waveLaTeX.str();
 }
 
 
@@ -497,12 +595,12 @@ waveDescription::constructProductionVertex(const Setting&       rootKey,
 	}
 	if (_debug)
 		printDebug << "reading production vertex from '" << prodVertKey->getPath() << "':" << endl;
-	bool success = true;
+	//bool success = true;
 	// get vertex type
 	string vertType;
 	if (not prodVertKey->lookupValue("type", vertType)) {
 		printWarn << "cannot find 'type' entry in '" << prodVertKey->getPath() << "'" << endl;
-		success = false;
+		//success = false;
 	}
 	// create production vertex
 	prodVert = mapProductionVertexType(*prodVertKey, vertType, X);
@@ -588,7 +686,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 			} else
 				success = false;
 		}
-  
+
 	const Setting*      isobarKeys = findLibConfigList(parentKey, "isobars", false);
 	vector<particlePtr> isobarDaughters;
 	if (isobarKeys)
@@ -601,7 +699,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 			success &= constructDecayVertex((*isobarKeys)[i], isobarDaughters.back(),
 			                                decayVertices, fsParticles, fromTemplate);
 		}
-  
+
 	const unsigned int nmbDaughters = fsDaughters.size() + isobarDaughters.size();
 	if (nmbDaughters != 2) {
 		printWarn << "cannot construct isobar vertex, because number of daughters "
@@ -611,14 +709,14 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 	}
 	if (not success)
 		return false;
-  
+
 	// get isobar vertex parameters
 	int L = 0, S = 0;
 	if ((   not parentKey.lookupValue("L", L)
 	     or not parentKey.lookupValue("S", S)) and not fromTemplate)
 		printWarn << "Either L or S are not specified in '" << parentKey.getPath() << "'. "
 		          << "using zero." << endl;
-  
+
 	// get mass dependence
 	massDependencePtr massDep;
 	if (parentParticle->bareName() != "X") {
@@ -628,7 +726,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 			massDepKey->lookupValue("name", massDepType);
 		massDep = mapMassDependenceType(massDepType);
 	}
-  
+
 	// if there is 1 final state particle and 1 isobar put them in the
 	// same order as in the key file
 	vector<particlePtr> daughters(2, particlePtr());
@@ -644,7 +742,7 @@ waveDescription::constructDecayVertex(const Setting&                parentKey,
 		daughters = fsDaughters;
 	else if (isobarDaughters.size() == 2)
 		daughters = isobarDaughters;
-  
+
 	// construct isobar decay vertex
 	decayVertices.push_back(createIsobarDecayVertex(parentParticle, daughters[0],
 	                                                daughters[1], L, S, massDep));
@@ -783,7 +881,7 @@ waveDescription::setXDecayKeys(Setting&                   parentDecayKey,
 		else
 			isobars.push_back(part);
 	}
-	bool success = true;	
+	bool success = true;
 	if (isobars.size() > 0) {
 		Setting& isobarsKey = parentDecayKey.add("isobars", Setting::TypeList);
 		for (unsigned int i = 0; i < isobars.size(); ++i) {
@@ -858,9 +956,11 @@ waveDescription::setAmplitude(Setting&               amplitudeKey,
 		amplitudeKey.add("formalism", Setting::TypeString) = formalism;
 	}
 	if (not amplitude.boseSymmetrization())
-		amplitudeKey.add("boseSymmetrize", Setting::TypeBoolean) = amplitude.boseSymmetrization();
+		amplitudeKey.add("boseSymmetrize", Setting::TypeBoolean) = false;
+	if (not amplitude.isospinSymmetrization())
+		amplitudeKey.add("isospinSymmetrize", Setting::TypeBoolean) = false;
 	if (not amplitude.reflectivityBasis())
-		amplitudeKey.add("useReflectivityBasis", Setting::TypeBoolean) = amplitude.reflectivityBasis();
+		amplitudeKey.add("useReflectivityBasis", Setting::TypeBoolean) = false;
 	return true;
 }
 
@@ -922,7 +1022,7 @@ waveDescription::writeKeyFile(const Config& key,
 		return false;
 	}
 	fclose(pipeWriteEnd);
-	// read keys from pipe  
+	// read keys from pipe
 	char         buf;
 	unsigned int countChar = 0;
 	while (read(pipeFileDescriptors[0], &buf, 1) > 0) {

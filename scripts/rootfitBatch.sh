@@ -10,7 +10,7 @@ echo "FITDIR=$FITDIR"
 
 test -s $FITDIR/$OUTFILE && mv $FITDIR/$OUTFILE $FITDIR/$OUTFILE.previous
 
-for i in $1; 
+for i in $1/*; 
 do 
   export BIN=`echo $i | gawk -F"/" '{ print $(NF) }' `;
   echo "---- Massbin: $BIN";

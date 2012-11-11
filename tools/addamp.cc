@@ -116,6 +116,7 @@ int main(int argc, char** argv)
 
   // loop through all amplitudes in list
   unsigned int n=file1v.size();
+  cerr << n << " amplitudes in list" << endl;
   for(unsigned int i=0;i<n;++i){
 
     cout << endl;

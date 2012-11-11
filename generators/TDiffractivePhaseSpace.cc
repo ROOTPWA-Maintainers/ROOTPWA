@@ -34,6 +34,7 @@
 #include "TFile.h"
 
 #include "reportingUtils.hpp"
+#include "physUtils.hpp"
 #include "TDiffractivePhaseSpace.h"
 
 using namespace std;
@@ -399,7 +400,14 @@ TDiffractivePhaseSpace::event()
 
   const TLorentzVector targetLab(0, 0, 0, _targetMass);
   const TLorentzVector overallCm = _beamLab + targetLab;  // beam-target center-of-mass system
-  
+  // check
+  if(_xMassMax + _targetMass  > overallCm.M()){
+    printErr << "Max Mass out of kinematic range." <<  endl
+	     << "Limit = " << overallCm.M()  - _targetMass << "GeV/c2" << endl
+	     << " ABORTING " << flush<< endl;
+    throw;
+  }
+
   bool              done     = false;
   while (!done) {
     
@@ -412,7 +420,7 @@ TDiffractivePhaseSpace::event()
     }
 
     double tPrime(_tprimeMin);
-    if ( _tprimeMax > _tprimeMin ) {
+    if ( _tprimeMax < _tprimeMin ) {
       // calculate the slope parameter depending on the invariant mass
       const double calc_invSlopePar = Get_inv_SlopePar(xMass);
       tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
@@ -495,17 +503,25 @@ TDiffractivePhaseSpace::event()
     }
 
     // apply t cut
-    if (t <= _tMin &&
-        _tprime >= _tprimeMin )
+    if (t > _tMin || _tprime > _tprimeMin || _tprime < _tprimeMax)
       continue;
     
     // generate n-body phase space for X system
     ++attempts;
     {
       _phaseSpace.pickMasses(xMass);
+
       // correct weight for phase space splitting
-      const double maxPsWeight = _phaseSpace.maxWeight()  * _xMassMax;
-      const double psWeight    = _phaseSpace.calcWeight() * xMass;
+      // and for 2-body phase space beam-target
+      // (1 / 4pi) * q(sqrt(s), m_x, m_recoil) / sqrt(s)
+      const double ps2bodyWMax = breakupMomentum(sqrtS,_xMassMax,_targetMass)/sqrtS;
+      const double ps2bodyW = breakupMomentum(sqrtS,xMass,_targetMass)/sqrtS;
+
+      const double maxPsWeight = _phaseSpace.maxWeight()  * _xMassMax * ps2bodyWMax;
+      const double psWeight    = _phaseSpace.calcWeight() * xMass* ps2bodyW;
+      
+
+
       if ((psWeight / maxPsWeight) < _phaseSpace.random())
     	continue;
       _phaseSpace.pickAngles();

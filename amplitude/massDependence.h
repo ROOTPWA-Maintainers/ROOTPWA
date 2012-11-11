@@ -44,8 +44,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/triangular.hpp>
-#include <boost/numeric/ublas/lu.hpp>
 
 
 namespace ublas = boost::numeric::ublas;
@@ -62,7 +60,7 @@ namespace rpwa {
 	class massDependence {
 
 	public:
-  
+
 		massDependence()          { }
 		virtual ~massDependence() { }
 
@@ -71,17 +69,23 @@ namespace rpwa {
 		virtual std::complex<double> operator ()(const isobarDecayVertex& v) { return amp(v); }
 
 		virtual std::string name() const { return "massDependence"; }  ///< returns label used in graph visualization, reporting, and key file
-    
+
+		bool operator ==(const massDependence& rhsMassDep) const { return this->isEqualTo(rhsMassDep); }
+		bool operator !=(const massDependence& rhsMassDep) const { return not (*this == rhsMassDep);   }
+
 		virtual std::ostream& print(std::ostream& out) const;
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
+
 
 	protected:
-    
+
+		virtual bool isEqualTo(const massDependence& massDep) const
+		{ return typeid(massDep) == typeid(*this); }  ///< returns whether massDep is of same type as this
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
 
 
@@ -102,15 +106,13 @@ namespace rpwa {
 	class flatMassDependence : public massDependence {
 
 	public:
-  
+
 		flatMassDependence() : massDependence() { }
 		virtual ~flatMassDependence()           { }
 
 		virtual std::complex<double> amp(const isobarDecayVertex&);
 
 		virtual std::string name() const { return "flatMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
-    
-		virtual std::ostream& print(std::ostream& out) const;
 
 	};
 
@@ -139,8 +141,6 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
-    
-		virtual std::ostream& print(std::ostream& out) const;
 
 	};
 
@@ -172,8 +172,6 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonM"; }  ///< returns label used in graph visualization, reporting, and key file
-    
-		virtual std::ostream& print(std::ostream& out) const;
 
 	protected:
 
@@ -188,7 +186,7 @@ namespace rpwa {
 		double _kaonChargedMass;
 		double _kaonNeutralMass;
 		double _kaonMeanMass;
-    
+
 	};
 
 
@@ -218,8 +216,6 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonVes"; }  ///< returns label used in graph visualization, reporting, and key file
-    
-		virtual std::ostream& print(std::ostream& out) const;
 
 	};
 
@@ -242,7 +238,7 @@ namespace rpwa {
 	/// from the original fortran code:
 	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
 	/// 04-Mar-2003 See eps_k1.for for description.
-	/// here matrix M=K^{-1} is parametrized with one pole.
+	/// here matrix M = K^{-1} is parametrized with one pole.
 	/// misprint in the article (other than in K1--K3 solutions)
 	/// was corrected.
 	///
@@ -258,8 +254,6 @@ namespace rpwa {
 		virtual ~piPiSWaveAuMorganPenningtonKachaev() { }
 
 		virtual std::string name() const { return "piPiSWaveAuMorganPenningtonKachaev"; }  ///< returns label used in graph visualization, reporting, and key file
-    
-		virtual std::ostream& print(std::ostream& out) const;
 
 	};
 
@@ -277,36 +271,31 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
-	// http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
-	// matrix inversion routine using lu_factorize and lu_substitute
-	template<typename T>
-	bool
-	invertMatrix(const ublas::matrix<T>& A,
-	             ublas::matrix<T>&       inverseA)
+	/// combined amplitude for rho(1450)/rho(1700)
+	/// see http://dx.doi.org/10.1007/BF01552547, sec. 4
+	class rhoPrimeMassDep : public massDependence {
+
+	public:
+
+		rhoPrimeMassDep() : massDependence() { }
+		virtual ~rhoPrimeMassDep()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "rhoPrimeMassDep"; }  ///< returns label used in graph visualization, reporting, and key file
+
+	};
+
+
+	typedef boost::shared_ptr<rhoPrimeMassDep> rhoPrimeMassDepPtr;
+
+
+	inline
+	rhoPrimeMassDepPtr
+	createRhoPrimeMassDep()
 	{
-		// create working copy of input
-		ublas::matrix<T> M(A);
-		// create permutation matrix for LU-factorization
-		ublas::permutation_matrix<std::size_t> pM(M.size1());
-		// perform LU-factorization
-		if (ublas::lu_factorize(M, pM) != 0)
-			return false;
-		// create identity matrix of "inverse"
-		inverseA.assign(ublas::identity_matrix<T>(M.size1()));
-		// backsubstitute to get the inverse
-		ublas::lu_substitute(M, pM, inverseA);
-		return true;
-	}
-
-
-	template<typename T>
-	ublas::matrix<T>
-	invertMatrix(const ublas::matrix<T>& A,
-	             bool&                   isSingular)
-	{ 
-		ublas::matrix<T> inverseA(A.size1(), A.size2());
-		isSingular = !invert(A, inverseA);
-		return inverseA;
+		rhoPrimeMassDepPtr massDep(new rhoPrimeMassDep());
+		return massDep;
 	}
 
 

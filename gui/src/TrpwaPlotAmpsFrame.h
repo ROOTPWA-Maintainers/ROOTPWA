@@ -211,6 +211,7 @@ private:
 	double masscuthigh; // current valid high range cut of plotted waves
 
 	TGComboBox* box_available_fits; // box with available fits, item index is a pointer to the file
+	vector<TTree*> _available_fit_ids;
 	TGComboBox* box_selected_fits;  // box with selected  fits, item index is a pointer to the file
 	TGComboBox* box_available_waves;        // box with available waves to select, item is a pointer to the wave
 	TGComboBox* box_available_anchor_waves; // box with available waves to select, item is a pointer to the wave

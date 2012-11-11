@@ -1,0 +1,107 @@
+//-------------------------------------------------------------------------
+// File and Version Information:
+// $Rev::                             $: revision of last commit
+// $Author::                          $: author of last commit
+// $Date::                            $: date of last commit
+//
+// Description:
+//      allowed decay modes for isobars in the pi+pi-pi+pi- system
+//
+//
+// Author List:
+//      Boris Grube          TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
+
+
+particleDecayList = (
+
+// -----------------------------------------------------------------
+// two-pion decays
+	{ name = "sigma0";
+		decays = (
+			{products = ["pi-", "pi+"];}
+		);
+	},
+	{ name = "rho(770)0";
+		decays = (
+			{products = ["pi-", "pi+"];}
+		);
+	},
+	{ name = "f0(980)0";
+		decays = (
+			{products = ["pi-", "pi+"];}
+		);
+	},
+	{ name = "f2(1270)0";
+		decays = (
+			{products = ["pi+", "pi-"];}
+		);
+	},
+
+
+// -----------------------------------------------------------------
+// three-pion decays
+	{ name = "a1(1260)-";
+		decays = (
+			{products = ["rho(770)0", "pi-"];},
+			{products = ["sigma0",    "pi-"];}
+		);
+	},
+	{ name = "a1(1260)+";
+		decays = (
+			{products = ["rho(770)0", "pi+"];},
+			{products = ["sigma0",    "pi+"];}
+		);
+	},
+	{ name = "pi(1300)-";
+		decays = (
+			{products = ["rho(770)0", "pi-"];},
+			{products = ["sigma0",    "pi-"];}
+			);
+	},
+	{ name = "pi(1300)+";
+		decays = (
+			{products = ["rho(770)0", "pi+"];},
+			{products = ["sigma0",    "pi+"];}
+		);
+	},
+	{ name = "a2(1320)-";
+		decays = (
+			{products = ["rho(770)0", "pi-"];}
+		);
+	},
+	{ name = "a2(1320)+";
+		decays = (
+			{products = ["rho(770)0", "pi+"];}
+		);
+	},
+	{name = "pi2(1670)-";
+		decays = (
+			{products = ["f2(1270)0", "pi-"];},
+			{products = ["rho(770)0", "pi-"];},
+			{products = ["sigma0",    "pi-"];}
+		);
+	},
+	{ name = "pi2(1670)+";
+		decays = (
+			{products = ["f2(1270)0", "pi+"];},
+			{products = ["rho(770)0", "pi+"];},
+			{products = ["sigma0",    "pi+"];}
+		);
+	},
+	{ name = "pi(1800)-";
+		decays = (
+			{products = ["f0(980)0",  "pi-"];},
+			{products = ["sigma0",    "pi-"];}
+		);
+	},
+	{ name = "pi(1800)+";
+		decays = (
+			{products = ["f0(980)0",  "pi+"];},
+			{products = ["sigma0",    "pi+"];}
+		);
+	}
+
+);

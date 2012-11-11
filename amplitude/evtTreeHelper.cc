@@ -41,9 +41,12 @@
 #include <string>
 #include <cassert>
 #include <algorithm>
+#include <map>
 
 #include <boost/tokenizer.hpp>
 #include <boost/progress.hpp>
+#include <boost/bimap.hpp>
+#include <boost/assign/list_inserter.hpp>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -53,7 +56,6 @@
 #include "TObjString.h"
 #include "TVector3.h"
 
-#include "pputil.h"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
 #include "particleDataTable.h"
@@ -64,21 +66,70 @@
 
 using namespace std;
 using namespace boost;
+using namespace boost::bimaps;
+using namespace boost::assign;
 
 
 namespace rpwa {
 
 
+	namespace {
+
+		struct  partName { };
+		struct  geantId  { };
+
+		typedef bimap<tagged<string, partName>, tagged<size_t, geantId> > nameGeantIdMap;
+		typedef nameGeantIdMap::map_by<partName>::const_iterator partNameIterator;
+		typedef nameGeantIdMap::map_by<geantId >::const_iterator geantIdIterator;
+
+		nameGeantIdMap initNameGeantIdTranslator()
+		{
+			nameGeantIdMap translator;
+			insert(translator)
+				(nameGeantIdMap::value_type("gamma",       1))
+				(nameGeantIdMap::value_type("e+",          2))
+				(nameGeantIdMap::value_type("e-",          3))
+				(nameGeantIdMap::value_type("mu+",         5))
+				(nameGeantIdMap::value_type("mu-",         6))
+				(nameGeantIdMap::value_type("pi0",         7))
+				(nameGeantIdMap::value_type("pi+",         8))
+				(nameGeantIdMap::value_type("pi-",         9))
+				(nameGeantIdMap::value_type("K_L",        10))
+				(nameGeantIdMap::value_type("K+",         11))
+				(nameGeantIdMap::value_type("K-",         12))
+				(nameGeantIdMap::value_type("n",          13))
+				(nameGeantIdMap::value_type("p+",         14))
+				(nameGeantIdMap::value_type("pbar-",      15))
+				(nameGeantIdMap::value_type("K_S",        16))
+				(nameGeantIdMap::value_type("eta",        17))
+				(nameGeantIdMap::value_type("Lambda",     18))
+				(nameGeantIdMap::value_type("nbar",       25))
+				(nameGeantIdMap::value_type("Lambdabar",  26))
+				(nameGeantIdMap::value_type("rho(770)0",  57))
+				(nameGeantIdMap::value_type("rho(770)+",  58))
+				(nameGeantIdMap::value_type("rho(770)-",  59))
+				(nameGeantIdMap::value_type("omega(782)", 60))
+				(nameGeantIdMap::value_type("eta'(982)",  61))
+				(nameGeantIdMap::value_type("phi(1020)",  62));
+			return translator;
+		}
+		nameGeantIdMap nameGeantIdTranslator(initNameGeantIdTranslator());
+
+	}
+
+
 	string
-	particleNameFromGeantId(const int id,
-	                        const int charge)
+	particleNameFromGeantId(const int id)
 	{
-		assert((charge == -1) or (charge == 0) or (charge == +1));
-		string name = id2name((Geant_ID)id);
-		name = particleProperties::stripChargeFromName(name);
-		stringstream n;
-		n << name << sign(charge);
-		return n.str();
+		geantIdIterator i = nameGeantIdTranslator.by<geantId>().find(id);
+		if (i == nameGeantIdTranslator.by<geantId>().end()) {
+			printErr << id << " is unknown GEANT particle ID. returning particle name 'unknown'." << endl;
+			return "unknown";
+    }
+		// make sure charge is correctly put into particle name
+		int charge;
+		const string bareName = particleProperties::chargeFromName(i->get<partName>(), charge);
+		return particleProperties::nameWithCharge(bareName, charge);
 	}
 
 
@@ -87,12 +138,42 @@ namespace rpwa {
 	                            int&          id,
 	                            int&          charge)
 	{
-		particleProperties::chargeFromName(name, charge);
-		id = name2id(name, charge);
-		if (id == g_Unknown)
-			id = name2id(particleProperties::stripChargeFromName(name), charge);
-		if (id == g_Unknown)
-			printWarn << "unknown particle '" << name << "'" << endl;
+		id = 0;
+		const string bareName = particleProperties::chargeFromName(name, charge);
+		partNameIterator i = nameGeantIdTranslator.by<partName>().find(name);
+		if (i == nameGeantIdTranslator.by<partName>().end())
+			// try again with charge stripped from name
+			i = nameGeantIdTranslator.by<partName>().find(bareName);
+		if (i == nameGeantIdTranslator.by<partName>().end()) {
+			printErr << "particle '" << name << "' is unknown. returning GEANT particle ID 0." << endl;
+			return;
+		}
+		id = i->get<geantId>();
+	}
+
+
+	bool
+	checkParticleCharge(const size_t  lineNmb,
+	                    const int     id,
+	                    const string& name,
+	                    const int     chargeToCheck)
+	{
+		if (name == "unknown") {
+			printWarn << "error reading data line " << lineNmb << ": unknown particle" << endl;
+			return false;
+		} else {
+			// check charge
+			int charge;
+			particleProperties::chargeFromName(name, charge);
+			if (chargeToCheck != charge) {
+				printWarn << "error reading data line " << lineNmb << ": "
+				          << "GEANT particle ID of " << id << " corresponds to particle "
+				          << "'" << name << "'. this inconsistent with the charge of "
+				          << "'" << chargeToCheck << "' in data file.";
+				return false;
+			}
+		}
+		return true;
 	}
 
 
@@ -250,7 +331,7 @@ namespace rpwa {
 				printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "
 				          << "skipping." << endl;
 			}
-		
+
 			// set particle names
 			if (prodKinPartNames) {
 				// check consistency
@@ -384,7 +465,7 @@ namespace rpwa {
 			assert(nmbParticles > 0);
 			if (debug)
 				printDebug << "# of particles = " << nmbParticles << endl;
-    
+
 			// read production kinematics data (beam + fixed target)
 			prodNames.clear();
 			prodKinMomenta->Clear();
@@ -394,7 +475,10 @@ namespace rpwa {
 				int          id = 0, charge = 0;
 				double       momX = 0, momY = 0, momZ = 0, E = 0;
 				if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-					prodNames.push_back(particleNameFromGeantId(id , charge));
+					const string partName = particleNameFromGeantId(id);
+					prodNames.push_back(partName);
+					if (not checkParticleCharge(countLines, id, partName, charge))
+						success = false;
 					new((*prodKinMomenta)[0]) TVector3(momX, momY, momZ);
 				} else {
 					printWarn << "event " << countEvents + 1 << ": error reading beam data "
@@ -425,7 +509,10 @@ namespace rpwa {
 					int          id, charge;
 					double       momX, momY, momZ, E;
 					if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-						decayNames[i] = particleNameFromGeantId(id , charge);
+						const string partName = particleNameFromGeantId(id);
+						decayNames[i] = partName;
+						if (not checkParticleCharge(countLines, id, partName, charge))
+							success = false;
 						new((*decayKinMomenta)[i]) TVector3(momX, momY, momZ);
 					} else {
 						printWarn << "event " << countEvents + 1 << ": error reading decay kinematics "
@@ -545,7 +632,7 @@ namespace rpwa {
 		// connect leaf variables to tree branches
 		inTree.SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta );
 		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta);
-			 
+
 		// loop over events
 		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
 		                                       : nmbEventsTree);
@@ -621,7 +708,7 @@ namespace rpwa {
 					     << "charge = " << charge << "; " << *mom << endl;
 				}
 			}
-    
+
 			if (debug)
 				cout << endl;
 		}
@@ -648,6 +735,8 @@ namespace rpwa {
 			printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
 			return false;
 		}
+		// initialize amplitude
+		amplitude->init();
 		const isobarDecayTopologyPtr& decayTopo = amplitude->decayTopology();
 
 		// create branch pointers and leaf variables
@@ -655,7 +744,7 @@ namespace rpwa {
 		TBranch*      decayKinMomentaBr = 0;
 		TClonesArray* prodKinMomenta    = 0;
 		TClonesArray* decayKinMomenta   = 0;
-	
+
 		// connect leaf variables to tree branches
 		tree.SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
 		tree.SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
@@ -680,7 +769,7 @@ namespace rpwa {
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
 				++(*progressIndicator);
-      
+
 			if (tree.LoadTree(eventIndex) < 0)
 				break;
 			// read only required branches

@@ -25,7 +25,7 @@
 #// $Date:: 2011-11-11 19:55:55 +0100 #$: date of last commit
 #//
 #// Description:
-#//      build file for amplitude library 
+#//      build file for amplitude library tests
 #//
 #//
 #// Author List:
@@ -56,4 +56,15 @@ make_executable(testWaveSet          testWaveSet.cc          "${AMPLITUDE_LIBS}"
 make_executable(testWaveSetGenerator testWaveSetGenerator.cc "${AMPLITUDE_LIBS}")
 make_executable(testAmplitude        testAmplitude.cc        "${AMPLITUDE_LIBS}")
 make_executable(testAmplitudeTree    testAmplitudeTree.cc    "${AMPLITUDE_LIBS}")
+make_executable(testIsospinSym       testIsospinSym.cc       "${AMPLITUDE_LIBS}")
 make_executable(testIntegral         testIntegral.cc         "${AMPLITUDE_LIBS}")
+if(USE_PWA2000)
+	if(Boost_TIMER_FOUND)
+		make_executable(testMassDependence testMassDependence.cc
+			"${AMPLITUDE_LIBS};${ROOTPWAGEN_LIBS};${Boost_TIMER_LIBRARY};${Boost_SYSTEM_LIBRARY}")
+	else()
+		message(STATUS "Cannot find Boost::timer shared library. Skipping build of testMassDependence.")
+	endif()
+else()
+	message(STATUS "PWA2000 disabled. Skipping build of testMassDependence.")
+endif()

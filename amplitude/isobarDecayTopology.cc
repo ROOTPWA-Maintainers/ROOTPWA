@@ -35,12 +35,12 @@
 //
 //-------------------------------------------------------------------------
 
-
 #include "diffractiveDissVertex.h"
 #include "isobarDecayTopology.h"
 #include "particleDataTable.h"
+#include "spinUtils.hpp"
 
-	
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -56,19 +56,21 @@ isobarDecayTopology::isobarDecayTopology()
 
 isobarDecayTopology::isobarDecayTopology(const productionVertexPtr&          productionVertex,
                                          const vector<isobarDecayVertexPtr>& isobarDecayVertices,
-                                         const vector<particlePtr>&          fsParticles)
+                                         const vector<particlePtr>&          fsParticles,
+                                         const bool                          performTopologyCheck)
 	: decayTopology()
 {
-	constructDecay(productionVertex, isobarDecayVertices, fsParticles);
+	constructDecay(productionVertex, isobarDecayVertices, fsParticles, performTopologyCheck);
 }
 
 
 isobarDecayTopology::isobarDecayTopology(const productionVertexPtr&          productionVertex,
                                          const vector<interactionVertexPtr>& isobarDecayVertices,
-                                         const vector<particlePtr>&          fsParticles)
+                                         const vector<particlePtr>&          fsParticles,
+                                         const bool                          performTopologyCheck)
 	: decayTopology()
 {
-	constructDecay(productionVertex, isobarDecayVertices, fsParticles);
+	constructDecay(productionVertex, isobarDecayVertices, fsParticles, performTopologyCheck);
 }
 
 
@@ -118,7 +120,7 @@ isobarDecayTopology::doClone(const bool cloneFsParticles,
 {
 	if (_debug)
 		printDebug << "cloning isobar decay topology '" << name() << "'; "
-		           << ((cloneFsParticles   ) ? "in" : "ex") << "cluding final state particles, "
+		           << ((cloneFsParticles   ) ? "in" : "ex") << "cluding final-state particles, "
 		           << ((cloneProdKinematics) ? "in" : "ex") << "cluding production kinematics particles"
 		           << endl;
 	decayTopology*       topoClone       = decayTopology::doClone(cloneFsParticles, cloneProdKinematics);
@@ -139,20 +141,21 @@ isobarDecayTopology::clear()
 isobarDecayTopology&
 isobarDecayTopology::constructDecay(const productionVertexPtr&          productionVertex,
                                     const vector<isobarDecayVertexPtr>& isobarDecayVertices,
-                                    const vector<particlePtr>&          fsParticles)
+                                    const vector<particlePtr>&          fsParticles,
+                                    const bool                          performTopologyCheck)
 {
 	const unsigned int nmbVert = isobarDecayVertices.size();
 	if (_debug)
 		printDebug << "constructing isobar decay topology with "
-		           << fsParticles.size() << " final state particles and "
+		           << fsParticles.size() << " final-state particles and "
 		           << nmbVert            << " isobar decay vertices" << endl;
 	vector<interactionVertexPtr> intVertices(nmbVert);
 	for (unsigned int i = 0; i < nmbVert; ++i)
 		intVertices[i] = isobarDecayVertices[i];
-	decayTopology::constructDecay(productionVertex, intVertices, fsParticles);
+	decayTopology::constructDecay(productionVertex, intVertices, fsParticles, performTopologyCheck);
 	// copy sorted vertices
 	buildIsobarVertexArray();
-	if (nmbDecayVertices() != nmbVert) {
+	if (performTopologyCheck and (nmbDecayVertices() != nmbVert)) {
 		printErr << "number of interaction vertices  = " << nmbDecayVertices()
 		         << " does not match number of vertices given in parameter array = " << nmbVert
 		         << ". aborting." << endl;
@@ -165,7 +168,8 @@ isobarDecayTopology::constructDecay(const productionVertexPtr&          producti
 isobarDecayTopology&
 isobarDecayTopology::constructDecay(const productionVertexPtr&          productionVertex,
                                     const vector<interactionVertexPtr>& isobarDecayVertices,
-                                    const vector<particlePtr>&          fsParticles)
+                                    const vector<particlePtr>&          fsParticles,
+                                    const bool                          performTopologyCheck)
 {
 	const unsigned int nmbVert = isobarDecayVertices.size();
 	vector<isobarDecayVertexPtr> decayVertices(nmbVert);
@@ -176,7 +180,7 @@ isobarDecayTopology::constructDecay(const productionVertexPtr&          producti
 			throw;
 		}
 	}
-	return constructDecay(productionVertex, decayVertices, fsParticles);
+	return constructDecay(productionVertex, decayVertices, fsParticles, performTopologyCheck);
 }
 
 
@@ -217,7 +221,7 @@ isobarDecayTopology::checkTopology() const
 }
 
 
-bool 
+bool
 isobarDecayTopology::checkConsistency() const
 {
 	bool allVertConsistent = true;
@@ -247,7 +251,7 @@ isobarDecayTopology::checkConsistency() const
 const TLorentzVector&
 isobarDecayTopology::calcIsobarLzVec()
 {
-	// loop over isobar decay vertices and propagate Lorentz-vectors from final state particles up to X-system
+	// loop over isobar decay vertices and propagate Lorentz-vectors from final-state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		if (_debug)
 			printDebug << "calculating Lorentz-vector of parent isobar '"
@@ -260,29 +264,33 @@ isobarDecayTopology::calcIsobarLzVec()
 
 
 void
-isobarDecayTopology::calcIsobarCharges()
+isobarDecayTopology::calcIsobarCharges(const bool warnIfNotExistent)
 {
-	// loop over isobar decay vertices and propagate charges from final state particles up to X-system
+	// loop over isobar decay vertices and propagate charges from final-state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		const particlePtr& isobar = _isobarVertices[i]->parent();
-		if (_debug)
+		if (_debug && warnIfNotExistent)
 			printDebug << "calculating charge of parent isobar '"
 			           << isobar->name() << "' "
 			           << "of node[" << node(_isobarVertices[i]) << "]" << endl;
 		const int isobarCharge = isobar->charge();
 		if (isobarCharge != _isobarVertices[i]->calcParentCharge())
 			if (isobar != XParticle()) {
-				printWarn << "fixed charge of isobar '" << isobar->name() << "' "
-				          << "from " << isobarCharge << " to " << isobar->charge() << ". "
-				          << "please fix wave definition." << endl;
-				isobar->fillFromDataTable(isobar->name());
+				if(warnIfNotExistent) {
+					printWarn << "fixed charge of isobar '" << isobar->name() << "' "
+					          << "from " << isobarCharge << " to " << isobar->charge() << ". "
+					          << "please fix wave definition." << endl;
+				}
+				isobar->fillFromDataTable(isobar->name(), warnIfNotExistent);
 			}
 	}
 	// correct C-parity of X, if necessary
 	if ((abs(XParticle()->charge()) > 0) and (XParticle()->C() != 0)) {
-		printWarn << "X is charged, but has C-parity = " << XParticle()->C()
-		          << ". setting C-parity to zero. please fix wave definition." << endl;
-		XParticle()->setC(0);
+		if(warnIfNotExistent) {
+			printWarn << "X is charged, but has C-parity = " << XParticle()->C()
+			          << ". setting C-parity to zero. please fix wave definition." << endl;
+			XParticle()->setC(0);
+		}
 	}
 	// update graph name
 	name() = "\"" + XParticle()->qnSummary() + "\"";
@@ -292,7 +300,7 @@ isobarDecayTopology::calcIsobarCharges()
 void
 isobarDecayTopology::calcIsobarBaryonNmbs()
 {
-	// loop over isobar decay vertices and propagate baryon numbers from final state particles up to X-system
+	// loop over isobar decay vertices and propagate baryon numbers from final-state particles up to X-system
 	for (int i = nmbDecayVertices() - 1; i >= 0; --i) {
 		if (_debug)
 			printDebug << "calculating baryon number of parent isobar '"
@@ -401,7 +409,7 @@ isobarDecayTopology::buildIsobarVertexArray()
 		}
 	}
 	if (not success) {
-		printErr << "incompatible topology to copy from. some interaction vertices are "
+		printErr << "incompatible topology. some interaction vertices are "
 		         << "not of type isobarDecayVertex. aborting." << endl;
 		throw;
 	}
@@ -447,8 +455,237 @@ isobarDecayTopology::joinDaughterDecays(const isobarDecayVertexPtr& parentVertex
                                         const isobarDecayTopology&  daughter1Decay,
                                         const isobarDecayTopology&  daughter2Decay)  ///< joins daughter decay graphs and connects them to a common parent vertex
 {
-	std::vector<isobarDecayTopology> daughterDecays(2);
+	vector<isobarDecayTopology> daughterDecays(2);
 	daughterDecays[0] = daughter1Decay;
 	daughterDecays[1] = daughter2Decay;
 	return joinDaughterDecays(parentVertex, daughterDecays);
+}
+
+
+double
+isobarDecayTopology::getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex) const
+{
+	if (not vertex)
+		vertex = static_pointer_cast<isobarDecayVertex>(XDecayVertex());
+
+	const particlePtr daughter1 = vertex->daughter1();
+	const particlePtr daughter2 = vertex->daughter2();
+	const particlePtr parent    = vertex->parent   ();
+
+	const double clebsch = clebschGordanCoeff<double>(daughter1->isospin(), daughter1->isospinProj(),
+	                                                  daughter2->isospin(), daughter2->isospinProj(),
+	                                                  parent->isospin   (), parent->isospinProj   ());
+	double clebschDaughter1 = 1.;
+	double clebschDaughter2 = 1.;
+	if (not isFsParticle(daughter1))
+		clebschDaughter1
+			= getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter1)));
+	if (not isFsParticle(daughter2))
+		clebschDaughter2
+			= getIsospinClebschGordanProduct(static_pointer_cast<isobarDecayVertex>(toVertex(daughter2)));
+	return clebsch * clebschDaughter1 * clebschDaughter2;
+}
+
+
+vector<symTermMap>
+isobarDecayTopology::getIsospinSymmetrization()
+{
+	const std::vector<particlePtr> fsParts = fsParticles();
+
+	// Get a vector of groups of particles which have to be permutated.
+	//
+	// The group is defined as all particles with the same J, P and I. A group
+	// consists of a vector where the indices of all particles belonging to the
+	// group are saved.
+	std::vector< std::vector<unsigned int> > groups;
+	for(unsigned int i = 0; i < fsParts.size(); ++i) {
+		const particlePtr& particle = fsParts.at(i);
+		bool inserted = false;
+		for(unsigned int j = 0; j < groups.size(); ++j) {
+			const particlePtr& compPart = fsParts.at(groups.at(j).at(0));
+			if(particle->isospin() == compPart->isospin() &&
+			   particle->J() == compPart->J() &&
+			   particle->P() == compPart->P())
+			{
+				groups.at(j).push_back(i);
+				inserted = true;
+			}
+		}
+		if(!inserted) {
+			groups.push_back(std::vector<unsigned int>(1,i));
+		}
+	}
+
+	if(_debug) {
+		printDebug<<"Doing stuff"<<std::endl;
+		for(unsigned int i = 0; i < groups.size(); ++i) {
+			printDebug<<"Group "<<i<<std::endl;
+			for(unsigned int j = 0; j < groups.at(i).size(); ++j) {
+				printDebug<<j<<": "<<groups.at(i).at(j)<<" ("<<fsParts.at(groups.at(i).at(j))->name()<<")"<<std::endl;
+			}
+		}
+	}
+
+	// Saving all the isospins z-projections.
+	//
+	// Needed to reset everything as it was at the end.
+	std::vector<int> isospinProjs;
+	for(unsigned int j = 0; j < fsParts.size(); ++j) {
+		isospinProjs.push_back(fsParts.at(j)->isospinProj());
+	}
+
+	// A vector of tuples to save the found permutations and their Clebsch-Gordans
+	vector<symTermMap> symAmplitudes;
+
+	// Permutating all the particles and checking if the permutation makes sense
+	//
+	// First, loop over all the groups.
+	for(unsigned int i = 0; i < groups.size(); ++i) {
+		std::vector<unsigned int> group = groups.at(i);
+
+		// Again debug output
+		if(_debug) {
+			printDebug<<"Group permutations "<<i<<std::endl;
+		}
+
+		// First we need a vector with the unity permutation, which will
+		// subsequently be permutated.
+		std::vector<unsigned int> permutations;
+		for(unsigned int j = 0; j < group.size(); ++j) {
+			permutations.push_back(j);
+		}
+
+		// Now loop over all permutations for the current group.
+		do {
+			// Create a unity map. The map has one entry per final-state particle
+			// (unlike the group, which only holds the indices of the final-state
+			// particles in the group).
+			std::vector<unsigned int> map;
+			for(unsigned int j = 0; j < fsParts.size(); ++j) {
+				map.push_back(j);
+			}
+
+			// Now apply the permutation to the map. We get the index of the particle
+			// we want to swap from the group vector and the index of the particle we
+			// want to swap it with from the permutations vector. The whole thing is
+			// applied to the map vector.
+			for(unsigned int j = 0; j < group.size(); ++j) {
+				map.at(group.at(j)) = group.at(permutations.at(j));
+			}
+
+			// Some first checks if the permutation makes sense.
+			bool breaking = false;
+			for(unsigned int j = 0; j < map.size(); ++j) {
+
+				if(j == map.at(j)) {
+					continue;
+				}
+
+				// Make sure we are not swapping two indistinguishable particles.
+				if(fsParts.at(j)->name() == fsParts.at(map.at(j))->name()) {
+					breaking = true;
+					break;
+				}
+
+				// Check if two particles from the same isobar are being swapped.
+				for(unsigned int k = 0; k < map.size(); ++k) {
+					if((map.at(k) == k) || (j == k)) continue;
+					if(fromVertex(fsParts.at(j)) == fromVertex(fsParts.at(k))) {
+						breaking = true;
+						break;
+					}
+				}
+				if(breaking) {
+					break;
+				}
+			}
+
+			if(breaking) {
+				continue;
+			}
+
+			// Set the isospin of the final-state particles as given by the premutation.
+			for(unsigned int j = 0; j < map.size(); ++j) {
+				fsParts.at(j)->setIsospinProj(isospinProjs.at(map.at(j)));
+			}
+			calcIsobarCharges(false);
+
+			// Check for isospin consistency in all vertices.
+			for(unsigned int j = 0; j < _isobarVertices.size(); ++j) {
+				const particlePtr d1 = _isobarVertices.at(j)->daughter1();
+				const particlePtr d2 = _isobarVertices.at(j)->daughter2();
+				const particlePtr p  = _isobarVertices.at(j)->parent();
+				if(!spinStatesCanCouple(d1->isospin(), d1->isospinProj(),
+				                        d2->isospin(), d2->isospinProj(),
+				                        p->isospin(),  p->isospinProj())) {
+					breaking = true;
+				}
+			}
+
+			// If something is amiss, reset everything and proceed to the next permutation.
+			if(breaking) {
+				for(unsigned int j = 0; j < fsParts.size(); ++j) {
+					fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
+				}
+				calcIsobarCharges();
+				continue;
+			}
+
+			double clebsch = getIsospinClebschGordanProduct();
+
+			// Survived all the criteria, saving to be returned
+			symTermMap symTerm(getIsospinClebschGordanProduct(), map);
+			symAmplitudes.push_back(symTerm);
+
+			if(_debug) {
+				printDebug<<"Found valid permutation: ";
+				for(unsigned int j = 0; j < map.size(); ++j) {
+					std::cout<<map.at(j);
+				}
+				std::cout<<" (";
+				for(unsigned int j = 0; j < map.size(); ++j) {
+					std::cout<<fsParts.at(j)->name();
+				}
+				std::cout<<"), clebsch-gordan="<<clebsch<<std::endl;
+			}
+
+			// Resetting isospins for the next permutation
+			for(unsigned int j = 0; j < fsParts.size(); ++j) {
+				fsParts.at(j)->setIsospinProj(isospinProjs.at(j));
+			}
+			calcIsobarCharges();
+
+		} while(next_permutation(permutations.begin(), permutations.end()));
+		// End of the loop over permutations.
+
+	} // End of the loop over the groups.
+
+	return symAmplitudes;
+}
+
+
+vector<unsigned int>
+isobarDecayTopology::findIsobarBoseSymVertices() const
+{
+	vector<unsigned int>   boseSymVertices;
+	isobarDecayTopologyPtr topo = this->clone();  // needed, because subDecay below is not const
+	for (unsigned int i = 0; i < topo->nmbDecayVertices(); ++i) {
+		// find decay vertex with two isobars as daughters
+		isobarDecayVertexPtr vert         = topo->isobarDecayVertices()[i];
+		const particlePtr    daughters[2] = {vert->daughter1(), vert->daughter2()};
+		if (topo->isFsParticle(daughters[0]) or topo->isFsParticle(daughters[1]))
+			continue;
+		// make sure the two daughters have the same final state
+		const decayTopology isobarTopos[2] = {topo->subDecay(topo->toNode(daughters[0])),
+		                                      topo->subDecay(topo->toNode(daughters[1]))};
+		if (isobarTopos[0].nmbIndistFsParticles() == isobarTopos[1].nmbIndistFsParticles()) {
+			if (_debug)
+				printDebug << "found isobar decay vertex " << *vert << " "
+				           << "that has two isobar daughters which decay into the same final state: " << endl
+				           << "daughter 1 " << isobarTopos[0]
+				           << "daughter 2 " << isobarTopos[1];
+			boseSymVertices.push_back(i);
+		}
+	}
+	return boseSymVertices;
 }

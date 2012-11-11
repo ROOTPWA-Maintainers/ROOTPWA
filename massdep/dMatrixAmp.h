@@ -72,33 +72,34 @@ typedef ublas::matrix<double> rmatrix;
 
 class dMatrixPole {
  public:
-  dMatrixPole(){}
+ dMatrixPole(): fBkg(false){}
  dMatrixPole(bool bkg): fBkg(bkg){}
- dMatrixPole(double m, cnum prodAmp):fm(m), fgProd(prodAmp) {}
+  //dMatrixPole(double m, cnum prodAmp):fm(m), fgProd(prodAmp) {}
   ~dMatrixPole(){}
 
   // Modifiers
   void setChannels(std::vector<TF1*>* psp, const rmatrix& gammas)
   {fpsp=psp;fgamma=gammas;}
-  void setProdAmp(cnum a){fgProd=a;}
+  //void setProdAmp(cnum a){fgProd=a;}
   void setMass(double m){fm=m;}
   void setGamma(double gamma, unsigned int i){fgamma(0,i)=gamma;}
   void setBkg(bool flag=true){fBkg=flag;}
 
   // Accessors
-  cnum M2(double m); // return complex pole position
-  cnum gProd(){return fgProd;} // return production coupling
-  cnum gDec(unsigned int i);   // return decay coupling (real) for channel i
-  cnum gamma(unsigned int i){return cnum(fgamma(0,i),0);} // return partial width for channel i
-  double psp(double m, unsigned int i); // return phase space element normalized to pole position
-  double gammaTot(); // total width (at resonance)
-  double gammaTot(double m); // total mass dependent width
+  cnum M2(double m) const ; // return complex pole position
+  //cnum gProd()const {return fgProd;} // return production coupling
+  cnum gDec(unsigned int i) const ;   // return decay coupling (real) for channel i
+  cnum gamma(unsigned int i)const {return cnum(fgamma(0,i),0);} // return partial width for channel i
+  double psp(double m, unsigned int i)const ; // return phase space element normalized to pole position
+  double m() const {return fm;} 
+  double gammaTot() const ; // total width (at resonance)
+  double gammaTot(double m) const; // total mass dependent width
   
  private:
   double fm;
   rmatrix fgamma; // partial widths
   const std::vector<TF1*>* fpsp; // phase space functions for different channels
-  cnum fgProd; // production coupling of this state
+  //cnum fgProd; // production coupling of this state
   bool fBkg;   // is background? -> purely real M2
 };
 
@@ -113,22 +114,29 @@ class dMatrixAmp {
   void setNBkg(unsigned int n);
   void addChannel(TF1*);
 
-  void Setup( const rmatrix& mbare, 
-	     const rmatrix& gamma, 
-	     const cmatrix& production,
-	     const rmatrix& mixing);
+  void Setup( const rmatrix& mbare, // (nPoles+nBkg) row  vector of bare masses
+	      const rmatrix& gamma,  // (nPoles+nBkg x nChannels) matrix of couplings
+	      const cmatrix& production, // (nPoles+nBkg)column vector of production couplings
+	      const rmatrix& mixing); // (nPoles+nBkg)^2 matrix of mixing
+                                      // only off-diagonals of upper triangle count!
   
 
   // processor:
   cnum amp(double m, unsigned int channel); /// amplitude in a channel
   
+  // parameter mapping:
+  unsigned int getNPar() const;
+  void setPar(const double* par);
+  void getPar(double* par) const;
+  
+
   // helpers:
-  unsigned int nPoles(){return fPoles.size();}
-  dMatrixPole& getPole(unsigned int i){return fPoles[i];}
-  unsigned int nBkg(){return fBkg.size();}
-  dMatrixPole& getBkg(unsigned int i){return fBkg[i];}
-  unsigned int nChannels(){return fChannels.size();}
-  TF1* getPS(unsigned int i){return fChannels[i];}
+  unsigned int nPoles()const {return fPoles.size();}
+  const dMatrixPole& getPole(unsigned int i)const{return fPoles[i];}
+  unsigned int nBkg()const {return fBkg.size();}
+  const dMatrixPole& getBkg(unsigned int i) const {return fBkg[i];}
+  unsigned int nChannels() const {return fChannels.size();}
+  TF1* getPS(unsigned int i)const {return fChannels[i];}
 
  private:
   std::vector<dMatrixPole> fPoles;

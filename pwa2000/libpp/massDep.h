@@ -15,71 +15,76 @@ class particle;
 
 class massDep {
 public:
-  massDep() { }
-  virtual ~massDep() { }
-  virtual massDep* create() const = 0;
-  virtual massDep* clone() const = 0;
+	massDep() { }
+	virtual ~massDep() { }
+	virtual massDep* create() const = 0;
+	virtual massDep* clone() const = 0;
 
-  virtual void print() { std::cout << "massDep"; }
-  virtual std::complex<double> val(const particle& p) = 0;
+	virtual void print() { std::cout << "massDep"; }
+	virtual std::complex<double> val(const particle& p) = 0;
 };
 
 
 class breitWigner : public massDep {
 public:
-  breitWigner() { }
-  virtual ~breitWigner() { }
-  breitWigner(const breitWigner&) { }
-  breitWigner* create() const { return new breitWigner(); }
-  breitWigner* clone() const { return new breitWigner(*this); }
+	breitWigner() { }
+	virtual ~breitWigner() { }
+	breitWigner(const breitWigner&) { }
+	breitWigner* create() const { return new breitWigner(); }
+	breitWigner* clone() const { return new breitWigner(*this); }
 
-  virtual void print() { std::cout << "breitWigner"; }
-  std::complex<double> val(const particle& p);
+	virtual void print() { std::cout << "breitWigner"; }
+	std::complex<double> val(const particle& p);
 };
 
 
 class rhoPrime : public massDep {
 public:
- rhoPrime() { }
-  virtual ~rhoPrime() { }
- rhoPrime(const rhoPrime&) { }
- rhoPrime* create() const { return new rhoPrime(); }
- rhoPrime* clone() const { return new rhoPrime(*this); }
+	rhoPrime() { }
+	virtual ~rhoPrime() { }
+	rhoPrime(const rhoPrime&) { }
+	rhoPrime* create() const { return new rhoPrime(); }
+	rhoPrime* clone() const { return new rhoPrime(*this); }
 
-  virtual void print() { std::cout << "rhoPrime"; }
-  std::complex<double> val(const particle& p);
+	virtual void print() { std::cout << "rhoPrime"; }
+	std::complex<double> val(const particle& p);
 };
 
 
 class flatRange : public massDep {
 public:
-  flatRange() { }
-  virtual ~flatRange() { }
-  flatRange(const flatRange&) { }
-  flatRange* create() const { return new flatRange(); }
-  flatRange* clone() const { return new flatRange(*this); }
+	flatRange() : mlow(0),mhigh(10) { }
+	virtual ~flatRange() { }
+	flatRange(const flatRange& b) {mlow=b.mlow;mhigh=b.mhigh; }
 
-  virtual void print() { std::cout << "flatRange"; }
-  std::complex<double> val(const particle& p);
+	flatRange* create() const { std::cerr << "flatRange::create " << std::endl;return new flatRange(); }
+	flatRange* clone() const { return new flatRange(*this); }
 
-  void setRange(double low, double high){mlow=low*0.001;mhigh=high*0.001;}
+	virtual void print() { std::cout << "flatRange"; }
+	std::complex<double> val(const particle& p);
 
- private:
-  double mlow;
-  double mhigh;
+	void setRange(double low, double high){
+		//std::cerr << low << "..." << high << std::endl;
+		mlow=low*0.001;mhigh=high*0.001;
+		//std::cerr << mlow << "..." << mhigh << std::endl;
+	}
+
+private:
+	double mlow;
+	double mhigh;
 };
 
 
 class flat : public massDep {
 public:
-  flat() { }
-  virtual ~flat() { }
-  flat(const flat&) { }
-  flat* create() const { return new flat(); }
-  flat* clone() const { return new flat(*this); }
+	flat() { }
+	virtual ~flat() { }
+	flat(const flat&) { }
+	flat* create() const { return new flat(); }
+	flat* clone() const { return new flat(*this); }
 
-  virtual void print() { std::cout << "flat"; }
-  std::complex<double> val(const particle& p);
+	virtual void print() { std::cout << "flat"; }
+	std::complex<double> val(const particle& p);
     
 };
 
@@ -92,27 +97,27 @@ public:
 class AMP_M : public massDep {
 
 protected:
-  int _Pmax;
-  int _Nmax;
-  matrix<std::complex<double> > _rho;
-  matrix<std::complex<double> > _M;
-  matrix<std::complex<double> > _T;
-  matrix<std::complex<double> > _f;
-  std::vector<matrix<std::complex<double> > > _a;
-  std::vector<matrix<std::complex<double> > > _c;
-  matrix<double> _sP;
+	int _Pmax;
+	int _Nmax;
+	matrix<std::complex<double> > _rho;
+	matrix<std::complex<double> > _M;
+	matrix<std::complex<double> > _T;
+	matrix<std::complex<double> > _f;
+	std::vector<matrix<std::complex<double> > > _a;
+	std::vector<matrix<std::complex<double> > > _c;
+	matrix<double> _sP;
 
 public:
-  int ves_sheet;
+	int ves_sheet;
 
-  AMP_M();
-  virtual ~AMP_M() { }
-  AMP_M(const AMP_M&) { }
-  virtual massDep* create() const { return new AMP_M(); }
-  virtual massDep* clone() const { return new AMP_M(*this); }
+	AMP_M();
+	virtual ~AMP_M() { }
+	AMP_M(const AMP_M&) { }
+	virtual massDep* create() const { return new AMP_M(); }
+	virtual massDep* clone() const { return new AMP_M(*this); }
 
-  virtual void print() { std::cout << "AMP_M"; }
-  std::complex<double> val(const particle& p);
+	virtual void print() { std::cout << "AMP_M"; }
+	std::complex<double> val(const particle& p);
 };
 
 
@@ -122,14 +127,14 @@ public:
  */ 
 class AMP_ves : public AMP_M {
 public:
-  AMP_ves() : AMP_M() { ves_sheet = 1; }
-  virtual ~AMP_ves() { }
-  AMP_ves(const AMP_ves&) { }
-  virtual massDep* create() const { return new AMP_ves(); }
-  virtual massDep* clone() const { return new AMP_ves(*this); }
+	AMP_ves() : AMP_M() { ves_sheet = 1; }
+	virtual ~AMP_ves() { }
+	AMP_ves(const AMP_ves&) { }
+	virtual massDep* create() const { return new AMP_ves(); }
+	virtual massDep* clone() const { return new AMP_ves(*this); }
 
-  virtual void print() { std::cout << "AMP_ves"; }
-  std::complex<double> val(const particle& p);
+	virtual void print() { std::cout << "AMP_ves"; }
+	std::complex<double> val(const particle& p);
 };
 
 
@@ -149,14 +154,14 @@ public:
  */ 
 class AMP_kach : public AMP_M {
 public:
-  AMP_kach();
-  virtual ~AMP_kach() { }
-  AMP_kach(const AMP_kach&) { }
-  virtual massDep* create() const { return new AMP_kach(); }
-  virtual massDep* clone() const { return new AMP_kach(*this); }
+	AMP_kach();
+	virtual ~AMP_kach() { }
+	AMP_kach(const AMP_kach&);
+	virtual massDep* create() const { return new AMP_kach(); }
+	virtual massDep* clone() const { return new AMP_kach(*this); }
 
-  virtual void print() { std::cout << "AMP_kach"; }
-  //std::complex<double> val(const particle& p);
+	virtual void print() { std::cout << "AMP_kach"; }
+	//std::complex<double> val(const particle& p);
 };
 
 //-------
@@ -171,14 +176,14 @@ public:
 // take a simple BW for the K_0(1430) instead
 class AMP_LASS : public massDep {
 public:
-  AMP_LASS() { }
-  virtual ~AMP_LASS() { }
-  AMP_LASS(const AMP_LASS&) { }
-  AMP_LASS* create() const { return new AMP_LASS(); }
-  AMP_LASS* clone() const { return new AMP_LASS(*this); }
+	AMP_LASS() { }
+	virtual ~AMP_LASS() { }
+	AMP_LASS(const AMP_LASS&) { }
+	AMP_LASS* create() const { return new AMP_LASS(); }
+	AMP_LASS* clone() const { return new AMP_LASS(*this); }
 
-  virtual void print() { std::cout << "AMP_LASS"; }
-  std::complex<double> val(const particle& p);
+	virtual void print() { std::cout << "AMP_LASS"; }
+	std::complex<double> val(const particle& p);
 };
 
 

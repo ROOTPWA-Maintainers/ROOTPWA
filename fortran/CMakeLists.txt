@@ -46,6 +46,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'fortran' directory.")
+
+
 # enable Fortran support
 enable_language(Fortran)
 
@@ -60,13 +64,16 @@ message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
 
 # source files that are compiled into library
 set(SOURCES
-  eps_k1.f
-  eps_k1p.f
-  eps_m.f
-  eps_mx.f
-)
-   
+	eps_k1.f
+	eps_k1p.f
+	eps_m.f
+	eps_mx.f
+	)
+
 
 # library
 set(THIS_LIB "Fortran")
-make_shared_library("${THIS_LIB}" "${SOURCES}")
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	)

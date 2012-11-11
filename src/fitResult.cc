@@ -42,6 +42,7 @@
 #include "TDecompChol.h"
 #include "TMath.h"
 #include "TMatrixDSym.h"
+#include "TRandom3.h"
 
 // PWA2000 classes
 #include "integral.h"
@@ -143,6 +144,53 @@ fitResult::fitResult(const TFitResult& result)
 
 fitResult::~fitResult()
 { }
+
+
+fitResult*
+fitResult::cloneVar(){
+  // copy complete info
+  fitResult* result = new fitResult(*this);
+
+  // Cholesky decomposition (hoepfully this will not slow us down too much 
+  // if it does we have to cache
+  cerr << "Starting Cholesky Decomposition" << endl; 
+  TDecompChol decomp(_fitParCovMatrix);
+  decomp.Decompose();
+  TMatrixT<Double_t> C(decomp.GetU());
+  cerr << "...Done" << endl;
+  
+  unsigned int npar=C.GetNrows();
+  TMatrixD x(npar,1);
+  // generate npar independent random numbers
+  for(unsigned int ipar=0;ipar<npar;++ipar){
+    x(ipar,0)=gRandom->Gaus();
+  }
+
+  // this tells us how to permute the parameters taking into account all
+  // correlations in the covariance matrix
+  TMatrixD y(C,TMatrixD::kMult,x);
+  
+  // now we need mapping from parameters to production amp re and im
+  // loop over production amps 
+  unsigned int nt=_prodAmps.size(); 
+  for(unsigned int it=0;it<nt;++it){
+    Int_t jre=_fitParCovMatrixIndices[it].first;
+    Int_t jim=_fitParCovMatrixIndices[it].second;
+    double re=result->_prodAmps[it].Re(); double im=result->_prodAmps[it].Im();
+    if(jre>-1)re+=y(jre,0);
+    if(jim>-1)im+=y(jim,0);
+    result->_prodAmps[it]=TComplex(re,im);
+    cerr << "Modifying amp " << it << " by (" << (jre>-1 ? y(jre,0) : 0) 
+	 << "," << (jim>-1 ? y(jim,0) : 0) <<")" << endl;
+  }
+  return result;
+}
+
+
+
+
+
+
 
 
 /// \brief calculates the model evidence using Rafters occam factor method

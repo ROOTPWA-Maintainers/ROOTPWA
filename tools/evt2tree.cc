@@ -56,10 +56,7 @@ int main(int argc, char** argv) {
     return 1;
   }
 
-  event e;
-
-
-  threeVec evtbeam;
+   threeVec evtbeam;
   list<particle> f_mesons;
   
   string outfilename(argv[1]);
@@ -81,7 +78,14 @@ int main(int argc, char** argv) {
   outtree->Branch("qbeam",&qbeam,"qbeam/I");
 
 
-  while(!(cin>>e).eof()) { // begin event loop
+  while(cin.good() && !cin.eof()) { // begin event loop
+    event e;
+    cin>>e;
+    if(!e.isValid()){
+      cerr << "EVENT NOT VALID (NO BEAM AND/OR NO FINAL STATE)!!! SKIPPING" << endl;
+      continue;
+    }
+    //cerr << e;
     p->Delete(); // clear output arrays
     q.clear();
     f_mesons=e.f_mesons();

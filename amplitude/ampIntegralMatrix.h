@@ -49,7 +49,7 @@
 
 #ifndef __CINT__
 #define BOOST_DISABLE_ASSERTS
-#include "boost/multi_array.hpp"
+#include <boost/multi_array.hpp>
 #endif
 
 #include "TObject.h"
@@ -142,8 +142,8 @@ namespace rpwa {
 		std::ostream& print(std::ostream& out,
 		                    const bool    printIntegralValues = false) const;  ///< prints integral in human-readable form
 
-    static bool debug() { return _debug; }                             ///< returns debug flag
-    static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
 
 	private:
@@ -164,7 +164,7 @@ namespace rpwa {
 		bool hasIdenticalWaveSet(const ampIntegralMatrix& integral) const;  ///< checks whether other integral matrix has exactly the same set of waves
 
 
-	  static bool _debug;  ///< if set to true, debug messages are printed
+		static bool _debug;  ///< if set to true, debug messages are printed
 
 		unsigned int                        _nmbWaves;            ///< number of waves in integral
 		std::map<std::string, unsigned int> _waveNameToIndexMap;  //! ///< maps wave names to wave indices

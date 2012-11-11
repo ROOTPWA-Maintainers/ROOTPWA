@@ -35,13 +35,17 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'utilities' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${Boost_INCLUDE_DIRS}
-  ${ROOT_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
+	${Boost_INCLUDE_DIRS}
+	${ROOT_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
-)
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
@@ -62,5 +66,9 @@ make_shared_library("${THIS_LIB}" "${SOURCES}"
 
 # executables
 make_executable(testSumAccumulators testSumAccumulators.cc "${THIS_LIB}")
-make_executable(testLibppFunctions  testLibppFunctions.cc  "${THIS_LIB}")
 make_executable(testSpinUtils       testSpinUtils.cc       "${THIS_LIB}")
+if(USE_PWA2000)
+	make_executable(testLibppFunctions testLibppFunctions.cc "${THIS_LIB}")
+else()
+	message(STATUS "PWA2000 disabled. Skipping build of testLibppFunctions.")
+endif()

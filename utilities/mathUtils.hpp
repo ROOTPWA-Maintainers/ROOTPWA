@@ -44,6 +44,12 @@
 #include <complex>
 
 #include <boost/math/tools/promotion.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/triangular.hpp>
+#include <boost/numeric/ublas/lu.hpp>
+
+
+namespace ublas = boost::numeric::ublas;
 
 
 namespace rpwa {
@@ -112,6 +118,40 @@ namespace rpwa {
 		if (val > 0)
 			return +1;
 		return 0;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	// matrix inversion routine using lu_factorize and lu_substitute
+	// see http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
+	template<typename T>
+	bool
+	invertMatrix(const ublas::matrix<T>& A,
+	             ublas::matrix<T>&       inverseA)
+	{
+		// create working copy of input
+		ublas::matrix<T> M(A);
+		// create permutation matrix for LU-factorization
+		ublas::permutation_matrix<std::size_t> pM(M.size1());
+		// perform LU-factorization
+		if (ublas::lu_factorize(M, pM) != 0)
+			return false;
+		// create identity matrix of "inverse"
+		inverseA.assign(ublas::identity_matrix<T>(M.size1()));
+		// backsubstitute to get the inverse
+		ublas::lu_substitute(M, pM, inverseA);
+		return true;
+	}
+
+
+	template<typename T>
+	ublas::matrix<T>
+	invertMatrix(const ublas::matrix<T>& A,
+	             bool&                   isSingular)
+	{
+		ublas::matrix<T> inverseA(A.size1(), A.size2());
+		isSingular = !invert(A, inverseA);
+		return inverseA;
 	}
 
 
