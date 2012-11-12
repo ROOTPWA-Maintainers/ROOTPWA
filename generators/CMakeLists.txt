@@ -59,7 +59,7 @@ set(SOURCES
 	nBodyPhaseSpaceGen.cc
 	productionAmp.cc
 	breitWignerProductionAmp.cc
-	TPWWeight.cc
+	partialWaveWeight.cc
 	diffractivePhaseSpace.cc
 	primaryVertexGen.cc
 	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui

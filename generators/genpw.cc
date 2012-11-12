@@ -47,7 +47,7 @@
 
 #include "reportingUtils.hpp"
 #include "diffractivePhaseSpace.h"
-#include "TPWWeight.h"
+#include "partialWaveWeight.h"
 #include "productionAmp.h"
 #include "breitWignerProductionAmp.h"
 #include "TFitBin.h"
@@ -161,7 +161,7 @@ int main(int argc, char** argv)
 
 	PDGtable.initialize();
 
-	TPWWeight weighter;
+	partialWaveWeight weighter;
 	Config reactConf;
 	reactConf.readFile(reactionFile.c_str());
 

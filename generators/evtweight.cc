@@ -42,7 +42,7 @@
 #include "TString.h"
 #include "TTree.h"
 
-#include "TPWWeight.h"
+#include "integral.h"
 
 #include "fitResult.h"
 #include "event.h"
