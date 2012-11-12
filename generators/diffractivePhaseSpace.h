@@ -31,18 +31,15 @@
 #include <iostream>
 #include <vector>
 
-#include "TLorentzVector.h"
 
 #include "nBodyPhaseSpaceGen.h"
-
 #include "TPrimaryVertexGen.h"
 
 
 class TH1;
-
+class TLorentzVector;
 
 namespace rpwa {
-
 
 	/** @brief Small helper class for bookkeeping
 	 */
@@ -68,13 +65,13 @@ namespace rpwa {
 	 *  @author Sebastian Neubert TUM (original author)
 	 *
 	 */
-	class TDiffractivePhaseSpace {
+	class diffractivePhaseSpace {
 
 	  public:
 
 		// Constructors/Destructors ---------
-		TDiffractivePhaseSpace();
-		~TDiffractivePhaseSpace();
+		diffractivePhaseSpace();
+		~diffractivePhaseSpace();
 
 		// Accessors -----------------------
 		const TLorentzVector* const GetDecay(unsigned int i) { return &_phaseSpace.daughter(i); }

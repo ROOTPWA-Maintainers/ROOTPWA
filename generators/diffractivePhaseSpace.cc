@@ -35,7 +35,7 @@
 
 #include "reportingUtils.hpp"
 #include "physUtils.hpp"
-#include "TDiffractivePhaseSpace.h"
+#include "diffractivePhaseSpace.h"
 
 using namespace std;
 using namespace rpwa;
@@ -66,7 +66,7 @@ using namespace rpwa;
 // const double _tMin = 0.001;  // [(GeV/c)^2]
 
 
-TDiffractivePhaseSpace::TDiffractivePhaseSpace()
+diffractivePhaseSpace::diffractivePhaseSpace()
 	: _tMin(0.),
 	  _tprimeMin(0.),
 	  _tprimeMax(numeric_limits<double>::max()),
@@ -84,7 +84,7 @@ TDiffractivePhaseSpace::TDiffractivePhaseSpace()
 	_invM        = NULL;
 }
 
-TDiffractivePhaseSpace::~TDiffractivePhaseSpace() {
+diffractivePhaseSpace::~diffractivePhaseSpace() {
 	delete _primaryVertexGen;
 }
 
@@ -94,7 +94,7 @@ TDiffractivePhaseSpace::~TDiffractivePhaseSpace() {
 
 // constructs beam Lorentz vector
 TLorentzVector
-TDiffractivePhaseSpace::makeBeam()
+diffractivePhaseSpace::makeBeam()
 {
 	// throw magnituide of beam momentum
 	const double pBeam = gRandom->Gaus(_beamMom, _beamMomSigma);
@@ -112,7 +112,7 @@ TDiffractivePhaseSpace::makeBeam()
 
 // writes event to ascii file read by gamp
 bool
-TDiffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
+diffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
                                           const int beamGeantId,
                                           const int beamCharge)
 {
@@ -139,7 +139,7 @@ TDiffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
 }
 
 bool
-TDiffractivePhaseSpace::writeComGeantAscii(ostream& out, bool  formated) {
+diffractivePhaseSpace::writeComGeantAscii(ostream& out, bool  formated) {
 
 	if(!out) {
 		cerr << "Output stream is not writable." << endl;
@@ -214,7 +214,7 @@ TDiffractivePhaseSpace::writeComGeantAscii(ostream& out, bool  formated) {
 
 
 void
-TDiffractivePhaseSpace::SetSeed(int seed)
+diffractivePhaseSpace::SetSeed(int seed)
 {
 	gRandom->SetSeed(seed);
 	_phaseSpace.setSeed(seed);
@@ -222,7 +222,7 @@ TDiffractivePhaseSpace::SetSeed(int seed)
 
 
 void
-TDiffractivePhaseSpace::SetDecayProducts(const vector<particleInfo>& info)
+diffractivePhaseSpace::SetDecayProducts(const vector<particleInfo>& info)
 {
 	_decayProducts.clear();
 	_decayProducts = info;
@@ -231,7 +231,7 @@ TDiffractivePhaseSpace::SetDecayProducts(const vector<particleInfo>& info)
 
 
 void
-TDiffractivePhaseSpace::AddDecayProduct(const particleInfo& info)
+diffractivePhaseSpace::AddDecayProduct(const particleInfo& info)
 {
 	_decayProducts.push_back(info);
 	BuildDaughterList();
@@ -239,7 +239,7 @@ TDiffractivePhaseSpace::AddDecayProduct(const particleInfo& info)
 
 
 void
-TDiffractivePhaseSpace::BuildDaughterList()
+diffractivePhaseSpace::BuildDaughterList()
 {
 	const unsigned int nmbDaughters = _decayProducts.size();
 	vector<double> daughterMasses(nmbDaughters, 0);
@@ -265,7 +265,7 @@ TDiffractivePhaseSpace::BuildDaughterList()
 /////////////////////////////////////////////////////////////////////////////////
 // main routine
 // void
-// TDiffractivePhaseSpace::genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of mass bin [GeV/c^2]
+// diffractivePhaseSpace::genPhaseSpaceData(const double   xMassMin          = 2.100,  // lower bound of mass bin [GeV/c^2]
 // 		  const double   xMassMax          = 2.140,  // upper bound of mass bin [GeV/c^2]
 // 		  const TString& outFileName       = "2100.2140.genbod.evt",
 // 		  const TString& thetaHistFileName = "./hTheta.root",  // histogram with experimental distribution of scattering angle
@@ -325,7 +325,7 @@ TDiffractivePhaseSpace::BuildDaughterList()
 // }
 
 double
-TDiffractivePhaseSpace::Get_inv_SlopePar(double invariant_M) {
+diffractivePhaseSpace::Get_inv_SlopePar(double invariant_M) {
 	double result = 1.;
 	if(!_invSlopePar) {
 		return result;
@@ -371,7 +371,7 @@ TDiffractivePhaseSpace::Get_inv_SlopePar(double invariant_M) {
 
 // based on Dima's prod_decay_split.f
 unsigned int
-TDiffractivePhaseSpace::event()
+diffractivePhaseSpace::event()
 {
 	unsigned long int attempts = 0;
   // construct primary vertex and beam
@@ -543,7 +543,7 @@ TDiffractivePhaseSpace::event()
 
 
 unsigned int
-TDiffractivePhaseSpace::event(ostream& stream)
+diffractivePhaseSpace::event(ostream& stream)
 {
 	unsigned int attempts = event();
 	//writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
@@ -553,7 +553,7 @@ TDiffractivePhaseSpace::event(ostream& stream)
 }
 
 unsigned int
-TDiffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
+diffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 {
 	unsigned int attempts = event();
 	//writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
@@ -565,7 +565,7 @@ TDiffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 
 
 void
-TDiffractivePhaseSpace::SetBeam(double Mom,  double MomSigma,
+diffractivePhaseSpace::SetBeam(double Mom,  double MomSigma,
 		double DxDz, double DxDzSigma,
 		double DyDz, double DyDzSigma)
 {
@@ -578,7 +578,7 @@ TDiffractivePhaseSpace::SetBeam(double Mom,  double MomSigma,
 }
 
 float
-TDiffractivePhaseSpace::Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out){
+diffractivePhaseSpace::Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out){
 	float result = 0.;
 	result = (particle_Out.M2()-particle_In.M2());
 	result = pow(result,2);

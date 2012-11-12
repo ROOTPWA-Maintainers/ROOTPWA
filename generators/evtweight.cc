@@ -25,7 +25,6 @@
 
 #include <complex>
 #include <iostream>
-//#include <stringstream>
 
 #include <fstream>
 #include <cstdlib>
@@ -44,12 +43,10 @@
 #include "TClonesArray.h"
 
 #include "TPWWeight.h"
-#include "TDiffractivePhaseSpace.h"
 
 #include "fitResult.h"
 #include "event.h"
 
-//#include "diffractiveDissVertex.h"
 #include "../amplitude/particle.h"
 #include "particleDataTable.h"
 #include "libconfig.h++"

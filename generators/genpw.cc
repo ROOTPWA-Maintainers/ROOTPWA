@@ -46,7 +46,7 @@
 #include "libconfig.h++"
 
 #include "reportingUtils.hpp"
-#include "TDiffractivePhaseSpace.h"
+#include "diffractivePhaseSpace.h"
 #include "TPWWeight.h"
 #include "TProductionAmp.h"
 #include "TBWProductionAmp.h"
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
 
 	//string theta_file= reactConf.lookup("finalstate.theta_file");
 
-	TDiffractivePhaseSpace difPS;
+	diffractivePhaseSpace difPS;
 	cerr << "Seed=" << seed << endl;
 	difPS.SetSeed(seed);
 	difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
