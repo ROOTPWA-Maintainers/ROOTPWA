@@ -55,7 +55,6 @@ using namespace std;
 using namespace libconfig;
 using namespace rpwa;
 
-extern ::particleDataTable PDGtable;
 
 void printUsage(char* prog, int errCode=0) {
 cerr << "usage:" << endl

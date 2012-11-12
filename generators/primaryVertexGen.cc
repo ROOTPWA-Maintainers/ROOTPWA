@@ -16,9 +16,9 @@
  *
  */
 
-#include "TPrimaryVertexGen.h"
+#include "primaryVertexGen.h"
 
-TPrimaryVertexGen::TPrimaryVertexGen(string histfilename, double beam_part_mass, double mean_beam_energy, double mean_beam_energy_spread){
+primaryVertexGen::primaryVertexGen(string histfilename, double beam_part_mass, double mean_beam_energy, double mean_beam_energy_spread){
 	histogramfile = NULL;
 	//static const string histogramfilename("properties_2008/primary_vertex_properties.root");
 	hist_angles_vert_mean  = NULL;
@@ -33,7 +33,7 @@ TPrimaryVertexGen::TPrimaryVertexGen(string histfilename, double beam_part_mass,
 	_beam_energy_sigma = mean_beam_energy_spread;
 }
 
-TPrimaryVertexGen::~TPrimaryVertexGen(){
+primaryVertexGen::~primaryVertexGen(){
 	if (histogramfile){
 		histogramfile->Close();
 	}
@@ -46,7 +46,7 @@ TPrimaryVertexGen::~TPrimaryVertexGen(){
 	delete hist_vertex_distr_z;
 }
 
-bool TPrimaryVertexGen::Load_histograms(string filename, bool plot){
+bool primaryVertexGen::Load_histograms(string filename, bool plot){
 	bool result(false);
 	if (plot){
 		gROOT->SetStyle("Plain");
@@ -113,11 +113,11 @@ bool TPrimaryVertexGen::Load_histograms(string filename, bool plot){
 	return result;
 }
 
-bool TPrimaryVertexGen::Check(){
+bool primaryVertexGen::Check(){
 	return _histograms_loaded;
 }
 
-TVector3& TPrimaryVertexGen::Get_Vertex(const float cutR,
+TVector3& primaryVertexGen::Get_Vertex(const float cutR,
 				const float cutZ_low,
 				const float cutZ_high){
 	if (!_histograms_loaded) {
@@ -140,7 +140,7 @@ TVector3& TPrimaryVertexGen::Get_Vertex(const float cutR,
 }
 
 
-TVector3& TPrimaryVertexGen::Get_beam_dir(const TVector3 vertex){
+TVector3& primaryVertexGen::Get_beam_dir(const TVector3 vertex){
 	TVector3* result = new TVector3(0.,0.,1.);
 	if (!_histograms_loaded) {
 		return *result;
@@ -168,7 +168,7 @@ TVector3& TPrimaryVertexGen::Get_beam_dir(const TVector3 vertex){
 	return *result;
 }
 
-TLorentzVector& TPrimaryVertexGen::Get_beam_part(const TVector3 beam_dir){
+TLorentzVector& primaryVertexGen::Get_beam_part(const TVector3 beam_dir){
 	double energy = gRandom->Gaus(_beam_energy_mean, _beam_energy_sigma);
 	TVector3 _beam_dir(beam_dir);
 	// m² = E² - p² -> |p| = sqrt(E²-m²)
@@ -177,7 +177,7 @@ TLorentzVector& TPrimaryVertexGen::Get_beam_part(const TVector3 beam_dir){
 	return *result;
 }
 
-void TPrimaryVertexGen::ges_palette(int i){
+void primaryVertexGen::ges_palette(int i){
   TPad foo; // never remove this line :-)))
   if(i == 0){
     const Int_t NRGBs = 5;
@@ -203,7 +203,7 @@ void TPrimaryVertexGen::ges_palette(int i){
 }
 
 void Beam_simulation(){
-	TPrimaryVertexGen primaryVertexGen;
+	primaryVertexGen primaryVertexGen;
 	if (!primaryVertexGen.Check()) return;
 	// some cross check histograms
 	//const int n_steps_x = 21;

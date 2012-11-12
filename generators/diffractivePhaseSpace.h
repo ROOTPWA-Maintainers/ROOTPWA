@@ -33,7 +33,7 @@
 
 
 #include "nBodyPhaseSpaceGen.h"
-#include "TPrimaryVertexGen.h"
+#include "primaryVertexGen.h"
 
 
 class TH1;
@@ -194,7 +194,7 @@ namespace rpwa {
 		 * Vertex position, Beam Energy and Direction will be
 		 * created by the primary Vertex Generator
 		 */
-		void SetPrimaryVertexGen(TPrimaryVertexGen* primaryVertexGen) { _primaryVertexGen = primaryVertexGen; };
+		void SetPrimaryVertexGen(primaryVertexGen* primaryVertexGen) { _primaryVertexGen = primaryVertexGen; };
 
 		/** @brief generates on event
 		 *
@@ -227,7 +227,7 @@ namespace rpwa {
 		// Private Data Members ------------
 		rpwa::nBodyPhaseSpaceGen _phaseSpace;
 
-		TPrimaryVertexGen* _primaryVertexGen;
+		primaryVertexGen* _primaryVertexGen;
 
 
 		// target position

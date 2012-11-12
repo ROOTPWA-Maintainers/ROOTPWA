@@ -41,7 +41,7 @@
 
 using namespace std;
 
-class TPrimaryVertexGen {
+class primaryVertexGen {
 
 private:
 
@@ -72,14 +72,14 @@ public:
 // initialization of default values
 // see also above the out commented constants
 // please TPrimaryVertexGen::Check() afterwards if loading went correctly
-TPrimaryVertexGen(
+primaryVertexGen(
 		string histfilename 			= "properties_2008/primary_vertex_properties.root",
 		double beam_part_mass 			= 0.13957018, // by default pion
 		double mean_beam_energy 		= 191.29, 	  // measured 2008
 		double mean_beam_energy_spread 	= 1.94476);   // measured sigma 2008
 
 // free histograms
-~TPrimaryVertexGen();
+~primaryVertexGen();
 
 // check if histograms were loaded properly
 bool Check();

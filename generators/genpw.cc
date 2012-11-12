@@ -52,7 +52,7 @@
 #include "TBWProductionAmp.h"
 #include "TFitBin.h"
 
-#include "TPrimaryVertexGen.h"
+#include "primaryVertexGen.h"
 
 
 using namespace std;
@@ -231,19 +231,19 @@ int main(int argc, char** argv)
 	double binCenter = 500 * (mmin + mmax);
 
   // check weather to use a primary vertex generator as requested by the config file
-	TPrimaryVertexGen* primaryVertexGen = NULL;
+	primaryVertexGen* primaryVtxGen = NULL;
 	string histfilename_primvertex = "";
 	if(reactConf.lookupValue("primvertex.histfilename", histfilename_primvertex)) {
-		primaryVertexGen = new TPrimaryVertexGen(
+		primaryVtxGen = new primaryVertexGen(
 		    histfilename_primvertex,
 		    BeamPartMass,
 		    Mom,
 		    MomSigma
 		    );
-		if (!primaryVertexGen->Check()) {
+		if (!primaryVtxGen->Check()) {
 			cerr << " Error: histogram filename with beam properties not loaded! " << endl;
-			delete primaryVertexGen;
-			primaryVertexGen = NULL;
+			delete primaryVtxGen;
+			primaryVtxGen = NULL;
 		}
 	}
 
@@ -288,7 +288,7 @@ int main(int argc, char** argv)
 	difPS.SetTarget(targetz,targetd,targetr,mrecoil);
 	difPS.SetTPrimeSlope(tslope, inv_m, ntslope);
 	difPS.SetMassRange(mmin,mmax);
-	difPS.SetPrimaryVertexGen(primaryVertexGen);
+	difPS.SetPrimaryVertexGen(primaryVtxGen);
 	if(tprime_min >= 0.) {
 		difPS.SettprimeMin(tprime_min);
 	} else {

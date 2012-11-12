@@ -61,7 +61,7 @@ set(SOURCES
 	TBWProductionAmp.cc
 	TPWWeight.cc
 	diffractivePhaseSpace.cc
-	TPrimaryVertexGen.cc
+	primaryVertexGen.cc
 	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
 	)
 
