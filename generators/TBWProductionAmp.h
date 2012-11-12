@@ -15,7 +15,7 @@
 #define TBWPRODUCTIONAMP_HH
 
 // Base Class Headers ----------------
-#include "TProductionAmp.h"
+#include "productionAmp.h"
 
 // Collaborating Class Headers -------
 #include <complex>
@@ -24,7 +24,7 @@
 
 
 
-class TBWProductionAmp : public TProductionAmp {
+class TBWProductionAmp : public rpwa::productionAmp {
 public:
 
   // Constructors/Destructors ---------

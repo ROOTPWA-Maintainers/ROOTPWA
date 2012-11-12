@@ -48,7 +48,7 @@
 #include "reportingUtils.hpp"
 #include "diffractivePhaseSpace.h"
 #include "TPWWeight.h"
-#include "TProductionAmp.h"
+#include "productionAmp.h"
 #include "TBWProductionAmp.h"
 #include "TFitBin.h"
 
@@ -58,7 +58,6 @@
 using namespace std;
 using namespace libconfig;
 using namespace rpwa;
-
 
 extern particleDataTable PDGtable;
 
@@ -423,14 +422,14 @@ int main(int argc, char** argv)
 			<< " eps=" << refl << " qn=" << jpcme << endl;
 		wavefile.ignore(256, '\n');
 
-		TProductionAmp* pamp;
+		productionAmp* pamp;
 		if(bwAmps[jpcme.Data()] != NULL) {
 			pamp = bwAmps[jpcme.Data()];
 			cerr << "Using BW for " << jpcme << endl;
 			// production vector index: rank+refl
 			weighter.addWave(wavename.Data(), pamp, amp, rank+refl);
 		} else {
-			pamp = new TProductionAmp(amp);
+			pamp = new productionAmp(amp);
 			weighter.addWave(wavename.Data(), pamp, complex<double>(1, 0), rank+refl);
 		}
 	}

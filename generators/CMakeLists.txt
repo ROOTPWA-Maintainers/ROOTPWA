@@ -57,7 +57,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	nBodyPhaseSpaceGen.cc
-	TProductionAmp.cc
+	productionAmp.cc
 	TBWProductionAmp.cc
 	TPWWeight.cc
 	diffractivePhaseSpace.cc

@@ -13,18 +13,11 @@
 //
 //-----------------------------------------------------------
 
-// This Class' Header ------------------
-#include "TProductionAmp.h"
-
-// C/C++ Headers ----------------------
+#include "productionAmp.h"
 
 
-// Collaborating Class Headers --------
+using namespace rpwa;
 
+productionAmp::productionAmp(const std::complex<double>& amplitude)
+	: _amp(amplitude) { }
 
-// Class Member definitions -----------
-
-
-TProductionAmp::TProductionAmp(const std::complex<double>& a)
-  : _amp(a)
-{}

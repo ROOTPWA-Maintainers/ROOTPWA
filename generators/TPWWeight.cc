@@ -18,13 +18,14 @@ using namespace std;
 // Class Member definitions -----------
 
 
+using namespace rpwa;
 
-void 
-TPWWeight::addWave(const std::string& keyfilename, 
-		   TProductionAmp* amp,
+void
+TPWWeight::addWave(const std::string& keyfilename,
+		   productionAmp* amp,
 		   const std::complex<double>& branching,
 		   unsigned int vectori){
-  
+
   if(vectori<=m_waves.size()){
     m_waves.resize(vectori+1);
     m_amps.resize(vectori+1);
@@ -45,7 +46,7 @@ TPWWeight::addWave(const std::string& keyfilename,
     TString name(keyfilename.c_str());
     int pos=name.Last('/');
     TString w1a=name(pos+8,name.Length()-pos-8);
-   
+
     w1a.ReplaceAll("+-","+");w1a.ReplaceAll("-+","-");
     w1a.Prepend(name(0,pos+8));
 
@@ -73,18 +74,18 @@ TPWWeight::addWave(const std::string& keyfilename,
     m_branchings[vectori].push_back(branching);
     m_amps[vectori].push_back(amp);
   }
-  
+
 
 }
 
 
-void 
+void
 TPWWeight::loadIntegrals(const std::string& normIntFileName, double mass){
-  //printInfo << "Loading normalization integral from '" 
+  //printInfo << "Loading normalization integral from '"
   //	    << normIntFileName << "'." << endl;
   ifstream intFile(normIntFileName.c_str());
   if (!intFile) {
-    printErr << "Cannot open file '" 
+    printErr << "Cannot open file '"
 	     << normIntFileName << "'. Exiting." << endl;
     throw;
   }
@@ -117,8 +118,8 @@ TPWWeight::loadIntegrals(const std::string& normIntFileName, double mass){
 
 
 
-std::complex<double> 
-TPWWeight::prodAmp(unsigned int iv, 
+std::complex<double>
+TPWWeight::prodAmp(unsigned int iv,
 		   unsigned int iw,
 		   event& e){
   // get mass
@@ -156,13 +157,13 @@ TPWWeight::weight(event& e){
     //cerr << mass << " -> closemass=" << closemass << endl;
     close_int=&(m_normInt[closemass]);
   } // endif has int
-  
+
   for(unsigned int ivec=0;ivec<nvec;++ivec){ // loop over production vectors
     std::complex<double> amp(0,0);
     unsigned int nwaves=m_waves[ivec].size();
     for(unsigned int iwaves=0;iwaves<nwaves;++iwaves){
       string w1=m_waves[ivec][iwaves];
-      
+
       // std::cerr << w1 << std::endl;
       //std::cerr.flush();
       w1.erase(0,w1.find_last_of("/")+1);
@@ -171,7 +172,7 @@ TPWWeight::weight(event& e){
       decayamp=m_gamp[ivec].Amp(iwaves,e);
       //std::cerr << "..first component ..."  << std::endl;
       if(w1.find("+-",7)!=string::npos){ // brute force treatment of composed amplitudes!
-	
+
 	// see addWave to understand bookkeeping!
 	// Here an isospin clebsch factor is missing
 	++iwaves;
@@ -188,7 +189,7 @@ TPWWeight::weight(event& e){
   } // end loop over production vectors
   if(w==0)w=1;
   return w;
-  
+
 }
 
 
