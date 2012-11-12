@@ -24,7 +24,7 @@
 // #include "plotWeightedEvts.h" maybe you are missing this? not needed since declaration is not needed, too
 
 
-using namespace std; 
+using namespace std;
 
 
 // subroutine to build a graph with errors out of a list of histograms
@@ -49,7 +49,7 @@ TGraphErrors* buildGraph(vector<TH1D*> histo, unsigned int n){
     sigma/=(n-1);
     g->SetPointError(ib,dx,sqrt(sigma));
   }
-  
+
   return g;
 
 }
@@ -63,14 +63,14 @@ void plotWeightedEvts(TTree* mctr, TTree* datatr, TString outfilename, TString m
 
 gROOT->SetStyle("Plain");
  Int_t NCont=100;
- 
+
   const Int_t NRGBs = 5;
   Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 };
   Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
   Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
   Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
   TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
- 
+
   gStyle->SetNumberContours(NCont);
 
  TString massbin;
@@ -86,13 +86,13 @@ gROOT->SetStyle("Plain");
  gStyle->SetOptTitle(0);
  gStyle->SetStripDecimals(1);
  TGaxis::SetMaxDigits(4);
- 
+
  Int_t font=132;
- 
+
  gStyle->SetTextFont(font);
  gStyle->SetLabelFont(font,"xyz");
  gStyle->SetTitleFont(font,"xyz");
- 
+
  vector<TH1D*> hM;
  TH1D* hMMC=new TH1D("hMMC"+massbin,"Mass (MC)",60,1.0,3.0);
  hM.push_back(hMMC);
@@ -105,7 +105,7 @@ gROOT->SetStyle("Plain");
  vector<TH1D*> hMIsobar3; // 2pi
  vector<TH1D*> hGJ; // 4pi/1pi
  vector<TH1D*> hTY; // 4pi/1pi
- 
+
  vector<TH1D*> hGJ2; // 3pi/2pi
  vector<TH1D*> hHe22; // 2pi2pi helicity frame
  vector<TH1D*> hHe22Phi;
@@ -120,20 +120,20 @@ gROOT->SetStyle("Plain");
     TH1D* hMIsobarMC=new TH1D("hMIsobarMC"+blub,"Isobar Mass (MC) for m_{5#pi}="+mass,nbninsm,0.2,3);
     hMIsobar.push_back(hMIsobarMC);
     hMIsobarMC->Sumw2();
-    
+
     TH1D* hMIsobar2MC=new TH1D("hMIsobar2MC"+blub,"Isobar Mass (MC)",nbninsm,0.4,2.7);
     hMIsobar2.push_back(hMIsobar2MC);
     hMIsobar2MC->Sumw2();
-    
+
     TH1D* hMIsobar3MC=new TH1D("hMIsobar3MC"+blub,"Isobar Mass (MC)",nbninsm,0.2,2.2);
     hMIsobar3.push_back(hMIsobar3MC);
     hMIsobar3MC->Sumw2();
-    
+
     TString name="hGJMC";name+=+massbin;name+="_";name+=isamples;
     TH1D* hGJMC=new TH1D(name,"Cos Gottfried-Jackson Theta (MC)",nbinsang,-1,1);
     hGJ.push_back(hGJMC);
     hGJMC->Sumw2();
- 
+
     TH1D* hTYMC=new TH1D("hTYMC"+blub,"Treiman-Yang Phi (MC)",nbinsang,-TMath::Pi(),TMath::Pi());
     hTY.push_back(hTYMC);
     hTYMC->Sumw2();
@@ -174,7 +174,7 @@ TH1D* hHe21MC=new TH1D("hHe21ThMC"+blub,"Helicity Theta 2pi1pi (MC)",nbinsang,-1
  hMIsobar.push_back(hMIsobarData);
 
  TH1D* hMIsobarAPS=new TH1D("hMIsobarAPS"+massbin,"Isobar mass (Accepted PS)",nbninsm,0.2,3);
- 
+
 
 
  TH1D* hDiffMIsobar; //=new TH1D("hDiffMIsobarData","Isobar mass (DATA) Diff",40,0.2,2.2);
@@ -193,7 +193,7 @@ TH1D* hMIsobar3APS=new TH1D("hMIsobar3APS"+massbin,"Isobar mass (Accepted PS)",n
  TH1D* hGJData=new TH1D("hGJData"+massbin,"Cos Gottfried-Jackson Theta (DATA)",nbinsang,-1,1); hGJ.push_back(hGJData);
 
  TH1D* hGJAPS=new TH1D("hGJAPS"+massbin,"Cos Gottfried-Jackson Theta (Accepted PS)",nbinsang,-1,1);
- 
+
  TH1D* hHe22Data=new TH1D("hHe22ThData"+massbin,"Helicity Theta 2pi2pi (Data)",nbinsang,-1,1);
     hHe22.push_back(hHe22Data);
  TH1D* hHe22APS=new TH1D("hHe22ThAPS"+massbin,"Helicity Theta 2pi2pi (Accepted PS)",nbinsang,-1,1);
@@ -252,7 +252,7 @@ TH1D* hMIsobar3APS=new TH1D("hMIsobar3APS"+massbin,"Isobar mass (Accepted PS)",n
  //hGJ3.push_back(hGJ3MC);
  //TH1D* hGJ3Data=new TH1D("hGJ3Data"+massbin,"Cos Gottfried-Jackson Theta (DATA)",nbinsang,-1,1); hGJ3.push_back(hGJ3Data);
  //hGJ3[0]->Sumw2();
- 
+
 
  TH1D* hTYData=new TH1D("hTYData"+massbin,"Treiman-Yang Phi (DATA)",nbinsang,-TMath::Pi(),TMath::Pi());
   hTY.push_back(hTYData);
@@ -274,7 +274,7 @@ vector<TH1D*> hTY3;
 hTY3[0]->Sumw2();
 // TH1D* hTY3APS=new TH1D("hTY3APS"+massbin,"Treiman-Yang Phi (DATA)",nbinsang,-TMath::Pi(),TMath::Pi());
 
- double avweight=1; 
+ double avweight=1;
 
 //Loop both over data and mc tree.
  for(unsigned int itree=0;itree<2;++itree){
@@ -282,7 +282,7 @@ hTY3[0]->Sumw2();
    if(tr==NULL)continue;
 
    double weight=1;double impweight=1;
-   double maxweight=0; 
+   double maxweight=0;
    TClonesArray* p=new TClonesArray("TLorentzVector");
    TLorentzVector* beam=NULL;
    int qbeam;
@@ -302,20 +302,20 @@ hTY3[0]->Sumw2();
    tr->SetBranchAddress("qbeam",&qbeam);
    tr->SetBranchAddress("q",&q);
 
- 
+
    TVector3 vertex;
 
    NParticleEvent event(p,q,beam,&qbeam,&vertex);
 
 
-   unsigned int nevt=tr->GetEntries();	
+   unsigned int nevt=tr->GetEntries();
    for(unsigned int i=0;i<nevt;++i){
      tr->GetEntry(i);
      if(itree==1){weight=1;impweight=1;}
      if(weight==0)continue;
 
      event.refresh();
-     
+
      if(impweight!=0)weight/=impweight;
 
      if(weight>maxweight)maxweight=weight;
@@ -332,41 +332,41 @@ hTY3[0]->Sumw2();
      }
 
 
-     // transform into GJ 
+     // transform into GJ
      event.toGJ();
-     
+
      // loop over all states that contain n-1 final state particles
      // and plot GJ angles
-    
+
      unsigned int nstates=event.nStates();
        for(unsigned int is=0;is<nstates;++is){
-       
+
        const NParticleState& state=event.getState(is);
        if(state.n()==npart){
-	 
-	 
+
+
 	 hM[itree]->Fill(state.p().M());
-	 
+
        }
 
        if(state.n()==npart-1 && state.q()==0){
-	 
+
 	 if(itree==0){ // mc-tree
 	   hGJAPS->Fill(state.p().CosTheta());
-	   hMIsobarAPS->Fill(state.p().M()); 
+	   hMIsobarAPS->Fill(state.p().M());
 	   hTYAPS->Fill(state.p().Phi());
 	   for(unsigned int isamples=0;isamples<nsamples;++isamples){
 	     hGJ[isamples]->Fill(state.p().CosTheta(),weights[isamples]);
 	     hTY[isamples]->Fill(state.p().Phi(),weights[isamples]);
-	     hMIsobar[isamples]->Fill(state.p().M(),weights[isamples]); 
+	     hMIsobar[isamples]->Fill(state.p().M(),weights[isamples]);
 	   } // end loop over sample models
 	 }
 	 else { // data tree
 	   hGJ[nsamples+itree-1]->Fill(state.p().CosTheta(),1);
-	   hMIsobar[nsamples+itree-1]->Fill(state.p().M(),1); 
+	   hMIsobar[nsamples+itree-1]->Fill(state.p().M(),1);
 	   //hGJt[itree]->Fill(state.p().CosTheta(),tprime,1);
 	   hTY[nsamples+itree-1]->Fill(state.p().Phi(),1);
-	   //hM1vsGJ[itree]->Fill(state.p().CosTheta(),state.p().M(),weight); 
+	   //hM1vsGJ[itree]->Fill(state.p().CosTheta(),state.p().M(),weight);
 	 }
        }
        else if(state.n()==npart-2 && state.q()==-1){
@@ -397,16 +397,16 @@ hTY3[0]->Sumw2();
 	  }
        }
      } // end loop over states 1
-     
-     
-     
+
+
+
      // loop again and fill helicity frame stuff
      // for this we get rid of GJ transform
      event.refresh(); // we do not need to build states again!
      TLorentzVector pX=event.p();
      // and loooooop
      for(unsigned int is=0;is<nstates;++is){
-       
+
        const NParticleState& state=event.getState(is);
        if(state.n()==4 && state.q()==0){
 	 // select sub-systems
@@ -483,12 +483,12 @@ hTY3[0]->Sumw2();
 	 } // end loop over substates ij
        } // end 3pi case
      } // end loop over states is 2
-     
-     
+
+
    }// end loop over events
    if(itree==0)avweight/=(double)nevt;
-   cout << "Maxweight=" << maxweight << endl; 
-   cout << "Average weight=" << avweight << endl; 
+   cout << "Maxweight=" << maxweight << endl;
+   cout << "Average weight=" << avweight << endl;
  } // loop over trees
 
 
@@ -499,7 +499,7 @@ hTY3[0]->Sumw2();
  hM[0]->SetLineColor(kRed);
  hM[0]->Draw();
  hM[1]->Draw("same");
- 
+
  TCanvas* gjt=new TCanvas("GJT"+massbin,"Events",40,40,600,800);
  // hGJt[0]->SetLineColor(kRed);
  hGJt[1]->Draw("COLZ");
@@ -515,17 +515,17 @@ hTY3[0]->Sumw2();
 
  cerr << "totMC/totData = " << totMC/totDATA << endl;
 
- for(unsigned int isamples=0;isamples<nsamples;++isamples){ 
-   const char* opt= (isamples==0) ? "" : "same"; 
+ for(unsigned int isamples=0;isamples<nsamples;++isamples){
+   const char* opt= (isamples==0) ? "" : "same";
    c->cd(1);
-  
+
    double totMC=hMIsobar[isamples]->Integral();
    double totDATA=hMIsobar[nsamples]->Integral();
    if(totMC!=0)hMIsobar[isamples]->Scale(totDATA/totMC);
    hMIsobar[isamples]->SetLineColor(kRed);
    ///hMIsobar[isamples]->SetFillColor(kRed);
    hMIsobar[isamples]->Draw(opt);
- 
+
    c->cd(2);
 
    totMC=hMIsobar2[isamples]->Integral();
@@ -534,7 +534,7 @@ hTY3[0]->Sumw2();
    hMIsobar2[isamples]->SetLineColor(kRed);
    //hMIsobar2[isamples]->SetFillColor(kRed);
    hMIsobar2[isamples]->Draw(opt);
- 
+
 
  c->cd(3);
  totMC=hMIsobar3[isamples]->Integral();
@@ -551,7 +551,7 @@ hTY3[0]->Sumw2();
  hGJ[isamples]->SetLineColor(kRed);
  //hGJ[isamples]->SetFillColor(kRed);
 hGJ[isamples]->Draw(opt);
-  
+
 
 c->cd(5);
  totDATA=hTY[nsamples]->Integral();
@@ -629,7 +629,7 @@ hTY[isamples]->Draw(opt);
  }// end loopover samples
 
  c->cd(6);
- 
+
  hGJ2[nsamples]->Draw("same E");
  hGJ2[0]->GetYaxis()->SetRangeUser(0,hGJ2[0]->GetMaximum()*1.5);
  gPad->Update();
@@ -687,7 +687,7 @@ c->cd(12);
 //  hGJ3[isamples]->SetLineColor(kRed);
 //  //hGJ3[isamples]->SetFillColor(kRed);
 //  hGJ3[isamples]->Draw();
- 
+
 //  hGJ3[1]->Draw("same E");
 //  hGJ3[isamples]->GetYaxis()->SetRangeUser(0,hGJ3[isamples]->GetMaximum()*1.5);
 //gPad->Update();
@@ -701,7 +701,7 @@ c->cd(12);
 //  hTY[0]->SetLineColor(kRed);
 //  hTY[0]->SetFillColor(kRed);
 //  hTY[0]->Draw("E");
- 
+
 
 //  hTY[1]->Draw("same E");
 //  hTY[0]->GetYaxis()->SetRangeUser(0,hTY[0]->GetMaximum()*1.5);
@@ -715,7 +715,7 @@ c->cd(12);
 //  hTY2[0]->SetLineColor(kRed);
 //  hTY2[0]->SetFillColor(kRed);
 //  hTY2[0]->Draw("E");
- 
+
 //  hTY2[1]->Draw("same E");
 //  hTY2[0]->GetYaxis()->SetRangeUser(0,hTY2[0]->GetMaximum()*1.5);
 //  gPad->Update();
@@ -729,13 +729,13 @@ c->cd(12);
 //  hTY3[0]->SetLineColor(kRed);
 //  hTY3[0]->SetFillColor(kRed);
 //  hTY3[0]->Draw("E");
- 
+
 //  hTY3[1]->Draw("same E");
 //  hTY3[0]->GetYaxis()->SetRangeUser(0,hTY3[0]->GetMaximum()*1.5);
 //  gPad->Update();
 
  c->cd(1);
- 
+
  hDiffMIsobar=(TH1D*)hMIsobar[0]->Clone("hMIsobarDiff"+massbin);
  hDiffMIsobar->Add(hMIsobar[nsamples],-1.);
  hMIsobar[nsamples]->Draw("same E");
@@ -799,7 +799,7 @@ c->Update();
  TString psFileName=outfilename;
  psFileName.ReplaceAll(".root",massbin);
  psFileName.Append(".ps");
- 
+
 
  if(totMC!=0){
  // get mass-integrated plots (or create them if not there)
@@ -832,7 +832,7 @@ TH1D* hMIsobar3MCGlob=(TH1D*)outfile->Get("hMIsobar3MCGlob");
  hMIsobar3DataGlob->Add(hMIsobar3[nsamples]);
  hMIsobar3DataGlob->Write();
 
- 
+
  TH1D* hGJMCGlob=(TH1D*)outfile->Get("hGJMCGlob");
  if(hGJMCGlob==NULL)hGJMCGlob=new TH1D("hGJMCGlob","Gottfried-Jackson Theta (MC)",nbinsang,-1,1);
  hGJMCGlob->Add(hGJ[0]);
@@ -842,7 +842,7 @@ TH1D* hGJDataGlob=(TH1D*)outfile->Get("hGJDataGlob");
  if(hGJDataGlob==NULL)hGJDataGlob=new TH1D("hGJDataGlob","Gottfried-Jackson Theta (Data)",nbinsang,-1,1);
  hGJDataGlob->Add(hGJ[nsamples]);
  hGJDataGlob->Write();
- 
+
 TH1D* hGJ2MCGlob=(TH1D*)outfile->Get("hGJ2MCGlob");
  if(hGJ2MCGlob==NULL)hGJ2MCGlob=new TH1D("hGJ2MCGlob","Gottfried-Jackson Theta (MC)",nbinsang,-1,1);
  hGJ2MCGlob->Add(hGJ2[0]);
@@ -852,7 +852,7 @@ TH1D* hGJ2DataGlob=(TH1D*)outfile->Get("hGJ2DataGlob");
  if(hGJ2DataGlob==NULL)hGJ2DataGlob=new TH1D("hGJ2DataGlob","Gottfried-Jackson Theta (Data)",nbinsang,-1,1);
  hGJ2DataGlob->Add(hGJ2[nsamples]);
  hGJ2DataGlob->Write();
- 
+
 
  // c->cd(13);
  // hMIsobarMCGlob->SetLineColor(kRed);
@@ -898,12 +898,12 @@ TH1D* hGJ2DataGlob=(TH1D*)outfile->Get("hGJ2DataGlob");
  Hlist->Print();
  Hlist->Write();
  outfile->Close();
- 
+
  gjt->Update();
 
  gROOT->cd();
 
- 
+
  }
 
 //If I'm not wrong this script should compile for root even with a main in it

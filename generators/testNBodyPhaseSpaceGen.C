@@ -94,7 +94,7 @@ dalitzKinematicBorder(double* var,
 	// parameters
 	const double  M   = par[0];                       // 3-body mass
 	const double* m   = &par[1];                      // array with the 3 daughter masses
-	const bool    min = (par[4] < 0) ? true : false;  // switches between curves for minimum and maximum mass squared on y-axis  
+	const bool    min = (par[4] < 0) ? true : false;  // switches between curves for minimum and maximum mass squared on y-axis
 
 	return dalitzKinematicBorder(mass_2, M, m, min);
 }
@@ -106,7 +106,7 @@ void setResidualPalette(const unsigned int nmbSteps = 99)
 	Double_t           rChannel[nmbCol] = {0, 1,   1};
 	Double_t           gChannel[nmbCol] = {0, 1,   0};
 	Double_t           bChannel[nmbCol] = {1, 1,   0};
-	Double_t           zPos    [nmbCol] = {0, 0.5, 1};   
+	Double_t           zPos    [nmbCol] = {0, 0.5, 1};
 	TColor::CreateGradientColorTable(nmbCol, zPos, rChannel, gChannel, bChannel, nmbSteps);
 }
 
@@ -255,7 +255,7 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
 		return;
 	}
 	cout << "    ... success" << endl;
-  
+
 	// setup nBodyPhaseSpaceGen generators
 	const unsigned int nmbGen = 5;
 	nBodyPhaseSpaceGen* gen[5];
@@ -287,7 +287,7 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
 	maxTGenWeight *= 1.01;
 	double   maxTGenWeightObserved = 0;
 	TRandom3 random(seed);
-  
+
 	// book histograms
 	TH2F* hDalitz [nmbGen + 1];
 	TH1F* hMass   [nmbGen + 1];
@@ -499,7 +499,7 @@ void testNBodyPhaseSpaceGen(const unsigned int nmbEvents   = 1000000,
 		const double       massRange2[2] = {m2[0] + m2[1] + m2[2] + m2[3], 2};    // [GeV/c^2]
 		printInfo << "comparing run time of generators for 4-body in mass range [" << massRange2[0] << ", " << massRange2[1] << "] GeV/c^2" << endl
 		          << "    generating " << nmbEvents << " events using TGenPhaseSpace ... " << endl;
-    
+
 		// setup nBodyPhaseSpaceGen generator
 		nBodyPhaseSpaceGen gen2;
 		gen2.setWeightType(nBodyPhaseSpaceGen::GENBOD);

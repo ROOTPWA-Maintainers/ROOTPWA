@@ -2,7 +2,7 @@ A few notes on usages:
 
 To produce predict plots from already computed phase-space amplitudes use evtweight like in the following example:
 
-evtweight -e ../1840.1900.genbod.evt -o ~/scratch/COMPASS/rootpwa/trunk/ltfit11predict1.root -w ../../../PWAFITS/LOWT/fit11/1840.2080.result.acc.root -i norm.int -m 1870  
+evtweight -e ../1840.1900.genbod.evt -o ~/scratch/COMPASS/rootpwa/trunk/ltfit11predict1.root -w ../../../PWAFITS/LOWT/fit11/1840.2080.result.acc.root -i norm.int -m 1870
 
 You have to call this from the directory where the amplitude-files are located!!
 

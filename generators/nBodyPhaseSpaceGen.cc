@@ -46,7 +46,7 @@
 //        be divided by the correct power of (2) pi (the "S.U. Chung"
 //        already contains a factor (4 pi)^(n - 1) from (trivial)
 //        integration over all angles)
-// 
+//
 // based on:
 // GENBOD (CERNLIB W515), see F. James, "Monte Carlo Phase Space", CERN 68-15 (1968)
 // NUPHAZ, see M. M. Block, "Monte Carlo phase space evaluation", Comp. Phys. Commun. 69, 459 (1992)
@@ -112,7 +112,7 @@ nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
     _kinematicsType   (BLOCK),
 
     _verbose(false),
-   
+
     _isoBWMass(1.0),_isoBWWidth(0.01) // dummy values!!!
 { }
 
@@ -156,11 +156,11 @@ nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of 
   _daughters.resize(_n, TLorentzVector(0, 0, 0, 0));
   // calculate normalization
   switch (_weightType) {
-  case S_U_CHUNG: case IMPORTANCE: 
+  case S_U_CHUNG: case IMPORTANCE:
     // S. U. Chung's normalization
 	  _norm = 1 / (2 * pow(twoPi, 2 * (int)_n - 3) * rpwa::factorial<double>(_n - 2));
     break;
-  case NUPHAZ: 
+  case NUPHAZ:
     {  // NUPHAZ's normalization: calculates phase space for massless daughters
 	    const double fact = rpwa::factorial<double>(_n - 2);
       _norm = 8 / (pow(fourPi, 2 * (int)_n + 1) * fact * fact * (_n - 1));
@@ -251,7 +251,7 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
 
   _M[_n - 1] = nBodyMass;
   switch (_weightType) {
-  case NUPHAZ: 
+  case NUPHAZ:
     {  // the NUPHAZ algorithm calculates part of the weight along with the effective isobar masses
       // for better readability notation was slightly changed w.r.t to Block's paper
       // \mathcal{F} -> F
@@ -286,10 +286,10 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
     break;
     /*  case IMPORTANCE:
     {
-      
+
       // set effective masses of (intermediate) two-body decays
       const double massInterval = nBodyMass - _mSum[_n - 1];  // kinematically allowed mass interval
-      
+
       //  do first isobar breitwigner importance sampling:
       double m=0;//unsigned int count=0;
       //while(m<_mSum[_n-2] || m>_mSum[_n-2]+massInterval){
@@ -298,34 +298,34 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
 	//printErr <<  _M[_n-3] << " < " << m << " < " << _mSum[_n-2]+massInterval << endl;
 	//}
       _M[_n-2]=m;
-      _impweight=TMath::BreitWigner(m,_isoBWMass,_isoBWWidth);  // for de-weighting (has to be read out explicitely!!!) 
-      
+      _impweight=TMath::BreitWigner(m,_isoBWMass,_isoBWWidth);  // for de-weighting (has to be read out explicitely!!!)
+
       // now that the first isobar mass is fixed, generate the rest:
       // create vector of sorted random values
       vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
       r[_n-3]=(_M[_n-2]-_mSum[_n-2])/massInterval;
-      
-      
+
+
       for (unsigned int i = _n-3; i > 0; --i)
 	r[i-1] = gRandom->Uniform(0,r[i]);
-      
+
       for (unsigned int i = 1; i < (_n - 2); ++i)             // loop over intermediate 2- to (n - 1)-bodies
 	_M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
-      
-      
-      
+
+
+
       if(_verbose){
 	for(unsigned int i =0; i < (_n - 1) ; ++i){
 	  cerr << "M["<<i<<"]="<<_M[i] << endl;
 	}
       }// end ifverbose
     }// end if importance sampling
-    
-    
+
+
     break;*/
   default:
     {
-      
+
       // create vector of sorted random values
       vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
       for (unsigned int i = 0; i < (_n - 2); ++i)
@@ -368,7 +368,7 @@ nBodyPhaseSpaceGen::calcWeight()
       _weight = _norm * pow(massInterval, (int)_n - 2) * momProd / _M[_n - 1] * _impweight;
     }
     break;
-  case NUPHAZ: 
+  case NUPHAZ:
     {  // NUPHAZ's weight
       const double M2 = _M[1] * _M[1];
       _weight *= _norm * pow(_M[_n - 1], 2 * (int)_n - 4) * F(_m[1] * _m[1] / M2, _m[0] * _m[0] / M2);
@@ -389,7 +389,7 @@ nBodyPhaseSpaceGen::calcWeight()
       _weight = momProd / momProdMax;
     }
     break;
-  case FLAT: 
+  case FLAT:
     // no weighting
     //!!! warning: produces distorted angular distribution
     _weight = 1;
@@ -414,7 +414,7 @@ void
 nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz vector of n-body system in lab frame
 {
   switch (_kinematicsType) {
-  case RAUBOLD_LYNCH: 
+  case RAUBOLD_LYNCH:
     {
       // builds event starting in 2-body RF going up to n-body
       // is less efficicient, since to calculate kinematics in i-body RF
@@ -446,7 +446,7 @@ nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz
 	    daughter->SetPy(sP * x + cP * y);
 	  }
 	}
-	if (i < (_n - 1)) { 
+	if (i < (_n - 1)) {
 	  // boost all daughters of the (i + 1)-body system from (i + 1)-body RF to (i + 2)-body RF; (i + 2)-body is along z-axis
 	  const double betaGammaInv = _M[i] / _breakupMom[i + 1];  // 1 / (beta * gamma) of (i + 1)-body system in the (i + 2) RF
 	  const double beta         = 1 / sqrt(1 + betaGammaInv * betaGammaInv);
@@ -461,7 +461,7 @@ nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz
       }
     }
     break;
-  case BLOCK: 
+  case BLOCK:
     {
       // builds event starting in n-body RF going down to 2-body RF
       // is more efficicient, since it requitres only one rotation and boost per daughter
@@ -495,8 +495,8 @@ nBodyPhaseSpaceGen::calcEventKinematics(const TLorentzVector& nBody)  // Lorentz
 // calculates maximum weight for given n-body mass
 double
 nBodyPhaseSpaceGen::estimateMaxWeight(const double       nBodyMass,        // sic!
-				      const unsigned int nmbOfIterations)  // number of generated events
-					     
+                                      const unsigned int nmbOfIterations)  // number of generated events
+
 {
   double maxWeight = 0;
   for (unsigned int i = 0; i < nmbOfIterations; ++i) {
@@ -527,7 +527,7 @@ nBodyPhaseSpaceGen::print(ostream& out) const
        << "    maximum weight since instantiation ......... " << _maxWeightObserved << endl
        << "    algorithm for kinematics calculation ....... " << _kinematicsType    << endl
        << "    daughter four-momenta:" << endl;
-  
+
   for (unsigned int i = 0; i < _n; ++i)
     out << "        daughter " << i << ": " << _daughters[i] << endl;
   return out;

@@ -45,7 +45,7 @@ TGraphErrors* buildGraph(vector<TH1D*> histo, unsigned int n){
     sigmastat*=sigmastat;
     g->SetPointError(ib,dx,sqrt(sigma+sigmastat));
   }
-  
+
   return g;
 
 }
@@ -53,7 +53,7 @@ TGraphErrors* buildGraph(vector<TH1D*> histo, unsigned int n){
 
 // routine to make a nice, accumulated plot
 TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsigned int nsamples,TFile* infile, TString plotdir){
-  
+
   TString mcname=histoname+"MC";
   TString dataname=histoname+"Data";
   TString apsname=histoname+"APS";
@@ -74,9 +74,9 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
     name=apsname+bins[ib];
     //cout << "Searching for " << name << endl;
     TH1D* apshisto=(TH1D*)infile->Get(name);
-    
+
     if(datahisto==NULL || apshisto==NULL){
-      
+
 
       return NULL;
     }
@@ -99,11 +99,11 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
       TH1D* mchisto=(TH1D*)infile->Get(name);
       if(mchisto==NULL)return 0;
       if(ib==0){ // create clone, rename and acccumulate into this
-	TString accname=mcname+range+"_";accname+=is;
-	mcplots[is]=(TH1D*)mchisto->Clone(accname);
+        TString accname=mcname+range+"_";accname+=is;
+        mcplots[is]=(TH1D*)mchisto->Clone(accname);
       }
       else {
-	mcplots[is]->Add(mchisto);
+        mcplots[is]->Add(mchisto);
       }
       mcplots[is]->SetLineColor(kRed);
     } // end loop over samples
@@ -133,7 +133,7 @@ TCanvas* plotAccu(TString histoname, TString xtitle, vector<TString> bins, unsig
   com04->SetNDC();
   com04->SetTextSize(0.05);
   com04->Draw();
-  
+
   // 5 pi on pb
   xc=xcenter+0.05;
   //xc=xcenter+0.1;
@@ -212,7 +212,7 @@ void accumKinePlots(TString plotsfile, TString outdir){
   TGaxis::SetMaxDigits(4);
   gStyle->SetFrameFillStyle(0);
   gStyle->SetFrameBorderMode(0);
-  
+
   gROOT->ForceStyle();
 
   // setup binning
@@ -236,9 +236,9 @@ void accumKinePlots(TString plotsfile, TString outdir){
     plotAccu("hMIsobar","invariant mass of #pi^{-}#pi^{+}#pi^{-}#pi^{+} system (GeV/c^{2})", bins[bin],100,infile,outdir);
     plotAccu("hMIsobar2","invariant mass of #pi^{-}#pi^{+}#pi^{-} system (GeV/c^{2})", bins[bin],100,infile,outdir);
     plotAccu("hMIsobar3","invariant mass of #pi^{-}#pi^{+} system (GeV/c^{2})", bins[bin],100,infile,outdir);
-    
+
     plotAccu("hGJ","cos #theta_{GJ}(#pi^{-}#pi^{+}#pi^{-}#pi^{+})", bins[bin],100,infile,outdir);
-  plotAccu("hTY","#phi_{TY}(#pi^{-}#pi^{+}#pi^{-}#pi^{+})", bins[bin],100,infile,outdir);
+    plotAccu("hTY","#phi_{TY}(#pi^{-}#pi^{+}#pi^{-}#pi^{+})", bins[bin],100,infile,outdir);
 
     plotAccu("hGJ2","cos #theta_{GJ}(#pi^{+}#pi^{-}#pi^{-})" ,bins[bin],100,infile,outdir);
     plotAccu("hHe22Th","cos #theta_{Hel}(#pi^{-}#pi^{+})(#pi^{-}#pi^{+})" ,bins[bin],100,infile,outdir);
@@ -248,8 +248,7 @@ void accumKinePlots(TString plotsfile, TString outdir){
     plotAccu("hHe21Phi","#phi_{Hel}(#pi^{-}#pi^{+})(#pi^{-})" ,bins[bin],100,infile,outdir);
     plotAccu("hHe31Phi","#phi_{Hel}(#pi^{-}#pi^{+}#pi^{-})(#pi^{+})" ,bins[bin],100,infile,outdir);
     //break;
-  }  
-
-  
+  }
 
 }
+

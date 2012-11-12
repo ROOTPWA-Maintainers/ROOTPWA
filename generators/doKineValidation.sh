@@ -32,7 +32,7 @@ for i in *; do
     cd ACCAMPS
     # cd PSPAMPS
     WEIGHTEDFILE=${FITFILE/.root/.kineval.$i.root}
-    test -s $WEIGHTEDFILE || time evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -n $SAMPLES -m $i  
+    test -s $WEIGHTEDFILE || time evtweight -e ../$i.acc.evt -o $WEIGHTEDFILE  -w $FITFILE -i accnorm.int -n $SAMPLES -m $i
     # produce nice plots
     root -b -q "$ROOTPWA/generators/doPlotWEvts.C(\"../$i.root\",\"$WEIGHTEDFILE\",\"$PLOTFILE\",\"$i\",$SAMPLES)"
 
