@@ -240,7 +240,7 @@ int main(int argc, char** argv)
 		    Mom,
 		    MomSigma
 		    );
-		if (!primaryVtxGen->Check()) {
+		if (!primaryVtxGen->check()) {
 			cerr << " Error: histogram filename with beam properties not loaded! " << endl;
 			delete primaryVtxGen;
 			primaryVtxGen = NULL;

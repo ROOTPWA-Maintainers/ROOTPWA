@@ -380,14 +380,14 @@ diffractivePhaseSpace::event()
 		// as documented one may need several attempts to get a vertex position
 		// which is valid also for the beam direction measurement
 		while(attempts < 1000) {
-			_vertex = _primaryVertexGen->Get_Vertex();
-			TVector3 beam_dir = _primaryVertexGen->Get_beam_dir(_vertex);
+			_vertex = _primaryVertexGen->getVertex();
+			TVector3 beam_dir = _primaryVertexGen->getBeamDir(_vertex);
 			if(beam_dir.Mag() == 0) {
 				++attempts;
 				//cout << " skipping " << endl;
 				continue;
 			}
-			_beamLab = _primaryVertexGen->Get_beam_part(beam_dir);
+			_beamLab = _primaryVertexGen->getBeamPart(beam_dir);
 			break;
 		}
 		// Just a few events should contain a vertex position with no beam direction information
