@@ -49,7 +49,7 @@
 #include "diffractivePhaseSpace.h"
 #include "TPWWeight.h"
 #include "productionAmp.h"
-#include "TBWProductionAmp.h"
+#include "breitWignerProductionAmp.h"
 #include "TFitBin.h"
 
 #include "primaryVertexGen.h"
@@ -326,7 +326,7 @@ int main(int argc, char** argv)
 	}
 
 	// see if we have a resonance in this wave
-	map<string, TBWProductionAmp*> bwAmps;
+	map<string, breitWignerProductionAmp*> bwAmps;
 	if(reactConf.exists("resonances")) {
 		const Setting &bws = root["resonances"]["breitwigners"];
 		// loop through breitwigners
@@ -346,7 +346,7 @@ int main(int argc, char** argv)
 			complex<double> coupl(cRe, cIm);
 			cout << "    JPCME = " << jpcme << ", mass = " << mass << " GeV/c^2, "
 			     << "width = " << width << " GeV/c^2, coupling = " << coupl << endl;
-			bwAmps[jpcme] = new TBWProductionAmp(mass, width, coupl);
+			bwAmps[jpcme] = new breitWignerProductionAmp(mass, width, coupl);
 		}
 	}
 

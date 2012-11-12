@@ -58,7 +58,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 set(SOURCES
 	nBodyPhaseSpaceGen.cc
 	productionAmp.cc
-	TBWProductionAmp.cc
+	breitWignerProductionAmp.cc
 	TPWWeight.cc
 	diffractivePhaseSpace.cc
 	primaryVertexGen.cc
