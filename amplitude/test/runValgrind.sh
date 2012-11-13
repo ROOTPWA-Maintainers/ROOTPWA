@@ -42,7 +42,7 @@ echo ">>> info: called ${0} ${*}"
 #VALGRIND_TOOL="memcheck"
 VALGRIND_TOOL="callgrind"
 
-PROGRAM="../build/bin/calcAmplitudes"
+PROGRAM="../../build/bin/calcAmplitudes"
 PROGRAM_OPT="-n 200000 -k 1-4++1+f21270_32_pi-.key -p ./particleDataTable.txt -o 1-4++1+f21270_32_pi-.amp /dev/shm/allBins.ps.noTarget.root"
 #PROGRAM="../debugBuild/bin/testLibppFunctions"
 #PROGRAM_OPT=""
@@ -58,7 +58,7 @@ echo
 # prepare command line
 case ${VALGRIND_TOOL} in
     "memcheck")  # run memcheck tool 
-	VALGRIND_OPT="--leak-check=full --suppressions=$ROOTSYS/etc/valgrind-root.supp --show-reachable=yes --track-origins=yes --freelist-vol=100000000 --verbose"
+	VALGRIND_OPT="--leak-check=full --suppressions=${ROOTSYS}/etc/valgrind-root.supp --show-reachable=yes --track-origins=yes --freelist-vol=100000000 --verbose"
 	;;
     "callgrind")  # run callgrind tool
 	#!!! callgrind segfaults when demangling Boost symbols
@@ -73,9 +73,9 @@ case ${VALGRIND_TOOL} in
 esac
 
 # do it
-COMMAND="valgrind ${VALGRIND_OPT} ${PROGRAM} ${PROGRAM_OPT} &> ${LOG_FILE}"
-echo "${COMMAND}"
-time eval ${COMMAND}
+CMD="valgrind ${VALGRIND_OPT} ${PROGRAM} ${PROGRAM_OPT} &> ${LOG_FILE}"
+echo "${CMD}"
+time eval ${CMD}
 echo
 
 # demangle symbols in callgrind output

@@ -78,7 +78,7 @@ namespace rpwa {
 		{ _isobarWhiteList = isobarList; }
 		void setAllowSpinExotics     (const bool   flag     ) { _allowSpinExotics      = flag;  }
 		void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
-		void setForceDecayCheck      (const bool   flag     ) { _forceDecayCheck  = flag;  }
+		void setForceDecayCheck      (const bool   flag     ) { _forceDecayCheck       = flag;  }
 		void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
 		std::size_t generateWaveSet();  ///< generates wave set from template topology

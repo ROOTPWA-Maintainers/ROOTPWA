@@ -61,7 +61,7 @@ namespace rpwa {
 
 		static const particleProperties* entry(const std::string& partName,
 		                                       const bool         warnIfNotExistent = true);  ///< access properties by particle name
-	
+
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>
@@ -93,7 +93,7 @@ namespace rpwa {
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-     
+
 
 	private:
 
@@ -109,7 +109,7 @@ namespace rpwa {
 
 	};
 
-  
+
 	inline
 	std::ostream&
 	operator <<(std::ostream&            out,
@@ -130,6 +130,6 @@ namespace rpwa {
 
 
 } // namespace rpwa
-	
+
 
 #endif  // PARTICLEDATATABLE_H

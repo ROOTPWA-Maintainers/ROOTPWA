@@ -116,7 +116,6 @@ fitResult::fitResult(const fitResult& result)
 	  _phaseSpaceIntegral    (result._phaseSpaceIntegral),
 	  _converged             (result._converged),
 	  _hasHessian            (result._hasHessian)
-  
 { }
 
 
@@ -149,14 +148,14 @@ fitResult::cloneVar(){
   // copy complete info
   fitResult* result = new fitResult(*this);
 
-  // Cholesky decomposition (hoepfully this will not slow us down too much 
+  // Cholesky decomposition (hoepfully this will not slow us down too much
   // if it does we have to cache
-  cerr << "Starting Cholesky Decomposition" << endl; 
+  cerr << "Starting Cholesky Decomposition" << endl;
   TDecompChol decomp(_fitParCovMatrix);
   decomp.Decompose();
   TMatrixT<Double_t> C(decomp.GetU());
   cerr << "...Done" << endl;
-  
+
   unsigned int npar=C.GetNrows();
   TMatrixD x(npar,1);
   // generate npar independent random numbers
@@ -167,10 +166,10 @@ fitResult::cloneVar(){
   // this tells us how to permute the parameters taking into account all
   // correlations in the covariance matrix
   TMatrixD y(C,TMatrixD::kMult,x);
-  
+
   // now we need mapping from parameters to production amp re and im
-  // loop over production amps 
-  unsigned int nt=_prodAmps.size(); 
+  // loop over production amps
+  unsigned int nt=_prodAmps.size();
   for(unsigned int it=0;it<nt;++it){
     Int_t jre=_fitParCovMatrixIndices[it].first;
     Int_t jim=_fitParCovMatrixIndices[it].second;
@@ -178,17 +177,11 @@ fitResult::cloneVar(){
     if(jre>-1)re+=y(jre,0);
     if(jim>-1)im+=y(jim,0);
     result->_prodAmps[it]=TComplex(re,im);
-    cerr << "Modifying amp " << it << " by (" << (jre>-1 ? y(jre,0) : 0) 
-	 << "," << (jim>-1 ? y(jim,0) : 0) <<")" << endl;
+    cerr << "Modifying amp " << it << " by (" << (jre>-1 ? y(jre,0) : 0)
+         << "," << (jim>-1 ? y(jim,0) : 0) <<")" << endl;
   }
   return result;
 }
-
-
-
-
-
-
 
 
 /// \brief calculates the model evidence using Rafters occam factor method
@@ -202,7 +195,7 @@ fitResult::evidence() const
 
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
 	double       l   = -logLikelihood();// - intensity(".*");
- 
+
 	double       det = _fitParCovMatrix.Determinant();
 	// simple determinant neglecting all off-diagonal entries
 	//   unsigned int n= _fitParCovMatrix.GetNcols();
@@ -219,13 +212,13 @@ fitResult::evidence() const
 	// parameter-volume after observing data
 	//double vad  = TMath::Power(2*TMath::Pi(), d * 0.5) * TMath::Sqrt(det);
 	//double lvad = TMath::Log(vad);
-  
+
 	double lvad=0.5*(d*1.837877066+TMath::Log(det));
 
 	// parameter volume prior to observing the data
 	// n-Sphere:
 	double lva= TMath::Log(d) + 0.5*(d*1.144729886+(d-1)*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
-  
+
 	// n-ball:
 	//  double lva = 0.5*(d*1.144729886+d*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
 
@@ -245,7 +238,7 @@ fitResult::evidence() const
 	}
 
 
-  
+
 	//   cerr << "fitResult::evidence()" << endl
 	//        << "    det         : " << det << endl
 	//     //<< "    detsimple   : " << det2 << endl
@@ -257,7 +250,7 @@ fitResult::evidence() const
 	//        << "    Occamfactor : " << -lva+lvad << endl
 	//        << "    LogProb     : " << logprob << endl
 	//        << "    evidence    : " << l + lvad - lva + logprob<< endl;
-  
+
 	return l + lvad - lva + logprob;
 }
 
@@ -404,11 +397,11 @@ fitResult::intensity(const char* waveNamePattern) const
 	double               intensity   = 0;
 	for (unsigned int i = 0; i < waveIndices.size(); ++i) {
 		intensity += this->intensity(waveIndices[i]);
-		// cout << "    contribution from " << _waveNames[waveIndices[i]] 
+		// cout << "    contribution from " << _waveNames[waveIndices[i]]
 		//      << " = " << this->intensity(waveIndices[i]) << endl;
 		for (unsigned int j = 0; j < i; ++j) {
 			intensity += overlap(waveIndices[i], waveIndices[j]);
-			// cout << "        overlap with " << _waveNames[waveIndices[j]] 
+			// cout << "        overlap with " << _waveNames[waveIndices[j]]
 			//      << " = " << overlap(waveIndices[i], waveIndices[j]) << endl;
 		}
 	}
@@ -444,7 +437,7 @@ fitResult::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 /// \brief calculates error of intensity of a set of waves matching name pattern
 ///
 /// error calculation is performed on amplitude level using: int = sum_ij Norm_ij sum_r A_ir A_jr*
-double 
+double
 fitResult::intensityErr(const char* waveNamePattern) const
 {
 	// get amplitudes that correspond to wave name pattern
@@ -481,7 +474,7 @@ fitResult::intensityErr(const char* waveNamePattern) const
 double
 fitResult::phase(const unsigned int waveIndexA,
                  const unsigned int waveIndexB) const
-{ 
+{
 	if (waveIndexA == waveIndexB)
 		return 0;
 	return arg(spinDensityMatrixElem(waveIndexA, waveIndexB)) * TMath::RadToDeg();
@@ -643,7 +636,7 @@ fitResult::reset()
 }
 
 
-void 
+void
 fitResult::fill
 (const unsigned int              nmbEvents,               // number of events in bin
  const unsigned int              normNmbEvents,	          // number of events to normalize to
@@ -789,7 +782,7 @@ fitResult::buildWaveMap()
 		const TString title = wavetitle(i);
 		if (find(_waveNames.begin(), _waveNames.end(), title.Data()) == _waveNames.end())
 			_waveNames.push_back(title.Data());
-    
+
 		// look for index of first occurence
 		int j;
 		for (j = 0; j < n; ++j)

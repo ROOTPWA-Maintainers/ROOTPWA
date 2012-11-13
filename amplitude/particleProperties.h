@@ -58,7 +58,7 @@ namespace rpwa {
 	class particleProperties {
 
 	public:
-		
+
 		particleProperties();
 		particleProperties(const particleProperties& partProp);
 		particleProperties(const std::string&        partName,
@@ -67,7 +67,7 @@ namespace rpwa {
 		                   const int                 J,
 		                   const int                 P,
 		                   const int                 C);
-    
+
 		virtual ~particleProperties();
 
 		particleProperties& operator =(const particleProperties& partProp);
@@ -101,7 +101,7 @@ namespace rpwa {
 		int         C               () const { return _C;                                      }  ///< returns particle's C-parity
 
 		bool isXParticle() const;  ///< returns whether particle's name is either of "X{,-,0,+}"
-		
+
 		bool isMeson () const;  ///< returns whether particle is a meson
 		bool isBaryon() const;  ///< returns whether particle is a baryon
 		bool isLepton() const;  ///< returns whether particle is a lepton
@@ -116,7 +116,7 @@ namespace rpwa {
 		bool hasDecay    (const std::multiset<std::string>& daughters) const; ///< returns whether given decay mode is in list of decays
 		void addDecayMode(const std::multiset<std::string>& daughters) { _decayModes.push_back(daughters); }  ///< adds decay channel into list of allowed decay modes
 
-		bool fillFromDataTable(const std::string& name, 
+		bool fillFromDataTable(const std::string& name,
 		                       const bool         warnIfNotExistent = true);  ///< sets particle properties from entry in particle data table
 
 		void setName        (const std::string& name       );                                                ///< sets particle name and charge (if given in name)
@@ -171,7 +171,7 @@ namespace rpwa {
 	protected:
 
 		virtual bool isEqualTo(const particleProperties& partProp) const;  ///< returns whether partProp is equal to this by checking equality of all member variables
-		
+
 
 	private:
 
@@ -285,7 +285,7 @@ namespace rpwa {
 	inline
 	void
 	particleProperties::setMass(const double mass)
-	{ 
+	{
 		_mass  = mass;
 		_mass2 = mass * mass;
 	}
@@ -324,6 +324,6 @@ namespace rpwa {
 
 
 } // namespace rpwa
-	
+
 
 #endif  // PARTICLEPROPERTIES_H

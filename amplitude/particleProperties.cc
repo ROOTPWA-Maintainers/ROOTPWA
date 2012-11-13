@@ -46,7 +46,7 @@
 #include "particleDataTable.h"
 #include "particleProperties.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 using namespace boost;
@@ -54,7 +54,7 @@ using namespace boost;
 
 bool particleProperties::_debug = false;
 
-	
+
 particleProperties::particleProperties()
 	: _name        (""),
 	  _antiPartName(""),
@@ -136,7 +136,7 @@ namespace rpwa {
 
 	// selector string can contain any of the following:
 	// I, G, J, P, C, strangeness, charm, beauty, baryonNmb, or allQn
-	bool 
+	bool
 	operator ==(const particleProperties&               lhsProp,
 	            const pair<particleProperties, string>& rhsPropSel)
 	{
@@ -175,7 +175,7 @@ particleProperties::isSpinExotic() const
 }
 
 
-bool 
+bool
 particleProperties::hasDecay(const multiset<string>& daughters) const
 {
   return find(_decayModes.begin(), _decayModes.end(), daughters) != _decayModes.end();
@@ -269,7 +269,7 @@ particleProperties::bareNameLaTeX() const
 	// // handle antiparticle
 	// if ()
 	// // handle * particles
-	
+
 	// // setup particle-name dictionary
 	// map<string, string> partNameDict;
 	// isobars["gamma"  ] = "\\gamma";
@@ -367,12 +367,12 @@ particleProperties::dump(ostream& out) const
 	    << width       () << "\t"
 	    << baryonNmb   () << "\t"
 	    << isospin     () << "\t"
-	    << strangeness () << "\t" 
-	    << charm       () << "\t" 
-	    << beauty      () << "\t" 
-	    << G           () << "\t" 
-	    << J           () << "\t" 
-	    << P           () << "\t" 
+	    << strangeness () << "\t"
+	    << charm       () << "\t"
+	    << beauty      () << "\t"
+	    << G           () << "\t"
+	    << J           () << "\t"
+	    << P           () << "\t"
 	    << C           ();
 	return out;
 }
