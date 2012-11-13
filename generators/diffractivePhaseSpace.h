@@ -74,10 +74,10 @@ namespace rpwa {
 		~diffractivePhaseSpace();
 
 		// Accessors -----------------------
-		const TLorentzVector* const GetDecay(unsigned int i) { return &_phaseSpace.daughter(i); }
-		TLorentzVector* GetBeam() { return &_beamLab; }
-		TVector3* GetVertex() { return &_vertex; }
-		double Gettprime() { return _tprime; }
+		const TLorentzVector* const decay(unsigned int i) { return &_phaseSpace.daughter(i); }
+		TLorentzVector* beam() { return &_beamLab; }
+		TVector3* vertex() { return &_vertex; }
+		double tPrime() { return _tPrime; }
 
 		// Modifiers -----------------------
 		/** @brief Set beam parameters
@@ -90,7 +90,7 @@ namespace rpwa {
 		 * _beamMom       = 189 [GeV/c]
 		 * _beamMomSigma  = 1.2
 		 */
-		void SetBeam(double Mom=190, double MomSigma=1.2,
+		void setBeam(double Mom=190, double MomSigma=1.2,
 		             double DxDz=0, double DxDzSigma=0,
 		             double DyDz=0, double DyDzSigma=0);
 
@@ -102,7 +102,7 @@ namespace rpwa {
 		 *           Defines a target cell with 4cm diameter extending
 		 *           from z=-40cm to z=0cm
 		 */
-		void SetTarget(double zPos,
+		void setTarget(double zPos,
 		               double length,
 		               double r,
 		               double mass)
@@ -121,7 +121,7 @@ namespace rpwa {
 		 *
 		 *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
 		 */
-		void SetTPrimeSlope(double slopePar) {
+		void setTPrimeSlope(double slopePar) {
 			_invSlopePar = new double[1];
 			_invSlopePar[0] = 1. / slopePar;
 		}  // inverse for simple usage with TRandom
@@ -132,7 +132,7 @@ namespace rpwa {
 		 *
 		 *  in case of more than one value assuming sorted ascending input for interpolation
 		 */
-		void SetTPrimeSlope(double* slopePar, double* inv_m = NULL, int nvalues = 1) {
+		void setTPrimeSlope(double* slopePar, double* inv_m = NULL, int nvalues = 1) {
 			// delete previous arrays if existing
 			if(_invSlopePar) {
 				delete [] _invSlopePar;
@@ -158,35 +158,35 @@ namespace rpwa {
 		 *
 		 *  Events will be generated uniformly in mass
 		 */
-		void SetMassRange(double min, double max) {
+		void setMassRange(double min, double max) {
 			_xMassMin=min;
 			_xMassMax=max;
 		}
 
-		void SetDecayProducts(const std::vector<particleInfo>& info);
-		void AddDecayProduct(const particleInfo& info);
-		void SetSeed(int seed);
+		void setDecayProducts(const std::vector<particleInfo>& info);
+		void addDecayProduct(const particleInfo& info);
+		void setSeed(int seed);
 
 		void setVerbose(bool flag) { _phaseSpace.setVerbose(flag); }
 
-		void SetImportanceBW(double mass, double width) {
+		void setImportanceBW(double mass, double width) {
 			_phaseSpace.setProposalBW(mass, width);
 			_phaseSpace.setWeightType(nBodyPhaseSpaceGen::IMPORTANCE);
 		}
 
-		void SettMin(double tMin) {
+		void setTMin(double tMin) {
 			_tMin = tMin;
 			if (tMin > 0) _tMin = -tMin;
 		};
 
-		void SettprimeMin(double tprimeMin) {
-			_tprimeMin = tprimeMin;
-			if (tprimeMin > 0) _tprimeMin = -tprimeMin;
+		void setTPrimeMin(double tPrimeMin) {
+			_tprimeMin = tPrimeMin;
+			if (tPrimeMin > 0) _tprimeMin = -tPrimeMin;
 		};
 
-		void SettprimeMax(double tprimeMax) {
-			_tprimeMax = tprimeMax;
-			if (tprimeMax > 0) _tprimeMax = -tprimeMax;
+		void setTPrimeMax(double tPrimeMax) {
+			_tprimeMax = tPrimeMax;
+			if (tPrimeMax > 0) _tprimeMax = -tPrimeMax;
 		};
 
 		/*
@@ -194,7 +194,7 @@ namespace rpwa {
 		 * Vertex position, Beam Energy and Direction will be
 		 * created by the primary Vertex Generator
 		 */
-		void SetPrimaryVertexGen(primaryVertexGen* primaryVertexGen) { _primaryVertexGen = primaryVertexGen; };
+		void setPrimaryVertexGen(primaryVertexGen* primaryVertexGen) { _primaryVertexGen = primaryVertexGen; };
 
 		/** @brief generates on event
 		 *
@@ -231,12 +231,12 @@ namespace rpwa {
 
 
 		// target position
-		double _targetZPos;     // [cm]
-		double _targetZLength;  // [cm]
-		double _targetR;        // [cm]
+		double _targetZPos;    // [cm]
+		double _targetZLength; // [cm]
+		double _targetR;       // [cm]
 
-		double _targetMass;  // [GeV/c^2]
-		double _recoilMass;  // [GeV/c^2]
+		double _targetMass;    // [GeV/c^2]
+		double _recoilMass;    // [GeV/c^2]
 
 		// beam parameters:
 		double _beamMomSigma;  // [GeV/c]
@@ -250,7 +250,7 @@ namespace rpwa {
 		TLorentzVector _beamLab;         // cache for last generated beam (in lab frame)
 		TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)
 		TVector3 _vertex;                // cache for last generated vertex
-		double _tprime;                  // cache for last generated t' (recalculated)
+		double _tPrime;                  // cache for last generated t' (recalculated)
 
 		//TH1* thetaDistribution;
 
@@ -279,22 +279,22 @@ namespace rpwa {
 		// writes event to ascii file read by ComGeant fort.26 interface
 		// please don't use the binary file option yet since there seems
 		// to be a problem reading it in ComGeant
-		bool writeComGeantAscii(ostream& out,
-		                        bool  formated = true); // true: text file ; false: binary file
+		bool writeComgeantAscii(ostream& out,
+		                        bool     formated = true); // true: text file ; false: binary file
 
-		void BuildDaughterList();
+		void buildDaughterList();
 		// particle masses
 		double _protonMass;
 		double _pionMass;
 		double _pionMass2;
 
 		// calculate the t' by using the information of the incoming and outgoing particle in the vertex
-		float Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out);
+		float calcTPrime(const TLorentzVector& inputParticle, const TLorentzVector& outputParticle);
 
 		// case invariant_M < 0. : first entry in _invSlopePar is taken (if any)
 		// case invariant_M >= 0.: extrapolation or interpolation of given points
 		// for t' over invariant Mass
-		double Get_inv_SlopePar(double invariant_M = -1.);
+		double getInvSlopePar(double invariantMass = -1.);
 
 	};
 

@@ -67,7 +67,11 @@ using namespace rpwa;
 
 
 diffractivePhaseSpace::diffractivePhaseSpace()
-	: _tMin(0.),
+	: _primaryVertexGen(NULL),
+	  _tPrime(0.),
+	  _invSlopePar(NULL),
+	  _invM(NULL),
+	  _tMin(0.),
 	  _tprimeMin(0.),
 	  _tprimeMax(numeric_limits<double>::max()),
 	  _xMassMin(0),
@@ -76,12 +80,8 @@ diffractivePhaseSpace::diffractivePhaseSpace()
 	  _pionMass(0.13957018),
 	  _pionMass2(_pionMass * _pionMass)
 {
-	_primaryVertexGen = NULL;
 	_phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
 	_phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
-	_tprime = 0;
-	_invSlopePar = NULL;
-	_invM        = NULL;
 }
 
 diffractivePhaseSpace::~diffractivePhaseSpace() {
@@ -139,7 +139,7 @@ diffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
 }
 
 bool
-diffractivePhaseSpace::writeComGeantAscii(ostream& out, bool  formated) {
+diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  formated) {
 
 	if(!out) {
 		cerr << "Output stream is not writable." << endl;
@@ -214,7 +214,7 @@ diffractivePhaseSpace::writeComGeantAscii(ostream& out, bool  formated) {
 
 
 void
-diffractivePhaseSpace::SetSeed(int seed)
+diffractivePhaseSpace::setSeed(int seed)
 {
 	gRandom->SetSeed(seed);
 	_phaseSpace.setSeed(seed);
@@ -222,24 +222,24 @@ diffractivePhaseSpace::SetSeed(int seed)
 
 
 void
-diffractivePhaseSpace::SetDecayProducts(const vector<particleInfo>& info)
+diffractivePhaseSpace::setDecayProducts(const vector<particleInfo>& info)
 {
 	_decayProducts.clear();
 	_decayProducts = info;
-	BuildDaughterList();
+	buildDaughterList();
 }
 
 
 void
-diffractivePhaseSpace::AddDecayProduct(const particleInfo& info)
+diffractivePhaseSpace::addDecayProduct(const particleInfo& info)
 {
 	_decayProducts.push_back(info);
-	BuildDaughterList();
+	buildDaughterList();
 }
 
 
 void
-diffractivePhaseSpace::BuildDaughterList()
+diffractivePhaseSpace::buildDaughterList()
 {
 	const unsigned int nmbDaughters = _decayProducts.size();
 	vector<double> daughterMasses(nmbDaughters, 0);
@@ -325,7 +325,7 @@ diffractivePhaseSpace::BuildDaughterList()
 // }
 
 double
-diffractivePhaseSpace::Get_inv_SlopePar(double invariant_M) {
+diffractivePhaseSpace::getInvSlopePar(double invariant_M) {
 	double result = 1.;
 	if(!_invSlopePar) {
 		return result;
@@ -426,7 +426,7 @@ diffractivePhaseSpace::event()
 		double tPrime = _tprimeMin;
 		if(_tprimeMax < _tprimeMin) {
 			// calculate the slope parameter depending on the invariant mass
-			const double calc_invSlopePar = Get_inv_SlopePar(xMass);
+			const double calc_invSlopePar = getInvSlopePar(xMass);
 			tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
 			//cout << " inv slope par " << _invSlopePar << " gradient " << _invSlopeParGradient << " t' is " << tPrime << endl;
 		}
@@ -503,13 +503,13 @@ diffractivePhaseSpace::event()
 		// number directly if you change if (1) to (0) to
 		// speed up the process a bit
 		if(0) {
-			_tprime = Calc_t_prime(_beamLab, xSystemLab);
+			_tPrime = calcTPrime(_beamLab, xSystemLab);
 		} else {
-			_tprime = tPrime;
+			_tPrime = tPrime;
 		}
 
 		// apply t cut
-		if(t > _tMin || _tprime > _tprimeMin || _tprime < _tprimeMax) {
+		if(t > _tMin || _tPrime > _tprimeMin || _tPrime < _tprimeMax) {
 			continue;
 		}
 
@@ -559,13 +559,13 @@ diffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 	//writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
 	// use the first particle as the beam particle
 	writePwa2000Ascii(stream, _decayProducts[0]._gId, _decayProducts[0]._charge);
-	writeComGeantAscii(streamComGeant, true);
+	writeComgeantAscii(streamComGeant, true);
 	return attempts;
 }
 
 
 void
-diffractivePhaseSpace::SetBeam(double Mom,  double MomSigma,
+diffractivePhaseSpace::setBeam(double Mom,  double MomSigma,
 		double DxDz, double DxDzSigma,
 		double DyDz, double DyDzSigma)
 {
@@ -578,7 +578,7 @@ diffractivePhaseSpace::SetBeam(double Mom,  double MomSigma,
 }
 
 float
-diffractivePhaseSpace::Calc_t_prime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out){
+diffractivePhaseSpace::calcTPrime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out){
 	float result = 0.;
 	result = (particle_Out.M2()-particle_In.M2());
 	result = pow(result,2);

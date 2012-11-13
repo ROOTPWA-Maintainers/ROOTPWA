@@ -45,11 +45,12 @@
 
 #include "libconfig.h++"
 
-#include "reportingUtils.hpp"
+#include "breitWignerProductionAmp.h"
 #include "diffractivePhaseSpace.h"
+#include "fileUtils.hpp"
 #include "partialWaveWeight.h"
 #include "productionAmp.h"
-#include "breitWignerProductionAmp.h"
+#include "fileUtils.hpp"
 #include "TFitBin.h"
 
 #include "primaryVertexGen.h"
@@ -74,7 +75,7 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        -o <file>  ROOT output file (if not specified, generated automatically)" << endl
 	     << "        -w <file>  wavelist file (contains production amplitudes)" << endl
 	     << "        -w <file.root>  to use TFitBin tree as input" << endl
-	     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 1)" << endl
+	     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 0)" << endl
 	     << "        -k <path>  path to keyfile directory (all keyfiles have to be there)" << endl
 	     << "        -i <file>  integral file" << endl
 	     << "        -r <file>  reaction config file" << endl
@@ -90,22 +91,23 @@ int main(int argc, char** argv)
 {
 
 	unsigned int nevents = 100;
-	unsigned int max_attempts = 0;
-	string output_file = ""; // either given by option or generated automatically by mass range
-	string output_evt = "";
-	string output_wht = "";
-	string output_comgeant = "";
-	string integrals_file;
-	bool hasint = false;
-	string wavelist_file; // format: name Re Im
-	string path_to_keyfiles = "./";
+	unsigned int maxAttempts = 0;
+	string outputFileName = ""; // either given by option or generated automatically by mass range
+	string outputEvtFileName = "";
+	string outputWhtFileName = "";
+	string outputComgeantFileName = "";
+	string integralsFileName;
+	bool hasIntegralsFile = false;
+	string wavelistFileName; // format: name Re Im
+	string pathToKeyfiles = "./";
 	string reactionFile;
 	double maxWeight = 0;
 	int seed = 123456;
+	bool seedSet = false;
 	int massLower = 0;
 	int massBinWidth = 0;
 	bool overwriteMass = false;
-	bool writeComGeantout = false;
+	bool writeComgeantOut = false;
 
 	int c;
 	while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h:c")) != -1) {
@@ -114,23 +116,24 @@ int main(int argc, char** argv)
 				nevents = atoi(optarg);
 				break;
 			case 'a':
-				max_attempts = atoi(optarg);
+				maxAttempts = atoi(optarg);
 				break;
 			case 's':
 				seed = atoi(optarg);
+				seedSet = true;
 				break;
 			case 'o':
-				output_file = optarg;
+				outputFileName = optarg;
 				break;
 			case 'w':
-				wavelist_file = optarg;
+				wavelistFileName = optarg;
 				break;
 			case 'i':
-				integrals_file = optarg;
-				hasint=true;
+				integralsFileName = optarg;
+				hasIntegralsFile = true;
 				break;
 			case 'k':
-				path_to_keyfiles = optarg;
+				pathToKeyfiles = optarg;
 				break;
 			case 'r':
 				reactionFile = optarg;
@@ -139,15 +142,15 @@ int main(int argc, char** argv)
 				maxWeight = atof(optarg);
 				break;
 			case 'c':
-				writeComGeantout = true;
+				writeComgeantOut = true;
 				break;
 			case 'M':
 				massLower = atoi(optarg);
-				overwriteMass=true;
+				overwriteMass = true;
 				break;
 			case 'B':
 				massBinWidth = atoi(optarg);
-				overwriteMass=true;
+				overwriteMass = true;
 				break;
 
 			case 'h':
@@ -169,160 +172,170 @@ int main(int argc, char** argv)
 	// or the config file
 	// will be stored in the tree later
 	double weight, impweight;
-	TClonesArray* p = new TClonesArray("TLorentzVector");
+	TClonesArray* momenta = new TClonesArray("TLorentzVector");
 	TLorentzVector beam;
 	TVector3 vertex;
-	double tprime = 0.;
-	int qbeam;
-	vector<int> q; // array of charges
+	double tPrime = 0.;
+	int qBeam;
+	vector<int> charges; // array of charges
 
-	double Mom = reactConf.lookup("beam.momentum");
-	double MomSigma = reactConf.lookup("beam.sigma_momentum");
-	double BeamPartMass = 0.13957018;
+	double beamMom = reactConf.lookup("beam.momentum");
+	double beamMomSigma = reactConf.lookup("beam.sigma_momentum");
+	double beamPartMass = 0.13957018;
 	if(reactConf.exists("beam.mass")){
-		BeamPartMass = reactConf.lookup("beam.mass");
+		beamPartMass = reactConf.lookup("beam.mass");
+	} else {
+		printWarn << "Beam particle mass not found in config file. Using '"
+				  << setprecision(8) << beamPartMass << "'." << endl;
 	}
-	double DxDz = reactConf.lookup("beam.DxDz");
-	double DxDzSigma = reactConf.lookup("beam.sigma_DxDz");
-	double DyDz = reactConf.lookup("beam.DyDz");
-	double DyDzSigma = reactConf.lookup("beam.sigma_DyDz");
+	double beamDxDz = reactConf.lookup("beam.DxDz");
+	double beamDxDzSigma = reactConf.lookup("beam.sigma_DxDz");
+	double beamDyDz = reactConf.lookup("beam.DyDz");
+	double beamDyDzSigma = reactConf.lookup("beam.sigma_DyDz");
 
-	double targetz = reactConf.lookup("target.pos.z");
-	double targetd = reactConf.lookup("target.length");
-	double targetr = reactConf.lookup("target.radius");
-	double mrecoil = reactConf.lookup("target.mrecoil");
+	double targetZPosition = reactConf.lookup("target.pos.z");
+	double targetLength = reactConf.lookup("target.length");
+	double targetRadius = reactConf.lookup("target.radius");
+	double massRecoil = reactConf.lookup("target.mrecoil");
 
-	double tprime_min(0.);
-	double tprime_max(numeric_limits<double>::max());
-	reactConf.lookupValue("finalstate.t_min", tprime_min);
-	reactConf.lookupValue("finalstate.t_max", tprime_max);
+	double tPrimeMin = 0.;
+	double tPrimeMax = numeric_limits<double>::max();
+	reactConf.lookupValue("finalstate.t_min", tPrimeMin);
+	reactConf.lookupValue("finalstate.t_max", tPrimeMax);
 
-	double mmin = reactConf.lookup("finalstate.mass_min");
-	double mmax = reactConf.lookup("finalstate.mass_max");
+	double minimumFinalStateMass = reactConf.lookup("finalstate.mass_min");
+	double maximumFinalStateMass = reactConf.lookup("finalstate.mass_max");
 	if(overwriteMass) {
-		mmin = massLower/1000.0;
-		mmax = (massLower+massBinWidth)/1000.0;
+		minimumFinalStateMass = massLower / 1000.0;
+		maximumFinalStateMass = (massLower + massBinWidth) / 1000.0;
 	}
 	// array of tslopes even when only one is existing
-	double* tslope = NULL;
-	double* inv_m  = NULL;
-	int ntslope = 1;
+	double* tSlopes = NULL;
+	double* finalStateInvariantMasses  = NULL;
+	int numberOftSlopes = 1;
 	if(reactConf.lookup("finalstate.t_slope").isArray()) {
-		ntslope = reactConf.lookup("finalstate.t_slope").getLength();
-		if(reactConf.lookup("finalstate.inv_m").getLength() != ntslope) {
-			cout << " Error: please check number of t' values and the corresponding invariant masses in the Configuration File! " << endl;
-			return 0;
+		numberOftSlopes = reactConf.lookup("finalstate.t_slope").getLength();
+		if(reactConf.lookup("finalstate.inv_m").getLength() != numberOftSlopes) {
+			printErr << " Error: please check number of t' values and the corresponding invariant masses in the Configuration File! " << endl;
+			exit(1);
 		}
-		tslope = new double[ntslope];
-		inv_m  = new double[ntslope];
-		cout << " found array of t' slopes. Reading " << ntslope << " of values ";
-		for(int i = 0; i < ntslope; i++) {
-			tslope[i] = reactConf.lookup("finalstate.t_slope")[i];
-			inv_m[i]  = reactConf.lookup("finalstate.inv_m")[i];
-			//cout << inv_m[i] << " " << tslope[i] << endl;
+		tSlopes = new double[numberOftSlopes];
+		finalStateInvariantMasses  = new double[numberOftSlopes];
+		printInfo << "Found array of t' slopes. Reading " << numberOftSlopes << "values...";
+		for(int i = 0; i < numberOftSlopes; ++i) {
+			tSlopes[i] = reactConf.lookup("finalstate.t_slope")[i];
+			finalStateInvariantMasses[i] = reactConf.lookup("finalstate.inv_m")[i];
 		}
-		cout << " done. " << endl;
+		cout << "done." << endl;
 	} else {
-		tslope = new double[1];
-		tslope[0] = reactConf.lookup("finalstate.t_slope");
-		//cout << " tslope set to " << tslope[0];
+		tSlopes = new double[1];
+		tSlopes[0] = reactConf.lookup("finalstate.t_slope");
+		printInfo << "Found one t' slope: " << tSlopes[0] << "." << endl;
 	}
-	double binCenter = 500 * (mmin + mmax);
+	double binCenter = 500 * (minimumFinalStateMass + maximumFinalStateMass);
 
-  // check weather to use a primary vertex generator as requested by the config file
+  // check whether to use a primary vertex generator as requested by the config file
 	primaryVertexGen* primaryVtxGen = NULL;
-	string histfilename_primvertex = "";
-	if(reactConf.lookupValue("primvertex.histfilename", histfilename_primvertex)) {
+	string histFilenamePrimVertex = "";
+	if(reactConf.lookupValue("primvertex.histfilename", histFilenamePrimVertex)) {
 		primaryVtxGen = new primaryVertexGen(
-		    histfilename_primvertex,
-		    BeamPartMass,
-		    Mom,
-		    MomSigma
+		    histFilenamePrimVertex,
+		    beamPartMass,
+		    beamMom,
+		    beamMomSigma
 		    );
-		if (!primaryVtxGen->check()) {
-			cerr << " Error: histogram filename with beam properties not loaded! " << endl;
+		if(!primaryVtxGen->check()) {
+			printErr << "Could not load histogram file '" << histFilenamePrimVertex << "with beam properties" << endl;
 			delete primaryVtxGen;
 			primaryVtxGen = NULL;
 		}
 	}
 
-	if(!reactConf.lookupValue("beam.charge",qbeam)) {
-		qbeam = -1;
+	if(!reactConf.lookupValue("beam.charge", qBeam)) {
+		printWarn << "Beam charge not found in config file. Setting it to '-1'." << endl;
+		qBeam = -1;
 	}
+
 	// generate the filename automatically if not specified
-	if (output_file == "") {
+	if (outputFileName == "") {
 		stringstream _filename;
 		_filename << massLower << "." << massLower+massBinWidth << ".genbod.root";
-		cout << " created output filename: " << _filename.str() << endl;
-		output_file = _filename.str();
+		printInfo << "Guessed filename '" << _filename.str() << "'." << endl;
+		outputFileName = _filename.str();
 	}
-	output_evt = output_file;
-	output_evt.replace(output_evt.find(".root"),5,".evt");
-	output_wht = output_file;
-	output_wht.replace(output_wht.find(".root"),5,".wht");
-	output_comgeant = output_file;
-	output_comgeant.erase(output_comgeant.find(".root"),5);
-	output_comgeant.append(".fort.26");
+	outputEvtFileName = changeFileExtension(outputFileName, ".evt");
+	outputWhtFileName = changeFileExtension(outputFileName, ".wht");
+	outputComgeantFileName = changeFileExtension(outputFileName, ".fort.26");
 
 	// now create the root file to store the events
-	TFile* outfile = TFile::Open(output_file.c_str(),"RECREATE");
-	TH1D* hWeights = new TH1D("hWeights","PW Weights",100,0,100);
-	TTree* outtree = new TTree("pwevents","pwevents");
+	TFile* outputFile = TFile::Open(outputFileName.c_str(), "RECREATE");
+	TH1D* weightsHistogram = new TH1D("hWeights", "PW Weights", 100, 0, 100);
+	TTree* outputTree = new TTree("pwevents", "pwevents");
 
-	outtree->Branch("weight",&weight,"weight/d");
-	outtree->Branch("impweight",&impweight,"impweight/d");
-	outtree->Branch("p",&p);
-	outtree->Branch("beam",&beam);
-	outtree->Branch("vertex", &vertex);
-	outtree->Branch("q",&q);
-	outtree->Branch("qbeam",&qbeam,"qbeam/I");
-	outtree->Branch("tprime", &tprime);
+	outputTree->Branch("weight", &weight, "weight/d");
+	outputTree->Branch("impweight", &impweight, "impweight/d");
+	outputTree->Branch("p", &momenta);
+	outputTree->Branch("beam", &beam);
+	outputTree->Branch("vertex", &vertex);
+	outputTree->Branch("q", &charges);
+	outputTree->Branch("qbeam", &qBeam,"qbeam/I");
+	outputTree->Branch("tprime", &tPrime);
 
 	//string theta_file= reactConf.lookup("finalstate.theta_file");
 
-	diffractivePhaseSpace difPS;
-	cerr << "Seed=" << seed << endl;
-	difPS.SetSeed(seed);
-	difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
-	difPS.SetTarget(targetz,targetd,targetr,mrecoil);
-	difPS.SetTPrimeSlope(tslope, inv_m, ntslope);
-	difPS.SetMassRange(mmin,mmax);
-	difPS.SetPrimaryVertexGen(primaryVtxGen);
-	if(tprime_min >= 0.) {
-		difPS.SettprimeMin(tprime_min);
+	if(not seedSet) {
+		printWarn << "Seed not set on command line, using default seed '"
+		          << seed << "'." << endl;
 	} else {
-		cout << " Error: tprime_min must be positive " << tprime_min << endl;
-	}
-	if(tprime_max >= 0.) {
-		difPS.SettprimeMax(tprime_max);
+		printInfo << "Random seed: " << seed << endl;
 	}
 
-	double impMass;
-	double impWidth;
+	diffractivePhaseSpace diffPS;
+	diffPS.setSeed(seed);
+	diffPS.setBeam(beamMom, beamMomSigma, beamDxDz, beamDxDzSigma, beamDyDz, beamDyDzSigma);
+	diffPS.setTarget(targetZPosition, targetLength, targetRadius, massRecoil);
+	diffPS.setTPrimeSlope(tSlopes, finalStateInvariantMasses, numberOftSlopes);
+	diffPS.setMassRange(minimumFinalStateMass, maximumFinalStateMass);
+	diffPS.setPrimaryVertexGen(primaryVtxGen);
+	if(tPrimeMin >= 0.) {
+		diffPS.setTPrimeMin(tPrimeMin);
+	} else {
+		printErr << "t_min (minimum t') must be positive, found '" << tPrimeMin << "'." << endl;
+		exit(1);
+	}
+	if(tPrimeMax >= 0.) {
+		diffPS.setTPrimeMax(tPrimeMax);
+	} else {
+		printErr << "t_max (maximum t') must be positive, found '" << tPrimeMax << "'." << endl;
+		exit(1);
+	}
 
-	if(reactConf.lookupValue("importance.mass",impMass) &&
-	   reactConf.lookupValue("importance.width",impWidth))
+	double importanceMass;
+	double importanceWidth;
+
+	if(reactConf.lookupValue("importance.mass",importanceMass) &&
+	   reactConf.lookupValue("importance.width",importanceWidth))
 	{
 		int act = reactConf.lookup("importance.active");
 		if(act == 1) {
-			difPS.SetImportanceBW(impMass,impWidth);
+			diffPS.setImportanceBW(importanceMass,importanceWidth);
 		}
 	}
 
 	const Setting& root = reactConf.getRoot();
 	const Setting& fspart = root["finalstate"]["particles"];
-	int nparticles = fspart.getLength();
+	int nParticles = fspart.getLength();
 
-	for(int ifs=0; ifs<nparticles; ++ifs) {
+	for(int ifs = 0; ifs < nParticles; ++ifs) {
 		const Setting &part = fspart[ifs];
 		int id;
-		part.lookupValue("g3id",id);
+		part.lookupValue("g3id", id);
 		int myq;
-		part.lookupValue("charge",myq);
+		part.lookupValue("charge", myq);
 		double m;
-		part.lookupValue("mass",m);
-		q.push_back(myq);
-		difPS.AddDecayProduct(particleInfo(id,myq,m));
+		part.lookupValue("mass", m);
+		charges.push_back(myq);
+		diffPS.addDecayProduct(particleInfo(id, myq, m));
 	}
 
 	// see if we have a resonance in this wave
@@ -331,8 +344,7 @@ int main(int argc, char** argv)
 		const Setting &bws = root["resonances"]["breitwigners"];
 		// loop through breitwigners
 		int nbw = bws.getLength();
-		printInfo << "found " << nbw << " Breit-Wigners in config" << endl;
-
+		printInfo << "Found " << nbw << " the following Breit-Wigners in config:" << endl;
 		for(int ibw = 0; ibw < nbw; ++ibw) {
 			const Setting &bw = bws[ibw];
 			string jpcme;
@@ -351,45 +363,47 @@ int main(int argc, char** argv)
 	}
 
 	// check if TFitBin is used as input
-	if(wavelist_file.find(".root") != string::npos) {
-		cerr << "Using TFitBin as input!" << endl;
-		TFile* fitresults = TFile::Open(wavelist_file.c_str(),"READ");
-		TFitBin* Bin      = NULL;
-		if(!fitresults || fitresults->IsZombie()) {
-			cerr << "Cannot open start fit results file " << wavelist_file << endl;
-			return 1;
+	if(extensionFromPath(wavelistFileName) == "root") {
+		printInfo << "Using TFitBin as input." << endl;
+		TFile* fitResultsFile = TFile::Open(wavelistFileName.c_str(),"READ");
+		TFitBin* fitBin = NULL;
+		if(!fitResultsFile || fitResultsFile->IsZombie()) {
+			printErr << "Cannot open start fit results file '" << wavelistFileName << "'." << endl;
+			exit(1);
 		}
 		// get tree with start values
 		TTree* tree;
-		fitresults->GetObject("pwa", tree);
+		fitResultsFile->GetObject("pwa", tree);
 		if(!tree) {
-			cerr << "Cannot find fitbin tree '" << "pwa" << "' " << endl;
+			printErr << "Cannot find TFitBin tree 'pwa' in file '" << wavelistFileName << "'." << endl;
+			exit(1);
 		} else {
-			Bin = new TFitBin();
-			tree->SetBranchAddress("fitbin", &Bin);
+			fitBin = new TFitBin();
+			tree->SetBranchAddress("fitbin", &fitBin);
 			// find entry which is closest to mass bin center
 			unsigned int iBest = 0;
 			double mBest = 0;
 			for(unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 				tree->GetEntry(i);
-				if(fabs(binCenter - Bin->mass()) <= fabs(binCenter - mBest)) {
+				if(fabs(binCenter - fitBin->mass()) <= fabs(binCenter - mBest)) {
 					iBest = i;
-					mBest = Bin->mass();
+					mBest = fitBin->mass();
 				}
 			}  // end loop over TFitBins
-			cerr << "Using data from Mass bin m=" << mBest << endl;
+			printInfo << "Using data from Mass bin with m = " << mBest << endl;
 			tree->GetEntry(iBest);
 			// write wavelist file for generator
 			string tmpname("/tmp/genamps.txt");
 			ofstream tmpfile(tmpname.c_str());
-			Bin->printAmpsGenPW(tmpfile);
+			fitBin->printAmpsGenPW(tmpfile);
 			tmpfile.close();
-			wavelist_file=tmpname;
+			wavelistFileName=tmpname;
 		}
 	} // end root file given
 
 	// read input wavelist and amplitudes
-	ifstream wavefile(wavelist_file.c_str());
+	printInfo << "Reading wavelist file '" << wavelistFileName << "':" << endl;
+	ifstream wavefile(wavelistFileName.c_str());
 	while(wavefile.good()) {
 		TString wavename;
 		double RE, IM;
@@ -397,7 +411,7 @@ int main(int argc, char** argv)
 		int refl = 0;
 		wavefile >> wavename >> RE >> IM;
 
-		if(wavename.Contains("flat") || wavename.Length()<2) {
+		if(wavename.Contains("flat") || wavename.Length() < 2) {
 			continue;
 		}
 		if(RE == 0 && IM == 0) {
@@ -405,7 +419,7 @@ int main(int argc, char** argv)
 		}
 		// check if there is rank information
 		if(wavename(0) == 'V') {
-			// we multiply rank by to to make space for refl+- production vectors
+			// we multiply rank by two to make space for refl+- production vectors
 			rank = 2 * atoi(wavename(1,1).Data());
 			// check reflecitivity to sort into correct production vector
 			refl = wavename(9)=='+' ? 0 : 1;
@@ -415,131 +429,134 @@ int main(int argc, char** argv)
 		TString jpcme = wavename(2,5);
 
 		wavename.ReplaceAll(".amp", ".key");
-		wavename.Prepend(path_to_keyfiles.c_str());
+		wavename.Prepend(pathToKeyfiles.c_str());
 
 		complex<double> amp(RE, IM);
-		cerr << wavename << " " << amp << " r=" << rank/2
-			<< " eps=" << refl << " qn=" << jpcme << endl;
+		printInfo << "Got wave: " << wavename << " " << amp << ": r=" << rank/2
+		          << " eps=" << refl << " qn=" << jpcme << endl;
 		wavefile.ignore(256, '\n');
 
-		productionAmp* pamp;
+		productionAmp* prodAmp;
 		if(bwAmps[jpcme.Data()] != NULL) {
-			pamp = bwAmps[jpcme.Data()];
-			cerr << "Using BW for " << jpcme << endl;
+			prodAmp = bwAmps[jpcme.Data()];
+			printInfo << "Using BW for " << jpcme << endl;
 			// production vector index: rank+refl
-			weighter.addWave(wavename.Data(), pamp, amp, rank+refl);
+			weighter.addWave(wavename.Data(), prodAmp, amp, rank+refl);
 		} else {
-			pamp = new productionAmp(amp);
-			weighter.addWave(wavename.Data(), pamp, complex<double>(1, 0), rank+refl);
+			prodAmp = new productionAmp(amp);
+			weighter.addWave(wavename.Data(), prodAmp, complex<double>(1, 0), rank+refl);
 		}
 	}
 
-	if(hasint){
+	if(hasIntegralsFile){
 		// read integral files
-		ifstream intfile(integrals_file.c_str());
-		while(intfile.good()) {
+		ifstream integralsFile(integralsFileName.c_str());
+		while(integralsFile.good()) {
 			string filename;
 			double mass;
-			intfile >> filename >> mass;
+			integralsFile >> filename >> mass;
 			weighter.loadIntegrals(filename, mass);
-			intfile.ignore(256, '\n');
+			integralsFile.ignore(256, '\n');
 		} // loop over integralfile
-	}// endif hasint
-
+	}// endif hasIntegraFile
 
 	double maxweight = -1;
-	unsigned int attempts = 0;
 
-
-	unsigned int tenpercent = (unsigned int)(nevents / 10);
-	unsigned int i = 0;
+	unsigned int tenPercent = (unsigned int)(nevents / 10);
 	//difPS.setVerbose(true);
-	ofstream evtout(output_evt.c_str());
-	ofstream evtgeant;
-	if(writeComGeantout) {
-		evtgeant.open(output_comgeant.c_str());
+	ofstream outputEvtFile(outputEvtFileName.c_str());
+	ofstream outputComgeantFile;
+	if(writeComgeantOut) {
+		outputComgeantFile.open(outputComgeantFileName.c_str());
 	}
-	ofstream evtwht(output_wht.c_str());
-	evtwht << setprecision(10);
+	ofstream outputWhtFile(outputWhtFileName.c_str());
+	outputWhtFile << setprecision(10);
 
-	while(i < nevents && ((max_attempts > 0 && attempts < max_attempts) || max_attempts == 0))
-	{
+	{ // Block to avoid "i" and "attempts" in global namespace.
 
-		++attempts;
+		unsigned int attempts = 0;
+		unsigned int i = 0;
 
-		p->Delete(); // clear output array
+		for(i = 0; i < nevents; ++i)
+		{
 
-		stringstream str;
-		if (writeComGeantout) {
-			difPS.event(str, evtgeant);
-		} else {
-			difPS.event(str);
-		}
-		impweight = difPS.impWeight();
+			++attempts;
 
-		for(int ip = 0; ip < nparticles; ++ip){
-			new ((*p)[ip]) TLorentzVector(*difPS.GetDecay(ip));
-		}
-
-		beam = *difPS.GetBeam();
-		vertex = *difPS.GetVertex();
-		tprime = difPS.Gettprime();
-
-		// calculate weight
-		event e;
-		e.setIOVersion(1);
-
-		str >> e;
-		evtout << e;
-		evtwht << impweight << endl;
-
-		//cerr << e << endl;
-
-		weight = weighter.weight(e);
-		if(weight > maxweight) {
-			maxweight = weight;
-		}
-		hWeights->Fill(weight);
-
-		if(maxWeight > 0) { // do weighting
-			cout << weight << endl;
-			//if(weight>maxWeight)maxWeight=weight;
-			if(gRandom->Uniform() > weight / maxWeight) {
-				continue;
+			if(maxAttempts > 0 && attempts > maxAttempts) {
+				break;
 			}
-		}
-		//cerr << i << endl;
 
-		outtree->Fill();
+			momenta->Delete(); // clear output array
+
+			stringstream str;
+			if (writeComgeantOut) {
+				diffPS.event(str, outputComgeantFile);
+			} else {
+				diffPS.event(str);
+			}
+			impweight = diffPS.impWeight();
+
+			for(int ip = 0; ip < nParticles; ++ip){
+				new ((*momenta)[ip]) TLorentzVector(*diffPS.decay(ip));
+			}
+
+			beam = *diffPS.beam();
+			vertex = *diffPS.vertex();
+			tPrime = diffPS.tPrime();
+
+			// calculate weight
+			event e;
+			e.setIOVersion(1);
+
+			str >> e;
+			outputEvtFile << e;
+			outputWhtFile << impweight << endl;
+
+			//cerr << e << endl;
+
+			weight = weighter.weight(e);
+			if(weight > maxweight) {
+				maxweight = weight;
+			}
+			weightsHistogram->Fill(weight);
+
+			if(maxWeight > 0) { // do weighting
+				cout << weight << endl;
+				//if(weight>maxWeight)maxWeight=weight;
+				if(gRandom->Uniform() > weight / maxWeight) {
+					continue;
+				}
+			}
+			//cerr << i << endl;
+
+			outputTree->Fill();
 
 
-		if(i > 0 && (i % tenpercent == 0)) {
-			cerr << "\x1B[2K" << "\x1B[0E" << "[" << (double)i/(double)nevents*100. << "%]";
-		}
+			if(i > 0 && (i % tenPercent == 0)) {
+				cerr << "\x1B[2K" << "\x1B[0E" << "[" << (double)i/(double)nevents*100. << "%]";
+			}
 
-		++i;
+		} // end event loop
 
-	} // end event loop
+		printInfo << "Generated " << i << " Events." << endl;
+		printInfo << "Attempts: " << attempts << endl;
+		printInfo << "Efficiency: " << (double)i / (double)attempts << endl;
+		printInfo << "Maximum weight found: " << maxweight << endl;
 
-	cerr << endl;
-	cerr << "Maxweight: " << maxweight << endl;
-	cerr << "Attempts: " << attempts << endl;
-	cerr << "Created Events: " << i << endl;
-	cerr << "Efficiency: " << (double)i / (double)attempts << endl;
+	} // Block to avoid "i" and "attempts" in global namespace.
 
-
-	outfile->cd();
-	hWeights->Write();
-	outtree->Write();
-	outfile->Close();
-	evtout.close();
-	evtwht.close();
-	if(writeComGeantout) {
-		evtgeant.close();
+	outputFile->cd();
+	weightsHistogram->Write();
+	outputTree->Write();
+	outputFile->Close();
+	outputEvtFile.close();
+	outputWhtFile.close();
+	if(writeComgeantOut) {
+		outputComgeantFile.close();
 	}
 
-	delete [] tslope;
-	delete [] inv_m;
+	delete [] tSlopes;
+	delete [] finalStateInvariantMasses;
 
 	return 0;
 
