@@ -34,6 +34,8 @@
 #include <stdlib.h>
 #include <event.h>
 
+#include <boost/progress.hpp>
+
 #include "TFile.h"
 #include "TTree.h"
 #include "TString.h"
@@ -55,10 +57,10 @@
 
 #include "primaryVertexGen.h"
 
-
-using namespace std;
+using namespace boost;
 using namespace libconfig;
 using namespace rpwa;
+using namespace std;
 
 extern particleDataTable PDGtable;
 
@@ -90,7 +92,7 @@ void printUsage(char* prog, int errCode = 0)
 int main(int argc, char** argv)
 {
 
-	unsigned int nevents = 100;
+	unsigned int nEvents = 100;
 	unsigned int maxAttempts = 0;
 	string outputFileName = ""; // either given by option or generated automatically by mass range
 	string outputEvtFileName = "";
@@ -113,7 +115,7 @@ int main(int argc, char** argv)
 	while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h:c")) != -1) {
 		switch (c) {
 			case 'n':
-				nevents = atoi(optarg);
+				nEvents = atoi(optarg);
 				break;
 			case 'a':
 				maxAttempts = atoi(optarg);
@@ -462,7 +464,6 @@ int main(int argc, char** argv)
 
 	double maxweight = -1;
 
-	unsigned int tenPercent = (unsigned int)(nevents / 10);
 	//difPS.setVerbose(true);
 	ofstream outputEvtFile(outputEvtFileName.c_str());
 	ofstream outputComgeantFile;
@@ -476,8 +477,9 @@ int main(int argc, char** argv)
 
 		unsigned int attempts = 0;
 		unsigned int i = 0;
+		progress_display* progressIndicator = new progress_display(nEvents, cout, "");
 
-		for(i = 0; i < nevents; ++i)
+		for(i = 0; i < nEvents; ++i)
 		{
 
 			++attempts;
@@ -527,14 +529,9 @@ int main(int argc, char** argv)
 					continue;
 				}
 			}
-			//cerr << i << endl;
 
 			outputTree->Fill();
-
-
-			if(i > 0 && (i % tenPercent == 0)) {
-				cerr << "\x1B[2K" << "\x1B[0E" << "[" << (double)i/(double)nevents*100. << "%]";
-			}
+			++(*progressIndicator);
 
 		} // end event loop
 
