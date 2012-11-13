@@ -393,7 +393,7 @@ int main(int argc, char** argv)
 			printInfo << "Using data from Mass bin with m = " << mBest << endl;
 			tree->GetEntry(iBest);
 			// write wavelist file for generator
-			string tmpname("/tmp/genamps.txt");
+			string tmpname = tmpnam(NULL);
 			ofstream tmpfile(tmpname.c_str());
 			fitBin->printAmpsGenPW(tmpfile);
 			tmpfile.close();
