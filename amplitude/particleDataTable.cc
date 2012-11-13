@@ -316,7 +316,10 @@ particleDataTable::readDecayModeFile(const string& fileName)
       }
       if(_debug)
 	      cout << endl;
-      particleProp.addDecayMode(daughters);
+      particleProperties::decayMode decay(daughters);
+      (*partDecays)[decayIndex].lookupValue("L", decay._L);
+      (*partDecays)[decayIndex].lookupValue("S", decay._S);
+      particleProp.addDecayMode(decay);
       ++countEntries;
     }
   }  // end loop over decay list entries

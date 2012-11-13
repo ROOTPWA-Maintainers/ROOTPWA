@@ -55,6 +55,34 @@ using namespace boost;
 bool particleProperties::_debug = false;
 
 
+particleProperties::decayMode::decayMode(const multiset<string>& daughters,
+                                         const int               L,
+                                         const int               S)
+	: _daughters(daughters),
+	  _L        (L),
+	  _S        (S)
+{ }
+
+
+particleProperties::decayMode::~decayMode()
+{ }
+
+
+
+bool
+particleProperties::decayMode::operator ==(const decayMode& rhsMode) const
+{
+	if (_daughters != rhsMode._daughters)
+		return false;
+	// compare L and S only if they are defined in left- and right-hand side
+	if ((_L != -1) and (rhsMode._L != -1) and (_L != rhsMode._L))
+		return false;
+	if ((_S != -1) and (rhsMode._S != -1) and (_S != rhsMode._S))
+		return false;
+	return true;
+}
+
+
 particleProperties::particleProperties()
 	: _name        (""),
 	  _antiPartName(""),
@@ -176,9 +204,9 @@ particleProperties::isSpinExotic() const
 
 
 bool
-particleProperties::hasDecay(const multiset<string>& daughters) const
+particleProperties::hasDecay(const decayMode& decay) const
 {
-  return find(_decayModes.begin(), _decayModes.end(), daughters) != _decayModes.end();
+  return find(_decayModes.begin(), _decayModes.end(), decay) != _decayModes.end();
 }
 
 
@@ -330,16 +358,16 @@ particleProperties::print(ostream& out) const
 		if (C() != 0)
 			out << "^" << sign(C());
 	out << ", "
-	    << "strangeness = "             << strangeness()     << ", "
-	    << "charm = "                   << charm()           << ", "
-	    << "beauty = "                  << beauty()          << ", "
-	    << "is meson = "                << yesNo(isMeson())  << ", ";
+	    << "strangeness = "             << strangeness()         << ", "
+	    << "charm = "                   << charm()               << ", "
+	    << "beauty = "                  << beauty()              << ", "
+	    << "is meson = "                << yesNo(isMeson())      << ", ";
 	if (isMeson())
-		out << "is spin-exotic = " << yesNo(isSpinExotic()) << ", ";
-	out << "is baryon = "               << yesNo(isBaryon()) << ", "
-	    << "is lepton = "               << yesNo(isLepton()) << ", "
-	    << "is photon = "               << yesNo(isPhoton()) << ", "
-	    << "antiparticle '"             << antiPartName()    << "', "
+		out << "is spin-exotic = "        << yesNo(isSpinExotic()) << ", ";
+	out << "is baryon = "               << yesNo(isBaryon())     << ", "
+	    << "is lepton = "               << yesNo(isLepton())     << ", "
+	    << "is photon = "               << yesNo(isPhoton())     << ", "
+	    << "antiparticle '"             << antiPartName()        << "', "
 	    << "is its own antiparticle = " << yesNo(isItsOwnAntiPart());
 	// decay products
 	const unsigned int nmbDecays = this->nmbDecays();
@@ -347,7 +375,15 @@ particleProperties::print(ostream& out) const
 		out << endl << "    decay modes:" << endl;
 		for (unsigned int i = 0; i < nmbDecays; ++i) {
 			out << "        -> ";
-			copy(_decayModes[i].begin(), _decayModes[i].end(), ostream_iterator<string>(out, "  "));
+			copy(_decayModes[i]._daughters.begin(), _decayModes[i]._daughters.end(),
+			     ostream_iterator<string>(out, "  "));
+			if (_decayModes[i]._L != -1)
+				out << "L = " << spinQn(_decayModes[i]._L);
+			if (_decayModes[i]._S != -1) {
+				if (_decayModes[i]._L != -1)
+					out << ", ";
+				out << "S = " << spinQn(_decayModes[i]._S);
+			}
 			if (i < nmbDecays - 1)
 				out << endl;
 		}
