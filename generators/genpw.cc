@@ -57,6 +57,8 @@
 
 #include "primaryVertexGen.h"
 
+#include "generatorManager.h"
+
 using namespace boost;
 using namespace libconfig;
 using namespace rpwa;
@@ -168,7 +170,13 @@ int main(int argc, char** argv)
 
 	partialWaveWeight weighter;
 	Config reactConf;
-	reactConf.readFile(reactionFile.c_str());
+//	reactConf.readFile(reactionFile.c_str());
+
+	generatorManager generatorMgr;
+	generatorMgr.readReactionFile(reactionFile);
+
+
+
 
 	// variable that need to get initialized either by input options
 	// or the config file
