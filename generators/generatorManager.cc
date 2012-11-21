@@ -6,6 +6,8 @@
 
 #include <TVector3.h>
 
+#include "diffractivePhaseSpace.h"
+#include "generator.hpp"
 #include "generatorParameters.hpp"
 #include "libConfigUtils.hpp"
 #include "particleDataTable.h"
@@ -18,7 +20,10 @@ using namespace rpwa;
 
 bool generatorManager::_debug = false;
 
-generatorManager::generatorManager() { };
+generatorManager::generatorManager()
+	: _reactionFileRead(false),
+	  _generator(NULL) { };
+
 
 generatorManager::~generatorManager() { };
 
@@ -26,6 +31,10 @@ generatorManager::~generatorManager() { };
 bool generatorManager::readReactionFile(const string& fileName) {
 	using namespace boost::assign;
 	using namespace libconfig;
+
+	if(_reactionFileRead) {
+		printWarn << "reading reaction file twice." << endl;
+	}
 
 	printInfo << "reading reaction file '" << fileName << "'." << endl;
 
@@ -167,6 +176,29 @@ bool generatorManager::readReactionFile(const string& fileName) {
 	} // Finished final state parameters.
 
 	printSucc << "read reaction file '" << fileName << "'." << endl;
+	_reactionFileRead = true;
 	return true;
+
+}
+
+
+bool generatorManager::initializeGenerator() {
+
+	printInfo << "initializing event generator." << endl;
+
+	if(not _reactionFileRead) {
+		printErr << "trying to initialize generator before reading reaction file." << endl;
+		return false;
+	}
+	if(_generator != NULL) {
+		printWarn << "generator already initialized. Overwriting old generator." << endl;
+		delete _generator;
+		_generator = NULL;
+	}
+	_generator = new diffractivePhaseSpace();
+	_generator->setBeam(_beam);
+	_generator->setTarget(_target);
+
+	return false;
 
 }

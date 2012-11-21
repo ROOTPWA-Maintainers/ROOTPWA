@@ -181,6 +181,7 @@ int main(int argc, char** argv)
 	rpwa::particleDataTable::readFile(pdgFileName);
 	generatorManager generatorMgr;
 	generatorMgr.readReactionFile(reactionFile);
+	generatorMgr.initializeGenerator();
 
 
 

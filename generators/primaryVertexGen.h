@@ -27,6 +27,8 @@
 
 #include <string>
 
+class TFile;
+class TH1;
 class TH2;
 
 namespace rpwa {
