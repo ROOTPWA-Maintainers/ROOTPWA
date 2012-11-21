@@ -2,7 +2,7 @@
 #define GENERATOR_HH_
 
 #include "generatorParameters.hpp"
-#include "generatorPickerFunctions.hpp"
+#include "generatorPickerFunctions.h"
 
 namespace rpwa {
 

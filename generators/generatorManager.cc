@@ -12,7 +12,7 @@
 #include "libConfigUtils.hpp"
 #include "particleDataTable.h"
 #include "reportingUtils.hpp"
-#include "generatorPickerFunctions.hpp"
+#include "generatorPickerFunctions.h"
 #include "generatorManager.h"
 
 

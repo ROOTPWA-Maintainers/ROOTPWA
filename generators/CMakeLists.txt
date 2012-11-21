@@ -64,6 +64,7 @@ set(SOURCES
 	diffractivePhaseSpace.cc
 	primaryVertexGen.cc
 	randomNumberGenerator.cc
+	generatorPickerFunctions.cc
 	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
 	)
 
