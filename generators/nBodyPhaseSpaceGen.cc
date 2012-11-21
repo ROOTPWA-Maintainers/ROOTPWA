@@ -272,10 +272,11 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
 	const double prob   = 1 / (i - (i - 1) * deltaX / term);              // cf. eq. (20)
 	// 2) calculate generator for distribution
 	double x;
-	if (random() < prob)
-	  x = xMin + deltaX * pow(random(), 1 / (double)i) * pow(random(), 1 / (double)(i - 1));  // cf. eq. (21)
+	randomNumberGenerator* random = randomNumberGenerator::instance();
+	if (random->rndm() < prob)
+	  x = xMin + deltaX * pow(random->rndm(), 1 / (double)i) * pow(random->rndm(), 1 / (double)(i - 1));  // cf. eq. (21)
 	else
-	  x = xMin + deltaX * pow(random(), 1 / (double)i);  // cf. eq. (22)
+	  x = xMin + deltaX * pow(random->rndm(), 1 / (double)i);  // cf. eq. (22)
 	// 3) calculate weight factor
 	const double deltaZ = (i * term - (i - 1) * deltaX) * pow(deltaX, (int)i - 1);  // cf. eq. (17) and (18)
 	_weight *= deltaZ * pow(x / (x - xMin), (int)i - 2) * F(x, u) / (1 + u - x);    // cf. eq. (24)
@@ -329,7 +330,7 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
       // create vector of sorted random values
       vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
       for (unsigned int i = 0; i < (_n - 2); ++i)
-	r[i] = random();
+	r[i] = randomNumberGenerator::instance()->rndm();
       sort(r.begin(), r.end());
       // set effective masses of (intermediate) two-body decays
       const double massInterval = nBodyMass - _mSum[_n - 1];  // kinematically allowed mass interval

@@ -26,6 +26,6 @@ void randomNumberGenerator::setSeed(unsigned int seed) {
 }
 
 
-double randomNumberGenerator::random() {
+double randomNumberGenerator::rndm() {
 	return _rndGen.Rndm();
 }

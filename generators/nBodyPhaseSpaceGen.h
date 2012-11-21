@@ -98,6 +98,7 @@
 #include "mathUtils.hpp"
 #endif
 
+#include "randomNumberGenerator.h"
 
 #define DEBUG 0
 
@@ -262,7 +263,7 @@ namespace rpwa {
 
     rndGen _rnd;  ///< random number generator instance
 */
-    ClassDef(nBodyPhaseSpaceGen,1)
+    ClassDef(nBodyPhaseSpaceGen, 2)
 
   };
 
@@ -273,9 +274,10 @@ inline
 void
 rpwa::nBodyPhaseSpaceGen::pickAngles()
 {
+  randomNumberGenerator* random = randomNumberGenerator::instance();
   for (unsigned int i = 1; i < _n; ++i) {  // loop over 2- to n-bodies
-    _cosTheta[i] = 2 * random() - 1;  // range [-1,    1]
-    _phi[i]      = rpwa::twoPi * random();  // range [ 0, 2 pi]
+    _cosTheta[i] = 2 * random->rndm() - 1;  // range [-1,    1]
+    _phi[i]      = rpwa::twoPi * random->rndm();  // range [ 0, 2 pi]
   }
 }
 
@@ -291,7 +293,7 @@ rpwa::nBodyPhaseSpaceGen::eventAccepted(const double maxWeight)  // if maxWeight
     printErr << "maximum weight = " << max << " does not make sense. rejecting event." << std::endl;
     return false;
   }
-  if ((_weight / max) > random())
+  if ((_weight / max) > randomNumberGenerator::instance()->rndm())
     return true;
   return false;
 }

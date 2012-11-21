@@ -15,7 +15,7 @@ namespace rpwa {
 		unsigned int seed();
 		void         setSeed(unsigned int seed);
 
-		double random(); // uniform ]0, 1]
+		double rndm(); // uniform ]0, 1]
 
 	  private:
 
