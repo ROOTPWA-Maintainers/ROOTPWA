@@ -2,6 +2,9 @@
 #define GENERATORWEIGHTFUNCTIONS_HH_
 
 
+#include<libconfig.h++>
+
+
 namespace rpwa {
 
 	class massAndTPrimePicker {

@@ -118,11 +118,11 @@ namespace rpwa {
     bool setDecay(const std::vector<double>& daughterMasses);  // daughter particle masses
     bool setDecay(const unsigned int   nmbOfDaughters,   // number of daughter particles
 		  const double*        daughterMasses);  // array of daughter particle masses
-
+/*
     void         setSeed(const unsigned int seed) { _rnd.setSeed(seed); }  ///< sets seed of random number generator
     unsigned int seed   ()                        { return _rnd.seed(); }  ///< returns seed of random number generator
     double       random ()                        { return _rnd.pick(); }  ///< returns number from internal random generator; intended for higher-level generators
-
+*/
 
     void setProposalBW(double mass, double width) { _isoBWMass=mass;_isoBWWidth=width;} ///< set proposal function for importance sampling in the (n-1) isobar mass as simple Breit-Wigner-Shape (to be used with IMPORTANCE weighting option)
 
@@ -239,7 +239,7 @@ namespace rpwa {
     double _isoBWMass;  ///< Breit-Wigner mass for importance sampling proposal
     double _isoBWWidth; ///< Breit-Wigner width for importance sampling proposal
 
-
+/*
     // wrapper class for random number generator
     class rndGen {
 
@@ -261,7 +261,7 @@ namespace rpwa {
     };
 
     rndGen _rnd;  ///< random number generator instance
-
+*/
     ClassDef(nBodyPhaseSpaceGen,1)
 
   };

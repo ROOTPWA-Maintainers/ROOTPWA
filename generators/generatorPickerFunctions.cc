@@ -3,8 +3,6 @@
 
 #include<boost/assign/std/vector.hpp>
 
-#include<libconfig.h++>
-
 #include "randomNumberGenerator.h"
 #include "libConfigUtils.hpp"
 #include "generatorPickerFunctions.h"

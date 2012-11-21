@@ -58,6 +58,7 @@
 
 #include "primaryVertexGen.h"
 
+#include "randomNumberGenerator.h"
 #include "generatorManager.h"
 
 using namespace boost;
@@ -171,6 +172,9 @@ int main(int argc, char** argv)
 				break;
 		}
 	}
+
+	printInfo << "Setting random seed to " << seed << endl;
+	randomNumberGenerator::instance()->setSeed(seed);
 
 	PDGtable.initialize();
 
@@ -312,7 +316,7 @@ int main(int argc, char** argv)
 	}
 
 	diffractivePhaseSpace diffPS;
-	diffPS.setSeed(seed);
+//	diffPS.setSeed(seed);
 //	diffPS.setBeam(beamMom, beamMomSigma, beamDxDz, beamDxDzSigma, beamDyDz, beamDyDzSigma);
 //	diffPS.setTarget(targetZPosition, targetLength, targetRadius, massRecoil);
 //	diffPS.setTPrimeSlope(tSlopes, finalStateInvariantMasses, numberOftSlopes);
@@ -544,7 +548,7 @@ int main(int argc, char** argv)
 			if(maxWeight > 0) { // do weighting
 				cout << weight << endl;
 				//if(weight>maxWeight)maxWeight=weight;
-				if(gRandom->Uniform() > weight / maxWeight) {
+				if(randomNumberGenerator::instance()->getGenerator()->Uniform() > weight / maxWeight) {
 					continue;
 				}
 			}

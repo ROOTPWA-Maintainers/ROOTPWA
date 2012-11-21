@@ -33,6 +33,7 @@
 #include "TRandom3.h"
 #include "TFile.h"
 
+#include "randomNumberGenerator.h"
 #include "reportingUtils.hpp"
 #include "physUtils.hpp"
 #include "diffractivePhaseSpace.h"
@@ -96,11 +97,12 @@ diffractivePhaseSpace::~diffractivePhaseSpace() {
 TLorentzVector
 diffractivePhaseSpace::makeBeam()
 {
+	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
 	// throw magnituide of beam momentum
-	const double pBeam = gRandom->Gaus(_beam.momentum, _beam.momentumSigma);
+	const double pBeam = random->Gaus(_beam.momentum, _beam.momentumSigma);
 	// throw beam inclination
-	const double dxdz = gRandom->Gaus(_beam.DxDz, _beam.DxDzSigma);
-	const double dydz = gRandom->Gaus(_beam.DyDz, _beam.DyDzSigma);
+	const double dxdz = random->Gaus(_beam.DxDz, _beam.DxDzSigma);
+	const double dydz = random->Gaus(_beam.DyDz, _beam.DyDzSigma);
 	// construct tilted beam momentum Lorentz vector
 	const double pz    = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
 	const double px    = dxdz * pz;
@@ -213,14 +215,14 @@ diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  formated) {
 	return true;
 }
 
-
+/*
 void
 diffractivePhaseSpace::setSeed(int seed)
 {
 	gRandom->SetSeed(seed);
 	_phaseSpace.setSeed(seed);
 }
-
+*/
 
 void
 diffractivePhaseSpace::setDecayProducts(const vector<particleInfo>& info)
@@ -376,6 +378,9 @@ diffractivePhaseSpace::getInvSlopePar(double invariant_M) {
 unsigned int
 diffractivePhaseSpace::event()
 {
+
+	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
+
 	unsigned long int attempts = 0;
   // construct primary vertex and beam
   // use the primary Vertex Generator if available
@@ -401,9 +406,9 @@ diffractivePhaseSpace::event()
 	} else {
 		double x;
 		double y;
-		gRandom->Circle(x, y, _target.radius);
+		random->Circle(x, y, _target.radius);
 		_vertex.SetXYZ(x, y,
-		               _target.position.Z()+gRandom->Uniform(-_target.length * 0.5,
+		               _target.position.Z()+random->Uniform(-_target.length * 0.5,
 		               _target.length * 0.5));
 		_beamLab = makeBeam();
 	}
@@ -478,7 +483,7 @@ diffractivePhaseSpace::event()
 		const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * _beamLab.E() * xEnergyLab) / (2 * _beamLab.P() * xMomLab);
 		const double xSinThetaLab     = sqrt(1 - xCosThetaLab * xCosThetaLab);
 		const double xPtLab           = xMomLab * xSinThetaLab;
-		const double xPhiLab          = gRandom->Uniform(0., TMath::TwoPi());
+		const double xPhiLab          = random->Uniform(0., TMath::TwoPi());
 
 		// xSystemLab is defined w.r.t. beam direction
 		TLorentzVector xSystemLab = TLorentzVector(xPtLab  * cos(xPhiLab),
@@ -542,7 +547,7 @@ diffractivePhaseSpace::event()
 			const double maxPsWeight = _phaseSpace.maxWeight()  * _xMassMax * ps2bodyWMax;
 			const double psWeight    = _phaseSpace.calcWeight() * xMass* ps2bodyW;
 
-			if((psWeight / maxPsWeight) < _phaseSpace.random()) {
+			if((psWeight / maxPsWeight) < random->Rndm()) {
 				continue;
 			}
 			_phaseSpace.pickAngles();

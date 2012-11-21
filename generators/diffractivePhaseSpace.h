@@ -164,7 +164,7 @@ namespace rpwa {
 */
 		void setDecayProducts(const std::vector<particleInfo>& info);
 		void addDecayProduct(const particleInfo& info);
-		void setSeed(int seed);
+//		void setSeed(int seed);
 
 		void setVerbose(bool flag) { _phaseSpace.setVerbose(flag); }
 

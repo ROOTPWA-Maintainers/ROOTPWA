@@ -29,6 +29,7 @@
 #include "TLorentzVector.h"
 #include "TRandom.h"
 
+#include "randomNumberGenerator.h"
 #include "primaryVertexGen.h"
 
 
@@ -188,15 +189,17 @@ TVector3& primaryVertexGen::getBeamDir(const TVector3 vertex) {
 	sigma_horiz = _hist_angles_horiz_sigma->Interpolate(vertex.X(), vertex.Y());
 	sigma_vert  = _hist_angles_vert_sigma->Interpolate(vertex.X(), vertex.Y());
 	// now we can retrieve the direction randomly
-	double angle_horiz = gRandom->Gaus(mean_horiz, sigma_horiz);
-	double angle_vert  = gRandom->Gaus(mean_vert , sigma_vert);
+	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
+	double angle_horiz = random->Gaus(mean_horiz, sigma_horiz);
+	double angle_vert  = random->Gaus(mean_vert , sigma_vert);
 	result->RotateX(-angle_vert);
 	result->RotateY(angle_horiz);
 	return *result;
 }
 
 TLorentzVector& primaryVertexGen::getBeamPart(const TVector3 beam_dir) {
-	double energy = gRandom->Gaus(_beam_energy_mean, _beam_energy_sigma);
+	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
+	double energy = random->Gaus(_beam_energy_mean, _beam_energy_sigma);
 	TVector3 _beam_dir(beam_dir);
 	// m² = E² - p² -> |p| = sqrt(E²-m²)
 	_beam_dir.SetMag(sqrt(energy*energy-_beam_part_mass*_beam_part_mass));
