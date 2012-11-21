@@ -33,24 +33,55 @@ namespace rpwa {
 
 	  public:
 
-		uniformMassExponentialTPicker() { }
+		uniformMassExponentialTPicker()
+		  : _initialized(false),
+		    _minimumTPrime(0.),
+		    _maximumTPrime(std::numeric_limits<double>::max()) { }
 		virtual ~uniformMassExponentialTPicker() { }
 
 		virtual bool init(const libconfig::Setting& setting) {
+			if(_initialized) {
+				printErr << "trying to initialize a massAndTPrimePicker class twice." << std::endl;
+				return false;
+			}
 			std::map<std::string, libconfig::Setting::Type> mandatoryArguments;
 			boost::assign::insert (mandatoryArguments)
 				("mass_min", libconfig::Setting::TypeFloat)
 			    ("mass_max", libconfig::Setting::TypeFloat)
 			    ("t_slope", libconfig::Setting::TypeArray)
-			    ("inv_m", libconfig::Setting::TypeArray)
-			    ("t_min", libconfig::Setting::TypeFloat);
+			    ("inv_m", libconfig::Setting::TypeArray);
 			if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
 				printErr << "found an invalid settings for function 'uniformMassExponentialT'." << std::endl;
 				return false;
 			}
 			_minimumMass = setting["mass_min"];
 			_maximumMass = setting["mass_max"];
-			_minimumTPrime = setting["t_min"];
+			if(_maximumMass < _minimumMass) {
+				printErr << "'mass_max' must not be smaller than 'mass_min'." << std::endl;
+				return false;
+			}
+			if(setting.exists("t_prime_min")) {
+				if(not setting.lookupValue("t_prime_min", _minimumTPrime)) {
+					printWarn << "'t_prime_min' setting is invalid. Setting 't_prime_min' to "
+					          << _minimumTPrime << "." << std::endl;
+				}
+			} else {
+				printInfo << "'t_prime_min' not specified. Setting it to "
+				          << _minimumTPrime << "." << std::endl;
+			}
+			if(setting.exists("t_prime_max")) {
+				if(not setting.lookupValue("t_prime_max", _maximumTPrime)) {
+					printWarn << "'t_prime_max' setting is invalid. Setting 't_prime_max' to "
+					          << _maximumTPrime << "." << std::endl;
+				}
+			} else {
+				printInfo << "'t_prime_max' not specified. Setting it to "
+				          << _maximumTPrime << "." << std::endl;
+			}
+			if(_maximumTPrime < _minimumTPrime) {
+				printErr << "'t_prime_max' must not be smaller than 't_prime_min'." << std::endl;
+				return false;
+			}
 			if(setting["inv_m"].getLength() != setting["t_slope"].getLength()) {
 				printErr << "'inv_m' and 't_slope' have to be arrays of the same length." << std::endl;
 				return false;
@@ -62,10 +93,15 @@ namespace rpwa {
 			for(int i = 0; i < setting["inv_m"].getLength(); ++i) {
 				_tSlopesForMassBins.push_back(std::pair<double, double>(setting["inv_m"][i], setting["t_slope"][i]));
 			}
+			_initialized = true;
 			return true;
 		}
 
 		virtual bool operator() (double& invariantMass, double& tPrime) {
+			if(not _initialized) {
+				printErr << "trying to use an uninitialized massAndTPrimePicker." << std::endl;
+				return false;
+			}
 			TRandom3* randomNumbers = rpwa::randomNumberGenerator::instance()->getGenerator();
 			invariantMass = randomNumbers->Uniform(_minimumMass, _maximumMass);
 			double tPrimeSlope = -1.;
@@ -85,7 +121,7 @@ namespace rpwa {
 				return false;
 			}
 			tPrime = _minimumTPrime - 1.;
-			while(tPrime <= _minimumTPrime) {
+			while(tPrime < _minimumTPrime || tPrime > _maximumTPrime) {
 				tPrime = randomNumbers->Exp(tPrimeSlope);
 			}
 			printDebug << "generated mass=" << invariantMass << " | t'Slope=" << tPrimeSlope << std::endl;
@@ -97,6 +133,7 @@ namespace rpwa {
 			out << "    minimum Mass ... " << _minimumMass << std::endl;
 			out << "    maximum Mass ... " << _maximumMass << std::endl;
 			out << "    minimum t' ..... " << _minimumTPrime << std::endl;
+			out << "    maximum t' ..... " << _maximumTPrime << std::endl;
 			if(_tSlopesForMassBins.size() == 1) {
 				out << "    t' slope ....... " << _tSlopesForMassBins[0].second << std::endl;
 			} else {
@@ -119,9 +156,12 @@ namespace rpwa {
 
 		std::vector<std::pair<double, double> > _tSlopesForMassBins;
 
+		bool _initialized;
+
 		double _minimumMass;
 		double _maximumMass;
 		double _minimumTPrime;
+		double _maximumTPrime;
 
 	};
 
