@@ -111,8 +111,8 @@ string particleDataTable::particleNameFromGeantId(const int id) {
 
 
 void particleDataTable::geantIdAndChargeFromParticleName(const string& name,
-                                 int&          id,
-                                 int&          charge)
+                                                         int&          id,
+                                                         int&          charge)
 {
 	id = 0;
 	const string bareName = particleProperties::chargeFromName(name, charge);
@@ -126,6 +126,14 @@ void particleDataTable::geantIdAndChargeFromParticleName(const string& name,
 		return;
 	}
 	id = it->second;
+}
+
+
+unsigned int particleDataTable::geantIdFromParticleName(const std::string& name) {
+	int retval;
+	int tmp;
+	geantIdAndChargeFromParticleName(name, retval, tmp);
+	return retval;
 }
 
 

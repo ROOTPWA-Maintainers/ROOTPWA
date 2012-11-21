@@ -196,6 +196,13 @@ namespace rpwa {
 }
 
 
+unsigned int
+particleProperties::geantId() const
+{
+	return particleDataTable::geantIdFromParticleName(this->name());
+}
+
+
 bool
 particleProperties::isSpinExotic() const
 {

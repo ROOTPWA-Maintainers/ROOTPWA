@@ -89,10 +89,11 @@ namespace rpwa {
 
 		static bool readDecayModeFile(const std::string& fileName);  ///< reads in decay modes for list of particles from file; requires particle properties
 
-		static std::string particleNameFromGeantId(const int id);
-		static void        geantIdAndChargeFromParticleName(const std::string& name,
+		static std::string  particleNameFromGeantId(const int id);
+		static void         geantIdAndChargeFromParticleName(const std::string& name,
 		                                                    int&               id,
 		                                                    int&               charge);
+		static unsigned int geantIdFromParticleName(const std::string& name);
 
 		static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
