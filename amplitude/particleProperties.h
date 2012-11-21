@@ -58,7 +58,23 @@ namespace rpwa {
 	class particleProperties {
 
 	public:
-		
+
+		// helper class that holds information about particle decay
+		struct decayMode {
+
+			decayMode(const std::multiset<std::string>& daughters,
+			          const int                         L = -1,
+			          const int                         S = -1);
+			virtual ~decayMode();
+
+			bool operator ==(const decayMode& rhsMode) const;
+
+			std::multiset<std::string> _daughters;  ///< names of daughter particles
+			int                        _L;          ///< L for two-body decay; -1 means undefined
+			int                        _S;          ///< total spin; -1 means undefined
+
+		};
+
 		particleProperties();
 		particleProperties(const particleProperties& partProp);
 		particleProperties(const std::string&        partName,
@@ -67,7 +83,7 @@ namespace rpwa {
 		                   const int                 J,
 		                   const int                 P,
 		                   const int                 C);
-    
+
 		virtual ~particleProperties();
 
 		particleProperties& operator =(const particleProperties& partProp);
@@ -101,7 +117,7 @@ namespace rpwa {
 		int         C               () const { return _C;                                      }  ///< returns particle's C-parity
 
 		bool isXParticle() const;  ///< returns whether particle's name is either of "X{,-,0,+}"
-		
+
 		bool isMeson () const;  ///< returns whether particle is a meson
 		bool isBaryon() const;  ///< returns whether particle is a baryon
 		bool isLepton() const;  ///< returns whether particle is a lepton
@@ -111,12 +127,12 @@ namespace rpwa {
 
 		bool isSpinExotic() const;  ///< returns whether particle is spin-exotic
 
-		const std::vector<std::multiset<std::string> >& decayModes() const { return _decayModes; }  ///< returns defined decay modes for this particle
-		int  nmbDecays   () const { return _decayModes.size(); }  ///< returns number of defined decay modes for this particle
-		bool hasDecay    (const std::multiset<std::string>& daughters) const; ///< returns whether given decay mode is in list of decays
-		void addDecayMode(const std::multiset<std::string>& daughters) { _decayModes.push_back(daughters); }  ///< adds decay channel into list of allowed decay modes
+		const std::vector<decayMode>& decayModes() const { return _decayModes; }  ///< returns decay modes defined for this particle
+		int  nmbDecays   () const { return _decayModes.size(); }  ///< returns number of decay modes defined for this particle
+		bool hasDecay    (const decayMode& decay) const; ///< returns whether given decay mode is in list of decays
+		void addDecayMode(const decayMode& decay) { _decayModes.push_back(decay); }  ///< adds decay channel into list of allowed decay modes
 
-		bool fillFromDataTable(const std::string& name, 
+		bool fillFromDataTable(const std::string& name,
 		                       const bool         warnIfNotExistent = true);  ///< sets particle properties from entry in particle data table
 
 		void setName        (const std::string& name       );                                                ///< sets particle name and charge (if given in name)
@@ -171,7 +187,7 @@ namespace rpwa {
 	protected:
 
 		virtual bool isEqualTo(const particleProperties& partProp) const;  ///< returns whether partProp is equal to this by checking equality of all member variables
-		
+
 
 	private:
 
@@ -191,7 +207,7 @@ namespace rpwa {
 		int         _P;             ///< parity (0 = undefined)
 		int         _C;             ///< C-parity (0 = undefined)
 
-		std::vector<std::multiset<std::string> > _decayModes; ///< allowed decay modes
+		std::vector<decayMode> _decayModes; ///< allowed decay modes
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 
@@ -285,7 +301,7 @@ namespace rpwa {
 	inline
 	void
 	particleProperties::setMass(const double mass)
-	{ 
+	{
 		_mass  = mass;
 		_mass2 = mass * mass;
 	}
@@ -324,6 +340,6 @@ namespace rpwa {
 
 
 } // namespace rpwa
-	
+
 
 #endif  // PARTICLEPROPERTIES_H

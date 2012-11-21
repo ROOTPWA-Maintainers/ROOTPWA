@@ -58,15 +58,6 @@ namespace rpwa {
 	class isobarAmplitude;
 
 
-	std::string particleNameFromGeantId(const int id,
-	                                    const int charge);
-
-
-	void idAndChargeFromParticleName(const std::string& name,
-	                                 int&               id,
-	                                 int&               charge);
-
-
 	double getParticleMass(const std::string& name);
 
 

@@ -44,6 +44,7 @@
 #include <map>
 #include <set>
 
+#include <boost/bimap.hpp>
 
 #include "particleProperties.h"
 
@@ -61,7 +62,7 @@ namespace rpwa {
 
 		static const particleProperties* entry(const std::string& partName,
 		                                       const bool         warnIfNotExistent = true);  ///< access properties by particle name
-	
+
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>
@@ -88,12 +89,16 @@ namespace rpwa {
 
 		static bool readDecayModeFile(const std::string& fileName);  ///< reads in decay modes for list of particles from file; requires particle properties
 
+		static std::string particleNameFromGeantId(const int id);
+		static void        geantIdAndChargeFromParticleName(const std::string& name,
+		                                                    int&               id,
+		                                                    int&               charge);
 
 		static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-     
+
 
 	private:
 
@@ -105,11 +110,13 @@ namespace rpwa {
 		static particleDataTable                         _instance;   ///< singleton instance
 		static std::map<std::string, particleProperties> _dataTable;  ///< map with particle data
 
+		static boost::bimap<std::string, unsigned int> _nameGeantIdMap; ///< bimap with translation particle name <> GeantId
+
 		static bool _debug;  ///< if set to true, debug messages are printed
 
 	};
 
-  
+
 	inline
 	std::ostream&
 	operator <<(std::ostream&            out,
@@ -130,6 +137,6 @@ namespace rpwa {
 
 
 } // namespace rpwa
-	
+
 
 #endif  // PARTICLEDATATABLE_H

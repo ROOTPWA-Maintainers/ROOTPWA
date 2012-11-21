@@ -68,7 +68,9 @@ main(int argc, char** argv)
 	// test loading of particle data table
 	particleDataTable& pdt = particleDataTable::instance();
 	pdt.readFile();
-	if (0)
+	pdt.readDecayModeFile("testParticleDecays.txt");
+
+	if (1)
 		printInfo << "particle data table:" << endl
 		          << pdt;
 

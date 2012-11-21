@@ -75,7 +75,7 @@ namespace rpwa {
 			: _func(func),
 			  _val (val )
 		{	}
-		
+
 		friend
 		std::ostream&
 		operator << (std::ostream& out,
@@ -83,10 +83,10 @@ namespace rpwa {
 		{	return manip._func(out, manip._val); }
 
 	private:
-		
+
 		funcPointer _func;
 		T           _val;
-	}; 
+	};
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -142,7 +142,7 @@ namespace rpwa {
 #ifndef __CINT__
 	const bool isColorTerminal = terminalSupportsColor();
 #endif
-	
+
 	inline
 	bool
 	streamIsNotInteractive(const int fileDescriptor)
@@ -171,7 +171,7 @@ namespace rpwa {
 			and not streamIsNotInteractive(STDERR_FILENO);
 	}
 
-	
+
 	// VT100 escape sequences
 	enum vt100EscapeCodesEnum {
 		NORMAL     = 0,
@@ -196,7 +196,7 @@ namespace rpwa {
 		BG_CYAN    = 46,
 		BG_WHITE   = 47
 	};
-	
+
 	// ostream manipulator function that inserts VT100 escape sequence into stream
 	inline
 	std::ostream&
@@ -448,8 +448,8 @@ namespace rpwa {
 	{
 		return out << "(" << pair.first << ", " << pair.second << ")";
 	}
-	
-	
+
+
 	template<typename T>
 	inline
 	std::ostream&

@@ -37,11 +37,11 @@
 
 
 #include <unistd.h>
+#include <fstream>
 
 #include "particleDataTable.h"
 #include "waveSetGenerator.h"
 #include "waveDescription.h"
-#include <fstream>
 
 
 using namespace std;
@@ -81,7 +81,7 @@ main(int    argc,
 	printLibraryInfo ();
 	printSvnVersion  ();
 	cout << endl;
-	
+
 	// parse command line options
 	const string progName                 = argv[0];
 	unsigned int entriesPerPage           = 20;
@@ -127,7 +127,7 @@ main(int    argc,
 		}
 
 	// initialize particle data table
-	particleDataTable::readFile(pdgFileName);	
+	particleDataTable::readFile(pdgFileName);
 	bool useDecays = false;
 	if (decayFileName != "") {
 		if (particleDataTable::readDecayModeFile(decayFileName))
@@ -147,7 +147,7 @@ main(int    argc,
 	bool     doTeX = false;
 	if (texFileName != "") {
 		doTeX = true;
-	  wavelistTeX.open(texFileName.c_str());	
+	  wavelistTeX.open(texFileName.c_str());
 	  wavelistTeX << "\\documentclass[10pt,a4paper]{article}" << endl
 	              << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
 	              << "\\def\\dst{\\displaystyle}"             << endl
