@@ -97,10 +97,10 @@ TLorentzVector
 diffractivePhaseSpace::makeBeam()
 {
 	// throw magnituide of beam momentum
-	const double pBeam = gRandom->Gaus(_beamMom, _beamMomSigma);
+	const double pBeam = gRandom->Gaus(_beam.momentum, _beam.momentumSigma);
 	// throw beam inclination
-	const double dxdz = gRandom->Gaus(_beamDxDz, _beamDxDzSigma);
-	const double dydz = gRandom->Gaus(_beamDyDz, _beamDyDzSigma);
+	const double dxdz = gRandom->Gaus(_beam.DxDz, _beam.DxDzSigma);
+	const double dydz = gRandom->Gaus(_beam.DyDz, _beam.DyDzSigma);
 	// construct tilted beam momentum Lorentz vector
 	const double pz    = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
 	const double px    = dxdz * pz;
@@ -137,6 +137,7 @@ diffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
 	}
 	return true;
 }
+
 
 bool
 diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  formated) {
@@ -396,19 +397,22 @@ diffractivePhaseSpace::event()
 			_beamLab = makeBeam();
 		}
 	} else {
-		_vertex.SetXYZ(0, 0,
-		               _targetZPos+gRandom->Uniform(-_targetZLength * 0.5,
-		               _targetZLength * 0.5));
+		double x;
+		double y;
+		gRandom->Circle(x, y, _target.radius);
+		_vertex.SetXYZ(x, y,
+		               _target.position.Z()+gRandom->Uniform(-_target.length * 0.5,
+		               _target.length * 0.5));
 		_beamLab = makeBeam();
 	}
 
-	const TLorentzVector targetLab(0, 0, 0, _targetMass);
+	const TLorentzVector targetLab(0, 0, 0, _target.targetParticle.mass());
 	const TLorentzVector overallCm = _beamLab + targetLab;  // beam-target center-of-mass system
 	// check
-	if(_xMassMax + _targetMass  > overallCm.M()) {
+	if(_xMassMax + _target.targetParticle.mass()  > overallCm.M()) {
 		printErr << "Max Mass out of kinematic range." <<  endl
-			<< "Limit = " << overallCm.M()  - _targetMass << "GeV/c2" << endl
-			<< " ABORTING " << flush<< endl;
+		         << "Limit = " << overallCm.M()  - _target.targetParticle.mass() << "GeV/c2" << endl
+		         << " ABORTING " << flush<< endl;
 		throw;
 	}
 
@@ -432,19 +436,19 @@ diffractivePhaseSpace::event()
 		}
 
 		// make sure that X mass is not larger than maximum allowed mass
-		if(xMass + _recoilMass > overallCm.M()) {
+		if(xMass + _target.recoilParticle.mass() > overallCm.M()) {
 			continue;
 		}
 
 		// calculate t from t' in center-of-mass system of collision
 		const double s            = overallCm.Mag2();
 		const double sqrtS        = sqrt(s);
-		const double recoilMass2  = _recoilMass * _recoilMass;
+		const double recoilMass2  = _target.recoilParticle.mass() * _target.recoilParticle.mass();
 		const double xMass2       = xMass * xMass;
 		const double xEnergyCM    = (s - recoilMass2 + xMass2) / (2 * sqrtS);  // breakup energy
 		const double xMomCM       = sqrt(xEnergyCM * xEnergyCM - xMass2);      // breakup momentum
 		const double beamMass2    = _beamLab.M2();
-		const double targetMass2  = _targetMass * _targetMass;
+		const double targetMass2  = _target.targetParticle.mass() * _target.targetParticle.mass();
 		const double beamEnergyCM = (s - targetMass2 + beamMass2) / (2 * sqrtS);    // breakup energy
 		const double beamMomCM    = sqrt(beamEnergyCM * beamEnergyCM - beamMass2);  // breakup momentum
 		const double t0           = (xEnergyCM - beamEnergyCM) * (xEnergyCM - beamEnergyCM) -
@@ -457,7 +461,7 @@ diffractivePhaseSpace::event()
 
 		// construct X Lorentz-vector in lab frame (= target RF)
 		// convention used here: Reggeon = X - beam = target - recoil (momentum transfer from target to beam vertex)
-		const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * _targetMass);  // breakup energy
+		const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * _target.targetParticle.mass());  // breakup energy
 		const double xEnergyLab       = _beamLab.E() + reggeonEnergyLab;
 		const double xMomLab          = sqrt(xEnergyLab * xEnergyLab - xMass2);
 		const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * _beamLab.E() * xEnergyLab) / (2 * _beamLab.P() * xMomLab);
@@ -521,8 +525,8 @@ diffractivePhaseSpace::event()
 			// correct weight for phase space splitting
 			// and for 2-body phase space beam-target
 			// (1 / 4pi) * q(sqrt(s), m_x, m_recoil) / sqrt(s)
-			const double ps2bodyWMax = breakupMomentum(sqrtS,_xMassMax,_targetMass)/sqrtS;
-			const double ps2bodyW = breakupMomentum(sqrtS,xMass,_targetMass)/sqrtS;
+			const double ps2bodyWMax = breakupMomentum(sqrtS, _xMassMax, _target.targetParticle.mass())/sqrtS;
+			const double ps2bodyW = breakupMomentum(sqrtS, xMass, _target.targetParticle.mass())/sqrtS;
 
 			const double maxPsWeight = _phaseSpace.maxWeight()  * _xMassMax * ps2bodyWMax;
 			const double psWeight    = _phaseSpace.calcWeight() * xMass* ps2bodyW;
@@ -552,6 +556,7 @@ diffractivePhaseSpace::event(ostream& stream)
 	return attempts;
 }
 
+
 unsigned int
 diffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 {
@@ -563,19 +568,13 @@ diffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 	return attempts;
 }
 
-
+/*
 void
-diffractivePhaseSpace::setBeam(double Mom,  double MomSigma,
-		double DxDz, double DxDzSigma,
-		double DyDz, double DyDzSigma)
+diffractivePhaseSpace::setBeam(const Beam& beam)
 {
-	_beamMomSigma=MomSigma;
-	_beamMom=Mom;
-	_beamDxDz=DxDz;
-	_beamDxDzSigma=DxDzSigma;
-	_beamDyDz=DyDz;
-	_beamDyDzSigma=DyDzSigma;
+	_beam = beam;
 }
+*/
 
 float
 diffractivePhaseSpace::calcTPrime(const TLorentzVector& particle_In, const TLorentzVector& particle_Out){

@@ -32,6 +32,8 @@
 #include <vector>
 
 
+#include "generator.hpp"
+#include "generatorParameters.hpp"
 #include "nBodyPhaseSpaceGen.h"
 #include "primaryVertexGen.h"
 
@@ -65,7 +67,7 @@ namespace rpwa {
 	 *  @author Sebastian Neubert TUM (original author)
 	 *
 	 */
-	class diffractivePhaseSpace {
+	class diffractivePhaseSpace : public rpwa::generator {
 
 	  public:
 
@@ -78,9 +80,9 @@ namespace rpwa {
 		TLorentzVector* beam() { return &_beamLab; }
 		TVector3* vertex() { return &_vertex; }
 		double tPrime() { return _tPrime; }
-
+/*
 		// Modifiers -----------------------
-		/** @brief Set beam parameters
+		* @brief Set beam parameters
 		 *
 		 * 2004 COMPASS beam:
 		 * _beamDxDz      = 0.00026; // tilt from Quirin was in mrad
@@ -89,19 +91,16 @@ namespace rpwa {
 		 * _beamDyDzSigma = 0.00018;
 		 * _beamMom       = 189 [GeV/c]
 		 * _beamMomSigma  = 1.2
-		 */
-		void setBeam(double Mom=190, double MomSigma=1.2,
-		             double DxDz=0, double DxDzSigma=0,
-		             double DyDz=0, double DyDzSigma=0);
+		void setBeam(const rpwa::Beam& beam);
 
-		/** @brief Set beam parameters
+		* @brief Set target parameters
 		 *  The target is assumed to be a single cylinder
 		 *  centered at zPos and r=0;
 		 *
 		 *  Example: SetTarget(-20,40,2)
 		 *           Defines a target cell with 4cm diameter extending
 		 *           from z=-40cm to z=0cm
-		 */
+
 		void setTarget(double zPos,
 		               double length,
 		               double r,
@@ -113,7 +112,7 @@ namespace rpwa {
 			_targetMass=mass;
 			_recoilMass=mass;
 		}
-
+*/
 		//void SetThetaDistribution(TH1* distr){thetaDistribution=distr;}
 
 
@@ -229,7 +228,7 @@ namespace rpwa {
 
 		primaryVertexGen* _primaryVertexGen;
 
-
+/*
 		// target position
 		double _targetZPos;    // [cm]
 		double _targetZLength; // [cm]
@@ -238,6 +237,7 @@ namespace rpwa {
 		double _targetMass;    // [GeV/c^2]
 		double _recoilMass;    // [GeV/c^2]
 
+		rpwa::Beam _beam;
 		// beam parameters:
 		double _beamMomSigma;  // [GeV/c]
 		double _beamMom;       // [GeV/c]
@@ -246,7 +246,7 @@ namespace rpwa {
 		double _beamDxDzSigma;
 		double _beamDyDz;
 		double _beamDyDzSigma;
-
+*/
 		TLorentzVector _beamLab;         // cache for last generated beam (in lab frame)
 		TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)
 		TVector3 _vertex;                // cache for last generated vertex

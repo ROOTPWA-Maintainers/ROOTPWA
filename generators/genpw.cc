@@ -205,7 +205,7 @@ int main(int argc, char** argv)
 		printWarn << "Beam particle mass not found in config file. Using '"
 				  << setprecision(8) << beamPartMass << "'." << endl;
 	}
-	double beamDxDz = reactConf.lookup("beam.DxDz");
+/*	double beamDxDz = reactConf.lookup("beam.DxDz");
 	double beamDxDzSigma = reactConf.lookup("beam.sigma_DxDz");
 	double beamDyDz = reactConf.lookup("beam.DyDz");
 	double beamDyDzSigma = reactConf.lookup("beam.sigma_DyDz");
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
 	double targetLength = reactConf.lookup("target.length");
 	double targetRadius = reactConf.lookup("target.radius");
 	double massRecoil = reactConf.lookup("target.mrecoil");
-
+*/
 	double tPrimeMin = 0.;
 	double tPrimeMax = numeric_limits<double>::max();
 	reactConf.lookupValue("finalstate.t_min", tPrimeMin);
@@ -309,8 +309,8 @@ int main(int argc, char** argv)
 
 	diffractivePhaseSpace diffPS;
 	diffPS.setSeed(seed);
-	diffPS.setBeam(beamMom, beamMomSigma, beamDxDz, beamDxDzSigma, beamDyDz, beamDyDzSigma);
-	diffPS.setTarget(targetZPosition, targetLength, targetRadius, massRecoil);
+//	diffPS.setBeam(beamMom, beamMomSigma, beamDxDz, beamDxDzSigma, beamDyDz, beamDyDzSigma);
+//	diffPS.setTarget(targetZPosition, targetLength, targetRadius, massRecoil);
 	diffPS.setTPrimeSlope(tSlopes, finalStateInvariantMasses, numberOftSlopes);
 	diffPS.setMassRange(minimumFinalStateMass, maximumFinalStateMass);
 	diffPS.setPrimaryVertexGen(primaryVtxGen);
