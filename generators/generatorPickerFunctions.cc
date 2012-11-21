@@ -19,6 +19,17 @@ uniformMassExponentialTPicker::uniformMassExponentialTPicker()
 	  _tPrimeRange(pair<double, double>(0., numeric_limits<double>::max())) { }
 
 
+uniformMassExponentialTPicker::uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker)
+	: massAndTPrimePicker(picker),
+	  _tPrimeRange(picker._tPrimeRange) { }
+
+
+massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
+	massAndTPrimePicker* retval = new uniformMassExponentialTPicker(*this);
+	return retval;
+}
+
+
 bool uniformMassExponentialTPicker::init(const Setting& setting) {
 	if(_initialized) {
 		printErr << "trying to initialize a massAndTPrimePicker class twice." << endl;

@@ -23,7 +23,7 @@ namespace rpwa {
 		virtual void setBeam(const rpwa::Beam& beam) { _beam = beam; };
 		virtual void setTarget(const rpwa::Target& target) { _target = target; };
 		virtual void setTPrimeAndMassPicker(const rpwa::massAndTPrimePicker& pickerFunction) {
-			(*_pickerFunction) = pickerFunction;
+			_pickerFunction = pickerFunction.clone();
 		}
 		virtual void setPrimaryVertexGenerator(rpwa::primaryVertexGen* primaryVertexGen) {
 			_primaryVertexGen = primaryVertexGen;

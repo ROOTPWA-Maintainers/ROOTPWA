@@ -15,7 +15,12 @@ namespace rpwa {
 			: _massRange(std::pair<double, double>(0., 0.)),
 			  _initialized(false) { };
 
+		massAndTPrimePicker(const massAndTPrimePicker& picker)
+			: _massRange(picker._massRange),
+			  _initialized(picker._initialized) { };
+
 		virtual ~massAndTPrimePicker() { };
+		virtual massAndTPrimePicker* clone() const = 0;
 
 		virtual bool init(const libconfig::Setting& setting) = 0;
 
@@ -43,7 +48,9 @@ namespace rpwa {
 	  public:
 
 		uniformMassExponentialTPicker();
+		uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker);
 		virtual ~uniformMassExponentialTPicker() { }
+		virtual massAndTPrimePicker* clone() const;
 
 		virtual bool init(const libconfig::Setting& setting);
 
