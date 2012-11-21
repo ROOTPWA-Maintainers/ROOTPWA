@@ -15,9 +15,8 @@ using namespace rpwa;
 
 
 uniformMassExponentialTPicker::uniformMassExponentialTPicker()
-	: _initialized(false),
-	  _minimumTPrime(0.),
-	  _maximumTPrime(numeric_limits<double>::max()) { }
+	: massAndTPrimePicker(),
+	  _tPrimeRange(pair<double, double>(0., numeric_limits<double>::max())) { }
 
 
 bool uniformMassExponentialTPicker::init(const Setting& setting) {
@@ -35,31 +34,31 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 		printErr << "found an invalid settings for function 'uniformMassExponentialT'." << endl;
 		return false;
 	}
-	_minimumMass = setting["mass_min"];
-	_maximumMass = setting["mass_max"];
-	if(_maximumMass < _minimumMass) {
+	_massRange.first = setting["mass_min"];
+	_massRange.second = setting["mass_max"];
+	if(_massRange.second < _massRange.first) {
 		printErr << "'mass_max' must not be smaller than 'mass_min'." << endl;
 		return false;
 	}
 	if(setting.exists("t_prime_min")) {
-		if(not setting.lookupValue("t_prime_min", _minimumTPrime)) {
+		if(not setting.lookupValue("t_prime_min", _tPrimeRange.first)) {
 			printWarn << "'t_prime_min' setting is invalid. Setting 't_prime_min' to "
-			          << _minimumTPrime << "." << endl;
+			          << _tPrimeRange.first << "." << endl;
 		}
 	} else {
 		printInfo << "'t_prime_min' not specified. Setting it to "
-		          << _minimumTPrime << "." << endl;
+		          << _tPrimeRange.first << "." << endl;
 	}
 	if(setting.exists("t_prime_max")) {
-		if(not setting.lookupValue("t_prime_max", _maximumTPrime)) {
+		if(not setting.lookupValue("t_prime_max", _tPrimeRange.second)) {
 			printWarn << "'t_prime_max' setting is invalid. Setting 't_prime_max' to "
-			          << _maximumTPrime << "." << endl;
+			          << _tPrimeRange.second << "." << endl;
 		}
 	} else {
 		printInfo << "'t_prime_max' not specified. Setting it to "
-		          << _maximumTPrime << "." << endl;
+		          << _tPrimeRange.second << "." << endl;
 	}
-	if(_maximumTPrime < _minimumTPrime) {
+	if(_tPrimeRange.second < _tPrimeRange.first) {
 		printErr << "'t_prime_max' must not be smaller than 't_prime_min'."
 		         << endl;
 		return false;
@@ -87,7 +86,7 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 		return false;
 	}
 	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
-	invariantMass = randomNumbers->Uniform(_minimumMass, _maximumMass);
+	invariantMass = randomNumbers->Uniform(_massRange.first, _massRange.second);
 	double tPrimeSlope = -1.;
 	if(_tSlopesForMassBins.size() == 1) {
 		tPrimeSlope = _tSlopesForMassBins[0].second;
@@ -106,7 +105,7 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 	}
 	do {
 		tPrime = randomNumbers->Exp(tPrimeSlope);
-	} while(tPrime < _minimumTPrime || tPrime > _maximumTPrime);
+	} while(tPrime < _tPrimeRange.first || tPrime > _tPrimeRange.second);
 	printDebug << "generated mass=" << invariantMass << " | t'Slope="
 	           << tPrimeSlope << endl;
 	return true;
@@ -115,10 +114,10 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 
 ostream& uniformMassExponentialTPicker::print(ostream& out) {
 	out << "'uniformMassExponentialT' weighter parameters:" << endl;
-	out << "    minimum Mass ... " << _minimumMass << endl;
-	out << "    maximum Mass ... " << _maximumMass << endl;
-	out << "    minimum t' ..... " << _minimumTPrime << endl;
-	out << "    maximum t' ..... " << _maximumTPrime << endl;
+	out << "    minimum Mass ... " << _massRange.first << endl;
+	out << "    maximum Mass ... " << _massRange.second << endl;
+	out << "    minimum t' ..... " << _tPrimeRange.first << endl;
+	out << "    maximum t' ..... " << _tPrimeRange.second << endl;
 	if(_tSlopesForMassBins.size() == 1) {
 		out << "    t' slope ....... " << _tSlopesForMassBins[0].second	<< endl;
 	} else {

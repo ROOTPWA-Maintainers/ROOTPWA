@@ -11,14 +11,30 @@ namespace rpwa {
 
 	  public:
 
-		massAndTPrimePicker() { };
+		massAndTPrimePicker()
+			: _massRange(std::pair<double, double>(0., 0.)),
+			  _initialized(false) { };
+
 		virtual ~massAndTPrimePicker() { };
 
 		virtual bool init(const libconfig::Setting& setting) = 0;
 
+		virtual std::pair<double, double> massRange() {
+			if(not _initialized) {
+				printErr << "cannot call massRange on uninitialized massAndTPrimePicker." << std::endl;
+				throw;
+			}
+			return _massRange;
+		};
+
 		virtual bool operator() (double& invariantMass, double& tPrime) = 0;
 
 		virtual std::ostream& print(std::ostream& out) = 0;
+
+	  protected:
+
+		std::pair<double, double> _massRange;
+		bool _initialized;
 
 	};
 
@@ -39,12 +55,7 @@ namespace rpwa {
 
 		std::vector<std::pair<double, double> > _tSlopesForMassBins;
 
-		bool _initialized;
-
-		double _minimumMass;
-		double _maximumMass;
-		double _minimumTPrime;
-		double _maximumTPrime;
+		std::pair<double, double> _tPrimeRange;
 
 	};
 
