@@ -97,24 +97,25 @@ namespace rpwa {
 		                        const std::pair<particleProperties, std::string>& rhsPropSel)
 		{ return not (lhsProp == rhsPropSel); }
 
-		std::string name            () const { return nameWithCharge(_name, _charge);          }  ///< returns particle name including charge
-		std::string bareName        () const { return _name;                                   }  ///< returns particle name w/o charge
-		std::string antiPartName    () const { return nameWithCharge(_antiPartName, -_charge); }  ///< returns antiparticle name including charge
-		std::string antiPartBareName() const { return _antiPartName;                           }  ///< returns antiparticle name w/o charge
-		int         charge          () const { return _charge;                                 }  ///< returns particle's charge
-		double      mass            () const { return _mass;                                   }  ///< returns particle mass
-		double      mass2           () const { return _mass2;                                  }  ///< returns particle mass squared
-		double      width           () const { return _width;                                  }  ///< returns particle width
-		int         baryonNmb       () const { return _baryonNmb;                              }  ///< returns particle's baryon number
-		int         isospin         () const { return _isospin;                                }  ///< returns particle's isospin [hbar/2]
-		int         isospinProj     () const { return 2 * _charge - (baryonNmb() + strangeness() + charm() + beauty()); }  ///< returns z-component of isospin using Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
-		int         strangeness     () const { return _strangeness;                            }  ///< returns particle's strangeness
-		int         charm           () const { return _charm;                                  }  ///< returns particle's charm
-		int         beauty          () const { return _beauty;                                 }  ///< returns particle's beauty
-		int         G               () const { return _G;                                      }  ///< returns particle's G-parity
-		int         J               () const { return _J;                                      }  ///< returns particle's spin [hbar/2]
-		int         P               () const { return _P;                                      }  ///< returns particle's parity
-		int         C               () const { return _C;                                      }  ///< returns particle's C-parity
+		std::string  name            () const { return nameWithCharge(_name, _charge);          }  ///< returns particle name including charge
+		std::string  bareName        () const { return _name;                                   }  ///< returns particle name w/o charge
+		std::string  antiPartName    () const { return nameWithCharge(_antiPartName, -_charge); }  ///< returns antiparticle name including charge
+		std::string  antiPartBareName() const { return _antiPartName;                           }  ///< returns antiparticle name w/o charge
+		int          charge          () const { return _charge;                                 }  ///< returns particle's charge
+		double       mass            () const { return _mass;                                   }  ///< returns particle mass
+		double       mass2           () const { return _mass2;                                  }  ///< returns particle mass squared
+		double       width           () const { return _width;                                  }  ///< returns particle width
+		int          baryonNmb       () const { return _baryonNmb;                              }  ///< returns particle's baryon number
+		int          isospin         () const { return _isospin;                                }  ///< returns particle's isospin [hbar/2]
+		int          isospinProj     () const { return 2 * _charge - (baryonNmb() + strangeness() + charm() + beauty()); }  ///< returns z-component of isospin using Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
+		int          strangeness     () const { return _strangeness;                            }  ///< returns particle's strangeness
+		int          charm           () const { return _charm;                                  }  ///< returns particle's charm
+		int          beauty          () const { return _beauty;                                 }  ///< returns particle's beauty
+		int          G               () const { return _G;                                      }  ///< returns particle's G-parity
+		int          J               () const { return _J;                                      }  ///< returns particle's spin [hbar/2]
+		int          P               () const { return _P;                                      }  ///< returns particle's parity
+		int          C               () const { return _C;                                      }  ///< returns particle's C-parity
+		unsigned int geantId         () const; ///< returns particle's Geant ID.
 
 		bool isXParticle() const;  ///< returns whether particle's name is either of "X{,-,0,+}"
 
