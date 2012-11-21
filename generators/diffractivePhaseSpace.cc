@@ -69,13 +69,13 @@ using namespace rpwa;
 diffractivePhaseSpace::diffractivePhaseSpace()
 	: _primaryVertexGen(NULL),
 	  _tPrime(0.),
-	  _invSlopePar(NULL),
-	  _invM(NULL),
+//	  _invSlopePar(NULL),
+//	  _invM(NULL),
 	  _tMin(0.),
-	  _tprimeMin(0.),
-	  _tprimeMax(numeric_limits<double>::max()),
-	  _xMassMin(0),
-	  _xMassMax(0),
+//	  _tprimeMin(0.),
+//	  _tprimeMax(numeric_limits<double>::max()),
+//	  _xMassMin(0),
+//	  _xMassMax(0),
 	  _protonMass(0.938272013),
 	  _pionMass(0.13957018),
 	  _pionMass2(_pionMass * _pionMass)
@@ -325,6 +325,7 @@ diffractivePhaseSpace::buildDaughterList()
 //   }
 // }
 
+/*
 double
 diffractivePhaseSpace::getInvSlopePar(double invariant_M) {
 	double result = 1.;
@@ -368,6 +369,7 @@ diffractivePhaseSpace::getInvSlopePar(double invariant_M) {
 	result = invt_1 + (((invt_2-invt_1) / (m_2-m_1)) * (invariant_M-m_1));
 	return result;
 }
+*/
 
 
 // based on Dima's prod_decay_split.f
@@ -416,10 +418,15 @@ diffractivePhaseSpace::event()
 		throw;
 	}
 
+	if(not _pickerFunction) {
+		printErr << "mass- and t'-picker function has not been set." <<endl;
+		throw;
+	}
+
 	bool done = false;
 	while(!done) {
 
-		// _xMassMin == _xMassMax
+/*		// _xMassMin == _xMassMax
 		double xMass = _xMassMin;
 		if(_xMassMin < _xMassMax) {
 			xMass = gRandom->Uniform(_xMassMin, _xMassMax); // pick random X mass
@@ -434,6 +441,10 @@ diffractivePhaseSpace::event()
 			tPrime = -gRandom->Exp(calc_invSlopePar);  // pick random t'
 			//cout << " inv slope par " << _invSlopePar << " gradient " << _invSlopeParGradient << " t' is " << tPrime << endl;
 		}
+*/
+		double tPrime;
+		double xMass;
+		assert((*_pickerFunction)(xMass, tPrime));
 
 		// make sure that X mass is not larger than maximum allowed mass
 		if(xMass + _target.recoilParticle.mass() > overallCm.M()) {
@@ -513,7 +524,7 @@ diffractivePhaseSpace::event()
 		}
 
 		// apply t cut
-		if(t > _tMin || _tPrime > _tprimeMin || _tPrime < _tprimeMax) {
+		if(t > _tMin /*|| _tPrime > _tprimeMin || _tPrime < _tprimeMax*/) {
 			continue;
 		}
 

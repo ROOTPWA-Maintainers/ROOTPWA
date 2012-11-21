@@ -183,7 +183,10 @@ int main(int argc, char** argv)
 	generatorMgr.readReactionFile(reactionFile);
 	generatorMgr.initializeGenerator();
 
-
+	if(overwriteMass) {
+		printErr << "Sorry, GAME OVER." << endl;
+		throw;
+	}
 
 
 	// variable that need to get initialized either by input options
@@ -215,7 +218,7 @@ int main(int argc, char** argv)
 	double targetLength = reactConf.lookup("target.length");
 	double targetRadius = reactConf.lookup("target.radius");
 	double massRecoil = reactConf.lookup("target.mrecoil");
-*/
+
 	double tPrimeMin = 0.;
 	double tPrimeMax = numeric_limits<double>::max();
 	reactConf.lookupValue("finalstate.t_min", tPrimeMin);
@@ -251,7 +254,7 @@ int main(int argc, char** argv)
 		printInfo << "Found one t' slope: " << tSlopes[0] << "." << endl;
 	}
 	double binCenter = 500 * (minimumFinalStateMass + maximumFinalStateMass);
-
+*/
   // check whether to use a primary vertex generator as requested by the config file
 	primaryVertexGen* primaryVtxGen = NULL;
 	string histFilenamePrimVertex = "";
@@ -268,12 +271,12 @@ int main(int argc, char** argv)
 			primaryVtxGen = NULL;
 		}
 	}
-
+/*
 	if(!reactConf.lookupValue("beam.charge", qBeam)) {
 		printWarn << "Beam charge not found in config file. Setting it to '-1'." << endl;
 		qBeam = -1;
 	}
-
+*/
 	// generate the filename automatically if not specified
 	if (outputFileName == "") {
 		stringstream _filename;
@@ -312,10 +315,10 @@ int main(int argc, char** argv)
 	diffPS.setSeed(seed);
 //	diffPS.setBeam(beamMom, beamMomSigma, beamDxDz, beamDxDzSigma, beamDyDz, beamDyDzSigma);
 //	diffPS.setTarget(targetZPosition, targetLength, targetRadius, massRecoil);
-	diffPS.setTPrimeSlope(tSlopes, finalStateInvariantMasses, numberOftSlopes);
-	diffPS.setMassRange(minimumFinalStateMass, maximumFinalStateMass);
+//	diffPS.setTPrimeSlope(tSlopes, finalStateInvariantMasses, numberOftSlopes);
+//	diffPS.setMassRange(minimumFinalStateMass, maximumFinalStateMass);
 	diffPS.setPrimaryVertexGen(primaryVtxGen);
-	if(tPrimeMin >= 0.) {
+/*	if(tPrimeMin >= 0.) {
 		diffPS.setTPrimeMin(tPrimeMin);
 	} else {
 		printErr << "t_min (minimum t') must be positive, found '" << tPrimeMin << "'." << endl;
@@ -327,7 +330,7 @@ int main(int argc, char** argv)
 		printErr << "t_max (maximum t') must be positive, found '" << tPrimeMax << "'." << endl;
 		exit(1);
 	}
-
+*/
 	double importanceMass;
 	double importanceWidth;
 
@@ -403,11 +406,11 @@ int main(int argc, char** argv)
 			double mBest = 0;
 			for(unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 				tree->GetEntry(i);
-				if(fabs(binCenter - fitBin->mass()) <= fabs(binCenter - mBest)) {
+/*				if(fabs(binCenter - fitBin->mass()) <= fabs(binCenter - mBest)) {
 					iBest = i;
 					mBest = fitBin->mass();
 				}
-			}  // end loop over TFitBins
+*/			}  // end loop over TFitBins
 			printInfo << "Using data from Mass bin with m = " << mBest << endl;
 			tree->GetEntry(iBest);
 			// write wavelist file for generator
@@ -567,10 +570,10 @@ int main(int argc, char** argv)
 	if(writeComgeantOut) {
 		outputComgeantFile.close();
 	}
-
+/*
 	delete [] tSlopes;
 	delete [] finalStateInvariantMasses;
-
+*/
 	return 0;
 
 }

@@ -112,25 +112,25 @@ namespace rpwa {
 			_targetMass=mass;
 			_recoilMass=mass;
 		}
-*/
+
 		//void SetThetaDistribution(TH1* distr){thetaDistribution=distr;}
 
 
-		/** @brief Set the slope b of the t-prime distribution
+		* @brief Set the slope b of the t-prime distribution
 		 *
 		 *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
-		 */
+
 		void setTPrimeSlope(double slopePar) {
 			_invSlopePar = new double[1];
 			_invSlopePar[0] = 1. / slopePar;
 		}  // inverse for simple usage with TRandom
 
-		/** @brief Set the slopes b of the t-prime distribution depending on the invariant mass
+		* @brief Set the slopes b of the t-prime distribution depending on the invariant mass
 		 *
 		 *  \f[ \frac{d\sigma}{dt'} \propto e^{-bt'} \f]
 		 *
 		 *  in case of more than one value assuming sorted ascending input for interpolation
-		 */
+
 		void setTPrimeSlope(double* slopePar, double* inv_m = NULL, int nvalues = 1) {
 			// delete previous arrays if existing
 			if(_invSlopePar) {
@@ -153,15 +153,15 @@ namespace rpwa {
 			}
 		}  // inverse for simple usage with TRandom
 
-		/** @brief Set mass range of produced system X
+		* @brief Set mass range of produced system X
 		 *
 		 *  Events will be generated uniformly in mass
-		 */
+
 		void setMassRange(double min, double max) {
 			_xMassMin=min;
 			_xMassMax=max;
 		}
-
+*/
 		void setDecayProducts(const std::vector<particleInfo>& info);
 		void addDecayProduct(const particleInfo& info);
 		void setSeed(int seed);
@@ -177,7 +177,7 @@ namespace rpwa {
 			_tMin = tMin;
 			if (tMin > 0) _tMin = -tMin;
 		};
-
+/*
 		void setTPrimeMin(double tPrimeMin) {
 			_tprimeMin = tPrimeMin;
 			if (tPrimeMin > 0) _tprimeMin = -tPrimeMin;
@@ -187,7 +187,7 @@ namespace rpwa {
 			_tprimeMax = tPrimeMax;
 			if (tPrimeMax > 0) _tprimeMax = -tPrimeMax;
 		};
-
+*/
 		/*
 		 * If you set the Primary Vertex Generator (create it first)
 		 * Vertex position, Beam Energy and Direction will be
@@ -228,40 +228,19 @@ namespace rpwa {
 
 		primaryVertexGen* _primaryVertexGen;
 
-/*
-		// target position
-		double _targetZPos;    // [cm]
-		double _targetZLength; // [cm]
-		double _targetR;       // [cm]
-
-		double _targetMass;    // [GeV/c^2]
-		double _recoilMass;    // [GeV/c^2]
-
-		rpwa::Beam _beam;
-		// beam parameters:
-		double _beamMomSigma;  // [GeV/c]
-		double _beamMom;       // [GeV/c]
-
-		double _beamDxDz;
-		double _beamDxDzSigma;
-		double _beamDyDz;
-		double _beamDyDzSigma;
-*/
 		TLorentzVector _beamLab;         // cache for last generated beam (in lab frame)
 		TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)
 		TVector3 _vertex;                // cache for last generated vertex
 		double _tPrime;                  // cache for last generated t' (recalculated)
 
 		//TH1* thetaDistribution;
-
+/*
 		double* _invSlopePar;  // inverse slope parameter(s) 1 / b of t' distribution [(GeV/c)^{-2}]
 		double* _invM;         // invariant masses corresponding to _invSlopePar
 		int     _ninvSlopePar;
-
+*/
 		// cut on t-distribution
 		double _tMin;       // [(GeV/c)^2]
-		double _tprimeMin;  // [(GeV/c)]
-		double _tprimeMax;  // [(GeV/c)]
 
 		double _xMassMin;   // [GeV/c^2]
 		double _xMassMax;   // [GeV/c^2]
