@@ -30,33 +30,11 @@
 class TFile;
 class TH1;
 class TH2;
+class TLorentzVector;
 
 namespace rpwa {
 
 	class primaryVertexGen {
-
-	  private:
-
-		// ********* some global constants and variables **********
-		TFile* _histogramfile;
-		//static const string histogramfilename("properties_2008/primary_vertex_properties.root");
-		TH2* _hist_angles_vert_mean;
-		TH2* _hist_angles_horiz_mean;
-		TH2* _hist_angles_vert_sigma;
-		TH2* _hist_angles_horiz_sigma;
-		TH2* _hist_vertex_distr_xy;
-		TH1* _hist_vertex_distr_z;
-
-		//const double beam_part_mass(0.13957018); // [GeV] 2008's PDG pi-/+ value
-		//const double beam_part_mass(0.493677); // [GeV] 2008's PDG K-/+ value
-		//const double beam_energy_mean(191.29); // [GeV] fit on pi- pi+ pi- energy
-		//const double beam_energy_sigma(1.94476); // [GeV] fit on pi- pi+ pi- energy
-		double _beam_part_mass;
-		double _beam_energy_mean;
-		double _beam_energy_sigma;
-		bool   _histograms_loaded;
-		// in principle the fitted values are missing the momentum transfer to the
-		// recoil particle that should be taken into account in the future
 
 	  public:
 
@@ -64,29 +42,16 @@ namespace rpwa {
 		// initialization of default values
 		// see also above the out commented constants
 		// please TPrimaryVertexGen::Check() afterwards if loading went correctly
-		primaryVertexGen(std::string histfilename       = "properties_2008/primary_vertex_properties.root",
-		                 double beam_part_mass          = 0.13957018, // by default pion
-		                 double mean_beam_energy        = 191.29,     // measured 2008
-		                 double mean_beam_energy_spread = 1.94476);   // measured sigma 2008
+		primaryVertexGen(std::string histfilename,
+		                 double beam_part_mass,
+		                 double mean_beam_energy,
+		                 double mean_beam_energy_spread);
 
 		// free histograms
 		~primaryVertexGen();
 
 		// check if histograms were loaded properly
 		bool check();
-
-		// ************* the prototypes ************
-
-	  private:
-
-		// Loading of distribution histograms specified by histogram filename
-		// if you wish a window showing the loaded histograms then plot = true
-		// returns false if something goes wrong
-		// Please do not use any other methods then
-		bool loadHistograms(std::string filename = "properties_2008/primary_vertex_properties.root",
-		                    bool plot = true);
-
-	  public:
 
 		// Get one Vertex point
 		// the position is distributed randomly based on hist_vertex_distr_xy
@@ -122,10 +87,34 @@ namespace rpwa {
 
 	  private:
 
-		/*
-		 * big thanks to Sergei Gerassimov for this
-		 * smooth palette settings
-		 */
+		TFile* _histogramfile;
+		TH2* _hist_angles_vert_mean;
+		TH2* _hist_angles_horiz_mean;
+		TH2* _hist_angles_vert_sigma;
+		TH2* _hist_angles_horiz_sigma;
+		TH2* _hist_vertex_distr_xy;
+		TH1* _hist_vertex_distr_z;
+
+		double _beam_part_mass;
+		double _beam_energy_mean;
+		double _beam_energy_sigma;
+		bool   _histograms_loaded;
+
+		// in principle the fitted values are missing the momentum transfer to the
+		// recoil particle that should be taken into account in the future
+
+		// Loading of distribution histograms specified by histogram filename
+		// if you wish a window showing the loaded histograms then plot = true
+		// returns false if something goes wrong
+		// Please do not use any other methods then
+		bool loadHistograms(std::string filename = "properties_2008/primary_vertex_properties.root",
+		                    bool plot = true);
+
+
+		//
+		// big thanks to Sergei Gerassimov for this
+		// smooth palette settings
+		//
 		void gesPalette(int i=0);
 
 	};

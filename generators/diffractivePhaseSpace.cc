@@ -68,7 +68,8 @@ using namespace rpwa;
 
 
 diffractivePhaseSpace::diffractivePhaseSpace()
-	: _primaryVertexGen(NULL),
+	: generator(),
+//	  _primaryVertexGen(NULL),
 	  _tPrime(0.),
 //	  _invSlopePar(NULL),
 //	  _invM(NULL),
@@ -407,9 +408,9 @@ diffractivePhaseSpace::event()
 		double x;
 		double y;
 		random->Circle(x, y, _target.radius);
-		_vertex.SetXYZ(x, y,
-		               _target.position.Z()+random->Uniform(-_target.length * 0.5,
-		               _target.length * 0.5));
+		_vertex.SetXYZ(_target.position.X() + x,
+		               _target.position.Y() + y,
+		               _target.position.Z() + random->Uniform(-_target.length * 0.5, _target.length * 0.5));
 		_beamLab = makeBeam();
 	}
 

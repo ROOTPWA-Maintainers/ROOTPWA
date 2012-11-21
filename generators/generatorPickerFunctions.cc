@@ -104,10 +104,9 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 		printErr << "error when calculating the t'-slope." << endl;
 		return false;
 	}
-	tPrime = _minimumTPrime - 1.;
-	while(tPrime < _minimumTPrime || tPrime > _maximumTPrime) {
+	do {
 		tPrime = randomNumbers->Exp(tPrimeSlope);
-	}
+	} while(tPrime < _minimumTPrime || tPrime > _maximumTPrime);
 	printDebug << "generated mass=" << invariantMass << " | t'Slope="
 	           << tPrimeSlope << endl;
 	return true;

@@ -187,14 +187,14 @@ namespace rpwa {
 			_tprimeMax = tPrimeMax;
 			if (tPrimeMax > 0) _tprimeMax = -tPrimeMax;
 		};
-*/
-		/*
+
+
 		 * If you set the Primary Vertex Generator (create it first)
 		 * Vertex position, Beam Energy and Direction will be
 		 * created by the primary Vertex Generator
-		 */
-		void setPrimaryVertexGen(primaryVertexGen* primaryVertexGen) { _primaryVertexGen = primaryVertexGen; };
 
+		void setPrimaryVertexGen(primaryVertexGen* primaryVertexGen) { _primaryVertexGen = primaryVertexGen; };
+*/
 		/** @brief generates on event
 		 *
 		 * returns number of attempts to generate this event and beam
@@ -226,7 +226,7 @@ namespace rpwa {
 		// Private Data Members ------------
 		rpwa::nBodyPhaseSpaceGen _phaseSpace;
 
-		primaryVertexGen* _primaryVertexGen;
+//		primaryVertexGen* _primaryVertexGen;
 
 		TLorentzVector _beamLab;         // cache for last generated beam (in lab frame)
 		TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)

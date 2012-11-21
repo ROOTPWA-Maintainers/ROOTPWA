@@ -13,6 +13,7 @@ namespace rpwa {
 
 	class generator;
 	class massAndTPrimePicker;
+	class primaryVertexGen;
 
 	class generatorManager {
 
@@ -33,6 +34,8 @@ namespace rpwa {
 		rpwa::Beam _beam;
 		rpwa::Target _target;
 		rpwa::FinalState _finalState;
+
+		rpwa::primaryVertexGen* _primaryVertexGen;
 
 		rpwa::massAndTPrimePicker* _pickerFunction;
 

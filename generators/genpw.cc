@@ -176,12 +176,6 @@ int main(int argc, char** argv)
 	printInfo << "Setting random seed to " << seed << endl;
 	randomNumberGenerator::instance()->setSeed(seed);
 
-	PDGtable.initialize();
-
-	partialWaveWeight weighter;
-	Config reactConf;
-//	reactConf.readFile(reactionFile.c_str());
-
 	rpwa::particleDataTable::readFile(pdgFileName);
 	generatorManager generatorMgr;
 	generatorMgr.readReactionFile(reactionFile);
@@ -192,6 +186,15 @@ int main(int argc, char** argv)
 		throw;
 	}
 
+	exit(255);
+
+// -------------------------------------------------------------------------------
+
+	PDGtable.initialize();
+
+	partialWaveWeight weighter;
+	Config reactConf;
+	reactConf.readFile(reactionFile.c_str());
 
 	// variable that need to get initialized either by input options
 	// or the config file
@@ -203,7 +206,7 @@ int main(int argc, char** argv)
 	double tPrime = 0.;
 	int qBeam;
 	vector<int> charges; // array of charges
-
+/*
 	double beamMom = reactConf.lookup("beam.momentum");
 	double beamMomSigma = reactConf.lookup("beam.sigma_momentum");
 	double beamPartMass = 0.13957018;
@@ -213,7 +216,7 @@ int main(int argc, char** argv)
 		printWarn << "Beam particle mass not found in config file. Using '"
 				  << setprecision(8) << beamPartMass << "'." << endl;
 	}
-/*	double beamDxDz = reactConf.lookup("beam.DxDz");
+	double beamDxDz = reactConf.lookup("beam.DxDz");
 	double beamDxDzSigma = reactConf.lookup("beam.sigma_DxDz");
 	double beamDyDz = reactConf.lookup("beam.DyDz");
 	double beamDyDzSigma = reactConf.lookup("beam.sigma_DyDz");
@@ -258,7 +261,7 @@ int main(int argc, char** argv)
 		printInfo << "Found one t' slope: " << tSlopes[0] << "." << endl;
 	}
 	double binCenter = 500 * (minimumFinalStateMass + maximumFinalStateMass);
-*/
+
   // check whether to use a primary vertex generator as requested by the config file
 	primaryVertexGen* primaryVtxGen = NULL;
 	string histFilenamePrimVertex = "";
@@ -275,7 +278,7 @@ int main(int argc, char** argv)
 			primaryVtxGen = NULL;
 		}
 	}
-/*
+
 	if(!reactConf.lookupValue("beam.charge", qBeam)) {
 		printWarn << "Beam charge not found in config file. Setting it to '-1'." << endl;
 		qBeam = -1;
@@ -321,7 +324,7 @@ int main(int argc, char** argv)
 //	diffPS.setTarget(targetZPosition, targetLength, targetRadius, massRecoil);
 //	diffPS.setTPrimeSlope(tSlopes, finalStateInvariantMasses, numberOftSlopes);
 //	diffPS.setMassRange(minimumFinalStateMass, maximumFinalStateMass);
-	diffPS.setPrimaryVertexGen(primaryVtxGen);
+//	diffPS.setPrimaryVertexGen(primaryVtxGen);
 /*	if(tPrimeMin >= 0.) {
 		diffPS.setTPrimeMin(tPrimeMin);
 	} else {

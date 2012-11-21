@@ -11,6 +11,7 @@
 #include "generatorParameters.hpp"
 #include "libConfigUtils.hpp"
 #include "particleDataTable.h"
+#include "primaryVertexGen.h"
 #include "reportingUtils.hpp"
 #include "generatorPickerFunctions.h"
 #include "generatorManager.h"
@@ -22,7 +23,8 @@ using namespace rpwa;
 bool generatorManager::_debug = false;
 
 generatorManager::generatorManager()
-	: _pickerFunction(NULL),
+	: _primaryVertexGen(NULL),
+	  _pickerFunction(NULL),
 	  _reactionFileRead(false),
 	  _generator(NULL) { };
 
@@ -86,6 +88,34 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		}
 	} // Finished with the beam settings.
 
+	// Read the settings for the beam simulation.
+	const Setting* configBeamSimulation = findLibConfigGroup(configRoot, "beamSimulation");
+	if(not configBeamSimulation) {
+		printWarn << "no 'beamSimulation' section found in reaction file. Beam package disabled." << endl;
+	} else {
+		map<string, Setting::Type> mandatoryArguments;
+		insert (mandatoryArguments)
+			("active", Setting::TypeBoolean)
+			("histogram_file", Setting::TypeString);
+		if(not checkIfAllVariablesAreThere(configBeamSimulation, mandatoryArguments)) {
+			printWarn << "'beamSimulation' section in reaction file contains errors. Beam package disabled" << endl;
+		} else if((*configBeamSimulation)["active"]) {
+			string histogramFileName;
+			configBeamSimulation->lookupValue("histogram_file", histogramFileName);
+			_primaryVertexGen = new primaryVertexGen(histogramFileName,
+			                                         _beam.particle.mass(),
+			                                         _beam.momentum,
+			                                         _beam.momentumSigma);
+			if(not _primaryVertexGen->check()) {
+				printWarn << "could not initialize primary vertex generator. Beam package disabled." << endl;
+				delete _primaryVertexGen;
+				_primaryVertexGen = NULL;
+			}
+		} else {
+			printInfo << "beam package disabled." << endl;
+		}
+	} // Finished with the beam simulation settings.
+
 	// Read the target settings.
 	const Setting* configTarget = findLibConfigGroup(configRoot, "target");
 	if(not configTarget) {
@@ -139,11 +169,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 	} else {
 		map<string, Setting::Type> mandatoryArguments;
 		insert (mandatoryArguments)
-/*			("mass_min", Setting::TypeFloat)
-		    ("mass_max", Setting::TypeFloat)
-		    ("t_slope", Setting::TypeFloat)
-		    ("t_min", Setting::TypeFloat)
-*/
 		    ("particles", Setting::TypeArray);
 		if(not checkIfAllVariablesAreThere(configFinalState, mandatoryArguments)) {
 			printErr << "'finalstate' section in reaction file contains errors." << endl;
@@ -158,12 +183,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			printErr << "'particles' in 'finalstate' section has to be made up of strings." << endl;
 			return false;
 		}
-/*
-		_finalState->minimumMass = (*configFinalState)["mass_min"];
-		_finalState->maximumMass = (*configFinalState)["mass_max"];
-		_finalState->tPrimeSlope = (*configFinalState)["t_slope"];
-		_finalState->minimumTPrime = (*configFinalState)["t_min"];
-*/
 		for(int i = 0; i < configFinalStateParticles.getLength(); ++i) {
 			string particleName = configFinalStateParticles[i];
 			const particleProperties* particle = particleDataTable::entry(particleName);
@@ -235,7 +254,10 @@ bool generatorManager::initializeGenerator() {
 	_generator = new diffractivePhaseSpace();
 	_generator->setBeam(_beam);
 	_generator->setTarget(_target);
+	if(_primaryVertexGen) {
+		_generator->setPrimaryVertexGenerator(_primaryVertexGen);
+	}
 
-	return false;
+	return true;
 
 }

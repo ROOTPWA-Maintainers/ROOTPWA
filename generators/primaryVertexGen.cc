@@ -16,8 +16,6 @@
  *
  */
 
-#include <iostream>
-
 #include "TH1.h"
 #include "TH2.h"
 #include "TCanvas.h"
@@ -30,6 +28,7 @@
 #include "TRandom.h"
 
 #include "randomNumberGenerator.h"
+#include "reportingUtils.hpp"
 #include "primaryVertexGen.h"
 
 
@@ -41,7 +40,6 @@ primaryVertexGen::primaryVertexGen(string histfilename,
                                    double mean_beam_energy,
                                    double mean_beam_energy_spread)
 	: _histogramfile(NULL),
-	  //static const string histogramfilename("properties_2008/primary_vertex_properties.root");
 	  _hist_angles_vert_mean(NULL),
 	  _hist_angles_horiz_mean(NULL),
 	  _hist_angles_vert_sigma(NULL),
@@ -71,7 +69,6 @@ primaryVertexGen::~primaryVertexGen() {
 
 
 bool primaryVertexGen::loadHistograms(string filename, bool plot) {
-	bool result(false);
 	if(plot) {
 		gROOT->SetStyle("Plain");
 		gStyle->SetPalette(1);
@@ -80,7 +77,7 @@ bool primaryVertexGen::loadHistograms(string filename, bool plot) {
 	TFile* histogramfile = new TFile(filename.c_str());
 	if(histogramfile->IsZombie()) {
 		cout << " Error: Could not read the given file containing histograms! " << endl;
-		return result;
+		return false;
 	}
 	_hist_angles_vert_mean   = (TH2*)gDirectory->Get("hist_angles_vert_mean");
 	_hist_angles_horiz_mean  = (TH2*)gDirectory->Get("hist_angles_horiz_mean");
@@ -97,18 +94,8 @@ bool primaryVertexGen::loadHistograms(string filename, bool plot) {
 	   !_hist_vertex_distr_z)
 	{
 		cout << " Error: histograms not found!" << endl;
-		return result;
+		return false;
 	}
-	/*
-		for (int x = 0; x < n_steps_x; x++){
-			for (int y = 0; y < n_steps_y; y++){
-				hist_angles_vert_mean->SetBinContent(x+1, y+1, mean_vert[x][y]);
-				hist_angles_vert_sigma->SetBinContent(x+1, y+1, sigma_vert[x][y]);
-				hist_angles_horiz_mean->SetBinContent(x+1, y+1, mean_horiz[x][y]);
-				hist_angles_horiz_sigma->SetBinContent(x+1, y+1, sigma_horiz[x][y]);
-			}
-		}
-	*/
 	// draw the output
 	if(plot) {
 		TCanvas *analyze_beam_properties_output = new TCanvas("analyze_beam_properties_output", "analyze_beam_properties_output method output", 600, 900);
@@ -134,8 +121,7 @@ bool primaryVertexGen::loadHistograms(string filename, bool plot) {
 		gPad->Update();
 		analyze_beam_properties_output->Print("Fitted_beam_property_distributions.pdf");
 	}
-	result = true;
-	return result;
+	return true;
 }
 
 
@@ -149,20 +135,16 @@ TVector3& primaryVertexGen::getVertex(const float cutR,
                                       const float cutZ_high)
 {
 	if(!_histograms_loaded) {
-		TVector3* result = new TVector3();
-		return *result;
+		printErr << "cannot produce vertex before histograms are loaded correctly." << endl;
+		throw;
 	}
 	double x;
 	double y;
 	double z;
-	bool tryagain(true);
-	while(tryagain) {
+	do {
 		_hist_vertex_distr_xy->GetRandom2(x, y);
 		z = _hist_vertex_distr_z->GetRandom();
-		if((sqrt(x*x+y*y) < cutR) && (z > cutZ_low) && (z < cutZ_high)) {
-			tryagain = false;
-		}
-	}
+	} while((sqrt(x*x + y*y) > cutR) || (z < cutZ_low) || (z > cutZ_high));
 	TVector3* result = new TVector3(x,y,z);
 	return *result;
 }
@@ -171,17 +153,17 @@ TVector3& primaryVertexGen::getVertex(const float cutR,
 TVector3& primaryVertexGen::getBeamDir(const TVector3 vertex) {
 	TVector3* result = new TVector3(0.,0.,1.);
 	if(!_histograms_loaded) {
-		return *result;
+		printErr << "cannot produce beam before histograms are loaded correctly." << endl;
+		throw;
 	}
-	// check whever we are in the valid ranges of the histograms
-	double sigma_horiz= _hist_angles_horiz_sigma->GetBinContent(
+	// check whether we are in the valid ranges of the histograms
+	double sigma_horiz = _hist_angles_horiz_sigma->GetBinContent(
 	          _hist_angles_horiz_sigma->FindBin(vertex.X(), vertex.Y()));
 	double sigma_vert = _hist_angles_vert_sigma->GetBinContent(
 	          _hist_angles_vert_sigma->FindBin(vertex.X(), vertex.Y()));
 	if((sigma_horiz == 0.) || (sigma_vert == 0.)) {
-		//cout << " Warning in Get_Beam: out of histogram range " << endl;
-		result->SetZ(0.);
-		return *result;
+		printErr << "vertex position out of range." << endl;
+		throw;
 	}
 	// if check passed retrieve interpolated values
 	double mean_horiz = _hist_angles_horiz_mean->Interpolate(vertex.X(), vertex.Y());
@@ -222,9 +204,9 @@ void primaryVertexGen::gesPalette(int i) {
 
 	if(i == 1) {
 		const UInt_t Number = 3;
-		Double_t Red[Number]    = { 1.00, 0.00, 0.00};
-		Double_t Green[Number]  = { 0.00, 1.00, 0.00};
-		Double_t Blue[Number]   = { 1.00, 0.00, 1.00};
+		Double_t Red[Number]    = { 1.00, 0.00, 0.00 };
+		Double_t Green[Number]  = { 0.00, 1.00, 0.00 };
+		Double_t Blue[Number]   = { 1.00, 0.00, 1.00 };
 		Double_t Length[Number] = { 0.00, 0.50, 1.00 };
 		Int_t nb=255;
 		TColor::CreateGradientColorTable(Number,Length,Red,Green,Blue,nb);
@@ -233,7 +215,10 @@ void primaryVertexGen::gesPalette(int i) {
 }
 
 void Beam_simulation() {
-	primaryVertexGen primaryVertexGen;
+	primaryVertexGen primaryVertexGen("properties_2008/primary_vertex_properties.root",
+	                                  0.13957018,
+	                                  191.29,
+	                                  1.94476);
 	if(!primaryVertexGen.check()) {
 		return;
 	}
