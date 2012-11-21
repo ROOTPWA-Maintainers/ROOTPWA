@@ -35,6 +35,7 @@
 #include "generator.hpp"
 #include "generatorParameters.hpp"
 #include "nBodyPhaseSpaceGen.h"
+#include "particleProperties.h"
 #include "primaryVertexGen.h"
 
 
@@ -42,9 +43,9 @@ class TH1;
 class TLorentzVector;
 
 namespace rpwa {
-
-	/** @brief Small helper class for bookkeeping
-	 */
+/*
+	** @brief Small helper class for bookkeeping
+	 *
 	class particleInfo {
 
 	  public:
@@ -61,7 +62,7 @@ namespace rpwa {
 		double _mass;    // mass [GeV/c^2]
 
 	};
-
+*/
 
 	/** @brief Phase Space generator for diffractive pion dissociation
 	 *  @author Sebastian Neubert TUM (original author)
@@ -162,8 +163,8 @@ namespace rpwa {
 			_xMassMax=max;
 		}
 */
-		void setDecayProducts(const std::vector<particleInfo>& info);
-		void addDecayProduct(const particleInfo& info);
+		void setDecayProducts(const std::vector<rpwa::particleProperties>& particles);
+		void addDecayProduct(const rpwa::particleProperties& particle);
 //		void setSeed(int seed);
 
 		void setVerbose(bool flag) { _phaseSpace.setVerbose(flag); }
@@ -245,7 +246,7 @@ namespace rpwa {
 		double _xMassMin;   // [GeV/c^2]
 		double _xMassMax;   // [GeV/c^2]
 
-		std::vector<particleInfo> _decayProducts;
+//		std::vector<rpwa::particleProperties> _decayProducts;
 
 		// Private Methods -----------------
 
@@ -262,11 +263,11 @@ namespace rpwa {
 		                        bool     formated = true); // true: text file ; false: binary file
 
 		void buildDaughterList();
-		// particle masses
+/*		// particle masses
 		double _protonMass;
 		double _pionMass;
 		double _pionMass2;
-
+*/
 		// calculate the t' by using the information of the incoming and outgoing particle in the vertex
 		float calcTPrime(const TLorentzVector& inputParticle, const TLorentzVector& outputParticle);
 

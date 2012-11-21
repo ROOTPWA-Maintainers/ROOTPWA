@@ -257,7 +257,9 @@ bool generatorManager::initializeGenerator() {
 	if(_primaryVertexGen) {
 		_generator->setPrimaryVertexGenerator(_primaryVertexGen);
 	}
+	_generator->setDecayProducts(_finalState.particles);
 
+	printSucc << "event generator initialized" << endl;
 	return true;
 
 }

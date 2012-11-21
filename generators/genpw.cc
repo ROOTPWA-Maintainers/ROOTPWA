@@ -353,7 +353,7 @@ int main(int argc, char** argv)
 	const Setting& root = reactConf.getRoot();
 	const Setting& fspart = root["finalstate"]["particles"];
 	int nParticles = fspart.getLength();
-
+/*
 	for(int ifs = 0; ifs < nParticles; ++ifs) {
 		const Setting &part = fspart[ifs];
 		int id;
@@ -365,7 +365,7 @@ int main(int argc, char** argv)
 		charges.push_back(myq);
 		diffPS.addDecayProduct(particleInfo(id, myq, m));
 	}
-
+*/
 	// see if we have a resonance in this wave
 	map<string, breitWignerProductionAmp*> bwAmps;
 	if(reactConf.exists("resonances")) {

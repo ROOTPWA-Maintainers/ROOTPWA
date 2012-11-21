@@ -73,14 +73,14 @@ diffractivePhaseSpace::diffractivePhaseSpace()
 	  _tPrime(0.),
 //	  _invSlopePar(NULL),
 //	  _invM(NULL),
-	  _tMin(0.),
+	  _tMin(0.)//,
 //	  _tprimeMin(0.),
 //	  _tprimeMax(numeric_limits<double>::max()),
 //	  _xMassMin(0),
 //	  _xMassMax(0),
-	  _protonMass(0.938272013),
-	  _pionMass(0.13957018),
-	  _pionMass2(_pionMass * _pionMass)
+//	  _protonMass(0.938272013),
+//	  _pionMass(0.13957018),
+//	  _pionMass2(_pionMass * _pionMass)
 {
 	_phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
 	_phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
@@ -105,10 +105,10 @@ diffractivePhaseSpace::makeBeam()
 	const double dxdz = random->Gaus(_beam.DxDz, _beam.DxDzSigma);
 	const double dydz = random->Gaus(_beam.DyDz, _beam.DyDzSigma);
 	// construct tilted beam momentum Lorentz vector
-	const double pz    = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
-	const double px    = dxdz * pz;
-	const double py    = dydz * pz;
-	const double EBeam = sqrt(pBeam * pBeam + _pionMass2);
+	const double pz        = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
+	const double px        = dxdz * pz;
+	const double py        = dydz * pz;
+	const double EBeam     = sqrt(pBeam * pBeam + _beam.particle.mass2());
 	return TLorentzVector(px, py, pz, EBeam);
 }
 
@@ -133,7 +133,7 @@ diffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
 	for(unsigned int i = 0; i < nmbDaughters; ++i) {
 		const TLorentzVector& hadron = _phaseSpace.daughter(i);
 		// hadron: geant ID, charge, p_x, p_y, p_z, E
-		out << _decayProducts[i]._gId << " " << _decayProducts[i]._charge
+		out << _decayProducts[i].geantId() << " " << _decayProducts[i].charge()
 		    << setprecision(numeric_limits<double>::digits10 + 1)
 		    << " " << hadron.Px() << " " << hadron.Py() << " " << hadron.Pz()
 		    << " " << hadron.E() << endl;
@@ -167,7 +167,7 @@ diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  formated) {
 			const TLorentzVector& hadron = _phaseSpace.daughter(i);
 			// hadron: geant ID, p_z, p_x, p_y
 			out << setprecision(numeric_limits<double>::digits10 + 1)
-			    << _decayProducts[i]._gId << " "
+			    << _decayProducts[i].geantId() << " "
 			    << hadron.Pz() << " "
 			    << hadron.Px() << " "
 			    << hadron.Py() << endl;// << " " << hadron->E() << endl;
@@ -202,7 +202,7 @@ diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  formated) {
 		for (unsigned int i = 0; i < nmbDaughters; ++i) {
 			const TLorentzVector& hadron = _phaseSpace.daughter(i);
 			// hadron: geant ID, p_z, p_x, p_y
-			intval = (int)_decayProducts[i]._gId; out.write((char*)&intval,4);
+			intval = (int)_decayProducts[i].geantId(); out.write((char*)&intval,4);
 			floatval = (float)hadron.Pz(); out.write((char*)&floatval,4);
 			floatval = (float)hadron.Px(); out.write((char*)&floatval,4);
 			floatval = (float)hadron.Py(); out.write((char*)&floatval,4);
@@ -226,18 +226,18 @@ diffractivePhaseSpace::setSeed(int seed)
 */
 
 void
-diffractivePhaseSpace::setDecayProducts(const vector<particleInfo>& info)
+diffractivePhaseSpace::setDecayProducts(const vector<particleProperties>& particles)
 {
 	_decayProducts.clear();
-	_decayProducts = info;
+	_decayProducts = particles;
 	buildDaughterList();
 }
 
 
 void
-diffractivePhaseSpace::addDecayProduct(const particleInfo& info)
+diffractivePhaseSpace::addDecayProduct(const particleProperties& particle)
 {
-	_decayProducts.push_back(info);
+	_decayProducts.push_back(particle);
 	buildDaughterList();
 }
 
@@ -248,7 +248,7 @@ diffractivePhaseSpace::buildDaughterList()
 	const unsigned int nmbDaughters = _decayProducts.size();
 	vector<double> daughterMasses(nmbDaughters, 0);
 	for(unsigned int i = 0; i < nmbDaughters; ++i) {
-		daughterMasses[i] = _decayProducts[i]._mass;
+		daughterMasses[i] = _decayProducts[i].mass();
 	}
 	if(nmbDaughters > 1) {
 		_phaseSpace.setDecay(daughterMasses);
@@ -277,10 +277,10 @@ diffractivePhaseSpace::buildDaughterList()
 // 		  const bool     plot              = false)
 // {
 //   Double_t daughterMasses[3] = {_pionMass, _pionMass, _pionMass};
-
+//
 //   gRandom->SetSeed(12345);
-
-
+//
+//
 //   // setup histograms
 //   TH1D* ht;
 //   TH1D* hm;
@@ -298,11 +298,11 @@ diffractivePhaseSpace::buildDaughterList()
 //     hVz       = new TH1D("hVz","Vertex z", 1000, _targetZPos - 40, _targetZPos + 40);
 //     hE        = new TH1D("hE", "E", 100, 180, 200);
 //   }
-
+//
 //   // open output file
 //   ofstream outFile(outFileName);
 //   cout << "Writing " << nmbEvent << " events to file '" << outFileName << "'." << endl;
-
+//
 //   // get theta histogram
 //   TH1* thetaDist = NULL;
 //   {
@@ -317,14 +317,14 @@ diffractivePhaseSpace::buildDaughterList()
 //       return;
 //     }
 //   }
-
+//
 //   int countEvent = 0;
 //   int attempts   = 0;
 //   int tenpercent = (int)(nmbEvent * 0.1);
 //   while (countEvent < nmbEvent) { // loop over events
 //     ++attempts;
-
-
+//
+//
 //   }
 // }
 
@@ -569,7 +569,7 @@ diffractivePhaseSpace::event(ostream& stream)
 	unsigned int attempts = event();
 	//writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
 	// use the first particle as the beam particle
-	writePwa2000Ascii(stream, _decayProducts[0]._gId, _decayProducts[0]._charge);
+	writePwa2000Ascii(stream, _decayProducts[0].geantId(), _decayProducts[0].charge());
 	return attempts;
 }
 
@@ -580,7 +580,7 @@ diffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 	unsigned int attempts = event();
 	//writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
 	// use the first particle as the beam particle
-	writePwa2000Ascii(stream, _decayProducts[0]._gId, _decayProducts[0]._charge);
+	writePwa2000Ascii(stream, _decayProducts[0].geantId(), _decayProducts[0].charge());
 	writeComgeantAscii(streamComGeant, true);
 	return attempts;
 }

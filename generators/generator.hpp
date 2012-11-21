@@ -28,6 +28,12 @@ namespace rpwa {
 		virtual void setPrimaryVertexGenerator(rpwa::primaryVertexGen* primaryVertexGen) {
 			_primaryVertexGen = primaryVertexGen;
 		}
+		virtual void setDecayProducts(const std::vector<rpwa::particleProperties>& particles) {
+			_decayProducts = particles;
+		}
+		virtual void addDecayProduct(const rpwa::particleProperties& particle) {
+			_decayProducts.push_back(particle);
+		}
 
 
 	  protected:
@@ -36,6 +42,7 @@ namespace rpwa {
 		rpwa::Target _target;
 		rpwa::massAndTPrimePicker* _pickerFunction;
 		rpwa::primaryVertexGen* _primaryVertexGen;
+		std::vector<particleProperties> _decayProducts;
 
 	};
 
