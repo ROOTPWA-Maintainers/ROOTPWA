@@ -39,6 +39,8 @@
 #include <iomanip>
 #include <iterator>
 
+#include <boost/assign/list_inserter.hpp>
+
 #include "libConfigUtils.hpp"
 #include "reportingUtils.hpp"
 #include "particleDataTable.h"
@@ -48,11 +50,83 @@
 using namespace std;
 using namespace rpwa;
 using namespace libconfig;
+using namespace boost::bimaps;
+
+
+namespace {
+
+	typedef bimap<string, unsigned int> nameGeantIdBimap;
+	nameGeantIdBimap initNameGeantIdTranslator()
+	{
+		nameGeantIdBimap translator;
+		boost::assign::insert(translator)
+			(nameGeantIdBimap::value_type("gamma",       1))
+			(nameGeantIdBimap::value_type("e+",          2))
+			(nameGeantIdBimap::value_type("e-",          3))
+			(nameGeantIdBimap::value_type("mu+",         5))
+			(nameGeantIdBimap::value_type("mu-",         6))
+			(nameGeantIdBimap::value_type("pi0",         7))
+			(nameGeantIdBimap::value_type("pi+",         8))
+			(nameGeantIdBimap::value_type("pi-",         9))
+			(nameGeantIdBimap::value_type("K_L",        10))
+			(nameGeantIdBimap::value_type("K+",         11))
+			(nameGeantIdBimap::value_type("K-",         12))
+			(nameGeantIdBimap::value_type("n",          13))
+			(nameGeantIdBimap::value_type("p+",         14))
+			(nameGeantIdBimap::value_type("pbar-",      15))
+			(nameGeantIdBimap::value_type("K_S",        16))
+			(nameGeantIdBimap::value_type("eta",        17))
+			(nameGeantIdBimap::value_type("Lambda",     18))
+			(nameGeantIdBimap::value_type("nbar",       25))
+			(nameGeantIdBimap::value_type("Lambdabar",  26))
+			(nameGeantIdBimap::value_type("rho(770)0",  57))
+			(nameGeantIdBimap::value_type("rho(770)+",  58))
+			(nameGeantIdBimap::value_type("rho(770)-",  59))
+			(nameGeantIdBimap::value_type("omega(782)", 60))
+			(nameGeantIdBimap::value_type("eta'(982)",  61))
+			(nameGeantIdBimap::value_type("phi(1020)",  62));
+		return translator;
+	}
+
+}
 
 
 particleDataTable               particleDataTable::_instance;
 map<string, particleProperties> particleDataTable::_dataTable;
 bool                            particleDataTable::_debug = false;
+nameGeantIdBimap                particleDataTable::_nameGeantIdMap = initNameGeantIdTranslator();
+
+
+string particleDataTable::particleNameFromGeantId(const int id) {
+	nameGeantIdBimap::right_const_iterator it = _nameGeantIdMap.right.find(id);
+	if (it == _nameGeantIdMap.right.end()) {
+		printErr << id << " is unknown GEANT particle ID. returning particle name 'unknown'." << endl;
+		return "unknown";
+	}
+	// make sure charge is correctly put into particle name
+	int charge;
+	const string bareName = particleProperties::chargeFromName(it->second, charge);
+	return particleProperties::nameWithCharge(bareName, charge);
+}
+
+
+void particleDataTable::geantIdAndChargeFromParticleName(const string& name,
+                                 int&          id,
+                                 int&          charge)
+{
+	id = 0;
+	const string bareName = particleProperties::chargeFromName(name, charge);
+	nameGeantIdBimap::left_const_iterator it = _nameGeantIdMap.left.find(name);
+	if(it == _nameGeantIdMap.left.end()) {
+		// try again with charge stripped from name
+		it = _nameGeantIdMap.left.find(bareName);
+	}
+	if(it == _nameGeantIdMap.left.end()) {
+		printErr << "particle '" << name << "' is unknown. returning GEANT particle ID 0." << endl;
+		return;
+	}
+	id = it->second;
+}
 
 
 bool

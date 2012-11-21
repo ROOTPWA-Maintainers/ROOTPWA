@@ -72,85 +72,6 @@ using namespace boost::bimaps;
 namespace rpwa {
 
 
-	namespace {
-
-		struct  partName { };
-		struct  geantId  { };
-
-		typedef bimap<tagged<string, partName>, tagged<size_t, geantId> > nameGeantIdMap;
-		typedef nameGeantIdMap::map_by<partName>::const_iterator partNameIterator;
-		typedef nameGeantIdMap::map_by<geantId >::const_iterator geantIdIterator;
-
-		nameGeantIdMap initNameGeantIdTranslator()
-		{
-			nameGeantIdMap translator;
-			boost::assign::insert(translator)
-				(nameGeantIdMap::value_type("gamma",       1))
-				(nameGeantIdMap::value_type("e+",          2))
-				(nameGeantIdMap::value_type("e-",          3))
-				(nameGeantIdMap::value_type("mu+",         5))
-				(nameGeantIdMap::value_type("mu-",         6))
-				(nameGeantIdMap::value_type("pi0",         7))
-				(nameGeantIdMap::value_type("pi+",         8))
-				(nameGeantIdMap::value_type("pi-",         9))
-				(nameGeantIdMap::value_type("K_L",        10))
-				(nameGeantIdMap::value_type("K+",         11))
-				(nameGeantIdMap::value_type("K-",         12))
-				(nameGeantIdMap::value_type("n",          13))
-				(nameGeantIdMap::value_type("p+",         14))
-				(nameGeantIdMap::value_type("pbar-",      15))
-				(nameGeantIdMap::value_type("K_S",        16))
-				(nameGeantIdMap::value_type("eta",        17))
-				(nameGeantIdMap::value_type("Lambda",     18))
-				(nameGeantIdMap::value_type("nbar",       25))
-				(nameGeantIdMap::value_type("Lambdabar",  26))
-				(nameGeantIdMap::value_type("rho(770)0",  57))
-				(nameGeantIdMap::value_type("rho(770)+",  58))
-				(nameGeantIdMap::value_type("rho(770)-",  59))
-				(nameGeantIdMap::value_type("omega(782)", 60))
-				(nameGeantIdMap::value_type("eta'(982)",  61))
-				(nameGeantIdMap::value_type("phi(1020)",  62));
-			return translator;
-		}
-		nameGeantIdMap nameGeantIdTranslator(initNameGeantIdTranslator());
-
-	}
-
-
-	string
-	particleNameFromGeantId(const int id)
-	{
-		geantIdIterator i = nameGeantIdTranslator.by<geantId>().find(id);
-		if (i == nameGeantIdTranslator.by<geantId>().end()) {
-			printErr << id << " is unknown GEANT particle ID. returning particle name 'unknown'." << endl;
-			return "unknown";
-    }
-		// make sure charge is correctly put into particle name
-		int charge;
-		const string bareName = particleProperties::chargeFromName(i->get<partName>(), charge);
-		return particleProperties::nameWithCharge(bareName, charge);
-	}
-
-
-	void
-	idAndChargeFromParticleName(const string& name,
-	                            int&          id,
-	                            int&          charge)
-	{
-		id = 0;
-		const string bareName = particleProperties::chargeFromName(name, charge);
-		partNameIterator i = nameGeantIdTranslator.by<partName>().find(name);
-		if (i == nameGeantIdTranslator.by<partName>().end())
-			// try again with charge stripped from name
-			i = nameGeantIdTranslator.by<partName>().find(bareName);
-		if (i == nameGeantIdTranslator.by<partName>().end()) {
-			printErr << "particle '" << name << "' is unknown. returning GEANT particle ID 0." << endl;
-			return;
-		}
-		id = i->get<geantId>();
-	}
-
-
 	bool
 	checkParticleCharge(const size_t  lineNmb,
 	                    const int     id,
@@ -474,7 +395,7 @@ namespace rpwa {
 				int          id = 0, charge = 0;
 				double       momX = 0, momY = 0, momZ = 0, E = 0;
 				if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-					const string partName = particleNameFromGeantId(id);
+					const string partName = particleDataTable::particleNameFromGeantId(id);
 					prodNames.push_back(partName);
 					if (not checkParticleCharge(countLines, id, partName, charge))
 						success = false;
@@ -508,7 +429,7 @@ namespace rpwa {
 					int          id, charge;
 					double       momX, momY, momZ, E;
 					if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-						const string partName = particleNameFromGeantId(id);
+						const string partName = particleDataTable::particleNameFromGeantId(id);
 						decayNames[i] = partName;
 						if (not checkParticleCharge(countLines, id, partName, charge))
 							success = false;
@@ -676,7 +597,7 @@ namespace rpwa {
 				assert(mom);
 				const double mass = getParticleMass(name);
 				int id, charge;
-				idAndChargeFromParticleName(name, id, charge);
+				particleDataTable::geantIdAndChargeFromParticleName(name, id, charge);
 				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
 				       << id << " " << charge << " " << mom->X() << " " << mom->Y() << " " << mom->Z() << " "
 				       << sqrt(mass * mass + mom->Mag2()) << endl;
@@ -698,7 +619,7 @@ namespace rpwa {
 				assert(mom);
 				const double mass = getParticleMass(name);
 				int id, charge;
-				idAndChargeFromParticleName(name, id, charge);
+				particleDataTable::geantIdAndChargeFromParticleName(name, id, charge);
 				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
 				       << id << " " << charge << " " << mom->X() << " " << mom->Y() << " " << mom->Z() << " "
 				       << sqrt(mass * mass + mom->Mag2()) << endl;
