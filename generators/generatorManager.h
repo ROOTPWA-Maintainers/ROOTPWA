@@ -12,6 +12,7 @@ class TVector3;
 namespace rpwa {
 
 	class generator;
+	class massAndTPrimePicker;
 
 	class generatorManager {
 
@@ -32,6 +33,8 @@ namespace rpwa {
 		rpwa::Beam _beam;
 		rpwa::Target _target;
 		rpwa::FinalState _finalState;
+
+		rpwa::massAndTPrimePicker* _pickerFunction;
 
 		bool _reactionFileRead;
 

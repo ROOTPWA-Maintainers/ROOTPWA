@@ -12,6 +12,7 @@
 #include "libConfigUtils.hpp"
 #include "particleDataTable.h"
 #include "reportingUtils.hpp"
+#include "generatorPickerFunctions.hpp"
 #include "generatorManager.h"
 
 
@@ -21,7 +22,8 @@ using namespace rpwa;
 bool generatorManager::_debug = false;
 
 generatorManager::generatorManager()
-	: _reactionFileRead(false),
+	: _pickerFunction(NULL),
+	  _reactionFileRead(false),
 	  _generator(NULL) { };
 
 
@@ -174,6 +176,41 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		printSucc << "initialized final state parameters." << endl;
 		_finalState.print(printInfo);
 	} // Finished final state parameters.
+
+	// Get t'- and m-dependence.
+	const Setting* configTAndMDependence = findLibConfigGroup(configRoot, "t_and_m_dependence");
+	if(not configTAndMDependence) {
+		printErr << "'t_and_m_dependence' section not found in reaction file." << endl;
+		return false;
+	} else {
+		map<string, Setting::Type> mandatoryArguments;
+		insert (mandatoryArguments)
+			("function", Setting::TypeString)
+			("settings", Setting::TypeGroup);
+		if(not checkIfAllVariablesAreThere(configTAndMDependence, mandatoryArguments)) {
+			printErr << "'configTAndMDependence' section in reaction file contains errors." << endl;
+			return false;
+		}
+		const Setting& settings = (*configTAndMDependence)["settings"];
+		string functionName;
+		configTAndMDependence->lookupValue("function", functionName);
+		if(functionName == "uniformMassExponentialT") {
+			_pickerFunction = new uniformMassExponentialTPicker();
+		} else if(functionName == "blabla") {
+			//nothing to see here, move along
+		} else {
+			printErr << "'function' name '" << functionName << "' unknown." << endl;
+			return false;
+		}
+		if(not _pickerFunction->init(settings)) {
+			printErr << "Could not initialize 'function' " << functionName << "." << endl;
+			delete _pickerFunction;
+			_pickerFunction = NULL;
+			return false;
+		}
+		printSucc << "initialized t' and mass dependence '" << functionName << "'." << endl;
+		_pickerFunction->print(printInfo);
+	} // Finished with t'- and m-dependence.
 
 	printSucc << "read reaction file '" << fileName << "'." << endl;
 	_reactionFileRead = true;
