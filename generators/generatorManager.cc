@@ -29,7 +29,11 @@ generatorManager::generatorManager()
 	  _generator(NULL) { };
 
 
-generatorManager::~generatorManager() { };
+generatorManager::~generatorManager() {
+	delete _primaryVertexGen;
+	delete _pickerFunction;
+	delete _generator;
+};
 
 
 bool generatorManager::readReactionFile(const string& fileName) {
@@ -215,8 +219,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		configTAndMDependence->lookupValue("function", functionName);
 		if(functionName == "uniformMassExponentialT") {
 			_pickerFunction = new uniformMassExponentialTPicker();
-		} else if(functionName == "blabla") {
-			//nothing to see here, move along
 		} else {
 			printErr << "'function' name '" << functionName << "' unknown." << endl;
 			return false;
@@ -254,6 +256,7 @@ bool generatorManager::initializeGenerator() {
 	_generator = new diffractivePhaseSpace();
 	_generator->setBeam(_beam);
 	_generator->setTarget(_target);
+	_generator->setTPrimeAndMassPicker(*_pickerFunction);
 	if(_primaryVertexGen) {
 		_generator->setPrimaryVertexGenerator(_primaryVertexGen);
 	}

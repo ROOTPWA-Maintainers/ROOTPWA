@@ -252,15 +252,21 @@ diffractivePhaseSpace::buildDaughterList()
 	}
 	if(nmbDaughters > 1) {
 		_phaseSpace.setDecay(daughterMasses);
-		if(_xMassMax == 0) {
-			printErr << "mass range [" << _xMassMin << ", " << _xMassMin << "] GeV/c^2 "
+		if(not _pickerFunction) {
+			printErr << "mass- and t'-picker function has not been set." <<endl;
+			throw;
+		}
+		const double xMassMin = _pickerFunction->massRange().first;
+		const double xMassMax = _pickerFunction->massRange().second;
+		if((xMassMax < xMassMin) || (xMassMax <= 0.)) {
+			printErr << "mass range [" << xMassMin << ", " << xMassMax << "] GeV/c^2 "
 			         << "does mot make sense. exiting." << endl;
 			throw;
 		} else {
 			printInfo << "calculating max weight (" << nmbDaughters << " FS particles) "
-			          << "for m = " << _xMassMax << " GeV/c^2" << endl;
-			_phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(_xMassMax, 1000000));
-			cout << "    max weight = " << _phaseSpace.maxWeight() << endl;
+			          << "for m = " << xMassMax << " GeV/c^2:";
+			_phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(xMassMax, 1000000));
+			cout << " max weight = " << _phaseSpace.maxWeight() << endl;
 		}
 	}
 }
@@ -414,20 +420,22 @@ diffractivePhaseSpace::event()
 		_beamLab = makeBeam();
 	}
 
+	if(not _pickerFunction) {
+		printErr << "mass- and t'-picker function has not been set." <<endl;
+		throw;
+	}
+
+	const double xMassMax = _pickerFunction->massRange().second;
 	const TLorentzVector targetLab(0, 0, 0, _target.targetParticle.mass());
 	const TLorentzVector overallCm = _beamLab + targetLab;  // beam-target center-of-mass system
 	// check
-	if(_xMassMax + _target.targetParticle.mass()  > overallCm.M()) {
+	if(xMassMax + _target.targetParticle.mass()  > overallCm.M()) {
 		printErr << "Max Mass out of kinematic range." <<  endl
 		         << "Limit = " << overallCm.M()  - _target.targetParticle.mass() << "GeV/c2" << endl
 		         << " ABORTING " << flush<< endl;
 		throw;
 	}
 
-	if(not _pickerFunction) {
-		printErr << "mass- and t'-picker function has not been set." <<endl;
-		throw;
-	}
 
 	bool done = false;
 	while(!done) {
@@ -542,10 +550,10 @@ diffractivePhaseSpace::event()
 			// correct weight for phase space splitting
 			// and for 2-body phase space beam-target
 			// (1 / 4pi) * q(sqrt(s), m_x, m_recoil) / sqrt(s)
-			const double ps2bodyWMax = breakupMomentum(sqrtS, _xMassMax, _target.targetParticle.mass())/sqrtS;
+			const double ps2bodyWMax = breakupMomentum(sqrtS, xMassMax, _target.targetParticle.mass())/sqrtS;
 			const double ps2bodyW = breakupMomentum(sqrtS, xMass, _target.targetParticle.mass())/sqrtS;
 
-			const double maxPsWeight = _phaseSpace.maxWeight()  * _xMassMax * ps2bodyWMax;
+			const double maxPsWeight = _phaseSpace.maxWeight()  * xMassMax * ps2bodyWMax;
 			const double psWeight    = _phaseSpace.calcWeight() * xMass* ps2bodyW;
 
 			if((psWeight / maxPsWeight) < random->Rndm()) {

@@ -243,8 +243,8 @@ namespace rpwa {
 		// cut on t-distribution
 		double _tMin;       // [(GeV/c)^2]
 
-		double _xMassMin;   // [GeV/c^2]
-		double _xMassMax;   // [GeV/c^2]
+//		double _xMassMin;   // [GeV/c^2]
+//		double _xMassMax;   // [GeV/c^2]
 
 //		std::vector<rpwa::particleProperties> _decayProducts;
 
