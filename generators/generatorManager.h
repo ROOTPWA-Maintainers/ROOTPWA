@@ -3,6 +3,8 @@
 
 #include<string>
 
+#include "particleProperties.h"
+
 class TVector3;
 
 namespace rpwa {
@@ -22,7 +24,7 @@ namespace rpwa {
 	  private:
 
 		struct Beam {
-			std::string particleName;
+			rpwa::particleProperties particle;
 			double momentum;
 			double momentumSigma;
 			double DxDz;
@@ -32,7 +34,7 @@ namespace rpwa {
 
 			std::ostream& print(std::ostream& out) {
 				out << "Beam parameters:" << std::endl;
-				out << "    Particle name ..... " << particleName << std::endl;
+				out << "    Particle name ..... " << particle.name() << std::endl;
 				out << "    Momentum .......... " << momentum << std::endl;
 				out << "    Momentum sigma .... " << momentumSigma << std::endl;
 				out << "    DxDz .............. " << DxDz << std::endl;
@@ -45,14 +47,14 @@ namespace rpwa {
 		};
 
 		struct Target {
-			std::string particleName;
+			rpwa::particleProperties particle;
 			TVector3 position;
 			double length;
 			double radius;
 
 			std::ostream& print(std::ostream& out) {
 				out << "Target parameters:" << std::endl;
-				out << "    Particle name ..... " << particleName << std::endl;
+				out << "    Particle name ..... " << particle.name() << std::endl;
 				out << "    Target position ... (" << position.X() << ", "
 				                                   << position.Y() << ", "
 				                                   << position.Z() << ")" << std::endl;
@@ -67,7 +69,7 @@ namespace rpwa {
 			double maximumMass;
 			double tPrimeSlope;
 			double minimumTPrime;
-			std::vector<std::string> particleNames;
+			std::vector<rpwa::particleProperties> particles;
 
 			std::ostream& print(std::ostream& out) {
 				out << "Final state parameters:" << std::endl;
@@ -75,9 +77,9 @@ namespace rpwa {
 				out << "    Maximum Mass ...... " << maximumMass << std::endl;
 				out << "    t' Slope .......... " << tPrimeSlope << std::endl;
 				out << "    Minimum t' ........ " << minimumTPrime << std::endl;
-				out << "    " << particleNames.size() << " Final State Particles:" << std::endl;
-				for(unsigned int i = 0; i < particleNames.size(); ++i) {
-					out << "        - " << particleNames[i] << std::endl;
+				out << "    " << particles.size() << " Final State Particles:" << std::endl;
+				for(unsigned int i = 0; i < particles.size(); ++i) {
+					out << "        - " << particles[i].name() << std::endl;
 				}
 				return out;
 			}

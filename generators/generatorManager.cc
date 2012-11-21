@@ -7,6 +7,7 @@
 #include <TVector3.h>
 
 #include "libConfigUtils.hpp"
+#include "particleDataTable.h"
 #include "reportingUtils.hpp"
 #include "generatorManager.h"
 
@@ -39,38 +40,29 @@ bool generatorManager::readReactionFile(const string& fileName) {
 	// Read the beam settings.
 	const Setting* configBeam = findLibConfigGroup(configRoot, "beam");
 	if(configBeam) {
-		bool active = true;
-		int activeFlag;
-		if(not configBeam->lookupValue("active", activeFlag)) {
-			printWarn << "'active' not found in 'beam' section, assuming beam simulation is enabled." << endl;
-		} else {
-			if(activeFlag == 1) {
-				printInfo << "beam simulation enabled." << endl;
-			} else if (activeFlag == 0) {
-				printInfo << "beam simulation disabled." << endl;
-				active = false;
+		map<string, Setting::Type> mandatoryArguments;
+		insert (mandatoryArguments)
+			("active", Setting::TypeBoolean)
+			("name", Setting::TypeString)
+			("momentum", Setting::TypeFloat)
+			("sigma_momentum", Setting::TypeFloat)
+			("DxDz", Setting::TypeFloat)
+			("sigma_DxDz", Setting::TypeFloat)
+			("DyDz", Setting::TypeFloat)
+			("sigma_DyDz", Setting::TypeFloat);
+		if(not checkIfAllVariablesAreThere(configBeam, mandatoryArguments)) {
+			printWarn << " Beam simulation disabled." << endl;
+		} else if((*configBeam)["active"]) {
+			_beam = new Beam();
+			string beamParticleName;
+			configBeam->lookupValue("name", beamParticleName);
+			const particleProperties* beamParticle = particleDataTable::entry(beamParticleName);
+			if(not beamParticle) {
+				printWarn << "invalid beam particle." << endl;
+				delete _beam;
+				_beam = NULL;
 			} else {
-				printWarn << "'active' flag in 'beam' section should be 0 or 1, found '"
-				          << activeFlag << "' instead. Beam simulation disabled."
-				          << endl;
-				active = false;
-			}
-		}
-		if(active) {
-			map<string, Setting::Type> mandatoryArguments;
-			insert (mandatoryArguments)
-				("name", Setting::TypeString)
-				("momentum", Setting::TypeFloat)
-				("sigma_momentum", Setting::TypeFloat)
-				("DxDz", Setting::TypeFloat)
-				("sigma_DxDz", Setting::TypeFloat)
-				("DyDz", Setting::TypeFloat)
-				("sigma_DyDz", Setting::TypeFloat);
-			if(not checkIfAllVariablesAreThere(configBeam, mandatoryArguments)) {
-				printWarn << " Beam simulation disabled." << endl;
-			} else {
-				_beam = new Beam();
-				configBeam->lookupValue("name", _beam->particleName);
+				_beam->particle = *beamParticle;
 				_beam->momentum = (*configBeam)["momentum"];
 				_beam->momentumSigma = (*configBeam)["sigma_momentum"];
 				_beam->DxDz = (*configBeam)["DxDz"];
@@ -80,7 +72,9 @@ bool generatorManager::readReactionFile(const string& fileName) {
 				printSucc << "initialized beam parameters." << endl;
 				_beam->print(printInfo);
 			}
-		} // end if(active)
+		} else {
+			printInfo << "beam simulation disabled by 'active' flag." << endl;
+		}
 	} else {
 		printWarn << "no 'beam' section found in configuration file. "
 		          << "Beam simulation disabled." << endl;
@@ -112,7 +106,16 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			return false;
 		}
 		_target = new Target();
-		configTarget->lookupValue("name", _target->particleName);
+		string targetParticleName;
+		configTarget->lookupValue("name", targetParticleName);
+		const particleProperties* targetParticle = particleDataTable::entry(targetParticleName);
+		if(not targetParticle) {
+			printErr << "invalid target particle" << endl;
+			delete _target;
+			_target = NULL;
+			return false;
+		}
+		_target->particle = *targetParticle;
 		_target->position.SetXYZ(configTargetPos[0], configTargetPos[1], configTargetPos[2]);
 		_target->radius = (*configTarget)["radius"];
 		_target->length = (*configTarget)["length"];
@@ -125,38 +128,46 @@ bool generatorManager::readReactionFile(const string& fileName) {
 	if(not configFinalState) {
 		printErr << "'finalstate' section not found in configuration file." << endl;
 		return false;
-	}
-	map<string, Setting::Type> mandatoryArguments;
-	insert (mandatoryArguments)
-		("mass_min", Setting::TypeFloat)
-		("mass_max", Setting::TypeFloat)
-		("t_slope", Setting::TypeFloat)
-		("t_min", Setting::TypeFloat)
-		("particles", Setting::TypeArray);
-	if(not checkIfAllVariablesAreThere(configFinalState, mandatoryArguments)) {
-		printErr << "'finalstate' section in configuration file contains errors." << endl;
-		return false;
-	}
-	const Setting& configFinalStateParticles = (*configFinalState)["particles"];
-	if(configFinalStateParticles.getLength() < 1) {
-		printErr << "'particles' in 'finalstate' section has to have at least one entry." << endl;
-		return false;
-	}
-	if(configFinalStateParticles[0].getType() != Setting::TypeString) {
-		printErr << "'particles' in 'finalstate' section has to be made up of strings." << endl;
-		return false;
-	}
-	_finalState = new FinalState();
-	_finalState->minimumMass = (*configFinalState)["mass_min"];
-	_finalState->maximumMass = (*configFinalState)["mass_max"];
-	_finalState->tPrimeSlope = (*configFinalState)["t_slope"];
-	_finalState->minimumTPrime = (*configFinalState)["t_min"];
-	for(int i = 0; i < configFinalStateParticles.getLength(); ++i) {
-		_finalState->particleNames.push_back(configFinalStateParticles[i]);
-	}
-	printSucc << "initialized final state parameters." << endl;
-	_finalState->print(printInfo);
-	// Finished final state parameters.
+	} else {
+		map<string, Setting::Type> mandatoryArguments;
+		insert (mandatoryArguments)
+			("mass_min", Setting::TypeFloat)
+		    ("mass_max", Setting::TypeFloat)
+		    ("t_slope", Setting::TypeFloat)
+		    ("t_min", Setting::TypeFloat)
+		    ("particles", Setting::TypeArray);
+		if(not checkIfAllVariablesAreThere(configFinalState, mandatoryArguments)) {
+			printErr << "'finalstate' section in configuration file contains errors." << endl;
+			return false;
+		}
+		const Setting& configFinalStateParticles = (*configFinalState)["particles"];
+		if(configFinalStateParticles.getLength() < 1) {
+			printErr << "'particles' in 'finalstate' section has to have at least one entry." << endl;
+			return false;
+		}
+		if(configFinalStateParticles[0].getType() != Setting::TypeString) {
+			printErr << "'particles' in 'finalstate' section has to be made up of strings." << endl;
+			return false;
+		}
+		_finalState = new FinalState();
+		_finalState->minimumMass = (*configFinalState)["mass_min"];
+		_finalState->maximumMass = (*configFinalState)["mass_max"];
+		_finalState->tPrimeSlope = (*configFinalState)["t_slope"];
+		_finalState->minimumTPrime = (*configFinalState)["t_min"];
+		for(int i = 0; i < configFinalStateParticles.getLength(); ++i) {
+			string particleName = configFinalStateParticles[i];
+			const particleProperties* particle = particleDataTable::entry(particleName);
+			if(not particle) {
+				printErr << "invalid final state particle" << endl;
+				delete _finalState;
+				_finalState = NULL;
+				return false;
+			}
+			_finalState->particles.push_back(*particle);
+		}
+		printSucc << "initialized final state parameters." << endl;
+		_finalState->print(printInfo);
+	} // Finished final state parameters.
 
 	printSucc << "read reaction file '" << fileName << "'." << endl;
 	return true;

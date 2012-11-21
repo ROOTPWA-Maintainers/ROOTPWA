@@ -50,6 +50,7 @@
 #include "breitWignerProductionAmp.h"
 #include "diffractivePhaseSpace.h"
 #include "fileUtils.hpp"
+#include "particleDataTable.h"
 #include "partialWaveWeight.h"
 #include "productionAmp.h"
 #include "fileUtils.hpp"
@@ -64,19 +65,20 @@ using namespace libconfig;
 using namespace rpwa;
 using namespace std;
 
-extern particleDataTable PDGtable;
+extern ::particleDataTable PDGtable;
 
 
 void printUsage(char* prog, int errCode = 0)
 {
 	cerr << "usage:" << endl
 	     << prog
-	     << " -n # [-a # -m # -M # -B # -s #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
+	     << " -n # [-a # -m # -M # -B # -s #] -o <file> -p <file> -w <file> -k <path> -i <file> -r <file>" << endl
 	     << "    where:" << endl
 	     << "        -n #       (max) number of events to generate (default: 100)" << endl
 	     << "        -a #       (max) number of attempts to do (default: infinity)" << endl
 	     << "        -m #       maxWeight" << endl
 	     << "        -o <file>  ROOT output file (if not specified, generated automatically)" << endl
+	     << "        -p         path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -w <file>  wavelist file (contains production amplitudes)" << endl
 	     << "        -w <file.root>  to use TFitBin tree as input" << endl
 	     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 0)" << endl
@@ -102,6 +104,7 @@ int main(int argc, char** argv)
 	string outputComgeantFileName = "";
 	string integralsFileName;
 	bool hasIntegralsFile = false;
+	string pdgFileName = "./particleDataTable.txt";
 	string wavelistFileName; // format: name Re Im
 	string pathToKeyfiles = "./";
 	string reactionFile;
@@ -114,7 +117,7 @@ int main(int argc, char** argv)
 	bool writeComgeantOut = false;
 
 	int c;
-	while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h:c")) != -1) {
+	while ((c = getopt(argc, argv, "n:a:o:p:w:k:i:r:m:s:M:B:h:c")) != -1) {
 		switch (c) {
 			case 'n':
 				nEvents = atoi(optarg);
@@ -128,6 +131,9 @@ int main(int argc, char** argv)
 				break;
 			case 'o':
 				outputFileName = optarg;
+				break;
+			case 'p':
+				pdgFileName = optarg;
 				break;
 			case 'w':
 				wavelistFileName = optarg;
@@ -172,6 +178,7 @@ int main(int argc, char** argv)
 	Config reactConf;
 //	reactConf.readFile(reactionFile.c_str());
 
+	rpwa::particleDataTable::readFile(pdgFileName);
 	generatorManager generatorMgr;
 	generatorMgr.readReactionFile(reactionFile);
 
