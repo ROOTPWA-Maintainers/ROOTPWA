@@ -6,22 +6,22 @@
 
 #include <TVector3.h>
 
+#include "generatorParameters.hpp"
 #include "libConfigUtils.hpp"
 #include "particleDataTable.h"
 #include "reportingUtils.hpp"
 #include "generatorManager.h"
+
 
 using namespace std;
 using namespace rpwa;
 
 bool generatorManager::_debug = false;
 
-generatorManager::generatorManager()
-	: _beam(NULL),
-	  _target(NULL),
-	  _finalState(NULL) { };
+generatorManager::generatorManager() { };
 
 generatorManager::~generatorManager() { };
+
 
 bool generatorManager::readReactionFile(const string& fileName) {
 	using namespace boost::assign;
@@ -39,10 +39,12 @@ bool generatorManager::readReactionFile(const string& fileName) {
 
 	// Read the beam settings.
 	const Setting* configBeam = findLibConfigGroup(configRoot, "beam");
-	if(configBeam) {
+	if(not configBeam) {
+		printErr << "'beam' section not found in reaction file." << endl;
+		return false;
+	} else {
 		map<string, Setting::Type> mandatoryArguments;
 		insert (mandatoryArguments)
-			("active", Setting::TypeBoolean)
 			("name", Setting::TypeString)
 			("momentum", Setting::TypeFloat)
 			("sigma_momentum", Setting::TypeFloat)
@@ -51,49 +53,43 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			("DyDz", Setting::TypeFloat)
 			("sigma_DyDz", Setting::TypeFloat);
 		if(not checkIfAllVariablesAreThere(configBeam, mandatoryArguments)) {
-			printWarn << " Beam simulation disabled." << endl;
-		} else if((*configBeam)["active"]) {
-			_beam = new Beam();
-			string beamParticleName;
-			configBeam->lookupValue("name", beamParticleName);
-			const particleProperties* beamParticle = particleDataTable::entry(beamParticleName);
-			if(not beamParticle) {
-				printWarn << "invalid beam particle." << endl;
-				delete _beam;
-				_beam = NULL;
-			} else {
-				_beam->particle = *beamParticle;
-				_beam->momentum = (*configBeam)["momentum"];
-				_beam->momentumSigma = (*configBeam)["sigma_momentum"];
-				_beam->DxDz = (*configBeam)["DxDz"];
-				_beam->DxDzSigma = (*configBeam)["sigma_DxDz"];
-				_beam->DyDz = (*configBeam)["DyDz"];
-				_beam->DyDzSigma = (*configBeam)["sigma_DyDz"];
-				printSucc << "initialized beam parameters." << endl;
-				_beam->print(printInfo);
-			}
-		} else {
-			printInfo << "beam simulation disabled by 'active' flag." << endl;
+			printErr << "'beam' section in reaction file contains errors." << endl;
+			return false;
 		}
-	} else {
-		printWarn << "no 'beam' section found in configuration file. "
-		          << "Beam simulation disabled." << endl;
+		string beamParticleName;
+		configBeam->lookupValue("name", beamParticleName);
+		const particleProperties* beamParticle = particleDataTable::entry(beamParticleName);
+		if(not beamParticle) {
+			printErr << "invalid beam particle." << endl;
+			return false;
+		} else {
+			_beam.particle = *beamParticle;
+			_beam.momentum = (*configBeam)["momentum"];
+			_beam.momentumSigma = (*configBeam)["sigma_momentum"];
+			_beam.DxDz = (*configBeam)["DxDz"];
+			_beam.DxDzSigma = (*configBeam)["sigma_DxDz"];
+			_beam.DyDz = (*configBeam)["DyDz"];
+			_beam.DyDzSigma = (*configBeam)["sigma_DyDz"];
+			printSucc << "initialized beam parameters." << endl;
+			_beam.print(printInfo);
+		}
 	} // Finished with the beam settings.
 
 	// Read the target settings.
 	const Setting* configTarget = findLibConfigGroup(configRoot, "target");
 	if(not configTarget) {
-		printErr << "no 'target' section found in configuration file." << endl;
+		printErr << "no 'target' section found in reaction file." << endl;
 		return false;
 	} else {
 		map<string, Setting::Type> mandatoryArguments;
 		insert (mandatoryArguments)
-			("name", Setting::TypeString)
+			("targetParticleName", Setting::TypeString)
+			("recoilParticleName", Setting::TypeString)
 			("pos", Setting::TypeArray)
 			("radius", Setting::TypeFloat)
 			("length", Setting::TypeFloat);
 		if(not checkIfAllVariablesAreThere(configTarget, mandatoryArguments)) {
-			printErr << "'target' section in configuration file contains errors." << endl;
+			printErr << "'target' section in reaction file contains errors." << endl;
 			return false;
 		}
 		const Setting& configTargetPos = (*configTarget)["pos"];
@@ -105,39 +101,41 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			printErr << "'pos' in 'target' section has to be made up of numbers." << endl;
 			return false;
 		}
-		_target = new Target();
 		string targetParticleName;
-		configTarget->lookupValue("name", targetParticleName);
+		string recoilParticleName;
+		configTarget->lookupValue("targetParticleName", targetParticleName);
+		configTarget->lookupValue("recoilParticleName", recoilParticleName);
 		const particleProperties* targetParticle = particleDataTable::entry(targetParticleName);
-		if(not targetParticle) {
-			printErr << "invalid target particle" << endl;
-			delete _target;
-			_target = NULL;
+		const particleProperties* recoilParticle = particleDataTable::entry(recoilParticleName);
+		if(not (targetParticle && recoilParticle)) {
+			printErr << "invalid target or recoil particle" << endl;
 			return false;
 		}
-		_target->particle = *targetParticle;
-		_target->position.SetXYZ(configTargetPos[0], configTargetPos[1], configTargetPos[2]);
-		_target->radius = (*configTarget)["radius"];
-		_target->length = (*configTarget)["length"];
+		_target.targetParticle = *targetParticle;
+		_target.recoilParticle = *recoilParticle;
+		_target.position.SetXYZ(configTargetPos[0], configTargetPos[1], configTargetPos[2]);
+		_target.radius = (*configTarget)["radius"];
+		_target.length = (*configTarget)["length"];
 		printSucc << "initialized target parameters." << endl;
-		_target->print(printInfo);
+		_target.print(printInfo);
 	}// Finished with the target settings.
 
 	// Read the final state parameters.
 	const Setting* configFinalState = findLibConfigGroup(configRoot, "finalstate");
 	if(not configFinalState) {
-		printErr << "'finalstate' section not found in configuration file." << endl;
+		printErr << "'finalstate' section not found in reaction file." << endl;
 		return false;
 	} else {
 		map<string, Setting::Type> mandatoryArguments;
 		insert (mandatoryArguments)
-			("mass_min", Setting::TypeFloat)
+/*			("mass_min", Setting::TypeFloat)
 		    ("mass_max", Setting::TypeFloat)
 		    ("t_slope", Setting::TypeFloat)
 		    ("t_min", Setting::TypeFloat)
+*/
 		    ("particles", Setting::TypeArray);
 		if(not checkIfAllVariablesAreThere(configFinalState, mandatoryArguments)) {
-			printErr << "'finalstate' section in configuration file contains errors." << endl;
+			printErr << "'finalstate' section in reaction file contains errors." << endl;
 			return false;
 		}
 		const Setting& configFinalStateParticles = (*configFinalState)["particles"];
@@ -149,24 +147,23 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			printErr << "'particles' in 'finalstate' section has to be made up of strings." << endl;
 			return false;
 		}
-		_finalState = new FinalState();
+/*
 		_finalState->minimumMass = (*configFinalState)["mass_min"];
 		_finalState->maximumMass = (*configFinalState)["mass_max"];
 		_finalState->tPrimeSlope = (*configFinalState)["t_slope"];
 		_finalState->minimumTPrime = (*configFinalState)["t_min"];
+*/
 		for(int i = 0; i < configFinalStateParticles.getLength(); ++i) {
 			string particleName = configFinalStateParticles[i];
 			const particleProperties* particle = particleDataTable::entry(particleName);
 			if(not particle) {
 				printErr << "invalid final state particle" << endl;
-				delete _finalState;
-				_finalState = NULL;
 				return false;
 			}
-			_finalState->particles.push_back(*particle);
+			_finalState.particles.push_back(*particle);
 		}
 		printSucc << "initialized final state parameters." << endl;
-		_finalState->print(printInfo);
+		_finalState.print(printInfo);
 	} // Finished final state parameters.
 
 	printSucc << "read reaction file '" << fileName << "'." << endl;
