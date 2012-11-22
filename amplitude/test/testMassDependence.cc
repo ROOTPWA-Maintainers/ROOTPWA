@@ -192,7 +192,7 @@ compareAmplitudes(const size_t          nmbEvents,
 		hAmpImag->Fill(newAmps[i].imag());
 		hAmp->Fill(newAmps[i].real(), newAmps[i].imag());
 		hInt->Fill(parentMass[i], abs(newAmps[i]));
-		hPhase->Fill(parentMass[i], TMath::RadToDeg() * arg(newAmps[i]));
+		hPhase->Fill(parentMass[i], TMath::RadToDeg() * std::arg(newAmps[i]));
 		hAbsDiffReal->Fill(absDiff.real());
 		hAbsDiffImag->Fill(absDiff.imag());
 		hRelDiffReal->Fill(relDiff.real());
