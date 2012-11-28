@@ -119,13 +119,6 @@ namespace rpwa {
 		bool setDecay(const std::vector<double>& daughterMasses);  // daughter particle masses
 		bool setDecay(const unsigned int   nmbOfDaughters,   // number of daughter particles
 		              const double*        daughterMasses);  // array of daughter particle masses
-/*
-		void         setSeed(const unsigned int seed) { _rnd.setSeed(seed); }  ///< sets seed of random number generator
-		unsigned int seed   ()                        { return _rnd.seed(); }  ///< returns seed of random number generator
-		double       random ()                        { return _rnd.pick(); }  ///< returns number from internal random generator; intended for higher-level generators
-*/
-
-		void setProposalBW(double mass, double width) { _isoBWMass=mass;_isoBWWidth=width;} ///< set proposal function for importance sampling in the (n-1) isobar mass as simple Breit-Wigner-Shape (to be used with IMPORTANCE weighting option)
 
 		// high-level generator interface
 		/// generates full event with certain n-body mass and momentum and returns event weight
@@ -165,8 +158,7 @@ namespace rpwa {
 		enum weightTypeEnum {S_U_CHUNG = 1,   // gives physically correct mass dependence
 		                     NUPHAZ    = 2,   // weight used in nuphaz
 		                     GENBOD    = 3,   // default weight used in genbod (gives wrong mass dependence)
-		                     FLAT      = 4,   // uniform mass distribution; warning: produces distorted angular distribution
-		                     IMPORTANCE = 5}; // like S_U_CHUNG but with importance sampling in (n-1) fs particle state (single breitwigner)
+		                     FLAT      = 4};   // uniform mass distribution; warning: produces distorted angular distribution
 		void           setWeightType(const weightTypeEnum weightType) { _weightType = weightType; }  ///< selects formula used for weight calculation
 
 		weightTypeEnum weightType   () const                          { return _weightType;       }  ///< returns formula used for weight calculation
@@ -201,7 +193,6 @@ namespace rpwa {
 
 
 
-		double                             impWeight() const {return _impweight;}
 		std::ostream& print(std::ostream& out = std::cout) const;  ///< prints generator status
 		friend std::ostream& operator << (std::ostream&             out,
 		                                  const nBodyPhaseSpaceGen& gen) { return gen.print(out); }
@@ -228,41 +219,11 @@ namespace rpwa {
 		weightTypeEnum              _weightType;         ///< switches between different weight formulas
 		double                      _norm;               ///< normalization value
 		double                      _weight;             ///< phase space weight of generated event
-		double                      _impweight;          ///< importance sampling weight
 		double                      _maxWeightObserved;  ///< maximum event weight calculated processing the input data
 		double                      _maxWeight;          ///< maximum weight used to weight events in hit-miss MC
 		kinematicsTypeEnum          _kinematicsType;     ///< switches between different ways of calculating event kinematics
 
-
-
 		bool _verbose;
-
-		double _isoBWMass;  ///< Breit-Wigner mass for importance sampling proposal
-		double _isoBWWidth; ///< Breit-Wigner width for importance sampling proposal
-
-/*
-		// wrapper class for random number generator
-		class rndGen {
-
-
-		  public:
-
-			rndGen()                        { }
-			rndGen(const unsigned int seed) { setSeed(seed); }
-			virtual ~rndGen()               { }
-
-			unsigned int seed   ()                  { return _rndGen.GetSeed(); }
-			void         setSeed(unsigned int seed) { _rndGen.SetSeed(seed);    }
-			double       pick   ()                  { return _rndGen.Rndm();    }
-
-			private:
-
-			TRandom3 _rndGen;
-
-		};
-
-		rndGen _rnd;  ///< random number generator instance
-*/
 
 		ClassDef(nBodyPhaseSpaceGen, 2)
 

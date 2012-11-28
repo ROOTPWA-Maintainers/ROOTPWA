@@ -60,19 +60,12 @@ namespace rpwa {
 
 		void setVerbose(bool flag) { _phaseSpace.setVerbose(flag); }
 
-		void setImportanceBW(double mass, double width) {
-			_phaseSpace.setProposalBW(mass, width);
-			_phaseSpace.setWeightType(nBodyPhaseSpaceGen::IMPORTANCE);
-		}
-
 		/** @brief generates one event
 		 *
 		 * returns number of attempts to generate this event and beam
 		 * the decay products can be fetched with GetDecay(i)
 		 */
 		unsigned int event();
-
-		double impWeight() const { return _phaseSpace.impWeight(); }
 
 	  private:
 

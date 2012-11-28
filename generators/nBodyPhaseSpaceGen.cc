@@ -105,13 +105,10 @@ nBodyPhaseSpaceGen::nBodyPhaseSpaceGen()
 	  _weightType       (S_U_CHUNG),
 	  _norm             (0),
 	  _weight           (0),
-	  _impweight(1),
 	  _maxWeightObserved(0),
 	  _maxWeight        (0),
 	  _kinematicsType   (BLOCK),
-	  _verbose(false),
-	  _isoBWMass(1.0),  // dummy value!
-	  _isoBWWidth(0.01) // dummy value!
+	  _verbose          (false)
 { }
 
 
@@ -155,7 +152,7 @@ nBodyPhaseSpaceGen::setDecay(const vector<double>& daughterMasses)  // array of 
 	_daughters.resize(_n, TLorentzVector(0, 0, 0, 0));
 	// calculate normalization
 	switch (_weightType) {
-		case S_U_CHUNG: case IMPORTANCE:
+		case S_U_CHUNG:
 			// S. U. Chung's normalization
 			_norm = 1 / (2 * pow(twoPi, 2 * (int)_n - 3) * rpwa::factorial<double>(_n - 2));
 			break;
@@ -286,48 +283,8 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
 				}
 			}
 			break;
-/*
-		case IMPORTANCE:
-			{
-
-				// set effective masses of (intermediate) two-body decays
-				const double massInterval = nBodyMass - _mSum[_n - 1];  // kinematically allowed mass interval
-
-				//  do first isobar breitwigner importance sampling:
-				double m=0; //unsigned int count=0;
-				//while(m<_mSum[_n-2] || m>_mSum[_n-2] + massInterval){
-				//m=gRandom->BreitWigner(_isoBWMass, _isoBWWidth);
-				m = gRandom->Uniform(_mSum[_n-2], _mSum[_n-2] + massInterval);
-				//printErr << _M[_n-3] << " < " << m << " < " << _mSum[_n-2]+massInterval << endl;
-				//}
-				_M[_n-2] = m;
-				_impweight = TMath::BreitWigner(m, _isoBWMass, _isoBWWidth); // for de-weighting (has to be read out explicitely!!!)
-
-				// now that the first isobar mass is fixed, generate the rest:
-				// create vector of sorted random values
-				vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
-				r[_n-3] = (_M[_n-2] - _mSum[_n-2]) / massInterval;
-
-				for (unsigned int i = _n-3; i > 0; --i) {
-					r[i-1] = gRandom->Uniform(0,r[i]);
-				}
-
-				for (unsigned int i = 1; i < (_n - 2); ++i) {           // loop over intermediate 2- to (n - 1)-bodies
-					_M[i] = _mSum[i] + r[i - 1] * massInterval;         // _mSum[i] is minimum effective mass
-				}
-
-				if(_verbose) {
-					for(unsigned int i =0; i < (_n - 1) ; ++i) {
-						cerr << "M["<<i<<"]="<<_M[i] << endl;
-					}
-				}// end ifverbose
-			}// end if importance sampling
-
-			break;
-*/
 		default:
 			{
-
 				// create vector of sorted random values
 				vector<double> r(_n - 2, 0);  // (n - 2) values needed for 2- through (n - 1)-body systems
 				for (unsigned int i = 0; i < (_n - 2); ++i) {
@@ -339,16 +296,6 @@ nBodyPhaseSpaceGen::pickMasses(const double nBodyMass)  // total energy of the s
 				for (unsigned int i = 1; i < (_n - 1); ++i) {             // loop over intermediate 2- to (n - 1)-bodies
 					_M[i] = _mSum[i] + r[i - 1] * massInterval;           // _mSum[i] is minimum effective mass
 				}
-
-				//cerr << _M[1] << endl;
-				if(_weightType==IMPORTANCE) {
-					_impweight=TMath::BreitWigner(_M[_n-2],_isoBWMass,_isoBWWidth);
-					// BE CAREFULL:::: hard coded a1 BW in 3pi mass
-					_impweight*=TMath::BreitWigner(_M[_n-3],1.23,0.425);
-					// BE CAREFULL:::: hard coded rho BW in 2pi mass
-					_impweight*=TMath::BreitWigner(_M[_n-4],0.77,0.15);
-				}
-				//cerr << _impweight << endl;
 			} // end default mass picking
 			break;
 	}
@@ -364,14 +311,14 @@ nBodyPhaseSpaceGen::calcWeight()
 		_breakupMom[i] = breakupMomentum(_M[i], _M[i - 1], _m[i]);
 	}
 	switch (_weightType) {
-		case S_U_CHUNG: case IMPORTANCE:
+		case S_U_CHUNG:
 			{  // S. U. Chung's weight
 				double momProd = 1;                    // product of breakup momenta
 				for (unsigned int i = 1; i < _n; ++i) { // loop over 2- to n-bodies
 					momProd *= _breakupMom[i];
 				}
 				const double massInterval = _M[_n - 1] - _mSum[_n - 1];  // kinematically allowed mass interval
-				_weight = _norm * pow(massInterval, (int)_n - 2) * momProd / _M[_n - 1] * _impweight;
+				_weight = _norm * pow(massInterval, (int)_n - 2) * momProd / _M[_n - 1];
 			}
 			break;
 		case NUPHAZ:

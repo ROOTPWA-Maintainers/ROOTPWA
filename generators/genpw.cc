@@ -251,7 +251,7 @@ int main(int argc, char** argv)
 	{
 		int act = reactConf.lookup("importance.active");
 		if(act == 1) {
-			diffPS.setImportanceBW(importanceMass,importanceWidth);
+//			diffPS.setImportanceBW(importanceMass,importanceWidth);
 		}
 	}
 
@@ -415,7 +415,7 @@ int main(int argc, char** argv)
 			} else {
 //				diffPS.event(str);
 			}
-			impweight = diffPS.impWeight();
+//			impweight = diffPS.impWeight();
 
 			for(int ip = 0; ip < nParticles; ++ip){
 				new ((*momenta)[ip]) TLorentzVector(diffPS.getGeneratedFinalState()[ip].lzVec());
