@@ -1,4 +1,5 @@
 
+#include<assert.h>
 #include<map>
 
 #include<boost/assign/std/vector.hpp>
@@ -21,6 +22,7 @@ uniformMassExponentialTPicker::uniformMassExponentialTPicker()
 
 uniformMassExponentialTPicker::uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker)
 	: massAndTPrimePicker(picker),
+	  _tSlopesForMassBins(picker._tSlopesForMassBins),
 	  _tPrimeRange(picker._tPrimeRange) { }
 
 
@@ -96,6 +98,7 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
 		return false;
 	}
+	assert(not _tSlopesForMassBins.empty());
 	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
 	invariantMass = randomNumbers->Uniform(_massRange.first, _massRange.second);
 	double tPrimeSlope = -1.;
@@ -117,8 +120,6 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 	do {
 		tPrime = randomNumbers->Exp(tPrimeSlope);
 	} while(tPrime < _tPrimeRange.first || tPrime > _tPrimeRange.second);
-	printDebug << "generated mass=" << invariantMass << " | t'Slope="
-	           << tPrimeSlope << endl;
 	return true;
 }
 
