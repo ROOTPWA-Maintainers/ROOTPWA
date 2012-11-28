@@ -242,6 +242,16 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		_pickerFunction->print(printInfo);
 	} // Finished with t'- and m-dependence.
 
+	// Features which have been removed during clean-up.
+	if(configRoot.exists("importance")) {
+		printWarn << "importance sampling removed for the time being. "
+		          << "If you want it back, check SVN revision 1072." << endl;
+	}
+	if(configRoot.exists("resonances")) {
+		printWarn << "resonances weighing removed for the time being. "
+		          << "If you want it back, check SVN revision 1072." << endl;
+	}
+
 	printSucc << "read reaction file '" << fileName << "'." << endl;
 	_reactionFileRead = true;
 	return true;
