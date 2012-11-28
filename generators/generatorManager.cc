@@ -36,6 +36,15 @@ generatorManager::~generatorManager() {
 };
 
 
+unsigned int generatorManager::event() {
+	if(not _reactionFileRead) {
+		printErr << "cannot generate event before reading the reaction file." << endl;
+		throw;
+	}
+	return _generator->event();
+}
+
+
 bool generatorManager::readReactionFile(const string& fileName) {
 	using namespace boost::assign;
 	using namespace libconfig;
@@ -264,5 +273,16 @@ bool generatorManager::initializeGenerator() {
 
 	printSucc << "event generator initialized" << endl;
 	return true;
+
+}
+
+
+void generatorManager::overrideMassRange(double lowerLimit, double upperLimit) {
+
+	if(not _reactionFileRead) {
+		printErr << "reaction file has to been read to override the mass range." << endl;
+		throw;
+	}
+	_pickerFunction->overrideMassRange(lowerLimit, upperLimit);
 
 }

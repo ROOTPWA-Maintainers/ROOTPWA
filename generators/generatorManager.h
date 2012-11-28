@@ -22,12 +22,18 @@ namespace rpwa {
 		generatorManager();
 		~generatorManager();
 
+		unsigned int event();
+
+		const rpwa::generator& getGenerator() const { return *_generator; }
+
 		bool readReactionFile(const std::string& fileName);
 
 		bool initializeGenerator();
 
-		static bool debug() { return _debug; };
-		static void setDebug(bool debug = true) { _debug = debug; };
+		void overrideMassRange(double lowerLimit, double upperLimit);
+
+		static bool debug() { return _debug; }
+		static void setDebug(bool debug = true) { _debug = debug; }
 
 	  private:
 
