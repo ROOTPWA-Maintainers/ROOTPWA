@@ -143,14 +143,14 @@ diffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
 
 
 bool
-diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  formated) {
+diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  binary) {
 
 	if(!out) {
 		cerr << "Output stream is not writable." << endl;
 		return false;
 	}
 
-	if(formated) {
+	if(not binary) { // Write text file.
 		// total number of particles including recoil proton and beam particle
 		unsigned int nmbDaughters = _decayProducts.size();
 		out << nmbDaughters+1+1 << endl;
@@ -589,7 +589,7 @@ diffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 	//writePwa2000Ascii(stream, 9, -1);  // use pi^- beam
 	// use the first particle as the beam particle
 	writePwa2000Ascii(stream, _decayProducts[0].geantId(), _decayProducts[0].charge());
-	writeComgeantAscii(streamComGeant, true);
+	writeComgeantAscii(streamComGeant, false);
 	return attempts;
 }
 

@@ -260,7 +260,7 @@ namespace rpwa {
 		// please don't use the binary file option yet since there seems
 		// to be a problem reading it in ComGeant
 		bool writeComgeantAscii(ostream& out,
-		                        bool     formated = true); // true: text file ; false: binary file
+		                        bool     binary = false); // true: text file ; false: binary file
 
 		void buildDaughterList();
 /*		// particle masses
