@@ -184,6 +184,10 @@ diffractivePhaseSpace::event()
 		double xMass;
 		assert((*_pickerFunction)(xMass, tPrime));
 
+// Not sure yet why this is needed.
+// Needs some investigating.
+tPrime *= -1;
+
 		// make sure that X mass is not larger than maximum allowed mass
 		if(xMass + _target.recoilParticle.mass() > overallCm.M()) {
 			continue;

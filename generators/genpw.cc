@@ -106,13 +106,13 @@ int main(int argc, char** argv)
 	string outputEvtFileName = "";
 	string outputWhtFileName = "";
 	string outputComgeantFileName = "";
-	string integralsFileName;
-	bool hasIntegralsFile = false;
+//	string integralsFileName;
+//	bool hasIntegralsFile = false;
 	string pdgFileName = "./particleDataTable.txt";
-	string wavelistFileName; // format: name Re Im
-	string pathToKeyfiles = "./";
+//	string wavelistFileName; // format: name Re Im
+//	string pathToKeyfiles = "./";
 	string reactionFile;
-	double maxWeight = 0;
+//	double maxWeight = 0;
 	int seed = 123456;
 	bool seedSet = false;
 	int massLower = 0;
@@ -188,7 +188,9 @@ int main(int argc, char** argv)
 		}
 	}
 
-	printInfo << "Setting random seed to " << seed << endl;
+	if(not seedSet) {
+		printInfo << "Setting random seed to " << seed << endl;
+	}
 	randomNumberGenerator::instance()->setSeed(seed);
 
 	rpwa::particleDataTable::readFile(pdgFileName);
@@ -197,9 +199,51 @@ int main(int argc, char** argv)
 	generatorMgr.initializeGenerator();
 
 	if(overwriteMass) {
-		printErr << "Sorry, GAME OVER." << endl;
-		throw;
+		generatorMgr.overrideMassRange(massLower / 1000., (massLower + massBinWidth) / 1000.);
 	}
+
+	if(outputEvtFileName == "") {
+		stringstream fileName;
+		fileName << massLower << "." << massLower + massBinWidth << ".genbod.evt";
+		outputEvtFileName = fileName.str();
+	}
+	ofstream outputEvtFile(outputEvtFileName.c_str());
+	printInfo << "output event file: " << outputEvtFileName << endl;
+
+	ofstream outputComgeantFile;
+	if(writeComgeantOut) {
+		outputComgeantFileName = changeFileExtension(outputEvtFileName, ".fort.26");
+		printInfo << "output comgeant file: " << outputComgeantFileName << endl;
+		outputComgeantFile.open(outputComgeantFileName.c_str());
+	}
+
+	progress_display* progressIndicator = new progress_display(nEvents, cout, "");
+
+	unsigned int attempts = 0;
+	for(unsigned int i = 0; i < nEvents; ++i) {
+
+		attempts += generatorMgr.event();
+		const generator& gen = generatorMgr.getGenerator();
+		rpwa::particle beam = gen.getGeneratedBeam();
+		std::vector<rpwa::particle> finalState = gen.getGeneratedFinalState();
+		generator::convertEventToAscii(outputEvtFile, beam, finalState);
+		if(writeComgeantOut) {
+			rpwa::particle recoil = gen.getGeneratedRecoil();
+			TVector3 vertex = gen.getGeneratedVertex();
+			generator::convertEventToComgeant(outputComgeantFile, beam, recoil, vertex, finalState, false);
+		}
+		++(*progressIndicator);
+
+	}
+
+	outputEvtFile.close();
+	if(writeComgeantOut) {
+		outputComgeantFile.close();
+	}
+
+	printSucc << "generated " << nEvents << " events." << endl;
+	printInfo << "attempts: " << attempts << endl;
+	printInfo << "efficiency: " << 100 * ((double)nEvents / attempts) << "%" << endl;
 
 	exit(255);
 
@@ -207,21 +251,21 @@ int main(int argc, char** argv)
 
 	PDGtable.initialize();
 
-	partialWaveWeight weighter;
+//	partialWaveWeight weighter;
 	Config reactConf;
 	reactConf.readFile(reactionFile.c_str());
 
 	// variable that need to get initialized either by input options
 	// or the config file
 	// will be stored in the tree later
-	double weight, impweight;
+//	double weight, impweight;
 	TClonesArray* momenta = new TClonesArray("TLorentzVector");
 	TLorentzVector beam;
 	TVector3 vertex;
-	double tPrime = 0.;
-	int qBeam;
+//	double tPrime = 0.;
+//	int qBeam;
 	vector<int> charges; // array of charges
-
+/*
 	// generate the filename automatically if not specified
 	if (outputFileName == "") {
 		stringstream _filename;
@@ -232,12 +276,12 @@ int main(int argc, char** argv)
 	outputEvtFileName = changeFileExtension(outputFileName, ".evt");
 	outputWhtFileName = changeFileExtension(outputFileName, ".wht");
 	outputComgeantFileName = changeFileExtension(outputFileName, ".fort.26");
-
+*/
 	// now create the root file to store the events
-	TFile* outputFile = TFile::Open(outputFileName.c_str(), "RECREATE");
-	TH1D* weightsHistogram = new TH1D("hWeights", "PW Weights", 100, 0, 100);
-	TTree* outputTree = new TTree("pwevents", "pwevents");
-
+//	TFile* outputFile = TFile::Open(outputFileName.c_str(), "RECREATE");
+//	TH1D* weightsHistogram = new TH1D("hWeights", "PW Weights", 100, 0, 100);
+//	TTree* outputTree = new TTree("pwevents", "pwevents");
+/*
 	outputTree->Branch("weight", &weight, "weight/d");
 	outputTree->Branch("impweight", &impweight, "impweight/d");
 	outputTree->Branch("p", &momenta);
@@ -246,18 +290,18 @@ int main(int argc, char** argv)
 	outputTree->Branch("q", &charges);
 	outputTree->Branch("qbeam", &qBeam,"qbeam/I");
 	outputTree->Branch("tprime", &tPrime);
-
+*/
 	//string theta_file= reactConf.lookup("finalstate.theta_file");
-
+/*
 	if(not seedSet) {
 		printWarn << "Seed not set on command line, using default seed '"
 		          << seed << "'." << endl;
 	} else {
 		printInfo << "Random seed: " << seed << endl;
 	}
-
+*/
 	diffractivePhaseSpace diffPS;
-
+/*
 	double importanceMass;
 	double importanceWidth;
 
@@ -269,11 +313,11 @@ int main(int argc, char** argv)
 //			diffPS.setImportanceBW(importanceMass,importanceWidth);
 		}
 	}
-
+*/
 	const Setting& root = reactConf.getRoot();
 	const Setting& fspart = root["finalstate"]["particles"];
 	int nParticles = fspart.getLength();
-
+/*
 	// see if we have a resonance in this wave
 	map<string, breitWignerProductionAmp*> bwAmps;
 	if(reactConf.exists("resonances")) {
@@ -321,11 +365,11 @@ int main(int argc, char** argv)
 			double mBest = 0;
 			for(unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 				tree->GetEntry(i);
-/*				if(fabs(binCenter - fitBin->mass()) <= fabs(binCenter - mBest)) {
+				if(fabs(binCenter - fitBin->mass()) <= fabs(binCenter - mBest)) {
 					iBest = i;
 					mBest = fitBin->mass();
 				}
-*/			}  // end loop over TFitBins
+			}  // end loop over TFitBins
 			printInfo << "Using data from Mass bin with m = " << mBest << endl;
 			tree->GetEntry(iBest);
 			// write wavelist file for generator
@@ -397,15 +441,15 @@ int main(int argc, char** argv)
 	}// endif hasIntegraFile
 
 	double maxweight = -1;
-
-	//difPS.setVerbose(true);
-	ofstream outputEvtFile(outputEvtFileName.c_str());
-	ofstream outputComgeantFile;
-	if(writeComgeantOut) {
-		outputComgeantFile.open(outputComgeantFileName.c_str());
-	}
-	ofstream outputWhtFile(outputWhtFileName.c_str());
-	outputWhtFile << setprecision(10);
+*/
+//	difPS.setVerbose(true);
+//	ofstream outputEvtFile(outputEvtFileName.c_str());
+//	ofstream outputComgeantFile;
+//	if(writeComgeantOut) {
+//		outputComgeantFile.open(outputComgeantFileName.c_str());
+//	}
+//	ofstream outputWhtFile(outputWhtFileName.c_str());
+//	outputWhtFile << setprecision(10);
 
 	{ // Block to avoid "i" and "attempts" in global namespace.
 
@@ -441,30 +485,30 @@ int main(int argc, char** argv)
 //			tPrime = diffPS.tPrime();
 
 			// calculate weight
-			event e;
-			e.setIOVersion(1);
+//			event e;
+//			e.setIOVersion(1);
 
-			str >> e;
-			outputEvtFile << e;
-			outputWhtFile << impweight << endl;
+//			str >> e;
+//			outputEvtFile << e;
+//			outputWhtFile << impweight << endl;
 
 			//cerr << e << endl;
-
+/*
 			weight = weighter.weight(e);
 			if(weight > maxweight) {
 				maxweight = weight;
 			}
-			weightsHistogram->Fill(weight);
-
-			if(maxWeight > 0) { // do weighting
+//			weightsHistogram->Fill(weight);
+*/
+/*			if(maxWeight > 0) { // do weighting
 				cout << weight << endl;
 				//if(weight>maxWeight)maxWeight=weight;
 				if(randomNumberGenerator::instance()->getGenerator()->Uniform() > weight / maxWeight) {
 					continue;
 				}
 			}
-
-			outputTree->Fill();
+*/
+//			outputTree->Fill();
 			++(*progressIndicator);
 
 		} // end event loop
@@ -472,16 +516,17 @@ int main(int argc, char** argv)
 		printInfo << "Generated " << i << " Events." << endl;
 		printInfo << "Attempts: " << attempts << endl;
 		printInfo << "Efficiency: " << (double)i / (double)attempts << endl;
-		printInfo << "Maximum weight found: " << maxweight << endl;
+//		printInfo << "Maximum weight found: " << maxweight << endl;
 
 	} // Block to avoid "i" and "attempts" in global namespace.
-
+/*
 	outputFile->cd();
 	weightsHistogram->Write();
 	outputTree->Write();
 	outputFile->Close();
 	outputEvtFile.close();
 	outputWhtFile.close();
+*/
 	if(writeComgeantOut) {
 		outputComgeantFile.close();
 	}
