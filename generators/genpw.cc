@@ -206,84 +206,7 @@ int main(int argc, char** argv)
 	double tPrime = 0.;
 	int qBeam;
 	vector<int> charges; // array of charges
-/*
-	double beamMom = reactConf.lookup("beam.momentum");
-	double beamMomSigma = reactConf.lookup("beam.sigma_momentum");
-	double beamPartMass = 0.13957018;
-	if(reactConf.exists("beam.mass")){
-		beamPartMass = reactConf.lookup("beam.mass");
-	} else {
-		printWarn << "Beam particle mass not found in config file. Using '"
-				  << setprecision(8) << beamPartMass << "'." << endl;
-	}
-	double beamDxDz = reactConf.lookup("beam.DxDz");
-	double beamDxDzSigma = reactConf.lookup("beam.sigma_DxDz");
-	double beamDyDz = reactConf.lookup("beam.DyDz");
-	double beamDyDzSigma = reactConf.lookup("beam.sigma_DyDz");
 
-	double targetZPosition = reactConf.lookup("target.pos.z");
-	double targetLength = reactConf.lookup("target.length");
-	double targetRadius = reactConf.lookup("target.radius");
-	double massRecoil = reactConf.lookup("target.mrecoil");
-
-	double tPrimeMin = 0.;
-	double tPrimeMax = numeric_limits<double>::max();
-	reactConf.lookupValue("finalstate.t_min", tPrimeMin);
-	reactConf.lookupValue("finalstate.t_max", tPrimeMax);
-
-	double minimumFinalStateMass = reactConf.lookup("finalstate.mass_min");
-	double maximumFinalStateMass = reactConf.lookup("finalstate.mass_max");
-	if(overwriteMass) {
-		minimumFinalStateMass = massLower / 1000.0;
-		maximumFinalStateMass = (massLower + massBinWidth) / 1000.0;
-	}
-	// array of tslopes even when only one is existing
-	double* tSlopes = NULL;
-	double* finalStateInvariantMasses  = NULL;
-	int numberOftSlopes = 1;
-	if(reactConf.lookup("finalstate.t_slope").isArray()) {
-		numberOftSlopes = reactConf.lookup("finalstate.t_slope").getLength();
-		if(reactConf.lookup("finalstate.inv_m").getLength() != numberOftSlopes) {
-			printErr << " Error: please check number of t' values and the corresponding invariant masses in the Configuration File! " << endl;
-			exit(1);
-		}
-		tSlopes = new double[numberOftSlopes];
-		finalStateInvariantMasses  = new double[numberOftSlopes];
-		printInfo << "Found array of t' slopes. Reading " << numberOftSlopes << "values...";
-		for(int i = 0; i < numberOftSlopes; ++i) {
-			tSlopes[i] = reactConf.lookup("finalstate.t_slope")[i];
-			finalStateInvariantMasses[i] = reactConf.lookup("finalstate.inv_m")[i];
-		}
-		cout << "done." << endl;
-	} else {
-		tSlopes = new double[1];
-		tSlopes[0] = reactConf.lookup("finalstate.t_slope");
-		printInfo << "Found one t' slope: " << tSlopes[0] << "." << endl;
-	}
-	double binCenter = 500 * (minimumFinalStateMass + maximumFinalStateMass);
-
-  // check whether to use a primary vertex generator as requested by the config file
-	primaryVertexGen* primaryVtxGen = NULL;
-	string histFilenamePrimVertex = "";
-	if(reactConf.lookupValue("primvertex.histfilename", histFilenamePrimVertex)) {
-		primaryVtxGen = new primaryVertexGen(
-		    histFilenamePrimVertex,
-		    beamPartMass,
-		    beamMom,
-		    beamMomSigma
-		    );
-		if(!primaryVtxGen->check()) {
-			printErr << "Could not load histogram file '" << histFilenamePrimVertex << "with beam properties" << endl;
-			delete primaryVtxGen;
-			primaryVtxGen = NULL;
-		}
-	}
-
-	if(!reactConf.lookupValue("beam.charge", qBeam)) {
-		printWarn << "Beam charge not found in config file. Setting it to '-1'." << endl;
-		qBeam = -1;
-	}
-*/
 	// generate the filename automatically if not specified
 	if (outputFileName == "") {
 		stringstream _filename;
@@ -319,25 +242,7 @@ int main(int argc, char** argv)
 	}
 
 	diffractivePhaseSpace diffPS;
-//	diffPS.setSeed(seed);
-//	diffPS.setBeam(beamMom, beamMomSigma, beamDxDz, beamDxDzSigma, beamDyDz, beamDyDzSigma);
-//	diffPS.setTarget(targetZPosition, targetLength, targetRadius, massRecoil);
-//	diffPS.setTPrimeSlope(tSlopes, finalStateInvariantMasses, numberOftSlopes);
-//	diffPS.setMassRange(minimumFinalStateMass, maximumFinalStateMass);
-//	diffPS.setPrimaryVertexGen(primaryVtxGen);
-/*	if(tPrimeMin >= 0.) {
-		diffPS.setTPrimeMin(tPrimeMin);
-	} else {
-		printErr << "t_min (minimum t') must be positive, found '" << tPrimeMin << "'." << endl;
-		exit(1);
-	}
-	if(tPrimeMax >= 0.) {
-		diffPS.setTPrimeMax(tPrimeMax);
-	} else {
-		printErr << "t_max (maximum t') must be positive, found '" << tPrimeMax << "'." << endl;
-		exit(1);
-	}
-*/
+
 	double importanceMass;
 	double importanceWidth;
 
@@ -353,19 +258,7 @@ int main(int argc, char** argv)
 	const Setting& root = reactConf.getRoot();
 	const Setting& fspart = root["finalstate"]["particles"];
 	int nParticles = fspart.getLength();
-/*
-	for(int ifs = 0; ifs < nParticles; ++ifs) {
-		const Setting &part = fspart[ifs];
-		int id;
-		part.lookupValue("g3id", id);
-		int myq;
-		part.lookupValue("charge", myq);
-		double m;
-		part.lookupValue("mass", m);
-		charges.push_back(myq);
-		diffPS.addDecayProduct(particleInfo(id, myq, m));
-	}
-*/
+
 	// see if we have a resonance in this wave
 	map<string, breitWignerProductionAmp*> bwAmps;
 	if(reactConf.exists("resonances")) {
@@ -577,10 +470,7 @@ int main(int argc, char** argv)
 	if(writeComgeantOut) {
 		outputComgeantFile.close();
 	}
-/*
-	delete [] tSlopes;
-	delete [] finalStateInvariantMasses;
-*/
+
 	return 0;
 
 }
