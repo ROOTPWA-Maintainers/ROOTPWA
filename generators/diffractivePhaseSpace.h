@@ -32,10 +32,10 @@
 #include <vector>
 
 
-#include "generator.hpp"
+#include "generator.h"
 #include "generatorParameters.hpp"
 #include "nBodyPhaseSpaceGen.h"
-#include "particleProperties.h"
+#include "../amplitude/particle.h"
 #include "primaryVertexGen.h"
 
 
@@ -77,10 +77,10 @@ namespace rpwa {
 		~diffractivePhaseSpace();
 
 		// Accessors -----------------------
-		const TLorentzVector* const decay(unsigned int i) { return &_phaseSpace.daughter(i); }
-		TLorentzVector* beam() { return &_beamLab; }
-		TVector3* vertex() { return &_vertex; }
-		double tPrime() { return _tPrime; }
+//		const TLorentzVector* const decay(unsigned int i) { return &_phaseSpace.daughter(i); }
+//		const TLorentzVector* beam() { return &_beam.particle.lzVec(); }
+//		const TVector3& vertex() { return _vertex; }
+//		double tPrime() { return _tPrime; }
 /*
 		// Modifiers -----------------------
 		* @brief Set beam parameters
@@ -163,8 +163,8 @@ namespace rpwa {
 			_xMassMax=max;
 		}
 */
-		void setDecayProducts(const std::vector<rpwa::particleProperties>& particles);
-		void addDecayProduct(const rpwa::particleProperties& particle);
+		void setDecayProducts(const std::vector<rpwa::particle>& particles);
+		void addDecayProduct(const rpwa::particle& particle);
 //		void setSeed(int seed);
 
 		void setVerbose(bool flag) { _phaseSpace.setVerbose(flag); }
@@ -209,7 +209,7 @@ namespace rpwa {
 		 * writes event to stream
 		 *
 		 */
-		unsigned int event(ostream&);
+//		unsigned int event(ostream&);
 
 		/** @brief generates on event
 		 *
@@ -218,7 +218,7 @@ namespace rpwa {
 		 * for ComGeant fort.26 input files
 		 *
 		 */
-		unsigned int event(ostream&, ostream&);
+//		unsigned int event(ostream&, ostream&);
 
 		double impWeight() const { return _phaseSpace.impWeight(); }
 
@@ -229,9 +229,9 @@ namespace rpwa {
 
 //		primaryVertexGen* _primaryVertexGen;
 
-		TLorentzVector _beamLab;         // cache for last generated beam (in lab frame)
-		TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)
-		TVector3 _vertex;                // cache for last generated vertex
+//		TLorentzVector _beamLab;         // cache for last generated beam (in lab frame)
+//		TLorentzVector _recoilprotonLab; // cache for last generated recoil proton (in lab frame)
+//		TVector3 _vertex;                // cache for last generated vertex
 		double _tPrime;                  // cache for last generated t' (recalculated)
 
 		//TH1* thetaDistribution;
@@ -251,7 +251,7 @@ namespace rpwa {
 		// Private Methods -----------------
 
 		TLorentzVector makeBeam();
-
+/*
 		bool writePwa2000Ascii(std::ostream& out,
 		                       const int     beamGeantId,
 		                       const int     beamCharge);
@@ -261,7 +261,7 @@ namespace rpwa {
 		// to be a problem reading it in ComGeant
 		bool writeComgeantAscii(ostream& out,
 		                        bool     binary = false); // true: text file ; false: binary file
-
+*/
 		void buildDaughterList();
 /*		// particle masses
 		double _protonMass;

@@ -518,19 +518,19 @@ int main(int argc, char** argv)
 
 			stringstream str;
 			if (writeComgeantOut) {
-				diffPS.event(str, outputComgeantFile);
+//				diffPS.event(str, outputComgeantFile);
 			} else {
-				diffPS.event(str);
+//				diffPS.event(str);
 			}
 			impweight = diffPS.impWeight();
 
 			for(int ip = 0; ip < nParticles; ++ip){
-				new ((*momenta)[ip]) TLorentzVector(*diffPS.decay(ip));
+				new ((*momenta)[ip]) TLorentzVector(diffPS.getGeneratedFinalState()[ip].lzVec());
 			}
 
-			beam = *diffPS.beam();
-			vertex = *diffPS.vertex();
-			tPrime = diffPS.tPrime();
+			beam = diffPS.getGeneratedBeam().lzVec();
+			vertex = diffPS.getGeneratedVertex();
+//			tPrime = diffPS.tPrime();
 
 			// calculate weight
 			event e;

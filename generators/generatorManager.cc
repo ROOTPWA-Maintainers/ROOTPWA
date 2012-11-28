@@ -7,7 +7,7 @@
 #include <TVector3.h>
 
 #include "diffractivePhaseSpace.h"
-#include "generator.hpp"
+#include "generator.h"
 #include "generatorParameters.hpp"
 #include "libConfigUtils.hpp"
 #include "particleDataTable.h"

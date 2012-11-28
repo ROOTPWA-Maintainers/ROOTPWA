@@ -57,6 +57,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	nBodyPhaseSpaceGen.cc
+	generator.cc
 	generatorManager.cc
 	productionAmp.cc
 	breitWignerProductionAmp.cc

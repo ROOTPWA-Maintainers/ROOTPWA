@@ -112,7 +112,7 @@ diffractivePhaseSpace::makeBeam()
 	return TLorentzVector(px, py, pz, EBeam);
 }
 
-
+/*
 // writes event to ascii file read by gamp
 bool
 diffractivePhaseSpace::writePwa2000Ascii(ostream&  out,
@@ -215,7 +215,7 @@ diffractivePhaseSpace::writeComgeantAscii(ostream& out, bool  binary) {
 	}
 	return true;
 }
-
+*/
 /*
 void
 diffractivePhaseSpace::setSeed(int seed)
@@ -226,7 +226,7 @@ diffractivePhaseSpace::setSeed(int seed)
 */
 
 void
-diffractivePhaseSpace::setDecayProducts(const vector<particleProperties>& particles)
+diffractivePhaseSpace::setDecayProducts(const vector<particle>& particles)
 {
 	_decayProducts.clear();
 	_decayProducts = particles;
@@ -235,7 +235,7 @@ diffractivePhaseSpace::setDecayProducts(const vector<particleProperties>& partic
 
 
 void
-diffractivePhaseSpace::addDecayProduct(const particleProperties& particle)
+diffractivePhaseSpace::addDecayProduct(const particle& particle)
 {
 	_decayProducts.push_back(particle);
 	buildDaughterList();
@@ -402,13 +402,13 @@ diffractivePhaseSpace::event()
 				//cout << " skipping " << endl;
 				continue;
 			}
-			_beamLab = _primaryVertexGen->getBeamPart(beam_dir);
+			_beam.particle.setLzVec(_primaryVertexGen->getBeamPart(beam_dir));
 			break;
 		}
 		// Just a few events should contain a vertex position with no beam direction information
 		if(attempts == 999) {
 			cerr << " Error in beam construction. Please check the beam properties loaded correctly!" << endl;
-			_beamLab = makeBeam();
+			_beam.particle.setLzVec(makeBeam());
 		}
 	} else {
 		double x;
@@ -417,7 +417,7 @@ diffractivePhaseSpace::event()
 		_vertex.SetXYZ(_target.position.X() + x,
 		               _target.position.Y() + y,
 		               _target.position.Z() + random->Uniform(-_target.length * 0.5, _target.length * 0.5));
-		_beamLab = makeBeam();
+		_beam.particle.setLzVec(makeBeam());
 	}
 
 	if(not _pickerFunction) {
@@ -425,9 +425,11 @@ diffractivePhaseSpace::event()
 		throw;
 	}
 
+	const TLorentzVector& beamLorentzVector = _beam.particle.lzVec();
+
 	const double xMassMax = _pickerFunction->massRange().second;
 	const TLorentzVector targetLab(0, 0, 0, _target.targetParticle.mass());
-	const TLorentzVector overallCm = _beamLab + targetLab;  // beam-target center-of-mass system
+	const TLorentzVector overallCm = beamLorentzVector + targetLab;  // beam-target center-of-mass system
 	// check
 	if(xMassMax + _target.targetParticle.mass()  > overallCm.M()) {
 		printErr << "Max Mass out of kinematic range." <<  endl
@@ -468,12 +470,12 @@ diffractivePhaseSpace::event()
 		// calculate t from t' in center-of-mass system of collision
 		const double s            = overallCm.Mag2();
 		const double sqrtS        = sqrt(s);
-		const double recoilMass2  = _target.recoilParticle.mass() * _target.recoilParticle.mass();
+		const double recoilMass2  = _target.recoilParticle.mass2();
 		const double xMass2       = xMass * xMass;
 		const double xEnergyCM    = (s - recoilMass2 + xMass2) / (2 * sqrtS);  // breakup energy
 		const double xMomCM       = sqrt(xEnergyCM * xEnergyCM - xMass2);      // breakup momentum
-		const double beamMass2    = _beamLab.M2();
-		const double targetMass2  = _target.targetParticle.mass() * _target.targetParticle.mass();
+		const double beamMass2    = _beam.particle.mass2();
+		const double targetMass2  = _target.targetParticle.mass2();
 		const double beamEnergyCM = (s - targetMass2 + beamMass2) / (2 * sqrtS);    // breakup energy
 		const double beamMomCM    = sqrt(beamEnergyCM * beamEnergyCM - beamMass2);  // breakup momentum
 		const double t0           = (xEnergyCM - beamEnergyCM) * (xEnergyCM - beamEnergyCM) -
@@ -486,10 +488,12 @@ diffractivePhaseSpace::event()
 
 		// construct X Lorentz-vector in lab frame (= target RF)
 		// convention used here: Reggeon = X - beam = target - recoil (momentum transfer from target to beam vertex)
+		const double beamEnergy       = beamLorentzVector.E();
+		const double beamMomentum     = beamLorentzVector.P();
 		const double reggeonEnergyLab = (targetMass2 - recoilMass2 + t) / (2 * _target.targetParticle.mass());  // breakup energy
-		const double xEnergyLab       = _beamLab.E() + reggeonEnergyLab;
+		const double xEnergyLab       = beamEnergy + reggeonEnergyLab;
 		const double xMomLab          = sqrt(xEnergyLab * xEnergyLab - xMass2);
-		const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * _beamLab.E() * xEnergyLab) / (2 * _beamLab.P() * xMomLab);
+		const double xCosThetaLab     = (t - xMass2 - beamMass2 + 2 * beamEnergy * xEnergyLab) / (2 * beamMomentum * xMomLab);
 		const double xSinThetaLab     = sqrt(1 - xCosThetaLab * xCosThetaLab);
 		const double xPtLab           = xMomLab * xSinThetaLab;
 		const double xPhiLab          = random->Uniform(0., TMath::TwoPi());
@@ -500,10 +504,10 @@ diffractivePhaseSpace::event()
 		                                           xMomLab * xCosThetaLab,
 		                                           xEnergyLab);
 		// rotate according to beam tilt
-		TVector3 beamDir = _beamLab.Vect().Unit();
+		TVector3 beamDir = _beam.particle.momentum().Unit();
 		xSystemLab.RotateUz(beamDir);
 		// calculate the recoil proton properties
-		_recoilprotonLab = (_beamLab + targetLab) - xSystemLab; // targetLab
+		_target.recoilParticle.setLzVec((beamLorentzVector + targetLab) - xSystemLab); // targetLab
 
 		/* check for coplanarity
 		   cout << " Energy balance is " << (_beamLab + targetLab).E() << " vs. " << (_recoilprotonLab+xSystemLab).E() << endl;
@@ -532,7 +536,7 @@ diffractivePhaseSpace::event()
 		// number directly if you change if (1) to (0) to
 		// speed up the process a bit
 		if(0) {
-			_tPrime = calcTPrime(_beamLab, xSystemLab);
+			_tPrime = calcTPrime(beamLorentzVector, xSystemLab);
 		} else {
 			_tPrime = tPrime;
 		}
@@ -567,10 +571,16 @@ diffractivePhaseSpace::event()
 	}
 	// event was accepted
 
+	const std::vector<TLorentzVector>& daughters = _phaseSpace.daughters();
+	assert(daughters.size() == _decayProducts.size());
+	for(unsigned int i = 0; i < daughters.size(); ++i) {
+		_decayProducts[i].setLzVec(daughters[i]);
+	}
+
 	return attempts;
 }
 
-
+/*
 unsigned int
 diffractivePhaseSpace::event(ostream& stream)
 {
@@ -592,7 +602,7 @@ diffractivePhaseSpace::event(ostream& stream, ostream& streamComGeant)
 	writeComgeantAscii(streamComGeant, false);
 	return attempts;
 }
-
+*/
 /*
 void
 diffractivePhaseSpace::setBeam(const Beam& beam)

@@ -2,13 +2,13 @@
 #define GENERATORPARAMETERS_HH_
 
 
-#include "particleProperties.h"
+#include "../amplitude/particle.h"
 
 
 namespace rpwa {
 
 	struct Beam {
-		rpwa::particleProperties particle;
+		rpwa::particle particle;
 		double momentum;
 		double momentumSigma;
 		double DxDz;
@@ -31,8 +31,8 @@ namespace rpwa {
 	};
 
 	struct Target {
-		rpwa::particleProperties targetParticle;
-		rpwa::particleProperties recoilParticle;
+		rpwa::particle targetParticle;
+		rpwa::particle recoilParticle;
 		TVector3 position;
 		double length;
 		double radius;
@@ -51,15 +51,10 @@ namespace rpwa {
 	};
 
 	struct FinalState {
-		std::vector<rpwa::particleProperties> particles;
+		std::vector<rpwa::particle> particles;
 
 		std::ostream& print(std::ostream& out) {
 			out << "Final state parameters:" << std::endl;
-/*			out << "    Minimum Mass ...... " << minimumMass << std::endl;
-			out << "    Maximum Mass ...... " << maximumMass << std::endl;
-			out << "    t' Slope .......... " << tPrimeSlope << std::endl;
-			out << "    Minimum t' ........ " << minimumTPrime << std::endl;
-*/
 			out << "    " << particles.size() << " Final State Particles:" << std::endl;
 			for(unsigned int i = 0; i < particles.size(); ++i) {
 				out << "        - " << particles[i].name() << std::endl;
