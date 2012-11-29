@@ -118,7 +118,7 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 		return false;
 	}
 	do {
-		tPrime = randomNumbers->Exp(tPrimeSlope);
+		tPrime = randomNumbers->Exp(1. / tPrimeSlope);
 	} while(tPrime < _tPrimeRange.first || tPrime > _tPrimeRange.second);
 	return true;
 }
