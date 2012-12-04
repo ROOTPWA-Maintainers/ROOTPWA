@@ -7,6 +7,9 @@
 // Description:
 //      allowed decay modes for isobars in the pi-pi+pi-pi+pi- system
 //
+//      !NOTE! L and S have to be specified in units of hbar / 2 so
+//             that they are always integer
+//
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -201,109 +204,111 @@ particleDecayList = (
 
 	{ name = "b1(1235)0";
 		decays = (
-			{products = ["sigma0", "rho(770)0"];},
-			{products = ["pi-",    "a1(1260)+"];},
-			{products = ["pi+",    "a1(1260)-"];}
+			{products = ["rho(770)0", "sigma0"];},
+			{products = ["a1(1260)+", "pi-"   ];},
+			{products = ["a1(1260)-", "pi+"   ];}
 		);
 	},
 	{ name = "f2(1270)0";
 		decays = (
 			{products = ["sigma0",    "sigma0"   ];},
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi-",       "pi(1300)+"];},
-			{products = ["pi+",       "pi(1300)-"];}
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["a1(1260)+", "pi-"      ];}
 		);
 	},
 	{ name = "f1(1285)0";
 		decays = (
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a1(1260)-"];}
+			{products = ["a1(1260)+", "pi-"];},
+			{products = ["a1(1260)-", "pi+"];}
 		);
 	},
 	{ name = "f0(1370)0";
 		decays = (
 			{products = ["sigma0",    "sigma0"   ];},
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "pi(1300)+"];},
-			{products = ["pi+",       "pi(1300)-"];}
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];}
 		);
 	},
 	{ name = "f1(1420)0";
 		decays = (
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a1(1260)-"];}
+			{products = ["a1(1260)+", "pi-"];},
+			{products = ["a1(1260)-", "pi+"];},
+			{products = ["a2(1320)+", "pi-"];},
+			{products = ["a2(1320)-", "pi+"];}
 		);
 	},
 	{ name = "f0(1500)0";
 		decays = (
 			{products = ["sigma0",    "sigma0"   ];},
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "pi(1300)+"];},
-			{products = ["pi+",       "pi(1300)-"];}
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];}
 		);
 	},
 	{ name = "f2(1565)0";
 		decays = (
 			{products = ["sigma0",    "sigma0"   ];},
-			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["sigma0",    "f2(1270)0"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "pi(1300)+"];},
-			{products = ["pi+",       "pi(1300)-"];},
-			{products = ["pi-",       "a2(1320)+"];},
-			{products = ["pi+",       "a2(1320)-"];}
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["f2(1270)0", "sigma0"   ]; L = 0;},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];},
+			{products = ["a2(1320)+", "pi-"      ];},
+			{products = ["a2(1320)-", "pi+"      ];}
 		);
 	},
 	{ name = "eta1(1600)0";
 		decays = (
 			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["sigma0",    "f2(1270)0"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "pi(1300)+"];},
-			{products = ["pi+",       "pi(1300)-"];},
-			{products = ["pi-",       "a2(1320)+"];},
-			{products = ["pi+",       "a2(1320)-"];}
+			{products = ["f2(1270)0", "sigma0"   ];},
+			{products = ["a1(1260)+", "pi-"      ]; L = 0;},
+			{products = ["a1(1260)-", "pi+"      ]; L = 0;},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];}
 		);
 	},
 	{ name = "eta2(1645)0";
 		decays = (
 			{products = ["rho(770)0", "rho(770)0"];},
-			{products = ["sigma0",    "f2(1270)0"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "a2(1320)+"];},
-			{products = ["pi+",       "a2(1320)-"];}
+			{products = ["f2(1270)0", "sigma0"   ];},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["a2(1320)+", "pi-"      ];},
+			{products = ["a2(1320)-", "pi+"      ];}
 		);
 	},
 	{ name = "rho3(1690)0";
 		decays = (
-			{products = ["sigma0",    "rho(770)0"];},
-			{products = ["f2(1270)0", "rho(770)0"];},
-			{products = ["pi+",       "a1(1260)-"];},
-			{products = ["pi-",       "a1(1260)+"];},
-			{products = ["pi+",       "a2(1320)-"];},
-			{products = ["pi-",       "a2(1320)+"];}
+			{products = ["rho(770)0", "sigma0"   ];},
+			{products = ["f2(1270)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a2(1320)-", "pi+"      ];},
+			{products = ["a2(1320)+", "pi-"      ];}
 		);
 	},
 	{ name = "rhoPrime0";
 		decays = (
-			{products = ["sigma0", "rho(770)0"];},
-			{products = ["pi-",    "a1(1260)+"];},
-			{products = ["pi+",    "a1(1260)-"];},
-			{products = ["pi-",    "pi(1300)+"];},
-			{products = ["pi+",    "pi(1300)-"];},
-			{products = ["pi-",    "a2(1320)+"];},
-			{products = ["pi+",    "a2(1320)-"];}
+			{products = ["rho(770)0", "sigma0"];},
+			{products = ["a1(1260)+", "pi-"   ]; L = 0;},
+			{products = ["a1(1260)-", "pi+"   ]; L = 0;},
+			{products = ["pi(1300)+", "pi-"   ];},
+			{products = ["pi(1300)-", "pi+"   ];}
+		);
+	},
+	{ name = "rho(1700)0";
+		decays = (
+			{products = ["a1(1260)+", "pi-"]; L = 4;},
+			{products = ["a1(1260)-", "pi+"]; L = 4;},
+			{products = ["a2(1320)+", "pi-"];},
+			{products = ["a2(1320)-", "pi+"];}
 		);
 	}
 
