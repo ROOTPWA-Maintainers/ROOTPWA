@@ -40,7 +40,7 @@
 #include "conversionUtils.hpp"
 #include "interactionVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -107,17 +107,11 @@ interactionVertex::isEqualTo(const interactionVertex& vert) const
 	    or (nmbOutParticles() != vert.nmbOutParticles()))
 		return false;
 	for (unsigned int i = 0; i < nmbInParticles(); ++i)
-		if (*(inParticles()[i]) != *(vert.inParticles()[i])) {
-			if (_debug)
-				printSucc << *(inParticles()[i]) << "  vs.  " << *(vert.inParticles()[i]) << endl;
+		if (*(inParticles()[i]) != *(vert.inParticles()[i]))
 			return false;
-		}
 	for (unsigned int i = 0; i < nmbOutParticles(); ++i)
-		if (*(outParticles()[i]) != *(vert.outParticles()[i])) {
-			if (_debug)
-				printSucc << *(outParticles()[i]) << "  vs.  " << *(vert.outParticles()[i]) << endl;
+		if (*(outParticles()[i]) != *(vert.outParticles()[i]))
 			return false;
-		}
 	return true;
 }
 

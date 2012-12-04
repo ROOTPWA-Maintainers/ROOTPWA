@@ -64,7 +64,7 @@ namespace {
 void rpwa::py::exportParticleDataTable()
 {
 
-	bp::class_< particleDataTableWrapper, boost::noncopyable >( "particleDataTable", bp::no_init )    
+	bp::class_< particleDataTableWrapper, boost::noncopyable >( "particleDataTable", bp::no_init )
 
 		.def(bp::self_ns::str(bp::self))
 
@@ -74,18 +74,18 @@ void rpwa::py::exportParticleDataTable()
 		)
 
 		.def("isInTable",&particleDataTableWrapper::isInTable)
-		.staticmethod("isInTable") 
+		.staticmethod("isInTable")
 
-		.def( 
+		.def(
 			"entry"
 			, &particleDataTableWrapper::entry
 			, (bp::arg("partName"), bp::arg("warnIfNotExistent")=(bool const)(true))
 			, bp::return_value_policy<bp::reference_existing_object>()
 		)
-		.staticmethod( "entry" )    
+		.staticmethod( "entry" )
 
 		.def("addEntry", &particleDataTableWrapper::addEntry)
-		.staticmethod("addEntry")    
+		.staticmethod("addEntry")
 
 		.def(
 			"entriesMatching"
@@ -101,12 +101,12 @@ void rpwa::py::exportParticleDataTable()
 		)
 		.staticmethod("entriesMatching")
 
-		.def("nmbEntries", &particleDataTableWrapper::nmbEntries) 
+		.def("nmbEntries", &particleDataTableWrapper::nmbEntries)
 		.staticmethod("nmbEntries")
 
 		.def("__iter__", bp::iterator< rpwa::particleDataTable >())
 
-		.def( 
+		.def(
 			"readFile"
 			, &particleDataTableWrapper::readFile
 			, (bp::arg("fileName")="./particleDataTable.txt")
@@ -118,9 +118,8 @@ void rpwa::py::exportParticleDataTable()
 		.staticmethod("readDecayModeFile")
 
 		.def("clear", &particleDataTableWrapper::clear)
-		.staticmethod("clear")    
+		.staticmethod("clear")
 
 		.add_static_property("debugParticleDataTable", &particleDataTableWrapper::debug, &particleDataTableWrapper::setDebug);
 
 }
-

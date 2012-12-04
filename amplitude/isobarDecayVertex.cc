@@ -43,7 +43,7 @@
 #include "spinUtils.hpp"
 #include "isobarDecayVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -58,9 +58,9 @@ isobarDecayVertex::isobarDecayVertex(const particlePtr&       parent,
                                      const unsigned int       S,
                                      const massDependencePtr& massDep)
 	: interactionVertex(),
-	  _L                (L),
-	  _S                (S),
-	  _massDep          (massDep)
+	  _L               (L),
+	  _S               (S),
+	  _massDep         (massDep)
 {
 	if (not parent) {
 		printErr << "null pointer to parent particle. aborting." << endl;
@@ -244,7 +244,7 @@ isobarDecayVertex::checkAdditiveQn(const int     mQn,
 }
 
 
-bool 
+bool
 isobarDecayVertex::checkConsistency()
 {
 	bool vertexConsistent = true;

@@ -227,7 +227,7 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
-	complex<double> bw;
+	complex<double> bw = 0;
 	if (mass > 2 * _piChargedMass) {
 		const double p     = breakupMomentum(mass,   _piChargedMass, _piChargedMass);
 		const double p0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);

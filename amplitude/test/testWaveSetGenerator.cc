@@ -25,11 +25,11 @@
 // $Date::                            $: date of last commit
 //
 // Description:
-//      basic test program for vertex and decay topology
+//      basic test program for wave set generator
 //
 //
 // Author List:
-//      Sebastian Neubert    TUM            (original author)
+//      Boris Grube          TUM            (original author)
 //
 //
 //-------------------------------------------------------------------------
@@ -64,7 +64,8 @@ main(int argc, char** argv)
 	waveSetGenerator::setDebug(true);
 
 	particleDataTable& pdt = particleDataTable::instance();
-	pdt.readFile();
+	pdt.readFile("./particleDataTable.txt");
+	pdt.readDecayModeFile("./testParticleDecays.txt");
 
 	// test selective comparision of particle properties
 	if (0) {
@@ -87,19 +88,19 @@ main(int argc, char** argv)
 	}
 
 
-	// test particle comparison
-	if (1) {
+	// test particle and vertex comparison
+	if (0) {
 		particleProperties partProp1;
 		partProp1.fillFromDataTable("pi+");
 		particleProperties partProp2 = partProp1;
-
-		particlePtr part1 = createParticle(partProp1);
-		particlePtr part2 = createParticle(partProp2, 1, 2, +1);
 		printDebug << "particle properties" << endl
 		           << partProp1 << endl
 		           << partProp2 << endl;
 		printInfo << "comparing particle properties" << endl;
 		partProp1 == partProp2;
+
+		particlePtr part1 = createParticle(partProp1);
+		particlePtr part2 = createParticle(partProp2, 1, 2, +1);
 		printDebug << "particles" << endl
 		           << *part1 << endl
 		           << *part2 << endl;
@@ -129,23 +130,22 @@ main(int argc, char** argv)
 	}
 
 
-	if (0) {
+	if (1) {
 		waveSetGenerator waveSetGen;
 		if (not waveSetGen.setWaveSetParameters("testWaveSetGenerator.key")) {
 			cout << "could not initialize wave set generator. aborting." << endl;
 			exit(1);
 		}
-		// const vector<string> isobarWhiteList = list_of("sigma")("rho(770)")("f2(1270)")
-		// 	("pi(1300)")("a1(1260)")("a2(1320)")("pi2(1670)")
-		// 	("f0(1500)")("f1(1285)")("rho(1450)")("rho(1700)")("rho3(1690)");
-		// waveSetGen.setIsobarWhiteList(isobarWhiteList);
-		cout << waveSetGen;
+		const vector<string> isobarWhiteList = list_of("rho(770)")("a1(1260)");
+		waveSetGen.setIsobarWhiteList(isobarWhiteList);
+		waveSetGen.setForceDecayCheck(true);
+		printDebug << waveSetGen;
 		waveSetGen.generateWaveSet();
 		vector<isobarDecayTopology>& decays             = waveSetGen.waveSet();
 		unsigned int                 consistentDecays   = 0;
 		unsigned int                 inconsistentDecays = 0;
 		for (unsigned int i = 0; i < decays.size(); ++i) {
-			cout << decays[i];
+			// cout << decays[i];
 			// decays[i].printPointers(cout);
 			// for (decayTopologyGraphType::nodeIterator j = decays[i].nodes().first;
 			// 	   j != decays[i].nodes().second; ++j)
@@ -154,16 +154,17 @@ main(int argc, char** argv)
 			bool isConsistent = decays[i].checkTopology() and decays[i].checkConsistency();
 			//isobarDecayVertex::setDebug(false);
 			if (isConsistent) {
-				cout << "isobar decay topology is consistent" << endl;
+				// cout << "isobar decay topology is consistent" << endl;
 				++consistentDecays;
 			} else {
-				cout << "isobar decay topology is NOT consistent" << endl;
+				printErr << "isobar decay topology is NOT consistent" << endl;
+				cout     << decays[i];
 				++inconsistentDecays;
 			}
 		}
 
 		for (unsigned int i = 0; i < decays.size(); ++i)
-			cout << setw(4) << i << ": " << waveDescription::waveNameFromTopology(decays[i]) << endl;
+			cout << setw(4) << i << ": " << waveDescription::waveNameFromTopology(decays[i], true) << endl;
 
 		gSystem->Exec("mkdir testWaveSetGenerator");
 		waveSetGen.writeKeyFiles("testWaveSetGenerator");

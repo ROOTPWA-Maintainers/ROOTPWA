@@ -68,18 +68,35 @@ particleProperties::decayMode::~decayMode()
 { }
 
 
-
 bool
-particleProperties::decayMode::operator ==(const decayMode& rhsMode) const
+particleProperties::decayMode::operator ==(const decayMode& rhsDecay) const
 {
-	if (_daughters != rhsMode._daughters)
+	if (_daughters != rhsDecay._daughters)
 		return false;
 	// compare L and S only if they are defined in left- and right-hand side
-	if ((_L != -1) and (rhsMode._L != -1) and (_L != rhsMode._L))
+	if ((_L != -1) and (rhsDecay._L != -1) and (_L != rhsDecay._L))
 		return false;
-	if ((_S != -1) and (rhsMode._S != -1) and (_S != rhsMode._S))
+	if ((_S != -1) and (rhsDecay._S != -1) and (_S != rhsDecay._S))
 		return false;
 	return true;
+}
+
+
+ostream&
+particleProperties::decayMode::print(ostream& out) const
+{
+	copy(_daughters.begin(), _daughters.end(), ostream_iterator<string>(out, "  "));
+	if (_L != -1)
+		out << "[L = " << spinQn(_L);
+	if (_S != -1) {
+		if (_L != -1)
+			out << ", ";
+		else
+			out << "[";
+		out << "S = " << spinQn(_S) << "]";
+	} else if (_L != -1)
+		out << "]";
+	return out;
 }
 
 
@@ -98,7 +115,8 @@ particleProperties::particleProperties()
 	  _G           (0),
 	  _J           (0),
 	  _P           (0),
-	  _C           (0)
+	  _C           (0),
+	  _decayModes  ()
 { }
 
 
@@ -121,7 +139,8 @@ particleProperties::particleProperties(const std::string& partName,
 	  _baryonNmb   (0),
 	  _strangeness (0),
 	  _charm       (0),
-	  _beauty      (0)
+	  _beauty      (0),
+	  _decayModes  ()
 {
 	setName   (partName);
 	setIsospin(isospin);
@@ -155,6 +174,7 @@ particleProperties::operator =(const particleProperties& partProp)
 		_J            = partProp._J;
 		_P            = partProp._P;
 		_C            = partProp._C;
+		_decayModes   = partProp._decayModes;
 	}
 	return *this;
 }
@@ -269,23 +289,47 @@ particleProperties::setIGJPC(const int isospin,
 
 
 particleProperties
-particleProperties::antiPartProperties() const
+particleProperties::antiPartProperties(const bool convertDecaysModes) const
 {
 	particleProperties antiPartProp;
-	antiPartProp.setName        (_antiPartName);
-	antiPartProp.setAntiPartName(_name        );
-	antiPartProp.setCharge      (-_charge     );
-	antiPartProp.setMass        (_mass        );
-	antiPartProp.setWidth       (_width       );
-	antiPartProp.setBaryonNmb   (-_baryonNmb  );
-	antiPartProp.setIsospin     (_isospin     );
-	antiPartProp.setStrangeness (-_strangeness);
-	antiPartProp.setCharm       (-_charm      );
-	antiPartProp.setBeauty      (-_beauty     );
-	antiPartProp.setG           (_G           );
-	antiPartProp.setJ           (_J           );
-	antiPartProp.setP           (_P           );
-	antiPartProp.setC           (_C           );
+	if (isItsOwnAntiPart()) {
+		if (convertDecaysModes)
+			return *this;
+		else {
+			antiPartProp = *this;
+			antiPartProp.deleteDecayModes();
+		}
+	} else {
+		antiPartProp.setName        (_antiPartName);
+		antiPartProp.setAntiPartName(_name        );
+		antiPartProp.setCharge      (-_charge     );
+		antiPartProp.setMass        (_mass        );
+		antiPartProp.setWidth       (_width       );
+		antiPartProp.setBaryonNmb   (-_baryonNmb  );
+		antiPartProp.setIsospin     (_isospin     );
+		antiPartProp.setStrangeness (-_strangeness);
+		antiPartProp.setCharm       (-_charm      );
+		antiPartProp.setBeauty      (-_beauty     );
+		antiPartProp.setG           (_G           );
+		antiPartProp.setJ           (_J           );
+		antiPartProp.setP           (_P           );
+		antiPartProp.setC           (_C           );
+		// convert decay modes to antiparticles
+		if (convertDecaysModes)
+			for (size_t i = 0 ; i < nmbDecays(); ++i) {
+				multiset<string> antiDaughters;
+				decayMode decay = _decayModes[i];
+				// !NOTE! for associative containers with value type == key type iterator is const_iterator
+				for (multiset<string>::const_iterator it = decay._daughters.begin();
+				     it != decay._daughters.end(); ++it) {
+					particleProperties daughterProp;
+					daughterProp.fillFromDataTable(*it);
+					antiDaughters.insert(daughterProp.antiPartName());
+				}
+				decay._daughters = antiDaughters;
+				antiPartProp.addDecayMode(decay);
+			}
+	}
 	return antiPartProp;
 }
 
@@ -381,16 +425,7 @@ particleProperties::print(ostream& out) const
 	if (nmbDecays > 0) {
 		out << endl << "    decay modes:" << endl;
 		for (unsigned int i = 0; i < nmbDecays; ++i) {
-			out << "        -> ";
-			copy(_decayModes[i]._daughters.begin(), _decayModes[i]._daughters.end(),
-			     ostream_iterator<string>(out, "  "));
-			if (_decayModes[i]._L != -1)
-				out << "L = " << spinQn(_decayModes[i]._L);
-			if (_decayModes[i]._S != -1) {
-				if (_decayModes[i]._L != -1)
-					out << ", ";
-				out << "S = " << spinQn(_decayModes[i]._S);
-			}
+			out << "        -> " << _decayModes[i];
 			if (i < nmbDecays - 1)
 				out << endl;
 		}
