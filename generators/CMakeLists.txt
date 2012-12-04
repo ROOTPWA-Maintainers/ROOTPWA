@@ -107,3 +107,6 @@ make_executable(genpw       genpw.cc           ${THIS_LIB} "${Libconfig_LIBS}")
 make_executable(evtweight   evtweight.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}")
 make_executable(plotBWAmp   plotBWAmp.cc       ${THIS_LIB})
 make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})
+
+# build tests
+add_subdirectory(test)
