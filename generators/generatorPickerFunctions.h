@@ -2,6 +2,8 @@
 #define GENERATORWEIGHTFUNCTIONS_HH_
 
 
+#include<limits>
+
 #include<libconfig.h++>
 
 #include<TF1.h>
