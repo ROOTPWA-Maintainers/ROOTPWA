@@ -121,7 +121,7 @@ int main(int argc, char** argv)
 	bool writeComgeantOut = false;
 
 	int c;
-	while ((c = getopt(argc, argv, "n:a:o:p:w:k:i:r:m:s:M:B:h:c")) != -1) {
+	while ((c = getopt(argc, argv, "n:a:o:p:w:k:i:r:m:s:M:B:hc")) != -1) {
 		switch (c) {
 			case 'n':
 				nEvents = atoi(optarg);
@@ -183,7 +183,7 @@ int main(int argc, char** argv)
 				printUsage(argv[0]);
 				break;
 			default:
-				printUsage(argv[0]);
+				printUsage(argv[0], 5);
 				break;
 		}
 	}
@@ -195,8 +195,14 @@ int main(int argc, char** argv)
 
 	rpwa::particleDataTable::readFile(pdgFileName);
 	generatorManager generatorMgr;
-	generatorMgr.readReactionFile(reactionFile);
-	generatorMgr.initializeGenerator();
+	if(not generatorMgr.readReactionFile(reactionFile)) {
+		printErr << "could not read reaction file. Aborting..." << endl;
+		exit(1);
+	}
+	if(not generatorMgr.initializeGenerator()) {
+		printErr << "could not initialize generator. Aborting..." << endl;
+		exit(1);
+	}
 
 	if(overwriteMass) {
 		generatorMgr.overrideMassRange(massLower / 1000., (massLower + massBinWidth) / 1000.);
