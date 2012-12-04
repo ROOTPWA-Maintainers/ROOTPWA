@@ -4,6 +4,8 @@
 
 #include<libconfig.h++>
 
+#include<TF1.h>
+
 
 namespace rpwa {
 
@@ -13,10 +15,12 @@ namespace rpwa {
 
 		massAndTPrimePicker()
 			: _massRange(std::pair<double, double>(0., 0.)),
+			  _tPrimeRange(std::pair<double, double>(0., std::numeric_limits<double>::max())),
 			  _initialized(false) { };
 
 		massAndTPrimePicker(const massAndTPrimePicker& picker)
 			: _massRange(picker._massRange),
+			  _tPrimeRange(picker._tPrimeRange),
 			  _initialized(picker._initialized) { };
 
 		virtual ~massAndTPrimePicker() { };
@@ -48,6 +52,7 @@ namespace rpwa {
 	  protected:
 
 		std::pair<double, double> _massRange;
+		std::pair<double, double> _tPrimeRange;
 		bool _initialized;
 
 	};
@@ -71,7 +76,29 @@ namespace rpwa {
 
 		std::vector<std::pair<double, double> > _tSlopesForMassBins;
 
-		std::pair<double, double> _tPrimeRange;
+	};
+
+	// Class to pick a m and t' slope. First the mass is picked from a polynomial,
+	// then the t' slope is determined in dependence of the mass (also a polynomial).
+	class polynomialMassAndTPrimeSlopePicker : public massAndTPrimePicker {
+
+	  public:
+
+		polynomialMassAndTPrimeSlopePicker();
+		polynomialMassAndTPrimeSlopePicker(const polynomialMassAndTPrimeSlopePicker& picker);
+		virtual ~polynomialMassAndTPrimeSlopePicker() { }
+		virtual massAndTPrimePicker* clone() const;
+
+		virtual bool init(const libconfig::Setting& setting);
+
+		virtual bool operator() (double& invariantMass, double& tPrime);
+
+		virtual std::ostream& print(std::ostream& out);
+
+	  private:
+
+		TF1 _massPolynomial;
+		TF1 _tPrimeSlopePolynomial;
 
 	};
 

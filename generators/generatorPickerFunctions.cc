@@ -16,14 +16,12 @@ using namespace rpwa;
 
 
 uniformMassExponentialTPicker::uniformMassExponentialTPicker()
-	: massAndTPrimePicker(),
-	  _tPrimeRange(pair<double, double>(0., numeric_limits<double>::max())) { }
+	: massAndTPrimePicker() { }
 
 
 uniformMassExponentialTPicker::uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker)
 	: massAndTPrimePicker(picker),
-	  _tSlopesForMassBins(picker._tSlopesForMassBins),
-	  _tPrimeRange(picker._tPrimeRange) { }
+	  _tSlopesForMassBins(picker._tSlopesForMassBins) { }
 
 
 massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
@@ -147,5 +145,127 @@ ostream& uniformMassExponentialTPicker::print(ostream& out) {
 		    << " -> t' slope = " << _tSlopesForMassBins[nSlots - 1].second
 		    << endl;
 	}
+	return out;
+}
+
+
+polynomialMassAndTPrimeSlopePicker::polynomialMassAndTPrimeSlopePicker()
+	: massAndTPrimePicker() { }
+
+
+polynomialMassAndTPrimeSlopePicker::polynomialMassAndTPrimeSlopePicker(const polynomialMassAndTPrimeSlopePicker& picker)
+	: massAndTPrimePicker(picker),
+	  _massPolynomial(picker._massPolynomial),
+	  _tPrimeSlopePolynomial(picker._tPrimeSlopePolynomial) { }
+
+
+massAndTPrimePicker* polynomialMassAndTPrimeSlopePicker::clone() const {
+	massAndTPrimePicker* retval = new polynomialMassAndTPrimeSlopePicker(*this);
+	return retval;
+}
+
+
+bool polynomialMassAndTPrimeSlopePicker::init(const Setting& setting) {
+	if(_initialized) {
+		printErr << "trying to initialize a massAndTPrimePicker class twice." << endl;
+		return false;
+	}
+	map < string, Setting::Type > mandatoryArguments;
+	insert (mandatoryArguments)
+		("mass_min", Setting::TypeFloat)
+		("mass_max", Setting::TypeFloat)
+		("coeffs_mass", Setting::TypeArray)
+		("coeffs_tslopes", Setting::TypeArray);
+	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
+		printErr << "found an invalid settings for function 'polynomialMassAndTPrime'." << endl;
+		return false;
+	}
+	_massRange.first = setting["mass_min"];
+	_massRange.second = setting["mass_max"];
+	if(_massRange.second < _massRange.first) {
+		printErr << "'mass_max' must not be smaller than 'mass_min'." << endl;
+		return false;
+	}
+	if(setting.exists("t_prime_min")) {
+		if(not setting.lookupValue("t_prime_min", _tPrimeRange.first)) {
+			printWarn << "'t_prime_min' setting is invalid. Setting 't_prime_min' to "
+			          << _tPrimeRange.first << "." << endl;
+		}
+	} else {
+		printInfo << "'t_prime_min' not specified. Setting it to "
+		          << _tPrimeRange.first << "." << endl;
+	}
+	if(setting.exists("t_prime_max")) {
+		if(not setting.lookupValue("t_prime_max", _tPrimeRange.second)) {
+			printWarn << "'t_prime_max' setting is invalid. Setting 't_prime_max' to "
+			          << _tPrimeRange.second << "." << endl;
+		}
+	} else {
+		printInfo << "'t_prime_max' not specified. Setting it to "
+		          << _tPrimeRange.second << "." << endl;
+	}
+	if(_tPrimeRange.second < _tPrimeRange.first) {
+		printErr << "'t_prime_max' must not be smaller than 't_prime_min'."
+		         << endl;
+		return false;
+	}
+	const Setting& configCoeffsMass = setting["coeffs_mass"];
+	unsigned int numberOfMassCoeffs = configCoeffsMass.getLength();
+	if(numberOfMassCoeffs < 1) {
+		printErr << "'coeffs_mass' array must not be empty." << endl;
+		return false;
+	}
+	if(not configCoeffsMass[0].isNumber()) {
+		printErr << "'coeffs_mass' array has to be made up of numbers." << endl;
+		return false;
+	}
+	stringstream strStr;
+	strStr << "pol" << (numberOfMassCoeffs - 1);
+	_massPolynomial = TF1("generatorPickerMassPolynomial", strStr.str().c_str(), _massRange.first, _massRange.second);
+	for(unsigned int i = 0; i < numberOfMassCoeffs; ++i) {
+		_massPolynomial.SetParameter(i, configCoeffsMass[i]);
+	}
+	const Setting& configCoeffsTSlopes = setting["coeffs_tslopes"];
+	unsigned int numberOfTSlopeCoeffs = configCoeffsTSlopes.getLength();
+	if(numberOfTSlopeCoeffs < 1) {
+		printErr << "'coeffs_tslopes' array must not be empty." << endl;
+		return false;
+	}
+	if(not configCoeffsTSlopes[0].isNumber()) {
+		printErr << "'coeffs_tslopes' array has to be made up of numbers." << endl;
+		return false;
+	}
+	strStr.str("");
+	strStr << "pol" << (numberOfTSlopeCoeffs - 1);
+	_tPrimeSlopePolynomial = TF1("generatorPickerMassPolynomial", strStr.str().c_str());
+	for(unsigned int i = 0; i < numberOfTSlopeCoeffs; ++i) {
+		_tPrimeSlopePolynomial.SetParameter(i, configCoeffsTSlopes[i]);
+	}
+	_initialized = true;
+	return true;
+}
+
+
+bool polynomialMassAndTPrimeSlopePicker::operator()(double& invariantMass, double& tPrime) {
+	if(not _initialized) {
+		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
+		return false;
+	}
+	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
+	invariantMass = _massPolynomial.GetRandom(_massRange.first, _massRange.second);
+	double tPrimeSlope = _tPrimeSlopePolynomial.Eval(invariantMass);
+	do {
+		tPrime = randomNumbers->Exp(1. / tPrimeSlope);
+	} while(tPrime < _tPrimeRange.first || tPrime > _tPrimeRange.second);
+	return true;
+}
+
+
+ostream& polynomialMassAndTPrimeSlopePicker::print(ostream& out) {
+	out << "'polynomialMassAndTPrime' weighter parameters:" << endl;
+	out << "    minimum Mass ........... " << _massRange.first << endl;
+	out << "    maximum Mass ........... " << _massRange.second << endl;
+	out << "    mass polynomial ........ " << _massPolynomial.GetExpFormula() <<endl;
+	out << "    t' slopes polynomial ... " << _tPrimeSlopePolynomial.GetExpFormula() <<endl;
 	return out;
 }
