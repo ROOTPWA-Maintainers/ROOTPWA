@@ -28,28 +28,16 @@ namespace rpwa {
 
 		virtual bool init(const libconfig::Setting& setting) = 0;
 
-		virtual void overrideMassRange(double lowerLimit, double upperLimit) {
-			if(not _initialized) {
-				printErr <<"cannot override massRange on uninitialized massAndTPrimePicker." << std::endl;
-				throw;
-			}
-			_massRange.first = lowerLimit;
-			_massRange.second = upperLimit;
-		}
-
-		virtual std::pair<double, double> massRange() {
-			if(not _initialized) {
-				printErr << "cannot call massRange on uninitialized massAndTPrimePicker." << std::endl;
-				throw;
-			}
-			return _massRange;
-		};
+		virtual void overrideMassRange(double lowerLimit, double upperLimit);
+		virtual std::pair<double, double> massRange();
 
 		virtual bool operator() (double& invariantMass, double& tPrime) = 0;
 
 		virtual std::ostream& print(std::ostream& out) = 0;
 
 	  protected:
+
+		virtual bool initTPrimeAndMassRanges(const libconfig::Setting& setting);
 
 		std::pair<double, double> _massRange;
 		std::pair<double, double> _tPrimeRange;

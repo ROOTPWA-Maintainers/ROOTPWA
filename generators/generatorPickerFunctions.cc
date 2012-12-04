@@ -15,22 +15,26 @@ using namespace std;
 using namespace rpwa;
 
 
-uniformMassExponentialTPicker::uniformMassExponentialTPicker()
-	: massAndTPrimePicker() { }
-
-
-uniformMassExponentialTPicker::uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker)
-	: massAndTPrimePicker(picker),
-	  _tSlopesForMassBins(picker._tSlopesForMassBins) { }
-
-
-massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
-	massAndTPrimePicker* retval = new uniformMassExponentialTPicker(*this);
-	return retval;
+void massAndTPrimePicker::overrideMassRange(double lowerLimit, double upperLimit) {
+	if(not _initialized) {
+		printErr <<"cannot override massRange on uninitialized massAndTPrimePicker." << endl;
+		throw;
+	}
+	_massRange.first = lowerLimit;
+	_massRange.second = upperLimit;
 }
 
 
-bool uniformMassExponentialTPicker::init(const Setting& setting) {
+std::pair<double, double> massAndTPrimePicker::massRange() {
+	if(not _initialized) {
+		printErr << "cannot call massRange on uninitialized massAndTPrimePicker." << endl;
+		throw;
+	}
+	return _massRange;
+}
+
+
+bool massAndTPrimePicker::initTPrimeAndMassRanges(const libconfig::Setting& setting) {
 	if(_initialized) {
 		printErr << "trying to initialize a massAndTPrimePicker class twice." << endl;
 		return false;
@@ -38,11 +42,9 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 	map < string, Setting::Type > mandatoryArguments;
 	insert (mandatoryArguments)
 		("mass_min", Setting::TypeFloat)
-		("mass_max", Setting::TypeFloat)
-		("t_slope", Setting::TypeArray)
-		("inv_m", Setting::TypeArray);
+		("mass_max", Setting::TypeFloat);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
-		printErr << "found an invalid settings for function 'uniformMassExponentialT'." << endl;
+		printErr << "found invalid settings for the mass range of a mass and t' picker." << endl;
 		return false;
 	}
 	_massRange.first = setting["mass_min"];
@@ -72,6 +74,38 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 	if(_tPrimeRange.second < _tPrimeRange.first) {
 		printErr << "'t_prime_max' must not be smaller than 't_prime_min'."
 		         << endl;
+		return false;
+	}
+	return true;
+}
+
+
+uniformMassExponentialTPicker::uniformMassExponentialTPicker()
+	: massAndTPrimePicker() { }
+
+
+uniformMassExponentialTPicker::uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker)
+	: massAndTPrimePicker(picker),
+	  _tSlopesForMassBins(picker._tSlopesForMassBins) { }
+
+
+massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
+	massAndTPrimePicker* retval = new uniformMassExponentialTPicker(*this);
+	return retval;
+}
+
+
+bool uniformMassExponentialTPicker::init(const Setting& setting) {
+	if(not massAndTPrimePicker::initTPrimeAndMassRanges(setting)) {
+		printErr << "could not initialize t' or mass range settings in 'uniformMassExponentialT'." << endl;
+		return false;
+	}
+	map < string, Setting::Type > mandatoryArguments;
+	insert (mandatoryArguments)
+		("t_slope", Setting::TypeArray)
+		("inv_m", Setting::TypeArray);
+	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
+		printErr << "found an invalid settings for function 'uniformMassExponentialT'." << endl;
 		return false;
 	}
 	if(setting["inv_m"].getLength() != setting["t_slope"].getLength()) {
@@ -166,47 +200,16 @@ massAndTPrimePicker* polynomialMassAndTPrimeSlopePicker::clone() const {
 
 
 bool polynomialMassAndTPrimeSlopePicker::init(const Setting& setting) {
-	if(_initialized) {
-		printErr << "trying to initialize a massAndTPrimePicker class twice." << endl;
+	if(not massAndTPrimePicker::initTPrimeAndMassRanges(setting)) {
+		printErr << "could not initialize t' or mass range settings in 'polynomialMassAndTPrime'." << endl;
 		return false;
 	}
 	map < string, Setting::Type > mandatoryArguments;
 	insert (mandatoryArguments)
-		("mass_min", Setting::TypeFloat)
-		("mass_max", Setting::TypeFloat)
 		("coeffs_mass", Setting::TypeArray)
 		("coeffs_tslopes", Setting::TypeArray);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
 		printErr << "found an invalid settings for function 'polynomialMassAndTPrime'." << endl;
-		return false;
-	}
-	_massRange.first = setting["mass_min"];
-	_massRange.second = setting["mass_max"];
-	if(_massRange.second < _massRange.first) {
-		printErr << "'mass_max' must not be smaller than 'mass_min'." << endl;
-		return false;
-	}
-	if(setting.exists("t_prime_min")) {
-		if(not setting.lookupValue("t_prime_min", _tPrimeRange.first)) {
-			printWarn << "'t_prime_min' setting is invalid. Setting 't_prime_min' to "
-			          << _tPrimeRange.first << "." << endl;
-		}
-	} else {
-		printInfo << "'t_prime_min' not specified. Setting it to "
-		          << _tPrimeRange.first << "." << endl;
-	}
-	if(setting.exists("t_prime_max")) {
-		if(not setting.lookupValue("t_prime_max", _tPrimeRange.second)) {
-			printWarn << "'t_prime_max' setting is invalid. Setting 't_prime_max' to "
-			          << _tPrimeRange.second << "." << endl;
-		}
-	} else {
-		printInfo << "'t_prime_max' not specified. Setting it to "
-		          << _tPrimeRange.second << "." << endl;
-	}
-	if(_tPrimeRange.second < _tPrimeRange.first) {
-		printErr << "'t_prime_max' must not be smaller than 't_prime_min'."
-		         << endl;
 		return false;
 	}
 	const Setting& configCoeffsMass = setting["coeffs_mass"];
