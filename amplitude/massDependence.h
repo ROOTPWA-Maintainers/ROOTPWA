@@ -158,8 +158,99 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
+	/// Brief relativistic constant-width s-wave Breit-Wigner
+	class constWidthBreitWigner : public massDependence {
+
+	public:
+
+		constWidthBreitWigner() : massDependence() { }
+		virtual ~constWidthBreitWigner()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "constWidthBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
+
+	};
+
+
+	typedef boost::shared_ptr<constWidthBreitWigner> constWidthBreitWignerPtr;
+
+
+	inline
+	constWidthBreitWignerPtr
+	createConstWidthBreitWigner()
+	{
+		constWidthBreitWignerPtr massDep(new constWidthBreitWigner());
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief Breit-Wigner for rho(770) -> pi pi
+	/// Breit-Wigner function for L = 1 with the Blatt-Weisskopf barrier
+	/// factor replaced by (2 * q^2) / (q^2 + q0^2) so that
+	/// Gamma = Gamma0 * m0 / m * (q / q0) * (2 * q^2) / (q^2 + q0^2)
+	/// [D. Bisello et al, Phys. Rev. D39 (1989) 701], appendix
+	/// http://dx.doi.org/10.1103/PhysRevD.39.701
+	class rhoBreitWigner : public massDependence {
+
+	public:
+
+		rhoBreitWigner() : massDependence() { }
+		virtual ~rhoBreitWigner()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "rhoBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
+
+	};
+
+
+	typedef boost::shared_ptr<rhoBreitWigner> rhoBreitWignerPtr;
+
+
+	inline
+	rhoBreitWignerPtr
+	createRhoBreitWigner()
+	{
+		rhoBreitWignerPtr massDep(new rhoBreitWigner());
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
+	/// Brief Breit-Wigner for f_0(980) -> pi pi
+	/// this is used in piPiSWaveAuMorganPenningtonVes for subtraction of f_0(980)
+	/// "Probably this isn't correct S-wave BW form!"
+	class f0980BreitWigner : public massDependence {
+
+	public:
+
+		f0980BreitWigner() : massDependence() { }
+		virtual ~f0980BreitWigner()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex& v);
+
+		virtual std::string name() const { return "f0980BreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
+
+	};
+
+
+	typedef boost::shared_ptr<f0980BreitWigner> f0980BreitWignerPtr;
+
+
+	inline
+	f0980BreitWignerPtr
+	createF0980BreitWigner()
+	{
+		f0980BreitWignerPtr massDep(new f0980BreitWigner());
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
 	/// Brief Au-Morgan-Pennington parameterization of pi pi s-wave
-	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
 	/// we have introduced a small modification by setting the
 	/// off-diagonal elements of the M-matrix to zero.
 	class piPiSWaveAuMorganPenningtonM : public massDependence {
@@ -204,7 +295,7 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// Brief old VES pi pi s-wave parameterization
-	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
 	/// brute force subtraction of the f0(980)
 	class piPiSWaveAuMorganPenningtonVes : public piPiSWaveAuMorganPenningtonM {
 
@@ -236,7 +327,7 @@ namespace rpwa {
 	/// Brief Kachaev's version of the AMP pi pi s-wave parameterization
 	///
 	/// from the original fortran code:
-	/// source: K.L. Au et al, Phys.Rev. D35, P 1633. M solution.
+	/// [K.L. Au et al, Phys. Rev. D35, 1633] M solution.
 	/// 04-Mar-2003 See eps_k1.for for description.
 	/// here matrix M = K^{-1} is parametrized with one pole.
 	/// misprint in the article (other than in K1--K3 solutions)
@@ -272,7 +363,7 @@ namespace rpwa {
 
 	//////////////////////////////////////////////////////////////////////////////
 	/// combined amplitude for rho(1450)/rho(1700)
-	/// see http://dx.doi.org/10.1007/BF01552547, sec. 4
+	/// [A. Donnachie et al, Z. Phys. C 33 (1987) 407] http://dx.doi.org/10.1007/BF01552547, sec. 4
 	class rhoPrimeMassDep : public massDependence {
 
 	public:

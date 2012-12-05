@@ -77,22 +77,118 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 	const particlePtr& parent = v.parent();
 
 	// get Breit-Wigner parameters
-	const double M       = parent->lzVec().M();                 // parent mass
-	const double m1      = v.daughter1()->lzVec().M();          // daughter 1 mass
-	const double m2      = v.daughter2()->lzVec().M();          // daughter 2 mass
-	const double M0      = parent->mass();                      // resonance peak position
-	const double Gamma0  = parent->width();                     // resonance peak width
-	const double q       = breakupMomentum       (M,  m1, m2);
-	const double q02     = breakupMomentumSquared(M0, m1, m2, true);
-	const double q0      = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
-	const unsigned int L = v.L();
+	const double       M      = parent->lzVec().M();         // parent mass
+	const double       m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
+	const double       m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
+	const double       q      = breakupMomentum(M,  m1, m2);
+	const double       M0     = parent->mass();              // resonance peak position
+	const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
+	// !NOTE! the following is incorrect but this is how it was done in PWA2000
+	const double       q0     = sqrt(fabs(q02));
+	const double       Gamma0 = parent->width();             // resonance peak width
+	const unsigned int L      = v.L();
 
 	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
-		           << ", q = " << maxPrecision(q) << " GeV/c, "
+		           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
 		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
+	return bw;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+constWidthBreitWigner::amp(const isobarDecayVertex& v)
+{
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M      = parent->lzVec().M();  // parent mass
+	const double M0     = parent->mass();       // resonance peak position
+	const double Gamma0 = parent->width();      // resonance peak width
+
+	// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
+	const double          A  = M0 * Gamma0;
+	const double          B  = M0 * M0 - M * M;
+	const complex<double> bw = (A / (B * B + A * A)) * complex<double>(B, A);
+	// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2) = "
+		           << maxPrecisionDouble(bw) << endl;
+	return bw;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+rhoBreitWigner::amp(const isobarDecayVertex& v)
+{
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M      = parent->lzVec().M();         // parent mass
+	const double m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
+	const double m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
+	const double q2     = breakupMomentumSquared(M,  m1, m2);
+	const double q      = sqrt(q2);
+	const double M0     = parent->mass();              // resonance peak position
+	const double q02    = breakupMomentumSquared(M0, m1, m2);
+	const double q0     = sqrt(q02);
+	const double Gamma0 = parent->width();             // resonance peak width
+
+	const double F      = 2 * q2 / (q02 + q2);
+	const double Gamma  = Gamma0 * (M0 / M) * (q / q0) * F;
+	// in the original publication the width reads
+	// Gamma = Gamma0 * (q / q0) * F
+
+	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+	const double          A  = M0 * Gamma0 * sqrt(F);
+	// in the original publication A reads
+	// A = sqrt(M0 * Gamma0 * (m / q0) * F)
+	const double          B  = M0 * M0 - M * M;
+	const double          C  = M0 * Gamma;
+	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
+		           << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
+		           << "= " << maxPrecisionDouble(bw) << endl;
+	return bw;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+f0980BreitWigner::amp(const isobarDecayVertex& v)
+{
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M      = parent->lzVec().M();         // parent mass
+	const double m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
+	const double m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
+	const double q      = breakupMomentum(M,  m1, m2);
+	const double M0     = parent->mass();              // resonance peak position
+	const double q0     = breakupMomentum(M0, m1, m2);
+	const double Gamma0 = parent->width();             // resonance peak width
+
+	const double Gamma  = Gamma0 * (q / q0);
+
+	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+	const double          C  = M0 * Gamma;
+	const double          A  = C * M / q;
+	const double          B  = M0 * M0 - M * M;
+	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
+		           << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
+		           << "= " << maxPrecisionDouble(bw) << endl;
 	return bw;
 }
 
@@ -219,7 +315,7 @@ piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 complex<double>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
-	double mass = v.parent()->lzVec().M();
+	const double M = v.parent()->lzVec().M();
 
 	const double          f0Mass  = 0.9837;  // [GeV]
 	const double          f0Width = 0.0376;  // [GeV]
@@ -228,20 +324,20 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 	const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
 	complex<double> bw = 0;
-	if (mass > 2 * _piChargedMass) {
-		const double p     = breakupMomentum(mass,   _piChargedMass, _piChargedMass);
-		const double p0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
-		const double Gamma = f0Width * (p / p0);
-		const double A     = f0Mass * f0Mass - mass * mass;
-		const double B     = f0Mass * Gamma;
-		const double C     = B * (mass / p);
-		const double denom = C / (A * A + B * B);
-		bw = denom * complex<double>(A, B);
+	if (M > 2 * _piChargedMass) {
+		const double q     = breakupMomentum(M,      _piChargedMass, _piChargedMass);
+		const double q0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
+		const double Gamma = f0Width * (q / q0);
+		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+		const double C     = f0Mass * Gamma;
+		const double A     = C * (M / q);
+		const double B     = f0Mass * f0Mass - M * M;
+		bw = (A / (B * B + C * C)) * complex<double>(B, C);
 	}
 
 	const complex<double> amp = ampM - coupling * bw;
 	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
 		           << maxPrecisionDouble(amp) << endl;
 
 	return amp;
