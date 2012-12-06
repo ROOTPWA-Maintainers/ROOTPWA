@@ -101,14 +101,14 @@ diffractivePhaseSpace::buildDaughterList()
 	if(nmbDaughters > 1) {
 		_phaseSpace.setDecay(daughterMasses);
 		if(not _pickerFunction) {
-			printErr << "mass- and t'-picker function has not been set." <<endl;
+			printErr << "mass- and t'-picker function has not been set. Aborting..." << endl;
 			throw;
 		}
 		const double xMassMin = _pickerFunction->massRange().first;
 		const double xMassMax = _pickerFunction->massRange().second;
 		if((xMassMax < xMassMin) || (xMassMax <= 0.)) {
 			printErr << "mass range [" << xMassMin << ", " << xMassMax << "] GeV/c^2 "
-			         << "does mot make sense. exiting." << endl;
+			         << "does mot make sense. Aborting..." << endl;
 			throw;
 		} else {
 			printInfo << "calculating max weight (" << nmbDaughters << " FS particles) "
@@ -131,24 +131,13 @@ diffractivePhaseSpace::event()
   // construct primary vertex and beam
   // use the primary Vertex Generator if available
 	if(_primaryVertexGen) {
-		// as documented one may need several attempts to get a vertex position
-		// which is valid also for the beam direction measurement
-		while(attempts < 1000) {
-			_vertex = _primaryVertexGen->getVertex();
-			TVector3 beam_dir = _primaryVertexGen->getBeamDir(_vertex);
-			if(beam_dir.Mag() == 0) {
-				++attempts;
-				//cout << " skipping " << endl;
-				continue;
-			}
-			_beam.particle.setLzVec(_primaryVertexGen->getBeamPart(beam_dir));
-			break;
+		_vertex = _primaryVertexGen->getVertex();
+		TVector3 beam_dir = _primaryVertexGen->getBeamDir(_vertex);
+		if(beam_dir.Mag() == 0) {
+			printErr << "got a null vector as beam. Aborting..." << endl;
+			throw;
 		}
-		// Just a few events should contain a vertex position with no beam direction information
-		if(attempts == 999) {
-			cerr << " Error in beam construction. Please check the beam properties loaded correctly!" << endl;
-			_beam.particle.setLzVec(makeBeam());
-		}
+		_beam.particle.setLzVec(_primaryVertexGen->getBeamPart(beam_dir));
 	} else {
 		double x;
 		double y;
@@ -161,7 +150,7 @@ diffractivePhaseSpace::event()
 	}
 
 	if(not _pickerFunction) {
-		printErr << "mass- and t'-picker function has not been set." <<endl;
+		printErr << "mass- and t'-picker function has not been set. Aborting..." << endl;
 		throw;
 	}
 
