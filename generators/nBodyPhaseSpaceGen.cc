@@ -456,7 +456,6 @@ nBodyPhaseSpaceGen::estimateMaxWeight(const double       nBodyMass,        // si
 {
 	double maxWeight = 0;
 	for (unsigned int i = 0; i < nmbOfIterations; ++i) {
-		_weight=1;
 		pickMasses(nBodyMass);
 		calcWeight();
 		maxWeight = max(_weight, maxWeight);

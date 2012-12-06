@@ -172,9 +172,9 @@ diffractivePhaseSpace::event()
 	const TLorentzVector overallCm = beamLorentzVector + targetLab;  // beam-target center-of-mass system
 	// check
 	if(xMassMax + _target.targetParticle.mass()  > overallCm.M()) {
-		printErr << "Max Mass out of kinematic range." <<  endl
-		         << "Limit = " << overallCm.M()  - _target.targetParticle.mass() << "GeV/c2" << endl
-		         << " ABORTING " << flush<< endl;
+		printErr << "Maximum mass out of kinematic range. "
+		         << "Limit = " << overallCm.M() - _target.targetParticle.mass() << " GeV/c2. "
+		         << "Aborting..." << endl;
 		throw;
 	}
 
@@ -184,10 +184,8 @@ diffractivePhaseSpace::event()
 		double tPrime;
 		double xMass;
 		assert((*_pickerFunction)(xMass, tPrime));
-
-// Not sure yet why this is needed.
-// Needs some investigating.
-tPrime *= -1;
+		// t' should be negative (why?)
+		tPrime *= -1;
 
 		// make sure that X mass is not larger than maximum allowed mass
 		if(xMass + _target.recoilParticle.mass() > overallCm.M()) {
