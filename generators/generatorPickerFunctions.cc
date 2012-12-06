@@ -17,11 +17,12 @@ using namespace rpwa;
 
 void massAndTPrimePicker::overrideMassRange(double lowerLimit, double upperLimit) {
 	if(not _initialized) {
-		printErr <<"cannot override massRange on uninitialized massAndTPrimePicker." << endl;
+		printErr << "cannot override massRange on uninitialized massAndTPrimePicker." << endl;
 		throw;
 	}
 	_massRange.first = lowerLimit;
 	_massRange.second = upperLimit;
+	printInfo << "mass range overriden: new range ]" << _massRange.first << ", " << _massRange.second << "]." << endl;
 }
 
 

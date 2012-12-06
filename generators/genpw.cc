@@ -84,7 +84,7 @@ int main(int argc, char** argv)
 	bool seedSet = false;
 	int massLower = 0;
 	int massBinWidth = 0;
-	bool overwriteMass = false;
+	bool overrideMass = false;
 	bool writeComgeantOut = false;
 
 	int c;
@@ -134,11 +134,11 @@ int main(int argc, char** argv)
 				break;
 			case 'M':
 				massLower = atoi(optarg);
-				overwriteMass = true;
+				overrideMass = true;
 				break;
 			case 'B':
 				massBinWidth = atoi(optarg);
-				overwriteMass = true;
+				overrideMass = true;
 				break;
 
 			case 'h':
@@ -153,6 +153,11 @@ int main(int argc, char** argv)
 	if(maxAttempts && (maxAttempts < nEvents)) {
 		printWarn << "Maximum attempts is smaller than the number of events. Setting it to infinity." << endl;
 		maxAttempts = 0;
+	}
+
+	if(overrideMass && not (massLower && massBinWidth)) {
+		printErr << "'-M' and '-B' can only be set together. Aborting..." << endl;
+		exit(2);
 	}
 
 	if(not seedSet) {
@@ -171,7 +176,7 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	if(overwriteMass) {
+	if(overrideMass) {
 		generatorMgr.overrideMassRange(massLower / 1000., (massLower + massBinWidth) / 1000.);
 	}
 
