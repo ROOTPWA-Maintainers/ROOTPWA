@@ -5,7 +5,9 @@ namespace bp = boost::python;
 bool rpwa::py::pythonAdministrator::constructAmplitude(std::string keyFileName)
 {
 	_waveDescription.parseKeyFile(keyFileName);
-	return _waveDescription.constructAmplitude(_amplitude);
+	 bool returnValue = _waveDescription.constructAmplitude(_amplitude);
+	_amplitude->init();
+	return returnValue;
 };
 
 bool rpwa::py::pythonAdministrator::initKinematicsData(PyObject* pyProdKinParticles,
