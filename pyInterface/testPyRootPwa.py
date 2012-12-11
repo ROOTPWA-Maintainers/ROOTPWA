@@ -73,12 +73,17 @@ def tPDTreadFile():
 	print
 do_test(tPDTreadFile, "Testing particleDataTable.readFile()")
 
+def tPDTiterator():
+	for part in particleTable:
+		assert(part.first == part.second.name)
+do_test(tPDTiterator, "Testing particleDataTable iterator")
+
 def tPDTentriesMatching():
 	pP = particleTable.entry("rho(770)0")
 	parts = pyRootPwa.core.particleDataTable.entriesMatching(pP, "allQn", 0, 0, [], [], [], False)
-	assert(len(parts) == 4)
+	assert(len(parts) == 5)
 	for part in parts:
-		assert(part.name[:part.name.find("(")] == "rho")
+		assert(part.name[:3] == "rho")
 do_test(tPDTentriesMatching, "Testing particleDataTable.entriesMatching()")
 
 def tPDDebug():
@@ -104,6 +109,11 @@ partProp = do_test(partPropTestConst, "Testing particleProperties constructor")
 def partPropTestCopyConst(): return pyRootPwa.core.particleProperties(partProp)
 partProp2 = do_test(partPropTestCopyConst, "Testing particleProperties copy constructor")
 
+def partPropChargeFromName():
+	tup = pyRootPwa.core.particleProperties.chargeFromName("bla+")
+	assert(tup[0] == 'bla' and tup[1] == 1)
+do_test(partPropChargeFromName, "Testing particleProperties::chargeFromName")
+
 def partPropTestOps():
 	assert(partProp == partProp2)
 	old_name = partProp2.name
@@ -118,7 +128,7 @@ print
 
 # ---------------------------------------------------------
 #
-#	particle	
+#	particle
 #
 # ---------------------------------------------------------
 
@@ -141,20 +151,20 @@ def partTestConsts():
 	pP = pyRootPwa.core.particleProperties()
 	pP.read("Delta(1910)+     Deltabar(1910)-  1.91        0.25        +1           3    0    0    0     0     1    +1     0")
 	t = pyRootPwa.ROOT.TVector3(1., 1., 1.)
-	
+
 	p3 = pyRootPwa.core.particle(pP)
 	p3 = pyRootPwa.core.particle(pP, -1)
 	p3 = pyRootPwa.core.particle(pP, -1, 0)
 	p3 = pyRootPwa.core.particle(pP, -1, 0, 0)
 	p3 = pyRootPwa.core.particle(pP, -1, 0, 0, t)
-	
+
 	p3 = pyRootPwa.core.particle("pi+")
 	p3 = pyRootPwa.core.particle("pi+", True)
 	p3 = pyRootPwa.core.particle("pi+", True, -1)
 	p3 = pyRootPwa.core.particle("pi+", True, -1, 0)
 	p3 = pyRootPwa.core.particle("pi+", True, -1, 0, 0)
 	p3 = pyRootPwa.core.particle("pi+", True, -1, 0, 0, t)
-	
+
 	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5)
 	p3.qnSummary()
 	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5, 6)
@@ -423,8 +433,8 @@ do_test(isobarDecVtxTestS, "Testing isobarDecayVertex.S")
 def isobarDecVtxTestMDA(): assert(isobDecVtx.massDepAmplitude() == (1+0j))
 do_test(isobarDecVtxTestMDA, "Testing isobarDecayVertex.massDepAmplitude()")
 
-def isobarDecVtxTestMD(): mDname = isobDecVtx.massDependence().name() 
-do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()", True)
+def isobarDecVtxTestMD(): mDname = isobDecVtx.massDependence().name()
+do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()")
 
 def isobarDecVtxTestSetMD():
 	isobDecVtx.setMassDependence(pyRootPwa.core.flatMassDependence())
@@ -573,11 +583,11 @@ do_test(diDiVtxTestbeam, "Testing diffractiveDissVertex.{beam/target/recoil}()")
 
 def diDiVtxTestiKD():
 	tCA = pyRootPwa.ROOT.TClonesArray("TObjString", 1)
-	tCA[0] = pyRootPwa.ROOT.TObjString("Kstar2(1430)2+") 
+	tCA[0] = pyRootPwa.ROOT.TObjString("Kstar2(1430)2+")
 	assert(diDiVtx.initKinematicsData(tCA))
 do_test(diDiVtxTestiKD, "Testing diffractiveDissVertex.initKinematicsData()")
 
-def diDiVtxTestiKD2(): 
+def diDiVtxTestiKD2():
 	print("\n")
 	assert(not diDiVtx.initKinematicsData("bla"))
 	print
@@ -685,7 +695,8 @@ def dTTestisbla():
 	assert(decTo.isDecayVertex(isobDecVtx))
 	assert(not decTo.isFsVertex(isobDecVtx))
 	assert(not decTo.isFsParticle(part))
-do_test(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()")
+do_test(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()", True)
+# needs a consistent topology
 
 def dTTestfPInd():
 	assert(decTo.fsParticlesIndex(part))
@@ -882,6 +893,13 @@ iHA = do_test(iHATestConst, "Testing isobarHelicityAmplitude constructors")
 
 def iHATestName(): assert(iHA.name() == "isobarHelicityAmplitude")
 do_test(iHATestName, "Testing isobarHelicityAmplitude.name()")
+
+def iHATTesthfTransform():
+	vec = pyRootPwa.ROOT.TLorentzVector(0., 1., 2., 3.)
+	rot1 = pyRootPwa.core.isobarHelicityAmplitude.hfTransform(vec)
+	rot2 = iHA.hfTransform(vec)
+	assert(rot1 == rot2)
+do_test_raw(iHATTesthfTransform, "Testing isobarHelicityAmplitude::hfTransform")
 
 def iHATestDebug():
 	old_debug = iHA.debugIsobarHelicityAmplitude
