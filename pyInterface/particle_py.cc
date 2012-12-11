@@ -43,7 +43,7 @@ namespace {
 		                const bp::object&         momentum           = bp::object())
 			: rpwa::particle(partName, requirePartInTable, index, spinProj, refl),
 			  bp::wrapper<rpwa::particle>()
-		{ 
+		{
 			if(!(momentum.is_none())) {
 				rpwa::particle::setMomentum(*(rpwa::py::convertFromPy<TVector3*>(momentum.ptr())));
 			}
@@ -182,7 +182,7 @@ void rpwa::py::exportParticle() {
 		.def("read", &particleWrapper::read__)
 
 		.def("label", &particleWrapper::label, &particleWrapper::default_label)
-		
+
 		.add_static_property("debugParticle", &particleWrapper::debug, &particleWrapper::setDebug);
 
 	bp::register_ptr_to_python< rpwa::particlePtr >();

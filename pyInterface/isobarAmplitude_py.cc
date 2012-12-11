@@ -40,7 +40,7 @@ namespace {
 			}
 			return sstr.str();
 		};
-			
+
 		std::string default_printParameters__() const {
 			std::stringstream sstr;
 			rpwa::isobarAmplitude::printParameters(sstr);

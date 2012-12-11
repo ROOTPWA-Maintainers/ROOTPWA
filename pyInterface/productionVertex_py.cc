@@ -67,7 +67,7 @@ namespace {
 void rpwa::py::exportProductionVertex() {
 
 	bp::class_<productionVertexWrapper, bp::bases<rpwa::interactionVertex>, boost::noncopyable>("productionVertex", bp::no_init)
-		
+
 		.def(bp::self_ns::str(bp::self))
 
 		.def(

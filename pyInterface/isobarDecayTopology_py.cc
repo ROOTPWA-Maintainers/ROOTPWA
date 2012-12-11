@@ -18,9 +18,9 @@ namespace {
 		                           const bp::object&                pyIsobarDecayVertices,
 		                           const bp::object&                pyFsParticles)
 			: rpwa::isobarDecayTopology(),
-			  bp::wrapper<rpwa::isobarDecayTopology>() 
-		{ 
-		
+			  bp::wrapper<rpwa::isobarDecayTopology>()
+		{
+
 			// Translate the fsParticles
 			bp::list pyListFsParticles = bp::extract<bp::list>(pyFsParticles);
 			std::vector<rpwa::particlePtr> fsParticles(bp::len(pyListFsParticles), rpwa::particlePtr());
@@ -28,13 +28,13 @@ namespace {
 				fsParticles[i] = bp::extract<rpwa::particlePtr>(pyListFsParticles[i]);
 			}
 
-			// Translate the isobarDecayVertices	
+			// Translate the isobarDecayVertices
 			bp::list pyListIsobarDecayVertices = bp::extract<bp::list>(pyIsobarDecayVertices);
 			if(bp::len(pyListIsobarDecayVertices) == 0) {
 				rpwa::isobarDecayTopology::constructDecay(productionVertex, std::vector<rpwa::isobarDecayVertexPtr>(), fsParticles);
 				return;
 			}
-			
+
 			bp::extract<rpwa::isobarDecayVertexPtr> get_iDVP(pyListIsobarDecayVertices[0]);
 			if(get_iDVP.check()) {
 				std::vector<rpwa::isobarDecayVertexPtr> isobarDecayVerticesIDV(bp::len(pyListIsobarDecayVertices), rpwa::isobarDecayVertexPtr());
@@ -56,17 +56,17 @@ namespace {
 			}
 
 			printErr<<"Got invalid input when executing rpwa::isobarDecayTopology::isobarDecayTopology()."<<std::endl;
-			
+
 		};
 
 		isobarDecayTopologyWrapper(const rpwa::isobarDecayTopology& topo)
 			: rpwa::isobarDecayTopology(topo),
 			  bp::wrapper<rpwa::isobarDecayTopology>() { };
-			  
+
 		isobarDecayTopologyWrapper(const rpwa::decayTopology& topo)
 			: rpwa::isobarDecayTopology(topo),
 			  bp::wrapper<rpwa::isobarDecayTopology>() { };
-			  
+
 		void clear() {
 			if(bp::override clear = this->get_override("clear")) {
 				clear();

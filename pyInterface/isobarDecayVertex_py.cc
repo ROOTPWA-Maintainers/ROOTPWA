@@ -59,7 +59,7 @@ namespace {
 		rpwa::particlePtr& daughter2__() {
 			return rpwa::isobarDecayVertex::daughter2();
 		};
-		
+
 		PyObject* calcParentLzVec() {
 			return rpwa::py::convertToPy<TLorentzVector>(rpwa::isobarDecayVertex::calcParentLzVec());
 		};
@@ -127,7 +127,7 @@ void rpwa::py::exportIsobarDecayVertex() {
 		.def("checkConsistency", &isobarDecayVertexWrapper::checkConsistency)
 
 		.def("name", &isobarDecayVertexWrapper::name, &isobarDecayVertexWrapper::default_name)
-		
+
 		.add_static_property("debugIsobarDecayVertex", &isobarDecayVertexWrapper::debug, &isobarDecayVertex::setDebug);
 
 	bp::register_ptr_to_python<rpwa::isobarDecayVertexPtr>();

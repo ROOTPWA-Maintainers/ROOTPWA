@@ -7,7 +7,7 @@ namespace {
 	struct amplitudeTreeLeafWrapper : public rpwa::amplitudeTreeLeaf,
 	                                         bp::wrapper<rpwa::amplitudeTreeLeaf>
 	{
-	
+
 		amplitudeTreeLeafWrapper()
 			: rpwa::amplitudeTreeLeaf(),
 			  bp::wrapper<rpwa::amplitudeTreeLeaf>() { };

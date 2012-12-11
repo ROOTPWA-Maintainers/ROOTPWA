@@ -25,7 +25,7 @@
 #// $Date:: 2012-08-07 20:48:35 +0200 #$: date of last commit
 #//
 #// Description:
-#//      build file for amplitude library 
+#//      build file for amplitude library
 #//
 #//
 #// Author List:

@@ -163,7 +163,6 @@ void rpwa::py::exportDiffractiveDissVertex() {
 			   bp::arg("cloneOutParticles")=false)
 		)
 
-	
 		.def("addInParticle", &diffractiveDissVertexWrapper::addInParticle, &diffractiveDissVertexWrapper::default_addInParticle)
 		.def("addOutParticle", &diffractiveDissVertexWrapper::addOutParticle, &diffractiveDissVertexWrapper::default_addOutParticle)
 
