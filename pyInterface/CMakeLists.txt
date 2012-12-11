@@ -76,7 +76,6 @@ set(SOURCES
 	amplitudeTreeLeaf_py.cc
 	ampIntegralMatrix_py.cc
 	utils_py.cc
-	pythonAdministrator_py.cc
 	)
 
 
