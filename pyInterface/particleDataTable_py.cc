@@ -75,7 +75,7 @@ void rpwa::py::exportParticleDataTable()
 			"entry"
 			, &rpwa::particleDataTable::entry
 			, (bp::arg("partName"), bp::arg("warnIfNotExistent")=(bool const)(true))
-			, bp::return_value_policy<bp::reference_existing_object>()
+			, bp::return_internal_reference<>()
 		)
 		.staticmethod( "entry" )
 

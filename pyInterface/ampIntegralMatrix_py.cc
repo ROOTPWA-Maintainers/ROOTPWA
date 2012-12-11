@@ -9,12 +9,12 @@ namespace {
 		return bp::list(self());
 	};
 */
-	const rpwa::waveDescription* ampIntegralMatrix_waveDesc1(const rpwa::ampIntegralMatrix& self, const unsigned int waveIndex) {
-		return self.waveDesc(waveIndex);
+	const rpwa::waveDescription& ampIntegralMatrix_waveDesc1(const rpwa::ampIntegralMatrix& self, const unsigned int waveIndex) {
+		return *(self.waveDesc(waveIndex));
 	};
 
-	const rpwa::waveDescription* ampIntegralMatrix_waveDesc2(const rpwa::ampIntegralMatrix& self, const std::string& waveName) {
-		return self.waveDesc(waveName);
+	const rpwa::waveDescription& ampIntegralMatrix_waveDesc2(const rpwa::ampIntegralMatrix& self, const std::string& waveName) {
+		return *(self.waveDesc(waveName));
 	};
 
 	std::complex<double> ampIntegralMatrix_element1(const rpwa::ampIntegralMatrix& self,
@@ -73,7 +73,7 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def(
 			"waveName"
 			, &rpwa::ampIntegralMatrix::waveName
-			, bp::return_value_policy<bp::copy_const_reference>()
+			, bp::return_value_policy<bp::return_by_value>()
 		)
 //		Disabled because of missing == operator in rpwa::waveDescription
 //		See also http://stackoverflow.com/questions/10680691/why-do-i-need-comparison-operators-in-boost-python-vector-indexing-suite
@@ -81,12 +81,12 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def(
 			"waveDesc"
 			, &ampIntegralMatrix_waveDesc1
-			, bp::return_value_policy<bp::return_by_value>()
+			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 		.def(
 			"waveDesc"
 			, &ampIntegralMatrix_waveDesc2
-			, bp::return_value_policy<bp::return_by_value>()
+			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 		.def("allWavesHaveDesc", &rpwa::ampIntegralMatrix::allWavesHaveDesc)
 

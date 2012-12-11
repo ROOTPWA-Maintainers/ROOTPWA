@@ -77,6 +77,10 @@ namespace {
 		return rpwa::py::convertToPy<TLorentzVector>(self.calcParentLzVec());
 	};
 
+	const rpwa::massDependence& isobarDecayVertex_massDependence(const rpwa::isobarDecayVertex& self) {
+		return *(self.massDependence());
+	}
+
 }
 
 void rpwa::py::exportIsobarDecayVertex() {
@@ -111,7 +115,7 @@ void rpwa::py::exportIsobarDecayVertex() {
 		.add_property("S", &rpwa::isobarDecayVertex::S, &rpwa::isobarDecayVertex::setS)
 
 		.def("massDepAmplitude", &rpwa::isobarDecayVertex::massDepAmplitude)
-		.def("massDependence", &rpwa::isobarDecayVertex::massDependence, bp::return_value_policy<bp::return_by_value>())
+		.def("massDependence", &isobarDecayVertex_massDependence, bp::return_internal_reference<>())
 		.def("setMassDependence", &rpwa::isobarDecayVertex::setMassDependence)
 
 		.def("checkConsistency", &rpwa::isobarDecayVertex::checkConsistency)

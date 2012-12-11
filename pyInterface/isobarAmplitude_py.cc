@@ -39,6 +39,10 @@ namespace {
 
 	};
 
+	rpwa::isobarDecayTopology& isobarAmplitude_decayTopology(const rpwa::isobarAmplitude& self) {
+		return *(self.decayTopology());
+	}
+
 	static PyObject* isobarAmplitude_gjTransform(PyObject* pyBeamLv, PyObject* pyXLv) {
 		TLorentzVector* beamLv = rpwa::py::convertFromPy<TLorentzVector*>(pyBeamLv);
 		TLorentzVector* XLv = rpwa::py::convertFromPy<TLorentzVector*>(pyXLv);
@@ -65,8 +69,8 @@ void rpwa::py::exportIsobarAmplitude() {
 
 		.def(
 			"decayTopology"
-			, &rpwa::isobarAmplitude::decayTopology
-			, bp::return_value_policy<bp::copy_const_reference>()
+			, &isobarAmplitude_decayTopology
+			, bp::return_internal_reference<>()
 		)
 
 		.def("setDecayTopology", &rpwa::isobarAmplitude::setDecayTopology)
