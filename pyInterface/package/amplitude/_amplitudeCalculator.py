@@ -139,10 +139,10 @@ class amplitudeCalculator(multiprocessing.Process):
 					pyRootPwa.utils.printErr('Could not read kinematics data.')
 					return -1
 				amp = pythonAdmin()
-				vals += [amp.real, amp.imag]
+				vals.append(amp)
 				if len(vals) > outputCacheSize:
 					if outputFileFormat == "binary":
-						arrayAmp.extend(vals)
+						arrayAmp.extend([number for complexNumber in vals for number in [complexNumber.real, complexNumber.imag]])
 						arrayAmp.tofile(outFile)
 						arrayAmp = array.array('d')
 					elif outputFileFormat == "ascii":
@@ -163,7 +163,7 @@ class amplitudeCalculator(multiprocessing.Process):
 			raise
 
 		if outputFileFormat == "binary":
-			arrayAmp.extend(vals)
+			arrayAmp.extend([number for complexNumber in vals for number in [complexNumber.real, complexNumber.imag]])
 			arrayAmp.tofile(outFile)
 		elif outputFileFormat == "ascii":
 			for val in vals:
