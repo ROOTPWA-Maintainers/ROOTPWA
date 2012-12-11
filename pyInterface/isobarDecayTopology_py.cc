@@ -78,31 +78,31 @@ namespace {
 			rpwa::isobarDecayTopology::clear();
 		};
 
-		bp::list isobarDecayVertices__() const {
-			return bp::list(rpwa::isobarDecayTopology::isobarDecayVertices());
-		};
+	};
 
-		static rpwa::isobarDecayTopology joinDaughterDecays__(const rpwa::isobarDecayVertexPtr& parentVertex,
-		                                                      const rpwa::isobarDecayTopology&  daughter1Decay,
-		                                                      const rpwa::isobarDecayTopology&  daughter2Decay)
-		{
-			return rpwa::isobarDecayTopology::joinDaughterDecays(parentVertex, daughter1Decay, daughter2Decay);
-		};
+	bp::list isobarDecayTopology_isobarDecayVertices(const rpwa::isobarDecayTopology& self) {
+		return bp::list(self.isobarDecayVertices());
+	};
 
-		const PyObject* calcIsobarLzVec__() {
-			return rpwa::py::convertToPy<TLorentzVector>(rpwa::isobarDecayTopology::calcIsobarLzVec());
-		};
+	rpwa::isobarDecayTopology isobarDecayTopology_joinDaughterDecays(const rpwa::isobarDecayVertexPtr& parentVertex,
+	                                                                 const rpwa::isobarDecayTopology&  daughter1Decay,
+	                                                                 const rpwa::isobarDecayTopology&  daughter2Decay)
+	{
+		return rpwa::isobarDecayTopology::joinDaughterDecays(parentVertex, daughter1Decay, daughter2Decay);
+	};
 
-		std::string writeGraphViz__1() {
-			std::stringstream sstr;
-			rpwa::isobarDecayTopology::writeGraphViz(sstr);
-			return sstr.str();
-		};
+	const PyObject* isobarDecayTopology_calcIsobarLzVec(rpwa::isobarDecayTopology& self) {
+		return rpwa::py::convertToPy<TLorentzVector>(self.calcIsobarLzVec());
+	};
 
-		bool writeGraphViz__2(const std::string& outFileName) {
-			return rpwa::isobarDecayTopology::writeGraphViz(outFileName);
-		};
+	std::string isobarDecayTopology_writeGraphViz1(rpwa::isobarDecayTopology& self) {
+		std::stringstream sstr;
+		self.writeGraphViz(sstr);
+		return sstr.str();
+	};
 
+	bool isobarDecayTopology_writeGraphViz2(rpwa::isobarDecayTopology& self, const std::string& outFileName) {
+		return self.writeGraphViz(outFileName);
 	};
 
 }
@@ -119,50 +119,51 @@ void rpwa::py::exportIsobarDecayTopology() {
 
 		.def(
 			"clone"
-			, &isobarDecayTopologyWrapper::clone
+			, &rpwa::isobarDecayTopology::clone
 			, (bp::arg("cloneFsParticles")=false,
 			   bp::arg("cloneProdKinematics")=false)
 		)
 
 		.def("clear", &isobarDecayTopologyWrapper::clear, &isobarDecayTopologyWrapper::default_clear)
+		.def("clear", &rpwa::isobarDecayTopology::clear)
 
-		.def("isobarDecayVertices", &isobarDecayTopologyWrapper::isobarDecayVertices__)
+		.def("isobarDecayVertices", &isobarDecayTopology_isobarDecayVertices)
 		.def(
 			"XIsobarDecayVertex"
-			, &isobarDecayTopologyWrapper::XIsobarDecayVertex
+			, &rpwa::isobarDecayTopology::XIsobarDecayVertex
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 
-		.def("checkTopology", &isobarDecayTopologyWrapper::checkTopology)
-		.def("checkConsistency", &isobarDecayTopologyWrapper::checkConsistency)
+		.def("checkTopology", &rpwa::isobarDecayTopology::checkTopology)
+		.def("checkConsistency", &rpwa::isobarDecayTopology::checkConsistency)
 
 // This one is missing because it returns something defined in decayGraph.hpp, which is currently omitted.
 /*		.def(
 			"subDecay"
-			, &decayTopologyWrapper::subDecay
+			, &rpwa::decayTopology::subDecay
 			, (bp::arg("startNd"),
 			   bp::arg("linkToMotherTopo")=false)
 		)*/
 
-		.def("addDecay", &isobarDecayTopologyWrapper::addDecay)
+		.def("addDecay", &rpwa::isobarDecayTopology::addDecay)
 
-		.def("joinDaughterDecays", &isobarDecayTopologyWrapper::joinDaughterDecays__)
+		.def("joinDaughterDecays", &isobarDecayTopology_joinDaughterDecays)
 		.staticmethod("joinDaughterDecays")
 
 		.def(
 			"calcIsobarLzVec"
-			, &isobarDecayTopologyWrapper::calcIsobarLzVec__
+			, &isobarDecayTopology_calcIsobarLzVec
 			, bp::return_value_policy<bp::manage_new_object>()
 		)
 
-		.def("writeGraphViz", &isobarDecayTopologyWrapper::writeGraphViz__1)
-		.def("writeGraphViz", &isobarDecayTopologyWrapper::writeGraphViz__2)
+		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz1)
+		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz2)
 
 
-		.def("calcIsobarCharges", &isobarDecayTopologyWrapper::calcIsobarCharges)
-		.def("calcIsobarBaryonNmbs", &isobarDecayTopologyWrapper::calcIsobarBaryonNmbs)
+		.def("calcIsobarCharges", &rpwa::isobarDecayTopology::calcIsobarCharges)
+		.def("calcIsobarBaryonNmbs", &rpwa::isobarDecayTopology::calcIsobarBaryonNmbs)
 
-		.add_static_property("debugIsobarDecayTopology", &isobarDecayTopologyWrapper::debug, &isobarDecayTopologyWrapper::setDebug);
+		.add_static_property("debugIsobarDecayTopology", &rpwa::isobarDecayTopology::debug, &isobarDecayTopology::setDebug);
 
 	bp::register_ptr_to_python<rpwa::isobarDecayTopologyPtr>();
 

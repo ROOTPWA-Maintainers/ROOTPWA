@@ -57,60 +57,60 @@ namespace {
 			rpwa::decayTopology::clear();
 		};
 
-		bp::dict nmbIndistFsParticles__() const {
-			return bp::dict(rpwa::decayTopology::nmbIndistFsParticles());
-		};
+	};
 
-		bp::list fsParticles__() const {
-			return bp::list(rpwa::decayTopology::fsParticles());
-		};
+	bp::dict decayTopology_nmbIndistFsParticles(const rpwa::decayTopology& self) {
+		return bp::dict(self.nmbIndistFsParticles());
+	};
 
-		bp::list decayVertices__() const {
-			return bp::list(rpwa::decayTopology::decayVertices());
-		};
+	bp::list decayTopology_fsParticles(const rpwa::decayTopology& self) {
+		return bp::list(self.fsParticles());
+	};
 
-		void transformFsParticles__(PyObject* pyL) {
-			TLorentzRotation* L = rpwa::py::convertFromPy<TLorentzRotation*>(pyL);
-			if(L == NULL) {
-				printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::transformFsParticles()."<<std::endl;
-			} else {
-				rpwa::decayTopology::transformFsParticles(*L);
-			}
-		};
+	bp::list decayTopology_decayVertices(const rpwa::decayTopology& self) {
+		return bp::list(self.decayVertices());
+	};
 
-		bool initKinematicsData__(PyObject* pyProdKinParticles, PyObject* pyDecayKinParticles) {
-			TClonesArray* prodKinParticles = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinParticles);
-			TClonesArray* decayKinParticles = rpwa::py::convertFromPy<TClonesArray*>(pyDecayKinParticles);
-			if((prodKinParticles == NULL) || (decayKinParticles == NULL)) {
-				printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::initKinematicsData()."<<std::endl;
-				return false;
-			}
-			return rpwa::decayTopology::initKinematicsData(*prodKinParticles, *decayKinParticles);
-		};
+	void decayTopology_transformFsParticles(rpwa::decayTopology& self, PyObject* pyL) {
+		TLorentzRotation* L = rpwa::py::convertFromPy<TLorentzRotation*>(pyL);
+		if(L == NULL) {
+			printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::transformFsParticles()."<<std::endl;
+		} else {
+			self.transformFsParticles(*L);
+		}
+	};
 
-		bool readKinematicsData__(PyObject* pyProdKinMomenta, PyObject* pyDecayKinMomenta) {
-			TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinMomenta);
-			TClonesArray* decayKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyDecayKinMomenta);
-			if((prodKinMomenta == NULL) || (decayKinMomenta == NULL)) {
-				printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::readKinematicsData()."<<std::endl;
-				return false;
-			}
-			return rpwa::decayTopology::readKinematicsData(*prodKinMomenta, *decayKinMomenta);
-		};
+	bool decayTopology_initKinematicsData(rpwa::decayTopology& self, PyObject* pyProdKinParticles, PyObject* pyDecayKinParticles) {
+		TClonesArray* prodKinParticles = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinParticles);
+		TClonesArray* decayKinParticles = rpwa::py::convertFromPy<TClonesArray*>(pyDecayKinParticles);
+		if((prodKinParticles == NULL) || (decayKinParticles == NULL)) {
+			printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::initKinematicsData()."<<std::endl;
+			return false;
+		}
+		return self.initKinematicsData(*prodKinParticles, *decayKinParticles);
+	};
 
-		bool revertMomenta__1() {
-			return rpwa::decayTopology::revertMomenta();
-		};
+	bool decayTopology_readKinematicsData(rpwa::decayTopology& self, PyObject* pyProdKinMomenta, PyObject* pyDecayKinMomenta) {
+		TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinMomenta);
+		TClonesArray* decayKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyDecayKinMomenta);
+		if((prodKinMomenta == NULL) || (decayKinMomenta == NULL)) {
+			printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::readKinematicsData()."<<std::endl;
+			return false;
+		}
+		return self.readKinematicsData(*prodKinMomenta, *decayKinMomenta);
+	};
 
-		bool revertMomenta__2(PyObject* pyIndexMap) {
-			bp::list pyListIndexMap = bp::extract<bp::list>(pyIndexMap);
-			std::vector<unsigned int> indexMap(bp::len(pyListIndexMap), 0);
-			for(int i = 0; i < bp::len(pyListIndexMap); ++i) {
-				indexMap[i] = bp::extract<unsigned int>(pyListIndexMap[i]);
-			}
-			return rpwa::decayTopology::revertMomenta(indexMap);
-		};
+	bool decayTopology_revertMomenta1(rpwa::decayTopology& self) {
+		return self.revertMomenta();
+	};
 
+	bool decayTopology_revertMomenta2(rpwa::decayTopology& self, PyObject* pyIndexMap) {
+		bp::list pyListIndexMap = bp::extract<bp::list>(pyIndexMap);
+		std::vector<unsigned int> indexMap(bp::len(pyListIndexMap), 0);
+		for(int i = 0; i < bp::len(pyListIndexMap); ++i) {
+			indexMap[i] = bp::extract<unsigned int>(pyListIndexMap[i]);
+		}
+		return self.revertMomenta(indexMap);
 	};
 
 }
@@ -126,72 +126,73 @@ void rpwa::py::exportDecayTopology() {
 
 		.def(
 			"clone"
-			, &decayTopologyWrapper::clone
+			, &rpwa::decayTopology::clone
 			, (bp::arg("cloneFsParticles")=false,
 			   bp::arg("cloneProdKinematics")=false)
 		)
 
 		.def("clear", &decayTopologyWrapper::clear, &decayTopologyWrapper::default_clear)
+		.def("clear", &rpwa::decayTopology::clear)
 
-		.def("nmbDecayVertices", &decayTopologyWrapper::nmbDecayVertices)
-		.def("nmbFsParticles", &decayTopologyWrapper::nmbFsParticles)
+		.def("nmbDecayVertices", &rpwa::decayTopology::nmbDecayVertices)
+		.def("nmbFsParticles", &rpwa::decayTopology::nmbFsParticles)
 
-		.def("nmbIndistFsParticles", &decayTopologyWrapper::nmbIndistFsParticles__)
+		.def("nmbIndistFsParticles", &decayTopology_nmbIndistFsParticles)
 
-		.def("fsParticlesIntrinsicParity", &decayTopologyWrapper::fsParticlesIntrinsicParity)
-		.def("spaceInvEigenValue", &decayTopologyWrapper::spaceInvEigenValue)
-		.def("reflectionEigenValue", &decayTopologyWrapper::reflectionEigenValue)
+		.def("fsParticlesIntrinsicParity", &rpwa::decayTopology::fsParticlesIntrinsicParity)
+		.def("spaceInvEigenValue", &rpwa::decayTopology::spaceInvEigenValue)
+		.def("reflectionEigenValue", &rpwa::decayTopology::reflectionEigenValue)
 
-		.def("fsParticles", &decayTopologyWrapper::fsParticles__)
-		.def("decayVertices", &decayTopologyWrapper::decayVertices__)
+		.def("fsParticles", &decayTopology_fsParticles)
+		.def("decayVertices", &decayTopology_decayVertices)
 
 		.def(
 			"XParticle"
-			, &decayTopologyWrapper::XParticle
+			, &rpwa::decayTopology::XParticle
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 		.def(
 			"productionVertex"
-			, &decayTopologyWrapper::productionVertex
+			, &rpwa::decayTopology::productionVertex
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 		.def(
 			"XDecayVertex"
-			, &decayTopologyWrapper::XDecayVertex
+			, &rpwa::decayTopology::XDecayVertex
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 
-		.def("transformFsParticles", &decayTopologyWrapper::transformFsParticles__)
+		.def("transformFsParticles", &decayTopology_transformFsParticles)
 
-		.def("isProductionVertex", &decayTopologyWrapper::isProductionVertex)
-		.def("isDecayVertex", &decayTopologyWrapper::isDecayVertex)
-		.def("isFsVertex", &decayTopologyWrapper::isFsVertex)
-		.def("isFsParticle", &decayTopologyWrapper::isFsParticle)
-		.def("fsParticlesIndex", &decayTopologyWrapper::fsParticlesIndex)
+		.def("isProductionVertex", &rpwa::decayTopology::isProductionVertex)
+		.def("isDecayVertex", &rpwa::decayTopology::isDecayVertex)
+		.def("isFsVertex", &rpwa::decayTopology::isFsVertex)
+		.def("isFsParticle", &rpwa::decayTopology::isFsParticle)
+		.def("fsParticlesIndex", &rpwa::decayTopology::fsParticlesIndex)
 
-		.def("checkTopology", &decayTopologyWrapper::checkTopology)
-		.def("checkConsistency", &decayTopologyWrapper::checkConsistency)
+		.def("checkTopology", &rpwa::decayTopology::checkTopology)
+		.def("checkConsistency", &rpwa::decayTopology::checkConsistency)
 
 // This one is missing because it returns something defined in decayGraph.hpp, which is currently omitted.
 /*		.def(
 			"subDecay"
-			, &decayTopologyWrapper::subDecay
+			, &rpwa::decayTopology::subDecay
 			, (bp::arg("startNd"),
 			   bp::arg("linkToMotherTopo")=false)
 		)*/
 
-		.def("addDecay", &decayTopologyWrapper::addDecay)
-		.def("setProductionVertex", &decayTopologyWrapper::setProductionVertex)
+		.def("addDecay", &rpwa::decayTopology::addDecay)
+		.def("setProductionVertex", &rpwa::decayTopology::setProductionVertex)
 
-		.def("initKinematicsData", &decayTopologyWrapper::initKinematicsData__)
-		.def("readKinematicsData", &decayTopologyWrapper::readKinematicsData__)
+		.def("initKinematicsData", &decayTopology_initKinematicsData)
+		.def("readKinematicsData", &decayTopology_readKinematicsData)
 
-		.def("fillKinematicsDataCache", &decayTopologyWrapper::fillKinematicsDataCache)
+		.def("fillKinematicsDataCache", &rpwa::decayTopology::fillKinematicsDataCache)
 
-		.def("revertMomenta", &decayTopologyWrapper::revertMomenta__1)
-		.def("revertMomenta", &decayTopologyWrapper::revertMomenta__2)
+		.def("revertMomenta", &decayTopology_revertMomenta1)
+		.def("revertMomenta", &decayTopology_revertMomenta2)
 
-		.add_static_property("debugDecayTopology", &decayTopologyWrapper::debug, &decayTopologyWrapper::setDebug);
+		.add_static_property("debugDecayTopology", &rpwa::decayTopology::debug, &rpwa::decayTopology::setDebug);
 
 	bp::register_ptr_to_python<rpwa::decayTopologyPtr>();
 

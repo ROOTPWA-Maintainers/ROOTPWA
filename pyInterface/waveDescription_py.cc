@@ -4,80 +4,66 @@ namespace bp = boost::python;
 
 namespace {
 
-	struct waveDescriptionWrapper : public rpwa::waveDescription,
-	                                       bp::wrapper<rpwa::waveDescription>
+	std::string waveDescription_printKeyFileContents(const rpwa::waveDescription& self) {
+		std::stringstream sstr;
+		self.printKeyFileContents(sstr);
+		return sstr.str();
+	};
+
+	bp::tuple waveDescription_constructAmplitude1(const rpwa::waveDescription& self) {
+		rpwa::isobarAmplitudePtr amplitude;
+		bool result = self.constructAmplitude(amplitude);
+		return bp::make_tuple(result, amplitude);
+	};
+
+	bp::tuple waveDescription_constructAmplitude2(const rpwa::waveDescription& self, rpwa::isobarDecayTopologyPtr& topo) {
+		rpwa::isobarAmplitudePtr amplitude;
+		bool result = self.constructAmplitude(amplitude, topo);
+		return bp::make_tuple(result, amplitude);
+	};
+
+	bool waveDescription_writeKeyFile(const std::string& keyFileName,
+	                                    const bp::object   pyTopoOrAmp,
+							            const bool         writeProdVert = true)
 	{
+		bp::extract<rpwa::isobarDecayTopology> get_iDT(pyTopoOrAmp);
+		if(get_iDT.check()) {
+			rpwa::isobarDecayTopology topoOrAmpiDT = get_iDT();
+			return rpwa::waveDescription::writeKeyFile(keyFileName, topoOrAmpiDT, writeProdVert);
+		}
+		rpwa::isobarAmplitude* topoOrAmp = bp::extract<rpwa::isobarAmplitude*>(pyTopoOrAmp);
+		return rpwa::waveDescription::writeKeyFile(keyFileName, *topoOrAmp, writeProdVert);
+	};
 
-		waveDescriptionWrapper()
-			: rpwa::waveDescription(),
-			  bp::wrapper<rpwa::waveDescription>() { };
-
-		waveDescriptionWrapper(const rpwa::waveDescription& waveDesc)
-			: rpwa::waveDescription(waveDesc),
-			  bp::wrapper<rpwa::waveDescription>() { };
-
-		std::string printKeyFileContents__() const {
-			std::stringstream sstr;
-			printKeyFileContents(sstr);
-			return sstr.str();
-		};
-
-		bp::tuple constructAmplitude__1() const {
-			rpwa::isobarAmplitudePtr amplitude;
-			bool result = rpwa::waveDescription::constructAmplitude(amplitude);
-			return bp::make_tuple(result, amplitude);
-		};
-
-		bp::tuple constructAmplitude__2(rpwa::isobarDecayTopologyPtr& topo) const {
-			rpwa::isobarAmplitudePtr amplitude;
-			bool result = rpwa::waveDescription::constructAmplitude(amplitude, topo);
-			return bp::make_tuple(result, amplitude);
-		};
-
-		static bool writeKeyFile__(const std::string& keyFileName,
-		                           const bp::object   pyTopoOrAmp,
-								   const bool         writeProdVert = true)
-		{
-			bp::extract<rpwa::isobarDecayTopology> get_iDT(pyTopoOrAmp);
-			if(get_iDT.check()) {
-				rpwa::isobarDecayTopology topoOrAmpiDT = get_iDT();
-				return rpwa::waveDescription::writeKeyFile(keyFileName, topoOrAmpiDT, writeProdVert);
-			}
-			rpwa::isobarAmplitude* topoOrAmp = bp::extract<rpwa::isobarAmplitude*>(pyTopoOrAmp);
-			return rpwa::waveDescription::writeKeyFile(keyFileName, *topoOrAmp, writeProdVert);
-		};
-
-		int Write__(std::string name) {
-			return this->Write(name.c_str());
-		};
-
+	int waveDescription_Write(const rpwa::waveDescription& self, std::string name) {
+		return self.Write(name.c_str());
 	};
 
 }
 
 void rpwa::py::exportWaveDescription() {
 
-	bp::class_<waveDescriptionWrapper>("waveDescription")
+	bp::class_<rpwa::waveDescription>("waveDescription")
 
-		.def("parseKeyFile", &waveDescriptionWrapper::parseKeyFile)
-		.def("keyFileParsed", &waveDescriptionWrapper::keyFileParsed)
+		.def("parseKeyFile", &rpwa::waveDescription::parseKeyFile)
+		.def("keyFileParsed", &rpwa::waveDescription::keyFileParsed)
 
-		.def("keyFileContents", &waveDescriptionWrapper::keyFileContents)
-		.def("printKeyFileContents", &waveDescriptionWrapper::printKeyFileContents__)
+		.def("keyFileContents", &rpwa::waveDescription::keyFileContents)
+		.def("printKeyFileContents", &waveDescription_printKeyFileContents)
 
 		.def(
 			"constructDecayTopology"
-			, &waveDescriptionWrapper::constructDecayTopology
+			, &rpwa::waveDescription::constructDecayTopology
 			, (bp::arg("topo"),
 			   bp::arg("fromTemplate")=false)
 		)
 
-		.def("constructAmplitude", &waveDescriptionWrapper::constructAmplitude__1)
-		.def("constructAmplitude", &waveDescriptionWrapper::constructAmplitude__2)
+		.def("constructAmplitude", &waveDescription_constructAmplitude1)
+		.def("constructAmplitude", &waveDescription_constructAmplitude2)
 
 		.def(
 			"writeKeyFile"
-			, &waveDescriptionWrapper::writeKeyFile__
+			, &waveDescription_writeKeyFile
 			, (bp::arg("keyFileName"),
 			   bp::arg("topoOrAmp"),
 			   bp::arg("writeProdVert")=false)
@@ -86,7 +72,7 @@ void rpwa::py::exportWaveDescription() {
 
 		.def(
 			"waveNameFromTopology"
-			, &waveDescriptionWrapper::waveNameFromTopology
+			, &rpwa::waveDescription::waveNameFromTopology
 			, (bp::arg("topo"),
 			   bp::arg("newConvention")=false,
 			   bp::arg("currentVertex")=rpwa::isobarDecayVertexPtr())
@@ -95,15 +81,15 @@ void rpwa::py::exportWaveDescription() {
 
 		.def(
 			"waveLaTeXFromTopology"
-			, &waveDescriptionWrapper::waveLaTeXFromTopology
+			, &rpwa::waveDescription::waveLaTeXFromTopology
 			, (bp::arg("topo"),
 			   bp::arg("currentVertex")=rpwa::isobarDecayVertexPtr())
 		)
 		.staticmethod("waveLaTeXFromTopology")
 
-		.def("Write", &waveDescriptionWrapper::Write__)
+		.def("Write", &waveDescription_Write)
 
-		.add_static_property("debugWaveDescription", &waveDescriptionWrapper::debug, &waveDescriptionWrapper::setDebug);
+		.add_static_property("debugWaveDescription", &rpwa::waveDescription::debug, &rpwa::waveDescription::setDebug);
 
 };
 

@@ -13,7 +13,7 @@ namespace {
 			: rpwa::fsVertex(fsParticle),
 			  bp::wrapper<rpwa::fsVertex>() { };
 
-		fsVertexWrapper(const fsVertex& vert)
+		fsVertexWrapper(const rpwa::fsVertex& vert)
 			: rpwa::fsVertex(vert),
 			  bp::wrapper<rpwa::fsVertex>() { };
 
@@ -40,10 +40,6 @@ namespace {
 			return rpwa::fsVertex::addOutParticle(part);
 		};
 
-		rpwa::particlePtr fsParticle__() {
-			return rpwa::fsVertex::fsParticle();
-		};
-
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
@@ -55,6 +51,10 @@ namespace {
 			return rpwa::fsVertex::name();
 		};
 
+	};
+
+	rpwa::particlePtr fsVertex_fsParticle(const rpwa::fsVertex& self) {
+		return self.fsParticle();
 	};
 
 }
@@ -70,19 +70,22 @@ void rpwa::py::exportFsVertex() {
 
 		.def(
 			"clone"
-			, &fsVertexWrapper::clone
+			, &rpwa::fsVertex::clone
 			, (bp::arg("cloneInParticles")=false,
 			   bp::arg("cloneOutParticles")=false)
 		)
 
 		.def("addInParticle", &fsVertexWrapper::addInParticle, &fsVertexWrapper::default_addInParticle)
+		.def("addInParticle", &rpwa::fsVertex::addInParticle)
 		.def("addOutParticle", &fsVertexWrapper::addOutParticle, &fsVertexWrapper::default_addOutParticle)
+		.def("addOutParticle", &rpwa::fsVertex::addOutParticle)
 
-		.def("fsParticle", &fsVertexWrapper::fsParticle__)
+		.def("fsParticle", &fsVertex_fsParticle)
 
 		.def("name", &fsVertexWrapper::name, &fsVertexWrapper::default_name)
+		.def("name", &rpwa::fsVertex::name)
 
-		.add_static_property("debugFsVertex", &fsVertexWrapper::debug, &fsVertexWrapper::setDebug);
+		.add_static_property("debugFsVertex", &rpwa::fsVertex::debug, &rpwa::fsVertex::setDebug);
 
 	bp::register_ptr_to_python<rpwa::fsVertexPtr>();
 

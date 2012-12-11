@@ -145,6 +145,28 @@ namespace {
 
 	};
 
+	PyObject* diffractiveDissVertex_referenceLzVec(const rpwa::diffractiveDissVertex& self) {
+		return rpwa::py::convertToPy<TLorentzVector>(self.referenceLzVec());
+	};
+
+	bool diffractiveDissVertex_initKinematicsData(rpwa::diffractiveDissVertex& self, PyObject* pyProdKinPartNames) {
+		TClonesArray* prodKinPartNames = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
+		if(prodKinPartNames == NULL) {
+			printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::initKinematicsData()."<<std::endl;
+			return false;
+		}
+		return self.initKinematicsData(*prodKinPartNames);
+	};
+
+	bool diffractiveDissVertex_readKinematicsData(rpwa::diffractiveDissVertex& self, PyObject* pyProdKinPartNames) {
+		TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
+		if(prodKinMomenta == NULL) {
+			printErr<<"Got invalid input when executing rpwa::diffractiveDissVertex::readKinematicsData()."<<std::endl;
+			return false;
+		}
+		return self.readKinematicsData(*prodKinMomenta);
+	};
+
 }
 
 void rpwa::py::exportDiffractiveDissVertex() {
@@ -158,48 +180,61 @@ void rpwa::py::exportDiffractiveDissVertex() {
 
 		.def(
 			"clone"
-			, &diffractiveDissVertexWrapper::clone
+			, &rpwa::diffractiveDissVertex::clone
 			, (bp::arg("cloneInParticles")=false,
 			   bp::arg("cloneOutParticles")=false)
 		)
 
 		.def("addInParticle", &diffractiveDissVertexWrapper::addInParticle, &diffractiveDissVertexWrapper::default_addInParticle)
+		.def("addInParticle", &rpwa::diffractiveDissVertex::addInParticle)
 		.def("addOutParticle", &diffractiveDissVertexWrapper::addOutParticle, &diffractiveDissVertexWrapper::default_addOutParticle)
+		.def("addOutParticle", &rpwa::diffractiveDissVertex::addOutParticle)
 
 		.def("referenceLzVec", &diffractiveDissVertexWrapper::referenceLzVec__, &diffractiveDissVertexWrapper::default_referenceLzVec__)
+		.def("referenceLzVec", &diffractiveDissVertex_referenceLzVec)
 		.def(
 			"XParticle"
 			, &diffractiveDissVertexWrapper::XParticle
 			, &diffractiveDissVertexWrapper::default_XParticle
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
+		.def(
+			"XParticle"
+			, &rpwa::diffractiveDissVertex::XParticle
+			, bp::return_value_policy<bp::copy_const_reference>()
+		)
 		.def("setXFlavorQN", &diffractiveDissVertexWrapper::setXFlavorQN, &diffractiveDissVertexWrapper::default_setXFlavorQN)
+		.def("setXFlavorQN", &rpwa::diffractiveDissVertex::setXFlavorQN)
 
 		.def(
 			"beam"
-			, &diffractiveDissVertexWrapper::beam
+			, &rpwa::diffractiveDissVertex::beam
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 
 		.def(
 			"target"
-			, &diffractiveDissVertexWrapper::target
+			, &rpwa::diffractiveDissVertex::target
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 
 		.def(
 			"recoil"
-			, &diffractiveDissVertexWrapper::recoil
+			, &rpwa::diffractiveDissVertex::recoil
 			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 
 		.def("initKinematicsData", &diffractiveDissVertexWrapper::initKinematicsData__, &diffractiveDissVertexWrapper::default_initKinematicsData__)
+		.def("initKinematicsData", &diffractiveDissVertex_initKinematicsData)
 		.def("readKinematicsData", &diffractiveDissVertexWrapper::readKinematicsData__, &diffractiveDissVertexWrapper::default_readKinematicsData__)
+		.def("readKinematicsData", &diffractiveDissVertex_readKinematicsData)
 
 		.def("revertMomenta", &diffractiveDissVertexWrapper::revertMomenta, &diffractiveDissVertexWrapper::default_revertMomenta)
+		.def("revertMomenta", &rpwa::diffractiveDissVertex::revertMomenta)
 		.def("name", &diffractiveDissVertexWrapper::name, &diffractiveDissVertexWrapper::default_name)
+		.def("name", &rpwa::diffractiveDissVertex::name)
 
-		.add_static_property("debugDiffractiveDissVertex", &diffractiveDissVertexWrapper::debug, &diffractiveDissVertexWrapper::setDebug);
+		.add_static_property("debugDiffractiveDissVertex", &rpwa::diffractiveDissVertex::debug, &rpwa::diffractiveDissVertex::setDebug);
 
 	bp::register_ptr_to_python<rpwa::diffractiveDissVertexPtr>();
 

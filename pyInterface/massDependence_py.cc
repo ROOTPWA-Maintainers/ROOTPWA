@@ -234,33 +234,45 @@ void rpwa::py::exportMassDependence() {
 			, &massDependenceWrapper::operator()
 			, (::std::complex< double > ( massDependenceWrapper::* )( ::rpwa::isobarDecayVertex const & ) )(&massDependenceWrapper::default___call__)
 		)
+		.def("__call__", &rpwa::massDependence::operator())
 		.def("name", &massDependenceWrapper::name, &massDependenceWrapper::default_name)
-		.add_static_property("debugMassDependence", &massDependenceWrapper::debug, &massDependenceWrapper::setDebug);
+		.def("name", &rpwa::massDependence::name)
+		.add_static_property("debugMassDependence", &rpwa::massDependence::debug, &rpwa::massDependence::setDebug);
 
 	bp::class_<flatMassDependenceWrapper, bp::bases<rpwa::massDependence> >("flatMassDependence")
 		.def(bp::self_ns::str(bp::self))
 		.def("amp", &flatMassDependenceWrapper::amp, &flatMassDependenceWrapper::default_amp)
-		.def("name", &flatMassDependenceWrapper::name, &flatMassDependenceWrapper::default_name);
+		.def("amp", &rpwa::flatMassDependence::amp)
+		.def("name", &flatMassDependenceWrapper::name, &flatMassDependenceWrapper::default_name)
+		.def("name", &rpwa::flatMassDependence::name);
 
 	bp::class_<relativisticBreitWignerWrapper, bp::bases<rpwa::massDependence> >("relativisticBreitWigner")
 		.def(bp::self_ns::str(bp::self))
 		.def("amp", &relativisticBreitWignerWrapper::amp, &relativisticBreitWignerWrapper::default_amp)
-		.def("name", &relativisticBreitWignerWrapper::name, &relativisticBreitWignerWrapper::default_name);
+		.def("amp", &rpwa::relativisticBreitWigner::amp)
+		.def("name", &relativisticBreitWignerWrapper::name, &relativisticBreitWignerWrapper::default_name)
+		.def("name", &rpwa::relativisticBreitWigner::name);
 
 	bp::class_<piPiSWaveAuMorganPenningtonMWrapper, bp::bases<rpwa::massDependence> >("piPiSWaveAuMorganPenningtonM")
 		.def(bp::self_ns::str(bp::self))
 		.def("amp", &piPiSWaveAuMorganPenningtonMWrapper::amp, &piPiSWaveAuMorganPenningtonMWrapper::default_amp)
-		.def("name", &piPiSWaveAuMorganPenningtonMWrapper::name, &piPiSWaveAuMorganPenningtonMWrapper::default_name);
+		.def("amp", &rpwa::piPiSWaveAuMorganPenningtonM::amp)
+		.def("name", &piPiSWaveAuMorganPenningtonMWrapper::name, &piPiSWaveAuMorganPenningtonMWrapper::default_name)
+		.def("name", &rpwa::piPiSWaveAuMorganPenningtonM::name);
 
 	bp::class_<piPiSWaveAuMorganPenningtonVesWrapper, bp::bases<rpwa::massDependence> >("piPiSWaveAuMorganPenningtonVes")
 		.def(bp::self_ns::str(bp::self))
 		.def("amp", &piPiSWaveAuMorganPenningtonVesWrapper::amp, &piPiSWaveAuMorganPenningtonVesWrapper::default_amp)
-		.def("name", &piPiSWaveAuMorganPenningtonVesWrapper::name, &piPiSWaveAuMorganPenningtonVesWrapper::default_name);
+		.def("amp", &rpwa::piPiSWaveAuMorganPenningtonVes::amp)
+		.def("name", &piPiSWaveAuMorganPenningtonVesWrapper::name, &piPiSWaveAuMorganPenningtonVesWrapper::default_name)
+		.def("name", &rpwa::piPiSWaveAuMorganPenningtonVes::name);
 
 	bp::class_<piPiSWaveAuMorganPenningtonKachaevWrapper, bp::bases<rpwa::massDependence> >("piPiSWaveAuMorganPenningtonKachaev")
 		.def(bp::self_ns::str(bp::self))
 		.def("amp", &piPiSWaveAuMorganPenningtonKachaevWrapper::amp, &piPiSWaveAuMorganPenningtonKachaevWrapper::default_amp)
-		.def("name", &piPiSWaveAuMorganPenningtonKachaevWrapper::name, &piPiSWaveAuMorganPenningtonKachaevWrapper::default_name);
+		.def("amp", &rpwa::piPiSWaveAuMorganPenningtonKachaev::amp)
+		.def("name", &piPiSWaveAuMorganPenningtonKachaevWrapper::name, &piPiSWaveAuMorganPenningtonKachaevWrapper::default_name)
+		.def("name", &rpwa::piPiSWaveAuMorganPenningtonKachaev::name);
 
 	bp::register_ptr_to_python<rpwa::massDependencePtr>();
 	bp::register_ptr_to_python<rpwa::flatMassDependencePtr>();
