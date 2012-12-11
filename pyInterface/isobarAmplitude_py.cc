@@ -10,6 +10,17 @@ namespace {
 	                                       bp::wrapper<rpwa::isobarAmplitude>
 	{
 
+		void init() {
+			if(bp::override init = this->get_override("init")) {
+				init();
+			}
+			rpwa::isobarAmplitude::init();
+		}
+
+		void default_init() {
+			rpwa::isobarAmplitude::init();
+		}
+
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
@@ -74,6 +85,9 @@ void rpwa::py::exportIsobarAmplitude() {
 		)
 
 		.def("setDecayTopology", &rpwa::isobarAmplitude::setDecayTopology)
+
+		.def("init", &isobarAmplitudeWrapper::init, &isobarAmplitudeWrapper::default_init)
+		.def("init", &rpwa::isobarAmplitude::init)
 
 		.add_property("reflectivityBasis", &rpwa::isobarAmplitude::reflectivityBasis, &rpwa::isobarAmplitude::enableReflectivityBasis)
 		.add_property("boseSymmetrization", &rpwa::isobarAmplitude::boseSymmetrization, &rpwa::isobarAmplitude::enableBoseSymmetrization)
