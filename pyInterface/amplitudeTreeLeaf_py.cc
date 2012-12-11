@@ -1,5 +1,10 @@
 #include "amplitudeTreeLeaf_py.h"
 
+#include<TTree.h>
+
+#include<reportingUtils.hpp>
+#include "rootConverters_py.h"
+
 namespace bp = boost::python;
 
 namespace {
@@ -15,6 +20,24 @@ namespace {
 	const std::complex<double>& amplitudeTreeLeaf_incohSubAmp2(const rpwa::amplitudeTreeLeaf& self, const std::string& subAmpLabel) {
 		return self.incohSubAmp(subAmpLabel);
 	};
+
+	int amplitudeTreeLeaf_setBranchAddress(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string branchName) {
+		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+		if(tree == NULL) {
+			printErr<<"Got invalid input when executing rpwa::amplitudeTreeLeaf::setBranchAddress()."<<std::endl;
+			return 0;
+		}
+		return tree->SetBranchAddress(branchName.c_str(), &self);
+	};
+
+	void amplitudeTreeLeaf_branch(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string name, int bufsize = 32000, int splitlevel = 99) {
+		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+		if(tree == NULL) {
+			printErr<<"Got invalid input when executing rpwa::amplitudeTreeLeaf::branch()."<<std::endl;
+			throw;
+		}
+		tree->Branch(name.c_str(), &self, bufsize, splitlevel);
+	}
 
 }
 
@@ -79,6 +102,16 @@ void rpwa::py::exportAmplitudeTreeLeaf() {
 		.def("setAmp", &rpwa::amplitudeTreeLeaf::setAmp)
 
 		.def("Write", &amplitudeTreeLeaf_Write)
+		.def("setBranchAddress", &amplitudeTreeLeaf_setBranchAddress)
+		.def(
+			"branch"
+			, &amplitudeTreeLeaf_branch
+			, (bp::arg("pyTree"),
+			   bp::arg("pyAmplitudeTreeLeaf"),
+			   bp::arg("name"),
+			   bp::arg("bufsize")=32000,
+			   bp::arg("splitlevel")=99)
+		)
 
 		.add_static_property("debugAmplitudeTreeLeaf", &rpwa::amplitudeTreeLeaf::debug, &rpwa::amplitudeTreeLeaf::setDebug);
 
