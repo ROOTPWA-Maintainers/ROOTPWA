@@ -84,6 +84,12 @@ namespace {
 		return bp::list(self.isobarDecayVertices());
 	};
 
+	rpwa::isobarDecayTopology isobarDecayTopology_subDecay(rpwa::isobarDecayTopology& self,
+	                                                       const rpwa::isobarDecayVertexPtr& startVert,
+	                                                       const bool linkToParentTopo = false) {
+		return self.subDecay(startVert, linkToParentTopo);
+	}
+
 	rpwa::isobarDecayTopology isobarDecayTopology_joinDaughterDecays(const rpwa::isobarDecayVertexPtr& parentVertex,
 	                                                                 const rpwa::isobarDecayTopology&  daughter1Decay,
 	                                                                 const rpwa::isobarDecayTopology&  daughter2Decay)
@@ -91,7 +97,7 @@ namespace {
 		return rpwa::isobarDecayTopology::joinDaughterDecays(parentVertex, daughter1Decay, daughter2Decay);
 	};
 
-	const PyObject* isobarDecayTopology_calcIsobarLzVec(rpwa::isobarDecayTopology& self) {
+	PyObject* isobarDecayTopology_calcIsobarLzVec(rpwa::isobarDecayTopology& self) {
 		return rpwa::py::convertToPy<TLorentzVector>(self.calcIsobarLzVec());
 	};
 
@@ -140,27 +146,30 @@ void rpwa::py::exportIsobarDecayTopology() {
 // This one is missing because it returns something defined in decayGraph.hpp, which is currently omitted.
 /*		.def(
 			"subDecay"
-			, &rpwa::decayTopology::subDecay
+			, &rpwa::isobarDecayTopology::subDecay
 			, (bp::arg("startNd"),
-			   bp::arg("linkToMotherTopo")=false)
+			   bp::arg("linkToParentTopo")=false)
 		)*/
+
+		.def(
+			"subDecay"
+			, &isobarDecayTopology_subDecay
+			, (bp::arg("startVert"),
+			   bp::arg("linkToParentTopo")=false)
+		)
 
 		.def("addDecay", &rpwa::isobarDecayTopology::addDecay)
 
 		.def("joinDaughterDecays", &isobarDecayTopology_joinDaughterDecays)
 		.staticmethod("joinDaughterDecays")
 
-		.def(
-			"calcIsobarLzVec"
-			, &isobarDecayTopology_calcIsobarLzVec
-			, bp::return_value_policy<bp::manage_new_object>()
-		)
+		.def("calcIsobarLzVec", &isobarDecayTopology_calcIsobarLzVec)
 
 		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz1)
 		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz2)
 
 
-		.def("calcIsobarCharges", &rpwa::isobarDecayTopology::calcIsobarCharges)
+		.def("calcIsobarCharges", &rpwa::isobarDecayTopology::calcIsobarCharges, (bp::arg("quiet")=false))
 		.def("calcIsobarBaryonNmbs", &rpwa::isobarDecayTopology::calcIsobarBaryonNmbs)
 
 		.add_static_property("debugIsobarDecayTopology", &rpwa::isobarDecayTopology::debug, &isobarDecayTopology::setDebug);

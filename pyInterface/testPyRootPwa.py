@@ -850,45 +850,46 @@ do_test(iDTTestClone, "Testing isobarDecayTopology.clone()")
 def iDTTestiDV(): assert(isoDecTop.isobarDecayVertices() == [])
 do_test(iDTTestiDV, "Testing isobarDecayTopology.isobarDecayVertices()")
 
-def iDTTestiXDV(): print(isoDecTop.XIsobarDecayVertex())
-do_test(iDTTestiXDV, "Testing isobarDecayTopology.XIsobarDecayVertex()", True)
-# need a consistent topology for that
+def iDTTestiXDV(): assert(consistentIsobarTopo.XIsobarDecayVertex().name() == 'isobarDecayVertex')
+do_test(iDTTestiXDV, "Testing isobarDecayTopology.XIsobarDecayVertex()")
 
-def iDTTestcC(): assert(isoDecTop.checkTopology())
-do_test(iDTTestcC, "Testing isobareDecayTopology.checkTopology()", True)
+def iDTTestcC(): assert(consistentIsobarTopo.checkTopology())
+do_test(iDTTestcC, "Testing isobareDecayTopology.checkTopology()")
 
 def iDTTestcCon(): assert(isoDecTop.checkConsistency())
 do_test(iDTTestcCon, "Testing isobarDecayTopology.checkConsistency()")
 
-def iDTTestAddDec(): isoDecTop.addDecay(isoDecTop)
-do_test(iDTTestAddDec, "Testing isobarDecayTopology.addDecay()", True)
-# need a consistent topology for that
+def iDTTestSubDecay(): return(consistentIsobarTopo.subDecay(consistentIsobarTopo.XIsobarDecayVertex()))
+do_test(iDTTestSubDecay, "Testing isobarDecayTopology.subDecay()", True)
+# problems with getting the right vertex as argument
 
-def iDTTestJDD(): pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, isoDecTop, isoDecTop)
+def iDTTestJDD(): pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, first, consistentIsobarTopo)
 do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()", True)
-# need a consistent topology for that
+# should be possible to test once isobarDecayTopology.subDecay() works?
 
-def iDTTestCILV(): print(isoDecTop.calcIsobarLzVec())
-do_test(iDTTestCILV, "Tessting isobarDecayTopology.calcIsobarLzVec()", True)
-# need a consistent topology for that
+def iDTTestCILV(): assert(consistentIsobarTopo.calcIsobarLzVec() == pyRootPwa.ROOT.TLorentzVector(0., 0., 0., 0.697850))
+do_test(iDTTestCILV, "Testing isobarDecayTopology.calcIsobarLzVec()")
 
-def iDTTestCIC(): print(isoDecTop.calcIsobarCharges())
-do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarCharges()", True)
-# need a consistent topology for that
+def iDTTestCIC(): consistentIsobarTopo.calcIsobarCharges()
+do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarCharges()")
 
-def iDTTestCIBN(): print(isoDecTop.calcIsobarBaryonNmbs())
-do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarBaryonNmbs()", True)
-# need a consistent topology for that
+def iDTTestCIBN(): consistentIsobarTopo.calcIsobarBaryonNmbs()
+do_test(iDTTestCIBN, "Testing isobarDecayTopology.calcIsobarBaryonNmbs()")
 
-def iDTTestWGV(): print(isoDecTop.writeGraphViz())
-do_test(iDTTestWGV, "Testing isobarDecayTopology.writeGraphViz()", True)
-# need a consistent topology for that
+def iDTTestWGV():
+	output = consistentIsobarTopo.writeGraphViz()
+	test = 'digraph "\\"X-[1-(1+)0+]\\"" {\nnode [\nfillcolor=white, style=filled];\n0[label=diffractiveDissVertex, shape=box];\n1[label="isobarDecayVertex: L = 1, S = 0"];\n2[label="isobarDecayVertex: L = 2, S = 1"];\n3[label="isobarDecayVertex: L = 2, S = 2"];\n4[label="isobarDecayVertex: L = 2, S = 3"];\n5[label=fsVertex, shape=diamond, style="dashed,filled"];\n6[label=fsVertex, shape=diamond, style="dashed,filled"];\n7[label=fsVertex, shape=diamond, style="dashed,filled"];\n8[label=fsVertex, shape=diamond, style="dashed,filled"];\n9[label=fsVertex, shape=diamond, style="dashed,filled"];\n2 -> 1[label="rho(770)0[1+(1--)]"];\n3 -> 2[label="a2(1320)-[1-(2+)]"];\n0 -> 4[label="X-[1-(1+)0+]"];\n4 -> 3[label="rho3(1690)0[1+(3--)]"];\n4 -> 5[label="pi-[1-(0-)]"];\n3 -> 6[label="pi+[1-(0-)]"];\n2 -> 7[label="pi-[1-(0-)]"];\n1 -> 8[label="pi+[1-(0-)]"];\n1 -> 9[label="pi-[1-(0-)]"];\n}\n'
+	assert(output == test)
+do_test(iDTTestWGV, "Testing isobarDecayTopology.writeGraphViz()")
 
 def iDTTestWGVtoFile():
-	print(isoDecTop.writeGraphViz("test.out"))
-	# Check if the file is there and if it is, remove it
-do_test(iDTTestWGVtoFile, "Testing isobarDecayTopology.writeGraphViz(outFileNmae)", True)
-# need a consistent topology for that
+	result = consistentIsobarTopo.writeGraphViz("test.out")
+	if os.path.isfile("test.out"):
+		os.system("rm -f test.out")
+	else:
+		assert(False)
+	assert(result)
+do_test(iDTTestWGVtoFile, "Testing isobarDecayTopology.writeGraphViz(outFileNmae)")
 
 def iDTTestDebug():
 	old_debug = isoDecTop.debugIsobarDecayTopology
