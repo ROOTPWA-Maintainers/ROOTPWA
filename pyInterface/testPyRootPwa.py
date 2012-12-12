@@ -698,36 +698,38 @@ do_test(dTTestnDV, "Testing decayTopology.nmbDecayVertices()")
 def dTTestnFP(): assert(decTo.nmbFsParticles() == 0)
 do_test(dTTestnFP, "Testing decayTopology.nmbFsParticles()")
 
-def dTTestnIFP(): assert(decTo.nmbIndistFsParticles() == {})
+def dTTestnIFP():
+	assert(decTo.nmbIndistFsParticles() == {})
+	assert(consistentIsobarTopo.nmbIndistFsParticles() == {'pi+': 2, 'pi-': 3})
 do_test(dTTestnIFP, "Testing decayTopology.nmbIndistFsParticles()")
 
 def dTTestfPIP(): assert(decTo.fsParticlesIntrinsicParity() == 1)
 do_test(dTTestfPIP, "Testing decayTopology.fsParticlesIntrinsicParity()")
 
-def dTTestsIEV(): print(decTo.spaceInvEigenValue())
-do_test(dTTestsIEV, "Testing decayTopology.spaceInvEigenValue()", True)
-# needs a consistent topology
+def dTTestsIEV(): assert(consistentIsobarTopo.spaceInvEigenValue() == -1)
+do_test(dTTestsIEV, "Testing decayTopology.spaceInvEigenValue()")
 
-def dTTestrEV(): print(decTo.reflectionEigenValue())
-do_test(dTTestrEV, "Testing decayTopology.reflectionEigenValue()", True)
-# needs a consistent topology
+def dTTestrEV(): assert(consistentIsobarTopo.reflectionEigenValue() == 1)
+do_test(dTTestrEV, "Testing decayTopology.reflectionEigenValue()")
 
 def dTTestfP(): assert(decTo.fsParticles() == [])
 do_test(dTTestfP, "Testing decayTopology.fsParticles()")
 
-def dTTestdV(): assert(decTo.decayVertices() == [])
+def dTTestdV():
+	assert(decTo.decayVertices() == [])
+	assert(len(consistentIsobarTopo.decayVertices()) == 4)
 do_test(dTTestdV, "Testing decayTopology.decayVertices()")
 
-def dTTestXpar(): print(decTo.XParticle())
-do_test(dTTestXpar, "Testing decayTopology.XParticle()", True)
-# needs a consistent topology
+def dTTestXpar(): assert(consistentIsobarTopo.XParticle().name == "X-")
+do_test(dTTestXpar, "Testing decayTopology.XParticle()")
 
 def dTTestprodVert(): assert(decTo.productionVertex() is None)
 do_test(dTTestprodVert, "Testing decayTopology.productionVertex()")
 
-def dTTestXDV(): print(decTo.XDecayVertex())
-do_test(dTTestXDV, "Testing decayTopology.XDecayVertex()", True)
-# needs a consistent topology
+def dTTestXDV():
+	vtx = consistentIsobarTopo.XDecayVertex()
+	assert(vtx.nmbInParticles == 1 and vtx.nmbOutParticles == 2)
+do_test_raw(dTTestXDV, "Testing decayTopology.XDecayVertex()")
 
 def dTTesttransFSP():
 	L = pyRootPwa.ROOT.TLorentzRotation(1, 1, 1)
@@ -741,27 +743,28 @@ def dTTesttransFSPUnsupT():
 do_test(dTTesttransFSPUnsupT, "Testing decayTopology.transformFsParticles(UNSUPPORTED TYPE)")
 
 def dTTestisbla():
-	assert(not decTo.isProductionVertex(isobDecVtx))
-	assert(decTo.isDecayVertex(isobDecVtx))
-	assert(not decTo.isFsVertex(isobDecVtx))
-	assert(not decTo.isFsParticle(part))
-do_test(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()", True)
-# needs a consistent topology
+	assert(not consistentIsobarTopo.isProductionVertex(isobDecVtx))
+	assert(not consistentIsobarTopo.isDecayVertex(isobDecVtx))
+	assert(not consistentIsobarTopo.isFsVertex(isobDecVtx))
+	assert(not consistentIsobarTopo.isFsParticle(part))
+	assert(consistentIsobarTopo.isDecayVertex(consistentIsobarTopo.XDecayVertex()))
+	assert(consistentIsobarTopo.isProductionVertex(consistentIsobarTopo.productionVertex()))
+	assert(not consistentIsobarTopo.isFsVertex(consistentIsobarTopo.decayVertices()[0]))
+	assert(consistentIsobarTopo.isFsParticle(consistentIsobarTopo.fsParticles()[0]))
+do_test_raw(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()")
 
 def dTTestfPInd():
 	assert(decTo.fsParticlesIndex(part))
 do_test(dTTestfPInd, "Testing decayTopology.fsParticlesIndex()")
 
-def tTTestCheckbla(): print(not decTo.checkTopology())
-do_test(tTTestCheckbla, "Testing decayTopology.checkTopology()", True)
-# needs a consistent topology
-
 def tTTestCheckCons(): assert(decTo.checkConsistency())
 do_test(tTTestCheckCons, "Testing decayTopology.checkConsistency()")
 
-def tTTestAdDec(): decTo.addDecay(decTo)
-do_test(tTTestAdDec, "Testing decayTopology.addDecay()", True)
-# needs a consistent topology
+def tTTestAdDec():
+	waste = consistentIsobarTopo.clone()
+	add0r = pyRootPwa.core.isobarDecayTopology()
+	waste.addDecay(add0r)
+do_test_raw(tTTestAdDec, "Testing decayTopology.addDecay()")
 
 def tTTestSPV(): decTo.setProductionVertex(diDiVtx)
 do_test(tTTestSPV, "Testing decayTopology.setProductionVertex()")

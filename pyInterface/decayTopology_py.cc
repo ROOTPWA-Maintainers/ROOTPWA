@@ -60,15 +60,30 @@ namespace {
 	};
 
 	bp::dict decayTopology_nmbIndistFsParticles(const rpwa::decayTopology& self) {
-		return bp::dict(self.nmbIndistFsParticles());
+		bp::dict retval;
+		std::map<std::string, unsigned int> nmbIndistFsParts = self.nmbIndistFsParticles();
+		for(std::map<std::string, unsigned int>::const_iterator it = nmbIndistFsParts.begin(); it != nmbIndistFsParts.end(); ++it) {
+			retval[it->first] = it->second;
+		}
+		return retval;
 	};
 
 	bp::list decayTopology_fsParticles(const rpwa::decayTopology& self) {
-		return bp::list(self.fsParticles());
+		bp::list retval;
+		std::vector<rpwa::particlePtr> fsParts = self.fsParticles();
+		for(unsigned int i = 0; i < fsParts.size(); ++i) {
+			retval.append(fsParts[i]);
+		}
+		return retval;
 	};
 
 	bp::list decayTopology_decayVertices(const rpwa::decayTopology& self) {
-		return bp::list(self.decayVertices());
+		bp::list retval;
+		std::vector<rpwa::interactionVertexPtr> decayVertices = self.decayVertices();
+		for(unsigned int i = 0; i < decayVertices.size(); ++i) {
+			retval.append(decayVertices[i]);
+		}
+		return retval;
 	};
 
 	void decayTopology_transformFsParticles(rpwa::decayTopology& self, PyObject* pyL) {
