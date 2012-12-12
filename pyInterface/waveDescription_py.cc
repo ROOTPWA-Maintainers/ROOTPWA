@@ -10,6 +10,12 @@ namespace {
 		return sstr.str();
 	};
 
+	bp::tuple waveDescription_constructDecayTopology(const rpwa::waveDescription& self, bool fromTemplate = false) {
+		rpwa::isobarDecayTopologyPtr topo;
+		bool result = self.constructDecayTopology(topo, fromTemplate);
+		return bp::make_tuple(result, topo);
+	}
+
 	bp::tuple waveDescription_constructAmplitude1(const rpwa::waveDescription& self) {
 		rpwa::isobarAmplitudePtr amplitude;
 		bool result = self.constructAmplitude(amplitude);
@@ -53,9 +59,8 @@ void rpwa::py::exportWaveDescription() {
 
 		.def(
 			"constructDecayTopology"
-			, &rpwa::waveDescription::constructDecayTopology
-			, (bp::arg("topo"),
-			   bp::arg("fromTemplate")=false)
+			, &waveDescription_constructDecayTopology
+			, bp::arg("fromTemplate")=false
 		)
 
 		.def("constructAmplitude", &waveDescription_constructAmplitude1)

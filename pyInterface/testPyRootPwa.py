@@ -624,6 +624,56 @@ print
 
 # ---------------------------------------------------------
 #
+#	waveDescription
+#
+# ---------------------------------------------------------
+
+def waveDescTestConst():
+	return pyRootPwa.core.waveDescription()
+waveDesc = do_test(waveDescTestConst, "Testing waveDescription constuctor")
+
+def waveDescTestReadKeyFile():
+	assert(waveDesc.parseKeyFile("./test.key"))
+	assert(waveDesc.keyFileParsed())
+do_test(waveDescTestReadKeyFile, "Testing waveDescription.parseKeyFile()")
+
+def waveDescTestConstuctTopo():
+	print('\n')
+	(result, topo) = waveDesc.constructDecayTopology()
+	print
+	assert(result)
+	return topo
+consistentIsobarTopo = do_test_raw(waveDescTestConstuctTopo, "Testing waveDescription.constructDecayTopology()")
+
+def waveDescTestConstructAmplitude():
+	print('\n')
+	(result, amp) = waveDesc.constructAmplitude()
+	print
+	assert(result)
+	return amp
+consistentIsobarAmp = do_test_raw(waveDescTestConstructAmplitude, "Testing waveDescription.constructAmplitude()")
+
+def waveDescWaveName():
+	assert(pyRootPwa.core.waveDescription.waveNameFromTopology(consistentIsobarTopo) == '1-1+00+rho31690=a21320-=rho770_21_pi-_22_pi+_23_pi-')
+do_test(waveDescWaveName, "Testing waveDescription::waveNameFromTopology()")
+
+def waveDescWaveNameLatex():
+	assert(pyRootPwa.core.waveDescription.waveLaTeXFromTopology(consistentIsobarTopo) == '1^{-}1^{+}0^{+}\\quad & \\rho_3^0(1690)\\rightarrow\\left\\{ a_2^-(1320)\\rightarrow\\left\\{ \\rho^0(770)\\ells{2}{1}\\pi^-\\right\\} \\ells{2}{2}\\pi^+\\right\\} \\ells{2}{3}\\pi^-')
+do_test(waveDescWaveNameLatex, "Testing waveDescription::waveLaTeXFromTopology()")
+
+def waveDescTestDebug():
+	old_debug = waveDesc.debugWaveDescription
+	waveDesc.debugWaveDescription = (not old_debug)
+	assert(waveDesc.debugWaveDescription == (not old_debug))
+	waveDesc.debugWaveDescription = old_debug
+do_test(waveDescTestDebug, "Testing waveDescription debug flag")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
 #	decayTopology
 #
 # ---------------------------------------------------------
