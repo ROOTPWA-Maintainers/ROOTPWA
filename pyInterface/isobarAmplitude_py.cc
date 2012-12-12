@@ -54,7 +54,7 @@ namespace {
 		return *(self.decayTopology());
 	}
 
-	static PyObject* isobarAmplitude_gjTransform(PyObject* pyBeamLv, PyObject* pyXLv) {
+	PyObject* isobarAmplitude_gjTransform(PyObject* pyBeamLv, PyObject* pyXLv) {
 		TLorentzVector* beamLv = rpwa::py::convertFromPy<TLorentzVector*>(pyBeamLv);
 		TLorentzVector* XLv = rpwa::py::convertFromPy<TLorentzVector*>(pyXLv);
 		if((beamLv == NULL) || (XLv == NULL)) {

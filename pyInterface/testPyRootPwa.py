@@ -169,7 +169,7 @@ def partTestConsts():
 	p3.qnSummary()
 	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5, 6)
 	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5, 6, 7)
-do_test_raw(partTestConsts, "Testing particle other constructors")
+do_test(partTestConsts, "Testing particle other constructors")
 
 def partTestClone(): p2 = part.clone()
 do_test(partTestClone, "Testing particle.clone()")
@@ -376,8 +376,7 @@ print
 def isobDecVtxTestConstructor():
 	lz = pyRootPwa.ROOT.TLorentzVector(1., 1., 1., 1.)
 	part.lzVec = lz
-#	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, pyRootPwa.core.flatMassDependence())
-#	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, [0, 1, 2])
+	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, pyRootPwa.core.flatMassDependence())
 	retval = pyRootPwa.core.isobarDecayVertex(part, part, part)
 	return retval
 isobDecVtx = do_test(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
@@ -643,7 +642,7 @@ def waveDescTestConstuctTopo():
 	print
 	assert(result)
 	return topo
-consistentIsobarTopo = do_test_raw(waveDescTestConstuctTopo, "Testing waveDescription.constructDecayTopology()")
+consistentIsobarTopo = do_test(waveDescTestConstuctTopo, "Testing waveDescription.constructDecayTopology()")
 
 def waveDescTestConstructAmplitude():
 	print('\n')
@@ -651,7 +650,7 @@ def waveDescTestConstructAmplitude():
 	print
 	assert(result)
 	return amp
-consistentIsobarAmp = do_test_raw(waveDescTestConstructAmplitude, "Testing waveDescription.constructAmplitude()")
+consistentIsobarAmp = do_test(waveDescTestConstructAmplitude, "Testing waveDescription.constructAmplitude()")
 
 def waveDescWaveName():
 	assert(pyRootPwa.core.waveDescription.waveNameFromTopology(consistentIsobarTopo) == '1-1+00+rho31690=a21320-=rho770_21_pi-_22_pi+_23_pi-')
@@ -729,7 +728,7 @@ do_test(dTTestprodVert, "Testing decayTopology.productionVertex()")
 def dTTestXDV():
 	vtx = consistentIsobarTopo.XDecayVertex()
 	assert(vtx.nmbInParticles == 1 and vtx.nmbOutParticles == 2)
-do_test_raw(dTTestXDV, "Testing decayTopology.XDecayVertex()")
+do_test(dTTestXDV, "Testing decayTopology.XDecayVertex()")
 
 def dTTesttransFSP():
 	L = pyRootPwa.ROOT.TLorentzRotation(1, 1, 1)
@@ -751,7 +750,7 @@ def dTTestisbla():
 	assert(consistentIsobarTopo.isProductionVertex(consistentIsobarTopo.productionVertex()))
 	assert(not consistentIsobarTopo.isFsVertex(consistentIsobarTopo.decayVertices()[0]))
 	assert(consistentIsobarTopo.isFsParticle(consistentIsobarTopo.fsParticles()[0]))
-do_test_raw(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()")
+do_test(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()")
 
 def dTTestfPInd():
 	assert(decTo.fsParticlesIndex(part))
@@ -764,7 +763,7 @@ def tTTestAdDec():
 	waste = consistentIsobarTopo.clone()
 	add0r = pyRootPwa.core.isobarDecayTopology()
 	waste.addDecay(add0r)
-do_test_raw(tTTestAdDec, "Testing decayTopology.addDecay()")
+do_test(tTTestAdDec, "Testing decayTopology.addDecay()")
 
 def tTTestSPV(): decTo.setProductionVertex(diDiVtx)
 do_test(tTTestSPV, "Testing decayTopology.setProductionVertex()")
@@ -953,7 +952,7 @@ def iHATTesthfTransform():
 	rot1 = pyRootPwa.core.isobarHelicityAmplitude.hfTransform(vec)
 	rot2 = iHA.hfTransform(vec)
 	assert(rot1 == rot2)
-do_test_raw(iHATTesthfTransform, "Testing isobarHelicityAmplitude::hfTransform")
+do_test(iHATTesthfTransform, "Testing isobarHelicityAmplitude::hfTransform")
 
 def iHATestDebug():
 	old_debug = iHA.debugIsobarHelicityAmplitude
