@@ -69,21 +69,11 @@ namespace {
 	};
 
 	bp::list decayTopology_fsParticles(const rpwa::decayTopology& self) {
-		bp::list retval;
-		std::vector<rpwa::particlePtr> fsParts = self.fsParticles();
-		for(unsigned int i = 0; i < fsParts.size(); ++i) {
-			retval.append(fsParts[i]);
-		}
-		return retval;
+		return bp::list(self.fsParticles());
 	};
 
 	bp::list decayTopology_decayVertices(const rpwa::decayTopology& self) {
-		bp::list retval;
-		std::vector<rpwa::interactionVertexPtr> decayVertices = self.decayVertices();
-		for(unsigned int i = 0; i < decayVertices.size(); ++i) {
-			retval.append(decayVertices[i]);
-		}
-		return retval;
+		return bp::list(self.decayVertices());
 	};
 
 	void decayTopology_transformFsParticles(rpwa::decayTopology& self, PyObject* pyL) {
