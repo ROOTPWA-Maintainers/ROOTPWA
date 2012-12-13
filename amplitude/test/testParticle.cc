@@ -67,15 +67,15 @@ main(int argc, char** argv)
 
 	// test loading of particle data table
 	particleDataTable& pdt = particleDataTable::instance();
-	pdt.readFile();
-	pdt.readDecayModeFile("testParticleDecays.txt");
+	pdt.readFile("./particleDataTable.txt");
+	pdt.readDecayModeFile("./testParticleDecays.txt");
 
 	if (1)
 		printInfo << "particle data table:" << endl
 		          << pdt;
 
 	// test filling of particle properties
-	if (1) {
+	if (0) {
 		particleProperties partProp;
 		const string       partName = "pi+";
 		partProp.fillFromDataTable(partName);
@@ -118,6 +118,30 @@ main(int argc, char** argv)
 			cout << "name = " << p.name() << endl
 			     << endl;
 		}
+	}
+
+	// check decay modes
+	if (1) {
+		cout << endl;
+		// particleProperties::decayMode decay1 = particleProperties::decayMode();
+		// printInfo << "decay mode: " << decay1 << endl;
+		particleProperties partProp;
+
+		// printDebug << "testing anti-particle decay modes" << endl;
+		// partProp.fillFromDataTable("rho(770)-");
+		// printInfo << "particle properties: " << partProp << endl;
+		// particleProperties antiPartProp = partProp.antiPartProperties(true);
+		// printInfo << "anti-particle properties: " << antiPartProp << endl;
+
+		printDebug << "testing equality operator for decay modes" << endl;
+		partProp.fillFromDataTable("sigma");
+		printInfo << "particle properties: " << partProp << endl;
+		for (unsigned int i = 0; i < partProp.nmbDecays(); ++i)
+			for (unsigned int j = i; j < partProp.nmbDecays(); ++j) {
+				cout << "    {decay mode[" << i << "]: " << partProp.decayModes()[i]
+				     << " vs. decay mode[" << j << "]: " << partProp.decayModes()[j]
+				     << "}: " << trueFalse(partProp.decayModes()[i] == partProp.decayModes()[j]) << endl;
+			}
 	}
 
 	// checking spin-exotic

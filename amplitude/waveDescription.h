@@ -112,7 +112,6 @@ namespace rpwa {
 
 	private:
 
-		
 		bool parseKeyFileLocalCopy();  ///< parses _keyFileLocalCopy string
 
 		// helper functions for construction of decay topology and ampltiude

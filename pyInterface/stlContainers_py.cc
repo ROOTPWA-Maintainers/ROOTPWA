@@ -18,25 +18,21 @@ void rpwa::py::exportStlContainers() {
 		.add_property("first", &stdpair_int_particleProperties::first)
 		.def_readwrite("second", &stdpair_int_particleProperties::second);
 
-	typedef std::map<std::string, unsigned int> map_string_uint;
-	bp::class_< map_string_uint >("__map_string_uint")
-		.def(bp::map_indexing_suite<map_string_uint>());
-
 	// std::vector<rpwa::particleProperties>
 	bp::class_<std::vector<rpwa::particleProperties> >("__vector_particleProperties")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::particleProperties> >());
 
 	// std::vector<rpwa::particlePtr>
 	bp::class_<std::vector<rpwa::particlePtr> >("__vector_particlePtr")
-		.def(bp::vector_indexing_suite<std::vector<rpwa::particlePtr> >());
+		.def(bp::vector_indexing_suite<std::vector<rpwa::particlePtr>, true>());
 
 	// std::vector<rpwa::interactionVertexPtr>
 	bp::class_<std::vector<rpwa::interactionVertexPtr> >("__vector_interactionVertexPtr")
-		.def(bp::vector_indexing_suite<std::vector<rpwa::interactionVertexPtr> >());
+		.def(bp::vector_indexing_suite<std::vector<rpwa::interactionVertexPtr>, true>());
 
 	// std::vector<rpwa::isobarDecayVertexPtr>
 	bp::class_<std::vector<rpwa::isobarDecayVertexPtr> >("__vector_isobarDecayVertexPtr")
-		.def(bp::vector_indexing_suite<std::vector<rpwa::isobarDecayVertexPtr> >());
+		.def(bp::vector_indexing_suite<std::vector<rpwa::isobarDecayVertexPtr>, true>());
 
 };
 

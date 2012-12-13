@@ -18,7 +18,7 @@
 
 if [[ "${1}" = *sigma*sigma*sigma* ]]
 then
-		echo "!!!HERE $1"
+
     # special treatment for sigma -> sigma sigma decays
 		sed --in-place=.bak 's/\(^[[:blank:]]*\)name = "sigma0";/\1name = "sigma0";\n\1massDep : { name = "piPiSWaveAuMorganPenningtonKachaev"; };/' "${1}"
 		# use Breit-Wigner for 4-body decay mode
@@ -27,7 +27,6 @@ then
 else
 
     # set special mass dependencies for some particles
-    # see http://unix.stackexchange.com/questions/14887/the-way-to-use-usr-bin-env-sed-f-in-shebang
 		exec sed --in-place=.bak "$(cat <<'EOF'
 
 # sigma
@@ -35,6 +34,9 @@ s/\(^[[:blank:]]*\)name = "sigma0";/\1name = "sigma0";\n\1massDep : { name = "pi
 
 # rho'
 s/\(^[[:blank:]]*\)name = "rhoPrime0";/\1name = "rhoPrime0";\n\1massDep : { name = "rhoPrime"; };/
+
+# f_0(980)
+s/\(^[[:blank:]]*\)name = "f0(980)0";/\1name = "f0(980)0";\n\1massDep : { name = "f_0(980)"; };/
 
 EOF
 )" "${1}"

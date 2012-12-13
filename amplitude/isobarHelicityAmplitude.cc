@@ -75,9 +75,8 @@ isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
 	const TVector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
 	// rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
 	TRotation rot1;
-	rot1.RotateZ(-yHfAxis.Phi());
-	rot1.RotateY(piHalf - yHfAxis.Theta());
-	rot1.RotateZ(piHalf);
+	rot1.RotateZ(piHalf - yHfAxis.Phi());
+	rot1.RotateX(yHfAxis.Theta() - piHalf);
 	daughter *= rot1;
 	// rotate about yHfAxis so that daughter momentum is along z-axis
 	TRotation rot2;

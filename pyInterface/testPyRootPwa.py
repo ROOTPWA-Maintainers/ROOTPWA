@@ -73,12 +73,17 @@ def tPDTreadFile():
 	print
 do_test(tPDTreadFile, "Testing particleDataTable.readFile()")
 
+def tPDTiterator():
+	for part in particleTable:
+		assert(part.first == part.second.name)
+do_test(tPDTiterator, "Testing particleDataTable iterator")
+
 def tPDTentriesMatching():
 	pP = particleTable.entry("rho(770)0")
 	parts = pyRootPwa.core.particleDataTable.entriesMatching(pP, "allQn", 0, 0, [], [], [], False)
-	assert(len(parts) == 4)
+	assert(len(parts) == 5)
 	for part in parts:
-		assert(part.name[:part.name.find("(")] == "rho")
+		assert(part.name[:3] == "rho")
 do_test(tPDTentriesMatching, "Testing particleDataTable.entriesMatching()")
 
 def tPDDebug():
@@ -104,6 +109,11 @@ partProp = do_test(partPropTestConst, "Testing particleProperties constructor")
 def partPropTestCopyConst(): return pyRootPwa.core.particleProperties(partProp)
 partProp2 = do_test(partPropTestCopyConst, "Testing particleProperties copy constructor")
 
+def partPropChargeFromName():
+	tup = pyRootPwa.core.particleProperties.chargeFromName("bla+")
+	assert(tup[0] == 'bla' and tup[1] == 1)
+do_test(partPropChargeFromName, "Testing particleProperties::chargeFromName")
+
 def partPropTestOps():
 	assert(partProp == partProp2)
 	old_name = partProp2.name
@@ -118,7 +128,7 @@ print
 
 # ---------------------------------------------------------
 #
-#	particle	
+#	particle
 #
 # ---------------------------------------------------------
 
@@ -141,25 +151,25 @@ def partTestConsts():
 	pP = pyRootPwa.core.particleProperties()
 	pP.read("Delta(1910)+     Deltabar(1910)-  1.91        0.25        +1           3    0    0    0     0     1    +1     0")
 	t = pyRootPwa.ROOT.TVector3(1., 1., 1.)
-	
+
 	p3 = pyRootPwa.core.particle(pP)
 	p3 = pyRootPwa.core.particle(pP, -1)
 	p3 = pyRootPwa.core.particle(pP, -1, 0)
 	p3 = pyRootPwa.core.particle(pP, -1, 0, 0)
 	p3 = pyRootPwa.core.particle(pP, -1, 0, 0, t)
-	
+
 	p3 = pyRootPwa.core.particle("pi+")
 	p3 = pyRootPwa.core.particle("pi+", True)
 	p3 = pyRootPwa.core.particle("pi+", True, -1)
 	p3 = pyRootPwa.core.particle("pi+", True, -1, 0)
 	p3 = pyRootPwa.core.particle("pi+", True, -1, 0, 0)
 	p3 = pyRootPwa.core.particle("pi+", True, -1, 0, 0, t)
-	
+
 	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5)
 	p3.qnSummary()
 	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5, 6)
 	p3 = pyRootPwa.core.particle("pi-", 0, 1, 2, 3, 4, 5, 6, 7)
-do_test_raw(partTestConsts, "Testing particle other constructors")
+do_test(partTestConsts, "Testing particle other constructors")
 
 def partTestClone(): p2 = part.clone()
 do_test(partTestClone, "Testing particle.clone()")
@@ -366,8 +376,7 @@ print
 def isobDecVtxTestConstructor():
 	lz = pyRootPwa.ROOT.TLorentzVector(1., 1., 1., 1.)
 	part.lzVec = lz
-#	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, pyRootPwa.core.flatMassDependence())
-#	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, [0, 1, 2])
+	retval = pyRootPwa.core.isobarDecayVertex(part, part, part, 0, 0, pyRootPwa.core.flatMassDependence())
 	retval = pyRootPwa.core.isobarDecayVertex(part, part, part)
 	return retval
 isobDecVtx = do_test(isobDecVtxTestConstructor, "Testing isobarDecayVertex constructor")
@@ -423,8 +432,8 @@ do_test(isobarDecVtxTestS, "Testing isobarDecayVertex.S")
 def isobarDecVtxTestMDA(): assert(isobDecVtx.massDepAmplitude() == (1+0j))
 do_test(isobarDecVtxTestMDA, "Testing isobarDecayVertex.massDepAmplitude()")
 
-def isobarDecVtxTestMD(): mDname = isobDecVtx.massDependence().name() 
-do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()", True)
+def isobarDecVtxTestMD(): mDname = isobDecVtx.massDependence().name()
+do_test(isobarDecVtxTestMD, "Testing isobarDecayVertex.massDependence()")
 
 def isobarDecVtxTestSetMD():
 	isobDecVtx.setMassDependence(pyRootPwa.core.flatMassDependence())
@@ -573,11 +582,11 @@ do_test(diDiVtxTestbeam, "Testing diffractiveDissVertex.{beam/target/recoil}()")
 
 def diDiVtxTestiKD():
 	tCA = pyRootPwa.ROOT.TClonesArray("TObjString", 1)
-	tCA[0] = pyRootPwa.ROOT.TObjString("Kstar2(1430)2+") 
+	tCA[0] = pyRootPwa.ROOT.TObjString("Kstar2(1430)2+")
 	assert(diDiVtx.initKinematicsData(tCA))
 do_test(diDiVtxTestiKD, "Testing diffractiveDissVertex.initKinematicsData()")
 
-def diDiVtxTestiKD2(): 
+def diDiVtxTestiKD2():
 	print("\n")
 	assert(not diDiVtx.initKinematicsData("bla"))
 	print
@@ -614,6 +623,56 @@ print
 
 # ---------------------------------------------------------
 #
+#	waveDescription
+#
+# ---------------------------------------------------------
+
+def waveDescTestConst():
+	return pyRootPwa.core.waveDescription()
+waveDesc = do_test(waveDescTestConst, "Testing waveDescription constuctor")
+
+def waveDescTestReadKeyFile():
+	assert(waveDesc.parseKeyFile("./test.key"))
+	assert(waveDesc.keyFileParsed())
+do_test(waveDescTestReadKeyFile, "Testing waveDescription.parseKeyFile()")
+
+def waveDescTestConstuctTopo():
+	print('\n')
+	(result, topo) = waveDesc.constructDecayTopology()
+	print
+	assert(result)
+	return topo
+consistentIsobarTopo = do_test(waveDescTestConstuctTopo, "Testing waveDescription.constructDecayTopology()")
+
+def waveDescTestConstructAmplitude():
+	print('\n')
+	(result, amp) = waveDesc.constructAmplitude()
+	print
+	assert(result)
+	return amp
+consistentIsobarAmp = do_test(waveDescTestConstructAmplitude, "Testing waveDescription.constructAmplitude()")
+
+def waveDescWaveName():
+	assert(pyRootPwa.core.waveDescription.waveNameFromTopology(consistentIsobarTopo) == '1-1+00+rho31690=a21320-=rho770_21_pi-_22_pi+_23_pi-')
+do_test(waveDescWaveName, "Testing waveDescription::waveNameFromTopology()")
+
+def waveDescWaveNameLatex():
+	assert(pyRootPwa.core.waveDescription.waveLaTeXFromTopology(consistentIsobarTopo) == '1^{-}1^{+}0^{+}\\quad & \\rho_3^0(1690)\\rightarrow\\left\\{ a_2^-(1320)\\rightarrow\\left\\{ \\rho^0(770)\\ells{2}{1}\\pi^-\\right\\} \\ells{2}{2}\\pi^+\\right\\} \\ells{2}{3}\\pi^-')
+do_test(waveDescWaveNameLatex, "Testing waveDescription::waveLaTeXFromTopology()")
+
+def waveDescTestDebug():
+	old_debug = waveDesc.debugWaveDescription
+	waveDesc.debugWaveDescription = (not old_debug)
+	assert(waveDesc.debugWaveDescription == (not old_debug))
+	waveDesc.debugWaveDescription = old_debug
+do_test(waveDescTestDebug, "Testing waveDescription debug flag")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
 #	decayTopology
 #
 # ---------------------------------------------------------
@@ -638,36 +697,38 @@ do_test(dTTestnDV, "Testing decayTopology.nmbDecayVertices()")
 def dTTestnFP(): assert(decTo.nmbFsParticles() == 0)
 do_test(dTTestnFP, "Testing decayTopology.nmbFsParticles()")
 
-def dTTestnIFP(): assert(decTo.nmbIndistFsParticles() == {})
+def dTTestnIFP():
+	assert(decTo.nmbIndistFsParticles() == {})
+	assert(consistentIsobarTopo.nmbIndistFsParticles() == {'pi+': 2, 'pi-': 3})
 do_test(dTTestnIFP, "Testing decayTopology.nmbIndistFsParticles()")
 
 def dTTestfPIP(): assert(decTo.fsParticlesIntrinsicParity() == 1)
 do_test(dTTestfPIP, "Testing decayTopology.fsParticlesIntrinsicParity()")
 
-def dTTestsIEV(): print(decTo.spaceInvEigenValue())
-do_test(dTTestsIEV, "Testing decayTopology.spaceInvEigenValue()", True)
-# needs a consistent topology
+def dTTestsIEV(): assert(consistentIsobarTopo.spaceInvEigenValue() == -1)
+do_test(dTTestsIEV, "Testing decayTopology.spaceInvEigenValue()")
 
-def dTTestrEV(): print(decTo.reflectionEigenValue())
-do_test(dTTestrEV, "Testing decayTopology.reflectionEigenValue()", True)
-# needs a consistent topology
+def dTTestrEV(): assert(consistentIsobarTopo.reflectionEigenValue() == 1)
+do_test(dTTestrEV, "Testing decayTopology.reflectionEigenValue()")
 
 def dTTestfP(): assert(decTo.fsParticles() == [])
 do_test(dTTestfP, "Testing decayTopology.fsParticles()")
 
-def dTTestdV(): assert(decTo.decayVertices() == [])
+def dTTestdV():
+	assert(decTo.decayVertices() == [])
+	assert(len(consistentIsobarTopo.decayVertices()) == 4)
 do_test(dTTestdV, "Testing decayTopology.decayVertices()")
 
-def dTTestXpar(): print(decTo.XParticle())
-do_test(dTTestXpar, "Testing decayTopology.XParticle()", True)
-# needs a consistent topology
+def dTTestXpar(): assert(consistentIsobarTopo.XParticle().name == "X-")
+do_test(dTTestXpar, "Testing decayTopology.XParticle()")
 
 def dTTestprodVert(): assert(decTo.productionVertex() is None)
 do_test(dTTestprodVert, "Testing decayTopology.productionVertex()")
 
-def dTTestXDV(): print(decTo.XDecayVertex())
-do_test(dTTestXDV, "Testing decayTopology.XDecayVertex()", True)
-# needs a consistent topology
+def dTTestXDV():
+	vtx = consistentIsobarTopo.XDecayVertex()
+	assert(vtx.nmbInParticles == 1 and vtx.nmbOutParticles == 2)
+do_test(dTTestXDV, "Testing decayTopology.XDecayVertex()")
 
 def dTTesttransFSP():
 	L = pyRootPwa.ROOT.TLorentzRotation(1, 1, 1)
@@ -681,26 +742,28 @@ def dTTesttransFSPUnsupT():
 do_test(dTTesttransFSPUnsupT, "Testing decayTopology.transformFsParticles(UNSUPPORTED TYPE)")
 
 def dTTestisbla():
-	assert(not decTo.isProductionVertex(isobDecVtx))
-	assert(decTo.isDecayVertex(isobDecVtx))
-	assert(not decTo.isFsVertex(isobDecVtx))
-	assert(not decTo.isFsParticle(part))
+	assert(not consistentIsobarTopo.isProductionVertex(isobDecVtx))
+	assert(not consistentIsobarTopo.isDecayVertex(isobDecVtx))
+	assert(not consistentIsobarTopo.isFsVertex(isobDecVtx))
+	assert(not consistentIsobarTopo.isFsParticle(part))
+	assert(consistentIsobarTopo.isDecayVertex(consistentIsobarTopo.XDecayVertex()))
+	assert(consistentIsobarTopo.isProductionVertex(consistentIsobarTopo.productionVertex()))
+	assert(not consistentIsobarTopo.isFsVertex(consistentIsobarTopo.decayVertices()[0]))
+	assert(consistentIsobarTopo.isFsParticle(consistentIsobarTopo.fsParticles()[0]))
 do_test(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()")
 
 def dTTestfPInd():
 	assert(decTo.fsParticlesIndex(part))
 do_test(dTTestfPInd, "Testing decayTopology.fsParticlesIndex()")
 
-def tTTestCheckbla(): print(not decTo.checkTopology())
-do_test(tTTestCheckbla, "Testing decayTopology.checkTopology()", True)
-# needs a consistent topology
-
 def tTTestCheckCons(): assert(decTo.checkConsistency())
 do_test(tTTestCheckCons, "Testing decayTopology.checkConsistency()")
 
-def tTTestAdDec(): decTo.addDecay(decTo)
-do_test(tTTestAdDec, "Testing decayTopology.addDecay()", True)
-# needs a consistent topology
+def tTTestAdDec():
+	waste = consistentIsobarTopo.clone()
+	add0r = pyRootPwa.core.isobarDecayTopology()
+	waste.addDecay(add0r)
+do_test(tTTestAdDec, "Testing decayTopology.addDecay()")
 
 def tTTestSPV(): decTo.setProductionVertex(diDiVtx)
 do_test(tTTestSPV, "Testing decayTopology.setProductionVertex()")
@@ -786,45 +849,46 @@ do_test(iDTTestClone, "Testing isobarDecayTopology.clone()")
 def iDTTestiDV(): assert(isoDecTop.isobarDecayVertices() == [])
 do_test(iDTTestiDV, "Testing isobarDecayTopology.isobarDecayVertices()")
 
-def iDTTestiXDV(): print(isoDecTop.XIsobarDecayVertex())
-do_test(iDTTestiXDV, "Testing isobarDecayTopology.XIsobarDecayVertex()", True)
-# need a consistent topology for that
+def iDTTestiXDV(): assert(consistentIsobarTopo.XIsobarDecayVertex().name() == 'isobarDecayVertex')
+do_test(iDTTestiXDV, "Testing isobarDecayTopology.XIsobarDecayVertex()")
 
-def iDTTestcC(): assert(isoDecTop.checkTopology())
-do_test(iDTTestcC, "Testing isobareDecayTopology.checkTopology()", True)
+def iDTTestcC(): assert(consistentIsobarTopo.checkTopology())
+do_test(iDTTestcC, "Testing isobareDecayTopology.checkTopology()")
 
 def iDTTestcCon(): assert(isoDecTop.checkConsistency())
 do_test(iDTTestcCon, "Testing isobarDecayTopology.checkConsistency()")
 
-def iDTTestAddDec(): isoDecTop.addDecay(isoDecTop)
-do_test(iDTTestAddDec, "Testing isobarDecayTopology.addDecay()", True)
-# need a consistent topology for that
+def iDTTestSubDecay(): return(consistentIsobarTopo.subDecay(consistentIsobarTopo.XIsobarDecayVertex()))
+do_test(iDTTestSubDecay, "Testing isobarDecayTopology.subDecay()", True)
+# problems with getting the right vertex as argument
 
-def iDTTestJDD(): pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, isoDecTop, isoDecTop)
+def iDTTestJDD(): pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, first, consistentIsobarTopo)
 do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()", True)
-# need a consistent topology for that
+# should be possible to test once isobarDecayTopology.subDecay() works?
 
-def iDTTestCILV(): print(isoDecTop.calcIsobarLzVec())
-do_test(iDTTestCILV, "Tessting isobarDecayTopology.calcIsobarLzVec()", True)
-# need a consistent topology for that
+def iDTTestCILV(): assert(consistentIsobarTopo.calcIsobarLzVec() == pyRootPwa.ROOT.TLorentzVector(0., 0., 0., 0.697850))
+do_test(iDTTestCILV, "Testing isobarDecayTopology.calcIsobarLzVec()")
 
-def iDTTestCIC(): print(isoDecTop.calcIsobarCharges())
-do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarCharges()", True)
-# need a consistent topology for that
+def iDTTestCIC(): consistentIsobarTopo.calcIsobarCharges()
+do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarCharges()")
 
-def iDTTestCIBN(): print(isoDecTop.calcIsobarBaryonNmbs())
-do_test(iDTTestCIC, "Testing isobarDecayTopology.calcIsobarBaryonNmbs()", True)
-# need a consistent topology for that
+def iDTTestCIBN(): consistentIsobarTopo.calcIsobarBaryonNmbs()
+do_test(iDTTestCIBN, "Testing isobarDecayTopology.calcIsobarBaryonNmbs()")
 
-def iDTTestWGV(): print(isoDecTop.writeGraphViz())
-do_test(iDTTestWGV, "Testing isobarDecayTopology.writeGraphViz()", True)
-# need a consistent topology for that
+def iDTTestWGV():
+	output = consistentIsobarTopo.writeGraphViz()
+	test = 'digraph "\\"X-[1-(1+)0+]\\"" {\nnode [\nfillcolor=white, style=filled];\n0[label=diffractiveDissVertex, shape=box];\n1[label="isobarDecayVertex: L = 1, S = 0"];\n2[label="isobarDecayVertex: L = 2, S = 1"];\n3[label="isobarDecayVertex: L = 2, S = 2"];\n4[label="isobarDecayVertex: L = 2, S = 3"];\n5[label=fsVertex, shape=diamond, style="dashed,filled"];\n6[label=fsVertex, shape=diamond, style="dashed,filled"];\n7[label=fsVertex, shape=diamond, style="dashed,filled"];\n8[label=fsVertex, shape=diamond, style="dashed,filled"];\n9[label=fsVertex, shape=diamond, style="dashed,filled"];\n2 -> 1[label="rho(770)0[1+(1--)]"];\n3 -> 2[label="a2(1320)-[1-(2+)]"];\n0 -> 4[label="X-[1-(1+)0+]"];\n4 -> 3[label="rho3(1690)0[1+(3--)]"];\n4 -> 5[label="pi-[1-(0-)]"];\n3 -> 6[label="pi+[1-(0-)]"];\n2 -> 7[label="pi-[1-(0-)]"];\n1 -> 8[label="pi+[1-(0-)]"];\n1 -> 9[label="pi-[1-(0-)]"];\n}\n'
+	assert(output == test)
+do_test(iDTTestWGV, "Testing isobarDecayTopology.writeGraphViz()")
 
 def iDTTestWGVtoFile():
-	print(isoDecTop.writeGraphViz("test.out"))
-	# Check if the file is there and if it is, remove it
-do_test(iDTTestWGVtoFile, "Testing isobarDecayTopology.writeGraphViz(outFileNmae)", True)
-# need a consistent topology for that
+	result = consistentIsobarTopo.writeGraphViz("test.out")
+	if os.path.isfile("test.out"):
+		os.system("rm -f test.out")
+	else:
+		assert(False)
+	assert(result)
+do_test(iDTTestWGVtoFile, "Testing isobarDecayTopology.writeGraphViz(outFileNmae)")
 
 def iDTTestDebug():
 	old_debug = isoDecTop.debugIsobarDecayTopology
@@ -882,6 +946,13 @@ iHA = do_test(iHATestConst, "Testing isobarHelicityAmplitude constructors")
 
 def iHATestName(): assert(iHA.name() == "isobarHelicityAmplitude")
 do_test(iHATestName, "Testing isobarHelicityAmplitude.name()")
+
+def iHATTesthfTransform():
+	vec = pyRootPwa.ROOT.TLorentzVector(0., 1., 2., 3.)
+	rot1 = pyRootPwa.core.isobarHelicityAmplitude.hfTransform(vec)
+	rot2 = iHA.hfTransform(vec)
+	assert(rot1 == rot2)
+do_test(iHATTesthfTransform, "Testing isobarHelicityAmplitude::hfTransform")
 
 def iHATestDebug():
 	old_debug = iHA.debugIsobarHelicityAmplitude

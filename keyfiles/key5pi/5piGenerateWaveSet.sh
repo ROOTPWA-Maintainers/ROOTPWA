@@ -51,7 +51,7 @@ then
 		for TEMPLATE_KEY_FILE in ${TEMPLATE_KEY_FILES}
 		do
 				KEY_DIR=${TEMPLATE_KEY_FILE%.template.key}
-				LOG_FILE=${DEST_DIR}/${TEMPLATE_KEY_FILE}.check.log
+				LOG_FILE=${KEY_DIR}/${TEMPLATE_KEY_FILE}.check.log
 				CMD="checkKeyFile -d \"${TEST_DATA}\" -p \"${PARTICLE_DATA_TABLE}\" \"${KEY_DIR}\"/*.key &> \"${LOG_FILE}\""
 				echo "${CMD}"
 				eval ${CMD}

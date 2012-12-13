@@ -4,61 +4,50 @@ namespace bp = boost::python;
 
 namespace {
 
-	struct ampIntegralMatrixWrapper : public rpwa::ampIntegralMatrix,
-	                                         bp::wrapper<rpwa::ampIntegralMatrix>
-	{
-
-		ampIntegralMatrixWrapper()
-			: rpwa::ampIntegralMatrix(),
-			  bp::wrapper<rpwa::ampIntegralMatrix>() { };
-
-		ampIntegralMatrixWrapper(const rpwa::ampIntegralMatrix& integral)
-			: rpwa::ampIntegralMatrix(integral),
-			  bp::wrapper<rpwa::ampIntegralMatrix>() { };
 /*
-		const bp::list waveDescriptions__() const {
-			return bp::list(rpwa::ampIntegralMatrix());
-		};
+	const bp::list ampIntegralMatrix_waveDescriptions(const rpwa::ampIntegralMatrix& self) {
+		return bp::list(self());
+	};
 */
-		const rpwa::waveDescription* waveDesc__1(const unsigned int waveIndex) {
-			return rpwa::ampIntegralMatrix::waveDesc(waveIndex);
-		};
+	const rpwa::waveDescription& ampIntegralMatrix_waveDesc1(const rpwa::ampIntegralMatrix& self, const unsigned int waveIndex) {
+		return *(self.waveDesc(waveIndex));
+	};
 
-		const rpwa::waveDescription* waveDesc__2(const std::string& waveName) {
-			return rpwa::ampIntegralMatrix::waveDesc(waveName);
-		};
+	const rpwa::waveDescription& ampIntegralMatrix_waveDesc2(const rpwa::ampIntegralMatrix& self, const std::string& waveName) {
+		return *(self.waveDesc(waveName));
+	};
 
-		std::complex<double> element__1(const unsigned int waveIndexI,
-		                                const unsigned int waveIndexJ) const
-		{
-			return rpwa::ampIntegralMatrix::element(waveIndexI, waveIndexJ);
-		};
+	std::complex<double> ampIntegralMatrix_element1(const rpwa::ampIntegralMatrix& self,
+	                                                const unsigned int waveIndexI,
+	                                                const unsigned int waveIndexJ)
+	{
+		return self.element(waveIndexI, waveIndexJ);
+	};
 
-		std::complex<double> element__2(const std::string& waveNameI,
-		                                const std::string& waveNameJ) const
-		{
-			return rpwa::ampIntegralMatrix::element(waveNameI, waveNameJ);
-		};
+	std::complex<double> ampIntegralMatrix_element2(const rpwa::ampIntegralMatrix& self,
+	                                                const std::string& waveNameI,
+	                                                const std::string& waveNameJ)
+	{
+		return self.element(waveNameI, waveNameJ);
+	};
 
-		bool writeAscii__(const std::string& outFileName) const {
-			return rpwa::ampIntegralMatrix::writeAscii(outFileName);
-		};
+	bool ampIntegralMatrix_writeAscii(const rpwa::ampIntegralMatrix& self, const std::string& outFileName) {
+		return self.writeAscii(outFileName);
+	};
 
-		bool readAscii__(const std::string& inFileName) {
-			return rpwa::ampIntegralMatrix::readAscii(inFileName);
-		};
+	bool ampIntegralMatrix_readAscii(rpwa::ampIntegralMatrix& self, const std::string& inFileName) {
+		return self.readAscii(inFileName);
+	};
 
-		int Write__(std::string name) {
-			return this->Write(name.c_str());
-		};
-
+	int ampIntegralMatrix_Write(const rpwa::ampIntegralMatrix& self, std::string name) {
+		return self.Write(name.c_str());
 	};
 
 }
 
 void rpwa::py::exportAmpIntegralMatrix() {
 
-	bp::class_<ampIntegralMatrixWrapper>("ampIntegralMatrix")
+	bp::class_<rpwa::ampIntegralMatrix>("ampIntegralMatrix")
 
 		.def(bp::init<rpwa::ampIntegralMatrix&>())
 
@@ -75,43 +64,43 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def(bp::self *= double())
 		.def(bp::self /= double())
 
-		.def("clear", &ampIntegralMatrixWrapper::clear)
-		.def("nmbWaves", &ampIntegralMatrixWrapper::nmbWaves)
-		.def("nmbEvents", &ampIntegralMatrixWrapper::nmbEvents)
-		.def("setNmbEvents", &ampIntegralMatrixWrapper::setNmbEvents)
-		.def("containsWave", &ampIntegralMatrixWrapper::containsWave)
-		.def("waveIndex", &ampIntegralMatrixWrapper::waveIndex)
+		.def("clear", &rpwa::ampIntegralMatrix::clear)
+		.def("nmbWaves", &rpwa::ampIntegralMatrix::nmbWaves)
+		.def("nmbEvents", &rpwa::ampIntegralMatrix::nmbEvents)
+		.def("setNmbEvents", &rpwa::ampIntegralMatrix::setNmbEvents)
+		.def("containsWave", &rpwa::ampIntegralMatrix::containsWave)
+		.def("waveIndex", &rpwa::ampIntegralMatrix::waveIndex)
 		.def(
 			"waveName"
-			, &ampIntegralMatrixWrapper::waveName
-			, bp::return_value_policy<bp::copy_const_reference>()
+			, &rpwa::ampIntegralMatrix::waveName
+			, bp::return_value_policy<bp::return_by_value>()
 		)
 //		Disabled because of missing == operator in rpwa::waveDescription
 //		See also http://stackoverflow.com/questions/10680691/why-do-i-need-comparison-operators-in-boost-python-vector-indexing-suite
-//		.def("waveDescriptions", &ampIntegralMatrixWrapper::waveDescriptions__)
+//		.def("waveDescriptions", &ampIntegralMatrix_waveDescriptions)
 		.def(
 			"waveDesc"
-			, &ampIntegralMatrixWrapper::waveDesc__1
-			, bp::return_value_policy<bp::return_by_value>()
+			, &ampIntegralMatrix_waveDesc1
+			, bp::return_value_policy<bp::copy_const_reference>()
 		)
 		.def(
 			"waveDesc"
-			, &ampIntegralMatrixWrapper::waveDesc__2
-			, bp::return_value_policy<bp::return_by_value>()
+			, &ampIntegralMatrix_waveDesc2
+			, bp::return_value_policy<bp::copy_const_reference>()
 		)
-		.def("allWavesHaveDesc", &ampIntegralMatrixWrapper::allWavesHaveDesc)
+		.def("allWavesHaveDesc", &rpwa::ampIntegralMatrix::allWavesHaveDesc)
 
 //		Commenting this until it is decided how the boost::multi_array should be handled in python
-//		.def("matrix", &ampIntegralMatrixWrapper::matrix)
+//		.def("matrix", &rpwa::ampIntegralMatrix::matrix)
 
-		.def("element", &ampIntegralMatrixWrapper::element__1)
-		.def("element", &ampIntegralMatrixWrapper::element__2)
-		.def("renormalize", &ampIntegralMatrixWrapper::renormalize)
-		.def("writeAscii", &ampIntegralMatrixWrapper::writeAscii__)
-		.def("readAscii", &ampIntegralMatrixWrapper::readAscii__)
+		.def("element", &ampIntegralMatrix_element1)
+		.def("element", &ampIntegralMatrix_element2)
+		.def("renormalize", &rpwa::ampIntegralMatrix::renormalize)
+		.def("writeAscii", &ampIntegralMatrix_writeAscii)
+		.def("readAscii", &ampIntegralMatrix_readAscii)
 
-		.def("Write", &ampIntegralMatrixWrapper::Write__)
+		.def("Write", &ampIntegralMatrix_Write)
 
-		.add_static_property("debugAmpIntegralMatrix", &ampIntegralMatrixWrapper::debug, &ampIntegralMatrixWrapper::setDebug);
+		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug);
 
 };

@@ -26,36 +26,6 @@ namespace {
 			: rpwa::particleProperties(partName, isospin, G, J, P, C),
 			  bp::wrapper<rpwa::particleProperties>() { };
 
-		bool equal__(const bp::object& rhsObj) {
-			bp::extract<particleProperties> get_partProp(rhsObj);
-			if(get_partProp.check()) {
-				return (*(this) == get_partProp());
-			}
-			bp::tuple rhs = bp::extract<bp::tuple>(rhsObj);
-			rpwa::particleProperties rhsProp = bp::extract<rpwa::particleProperties>(rhs[0]);
-			std::string rhsString = bp::extract<std::string>(rhs[1]);
-			std::pair<rpwa::particleProperties, std::string> rhsPair;
-			rhsPair.first = rhsProp;
-			rhsPair.second = rhsString;
-			return (*(this) == rhsPair);
-		}
-
-		bool nequal__(const bp::object& rhsObj) {
-			return not (*(this) == rhsObj);
-		}
-
-		bool hasDecay(bp::object& pyDaughters) const {
-			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
-			std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
-			return rpwa::particleProperties::hasDecay(daughters);
-		}
-
-		void addDecayMode(bp::object& pyDaughters) {
-			bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
-			std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
-			rpwa::particleProperties::addDecayMode(daughters);
-		}
-
 		std::string qnSummary() const {
 			if(bp::override qnSummary = this->get_override("qnSummary")) {
 				return qnSummary();
@@ -67,21 +37,53 @@ namespace {
 			return rpwa::particleProperties::qnSummary();
 		}
 
-		bool read__(bp::object& pyLine) {
-			std::string strLine = bp::extract<std::string>(pyLine);
-			std::istringstream sstrLine(strLine, std::istringstream::in);
-			return rpwa::particleProperties::read(sstrLine);
-		}
-
-		static bp::tuple chargeFromName__(const std::string& name) {
-			int charge;
-			std::string new_name = rpwa::particleProperties::chargeFromName(name, charge);
-			return bp::make_tuple(new_name, charge);
-		}
-
 	};
 
+
+	bool particleProperties_equal(const rpwa::particleProperties& self, const bp::object& rhsObj) {
+		bp::extract<rpwa::particleProperties> get_partProp(rhsObj);
+		if(get_partProp.check()) {
+			return (self == get_partProp());
+		}
+		bp::tuple rhs = bp::extract<bp::tuple>(rhsObj);
+		rpwa::particleProperties rhsProp = bp::extract<rpwa::particleProperties>(rhs[0]);
+		std::string rhsString = bp::extract<std::string>(rhs[1]);
+		std::pair<rpwa::particleProperties, std::string> rhsPair;
+		rhsPair.first = rhsProp;
+		rhsPair.second = rhsString;
+		return (self == rhsPair);
+		}
+
+	bool particleProperties_nequal(const rpwa::particleProperties& self, const bp::object& rhsObj) {
+		return not (self == rhsObj);
+	}
+
+	bool particleProperties_hasDecay(const rpwa::particleProperties& self, bp::object& pyDaughters) {
+		bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
+		std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
+		return self.hasDecay(daughters);
+	}
+
+	void particleProperties_addDecayMode(rpwa::particleProperties& self, bp::object& pyDaughters) {
+		bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
+		std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
+		self.addDecayMode(daughters);
+	}
+
+	bool particleProperties_read(rpwa::particleProperties& self, bp::object& pyLine) {
+		std::string strLine = bp::extract<std::string>(pyLine);
+		std::istringstream sstrLine(strLine, std::istringstream::in);
+		return self.read(sstrLine);
+	}
+
+	bp::tuple particleProperties_chargeFromName(const std::string& name) {
+		int charge;
+		std::string new_name = rpwa::particleProperties::chargeFromName(name, charge);
+		return bp::make_tuple(new_name, charge);
+	}
+
 }
+
 
 void rpwa::py::exportParticleProperties()
 {
@@ -91,70 +93,71 @@ void rpwa::py::exportParticleProperties()
 		.def(bp::init<particlePropertiesWrapper&>())
 		.def(bp::init<std::string, int, int, int, int, int>())
 
-		.def("__eq__", &particlePropertiesWrapper::equal__)
-		.def("__neq__", &particlePropertiesWrapper::nequal__)
+		.def("__eq__", &particleProperties_equal)
+		.def("__neq__", &particleProperties_nequal)
 
 		.def(bp::self_ns::str(bp::self))
 
-		.add_property("name", &particlePropertiesWrapper::name, &particlePropertiesWrapper::setName)
-		.add_property("bareName", &particlePropertiesWrapper::bareName)
-		.add_property("antiPartName", &particlePropertiesWrapper::antiPartName, &particlePropertiesWrapper::setAntiPartName)
-		.add_property("antiPartBareName", &particlePropertiesWrapper::antiPartBareName)
-		.add_property("charge", &particlePropertiesWrapper::charge, &particlePropertiesWrapper::setCharge)
-		.add_property("mass", &particlePropertiesWrapper::mass, &particlePropertiesWrapper::setMass)
-		.add_property("mass2", &particlePropertiesWrapper::mass2)
-		.add_property("width", &particlePropertiesWrapper::width, &particlePropertiesWrapper::setWidth)
-		.add_property("baryonNmb", &particlePropertiesWrapper::baryonNmb, &particlePropertiesWrapper::setBaryonNmb)
-		.add_property("isospin", &particlePropertiesWrapper::isospin, &particlePropertiesWrapper::setIsospin)
-		.add_property("isospinProj", &particlePropertiesWrapper::isospinProj/*, &particlePropertiesWrapper::setIsospinProj*/) //<- Uncomment as soon as branch isospin-sym is reintegrated
-		.add_property("strangeness", &particlePropertiesWrapper::strangeness, &particlePropertiesWrapper::setStrangeness)
-		.add_property("charm", &particlePropertiesWrapper::charm, &particlePropertiesWrapper::setCharm)
-		.add_property("beauty", &particlePropertiesWrapper::beauty, &particlePropertiesWrapper::setBeauty)
-		.add_property("G", &particlePropertiesWrapper::G, &particlePropertiesWrapper::setG)
-		.add_property("J", &particlePropertiesWrapper::J, &particlePropertiesWrapper::setJ)
-		.add_property("P", &particlePropertiesWrapper::P, &particlePropertiesWrapper::setP)
-		.add_property("C", &particlePropertiesWrapper::C, &particlePropertiesWrapper::setC)
+		.add_property("name", &rpwa::particleProperties::name, &rpwa::particleProperties::setName)
+		.add_property("bareName", &rpwa::particleProperties::bareName)
+		.add_property("antiPartName", &rpwa::particleProperties::antiPartName, &rpwa::particleProperties::setAntiPartName)
+		.add_property("antiPartBareName", &rpwa::particleProperties::antiPartBareName)
+		.add_property("charge", &rpwa::particleProperties::charge, &rpwa::particleProperties::setCharge)
+		.add_property("mass", &rpwa::particleProperties::mass, &rpwa::particleProperties::setMass)
+		.add_property("mass2", &rpwa::particleProperties::mass2)
+		.add_property("width", &rpwa::particleProperties::width, &rpwa::particleProperties::setWidth)
+		.add_property("baryonNmb", &rpwa::particleProperties::baryonNmb, &rpwa::particleProperties::setBaryonNmb)
+		.add_property("isospin", &rpwa::particleProperties::isospin, &rpwa::particleProperties::setIsospin)
+		.add_property("isospinProj", &rpwa::particleProperties::isospinProj, &rpwa::particleProperties::setIsospinProj)
+		.add_property("strangeness", &rpwa::particleProperties::strangeness, &rpwa::particleProperties::setStrangeness)
+		.add_property("charm", &rpwa::particleProperties::charm, &rpwa::particleProperties::setCharm)
+		.add_property("beauty", &rpwa::particleProperties::beauty, &rpwa::particleProperties::setBeauty)
+		.add_property("G", &rpwa::particleProperties::G, &rpwa::particleProperties::setG)
+		.add_property("J", &rpwa::particleProperties::J, &rpwa::particleProperties::setJ)
+		.add_property("P", &rpwa::particleProperties::P, &rpwa::particleProperties::setP)
+		.add_property("C", &rpwa::particleProperties::C, &rpwa::particleProperties::setC)
 
-		.add_property("isXParticle", &particlePropertiesWrapper::isXParticle)
-		.add_property("isMeson", &particlePropertiesWrapper::isMeson)
-		.add_property("isBaryon", &particlePropertiesWrapper::isBaryon)
-		.add_property("isLepton", &particlePropertiesWrapper::isLepton)
-		.add_property("isPhoton", &particlePropertiesWrapper::isPhoton)
-		.add_property("isItsOwnAntiPart", &particlePropertiesWrapper::isItsOwnAntiPart)
-		.add_property("isSpinExotic", &particlePropertiesWrapper::isSpinExotic)
+		.add_property("isXParticle", &rpwa::particleProperties::isXParticle)
+		.add_property("isMeson", &rpwa::particleProperties::isMeson)
+		.add_property("isBaryon", &rpwa::particleProperties::isBaryon)
+		.add_property("isLepton", &rpwa::particleProperties::isLepton)
+		.add_property("isPhoton", &rpwa::particleProperties::isPhoton)
+		.add_property("isItsOwnAntiPart", &rpwa::particleProperties::isItsOwnAntiPart)
+		.add_property("isSpinExotic", &rpwa::particleProperties::isSpinExotic)
 
 		.def(
 			"fillFromDataTable"
-			, &particlePropertiesWrapper::fillFromDataTable
+			, &rpwa::particleProperties::fillFromDataTable
 			, (bp::arg("name"), bp::arg("warnIfNotExistent")=(bool const)(true))
 		)
 
-		.add_property("nmbDecays", &particlePropertiesWrapper::nmbDecays)
-		.def("hasDecay", &particlePropertiesWrapper::hasDecay)
-		.def("addDecayMode", &particlePropertiesWrapper::addDecayMode)
+		.add_property("nmbDecays", &rpwa::particleProperties::nmbDecays)
+		.def("hasDecay", &particleProperties_hasDecay)
+		.def("addDecayMode", &particleProperties_addDecayMode)
 
-		.def("setSCB", &particlePropertiesWrapper::setSCB)
-		.def("setIGJPC", &particlePropertiesWrapper::setIGJPC)
+		.def("setSCB", &rpwa::particleProperties::setSCB)
+		.def("setIGJPC", &rpwa::particleProperties::setIGJPC)
 
 
-		.add_property("antiPartProperties", &particlePropertiesWrapper::antiPartProperties)
+		.add_property("antiPartProperties", &rpwa::particleProperties::antiPartProperties)
 
 		.def("qnSummary", &particlePropertiesWrapper::qnSummary, &particlePropertiesWrapper::default_qnSummary)
+		.def("qnSummary", &rpwa::particleProperties::qnSummary)
 
-		.add_property("bareNameLaTeX", &particlePropertiesWrapper::bareNameLaTeX)
+		.add_property("bareNameLaTeX", &rpwa::particleProperties::bareNameLaTeX)
 
-		.def("read", &particlePropertiesWrapper::read__)
+		.def("read", &particleProperties_read)
 
-		.def("nameWithCharge", &particlePropertiesWrapper::nameWithCharge)
+		.def("nameWithCharge", &rpwa::particleProperties::nameWithCharge)
 		.staticmethod("nameWithCharge")
 
-		.def("chargeFromName", &particlePropertiesWrapper::chargeFromName__)
+		.def("chargeFromName", &particleProperties_chargeFromName)
 		.staticmethod("chargeFromName")
 
-		.def("stripChargeFromName", &particlePropertiesWrapper::stripChargeFromName)
+		.def("stripChargeFromName", &rpwa::particleProperties::stripChargeFromName)
 		.staticmethod("stripChargeFromName")
 
-		.add_static_property("debugParticleProperties", &particlePropertiesWrapper::debug, &particlePropertiesWrapper::setDebug);
+		.add_static_property("debugParticleProperties", &rpwa::particleProperties::debug, &rpwa::particleProperties::setDebug);
 
 };
 

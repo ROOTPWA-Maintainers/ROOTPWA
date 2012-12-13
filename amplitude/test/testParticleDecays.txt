@@ -7,6 +7,9 @@
 // Description:
 //      allowed decay modes for isobars in the pi-pi+pi-pi+pi- system
 //
+//      !NOTE! L and S have to be specified in units of hbar / 2 so
+//             that they are always integer
+//
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -21,8 +24,22 @@ particleDecayList = (
 // two-pion decays
 	{ name = "sigma0";
 		decays = (
-			{products = ["pi-", "pi+"]; L = 0; S = 1; },
-			{products = ["pi0", "pi0"]; L = 2; }
+			{products = ["pi-", "pi+"];},
+			{products = ["pi-", "pi+"]; L = 0;},
+			{products = ["pi-", "pi+"]; L = 0;},
+			{products = ["pi-", "pi+"]; L = 1;},
+			{products = ["pi-", "pi+"]; S = 0;},
+			{products = ["pi-", "pi+"]; S = 0;},
+			{products = ["pi-", "pi+"]; S = 1;},
+			{products = ["pi-", "pi+"]; L = 0; S = 0;},
+			{products = ["pi-", "pi+"]; L = 0; S = 1;},
+			{products = ["pi-", "pi+"]; L = 1; S = 0;},
+			{products = ["pi-", "pi+"]; L = 1; S = 1;},
+			{products = ["pi-", "pi+"]; L = 1; S = 1;},
+			{products = ["pi0", "pi0"];},
+			{products = ["pi0", "pi0"]; L = 0;},
+			{products = ["pi0", "pi0"]; S = 0;},
+			{products = ["pi0", "pi0"]; L = 0; S = 0;}
 		);
 	},
 	{ name = "rho(770)0";
@@ -32,7 +49,10 @@ particleDecayList = (
 	},
 	{ name = "rho(770)-";
 		decays = (
-			{products = ["pi-", "pi0"];}
+			{products = ["pi-", "pi0"];},
+			{products = ["pi-", "pi0"]; L = 1;},
+			{products = ["pi-", "pi0"]; S = 0;},
+			{products = ["pi-", "pi0"]; L = 1; S = 0;}
 		);
 	},
 	{ name = "rho(770)+";
@@ -65,7 +85,10 @@ particleDecayList = (
 // three-pion decays
 	{ name = "a1(1260)-";
 		decays = (
-			{products = ["pi-", "rho(770)0"];},
+		  // {products = ["pi-", "rho(770)0"];},
+		  // {products = ["pi-", "rho(770)0"]; L = 0;},
+			// {products = ["pi-", "rho(770)0"]; L = 4;},
+			{products = ["pi-", "rho(770)0"]; L = 4; S = 2; },
 			{products = ["pi-", "sigma0"   ];}
 		);
 	},

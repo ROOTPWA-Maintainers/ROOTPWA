@@ -55,27 +55,6 @@ namespace {
 			return rpwa::interactionVertex::addOutParticle(part);
 		};
 
-		void transformOutParticles(PyObject* pyRotation) {
-			TLorentzRotation* L = rpwa::py::convertFromPy<TLorentzRotation*>(pyRotation);
-			if(L == NULL) {
-				printErr<<"Got invalid input when executing rpwa::interactionVertex()."<<std::endl;
-			} else {
-				return rpwa::interactionVertex::transformOutParticles(*L);
-			}
-		};
-
-		bp::list inParticles() {
-			std::vector<rpwa::particlePtr> retVec = rpwa::interactionVertex::inParticles();
-			bp::object iter = bp::iterator<std::vector<rpwa::particlePtr> >()(retVec);
-			return bp::list(iter);
-		};
-
-		bp::list outParticles() {
-			std::vector<rpwa::particlePtr> retVec = rpwa::interactionVertex::outParticles();
-			bp::object iter = bp::iterator<std::vector<rpwa::particlePtr> >()(retVec);
-			return bp::list(iter);
-		};
-
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
@@ -87,6 +66,27 @@ namespace {
 			return rpwa::interactionVertex::name();
 		};
 
+	};
+
+	void interactionVertex_transformOutParticles(rpwa::interactionVertex& self, PyObject* pyRotation) {
+		TLorentzRotation* L = rpwa::py::convertFromPy<TLorentzRotation*>(pyRotation);
+		if(L == NULL) {
+			printErr<<"Got invalid input when executing rpwa::interactionVertex()."<<std::endl;
+		} else {
+			return self.transformOutParticles(*L);
+		}
+	};
+
+	bp::list interactionVertex_inParticles(const rpwa::interactionVertex& self) {
+		std::vector<rpwa::particlePtr> retVec = self.inParticles();
+		bp::object iter = bp::iterator<std::vector<rpwa::particlePtr> >()(retVec);
+		return bp::list(iter);
+	};
+
+	bp::list interactionVertex_outParticles(const rpwa::interactionVertex& self) {
+		std::vector<rpwa::particlePtr> retVec = self.outParticles();
+		bp::object iter = bp::iterator<std::vector<rpwa::particlePtr> >()(retVec);
+		return bp::list(iter);
 	};
 
 }
@@ -101,27 +101,31 @@ void rpwa::py::exportInteractionVertex() {
 
 		.def(
 			"clone"
-			, &interactionVertexWrapper::clone
+			, &rpwa::interactionVertex::clone
 			, (bp::arg("cloneInParticles")=false,
 			   bp::arg("cloneOutParticles")=false)
 		)
 
 		.def("clear", &interactionVertexWrapper::clear, &interactionVertexWrapper::default_clear)
+		.def("clear", &rpwa::interactionVertex::clear)
 
 		.def("addInParticle", &interactionVertexWrapper::addInParticle, &interactionVertexWrapper::default_addInParticle)
+		.def("addInParticle", &rpwa::interactionVertex::addInParticle)
 		.def("addOutParticle", &interactionVertexWrapper::addOutParticle, &interactionVertexWrapper::default_addOutParticle)
+		.def("addOutParticle", &rpwa::interactionVertex::addOutParticle)
 
-		.def("transformOutParticles", &interactionVertexWrapper::transformOutParticles)
+		.def("transformOutParticles", &interactionVertex_transformOutParticles)
 
-		.def("inParticles", &interactionVertexWrapper::inParticles)
-		.def("outParticles", &interactionVertexWrapper::outParticles)
+		.def("inParticles", &interactionVertex_inParticles)
+		.def("outParticles", &interactionVertex_outParticles)
 
-		.add_property("nmbInParticles", &interactionVertexWrapper::nmbInParticles)
-		.add_property("nmbOutParticles", &interactionVertexWrapper::nmbOutParticles)
+		.add_property("nmbInParticles", &rpwa::interactionVertex::nmbInParticles)
+		.add_property("nmbOutParticles", &rpwa::interactionVertex::nmbOutParticles)
 
 		.def("name", &interactionVertexWrapper::name, &interactionVertexWrapper::default_name)
+		.def("name", &rpwa::interactionVertex::name)
 
-		.add_static_property("debugInteractionVertex", &interactionVertexWrapper::debug, &interactionVertexWrapper::setDebug);
+		.add_static_property("debugInteractionVertex", &rpwa::interactionVertex::debug, &rpwa::interactionVertex::setDebug);
 
 	bp::register_ptr_to_python<rpwa::interactionVertexPtr>();
 

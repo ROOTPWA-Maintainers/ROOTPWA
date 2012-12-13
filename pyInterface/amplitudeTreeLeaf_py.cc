@@ -1,40 +1,49 @@
 #include "amplitudeTreeLeaf_py.h"
 
+#include<TTree.h>
+
+#include<reportingUtils.hpp>
+#include "rootConverters_py.h"
+
 namespace bp = boost::python;
 
 namespace {
 
-	struct amplitudeTreeLeafWrapper : public rpwa::amplitudeTreeLeaf,
-	                                         bp::wrapper<rpwa::amplitudeTreeLeaf>
-	{
-	
-		amplitudeTreeLeafWrapper()
-			: rpwa::amplitudeTreeLeaf(),
-			  bp::wrapper<rpwa::amplitudeTreeLeaf>() { };
-
-		amplitudeTreeLeafWrapper(const rpwa::amplitudeTreeLeaf& ampTreeLeaf)
-			: rpwa::amplitudeTreeLeaf(ampTreeLeaf),
-			  bp::wrapper<rpwa::amplitudeTreeLeaf>() { };
-
-		int Write__(std::string name) {
-			return this->Write(name.c_str());
-		};
-
-		const std::complex<double>& incohSubAmp__1(const unsigned int index = 0) {
-			return rpwa::amplitudeTreeLeaf::incohSubAmp(index);
-		};
-
-		const std::complex<double>& incohSubAmp__2(const std::string& subAmpLabel) {
-			return rpwa::amplitudeTreeLeaf::incohSubAmp(subAmpLabel);
-		};
-
+	int amplitudeTreeLeaf_Write(const rpwa::amplitudeTreeLeaf& self, std::string name) {
+		return self.Write(name.c_str());
 	};
+
+	const std::complex<double>& amplitudeTreeLeaf_incohSubAmp1(const rpwa::amplitudeTreeLeaf& self, const unsigned int index = 0) {
+		return self.incohSubAmp(index);
+	};
+
+	const std::complex<double>& amplitudeTreeLeaf_incohSubAmp2(const rpwa::amplitudeTreeLeaf& self, const std::string& subAmpLabel) {
+		return self.incohSubAmp(subAmpLabel);
+	};
+
+	int amplitudeTreeLeaf_setBranchAddress(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string branchName) {
+		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+		if(tree == NULL) {
+			printErr<<"Got invalid input when executing rpwa::amplitudeTreeLeaf::setBranchAddress()."<<std::endl;
+			return 0;
+		}
+		return tree->SetBranchAddress(branchName.c_str(), &self);
+	};
+
+	void amplitudeTreeLeaf_branch(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string name, int bufsize = 32000, int splitlevel = 99) {
+		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
+		if(tree == NULL) {
+			printErr<<"Got invalid input when executing rpwa::amplitudeTreeLeaf::branch()."<<std::endl;
+			throw;
+		}
+		tree->Branch(name.c_str(), &self, bufsize, splitlevel);
+	}
 
 }
 
 void rpwa::py::exportAmplitudeTreeLeaf() {
 
-	bp::class_<amplitudeTreeLeafWrapper>("amplitudeTreeLeaf")
+	bp::class_<rpwa::amplitudeTreeLeaf>("amplitudeTreeLeaf")
 
 		.def(bp::self == bp::self)
 		.def(bp::self != bp::self)
@@ -58,43 +67,53 @@ void rpwa::py::exportAmplitudeTreeLeaf() {
 
 		.def(bp::self_ns::str(bp::self))
 
-		.def("clear", &amplitudeTreeLeafWrapper::clear)
+		.def("clear", &rpwa::amplitudeTreeLeaf::clear)
 
-		.def("nmbIncohSubAmps", &amplitudeTreeLeafWrapper::nmbIncohSubAmps)
+		.def("nmbIncohSubAmps", &rpwa::amplitudeTreeLeaf::nmbIncohSubAmps)
 
-		.def("containsIncohSubAmp", &amplitudeTreeLeafWrapper::containsIncohSubAmp)
-		.def("incohSubAmpIndex", &amplitudeTreeLeafWrapper::incohSubAmpIndex)
+		.def("containsIncohSubAmp", &rpwa::amplitudeTreeLeaf::containsIncohSubAmp)
+		.def("incohSubAmpIndex", &rpwa::amplitudeTreeLeaf::incohSubAmpIndex)
 		.def(
 			"incohSubAmpName"
-			, &amplitudeTreeLeafWrapper::incohSubAmpName
+			, &rpwa::amplitudeTreeLeaf::incohSubAmpName
 			, bp::return_value_policy<bp::return_by_value>()
 		)
 
 		.def(
 			"incohSubAmp"
-			, &amplitudeTreeLeafWrapper::incohSubAmp__1
+			, &amplitudeTreeLeaf_incohSubAmp1
 			, bp::return_value_policy<bp::return_by_value>()
 		)
 
 		.def(
 			"incohSubAmp"
-			, &amplitudeTreeLeafWrapper::incohSubAmp__2
+			, &amplitudeTreeLeaf_incohSubAmp2
 			, bp::return_value_policy<bp::return_by_value>()
 		)
 
 		.def(
 			"amp"
-			, &amplitudeTreeLeafWrapper::amp
+			, &rpwa::amplitudeTreeLeaf::amp
 			, bp::return_value_policy<bp::return_by_value>()
 		)
 
-		.def("defineIncohSubAmps", &amplitudeTreeLeafWrapper::defineIncohSubAmps)
-		.def("setIncohSubAmp", &amplitudeTreeLeafWrapper::setIncohSubAmp)
-		.def("setAmp", &amplitudeTreeLeafWrapper::setAmp)
+		.def("defineIncohSubAmps", &rpwa::amplitudeTreeLeaf::defineIncohSubAmps)
+		.def("setIncohSubAmp", &rpwa::amplitudeTreeLeaf::setIncohSubAmp)
+		.def("setAmp", &rpwa::amplitudeTreeLeaf::setAmp)
 
-		.def("Write", &amplitudeTreeLeafWrapper::Write__)
+		.def("Write", &amplitudeTreeLeaf_Write)
+		.def("setBranchAddress", &amplitudeTreeLeaf_setBranchAddress)
+		.def(
+			"branch"
+			, &amplitudeTreeLeaf_branch
+			, (bp::arg("pyTree"),
+			   bp::arg("pyAmplitudeTreeLeaf"),
+			   bp::arg("name"),
+			   bp::arg("bufsize")=32000,
+			   bp::arg("splitlevel")=99)
+		)
 
-		.add_static_property("debugAmplitudeTreeLeaf", &amplitudeTreeLeafWrapper::debug, &amplitudeTreeLeafWrapper::setDebug);
+		.add_static_property("debugAmplitudeTreeLeaf", &rpwa::amplitudeTreeLeaf::debug, &rpwa::amplitudeTreeLeaf::setDebug);
 
 };
 

@@ -25,7 +25,7 @@
 #// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      build file for Fortran library 
+#//      build file for Fortran library
 #//
 #// !!! important !!!
 #//
@@ -64,6 +64,7 @@ message(STATUS "Using Fortran compiler flags '${CMAKE_Fortran_FLAGS}'")
 
 # source files that are compiled into library
 set(SOURCES
+	bw.f
 	eps_k1.f
 	eps_k1p.f
 	eps_m.f

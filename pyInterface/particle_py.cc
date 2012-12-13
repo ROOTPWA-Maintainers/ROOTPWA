@@ -43,7 +43,7 @@ namespace {
 		                const bp::object&         momentum           = bp::object())
 			: rpwa::particle(partName, requirePartInTable, index, spinProj, refl),
 			  bp::wrapper<rpwa::particle>()
-		{ 
+		{
 			if(!(momentum.is_none())) {
 				rpwa::particle::setMomentum(*(rpwa::py::convertFromPy<TVector3*>(momentum.ptr())));
 			}
@@ -60,70 +60,6 @@ namespace {
 		                const int                 index = -1)
 			: rpwa::particle(partName, isospin, G, J, P, C, spinProj, refl, index),
 			  bp::wrapper<rpwa::particle>() { };
-
-		bool equal__(const bp::object& rhsObj) {
-			bp::extract<particleProperties> get_partProp(rhsObj);
-			if(get_partProp.check()) {
-				return (*(this) == get_partProp());
-			}
-			bp::tuple rhs = bp::extract<bp::tuple>(rhsObj);
-			rpwa::particleProperties rhsProp = bp::extract<rpwa::particleProperties>(rhs[0]);
-			std::string rhsString = bp::extract<std::string>(rhs[1]);
-			std::pair<rpwa::particleProperties, std::string> rhsPair;
-			rhsPair.first = rhsProp;
-			rhsPair.second = rhsString;
-			return (*(this) == rhsPair);
-		}
-
-		bool nequal__(const bp::object& rhsObj) {
-			return not (*(this) == rhsObj);
-		}
-
-		bool read__(bp::object& pyLine) {
-			std::string strLine = bp::extract<std::string>(pyLine);
-			std::istringstream sstrLine(strLine, std::istringstream::in);
-			return rpwa::particleProperties::read(sstrLine);
-		};
-
-		PyObject* momentum() const {
-			return rpwa::py::convertToPy<TVector3>(particle::momentum());
-		};
-
-		void setMomentum(PyObject* pyMom) {
-			TVector3* newMom = rpwa::py::convertFromPy<TVector3*>(pyMom);
-			if(newMom == NULL) {
-				printErr<<"Got invalid input when executing rpwa::particle::setMomentum()."<<std::endl;
-			} else {
-				rpwa::particle::setMomentum(*newMom);
-			}
-		};
-
-		PyObject* lzVec() const {
-			return rpwa::py::convertToPy<TLorentzVector>(rpwa::particle::lzVec());
-		};
-
-		void setLzVec(PyObject* pyLzVec) {
-			TLorentzVector* newLzVec = rpwa::py::convertFromPy<TLorentzVector*>(pyLzVec);
-			if(newLzVec == NULL) {
-				printErr<<"Got invalid input when executing rpwa::particle::setLzVec()."<<std::endl;
-			} else {
-				rpwa::particle::setLzVec(*newLzVec);
-			}
-		};
-
-
-		PyObject* transform__(PyObject* pyTrafo) {
-			TVector3* trafoTV3 = rpwa::py::convertFromPy<TVector3*>(pyTrafo);
-			if(trafoTV3 != NULL) {
-				return rpwa::py::convertToPy<TLorentzVector>(rpwa::particle::transform(*trafoTV3));
-			}
-			TLorentzRotation* trafoTLR = rpwa::py::convertFromPy<TLorentzRotation*>(pyTrafo);
-			if(trafoTLR != NULL) {
-				return rpwa::py::convertToPy<TLorentzVector>(rpwa::particle::transform(*trafoTLR));
-			}
-			printErr<<"Got invalid input when executing rpwa::particle::transform()."<<std::endl;
-			return NULL;
-		};
 
 		std::string qnSummary() const {
 			if(bp::override qnSummary = this->get_override("qnSummary")) {
@@ -149,6 +85,70 @@ namespace {
 
 	};
 
+	bool particle_equal(const rpwa::particle& self, const bp::object& rhsObj) {
+		bp::extract<rpwa::particleProperties> get_partProp(rhsObj);
+		if(get_partProp.check()) {
+			return (self == get_partProp());
+		}
+		bp::tuple rhs = bp::extract<bp::tuple>(rhsObj);
+		rpwa::particleProperties rhsProp = bp::extract<rpwa::particleProperties>(rhs[0]);
+		std::string rhsString = bp::extract<std::string>(rhs[1]);
+		std::pair<rpwa::particleProperties, std::string> rhsPair;
+		rhsPair.first = rhsProp;
+		rhsPair.second = rhsString;
+		return (self == rhsPair);
+	}
+
+	bool particle_nequal(const rpwa::particle& self, const bp::object& rhsObj) {
+		return not (self == rhsObj);
+	}
+
+	bool particle_read(rpwa::particle& self, bp::object& pyLine) {
+		std::string strLine = bp::extract<std::string>(pyLine);
+		std::istringstream sstrLine(strLine, std::istringstream::in);
+		return self.read(sstrLine);
+	};
+
+	PyObject* particle_momentum(const rpwa::particle& self) {
+		return rpwa::py::convertToPy<TVector3>(self.momentum());
+	};
+
+	void particle_setMomentum(rpwa::particle& self, PyObject* pyMom) {
+		TVector3* newMom = rpwa::py::convertFromPy<TVector3*>(pyMom);
+		if(newMom == NULL) {
+			printErr<<"Got invalid input when executing rpwa::particle::setMomentum()."<<std::endl;
+		} else {
+			self.setMomentum(*newMom);
+		}
+	};
+
+	PyObject* particle_lzVec(const rpwa::particle& self) {
+		return rpwa::py::convertToPy<TLorentzVector>(self.lzVec());
+	};
+
+	void particle_setLzVec(rpwa::particle& self, PyObject* pyLzVec) {
+		TLorentzVector* newLzVec = rpwa::py::convertFromPy<TLorentzVector*>(pyLzVec);
+		if(newLzVec == NULL) {
+			printErr<<"Got invalid input when executing rpwa::particle::setLzVec()."<<std::endl;
+		} else {
+			self.setLzVec(*newLzVec);
+		}
+	};
+
+
+	PyObject* particle_transform(rpwa::particle& self, PyObject* pyTrafo) {
+		TVector3* trafoTV3 = rpwa::py::convertFromPy<TVector3*>(pyTrafo);
+		if(trafoTV3 != NULL) {
+			return rpwa::py::convertToPy<TLorentzVector>(self.transform(*trafoTV3));
+		}
+		TLorentzRotation* trafoTLR = rpwa::py::convertFromPy<TLorentzRotation*>(pyTrafo);
+		if(trafoTLR != NULL) {
+			return rpwa::py::convertToPy<TLorentzVector>(self.transform(*trafoTLR));
+		}
+		printErr<<"Got invalid input when executing rpwa::particle::transform()."<<std::endl;
+		return NULL;
+	};
+
 }
 
 void rpwa::py::exportParticle() {
@@ -162,28 +162,30 @@ void rpwa::py::exportParticle() {
 
 		.def(bp::self_ns::str(bp::self))
 
-		.def("__eq__", &particleWrapper::equal__)
-		.def("__neq__", &particleWrapper::nequal__)
+		.def("__eq__", &particle_equal)
+		.def("__neq__", &particle_nequal)
 
-		.def("clone", &particleWrapper::clone)
+		.def("clone", &rpwa::particle::clone)
 
-		.add_property("spinProj", &particleWrapper::spinProj, &particleWrapper::setSpinProj)
-		.add_property("momentum", &particleWrapper::momentum, &particleWrapper::setMomentum)
-		.add_property("lzVec", &particleWrapper::lzVec, &particleWrapper::setLzVec)
-		.add_property("index", &particleWrapper::index, &particleWrapper::setIndex)
-		.add_property("reflectivity", &particleWrapper::reflectivity, &particleWrapper::setReflectivity)
+		.add_property("spinProj", &rpwa::particle::spinProj, &rpwa::particle::setSpinProj)
+		.add_property("momentum", &particle_momentum, &particle_setMomentum)
+		.add_property("lzVec", &particle_lzVec, &particle_setLzVec)
+		.add_property("index", &rpwa::particle::index, &rpwa::particle::setIndex)
+		.add_property("reflectivity", &rpwa::particle::reflectivity, &rpwa::particle::setReflectivity)
 
-		.def("setProperties", &particleWrapper::setProperties)
+		.def("setProperties", &rpwa::particle::setProperties)
 
-		.def("transform", &particleWrapper::transform__)
+		.def("transform", &particle_transform)
 
 		.def("qnSummary", &particleWrapper::qnSummary, &particleWrapper::default_qnSummary)
+		.def("qnSummary", &rpwa::particle::qnSummary)
 
-		.def("read", &particleWrapper::read__)
+		.def("read", &particle_read)
 
 		.def("label", &particleWrapper::label, &particleWrapper::default_label)
-		
-		.add_static_property("debugParticle", &particleWrapper::debug, &particleWrapper::setDebug);
+		.def("label", &rpwa::particle::label)
+
+		.add_static_property("debugParticle", &rpwa::particle::debug, &rpwa::particle::setDebug);
 
 	bp::register_ptr_to_python< rpwa::particlePtr >();
 

@@ -66,14 +66,14 @@ namespace rpwa {
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>
-		entriesMatching(const particleProperties&         prototype,
-		                const std::string&                sel,
-		                const double                      minMass            = 0,
-		                const double                      minMassWidthFactor = 0,
-		                const std::vector<std::string>&   whiteList          = std::vector<std::string>(),
-		                const std::vector<std::string>&   blackList          = std::vector<std::string>(),
-		                const std::multiset<std::string>& decayProducts      = std::multiset<std::string>(),
-		                const bool&                       forceDecayCheck    = true);  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers to be compared are selected by sel string; if minMass > 0 the isobar mass is limited; checks for allowed decays if they are defined; decay checks can be forced, then particles which have no specified decays will be discarded
+		entriesMatching(const particleProperties&            prototype,
+		                const std::string&                   sel,
+		                const double                         minMass            = 0,
+		                const double                         minMassWidthFactor = 0,
+		                const std::vector<std::string>&      whiteList          = std::vector<std::string>(),
+		                const std::vector<std::string>&      blackList          = std::vector<std::string>(),
+		                const particleProperties::decayMode& decay              = particleProperties::decayMode(),
+		                const bool&                          forceDecayCheck    = true);  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers to be compared are selected by sel string; if minMass > 0 the isobar mass is limited; checks for allowed decays if they are defined; decay checks can be forced, then particles which have no specified decays will be discarded
 
 		static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
 

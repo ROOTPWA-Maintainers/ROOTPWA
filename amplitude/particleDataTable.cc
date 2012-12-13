@@ -46,7 +46,7 @@
 #include "particleDataTable.h"
 #include "libconfig.h++"
 
-	
+
 using namespace std;
 using namespace rpwa;
 using namespace libconfig;
@@ -160,16 +160,16 @@ particleDataTable::entry(const string& partName,
 		return &(i->second);
 }
 
-    
-vector<const particleProperties*> 
-particleDataTable::entriesMatching(const particleProperties& prototype,
-                                   const string&             sel,
-                                   const double              minMass,
-                                   const double              minMassWidthFactor,
-                                   const vector<string>&     whiteList,
-                                   const vector<string>&     blackList,
-                                   const multiset<string>&   decayProducts,
-                                   const bool&               forceDecayCheck)
+
+vector<const particleProperties*>
+particleDataTable::entriesMatching(const particleProperties&            prototype,
+                                   const string&                        sel,
+                                   const double                         minMass,
+                                   const double                         minMassWidthFactor,
+                                   const vector<string>&                whiteList,
+                                   const vector<string>&                blackList,
+                                   const particleProperties::decayMode& decay,
+                                   const bool&                          forceDecayCheck)
 {
 	const pair<particleProperties, string> selector(prototype, sel);
 	vector<const particleProperties*>      matchingEntries;
@@ -179,7 +179,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		const particleProperties& partProp = i->second;
 		// limit isobar mass, if minMass > 0
 		if ((minMass > 0) and (partProp.mass() + minMassWidthFactor * partProp.width() < minMass))
-		{ 
+		{
 			if(_debug)printDebug << partProp.name() << " not in mass window " << flush;
 			continue;
 		}
@@ -207,17 +207,14 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 		}
 		// apply list of decays
 		bool decayMatch = true;
-		if ((decayProducts.size() > 0) and partProp.nmbDecays() > 0) {
-			if (not partProp.hasDecay(decayProducts))
+		if ((decay._daughters.size() > 0) and partProp.nmbDecays() > 0) {
+			if (not partProp.hasDecay(decay))
 				decayMatch = false;
 		} else if (forceDecayCheck)
 			decayMatch = false;
 		if (not decayMatch) {
-			if (_debug) {
-				printDebug << partProp.name() << " does not have a decay into ";
-				copy(decayProducts.begin(), decayProducts.end(), ostream_iterator<string>(cout, "  "));
-				cout << endl;
-			}
+			if (_debug)
+				printDebug << partProp.name() << " does not have a decay into " << decay << endl;
 			continue;
 		}
 
@@ -231,9 +228,7 @@ particleDataTable::entriesMatching(const particleProperties& prototype,
 			if (blackList.size() > 0)
 				cout << " ; not in black list";
 			if (decayMatch)
-				cout << " ; with allowed decay into " ;
-			copy(decayProducts.begin(), decayProducts.end(), ostream_iterator<string>(cout, "  "));
-			cout << endl;
+				cout << " ; with allowed decay into " << decay << endl;
 		}
 		matchingEntries.push_back(&partProp);
 	}
@@ -245,7 +240,7 @@ bool
 particleDataTable::addEntry(const particleProperties& partProp)
 {
 	const string name = partProp.name();
-	iterator i    = _dataTable.find(name);
+	iterator     i    = _dataTable.find(name);
 	if (i != _dataTable.end()) {
 		printWarn << "trying to add entry for particle '" << name << "' "
 		          << "which already exists in table"     << endl

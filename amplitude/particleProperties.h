@@ -26,8 +26,9 @@
 //
 // Description:
 //      container class for particle properties
+//
 //      !NOTE! all potentially half-integer quantum numbers (I, I_z, J)
-//      are in units of hbar / 2 so that they are always integer
+//             are in units of hbar / 2 so that they are always integer
 //
 //
 // Author List:
@@ -62,12 +63,14 @@ namespace rpwa {
 		// helper class that holds information about particle decay
 		struct decayMode {
 
-			decayMode(const std::multiset<std::string>& daughters,
-			          const int                         L = -1,
-			          const int                         S = -1);
+			decayMode(const std::multiset<std::string>& daughters = std::multiset<std::string>(),
+			          const int                         L         = -1,
+			          const int                         S         = -1);
 			virtual ~decayMode();
 
-			bool operator ==(const decayMode& rhsMode) const;
+			bool operator ==(const decayMode& rhsDecay) const;
+
+			virtual std::ostream& print(std::ostream& out) const;  ///< prints decay mode informayion in human-readable form
 
 			std::multiset<std::string> _daughters;  ///< names of daughter particles
 			int                        _L;          ///< L for two-body decay; -1 means undefined
@@ -128,10 +131,11 @@ namespace rpwa {
 
 		bool isSpinExotic() const;  ///< returns whether particle is spin-exotic
 
-		const std::vector<decayMode>& decayModes() const { return _decayModes; }  ///< returns decay modes defined for this particle
-		int  nmbDecays   () const { return _decayModes.size(); }  ///< returns number of decay modes defined for this particle
-		bool hasDecay    (const decayMode& decay) const; ///< returns whether given decay mode is in list of decays
-		void addDecayMode(const decayMode& decay) { _decayModes.push_back(decay); }  ///< adds decay channel into list of allowed decay modes
+		const std::vector<decayMode>& decayModes() const { return _decayModes; }                 ///< returns decay modes defined for this particle
+		unsigned int nmbDecays       () const { return _decayModes.size(); }                     ///< returns number of decay modes defined for this particle
+		bool         hasDecay        (const decayMode& decay) const;                             ///< returns whether given decay mode is in list of decays
+		void         addDecayMode    (const decayMode& decay) { _decayModes.push_back(decay); }  ///< adds decay channel into list of allowed decay modes
+		void         deleteDecayModes()                       { _decayModes.clear();          }  ///< deletes all decay modes
 
 		bool fillFromDataTable(const std::string& name,
 		                       const bool         warnIfNotExistent = true);  ///< sets particle properties from entry in particle data table
@@ -161,7 +165,7 @@ namespace rpwa {
 		              const int P,
 		              const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
 
-		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle; !NOTE! decay modes are not (yet) handled
+		particleProperties antiPartProperties(const bool convertDecaysModes = false) const;  ///< constructs antiparticle properties from particle
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)]
 
@@ -213,6 +217,15 @@ namespace rpwa {
 		static bool _debug;  ///< if set to true, debug messages are printed
 
 	};  // particleProperties
+
+
+	inline
+	std::ostream&
+	operator <<(std::ostream&                        out,
+	            const particleProperties::decayMode& mode)
+	{
+		return mode.print(out);
+	}
 
 
 	inline

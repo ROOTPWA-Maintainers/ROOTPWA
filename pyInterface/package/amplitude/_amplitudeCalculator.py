@@ -89,7 +89,14 @@ class amplitudeCalculator(multiprocessing.Process):
 		amplitudeLeafName = pyRootPwa.config.amplitudeLeafName
 		outputCacheSize = pyRootPwa.config.outputCacheSize
 
-		pythonAdmin = pyRootPwa.core.pythonAdministrator()
+		waveDescription = pyRootPwa.core.waveDescription()
+		waveDescription.parseKeyFile(keyfile)
+		(result, amplitude) = waveDescription.constructAmplitude()
+		if not result:
+			pyRootPwa.utils.printWarn('Could not construct amplitude for keyfile "' + keyfile + '".')
+			return -1
+		amplitude.init()
+		print(amplitude)
 
 		writeRootFile = False
 		if outputFileFormat == "root":
@@ -100,12 +107,7 @@ class amplitudeCalculator(multiprocessing.Process):
 			ampTreeName = keyfile.rsplit('/',1)[-1].replace('.key', '.amp')
 			outTree = pyRootPwa.ROOT.TTree(ampTreeName, ampTreeName)
 			amplitudeTreeLeaf = pyRootPwa.core.amplitudeTreeLeaf()
-			pythonAdmin.branch(outTree, amplitudeTreeLeaf, amplitudeLeafName)
-
-		if not pythonAdmin.constructAmplitude(keyfile):
-			pyRootPwa.utils.printWarn('Could not construct amplitude for keyfile "' + keyfile + '".')
-			return -1
-		sys.stdout.write(str(pythonAdmin))
+			amplitudeTreeLeaf.branch(outTree, amplitudeLeafName)
 
 		prodKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 		decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
@@ -119,7 +121,8 @@ class amplitudeCalculator(multiprocessing.Process):
 		inTree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, prodKinMomenta)
 		inTree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
 
-		if not pythonAdmin.initKinematicsData(inFile.prodKinParticles, inFile.decayKinParticles):
+		decayTopology = amplitude.decayTopology()
+		if not decayTopology.initKinematicsData(inFile.prodKinParticles, inFile.decayKinParticles):
 			pyRootPwa.utils.printErr('Could not initialize kinematics Data "' + keyfile + '".')
 			return -1
 
@@ -133,16 +136,16 @@ class amplitudeCalculator(multiprocessing.Process):
 		try:
 			for treeIndex in range(nEntries):
 				inTree.GetEntry(treeIndex)
-				if not pythonAdmin.readKinematicsData(prodKinMomenta, decayKinMomenta):
+				if not decayTopology.readKinematicsData(prodKinMomenta, decayKinMomenta):
 					if self.progressBar:
 						progressbar.cancel()
 					pyRootPwa.utils.printErr('Could not read kinematics data.')
 					return -1
-				amp = pythonAdmin()
-				vals += [amp.real, amp.imag]
+				amp = amplitude()
+				vals.append(amp)
 				if len(vals) > outputCacheSize:
 					if outputFileFormat == "binary":
-						arrayAmp.extend(vals)
+						arrayAmp.extend([number for complexNumber in vals for number in [complexNumber.real, complexNumber.imag]])
 						arrayAmp.tofile(outFile)
 						arrayAmp = array.array('d')
 					elif outputFileFormat == "ascii":
@@ -163,7 +166,7 @@ class amplitudeCalculator(multiprocessing.Process):
 			raise
 
 		if outputFileFormat == "binary":
-			arrayAmp.extend(vals)
+			arrayAmp.extend([number for complexNumber in vals for number in [complexNumber.real, complexNumber.imag]])
 			arrayAmp.tofile(outFile)
 		elif outputFileFormat == "ascii":
 			for val in vals:

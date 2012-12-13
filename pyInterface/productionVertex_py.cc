@@ -67,7 +67,7 @@ namespace {
 void rpwa::py::exportProductionVertex() {
 
 	bp::class_<productionVertexWrapper, bp::bases<rpwa::interactionVertex>, boost::noncopyable>("productionVertex", bp::no_init)
-		
+
 		.def(bp::self_ns::str(bp::self))
 
 		.def(
@@ -83,6 +83,7 @@ void rpwa::py::exportProductionVertex() {
 		)
 
 		.def("productionAmp", &productionVertexWrapper::productionAmp, &productionVertexWrapper::default_productionAmp)
+		.def("productionAmp", &rpwa::productionVertex::productionAmp)
 		.def("setXFlavorQN", bp::pure_virtual(&rpwa::productionVertex::setXFlavorQN))
 
 		.def("initKinematicsData", bp::pure_virtual(&rpwa::productionVertex::initKinematicsData))
@@ -91,8 +92,9 @@ void rpwa::py::exportProductionVertex() {
 		.def("revertMomenta", bp::pure_virtual(&rpwa::productionVertex::revertMomenta))
 
 		.def("name", &productionVertexWrapper::name, &productionVertexWrapper::default_name)
+		.def("name", &rpwa::productionVertex::name)
 
-		.add_static_property("debugProductionVertex", &productionVertexWrapper::debug, &productionVertexWrapper::setDebug);
+		.add_static_property("debugProductionVertex", &rpwa::productionVertex::debug, &rpwa::productionVertex::setDebug);
 
 	bp::register_ptr_to_python<rpwa::productionVertexPtr>();
 

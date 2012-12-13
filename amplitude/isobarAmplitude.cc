@@ -144,9 +144,8 @@ isobarAmplitude::gjTransform(const TLorentzVector& beamLv,  // beam Lorentz-vect
 	const TVector3 yGjAxis = beam.Vect().Cross(X.Vect());  // y-axis of Gottfried-Jackson frame
 	// rotate so that yGjAxis becomes parallel to y-axis and beam momentum ends up in (x, z)-plane
 	TRotation rot1;
-	rot1.RotateZ(-yGjAxis.Phi());
-	rot1.RotateY(piHalf - yGjAxis.Theta());
-	rot1.RotateZ(piHalf);
+	rot1.RotateZ(piHalf - yGjAxis.Phi());
+	rot1.RotateX(yGjAxis.Theta() - piHalf);
 	beam *= rot1;
 	X    *= rot1;
 	// boost to X RF

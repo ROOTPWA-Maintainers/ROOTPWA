@@ -48,22 +48,6 @@ namespace {
 			return rpwa::isobarDecayVertex::addOutParticle(part);
 		};
 
-		rpwa::particlePtr& parent__() {
-			return rpwa::isobarDecayVertex::parent();
-		};
-
-		rpwa::particlePtr& daughter1__() {
-			return rpwa::isobarDecayVertex::daughter1();
-		};
-
-		rpwa::particlePtr& daughter2__() {
-			return rpwa::isobarDecayVertex::daughter2();
-		};
-		
-		PyObject* calcParentLzVec() {
-			return rpwa::py::convertToPy<TLorentzVector>(rpwa::isobarDecayVertex::calcParentLzVec());
-		};
-
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
@@ -77,6 +61,26 @@ namespace {
 
 	};
 
+	rpwa::particlePtr isobarDecayVertex_parent(rpwa::isobarDecayVertex& self) {
+		return self.parent();
+	};
+
+	rpwa::particlePtr isobarDecayVertex_daughter1(rpwa::isobarDecayVertex& self) {
+		return self.daughter1();
+	};
+
+	rpwa::particlePtr isobarDecayVertex_daughter2(rpwa::isobarDecayVertex& self) {
+		return self.daughter2();
+	};
+
+	PyObject* isobarDecayVertex_calcParentLzVec(rpwa::isobarDecayVertex& self) {
+		return rpwa::py::convertToPy<TLorentzVector>(self.calcParentLzVec());
+	};
+
+	const rpwa::massDependence& isobarDecayVertex_massDependence(const rpwa::isobarDecayVertex& self) {
+		return *(self.massDependence());
+	}
+
 }
 
 void rpwa::py::exportIsobarDecayVertex() {
@@ -89,46 +93,37 @@ void rpwa::py::exportIsobarDecayVertex() {
 
 		.def(
 			"clone"
-			, &isobarDecayVertexWrapper::clone
+			, &rpwa::isobarDecayVertex::clone
 			, (bp::arg("cloneInParticles")=false,
 			   bp::arg("cloneOutParticles")=false)
 		)
 
 		.def("addInParticle", &isobarDecayVertexWrapper::addInParticle, &isobarDecayVertexWrapper::default_addInParticle)
+		.def("addInParticle", &rpwa::isobarDecayVertex::addInParticle)
 		.def("addOutParticle", &isobarDecayVertexWrapper::addOutParticle, &isobarDecayVertexWrapper::default_addOutParticle)
+		.def("addInParticle", &rpwa::isobarDecayVertex::addOutParticle)
 
-		.def(
-			"parent"
-			, &isobarDecayVertexWrapper::parent__
-			, bp::return_value_policy<bp::copy_non_const_reference>()
-		)
-		.def(
-			"daughter1"
-			, &isobarDecayVertexWrapper::daughter1__
-			, bp::return_value_policy<bp::copy_non_const_reference>()
-		)
-		.def(
-			"daughter2"
-			, &isobarDecayVertexWrapper::daughter2__
-			, bp::return_value_policy<bp::copy_non_const_reference>()
-		)
+		.def("parent", &isobarDecayVertex_parent)
+		.def("daughter1", &isobarDecayVertex_daughter1)
+		.def("daughter2", &isobarDecayVertex_daughter2)
 
-		.def("calcParentLzVec", &isobarDecayVertexWrapper::calcParentLzVec)
-		.def("calcParentCharge", &isobarDecayVertexWrapper::calcParentCharge)
-		.def("calcParentBaryonNmb", &isobarDecayVertexWrapper::calcParentBaryonNmb)
+		.def("calcParentLzVec", &isobarDecayVertex_calcParentLzVec)
+		.def("calcParentCharge", &rpwa::isobarDecayVertex::calcParentCharge)
+		.def("calcParentBaryonNmb", &rpwa::isobarDecayVertex::calcParentBaryonNmb)
 
-		.add_property("L", &isobarDecayVertexWrapper::L, &isobarDecayVertexWrapper::setL)
-		.add_property("S", &isobarDecayVertexWrapper::S, &isobarDecayVertexWrapper::setS)
+		.add_property("L", &rpwa::isobarDecayVertex::L, &rpwa::isobarDecayVertex::setL)
+		.add_property("S", &rpwa::isobarDecayVertex::S, &rpwa::isobarDecayVertex::setS)
 
-		.def("massDepAmplitude", &isobarDecayVertexWrapper::massDepAmplitude)
-		.def("massDependence", &isobarDecayVertexWrapper::massDependence, bp::return_value_policy<bp::return_by_value>())
-		.def("setMassDependence", &isobarDecayVertexWrapper::setMassDependence)
+		.def("massDepAmplitude", &rpwa::isobarDecayVertex::massDepAmplitude)
+		.def("massDependence", &isobarDecayVertex_massDependence, bp::return_internal_reference<>())
+		.def("setMassDependence", &rpwa::isobarDecayVertex::setMassDependence)
 
-		.def("checkConsistency", &isobarDecayVertexWrapper::checkConsistency)
+		.def("checkConsistency", &rpwa::isobarDecayVertex::checkConsistency)
 
 		.def("name", &isobarDecayVertexWrapper::name, &isobarDecayVertexWrapper::default_name)
-		
-		.add_static_property("debugIsobarDecayVertex", &isobarDecayVertexWrapper::debug, &isobarDecayVertex::setDebug);
+		.def("name", &rpwa::isobarDecayVertex::name)
+
+		.add_static_property("debugIsobarDecayVertex", &rpwa::isobarDecayVertex::debug, &rpwa::isobarDecayVertex::setDebug);
 
 	bp::register_ptr_to_python<rpwa::isobarDecayVertexPtr>();
 

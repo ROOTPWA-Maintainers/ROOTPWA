@@ -36,6 +36,8 @@
 //-------------------------------------------------------------------------
 
 
+#include <boost/assign.hpp>
+
 #include "libconfig.h++"
 
 #include "physUtils.hpp"
@@ -389,17 +391,22 @@ waveSetGenerator::generateWaveSet()
 										  (daughters[0]->mass() - _isobarMassWindowSigma * daughters[0]->width())
 										+ (daughters[1]->mass() - _isobarMassWindowSigma * daughters[1]->width())
 										: 0;
-									multiset<string> decayProducts;
-									decayProducts.insert(daughters[0]->name());
-									decayProducts.insert(daughters[1]->name());
+
+									const particleProperties::decayMode
+										decay(assign::list_of(daughters[0]->name())(daughters[1]->name()), L, S);
 									vector<const particleProperties*> possibleIsobars
 									    = particleDataTable::entriesMatching(isobarProp, "allQn",
 									                                         minIsobarMass, _isobarMassWindowSigma,
 									                                         _isobarWhiteList, _isobarBlackList,
-									                                         decayProducts, _forceDecayCheck);
-									if (_debug)
-										printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
-										           << isobarProp.qnSummary() << " in particle data table" << endl;
+									                                         decay, _forceDecayCheck);
+									if (_debug) {
+										if (possibleIsobars.empty())
+											printDebug << "rejected, because no matching isobar could be found for "
+											           << isobarProp.qnSummary() << " in particle data table" << endl;
+										else
+											printDebug << "found " << possibleIsobars.size() << " isobar candidate(s) for "
+											           << isobarProp.qnSummary() << " in particle data table" << endl;
+									}
 
 									// loop over isobar candidates
 									for (size_t iIsobar = 0; iIsobar < possibleIsobars.size(); ++iIsobar) {
