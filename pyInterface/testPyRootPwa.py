@@ -859,12 +859,14 @@ def iDTTestcCon(): assert(isoDecTop.checkConsistency())
 do_test(iDTTestcCon, "Testing isobarDecayTopology.checkConsistency()")
 
 def iDTTestSubDecay(): return(consistentIsobarTopo.subDecay(consistentIsobarTopo.XIsobarDecayVertex()))
-do_test(iDTTestSubDecay, "Testing isobarDecayTopology.subDecay()", True)
-# problems with getting the right vertex as argument
+do_test(iDTTestSubDecay, "Testing isobarDecayTopology.subDecay()")
 
-def iDTTestJDD(): pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, first, consistentIsobarTopo)
-do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()", True)
-# should be possible to test once isobarDecayTopology.subDecay() works?
+def iDTTestJDD():
+	waste = consistentIsobarTopo.clone()
+	dec1 = waste.subDecay(waste.decayVertices()[3])
+	dec2 = waste.subDecay(waste.decayVertices()[3])
+	return pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, dec1, dec2)
+do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()")
 
 def iDTTestCILV(): assert(consistentIsobarTopo.calcIsobarLzVec() == pyRootPwa.ROOT.TLorentzVector(0., 0., 0., 0.697850))
 do_test(iDTTestCILV, "Testing isobarDecayTopology.calcIsobarLzVec()")
