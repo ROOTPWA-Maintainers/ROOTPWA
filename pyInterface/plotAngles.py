@@ -138,6 +138,8 @@ if __name__ == "__main__":
 
 				progressbar.update(i)
 
+			dataFile.Close()
+
 	outputFile.Write()
 	outputFile.Close()
 
