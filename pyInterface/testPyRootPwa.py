@@ -493,7 +493,7 @@ def flatMassDepTestDebug():
 	flatMassDep.debugMassDependence = (not old_debug)
 	assert(flatMassDep.debugMassDependence == (not old_debug))
 	flatMassDep.debugMassDependence = old_debug
-do_test(flatMassDepTestDebug, "Testing flatMassDependence debug flag.")
+do_test(flatMassDepTestDebug, "Testing massDependence debug flag.")
 
 def flatMassDepTestAmp(): assert(flatMassDep.amp(isobDecVtx) == (1+0j))
 do_test(flatMassDepTestAmp, "Testing flatMassDependence.amp()")
@@ -511,6 +511,41 @@ do_test(relBreitWigTestAmp, "Testing relativisticBreitWigner.amp()")
 
 def relBreitWigTestName(): assert(relBreitWig.name() == "relativisticBreitWigner")
 do_test(relBreitWigTestName, "Testing relativisticBreitWigner.name()")
+
+def constBreitWigTestConst(): return pyRootPwa.core.constWidthBreitWigner()
+constBreitWig = do_test(constBreitWigTestConst, "Testing constWidthBreitWigner default constructor")
+
+def constBreitWigTestAmp():
+	amp = constBreitWig.amp(isobDecVtx)
+	zero = amp - (-0.02351738960326379+0.00055337383635446j)
+	assert(zero.real < 10e-17)
+	assert(zero.imag < 10e-17)
+do_test(constBreitWigTestAmp, "Testing constWidthBreitWigner.amp()")
+
+def constBreitWigTestName(): assert(constBreitWig.name() == "constWidthBreitWigner")
+do_test(constBreitWigTestName, "Testing constWidthBreitWigner.name()")
+
+def rhoBreitWigTestConst(): return pyRootPwa.core.rhoBreitWigner()
+rhoBreitWig = do_test(rhoBreitWigTestConst, "Testing rhoBreitWigner default constructor")
+
+def rhoBreitWigTestAmp():
+	amp = rhoBreitWig.amp(isobDecVtx)
+	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+do_test(rhoBreitWigTestAmp, "Testing rhoBreitWigner.amp()")
+
+def rhoBreitWigTestName(): assert(rhoBreitWig.name() == "rhoBreitWigner")
+do_test(rhoBreitWigTestName, "Testing rhoBreitWigner.name()")
+
+def f0980BreitWigTestConst(): return pyRootPwa.core.f0980BreitWigner()
+f0980BreitWig = do_test(f0980BreitWigTestConst, "Testing f0980BreitWigner default constructor")
+
+def f0980BreitWigTestAmp():
+	amp = f0980BreitWig.amp(isobDecVtx)
+	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+do_test(f0980BreitWigTestAmp, "Testing f0980BreitWigner.amp()")
+
+def f0980BreitWigTestName(): assert(f0980BreitWig.name() == "f0980BreitWigner")
+do_test(f0980BreitWigTestName, "Testing f0980BreitWigner.name()")
 
 def SAuMoPenMTestConst(): return pyRootPwa.core.piPiSWaveAuMorganPenningtonM()
 SAuMoPenM = do_test(SAuMoPenMTestConst, "Testing piPiSWaveAuMorganPenningtonM default constructor")
@@ -550,6 +585,17 @@ do_test(SAuMoPenKachaevTestAmp, "Testing piPiSWaveAuMorganPennigtonKachaev.amp()
 
 def SAuMoPenKachaevTestName(): assert(SAuMoPenKachaev.name() == "piPiSWaveAuMorganPenningtonKachaev")
 do_test(SAuMoPenKachaevTestName, "Testing piPiSWaveAuMorganPennigtonKachaev.name()")
+
+def rhoPrimeTestConst(): return pyRootPwa.core.rhoPrimeMassDep()
+rhoPrime = do_test(rhoPrimeTestConst, "Testing rhoPrimeMassDep default constructor")
+
+def rhoPrimeTestAmp():
+	amp = rhoPrime.amp(isobDecVtx)
+	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+do_test(rhoPrimeTestAmp, "Testing rhoPrimeMassDep.amp()")
+
+def rhoPrimeTestName(): assert(rhoPrime.name() == "rhoPrimeMassDep")
+do_test(rhoPrimeTestName, "Testing rhoPrimeMassDep.name()")
 
 print
 print("########################################################################")
