@@ -49,8 +49,17 @@ def do_test_raw(function, name):
 #
 # ---------------------------------------------------------
 
-def impLib(): import pyRootPwa
-do_test(impLib, "Importing pyRootPwa")
+def impLib(name):
+	sys.stdout.write(name + "...")
+	try:
+		import pyRootPwa
+	except:
+		print_red("error")
+		return False
+	return True
+if not impLib("Importing pyRootPwa"):
+	print("Could not import library, aborting tests...")
+	sys.exit(1)
 
 import pyRootPwa
 
@@ -180,26 +189,36 @@ do_test(partTestqnSummary, "Testing particle.qnSummary()")
 def partTestLabel(): assert(part.label() == "Delta(1910)+[1.5(0.5+)]")
 do_test(partTestLabel, "Testing particle.label()")
 
+def partTestSpinProj():
+	assert(part.spinProj == 0)
+	part.spinProj = 2
+	assert(part.spinProj == 2)
+do_test(partTestSpinProj, "Testing particle.spinProj")
+
 def partTestMomentum():
+	assert(part.momentum.X() == 0.)
 	part.momentum = pyRootPwa.ROOT.TVector3(10, 10, 10)
 	assert(part.momentum.X() == 10.)
 do_test(partTestMomentum, "Testing particle.momentum")
 
 def partTestlzVec():
+	assert(part.lzVec.E() == 17.42550142750560838)
 	lz = pyRootPwa.ROOT.TLorentzVector(1., 1., 1., 1.)
 	part.lzVec = lz
 	assert(part.lzVec.E() == 1.)
 do_test(partTestlzVec, "Testing particle.lzVec")
 
 def partTestIndex():
+	assert(part.index == -1)
 	part.index = 12
 	assert(part.index == 12)
 do_test(partTestIndex, "Testing particle.index")
 
 def partTestReflectivity():
+	assert(part.reflectivity == 0)
 	part.reflectivity = 2
 	assert(part.reflectivity == 1)
-do_test(partTestReflectivity, "Testing part.reflectivity")
+do_test(partTestReflectivity, "Testing particle.reflectivity")
 
 def partTestSetProperties():
 	pP = pyRootPwa.core.particleProperties()
@@ -908,6 +927,23 @@ print
 
 # ---------------------------------------------------------
 #
+#	isobarAmplitude
+#
+# ---------------------------------------------------------
+
+def iATestgjTrans():
+	lzVec1 = pyRootPwa.ROOT.TLorentzVector(-0.000905,-0.082895,192.513945,192.514013)
+	lzVec2 = pyRootPwa.ROOT.TLorentzVector(-0.855221,0.115472,192.091726,192.100313)
+	rot = pyRootPwa.core.isobarAmplitude.gjTransform(lzVec2, lzVec1)
+	assert(rot.XX() == -0.97198203396081984)
+do_test(iATestgjTrans, "Testing isobarAmplitude::gjTransform")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
 #	isobarCanonicalAmplitude
 #
 # ---------------------------------------------------------
@@ -952,6 +988,7 @@ do_test(iHATestName, "Testing isobarHelicityAmplitude.name()")
 def iHATTesthfTransform():
 	vec = pyRootPwa.ROOT.TLorentzVector(0., 1., 2., 3.)
 	rot1 = pyRootPwa.core.isobarHelicityAmplitude.hfTransform(vec)
+	assert(rot1.XY() == 0.89442719099991586)
 	rot2 = iHA.hfTransform(vec)
 	assert(rot1 == rot2)
 do_test(iHATTesthfTransform, "Testing isobarHelicityAmplitude::hfTransform")
