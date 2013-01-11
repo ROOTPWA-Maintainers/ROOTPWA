@@ -957,6 +957,20 @@ def iDTTestWGVtoFile():
 	assert(result)
 do_test(iDTTestWGVtoFile, "Testing isobarDecayTopology.writeGraphViz(outFileNmae)")
 
+def iDTTestgIsoCGProd():
+	assert(consistentIsobarTopo.getIsospinClebschGordanProduct() == -0.25000000000000006)
+	assert(consistentIsobarTopo.getIsospinClebschGordanProduct(consistentIsobarTopo.isobarDecayVertices()[2]) == 0.50000000000000011)
+do_test(iDTTestgIsoCGProd, "Testing isobarDecayTopology.getIsospinClebschGordanProduct()")
+
+def iDTTestgetIsoSym():
+	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (-0.25000000000000006+0j)}, {'fsPartPermMap': [0, 1, 3, 2, 4], 'factor': (-0.25000000000000006+0j)}]
+	assert(consistentIsobarTopo.getIsospinSymmetrization() == testval)
+do_test(iDTTestgetIsoSym, "Testing isobarDecayTopology.getIsospinSymmetrization()")
+
+def iDTestfIsoBoseSymVerts():
+	assert(consistentIsobarTopo.findIsobarBoseSymVertices() == [])
+do_test(iDTestfIsoBoseSymVerts, "Testing isobarDecayTopology.findIsobarBoseSymVertices()")
+
 def iDTTestDebug():
 	old_debug = isoDecTop.debugIsobarDecayTopology
 	isoDecTop.debugIsobarDecayTopology = (not old_debug)

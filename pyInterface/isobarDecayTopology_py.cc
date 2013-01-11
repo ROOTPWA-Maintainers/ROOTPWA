@@ -111,6 +111,22 @@ namespace {
 		return self.writeGraphViz(outFileName);
 	};
 
+	bp::list isobarDecayTopology_getIsospinSymmetrization(rpwa::isobarDecayTopology& self) {
+		std::vector<rpwa::symTermMap> symTermMap = self.getIsospinSymmetrization();
+		bp::list retval;
+		for(unsigned int i = 0; i < symTermMap.size(); ++i) {
+			bp::dict dict;
+			dict["factor"] = symTermMap[i].factor;
+			dict["fsPartPermMap"] = bp::list(symTermMap[i].fsPartPermMap);
+			retval.append(dict);
+		}
+		return retval;
+	}
+
+	bp::list isobarDecayTopology_findIsobarBoseSymVertices(const rpwa::isobarDecayTopology& self) {
+		return bp::list(self.findIsobarBoseSymVertices());
+	}
+
 }
 
 void rpwa::py::exportIsobarDecayTopology() {
@@ -168,9 +184,17 @@ void rpwa::py::exportIsobarDecayTopology() {
 		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz1)
 		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz2)
 
-
 		.def("calcIsobarCharges", &rpwa::isobarDecayTopology::calcIsobarCharges, (bp::arg("quiet")=false))
 		.def("calcIsobarBaryonNmbs", &rpwa::isobarDecayTopology::calcIsobarBaryonNmbs)
+
+		.def(
+			"getIsospinClebschGordanProduct"
+			, &rpwa::isobarDecayTopology::getIsospinClebschGordanProduct
+			, (bp::arg("vertex")=rpwa::isobarDecayVertexPtr())
+		)
+
+		.def("getIsospinSymmetrization", &isobarDecayTopology_getIsospinSymmetrization)
+		.def("findIsobarBoseSymVertices", &isobarDecayTopology_findIsobarBoseSymVertices)
 
 		.add_static_property("debugIsobarDecayTopology", &rpwa::isobarDecayTopology::debug, &isobarDecayTopology::setDebug);
 
