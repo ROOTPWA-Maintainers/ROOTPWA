@@ -962,8 +962,14 @@ def iDTTestgIsoCGProd():
 	assert(consistentIsobarTopo.getIsospinClebschGordanProduct(consistentIsobarTopo.isobarDecayVertices()[2]) == 0.50000000000000011)
 do_test(iDTTestgIsoCGProd, "Testing isobarDecayTopology.getIsospinClebschGordanProduct()")
 
+def iDTTestgetBoseSym():
+	print
+	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 1, 4, 3, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 2, 1, 3, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 2, 4, 3, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 4, 1, 3, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 4, 2, 3, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 1, 2, 0, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 1, 4, 0, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 2, 1, 0, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 2, 4, 0, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 4, 1, 0, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 4, 2, 0, 1], 'factor': (0.2886751345948129+0j)}]
+	assert(consistentIsobarTopo.getBoseSymmetrization() == testval)
+do_test(iDTTestgetBoseSym, "Testing isobarDecayTopology.getBoseSymmetrization()")
+
 def iDTTestgetIsoSym():
-	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (-0.25000000000000006+0j)}, {'fsPartPermMap': [0, 1, 3, 2, 4], 'factor': (-0.25000000000000006+0j)}]
+	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (-0.7071067811865475+0j)}, {'fsPartPermMap': [0, 1, 3, 2, 4], 'factor': (-0.7071067811865475+0j)}]
 	assert(consistentIsobarTopo.getIsospinSymmetrization() == testval)
 do_test(iDTTestgetIsoSym, "Testing isobarDecayTopology.getIsospinSymmetrization()")
 

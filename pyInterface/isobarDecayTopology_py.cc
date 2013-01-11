@@ -123,6 +123,18 @@ namespace {
 		return retval;
 	}
 
+	bp::list isobarDecayTopology_getBoseSymmetrization(const rpwa::isobarDecayTopology& self) {
+		std::vector<rpwa::symTermMap> symTermMap = self.getBoseSymmetrization();
+		bp::list retval;
+		for(unsigned int i = 0; i < symTermMap.size(); ++i) {
+			bp::dict dict;
+			dict["factor"] = symTermMap[i].factor;
+			dict["fsPartPermMap"] = bp::list(symTermMap[i].fsPartPermMap);
+			retval.append(dict);
+		}
+		return retval;
+	}
+
 	bp::list isobarDecayTopology_findIsobarBoseSymVertices(const rpwa::isobarDecayTopology& self) {
 		return bp::list(self.findIsobarBoseSymVertices());
 	}
@@ -194,6 +206,7 @@ void rpwa::py::exportIsobarDecayTopology() {
 		)
 
 		.def("getIsospinSymmetrization", &isobarDecayTopology_getIsospinSymmetrization)
+		.def("getBoseSymmetrization", &isobarDecayTopology_getBoseSymmetrization)
 		.def("findIsobarBoseSymVertices", &isobarDecayTopology_findIsobarBoseSymVertices)
 
 		.add_static_property("debugIsobarDecayTopology", &rpwa::isobarDecayTopology::debug, &isobarDecayTopology::setDebug);
