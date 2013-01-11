@@ -11,7 +11,7 @@ namespace bp = boost::python;
 template<typename T>
 PyObject* rpwa::py::convertToPy(const T& cxxObj) {
 	T* newCxxObj = new T(cxxObj);
-	return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName());
+	return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName(), true);
 };
 
 template<typename T>
