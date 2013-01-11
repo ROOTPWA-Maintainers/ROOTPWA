@@ -109,16 +109,7 @@ namespace rpwa {
 
 		virtual std::complex<double> symTermAmp(const std::vector<unsigned int>& fsPartPermMap) const;  ///< returns decay amplitude for a certain permutation of final-state particles
 
-		virtual void genBoseSymTermMaps
-		(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
-		 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
-		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry,
-		 const std::vector<unsigned int>&                             baseFsPartPermMap,
-		 std::vector<symTermMap>&                                     symTermMaps) const;  ///< recursive function that generates all permutation maps of indistinguishable final state particles
-		virtual void initBoseSymTermMaps();  ///< generates final-state permutation maps for Bose symmetrization
-
-		virtual void initIsospinSymTermMaps();  ///< generates final-state permutation maps for isospin symmetrization
-
+		virtual bool initSymTermMaps();
 
 		isobarDecayTopologyPtr  _decay;                 ///< isobar decay topology with all external information
 		bool                    _useReflectivityBasis;  ///< if set, reflectivity basis is used to calculate the X decay node
