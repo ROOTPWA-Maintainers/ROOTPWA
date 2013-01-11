@@ -486,14 +486,14 @@ isobarDecayTopology::getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex)
 vector<symTermMap>
 isobarDecayTopology::getIsospinSymmetrization()
 {
-	const std::vector<particlePtr> fsParts = fsParticles();
+	const vector<particlePtr> fsParts = fsParticles();
 
 	// Get a vector of groups of particles which have to be permutated.
 	// 
 	// The group is defined as all particles with the same J, P and I. A group
 	// consists of a vector where the indices of all particles belonging to the
 	// group are saved.
-	std::vector< std::vector<unsigned int> > groups;
+	vector< vector<unsigned int> > groups;
 	for(unsigned int i = 0; i < fsParts.size(); ++i) {
 		const particlePtr& particle = fsParts.at(i);
 		bool inserted = false;
@@ -508,16 +508,17 @@ isobarDecayTopology::getIsospinSymmetrization()
 			}
 		}
 		if(!inserted) {
-			groups.push_back(std::vector<unsigned int>(1,i));
+			groups.push_back(vector<unsigned int>(1,i));
 		}
 	}
 
 	if(_debug) {
-		printDebug<<"Doing stuff"<<std::endl;
+		printDebug << "Found isospin symmetrization groups:" << endl;
 		for(unsigned int i = 0; i < groups.size(); ++i) {
-			printDebug<<"Group "<<i<<std::endl;
+			printDebug << "Group " << i << endl;
 			for(unsigned int j = 0; j < groups.at(i).size(); ++j) {
-				printDebug<<j<<": "<<groups.at(i).at(j)<<" ("<<fsParts.at(groups.at(i).at(j))->name()<<")"<<std::endl;
+				printDebug << j << ": " << groups.at(i).at(j)
+				           << " (" << fsParts.at(groups.at(i).at(j))->name() << ")" << endl;
 			}
 		}
 	}
@@ -525,7 +526,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 	// Saving all the isospins z-projections.
 	//
 	// Needed to reset everything as it was at the end.
-	std::vector<int> isospinProjs;
+	vector<int> isospinProjs;
 	for(unsigned int j = 0; j < fsParts.size(); ++j) {
 		isospinProjs.push_back(fsParts.at(j)->isospinProj());
 	}
@@ -537,16 +538,16 @@ isobarDecayTopology::getIsospinSymmetrization()
 	//
 	// First, loop over all the groups.
 	for(unsigned int i = 0; i < groups.size(); ++i) {
-		std::vector<unsigned int> group = groups.at(i);
+		vector<unsigned int> group = groups.at(i);
 
 		// Again debug output
 		if(_debug) {
-			printDebug<<"Group permutations "<<i<<std::endl;
+			printDebug << "Group permutations " << i << endl;
 		}
 
 		// First we need a vector with the unity permutation, which will 
 		// subsequently be permutated.
-		std::vector<unsigned int> permutations;
+		vector<unsigned int> permutations;
 		for(unsigned int j = 0; j < group.size(); ++j) {
 			permutations.push_back(j);
 		}
@@ -556,7 +557,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 			// Create a unity map. The map has one entry per final-state particle
 			// (unlike the group, which only holds the indices of the final-state
 			// particles in the group).
-			std::vector<unsigned int> map;
+			vector<unsigned int> map;
 			for(unsigned int j = 0; j < fsParts.size(); ++j) {
 				map.push_back(j);
 			}
@@ -634,15 +635,15 @@ isobarDecayTopology::getIsospinSymmetrization()
 			symAmplitudes.push_back(symTerm);
 
 			if(_debug) {
-				printDebug<<"Found valid permutation: ";
+				printDebug << "Found valid permutation: ";
 				for(unsigned int j = 0; j < map.size(); ++j) {
-					std::cout<<map.at(j);
+					cout << map.at(j);
 				}
-				std::cout<<" (";
+				cout << " (";
 				for(unsigned int j = 0; j < map.size(); ++j) {
-					std::cout<<fsParts.at(j)->name();
+					cout << fsParts.at(j)->name();
 				}
-				std::cout<<"), clebsch-gordan="<<clebsch<<std::endl;
+				cout << "), clebsch-gordan=" << clebsch << endl;
 			}
 
 			// Resetting isospins for the next permutation
