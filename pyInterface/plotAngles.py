@@ -61,6 +61,18 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("could not construct topology. Aborting...")
 		sys.exit(5)
 
+	permutations = {}
+	boseSyms = topology.getBoseSymmetrization()
+	for sym in boseSyms:
+		permutation = tuple(sym["fsPartPermMap"])
+		permutations[permutation] = []
+		if list(permutation) == [x for x in range(topology.nmbFsParticles())]:
+			for i in range(topology.nmbDecayVertices()):
+				permutations[permutation].append(True)
+		else:
+			for vertex in topology.isobarDecayVertices():
+				permutations[permutation].append(topology.isobarIsAffectedByPermutation(vertex, list(permutation)))
+
 	outputFile = pyRootPwa.ROOT.TFile.Open(arguments.outputFile, "RECREATE")
 
 	inputFileRanges = {}
@@ -107,34 +119,44 @@ if __name__ == "__main__":
 			for i in range(nEvents):
 				dataTree.GetEntry(i)
 
-				# Transform all particles
+				# Read input data
 				if(arguments.randomizeVectorOrder):
 					topology.readKinematicsData(prodKinMomenta, randomizeTClonesArray(decayKinMomenta))
 				else:
 					topology.readKinematicsData(prodKinMomenta, decayKinMomenta)
-				topology.calcIsobarLzVec()
-				beamLv = topology.productionVertex().referenceLzVec()
-				XLv = topology.XParticle().lzVec
-				gjTrans = pyRootPwa.core.isobarAmplitude.gjTransform(beamLv, XLv)
-				for vertex in topology.isobarDecayVertices():
-					vertex.transformOutParticles(gjTrans)
-				for vertex in topology.isobarDecayVertices()[1:]:
-					hfTrans = pyRootPwa.core.isobarHelicityAmplitude.hfTransform(vertex.parent().lzVec)
-					for subVertex in topology.subDecay(vertex).decayVertices():
-						subVertex.transformOutParticles(hfTrans)
 
-				# Fill the histograms
-				hist_i = 0
-				for vertex in topology.isobarDecayVertices():
-					daughter = vertex.daughter1()
-					parent = vertex.parent()
-					mass = parent.lzVec.M()
-					phi = daughter.lzVec.Phi()
-					theta = daughter.lzVec.Theta()
-					hists[rangeName][hist_i][0].Fill(mass)
-					hists[rangeName][hist_i][1].Fill(phi)
-					hists[rangeName][hist_i][2].Fill(pyRootPwa.ROOT.TMath.Cos(theta))
-					hist_i += 1
+				for permutationKey in permutations.keys():
+
+					permutation = list(permutationKey)
+
+					topology.revertMomenta(permutation)
+
+					# Transform all particles
+					topology.calcIsobarLzVec()
+					beamLv = topology.productionVertex().referenceLzVec()
+					XLv = topology.XParticle().lzVec
+					gjTrans = pyRootPwa.core.isobarAmplitude.gjTransform(beamLv, XLv)
+					for vertex in topology.isobarDecayVertices():
+						vertex.transformOutParticles(gjTrans)
+					for vertex in topology.isobarDecayVertices()[1:]:
+						hfTrans = pyRootPwa.core.isobarHelicityAmplitude.hfTransform(vertex.parent().lzVec)
+						for subVertex in topology.subDecay(vertex).decayVertices():
+							subVertex.transformOutParticles(hfTrans)
+
+					# Fill the histograms
+					hist_i = 0
+
+					for vertex in topology.isobarDecayVertices():
+						if(permutations[permutationKey][hist_i]):
+							daughter = vertex.daughter1()
+							parent = vertex.parent()
+							mass = parent.lzVec.M()
+							phi = daughter.lzVec.Phi()
+							theta = daughter.lzVec.Theta()
+							hists[rangeName][hist_i][0].Fill(mass)
+							hists[rangeName][hist_i][1].Fill(phi)
+							hists[rangeName][hist_i][2].Fill(pyRootPwa.ROOT.TMath.Cos(theta))
+						hist_i += 1
 
 				progressbar.update(i)
 
