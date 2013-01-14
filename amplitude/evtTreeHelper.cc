@@ -207,7 +207,6 @@ namespace rpwa {
 				if (inChain->Add(rootFileNames[i].c_str()) < 1)
 					printWarn << "no events in ROOT input file '" << rootFileNames[i] << "'" << endl;
 			}
-			inChain->GetListOfFiles()->ls();
 			// read particle names from first root file
 			TFile* inFile = inChain->GetFile();  // opens first file
 			if (not inFile)
