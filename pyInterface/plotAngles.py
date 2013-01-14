@@ -68,10 +68,12 @@ if __name__ == "__main__":
 		permutations[permutation] = []
 		if list(permutation) == [x for x in range(topology.nmbFsParticles())]:
 			for i in range(topology.nmbDecayVertices()):
-				permutations[permutation].append(True)
+				permutations[permutation].append((True, True))
 		else:
 			for vertex in topology.isobarDecayVertices():
-				permutations[permutation].append(topology.isobarIsAffectedByPermutation(vertex, list(permutation)))
+				permutations[permutation].append((topology.isobarIsAffectedByPermutation(vertex, list(permutation)),
+				                                  topology.daughtersAreAffectedByPermutation(vertex, list(permutation))))
+
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(arguments.outputFile, "RECREATE")
 
@@ -147,13 +149,14 @@ if __name__ == "__main__":
 					hist_i = 0
 
 					for vertex in topology.isobarDecayVertices():
-						if(permutations[permutationKey][hist_i]):
-							daughter = vertex.daughter1()
+						if(permutations[permutationKey][hist_i][0]):
 							parent = vertex.parent()
 							mass = parent.lzVec.M()
+							hists[rangeName][hist_i][0].Fill(mass)
+						if(permutations[permutationKey][hist_i][1]):
+							daughter = vertex.daughter1()
 							phi = daughter.lzVec.Phi()
 							theta = daughter.lzVec.Theta()
-							hists[rangeName][hist_i][0].Fill(mass)
 							hists[rangeName][hist_i][1].Fill(phi)
 							hists[rangeName][hist_i][2].Fill(pyRootPwa.ROOT.TMath.Cos(theta))
 						hist_i += 1

@@ -705,6 +705,27 @@ bool
 isobarDecayTopology::isobarIsAffectedByPermutation(const isobarDecayVertexPtr& vertex,
                                                    const vector<unsigned int>& permutation) const
 {
+	vector<unsigned int> fsPartIndices = getFsPartIndicesConnectedToVertex(vertex);
+	for(unsigned int i = 0; i < permutation.size(); ++i) {
+		if(permutation[i] == i) {
+			continue;
+		}
+		if((find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) == fsPartIndices.end() and
+			find(fsPartIndices.begin(), fsPartIndices.end(), i) != fsPartIndices.end()) or
+		   (find(fsPartIndices.begin(), fsPartIndices.end(), i) == fsPartIndices.end() and
+			find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) != fsPartIndices.end()))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+
+bool
+isobarDecayTopology::daughtersAreAffectedByPermutation(const isobarDecayVertexPtr& vertex,
+                                                       const vector<unsigned int>& permutation) const
+{
 	vector<isobarDecayVertexPtr> verticesToTest(1, vertex);
 	isobarDecayVertexPtr daughter;
 	if(not isFsParticle(vertex->daughter1())) {
@@ -724,18 +745,8 @@ isobarDecayTopology::isobarIsAffectedByPermutation(const isobarDecayVertexPtr& v
 		verticesToTest.push_back(daughter);
 	}
 	for(unsigned int i = 0; i < verticesToTest.size(); ++i) {
-		vector<unsigned int> fsPartIndices = getFsPartIndicesConnectedToVertex(verticesToTest[i]);
-		for(unsigned int j = 0; j < permutation.size(); ++j) {
-			if(permutation[j] == j) {
-				continue;
-			}
-			if((find(fsPartIndices.begin(), fsPartIndices.end(), permutation[j]) == fsPartIndices.end() and
-				find(fsPartIndices.begin(), fsPartIndices.end(), j) != fsPartIndices.end()) or
-			   (find(fsPartIndices.begin(), fsPartIndices.end(), j) == fsPartIndices.end() and
-				find(fsPartIndices.begin(), fsPartIndices.end(), permutation[j]) != fsPartIndices.end()))
-			{
-				return true;
-			}
+		if(isobarIsAffectedByPermutation(verticesToTest[i], permutation)) {
+			return true;
 		}
 	}
 	return false;

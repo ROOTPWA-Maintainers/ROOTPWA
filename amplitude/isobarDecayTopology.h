@@ -127,7 +127,8 @@ namespace rpwa {
 		std::vector<symTermMap> getIsospinSymmetrization();  ///< returns all final-state permutations needed for isospin symmetrization
 		std::vector<symTermMap> getBoseSymmetrization() const;     ///< returns all final-state permutations needed for Bose symmetrization
 
-		bool isobarIsAffectedByPermutation(const isobarDecayVertexPtr& vertex, const std::vector<unsigned int>& permutation) const; ///< returns false if the permutation only affects 'one side' of the decay
+		bool isobarIsAffectedByPermutation(const isobarDecayVertexPtr& vertex, const std::vector<unsigned int>& permutation) const; ///< returns true if the isobar decaying to the vertex is changed by the permutation
+		bool daughtersAreAffectedByPermutation(const isobarDecayVertexPtr& vertex, const std::vector<unsigned int>& permutation) const; ///< returns true if the daughters the vertex decays into are changed by the permutation
 		std::vector<unsigned int> getFsPartIndicesConnectedToVertex(const isobarDecayVertexPtr& vertex) const; ///< returns the indices of the final state particles which are 'below' the given vertex
 
 		std::vector<unsigned int> findIsobarBoseSymVertices() const;  ///< returns indices of all isobar vertices that have isobar daughters that decay into the same final state

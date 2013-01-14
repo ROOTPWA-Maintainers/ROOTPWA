@@ -983,6 +983,16 @@ def iDTTestisoAffPerm():
 		i += 1
 do_test(iDTTestisoAffPerm, "Testing isobarDecayTopology.isobarIsAffectedByPermutation()")
 
+def iDTTestdausAffPerm():
+	testvals = [[False, True, True], [False, True, True], [False, False, False], [False, False, False]]
+	i = 0
+	for vertex in consistentIsobarTopo.isobarDecayVertices():
+		assert(consistentIsobarTopo.daughtersAreAffectedByPermutation(vertex, [0,1,2,3,4]) == testvals[i][0])
+		assert(consistentIsobarTopo.daughtersAreAffectedByPermutation(vertex, [0,1,2,4,3]) == testvals[i][1])
+		assert(consistentIsobarTopo.daughtersAreAffectedByPermutation(vertex, [1,0,2,4,3]) == testvals[i][2])
+		i += 1
+do_test(iDTTestdausAffPerm, "Testing isobarDecayTopology.daughtersAreAffectedByPermutation()")
+
 def iDTTestgetFsPCTV():
 	testvals = [[0,1,2,3,4], [0,1,2,3], [0,1,2], [0,1]]
 	i = 0
