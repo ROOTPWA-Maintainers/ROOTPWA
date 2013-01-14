@@ -166,13 +166,20 @@ namespace rpwa {
 
 	private:
 
+		struct smartPtrComparator {
+			template< typename T >
+			bool operator()(T p1, T p2) const {
+				return p1.get() < p2.get();
+			}
+		};
+
 		// reverse map types
-		typedef typename std::map<VPtr, nodeDesc>            vertexNodeMapType;
-		typedef typename vertexNodeMapType::iterator         vertexNodeMapIt;
-		typedef typename vertexNodeMapType::const_iterator   vertexNodeMapConstIt;
-		typedef typename std::map<PPtr, edgeDesc>            particleEdgeMapType;
-		typedef typename particleEdgeMapType::iterator       particleEdgeMapIt;
-		typedef typename particleEdgeMapType::const_iterator particleEdgeMapConstIt;
+		typedef typename std::map<VPtr, nodeDesc, smartPtrComparator> vertexNodeMapType;
+		typedef typename vertexNodeMapType::iterator                  vertexNodeMapIt;
+		typedef typename vertexNodeMapType::const_iterator            vertexNodeMapConstIt;
+		typedef typename std::map<PPtr, edgeDesc, smartPtrComparator> particleEdgeMapType;
+		typedef typename particleEdgeMapType::iterator                particleEdgeMapIt;
+		typedef typename particleEdgeMapType::const_iterator          particleEdgeMapConstIt;
 
 
 	public:

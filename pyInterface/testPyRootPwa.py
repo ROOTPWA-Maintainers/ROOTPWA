@@ -49,8 +49,17 @@ def do_test_raw(function, name):
 #
 # ---------------------------------------------------------
 
-def impLib(): import pyRootPwa
-do_test(impLib, "Importing pyRootPwa")
+def impLib(name):
+	sys.stdout.write(name + "...")
+	try:
+		import pyRootPwa
+	except:
+		print_red("error")
+		return False
+	return True
+if not impLib("Importing pyRootPwa"):
+	print("Could not import library, aborting tests...")
+	sys.exit(1)
 
 import pyRootPwa
 
@@ -180,26 +189,36 @@ do_test(partTestqnSummary, "Testing particle.qnSummary()")
 def partTestLabel(): assert(part.label() == "Delta(1910)+[1.5(0.5+)]")
 do_test(partTestLabel, "Testing particle.label()")
 
+def partTestSpinProj():
+	assert(part.spinProj == 0)
+	part.spinProj = 2
+	assert(part.spinProj == 2)
+do_test(partTestSpinProj, "Testing particle.spinProj")
+
 def partTestMomentum():
+	assert(part.momentum.X() == 0.)
 	part.momentum = pyRootPwa.ROOT.TVector3(10, 10, 10)
 	assert(part.momentum.X() == 10.)
 do_test(partTestMomentum, "Testing particle.momentum")
 
 def partTestlzVec():
+	assert(part.lzVec.E() == 17.42550142750560838)
 	lz = pyRootPwa.ROOT.TLorentzVector(1., 1., 1., 1.)
 	part.lzVec = lz
 	assert(part.lzVec.E() == 1.)
 do_test(partTestlzVec, "Testing particle.lzVec")
 
 def partTestIndex():
+	assert(part.index == -1)
 	part.index = 12
 	assert(part.index == 12)
 do_test(partTestIndex, "Testing particle.index")
 
 def partTestReflectivity():
+	assert(part.reflectivity == 0)
 	part.reflectivity = 2
 	assert(part.reflectivity == 1)
-do_test(partTestReflectivity, "Testing part.reflectivity")
+do_test(partTestReflectivity, "Testing particle.reflectivity")
 
 def partTestSetProperties():
 	pP = pyRootPwa.core.particleProperties()
@@ -474,7 +493,7 @@ def flatMassDepTestDebug():
 	flatMassDep.debugMassDependence = (not old_debug)
 	assert(flatMassDep.debugMassDependence == (not old_debug))
 	flatMassDep.debugMassDependence = old_debug
-do_test(flatMassDepTestDebug, "Testing flatMassDependence debug flag.")
+do_test(flatMassDepTestDebug, "Testing massDependence debug flag.")
 
 def flatMassDepTestAmp(): assert(flatMassDep.amp(isobDecVtx) == (1+0j))
 do_test(flatMassDepTestAmp, "Testing flatMassDependence.amp()")
@@ -492,6 +511,41 @@ do_test(relBreitWigTestAmp, "Testing relativisticBreitWigner.amp()")
 
 def relBreitWigTestName(): assert(relBreitWig.name() == "relativisticBreitWigner")
 do_test(relBreitWigTestName, "Testing relativisticBreitWigner.name()")
+
+def constBreitWigTestConst(): return pyRootPwa.core.constWidthBreitWigner()
+constBreitWig = do_test(constBreitWigTestConst, "Testing constWidthBreitWigner default constructor")
+
+def constBreitWigTestAmp():
+	amp = constBreitWig.amp(isobDecVtx)
+	zero = amp - (-0.02351738960326379+0.00055337383635446j)
+	assert(zero.real < 10e-17)
+	assert(zero.imag < 10e-17)
+do_test(constBreitWigTestAmp, "Testing constWidthBreitWigner.amp()")
+
+def constBreitWigTestName(): assert(constBreitWig.name() == "constWidthBreitWigner")
+do_test(constBreitWigTestName, "Testing constWidthBreitWigner.name()")
+
+def rhoBreitWigTestConst(): return pyRootPwa.core.rhoBreitWigner()
+rhoBreitWig = do_test(rhoBreitWigTestConst, "Testing rhoBreitWigner default constructor")
+
+def rhoBreitWigTestAmp():
+	amp = rhoBreitWig.amp(isobDecVtx)
+	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+do_test(rhoBreitWigTestAmp, "Testing rhoBreitWigner.amp()")
+
+def rhoBreitWigTestName(): assert(rhoBreitWig.name() == "rhoBreitWigner")
+do_test(rhoBreitWigTestName, "Testing rhoBreitWigner.name()")
+
+def f0980BreitWigTestConst(): return pyRootPwa.core.f0980BreitWigner()
+f0980BreitWig = do_test(f0980BreitWigTestConst, "Testing f0980BreitWigner default constructor")
+
+def f0980BreitWigTestAmp():
+	amp = f0980BreitWig.amp(isobDecVtx)
+	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+do_test(f0980BreitWigTestAmp, "Testing f0980BreitWigner.amp()")
+
+def f0980BreitWigTestName(): assert(f0980BreitWig.name() == "f0980BreitWigner")
+do_test(f0980BreitWigTestName, "Testing f0980BreitWigner.name()")
 
 def SAuMoPenMTestConst(): return pyRootPwa.core.piPiSWaveAuMorganPenningtonM()
 SAuMoPenM = do_test(SAuMoPenMTestConst, "Testing piPiSWaveAuMorganPenningtonM default constructor")
@@ -531,6 +585,17 @@ do_test(SAuMoPenKachaevTestAmp, "Testing piPiSWaveAuMorganPennigtonKachaev.amp()
 
 def SAuMoPenKachaevTestName(): assert(SAuMoPenKachaev.name() == "piPiSWaveAuMorganPenningtonKachaev")
 do_test(SAuMoPenKachaevTestName, "Testing piPiSWaveAuMorganPennigtonKachaev.name()")
+
+def rhoPrimeTestConst(): return pyRootPwa.core.rhoPrimeMassDep()
+rhoPrime = do_test(rhoPrimeTestConst, "Testing rhoPrimeMassDep default constructor")
+
+def rhoPrimeTestAmp():
+	amp = rhoPrime.amp(isobDecVtx)
+	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+do_test(rhoPrimeTestAmp, "Testing rhoPrimeMassDep.amp()")
+
+def rhoPrimeTestName(): assert(rhoPrime.name() == "rhoPrimeMassDep")
+do_test(rhoPrimeTestName, "Testing rhoPrimeMassDep.name()")
 
 print
 print("########################################################################")
@@ -859,12 +924,14 @@ def iDTTestcCon(): assert(isoDecTop.checkConsistency())
 do_test(iDTTestcCon, "Testing isobarDecayTopology.checkConsistency()")
 
 def iDTTestSubDecay(): return(consistentIsobarTopo.subDecay(consistentIsobarTopo.XIsobarDecayVertex()))
-do_test(iDTTestSubDecay, "Testing isobarDecayTopology.subDecay()", True)
-# problems with getting the right vertex as argument
+do_test(iDTTestSubDecay, "Testing isobarDecayTopology.subDecay()")
 
-def iDTTestJDD(): pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, first, consistentIsobarTopo)
-do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()", True)
-# should be possible to test once isobarDecayTopology.subDecay() works?
+def iDTTestJDD():
+	waste = consistentIsobarTopo.clone()
+	dec1 = waste.subDecay(waste.decayVertices()[3])
+	dec2 = waste.subDecay(waste.decayVertices()[3])
+	return pyRootPwa.core.isobarDecayTopology.joinDaughterDecays(isobDecVtx, dec1, dec2)
+do_test(iDTTestJDD, "Testing isobarDecayTopology.joinDaughterDecays()")
 
 def iDTTestCILV(): assert(consistentIsobarTopo.calcIsobarLzVec() == pyRootPwa.ROOT.TLorentzVector(0., 0., 0., 0.697850))
 do_test(iDTTestCILV, "Testing isobarDecayTopology.calcIsobarLzVec()")
@@ -890,6 +957,54 @@ def iDTTestWGVtoFile():
 	assert(result)
 do_test(iDTTestWGVtoFile, "Testing isobarDecayTopology.writeGraphViz(outFileNmae)")
 
+def iDTTestgIsoCGProd():
+	assert(consistentIsobarTopo.getIsospinClebschGordanProduct() == -0.25000000000000006)
+	assert(consistentIsobarTopo.getIsospinClebschGordanProduct(consistentIsobarTopo.isobarDecayVertices()[2]) == 0.50000000000000011)
+do_test(iDTTestgIsoCGProd, "Testing isobarDecayTopology.getIsospinClebschGordanProduct()")
+
+def iDTTestgetBoseSym():
+	print
+	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 1, 4, 3, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 2, 1, 3, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 2, 4, 3, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 4, 1, 3, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 4, 2, 3, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 1, 2, 0, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 1, 4, 0, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 2, 1, 0, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 2, 4, 0, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 4, 1, 0, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 4, 2, 0, 1], 'factor': (0.2886751345948129+0j)}]
+	assert(consistentIsobarTopo.getBoseSymmetrization() == testval)
+do_test(iDTTestgetBoseSym, "Testing isobarDecayTopology.getBoseSymmetrization()")
+
+def iDTTestgetIsoSym():
+	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (-0.7071067811865475+0j)}, {'fsPartPermMap': [0, 1, 3, 2, 4], 'factor': (-0.7071067811865475+0j)}]
+	assert(consistentIsobarTopo.getIsospinSymmetrization() == testval)
+do_test(iDTTestgetIsoSym, "Testing isobarDecayTopology.getIsospinSymmetrization()")
+
+def iDTTestisoAffPerm():
+	testvals = [[False, False, False], [False, True, True], [False, False, False], [False, False, False]]
+	i = 0
+	for vertex in consistentIsobarTopo.isobarDecayVertices():
+		assert(consistentIsobarTopo.isobarIsAffectedByPermutation(vertex, [0,1,2,3,4]) == testvals[i][0])
+		assert(consistentIsobarTopo.isobarIsAffectedByPermutation(vertex, [0,1,2,4,3]) == testvals[i][1])
+		assert(consistentIsobarTopo.isobarIsAffectedByPermutation(vertex, [1,0,2,4,3]) == testvals[i][2])
+		i += 1
+do_test(iDTTestisoAffPerm, "Testing isobarDecayTopology.isobarIsAffectedByPermutation()")
+
+def iDTTestdausAffPerm():
+	testvals = [[False, True, True], [False, True, True], [False, False, False], [False, False, False]]
+	i = 0
+	for vertex in consistentIsobarTopo.isobarDecayVertices():
+		assert(consistentIsobarTopo.daughtersAreAffectedByPermutation(vertex, [0,1,2,3,4]) == testvals[i][0])
+		assert(consistentIsobarTopo.daughtersAreAffectedByPermutation(vertex, [0,1,2,4,3]) == testvals[i][1])
+		assert(consistentIsobarTopo.daughtersAreAffectedByPermutation(vertex, [1,0,2,4,3]) == testvals[i][2])
+		i += 1
+do_test(iDTTestdausAffPerm, "Testing isobarDecayTopology.daughtersAreAffectedByPermutation()")
+
+def iDTTestgetFsPCTV():
+	testvals = [[0,1,2,3,4], [0,1,2,3], [0,1,2], [0,1]]
+	i = 0
+	for vertex in consistentIsobarTopo.isobarDecayVertices():
+		assert(consistentIsobarTopo.getFsPartIndicesConnectedToVertex(vertex) == testvals[i])
+		i += 1
+do_test(iDTTestgetFsPCTV, "Testing isobarDecayTopology.getFsPartIndicesConnectedToVertex()")
+
+def iDTestfIsoBoseSymVerts():
+	assert(consistentIsobarTopo.findIsobarBoseSymVertices() == [])
+do_test(iDTestfIsoBoseSymVerts, "Testing isobarDecayTopology.findIsobarBoseSymVertices()")
+
 def iDTTestDebug():
 	old_debug = isoDecTop.debugIsobarDecayTopology
 	isoDecTop.debugIsobarDecayTopology = (not old_debug)
@@ -899,6 +1014,23 @@ do_test(iDTTestDebug, "Testing isobarDecayTopology debug flag")
 
 def iDTTestClear(): isoDecTop.clear()
 do_test(iDTTestClear, "Testing isobarDecayTopology.clear()")
+
+print
+print("########################################################################")
+print
+
+# ---------------------------------------------------------
+#
+#	isobarAmplitude
+#
+# ---------------------------------------------------------
+
+def iATestgjTrans():
+	lzVec1 = pyRootPwa.ROOT.TLorentzVector(-0.000905,-0.082895,192.513945,192.514013)
+	lzVec2 = pyRootPwa.ROOT.TLorentzVector(-0.855221,0.115472,192.091726,192.100313)
+	rot = pyRootPwa.core.isobarAmplitude.gjTransform(lzVec2, lzVec1)
+	assert(rot.XX() == -0.97198203396081984)
+do_test(iATestgjTrans, "Testing isobarAmplitude::gjTransform")
 
 print
 print("########################################################################")
@@ -950,6 +1082,7 @@ do_test(iHATestName, "Testing isobarHelicityAmplitude.name()")
 def iHATTesthfTransform():
 	vec = pyRootPwa.ROOT.TLorentzVector(0., 1., 2., 3.)
 	rot1 = pyRootPwa.core.isobarHelicityAmplitude.hfTransform(vec)
+	assert(rot1.XY() == 0.89442719099991586)
 	rot2 = iHA.hfTransform(vec)
 	assert(rot1 == rot2)
 do_test(iHATTesthfTransform, "Testing isobarHelicityAmplitude::hfTransform")

@@ -125,6 +125,11 @@ namespace rpwa {
 		double getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex = isobarDecayVertexPtr()) const;  ///< returns product of isospin Clebsch-Gordans for all two-body decays in the topology
 
 		std::vector<symTermMap> getIsospinSymmetrization();  ///< returns all final-state permutations needed for isospin symmetrization
+		std::vector<symTermMap> getBoseSymmetrization() const;     ///< returns all final-state permutations needed for Bose symmetrization
+
+		bool isobarIsAffectedByPermutation(const isobarDecayVertexPtr& vertex, const std::vector<unsigned int>& permutation) const; ///< returns true if the isobar decaying to the vertex is changed by the permutation
+		bool daughtersAreAffectedByPermutation(const isobarDecayVertexPtr& vertex, const std::vector<unsigned int>& permutation) const; ///< returns true if the daughters the vertex decays into are changed by the permutation
+		std::vector<unsigned int> getFsPartIndicesConnectedToVertex(const isobarDecayVertexPtr& vertex) const; ///< returns the indices of the final state particles which are 'below' the given vertex
 
 		std::vector<unsigned int> findIsobarBoseSymVertices() const;  ///< returns indices of all isobar vertices that have isobar daughters that decay into the same final state
 
@@ -147,6 +152,12 @@ namespace rpwa {
 		                                     const bool cloneProdKinematics) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
 
 		void buildIsobarVertexArray();  ///< (re)builds array of isobar decay vertices
+
+		virtual void genBoseSymTermMaps
+		(const std::map<std::string, std::vector<unsigned int> >&     origFsPartIndices,
+		 const std::map<std::string, std::vector<unsigned int> >&     newFsPartIndices,
+		 std::map<std::string, std::vector<unsigned int> >::iterator& newFsPartIndicesEntry,
+		 std::vector<symTermMap>&                                     symTermMaps) const;  ///< recursive function that generates all permutation maps of indistinguishable final state particles
 
 		std::vector<isobarDecayVertexPtr> _isobarVertices;  ///< array of isobar-decay vertices excluding production vertex; ordered depth-first; this is a copy of the respective array in decayTopology
 

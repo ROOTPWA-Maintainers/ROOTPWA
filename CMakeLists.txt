@@ -361,42 +361,49 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up Python.")
 option(USE_PYTHON "En/Disables Python bindings" OFF)
-find_package(Python 2.7)
-set_feature_info(Python
-	"General-purpose, high-level programming language"
-	"http://www.python.org"
-	"optional"
-	)
-if(NOT PYTHONLIBS_FOUND)
+if(ROOT_VERSION VERSION_LESS "5.34.04")
+	message(STATUS "Python bindings require ROOT version 5.34.04 or newer "
+		"(found ${ROOT_VERSION}).")
+	message(STATUS "No Python bindings will be generated")
 	set(USE_PYTHON OFF)
-	message(STATUS "Cannot find Python libraries. No Python bindings will be generated.")
 else()
-	set(USE_PYTHON ON)
-	# check that Boost.Python library was found
-	set(_BOOST_PYTHON_COMPONENTS "python")
-	foreach(_BOOST_PYTHON_COMPONENT ${_BOOST_PYTHON_COMPONENTS})
-		string(TOUPPER ${_BOOST_PYTHON_COMPONENT} _BOOST_PYTHON_COMPONENT)
-		if(NOT Boost_${_BOOST_PYTHON_COMPONENT}_FOUND)
-			set(USE_PYTHON OFF)
-			message(STATUS "Cannot find Boost.Python library in "
-				"'${Boost_LIBRARY_DIRS}'. Please read INSTALL on how to build Boost.Python.")
-		else()
-			list(APPEND Boost_PYTHON_LIBS ${Boost_${_BOOST_PYTHON_COMPONENT}_LIBRARY})
-		endif()
-	endforeach()
-	unset(_BOOST_PYTHON_COMPONENTS)
-	if(USE_PYTHON)
-		message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
-		message(STATUS "Enabling compilation of Python components.")
-		add_definitions(-DUSE_PYTHON)
-		set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
-		file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH})
-		file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa)
-		message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
+	find_package(Python 2.7)
+	set_feature_info(Python
+		"General-purpose, high-level programming language"
+		"http://www.python.org"
+		"optional"
+		)
+	if(NOT PYTHONLIBS_FOUND)
+		set(USE_PYTHON OFF)
+		message(STATUS "Cannot find Python libraries. No Python bindings will be generated.")
 	else()
-		disable_feature(Python)
-		message(STATUS "Found Python installation, but Boost.Python is not built correctly (consult INSTALL). "
-			"No Python bindings will be generated.")
+		set(USE_PYTHON ON)
+		# check that Boost.Python library was found
+		set(_BOOST_PYTHON_COMPONENTS "python")
+		foreach(_BOOST_PYTHON_COMPONENT ${_BOOST_PYTHON_COMPONENTS})
+			string(TOUPPER ${_BOOST_PYTHON_COMPONENT} _BOOST_PYTHON_COMPONENT)
+			if(NOT Boost_${_BOOST_PYTHON_COMPONENT}_FOUND)
+				set(USE_PYTHON OFF)
+				message(STATUS "Cannot find Boost.Python library in "
+					"'${Boost_LIBRARY_DIRS}'. Please read INSTALL on how to build Boost.Python.")
+			else()
+				list(APPEND Boost_PYTHON_LIBS ${Boost_${_BOOST_PYTHON_COMPONENT}_LIBRARY})
+			endif()
+		endforeach()
+		unset(_BOOST_PYTHON_COMPONENTS)
+		if(USE_PYTHON)
+			message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
+			message(STATUS "Enabling compilation of Python components.")
+			add_definitions(-DUSE_PYTHON)
+			set(PYTHON_LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/pyLib")
+			file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH})
+			file(MAKE_DIRECTORY ${PYTHON_LIBRARY_OUTPUT_PATH}/pyRootPwa)
+			message(STATUS "Using python bindings output path '${PYTHON_LIBRARY_OUTPUT_PATH}'.")
+		else()
+			disable_feature(Python)
+			message(STATUS "Found Python installation, but Boost.Python is not built correctly (consult INSTALL). "
+				"No Python bindings will be generated.")
+		endif()
 	endif()
 endif()
 

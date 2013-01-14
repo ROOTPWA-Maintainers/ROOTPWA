@@ -111,6 +111,62 @@ namespace {
 		return self.writeGraphViz(outFileName);
 	};
 
+	bp::list isobarDecayTopology_getIsospinSymmetrization(rpwa::isobarDecayTopology& self) {
+		std::vector<rpwa::symTermMap> symTermMap = self.getIsospinSymmetrization();
+		bp::list retval;
+		for(unsigned int i = 0; i < symTermMap.size(); ++i) {
+			bp::dict dict;
+			dict["factor"] = symTermMap[i].factor;
+			dict["fsPartPermMap"] = bp::list(symTermMap[i].fsPartPermMap);
+			retval.append(dict);
+		}
+		return retval;
+	}
+
+	bp::list isobarDecayTopology_getBoseSymmetrization(const rpwa::isobarDecayTopology& self) {
+		std::vector<rpwa::symTermMap> symTermMap = self.getBoseSymmetrization();
+		bp::list retval;
+		for(unsigned int i = 0; i < symTermMap.size(); ++i) {
+			bp::dict dict;
+			dict["factor"] = symTermMap[i].factor;
+			dict["fsPartPermMap"] = bp::list(symTermMap[i].fsPartPermMap);
+			retval.append(dict);
+		}
+		return retval;
+	}
+
+	bool isobarDecayTopology_isobarIsAffectedByPermutation(const rpwa::isobarDecayTopology& self,
+	                                                       const rpwa::isobarDecayVertexPtr& vertex,
+	                                                       const bp::list& pyPermutation)
+	{
+		std::vector<unsigned int> permutation;
+		for(int i = 0; i < bp::len(pyPermutation); ++i) {
+			permutation.push_back(bp::extract<unsigned int>(pyPermutation[i]));
+		}
+		return self.isobarIsAffectedByPermutation(vertex, permutation);
+	}
+
+	bool isobarDecayTopology_daughtersAreAffectedByPermutation(const rpwa::isobarDecayTopology& self,
+		                                                       const rpwa::isobarDecayVertexPtr& vertex,
+		                                                       const bp::list& pyPermutation)
+	{
+		std::vector<unsigned int> permutation;
+		for(int i = 0; i < bp::len(pyPermutation); ++i) {
+			permutation.push_back(bp::extract<unsigned int>(pyPermutation[i]));
+		}
+		return self.daughtersAreAffectedByPermutation(vertex, permutation);
+	}
+
+	bp::list isobarDecayTopology_getFsPartIndicesConnectedToVertex(const rpwa::isobarDecayTopology& self,
+	                                                               const rpwa::isobarDecayVertexPtr& vertex)
+	{
+		return bp::list(self.getFsPartIndicesConnectedToVertex(vertex));
+	}
+
+	bp::list isobarDecayTopology_findIsobarBoseSymVertices(const rpwa::isobarDecayTopology& self) {
+		return bp::list(self.findIsobarBoseSymVertices());
+	}
+
 }
 
 void rpwa::py::exportIsobarDecayTopology() {
@@ -168,9 +224,21 @@ void rpwa::py::exportIsobarDecayTopology() {
 		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz1)
 		.def("writeGraphViz", &isobarDecayTopology_writeGraphViz2)
 
-
 		.def("calcIsobarCharges", &rpwa::isobarDecayTopology::calcIsobarCharges, (bp::arg("quiet")=false))
 		.def("calcIsobarBaryonNmbs", &rpwa::isobarDecayTopology::calcIsobarBaryonNmbs)
+
+		.def(
+			"getIsospinClebschGordanProduct"
+			, &rpwa::isobarDecayTopology::getIsospinClebschGordanProduct
+			, (bp::arg("vertex")=rpwa::isobarDecayVertexPtr())
+		)
+
+		.def("getIsospinSymmetrization", &isobarDecayTopology_getIsospinSymmetrization)
+		.def("getBoseSymmetrization", &isobarDecayTopology_getBoseSymmetrization)
+		.def("isobarIsAffectedByPermutation", &isobarDecayTopology_isobarIsAffectedByPermutation)
+		.def("daughtersAreAffectedByPermutation", &isobarDecayTopology_daughtersAreAffectedByPermutation)
+		.def("getFsPartIndicesConnectedToVertex", &isobarDecayTopology_getFsPartIndicesConnectedToVertex)
+		.def("findIsobarBoseSymVertices", &isobarDecayTopology_findIsobarBoseSymVertices)
 
 		.add_static_property("debugIsobarDecayTopology", &rpwa::isobarDecayTopology::debug, &isobarDecayTopology::setDebug);
 

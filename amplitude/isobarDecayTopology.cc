@@ -486,14 +486,14 @@ isobarDecayTopology::getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex)
 vector<symTermMap>
 isobarDecayTopology::getIsospinSymmetrization()
 {
-	const std::vector<particlePtr> fsParts = fsParticles();
+	const vector<particlePtr> fsParts = fsParticles();
 
 	// Get a vector of groups of particles which have to be permutated.
 	// 
 	// The group is defined as all particles with the same J, P and I. A group
 	// consists of a vector where the indices of all particles belonging to the
 	// group are saved.
-	std::vector< std::vector<unsigned int> > groups;
+	vector< vector<unsigned int> > groups;
 	for(unsigned int i = 0; i < fsParts.size(); ++i) {
 		const particlePtr& particle = fsParts.at(i);
 		bool inserted = false;
@@ -508,16 +508,17 @@ isobarDecayTopology::getIsospinSymmetrization()
 			}
 		}
 		if(!inserted) {
-			groups.push_back(std::vector<unsigned int>(1,i));
+			groups.push_back(vector<unsigned int>(1,i));
 		}
 	}
 
 	if(_debug) {
-		printDebug<<"Doing stuff"<<std::endl;
+		printDebug << "Found isospin symmetrization groups:" << endl;
 		for(unsigned int i = 0; i < groups.size(); ++i) {
-			printDebug<<"Group "<<i<<std::endl;
+			printDebug << "Group " << i << endl;
 			for(unsigned int j = 0; j < groups.at(i).size(); ++j) {
-				printDebug<<j<<": "<<groups.at(i).at(j)<<" ("<<fsParts.at(groups.at(i).at(j))->name()<<")"<<std::endl;
+				printDebug << j << ": " << groups.at(i).at(j)
+				           << " (" << fsParts.at(groups.at(i).at(j))->name() << ")" << endl;
 			}
 		}
 	}
@@ -525,7 +526,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 	// Saving all the isospins z-projections.
 	//
 	// Needed to reset everything as it was at the end.
-	std::vector<int> isospinProjs;
+	vector<int> isospinProjs;
 	for(unsigned int j = 0; j < fsParts.size(); ++j) {
 		isospinProjs.push_back(fsParts.at(j)->isospinProj());
 	}
@@ -537,16 +538,16 @@ isobarDecayTopology::getIsospinSymmetrization()
 	//
 	// First, loop over all the groups.
 	for(unsigned int i = 0; i < groups.size(); ++i) {
-		std::vector<unsigned int> group = groups.at(i);
+		vector<unsigned int> group = groups.at(i);
 
 		// Again debug output
 		if(_debug) {
-			printDebug<<"Group permutations "<<i<<std::endl;
+			printDebug << "Group permutations " << i << endl;
 		}
 
 		// First we need a vector with the unity permutation, which will 
 		// subsequently be permutated.
-		std::vector<unsigned int> permutations;
+		vector<unsigned int> permutations;
 		for(unsigned int j = 0; j < group.size(); ++j) {
 			permutations.push_back(j);
 		}
@@ -556,7 +557,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 			// Create a unity map. The map has one entry per final-state particle
 			// (unlike the group, which only holds the indices of the final-state
 			// particles in the group).
-			std::vector<unsigned int> map;
+			vector<unsigned int> map;
 			for(unsigned int j = 0; j < fsParts.size(); ++j) {
 				map.push_back(j);
 			}
@@ -634,15 +635,15 @@ isobarDecayTopology::getIsospinSymmetrization()
 			symAmplitudes.push_back(symTerm);
 
 			if(_debug) {
-				printDebug<<"Found valid permutation: ";
+				printDebug << "Found valid permutation: ";
 				for(unsigned int j = 0; j < map.size(); ++j) {
-					std::cout<<map.at(j);
+					cout << map.at(j);
 				}
-				std::cout<<" (";
+				cout << " (";
 				for(unsigned int j = 0; j < map.size(); ++j) {
-					std::cout<<fsParts.at(j)->name();
+					cout << fsParts.at(j)->name();
 				}
-				std::cout<<"), clebsch-gordan="<<clebsch<<std::endl;
+				cout << "), clebsch-gordan=" << clebsch << endl;
 			}
 
 			// Resetting isospins for the next permutation
@@ -656,7 +657,187 @@ isobarDecayTopology::getIsospinSymmetrization()
 
 	} // End of the loop over the groups.
 
+	for(unsigned int i = 0; i < symAmplitudes.size(); ++i) {
+		symAmplitudes[i].factor = signum(symAmplitudes[i].factor.real()) / sqrt(symAmplitudes.size());
+	}
+
 	return symAmplitudes;
+}
+
+
+vector<symTermMap>
+isobarDecayTopology::getBoseSymmetrization() const
+{
+	// get final state indistinguishable particles
+	typedef map<string, unsigned int>::const_iterator indistFsPartIt;
+	const map<string, unsigned int> indistFsPart = nmbIndistFsParticles();
+	printInfo << "indistinguishable final-state multiplicities "
+	          << "(marked FS particles will be Bose symmetrized): ";
+	for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
+		cout << i->first << " = " << i->second << ((i->second) >= 2 ? " <<<  " : "  ");
+	cout << endl;
+
+	// calculate normalization factor
+	double nmbCombinations = 1;
+	for (indistFsPartIt i = indistFsPart.begin(); i != indistFsPart.end(); ++i)
+		nmbCombinations *= factorial<double>(i->second);
+	const double normFactor = 1 / sqrt(nmbCombinations);
+
+	// initialize indices used to generate final-state permutation maps
+	// in order to get all permutations with std::next_permutation indices have to be sorted ascending
+	map<string, vector<unsigned int> > origFsPartIndices;
+	for (unsigned int i = 0; i < nmbFsParticles(); ++i) {
+		const string partName = fsParticles()[i]->name();
+		origFsPartIndices[partName].push_back(i);
+	}
+	map<string, vector<unsigned int> > newFsPartIndices = origFsPartIndices;
+	map<string, vector<unsigned int> >::iterator firstEntry        = newFsPartIndices.begin();
+	vector<symTermMap> symTermMaps;
+	genBoseSymTermMaps(origFsPartIndices, newFsPartIndices, firstEntry, symTermMaps);
+	for(unsigned int i = 0; i < symTermMaps.size(); ++i) {
+		symTermMaps[i].factor = normFactor;
+	}
+	return symTermMaps;
+}
+
+
+bool
+isobarDecayTopology::isobarIsAffectedByPermutation(const isobarDecayVertexPtr& vertex,
+                                                   const vector<unsigned int>& permutation) const
+{
+	vector<unsigned int> fsPartIndices = getFsPartIndicesConnectedToVertex(vertex);
+	for(unsigned int i = 0; i < permutation.size(); ++i) {
+		if(permutation[i] == i) {
+			continue;
+		}
+		if((find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) == fsPartIndices.end() and
+			find(fsPartIndices.begin(), fsPartIndices.end(), i) != fsPartIndices.end()) or
+		   (find(fsPartIndices.begin(), fsPartIndices.end(), i) == fsPartIndices.end() and
+			find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) != fsPartIndices.end()))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+
+bool
+isobarDecayTopology::daughtersAreAffectedByPermutation(const isobarDecayVertexPtr& vertex,
+                                                       const vector<unsigned int>& permutation) const
+{
+	vector<isobarDecayVertexPtr> verticesToTest(1, vertex);
+	isobarDecayVertexPtr daughter;
+	if(not isFsParticle(vertex->daughter1())) {
+		daughter = dynamic_pointer_cast<isobarDecayVertex>(toVertex(vertex->daughter1()));
+		if(not daughter) {
+			printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+			throw;
+		}
+		verticesToTest.push_back(daughter);
+	}
+	if(not isFsParticle(vertex->daughter2())) {
+		daughter = dynamic_pointer_cast<isobarDecayVertex>(toVertex(vertex->daughter2()));
+		if(not daughter) {
+			printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+			throw;
+		}
+		verticesToTest.push_back(daughter);
+	}
+	for(unsigned int i = 0; i < verticesToTest.size(); ++i) {
+		if(isobarIsAffectedByPermutation(verticesToTest[i], permutation)) {
+			return true;
+		}
+	}
+	return false;
+}
+
+
+vector<unsigned int> isobarDecayTopology::getFsPartIndicesConnectedToVertex(const isobarDecayVertexPtr& vertex) const
+{
+	vector<unsigned int> indices;
+	int index1 = fsParticlesIndex(vertex->daughter1());
+	int index2 = fsParticlesIndex(vertex->daughter2());
+	if(index1 >= 0) {
+		indices.push_back(static_cast<unsigned int>(index1));
+	} else {
+		const particlePtr& daughter1 = vertex->daughter1();
+		if(not isFsParticle(daughter1)) {
+			isobarDecayVertexPtr daughterVertex1 = dynamic_pointer_cast<isobarDecayVertex>(toVertex(daughter1));
+			if(not daughterVertex1) {
+				printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+				throw;
+			}
+			vector<unsigned int> indices1 = getFsPartIndicesConnectedToVertex(daughterVertex1);
+			indices.insert(indices.end(), indices1.begin(), indices1.end());
+		}
+	}
+	if(index2 >= 0) {
+		indices.push_back(static_cast<unsigned int>(index2));
+	} else {
+		const particlePtr& daughter2 = vertex->daughter2();
+		if(not isFsParticle(daughter2)) {
+			isobarDecayVertexPtr daughterVertex2 = dynamic_pointer_cast<isobarDecayVertex>(toVertex(daughter2));
+			if(not daughterVertex2) {
+				printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+				throw;
+			}
+			vector<unsigned int> indices2 = getFsPartIndicesConnectedToVertex(daughterVertex2);
+			indices.insert(indices.end(), indices2.begin(), indices2.end());
+		}
+	}
+	return indices;
+}
+
+void
+isobarDecayTopology::genBoseSymTermMaps
+(const map<string, vector<unsigned int> >&     origFsPartIndices,      // original final-state particle ordering sorted by species
+ const map<string, vector<unsigned int> >&     newFsPartIndices,       // new final-state particle ordering sorted by species
+ map<string, vector<unsigned int> >::iterator& newFsPartIndicesEntry,  // entry of particle species that is currently being symmetrized
+ vector<symTermMap>&                           newSymTermMaps) const   // generated permutation maps
+{
+	// loop over all permutations for current final-state particle species
+	do {
+		map<string, vector<unsigned int> >::iterator nextFsPartIndicesEntry = newFsPartIndicesEntry;
+		if (++nextFsPartIndicesEntry != newFsPartIndices.end())
+			// recurse to permutations of other final-state particle species
+			genBoseSymTermMaps(origFsPartIndices, newFsPartIndices, nextFsPartIndicesEntry,
+			                   newSymTermMaps);
+		else {
+			// build map for current permutation
+			vector<unsigned int> bosePermMap(nmbFsParticles(), 0);
+			if (_debug)
+				printDebug << "Bose-symmetrization final-state permutation: ";
+			for (map<string, vector<unsigned int> >::const_iterator i = origFsPartIndices.begin();
+			     i != origFsPartIndices.end(); ++i) {
+				const string partName = i->first;
+				map<string, vector<unsigned int> >::const_iterator entry = newFsPartIndices.find(partName);
+				assert(entry != newFsPartIndices.end());
+				for (unsigned int j = 0; j < i->second.size(); ++j) {
+					assert(entry->second.size() == i->second.size());
+					const unsigned int origFsPartIndex = i->second[j];
+					const unsigned int newFsPartIndex  = entry->second[j];
+					if (_debug)
+						cout << partName << "[" << origFsPartIndex << " -> " << newFsPartIndex << "]  ";
+					bosePermMap[origFsPartIndex] = newFsPartIndex;
+				}
+			}
+			if (_debug)
+				cout << endl;
+			// compute effective permutation map by reshuffling Bose
+			// symmetrization permuation map according to base permutation map
+			vector<unsigned int> fsPartPermMap(bosePermMap.size(), 0);
+			for (unsigned int i = 0; i < fsPartPermMap.size(); ++i) {
+				fsPartPermMap[i] = bosePermMap[i];
+			}
+			if (_debug)
+				printDebug << "effective Bose-symmetrization is: final-state permutation map = "
+				           << fsPartPermMap << endl;
+			symTermMap symTerm(1, fsPartPermMap);
+			newSymTermMaps.push_back(symTerm);
+		}
+	} while (next_permutation(newFsPartIndicesEntry->second.begin(),
+	                          newFsPartIndicesEntry->second.end()));
 }
 
 
