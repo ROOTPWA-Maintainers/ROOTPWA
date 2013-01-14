@@ -705,17 +705,37 @@ bool
 isobarDecayTopology::isobarIsAffectedByPermutation(const isobarDecayVertexPtr& vertex,
                                                    const vector<unsigned int>& permutation) const
 {
-	vector<unsigned int> fsPartIndices = getFsPartIndicesConnectedToVertex(vertex);
-	for(unsigned int i = 0; i < permutation.size(); ++i) {
-		if(permutation[i] == i) {
-			continue;
+	vector<isobarDecayVertexPtr> verticesToTest(1, vertex);
+	isobarDecayVertexPtr daughter;
+	if(not isFsParticle(vertex->daughter1())) {
+		daughter = dynamic_pointer_cast<isobarDecayVertex>(toVertex(vertex->daughter1()));
+		if(not daughter) {
+			printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+			throw;
 		}
-		if((find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) == fsPartIndices.end() and
-		    find(fsPartIndices.begin(), fsPartIndices.end(), i) != fsPartIndices.end()) or
-		   (find(fsPartIndices.begin(), fsPartIndices.end(), i) == fsPartIndices.end() and
-		    find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) != fsPartIndices.end()))
-		{
-			return true;
+		verticesToTest.push_back(daughter);
+	}
+	if(not isFsParticle(vertex->daughter2())) {
+		daughter = dynamic_pointer_cast<isobarDecayVertex>(toVertex(vertex->daughter2()));
+		if(not daughter) {
+			printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+			throw;
+		}
+		verticesToTest.push_back(daughter);
+	}
+	for(unsigned int i = 0; i < verticesToTest.size(); ++i) {
+		vector<unsigned int> fsPartIndices = getFsPartIndicesConnectedToVertex(verticesToTest[i]);
+		for(unsigned int j = 0; j < permutation.size(); ++j) {
+			if(permutation[j] == j) {
+				continue;
+			}
+			if((find(fsPartIndices.begin(), fsPartIndices.end(), permutation[j]) == fsPartIndices.end() and
+				find(fsPartIndices.begin(), fsPartIndices.end(), j) != fsPartIndices.end()) or
+			   (find(fsPartIndices.begin(), fsPartIndices.end(), j) == fsPartIndices.end() and
+				find(fsPartIndices.begin(), fsPartIndices.end(), permutation[j]) != fsPartIndices.end()))
+			{
+				return true;
+			}
 		}
 	}
 	return false;
