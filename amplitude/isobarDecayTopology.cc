@@ -701,6 +701,63 @@ isobarDecayTopology::getBoseSymmetrization() const
 }
 
 
+bool
+isobarDecayTopology::isobarIsAffectedByPermutation(const isobarDecayVertexPtr& vertex,
+                                                   const vector<unsigned int>& permutation) const
+{
+	vector<unsigned int> fsPartIndices = getFsPartIndicesConnectedToVertex(vertex);
+	for(unsigned int i = 0; i < permutation.size(); ++i) {
+		if(permutation[i] == i) {
+			continue;
+		}
+		if((find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) == fsPartIndices.end() and
+		    find(fsPartIndices.begin(), fsPartIndices.end(), i) != fsPartIndices.end()) or
+		   (find(fsPartIndices.begin(), fsPartIndices.end(), i) == fsPartIndices.end() and
+		    find(fsPartIndices.begin(), fsPartIndices.end(), permutation[i]) != fsPartIndices.end()))
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+
+vector<unsigned int> isobarDecayTopology::getFsPartIndicesConnectedToVertex(const isobarDecayVertexPtr& vertex) const
+{
+	vector<unsigned int> indices;
+	int index1 = fsParticlesIndex(vertex->daughter1());
+	int index2 = fsParticlesIndex(vertex->daughter2());
+	if(index1 >= 0) {
+		indices.push_back(static_cast<unsigned int>(index1));
+	} else {
+		const particlePtr& daughter1 = vertex->daughter1();
+		if(not isFsParticle(daughter1)) {
+			isobarDecayVertexPtr daughterVertex1 = dynamic_pointer_cast<isobarDecayVertex>(toVertex(daughter1));
+			if(not daughterVertex1) {
+				printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+				throw;
+			}
+			vector<unsigned int> indices1 = getFsPartIndicesConnectedToVertex(daughterVertex1);
+			indices.insert(indices.end(), indices1.begin(), indices1.end());
+		}
+	}
+	if(index2 >= 0) {
+		indices.push_back(static_cast<unsigned int>(index2));
+	} else {
+		const particlePtr& daughter2 = vertex->daughter2();
+		if(not isFsParticle(daughter2)) {
+			isobarDecayVertexPtr daughterVertex2 = dynamic_pointer_cast<isobarDecayVertex>(toVertex(daughter2));
+			if(not daughterVertex2) {
+				printErr << "Got NULL pointer while getting toVertex. Aborting..." << endl;
+				throw;
+			}
+			vector<unsigned int> indices2 = getFsPartIndicesConnectedToVertex(daughterVertex2);
+			indices.insert(indices.end(), indices2.begin(), indices2.end());
+		}
+	}
+	return indices;
+}
+
 void
 isobarDecayTopology::genBoseSymTermMaps
 (const map<string, vector<unsigned int> >&     origFsPartIndices,      // original final-state particle ordering sorted by species
