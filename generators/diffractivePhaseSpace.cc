@@ -167,19 +167,16 @@ diffractivePhaseSpace::event()
 		throw;
 	}
 
+	double tPrime;
+	double xMass;
+	do {
+		assert((*_pickerFunction)(xMass, tPrime));
+	} while(xMass + _target.recoilParticle.mass() > overallCm.M());
+	// t' should be negative (why?)
+	tPrime *= -1;
+
 	bool done = false;
 	while(!done) {
-
-		double tPrime;
-		double xMass;
-		assert((*_pickerFunction)(xMass, tPrime));
-		// t' should be negative (why?)
-		tPrime *= -1;
-
-		// make sure that X mass is not larger than maximum allowed mass
-		if(xMass + _target.recoilParticle.mass() > overallCm.M()) {
-			continue;
-		}
 
 		// calculate t from t' in center-of-mass system of collision
 		const double s            = overallCm.Mag2();
