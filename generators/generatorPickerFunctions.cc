@@ -140,10 +140,16 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 	} else {
 		if(invariantMass > _tSlopesForMassBins[_tSlopesForMassBins.size() - 1].first) {
 			tPrimeSlope = _tSlopesForMassBins[_tSlopesForMassBins.size() - 1].second;
+		} else if(invariantMass < _tSlopesForMassBins[0].first) {
+			tPrimeSlope = _tSlopesForMassBins[0].second;
 		} else {
 			unsigned int i = 0;
 			for(; (invariantMass > _tSlopesForMassBins[i].first); ++i);
-			tPrimeSlope = _tSlopesForMassBins[i].second;
+			double m2 = _tSlopesForMassBins[i].first;
+			double m1 = _tSlopesForMassBins[i-1].first;
+			double t2 = _tSlopesForMassBins[i].second;
+			double t1 = _tSlopesForMassBins[i-1].second;
+			tPrimeSlope = t1 + ((t2 - t1)/(m2 - m1) * (invariantMass - m1));
 		}
 	}
 	if(tPrimeSlope < 0) {
@@ -167,14 +173,15 @@ ostream& uniformMassExponentialTPicker::print(ostream& out) {
 		out << "    t' slope ....... " << _tSlopesForMassBins[0].second	<< endl;
 	} else {
 		unsigned int nSlots = _tSlopesForMassBins.size();
-		out << "    t' slopes:" << endl;
+		out << "    t' slopes for interpolation:" << endl;
 		out << "        mass < " << _tSlopesForMassBins[0].first
 		    << " -> t' slope = " << _tSlopesForMassBins[0].second
 		    << endl;
-		for(unsigned int i = 0; i < nSlots - 1; ++i) {
-			out << "        mass in [" << _tSlopesForMassBins[i].first << ", "
-			    << _tSlopesForMassBins[i + 1].first << "] -> t' slope = "
-			    << _tSlopesForMassBins[i + 1].second << endl;
+		for(unsigned int i = 0; i < nSlots; ++i) {
+			stringstream strStr;
+			strStr << "        t' slope(mass = " << _tSlopesForMassBins[i].first << ") ";
+			out << setw(35) << left << strStr.str()
+			    << setw(0) << "= " << _tSlopesForMassBins[i].second << endl;
 		}
 		out << "        mass >= " << _tSlopesForMassBins[nSlots - 1].first
 		    << " -> t' slope = " << _tSlopesForMassBins[nSlots - 1].second
