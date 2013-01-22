@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 
 import sys
 import subprocess
@@ -7,16 +7,30 @@ refname = sys.argv[1]
 oldrev = sys.argv[2]
 newrev = sys.argv[3]
 
+def runCommand(command):
+	process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	retval = process.communicate()[0].split('\n')
+	if process.returncode != 0:
+		print("Something went wrong in the update hook. Please contact a ROOTPWA administrator...")
+		print("Add the following information to your report:")
+		print("Command: \"" + command + "\"")
+		print("Output:\n" + str(retval))
+		sys.exit(255)
+	return retval
+
+
 if oldrev == "0000000000000000000000000000000000000000":
 	allCommits = [newrev]
 else:
-	allCommits = subprocess.check_output("git rev-list " + oldrev + ".." + newrev, shell=True).split('\n')
+	command = "git rev-list " + oldrev + ".." + newrev
+	allCommits = runCommand(command)
 
 while '' in allCommits:
 	allCommits.remove('')
 
 for sha in allCommits:
-	commitInfo = subprocess.check_output("git cat-file commit " + sha, shell=True).split('\n')
+	command = "git cat-file commit " + sha
+	commitInfo = runCommand(command)
 	commitMessage = []
 	for i in range(len(commitInfo)):
 		if commitInfo[i] == '':
