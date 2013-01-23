@@ -60,7 +60,12 @@ namespace rpwa {
 			         << m1 << " + " << m2 << " GeV/c^2. this should never happen. aborting." << std::endl;
 			throw;
 		}
-		return (M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2) / (4 * M * M);
+		double q2 = (M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2) / (4 * M * M);
+		// check for rounding errors
+		if (not allowSubThr and q2 < 0) {
+			q2 = 0.;
+		}
+		return q2;
 	}
 
 
