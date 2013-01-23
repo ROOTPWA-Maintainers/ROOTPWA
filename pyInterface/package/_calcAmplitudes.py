@@ -15,7 +15,7 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 	# print some info
 	pyRootPwa.core.printCompilerInfo()
 	pyRootPwa.core.printLibraryInfo()
-	pyRootPwa.core.printSvnVersion()
+	pyRootPwa.core.printGitHash()
 
 	# making the output nice for multi-threading
 	pyRootPwa.utils.stdoutisatty = sys.stdout.isatty()

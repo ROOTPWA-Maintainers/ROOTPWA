@@ -63,7 +63,7 @@ typedef decayGraph<interactionVertex, particle> graphType;
 int
 main(int argc, char** argv)
 {
-	printSvnVersion();
+	printGitHash();
 
 	// switch on debug output
 	// particle::setDebug(true);

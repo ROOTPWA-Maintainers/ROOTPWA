@@ -55,7 +55,7 @@ int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
 
