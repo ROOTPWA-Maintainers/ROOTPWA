@@ -357,7 +357,8 @@ nBodyPhaseSpaceGen::calcWeight()
 		_maxWeightObserved = _weight;
 	}
 	if (isnan(_weight)) {
-		printWarn << "weight = " << _weight << endl;
+		printWarn << "weight = " << _weight << ". Setting weight to 0." << endl;
+		_weight = 0.;
 	}
 	return _weight;
 }
