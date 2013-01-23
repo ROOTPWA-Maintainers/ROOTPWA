@@ -81,7 +81,7 @@ int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
 	pdt.readFile();

@@ -80,7 +80,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 	// parse command line options

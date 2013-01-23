@@ -226,7 +226,7 @@ int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 
 	const long int maxNmbEvents = 1000;
 	//const long int maxNmbEvents = 1;

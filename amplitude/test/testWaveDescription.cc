@@ -52,7 +52,7 @@ main(int argc, char** argv)
 	waveDescription::setDebug(true);
 
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 	particleDataTable::readFile();
 
 	if (1) {

@@ -98,7 +98,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
