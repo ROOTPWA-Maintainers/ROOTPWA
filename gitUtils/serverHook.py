@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.6
 
+import os
 import sys
 import subprocess
 
@@ -19,7 +20,20 @@ def runCommand(command):
 	return retval
 
 
-if oldrev == "0000000000000000000000000000000000000000":
+allowedUsers = [ ]
+
+branchOrTagName = refname.rsplit('/', 1)[-1]
+
+if newrev == "0000000000000000000000000000000000000000":
+	if branchOrTagName.startswith('_') or branchOrTagName == "master":
+		sys.stderr.write("Branch '" + refname + "' cannot be deleted. Aborting push...\n")
+		sys.exit(1)
+	allCommits = [oldrev]
+elif oldrev == "0000000000000000000000000000000000000000":
+	if branchOrTagName.startswith('_') or branchOrTagName == "master":
+		if os.environ['USER'] not in allowedUsers:
+			sys.stderr.write("Branch '" + refname + "' cannot be created. Aborting push...\n")
+			sys.exit(1)
 	allCommits = [newrev]
 else:
 	command = "git rev-list " + oldrev + ".." + newrev
