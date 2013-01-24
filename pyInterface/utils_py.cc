@@ -4,7 +4,7 @@ namespace bp = boost::python;
 
 void rpwa::py::exportUtils() {
 
-	bp::def("printSvnVersion", &rpwa::printSvnVersion);
+	bp::def("printGitHash", &rpwa::printGitHash);
 	bp::def("printCompilerInfo", &rpwa::printCompilerInfo);
 	bp::def("printLibraryInfo", &rpwa::printLibraryInfo);
 

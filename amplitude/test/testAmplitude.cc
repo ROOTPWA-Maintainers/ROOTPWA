@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      basic test program for amplitude classes
@@ -81,7 +77,7 @@ int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 
 	rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
 	pdt.readFile();

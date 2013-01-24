@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      example macro that reads uDST tree and generates mass bin
@@ -323,7 +319,7 @@ fillUdstDataIntoMassBins_example(const string&      inFileNamePattern = "fillUds
 		const TLorentzVector X = piZeros[0] + piZeros[1] + *piMinus;
 		// calculate t'
 		const double t      = (*beam - X) * (*beam - X);
-		const double tPrime = fabs(t) - fabs((X.M() * X.M() - beam->M() * beam->M())
+		const double tPrime = fabs(t) - fabs((X.M() * X.M() - beam->M() * beam->M())*(X.M() * X.M() - beam->M() * beam->M())
 		                                     / (4 * (beam->Vect() * beam->Vect())));
 		// cut on t'
 		if ((tPrime < 0.1) or (tPrime > 1.0))

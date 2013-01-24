@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 331                         $: revision of last commit
-#// $Author:: bgrube                   $: author of last commit
-#// $Date:: 2010-07-27 18:51:06 +0200 #$: date of last commit
 #//
 #// Description:
 #//      build file for amplitude library 

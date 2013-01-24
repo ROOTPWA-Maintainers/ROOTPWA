@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
 #//      main build file for ROOTPWA
@@ -408,42 +404,32 @@ else()
 endif()
 
 
-# make SVN version string accessible via predefined macro SVN_VERSION
+# make git hash accessible via predefined macro GIT_HASH
 message(STATUS "")
-message(STATUS ">>> Setting up Subversion.")
-find_package(Subversion)
+message(STATUS ">>> Setting up Git.")
+find_package(Git)
 set_feature_info(Subversion
-	"Software versioning and revision control system"
-	"http://subversion.apache.org/"
-	"needed only to determine repository revision"
+	"Free and open source distributed version control system"
+	"http://git-scm.com/"
+	"needed only to determine repository commit sha"
 	)
-if(Subversion_FOUND)
-	# unfortunately CMAKE only parses 'svn info'
-	find_program(SVNVERSION_EXECUTABLE
-		svnversion
-		)
-	if(NOT SVNVERSION_EXECUTABLE)
-		message(STATUS "Could not find subversion command 'svnversion'. Repository version unknown.")
+if(GIT_FOUND)
+	execute_process(
+		COMMAND ${GIT_EXECUTABLE} log --pretty="%H" -n1 -- ${CMAKE_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_HASH
+		RESULT_VARIABLE _GIT_LOG_RETURN
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	if(NOT _GIT_LOG_RETURN)
+		message(STATUS "Git repository hash is '${GIT_HASH}'.")
 	else()
-		execute_process(
-			COMMAND ${SVNVERSION_EXECUTABLE} "${CMAKE_SOURCE_DIR}"
-			OUTPUT_VARIABLE SVN_VERSION
-			RESULT_VARIABLE _SVNVERSION_RETURN
-			OUTPUT_STRIP_TRAILING_WHITESPACE)
-		if(NOT _SVNVERSION_RETURN)
-			message(STATUS "Subversion repository revision is '${SVN_VERSION}'.")
-		else()
-			message(STATUS "Error running 'svnversion'. Repository version unknown.")
-			set(SVN_VERSION "")
-		endif()
+		message(STATUS "Error running 'git'. Repository hash unknown.")
 	endif()
-else()
-	message(STATUS "Could not find subversion installation. Repository version unknown.")
 endif()
-if(SVN_VERSION)
-	add_definitions(-D'SVN_VERSION=\"${SVN_VERSION}\"')
+if(GIT_HASH)
+	add_definitions(-D'GIT_HASH=${GIT_HASH}')
 else()
-	add_definitions(-D'SVN_VERSION=\"\"')
+	add_definitions(-D'GIT_HASH=\"\"')
 endif()
 
 

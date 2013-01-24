@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      reads in data files in .evt or ROOT tree format, calculates
@@ -98,7 +94,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS

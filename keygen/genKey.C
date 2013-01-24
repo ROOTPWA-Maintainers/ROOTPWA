@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      example macro to create 5pi key file for gamp     

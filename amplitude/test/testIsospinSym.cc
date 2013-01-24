@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      test program for amplitude isospin symmetrization
@@ -226,7 +222,7 @@ int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 
 	const long int maxNmbEvents = 1000;
 	//const long int maxNmbEvents = 1;

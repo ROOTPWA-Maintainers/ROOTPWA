@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      basic test program for vertex and decay topology
@@ -63,7 +59,7 @@ typedef decayGraph<interactionVertex, particle> graphType;
 int
 main(int argc, char** argv)
 {
-	printSvnVersion();
+	printGitHash();
 
 	// switch on debug output
 	// particle::setDebug(true);

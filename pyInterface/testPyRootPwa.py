@@ -56,12 +56,21 @@ def impLib(name):
 	except:
 		print_red("error")
 		return False
+	print_green("success")
 	return True
 if not impLib("Importing pyRootPwa"):
 	print("Could not import library, aborting tests...")
 	sys.exit(1)
 
 import pyRootPwa
+
+def testPrintingUtils():
+	print("\n")
+	pyRootPwa.core.printCompilerInfo()
+	pyRootPwa.core.printLibraryInfo()
+	pyRootPwa.core.printGitHash()
+	print
+do_test(testPrintingUtils, "Testing printing utilities")
 
 print
 print("########################################################################")

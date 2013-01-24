@@ -1,6 +1,4 @@
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Reggeized propagator

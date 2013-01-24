@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Resonance Mixing Amplitude in the D-Matrix Formalism

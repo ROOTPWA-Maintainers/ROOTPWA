@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      some primitive standardized streams for reporting plus some
@@ -283,8 +279,8 @@ namespace rpwa {
 #ifndef CMAKE_BUILD_TYPE
 #define CMAKE_BUILD_TYPE "undefined"
 #endif
-#ifndef SVN_VERSION
-#define SVN_VERSION "undefined"
+#ifndef GIT_HASH
+#define GIT_HASH "undefined"
 #endif
 #ifndef Boost_LIBRARY_VERSION
 #define Boost_LIBRARY_VERSION "undefined"
@@ -317,10 +313,10 @@ namespace rpwa {
 
 	inline
 	void
-	printSvnVersion()
+	printGitHash()
 	{
-		printInfo << "subversion repository revision at compile time was "
-		          << "'" << SVN_VERSION << "'" << std::endl;
+		printInfo << "git repository hash at compile time was "
+		          << "'" << GIT_HASH << "'" << std::endl;
 	}
 
 

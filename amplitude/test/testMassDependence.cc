@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      basic test program for mass dependence functions
@@ -218,7 +214,7 @@ int
 main(int argc, char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 	cout << endl;
 
 	// define parameters

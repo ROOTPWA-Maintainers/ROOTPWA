@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      checks validity of amplitude specified by key file by
@@ -296,7 +292,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 	// parse command line options

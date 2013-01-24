@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      calculates integral matrix for set of amplitudes
@@ -79,7 +75,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 	// force loading predefined std::complex dictionary

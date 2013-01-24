@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      basic test program for wave description class
@@ -52,7 +48,7 @@ main(int argc, char** argv)
 	waveDescription::setDebug(true);
 
 	printCompilerInfo();
-	printSvnVersion();
+	printGitHash();
 	particleDataTable::readFile();
 
 	if (1) {

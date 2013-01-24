@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 550                         $: revision of last commit
-#// $Author:: sneubert                 $: author of last commit
-#// $Date:: 2010-12-10 15:16:56 +0100 #$: date of last commit
 #//
 #// Description:
 #//      build file for RootPwaScripts library
