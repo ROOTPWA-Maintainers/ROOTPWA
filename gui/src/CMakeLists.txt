@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 266                         $: revision of last commit
-#// $Author:: promme                   $: author of last commit
-#// $Date:: 2010-06-17 10:35:01 +0200 #$: date of last commit
 #//
 #// Description:
 #//      build file for RootPwaGen

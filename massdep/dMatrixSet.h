@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //    set of dMatrix amplitudes for mass dependent fit

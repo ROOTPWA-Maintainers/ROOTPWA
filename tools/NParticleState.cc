@@ -18,8 +18,6 @@
 //    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 /////////////////////////////////////////////////////////////////////////////-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Implementation of class NParticleState

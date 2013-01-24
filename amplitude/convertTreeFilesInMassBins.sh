@@ -20,10 +20,6 @@
 #
 ##########################################################################
 #-------------------------------------------------------------------------
-# File and Version Information:
-# $Rev:: 799                         $: revision of last commit
-# $Author:: bgrube                   $: author of last commit
-# $Date:: 2011-11-04 16:58:53 +0100 #$: date of last commit
 #
 # Description:
 #      converts all .root files in the given mass bin directories into .evt files

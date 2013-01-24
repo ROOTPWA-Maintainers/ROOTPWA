@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 239                         $: revision of last commit
-#// $Author:: bgrube                   $: author of last commit
-#// $Date:: 2010-05-28 14:34:08 +0200 #$: date of last commit
 #//
 #// Description:
 #//      build file for RootPwaTools library
