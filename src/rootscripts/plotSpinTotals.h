@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Creates summary plots with intensities of spin totals

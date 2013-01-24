@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      container class for all external particle related information

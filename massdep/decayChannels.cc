@@ -1,6 +1,4 @@
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Implementation of classes in decayChannels

@@ -1,6 +1,4 @@
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Contraints an amplitude to a defined phase difference

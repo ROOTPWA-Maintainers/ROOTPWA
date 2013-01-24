@@ -1,6 +1,4 @@
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      mass dependent fit likelihood rank 1!

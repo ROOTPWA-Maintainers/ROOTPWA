@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      ROOT logon script that loads libraries required for plotting

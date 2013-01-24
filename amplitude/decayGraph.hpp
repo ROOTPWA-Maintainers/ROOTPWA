@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      general class that represents decay process in form of a graph using

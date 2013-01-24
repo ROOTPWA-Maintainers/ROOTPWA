@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev:: 633                         $: revision of last commit
-// $Author:: bgrube                   $: author of last commit
-// $Date:: 2011-02-14 19:33:31 +0100 #$: date of last commit
 //
 // Description:
 //      tells rootcint for which classes to generate method interface stubs

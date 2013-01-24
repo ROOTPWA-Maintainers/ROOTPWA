@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Creates overview plot with intensities, phase, and coherence

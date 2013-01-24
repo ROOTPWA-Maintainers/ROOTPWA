@@ -20,10 +20,6 @@
 #
 ##########################################################################
 #-------------------------------------------------------------------------
-# File and Version Information:
-# $Rev:: -1                          $: revision of last commit
-# $Author::                          $: author of last commit
-# $Date::                            $: date of last commit
 #
 # Description:
 #      performs PWA fit of a number of consecutive mass bins specified

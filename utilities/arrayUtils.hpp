@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      functions for dynamic allocation and handling of n-dimensional arrays
