@@ -63,8 +63,10 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
 	     << "        -B #   width of mass bin in MeV" << endl
 	     << endl
-	     << "A comment regarding the disabled features: these options have been taken out "
-	     << "for the time being. If you want to get them back, check SVN revision 1072." << endl
+	     << "A comment regarding the disabled features: these options have been taken out\n"
+	     << "for the time being. If you want to get them back, check GIT revision\n"
+	     << "cb48b651809e1058ab740441c2b6bd8a1579d46d or use the _v1 branch (or one of its\n"
+	     << "tags)." << endl
 	     << endl;
 	exit(errCode);
 }
