@@ -187,6 +187,7 @@ void rpwa::py::exportDecayTopology() {
 
 		.def("isProductionVertex", &rpwa::decayTopology::isProductionVertex)
 		.def("isDecayVertex", &rpwa::decayTopology::isDecayVertex)
+		.def("decayVertexIndex", &rpwa::decayTopology::decayVertexIndex)
 		.def("isFsVertex", &rpwa::decayTopology::isFsVertex)
 		.def("isFsParticle", &rpwa::decayTopology::isFsParticle)
 		.def("fsParticlesIndex", &rpwa::decayTopology::fsParticlesIndex)

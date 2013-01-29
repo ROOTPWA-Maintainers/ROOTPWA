@@ -826,6 +826,10 @@ def dTTestisbla():
 	assert(consistentIsobarTopo.isFsParticle(consistentIsobarTopo.fsParticles()[0]))
 do_test(dTTestisbla, "Testing decayTopology.is{ProductionVertex/DecayVertex/FsVertex/FsParticle}()")
 
+def dTTestdVInd():
+	assert(consistentIsobarTopo.decayVertexIndex(consistentIsobarTopo.decayVertices()[3]) == 3)
+do_test(dTTestdVInd, "Testing decayTopology.decayVertexIndex()")
+
 def dTTestfPInd():
 	assert(decTo.fsParticlesIndex(part))
 do_test(dTTestfPInd, "Testing decayTopology.fsParticlesIndex()")
