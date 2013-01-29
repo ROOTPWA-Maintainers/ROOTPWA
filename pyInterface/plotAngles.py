@@ -19,6 +19,7 @@ if __name__ == "__main__":
 	parser.add_argument("templateFile", metavar="template-file", help="path to template file")
 	parser.add_argument("-b", action="append", metavar="massBin(s)", default=[], dest="massBins", help="mass bins to be calculated (default: all)")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
+	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
 		arguments.massBins.append("all")
@@ -46,17 +47,20 @@ if __name__ == "__main__":
 
 	permutations = {}
 	boseSyms = topology.getBoseSymmetrization()
-	for sym in boseSyms:
-		permutation = tuple(sym["fsPartPermMap"])
-		permutations[permutation] = []
-		if list(permutation) == [x for x in range(topology.nmbFsParticles())]:
-			for i in range(topology.nmbDecayVertices()):
-				permutations[permutation].append((True, True))
-		else:
-			for vertex in topology.isobarDecayVertices():
-				permutations[permutation].append((topology.isobarIsAffectedByPermutation(vertex, list(permutation)),
-				                                  topology.daughtersAreAffectedByPermutation(vertex, list(permutation))))
-
+	if arguments.disableBoseSymmetrization:
+		permutation = [x for x in range(topology.nmbFsParticles())]
+		permutations[tuple(permutation)] = [(True, True) for i in range(topology.nmbDecayVertices())]
+	else:
+		for sym in boseSyms:
+			permutation = tuple(sym["fsPartPermMap"])
+			permutations[permutation] = []
+			if list(permutation) == [x for x in range(topology.nmbFsParticles())]:
+				for i in range(topology.nmbDecayVertices()):
+					permutations[permutation].append((True, True))
+			else:
+				for vertex in topology.isobarDecayVertices():
+					permutations[permutation].append((topology.isobarIsAffectedByPermutation(vertex, list(permutation)),
+					                                  topology.daughtersAreAffectedByPermutation(vertex, list(permutation))))
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(arguments.outputFile, "RECREATE")
 
