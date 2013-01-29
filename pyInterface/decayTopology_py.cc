@@ -59,6 +59,18 @@ namespace {
 
 	};
 
+	const rpwa::interactionVertexPtr& decayGraph_toVertex(const rpwa::decayTopology& self,
+	                                                      const rpwa::particlePtr& vertex)
+	{
+		return self.toVertex(vertex);
+	}
+
+	const rpwa::interactionVertexPtr& decayGraph_fromVertex(const rpwa::decayTopology& self,
+		                                                    const rpwa::particlePtr& vertex)
+	{
+			return self.fromVertex(vertex);
+	}
+
 	bp::dict decayTopology_nmbIndistFsParticles(const rpwa::decayTopology& self) {
 		bp::dict retval;
 		std::map<std::string, unsigned int> nmbIndistFsParts = self.nmbIndistFsParticles();
@@ -128,6 +140,10 @@ void rpwa::py::exportDecayTopology() {
 		.def(bp::init<rpwa::decayTopology>())
 
 		.def(bp::self_ns::str(bp::self))
+
+		// Functions from decayGraph.hpp
+		.def("toVertex", &decayGraph_toVertex, bp::return_value_policy<bp::copy_const_reference>())
+		.def("fromVertex", &decayGraph_fromVertex, bp::return_value_policy<bp::copy_const_reference>())
 
 		.def(
 			"clone"

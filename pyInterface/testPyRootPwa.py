@@ -892,6 +892,19 @@ do_test(tTTestDebug, "Testing decayTopology debug flag")
 def tTTestClear(): decTo.clear()
 do_test(tTTestClear, "Testing decayTopology.clear()")
 
+def tTTestToVertex():
+	vertex = consistentIsobarTopo.toVertex(consistentIsobarTopo.XParticle())
+	testVertex = consistentIsobarTopo.decayVertices()[0]
+	assert(vertex.name() == testVertex.name())
+do_test(tTTestToVertex, "Testing decayTopology.toVertex()")
+
+def tTTestFromVertex():
+	fsParticle = consistentIsobarTopo.fsParticles()[3]
+	vertex = consistentIsobarTopo.fromVertex(fsParticle)
+	testVertex = consistentIsobarTopo.decayVertices()[1]
+	assert(vertex.name() == testVertex.name())
+do_test(tTTestFromVertex, "Testing decayTopology.fromVertex()")
+
 print
 print("########################################################################")
 print
