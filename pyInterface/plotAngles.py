@@ -8,22 +8,6 @@ import time
 import pyRootPwa
 import pyRootPwa.utils
 
-def randomizeTClonesArray(array):
-	entries = array.GetEntries()
-	if entries == 0:
-		return array
-	retval = pyRootPwa.ROOT.TClonesArray("TVector3")
-	map = []
-	for i in range(entries):
-		while True:
-			num = int(round(pyRootPwa.ROOT.gRandom.Uniform(-0.5, entries-0.5)))
-			if num not in map:
-				map.append(num)
-				break
-	for i in range(entries):
-		retval[i] = array[map[i]]
-	return retval
-
 
 if __name__ == "__main__":
 
@@ -35,7 +19,6 @@ if __name__ == "__main__":
 	parser.add_argument("templateFile", metavar="template-file", help="path to template file")
 	parser.add_argument("-b", action="append", metavar="massBin(s)", default=[], dest="massBins", help="mass bins to be calculated (default: all)")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
-	parser.add_argument("-r", action="store_true", dest="randomizeVectorOrder", help="randomize the order in the input TClonesArrays")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
 		arguments.massBins.append("all")
@@ -122,10 +105,7 @@ if __name__ == "__main__":
 				dataTree.GetEntry(i)
 
 				# Read input data
-				if(arguments.randomizeVectorOrder):
-					topology.readKinematicsData(prodKinMomenta, randomizeTClonesArray(decayKinMomenta))
-				else:
-					topology.readKinematicsData(prodKinMomenta, decayKinMomenta)
+				topology.readKinematicsData(prodKinMomenta, decayKinMomenta)
 
 				for permutationKey in permutations.keys():
 
