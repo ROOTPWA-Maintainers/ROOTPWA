@@ -19,6 +19,9 @@ if __name__ == "__main__":
 	parser.add_argument("templateFile", metavar="template-file", help="path to template file")
 	parser.add_argument("-b", action="append", metavar="massBin(s)", default=[], dest="massBins", help="mass bins to be calculated (default: all)")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
+	parser.add_argument("-g", "--n-bins", type=int, metavar="n-bins", default=100, dest="nHistogramBins", help="number of bins for the histograms (default: 100)")
+	parser.add_argument("-i", "--min-mass", type=float, metavar="min-mass", default=0.0, dest="massMin", help="minimum mass for the histograms (default: 0)")
+	parser.add_argument("-a", "--max-mass", type=float, metavar="max-mass", default=10.0, dest="massMax", help="maximum mass for the histograms (default: 10)")
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
@@ -75,9 +78,17 @@ if __name__ == "__main__":
 		outputFile.cd(rangeName)
 		hists[rangeName] = []
 		for i in range(topology.nmbDecayVertices()):
-			hists[rangeName].append([pyRootPwa.ROOT.TH1D("m" + str(i), "m" + str(i), 100, 0, 5),
-									 pyRootPwa.ROOT.TH1D("phi" + str(i), "phi" + str(i), 100, -3.142, 3.142),
-			                         pyRootPwa.ROOT.TH1D("theta" + str(i), "theta" + str(i), 100, -1, 1)])
+			parent = topology.isobarDecayVertices()[i].parent()
+			daughter1 = topology.isobarDecayVertices()[i].daughter1()
+			daughter2 = topology.isobarDecayVertices()[i].daughter2()
+			label = parent.name + " -> [" + daughter1.name + " " + daughter2.name + "]"
+			name = parent.name + "_" + daughter1.name + "_" + daughter2.name
+			hists[rangeName].append([pyRootPwa.ROOT.TH1D("m_" + parent.name, "m(" + parent.name + ")", arguments.nHistogramBins, arguments.massMin, arguments.massMax),
+									 pyRootPwa.ROOT.TH1D(name + "_phi", "#phi(" + label + ")", arguments.nHistogramBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi()),
+			                         pyRootPwa.ROOT.TH1D(name + "_cosTheta", "cos #theta(" + label + ")", arguments.nHistogramBins, -1, 1)])
+			for hist in hists[rangeName][-1]:
+				hist.SetMinimum(0)
+
 	assert(inputFileRanges.keys() == hists.keys())
 
 	for rangeName in inputFileRanges.keys():
