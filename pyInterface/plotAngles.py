@@ -9,6 +9,56 @@ import pyRootPwa
 import pyRootPwa.utils
 
 
+def getPermutations(topology):
+	boseSyms = topology.getBoseSymmetrization()
+	keys = [tuple(x["fsPartPermMap"]) for x in boseSyms]
+	permutations = {}
+	for key in keys:
+		permutations[key] = [[None, None] for x in range(topology.nmbDecayVertices())]
+	vertex_i = 0
+	for vertex in topology.decayVertices():
+		daughter1 = vertex.daughter1()
+		daughter2 = vertex.daughter2()
+		fsParts1 = []
+		fsParts2 = []
+		if topology.isFsParticle(daughter1):
+			fsParts1.append(topology.fsParticlesIndex(daughter1))
+		else:
+			fsParts1 = topology.getFsPartIndicesConnectedToVertex(topology.toVertex(daughter1))
+		if topology.isFsParticle(daughter2):
+			fsParts2.append(topology.fsParticlesIndex(daughter2))
+		else:
+			fsParts2 = topology.getFsPartIndicesConnectedToVertex(topology.toVertex(daughter2))
+		fsPartsParent = topology.getFsPartIndicesConnectedToVertex(vertex)
+		keys = permutations.keys()
+		for i in range(len(keys)):
+			permutation = keys[i]
+			# this is the part for the masses
+			massGroup = sorted([permutation[x] for x in fsPartsParent])
+			# this is the part for the angles
+			group1 = sorted([permutation[x] for x in fsParts1])
+			group2 = sorted([permutation[x] for x in fsParts2])
+			# and now check all other permutations
+			massAlreadyThere = False
+			anglesAlreadyThere = False
+			for j in range(i):
+				testPermutation = keys[j]
+				# this is the part for the masses
+				testMassGroup = sorted([testPermutation[x] for x in fsPartsParent])
+				if massGroup == testMassGroup:
+					massAlreadyThere = True
+				# this is the part for the angles
+				testGroup1 = sorted([testPermutation[x] for x in fsParts1])
+				testGroup2 = sorted([testPermutation[x] for x in fsParts2])
+				if group1 == testGroup1 and group2 == testGroup2:
+					anglesAlreadyThere = True
+				if massAlreadyThere and anglesAlreadyThere:
+					break
+			permutations[permutation][vertex_i] = [not massAlreadyThere, not anglesAlreadyThere]
+		vertex_i += 1
+	return permutations
+
+
 if __name__ == "__main__":
 
 	# parse command line arguments
@@ -48,22 +98,12 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("could not construct topology. Aborting...")
 		sys.exit(5)
 
-	permutations = {}
-	boseSyms = topology.getBoseSymmetrization()
 	if arguments.disableBoseSymmetrization:
+		permutations = {}
 		permutation = [x for x in range(topology.nmbFsParticles())]
 		permutations[tuple(permutation)] = [(True, True) for i in range(topology.nmbDecayVertices())]
 	else:
-		for sym in boseSyms:
-			permutation = tuple(sym["fsPartPermMap"])
-			permutations[permutation] = []
-			if list(permutation) == [x for x in range(topology.nmbFsParticles())]:
-				for i in range(topology.nmbDecayVertices()):
-					permutations[permutation].append((True, True))
-			else:
-				for vertex in topology.isobarDecayVertices():
-					permutations[permutation].append((topology.isobarIsAffectedByPermutation(vertex, list(permutation)),
-					                                  topology.daughtersAreAffectedByPermutation(vertex, list(permutation))))
+		permutations = getPermutations(topology)
 
 	outputFile = pyRootPwa.ROOT.TFile.Open(arguments.outputFile, "RECREATE")
 
