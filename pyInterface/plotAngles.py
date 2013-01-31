@@ -101,6 +101,7 @@ if __name__ == "__main__":
 	parser.add_argument("-g2d", "--n-2D-bins", type=int, metavar="n-bins", default=50, dest="nHistogram2DBins", help="number of bins for the 2D histograms (default: 50)")
 	parser.add_argument("-i", "--min-mass", type=float, metavar="min-mass", default=0.0, dest="massMin", help="minimum mass in GeV/c^{2} for the histograms (default: 0)")
 	parser.add_argument("-a", "--max-mass", type=float, metavar="max-mass", default=10.0, dest="massMax", help="maximum mass in GeV/c^{2} for the histograms (default: 10)")
+	parser.add_argument("-t", "--type", type=str, metavar="type", default="data", dest="type", help='type of input, can be "data", "gen" or "acc" (default: "data")')
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
@@ -115,6 +116,11 @@ if __name__ == "__main__":
 	pyRootPwa.utils.printSucc = pyRootPwa.utils.printSuccClass(printingCounter)
 	pyRootPwa.utils.printInfo = pyRootPwa.utils.printInfoClass(printingCounter)
 	pyRootPwa.utils.printDebug = pyRootPwa.utils.printDebugClass(printingCounter)
+
+	if arguments.type not in ["data", "acc", "gen"]:
+		pyRootPwa.utils.printErr("invalid type '" + arguments.type + "' found, must be either 'data', 'gen' or 'acc'. Aborting...")
+		sys.exit(5)
+	type = {"data": 0, "gen": 1, "acc": 2}
 
 	pyRootPwa.config = pyRootPwa.rootPwaConfig(arguments.configFileName)
 	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
@@ -155,7 +161,9 @@ if __name__ == "__main__":
 		allMassBins = sorted(glob.glob(pyRootPwa.config.dataDirectory + '/' + pyRootPwa.config.massBinDirectoryNamePattern))
 		massBins = pyRootPwa.utils.parseMassBinArgs(allMassBins, binRange)
 		rangeName = massBins[0].rsplit('/', 1)[-1] + '_' + massBins[-1].rsplit('/', 1)[-1]
-		inputFileRanges[rangeName] = pyRootPwa.utils.getListOfInputFiles(massBins)[0]
+		inputFileRanges[rangeName] = pyRootPwa.utils.getListOfInputFiles(massBins)[type[arguments.type]]
+		if not inputFileRanges[rangeName]:
+			pyRootPwa.utils.printErr("No input files found for mass bins " + str(massBins) + ".")
 		outputFile.mkdir(rangeName)
 		outputFile.cd(rangeName)
 		hists[rangeName] = []
