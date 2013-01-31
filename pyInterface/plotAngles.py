@@ -4,7 +4,6 @@ import argparse
 import glob
 import itertools
 import sys
-import time
 
 import pyRootPwa
 import pyRootPwa.utils
@@ -120,7 +119,7 @@ if __name__ == "__main__":
 	if arguments.type not in ["data", "acc", "gen"]:
 		pyRootPwa.utils.printErr("invalid type '" + arguments.type + "' found, must be either 'data', 'gen' or 'acc'. Aborting...")
 		sys.exit(5)
-	type = {"data": 0, "gen": 1, "acc": 2}
+	inputTypeIndex = {"data": 0, "gen": 1, "acc": 2}
 
 	pyRootPwa.config = pyRootPwa.rootPwaConfig(arguments.configFileName)
 	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
@@ -161,7 +160,7 @@ if __name__ == "__main__":
 		allMassBins = sorted(glob.glob(pyRootPwa.config.dataDirectory + '/' + pyRootPwa.config.massBinDirectoryNamePattern))
 		massBins = pyRootPwa.utils.parseMassBinArgs(allMassBins, binRange)
 		rangeName = massBins[0].rsplit('/', 1)[-1] + '_' + massBins[-1].rsplit('/', 1)[-1]
-		inputFileRanges[rangeName] = pyRootPwa.utils.getListOfInputFiles(massBins)[type[arguments.type]]
+		inputFileRanges[rangeName] = pyRootPwa.utils.getListOfInputFiles(massBins)[inputTypeIndex[arguments.type]]
 		if not inputFileRanges[rangeName]:
 			pyRootPwa.utils.printErr("No input files found for mass bins " + str(massBins) + ".")
 		outputFile.mkdir(rangeName)
@@ -176,10 +175,10 @@ if __name__ == "__main__":
 			nEntriesMass = 0
 			nEntriesAngles = 0
 			for permutationKey in permutations.keys():
-				tuple = permutations[permutationKey][i]
-				if tuple[0]:
+				tuples = permutations[permutationKey][i]
+				if tuples[0]:
 					nEntriesMass += 1
-				if tuple[1]:
+				if tuples[1]:
 					nEntriesAngles += 1
 			massYAxisTitle = ""
 			if nEntriesMass == 1:
