@@ -2,6 +2,7 @@
 
 import argparse
 import glob
+import itertools
 import sys
 import time
 
@@ -59,6 +60,33 @@ def getPermutations(topology):
 	return permutations
 
 
+def getPermutationsForIsobarCombinations(topology, isobarCombinations):
+	boseSyms = topology.getBoseSymmetrization()
+	keys = [tuple(x["fsPartPermMap"]) for x in boseSyms]
+	permutations = {}
+	for key in keys:
+		permutations[key] = [None for x in range(len(isobarCombinations))]
+	for isobarCombination_i in range(len(isobarCombinations)):
+		isobar1 = topology.isobarDecayVertices()[isobarCombinations[isobarCombination_i][0]]
+		isobar2 = topology.isobarDecayVertices()[isobarCombinations[isobarCombination_i][1]]
+		fsParts1 = topology.getFsPartIndicesConnectedToVertex(isobar1)
+		fsParts2 = topology.getFsPartIndicesConnectedToVertex(isobar2)
+		for i in range(len(keys)):
+			permutation = keys[i]
+			massGroup1 = sorted([permutation[x] for x in fsParts1])
+			massGroup2 = sorted([permutation[x] for x in fsParts2])
+			alreadyThere = False
+			for j in range(i):
+				testPermutation = keys[j]
+				testMassGroup1 = sorted([testPermutation[x] for x in fsParts1])
+				testMassGroup2 = sorted([testPermutation[x] for x in fsParts2])
+				if massGroup1 == testMassGroup1 and massGroup2 == testMassGroup2:
+					alreadyThere = True
+					break
+			permutations[permutation][isobarCombination_i] = not alreadyThere
+	return permutations
+
+
 if __name__ == "__main__":
 
 	# parse command line arguments
@@ -70,8 +98,9 @@ if __name__ == "__main__":
 	parser.add_argument("-b", action="append", metavar="massBin(s)", default=[], dest="massBins", help="mass bins to be calculated (default: all)")
 	parser.add_argument("-c", type=str, metavar="config-file", default="rootpwa.config", dest="configFileName", help="path to config file (default: ./rootpwa.config)")
 	parser.add_argument("-g", "--n-bins", type=int, metavar="n-bins", default=100, dest="nHistogramBins", help="number of bins for the histograms (default: 100)")
-	parser.add_argument("-i", "--min-mass", type=float, metavar="min-mass", default=0.0, dest="massMin", help="minimum mass in GeV for the histograms (default: 0)")
-	parser.add_argument("-a", "--max-mass", type=float, metavar="max-mass", default=10.0, dest="massMax", help="maximum mass in GeV for the histograms (default: 10)")
+	parser.add_argument("-g2d", "--n-2D-bins", type=int, metavar="n-bins", default=50, dest="nHistogram2DBins", help="number of bins for the 2D histograms (default: 50)")
+	parser.add_argument("-i", "--min-mass", type=float, metavar="min-mass", default=0.0, dest="massMin", help="minimum mass in GeV/c^{2} for the histograms (default: 0)")
+	parser.add_argument("-a", "--max-mass", type=float, metavar="max-mass", default=10.0, dest="massMax", help="maximum mass in GeV/c^{2} for the histograms (default: 10)")
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
@@ -97,6 +126,16 @@ if __name__ == "__main__":
 	if not result:
 		pyRootPwa.utils.printErr("could not construct topology. Aborting...")
 		sys.exit(5)
+
+	isobarCombinations = list(itertools.combinations(range(topology.nmbDecayVertices()), 2))
+	for i in range(len(isobarCombinations)):
+		vertex1 = topology.isobarDecayVertices()[isobarCombinations[i][0]]
+		vertex2 = topology.isobarDecayVertices()[isobarCombinations[i][1]]
+		fsParts1 = topology.getFsPartIndicesConnectedToVertex(vertex1)
+		fsParts2 = topology.getFsPartIndicesConnectedToVertex(vertex2)
+		if len(fsParts2) > len(fsParts1):
+			isobarCombinations[i] = (isobarCombinations[i][1], isobarCombinations[i][0])
+	isobarPermutations = getPermutationsForIsobarCombinations(topology, isobarCombinations)
 
 	if arguments.disableBoseSymmetrization:
 		permutations = {}
@@ -148,15 +187,38 @@ if __name__ == "__main__":
 				cosYAxisTitle = str(nEntriesAngles) + " entries per event / " + cosBinWidth + " mrad"
 				thetaYAxisTitle = str(nEntriesAngles) + " entries per event"
 
-			massTitle = "m(" + parent.name + ");m(" + parent.name + ") [GeV];" + massYAxisTitle
+			massTitle = "m(" + parent.name + ");m(" + parent.name + ") [GeV/c^{2}];" + massYAxisTitle
 			phiTitle = "#phi(" + label + ");#phi(" + label + ") [rad];" + cosYAxisTitle
 			thetaTitle = "cos #theta(" + label + ");cos #theta(" + label + ");" + thetaYAxisTitle
+			phiVsMassTitle = "#phi(" + label + ") vs. m(" + parent.name + ");m(" + parent.name + ") [GeV/c^{2}];#phi(" + label + ") [rad];" + thetaYAxisTitle
+			thetaVsMassTitle = "cos #theta(" + label + ") vs. m(" + parent.name + ");m(" + parent.name + ") [GeV/c^{2}];cos #theta(" + label + ");" + thetaYAxisTitle
+			phiVsThetaTitle = "#phi vs. cos(#theta) (" + label + ");cos #theta(" + label + ");#phi(" + label + ") [rad];" + thetaYAxisTitle
 
 			hists[rangeName].append([pyRootPwa.ROOT.TH1D("m_" + parent.name, massTitle, arguments.nHistogramBins, arguments.massMin, arguments.massMax),
 									 pyRootPwa.ROOT.TH1D(name + "_phi", phiTitle, arguments.nHistogramBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi()),
-			                         pyRootPwa.ROOT.TH1D(name + "_cosTheta", thetaTitle, arguments.nHistogramBins, -1, 1)])
+			                         pyRootPwa.ROOT.TH1D(name + "_cosTheta", thetaTitle, arguments.nHistogramBins, -1, 1),
+			                         pyRootPwa.ROOT.TH2D(name + "_phi_vs_m_" + parent.name, phiVsMassTitle, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi()),
+			                         pyRootPwa.ROOT.TH2D(name + "_cosTheta_vs_m_" + parent.name, thetaVsMassTitle, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, -1, 1),
+			                         pyRootPwa.ROOT.TH2D(name + "_phi_vs_cosTheta", phiVsThetaTitle, arguments.nHistogram2DBins, -1, 1, arguments.nHistogram2DBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi())])
 			for hist in hists[rangeName][-1]:
 				hist.SetMinimum(0)
+		isobarCombinationHistograms = {}
+		for isobarCombination_i in range(len(isobarCombinations)):
+			isobarCombination = isobarCombinations[isobarCombination_i]
+			index1 = isobarCombination[0]
+			index2 = isobarCombination[1]
+			isobar1Name = topology.isobarDecayVertices()[index1].parent().name
+			isobar2Name = topology.isobarDecayVertices()[index2].parent().name
+			nEntries = 0
+			for permutationKey in isobarPermutations.keys():
+				if isobarPermutations[permutationKey][isobarCombination_i]:
+					nEntries += 1
+			if nEntries == 1:
+				zAxisTitle = "events"
+			else:
+				zAxisTitle = str(nEntries) + " entries per event"
+			histName = "m(" + isobar2Name + ") vs. m(" + isobar1Name + ");m(" + isobar1Name + ") [GeV/c^{2}];m(" + isobar2Name + ") [GeV/c^{2}];" + zAxisTitle
+			isobarCombinationHistograms[isobarCombination] = pyRootPwa.ROOT.TH2D("m_" + isobar2Name + "_vs_m_" + isobar1Name, histName, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax)
 
 	assert(inputFileRanges.keys() == hists.keys())
 
@@ -212,18 +274,32 @@ if __name__ == "__main__":
 					# Fill the histograms
 					hist_i = 0
 
+					masses = []
 					for vertex in topology.isobarDecayVertices():
+						parent = vertex.parent()
+						mass = parent.lzVec.M()
+						masses.append(mass)
 						if(permutations[permutationKey][hist_i][0]):
-							parent = vertex.parent()
-							mass = parent.lzVec.M()
 							hists[rangeName][hist_i][0].Fill(mass)
 						if(permutations[permutationKey][hist_i][1]):
 							daughter = vertex.daughter1()
 							phi = daughter.lzVec.Phi()
 							theta = daughter.lzVec.Theta()
+							cosTheta = pyRootPwa.ROOT.TMath.Cos(theta)
 							hists[rangeName][hist_i][1].Fill(phi)
-							hists[rangeName][hist_i][2].Fill(pyRootPwa.ROOT.TMath.Cos(theta))
+							hists[rangeName][hist_i][2].Fill(cosTheta)
+							hists[rangeName][hist_i][3].Fill(mass, phi)
+							hists[rangeName][hist_i][4].Fill(mass, cosTheta)
+							hists[rangeName][hist_i][5].Fill(cosTheta, phi)
 						hist_i += 1
+
+					for isobarCombination_i in range(len(isobarCombinations)):
+						isobarCombination = isobarCombinations[isobarCombination_i]
+						if not isobarPermutations[permutationKey]:
+							continue
+						index1 = isobarCombination[0]
+						index2 = isobarCombination[1]
+						isobarCombinationHistograms[isobarCombination].Fill(masses[index1], masses[index2])
 
 				progressbar.update(i)
 
