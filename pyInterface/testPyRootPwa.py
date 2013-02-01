@@ -706,7 +706,8 @@ def waveDescTestConst():
 waveDesc = do_test(waveDescTestConst, "Testing waveDescription constuctor")
 
 def waveDescTestReadKeyFile():
-	assert(waveDesc.parseKeyFile("./test.key"))
+	path = os.path.dirname(os.path.abspath(__file__))
+	assert(waveDesc.parseKeyFile(path + "/test.key"))
 	assert(waveDesc.keyFileParsed())
 do_test(waveDescTestReadKeyFile, "Testing waveDescription.parseKeyFile()")
 
@@ -1143,3 +1144,5 @@ if skip > 0:
 	else:
 		outstring = " tests were skipped."
 	print_yellow(str(skip) + outstring)
+
+sys.exit(errors)
