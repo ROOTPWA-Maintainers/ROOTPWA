@@ -102,3 +102,4 @@ add_custom_target(
 
 add_dependencies(libRootPwaPyLink RootPwaPy pyRootPwaPackageLinks)
 
+add_test(testPyRootPwa ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/pyInterface/testPyRootPwa.py)
