@@ -40,9 +40,6 @@ class _printClass:
 	_terminalColorStrings['bgCyan']     = "\033[46m"
 	_terminalColorStrings['bgWhite']    = "\033[47m"
 
-	def __init__(self):
-		self.count = 0
-
 	def printFormatted(self, msg, level):
 		frame = _inspect.currentframe().f_back.f_back
 		if frame is None:

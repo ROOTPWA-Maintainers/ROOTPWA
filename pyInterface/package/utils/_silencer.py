@@ -24,7 +24,7 @@ class silencer():
 		os.dup2(self._outputStream.fileno(), 2)
 		return self
 
-	def __exit__(self, *args):
+	def __exit__(self, type, value, traceback):
 		if not self._silence:
 			self.output = ""
 			return

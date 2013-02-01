@@ -1,7 +1,4 @@
 
-import collections
-import multiprocessing
-
 import pyRootPwa
 import pyRootPwa.utils
 
@@ -48,7 +45,7 @@ class inputFile():
 		self._inWith = True
 		return self._inFile
 
-	def __exit__(self, *args):
+	def __exit__(self, type, value, traceback):
 		if self._readRootFile:
 			self._inFile.Close()
 		self._inWith = False
