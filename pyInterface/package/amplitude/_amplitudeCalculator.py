@@ -83,8 +83,6 @@ class amplitudeCalculator(multiprocessing.Process):
 		if pyRootPwa.config is None:
 			raise pyRootPwa.rootPwaException("pyRootPwa configuration not initialized")
 
-		prodKinMomentaLeafName = pyRootPwa.config.prodKinMomentaLeafName
-		decayKinMomentaLeafName = pyRootPwa.config.decayKinMomentaLeafName
 		outputFileFormat = pyRootPwa.config.outputFileFormat
 		amplitudeLeafName = pyRootPwa.config.amplitudeLeafName
 		outputCacheSize = pyRootPwa.config.outputCacheSize
