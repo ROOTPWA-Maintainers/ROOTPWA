@@ -112,8 +112,8 @@ make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
 make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${Libconfig_LIBS}")
 
 # test executables
-add_test(testBuild        ${CMAKE_BUILD_TOOL})
-add_test(testPWAAmp       ${EXECUTABLE_OUTPUT_PATH}/testPWAAmp)
+# add_test(testBuild        ${CMAKE_BUILD_TOOL})
+# add_test(testPWAAmp       ${EXECUTABLE_OUTPUT_PATH}/testPWAAmp)
 add_test(testPWALikeli    ${CMAKE_CURRENT_SOURCE_DIR}/testPWALikeli.sh)
 add_test(testPWAConstrain ${CMAKE_CURRENT_SOURCE_DIR}/testPWAConstraint.sh)
 # add_test(testPWAFit       ${CMAKE_CURRENT_SOURCE_DIR}/testPWAFit.sh)
