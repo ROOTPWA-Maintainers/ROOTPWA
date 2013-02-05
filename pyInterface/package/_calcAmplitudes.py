@@ -73,10 +73,17 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 
 
 	# get list of keyfiles
-	keyfiles = pyRootPwa.utils.getListOfKeyfiles(pyRootPwa.config.keyfilePattern)
-	if len(keyfiles) == 0:
-		pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
-		sys.exit(1)
+	if "keyfiles" in arguments:
+		keyfiles = arguments["keyfiles"]
+		for keyfile in keyfiles:
+			if not (os.path.isfile(keyfile) and keyfile.endswith(".key")):
+				pyRootPwa.utils.printErr("Keyfile '" + keyfile + "' not valid. Aborting...")
+				sys.exit(1)
+	else:
+		keyfiles = pyRootPwa.utils.getListOfKeyfiles(pyRootPwa.config.keyfilePattern)
+		if len(keyfiles) == 0:
+			pyRootPwa.utils.printErr("No keyfiles found with valid file extension. Aborting...")
+			sys.exit(1)
 
 	# initialize the particleDataTable
 	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
