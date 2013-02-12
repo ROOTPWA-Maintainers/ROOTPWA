@@ -3,6 +3,7 @@
 import argparse
 import glob
 import itertools
+import os
 import sys
 
 import pyRootPwa
@@ -101,6 +102,7 @@ if __name__ == "__main__":
 	parser.add_argument("-i", "--min-mass", type=float, metavar="min-mass", default=0.0, dest="massMin", help="minimum mass in GeV/c^{2} for the histograms (default: 0)")
 	parser.add_argument("-a", "--max-mass", type=float, metavar="max-mass", default=10.0, dest="massMax", help="maximum mass in GeV/c^{2} for the histograms (default: 10)")
 	parser.add_argument("-t", "--type", type=str, metavar="type", default="data", dest="type", help='type of input, can be "data", "gen" or "acc" (default: "data")')
+	parser.add_argument("-m", "--mass-hist", type=str, metavar="xMassHist", dest="xMassHistogramPath", help='histogram of the X mass, specified as pathToRootFile.root/pathOfHistInRootFile')
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
@@ -120,6 +122,31 @@ if __name__ == "__main__":
 		pyRootPwa.utils.printErr("invalid type '" + arguments.type + "' found, must be either 'data', 'gen' or 'acc'. Aborting...")
 		sys.exit(5)
 	inputTypeIndex = {"data": 0, "gen": 1, "acc": 2}
+
+	xMassHistogram = None
+	massSliceHistogram = None
+	if arguments.xMassHistogramPath != None:
+		fullPath = arguments.xMassHistogramPath
+		if fullPath.find('.root/') < 0:
+			pyRootPwa.utils.printWarn("Path to X mass histogram '" + fullPath +
+			                          "' not valid. Not using X mass histogram.")
+		else:
+			(rootFilePath, histogramPath) = fullPath.rsplit('.root/', 1)
+			rootFilePath += '.root'
+			if not os.path.isfile(rootFilePath):
+				pyRootPwa.utils.printWarn("X mass histogram root file '" + rootFilePath +
+				                          "' not found. Not using X mass histogram.")
+			else:
+				rootFile = pyRootPwa.ROOT.TFile.Open(rootFilePath, "READ")
+				xMassHistogram = rootFile.Get(histogramPath)
+				if not xMassHistogram or xMassHistogram.ClassName() != "TH1D":
+					pyRootPwa.utils.printWarn("X mass histogram '" + histogramPath +
+					                          "' not found in root file '" + rootFilePath +
+					                          "'. Not using X mass histogram.")
+					xMassHistogram = None
+	if xMassHistogram is not None:
+		massSliceHistogram = xMassHistogram.Clone("mass_slice")
+		massSliceHistogram.Reset()
 
 	pyRootPwa.config = pyRootPwa.rootPwaConfig(arguments.configFileName)
 	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
@@ -288,6 +315,8 @@ if __name__ == "__main__":
 						masses.append(mass)
 						if(permutations[permutationKey][hist_i][0]):
 							hists[rangeName][hist_i][0].Fill(mass)
+							if hist_i == 0 and xMassHistogram is not None:
+								massSliceHistogram.Fill(mass)
 						if(permutations[permutationKey][hist_i][1]):
 							daughter = vertex.daughter1()
 							phi = daughter.lzVec.Phi()
@@ -311,6 +340,34 @@ if __name__ == "__main__":
 				progressbar.update(i)
 
 			dataFile.Close()
+
+		if xMassHistogram is not None:
+			xMassCan = pyRootPwa.ROOT.TCanvas("X_mass", "X mass", 1000, 700)
+			xMassCan.cd()
+			xMassHistogram.Draw()
+			massSliceHistogram.Draw("same")
+			massSliceHistogram.SetFillColor(pyRootPwa.ROOT.kOrange)
+			outputFile.cd(rangeName)
+			xMassCan.Write()
+			xMassCan.Close()
+			for i in range(len(hists[rangeName])):
+				for j in range(len(hists[rangeName][i])):
+					hist = hists[rangeName][i][j]
+					canvas = pyRootPwa.ROOT.TCanvas(hist.GetName() + "_canvas", hist.GetTitle(), 1000, 1400)
+					canvas.Divide(1, 2)
+					canvas.cd(1)
+					xMassHistogram.Draw()
+					massSliceHistogram.Draw("same")
+					massSliceHistogram.SetFillColor(pyRootPwa.ROOT.kOrange)
+					canvas.cd(2)
+					hist.Draw()
+					if hist.ClassName() == "TH2D":
+						hist.SetDrawOption("colz")
+					else:
+						hist.SetFillColor(pyRootPwa.ROOT.kOrange)
+					canvas.Write()
+					canvas.Close()
+			massSliceHistogram.Reset()
 
 	outputFile.Write()
 	outputFile.Close()
