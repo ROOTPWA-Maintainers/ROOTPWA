@@ -3,6 +3,9 @@ import math
 import os
 import sys
 
+DIGITS_TO_ROUND_TO = 14
+DIGITS_TO_ROUND_GJTRAFO_TO = 11
+
 errors = 0
 skip = 0
 
@@ -992,12 +995,20 @@ do_test(iDTTestgIsoCGProd, "Testing isobarDecayTopology.getIsospinClebschGordanP
 def iDTTestgetBoseSym():
 	print
 	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 1, 4, 3, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 2, 1, 3, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 2, 4, 3, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 4, 1, 3, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [0, 4, 2, 3, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 1, 2, 0, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 1, 4, 0, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 2, 1, 0, 4], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 2, 4, 0, 1], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 4, 1, 0, 2], 'factor': (0.2886751345948129+0j)}, {'fsPartPermMap': [3, 4, 2, 0, 1], 'factor': (0.2886751345948129+0j)}]
-	assert(consistentIsobarTopo.getBoseSymmetrization() == testval)
+	retval = consistentIsobarTopo.getBoseSymmetrization()
+	for itemlist in [retval, testval]:
+		for item in itemlist:
+			item['factor'] = complex(round(item['factor'].real, DIGITS_TO_ROUND_TO), round(item['factor'].imag, DIGITS_TO_ROUND_TO))
+	assert(retval == testval)
 do_test(iDTTestgetBoseSym, "Testing isobarDecayTopology.getBoseSymmetrization()")
 
 def iDTTestgetIsoSym():
 	testval = [{'fsPartPermMap': [0, 1, 2, 3, 4], 'factor': (-0.7071067811865475+0j)}, {'fsPartPermMap': [0, 1, 3, 2, 4], 'factor': (-0.7071067811865475+0j)}]
-	assert(consistentIsobarTopo.getIsospinSymmetrization() == testval)
+	retval = consistentIsobarTopo.getIsospinSymmetrization()
+	for itemlist in [retval, testval]:
+		for item in itemlist:
+			item['factor'] = complex(round(item['factor'].real, DIGITS_TO_ROUND_TO), round(item['factor'].imag, DIGITS_TO_ROUND_TO))
+	assert(retval == testval)
 do_test(iDTTestgetIsoSym, "Testing isobarDecayTopology.getIsospinSymmetrization()")
 
 def iDTTestisoAffPerm():
@@ -1056,7 +1067,9 @@ def iATestgjTrans():
 	lzVec1 = pyRootPwa.ROOT.TLorentzVector(-0.000905,-0.082895,192.513945,192.514013)
 	lzVec2 = pyRootPwa.ROOT.TLorentzVector(-0.855221,0.115472,192.091726,192.100313)
 	rot = pyRootPwa.core.isobarAmplitude.gjTransform(lzVec2, lzVec1)
-	assert(rot.XX() == -0.97198203396081984)
+	testval = round(-0.97198203396081984, DIGITS_TO_ROUND_GJTRAFO_TO)
+	retval = round(rot.XX(), DIGITS_TO_ROUND_GJTRAFO_TO)
+	assert(retval == testval)
 do_test(iATestgjTrans, "Testing isobarAmplitude::gjTransform")
 
 print
