@@ -147,6 +147,8 @@ if __name__ == "__main__":
 	if xMassHistogram is not None:
 		massSliceHistogram = xMassHistogram.Clone("mass_slice")
 		massSliceHistogram.Reset()
+		pyRootPwa.utils.printInfo("X mass histogram found. Switching root to batch mode.")
+		pyRootPwa.ROOT.gROOT.SetBatch(True)
 
 	pyRootPwa.config = pyRootPwa.rootPwaConfig(arguments.configFileName)
 	pyRootPwa.core.particleDataTable.readFile(pyRootPwa.config.pdgFileName)
@@ -180,6 +182,7 @@ if __name__ == "__main__":
 
 	inputFileRanges = {}
 	hists = {}
+	isobarCombinationHistograms = {}
 	massBinWidth = '%.2f' % (1000.0*((arguments.massMax - arguments.massMin)/arguments.nHistogramBins))
 	cosBinWidth = '%.2f' % (2000.0 / arguments.nHistogramBins)
 	thetaBinWidth = '%.2f' % (pyRootPwa.ROOT.TMath.TwoPi() / arguments.nHistogramBins)
@@ -236,7 +239,7 @@ if __name__ == "__main__":
 			                         pyRootPwa.ROOT.TH2D(name + "_phi_vs_cosTheta", phiVsThetaTitle, arguments.nHistogram2DBins, -1, 1, arguments.nHistogram2DBins, -pyRootPwa.ROOT.TMath.Pi(), pyRootPwa.ROOT.TMath.Pi())])
 			for hist in hists[rangeName][-1]:
 				hist.SetMinimum(0)
-		isobarCombinationHistograms = {}
+		isobarCombinationHistograms[rangeName] = {}
 		for isobarCombination_i in range(len(isobarCombinations)):
 			isobarCombination = isobarCombinations[isobarCombination_i]
 			index1 = isobarCombination[0]
@@ -252,7 +255,7 @@ if __name__ == "__main__":
 			else:
 				zAxisTitle = str(nEntries) + " entries per event"
 			histName = "m(" + isobar2Name + ") vs. m(" + isobar1Name + ");m(" + isobar1Name + ") [GeV/c^{2}];m(" + isobar2Name + ") [GeV/c^{2}];" + zAxisTitle
-			isobarCombinationHistograms[isobarCombination] = pyRootPwa.ROOT.TH2D("m_" + isobar2Name + "_vs_m_" + isobar1Name, histName, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax)
+			isobarCombinationHistograms[rangeName][isobarCombination] = pyRootPwa.ROOT.TH2D("m_" + isobar2Name + "_vs_m_" + isobar1Name, histName, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax, arguments.nHistogram2DBins, arguments.massMin, arguments.massMax)
 
 	assert(inputFileRanges.keys() == hists.keys())
 
@@ -329,13 +332,12 @@ if __name__ == "__main__":
 							hists[rangeName][hist_i][5].Fill(cosTheta, phi)
 						hist_i += 1
 
-					for isobarCombination_i in range(len(isobarCombinations)):
-						isobarCombination = isobarCombinations[isobarCombination_i]
+					for isobarCombination in isobarCombinations:
 						if not isobarPermutations[permutationKey]:
 							continue
 						index1 = isobarCombination[0]
 						index2 = isobarCombination[1]
-						isobarCombinationHistograms[isobarCombination].Fill(masses[index1], masses[index2])
+						isobarCombinationHistograms[rangeName][isobarCombination].Fill(masses[index1], masses[index2])
 
 				progressbar.update(i)
 
@@ -350,23 +352,27 @@ if __name__ == "__main__":
 			outputFile.cd(rangeName)
 			xMassCan.Write()
 			xMassCan.Close()
+			allHistograms = []
 			for i in range(len(hists[rangeName])):
 				for j in range(len(hists[rangeName][i])):
-					hist = hists[rangeName][i][j]
-					canvas = pyRootPwa.ROOT.TCanvas(hist.GetName() + "_canvas", hist.GetTitle(), 1000, 1400)
-					canvas.Divide(1, 2)
-					canvas.cd(1)
-					xMassHistogram.Draw()
-					massSliceHistogram.Draw("same")
-					massSliceHistogram.SetFillColor(pyRootPwa.ROOT.kOrange)
-					canvas.cd(2)
-					hist.Draw()
-					if hist.ClassName() == "TH2D":
-						hist.SetDrawOption("colz")
-					else:
-						hist.SetFillColor(pyRootPwa.ROOT.kOrange)
-					canvas.Write()
-					canvas.Close()
+					allHistograms.append(hists[rangeName][i][j])
+			for isobarCombination in isobarCombinations:
+				allHistograms.append(isobarCombinationHistograms[rangeName][isobarCombination])
+			for hist in allHistograms:
+				canvas = pyRootPwa.ROOT.TCanvas(hist.GetName() + "_canvas", hist.GetTitle(), 1000, 1400)
+				canvas.Divide(1, 2)
+				canvas.cd(1)
+				xMassHistogram.Draw()
+				massSliceHistogram.Draw("same")
+				massSliceHistogram.SetFillColor(pyRootPwa.ROOT.kOrange)
+				canvas.cd(2)
+				hist.Draw()
+				if hist.ClassName() == "TH2D":
+					hist.SetDrawOption("colz")
+				else:
+					hist.SetFillColor(pyRootPwa.ROOT.kOrange)
+				canvas.Write()
+				canvas.Close()
 			massSliceHistogram.Reset()
 
 	outputFile.Write()
