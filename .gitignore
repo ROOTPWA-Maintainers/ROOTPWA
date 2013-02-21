@@ -2,3 +2,5 @@ html-doc
 *.pyc
 *.root
 .project
+*.d
+*.so
