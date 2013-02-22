@@ -1,6 +1,5 @@
 
 import ConfigParser
-import multiprocessing
 import os
 import sys
 
@@ -43,10 +42,10 @@ class rootPwaConfig:
 			with open(configFileName, 'r') as configFile:
 				self.config.readfp(configFile)
 		except IOError:
-			pyRootPwa.utils.printErr("config file could not be opened. Aborting...")
+			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be opened. Aborting...")
 			sys.exit(1)
 		except ConfigParser.Error:
-			pyRootPwa.utils.printErr("config file could not be parsed. Aborting...")
+			pyRootPwa.utils.printErr("config file '" + configFileName + "' could not be parsed. Aborting...")
 			sys.exit(1)
 
 		try:

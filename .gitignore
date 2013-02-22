@@ -1,1 +1,4 @@
 html-doc
+*.pyc
+*.root
+.project
