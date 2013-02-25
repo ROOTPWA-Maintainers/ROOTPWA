@@ -273,11 +273,19 @@ main(int    argc,
 		return 1;
 	}
 	// get tree with start values
+	vector<vector<complex<double> >*> prodAmps(nmbSamples); //production amplitudes
+	vector<string> waveNames;
+	vector<int> reflectivities;
+	vector<int> ms;
+	vector<int> ranks;
+	int maxrank = 0;
+
 	bool hasfit = true;
 	TTree* tree;
 	fitresults->GetObject("pwa", tree);
 	if(!tree) {
 		cerr << "Cannot find fitbin tree '"<< "pwa" << "' "<< endl;
+		exit(1);
 	} else {
 		Bin = new fitResult();
 		tree->SetBranchAddress("fitResult_v2", &Bin);
@@ -314,93 +322,69 @@ main(int    argc,
 		// string tmpname("genamps.txt");
 		// create slightly modified versions of the model according to covariances
 		for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
-			// enumerate genamps files
-			TString tmpname("genamps");
-			tmpname+=isamples;
-			tmpname+=".txt";
-			ofstream tmpfile(tmpname.Data());
+			prodAmps[isamples] = new vector<complex<double> >();
+
+			fitResult* fit = NULL;
 			if(isamples == 0) {
-				Bin->printAmpsGenPW(tmpfile);
+				fit = Bin;
 			} else {
-				fitResult* clone = Bin->cloneVar();
-				clone->printAmpsGenPW(tmpfile);
-				delete clone;
-			}
-			tmpfile.close();
-		} // end loop over model versions
-	}
-
-	vector<string> waveNames;
-
-	vector<vector<complex<double> >*> prodAmps(nmbSamples); //production amplitudes
-	for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
-		prodAmps[isamples] = new vector<complex<double> >();
-	}
-
-	vector<int> reflectivities;
-	vector<int> ms;
-	vector<int> ranks;
-	int maxrank = 0;
-	// if we have read in a TFitResult the the name of the file has been changed!
-	// so it is ok to use the same variable here. See above!
-
-	// read in a list of waveListFiles
-	for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
-		TString tmpname("genamps");
-		tmpname += isamples;
-		tmpname += ".txt";
-		cerr << "Reading back file " << tmpname << endl;
-		ifstream wavefile(tmpname);
-		while(wavefile.good()) {
-			TString wavename;
-			double RE, IM;
-			int rank = 0;
-			int refl = 0;
-			int m = 0;
-			wavefile >> wavename >> RE >> IM;
-			//cerr << wavename << endl;
-
-			if(wavename.Length() < 2) {
-				continue;
-			}
-			if((RE == 0) && (IM == 0)) {
-				continue;
-			}
-			// check if there is rank information
-			if(wavename(0) == 'V') {
-				// we multiply rank by to to make space for refl+- production vectors
-				rank = 2 * atoi(wavename(1, 1).Data());
-				// check reflecitivity to sort into correct production vector
-				refl = wavename(9)=='+' ? 0 : 1;
-				m = wavename(8)=='0' ? 0 : 1;
-				//cerr << wavename(9) << endl;
-				wavename = wavename(3, wavename.Length());
-			} else if(wavename != "flat") {
-				refl = wavename(6)=='+' ? 0 : 1;
-				m = wavename(5)=='0' ? 0 : 1;
-				//cerr << wavename(6) << endl;
+				fit = Bin->cloneVar();
 			}
 
-			std::complex<double> amp(RE, IM);
-			prodAmps[isamples]->push_back(amp);
-			cerr << wavename << " " << amp << " r=" << rank/2
-			     << " eps=" << refl
-			     << " m="   << m << endl;
-			wavefile.ignore(256, '\n');
-			// for first file store info on waves
-			if(isamples == 0) {
-				waveNames.push_back(wavename.Data());
-				reflectivities.push_back(refl);
-				ms.push_back(m);
-				ranks.push_back(rank);
-				if(maxrank < rank) {
-					maxrank = rank;
+			for (unsigned int iwaves = 0; iwaves < fit->nmbWaves(); iwaves++) {
+				TString wavename = fit->waveName(iwaves);
+				const double RE = fit->prodAmp(iwaves).real();
+				const double IM = fit->prodAmp(iwaves).imag();
+
+				int rank = 0;
+				int refl = 0;
+				int m = 0;
+
+				if(wavename.Length() < 2) {
+					continue;
+				}
+				if((RE == 0) && (IM == 0)) {
+					continue;
+				}
+				// check if there is rank information
+				if(wavename(0) == 'V') {
+					// we multiply rank by to to make space for refl+- production vectors
+					rank = 2 * atoi(wavename(1, 1).Data());
+					// check reflecitivity to sort into correct production vector
+					refl = wavename(9)=='+' ? 0 : 1;
+					m = wavename(8)=='0' ? 0 : 1;
+					//cerr << wavename(9) << endl;
+					wavename = wavename(3, wavename.Length());
+				} else if(wavename != "flat") {
+					refl = wavename(6)=='+' ? 0 : 1;
+					m = wavename(5)=='0' ? 0 : 1;
+					//cerr << wavename(6) << endl;
+				}
+
+				std::complex<double> amp(RE, IM);
+				prodAmps[isamples]->push_back(amp);
+				cerr << wavename << " " << amp << " r=" << rank/2
+				     << " eps=" << refl
+				     << " m="   << m << endl;
+				// for first file store info on waves
+				if(isamples == 0) {
+					waveNames.push_back(wavename.Data());
+					reflectivities.push_back(refl);
+					ms.push_back(m);
+					ranks.push_back(rank);
+					if(maxrank < rank) {
+						maxrank = rank;
+					}
 				}
 			}
-		} // loop over file
 
-		cerr << "Rank of fit was:" << maxrank + 1 << endl;
-	} // end loop over samples
+			if (isamples != 0) {
+				delete fit;
+			}
+
+			cerr << "Rank of fit was:" << maxrank + 1 << endl;
+		} // end loop over model versions
+	}
 
 	unsigned int nmbWaves = waveNames.size();
 	// TODO reserve list of wheight branches!
