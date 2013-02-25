@@ -240,7 +240,6 @@ main(int    argc,
 	rpwa::particleDataTable::readFile(pdgFileName);
 
 	TFile* outfile = TFile::Open(outFileName.c_str(), "RECREATE");
-	TH1D* hWeights = new TH1D("hWeights", "PW Weights", 100, 0, 100);
 	TTree* outtree = new TTree(inTreeName.c_str(), inTreeName.c_str());
 	double weight;
 	double weightPosRef;
@@ -535,10 +534,6 @@ main(int    argc,
 				// weight as incoherent sum of the two reflectivities and the flat wave
 				weight = weightPosRef + weightNegRef + weightFlat;
 
-
-				if(isample == 0) {
-					hWeights->Fill(weight);
-				}
 				modelweights[isample] = weight;
 
 			}// end loop over model samples
@@ -555,7 +550,6 @@ main(int    argc,
 	outfile->cd();
 	prodKinPartNames ->Write(prodKinPartNamesObjName.c_str(),  TObject::kSingleKey);
 	decayKinPartNames->Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);
-	hWeights->Write();
 	outtree->Write();
 	outfile->Close();
 
