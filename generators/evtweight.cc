@@ -277,7 +277,6 @@ main(int    argc,
 	vector<int> ranks;
 	int maxrank = 0;
 
-	bool hasfit = true;
 	TTree* tree;
 	fitresults->GetObject("pwa", tree);
 	if(!tree) {
@@ -313,8 +312,7 @@ main(int    argc,
 		if((mBest < (massBinCenter-massBinWidth / 2.)) || (mBest > (massBinCenter + massBinWidth / 2.))) {
 			cerr << "No fit found for Mass bin m=" << massBinCenter << " (mBest=" << mBest << ", massBinCenter=" << massBinCenter << ", massBinWidth=" << massBinWidth << ")" << endl;
 			Bin->reset();
-			hasfit = false;
-			return 1;
+			exit(1);
 		} else {
 			printInfo << "Found best matching mass bin to be centered at " << mBest << " MeV/c^2, index " << iBest << "." << endl;
 			tree->GetEntry(iBest);
@@ -535,11 +533,9 @@ main(int    argc,
 				// incoherent sum over rank and diffrerent reflectivities
 				weightPosRef = 0;
 				weightNegRef = 0;
-				if(hasfit) {
-					for(int ir = 0; ir < maxrank + 1; ++ir) {
-						weightPosRef += norm(posamps[ir]);
-						weightNegRef += norm(negamps[ir]);
-					}
+				for(int ir = 0; ir < maxrank + 1; ++ir) {
+					weightPosRef += norm(posamps[ir]);
+					weightNegRef += norm(negamps[ir]);
 				}
 				weightFlat = norm(flatamp);
 				// weight as incoherent sum of the two reflectivities and the flat wave
