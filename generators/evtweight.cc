@@ -101,54 +101,6 @@ getReflectivity(const TString& waveName)
 }
 
 
-void parseWaveList(const string& waveListFileName,
-                   vector<string>& waveNames,
-                   vector<double>& waveThresholds,
-                   vector<int>& refl)
-{
-
-	unsigned int _nmbWavesPosRefl = 0;
-	unsigned int _nmbWavesNegRefl = 0;
-	bool _debug = false;
-	printInfo << "Reading amplitude names from wave list file '" << waveListFileName << "'." << endl;
-	ifstream waveListFile(waveListFileName.c_str());
-	if(!waveListFile) {
-		printErr << "Cannot open file '" << waveListFileName << "'. Exiting." << endl;
-		throw;
-	}
-	string line;
-	int    lineNmb = 0;
-	while(getline(waveListFile, line)) {
-		if(line[0] == '#') { // comments start with #
-			continue;
-		}
-		stringstream lineStream;
-		lineStream.str(line);
-		string waveName;
-		if(lineStream >> waveName) {
-			double threshold;
-			// !!! it would be safer to make the threshold value in the wave list file mandatory
-			if(!(lineStream >> threshold))
-				threshold = 0;
-			if(_debug)
-				cout << "    reading line " << setw(3) << lineNmb + 1 << ": " << waveName << ",  threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
-			if(getReflectivity(waveName) > 0){
-				++_nmbWavesPosRefl; refl.push_back(1);
-			} else {
-				++_nmbWavesNegRefl; refl.push_back(-1);
-			}
-			waveNames.push_back(waveName);
-			waveThresholds.push_back(threshold);
-		} else {
-			printWarn << "Cannot parse line '" << line << "' in wave list file '" << waveListFileName << "'." << endl;
-		}
-		++lineNmb;
-	}
-	waveListFile.close();
-	printInfo << "Read " << lineNmb << " lines from wave list file '" << waveListFileName << "'." << endl;
-}
-
-
 int
 main(int    argc,
      char** argv)
