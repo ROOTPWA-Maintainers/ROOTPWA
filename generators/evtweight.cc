@@ -51,7 +51,7 @@
 #include "TString.h"
 #include "TTree.h"
 
-#include "integral.h"
+#include "ampIntegralMatrix.h"
 #include "fitResult.h"
 #include "event.h"
 #include "fileUtils.hpp"
@@ -251,16 +251,12 @@ main(int    argc,
 	TBranch* outDecayKinMomentaBr = 0;
 
 	// load integrals ---------------------------------------------------
-	integral normInt;
-	ifstream intFile(intFileName.c_str());
-	if(!intFile) {
-		printErr << "Cannot open file '"
+	ampIntegralMatrix normInt;
+	if(!normInt.readAscii(intFileName)) {
+		printErr << "Cannot read from file '"
 		         << intFileName << "'. Exiting." << endl;
-		throw;
+		exit(1);
 	}
-	// !!! integral.scan() performs no error checks!
-	normInt.scan(intFile);
-	intFile.close();
 
 	// load production amplitudes ------------------------------------------
 	// read TFitResult is used as input
@@ -516,7 +512,7 @@ main(int    argc,
 						continue;
 					}
 					//cerr << w1 << "  " << decayamp << endl;
-					double nrm = sqrt(normInt.val(w1, w1).real());
+					double nrm = sqrt(normInt.element(w1, w1).real());
 					complex<double> amp = decayamp / nrm * prodAmps[isample]->at(iw);
 					if(isample == 0) {// fill wheights of individual waves
 						weights[iw] = norm(amp);
