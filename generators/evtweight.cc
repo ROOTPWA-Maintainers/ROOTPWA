@@ -243,7 +243,7 @@ main(int    argc,
 	double qbeam;
 	std::vector<int> q; // array of charges
 
-	outtree->Branch("weight", &weight, "weight/d");
+	outtree->Branch("weight", &weight, "weight/D");
 	outtree->Branch("p", &p);
 	outtree->Branch("beam", &beam);
 	outtree->Branch("q", &q);
@@ -424,7 +424,7 @@ main(int    argc,
 	for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
 		TString weightname("Wintens_");
 		weightname += waveNames[iw];
-		outtree->Branch(weightname.Data(), &weights[iw], (weightname + "/d").Data());
+		outtree->Branch(weightname.Data(), &weights[iw], (weightname + "/D").Data());
 	}
 
 	// create branches for the weights of the different model variants
@@ -432,7 +432,7 @@ main(int    argc,
 	for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
 		TString weightname("W");
 		weightname += isamples;
-		outtree->Branch(weightname.Data(), &modelweights[isamples], (weightname + "/d").Data());
+		outtree->Branch(weightname.Data(), &modelweights[isamples], (weightname + "/D").Data());
 	}
 
 	// open decay amplitude files --------------------------------------------
