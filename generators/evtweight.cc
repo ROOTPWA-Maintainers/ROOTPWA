@@ -274,7 +274,6 @@ main(int    argc,
 	vector<vector<complex<double> >*> prodAmps(nmbSamples); //production amplitudes
 	vector<string> waveNames;
 	vector<int> reflectivities;
-	vector<int> ms;
 	vector<int> ranks;
 	int maxrank = 0;
 
@@ -340,7 +339,6 @@ main(int    argc,
 
 				int rank = 0;
 				int refl = 0;
-				int m = 0;
 
 				if(wavename.Length() < 2) {
 					continue;
@@ -354,25 +352,21 @@ main(int    argc,
 					rank = 2 * atoi(wavename(1, 1).Data());
 					// check reflecitivity to sort into correct production vector
 					refl = wavename(9)=='+' ? 0 : 1;
-					m = wavename(8)=='0' ? 0 : 1;
 					//cerr << wavename(9) << endl;
 					wavename = wavename(3, wavename.Length());
 				} else if(wavename != "flat") {
 					refl = wavename(6)=='+' ? 0 : 1;
-					m = wavename(5)=='0' ? 0 : 1;
 					//cerr << wavename(6) << endl;
 				}
 
 				std::complex<double> amp(RE, IM);
 				prodAmps[isamples]->push_back(amp);
 				cerr << wavename << " " << amp << " r=" << rank/2
-				     << " eps=" << refl
-				     << " m="   << m << endl;
+				     << " eps=" << refl << endl;
 				// for first file store info on waves
 				if(isamples == 0) {
 					waveNames.push_back(wavename.Data());
 					reflectivities.push_back(refl);
-					ms.push_back(m);
 					ranks.push_back(rank);
 					if(maxrank < rank) {
 						maxrank = rank;
@@ -511,11 +505,8 @@ main(int    argc,
 			// weighting - do this for each model-sample
 			for(unsigned int isample=0; isample<nmbSamples; ++isample){
 
-				vector<complex<double> > posm0amps(maxrank + 1); // positive refl vector m=0
-				vector<complex<double> > posm1amps(maxrank + 1); // positive refl vector m=1
-
-				vector<complex<double> > negm0amps(maxrank + 1); // negative refl vector m=0
-				vector<complex<double> > negm1amps(maxrank + 1); // negative refl vector m=1
+				vector<complex<double> > posamps(maxrank + 1); // positive refl vector
+				vector<complex<double> > negamps(maxrank + 1); // negative refl vector
 
 				complex<double> flatamp;
 
@@ -534,17 +525,9 @@ main(int    argc,
 					}
 
 					if (reflectivities[iw] == 0) {
-						if(ms[iw] == 0) {
-							posm0amps[ranks[iw]] += amp;
-						} else if(ms[iw] == 1) {
-							posm1amps[ranks[iw]] += amp;
-						}
+						posamps[ranks[iw]] += amp;
 					} else if(reflectivities[iw] == 1) {
-						if(ms[iw] == 0) {
-							negm0amps[ranks[iw]] += amp;
-						} else if(ms[iw] == 1) {
-							negm1amps[ranks[iw]] += amp;
-						}
+						negamps[ranks[iw]] += amp;
 					}
 				}
 				// end loop over waves
@@ -554,8 +537,8 @@ main(int    argc,
 				weightNegRef = 0;
 				if(hasfit) {
 					for(int ir = 0; ir < maxrank + 1; ++ir) {
-						weightPosRef += norm(posm0amps[ir] + posm1amps[ir]);
-						weightNegRef += norm(negm0amps[ir] + negm1amps[ir]);
+						weightPosRef += norm(posamps[ir]);
+						weightNegRef += norm(negamps[ir]);
 					}
 				}
 				weightFlat = norm(flatamp);
