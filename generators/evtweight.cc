@@ -291,31 +291,35 @@ main(int    argc,
 		tree->SetBranchAddress("fitResult_v2", &Bin);
 		// find entry which is closest to mass bin center
 		// and has the lowest likelihood
+		printInfo << "Searching for best fit in mass bin centered at " << massBinCenter << " MeV/c^2." << std::endl;
 		unsigned int iBest = 0;
 		double mBest = 0;
-		//double loglike = 0;
-		for(unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
+		double loglike = std::numeric_limits<double>::max();
+		for(unsigned int i = 0; i < tree->GetEntries(); ++i) {
 			tree->GetEntry(i);
-			if (fabs(massBinCenter - Bin->massBinCenter()) <= fabs(massBinCenter - mBest)) {
-				// check also if this bin is more likely in case of many fits per bin
-				//if (loglike == 0 || Bin->logLikelihood() < loglike){
+			if (fabs(massBinCenter - Bin->massBinCenter()) < fabs(massBinCenter - mBest)) {
+				// this mass bin is closer to mass bin searched for
 				iBest = i;
 				mBest = Bin->massBinCenter();
-				//loglike = Bin->logLikelihood();
-				//}
-				//else cerr << "This is a redundant fit" << endl;
+				loglike = Bin->logLikelihood();
+			} else if (fabs(massBinCenter - Bin->massBinCenter()) <= fabs(massBinCenter - mBest)) {
+				// this mass bin is close as before, also compare likelihood
+				if (Bin->logLikelihood() < loglike) {
+					iBest = i;
+					mBest = Bin->massBinCenter();
+					loglike = Bin->logLikelihood();
+				}
 			}
 		}  // end loop over TFitBins
-		cerr << "mBest= " << mBest << endl;
 
 
 		if((mBest < (massBinCenter-massBinWidth / 2.)) || (mBest > (massBinCenter + massBinWidth / 2.))) {
-			cerr << "No fit found for Mass bin m=" << massBinCenter << endl;
+			cerr << "No fit found for Mass bin m=" << massBinCenter << " (mBest=" << mBest << ", massBinCenter=" << massBinCenter << ", massBinWidth=" << massBinWidth << ")" << endl;
 			Bin->reset();
 			hasfit = false;
 			return 1;
 		} else {
-			cerr << "Using data from Mass bin m=" << mBest << " bin " << iBest << endl;
+			printInfo << "Found best matching mass bin to be centered at " << mBest << " MeV/c^2, index " << iBest << "." << endl;
 			tree->GetEntry(iBest);
 		}
 		// write wavelist files for generator
