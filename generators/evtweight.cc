@@ -73,16 +73,22 @@ usage(const string& progName,
          << endl
          << "usage:" << endl
 	     << progName
-	     << " -o <file> -w <file> -i <file> -n samples  -m mass"
+	     << " [-o output file -w fit result file -i integral file -d amplitude directory -n samples] -m mass [-b mass bin width] "
+	     << "-t tree name -l leaf names -v -h] "
          << "input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
-	     << "        -o <file>  ROOT output file"<< endl
-	     << "        -w <file.root>  use TFitBin tree as input"<< endl
-	     << "        -i <file>  integral file"<< endl
-	     << "        -m mass  center of mass bin"<< endl
-	     << "        -n samples  sampling of the model parameters (default=1)"<< endl
-	     << "        -b width  width of mass bin"<< endl
+	     << "        -o file    ROOT output file (default: './genpw.root')"<< endl
+	     << "        -w file    file containing the TFitBin tree to be used as input (default: './fitresult.root')"<< endl
+	     << "        -i file    integral file (default: './norm.int')"<< endl
+	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
+	     << "        -n #       number of samples of model parameters (default: 1)"<< endl
+	     << "        -m #       central mass of mass bin [MeV/c^2]"<< endl
+	     << "        -b #       width of mass bin [MeV/c^2] (default: 60 MeV/c^2)"<< endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
+	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
+	     << "        -l names   semicolon separated object/leaf names in input data" << endl
+             << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
@@ -121,12 +127,13 @@ main(int    argc,
 
 	// parse command line options
 	const string   progName       = argv[0];
-	string output_file = "genpw.root";
-	string integrals_file;
-	string waveListFileName = "wavelist";
-	double binCenter = 0;
-	double binWidth = 60; // MeV
-	unsigned int nsamples = 1;
+	string         outFileName    = "./genpw.root";
+	string         fitFileName    = "./fitresult.root";
+	string         intFileName    = "./norm.int";
+	string         ampDirName     = ".";
+	unsigned int   nmbSamples     = 1;
+	double         massBinCenter  = 0.;
+	double         massBinWidth   = 60.;
 	string         pdgFileName    = "./particleDataTable.txt";
 	string         inTreeName     = "rootPwaEvtTree";
 	string         leafNames      = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
@@ -134,40 +141,54 @@ main(int    argc,
 	const long int treeCacheSize  = 1000000;  // 1 MByte ROOT tree read cache size
 
 	int c;
-	while ((c = getopt(argc, argv, "o:w:i:m:n:p:h")) != -1) {
+	while ((c = getopt(argc, argv, "o:w:i:d:m:n:b:p:t:l:vh")) != -1) {
 		switch (c) {
-			case 'o':
-				output_file = optarg;
-				break;
-			case 'w':
-				waveListFileName = optarg;
-				break;
-			case 'i':
-				integrals_file = optarg;
-				break;
-			case 'm':
-				binCenter = atof(optarg);
-				break;
-			case 'n':
-				nsamples = atoi(optarg);
-				break;
-			case 'b':
-				binWidth = atof(optarg);
-				break;
+		case 'o':
+			outFileName = optarg;
+			break;
+		case 'w':
+			fitFileName = optarg;
+			break;
+		case 'i':
+			intFileName = optarg;
+			break;
+		case 'd':
+			ampDirName = optarg;
+			break;
+		case 'n':
+			nmbSamples = atoi(optarg);
+			break;
+		case 'm':
+			massBinCenter = atof(optarg);
+			break;
+		case 'b':
+			massBinWidth = atof(optarg);
+			break;
 		case 'p':
 			pdgFileName = optarg;
 			break;
-
-			case 'h':
-				usage(argv[0]);
-				break;
-			default:
-				usage(argv[0]);
-				break;
+		case 't':
+			inTreeName = optarg;
+			break;
+		case 'l':
+			leafNames = optarg;
+			break;
+		case 'v':
+			debug = true;
+			break;
+			
+		case 'h':
+		default:
+			usage(progName);
+			break;
 		}
 	}
 
-	binCenter += 0.5 * binWidth;
+	// the mass bin has to be specified
+	if (massBinCenter == 0.) {
+		printErr << "central mass of mass bin to be processed has to be specified. aborting." << endl;
+		usage(progName, 1);
+	}
 
         // get input file names
         if (optind >= argc) {
@@ -213,8 +234,7 @@ main(int    argc,
 	// initialize particle data table
 	rpwa::particleDataTable::readFile(pdgFileName);
   
-
-	TFile* outfile = TFile::Open(output_file.c_str(), "RECREATE");
+	TFile* outfile = TFile::Open(outFileName.c_str(), "RECREATE");
 	TH1D* hWeights = new TH1D("hWeights", "PW Weights", 100, 0, 100);
 	TTree* outtree = new TTree("pwevents", "pwevents");
 	double weight;
@@ -234,10 +254,10 @@ main(int    argc,
 
 	// load integrals ---------------------------------------------------
 	integral normInt;
-	ifstream intFile(integrals_file.c_str());
+	ifstream intFile(intFileName.c_str());
 	if(!intFile) {
 		printErr << "Cannot open file '"
-		         << integrals_file << "'. Exiting." << endl;
+		         << intFileName << "'. Exiting." << endl;
 		throw;
 	}
 	// !!! integral.scan() performs no error checks!
@@ -246,10 +266,10 @@ main(int    argc,
 
 	// load production amplitudes ------------------------------------------
 	// read TFitResult is used as input
-	TFile* fitresults = TFile::Open(waveListFileName.c_str(), "READ");
+	TFile* fitresults = TFile::Open(fitFileName.c_str(), "READ");
 	fitResult* Bin = NULL;
 	if(!fitresults || fitresults->IsZombie()) {
-		cerr << "Cannot open start fit results file " << waveListFileName << endl;
+		cerr << "Cannot open start fit results file " << fitFileName << endl;
 		return 1;
 	}
 	// get tree with start values
@@ -268,7 +288,7 @@ main(int    argc,
 		//double loglike = 0;
 		for(unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
 			tree->GetEntry(i);
-			if (fabs(binCenter - Bin->massBinCenter()) <= fabs(binCenter - mBest)) {
+			if (fabs(massBinCenter - Bin->massBinCenter()) <= fabs(massBinCenter - mBest)) {
 				// check also if this bin is more likely in case of many fits per bin
 				//if (loglike == 0 || Bin->logLikelihood() < loglike){
 				iBest = i;
@@ -281,8 +301,8 @@ main(int    argc,
 		cerr << "mBest= " << mBest << endl;
 
 
-		if((mBest < (binCenter-binWidth / 2.)) || (mBest > (binCenter + binWidth / 2.))) {
-			cerr << "No fit found for Mass bin m=" << binCenter << endl;
+		if((mBest < (massBinCenter-massBinWidth / 2.)) || (mBest > (massBinCenter + massBinWidth / 2.))) {
+			cerr << "No fit found for Mass bin m=" << massBinCenter << endl;
 			Bin->reset();
 			hasfit = false;
 			return 1;
@@ -293,7 +313,7 @@ main(int    argc,
 		// write wavelist files for generator
 		// string tmpname("genamps.txt");
 		// create slightly modified versions of the model according to covariances
-		for(unsigned int isamples = 0; isamples < nsamples; ++isamples) {
+		for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
 			// enumerate genamps files
 			TString tmpname("genamps");
 			tmpname+=isamples;
@@ -307,14 +327,13 @@ main(int    argc,
 				delete clone;
 			}
 			tmpfile.close();
-			waveListFileName = "genamps0.txt";
 		} // end loop over model versions
 	}
 
 	vector<string> waveNames;
 
-	vector<vector<complex<double> >*> prodAmps(nsamples); //production amplitudes
-	for(unsigned int isamples = 0; isamples < nsamples; ++isamples) {
+	vector<vector<complex<double> >*> prodAmps(nmbSamples); //production amplitudes
+	for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
 		prodAmps[isamples] = new vector<complex<double> >();
 	}
 
@@ -326,7 +345,7 @@ main(int    argc,
 	// so it is ok to use the same variable here. See above!
 
 	// read in a list of waveListFiles
-	for(unsigned int isamples = 0; isamples < nsamples; ++isamples) {
+	for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
 		TString tmpname("genamps");
 		tmpname += isamples;
 		tmpname += ".txt";
@@ -409,8 +428,8 @@ main(int    argc,
 	}
 
 	// create branches for the weights of the different model variants
-	vector<double> modelweights(nsamples);
-	for(unsigned int isamples = 0; isamples < nsamples; ++isamples) {
+	vector<double> modelweights(nmbSamples);
+	for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
 		TString weightname("W");
 		weightname += isamples;
 		outtree->Branch(weightname.Data(), &modelweights[isamples], (weightname + "/d").Data());
@@ -489,7 +508,7 @@ main(int    argc,
 			}
 
 			// weighting - do this for each model-sample
-			for(unsigned int isample=0; isample<nsamples; ++isample){
+			for(unsigned int isample=0; isample<nmbSamples; ++isample){
 
 				vector<complex<double> > posm0amps(maxrank + 1); // positive refl vector m=0
 				vector<complex<double> > posm1amps(maxrank + 1); // positive refl vector m=1
@@ -569,7 +588,7 @@ main(int    argc,
 		delete ampfiles[iw];
 	}
 	ampfiles.clear();
-	for(unsigned int isamples=0; isamples < nsamples; ++isamples) {
+	for(unsigned int isamples=0; isamples < nmbSamples; ++isamples) {
 		delete prodAmps[isamples];
 	}
 	prodAmps.clear();
