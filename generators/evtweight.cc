@@ -39,6 +39,8 @@
 #include <vector>
 #include <unistd.h>
 
+#include <boost/progress.hpp>
+
 #include "TClonesArray.h"
 #include "TFile.h"
 #include "TH1.h"
@@ -51,12 +53,16 @@
 #include "integral.h"
 #include "fitResult.h"
 #include "event.h"
+#include "fileUtils.hpp"
 #include "../amplitude/particle.h"
+#include "evtTreeHelper.h"
 #include "particleDataTable.h"
 
 
 using namespace std;
+using namespace boost;
 using namespace rpwa;
+
 
 void
 usage(const string& progName,
@@ -66,15 +72,17 @@ usage(const string& progName,
          << endl
          << "usage:" << endl
 	     << progName
-	     << " -e <file> -o <file> -w <file> -i <file> -n samples  -m mass"
+	     << " -o <file> -w <file> -i <file> -n samples  -m mass"
+         << "input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
-	     << "        -e <file> acc or ps events in .evt or .root format"<< endl
 	     << "        -o <file>  ROOT output file"<< endl
 	     << "        -w <file.root>  use TFitBin tree as input"<< endl
 	     << "        -i <file>  integral file"<< endl
 	     << "        -m mass  center of mass bin"<< endl
 	     << "        -n samples  sampling of the model parameters (default=1)"<< endl
 	     << "        -b width  width of mass bin"<< endl
+	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
+	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
 }
@@ -110,24 +118,23 @@ main(int    argc,
 	printGitHash     ();
 	cout << endl;
 
-	if(argc < 3) {
-		usage(argv[0],1);
-	}
-
+	// parse command line options
+	const string   progName       = argv[0];
 	string output_file = "genpw.root";
 	string integrals_file;
 	string waveListFileName = "wavelist";
-	string evtfilename;
 	double binCenter = 0;
 	double binWidth = 60; // MeV
 	unsigned int nsamples = 1;
+	string         pdgFileName    = "./particleDataTable.txt";
+	string         inTreeName     = "rootPwaEvtTree";
+	string         leafNames      = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool           debug          = false;
+	const long int treeCacheSize  = 1000000;  // 1 MByte ROOT tree read cache size
 
 	int c;
-	while ((c = getopt(argc, argv, "e:o:w:i:m:n:h")) != -1) {
+	while ((c = getopt(argc, argv, "o:w:i:m:n:p:h")) != -1) {
 		switch (c) {
-			case 'e':
-				evtfilename = optarg;
-				break;
 			case 'o':
 				output_file = optarg;
 				break;
@@ -146,6 +153,9 @@ main(int    argc,
 			case 'b':
 				binWidth = atof(optarg);
 				break;
+		case 'p':
+			pdgFileName = optarg;
+			break;
 
 			case 'h':
 				usage(argv[0]);
@@ -157,6 +167,51 @@ main(int    argc,
 	}
 
 	binCenter += 0.5 * binWidth;
+
+        // get input file names
+        if (optind >= argc) {
+                printErr << "you need to specify at least one data file to process. aborting." << endl;
+                usage(progName, 1);
+        }
+        vector<string> rootFileNames;
+        vector<string> evtFileNames;
+        while (optind < argc) {
+                const string fileName = argv[optind++];
+                const string fileExt  = extensionFromPath(fileName);
+                if (fileExt == "root")
+                        rootFileNames.push_back(fileName);
+                else if (fileExt == "evt")
+                        evtFileNames.push_back(fileName);
+                else
+                        printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
+                                  << "skipping." << endl;
+        }
+        if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
+                printErr << "none of the specified input files is a .root or .evt file. aborting.";
+                usage(progName, 1);
+        }
+
+        // get object and leaf names for event data
+        string prodKinPartNamesObjName,  prodKinMomentaLeafName;
+        string decayKinPartNamesObjName, decayKinMomentaLeafName;
+        parseLeafAndObjNames(leafNames, prodKinPartNamesObjName, prodKinMomentaLeafName,
+                             decayKinPartNamesObjName, decayKinMomentaLeafName);
+
+        // open .root and .evt files for event data
+        vector<TTree*> inTrees;
+        TClonesArray*  prodKinPartNames  = 0;
+        TClonesArray*  decayKinPartNames = 0;
+        if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
+                                 rootFileNames, evtFileNames,
+                                 inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+                                 decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
+                printErr << "problems opening input file(s). aborting." << endl;
+                exit(1);
+        }
+
+	// initialize particle data table
+	rpwa::particleDataTable::readFile(pdgFileName);
+  
 
 	TFile* outfile = TFile::Open(output_file.c_str(), "RECREATE");
 	TH1D* hWeights = new TH1D("hWeights", "PW Weights", 100, 0, 100);
@@ -172,6 +227,9 @@ main(int    argc,
 	outtree->Branch("beam", &beam);
 	outtree->Branch("q", &q);
 	outtree->Branch("qbeam", &qbeam, "qbeam/i");
+
+	TBranch* outProdKinMomentaBr  = 0;
+	TBranch* outDecayKinMomentaBr = 0;
 
 	// load integrals ---------------------------------------------------
 	integral normInt;
@@ -365,35 +423,57 @@ main(int    argc,
 
 	// event loop ------------------------------------------------------------
 	unsigned int counter = 0;
-	if(evtfilename.find(".evt") > 0) {
-		event e;
-		list< ::particle> f_mesons;
-		ifstream evtfile(evtfilename.c_str());
+	for (unsigned int i = 0; i < inTrees.size(); ++i) {
+		printInfo << "processing ";
+		if ((rootFileNames.size() > 0) and (i == 0)) 
+			cout << "chain of .root files";
+		else
+			cout << ".evt tree[" << ((rootFileNames.size() > 0) ? i : i + 1) << "]";
+		cout << endl;
 
-		while(!evtfile.eof() && evtfile.good()) {
-			// evt2tree
-			if(counter % 1000 == 0) {
-				std::cout << ".";
-			}
-			if(counter++ % 10000 == 0) {
-				std::cout << counter;
-			}
-			evtfile >> e;
-			p->Delete(); // clear output arrays
-			q.clear();
-			f_mesons = e.f_mesons();
-			fourVec pX;
-			list< ::particle>::iterator it = f_mesons.begin();
-			while(it != f_mesons.end()) {
-				pX = it->get4P();
-				new ((*p)[p->GetEntries()]) TLorentzVector(pX.x(), pX.y(), pX.z(), pX.t());
-				q.push_back(it->Charge());
-				++it;
-			}
-			fourVec evtbeam = e.beam().get4P();
-			beam.SetPxPyPzE(evtbeam.x(), evtbeam.y(), evtbeam.z(), evtbeam.t());
-			qbeam = e.beam().Charge();
+		// create branch pointers and leaf variables
+		TBranch*      prodKinMomentaBr  = 0;
+		TBranch*      decayKinMomentaBr = 0;
+		TClonesArray* prodKinMomenta    = 0;
+		TClonesArray* decayKinMomenta   = 0;
 
+		// connect leaf variables to tree branches
+		inTrees[i]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
+		inTrees[i]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
+		inTrees[i]->SetCacheSize(treeCacheSize);
+		inTrees[i]->AddBranchToCache(prodKinMomentaLeafName.c_str(),  true);
+		inTrees[i]->AddBranchToCache(decayKinMomentaLeafName.c_str(), true);
+		inTrees[i]->StopCacheLearningPhase();
+
+		// connect TClonesArrays from input to output tree
+		if (outProdKinMomentaBr == NULL) {
+			const int splitLevel = 99;
+			const int bufSize    = 256000;
+			outProdKinMomentaBr  = outtree->Branch(prodKinMomentaLeafName.c_str(),  "TClonesArray", &prodKinMomenta,  bufSize, splitLevel);
+		} else {
+			outProdKinMomentaBr->SetAddress(&prodKinMomenta);
+		}
+		if (outDecayKinMomentaBr == NULL) {
+			const int splitLevel = 99;
+			const int bufSize    = 256000;
+			outDecayKinMomentaBr = outtree->Branch(decayKinMomentaLeafName.c_str(), "TClonesArray", &decayKinMomenta, bufSize, splitLevel);
+		} else {
+			outDecayKinMomentaBr->SetAddress(&decayKinMomenta);
+		}
+
+		const long int   nmbEventsTree = inTrees[i]->GetEntries();
+		const long int   maxNmbEvents  = 0;
+		const long int   nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
+		                                  : nmbEventsTree);
+		progress_display progressIndicator(nmbEvents, cout, "");
+		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+			++progressIndicator;
+
+			if (inTrees[i]->LoadTree(eventIndex) < 0)
+				break;
+			// read only required branches
+			prodKinMomentaBr->GetEntry (eventIndex);
+			decayKinMomentaBr->GetEntry(eventIndex);
 
 			// read decay amps for this event
 			vector<complex<double> > decayamps(nmbWaves);
@@ -468,106 +548,6 @@ main(int    argc,
 
 		} // end loop over events
 	} // end we have an eventfile with decay amplitudes
-	else {
-		// Initialize PDGTable
-		rpwa::particleDataTable& pdt = rpwa::particleDataTable::instance();
-		pdt.readFile();
-
-		TClonesArray prodKinPar("TObjString");
-		TClonesArray prodKinMom("TVector3");
-		TClonesArray decayKinPar("TObjString");
-		TClonesArray decayKinMom("TVector3");
-		TClonesArray *pprodKinPar = &prodKinPar;
-		TClonesArray *pprodKinMom = &prodKinMom;
-		TClonesArray *pdecayKinPar = &decayKinPar;
-		TClonesArray *pdecayKinMom = &decayKinMom;
-
-		TFile* infile = TFile::Open(evtfilename.c_str(), "READ");
-		TTree *evt_tree;
-		infile->GetObject("rootPwaEvtTree;1", evt_tree);
-
-		evt_tree->SetBranchAddress("prodKinParticles", &pprodKinPar);
-		evt_tree->SetBranchAddress("prodKinMomenta", &pprodKinMom);
-		evt_tree->SetBranchAddress("decayKinParticles", &pdecayKinPar);
-		evt_tree->SetBranchAddress("decayKinMomenta", &pdecayKinMom);
-
-		unsigned int counter = 0;
-		unsigned long entries = evt_tree->GetEntries();
-		for(unsigned long i = 0; i < entries; i++) {
-			// evt2tree
-			evt_tree->GetEntry(i);
-			if(counter % 1000 == 0) {
-				std::cout << ".";
-			}
-			if(counter++ % 10000 == 0) {
-				std::cout << counter;
-			}
-			p->Delete(); // clear output arrays
-			q.clear();
-
-			// we need 4 momentum and charge of beam and decay particles
-			// in rootPwaEvtTree the particle name plus the 3 momentum is stored
-			// so first get charge and particle mass from pdg table via particle name
-			// then construct the 4 momenta
-
-
-			// beam particle
-			rpwa::particle beampar(((TString*)prodKinPar[0])->Data()); // beam particle should be at first place -> 0
-			qbeam = beampar.charge();
-			beam.SetVectM(*(TVector3*)prodKinMom[0], pdt.entry(beampar.bareName())->mass());
-
-			// decay particles
-			for(int dp = 0; dp < decayKinPar.GetEntries(); dp++) {
-				rpwa::particle dpar(((TString*)prodKinPar[dp])->Data());
-				q.push_back(dpar.charge());
-				new ((*p)[p->GetEntries()]) TLorentzVector(*(TVector3*)decayKinMom[dp],
-				                            pdt.entry(dpar.bareName())->mass());
-			}
-
-			// weighting
-
-			vector<complex<double> > posm0amps(maxrank + 1); // positive refl vector m=0
-			vector<complex<double> > posm1amps(maxrank + 1); // positive refl vector m=1
-
-			vector<complex<double> > negm0amps(maxrank + 1); // negative refl vector m=0
-			vector<complex<double> > negm1amps(maxrank + 1); // negative refl vector m=1
-
-			for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-				complex<double> decayamp;
-				ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
-				string w1 = waveNames[iw];
-				//cerr << w1 << "  " << decayamp << endl;
-				double nrm = sqrt(normInt.val(w1, w1).real());
-				complex<double> amp = decayamp / nrm * prodAmps[0]->at(iw);
-				if(reflectivities[iw] == 1) {
-					if(ms[iw] == 0) {
-						posm0amps[ranks[iw]] += amp;
-					} else if(ms[iw] == 1) {
-						posm1amps[ranks[iw]] += amp;
-					}
-				} else {
-					if(ms[iw] == 0) {
-						negm0amps[ranks[iw]] += amp;
-					} else if(ms[iw] == 1) {
-						negm1amps[ranks[iw]] += amp;
-					}
-				}
-			} // end loop over waves
-
-			// incoherent sum:
-			weight = 0;
-			if(hasfit) {
-				for(int ir = 0; ir < maxrank + 1; ++ir) {
-					weight += norm(posm0amps[ir]+posm1amps[ir]);
-					//weight += norm(posm1amps[ir]);
-					weight += norm(negm0amps[ir]+negm1amps[ir]);
-					//weight += norm(negm1amps[ir]);
-				}
-			}
-			hWeights->Fill(weight);
-			outtree->Fill();
-		}
-	} // end of event loop
 	cout << endl << "Processed " << counter << " events" << endl;
 
 	outfile->cd();
