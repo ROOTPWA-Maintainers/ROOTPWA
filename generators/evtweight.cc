@@ -82,6 +82,7 @@ usage(const string& progName,
 	     << "        -i file    integral file (default: './norm.int')"<< endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
 	     << "        -n #       number of samples of model parameters (default: 1)"<< endl
+	     << "        -s         add weight of each single wave (caution: this vastly increase the size of the output file)" << endl
 	     << "        -m #       central mass of mass bin [MeV/c^2]"<< endl
 	     << "        -b #       width of mass bin [MeV/c^2] (default: 60 MeV/c^2)"<< endl
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
@@ -132,6 +133,7 @@ main(int    argc,
 	string         intFileName    = "./norm.int";
 	string         ampDirName     = ".";
 	unsigned int   nmbSamples     = 1;
+	bool           singleWave     = false;
 	double         massBinCenter  = 0.;
 	double         massBinWidth   = 60.;
 	string         pdgFileName    = "./particleDataTable.txt";
@@ -141,7 +143,7 @@ main(int    argc,
 	const long int treeCacheSize  = 1000000;  // 1 MByte ROOT tree read cache size
 
 	int c;
-	while ((c = getopt(argc, argv, "o:w:i:d:m:n:b:p:t:l:vh")) != -1) {
+	while ((c = getopt(argc, argv, "o:w:i:d:n:sm:b:p:t:l:vh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -157,6 +159,9 @@ main(int    argc,
 			break;
 		case 'n':
 			nmbSamples = atoi(optarg);
+			break;
+		case 's':
+			singleWave = true;
 			break;
 		case 'm':
 			massBinCenter = atof(optarg);
@@ -384,21 +389,14 @@ main(int    argc,
 	// will take a pointer onto the elements
 	//vector<double> weights((nmbWaves+1)*nmbWaves/2);
 	vector<double> weights(nmbWaves);
-	//unsigned int wcount=0;
-	//create wheight vectors for individual intensities and interference terms
-	// for(unsigned int iw=0;iw<nmbWaves;++iw){
-	//   for(unsigned int jw=iw;jw<nmbWaves;++jw){
-	//     TString weightname("W_");
-	//     if(iw==jw)weightname+=waveNames[iw];
-	//     else weightname+=waveNames[iw] +"_"+ waveNames[jw];
 
-	//     outtree->Branch(weightname.Data(),&weights[wcount++],(weightname+"/d").Data());
-	//   }
-	// }
-	for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-		TString weightname("Wintens_");
-		weightname += waveNames[iw];
-		outtree->Branch(weightname.Data(), &weights[iw], (weightname + "/D").Data());
+	// if requested also save the weight of each individual wave
+	if (singleWave) {
+		for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
+			TString weightname("Wintens_");
+			weightname += waveNames[iw];
+			outtree->Branch(weightname.Data(), &weights[iw], (weightname + "/D").Data());
+		}
 	}
 
 	// create branches for the weights of the different model variants
