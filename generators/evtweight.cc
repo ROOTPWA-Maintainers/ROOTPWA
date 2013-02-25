@@ -437,7 +437,18 @@ main(int    argc,
 
 	// open decay amplitude files --------------------------------------------
 	for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-		ampfiles.push_back(new ifstream(waveNames[iw].c_str()));
+		if (waveNames[iw] == "flat") {
+			ampfiles.push_back(NULL);
+			continue;
+		}
+		string ampFilePath = ampDirName + "/" + waveNames[iw];
+		printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
+		ifstream* ampfile = new ifstream(ampFilePath.c_str());
+		if (!ampfile->good()) {
+			printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;
+			exit(1);
+		}
+		ampfiles.push_back(ampfile);
 	}
 
 
@@ -502,9 +513,13 @@ main(int    argc,
 			// read decay amps for this event
 			vector<complex<double> > decayamps(nmbWaves);
 			for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-				complex<double> decayamp;
-				ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
-				decayamps[iw] = decayamp;
+				if (ampfiles[iw] == NULL) { // e.g. flat wave
+					decayamps[iw] = complex<double>(0., 0.);
+				} else {
+					complex<double> decayamp;
+					ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
+					decayamps[iw] = decayamp;
+				}
 			}
 
 			// weighting - do this for each model-sample
@@ -584,8 +599,10 @@ main(int    argc,
 	outfile->Close();
 
 	for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-		ampfiles[iw]->close();
-		delete ampfiles[iw];
+		if (ampfiles[iw] != NULL) {
+			ampfiles[iw]->close();
+			delete ampfiles[iw];
+		}
 	}
 	ampfiles.clear();
 	for(unsigned int isamples=0; isamples < nmbSamples; ++isamples) {
