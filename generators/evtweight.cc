@@ -18,20 +18,26 @@
 //    along with rootpwa.  If not, see <http://www.gnu.org/licenses/>.
 //
 ///////////////////////////////////////////////////////////////////////////
+//-----------------------------------------------------------
+//
+// Description:
+//      Calculate weight of event list from amp files
+//
+//
+// Author List:
+//      Sebastian Neubert    TUM            (original author)
+//
+//
+//-----------------------------------------------------------
 
-/** @brief Calculate weight of event list from amp files
- */
 
-
-#include <complex>
-#include <iostream>
-
-#include <fstream>
 #include <cstdlib>
+#include <complex>
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 #include <unistd.h>
-#include <stdlib.h>
 
 #include "TClonesArray.h"
 #include "TFile.h"
@@ -43,22 +49,23 @@
 #include "TTree.h"
 
 #include "integral.h"
-
 #include "fitResult.h"
 #include "event.h"
-
 #include "../amplitude/particle.h"
 #include "particleDataTable.h"
-#include "libconfig.h++"
 
 
 using namespace std;
-using namespace libconfig;
 using namespace rpwa;
 
-void printUsage(char* prog, int errCode=0) {
-	cerr << "usage:" << endl
-	     << prog
+void
+usage(const string& progName,
+      const int     errCode = 0)
+{
+	cerr << "weight (phase space) events with fit result" << endl
+         << endl
+         << "usage:" << endl
+	     << progName
 	     << " -e <file> -o <file> -w <file> -i <file> -n samples  -m mass"
 	     << "    where:" << endl
 	     << "        -e <file> acc or ps events in .evt or .root format"<< endl
@@ -73,7 +80,8 @@ void printUsage(char* prog, int errCode=0) {
 }
 
 
-int getReflectivity(const TString& waveName)
+int
+getReflectivity(const TString& waveName)
 {
 	int refl = 0;
 	unsigned int reflIndex = 6;  // position of reflectivity in wave
@@ -141,11 +149,17 @@ void parseWaveList(const string& waveListFileName,
 }
 
 
-int main(int argc, char** argv)
+int
+main(int    argc,
+     char** argv)
 {
+	printCompilerInfo();
+	printLibraryInfo ();
+	printGitHash     ();
+	cout << endl;
 
 	if(argc < 3) {
-		printUsage(argv[0],1);
+		usage(argv[0],1);
 	}
 
 	string output_file = "genpw.root";
@@ -182,10 +196,10 @@ int main(int argc, char** argv)
 				break;
 
 			case 'h':
-				printUsage(argv[0]);
+				usage(argv[0]);
 				break;
 			default:
-				printUsage(argv[0]);
+				usage(argv[0]);
 				break;
 		}
 	}
@@ -622,4 +636,3 @@ int main(int argc, char** argv)
 	return 0;
 
 }
-
