@@ -236,18 +236,16 @@ main(int    argc,
   
 	TFile* outfile = TFile::Open(outFileName.c_str(), "RECREATE");
 	TH1D* hWeights = new TH1D("hWeights", "PW Weights", 100, 0, 100);
-	TTree* outtree = new TTree("pwevents", "pwevents");
+	TTree* outtree = new TTree(inTreeName.c_str(), inTreeName.c_str());
 	double weight;
-	TClonesArray* p = new TClonesArray("TLorentzVector");
-	TLorentzVector beam;
-	double qbeam;
-	std::vector<int> q; // array of charges
+	double weightPosRef;
+	double weightNegRef;
+	double weightFlat;
 
 	outtree->Branch("weight", &weight, "weight/D");
-	outtree->Branch("p", &p);
-	outtree->Branch("beam", &beam);
-	outtree->Branch("q", &q);
-	outtree->Branch("qbeam", &qbeam, "qbeam/i");
+	outtree->Branch("weightPosRef", &weightPosRef, "weightPosRef/D");
+	outtree->Branch("weightNegRef", &weightNegRef, "weightNegRef/D");
+	outtree->Branch("weightFlat", &weightFlat, "weightFlat/D");
 
 	TBranch* outProdKinMomentaBr  = 0;
 	TBranch* outDecayKinMomentaBr = 0;
@@ -552,17 +550,17 @@ main(int    argc,
 				// end loop over waves
 
 				// incoherent sum over rank and diffrerent reflectivities
-				weight = 0;
+				weightPosRef = 0;
+				weightNegRef = 0;
 				if(hasfit) {
 					for(int ir = 0; ir < maxrank + 1; ++ir) {
-						weight += norm(posm0amps[ir] + posm1amps[ir]);
-						//weight += norm(posm1amps[ir]);
-						weight += norm(negm0amps[ir] + negm1amps[ir]);
-						// weight += norm(negm1amps[ir]);
+						weightPosRef += norm(posm0amps[ir] + posm1amps[ir]);
+						weightNegRef += norm(negm0amps[ir] + negm1amps[ir]);
 					}
 				}
-				// add flat
-				weight += norm(flatamp);
+				weightFlat = norm(flatamp);
+				// weight as incoherent sum of the two reflectivities and the flat wave
+				weight = weightPosRef + weightNegRef + weightFlat;
 
 
 				if(isample == 0) {
@@ -582,6 +580,8 @@ main(int    argc,
 	timer.Print();
 
 	outfile->cd();
+	prodKinPartNames ->Write(prodKinPartNamesObjName.c_str(),  TObject::kSingleKey);
+	decayKinPartNames->Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);
 	hWeights->Write();
 	outtree->Write();
 	outfile->Close();
