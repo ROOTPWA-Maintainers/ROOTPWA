@@ -70,12 +70,12 @@ usage(const string& progName,
       const int     errCode = 0)
 {
 	cerr << "weight (phase space) events with fit result" << endl
-         << endl
-         << "usage:" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
 	     << " [-o output file -w fit result file -i integral file -d amplitude directory -n samples] -m mass [-b mass bin width] "
 	     << "-t tree name -l leaf names -v -h] "
-         << "input data file(s) (.evt or .root format)" << endl
+	     << "input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
 	     << "        -o file    ROOT output file (default: './genpw.root')"<< endl
 	     << "        -w file    file containing the TFitBin tree to be used as input (default: './fitresult.root')"<< endl
@@ -87,7 +87,7 @@ usage(const string& progName,
 	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
 	     << "        -l names   semicolon separated object/leaf names in input data" << endl
-             << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	     << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -190,50 +190,50 @@ main(int    argc,
 		usage(progName, 1);
 	}
 
-        // get input file names
-        if (optind >= argc) {
-                printErr << "you need to specify at least one data file to process. aborting." << endl;
-                usage(progName, 1);
-        }
-        vector<string> rootFileNames;
-        vector<string> evtFileNames;
-        while (optind < argc) {
-                const string fileName = argv[optind++];
-                const string fileExt  = extensionFromPath(fileName);
-                if (fileExt == "root")
-                        rootFileNames.push_back(fileName);
-                else if (fileExt == "evt")
-                        evtFileNames.push_back(fileName);
-                else
-                        printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
-                                  << "skipping." << endl;
-        }
-        if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
-                printErr << "none of the specified input files is a .root or .evt file. aborting.";
-                usage(progName, 1);
-        }
+	// get input file names
+	if (optind >= argc) {
+		printErr << "you need to specify at least one data file to process. aborting." << endl;
+		usage(progName, 1);
+	}
+	vector<string> rootFileNames;
+	vector<string> evtFileNames;
+	while (optind < argc) {
+		const string fileName = argv[optind++];
+		const string fileExt  = extensionFromPath(fileName);
+		if (fileExt == "root")
+			rootFileNames.push_back(fileName);
+		else if (fileExt == "evt")
+			evtFileNames.push_back(fileName);
+		else
+			printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
+			          << "skipping." << endl;
+	}
+	if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
+		printErr << "none of the specified input files is a .root or .evt file. aborting.";
+		usage(progName, 1);
+	}
 
-        // get object and leaf names for event data
-        string prodKinPartNamesObjName,  prodKinMomentaLeafName;
-        string decayKinPartNamesObjName, decayKinMomentaLeafName;
-        parseLeafAndObjNames(leafNames, prodKinPartNamesObjName, prodKinMomentaLeafName,
-                             decayKinPartNamesObjName, decayKinMomentaLeafName);
+	// get object and leaf names for event data
+	string prodKinPartNamesObjName,  prodKinMomentaLeafName;
+	string decayKinPartNamesObjName, decayKinMomentaLeafName;
+	parseLeafAndObjNames(leafNames, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                     decayKinPartNamesObjName, decayKinMomentaLeafName);
 
-        // open .root and .evt files for event data
-        vector<TTree*> inTrees;
-        TClonesArray*  prodKinPartNames  = 0;
-        TClonesArray*  decayKinPartNames = 0;
-        if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
-                                 rootFileNames, evtFileNames,
-                                 inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
-                                 decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
-                printErr << "problems opening input file(s). aborting." << endl;
-                exit(1);
-        }
+	// open .root and .evt files for event data
+	vector<TTree*> inTrees;
+	TClonesArray*  prodKinPartNames  = 0;
+	TClonesArray*  decayKinPartNames = 0;
+	if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
+	                         rootFileNames, evtFileNames,
+	                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
+		printErr << "problems opening input file(s). aborting." << endl;
+		exit(1);
+	}
 
 	// initialize particle data table
 	rpwa::particleDataTable::readFile(pdgFileName);
-  
+
 	TFile* outfile = TFile::Open(outFileName.c_str(), "RECREATE");
 	TH1D* hWeights = new TH1D("hWeights", "PW Weights", 100, 0, 100);
 	TTree* outtree = new TTree(inTreeName.c_str(), inTreeName.c_str());
