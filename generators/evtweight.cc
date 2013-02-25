@@ -47,6 +47,7 @@
 #include "TH1D.h"
 #include "TLorentzVector.h"
 #include "TRandom3.h"
+#include "TStopwatch.h"
 #include "TString.h"
 #include "TTree.h"
 
@@ -421,7 +422,10 @@ main(int    argc,
 	}
 
 
-	// event loop ------------------------------------------------------------
+	// read data from tree(s) and calculate weight
+	TStopwatch timer;
+	timer.Reset();
+	timer.Start();
 	unsigned int counter = 0;
 	for (unsigned int i = 0; i < inTrees.size(); ++i) {
 		printInfo << "processing ";
@@ -467,6 +471,7 @@ main(int    argc,
 		                                  : nmbEventsTree);
 		progress_display progressIndicator(nmbEvents, cout, "");
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
+			++counter;
 			++progressIndicator;
 
 			if (inTrees[i]->LoadTree(eventIndex) < 0)
@@ -545,10 +550,14 @@ main(int    argc,
 
 			}// end loop over model samples
 			outtree->Fill();
+		}
 
-		} // end loop over events
-	} // end we have an eventfile with decay amplitudes
-	cout << endl << "Processed " << counter << " events" << endl;
+		inTrees[i]->PrintCacheStats();
+	}
+	printSucc << "calculated weight for " << counter << " events" << endl;
+	timer.Stop();
+	printInfo << "this job consumed: ";
+	timer.Print();
 
 	outfile->cd();
 	hWeights->Write();
@@ -566,5 +575,4 @@ main(int    argc,
 	prodAmps.clear();
 
 	return 0;
-
 }
