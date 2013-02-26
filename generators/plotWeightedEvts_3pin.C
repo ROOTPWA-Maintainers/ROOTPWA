@@ -10,6 +10,8 @@
  * Also for each massbin create a directory and create the same filenames for each variable
  */
 
+#include <string>
+
 #include <THStack.h>
 
 #include "TTree.h"
@@ -27,7 +29,6 @@
 #include "TMath.h"
 #include "TPad.h"
 #include "TCanvas.h"
-#include "TString.h"
 #include <iostream>
 #include <vector>
 #include "NParticleEvent.h"
@@ -80,70 +81,51 @@ int getTotalCharge(std::pair<int, int> p) {
 	return p.first + p.second;
 }
 
-TString stripUnits(TString s) {
-	//std::cout<<"stripunits-in: "<<s<<std::endl;
-	TPRegexp re("^(.*)\\s*(\\[.*])\\s*$");
-	re.Substitute(s,"$1");
-	//std::cout<<"stripunits-out: "<<s<<std::endl;
-	return s;
-}
-
-TString getUnits(TString s) {
-	//std::cout << "getunits-in: " << s << std::endl;
-	TPRegexp re("^.*(\\[.*])\\s*$");
-	if(re.MatchB(s) > 0)
-		re.Substitute(s,"$1");
-	else
-		s = "";
-	//std::cout << "getunits-out: " << s << std::endl;
-	return s;
-}
-
-GJHistBunch GJHistBunchFactory(TString name_prefix) {
+GJHistBunch GJHistBunchFactory(const std::string& name_prefix) {
 	GJHistBunch temp;
-	TH1D* hMIsobarMC = new TH1D("hMIsobarMC_" + name_prefix, name_prefix + " Isobar Mass (MC)", nbninsm, 0.0, 1.5);
+	TH1D* hMIsobarMC = new TH1D(("hMIsobarMC_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (MC)").c_str(), nbninsm, 0.0, 1.5);
 	hMIsobarMC->SetXTitle("isobar mass [GeV]");
 	hMIsobarMC->SetYTitle("# of events");
 	temp.isobar_mass.push_back(hMIsobarMC);
-	TH1D* hMIsobarData = new TH1D("hMIsobarData_" + name_prefix, name_prefix + " Isobar Mass (DATA)", nbninsm,
+	TH1D* hMIsobarData = new TH1D(("hMIsobarData_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (DATA)").c_str(), nbninsm,
 				      0.0, 1.5);
 	hMIsobarData->SetXTitle("isobar mass [GeV]");
 	hMIsobarData->SetYTitle("# of events");
 	temp.isobar_mass.push_back(hMIsobarData);
 	temp.isobar_mass[0]->Sumw2();
 	
-	TH1D* hGJMC = new TH1D("hGJMC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)", nbinsang, -1, 1);
+	TH1D* hGJMC = new TH1D(("hGJMC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
 	hGJMC->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJMC->SetYTitle("# of events");
 	temp.costheta_GJF.push_back(hGJMC);
-	TH1D* hGJData = new TH1D("hGJData_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (DATA)", nbinsang, -1,
+	TH1D* hGJData = new TH1D(("hGJData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (DATA)").c_str(), nbinsang, -1,
 				 1);
 	hGJData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJData->SetYTitle("# of events");
 	temp.costheta_GJF.push_back(hGJData);
 	temp.costheta_GJF[0]->Sumw2();
 	
-	temp.costheta_GJF_MC_raw = new TH1D("hGJMC_raw" + name_prefix,
+	temp.costheta_GJF_MC_raw = new TH1D(("hGJMC_raw" + name_prefix).c_str(),
 					    "Cos Gottfried-Jackson Theta (unweighted MC)", nbinsang, -1, 1);
 	temp.costheta_GJF_MC_raw->SetXTitle("isobar cos(#theta_{GJ})");
 	temp.costheta_GJF_MC_raw->SetYTitle("# of events");
 	
-	TH2D* hGJtMC = new TH2D("hGJtMC_" + name_prefix, name_prefix + " Isobar Cos GJ Theta vs t' (MC)", nbinsang, -1, 1, 40, 0., 2.);
+	TH2D* hGJtMC = new TH2D(("hGJtMC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (MC)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
 	hGJtMC->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJtMC->SetYTitle("t' [GeV]");
 	hGJtMC->SetOption("COLZ");
 	temp.costheta_GJF_tprime.push_back(hGJtMC);
-	TH2D* hGJtData = new TH2D("hGJtData_" + name_prefix, name_prefix + " Isobar Cos GJ Theta vs t' (DATA)", nbinsang, -1, 1, 40, 0., 2.);
+	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (DATA)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
 	hGJtData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJtData->SetYTitle("t' [GeV]");
 	hGJtData->SetOption("COLZ");
 	temp.costheta_GJF_tprime.push_back(hGJtData);
 	
-	TH1D* hTYMC = new TH1D("hTYMC_" + name_prefix, name_prefix + " Isobar Treiman-Yang Phi (MC)", nbinsang, -TMath::Pi(),
+	TH1D* hTYMC = new TH1D(("hTYMC_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (MC)").c_str(), nbinsang, -TMath::Pi(),
 			       TMath::Pi());
 	hTYMC->SetXTitle("isobar #phi_{TY} [rad]");
 	hTYMC->SetYTitle("# of events");
-	TH1D* hTYData = new TH1D("hTYData_" + name_prefix, name_prefix + " Isobar Treiman-Yang Phi (DATA)", nbinsang, -TMath::Pi(),
+	TH1D* hTYData = new TH1D(("hTYData_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (DATA)").c_str(), nbinsang, -TMath::Pi(),
 				 TMath::Pi());
 	hTYData->SetXTitle("isobar #phi_{TY} [rad]");
 	hTYData->SetYTitle("# of events");
@@ -151,19 +133,19 @@ GJHistBunch GJHistBunchFactory(TString name_prefix) {
 	temp.phi_GJF.push_back(hTYData);
 	temp.phi_GJF[0]->Sumw2();
 
-	temp.costheta_GJF_Stack = new THStack("hGJF_Stack_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)");
+	temp.costheta_GJF_Stack = new THStack(("hGJF_Stack_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str());
 	
-	temp.costheta_GJF_Flat = new TH1D("hGJF_Flat_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)", nbinsang, -1, 1);
+	temp.costheta_GJF_Flat = new TH1D(("hGJF_Flat_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
 	temp.costheta_GJF_Flat->SetXTitle("isobar cos(#theta_{GJ})");
 	temp.costheta_GJF_Flat->SetYTitle("# of events");
 	temp.costheta_GJF_Stack->Add(temp.costheta_GJF_Flat);
 
-	temp.costheta_GJF_NegRef = new TH1D("hGJF_Neg_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)", nbinsang, -1, 1);
+	temp.costheta_GJF_NegRef = new TH1D(("hGJF_Neg_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
 	temp.costheta_GJF_NegRef->SetXTitle("isobar cos(#theta_{GJ})");
 	temp.costheta_GJF_NegRef->SetYTitle("# of events");
 	temp.costheta_GJF_Stack->Add(temp.costheta_GJF_NegRef);
 	
-	temp.costheta_GJF_PosRef = new TH1D("hGJF_Pos_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)", nbinsang, -1, 1);
+	temp.costheta_GJF_PosRef = new TH1D(("hGJF_Pos_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
 	temp.costheta_GJF_PosRef->SetXTitle("isobar cos(#theta_{GJ})");
 	temp.costheta_GJF_PosRef->SetYTitle("# of events");
 	temp.costheta_GJF_Stack->Add(temp.costheta_GJF_PosRef);
@@ -171,24 +153,24 @@ GJHistBunch GJHistBunchFactory(TString name_prefix) {
 	return temp;
 }
 
-HelicityHistBunch HelicityHistBunchFactory(TString name_prefix) {
+HelicityHistBunch HelicityHistBunchFactory(const std::string& name_prefix) {
 	HelicityHistBunch temp;
-	TH1D* hHThetaMC = new TH1D("hHThetaMC_" + name_prefix, name_prefix + " Isobar Helicity Cos Theta (MC)", nbinsang, -1, 1);
+	TH1D* hHThetaMC = new TH1D(("hHThetaMC_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (MC)").c_str(), nbinsang, -1, 1);
 	hHThetaMC->SetXTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
 	hHThetaMC->SetYTitle("# of events");
 	temp.costheta_HF.push_back(hHThetaMC);
-	TH1D* hHThetaData = new TH1D("hHThetaData_" + name_prefix, name_prefix + " Isobar Helicity Cos Theta (DATA)", nbinsang, -1,
+	TH1D* hHThetaData = new TH1D(("hHThetaData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (DATA)").c_str(), nbinsang, -1,
 				     1);
 	hHThetaData->SetXTitle("cos(#theta_{hel}) of #pi^{0} from isobar");
 	hHThetaData->SetYTitle("# of events");
 	temp.costheta_HF.push_back(hHThetaData);
 	temp.costheta_HF[0]->Sumw2();
 	
-	TH1D* hHPhiMC = new TH1D("hHPhiMC_" + name_prefix, name_prefix + " Isobar Helicity Phi (MC)", nbinsang, -TMath::Pi(),
+	TH1D* hHPhiMC = new TH1D(("hHPhiMC_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (MC)").c_str(), nbinsang, -TMath::Pi(),
 				 TMath::Pi());
 	hHPhiMC->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 	hHPhiMC->SetYTitle("# of events");
-	TH1D* hHPhiData = new TH1D("hHPhiData_" + name_prefix, name_prefix + " Isobar Helicity Phi (DATA)", nbinsang, -TMath::Pi(),
+	TH1D* hHPhiData = new TH1D(("hHPhiData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (DATA)").c_str(), nbinsang, -TMath::Pi(),
 				   TMath::Pi());
 	hHPhiData->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 	hHPhiData->SetYTitle("# of events");
@@ -276,10 +258,10 @@ void makeDifferencePlots(TFile *outfile) {
 		TIter histiter(histlist);
 		TObject *obj;
 		while ((obj = histiter())) {
-			TString s(obj->GetName());
-			if (s.EndsWith("MC"))
+			const std::string s(obj->GetName());
+			if (s.length() >= 2 && s.substr(s.length()-2, 2) == "MC")
 				mclist.Add(obj);
-			else if (s.Contains("MC_"))
+			else if (s.find("MC_") != std::string::npos)
 				mclist.Add(obj);
 		}
 		histiter = TIter(&mclist);
@@ -389,7 +371,7 @@ void makeDifferencePlots(TFile *outfile) {
 	}
 }
 
-TH2D* createDalitzHistogram(TString name, TString title, double mass, unsigned int treeentries) {
+TH2D* createDalitzHistogram(const std::string& name, const std::string& title, double mass, unsigned int treeentries) {
 	double rangelow = 0.0;
 	double rangehigh = pow(mass-0.1, 2);
 	unsigned int nbins = 0;
@@ -399,19 +381,19 @@ TH2D* createDalitzHistogram(TString name, TString title, double mass, unsigned i
 	if(nbins < 20) nbins = 20;
 	// upper bound is 130 bins
 	if(nbins > 130) nbins = 130;
-	TH2D* phist = new TH2D(name, title, nbins, rangelow, rangehigh, nbins, rangelow, rangehigh);
+	TH2D* phist = new TH2D(name.c_str(), title.c_str(), nbins, rangelow, rangehigh, nbins, rangelow, rangehigh);
 	return phist;
 }
 
 
 void
-plotWeightedEvts_3pin(const TString& dataFileName,
-                      const TString& mcFileName,
-                      const TString& massBin,
-                      const TString& outFileName = "kineplots.root")
+plotWeightedEvts_3pin(const std::string& dataFileName,
+                      const std::string& mcFileName,
+                      const std::string& massBin,
+                      const std::string& outFileName = "kineplots.root")
 {
 	// open data file
-	TFile* dataFile = TFile::Open(dataFileName);
+	TFile* dataFile = TFile::Open(dataFileName.c_str());
 
 	// tree containg the real data events
 	TTree* dataTree;
@@ -431,7 +413,7 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 		assert(((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
 
 	// open weighted MC file
-	TFile* mcFile = TFile::Open(mcFileName);
+	TFile* mcFile = TFile::Open(mcFileName.c_str());
 
 	// tree containing the phase space events and weights
 	TTree* mcTree;
@@ -453,7 +435,7 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 	double massval = 0.0;
 	unsigned int datatreeentries = 0;
 	
-	std::string binname(massBin.Data());
+	std::string binname(massBin);
 	unsigned int pointpos = binname.find(".");
 	if(pointpos == 0 || pointpos == binname.size())
 		std::cout<<"Warning: Bad massbin name!"<<std::endl;
@@ -464,13 +446,13 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 
 	
 	gROOT->SetStyle("Plain");
-	TFile* outfile = TFile::Open(outFileName, "UPDATE");
+	TFile* outfile = TFile::Open(outFileName.c_str(), "UPDATE");
 	outfile->cd();
 	gDirectory->cd();
-	if (!gDirectory->GetDirectory(massBin)) {
-		gDirectory->mkdir(massBin);
+	if (!gDirectory->GetDirectory(massBin.c_str())) {
+		gDirectory->mkdir(massBin.c_str());
 	}
-	gDirectory->cd(massBin);
+	gDirectory->cd(massBin.c_str());
 
 	// --------------- global diagrams
 	std::vector<TH1D*> hM;
