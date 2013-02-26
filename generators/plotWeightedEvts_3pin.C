@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/progress.hpp>
+
 #include <TClonesArray.h>
 #include <TFile.h>
 #include <TH1D.h>
@@ -506,6 +508,12 @@ createWeightedPlots(const std::string& dataFileName,
 	// itree = 0: mc tree
 	// itree = 1: data tree
 	for (unsigned int itree = 0; itree < 2; ++itree) {
+		if (itree == 0) {
+			std::cout << "Step 1: creating plots for MC" << std::endl;
+		} else {
+			std::cout << "Step 2: creating plots for data" << std::endl;
+		}
+
 		TTree* tree = (itree == 0) ? mcTree : dataTree;
 		if (tree == NULL)
 			continue;
@@ -558,7 +566,9 @@ createWeightedPlots(const std::string& dataFileName,
 
 		// loop over tree entries
 		unsigned int nevt = tree->GetEntries();
+		boost::progress_display progressIndicator(nevt, cout, "");
 		for (unsigned int i = 0; i < nevt; ++i) {
+			++progressIndicator;
 			tree->GetEntry(i);
 			p->Delete();
 			q->clear();
@@ -672,10 +682,12 @@ createWeightedPlots(const std::string& dataFileName,
 			}
 			
 		}// end loop over events
-		if (itree == 0)
+		if (itree == 0) {
 			avweight /= (double) nevt;
-		cout << "Maxweight=" << maxweight << endl;
-		cout << "Average weight=" << avweight << endl;
+			cout << "Maxweight=" << maxweight << endl;
+			cout << "Average weight=" << avweight << endl;
+		}
+		std::cout << std::endl;
 	}// end loop over trees
 	
 	GJHB_neutral_isobar.costheta_GJF_Stack->Write();
