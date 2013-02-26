@@ -502,13 +502,6 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 	dalitz->SetOption("COLZ");
 	dalitz->SetStats(0);
 	dalitz_neutral.push_back(dalitz);
-	/*std::vector<TH2D*> dalitz_charged;
-	  dalitz = new TH2D("hDalitzChargedMC", "Dalitz Plot #pi^{-}#pi^{0} vs. #pi^{-}#pi^{0} (MC)", nbninsm, 0.0,
-	  2.2, nbninsm, 0.0, 2.2);
-	  dalitz_charged.push_back(dalitz);
-	  dalitz = new TH2D("hDalitzChargedData", "Dalitz Plot #pi^{-}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", nbninsm,
-	  0.0, 2.2, nbninsm, 0.0, 2.2);
-	  dalitz_charged.push_back(dalitz);*/
 	
 	// --------------- generate histogram bunches
 	// neutral isobar
@@ -524,20 +517,6 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 	HelicityHistBunch HHB_charged_isobar = HelicityHistBunchFactory("Charged");
 	
 	double avweight = 1;
-	
-	/*TH1D* hCosTheta[2] = {new TH1D("hCosThetaMC", "Cos Theta (Data)", nbninsm, -1, 1), new TH1D("hCosThetaData", "Cos Theta (MC)", nbninsm, -1, 1) };
-	  TH1D* foohTY[2] = {new TH1D("foohTYMC_", " Isobar Treiman-Yang Phi (MC)", nbinsang, -TMath::Pi(),
-	  TMath::Pi()), new TH1D("foohTYData_", " Isobar Treiman-Yang Phi (DATA)", nbinsang, -TMath::Pi(),
-	  TMath::Pi()) };
-	  hCosTheta[0]->Sumw2();
-	  foohTY[0]->Sumw2();
-	  
-	  TH1D* hhCosTheta[2] = {new TH1D("hhCosThetaMC", "Cos Theta (Data)", nbninsm, -1, 1), new TH1D("hhCosThetaData", "Cos Theta (MC)", nbninsm, -1, 1) };
-	  TH1D* hfoohTY[2] = {new TH1D("hfoohTYMC_", " Isobar Treiman-Yang Phi (MC)", nbinsang, -TMath::Pi(),
-	  TMath::Pi()), new TH1D("hfoohTYData_", " Isobar Treiman-Yang Phi (DATA)", nbinsang, -TMath::Pi(),
-	  TMath::Pi()) };
-	  hhCosTheta[0]->Sumw2();
-	  hfoohTY[0]->Sumw2();*/
 	
 	//Loop both over data and mc tree
 	// itree = 0: mc tree
@@ -675,76 +654,10 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 			dalitz_neutral[itree]->Fill(comb[0].second, comb[1].second, weight);
 			//dalitz_charged[itree]->Fill(comb[1].second, comb[2].second, weight);
 			
-			/* unsigned int index = 0;
-			   TLorentzVector fsParticles[3];
-			   TLorentzVector beam = *event.beam();
-			   TLorentzVector X(0, 0, 0, 0);
-			   for (unsigned int is = 0; is < 3; ++is) {
-			   if (event.getParticle(is).q() == -1)
-			   index = is;
-			   fsParticles[is] = event.getParticle(is).p();
-			   X += fsParticles[is];
-			   }
-			   TVector3 xboost = X.BoostVector();
-			   for (unsigned int is = 0; is < 3; ++is) {
-			   fsParticles[is].Boost(-xboost);
-			   }
-			   beam.Boost(-xboost);
-			   TVector3 zaxis = beam.Vect().Unit();
-			   TVector3 yaxis = beam.Vect().Cross(X.Vect()).Unit();
-			   TVector3 xaxis = yaxis.Cross(zaxis);
-			   
-			   double phi = 0.0;
-			   double theta = zaxis.Angle(fsParticles[index].Vect());
-			   double cosTheta = TMath::Cos(theta);
-			   double fX = xaxis.Dot(fsParticles[index].Vect());
-			   double fY = yaxis.Dot(fsParticles[index].Vect());
-			   if (!(fX == 0.0 && fY == 0.0))
-			   phi = TMath::ATan2(fY, fX);
-			   
-			   hCosTheta[itree]->Fill(cosTheta, weight);
-			   foohTY[itree]->Fill(phi, weight);
-			   
-			   TLorentzVector isobar(0, 0, 0, 0);
-			   unsigned int hindex = 0;
-			   for (unsigned int is = 0; is < 3; ++is) {
-			   if (is == index)
-			   continue;
-			   isobar += fsParticles[is];
-			   hindex = is;
-			   }
-			   
-			   // create helicity frame coordinate system
-			   TVector3 hzaxis = isobar.Vect().Unit();
-			   TVector3 hyaxis = zaxis.Cross(hzaxis).Unit();
-			   TVector3 hxaxis = hyaxis.Cross(hzaxis);
-			   
-			   // boost NParticleState into isobar rest frame
-			   const TVector3 hboost = isobar.BoostVector();
-			   fsParticles[hindex].Boost(-hboost);
-			   // theta
-			   double htheta = hzaxis.Angle(fsParticles[hindex].Vect());
-			   double hcosTheta = TMath::Cos(htheta);
-			   double hfX = hxaxis.Dot(fsParticles[hindex].Vect());
-			   double hfY = hyaxis.Dot(fsParticles[hindex].Vect());
-			   double hphi = 0.0;
-			   if (!(hfX == 0.0 && hfY == 0.0))
-			   hphi = TMath::ATan2(hfY, hfX);
-			   
-			   hhCosTheta[itree]->Fill(hcosTheta, weight);
-			   hfoohTY[itree]->Fill(hphi, weight);*/
-			
 			// transform into GJ
 			event.toGJ();
 			// build again to get particles in GJF
 			event.build();
-			
-			/*TLorentzVector temp(0,0,0,0);
-			//cout<<"number of particles in event: "<<event.nParticles()<<endl;
-			for (unsigned int is = 0; is < 3; ++is) {
-			temp += event.getParticle(is).p();
-			}
-			temp.Dump();*/
 			
 			// loop over all states that contain n-1 final state particles
 			// and plot angles
