@@ -379,27 +379,37 @@ TH2D* createDalitzHistogram(const std::string& name, const std::string& title, d
 
 
 void
-plotWeightedEvts_3pin(const std::string& dataFileName,
-                      const std::string& mcFileName,
-                      const std::string& massBin,
-                      const std::string& outFileName = "kineplots.root")
+createWeightedPlots(const std::string& dataFileName,
+                    const std::string& dataTreeName,
+		    const std::string& dataProdKinPartNamesName,
+		    const std::string& dataProdKinMomentaName,
+		    const std::string& dataDecayKinPartNamesName,
+		    const std::string& dataDecayKinMomentaName,
+		    const std::string& mcFileName,
+		    const std::string& mcTreeName,
+		    const std::string& mcProdKinPartNamesName,
+		    const std::string& mcProdKinMomentaName,
+		    const std::string& mcDecayKinPartNamesName,
+		    const std::string& mcDecayKinMomentaName,
+		    const std::string& massBin,
+		    const std::string& outFileName)
 {
 	// open data file
 	TFile* dataFile = TFile::Open(dataFileName.c_str());
 
 	// tree containg the real data events
 	TTree* dataTree;
-	dataFile->GetObject("rootPwaEvtTree", dataTree);
+	dataFile->GetObject(dataTreeName.c_str(), dataTree);
 
 	// names of particles in tree
 	TClonesArray* dataProdKinPartNames(NULL);
-	dataFile->GetObject("prodKinParticles", dataProdKinPartNames);
+	dataFile->GetObject(dataProdKinPartNamesName.c_str(), dataProdKinPartNames);
 	assert(dataProdKinPartNames->GetEntries() == 1);
 	for (Int_t i=0; i<dataProdKinPartNames->GetEntries(); i++)
 		assert(((TObjString*)(dataProdKinPartNames->At(i)))->String().EqualTo("pi-"));
 
 	TClonesArray* dataDecayKinPartNames(NULL);
-	dataFile->GetObject("decayKinParticles", dataDecayKinPartNames);
+	dataFile->GetObject(dataDecayKinPartNamesName.c_str(), dataDecayKinPartNames);
 	assert(dataDecayKinPartNames->GetEntries() == 3);
 	for (Int_t i=0; i<dataDecayKinPartNames->GetEntries(); i++)
 		assert(((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
@@ -409,17 +419,17 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 
 	// tree containing the phase space events and weights
 	TTree* mcTree;
-	mcFile->GetObject("rootPwaEvtTree", mcTree);
+	mcFile->GetObject(mcTreeName.c_str(), mcTree);
 
 	// names of particles in tree
 	TClonesArray* mcProdKinPartNames(NULL);
-	mcFile->GetObject("prodKinParticles", mcProdKinPartNames);
+	mcFile->GetObject(mcProdKinPartNamesName.c_str(), mcProdKinPartNames);
 	assert(mcProdKinPartNames->GetEntries() == 1);
 	for (Int_t i=0; i<mcProdKinPartNames->GetEntries(); i++)
 		assert(((TObjString*)(mcProdKinPartNames->At(i)))->String().EqualTo("pi-"));
 
 	TClonesArray* mcDecayKinPartNames(NULL);
-	mcFile->GetObject("decayKinParticles", mcDecayKinPartNames);
+	mcFile->GetObject(mcDecayKinPartNamesName.c_str(), mcDecayKinPartNames);
 	assert(mcDecayKinPartNames->GetEntries() == 3);
 	for (Int_t i=0; i<mcDecayKinPartNames->GetEntries(); i++)
 		assert(((TObjString*)(mcDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(mcDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
@@ -517,19 +527,25 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 
 		TClonesArray* prodKinPartNames  = NULL;
 		TClonesArray* decayKinPartNames = NULL;
+		std::string   prodKinMomentaName;
+		std::string   decayKinMomentaName;
 		TClonesArray* prodKinMomenta    = NULL;
 		TClonesArray* decayKinMomenta   = NULL;
 
 		if (itree == 0) {
-			prodKinPartNames  = mcProdKinPartNames;
-			decayKinPartNames = mcDecayKinPartNames;
+			prodKinPartNames    = mcProdKinPartNames;
+			decayKinPartNames   = mcDecayKinPartNames;
+			prodKinMomentaName  = mcProdKinMomentaName;
+			decayKinMomentaName = mcDecayKinMomentaName;
 		} else {
-			prodKinPartNames  = dataProdKinPartNames;
-			decayKinPartNames = dataDecayKinPartNames;
+			prodKinPartNames    = dataProdKinPartNames;
+			decayKinPartNames   = dataDecayKinPartNames;
+			prodKinMomentaName  = dataProdKinMomentaName;
+			decayKinMomentaName = dataDecayKinMomentaName;
 		}
 
-		tree->SetBranchAddress("prodKinMomenta", &prodKinMomenta);
-		tree->SetBranchAddress("decayKinMomenta", &decayKinMomenta);
+		tree->SetBranchAddress(prodKinMomentaName.c_str(),  &prodKinMomenta);
+		tree->SetBranchAddress(decayKinMomentaName.c_str(), &decayKinMomenta);
 
 		TLorentzVector* beam = new TLorentzVector;
 		int qbeam;
@@ -679,4 +695,27 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	
 	gROOT->cd();
 	
+}
+
+void
+plotWeightedEvts_3pin(const std::string& dataFileName,
+                      const std::string& mcFileName,
+                      const std::string& massBin,
+                      const std::string& outFileName = "kineplots.root")
+{
+	// set some default values for tree names and so on
+	const std::string dataTreeName              = "rootPwaEvtTree";
+	const std::string dataProdKinPartNamesName  = "prodKinParticles";
+	const std::string dataProdKinMomentaName    = "prodKinMomenta";
+	const std::string dataDecayKinPartNamesName = "decayKinParticles";
+	const std::string dataDecayKinMomentaName   = "decayKinMomenta";
+	const std::string mcTreeName                = "rootPwaEvtTree";
+	const std::string mcProdKinPartNamesName    = "prodKinParticles";
+	const std::string mcProdKinMomentaName      = "prodKinMomenta";
+	const std::string mcDecayKinPartNamesName   = "decayKinParticles";
+	const std::string mcDecayKinMomentaName     = "decayKinMomenta";
+
+	createWeightedPlots(dataFileName, dataTreeName, dataProdKinPartNamesName, dataProdKinMomentaName, dataDecayKinPartNamesName, dataDecayKinMomentaName,
+	                    mcFileName,   mcTreeName,   mcProdKinPartNamesName,   mcProdKinMomentaName,   mcDecayKinPartNamesName,   mcDecayKinMomentaName,
+	                    massBin, outFileName);
 }
