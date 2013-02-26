@@ -101,32 +101,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		}
 	} // Finished with the beam settings.
 
-	// Read the settings for the beam simulation.
-	const Setting* configBeamSimulation = findLibConfigGroup(configRoot, "beamSimulation");
-	if(not configBeamSimulation) {
-		printWarn << "no 'beamSimulation' section found in reaction file. Beam package disabled." << endl;
-	} else {
-		map<string, Setting::Type> mandatoryArguments;
-		insert (mandatoryArguments)
-			("active", Setting::TypeBoolean)
-			("histogram_file", Setting::TypeString);
-		if(not checkIfAllVariablesAreThere(configBeamSimulation, mandatoryArguments)) {
-			printWarn << "'beamSimulation' section in reaction file contains errors. Beam package disabled" << endl;
-		} else if((*configBeamSimulation)["active"]) {
-			string histogramFileName;
-			configBeamSimulation->lookupValue("histogram_file", histogramFileName);
-			_beamAndVertexGenerator = new beamAndVertexGenerator(histogramFileName,
-			                                         _beam.particle.mass());
-			if(not _beamAndVertexGenerator->check()) {
-				printWarn << "could not initialize beam and vertex generator. Beam package disabled." << endl;
-				delete _beamAndVertexGenerator;
-				_beamAndVertexGenerator = NULL;
-			}
-		} else {
-			printInfo << "beam package disabled." << endl;
-		}
-	} // Finished with the beam simulation settings.
-
 	// Read the target settings.
 	const Setting* configTarget = findLibConfigGroup(configRoot, "target");
 	if(not configTarget) {
@@ -139,7 +113,8 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			("recoilParticleName", Setting::TypeString)
 			("pos", Setting::TypeArray)
 			("radius", Setting::TypeFloat)
-			("length", Setting::TypeFloat);
+			("length", Setting::TypeFloat)
+			("interactionLength", Setting::TypeFloat);
 		if(not checkIfAllVariablesAreThere(configTarget, mandatoryArguments)) {
 			printErr << "'target' section in reaction file contains errors." << endl;
 			return false;
@@ -163,14 +138,52 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			printErr << "invalid target or recoil particle" << endl;
 			return false;
 		}
+		double interactionLength;
+		configTarget->lookupValue("interactionLength", interactionLength);
+		if(interactionLength < 0 or interactionLength >= 1) {
+			printErr << "interaction length has to be in [0, 1[ (set it to 0 to disable this feature)." << endl;
+			return false;
+		}
 		_target.targetParticle = *targetParticle;
 		_target.recoilParticle = *recoilParticle;
 		_target.position.SetXYZ(configTargetPos[0], configTargetPos[1], configTargetPos[2]);
 		_target.radius = (*configTarget)["radius"];
 		_target.length = (*configTarget)["length"];
+		_target.interactionLength = interactionLength;
 		printSucc << "initialized target parameters." << endl;
 		_target.print(printInfo);
 	}// Finished with the target settings.
+
+	// Read the settings for the beam simulation.
+	const Setting* configBeamSimulation = findLibConfigGroup(configRoot, "beamSimulation");
+	if(not configBeamSimulation) {
+		printWarn << "no 'beamSimulation' section found in reaction file. Beam package disabled." << endl;
+	} else {
+		map<string, Setting::Type> mandatoryArguments;
+		insert (mandatoryArguments)
+			("active", Setting::TypeBoolean);
+		if(not checkIfAllVariablesAreThere(configBeamSimulation, mandatoryArguments)) {
+			printErr << "'beamSimulation' section in reaction file contains errors." << endl;
+			return false;
+		} else if((*configBeamSimulation)["active"]) {
+			string histogramFileName;
+			if(not configBeamSimulation->lookupValue("beamFile", histogramFileName)) {
+				printErr << "'beamSimulation' section in reaction file is missing the 'beamFile' entry.";
+				return false;
+			}
+			_beamAndVertexGenerator = new beamAndVertexGenerator(histogramFileName,
+			                                                     _beam.particle.mass(),
+			                                                     _target);
+			if(not _beamAndVertexGenerator->check()) {
+				printErr << "could not initialize beam and vertex generator." << endl;
+				delete _beamAndVertexGenerator;
+				_beamAndVertexGenerator = NULL;
+				return false;
+			}
+		} else {
+			printInfo << "beam package disabled." << endl;
+		}
+	} // Finished with the beam simulation settings.
 
 	// Read the final state parameters.
 	const Setting* configFinalState = findLibConfigGroup(configRoot, "finalstate");

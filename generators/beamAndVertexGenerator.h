@@ -16,12 +16,15 @@ class TTree;
 
 namespace rpwa {
 
+	struct Target;
+
 	class beamAndVertexGenerator {
 
 	  public:
 
 		beamAndVertexGenerator(std::string rootFileName,
-		                 double massBeamParticle);
+		                       double massBeamParticle,
+		                       Target target);
 
 		~beamAndVertexGenerator();
 
@@ -39,6 +42,16 @@ namespace rpwa {
 		TTree* _beamTree;
 		TVector3 _vertex;
 		TLorentzVector _beam;
+
+		// pairs with [value, sigma]
+		std::pair<double, double> _vertexX;
+		std::pair<double, double> _vertexY;
+		double _vertexZLow;
+		double _targetLength;
+		double _targetInteractionLength;
+		std::pair<double, double> _beamMomentumX;
+		std::pair<double, double> _beamMomentumY;
+		std::pair<double, double> _beamMomentumZ;
 
 		double _massBeamParticle;
 		bool _sigmasPresent;

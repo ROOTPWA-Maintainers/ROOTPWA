@@ -134,9 +134,14 @@ diffractivePhaseSpace::event()
 		double y;
 		double radius = std::sqrt(random->Uniform(0, _target.radius * _target.radius));
 		random->Circle(x, y, radius);
+		double z;
+		do {
+			z = random->Uniform();
+		} while (random->Uniform() < z*_target.interactionLength);
+		z = (_target.position.Z() - _target.length * 0.5) + z * _target.length;
 		_vertex.SetXYZ(_target.position.X() + x,
 		               _target.position.Y() + y,
-		               _target.position.Z() + random->Uniform(-_target.length * 0.5, _target.length * 0.5));
+		               z);
 		_beam.particle.setLzVec(makeBeam());
 	}
 

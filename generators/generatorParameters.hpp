@@ -36,6 +36,7 @@ namespace rpwa {
 		TVector3 position;
 		double length;
 		double radius;
+		double interactionLength;
 
 		std::ostream& print(std::ostream& out) {
 			out << "Target parameters:" << std::endl;
@@ -46,6 +47,7 @@ namespace rpwa {
 			                                        << position.Z() << ")" << std::endl;
 			out << "    Length ................. " << length << std::endl;
 			out << "    Radius ................. " << radius << std::endl;
+			out << "    Interaction length ..... " << interactionLength << std::endl;
 			return out;
 		}
 	};
