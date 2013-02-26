@@ -24,9 +24,11 @@
 #include <TLorentzVector.h>
 #include <TMath.h>
 #include <TROOT.h>
+#include <TStopwatch.h>
 #include <TTree.h>
 
 #include <NParticleEvent.h>
+#include <reportingUtils.hpp>
 
 using namespace std;
 
@@ -396,6 +398,10 @@ createWeightedPlots(const std::string& dataFileName,
 		    const std::string& massBin,
 		    const std::string& outFileName)
 {
+	// keep track of the processing time
+	TStopwatch timer;
+	timer.Start();
+
 	// open data file
 	TFile* dataFile = TFile::Open(dataFileName.c_str());
 
@@ -509,9 +515,9 @@ createWeightedPlots(const std::string& dataFileName,
 	// itree = 1: data tree
 	for (unsigned int itree = 0; itree < 2; ++itree) {
 		if (itree == 0) {
-			std::cout << "Step 1: creating plots for MC" << std::endl;
+			printInfo << "Step 1: creating plots for MC" << std::endl;
 		} else {
-			std::cout << "Step 2: creating plots for data" << std::endl;
+			printInfo << "Step 2: creating plots for data" << std::endl;
 		}
 
 		TTree* tree = (itree == 0) ? mcTree : dataTree;
@@ -707,6 +713,10 @@ createWeightedPlots(const std::string& dataFileName,
 	
 	gROOT->cd();
 	
+	// print information on the processing time
+	timer.Stop();
+	printInfo << "this job consumed: ";
+	timer.Print();
 }
 
 void
