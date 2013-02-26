@@ -52,24 +52,41 @@ std::map<TString, std::vector<booky_page> > booky_map;
 
 std::map<TString, std::vector<TString> > booky_setup_map;
 // here just fill a vector with Histogram names and add this to the booky_setup_map with the name of the booky
-void setupBookies() {
+void setupBookies(const bool twoMc) {
 	// lets create a booky for the the 5 1D projections (3 FS particle case)
 	std::vector<TString> histnames_neutral;
 	std::vector<TString> histnames_charged;
-	// neutral isobar decay
-	histnames_neutral.push_back(TString("hMIsobarMc_Neutral")); // Canvas spot 1
-	histnames_neutral.push_back(TString("spacer")); // Canvas spot 2
-	histnames_neutral.push_back(TString("hGJMc_Neutral")); // Canvas spot 3
-	histnames_neutral.push_back(TString("hTYMc_Neutral")); // Canvas spot 4
-	histnames_neutral.push_back(TString("hHThetaMc_Neutral")); // Canvas spot 5
-	histnames_neutral.push_back(TString("hHPhiMc_Neutral")); // Canvas spot 6
-	// charged isobar decay
-	histnames_charged.push_back(TString("hMIsobarMc_Charged")); // Canvas spot 1
-	histnames_charged.push_back(TString("spacer")); // Canvas spot 2
-	histnames_charged.push_back(TString("hGJMc_Charged")); // Canvas spot 3
-	histnames_charged.push_back(TString("hTYMc_Charged")); // Canvas spot 4
-	histnames_charged.push_back(TString("hHThetaMc_Charged")); // Canvas spot 5
-	histnames_charged.push_back(TString("hHPhiMc_Charged")); // Canvas spot 6
+	if (twoMc) {
+		// neutral isobar decay
+		histnames_neutral.push_back(TString("hMIsobarMcAcc_Neutral")); // Canvas spot 1
+		histnames_neutral.push_back(TString("spacer")); // Canvas spot 2
+		histnames_neutral.push_back(TString("hGJMcAcc_Neutral")); // Canvas spot 3
+		histnames_neutral.push_back(TString("hTYMcAcc_Neutral")); // Canvas spot 4
+		histnames_neutral.push_back(TString("hHThetaMcAcc_Neutral")); // Canvas spot 5
+		histnames_neutral.push_back(TString("hHPhiMcAcc_Neutral")); // Canvas spot 6
+		// charged isobar decay
+		histnames_charged.push_back(TString("hMIsobarMcAcc_Charged")); // Canvas spot 1
+		histnames_charged.push_back(TString("spacer")); // Canvas spot 2
+		histnames_charged.push_back(TString("hGJMcAcc_Charged")); // Canvas spot 3
+		histnames_charged.push_back(TString("hTYMcAcc_Charged")); // Canvas spot 4
+		histnames_charged.push_back(TString("hHThetaMcAcc_Charged")); // Canvas spot 5
+		histnames_charged.push_back(TString("hHPhiMcAcc_Charged")); // Canvas spot 6
+	} else {
+		// neutral isobar decay
+		histnames_neutral.push_back(TString("hMIsobarMc_Neutral")); // Canvas spot 1
+		histnames_neutral.push_back(TString("spacer")); // Canvas spot 2
+		histnames_neutral.push_back(TString("hGJMc_Neutral")); // Canvas spot 3
+		histnames_neutral.push_back(TString("hTYMc_Neutral")); // Canvas spot 4
+		histnames_neutral.push_back(TString("hHThetaMc_Neutral")); // Canvas spot 5
+		histnames_neutral.push_back(TString("hHPhiMc_Neutral")); // Canvas spot 6
+		// charged isobar decay
+		histnames_charged.push_back(TString("hMIsobarMc_Charged")); // Canvas spot 1
+		histnames_charged.push_back(TString("spacer")); // Canvas spot 2
+		histnames_charged.push_back(TString("hGJMc_Charged")); // Canvas spot 3
+		histnames_charged.push_back(TString("hTYMc_Charged")); // Canvas spot 4
+		histnames_charged.push_back(TString("hHThetaMc_Charged")); // Canvas spot 5
+		histnames_charged.push_back(TString("hHPhiMc_Charged")); // Canvas spot 6
+	}
 	
 	booky_setup_map.insert(std::pair<TString, std::vector<TString> >("Booky_neutral_isobar", histnames_neutral));
 	booky_setup_map.insert(std::pair<TString, std::vector<TString> >("Booky_charged_isobar", histnames_charged));
@@ -276,7 +293,7 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
 			// CompareTo returns 0 if its a match....
 			if (histlist[i].CompareTo("spacer")) {
 				TIter histiter = TIter(mclist);
-				TH1D *reldiffhist, *diffhist, *mchist, *datahist;
+				TH1D *reldiffhist, *diffhist, *mchist, *mcpsphist, *datahist;
 				// generate difference histograms
 				std::string hnamemc(histlist[i].Data());
 				// create new string with MC exchanged for Diff
@@ -290,13 +307,26 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
 				hnamereldiff.insert(pos, "RelDiff");
 				// create new string with MC exchanged for Data
 				std::string hnamedata(hnamemc);
-				hnamedata.erase(pos, 2);
+				if (hnamemc.substr(pos, 5) == "McPsp" || hnamemc.substr(pos, 5) == "McAcc") {
+					hnamedata.erase(pos, 5);
+				} else {
+					hnamedata.erase(pos, 2);
+				}
 				hnamedata.insert(pos, "Data");
 				
 				infile->GetObject((dirname + "/" + hnamereldiff).c_str(), reldiffhist);
 				infile->GetObject((dirname + "/" + hnamediff).c_str(), diffhist);
 				infile->GetObject((dirname + "/" + hnamedata).c_str(), datahist);
 				infile->GetObject((dirname + "/" + hnamemc).c_str(), mchist);
+
+				if (hnamemc.substr(pos, 5) == "McAcc") {
+					std::string name(hnamemc);
+					name.erase(pos, 5);
+					name.insert(pos, "McPsp");
+					infile->GetObject((dirname + "/" + name).c_str(), mcpsphist);
+				} else {
+					mcpsphist = NULL;
+				}
 				
 				outfile->cd(dirname.c_str());
 				if (mchist && datahist) {
@@ -317,6 +347,17 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
 						line->Draw();
 						diffhist->SetLineColor(kOrange - 3);
 						diffhist->Draw("same");
+					}
+					if (mcpsphist) {
+						TH1D* ratiohist = new TH1D(*mchist);
+						ratiohist->Divide(mcpsphist);
+						ratiohist->Scale(datahist->GetMaximum() / scale);
+						ratiohist->SetLineColor(4);
+						ratiohist->Draw("SAME");
+
+						mcpsphist->SetLineColor(4);
+						mcpsphist->Scale(datahist->Integral() / mcpsphist->Integral());
+						mcpsphist->Draw("SAME");
 					}
 					double max = mchist->GetMaximum();
 					double min = mchist->GetMinimum();
@@ -348,15 +389,54 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
  * -> etc...
  */
 void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename) {
-	setupBookies();
+	TFile* infile = TFile::Open(input_filename, "READ");
+	TFile* outfile = new TFile(output_filename, "RECREATE");
+	outfile->mkdir("global");
+	
+	// guess if we are running on data that has been generated from one or
+	// two sets of phasespace events
+	bool twoMc(false);
+	{
+		TList *dirlist = infile->GetListOfKeys();
+		TIter diriter(dirlist);
+		TDirectory *dir;
+	
+		while ((dir = (TDirectory *)diriter())) {
+			std::string dirname = dir->GetName();
+			// check if directory is mass bin dir
+			unsigned int pointpos = dirname.find(".");
+			if(pointpos == 0 || pointpos == dirname.size()) continue;
+
+			infile->cd(dir->GetName());
+		
+			TList mclist;
+			TList *histlist = gDirectory->GetListOfKeys();
+			TIter histiter(histlist);
+			TObject *obj;
+			while ((obj = histiter())) {
+				const std::string s(obj->GetName());
+				if ((s.length() >= 2 && s.substr(s.length()-2, 2) == "Mc") ||
+				    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McPsp") ||
+				    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McAcc") ||
+				    s.find("Mc_") != std::string::npos ||
+				    s.find("McPsp_") != std::string::npos ||
+				    s.find("McAcc_") != std::string::npos) {
+					twoMc = true;
+					break;
+				}
+			}
+
+			if (twoMc) {
+				break;
+			}
+		}
+	}
+	
+	setupBookies(twoMc);
 	
 	int massbins =0;
 	double mass= 0.0, massstart =1000.0, massend=0.0;
 	std::map<std::string, std::pair<double, std::pair<double, double> > > diffbounds;
-	
-	TFile* infile = TFile::Open(input_filename, "READ");
-	TFile* outfile = new TFile(output_filename, "RECREATE");
-	outfile->mkdir("global");
 	
 	TList *dirlist = infile->GetListOfKeys();
 	massbins = dirlist->GetSize();
@@ -390,11 +470,15 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 		TIter histiter(histlist);
 		TObject *obj;
 		while ((obj = histiter())) {
-			TString s(obj->GetName());
-			if(s.EndsWith("Mc"))
+			const std::string s(obj->GetName());
+			if ((s.length() >= 2 && s.substr(s.length()-2, 2) == "Mc") ||
+			    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McPsp") ||
+			    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McAcc") ||
+			    s.find("Mc_") != std::string::npos ||
+			    s.find("McPsp_") != std::string::npos ||
+			    s.find("McAcc_") != std::string::npos) {
 				mclist.Add(obj);
-			else if(s.Contains("Mc_"))
-				mclist.Add(obj);
+			}
 		}
 		make1DOverviewCanvas(infile, outfile, &mclist, dirname);
 		histiter = TIter(&mclist);
@@ -468,7 +552,11 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 			hnamereldiff.insert(pos, "RelDiff");
 			// create new string with MC exchanged for Data
 			std::string hnamedata(hnamemc);
-			hnamedata.erase(pos, 2);
+			if (hnamemc.substr(pos, 5) == "McPsp" || hnamemc.substr(pos, 5) == "McAcc") {
+                                hnamedata.erase(pos, 5);
+                        } else {
+                                hnamedata.erase(pos, 2);
+                        }
 			hnamedata.insert(pos, "Data");
 			
 			infile->GetObject((std::string(dir->GetName()) + "/" + hnamereldiff).c_str(), reldiffhist2d);
@@ -501,11 +589,15 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 		TIter histiter(histlist);
 		TObject *obj;
 		while ((obj = histiter())) {
-			TString s(obj->GetName());
-			if (s.EndsWith("Mc"))
+			const std::string s(obj->GetName());
+			if ((s.length() >= 2 && s.substr(s.length()-2, 2) == "Mc") ||
+			    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McPsp") ||
+			    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McAcc") ||
+			    s.find("Mc_") != std::string::npos ||
+			    s.find("McPsp_") != std::string::npos ||
+			    s.find("McAcc_") != std::string::npos) {
 				mclist.Add(obj);
-			else if (s.Contains("Mc_"))
-				mclist.Add(obj);
+			}
 		}
 		histiter = TIter(&mclist);
 		TH1D *hist;
@@ -520,7 +612,11 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 			hname.insert(pos, "Diff");
 			// create new string with MC exchanged for Data
 			std::string hnamedata(hnamemc);
-			hnamedata.erase(pos, 2);
+                       if (hnamemc.substr(pos, 5) == "McPsp" || hnamemc.substr(pos, 5) == "McAcc") {
+                                hnamedata.erase(pos, 5);
+                        } else {
+                                hnamedata.erase(pos, 2);
+                        }
 			hnamedata.insert(pos, "Data");
 			// create new string for MC Global Histogram
 			std::string hnamemcglob(hnamemc);
@@ -563,7 +659,11 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 			hnamediff.insert(pos, "Diff");
 			// create new string with MC exchanged for Data
 			std::string hnamedata(hnamemc);
-			hnamedata.erase(pos, 2);
+			if (hnamemc.substr(pos, 5) == "McPsp" || hnamemc.substr(pos, 5) == "McAcc") {
+                                hnamedata.erase(pos, 5);
+                        } else {
+                                hnamedata.erase(pos, 2);
+                        }
 			hnamedata.insert(pos, "Data");
 			// create new string for MC Global Histogram
 			std::string hnamemcglob(hnamemc);
