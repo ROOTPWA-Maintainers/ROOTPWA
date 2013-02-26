@@ -20,11 +20,11 @@ namespace rpwa {
 
 		generator()
 			: _pickerFunction(NULL),
-			  _primaryVertexGen(NULL) { }
+			  _beamAndVertexGenerator(NULL) { }
 
 		virtual ~generator() {
 			delete _pickerFunction;
-			delete _primaryVertexGen;
+			delete _beamAndVertexGenerator;
 		};
 
 		virtual unsigned int event() = 0;
@@ -39,8 +39,8 @@ namespace rpwa {
 		virtual void setTPrimeAndMassPicker(const rpwa::massAndTPrimePicker& pickerFunction) {
 			_pickerFunction = pickerFunction.clone();
 		}
-		virtual void setPrimaryVertexGenerator(rpwa::primaryVertexGen* primaryVertexGen) {
-			_primaryVertexGen = primaryVertexGen;
+		virtual void setPrimaryVertexGenerator(rpwa::beamAndVertexGenerator* beamAndVertexGenerator) {
+			_beamAndVertexGenerator = beamAndVertexGenerator;
 		}
 		virtual void setDecayProducts(const std::vector<rpwa::particle>& particles) {
 			_decayProducts = particles;
@@ -66,7 +66,7 @@ namespace rpwa {
 		rpwa::Beam _beam;
 		rpwa::Target _target;
 		rpwa::massAndTPrimePicker* _pickerFunction;
-		rpwa::primaryVertexGen* _primaryVertexGen;
+		rpwa::beamAndVertexGenerator* _beamAndVertexGenerator;
 		std::vector<rpwa::particle> _decayProducts;
 		TVector3 _vertex;
 

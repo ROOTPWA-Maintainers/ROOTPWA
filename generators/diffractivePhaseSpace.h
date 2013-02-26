@@ -53,7 +53,7 @@ namespace rpwa {
 	  public:
 
 		diffractivePhaseSpace();
-		~diffractivePhaseSpace();
+		~diffractivePhaseSpace() { };
 
 		void setDecayProducts(const std::vector<rpwa::particle>& particles);
 		void addDecayProduct(const rpwa::particle& particle);

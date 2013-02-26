@@ -23,14 +23,14 @@ using namespace rpwa;
 bool generatorManager::_debug = false;
 
 generatorManager::generatorManager()
-	: _primaryVertexGen(NULL),
+	: _beamAndVertexGenerator(NULL),
 	  _pickerFunction(NULL),
 	  _reactionFileRead(false),
 	  _generator(NULL) { };
 
 
 generatorManager::~generatorManager() {
-	delete _primaryVertexGen;
+	delete _beamAndVertexGenerator;
 	delete _pickerFunction;
 	delete _generator;
 };
@@ -115,14 +115,12 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		} else if((*configBeamSimulation)["active"]) {
 			string histogramFileName;
 			configBeamSimulation->lookupValue("histogram_file", histogramFileName);
-			_primaryVertexGen = new primaryVertexGen(histogramFileName,
-			                                         _beam.particle.mass(),
-			                                         _beam.momentum,
-			                                         _beam.momentumSigma);
-			if(not _primaryVertexGen->check()) {
-				printWarn << "could not initialize primary vertex generator. Beam package disabled." << endl;
-				delete _primaryVertexGen;
-				_primaryVertexGen = NULL;
+			_beamAndVertexGenerator = new beamAndVertexGenerator(histogramFileName,
+			                                         _beam.particle.mass());
+			if(not _beamAndVertexGenerator->check()) {
+				printWarn << "could not initialize beam and vertex generator. Beam package disabled." << endl;
+				delete _beamAndVertexGenerator;
+				_beamAndVertexGenerator = NULL;
 			}
 		} else {
 			printInfo << "beam package disabled." << endl;
@@ -278,8 +276,8 @@ bool generatorManager::initializeGenerator() {
 	_generator->setBeam(_beam);
 	_generator->setTarget(_target);
 	_generator->setTPrimeAndMassPicker(*_pickerFunction);
-	if(_primaryVertexGen) {
-		_generator->setPrimaryVertexGenerator(_primaryVertexGen);
+	if(_beamAndVertexGenerator) {
+		_generator->setPrimaryVertexGenerator(_beamAndVertexGenerator);
 	}
 	_generator->setDecayProducts(_finalState.particles);
 

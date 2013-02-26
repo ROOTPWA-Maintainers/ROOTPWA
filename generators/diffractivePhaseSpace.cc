@@ -50,11 +50,6 @@ diffractivePhaseSpace::diffractivePhaseSpace()
 }
 
 
-diffractivePhaseSpace::~diffractivePhaseSpace() {
-	delete _primaryVertexGen;
-}
-
-
 TLorentzVector
 diffractivePhaseSpace::makeBeam()
 {
@@ -130,14 +125,10 @@ diffractivePhaseSpace::event()
 	unsigned long int attempts = 0;
   // construct primary vertex and beam
   // use the primary Vertex Generator if available
-	if(_primaryVertexGen) {
-		_vertex = _primaryVertexGen->getVertex();
-		TVector3 beam_dir = _primaryVertexGen->getBeamDir(_vertex);
-		if(beam_dir.Mag() == 0) {
-			printErr << "got a null vector as beam. Aborting..." << endl;
-			throw;
-		}
-		_beam.particle.setLzVec(_primaryVertexGen->getBeamPart(beam_dir));
+	if(_beamAndVertexGenerator) {
+		_beamAndVertexGenerator->event();
+		_vertex = _beamAndVertexGenerator->getVertex();
+		_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
 	} else {
 		double x;
 		double y;
