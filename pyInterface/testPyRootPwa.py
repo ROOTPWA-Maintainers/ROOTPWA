@@ -518,7 +518,9 @@ relBreitWig = do_test(relBreitWigTestConst, "Testing relativisticBreitWigner def
 
 def relBreitWigTestAmp():
 	amp = relBreitWig.amp(isobDecVtx)
-	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+	zero = amp - (-0.0235304107169-0j)
+	assert(zero.real < 10e-17)
+	assert(zero.imag < 10e-17)
 do_test(relBreitWigTestAmp, "Testing relativisticBreitWigner.amp()")
 
 def relBreitWigTestName(): assert(relBreitWig.name() == "relativisticBreitWigner")
@@ -603,7 +605,9 @@ rhoPrime = do_test(rhoPrimeTestConst, "Testing rhoPrimeMassDep default construct
 
 def rhoPrimeTestAmp():
 	amp = rhoPrime.amp(isobDecVtx)
-	assert(math.isnan(amp.real) and math.isnan(amp.imag))
+	zero = amp - (-0.00224006160232+0j)
+	assert(zero.real < 10e-15)
+	assert(zero.imag < 10e-15)
 do_test(rhoPrimeTestAmp, "Testing rhoPrimeMassDep.amp()")
 
 def rhoPrimeTestName(): assert(rhoPrime.name() == "rhoPrimeMassDep")
