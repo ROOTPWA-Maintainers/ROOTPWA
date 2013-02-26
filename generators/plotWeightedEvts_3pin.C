@@ -378,8 +378,24 @@ TH2D* createDalitzHistogram(TString name, TString title, double mass, unsigned i
 }
 
 
-void plotWeightedEvts_3pin(TTree* mctr, TTree* datatr, TString outfilename = "kineplots.root",
-    TString mass_ = "000") {
+void
+plotWeightedEvts_3pin(const TString& dataFileName,
+                      const TString& mcFileName,
+                      const TString& mass_,
+                      const TString& outfilename = "kineplots.root")
+{
+	// open data file
+	TFile* dataFile = TFile::Open(dataFileName);
+	// tree containg the real data events
+	TTree* datatr;
+	dataFile->GetObject("events", datatr);
+
+	// open weighted MC file
+	TFile* mcFile = TFile::Open(mcFileName);
+	// tree containing the phase space events and weights
+	TTree* mctr;
+	mcFile->GetObject("pwevents", mctr);
+
   double massval = 0.0;
   unsigned int datatreeentries = 0;
   mass = mass_;
