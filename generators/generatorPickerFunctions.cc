@@ -42,38 +42,38 @@ bool massAndTPrimePicker::initTPrimeAndMassRanges(const libconfig::Setting& sett
 	}
 	map < string, Setting::Type > mandatoryArguments;
 	insert (mandatoryArguments)
-		("mass_min", Setting::TypeFloat)
-		("mass_max", Setting::TypeFloat);
+		("massMin", Setting::TypeFloat)
+		("massMax", Setting::TypeFloat);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
 		printErr << "found invalid settings for the mass range of a mass and t' picker." << endl;
 		return false;
 	}
-	_massRange.first = setting["mass_min"];
-	_massRange.second = setting["mass_max"];
+	_massRange.first = setting["massMin"];
+	_massRange.second = setting["massMax"];
 	if(_massRange.second < _massRange.first) {
-		printErr << "'mass_max' must not be smaller than 'mass_min'." << endl;
+		printErr << "'massMax' must not be smaller than 'massMin'." << endl;
 		return false;
 	}
-	if(setting.exists("t_prime_min")) {
-		if(not setting.lookupValue("t_prime_min", _tPrimeRange.first)) {
-			printWarn << "'t_prime_min' setting is invalid. Setting 't_prime_min' to "
+	if(setting.exists("tPrimeMin")) {
+		if(not setting.lookupValue("tPrimeMin", _tPrimeRange.first)) {
+			printWarn << "'tPrimeMin' setting is invalid. Setting 'tPrimeMin' to "
 			          << _tPrimeRange.first << "." << endl;
 		}
 	} else {
-		printInfo << "'t_prime_min' not specified. Setting it to "
+		printInfo << "'tPrimeMin' not specified. Setting it to "
 		          << _tPrimeRange.first << "." << endl;
 	}
-	if(setting.exists("t_prime_max")) {
-		if(not setting.lookupValue("t_prime_max", _tPrimeRange.second)) {
-			printWarn << "'t_prime_max' setting is invalid. Setting 't_prime_max' to "
+	if(setting.exists("tPrimeMax")) {
+		if(not setting.lookupValue("tPrimeMax", _tPrimeRange.second)) {
+			printWarn << "'tPrimeMax' setting is invalid. Setting 'tPrimeMax' to "
 			          << _tPrimeRange.second << "." << endl;
 		}
 	} else {
-		printInfo << "'t_prime_max' not specified. Setting it to "
+		printInfo << "'tPrimeMax' not specified. Setting it to "
 		          << _tPrimeRange.second << "." << endl;
 	}
 	if(_tPrimeRange.second < _tPrimeRange.first) {
-		printErr << "'t_prime_max' must not be smaller than 't_prime_min'."
+		printErr << "'tPrimeMax' must not be smaller than 'tPrimeMax'."
 		         << endl;
 		return false;
 	}
@@ -103,23 +103,23 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 	}
 	map < string, Setting::Type > mandatoryArguments;
 	insert (mandatoryArguments)
-		("t_slope", Setting::TypeArray)
-		("inv_m", Setting::TypeArray);
+		("tSlopes", Setting::TypeArray)
+		("invariantMasses", Setting::TypeArray);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
 		printErr << "found an invalid settings for function 'uniformMassExponentialT'." << endl;
 		return false;
 	}
-	if(setting["inv_m"].getLength() != setting["t_slope"].getLength()) {
-		printErr << "'inv_m' and 't_slope' have to be arrays of the same length." << endl;
+	if(setting["invariantMasses"].getLength() != setting["tSlopes"].getLength()) {
+		printErr << "'invariantMasses' and 'tSlopes' have to be arrays of the same length." << endl;
 		return false;
 	}
-	if(not (setting["inv_m"][0].isNumber())
-			&& (setting["t_slope"][0].isNumber())) {
-		printErr << "'inv_m' and 't_slope' have to be array of numbers." << endl;
+	if(not (setting["invariantMasses"][0].isNumber())
+			&& (setting["tSlopes"][0].isNumber())) {
+		printErr << "'invariantMasses' and 'tSlopes' have to be array of numbers." << endl;
 		return false;
 	}
-	for(int i = 0; i < setting["inv_m"].getLength(); ++i) {
-		_tSlopesForMassBins.push_back(pair<double, double>(setting["inv_m"][i], setting["t_slope"][i]));
+	for(int i = 0; i < setting["invariantMasses"].getLength(); ++i) {
+		_tSlopesForMassBins.push_back(pair<double, double>(setting["invariantMasses"][i], setting["tSlopes"][i]));
 	}
 	_initialized = true;
 	return true;
@@ -214,20 +214,20 @@ bool polynomialMassAndTPrimeSlopePicker::init(const Setting& setting) {
 	}
 	map < string, Setting::Type > mandatoryArguments;
 	insert (mandatoryArguments)
-		("coeffs_mass", Setting::TypeArray)
-		("coeffs_tslopes", Setting::TypeArray);
+		("coeffsMass", Setting::TypeArray)
+		("coeffsTSlopes", Setting::TypeArray);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
 		printErr << "found an invalid settings for function 'polynomialMassAndTPrime'." << endl;
 		return false;
 	}
-	const Setting& configCoeffsMass = setting["coeffs_mass"];
+	const Setting& configCoeffsMass = setting["coeffsMass"];
 	unsigned int numberOfMassCoeffs = configCoeffsMass.getLength();
 	if(numberOfMassCoeffs < 1) {
-		printErr << "'coeffs_mass' array must not be empty." << endl;
+		printErr << "'coeffsMass' array must not be empty." << endl;
 		return false;
 	}
 	if(not configCoeffsMass[0].isNumber()) {
-		printErr << "'coeffs_mass' array has to be made up of numbers." << endl;
+		printErr << "'coeffsMass' array has to be made up of numbers." << endl;
 		return false;
 	}
 	stringstream strStr;
@@ -236,14 +236,14 @@ bool polynomialMassAndTPrimeSlopePicker::init(const Setting& setting) {
 	for(unsigned int i = 0; i < numberOfMassCoeffs; ++i) {
 		_massPolynomial.SetParameter(i, configCoeffsMass[i]);
 	}
-	const Setting& configCoeffsTSlopes = setting["coeffs_tslopes"];
+	const Setting& configCoeffsTSlopes = setting["coeffsTSlopes"];
 	unsigned int numberOfTSlopeCoeffs = configCoeffsTSlopes.getLength();
 	if(numberOfTSlopeCoeffs < 1) {
-		printErr << "'coeffs_tslopes' array must not be empty." << endl;
+		printErr << "'coeffsTSlopes' array must not be empty." << endl;
 		return false;
 	}
 	if(not configCoeffsTSlopes[0].isNumber()) {
-		printErr << "'coeffs_tslopes' array has to be made up of numbers." << endl;
+		printErr << "'coeffsTSlopes' array has to be made up of numbers." << endl;
 		return false;
 	}
 	strStr.str("");

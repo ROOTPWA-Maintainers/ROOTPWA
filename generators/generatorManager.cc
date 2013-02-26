@@ -73,11 +73,11 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		insert (mandatoryArguments)
 			("name", Setting::TypeString)
 			("momentum", Setting::TypeFloat)
-			("sigma_momentum", Setting::TypeFloat)
+			("momentumSigma", Setting::TypeFloat)
 			("DxDz", Setting::TypeFloat)
-			("sigma_DxDz", Setting::TypeFloat)
+			("DxDzSigma", Setting::TypeFloat)
 			("DyDz", Setting::TypeFloat)
-			("sigma_DyDz", Setting::TypeFloat);
+			("DyDzSigma", Setting::TypeFloat);
 		if(not checkIfAllVariablesAreThere(configBeam, mandatoryArguments)) {
 			printErr << "'beam' section in reaction file contains errors." << endl;
 			return false;
@@ -91,11 +91,11 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		} else {
 			_beam.particle = *beamParticle;
 			_beam.momentum = (*configBeam)["momentum"];
-			_beam.momentumSigma = (*configBeam)["sigma_momentum"];
+			_beam.momentumSigma = (*configBeam)["momentumSigma"];
 			_beam.DxDz = (*configBeam)["DxDz"];
-			_beam.DxDzSigma = (*configBeam)["sigma_DxDz"];
+			_beam.DxDzSigma = (*configBeam)["DxDzSigma"];
 			_beam.DyDz = (*configBeam)["DyDz"];
-			_beam.DyDzSigma = (*configBeam)["sigma_DyDz"];
+			_beam.DyDzSigma = (*configBeam)["DyDzSigma"];
 			printSucc << "initialized beam parameters." << endl;
 			_beam.print(printInfo);
 		}
