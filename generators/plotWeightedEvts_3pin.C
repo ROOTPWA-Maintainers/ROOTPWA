@@ -386,15 +386,43 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 {
 	// open data file
 	TFile* dataFile = TFile::Open(dataFileName);
+
 	// tree containg the real data events
-	TTree* datatr;
-	dataFile->GetObject("events", datatr);
+	TTree* dataTree;
+	dataFile->GetObject("rootPwaEvtTree", dataTree);
+
+	// names of particles in tree
+	TClonesArray* dataProdKinPartNames(NULL);
+	dataFile->GetObject("prodKinParticles", dataProdKinPartNames);
+	assert(dataProdKinPartNames->GetEntries() == 1);
+	for (Int_t i=0; i<dataProdKinPartNames->GetEntries(); i++)
+		assert(((TObjString*)(dataProdKinPartNames->At(i)))->String().EqualTo("pi-"));
+
+	TClonesArray* dataDecayKinPartNames(NULL);
+	dataFile->GetObject("decayKinParticles", dataDecayKinPartNames);
+	assert(dataDecayKinPartNames->GetEntries() == 3);
+	for (Int_t i=0; i<dataDecayKinPartNames->GetEntries(); i++)
+		assert(((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
 
 	// open weighted MC file
 	TFile* mcFile = TFile::Open(mcFileName);
+
 	// tree containing the phase space events and weights
-	TTree* mctr;
-	mcFile->GetObject("pwevents", mctr);
+	TTree* mcTree;
+	mcFile->GetObject("rootPwaEvtTree", mcTree);
+
+	// names of particles in tree
+	TClonesArray* mcProdKinPartNames(NULL);
+	mcFile->GetObject("prodKinParticles", mcProdKinPartNames);
+	assert(mcProdKinPartNames->GetEntries() == 1);
+	for (Int_t i=0; i<mcProdKinPartNames->GetEntries(); i++)
+		assert(((TObjString*)(mcProdKinPartNames->At(i)))->String().EqualTo("pi-"));
+
+	TClonesArray* mcDecayKinPartNames(NULL);
+	mcFile->GetObject("decayKinParticles", mcDecayKinPartNames);
+	assert(mcDecayKinPartNames->GetEntries() == 3);
+	for (Int_t i=0; i<mcDecayKinPartNames->GetEntries(); i++)
+		assert(((TObjString*)(mcDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(mcDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
 
   double massval = 0.0;
   unsigned int datatreeentries = 0;
@@ -411,7 +439,7 @@ plotWeightedEvts_3pin(const TString& dataFileName,
   std::string masshigh = binname.substr(pointpos+1);
   massval = atof(masshigh.c_str());
   massval /=1000;
-  datatreeentries = datatr->GetEntries();
+  datatreeentries = dataTree->GetEntries();
 
 
   gROOT->SetStyle("Plain");
@@ -488,45 +516,88 @@ plotWeightedEvts_3pin(const TString& dataFileName,
     hhCosTheta[0]->Sumw2();
     hfoohTY[0]->Sumw2();*/
 
-  //Loop both over data and mc tree
-  // itree = 0: mc tree
-  // itree = 1: data tree
-  for (unsigned int itree = 0; itree < 2; ++itree) {
-    TTree* tr = (itree == 0) ? mctr : datatr;
-    if (tr == NULL)
-      continue;
+	//Loop both over data and mc tree
+	// itree = 0: mc tree
+	// itree = 1: data tree
+	for (unsigned int itree = 0; itree < 2; ++itree) {
+		TTree* tree = (itree == 0) ? mcTree : dataTree;
+		if (tree == NULL)
+			continue;
 
-    double weight = 1;
-    double impweight = 1;
-    double maxweight = 0;
-    TClonesArray* p = new TClonesArray("TLorentzVector");
-    TLorentzVector* beam = NULL;
-    int qbeam;
-    std::vector<int>* q = NULL;
-    if (itree == 0)
-      tr->SetBranchAddress("weight", &weight);
-    if (itree == 0)
-      tr->SetBranchAddress("impweight", &impweight);
-    tr->SetBranchAddress("p", &p);
-    tr->SetBranchAddress("beam", &beam);
-    tr->SetBranchAddress("qbeam", &qbeam);
-    tr->SetBranchAddress("q", &q);
+		// in case of MC tree connect the weights
+		double weight = 1;
+		double weightPosRef = 1.;
+		double weightNegRef = 1.;
+		double weightFlat = 1.;
+		double impweight = 1;
+		double maxweight = 0;
+		if (itree == 0) {
+			tree->SetBranchAddress("weight", &weight);
+			tree->SetBranchAddress("weightPosRef", &weightPosRef);
+			tree->SetBranchAddress("weightNegRef", &weightNegRef);
+			tree->SetBranchAddress("weightFlat", &weightFlat);
+			tree->SetBranchAddress("impweight", &impweight);
+		}
 
-    TVector3 vertex;
+		TClonesArray* prodKinPartNames  = NULL;
+		TClonesArray* decayKinPartNames = NULL;
+		TClonesArray* prodKinMomenta    = NULL;
+		TClonesArray* decayKinMomenta   = NULL;
 
-    NParticleEvent event(p, q, beam, &qbeam, &vertex);
+		if (itree == 0) {
+			prodKinPartNames  = mcProdKinPartNames;
+			decayKinPartNames = mcDecayKinPartNames;
+		} else {
+			prodKinPartNames  = dataProdKinPartNames;
+			decayKinPartNames = dataDecayKinPartNames;
+		}
 
-    // loop over tree entries
-    unsigned int nevt = tr->GetEntries();
-    for (unsigned int i = 0; i < nevt; ++i) {
-      tr->GetEntry(i);
-      // in case its data tree (itree=1) put weights to 1
-      if (itree == 1) {
-        weight = 1;
-        impweight = 1;
-      }
-      if (weight == 0)
-        continue;
+		tree->SetBranchAddress("prodKinMomenta", &prodKinMomenta);
+		tree->SetBranchAddress("decayKinMomenta", &decayKinMomenta);
+
+		TLorentzVector* beam = new TLorentzVector;
+		int qbeam;
+		TClonesArray* p = new TClonesArray("TLorentzVector");
+		std::vector<int>* q = new std::vector<int>;
+
+		TVector3 vertex;
+
+		NParticleEvent event(p, q, beam, &qbeam, &vertex);
+
+		// loop over tree entries
+		unsigned int nevt = tree->GetEntries();
+		for (unsigned int i = 0; i < nevt; ++i) {
+			tree->GetEntry(i);
+			p->Delete();
+			q->clear();
+
+			assert(prodKinMomenta->GetEntries() == 1);
+			for (Int_t j=0; j<prodKinMomenta->GetEntries(); j++) {
+				if (((TObjString*)(prodKinPartNames->At(j)))->String().EqualTo("pi-")) {
+					beam->SetVectM(*((TVector3*)(prodKinMomenta->At(j))), 0.13957018);
+					qbeam = -1;
+				} else
+					assert(false);
+			}
+			assert(decayKinMomenta->GetEntries() == 3);
+			for (Int_t j=0; j<decayKinMomenta->GetEntries(); j++) {
+				new((*p)[j]) TLorentzVector;
+				if (((TObjString*)(decayKinPartNames->At(j)))->String().EqualTo("pi-")) {
+					((TLorentzVector*)(p->At(j)))->SetVectM(*((TVector3*)(decayKinMomenta->At(j))), 0.13957018);
+					q->push_back(-1);
+				} else if (((TObjString*)(decayKinPartNames->At(j)))->String().EqualTo("pi0")) {
+					((TLorentzVector*)(p->At(j)))->SetVectM(*((TVector3*)(decayKinMomenta->At(j))), 0.1349766);
+					q->push_back(0);
+				} else
+					assert(false);
+			}
+			// in case its data tree (itree=1) put weights to 1
+			if (itree == 1) {
+				weight = 1;
+				impweight = 1;
+			}
+			if (weight == 0)
+				continue;
 
       // this builds all subsystems
       event.refresh();
@@ -685,8 +756,8 @@ plotWeightedEvts_3pin(const TString& dataFileName,
   makeDifferencePlots(outfile);
 
   TList* Hlist = gDirectory->GetList();
-  Hlist->Remove(mctr);
-  Hlist->Remove(datatr);
+  Hlist->Remove(mcTree);
+  Hlist->Remove(dataTree);
   //Hlist->Remove("hWeights");
   int nobj = Hlist->GetEntries();
   std::cout << "Found " << nobj << " Objects in HList" << std::endl;
