@@ -445,11 +445,10 @@ createWeightedPlots(const std::string& dataFileName,
 	double massval = 0.0;
 	unsigned int datatreeentries = 0;
 	
-	std::string binname(massBin);
-	unsigned int pointpos = binname.find(".");
-	if(pointpos == 0 || pointpos == binname.size())
+	unsigned int pointpos = massBin.find(".");
+	if(pointpos == 0 || pointpos == massBin.size())
 		std::cout<<"Warning: Bad massbin name!"<<std::endl;
-	std::string masshigh = binname.substr(pointpos+1);
+	std::string masshigh = massBin.substr(pointpos+1);
 	massval = atof(masshigh.c_str());
 	massval /=1000;
 	datatreeentries = dataTree->GetEntries();
