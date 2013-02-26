@@ -10,6 +10,8 @@
  * Also for each massbin create a directory and create the same filenames for each variable
  */
 
+#include <THStack.h>
+
 #include "TTree.h"
 #include "TFile.h"
 #include "TList.h"
@@ -46,6 +48,12 @@ struct GJHistBunch {
     TH1D* costheta_GJF_MC_raw;
     std::vector<TH2D*> costheta_GJF_tprime;
 
+	// resolved for positive and negative reflectivity, and flat wave
+	THStack* costheta_GJF_Stack;
+	TH1D* costheta_GJF_PosRef;
+	TH1D* costheta_GJF_NegRef;
+	TH1D* costheta_GJF_Flat;
+	
     // difference histograms
     TH1D* isobar_mass_diff;
     TH1D* costheta_GJF_diff;
@@ -143,6 +151,23 @@ GJHistBunch GJHistBunchFactory(TString name_prefix) {
   temp.phi_GJF.push_back(hTYData);
   temp.phi_GJF[0]->Sumw2();
 
+  temp.costheta_GJF_Stack = new THStack("hGJF_Stack_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)");
+
+  temp.costheta_GJF_Flat = new TH1D("hGJF_Flat_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)", nbinsang, -1, 1);
+  temp.costheta_GJF_Flat->SetXTitle("isobar cos(#theta_{GJ})");
+  temp.costheta_GJF_Flat->SetYTitle("# of events");
+  temp.costheta_GJF_Stack->Add(temp.costheta_GJF_Flat);
+
+  temp.costheta_GJF_NegRef = new TH1D("hGJF_Neg_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)", nbinsang, -1, 1);
+  temp.costheta_GJF_NegRef->SetXTitle("isobar cos(#theta_{GJ})");
+  temp.costheta_GJF_NegRef->SetYTitle("# of events");
+  temp.costheta_GJF_Stack->Add(temp.costheta_GJF_NegRef);
+
+  temp.costheta_GJF_PosRef = new TH1D("hGJF_Pos_MC_" + name_prefix, name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)", nbinsang, -1, 1);
+  temp.costheta_GJF_PosRef->SetXTitle("isobar cos(#theta_{GJ})");
+  temp.costheta_GJF_PosRef->SetYTitle("# of events");
+  temp.costheta_GJF_Stack->Add(temp.costheta_GJF_PosRef);
+
   return temp;
 }
 
@@ -179,10 +204,14 @@ void fillWeightedHelicityAnglePlots(const HelicityAngles &ha, double weight, uns
   hhb.phi_HF[tree_index]->Fill(ha.phi, weight);
 }
 
-void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, double tprime, unsigned int tree_index, GJHistBunch &hBunch) {
+void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, double weightPosRef, double weightNegRef, double weightFlat, double tprime, unsigned int tree_index, GJHistBunch &hBunch) {
   hBunch.costheta_GJF[tree_index]->Fill(isobar.CosTheta(), weight);
-  if (tree_index == 0)
+  if (tree_index == 0) {
     hBunch.costheta_GJF_MC_raw->Fill(isobar.CosTheta());
+    hBunch.costheta_GJF_PosRef->Fill(isobar.CosTheta(), weightPosRef);
+    hBunch.costheta_GJF_NegRef->Fill(isobar.CosTheta(), weightNegRef);
+    hBunch.costheta_GJF_Flat->Fill(isobar.CosTheta(), weightFlat);
+  }
   hBunch.costheta_GJF_tprime[tree_index]->Fill(isobar.CosTheta(), tprime, weight);
   hBunch.phi_GJF[tree_index]->Fill(isobar.Phi(), weight);
   hBunch.isobar_mass[tree_index]->Fill(isobar.M(), weight);
@@ -729,12 +758,12 @@ plotWeightedEvts_3pin(const TString& dataFileName,
         }
         if (state.n() == npart - 1 && state.q() == 0) {
           // this is a neutral isobar state with n-1 (here 2) final state particles
-          fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_neutral_isobar);
+          fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_neutral_isobar);
           fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_neutral_isobar);
         }
         else if (state.n() == npart - 1 && state.q() == -1) {
           // this is a negativly charged isobar state with n-1 (here 2) final state particles
-          fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_charged_isobar);
+          fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_charged_isobar);
           fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_charged_isobar);
         }
       }
@@ -745,6 +774,9 @@ plotWeightedEvts_3pin(const TString& dataFileName,
     cout << "Maxweight=" << maxweight << endl;
     cout << "Average weight=" << avweight << endl;
   }// end loop over trees
+
+        GJHB_neutral_isobar.costheta_GJF_Stack->Write();
+        GJHB_charged_isobar.costheta_GJF_Stack->Write();
 
   outfile->Write();
   makeDifferencePlots(outfile);
