@@ -59,7 +59,7 @@ set(SOURCES
 	breitWignerProductionAmp.cc
 	partialWaveWeight.cc
 	diffractivePhaseSpace.cc
-	primaryVertexGen.cc
+	beamAndVertexGenerator.cc
 	randomNumberGenerator.cc
 	generatorPickerFunctions.cc
 	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui

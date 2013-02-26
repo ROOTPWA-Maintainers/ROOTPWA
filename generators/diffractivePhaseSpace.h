@@ -36,7 +36,7 @@
 #include "generatorParameters.hpp"
 #include "nBodyPhaseSpaceGen.h"
 #include "../amplitude/particle.h"
-#include "primaryVertexGen.h"
+#include "beamAndVertexGenerator.h"
 
 
 class TH1;

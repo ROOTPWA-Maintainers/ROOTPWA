@@ -3,7 +3,7 @@
 
 #include "randomNumberGenerator.h"
 #include "reportingUtils.hpp"
-#include "primaryVertexGen.h"
+#include "beamAndVertexGenerator.h"
 
 
 using namespace std;

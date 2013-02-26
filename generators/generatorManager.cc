@@ -11,7 +11,7 @@
 #include "generatorParameters.hpp"
 #include "libConfigUtils.hpp"
 #include "particleDataTable.h"
-#include "primaryVertexGen.h"
+#include "beamAndVertexGenerator.h"
 #include "reportingUtils.hpp"
 #include "generatorPickerFunctions.h"
 #include "generatorManager.h"

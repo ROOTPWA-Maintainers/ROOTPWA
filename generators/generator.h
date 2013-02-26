@@ -6,7 +6,7 @@
 
 #include "generatorParameters.hpp"
 #include "generatorPickerFunctions.h"
-#include "primaryVertexGen.h"
+#include "beamAndVertexGenerator.h"
 
 class TVector3;
 
