@@ -120,15 +120,15 @@ GJHistBunch GJHistBunchFactory(TString name_prefix) {
   temp.costheta_GJF_MC_raw->SetXTitle("isobar cos(#theta_{GJ})");
   temp.costheta_GJF_MC_raw->SetYTitle("# of events");
 
-  TH2D* hGJtMC = new TH2D("hGJtMC_" + name_prefix, name_prefix + " Isobar Cos GJ Theta vs t' (MC)", nbinsang, -1, 1, 20, 0,
-      0.01);
+  TH2D* hGJtMC = new TH2D("hGJtMC_" + name_prefix, name_prefix + " Isobar Cos GJ Theta vs t' (MC)", nbinsang, -1, 1, 40, 0., 2.);
   hGJtMC->SetXTitle("isobar cos(#theta_{GJ})");
   hGJtMC->SetYTitle("t' [GeV]");
+  hGJtMC->SetOption("COLZ");
   temp.costheta_GJF_tprime.push_back(hGJtMC);
-  TH2D* hGJtData = new TH2D("hGJtData_" + name_prefix, name_prefix + " Isobar Cos GJ Theta vs t' (DATA)", nbinsang, -1, 1, 20,
-      0, 0.01);
-  hGJData->SetXTitle("isobar cos(#theta_{GJ})");
-  hGJData->SetYTitle("t' [GeV]");
+  TH2D* hGJtData = new TH2D("hGJtData_" + name_prefix, name_prefix + " Isobar Cos GJ Theta vs t' (DATA)", nbinsang, -1, 1, 40, 0., 2.);
+  hGJtData->SetXTitle("isobar cos(#theta_{GJ})");
+  hGJtData->SetYTitle("t' [GeV]");
+  hGJtData->SetOption("COLZ");
   temp.costheta_GJF_tprime.push_back(hGJtData);
 
   TH1D* hTYMC = new TH1D("hTYMC_" + name_prefix, name_prefix + " Isobar Treiman-Yang Phi (MC)", nbinsang, -TMath::Pi(),
@@ -463,12 +463,14 @@ plotWeightedEvts_3pin(const TString& dataFileName,
       "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (MC)", massval, datatreeentries);
   dalitz->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
   dalitz->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
+  dalitz->SetOption("COLZ");
   dalitz->SetStats(0);
   dalitz_neutral.push_back(dalitz);
   dalitz = createDalitzHistogram("hDalitzData",
       "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", massval, datatreeentries);
   dalitz->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
   dalitz->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
+  dalitz->SetOption("COLZ");
   dalitz->SetStats(0);
   dalitz_neutral.push_back(dalitz);
   /*std::vector<TH2D*> dalitz_charged;
