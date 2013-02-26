@@ -565,9 +565,9 @@ createWeightedPlots(const std::string& dataFileName,
 		NParticleEvent event(p, q, beam, &qbeam, &vertex);
 
 		// loop over tree entries
-		unsigned int nevt = tree->GetEntries();
-		boost::progress_display progressIndicator(nevt, cout, "");
-		for (unsigned int i = 0; i < nevt; ++i) {
+		const long int nmbEvents = tree->GetEntries();
+		boost::progress_display progressIndicator(nmbEvents, cout, "");
+		for (long int i = 0; i < nmbEvents; ++i) {
 			++progressIndicator;
 			tree->GetEntry(i);
 			p->Delete();
@@ -683,7 +683,7 @@ createWeightedPlots(const std::string& dataFileName,
 			
 		}// end loop over events
 		if (itree == 0) {
-			avweight /= (double) nevt;
+			avweight /= (double) nmbEvents;
 			cout << "Maxweight=" << maxweight << endl;
 			cout << "Average weight=" << avweight << endl;
 		}
