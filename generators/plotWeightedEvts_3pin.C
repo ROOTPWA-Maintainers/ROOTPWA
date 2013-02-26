@@ -10,29 +10,21 @@
  * Also for each massbin create a directory and create the same filenames for each variable
  */
 
-#include <string>
-
-#include <THStack.h>
-
-#include "TTree.h"
-#include "TFile.h"
-#include "TList.h"
-#include "TLatex.h"
-
-#include "TLorentzVector.h"
-#include "TVector3.h"
-#include "TLorentzRotation.h"
-#include "TH1D.h"
-#include "TH2D.h"
-#include "TClonesArray.h"
-#include "TROOT.h"
-#include "TMath.h"
-#include "TPad.h"
-#include "TCanvas.h"
 #include <iostream>
+#include <string>
 #include <vector>
-#include "NParticleEvent.h"
-#include "TPRegexp.h"
+
+#include <TClonesArray.h>
+#include <TFile.h>
+#include <TH1D.h>
+#include <TH2D.h>
+#include <THStack.h>
+#include <TLorentzVector.h>
+#include <TMath.h>
+#include <TROOT.h>
+#include <TTree.h>
+
+#include <NParticleEvent.h>
 
 using namespace std;
 
