@@ -42,14 +42,14 @@ struct GJHistBunch {
 	std::vector<TH1D*> isobar_mass;
 	std::vector<TH1D*> costheta_GJF;
 	std::vector<TH1D*> phi_GJF;
-	TH1D* costheta_GJF_MC_raw;
+	std::vector<TH1D*> costheta_GJF_MC_raw;
 	std::vector<TH2D*> costheta_GJF_tprime;
 
 	// resolved for positive and negative reflectivity, and flat wave
-	THStack* costheta_GJF_Stack;
-	TH1D* costheta_GJF_PosRef;
-	TH1D* costheta_GJF_NegRef;
-	TH1D* costheta_GJF_Flat;
+	std::vector<THStack*> costheta_GJF_Stack;
+	std::vector<TH1D*> costheta_GJF_PosRef;
+	std::vector<TH1D*> costheta_GJF_NegRef;
+	std::vector<TH1D*> costheta_GJF_Flat;
 	
 	// difference histograms
 	TH1D* isobar_mass_diff;
@@ -79,100 +79,101 @@ int getTotalCharge(std::pair<int, int> p) {
 
 GJHistBunch GJHistBunchFactory(const std::string& name_prefix) {
 	GJHistBunch temp;
-	TH1D* hMIsobarMC = new TH1D(("hMIsobarMC_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (MC)").c_str(), nbninsm, 0.0, 1.5);
-	hMIsobarMC->SetXTitle("isobar mass [GeV]");
-	hMIsobarMC->SetYTitle("# of events");
-	temp.isobar_mass.push_back(hMIsobarMC);
 	TH1D* hMIsobarData = new TH1D(("hMIsobarData_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (DATA)").c_str(), nbninsm,
 				      0.0, 1.5);
 	hMIsobarData->SetXTitle("isobar mass [GeV]");
 	hMIsobarData->SetYTitle("# of events");
 	temp.isobar_mass.push_back(hMIsobarData);
-	temp.isobar_mass[0]->Sumw2();
+	TH1D* hMIsobarMC = new TH1D(("hMIsobarMC_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (MC)").c_str(), nbninsm, 0.0, 1.5);
+	hMIsobarMC->SetXTitle("isobar mass [GeV]");
+	hMIsobarMC->SetYTitle("# of events");
+	temp.isobar_mass.push_back(hMIsobarMC);
 	
-	TH1D* hGJMC = new TH1D(("hGJMC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
-	hGJMC->SetXTitle("isobar cos(#theta_{GJ})");
-	hGJMC->SetYTitle("# of events");
-	temp.costheta_GJF.push_back(hGJMC);
 	TH1D* hGJData = new TH1D(("hGJData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (DATA)").c_str(), nbinsang, -1,
 				 1);
 	hGJData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJData->SetYTitle("# of events");
 	temp.costheta_GJF.push_back(hGJData);
-	temp.costheta_GJF[0]->Sumw2();
+	TH1D* hGJMC = new TH1D(("hGJMC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
+	hGJMC->SetXTitle("isobar cos(#theta_{GJ})");
+	hGJMC->SetYTitle("# of events");
+	temp.costheta_GJF.push_back(hGJMC);
 	
-	temp.costheta_GJF_MC_raw = new TH1D(("hGJMC_raw" + name_prefix).c_str(),
+	TH1D* hGJMC_raw = new TH1D(("hGJMC_raw" + name_prefix).c_str(),
 					    "Cos Gottfried-Jackson Theta (unweighted MC)", nbinsang, -1, 1);
-	temp.costheta_GJF_MC_raw->SetXTitle("isobar cos(#theta_{GJ})");
-	temp.costheta_GJF_MC_raw->SetYTitle("# of events");
+	hGJMC_raw->SetXTitle("isobar cos(#theta_{GJ})");
+	hGJMC_raw->SetYTitle("# of events");
+	temp.costheta_GJF_MC_raw.push_back(hGJMC_raw);
 	
-	TH2D* hGJtMC = new TH2D(("hGJtMC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (MC)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
-	hGJtMC->SetXTitle("isobar cos(#theta_{GJ})");
-	hGJtMC->SetYTitle("t' [GeV]");
-	hGJtMC->SetOption("COLZ");
-	temp.costheta_GJF_tprime.push_back(hGJtMC);
 	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (DATA)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
 	hGJtData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJtData->SetYTitle("t' [GeV]");
 	hGJtData->SetOption("COLZ");
 	temp.costheta_GJF_tprime.push_back(hGJtData);
+	TH2D* hGJtMC = new TH2D(("hGJtMC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (MC)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
+	hGJtMC->SetXTitle("isobar cos(#theta_{GJ})");
+	hGJtMC->SetYTitle("t' [GeV]");
+	hGJtMC->SetOption("COLZ");
+	temp.costheta_GJF_tprime.push_back(hGJtMC);
 	
-	TH1D* hTYMC = new TH1D(("hTYMC_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (MC)").c_str(), nbinsang, -TMath::Pi(),
-			       TMath::Pi());
-	hTYMC->SetXTitle("isobar #phi_{TY} [rad]");
-	hTYMC->SetYTitle("# of events");
 	TH1D* hTYData = new TH1D(("hTYData_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (DATA)").c_str(), nbinsang, -TMath::Pi(),
 				 TMath::Pi());
 	hTYData->SetXTitle("isobar #phi_{TY} [rad]");
 	hTYData->SetYTitle("# of events");
-	temp.phi_GJF.push_back(hTYMC);
 	temp.phi_GJF.push_back(hTYData);
-	temp.phi_GJF[0]->Sumw2();
+	TH1D* hTYMC = new TH1D(("hTYMC_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (MC)").c_str(), nbinsang, -TMath::Pi(),
+			       TMath::Pi());
+	hTYMC->SetXTitle("isobar #phi_{TY} [rad]");
+	hTYMC->SetYTitle("# of events");
+	temp.phi_GJF.push_back(hTYMC);
 
-	temp.costheta_GJF_Stack = new THStack(("hGJF_Stack_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str());
+	THStack* hGJF_Stack_MC = new THStack(("hGJF_Stack_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str());
 	
-	temp.costheta_GJF_Flat = new TH1D(("hGJF_Flat_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
-	temp.costheta_GJF_Flat->SetXTitle("isobar cos(#theta_{GJ})");
-	temp.costheta_GJF_Flat->SetYTitle("# of events");
-	temp.costheta_GJF_Stack->Add(temp.costheta_GJF_Flat);
+	TH1D* hGJF_Flat_MC = new TH1D(("hGJF_Flat_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
+	hGJF_Flat_MC->SetXTitle("isobar cos(#theta_{GJ})");
+	hGJF_Flat_MC->SetYTitle("# of events");
+	temp.costheta_GJF_Flat.push_back(hGJF_Flat_MC);
+	hGJF_Stack_MC->Add(hGJF_Flat_MC);
 
-	temp.costheta_GJF_NegRef = new TH1D(("hGJF_Neg_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
-	temp.costheta_GJF_NegRef->SetXTitle("isobar cos(#theta_{GJ})");
-	temp.costheta_GJF_NegRef->SetYTitle("# of events");
-	temp.costheta_GJF_Stack->Add(temp.costheta_GJF_NegRef);
+	TH1D* hGJF_Neg_MC = new TH1D(("hGJF_Neg_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
+	hGJF_Neg_MC->SetXTitle("isobar cos(#theta_{GJ})");
+	hGJF_Neg_MC->SetYTitle("# of events");
+	temp.costheta_GJF_NegRef.push_back(hGJF_Neg_MC);
+	hGJF_Stack_MC->Add(hGJF_Neg_MC);
 	
-	temp.costheta_GJF_PosRef = new TH1D(("hGJF_Pos_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
-	temp.costheta_GJF_PosRef->SetXTitle("isobar cos(#theta_{GJ})");
-	temp.costheta_GJF_PosRef->SetYTitle("# of events");
-	temp.costheta_GJF_Stack->Add(temp.costheta_GJF_PosRef);
+	TH1D* hGJF_Pos_MC = new TH1D(("hGJF_Pos_MC_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (MC)").c_str(), nbinsang, -1, 1);
+	hGJF_Pos_MC->SetXTitle("isobar cos(#theta_{GJ})");
+	hGJF_Pos_MC->SetYTitle("# of events");
+	temp.costheta_GJF_PosRef.push_back(hGJF_Pos_MC);
+	hGJF_Stack_MC->Add(hGJF_Pos_MC);
 	
+	temp.costheta_GJF_Stack.push_back(hGJF_Stack_MC);
+
 	return temp;
 }
 
 HelicityHistBunch HelicityHistBunchFactory(const std::string& name_prefix) {
 	HelicityHistBunch temp;
-	TH1D* hHThetaMC = new TH1D(("hHThetaMC_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (MC)").c_str(), nbinsang, -1, 1);
-	hHThetaMC->SetXTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
-	hHThetaMC->SetYTitle("# of events");
-	temp.costheta_HF.push_back(hHThetaMC);
 	TH1D* hHThetaData = new TH1D(("hHThetaData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (DATA)").c_str(), nbinsang, -1,
 				     1);
 	hHThetaData->SetXTitle("cos(#theta_{hel}) of #pi^{0} from isobar");
 	hHThetaData->SetYTitle("# of events");
 	temp.costheta_HF.push_back(hHThetaData);
-	temp.costheta_HF[0]->Sumw2();
+	TH1D* hHThetaMC = new TH1D(("hHThetaMC_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (MC)").c_str(), nbinsang, -1, 1);
+	hHThetaMC->SetXTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
+	hHThetaMC->SetYTitle("# of events");
+	temp.costheta_HF.push_back(hHThetaMC);
 	
-	TH1D* hHPhiMC = new TH1D(("hHPhiMC_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (MC)").c_str(), nbinsang, -TMath::Pi(),
-				 TMath::Pi());
-	hHPhiMC->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
-	hHPhiMC->SetYTitle("# of events");
 	TH1D* hHPhiData = new TH1D(("hHPhiData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (DATA)").c_str(), nbinsang, -TMath::Pi(),
 				   TMath::Pi());
 	hHPhiData->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 	hHPhiData->SetYTitle("# of events");
-	temp.phi_HF.push_back(hHPhiMC);
 	temp.phi_HF.push_back(hHPhiData);
-	temp.phi_HF[0]->Sumw2();
+	TH1D* hHPhiMC = new TH1D(("hHPhiMC_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (MC)").c_str(), nbinsang, -TMath::Pi(),
+				 TMath::Pi());
+	hHPhiMC->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
+	hHPhiMC->SetYTitle("# of events");
+	temp.phi_HF.push_back(hHPhiMC);
 	
 	return temp;
 }
@@ -184,11 +185,11 @@ void fillWeightedHelicityAnglePlots(const HelicityAngles &ha, double weight, uns
 
 void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, double weightPosRef, double weightNegRef, double weightFlat, double tprime, unsigned int tree_index, GJHistBunch &hBunch) {
 	hBunch.costheta_GJF[tree_index]->Fill(isobar.CosTheta(), weight);
-	if (tree_index == 0) {
-		hBunch.costheta_GJF_MC_raw->Fill(isobar.CosTheta());
-		hBunch.costheta_GJF_PosRef->Fill(isobar.CosTheta(), weightPosRef);
-		hBunch.costheta_GJF_NegRef->Fill(isobar.CosTheta(), weightNegRef);
-		hBunch.costheta_GJF_Flat->Fill(isobar.CosTheta(), weightFlat);
+	if (tree_index != 0) {
+		hBunch.costheta_GJF_MC_raw[tree_index-1]->Fill(isobar.CosTheta());
+		hBunch.costheta_GJF_PosRef[tree_index-1]->Fill(isobar.CosTheta(), weightPosRef);
+		hBunch.costheta_GJF_NegRef[tree_index-1]->Fill(isobar.CosTheta(), weightNegRef);
+		hBunch.costheta_GJF_Flat[tree_index-1]->Fill(isobar.CosTheta(), weightFlat);
 	}
 	hBunch.costheta_GJF_tprime[tree_index]->Fill(isobar.CosTheta(), tprime, weight);
 	hBunch.phi_GJF[tree_index]->Fill(isobar.Phi(), weight);
@@ -389,14 +390,21 @@ createWeightedPlots(const std::string& dataFileName,
 		    const std::string& dataProdKinMomentaName,
 		    const std::string& dataDecayKinPartNamesName,
 		    const std::string& dataDecayKinMomentaName,
-		    const std::string& mcFileName,
-		    const std::string& mcTreeName,
-		    const std::string& mcProdKinPartNamesName,
-		    const std::string& mcProdKinMomentaName,
-		    const std::string& mcDecayKinPartNamesName,
-		    const std::string& mcDecayKinMomentaName,
+		    const std::string& mcPspFileName,
+		    const std::string& mcPspTreeName,
+		    const std::string& mcPspProdKinPartNamesName,
+		    const std::string& mcPspProdKinMomentaName,
+		    const std::string& mcPspDecayKinPartNamesName,
+		    const std::string& mcPspDecayKinMomentaName,
+		    const std::string& mcAccFileName,
+		    const std::string& mcAccTreeName,
+		    const std::string& mcAccProdKinPartNamesName,
+		    const std::string& mcAccProdKinMomentaName,
+		    const std::string& mcAccDecayKinPartNamesName,
+		    const std::string& mcAccDecayKinMomentaName,
 		    const std::string& massBin,
-		    const std::string& outFileName)
+		    const std::string& outFileName,
+		    const long int     treeCacheSize)
 {
 	// keep track of the processing time
 	TStopwatch timer;
@@ -423,24 +431,53 @@ createWeightedPlots(const std::string& dataFileName,
 		assert(((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
 
 	// open weighted MC file
-	TFile* mcFile = TFile::Open(mcFileName.c_str());
+	TFile* mcPspFile = TFile::Open(mcPspFileName.c_str());
 
 	// tree containing the phase space events and weights
-	TTree* mcTree;
-	mcFile->GetObject(mcTreeName.c_str(), mcTree);
+	TTree* mcPspTree;
+	mcPspFile->GetObject(mcPspTreeName.c_str(), mcPspTree);
 
 	// names of particles in tree
-	TClonesArray* mcProdKinPartNames(NULL);
-	mcFile->GetObject(mcProdKinPartNamesName.c_str(), mcProdKinPartNames);
-	assert(mcProdKinPartNames->GetEntries() == 1);
-	for (Int_t i=0; i<mcProdKinPartNames->GetEntries(); i++)
-		assert(((TObjString*)(mcProdKinPartNames->At(i)))->String().EqualTo("pi-"));
+	TClonesArray* mcPspProdKinPartNames(NULL);
+	mcPspFile->GetObject(mcPspProdKinPartNamesName.c_str(), mcPspProdKinPartNames);
+	assert(mcPspProdKinPartNames->GetEntries() == 1);
+	for (Int_t i=0; i<mcPspProdKinPartNames->GetEntries(); i++)
+		assert(((TObjString*)(mcPspProdKinPartNames->At(i)))->String().EqualTo("pi-"));
 
-	TClonesArray* mcDecayKinPartNames(NULL);
-	mcFile->GetObject(mcDecayKinPartNamesName.c_str(), mcDecayKinPartNames);
-	assert(mcDecayKinPartNames->GetEntries() == 3);
-	for (Int_t i=0; i<mcDecayKinPartNames->GetEntries(); i++)
-		assert(((TObjString*)(mcDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(mcDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
+	TClonesArray* mcPspDecayKinPartNames(NULL);
+	mcPspFile->GetObject(mcPspDecayKinPartNamesName.c_str(), mcPspDecayKinPartNames);
+	assert(mcPspDecayKinPartNames->GetEntries() == 3);
+	for (Int_t i=0; i<mcPspDecayKinPartNames->GetEntries(); i++)
+		assert(((TObjString*)(mcPspDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(mcPspDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
+	
+	// open weighted MC file
+	TFile* mcAccFile(NULL);
+	if (mcAccFileName != "") {
+		mcAccFile = TFile::Open(mcAccFileName.c_str());
+	}
+
+	// tree containing the phase space events and weights
+	TTree* mcAccTree(NULL);
+	if (mcAccFile != NULL) {
+		mcAccFile->GetObject(mcAccTreeName.c_str(), mcAccTree);
+	}
+
+	// names of particles in tree
+	TClonesArray* mcAccProdKinPartNames(NULL);
+	if (mcAccFile != NULL) {
+		mcAccFile->GetObject(mcAccProdKinPartNamesName.c_str(), mcAccProdKinPartNames);
+		assert(mcAccProdKinPartNames->GetEntries() == 1);
+		for (Int_t i=0; i<mcAccProdKinPartNames->GetEntries(); i++)
+			assert(((TObjString*)(mcAccProdKinPartNames->At(i)))->String().EqualTo("pi-"));
+	}
+
+	TClonesArray* mcAccDecayKinPartNames(NULL);
+	if (mcAccFile != NULL) {
+		mcAccFile->GetObject(mcAccDecayKinPartNamesName.c_str(), mcAccDecayKinPartNames);
+		assert(mcAccDecayKinPartNames->GetEntries() == 3);
+		for (Int_t i=0; i<mcAccDecayKinPartNames->GetEntries(); i++)
+			assert(((TObjString*)(mcAccDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(mcAccDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
+	}
 	
 	double massval = 0.0;
 	unsigned int datatreeentries = 0;
@@ -465,29 +502,29 @@ createWeightedPlots(const std::string& dataFileName,
 
 	// --------------- global diagrams
 	std::vector<TH1D*> hM;
-	TH1D* hMMC = new TH1D("hResMassMC", "Mass (MC)", 60, 0.5, 2.5);
-	hM.push_back(hMMC);
 	TH1D* hMData = new TH1D("hResMassData", "Mass (DATA)", 60, 0.5, 2.5);
 	hM.push_back(hMData);
+	TH1D* hMMC = new TH1D("hResMassMC", "Mass (MC)", 60, 0.5, 2.5);
+	hM.push_back(hMMC);
 	
 	vector<TH1D*> hThetaLab;
-	TH1D* hThetaLabMC = new TH1D("hThetaLabMC", "Cos Theta Lab (MC)", nbninsm, 0.997, 1);
-	hThetaLab.push_back(hThetaLabMC);
 	TH1D* hThetaLabData = new TH1D("hThetaLabData", "Cos Theta Lab (Data)", nbninsm, 0.997, 1);
 	hThetaLab.push_back(hThetaLabData);
-	hThetaLab[0]->Sumw2();
+	TH1D* hThetaLabMC = new TH1D("hThetaLabMC", "Cos Theta Lab (MC)", nbninsm, 0.997, 1);
+	hThetaLab.push_back(hThetaLabMC);
 	
 	// Dalitz plots
 	std::vector<TH2D*> dalitz_neutral;
-	TH2D* dalitz = createDalitzHistogram("hDalitzMC",
-					     "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (MC)", massval, datatreeentries);
+	TH2D* dalitz;
+	dalitz = createDalitzHistogram("hDalitzData",
+				       "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", massval, datatreeentries);
 	dalitz->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 	dalitz->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 	dalitz->SetOption("COLZ");
 	dalitz->SetStats(0);
 	dalitz_neutral.push_back(dalitz);
-	dalitz = createDalitzHistogram("hDalitzData",
-				       "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", massval, datatreeentries);
+	dalitz = createDalitzHistogram("hDalitzMC",
+					     "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (MC)", massval, datatreeentries);
 	dalitz->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 	dalitz->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 	dalitz->SetOption("COLZ");
@@ -510,18 +547,24 @@ createWeightedPlots(const std::string& dataFileName,
 	double avweight = 1;
 	
 	//Loop both over data and mc tree
-	// itree = 0: mc tree
-	// itree = 1: data tree
+	// itree = 0: data tree
+	// itree = 1: mc tree
+	// itree = 1: (accepted) mc tree
 	for (unsigned int itree = 0; itree < 2; ++itree) {
-		if (itree == 0) {
-			printInfo << "Step 1: creating plots for MC" << std::endl;
-		} else {
-			printInfo << "Step 2: creating plots for data" << std::endl;
-		}
-
-		TTree* tree = (itree == 0) ? mcTree : dataTree;
+		TTree* tree(NULL);
+		if      (itree == 0) { tree = dataTree; }
+		else if (itree == 1) { tree = mcPspTree; }
+		else if (itree == 2) { tree = mcAccTree; }
 		if (tree == NULL)
 			continue;
+
+		if (itree == 0) {
+			printInfo << "Step 1: creating plots for data events" << std::endl;
+		} else if (itree == 1) {
+			printInfo << "Step 2: creating plots for phase-space events" << std::endl;
+		} else {
+			printInfo << "Step 3: creating plots for accepted phase-space events" << std::endl;
+		}
 
 		// in case of MC tree connect the weights
 		double weight = 1;
@@ -530,7 +573,7 @@ createWeightedPlots(const std::string& dataFileName,
 		double weightFlat = 1.;
 		double impweight = 1;
 		double maxweight = 0;
-		if (itree == 0) {
+		if (itree != 0) {
 			tree->SetBranchAddress("weight", &weight);
 			tree->SetBranchAddress("weightPosRef", &weightPosRef);
 			tree->SetBranchAddress("weightNegRef", &weightNegRef);
@@ -546,19 +589,36 @@ createWeightedPlots(const std::string& dataFileName,
 		TClonesArray* decayKinMomenta   = NULL;
 
 		if (itree == 0) {
-			prodKinPartNames    = mcProdKinPartNames;
-			decayKinPartNames   = mcDecayKinPartNames;
-			prodKinMomentaName  = mcProdKinMomentaName;
-			decayKinMomentaName = mcDecayKinMomentaName;
-		} else {
 			prodKinPartNames    = dataProdKinPartNames;
 			decayKinPartNames   = dataDecayKinPartNames;
 			prodKinMomentaName  = dataProdKinMomentaName;
 			decayKinMomentaName = dataDecayKinMomentaName;
+		} else if (itree == 1) {
+			prodKinPartNames    = mcPspProdKinPartNames;
+			decayKinPartNames   = mcPspDecayKinPartNames;
+			prodKinMomentaName  = mcPspProdKinMomentaName;
+			decayKinMomentaName = mcPspDecayKinMomentaName;
+		} else {
+			prodKinPartNames    = mcAccProdKinPartNames;
+			decayKinPartNames   = mcAccDecayKinPartNames;
+			prodKinMomentaName  = mcAccProdKinMomentaName;
+			decayKinMomentaName = mcAccDecayKinMomentaName;
 		}
 
 		tree->SetBranchAddress(prodKinMomentaName.c_str(),  &prodKinMomenta);
 		tree->SetBranchAddress(decayKinMomentaName.c_str(), &decayKinMomenta);
+
+		tree->SetCacheSize(treeCacheSize);
+		if (itree != 0) {
+			tree->AddBranchToCache("weight", true);
+			tree->AddBranchToCache("weightPosRef", true);
+			tree->AddBranchToCache("weightNegRef", true);
+			tree->AddBranchToCache("weightFlat", true);
+			tree->AddBranchToCache("impweight", true);
+		}
+	        tree->AddBranchToCache(prodKinMomentaName.c_str(),  true);
+	        tree->AddBranchToCache(decayKinMomentaName.c_str(), true);
+		tree->StopCacheLearningPhase();
 
 		TLorentzVector* beam = new TLorentzVector;
 		int qbeam;
@@ -598,8 +658,8 @@ createWeightedPlots(const std::string& dataFileName,
 				} else
 					assert(false);
 			}
-			// in case its data tree (itree=1) put weights to 1
-			if (itree == 1) {
+			// in case its data tree (itree=0) put weights to 1
+			if (itree == 0) {
 				weight = 1;
 				impweight = 1;
 			}
@@ -614,7 +674,7 @@ createWeightedPlots(const std::string& dataFileName,
 			
 			if (weight > maxweight)
 				maxweight = weight;
-			if (itree == 0)
+			if (itree != 0)
 				avweight += weight;
 
 			double tprime = event.tprime();
@@ -687,7 +747,7 @@ createWeightedPlots(const std::string& dataFileName,
 			}
 			
 		}// end loop over events
-		if (itree == 0) {
+		if (itree != 0) {
 			avweight /= (double) nmbEvents;
 			cout << "Maxweight=" << maxweight << endl;
 			cout << "Average weight=" << avweight << endl;
@@ -695,15 +755,16 @@ createWeightedPlots(const std::string& dataFileName,
 		std::cout << std::endl;
 	}// end loop over trees
 	
-	GJHB_neutral_isobar.costheta_GJF_Stack->Write();
-	GJHB_charged_isobar.costheta_GJF_Stack->Write();
+	GJHB_neutral_isobar.costheta_GJF_Stack[0]->Write();
+	GJHB_charged_isobar.costheta_GJF_Stack[0]->Write();
 	
 	outfile->Write();
 	makeDifferencePlots(outfile);
 	
 	TList* Hlist = gDirectory->GetList();
-	Hlist->Remove(mcTree);
 	Hlist->Remove(dataTree);
+	Hlist->Remove(mcPspTree);
+	Hlist->Remove(mcAccTree);
 	//Hlist->Remove("hWeights");
 	int nobj = Hlist->GetEntries();
 	std::cout << "Found " << nobj << " Objects in HList" << std::endl;
@@ -722,7 +783,7 @@ void
 plotWeightedEvts_3pin(const std::string& dataFileName,
                       const std::string& mcFileName,
                       const std::string& massBin,
-                      const std::string& outFileName = "kineplots.root")
+                      const std::string& outFileName)
 {
 	// set some default values for tree names and so on
 	const std::string dataTreeName              = "rootPwaEvtTree";
@@ -736,7 +797,46 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcDecayKinPartNamesName   = "decayKinParticles";
 	const std::string mcDecayKinMomentaName     = "decayKinMomenta";
 
+	// set 25 MByte ROOT tree read cache
+	const long int    treeCacheSize             = 25000000;
+
 	createWeightedPlots(dataFileName, dataTreeName, dataProdKinPartNamesName, dataProdKinMomentaName, dataDecayKinPartNamesName, dataDecayKinMomentaName,
 	                    mcFileName,   mcTreeName,   mcProdKinPartNamesName,   mcProdKinMomentaName,   mcDecayKinPartNamesName,   mcDecayKinMomentaName,
-	                    massBin, outFileName);
+			    "",           "",           "",                       "",                     "",                        "",
+	                    massBin, outFileName,
+			    treeCacheSize);
+}
+
+void
+plotWeightedEvts_3pin(const std::string& dataFileName,
+                      const std::string& mcPspFileName,
+                      const std::string& mcAccFileName,
+                      const std::string& massBin,
+                      const std::string& outFileName)
+{
+	// set some default values for tree names and so on
+	const std::string dataTreeName               = "rootPwaEvtTree";
+	const std::string dataProdKinPartNamesName   = "prodKinParticles";
+	const std::string dataProdKinMomentaName     = "prodKinMomenta";
+	const std::string dataDecayKinPartNamesName  = "decayKinParticles";
+	const std::string dataDecayKinMomentaName    = "decayKinMomenta";
+	const std::string mcPspTreeName              = "rootPwaEvtTree";
+	const std::string mcPspProdKinPartNamesName  = "prodKinParticles";
+	const std::string mcPspProdKinMomentaName    = "prodKinMomenta";
+	const std::string mcPspDecayKinPartNamesName = "decayKinParticles";
+	const std::string mcPspDecayKinMomentaName   = "decayKinMomenta";
+	const std::string mcAccTreeName              = "rootPwaEvtTree";
+	const std::string mcAccProdKinPartNamesName  = "prodKinParticles";
+	const std::string mcAccProdKinMomentaName    = "prodKinMomenta";
+	const std::string mcAccDecayKinPartNamesName = "decayKinParticles";
+	const std::string mcAccDecayKinMomentaName   = "decayKinMomenta";
+
+	// set 25 MByte ROOT tree read cache
+	const long int    treeCacheSize             = 25000000;
+
+	createWeightedPlots(dataFileName,  dataTreeName,  dataProdKinPartNamesName,  dataProdKinMomentaName,  dataDecayKinPartNamesName,  dataDecayKinMomentaName,
+	                    mcPspFileName, mcPspTreeName, mcPspProdKinPartNamesName, mcPspProdKinMomentaName, mcPspDecayKinPartNamesName, mcPspDecayKinMomentaName,
+	                    mcAccFileName, mcAccTreeName, mcAccProdKinPartNamesName, mcAccProdKinMomentaName, mcAccDecayKinPartNamesName, mcAccDecayKinMomentaName,
+	                    massBin, outFileName,
+			    treeCacheSize);
 }
