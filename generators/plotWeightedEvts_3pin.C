@@ -919,6 +919,10 @@ createWeightedPlots(const std::string& dataFileName,
 	
 	GJHB_neutral_isobar.costheta_GJF_Stack[0]->Write();
 	GJHB_charged_isobar.costheta_GJF_Stack[0]->Write();
+	if (mcAccFile != NULL) {
+		GJHB_neutral_isobar.costheta_GJF_Stack[1]->Write();
+		GJHB_charged_isobar.costheta_GJF_Stack[1]->Write();
+	}
 	
 	outfile->Write();
 	makeDifferencePlots(outfile);
