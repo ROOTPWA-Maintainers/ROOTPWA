@@ -33,9 +33,6 @@
 
 using namespace std;
 
-TString massbin;
-TString mass;
-
 int nbninsm = 144;
 int nbinsang = 80;
 
@@ -381,8 +378,8 @@ TH2D* createDalitzHistogram(TString name, TString title, double mass, unsigned i
 void
 plotWeightedEvts_3pin(const TString& dataFileName,
                       const TString& mcFileName,
-                      const TString& mass_,
-                      const TString& outfilename = "kineplots.root")
+                      const TString& massBin,
+                      const TString& outFileName = "kineplots.root")
 {
 	// open data file
 	TFile* dataFile = TFile::Open(dataFileName);
@@ -426,13 +423,8 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 
   double massval = 0.0;
   unsigned int datatreeentries = 0;
-  mass = mass_;
-  if (mass != "000") {
-    massbin = ("_m") + mass;
-    massbin.ReplaceAll(" ", "");
-  }
 
-  std::string binname(mass.Data());
+  std::string binname(massBin.Data());
   unsigned int pointpos = binname.find(".");
   if(pointpos == 0 || pointpos == binname.size())
     std::cout<<"Warning: Bad massbin name!"<<std::endl;
@@ -443,13 +435,13 @@ plotWeightedEvts_3pin(const TString& dataFileName,
 
 
   gROOT->SetStyle("Plain");
-  TFile* outfile = TFile::Open(outfilename, "UPDATE");
+  TFile* outfile = TFile::Open(outFileName, "UPDATE");
   outfile->cd();
   gDirectory->cd();
-  if (!gDirectory->GetDirectory(mass)) {
-    gDirectory->mkdir(mass);
+  if (!gDirectory->GetDirectory(massBin)) {
+    gDirectory->mkdir(massBin);
   }
-  gDirectory->cd(mass);
+  gDirectory->cd(massBin);
 
   // --------------- global diagrams
   std::vector<TH1D*> hM;
