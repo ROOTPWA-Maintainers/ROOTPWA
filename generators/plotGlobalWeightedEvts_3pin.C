@@ -62,19 +62,19 @@ void setupBookies() {
   std::vector<TString> histnames_neutral;
   std::vector<TString> histnames_charged;
   // neutral isobar decay
-  histnames_neutral.push_back(TString("hMIsobarMC_Neutral")); // Canvas spot 1
+  histnames_neutral.push_back(TString("hMIsobarMc_Neutral")); // Canvas spot 1
   histnames_neutral.push_back(TString("spacer")); // Canvas spot 2
-  histnames_neutral.push_back(TString("hGJMC_Neutral")); // Canvas spot 3
-  histnames_neutral.push_back(TString("hTYMC_Neutral")); // Canvas spot 4
-  histnames_neutral.push_back(TString("hHThetaMC_Neutral")); // Canvas spot 5
-  histnames_neutral.push_back(TString("hHPhiMC_Neutral")); // Canvas spot 6
+  histnames_neutral.push_back(TString("hGJMc_Neutral")); // Canvas spot 3
+  histnames_neutral.push_back(TString("hTYMc_Neutral")); // Canvas spot 4
+  histnames_neutral.push_back(TString("hHThetaMc_Neutral")); // Canvas spot 5
+  histnames_neutral.push_back(TString("hHPhiMc_Neutral")); // Canvas spot 6
   // charged isobar decay
-  histnames_charged.push_back(TString("hMIsobarMC_Charged")); // Canvas spot 1
+  histnames_charged.push_back(TString("hMIsobarMc_Charged")); // Canvas spot 1
   histnames_charged.push_back(TString("spacer")); // Canvas spot 2
-  histnames_charged.push_back(TString("hGJMC_Charged")); // Canvas spot 3
-  histnames_charged.push_back(TString("hTYMC_Charged")); // Canvas spot 4
-  histnames_charged.push_back(TString("hHThetaMC_Charged")); // Canvas spot 5
-  histnames_charged.push_back(TString("hHPhiMC_Charged")); // Canvas spot 6
+  histnames_charged.push_back(TString("hGJMc_Charged")); // Canvas spot 3
+  histnames_charged.push_back(TString("hTYMc_Charged")); // Canvas spot 4
+  histnames_charged.push_back(TString("hHThetaMc_Charged")); // Canvas spot 5
+  histnames_charged.push_back(TString("hHPhiMc_Charged")); // Canvas spot 6
 
   booky_setup_map.insert(std::pair<TString, std::vector<TString> >("Booky_neutral_isobar", histnames_neutral));
   booky_setup_map.insert(std::pair<TString, std::vector<TString> >("Booky_charged_isobar", histnames_charged));
@@ -268,7 +268,7 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
         std::string hnamemc(histlist[i].Data());
         // create new string with MC exchanged for Diff
         std::string hnamediff(hnamemc);
-        int pos = hnamemc.find("MC");
+        int pos = hnamemc.find("Mc");
         hnamediff.erase(pos, 2);
         hnamediff.insert(pos, "Diff");
         // create new string with MC exchanged for RelDiff
@@ -378,9 +378,9 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
     TObject *obj;
     while ((obj = histiter())) {
       TString s(obj->GetName());
-      if(s.EndsWith("MC"))
+      if(s.EndsWith("Mc"))
         mclist.Add(obj);
-      else if(s.Contains("MC_"))
+      else if(s.Contains("Mc_"))
         mclist.Add(obj);
     }
     make1DOverviewCanvas(infile, outfile, &mclist, dirname);
@@ -391,7 +391,7 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
       std::string hnamemc(mchist->GetName());
       // create new string with MC exchanged for Diff
       std::string hnamediff(hnamemc);
-      int pos = hnamemc.find("MC");
+      int pos = hnamemc.find("Mc");
       hnamediff.erase(pos, 2);
       hnamediff.insert(pos, "Diff");
 
@@ -448,7 +448,7 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
       std::string hnamemc(mchist2d->GetName());
       // create new string with MC exchanged for Diff
       std::string hnamediff(hnamemc);
-      int pos = hnamemc.find("MC");
+      int pos = hnamemc.find("Mc");
       hnamediff.erase(pos, 2);
       hnamediff.insert(pos, "Diff");
       // create new string with MC exchanged for RelDiff
@@ -491,9 +491,9 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
     TObject *obj;
     while ((obj = histiter())) {
       TString s(obj->GetName());
-      if (s.EndsWith("MC"))
+      if (s.EndsWith("Mc"))
         mclist.Add(obj);
-      else if (s.Contains("MC_"))
+      else if (s.Contains("Mc_"))
         mclist.Add(obj);
     }
     histiter = TIter(&mclist);
@@ -504,7 +504,7 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
       std::string hnamemc(hist->GetName());
       // create new string with MC exchanged for Diff
       std::string hname(hnamemc);
-      int pos = hnamemc.find("MC");
+      int pos = hnamemc.find("Mc");
       hname.erase(pos, 2);
       hname.insert(pos, "Diff");
       // create new string with MC exchanged for Data
@@ -547,7 +547,7 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
       std::string hnamemc(mchist2d->GetName());
       // create new string with MC exchanged for Diff
       std::string hnamediff(hnamemc);
-      int pos = hnamemc.find("MC");
+      int pos = hnamemc.find("Mc");
       hnamediff.erase(pos, 2);
       hnamediff.insert(pos, "Diff");
       // create new string with MC exchanged for Data
