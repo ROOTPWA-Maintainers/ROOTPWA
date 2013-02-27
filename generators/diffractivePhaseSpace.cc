@@ -126,7 +126,7 @@ diffractivePhaseSpace::event()
   // construct primary vertex and beam
   // use the primary Vertex Generator if available
 	if(_beamAndVertexGenerator) {
-		_beamAndVertexGenerator->event();
+		assert(_beamAndVertexGenerator->event());
 		_vertex = _beamAndVertexGenerator->getVertex();
 		_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
 	} else {

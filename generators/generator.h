@@ -24,7 +24,6 @@ namespace rpwa {
 
 		virtual ~generator() {
 			delete _pickerFunction;
-			delete _beamAndVertexGenerator;
 		};
 
 		virtual unsigned int event() = 0;

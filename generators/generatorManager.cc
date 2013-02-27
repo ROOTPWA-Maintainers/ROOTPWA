@@ -166,12 +166,12 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			printErr << "'beamSimulation' section in reaction file contains errors." << endl;
 			return false;
 		} else if((*configBeamSimulation)["active"]) {
-			string histogramFileName;
-			if(not configBeamSimulation->lookupValue("beamFile", histogramFileName)) {
+			string beamFileName;
+			if(not configBeamSimulation->lookupValue("beamFile", beamFileName)) {
 				printErr << "'beamSimulation' section in reaction file is missing the 'beamFile' entry.";
 				return false;
 			}
-			_beamAndVertexGenerator = new beamAndVertexGenerator(histogramFileName,
+			_beamAndVertexGenerator = new beamAndVertexGenerator(beamFileName,
 			                                                     _beam.particle.mass(),
 			                                                     _target);
 			if(not _beamAndVertexGenerator->check()) {

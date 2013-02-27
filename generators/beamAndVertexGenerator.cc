@@ -93,10 +93,6 @@ beamAndVertexGenerator::beamAndVertexGenerator(string rootFileName,
 beamAndVertexGenerator::~beamAndVertexGenerator() {
 	if(_rootFile) {
 		_rootFile->Close();
-		delete _rootFile;
-	}
-	if(_beamTree) {
-		delete _beamTree;
 	}
 }
 
@@ -135,5 +131,5 @@ bool beamAndVertexGenerator::event() {
 		              _beamMomentumZ.first,
 		              _massBeamParticle);
 	}
-	return false;
+	return true;
 }
