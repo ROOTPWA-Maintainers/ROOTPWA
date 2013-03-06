@@ -29,7 +29,6 @@ class rootPwaConfig:
 	prodKinMomentaLeafName                = ""
 	decayKinPartNamesObjName              = ""
 	decayKinMomentaLeafName               = ""
-	fileNameConvention                    = ""
 	outputFileFormat                      = ""
 	outputCacheSize                       = 0
 
@@ -79,11 +78,6 @@ class rootPwaConfig:
 			self.decayKinPartNamesObjName              = self.config.get('amplitudes', 'decayKinPartNamesObjName')
 			self.decayKinMomentaLeafName               = self.config.get('amplitudes', 'decayKinMomentaLeafName')
 			self.outputCacheSize                       = self.config.get('amplitudes', 'outputCacheSize')
-
-			self.fileNameConvention                    = self.config.get('amplitudes', 'fileNameConvention').lower()
-			if not self.fileNameConvention in ['old', 'new']:
-				pyRootPwa.utils.printErr('"fileNameConvention" option of the "amplitude" section has to be either "old" or "new" (found "' + self.fileNameConvention + '). Aborting...')
-				sys.exit(1)
 
 			self.outputFileFormat                    = self.config.get('amplitudes', 'outputFileFormat').lower()
 			if not self.outputFileFormat in ['binary', 'ascii', 'root']:
