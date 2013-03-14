@@ -180,6 +180,8 @@ bool generatorManager::readReactionFile(const string& fileName) {
 				_beamAndVertexGenerator = NULL;
 				return false;
 			}
+			printSucc << "initialized beam package." << endl;
+			_beamAndVertexGenerator->print(printInfo);
 		} else {
 			printInfo << "beam package disabled." << endl;
 		}

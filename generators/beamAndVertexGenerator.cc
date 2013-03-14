@@ -81,6 +81,7 @@ beamAndVertexGenerator::beamAndVertexGenerator(string rootFileName,
 		          << " will be used as-is." << endl;
 		_sigmasPresent = false;
 	} else {
+		_sigmasPresent = true;
 		_beamTree->SetBranchAddress("vertex_x_position_sigma", &_vertexX.second);
 		_beamTree->SetBranchAddress("vertex_y_position_sigma", &_vertexY.second);
 		_beamTree->SetBranchAddress("beam_momentum_x_sigma", &_beamMomentumX.second);
@@ -132,4 +133,29 @@ bool beamAndVertexGenerator::event() {
 		              _massBeamParticle);
 	}
 	return true;
+}
+
+
+ostream& beamAndVertexGenerator::print(ostream& out) {
+
+	out << "Beam package information: " << endl;
+	out << "    Beam file loaded ....... ";
+	if(_rootFile) {
+		out << "Yes" << endl;
+	} else {
+		out << "No" << endl;
+	}
+	out << "    Beam tree loaded ....... ";
+	if(_beamTree) {
+		out << "Yes" << endl;
+	} else {
+		out << "No" << endl;
+	}
+	out << "    Sigmas found ........... ";
+	if(_sigmasPresent) {
+		out << "Yes" << endl;
+	} else {
+		out << "No" << endl;
+	}
+	return out;
 }

@@ -36,6 +36,8 @@ namespace rpwa {
 
 		const TLorentzVector& getBeam() { return _beam; }
 
+		std::ostream& print(std::ostream& out);
+
 	  private:
 
 		TFile* _rootFile;
