@@ -18,13 +18,13 @@ namespace rpwa {
 
 		std::ostream& print(std::ostream& out) {
 			out << "Beam parameters:" << std::endl;
-			out << "    Particle name ..... " << particle.name() << std::endl;
-			out << "    Momentum .......... " << momentum << std::endl;
-			out << "    Momentum sigma .... " << momentumSigma << std::endl;
-			out << "    DxDz .............. " << DxDz << std::endl;
-			out << "    DxDz sigma ........ " << DxDzSigma << std::endl;
-			out << "    DyDz .............. " << DyDz << std::endl;
-			out << "    DyDz sigma ........ " << DyDzSigma << std::endl;
+			out << "    Particle name .......... " << particle.name() << std::endl;
+			out << "    Momentum ............... " << momentum << std::endl;
+			out << "    Momentum sigma ......... " << momentumSigma << std::endl;
+			out << "    DxDz ................... " << DxDz << std::endl;
+			out << "    DxDz sigma ............. " << DxDzSigma << std::endl;
+			out << "    DyDz ................... " << DyDz << std::endl;
+			out << "    DyDz sigma ............. " << DyDzSigma << std::endl;
 			return out;
 		}
 
