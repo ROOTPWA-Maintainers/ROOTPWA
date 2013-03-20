@@ -43,6 +43,7 @@
 #//      ROOT_LIBRARY_DIR       - ROOT library directory
 #//      ROOT_LIBRARIES         - linker flags for ROOT libraries
 #//      ROOT_AUX_LIBRARIES     - linker flags for auxiliary libraries
+#//      ROOT_EVE_LIBRARIES     - linker flags for auxiliary libraries
 #//      ROOTCINT_EXECUTABLE    - path to rootcint program
 #//      ROOT_LIBS              - list of ROOT library files
 #//	 
@@ -140,6 +141,10 @@ else()
 
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --auxlibs
 		OUTPUT_VARIABLE ROOT_AUX_LIBRARIES
+		OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --evelibs
+		OUTPUT_VARIABLE ROOT_EVE_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	find_program(ROOTCINT_EXECUTABLE rootcint)
@@ -246,6 +251,32 @@ if(ROOT_FOUND)
 		unset(_LIBNAME)
 	endforeach()
 	unset(_LIBRARY)
+
+	# create list of external libraries from root-config output, for evelibs this time
+	separate_arguments(ROOT_EVE_LIBRARIES)
+	# remove first -L entry
+	list(REMOVE_AT ROOT_EVE_LIBRARIES 0)
+	# loop over -l entries
+	foreach(_LIBRARY ${ROOT_EVE_LIBRARIES})
+		# extract library name from compiler flag
+		string(REGEX MATCH "^-l...(.*)$" _LIBNAME "${_LIBRARY}")
+		if(_LIBNAME)
+			string(REGEX REPLACE "^-.(.*)$" "\\1" _LIBNAME "${_LIBNAME}")
+			# check whether libraries exist
+			find_library(_EVE_LIB_${_LIBNAME}
+				NAMES ${_LIBNAME}
+				HINTS ${ROOT_LIBRARY_DIR})
+			if(NOT _EVE_LIB_${_LIBNAME})
+				set(ROOT_FOUND FALSE)
+				set(ROOT_ERROR_REASON "${ROOT_ERROR_REASON} Cannot find ROOT library '${_LIBNAME}'.")
+			else()
+				list(APPEND ROOT_LIBS ${_EVE_LIB_${_LIBNAME}})
+				list(APPEND ROOT_LIBRARIES -l${_LIBNAME})
+			endif()
+			unset(_EVE_LIB_${_LIBNAME})
+		endif()
+		unset(_LIBNAME)
+	endforeach()
 
 endif()
 
