@@ -316,7 +316,7 @@ void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, doubl
 	hBunch.isobar_mass[tree_index]->Fill(isobar.M(), weight);
 }
 
-HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVector *beam = NULL) {
+HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVector *beam = NULL, bool first = true) {
 	HelicityAngles temp;
 	
 	TVector3 zaxis_gjf;
@@ -333,7 +333,7 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 	
 	// boost NParticleState into isobar rest frame
 	TLorentzVector particle;
-	if(isobar.getParticle(0)->q() == 0)
+	if(isobar.getParticle(0)->q() == 0 && first)
 		particle = isobar.getParticle(0)->p();
 	else
 		particle = isobar.getParticle(1)->p();
@@ -899,7 +899,8 @@ createWeightedPlots(const std::string& dataFileName,
 				if (state.n() == npart - 1 && state.q() == 0) {
 					// this is a neutral isobar state with n-1 (here 2) final state particles
 					fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_neutral_isobar);
-					fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_neutral_isobar);
+					fillWeightedHelicityAnglePlots(calculateHelicityAngles(state, NULL,  true), weight, itree, HHB_neutral_isobar);
+					fillWeightedHelicityAnglePlots(calculateHelicityAngles(state, NULL, false), weight, itree, HHB_neutral_isobar);
 				}
 				else if (state.n() == npart - 1 && state.q() == -1) {
 					// this is a negativly charged isobar state with n-1 (here 2) final state particles
