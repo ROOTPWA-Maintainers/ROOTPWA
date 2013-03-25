@@ -684,7 +684,7 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 				outfile->cd("global");
 				TH2D* hmcglob = (TH2D*) outfile->Get(std::string("global/" + hnamemcglob).c_str());
 				if (hmcglob == NULL) {
-					hmcglob = new TH2D(hnamemcglob.c_str(), mchist2d->GetTitle(), mchist->GetNbinsX(),
+					hmcglob = new TH2D(hnamemcglob.c_str(), mchist2d->GetTitle(), mchist2d->GetNbinsX(),
 							   mchist2d->GetXaxis()->GetXmin(), mchist2d->GetXaxis()->GetXmax(), mchist2d->GetNbinsY(),
 							   mchist2d->GetYaxis()->GetXmin(), mchist2d->GetYaxis()->GetXmax());
 					hmcglob->SetXTitle(mchist2d->GetXaxis()->GetTitle());
