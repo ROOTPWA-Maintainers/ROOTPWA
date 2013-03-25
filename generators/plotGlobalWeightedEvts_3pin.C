@@ -419,10 +419,8 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 			TKey *keyI;
 			while ((keyI = dynamic_cast<TKey*>(histiter()))) {
 				const std::string s(keyI->GetName());
-				if ((s.length() >= 2 && s.substr(s.length()-2, 2) == "Mc") ||
-				    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McPsp") ||
+				if ((s.length() >= 5 && s.substr(s.length()-5, 5) == "McPsp") ||
 				    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McAcc") ||
-				    s.find("Mc_") != std::string::npos ||
 				    s.find("McPsp_") != std::string::npos ||
 				    s.find("McAcc_") != std::string::npos) {
 					twoMc = true;
