@@ -43,7 +43,6 @@ struct GJHistBunch {
 	std::vector<TH1D*> isobar_mass;
 	std::vector<TH1D*> costheta_GJF;
 	std::vector<TH1D*> phi_GJF;
-	std::vector<TH1D*> costheta_GJF_MC_raw;
 	std::vector<TH2D*> costheta_GJF_tprime;
 
 	// resolved for positive and negative reflectivity, and flat wave
@@ -121,23 +120,6 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 		temp.costheta_GJF.push_back(hGJMc);
 	}
 
-	if (twoMc) {
-		TH1D* hGJMcPsp_raw = new TH1D(("hGJMcPsp_raw" + name_prefix).c_str(), "Cos Gottfried-Jackson Theta (unweighted McPsp)", nbinsang, -1, 1);
-		hGJMcPsp_raw->SetXTitle("isobar cos(#theta_{GJ})");
-		hGJMcPsp_raw->SetYTitle("# of events");
-		temp.costheta_GJF_MC_raw.push_back(hGJMcPsp_raw);
-		TH1D* hGJMcAcc_raw = new TH1D(("hGJMcAcc_raw" + name_prefix).c_str(), "Cos Gottfried-Jackson Theta (unweighted McAcc)", nbinsang, -1, 1);
-		hGJMcAcc_raw->SetXTitle("isobar cos(#theta_{GJ})");
-		hGJMcAcc_raw->SetYTitle("# of events");
-		temp.costheta_GJF_MC_raw.push_back(hGJMcAcc_raw);
-	} else {
-		TH1D* hGJMc_raw = new TH1D(("hGJMc_raw" + name_prefix).c_str(),
-					   "Cos Gottfried-Jackson Theta (unweighted Mc)", nbinsang, -1, 1);
-		hGJMc_raw->SetXTitle("isobar cos(#theta_{GJ})");
-		hGJMc_raw->SetYTitle("# of events");
-		temp.costheta_GJF_MC_raw.push_back(hGJMc_raw);
-	}
-	
 	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Data)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
 	hGJtData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJtData->SetYTitle("t' [GeV]");
@@ -307,7 +289,6 @@ void fillWeightedHelicityAnglePlots(const HelicityAngles &ha, double weight, uns
 void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, double weightPosRef, double weightNegRef, double weightFlat, double tprime, unsigned int tree_index, GJHistBunch &hBunch) {
 	hBunch.costheta_GJF[tree_index]->Fill(isobar.CosTheta(), weight);
 	if (tree_index != 0) {
-		hBunch.costheta_GJF_MC_raw[tree_index-1]->Fill(isobar.CosTheta());
 		hBunch.costheta_GJF_PosRef[tree_index-1]->Fill(isobar.CosTheta(), weightPosRef);
 		hBunch.costheta_GJF_NegRef[tree_index-1]->Fill(isobar.CosTheta(), weightNegRef);
 		hBunch.costheta_GJF_Flat[tree_index-1]->Fill(isobar.CosTheta(), weightFlat);
