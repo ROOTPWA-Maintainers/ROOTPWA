@@ -21,6 +21,7 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <THStack.h>
+#include <TKey.h>
 #include <TLorentzVector.h>
 #include <TMath.h>
 #include <TROOT.h>
@@ -354,28 +355,29 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 
 
 void makeDifferencePlots(TDirectory* dir) {
-	// make list of MC Histograms
+	// create list of histograms to compare data and mc
 	TList mclist;
-	TList *histlist = dir->GetListOfKeys();
-	TIter histiter(histlist);
-	TObject *obj;
-	while ((obj = histiter())) {
-		const std::string s(obj->GetName());
+	TIter histiter(dir->GetListOfKeys());
+	TKey* key;
+	while ((key = dynamic_cast<TKey*>(histiter()))) {
+		const std::string s(key->GetName());
 		if ((s.length() >= 2 && s.substr(s.length()-2, 2) == "Mc") ||
 		    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McPsp") ||
 		    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McAcc") ||
 		    s.find("Mc_") != std::string::npos ||
 		    s.find("McPsp_") != std::string::npos ||
 		    s.find("McAcc_") != std::string::npos) {
-			mclist.Add(obj);
+			mclist.Add(key);
 		}
 	}
+
+	// process 1D histograms
 	histiter = TIter(&mclist);
-	TH1D *diffhist, *reldiffhist, *mchist, *datahist;
-	double scale;
-	while ((mchist = (TH1D*) histiter())) {
+	while ((key = dynamic_cast<TKey*>(histiter()))) {
+		key->Print();
+		key->Dump();
 		// generate difference histograms
-		std::string hnamemc(mchist->GetName());
+		std::string hnamemc(key->GetName());
 		int pos = hnamemc.find("Mc");
 		// create new string with MC exchanged for Diff
 		std::string hnamediff(hnamemc);
@@ -394,6 +396,7 @@ void makeDifferencePlots(TDirectory* dir) {
 		}
 		hnamedata.insert(pos, "Data");
 		
+		TH1D *diffhist, *reldiffhist, *mchist, *datahist;
 		dir->GetObject(hnamediff.c_str(), diffhist);
 		dir->GetObject(hnamereldiff.c_str(), reldiffhist);
 		dir->GetObject(hnamedata.c_str(), datahist);
@@ -401,7 +404,7 @@ void makeDifferencePlots(TDirectory* dir) {
 		if (!diffhist) {
 			if (datahist) {
 				dir->cd();
-				scale = datahist->Integral();
+				double scale = datahist->Integral();
 				scale = scale / (mchist->Integral());
 				mchist->Scale(scale);
 				
@@ -422,11 +425,9 @@ void makeDifferencePlots(TDirectory* dir) {
 	}
 	
 	histiter = TIter(&mclist);
-	TH2D *diffhist2d, *reldiffhist2d, *mchist2d, *datahist2d;
-	scale = 1.0;
-	while ((mchist2d = (TH2D*) histiter())) {
+	while ((key = dynamic_cast<TKey*>(histiter()))) {
 		// generate difference histograms
-		std::string hnamemc(mchist2d->GetName());
+		std::string hnamemc(key->GetName());
 		int pos = hnamemc.find("Mc");
 		// create new string with MC exchanged for Diff
 		std::string hnamediff(hnamemc);
@@ -445,6 +446,7 @@ void makeDifferencePlots(TDirectory* dir) {
 		}
 		hnamedata.insert(pos, "Data");
 		
+		TH2D *diffhist2d, *reldiffhist2d, *mchist2d, *datahist2d;
 		dir->GetObject(hnamediff.c_str(), diffhist2d);
 		dir->GetObject(hnamereldiff.c_str(), reldiffhist2d);
 		dir->GetObject(hnamedata.c_str(), datahist2d);
@@ -452,7 +454,7 @@ void makeDifferencePlots(TDirectory* dir) {
 		if (!diffhist2d) {
 			if (datahist2d) {
 				dir->cd();
-				scale = datahist2d->Integral();
+				double scale = datahist2d->Integral();
 				scale = scale / (mchist2d->Integral());
 				mchist2d->Scale(scale);
 				
