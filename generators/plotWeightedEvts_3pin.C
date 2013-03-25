@@ -583,19 +583,6 @@ createWeightedPlots(const std::string& dataFileName,
 		hM.push_back(hMMc);
 	}
 	
-	vector<TH1D*> hThetaLab;
-	TH1D* hThetaLabData = new TH1D("hThetaLabData", "Cos Theta Lab (Data)", 100, 0.997, 1);
-	hThetaLab.push_back(hThetaLabData);
-	if (mcAccFile != NULL) {
-		TH1D* hThetaLabMcPsp = new TH1D("hThetaLabMcPsp", "Cos Theta Lab (McPsp)", 100, 0.997, 1);
-		hThetaLab.push_back(hThetaLabMcPsp);
-		TH1D* hThetaLabMcAcc = new TH1D("hThetaLabMcAcc", "Cos Theta Lab (McAcc)", 100, 0.997, 1);
-		hThetaLab.push_back(hThetaLabMcAcc);
-	} else {
-		TH1D* hThetaLabMc = new TH1D("hThetaLabMc", "Cos Theta Lab (Mc)", 100, 0.997, 1);
-		hThetaLab.push_back(hThetaLabMc);
-	}
-	
 	// Dalitz plots
 	std::vector<TH2D*> dalitz_neutral;
 	TH2D* hDalitzData = new TH2D("hDalitzData", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
@@ -775,11 +762,6 @@ createWeightedPlots(const std::string& dataFileName,
 			double tprime = event.tprime();
 			//cout << tprime << endl;
 			unsigned int npart = event.nParticles();
-			// loop over pions
-			for (unsigned int ipart = 0; ipart < npart; ++ipart) {
-				TLorentzVector p = event.getParticle(ipart).p();
-				hThetaLab[itree]->Fill(p.CosTheta(), weight);
-			}
 			
 			// ----dalitz plots
 			// make all combinations
