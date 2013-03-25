@@ -844,7 +844,7 @@ createWeightedPlots(const std::string& dataFileName,
 				
 				const NParticleState& state = event.getState(is);
 				if (state.n() == npart) {
-					hM[itree]->Fill(state.p().M());
+					hM[itree]->Fill(state.p().M(), weight);
 				}
 				if (state.n() == npart - 1 && state.q() == 0) {
 					// this is a neutral isobar state with n-1 (here 2) final state particles
