@@ -21,6 +21,7 @@
 #include <TFile.h>
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TKey.h>
 #include <TLatex.h>
 #include <TLine.h>
 #include <TROOT.h>
@@ -397,24 +398,27 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 	// two sets of phasespace events
 	bool twoMc(false);
 	{
-		TList *dirlist = infile->GetListOfKeys();
-		TIter diriter(dirlist);
-		TDirectory *dir;
+		TIter diriter(infile->GetListOfKeys());
+		TKey *keyO;
 	
-		while ((dir = (TDirectory *)diriter())) {
-			std::string dirname = dir->GetName();
-			// check if directory is mass bin dir
-			unsigned int pointpos = dirname.find(".");
-			if(pointpos == 0 || pointpos == dirname.size()) continue;
+		while ((keyO = dynamic_cast<TKey*>(diriter()))) {
+			// check if keyO points to a TDirectory
+			if (!TClass::GetClass(keyO->GetClassName())->InheritsFrom("TDirectory"))
+				continue;
 
-			infile->cd(dir->GetName());
+			// check if this directory is a mass bin dir
+			const std::string dirname = keyO->GetName();
+			const size_t pointpos = dirname.find(".");
+			if(pointpos == 0 || pointpos == dirname.size())
+				continue;
+
+			TDirectory* dir = dynamic_cast<TDirectory*>(keyO->ReadObj());
+			assert(dir != NULL);
 		
-			TList mclist;
-			TList *histlist = gDirectory->GetListOfKeys();
-			TIter histiter(histlist);
-			TObject *obj;
-			while ((obj = histiter())) {
-				const std::string s(obj->GetName());
+			TIter histiter(dir->GetListOfKeys());
+			TKey *keyI;
+			while ((keyI = dynamic_cast<TKey*>(histiter()))) {
+				const std::string s(keyI->GetName());
 				if ((s.length() >= 2 && s.substr(s.length()-2, 2) == "Mc") ||
 				    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McPsp") ||
 				    (s.length() >= 5 && s.substr(s.length()-5, 5) == "McAcc") ||
@@ -425,6 +429,8 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 					break;
 				}
 			}
+
+			delete dir;
 
 			if (twoMc) {
 				break;
@@ -568,7 +574,7 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 			make2DOverviewCanvas(mchist2d, datahist2d, diffhist2d, reldiffhist2d, mass);
 		}
 	}
-	
+
 	dirlist = infile->GetListOfKeys();
 	infile->cd();
 	diriter = TIter(dirlist);
@@ -699,7 +705,7 @@ void plotGlobalWeightedEvts_3pin(TString input_filename, TString output_filename
 			}
 		}
 	}
-	
+
 	makeBookies();
 	
 	std::cout<< "saving to disk..." <<std::endl;
