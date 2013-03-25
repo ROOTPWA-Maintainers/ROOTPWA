@@ -355,8 +355,10 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 
 
 void makeDifferencePlots(TDirectory* dir) {
-	// create list of histograms to compare data and mc
-	TList mclist;
+	// create list of histograms to compare data and mc, and to calculate
+	// the acceptance
+	TList plotsDifference;
+	TList plotsAcceptance;
 	TIter histiter(dir->GetListOfKeys());
 	TKey* key;
 	while ((key = dynamic_cast<TKey*>(histiter()))) {
@@ -367,64 +369,50 @@ void makeDifferencePlots(TDirectory* dir) {
 		    s.find("Mc_") != std::string::npos ||
 		    s.find("McPsp_") != std::string::npos ||
 		    s.find("McAcc_") != std::string::npos) {
-			mclist.Add(key);
+			plotsDifference.Add(key);
+		}
+		if ((s.length() >= 5 && s.substr(s.length()-5, 5) == "McAcc") ||
+		    s.find("McAcc_") != std::string::npos) {
+			plotsAcceptance.Add(key);
 		}
 	}
 
-	// process 1D histograms
-	histiter = TIter(&mclist);
+	// process histograms for acceptance
+	// process those first as some histograms are rescaled for creating the
+	// difference plots
+	histiter = TIter(&plotsAcceptance);
 	while ((key = dynamic_cast<TKey*>(histiter()))) {
-		key->Print();
-		key->Dump();
 		// generate difference histograms
-		std::string hnamemc(key->GetName());
-		int pos = hnamemc.find("Mc");
-		// create new string with MC exchanged for Diff
-		std::string hnamediff(hnamemc);
-		hnamediff.erase(pos, 2);
-		hnamediff.insert(pos, "Diff");
-		// create new string with MC exchanged for RelDiff
-		std::string hnamereldiff(hnamemc);
-		hnamereldiff.erase(pos, 2);
-		hnamereldiff.insert(pos, "RelDiff");
-		// create new string with MC exchanged for Data
-		std::string hnamedata(hnamemc);
-		if (hnamemc.substr(pos, 5) == "McPsp" || hnamemc.substr(pos, 5) == "McAcc") {
-			hnamedata.erase(pos, 5);
-		} else {
-			hnamedata.erase(pos, 2);
-		}
-		hnamedata.insert(pos, "Data");
+		const std::string nameMcAcc(key->GetName());
+		const size_t pos = nameMcAcc.find("McAcc");
+
+		std::string nameMcPsp(nameMcAcc);
+		nameMcPsp.erase(pos, 5);
+		nameMcPsp.insert(pos, "McPsp");
+
+		std::string nameAcceptance(nameMcAcc);
+		nameAcceptance.erase(pos, 5);
+		nameAcceptance.insert(pos, "Acceptance");
+
+		TH1* histMcAcc;
+		dir->GetObject(nameMcAcc.c_str(), histMcAcc);
+		TH1* histMcPsp;
+		dir->GetObject(nameMcPsp.c_str(), histMcPsp);
 		
-		TH1D *diffhist, *reldiffhist, *mchist, *datahist;
-		dir->GetObject(hnamediff.c_str(), diffhist);
-		dir->GetObject(hnamereldiff.c_str(), reldiffhist);
-		dir->GetObject(hnamedata.c_str(), datahist);
-		dir->GetObject(hnamemc.c_str(), mchist);
-		if (!diffhist) {
-			if (datahist) {
-				dir->cd();
-				double scale = datahist->Integral();
-				scale = scale / (mchist->Integral());
-				mchist->Scale(scale);
-				
-				diffhist = new TH1D(*mchist);
-				diffhist->SetName(hnamediff.c_str());
-				diffhist->SetTitle("");
-				diffhist->Add(datahist, -1.);
-				diffhist->SetYTitle("# of events difference(MC-Data)");
-				diffhist->Write();
-				
-				reldiffhist = new TH1D(*diffhist);
-				reldiffhist->SetName(hnamereldiff.c_str());
-				reldiffhist->Divide(datahist);
-				reldiffhist->SetYTitle("relative difference((MC-Data)/Data)");
-				reldiffhist->Write();
-			}
+		if (histMcAcc && histMcPsp) {
+			dir->cd();
+			
+			TH1* histAcceptance = dynamic_cast<TH1*>(histMcAcc->Clone(nameAcceptance.c_str()));
+			assert(histAcceptance != NULL);
+			histAcceptance->SetTitle("");
+			histAcceptance->Divide(histMcPsp);
+			histAcceptance->SetYTitle("acceptance (acc. MC / PS MC)");
+			histAcceptance->Write(NULL, TObject::kOverwrite);
 		}
 	}
-	
-	histiter = TIter(&mclist);
+
+	// process histograms for difference
+	histiter = TIter(&plotsDifference);
 	while ((key = dynamic_cast<TKey*>(histiter()))) {
 		// generate difference histograms
 		std::string hnamemc(key->GetName());
@@ -446,42 +434,36 @@ void makeDifferencePlots(TDirectory* dir) {
 		}
 		hnamedata.insert(pos, "Data");
 		
-		TH2D *diffhist2d, *reldiffhist2d, *mchist2d, *datahist2d;
-		dir->GetObject(hnamediff.c_str(), diffhist2d);
-		dir->GetObject(hnamereldiff.c_str(), reldiffhist2d);
-		dir->GetObject(hnamedata.c_str(), datahist2d);
-		dir->GetObject(hnamemc.c_str(), mchist2d);
-		if (!diffhist2d) {
-			if (datahist2d) {
-				dir->cd();
-				double scale = datahist2d->Integral();
-				scale = scale / (mchist2d->Integral());
-				mchist2d->Scale(scale);
-				
-				diffhist2d = new TH2D(*mchist2d);
-				diffhist2d->SetName(hnamediff.c_str());
-				diffhist2d->SetTitle("diff(MC-Data)");
-				diffhist2d->Add(datahist2d, -1.);
-				double max = diffhist2d->GetMaximum();
-				if(max < TMath::Abs(diffhist2d->GetMinimum()))
-					max = TMath::Abs(diffhist2d->GetMinimum());
-				diffhist2d->SetMaximum(max);
-				diffhist2d->SetMinimum(-max);
-				diffhist2d->Write();
-				
-				reldiffhist2d = new TH2D(*diffhist2d);
-				reldiffhist2d->SetName(hnamereldiff.c_str());
-				reldiffhist2d->SetTitle("rel. diff((MC-Data)/Data)");
-				reldiffhist2d->Divide(datahist2d);
-				reldiffhist2d->SetMaximum();
-				reldiffhist2d->SetMinimum();
-				max = reldiffhist2d->GetMaximum();
-				if (max < TMath::Abs(reldiffhist2d->GetMinimum()))
-					max = TMath::Abs(reldiffhist2d->GetMinimum());
-				reldiffhist2d->SetMaximum(max);
-				reldiffhist2d->SetMinimum(-max);
-				reldiffhist2d->Write();
-			}
+		TH1* mchist;
+		dir->GetObject(hnamemc.c_str(), mchist);
+		TH1* datahist;
+		dir->GetObject(hnamedata.c_str(), datahist);
+		
+		if (datahist && mchist) {
+			dir->cd();
+			const double scale = datahist->Integral() / mchist->Integral();
+			mchist->Scale(scale);
+			
+			TH1* diffhist = dynamic_cast<TH1*>(mchist->Clone(hnamediff.c_str()));
+			assert(diffhist != NULL);
+			diffhist->SetTitle("");
+			diffhist->Add(datahist, -1.);
+			diffhist->SetYTitle("# of events difference(MC-Data)");
+			double max = std::max(std::abs(diffhist->GetMaximum()), std::abs(diffhist->GetMinimum()));
+			diffhist->SetMaximum( 1.1 * max);
+			diffhist->SetMinimum(-1.1 * max);
+			diffhist->Write(NULL, TObject::kOverwrite);
+			
+			TH1* reldiffhist = dynamic_cast<TH1*>(diffhist->Clone(hnamereldiff.c_str()));
+			assert(reldiffhist != NULL);
+			reldiffhist->Divide(datahist);
+			reldiffhist->SetYTitle("relative difference((MC-Data)/Data)");
+			reldiffhist->SetMaximum();
+			reldiffhist->SetMinimum();
+			max = std::max(std::abs(reldiffhist->GetMaximum()), std::abs(reldiffhist->GetMinimum()));
+			reldiffhist->SetMaximum( 1.1 * max);
+			reldiffhist->SetMinimum(-1.1 * max);
+			reldiffhist->Write(NULL, TObject::kOverwrite);
 		}
 	}
 }
@@ -905,14 +887,14 @@ createWeightedPlots(const std::string& dataFileName,
 		std::cout << std::endl;
 	}// end loop over trees
 	
-	GJHB_neutral_isobar.costheta_GJF_Stack[0]->Write();
-	GJHB_charged_isobar.costheta_GJF_Stack[0]->Write();
+	GJHB_neutral_isobar.costheta_GJF_Stack[0]->Write(NULL, TObject::kOverwrite);
+	GJHB_charged_isobar.costheta_GJF_Stack[0]->Write(NULL, TObject::kOverwrite);
 	if (mcAccFile != NULL) {
-		GJHB_neutral_isobar.costheta_GJF_Stack[1]->Write();
-		GJHB_charged_isobar.costheta_GJF_Stack[1]->Write();
+		GJHB_neutral_isobar.costheta_GJF_Stack[1]->Write(NULL, TObject::kOverwrite);
+		GJHB_charged_isobar.costheta_GJF_Stack[1]->Write(NULL, TObject::kOverwrite);
 	}
 	
-	outfile->Write();
+	outfile->Write(NULL, TObject::kOverwrite);
 	makeDifferencePlots(outdir);
 	
 	TList* Hlist = gDirectory->GetList();
