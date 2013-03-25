@@ -33,10 +33,15 @@
 
 using namespace std;
 
-int nbninsm = 144;
-int nbinsang = 80;
-
-
+const int    HISTLIMITS_COSTHETA_BINS = 100;
+const double HISTLIMITS_COSTHETA_MAX  =   1.;
+const double HISTLIMITS_COSTHETA_MIN  =  -1.;
+const int    HISTLIMITS_MASS_BINS = 1000;
+const double HISTLIMITS_MASS_MAX  =   10.;
+const double HISTLIMITS_MASS_MIN  =    0.;
+const int    HISTLIMITS_PHI_BINS = 100;
+const double HISTLIMITS_PHI_MAX  =  TMath::Pi();
+const double HISTLIMITS_PHI_MIN  = -TMath::Pi();
 
 struct GJHistBunch {
 	// base histograms
@@ -79,86 +84,85 @@ int getTotalCharge(std::pair<int, int> p) {
 
 GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc) {
 	GJHistBunch temp;
-	TH1D* hMIsobarData = new TH1D(("hMIsobarData_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Data)").c_str(), nbninsm,
-				      0.0, 1.5);
+	TH1D* hMIsobarData = new TH1D(("hMIsobarData_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Data)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 	hMIsobarData->SetXTitle("isobar mass [GeV]");
 	hMIsobarData->SetYTitle("# of events");
 	temp.isobar_mass.push_back(hMIsobarData);
 	if (twoMc) {
-		TH1D* hMIsobarMcPsp = new TH1D(("hMIsobarMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McPsp)").c_str(), nbninsm, 0.0, 1.5);
+		TH1D* hMIsobarMcPsp = new TH1D(("hMIsobarMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McPsp)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hMIsobarMcPsp->SetXTitle("isobar mass [GeV]");
 		hMIsobarMcPsp->SetYTitle("# of events");
 		temp.isobar_mass.push_back(hMIsobarMcPsp);
-		TH1D* hMIsobarMcAcc = new TH1D(("hMIsobarMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McAcc)").c_str(), nbninsm, 0.0, 1.5);
+		TH1D* hMIsobarMcAcc = new TH1D(("hMIsobarMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McAcc)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hMIsobarMcAcc->SetXTitle("isobar mass [GeV]");
 		hMIsobarMcAcc->SetYTitle("# of events");
 		temp.isobar_mass.push_back(hMIsobarMcAcc);
 	} else {
-		TH1D* hMIsobarMc = new TH1D(("hMIsobarMc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Mc)").c_str(), nbninsm, 0.0, 1.5);
+		TH1D* hMIsobarMc = new TH1D(("hMIsobarMc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Mc)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hMIsobarMc->SetXTitle("isobar mass [GeV]");
 		hMIsobarMc->SetYTitle("# of events");
 		temp.isobar_mass.push_back(hMIsobarMc);
 	}
 	
-	TH1D* hGJData = new TH1D(("hGJData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Data)").c_str(), nbinsang, -1, 1);
+	TH1D* hGJData = new TH1D(("hGJData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Data)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 	hGJData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJData->SetYTitle("# of events");
 	temp.costheta_GJF.push_back(hGJData);
 	if (twoMc) {
-		TH1D* hGJMcPsp = new TH1D(("hGJMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJMcPsp = new TH1D(("hGJMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJMcPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJMcPsp->SetYTitle("# of events");
 		temp.costheta_GJF.push_back(hGJMcPsp);
-		TH1D* hGJMcAcc = new TH1D(("hGJMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJMcAcc = new TH1D(("hGJMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJMcAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJMcAcc->SetYTitle("# of events");
 		temp.costheta_GJF.push_back(hGJMcAcc);
 	} else {
-		TH1D* hGJMc = new TH1D(("hGJMc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJMc = new TH1D(("hGJMc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJMc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJMc->SetYTitle("# of events");
 		temp.costheta_GJF.push_back(hGJMc);
 	}
 
-	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Data)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
+	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Data)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 	hGJtData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJtData->SetYTitle("t' [GeV]");
 	hGJtData->SetOption("COLZ");
 	temp.costheta_GJF_tprime.push_back(hGJtData);
 	if (twoMc) {
-		TH2D* hGJtMcPsp = new TH2D(("hGJtMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McPsp)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
+		TH2D* hGJtMcPsp = new TH2D(("hGJtMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hGJtMcPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMcPsp->SetYTitle("t' [GeV]");
 		hGJtMcPsp->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMcPsp);
-		TH2D* hGJtMcAcc = new TH2D(("hGJtMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McAcc)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
+		TH2D* hGJtMcAcc = new TH2D(("hGJtMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hGJtMcAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMcAcc->SetYTitle("t' [GeV]");
 		hGJtMcAcc->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMcAcc);
 	} else {
-		TH2D* hGJtMc = new TH2D(("hGJtMc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Mc)").c_str(), nbinsang, -1, 1, 40, 0., 2.);
+		TH2D* hGJtMc = new TH2D(("hGJtMc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hGJtMc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMc->SetYTitle("t' [GeV]");
 		hGJtMc->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMc);
 	}
 	
-	TH1D* hTYData = new TH1D(("hTYData_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (Data)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+	TH1D* hTYData = new TH1D(("hTYData_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (Data)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 	hTYData->SetXTitle("isobar #phi_{TY} [rad]");
 	hTYData->SetYTitle("# of events");
 	temp.phi_GJF.push_back(hTYData);
 	if (twoMc) {
-		TH1D* hTYMcPsp = new TH1D(("hTYMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (McPsp)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+		TH1D* hTYMcPsp = new TH1D(("hTYMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (McPsp)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 		hTYMcPsp->SetXTitle("isobar #phi_{TY} [rad]");
 		hTYMcPsp->SetYTitle("# of events");
 		temp.phi_GJF.push_back(hTYMcPsp);
-		TH1D* hTYMcAcc = new TH1D(("hTYMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (McAcc)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+		TH1D* hTYMcAcc = new TH1D(("hTYMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (McAcc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 		hTYMcAcc->SetXTitle("isobar #phi_{TY} [rad]");
 		hTYMcAcc->SetYTitle("# of events");
 		temp.phi_GJF.push_back(hTYMcAcc);
 	} else {
-		TH1D* hTYMc = new TH1D(("hTYMc_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (Mc)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+		TH1D* hTYMc = new TH1D(("hTYMc_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (Mc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 		hTYMc->SetXTitle("isobar #phi_{TY} [rad]");
 		hTYMc->SetYTitle("# of events");
 		temp.phi_GJF.push_back(hTYMc);
@@ -167,19 +171,19 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 	if (twoMc) {
 		THStack* hGJF_Stack_McPsp = new THStack(("hGJF_Stack_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str());
 	
-		TH1D* hGJF_Flat_McPsp = new TH1D(("hGJF_Flat_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Flat_McPsp = new TH1D(("hGJF_Flat_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Flat_McPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Flat_McPsp->SetYTitle("# of events");
 		temp.costheta_GJF_Flat.push_back(hGJF_Flat_McPsp);
 		hGJF_Stack_McPsp->Add(hGJF_Flat_McPsp);
 		
-		TH1D* hGJF_Neg_McPsp = new TH1D(("hGJF_Neg_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Neg_McPsp = new TH1D(("hGJF_Neg_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Neg_McPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Neg_McPsp->SetYTitle("# of events");
 		temp.costheta_GJF_NegRef.push_back(hGJF_Neg_McPsp);
 		hGJF_Stack_McPsp->Add(hGJF_Neg_McPsp);
 		
-		TH1D* hGJF_Pos_McPsp = new TH1D(("hGJF_Pos_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Pos_McPsp = new TH1D(("hGJF_Pos_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Pos_McPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Pos_McPsp->SetYTitle("# of events");
 		temp.costheta_GJF_PosRef.push_back(hGJF_Pos_McPsp);
@@ -189,19 +193,19 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 
 		THStack* hGJF_Stack_McAcc = new THStack(("hGJF_Stack_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str());
 	
-		TH1D* hGJF_Flat_McAcc = new TH1D(("hGJF_Flat_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Flat_McAcc = new TH1D(("hGJF_Flat_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Flat_McAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Flat_McAcc->SetYTitle("# of events");
 		temp.costheta_GJF_Flat.push_back(hGJF_Flat_McAcc);
 		hGJF_Stack_McAcc->Add(hGJF_Flat_McAcc);
 		
-		TH1D* hGJF_Neg_McAcc = new TH1D(("hGJF_Neg_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Neg_McAcc = new TH1D(("hGJF_Neg_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Neg_McAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Neg_McAcc->SetYTitle("# of events");
 		temp.costheta_GJF_NegRef.push_back(hGJF_Neg_McAcc);
 		hGJF_Stack_McAcc->Add(hGJF_Neg_McAcc);
 		
-		TH1D* hGJF_Pos_McAcc = new TH1D(("hGJF_Pos_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Pos_McAcc = new TH1D(("hGJF_Pos_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Pos_McAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Pos_McAcc->SetYTitle("# of events");
 		temp.costheta_GJF_PosRef.push_back(hGJF_Pos_McAcc);
@@ -211,19 +215,19 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 	} else {
 		THStack* hGJF_Stack_Mc = new THStack(("hGJF_Stack_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str());
 	
-		TH1D* hGJF_Flat_Mc = new TH1D(("hGJF_Flat_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Flat_Mc = new TH1D(("hGJF_Flat_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Flat_Mc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Flat_Mc->SetYTitle("# of events");
 		temp.costheta_GJF_Flat.push_back(hGJF_Flat_Mc);
 		hGJF_Stack_Mc->Add(hGJF_Flat_Mc);
 		
-		TH1D* hGJF_Neg_Mc = new TH1D(("hGJF_Neg_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Neg_Mc = new TH1D(("hGJF_Neg_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Neg_Mc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Neg_Mc->SetYTitle("# of events");
 		temp.costheta_GJF_NegRef.push_back(hGJF_Neg_Mc);
 		hGJF_Stack_Mc->Add(hGJF_Neg_Mc);
 		
-		TH1D* hGJF_Pos_Mc = new TH1D(("hGJF_Pos_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), nbinsang, -1, 1);
+		TH1D* hGJF_Pos_Mc = new TH1D(("hGJF_Pos_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Pos_Mc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Pos_Mc->SetYTitle("# of events");
 		temp.costheta_GJF_PosRef.push_back(hGJF_Pos_Mc);
@@ -237,42 +241,41 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 
 HelicityHistBunch HelicityHistBunchFactory(const std::string& name_prefix, const bool twoMc) {
 	HelicityHistBunch temp;
-	TH1D* hHThetaData = new TH1D(("hHThetaData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (Data)").c_str(), nbinsang, -1,
-				     1);
+	TH1D* hHThetaData = new TH1D(("hHThetaData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (Data)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 	hHThetaData->SetXTitle("cos(#theta_{hel}) of #pi^{0} from isobar");
 	hHThetaData->SetYTitle("# of events");
 	temp.costheta_HF.push_back(hHThetaData);
 	if (twoMc) {
-		TH1D* hHThetaMcPsp = new TH1D(("hHThetaMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (McPsp)").c_str(), nbinsang, -1, 1);
+		TH1D* hHThetaMcPsp = new TH1D(("hHThetaMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hHThetaMcPsp->SetXTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
 		hHThetaMcPsp->SetYTitle("# of events");
 		temp.costheta_HF.push_back(hHThetaMcPsp);
-		TH1D* hHThetaMcAcc = new TH1D(("hHThetaMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (McAcc)").c_str(), nbinsang, -1, 1);
+		TH1D* hHThetaMcAcc = new TH1D(("hHThetaMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hHThetaMcAcc->SetXTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
 		hHThetaMcAcc->SetYTitle("# of events");
 		temp.costheta_HF.push_back(hHThetaMcAcc);
 	} else {
-		TH1D* hHThetaMc = new TH1D(("hHThetaMc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (Mc)").c_str(), nbinsang, -1, 1);
+		TH1D* hHThetaMc = new TH1D(("hHThetaMc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Cos Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hHThetaMc->SetXTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
 		hHThetaMc->SetYTitle("# of events");
 		temp.costheta_HF.push_back(hHThetaMc);
 	}
 	
-	TH1D* hHPhiData = new TH1D(("hHPhiData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (Data)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+	TH1D* hHPhiData = new TH1D(("hHPhiData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (Data)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 	hHPhiData->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 	hHPhiData->SetYTitle("# of events");
 	temp.phi_HF.push_back(hHPhiData);
 	if (twoMc) {
-		TH1D* hHPhiMcPsp = new TH1D(("hHPhiMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (McPsp)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+		TH1D* hHPhiMcPsp = new TH1D(("hHPhiMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (McPsp)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 		hHPhiMcPsp->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 		hHPhiMcPsp->SetYTitle("# of events");
 		temp.phi_HF.push_back(hHPhiMcPsp);
-		TH1D* hHPhiMcAcc = new TH1D(("hHPhiMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (McAcc)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+		TH1D* hHPhiMcAcc = new TH1D(("hHPhiMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (McAcc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 		hHPhiMcAcc->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 		hHPhiMcAcc->SetYTitle("# of events");
 		temp.phi_HF.push_back(hHPhiMcAcc);
 	} else {
-		TH1D* hHPhiMc = new TH1D(("hHPhiMc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (Mc)").c_str(), nbinsang, -TMath::Pi(), TMath::Pi());
+		TH1D* hHPhiMc = new TH1D(("hHPhiMc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (Mc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 		hHPhiMc->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 		hHPhiMc->SetYTitle("# of events");
 		temp.phi_HF.push_back(hHPhiMc);
@@ -333,7 +336,6 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 	
 	return temp;
 }
-
 
 void makeDifferencePlots(TDirectory* dir) {
 	// create list of histograms to compare data and mc, and to calculate
@@ -448,21 +450,6 @@ void makeDifferencePlots(TDirectory* dir) {
 		}
 	}
 }
-
-TH2D* createDalitzHistogram(const std::string& name, const std::string& title, double mass, unsigned int treeentries) {
-	double rangelow = 0.0;
-	double rangehigh = pow(mass-0.1, 2);
-	unsigned int nbins = 0;
-	nbins = 0.6*TMath::Sqrt(treeentries)*(rangehigh-rangelow);
-	std::cout<<"nbins for mass "<<mass<<": "<<nbins<<std::endl;
-	// lower bound is 20 bins
-	if(nbins < 20) nbins = 20;
-	// upper bound is 130 bins
-	if(nbins > 130) nbins = 130;
-	TH2D* phist = new TH2D(name.c_str(), title.c_str(), nbins, rangelow, rangehigh, nbins, rangelow, rangehigh);
-	return phist;
-}
-
 
 void
 createWeightedPlots(const std::string& dataFileName,
@@ -584,58 +571,54 @@ createWeightedPlots(const std::string& dataFileName,
 
 	// --------------- global diagrams
 	std::vector<TH1D*> hM;
-	TH1D* hMData = new TH1D("hResMassData", "Mass (Data)", 60, 0.5, 2.5);
+	TH1D* hMData = new TH1D("hResMassData", "Mass (Data)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 	hM.push_back(hMData);
 	if (mcAccFile != NULL) {
-		TH1D* hMMcPsp = new TH1D("hResMassMcPsp", "Mass (McPsp)", 60, 0.5, 2.5);
+		TH1D* hMMcPsp = new TH1D("hResMassMcPsp", "Mass (McPsp)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hM.push_back(hMMcPsp);
-		TH1D* hMMcAcc = new TH1D("hResMassMcAcc", "Mass (McAcc)", 60, 0.5, 2.5);
+		TH1D* hMMcAcc = new TH1D("hResMassMcAcc", "Mass (McAcc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hM.push_back(hMMcAcc);
 	} else {
-		TH1D* hMMc = new TH1D("hResMassMc", "Mass (Mc)", 60, 0.5, 2.5);
+		TH1D* hMMc = new TH1D("hResMassMc", "Mass (Mc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hM.push_back(hMMc);
 	}
 	
 	vector<TH1D*> hThetaLab;
-	TH1D* hThetaLabData = new TH1D("hThetaLabData", "Cos Theta Lab (Data)", nbninsm, 0.997, 1);
+	TH1D* hThetaLabData = new TH1D("hThetaLabData", "Cos Theta Lab (Data)", 100, 0.997, 1);
 	hThetaLab.push_back(hThetaLabData);
 	if (mcAccFile != NULL) {
-		TH1D* hThetaLabMcPsp = new TH1D("hThetaLabMcPsp", "Cos Theta Lab (McPsp)", nbninsm, 0.997, 1);
+		TH1D* hThetaLabMcPsp = new TH1D("hThetaLabMcPsp", "Cos Theta Lab (McPsp)", 100, 0.997, 1);
 		hThetaLab.push_back(hThetaLabMcPsp);
-		TH1D* hThetaLabMcAcc = new TH1D("hThetaLabMcAcc", "Cos Theta Lab (McAcc)", nbninsm, 0.997, 1);
+		TH1D* hThetaLabMcAcc = new TH1D("hThetaLabMcAcc", "Cos Theta Lab (McAcc)", 100, 0.997, 1);
 		hThetaLab.push_back(hThetaLabMcAcc);
 	} else {
-		TH1D* hThetaLabMc = new TH1D("hThetaLabMc", "Cos Theta Lab (Mc)", nbninsm, 0.997, 1);
+		TH1D* hThetaLabMc = new TH1D("hThetaLabMc", "Cos Theta Lab (Mc)", 100, 0.997, 1);
 		hThetaLab.push_back(hThetaLabMc);
 	}
 	
 	// Dalitz plots
 	std::vector<TH2D*> dalitz_neutral;
-	TH2D* hDalitzData = createDalitzHistogram("hDalitzData",
-						  "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", massval, datatreeentries);
+	TH2D* hDalitzData = new TH2D("hDalitzData", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 	hDalitzData->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 	hDalitzData->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 	hDalitzData->SetOption("COLZ");
 	hDalitzData->SetStats(0);
 	dalitz_neutral.push_back(hDalitzData);
 	if (mcAccFile != NULL) {
-		TH2D* hDalitzMcPsp = createDalitzHistogram("hDalitzMcPsp",
-							   "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McPsp)", massval, datatreeentries);
+		TH2D* hDalitzMcPsp = new TH2D("hDalitzMcPsp", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McPsp)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hDalitzMcPsp->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcPsp->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcPsp->SetOption("COLZ");
 		hDalitzMcPsp->SetStats(0);
 		dalitz_neutral.push_back(hDalitzMcPsp);
-		TH2D* hDalitzMcAcc = createDalitzHistogram("hDalitzMcAcc",
-							   "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McAcc)", massval, datatreeentries);
+		TH2D* hDalitzMcAcc = new TH2D("hDalitzMcAcc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McAcc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hDalitzMcAcc->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcAcc->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcAcc->SetOption("COLZ");
 		hDalitzMcAcc->SetStats(0);
 		dalitz_neutral.push_back(hDalitzMcAcc);
 	} else {
-		TH2D* hDalitzMc = createDalitzHistogram("hDalitzMc",
-							"Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Mc)", massval, datatreeentries);
+		TH2D* hDalitzMc = new TH2D("hDalitzMc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Mc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hDalitzMc->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMc->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMc->SetOption("COLZ");
