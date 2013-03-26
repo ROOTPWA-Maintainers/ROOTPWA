@@ -29,6 +29,9 @@
 #include <TTree.h>
 
 #include <NParticleEvent.h>
+#ifndef __CINT__
+#include <particleDataTable.h>
+#endif // __CINT__
 #include <reportingUtils.hpp>
 
 using namespace std;
@@ -475,11 +478,15 @@ createWeightedPlots(const std::string& dataFileName,
 		    const std::string& mcAccDecayKinMomentaName,
 		    const std::string& massBin,
 		    const std::string& outFileName,
+		    const std::string& pdgFileName,
 		    const long int     treeCacheSize)
 {
 	// keep track of the processing time
 	TStopwatch timer;
 	timer.Start();
+
+        // initialize particle data table
+	rpwa::particleDataTable::readFile(pdgFileName);
 
 	// open data file
 	TFile* dataFile = TFile::Open(dataFileName.c_str());
@@ -492,14 +499,22 @@ createWeightedPlots(const std::string& dataFileName,
 	TClonesArray* dataProdKinPartNames(NULL);
 	dataFile->GetObject(dataProdKinPartNamesName.c_str(), dataProdKinPartNames);
 	assert(dataProdKinPartNames->GetEntries() == 1);
-	for (Int_t i=0; i<dataProdKinPartNames->GetEntries(); i++)
-		assert(((TObjString*)(dataProdKinPartNames->At(i)))->String().EqualTo("pi-"));
+	for (Int_t i=0; i<dataProdKinPartNames->GetEntries(); i++) {
+		if (!rpwa::particleDataTable::isInTable(((TObjString*)(dataProdKinPartNames->At(i)))->String().Data())) {
+			printErr << "Unknown particle '" << ((TObjString*)(dataProdKinPartNames->At(i)))->String() << "' found in input tree '" << dataFileName << ":" << dataTreeName << "'." << std::endl;
+			return;
+		}
+	}
 
 	TClonesArray* dataDecayKinPartNames(NULL);
 	dataFile->GetObject(dataDecayKinPartNamesName.c_str(), dataDecayKinPartNames);
 	assert(dataDecayKinPartNames->GetEntries() == 3);
-	for (Int_t i=0; i<dataDecayKinPartNames->GetEntries(); i++)
-		assert(((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(dataDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
+	for (Int_t i=0; i<dataDecayKinPartNames->GetEntries(); i++) {
+		if (!rpwa::particleDataTable::isInTable(((TObjString*)(dataDecayKinPartNames->At(i)))->String().Data())) {
+			printErr << "Unknown particle '" << ((TObjString*)(dataDecayKinPartNames->At(i)))->String() << "' found in input tree '" << dataFileName << ":" << dataTreeName << "'." << std::endl;
+			return;
+		}
+	}
 
 	// open weighted MC file
 	TFile* mcPspFile = TFile::Open(mcPspFileName.c_str());
@@ -512,14 +527,22 @@ createWeightedPlots(const std::string& dataFileName,
 	TClonesArray* mcPspProdKinPartNames(NULL);
 	mcPspFile->GetObject(mcPspProdKinPartNamesName.c_str(), mcPspProdKinPartNames);
 	assert(mcPspProdKinPartNames->GetEntries() == 1);
-	for (Int_t i=0; i<mcPspProdKinPartNames->GetEntries(); i++)
-		assert(((TObjString*)(mcPspProdKinPartNames->At(i)))->String().EqualTo("pi-"));
+	for (Int_t i=0; i<mcPspProdKinPartNames->GetEntries(); i++) {
+		if (!rpwa::particleDataTable::isInTable(((TObjString*)(mcPspProdKinPartNames->At(i)))->String().Data())) {
+			printErr << "Unknown particle '" << ((TObjString*)(mcPspProdKinPartNames->At(i)))->String() << "' found in input tree '" << mcPspFileName << ":" << mcPspTreeName << "'." << std::endl;
+			return;
+		}
+	}
 
 	TClonesArray* mcPspDecayKinPartNames(NULL);
 	mcPspFile->GetObject(mcPspDecayKinPartNamesName.c_str(), mcPspDecayKinPartNames);
 	assert(mcPspDecayKinPartNames->GetEntries() == 3);
-	for (Int_t i=0; i<mcPspDecayKinPartNames->GetEntries(); i++)
-		assert(((TObjString*)(mcPspDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(mcPspDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
+	for (Int_t i=0; i<mcPspDecayKinPartNames->GetEntries(); i++) {
+		if (!rpwa::particleDataTable::isInTable(((TObjString*)(mcPspDecayKinPartNames->At(i)))->String().Data())) {
+			printErr << "Unknown particle '" << ((TObjString*)(mcPspDecayKinPartNames->At(i)))->String() << "' found in input tree '" << mcPspFileName << ":" << mcPspTreeName << "'." << std::endl;
+			return;
+		}
+	}
 
 	// open weighted MC file
 	TFile* mcAccFile(NULL);
@@ -538,16 +561,24 @@ createWeightedPlots(const std::string& dataFileName,
 	if (mcAccFile != NULL) {
 		mcAccFile->GetObject(mcAccProdKinPartNamesName.c_str(), mcAccProdKinPartNames);
 		assert(mcAccProdKinPartNames->GetEntries() == 1);
-		for (Int_t i=0; i<mcAccProdKinPartNames->GetEntries(); i++)
-			assert(((TObjString*)(mcAccProdKinPartNames->At(i)))->String().EqualTo("pi-"));
+		for (Int_t i=0; i<mcAccProdKinPartNames->GetEntries(); i++) {
+			if (!rpwa::particleDataTable::isInTable(((TObjString*)(mcAccProdKinPartNames->At(i)))->String().Data())) {
+				printErr << "Unknown particle '" << ((TObjString*)(mcAccProdKinPartNames->At(i)))->String() << "' found in input tree '" << mcAccFileName << ":" << mcAccTreeName << "'." << std::endl;
+				return;
+			}
+		}
 	}
 
 	TClonesArray* mcAccDecayKinPartNames(NULL);
 	if (mcAccFile != NULL) {
 		mcAccFile->GetObject(mcAccDecayKinPartNamesName.c_str(), mcAccDecayKinPartNames);
 		assert(mcAccDecayKinPartNames->GetEntries() == 3);
-		for (Int_t i=0; i<mcAccDecayKinPartNames->GetEntries(); i++)
-			assert(((TObjString*)(mcAccDecayKinPartNames->At(i)))->String().EqualTo("pi-") || ((TObjString*)(mcAccDecayKinPartNames->At(i)))->String().EqualTo("pi0"));
+		for (Int_t i=0; i<mcAccDecayKinPartNames->GetEntries(); i++) {
+			if (!rpwa::particleDataTable::isInTable(((TObjString*)(mcAccDecayKinPartNames->At(i)))->String().Data())) {
+				printErr << "Unknown particle '" << ((TObjString*)(mcAccDecayKinPartNames->At(i)))->String() << "' found in input tree '" << mcAccFileName << ":" << mcAccTreeName << "'." << std::endl;
+				return;
+			}
+		}
 	}
 	
 	double massval = 0.0;
@@ -725,23 +756,25 @@ createWeightedPlots(const std::string& dataFileName,
 
 			assert(prodKinMomenta->GetEntries() == 1);
 			for (Int_t j=0; j<prodKinMomenta->GetEntries(); j++) {
-				if (((TObjString*)(prodKinPartNames->At(j)))->String().EqualTo("pi-")) {
-					beam->SetVectM(*((TVector3*)(prodKinMomenta->At(j))), 0.13957018);
-					qbeam = -1;
-				} else
-					assert(false);
+				const rpwa::particleProperties* pp = rpwa::particleDataTable::entry(((TObjString*)(prodKinPartNames->At(j)))->String().Data());
+				if (pp == NULL) {
+					printErr << "Unknown particle '" << ((TObjString*)(prodKinPartNames->At(i)))->String() << "' found in input tree." << std::endl;
+					return;
+				}
+				beam->SetVectM(*((TVector3*)(prodKinMomenta->At(j))), pp->mass());
+				qbeam = pp->charge();
 			}
 			assert(decayKinMomenta->GetEntries() == 3);
 			for (Int_t j=0; j<decayKinMomenta->GetEntries(); j++) {
+				const rpwa::particleProperties* pp = rpwa::particleDataTable::entry(((TObjString*)(decayKinPartNames->At(j)))->String().Data());
+				if (pp == NULL) {
+					printErr << "Unknown particle '" << ((TObjString*)(decayKinPartNames->At(i)))->String() << "' found in input tree." << std::endl;
+					return;
+				}
+
 				new((*p)[j]) TLorentzVector;
-				if (((TObjString*)(decayKinPartNames->At(j)))->String().EqualTo("pi-")) {
-					((TLorentzVector*)(p->At(j)))->SetVectM(*((TVector3*)(decayKinMomenta->At(j))), 0.13957018);
-					q->push_back(-1);
-				} else if (((TObjString*)(decayKinPartNames->At(j)))->String().EqualTo("pi0")) {
-					((TLorentzVector*)(p->At(j)))->SetVectM(*((TVector3*)(decayKinMomenta->At(j))), 0.1349766);
-					q->push_back(0);
-				} else
-					assert(false);
+				((TLorentzVector*)(p->At(j)))->SetVectM(*((TVector3*)(decayKinMomenta->At(j))), pp->mass());
+				q->push_back(pp->charge());
 			}
 			// in case its data tree (itree=0) put weights to 1
 			if (itree == 0) {
@@ -882,6 +915,9 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcDecayKinPartNamesName   = "decayKinParticles";
 	const std::string mcDecayKinMomentaName     = "decayKinMomenta";
 
+	// guess path to particleDataTable.txt
+	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/amplitude/particleDataTable.txt";
+
 	// set 25 MByte ROOT tree read cache
 	const long int    treeCacheSize             = 25000000;
 
@@ -889,7 +925,7 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	                    mcFileName,   mcTreeName,   mcProdKinPartNamesName,   mcProdKinMomentaName,   mcDecayKinPartNamesName,   mcDecayKinMomentaName,
 			    "",           "",           "",                       "",                     "",                        "",
 	                    massBin, outFileName,
-			    treeCacheSize);
+			    pdgFileName, treeCacheSize);
 }
 
 void
@@ -916,6 +952,9 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	const std::string mcAccDecayKinPartNamesName = "decayKinParticles";
 	const std::string mcAccDecayKinMomentaName   = "decayKinMomenta";
 
+	// guess path to particleDataTable.txt
+	const std::string pdgFileName               = std::string(getenv("ROOTPWA")) + "/amplitude/particleDataTable.txt";
+
 	// set 25 MByte ROOT tree read cache
 	const long int    treeCacheSize             = 25000000;
 
@@ -923,5 +962,5 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	                    mcPspFileName, mcPspTreeName, mcPspProdKinPartNamesName, mcPspProdKinMomentaName, mcPspDecayKinPartNamesName, mcPspDecayKinMomentaName,
 	                    mcAccFileName, mcAccTreeName, mcAccProdKinPartNamesName, mcAccProdKinMomentaName, mcAccDecayKinPartNamesName, mcAccDecayKinMomentaName,
 	                    massBin, outFileName,
-			    treeCacheSize);
+			    pdgFileName, treeCacheSize);
 }
