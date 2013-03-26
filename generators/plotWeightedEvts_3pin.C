@@ -428,11 +428,11 @@ void makeDifferencePlots(TDirectory* dir) {
 		if (datahist && mchist) {
 			dir->cd();
 			const double scale = datahist->Integral() / mchist->Integral();
-			mchist->Scale(scale);
 			
 			TH1* diffhist = dynamic_cast<TH1*>(mchist->Clone(hnamediff.c_str()));
 			assert(diffhist != NULL);
 			diffhist->SetTitle("");
+			diffhist->Scale(scale);
 			diffhist->Add(datahist, -1.);
 			diffhist->SetYTitle("# of events difference(MC-Data)");
 			double max = std::max(std::abs(diffhist->GetMaximum()), std::abs(diffhist->GetMinimum()));
