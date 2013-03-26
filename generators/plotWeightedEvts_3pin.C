@@ -42,6 +42,9 @@ const double HISTLIMITS_MASS_MIN  =    0.;
 const int    HISTLIMITS_PHI_BINS = 100;
 const double HISTLIMITS_PHI_MAX  =  TMath::Pi();
 const double HISTLIMITS_PHI_MIN  = -TMath::Pi();
+const int    HISTLIMITS_TPRIME_BINS = 400;
+const double HISTLIMITS_TPRIME_MAX  =   4.;
+const double HISTLIMITS_TPRIME_MIN  =   0.;
 
 struct GJHistBunch {
 	// base histograms
@@ -124,24 +127,24 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 		temp.costheta_GJF.push_back(hGJMc);
 	}
 
-	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Data)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Data)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 	hGJtData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJtData->SetYTitle("t' [GeV]");
 	hGJtData->SetOption("COLZ");
 	temp.costheta_GJF_tprime.push_back(hGJtData);
 	if (twoMc) {
-		TH2D* hGJtMcPsp = new TH2D(("hGJtMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH2D* hGJtMcPsp = new TH2D(("hGJtMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 		hGJtMcPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMcPsp->SetYTitle("t' [GeV]");
 		hGJtMcPsp->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMcPsp);
-		TH2D* hGJtMcAcc = new TH2D(("hGJtMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH2D* hGJtMcAcc = new TH2D(("hGJtMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 		hGJtMcAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMcAcc->SetYTitle("t' [GeV]");
 		hGJtMcAcc->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMcAcc);
 	} else {
-		TH2D* hGJtMc = new TH2D(("hGJtMc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH2D* hGJtMc = new TH2D(("hGJtMc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 		hGJtMc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMc->SetYTitle("t' [GeV]");
 		hGJtMc->SetOption("COLZ");
