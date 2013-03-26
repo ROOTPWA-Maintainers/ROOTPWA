@@ -114,6 +114,11 @@ public:
 		const double max = std::max(hist[0]->GetMaximum(), hist[1]->GetMaximum());
 		hist[0]->SetMaximum(max);
 		hist[1]->SetMaximum(max);
+
+		// skip mass bins without any entries
+		if (max == 0.) {
+			return;
+		}
 		
 		// force histogram with relative differences to a range
 		if (hist[3] != NULL) {
@@ -218,6 +223,11 @@ public:
 			histMc->Scale(scale);
 
 			double max = std::max(histData->GetMaximum(), histMc->GetMaximum());
+
+			// skip mass bins without any entries
+			if (max == 0.) {
+				return;
+			}
 
 			double spacePlot = 0.7;
 			double spaceDiff = 0.3;
