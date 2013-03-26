@@ -540,6 +540,7 @@ setupBookies(const std::vector<MassBin>& massBins,
 	// neutral and charged isobars
 	definition.insert(std::pair<std::string, BookyDefinition*>("BookyNeutralIsobar", new AnglesComparison("BookyNeutralIsobar", "Neutral")));
 	definition.insert(std::pair<std::string, BookyDefinition*>("BookyChargedIsobar", new AnglesComparison("BookyChargedIsobar", "Charged")));
+	definition.insert(std::pair<std::string, BookyDefinition*>("BookyRhoIsobar", new AnglesComparison("BookyRhoIsobar", "ChargedRho")));
 
 	// difference vs mass
 	definition.insert(std::pair<std::string, BookyDefinition*>("BookyDiffVsMass", new DiffVsMass("BookyDiffVsMass", outGlobal, massBins.size(), massBins.front().GetMassBinLower(), massBins.back().GetMassBinUpper())));

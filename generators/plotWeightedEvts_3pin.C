@@ -660,6 +660,12 @@ createWeightedPlots(const std::string& dataFileName,
 	// Helicity Histogram Bunch
 	HelicityHistBunch HHB_charged_isobar = HelicityHistBunchFactory("Charged", mcAccFile!=NULL);
 	
+	// charged isobar with rho mass cut
+	// GJ Histogram Bunch MC
+	GJHistBunch GJHB_rho = GJHistBunchFactory("ChargedRho", mcAccFile!=NULL);
+	// Helicity Histogram Bunch
+	HelicityHistBunch HHB_rho = HelicityHistBunchFactory("ChargedRho", mcAccFile!=NULL);
+	
 	double avweight = 1;
 	
 	//Loop both over data and mc tree
@@ -857,6 +863,18 @@ createWeightedPlots(const std::string& dataFileName,
 					// this is a negativly charged isobar state with n-1 (here 2) final state particles
 					fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_charged_isobar);
 					fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_charged_isobar);
+
+					// fill the angles only if the isobar mass is close the the rho mass
+					const rpwa::particleProperties* pp = rpwa::particleDataTable::entry("rho(770)-");
+					if (pp == NULL) {
+						printErr << "Unknown particle 'rho(770)-' which is required for rho mass cut on charged isobar." << std::endl;
+						return;
+					}
+
+					if (std::abs(state.p().M() - pp->mass()) < pp->width()/2.) {
+						fillWeightedGJAnglePlots(state.p(), weight, weightPosRef, weightNegRef, weightFlat, tprime, itree, GJHB_rho);
+						fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_rho);
+					}
 				}
 			}
 			
