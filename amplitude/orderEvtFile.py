@@ -34,6 +34,7 @@
 
 import argparse
 import os
+import tempfile
 
 class EventFile:
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
 
 	change_evt_file = False
 	if output_file is None:
-		output_file = "ordererTmp"
+		output_file = tempfile.mkstemp()[1]
 		change_evt_file = True
 
 	print("Starting to order events...")
