@@ -31,7 +31,7 @@ namespace rpwa {
 		virtual const rpwa::particle& getGeneratedBeam() const { return _beam.particle; }
 		virtual const rpwa::particle& getGeneratedRecoil() const { return _target.recoilParticle; }
 		virtual const std::vector<rpwa::particle>& getGeneratedFinalState() const { return _decayProducts; }
-		virtual const TVector3 getGeneratedVertex() const { return _vertex; }
+		virtual const TVector3& getGeneratedVertex() const { return _vertex; }
 
 		virtual void setBeam(const rpwa::Beam& beam) { _beam = beam; };
 		virtual void setTarget(const rpwa::Target& target) { _target = target; };

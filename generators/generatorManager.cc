@@ -140,8 +140,8 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		}
 		double interactionLength;
 		configTarget->lookupValue("interactionLength", interactionLength);
-		if(interactionLength < 0 or interactionLength >= 1) {
-			printErr << "interaction length has to be in [0, 1[ (set it to 0 to disable this feature)." << endl;
+		if(interactionLength < 0) {
+			printErr << "interaction length has to be >0 (set it to 0 to disable this feature)." << endl;
 			return false;
 		}
 		_target.targetParticle = *targetParticle;
