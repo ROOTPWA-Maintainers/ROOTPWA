@@ -126,7 +126,7 @@ diffractivePhaseSpace::event()
   // construct primary vertex and beam
   // use the primary Vertex Generator if available
 	if(_beamAndVertexGenerator) {
-		assert(_beamAndVertexGenerator->event());
+		assert(_beamAndVertexGenerator->event(*this));
 		_vertex = _beamAndVertexGenerator->getVertex();
 		_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
 	} else {
@@ -134,11 +134,7 @@ diffractivePhaseSpace::event()
 		double y;
 		double radius = std::sqrt(random->Uniform(0, _target.radius * _target.radius));
 		random->Circle(x, y, radius);
-		double z;
-		do {
-			z = random->Uniform();
-		} while (random->Uniform() < z*_target.interactionLength);
-		z = (_target.position.Z() - _target.length * 0.5) + z * _target.length;
+		double z = getVertexZ();
 		_vertex.SetXYZ(_target.position.X() + x,
 		               _target.position.Y() + y,
 		               z);

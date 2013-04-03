@@ -1,12 +1,24 @@
 
 #include<limits>
 
-#include<generator.h>
+#include<TRandom3.h>
 
+#include "generator.h"
+#include "randomNumberGenerator.h"
 
 using namespace rpwa;
 using namespace std;
 
+
+double generator::getVertexZ() const {
+	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+	double z;
+	do {
+		z = randomGen->Uniform();
+	} while (randomGen->Uniform() < z*_target.interactionLength);
+	z = (_target.position.Z() - _target.length * 0.5) + z * _target.length;
+	return z;
+}
 
 ostream& generator::convertEventToAscii(ostream&  out,
                                      const particle& beam,

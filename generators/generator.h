@@ -48,6 +48,8 @@ namespace rpwa {
 			_decayProducts.push_back(particle);
 		}
 
+		virtual double getVertexZ() const;
+
 		static std::ostream& convertEventToAscii(std::ostream& out,
 		                                         const rpwa::particle& beam,
 		                                         const std::vector<rpwa::particle>& finalState);

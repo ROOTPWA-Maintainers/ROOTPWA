@@ -16,6 +16,7 @@ class TTree;
 
 namespace rpwa {
 
+	class generator;
 	struct Target;
 
 	class beamAndVertexGenerator {
@@ -30,7 +31,7 @@ namespace rpwa {
 
 		bool check();
 
-		bool event();
+		bool event(const rpwa::generator& generator);
 
 		const TVector3& getVertex() { return _vertex; }
 
@@ -48,9 +49,6 @@ namespace rpwa {
 		// pairs with [value, sigma]
 		std::pair<double, double> _vertexX;
 		std::pair<double, double> _vertexY;
-		double _vertexZLow;
-		double _targetLength;
-		double _targetInteractionLength;
 		std::pair<double, double> _beamMomentumX;
 		std::pair<double, double> _beamMomentumY;
 		std::pair<double, double> _beamMomentumZ;

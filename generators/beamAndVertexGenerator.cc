@@ -2,6 +2,7 @@
 #include <TFile.h>
 #include <TTree.h>
 
+#include "generator.h"
 #include "generatorParameters.hpp"
 #include "randomNumberGenerator.h"
 #include "reportingUtils.hpp"
@@ -20,9 +21,6 @@ beamAndVertexGenerator::beamAndVertexGenerator(string rootFileName,
 	  _beam(TLorentzVector(0., 0., 0., 0.)),
 	  _vertexX(pair<double, double>(0., 0.)),
 	  _vertexY(pair<double, double>(0., 0.)),
-	  _vertexZLow(target.position.Z() - 0.5 * target.length),
-	  _targetLength(target.length),
-	  _targetInteractionLength(target.interactionLength),
 	  _beamMomentumX(pair<double, double>(0., 0.)),
 	  _beamMomentumY(pair<double, double>(0., 0.)),
 	  _beamMomentumZ(pair<double, double>(0., 0.)),
@@ -107,16 +105,12 @@ bool beamAndVertexGenerator::check() {
 }
 
 
-bool beamAndVertexGenerator::event() {
+bool beamAndVertexGenerator::event(const generator& generator) {
 	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
 	long nEntries = _beamTree->GetEntries();
 	long entry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
 	_beamTree->GetEntry(entry);
-	double z;
-	do {
-		z = randomGen->Uniform();
-	} while (randomGen->Uniform() < z*_targetInteractionLength);
-	z = _vertexZLow + z * _targetLength;
+	double z = generator.getVertexZ();
 	if(_sigmasPresent) {
 		_vertex.SetXYZ(randomGen->Gaus(_vertexX.first, _vertexX.second),
 		               randomGen->Gaus(_vertexY.first, _vertexY.second),
