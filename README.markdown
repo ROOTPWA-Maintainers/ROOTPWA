@@ -153,7 +153,7 @@ By default you will be in the "master" branch after you cloned the repository. T
 
     > git tag | grep <branch name>
 
-The naming scheme for the tags is `<branch name>.<version number>`. In order to get the revision that belongs to a certain tag run
+The naming scheme for the tags is `<branch name>.<version number>` (e.g. `_v1.12`). In order to get the revision that belongs to a certain tag run
 
     > git checkout <tag name>
 
@@ -271,7 +271,7 @@ Some information which might be of importance:
 
 #### 1. Branch Layout ####
 
-The ROOTPWA repository uses the master branch for development, meaning that the latest development version is generally in the master branch. For older versions, there are maintenance branches name "_v1", "_v2", etc.. Versions which are deemed stable are tagged with a version number, e.g. <branch name>.<version number> (e.g. _v1.12). Most work is to be done in topic branches whose name should _not_ start with an `_`. If you are unsure which branch your work should be based upon, feel free to contact the ROOTPWA developers for support.
+The ROOTPWA repository uses the master branch for development, meaning that the latest development version is generally in the master branch. For older versions, there are maintenance branches name `_v1`, `_v2`, etc.. Versions which are deemed stable are tagged with a version number, e.g. `<branch name>.<version number>` (e.g. `_v1.12`). Most work is to be done in topic branches whose name should _not_ start with an `_`. If you are unsure which branch your work should be based upon, feel free to contact the ROOTPWA developers for support.
 
 
 #### 2. Commit Message Format ####
