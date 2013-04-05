@@ -25,7 +25,7 @@
 #//      replaces the official FindPython that comes with Cmake which for several reasons is unusable
 #//      requires executable of Python interpreter to be in PATH
 #//      if both Pyhton 2 and 3 are found, Python 3 will be preferred
-#//	 
+#//
 #//      following variables are defined:
 #//      PYTHONINTERP_FOUND        - Was the Python executable found
 #//      PYTHON_EXECUTABLE         - path to the Python interpreter
@@ -37,11 +37,11 @@
 #//      PYTHON_LIBRARIES          - path to the Python library
 #//      PYTHON_INCLUDE_DIRS       - path to includes
 #//      PYTHONLIBS_VERSION_STRING - version of the Python libs found
-#//	 
+#//
 #//      Example usage:
 #//          find_package(Python 2.7 REQUIRED)
-#//	 
-#//	 
+#//
+#//
 #// Author List:
 #//      Boris Grube          TUM            (original author)
 #//
@@ -55,35 +55,33 @@ set(PYTHON_ERROR_REASON "")
 
 
 # find Python interpreter
-set(_PYTHON_EXEC_NAMES "python")  # defines search order for python executable
+set(_PYTHON_EXEC_NAMES "python")  # allows to define search order for multiple python executable names
 foreach(_PYTHON_EXEC_NAME ${_PYTHON_EXEC_NAMES})
 	find_program(PYTHON_EXECUTABLE ${_PYTHON_EXEC_NAME})
 	if(PYTHON_EXECUTABLE)
 		break()
 	endif()
 endforeach()
+if(NOT PYTHON_EXECUTABLE)
+	set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find executable of Python interpreter with name(s) '${_PYTHON_EXEC_NAMES}' in path. Make sure Python is setup correctly.")
+else()
+	set(PYTHONINTERP_FOUND TRUE)
+endif()
 unset(_PYTHON_EXEC_NAMES)
 
-#find_program(PYTHON_EXECUTABLE python)
 
-if(NOT PYTHON_EXECUTABLE)
-	set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find executable of Python interpreter in path. Make sure Python is setup correctly.")
-else()
+if(PYTHONINTERP_FOUND)
 
-	set(PYTHONINTERP_FOUND TRUE)
-	
+	# get version number
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[0])"
 		OUTPUT_VARIABLE PYTHON_VERSION_MAJOR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[1])"
 		OUTPUT_VARIABLE PYTHON_VERSION_MINOR
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; print(sys.version_info[2])"
 		OUTPUT_VARIABLE PYTHON_VERSION_PATCH
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
-
 	set(PYTHON_VERSION_STRING "${PYTHON_VERSION_MAJOR}.${PYTHON_VERSION_MINOR}.${PYTHON_VERSION_PATCH}")
 
 	# compare version
@@ -101,12 +99,6 @@ else()
 		endif()
 	endif()
 
-endif()
-
-
-# find Python library
-if(PYTHONINTERP_FOUND)
-
 	# get file name of shared library
 	execute_process(COMMAND ${PYTHON_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('LIBDEST'))"
 		OUTPUT_VARIABLE _PYTHON_LIBRARY_PATH
@@ -114,7 +106,7 @@ if(PYTHONINTERP_FOUND)
 	# split path into directory and file name
 	get_filename_component(_PYTHON_LIBRARY_FILE_NAME "${_PYTHON_LIBRARY_PATH}" NAME)
 	get_filename_component(_PYTHON_LIBRARY_DIR       "${_PYTHON_LIBRARY_PATH}" PATH)
-
+	# find shared library
 	find_library(PYTHON_LIBRARIES
 		NAMES ${_PYTHON_LIBRARY_FILE_NAME}
 		PATHS ${_PYTHON_LIBRARY_DIR}
@@ -130,13 +122,19 @@ if(PYTHONINTERP_FOUND)
 			PATHS ${_PYTHON_LIBRARY_DIR}
 			NO_DEFAULT_PATH)
 	endif()
-
 	if(NOT PYTHON_LIBRARIES)
 		set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Cannot find Python shared library '${_PYTHON_LIBRARY_FILE_NAME}' in '${_PYTHON_LIBRARY_DIR}'. Make sure Python is setup correctly.")
 	else()
-
 		set(PYTHONLIBS_FOUND TRUE)
-		
+	endif()
+	unset(_PYTHON_LIBRARY_PATH)
+	unset(_PYTHON_LIBRARY_FILE_NAME)
+	unset(_PYTHON_LIBRARY_DIR)
+
+
+	if(PYTHONLIBS_FOUND)
+
+		# get include directories
 		execute_process(
 			# Python 2.7 on Ubuntu 12.04 requires to define the 'posix_prefix' scheme here explicitely
 			# otherwise a nonexisting path is returned; sigh!
@@ -148,35 +146,32 @@ if(PYTHONINTERP_FOUND)
 			if(NOT EXISTS "${_PYTHON_INCLUDE_DIR}")
 				set(PYTHONLIBS_FOUND FALSE)
 				set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python include directory '${_PYTHON_INCLUDE_DIR}' does not exist.")
+			else()
+				# get library version from patchlevel.h
+				if(EXISTS "${_PYTHON_INCLUDE_DIR}/patchlevel.h")
+					# get line with version string
+					file(STRINGS
+						"${_PYTHON_INCLUDE_DIR}/patchlevel.h"
+						_PYTHONLIBS_VERSION_STRING
+						REGEX "^#define[ \t]+PY_VERSION[ \t]+\"[^\"]+\""
+						)
+					# parse version line
+					string(REGEX REPLACE "^#define[ \t]+PY_VERSION[ \t]+\"([^\"]+)\".*" "\\1"
+						PYTHONLIBS_VERSION_STRING "${_PYTHONLIBS_VERSION_STRING}")
+					unset(_PYTHONLIBS_VERSION_STRING)
+				endif()
 			endif()
 		endforeach()
 		unset(_PYTHON_INCLUDE_DIR)
-
-		# get library version from patchlevel.h
-		if(PYTHON_INCLUDE_DIRS AND EXISTS "${PYTHON_INCLUDE_DIRS}/patchlevel.h")
-			# get line with version string
-			file(STRINGS
-				"${PYTHON_INCLUDE_DIRS}/patchlevel.h"
-				_PYTHONLIBS_VERSION_STRING
-        REGEX "^#define[ \t]+PY_VERSION[ \t]+\"[^\"]+\""
-				)
-			# parse version line
-			string(REGEX REPLACE "^#define[ \t]+PY_VERSION[ \t]+\"([^\"]+)\".*" "\\1"
-        PYTHONLIBS_VERSION_STRING "${_PYTHONLIBS_VERSION_STRING}")
-			unset(_PYTHONLIBS_VERSION_STRING)
-		endif()
 		if(NOT PYTHONLIBS_VERSION_STRING VERSION_EQUAL PYTHON_VERSION_STRING)
 			set(PYTHONLIBS_FOUND FALSE)
-			set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python library version ${PYTHONLIBS_VERSION_STRING} does not match Python interpreter version ${PYTHON_VERSION_STRING}.")			
+			set(PYTHON_ERROR_REASON "${PYTHON_ERROR_REASON} Python library version ${PYTHONLIBS_VERSION_STRING} does not match Python interpreter version ${PYTHON_VERSION_STRING}.")
 		endif()
 
 	endif()
-	unset(_PYTHON_LIBRARY_PATH)
-	unset(_PYTHON_LIBRARY_FILE_NAME)
-	unset(_PYTHON_LIBRARY_DIR)
 
-endif()
-	
+endif()  # PYTHONINTERP_FOUND
+
 
 # make variables changeable
 mark_as_advanced(
