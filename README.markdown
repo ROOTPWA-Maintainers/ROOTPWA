@@ -170,7 +170,7 @@ If you are more adventurous and want to get the latest version of a branch, run
 Finally you are ready to build ROOTPWA from the sources.
 
 
-### 1. Setup Build Environment ###
+### Setting Up Build Environment ###
 
 1.  Make sure that you have installed all the packages mentioned above for the correct architecture: If you compile on a 32 bit machine, _all_ external libraries need also to be compiled for 32 bit. Similarly for 64 bit machines _all_ libraries (including ROOT!) have to be compiled for 64 bit. Mixed 32/64 bit compilation is not supported and will result in linker errors.
 
@@ -185,7 +185,7 @@ Finally you are ready to build ROOTPWA from the sources.
 ROOTPWA comes with some example `setup*.sh` scripts that define set all the above mentioned environment variables and can be used as templates. You should copy one of them and modify it according to your environment.
 
 
-### 2. Compiling ROOTPWA ###
+### Compiling ROOTPWA ###
 
 1.  We use an out-of-source build strategy (one of the nice features of CMake). This means that all files created by the build system will reside in a separate directory outside of the directories that contain the source code. The build system expects this directory to be `${ROOTPWA}/build` which should already exist in your git working copy.
 
@@ -253,14 +253,14 @@ ROOTPWA comes with some example `setup*.sh` scripts that define set all the abov
 Contributions to the development of ROOTPWA are very welcome and can be made in several ways:
 
 
-## 1. Bug Reports / Feature Requests ##
+## Bug Reports / Feature Requests ##
 
 If you find a problem with ROOTPWA or feel that a feature that you would like to have is missing, you can file a [bug report](https://sourceforge.net/p/rootpwa/bugs/) or a [feature request](https://sourceforge.net/p/rootpwa/feature-requests/) on our website. Before submitting a report, please check if your item has not already been submitted by somebody else. Note that you can vote on both bug reports and feature requests if you feel that their resolution is of help to you.
 
 If you already have a solution for a particular bug or have already implemented a new feature, feel free to attach a patch to the corresponding request. The ROOTPWA developers will review your changes and consider them for implementation to the repository.
 
 
-## 2. Contributing Code ##
+## Contributing Code ##
 
 If you would like to contribute to ROOTPWA to an extent which would be impractical for patch files, you can fork the ROOTPWA repository. To do this, you need to have a SourceForge account. While logged in, go to the [ROOTPWA repository](https://sourceforge.net/p/rootpwa/code/) and click "Fork" on the left. This will give you your own copy of the ROOTPWA git repository on SourceForge which you can use to implement your contribution. As soon as you judge your work ready for integration, you can issue a merge request by clicking "Request Merge" in your copy of the repository. The ROOTPWA developers will then consider your changes for implementation.
 
@@ -269,12 +269,12 @@ In case you are new to git and need information on how to work with it, we recom
 Some information which might be of importance:
 
 
-#### 1. Branch Layout ####
+### Branch Layout ###
 
 The ROOTPWA repository uses the master branch for development, meaning that the latest development version is generally in the master branch. For older versions, there are maintenance branches name `_v1`, `_v2`, etc.. Versions which are deemed stable are tagged with a version number, e.g. `<branch name>.<version number>` (e.g. `_v1.12`). Most work is to be done in topic branches whose name should _not_ start with an `_`. If you are unsure which branch your work should be based upon, feel free to contact the ROOTPWA developers for support.
 
 
-#### 2. Commit Message Format ####
+### Commit Message Format ###
 
 ROOTPWA follows a policy for the commit messages, which is close to the standard git commit message policy. It consists of the following rules:
 
