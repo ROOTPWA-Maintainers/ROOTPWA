@@ -656,5 +656,4 @@ print_disabled_features()
 message(STATUS "")
 message(STATUS ">>> Done.")
 message(STATUS "Run 'make' to build the project.")
-message(STATUS "On multi-core machines 'make -j#', where # is the number of parallel jobs, "
-	"can speedup compilation considerably.")
+message(STATUS "On multi-core machines using 'make -j' can speedup compilation considerably.")
