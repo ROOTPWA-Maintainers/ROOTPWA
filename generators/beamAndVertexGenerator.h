@@ -41,6 +41,7 @@ namespace rpwa {
 
 	  private:
 
+		std::string _rootFileName;
 		TFile* _rootFile;
 		TTree* _beamTree;
 		TVector3 _vertex;

@@ -15,7 +15,8 @@ using namespace rpwa;
 beamAndVertexGenerator::beamAndVertexGenerator(string rootFileName,
                                    double massBeamParticle,
                                    Target target)
-	: _rootFile(NULL),
+	: _rootFileName(rootFileName),
+	  _rootFile(NULL),
 	  _beamTree(NULL),
 	  _vertex(TVector3(0., 0., 0.)),
 	  _beam(TLorentzVector(0., 0., 0., 0.)),
@@ -27,16 +28,16 @@ beamAndVertexGenerator::beamAndVertexGenerator(string rootFileName,
 	  _massBeamParticle(massBeamParticle),
 	  _sigmasPresent(false)
 {
-	_rootFile = TFile::Open(rootFileName.c_str(), "READ");
+	_rootFile = TFile::Open(_rootFileName.c_str(), "READ");
 	if(not _rootFile) {
-		printErr << "Could not open root file '" << rootFileName
+		printErr << "Could not open root file '" << _rootFileName
 		         << "' when initializing beam simulation." << endl;
 		return;
 	}
 	const string beamTreeName = "beamTree";
 	_beamTree = dynamic_cast<TTree*>(_rootFile->Get(beamTreeName.c_str()));
 	if(not _beamTree) {
-		printErr << "Could not find '" << beamTreeName << "' in root file '" << rootFileName
+		printErr << "Could not find '" << beamTreeName << "' in root file '" << _rootFileName
 		         << "' when initializing beam simulation." << endl;
 		return;
 	}
@@ -49,7 +50,7 @@ beamAndVertexGenerator::beamAndVertexGenerator(string rootFileName,
 	        beamMomentumX and beamMomentumY and beamMomentumZ))
 	{
 		printErr << "One of the required branches is missing in tree '" << beamTreeName
-		         << "' in root file '" << rootFileName << ". Required are "
+		         << "' in root file '" << _rootFileName << ". Required are "
 		         << " 'vertex_x_position', 'vertex_y_position', 'beam_momentum_x'"
 		         << ", 'beam_momentum_y' 'and beam_momentum_z'." << endl;
 		_rootFile->Close();
@@ -73,7 +74,7 @@ beamAndVertexGenerator::beamAndVertexGenerator(string rootFileName,
 	        beamMomentumXSigma and beamMomentumYSigma and beamMomentumZSigma))
 	{
 		printWarn << "One of the optional branches is missing in tree '" << beamTreeName
-		          << "' in root file '" << rootFileName << ". Required are"
+		          << "' in root file '" << _rootFileName << ". Required are"
 		          << " 'vertex_x_position_sigma', 'vertex_y_position_sigma', 'beam_momentum_x_sigma'"
 		          << ", 'beam_momentum_y_sigma' 'and beam_momentum_z_sigma'. The input events"
 		          << " will be used as-is." << endl;
@@ -133,6 +134,7 @@ bool beamAndVertexGenerator::event(const generator& generator) {
 ostream& beamAndVertexGenerator::print(ostream& out) {
 
 	out << "Beam package information: " << endl;
+	out << "    Beam file path ......... " << _rootFileName << endl;
 	out << "    Beam file loaded ....... ";
 	if(_rootFile) {
 		out << "Yes" << endl;
