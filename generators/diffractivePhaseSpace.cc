@@ -50,24 +50,6 @@ diffractivePhaseSpace::diffractivePhaseSpace()
 }
 
 
-TLorentzVector
-diffractivePhaseSpace::makeBeam()
-{
-	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
-	// throw magnituide of beam momentum
-	const double pBeam = random->Gaus(_beam.momentum, _beam.momentumSigma);
-	// throw beam inclination
-	const double dxdz = random->Gaus(_beam.DxDz, _beam.DxDzSigma);
-	const double dydz = random->Gaus(_beam.DyDz, _beam.DyDzSigma);
-	// construct tilted beam momentum Lorentz vector
-	const double pz        = pBeam / sqrt(1 + dxdz * dxdz + dydz * dydz);
-	const double px        = dxdz * pz;
-	const double py        = dydz * pz;
-	const double EBeam     = sqrt(pBeam * pBeam + _beam.particle.mass2());
-	return TLorentzVector(px, py, pz, EBeam);
-}
-
-
 void
 diffractivePhaseSpace::setDecayProducts(const vector<particle>& particles)
 {
@@ -123,23 +105,11 @@ diffractivePhaseSpace::event()
 	TRandom3* random = randomNumberGenerator::instance()->getGenerator();
 
 	unsigned long int attempts = 0;
-  // construct primary vertex and beam
-  // use the primary Vertex Generator if available
-	if(_beamAndVertexGenerator) {
-		assert(_beamAndVertexGenerator->event(*this));
-		_vertex = _beamAndVertexGenerator->getVertex();
-		_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
-	} else {
-		double x;
-		double y;
-		double radius = std::sqrt(random->Uniform(0, _target.radius * _target.radius));
-		random->Circle(x, y, radius);
-		double z = getVertexZ();
-		_vertex.SetXYZ(_target.position.X() + x,
-		               _target.position.Y() + y,
-		               z);
-		_beam.particle.setLzVec(makeBeam());
-	}
+	// construct primary vertex and beam
+	assert(_beamAndVertexGenerator);
+	assert(_beamAndVertexGenerator->event(_target, _beam));
+	_vertex = _beamAndVertexGenerator->getVertex();
+	_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
 
 	if(not _pickerFunction) {
 		printErr << "mass- and t'-picker function has not been set. Aborting..." << endl;

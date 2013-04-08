@@ -23,7 +23,7 @@ using namespace rpwa;
 bool generatorManager::_debug = false;
 
 generatorManager::generatorManager()
-	: _beamAndVertexGenerator(NULL),
+	: _beamAndVertexGenerator(new beamAndVertexGenerator()),
 	  _pickerFunction(NULL),
 	  _reactionFileRead(false),
 	  _generator(NULL) { };
@@ -171,21 +171,16 @@ bool generatorManager::readReactionFile(const string& fileName) {
 				printErr << "'beamSimulation' section in reaction file is missing the 'beamFile' entry.";
 				return false;
 			}
-			_beamAndVertexGenerator = new beamAndVertexGenerator(beamFileName,
-			                                                     _beam.particle.mass(),
-			                                                     _target);
-			if(not _beamAndVertexGenerator->check()) {
+			if(not _beamAndVertexGenerator->loadBeamFile(beamFileName)) {
 				printErr << "could not initialize beam and vertex generator." << endl;
-				delete _beamAndVertexGenerator;
-				_beamAndVertexGenerator = NULL;
 				return false;
 			}
 			printSucc << "initialized beam package." << endl;
-			_beamAndVertexGenerator->print(printInfo);
 		} else {
 			printInfo << "beam package disabled." << endl;
 		}
 	} // Finished with the beam simulation settings.
+	_beamAndVertexGenerator->print(printInfo);
 
 	// Read the final state parameters.
 	const Setting* configFinalState = findLibConfigGroup(configRoot, "finalstate");
@@ -291,9 +286,7 @@ bool generatorManager::initializeGenerator() {
 	_generator->setBeam(_beam);
 	_generator->setTarget(_target);
 	_generator->setTPrimeAndMassPicker(*_pickerFunction);
-	if(_beamAndVertexGenerator) {
-		_generator->setPrimaryVertexGenerator(_beamAndVertexGenerator);
-	}
+	_generator->setPrimaryVertexGenerator(_beamAndVertexGenerator);
 	_generator->setDecayProducts(_finalState.particles);
 
 	printSucc << "event generator initialized" << endl;

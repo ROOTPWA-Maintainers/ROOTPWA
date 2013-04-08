@@ -71,8 +71,6 @@ namespace rpwa {
 
 		rpwa::nBodyPhaseSpaceGen _phaseSpace;
 
-		TLorentzVector makeBeam();
-
 		void buildDaughterList();
 
 		// calculate the t' by using the information of the incoming and outgoing particle in the vertex

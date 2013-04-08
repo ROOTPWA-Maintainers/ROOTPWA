@@ -10,16 +10,6 @@ using namespace rpwa;
 using namespace std;
 
 
-double generator::getVertexZ() const {
-	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
-	double z;
-	do {
-		z = randomGen->Exp(_target.interactionLength);
-	} while(z > _target.length);
-	z = (_target.position.Z() - _target.length * 0.5) + z * _target.length;
-	return z;
-}
-
 ostream& generator::convertEventToAscii(ostream&  out,
                                      const particle& beam,
                                      const vector<particle>& finalState)

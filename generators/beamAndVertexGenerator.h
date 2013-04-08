@@ -23,15 +23,15 @@ namespace rpwa {
 
 	  public:
 
-		beamAndVertexGenerator(std::string rootFileName,
-		                       double massBeamParticle,
-		                       Target target);
+		beamAndVertexGenerator();
 
-		~beamAndVertexGenerator();
+		virtual ~beamAndVertexGenerator();
 
-		bool check();
+		virtual bool loadBeamFile(const std::string& beamFileName);
 
-		bool event(const rpwa::generator& generator);
+		virtual bool check();
+
+		virtual bool event(const rpwa::Target& target, const rpwa::Beam& beam);
 
 		const TVector3& getVertex() { return _vertex; }
 
@@ -39,9 +39,15 @@ namespace rpwa {
 
 		std::ostream& print(std::ostream& out);
 
+	  protected:
+
+		virtual double getVertexZ(const rpwa::Target& target) const;
+
 	  private:
 
-		std::string _rootFileName;
+		bool _simpleSimulation;
+
+		std::string _beamFileName;
 		TFile* _rootFile;
 		TTree* _beamTree;
 		TVector3 _vertex;
@@ -54,7 +60,6 @@ namespace rpwa {
 		std::pair<double, double> _beamMomentumY;
 		std::pair<double, double> _beamMomentumZ;
 
-		double _massBeamParticle;
 		bool _sigmasPresent;
 
 	};
