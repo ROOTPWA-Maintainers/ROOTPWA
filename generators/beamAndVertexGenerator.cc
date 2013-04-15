@@ -163,7 +163,7 @@ double beamAndVertexGenerator::getVertexZ(const Target& target) const {
 	do {
 		z = randomGen->Exp(target.interactionLength);
 	} while(z > target.length);
-	z = (target.position.Z() - target.length * 0.5) + z * target.length;
+	z = (target.position.Z() - target.length * 0.5) + z;
 	return z;
 }
 
