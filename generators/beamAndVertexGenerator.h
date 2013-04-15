@@ -37,6 +37,8 @@ namespace rpwa {
 
 		const TLorentzVector& getBeam() { return _beam; }
 
+		void setSigmaScalingFactor(const double& scalingFactor) { _sigmaScalingFactor = scalingFactor; }
+
 		std::ostream& print(std::ostream& out);
 
 	  protected:
@@ -61,6 +63,7 @@ namespace rpwa {
 		std::pair<double, double> _beamMomentumZ;
 
 		bool _sigmasPresent;
+		double _sigmaScalingFactor;
 
 	};
 

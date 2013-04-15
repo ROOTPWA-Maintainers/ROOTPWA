@@ -25,7 +25,8 @@ beamAndVertexGenerator::beamAndVertexGenerator()
 	  _beamMomentumX(pair<double, double>(0., 0.)),
 	  _beamMomentumY(pair<double, double>(0., 0.)),
 	  _beamMomentumZ(pair<double, double>(0., 0.)),
-	  _sigmasPresent(false) { }
+	  _sigmasPresent(false),
+	  _sigmaScalingFactor(1.) { }
 
 
 bool beamAndVertexGenerator::loadBeamFile(const string& beamFileName)
@@ -137,20 +138,20 @@ bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
 		long nEntries = _beamTree->GetEntries();
 		long entry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
 		_beamTree->GetEntry(entry);
-		if(_sigmasPresent) {
-			_vertex.SetXYZ(randomGen->Gaus(_vertexX.first, _vertexX.second),
-						   randomGen->Gaus(_vertexY.first, _vertexY.second),
-						   z);
-			_beam.SetXYZM(randomGen->Gaus(_beamMomentumX.first, _beamMomentumX.second),
-						  randomGen->Gaus(_beamMomentumY.first, _beamMomentumY.second),
-						  randomGen->Gaus(_beamMomentumZ.first, _beamMomentumZ.second),
+		if(_sigmasPresent and _sigmaScalingFactor != 0.) {
+			_vertex.SetXYZ(randomGen->Gaus(_vertexX.first, _sigmaScalingFactor * _vertexX.second),
+			               randomGen->Gaus(_vertexY.first, _sigmaScalingFactor * _vertexY.second),
+			               z);
+			_beam.SetXYZM(randomGen->Gaus(_beamMomentumX.first, _sigmaScalingFactor * _beamMomentumX.second),
+			              randomGen->Gaus(_beamMomentumY.first, _sigmaScalingFactor * _beamMomentumY.second),
+			              randomGen->Gaus(_beamMomentumZ.first, _sigmaScalingFactor * _beamMomentumZ.second),
 						  beam.particle.mass());
 		} else {
 			_vertex.SetXYZ(_vertexX.first, _vertexY.first, z);
 			_beam.SetXYZM(_beamMomentumX.first,
-						  _beamMomentumY.first,
-						  _beamMomentumZ.first,
-						  beam.particle.mass());
+			              _beamMomentumY.first,
+			              _beamMomentumZ.first,
+			              beam.particle.mass());
 		}
 	}
 	return true;
@@ -196,5 +197,6 @@ ostream& beamAndVertexGenerator::print(ostream& out) {
 	} else {
 		out << "No" << endl;
 	}
+	out << "    Sigma scaling factor .... " << _sigmaScalingFactor << endl;
 	return out;
 }

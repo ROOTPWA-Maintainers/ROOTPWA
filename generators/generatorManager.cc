@@ -171,6 +171,21 @@ bool generatorManager::readReactionFile(const string& fileName) {
 				printErr << "'beamSimulation' section in reaction file is missing the 'beamFile' entry.";
 				return false;
 			}
+			double sigmaScalingFactor = 1.;
+			if(not configBeamSimulation->exists("sigmaScalingFactor")) {
+				printWarn << "'sigmaScalingFactor' is missing from 'beamSimulation' section." << endl;
+			} else {
+				if(not configBeamSimulation->lookupValue("sigmaScalingFactor", sigmaScalingFactor)) {
+					printErr << "Could not read 'sigmaScalingFactor' in 'beamSimulation' section." << endl;
+					return false;
+				} else {
+					if(sigmaScalingFactor < 0.) {
+						printErr << "'sigmaScalingFactor' in 'beamSimulation' section must be positive." << endl;
+						return false;
+					}
+				}
+			}
+			_beamAndVertexGenerator->setSigmaScalingFactor(sigmaScalingFactor);
 			if(not _beamAndVertexGenerator->loadBeamFile(beamFileName)) {
 				printErr << "could not initialize beam and vertex generator." << endl;
 				return false;
