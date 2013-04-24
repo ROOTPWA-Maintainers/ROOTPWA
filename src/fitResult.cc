@@ -34,6 +34,7 @@
 
 
 #include <algorithm>
+#include <set>
 
 #include "Math/SpecFuncMathCore.h"
 #include "Math/ProbFuncMathCore.h"
@@ -190,26 +191,60 @@ fitResult::cloneVar(){
 double
 fitResult::evidence() const
 {
+	// find the thresholded production amplitudes, assume those are the
+	// ones with imaginary and real part equal to zero
+	std::set<unsigned int> thrProdAmps;
+	for (unsigned int i=0; i<nmbProdAmps(); ++i) {
+		if (prodAmp(i).imag() == 0. && prodAmp(i).real() == 0.) {
+			thrProdAmps.insert(i);
+		}
+	}
+
+	// from the list of thresholded production amplitudes get the list of
+	// thresholded waves, this assumes that if a production amplitude is
+	// thresholded, it is thresholded in the same way for all ranks
+	std::set<unsigned int> thrWaves;
+	for (std::set<unsigned int>::const_iterator it=thrProdAmps.begin(); it!=thrProdAmps.end(); ++it) {
+		std::map<Int_t, Int_t>::const_iterator itm=normIntIndexMap().find(*it);
+		assert(itm!=normIntIndexMap().end());
+		thrWaves.insert(itm->second);
+	}
+
+	// for the list of thresholded production amplitudes get the list of
+	// columns and rows of the covariance matrix that are thresholded
+	std::set<Int_t> thrColsAndRows;
+	for (std::set<unsigned int>::const_iterator it=thrProdAmps.begin(); it!=thrProdAmps.end(); ++it) {
+		thrColsAndRows.insert(fitParCovIndices()[*it].first);
+		if (fitParCovIndices()[*it].second != -1)
+			thrColsAndRows.insert(fitParCovIndices()[*it].second);
+	}
+
+	// create a new covariance matrix with the thresholded entries removed
+	TMatrixT<Double_t> thrCovMatrix(fitParCovMatrix().GetNrows()-thrColsAndRows.size(), fitParCovMatrix().GetNcols()-thrColsAndRows.size());
+	Int_t row=-1;
+	for (Int_t i=0; i<fitParCovMatrix().GetNrows(); ++i) {
+		if (thrColsAndRows.count(i) > 0)
+			continue;
+		row++;
+
+		Int_t col=-1;
+		for (Int_t j=0; j<fitParCovMatrix().GetNcols(); ++j) {
+			if (thrColsAndRows.count(j) > 0)
+				continue;
+			col++;
+
+			thrCovMatrix(row, col) = fitParCovMatrix()(i, j);
+		}
+	}
 
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
 	double       l   = -logLikelihood();// - intensity(".*");
 
-	double       det = _fitParCovMatrix.Determinant();
-	// simple determinant neglecting all off-diagonal entries
-	//   unsigned int n= _fitParCovMatrix.GetNcols();
-	//   double det2=1;
-	//   for(unsigned int i=0;i<n;++i){
-	//    det2*=_fitParCovMatrix[i][i];
-	//   }
+	double       det = thrCovMatrix.Determinant();
 
-	double       d   = (double)_fitParCovMatrix.GetNcols();
-	double       sum = 0;
-	unsigned int ni  = _normIntegral.ncols();
-	for (unsigned int i = 0; i < ni ; ++i)
-		sum += 1. / _normIntegral(i, i).Re();
+	double       d   = (double)thrCovMatrix.GetNcols();
+
 	// parameter-volume after observing data
-	//double vad  = TMath::Power(2*TMath::Pi(), d * 0.5) * TMath::Sqrt(det);
-	//double lvad = TMath::Log(vad);
 
 	double lvad=0.5*(d*1.837877066+TMath::Log(det));
 
@@ -217,37 +252,23 @@ fitResult::evidence() const
 	// n-Sphere:
 	double lva= TMath::Log(d) + 0.5*(d*1.144729886+(d-1)*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
 
-	// n-ball:
-	//  double lva = 0.5*(d*1.144729886+d*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
-
 	// finally we calculate the probability of single waves being negligible and
 	// take these reults into account
 
 	unsigned int nwaves=nmbWaves();
 	double logprob=0;
 	for(unsigned int iwaves=0;iwaves<nwaves;++iwaves){
+		// check that this wave is not amongst the thresholded waves
+		if (thrWaves.count(iwaves) > 0)
+			continue;
+
 		double val=intensity(iwaves);
 		double err=intensityErr(iwaves);
 		// P(val>0); (assuming gaussian...) dirty!
 		// require 3simga significance!
 		double prob=ROOT::Math::normal_cdf_c(5.*err,err,val);
-		//cerr << "val="<<val<<"   err="<<err<<"   prob(val>0)="<<prob<<endl;
 		logprob+=TMath::Log(prob);
 	}
-
-
-
-	//   cerr << "fitResult::evidence()" << endl
-	//        << "    det         : " << det << endl
-	//     //<< "    detsimple   : " << det2 << endl
-	//        << "    LogLikeli   : " << l << endl
-	//        << "    logVA       : " << lva << endl
-	//     //   << "    logVASphere : " << lvaS << endl
-	//        << "    logVA|D     : " << lvad << endl
-	//     //  << "    logVA|D2     : " << lvad2 << endl
-	//        << "    Occamfactor : " << -lva+lvad << endl
-	//        << "    LogProb     : " << logprob << endl
-	//        << "    evidence    : " << l + lvad - lva + logprob<< endl;
 
 	return l + lvad - lva + logprob;
 }
