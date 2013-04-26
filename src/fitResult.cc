@@ -193,44 +193,57 @@ fitResult::evidence() const
 {
 	// find the thresholded production amplitudes, assume those are the
 	// ones with imaginary and real part equal to zero
-	std::set<unsigned int> thrProdAmps;
-	for (unsigned int i=0; i<nmbProdAmps(); ++i) {
-		if (prodAmp(i).imag() == 0. && prodAmp(i).real() == 0.) {
-			thrProdAmps.insert(i);
+	set<unsigned int> thrProdAmpIndices;
+	for (unsigned int i = 0; i < nmbProdAmps(); ++i) {
+		// printDebug << "production amplitude[" << i << "] = '" << _prodAmpNames[i]
+		//            << "' = " << prodAmp(i) << endl;
+		if (prodAmp(i) == 0.) {
+			// printDebug << "IS ZERO!!!" << endl;
+			thrProdAmpIndices.insert(i);
 		}
 	}
 
 	// from the list of thresholded production amplitudes get the list of
 	// thresholded waves, this assumes that if a production amplitude is
 	// thresholded, it is thresholded in the same way for all ranks
-	std::set<unsigned int> thrWaves;
-	for (std::set<unsigned int>::const_iterator it=thrProdAmps.begin(); it!=thrProdAmps.end(); ++it) {
-		std::map<Int_t, Int_t>::const_iterator itm=normIntIndexMap().find(*it);
-		assert(itm!=normIntIndexMap().end());
-		thrWaves.insert(itm->second);
+	set<unsigned int> thrWaveIndices;
+	for (set<unsigned int>::const_iterator it = thrProdAmpIndices.begin();
+	     it != thrProdAmpIndices.end(); ++it) {
+		const int index = waveIndex(waveNameForProdAmp(*it).Data());
+		// printDebug << " wave[" << index << "] = '" << waveNameForProdAmp(*it).Data()
+		//            << "' has zero production amp[" << *it << "] = '"
+		//            << _prodAmpNames[*it] << "'" << endl;
+		assert(index > 0);
+		thrWaveIndices.insert(index);
 	}
 
 	// for the list of thresholded production amplitudes get the list of
 	// columns and rows of the covariance matrix that are thresholded
-	std::set<Int_t> thrColsAndRows;
-	for (std::set<unsigned int>::const_iterator it=thrProdAmps.begin(); it!=thrProdAmps.end(); ++it) {
-		thrColsAndRows.insert(fitParCovIndices()[*it].first);
+	set<Int_t> thrColAndRowIndices;
+	for (set<unsigned int>::const_iterator it = thrProdAmpIndices.begin();
+	     it != thrProdAmpIndices.end(); ++it) {
+		thrColAndRowIndices.insert(fitParCovIndices()[*it].first);
 		if (fitParCovIndices()[*it].second != -1)
-			thrColsAndRows.insert(fitParCovIndices()[*it].second);
+			thrColAndRowIndices.insert(fitParCovIndices()[*it].second);
 	}
 
 	// create a new covariance matrix with the thresholded entries removed
-	TMatrixT<Double_t> thrCovMatrix(fitParCovMatrix().GetNrows()-thrColsAndRows.size(), fitParCovMatrix().GetNcols()-thrColsAndRows.size());
-	Int_t row=-1;
-	for (Int_t i=0; i<fitParCovMatrix().GetNrows(); ++i) {
-		if (thrColsAndRows.count(i) > 0)
+	TMatrixT<Double_t> thrCovMatrix(fitParCovMatrix().GetNrows()-thrColAndRowIndices.size(),
+	                                fitParCovMatrix().GetNcols()-thrColAndRowIndices.size());
+	Int_t row = -1;
+	for (Int_t i = 0; i < fitParCovMatrix().GetNrows(); ++i) {
+		if (thrColAndRowIndices.count(i) > 0) {
+			// printDebug << "disregarding covariance row " << i << endl;
 			continue;
+		}
 		row++;
 
-		Int_t col=-1;
-		for (Int_t j=0; j<fitParCovMatrix().GetNcols(); ++j) {
-			if (thrColsAndRows.count(j) > 0)
+		Int_t col = -1;
+		for (Int_t j = 0; j < fitParCovMatrix().GetNcols(); ++j) {
+			if (thrColAndRowIndices.count(j) > 0) {
+				// printDebug << "disregarding covariance column " << j << endl;
 				continue;
+			}
 			col++;
 
 			thrCovMatrix(row, col) = fitParCovMatrix()(i, j);
@@ -238,36 +251,33 @@ fitResult::evidence() const
 	}
 
 	// REMOVE CONSTRAINT TO NUMBER OF EVENTS!
-	double       l   = -logLikelihood();// - intensity(".*");
-
-	double       det = thrCovMatrix.Determinant();
-
-	double       d   = (double)thrCovMatrix.GetNcols();
+	const double l   = -logLikelihood();// - intensity(".*");
+	const double det = thrCovMatrix.Determinant();
+	const double d   = (double)thrCovMatrix.GetNcols();
 
 	// parameter-volume after observing data
-
-	double lvad=0.5*(d*1.837877066+TMath::Log(det));
+	const double lvad = 0.5 * (d * 1.837877066 + TMath::Log(det));
 
 	// parameter volume prior to observing the data
 	// n-Sphere:
-	double lva= TMath::Log(d) + 0.5*(d*1.144729886+(d-1)*TMath::Log(_nmbEvents))-ROOT::Math::lgamma(0.5*d+1);
+	const double lva = TMath::Log(d) + 0.5 * (d * 1.144729886 + (d - 1) * TMath::Log(_nmbEvents))
+		- ROOT::Math::lgamma(0.5 * d + 1);
 
 	// finally we calculate the probability of single waves being negligible and
 	// take these reults into account
-
-	unsigned int nwaves=nmbWaves();
-	double logprob=0;
-	for(unsigned int iwaves=0;iwaves<nwaves;++iwaves){
+	const unsigned int nwaves = nmbWaves();
+	double logprob = 0;
+	for (unsigned int iwaves = 0; iwaves < nwaves; ++iwaves) {
 		// check that this wave is not amongst the thresholded waves
-		if (thrWaves.count(iwaves) > 0)
+		if (thrWaveIndices.count(iwaves) > 0)
 			continue;
 
-		double val=intensity(iwaves);
-		double err=intensityErr(iwaves);
+		const double val = intensity   (iwaves);
+		const double err = intensityErr(iwaves);
 		// P(val>0); (assuming gaussian...) dirty!
 		// require 3simga significance!
-		double prob=ROOT::Math::normal_cdf_c(5.*err,err,val);
-		logprob+=TMath::Log(prob);
+		const double prob = ROOT::Math::normal_cdf_c(5. * err, err, val);
+		logprob += TMath::Log(prob);
 	}
 
 	return l + lvad - lva + logprob;
@@ -694,7 +704,19 @@ fitResult::fill
 	_normIntegral       = normIntegral;
 	_phaseSpaceIntegral = phaseSpaceIntegral;
 
-	buildWaveMap();
+	// get wave list from production amplitudes and fill map for
+	// production-amplitude indices to indices in normalization integral
+	for (unsigned int i = 0; i < _prodAmpNames.size(); ++i) {
+		const TString waveName = waveNameForProdAmp(i);
+		if (find(_waveNames.begin(), _waveNames.end(), waveName.Data()) == _waveNames.end())
+			_waveNames.push_back(waveName.Data());
+		// look for index of first occurence
+		unsigned int j;
+		for (j = 0; j < _prodAmpNames.size(); ++j)
+			if (prodAmpName(j).Contains(waveName))
+				break;
+		_normIntIndexMap[i] = j;
+	}
 
 	// check consistency
 	if (_prodAmps.size() != _prodAmpNames.size())
@@ -736,24 +758,24 @@ fitResult::fill
 			prodAmpIndexMap[prodAmpName(i)] = i;
 		for (map<TString, unsigned int>::const_iterator i = prodAmpIndexMap.begin();
 		     i != prodAmpIndexMap.end(); ++i) {
-			const int iIdx[2] = { _fitParCovMatrixIndices[i->second].first,    // real part index
-			                      _fitParCovMatrixIndices[i->second].second};  // imaginary part index
+			const int iIndex[2] = { _fitParCovMatrixIndices[i->second].first,    // real part index
+			                        _fitParCovMatrixIndices[i->second].second};  // imaginary part index
 			for (map<TString, unsigned int>::const_iterator j = prodAmpIndexMap.begin();
 			     j != prodAmpIndexMap.end(); ++j) {
-				const int jIdx[2] = { _fitParCovMatrixIndices[j->second].first,    // real part index
-				                      _fitParCovMatrixIndices[j->second].second};  // imaginary part index
+				const int jIndex[2] = { _fitParCovMatrixIndices[j->second].first,    // real part index
+				                        _fitParCovMatrixIndices[j->second].second};  // imaginary part index
 				cout << "    [" << i->first << "][" << j->first << "]: " << flush;
-				if (iIdx[0] >= 0) {
-					if (jIdx[0] >= 0)
-						cout << "ReRe = " << fitParameterCov(iIdx[0], jIdx[0]) << ", " << flush;
-					if (jIdx[1] >= 0)
-						cout << "ReIm = " << fitParameterCov(iIdx[0], jIdx[1]) << ", " << flush;
+				if (iIndex[0] >= 0) {
+					if (jIndex[0] >= 0)
+						cout << "ReRe = " << fitParameterCov(iIndex[0], jIndex[0]) << ", " << flush;
+					if (jIndex[1] >= 0)
+						cout << "ReIm = " << fitParameterCov(iIndex[0], jIndex[1]) << ", " << flush;
 				}
-				if (iIdx[1] >= 0) {
-					if (jIdx[0] >= 0)
-						cout << "ImRe = " << fitParameterCov(iIdx[1], jIdx[0]) << ", " << flush;
-					if (jIdx[1] >= 0)
-						cout << "ImIm = " << fitParameterCov(iIdx[1], jIdx[1]) << flush;
+				if (iIndex[1] >= 0) {
+					if (jIndex[0] >= 0)
+						cout << "ImRe = " << fitParameterCov(iIndex[1], jIndex[0]) << ", " << flush;
+					if (jIndex[1] >= 0)
+						cout << "ImIm = " << fitParameterCov(iIndex[1], jIndex[1]) << flush;
 				}
 				cout << endl;
 			}
@@ -789,24 +811,4 @@ fitResult::prodAmpIndex(const string& prodAmpName) const
 	if (index == -1)
 		printWarn << "could not find any production amplitude named '" << prodAmpName << "'." << endl;
 	return index;
-}
-
-
-void
-fitResult::buildWaveMap()
-{
-	const int n = _prodAmpNames.size();
-	for (int i = 0; i < n; ++i) {
-		// strip rank
-		const TString title = wavetitle(i);
-		if (find(_waveNames.begin(), _waveNames.end(), title.Data()) == _waveNames.end())
-			_waveNames.push_back(title.Data());
-
-		// look for index of first occurence
-		int j;
-		for (j = 0; j < n; ++j)
-			if(prodAmpName(j).Contains(title))
-				break;
-		_normIntIndexMap[i] = j;
-	}
 }
