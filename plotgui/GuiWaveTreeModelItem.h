@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Header file for the GuiWaveTreeModelItem class that provides an
@@ -40,6 +40,7 @@
 
 #include <QList>
 #include <QVariant>
+#include <QString>
 
 namespace rpwa{
 
@@ -56,7 +57,7 @@ namespace rpwa{
 	private:
 		// Variables
 	     QList<GuiWaveTreeModelItem*> _Children;
-	     QVariant _Data;
+	     QString _Data;
 	     GuiWaveTreeModelItem *_Parent;
 	     E_Types _Type;
 
@@ -66,7 +67,7 @@ namespace rpwa{
 
 	public:
 		// Constructors + Destructors
-		GuiWaveTreeModelItem(const QVariant& Data, E_Types Type, GuiWaveTreeModelItem *Parent = 0); ///< Fills Data, Type and Parent into the member variables
+		GuiWaveTreeModelItem(const QString& Data, E_Types Type, GuiWaveTreeModelItem *Parent = 0); ///< Fills Data, Type and Parent into the member variables
 		~GuiWaveTreeModelItem(); ///< Deletes all children
 
 		// Get && Set
@@ -75,7 +76,7 @@ namespace rpwa{
 		GuiWaveTreeModelItem *Parent(); ///< Returns the parent
 		int IndexAtParent() const; ///< Returns the index where this element is listed at its parent
 		E_Types Type() const; ///< Returns the type of this item
-		const QVariant& Data() const; ///< Returns the data string
+		const QString& Data() const; ///< Returns the data string
 
 		// Functions
 		bool AppendChild(GuiWaveTreeModelItem *Child); ///< Returns true and appends child to child list if it's a proper child (type of child fits to type of this item)

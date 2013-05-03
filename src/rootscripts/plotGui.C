@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <limits>
 //#include <stringstream>
 
 using namespace rpwa;
@@ -230,21 +231,30 @@ void MyMainFrame::PrintSelected()
    for(unsigned int i=0;i<n;++i){
      fTree->GetEntry(i);
      
-     
+     if(!result->converged())continue;
+     if(!result->hasHessian())continue;
+ 
+     double intensity1=result->intensity(w1.c_str());
+     if((numeric_limits<double>::has_infinity && intensity1 == numeric_limits<double>::infinity()) || intensity1!=intensity1)continue;
 
      g1->SetPoint(i,
 		 result->massBinCenter()*0.001,
-		 result->intensity(w1.c_str()));
+		 intensity1);
      g1->SetPointError(i,
-		      binwidth*0.5,
-		      result->intensityErr(w1.c_str()));
+     		      binwidth*0.5,
+     		      result->intensityErr(w1.c_str()));
      
+     double intensity2=result->intensity(w2.c_str());
+     if((numeric_limits<double>::has_infinity && intensity2 == numeric_limits<double>::infinity()) || intensity2!=intensity2)continue;
+
      g2->SetPoint(i,
 		 result->massBinCenter()*0.001,
-		 result->intensity(w2.c_str()));
+		 intensity2);
+    
      g2->SetPointError(i,
-		      binwidth*0.5,
-		      result->intensityErr(w2.c_str()));
+     		      binwidth*0.5,
+     		      result->intensityErr(w2.c_str()));
+      
 
      double ph=result->phase(w1.c_str(),w2.c_str());
      double pherr=result->phaseErr(w1.c_str(),w2.c_str());
@@ -304,7 +314,6 @@ void MyMainFrame::PrintSelected()
       gIm->SetPointError(i,
 			 binwidth*0.5,
 			 sqrt(rhoCov[1][1]));
-     
    }// end loop over bins
    
    

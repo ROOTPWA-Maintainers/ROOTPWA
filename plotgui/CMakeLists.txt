@@ -20,9 +20,9 @@
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
 #// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
+#// $Rev:: 862                         $: revision of last commit
+#// $Author:: schmeing                 $: author of last commit
+#// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 #//
 #// Description:
 #//      build file for plotgui 
@@ -54,6 +54,7 @@ INCLUDE(${QT_USE_FILE})
 # set form files from Qt (.ui)
 set(FORMS
 	Qt-DesignerFiles/GuiPwaMain.ui
+	Qt-DesignerFiles/GuiSelectedFilesWidgetAdd.ui
 	)
 
 # prozessing Qt Forms (.ui) with uic
@@ -62,7 +63,9 @@ QT4_WRAP_UI(FORMS_HEADERS ${FORMS})
 # set header files that contain Q_OBJECT macro
 set(HEADERS
 	GuiPwaMain.h
+	GuiStringTreeModel.h
 	GuiWaveTreeModel.h
+	GuiOpenMultipleFilesDialog.h
 	)
 
 # prozessing Q_OBJECT headers with moc
@@ -76,7 +79,12 @@ set(SOURCES
 	CompassPwaFileNormIntegrals.cc
 	CompassPwaFileObject.cc
 	CompassPwaFilePhaseSpaceIntegrals.cc
+	GuiFileListTreeModel.cc
+	GuiFileListTreeModelItem.cc
+	GuiOpenMultipleFilesDialog.cc
 	GuiPwaMain.cc
+	GuiStringTreeModel.cc
+	GuiStringTreeModelItem.cc
 	GuiWaveTreeModel.cc
 	GuiWaveTreeModelItem.cc
 	RootPwaDataObject.cc

@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      compares two amplitude files and calculates differences
@@ -58,7 +54,9 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
+	cerr << "calculates difference of two amplitude files an writes result into tree" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
 	     << " [-o out file -v -h] .amp file 1 .amp file 2" << endl
 	     << "    where:" << endl
@@ -107,7 +105,9 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printGitHash     ();
+	cout << endl;
 
 	// parse command line options
 	const string progName        = argv[0];
@@ -181,9 +181,9 @@ main(int    argc,
 	TObjString*  ampName = new TObjString(gSystem->GetFromPipe(cmd.c_str()));
 	UInt_t       eventNmb;
 	UInt_t       massBinMin = 0, massBinMax = 0;  // [MeV/c^2]
-	double_t     valReal[2], valImag[2];
-	double_t     absDiffReal, absDiffImag;
-	double_t     relDiffReal, relDiffImag;
+	Double_t     valReal[2], valImag[2];
+	Double_t     absDiffReal, absDiffImag;
+	Double_t     relDiffReal, relDiffImag;
 
 	// get mass bin boundaries from file paths
 	if (not     massBinFromPath(ampFileNames[0], massBinMin, massBinMax)

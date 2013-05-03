@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 331                         $: revision of last commit
-#// $Author:: bgrube                   $: author of last commit
-#// $Date:: 2010-07-27 18:51:06 +0200 #$: date of last commit
 #//
 #// Description:
 #//      build file for amplitude library 
@@ -35,11 +31,15 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'relampl' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${Boost_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
-  	${LIBCONFIG_INCLUDE_DIR}
+	${Libconfig_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
@@ -60,10 +60,12 @@ set(SOURCES
 
 # library
 set(THIS_LIB "RelAmpl")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
 	)
 
 
 # executables
 make_executable(CalcAmpl  CalcAmpl.cc  ${THIS_LIB})
-make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${LIBCONFIG_LIBS} ${AMPLITUDE_LIBS})
+make_executable(CalcAmpl2 CalcAmpl2.cc ${THIS_LIB} ${Libconfig_LIBS} ${AMPLITUDE_LIBS})

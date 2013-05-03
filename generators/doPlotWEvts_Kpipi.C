@@ -1,9 +1,9 @@
-void doPlotWEvts_Kpipi(TString evtfile, TString mcfile, 
-		 TString outfile, TString mass){
+void doPlotWEvts_Kpipi(TString evtfile, TString mcfile,
+                       TString outfile, TString mass){
 
 //  gROOT->ProcessLine(".L $ROOTPWA/generators/plotWeightedEvts.C+");
   gROOT->ProcessLine(".L $ROOTPWA/generators/plotWeightedEvts_Kpipi.C+");
-  
+
   TFile* file1=TFile::Open(evtfile,"READ");
   TFile* file2=TFile::Open(mcfile,"READ");
   TTree* data=(TTree*)file1->Get("events");

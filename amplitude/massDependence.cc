@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      functor class hierarchy for mass-dependent part of the amplitude
@@ -35,7 +31,8 @@
 //-------------------------------------------------------------------------
 
 
-#include "mathUtils.hpp"
+#include <boost/numeric/ublas/io.hpp>
+
 #include "physUtils.hpp"
 #include "isobarDecayVertex.h"
 #include "particleDataTable.h"
@@ -64,16 +61,8 @@ complex<double>
 flatMassDependence::amp(const isobarDecayVertex&)
 {
 	if (_debug)
-		printInfo << name() << " = 1" << endl;
+		printDebug << name() << " = 1" << endl;
 	return 1;
-}
-
-
-ostream&
-flatMassDependence::print(ostream& out) const
-{
-	out << name();
-	return out;
 }
 
 
@@ -83,38 +72,120 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
 
-	const double M       = parent->lzVec().M();          // parent mass
-	const double m1      = v.daughter1()->lzVec().M();   // daughter 1 mass
-	const double m2      = v.daughter2()->lzVec().M();   // daughter 2 mass
-	const double M0      = parent->mass();               // resonance peak position
-	const double Gamma0  = parent->width();              // resonance peak width
-	const double q       = breakupMomentum(M,  m1, m2);  // breakup momentum
-	//const double q0      = breakupMomentum(M0, m1, m2);  // breakup momentum at peak position
-	const unsigned int L = v.L();
-
-	// this is how it is done in PWA2000
-	const double M02    = M0 * M0;
-	const double m12    = m1 * m1;
-	const double m22    = m2 * m2;
-	// const double m12    = v.daughter1()->mass() * v.daughter1()->mass();
-	// const double m22    = v.daughter2()->mass() * v.daughter2()->mass();
-	const double lambda = M02 * M02 + m12 * m12 + m22 * m22 - 2 * (M02 * m12 + m12 * m22 + m22 * M02);
-	const double q0     = sqrt(fabs(lambda / (4 * M02)));  //!!! the fabs is probably wrong
+	// get Breit-Wigner parameters
+	const double       M      = parent->lzVec().M();         // parent mass
+	const double       m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
+	const double       m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
+	const double       q      = breakupMomentum(M,  m1, m2);
+	const double       M0     = parent->mass();              // resonance peak position
+	const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
+	// !NOTE! the following is incorrect but this is how it was done in PWA2000
+	const double       q0     = sqrt(fabs(q02));
+	const double       Gamma0 = parent->width();             // resonance peak width
+	const unsigned int L      = v.L();
 
 	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 	if (_debug)
-		printInfo << name() << "(m = " << M << " GeV, m_0 = " << M0 << " GeV, "
-		          << "Gamma_0 = " << Gamma0 << " GeV, L = " << 0.5 * L << ", q = " << q << " GeV, "
-		          << q0 << " GeV) = " << maxPrecisionDouble(bw) << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
+		           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
+		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
 	return bw;
 }
 
 
-ostream&
-relativisticBreitWigner::print(ostream& out) const
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+constWidthBreitWigner::amp(const isobarDecayVertex& v)
 {
-	out << name();
-	return out;
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M      = parent->lzVec().M();  // parent mass
+	const double M0     = parent->mass();       // resonance peak position
+	const double Gamma0 = parent->width();      // resonance peak width
+
+	// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
+	const double          A  = M0 * Gamma0;
+	const double          B  = M0 * M0 - M * M;
+	const complex<double> bw = (A / (B * B + A * A)) * complex<double>(B, A);
+	// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2) = "
+		           << maxPrecisionDouble(bw) << endl;
+	return bw;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+rhoBreitWigner::amp(const isobarDecayVertex& v)
+{
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M      = parent->lzVec().M();         // parent mass
+	const double m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
+	const double m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
+	const double q2     = breakupMomentumSquared(M,  m1, m2);
+	const double q      = sqrt(q2);
+	const double M0     = parent->mass();              // resonance peak position
+	const double q02    = breakupMomentumSquared(M0, m1, m2);
+	const double q0     = sqrt(q02);
+	const double Gamma0 = parent->width();             // resonance peak width
+
+	const double F      = 2 * q2 / (q02 + q2);
+	const double Gamma  = Gamma0 * (M0 / M) * (q / q0) * F;
+	// in the original publication the width reads
+	// Gamma = Gamma0 * (q / q0) * F
+
+	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+	const double          A  = M0 * Gamma0 * sqrt(F);
+	// in the original publication A reads
+	// A = sqrt(M0 * Gamma0 * (m / q0) * F)
+	const double          B  = M0 * M0 - M * M;
+	const double          C  = M0 * Gamma;
+	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	// return (M0 * Gamma0 * sqrt(F)) / (M0 * M0 - M * M - imag * M0 * Gamma);
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
+		           << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
+		           << "= " << maxPrecisionDouble(bw) << endl;
+	return bw;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+f0980BreitWigner::amp(const isobarDecayVertex& v)
+{
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M      = parent->lzVec().M();         // parent mass
+	const double m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
+	const double m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
+	const double q      = breakupMomentum(M,  m1, m2);
+	const double M0     = parent->mass();              // resonance peak position
+	const double q0     = breakupMomentum(M0, m1, m2);
+	const double Gamma0 = parent->width();             // resonance peak width
+
+	const double Gamma  = Gamma0 * (q / q0);
+
+	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+	const double          C  = M0 * Gamma;
+	const double          A  = C * M / q;
+	const double          B  = M0 * M0 - M * M;
+	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	// return ((M0 * Gamma0 * M / q) / (M0 * M0 - M * M - imag * M0 * Gamma);
+	if (_debug)
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, "
+		           << "q = " << maxPrecision(q) << " GeV/c, q0 = " << maxPrecision(q0) << " GeV/c) "
+		           << "= " << maxPrecisionDouble(bw) << endl;
+	return bw;
 }
 
 
@@ -127,47 +198,47 @@ piPiSWaveAuMorganPenningtonM::piPiSWaveAuMorganPenningtonM()
 	  _sP      (1, 2),
 	  _vesSheet(0)
 {
-	const double f[2] = {0.1968, -0.0154};
+	const double f[2] = {0.1968, -0.0154};  // AMP Table 1, M solution: f_1^1 and f_2^1
 
-	_a[0](0, 0) =  0.1131;
-	_a[0](0, 1) =  0.0150;
-	_a[0](1, 0) =  0.0150;
-	_a[0](1, 1) = -0.3216;
+	_a[0](0, 0) =  0.1131;  // AMP Table 1, M solution: f_2^2
+	_a[0](0, 1) =  0.0150;  // AMP Table 1, M solution: f_1^3
+	_a[0](1, 0) =  0.0150;  // AMP Table 1, M solution: f_1^3
+	_a[0](1, 1) = -0.3216;  // AMP Table 1, M solution: f_2^3
 	_a[1](0, 0) = f[0] * f[0];
 	_a[1](0, 1) = f[0] * f[1];
 	_a[1](1, 0) = f[1] * f[0];
 	_a[1](1, 1) = f[1] * f[1];
-	
-	_c[0](0, 0) =  0.0337;
-	_c[1](0, 0) = -0.3185;
-	_c[2](0, 0) = -0.0942;
-	_c[3](0, 0) = -0.5927;
-	_c[4](0, 0) =  0.1957; 
-	_c[0](0, 1) = _c[0](1, 0) = -0.2826;
-	_c[1](0, 1) = _c[1](1, 0) =  0.0918;
-	_c[2](0, 1) = _c[2](1, 0) =  0.1669;
-	_c[3](0, 1) = _c[3](1, 0) = -0.2082;
-	_c[4](0, 1) = _c[4](1, 0) = -0.1386;
-	_c[0](1, 1) =  0.3010;
-	_c[1](1, 1) = -0.5140;
-	_c[2](1, 1) =  0.1176;
-	_c[3](1, 1) =  0.5204;
-	_c[4](1, 1) = -0.3977; 
 
-	_sP(0, 0) = -0.0074;
-	_sP(0, 1) =  0.9828;
-  
+	_c[0](0, 0) =  0.0337;                // AMP Table 1, M solution: c_11^0
+	_c[1](0, 0) = -0.3185;                // AMP Table 1, M solution: c_11^1
+	_c[2](0, 0) = -0.0942;                // AMP Table 1, M solution: c_11^2
+	_c[3](0, 0) = -0.5927;                // AMP Table 1, M solution: c_11^3
+	_c[4](0, 0) =  0.1957;                // AMP Table 1, M solution: c_11^4
+	_c[0](0, 1) = _c[0](1, 0) = -0.2826;  // AMP Table 1, M solution: c_12^0
+	_c[1](0, 1) = _c[1](1, 0) =  0.0918;  // AMP Table 1, M solution: c_12^1
+	_c[2](0, 1) = _c[2](1, 0) =  0.1669;  // AMP Table 1, M solution: c_12^2
+	_c[3](0, 1) = _c[3](1, 0) = -0.2082;  // AMP Table 1, M solution: c_12^3
+	_c[4](0, 1) = _c[4](1, 0) = -0.1386;  // AMP Table 1, M solution: c_12^4
+	_c[0](1, 1) =  0.3010;                // AMP Table 1, M solution: c_22^0
+	_c[1](1, 1) = -0.5140;                // AMP Table 1, M solution: c_12^1
+	_c[2](1, 1) =  0.1176;                // AMP Table 1, M solution: c_12^2
+	_c[3](1, 1) =  0.5204;                // AMP Table 1, M solution: c_12^3
+	_c[4](1, 1) = -0.3977;                // AMP Table 1, M solution: c_12^4
+
+	_sP(0, 0) = -0.0074;  // AMP Table 1, M solution: s_0
+	_sP(0, 1) =  0.9828;  // AMP Table 1, M solution: s_1
+
 	particleDataTable& pdt = particleDataTable::instance();
-	const string partList[] = {"pi", "pi0", "K", "K0"};
+	const string partList[] = {"pi+", "pi0", "K+", "K0"};
 	for (unsigned int i = 0; i < sizeof(partList) / sizeof(partList[0]); ++i)
 		if (not pdt.isInTable(partList[i])) {
 			printErr << "cannot find particle " << partList[i] << " in particle data table. "
-			         << "was the table initiatlized properly?" << endl;
+			         << "aborting." << endl;
 			throw;
 		}
-	_piChargedMass   = pdt.entry("pi" )->mass();
+	_piChargedMass   = pdt.entry("pi+")->mass();
 	_piNeutralMass   = pdt.entry("pi0")->mass();
-	_kaonChargedMass = pdt.entry("K"  )->mass();
+	_kaonChargedMass = pdt.entry("K+" )->mass();
 	_kaonNeutralMass = pdt.entry("K0" )->mass();
 	_kaonMeanMass    = (_kaonChargedMass + _kaonNeutralMass) / 2;
 }
@@ -185,11 +256,11 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 		s     = mass * mass;
 	}
 
-	const complex<double> qPiPi   = q(mass, _piChargedMass,   _piChargedMass);
-	const complex<double> qPi0Pi0 = q(mass, _piNeutralMass,   _piNeutralMass);
-	const complex<double> qKK     = q(mass, _kaonChargedMass, _kaonChargedMass);
-	const complex<double> qK0K0   = q(mass, _kaonNeutralMass, _kaonNeutralMass);
-	complex<double>       qKmKm   = q(mass, _kaonMeanMass,    _kaonMeanMass);
+	const complex<double> qPiPi   = breakupMomentumComplex(mass, _piChargedMass,   _piChargedMass  );
+	const complex<double> qPi0Pi0 = breakupMomentumComplex(mass, _piNeutralMass,   _piNeutralMass  );
+	const complex<double> qKK     = breakupMomentumComplex(mass, _kaonChargedMass, _kaonChargedMass);
+	const complex<double> qK0K0   = breakupMomentumComplex(mass, _kaonNeutralMass, _kaonNeutralMass);
+	complex<double>       qKmKm   = breakupMomentumComplex(mass, _kaonMeanMass,    _kaonMeanMass   );
 
 	matrix<complex<double> > rho(2, 2);
 	if (_vesSheet) {
@@ -206,15 +277,15 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 	const double scale = (s / (4 * _kaonMeanMass * _kaonMeanMass)) - 1;
 
 	matrix<complex<double> > M(zero_matrix<complex<double> >(2, 2));
-	for (unsigned int p = 0; p < _sP.size2(); ++p) {
-		const complex<double> fa = 1. / (s - _sP(0, p));
-		M += fa * _a[p];
+	for (unsigned int i = 0; i < _sP.size2(); ++i) {
+		const complex<double> fa = 1. / (s - _sP(0, i));
+		M += fa * _a[i];
 	}
-	for (unsigned int n = 0; n < _c.size(); ++n) {
-		const complex<double> sc = pow(scale, (int) n);
-		M += sc *_c[n];
+	for (unsigned int i = 0; i < _c.size(); ++i) {
+		const complex<double> sc = pow(scale, (int)i);
+		M += sc *_c[i];
 	}
-	
+
 	// modification: off-diagonal terms set to 0
 	M(0, 1) = 0;
 	M(1, 0) = 0;
@@ -222,17 +293,10 @@ piPiSWaveAuMorganPenningtonM::amp(const isobarDecayVertex& v)
 	invertMatrix<complex<double> >(M - imag * rho, _T);
 	const complex<double> amp = _T(0, 0);
 	if (_debug)
-		printInfo << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << maxPrecision(mass) << " GeV) = "
+		           << maxPrecisionDouble(amp) << endl;
 
 	return amp;
-}
-
-
-ostream&
-piPiSWaveAuMorganPenningtonM::print(ostream& out) const
-{
-	out << name();
-	return out;
 }
 
 
@@ -247,7 +311,7 @@ piPiSWaveAuMorganPenningtonVes::piPiSWaveAuMorganPenningtonVes()
 complex<double>
 piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 {
-	double mass = v.parent()->lzVec().M();
+	const double M = v.parent()->lzVec().M();
 
 	const double          f0Mass  = 0.9837;  // [GeV]
 	const double          f0Width = 0.0376;  // [GeV]
@@ -255,31 +319,24 @@ piPiSWaveAuMorganPenningtonVes::amp(const isobarDecayVertex& v)
 
 	const complex<double> ampM = piPiSWaveAuMorganPenningtonM::amp(v);
 
-	complex<double> bw;
-	if (mass > 2 * _piChargedMass) {
-		const double p     = q(mass,   _piChargedMass, _piChargedMass).real();
-		const double p0    = q(f0Mass, _piChargedMass, _piChargedMass).real();
-		const double Gamma = f0Width * (p / p0);
-		const double A     = f0Mass * f0Mass - mass * mass;
-		const double B     = f0Mass * Gamma;
-		const double C     = B * (mass / p);
-		const double denom = C / (A * A + B * B);
-		bw = denom * complex<double>(A, B);
+	complex<double> bw = 0;
+	if (M > 2 * _piChargedMass) {
+		const double q     = breakupMomentum(M,      _piChargedMass, _piChargedMass);
+		const double q0    = breakupMomentum(f0Mass, _piChargedMass, _piChargedMass);
+		const double Gamma = f0Width * (q / q0);
+		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+		const double C     = f0Mass * Gamma;
+		const double A     = C * (M / q);
+		const double B     = f0Mass * f0Mass - M * M;
+		bw = (A / (B * B + C * C)) * complex<double>(B, C);
 	}
 
 	const complex<double> amp = ampM - coupling * bw;
 	if (_debug)
-		printInfo << name() << "(m = " << mass << " GeV) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV) = "
+		           << maxPrecisionDouble(amp) << endl;
 
 	return amp;
-}
-
-
-ostream&
-piPiSWaveAuMorganPenningtonVes::print(ostream& out) const
-{
-	out << name();
-	return out;
 }
 
 
@@ -293,7 +350,7 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 
 	_a[0](0, 1) = 0; // was 0.0150
 	_a[0](1, 0) = 0; // was 0.0150
- 
+
 	// _a[1] are the f's from the AMP paper
 	_a[1](0, 0) = 0;
 	_a[1](0, 1) = 0;
@@ -302,9 +359,47 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 }
 
 
-ostream&
-piPiSWaveAuMorganPenningtonKachaev::print(ostream& out) const
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
+rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 {
-	out << name();
-	return out;
+	const particlePtr& parent = v.parent();
+
+	// get Breit-Wigner parameters
+	const double M   = parent->lzVec().M();                 // parent mass
+	const double m1  = v.daughter1()->lzVec().M();          // daughter 1 measured/assumed mass
+	const double m2  = v.daughter2()->lzVec().M();          // daughter 2 measured/assumed mass
+	const double q   = breakupMomentum(M, m1, m2);
+	// const double M0  = parent->mass();                      // resonance peak position
+	// const double q02 = breakupMomentumSquared(M0, m1, m2, true);
+	// const double q0  = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
+	const unsigned int L = v.L();
+
+	// rho' parameters
+	const double M01     = 1.465;  // rho(1450) mass [GeV/c^]
+	const double Gamma01 = 0.235;  // rho(1450) width [GeV/c^]
+	const double M02     = 1.700;  // rho(1700) mass [GeV/c^]
+	const double Gamma02 = 0.220;  // rho(1700) width [GeV/c^]
+	// const double M02     = 1.720;  // rho(1700) mass; PDG12 [GeV/c^]
+	// const double Gamma02 = 0.250;  // rho(1700) width; PDG12 [GeV/c^]
+	const double q102    = breakupMomentumSquared(M01, m1, m2, true);
+	const double q10     = sqrt(fabs(q102));
+	const double q202    = breakupMomentumSquared(M02, m1, m2, true);
+	const double q20     = sqrt(fabs(q202));
+
+	// const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
+	// const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
+	const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q10);
+	const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q20);
+	const complex<double> amp = (4 * bw1 - 3 * bw2) / 7;
+
+	if (_debug)
+		// printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+		//            << " GeV/c^2, L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
+		//            << "q_0 = " << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
+		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
+		           << "L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
+		           << "q1_0 = " << maxPrecision(q10) << " GeV/c, "
+		           << "q2_0 = " << maxPrecision(q20) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
+	return amp;
 }

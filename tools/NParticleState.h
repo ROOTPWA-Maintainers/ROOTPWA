@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      N-Particle state
@@ -63,11 +61,11 @@ public:
   TLorentzVector p() const; // Momentum of NParticleState
   TLorentzVector pfs(unsigned int i) const; // Momentum of ith daughter particle;
   FSParticle* getParticle(unsigned int i) const {return _fspart.at(i);}
-  double Q2(); // momentum transfer to target
-  double t(){return -Q2();}  // momentum transfer to target
+  double Q2() const; // momentum transfer to target
+  double t() const {return -Q2();}  // momentum transfer to target
   TVector3 vertex() const;  // Vertex
   const TLorentzVector& beam() const {return _beam;}
-  double rapidity();
+  double rapidity() const;
 
   bool Exclusive(double d=10);
 
@@ -76,8 +74,8 @@ public:
   void setBeam(const TLorentzVector& beam);
 
   // Operations ----------------------
-  bool isSubstate(NParticleState* motherstate);
-  bool isDisjunctFrom(NParticleState* isobar);
+  bool isSubstate(const NParticleState* motherstate) const;
+  bool isDisjunctFrom(const NParticleState* isobar) const;
 
 private:
 

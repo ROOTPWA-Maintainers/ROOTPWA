@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      general isobar decay amplitude in helicity formalism
@@ -36,12 +32,11 @@
 
 
 #include <algorithm>
-#include <cassert>
 
 #include "TLorentzRotation.h"
 #include "TMath.h"
 
-#include "clebschGordanCoeff.hpp"
+#include "spinUtils.hpp"
 #include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
 
@@ -76,9 +71,8 @@ isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
 	const TVector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
 	// rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
 	TRotation rot1;
-	rot1.RotateZ(-yHfAxis.Phi());
-	rot1.RotateY(piHalf - yHfAxis.Theta());
-	rot1.RotateZ(piHalf);
+	rot1.RotateZ(piHalf - yHfAxis.Phi());
+	rot1.RotateX(yHfAxis.Theta() - piHalf);
 	daughter *= rot1;
 	// rotate about yHfAxis so that daughter momentum is along z-axis
 	TRotation rot2;
@@ -117,16 +111,16 @@ isobarHelicityAmplitude::transformDaughters() const
 	for (unsigned int i = 0; i < _decay->nmbDecayVertices(); ++i) {
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
-			printInfo << "transforming outgoing particles of vertex " << *vertex
-			          << " into " << vertex->parent()->name() << " Gottfried-Jackson RF" << endl;
+			printDebug << "transforming outgoing particles of vertex " << *vertex
+			           << " into " << vertex->parent()->name() << " Gottfried-Jackson RF" << endl;
 		vertex->transformOutParticles(gjTrans);
 	}
 	// 2) transform daughters of isobar decay vertices to the respective helicity frames
 	for (unsigned int i = 1; i < _decay->nmbDecayVertices(); ++i) {  // exclude X-decay vertex
 		const isobarDecayVertexPtr& vertex = _decay->isobarDecayVertices()[i];
 		if (_debug)
-			printInfo << "transforming all child particles of vertex " << *vertex
-			          << " into " << vertex->parent()->name() << " helicity RF" << endl;
+			printDebug << "transforming all child particles of vertex " << *vertex
+			           << " into " << vertex->parent()->name() << " helicity RF" << endl;
 		const TLorentzRotation hfTrans = hfTransform(vertex->parent()->lzVec());
 		// get all particles downstream of this vertex
 		decayTopologyGraphType subGraph = _decay->dfsSubGraph(vertex);
@@ -148,7 +142,8 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
                                                const bool                  topVertex) const
 {
 	if (_debug)
-		printInfo << "calculating two-body decay amplitude in helicity formalism for " << *vertex << endl;
+		printDebug << "calculating two-body decay amplitude in helicity formalism for "
+		           << *vertex << endl;
 
 	const particlePtr& parent    = vertex->parent();
 	const particlePtr& daughter1 = vertex->daughter1();
@@ -198,6 +193,6 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
   
 	if (_debug)
-		printInfo << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
+		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
 	return amp;
 }

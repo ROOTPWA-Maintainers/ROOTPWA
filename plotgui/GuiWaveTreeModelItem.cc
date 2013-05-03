@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Code file for the GuiWaveTreeModelItem class that provides an
@@ -45,7 +45,7 @@ using namespace rpwa;
 bool GuiWaveTreeModelItem::_Debug = false;
 
 // Fills Data, Type and Parent into the member variables
-GuiWaveTreeModelItem::GuiWaveTreeModelItem(const QVariant& Data, E_Types Type, GuiWaveTreeModelItem *Parent):
+GuiWaveTreeModelItem::GuiWaveTreeModelItem(const QString& Data, E_Types Type, GuiWaveTreeModelItem *Parent):
 	_Data(Data),
 	_Parent(Parent),
 	_Type(Type){
@@ -63,7 +63,7 @@ int GuiWaveTreeModelItem::NChildren() const{
 
 // Returns child with index Index
 GuiWaveTreeModelItem *GuiWaveTreeModelItem::Child(int Index){
-		return _Children.value(Index);
+	return _Children.value(Index);
 }
 
 // Returns the parent
@@ -87,7 +87,7 @@ GuiWaveTreeModelItem::E_Types GuiWaveTreeModelItem::Type() const{
 }
 
 // Returns the data string
-const QVariant& GuiWaveTreeModelItem::Data() const{
+const QString& GuiWaveTreeModelItem::Data() const{
 	return _Data;
 }
 

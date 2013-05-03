@@ -14,26 +14,26 @@
 #include "NParticleEvent.h"
 
 
-using namespace std; 
+using namespace std;
 
 
 void sampleWeightedEvents(TTree* mctr, string outputfile,unsigned int n,bool doweight=true){
-  
+
 
   ofstream outfile(outputfile.c_str());
 
 
   TTree* tr=mctr;
   double weight=1;
-  double maxweight=0; 
+  double maxweight=0;
   TClonesArray* p=new TClonesArray("TLorentzVector");
   TLorentzVector* beam=NULL;
   int qbeam;
-  std::vector<int>* q=NULL; 
+  std::vector<int>* q=NULL;
   tr->SetBranchAddress("weight",&weight);
-  
+
   // get max weight
-  unsigned int nevt=tr->GetEntries();	
+  unsigned int nevt=tr->GetEntries();
   for(unsigned int i=0;i<nevt;++i){
     tr->GetEntry(i);
     if(weight>maxweight)maxweight=weight;
@@ -46,7 +46,7 @@ void sampleWeightedEvents(TTree* mctr, string outputfile,unsigned int n,bool dow
  tr->SetBranchAddress("q",&q);
  TVector3 vertex;
  NParticleEvent event(p,q,beam,&qbeam,&vertex);
- 
+
  unsigned int nselected=0;
  unsigned int attempts=0;
  while(nselected<n){
@@ -54,17 +54,17 @@ void sampleWeightedEvents(TTree* mctr, string outputfile,unsigned int n,bool dow
      tr->GetEntry(i);
      ++attempts;
      if(doweight && gRandom->Uniform()>weight/maxweight)continue;
-     
+
      ++nselected;
      event.refresh();
      event.writeGAMP(outfile);
      if(nselected==n)break;
-     
+
    }// end loop over events
  }
  cout << "Attempts: " << attempts << endl;
  cout << "Efficiency=" << (double)nselected/(double)attempts << endl;
- 
+
  outfile.close();
- 
+
 }

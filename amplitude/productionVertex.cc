@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      production vertex virtual base class
@@ -50,7 +46,7 @@ productionVertex::productionVertex()
 	: interactionVertex()
 {
 	if (_debug)
-		printInfo << "constructed " << *this << endl;
+		printDebug << "constructed " << *this << endl;
 }
 
 

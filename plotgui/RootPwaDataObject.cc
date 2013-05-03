@@ -74,7 +74,12 @@ void RootPwaDataObject::EmptyTreeMap(){
 // Default constructor
 RootPwaDataObject::RootPwaDataObject():
 	_DataFile(0),
-	_DataTree(0){
+	_DataTree(0),
+	_DataBranch(0),
+	_DataFileName(""),
+	_DataTreeName(""),
+	_DataBranchName(""),
+	_TreeMap(){
 }
 
 // Destructor
@@ -82,16 +87,22 @@ RootPwaDataObject::~RootPwaDataObject(){
 	EmptyTreeMap();
 	delete _DataTree;
 	delete _DataFile;
+	delete _DataBranch;
 }
 
-///< returns the filename of the loaded file
+// Returns the filename of the loaded file
 const string& RootPwaDataObject::DataFileName() const{
 	return _DataFileName;
 }
 
-///< returns the treename of the selected tree
+// Returns the treename of the selected tree
 const string& RootPwaDataObject::DataTreeName() const{
 	return _DataTreeName;
+}
+
+// Returns the branchname of the selected branch
+const string& RootPwaDataObject::DataBranchName() const{
+	return _DataBranchName;
 }
 
 // Loading the given root tree file
@@ -114,7 +125,7 @@ TFile *RootPwaDataObject::LoadFile( string FileString ) {
 	return _DataFile;
 }
 
-// Reads the names of all trees in the file and returns it in a std::list& given as parameter, returns the number of found Trees
+// Reads the names of all trees in the file and returns it in a std::list& given as parameter, returns the number of found trees
 unsigned int RootPwaDataObject::TreesInFile( list<string>& TreeList ){
 	if( FileNotLoaded() ){
 		return 0;
@@ -163,20 +174,73 @@ TTree *RootPwaDataObject::SelectTree( std::string TreeName ){
 	return _DataTree;
 }
 
+// Reads the names of all branches in the tree and returns it in a std::list& given as parameter, returns the number of found branches
+unsigned int RootPwaDataObject::BranchesInTree( list<string>& BranchList ){
+	if( !_DataTree ){
+		printErr << "No data tree selected. Select one before trying to select its branch.\n";
+		return 0;
+	}
+
+	BranchList.clear();
+	TObjArray *ObjectList = _DataTree->GetListOfBranches(); // List of branches in the tree
+	TBranch *tmp;
+	unsigned int i=0;
+
+	while( ( tmp = static_cast<TBranch *>(ObjectList->At(i)) ) ){
+		if( _Debug){
+			printDebug << tmp->GetClassName() << ':' << tmp->GetName() << '\n';
+		}
+
+		if( string( tmp->GetClassName() ) == "rpwa::fitResult" ){
+			// Object is a fitResult branch
+			BranchList.push_back( string( tmp->GetName() ) );
+		}
+
+		++i;
+	}
+
+	return BranchList.size();
+}
+
+// Selecting branch in _DataTree by name and returns if selection was successful (if branch exists)
+TBranch *RootPwaDataObject::SelectBranch( string BranchName ){
+	if( !_DataTree ){
+		printErr << "No data tree selected. Select one before trying to select its branch.\n";
+		return 0;
+	}
+
+	if( _DataBranch ){
+		printErr << "There is already a branch selected. Clear the object before reuse.\n";
+		return 0;
+	}
+
+	_DataBranch = static_cast<TBranch *>( _DataTree->GetBranch( BranchName.c_str() ) );
+
+	if( _DataBranch ){
+		_DataBranchName = BranchName;
+	}
+
+	return _DataBranch;
+}
+
 const vector<string> *RootPwaDataObject::WavesInTree() const{
 	if( !_DataTree ){
 		printErr << "No data tree selected. Select one before trying to get its waves.\n";
 		return 0;
 	}
 
-	const fitResult *TmpFitResult = 0;
-	_DataTree->SetBranchAddress("FitResults",&TmpFitResult);
+	if( !_DataBranch ){
+		printErr << "No data branch selected. Select one before trying to get the waves of the tree.\n";
+		return 0;
+	}
 
+	const fitResult *TmpFitResult = 0;
+	_DataBranch->SetAddress(&TmpFitResult);
 
 	// If tree has entries
-	if( _DataTree->GetEntries() ){
+	if( _DataBranch->GetEntries() ){
 		// Get first Entry in Tree
-		_DataTree->GetEntry(0);
+		_DataBranch->GetEntry(0);
 		return &( TmpFitResult->waveNames() );
 	}
 	else{
@@ -188,14 +252,19 @@ const vector<string> *RootPwaDataObject::WavesInTree() const{
 unsigned int RootPwaDataObject::MapTreeByMassWithHighestLikelihood(){
 	EmptyTreeMap();
 
+	if( !_DataBranch ){
+		printErr << "No data branch selected. Select one before trying to map the tree.\n";
+		return 0;
+	}
+
 	const fitResult *TmpFitResult = 0;
 	fitResult *MemFitResult;
-	_DataTree->SetBranchAddress("FitResults",&TmpFitResult);
+	_DataBranch->SetAddress(&TmpFitResult);
 
 	 // Loop over all fitResults in tree
-	Long64_t NEntries = _DataTree->GetEntries();
+	Long64_t NEntries = _DataBranch->GetEntries();
 	for (Long64_t i=0; i<NEntries; ++i){
-		_DataTree->GetEntry(i);
+		_DataBranch->GetEntry(i);
 		pair<map<double, fitResult *>::iterator,bool> InsertAttempt = _TreeMap.insert( pair<double, fitResult *>( TmpFitResult->massBinCenter(), 0 ) ); // 0 pointer just a dummy, has to be filled before use of map!!!
 		if( InsertAttempt.second ){ // fitResult was successfully inserted
 			// Copy the fitResult from root into memory and add the correct pointer
@@ -209,7 +278,7 @@ unsigned int RootPwaDataObject::MapTreeByMassWithHighestLikelihood(){
 			}
 		}
 		else{ // fitResult could not be inserted, because an object with equal massBinCenter already exists
-			if( InsertAttempt.first->second->logLikelihood() < TmpFitResult->logLikelihood() ){ // Likelihood of currently mapped fitResult is lower then the new one
+			if( InsertAttempt.first->second->logLikelihood() <= TmpFitResult->logLikelihood() ){ // Likelihood of currently mapped fitResult is lower then the new one
 				// Copy the fitResult from root into memory and add the correct pointer
 				MemFitResult = new fitResult( *TmpFitResult );
 				if( MemFitResult ){
@@ -228,33 +297,37 @@ unsigned int RootPwaDataObject::MapTreeByMassWithHighestLikelihood(){
 
 // Creates a root histogram of the intensity out of the fitResults in map over the sorting parameter and the spacing between elements has to be constant
 TH1F *RootPwaDataObject::IntensityHist( const string& WaveName, const string& TitleXAxis ) const{
-	if( _TreeMap.size() < 2){
-		printErr << "Data tree contains less than 2 elements.\n";
+	if( _TreeMap.size() < 1){
+		printErr << "Data tree contains no element.\n";
 		return 0;
 	}
 
-	// Determine start (sorting parameter of first element - step size/2) and end value (sorting parameter of last element + step size/2) of histograms x-axis
 	map<double, fitResult *>::const_iterator it = _TreeMap.begin(); // First element of map
-	if( _Debug ){
-		printDebug << *(it->second);
-	}
 
-	double from = it->first*3/2;
-	if( _Debug ){
-		printDebug << "Plot from tmp: " << from << '\n';
+	// Determine start (sorting parameter of first element - step size/2) and end value (sorting parameter of last element + step size/2) of histograms x-axis
+	double from, to;
+	if( _TreeMap.size() < 2){
+		from = it->first-0.01;
+		to = it->first+0.01;
 	}
-	from -= (++it)->first*1/2;
-	if( _Debug ){
-		printDebug << "Plot from final: " << from << '\n';
-	}
-	it = _TreeMap.end(); // Element after the last element of map
-	double to = (--it)->first*3/2;
-	if( _Debug ){
-		printDebug << "Plot to tmp: " << to << '\n';
-	}
-	to -= (--it)->first*1/2;
-	if( _Debug ){
-		printDebug << "Plot to final: " << to << '\n';
+	else{
+		from = it->first*3/2;
+		if( _Debug ){
+			printDebug << "Plot from tmp: " << from << '\n';
+		}
+		from -= (++it)->first*1/2;
+		if( _Debug ){
+			printDebug << "Plot from final: " << from << '\n';
+		}
+		it = _TreeMap.end(); // Element after the last element of map
+		to = (--it)->first*3/2;
+		if( _Debug ){
+			printDebug << "Plot to tmp: " << to << '\n';
+		}
+		to -= (--it)->first*1/2;
+		if( _Debug ){
+			printDebug << "Plot to final: " << to << '\n';
+		}
 	}
 
 	TH1F *Hist = new TH1F( (string("IntHist") += WaveName).c_str(), (string("Intensity Histogram: ") += WaveName).c_str(), _TreeMap.size(),from,to);
@@ -264,6 +337,9 @@ TH1F *RootPwaDataObject::IntensityHist( const string& WaveName, const string& Ti
 	unsigned int CurrentBin = 1; // Bin 0 is the underflow bin
 	for ( it = _TreeMap.begin(); it != _TreeMap.end(); ++it){ // Loops over the whole tree
 		if( _Debug ){
+			if( 22 == CurrentBin ){
+				printDebug << "FitResult Dump (i=" << CurrentBin << ")\n" << *(it->second);
+			}
 			printDebug << "Adding MassBin " << it->first << '=' << it->second->massBinCenter() << '\n';
 		}
 		if( it->second->waveName(WaveIndex) != WaveName ){
@@ -295,12 +371,20 @@ TH1F *RootPwaDataObject::IntensityHist( const string& WaveName, const string& Ti
 void RootPwaDataObject::Clear(){
 	_DataTree = 0;
 	_DataFile = 0;
+	_DataBranch = 0;
+
+	_DataFileName = "";
+	_DataTreeName = "";
+	_DataBranchName = "";
+
+	EmptyTreeMap();
 }
 
 // Clears the file object and calls destructor of the _DataObject;
 void RootPwaDataObject::Empty(){
 	delete _DataTree;
 	delete _DataFile;
+	delete _DataBranch;
 
 	Clear();
 }

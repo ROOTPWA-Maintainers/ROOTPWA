@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      interface for CUDA likelihood functions
@@ -40,6 +36,7 @@
 #include "nDimArrayUtils.hpp"
 #include "reportingUtils.hpp"
 
+#include "conversionUtils.hpp"
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"
 #include "likelihoodKernel.cu"
@@ -607,9 +604,6 @@ likelihoodInterface<complexT>::print(ostream& out)
       << "    maximum 3-dim texture size: ............................ "
       << _cudaDeviceProp.maxTexture3D[0] << " x " << _cudaDeviceProp.maxTexture3D[1]
       << " x " << _cudaDeviceProp.maxTexture3D[2] << " pixels" << endl
-      << "    maximum 2-dim texture array size: ...................... "
-      << _cudaDeviceProp.maxTexture2DArray[0] << " x " << _cudaDeviceProp.maxTexture2DArray[1]
-      << " x " << _cudaDeviceProp.maxTexture2DArray[2] << endl
       << "    alignment required for textures: ....................... "
       << _cudaDeviceProp.textureAlignment << " bytes" << endl
       << "    alignment required for surfaces: ....................... "
@@ -617,17 +611,17 @@ likelihoodInterface<complexT>::print(ostream& out)
       << "    maximum memory pitch: .................................. "
       << _cudaDeviceProp.memPitch << " bytes" << endl
       << "    support for concurrent execution of multiple kernels ... "
-      << ((_cudaDeviceProp.concurrentKernels)        ? "yes" : "no") << endl
+      << yesNo(_cudaDeviceProp.concurrentKernels) << endl
       << "    support for ECC memory protection: ..................... "
-      << ((_cudaDeviceProp.ECCEnabled)               ? "yes" : "no") << endl
+      << yesNo(_cudaDeviceProp.ECCEnabled) << endl
       << "    concurrent copy and execution: ......................... "
-      << ((_cudaDeviceProp.deviceOverlap)            ? "yes" : "no") << endl
+      << yesNo(_cudaDeviceProp.deviceOverlap) << endl
       << "    run time limit on kernels: ............................. "
-      << ((_cudaDeviceProp.kernelExecTimeoutEnabled) ? "yes" : "no") << endl
+      << yesNo(_cudaDeviceProp.kernelExecTimeoutEnabled) << endl
       << "    device is an integrated component ...................... "
-      << ((_cudaDeviceProp.integrated)               ? "yes" : "no") << endl
+      << yesNo(_cudaDeviceProp.integrated) << endl
       << "    support for host page-locked memory mapping: ........... "
-      << ((_cudaDeviceProp.canMapHostMemory)         ? "yes" : "no") << endl
+      << yesNo(_cudaDeviceProp.canMapHostMemory) << endl
       << "    compute mode: .......................................... ";
   if (_cudaDeviceProp.computeMode == cudaComputeModeDefault)
 	  out << "default (multiple host threads can use this device simultaneously)";

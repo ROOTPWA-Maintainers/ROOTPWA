@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Data storage class for PWA fit result of one kinematic bin
@@ -44,17 +42,7 @@
 #define TFITRESULT_HH
 
 
-// TFitResult produces a name clash for ROOT versions from 5.25.0 on
-#include "RVersion.h"
-// rootcint has problems with this: #if ROOT_VERSION_CODE < ROOT_VERSION(5,25,0)
-#if ROOT_VERSION_CODE < 334080  // make sure ROOT version is below 5.25.0
-#define TFITRESULT_ENABLED 1
-#else
-#define TFITRESULT_ENABLED 0
-#endif
-
-
-#if TFITRESULT_ENABLED
+#ifdef USE_TFITRESULT
 
 
 #include <iostream>
@@ -496,7 +484,7 @@ TFitResult::realValVariance(const unsigned int      waveIndexA,
 }
 
 
-#endif // TFITRESULT_ENABLED
+#endif // USE_TFITRESULT
 
 
 #endif  // TFITRESULT_HH

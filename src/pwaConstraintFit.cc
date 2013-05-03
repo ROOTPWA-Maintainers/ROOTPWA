@@ -107,7 +107,7 @@ int main(int argc, char** argv)
   TString normFileName; // file with normalization integrals
   TString accFileName;  // file with acceptance integrals
   bool quiet = false;
-  bool useStartVal = false; // are there start values?
+  //bool useStartVal = false; // are there start values?
   bool useNorm = false;
   unsigned int rank = 1; // rank
   extern char* optarg;
@@ -132,7 +132,7 @@ int main(int argc, char** argv)
       break;
     case 'S':
       startValFileName = optarg;
-      useStartVal = 1;
+      //useStartVal = 1;
       break;
     case 'n':
       normFileName = optarg;

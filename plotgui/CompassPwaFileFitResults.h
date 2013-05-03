@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 836                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2011-12-21 12:31:38 +0100 #$: date of last commit
 //
 // Description:
 //      Header file for the CompassPwaFileFitResults class that provides
@@ -80,6 +80,7 @@ namespace rpwa{
 		const TCMatrix& FitResults() const; ///< Returns _FitResults
 		std::vector< std::complex<double> >& ProdAmpsRootPwa( std::vector< std::complex<double> >& Destination ) const; ///< Returns _FitResults in rootpwa style
 		const TMatrixT<double>& CovMatrix() const; ///< Returns _CovMatrix
+		TMatrixT<double> &CovMatrixRootPwa( TMatrixT<double> &Destination ) const; ///< Returns _CovMatrix in rootpwa style
 		std::vector<std::pair<int, int> >& CovMatrixMapRootPwa( std::vector<std::pair<int, int> >& Destination ) const; ///< Returns a map for the covariance matrix as it is needed for root pwa
 
 

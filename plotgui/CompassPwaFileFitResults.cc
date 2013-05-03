@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Code file for the CompassPwaFileFitResults class that provides
@@ -128,12 +128,12 @@ vector< complex<double> >& CompassPwaFileFitResults::ProdAmpsRootPwa( vector< co
 	for( unsigned int i=0; i < _WaveNames.size(); ++i ){
 		if( "FLAT" == _WaveNames[i] ){
 			ProdAmpTmp = _FitResults.get(i,0);
-			Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() );
+			Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() ) * sqrt(_NumEvents); // The intensities has to be multiplied with the number of events in CompassPWA, but not in rootpwa therefore this sqrt has to be multiplied with the production amplitudes
 		}
 		else{
 			for( unsigned int k=0; k < _Rank; ++k ){
 				ProdAmpTmp = _FitResults.get(i,k);
-				Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() );
+				Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() ) * sqrt(_NumEvents); // The intensities has to be multiplied with the number of events in CompassPWA, but not in rootpwa therefore this sqrt has to be multiplied with the production amplitudes
 			}
 		}
 	}
@@ -141,12 +141,33 @@ vector< complex<double> >& CompassPwaFileFitResults::ProdAmpsRootPwa( vector< co
 	return Destination;
 }
 
-///< Returns _CovMatrix
+// Returns _CovMatrix
 const TMatrixT<double>& CompassPwaFileFitResults::CovMatrix() const{
 	return _CovMatrix;
 }
 
-///< Returns a map for the covariance matrix as it is needed for root pwa
+// Returns _CovMatrix in rootpwa style
+TMatrixT<double> &CompassPwaFileFitResults::CovMatrixRootPwa( TMatrixT<double> &Destination ) const{
+	if( _Debug ){
+		printDebug << "CovMatrix(C"<< _CovMatrix.GetNcols() <<",R"<< _CovMatrix.GetNrows() <<"):\n";
+		_CovMatrix.Print();
+	}
+	Destination.ResizeTo( _CovMatrix.GetNcols(), _CovMatrix.GetNrows() );
+	Destination = _CovMatrix;
+	if( _Debug ){
+		printDebug << "Destination(C"<< Destination.GetNcols() <<",R"<< Destination.GetNrows() <<"):\n";
+		Destination.Print();
+	}
+	Destination *= _NumEvents;
+	if( _Debug ){
+		printDebug << "DestinationMult(C"<< Destination.GetNcols() <<",R"<< Destination.GetNrows() <<"):\n";
+		Destination.Print();
+	}
+
+	return Destination;
+}
+
+// Returns a map for the covariance matrix as it is needed for root pwa
 vector<pair<int, int> >& CompassPwaFileFitResults::CovMatrixMapRootPwa( vector<pair<int, int> >& Destination ) const{
 	Destination.clear();
 	Destination.reserve( _CovMatrixSize/2 );

@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Implementation of class TPWALikelihood
@@ -216,9 +214,9 @@ TPWALikelihood<complexT>::FdF
 	_funcCallInfo[FDF].totalTime(timerTot.RealTime());
 	
 	if (_debug)
-		printInfo << "log likelihood =  "       << maxPrecisionAlign(sum(logLikelihoodAcc)) << ", "
-		          << "normalization =  "        << maxPrecisionAlign(sum(normFactorAcc)   ) << ", "
-		          << "normalized likelihood = " << maxPrecisionAlign(funcVal              ) << endl;
+		printDebug << "log likelihood =  "       << maxPrecisionAlign(sum(logLikelihoodAcc)) << ", "
+		           << "normalization =  "        << maxPrecisionAlign(sum(normFactorAcc)   ) << ", "
+		           << "normalized likelihood = " << maxPrecisionAlign(funcVal              ) << endl;
 }
 
 
@@ -315,9 +313,9 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 	_funcCallInfo[DOEVAL].totalTime(timerTot.RealTime());
 
 	if (_debug)
-		printInfo << "raw log likelihood =  "       << maxPrecisionAlign(logLikelihood     ) << ", "
-		          << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
-		          << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
+		printDebug << "raw log likelihood =  "       << maxPrecisionAlign(logLikelihood     ) << ", "
+		           << "normalization =  "            << maxPrecisionAlign(sum(normFactorAcc)) << ", "
+		           << "normalized log likelihood = " << maxPrecisionAlign(funcVal           ) << endl;
 	
 	return funcVal;
 	
@@ -590,8 +588,8 @@ TPWALikelihood<complexT>::readWaveList(const string& waveListFileName)
 			if (not (lineStream >> threshold))
 				threshold = 0;
 			if (_debug)
-				printInfo << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
-				          << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
+				printDebug << "reading line " << setw(3) << lineNmb + 1 << ": " << waveName<< ", "
+				           << "threshold = " << setw(4) << threshold << " MeV/c^2" << endl;
 			if (getReflectivity(waveName) > 0) {
 				++_nmbWavesRefl[1];  // positive reflectivity
 				waveNames     [1].push_back(waveName);
@@ -717,9 +715,9 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
 			}
 			indexLookUp[iRefl][iWave] = integral.index(_waveNames[iRefl][iWave]);
 			if (_debug)
-				printInfo << "    mapping wave [" << sign((int)iRefl * 2 - 1) << ", "
-				          << setw(3) << iWave << "] '" << _waveNames[iRefl][iWave] << "' "
-				          << "to index " << setw(3) << indexLookUp[iRefl][iWave] << " in integral." << endl;
+				printDebug << "    mapping wave [" << sign((int)iRefl * 2 - 1) << ", "
+				           << setw(3) << iWave << "] '" << _waveNames[iRefl][iWave] << "' "
+				           << "to index " << setw(3) << indexLookUp[iRefl][iWave] << " in integral." << endl;
 		}
 	// create reordered matrix
 	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
@@ -737,8 +735,8 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
 // returns integral matrix reordered according to _waveNames array
 template<typename complexT>
 void
-TPWALikelihood<complexT>::reorderIntegralMatrix(const normalizationIntegral& integral,
-                                                normMatrixArrayType&         reorderedMatrix) const
+TPWALikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral,
+                                                normMatrixArrayType&     reorderedMatrix) const
 {
 	// create reordered matrix
 	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
@@ -762,7 +760,7 @@ TPWALikelihood<complexT>::readIntegrals
 {
 	printInfo << "loading normalization integral from '" << normIntFileName << "'" << endl;
 	const string normIntFileExt  = extensionFromPath(normIntFileName);
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (normIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(normIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
@@ -770,7 +768,7 @@ TPWALikelihood<complexT>::readIntegrals
 			         << "aborting." << endl;
 			throw;
 		}
-		normalizationIntegral* integral = 0;
+		ampIntegralMatrix* integral = 0;
 		intFile->GetObject(integralTKeyName.c_str(), integral);
 		if (not integral) {
 			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
@@ -780,7 +778,7 @@ TPWALikelihood<complexT>::readIntegrals
 		reorderIntegralMatrix(*integral, _normMatrix);
 		intFile->Close();
 	} else
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 		if (normIntFileExt == "int") {
 		ifstream intFile(normIntFileName.c_str());
 		if (not intFile) {
@@ -800,7 +798,7 @@ TPWALikelihood<complexT>::readIntegrals
 
 	printInfo << "loading acceptance integral from '" << accIntFileName << "'" << endl;
 	const string accIntFileExt  = extensionFromPath(accIntFileName);
-#if NORMALIZATIONINTEGRAL_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (accIntFileExt == "root") {
 		TFile* intFile  = TFile::Open(accIntFileName.c_str(), "READ");
 		if (not intFile or intFile->IsZombie()) {
@@ -808,7 +806,7 @@ TPWALikelihood<complexT>::readIntegrals
 			         << "aborting." << endl;
 			throw;
 		}
-		normalizationIntegral* integral = 0;
+		ampIntegralMatrix* integral = 0;
 		intFile->GetObject(integralTKeyName.c_str(), integral);
 		if (not integral) {
 			printErr << "cannot find integral object in TKey '" << integralTKeyName << "' in file "
@@ -824,7 +822,7 @@ TPWALikelihood<complexT>::readIntegrals
 		reorderIntegralMatrix(*integral, _accMatrix);
 		intFile->Close();
 	} else
-#endif  // NORMALIZATIONINTEGRAL_ENABLED
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 		if (accIntFileExt == "int") {
 		ifstream intFile(accIntFileName.c_str());
 		if (not intFile) {
@@ -878,7 +876,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 				amps.reserve(nmbEvents);
 			// read decay amplitudes
 			string ampFilePath = ampDirName + "/" + _waveNames[iRefl][iWave];
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			if (useRootAmps) {
 				ampFilePath = changeFileExtension(ampFilePath, ".root");
 				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
@@ -914,7 +912,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 					amps.push_back(amp);
 				}
 			} else
-#endif
+#endif  // USE_STD_COMPLEX_TREE_LEAFS
 			{
 				printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
 				ifstream ampFile(ampFilePath.c_str());
@@ -948,8 +946,8 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 			for (unsigned int iEvt = 0; iEvt < _nmbEvents; ++iEvt)
 				_decayAmps[iEvt][iRefl][iWave] = amps[iEvt];
 			if (_debug)
-				printInfo << "read " << _nmbEvents << " events from file "
-				          << "'" << _waveNames[iRefl][iWave] << "'" << endl;
+				printDebug << "read " << _nmbEvents << " events from file "
+				           << "'" << _waveNames[iRefl][iWave] << "'" << endl;
 		}
 	printInfo << "loaded decay amplitudes for " << _nmbEvents << " events into memory" << endl;
 
@@ -984,7 +982,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 			for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 				_normMatrix[iRefl][iWave][iRefl][iWave] = 1;  // diagonal term
 		if (_debug) {
-			printInfo << "normalized integral matrices" << endl;
+			printDebug << "normalized integral matrices" << endl;
 			for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
 				for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
 					for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
@@ -1111,8 +1109,8 @@ TPWALikelihood<complexT>::getReflectivity(const TString& waveName)
 		throw;
 	}
 	if (_debug)
-		printInfo << "extracted reflectivity = " << refl << " from parameter name "
-		          << "'" << waveName << "' (char position " << reflIndex << ")" << endl;
+		printDebug << "extracted reflectivity = " << refl << " from parameter name "
+		           << "'" << waveName << "' (char position " << reflIndex << ")" << endl;
 	return refl;
 }
 

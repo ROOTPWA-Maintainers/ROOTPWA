@@ -3,8 +3,11 @@
 	
 
 #include <cmath>
-#include <Vec.h>
 #include <matrix.h>
+
+
+class threeVec;
+class fourVec;
 
 
 class rotation : public matrix<double> {

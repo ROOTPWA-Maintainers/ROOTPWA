@@ -258,7 +258,7 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
     name += dirname.c_str();
 	string isoname;
 	if (it->first == "Booky_Kpi_isobar"){
-		isoname = "(K^{-} #pi^{+})";	
+		isoname = "(K^{-} #pi^{+})";
 	} else {
 		isoname = "(#pi^{-} #pi^{+})";
 	}
@@ -360,25 +360,25 @@ void make1DOverviewCanvas(TFile *infile, TFile *outfile, TList *mclist, std::str
 void plotGlobalWeightedEvts_Kpipi(TString input_filename, TString output_filename) {
   setupBookies();
 
-	gROOT->SetStyle("Plain");
-	gStyle->SetTitleFont(10*13+2,"xyz");
-	gStyle->SetTitleSize(0.06, "xyz");
-	gStyle->SetTitleOffset(1.3,"y");
-	gStyle->SetTitleOffset(1.3,"z");
-	gStyle->SetLabelFont(10*13+2,"xyz");
-	gStyle->SetLabelSize(0.06,"xyz");
-	gStyle->SetLabelOffset(0.009,"xyz");
-	gStyle->SetPadBottomMargin(0.16);
-	gStyle->SetPadTopMargin(0.16);
-	gStyle->SetPadLeftMargin(0.16);
-	gStyle->SetPadRightMargin(0.16);
-	gStyle->SetOptTitle(0);
-	gStyle->SetOptStat(0);
-	gROOT->ForceStyle();
-	gStyle->SetFrameFillColor(0);
-   	gStyle->SetFrameFillStyle(0);
-   	TGaxis::SetMaxDigits(3);
-	//IsPhDStyle = true;
+  gROOT->SetStyle("Plain");
+  gStyle->SetTitleFont(10*13+2,"xyz");
+  gStyle->SetTitleSize(0.06, "xyz");
+  gStyle->SetTitleOffset(1.3,"y");
+  gStyle->SetTitleOffset(1.3,"z");
+  gStyle->SetLabelFont(10*13+2,"xyz");
+  gStyle->SetLabelSize(0.06,"xyz");
+  gStyle->SetLabelOffset(0.009,"xyz");
+  gStyle->SetPadBottomMargin(0.16);
+  gStyle->SetPadTopMargin(0.16);
+  gStyle->SetPadLeftMargin(0.16);
+  gStyle->SetPadRightMargin(0.16);
+  gStyle->SetOptTitle(0);
+  gStyle->SetOptStat(0);
+  gROOT->ForceStyle();
+  gStyle->SetFrameFillColor(0);
+  gStyle->SetFrameFillStyle(0);
+  TGaxis::SetMaxDigits(3);
+  //IsPhDStyle = true;
 
   int massbins =0;
   double mass= 0.0, massstart =1000.0, massend=0.0;

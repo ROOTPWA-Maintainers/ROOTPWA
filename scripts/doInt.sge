@@ -4,21 +4,22 @@
 # Select queue
 #$ -l short=TRUE,h_vmem=100M
 # Divert output
-#$ -o /afs/e18/compass/analysis/sneubert/LOGS
+#$ -o /nfs/nas/user/sneubert/LOGS
 # Write error in same file
 #$ -j y
 
-#cd ~/scratch/COMPASS/rootpwa/trunk
-cd $ROOTPWA
-#source setup.sh
+cd /nfs/nas/user/sneubert/scratch/COMPASS/rootpwa/trunk
+#cd $ROOTPWA
+source setup.sh
 cd scripts/
 
-#DATADIR=/afs/e18/compass/analysis/sneubert/5PiLTData3/
+DATADIR=/nfs/hicran/project/compass/analysis/sneubert/5PiLTData3/
+#DATADIR=/nfs/nas/user/sneubert/2004/5PiLTData3/
 #DATADIR=/afs/e18/compass/analysis/sneubert/5PiModels/ImpTest/pieces2/
-DATADIR=$HOME/disk2/analysis/Kp_Kppipi/pwa/WA03_like/
+#DATADIR=$HOME/disk2/analysis/Kp_Kppipi/pwa/WA03_like/
 
-#WAVESETDIR=$ROOTPWA/keyfiles/key5pi/
-WAVESETDIR=$ROOTPWA/keyfiles/keyKpipi/
+WAVESETDIR=$ROOTPWA/keyfiles/key5pi/
+#WAVESETDIR=$ROOTPWA/keyfiles/keyKpipi/
 
 # choose which amplitudes to do
 DOAMPS=1
@@ -53,14 +54,16 @@ if [ ! -d $DATADIR/$MYBIN ]; then
     exit;
 fi
 
-WEIGHTS="-w ../$MYBIN.genbod.wht"
+#WEIGHTS="-w ../$MYBIN.genbod.wht"
 
 if [ -n "$DOPSP" ]; then
   echo "--- Doing PSPAMPS ----------------";
   cd $DATADIR/$MYBIN/PSPAMPS;
   
   for i in $WAVESETDIR/*list.dat; do
-  	addamp $i OLD/;
+        echo "Processing $i";
+	ls -l $i;
+  	addamp $i ./; #OLD/;
   done;
 
   int $WEIGHTS *.amp > norm.int;
@@ -72,7 +75,9 @@ if [ -n "$DOACC" ]; then
   cd $DATADIR/$MYBIN/ACCAMPS;
   
   for i in $WAVESETDIR/*list.dat; do
-  	addamp $i OLD/;
+      echo "Processing $i";
+	ls -l $i;
+  	addamp $i ./; #OLD/;
   done;
 
   int *.amp > accnorm.int;
@@ -85,7 +90,9 @@ if [ -n "$DOAMPS" ]; then
   cd $DATADIR/$MYBIN/AMPS;
   
   for i in $WAVESETDIR/*list.dat; do
-  	addamp $i OLD/;
+      echo "Processing $i";
+	ls -l $i;
+  	addamp $i ./; #OLD/;
   done;
  
 fi;

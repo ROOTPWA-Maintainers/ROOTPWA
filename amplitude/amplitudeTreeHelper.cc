@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      helper functions that convert between standard binary PWA2000
@@ -62,6 +58,7 @@ namespace rpwa {
 	                TTree&         outTree,
 	                const long int maxNmbEvents,
 	                const string&  ampLeafName,
+	                const long int treeCacheSize,
 	                const bool)
 	{
 		// open input file
@@ -74,12 +71,13 @@ namespace rpwa {
 
 		// create leaf variable and connect it to tree branch
 		amplitudeTreeLeaf* ampTreeLeaf = new amplitudeTreeLeaf();
-		ampTreeLeaf->setNmbIncohSubAmps(1);
-		const string ampTreeName = fileNameFromPath(inFileName);
+		const string       ampTreeName = fileNameFromPath(inFileName);
 		printInfo << "writing to tree '" << ampTreeName << "'" << endl;
-		outTree.SetName(ampTreeName.c_str());
+		outTree.SetName (ampTreeName.c_str());
 		outTree.SetTitle(ampTreeName.c_str());
-		outTree.Branch(ampLeafName.c_str(), &ampTreeLeaf);
+		const int splitLevel = 99;
+		const int bufSize    = 256000;
+		outTree.Branch(ampLeafName.c_str(), &ampTreeLeaf, bufSize, splitLevel);
 
 		// loop over events and fill tree
 		printInfo << "writing amplitudes..." << endl;
@@ -89,7 +87,7 @@ namespace rpwa {
 		progress_display progressIndicator(fileLength, cout, "");
 		complex<double>  amp;
 		while (inFile.read((char*)&amp, sizeof(complex<double>))) {
-			ampTreeLeaf->setIncohSubAmp(amp);
+			ampTreeLeaf->setAmp(amp);
 			outTree.Fill();
 			++countEvents;
 			progressIndicator += inFile.tellg() - lastPos;
@@ -97,6 +95,11 @@ namespace rpwa {
 			if ((maxNmbEvents > 0) and (countEvents >= maxNmbEvents))
 				break;
 		}
+
+		printInfo << "optimizing tree" << endl;
+		//outTree.Print();
+		outTree.OptimizeBaskets(treeCacheSize, 1, "d");
+		//outTree.Print();
 
 		printInfo << "wrote amplitudes for " << countEvents << " events to tree "
 		          << "'" << outTree.GetName() << "'" << endl;
@@ -148,7 +151,7 @@ namespace rpwa {
 				          << " has a size of " << ampTreeLeaf->nmbIncohSubAmps()
 				          << " writing only first amplitude."<< endl;
 
-			complex<double> amp = ampTreeLeaf->incohSubAmp(0);
+			complex<double> amp = ampTreeLeaf->amp();
 			outFile.write((char*)(&amp), sizeof(complex<double>));
 		}
 

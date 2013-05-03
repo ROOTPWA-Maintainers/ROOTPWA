@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Header file for the GuiPwaMain class that provides
@@ -64,10 +64,12 @@ namespace rpwa{
 		static bool _Debug; ///< if set to true, debug messages are printed
 
 		// Functions
+		void  ClearWaves(); ///< Clears the canvas from the currently loaded waves
 
 	private slots:
 		// Automatically connected slots
 		void on_actionOpenTree_triggered(); ///< Loads the selected rootfile and tree into _RootDataObject and updates _WaveTreeModel when "Open Tree" is selected from the menu
+		void on_actionParse_CompassPWA_txts_triggered(); ///< Parses the selected CompassPWA txt files into a rootfile and displays its tree like if it was opened with on_actionOpenTree_triggered
 
 		// Manually connected slots
 		void mon__WaveSelection_currentChanged( const QModelIndex & Current, const QModelIndex & Previous );

@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Main file for converter from CompassPWA files to root tree
@@ -47,9 +47,6 @@ using namespace std;
 using namespace rpwa;
 
 int main(int argc, char *argv[]){ //[1]name of particleDataTable file, [2]name of root output file and [3] to [x] at least one destination of input files
-//	CompassPwaFileLoader::SetDebug(true);
-//	CompassPwaFileFitResults::SetDebug(true);
-
 	if( argc > 3){
 		TFile *ResultFile = new TFile( argv[2],"RECREATE","PWA fit results");
 	

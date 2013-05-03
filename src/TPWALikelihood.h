@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Likelihood function Object to use with ROOT minimizers
@@ -54,7 +52,7 @@
 #include "matrix.h"
 
 #include "sumAccumulators.hpp"
-#include "normalizationIntegral.h"
+#include "ampIntegralMatrix.h"
 
 
 class TString;
@@ -67,9 +65,6 @@ class TPWALikelihood : public ROOT::Math::IGradientFunctionMultiDim {
 public:
 
 	typedef typename complexT::value_type value_type;
-
-private:
-public:
 
 	// define array types
 	typedef boost::multi_array<std::string,            2> waveNameArrayType;    // array for wave names
@@ -137,9 +132,9 @@ public:
 	unsigned int ncalls(const functionCallEnum func = FDF) const
 	{ return _funcCallInfo[func].nmbCalls; }
 	double Ltime(const functionCallEnum func = FDF) const
-	{ return sum(_funcCallInfo[func].funcTime); }
+	{ return boost::accumulators::sum(_funcCallInfo[func].funcTime); }
 	double Ntime(const functionCallEnum func = FDF) const
-	{ return sum(_funcCallInfo[func].normTime); }
+	{ return boost::accumulators::sum(_funcCallInfo[func].normTime); }
 	//const integral& normInt() const { return _normInt; }
 
 	// modifiers
@@ -195,8 +190,8 @@ private:
   
 	void reorderIntegralMatrix(integral&            integral,
 	                           normMatrixArrayType& reorderedMatrix) const;
-	void reorderIntegralMatrix(const rpwa::normalizationIntegral& integral,
-	                           normMatrixArrayType&               reorderedMatrix) const;
+	void reorderIntegralMatrix(const rpwa::ampIntegralMatrix& integral,
+	                           normMatrixArrayType&           reorderedMatrix) const;
 
 public:
 

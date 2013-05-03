@@ -2,11 +2,10 @@
 #define __VEC_H_
 
 
+#include <iostream>
 #include <fstream>
 #include <cmath>
 #include <cassert>
-
-#include <pputil.h>
 	
 
 class threeVec {

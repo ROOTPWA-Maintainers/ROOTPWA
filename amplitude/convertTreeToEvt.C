@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      program that converts standrad ASCII PWA2000 .evt files into
@@ -38,7 +34,6 @@
 
 #include <fstream>
 #include <string>
-#include <cassert>
 #include <iomanip>
 #include <limits>
 #include <algorithm>
@@ -49,7 +44,9 @@
 #include "TVector3.h"
 
 #include "reportingUtils.hpp"
+#ifndef __CINT__
 #include "particleDataTable.h"
+#endif
 #include "evtTreeHelper.h"
 
 
@@ -59,7 +56,7 @@ using namespace rpwa;
 
 bool
 convertTreeToEvt(const string&  inFileNamePattern        = "testEvents.root",
-                 const string&  outFileName              = "testTree.evt",
+                 const string&  outFileName              = "testEvents.evt",
                  const string&  pdgTableFileName         = "./particleDataTable.txt",
                  const long int maxNmbEvents             = -1,
                  const string&  inTreeName               = "rootPwaEvtTree",

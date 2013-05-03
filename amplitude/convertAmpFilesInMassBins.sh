@@ -20,18 +20,14 @@
 #
 ##########################################################################
 #-------------------------------------------------------------------------
-# File and Version Information:
-# $Rev::                             $: revision of last commit
-# $Author::                          $: author of last commit
-# $Date::                            $: date of last commit
 #
 # Description:
-#      converts all .amp files in mass bin directories into ROOT files
+#      converts all .amp files in the given mass bin directories into ROOT files
 #
 #      uses PWA environment variable(s)
-#      PWA_ENV_SET
+#      ROOTPWA_ENV_SET
 #      ROOTPWA
-#      PWA_DATA_DIR
+#      ROOTPWA_DATA_DIR
 #
 #
 # Author List:
@@ -42,30 +38,31 @@
 
 
 echo ">>> info: ${0} started on $(date)"
-echo ">>> info: converting .amp files in ${PWA_DATA_DIR}"
+echo ">>> info: converting .amp files in ${ROOTPWA_DATA_DIR}"
 echo
-if [[ -z "${PWA_ENV_SET}" ]]
+if [[ "${ROOTPWA_DATA_ENV_SET}" != "true" ]]
 then
-    echo "!!! error: PWA environment is not setup. source setupThis.sh!"
+    echo "!!! error: ROOTPWA data environment is not setup. cannot convert .amp files. please source the setup script for the data environment first."
     exit 1
 fi
 
 
+# internal paramters
 RECREATE_LINKS="false"
 
 
 # find mass bin directories
-MASS_BINS=$(find ${PWA_DATA_DIR} -type d -regex '.*/[0-9]+.[0-9]+' -printf '%f\n' | sort -n)
+MASS_BINS=$(find ${ROOTPWA_DATA_DIR} -type d -regex '.*/[0-9]+.[0-9]+' -printf '%f\n' | sort -n)
 if [[ -z "${MASS_BINS}" ]]
 then
-    echo "!!! error: cannot find any mass bins in ${PWA_DATA_DIR}"
+    echo "!!! error: cannot find any mass bins in ${ROOTPWA_DATA_DIR}"
     exit 1
 fi
 
 
 for MASS_BIN in ${MASS_BINS}
 do
-    DIR=${PWA_DATA_DIR}/${MASS_BIN}
+    DIR=${ROOTPWA_DATA_DIR}/${MASS_BIN}
 		for AMP_FILE in ${DIR}/{,PSP}AMPS/*.amp
 		do
 				ROOT_FILE=${AMP_FILE%.amp}.root

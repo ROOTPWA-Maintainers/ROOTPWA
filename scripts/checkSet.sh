@@ -14,7 +14,7 @@ rm -f $DATA/amplist
 ls -1 $DATA/*.amp > $DATA/amplist
 ls -1 $DATA/OLD/*.amp >> $DATA/amplist
 
-for j in *SET ; do
+for j in F2BINS ; do
 cd $j;
 echo "Checking Set $j"
   FOUND=0;

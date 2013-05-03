@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      some simple conversion routines
@@ -47,10 +43,9 @@
 namespace rpwa {
 
 
-	// converts sign character into int
 	inline
 	int
-	sign(const char s)
+	sign(const char s)  ///< converts sign character into int
 	{
 		if (s == '+')
 			return +1;
@@ -60,11 +55,10 @@ namespace rpwa {
 	}
 
 
-	// extracts sign string from a value
 	template<typename T>
 	inline
 	std::string
-	sign(const T& val)
+	sign(const T& val)  ///< extracts sign string from a value
 	{
 		if (val < 0)
 			return "-";
@@ -74,24 +68,10 @@ namespace rpwa {
 	}
 
 
-	// extracts sign from value
-	template<typename T>
-	inline
-	T signum(const T& val)
-	{
-		if (val < 0)
-			return -1;
-		if (val > 0)
-			return +1;
-		return 0;
-	}
-
-
-	// conversion functions from std::vector to C array
 	template<typename T>
 	inline
 	const T*
-	toArray(const std::vector<T>& vec)
+	toArray(const std::vector<T>& vec)  ///< returns underlying array of vector
 	{
 		return &(*(vec.begin()));
 	}
@@ -99,7 +79,7 @@ namespace rpwa {
 	template<typename T>
 	inline
 	T*
-	toArray(std::vector<T>& vec)
+	toArray(std::vector<T>& vec)  ///< returns underlying array of vector
 	{
 		return &(*(vec.begin()));
 	}
@@ -108,7 +88,7 @@ namespace rpwa {
 	inline
 	const T*
 	toArray(std::size_t&          size,
-	        const std::vector<T>& vec)
+	        const std::vector<T>& vec)  ///< returns underlying array of vector and its size
 	{
 		size = vec.size();
 		return &(*(vec.begin()));
@@ -118,7 +98,7 @@ namespace rpwa {
 	inline
 	T*
 	toArray(std::size_t&    size,
-	        std::vector<T>& vec)
+	        std::vector<T>& vec)  ///< returns underlying array of vector and its size
 	{
 		size = vec.size();
 		return &(*(vec.begin()));
@@ -128,7 +108,7 @@ namespace rpwa {
 	template<typename T>
 	inline
 	std::string
-	toString(const T& fromValue)
+	toString(const T& fromValue)  ///< converts any type into string that has output stream operator defined
 	{
 		std::ostringstream to;
 		to << fromValue;
@@ -136,9 +116,8 @@ namespace rpwa {
 	}
 
 
-	// converts bool to "true"/"false" string
 	inline
-	std::string trueFalse(const bool val)
+	std::string trueFalse(const bool val)  ///< converts bool to "true"/"false" string
 	{
 		if (val)
 			return "true";
@@ -146,9 +125,8 @@ namespace rpwa {
 			return "false";
 	}
 
-	// converts bool to "yes"/"no" string
 	inline
-	std::string yesNo(const bool val)
+	std::string yesNo(const bool val)  ///< converts bool to "yes"/"no" string
 	{
 		if (val)
 			return "yes";
@@ -156,9 +134,8 @@ namespace rpwa {
 			return "no";
 	}
 
-	// converts bool to "on"/"off" string
 	inline
-	std::string onOff(const bool val)
+	std::string onOff(const bool val)  ///< converts bool to "on"/"off" string
 	{
 		if (val)
 			return "on";
@@ -166,9 +143,8 @@ namespace rpwa {
 			return "off";
 	}
 
-	// converts bool to "enabled"/"disabled" string
 	inline
-	std::string enDisabled(const bool val)
+	std::string enDisabled(const bool val)  ///< converts bool to "enabled"/"disabled" string
 	{
 		if (val)
 			return "enabled";
@@ -177,19 +153,21 @@ namespace rpwa {
 	}
 
 
-	// convert internal spin quantum number into real quantum number in units of hbar
 	inline
 	double
-	spinQn(const int qn)
-	{	return 0.5 * qn; }
+	spinQn(const int qn)  ///< convert internal spin quantum number into real quantum number in units of hbar
+	{
+		return 0.5 * qn;
+	}
 
 
-	// convert parity quantum number into string (+, -, or empty string)
 	inline
 	std::string
-	parityQn(const int qn)
-	{ return (qn != 0) ? sign(qn) : ""; }
-
+	parityQn(const int qn)  ///< convert parity quantum number into string (+, -, or empty string)
+	{
+		return (qn != 0) ? sign(qn) : "";
+	}
+	
 
 }  // namespace rpwa
 

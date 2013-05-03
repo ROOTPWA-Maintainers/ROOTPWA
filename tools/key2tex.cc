@@ -37,7 +37,7 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-  const unsigned int maxNmbWavesPerPage = 20;
+  const unsigned int maxNmbWavesPerPage = 1;
   
   // setup isobar dictionary key->tex
   map<TString, TString> isobars;
@@ -70,15 +70,17 @@ int main(int argc, char** argv)
   isobars["f11420"  ] = "f_1(1420)";
   isobars["eta1440" ] = "\\eta(1420)";
   isobars["eta21645"] = "\\eta_2(1645)";
+  isobars["eta11600"] = "\\eta_1(1600)";
   isobars["rho31690"] = "\\rho_3(1690)";
+  isobars["rho1600"] = "\\rho(1600)";
   isobars["a21320"  ] = "a_2(1320)";
 
   // print latex header
   cout << "\\documentclass[10pt,a4paper]{article}" << endl
        << "\\usepackage{amsmath,amsthm,amssymb}"   << endl
        << "\\begin{document}"                      << endl
-       << "\\begin{align*}"                        << endl
-       << "\\begin{aligned}"                       << endl;
+       << "\\(";
+    // "\\begin{aligned}"                       << endl;
   string line;
   int    countWave = 0;
   while (!(cin >> line).eof()) { // begin event loop
@@ -90,14 +92,14 @@ int main(int argc, char** argv)
     }
 
     if (countWave > 0) {
-      cout << " \\\\" << endl;
+      //cout << " \\\\" << endl;
       // pagebreak
       if (countWave % maxNmbWavesPerPage == 0)
-	cout << "\\end{aligned}"   << endl
-	     << "\\end{align*}"    << endl
+	cout << "\\) \\\\"   << endl
+	  //<< "\\end{align*}"    << endl
 	     << "\\pagebreak"      << endl
-	     << "\\begin{align*}"  << endl
-	     << "\\begin{aligned}" << endl;
+	     << "\\(";
+	  //<< "\\begin{aligned}" << endl;
     }
     ++countWave;
 
@@ -115,7 +117,7 @@ int main(int argc, char** argv)
     const TString refl = head(6, 1);
     l.Remove(0, 7);
     // print X quantum numbers
-    cout << I << "^" << G << J << "^{" << P << C << "}" << M << "^" << refl << "\\quad & ";
+    cout << I << "^" << G << "("<< J << "^{" << P << C << "}" << M << "^" << refl << ")\\, ";
 
     // tokenize input
     TObjArray* tokens = l.Tokenize("_=");
@@ -137,14 +139,14 @@ int main(int argc, char** argv)
 	  mode = 2;
       } else if (mode == 1) {  // ls mode
 	if (token.Length() == 1)  // only l
-	  cout << "[" << token << "] ";
+	  cout << "(" << token << ") ";
 	else
-	  cout << "\\left[\\begin{array}{c}" << token(0, 1) << "\\\\"
-	       << token(1, 1) << "\\end{array}\\right]";
+	  cout << "{" << token(0, 1) << " \\choose "
+	       << token(1, 1) << "}";
 	l.Remove(0, token.Length());
 	mode = 0;
       } else if (mode == 2) {
-	cout << "\\rightarrow ";
+	cout << "~\\rightarrow~";
 	if (isobars.find(token) != isobars.end())
 	  cout << isobars[token];
 	else
@@ -158,9 +160,9 @@ int main(int argc, char** argv)
       }
       l.Remove(0, 1); // remove delimiter
     }
-    cout << " & ";    
+    //cout << "\\,";    
   }
-  cout << "\\end{aligned}"  << endl
-       << "\\end{align*}"   << endl
+  cout << "\\)"  << endl
+    //<< "\\end{align*}"   << endl
        << "\\end{document}" << endl;
 };

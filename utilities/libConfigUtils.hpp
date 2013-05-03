@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      collection of useful libConfig routines
@@ -45,6 +41,19 @@
 
 
 namespace rpwa {
+
+
+	inline
+	std::string
+	getLibConfigSourceFilePath(const libconfig::Setting& setting)
+	{
+		std::string sourceFile = "";
+		const char* sourceFilePtr = setting.getSourceFile();
+		if(sourceFilePtr) {
+			sourceFile = sourceFilePtr;
+		}
+		return sourceFile;
+	}
 
 	
 	inline
@@ -96,17 +105,18 @@ namespace rpwa {
 	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a group
 	{
 		// find field
+		std::string sourceFile = getLibConfigSourceFilePath(parent);
 		if (not parent.exists(groupName)) {
 			if (mustExist)
 				printWarn << "cannot find '" << groupName << "' field in '" << parent.getPath() << "' "
-				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
 		const libconfig::Setting& groupKey = parent[groupName];
 		// check that it is a group
 		if (not groupKey.isGroup()) {
 			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not a group" << std::endl;
+			          << "of key file '" << sourceFile << "' is not a group" << std::endl;
 			return 0;
 		}
 		return &groupKey;
@@ -120,24 +130,25 @@ namespace rpwa {
 	                  const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty list
 	{
 		// find field
+		std::string sourceFile = getLibConfigSourceFilePath(parent);
 		if (not parent.exists(listName)) {
 			if (mustExist)
 				printWarn << "cannot find '" << listName << "' field in '" << parent.getPath() << "' "
-				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
 		const libconfig::Setting& listKey = parent[listName];
 		// check that it is a list
 		if (not listKey.isList()) {
 			printWarn << "'" << listName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not a list. "
+			          << "of key file '" << sourceFile << "' is not a list. "
 			          << "check that braces are correct." << std::endl;
 			return 0;
 		}
 		// check that it is not empty
 		if (listKey.getLength() < 1) {
 			printWarn << "list '" << listName << "' in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
+			          << "of key file '" << sourceFile << "' is empty" << std::endl;
 			return 0;
 		}
 		return &listKey;
@@ -151,24 +162,25 @@ namespace rpwa {
 	                   const bool                mustExist = true)  ///< finds field in keyfile and makes sure it is a non-empty array
 	{
 		// find field
+		std::string sourceFile = getLibConfigSourceFilePath(parent);
 		if (not parent.exists(arrayName)) {
 			if (mustExist)
 				printWarn << "cannot find '" << arrayName << "' field in '" << parent.getPath() << "' "
-				          << "of key file '" << parent.getSourceFile() << "'" << std::endl;
+				          << "of key file '" << sourceFile << "'" << std::endl;
 			return 0;
 		}
 		const libconfig::Setting& arrayKey = parent[arrayName];
 		// check that it is a list
 		if (not arrayKey.isArray()) {
 			printWarn << "'" << arrayName << "' field in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is not an array. "
+			          << "of key file '" << sourceFile << "' is not an array. "
 			          << "check that braces are correct." << std::endl;
 			return 0;
 		}
 		// check that it is not empty
 		if (arrayKey.getLength() < 1) {
 			printWarn << "array '" << arrayName << "' in '" << parent.getPath() << "' "
-			          << "of key file '" << parent.getSourceFile() << "' is empty" << std::endl;
+			          << "of key file '" << sourceFile << "' is empty" << std::endl;
 			return 0;
 		}
 		return &arrayKey;

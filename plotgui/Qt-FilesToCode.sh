@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #add names inside the ' ' separated by a space, e.g.: 'name1 name2 name3'
-uis='GuiPwaMain'
+uis='GuiPwaMain GuiSelectedFilesWidgetAdd'
 #mocs='GuiPwaMain GuiWaveTreeModel'
 
 for ui in $uis; do

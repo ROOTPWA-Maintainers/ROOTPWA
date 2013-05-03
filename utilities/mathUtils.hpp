@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      collection of useful mathematical functions
@@ -44,12 +40,14 @@
 #include <complex>
 
 #include <boost/math/tools/promotion.hpp>
-
-#include "pputil.h"
-#include "reportingUtils.hpp"
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/triangular.hpp>
+#include <boost/numeric/ublas/lu.hpp>
 
 
 namespace rpwa {
+
+	namespace ublas = boost::numeric::ublas;
 
 
 	// mathematical constants
@@ -59,8 +57,8 @@ namespace rpwa {
 	const double fourPi = 4 * pi;
 
 	const std::complex<double> imag(0, 1);
-  
-  
+
+
 	//////////////////////////////////////////////////////////////////////////////
 	// define aliases for some math functions so implementations may be switched easliy
 	template<typename T> inline T abs(const T& x) { return std::abs (x); }
@@ -86,7 +84,7 @@ namespace rpwa {
 			return +1;
 	}
 
-	
+
 	template <typename T>
 	inline
 	bool
@@ -94,7 +92,7 @@ namespace rpwa {
 	{
 		return val & 0x1;
 	}
-  
+
 
 	template <typename T>
 	inline
@@ -104,97 +102,53 @@ namespace rpwa {
 		return not isOdd(val);
 	}
 
-	
-	inline
-	bool
-	angMomCanCouple(const int j1,
-	                const int j2,
-	                const int J)  ///< returns, whether j1 and j2 can couple to J; all in units of hbar / 2
-	{
-		if ((j1 < 0) or (j2 < 0) or (J < 0)) { // negative spins are not allowed
-			printErr << "negative spins are not allowed (j1 = " << 0.5 * j1 << ", "
-			         << "j2 = " << 0.5 * j2 << ", J = " << 0.5 * J << "). aborting." << std::endl;
-			throw;
-		}
-		if ((J < rpwa::abs(j1 - j2)) or (J > j1 + j2))  // make sure J is in physical allowed range
-			return false;
-		if (isOdd(j1 + j2 - J))  // check that J is in the half-integer or integer series, respectively
-			return false;
-		return true;
-	}
-  
 
+	template<typename T>
 	inline
-	double
-	angMomNormFactor(const int  L,
-	                 const bool debug = false)  ///< angular momentum normalization factor in amplitudes
+	T signum(const T& val)  ///< extracts sign from value
 	{
-		const double norm = rpwa::sqrt(L + 1);
-		if (debug)
-			printInfo << "normalization factor sqrt(2 * L = " << 0.5 * L << " + 1) = "
-			          << maxPrecision(norm) << std::endl;
-		return norm;
-	}
-
-
-	inline
-	int
-	reflectivityFactor(const int j,
-	                   const int P,
-	                   const int m,
-	                   const int refl)  ///< calculates prefactor for reflectibity symmetrization
-	{
-		if (rpwa::abs(P) != 1) {
-			printWarn << "parity value P = " << P << " != +-1 is not allowed. "
-			          << "returning 0." << std::endl;
-			return 0;
-		}
-		if (m < 0) {
-			printWarn << "in reflectivity basis M = " << 0.5 * m << " < 0 is not allowed. "
-			          << "returning 0." << std::endl;
-			return 0;
-		}
-		if (rpwa::abs(refl) != 1) {
-			printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
-			          << "returning 0." << std::endl;
-			return 0;
-		}
-		return refl * P * powMinusOne((j - m) / 2);
+		if (val < 0)
+			return -1;
+		if (val > 0)
+			return +1;
+		return 0;
 	}
 
 
 	//////////////////////////////////////////////////////////////////////////////
-	// some wrappers for libpp functions
-	// !NOTE! all angular momenta and spin projections are in units of hbar/2
-	inline
-	double
-	barrierFactor(const int    L,
-	              const double breakupMom,
-	              const bool   debug = false)  ///< Blatt-Weisskopf barrier factor
+	// matrix inversion routine using lu_factorize and lu_substitute
+	// see http://www.crystalclearsoftware.com/cgi-bin/boost_wiki/wiki.pl?LU_Matrix_Inversion
+	template<typename T>
+	bool
+	invertMatrix(const ublas::matrix<T>& A,
+	             ublas::matrix<T>&       inverseA)
 	{
-		const double bf = F(L, breakupMom);
-		if (debug)
-			printInfo << "Blatt-Weisskopf barrier factor(L = " << 0.5 * L << ", "
-			          << "q = " << breakupMom << " GeV) = " << maxPrecision(bf) << std::endl;
-		return bf;
+		// create working copy of input
+		ublas::matrix<T> M(A);
+		// create permutation matrix for LU-factorization
+		ublas::permutation_matrix<std::size_t> pM(M.size1());
+		// perform LU-factorization
+		if (ublas::lu_factorize(M, pM) != 0)
+			return false;
+		// create identity matrix of "inverse"
+		inverseA.assign(ublas::identity_matrix<T>(M.size1()));
+		// backsubstitute to get the inverse
+		ublas::lu_substitute(M, pM, inverseA);
+		return true;
 	}
 
-  
-	inline
-	std::complex<double>
-	breitWigner(const double m,
-	            const double m0,
-	            const double Gamma0,
-	            const int    L,
-	            const double q,
-	            const double q0)  ///< relativistic Breit-Wigner with mass-dependent width
+
+	template<typename T>
+	ublas::matrix<T>
+	invertMatrix(const ublas::matrix<T>& A,
+	             bool&                   isSingular)
 	{
-		const double Gamma  =   Gamma0 * (m0 / m) * (q / q0)
-			                    * (rpwa::pow(F(L, q), 2) / rpwa::pow(F(L, q0), 2));
-		return (m0 * Gamma0) / (m0 * m0 - m * m - imag * m0 * Gamma);
+		ublas::matrix<T> inverseA(A.size1(), A.size2());
+		isSingular = !invert(A, inverseA);
+		return inverseA;
 	}
-  
-  
+
+
 } // namespace rpwa
 
 

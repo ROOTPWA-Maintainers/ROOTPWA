@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      checks validity of amplitude specified by key file by
@@ -42,8 +38,6 @@
 #include <vector>
 #include <complex>
 
-#include <boost/tokenizer.hpp>
-
 #include "TChain.h"
 #include "TTree.h"
 #include "TBranch.h"
@@ -57,7 +51,6 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace rpwa;
 
 
@@ -65,9 +58,11 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
+	cerr << "verify that given .key files do not violate physics" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
-	     << " -d test data [-n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
+	     << " [-d test data -n max. # of events -p PDG file -t tree name -e max. diff. -l leaf names -v -h] key file(s)" << endl
 	     << "    where:" << endl
 	     << "        -d file    path to file with test data (.evt or .root format)" << endl
 	     << "        -n #       maximum number of events to read (default: all)" << endl
@@ -144,7 +139,7 @@ bool testAmplitude(TTree*              inTree,
 		printWarn << "no amplitude were calculated" << endl;
 		return false;
 	}
-  
+
 	// calculate amplitudes for parity transformed decay daughters
 	vector<complex<double> > ampSpaceInvValues;
 	amplitude->enableSpaceInversion(true);
@@ -154,7 +149,7 @@ bool testAmplitude(TTree*              inTree,
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
-  
+
 	// calculate amplitudes for decay daughters reflected through production plane
 	vector<complex<double> > ampReflValues;
 	amplitude->enableSpaceInversion(false);
@@ -165,7 +160,7 @@ bool testAmplitude(TTree*              inTree,
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
-  
+
 	if (   (ampValues.size() != ampSpaceInvValues.size())
 	    or (ampValues.size() != ampReflValues.size    ())) {
 		printWarn << "different number of amplitudes for space inverted "
@@ -208,9 +203,12 @@ bool testAmplitude(TTree*              inTree,
 			                  ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
 			                  (ampSpaceInvValues[i].imag() != 0) ?
 			                  ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
+		bool spaceInvAmpRatioOk = true;
 		if (   (fabs(spaceInvRatio.real()) - 1 > maxDelta)
-		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta))
+		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
+			spaceInvAmpRatioOk = false;
 			++countAmpRatioNotOk;
+		}
 		const int spaceInvEigenValue = decayTopo->spaceInvEigenValue();
 		bool      spaceInvEigenValOk = true;
 		if (   (    (spaceInvRatio.real() != 0)
@@ -222,9 +220,11 @@ bool testAmplitude(TTree*              inTree,
 		}
 		if (debug) {
 			s.str("");
-			s << "Re[ampl.] / Re[ampl.] space inv. = " << setw(23) << spaceInvRatio.real() << ", "
-			  << "Im[ampl.] / Im[ampl.] space inv. = " << setw(23) << spaceInvRatio.imag();
+			s << "Re[ampl.] / Re[ampl.] space inv. - 1 = " << setw(23) << spaceInvRatio.real() - 1 << ", "
+			  << "Im[ampl.] / Im[ampl.] space inv. - 1 = " << setw(23) << spaceInvRatio.imag() - 1;
 			cout << "        " << s.str();
+			if (not spaceInvAmpRatioOk)
+				cout << " <! larger than " << maxDelta;
 			if (not spaceInvEigenValOk)
 				cout << " <! eigenvalue != " << spaceInvEigenValue;
 			cout << endl;
@@ -236,9 +236,12 @@ bool testAmplitude(TTree*              inTree,
 			                  ampValues[i].real() / ampReflValues[i].real() : 0,
 			                  (ampReflValues[i].imag() != 0) ?
 			                  ampValues[i].imag() / ampReflValues[i].imag() : 0);
+		bool reflAmpRatioOk = true;
 		if (   (fabs(reflRatio.real()) - 1 > maxDelta)
-		    or (fabs(reflRatio.imag()) - 1 > maxDelta))
+	      or (fabs(reflRatio.imag()) - 1 > maxDelta)) {
+			reflAmpRatioOk = false;
 			++countAmpRatioNotOk;
+		}
 		const int reflEigenValue = decayTopo->reflectionEigenValue();
 		bool      reflEigenValOk = true;
 		if (   (    (reflRatio.real() != 0)
@@ -250,9 +253,11 @@ bool testAmplitude(TTree*              inTree,
 		}
 		if (debug) {
 			s.str("");
-			s << "Re[ampl.] / Re[ampl.] refl.      = " << setw(23) << reflRatio.real() << ", "
-			  << "Im[ampl.] / Im[ampl.] refl.      = " << setw(23) << reflRatio.imag();
+			s << "Re[ampl.] / Re[ampl.] refl. - 1      = " << setw(23) << reflRatio.real() - 1 << ", "
+			  << "Im[ampl.] / Im[ampl.] refl. - 1      = " << setw(23) << reflRatio.imag() - 1;
 			cout << "        " << s.str();
+			if (not reflAmpRatioOk)
+				cout << " <! larger than " << maxDelta;
 			if (not reflEigenValOk)
 				cout << " <! eigenvalue != " << reflEigenValue;
 			cout << endl;
@@ -269,7 +274,7 @@ bool testAmplitude(TTree*              inTree,
 		keyFileErrors.push_back(s.str());
 		success = false;
 	}
-	if (countSpaceInvEigenValNotOk > 0) { 
+	if (countSpaceInvEigenValNotOk > 0) {
 		keyFileErrors.push_back("wrong space inversion eigenvalue");
 		success = false;
 	}
@@ -286,7 +291,9 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printGitHash     ();
+	cout << endl;
 
 	// parse command line options
 	const string progName     = argv[0];
@@ -329,11 +336,12 @@ main(int    argc,
 		}
 
 	// set debug options
-	// if (debug) {
-	// 	waveDescription::setDebug(true);
-	// 	isobarHelicityAmplitude::setDebug(true);
-	// 	massDependence::setDebug(true);
-	// }
+	if (debug) {
+		waveDescription::setDebug(true);
+		//particleProperties::setDebug(true);
+		//isobarHelicityAmplitude::setDebug(true);
+		//massDependence::setDebug(true);
+	}
 
 	// get key file names
 	if (optind >= argc) {
@@ -346,23 +354,11 @@ main(int    argc,
 		keyFileNames.push_back(fileName);
 	}
 
-	// get leaf names
-	typedef tokenizer<char_separator<char> > tokenizer;
-	char_separator<char> separator(";");
-	tokenizer            leafNameTokens(leafNames, separator);
-	tokenizer::iterator  leafNameToken            = leafNameTokens.begin();
-	const string         prodKinPartNamesObjName  = *leafNameToken;
-	const string         prodKinMomentaLeafName   = *(++leafNameToken);
-	const string         decayKinPartNamesObjName = *(++leafNameToken);
-	const string         decayKinMomentaLeafName  = *(++leafNameToken);
-	if (debug)
-		printDebug << "using the following leaf names:" << endl
-		           << "        production kinematics: "
-		           << "particle names = '" << prodKinPartNamesObjName << "', "
-		           << "momenta = '" << prodKinMomentaLeafName << "'" << endl
-		           << "        decay kinematics     : "
-		           << "particle names = '" << decayKinPartNamesObjName << "', "
-		           << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
+	// get object and leaf names for event data
+	string prodKinPartNamesObjName,  prodKinMomentaLeafName;
+	string decayKinPartNamesObjName, decayKinMomentaLeafName;
+	parseLeafAndObjNames(leafNames, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                     decayKinPartNamesObjName, decayKinMomentaLeafName);
 
 	// open input file
 	TTree*        inTree            = 0;
@@ -395,8 +391,7 @@ main(int    argc,
 	}
 
 	// initialize particle data table
-	particleDataTable& pdt = particleDataTable::instance();
-	pdt.readFile(pdgFileName);
+	particleDataTable::readFile(pdgFileName);
 
 	// loop over key files
 	map<string, vector<string> > keyFileErrors;  // maps error description to key files
@@ -407,9 +402,11 @@ main(int    argc,
 		vector<string> errors;
 		if (not testAmplitude(inTree, keyFileNames[i], errors, maxNmbEvents, debug, maxDelta,
 		                      prodKinPartNames,  decayKinPartNames,
-		                      prodKinMomentaLeafName, decayKinMomentaLeafName))
+		                      prodKinMomentaLeafName, decayKinMomentaLeafName)) {
 			++countKeyFileErr;
-		else
+			printWarn << "key file '" << keyFileNames[i] << "' did not pass all tests. "
+			          << "see summary below." << endl;
+		} else
 			printSucc << "key file '" << keyFileNames[i] << "' passed all tests" << endl;
 		// collect errors
 		for (unsigned int j = 0; j < errors.size(); ++j)
@@ -438,6 +435,6 @@ main(int    argc,
 				cout << "            " << entry->second[i] << endl;
 		}
 	}
-	return 1;
-  
+	exit(1);
+
 }

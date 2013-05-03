@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      program that converts standrad ASCII PWA2000 .evt files into
@@ -38,7 +34,6 @@
 
 #include <fstream>
 #include <string>
-#include <cassert>
 #include <iomanip>
 #include <limits>
 #include <algorithm>

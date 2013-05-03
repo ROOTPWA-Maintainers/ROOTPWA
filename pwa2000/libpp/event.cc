@@ -17,6 +17,12 @@ event::event()
 {
 }
 
+bool 
+event::isValid(){
+  return (_beam!=NULL) && (_final.size()!=0);
+}
+
+
 
 event::event(const event& e)
 {

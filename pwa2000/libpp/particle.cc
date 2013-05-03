@@ -49,7 +49,7 @@ particle::particle(const particle& p)
   _helicities  = p._helicities;
   _inRestFrame = p._inRestFrame;
   if (p._massDep)
-	  _massDep = p._massDep->create();
+	  _massDep = p._massDep->clone();
   else
 	  _massDep = NULL;
 }
@@ -102,7 +102,7 @@ particle::operator = (const particle& p)
       _decay = NULL;
     delete _massDep;
     if (p._massDep) {
-      _massDep = p._massDep->create();
+      _massDep = p._massDep->clone();
     } else
       _massDep = NULL;
   }

@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      test Likelihood
@@ -47,7 +43,7 @@
 
 #include "sumAccumulators.hpp"
 #include "reportingUtils.hpp"
-#include "nDimArrayUtils.hpp"
+#include "arrayUtils.hpp"
 
 #include "complex.cuh"
 #include "likelihoodInterface.cuh"

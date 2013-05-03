@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 239                         $: revision of last commit
-#// $Author:: bgrube                   $: author of last commit
-#// $Date:: 2010-05-28 14:34:08 +0200 #$: date of last commit
 #//
 #// Description:
 #//      build file for RootPwaTools library
@@ -35,20 +31,27 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'regge' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
+	${ROOT_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${TOOLS_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  reggeprop.cc
-)
-   
+	reggeprop.cc
+	pipiamp.cc
+	pipiphaseshift.cc
+	)
+
 
 # ROOT dictionary
 #set(REGGE_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaReggeDict.cc)
@@ -62,12 +65,14 @@ set(SOURCES
 
 # library
 set(THIS_LIB "RootPwaRegge")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOT_LIBS}"
-  "${PWA2000_LIBS}"
-)
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${PWA2000_LIBS}"
+	"${ROOTPWATOOLS_LIBS}"
+	)
 
 
 # executables
-make_executable(testRegge          testRegge.cc          ${THIS_LIB})
-
+make_executable(testRegge testRegge.cc ${THIS_LIB})

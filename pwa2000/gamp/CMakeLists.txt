@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
 #//      build file for pwa library and amplitude executables
@@ -35,36 +31,42 @@
 #//-------------------------------------------------------------------------
 
 
-set(CMAKE_CXX_FLAGS   "-O2 -Wall")
+message(STATUS "")
+message(STATUS ">>> Setting up 'gamp' directory.")
+
+
+set(CMAKE_CXX_FLAGS   "-O2 -Wall -Werror")
 set(CMAKE_CXX_LDFLAGS "-O2")
 
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${UTILITIES_INCLUDE_DIR}
-  ${Boost_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/pwa2000/libpp
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
+	${UTILITIES_INCLUDE_DIR}
+	${Boost_INCLUDE_DIRS}
+	${CMAKE_SOURCE_DIR}/pwa2000/libpp
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  integral.cc
-  keyParse.cc
-  keyfile.cc
-  keyScan.cc
-  wave.cc
-  Tgamp.cc
-)
+	integral.cc
+	keyParse.cc
+	keyfile.cc
+	keyScan.cc
+	wave.cc
+	Tgamp.cc
+	)
 
 
 # library
 set(THIS_LIB "pwa")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  pp
-)
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	pp
+	)
 
 
 # executables

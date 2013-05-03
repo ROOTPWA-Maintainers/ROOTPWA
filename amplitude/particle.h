@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      container class for all particle related external information
@@ -47,6 +43,7 @@
 #include "TLorentzVector.h"
 #include "TLorentzRotation.h"
 
+#include "conversionUtils.hpp"
 #include "particleProperties.h"
 
 
@@ -57,13 +54,12 @@ namespace rpwa {
 
 
 	class particle : public particleProperties {
-	
+
 	public:
-			
+
 		particle();
 		particle(const particle&           part);
 		particle(const particleProperties& partProp,
-		         const int                 charge,
 		         const int                 index    = -1,
 		         const int                 spinProj = 0,
 		         const int                 refl     = 0,
@@ -88,23 +84,17 @@ namespace rpwa {
 		particle& operator =(const particle& part);
 		particlePtr clone() const { return particlePtr(doClone()); }  ///< creates deep copy of particle; must not be virtual
 
-		std::string           name        () const;                                         ///< returns particle name including charge
-		std::string           bareName    () const { return stripChargeFromName(name()); }  ///< returns particle name w/o charge
-		int                   charge      () const { return _charge;                     }  ///< returns particle's charge
 		int                   spinProj    () const { return _spinProj;                   }  ///< returns particle's spin projection quantum number
 		TVector3              momentum    () const { return _lzVec.Vect();               }  ///< returns three-momentum of particle
 		const TLorentzVector& lzVec       () const { return _lzVec;                      }  ///< returns Lorentz vector of particle
 		int                   index       () const { return _index;                      }  ///< returns index label assigned to particle; -1 means undefined
 		int                   reflectivity() const { return _refl;                       }  ///< returns particle's reflectivity; 0 means undefined
-		int                   isospinProj () const
-		{ return 2 * _charge - (baryonNmb() + strangeness() + charm() + beauty()); }  ///< returns z-component of isospin using Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
 
-		void setCharge      (const int             charge  ) { _charge   = charge;                                                            }  ///< sets particle's charge
 		void setSpinProj    (const int             spinProj) { _spinProj = spinProj;                                                          }  ///< sets particle's spin projection quantum number
 		void setMomentum    (const TVector3&       momentum) { _lzVec    = TLorentzVector(momentum, sqrt(momentum.Mag2() + mass() * mass())); }  ///< sets particle's Lorentz vector
 		void setLzVec       (const TLorentzVector& lzVec   ) { _lzVec    = lzVec;                                                             }  ///< sets particle's Lorentz vector; if this is used to inject external data the mass values likely become inconsistent
 		void setIndex       (const int             index   ) { _index    = index;                                                             }  ///< sets particle's index label
-		void setReflectivity(const int             refl    ) { _refl     = refl;                                                              }  ///< sets particle's reflectivity
+		void setReflectivity(const int             refl    ) { _refl     = signum(refl);                                                      }  ///< sets particle's reflectivity
 
 		void setProperties(const particleProperties& prop);  ///< sets particle's poperties to those given by argument
 
@@ -119,20 +109,20 @@ namespace rpwa {
 
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints particle parameters in human-readable form
 
-		virtual std::string label() const;  ///< returns graph label
+		virtual std::string label() const;  ///< returns particle label
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
 
-    
+
 	protected:
-    
+
 		virtual particle* doClone() const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
-			
+
+		virtual bool isEqualTo(const particleProperties& partProp) const;  ///< returns whether partProp is equal to this by checking equality of all member variables (except Lorentz-vector)
 
 	private:
 
-		int            _charge;    ///< charge
 		int            _spinProj;  ///< spin projection quantum number; can be either M or helicity
 		TLorentzVector _lzVec;     ///< Lorentz vector [GeV]
 		int            _index;     ///< index that can be used to label indistinguishable particles
@@ -155,13 +145,12 @@ namespace rpwa {
 	inline
 	particlePtr
 	createParticle(const particleProperties& partProp,
-	               const int                 charge,
 	               const int                 index    = -1,
 	               const int                 spinProj = 0,
 	               const int                 refl     = 0,
 	               const TVector3&           momentum = TVector3())
 	{
-		particlePtr part(new particle(partProp, charge, index, spinProj, refl, momentum));
+		particlePtr part(new particle(partProp, index, spinProj, refl, momentum));
 		return part;
 	}
 

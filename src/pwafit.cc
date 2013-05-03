@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      fitting program for rootpwa
@@ -72,7 +70,10 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "usage:" << endl
+	
+	cerr << "performs PWA fit for given mass bin and list of waves" << endl
+	     << endl
+	     << "usage:" << endl
 	     << progName
 	     << " -l # -u # -w wavelist [-d amplitude directory -R -o outfile -S start value file -N -n normfile"
 	     << " [-a normfile] -r rank -M minimizer [-m algorithm -g strategy -t #] -q -h]" << endl
@@ -81,7 +82,7 @@ usage(const string& progName,
 	     << "        -u #       upper edge of mass bin [MeV/c^2]" << endl
 	     << "        -w file    path to wavelist file" << endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	     << "        -R         use .root amplitude files (default: false)" << endl
 #else
 	     << "        -R         use .root amplitude files [not supported; ROOT version too low]" << endl
@@ -155,7 +156,8 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
+	cout << endl;
 
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
@@ -213,7 +215,7 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'R':
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 			useRootAmps = true;
 #endif
 			break;
@@ -334,6 +336,10 @@ main(int    argc,
 	minimizer->SetFunction        (L);
 	minimizer->SetStrategy        (minimizerStrategy);
 	minimizer->SetTolerance       (minimizerTolerance);
+
+	// setting the ErrorDef to 1 since the ROOT interface does not
+	// Propagate the value. Will do the error rescaling by hand below.
+	minimizer->SetErrorDef(1); 
 	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
 	minimizer->SetMaxIterations   (maxNmbOfIterations);
 	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
@@ -567,7 +573,12 @@ main(int    argc,
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
-						fitParCovMatrix[i][j] = minimizer->CovMatrix(i, j);
+					  // The factor 0.5 is needed because
+					  // MINUIT by default assumes a Chi2
+					  // function and not a loglikeli
+					  // (see Minuit manual!)
+					  // Note: SetErrorDef in ROOT does not work
+						fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance

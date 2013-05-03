@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      helper functions that convert between standard binary PWA2000
@@ -48,9 +44,10 @@ namespace rpwa {
 
 	bool fillTreeFromAmp(const std::string& inFileName,
 	                     TTree&             outTree,
-	                     const long int     maxNmbEvents = -1,
-	                     const std::string& ampLeafName  = "amplitude",
-	                     const bool         debug        = false);
+	                     const long int     maxNmbEvents  = -1,
+	                     const std::string& ampLeafName   = "amplitude",
+	                     const long int     treeCacheSize = 1000000,  // 1 MByte ROOT tree read cache
+	                     const bool         debug         = false);
   
 
 	bool writeAmpFromTree(TChain&            inTree,

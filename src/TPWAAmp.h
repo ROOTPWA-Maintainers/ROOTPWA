@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      A class to encapsulate PWA production amplitudes

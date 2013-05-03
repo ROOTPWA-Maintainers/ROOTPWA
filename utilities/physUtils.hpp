@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      collection of useful physics functions and constants
@@ -39,16 +35,29 @@
 #define PHYSUTILS_H
 
 
-#include <cmath>
-#include <algorithm>
-
-#include <boost/tuple/tuple.hpp>
-
 #include "mathUtils.hpp"
-#include "clebschGordanCoeff.hpp"
+#include "reportingUtils.hpp"
+#include "conversionUtils.hpp"
 
 
 namespace rpwa {
+
+
+	// computes squared breakup momentum of 2-body decay
+	inline
+	double
+	breakupMomentumSquared(const double M,   // mass of mother particle
+	                       const double m1,  // mass of daughter particle 1
+	                       const double m2,  // mass of daughter particle 2
+	                       const bool   allowSubThr = false)  // if set sub-threshold decays with negative return values are allowed
+	{
+		if (not allowSubThr and (M < m1 + m2)) {
+			printErr << "mother mass " << M << " GeV/c^2 is smaller than sum of daughter masses "
+			         << m1 << " + " << m2 << " GeV/c^2. this should never happen. aborting." << std::endl;
+			throw;
+		}
+		return (M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2) / (4 * M * M);
+	}
 
 
 	// computes breakup momentum of 2-body decay
@@ -58,9 +67,23 @@ namespace rpwa {
 	                const double m1,  // mass of daughter particle 1
 	                const double m2)  // mass of daughter particle 2
 	{
-		if (M < m1 + m2)
-			return 0;
-		return sqrt((M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2)) / (2 * M);
+		return rpwa::sqrt(breakupMomentumSquared(M, m1, m2, false));
+	}
+
+
+	// computes breakup momentum of 2-body decay
+	// complex version with analytic continuation below threshold as used in K-matrix formalism
+	inline
+	std::complex<double>
+	breakupMomentumComplex(const double M,   // mass of mother particle
+	                       const double m1,  // mass of daughter particle 1
+	                       const double m2)  // mass of daughter particle 2
+	{
+		const double q2 = rpwa::breakupMomentumSquared(M, m1, m2, true);
+		const double q  = sqrt(fabs(q2));
+		if (q2 < 0)
+			return std::complex<double>(0, q);
+		return std::complex<double>(q, 0);
 	}
 
 
@@ -75,7 +98,7 @@ namespace rpwa {
 	{
 		if (mass_2 < 0)
 			return 0;
-		const double  mass   = sqrt(mass_2);
+		const double  mass   = rpwa::sqrt(mass_2);
 		const double  M_2    = M * M;                                    // 3-body mass squared
 		const double  m_2[3] = {m[0] * m[0], m[1] * m[1], m[2] * m[2]};  // daughter masses squared
 
@@ -88,8 +111,8 @@ namespace rpwa {
 			return 0;
 
 		// calculate m12^2
-		const double p1     = sqrt(E1_2 - m_2[1]);
-		const double p2     = sqrt(E2_2 - m_2[2]);
+		const double p1     = rpwa::sqrt(E1_2 - m_2[1]);
+		const double p2     = rpwa::sqrt(E2_2 - m_2[2]);
 		const double Esum_2 = (E1 + E2) * (E1 + E2);
 		if (min)
 			return Esum_2 - (p1 + p2) * (p1 + p2);
@@ -98,147 +121,149 @@ namespace rpwa {
 	}
 
 
-	//////////////////////////////////////////////////////////////////////////////
-	// functions related to spin algebra
-	// !NOTE! all spin quantum numbers are in units of hbar/2
-
-	// computes minimum and maximum possible spins that can be made by
-	// coupling spin A and spin B
 	inline
-	boost::tuples::tuple<int, int>
-	getSpinRange(const int spinA,
-	             const int spinB, 
-	             bool*     valid = 0)
+	double
+	angMomNormFactor(const int  L,
+	                 const bool debug = false)  ///< angular momentum normalization factor in amplitudes
 	{
-		// make sure that allowedRange can always be directly used in for loops
-		boost::tuples::tuple<int, int> allowedRange(0, -1);
-		if ((spinA < 0) or (spinB < 0)) {
-			if (valid)
-				*valid = false;
-			return allowedRange;
-		}
-		allowedRange = boost::tuples::make_tuple(std::abs(spinA - spinB), spinA + spinB);
-		if (valid)
-			*valid = true;
-		return allowedRange;
+		const double norm = rpwa::sqrt(L + 1);
+		if (debug)
+			printDebug << "normalization factor sqrt(2 * L = " << spinQn(L) << " + 1) = "
+			           << maxPrecision(norm) << std::endl;
+		return norm;
 	}
 
-	// computes spin quantum number larger than or equal to lowerBound
-	// in spin series defined by spinQn
+
 	inline
 	int
-	spinQnLargerEqual(const int spinQn,
-	                  const int lowerBound)
+	reflectivityFactor(const int J,
+	                   const int P,
+	                   const int M,
+	                   const int refl)  ///< calculates prefactor for reflectibity symmetrization
 	{
-		if (isOdd(spinQn))
-			if (isOdd(lowerBound))
-				return std::max(spinQn, lowerBound);
-			else
-				return std::max(spinQn, lowerBound + 1);
-		else
-			if (isEven(lowerBound))
-				return std::max(spinQn, lowerBound);
-			else
-				return std::max(spinQn, lowerBound + 1);
-	}
-
-	// computes spin quantum number smaller than or equal to upperBound in
-	// spin series defined by spinQn
-	inline
-	int
-	spinQnSmallerEqual(const int spinQn,
-	                   const int upperBound)
-	{
-		if (isOdd(spinQn))
-			if (isOdd(upperBound))
-				return std::min(spinQn, upperBound);
-			else
-				return std::min(spinQn, upperBound - 1);
-		else
-			if (isEven(upperBound))
-				return std::min(spinQn, upperBound);
-			else
-				return std::min(spinQn, upperBound - 1);
-	}
-
-	// computes minimum and maximum possible spins that can be made by
-	// coupling spin A and spin B taking into account externally defined
-	// spin range
-	inline
-	boost::tuples::tuple<int, int>
-	getSpinRange(const int                             spinA,
-	             const int                             spinB,
-	             const boost::tuples::tuple<int, int>& demandedRange,
-	             bool*                                 valid = 0)
-	{
-		bool validRange;
-		boost::tuples::tuple<int, int> allowedRange = getSpinRange(spinA, spinB, &validRange);
-		if (not validRange) {
-			if (valid)
-				*valid = false;
-			return allowedRange;
+		if (rpwa::abs(P) != 1) {
+			printWarn << "parity value P = " << P << " != +-1 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
 		}
-		boost::tuples::get<0>(allowedRange) = spinQnLargerEqual (boost::tuples::get<0>(allowedRange),
-		                                                         boost::tuples::get<0>(demandedRange));
-		boost::tuples::get<1>(allowedRange) = spinQnSmallerEqual(boost::tuples::get<1>(allowedRange),
-		                                                         boost::tuples::get<1>(demandedRange));
-		if (valid) {
-			if (boost::tuples::get<0>(allowedRange) <= boost::tuples::get<1>(allowedRange))
-				*valid = true;
-			else
-				*valid = false;
+		if (M < 0) {
+			printWarn << "in reflectivity basis M = " << spinQn(M) << " < 0 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
 		}
-		return allowedRange;
+		if (rpwa::abs(refl) != 1) {
+			printWarn << "reflectivity value epsilon = " << refl << " != +-1 is not allowed. "
+			          << "returning 0." << std::endl;
+			return 0;
+		}
+		return refl * P * powMinusOne((J - M) / 2);
 	}
 
 
-	// checks that spin and its projection quantum number are consistent
+	// computes square of Blatt-Weisskopf barrier factor for 2-body decay
+	// !NOTE! L is units of hbar/2
 	inline
-	bool
-	spinAndProjAreCompatible(const int spin,
-	                         const int spinProj)
-	{ return (abs(spinProj) <= spin) and isEven(spin - spinProj); }
-
-
-	// checks whether to daughter spin states can couple to given parent spin state
-	inline
-	bool
-	spinStatesCanCouple(const int daughterSpins    [2],
-	                    const int daughterSpinProjs[2],
-	                    const int parentSpin,
-	                    const int parentSpinProj)
+	double
+	barrierFactorSquared(const int    L,               // relative orbital angular momentum
+	                     const double breakupMom,      // breakup momentum of 2-body decay [GeV/c]
+	                     const bool   debug = false,
+	                     const double Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
 	{
-		//!!! the first two checks should probably be part of clebschGordanCoeff
-		for (unsigned i = 0; i < 2; ++i)
-			if (not spinAndProjAreCompatible(daughterSpins[i], daughterSpinProjs[i]))
-				return false;
-		if (not spinAndProjAreCompatible(parentSpin, parentSpinProj))
-			return false;
-		if (clebschGordanCoeff<double>(daughterSpins[0], daughterSpinProjs[0],
-		                               daughterSpins[1], daughterSpinProjs[1],
-		                               parentSpin,       parentSpinProj) == 0)
-			return false;
-		return true;		
+		const double z   = (breakupMom * breakupMom) / (Pr * Pr);
+		double       bf2 = 0;
+		switch (L) {
+		case 0:  // L = 0
+			bf2 = 1;
+			break;
+		case 2:  // L = 1
+			bf2 = (2 * z) / (z + 1);
+			break;
+		case 4:  // L = 2
+			bf2 = (13 * z * z) / (z * (z + 3) + 9);
+			break;
+		case 6:  // L = 3
+			bf2 = (277 * z * z * z) / (z * (z * (z + 6) + 45) + 225);
+			break;
+		case 8:  // L = 4
+			{
+				const double z2 = z * z;
+				bf2 = (12746 * z2 * z2) / (z * (z * (z * (z + 10) + 135) + 1575) + 11025);
+			}
+			break;
+		case 10:  // L = 5
+			{
+				const double z2 = z * z;
+				bf2 = (998881 * z2 * z2 * z)
+					/ (z * (z * (z * (z * (z + 15) + 315) + 6300) + 99225) + 893025);
+			}
+			break;
+		case 12:  // L = 6
+			{
+				const double z3 = z * z * z;
+				bf2 = (118394977 * z3 * z3)
+					/ (z * (z * (z * (z * (z * (z + 21) + 630) + 18900) + 496125) + 9823275) + 108056025);
+			}
+			break;
+		case 14:  // L = 7
+			{
+				const double z3 = z * z * z;
+				bf2 = (19727003738LL * z3 * z3 * z)
+					/ (z * (z * (z * (z * (z * (z * (z + 28) + 1134) + 47250) + 1819125) + 58939650)
+					        + 1404728325L) + 18261468225LL);
+			}
+			break;
+		default:
+			printDebug << "calculation of Blatt-Weisskopf barrier factor is not (yet) implemented for L = "
+			           << spinQn(L) << ". returning 0." << std::endl;
+			return 0;
+		}
+		if (debug)
+			printDebug << "squared Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
+			           << "q = " << maxPrecision(breakupMom) << " GeV/c; P_r = " << Pr << " GeV/c) = "
+			           << maxPrecision(bf2) << std::endl;
+		return bf2;
 	}
 
 
-	// checks whether JPC combination is exotic
+	// computes Blatt-Weisskopf barrier factor for 2-body decay
+	// !NOTE! L is units of hbar/2
 	inline
-	bool
-	jpcIsExotic(const int J,
-	            const int P,
-	            const int C)
+	double
+	barrierFactor(const int    L,               // relative orbital angular momentum
+	              const double breakupMom,      // breakup momentum of 2-body decay [GeV/c]
+	              const bool   debug = false,
+	              const double Pr    = 0.1973)  // momentum scale 0.1973 GeV/c corresponds to 1 fm interaction radius
 	{
-		// for baryons all JPCs are allowed
-		if (isOdd(J))
-			return false;
-		// quark model restrictions for mesons: P == C is always allowed
-		// check that P = (-1)^(J + 1)
-		if (    (P != C)
-		    and (   (C != (J % 4     == 0 ? 1 : -1))
-		         or (P != (J + 2 % 4 == 0 ? 1 : -1))))
-			return true;
-		return false;
+		const double bf = rpwa::sqrt(barrierFactorSquared(L, breakupMom, false, Pr));
+		if (debug)
+			printDebug << "Blatt-Weisskopf barrier factor(L = " << spinQn(L) << ", "
+			           << "q = " << maxPrecision(breakupMom) << " GeV/c; P_r = " << Pr << " GeV/c) = "
+			           << maxPrecision(bf) << std::endl;
+		return bf;
+	}
+
+
+	// computes relativistic Breit-Wigner amplitude with mass-dependent width for 2-body decay
+	// !NOTE! L is units of hbar/2
+	inline
+	std::complex<double>
+	breitWigner(const double M,       // mass
+	            const double M0,      // peak position
+	            const double Gamma0,  // total width
+	            const int    L,       // relative orbital angular momentum
+	            const double q,       // 2-body breakup momentum
+	            const double q0)      // 2-body breakup momentum at peak position
+	{
+		if (q0 == 0)
+			return 0;
+		const double Gamma  = Gamma0 * (M0 / M) * (q / q0)
+			                    * (barrierFactorSquared(L, q) / barrierFactorSquared(L, q0));
+		// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
+		const double A = M0 * Gamma0;
+		const double B = M0 * M0 - M * M;
+		const double C = M0 * Gamma;
+		return (A / (B * B + C * C)) * std::complex<double>(B, C);
+		// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 	}
 
 

@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>PWA GUI</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QTreeView" name="_WaveTreeView">
@@ -52,12 +52,18 @@
      <string>File</string>
     </property>
     <addaction name="actionOpenTree"/>
+    <addaction name="actionParse_CompassPWA_txts"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
   <action name="actionOpenTree">
    <property name="text">
     <string>Open Root Tree</string>
+   </property>
+  </action>
+  <action name="actionParse_CompassPWA_txts">
+   <property name="text">
+    <string>Parse CompassPWA txts</string>
    </property>
   </action>
  </widget>

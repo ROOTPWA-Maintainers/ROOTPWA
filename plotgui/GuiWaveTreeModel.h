@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Header file for the GuiWaveTreeModel class that provides a model
@@ -56,9 +56,9 @@ namespace rpwa{
 		static bool _Debug; ///< if set to true, debug messages are printed
 
 		// Functions
-		GuiWaveTreeModelItem *AddFile(QVariant Data); ///< Adds a child of type File to _RootItem
-		GuiWaveTreeModelItem *AddTree(QVariant Data, GuiWaveTreeModelItem *Parent); ///< Adds a child of type Tree to Parent
-		GuiWaveTreeModelItem *AddWave(QVariant Data, GuiWaveTreeModelItem *Parent); ///< Adds a child of type Wave to Parent
+		GuiWaveTreeModelItem *AddFile(QString Data); ///< Adds a child of type File to _RootItem
+		GuiWaveTreeModelItem *AddTree(QString Data, GuiWaveTreeModelItem *Parent); ///< Adds a child of type Tree to Parent
+		GuiWaveTreeModelItem *AddWave(QString Data, GuiWaveTreeModelItem *Parent); ///< Adds a child of type Wave to Parent
 
 	public:
 		// Constructors + Destructors

@@ -1,6 +1,4 @@
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //    (BW) Component of mass dependent fit
@@ -36,10 +34,24 @@ namespace rpwa {
     pwachannel() : _C(0,0),_ps(NULL){}
     pwachannel(std::complex<double> coupling,
 	       TGraph* phasespace)
-      : _C(coupling), _ps(phasespace){}
+      : _C(coupling), _ps(phasespace)
+    {
+      //_sqrtps= new TGraph(_ps->GetN());
+      //for(int i=0;i<_ps->GetN();++i){
+      //	double m,val;
+      //	_ps->GetPoint(i,m,val);
+      //	_sqrtps->SetPoint(i,m,sqrt(val));
+      //}
+    }
 
+    //~pwachannel(){if(_sqrtps!=NULL)delete _sqrtps;}  
+
+    pwachannel(const rpwa::pwachannel& ch); /// cp ctor
+    
     // accessors
     std::complex<double> C() const {return _C;}
+    std::complex<double> CsqrtPS(double m) const {return _C*sqrt(_ps->Eval(m));}
+    
     TGraph* ps() const {return _ps;}
     double ps(double m) const {return _ps->Eval(m);}
 
@@ -50,7 +62,7 @@ namespace rpwa {
   private:
     std::complex<double> _C;
     TGraph* _ps;
-
+    TGraph* _sqrtps;
   };
 
 
@@ -66,6 +78,8 @@ namespace rpwa {
     virtual std::complex<double> val(double m) const ;
     virtual void setPar(double m0, double gamma){_m0=m0;_m02=m0*m0;_gamma=gamma;}
     unsigned int numChannels() const {return _channels.size();}
+    const std::string& getChannelName(unsigned int i) const {return _channelname[i];}
+    const pwachannel& getChannel(unsigned int i) const {return *_vchannels[i];} 
     unsigned int numPar() const {return numChannels()*2+2;}
     void setCouplings(const double* par);
     void getCouplings(double* par);
@@ -97,7 +111,8 @@ namespace rpwa {
     bool _fixgamma;
     bool _constWidth;
     std::map<std::string,pwachannel > _channels;
-    
+    std::vector<pwachannel*> _vchannels; // vector of channels
+    std::vector<std::string> _channelname;
 
   };
 
@@ -131,6 +146,9 @@ namespace rpwa {
 
     void add(pwacomponent* comp){_comp.push_back(comp);_numpar+=comp->numPar();}
     void setPS(TF1* fPS);
+    void doMapping(); // necessary for performance. to be called after all
+                      // components have been added
+
 
     unsigned int n() const {return _comp.size();}
     unsigned int numPar() const {return _numpar;}
@@ -140,11 +158,14 @@ namespace rpwa {
     void setPar(const double* par); // set parameters
     void getPar(double* par);       // return parameters 
     unsigned int nFreePSPar() const {return _freePSpar.size();}
-    double getFreePSPar(unsigned int i);
-    void getFreePSLimits(unsigned int i, double& lower, double& upper);
+    double getFreePSPar(unsigned int i) const;
+    void getFreePSLimits(unsigned int i, double& lower, double& upper) const;
 
 
     const pwacomponent* operator[](unsigned int i) const {return _comp[i];}
+    std::vector<std::pair<unsigned int,unsigned int> >
+      getCompChannel(const std::string& wave) const;
+
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacompset& cs);
     double ps(double m);
@@ -156,12 +177,19 @@ namespace rpwa {
     std::complex<double> overlap(const std::string& wave1,
 		 const std::string& wave2,
 		 double m);
-    
+    std::complex<double> overlap(unsigned int wave1,
+				 unsigned int wave2,
+				 double m);
+
   private:
     std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
     TF1* _phasespace;
     std::vector<unsigned int> _freePSpar; // parameters of phase space to keep floating
+    // mapping for wave -> which components with which channel
+    // wavelist in same order as given by wavelist
+    std::vector<std::vector<std::pair<unsigned int,unsigned int> > > _compChannel;    
+
 
   };
 

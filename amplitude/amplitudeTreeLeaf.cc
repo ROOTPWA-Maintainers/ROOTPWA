@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      TTree leaf persistency storage class for amplitude information
@@ -36,8 +32,11 @@
 //-------------------------------------------------------------------------
 
 
+#include <algorithm>
+
 #include "TClass.h"
 
+#include "reportingUtils.hpp"
 #include "amplitudeTreeLeaf.h"
 
 	
@@ -45,16 +44,21 @@ using namespace std;
 using namespace rpwa;
 
 
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 ClassImp(amplitudeTreeLeaf);
 #endif
 
 
+bool amplitudeTreeLeaf::_debug = false;
+
+
 amplitudeTreeLeaf::amplitudeTreeLeaf()
-	: TObject()
+	: TObject           (),
+	  _incohSubAmps     (1, 0),
+	  _incohSubAmpLabels(),
+	  _labelToIndexMap  ()
 {
 	amplitudeTreeLeaf::Class()->IgnoreTObjectStreamer();  // don't store TObject's fBits and fUniqueID
-	clear();
 }
 
 
@@ -64,5 +68,137 @@ amplitudeTreeLeaf::~amplitudeTreeLeaf()
 
 void amplitudeTreeLeaf::clear()
 {
-	_incohSubAmps.clear();
+	_incohSubAmps.clear     ();
+	_incohSubAmps.resize    (1, 0);
+	_incohSubAmpLabels.clear();
+	_labelToIndexMap.clear  ();
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator =(const amplitudeTreeLeaf& amp)
+{
+	if (this != &amp) {
+		TObject::operator =(amp);
+		_incohSubAmps      = amp._incohSubAmps;
+		_incohSubAmpLabels = amp._incohSubAmpLabels;
+		_labelToIndexMap   = amp._labelToIndexMap;
+	}
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator +=(const amplitudeTreeLeaf& amp)
+{
+	if (_incohSubAmpLabels != amp._incohSubAmpLabels) {
+		printErr << "cannot add " << *this << endl
+		         << "and " << amp << endl
+		         << "because the two amplitudes have different incoherent sub-amplitudes. "
+		         << "aborting." << endl;
+		throw;
+	}
+	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+		_incohSubAmps[i] += amp.incohSubAmp(i);
+	return *this;
+}
+
+
+amplitudeTreeLeaf&
+amplitudeTreeLeaf::operator -=(const amplitudeTreeLeaf& amp)
+{
+	if (_incohSubAmpLabels != amp._incohSubAmpLabels) {
+		printErr << "cannot subtract " << amp << endl
+		         << "from " << *this << endl
+		         << "because the two amplitudes have different incoherent sub-amplitudes. "
+		         << "aborting." << endl;
+		throw;
+	}
+	for (unsigned int i = 0; i < nmbIncohSubAmps(); ++i)
+		_incohSubAmps[i] -= amp.incohSubAmp(i);
+	return *this;
+}
+
+
+bool
+amplitudeTreeLeaf::containsIncohSubAmp(const string& subAmpLabel) const
+{
+	labelToIndexMapIterator entry = _labelToIndexMap.find(subAmpLabel);
+	if (entry == _labelToIndexMap.end())
+		return false;
+	return true;
+}
+
+
+unsigned int
+amplitudeTreeLeaf::incohSubAmpIndex(const string& subAmpLabel) const
+{
+	labelToIndexMapIterator entry = _labelToIndexMap.find(subAmpLabel);
+	if (entry == _labelToIndexMap.end()) {
+		printErr << "cannot find subamp '" << subAmpLabel << "'. aborting." << endl;
+		throw;
+	}
+	return entry->second;
+}
+
+
+const string&
+amplitudeTreeLeaf::incohSubAmpName(const unsigned int subAmpIndex) const
+{
+	if (subAmpIndex < _incohSubAmpLabels.size())
+		return _incohSubAmpLabels[subAmpIndex];
+	else {
+		printErr << "subamp index " << subAmpIndex << " is out of range. aborting." << endl;
+		throw;
+	}
+}
+
+
+void
+amplitudeTreeLeaf::defineIncohSubAmps(const vector<string>& subAmpLabels)
+{
+	const unsigned int nmbSubAmps = subAmpLabels.size();
+	if (nmbSubAmps < 2)
+		printWarn << "vector with subamp labels '" << subAmpLabels << "' has less than 2 entries. "
+		          << "using single amplitude value." << endl;
+	// make sure labels are unique
+	vector<string> uniqueLabels = subAmpLabels;
+	sort(uniqueLabels.begin(), uniqueLabels.end());
+	uniqueLabels.erase(unique(uniqueLabels.begin(), uniqueLabels.end()), uniqueLabels.end());
+	if (uniqueLabels.size() < nmbSubAmps) {
+		printErr << "vector with subamp labels '" << subAmpLabels << "' contains dublicate entries. "
+		         << "aborting." << endl;
+		throw;
+	}
+	_incohSubAmps.resize(nmbSubAmps, 0);
+	_incohSubAmpLabels = subAmpLabels;
+	rebuildSubAmpLabelMap();
+}
+
+
+ostream&
+amplitudeTreeLeaf::print(ostream& out) const
+{
+	out << "amplitude tree leaf:"  << endl;
+	const unsigned int nmbSubAmps = nmbIncohSubAmps();
+	if (nmbSubAmps > 1) {
+		out << "    number of incoherent sub-amps ... " << nmbSubAmps << endl;
+		out << "    amplitude value(s):" << endl;
+		for (unsigned int i = 0; i < nmbSubAmps; ++i)
+			out << "        [" << setw(4) << i << "] = '" << _incohSubAmpLabels[i]
+			    << "' = " << maxPrecisionDouble(_incohSubAmps[i]) << endl;
+	} else if (nmbSubAmps == 1)
+		out << "    amplitude ... " << _incohSubAmps[0] << endl;
+	else
+		out << "    no amplitude value" << endl;
+	return out;
+}
+
+
+void
+amplitudeTreeLeaf::rebuildSubAmpLabelMap()
+{
+	_labelToIndexMap.clear();
+	for (unsigned int i = 0; i < _incohSubAmpLabels.size(); ++i)
+		_labelToIndexMap[_incohSubAmpLabels[i]] = i;
 }

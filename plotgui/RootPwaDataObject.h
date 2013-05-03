@@ -46,6 +46,7 @@
 
 #include <TFile.h>
 #include <TTree.h>
+#include <TBranch.h>
 #include <TH1F.h>
 
 #include "fitResult.h"
@@ -57,9 +58,12 @@ namespace rpwa{
 		// Variables
 		TFile *_DataFile; // Pointer to the root file containing the data
 		TTree *_DataTree; // Pointer to the root tree containing the data
+		TBranch *_DataBranch; // Pointer to the root branch containing the data
 
 		std::string _DataFileName;
 		std::string _DataTreeName;
+		std::string _DataBranchName; ///< Gives the name of the branch which contains the fitResults in the root tree
+
 		std::map<double, fitResult *> _TreeMap;
 
 		static bool _Debug; ///< If set to true, debug messages are printed
@@ -74,16 +78,20 @@ namespace rpwa{
 		~RootPwaDataObject(); ///< Destructor
 
 		// Get && Set
-		const std::string& DataFileName() const; ///< returns the filename of the loaded file
-		const std::string& DataTreeName() const; ///< returns the treename of the selected tree
+		const std::string& DataFileName() const; ///< Returns the filename of the loaded file
+		const std::string& DataTreeName() const; ///< Returns the treename of the selected tree
+		const std::string& DataBranchName() const; ///< Returns the branchname of the selected branch
 
 		static bool Debug() { return _Debug; } ///< returns debug flag
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
 		TFile *LoadFile( std::string FileName ); ///< Loading the given root tree file
-		unsigned int TreesInFile( std::list<std::string>& TreeList ); ///< Reads the names of all trees in the file and returns it in a std::list& given as parameter, returns the number of found Trees
+		unsigned int TreesInFile( std::list<std::string>& TreeList ); ///< Reads the names of all trees in the file and returns it in a std::list& given as parameter, returns the number of found trees
 		TTree *SelectTree( std::string TreeName ); ///< Selecting root tree in _DataFile by name: Returns Null pointer if tree with given name does not exist
+		unsigned int BranchesInTree( std::list<std::string>& BranchList ); ///< Reads the names of all branches in the tree and returns it in a std::list& given as parameter, returns the number of found branches
+		TBranch *SelectBranch( std::string BranchName ); ///< Selecting branch in _DataTree by name and returns if selection was successful (if branch exists)
+
 		const std::vector<std::string> *WavesInTree() const;
 		unsigned int MapTreeByMassWithHighestLikelihood(); ///< Creates _TreeMap as map of fitResults out of _DataTree sorted by massBinCenter only inserting the fitResults with the Highest logLikelihood for each massBinCenter, returns number of entries in the map
 		TH1F *IntensityHist( const std::string& WaveName, const std::string& TitleXAxis ) const; ///< Creates a root histogram of the intensity out of the fitResults in map over the sorting parameter and the spacing between elements has to be constant (The deletion of the histogram is responsibility of calling function)

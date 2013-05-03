@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      class that describes production vertex in diffractive
@@ -90,7 +86,7 @@ diffractiveDissVertex::diffractiveDissVertex(const particlePtr& beam,
 		interactionVertex::addOutParticle(createParticle(*target));
 	}
 	if (_debug)
-		printInfo << "constructed " << *this << endl;
+		printDebug << "constructed " << *this << endl;
 }
 
 
@@ -127,9 +123,9 @@ diffractiveDissVertex::doClone(const bool cloneInParticles,
 	if (cloneOutParticles)
 		vertexClone->cloneOutParticles();
 	if (_debug)
-		printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-		          << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
-		          << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
+		printDebug << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
+		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
 	return vertexClone;
 }
 
@@ -248,8 +244,8 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 	TVector3* beamMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
 	if (beamMom) {
 		if (_debug)
-			printInfo << "setting momentum of beam particle '" << beam()->name()
-			          << "' to " << *beamMom << " GeV" << endl;
+			printDebug << "setting momentum of beam particle '" << beam()->name()
+			           << "' to " << *beamMom << " GeV" << endl;
 		beam()->setMomentum(*beamMom);
 		_beamMomCache = beam()->momentum();
 	} else {
@@ -263,8 +259,8 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
 		if (recoilMom) {
 			if (_debug)
-				printInfo << "setting momentum of recoil particle '" << recoil()->name()
-				          << "' to " << *recoilMom << " GeV" << endl;
+				printDebug << "setting momentum of recoil particle '" << recoil()->name()
+				           << "' to " << *recoilMom << " GeV" << endl;
 			recoil()->setMomentum(*recoilMom);
 			_recoilMomCache = recoil()->momentum();
 		} else {
@@ -279,8 +275,8 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
 		if (targetMom) {
 			if (_debug)
-				printInfo << "setting momentum of target particle '" << target()->name()
-				          << "' to " << *targetMom << " GeV" << endl;
+				printDebug << "setting momentum of target particle '" << target()->name()
+				           << "' to " << *targetMom << " GeV" << endl;
 			target()->setMomentum(*targetMom);
 			_targetMomCache = target()->momentum();
 		} else {
@@ -297,14 +293,13 @@ diffractiveDissVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 bool
 diffractiveDissVertex::revertMomenta()
 {
-	if (_debug)
-		printInfo << "resetting beam momentum to " << _beamMomCache << " GeV" << endl;
-	beam()->setMomentum(_beamMomCache);
-	if (_debug)
-		printInfo << "resetting recoil momentum to " << _recoilMomCache << " GeV" << endl;
+	if (_debug) {
+		printDebug << "resetting beam momentum to "       << _beamMomCache   << " GeV" << endl
+		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
+		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
+	}
+	beam  ()->setMomentum(_beamMomCache  );
 	recoil()->setMomentum(_recoilMomCache);
-	if (_debug)
-		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
 	target()->setMomentum(_targetMomCache);
 	return true;
 }

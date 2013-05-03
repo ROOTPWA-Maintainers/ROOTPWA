@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Code file for the GuiPwaMain class that provides
@@ -38,7 +38,8 @@
 #include <list>
 
 #include <QMessageBox>
-#include <QFileDialog>
+
+#include "GuiOpenMultipleFilesDialog.h"
 
 #include "GuiPwaMain.h"
 
@@ -47,27 +48,46 @@ using namespace rpwa;
 
 bool GuiPwaMain::_Debug = false;
 
+///< Clears the canvas from the currently loaded waves
+void GuiPwaMain::ClearWaves(){
+	_RootDataObject.Clear();
+	_WaveTreeModel.Clear();
+	_PlotWidget->GetCanvas()->Clear();
+	delete _ShownHistogram;
+	_ShownHistogram = 0;
+	_PlotWidget->Refresh();
+}
+
 // Loads the selected rootfile and tree into _RootDataObject and updates _WaveTreeModel when "Open Tree" is selected from the menu
 void GuiPwaMain::on_actionOpenTree_triggered(){
-	QString fileName = QFileDialog::getOpenFileName(this, tr("Select Root Tree"), "", tr("Root Files (*.root)"));
-	if( !fileName.isEmpty() ){
-		_RootDataObject.Clear();
-		_WaveTreeModel.Clear();
-		_PlotWidget->GetCanvas()->Clear();
-		delete _ShownHistogram;
-		_ShownHistogram = 0;
-		_PlotWidget->Refresh();
+	QString FileName = QFileDialog::getOpenFileName(this, tr("Select Root Tree"), "", tr("Root Files (*.root)"));
+	if( !FileName.isEmpty() ){
+		ClearWaves();
 
-		if( _RootDataObject.LoadFile( (fileName.toLatin1()).constData() ) ){
+		if( _RootDataObject.LoadFile( (FileName.toLatin1()).constData() ) ){
 			list<string> TreeList;
 			int NumberOfTrees = _RootDataObject.TreesInFile( TreeList );
 			if( 0 == NumberOfTrees ){
 				QMessageBox::warning(this, tr("Error"), "File does not contain any tree. Please load another file." );
 			}
 			else if( 1 == NumberOfTrees ){
-				_RootDataObject.SelectTree( TreeList.front() );
-				_RootDataObject.MapTreeByMassWithHighestLikelihood();
-				_WaveTreeModel.AddTree(_RootDataObject);
+				if( _RootDataObject.SelectTree( TreeList.front() ) ){
+					list<string> BranchList;
+					int NumberOfBranches = _RootDataObject.BranchesInTree( BranchList );
+					if( 0 == NumberOfBranches ){
+						QMessageBox::warning(this, tr("Error"), "Tree does not contain branches of class fitResult." );
+					}
+					else if( 1 == NumberOfBranches ){
+						if( _RootDataObject.SelectBranch( BranchList.front() ) ){
+							_RootDataObject.MapTreeByMassWithHighestLikelihood();
+							_WaveTreeModel.AddTree(_RootDataObject);
+						}
+					}
+					else{
+						QString NumberStr;
+						QMessageBox::information(this, tr("Test"), "Tree contains "+NumberStr.setNum(NumberOfBranches)+" branches. Branch selection is not implemented yet." );
+					}
+				}
 			}
 			else{
 				QString NumberStr;
@@ -77,6 +97,21 @@ void GuiPwaMain::on_actionOpenTree_triggered(){
 	}
 }
 
+// Parses the selected CompassPWA txt files into a rootfile and displays its tree like if it was opened with on_actionOpenTree_triggered
+void GuiPwaMain::on_actionParse_CompassPWA_txts_triggered(){
+	GuiOpenMultipleFilesDialog* CompassFilesDialog = new GuiOpenMultipleFilesDialog( this, tr("Select CompassPWA text files (Fitresults and Integrals)"), "", tr("Text Files(*.txt)") );
+
+	if( CompassFilesDialog->exec() ){
+		QString RootFileName = QFileDialog::getSaveFileName(this, tr("Save Parsed Fitresults As"), "", tr("Root Files (*.root)"));
+		if( !RootFileName.isEmpty() ){
+			// Parsing the CompassPwa files
+
+			// Loading parsed file
+		}
+	}
+
+	delete CompassFilesDialog;
+}
 
 void GuiPwaMain::mon__WaveSelection_currentChanged( const QModelIndex& Current, const QModelIndex & Previous ){
 	_PlotWidget->GetCanvas()->Clear();
@@ -86,7 +121,9 @@ void GuiPwaMain::mon__WaveSelection_currentChanged( const QModelIndex& Current, 
 	if( static_cast<GuiWaveTreeModelItem *>( Current.internalPointer() )->Type() == GuiWaveTreeModelItem::Wave ){
 		_ShownHistogram = _RootDataObject.IntensityHist( Current.data().toString().toLatin1().constData(), "MassBin [Gev]" );
 
-		_ShownHistogram->Draw("E1");
+		if( _ShownHistogram ){
+			_ShownHistogram->Draw("e1");
+		}
 	}
 
 	_PlotWidget->Refresh();
@@ -111,7 +148,7 @@ GuiPwaMain::GuiPwaMain(QMainWindow *parent):
 		_WaveTreeModel(this),
 		_WaveSelection(&_WaveTreeModel),
 		_ShownHistogram(0){
-
+//	RootPwaDataObject::SetDebug(true);
 	setupUi( this );
 
 	 //WaveTreeView defined in ui_GuiPwaMain.h

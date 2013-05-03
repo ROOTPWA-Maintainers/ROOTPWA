@@ -519,7 +519,7 @@ TH2D* dalitz = createDalitzHistogram("hDalitzMC",
     for (unsigned int i = 0; i < nevt-1; ++i) {
       //int percent = i*100/nevt;
       //	 if (percent % 10 == 0)
-      //	 	std::cout << i << "% " << std::endl; 
+      //	 	std::cout << i << "% " << std::endl;
       tr->GetEntry(i);
       // in case its data tree (itree=1) put weights to 1
       if (itree == 1) {
@@ -599,7 +599,7 @@ TH2D* dalitz = createDalitzHistogram("hDalitzMC",
 		  }
 		}
       }
-	  // second pass swap the havier combination to the front	
+	  // second pass swap the havier combination to the front
       if (fabs(comb[1].first.first)+fabs(comb[1].first.second) > fabs(comb[0].first.first)+fabs(comb[0].first.second)){
 	    std::pair<std::pair<float, float>, double> temp = comb[0];
 	    comb[0] = comb[1];
@@ -688,7 +688,7 @@ TH2D* dalitz = createDalitzHistogram("hDalitzMC",
         const NParticleState& state = event.getState(is);
         if (state.n() == npart) {
           hM[itree]->Fill(state.p().M());
-        
+
 	}
 	if (state.n() == 2 && state.q() == 0){
 	  float sum_mass = state.getParticle(0)->p().M()+state.getParticle(1)->p().M();
@@ -697,7 +697,7 @@ TH2D* dalitz = createDalitzHistogram("hDalitzMC",
 	    fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_Kpi_isobar);
 	    fillWeightedHelicityAnglePlots(calculateHelicityAngles(state), weight, itree, HHB_Kpi_isobar);
 	  }
-	  else { 
+	  else {
 	    if (fabs(sum_mass-0.279) < 0.010) {
 	      // this is an isobar decaying into pi-pi+ final state particles
 	      fillWeightedGJAnglePlots(state.p(), weight, tprime, itree, GJHB_pipi_isobar);

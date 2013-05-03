@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      class that describes leptoproduction vertex
@@ -100,7 +96,7 @@ namespace rpwa {
 		inline double Q2     () const { return -virtPhoton()->lzVec().Mag2();                                }  ///< returns Q^2 of virtual photon
 		inline double nu     () const { return target()->lzVec() * virtPhoton()->lzVec() / target()->mass(); }  ///< returns energy of virtual photon
 		inline double y      () const;                                                                          ///< returns relative energy loss of virtual photon
-    double        epsilon() const;                                                                          ///< returns photon's polarization parameter
+		double        epsilon() const;                                                                          ///< returns photon's polarization parameter
 		inline double delta  () const { return (2 * beamLepton()->mass2() / Q2()) * (1 - epsilon());         }  ///< returns photon's mass correction parameter
 		inline double xBj    () const { return Q2() / (2 * (target()->lzVec() * virtPhoton()->lzVec()));     }  ///< returns Bjorken x
 		inline double s      () const { return (target()->lzVec() + virtPhoton()->lzVec()).Mag2();           }  ///< returns total energy squared in (virtual photon, target) CM system

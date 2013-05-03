@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      base class that desbribes general interaction vertex between particles
@@ -72,6 +68,10 @@ namespace rpwa {
 		{ return interactionVertexPtr(doClone(cloneInParticles, cloneOutParticles)); }
 		virtual void clear();
 
+		// comparison operators that check equality of all member variables
+		bool operator ==(const interactionVertex& rhsVert) { return this->isEqualTo(rhsVert); }
+		bool operator !=(const interactionVertex& rhsVert) { return not (*this == rhsVert);   }
+
 		virtual bool addInParticle (const particlePtr& part);  ///< adds an incoming particle to vertex
 		virtual bool addOutParticle(const particlePtr& part);  ///< adds an outgoing particle to vertex
 
@@ -99,6 +99,8 @@ namespace rpwa {
 
 		virtual interactionVertex* doClone(const bool cloneInParticles,
 		                                   const bool cloneOutParticles) const;  ///< helper function to use covariant return types with smart pointers; needed for public clone()
+
+		virtual bool isEqualTo(const interactionVertex& vert) const;  ///< returns whether vert is equal to this by checking equality of all member variables
 
 		void cloneInParticles ();  ///< clones all incoming particles
 		void cloneOutParticles();  ///< clones all outgoing particles

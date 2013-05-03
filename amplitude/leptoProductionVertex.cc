@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      class that describes leptoproduction vertex
@@ -98,7 +94,7 @@ leptoProductionVertex::leptoProductionVertex(const particlePtr& beamLepton,
 	}
 	interactionVertex::addOutParticle(createParticle(*beamLepton));  // lepton scatters elastically
 	if (_debug)
-		printInfo << "constructed " << *this << endl;
+		printDebug << "constructed " << *this << endl;
 }
 
 
@@ -136,9 +132,9 @@ leptoProductionVertex::doClone(const bool cloneInParticles,
 	if (cloneOutParticles)
 		vertexClone->cloneOutParticles();
 	if (_debug)
-		printInfo << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
-		          << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
-		          << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
+		printDebug << "cloned " << *this << "; " << this << " -> " << vertexClone << " "
+		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
+		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
 	return vertexClone;
 }
 
@@ -249,42 +245,42 @@ leptoProductionVertex::productionAmp() const
 		                             - rho[0][1] * rho[2][2] * rho[1][0];
 	printInfo << "det[rho] = " << detRho << " vs. "
 	          << (  (epsilon + delta) * (1 - epsilon * epsilon) * (1 - _longPol * _longPol)
-	              - (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
-	              + 2 * _longPol * _longPol * zeta * xi * sqrt(1 - epsilon * epsilon)) / 4
+	                - (1 + epsilon) * (xi * xi + _longPol * _longPol * zeta * zeta)
+	                + 2 * _longPol * _longPol * zeta * xi * sqrt(1 - epsilon * epsilon)) / 4
 	          << endl;
 
-  // perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
-  // triangle matrix with real diagonal elements
-  complex<double> V[3][3];
-  // first column
-  V[0][0] = sqrt(real(rho[0][0]));
-  V[1][0] = rho[1][0] / real(V[0][0]);
-  V[2][0] = rho[2][0] / real(V[0][0]);
-  // second column
-  V[1][1] = sqrt(real(rho[1][1]) - norm(V[1][0]));
-  V[2][1] = (rho[2][1] - V[2][0] * conj(V[1][0])) / real(V[1][1]);
-  // third column
-  V[2][2] = sqrt(real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]));
-  // zero elements
+	// perform Cholesky decomposition rho_ij = sum_r V_ir * V_jr^*, where V_ir is a lower
+	// triangle matrix with real diagonal elements
+	complex<double> V[3][3];
+	// first column
+	V[0][0] = sqrt(real(rho[0][0]));
+	V[1][0] = rho[1][0] / real(V[0][0]);
+	V[2][0] = rho[2][0] / real(V[0][0]);
+	// second column
+	V[1][1] = sqrt(real(rho[1][1]) - norm(V[1][0]));
+	V[2][1] = (rho[2][1] - V[2][0] * conj(V[1][0])) / real(V[1][1]);
+	// third column
+	V[2][2] = sqrt(real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]));
+	// zero elements
 	V[0][1] = 0;
 	V[0][2] = 0;
 	V[1][2] = 0;
-  printInfo << "V[2][2]^2 = " << real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]) << ": "
-            << real(rho[2][2]) << " - " << norm(V[2][1]) << " - " << norm(V[2][0]) << endl;
-  for (unsigned int j = 0; j < 3; ++j)
-	  for (unsigned int i = 0; i < 3; ++i)
-		  printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
-  complex<double> rhoPrime[3][3];
-  for (unsigned int j = 0; j < 3; ++j)
-	  for (unsigned int i = 0; i < 3; ++i) {
-		  rhoPrime[i][j] = 0;
-		  for (unsigned int r = 0; r < 3; ++r)
-			  rhoPrime[i][j] += V[i][r] * conj(V[j][r]);
-	  }
-  for (unsigned int j = 0; j < 3; ++j)
-	  for (unsigned int i = 0; i < 3; ++i)
-		  printInfo << "deltaRho[" << i << "][" << j << "] = "
-		            << maxPrecisionDouble(rho[i][j] - rhoPrime[i][j]) << endl;
+	printInfo << "V[2][2]^2 = " << real(rho[2][2]) - norm(V[2][1]) - norm(V[2][0]) << ": "
+	          << real(rho[2][2]) << " - " << norm(V[2][1]) << " - " << norm(V[2][0]) << endl;
+	for (unsigned int j = 0; j < 3; ++j)
+		for (unsigned int i = 0; i < 3; ++i)
+			printInfo << "V[" << i << "][" << j << "] = " << maxPrecisionDouble(V[i][j]) << endl;
+	complex<double> rhoPrime[3][3];
+	for (unsigned int j = 0; j < 3; ++j)
+		for (unsigned int i = 0; i < 3; ++i) {
+			rhoPrime[i][j] = 0;
+			for (unsigned int r = 0; r < 3; ++r)
+				rhoPrime[i][j] += V[i][r] * conj(V[j][r]);
+		}
+	for (unsigned int j = 0; j < 3; ++j)
+		for (unsigned int i = 0; i < 3; ++i)
+			printInfo << "deltaRho[" << i << "][" << j << "] = "
+			          << maxPrecisionDouble(rho[i][j] - rhoPrime[i][j]) << endl;
 
 
 	// compute production amplitude for given photon helicity
@@ -433,8 +429,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 	TVector3* beamLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[0]);
 	if (beamLeptonMom) {
 		if (_debug)
-			printInfo << "setting momentum of beam lepton '" << beamLepton()->name()
-			          << "' to " << *beamLeptonMom << " GeV" << endl;
+			printDebug << "setting momentum of beam lepton '" << beamLepton()->name()
+			           << "' to " << *beamLeptonMom << " GeV" << endl;
 		beamLepton()->setMomentum(*beamLeptonMom);
 		_beamLeptonMomCache = beamLepton()->momentum();
 	} else {
@@ -447,8 +443,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 	TVector3* scatteredLeptonMom = dynamic_cast<TVector3*>(prodKinMomenta[1]);
 	if (scatteredLeptonMom) {
 		if (_debug)
-			printInfo << "setting momentum of scattered lepton '" << beamLepton()->name()
-			          << "' to " << *beamLeptonMom << " GeV" << endl;
+			printDebug << "setting momentum of scattered lepton '" << beamLepton()->name()
+			           << "' to " << *beamLeptonMom << " GeV" << endl;
 		scatteredLepton()->setMomentum(*scatteredLeptonMom);
 		_scatteredLeptonMomCache = scatteredLepton()->momentum();
 	} else {
@@ -463,8 +459,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		TVector3* recoilMom = dynamic_cast<TVector3*>(prodKinMomenta[2]);
 		if (recoilMom) {
 			if (_debug)
-				printInfo << "setting momentum of recoil particle '" << recoil()->name()
-				          << "' to " << *recoilMom << " GeV" << endl;
+				printDebug << "setting momentum of recoil particle '" << recoil()->name()
+				           << "' to " << *recoilMom << " GeV" << endl;
 			recoil()->setMomentum(*recoilMom);
 			_recoilMomCache = recoil()->momentum();
 		} else {
@@ -479,8 +475,8 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 		TVector3* targetMom = dynamic_cast<TVector3*>(prodKinMomenta[3]);
 		if (targetMom) {
 			if (_debug)
-				printInfo << "setting momentum of target particle '" << target()->name()
-				          << "' to " << *targetMom << " GeV" << endl;
+				printDebug << "setting momentum of target particle '" << target()->name()
+				           << "' to " << *targetMom << " GeV" << endl;
 			target()->setMomentum(*targetMom);
 			_targetMomCache = target()->momentum();
 		} else {
@@ -499,19 +495,17 @@ leptoProductionVertex::readKinematicsData(const TClonesArray& prodKinMomenta)
 bool
 leptoProductionVertex::revertMomenta()
 {
-	if (_debug)
-		printInfo << "resetting beam lepton momentum to " << _beamLeptonMomCache << " GeV" << endl;
-	beamLepton()->setMomentum(_beamLeptonMomCache);
-	if (_debug)
-		printInfo << "resetting scattered lepton momentum to " << _scatteredLeptonMomCache << " GeV"
-		          << endl;
+	if (_debug) {
+		printDebug << "resetting beam lepton momentum to " << _beamLeptonMomCache << " GeV" << endl
+		           << "    resetting scattered lepton momentum to "
+		           << _scatteredLeptonMomCache << " GeV" << endl
+		           << "    resetting recoil momentum to " << _recoilMomCache << " GeV" << endl
+		           << "    resetting target momentum to " << _targetMomCache << " GeV" << endl;
+	}
+	beamLepton     ()->setMomentum(_beamLeptonMomCache     );
 	scatteredLepton()->setMomentum(_scatteredLeptonMomCache);
-	if (_debug)
-		printInfo << "resetting recoil momentum to " << _recoilMomCache << " GeV" << endl;
-	recoil()->setMomentum(_recoilMomCache);
-	if (_debug)
-		printInfo << "resetting target momentum to " << _targetMomCache << " GeV" << endl;
-	target()->setMomentum(_targetMomCache);
+	recoil         ()->setMomentum(_recoilMomCache         );
+	target         ()->setMomentum(_targetMomCache         );
 	// set virtual photon
 	virtPhoton()->setLzVec(beamLepton()->lzVec() - scatteredLepton()->lzVec());
 	return true;

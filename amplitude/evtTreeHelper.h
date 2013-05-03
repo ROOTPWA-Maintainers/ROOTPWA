@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      helper functions that convert between standard ASCII PWA2000
@@ -58,16 +54,14 @@ namespace rpwa {
 	class isobarAmplitude;
 
 
-	std::string particleNameFromGeantId(const int id,
-	                                    const int charge);
-
-
-	void idAndChargeFromParticleName(const std::string& name,
-	                                 int&               id,
-	                                 int&               charge);
-
-
 	double getParticleMass(const std::string& name);
+
+
+	void parseLeafAndObjNames(const std::string& cmdLineString,
+	                          std::string&       prodKinPartNamesObjName,
+	                          std::string&       prodKinMomentaLeafName,
+	                          std::string&       decayKinPartNamesObjName,
+	                          std::string&       decayKinMomentaLeafName);  // parses leaf and object names from ;-delimited command line string
 
 
 	bool getParticleNamesFromRootFile(TFile&             inFile,

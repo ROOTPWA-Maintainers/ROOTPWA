@@ -19,15 +19,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
-//      reads in data files in .evt or tree format, calculates
+//      reads in data files in .evt or ROOT tree format, calculates
 //      amplitudes for each event based on given key file, and writes
-//      out amplitudes in PWA2000 binary or ascii format
+//      out amplitudes in ROOT tree or PWA2000 binary or ascii format
 //
 //
 // Author List:
@@ -42,8 +38,6 @@
 #include <unistd.h>
 #include <vector>
 #include <complex>
-
-#include <boost/tokenizer.hpp>
 
 #include "TROOT.h"
 #include "TFile.h"
@@ -61,7 +55,6 @@
 
 
 using namespace std;
-using namespace boost;
 using namespace rpwa;
 
 
@@ -69,7 +62,9 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "calculates amplitudes for events in input data files and writes them to file" << endl
+
+	cerr << "calculates decay amplitudes for given wave for events in input data files and" << endl
+	     << "writes amplitudes to file" << endl
 	     << endl
 	     << "usage:" << endl
 	     << progName
@@ -84,7 +79,8 @@ usage(const string& progName,
 	     << "        -m         amplitude leaf name (default: 'amplitude')" << endl
 	     << "        -a         write .amp files in ASCII format (default: binary)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
-	     << "        -l names   semicolon separated object/leaf names in input data (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
+	     << "        -l names   semicolon separated object/leaf names in input data" << endl
+	     << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
 	     << "        -v         verbose; print debug output (default: false)" << endl
 	     << "        -h         print help" << endl
 	     << endl;
@@ -97,28 +93,32 @@ main(int    argc,
      char** argv)
 {
 	printCompilerInfo();
-	printSvnVersion();
+	printLibraryInfo ();
+	printGitHash     ();
+	cout << endl;
 
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	// force loading predefined std::complex dictionary
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
 #endif
 	
 	// parse command line options
-	const string progName     = argv[0];
-	string       keyFileName  = "";
-	long int     maxNmbEvents = -1;
-	string       pdgFileName  = "./particleDataTable.txt";
-	string       ampFileName  = "./out.root";
-	string       ampLeafName  = "amplitude";
-	bool         asciiOutput  = false;
-	string       inTreeName   = "rootPwaEvtTree";
-	string       leafNames    = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
-	bool         debug        = false;
-	extern char* optarg;
-	extern int   optind;
-	int          c;
+	const string   progName                 = argv[0];
+	string         keyFileName              = "";
+	long int       maxNmbEvents             = -1;
+	string         pdgFileName              = "./particleDataTable.txt";
+	string         ampFileName              = "./out.root";
+	string         ampLeafName              = "amplitude";
+	bool           asciiOutput              = false;
+	string         inTreeName               = "rootPwaEvtTree";
+	string         leafNames                = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool           newKeyFileNameConvention = false;
+	bool           debug                    = false;
+	const long int treeCacheSize            = 1000000;  // 1 MByte ROOT tree read cache size
+	extern char*   optarg;
+	extern int     optind;
+	int            c;
 	while ((c = getopt(argc, argv, "k:n:p:o:m:at:l:r:vh")) != -1)
 		switch (c) {
 		case 'k':
@@ -176,24 +176,13 @@ main(int    argc,
 		usage(progName, 1);
 	}
 
-	// get leaf names
-	typedef tokenizer<char_separator<char> > tokenizer;
-	char_separator<char> separator(";");
-	tokenizer            leafNameTokens(leafNames, separator);
-	tokenizer::iterator  leafNameToken            = leafNameTokens.begin();
-	const string         prodKinPartNamesObjName  = *leafNameToken;
-	const string         prodKinMomentaLeafName   = *(++leafNameToken);
-	const string         decayKinPartNamesObjName = *(++leafNameToken);
-	const string         decayKinMomentaLeafName  = *(++leafNameToken);
-	printInfo << "using the following object/leaf names:" << endl
-	          << "        production kinematics: "
-	          << "particle names = '" << prodKinPartNamesObjName << "', "
-	          << "momenta = '" << prodKinMomentaLeafName << "'" << endl
-	          << "        decay kinematics:      "
-	          << "particle names = '" << decayKinPartNamesObjName << "', "
-	          << "momenta = '" << decayKinMomentaLeafName << "'" << endl;
+	// get object and leaf names for event data
+	string prodKinPartNamesObjName,  prodKinMomentaLeafName;
+	string decayKinPartNamesObjName, decayKinMomentaLeafName;
+	parseLeafAndObjNames(leafNames, prodKinPartNamesObjName, prodKinMomentaLeafName,
+	                     decayKinPartNamesObjName, decayKinMomentaLeafName);
 
-	// open .root and .evt files
+	// open .root and .evt files for event data
 	vector<TTree*> inTrees;
 	TClonesArray*  prodKinPartNames  = 0;
 	TClonesArray*  decayKinPartNames = 0;
@@ -225,7 +214,7 @@ main(int    argc,
 
 	// create output file for amplitudes
 	bool writeRootFormat = false;
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	const string ampFileExt = extensionFromPath(ampFileName);
 	if (ampFileExt == "root")
 		writeRootFormat = true;
@@ -240,34 +229,36 @@ main(int    argc,
 	printInfo << "creating amplitude file '" << ampFileName << "'";
 	ofstream*          ampFilePlain = 0;
 	TFile*             ampFileRoot  = 0;
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	amplitudeTreeLeaf* ampTreeLeaf  = 0;
 	TTree*             ampTree      = 0;
 	if (writeRootFormat) {
 		cout << endl;
 		ampFileRoot = TFile::Open(ampFileName.c_str(), "RECREATE");
 		// write wave description
-		const string waveName = waveDesc.waveNameFromTopologyOld(*(amplitude->decayTopology()));
+		const string waveName = waveDesc.waveNameFromTopology(*(amplitude->decayTopology()),
+		                                                      newKeyFileNameConvention);
 		waveDesc.Write((waveName + ".key").c_str());
 		// create output tree
 		ampTreeLeaf = new amplitudeTreeLeaf();
-		ampTreeLeaf->setNmbIncohSubAmps(1);
 		const string ampTreeName = waveName + ".amp";
 		ampTree = new TTree(ampTreeName.c_str(), ampTreeName.c_str());
-		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, 256000, 99);
+		const int splitLevel = 99;
+		const int bufSize    = 256000;
+		ampTree->Branch(ampLeafName.c_str(), &ampTreeLeaf, bufSize, splitLevel);
 	} else
 #endif
-	{
-		cout << "; " << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
-		ampFilePlain = new ofstream(ampFileName.c_str());
-	}
-	if ((writeRootFormat and not ampFileRoot)
+		{
+			cout << "; " << ((asciiOutput) ? "ASCII" : "binary") << " mode" << endl;
+			ampFilePlain = new ofstream(ampFileName.c_str());
+		}
+	if (   (writeRootFormat and not ampFileRoot)
 	    or (not writeRootFormat and not ampFilePlain and not *ampFilePlain)) {
 		printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
 		exit(1);
 	}
   
-	// read data from tree(s), calculate amplitudes
+	// read data from tree(s) and calculate decay amplitudes
 	TStopwatch timer;
 	timer.Reset();
 	timer.Start();
@@ -291,9 +282,9 @@ main(int    argc,
   
 	// write amplitudes to output file
 	for (unsigned int i = 0; i < ampValues.size(); ++i) {
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 		if (ampFileRoot) {
-			ampTreeLeaf->setIncohSubAmp(ampValues[i]);
+			ampTreeLeaf->setAmp(ampValues[i]);
 			ampTree->Fill();
 		}
 #endif
@@ -304,12 +295,13 @@ main(int    argc,
 				ampFilePlain->write((char*)(&ampValues[i]), sizeof(complex<double>));
 		}
 	}
-#if AMPLITUDETREELEAF_ENABLED
+#ifdef USE_STD_COMPLEX_TREE_LEAFS
 	if (ampFileRoot) {
-		ampTree->Print();
-		ampTree->OptimizeBaskets(10000000, 1, "d");
+		printInfo << "optimizing tree" << endl;
+		//ampTree->Print();
+		ampTree->OptimizeBaskets(treeCacheSize, 1, "d");
 		ampTree->Write();
-		ampTree->Print();
+		//ampTree->Print();
 		ampFileRoot->Close();
 		delete ampFileRoot;
 	}

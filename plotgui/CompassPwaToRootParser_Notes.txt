@@ -13,7 +13,7 @@ pwa/pwatools/pwamain/fit3sum_new.f (A common variable (G2) is set for the output
 
 The text files are self-explaining. The output name convention is
 fit results:
-(specified fit folder)/(specified fit file name)/PWAfitresults_(specified fit file name)_(mass bin start in MeV)_(mass bin end in MeV)_(t' bin start in Mev^2)_(t' bin start in MeV^2)_(specified random seed, 0 if none was specified)_fit(counter of fit attemps, beginning with 1).txt
+(specified fit folder)/text_(specified fit file name)_(mass bin start in MeV)_(mass bin end in MeV)/PWAfitresults_(specified fit file name)_(mass bin start in MeV)_(mass bin end in MeV)_(t' bin start in Mev^2)_(t' bin start in MeV^2)_(specified random seed, 0 if none was specified)_fit(counter of fit attemps, beginning with 1).txt
 
 acceptance corrected normalization integrals:
 (specified integral folder)/PWANormIntegralsAcc_(mass bin start in MeV)_(mass bin end in MeV)_(t' bin start in Mev^2)_(t' bin start in MeV^2).txt

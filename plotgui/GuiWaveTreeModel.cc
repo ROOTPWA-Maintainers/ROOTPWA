@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Code file for the GuiWaveTreeModel class that provides a model
@@ -47,11 +47,11 @@ using namespace rpwa;
 bool GuiWaveTreeModel::_Debug = false;
 
 // Adds a child of type File to _RootItem
-GuiWaveTreeModelItem *GuiWaveTreeModel::AddFile(QVariant Data){
+GuiWaveTreeModelItem *GuiWaveTreeModel::AddFile(QString Data){
 	GuiWaveTreeModelItem *File = new GuiWaveTreeModelItem(Data, GuiWaveTreeModelItem::File, _RootItem);
 	if( _RootItem->AppendChild(File) ){
 		if( _Debug ){
-			printDebug << "File '"<<Data.toString().toLatin1().constData()<<"' added\n";
+			printDebug << "File '"<<Data.toLatin1().constData()<<"' added\n";
 		}
 		return File;
 	}
@@ -65,19 +65,19 @@ GuiWaveTreeModelItem *GuiWaveTreeModel::AddFile(QVariant Data){
 }
 
 // Adds a child of type Tree to Parent
-GuiWaveTreeModelItem *GuiWaveTreeModel::AddTree(QVariant Data, GuiWaveTreeModelItem *Parent){
+GuiWaveTreeModelItem *GuiWaveTreeModel::AddTree(QString Data, GuiWaveTreeModelItem *Parent){
 	if( Parent ){
 		GuiWaveTreeModelItem *Tree = new GuiWaveTreeModelItem(Data, GuiWaveTreeModelItem::Tree, Parent);
 		if( Parent->AppendChild(Tree) ){
 			if( _Debug ){
-				printDebug << "Tree '"<<Data.toString().toLatin1().constData()<<"' added to '"<<Parent->Data().toString().toLatin1().constData()<<"'\n";
+				printDebug << "Tree '"<<Data.toLatin1().constData()<<"' added to '"<<Parent->Data().toLatin1().constData()<<"'\n";
 			}
 			return Tree;
 		}
 		else{
 			delete Tree;
 			if( _Debug ){
-				printDebug << "GuiWaveTreeModel::AddTree AppendChild failed adding '"<<Data.toString().toLatin1().constData()<<"' to '"<<Parent->Data().toString().toLatin1().constData()<<"'\n";
+				printDebug << "GuiWaveTreeModel::AddTree AppendChild failed adding '"<<Data.toLatin1().constData()<<"' to '"<<Parent->Data().toLatin1().constData()<<"'\n";
 			}
 			return 0;
 		}
@@ -88,12 +88,12 @@ GuiWaveTreeModelItem *GuiWaveTreeModel::AddTree(QVariant Data, GuiWaveTreeModelI
 }
 
 // Adds a child of type Wave to Parent
-GuiWaveTreeModelItem *GuiWaveTreeModel::AddWave(QVariant Data, GuiWaveTreeModelItem *Parent){
+GuiWaveTreeModelItem *GuiWaveTreeModel::AddWave(QString Data, GuiWaveTreeModelItem *Parent){
 	if( Parent ){
 		GuiWaveTreeModelItem *Wave = new GuiWaveTreeModelItem(Data, GuiWaveTreeModelItem::Wave, Parent);
 		if( Parent->AppendChild(Wave) ){
 			if( _Debug ){
-				printDebug << "Wave '"<<Data.toString().toLatin1().constData()<<"' added to '"<<Parent->Data().toString().toLatin1().constData()<<"'\n";
+				printDebug << "Wave '"<<Data.toLatin1().constData()<<"' added to '"<<Parent->Data().toLatin1().constData()<<"'\n";
 			}
 			return Wave;
 		}
@@ -252,14 +252,14 @@ int GuiWaveTreeModel::columnCount(const QModelIndex &parent) const{
 QVariant GuiWaveTreeModel::data(const QModelIndex &index, int role) const{
 	if ( !index.isValid() ){
 		if( _Debug ){
-			printDebug << "GuiWaveTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<QVariant().toString().toLatin1().constData()<<'\n';
+			printDebug << "GuiWaveTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<QString().toLatin1().constData()<<'\n';
 		}
 		return QVariant();
 	}
 
 	if (role != Qt::DisplayRole){
 		if( _Debug ){
-			printDebug << "GuiWaveTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<QVariant().toString().toLatin1().constData()<<'\n';
+			printDebug << "GuiWaveTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<QString().toLatin1().constData()<<'\n';
 		}
 		return QVariant();
 	}
@@ -267,7 +267,7 @@ QVariant GuiWaveTreeModel::data(const QModelIndex &index, int role) const{
 	GuiWaveTreeModelItem *Item = static_cast<GuiWaveTreeModelItem*>( index.internalPointer() );
 
 	if( _Debug ){
-		printDebug << "GuiWaveTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<Item->Data().toString().toLatin1().constData()<<'\n';
+		printDebug << "GuiWaveTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<Item->Data().toLatin1().constData()<<'\n';
 	}
 	return Item->Data();
 }

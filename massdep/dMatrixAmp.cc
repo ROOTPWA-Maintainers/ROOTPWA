@@ -20,8 +20,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Resonance Mixing Amplitude in the D-Matrix Formalism
@@ -45,18 +43,18 @@ using namespace ublas;
 using namespace std;
 
 cnum
-dMatrixPole::gDec(unsigned int i) {
+dMatrixPole::gDec(unsigned int i) const {
   return cnum(sqrt(fm*fgamma(0,i)),0);
 }
 
  double
- dMatrixPole::psp(double m, unsigned int i){
+ dMatrixPole::psp(double m, unsigned int i) const {
    return (*fpsp)[i]->Eval(m)/(*fpsp)[i]->Eval(fm);
  }
 
  
 double 
-dMatrixPole::gammaTot(){
+dMatrixPole::gammaTot() const {
   unsigned int n=fgamma.size2();
   double result=0;
   for(unsigned int i=0;i<n;++i){
@@ -66,7 +64,7 @@ dMatrixPole::gammaTot(){
 }
 
 double 
-dMatrixPole::gammaTot(double m){
+dMatrixPole::gammaTot(double m) const {
   unsigned int n=fgamma.size2();
   double result=0;
   for(unsigned int i=0;i<n;++i){
@@ -77,9 +75,9 @@ dMatrixPole::gammaTot(double m){
 
 
 cnum 
-dMatrixPole::M2(double m){
+dMatrixPole::M2(double m) const {
    double m2=fm*fm;
-   if(fBkg)return cnum(m2);
+   if(fBkg)return cnum(m2,0);
    else return cnum(m2,-gammaTot(m));
 }
 
@@ -112,16 +110,19 @@ dMatrixAmp::Setup( const rmatrix& mbare,
 	     const rmatrix& gamma, 
 	     const cmatrix& production,
 	     const rmatrix& mixing){
-   unsigned int np=nPoles();
-   unsigned int nc=nChannels();
-   fprod=production;
+  unsigned int np=nPoles();
+  unsigned int nb=nBkg();
+  unsigned int nc=nChannels();
+  fprod=production;
    fmixing=mixing;
-   for(unsigned int ip=0;ip<np;++ip){
+   for(unsigned int ip=0;ip<np+nb;++ip){
      cerr << "ip="<< ip << endl;
-     fPoles[ip].setMass(mbare(0,ip));
-     matrix_range<const rmatrix> gam(gamma,range(ip,ip+1),range(0,nc));
-      cerr << gam << endl;
-      fPoles[ip].setChannels(&fChannels,gam);
+     if(ip<np)fPoles[ip].setMass(mbare(0,ip));
+     else fBkg[ip-np].setMass(mbare(0,ip));
+       matrix_range<const rmatrix> gam(gamma,range(ip,ip+1),range(0,nc));
+       cerr << gam << endl;
+     if(ip<np)fPoles[ip].setChannels(&fChannels,gam);
+     else fBkg[ip-np].setChannels(&fChannels,gam);
    }// end loop over poles
  }
 
@@ -137,9 +138,9 @@ dMatrixAmp::amp(double m, unsigned int channel){
     for(unsigned int j=0;j<n;++j){
       if(i==j){
 	if(i<nPoles())Dinv(i,j)=getPole(i).M2(m)-s;
-	else Dinv(i,j)=getBkg(i-nPoles()).M2(m);
+	else Dinv(i,j)=-getBkg(i-nPoles()).M2(m);
       } // end setting 
-      else Dinv(i,j)=-fmixing(i,j); // no mixing at the moment
+      else Dinv(i,j)=-fmixing(i,j); 
     }
   
     // build row-vector of decay amplitudes
@@ -158,3 +159,101 @@ dMatrixAmp::amp(double m, unsigned int channel){
 
   return ADecDAProd(0,0);
 }; /// full amplitude
+
+
+// parameter mapping:
+unsigned int 
+dMatrixAmp::getNPar() const {
+  unsigned int nbare=fPoles.size()+fBkg.size(); // bare masses
+  // widths/decay couplings
+  unsigned int ngamma=nbare*fChannels.size();
+  // production constants (complex!) 
+  unsigned int nprod = nbare*2;
+  // mixing terms
+  unsigned int nmix=0.5*nbare*(nbare - 1); // diagonal terms are unphysical!
+                                           // symmetrie!!!
+  return nbare+ngamma+nprod+nmix;
+
+}
+
+void
+dMatrixAmp::getPar(double* par) const {
+  unsigned int counter=0;
+  // bare masses
+  // loop over poles
+  for(unsigned int ip=0;ip<nPoles();++ip){
+    par[counter++]=fPoles[ip].m();
+  }
+  // loop over bkg
+  for(unsigned int ip=0;ip<nBkg();++ip){
+    par[counter++]=fBkg[ip].m();
+  }
+  // get gammas
+  // loop over channels
+  for(unsigned int ic=0;ic<nChannels();++ic){
+    // loop over poles
+    for(unsigned int ip=0;ip<nPoles();++ip){
+      par[counter++]=fPoles[ip].gamma(ic).real();
+    }
+    // loop over bkg
+    for(unsigned int ip=0;ip<nBkg();++ip){
+      par[counter++]=fBkg[ip].gamma(ic).real();
+    }
+  }// end loop over channels
+  // get production vector
+  unsigned int nbare=nBkg()+nPoles();
+  for(unsigned int ip=0;ip<nbare;++ip){
+    par[counter++]=fprod(ip,0).real();
+    par[counter++]=fprod(ip,0).imag();
+  }
+  // get mixing off diagonal elements
+  for(unsigned int i=0;i<nbare;++i){
+    for(unsigned int j=i+1;j<nbare;++j){
+      if(i!=j)par[counter++]=fmixing(i,j);
+    }
+  }
+  assert(counter==getNPar());
+
+}
+
+void
+dMatrixAmp::setPar(const double* par) {
+  unsigned int counter=0;
+  // bare masses
+  unsigned int nbare=nBkg()+nPoles();
+  rmatrix mbare(1,nbare); 
+  // loop over poles&bkg
+  for(unsigned int ip=0;ip<nbare;++ip){
+    mbare(0,ip)=par[counter++];
+  }
+  // get gammas
+  rmatrix gamma(nbare,nChannels());
+  // loop over channels
+  for(unsigned int ic=0;ic<nChannels();++ic){
+    // loop over poles&bkg
+    for(unsigned int ip=0;ip<nbare;++ip){
+      gamma(ip,ic)=par[counter++];
+    }
+  }// end loop over channels
+  // get production vector
+  cmatrix prod(nbare,1);
+  for(unsigned int ip=0;ip<nbare;++ip){
+    double real=par[counter++];
+    double imag=par[counter++];
+    prod(ip,0)=cnum(real,imag);
+  }
+  // get mixing  -- off diagonal elements
+  rmatrix mix(nbare,nbare);
+  for(unsigned int i=0;i<nbare;++i){
+    for(unsigned int j=i;j<nbare;++j){
+      if(i!=j){
+	mix(i,j)=par[counter++];
+	mix(j,i)=mix(i,j);
+      }
+      else mix(i,j)=0;
+    }
+  }
+  assert(counter==getNPar());
+
+  Setup(mbare,gamma,prod,mix);
+}

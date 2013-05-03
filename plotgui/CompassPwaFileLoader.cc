@@ -20,9 +20,9 @@
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
 // File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
+// $Rev:: 862                         $: revision of last commit
+// $Author:: schmeing                 $: author of last commit
+// $Date:: 2012-07-06 13:54:31 +0200 #$: date of last commit
 //
 // Description:
 //      Code file for the CompassPwaFileLoader class that provides
@@ -238,6 +238,7 @@ TTree *CompassPwaFileLoader::Merge(){
 			// Preparing variables for loop
 			vector< complex<double> > ProdAmps;
 			vector<string> WaveNames;
+			TMatrixT<double> CovMatrix;
 			vector< pair<int, int> > FitParCovMatrixIndices; // Indices of fit parameters for real and imaginary part in covariance matrix matrix
 			TCMatrix NormIntegralValues;
 			vector<double> PhaseSpaceIntegralValues;
@@ -276,20 +277,20 @@ TTree *CompassPwaFileLoader::Merge(){
 							printDebug << "WaveNames\n";
 							_FitResults[i]->WaveNamesRootPwa( WaveNames );
 							printDebug << "CovMatrix\n";
-							_FitResults[i]->CovMatrix();
+							_FitResults[i]->CovMatrixRootPwa( CovMatrix );
 							printDebug << "CovMatrixMap\n";
 							_FitResults[i]->CovMatrixMapRootPwa( FitParCovMatrixIndices );
 							printDebug << "Fill result with data\n";
 						}
 
 						FitResult->fill(	_FitResults[i]->NumEvents(),
-											_FitResults[i]->NumEvents(),
+											1, // Won't be used for the plotting just in the rootpwa fitter
 											(_FitResults[i]->MassBinStart() + _FitResults[i]->MassBinEnd() )/2,
 											_FitResults[i]->LogLikelihood(),
 											(int)(_FitResults[i]->Rank()),
 											_FitResults[i]->ProdAmpsRootPwa( ProdAmps ),
 											_FitResults[i]->WaveNamesRootPwa( WaveNames ),
-											_FitResults[i]->CovMatrix(),
+											_FitResults[i]->CovMatrixRootPwa( CovMatrix ),
 											_FitResults[i]->CovMatrixMapRootPwa( FitParCovMatrixIndices ),
 											NormIntegralValues,
 											PhaseSpaceIntegralValues,
