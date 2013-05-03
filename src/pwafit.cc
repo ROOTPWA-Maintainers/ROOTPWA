@@ -70,7 +70,7 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	
+
 	cerr << "performs PWA fit for given mass bin and list of waves" << endl
 	     << endl
 	     << "usage:" << endl
@@ -316,7 +316,7 @@ main(int    argc,
 	L.useNormalizedAmps(useNormalizedAmps);
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
-#endif  
+#endif
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
@@ -329,7 +329,7 @@ main(int    argc,
 	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
 	          << "using algorithm '" << minimizerType[1] << "'" << endl;
 	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-	if (not minimizer) { 
+	if (not minimizer) {
 		printErr << "could not create minimizer. exiting." << endl;
 		throw;
 	}
@@ -339,7 +339,7 @@ main(int    argc,
 
 	// setting the ErrorDef to 1 since the ROOT interface does not
 	// Propagate the value. Will do the error rescaling by hand below.
-	minimizer->SetErrorDef(1); 
+	minimizer->SetErrorDef(1);
 	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
 	minimizer->SetMaxIterations   (maxNmbOfIterations);
 	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
@@ -536,7 +536,7 @@ main(int    argc,
 #ifdef USE_CUDA
 	printInfo << "total CUDA kernel time: "
 	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
-#endif	  
+#endif
 
 	// ---------------------------------------------------------------------------
 	// write out result
@@ -564,7 +564,7 @@ main(int    argc,
 				tree->SetBranchAddress(valBranchName.c_str(), &result);
 			}
 
-			{ 
+			{
 				// get data structures to construct fitResult
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
@@ -608,13 +608,14 @@ main(int    argc,
 				             phaseSpaceIntegral,
 				             converged,
 				             hasHesse);
+				//printDebug << *result;
 			}
-			
+
 			if (1) {
 				// get data structures to construct TFitBin
 				vector<TComplex>       prodAmplitudes;  // production amplitudes
 				vector<pair<int,int> > indices;         // indices for error matrix access
-				vector<TString>        waveNames;       // contains rank information 
+				vector<TString>        waveNames;       // contains rank information
 				{
 					vector<std::complex<double> > V;
 					vector<string>                names;
@@ -648,7 +649,7 @@ main(int    argc,
 				//integralMatrix.Print();
 				// representation of number of events depends on whether normalization was done
 				const int nmbEvt = (useNormalizedAmps) ? 1 : L.nmbEvents();
-	
+
 				cout << "filling TFitBin:" << endl
 				     << "    number of fit parameters ........... " << nmbPar                 << endl
 				     << "    number of production amplitudes .... " << prodAmplitudes.size()  << endl
@@ -677,7 +678,7 @@ main(int    argc,
 			outFile->Close();
 		}
 	}
-	
+
 	if (minimizer)
 		delete minimizer;
 	return 0;
