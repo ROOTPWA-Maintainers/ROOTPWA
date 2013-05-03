@@ -217,7 +217,8 @@ set_feature_info(Libconfig
 # setup ROOT includes and libraries
 message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
-find_package(ROOT 5.26 REQUIRED Minuit2 MathMore TreePlayer)
+set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
+find_package(ROOT 5.26 REQUIRED ${_ROOT_COMPONENTS})
 set_feature_info(ROOT
 	"C++ HEP analysis framework"
 	"http://root.cern.ch/"
@@ -388,6 +389,8 @@ else()
 		endforeach()
 		unset(_BOOST_PYTHON_COMPONENTS)
 		if(USE_PYTHON)
+			message(STATUS "Setting up ROOT with PyROOT library.")
+			find_package(ROOT 5.26 REQUIRED ${_ROOT_COMPONENTS} PyROOT)
 			message(STATUS "Using Boost.Python libraries '${Boost_PYTHON_LIBS}'.")
 			message(STATUS "Enabling compilation of Python components.")
 			add_definitions(-DUSE_PYTHON)
@@ -402,6 +405,7 @@ else()
 		endif()
 	endif()
 endif()
+unset(_ROOT_COMPONENTS)
 
 
 # make git hash accessible via predefined macro GIT_HASH
