@@ -226,6 +226,7 @@ if(ROOT_FOUND)
 		unset(_ROOT_LIB_${_LIBNAME})
 	endforeach()
 	unset(_LIBNAME)
+	unset(_LIBRARY_NAMES)
 
 	# create list of external libraries from root-config output
 	separate_arguments(ROOT_AUX_LIBRARIES)
