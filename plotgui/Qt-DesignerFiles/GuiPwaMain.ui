@@ -17,26 +17,35 @@
    <string>PWA GUI</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTreeView" name="_WaveTreeView">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>201</width>
-      <height>511</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="TQtWidget" name="_PlotWidget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>220</x>
-      <y>10</y>
-      <width>571</width>
-      <height>511</height>
-     </rect>
-    </property>
-   </widget>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QTreeView" name="_WaveTreeView">
+      <property name="minimumSize">
+       <size>
+        <width>201</width>
+        <height>200</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>201</width>
+        <height>16777215</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="TQtWidget" name="_PlotWidget" native="true">
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>200</height>
+       </size>
+      </property>
+      <zorder>_WaveTreeView</zorder>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
