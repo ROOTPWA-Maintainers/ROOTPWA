@@ -114,7 +114,8 @@ void GuiPwaMain::on_actionParse_CompassPWA_txts_triggered(){
 }
 
 void GuiPwaMain::mon__WaveSelection_currentChanged( const QModelIndex& Current, const QModelIndex & Previous ){
-	_PlotWidget->GetCanvas()->Clear();
+	_PlotWidget->Clear();
+
 	delete _ShownHistogram;
 	_ShownHistogram = 0;
 
@@ -128,19 +129,6 @@ void GuiPwaMain::mon__WaveSelection_currentChanged( const QModelIndex& Current, 
 
 	_PlotWidget->Refresh();
 }
-/*void GuiPwaMain::on__WaveTreeView_clicked( const QModelIndex& Index ){
-	_PlotWidget->GetCanvas()->Clear();
-	delete _ShownHistogram;
-	_ShownHistogram = 0;
-
-	if( static_cast<GuiWaveTreeModelItem *>( Index.internalPointer() )->Type() == GuiWaveTreeModelItem::Wave ){
-		_ShownHistogram = _RootDataObject.IntensityHist( Index.data().toString().toLatin1().constData(), "MassBin [Gev]" );
-
-		_ShownHistogram->Draw("E1");
-	}
-
-	_PlotWidget->Refresh();
-}*/
 
 // Initializes the Gui
 GuiPwaMain::GuiPwaMain(QMainWindow *parent):
@@ -148,7 +136,7 @@ GuiPwaMain::GuiPwaMain(QMainWindow *parent):
 		_WaveTreeModel(this),
 		_WaveSelection(&_WaveTreeModel),
 		_ShownHistogram(0){
-//	RootPwaDataObject::SetDebug(true);
+	RootPwaDataObject::SetDebug(false);
 	setupUi( this );
 
 	 //WaveTreeView defined in ui_GuiPwaMain.h
@@ -158,7 +146,8 @@ GuiPwaMain::GuiPwaMain(QMainWindow *parent):
 
 	// Make the the embedded TCanvas to be the current ROOT TCanvas
 	_PlotWidget->Refresh();
-	_PlotWidget->GetCanvas()->cd();
+	_PlotWidget->cd();
+	_PlotWidget->GetCanvas()->SetFillColor(10);
 
 	// Set up connections
 	QObject::connect( &_WaveSelection, SIGNAL( currentChanged( const QModelIndex &, const QModelIndex & ) ), this,  SLOT( mon__WaveSelection_currentChanged( const QModelIndex &, const QModelIndex & ) ) );

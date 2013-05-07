@@ -43,7 +43,9 @@
 #include <QtGui/QMainWindow>
 
 #include <TH1F.h>
+#include <TH2F.h>
 #include <TQtWidget.h>
+#include <TGraph.h>
 
 #include <ui_GuiPwaMain.h>
 
