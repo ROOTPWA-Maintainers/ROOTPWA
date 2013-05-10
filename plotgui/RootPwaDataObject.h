@@ -71,6 +71,7 @@ namespace rpwa{
 		// Functions
 		bool FileNotLoaded(); ///< Returns if a File has not been yet loaded and prints an error message if that is the case
 		void EmptyTreeMap(); ///< Deletes all elements in TreeMap and clears the map
+		void XAxisParameters( double& from, double& to ) const; ///< Determines the start and end value of the x-axis for the histograms
 
 	public:
 		// Constructors + Destructors
@@ -95,6 +96,8 @@ namespace rpwa{
 		const std::vector<std::string> *WavesInTree() const;
 		unsigned int MapTreeByMassWithHighestLikelihood(); ///< Creates _TreeMap as map of fitResults out of _DataTree sorted by massBinCenter only inserting the fitResults with the Highest logLikelihood for each massBinCenter, returns number of entries in the map
 		TH1F *IntensityHist( const std::string& WaveName, const std::string& TitleXAxis ) const; ///< Creates a root histogram of the intensity out of the fitResults in map over the sorting parameter and the spacing between elements has to be constant (The deletion of the histogram is responsibility of calling function)
+		TH1F *CoherentSumHist( const std::list<std::string>& WaveNames, const std::string& TitleXAxis ) const; ///< Creates a root histogram of the coherent sum out of the fitResults in map over the sorting parameter and the spacing between elements has to be constant (The deletion of the histogram is responsibility of calling function)
+		TH1F *PhaseShiftHist( const std::string& WaveNameA, const std::string& WaveNameB, const std::string& TitleXAxis ) const; ///< Creates a root histogram of the phase shift between wave A and B out of the fitResults in map over the sorting parameter and the spacing between elements has to be constant (The deletion of the histogram is responsibility of calling function)
 		void Clear(); ///< Clears the data object without calling destructor of the _DataObject
 		void Empty(); ///< Clears the data object and calls destructor of the _DataObject
 		std::ostream& Print( std::ostream& Out ) const; ///< Prints all important variables of class

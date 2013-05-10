@@ -420,9 +420,8 @@ fitResult::spinDensityMatrixElemCov(const unsigned int waveIndexA,
 ///
 /// int = sum_i int(i) + sum_i sum_{j < i} overlap(i, j)
 double
-fitResult::intensity(const char* waveNamePattern) const
+fitResult::intensity(const vector<unsigned int>& waveIndices) const
 {
-	vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
 	double               intensity   = 0;
 	for (unsigned int i = 0; i < waveIndices.size(); ++i) {
 		intensity += this->intensity(waveIndices[i]);
@@ -435,6 +434,18 @@ fitResult::intensity(const char* waveNamePattern) const
 		}
 	}
 	return intensity;
+}
+
+
+/// \brief calculates intensity for set of waves with indices from waveIndices
+///
+/// int = sum_i int(i) + sum_i sum_{j < i} overlap(i, j)
+double
+fitResult::intensity(const char* waveNamePattern) const
+{
+	vector<unsigned int> waveIndices = waveIndicesMatchingPattern(waveNamePattern);
+
+	return intensity(waveIndices);
 }
 
 
@@ -463,14 +474,13 @@ fitResult::normIntegralForProdAmp(const unsigned int prodAmpIndexA,
 }
 
 
-/// \brief calculates error of intensity of a set of waves matching name pattern
+/// \brief calculates error of intensity of a set of waves with indices from  waveIndices
 ///
 /// error calculation is performed on amplitude level using: int = sum_ij Norm_ij sum_r A_ir A_jr*
 double
-fitResult::intensityErr(const char* waveNamePattern) const
+fitResult::intensityErr(const std::vector<unsigned int>& prodAmpIndices) const
 {
 	// get amplitudes that correspond to wave name pattern
-	const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);
 	const unsigned int         nmbAmps        = prodAmpIndices.size();
 	if (!_covMatrixValid || (nmbAmps == 0))
 		return 0;
@@ -496,6 +506,17 @@ fitResult::intensityErr(const char* waveNamePattern) const
 	const TMatrixT<double> prodAmpCovJT = prodAmpCov * jacobianT;               // 2n x  1 matrix
 	const TMatrixT<double> intensityCov = jacobian * prodAmpCovJT;              //  1 x  1 matrix
 	return sqrt(intensityCov[0][0]);
+}
+
+/// \brief calculates error of intensity of a set of waves matching name pattern
+///
+/// error calculation is performed on amplitude level using: int = sum_ij Norm_ij sum_r A_ir A_jr*
+double
+fitResult::intensityErr(const char* waveNamePattern) const
+{
+	// get amplitudes that correspond to wave name pattern
+	const vector<unsigned int> prodAmpIndices = prodAmpIndicesMatchingPattern(waveNamePattern);
+	return intensityErr(prodAmpIndices);
 }
 
 

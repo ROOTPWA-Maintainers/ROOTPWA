@@ -39,6 +39,8 @@
 
 #include <QMessageBox>
 
+#include <TLegend.h>
+
 #include "GuiOpenMultipleFilesDialog.h"
 
 #include "GuiPwaMain.h"
@@ -48,14 +50,133 @@ using namespace rpwa;
 
 bool GuiPwaMain::_Debug = false;
 
-///< Clears the canvas from the currently loaded waves
+// Clears the canvas and deletes the histogram
+void GuiPwaMain::ClearHistogram(){
+	_PlotWidget->Clear();
+
+	// Deletes all Histograms in list
+	while( !_ShownHistograms.empty() ){
+		delete _ShownHistograms.back();
+		_ShownHistograms.pop_back();
+	}
+}
+
+// Clears the canvas from the currently loaded waves
 void GuiPwaMain::ClearWaves(){
 	_RootDataObject.Clear();
 	_WaveTreeModel.Clear();
 	_PlotWidget->GetCanvas()->Clear();
-	delete _ShownHistogram;
-	_ShownHistogram = 0;
+	ClearHistogram();
 	_PlotWidget->Refresh();
+}
+
+// Creates and draws the histogram depending on the selected waves and the plotting mode
+void GuiPwaMain::DrawHistogram(){
+	QModelIndexList selectedWaves = _WaveSelection.selectedIndexes();
+
+	if( selectedWaves.isEmpty() ){
+		ClearHistogram();
+		_PlotWidget->Refresh();
+	}
+	else{
+		switch( _PlotMode->currentIndex() ){
+		case 0: // Single Intensity
+		{
+			ClearHistogram();
+
+			_ShownHistograms.push_back( _RootDataObject.IntensityHist( selectedWaves[0].data().toString().toLatin1().constData(), "MassBin [Gev]" ) );
+			if( _ShownHistograms.back() ){
+				_ShownHistograms.back()->Draw("e1");
+			}
+
+			for(int i=1; i < selectedWaves.size(); ++i){
+				_ShownHistograms.push_back( _RootDataObject.IntensityHist( selectedWaves[i].data().toString().toLatin1().constData(), "MassBin [Gev]" ) );
+
+				if( _ShownHistograms.back() ){
+					if( 9 > i ){
+						_ShownHistograms.back()->SetMarkerColor(i);
+						_ShownHistograms.back()->SetLineColor(i);
+					}
+					else{ // Color 10 is white/background
+						_ShownHistograms.back()->SetMarkerColor(i+1);
+						_ShownHistograms.back()->SetLineColor(i+1);
+					}
+
+					_ShownHistograms.back()->Draw("e1same");
+				}
+			}
+
+			if( 1 < selectedWaves.size() ){
+				_PlotWidget->GetCanvas()->BuildLegend();
+			}
+
+			_PlotWidget->Refresh();
+
+			break;
+		}
+		case 1: // Coherent Sum
+		{
+			ClearHistogram();
+
+			list<string> WaveNames;
+
+			for(int i=0; i < selectedWaves.size(); ++i){
+				if( _Debug ){
+					printDebug << "Added Wave " << selectedWaves[i].data().toString().toLatin1().constData() << '\n';
+				}
+				WaveNames.push_back( selectedWaves[i].data().toString().toLatin1().constData() );
+			}
+
+			_ShownHistograms.push_back( _RootDataObject.CoherentSumHist( WaveNames, "MassBin [Gev]" ) );
+			if( _ShownHistograms.back() ){
+				_ShownHistograms.back()->Draw("e1");
+			}
+
+			_PlotWidget->Refresh();
+			break;
+		}
+		case 2: // Phase Shift
+		{
+			ClearHistogram();
+
+			// Sorts the list of selected waves to make correlation between the waves in the histogram and position of histogram easier
+			qSort( selectedWaves.begin(), selectedWaves.end() );
+
+			// Divides the Pad into subpads for each phase shift
+			_PlotWidget->GetCanvas()->Divide(selectedWaves.size(),selectedWaves.size());
+
+			// Loops over all pairs of waves and creates a phase shift histogram for each pair
+			int k;
+			for(int i=0; i < selectedWaves.size(); ++i){
+				for(k=0; k < selectedWaves.size(); ++k){
+					if( _Debug ){
+						printDebug << "Processing Pad (" << i << ';' << k << ")\n";
+					}
+
+					_ShownHistograms.push_back( _RootDataObject.PhaseShiftHist( selectedWaves[i].data().toString().toLatin1().constData(), selectedWaves[k].data().toString().toLatin1().constData(), "MassBin [Gev]" ) );
+
+					if( _ShownHistograms.back() ){
+						if( _Debug ){
+							printDebug << "Drawing Pad (" << i << ';' << k << ")\n";
+						}
+
+						_PlotWidget->cd( i*selectedWaves.size() + k + 1 );
+
+						_ShownHistograms.back()->Draw("e1");
+					}
+				}
+			}
+
+			_PlotWidget->Refresh();
+
+			break;
+		}
+		default:
+			ClearHistogram();
+			_PlotWidget->Refresh();
+			break;
+		}
+	}
 }
 
 // Loads the selected rootfile and tree into _RootDataObject and updates _WaveTreeModel when "Open Tree" is selected from the menu
@@ -113,35 +234,44 @@ void GuiPwaMain::on_actionParse_CompassPWA_txts_triggered(){
 	delete CompassFilesDialog;
 }
 
-void GuiPwaMain::mon__WaveSelection_currentChanged( const QModelIndex& Current, const QModelIndex & Previous ){
-	_PlotWidget->Clear();
+void GuiPwaMain::on__PlotMode_currentIndexChanged(){
+	DrawHistogram();
+}
 
-	delete _ShownHistogram;
-	_ShownHistogram = 0;
+void GuiPwaMain::mon__WaveSelection_selectionChanged( const QItemSelection & selected, const QItemSelection & deselected ){
+	const QModelIndexList& selectedItems( selected.indexes() );
+	int allWaves = true;
+	QItemSelection unselect;
 
-	if( static_cast<GuiWaveTreeModelItem *>( Current.internalPointer() )->Type() == GuiWaveTreeModelItem::Wave ){
-		_ShownHistogram = _RootDataObject.IntensityHist( Current.data().toString().toLatin1().constData(), "MassBin [Gev]" );
-
-		if( _ShownHistogram ){
-			_ShownHistogram->Draw("e1");
+	for( int i=0; i < selectedItems.size(); i++ ){
+		if( static_cast<GuiWaveTreeModelItem *>( selectedItems[i].internalPointer() )->Type() != GuiWaveTreeModelItem::Wave ){
+			allWaves = false;
+			unselect.select(selectedItems[i],selectedItems[i]);
 		}
 	}
 
-	_PlotWidget->Refresh();
+	if( allWaves ){
+		DrawHistogram();
+	}
+	else{
+		_WaveSelection.select(unselect, QItemSelectionModel::Deselect);
+
+	}
 }
 
 // Initializes the Gui
 GuiPwaMain::GuiPwaMain(QMainWindow *parent):
 		QMainWindow(parent),
 		_WaveTreeModel(this),
-		_WaveSelection(&_WaveTreeModel),
-		_ShownHistogram(0){
-	RootPwaDataObject::SetDebug(false);
+		_WaveSelection(&_WaveTreeModel){
+//	RootPwaDataObject::SetDebug(true);
+//	GuiPwaMain::SetDebug(true);
 	setupUi( this );
 
 	 //WaveTreeView defined in ui_GuiPwaMain.h
 	_WaveTreeView->header()->hide();
 	_WaveTreeView->setModel(&_WaveTreeModel);
+	_WaveTreeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 	_WaveTreeView->setSelectionModel(&_WaveSelection);
 
 	// Make the the embedded TCanvas to be the current ROOT TCanvas
@@ -150,7 +280,7 @@ GuiPwaMain::GuiPwaMain(QMainWindow *parent):
 	_PlotWidget->GetCanvas()->SetFillColor(10);
 
 	// Set up connections
-	QObject::connect( &_WaveSelection, SIGNAL( currentChanged( const QModelIndex &, const QModelIndex & ) ), this,  SLOT( mon__WaveSelection_currentChanged( const QModelIndex &, const QModelIndex & ) ) );
+	QObject::connect( &_WaveSelection, SIGNAL( selectionChanged( const QItemSelection &, const QItemSelection & ) ), this,  SLOT( mon__WaveSelection_selectionChanged( const QItemSelection &, const QItemSelection & ) ) );
 }
 
 // Event handling

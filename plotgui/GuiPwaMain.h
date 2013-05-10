@@ -38,14 +38,14 @@
 #ifndef GuiPwaMain_H
 #define GuiPwaMain_H
 
+#include <list>
+
 #include <QObject>
 #include <QModelIndex>
 #include <QtGui/QMainWindow>
 
 #include <TH1F.h>
-#include <TH2F.h>
 #include <TQtWidget.h>
-#include <TGraph.h>
 
 #include <ui_GuiPwaMain.h>
 
@@ -61,20 +61,23 @@ namespace rpwa{
 		RootPwaDataObject _RootDataObject;
 		GuiWaveTreeModel _WaveTreeModel;
 		QItemSelectionModel _WaveSelection;
-		TH1F * _ShownHistogram;
+		std::list<TH1F *> _ShownHistograms;
 
 		static bool _Debug; ///< if set to true, debug messages are printed
 
 		// Functions
-		void  ClearWaves(); ///< Clears the canvas from the currently loaded waves
+		void ClearHistogram(); ///< Clears the canvas and deletes the histogram
+		void ClearWaves(); ///< Clears the canvas from the currently loaded waves
+		void DrawHistogram(); ///< Creates and draws the histogram depending on the selected waves and the plotting mode
 
 	private slots:
 		// Automatically connected slots
 		void on_actionOpenTree_triggered(); ///< Loads the selected rootfile and tree into _RootDataObject and updates _WaveTreeModel when "Open Tree" is selected from the menu
 		void on_actionParse_CompassPWA_txts_triggered(); ///< Parses the selected CompassPWA txt files into a rootfile and displays its tree like if it was opened with on_actionOpenTree_triggered
+		void on__PlotMode_currentIndexChanged();
 
 		// Manually connected slots
-		void mon__WaveSelection_currentChanged( const QModelIndex & Current, const QModelIndex & Previous );
+		void mon__WaveSelection_selectionChanged( const QItemSelection & selected, const QItemSelection & deselected );
 
 	protected:
 		// Variables
@@ -86,6 +89,8 @@ namespace rpwa{
 		GuiPwaMain(QMainWindow *parent = 0); ///< Initializes the Gui
 
 		// Get && Set
+		static bool Debug() { return _Debug; } ///< returns debug flag
+		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
 		void changeEvent(QEvent *event); ///< Event handling

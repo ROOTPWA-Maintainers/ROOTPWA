@@ -19,20 +19,55 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QTreeView" name="_WaveTreeView">
-      <property name="minimumSize">
-       <size>
-        <width>201</width>
-        <height>200</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>201</width>
-        <height>16777215</height>
-       </size>
-      </property>
-     </widget>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QComboBox" name="_PlotMode">
+        <property name="minimumSize">
+         <size>
+          <width>201</width>
+          <height>27</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>201</width>
+          <height>27</height>
+         </size>
+        </property>
+        <item>
+         <property name="text">
+          <string>Single Intensity</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Coherent Sum</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Phase Shift</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTreeView" name="_WaveTreeView">
+        <property name="minimumSize">
+         <size>
+          <width>201</width>
+          <height>200</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>201</width>
+          <height>16777215</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
     <item>
      <widget class="TQtWidget" name="_PlotWidget" native="true">
@@ -42,7 +77,6 @@
         <height>200</height>
        </size>
       </property>
-      <zorder>_WaveTreeView</zorder>
      </widget>
     </item>
    </layout>

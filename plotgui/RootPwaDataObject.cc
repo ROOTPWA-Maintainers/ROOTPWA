@@ -38,6 +38,7 @@
 //-------------------------------------------------------------------------
 
 #include <iostream>
+#include <complex>
 
 #include <TList.h>
 #include <TKey.h>
@@ -69,6 +70,35 @@ void RootPwaDataObject::EmptyTreeMap(){
 	}
 
 	_TreeMap.clear();
+}
+
+// Determines the start and end value of the x-axis for the histograms
+void RootPwaDataObject::XAxisParameters( double& from, double& to ) const{
+	map<double, fitResult *>::const_iterator it = _TreeMap.begin(); // First element of map
+
+	if( _TreeMap.size() < 2){
+		from = it->first-0.01;
+		to = it->first+0.01;
+	}
+	else{
+		from = it->first*3/2;
+		if( _Debug ){
+			printDebug << "Plot from tmp: " << from << '\n';
+		}
+		from -= (++it)->first*1/2;
+		if( _Debug ){
+			printDebug << "Plot from final: " << from << '\n';
+		}
+		it = _TreeMap.end(); // Element after the last element of map
+		to = (--it)->first*3/2;
+		if( _Debug ){
+			printDebug << "Plot to tmp: " << to << '\n';
+		}
+		to -= (--it)->first*1/2;
+		if( _Debug ){
+			printDebug << "Plot to final: " << to << '\n';
+		}
+	}
 }
 
 // Default constructor
@@ -302,44 +332,19 @@ TH1F *RootPwaDataObject::IntensityHist( const string& WaveName, const string& Ti
 		return 0;
 	}
 
-	map<double, fitResult *>::const_iterator it = _TreeMap.begin(); // First element of map
-
 	// Determine start (sorting parameter of first element - step size/2) and end value (sorting parameter of last element + step size/2) of histograms x-axis
 	double from, to;
-	if( _TreeMap.size() < 2){
-		from = it->first-0.01;
-		to = it->first+0.01;
-	}
-	else{
-		from = it->first*3/2;
-		if( _Debug ){
-			printDebug << "Plot from tmp: " << from << '\n';
-		}
-		from -= (++it)->first*1/2;
-		if( _Debug ){
-			printDebug << "Plot from final: " << from << '\n';
-		}
-		it = _TreeMap.end(); // Element after the last element of map
-		to = (--it)->first*3/2;
-		if( _Debug ){
-			printDebug << "Plot to tmp: " << to << '\n';
-		}
-		to -= (--it)->first*1/2;
-		if( _Debug ){
-			printDebug << "Plot to final: " << to << '\n';
-		}
-	}
+	XAxisParameters( from, to );
 
 	TH1F *Hist = new TH1F( (string("IntHist") += WaveName).c_str(), (string("Intensity Histogram: ") += WaveName).c_str(), _TreeMap.size(),from,to);
 
 	// Filling the histogram
 	int WaveIndex = 0;
 	unsigned int CurrentBin = 1; // Bin 0 is the underflow bin
+	map<double, fitResult *>::const_iterator it;
+
 	for ( it = _TreeMap.begin(); it != _TreeMap.end(); ++it){ // Loops over the whole tree
 		if( _Debug ){
-			if( 22 == CurrentBin ){
-				printDebug << "FitResult Dump (i=" << CurrentBin << ")\n" << *(it->second);
-			}
 			printDebug << "Adding MassBin " << it->first << '=' << it->second->massBinCenter() << '\n';
 		}
 		if( it->second->waveName(WaveIndex) != WaveName ){
@@ -363,6 +368,111 @@ TH1F *RootPwaDataObject::IntensityHist( const string& WaveName, const string& Ti
 
 	Hist->SetXTitle( TitleXAxis.c_str() );
 	Hist->SetYTitle( "Intensity" );
+
+	return Hist;
+}
+
+// Creates a root histogram of the coherent sum out of the fitResults in map over the sorting parameter and the spacing between elements has to be constant (The deletion of the histogram is responsibility of calling function)
+TH1F *RootPwaDataObject::CoherentSumHist( const list<string>& WaveNames, const std::string& TitleXAxis ) const{
+	if( _TreeMap.size() < 1){
+		printErr << "Data tree contains no element.\n";
+		return 0;
+	}
+
+	// Determine start (sorting parameter of first element - step size/2) and end value (sorting parameter of last element + step size/2) of histograms x-axis
+	double from, to;
+	XAxisParameters( from, to );
+
+	// Creating list of WaveIndices out of WaveNames
+	map<double, fitResult *>::const_iterator it = _TreeMap.begin();
+	list<string>::const_iterator it2;
+	vector<unsigned int> waveIndices;
+	vector<unsigned int> prodAmpIndices;
+	vector<unsigned int> tmpIndices;
+	int waveIndex;
+
+	for ( it2 = WaveNames.begin(); it2 != WaveNames.end(); ++it2){ // Loops over the whole list
+		waveIndex = it->second->waveIndex( it2->data() );
+
+		if( waveIndex == -1 ){
+			printWarn << it2->data() << " is missing in this fitResult";
+		}
+		else{
+			waveIndices.push_back( static_cast<unsigned int>(waveIndex) );
+			tmpIndices = it->second->prodAmpIndicesForWave(waveIndex);
+			prodAmpIndices.insert(prodAmpIndices.end(), tmpIndices.begin(), tmpIndices.end() );
+		}
+	}
+
+	// Filling the histogram
+	TH1F *Hist = new TH1F( "CohSumHist", "Coherent Sum Histogram", _TreeMap.size(),from,to);
+	unsigned int CurrentBin = 1; // Bin 0 is the underflow bin
+
+
+	for ( it = _TreeMap.begin(); it != _TreeMap.end(); ++it){ // Loops over the whole tree
+		if( _Debug ){
+			printDebug << "Adding MassBin " << it->first << '=' << it->second->massBinCenter() << '\n';
+		}
+
+		Hist->SetBinContent(CurrentBin, it->second->intensity( waveIndices ) );
+		Hist->SetBinError(CurrentBin, it->second->intensityErr( prodAmpIndices ) );
+
+		++CurrentBin;
+	}
+
+	Hist->SetXTitle( TitleXAxis.c_str() );
+	Hist->SetYTitle( "Coherent Sum" );
+
+	return Hist;
+}
+
+///< Creates a root histogram of the phase shift between wave A and B out of the fitResults in map over the sorting parameter and the spacing between elements has to be constant (The deletion of the histogram is responsibility of calling function)
+TH1F *RootPwaDataObject::PhaseShiftHist( const string& WaveNameA, const string& WaveNameB, const string& TitleXAxis ) const{
+	if( _TreeMap.size() < 1){
+		printErr << "Data tree contains no element.\n";
+		return 0;
+	}
+
+	// Determine start (sorting parameter of first element - step size/2) and end value (sorting parameter of last element + step size/2) of histograms x-axis
+	double from, to;
+	XAxisParameters( from, to );
+
+	TH1F *Hist = new TH1F( ((string("PhaseShiftHist") += WaveNameA) += WaveNameB).c_str(), (((string("Phase Shift Histogram: ") += WaveNameA) += string(" ")) += WaveNameB).c_str(), _TreeMap.size(),from,to);
+
+	// Filling the histogram
+	int WaveIndexA = 0;
+	int WaveIndexB = 0;
+	unsigned int CurrentBin = 1; // Bin 0 is the underflow bin
+	map<double, fitResult *>::const_iterator it;
+
+	for ( it = _TreeMap.begin(); it != _TreeMap.end(); ++it){ // Loops over the whole tree
+		if( _Debug ){
+			printDebug << "Adding MassBin " << it->first << '=' << it->second->massBinCenter() << '\n';
+		}
+
+		if( it->second->waveName(WaveIndexA) != WaveNameA ){
+			WaveIndexA = it->second->waveIndex(WaveNameA);
+		}
+		if( it->second->waveName(WaveIndexB) != WaveNameB ){
+			WaveIndexB = it->second->waveIndex(WaveNameB);
+		}
+
+		if( WaveIndexA == -1 ){
+			printWarn << CurrentBin << ". bin empty since \"" << WaveNameA << "\" does not exist in this fitResult\n";
+		}
+		else if( WaveIndexB == -1 ){
+			printWarn << CurrentBin << ". bin empty since \"" << WaveNameB << "\" does not exist in this fitResult\n";
+		}
+		else{
+			Hist->SetBinContent(CurrentBin, it->second->phase(WaveIndexA,WaveIndexB) );
+			Hist->SetBinError(CurrentBin, it->second->phaseErr(WaveIndexA,WaveIndexB) );
+		}
+
+		++CurrentBin;
+	}
+
+	Hist->SetXTitle( TitleXAxis.c_str() );
+	Hist->SetYTitle( "Phase Shift" );
 
 	return Hist;
 }

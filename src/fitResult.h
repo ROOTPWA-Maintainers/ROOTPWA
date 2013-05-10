@@ -142,6 +142,8 @@ namespace rpwa {
 
 		int waveIndex   (const std::string& waveName   ) const;  ///< returns wave index corresponding to wave name
 		int prodAmpIndex(const std::string& prodAmpName) const;  ///< returns production amplitude index corresponding to production amplitude name
+		std::vector<unsigned int>        prodAmpIndicesForWave        (const unsigned int waveIndex         ) const
+		{ return prodAmpIndicesMatchingPattern(waveNameEsc(waveIndex).Data()); }  ///< returns indices of production amplitudes that belong to wave at index
 
 		double      fitParameter   (const std::string& parName  ) const;  ///< returns value of fit parameter with name
 		/// returns covariance of fit parameters at index A and B
@@ -180,6 +182,8 @@ namespace rpwa {
 		double intensity   (const unsigned int waveIndex)         const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }
 		/// returns error of intensity of single wave at index
 		double intensityErr(const unsigned int waveIndex)         const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]); }
+		double intensity   (const std::vector<unsigned int>& waveIndices) const;                      ///< returns intensity of sum of waves with indices from waveIndices
+		double intensityErr(const std::vector<unsigned int>& prodAmpIndices) const;                   ///< returns error of intensity of sum of waves with indices from waveIndices
 		double intensity   (const char*        waveNamePattern) const;                                ///< returns intensity of sum of waves matching name pattern
 		double intensityErr(const char*        waveNamePattern) const;                                ///< returns error of intensity of sum of waves matching name pattern
 		double intensity   ()                                   const { return intensity   (".*"); }  ///< returns total intensity
@@ -254,8 +258,6 @@ namespace rpwa {
 
 		inline std::vector<unsigned int> waveIndicesMatchingPattern   (const std::string& waveNamePattern   ) const;
 		inline std::vector<unsigned int> prodAmpIndicesMatchingPattern(const std::string& prodAmpNamePattern) const;
-		std::vector<unsigned int>        prodAmpIndicesForWave        (const unsigned int waveIndex         ) const
-		{ return prodAmpIndicesMatchingPattern(waveNameEsc(waveIndex).Data()); }  ///< returns indices of production amplitudes that belong to wave at index
 		inline std::vector<std::pair<unsigned int, unsigned int> > prodAmpIndexPairsForWaves
 		(const unsigned int waveIndexA,
 		 const unsigned int waveIndexB) const;
