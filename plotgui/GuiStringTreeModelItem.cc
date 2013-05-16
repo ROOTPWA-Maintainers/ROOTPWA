@@ -70,6 +70,11 @@ GuiStringTreeModelItem *GuiStringTreeModelItem::Parent(){
 	return static_cast<GuiStringTreeModelItem *>( _Parent );
 }
 
+// Sets the parent
+void GuiStringTreeModelItem::SetParent(GuiStringTreeModelItem *Parent){
+	_Parent = Parent;
+}
+
 // Returns the index where this element is listed at its parent
 int GuiStringTreeModelItem::IndexAtParent() const{
 	if (_Parent){
@@ -111,4 +116,25 @@ int GuiStringTreeModelItem::Find( const QString& SearchTerm ) const{
 
 	// Has not found a children with this data string
 	return -1;
+}
+
+///< Adds pointers to all children (and subchildren and subsubchildren ...) to ChildrenSet
+void GuiStringTreeModelItem::AddChildrenToSet( set<GuiStringTreeModelItem const*>& ChildrenSet ) const{
+	if( _Debug ){
+		printDebug << "(Size " << ChildrenSet.size() << ") Add " << _Children.size() << " children to set\n";
+	}
+	for(int i=0; i < _Children.size(); ++i){
+		if( ChildrenSet.insert( _Children[i] ).second ){
+			if( _Debug ){
+				printDebug << "(Size " << ChildrenSet.size() << ") Added " << _Children[i] << '\n';
+			}
+			_Children[i]->AddChildrenToSet( ChildrenSet );
+		}
+		else{
+			if( _Debug ){
+				printDebug << "(Size " << ChildrenSet.size() << _Children[i] << "Already in set\n";
+			}
+		}
+		printDebug << endl;
+	}
 }

@@ -140,7 +140,7 @@ bool CompassPwaFileNormIntegrals::ReadIn( std::istream& File ){
 				WaveName.resize(LastNonEmptyCharacter + 1);
 
 				if( !( _WaveNameIndexMap.insert( pair<const string, const unsigned int>(WaveName, i) ).second ) ){
-					printErr << "Two waves with the same name in the file\n";
+					printErr << "Two waves with the same name in the file: " << WaveName << '\n';
 					Succesful = false;
 				}
 			}
@@ -208,8 +208,14 @@ ostream& CompassPwaFileNormIntegrals::Print( ostream& Out ) const{
 }
 
 // Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
-bool CompassPwaFileNormIntegrals::Combine( TCMatrix& Destination, const deque<const CompassPwaFileNormIntegrals *>& Integrals, const vector<string>& WaveNames, double MassBinStart, double MassBinEnd ){
+bool CompassPwaFileNormIntegrals::Combine( TCMatrix& Destination, const deque<const CompassPwaFileNormIntegrals *>& Integrals, const vector< vector<string> >& WaveNames, double MassBinStart, double MassBinEnd ){
 	bool Succesful = true;
+
+	// Determines total number of waves
+	unsigned int TotNumWaves = 0;
+	for( unsigned int s=0; s < WaveNames.size(); ++s ){
+		TotNumWaves += WaveNames[s].size();
+	}
 
 	// For now it just returns the integral in the middle of the mass bin specified
 	unsigned int middle = Integrals.size() / 2;
@@ -218,24 +224,27 @@ bool CompassPwaFileNormIntegrals::Combine( TCMatrix& Destination, const deque<co
 	if( _Debug ){
 		printDebug << "Map position to wave names\n";
 	}
-	unsigned int PositionMap[ WaveNames.size() ];
-	for( unsigned int i = 0; i < WaveNames.size(); ++i ){
-		Succesful = Succesful && Integrals[middle]->Position( PositionMap[i], WaveNames[i] );
+	unsigned int j = 0; // Index for PositionMap
+	unsigned int PositionMap[ TotNumWaves ];
+	for( unsigned int s=0; s < WaveNames.size(); ++s ){
+		for( unsigned int i = 0; i < WaveNames[s].size(); ++i ){
+			Succesful = Succesful && Integrals[middle]->Position( PositionMap[j++], WaveNames[s][i] );
+		}
 	}
 
 	// And then Destination is filled
 	if( _Debug ){
 		printDebug << "Map\n";
-		for( unsigned int i = 0; i < WaveNames.size(); ++i ){
+		for( unsigned int i = 0; i < TotNumWaves; ++i ){
 			printDebug << i << ':' << PositionMap[i] << '\n';
 		}
 		printDebug << "Fill matrix\n";
 	}
 
 	if( Succesful ){
-		Destination.ResizeTo( WaveNames.size(),WaveNames.size() );
-		for( unsigned int i = 0; i < WaveNames.size(); ++i ){
-			for( unsigned int j = 0; j < WaveNames.size(); ++j ){
+		Destination.ResizeTo( TotNumWaves,TotNumWaves );
+		for( unsigned int i = 0; i < TotNumWaves; ++i ){
+			for( unsigned int j = 0; j < TotNumWaves; ++j ){
 				Destination.set( i, j, Integrals[middle]->NormIntegral( PositionMap[i], PositionMap[j] ) );
 			}
 		}

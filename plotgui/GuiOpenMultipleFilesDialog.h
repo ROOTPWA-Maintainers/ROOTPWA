@@ -39,6 +39,9 @@
 #ifndef GuiOpenMultipleFilesDialog_H
 #define GuiOpenMultipleFilesDialog_H
 
+#include <vector>
+#include <string>
+
 #include <QObject>
 #include <QWidget>
 #include <QFileDialog>
@@ -73,8 +76,9 @@ namespace rpwa{
 			QModelIndexList SelectedFiles() const; ///< Returns a list of all selected files
 			void AddFileString(const QString& Data); ///< Adds a file string to the model
 			void AddFolderString(const QDir& Folder); ///< Adds a complete folder to the model
-			void DeleteItem( const QModelIndex& Item ); ///< Deletes an item and all parents that are left without a child (except the _RootItem of course)
+			void DeleteItems( const QModelIndexList& DeletionList ); ///< Deletes all items on DeletionList and all parents that are left without a child (except the _RootItem of course)
 			void DeleteSelectedItems(); ///< Deletes all selected items and all parents that are left without a child (except the _RootItem of course)
+			std::vector<std::string>& GetFiles( std::vector<std::string>& FileList ) const; ///< Writes all chosen files into FileList and returns it
 		};
 
 	private:
@@ -104,8 +108,11 @@ namespace rpwa{
 		GuiOpenMultipleFilesDialog( QWidget * parent = 0, const QString & caption = QString(), const QString & directory = QString(), const QString & filter = QString() ); ///< Initializes the file dialog
 
 		// Get && Set
+		static bool Debug() { return _Debug; } ///< returns debug flag
+		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
+		std::vector<std::string>& GetFiles( std::vector<std::string>& FileList ) const; ///< Writes all chosen files into FileList and returns it
 	};
 
 } // namespace rpwa

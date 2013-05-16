@@ -56,15 +56,17 @@ namespace rpwa{
 		unsigned int _NumEvents;
 		double _LogLikelihood;
 		int _FitStatus;
-		unsigned int _Rank;
-		std::vector<std::string> _WaveNames;
-		TCMatrix _FitResults;
-		unsigned int _CovMatrixSize;
+		std::vector<unsigned int> _Ranks;
+		std::vector< std::vector<std::string> > _WaveNames;
+		std::vector<TCMatrix> _FitResults;
 		TMatrixT<double> _CovMatrix;
 
 		static bool _Debug; ///< if set to true, debug messages are printed
 
 		// Functions
+		unsigned int TotalNumWaves() const; ///< Returns total number of waves (Sum over all sections)
+		unsigned int TotalCovMatrixSizeEqualRanks() const; ///< Returns the size of the total covariance matrix if equal ranks for all sections are enforced (except flat wave)
+
 
 	public:
 		// Constructors + Destructors
@@ -74,10 +76,12 @@ namespace rpwa{
 		// Get && Set
 		unsigned int NumEvents() const; ///< Returns _NumEvents
 		double LogLikelihood() const; ///< Returns _LogLikelihood
-		unsigned int Rank() const; ///< Returns _Rank
-		const std::vector<std::string>& WaveNames() const; ///< Returns _WaveNames
-		std::vector<std::string>& WaveNamesRootPwa( std::vector<std::string>& Destination ) const; ///< Returns _WaveNames in rootpwa style
-		const TCMatrix& FitResults() const; ///< Returns _FitResults
+		unsigned int NumSections() const; ///< Returns number of reflectivity sections
+		unsigned int Rank( unsigned int Section ) const; ///< Returns _Rank[Section]
+		const std::vector< std::vector<std::string> >& WaveNames() const; ///< Returns _WaveNames
+		const std::vector<std::string>& WaveNames( unsigned int Section ) const; ///< Returns _WaveNames[Section]
+		std::vector<std::string>& ProdAmpNamesRootPwa( std::vector<std::string>& Destination ) const; ///< Returns _WaveNames in rootpwa style
+		const TCMatrix& FitResults( unsigned int Section ) const; ///< Returns _FitResults[Section]
 		std::vector< std::complex<double> >& ProdAmpsRootPwa( std::vector< std::complex<double> >& Destination ) const; ///< Returns _FitResults in rootpwa style
 		const TMatrixT<double>& CovMatrix() const; ///< Returns _CovMatrix
 		TMatrixT<double> &CovMatrixRootPwa( TMatrixT<double> &Destination ) const; ///< Returns _CovMatrix in rootpwa style
@@ -88,7 +92,8 @@ namespace rpwa{
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
-		bool ReadIn( std::istream& File ); ///< Reads the rest of the information from a fit result file stream and returns 0 if no error occurred or a negative number as the error code
+		/*!!!*/bool ReadIn( std::istream& File ); ///< Reads the rest of the information from a fit result file stream and returns 0 if no error occurred or a negative number as the error code
+		unsigned int MaxRank() const; ///< Returns the highest rank of all sections
 		std::ostream& Print(std::ostream& Out) const; ///< Prints all important variables of class
 
 		static bool IsNumber( char CharToCheck ); ///< Returns true if CharToCheck is a Number or false if it isn't

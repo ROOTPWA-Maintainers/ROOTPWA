@@ -53,13 +53,12 @@ bool CompassPwaFileLoader::_Debug = false;
 bool CompassPwaFileLoader::ValidityCheck() const{
 	bool valid = true;
 
-	if( _Debug ){
-		printDebug << "Starting validity check\n";
-	}
+	printInfo << "Starting validity check" << endl;
 
 	// Do overlapping phase space integrals exist?
 	if( _PhaseSpaceIntegrals.begin() == _PhaseSpaceIntegrals.end() ){
-		printWarn << "No phase space integrals loaded\n";
+		printErr << "No phase space integrals loaded\n";
+		valid = false;
 	}
 	else{
 		for ( map<double, const CompassPwaFilePhaseSpaceIntegrals *>::const_iterator it = _PhaseSpaceIntegrals.begin(); ++it != _PhaseSpaceIntegrals.end();){
@@ -70,13 +69,12 @@ bool CompassPwaFileLoader::ValidityCheck() const{
 		}
 	}
 
-	if( _Debug ){
-		printDebug << "Phase space integral validity checked\n";
-	}
+	printInfo << "Phase space integral validity checked" << endl;
 
 	// Do overlapping normalization integrals exist?
-	if( _PhaseSpaceIntegrals.begin() == _PhaseSpaceIntegrals.end() ){
-		printWarn << "No normalization integrals loaded\n";
+	if( _NormIntegrals.begin() == _NormIntegrals.end() ){
+		printErr << "No normalization integrals loaded\n";
+		valid = false;
 	}
 	else{
 		for ( map<double, const CompassPwaFileNormIntegrals *>::const_iterator it = _NormIntegrals.begin() ; ++it != _NormIntegrals.end(); ){
@@ -87,25 +85,24 @@ bool CompassPwaFileLoader::ValidityCheck() const{
 		}
 	}
 
-	if( _Debug ){
-		printDebug << "Normalization integral validity checked\n";
-	}
+	printInfo << "Normalization integral validity checked" << endl;
 
 	if( 0 == _FitResults.size() ){
-		printWarn << "No fit results loaded\n";
+		printErr << "No fit results loaded\n";
+		valid = false;
 	}
 
 	return valid;
 }
 
 // Combines the matching integrals from _NormIntegrals to one for the given mass bin and given waves
-bool CompassPwaFileLoader::DetermineNormIntegral( TCMatrix& Destination, const vector<string>& WaveNames, double MassBinStart, double MassBinEnd ){
+bool CompassPwaFileLoader::DetermineNormIntegral( TCMatrix& Destination, const vector< vector<string> >& WaveNames, double MassBinStart, double MassBinEnd ){
 	deque<const CompassPwaFileNormIntegrals *> NormIntegralSelection;
 
 	if( _Debug ){
 		printDebug << "Build normalization integral list from map\n";
 	}
-	map<double, const CompassPwaFileNormIntegrals *>::const_iterator it = _NormIntegrals.lower_bound(MassBinStart); // First Element of the integral map witch mass bin starts after MassBinStart
+	map<double, const CompassPwaFileNormIntegrals *>::const_iterator it = _NormIntegrals.lower_bound(MassBinStart); // First Element of the integral map which mass bin starts after MassBinStart
 
 	if( it != _NormIntegrals.begin() ){
 		if( (--it)->second->MassBinEnd() > MassBinStart ){
@@ -126,7 +123,7 @@ bool CompassPwaFileLoader::DetermineNormIntegral( TCMatrix& Destination, const v
 }
 
 // Combines the matching integrals from _PhaseSpaceIntegrals to one for the given mass bin and given waves
-bool CompassPwaFileLoader::DeterminePhaseSpaceIntegral( vector<double>& Destination, const vector<string>& WaveNames, double MassBinStart, double MassBinEnd ){
+bool CompassPwaFileLoader::DeterminePhaseSpaceIntegral( vector<double>& Destination, const vector< vector<string> >& WaveNames, double MassBinStart, double MassBinEnd ){
 	deque<const CompassPwaFilePhaseSpaceIntegrals *> PhaseSpaceIntegralSelection;
 
 	map<double, const CompassPwaFilePhaseSpaceIntegrals *>::const_iterator it = _PhaseSpaceIntegrals.lower_bound(MassBinStart); // First Element of the integral map witch mass bin starts after MassBinStart
@@ -237,23 +234,31 @@ TTree *CompassPwaFileLoader::Merge(){
 
 			// Preparing variables for loop
 			vector< complex<double> > ProdAmps;
-			vector<string> WaveNames;
+			vector<string> ProdAmpNames;
 			TMatrixT<double> CovMatrix;
 			vector< pair<int, int> > FitParCovMatrixIndices; // Indices of fit parameters for real and imaginary part in covariance matrix matrix
 			TCMatrix NormIntegralValues;
 			vector<double> PhaseSpaceIntegralValues;
 
 			if( _Debug ){
-				_FitResults[0]->WaveNamesRootPwa( WaveNames );
-				for ( unsigned int i = 0; i < WaveNames.size() ; ++i ){
-					printDebug << WaveNames[i] << '\n';
+				_FitResults[0]->ProdAmpNamesRootPwa( ProdAmpNames );
+				for ( unsigned int i = 0; i < ProdAmpNames.size() ; ++i ){
+					printDebug << ProdAmpNames[i] << '\n';
 				}
 			}
 
+			printInfo << "Processing merge: 0%" <<endl;
+			unsigned int Percent = 1;
+
 			// Looping over all CompassPWA fit results building root pwa fit results and storing them into the root tree
 			for ( unsigned int i = 0; i < _FitResults.size() ; ++i ){
+				if( i*100/_FitResults.size() >= Percent ){
+					printInfo << "Processing merge: " << Percent << '%' <<endl;
+					++Percent;
+				}
+
 				if( _Debug ){
-					printDebug << "Prozessing fit result " << i << '\n';
+					printDebug << "Processing fit result " << i << '\n';
 				}
 
 				if( DetermineNormIntegral( NormIntegralValues, _FitResults[i]->WaveNames(), _FitResults[i]->MassBinStart(), _FitResults[i]->MassBinEnd() ) && DeterminePhaseSpaceIntegral( PhaseSpaceIntegralValues, _FitResults[i]->WaveNames(), _FitResults[i]->MassBinStart(), _FitResults[i]->MassBinEnd() ) ){
@@ -271,11 +276,11 @@ TTree *CompassPwaFileLoader::Merge(){
 							printDebug << "LogLikelihood\n";
 							_FitResults[i]->LogLikelihood();
 							printDebug << "Rank\n";
-							(int)(_FitResults[i]->Rank());
+							(int)(_FitResults[i]->MaxRank());
 							printDebug << "ProdAmps\n";
 							_FitResults[i]->ProdAmpsRootPwa( ProdAmps );
 							printDebug << "WaveNames\n";
-							_FitResults[i]->WaveNamesRootPwa( WaveNames );
+							_FitResults[i]->ProdAmpNamesRootPwa( ProdAmpNames );
 							printDebug << "CovMatrix\n";
 							_FitResults[i]->CovMatrixRootPwa( CovMatrix );
 							printDebug << "CovMatrixMap\n";
@@ -287,9 +292,9 @@ TTree *CompassPwaFileLoader::Merge(){
 											1, // Won't be used for the plotting just in the rootpwa fitter
 											(_FitResults[i]->MassBinStart() + _FitResults[i]->MassBinEnd() )/2,
 											_FitResults[i]->LogLikelihood(),
-											(int)(_FitResults[i]->Rank()),
+											(int)(_FitResults[i]->MaxRank()),
 											_FitResults[i]->ProdAmpsRootPwa( ProdAmps ),
-											_FitResults[i]->WaveNamesRootPwa( WaveNames ),
+											_FitResults[i]->ProdAmpNamesRootPwa( ProdAmpNames ),
 											_FitResults[i]->CovMatrixRootPwa( CovMatrix ),
 											_FitResults[i]->CovMatrixMapRootPwa( FitParCovMatrixIndices ),
 											NormIntegralValues,
@@ -325,9 +330,11 @@ TTree *CompassPwaFileLoader::Merge(){
 				}
 
 				if( _Debug ){
-					printDebug << "Done prozessing fit result " << i << '\n';
+					printDebug << "Done processing fit result " << i << '\n';
 				}
 			}
+
+			printInfo << "Processing merge: 100%" <<endl;
 
 			if( FitResultTree->GetEntries() ){
 				printSucc << "Successfully added " << FitResultTree->GetEntries() << "fit results to the root tree\n";

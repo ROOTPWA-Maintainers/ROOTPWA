@@ -69,7 +69,7 @@ namespace rpwa{
 		static bool _Debug; ///< If set to true, debug messages are printed
 
 		// Functions
-		bool FileNotLoaded(); ///< Returns if a File has not been yet loaded and prints an error message if that is the case
+		bool FileNotLoaded() const; ///< Returns if a File has not been yet loaded and prints an error message if that is the case
 		void EmptyTreeMap(); ///< Deletes all elements in TreeMap and clears the map
 		void XAxisParameters( double& from, double& to ) const; ///< Determines the start and end value of the x-axis for the histograms
 
@@ -87,11 +87,12 @@ namespace rpwa{
 		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
-		TFile *LoadFile( std::string FileName ); ///< Loading the given root tree file
-		unsigned int TreesInFile( std::list<std::string>& TreeList ); ///< Reads the names of all trees in the file and returns it in a std::list& given as parameter, returns the number of found trees
-		TTree *SelectTree( std::string TreeName ); ///< Selecting root tree in _DataFile by name: Returns Null pointer if tree with given name does not exist
+		TFile *LoadFile( const std::string& FileName ); ///< Loading the given root tree file
+		TFile *ParseFiles( const std::string& ParticleDataTable, const std::string& RootFile, const std::vector<std::string>& DataFiles ); ///< Parsing DataFiles into RootFile using ParticleDataTable returning the root file (status of the RootPwaDataObject is like after loading the root file)
+		unsigned int TreesInFile ( std::list<std::string>& TreeList ) const; ///< Reads the names of all trees in the file and returns it in a std::list& given as parameter, returns the number of found trees
+		TTree *SelectTree( const std::string& TreeName ); ///< Selecting root tree in _DataFile by name: Returns Null pointer if tree with given name does not exist
 		unsigned int BranchesInTree( std::list<std::string>& BranchList ); ///< Reads the names of all branches in the tree and returns it in a std::list& given as parameter, returns the number of found branches
-		TBranch *SelectBranch( std::string BranchName ); ///< Selecting branch in _DataTree by name and returns if selection was successful (if branch exists)
+		TBranch *SelectBranch( const std::string& BranchName ); ///< Selecting branch in _DataTree by name and returns if selection was successful (if branch exists)
 
 		const std::vector<std::string> *WavesInTree() const;
 		unsigned int MapTreeByMassWithHighestLikelihood(); ///< Creates _TreeMap as map of fitResults out of _DataTree sorted by massBinCenter only inserting the fitResults with the Highest logLikelihood for each massBinCenter, returns number of entries in the map

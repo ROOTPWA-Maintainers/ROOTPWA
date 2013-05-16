@@ -38,7 +38,7 @@
 #ifndef GuiPwaMain_H
 #define GuiPwaMain_H
 
-#include <list>
+//#include <list>
 
 #include <QObject>
 #include <QModelIndex>
@@ -69,6 +69,7 @@ namespace rpwa{
 		void ClearHistogram(); ///< Clears the canvas and deletes the histogram
 		void ClearWaves(); ///< Clears the canvas from the currently loaded waves
 		void DrawHistogram(); ///< Creates and draws the histogram depending on the selected waves and the plotting mode
+		void ProcessOpenedFile(); ///< Takes care of preparing _RootFataObject for plotting
 
 	private slots:
 		// Automatically connected slots

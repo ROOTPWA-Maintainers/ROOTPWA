@@ -38,6 +38,8 @@
 #ifndef GuiStringTreeModelItem_H
 #define GuiStringTreeModelItem_H
 
+#include <set>
+
 #include <QList>
 #include <QVariant>
 #include <QString>
@@ -66,13 +68,18 @@ namespace rpwa{
 		int NChildren() const; ///< Returns the number of children
 		GuiStringTreeModelItem *Child(int Index); ///< Returns child with index Index
 		GuiStringTreeModelItem *Parent(); ///< Returns the parent
+		void SetParent(GuiStringTreeModelItem *Parent); ///< Sets the parent
 		int IndexAtParent() const; ///< Returns the index where this element is listed at its parent
 		const QString& Data() const; ///< Returns the data string
+
+		static bool Debug() { return _Debug; } ///< returns debug flag
+		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
 		void DeleteChild(int Index); ///< Deletes child with index Index
 		void DeleteChildren(); ///< Deletes all children of this item
 		int Find( const QString& SearchTerm ) const; ///< Returns the index of the element which has this string as data string or -1 if none has
+		void AddChildrenToSet( std::set<GuiStringTreeModelItem const*>& ChildrenSet ) const; ///< Adds pointers to all children (and subchildren and subsubchildren ...) to ChildrenSet
 	};
 
 } // namespace rpwa

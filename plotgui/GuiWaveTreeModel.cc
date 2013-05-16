@@ -257,7 +257,7 @@ QVariant GuiWaveTreeModel::data(const QModelIndex &index, int role) const{
 		return QVariant();
 	}
 
-	if (role != Qt::DisplayRole){
+	if ( (role != Qt::DisplayRole) && (role != Qt::ToolTipRole) ){
 		if( _Debug ){
 			printDebug << "GuiWaveTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<QString().toLatin1().constData()<<'\n';
 		}

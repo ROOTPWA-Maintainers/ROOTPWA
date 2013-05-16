@@ -35,6 +35,7 @@
 //
 //-------------------------------------------------------------------------
 
+#include <vector>
 #include <list>
 
 #include <QMessageBox>
@@ -179,41 +180,46 @@ void GuiPwaMain::DrawHistogram(){
 	}
 }
 
+// Takes care of preparing _RootFataObject for plotting
+void GuiPwaMain::ProcessOpenedFile(){
+	list<string> TreeList;
+	int NumberOfTrees = _RootDataObject.TreesInFile( TreeList );
+	if( 0 == NumberOfTrees ){
+		QMessageBox::warning(this, tr("Error"), "File does not contain any tree. Please load another file." );
+	}
+	else if( 1 == NumberOfTrees ){
+		if( _RootDataObject.SelectTree( TreeList.front() ) ){
+			list<string> BranchList;
+			int NumberOfBranches = _RootDataObject.BranchesInTree( BranchList );
+			if( 0 == NumberOfBranches ){
+				QMessageBox::warning(this, tr("Error"), "Tree does not contain branches of class fitResult." );
+			}
+			else if( 1 == NumberOfBranches ){
+				if( _RootDataObject.SelectBranch( BranchList.front() ) ){
+					_RootDataObject.MapTreeByMassWithHighestLikelihood();
+					_WaveTreeModel.AddTree(_RootDataObject);
+				}
+			}
+			else{
+				QString NumberStr;
+				QMessageBox::information(this, tr("Not Implemented"), "Tree contains "+NumberStr.setNum(NumberOfBranches)+" branches. Branch selection is not implemented yet." );
+			}
+		}
+	}
+	else{
+		QString NumberStr;
+		QMessageBox::information(this, tr("Not Implemented"), "File contains "+NumberStr.setNum(NumberOfTrees)+" trees. Tree selection is not implemented yet." );
+	}
+}
+
 // Loads the selected rootfile and tree into _RootDataObject and updates _WaveTreeModel when "Open Tree" is selected from the menu
 void GuiPwaMain::on_actionOpenTree_triggered(){
 	QString FileName = QFileDialog::getOpenFileName(this, tr("Select Root Tree"), "", tr("Root Files (*.root)"));
 	if( !FileName.isEmpty() ){
 		ClearWaves();
 
-		if( _RootDataObject.LoadFile( (FileName.toLatin1()).constData() ) ){
-			list<string> TreeList;
-			int NumberOfTrees = _RootDataObject.TreesInFile( TreeList );
-			if( 0 == NumberOfTrees ){
-				QMessageBox::warning(this, tr("Error"), "File does not contain any tree. Please load another file." );
-			}
-			else if( 1 == NumberOfTrees ){
-				if( _RootDataObject.SelectTree( TreeList.front() ) ){
-					list<string> BranchList;
-					int NumberOfBranches = _RootDataObject.BranchesInTree( BranchList );
-					if( 0 == NumberOfBranches ){
-						QMessageBox::warning(this, tr("Error"), "Tree does not contain branches of class fitResult." );
-					}
-					else if( 1 == NumberOfBranches ){
-						if( _RootDataObject.SelectBranch( BranchList.front() ) ){
-							_RootDataObject.MapTreeByMassWithHighestLikelihood();
-							_WaveTreeModel.AddTree(_RootDataObject);
-						}
-					}
-					else{
-						QString NumberStr;
-						QMessageBox::information(this, tr("Test"), "Tree contains "+NumberStr.setNum(NumberOfBranches)+" branches. Branch selection is not implemented yet." );
-					}
-				}
-			}
-			else{
-				QString NumberStr;
-				QMessageBox::information(this, tr("Test"), "File contains "+NumberStr.setNum(NumberOfTrees)+" trees. Tree selection is not implemented yet." );
-			}
+		if( _RootDataObject.LoadFile( FileName.toLatin1().constData() ) ){
+			ProcessOpenedFile();
 		}
 	}
 }
@@ -225,9 +231,18 @@ void GuiPwaMain::on_actionParse_CompassPWA_txts_triggered(){
 	if( CompassFilesDialog->exec() ){
 		QString RootFileName = QFileDialog::getSaveFileName(this, tr("Save Parsed Fitresults As"), "", tr("Root Files (*.root)"));
 		if( !RootFileName.isEmpty() ){
-			// Parsing the CompassPwa files
+			ClearWaves();
 
-			// Loading parsed file
+			vector<string> DataFiles;
+
+			// Parsing the CompassPwa files
+			if( _RootDataObject.ParseFiles( "/nfs/hicran/project/compass/analysis/sschmeing/rootpwa/amplitude/particleDataTable.txt", RootFileName.toLatin1().constData(), CompassFilesDialog->GetFiles(DataFiles) ) ){
+				ProcessOpenedFile();
+			}
+
+			if( _Debug ){
+				printDebug << "Received FileList of size: " << DataFiles.size() << '\n';
+			}
 		}
 	}
 
@@ -266,6 +281,8 @@ GuiPwaMain::GuiPwaMain(QMainWindow *parent):
 		_WaveSelection(&_WaveTreeModel){
 //	RootPwaDataObject::SetDebug(true);
 //	GuiPwaMain::SetDebug(true);
+//	GuiFileListTreeModel::SetDebug(true);
+//	GuiStringTreeModelItem::SetDebug(true);
 	setupUi( this );
 
 	 //WaveTreeView defined in ui_GuiPwaMain.h

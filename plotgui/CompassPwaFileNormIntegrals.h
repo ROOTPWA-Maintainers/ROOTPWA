@@ -75,7 +75,7 @@ namespace rpwa{
 		// Functions
 		bool ReadIn( std::istream& File ); ///< Reads the rest of the information from a norm integral file stream and returns whether it was successful
 		std::ostream& Print( std::ostream& Out ) const; ///< Prints all important variables of class
-		static bool Combine( TCMatrix& Destination, const std::deque<const CompassPwaFileNormIntegrals *>& Integrals, const std::vector<std::string>& WaveNames, double MassBinStart, double MassBinEnd ); ///< Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
+		static bool Combine( TCMatrix& Destination, const std::deque<const CompassPwaFileNormIntegrals *>& Integrals, const std::vector< std::vector<std::string> >& WaveNames, double MassBinStart, double MassBinEnd ); ///< Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
 	};
 
 	inline std::ostream& operator <<( std::ostream& Out, const CompassPwaFileNormIntegrals& NormIntegral ){

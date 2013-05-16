@@ -71,7 +71,7 @@ namespace rpwa{
 		// Functions
 		bool ReadIn( std::istream& File ); ///< Reads the rest of the information from a phase space integral file stream and returns 0 if no error occurred or a negative number as the error code
 		std::ostream& Print( std::ostream& Out ) const; ///< Prints all important variables of class
-		static bool Combine( std::vector<double>& Destination, const std::deque<const CompassPwaFilePhaseSpaceIntegrals *>& Integrals, const std::vector<std::string>& WaveNames, double MassBinStart, double MassBinEnd ); ///< Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
+		static bool Combine( std::vector<double>& Destination, const std::deque<const CompassPwaFilePhaseSpaceIntegrals *>& Integrals, const std::vector< std::vector<std::string> >& WaveNames, double MassBinStart, double MassBinEnd ); ///< Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
 	};
 
 	inline std::ostream& operator <<( std::ostream& Out, const CompassPwaFilePhaseSpaceIntegrals& PhaseSpaceIntegral ){

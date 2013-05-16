@@ -57,6 +57,11 @@ namespace rpwa{
 		virtual GuiStringTreeModelItem *RootItem() const = 0;
 		virtual GuiStringTreeModelItem *RootItem() = 0;
 
+		void AppendChildren( QModelIndexList& List, const QModelIndex& Parent) const; ///< Appends the ModelIndex of all children (and subchildren and subsubchildren ...) of Parent to List
+
+	protected:
+		QModelIndexList ListOfTree() const; ///< Returns a list of all entries in the tree
+
 	public:
 		// Constructors + Destructors
 		GuiStringTreeModel( QObject *Parent ); ///< Calls QAbstractItemModel constructor and creates _RootItem
@@ -65,6 +70,9 @@ namespace rpwa{
 
 		// Functions
 		void Clear(); ///< Deletes all items of the tree (except _RootItem, which should never be deleted, while object exists)
+
+		static bool Debug() { return _Debug; } ///< returns debug flag
+		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Overloaded QAbstractItemModel functions
 		QModelIndex index(int row, int column, const QModelIndex &parent = QModelIndex()) const; ///< Returns the index of the item in the model specified by the given row, column and parent index.

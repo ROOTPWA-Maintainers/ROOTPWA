@@ -38,6 +38,9 @@
 #ifndef GuiFileListTreeModel_H
 #define GuiFileListTreeModel_H
 
+#include <vector>
+#include <string>
+
 #include <QModelIndex>
 #include <QVariant>
 #include <QString>
@@ -60,6 +63,7 @@ namespace rpwa{
 		GuiStringTreeModelItem *RootItem(); ///< Returns the RootItem for the base class
 		GuiFileListTreeModelItem *AddFolder(const QString& Data, GuiFileListTreeModelItem *Parent); ///< Adds a child of type Folder to Parent
 		GuiFileListTreeModelItem *AddFile(const QString& Data, GuiFileListTreeModelItem *Parent); ///< Adds a child of type File to Parent
+		GuiFileListTreeModelItem *AddCompletePath(const QString& Data); ///< Adds all folders in the given path in Data if they do not already exists and returns the GuiFileListTreeModelItem of the last folder in the string
 
 	public:
 		// Constructors + Destructors
@@ -67,11 +71,16 @@ namespace rpwa{
 		~GuiFileListTreeModel(); ///< Deletes _RootItem
 
 		// Get && Set
+		static bool Debug() { return _Debug; } ///< returns debug flag
+		static void SetDebug(const bool Debug = true) { _Debug = Debug; } ///< sets debug flag
 
 		// Functions
 		void AddFileString(const QString& Data); ///< Adds a file string to the model
 		void AddFolderString(const QDir& Folder); ///< Adds a complete folder to the model
-		void DeleteItem( const QModelIndex& Item ); ///< Deletes an Item and all parents that are left without a child (except the _RootItem of course)
+		void DeleteItems( QModelIndexList DeletionList ); ///< Deletes all items on DeletionList and all parents that are left without a child (except the _RootItem of course)
+		std::vector<std::string>& GetFiles( std::vector<std::string>& FileList ) const; ///< Appends all files from list to the end of FileList and returns it
+
+		std::ostream& Print(std::ostream& out) const;
 	};
 
 } // namespace rpwa

@@ -54,11 +54,26 @@ using namespace boost;
 
 bool CompassPwaFileFitResults::_Debug = false;
 
+// Returns total number of waves (Sum over all sections)
+unsigned int CompassPwaFileFitResults::TotalNumWaves() const{
+	unsigned int TotalNumWaves = 0;
+
+	for( unsigned int i=0; i < _WaveNames.size(); ++i ){
+		TotalNumWaves += _WaveNames[i].size();
+	}
+
+	return TotalNumWaves;
+}
+
+// Returns the size of the total covariance matrix if equal ranks for all sections are enforced (except flat wave)
+unsigned int CompassPwaFileFitResults::TotalCovMatrixSizeEqualRanks() const{
+	return ( (TotalNumWaves() - 1) * MaxRank() + 1 ) * 2; // Flat wave has always rank 1 and each wave has a real and imaginary part
+}
+
 // Default constructor
 CompassPwaFileFitResults::CompassPwaFileFitResults():
 	_NumEvents(0),
-	_LogLikelihood(0),
-	_Rank(0){
+	_LogLikelihood(0){
 }
 
 // Destructor
@@ -75,36 +90,54 @@ double CompassPwaFileFitResults::LogLikelihood() const{
 	return _LogLikelihood;
 }
 
-// Returns _Rank
-unsigned int CompassPwaFileFitResults::Rank() const{
-	return _Rank;
+// Returns number of reflectivity sections
+unsigned int CompassPwaFileFitResults::NumSections() const{
+	return _Ranks.size();
+}
+
+// Returns _Rank[Section]
+unsigned int CompassPwaFileFitResults::Rank( unsigned int Section ) const{
+	return _Ranks[Section];
 }
 
 // Returns _WaveNames
-const std::vector<std::string>& CompassPwaFileFitResults::WaveNames() const{
+const vector< vector<string> >& CompassPwaFileFitResults::WaveNames() const{
 	return _WaveNames;
 }
 
+// Returns _WaveNames[Section]
+const std::vector<string>& CompassPwaFileFitResults::WaveNames( unsigned int Section ) const{
+	return _WaveNames[Section];
+}
+
 // Returns _WaveNames in rootpwa style
-vector<string>& CompassPwaFileFitResults::WaveNamesRootPwa( vector<string>& Destination ) const{
+vector<string>& CompassPwaFileFitResults::ProdAmpNamesRootPwa( vector<string>& Destination ) const{
+	unsigned int maxRank = MaxRank();
+
 	Destination.clear();
-	Destination.resize( _WaveNames.size() * _Rank - _Rank + 1 ); // Each rank for each wave has an entry, but the flatwave has only one entry
+	Destination.resize( ( TotalNumWaves() - 1 ) * maxRank + 1 ); // Each rank for each wave has an entry, but the flatwave has only one entry
 
 	if( _Debug ){
-		printDebug << "Reserved " << _WaveNames.size() * _Rank - _Rank + 1 << " strings in Destination\n";
+		printDebug << "Resized to " << ( TotalNumWaves() - 1 ) * maxRank + 1 << " strings in Destination\n";
 	}
 
+	TComplex ProdAmpTmp(0,0);
+
+	unsigned int k; // Current rank
 	unsigned int j=0; // Next free position in Destination
-	for( unsigned int i=0; i < _WaveNames.size(); ++i ){
+	for( unsigned int s=0; s < _WaveNames.size(); ++s ){ // Section
 		if( _Debug ){
 			printDebug << "Accessing " << j << '\n';
 		}
-		if( "FLAT" == _WaveNames[i] ){
+
+		if( "FLAT" == _WaveNames[s][0] ){
 			CompassPwaNameToRootPwaName( Destination[j++], "FLAT" );
 		}
 		else{
-			for( unsigned int k=0; k < _Rank; ++k ){
-				CompassPwaNameToRootPwaName( Destination[j++], _WaveNames[i], k );
+			for( unsigned int i=0; i < _WaveNames[s].size(); ++i ){
+				for( k = 0; k < maxRank; ++k ){
+					CompassPwaNameToRootPwaName( Destination[j++], _WaveNames[s][i], k );
+				}
 			}
 		}
 	}
@@ -112,28 +145,38 @@ vector<string>& CompassPwaFileFitResults::WaveNamesRootPwa( vector<string>& Dest
 	return Destination;
 }
 
-// Returns _FitResults
-const TCMatrix& CompassPwaFileFitResults::FitResults() const{
-	return _FitResults;
+// Returns _FitResults[Section]
+const TCMatrix& CompassPwaFileFitResults::FitResults( unsigned int Section ) const{
+	return _FitResults[Section];
 }
 
 // Returns _FitResults in rootpwa style
 vector< complex<double> >& CompassPwaFileFitResults::ProdAmpsRootPwa( vector< complex<double> >& Destination ) const{
+	unsigned int maxRank = MaxRank();
+
 	Destination.clear();
-	Destination.resize( _WaveNames.size() * _Rank - _Rank + 1 ); // Each rank for each wave has an entry, but the flatwave has only one entry
+	Destination.resize( ( TotalNumWaves() - 1 ) * maxRank + 1 ); // Each rank for each wave has an entry, but the flatwave has only one entry
 
 	TComplex ProdAmpTmp(0,0);
 
+	unsigned int k; // Current rank
 	unsigned int j=0; // Next free position in Destination
-	for( unsigned int i=0; i < _WaveNames.size(); ++i ){
-		if( "FLAT" == _WaveNames[i] ){
-			ProdAmpTmp = _FitResults.get(i,0);
+	for( unsigned int s=0; s < _WaveNames.size(); ++s ){ // Section
+		if( "FLAT" == _WaveNames[s][0] ){
+			ProdAmpTmp = _FitResults[s].get(0,0);
 			Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() ) * sqrt(_NumEvents); // The intensities has to be multiplied with the number of events in CompassPWA, but not in rootpwa therefore this sqrt has to be multiplied with the production amplitudes
 		}
 		else{
-			for( unsigned int k=0; k < _Rank; ++k ){
-				ProdAmpTmp = _FitResults.get(i,k);
-				Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() ) * sqrt(_NumEvents); // The intensities has to be multiplied with the number of events in CompassPWA, but not in rootpwa therefore this sqrt has to be multiplied with the production amplitudes
+			for( unsigned int i=0; i < _WaveNames[s].size(); ++i ){
+				for( k = 0; k < _Ranks[s]; ++k ){
+					ProdAmpTmp = _FitResults[s].get(i,k);
+					Destination[j++] = complex<double>( ProdAmpTmp.Re(), ProdAmpTmp.Im() ) * sqrt(_NumEvents); // The intensities has to be multiplied with the number of events in CompassPWA, but not in rootpwa therefore this sqrt has to be multiplied with the production amplitudes
+				}
+
+				// Filling up with zeros to enforce equal ranks for all sections (except flat wave)
+				for( ; k < maxRank; ++k){
+					Destination[j++] = complex<double>( 0, 0 );
+				}
 			}
 		}
 	}
@@ -152,8 +195,74 @@ TMatrixT<double> &CompassPwaFileFitResults::CovMatrixRootPwa( TMatrixT<double> &
 		printDebug << "CovMatrix(C"<< _CovMatrix.GetNcols() <<",R"<< _CovMatrix.GetNrows() <<"):\n";
 		_CovMatrix.Print();
 	}
-	Destination.ResizeTo( _CovMatrix.GetNcols(), _CovMatrix.GetNrows() );
-	Destination = _CovMatrix;
+
+	unsigned int size = TotalCovMatrixSizeEqualRanks();
+	Destination.ResizeTo( size, size );
+	Destination.Zero();
+
+	unsigned int maxRank = MaxRank();
+	unsigned int CurRanki = 0;
+	unsigned int CurRankj = 0;
+
+	unsigned int iCurSection = 0; // Current reflectivity section in rows
+	unsigned int jCurSection; // Current reflectivity section in columns
+	unsigned int iLastIndexOfSection = _WaveNames[0].size() * _Ranks[0] * 2 - 1; // Row index where the next reflectivity section start
+	unsigned int jLastIndexOfSection; // Column index where the next reflectivity section start
+
+	unsigned int iTot = 0; // Corresponding to index i in the covariance matrix with enforced equal ranks
+	unsigned int jTot; // Corresponding to index j in the covariance matrix with enforced equal ranks
+
+	for( unsigned int i = 0; static_cast<int>(i) < _CovMatrix.GetNrows(); i += 2 ){
+		 // Reset columns
+		jTot = 0;
+		jCurSection = 0;
+		jLastIndexOfSection = _WaveNames[0].size() * _Ranks[0] * 2 - 1;
+
+		// Update reflectivity section
+		if( i > iLastIndexOfSection ){
+			++iCurSection;
+			iLastIndexOfSection += _WaveNames[iCurSection].size() * _Ranks[iCurSection] * 2;
+		}
+
+		for( unsigned int j = 0; static_cast<int>(j) <  _CovMatrix.GetNcols(); j += 2 ){
+			// Update reflectivity section
+			if( j > jLastIndexOfSection ){
+				++jCurSection;
+				jLastIndexOfSection += _WaveNames[jCurSection].size() * _Ranks[jCurSection] * 2;
+			}
+
+			Destination.SetSub( iTot, jTot, _CovMatrix.GetSub(i,i+1,j,j+1) ); // Directly copies a complete 2x2-block of real and imaginary part
+
+			if( ++CurRankj < _Ranks[jCurSection] ){ // CurRankj + 1 is still a rank in the covariance matrix
+				jTot += 2;
+			}
+			else{ // CurRankj + 1 is not a rank in the covariance matrix anymore and the program has to set jTot to the first rank of the next wave in the covariance matrix
+				if( "FLAT" == _WaveNames[jCurSection][0] ){
+					jTot += 2;
+				}
+				else{
+					jTot += (maxRank-_Ranks[jCurSection]+1)*2;
+				}
+
+				CurRankj = 0;
+			}
+		}
+
+		if( ++CurRanki < _Ranks[iCurSection] ){ // CurRanki + 1 is still a rank in the covariance matrix
+			iTot += 2;
+		}
+		else{ // CurRanki + 1 is not a rank in the covariance matrix anymore and the program has to set iTot to the first rank of the next wave in the covariance matrix
+			if( "FLAT" == _WaveNames[iCurSection][0] ){
+				iTot += 2;
+			}
+			else{
+				iTot += (maxRank-_Ranks[iCurSection]+1)*2;
+			}
+
+			CurRanki = 0;
+		}
+	}
+
 	if( _Debug ){
 		printDebug << "Destination(C"<< Destination.GetNcols() <<",R"<< Destination.GetNrows() <<"):\n";
 		Destination.Print();
@@ -170,9 +279,12 @@ TMatrixT<double> &CompassPwaFileFitResults::CovMatrixRootPwa( TMatrixT<double> &
 // Returns a map for the covariance matrix as it is needed for root pwa
 vector<pair<int, int> >& CompassPwaFileFitResults::CovMatrixMapRootPwa( vector<pair<int, int> >& Destination ) const{
 	Destination.clear();
-	Destination.reserve( _CovMatrixSize/2 );
 
-	for( unsigned int i=0; i < _CovMatrixSize/2; ++i ){
+	unsigned int size = TotalCovMatrixSizeEqualRanks() / 2;
+
+	Destination.reserve( size );
+
+	for( unsigned int i=0; i < size; ++i ){
 		Destination.push_back( pair<int,int>( i*2, i*2+1 ) );
 	}
 
@@ -186,6 +298,9 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	string Line;
 
 	// Get number of events
+	if( _Debug){
+		printDebug << "Get number of events" << endl;
+	}
 	if( GetNextValidLine( File, LineStream ) ){
 		// Line example between "": "       33657"
 		LineStream >> _NumEvents;
@@ -205,6 +320,9 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 
 	// Get log(likelihood)
+	if( _Debug){
+		printDebug << "Get log(likelihood)" << endl;
+	}
 	if( GetNextValidLine( File, LineStream ) ){
 		// Line example between "": ""
 		LineStream >> _LogLikelihood;
@@ -224,6 +342,9 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 
 	// Get fit status
+	if( _Debug){
+		printDebug << "Get fit status" << endl;
+	}
 	if( GetNextValidLine( File, LineStream ) ){
 		// Line example between "": "           0"
 		LineStream >> _FitStatus;
@@ -243,6 +364,9 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 
 	// Get number of reflectivity sections
+	if( _Debug){
+		printDebug << "Get number of reflectivity sections" << endl;
+	}
 	unsigned int NumSections = 0;
 
 	if( GetNextValidLine( File, LineStream ) ){
@@ -264,8 +388,10 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 
 	// Get number of waves of each reflectivity section
+	if( _Debug){
+		printDebug << "Get number of waves of each reflectivity section" << endl;
+	}
 	unsigned int SecNumWaves[NumSections];
-	unsigned int NumWaves = 0;
 	char semicolon = 0;
 
 	if( GetNextValidLine( File, LineStream ) ){
@@ -286,8 +412,6 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 						printDebug << "Separator: '" << semicolon << "'\n";
 					}
 				}
-
-				NumWaves += SecNumWaves[i];
 			}
 		}
 
@@ -302,20 +426,21 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 
 	// Get rank of each reflectivity section
-	unsigned int SecRank[NumSections];
-	// The rank has to be the same for each section except the flatwave section, where the rank always will be 1
-	bool RankException = false; // This variable will be set to true if a section with rank 1 is found, therefore if it's true and another section with rank 1 is found, all sections have to have rank 1
+	if( _Debug){
+		printDebug << "Get rank of each reflectivity section" << endl;
+	}
 	semicolon = 0;
+	_Ranks.resize(NumSections);
 
 	if( GetNextValidLine( File, LineStream ) ){
 		// Line example between "": "    1;    2;    2;"
-		for( unsigned i = 0; i < NumSections; ++i){
-			SecRank[i] = 0;
+		for( unsigned int i = 0; i < NumSections; ++i){
+			_Ranks[i] = 0;
 
-			LineStream >> SecRank[i] >> semicolon;
+			LineStream >> _Ranks[i] >> semicolon;
 
-			if( !SecRank[i] ){
-				printErr << "Rank either 0 or not a int\n";
+			if( !_Ranks[i] ){
+				printErr << "Rank either 0 or not an int\n";
 				Succesful = false;
 			}
 			else{
@@ -323,32 +448,6 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 					printWarn << "Rank separator not a semicolon\n";
 					if( _Debug ){
 						printDebug << "Separator: '" << semicolon << "'\n";
-					}
-				}
-
-				if( _Rank != SecRank[i] ){
-					if( RankException ){
-						if( 0 == _Rank ){
-							_Rank = SecRank[i];
-						}
-						else{
-							printErr << "Rank of this section is " << SecRank[i] << " but the previous sections had rank " << _Rank << " and the section of the flat wave was already found\n";
-							Succesful = false;
-						}
-					}
-					else{
-						if( (1 == SecRank[i]) && (1 == SecNumWaves[i]) ){ //it is possibly the flatwave section
-							RankException = true;
-						}
-						else{
-							if( 0 == _Rank ){
-								_Rank = SecRank[i];
-							}
-							else{
-								printErr << "Rank of this section is " << SecRank[i] << " but the previous sections had rank " << _Rank << " and it cannot be the section of the flat wave\n";
-								Succesful = false;
-							}
-						}
 					}
 				}
 			}
@@ -365,14 +464,23 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 
 	// Get fit results
+	if( _Debug){
+		printDebug << "Get fit results" << endl;
+	}
+
+	_WaveNames.resize(NumSections);
+	_FitResults.resize(NumSections);
+	for( unsigned int s = 0; s < NumSections; ++s){
+		_FitResults[s].ResizeTo(SecNumWaves[s],_Ranks[s]);
+	}
+
 	char WaveNameCStr[61];
 	string WaveName;
 	WaveName.reserve(61);
 	unsigned int LastNonEmptyCharacter;
 	unsigned int CurRank;
-	unsigned int l=0; // Loop variable equal to j except that it is not reseted to 0 for each section and therefore addresses _FitResults correctly
+	unsigned int l; // Loop variable equal to j except that it is not reseted to 0 for each section and therefore addresses _FitResults correctly
 	unsigned int k; // Loop variable that is needed unchanged in a second loop
-	_FitResults.ResizeTo(NumWaves,_Rank);
 	complex<double> FitResultParameter;
 	char apostrophe1; // Takes the first bracket character, which should be a apostrophe
 	char apostrophe2; // Takes the second bracket character, which should be a apostrophe
@@ -381,8 +489,9 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	double RankSumProdAmpsSquared;
 	// }
 
-	for( unsigned i = 0; i < NumSections; ++i){
-		for( unsigned j = 0; j < SecNumWaves[i]; ++j){
+	for( unsigned int s = 0; s < NumSections; ++s){ // Section
+		l=0;
+		for( unsigned int j = 0; j < SecNumWaves[s]; ++j){
 			if( GetNextValidLine( File, LineStream ) ){
 				// Example:
 				// 'FLAT                                                        '(-0.398790E-15;-0.824390E-15)
@@ -402,10 +511,10 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 				// }
 
 				// Fill the corresponding row of the matrix with the values from the file
-				CurRank = min(SecRank[i],j+1);
+				CurRank = min(_Ranks[s],j+1);
 				for( k = 0; k < CurRank; ++k){
 					LineStream >> FitResultParameter;
-					_FitResults.set( l, k, FitResultParameter );
+					_FitResults[s].set( l, k, FitResultParameter );
 					if( _Debug ){
 						printDebug << "Rank"<<k<<": " << FitResultParameter << '\n';
 						RankSumProdAmpsSquared += norm(FitResultParameter);
@@ -418,8 +527,8 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 
 				// Fill the rest of the row of the matrix with (0,0), since in the Compass code result parameter that are always 0 are not included
 				FitResultParameter = complex<double>(0,0);
-				for( ; k < _Rank; ++k){
-					_FitResults.set( l, k, FitResultParameter );
+				for( ; k < _Ranks[s]; ++k){
+					_FitResults[s].set( l, k, FitResultParameter );
 				}
 
 				if( LineStream.fail() ){
@@ -445,7 +554,7 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 					LastNonEmptyCharacter = WaveName.find_last_not_of(' ');
 					WaveName.resize(LastNonEmptyCharacter + 1);
 
-					_WaveNames.push_back( WaveName );
+					_WaveNames[s].push_back( WaveName );
 					if( _Debug ){
 						printDebug << MassBinStart() << '-' << MassBinEnd() << '_' << WaveName << ':' << RankSumProdAmpsSquared * _NumEvents << '\n';
 					}
@@ -475,17 +584,19 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	}
 
 	// Get covariance matrix
-	_CovMatrixSize = NumWaves*_Rank*2; // Real and imaginary entry for each rank of each wave
-	if( RankException ){
-		// Data contains flat wave with rank 1, therefore the size must be corrected
-		_CovMatrixSize -= (_Rank-1)*2;
+	if( _Debug){
+		printDebug << "Get covariance matrix" << endl;
 	}
-	_CovMatrix.ResizeTo( _CovMatrixSize, _CovMatrixSize );
 
-	for( unsigned int i = 0; i<_CovMatrixSize; ++i ){
+	unsigned int CovMatrixSize = 0;
+	for( unsigned int s=0; s < NumSections; ++s ){
+		CovMatrixSize += SecNumWaves[s]*_Ranks[s]*2; // Real and imaginary entry for each rank of each wave for each section
+	}
+	_CovMatrix.ResizeTo( CovMatrixSize, CovMatrixSize );
+
+	for( unsigned int i = 0; i<CovMatrixSize; ++i ){
 		if( GetNextValidLine( File, LineStream ) ){
-			// Line example between "": ""
-			for( unsigned int j = 0; j<_CovMatrixSize; ++j ){
+			for( unsigned int j = 0; j<CovMatrixSize; ++j ){
 				LineStream >> _CovMatrix( i, j );
 			}
 
@@ -517,20 +628,40 @@ bool CompassPwaFileFitResults::ReadIn( std::istream& File ){
 	return Succesful;
 }
 
+// Returns the highest rank of all sections
+unsigned int CompassPwaFileFitResults::MaxRank() const{
+	unsigned int MaxRank = 0;
+
+	for( unsigned int i=0; i < _Ranks.size(); ++i ){
+		if( _Ranks[i] > MaxRank ){
+			MaxRank = _Ranks[i];
+		}
+	}
+
+	return MaxRank;
+}
+
 // Prints all important variables of class
 ostream& CompassPwaFileFitResults::Print(ostream& Out) const{
 	CompassPwaFileBase::Print( Out );
 
 	Out << "Number of events: " << _NumEvents << '\n';
 	Out << "log(likelihood): " << _LogLikelihood << '\n';
-	Out << "Rank: " << _Rank << '\n';
 
-	for( unsigned int i=0; i < _WaveNames.size(); ++i){
-		Out << '\'' << _WaveNames[i] << '\'';
-		for( unsigned int k=0; k < _Rank; ++k ){
-			Out << _FitResults.get(i,k);
+	Out << "Ranks: " << _Ranks[0];
+	for( unsigned int i=1; i < _Ranks.size(); ++i ){
+		Out << " ;" << _Ranks[i];
+	}
+	Out << '\n';
+
+	for( unsigned int s=1; s < _Ranks.size(); ++s ){ // Sections
+		for( unsigned int i=0; i < _WaveNames[s].size(); ++i){
+			Out << '\'' << _WaveNames[s][i] << '\'';
+			for( unsigned int k=0; k < _Ranks[s]; ++k ){
+				Out << _FitResults[s].get(i,k);
+			}
+			Out << '\n';
 		}
-		Out << '\n';
 	}
 
 	return Out;
@@ -614,17 +745,18 @@ bool CompassPwaFileFitResults::CompassPwaNameToRootPwaName( std::string& RootPwa
 		string Isobar;
 		// Translate isobars
 		unsigned int NumIsobars = 0;
-		const unsigned int nmbDict = 6;
+		const unsigned int nmbDict = 7;
 		vector<string> FindVec;
 
 		// {rootpwa, CompassPWA}
 		const string IsobarDictionary[nmbDict][2] = {
-				{"sigma",    "f0(1400)"},
-				{"f0(980)",    "f0(980)"},
-				{"rho(770)",   "rho"},
-				{"f2(1270)",   "f2"},
-				{"rho3(1690)", "rho3"},
-				{"f0(1500)", "f0(1500)"} };
+				{"sigma0",    "(pipi)_S"},
+				{"sigma0",    "f0(1400)"},
+				{"f0(980)0",    "f0(980)"},
+				{"rho(770)0",   "rho"},
+				{"f2(1270)0",   "f2"},
+				{"rho3(1690)0", "rho3"},
+				{"f0(1500)0", "f0(1500)"} };
 
 		for (unsigned int i = 0; i < nmbDict; ++i){
 			FindVec.clear();
@@ -670,13 +802,14 @@ bool CompassPwaFileFitResults::CompassPwaNameToRootPwaName( std::string& RootPwa
 		LDictionary['G'] = '4';
 		LDictionary['H'] = '5';
 		LDictionary['I'] = '6';
+		LDictionary['6'] = '6';
 		LDictionary['K'] = '7';
 		LDictionary['L'] = '8';
 
 		int PosL = RootPwaDestination.find_last_of(' ') + 1;
 		map<char,char>::iterator it = LDictionary.find( RootPwaDestination[PosL] );
 		if( it == LDictionary.end() ){
-			printErr << "L of wave is not well-defined\n";
+			printErr << "L of wave \"" << CompassPwaSource << "\" is not well-defined\n";
 			Successful = false;
 		}
 		else{
@@ -688,6 +821,11 @@ bool CompassPwaFileFitResults::CompassPwaNameToRootPwaName( std::string& RootPwa
 		RootPwaDestination.erase( PosL, 1 );
 		RootPwaDestination.insert( PosL, "_00_" ); // The 0s are just place holders
 		RootPwaDestination[PosL+1] = L;
+
+		if(_Debug){
+			printDebug << particleDataTable::instance();
+		}
+
 		const particleProperties *IsobarParticle = particleDataTable::entry( Isobar );
 		if( !IsobarParticle ){
 			printErr << "Spin of particle " << Isobar << " could not be determined\n";

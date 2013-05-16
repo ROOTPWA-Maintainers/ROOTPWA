@@ -46,6 +46,24 @@ using namespace rpwa;
 
 bool GuiStringTreeModel::_Debug = false;
 
+///< Appends the ModelIndex of all children (and subchildren and subsubchildren ...) of Parent to List
+void GuiStringTreeModel::AppendChildren( QModelIndexList& List, const QModelIndex& Parent) const{
+	for(int i=0; i < rowCount(Parent); ++i){
+		List.append( index( i, 0, Parent ) );
+		AppendChildren( List, List.last() );
+	}
+}
+
+
+///< Returns a list of all entries in the tree
+QModelIndexList GuiStringTreeModel::ListOfTree() const{
+	QModelIndexList ItemList;
+
+	AppendChildren( ItemList, QModelIndex() ); // RootItem has no ModelIndex
+
+	return ItemList;
+}
+
 // Calls QAbstractItemModel constructor
 GuiStringTreeModel::GuiStringTreeModel( QObject *Parent ):
 		QAbstractItemModel(Parent){
@@ -167,7 +185,7 @@ QVariant GuiStringTreeModel::data(const QModelIndex &index, int role) const{
 		return QVariant();
 	}
 
-	if (role != Qt::DisplayRole){
+	if ( (role != Qt::DisplayRole) && (role != Qt::ToolTipRole) ){
 		if( _Debug ){
 			printDebug << "GuiStringTreeModel::data(["<<index.row()<<';'<<index.column()<<';'<<index.parent().data().toString().toLatin1().constData()<<"];"<<role<<"):"<<QString().toLatin1().constData()<<'\n';
 		}

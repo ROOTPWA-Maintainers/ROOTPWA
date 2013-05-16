@@ -45,6 +45,8 @@
 
 #include "reportingUtils.hpp"
 
+#include "CompassPwaFileLoader.h"
+
 #include "RootPwaDataObject.h"
 
 using namespace std;
@@ -53,7 +55,7 @@ using namespace rpwa;
 bool RootPwaDataObject::_Debug = false;
 
 // Returns if a File has not been yet loaded and prints an error message if that is the case
-bool RootPwaDataObject::FileNotLoaded(){
+bool RootPwaDataObject::FileNotLoaded() const{
 	if( !_DataFile ){
 		printErr << "No file is loaded. Load a file before trying to select a tree.\n";
 		return 0;
@@ -136,14 +138,14 @@ const string& RootPwaDataObject::DataBranchName() const{
 }
 
 // Loading the given root tree file
-TFile *RootPwaDataObject::LoadFile( string FileString ) {
+TFile *RootPwaDataObject::LoadFile( const string& FileString ) {
 	if( _DataFile ){
 		printErr << "There is already a File loaded. Clear the object before use.\n";
 		return 0;
 	}
 
 	printInfo << "Loading File " << FileString << '\n';
-	_DataFile = new TFile( FileString.c_str(),"READ","PWA fit results", 1);
+	_DataFile = new TFile( FileString.c_str(),"READ","PWA fit results");
 	if( _DataFile->IsZombie() ){
 		delete _DataFile;
 		_DataFile = 0;
@@ -155,8 +157,62 @@ TFile *RootPwaDataObject::LoadFile( string FileString ) {
 	return _DataFile;
 }
 
+// Parsing DataFiles into RootFile using ParticleDataTable returning the root file (status of the RootPwaDataObject is like after loading the root file)
+TFile *RootPwaDataObject::ParseFiles( const string& ParticleDataTable, const string& RootFile, const vector<string>& DataFiles ){
+	if( _DataFile ){
+		printErr << "There is already a File loaded. Clear the object before use.\n";
+		return 0;
+	}
+
+	// Parsing into RootFile
+	printInfo << "Parsing into File " << RootFile << '\n';
+	_DataFile = new TFile( RootFile.c_str(),"RECREATE","PWA fit results");
+
+	if( _DataFile ){
+		CompassPwaFileLoader FileLoader( ParticleDataTable );
+
+		printInfo << "Begin loading data from CompassPWA files\n";
+		if( _Debug ){
+			printDebug << "Received FileList of size: " << DataFiles.size() << '\n';
+		}
+		for( unsigned int i = 0; i < DataFiles.size(); ++i ){
+			if( _Debug ){
+				printDebug << "Processing file " << i << ": " << DataFiles[i] << '\n';
+			}
+			FileLoader.ReadFile( DataFiles[i] );
+		}
+		printInfo << "Done loading data from CompassPWA files\n";
+
+		printInfo << "Merging CompassPWA data into root tree\n";
+		TTree *data = FileLoader.Merge();
+		if( data ){
+			printInfo << "Done merging CompassPWA data into root tree\n";
+
+			if( _DataFile->Write() ){
+				printSucc << "Root Tree successfully written to " << RootFile << '\n';
+			}
+			else{
+				printErr << "File could not be written\n";
+			}
+		}
+		else{
+			printErr << "Merging failed\n";
+		}
+
+		_DataFile->Close();
+		delete _DataFile;
+		_DataFile = 0;
+	}
+	else{
+		printErr << "Could not create new TFile\n";
+	}
+
+	// Loading RootFile
+	return LoadFile( RootFile );
+}
+
 // Reads the names of all trees in the file and returns it in a std::list& given as parameter, returns the number of found trees
-unsigned int RootPwaDataObject::TreesInFile( list<string>& TreeList ){
+unsigned int RootPwaDataObject::TreesInFile( list<string>& TreeList ) const{
 	if( FileNotLoaded() ){
 		return 0;
 	}
@@ -185,7 +241,7 @@ unsigned int RootPwaDataObject::TreesInFile( list<string>& TreeList ){
 }
 
 // Selecting root tree in _DataFile by name: Returns Null pointer if tree with given name does not exist
-TTree *RootPwaDataObject::SelectTree( std::string TreeName ){
+TTree *RootPwaDataObject::SelectTree( const std::string& TreeName ){
 	if( FileNotLoaded() ){
 		return 0;
 	}
@@ -233,7 +289,7 @@ unsigned int RootPwaDataObject::BranchesInTree( list<string>& BranchList ){
 }
 
 // Selecting branch in _DataTree by name and returns if selection was successful (if branch exists)
-TBranch *RootPwaDataObject::SelectBranch( string BranchName ){
+TBranch *RootPwaDataObject::SelectBranch( const string& BranchName ){
 	if( !_DataTree ){
 		printErr << "No data tree selected. Select one before trying to select its branch.\n";
 		return 0;

@@ -133,7 +133,7 @@ bool CompassPwaFilePhaseSpaceIntegrals::ReadIn( std::istream& File ){
 				WaveName.resize(LastNonEmptyCharacter + 1);
 
 				if( !( _PhaseSpaceIntegralsMap.insert( pair<const string, const double>(WaveName, IntegralValue) ).second ) ){
-					printErr << "Two waves with the same name in the file\n";
+					printErr << "Two waves with the same name in the file: " << WaveName << '\n';
 					Succesful = false;
 				}
 			}
@@ -170,16 +170,26 @@ ostream& CompassPwaFilePhaseSpaceIntegrals::Print( ostream& Out ) const{
 }
 
 // Combines the matching integrals from Integrals to one for the given mass bin and given waves, stores it in Destination and returns a reference to Destination
-bool CompassPwaFilePhaseSpaceIntegrals::Combine( vector<double>& Destination, const deque<const CompassPwaFilePhaseSpaceIntegrals *>& Integrals, const vector<string>& WaveNames, double MassBinStart, double MassBinEnd ){
+bool CompassPwaFilePhaseSpaceIntegrals::Combine( vector<double>& Destination, const deque<const CompassPwaFilePhaseSpaceIntegrals *>& Integrals, const vector< vector<string> >& WaveNames, double MassBinStart, double MassBinEnd ){
 	bool Succesful = true;
 
+	// Determines total number of waves
+	unsigned int TotNumWaves = 0;
+	for( unsigned int s=0; s < WaveNames.size(); ++s ){
+		TotNumWaves += WaveNames[s].size();
+	}
+
 	Destination.clear();
-	Destination.resize( WaveNames.size() );
+	Destination.resize( TotNumWaves );
 
 	// For now it just returns the integral in the middle of the mass bin specified
 	unsigned int middle = Integrals.size() / 2;
-	for( unsigned int i = 0; i < WaveNames.size(); ++i ){
-		Succesful = Succesful && Integrals[middle]->PhaseSpaceIntegral( Destination[i], WaveNames[i] );
+
+	unsigned int j=0;
+	for( unsigned int s = 0; s < WaveNames.size(); ++s ){ // Section
+		for( unsigned int i = 0; i < WaveNames[s].size(); ++i ){
+			Succesful = Succesful && Integrals[middle]->PhaseSpaceIntegral( Destination[j++], WaveNames[s][i] );
+		}
 	}
 
 	return Succesful;

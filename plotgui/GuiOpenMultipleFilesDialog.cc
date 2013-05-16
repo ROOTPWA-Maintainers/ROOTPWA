@@ -57,7 +57,7 @@ GuiOpenMultipleFilesDialog::GuiSelectedFilesWidgetAdd::GuiSelectedFilesWidgetAdd
 	_SelectedFilesTreeView->header()->hide();
 	_SelectedFilesTreeView->setModel(&_SelectedFilesModel);
 	_SelectedFilesTreeView->setSelectionModel(&_SelectedFilesSelection);
-	_SelectedFilesTreeView->setSelectionMode(QAbstractItemView::MultiSelection);
+	_SelectedFilesTreeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
 }
 
 // Returns a list of all selected files
@@ -75,18 +75,21 @@ void GuiOpenMultipleFilesDialog::GuiSelectedFilesWidgetAdd::AddFolderString(cons
 	_SelectedFilesModel.AddFolderString( Folder );
 }
 
-// Deletes an item and all parents that are left without a child (except the _RootItem of course)
-void GuiOpenMultipleFilesDialog::GuiSelectedFilesWidgetAdd::DeleteItem( const QModelIndex& Item ){
-	_SelectedFilesModel.DeleteItem( Item );
+// Deletes all items on DeletionList and all parents that are left without a child (except the _RootItem of course)
+void GuiOpenMultipleFilesDialog::GuiSelectedFilesWidgetAdd::DeleteItems( const QModelIndexList& DeletionList ){
+	_SelectedFilesModel.DeleteItems( DeletionList );
 }
 
 // Deletes all selected items and all parents that are left without a child (except the _RootItem of course)
 void GuiOpenMultipleFilesDialog::GuiSelectedFilesWidgetAdd::DeleteSelectedItems(){
-	QModelIndexList DeletionList = _SelectedFilesSelection.selectedIndexes();
+	_SelectedFilesModel.DeleteItems( _SelectedFilesSelection.selectedIndexes() );
+}
 
-	for( int i = 0; i < DeletionList.size(); i++){
-		DeleteItem( DeletionList[i] );
-	}
+///< Returns all chosen files
+vector<string>& GuiOpenMultipleFilesDialog::GuiSelectedFilesWidgetAdd::GetFiles( vector<string>& FileList ) const{
+	FileList.clear();
+
+	return _SelectedFilesModel.GetFiles( FileList );;
 }
 
 void GuiOpenMultipleFilesDialog::mon__BtAdd_clicked(){
@@ -142,4 +145,9 @@ GuiOpenMultipleFilesDialog::GuiOpenMultipleFilesDialog( QWidget * parent, const 
 	QObject::connect( _SelectedFilesWidget._BtAdd, SIGNAL( clicked( bool ) ), this, SLOT( mon__BtAdd_clicked() ) );
 	QObject::connect( _SelectedFilesWidget._BtAddAll, SIGNAL( clicked( bool ) ), this, SLOT( mon__BtAddAll_clicked() ) );
 	QObject::connect( _SelectedFilesWidget._BtRemove, SIGNAL( clicked( bool ) ), this, SLOT( mon__BtRemove_clicked() ) );
+}
+
+// Returns all chosen files
+vector<string>& GuiOpenMultipleFilesDialog::GetFiles( vector<string>& FileList ) const{
+	return _SelectedFilesWidget.GetFiles( FileList );
 }
