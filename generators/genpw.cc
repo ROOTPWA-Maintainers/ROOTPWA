@@ -26,6 +26,7 @@
 #include<cstdlib>
 #include<iostream>
 #include<fstream>
+#include<getopt.h>
 #include<unistd.h>
 
 #include <boost/progress.hpp>
@@ -55,13 +56,13 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        -p         path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -w <file>  wavelist file (contains production amplitudes) FEATURE DISABLED" << endl
 	     << "        -w <file.root>  to use TFitBin tree as input FEATURE PERMANENTLY REMOVED" << endl
-	     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 0)" << endl
+	     << "        -c         if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 0)" << endl
 	     << "        -k <path>  path to keyfile directory (all keyfiles have to be there) FEATURE DISABLED" << endl
 	     << "        -i <file>  integral file FEATURE DISABLED" << endl
 	     << "        -r <file>  reaction config file" << endl
-	     << "        -s #   set seed " << endl
-	     << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
-	     << "        -B #   width of mass bin in MeV" << endl
+	     << "        -s #       set seed " << endl
+	     << "        -M #       lower boundary of mass range in MeV (overwrites values from config file)" << endl
+	     << "        -B #       width of mass bin in MeV" << endl
 	     << endl
 	     << "A comment regarding the disabled features: these options have been taken out\n"
 	     << "for the time being. If you want to get them back, check GIT revision\n"
@@ -110,17 +111,20 @@ int main(int argc, char** argv)
 				break;
 			case 'w':
 				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check SVN revision 1072." << endl;
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
 				exit(10);
 				break;
 			case 'i':
 				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check SVN revision 1072." << endl;
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
 				exit(10);
 				break;
 			case 'k':
 				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check SVN revision 1072." << endl;
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
 				exit(10);
 				break;
 			case 'r':
@@ -128,7 +132,8 @@ int main(int argc, char** argv)
 				break;
 			case 'm':
 				printErr << "this feature has been removed for the time being. "
-				         << "If you want it back, check SVN revision 1072." << endl;
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
 				exit(10);
 				break;
 			case 'c':
