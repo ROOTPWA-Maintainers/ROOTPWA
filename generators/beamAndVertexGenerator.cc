@@ -142,6 +142,10 @@ bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
 			_currentBeamfileEntry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
 			_beamTree->GetEntry(_currentBeamfileEntry);
 		} else {
+			if(_currentBeamfileEntry >= nEntries) {
+				printInfo << "reached end of beamfile, looping back to first event." << endl;
+				_currentBeamfileEntry = 0;
+			}
 			_beamTree->GetEntry(_currentBeamfileEntry++);
 		}
 		if(_sigmasPresent and _sigmaScalingFactor != 0.) {
