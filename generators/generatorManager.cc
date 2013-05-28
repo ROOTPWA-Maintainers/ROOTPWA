@@ -335,6 +335,6 @@ void generatorManager::readBeamfileSequentially(bool readBeamfileSequentially) {
 		printErr << "beam and vertex package seems to be disabled, unable to read beamfile sequentially." << endl;
 		throw;
 	}
-	_beamAndVertexGenerator->setBeamfileSequentialReading();
+	_beamAndVertexGenerator->setBeamfileSequentialReading(readBeamfileSequentially);
 
 }

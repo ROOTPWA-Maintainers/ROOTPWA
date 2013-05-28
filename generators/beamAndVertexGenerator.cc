@@ -182,31 +182,38 @@ double beamAndVertexGenerator::getVertexZ(const Target& target) const {
 ostream& beamAndVertexGenerator::print(ostream& out) {
 
 	out << "Beam package information: " << endl;
-	out << "    Using beam file ........ ";
+	out << "    Using beam file ................ ";
 	if(_simpleSimulation) {
 		out << "No" << endl;
 	} else {
 		out << "Yes" << endl;
 	}
-	out << "    Beam file path ......... " << _beamFileName << endl;
-	out << "    Beam file loaded ....... ";
+	out << "    Beam file path ................. " << _beamFileName << endl;
+	out << "    Beam file loaded ............... ";
 	if(_rootFile) {
 		out << "Yes" << endl;
 	} else {
 		out << "No" << endl;
 	}
-	out << "    Beam tree loaded ....... ";
+	out << "    Beam tree loaded ............... ";
 	if(_beamTree) {
 		out << "Yes" << endl;
 	} else {
 		out << "No" << endl;
 	}
-	out << "    Sigmas found ........... ";
+	out << "    Sigmas found ................... ";
 	if(_sigmasPresent) {
 		out << "Yes" << endl;
 	} else {
 		out << "No" << endl;
 	}
-	out << "    Sigma scaling factor .... " << _sigmaScalingFactor << endl;
+	out << "    Sigma scaling factor ........... " << _sigmaScalingFactor << endl;
+	out << "    Read beam file sequentially .... ";
+	if(_readBeamfileSequentially) {
+		out << "Yes" << endl;
+	} else {
+		out << "No" << endl;
+	}
 	return out;
+
 }
