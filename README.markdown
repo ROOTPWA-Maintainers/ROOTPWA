@@ -78,7 +78,8 @@ and then to checkout the wanted release version via
 This way one can easily switch to any existing Boost version and also updates are much more convenient:
 
     > git checkout master
-    > git pull
+    > git fetch
+    > git fetch --tags
     > git checkout Boost_1_51_0
 
 If you use one of the (optional) features like Python or MPI be sure to recompile the respective Boost libraries after having switched to a different Boost version.
@@ -271,7 +272,7 @@ Some information which might be of importance:
 
 ### Branch Layout ###
 
-The ROOTPWA repository uses the master branch for development, meaning that the latest development version is generally in the master branch. For older versions, there are maintenance branches name `_v1`, `_v2`, etc.. Versions which are deemed stable are tagged with a version number, e.g. `<branch name>.<version number>` (e.g. `_v1.12`). Most work is to be done in topic branches whose name should _not_ start with an `_`. If you are unsure which branch your work should be based upon, feel free to contact the ROOTPWA developers for support.
+The ROOTPWA repository uses the master branch for development, meaning that the latest development version is generally in the master branch. For older versions, there are maintenance branches name `_v1`, `_v2`, etc. Versions which are deemed stable are tagged with a version number, e.g. `<branch name>.<version number>` (e.g. `_v1.12`). Most work is to be done in topic branches whose name should _not_ start with an `_`. If you are unsure which branch your work should be based upon, feel free to contact the ROOTPWA developers for support.
 
 
 ### Commit Message Format ###

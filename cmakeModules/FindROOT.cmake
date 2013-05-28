@@ -25,7 +25,7 @@
 #//      requires root-config to be in PATH
 #//      based on AliRoots's FindROOT.cmake (r41015)
 #//      in https://alisoft.cern.ch/AliRoot/trunk/cmake/modules
-#//	 
+#//
 #//      following variables are defined:
 #//      ROOT_CONFIG_EXECUTABLE - path to root-config program
 #//      ROOTSYS                - path to root installation directory
@@ -43,14 +43,14 @@
 #//      ROOT_LIBRARY_DIR       - ROOT library directory
 #//      ROOT_LIBRARIES         - linker flags for ROOT libraries
 #//      ROOT_AUX_LIBRARIES     - linker flags for auxiliary libraries
-#//      ROOT_EVE_LIBRARIES     - linker flags for auxiliary libraries
+#//      ROOT_EVE_LIBRARIES     - linker flags for EVE libraries
 #//      ROOTCINT_EXECUTABLE    - path to rootcint program
 #//      ROOT_LIBS              - list of ROOT library files
-#//	 
+#//
 #//      Example usage:
 #//          find_package(ROOT 5.26 REQUIRED Minuit2)
-#//	 
-#//	 
+#//
+#//
 #//      The module also provides a function to generate ROOT dictionaries.
 #//      Example usage:
 #//          set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/someDict.cc)  # set dictionary path
@@ -83,20 +83,20 @@ else()
 
 	set(ROOT_FOUND TRUE)
 
-	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --prefix 
-		OUTPUT_VARIABLE ROOTSYS 
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --prefix
+		OUTPUT_VARIABLE ROOTSYS
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --arch
 		OUTPUT_VARIABLE ROOT_TARGET
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --f77 
-		OUTPUT_VARIABLE ROOT_F77 
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --f77
+		OUTPUT_VARIABLE ROOT_F77
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --cc
-		OUTPUT_VARIABLE ROOT_CC 
+		OUTPUT_VARIABLE ROOT_CC
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --cxx
@@ -139,12 +139,16 @@ else()
 		OUTPUT_VARIABLE ROOT_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --auxlibs
-		OUTPUT_VARIABLE ROOT_AUX_LIBRARIES
+	# is this really needed? could one not handle this via the components?
+  # in any case the EVE libs can be handled like the other ROOT libs
+  # so this list should be merged with ROOT_LIBRARIES and duplicates removed
+	# the extra loop over the EVE libs is superfluous
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --noauxlibs --evelibs
+		OUTPUT_VARIABLE ROOT_EVE_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --evelibs
-		OUTPUT_VARIABLE ROOT_EVE_LIBRARIES
+	execute_process(COMMAND ${ROOT_CONFIG_EXECUTABLE} --auxlibs
+		OUTPUT_VARIABLE ROOT_AUX_LIBRARIES
 		OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 	find_program(ROOTCINT_EXECUTABLE rootcint)
