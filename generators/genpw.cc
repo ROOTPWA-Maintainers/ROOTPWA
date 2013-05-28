@@ -63,6 +63,7 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        -s #       set seed " << endl
 	     << "        -M #       lower boundary of mass range in MeV (overwrites values from config file)" << endl
 	     << "        -B #       width of mass bin in MeV" << endl
+	     << "        --beamfile <file> path to beam file (overrides values from config file)" << endl
 	     << endl
 	     << "A comment regarding the disabled features: these options have been taken out\n"
 	     << "for the time being. If you want to get them back, check GIT revision\n"
@@ -89,9 +90,18 @@ int main(int argc, char** argv)
 	int massBinWidth = 0;
 	bool overrideMass = false;
 	bool writeComgeantOut = false;
+	string beamfileNameOverride = "";
+
+	static struct option longOptions[] =
+	    {
+	         { "beamfile", required_argument, 0, 10000 },
+	         { 0, 0, 0, 0 }
+	    };
+
 
 	int c;
-	while ((c = getopt(argc, argv, "n:a:o:p:w:k:i:r:m:s:M:B:hc")) != -1) {
+	int optionIndex;
+	while ((c = getopt_long(argc, argv, "n:a:o:p:w:k:i:r:m:s:M:B:hc", longOptions, &optionIndex)) != -1) {
 		switch (c) {
 			case 'n':
 				nEvents = atoi(optarg);
@@ -147,6 +157,9 @@ int main(int argc, char** argv)
 				massBinWidth = atoi(optarg);
 				overrideMass = true;
 				break;
+			case 10000:
+				beamfileNameOverride = optarg;
+				break;
 
 			case 'h':
 				printUsage(argv[0]);
@@ -174,6 +187,10 @@ int main(int argc, char** argv)
 
 	particleDataTable::readFile(pdgFileName);
 	generatorManager generatorMgr;
+	if(beamfileNameOverride != "") {
+		generatorMgr.overrideBeamFile(beamfileNameOverride);
+	}
+
 	if(not generatorMgr.readReactionFile(reactionFile)) {
 		printErr << "could not read reaction file. Aborting..." << endl;
 		exit(1);

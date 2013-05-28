@@ -25,6 +25,7 @@ bool generatorManager::_debug = false;
 generatorManager::generatorManager()
 	: _beamAndVertexGenerator(new beamAndVertexGenerator()),
 	  _pickerFunction(NULL),
+	  _beamFileName(""),
 	  _reactionFileRead(false),
 	  _generator(NULL) { };
 
@@ -166,10 +167,13 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			printErr << "'beamSimulation' section in reaction file contains errors." << endl;
 			return false;
 		} else if((*configBeamSimulation)["active"]) {
-			string beamFileName;
-			if(not configBeamSimulation->lookupValue("beamFile", beamFileName)) {
-				printErr << "'beamSimulation' section in reaction file is missing the 'beamFile' entry.";
-				return false;
+			if(_beamFileName == "") {
+				if(not configBeamSimulation->lookupValue("beamFile", _beamFileName)) {
+					printErr << "'beamSimulation' section in reaction file is missing the 'beamFile' entry." << endl;
+					return false;
+				}
+			} else {
+				printInfo << "Beamfile command line override '" << _beamFileName << "' found." << endl;
 			}
 			double sigmaScalingFactor = 1.;
 			if(not configBeamSimulation->exists("sigmaScalingFactor")) {
@@ -186,7 +190,7 @@ bool generatorManager::readReactionFile(const string& fileName) {
 				}
 			}
 			_beamAndVertexGenerator->setSigmaScalingFactor(sigmaScalingFactor);
-			if(not _beamAndVertexGenerator->loadBeamFile(beamFileName)) {
+			if(not _beamAndVertexGenerator->loadBeamFile(_beamFileName)) {
 				printErr << "could not initialize beam and vertex generator." << endl;
 				return false;
 			}

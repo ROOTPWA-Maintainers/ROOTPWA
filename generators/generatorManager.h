@@ -31,6 +31,7 @@ namespace rpwa {
 		bool initializeGenerator();
 
 		void overrideMassRange(double lowerLimit, double upperLimit);
+		void overrideBeamFile(std::string beamFileName) { _beamFileName = beamFileName; }
 
 		static bool debug() { return _debug; }
 		static void setDebug(bool debug = true) { _debug = debug; }
@@ -44,6 +45,8 @@ namespace rpwa {
 		rpwa::beamAndVertexGenerator* _beamAndVertexGenerator;
 
 		rpwa::massAndTPrimePicker* _pickerFunction;
+
+		std::string _beamFileName;
 
 		bool _reactionFileRead;
 
