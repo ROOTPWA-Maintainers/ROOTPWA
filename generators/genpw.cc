@@ -64,6 +64,7 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        -M #       lower boundary of mass range in MeV (overwrites values from config file)" << endl
 	     << "        -B #       width of mass bin in MeV" << endl
 	     << "        --beamfile <file> path to beam file (overrides values from config file)" << endl
+	     << "        --noRandomBeam    read the events from the beamfile sequentially" << endl
 	     << endl
 	     << "A comment regarding the disabled features: these options have been taken out\n"
 	     << "for the time being. If you want to get them back, check GIT revision\n"
@@ -91,10 +92,12 @@ int main(int argc, char** argv)
 	bool overrideMass = false;
 	bool writeComgeantOut = false;
 	string beamfileNameOverride = "";
+	int readBeamfileSequentially = 0;
 
 	static struct option longOptions[] =
 	    {
 	         { "beamfile", required_argument, 0, 10000 },
+	         { "noRandomBeam", no_argument, &readBeamfileSequentially, 1 },
 	         { 0, 0, 0, 0 }
 	    };
 
@@ -103,6 +106,10 @@ int main(int argc, char** argv)
 	int optionIndex;
 	while ((c = getopt_long(argc, argv, "n:a:o:p:w:k:i:r:m:s:M:B:hc", longOptions, &optionIndex)) != -1) {
 		switch (c) {
+			case 0:
+				if(longOptions[optionIndex].flag != 0) {
+					break;
+				}
 			case 'n':
 				nEvents = atoi(optarg);
 				break;
@@ -202,6 +209,9 @@ int main(int argc, char** argv)
 
 	if(overrideMass) {
 		generatorMgr.overrideMassRange(massLower / 1000., (massLower + massBinWidth) / 1000.);
+	}
+	if(readBeamfileSequentially == 1) {
+		generatorMgr.readBeamfileSequentially();
 	}
 
 	if(outputEvtFileName == "") {

@@ -317,9 +317,24 @@ bool generatorManager::initializeGenerator() {
 void generatorManager::overrideMassRange(double lowerLimit, double upperLimit) {
 
 	if(not _reactionFileRead) {
-		printErr << "reaction file has to been read to override the mass range." << endl;
+		printErr << "reaction file has to have been read to override the mass range." << endl;
 		throw;
 	}
 	_pickerFunction->overrideMassRange(lowerLimit, upperLimit);
+
+}
+
+
+void generatorManager::readBeamfileSequentially(bool readBeamfileSequentially) {
+
+	if(not _reactionFileRead) {
+		printErr << "reaction file has to have been read to set this option (readBeamfileSequentially)." << endl;
+		throw;
+	}
+	if(not _beamAndVertexGenerator) {
+		printErr << "beam and vertex package seems to be disabled, unable to read beamfile sequentially." << endl;
+		throw;
+	}
+	_beamAndVertexGenerator->setBeamfileSequentialReading();
 
 }

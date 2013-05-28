@@ -14,12 +14,14 @@ using namespace rpwa;
 
 
 beamAndVertexGenerator::beamAndVertexGenerator()
-	: _simpleSimulation(true),
-	  _beamFileName(""),
-	  _rootFile(NULL),
-	  _beamTree(NULL),
+	: _beamFileName(""),
 	  _vertex(TVector3(0., 0., 0.)),
 	  _beam(TLorentzVector(0., 0., 0., 0.)),
+	  _readBeamfileSequentially(false),
+	  _currentBeamfileEntry(0),
+	  _simpleSimulation(true),
+	  _rootFile(NULL),
+	  _beamTree(NULL),
 	  _vertexX(pair<double, double>(0., 0.)),
 	  _vertexY(pair<double, double>(0., 0.)),
 	  _beamMomentumX(pair<double, double>(0., 0.)),
@@ -136,8 +138,12 @@ bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
 		_beam.SetXYZT(px, py, pz, EBeam);
 	} else {
 		long nEntries = _beamTree->GetEntries();
-		long entry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
-		_beamTree->GetEntry(entry);
+		if(not _readBeamfileSequentially) {
+			_currentBeamfileEntry = (long)-randomGen->Uniform(-nEntries, 0); // because Uniform(a, b) is in ]a, b]
+			_beamTree->GetEntry(_currentBeamfileEntry);
+		} else {
+			_beamTree->GetEntry(_currentBeamfileEntry++);
+		}
 		if(_sigmasPresent and _sigmaScalingFactor != 0.) {
 			_vertex.SetXYZ(randomGen->Gaus(_vertexX.first, _sigmaScalingFactor * _vertexX.second),
 			               randomGen->Gaus(_vertexY.first, _sigmaScalingFactor * _vertexY.second),

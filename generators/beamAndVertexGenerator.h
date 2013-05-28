@@ -28,14 +28,15 @@ namespace rpwa {
 		virtual ~beamAndVertexGenerator();
 
 		virtual bool loadBeamFile(const std::string& beamFileName);
+		virtual void setBeamfileSequentialReading(bool sequentialReading = true) { _readBeamfileSequentially = sequentialReading; }
 
 		virtual bool check();
 
 		virtual bool event(const rpwa::Target& target, const rpwa::Beam& beam);
 
-		const TVector3& getVertex() { return _vertex; }
+		virtual const TVector3& getVertex() { return _vertex; }
 
-		const TLorentzVector& getBeam() { return _beam; }
+		virtual const TLorentzVector& getBeam() { return _beam; }
 
 		void setSigmaScalingFactor(const double& scalingFactor) { _sigmaScalingFactor = scalingFactor; }
 
@@ -45,15 +46,20 @@ namespace rpwa {
 
 		virtual double getVertexZ(const rpwa::Target& target) const;
 
+		std::string _beamFileName;
+
+		TVector3 _vertex;
+		TLorentzVector _beam;
+
+		bool _readBeamfileSequentially;
+		long _currentBeamfileEntry;
+
 	  private:
 
 		bool _simpleSimulation;
 
-		std::string _beamFileName;
 		TFile* _rootFile;
 		TTree* _beamTree;
-		TVector3 _vertex;
-		TLorentzVector _beam;
 
 		// pairs with [value, sigma]
 		std::pair<double, double> _vertexX;
