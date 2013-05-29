@@ -181,7 +181,7 @@ double beamAndVertexGenerator::getVertexZ(const Target& target) const {
 
 ostream& beamAndVertexGenerator::print(ostream& out) {
 
-	out << "Beam package information: " << endl;
+	out << "Beam package information:" << endl;
 	out << "    Using beam file ................ ";
 	if(_simpleSimulation) {
 		out << "No" << endl;

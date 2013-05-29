@@ -34,6 +34,8 @@ namespace rpwa {
 		void overrideBeamFile(std::string beamFileName) { _beamFileName = beamFileName; }
 		void readBeamfileSequentially(bool readBeamfileSequentially = true);
 
+		std::ostream& print(std::ostream& out);
+
 		static bool debug() { return _debug; }
 		static void setDebug(bool debug = true) { _debug = debug; }
 

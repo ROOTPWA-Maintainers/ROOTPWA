@@ -229,6 +229,8 @@ int main(int argc, char** argv)
 		outputComgeantFile.open(outputComgeantFileName.c_str());
 	}
 
+	generatorMgr.print(printInfo);
+
 	boost::progress_display* progressIndicator = new boost::progress_display(nEvents, cout, "");
 
 	unsigned int attempts = 0;

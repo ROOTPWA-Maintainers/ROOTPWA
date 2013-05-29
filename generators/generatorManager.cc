@@ -98,7 +98,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			_beam.DyDz = (*configBeam)["DyDz"];
 			_beam.DyDzSigma = (*configBeam)["DyDzSigma"];
 			printSucc << "initialized beam parameters." << endl;
-			_beam.print(printInfo);
 		}
 	} // Finished with the beam settings.
 
@@ -152,7 +151,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		_target.length = (*configTarget)["length"];
 		_target.interactionLength = interactionLength;
 		printSucc << "initialized target parameters." << endl;
-		_target.print(printInfo);
 	}// Finished with the target settings.
 
 	// Read the settings for the beam simulation.
@@ -199,7 +197,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			printInfo << "beam package disabled." << endl;
 		}
 	} // Finished with the beam simulation settings.
-	_beamAndVertexGenerator->print(printInfo);
 
 	// Read the final state parameters.
 	const Setting* configFinalState = findLibConfigGroup(configRoot, "finalstate");
@@ -233,7 +230,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			_finalState.particles.push_back(*particle);
 		}
 		printSucc << "initialized final state parameters." << endl;
-		_finalState.print(printInfo);
 	} // Finished final state parameters.
 
 	// Get t'- and m-dependence.
@@ -268,7 +264,6 @@ bool generatorManager::readReactionFile(const string& fileName) {
 			return false;
 		}
 		printSucc << "initialized t' and mass dependence '" << functionName << "'." << endl;
-		_pickerFunction->print(printInfo);
 	} // Finished with t'- and m-dependence.
 
 	// Features which have been removed during clean-up.
@@ -336,5 +331,22 @@ void generatorManager::readBeamfileSequentially(bool readBeamfileSequentially) {
 		throw;
 	}
 	_beamAndVertexGenerator->setBeamfileSequentialReading(readBeamfileSequentially);
+
+}
+
+
+ostream& generatorManager::print(ostream& out) {
+
+	out << "generatorManager parameter collection:" << endl;
+	_beam.print(out);
+	_target.print(out);
+	if(_beamAndVertexGenerator) {
+		_beamAndVertexGenerator->print(out);
+	}
+	_finalState.print(out);
+	if(_pickerFunction) {
+		_pickerFunction->print(out);
+	}
+	return out;
 
 }
