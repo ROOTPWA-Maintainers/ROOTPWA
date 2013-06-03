@@ -29,6 +29,7 @@ namespace rpwa {
 
 		virtual bool loadBeamFile(const std::string& beamFileName);
 		virtual void setBeamfileSequentialReading(bool sequentialReading = true) { _readBeamfileSequentially = sequentialReading; }
+		virtual void randomizeBeamfileStartingPosition();
 
 		virtual bool check();
 

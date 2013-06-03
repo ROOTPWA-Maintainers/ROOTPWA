@@ -106,8 +106,15 @@ diffractivePhaseSpace::event()
 
 	unsigned long int attempts = 0;
 	// construct primary vertex and beam
-	assert(_beamAndVertexGenerator);
-	assert(_beamAndVertexGenerator->event(_target, _beam));
+	if(not _beamAndVertexGenerator) {
+		printErr << "beam and vertex generator has not been set. Aborting..." << endl;
+		throw;
+	}
+	if(not _beamAndVertexGenerator->event(_target, _beam)) {
+		printErr << "could not generate vertex/beam. Aborting..." << endl;
+		throw;
+	}
+
 	_vertex = _beamAndVertexGenerator->getVertex();
 	_beam.particle.setLzVec(_beamAndVertexGenerator->getBeam());
 
@@ -132,7 +139,10 @@ diffractivePhaseSpace::event()
 	double tPrime;
 	double xMass;
 	do {
-		assert((*_pickerFunction)(xMass, tPrime));
+		if(not (*_pickerFunction)(xMass, tPrime)) {
+			printErr << "could not generate X mass and t'. Aborting..." << endl;
+			throw;
+		}
 	} while(xMass + _target.recoilParticle.mass() > overallCm.M());
 	// t' should be negative (why?)
 	tPrime *= -1;
@@ -208,7 +218,10 @@ diffractivePhaseSpace::event()
 	// event was accepted
 
 	const std::vector<TLorentzVector>& daughters = _phaseSpace.daughters();
-	assert(daughters.size() == _decayProducts.size());
+	if(daughters.size() != _decayProducts.size()) {
+		printErr << "size mismatch between daughters and _decayProducts. Aborting..." << endl;
+		throw;
+	}
 	for(unsigned int i = 0; i < daughters.size(); ++i) {
 		_decayProducts[i].setLzVec(daughters[i]);
 	}

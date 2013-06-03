@@ -64,7 +64,8 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        -M #       lower boundary of mass range in MeV (overwrites values from config file)" << endl
 	     << "        -B #       width of mass bin in MeV" << endl
 	     << "        --beamfile <file> path to beam file (overrides values from config file)" << endl
-	     << "        --noRandomBeam    read the events from the beamfile sequentially" << endl
+	     << "        --noRandomBeam     read the events from the beamfile sequentially" << endl
+	     << "        --randomBlockBeam  like --noRandomBeam but with random starting position" << endl
 	     << endl
 	     << "A comment regarding the disabled features: these options have been taken out\n"
 	     << "for the time being. If you want to get them back, check GIT revision\n"
@@ -93,11 +94,13 @@ int main(int argc, char** argv)
 	bool writeComgeantOut = false;
 	string beamfileNameOverride = "";
 	int readBeamfileSequentially = 0;
+	int readBeamfileRandomBlock = 0;
 
 	static struct option longOptions[] =
 	    {
 	         { "beamfile", required_argument, 0, 10000 },
 	         { "noRandomBeam", no_argument, &readBeamfileSequentially, 1 },
+	         { "randomBlockBeam", no_argument, &readBeamfileRandomBlock, 1 },
 	         { 0, 0, 0, 0 }
 	    };
 
@@ -212,6 +215,10 @@ int main(int argc, char** argv)
 	}
 	if(readBeamfileSequentially == 1) {
 		generatorMgr.readBeamfileSequentially();
+	}
+	if(readBeamfileRandomBlock == 1) {
+		generatorMgr.readBeamfileSequentially();
+		generatorMgr.randomizeBeamfileStartingPosition();
 	}
 
 	if(outputEvtFileName == "") {

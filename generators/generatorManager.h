@@ -33,6 +33,7 @@ namespace rpwa {
 		void overrideMassRange(double lowerLimit, double upperLimit);
 		void overrideBeamFile(std::string beamFileName) { _beamFileName = beamFileName; }
 		void readBeamfileSequentially(bool readBeamfileSequentially = true);
+		void randomizeBeamfileStartingPosition();
 
 		std::ostream& print(std::ostream& out);
 

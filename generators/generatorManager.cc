@@ -335,6 +335,21 @@ void generatorManager::readBeamfileSequentially(bool readBeamfileSequentially) {
 }
 
 
+void generatorManager::randomizeBeamfileStartingPosition() {
+
+	if(not _reactionFileRead) {
+		printErr << "reaction file has to have been read to set this option (readBeamfileSequentially)." << endl;
+		throw;
+	}
+	if(not _beamAndVertexGenerator) {
+		printErr << "beam and vertex package seems to be disabled, unable to read beamfile sequentially." << endl;
+		throw;
+	}
+	_beamAndVertexGenerator->randomizeBeamfileStartingPosition();
+
+}
+
+
 ostream& generatorManager::print(ostream& out) {
 
 	out << "generatorManager parameter collection:" << endl;

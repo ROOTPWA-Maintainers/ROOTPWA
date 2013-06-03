@@ -105,6 +105,18 @@ beamAndVertexGenerator::~beamAndVertexGenerator() {
 }
 
 
+void beamAndVertexGenerator::randomizeBeamfileStartingPosition() {
+
+	if(not _readBeamfileSequentially) {
+		printWarn << "randomizing beamfile starting position without "
+		          << "sequential beamfile reading has no effect." << endl;
+	}
+	TRandom3* randomGen = randomNumberGenerator::instance()->getGenerator();
+	_currentBeamfileEntry = (long)-randomGen->Uniform(-_beamTree->GetEntries(), 0);
+
+}
+
+
 bool beamAndVertexGenerator::check() {
 	if(_beamTree or _simpleSimulation) {
 		return true;
@@ -211,6 +223,7 @@ ostream& beamAndVertexGenerator::print(ostream& out) {
 	out << "    Read beam file sequentially .... ";
 	if(_readBeamfileSequentially) {
 		out << "Yes" << endl;
+		out << "    Beamfile starting position ..... " << _currentBeamfileEntry << endl;
 	} else {
 		out << "No" << endl;
 	}

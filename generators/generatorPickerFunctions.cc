@@ -131,7 +131,10 @@ bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tP
 		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
 		return false;
 	}
-	assert(not _tSlopesForMassBins.empty());
+	if(_tSlopesForMassBins.empty()) {
+		printErr << "no t' slopes to generate t' from." << endl;
+		return false;
+	}
 	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
 	invariantMass = randomNumbers->Uniform(_massRange.first, _massRange.second);
 	double tPrimeSlope = -1.;
