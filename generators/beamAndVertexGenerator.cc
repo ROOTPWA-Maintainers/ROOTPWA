@@ -160,16 +160,20 @@ bool beamAndVertexGenerator::event(const Target& target, const Beam& beam) {
 			}
 			_beamTree->GetEntry(_currentBeamfileEntry++);
 		}
+		double dx = _beamMomentumX.first / _beamMomentumZ.first;
+		double dy = _beamMomentumY.first / _beamMomentumZ.first;
+		double projectedVertexX = _vertexX.first + dx * z;
+		double projectedVertexY = _vertexY.first + dy * z;
 		if(_sigmasPresent and _sigmaScalingFactor != 0.) {
-			_vertex.SetXYZ(randomGen->Gaus(_vertexX.first, _sigmaScalingFactor * _vertexX.second),
-			               randomGen->Gaus(_vertexY.first, _sigmaScalingFactor * _vertexY.second),
+			_vertex.SetXYZ(randomGen->Gaus(projectedVertexX, _sigmaScalingFactor * _vertexX.second),
+			               randomGen->Gaus(projectedVertexY, _sigmaScalingFactor * _vertexY.second),
 			               z);
 			_beam.SetXYZM(randomGen->Gaus(_beamMomentumX.first, _sigmaScalingFactor * _beamMomentumX.second),
 			              randomGen->Gaus(_beamMomentumY.first, _sigmaScalingFactor * _beamMomentumY.second),
 			              randomGen->Gaus(_beamMomentumZ.first, _sigmaScalingFactor * _beamMomentumZ.second),
 						  beam.particle.mass());
 		} else {
-			_vertex.SetXYZ(_vertexX.first, _vertexY.first, z);
+			_vertex.SetXYZ(projectedVertexX, projectedVertexY, z);
 			_beam.SetXYZM(_beamMomentumX.first,
 			              _beamMomentumY.first,
 			              _beamMomentumZ.first,
