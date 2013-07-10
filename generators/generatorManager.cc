@@ -251,6 +251,8 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		configTAndMDependence->lookupValue("function", functionName);
 		if(functionName == "uniformMassExponentialT") {
 			_pickerFunction = new uniformMassExponentialTPicker();
+		} else if(functionName == "uniformMassMultiExponentialT") {
+			_pickerFunction = new uniformMassMultiExponentialTPicker();
 		} else if(functionName == "polynomialMassAndTPrime") {
 			_pickerFunction = new polynomialMassAndTPrimeSlopePicker();
 		} else {
