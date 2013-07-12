@@ -51,12 +51,14 @@ namespace rpwa {
 	                       const double m2,  // mass of daughter particle 2
 	                       const bool   allowSubThr = false)  // if set sub-threshold decays with negative return values are allowed
 	{
-		if (not allowSubThr and (M < m1 + m2)) {
+		const double mSum  = m1 + m2;
+		if (not allowSubThr and (M < mSum)) {
 			printErr << "mother mass " << M << " GeV/c^2 is smaller than sum of daughter masses "
 			         << m1 << " + " << m2 << " GeV/c^2. this should never happen. aborting." << std::endl;
 			throw;
 		}
-		return (M - m1 - m2) * (M + m1 + m2) * (M - m1 + m2) * (M + m1 - m2) / (4 * M * M);
+		const double mDiff = m1 - m2;
+		return (M - mSum) * (M + mSum) * (M - mDiff) * (M + mDiff) / (4 * M * M);
 	}
 
 

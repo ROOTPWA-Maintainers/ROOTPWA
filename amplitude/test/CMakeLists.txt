@@ -45,14 +45,15 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
-make_executable(testParticle         testParticle.cc         "${AMPLITUDE_LIBS}")
-make_executable(testDecayTopology    testDecayTopology.cc    "${AMPLITUDE_LIBS}")
-make_executable(testWaveDescription  testWaveDescription.cc  "${AMPLITUDE_LIBS}")
-make_executable(testWaveSetGenerator testWaveSetGenerator.cc "${AMPLITUDE_LIBS}")
-make_executable(testAmplitude        testAmplitude.cc        "${AMPLITUDE_LIBS}")
-make_executable(testAmplitudeTree    testAmplitudeTree.cc    "${AMPLITUDE_LIBS}")
-make_executable(testIsospinSym       testIsospinSym.cc       "${AMPLITUDE_LIBS}")
-make_executable(testIntegral         testIntegral.cc         "${AMPLITUDE_LIBS}")
+make_executable(testParticle                testParticle.cc                "${AMPLITUDE_LIBS}")
+make_executable(testDecayTopology           testDecayTopology.cc           "${AMPLITUDE_LIBS}")
+make_executable(testWaveDescription         testWaveDescription.cc         "${AMPLITUDE_LIBS}")
+make_executable(testWaveSetGenerator        testWaveSetGenerator.cc        "${AMPLITUDE_LIBS}")
+make_executable(testAmplitude               testAmplitude.cc               "${AMPLITUDE_LIBS}")
+make_executable(testAmplitudeTree           testAmplitudeTree.cc           "${AMPLITUDE_LIBS}")
+make_executable(testIsospinSym              testIsospinSym.cc              "${AMPLITUDE_LIBS}")
+make_executable(testIntegral                testIntegral.cc                "${AMPLITUDE_LIBS}")
+make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc "${AMPLITUDE_LIBS}")
 if(USE_PWA2000)
 	if(Boost_TIMER_FOUND)
 		make_executable(testMassDependence testMassDependence.cc
