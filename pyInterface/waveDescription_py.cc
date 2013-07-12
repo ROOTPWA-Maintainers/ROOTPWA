@@ -4,9 +4,9 @@ namespace bp = boost::python;
 
 namespace {
 
-	std::string waveDescription_printKeyFileContents(const rpwa::waveDescription& self) {
+	std::string waveDescription_printKeyFileContent(const rpwa::waveDescription& self) {
 		std::stringstream sstr;
-		self.printKeyFileContents(sstr);
+		self.printKeyFileContent(sstr);
 		return sstr.str();
 	};
 
@@ -52,10 +52,11 @@ void rpwa::py::exportWaveDescription() {
 	bp::class_<rpwa::waveDescription>("waveDescription")
 
 		.def("parseKeyFile", &rpwa::waveDescription::parseKeyFile)
+		.def("parseKeyFileContent", &rpwa::waveDescription::parseKeyFileContent)
 		.def("keyFileParsed", &rpwa::waveDescription::keyFileParsed)
 
-		.def("keyFileContents", &rpwa::waveDescription::keyFileContents)
-		.def("printKeyFileContents", &waveDescription_printKeyFileContents)
+		.def("keyFileContent", &rpwa::waveDescription::keyFileContent)
+		.def("printKeyFileContent", &waveDescription_printKeyFileContent)
 
 		.def(
 			"constructDecayTopology"

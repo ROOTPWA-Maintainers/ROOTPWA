@@ -73,14 +73,16 @@ namespace rpwa {
 #ifndef __CINT__
 
 		// construction of decay topology and amplitude objects
-		bool parseKeyFile (const std::string& keyFileName);    ///< parses key file
+		bool parseKeyFile       (const std::string& keyFileName   );    ///< parses key file
+		bool parseKeyFileContent(const std::string& keyFileContent);    ///< parses key file
 		bool keyFileParsed() const { return _keyFileParsed; }  ///< returns whether key file was successfully parsed
 
-		std::string keyFileContents() const { return _keyFileLocalCopy; }  ///< returns contents of key file
-		std::ostream& printKeyFileContents(std::ostream& out) const;  ///< prints key file contents with line numbers
+		std::string   keyFileContent() const { return _keyFileLocalCopy; }  ///< returns content of key file
+		std::ostream& printKeyFileContent(std::ostream&      out,
+		                                  const std::string& keyFileContent = "") const;  ///< prints key file content string with line numbers
 		bool constructDecayTopology(isobarDecayTopologyPtr& topo,
 		                            const bool              fromTemplate = false) const;  ///< construct isobar decay topology from keyfile
-		bool constructAmplitude(isobarAmplitudePtr& amplitude) const;   ///< construct isobar decay amplitude from keyfile
+		bool constructAmplitude(isobarAmplitudePtr& amplitude) const;  ///< construct isobar decay amplitude from keyfile
 		bool constructAmplitude(isobarAmplitudePtr&           amplitude,
 		                        const isobarDecayTopologyPtr& topo) const;  ///< construct isobar amplitude using existing decay topology
 
@@ -108,7 +110,9 @@ namespace rpwa {
 
 	private:
 
-		bool parseKeyFileLocalCopy();  ///< parses _keyFileLocalCopy string
+		bool readKeyFileIntoLocalCopy(const std::string& keyFileName);  ///< reads key file content into _keyFileLocalCopy string
+
+		bool parseKeyFileLocalCopy() { return parseKeyFileContent(_keyFileLocalCopy); }  ///< parses _keyFileLocalCopy string
 
 		// helper functions for construction of decay topology and ampltiude
 		static bool constructXParticle(const libconfig::Setting& XQnKey,
@@ -161,7 +165,7 @@ namespace rpwa {
 		libconfig::Config* _key;            //! ///< libConfig date structure constructed from key file
 		bool               _keyFileParsed;  //! ///< indicates whether key file was successfully parsed
 
-		std::string _keyFileLocalCopy;  ///< copy of keyfile contents; is written to .root file
+		std::string _keyFileLocalCopy;  ///< copy of keyfile content; is written to .root file
 
 		static bool _debug;  ///< if set to true, debug messages are printed
 		static std::map<std::string, std::string> isobars; ///< LaTeX names of isobars
@@ -198,7 +202,7 @@ namespace rpwa {
 			return false;
 		}
 		fclose(pipeWriteEnd);
-		// read keys from pipe  
+		// read keys from pipe
 		char         buf;
 		unsigned int countChar = 0;
 		while (read(pipeFileDescriptors[0], &buf, 1) > 0) {

@@ -131,7 +131,7 @@ waveDescription&
 waveDescription::operator =(const waveDescription& waveDesc)
 {
 	if (this != &waveDesc) {
-		TObject::operator   =(waveDesc);
+		TObject::operator =(waveDesc);
 		_key              = waveDesc._key;
 		_keyFileParsed    = waveDesc._keyFileParsed;
 		_keyFileLocalCopy = waveDesc._keyFileLocalCopy;
@@ -153,35 +153,55 @@ waveDescription::parseKeyFile(const string& keyFileName)
 		_key = 0;
 		return false;
 	}
-	// read key file contents into string
-	{
-		ifstream keyFile(keyFileName.c_str());
-		if (not keyFile or not keyFile.good()) {
-			printWarn << "cannot read from file '"  << keyFileName << "'" << endl;
-			return false;
-		}
-		_keyFileLocalCopy = "";
-		string line;
-		while(getline(keyFile, line))
-			_keyFileLocalCopy += line + "\n";
-	}
+	if (not readKeyFileIntoLocalCopy(keyFileName))
+		return false;
 	_keyFileParsed = true;
 	return true;
 }
 
 
-ostream&
-waveDescription::printKeyFileContents(ostream& out) const
+bool
+waveDescription::parseKeyFileContent(const string& keyFileContent)
 {
-	if (_keyFileLocalCopy != "") {
+	_keyFileParsed = false;
+	if (keyFileContent == "") {
+		printWarn << "empty key file content string. cannot construct decay topology." << endl;
+		return false;
+	}
+	if (not _key)
+		_key = new Config();
+	if (not parseLibConfigString(keyFileContent, *_key, _debug)) {
+		printWarn << "problems reading key file content string:" << endl;
+		printKeyFileContent(cout, keyFileContent);
+		cout << "    cannot construct decay topology." << endl;
+		delete _key;
+		_key = 0;
+		return false;
+	}
+	_keyFileLocalCopy = keyFileContent;
+	_keyFileParsed    = true;
+	return true;
+}
+
+
+ostream&
+waveDescription::printKeyFileContent(ostream&      out,
+                                     const string& keyFileContent) const
+{
+	string k;
+	if (keyFileContent != "")
+		k = keyFileContent;
+	else
+		k = _keyFileLocalCopy;
+	if (k != "") {
 		typedef tokenizer<char_separator<char> > tokenizer;
 		char_separator<char> separator("\n");
-		tokenizer            keyFileLines(_keyFileLocalCopy, separator);
+		tokenizer            keyFileLines(k, separator);
 		unsigned int         lineNumber = 0;
 		for (tokenizer::iterator i = keyFileLines.begin(); i != keyFileLines.end(); ++i)
 			out << setw(5) << ++lineNumber << "  " << *i << endl;
 	} else
-		out << "key file contents string is empty" << endl;
+		out << "key file content string is empty" << endl;
 	return out;
 }
 
@@ -256,9 +276,6 @@ waveDescription::constructDecayTopology(isobarDecayTopologyPtr& topo,
 	// backward compatibility: allow sloppy key files, where charges of
 	// isobars are not explicitely defined
 	topo->calcIsobarCharges();
-	//!!! user should correctly define quantum numbers
-	//topo->calcIsobarBaryonNmbs();
-	//topo->productionVertex()->setXFlavorQN();  // sets baryon nmb, S, C, and B of X
 
 	printSucc << "constructed decay topology from key file" << endl;
 	return true;
@@ -457,20 +474,18 @@ waveDescription::waveLaTeXFromTopology(isobarDecayTopology         topo,
 
 
 bool
-waveDescription::parseKeyFileLocalCopy()
+waveDescription::readKeyFileIntoLocalCopy(const std::string& keyFileName)
 {
-	_keyFileParsed = false;
-	if (not _key)
-		_key = new Config();
-	if (not parseLibConfigString(_keyFileLocalCopy, *_key, _debug)) {
-		printWarn << "problems parsing key file string:" << endl;
-		printKeyFileContents(cout);
-		cout  << "    cannot construct decay topology." << endl;
-		delete _key;
-		_key = 0;
+	// read key file content into string
+	ifstream keyFile(keyFileName.c_str());
+	if (not keyFile or not keyFile.good()) {
+		printWarn << "cannot read from file '"  << keyFileName << "'" << endl;
 		return false;
 	}
-	_keyFileParsed = true;
+	_keyFileLocalCopy = "";
+	string line;
+	while(getline(keyFile, line))
+		_keyFileLocalCopy += line + "\n";
 	return true;
 }
 

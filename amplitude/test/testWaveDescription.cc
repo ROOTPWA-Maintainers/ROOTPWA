@@ -81,7 +81,7 @@ main(int argc, char** argv)
 					printErr << "cannot find wave description '" << waveName << "'" << endl;
 				else
 					printInfo << "key file:" << endl;
-				waveDesc2->printKeyFileContents(cout);
+				waveDesc2->printKeyFileContent(cout);
 				waveDesc2->constructAmplitude(amp);
 				waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *amp);  // test key file creation
 				//waveDesc2->writeKeyFile("testWaveDescriptionWrite2.key", *(amp->decayTopology()));  // test key file creation

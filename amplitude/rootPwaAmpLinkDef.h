@@ -59,7 +59,7 @@
 	code="{ newObj->rebuildSubAmpLabelMap(); }"
 #pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class rpwa::ampIntegralMatrix-;
-#endif 
+#endif
 
 
 #endif
