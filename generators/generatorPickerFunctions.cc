@@ -87,7 +87,8 @@ uniformMassExponentialTPicker::uniformMassExponentialTPicker()
 
 uniformMassExponentialTPicker::uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker)
 	: massAndTPrimePicker(picker),
-	  _tSlopesForMassBins(picker._tSlopesForMassBins) { }
+	  _tSlopesForMassBins(picker._tSlopesForMassBins),
+	  _nExponential(picker._nExponential) { }
 
 
 massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
@@ -96,121 +97,7 @@ massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
 }
 
 
-bool uniformMassExponentialTPicker::init(const Setting& setting) {
-	if(not massAndTPrimePicker::initTPrimeAndMassRanges(setting)) {
-		printErr << "could not initialize t' or mass range settings in 'uniformMassExponentialT'." << endl;
-		return false;
-	}
-	map < string, Setting::Type > mandatoryArguments;
-	insert (mandatoryArguments)
-		("tSlopes", Setting::TypeArray)
-		("invariantMasses", Setting::TypeArray);
-	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
-		printErr << "found an invalid setting for function 'uniformMassExponentialT'." << endl;
-		return false;
-	}
-	if(setting["invariantMasses"].getLength() != setting["tSlopes"].getLength()) {
-		printErr << "'invariantMasses' and 'tSlopes' have to be arrays of the same length." << endl;
-		return false;
-	}
-	if(not (setting["invariantMasses"][0].isNumber()
-			&& setting["tSlopes"][0].isNumber())) {
-		printErr << "'invariantMasses' and 'tSlopes' have to be array of numbers." << endl;
-		return false;
-	}
-	for(int i = 0; i < setting["invariantMasses"].getLength(); ++i) {
-		_tSlopesForMassBins.push_back(pair<double, double>(setting["invariantMasses"][i], setting["tSlopes"][i]));
-	}
-	_initialized = true;
-	return true;
-}
-
-
-bool uniformMassExponentialTPicker::operator()(double& invariantMass, double& tPrime) {
-	if(not _initialized) {
-		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
-		return false;
-	}
-	if(_tSlopesForMassBins.empty()) {
-		printErr << "no t' slopes to generate t' from." << endl;
-		return false;
-	}
-	TRandom3* randomNumbers = randomNumberGenerator::instance()->getGenerator();
-	invariantMass = randomNumbers->Uniform(_massRange.first, _massRange.second);
-	double tPrimeSlope = -1.;
-	if(_tSlopesForMassBins.size() == 1) {
-		tPrimeSlope = _tSlopesForMassBins[0].second;
-	} else {
-		if(invariantMass > _tSlopesForMassBins[_tSlopesForMassBins.size() - 1].first) {
-			tPrimeSlope = _tSlopesForMassBins[_tSlopesForMassBins.size() - 1].second;
-		} else if(invariantMass < _tSlopesForMassBins[0].first) {
-			tPrimeSlope = _tSlopesForMassBins[0].second;
-		} else {
-			unsigned int i = 0;
-			for(; (invariantMass > _tSlopesForMassBins[i].first); ++i);
-			double m2 = _tSlopesForMassBins[i].first;
-			double m1 = _tSlopesForMassBins[i-1].first;
-			double t2 = _tSlopesForMassBins[i].second;
-			double t1 = _tSlopesForMassBins[i-1].second;
-			tPrimeSlope = t1 + ((t2 - t1)/(m2 - m1) * (invariantMass - m1));
-		}
-	}
-	if(tPrimeSlope < 0) {
-		printErr << "error when calculating the t'-slope." << endl;
-		return false;
-	}
-	do {
-		tPrime = randomNumbers->Exp(1. / tPrimeSlope);
-	} while(tPrime < _tPrimeRange.first || tPrime > _tPrimeRange.second);
-	return true;
-}
-
-
-ostream& uniformMassExponentialTPicker::print(ostream& out) {
-	out << "'uniformMassExponentialT' weighter parameters:" << endl;
-	out << "    minimum Mass ... " << _massRange.first << endl;
-	out << "    maximum Mass ... " << _massRange.second << endl;
-	out << "    minimum t' ..... " << _tPrimeRange.first << endl;
-	out << "    maximum t' ..... " << _tPrimeRange.second << endl;
-	if(_tSlopesForMassBins.size() == 1) {
-		out << "    t' slope ....... " << _tSlopesForMassBins[0].second	<< endl;
-	} else {
-		unsigned int nSlots = _tSlopesForMassBins.size();
-		out << "    t' slopes for interpolation:" << endl;
-		out << "        mass < " << _tSlopesForMassBins[0].first
-		    << " -> t' slope = " << _tSlopesForMassBins[0].second
-		    << endl;
-		for(unsigned int i = 0; i < nSlots; ++i) {
-			stringstream strStr;
-			strStr << "        t' slope(mass = " << _tSlopesForMassBins[i].first << ") ";
-			out << setw(35) << left << strStr.str()
-			    << setw(0) << "= " << _tSlopesForMassBins[i].second << endl;
-		}
-		out << "        mass >= " << _tSlopesForMassBins[nSlots - 1].first
-		    << " -> t' slope = " << _tSlopesForMassBins[nSlots - 1].second
-		    << endl;
-	}
-	return out;
-}
-
-
-uniformMassMultiExponentialTPicker::uniformMassMultiExponentialTPicker()
-	: massAndTPrimePicker() { }
-
-
-uniformMassMultiExponentialTPicker::uniformMassMultiExponentialTPicker(const uniformMassMultiExponentialTPicker& picker)
-	: massAndTPrimePicker(picker),
-	  _tSlopesForMassBins(picker._tSlopesForMassBins),
-	  _nExponential(picker._nExponential) { }
-
-
-massAndTPrimePicker* uniformMassMultiExponentialTPicker::clone() const {
-	massAndTPrimePicker* retval = new uniformMassMultiExponentialTPicker(*this);
-	return retval;
-}
-
-
-bool uniformMassMultiExponentialTPicker::init(const libconfig::Setting& setting) {
+bool uniformMassExponentialTPicker::init(const libconfig::Setting& setting) {
 	if(not massAndTPrimePicker::initTPrimeAndMassRanges(setting)) {
 		printErr << "could not initialize t' or mass range settings in 'uniformMassExponentialT'." << endl;
 		return false;
@@ -264,7 +151,7 @@ bool uniformMassMultiExponentialTPicker::init(const libconfig::Setting& setting)
 			}
 		} else {
 			param.push_back(setting["tSlopes"][i]);
-		} 
+		}
 		// check parameters for correctness
 		for(unsigned int j = 0; j < _nExponential; ++j) {
 			if(param[2*j] >= 0.) {
@@ -289,7 +176,7 @@ bool uniformMassMultiExponentialTPicker::init(const libconfig::Setting& setting)
 }
 
 
-bool uniformMassMultiExponentialTPicker::operator() (double& invariantMass, double& tPrime) {
+bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& tPrime) {
 	if(not _initialized) {
 		printErr << "trying to use an uninitialized massAndTPrimePicker." << endl;
 		return false;
@@ -401,7 +288,7 @@ bool uniformMassMultiExponentialTPicker::operator() (double& invariantMass, doub
 }
 
 
-ostream& uniformMassMultiExponentialTPicker::print(ostream& out) {
+ostream& uniformMassExponentialTPicker::print(ostream& out) {
 	out << "'uniformMassMultiExponentialT' weighter parameters:" << endl;
 	out << "    minimum Mass ... " << _massRange.first << endl;
 	out << "    maximum Mass ... " << _massRange.second << endl;
@@ -436,7 +323,7 @@ ostream& uniformMassMultiExponentialTPicker::print(ostream& out) {
 }
 
 
-ostream& uniformMassMultiExponentialTPicker::printSlice(ostream& out, const vector<double>& param) {
+ostream& uniformMassExponentialTPicker::printSlice(ostream& out, const vector<double>& param) {
 	out << "[";
 	for(size_t i = 0; i < param.size(); ++i) {
 		if(i != 0) {

@@ -65,27 +65,6 @@ namespace rpwa {
 
 	  private:
 
-		std::vector<std::pair<double, double> > _tSlopesForMassBins;
-
-	};
-
-	class uniformMassMultiExponentialTPicker : public massAndTPrimePicker {
-
-	  public:
-
-		uniformMassMultiExponentialTPicker();
-		uniformMassMultiExponentialTPicker(const uniformMassMultiExponentialTPicker& picker);
-		virtual ~uniformMassMultiExponentialTPicker() { }
-		virtual massAndTPrimePicker* clone() const;
-
-		virtual bool init(const libconfig::Setting& setting);
-
-		virtual bool operator() (double& invariantMass, double& tPrime);
-
-		virtual std::ostream& print(std::ostream& out);
-
-	  private:
-
 		virtual std::ostream& printSlice(std::ostream& out, const std::vector<double>& param);
 
 		std::map<double, std::vector<double> > _tSlopesForMassBins;
