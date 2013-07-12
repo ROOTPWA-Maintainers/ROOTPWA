@@ -250,13 +250,13 @@ bool uniformMassMultiExponentialTPicker::init(const libconfig::Setting& setting)
 	for(int i = 0; i < setting["invariantMasses"].getLength(); ++i) {
 		vector<double> param;
 		if(tArray && not setting["tSlopes"][i].isArray()) {
-			printErr << "all entries of 'tSlopes have to either number or array of numbers." << endl;
+			printErr << "all entries of 'tSlopes' have to be either numbers or arrays of numbers." << endl;
 			return false;
 		}
 		if(tArray) {
 			unsigned int nExponential = (setting["tSlopes"][i].getLength()+1) / 2;
 			if(nExponential != _nExponential) {
-				printErr << "all entries of 'tSlopes have to be arrays of the same length" << endl;
+				printErr << "all entries of 'tSlopes' have to be arrays of the same length" << endl;
 				return false;
 			}
 			for(int j = 0; j < setting["tSlopes"][i].getLength(); ++j) {
@@ -264,6 +264,23 @@ bool uniformMassMultiExponentialTPicker::init(const libconfig::Setting& setting)
 			}
 		} else {
 			param.push_back(setting["tSlopes"][i]);
+		} 
+		// check parameters for correctness
+		for(unsigned int j = 0; j < _nExponential; ++j) {
+			if(param[2*j] >= 0.) {
+				const double mass = setting["invariantMasses"][i];
+				printErr << "while reading 'tSlopes' for invariant mass " << mass << ": "
+				         << "parameter " << 2*j << " (current value = " << param[2*j] << ") has to be smaller than zero." << endl;
+				return false;
+			}
+			if(j > 0) {
+				if(param[2*j-1] < 0.) {
+					const double mass = setting["invariantMasses"][i];
+					printErr << "while reading 'tSlopes' for invariant mass " << mass << ": "
+					         << "parameter " << 2*j-1 << " (current value = " << param[2*j-1] << ") has to be larger than or equal to zero." << endl;
+					return false;
+				}
+			}
 		}
 		_tSlopesForMassBins.insert(pair<double, vector<double> >(setting["invariantMasses"][i], param));
 	}
@@ -330,47 +347,55 @@ bool uniformMassMultiExponentialTPicker::operator() (double& invariantMass, doub
 		Fmin += param[2*i-1] * exp(param[2*i] * _tPrimeRange.first) / param[2*i];
 		Fmax += param[2*i-1] * exp(param[2*i] * _tPrimeRange.second) / param[2*i];
 	}
-	tPrime = 0.;
-	const double r = randomNumbers->Uniform();
 	bool done = false;
-	unsigned int steps = 0;
-	while(not done) {
-		// calculate g (here: F) and g' (here: f)
-		double Ft = exp(param[0] * tPrime) / param[0];
-		double ft = exp(param[0] * tPrime);
-		for(unsigned int i = 1; i < _nExponential; ++i) {
-			Ft += param[2*i-1] * exp(param[2*i] * tPrime) / param[2*i];
-			ft += param[2*i-1] * exp(param[2*i] * tPrime);
+	unsigned int restarts = 0;
+	while (not done) {
+		tPrime = 0.;
+		const double r = randomNumbers->Uniform();
+		unsigned int steps = 0;
+		while(not done) {
+			// calculate g (here: F) and g' (here: f)
+			double Ft = exp(param[0] * tPrime) / param[0];
+			double ft = exp(param[0] * tPrime);
+			for(unsigned int i = 1; i < _nExponential; ++i) {
+				Ft += param[2*i-1] * exp(param[2*i] * tPrime) / param[2*i];
+				ft += param[2*i-1] * exp(param[2*i] * tPrime);
+			}
+			// check whether the current value for tPrime is already okay
+			const double errF = r*(Fmax-Fmin)*numeric_limits<double>::epsilon();
+			const double diffF = (Ft-Fmin) - r*(Fmax-Fmin);
+			if(abs(diffF) < 10.*errF) {
+				done = true;
+				break;
+			}
+			const double errU = tPrime*numeric_limits<double>::epsilon();
+			const double update = (Ft - r*Fmax - (1-r)*Fmin) / ft;
+			if(abs(update) < 10.*errU) {
+				done = true;
+				break;
+			}
+			if(steps >= 50) {
+				printWarn << "t' could not be found in " << steps << " steps:" << endl
+				          << "\t\t r*(Fmax-Fmin) = " << r*(Fmax-Fmin) << endl
+				          << "\t\t     (Ft-Fmin) = " << (Ft-Fmin) << endl
+				          << "\t\t   actual diff = " << diffF << endl
+				          << "\t\t  allowed diff = " << errF << endl
+				          << "\t\t actual update = " << update << endl
+				          << "\t\tminimal update = " << errU << endl
+				          << "\t\t        tPrime = " << tPrime << endl
+				          << "restarting with a new random number." << endl;
+				done = false;
+				break;
+			}
+			// do the step to the next iteration
+			tPrime -= update;
+			steps++;
 		}
-		// check whether the current value for tPrime is already okay
-		const double errF = r*(Fmax-Fmin)*numeric_limits<double>::epsilon();
-		const double diffF = (Ft-Fmin) - r*(Fmax-Fmin);
-		if(abs(diffF) < 10.*errF) {
-			done = true;
-			break;
+		restarts++;
+		if(restarts >= 5 && not done) {
+                            printErr << restarts << " attempts to generate t' failed." << endl;
+			return false;
 		}
-		const double errU = tPrime*numeric_limits<double>::epsilon();
-		const double update = (Ft - r*Fmax - (1-r)*Fmin) / ft;
-		if(abs(update) < 10.*errU) {
-			done = true;
-			break;
-		}
-		if(steps >= 50) {
-			printInfo << "t' could not be found in " << steps << " steps:" << endl
-			          << "\t\t r*(Fmax-Fmin) = " << r*(Fmax-Fmin) << endl
-			          << "\t\t     (Ft-Fmin) = " << (Ft-Fmin) << endl
-			          << "\t\t   actual diff = " << diffF << endl
-			          << "\t\t  allowed diff = " << errF << endl
-			          << "\t\t actual update = " << update << endl
-			          << "\t\tminimal update = " << errU << endl
-			          << "\t\t        tPrime = " << tPrime << endl
-			          << "the last tPrime value will be used nevertheless." << endl;
-			done = false;
-			break;
-		}
-		// do the step to the next iteration
-		tPrime -= update;
-		steps++;
 	}
 	return true;
 }
