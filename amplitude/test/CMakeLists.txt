@@ -38,6 +38,7 @@ set(INCLUDE_DIRECTORIES
   ${ROOT_INCLUDE_DIR}
   ${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
 	)
@@ -53,7 +54,7 @@ make_executable(testAmplitude               testAmplitude.cc               "${AM
 make_executable(testAmplitudeTree           testAmplitudeTree.cc           "${AMPLITUDE_LIBS}")
 make_executable(testIsospinSym              testIsospinSym.cc              "${AMPLITUDE_LIBS}")
 make_executable(testIntegral                testIntegral.cc                "${AMPLITUDE_LIBS}")
-make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc "${AMPLITUDE_LIBS}")
+make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc "${AMPLITUDE_LIBS}" "${ROOTPWAGEN_LIBS}")
 if(USE_PWA2000)
 	if(Boost_TIMER_FOUND)
 		make_executable(testMassDependence testMassDependence.cc

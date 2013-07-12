@@ -2,16 +2,21 @@
 #include <sstream>
 #include <complex>
 
+#include <boost/progress.hpp>
+
 #include "TApplication.h"
 #include "TSystem.h"
 #include "TGraph.h"
 #include "TCanvas.h"
 #include "TEllipse.h"
 #include "TF1.h"
+#include "TLorentzVector.h"
+#include "TH2.h"
 
 #include "physUtils.hpp"
 #include "particleDataTable.h"
 #include "waveDescription.h"
+#include "nBodyPhaseSpaceGen.h"
 
 
 using namespace std;
@@ -519,12 +524,10 @@ main()
 		drawHists(nmbGraphs, colors, intensities, argands, phases, dyn);
 	}
 
-	// gApplication->SetReturnFromRun(kFALSE);
-	// gSystem->Run();
-
 	if (1) {
     // initialize particle data table
     particleDataTable::readFile("./particleDataTable.txt");
+    const particleDataTable& pdt = particleDataTable::instance();
     stringstream keyFileContent;
     keyFileContent << "productionVertex : {type = \"diffractiveDissVertex\";"
                    << "beam : {name = \"pi-\";}; target : {name = \"p+\";};};" << endl
@@ -543,7 +546,33 @@ main()
 			exit(1);
 		}
 		printInfo << *amplitude;
+
+		const double       m3pi  = 1.2;
+		const unsigned int nmbEv = 100000000;
+		const double       mPi   = pdt.entry("pi+")->mass();
+		const double       m[]   = {mPi, mPi, mPi};
+
+		nBodyPhaseSpaceGen psGen;
+		psGen.setDecay(3, m);
+		psGen.setSeed(123456789);
+		psGen.setMaxWeight(1.01 * psGen.estimateMaxWeight(m3pi, 100000));
+		TLorentzVector parent(0, 0, 0, m3pi);
+		printInfo << psGen << endl;
+		TH2F* hDalitz = new TH2F("hDalitz", "Dalitz Plot;m_{01}^{2} [(GeV/c^{2})^{2}];m_{12}^{2} [(GeV/c^{2})^{2}]",
+		                         100, 0, 1.2, 100, 0, 1.2);
+		boost::progress_display progressIndicator(nmbEv, cout, "");
+		for (unsigned int i = 0; i < nmbEv; ++i) {
+			++progressIndicator;
+			psGen.generateDecayAccepted(parent);
+			const TLorentzVector p01 = psGen.daughter(0) + psGen.daughter(1);
+			const TLorentzVector p12 = psGen.daughter(1) + psGen.daughter(2);
+			hDalitz->Fill(p01.M2(), p12.M2());
+		}
+		printInfo << psGen << endl;
+		hDalitz->Draw("COLZ");
 	}
 
+	gApplication->SetReturnFromRun(kFALSE);
+	gSystem->Run();
 	return 0;
 }
