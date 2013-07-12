@@ -55,7 +55,7 @@ namespace rpwa {
 		return sourceFile;
 	}
 
-	
+
 	inline
 	bool
 	parseLibConfigFile(const std::string& libConfigFileName,
@@ -154,7 +154,7 @@ namespace rpwa {
 		return &listKey;
 	}
 
-	
+
 	inline
 	const libconfig::Setting*
 	findLibConfigArray(const libconfig::Setting& parent,
@@ -204,7 +204,7 @@ namespace rpwa {
 						  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
-		
+
 		// check that it is a group
 		if (not (*groupKey).isGroup()) {
 			printWarn << "'" << groupName << "' field in '" << parent.getPath() << "' "
@@ -238,7 +238,7 @@ namespace rpwa {
 			          << "check that braces are correct." << std::endl;
 			return 0;
 		}
-		
+
 		// check that it is not empty
 		if ((*listKey).getLength() < 1) {
 			printWarn << "list '" << listName << "' in '" << parent.getPath() << "' "
@@ -248,7 +248,7 @@ namespace rpwa {
 		return listKey;
 	}
 
-	
+
 	inline
 	const libconfig::Setting*
 	findLibConfigArray(const libconfig::Setting& parent,
@@ -265,7 +265,7 @@ namespace rpwa {
 					  << "of key file '" << parent.getSourceFile() << "'" << std::endl;
 			return 0;
 		}
-		
+
 		// check that it is a list
 		if (not (*arrayKey).isArray()) {
 			printWarn << "'" << arrayName << "' field in '" << parent.getPath() << "' "
@@ -281,8 +281,8 @@ namespace rpwa {
 		}
 		return arrayKey;
 	}
-	
-	
+
+
 } // namespace rpwa
 
 

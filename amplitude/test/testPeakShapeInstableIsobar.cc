@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <complex>
 
 #include "TApplication.h"
@@ -9,6 +10,8 @@
 #include "TF1.h"
 
 #include "physUtils.hpp"
+#include "particleDataTable.h"
+#include "waveDescription.h"
 
 
 using namespace std;
@@ -278,6 +281,92 @@ public:
 };  // threeBodyDynAmpMc
 
 
+void
+drawHists(const unsigned int  nmbGraphs,
+          const unsigned int* colors,
+          TGraph**            intensities,
+          TGraph**            argands,
+          TGraph**            phases,
+          TGraph**            dyn = 0)
+{
+	if ((not intensities) or (not argands) or (not phases)) {
+		printErr << "null pointer: intensities = " << intensities << ", argands = " << argands << ", "
+		         << "phases = " << phases << endl;
+		throw;
+	}
+	TCanvas* canv = 0;
+	if (dyn) {
+		canv = new TCanvas("peak_shape", "Peak Shape", 1980, 470);
+		canv->Divide(4, 1);
+	} else {
+		canv = new TCanvas("peak_shape", "Peak Shape", 1800, 600);
+		canv->Divide(3, 1);
+	}
+
+	// draw intensity
+	canv->cd(1);
+	intensities[0]->SetTitle("Intensity");
+	intensities[0]->Draw("APC");
+	intensities[0]->SetLineColor  (colors[0]);
+	intensities[0]->SetMarkerColor(colors[0]);
+	for (unsigned int i = 1; i < nmbGraphs; ++i) {
+		intensities[i]->SetTitle("Intensity");
+		intensities[i]->Draw("PC SAME");
+		intensities[i]->SetLineColor  (colors[i]);
+		intensities[i]->SetMarkerColor(colors[i]);
+	}
+
+	// draw Argand plot
+	canv->cd(2);
+	argands[0]->SetTitle("Argand Plot");
+	argands[0]->Draw("APC");
+	argands[0]->SetLineColor  (colors[0]);
+	argands[0]->SetMarkerColor(colors[0]);
+	for (unsigned int i = 1; i < nmbGraphs; ++i) {
+		argands[i]->SetTitle("Argand Plot");
+		argands[i]->Draw("PC SAME");
+		argands[i]->SetLineColor  (colors[i]);
+		argands[i]->SetMarkerColor(colors[i]);
+	}
+	TEllipse* circ = new TEllipse(0, 0.5, 0.5);
+	circ->SetLineStyle(2);
+	circ->SetLineColor(16);
+	circ->SetFillStyle(0);
+	circ->Draw();
+
+	// draw phase
+	canv->cd(3);
+	phases[0]->SetTitle("Phase");
+	phases[0]->Draw("APC");
+	phases[0]->SetLineColor  (colors[0]);
+	phases[0]->SetMarkerColor(colors[0]);
+	for (unsigned int i = 1; i < nmbGraphs; ++i) {
+		phases[i]->SetTitle("Phase");
+		phases[i]->Draw("PC SAME");
+		phases[i]->SetLineColor  (colors[i]);
+		phases[i]->SetMarkerColor(colors[i]);
+	}
+
+	// draw dynamic factor
+	if (dyn) {
+		canv->cd(4);
+		dyn[0]->SetTitle("Dynamic Factor");
+		dyn[0]->Draw("APC");
+		dyn[0]->SetLineColor  (colors[0]);
+		dyn[0]->SetMarkerColor(colors[0]);
+		for (unsigned int i = 1; i < nmbGraphs; ++i) {
+			dyn[i]->SetTitle("Dynamic Factor");
+			dyn[i]->Draw("PC SAME");
+			dyn[i]->SetLineColor  (colors[i]);
+			dyn[i]->SetMarkerColor(colors[i]);
+		}
+	}
+
+	canv->ForceUpdate();
+	canv->Flush();
+}
+
+
 int
 main()
 {
@@ -346,52 +435,7 @@ main()
 
 		}
 
-		// draw amplitude
-		TCanvas* canv = new TCanvas("peak_shape", "Peak Shape", 1800, 600);
-		canv->Divide(3, 1);
-		canv->cd(1);
-		intensities[0]->SetTitle("Intensity");
-		intensities[0]->Draw("APC");
-		intensities[0]->SetLineColor  (colors[0]);
-		intensities[0]->SetMarkerColor(colors[0]);
-		for (unsigned int i = 1; i < nmbGraphs; ++i) {
-			intensities[i]->SetTitle("Intensity");
-			intensities[i]->Draw("PC SAME");
-			intensities[i]->SetLineColor  (colors[i]);
-			intensities[i]->SetMarkerColor(colors[i]);
-		}
-
-		canv->cd(2);
-		argands[0]->SetTitle("Argand Plot");
-		argands[0]->Draw("APC");
-		argands[0]->SetLineColor  (colors[0]);
-		argands[0]->SetMarkerColor(colors[0]);
-		for (unsigned int i = 1; i < nmbGraphs; ++i) {
-			argands[i]->SetTitle("Argand Plot");
-			argands[i]->Draw("PC SAME");
-			argands[i]->SetLineColor  (colors[i]);
-			argands[i]->SetMarkerColor(colors[i]);
-		}
-		TEllipse* circ = new TEllipse(0, 0.5, 0.5);
-		circ->SetLineStyle(2);
-		circ->SetLineColor(16);
-		circ->SetFillStyle(0);
-		circ->Draw();
-
-		canv->cd(3);
-		phases[0]->SetTitle("Phase");
-		phases[0]->Draw("APC");
-		phases[0]->SetLineColor  (colors[0]);
-		phases[0]->SetMarkerColor(colors[0]);
-		for (unsigned int i = 1; i < nmbGraphs; ++i) {
-			phases[i]->SetTitle("Phase");
-			phases[i]->Draw("PC SAME");
-			phases[i]->SetLineColor  (colors[i]);
-			phases[i]->SetMarkerColor(colors[i]);
-		}
-
-		canv->ForceUpdate();
-		canv->Flush();
+		drawHists(nmbGraphs, colors, intensities, argands, phases);
 
 		// test integrability
 		if (0) {
@@ -400,14 +444,14 @@ main()
 			const double       intLimits[]  = {massMax, 10, 100, 1000, 10000};
 			const unsigned int nmbIntLimits = sizeof(intLimits) / sizeof(intLimits[0]);
 			for (unsigned int i = 0; i < nmbIntLimits; ++i)
-				cout << "!!! integral in range [" << intFunc->GetXmin() << ", " << intLimits[i] << "] = "
-				     << intFunc->Integral(intFunc->GetXmin(), intLimits[i]) << endl;
+				printInfo << "integral in range [" << intFunc->GetXmin() << ", " << intLimits[i] << "] = "
+				          << intFunc->Integral(intFunc->GetXmin(), intLimits[i]) << endl;
 		}
 	}
 
 
 	// test three-body dynamic amplitude
-	if (1) {
+	if (0) {
 		// rho(770) -> pi+ pi-
 		const double isobarMass          = 0.7665;
 		const double isobarWidth         = 0.1502;
@@ -472,69 +516,34 @@ main()
 
 		}
 
-		// draw amplitude
-		TCanvas* canv = new TCanvas("peak_shape", "Peak Shape", 2000, 475);
-		canv->Divide(4, 1);
-		canv->cd(1);
-		intensities[0]->SetTitle("Intensity");
-		intensities[0]->Draw("APC");
-		intensities[0]->SetLineColor  (colors[0]);
-		intensities[0]->SetMarkerColor(colors[0]);
-		for (unsigned int i = 1; i < nmbGraphs; ++i) {
-			intensities[i]->SetTitle("Intensity");
-			intensities[i]->Draw("PC SAME");
-			intensities[i]->SetLineColor  (colors[i]);
-			intensities[i]->SetMarkerColor(colors[i]);
-		}
-
-		canv->cd(2);
-		argands[0]->SetTitle("Argand Plot");
-		argands[0]->Draw("APC");
-		argands[0]->SetLineColor  (colors[0]);
-		argands[0]->SetMarkerColor(colors[0]);
-		for (unsigned int i = 1; i < nmbGraphs; ++i) {
-			argands[i]->SetTitle("Argand Plot");
-			argands[i]->Draw("PC SAME");
-			argands[i]->SetLineColor  (colors[i]);
-			argands[i]->SetMarkerColor(colors[i]);
-		}
-		TEllipse* circ = new TEllipse(0, 0.5, 0.5);
-		circ->SetLineStyle(2);
-		circ->SetLineColor(16);
-		circ->SetFillStyle(0);
-		circ->Draw();
-
-		canv->cd(3);
-		phases[0]->SetTitle("Phase");
-		phases[0]->Draw("APC");
-		phases[0]->SetLineColor  (colors[0]);
-		phases[0]->SetMarkerColor(colors[0]);
-		for (unsigned int i = 1; i < nmbGraphs; ++i) {
-			phases[i]->SetTitle("Phase");
-			phases[i]->Draw("PC SAME");
-			phases[i]->SetLineColor  (colors[i]);
-			phases[i]->SetMarkerColor(colors[i]);
-		}
-
-		canv->cd(4);
-		dyn[0]->SetTitle("Dynamic Factor");
-		dyn[0]->Draw("APC");
-		dyn[0]->SetLineColor  (colors[0]);
-		dyn[0]->SetMarkerColor(colors[0]);
-		for (unsigned int i = 1; i < nmbGraphs; ++i) {
-			dyn[i]->SetTitle("Dynamic Factor");
-			dyn[i]->Draw("PC SAME");
-			dyn[i]->SetLineColor  (colors[i]);
-			dyn[i]->SetMarkerColor(colors[i]);
-		}
-
-		canv->ForceUpdate();
-		canv->Flush();
-
+		drawHists(nmbGraphs, colors, intensities, argands, phases, dyn);
 	}
 
-	gApplication->SetReturnFromRun(kFALSE);
-	gSystem->Run();
+	// gApplication->SetReturnFromRun(kFALSE);
+	// gSystem->Run();
+
+	if (1) {
+    // initialize particle data table
+    particleDataTable::readFile("./particleDataTable.txt");
+    stringstream keyFileContent;
+    keyFileContent << "productionVertex : {type = \"diffractiveDissVertex\";"
+                   << "beam : {name = \"pi-\";}; target : {name = \"p+\";};};" << endl
+                   << "decayVertex : {" << endl
+                   << "XQuantumNumbers : {isospin =  2; G = +1; J = 2; P = -1; C = -1; M = 0; refl = +1;};" << endl
+                   << "XDecay : {fsParticles = ({name = \"pi+\";}, {name = \"pi-\";}); L = 2; S = 0;};" << endl
+                   << "};" << endl;
+
+		waveDescription    waveDesc;
+		isobarAmplitudePtr amplitude;
+		if (   not waveDesc.parseKeyFileContent(keyFileContent.str())
+		    or not waveDesc.constructAmplitude(amplitude)) {
+			printErr << "problems constructing decay topology from key file content string:" << endl;
+			waveDesc.printKeyFileContent(cout, keyFileContent.str());
+			cout << "aborting." << endl;
+			exit(1);
+		}
+		printInfo << *amplitude;
+	}
 
 	return 0;
 }
