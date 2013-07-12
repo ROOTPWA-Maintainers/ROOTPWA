@@ -45,7 +45,7 @@ bool massAndTPrimePicker::initTPrimeAndMassRanges(const libconfig::Setting& sett
 		("massMin", Setting::TypeFloat)
 		("massMax", Setting::TypeFloat);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
-		printErr << "found invalid settings for the mass range of a mass and t' picker." << endl;
+		printErr << "found invalid setting for the mass range of a mass and t' picker." << endl;
 		return false;
 	}
 	_massRange.first = setting["massMin"];
@@ -106,7 +106,7 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 		("tSlopes", Setting::TypeArray)
 		("invariantMasses", Setting::TypeArray);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
-		printErr << "found an invalid settings for function 'uniformMassExponentialT'." << endl;
+		printErr << "found an invalid setting for function 'uniformMassExponentialT'." << endl;
 		return false;
 	}
 	if(setting["invariantMasses"].getLength() != setting["tSlopes"].getLength()) {
@@ -220,7 +220,7 @@ bool uniformMassMultiExponentialTPicker::init(const libconfig::Setting& setting)
 		("invariantMasses", Setting::TypeArray)
 		("tSlopes", Setting::TypeList);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
-		printErr << "found an invalid settings for function 'uniformMassExponentialT'." << endl;
+		printErr << "found an invalid setting for function 'uniformMassExponentialT'." << endl;
 		return false;
 	}
 	if(setting["invariantMasses"].getLength() != setting["tSlopes"].getLength()) {
@@ -236,7 +236,7 @@ bool uniformMassMultiExponentialTPicker::init(const libconfig::Setting& setting)
 		printErr << "'tSlopes' has to be number or array of numbers." << endl;
 		return false;
 	}
-	bool tArray(false);
+	bool tArray = false;
 	if(setting["tSlopes"][0].isNumber()) {
 		_nExponential = 1;
 	} else {
@@ -316,7 +316,7 @@ bool uniformMassMultiExponentialTPicker::operator() (double& invariantMass, doub
 	//        Int(f(t'),t'=(tmin..tmax))
 	// with
 	// f(t) = exp(p[0]*t) + Sum(p[2*i-1] * exp(p[2*i]*t),i=1.._nExponential)
-	// 
+	//
 	// The idea behind this is the usual ansatz of getting one random
 	// number r between 0 and 1, and then find the t for which the integral
 	// from tmin to t is equal to the integral from tmin to tmax times r.
@@ -331,9 +331,9 @@ bool uniformMassMultiExponentialTPicker::operator() (double& invariantMass, doub
 		Fmax += param[2*i-1] * exp(param[2*i] * _tPrimeRange.second) / param[2*i];
 	}
 	tPrime = 0.;
-	const double r(randomNumbers->Uniform());
-	bool done(false);
-	unsigned int steps(0);
+	const double r = randomNumbers->Uniform();
+	bool done = false;
+	unsigned int steps = 0;
 	while(not done) {
 		// calculate g (here: F) and g' (here: f)
 		double Ft = exp(param[0] * tPrime) / param[0];
@@ -450,7 +450,7 @@ bool polynomialMassAndTPrimeSlopePicker::init(const Setting& setting) {
 		("coeffsMass", Setting::TypeArray)
 		("coeffsTSlopes", Setting::TypeArray);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
-		printErr << "found an invalid settings for function 'polynomialMassAndTPrime'." << endl;
+		printErr << "found an invalid setting for function 'polynomialMassAndTPrime'." << endl;
 		return false;
 	}
 	const Setting& configCoeffsMass = setting["coeffsMass"];

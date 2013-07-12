@@ -83,9 +83,10 @@ namespace rpwa {
 		virtual bool operator() (double& invariantMass, double& tPrime);
 
 		virtual std::ostream& print(std::ostream& out);
-		virtual std::ostream& printSlice(std::ostream& out, const std::vector<double>& param);
 
 	  private:
+
+		virtual std::ostream& printSlice(std::ostream& out, const std::vector<double>& param);
 
 		std::map<double, std::vector<double> > _tSlopesForMassBins;
 		unsigned int _nExponential;
