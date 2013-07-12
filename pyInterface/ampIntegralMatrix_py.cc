@@ -31,6 +31,25 @@ namespace {
 		return self.element(waveNameI, waveNameJ);
 	};
 
+	bool ampIntegralMatrix_integrate(rpwa::ampIntegralMatrix& self,
+	                                 const bp::object& pyBinAmpFileNames,
+	                                 const bp::object& pyRootAmpFileNames,
+	                                 const unsigned long maxNmbEvents,
+	                                 const std::string& weightFileName)
+	{
+		bp::list pyListBinAmpFileNames = bp::extract<bp::list>(pyBinAmpFileNames);
+		std::vector<std::string> binAmpFileNames(bp::len(pyListBinAmpFileNames), "");
+		for(int i = 0; i < bp::len(pyListBinAmpFileNames); ++i) {
+			binAmpFileNames[i] = bp::extract<std::string>(pyListBinAmpFileNames[i]);
+		}
+		bp::list pyListRootAmpFileNames = bp::extract<bp::list>(pyRootAmpFileNames);
+		std::vector<std::string> rootAmpFileNames(bp::len(pyListRootAmpFileNames), "");
+		for(int i = 0; i < bp::len(pyListRootAmpFileNames); ++i) {
+			rootAmpFileNames[i] = bp::extract<std::string>(pyListRootAmpFileNames[i]);
+		}
+		return self.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
+	};
+
 	bool ampIntegralMatrix_writeAscii(const rpwa::ampIntegralMatrix& self, const std::string& outFileName) {
 		return self.writeAscii(outFileName);
 	};
@@ -95,6 +114,15 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 		.def("element", &ampIntegralMatrix_element1)
 		.def("element", &ampIntegralMatrix_element2)
+
+		.def("integrate"
+		     , &ampIntegralMatrix_integrate
+		     , (bp::arg("pyBinAmpFileNames"),
+		         bp::arg("pyRootAmpFileNames"),
+		         bp::arg("maxNmbEvents")=0,
+		         bp::arg("weightFileName")="")
+		)
+
 		.def("renormalize", &rpwa::ampIntegralMatrix::renormalize)
 		.def("writeAscii", &ampIntegralMatrix_writeAscii)
 		.def("readAscii", &ampIntegralMatrix_readAscii)
