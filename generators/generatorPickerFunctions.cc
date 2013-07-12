@@ -113,8 +113,8 @@ bool uniformMassExponentialTPicker::init(const Setting& setting) {
 		printErr << "'invariantMasses' and 'tSlopes' have to be arrays of the same length." << endl;
 		return false;
 	}
-	if(not (setting["invariantMasses"][0].isNumber())
-			&& (setting["tSlopes"][0].isNumber())) {
+	if(not (setting["invariantMasses"][0].isNumber()
+			&& setting["tSlopes"][0].isNumber())) {
 		printErr << "'invariantMasses' and 'tSlopes' have to be array of numbers." << endl;
 		return false;
 	}
