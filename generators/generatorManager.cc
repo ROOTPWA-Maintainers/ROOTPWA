@@ -17,22 +17,21 @@
 #include "generatorManager.h"
 
 
+using namespace boost;
 using namespace std;
 using namespace rpwa;
 
 bool generatorManager::_debug = false;
 
 generatorManager::generatorManager()
-	: _beamAndVertexGenerator(new beamAndVertexGenerator()),
-	  _pickerFunction(NULL),
+	: _beamAndVertexGenerator(shared_ptr<beamAndVertexGenerator>(new beamAndVertexGenerator())),
+	  _pickerFunction(shared_ptr<massAndTPrimePicker>()),
 	  _beamFileName(""),
 	  _reactionFileRead(false),
 	  _generator(NULL) { };
 
 
 generatorManager::~generatorManager() {
-	delete _beamAndVertexGenerator;
-	delete _pickerFunction;
 	delete _generator;
 };
 
@@ -250,17 +249,16 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		string functionName;
 		configTAndMDependence->lookupValue("function", functionName);
 		if(functionName == "uniformMassExponentialT") {
-			_pickerFunction = new uniformMassExponentialTPicker();
+			_pickerFunction = shared_ptr<massAndTPrimePicker>(new uniformMassExponentialTPicker());
 		} else if(functionName == "polynomialMassAndTPrime") {
-			_pickerFunction = new polynomialMassAndTPrimeSlopePicker();
+			_pickerFunction = shared_ptr<massAndTPrimePicker>(new polynomialMassAndTPrimeSlopePicker());
 		} else {
 			printErr << "'function' name '" << functionName << "' unknown." << endl;
 			return false;
 		}
 		if(not _pickerFunction->init(settings)) {
 			printErr << "Could not initialize 'function' " << functionName << "." << endl;
-			delete _pickerFunction;
-			_pickerFunction = NULL;
+			_pickerFunction = shared_ptr<massAndTPrimePicker>();
 			return false;
 		}
 		printSucc << "initialized t' and mass dependence '" << functionName << "'." << endl;
@@ -299,7 +297,7 @@ bool generatorManager::initializeGenerator() {
 	_generator = new diffractivePhaseSpace();
 	_generator->setBeam(_beam);
 	_generator->setTarget(_target);
-	_generator->setTPrimeAndMassPicker(*_pickerFunction);
+	_generator->setTPrimeAndMassPicker(_pickerFunction);
 	_generator->setPrimaryVertexGenerator(_beamAndVertexGenerator);
 	_generator->setDecayProducts(_finalState.particles);
 

@@ -205,10 +205,6 @@ int main(int argc, char** argv)
 		printErr << "could not read reaction file. Aborting..." << endl;
 		exit(1);
 	}
-	if(not generatorMgr.initializeGenerator()) {
-		printErr << "could not initialize generator. Aborting..." << endl;
-		exit(1);
-	}
 
 	if(overrideMass) {
 		generatorMgr.overrideMassRange(massLower / 1000., (massLower + massBinWidth) / 1000.);
@@ -219,6 +215,11 @@ int main(int argc, char** argv)
 	if(readBeamfileRandomBlock == 1) {
 		generatorMgr.readBeamfileSequentially();
 		generatorMgr.randomizeBeamfileStartingPosition();
+	}
+
+	if(not generatorMgr.initializeGenerator()) {
+		printErr << "could not initialize generator. Aborting..." << endl;
+		exit(1);
 	}
 
 	if(outputEvtFileName == "") {

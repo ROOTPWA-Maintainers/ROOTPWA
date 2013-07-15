@@ -4,6 +4,8 @@
 #include<iostream>
 #include<vector>
 
+#include<boost/shared_ptr.hpp>
+
 #include "generatorParameters.hpp"
 #include "generatorPickerFunctions.h"
 #include "beamAndVertexGenerator.h"
@@ -19,12 +21,10 @@ namespace rpwa {
 	  public:
 
 		generator()
-			: _pickerFunction(NULL),
-			  _beamAndVertexGenerator(NULL) { }
+			: _pickerFunction(boost::shared_ptr<rpwa::massAndTPrimePicker>()),
+			  _beamAndVertexGenerator(boost::shared_ptr<rpwa::beamAndVertexGenerator>()) { }
 
-		virtual ~generator() {
-			delete _pickerFunction;
-		};
+		virtual ~generator() { };
 
 		virtual unsigned int event() = 0;
 
@@ -35,10 +35,10 @@ namespace rpwa {
 
 		virtual void setBeam(const rpwa::Beam& beam) { _beam = beam; };
 		virtual void setTarget(const rpwa::Target& target) { _target = target; };
-		virtual void setTPrimeAndMassPicker(const rpwa::massAndTPrimePicker& pickerFunction) {
-			_pickerFunction = pickerFunction.clone();
+		virtual void setTPrimeAndMassPicker(const boost::shared_ptr<rpwa::massAndTPrimePicker>& pickerFunction) {
+			_pickerFunction = pickerFunction;
 		}
-		virtual void setPrimaryVertexGenerator(rpwa::beamAndVertexGenerator* beamAndVertexGenerator) {
+		virtual void setPrimaryVertexGenerator(const boost::shared_ptr<rpwa::beamAndVertexGenerator>& beamAndVertexGenerator) {
 			_beamAndVertexGenerator = beamAndVertexGenerator;
 		}
 		virtual void setDecayProducts(const std::vector<rpwa::particle>& particles) {
@@ -64,8 +64,8 @@ namespace rpwa {
 
 		rpwa::Beam _beam;
 		rpwa::Target _target;
-		rpwa::massAndTPrimePicker* _pickerFunction;
-		rpwa::beamAndVertexGenerator* _beamAndVertexGenerator;
+		boost::shared_ptr<rpwa::massAndTPrimePicker> _pickerFunction;
+		boost::shared_ptr<rpwa::beamAndVertexGenerator> _beamAndVertexGenerator;
 		std::vector<rpwa::particle> _decayProducts;
 		TVector3 _vertex;
 

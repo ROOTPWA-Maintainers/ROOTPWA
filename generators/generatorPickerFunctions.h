@@ -27,7 +27,6 @@ namespace rpwa {
 			  _initialized(picker._initialized) { };
 
 		virtual ~massAndTPrimePicker() { };
-		virtual massAndTPrimePicker* clone() const = 0;
 
 		virtual bool init(const libconfig::Setting& setting) = 0;
 
@@ -55,7 +54,6 @@ namespace rpwa {
 		uniformMassExponentialTPicker();
 		uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker);
 		virtual ~uniformMassExponentialTPicker() { }
-		virtual massAndTPrimePicker* clone() const;
 
 		virtual bool init(const libconfig::Setting& setting);
 
@@ -81,7 +79,6 @@ namespace rpwa {
 		polynomialMassAndTPrimeSlopePicker();
 		polynomialMassAndTPrimeSlopePicker(const polynomialMassAndTPrimeSlopePicker& picker);
 		virtual ~polynomialMassAndTPrimeSlopePicker() { }
-		virtual massAndTPrimePicker* clone() const;
 
 		virtual bool init(const libconfig::Setting& setting);
 

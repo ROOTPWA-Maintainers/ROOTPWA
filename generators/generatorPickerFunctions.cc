@@ -82,19 +82,14 @@ bool massAndTPrimePicker::initTPrimeAndMassRanges(const libconfig::Setting& sett
 
 
 uniformMassExponentialTPicker::uniformMassExponentialTPicker()
-	: massAndTPrimePicker() { }
+	: massAndTPrimePicker(),
+	  _nExponential(0) { }
 
 
 uniformMassExponentialTPicker::uniformMassExponentialTPicker(const uniformMassExponentialTPicker& picker)
 	: massAndTPrimePicker(picker),
 	  _tSlopesForMassBins(picker._tSlopesForMassBins),
 	  _nExponential(picker._nExponential) { }
-
-
-massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
-	massAndTPrimePicker* retval = new uniformMassExponentialTPicker(*this);
-	return retval;
-}
 
 
 bool uniformMassExponentialTPicker::init(const Setting& setting) {
@@ -344,12 +339,6 @@ polynomialMassAndTPrimeSlopePicker::polynomialMassAndTPrimeSlopePicker(const pol
 	: massAndTPrimePicker(picker),
 	  _massPolynomial(picker._massPolynomial),
 	  _tPrimeSlopePolynomial(picker._tPrimeSlopePolynomial) { }
-
-
-massAndTPrimePicker* polynomialMassAndTPrimeSlopePicker::clone() const {
-	massAndTPrimePicker* retval = new polynomialMassAndTPrimeSlopePicker(*this);
-	return retval;
-}
 
 
 bool polynomialMassAndTPrimeSlopePicker::init(const Setting& setting) {

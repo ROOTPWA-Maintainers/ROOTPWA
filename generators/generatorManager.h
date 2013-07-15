@@ -4,6 +4,8 @@
 
 #include<string>
 
+#include<boost/shared_ptr.hpp>
+
 #include "generatorParameters.hpp"
 
 
@@ -46,9 +48,9 @@ namespace rpwa {
 		rpwa::Target _target;
 		rpwa::FinalState _finalState;
 
-		rpwa::beamAndVertexGenerator* _beamAndVertexGenerator;
+		boost::shared_ptr<rpwa::beamAndVertexGenerator> _beamAndVertexGenerator;
 
-		rpwa::massAndTPrimePicker* _pickerFunction;
+		boost::shared_ptr<rpwa::massAndTPrimePicker> _pickerFunction;
 
 		std::string _beamFileName;
 
