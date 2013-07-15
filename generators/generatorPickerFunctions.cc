@@ -45,7 +45,7 @@ bool massAndTPrimePicker::initTPrimeAndMassRanges(const libconfig::Setting& sett
 		("massMin", Setting::TypeFloat)
 		("massMax", Setting::TypeFloat);
 	if(not checkIfAllVariablesAreThere(&setting, mandatoryArguments)) {
-		printErr << "found invalid setting for the mass range of a mass and t' picker." << endl;
+		printErr << "found invalid settings for the mass range of a mass and t' picker." << endl;
 		return false;
 	}
 	_massRange.first = setting["massMin"];
@@ -97,7 +97,7 @@ massAndTPrimePicker* uniformMassExponentialTPicker::clone() const {
 }
 
 
-bool uniformMassExponentialTPicker::init(const libconfig::Setting& setting) {
+bool uniformMassExponentialTPicker::init(const Setting& setting) {
 	if(not massAndTPrimePicker::initTPrimeAndMassRanges(setting)) {
 		printErr << "could not initialize t' or mass range settings in 'uniformMassExponentialT'." << endl;
 		return false;
@@ -289,7 +289,7 @@ bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& t
 
 
 ostream& uniformMassExponentialTPicker::print(ostream& out) {
-	out << "'uniformMassMultiExponentialT' weighter parameters:" << endl;
+	out << "'uniformMassExponentialT' weighter parameters:" << endl;
 	out << "    minimum Mass ... " << _massRange.first << endl;
 	out << "    maximum Mass ... " << _massRange.second << endl;
 	out << "    minimum t' ..... " << _tPrimeRange.first << endl;
