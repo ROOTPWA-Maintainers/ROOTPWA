@@ -43,7 +43,10 @@ using namespace rpwa;
 
 
 diffractivePhaseSpace::diffractivePhaseSpace()
-	: generator()
+	: generator(),
+	  _phaseSpace(),
+	  _maxXMassSlices(),
+	  _maxWeightsForXMasses()
 {
 	_phaseSpace.setWeightType    (nBodyPhaseSpaceGen::S_U_CHUNG);
 	_phaseSpace.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
@@ -88,10 +91,21 @@ diffractivePhaseSpace::buildDaughterList()
 			         << "does mot make sense. Aborting..." << endl;
 			throw;
 		} else {
-			printInfo << "calculating max weight (" << nmbDaughters << " FS particles) "
-			          << "for m = " << xMassMax << " GeV/c^2:";
-			_phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(xMassMax, 1000000));
-			cout << " max weight = " << _phaseSpace.maxWeight() << endl;
+			unsigned int numberOfMassSlices = _numberOfMassSlices;
+			if((xMassMax - xMassMin) < 0.5) {
+				numberOfMassSlices = 1;
+			}
+			double massRangeSliceWidth = (xMassMax - xMassMin) / numberOfMassSlices;
+			for(unsigned int i = 1; i <= numberOfMassSlices; ++i) {
+				_maxXMassSlices.push_back(xMassMin + (massRangeSliceWidth * i));
+			}
+			for(unsigned int i = 0; i < _maxXMassSlices.size(); ++i) {
+				printInfo << "calculating max weight (" << nmbDaughters << " FS particles) "
+				          << "for m = " << _maxXMassSlices[i] << " GeV/c^2:";
+				_phaseSpace.setMaxWeight(1.01 * _phaseSpace.estimateMaxWeight(_maxXMassSlices[i], 1000000));
+				_maxWeightsForXMasses.push_back(_phaseSpace.maxWeight());
+				cout << " max weight = " << _phaseSpace.maxWeight() << endl;
+			}
 		}
 	}
 }
@@ -146,6 +160,12 @@ diffractivePhaseSpace::event()
 	} while(xMass + _target.recoilParticle.mass() > overallCm.M());
 	// t' should be negative (why?)
 	tPrime *= -1;
+
+	{
+		unsigned int i = 0;
+		for(; xMass > _maxXMassSlices[i]; ++i);
+		_phaseSpace.setMaxWeight(_maxWeightsForXMasses[i]);
+	}
 
 	bool done = false;
 	while(!done) {
