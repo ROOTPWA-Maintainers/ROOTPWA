@@ -217,7 +217,7 @@ isobarDecayTopology::checkTopology() const
 }
 
 
-bool 
+bool
 isobarDecayTopology::checkConsistency() const
 {
 	bool allVertConsistent = true;
@@ -485,7 +485,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 	const vector<particlePtr> fsParts = fsParticles();
 
 	// Get a vector of groups of particles which have to be permutated.
-	// 
+	//
 	// The group is defined as all particles with the same J, P and I. A group
 	// consists of a vector where the indices of all particles belonging to the
 	// group are saved.
@@ -541,7 +541,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 			printDebug << "Group permutations " << i << endl;
 		}
 
-		// First we need a vector with the unity permutation, which will 
+		// First we need a vector with the unity permutation, which will
 		// subsequently be permutated.
 		vector<unsigned int> permutations;
 		for(unsigned int j = 0; j < group.size(); ++j) {
@@ -625,7 +625,7 @@ isobarDecayTopology::getIsospinSymmetrization()
 			}
 
 			double clebsch = getIsospinClebschGordanProduct();
-		
+
 			// Survived all the criteria, saving to be returned
 			symTermMap symTerm(getIsospinClebschGordanProduct(), map);
 			symAmplitudes.push_back(symTerm);
@@ -686,8 +686,8 @@ isobarDecayTopology::getBoseSymmetrization() const
 		const string partName = fsParticles()[i]->name();
 		origFsPartIndices[partName].push_back(i);
 	}
-	map<string, vector<unsigned int> > newFsPartIndices = origFsPartIndices;
-	map<string, vector<unsigned int> >::iterator firstEntry        = newFsPartIndices.begin();
+	map<string, vector<unsigned int> >           newFsPartIndices = origFsPartIndices;
+	map<string, vector<unsigned int> >::iterator firstEntry       = newFsPartIndices.begin();
 	vector<symTermMap> symTermMaps;
 	genBoseSymTermMaps(origFsPartIndices, newFsPartIndices, firstEntry, symTermMaps);
 	for(unsigned int i = 0; i < symTermMaps.size(); ++i) {
@@ -749,7 +749,8 @@ isobarDecayTopology::daughtersAreAffectedByPermutation(const isobarDecayVertexPt
 }
 
 
-vector<unsigned int> isobarDecayTopology::getFsPartIndicesConnectedToVertex(const isobarDecayVertexPtr& vertex) const
+vector<unsigned int>
+isobarDecayTopology::getFsPartIndicesConnectedToVertex(const isobarDecayVertexPtr& vertex) const
 {
 	vector<unsigned int> indices;
 	int index1 = fsParticlesIndex(vertex->daughter1());
@@ -784,6 +785,7 @@ vector<unsigned int> isobarDecayTopology::getFsPartIndicesConnectedToVertex(cons
 	}
 	return indices;
 }
+
 
 void
 isobarDecayTopology::genBoseSymTermMaps

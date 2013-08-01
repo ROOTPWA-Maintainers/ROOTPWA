@@ -48,6 +48,8 @@
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "waveDescription.h"
+#include "isobarHelicityAmplitude.h"
+#include "isobarCanonicalAmplitude.h"
 
 
 using namespace std;
@@ -187,7 +189,7 @@ bool testAmplitude(TTree*              inTree,
 		s.precision(nmbDigits);
 		s.setf(ios_base::scientific, ios_base::floatfield);
 		if (debug) {
-			printDebug << "amplitude " << i << ": " << endl;
+			printDebug << "amplitude [" << i << "]: " << endl;
 			s << "        ampl.            = " << ampValues[i];
 			if (ampZero)
 				s << " <! zero amplitude";
@@ -220,8 +222,8 @@ bool testAmplitude(TTree*              inTree,
 		}
 		if (debug) {
 			s.str("");
-			s << "Re[ampl.] / Re[ampl.] space inv. - 1 = " << setw(23) << spaceInvRatio.real() - 1 << ", "
-			  << "Im[ampl.] / Im[ampl.] space inv. - 1 = " << setw(23) << spaceInvRatio.imag() - 1;
+			s << "Re[ampl.] / Re[ampl. space inv.] = " << setw(23) << spaceInvRatio.real() << ", "
+			  << "Im[ampl.] / Im[ampl. space inv.] = " << setw(23) << spaceInvRatio.imag();
 			cout << "        " << s.str();
 			if (not spaceInvAmpRatioOk)
 				cout << " <! larger than " << maxDelta;
@@ -253,8 +255,8 @@ bool testAmplitude(TTree*              inTree,
 		}
 		if (debug) {
 			s.str("");
-			s << "Re[ampl.] / Re[ampl.] refl. - 1      = " << setw(23) << reflRatio.real() - 1 << ", "
-			  << "Im[ampl.] / Im[ampl.] refl. - 1      = " << setw(23) << reflRatio.imag() - 1;
+			s << "Re[ampl.] / Re[ampl. refl.]      = " << setw(23) << reflRatio.real() << ", "
+			  << "Im[ampl.] / Im[ampl. refl.]      = " << setw(23) << reflRatio.imag();
 			cout << "        " << s.str();
 			if (not reflAmpRatioOk)
 				cout << " <! larger than " << maxDelta;
@@ -339,7 +341,8 @@ main(int    argc,
 	if (debug) {
 		waveDescription::setDebug(true);
 		//particleProperties::setDebug(true);
-		//isobarHelicityAmplitude::setDebug(true);
+		isobarHelicityAmplitude::setDebug(true);
+		isobarCanonicalAmplitude::setDebug(true);
 		//massDependence::setDebug(true);
 	}
 
