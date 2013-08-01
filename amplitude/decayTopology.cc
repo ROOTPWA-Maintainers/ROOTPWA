@@ -54,7 +54,7 @@
 #include "conversionUtils.hpp"
 #include "decayTopology.h"
 
-	
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;

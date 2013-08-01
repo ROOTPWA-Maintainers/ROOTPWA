@@ -38,7 +38,7 @@
 #include "isobarAmplitude.h"
 
 
-namespace rpwa {  
+namespace rpwa {
 
 
 	class isobarCanonicalAmplitude;
@@ -46,18 +46,18 @@ namespace rpwa {
 
 
 	class isobarCanonicalAmplitude : public isobarAmplitude {
-  
+
 	public:
-      
+
 		isobarCanonicalAmplitude();
 		isobarCanonicalAmplitude(const isobarDecayTopologyPtr& decay);
 		virtual ~isobarCanonicalAmplitude();
 
 		std::string name() const { return "isobarCanonicalAmplitude"; }
-    
+
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-    
+
 
 	private:
 
@@ -66,12 +66,12 @@ namespace rpwa {
 		std::complex<double> twoBodyDecayAmplitude
 		(const isobarDecayVertexPtr& vertex,
 		 const bool                  topVertex) const;  ///< calculates amplitude for two-body decay a -> b + c; where b and c are stable
-    
+
 		static bool _debug;  ///< if set to true, debug messages are printed
-    
+
 	};
-  
-  
+
+
 	inline
 	isobarCanonicalAmplitudePtr
 	createIsobarCanonicalAmplitude(const isobarDecayTopologyPtr& decay)

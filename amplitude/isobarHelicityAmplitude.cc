@@ -40,7 +40,7 @@
 #include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
 
-  
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -191,7 +191,7 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 
 	// calculate decay amplitude
 	complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
-  
+
 	if (_debug)
 		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
 	return amp;

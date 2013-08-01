@@ -41,7 +41,7 @@
 #include "decayTopology.h"
 
 
-namespace rpwa {  
+namespace rpwa {
 
 	// amplitude symmetrization info
 	struct symTermMap {
@@ -53,11 +53,11 @@ namespace rpwa {
 		std::complex<double>      factor;         ///< factor to be applied to symmetrization term
 		std::vector<unsigned int> fsPartPermMap;  ///< final-state-particle permutation map
 	};
-	
+
 
 	class isobarDecayTopology;
 	typedef boost::shared_ptr<isobarDecayTopology> isobarDecayTopologyPtr;
-	
+
 
 	class isobarDecayTopology : public decayTopology {
 
@@ -117,7 +117,7 @@ namespace rpwa {
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-	 
+
 		double getIsospinClebschGordanProduct(isobarDecayVertexPtr vertex = isobarDecayVertexPtr()) const;  ///< returns product of isospin Clebsch-Gordans for all two-body decays in the topology
 
 		std::vector<symTermMap> getIsospinSymmetrization();  ///< returns all final-state permutations needed for isospin symmetrization
@@ -186,8 +186,8 @@ namespace rpwa {
 		                                                    fsParticles, performTopologyCheck));
 		return topo;
 	}
-	
-	
+
+
 	inline
 	isobarDecayTopologyPtr
 	createIsobarDecayTopology(const isobarDecayTopology& topo)
@@ -195,8 +195,8 @@ namespace rpwa {
 		isobarDecayTopologyPtr topoCopy(new isobarDecayTopology(topo));
 		return topoCopy;
 	}
-	
-	
+
+
 	inline
 	isobarDecayTopologyPtr
 	createIsobarDecayTopology(const decayTopology& topo)
