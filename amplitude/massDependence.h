@@ -126,6 +126,34 @@ namespace rpwa {
 
 
 	//////////////////////////////////////////////////////////////////////////////
+	/// Brief trivial flat mass dependence over a range
+	class flatRangeMassDependence : public massDependence {
+
+	public:
+
+		flatRangeMassDependence() : massDependence() { }
+		virtual ~flatRangeMassDependence()           { }
+
+		virtual std::complex<double> amp(const isobarDecayVertex&);
+
+		virtual std::string name() const { return "flatRangeMassDependence"; }  ///< returns label used in graph visualization, reporting, and key file
+
+	};
+
+
+	typedef boost::shared_ptr<flatRangeMassDependence> flatRangeMassDependencePtr;
+
+
+	inline
+	flatRangeMassDependencePtr
+	createFlatRangeMassDependence()
+	{
+		flatRangeMassDependencePtr massDep(new flatRangeMassDependence());
+		return massDep;
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////////
 	/// Brief relativistic Breit-Wigner with mass-dependent width and Blatt-Weisskopf barrier factors
 	class relativisticBreitWigner : public massDependence {
 

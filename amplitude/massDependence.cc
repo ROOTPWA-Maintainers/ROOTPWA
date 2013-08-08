@@ -68,6 +68,26 @@ flatMassDependence::amp(const isobarDecayVertex&)
 
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
+flatRangeMassDependence::amp(const isobarDecayVertex& v)
+{
+	complex<double> amp = 0.;
+
+	const particlePtr& parent = v.parent();
+	if (fabs(parent->lzVec().M() - parent->mass()) < parent->width()/2.)
+		amp = 1.;
+
+	if (_debug)
+		printDebug << name() << " M = " << parent->lzVec().M()
+		                     << ", M0 = " << parent->mass()
+		                     << ", G0 = " << parent->width()
+		                     << ", amp = " << amp << endl;
+
+	return amp;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+complex<double>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
