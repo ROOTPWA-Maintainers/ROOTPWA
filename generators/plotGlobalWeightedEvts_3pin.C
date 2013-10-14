@@ -98,7 +98,7 @@ public:
 			histName.replace(pos, len, replacement[i]);
 
 			massBin.GetDir()->GetObject(histName.c_str(), hist[i]);
-			
+
 			if (hist[i] == NULL) {
 				std::cerr << "Could not find histogram '" << histName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 			}
@@ -108,9 +108,6 @@ public:
 			return;
 		}
 
-		const double scale = hist[1]->Integral() / hist[0]->Integral();
-		hist[0]->Scale(scale);
-
 		const double max = std::max(hist[0]->GetMaximum(), hist[1]->GetMaximum());
 		hist[0]->SetMaximum(max);
 		hist[1]->SetMaximum(max);
@@ -119,16 +116,16 @@ public:
 		if (max == 0.) {
 			return;
 		}
-		
+
 		// force histogram with relative differences to a range
 		if (hist[3] != NULL) {
 			hist[3]->SetMaximum( 1.);
 			hist[3]->SetMinimum(-1.);
 		}
-			
+
 		for (unsigned int i=0; i<4; i++) {
 			c->cd(i+1);
-			
+
 			if (hist[i] == NULL) {
 				continue;
 			}
@@ -189,7 +186,7 @@ public:
 
 		for (unsigned int i=0; i<6; i++) {
 			c->cd(i+1);
-			
+
 			if (prefix[i] == NULL) {
 				continue;
 			}
@@ -203,7 +200,7 @@ public:
 
 			TH1* histMc;
 			massBin.GetDir()->GetObject(histMcName.c_str(), histMc);
-			
+
 			if (histMc == NULL) {
 				std::cerr << "Could not find histogram '" << histMcName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 				continue;
@@ -213,14 +210,11 @@ public:
 
 			TH1* histData;
 			massBin.GetDir()->GetObject(histDataName.c_str(), histData);
-			
+
 			if (histData == NULL) {
 				std::cerr << "Could not find histogram '" << histDataName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 				continue;
 			}
-
-			const double scale = histData->Integral() / histMc->Integral();
-			histMc->Scale(scale);
 
 			double max = std::max(histData->GetMaximum(), histMc->GetMaximum());
 
@@ -241,16 +235,18 @@ public:
 			TH1* histFirst(NULL);
 			if (twoMc) {
 				const std::string histMcPspName = GetHistogramName(prefix[i], "McPsp", suffix);
-				
+
 				TH1* histMcPsp;
 				massBin.GetDir()->GetObject(histMcPspName.c_str(), histMcPsp);
-				
+
 				if (histMcPsp == NULL) {
 					std::cerr << "Could not find histogram '" << histMcPspName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 					continue;
 				}
 
-				const double scalePsp = histData->Integral() / histMcPsp->Integral();
+				double scalePsp = 1.;
+				if (histMcPsp->Integral() != 0.)
+					scalePsp = histData->Integral() / histMcPsp->Integral();
 				histMcPsp->Scale(scalePsp);
 
 				max = std::max(max, histMcPsp->GetMaximum());
@@ -261,7 +257,6 @@ public:
 				histMcPsp->Draw("A E3");
 
 				histFirst = histMcPsp;
-
 			} else {
 				histFirst = histMc;
 			}
@@ -291,21 +286,21 @@ public:
 			} else {
 				histDiffName = GetHistogramName(prefix[i], "Diff", suffix);
 			}
-			
+
 			TH1* histDiff;
 			massBin.GetDir()->GetObject(histDiffName.c_str(), histDiff);
-			
+
 			if (histDiff == NULL) {
 				std::cerr << "Could not find histogram '" << histDiffName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 				continue;
 			}
-			
+
 			histDiff->SetMaximum();
 			histDiff->SetMinimum();
 			const double maxDiff = std::max(std::abs(histDiff->GetMaximum()), std::abs(histDiff->GetMinimum()));
-			
+
 			TransformHistogram(histDiff, -1.1*maxDiff, 1.1*maxDiff, boundWidth*spaceAcc + boundLower, boundWidth*(spaceAcc+spaceDiff) + boundLower);
-			
+
 			histDiff->SetStats(false);
 			histDiff->Draw("SAME");
 
@@ -315,29 +310,29 @@ public:
 			} else {
 				histRelDiffName = GetHistogramName(prefix[i], "RelDiff", suffix);
 			}
-			
+
 			TH1* histRelDiff;
 			massBin.GetDir()->GetObject(histRelDiffName.c_str(), histRelDiff);
-			
+
 			if (histRelDiff == NULL) {
 				std::cerr << "Could not find histogram '" << histRelDiffName << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 				continue;
 			}
-				
+
 			histRelDiff->SetMaximum();
 			histRelDiff->SetMinimum();
 			const double maxRelDiff = std::max(std::abs(histRelDiff->GetMaximum()), std::abs(histRelDiff->GetMinimum()));
-			
+
 			TransformHistogram(histRelDiff, -1.1*maxRelDiff, 1.1*maxRelDiff, boundWidth*spaceAcc + boundLower, boundWidth*(spaceAcc+spaceDiff) + boundLower);
-			
+
 			histRelDiff->SetStats(false);
 			histRelDiff->SetLineColor(kBlue);
 			histRelDiff->Draw("SAME");
-			
+
 			double maxAcceptance(0.);
 			if (twoMc) {
 				const std::string histAcceptanceName = GetHistogramName(prefix[i], "Acceptance", suffix);
-				
+
 				TH1* histAcceptance;
 				massBin.GetDir()->GetObject(histAcceptanceName.c_str(), histAcceptance);
 
@@ -345,12 +340,12 @@ public:
 					std::cerr << "Could not find histogram '" << histAcceptance << "' in '" << massBin.GetDir()->GetName() << "'. The bookies created might be wrong." << std::endl;
 					continue;
 				}
-				
+
 				histAcceptance->SetMaximum();
 				maxAcceptance = histAcceptance->GetMaximum();
-				
+
 				TransformHistogram(histAcceptance, 0., 1.1*maxAcceptance, boundLower, boundWidth*spaceAcc + boundLower);
-				
+
 				histAcceptance->SetStats(false);
 				histAcceptance->SetLineColor(kBlack);
 				histAcceptance->Draw("SAME");
@@ -382,7 +377,7 @@ public:
 			const double yAxisRelDiffMax =  1.1*maxRelDiff;
 			const double yAxisRelDiffMin = -1.1*maxRelDiff;
 			const char* yAxisRelDiffTitle = "(M-D)/D";
-	
+
 			TGaxis* yAxisPlot = new TGaxis(xAxisMin, 0., xAxisMin, boundUpper, yAxisPlotMin, yAxisPlotMax, 508, "-");
 			yAxisPlot->SetTitle(yAxisPlotTitle);
 			yAxisPlot->Draw();
@@ -472,8 +467,8 @@ public:
 			if (histVsMass == NULL) {
 				out->cd();
 				histVsMass = new TH2D(n.c_str(), (std::string(histBin->GetTitle()) + " vs. mass").c_str(),
-						      massBins, massBinsLower, massBinsUpper,
-						      histBin->GetNbinsX(), histBin->GetXaxis()->GetXmin(), histBin->GetXaxis()->GetXmax());
+				                      massBins, massBinsLower, massBinsUpper,
+				                      histBin->GetNbinsX(), histBin->GetXaxis()->GetXmin(), histBin->GetXaxis()->GetXmax());
 				histVsMass->SetOption("COLZ");
 				histVsMass->SetXTitle("Resonance Mass [GeV/c^{2}]");
 				histVsMass->SetYTitle(histBin->GetXaxis()->GetTitle());
@@ -512,7 +507,7 @@ public:
 
 			TCanvas* c= new TCanvas(n.c_str(), n.c_str());
 			c->cd();
-			
+
 			histVsMass->SetContour(NUMBER_CONTOURS);
 			histVsMass->Draw("AXIS");
 
@@ -526,7 +521,7 @@ public:
 			c->cd()->RedrawAxis();
 
 			c->Print((GetName() + ".ps").c_str());
-		
+
 			ret.push_back(c);
 		}
 
@@ -542,11 +537,11 @@ private:
 
 std::map<std::string, BookyDefinition*>
 setupBookies(const std::vector<MassBin>& massBins,
-	     TDirectory* outGlobal,
-	     const bool twoMc) {
+             TDirectory* outGlobal,
+             const bool twoMc) {
 	std::map<std::string, BookyDefinition*> definition;
 
-	// add definitions for comparison of GJ and helicity angles fot the
+	// add definitions for comparison of GJ and helicity angles for the
 	// neutral and charged isobars
 	definition.insert(std::pair<std::string, BookyDefinition*>("BookyNeutralIsobar", new AnglesComparison("BookyNeutralIsobar", "Neutral")));
 	definition.insert(std::pair<std::string, BookyDefinition*>("BookyChargedIsobar", new AnglesComparison("BookyChargedIsobar", "Charged")));
@@ -592,12 +587,12 @@ void
 setDiffColorStyle(const unsigned int NCont) {
 	static Int_t *colors =0;
 	static Bool_t initialized = kFALSE;
-	
+
 	Double_t Red[3]    = { 0.0, 1.0, 1.0 };
 	Double_t Green[3]  = { 0.0, 1.0, 0.0 };
 	Double_t Blue[3]   = { 1.0, 1.0, 0.0 };
 	Double_t Length[3] = { 0.0, 0.50, 1.0 };
-	
+
 	if(!initialized){
 		colors = new Int_t[NCont];
 		Int_t FI = TColor::CreateGradientColorTable(3,Length,Red,Green,Blue,NCont);
@@ -614,23 +609,23 @@ fileContainsTwoMc(TFile* in) {
 	// only, or the combination of those two)
 	TIter diriter(in->GetListOfKeys());
 	TKey* keyO;
-	
+
 	bool twoMc(false);
 	while ((keyO = dynamic_cast<TKey*>(diriter()))) {
 		// check if keyO points to a TDirectory
 		if (!TClass::GetClass(keyO->GetClassName())->InheritsFrom("TDirectory"))
 			continue;
-		
+
 		// check if this directory is a mass bin dir
 		const std::string nameDir = keyO->GetName();
 		const size_t pointpos = nameDir.find(".");
 		if (pointpos == 0 || pointpos == nameDir.size())
 			continue;
-		
+
 		TDirectory* dir;
 		in->GetObject(keyO->GetName(), dir);
 		assert(dir != NULL);
-		
+
 		TIter histiter(dir->GetListOfKeys());
 		TKey* keyI;
 		while ((keyI = dynamic_cast<TKey*>(histiter()))) {
@@ -643,7 +638,7 @@ fileContainsTwoMc(TFile* in) {
 				break;
 			}
 		}
-		
+
 		if (twoMc) {
 			break;
 		}
@@ -699,7 +694,7 @@ addHistograms(TDirectory* out, const MassBin& massBin) {
 
 		TH1* histBin;
 		massBin.GetDir()->GetObject(key->GetName(), histBin);
-		
+
 		TH1* histSum;
 		out->GetObject(key->GetName(), histSum);
 		if (histSum == NULL) {
@@ -728,7 +723,7 @@ freeMemory(const MassBin& massBin) {
 
 void
 plotGlobalWeightedEvts_3pin(const std::string& inFileName,
-			    const std::string& outFileName) {
+                            const std::string& outFileName) {
 	TFile* inFile = TFile::Open(inFileName.c_str(), "READ");
 	if (inFile == NULL) {
 		std::cerr << "Input file '" << inFileName << "' could not be opened." << std::endl;
@@ -742,11 +737,11 @@ plotGlobalWeightedEvts_3pin(const std::string& inFileName,
 
 	TDirectory* outGlobal = outFile->mkdir("global");
 	TDirectory* outSum = outFile->mkdir("sum");
-	
+
 	// guess if we are running on data that has been generated from one or
 	// two sets of phasespace events
 	const bool twoMc = fileContainsTwoMc(inFile);
-	
+
 	// get list of mass bins from the file
 	std::vector<MassBin> massBins = getMassBins(inFile);
 
@@ -785,7 +780,7 @@ plotGlobalWeightedEvts_3pin(const std::string& inFileName,
 		}
 		delete itBookies->second;
 	}
-	
+
 	std::cout<< "saving to disk..." <<std::endl;
 	outFile->Write();
 	outFile->Close();
