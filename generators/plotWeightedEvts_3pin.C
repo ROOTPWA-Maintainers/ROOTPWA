@@ -55,28 +55,20 @@ struct GJHistBunch {
 	std::vector<TH1D*> costheta_GJF;
 	std::vector<TH1D*> phi_GJF;
 	std::vector<TH2D*> costheta_GJF_tprime;
+	std::vector<TH2D*> phi_costheta_GJF;
 
 	// resolved for positive and negative reflectivity, and flat wave
 	std::vector<THStack*> costheta_GJF_Stack;
 	std::vector<TH1D*> costheta_GJF_PosRef;
 	std::vector<TH1D*> costheta_GJF_NegRef;
 	std::vector<TH1D*> costheta_GJF_Flat;
-	
-	// difference histograms
-	TH1D* isobar_mass_diff;
-	TH1D* costheta_GJF_diff;
-	TH1D* phi_GJF_diff;
-	TH2D* costheta_GJF_tprime_diff;
 };
 
 struct HelicityHistBunch {
 	// base histograms
 	std::vector<TH1D*> costheta_HF;
 	std::vector<TH1D*> phi_HF;
-	
-	// difference histograms
-	TH1D* costheta_HF_diff;
-	TH1D* phi_HF_diff;
+	std::vector<TH2D*> phi_costheta_HF;
 };
 
 struct HelicityAngles {
@@ -109,7 +101,7 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 		hMIsobarMc->SetYTitle("# of events");
 		temp.isobar_mass.push_back(hMIsobarMc);
 	}
-	
+
 	TH1D* hGJData = new TH1D(("hGJData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Data)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 	hGJData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJData->SetYTitle("# of events");
@@ -133,27 +125,31 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 	TH2D* hGJtData = new TH2D(("hGJtData_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Data)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 	hGJtData->SetXTitle("isobar cos(#theta_{GJ})");
 	hGJtData->SetYTitle("t' [GeV]");
+	hGJtData->SetZTitle("# events");
 	hGJtData->SetOption("COLZ");
 	temp.costheta_GJF_tprime.push_back(hGJtData);
 	if (twoMc) {
 		TH2D* hGJtMcPsp = new TH2D(("hGJtMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 		hGJtMcPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMcPsp->SetYTitle("t' [GeV]");
+		hGJtMcPsp->SetZTitle("# events");
 		hGJtMcPsp->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMcPsp);
 		TH2D* hGJtMcAcc = new TH2D(("hGJtMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 		hGJtMcAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMcAcc->SetYTitle("t' [GeV]");
+		hGJtMcAcc->SetZTitle("# events");
 		hGJtMcAcc->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMcAcc);
 	} else {
 		TH2D* hGJtMc = new TH2D(("hGJtMc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos GJ Theta vs t' (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX, HISTLIMITS_TPRIME_BINS, HISTLIMITS_TPRIME_MIN, HISTLIMITS_TPRIME_MAX);
 		hGJtMc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJtMc->SetYTitle("t' [GeV]");
+		hGJtMc->SetZTitle("# events");
 		hGJtMc->SetOption("COLZ");
 		temp.costheta_GJF_tprime.push_back(hGJtMc);
 	}
-	
+
 	TH1D* hTYData = new TH1D(("hTYData_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi (Data)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 	hTYData->SetXTitle("isobar #phi_{TY} [rad]");
 	hTYData->SetYTitle("# of events");
@@ -174,71 +170,99 @@ GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc)
 		temp.phi_GJF.push_back(hTYMc);
 	}
 
+	TH2D* hTYVsGJData = new TH2D(("hTYVsGJData_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi vs Cos GJ Theta (Data)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+	hTYVsGJData->SetXTitle("isobar #phi_{TY} [rad]");
+	hTYVsGJData->SetYTitle("isobar cos(#theta_{GJ})");
+	hTYVsGJData->SetZTitle("# of events");
+	hTYVsGJData->SetOption("COLZ");
+	temp.phi_costheta_GJF.push_back(hTYVsGJData);
+	if (twoMc) {
+		TH2D* hTYVsGJMcPsp = new TH2D(("hTYVsGJMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi vs Cos GJ Theta (McPsp)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+		hTYVsGJMcPsp->SetXTitle("isobar #phi_{TY} [rad]");
+		hTYVsGJMcPsp->SetYTitle("isobar cos(#theta_{GJ})");
+		hTYVsGJMcPsp->SetZTitle("# of events");
+		hTYVsGJMcPsp->SetOption("COLZ");
+		temp.phi_costheta_GJF.push_back(hTYVsGJMcPsp);
+		TH2D* hTYVsGJMcAcc = new TH2D(("hTYVsGJMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi vs Cos GJ Theta (McAcc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+		hTYVsGJMcAcc->SetXTitle("isobar #phi_{TY} [rad]");
+		hTYVsGJMcAcc->SetYTitle("isobar cos(#theta_{GJ})");
+		hTYVsGJMcAcc->SetZTitle("# of events");
+		hTYVsGJMcAcc->SetOption("COLZ");
+		temp.phi_costheta_GJF.push_back(hTYVsGJMcAcc);
+	} else {
+		TH2D* hTYVsGJMc = new TH2D(("hTYVsGJMc_" + name_prefix).c_str(), (name_prefix + " Isobar Treiman-Yang Phi vs Cos GJ Theta (Mc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+		hTYVsGJMc->SetXTitle("isobar #phi_{TY} [rad]");
+		hTYVsGJMc->SetYTitle("isobar cos(#theta_{GJ})");
+		hTYVsGJMc->SetZTitle("# of events");
+		hTYVsGJMc->SetOption("COLZ");
+		temp.phi_costheta_GJF.push_back(hTYVsGJMc);
+	}
+
 	if (twoMc) {
 		THStack* hGJF_Stack_McPsp = new THStack(("hGJF_Stack_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str());
-	
+
 		TH1D* hGJF_Flat_McPsp = new TH1D(("hGJF_Flat_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Flat_McPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Flat_McPsp->SetYTitle("# of events");
 		temp.costheta_GJF_Flat.push_back(hGJF_Flat_McPsp);
 		hGJF_Stack_McPsp->Add(hGJF_Flat_McPsp);
-		
+
 		TH1D* hGJF_Neg_McPsp = new TH1D(("hGJF_Neg_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Neg_McPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Neg_McPsp->SetYTitle("# of events");
 		temp.costheta_GJF_NegRef.push_back(hGJF_Neg_McPsp);
 		hGJF_Stack_McPsp->Add(hGJF_Neg_McPsp);
-		
+
 		TH1D* hGJF_Pos_McPsp = new TH1D(("hGJF_Pos_McPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McPsp)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Pos_McPsp->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Pos_McPsp->SetYTitle("# of events");
 		temp.costheta_GJF_PosRef.push_back(hGJF_Pos_McPsp);
 		hGJF_Stack_McPsp->Add(hGJF_Pos_McPsp);
-	
+
 		temp.costheta_GJF_Stack.push_back(hGJF_Stack_McPsp);
 
 		THStack* hGJF_Stack_McAcc = new THStack(("hGJF_Stack_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str());
-	
+
 		TH1D* hGJF_Flat_McAcc = new TH1D(("hGJF_Flat_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Flat_McAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Flat_McAcc->SetYTitle("# of events");
 		temp.costheta_GJF_Flat.push_back(hGJF_Flat_McAcc);
 		hGJF_Stack_McAcc->Add(hGJF_Flat_McAcc);
-		
+
 		TH1D* hGJF_Neg_McAcc = new TH1D(("hGJF_Neg_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Neg_McAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Neg_McAcc->SetYTitle("# of events");
 		temp.costheta_GJF_NegRef.push_back(hGJF_Neg_McAcc);
 		hGJF_Stack_McAcc->Add(hGJF_Neg_McAcc);
-		
+
 		TH1D* hGJF_Pos_McAcc = new TH1D(("hGJF_Pos_McAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (McAcc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Pos_McAcc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Pos_McAcc->SetYTitle("# of events");
 		temp.costheta_GJF_PosRef.push_back(hGJF_Pos_McAcc);
 		hGJF_Stack_McAcc->Add(hGJF_Pos_McAcc);
-	
+
 		temp.costheta_GJF_Stack.push_back(hGJF_Stack_McAcc);
 	} else {
 		THStack* hGJF_Stack_Mc = new THStack(("hGJF_Stack_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str());
-	
+
 		TH1D* hGJF_Flat_Mc = new TH1D(("hGJF_Flat_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Flat_Mc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Flat_Mc->SetYTitle("# of events");
 		temp.costheta_GJF_Flat.push_back(hGJF_Flat_Mc);
 		hGJF_Stack_Mc->Add(hGJF_Flat_Mc);
-		
+
 		TH1D* hGJF_Neg_Mc = new TH1D(("hGJF_Neg_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Neg_Mc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Neg_Mc->SetYTitle("# of events");
 		temp.costheta_GJF_NegRef.push_back(hGJF_Neg_Mc);
 		hGJF_Stack_Mc->Add(hGJF_Neg_Mc);
-		
+
 		TH1D* hGJF_Pos_Mc = new TH1D(("hGJF_Pos_Mc_" + name_prefix).c_str(), (name_prefix + " Isobar Cos Gottfried-Jackson Theta (Mc)").c_str(), HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
 		hGJF_Pos_Mc->SetXTitle("isobar cos(#theta_{GJ})");
 		hGJF_Pos_Mc->SetYTitle("# of events");
 		temp.costheta_GJF_PosRef.push_back(hGJF_Pos_Mc);
 		hGJF_Stack_Mc->Add(hGJF_Pos_Mc);
-	
+
 		temp.costheta_GJF_Stack.push_back(hGJF_Stack_Mc);
 	}
 
@@ -266,7 +290,7 @@ HelicityHistBunch HelicityHistBunchFactory(const std::string& name_prefix, const
 		hHThetaMc->SetYTitle("# of events");
 		temp.costheta_HF.push_back(hHThetaMc);
 	}
-	
+
 	TH1D* hHPhiData = new TH1D(("hHPhiData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi (Data)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX);
 	hHPhiData->SetXTitle("#phi_{hel} [rad] of #pi^{0} from isobar");
 	hHPhiData->SetYTitle("# of events");
@@ -286,13 +310,42 @@ HelicityHistBunch HelicityHistBunchFactory(const std::string& name_prefix, const
 		hHPhiMc->SetYTitle("# of events");
 		temp.phi_HF.push_back(hHPhiMc);
 	}
-	
+
+	TH2D* hHPhiVsHThetaData = new TH2D(("hHPhiVsHThetaData_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi vs Cos Theta (Data)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+	hHPhiVsHThetaData->SetXTitle("isobar #phi_{hel} [rad]");
+	hHPhiVsHThetaData->SetYTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
+	hHPhiVsHThetaData->SetZTitle("# of events");
+	hHPhiVsHThetaData->SetOption("COLZ");
+	temp.phi_costheta_HF.push_back(hHPhiVsHThetaData);
+	if (twoMc) {
+		TH2D* hHPhiVsHThetaMcPsp = new TH2D(("hHPhiVsHThetaMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi vs Cos Theta (McPsp)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+		hHPhiVsHThetaMcPsp->SetXTitle("isobar #phi_{hel} [rad]");
+		hHPhiVsHThetaMcPsp->SetYTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
+		hHPhiVsHThetaMcPsp->SetZTitle("# of events");
+		hHPhiVsHThetaMcPsp->SetOption("COLZ");
+		temp.phi_costheta_HF.push_back(hHPhiVsHThetaMcPsp);
+		TH2D* hHPhiVsHThetaMcAcc = new TH2D(("hHPhiVsHThetaMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi vs Cos Theta (McAcc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+		hHPhiVsHThetaMcAcc->SetXTitle("isobar #phi_{hel} [rad]");
+		hHPhiVsHThetaMcAcc->SetYTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
+		hHPhiVsHThetaMcAcc->SetZTitle("# of events");
+		hHPhiVsHThetaMcAcc->SetOption("COLZ");
+		temp.phi_costheta_HF.push_back(hHPhiVsHThetaMcAcc);
+	} else {
+		TH2D* hHPhiVsHThetaMc = new TH2D(("hHPhiVsHThetaMc_" + name_prefix).c_str(), (name_prefix + " Isobar Helicity Phi vs Cos Theta (Mc)").c_str(), HISTLIMITS_PHI_BINS, HISTLIMITS_PHI_MIN, HISTLIMITS_PHI_MAX, HISTLIMITS_COSTHETA_BINS, HISTLIMITS_COSTHETA_MIN, HISTLIMITS_COSTHETA_MAX);
+		hHPhiVsHThetaMc->SetXTitle("isobar #phi_{hel} [rad]");
+		hHPhiVsHThetaMc->SetYTitle("cos(#theta_{hel} of #pi^{0} from isobar)");
+		hHPhiVsHThetaMc->SetZTitle("# of events");
+		hHPhiVsHThetaMc->SetOption("COLZ");
+		temp.phi_costheta_HF.push_back(hHPhiVsHThetaMc);
+	}
+
 	return temp;
 }
 
 void fillWeightedHelicityAnglePlots(const HelicityAngles &ha, double weight, unsigned int tree_index, HelicityHistBunch &hhb) {
 	hhb.costheta_HF[tree_index]->Fill(ha.cosTheta, weight);
 	hhb.phi_HF[tree_index]->Fill(ha.phi, weight);
+	hhb.phi_costheta_HF[tree_index]->Fill(ha.phi, ha.cosTheta, weight);
 }
 
 void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, double weightPosRef, double weightNegRef, double weightFlat, double tprime, unsigned int tree_index, GJHistBunch &hBunch) {
@@ -305,11 +358,12 @@ void fillWeightedGJAnglePlots(const TLorentzVector &isobar, double weight, doubl
 	hBunch.costheta_GJF_tprime[tree_index]->Fill(isobar.CosTheta(), tprime, weight);
 	hBunch.phi_GJF[tree_index]->Fill(isobar.Phi(), weight);
 	hBunch.isobar_mass[tree_index]->Fill(isobar.M(), weight);
+	hBunch.phi_costheta_GJF[tree_index]->Fill(isobar.Phi(), isobar.CosTheta(), weight);
 }
 
 HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVector *beam = NULL, bool first = true) {
 	HelicityAngles temp;
-	
+
 	TVector3 zaxis_gjf;
 	if(beam != NULL) {
 		zaxis_gjf = beam->Vect().Unit();
@@ -321,7 +375,7 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 	TVector3 zaxis = isobar.p().Vect().Unit();
 	TVector3 yaxis = zaxis_gjf.Cross(zaxis).Unit();
 	TVector3 xaxis = yaxis.Cross(zaxis);
-	
+
 	// boost NParticleState into isobar rest frame
 	TLorentzVector particle;
 	if(isobar.getParticle(0)->q() == 0 && first)
@@ -339,7 +393,7 @@ HelicityAngles calculateHelicityAngles(const NParticleState &isobar, TLorentzVec
 		temp.phi = 0.0;
 	else
 		temp.phi = TMath::ATan2(fY,fX);
-	
+
 	return temp;
 }
 
@@ -387,15 +441,18 @@ void makeDifferencePlots(TDirectory* dir) {
 		dir->GetObject(nameMcAcc.c_str(), histMcAcc);
 		TH1* histMcPsp;
 		dir->GetObject(nameMcPsp.c_str(), histMcPsp);
-		
+
 		if (histMcAcc && histMcPsp) {
 			dir->cd();
-			
+
 			TH1* histAcceptance = dynamic_cast<TH1*>(histMcAcc->Clone(nameAcceptance.c_str()));
 			assert(histAcceptance != NULL);
 			histAcceptance->SetTitle("");
 			histAcceptance->Divide(histMcPsp);
-			histAcceptance->SetYTitle("acceptance (acc. MC / PS MC)");
+			if (dynamic_cast<TH2*>(histAcceptance) != NULL)
+				histAcceptance->SetZTitle("acceptance (acc. MC / PS MC)");
+			else
+				histAcceptance->SetYTitle("acceptance (acc. MC / PS MC)");
 			histAcceptance->Write(NULL, TObject::kOverwrite);
 		}
 	}
@@ -422,34 +479,44 @@ void makeDifferencePlots(TDirectory* dir) {
 			hnamedata.erase(pos, 2);
 		}
 		hnamedata.insert(pos, "Data");
-		
+
 		TH1* mchist;
 		dir->GetObject(hnamemc.c_str(), mchist);
 		TH1* datahist;
 		dir->GetObject(hnamedata.c_str(), datahist);
-		
+
 		if (datahist && mchist) {
 			dir->cd();
-			const double scale = datahist->Integral() / mchist->Integral();
-			
+
 			TH1* diffhist = dynamic_cast<TH1*>(mchist->Clone(hnamediff.c_str()));
 			assert(diffhist != NULL);
 			diffhist->SetTitle("");
-			diffhist->Scale(scale);
 			diffhist->Add(datahist, -1.);
-			diffhist->SetYTitle("# of events difference(MC-Data)");
+			if (dynamic_cast<TH2*>(diffhist) != NULL)
+				diffhist->SetZTitle("# of events difference(MC-Data)");
+			else
+				diffhist->SetYTitle("# of events difference(MC-Data)");
+			diffhist->SetMaximum();
+			diffhist->SetMinimum();
 			double max = std::max(std::abs(diffhist->GetMaximum()), std::abs(diffhist->GetMinimum()));
+			if (max == 0.)
+				max = 1. / 1.1;
 			diffhist->SetMaximum( 1.1 * max);
 			diffhist->SetMinimum(-1.1 * max);
 			diffhist->Write(NULL, TObject::kOverwrite);
-			
+
 			TH1* reldiffhist = dynamic_cast<TH1*>(diffhist->Clone(hnamereldiff.c_str()));
 			assert(reldiffhist != NULL);
 			reldiffhist->Divide(datahist);
-			reldiffhist->SetYTitle("relative difference((MC-Data)/Data)");
+			if (dynamic_cast<TH2*>(reldiffhist) != NULL)
+				reldiffhist->SetZTitle("relative difference((MC-Data)/Data)");
+			else
+				reldiffhist->SetYTitle("relative difference((MC-Data)/Data)");
 			reldiffhist->SetMaximum();
 			reldiffhist->SetMinimum();
 			max = std::max(std::abs(reldiffhist->GetMaximum()), std::abs(reldiffhist->GetMinimum()));
+			if (max == 0.)
+				max = 1. / 1.1;
 			reldiffhist->SetMaximum( 1.1 * max);
 			reldiffhist->SetMinimum(-1.1 * max);
 			reldiffhist->Write(NULL, TObject::kOverwrite);
@@ -460,32 +527,32 @@ void makeDifferencePlots(TDirectory* dir) {
 void
 createWeightedPlots(const std::string& dataFileName,
                     const std::string& dataTreeName,
-		    const std::string& dataProdKinPartNamesName,
-		    const std::string& dataProdKinMomentaName,
-		    const std::string& dataDecayKinPartNamesName,
-		    const std::string& dataDecayKinMomentaName,
-		    const std::string& mcPspFileName,
-		    const std::string& mcPspTreeName,
-		    const std::string& mcPspProdKinPartNamesName,
-		    const std::string& mcPspProdKinMomentaName,
-		    const std::string& mcPspDecayKinPartNamesName,
-		    const std::string& mcPspDecayKinMomentaName,
-		    const std::string& mcAccFileName,
-		    const std::string& mcAccTreeName,
-		    const std::string& mcAccProdKinPartNamesName,
-		    const std::string& mcAccProdKinMomentaName,
-		    const std::string& mcAccDecayKinPartNamesName,
-		    const std::string& mcAccDecayKinMomentaName,
-		    const std::string& massBin,
-		    const std::string& outFileName,
-		    const std::string& pdgFileName,
-		    const long int     treeCacheSize)
+                    const std::string& dataProdKinPartNamesName,
+                    const std::string& dataProdKinMomentaName,
+                    const std::string& dataDecayKinPartNamesName,
+                    const std::string& dataDecayKinMomentaName,
+                    const std::string& mcPspFileName,
+                    const std::string& mcPspTreeName,
+                    const std::string& mcPspProdKinPartNamesName,
+                    const std::string& mcPspProdKinMomentaName,
+                    const std::string& mcPspDecayKinPartNamesName,
+                    const std::string& mcPspDecayKinMomentaName,
+                    const std::string& mcAccFileName,
+                    const std::string& mcAccTreeName,
+                    const std::string& mcAccProdKinPartNamesName,
+                    const std::string& mcAccProdKinMomentaName,
+                    const std::string& mcAccDecayKinPartNamesName,
+                    const std::string& mcAccDecayKinMomentaName,
+                    const std::string& massBin,
+                    const std::string& outFileName,
+                    const std::string& pdgFileName,
+                    const long int     treeCacheSize)
 {
 	// keep track of the processing time
 	TStopwatch timer;
 	timer.Start();
 
-        // initialize particle data table
+	// initialize particle data table
 	rpwa::particleDataTable::readFile(pdgFileName);
 
 	// open data file
@@ -580,10 +647,10 @@ createWeightedPlots(const std::string& dataFileName,
 			}
 		}
 	}
-	
+
 	double massval = 0.0;
 	unsigned int datatreeentries = 0;
-	
+
 	unsigned int pointpos = massBin.find(".");
 	if(pointpos == 0 || pointpos == massBin.size())
 		std::cout<<"Warning: Bad massbin name!"<<std::endl;
@@ -592,7 +659,7 @@ createWeightedPlots(const std::string& dataFileName,
 	massval /=1000;
 	datatreeentries = dataTree->GetEntries();
 
-	
+
 	gROOT->SetStyle("Plain");
 	TFile* outfile = TFile::Open(outFileName.c_str(), "UPDATE");
 	outfile->cd();
@@ -616,12 +683,13 @@ createWeightedPlots(const std::string& dataFileName,
 		TH1D* hMMc = new TH1D("hResMassMc", "Mass (Mc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hM.push_back(hMMc);
 	}
-	
+
 	// Dalitz plots
 	std::vector<TH2D*> dalitz_neutral;
 	TH2D* hDalitzData = new TH2D("hDalitzData", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 	hDalitzData->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 	hDalitzData->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
+	hDalitzData->SetZTitle("# of events");
 	hDalitzData->SetOption("COLZ");
 	hDalitzData->SetStats(0);
 	dalitz_neutral.push_back(hDalitzData);
@@ -629,12 +697,14 @@ createWeightedPlots(const std::string& dataFileName,
 		TH2D* hDalitzMcPsp = new TH2D("hDalitzMcPsp", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McPsp)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hDalitzMcPsp->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcPsp->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
+		hDalitzMcPsp->SetZTitle("# of events");
 		hDalitzMcPsp->SetOption("COLZ");
 		hDalitzMcPsp->SetStats(0);
 		dalitz_neutral.push_back(hDalitzMcPsp);
 		TH2D* hDalitzMcAcc = new TH2D("hDalitzMcAcc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McAcc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hDalitzMcAcc->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcAcc->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
+		hDalitzMcAcc->SetZTitle("# of events");
 		hDalitzMcAcc->SetOption("COLZ");
 		hDalitzMcAcc->SetStats(0);
 		dalitz_neutral.push_back(hDalitzMcAcc);
@@ -642,32 +712,33 @@ createWeightedPlots(const std::string& dataFileName,
 		TH2D* hDalitzMc = new TH2D("hDalitzMc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Mc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
 		hDalitzMc->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMc->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
+		hDalitzMc->SetZTitle("# of events");
 		hDalitzMc->SetOption("COLZ");
 		hDalitzMc->SetStats(0);
 		dalitz_neutral.push_back(hDalitzMc);
 	}
-	
+
 	// --------------- generate histogram bunches
 	// neutral isobar
 	// GJ Histogram Bunch
 	GJHistBunch GJHB_neutral_isobar = GJHistBunchFactory("Neutral", mcAccFile!=NULL);
 	// Helicity Histogram Bunch
 	HelicityHistBunch HHB_neutral_isobar = HelicityHistBunchFactory("Neutral", mcAccFile!=NULL);
-	
+
 	// charged isobar
 	// GJ Histogram Bunch MC
 	GJHistBunch GJHB_charged_isobar = GJHistBunchFactory("Charged", mcAccFile!=NULL);
 	// Helicity Histogram Bunch
 	HelicityHistBunch HHB_charged_isobar = HelicityHistBunchFactory("Charged", mcAccFile!=NULL);
-	
+
 	// charged isobar with rho mass cut
 	// GJ Histogram Bunch MC
 	GJHistBunch GJHB_rho = GJHistBunchFactory("ChargedRho", mcAccFile!=NULL);
 	// Helicity Histogram Bunch
 	HelicityHistBunch HHB_rho = HelicityHistBunchFactory("ChargedRho", mcAccFile!=NULL);
-	
+
 	double avweight = 1;
-	
+
 	//Loop both over data and mc tree
 	// itree = 0: data tree
 	// itree = 1: mc tree
@@ -738,8 +809,8 @@ createWeightedPlots(const std::string& dataFileName,
 			tree->AddBranchToCache("weightFlat", true);
 			tree->AddBranchToCache("impweight", true);
 		}
-	        tree->AddBranchToCache(prodKinMomentaName.c_str(),  true);
-	        tree->AddBranchToCache(decayKinMomentaName.c_str(), true);
+		tree->AddBranchToCache(prodKinMomentaName.c_str(),  true);
+		tree->AddBranchToCache(decayKinMomentaName.c_str(), true);
 		tree->StopCacheLearningPhase();
 
 		TLorentzVector* beam = new TLorentzVector;
@@ -792,10 +863,10 @@ createWeightedPlots(const std::string& dataFileName,
 
 			// this builds all subsystems
 			event.refresh();
-			
+
 			if (impweight != 0)
 				weight /= impweight;
-			
+
 			if (weight > maxweight)
 				maxweight = weight;
 			if (itree != 0)
@@ -804,7 +875,7 @@ createWeightedPlots(const std::string& dataFileName,
 			double tprime = event.tprime();
 			//cout << tprime << endl;
 			unsigned int npart = event.nParticles();
-			
+
 			// ----dalitz plots
 			// make all combinations
 			std::vector<std::pair<std::pair<int, int>, double> > comb;
@@ -818,10 +889,10 @@ createWeightedPlots(const std::string& dataFileName,
 					comb.push_back(temp);
 				}
 			}
-			
+
 			// now fill corresponding dalitz plots
 			// this part is pi-pi0pi0 specific
-			
+
 			// put pi0 pi0 combination to front of vector to make combination picks easier later on
 			for(unsigned int i = 0; i < comb.size(); i++) {
 				if(getTotalCharge(comb[i].first) == 0) {
@@ -837,18 +908,18 @@ createWeightedPlots(const std::string& dataFileName,
 			// now actually fill the histograms
 			dalitz_neutral[itree]->Fill(comb[0].second, comb[1].second, weight);
 			//dalitz_charged[itree]->Fill(comb[1].second, comb[2].second, weight);
-			
+
 			// transform into GJ
 			event.toGJ();
 			// build again to get particles in GJF
 			event.build();
-			
+
 			// loop over all states that contain n-1 final state particles
 			// and plot angles
 			unsigned int nstates = event.nStates();
 			//cout<<"number of substates: "<<event.nStates()<<endl;
 			for (unsigned int is = 0; is < nstates; ++is) {
-				
+
 				const NParticleState& state = event.getState(is);
 				if (state.n() == npart) {
 					hM[itree]->Fill(state.p().M(), weight);
@@ -877,7 +948,7 @@ createWeightedPlots(const std::string& dataFileName,
 					}
 				}
 			}
-			
+
 		}// end loop over events
 		if (itree != 0) {
 			avweight /= (double) nmbEvents;
@@ -886,17 +957,17 @@ createWeightedPlots(const std::string& dataFileName,
 		}
 		std::cout << std::endl;
 	}// end loop over trees
-	
+
 	GJHB_neutral_isobar.costheta_GJF_Stack[0]->Write(NULL, TObject::kOverwrite);
 	GJHB_charged_isobar.costheta_GJF_Stack[0]->Write(NULL, TObject::kOverwrite);
 	if (mcAccFile != NULL) {
 		GJHB_neutral_isobar.costheta_GJF_Stack[1]->Write(NULL, TObject::kOverwrite);
 		GJHB_charged_isobar.costheta_GJF_Stack[1]->Write(NULL, TObject::kOverwrite);
 	}
-	
+
 	outfile->Write(NULL, TObject::kOverwrite);
 	makeDifferencePlots(outdir);
-	
+
 	TList* Hlist = gDirectory->GetList();
 	Hlist->Remove(dataTree);
 	Hlist->Remove(mcPspTree);
@@ -904,11 +975,11 @@ createWeightedPlots(const std::string& dataFileName,
 	//Hlist->Remove("hWeights");
 	int nobj = Hlist->GetEntries();
 	std::cout << "Found " << nobj << " Objects in HList" << std::endl;
-	
+
 	outfile->Close();
-	
+
 	gROOT->cd();
-	
+
 	// print information on the processing time
 	timer.Stop();
 	printInfo << "this job consumed: ";
@@ -941,9 +1012,9 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 
 	createWeightedPlots(dataFileName, dataTreeName, dataProdKinPartNamesName, dataProdKinMomentaName, dataDecayKinPartNamesName, dataDecayKinMomentaName,
 	                    mcFileName,   mcTreeName,   mcProdKinPartNamesName,   mcProdKinMomentaName,   mcDecayKinPartNamesName,   mcDecayKinMomentaName,
-			    "",           "",           "",                       "",                     "",                        "",
+	                    "",           "",           "",                       "",                     "",                        "",
 	                    massBin, outFileName,
-			    pdgFileName, treeCacheSize);
+	                    pdgFileName, treeCacheSize);
 }
 
 void
@@ -980,5 +1051,5 @@ plotWeightedEvts_3pin(const std::string& dataFileName,
 	                    mcPspFileName, mcPspTreeName, mcPspProdKinPartNamesName, mcPspProdKinMomentaName, mcPspDecayKinPartNamesName, mcPspDecayKinMomentaName,
 	                    mcAccFileName, mcAccTreeName, mcAccProdKinPartNamesName, mcAccProdKinMomentaName, mcAccDecayKinPartNamesName, mcAccDecayKinMomentaName,
 	                    massBin, outFileName,
-			    pdgFileName, treeCacheSize);
+	                    pdgFileName, treeCacheSize);
 }
