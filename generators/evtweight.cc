@@ -505,12 +505,13 @@ main(int    argc,
 					complex<double> decayamp = decayamps[iw];
 					string w1 = waveNames[iw];
 					if(w1 == "flat"){
-						flatamp = prodAmps[isample]->at(iw);
+						const double nrm = sqrt((double)normInt.nmbEvents());
+						flatamp = prodAmps[isample]->at(iw) / nrm;
 						continue;
 					}
 					//cerr << w1 << "  " << decayamp << endl;
-					double nrm = sqrt(normInt.element(w1, w1).real());
-					complex<double> amp = decayamp / nrm * prodAmps[isample]->at(iw);
+					const double nrm = sqrt(normInt.element(w1, w1).real() * (double)normInt.nmbEvents());
+					complex<double> amp = decayamp * prodAmps[isample]->at(iw) / nrm;
 					if(isample == 0) {// fill wheights of individual waves
 						weights[iw] = norm(amp);
 					}
