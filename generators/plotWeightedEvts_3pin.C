@@ -39,9 +39,15 @@ using namespace std;
 const int    HISTLIMITS_COSTHETA_BINS = 100;
 const double HISTLIMITS_COSTHETA_MAX  =   1.;
 const double HISTLIMITS_COSTHETA_MIN  =  -1.;
-const int    HISTLIMITS_MASS_BINS = 1000;
-const double HISTLIMITS_MASS_MAX  =   10.;
-const double HISTLIMITS_MASS_MIN  =    0.;
+const int    HISTLIMITS_3PI_MASS_BINS = 52;
+const double HISTLIMITS_3PI_MASS_MAX  =  2.54;
+const double HISTLIMITS_3PI_MASS_MIN  =  0.46;
+const int    HISTLIMITS_2PI_MASS_BINS = 250;
+const double HISTLIMITS_2PI_MASS_MAX  =   2.5;
+const double HISTLIMITS_2PI_MASS_MIN  =   0.;
+const int    HISTLIMITS_2PI_MASS2_BINS = 100;
+const double HISTLIMITS_2PI_MASS2_MAX  =   5.;
+const double HISTLIMITS_2PI_MASS2_MIN  =   0.;
 const int    HISTLIMITS_PHI_BINS = 100;
 const double HISTLIMITS_PHI_MAX  =  TMath::Pi();
 const double HISTLIMITS_PHI_MIN  = -TMath::Pi();
@@ -82,21 +88,21 @@ int getTotalCharge(std::pair<int, int> p) {
 
 GJHistBunch GJHistBunchFactory(const std::string& name_prefix, const bool twoMc) {
 	GJHistBunch temp;
-	TH1D* hMIsobarData = new TH1D(("hMIsobarData_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Data)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+	TH1D* hMIsobarData = new TH1D(("hMIsobarData_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Data)").c_str(), HISTLIMITS_2PI_MASS_BINS, HISTLIMITS_2PI_MASS_MIN, HISTLIMITS_2PI_MASS_MAX);
 	hMIsobarData->SetXTitle("isobar mass [GeV]");
 	hMIsobarData->SetYTitle("# of events");
 	temp.isobar_mass.push_back(hMIsobarData);
 	if (twoMc) {
-		TH1D* hMIsobarMcPsp = new TH1D(("hMIsobarMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McPsp)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH1D* hMIsobarMcPsp = new TH1D(("hMIsobarMcPsp_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McPsp)").c_str(), HISTLIMITS_2PI_MASS_BINS, HISTLIMITS_2PI_MASS_MIN, HISTLIMITS_2PI_MASS_MAX);
 		hMIsobarMcPsp->SetXTitle("isobar mass [GeV]");
 		hMIsobarMcPsp->SetYTitle("# of events");
 		temp.isobar_mass.push_back(hMIsobarMcPsp);
-		TH1D* hMIsobarMcAcc = new TH1D(("hMIsobarMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McAcc)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH1D* hMIsobarMcAcc = new TH1D(("hMIsobarMcAcc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (McAcc)").c_str(), HISTLIMITS_2PI_MASS_BINS, HISTLIMITS_2PI_MASS_MIN, HISTLIMITS_2PI_MASS_MAX);
 		hMIsobarMcAcc->SetXTitle("isobar mass [GeV]");
 		hMIsobarMcAcc->SetYTitle("# of events");
 		temp.isobar_mass.push_back(hMIsobarMcAcc);
 	} else {
-		TH1D* hMIsobarMc = new TH1D(("hMIsobarMc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Mc)").c_str(), HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH1D* hMIsobarMc = new TH1D(("hMIsobarMc_" + name_prefix).c_str(), (name_prefix + " Isobar Mass (Mc)").c_str(), HISTLIMITS_2PI_MASS_BINS, HISTLIMITS_2PI_MASS_MIN, HISTLIMITS_2PI_MASS_MAX);
 		hMIsobarMc->SetXTitle("isobar mass [GeV]");
 		hMIsobarMc->SetYTitle("# of events");
 		temp.isobar_mass.push_back(hMIsobarMc);
@@ -672,21 +678,21 @@ createWeightedPlots(const std::string& dataFileName,
 
 	// --------------- global diagrams
 	std::vector<TH1D*> hM;
-	TH1D* hMData = new TH1D("hResMassData", "Mass (Data)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+	TH1D* hMData = new TH1D("hResMassData", "Mass (Data)", HISTLIMITS_3PI_MASS_BINS, HISTLIMITS_3PI_MASS_MIN, HISTLIMITS_3PI_MASS_MAX);
 	hM.push_back(hMData);
 	if (mcAccFile != NULL) {
-		TH1D* hMMcPsp = new TH1D("hResMassMcPsp", "Mass (McPsp)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH1D* hMMcPsp = new TH1D("hResMassMcPsp", "Mass (McPsp)", HISTLIMITS_3PI_MASS_BINS, HISTLIMITS_3PI_MASS_MIN, HISTLIMITS_3PI_MASS_MAX);
 		hM.push_back(hMMcPsp);
-		TH1D* hMMcAcc = new TH1D("hResMassMcAcc", "Mass (McAcc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH1D* hMMcAcc = new TH1D("hResMassMcAcc", "Mass (McAcc)", HISTLIMITS_3PI_MASS_BINS, HISTLIMITS_3PI_MASS_MIN, HISTLIMITS_3PI_MASS_MAX);
 		hM.push_back(hMMcAcc);
 	} else {
-		TH1D* hMMc = new TH1D("hResMassMc", "Mass (Mc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH1D* hMMc = new TH1D("hResMassMc", "Mass (Mc)", HISTLIMITS_3PI_MASS_BINS, HISTLIMITS_3PI_MASS_MIN, HISTLIMITS_3PI_MASS_MAX);
 		hM.push_back(hMMc);
 	}
 
 	// Dalitz plots
 	std::vector<TH2D*> dalitz_neutral;
-	TH2D* hDalitzData = new TH2D("hDalitzData", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+	TH2D* hDalitzData = new TH2D("hDalitzData", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Data)", HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX, HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX);
 	hDalitzData->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 	hDalitzData->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 	hDalitzData->SetZTitle("# of events");
@@ -694,14 +700,14 @@ createWeightedPlots(const std::string& dataFileName,
 	hDalitzData->SetStats(0);
 	dalitz_neutral.push_back(hDalitzData);
 	if (mcAccFile != NULL) {
-		TH2D* hDalitzMcPsp = new TH2D("hDalitzMcPsp", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McPsp)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH2D* hDalitzMcPsp = new TH2D("hDalitzMcPsp", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McPsp)", HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX, HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX);
 		hDalitzMcPsp->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcPsp->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcPsp->SetZTitle("# of events");
 		hDalitzMcPsp->SetOption("COLZ");
 		hDalitzMcPsp->SetStats(0);
 		dalitz_neutral.push_back(hDalitzMcPsp);
-		TH2D* hDalitzMcAcc = new TH2D("hDalitzMcAcc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McAcc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH2D* hDalitzMcAcc = new TH2D("hDalitzMcAcc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (McAcc)", HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX, HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX);
 		hDalitzMcAcc->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcAcc->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMcAcc->SetZTitle("# of events");
@@ -709,7 +715,7 @@ createWeightedPlots(const std::string& dataFileName,
 		hDalitzMcAcc->SetStats(0);
 		dalitz_neutral.push_back(hDalitzMcAcc);
 	} else {
-		TH2D* hDalitzMc = new TH2D("hDalitzMc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Mc)", HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX, HISTLIMITS_MASS_BINS, HISTLIMITS_MASS_MIN, HISTLIMITS_MASS_MAX);
+		TH2D* hDalitzMc = new TH2D("hDalitzMc", "Dalitz Plot #pi^{0}#pi^{0} vs. #pi^{-}#pi^{0} (Mc)", HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX, HISTLIMITS_2PI_MASS2_BINS, HISTLIMITS_2PI_MASS2_MIN, HISTLIMITS_2PI_MASS2_MAX);
 		hDalitzMc->SetXTitle("mass^{2}(#pi^{0}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMc->SetYTitle("mass^{2}(#pi^{-}#pi^{0}) [GeV^{2}/c^{4}]");
 		hDalitzMc->SetZTitle("# of events");
