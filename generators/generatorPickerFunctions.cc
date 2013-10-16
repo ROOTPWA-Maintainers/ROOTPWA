@@ -256,6 +256,15 @@ bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& t
 				done = true;
 				break;
 			}
+			if(update > 0.) {
+				// for this strictly monotonic decreasing
+				// function with a strictly monotonic decreaing
+				// derivative, a step should never be done
+				// "backwards" (if it happens it should
+				// typically be a sign for numeric limitations)
+				done = true;
+				break;
+			}
 			if(steps >= 50) {
 				printWarn << "t' could not be found in " << steps << " steps:" << endl
 				          << "\t\t r*(Fmax-Fmin) = " << r*(Fmax-Fmin) << endl
