@@ -207,6 +207,16 @@ bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& t
 		printErr << "error when calculating the parameters for t'-slope." << endl;
 		return false;
 	}
+        // short-cut for one exponential, then t can analytically be calculated
+	if (_nExponential == 1) {
+		const double r = randomNumbers->Uniform();
+		const double Fmin = exp(param[0] * _tPrimeRange.first);
+		const double Fmax = exp(param[0] * _tPrimeRange.second);
+
+		tPrime = log(r*(Fmax-Fmin) + Fmin) / param[0];
+
+		return true;
+	}
 	// search for the t' using the Newton-Raphson method
 	// way faster than using ROOT TF1s
 	// the function to find the root for is
