@@ -253,8 +253,9 @@ public:
 
 				histMcPsp->SetFillColor(kBlue);
 				histMcPsp->SetLineColor(kBlue);
+				histMcPsp->SetMarkerColor(kBlue);
 				histMcPsp->SetStats(false);
-				histMcPsp->Draw("A E3");
+				histMcPsp->Draw("A E2");
 
 				histFirst = histMcPsp;
 			} else {
@@ -263,11 +264,12 @@ public:
 
 			histMc->SetFillColor(kRed);
 			histMc->SetLineColor(kRed);
+			histMc->SetMarkerColor(kRed);
 			histMc->SetStats(false);
 			if (twoMc) {
-				histMc->Draw("E3 SAME");
+				histMc->Draw("E2 SAME");
 			} else {
-				histMc->Draw("A E3");
+				histMc->Draw("A E2");
 			}
 
 			histData->SetStats(false);
