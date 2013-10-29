@@ -3,6 +3,7 @@
 import argparse
 import glob
 import itertools
+import numpy
 import os
 import sys
 
@@ -103,6 +104,7 @@ if __name__ == "__main__":
 	parser.add_argument("-a", "--max-mass", type=float, metavar="max-mass", default=10.0, dest="massMax", help="maximum mass in GeV/c^{2} for the histograms (default: 10)")
 	parser.add_argument("-t", "--type", type=str, metavar="type", default="data", dest="type", help='type of input, can be "data", "gen" or "acc" (default: "data")')
 	parser.add_argument("-m", "--mass-hist", type=str, metavar="xMassHist", dest="xMassHistogramPath", help='histogram of the X mass, specified as pathToRootFile.root/pathOfHistInRootFile')
+	parser.add_argument("--weighted", action="store_true", dest="useWeightInformation", help="weight information available")
 	parser.add_argument("--disable-bose-symmetrization", action="store_true", dest="disableBoseSymmetrization", help="do not consider Bose-symmetric permutations")
 	arguments = parser.parse_args()
 	if len(arguments.massBins) == 0:
@@ -266,6 +268,9 @@ if __name__ == "__main__":
 
 		for dataFileName in inputFileRanges[rangeName]:
 
+			if arguments.useWeightInformation:
+				dataFileName = dataFileName[:dataFileName.rfind(".root")] + ".weighted.root"
+
 			# Do all the initialization
 			pyRootPwa.utils.printInfo("Opening input file " + dataFileName)
 			dataFile = pyRootPwa.ROOT.TFile.Open(dataFileName)
@@ -279,6 +284,13 @@ if __name__ == "__main__":
 			decayKinMomenta = pyRootPwa.ROOT.TClonesArray("TVector3")
 			dataTree.SetBranchAddress(pyRootPwa.config.prodKinMomentaLeafName, prodKinMomenta)
 			dataTree.SetBranchAddress(pyRootPwa.config.decayKinMomentaLeafName, decayKinMomenta)
+
+			# Handle weighted MC
+			weight = numpy.array(1, dtype = float)
+			if arguments.useWeightInformation:
+				dataTree.SetBranchAddress("weight", weight)
+			else:
+				weight = 1.
 
 			progressbar = pyRootPwa.utils.progressBar(0, nEvents-1, sys.stdout)
 			progressbar.start()
@@ -317,19 +329,19 @@ if __name__ == "__main__":
 						mass = parent.lzVec.M()
 						masses.append(mass)
 						if(permutations[permutationKey][hist_i][0]):
-							hists[rangeName][hist_i][0].Fill(mass)
+							hists[rangeName][hist_i][0].Fill(mass, weight)
 							if hist_i == 0 and xMassHistogram is not None:
-								massSliceHistogram.Fill(mass)
+								massSliceHistogram.Fill(mass, weight)
 						if(permutations[permutationKey][hist_i][1]):
 							daughter = vertex.daughter1()
 							phi = daughter.lzVec.Phi()
 							theta = daughter.lzVec.Theta()
 							cosTheta = pyRootPwa.ROOT.TMath.Cos(theta)
-							hists[rangeName][hist_i][1].Fill(phi)
-							hists[rangeName][hist_i][2].Fill(cosTheta)
-							hists[rangeName][hist_i][3].Fill(mass, phi)
-							hists[rangeName][hist_i][4].Fill(mass, cosTheta)
-							hists[rangeName][hist_i][5].Fill(cosTheta, phi)
+							hists[rangeName][hist_i][1].Fill(phi, weight)
+							hists[rangeName][hist_i][2].Fill(cosTheta, weight)
+							hists[rangeName][hist_i][3].Fill(mass, phi, weight)
+							hists[rangeName][hist_i][4].Fill(mass, cosTheta, weight)
+							hists[rangeName][hist_i][5].Fill(cosTheta, phi, weight)
 						hist_i += 1
 
 					for isobarCombination in isobarCombinations:
@@ -337,7 +349,7 @@ if __name__ == "__main__":
 							continue
 						index1 = isobarCombination[0]
 						index2 = isobarCombination[1]
-						isobarCombinationHistograms[rangeName][isobarCombination].Fill(masses[index1], masses[index2])
+						isobarCombinationHistograms[rangeName][isobarCombination].Fill(masses[index1], masses[index2], weight)
 
 				progressbar.update(i)
 
