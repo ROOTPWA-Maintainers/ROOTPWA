@@ -68,11 +68,11 @@ Part of the code relies on the Boost C++ template library which is available at 
 
 A more convenient way than downloading and extracting the tarball of a certain Boost version is to clone the Boost git repository by running
 
-    > git clone https://github.com/ryppl/boost-svn.git
+    > git clone https://github.com/ned14/boost-trunk.git
 
 and then to checkout the wanted release version via
 
-    > cd boost-svn
+    > cd boost-trunk
     > git checkout Boost_1_50_0
 
 This way one can easily switch to any existing Boost version and also updates are much more convenient:

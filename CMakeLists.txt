@@ -92,14 +92,17 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 	message(STATUS "No build type was specified. Setting build type to 'RELEASE'.")
 	set(CMAKE_BUILD_TYPE RELEASE)
 endif()
+
+
 # common compiler flags
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra")
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn")
-set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror")
+#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}" CACHE STRING "c++ compile flags" FORCE)
+set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror ${CMAKE_CXX_FLAGS}")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native ${CMAKE_CXX_FLAGS}")
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
 if(NOT CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
@@ -196,6 +199,11 @@ if(Boost_FOUND)
 	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
+	# fix unused-local-typedefs warnings in Boost reported by gcc 4.8 and above
+	if(GCC_VERSION VERSION_GREATER "4.7" AND Boost_LIBRARY_VERSION VERSION_LESS "1.55.0")
+		set(CMAKE_CXX_FLAGS "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
+		set(CMAKE_CXX_FLAGS_RELEASE "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS_RELEASE}")
+	endif()
 else()
 	message(FATAL_ERROR "Could not find Boost installation. "
 		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
