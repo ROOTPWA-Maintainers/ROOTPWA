@@ -135,6 +135,8 @@ void rpwa::py::exportParticleProperties()
 		.def("hasDecay", &particleProperties_hasDecay)
 		.def("addDecayMode", &particleProperties_addDecayMode)
 
+		.add_property("isStable", &rpwa::particleProperties::isStable)
+
 		.def("setSCB", &rpwa::particleProperties::setSCB)
 		.def("setIGJPC", &rpwa::particleProperties::setIGJPC)
 

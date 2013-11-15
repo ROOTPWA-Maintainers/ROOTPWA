@@ -232,6 +232,11 @@ particleProperties::hasDecay(const decayMode& decay) const
   return find(_decayModes.begin(), _decayModes.end(), decay) != _decayModes.end();
 }
 
+bool
+particleProperties::isStable() const
+{
+	return _name == "pi";
+}
 
 bool
 particleProperties::fillFromDataTable(const string& partName,
