@@ -60,12 +60,12 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 
 	# get the lists of input files
 	(inputDataFiles, inputPSFiles, inputAccPSFiles) = pyRootPwa.utils.getListOfInputFiles(massBins)
-#	if not inputDataFiles:
-#		pyRootPwa.utils.printErr('No input data files found. Aborting...')
-#		sys.exit(1)
-#	if len(inputDataFiles) != len(massBins):
-#		pyRootPwa.utils.printErr('Not all data input files are present (should have ' + str(len(massBins)) + ', found ' + str(len(inputDataFiles)) + '). Aborting...')
-#		sys.exit(1)
+	if not inputDataFiles:
+		pyRootPwa.utils.printErr('No input data files found. Aborting...')
+		sys.exit(1)
+	if len(inputDataFiles) != len(massBins):
+		pyRootPwa.utils.printErr('Not all data input files are present (should have ' + str(len(massBins)) + ', found ' + str(len(inputDataFiles)) + '). Aborting...')
+		sys.exit(1)
 	if len(inputPSFiles) != len(massBins):
 		pyRootPwa.utils.printWarn('Not all phase space input files are present (should have ' + str(len(massBins)) + ', found ' + str(len(inputPSFiles)) + ').')
 	if len(inputAccPSFiles) != len(massBins):
@@ -163,7 +163,7 @@ def calcAmplitudes(configFileName, massBins, **arguments):
 		pyRootPwa.utils.printInfo('Recieved keyboard interrupt. Aborting...')
 		while True:
 			try:
-				processQueue.get(True, 600)
+				processQueue.get(True, 2)
 			except IOError:
 				pass
 			except Queue.Empty:

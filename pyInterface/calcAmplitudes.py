@@ -33,8 +33,7 @@ if __name__ == "__main__":
 		        "massBins": arguments.massBins,
 		        "nJobs": arguments.nJobs,
 		        "progressBar": (not arguments.noProgressBar),
-		        "maxNmbEvents": arguments.maxNmbEvents,
-		        "proFile": "blup"}
+		        "maxNmbEvents": arguments.maxNmbEvents}
 
 		if arguments.keyfiles is not None:
 			args["keyfiles"] = arguments.keyfiles

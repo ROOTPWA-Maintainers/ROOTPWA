@@ -41,11 +41,6 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
 
-#include<TFile.h>
-#include<TGraph2D.h>
-#include<TH2D.h>
-#include<map>
-
 
 namespace ublas = boost::numeric::ublas;
 
@@ -170,18 +165,6 @@ namespace rpwa {
 		virtual std::complex<double> amp(const isobarDecayVertex& v);
 
 		virtual std::string name() const { return "relativisticBreitWigner"; }  ///< returns label used in graph visualization, reporting, and key file
-
-		static void setOutFile(TFile* file) { _file = file; }
-		static void endOfRun();
-
-	private:
-
-		static TFile* _file;
-		static std::map<std::string, TGraph2D*> _graphMap;
-		static std::map<std::string, TH2D*> _histMap;
-		static std::map<std::string, int> _nPoints;
-		static std::map<std::string, bool> _doneMap;
-		const static int _totalPoints = 3000000;
 
 	};
 

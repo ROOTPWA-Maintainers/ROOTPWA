@@ -43,12 +43,6 @@ using namespace std;
 using namespace boost::numeric::ublas;
 using namespace rpwa;
 
-TFile* relativisticBreitWigner::_file = 0;
-std::map<std::string, TGraph2D*> relativisticBreitWigner::_graphMap = std::map<std::string, TGraph2D*>();
-std::map<std::string, TH2D*> relativisticBreitWigner::_histMap = std::map<std::string, TH2D*>();
-std::map<std::string, int> relativisticBreitWigner::_nPoints = std::map<std::string, int>();
-std::map<std::string, bool> relativisticBreitWigner::_doneMap = std::map<std::string, bool>();
-
 
 ////////////////////////////////////////////////////////////////////////////////
 bool massDependence::_debug = false;
@@ -91,33 +85,6 @@ flatRangeMassDependence::amp(const isobarDecayVertex& v)
 	return amp;
 }
 
-#include<TAxis.h>
-#include<TFile.h>
-#include<TGraph.h>
-#include<TGraph2D.h>
-#include<TH1D.h>
-#include<TH2D.h>
-
-void relativisticBreitWigner::endOfRun() {
-
-	printDebug<<"ending run..."<<std::endl;
-	printDebug<<"map has "<<_graphMap.size()<<" elements"<<std::endl;
-
-	for(std::map<string, TGraph2D*>::iterator it = _graphMap.begin(); it != _graphMap.end(); ++it) {
-		printDebug<<"Writing graph for "<<it->first<<std::endl;
-		if(not _doneMap[it->first]) {
-			printErr<<"Did not collect enough points for decay "<<it->first<<std::endl;
-		}
-		_file->cd(it->first.c_str());
-		it->second->Write();
-		_histMap[it->first]->Write();
-	}
-	_file->Write();
-	_file->Close();
-
-	printDebug<<"file closed"<<std::endl;
-
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 complex<double>
@@ -137,113 +104,12 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 	const double       Gamma0 = parent->width();             // resonance peak width
 	const unsigned int L      = v.L();
 
-
 	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
 	if (_debug)
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
 		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
 		           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
 		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
-
-	std::string label = parent->label();
-	std::cout<<"label="<<label<<" L="<<L<<std::endl;
-	std::map<string, TGraph2D*>::iterator graphIt = _graphMap.find(label);
-	if(graphIt == _graphMap.end()) {
-		printDebug<<"inserting graph for decay "<<label<<std::endl;
-		_nPoints[label] = 0;
-		_file->cd();
-		_file->mkdir(label.c_str());
-		_file->cd(label.c_str());
-		_graphMap[label] = new TGraph2D(_totalPoints);
-		_graphMap[label]->SetTitle(label.c_str());
-		_graphMap[label]->SetName(label.c_str());
-		_graphMap[label]->GetXaxis()->SetTitle("Isobar Mass (GeV)");
-		_graphMap[label]->GetYaxis()->SetTitle("m1-m2 (GeV)");
-		std::stringstream sstr;
-		sstr<<label<<"_h";
-		_histMap[label] = new TH2D(sstr.str().c_str(), sstr.str().c_str(),1000, 0, 2.5, 1000, 0, 2.5);
-		_histMap[label]->GetXaxis()->SetTitle("Isobar Mass (GeV)");
-		_histMap[label]->GetYaxis()->SetTitle("m1-m2 (GeV)");
-		printDebug<<"map has now "<<_graphMap.size()<<" elements"<<std::endl;
-	}
-	if(_nPoints[label] <= _totalPoints) {
-//		printDebug<<"inserting point #"<<_nPoints[label]<<" in graph for decay "<<label<<std::endl;
-		_graphMap[label]->SetPoint(_nPoints[label], M, m1+m2, norm(bw));
-		_nPoints[label]++;
-	} else if(not _doneMap[label]) {
-		printDebug<<"enough points for graph for decay "<<label<<std::endl;
-		_doneMap[label] = true;
-	}
-	_histMap[label]->Fill(M, m1+m2, norm(bw));
-
-/*
-
-	static TFile* ofile = TFile::Open("/home/kbicker/analysis/data_horsing_around/blaGraph.root", "RECREATE");
-	ofile->cd();
-//	static TGraph* graph_a1 = new TGraph();
-	const static int totalPoints = 2500000;
-	static TGraph* graph_f0 = new TGraph(totalPoints);
-	static TGraph2D* graph_f0_2d = 0;
-	static TGraph2D* graph_f0_2d_2 = 0;
-	static TH1D* massDefect = new TH1D("massDef", "massDef", 1000, 0, 3);
-	static TH2D* masDef2d = new TH2D("md2d", "md2d", 500, 0, 3, 500, 0, 3);
-	static int nPoints = 0;
-	static bool first = true;
-	if(first) {
-//		graph_a1->SetTitle("a1(1260)-[1-(1+)]");
-		graph_f0->SetTitle("f0(1370)0[0+(0++)]");
-		graph_f0->SetName("f0(1370)0[0+(0++)]");
-		graph_f0_2d = new TGraph2D(totalPoints);
-		graph_f0_2d->SetTitle("f0(1370)0[0+(0++)]");
-		graph_f0_2d->SetName("f0(1370)0[0+(0++)]");
-		graph_f0_2d->GetXaxis()->SetTitle("Isobar Mass (GeV)");
-		graph_f0_2d->GetYaxis()->SetTitle("m1-m2 (GeV)");
-		graph_f0_2d_2 = new TGraph2D(totalPoints);
-		graph_f0_2d_2->SetTitle("f0(1370)0[0+(0++)]__2");
-		graph_f0_2d_2->SetName("f0(1370)0[0+(0++)]__2");
-		graph_f0_2d_2->GetXaxis()->SetTitle("Isobar Mass (GeV)");
-		graph_f0_2d_2->GetYaxis()->SetTitle("m1+m2 (GeV)");
-		first = false;
-	}
-
-//	if(parent->label() == "f0(1370)0[0+(0++)]") {
-	if(parent->label() == "rho(770)0[1+(1--)]") {
-		const double massDef = M - m1 - m2;
-		massDefect->Fill(massDef);
-		masDef2d->Fill(M, massDef);
-		graph_f0->SetPoint(nPoints, M, norm(bw));
-		graph_f0_2d->SetPoint(nPoints, M, massDef, norm(bw));
-		graph_f0_2d_2->SetPoint(nPoints, M, m1+m2, norm(bw));
-		nPoints++;
-		if(not (nPoints % 10000)) {
-			std::cout<<"nPoints="<<nPoints<<std::endl;
-		}
-		if(nPoints > totalPoints) {
-			ofile->cd();
-//			graph_a1->Write();
-			graph_f0->Write();
-			graph_f0_2d->Write();
-			graph_f0_2d_2->Write();
-			ofile->Write();
-			ofile->Close();
-			throw;
-		}
-	}
-*//*
-	if(parent->label() == "a1(1260)-[1-(1+)]") {
-		graph_a1->Set(nPoints+1);
-		graph_a1->SetPoint(nPoints, parent->lzVec().M(), norm(bw));
-		nPoints++;
-		if(nPoints > 500000) {
-			ofile->cd();
-			graph_a1->Write();
-			graph_f0->Write();
-			ofile->Write();
-			ofile->Close();
-			throw;
-		}
-	}
-*/
 	return bw;
 }
 
