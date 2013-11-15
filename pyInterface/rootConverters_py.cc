@@ -5,6 +5,7 @@
 #include<TPython.h>
 #include<TVector3.h>
 #include<TTree.h>
+#include<TFile.h>
 
 namespace bp = boost::python;
 
@@ -49,6 +50,11 @@ void rpwa::py::exportRootConverters() {
 
 	bp::def(
 		"__RootConverters_convertFromPy_TTree", &rpwa::py::convertFromPy<TTree*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def(
+		"__RootConverters_convertFromPy_TFile", &rpwa::py::convertFromPy<TFile*>
 		, bp::return_internal_reference<1>()
 	);
 

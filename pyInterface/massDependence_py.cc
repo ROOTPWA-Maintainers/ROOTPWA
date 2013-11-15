@@ -2,6 +2,8 @@
 
 #include<isobarDecayVertex.h>
 
+#include "rootConverters_py.h"
+
 namespace bp = boost::python;
 
 namespace {
@@ -368,6 +370,12 @@ namespace {
 
 }
 
+
+void relativisticBreatWigner_setOutFile(PyObject* pyFile) {
+	TFile* file = rpwa::py::convertFromPy<TFile*>(pyFile);
+	rpwa::relativisticBreitWigner::setOutFile(file);
+};
+
 void rpwa::py::exportMassDependence() {
 
 	bp::class_<massDependenceWrapper, boost::noncopyable>("massDependence", bp::no_init)
@@ -395,7 +403,11 @@ void rpwa::py::exportMassDependence() {
 		.def("amp", &relativisticBreitWignerWrapper::amp, &relativisticBreitWignerWrapper::default_amp)
 		.def("amp", &rpwa::relativisticBreitWigner::amp)
 		.def("name", &relativisticBreitWignerWrapper::name, &relativisticBreitWignerWrapper::default_name)
-		.def("name", &rpwa::relativisticBreitWigner::name);
+		.def("name", &rpwa::relativisticBreitWigner::name)
+		.def("setOutFile", &relativisticBreatWigner_setOutFile)
+		.staticmethod("setOutFile")
+		.def("endOfRun", &relativisticBreitWigner::endOfRun)
+		.staticmethod("endOfRun");
 
 	bp::class_<constWidthBreitWignerWrapper, bp::bases<rpwa::massDependence> >("constWidthBreitWigner")
 		.def(bp::self_ns::str(bp::self))

@@ -23,7 +23,10 @@ class amplitudeCalculator(multiprocessing.Process):
 		self.maxNmbEvents = maxNmbEvents
 		multiprocessing.Process.__init__(self)
 
+
 	def run(self, runDirectly=False):
+		f = pyRootPwa.ROOT.TFile.Open("/home/kbicker/analysis/data_horsing_around/blaManyGraphs.root", "RECREATE")
+		pyRootPwa.core.relativisticBreitWigner.setOutFile(f)
 		while True:
 			try:
 				if not runDirectly:
@@ -73,6 +76,8 @@ class amplitudeCalculator(multiprocessing.Process):
 					traceback.print_exc()
 				break
 			self.queue.task_done()
+		pyRootPwa.core.relativisticBreitWigner.endOfRun()
+
 
 	def calcAmplitudes(self, inTuple):
 
