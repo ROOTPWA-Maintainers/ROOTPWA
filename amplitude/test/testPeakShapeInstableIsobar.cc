@@ -17,6 +17,7 @@
 #include "particleDataTable.h"
 #include "waveDescription.h"
 #include "nBodyPhaseSpaceGen.h"
+#include "randomNumberGenerator.h"
 
 
 using namespace std;
@@ -554,7 +555,7 @@ main()
 
 		nBodyPhaseSpaceGen psGen;
 		psGen.setDecay(3, m);
-		psGen.setSeed(123456789);
+		randomNumberGenerator::instance()->setSeed(123456789);
 		psGen.setMaxWeight(1.01 * psGen.estimateMaxWeight(m3pi, 100000));
 		TLorentzVector parent(0, 0, 0, m3pi);
 		printInfo << psGen << endl;
