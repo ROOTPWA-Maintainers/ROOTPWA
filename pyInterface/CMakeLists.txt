@@ -35,6 +35,7 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'pyInterface' directory.")
 
 set(AMPLITUDE_SUBDIR amplitude)
+set(GENERATORS_SUBDIR generators)
 set(UTILITIES_SUBDIR utilities)
 set(PYUTILS_SUBDIR pyUtils)
 
@@ -45,10 +46,12 @@ set(INCLUDE_DIRECTORIES
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
-	${UTILITIES_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
 	${AMPLITUDE_SUBDIR}
+	${GENERATORS_SUBDIR}
 	${UTILITIES_SUBDIR}
 	${PYUTILS_SUBDIR}
 	)
@@ -77,6 +80,7 @@ set(SOURCES
 	${AMPLITUDE_SUBDIR}/waveDescription_py.cc
 	${AMPLITUDE_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${AMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
+	${GENERATORS_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 
@@ -92,6 +96,7 @@ make_shared_library(
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
 	"${AMPLITUDE_LIBS}"
+	"${ROOTPWAGEN_LIBS}"
 	)
 
 # link the shared library with the python bindings
