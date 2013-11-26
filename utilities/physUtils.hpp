@@ -58,7 +58,12 @@ namespace rpwa {
 			throw;
 		}
 		const double mDiff = m1 - m2;
-		return (M - mSum) * (M + mSum) * (M - mDiff) * (M + mDiff) / (4 * M * M);
+		double q2 = (M - mSum) * (M + mSum) * (M - mDiff) * (M + mDiff) / (4 * M * M);
+		// check for rounding errors
+		if (not allowSubThr and q2 < 0) {
+			q2 = 0.;
+		}
+		return q2;
 	}
 
 

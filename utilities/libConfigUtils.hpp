@@ -35,6 +35,8 @@
 #define LIBCONFIGUTILS_H
 
 
+#include<map>
+
 #include "libconfig.h++"
 
 #include "reportingUtils.hpp"
@@ -283,6 +285,28 @@ namespace rpwa {
 	}
 
 
+	inline
+	bool
+	checkIfAllVariablesAreThere(const libconfig::Setting* group,
+	                            const std::map<std::string, libconfig::Setting::Type>& nameMap)
+	{
+		for(std::map<std::string, libconfig::Setting::Type>::const_iterator it = nameMap.begin(); it != nameMap.end(); ++it) {
+			std::string name = it->first;
+			libconfig::Setting::Type type = it->second;
+			if(not group->exists(name)) {
+				printWarn << "'" << name << "' not found "
+				          << "in '" << group->getName() << "' section." << std::endl;
+				return false;
+			}
+			if((*group)[name].getType() != type) {
+				printWarn << "'" << name << "' in section '" << group->getName() << "' has wrong type." << std::endl;
+				return false;
+			}
+		}
+		return true;
+	}
+
+	
 } // namespace rpwa
 
 

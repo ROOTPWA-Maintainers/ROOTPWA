@@ -23,64 +23,54 @@
  */
 
 
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-#include <complex>
-#include <cstdlib>
-#include <string>
-#include <vector>
-#include <unistd.h>
-#include <stdlib.h>
-#include <event.h>
+#include<cstdlib>
+#include<iostream>
+#include<fstream>
+#include<getopt.h>
+#include<unistd.h>
 
-#include "TFile.h"
-#include "TTree.h"
-#include "TString.h"
-#include "TH1.h"
-#include "TRandom3.h"
-#include "TLorentzVector.h"
-#include "TVector3.h"
-#include "TClonesArray.h"
+#include <boost/progress.hpp>
 
-#include "libconfig.h++"
-
-#include "reportingUtils.hpp"
-#include "diffractivePhaseSpace.h"
-#include "partialWaveWeight.h"
-#include "productionAmp.h"
-#include "breitWignerProductionAmp.h"
-#include "TFitBin.h"
-
-#include "primaryVertexGen.h"
+#include<fileUtils.hpp>
+#include<generator.h>
+#include<generatorManager.h>
+#include<particleDataTable.h>
+#include<randomNumberGenerator.h>
+#include<reportingUtils.hpp>
 
 
-using namespace std;
-using namespace libconfig;
 using namespace rpwa;
-
-extern particleDataTable PDGtable;
+using namespace std;
 
 
 void printUsage(char* prog, int errCode = 0)
 {
 	cerr << "usage:" << endl
 	     << prog
-	     << " -n # [-a # -m # -M # -B # -s #] -o <file> -w <file> -k <path> -i <file> -r <file>" << endl
+	     << " -n # [-a # -m # -M # -B # -s #] -o <file> -p <file> -w <file> -k <path> -i <file> -r <file>" << endl
 	     << "    where:" << endl
 	     << "        -n #       (max) number of events to generate (default: 100)" << endl
 	     << "        -a #       (max) number of attempts to do (default: infinity)" << endl
-	     << "        -m #       maxWeight" << endl
-	     << "        -o <file>  ROOT output file (if not specified, generated automatically)" << endl
-	     << "        -w <file>  wavelist file (contains production amplitudes)" << endl
-	     << "        -w <file.root>  to use TFitBin tree as input" << endl
-	     << "        -c <0/1>   if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 1)" << endl
-	     << "        -k <path>  path to keyfile directory (all keyfiles have to be there)" << endl
-	     << "        -i <file>  integral file" << endl
+	     << "        -m #       maxWeight FEATURE DISABLED" << endl
+	     << "        -o <file>  ASCII output file (if not specified, generated automatically)" << endl
+	     << "        -p         path to particle data table file (default: ./particleDataTable.txt)" << endl
+	     << "        -w <file>  wavelist file (contains production amplitudes) FEATURE DISABLED" << endl
+	     << "        -w <file.root>  to use TFitBin tree as input FEATURE PERMANENTLY REMOVED" << endl
+	     << "        -c         if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 0)" << endl
+	     << "        -k <path>  path to keyfile directory (all keyfiles have to be there) FEATURE DISABLED" << endl
+	     << "        -i <file>  integral file FEATURE DISABLED" << endl
 	     << "        -r <file>  reaction config file" << endl
-	     << "        -s #   set seed " << endl
-	     << "        -M #   lower boundary of mass range in MeV (overwrites values from config file) " << endl
-	     << "        -B #   width of mass bin in MeV" << endl
+	     << "        -s #       set seed " << endl
+	     << "        -M #       lower boundary of mass range in MeV (overwrites values from config file)" << endl
+	     << "        -B #       width of mass bin in MeV" << endl
+	     << "        --beamfile <file> path to beam file (overrides values from config file)" << endl
+	     << "        --noRandomBeam     read the events from the beamfile sequentially" << endl
+	     << "        --randomBlockBeam  like --noRandomBeam but with random starting position" << endl
+	     << endl
+	     << "A comment regarding the disabled features: these options have been taken out\n"
+	     << "for the time being. If you want to get them back, check GIT revision\n"
+	     << "cb48b651809e1058ab740441c2b6bd8a1579d46d or use the _v1 branch (or one of its\n"
+	     << "tags)." << endl
 	     << endl;
 	exit(errCode);
 }
@@ -89,459 +79,198 @@ void printUsage(char* prog, int errCode = 0)
 int main(int argc, char** argv)
 {
 
-	unsigned int nevents = 100;
-	unsigned int max_attempts = 0;
-	string output_file = ""; // either given by option or generated automatically by mass range
-	string output_evt = "";
-	string output_wht = "";
-	string output_comgeant = "";
-	string integrals_file;
-	bool hasint = false;
-	string wavelist_file; // format: name Re Im
-	string path_to_keyfiles = "./";
+	unsigned int nEvents = 100;
+	unsigned int maxAttempts = 0;
+	string outputEvtFileName = "";
+	string outputWhtFileName = "";
+	string outputComgeantFileName = "";
+	string pdgFileName = "./particleDataTable.txt";
 	string reactionFile;
-	double maxWeight = 0;
 	int seed = 123456;
+	bool seedSet = false;
 	int massLower = 0;
 	int massBinWidth = 0;
-	bool overwriteMass = false;
-	bool writeComGeantout = false;
+	bool overrideMass = false;
+	bool writeComgeantOut = false;
+	string beamfileNameOverride = "";
+	int readBeamfileSequentially = 0;
+	int readBeamfileRandomBlock = 0;
+
+	static struct option longOptions[] =
+	    {
+	         { "beamfile", required_argument, 0, 10000 },
+	         { "noRandomBeam", no_argument, &readBeamfileSequentially, 1 },
+	         { "randomBlockBeam", no_argument, &readBeamfileRandomBlock, 1 },
+	         { 0, 0, 0, 0 }
+	    };
+
 
 	int c;
-	while ((c = getopt(argc, argv, "n:a:o:w:k:i:r:m:s:M:B:h:c")) != -1) {
+	int optionIndex;
+	while ((c = getopt_long(argc, argv, "n:a:o:p:w:k:i:r:m:s:M:B:hc", longOptions, &optionIndex)) != -1) {
 		switch (c) {
+			case 0:
+				if(longOptions[optionIndex].flag != 0) {
+					break;
+				}
 			case 'n':
-				nevents = atoi(optarg);
+				nEvents = atoi(optarg);
 				break;
 			case 'a':
-				max_attempts = atoi(optarg);
+				maxAttempts = atoi(optarg);
 				break;
 			case 's':
 				seed = atoi(optarg);
+				seedSet = true;
 				break;
 			case 'o':
-				output_file = optarg;
+				outputEvtFileName = optarg;
+				break;
+			case 'p':
+				pdgFileName = optarg;
 				break;
 			case 'w':
-				wavelist_file = optarg;
+				printErr << "this feature has been removed for the time being. "
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
+				exit(10);
 				break;
 			case 'i':
-				integrals_file = optarg;
-				hasint=true;
+				printErr << "this feature has been removed for the time being. "
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
+				exit(10);
 				break;
 			case 'k':
-				path_to_keyfiles = optarg;
+				printErr << "this feature has been removed for the time being. "
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
+				exit(10);
 				break;
 			case 'r':
 				reactionFile = optarg;
 				break;
 			case 'm':
-				maxWeight = atof(optarg);
+				printErr << "this feature has been removed for the time being. "
+				         << "If you want it back, check GIT revision "
+				         << "cb48b651809e1058ab740441c2b6bd8a1579d46d." << endl;
+				exit(10);
 				break;
 			case 'c':
-				writeComGeantout = true;
+				writeComgeantOut = true;
 				break;
 			case 'M':
 				massLower = atoi(optarg);
-				overwriteMass=true;
+				overrideMass = true;
 				break;
 			case 'B':
 				massBinWidth = atoi(optarg);
-				overwriteMass=true;
+				overrideMass = true;
+				break;
+			case 10000:
+				beamfileNameOverride = optarg;
 				break;
 
 			case 'h':
 				printUsage(argv[0]);
 				break;
 			default:
-				printUsage(argv[0]);
+				printUsage(argv[0], 5);
 				break;
 		}
 	}
 
-	PDGtable.initialize();
-
-	partialWaveWeight weighter;
-	Config reactConf;
-	reactConf.readFile(reactionFile.c_str());
-
-	// variable that need to get initialized either by input options
-	// or the config file
-	// will be stored in the tree later
-	double weight, impweight;
-	TClonesArray* p = new TClonesArray("TLorentzVector");
-	TLorentzVector beam;
-	TVector3 vertex;
-	double tprime = 0.;
-	int qbeam;
-	vector<int> q; // array of charges
-
-	double Mom = reactConf.lookup("beam.momentum");
-	double MomSigma = reactConf.lookup("beam.sigma_momentum");
-	double BeamPartMass = 0.13957018;
-	if(reactConf.exists("beam.mass")){
-		BeamPartMass = reactConf.lookup("beam.mass");
-	}
-	double DxDz = reactConf.lookup("beam.DxDz");
-	double DxDzSigma = reactConf.lookup("beam.sigma_DxDz");
-	double DyDz = reactConf.lookup("beam.DyDz");
-	double DyDzSigma = reactConf.lookup("beam.sigma_DyDz");
-
-	double targetz = reactConf.lookup("target.pos.z");
-	double targetd = reactConf.lookup("target.length");
-	double targetr = reactConf.lookup("target.radius");
-	double mrecoil = reactConf.lookup("target.mrecoil");
-
-	double tprime_min(0.);
-	double tprime_max(numeric_limits<double>::max());
-	reactConf.lookupValue("finalstate.t_min", tprime_min);
-	reactConf.lookupValue("finalstate.t_max", tprime_max);
-
-	double mmin = reactConf.lookup("finalstate.mass_min");
-	double mmax = reactConf.lookup("finalstate.mass_max");
-	if(overwriteMass) {
-		mmin = massLower/1000.0;
-		mmax = (massLower+massBinWidth)/1000.0;
-	}
-	// array of tslopes even when only one is existing
-	double* tslope = NULL;
-	double* inv_m  = NULL;
-	int ntslope = 1;
-	if(reactConf.lookup("finalstate.t_slope").isArray()) {
-		ntslope = reactConf.lookup("finalstate.t_slope").getLength();
-		if(reactConf.lookup("finalstate.inv_m").getLength() != ntslope) {
-			cout << " Error: please check number of t' values and the corresponding invariant masses in the Configuration File! " << endl;
-			return 0;
-		}
-		tslope = new double[ntslope];
-		inv_m  = new double[ntslope];
-		cout << " found array of t' slopes. Reading " << ntslope << " of values ";
-		for(int i = 0; i < ntslope; i++) {
-			tslope[i] = reactConf.lookup("finalstate.t_slope")[i];
-			inv_m[i]  = reactConf.lookup("finalstate.inv_m")[i];
-			//cout << inv_m[i] << " " << tslope[i] << endl;
-		}
-		cout << " done. " << endl;
-	} else {
-		tslope = new double[1];
-		tslope[0] = reactConf.lookup("finalstate.t_slope");
-		//cout << " tslope set to " << tslope[0];
-	}
-	double binCenter = 500 * (mmin + mmax);
-
-  // check weather to use a primary vertex generator as requested by the config file
-	primaryVertexGen* primaryVtxGen = NULL;
-	string histfilename_primvertex = "";
-	if(reactConf.lookupValue("primvertex.histfilename", histfilename_primvertex)) {
-		primaryVtxGen = new primaryVertexGen(
-		    histfilename_primvertex,
-		    BeamPartMass,
-		    Mom,
-		    MomSigma
-		    );
-		if (!primaryVtxGen->check()) {
-			cerr << " Error: histogram filename with beam properties not loaded! " << endl;
-			delete primaryVtxGen;
-			primaryVtxGen = NULL;
-		}
+	if(maxAttempts && (maxAttempts < nEvents)) {
+		printWarn << "Maximum attempts is smaller than the number of events. Setting it to infinity." << endl;
+		maxAttempts = 0;
 	}
 
-	if(!reactConf.lookupValue("beam.charge",qbeam)) {
-		qbeam = -1;
-	}
-	// generate the filename automatically if not specified
-	if (output_file == "") {
-		stringstream _filename;
-		_filename << massLower << "." << massLower+massBinWidth << ".genbod.root";
-		cout << " created output filename: " << _filename.str() << endl;
-		output_file = _filename.str();
-	}
-	output_evt = output_file;
-	output_evt.replace(output_evt.find(".root"),5,".evt");
-	output_wht = output_file;
-	output_wht.replace(output_wht.find(".root"),5,".wht");
-	output_comgeant = output_file;
-	output_comgeant.erase(output_comgeant.find(".root"),5);
-	output_comgeant.append(".fort.26");
-
-	// now create the root file to store the events
-	TFile* outfile = TFile::Open(output_file.c_str(),"RECREATE");
-	TH1D* hWeights = new TH1D("hWeights","PW Weights",100,0,100);
-	TTree* outtree = new TTree("pwevents","pwevents");
-
-	outtree->Branch("weight",&weight,"weight/d");
-	outtree->Branch("impweight",&impweight,"impweight/d");
-	outtree->Branch("p",&p);
-	outtree->Branch("beam",&beam);
-	outtree->Branch("vertex", &vertex);
-	outtree->Branch("q",&q);
-	outtree->Branch("qbeam",&qbeam,"qbeam/I");
-	outtree->Branch("tprime", &tprime);
-
-	//string theta_file= reactConf.lookup("finalstate.theta_file");
-
-	diffractivePhaseSpace difPS;
-	cerr << "Seed=" << seed << endl;
-	difPS.SetSeed(seed);
-	difPS.SetBeam(Mom,MomSigma,DxDz,DxDzSigma,DyDz,DyDzSigma);
-	difPS.SetTarget(targetz,targetd,targetr,mrecoil);
-	difPS.SetTPrimeSlope(tslope, inv_m, ntslope);
-	difPS.SetMassRange(mmin,mmax);
-	difPS.SetPrimaryVertexGen(primaryVtxGen);
-	if(tprime_min >= 0.) {
-		difPS.SettprimeMin(tprime_min);
-	} else {
-		cout << " Error: tprime_min must be positive " << tprime_min << endl;
-	}
-	if(tprime_max >= 0.) {
-		difPS.SettprimeMax(tprime_max);
+	if(overrideMass && not (massLower && massBinWidth)) {
+		printErr << "'-M' and '-B' can only be set together. Aborting..." << endl;
+		exit(2);
 	}
 
-	double impMass;
-	double impWidth;
+	if(not seedSet) {
+		printInfo << "Setting random seed to " << seed << endl;
+	}
+	randomNumberGenerator::instance()->setSeed(seed);
 
-	if(reactConf.lookupValue("importance.mass",impMass) &&
-	   reactConf.lookupValue("importance.width",impWidth))
-	{
-		int act = reactConf.lookup("importance.active");
-		if(act == 1) {
-			difPS.SetImportanceBW(impMass,impWidth);
-		}
+	particleDataTable::readFile(pdgFileName);
+	generatorManager generatorMgr;
+	if(beamfileNameOverride != "") {
+		generatorMgr.overrideBeamFile(beamfileNameOverride);
 	}
 
-	const Setting& root = reactConf.getRoot();
-	const Setting& fspart = root["finalstate"]["particles"];
-	int nparticles = fspart.getLength();
-
-	for(int ifs=0; ifs<nparticles; ++ifs) {
-		const Setting &part = fspart[ifs];
-		int id;
-		part.lookupValue("g3id",id);
-		int myq;
-		part.lookupValue("charge",myq);
-		double m;
-		part.lookupValue("mass",m);
-		q.push_back(myq);
-		difPS.AddDecayProduct(particleInfo(id,myq,m));
+	if(not generatorMgr.readReactionFile(reactionFile)) {
+		printErr << "could not read reaction file. Aborting..." << endl;
+		exit(1);
 	}
 
-	// see if we have a resonance in this wave
-	map<string, breitWignerProductionAmp*> bwAmps;
-	if(reactConf.exists("resonances")) {
-		const Setting &bws = root["resonances"]["breitwigners"];
-		// loop through breitwigners
-		int nbw = bws.getLength();
-		printInfo << "found " << nbw << " Breit-Wigners in config" << endl;
-
-		for(int ibw = 0; ibw < nbw; ++ibw) {
-			const Setting &bw = bws[ibw];
-			string jpcme;
-			double mass, width;
-			double cRe, cIm;
-			bw.lookupValue("jpcme",       jpcme);
-			bw.lookupValue("mass",        mass);
-			bw.lookupValue("width",       width);
-			bw.lookupValue("coupling_Re", cRe);
-			bw.lookupValue("coupling_Im", cIm);
-			complex<double> coupl(cRe, cIm);
-			cout << "    JPCME = " << jpcme << ", mass = " << mass << " GeV/c^2, "
-			     << "width = " << width << " GeV/c^2, coupling = " << coupl << endl;
-			bwAmps[jpcme] = new breitWignerProductionAmp(mass, width, coupl);
-		}
+	if(overrideMass) {
+		generatorMgr.overrideMassRange(massLower / 1000., (massLower + massBinWidth) / 1000.);
+	}
+	if(readBeamfileSequentially == 1) {
+		generatorMgr.readBeamfileSequentially();
+	}
+	if(readBeamfileRandomBlock == 1) {
+		generatorMgr.readBeamfileSequentially();
+		generatorMgr.randomizeBeamfileStartingPosition();
 	}
 
-	// check if TFitBin is used as input
-	if(wavelist_file.find(".root") != string::npos) {
-		cerr << "Using TFitBin as input!" << endl;
-		TFile* fitresults = TFile::Open(wavelist_file.c_str(),"READ");
-		TFitBin* Bin      = NULL;
-		if(!fitresults || fitresults->IsZombie()) {
-			cerr << "Cannot open start fit results file " << wavelist_file << endl;
-			return 1;
-		}
-		// get tree with start values
-		TTree* tree;
-		fitresults->GetObject("pwa", tree);
-		if(!tree) {
-			cerr << "Cannot find fitbin tree '" << "pwa" << "' " << endl;
-		} else {
-			Bin = new TFitBin();
-			tree->SetBranchAddress("fitbin", &Bin);
-			// find entry which is closest to mass bin center
-			unsigned int iBest = 0;
-			double mBest = 0;
-			for(unsigned int i = 0; i < tree->GetEntriesFast(); ++i) {
-				tree->GetEntry(i);
-				if(fabs(binCenter - Bin->mass()) <= fabs(binCenter - mBest)) {
-					iBest = i;
-					mBest = Bin->mass();
-				}
-			}  // end loop over TFitBins
-			cerr << "Using data from Mass bin m=" << mBest << endl;
-			tree->GetEntry(iBest);
-			// write wavelist file for generator
-			string tmpname = tmpnam(NULL);
-			ofstream tmpfile(tmpname.c_str());
-			Bin->printAmpsGenPW(tmpfile);
-			tmpfile.close();
-			wavelist_file=tmpname;
-		}
-	} // end root file given
-
-	// read input wavelist and amplitudes
-	ifstream wavefile(wavelist_file.c_str());
-	while(wavefile.good()) {
-		TString wavename;
-		double RE, IM;
-		int rank = 0;
-		int refl = 0;
-		wavefile >> wavename >> RE >> IM;
-
-		if(wavename.Contains("flat") || wavename.Length()<2) {
-			continue;
-		}
-		if(RE == 0 && IM == 0) {
-			continue;
-		}
-		// check if there is rank information
-		if(wavename(0) == 'V') {
-			// we multiply rank by to to make space for refl+- production vectors
-			rank = 2 * atoi(wavename(1,1).Data());
-			// check reflecitivity to sort into correct production vector
-			refl = wavename(9)=='+' ? 0 : 1;
-			wavename = wavename(3, wavename.Length());
-		}
-
-		TString jpcme = wavename(2,5);
-
-		wavename.ReplaceAll(".amp", ".key");
-		wavename.Prepend(path_to_keyfiles.c_str());
-
-		complex<double> amp(RE, IM);
-		cerr << wavename << " " << amp << " r=" << rank/2
-			<< " eps=" << refl << " qn=" << jpcme << endl;
-		wavefile.ignore(256, '\n');
-
-		productionAmp* pamp;
-		if(bwAmps[jpcme.Data()] != NULL) {
-			pamp = bwAmps[jpcme.Data()];
-			cerr << "Using BW for " << jpcme << endl;
-			// production vector index: rank+refl
-			weighter.addWave(wavename.Data(), pamp, amp, rank+refl);
-		} else {
-			pamp = new productionAmp(amp);
-			weighter.addWave(wavename.Data(), pamp, complex<double>(1, 0), rank+refl);
-		}
+	if(not generatorMgr.initializeGenerator()) {
+		printErr << "could not initialize generator. Aborting..." << endl;
+		exit(1);
 	}
 
-	if(hasint){
-		// read integral files
-		ifstream intfile(integrals_file.c_str());
-		while(intfile.good()) {
-			string filename;
-			double mass;
-			intfile >> filename >> mass;
-			weighter.loadIntegrals(filename, mass);
-			intfile.ignore(256, '\n');
-		} // loop over integralfile
-	}// endif hasint
+	if(outputEvtFileName == "") {
+		stringstream fileName;
+		fileName << massLower << "." << massLower + massBinWidth << ".genbod.evt";
+		outputEvtFileName = fileName.str();
+	}
+	ofstream outputEvtFile(outputEvtFileName.c_str());
+	printInfo << "output event file: " << outputEvtFileName << endl;
 
+	ofstream outputComgeantFile;
+	if(writeComgeantOut) {
+		outputComgeantFileName = changeFileExtension(outputEvtFileName, ".fort.26");
+		printInfo << "output comgeant file: " << outputComgeantFileName << endl;
+		outputComgeantFile.open(outputComgeantFileName.c_str());
+	}
 
-	double maxweight = -1;
+	generatorMgr.print(printInfo);
+
+	boost::progress_display* progressIndicator = new boost::progress_display(nEvents, cout, "");
+
 	unsigned int attempts = 0;
+	unsigned int eventsGenerated = 0;
+	for(; eventsGenerated < nEvents; ++eventsGenerated) {
 
-
-	unsigned int tenpercent = (unsigned int)(nevents / 10);
-	unsigned int i = 0;
-	//difPS.setVerbose(true);
-	ofstream evtout(output_evt.c_str());
-	ofstream evtgeant;
-	if(writeComGeantout) {
-		evtgeant.open(output_comgeant.c_str());
-	}
-	ofstream evtwht(output_wht.c_str());
-	evtwht << setprecision(10);
-
-	while(i < nevents && ((max_attempts > 0 && attempts < max_attempts) || max_attempts == 0))
-	{
-
-		++attempts;
-
-		p->Delete(); // clear output array
-
-		stringstream str;
-		if (writeComGeantout) {
-			difPS.event(str, evtgeant);
-		} else {
-			difPS.event(str);
+		attempts += generatorMgr.event();
+		const generator& gen = generatorMgr.getGenerator();
+		rpwa::particle beam = gen.getGeneratedBeam();
+		std::vector<rpwa::particle> finalState = gen.getGeneratedFinalState();
+		generator::convertEventToAscii(outputEvtFile, beam, finalState);
+		if(writeComgeantOut) {
+			rpwa::particle recoil = gen.getGeneratedRecoil();
+			TVector3 vertex = gen.getGeneratedVertex();
+			generator::convertEventToComgeant(outputComgeantFile, beam, recoil, vertex, finalState, false);
 		}
-		impweight = difPS.impWeight();
-
-		for(int ip = 0; ip < nparticles; ++ip){
-			new ((*p)[ip]) TLorentzVector(*difPS.GetDecay(ip));
+		if(maxAttempts && (attempts > maxAttempts)) {
+			printWarn << "reached maximum attempts. Aborting..." << endl;
+			break;
 		}
+		++(*progressIndicator);
 
-		beam = *difPS.GetBeam();
-		vertex = *difPS.GetVertex();
-		tprime = difPS.Gettprime();
-
-		// calculate weight
-		event e;
-		e.setIOVersion(1);
-
-		str >> e;
-		evtout << e;
-		evtwht << impweight << endl;
-
-		//cerr << e << endl;
-
-		weight = weighter.weight(e);
-		if(weight > maxweight) {
-			maxweight = weight;
-		}
-		hWeights->Fill(weight);
-
-		if(maxWeight > 0) { // do weighting
-			cout << weight << endl;
-			//if(weight>maxWeight)maxWeight=weight;
-			if(gRandom->Uniform() > weight / maxWeight) {
-				continue;
-			}
-		}
-		//cerr << i << endl;
-
-		outtree->Fill();
-
-
-		if(i > 0 && (i % tenpercent == 0)) {
-			cerr << "\x1B[2K" << "\x1B[0E" << "[" << (double)i/(double)nevents*100. << "%]";
-		}
-
-		++i;
-
-	} // end event loop
-
-	cerr << endl;
-	cerr << "Maxweight: " << maxweight << endl;
-	cerr << "Attempts: " << attempts << endl;
-	cerr << "Created Events: " << i << endl;
-	cerr << "Efficiency: " << (double)i / (double)attempts << endl;
-
-
-	outfile->cd();
-	hWeights->Write();
-	outtree->Write();
-	outfile->Close();
-	evtout.close();
-	evtwht.close();
-	if(writeComGeantout) {
-		evtgeant.close();
 	}
 
-	delete [] tslope;
-	delete [] inv_m;
+	outputEvtFile.close();
+	if(writeComgeantOut) {
+		outputComgeantFile.close();
+	}
 
-	return 0;
+	printSucc << "generated " << eventsGenerated << " events." << endl;
+	printInfo << "attempts: " << attempts << endl;
+	printInfo << "efficiency: " << setprecision(3) << 100 * ((double)eventsGenerated / attempts) << "%" << endl;
 
 }
 

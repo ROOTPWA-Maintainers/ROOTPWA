@@ -107,7 +107,7 @@ compareAmplitudes(const size_t          nmbEvents,
 	psGen.setWeightType(nBodyPhaseSpaceGen::S_U_CHUNG);
 	psGen.setKinematicsType(nBodyPhaseSpaceGen::BLOCK);
 	psGen.setDecay(2, daughterMasses);
-	psGen.setSeed(seed);
+	randomNumberGenerator::instance()->setSeed(seed);
 	psGen.setMaxWeight(1.01 * psGen.estimateMaxWeight(massRange[1]));
 
 	// loop over events

@@ -53,11 +53,15 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	nBodyPhaseSpaceGen.cc
+	generator.cc
+	generatorManager.cc
 	productionAmp.cc
 	breitWignerProductionAmp.cc
 	partialWaveWeight.cc
 	diffractivePhaseSpace.cc
-	primaryVertexGen.cc
+	beamAndVertexGenerator.cc
+	randomNumberGenerator.cc
+	generatorPickerFunctions.cc
 	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
 	)
 
@@ -99,3 +103,6 @@ make_executable(genpw       genpw.cc           ${THIS_LIB} "${Libconfig_LIBS}")
 make_executable(evtweight   evtweight.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}")
 make_executable(plotBWAmp   plotBWAmp.cc       ${THIS_LIB})
 make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})
+
+# build tests
+add_subdirectory(test)
