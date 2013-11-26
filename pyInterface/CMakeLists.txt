@@ -34,6 +34,10 @@
 message(STATUS "")
 message(STATUS ">>> Setting up 'pyInterface' directory.")
 
+set(AMPLITUDE_SUBDIR amplitude)
+set(UTILITIES_SUBDIR utilities)
+set(PYUTILS_SUBDIR pyUtils)
+
 
 # set include directories
 set(INCLUDE_DIRECTORIES
@@ -41,10 +45,12 @@ set(INCLUDE_DIRECTORIES
 	${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
-#	${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
+	${AMPLITUDE_SUBDIR}
+	${UTILITIES_SUBDIR}
+	${PYUTILS_SUBDIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
@@ -52,26 +58,26 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	rootPwaPy.cc
-	stlContainers_py.cc
-	rootConverters_py.cc
-	particleProperties_py.cc
-	particleDataTable_py.cc
-	particle_py.cc
-	interactionVertex_py.cc
-	fsVertex_py.cc
-	massDependence_py.cc
-	isobarDecayVertex_py.cc
-	productionVertex_py.cc
-	diffractiveDissVertex_py.cc
-	decayTopology_py.cc
-	isobarDecayTopology_py.cc
-	isobarAmplitude_py.cc
-	isobarCanonicalAmplitude_py.cc
-	isobarHelicityAmplitude_py.cc
-	waveDescription_py.cc
-	amplitudeTreeLeaf_py.cc
-	ampIntegralMatrix_py.cc
-	utils_py.cc
+	${PYUTILS_SUBDIR}/stlContainers_py.cc
+	${PYUTILS_SUBDIR}/rootConverters_py.cc
+	${AMPLITUDE_SUBDIR}/particleProperties_py.cc
+	${AMPLITUDE_SUBDIR}/particleDataTable_py.cc
+	${AMPLITUDE_SUBDIR}/particle_py.cc
+	${AMPLITUDE_SUBDIR}/interactionVertex_py.cc
+	${AMPLITUDE_SUBDIR}/fsVertex_py.cc
+	${AMPLITUDE_SUBDIR}/massDependence_py.cc
+	${AMPLITUDE_SUBDIR}/isobarDecayVertex_py.cc
+	${AMPLITUDE_SUBDIR}/productionVertex_py.cc
+	${AMPLITUDE_SUBDIR}/diffractiveDissVertex_py.cc
+	${AMPLITUDE_SUBDIR}/decayTopology_py.cc
+	${AMPLITUDE_SUBDIR}/isobarDecayTopology_py.cc
+	${AMPLITUDE_SUBDIR}/isobarAmplitude_py.cc
+	${AMPLITUDE_SUBDIR}/isobarCanonicalAmplitude_py.cc
+	${AMPLITUDE_SUBDIR}/isobarHelicityAmplitude_py.cc
+	${AMPLITUDE_SUBDIR}/waveDescription_py.cc
+	${AMPLITUDE_SUBDIR}/amplitudeTreeLeaf_py.cc
+	${AMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
+	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 
 
