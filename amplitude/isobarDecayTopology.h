@@ -94,6 +94,7 @@ namespace rpwa {
 		isobarDecayTopology subDecay(const isobarDecayVertexPtr& startVert,
 		                             const bool                  linkToParentTopo = false)
 		{ return subDecay(node(startVert), linkToParentTopo); }  ///< returns sub-decay tree that starts at given vertex
+		isobarDecayTopology subDecayConsistent(const isobarDecayVertexPtr& startVertex); ///< returns sub-decay tree that starts at given vertex, but adds a nonInteractionVertex as production vertex to have a consistent topology
 
 		void addDecay(const isobarDecayTopology& topo);  ///< returns sub-decay tree that starts at given vertex
 

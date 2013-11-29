@@ -214,6 +214,8 @@ void rpwa::py::exportIsobarDecayTopology() {
 			   bp::arg("linkToParentTopo")=false)
 		)
 
+		.def("subDecayConsistent", &rpwa::isobarDecayTopology::subDecayConsistent)
+
 		.def("addDecay", &rpwa::isobarDecayTopology::addDecay)
 
 		.def("joinDaughterDecays", &isobarDecayTopology_joinDaughterDecays)

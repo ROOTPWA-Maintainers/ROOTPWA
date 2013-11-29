@@ -63,6 +63,7 @@ set(SOURCES
 	productionVertex.cc
 	diffractiveDissVertex.cc
 	leptoProductionVertex.cc
+	nonInteractionVertex.cc
 	isobarDecayVertex.cc
 	isobarDecayTopology.cc
 	massDependence.cc
