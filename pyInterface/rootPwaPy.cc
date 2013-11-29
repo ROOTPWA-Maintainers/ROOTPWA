@@ -22,6 +22,7 @@
 #include "amplitudeTreeLeaf_py.h"
 #include "ampIntegralMatrix_py.h"
 #include "nBodyPhaseSpaceGen_py.h"
+#include "randomNumberGenerator_py.h"
 #include "utils_py.h"
 
 namespace bp = boost::python;
@@ -47,6 +48,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportAmplitudeTreeLeaf();
 	rpwa::py::exportAmpIntegralMatrix();
 	rpwa::py::exportNBodyPhaseSpaceGen();
+	rpwa::py::exportRandomNumberGenerator();
 	rpwa::py::exportUtils();
 
 }

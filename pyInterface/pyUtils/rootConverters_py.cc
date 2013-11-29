@@ -3,6 +3,7 @@
 #include<TClonesArray.h>
 #include<TLorentzRotation.h>
 #include<TPython.h>
+#include<TRandom3.h>
 #include<TVector3.h>
 #include<TTree.h>
 
@@ -44,6 +45,12 @@ void rpwa::py::exportRootConverters() {
 	bp::def("__RootConverters_convertToPy_TClonesArray", &rpwa::py::convertToPy<TClonesArray>);
 	bp::def(
 		"__RootConverters_convertFromPy_TClonesArray", &rpwa::py::convertFromPy<TClonesArray*>
+		, bp::return_internal_reference<1>()
+	);
+
+	bp::def("__RootConverters_convertToPy_TRandom3", &rpwa::py::convertToPy<TRandom3>);
+	bp::def(
+		"__RootConverters_convertFromPy_TRandom3", &rpwa::py::convertFromPy<TRandom3*>
 		, bp::return_internal_reference<1>()
 	);
 
