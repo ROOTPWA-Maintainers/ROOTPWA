@@ -76,6 +76,7 @@ set(SOURCES
 	amplitudeTreeHelper.cc
 	ampIntegralMatrix.cc
 	waveSetGenerator.cc
+	phaseSpaceIntegral.cc
 	)
 
 
