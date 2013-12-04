@@ -39,6 +39,8 @@
 #include <vector>
 #include <complex>
 
+#include <boost/weak_ptr.hpp>
+
 #include "TLorentzRotation.h"
 
 #include "particle.h"
@@ -49,6 +51,8 @@ class TClonesArray;
 
 namespace rpwa {
 
+	class decayTopology;
+	typedef boost::shared_ptr<decayTopology> decayTopologyPtr;
   
 	class interactionVertex;
 	typedef boost::shared_ptr<interactionVertex> interactionVertexPtr;
@@ -85,6 +89,9 @@ namespace rpwa {
 		virtual inline const std::vector<particlePtr>& inParticles () const { return _inParticles;  }  ///< returns array of incoming particles
 		virtual inline const std::vector<particlePtr>& outParticles() const { return _outParticles; }  ///< returns array of outgoing particles
 
+		virtual const decayTopologyPtr decay() const { return _decay.lock(); } ///< Caution: this might return an empty shared_ptr, as _decay is only set when a topology is added to an isobarAmplitude
+		virtual void setDecay(const decayTopologyPtr& decay) { _decay = boost::weak_ptr<decayTopology>(decay); }
+
 		virtual std::ostream& print        (std::ostream& out) const;  ///< prints vertex parameters in human-readable form
 		virtual std::ostream& dump         (std::ostream& out) const;  ///< prints all vertex data in human-readable form
 		virtual std::ostream& printPointers(std::ostream& out) const;  ///< prints particle pointers strored in vertex
@@ -107,6 +114,8 @@ namespace rpwa {
 
 		std::vector<particlePtr> _inParticles;   ///< array of pointers to incoming particles
 		std::vector<particlePtr> _outParticles;  ///< array of pointers to outgoing particles
+
+		boost::weak_ptr<decayTopology> _decay; ///< pointer to the decay the vertex is a "member" of, has to be a weak_ptr to avoid cycles (decayTopology -> interactionVertexPtr -> decayTopologyPtr).
 
 
 	private:
