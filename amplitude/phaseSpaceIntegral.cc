@@ -2,6 +2,7 @@
 #include "phaseSpaceIntegral.h"
 
 #include <boost/progress.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include<TClonesArray.h>
 #include<TDirectory.h>
@@ -23,6 +24,52 @@ using namespace rpwa;
 phaseSpaceIntegral* phaseSpaceIntegral::_instance = 0;
 const std::string phaseSpaceIntegral::TREE_NAME = "psint";
 const std::string phaseSpaceIntegral::DIRECTORY = "/home/kbicker/analysis/integralAmplitudesPwd";
+
+namespace {
+
+	// Re-Implementation of waveDescription::waveNameFromTopology which omits the
+	// spin projection quantum number M for the top vertex, as it does not change
+	// the integral.
+	string
+	__waveNameFromTopology(isobarDecayTopology topo,
+	                       const bool          newConvention)
+	{
+		ostringstream waveName;
+		if (not topo.checkTopology() or not topo.checkConsistency()) {
+			printWarn << "decay topology has issues. cannot construct wave name." << endl;
+			return "";
+		}
+		// X quantum numbers
+		const particle& X = *(topo.XParticle());
+		if(newConvention) {
+			waveName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
+			         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
+			         << "X" << parityQn(X.reflectivity()) << "]"
+			         << waveDescription::waveNameFromTopology(topo, newConvention, topo.XIsobarDecayVertex());
+		} else {
+			waveName << spinQn(X.isospin()) << sign(X.G())
+			         << spinQn(X.J()) << sign(X.P()) << sign(X.C())
+			         << "X" << sign(X.reflectivity())
+			         << waveDescription::waveNameFromTopology(topo, newConvention, boost::static_pointer_cast<isobarDecayVertex>
+			                                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
+			         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
+			         << spinQn(topo.XIsobarDecayVertex()->S()) << "_"
+			         << waveDescription::waveNameFromTopology(topo, newConvention, boost::static_pointer_cast<isobarDecayVertex>
+			                                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter2())));
+		}
+		{
+			string name = waveName.str();
+			if (newConvention) {
+				boost::replace_all(name, "(", "_");
+				boost::replace_all(name, ")", "_");
+			} else {
+				boost::replace_all(name, "(", "");
+				boost::replace_all(name, ")", "");
+			}
+			return name;
+		}
+	}
+}
 
 phaseSpaceIntegral* phaseSpaceIntegral::instance() {
 
@@ -61,8 +108,8 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 	}
 
 	_subDecay = createIsobarDecayTopology(mainTopo->subDecayConsistent(_vertex));
-	std::stringstream sstr;
-	sstr<<DIRECTORY<<"/"<<waveDescription::waveNameFromTopology(*_subDecay, NEW_FILENAME_CONVENTION)<<".root";
+	stringstream sstr;
+	sstr<<DIRECTORY<<"/"<<__waveNameFromTopology(*_subDecay, NEW_FILENAME_CONVENTION)<<".root";
 	_filename = sstr.str();
 
 	const particlePtr& parent = _vertex->parent();
