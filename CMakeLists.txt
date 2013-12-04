@@ -565,6 +565,9 @@ set(ROOTPWA_LIBS
 set(GEN_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/generators
 	)
+set(ROOTPWA_NBPSGEN_LIBS
+	RootPwaNBPSGen
+	)
 set(ROOTPWAGEN_LIBS
 	RootPwaGen
 	)

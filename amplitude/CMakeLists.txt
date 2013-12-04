@@ -102,6 +102,7 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
+	"${ROOTPWA_NBPSGEN_LIBS}"
 	)
 
 
