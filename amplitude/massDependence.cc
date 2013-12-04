@@ -36,6 +36,7 @@
 #include "physUtils.hpp"
 #include "isobarDecayVertex.h"
 #include "particleDataTable.h"
+#include "phaseSpaceIntegral.h"
 #include "massDependence.h"
 
 
@@ -91,25 +92,36 @@ complex<double>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
+	const particlePtr& daughter1 = v.daughter1();
+	const particlePtr& daughter2 = v.daughter2();
 
-	// get Breit-Wigner parameters
-	const double       M      = parent->lzVec().M();         // parent mass
-	const double       m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
-	const double       m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
-	const double       q      = breakupMomentum(M,  m1, m2);
-	const double       M0     = parent->mass();              // resonance peak position
-	const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
-	// !NOTE! the following is incorrect but this is how it was done in PWA2000
-	const double       q0     = sqrt(fabs(q02));
-	const double       Gamma0 = parent->width();             // resonance peak width
-	const unsigned int L      = v.L();
+	complex<double> bw;
+	if(daughter1->isStable() and daughter2->isStable()) {
 
-	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
-		           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
-		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
+		// get Breit-Wigner parameters
+		const double       M      = parent->lzVec().M();         // parent mass
+		const double       m1     = daughter1->lzVec().M();  // daughter 1 mass
+		const double       m2     = daughter2->lzVec().M();  // daughter 2 mass
+		const double       q      = breakupMomentum(M,  m1, m2);
+		const double       M0     = parent->mass();              // resonance peak position
+		const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
+		// !NOTE! the following is incorrect but this is how it was done in PWA2000
+		const double       q0     = sqrt(fabs(q02));
+		const double       Gamma0 = parent->width();             // resonance peak width
+		const unsigned int L      = v.L();
+
+		bw = breitWigner(M, M0, Gamma0, L, q, q0);
+		if (_debug)
+			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+			           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
+			           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
+			           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
+	} else {
+
+		bw = (*phaseSpaceIntegral::instance())(v);
+
+	}
+
 	return bw;
 }
 

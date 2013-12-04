@@ -20,8 +20,6 @@ namespace rpwa {
 
 		static phaseSpaceIntegral* instance();
 
-		void setDecay(const isobarDecayTopology& decay) { _decay = &decay; }
-
 		std::complex<double> operator()(const isobarDecayVertex& vertex);
 
 	  private:
@@ -31,24 +29,25 @@ namespace rpwa {
 		double dyn();
 		double readIntegralValueFromTree(const double& M, TTree* tree) const;
 
-		std::vector<std::string> getFilenames() const;
-		void createIntegralFile(std::string filename) const;
+		void createIntegralFile() const;
 
-		double phaseSpace1D(double* x, double* p) const;
-
-		double evalInt(const double& M) const;
+		double evalInt(const double& M, const unsigned int& nEvents) const;
 
 		static phaseSpaceIntegral* _instance;
 
-		const isobarDecayVertex* _vertex;
-
-		const isobarDecayTopology* _decay;
+		isobarDecayVertexPtr _vertex;
+		std::string _filename;
+		isobarDecayTopologyPtr _subDecay;
 
 		const static std::string TREE_NAME;
 		const static std::string DIRECTORY;
-		const static int N_POINTS = 10000;
+		const static int N_POINTS = 50;
+		const static int N_MC_EVENTS = 1000000;
+		const static int N_MC_EVENTS_FOR_M0 = 10000000;
+		const static int MC_SEED = 987654321;
 		const static double LOWER_BOUND = 0.41871054;
 		const static double UPPER_BOUND = 4.5;
+		const static bool NEW_FILENAME_CONVENTION = false;
 
 };
 
