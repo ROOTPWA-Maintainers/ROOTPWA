@@ -44,12 +44,12 @@ namespace {
 		if(newConvention) {
 			waveName << "[" << spinQn(X.isospin()) << parityQn(X.G()) << ","
 			         << spinQn(X.J()) << parityQn(X.P()) << parityQn(X.C()) << ","
-			         << "X" << parityQn(X.reflectivity()) << "]"
+			         << "M" << parityQn(X.reflectivity()) << "]"
 			         << waveDescription::waveNameFromTopology(topo, newConvention, topo.XIsobarDecayVertex());
 		} else {
 			waveName << spinQn(X.isospin()) << sign(X.G())
 			         << spinQn(X.J()) << sign(X.P()) << sign(X.C())
-			         << "X" << sign(X.reflectivity())
+			         << "M" << sign(X.reflectivity())
 			         << waveDescription::waveNameFromTopology(topo, newConvention, boost::static_pointer_cast<isobarDecayVertex>
 			                                                 (topo.toVertex(topo.XIsobarDecayVertex()->daughter1())))
 			         << "_" << spinQn(topo.XIsobarDecayVertex()->L())
