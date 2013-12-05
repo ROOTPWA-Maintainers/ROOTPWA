@@ -42,7 +42,6 @@ namespace rpwa {
 		const static int N_MC_EVENTS = 1000000;
 		const static int N_MC_EVENTS_FOR_M0 = 10000000;
 		const static int MC_SEED = 987654321;
-		const static double LOWER_BOUND = 0.41871054;
 		const static double UPPER_BOUND = 4.5;
 		const static bool NEW_FILENAME_CONVENTION = false;
 

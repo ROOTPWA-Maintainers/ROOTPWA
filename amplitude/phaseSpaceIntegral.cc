@@ -230,11 +230,17 @@ void phaseSpaceIntegral::createIntegralFile() const {
 	outTree->Branch("M", &M);
 	outTree->Branch("int", &psInt);
 
-	const double step = (UPPER_BOUND - LOWER_BOUND) / (N_POINTS - 1);
 
+
+	M = 0.;
+	for(unsigned int i = 0; i < _subDecay->nmbFsParticles(); ++i) {
+		M += _subDecay->fsParticles()[i]->mass();
+	}
+	const double step = (UPPER_BOUND - M) / (N_POINTS);
 	const double M0 = _vertex->parent()->mass();
-
-	M = LOWER_BOUND;
+	psInt = 0.;
+	outTree->Fill();
+	M += step;
 	for(unsigned int i = 0; i < N_POINTS; ++i) {
 		psInt = evalInt(M, N_MC_EVENTS);
 		outTree->Fill();
@@ -247,13 +253,8 @@ void phaseSpaceIntegral::createIntegralFile() const {
 		}
 		M += step;
 	}
-/*
-	for(double M = LOWER_BOUND; M <= UPPER_BOUND; M += step) {
-		psInt = evalInt(M);
-		outTree->Fill();
-//		std::cout<<M<<std::endl;
-	}
-*/
+
+	integralFile->cd();
 	outTree->Write();
 	integralFile->Close();
 	pwd->cd();
