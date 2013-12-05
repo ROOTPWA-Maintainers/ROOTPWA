@@ -18,13 +18,12 @@ namespace rpwa {
 
 	  public:
 
-		static phaseSpaceIntegral* instance();
+		phaseSpaceIntegral() { }
 
 		std::complex<double> operator()(const isobarDecayVertex& vertex);
 
 	  private:
 
-		phaseSpaceIntegral() { }
 
 		double dyn();
 		double readIntegralValueFromTree(const double& M, TTree* tree) const;
@@ -32,8 +31,6 @@ namespace rpwa {
 		void createIntegralFile() const;
 
 		double evalInt(const double& M, const unsigned int& nEvents) const;
-
-		static phaseSpaceIntegral* _instance;
 
 		isobarDecayVertexPtr _vertex;
 		std::string _filename;

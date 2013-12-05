@@ -21,7 +21,6 @@
 using namespace std;
 using namespace rpwa;
 
-phaseSpaceIntegral* phaseSpaceIntegral::_instance = 0;
 const std::string phaseSpaceIntegral::TREE_NAME = "psint";
 const std::string phaseSpaceIntegral::DIRECTORY = "/home/kbicker/analysis/integralAmplitudesPwd";
 
@@ -71,16 +70,6 @@ namespace {
 	}
 }
 
-phaseSpaceIntegral* phaseSpaceIntegral::instance() {
-
-	if(not _instance) {
-		_instance = new phaseSpaceIntegral();
-		randomNumberGenerator::instance()->setSeed(MC_SEED);
-	}
-
-	return _instance;
-
-}
 
 complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
 
