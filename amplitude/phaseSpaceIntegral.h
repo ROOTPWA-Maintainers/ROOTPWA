@@ -1,43 +1,56 @@
+#ifndef PHASESPACEINTEGRAL_H
+#define PHASESPACEINTEGRAL_H
 
 #include<complex>
 
-#include"massDependence.h"
-#include"isobarDecayTopology.h"
 #include"isobarDecayVertex.h"
+#include"isobarDecayTopology.h"
 #include"particle.h"
-
-#ifndef PHASESPACEINTEGRAL_H
-#define PHASESPACEINTEGRAL_H
 
 class TFile;
 class TTree;
 
 namespace rpwa {
 
-	class phaseSpaceIntegral {
+
+	class integralTableContainer {
 
 	  public:
 
-		phaseSpaceIntegral() { }
+		integralTableContainer() : _init(false) { }
+		integralTableContainer(const isobarDecayVertex& vertex);
+		~integralTableContainer() { }
 
-		std::complex<double> operator()(const isobarDecayVertex& vertex);
+		std::complex<double> operator()();
+
+		static std::string getSubWaveNameFromVertex(const isobarDecayVertex& vertex);
+		static std::string getSubWaveNameFromVertex(const isobarDecayVertex& vertex,
+		                                            isobarDecayVertexPtr& vertexPtr,
+		                                            isobarDecayTopologyPtr& subDecay);
 
 	  private:
 
-
 		double dyn();
-		double readIntegralValueFromTree(const double& M, TTree* tree) const;
+		double interpolate(const double& M) const;
+		double getInt0(const double& M0);
 
-		void createIntegralFile() const;
+		void fillIntegralTable();
+		void addToIntegralTable(const std::pair<double, double>& newPoint);
+
+		void readIntegralFile();
+		void writeIntegralTableToDisk(bool overwriteFile = false) const;
 
 		double evalInt(const double& M, const unsigned int& nEvents) const;
 
+		std::vector<std::pair<double, double> > _integralTable;
+
 		isobarDecayVertexPtr _vertex;
-		std::string _filename;
+		std::string _subWaveName;
+		std::string _fullPathToFile;
 		isobarDecayTopologyPtr _subDecay;
 
-		const static std::string TREE_NAME;
-		const static std::string DIRECTORY;
+		bool _init;
+
 		const static int N_POINTS = 50;
 		const static int N_MC_EVENTS = 1000000;
 		const static int N_MC_EVENTS_FOR_M0 = 10000000;
@@ -45,7 +58,28 @@ namespace rpwa {
 		const static double UPPER_BOUND = 4.5;
 		const static bool NEW_FILENAME_CONVENTION = false;
 
-};
+		const static std::string DIRECTORY;
+		const static std::string TREE_NAME;
+
+	};
+
+
+	class phaseSpaceIntegral {
+
+	  public:
+
+		static phaseSpaceIntegral* instance();
+		std::complex<double> operator()(const isobarDecayVertex& vertex);
+
+	  private:
+
+		phaseSpaceIntegral() { };
+
+		static phaseSpaceIntegral* _instance;
+		std::map<const isobarDecayVertex*, std::string> _vertexToSubwaveName;
+		std::map<std::string, integralTableContainer> _subwaveNameToIntegral;
+
+	};
 
 }
 

@@ -118,8 +118,7 @@ relativisticBreitWigner::amp(const isobarDecayVertex& v)
 			           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
 	} else {
 
-		phaseSpaceIntegral pSI;
-		bw = (pSI)(v);
+		bw = (*phaseSpaceIntegral::instance())(v);
 
 	}
 

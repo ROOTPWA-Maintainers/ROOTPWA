@@ -21,8 +21,33 @@
 using namespace std;
 using namespace rpwa;
 
-const std::string phaseSpaceIntegral::TREE_NAME = "psint";
-const std::string phaseSpaceIntegral::DIRECTORY = "/home/kbicker/analysis/integralAmplitudesPwd";
+phaseSpaceIntegral* phaseSpaceIntegral::_instance = 0;
+
+phaseSpaceIntegral* phaseSpaceIntegral::instance()
+{
+	if(not _instance) {
+		_instance = new phaseSpaceIntegral();
+	}
+	return _instance;
+}
+
+
+complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
+
+	map<const isobarDecayVertex*, string>::iterator name_it = _vertexToSubwaveName.find(&vertex);
+	if(name_it == _vertexToSubwaveName.end()) {
+		string waveName = integralTableContainer::getSubWaveNameFromVertex(vertex);
+		_vertexToSubwaveName[&vertex] = waveName;
+	}
+	const string& waveName = _vertexToSubwaveName[&vertex];
+	map<string, integralTableContainer>::iterator cont_it = _subwaveNameToIntegral.find(waveName);
+	if(cont_it == _subwaveNameToIntegral.end()) {
+		_subwaveNameToIntegral[waveName] = integralTableContainer(vertex);
+	}
+	return _subwaveNameToIntegral[waveName]();
+
+}
+
 
 namespace {
 
@@ -30,7 +55,7 @@ namespace {
 	// spin projection quantum number M for the top vertex, as it does not change
 	// the integral.
 	string
-	__waveNameFromTopology(isobarDecayTopology topo,
+	__waveNameFromTopology(const isobarDecayTopology& topo,
 	                       const bool          newConvention)
 	{
 		ostringstream waveName;
@@ -71,20 +96,34 @@ namespace {
 }
 
 
-complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
+const string integralTableContainer::TREE_NAME = "psint";
+const string integralTableContainer::DIRECTORY = "/home/kbicker/analysis/integralAmplitudesPwd";
 
-	_vertex = isobarDecayVertexPtr();
-	const decayTopologyPtr origDecayOfVertex = vertex.decay();
-	const isobarDecayTopologyPtr mainTopo = boost::dynamic_pointer_cast<isobarDecayTopology>(origDecayOfVertex);
+
+string integralTableContainer::getSubWaveNameFromVertex(const isobarDecayVertex& vertex)
+{
+	isobarDecayVertexPtr vertexPtr = isobarDecayVertexPtr();
+	isobarDecayTopologyPtr subDecay = isobarDecayTopologyPtr();
+	return integralTableContainer::getSubWaveNameFromVertex(vertex, vertexPtr, subDecay);
+}
+
+
+string integralTableContainer::getSubWaveNameFromVertex(const isobarDecayVertex& vertex,
+                                                        isobarDecayVertexPtr& vertexPtr,
+                                                        isobarDecayTopologyPtr& subDecay)
+{
+
+	vertexPtr = isobarDecayVertexPtr();
+	const isobarDecayTopologyPtr mainTopo = boost::dynamic_pointer_cast<isobarDecayTopology>(vertex.decay());
 	if(not mainTopo) {
-		printErr << "got NULL pointer from vertex. Aborting..." << std::endl;
+		printErr << "got NULL pointer from vertex. Aborting..." << endl;
 		throw;
 	}
-	const std::vector<interactionVertexPtr>& decayVertices = mainTopo->decayVertices();
+	const vector<interactionVertexPtr>& decayVertices = mainTopo->decayVertices();
 	bool success = false;
 	for(unsigned int i = 0; i < decayVertices.size(); ++i) {
 		if(*(decayVertices[i]) == vertex) {
-			_vertex = boost::dynamic_pointer_cast<isobarDecayVertex>(decayVertices[i]);
+			vertexPtr = boost::dynamic_pointer_cast<isobarDecayVertex>(decayVertices[i]);
 			success = true;
 			break;
 		}
@@ -92,15 +131,38 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 	if(not success) {
 		printErr << "decay vertex of particle " << vertex.parent()->label() << " not found. Aborting..." << endl;
 	}
-	if(not _vertex) {
+	if(not vertexPtr) {
 		printErr << "coud not find decay vertex in decay topology. Aborting..." << endl;
 		throw;
 	}
 
-	_subDecay = createIsobarDecayTopology(mainTopo->subDecayConsistent(_vertex));
+	subDecay = createIsobarDecayTopology(mainTopo->subDecayConsistent(vertexPtr));
+	return __waveNameFromTopology(*subDecay, NEW_FILENAME_CONVENTION);
+
+}
+
+
+integralTableContainer::integralTableContainer(const isobarDecayVertex& vertex)
+: _init(true)
+{
+
+	_subWaveName = getSubWaveNameFromVertex(vertex, _vertex, _subDecay);
+
 	stringstream sstr;
 	sstr<<DIRECTORY<<"/"<<__waveNameFromTopology(*_subDecay, NEW_FILENAME_CONVENTION)<<".root";
-	_filename = sstr.str();
+	_fullPathToFile = sstr.str();
+
+	readIntegralFile();
+
+}
+
+
+complex<double> integralTableContainer::operator()() {
+
+	if(not _init) {
+		printErr << "trying to use uninitialized integralTableContainer. Aborting..." << endl;
+		throw;
+	}
 
 	const particlePtr& parent = _vertex->parent();
 
@@ -114,44 +176,31 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 	const double A = M0 * Gamma0;
 	const double B = M0 * M0 - M * M;
 	const double C = M0 * Gamma;
-	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+	const complex<double> bw = (A / (B * B + C * C)) * complex<double>(B, C);
 
-	origDecayOfVertex->saveDecayToVertices(origDecayOfVertex);
 	return bw;
 	// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 }
 
-double phaseSpaceIntegral::dyn() {
+double integralTableContainer::dyn() {
 
-	TFile* integralFile = 0;
-
-	integralFile = TFile::Open(_filename.c_str(), "READ");
-
-	if(not integralFile) {
-		printInfo << "no file '" << _filename << "' with integral table found. Creating it..." << endl;
-		createIntegralFile();
-		printInfo << "created integral file '" << _filename << "." << endl;
-		integralFile = TFile::Open(_filename.c_str(), "READ");
-	}
-	TTree* tree = (TTree*)integralFile->Get(TREE_NAME.c_str());
-	double psInt = readIntegralValueFromTree(_vertex->parent()->lzVec().M(), tree);
-	double psInt0 = readIntegralValueFromTree(_vertex->parent()->mass(), tree);
-	integralFile->Close();
+	double psInt = interpolate(_vertex->parent()->lzVec().M());
+	double psInt0 = getInt0(_vertex->parent()->mass());
 	return (psInt / psInt0);
+
 }
 
 
-double phaseSpaceIntegral::readIntegralValueFromTree(const double& M, TTree* tree) const
+double integralTableContainer::interpolate(const double& M) const
 {
 
-	double currentM, psInt;
-	tree->SetBranchAddress("M", &currentM);
-	tree->SetBranchAddress("int", &psInt);
-	tree->GetEntry(0);
+	double currentM = _integralTable[0].first;
+	double psInt = _integralTable[0].second;
 	double lastM = currentM;
 	double lastPsInt = psInt;
-	for(long i = 1; i < tree->GetEntries(); ++i) {
-		tree->GetEntry(i);
+	for(unsigned int i = 1; i < _integralTable.size(); ++i) {
+		currentM = _integralTable[i].first;
+		psInt = _integralTable[i].second;
 		if((lastM <= M) and (M < currentM)) {
 			break;
 		}
@@ -161,9 +210,25 @@ double phaseSpaceIntegral::readIntegralValueFromTree(const double& M, TTree* tre
 }
 
 
-double phaseSpaceIntegral::evalInt(const double& M, const unsigned int& nEvents) const {
+double integralTableContainer::getInt0(const double& M0) {
+	for(unsigned int i = 0; i < _integralTable.size(); ++i) {
+		if(fabs(_integralTable[i].first - M0) < 1e-10) {
+			return interpolate(M0);
+		}
+	}
+	addToIntegralTable(pair<double, double>(M0, evalInt(M0, N_MC_EVENTS_FOR_M0)));
+	writeIntegralTableToDisk(true);
+	return getInt0(M0);
+}
 
-	printInfo << "calculating integral for " << _filename << " at mother mass = " << M << "GeV." << endl;
+
+double integralTableContainer::evalInt(const double& M, const unsigned int& nEvents) const {
+
+	printInfo << "calculating integral for " << _subWaveName
+	          << " at mother mass = " << M << "GeV with "
+	          << nEvents << " events." << endl;
+
+	const decayTopologyPtr origTopology = _vertex->decay();
 
 	const massDependencePtr originalMassDep = _vertex->massDependence();
 	_vertex->setMassDependence(createFlatMassDependence());
@@ -174,7 +239,7 @@ double phaseSpaceIntegral::evalInt(const double& M, const unsigned int& nEvents)
 	TClonesArray prodNames("TObjString", 1);
 	TClonesArray decayNames("TObjString", nmbFsParticles);
 	new (prodNames[0]) TObjString(_vertex->parent()->name().c_str());
-	std::vector<double> daughterMasses(nmbFsParticles, 0.);
+	vector<double> daughterMasses(nmbFsParticles, 0.);
 	double fsParticlesMassSum = 0.;
 	for(unsigned int i = 0; i < nmbFsParticles; ++i) {
 		const particlePtr particle = _subDecay->fsParticles()[i];
@@ -214,49 +279,117 @@ double phaseSpaceIntegral::evalInt(const double& M, const unsigned int& nEvents)
 	_vertex->setMassDependence(originalMassDep);
 	const double V = fourPi * (1 / rpwa::factorial<double>(nmbFsParticles)) * pow((fourPi*(M - fsParticlesMassSum)), nmbFsParticles-2);
 	integral *= (V / (double)nEvents);
-	printSucc << "calculated integral: " << integral << std::endl;
+
+	_subDecay->saveDecayToVertices(origTopology);
+
+	printSucc << "calculated integral: " << integral << endl;
 	return integral;
 }
 
 
-void phaseSpaceIntegral::createIntegralFile() const {
+void integralTableContainer::readIntegralFile() {
+
 	TDirectory* pwd = gDirectory;
-	TFile* integralFile = TFile::Open(_filename.c_str(), "NEW");
+	TFile* integralTableFile = TFile::Open(_fullPathToFile.c_str(), "READ");
+	if(not integralTableFile) {
+		printInfo << "no file '" << _fullPathToFile << "' with integral table found. Creating it..." << endl;
+		fillIntegralTable();
+		writeIntegralTableToDisk();
+		printInfo << "created integral file '" << _fullPathToFile << "." << endl;
+		integralTableFile = TFile::Open(_fullPathToFile.c_str(), "READ");
+	} else {
+		printInfo << "reading integral table from file '" << _fullPathToFile << "'." << endl;
+	}
+	TTree* tree = (TTree*)integralTableFile->Get(TREE_NAME.c_str());
+	double M, psInt;
+	tree->SetBranchAddress("M", &M);
+	tree->SetBranchAddress("int", &psInt);
+	_integralTable.resize(tree->GetEntries());
+	for(long i = 1; i < tree->GetEntries(); ++i) {
+		tree->GetEntry(i);
+		_integralTable[i] = pair<double, double>(M, psInt);
+	}
+	pwd->cd();
+
+}
+
+
+void integralTableContainer::writeIntegralTableToDisk(bool overwriteFile) const {
+
+	TDirectory* pwd = gDirectory;
+	TFile* integralFile = 0;
+	if(overwriteFile) {
+		integralFile = TFile::Open(_fullPathToFile.c_str(), "RECREATE");
+	} else {
+		integralFile = TFile::Open(_fullPathToFile.c_str(), "NEW");
+	}
 	integralFile->cd();
-	TObjString filenameForRoot(_filename.c_str());
+	TObjString filenameForRoot(_subWaveName.c_str());
 	filenameForRoot.Write();
 	TTree* outTree = new TTree(TREE_NAME.c_str(), TREE_NAME.c_str());
 	double M, psInt;
 	outTree->Branch("M", &M);
 	outTree->Branch("int", &psInt);
-
-
-
-	M = 0.;
-	for(unsigned int i = 0; i < _subDecay->nmbFsParticles(); ++i) {
-		M += _subDecay->fsParticles()[i]->mass();
-	}
-	const double step = (UPPER_BOUND - M) / (N_POINTS);
-	const double M0 = _vertex->parent()->mass();
-	psInt = 0.;
-	outTree->Fill();
-	M += step;
-	for(unsigned int i = 0; i < N_POINTS; ++i) {
-		psInt = evalInt(M, N_MC_EVENTS);
+	for(unsigned int i = 0; i < _integralTable.size(); ++i) {
+		M = _integralTable[i].first;
+		psInt = _integralTable[i].second;
 		outTree->Fill();
-		if((M0 > M) and (M0 < (M+step))) {
-			const double oldM = M;
-			M = M0;
-			psInt = evalInt(M, N_MC_EVENTS_FOR_M0);
-			outTree->Fill();
-			M = oldM;
-		}
-		M += step;
 	}
-
 	integralFile->cd();
 	outTree->Write();
 	integralFile->Close();
 	pwd->cd();
+
+}
+
+
+void integralTableContainer::fillIntegralTable() {
+
+	if(_integralTable.size() > 0) {
+		printErr << "trying to fill an already filled integral Table. Aborting..." << endl;
+		throw;
+	}
+
+	double M = 0.;
+	for(unsigned int i = 0; i < _subDecay->nmbFsParticles(); ++i) {
+		M += _subDecay->fsParticles()[i]->mass();
+	}
+	const double step = (UPPER_BOUND - M) / (N_POINTS);
+	_integralTable.push_back(pair<double, double>(M, 0.));
+	M += step;
+
+	const double& M0 = _vertex->parent()->mass();
+	printInfo << "filling the integration table assuming the decaying isobar to be "
+	          << _vertex->parent()->name() << " with M0=" << M0 << endl;
+
+	for(; M <= UPPER_BOUND; M += step) {
+		if((M0 > (M-step)) and (M0 < M)) {
+			_integralTable.push_back(pair<double, double>(M0, evalInt(M0, N_MC_EVENTS_FOR_M0)));
+        }
+		_integralTable.push_back(pair<double, double>(M, evalInt(M, N_MC_EVENTS)));
+	}
+
+}
+
+
+void integralTableContainer::addToIntegralTable(const pair<double, double>& newPoint) {
+
+	vector<pair<double, double> > newIntegralTable(1, _integralTable[0]);
+	const double& newM = newPoint.first;
+	bool added = false;
+	for(unsigned int i = 1; i < _integralTable.size(); ++i) {
+		const double& lastM = _integralTable[i-1].first;
+		const double& currentM = _integralTable[i].first;
+		if((newM >= lastM) and (newM < currentM)) {
+			newIntegralTable.push_back(newPoint);
+			added = true;
+		}
+		newIntegralTable.push_back(_integralTable[i]);
+	}
+	if(not added) {
+		printErr << "could not add new point to integral table (out of range?). Aborting..." << endl;
+		throw;
+	}
+	_integralTable = newIntegralTable;
 
 }
