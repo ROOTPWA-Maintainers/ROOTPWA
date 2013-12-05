@@ -771,6 +771,17 @@ decayTopology::revertMomenta(const vector<unsigned int>& fsPartPermMap)  // fina
 }
 
 
+void
+decayTopology::saveDecayToVertices(const decayTopologyPtr decay)
+{
+	productionVertex()->setDecay(decay);
+	const vector<interactionVertexPtr>& decayVertices = this->decayVertices();
+	for(unsigned int i = 0; i < decayVertices.size(); ++i) {
+		decayVertices[i]->setDecay(decay);
+	}
+}
+
+
 ostream&
 decayTopology::print(ostream& out) const
 {

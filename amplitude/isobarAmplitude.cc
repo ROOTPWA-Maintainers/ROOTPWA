@@ -91,11 +91,7 @@ isobarAmplitude::setDecayTopology(const isobarDecayTopologyPtr& decay)
 		throw;
 	}
 	_decay = decay;
-	_decay->productionVertex()->setDecay(_decay);
-	const std::vector<interactionVertexPtr>& decayVertices = _decay->decayVertices();
-	for(unsigned int i = 0; i < decayVertices.size(); ++i) {
-		decayVertices[i]->setDecay(_decay);
-	}
+	_decay->saveDecayToVertices(_decay);
 }
 
 

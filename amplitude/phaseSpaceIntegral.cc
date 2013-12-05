@@ -85,7 +85,8 @@ phaseSpaceIntegral* phaseSpaceIntegral::instance() {
 complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) {
 
 	_vertex = isobarDecayVertexPtr();
-	const isobarDecayTopologyPtr mainTopo = boost::dynamic_pointer_cast<isobarDecayTopology>(vertex.decay());
+	const decayTopologyPtr origDecayOfVertex = vertex.decay();
+	const isobarDecayTopologyPtr mainTopo = boost::dynamic_pointer_cast<isobarDecayTopology>(origDecayOfVertex);
 	if(not mainTopo) {
 		printErr << "got NULL pointer from vertex. Aborting..." << std::endl;
 		throw;
@@ -124,7 +125,10 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 	const double A = M0 * Gamma0;
 	const double B = M0 * M0 - M * M;
 	const double C = M0 * Gamma;
-	return (A / (B * B + C * C)) * std::complex<double>(B, C);
+	const complex<double> bw = (A / (B * B + C * C)) * std::complex<double>(B, C);
+
+	origDecayOfVertex->saveDecayToVertices(origDecayOfVertex);
+	return bw;
 	// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 }
 
@@ -173,7 +177,6 @@ double phaseSpaceIntegral::evalInt(const double& M, const unsigned int& nEvents)
 	printInfo << "calculating integral for " << _filename << " at mother mass = " << M << "GeV." << endl;
 
 	const massDependencePtr originalMassDep = _vertex->massDependence();
-	const decayTopologyPtr originalDecayTopology = _vertex->decay();
 	_vertex->setMassDependence(createFlatMassDependence());
 
 	const unsigned int nmbFsParticles = _subDecay->nmbFsParticles();
@@ -220,7 +223,6 @@ double phaseSpaceIntegral::evalInt(const double& M, const unsigned int& nEvents)
 	}
 
 	_vertex->setMassDependence(originalMassDep);
-	_vertex->setDecay(originalDecayTopology);
 	const double V = fourPi * (1 / rpwa::factorial<double>(nmbFsParticles)) * pow((fourPi*(M - fsParticlesMassSum)), nmbFsParticles-2);
 	integral *= (V / (double)nEvents);
 	printSucc << "calculated integral: " << integral << std::endl;
