@@ -194,13 +194,13 @@ double integralTableContainer::dyn() {
 double integralTableContainer::interpolate(const double& M) const
 {
 
-	double currentM = _integralTable[0].first;
-	double psInt = _integralTable[0].second;
+	double currentM = _integralTable[0].M;
+	double psInt = _integralTable[0].integralValue;
 	double lastM = currentM;
 	double lastPsInt = psInt;
 	for(unsigned int i = 1; i < _integralTable.size(); ++i) {
-		currentM = _integralTable[i].first;
-		psInt = _integralTable[i].second;
+		currentM = _integralTable[i].M;
+		psInt = _integralTable[i].integralValue;
 		if((lastM <= M) and (M < currentM)) {
 			break;
 		}
@@ -212,17 +212,17 @@ double integralTableContainer::interpolate(const double& M) const
 
 double integralTableContainer::getInt0(const double& M0) {
 	for(unsigned int i = 0; i < _integralTable.size(); ++i) {
-		if(fabs(_integralTable[i].first - M0) < 1e-10) {
+		if(fabs(_integralTable[i].M - M0) < 1e-10) {
 			return interpolate(M0);
 		}
 	}
-	addToIntegralTable(pair<double, double>(M0, evalInt(M0, N_MC_EVENTS_FOR_M0)));
+	addToIntegralTable(evalInt(M0, N_MC_EVENTS_FOR_M0));
 	writeIntegralTableToDisk(true);
 	return getInt0(M0);
 }
 
 
-double integralTableContainer::evalInt(const double& M, const unsigned int& nEvents) const {
+integralTablePoint integralTableContainer::evalInt(const double& M, const unsigned int& nEvents) const {
 
 	printInfo << "calculating integral for " << _subWaveName
 	          << " at mother mass = " << M << "GeV with "
@@ -257,6 +257,10 @@ double integralTableContainer::evalInt(const double& M, const unsigned int& nEve
 	TLorentzVector parent(0., 0., 0., M);
 
 	double integral = 0.;
+	vector<double> samples;
+	if(CALCULATE_ERRORS) {
+		samples.resize(nEvents, 0.);
+	}
 
 	boost::progress_display progressIndicator(nEvents, cout, "");
 	for(unsigned int i = 0; i < nEvents; ++i) {
@@ -272,18 +276,35 @@ double integralTableContainer::evalInt(const double& M, const unsigned int& nEve
 		new (prodKinMom[0]) TVector3(particleSum.Vect());
 		subAmp.decayTopology()->readKinematicsData(prodKinMom, decayKinMom);
 		const double ampVal = norm(subAmp());
-		integral += ampVal * psGen.eventWeight();
+		const double sample = ampVal * psGen.eventWeight();
+		integral += sample;
+		if(CALCULATE_ERRORS) {
+			samples[i] = sample;
+		}
 		++progressIndicator;
 	}
 
 	_vertex->setMassDependence(originalMassDep);
 	const double V = fourPi * (1 / rpwa::factorial<double>(nmbFsParticles)) * pow((fourPi*(M - fsParticlesMassSum)), nmbFsParticles-2);
-	integral *= (V / (double)nEvents);
+	integral /= (double)nEvents;
+
+	double error = 0.;
+	if(CALCULATE_ERRORS) {
+		double sig2 = 0.;
+		for(unsigned int i = 0; i < nEvents; ++i) {
+			double diff = samples[i] - integral;
+			sig2 += diff * diff;
+		}
+		sig2 /= (nEvents - 1);
+		error = V * sqrt(sig2 / nEvents);
+	}
+
+	integral *= V;
 
 	_subDecay->saveDecayToVertices(origTopology);
 
 	printSucc << "calculated integral: " << integral << endl;
-	return integral;
+	return integralTablePoint(M, integral, error);
 }
 
 
@@ -301,13 +322,16 @@ void integralTableContainer::readIntegralFile() {
 		printInfo << "reading integral table from file '" << _fullPathToFile << "'." << endl;
 	}
 	TTree* tree = (TTree*)integralTableFile->Get(TREE_NAME.c_str());
-	double M, psInt;
+	double M, psInt, psIntErr;
 	tree->SetBranchAddress("M", &M);
 	tree->SetBranchAddress("int", &psInt);
+	tree->SetBranchAddress("err", &psIntErr);
 	_integralTable.resize(tree->GetEntries());
 	for(long i = 1; i < tree->GetEntries(); ++i) {
 		tree->GetEntry(i);
-		_integralTable[i] = pair<double, double>(M, psInt);
+		_integralTable[i].M = M;
+		_integralTable[i].integralValue = psInt;
+		_integralTable[i].integralError = psIntErr;
 	}
 	pwd->cd();
 
@@ -327,12 +351,15 @@ void integralTableContainer::writeIntegralTableToDisk(bool overwriteFile) const 
 	TObjString filenameForRoot(_subWaveName.c_str());
 	filenameForRoot.Write();
 	TTree* outTree = new TTree(TREE_NAME.c_str(), TREE_NAME.c_str());
-	double M, psInt;
+	double M, psInt, psIntErr;
 	outTree->Branch("M", &M);
 	outTree->Branch("int", &psInt);
+	outTree->Branch("err", &psIntErr);
 	for(unsigned int i = 0; i < _integralTable.size(); ++i) {
-		M = _integralTable[i].first;
-		psInt = _integralTable[i].second;
+		const integralTablePoint& point = _integralTable[i];
+		M = point.M;
+		psInt = point.integralValue;
+		psIntErr = point.integralError;
 		outTree->Fill();
 	}
 	integralFile->cd();
@@ -355,7 +382,7 @@ void integralTableContainer::fillIntegralTable() {
 		M += _subDecay->fsParticles()[i]->mass();
 	}
 	const double step = (UPPER_BOUND - M) / (N_POINTS);
-	_integralTable.push_back(pair<double, double>(M, 0.));
+	_integralTable.push_back(integralTablePoint(M));
 	M += step;
 
 	const double& M0 = _vertex->parent()->mass();
@@ -364,22 +391,22 @@ void integralTableContainer::fillIntegralTable() {
 
 	for(; M <= UPPER_BOUND; M += step) {
 		if((M0 > (M-step)) and (M0 < M)) {
-			_integralTable.push_back(pair<double, double>(M0, evalInt(M0, N_MC_EVENTS_FOR_M0)));
+			_integralTable.push_back(evalInt(M0, N_MC_EVENTS_FOR_M0));
         }
-		_integralTable.push_back(pair<double, double>(M, evalInt(M, N_MC_EVENTS)));
+		_integralTable.push_back(evalInt(M, N_MC_EVENTS));
 	}
 
 }
 
 
-void integralTableContainer::addToIntegralTable(const pair<double, double>& newPoint) {
+void integralTableContainer::addToIntegralTable(const integralTablePoint& newPoint) {
 
-	vector<pair<double, double> > newIntegralTable(1, _integralTable[0]);
-	const double& newM = newPoint.first;
+	vector<integralTablePoint> newIntegralTable(1, _integralTable[0]);
+	const double& newM = newPoint.M;
 	bool added = false;
 	for(unsigned int i = 1; i < _integralTable.size(); ++i) {
-		const double& lastM = _integralTable[i-1].first;
-		const double& currentM = _integralTable[i].first;
+		const double& lastM = _integralTable[i-1].M;
+		const double& currentM = _integralTable[i].M;
 		if((newM >= lastM) and (newM < currentM)) {
 			newIntegralTable.push_back(newPoint);
 			added = true;

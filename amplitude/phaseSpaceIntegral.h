@@ -12,6 +12,20 @@ class TTree;
 
 namespace rpwa {
 
+	class integralTablePoint {
+
+	  public:
+
+		integralTablePoint(double MM = 0., double intV = 0., double intErr = 0.)
+			: M(MM),
+			  integralValue(intV),
+			  integralError(intErr) { };
+
+		double M;
+		double integralValue;
+		double integralError;
+
+	};
 
 	class integralTableContainer {
 
@@ -35,14 +49,14 @@ namespace rpwa {
 		double getInt0(const double& M0);
 
 		void fillIntegralTable();
-		void addToIntegralTable(const std::pair<double, double>& newPoint);
+		void addToIntegralTable(const integralTablePoint& newPoint);
 
 		void readIntegralFile();
 		void writeIntegralTableToDisk(bool overwriteFile = false) const;
 
-		double evalInt(const double& M, const unsigned int& nEvents) const;
+		integralTablePoint evalInt(const double& M, const unsigned int& nEvents) const;
 
-		std::vector<std::pair<double, double> > _integralTable;
+		std::vector<integralTablePoint> _integralTable;
 
 		isobarDecayVertexPtr _vertex;
 		std::string _subWaveName;
@@ -57,6 +71,7 @@ namespace rpwa {
 		const static int MC_SEED = 987654321;
 		const static double UPPER_BOUND = 4.5;
 		const static bool NEW_FILENAME_CONVENTION = false;
+		const static bool CALCULATE_ERRORS = true;
 
 		const static std::string DIRECTORY;
 		const static std::string TREE_NAME;
