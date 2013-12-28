@@ -8,6 +8,7 @@
 #include<TDirectory.h>
 #include<TF1.h>
 #include<TFile.h>
+#include<TGraphErrors.h>
 #include<TObjString.h>
 #include<TTree.h>
 
@@ -211,6 +212,16 @@ double integralTableContainer::interpolate(const double& M) const
 
 
 double integralTableContainer::getInt0(const double& M0) {
+	bool found = false;
+	for(unsigned int i = 0; i < _M0s.size(); ++i) {
+		if(fabs(_M0s[i] - M0) < 1e-10) {
+			found = true;
+			break;
+		}
+	}
+	if(not found) {
+		_M0s.push_back(M0);
+	}
 	for(unsigned int i = 0; i < _integralTable.size(); ++i) {
 		if(fabs(_integralTable[i].M - M0) < 1e-10) {
 			return interpolate(M0);
@@ -355,14 +366,53 @@ void integralTableContainer::writeIntegralTableToDisk(bool overwriteFile) const 
 	outTree->Branch("M", &M);
 	outTree->Branch("int", &psInt);
 	outTree->Branch("err", &psIntErr);
-	for(unsigned int i = 0; i < _integralTable.size(); ++i) {
+
+	const unsigned int nPoints = _integralTable.size();
+
+	TGraphErrors* rawIntGraph = new TGraphErrors(nPoints);
+	stringstream sstr;
+	sstr<<_subWaveName<<"_integralValues";
+	rawIntGraph->SetTitle(sstr.str().c_str());
+	rawIntGraph->SetName(sstr.str().c_str());
+	vector<TGraphErrors*> graphs(_M0s.size(), 0);
+	for(unsigned int i = 0; i < graphs.size(); ++i) {
+		graphs[i] = new TGraphErrors(nPoints);
+		sstr.str("");
+		sstr<<_subWaveName<<"_dyn_M0-"<<_M0s[i];
+		graphs[i]->SetTitle(sstr.str().c_str());
+		graphs[i]->SetName(sstr.str().c_str());
+	}
+	vector<integralTablePoint> psInt0s(_M0s.size());
+	for(unsigned int j = 0; j < psInt0s.size(); ++j) {
+		const double& M0 = _M0s[j];
+		for(unsigned int i = 0; i < nPoints; ++i) {
+			if(fabs(M0 - _integralTable[i].M) < 1e-10) {
+				psInt0s[j] = _integralTable[i];
+			}
+		}
+	}
+
+	for(unsigned int i = 0; i < nPoints; ++i) {
 		const integralTablePoint& point = _integralTable[i];
 		M = point.M;
 		psInt = point.integralValue;
 		psIntErr = point.integralError;
 		outTree->Fill();
+		for(unsigned int j = 0; j < _M0s.size(); ++j) {
+			const double dyn = psInt / psInt0s[j].integralValue;
+			const double dynErr = ((psIntErr / psInt) + (psInt0s[j].integralError / psInt0s[j].integralValue)) * dyn;
+			graphs[j]->SetPoint(i, M, dyn);
+			graphs[j]->SetPointError(i, 0., dynErr);
+		}
+		rawIntGraph->SetPoint(i, M, psInt);
+		rawIntGraph->SetPointError(i, 0., psIntErr);
 	}
+
 	integralFile->cd();
+	rawIntGraph->Write();
+	for(unsigned int i = 0; i < graphs.size(); ++i) {
+		graphs[i]->Write();
+	}
 	outTree->Write();
 	integralFile->Close();
 	pwd->cd();
@@ -388,6 +438,7 @@ void integralTableContainer::fillIntegralTable() {
 	const double& M0 = _vertex->parent()->mass();
 	printInfo << "filling the integration table assuming the decaying isobar to be "
 	          << _vertex->parent()->name() << " with M0=" << M0 << endl;
+	_M0s.push_back(M0);
 
 	for(; M <= UPPER_BOUND; M += step) {
 		if((M0 > (M-step)) and (M0 < M)) {

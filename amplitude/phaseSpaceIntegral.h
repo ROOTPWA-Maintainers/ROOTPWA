@@ -57,6 +57,7 @@ namespace rpwa {
 		integralTablePoint evalInt(const double& M, const unsigned int& nEvents) const;
 
 		std::vector<integralTablePoint> _integralTable;
+		std::vector<double> _M0s;
 
 		isobarDecayVertexPtr _vertex;
 		std::string _subWaveName;
