@@ -205,6 +205,8 @@ double integralTableContainer::interpolate(const double& M) const
 		if((lastM <= M) and (M < currentM)) {
 			break;
 		}
+		lastM = currentM;
+		lastPsInt = psInt;
 	}
 	return (lastPsInt + (((psInt - lastPsInt) / (currentM - lastM)) * (M - lastM)));
 
@@ -338,7 +340,7 @@ void integralTableContainer::readIntegralFile() {
 	tree->SetBranchAddress("int", &psInt);
 	tree->SetBranchAddress("err", &psIntErr);
 	_integralTable.resize(tree->GetEntries());
-	for(long i = 1; i < tree->GetEntries(); ++i) {
+	for(long i = 0; i < tree->GetEntries(); ++i) {
 		tree->GetEntry(i);
 		_integralTable[i].M = M;
 		_integralTable[i].integralValue = psInt;
