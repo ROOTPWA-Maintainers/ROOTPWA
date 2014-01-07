@@ -46,37 +46,8 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 		_subwaveNameToIntegral[waveName] = integralTableContainer(vertex);
 	}
 
-	const particlePtr& parent = vertex.parent();
-
-	static std::list<std::string> vertnames;
-	std::string vertname = vertex.parent()->name();
-	std::list<std::string>::const_iterator vertit = find(vertnames.begin(), vertnames.end(), vertname);
-	if(vertit == vertnames.end()) {
-		vertnames.push_back(vertname);
-		std::stringstream sstr;
-		sstr<<"/home/kbicker/analysis/integralAmplitudesPwd/"<<vertname<<"_debug.root";
-		TDirectory* pwd = gDirectory;
-		TFile* vertFile = TFile::Open(sstr.str().c_str(), "NEW");
-		if(not vertFile) {
-			printErr << "could not create vert file, aborting..." << endl;
-			throw;
-		}
-		const unsigned int NPOINTS = 200;
-		const double MINMASS = 0.6;
-		const double MAXMASS = 4.;
-		const double STEP = (MAXMASS - MINMASS) / NPOINTS;
-		TGraph g(NPOINTS);
-		for(unsigned int i = 0; i < NPOINTS; ++i) {
-			double M = MINMASS + (STEP * i);
-			g.SetPoint(i, M, abs(_subwaveNameToIntegral[waveName](M, parent->mass(), parent->width())));
-		}
-		g.Write();
-		vertFile->Write();
-		vertFile->Close();
-		pwd->cd();
-	}
-
 	// get Breit-Wigner parameters
+	const particlePtr& parent = vertex.parent();
 	const double       M      = vertex.parent()->lzVec().M();    // parent mass
 	const double       M0     = parent->mass();                  // resonance peak position
 	const double       Gamma0 = parent->width();                 // resonance peak width
@@ -200,14 +171,7 @@ complex<double> integralTableContainer::operator()(double M, double M0, double G
 		printErr << "trying to use uninitialized integralTableContainer. Aborting..." << endl;
 		throw;
 	}
-/*
-	const particlePtr& parent = _vertex->parent();
 
-	// get Breit-Wigner parameters
-	const double       M      = mass;                        // parent mass
-	const double       M0     = parent->mass();              // resonance peak position
-	const double       Gamma0 = parent->width();             // resonance peak width
-*/
 	const double Gamma = Gamma0 * dyn(M, M0);
 	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
 	const double A = M0 * Gamma0;
