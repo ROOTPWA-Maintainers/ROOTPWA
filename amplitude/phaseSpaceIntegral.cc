@@ -27,6 +27,7 @@ phaseSpaceIntegral* phaseSpaceIntegral::_instance = 0;
 phaseSpaceIntegral* phaseSpaceIntegral::instance()
 {
 	if(not _instance) {
+		printInfo << "singleton instantiated." << endl;
 		_instance = new phaseSpaceIntegral();
 	}
 	return _instance;
@@ -43,6 +44,7 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 	const string& waveName = _vertexToSubwaveName[&vertex];
 	map<string, integralTableContainer>::iterator cont_it = _subwaveNameToIntegral.find(waveName);
 	if(cont_it == _subwaveNameToIntegral.end()) {
+		printInfo << "adding new integralTableContainer for waveName=\"" << waveName << "\"." << endl;
 		_subwaveNameToIntegral[waveName] = integralTableContainer(vertex);
 	}
 
