@@ -133,7 +133,7 @@ string integralTableContainer::getSubWaveNameFromVertex(const isobarDecayVertex&
 		printErr << "decay vertex of particle " << vertex.parent()->label() << " not found. Aborting..." << endl;
 	}
 	if(not vertexPtr) {
-		printErr << "coud not find decay vertex in decay topology. Aborting..." << endl;
+		printErr << "could not find decay vertex in decay topology. Aborting..." << endl;
 		throw;
 	}
 
