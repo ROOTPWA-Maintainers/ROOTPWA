@@ -45,7 +45,43 @@ complex<double> phaseSpaceIntegral::operator()(const isobarDecayVertex& vertex) 
 	if(cont_it == _subwaveNameToIntegral.end()) {
 		_subwaveNameToIntegral[waveName] = integralTableContainer(vertex);
 	}
-	return _subwaveNameToIntegral[waveName]();
+
+	const particlePtr& parent = vertex.parent();
+
+	static std::list<std::string> vertnames;
+	std::string vertname = vertex.parent()->name();
+	std::list<std::string>::const_iterator vertit = find(vertnames.begin(), vertnames.end(), vertname);
+	if(vertit == vertnames.end()) {
+		vertnames.push_back(vertname);
+		std::stringstream sstr;
+		sstr<<"/home/kbicker/analysis/integralAmplitudesPwd/"<<vertname<<"_debug.root";
+		TDirectory* pwd = gDirectory;
+		TFile* vertFile = TFile::Open(sstr.str().c_str(), "NEW");
+		if(not vertFile) {
+			printErr << "could not create vert file, aborting..." << endl;
+			throw;
+		}
+		const unsigned int NPOINTS = 200;
+		const double MINMASS = 0.6;
+		const double MAXMASS = 4.;
+		const double STEP = (MAXMASS - MINMASS) / NPOINTS;
+		TGraph g(NPOINTS);
+		for(unsigned int i = 0; i < NPOINTS; ++i) {
+			double M = MINMASS + (STEP * i);
+			g.SetPoint(i, M, abs(_subwaveNameToIntegral[waveName](M, parent->mass(), parent->width())));
+		}
+		g.Write();
+		vertFile->Write();
+		vertFile->Close();
+		pwd->cd();
+	}
+
+	// get Breit-Wigner parameters
+	const double       M      = vertex.parent()->lzVec().M();    // parent mass
+	const double       M0     = parent->mass();                  // resonance peak position
+	const double       Gamma0 = parent->width();                 // resonance peak width
+
+	return _subwaveNameToIntegral[waveName](M, M0, Gamma0);
 
 }
 
@@ -158,21 +194,21 @@ integralTableContainer::integralTableContainer(const isobarDecayVertex& vertex)
 }
 
 
-complex<double> integralTableContainer::operator()() {
+complex<double> integralTableContainer::operator()(double M, double M0, double Gamma0) {
 
 	if(not _init) {
 		printErr << "trying to use uninitialized integralTableContainer. Aborting..." << endl;
 		throw;
 	}
-
+/*
 	const particlePtr& parent = _vertex->parent();
 
 	// get Breit-Wigner parameters
-	const double       M      = parent->lzVec().M();         // parent mass
+	const double       M      = mass;                        // parent mass
 	const double       M0     = parent->mass();              // resonance peak position
 	const double       Gamma0 = parent->width();             // resonance peak width
-
-	const double Gamma = Gamma0 * dyn();
+*/
+	const double Gamma = Gamma0 * dyn(M, M0);
 	// A / (B - iC) = (A / (B^2 + C^2)) * (B + iC)
 	const double A = M0 * Gamma0;
 	const double B = M0 * M0 - M * M;
@@ -183,10 +219,10 @@ complex<double> integralTableContainer::operator()() {
 	// return (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma);
 }
 
-double integralTableContainer::dyn() {
+double integralTableContainer::dyn(double M, double M0) {
 
-	double psInt = interpolate(_vertex->parent()->lzVec().M());
-	double psInt0 = getInt0(_vertex->parent()->mass());
+	double psInt = interpolate(M);
+	double psInt0 = getInt0(M0);
 	return (psInt / psInt0);
 
 }
@@ -229,6 +265,7 @@ double integralTableContainer::getInt0(const double& M0) {
 			return interpolate(M0);
 		}
 	}
+	printInfo << "adding new value for M0=" << M0 << " to integral table." << endl;
 	addToIntegralTable(evalInt(M0, N_MC_EVENTS_FOR_M0));
 	writeIntegralTableToDisk(true);
 	return getInt0(M0);

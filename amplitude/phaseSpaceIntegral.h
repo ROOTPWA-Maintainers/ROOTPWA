@@ -35,7 +35,7 @@ namespace rpwa {
 		integralTableContainer(const isobarDecayVertex& vertex);
 		~integralTableContainer() { }
 
-		std::complex<double> operator()();
+		std::complex<double> operator()(double M, double M0, double Gamma0);
 
 		static std::string getSubWaveNameFromVertex(const isobarDecayVertex& vertex);
 		static std::string getSubWaveNameFromVertex(const isobarDecayVertex& vertex,
@@ -44,7 +44,7 @@ namespace rpwa {
 
 	  private:
 
-		double dyn();
+		double dyn(double M, double M0);
 		double interpolate(const double& M) const;
 		double getInt0(const double& M0);
 
