@@ -103,10 +103,7 @@ namespace rpwa {
 #endif
 		virtual ~fitResult();
 
-		// create a copy of the current object with slightly modified
-		// parameters according to the distribution described by the
-		// covariance matrix
-		fitResult* cloneVar();
+		fitResult* variedProdAmps();  ///< create a copy with production amplitudes varied according to covariance matrix
 
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
