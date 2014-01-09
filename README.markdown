@@ -73,14 +73,14 @@ A more convenient way than downloading and extracting the tarball of a certain B
 and then to checkout the wanted release version via
 
     > cd boost-trunk
-    > git checkout Boost_1_50_0
+    > git checkout release/Boost_1_50_0
 
 This way one can easily switch to any existing Boost version and also updates are much more convenient:
 
     > git checkout master
     > git fetch
     > git fetch --tags
-    > git checkout Boost_1_51_0
+    > git checkout release/Boost_1_51_0
 
 If you use one of the (optional) features like Python or MPI be sure to recompile the respective Boost libraries after having switched to a different Boost version.
 

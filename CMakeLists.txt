@@ -200,7 +200,7 @@ if(Boost_FOUND)
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
 	# fix unused-local-typedefs warnings in Boost reported by gcc 4.8 and above
-	if(GCC_VERSION VERSION_GREATER "4.7" AND Boost_LIBRARY_VERSION VERSION_LESS "1.55.0")
+	if(GCC_VERSION VERSION_GREATER "4.7" AND Boost_LIBRARY_VERSION VERSION_LESS "1.56.0")
 		set(CMAKE_CXX_FLAGS "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
 		set(CMAKE_CXX_FLAGS_RELEASE "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS_RELEASE}")
 	endif()
