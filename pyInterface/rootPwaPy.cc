@@ -21,6 +21,7 @@
 #include "waveDescription_py.h"
 #include "amplitudeTreeLeaf_py.h"
 #include "ampIntegralMatrix_py.h"
+#include "phaseSpaceIntegral_py.h"
 #include "nBodyPhaseSpaceGen_py.h"
 #include "randomNumberGenerator_py.h"
 #include "utils_py.h"
@@ -47,6 +48,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportWaveDescription();
 	rpwa::py::exportAmplitudeTreeLeaf();
 	rpwa::py::exportAmpIntegralMatrix();
+	rpwa::py::exportPhaseSpaceIntegral();
 	rpwa::py::exportNBodyPhaseSpaceGen();
 	rpwa::py::exportRandomNumberGenerator();
 	rpwa::py::exportUtils();

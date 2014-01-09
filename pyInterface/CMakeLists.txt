@@ -80,6 +80,7 @@ set(SOURCES
 	${AMPLITUDE_SUBDIR}/waveDescription_py.cc
 	${AMPLITUDE_SUBDIR}/amplitudeTreeLeaf_py.cc
 	${AMPLITUDE_SUBDIR}/ampIntegralMatrix_py.cc
+	${AMPLITUDE_SUBDIR}/phaseSpaceIntegral_py.cc
 	${GENERATORS_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${GENERATORS_SUBDIR}/randomNumberGenerator_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
