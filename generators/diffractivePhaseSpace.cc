@@ -72,7 +72,7 @@ diffractivePhaseSpace::diffractivePhaseSpace()
 	  _tprimeMax(numeric_limits<double>::max()),
 	  _xMassMin(0),
 	  _xMassMax(0),
-	  _protonMass(0.938272013),
+	  //_protonMass(0.938272013),
 	  _pionMass(0.13957018),
 	  _pionMass2(_pionMass * _pionMass)
 {

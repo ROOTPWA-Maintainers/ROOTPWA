@@ -37,7 +37,7 @@ message(STATUS ">>> Setting up 'utilities' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
   ${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}

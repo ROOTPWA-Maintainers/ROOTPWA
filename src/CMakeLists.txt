@@ -37,7 +37,7 @@ message(STATUS ">>> Setting up 'src' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}

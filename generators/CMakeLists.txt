@@ -38,7 +38,7 @@ message(STATUS ">>> Setting up 'generators' directory.")
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${ROOT_INCLUDE_DIR}
-	${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}

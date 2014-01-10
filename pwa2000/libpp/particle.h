@@ -13,7 +13,10 @@
 	
 class massDep;
 class event;
-class decay;
+namespace pwa2000 {
+	class decay;
+}
+using pwa2000::decay;
 
 
 class particle : public particleData {
@@ -85,63 +88,65 @@ private:
 };
 
 	
-class decay {
+namespace pwa2000 {
+
+	class decay {
 	
-public:
+	public:
 
-  decay();
-  decay(const decay&);
-  virtual ~decay();
+		decay();
+		decay(const decay&);
+		virtual ~decay();
 		
-  decay& addChild  (const particle& p);
-  decay& setL      (const int       l);
-  decay& setS      (const int       s);
-  decay& calculateS();
+		decay& addChild  (const particle& p);
+		decay& setL      (const int       l);
+		decay& setS      (const int       s);
+		decay& calculateS();
 
-  int L() const { return _l; }
-  int S() const { return _s; }
-  fourVec* get4P(particle* part,
-		 const int debug = 0);
+		int L() const { return _l; }
+		int S() const { return _s; }
+		fourVec* get4P(particle* part,
+		               const int debug = 0);
 
-  decay& operator =  (const decay&            d);
-  decay& operator *= (const lorentzTransform& L);
+		decay& operator =  (const decay&            d);
+		decay& operator *= (const lorentzTransform& L);
 
-  fourVec fill(const event& e,
-	       const int    debug = 0);
+		fourVec fill(const event& e,
+		             const int    debug = 0);
 
-  decay& setupFrames(const lorentzTransform& T,
-		     const int               debug = 0);
+		decay& setupFrames(const lorentzTransform& T,
+		                   const int               debug = 0);
 
-  std::complex<double> expt_amp(const double b,
-				const double t,
-				const int    debug = 0);
+		std::complex<double> expt_amp(const double b,
+		                              const double t,
+		                              const int    debug = 0);
 
-  std::complex<double> amp(const int j,
-			   const int m,
-			   const int debug = 0);
+		std::complex<double> amp(const int j,
+		                         const int m,
+		                         const int debug = 0);
 		
-  void print      () const;
-  void printFrames() const;
+		void print      () const;
+		void printFrames() const;
 
-  void debug(const int d = 1) { _decay_debug = d; }
+		void debug(const int d = 1) { _decay_debug = d; }
 
-  std::list<particle> _children;
+		std::list<particle> _children;
 
-private:
+	private:
 
-  void _init(const std::list<particle>& children,
-	     const int                  l,
-	     const int                  s,
-	     const double               mass);
+		void _init(const std::list<particle>& children,
+		           const int                  l,
+		           const int                  s,
+		           const double               mass);
 
-  static int          _decay_debug;
-  std::list<particle> _childrenInFrames;
-  int                 _l;
-  int                 _s;
-  double              _mass;
+		static int          _decay_debug;
+		std::list<particle> _childrenInFrames;
+		int                 _l;
+		int                 _s;
+		double              _mass;
 	
-};
-
+	};
+}
 
 #define _PARTICLE_H
 #endif

@@ -151,8 +151,7 @@ int main(int argc, char** argv)
 
     complex<double> phase(1,0);
     double phi=phasev[i];
-    phase.real()=cos(phi);
-    phase.imag()=sin(phi);
+    phase=complex<double>(cos(phi),sin(phi));
   
     double R=branchv[i]; // branching ratio 
   

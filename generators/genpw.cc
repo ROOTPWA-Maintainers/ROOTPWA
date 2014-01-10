@@ -380,7 +380,15 @@ int main(int argc, char** argv)
 			cerr << "Using data from Mass bin m=" << mBest << endl;
 			tree->GetEntry(iBest);
 			// write wavelist file for generator
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+// better implemented using Boost.Filesystem V3+
+// #include <string>
+// #include <boost/filesystem.hpp>
+// boost::filesystem::path temp = boost::filesystem::unique_path();
+// const std::string tempstr    = temp.native();
 			string tmpname = tmpnam(NULL);
+#pragma clang diagnostic pop
 			ofstream tmpfile(tmpname.c_str());
 			Bin->printAmpsGenPW(tmpfile);
 			tmpfile.close();

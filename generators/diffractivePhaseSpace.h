@@ -284,7 +284,7 @@ namespace rpwa {
 
 		void BuildDaughterList();
 		// particle masses
-		double _protonMass;
+		//double _protonMass;
 		double _pionMass;
 		double _pionMass2;
 

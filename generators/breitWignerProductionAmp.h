@@ -31,9 +31,9 @@ namespace rpwa {
 
 	  private:
 
-			double _mass;
+		//double _mass;
 			double _m2;
-			double _width;
+		//double _width;
 			double _mw;
 			std::complex<double> _coupling;
 

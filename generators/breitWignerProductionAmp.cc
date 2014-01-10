@@ -19,9 +19,9 @@ using namespace rpwa;
 breitWignerProductionAmp::breitWignerProductionAmp(double mass,
                                                    double width,
                                                    std::complex<double> coupling)
-	: _mass(mass),
+	: //_mass(mass),
 	  _m2(mass*mass),
-	  _width(width),
+	  //_width(width),
 	  _mw(mass*width),
 	  _coupling(coupling) { }
 

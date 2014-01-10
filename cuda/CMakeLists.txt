@@ -43,7 +43,7 @@ message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
 	${CUDA_SDK_ROOT_DIR}/common/inc
 	${ROOT_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}

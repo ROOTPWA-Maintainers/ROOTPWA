@@ -319,12 +319,13 @@ ampIntegralMatrix::integrate(const vector<string>& binAmpFileNames,
 	}
 
 	// loop over events and calculate integral matrix
-	accumulator_set<double,          stats<tag::sum(compensated)> > weightAcc;
-	accumulator_set<complex<double>, stats<tag::sum(compensated)> > ampProdAcc[_nmbWaves][_nmbWaves];
+	accumulator_set<double, stats<tag::sum(compensated)> > weightAcc;
+	typedef accumulator_set<complex<double>, stats<tag::sum(compensated)> > complexAcc;
+	vector<vector<complexAcc> > ampProdAcc(_nmbWaves, vector<complexAcc>(_nmbWaves));
 	// process weight file and binary amplitude files
-	vector<complex<double> > amps[_nmbWaves];
-	progress_display         progressIndicator(_nmbEvents, cout, "");
-	bool                     success = true;
+	vector<vector<complex<double> > > amps(_nmbWaves);
+	progress_display progressIndicator(_nmbEvents, cout, "");
+	bool             success = true;
 	for (unsigned long iEvent = 0; iEvent < _nmbEvents; ++iEvent) {
 		++progressIndicator;
 	  

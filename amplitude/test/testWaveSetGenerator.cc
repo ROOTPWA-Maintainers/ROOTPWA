@@ -92,16 +92,14 @@ main(int argc, char** argv)
 		printDebug << "particle properties" << endl
 		           << partProp1 << endl
 		           << partProp2 << endl;
-		printInfo << "comparing particle properties" << endl;
-		partProp1 == partProp2;
+		printInfo << "comparing particle properties: " << (partProp1 == partProp2) << endl;
 
 		particlePtr part1 = createParticle(partProp1);
 		particlePtr part2 = createParticle(partProp2, 1, 2, +1);
 		printDebug << "particles" << endl
 		           << *part1 << endl
 		           << *part2 << endl;
-		printInfo << "comparing particles" << endl;
-		*part1 == *part2;
+		printInfo << "comparing particles: " << (*part1 == *part2) << endl;
 
 		// const string       keyFileName = "../../keyfiles/key3pi/SET1_new/1-0-+0+rho770_11_pi-.key";
 		const string       keyFileName = "testWaveDescription.key";
@@ -117,10 +115,8 @@ main(int argc, char** argv)
 			printInfo << "isobar decay vertex: " << *isoVert << endl;
 			printInfo << "interaction vertex:  " << *vert    << endl;
 
-			printInfo << "comparing isobar decay vertices" << endl;
-			*isoVert == *isoVert;
-			printInfo << "comparing interaction vertices" << endl;
-			*vert == *vert;
+			printInfo << "comparing isobar decay vertices: " << (*isoVert == *isoVert) << endl;
+			printInfo << "comparing interaction vertices: " << (*vert == *vert) << endl;
 		}
 
 	}

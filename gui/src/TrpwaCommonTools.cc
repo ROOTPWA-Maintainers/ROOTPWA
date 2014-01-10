@@ -31,7 +31,7 @@ bool TrpwaCommonTools::IsSign(char character, int& result){
 // pos is set to the next character after the number
 bool TrpwaCommonTools::IsNumber(string text, int& result, unsigned int& pos){
 	result = 0;
-	if (pos < 0) return false;
+	//if (pos < 0) return false;  // pos is unsigned
 	unsigned int posend;
 	for (posend = pos; posend < text.size(); posend++){
 		if (!isdigit(text[posend])) break;

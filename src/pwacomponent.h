@@ -62,7 +62,7 @@ namespace rpwa {
   private:
     std::complex<double> _C;
     TGraph* _ps;
-    TGraph* _sqrtps;
+	  //TGraph* _sqrtps;
   };
 
 

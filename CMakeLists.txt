@@ -32,7 +32,7 @@
 
 
 # check if cmake has the required version
-cmake_minimum_required(VERSION 2.8.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 
 
 # set verbosity
@@ -102,7 +102,9 @@ endif()
 set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror ${CMAKE_CXX_FLAGS}")
 # flags for specific build types
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native ${CMAKE_CXX_FLAGS}")
+# march=native caused come trouble in heterogeneous environments
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS}")
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
 if(NOT CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
@@ -135,6 +137,7 @@ set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
 set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
 # report global build settings
 foreach(_LANG "C" "CXX")
+	message(STATUS "${_LANG} compiler ID is '${CMAKE_${_LANG}_COMPILER_ID} V${CMAKE_${_LANG}_COMPILER_VERSION}'.")
 	message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'.")
 	message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'.")
 endforeach()
@@ -201,7 +204,7 @@ if(Boost_FOUND)
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
 	# fix unused-local-typedefs warnings in Boost reported by gcc 4.8 and above
 	if(GCC_VERSION VERSION_GREATER "4.7" AND Boost_LIBRARY_VERSION VERSION_LESS "1.56.0")
-		set(CMAKE_CXX_FLAGS "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
+		set(CMAKE_CXX_FLAGS         "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
 		set(CMAKE_CXX_FLAGS_RELEASE "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS_RELEASE}")
 	endif()
 else()

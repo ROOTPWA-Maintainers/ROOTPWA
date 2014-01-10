@@ -446,7 +446,8 @@ TPWALikelihoodC::FdF(const double* x, double& f, double* df) const {
       } // end loop over waves
       l+=std::norm(Aplus);
       l+=std::norm(Aminus);
-      Aplus.real()=0;Aplus.imag()=0;Aminus.real()=0;Aminus.imag()=0;
+      Aplus=0.;
+      Aminus=0.;
       assert(l>=0);
       for(unsigned int k=0;k<_nwaves; ++k){ // again loop over derivatives
 	// loop (only inside current rank)
@@ -461,8 +462,7 @@ TPWALikelihoodC::FdF(const double* x, double& f, double* df) const {
     for(unsigned int ir=0;ir<_rank;++ir){
       for(unsigned int id=0;id<_nwaves; ++id){
 	(*_dL[ir])[id]-=(*_dl[ir])[id]*g;
-	(*_dl[ir])[id].real()=0;
-	(*_dl[ir])[id].imag()=0;
+	(*_dl[ir])[id]=0.;
       }
     }
     dLdflat-=_Vflat.amp().real()*g;
@@ -526,8 +526,8 @@ TPWALikelihoodC::FdF(const double* x, double& f, double* df) const {
   _dLcache[outcount]=dLdflat+n2*_Vflat.amp().real();
   df[outcount]=dLdflat+n2*_Vflat.amp().real();
 
-  
-  N.real()+=std::norm(_Vflat.amp()); 
+
+  N.real(N.real()+std::norm(_Vflat.amp()));
 
   double t2=timer.RealTime();
   timer.Stop();
