@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-const int PIDGEANTTOCHARGE[16]={0,0,+1,-1,0,+1,-1,0,+1,-1,0,+1,-1,0,+1,-1};
+//const int PIDGEANTTOCHARGE[16]={0,0,+1,-1,0,+1,-1,0,+1,-1,0,+1,-1,0,+1,-1};
 
 TrpwaEventTreeHandler::TrpwaEventTreeHandler(){
 	last_percent = -1.;
