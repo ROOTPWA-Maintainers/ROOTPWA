@@ -37,7 +37,7 @@ cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 
 # set verbosity
 set(CMAKE_VERBOSE_MAKEFILE 0)  # if set to 1 compile and link commands are displayed during build
-# the same effect can be achieved by calling 'make VERBOSE=1'
+                               # the same effect can be achieved by calling 'make VERBOSE=1'
 
 
 option(DEBUG_OUTPUT "en/disable debug output" OFF)
@@ -57,6 +57,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
 message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
 include(CommonMacros)
 include(FeatureSummary)
+include(AddEnvCompilerDefs)
+include(ProcessorCount)
 
 
 # force out-of-source builds.
@@ -69,16 +71,10 @@ message(STATUS ">>> Setting up system environment.")
 if(NOT UNIX)
 	message(FATAL_ERROR "This is an unsupported system.")
 endif()
-if(CMAKE_VERSION VERSION_GREATER 2.8.4)
-	include(ProcessorCount)  # requires Cmake V2.8.5+
-	ProcessorCount(NMB_CPU_CORES)
-	message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-		"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
-		"${NMB_CPU_CORES} CPU core(s).")
-else()
-	message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
-		"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}'.")
-endif()
+ProcessorCount(NMB_CPU_CORES)
+message(STATUS "Detected host system '${CMAKE_HOST_SYSTEM_NAME}' version "
+	"'${CMAKE_HOST_SYSTEM_VERSION}', architecture '${CMAKE_HOST_SYSTEM_PROCESSOR}', "
+	"${NMB_CPU_CORES} CPU core(s).")
 message(STATUS "Compiling for system '${CMAKE_SYSTEM_NAME}' version '${CMAKE_SYSTEM_VERSION}', "
 	"architecture '${CMAKE_SYSTEM_PROCESSOR}'.")
 
@@ -96,7 +92,6 @@ endif()
 
 # common compiler flags
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
-#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra")
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn")
 #set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}" CACHE STRING "c++ compile flags" FORCE)
 set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror ${CMAKE_CXX_FLAGS}")
@@ -147,7 +142,9 @@ message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}
 	"for build type ${CMAKE_BUILD_TYPE}.")
 message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
 	"for build type ${CMAKE_BUILD_TYPE}.")
-#include(CMakePrintSystemInformation)
+if(DEBUG_OUTPUT)
+	include(CMakePrintSystemInformation)
+endif()
 
 
 # redirect output files
@@ -193,20 +190,16 @@ endforeach()
 unset(_BOOST_COMPONENT)
 unset(_BOOST_COMPONENTS)
 find_package(Boost 1.50.0 REQUIRED)
-set_feature_info(Boost
-	"C++ Template Library"
-	"http://www.boost.org/"
-	"required"
+set_package_properties(Boost
+	PROPERTIES
+	DESCRIPTION "C++ Template Library"
+	URL "http://www.boost.org/"
+	TYPE REQUIRED
 	)
 if(Boost_FOUND)
 	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
-	# fix unused-local-typedefs warnings in Boost reported by gcc 4.8 and above
-	if(GCC_VERSION VERSION_GREATER "4.7" AND Boost_LIBRARY_VERSION VERSION_LESS "1.56.0")
-		set(CMAKE_CXX_FLAGS         "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
-		set(CMAKE_CXX_FLAGS_RELEASE "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS_RELEASE}")
-	endif()
 else()
 	message(FATAL_ERROR "Could not find Boost installation. "
 		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
@@ -218,10 +211,11 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up libconfig library.")
 find_package(Libconfig 1.4 REQUIRED)
-set_feature_info(Libconfig
-	"Simple C++ library for processing structured configuration files"
-	"http://www.hyperrealm.com/libconfig/"
-	"required"
+set_package_properties(Libconfig
+	PROPERTIES
+	DESCRIPTION "Simple C++ library for processing structured configuration files"
+	URL "http://www.hyperrealm.com/libconfig/"
+	TYPE REQUIRED
 	)
 
 
@@ -230,10 +224,11 @@ message(STATUS "")
 message(STATUS ">>> Setting up ROOT.")
 set(_ROOT_COMPONENTS "Minuit2" "MathMore" "TreePlayer")
 find_package(ROOT 5.26 REQUIRED ${_ROOT_COMPONENTS})
-set_feature_info(ROOT
-	"C++ HEP analysis framework"
-	"http://root.cern.ch/"
-	"required"
+set_package_properties(ROOT
+	PROPERTIES
+	DESCRIPTION "C++ HEP analysis framework"
+	URL "http://root.cern.ch/"
+	TYPE REQUIRED
 	)
 # some code switches that depend on ROOT version
 # std::complex is not supported as TTree leaf in ROOT versions below 5.27.06
@@ -241,27 +236,32 @@ if(NOT ROOT_VERSION VERSION_LESS "5.27.06")
 	set(USE_STD_COMPLEX_TREE_LEAFS TRUE)
 	add_definitions(-DUSE_STD_COMPLEX_TREE_LEAFS)
 endif()
+add_feature_info(Complex_tree_leaf USE_STD_COMPLEX_TREE_LEAFS "The Complex_tree_leaf feature provides ROOT data formats for amplitudes and amplitude integrals.")
 # TFitResult produces a name clash for ROOT versions from 5.25.0 on
 if(ROOT_VERSION VERSION_LESS "5.25.00")
 	set(USE_TFITRESULT TRUE)
 	add_definitions(-DUSE_TFITRESULT)
 endif()
+add_feature_info(TFitResult USE_TFITRESULT "The TFitResult feature provides legacy fit result class.")
 
 
 # setup CUDA
 message(STATUS "")
 message(STATUS ">>> Setting up CUDA.")
 option(USE_CUDA "En/Disables compilation of CUDA components" OFF)
+add_feature_info(CUDA_acceleration USE_CUDA "The CUDA_acceleration feature provides GPU acceleration.")
 set(CUDA_SHADER_MODELS "13" "20")
 if(NOT DEFINED ENV{NVSDKCUDA_ROOT})
 	# use default SDK path, if not defined by user
 	set(ENV{NVSDKCUDA_ROOT} "$ENV{HOME}/NVIDIA_GPU_Computing_SDK/C")
 endif()
 find_package(CUDA 4.0)
-set_feature_info(CUDA
-	"nvidia GPGPU framework"
-	"http://developer.nvidia.com/category/zone/cuda-zone"
-	"optional"
+set_package_properties(CUDA
+	PROPERTIES
+	DESCRIPTION "nvidia GPGPU framework"
+	URL "http://developer.nvidia.com/category/zone/cuda-zone"
+	PURPOSE "Used to accelerate calculations, if system is equipped with suitable GPU"
+	TYPE OPTIONAL
 	)
 if(NOT CUDA_FOUND)
 	set(USE_CUDA OFF)
@@ -323,11 +323,14 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up MPI.")
 option(USE_MPI "En/Disables compilation of MPI components" OFF)
+add_feature_info(MPI_parallization USE_MPI "The MPI_parallization feature will allow parallelized execution of some tools.")
 find_package(MPI)
-set_feature_info(MPI
-	"Standardized and portable message-passing system for parallel computing"
-	"http://www.boost.org/doc/libs/1_50_0/doc/html/mpi.html"
-	"optional"
+set_package_properties(MPI
+	PROPERTIES
+	DESCRIPTION "Standardized and portable message-passing system for parallel computing"
+	URL "http://www.boost.org/doc/libs/1_50_0/doc/html/mpi.html"
+	PURPOSE "At the moment just used for tests"
+	TYPE OPTIONAL
 	)
 if(NOT MPI_CXX_FOUND)
 	set(USE_MPI OFF)
@@ -369,6 +372,7 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up Python.")
 option(USE_PYTHON "En/Disables Python bindings" OFF)
+add_feature_info(Python_scripting USE_PYTHON "The Python_scripting feature provides a scripting interface for some classes.")
 if(ROOT_VERSION VERSION_LESS "5.34.04")
 	message(STATUS "Python bindings require ROOT version 5.34.04 or newer "
 		"(found ${ROOT_VERSION}).")
@@ -376,10 +380,12 @@ if(ROOT_VERSION VERSION_LESS "5.34.04")
 	set(USE_PYTHON OFF)
 else()
 	find_package(Python 2.7)
-	set_feature_info(Python
-		"General-purpose, high-level programming language"
-		"http://www.python.org"
-		"optional"
+	set_package_properties(Python
+		PROPERTIES
+		DESCRIPTION "General-purpose, high-level programming language"
+		URL "http://www.python.org"
+		PURPOSE "Provides scripting interface to ROOTPWA classes"
+		TYPE OPTIONAL
 		)
 	if(NOT PYTHONLIBS_FOUND)
 		set(USE_PYTHON OFF)
@@ -423,10 +429,12 @@ unset(_ROOT_COMPONENTS)
 message(STATUS "")
 message(STATUS ">>> Setting up Git.")
 find_package(Git)
-set_feature_info(Subversion
-	"Free and open source distributed version control system"
-	"http://git-scm.com/"
-	"needed only to determine repository commit sha"
+set_package_properties(Git
+	PROPERTIES
+	DESCRIPTION "Free and open source distributed version control system"
+	URL "http://git-scm.com/"
+	PURPOSE "Used to determine repository hash that is put into executables"
+	TYPE RECOMMENDED
 	)
 if(GIT_FOUND)
 	execute_process(
@@ -452,10 +460,12 @@ endif()
 message(STATUS "")
 message(STATUS ">>> Setting up Doxygen.")
 find_package(Doxygen)
-set_feature_info(Doxygen
-	"Documentation generator"
-	"http://www.doxygen.org/"
-	"optional"
+set_package_properties(Doxygen
+	PROPERTIES
+	DESCRIPTION "Documentation generator"
+	URL "http://www.doxygen.org/"
+  PURPOSE "Generates HTML source-code documentation"
+	TYPE RECOMMENDED
 	)
 if(NOT DOXYGEN_FOUND)
 	message(WARNING "Cannot find Doxygen. Documentation cannot be generated.")
@@ -474,63 +484,7 @@ endif()
 
 
 # make some environment variables accessible via predefined macro variables
-execute_process(COMMAND hostname
-	OUTPUT_VARIABLE HOSTNAME
-	RESULT_VARIABLE _HOSTNAME_RETURN
-	OUTPUT_STRIP_TRAILING_WHITESPACE)
-if(_HOSTNAME_RETURN)
-	set(HOSTNAME "")
-endif()
-unset(_HOSTNAME_RETURN)
-if(DEBUG_OUTPUT)
-	message(STATUS "Adding definitions for internal variables:")
-endif()
-foreach(_CMAKEVAR
-		"CMAKE_HOST_SYSTEM_NAME"
-		"CMAKE_HOST_SYSTEM_PROCESSOR"
-		"CMAKE_HOST_SYSTEM_VERSION"
-		"NMB_CPU_CORES"
-		"HOSTNAME"
-		"CMAKE_SOURCE_DIR"
-		"CMAKE_BUILD_TYPE"
-		"Boost_LIBRARY_VERSION"
-		"Boost_INCLUDE_DIRS"
-		"Libconfig_VERSION"
-		"Libconfig_DIR"
-		"ROOTSYS"
-		"CUDA_VERSION"
-		"CUDA_LIB_DIRS"
-		"PYTHONLIBS_VERSION_STRING"
-		"PYTHON_INCLUDE_DIRS"
-		)
-	if(_CMAKEVAR)
-		if(DEBUG_OUTPUT)
-			message(STATUS "        ${_CMAKEVAR} = ${${_CMAKEVAR}}")
-		endif()
-		add_definitions(-D'${_CMAKEVAR}=\"${${_CMAKEVAR}}\"')
-	else()
-		add_definitions(-D'${_CMAKEVAR}=\"\"')
-	endif()
-endforeach()
-unset(_CMAKEVAR)
-if(DEBUG_OUTPUT)
-	message(STATUS "Adding definitions for environment variables:")
-endif()
-foreach(_ENVVAR
-		"USER"
-		)
-	set(_ENVVARVAL $ENV{${_ENVVAR}})
-	if(_ENVVARVAL)
-		if(DEBUG_OUTPUT)
-			message(STATUS "        ${_ENVVAR} = ${_ENVVARVAL}")
-		endif()
-		add_definitions(-D'${_ENVVAR}=\"${_ENVVARVAL}\"')
-	else()
-		add_definitions(-D'${_ENVVAR}=\"\"')
-	endif()
-	unset(_ENVVARVAL)
-endforeach()
-unset(_ENVVAR)
+add_env_compiler_defs()
 
 
 enable_testing()
@@ -603,6 +557,7 @@ set(ROOTPWASCRIPTS_LIBS
 
 # PWA2000
 option(USE_PWA2000 "En/Disables compilation of PWA2000 components" ON)
+add_feature_info(PWA2000 USE_PWA2000 "The PWA2000 feature provides legacy libraries.")
 if(USE_PWA2000)
 	add_subdirectory(pwa2000)
 endif()
@@ -657,18 +612,26 @@ if(USE_PYTHON)
 endif()
 
 
-# print feature summary
+# print package and feature summary
+message(STATUS "")
+message(STATUS ">>> Package summary:")
+feature_summary(WHAT PACKAGES_FOUND
+	FATAL_ON_MISSING_REQUIRED_PACKAGES
+	DESCRIPTION "Found packages:")
+feature_summary(WHAT PACKAGES_NOT_FOUND
+	FATAL_ON_MISSING_REQUIRED_PACKAGES
+	DESCRIPTION "Packages not found:")
 message(STATUS "")
 message(STATUS ">>> Feature summary:")
-#if(CMAKE_VERSION VERSION_GREATER 2.8.4)
-#	feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)  # requires Cmake V2.8.5+
-#else()
-print_enabled_features()
-print_disabled_features()
-#endif()
+feature_summary(WHAT ENABLED_FEATURES
+	FATAL_ON_MISSING_REQUIRED_PACKAGES
+	DESCRIPTION "Enabled features:")
+feature_summary(WHAT DISABLED_FEATURES
+	FATAL_ON_MISSING_REQUIRED_PACKAGES
+	DESCRIPTION "Disabled features:")
 
 
 message(STATUS "")
 message(STATUS ">>> Done.")
 message(STATUS "Run 'make' to build the project.")
-message(STATUS "On multi-core machines using 'make -j' can speedup compilation considerably.")
+message(STATUS "On this machine using 'make -j${NMB_CPU_CORES}' can speedup compilation considerably.")

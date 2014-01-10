@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for amplitude library 
+#//      build file for amplitude library
 #//
 #//
 #// Author List:
