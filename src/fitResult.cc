@@ -194,6 +194,17 @@ fitResult::variedProdAmps() {
 double
 fitResult::evidence() const
 {
+	double retval = 0.;
+	std::vector<double> summands = evidenceComponents();
+	for(unsigned int i = 0; i < summands.size(); ++i) {
+		retval += summands[i];
+	}
+	return retval;
+}
+
+std::vector<double>
+fitResult::evidenceComponents() const
+{
 	// find the thresholded production amplitudes, assume those are the
 	// ones with imaginary and real part equal to zero
 	set<unsigned int> thrProdAmpIndices;
@@ -283,7 +294,13 @@ fitResult::evidence() const
 		logprob += TMath::Log(prob);
 	}
 
-	return l + lvad - lva + logprob;
+	std::vector<double> retval;
+	retval.push_back(l);
+	retval.push_back(lvad);
+	retval.push_back(-lva);
+	retval.push_back(logprob);
+	return retval;
+
 }
 
 
