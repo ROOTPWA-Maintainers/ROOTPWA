@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      helper functions that convert between standard ASCII PWA2000
@@ -41,9 +37,12 @@
 #include <string>
 #include <cassert>
 #include <algorithm>
+#include <map>
 
 #include <boost/tokenizer.hpp>
 #include <boost/progress.hpp>
+#include <boost/bimap.hpp>
+#include <boost/assign/list_inserter.hpp>
 
 #include "TFile.h"
 #include "TTree.h"
@@ -53,7 +52,6 @@
 #include "TObjString.h"
 #include "TVector3.h"
 
-#include "pputil.h"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
 #include "particleDataTable.h"
@@ -64,35 +62,34 @@
 
 using namespace std;
 using namespace boost;
+using namespace boost::bimaps;
 
 
 namespace rpwa {
 
 
-	string
-	particleNameFromGeantId(const int id,
-	                        const int charge)
+	bool
+	checkParticleCharge(const size_t  lineNmb,
+	                    const int     id,
+	                    const string& name,
+	                    const int     chargeToCheck)
 	{
-		assert((charge == -1) or (charge == 0) or (charge == +1));
-		string name = id2name((Geant_ID)id);
-		name = particleProperties::stripChargeFromName(name);
-		stringstream n;
-		n << name << sign(charge);
-		return n.str();
-	}
-
-
-	void
-	idAndChargeFromParticleName(const string& name,
-	                            int&          id,
-	                            int&          charge)
-	{
-		particleProperties::chargeFromName(name, charge);
-		id = name2id(name, charge);
-		if (id == g_Unknown)
-			id = name2id(particleProperties::stripChargeFromName(name), charge);
-		if (id == g_Unknown)
-			printWarn << "unknown particle '" << name << "'" << endl;
+		if (name == "unknown") {
+			printWarn << "error reading data line " << lineNmb << ": unknown particle" << endl;
+			return false;
+		} else {
+			// check charge
+			int charge;
+			particleProperties::chargeFromName(name, charge);
+			if (chargeToCheck != charge) {
+				printWarn << "error reading data line " << lineNmb << ": "
+				          << "GEANT particle ID of " << id << " corresponds to particle "
+				          << "'" << name << "'. this inconsistent with the charge of "
+				          << "'" << chargeToCheck << "' in data file.";
+				return false;
+			}
+		}
+		return true;
 	}
 
 
@@ -206,7 +203,6 @@ namespace rpwa {
 				if (inChain->Add(rootFileNames[i].c_str()) < 1)
 					printWarn << "no events in ROOT input file '" << rootFileNames[i] << "'" << endl;
 			}
-			inChain->GetListOfFiles()->ls();
 			// read particle names from first root file
 			TFile* inFile = inChain->GetFile();  // opens first file
 			if (not inFile)
@@ -250,7 +246,7 @@ namespace rpwa {
 				printWarn << "problems creating tree from .evt input file '" << evtFileNames[i] << "' "
 				          << "skipping." << endl;
 			}
-		
+
 			// set particle names
 			if (prodKinPartNames) {
 				// check consistency
@@ -384,7 +380,7 @@ namespace rpwa {
 			assert(nmbParticles > 0);
 			if (debug)
 				printDebug << "# of particles = " << nmbParticles << endl;
-    
+
 			// read production kinematics data (beam + fixed target)
 			prodNames.clear();
 			prodKinMomenta->Clear();
@@ -394,7 +390,10 @@ namespace rpwa {
 				int          id = 0, charge = 0;
 				double       momX = 0, momY = 0, momZ = 0, E = 0;
 				if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-					prodNames.push_back(particleNameFromGeantId(id , charge));
+					const string partName = particleDataTable::particleNameFromGeantId(id);
+					prodNames.push_back(partName);
+					if (not checkParticleCharge(countLines, id, partName, charge))
+						success = false;
 					new((*prodKinMomenta)[0]) TVector3(momX, momY, momZ);
 				} else {
 					printWarn << "event " << countEvents + 1 << ": error reading beam data "
@@ -425,7 +424,10 @@ namespace rpwa {
 					int          id, charge;
 					double       momX, momY, momZ, E;
 					if (lineStream >> id >> charge >> momX >> momY >> momZ >> E) {
-						decayNames[i] = particleNameFromGeantId(id , charge);
+						const string partName = particleDataTable::particleNameFromGeantId(id);
+						decayNames[i] = partName;
+						if (not checkParticleCharge(countLines, id, partName, charge))
+							success = false;
 						new((*decayKinMomenta)[i]) TVector3(momX, momY, momZ);
 					} else {
 						printWarn << "event " << countEvents + 1 << ": error reading decay kinematics "
@@ -545,7 +547,7 @@ namespace rpwa {
 		// connect leaf variables to tree branches
 		inTree.SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta );
 		inTree.SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta);
-			 
+
 		// loop over events
 		const long int    nmbEvents         = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
 		                                       : nmbEventsTree);
@@ -590,7 +592,7 @@ namespace rpwa {
 				assert(mom);
 				const double mass = getParticleMass(name);
 				int id, charge;
-				idAndChargeFromParticleName(name, id, charge);
+				particleDataTable::geantIdAndChargeFromParticleName(name, id, charge);
 				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
 				       << id << " " << charge << " " << mom->X() << " " << mom->Y() << " " << mom->Z() << " "
 				       << sqrt(mass * mass + mom->Mag2()) << endl;
@@ -612,7 +614,7 @@ namespace rpwa {
 				assert(mom);
 				const double mass = getParticleMass(name);
 				int id, charge;
-				idAndChargeFromParticleName(name, id, charge);
+				particleDataTable::geantIdAndChargeFromParticleName(name, id, charge);
 				outEvt << setprecision(numeric_limits<double>::digits10 + 1)
 				       << id << " " << charge << " " << mom->X() << " " << mom->Y() << " " << mom->Z() << " "
 				       << sqrt(mass * mass + mom->Mag2()) << endl;
@@ -621,7 +623,7 @@ namespace rpwa {
 					     << "charge = " << charge << "; " << *mom << endl;
 				}
 			}
-    
+
 			if (debug)
 				cout << endl;
 		}
@@ -648,6 +650,8 @@ namespace rpwa {
 			printWarn << "null pointer to isobar decay amplitude. cannot process tree." << endl;
 			return false;
 		}
+		// initialize amplitude
+		amplitude->init();
 		const isobarDecayTopologyPtr& decayTopo = amplitude->decayTopology();
 
 		// create branch pointers and leaf variables
@@ -655,7 +659,7 @@ namespace rpwa {
 		TBranch*      decayKinMomentaBr = 0;
 		TClonesArray* prodKinMomenta    = 0;
 		TClonesArray* decayKinMomenta   = 0;
-	
+
 		// connect leaf variables to tree branches
 		tree.SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
 		tree.SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
@@ -680,7 +684,7 @@ namespace rpwa {
 		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
 			if (progressIndicator)
 				++(*progressIndicator);
-      
+
 			if (tree.LoadTree(eventIndex) < 0)
 				break;
 			// read only required branches

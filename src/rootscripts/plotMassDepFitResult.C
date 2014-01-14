@@ -17,12 +17,16 @@
 //#include "TQSender.h"
 
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <map>
 using namespace std;
 
-TString fitname;
+#define RECOLOR kYellow-9
+#define IMCOLOR kSpring-9
 
+
+TString fitname;
 
 TString parseTitle(TString l, unsigned int level=10){
  // setup isobar dictionary key->tex
@@ -30,12 +34,13 @@ TString parseTitle(TString l, unsigned int level=10){
   isobars["pi+"     ] = "\\pi^{+}";
   isobars["pi-"     ] = "\\pi^{-}";
   isobars["pi+-"    ] = "\\pi^{\\pm}";
-  isobars["pi-+"    ] = "\\pi^{\\mp}";
+  isobars["pi-+"    ] = "\\pi^{\\pm}";
   isobars["sigma"   ] = "\\sigma";
   isobars["rho770"  ] = "\\rho(770)";
   isobars["a11269"  ] = "a_{1}(1269)";
   isobars["a21320"  ] = "a_{2}(1320)";
   isobars["rho1450" ] = "\\rho(1450)";
+  isobars["rho1600" ] = "\\rho(1600)";
   isobars["rho1700" ] = "\\rho(1700)";
   isobars["pi1300"  ] = "\\pi(1300)";
   isobars["pi1800"  ] = "\\pi(1800)";
@@ -55,6 +60,7 @@ TString parseTitle(TString l, unsigned int level=10){
   isobars["f22010"  ] = "f_{2}(2010)";
   isobars["f11420"  ] = "f_{1}(1420)";
   isobars["eta1440" ] = "\\eta(1420)";
+ isobars["eta11600" ] = "\\eta_{1}(1600)";
   isobars["eta21645"] = "\\eta_{2}(1645)";
   isobars["rho31690"] = "\\rho_{3(1690)";
 
@@ -129,15 +135,107 @@ TString parseTitle(TString l, unsigned int level=10){
 
 void plotNice(TVirtualPad* pad, TString plotDir=""){
    TCanvas* cpopup=(TCanvas*)gROOT->FindObjectAny("cpopup");
+   if(cpopup==NULL){
+     cerr << "Popupo Window not found! RESPAWNING" << endl;
+     cpopup=new TCanvas("cpopup","PopUp",50,50,700,700);
+   }
+
     cpopup->Clear("");
     cpopup->cd();
     TVirtualPad* clone=(TVirtualPad*)pad->Clone();
+    if(clone==NULL){
+        cerr << "Cloning pad failed!" << endl;
+     return;
+    }
+
+
+    clone->SetFillStyle(1);
     clone->Draw();
     clone->SetPad("pu","PopUp",0,0,1,1,0);
     cpopup->cd(1);
     cpopup->Update();
-    clone->cd();
+
+    TMultiGraph* gr=(TMultiGraph*)clone->GetListOfPrimitives()->At(1);
+    if(gr==NULL){
+        cerr << "Cloning graphs failed!" << endl;
+     return;
+    }
+
+   
+   
+
+    TString title=gr->GetName();
+    TH1* hx=NULL;
+    if(!title.Contains("dPhi") && !title.Contains("Re") && !title.Contains("Im"))hx=(TH1*)clone->GetListOfPrimitives()->At(2);
+
+
+
+    TGraphErrors* gdata=(TGraphErrors*)gr->GetListOfGraphs()->At(1);
+    if(gdata==NULL){
+        cerr << "Cloning data failed!" << endl;
+     return;
+    }
+    gdata->SetLineWidth(2);
+
     
+    double xmax=gr->GetXaxis()->GetBinCenter(gr->GetXaxis()->GetLast());
+    double xmin=gr->GetXaxis()->GetBinCenter(gr->GetXaxis()->GetFirst());
+    double max=-1E6;
+    double min=1E6;
+    TGraphErrors* fitg=(TGraphErrors*)gr->GetListOfGraphs()->At(2);
+    
+    if(fitg!=NULL){
+      fitg->SetLineWidth(2);
+      double* yp=fitg->GetY();
+      for(unsigned int i=0;i<fitg->GetN();++i){
+	if(max<yp[i])max=yp[i];
+	if(min>yp[i])min=yp[i];
+      }
+    }
+    else {
+      max=0;
+      min=0;
+    }
+    // this works nly for phase plots
+    double ymin=0.5*(max+min)-220;
+    double ymax=0.5*(max+min)+220;
+
+    if(title.Contains("dPhi")){
+      cerr << "Ymin: " << ymin << "   Ymax: " << ymax << endl;  
+      // for phase plots manually cut the systematic errors!
+      TGraphErrors* gsys=(TGraphErrors*)gr->GetListOfGraphs()->At(0);
+      //gsys->GetYaxis()->SetRangeUser(ymin,ymax);
+      unsigned int n=gsys->GetN();
+      for(unsigned int i=0;i<n;++i){
+	double y, x, ey, ex;
+	gsys->GetPoint(i,x,y);
+	ey=gsys->GetErrorY(i);
+	ex=gsys->GetErrorX(i);
+	
+	// check if error band is in limits
+	if(y+ey>ymax){
+	  cerr << "correcting upper" << endl;
+	  double dy=0.5*(y+ey-ymax);
+	  y-=dy;
+	  ey-=dy; 
+	}
+	if(y-ey<ymin){
+	  double dy=0.5*(ymin-y+ey);
+	  y+=dy;
+	  ey-=dy;
+	}
+	gsys->SetPoint(i,x,y);
+	gsys->SetPointError(i,ex,ey);
+      }
+    }
+    if(hx!=NULL)hx->SetLineColor(kMagenta);
+    clone->Draw();
+    clone->cd();
+    clone->GetFrame()->Draw();
+    clone->SetBorderMode(0);
+
+  
+
    
     double xcenter=0.5;
     double ycenter=0.5;
@@ -146,7 +244,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     double y=xcenter-0.2;
     
     // preliminary
-    TLatex* prelim=new TLatex(x,y,"preliminary");
+     TLatex* prelim=new TLatex(x,y,"preliminary");
     prelim->SetNDC();
     prelim->SetTextColor(kGray);
     prelim->SetTextSize(0.1);
@@ -154,98 +252,117 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     prelim->Draw();
     
     // compass 2004
-    double xc=xcenter+0.05;
+    //double xc=xcenter+0.05;
+    double xc=0.105;//xcenter+0.05;
+    
     //if(right)xc=xcenter+0.1;
-    double yc=ycenter+0.35;
+    //double yc=ycenter+0.35;
+    double yc=ycenter+0.45;
     TLatex* com04=new TLatex(xc,yc,"COMPASS 2004");
     com04->SetNDC();
     com04->SetTextSize(0.05);
     com04->Draw();
     
     // 5 pi on pb
-    xc=xcenter+0.05;
-    //xc=xcenter+0.1;
-    yc=ycenter+0.31;
+    yc=yc-0.04;
     TLatex* react=new TLatex(xc,yc,"#pi^{-} Pb #rightarrow #pi^{-}#pi^{+}#pi^{-}#pi^{+}#pi^{-} Pb");
     react->SetNDC();
     react->SetTextSize(0.039);
     react->Draw();
     
     // add waves 
-    cout << "####### Title:" << endl;
-    TMultiGraph* gr=(TMultiGraph*)clone->GetListOfPrimitives()->At(1);
+    //cout << "####### Title:" << endl;
+
+  
+
+    if(ymax > 0 && ymin < 0){
+      TLine* zeroline=new TLine(xmin,0,xmax,0);
+      zeroline->SetLineStyle(7);
+      zeroline->Draw();
+    }
 
     // gr->GetListOfGraphs()->RemoveAt(2);
-    gr->GetXaxis()->SetTitle("mass (MeV/c^{2})");
+    gr->GetXaxis()->SetTitle("mass (GeV/c^{2})");
+    gr->GetXaxis()->Draw();
+    gr->GetYaxis()->Draw();
 
-
-    TString title=gr->GetName();
-    cout << title << endl;
+  
+    //cout << title << endl;
     // check if this is intensity or off diagonal
     TString wave;
+    bool isIntens=false;
     if(!title.Contains("---")){
       cout << "Processing Intensity:" << endl;
-      wave=parseTitle(title,0);
-      cout << wave << endl;
-      yc=ycenter+0.24;
+      wave=parseTitle(title,1);
+      //cout << wave << endl;
+      yc=ycenter+0.44;
+      isIntens=true;
     }
     else {
       // Split
-      unsigned int i = title.Index("---");
-      TString wave1=title(3,i-3);
-      TString wave2=title(i+3,title.Length());
-      
-      cout << parseTitle(wave1,0) << endl;
-      cout << parseTitle(wave2,0) << endl;
-      
-      
-
+      //cout << title << endl;
+         
+      unsigned int offset=3;
       wave="#splitline{Interference - ";
       if(title.Contains("Re"))wave+= "real part";
       else if(title.Contains("Im"))wave+="imaginary part"; 
-      else wave+="phase difference";
-      wave+="}{#splitline{";
-      wave+=parseTitle(wave1,0);
+      else {
+	wave+="phase difference";
+	offset=5;
+      }
+
+      unsigned int i = title.Index("---");
+      TString wave1=title(offset,i-offset);
+      TString wave2=title(i+3,title.Length());
+      
+      //cout << parseTitle(wave1,1) << endl;
+      //cout << parseTitle(wave2,1) << endl;
+
+      
+
+      wave="#splitline{";
+      wave+=parseTitle(wave1,1);
       wave+="}{";
-      wave+=parseTitle(wave2,0);
-      wave+="}}";
+      wave+=parseTitle(wave2,1);
+      wave+="}";
 	   // check if we put text up or down
      double max=gr->GetYaxis()->GetXmax();
      double min=gr->GetYaxis()->GetXmin();
      // get last data point
-     TGraph* g=(TGraph*)gr->GetListOfGraphs()->At(0);
+     TGraph* g=(TGraph*)gr->GetListOfGraphs()->At(1);
      double yg,xg;
      g->GetPoint((int)(g->GetN()*0.6),xg,yg);
      if(fabs(max-yg)>fabs(min-yg)){
-	yc=ycenter+0.24;
+	yc=ycenter+0.44;
      }
      else{
-       yc=ycenter-0.25;
+       yc=ycenter+0.44;
      }
 
 
     }
 
-     xc=xcenter+0.05;
+    xc=xcenter-0.05;
     //xc=xcenter+0.1;
   
     TLatex* waveL=new TLatex(xc,yc,wave);
     waveL->SetNDC();
-    waveL->SetTextSize(0.03);
+    if(isIntens)waveL->SetTextSize(0.03);
+    else waveL->SetTextSize(0.02);
     waveL->Draw();
 
 
      // fitname
-    xc=xcenter-0.4;
+    xc=xcenter-0.03;
     //if(right)xc=xcenter+0.1;
-     yc=ycenter+0.42;
+     yc=ycenter+0.35;
     TLatex* fitNameL=new TLatex(xc,yc,fitname);
     fitNameL->SetNDC();
-    fitNameL->SetTextSize(0.025);
+    fitNameL->SetTextSize(0.05);
     fitNameL->Draw();
 
-
     cpopup->UseCurrentStyle();
+    if(hx!=NULL)hx->SetLineColor(kMagenta);
     cpopup->Update();
 
     if(plotDir.Length()>1){
@@ -259,6 +376,7 @@ void plotNice(TVirtualPad* pad, TString plotDir=""){
     }
 
     //cpopup->Flush();
+	cerr << "###### end of plotnice" << endl;
 }// end plotnice
 
 
@@ -283,8 +401,12 @@ void exec3event(Int_t event, Int_t x, Int_t y, TObject *selected)
 //------------------------------------------------------
 //------------------------------------------------------
 
+// plotlevel:
+// 0 = data + fit + component
+// 1 = data + fit
+// 2 = data only 
 
-void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0 ){
+void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString fittitle="", double mmin=0, double mmax=0, unsigned int plotLevel=0 , TString xcheckfile="", bool onlyDiag=false){
   if(fittitle.Length()<=1)fitname=infilename;
   else fitname=fittitle;
   TFile* infile=TFile::Open(infilename);
@@ -292,30 +414,69 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
   gStyle->SetTextFont(font);
   gStyle->SetLabelFont(font,"xy");
   gStyle->SetTitleFont(font,"xy");
-    gStyle->SetOptStat(0);
-    gStyle->SetOptTitle(0);
-    gStyle->SetStripDecimals(1);
-    TGaxis::SetMaxDigits(4);
-    gStyle->SetFrameFillStyle(0);
+  gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
+  gStyle->SetStripDecimals(1);
+  TGaxis::SetMaxDigits(4);
+  gStyle->SetFrameFillStyle(0);
+  gStyle->SetFrameBorderMode(0);
 
     gROOT->ForceStyle();
 
+    TFile* xcheck=NULL;
+    ifstream xcheckmapfile;
+    map<TString,TString> xcheckmap;
+    if(xcheckfile.Length()>2){
+      cerr << "Found XCheck File " << xcheckfile << endl;
+      xcheck=TFile::Open(xcheckfile);
+      xcheckfile.ReplaceAll(".root",".map");
+      xcheckmapfile.open(xcheckfile.Data());
+      TString wave, key;
+      while(xcheckmapfile.good()){
+	xcheckmapfile >> wave >> key;
+	xcheckmap[wave]=key;
+	cerr << wave << " ---> " << key << endl;
+      }
+    }
+    
+     
 
-  TList* keylist=infile->GetListOfKeys();
-  unsigned int num=keylist->GetEntries();
+
+    TList* keylist=infile->GetListOfKeys();
+    unsigned int num=keylist->GetEntries();
 
   // loop over keys and count waves
   vector<TString> wavenames;
 
   for(unsigned int i=0;i<num;++i){
     TString keyname(((TKey*)keylist->At(i))->GetName());
-    if(keyname.Contains("dPhi") || keyname.Contains("Re") || keyname.Contains("Im"))continue;
+    if(keyname.Contains("dPhi") || keyname.Contains("Re") || keyname.Contains("Im") || keyname.Contains("fPS"))continue;
     wavenames.push_back(keyname);
   }
 
 
+
   unsigned int nwaves=wavenames.size();
   std::cout << nwaves << " waves used in fit" << endl;
+
+  map<TString,TString> xcheckmapReIm;
+  for(unsigned int i=0;i<nwaves;++i){
+TString map1=xcheckmap[wavenames[i]];
+ unsigned int index1=atoi(map1(1,2).Data());
+    for(unsigned int j=i+1;j<nwaves;++j){
+      TString keyRe="Re_"+wavenames[i]+"---"+wavenames[j];
+      TString keyIm="Im_"+wavenames[i]+"---"+wavenames[j];
+      TString map2=xcheckmap[wavenames[j]];
+      // extract index number
+      unsigned int index2=atoi(map2(1,2).Data());
+      TString ReMapper="h";ReMapper+= 10000+100*index1+index2;
+      TString ImMapper="h";ImMapper+= 20000+100*index1+index2;
+      xcheckmapReIm[keyRe]=ReMapper;
+      xcheckmapReIm[keyIm]=ImMapper;
+    }
+  } // end loop to build xcheckmap
+
+
 
   TCanvas* cS=new TCanvas("cS","Spin Density Matrix",10,10,1000,1000);
   cS->Divide(nwaves,nwaves,0,0);
@@ -339,13 +500,29 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
   for(unsigned int ip=0;ip<nwaves;++ip){
     for(unsigned int jp=ip;jp<nwaves;++jp){
       cS->cd(jp+ip*nwaves+1);
+      cerr << " ##### " << ip << "-" << jp << " ###### " << endl;
       if(ip==jp){
 	TMultiGraph* g=(TMultiGraph*)infile->Get(wavenames[ip]);
-	//g->GetListOfGraphs()->RemoveAt(3); // remove black line
-	//g->GetListOfGraphs()->RemoveAt(2); // remove fit
+      
+	// remove components and phase space graphs
+	// plotlevel:
+	// 0 = data + fit + component
+	// 1 = data + fit
+	// 2 = data only 
+	if(plotLevel>0){
+	  for(unsigned int i=g->GetListOfGraphs()->GetSize()-1;i>2;--i){
+	    g->GetListOfGraphs()->RemoveAt(i);
+	  }
+	}
+	// remove only ps
+	else g->GetListOfGraphs()->RemoveAt(3);
+	
+
+	
+	if(plotLevel>1)g->GetListOfGraphs()->RemoveAt(2); // remove fit
 	g->Draw("APC");
 
-	// rescale
+// rescale
 	TGraphErrors* datag=(TGraphErrors*)g->GetListOfGraphs()->At(1);
 	double* y=datag->GetY();
 	double max=-1E6;
@@ -355,9 +532,9 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  if(min>y[i])min=y[i];
 	}
 	cout << min << "     " << max << endl;
-	g->GetYaxis()->SetRangeUser(0 < min ? -0.8*min : 1.2*min,1.2*max);
+	//g->GetYaxis()->SetRangeUser(0 < min ? -0.8*min : 1.2*min,1.2*max);
 	g->GetYaxis()->SetTitle("intensity");
-	g->GetYaxis()->SetTitleOffset(1.2);
+	g->GetYaxis()->SetTitleOffset(1.3);
 	
 	if(mmin!=0 || mmax!=0){
 	  g->GetXaxis()->SetRangeUser(mmin,mmax);
@@ -367,7 +544,19 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	cRe->cd(jp+ip*nwaves+1);
 	g->Draw("APC");
 
-
+	if(xcheck!=NULL){
+	  // get key
+	  TString xcheckkey=xcheckmap[wavenames[ip]];
+	  cerr << "Adding xcheckplot " << xcheckkey << endl;
+	  if(xcheckkey!=""){
+	    TH1* xh=(TH1*)xcheck->Get(xcheckkey);
+	    if(xh!=NULL){
+	      xh->SetLineColor(kMagenta);
+	      xh->Draw("same");
+	    }
+	    else cerr << "Did not find xcheckPlot!" << endl;
+	  }
+	}
 	/*
 	TCanvas* c2=new TCanvas();
 	g->Draw("APC");
@@ -380,9 +569,19 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	plotNice(cRe->GetPad(jp+ip*nwaves+1),plotdir);
       }
       else {
+	if(onlyDiag)continue;
 	TString key="dPhi_"+wavenames[ip]+"---"+wavenames[jp];
+	cerr << key << endl;
 	TMultiGraph* g=(TMultiGraph*)infile->Get(key);
 	if(g!=NULL){
+	  TString title=g->GetName();
+	  unsigned int i = title.Index("---");
+	  TString wave1=title(5,i-5);
+	  TString wave2=title(i+3,title.Length());
+	  // check for same reflectivity
+	  if(wave1(6)!=wave2(6)) continue;
+
+	  if(plotLevel>1)g->GetListOfGraphs()->RemoveAt(2); // remove fit
        	  g->Draw("AN");
 	  if(mmin!=0 || mmax!=0){
 	    g->GetXaxis()->SetRangeUser(mmin,mmax);
@@ -390,15 +589,17 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  double max=-1E6;
 	  double min=1E6;
 	  TGraphErrors* fitg=(TGraphErrors*)g->GetListOfGraphs()->At(2);
-	  double* y=fitg->GetY();
-	  for(unsigned int i=0;i<fitg->GetN();++i){
-	    if(max<y[i])max=y[i];
-	    if(min>y[i])min=y[i];
+	  if(fitg!=NULL){
+	    double* y=fitg->GetY();
+	    for(unsigned int i=0;i<fitg->GetN();++i){
+	      if(max<y[i])max=y[i];
+	      if(min>y[i])min=y[i];
+	    }
 	  }
 	  TAxis* a=g->GetYaxis();
 	  if(a!=NULL)a->SetRangeUser(0.5*(max+min)-220,0.5*(max+min)+220);
-	  a->SetTitle("#Delta#Phi");
-	  a->SetTitleOffset(1.2);
+	  a->SetTitle("#Delta#phi");
+	  a->SetTitleOffset(1.3);
 	  g->Draw("A");
 	  plotNice(cS->GetPad(jp+ip*nwaves+1),plotdir);
 	  //TCanvas* c2=new TCanvas();
@@ -410,16 +611,32 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  //delete c2;
 	  key.ReplaceAll("dPhi","Re");
 	  TMultiGraph* g2=(TMultiGraph*)infile->Get(key);
-	  //g2->GetListOfGraphs()->RemoveAt(2);
+	  if(plotLevel>1)g2->GetListOfGraphs()->RemoveAt(2);
 	  TVirtualPad* pa= cRe->cd(jp+ip*nwaves+1);
-	  pa->SetFillColor(kYellow-9);
+	  pa->SetFillColor(RECOLOR);
 	  g2->Draw("A");
 	  if(mmin!=0 || mmax!=0){
 	    g2->GetXaxis()->SetRangeUser(mmin,mmax);
 	  }
 	  g2->GetXaxis()->SetTitle("mass (MeV/c^{2})");
 	  g2->GetYaxis()->SetTitle("real part");
-	  g2->GetYaxis()->SetTitleOffset(1.2);
+	  g2->GetYaxis()->SetTitleOffset(1.3);
+
+	if(xcheck!=NULL){
+	  // get key
+	  TString xcheckkey=xcheckmapReIm[key];
+	  cerr << "Adding xcheckplot " << xcheckkey << endl;
+	  if(xcheckkey!=""){
+	    TH1* xh=(TH1*)xcheck->Get(xcheckkey);
+	    if(xh!=NULL){
+	      xh->SetLineColor(kMagenta);
+	      xh->Draw("same");
+	    }
+	    else cerr << "Did not find xcheckPlot!" << endl;
+	  }
+	}
+
+
 	  plotNice(cRe->GetPad(jp+ip*nwaves+1),plotdir);
 	  //c2=new TCanvas();
 	  //g2->Draw("A");
@@ -430,17 +647,35 @@ void plotMassDepFitResult(TString infilename, TString plotdir="plots/", TString 
 	  //delete c2;
 	  key.ReplaceAll("Re","Im");
 	  TMultiGraph* g3=(TMultiGraph*)infile->Get(key);
-	  //g3->GetListOfGraphs()->RemoveAt(2);
+	  if(plotLevel>1)g3->GetListOfGraphs()->RemoveAt(2);
 	  //cIm->cd(jp+ip*nwaves+1);
 	  pa=cRe->cd(ip+jp*nwaves+1);
-	  pa->SetFillColor(kSpring+6);
+	  pa->SetFillColor(IMCOLOR);
 	  g3->Draw("A");
 	 if(mmin!=0 || mmax!=0){
 	    g3->GetXaxis()->SetRangeUser(mmin,mmax);
 	  }
 	  g3->GetXaxis()->SetTitle("mass (MeV/c^{2})");
 	  g3->GetYaxis()->SetTitle("imaginary part");
-	  g3->GetYaxis()->SetTitleOffset(1.2);
+	  g3->GetYaxis()->SetTitleOffset(1.3);
+
+if(xcheck!=NULL){
+	  // get key
+	  TString xcheckkey=xcheckmapReIm[key];
+	  cerr << "Adding xcheckplot " << xcheckkey << endl;
+	  if(xcheckkey!=""){
+	    TH1* xh=(TH1*)xcheck->Get(xcheckkey);
+	    
+	    if(xh!=NULL){
+	      xh->Scale(-1);
+	      xh->SetLineColor(kMagenta);
+	      xh->Draw("same");
+	    }
+	    else cerr << "Did not find xcheckPlot!" << endl;
+	  }
+	}
+
+
 	  plotNice(cRe->GetPad(ip+jp*nwaves+1),plotdir);
 	  //c2=new TCanvas();
 	  //g3->Draw("A");

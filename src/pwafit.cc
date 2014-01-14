@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      fitting program for rootpwa
@@ -72,7 +70,7 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	
+
 	cerr << "performs PWA fit for given mass bin and list of waves" << endl
 	     << endl
 	     << "usage:" << endl
@@ -158,7 +156,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 	// force loading predefined std::complex dictionary
@@ -318,7 +316,7 @@ main(int    argc,
 	L.useNormalizedAmps(useNormalizedAmps);
 #ifdef USE_CUDA
 	L.enableCuda(cudaEnabled);
-#endif  
+#endif
 	L.init(rank, waveListFileName, normIntFileName, accIntFileName,
 	       ampDirName, numbAccEvents, useRootAmps);
 	if (not quiet)
@@ -331,13 +329,17 @@ main(int    argc,
 	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
 	          << "using algorithm '" << minimizerType[1] << "'" << endl;
 	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-	if (not minimizer) { 
+	if (not minimizer) {
 		printErr << "could not create minimizer. exiting." << endl;
 		throw;
 	}
 	minimizer->SetFunction        (L);
 	minimizer->SetStrategy        (minimizerStrategy);
 	minimizer->SetTolerance       (minimizerTolerance);
+
+	// setting the ErrorDef to 1 since the ROOT interface does not
+	// Propagate the value. Will do the error rescaling by hand below.
+	minimizer->SetErrorDef(1);
 	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
 	minimizer->SetMaxIterations   (maxNmbOfIterations);
 	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
@@ -534,7 +536,7 @@ main(int    argc,
 #ifdef USE_CUDA
 	printInfo << "total CUDA kernel time: "
 	          << cuda::likelihoodInterface<cuda::complex<double> >::kernelTime() << " sec" << endl;
-#endif	  
+#endif
 
 	// ---------------------------------------------------------------------------
 	// write out result
@@ -562,7 +564,7 @@ main(int    argc,
 				tree->SetBranchAddress(valBranchName.c_str(), &result);
 			}
 
-			{ 
+			{
 				// get data structures to construct fitResult
 				vector<std::complex<double> > prodAmps;                // production amplitudes
 				vector<string>                prodAmpNames;            // names of production amplitudes used in fit
@@ -571,7 +573,12 @@ main(int    argc,
 				TMatrixT<double> fitParCovMatrix(nmbPar, nmbPar);  // covariance matrix of fit parameters
 				for(unsigned int i = 0; i < nmbPar; ++i)
 					for(unsigned int j = 0; j < nmbPar; ++j)
-						fitParCovMatrix[i][j] = minimizer->CovMatrix(i, j);
+					  // The factor 0.5 is needed because
+					  // MINUIT by default assumes a Chi2
+					  // function and not a loglikeli
+					  // (see Minuit manual!)
+					  // Note: SetErrorDef in ROOT does not work
+						fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
 				TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
 				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
@@ -601,13 +608,14 @@ main(int    argc,
 				             phaseSpaceIntegral,
 				             converged,
 				             hasHesse);
+				//printDebug << *result;
 			}
-			
+
 			if (1) {
 				// get data structures to construct TFitBin
 				vector<TComplex>       prodAmplitudes;  // production amplitudes
 				vector<pair<int,int> > indices;         // indices for error matrix access
-				vector<TString>        waveNames;       // contains rank information 
+				vector<TString>        waveNames;       // contains rank information
 				{
 					vector<std::complex<double> > V;
 					vector<string>                names;
@@ -641,7 +649,7 @@ main(int    argc,
 				//integralMatrix.Print();
 				// representation of number of events depends on whether normalization was done
 				const int nmbEvt = (useNormalizedAmps) ? 1 : L.nmbEvents();
-	
+
 				cout << "filling TFitBin:" << endl
 				     << "    number of fit parameters ........... " << nmbPar                 << endl
 				     << "    number of production amplitudes .... " << prodAmplitudes.size()  << endl
@@ -670,7 +678,7 @@ main(int    argc,
 			outFile->Close();
 		}
 	}
-	
+
 	if (minimizer)
 		delete minimizer;
 	return 0;

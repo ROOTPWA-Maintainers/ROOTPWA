@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      container class for all external particle related information
@@ -135,6 +131,20 @@ particle::doClone() const
 	if (_debug)
 		printDebug << "cloned " << *this << "; " << this << " -> " << particleClone << endl;
 	return particleClone;
+}
+
+
+bool
+particle::isEqualTo(const particleProperties& partProp) const
+{
+	const particle* part = dynamic_cast<const particle*>(&partProp);
+	if (not part)
+		return false;
+	if (not particleProperties::isEqualTo(partProp))
+		return false;
+	return (    (spinProj    () == part->spinProj    ())
+	        and (index       () == part->index       ())
+	        and (reflectivity() == part->reflectivity()));
 }
 
 

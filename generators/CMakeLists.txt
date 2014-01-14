@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
 #//      build file for RootPwaGen
@@ -35,51 +31,66 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'generators' directory.")
+
+
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR}
-  ${Boost_INCLUDE_DIRS}
-  ${Libconfig_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
-  ${AMPLITUDE_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${TOOLS_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	SYSTEM ${Boost_INCLUDE_DIRS}
+	${Libconfig_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+	${TOOLS_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  nBodyPhaseSpaceGen.cc
-  TProductionAmp.cc
-  TBWProductionAmp.cc
-  TPWWeight.cc
-  TDiffractivePhaseSpace.cc
-  TPrimaryVertexGen.cc
-  plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
+	nBodyPhaseSpaceGen.cc
+	productionAmp.cc
+	breitWignerProductionAmp.cc
+	partialWaveWeight.cc
+	diffractivePhaseSpace.cc
+	primaryVertexGen.cc
+	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
 	)
 
 
 # ROOT dictionary
 set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
+set(ROOTPWAGEN_DICT_INCLUDE_DIRS
+	${ROOT_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${AMPLITUDE_INCLUDE_DIR}
+	${TOOLS_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 root_generate_dictionary(
-  "${ROOTPWAGEN_DICTIONARY}"
-  "${INCLUDE_DIRECTORIES}"
-  "nBodyPhaseSpaceGen.h"
-  "rootPwaGenLinkDef.h"
+	"${ROOTPWAGEN_DICTIONARY}"
+	"${ROOTPWAGEN_DICT_INCLUDE_DIRS}"
+	"nBodyPhaseSpaceGen.h"
+	"rootPwaGenLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWAGEN_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwaGen")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOT_LIBS}"
-  "${PWA2000_LIBS}"
-  "${ROOTPWA_LIBS}"
-  "${ROOTPWATOOLS_LIBS}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${PWA2000_LIBS}"
+	"${ROOTPWA_LIBS}"
+	"${ROOTPWATOOLS_LIBS}"
 	)
 
 

@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      reads in data files in .evt or ROOT tree format, calculates
@@ -98,7 +94,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 #ifdef USE_STD_COMPLEX_TREE_LEAFS
@@ -106,7 +102,7 @@ main(int    argc,
 	// see http://root.cern.ch/phpBB3/viewtopic.php?f=5&t=9618&p=50164
 	gROOT->ProcessLine("#include <complex>");
 #endif
-	
+
 	// parse command line options
 	const string   progName                 = argv[0];
 	string         keyFileName              = "";
@@ -200,7 +196,7 @@ main(int    argc,
 
 	// initialize particle data table
 	particleDataTable::readFile(pdgFileName);
-  
+
 	// parse key file and create amplitude instance
 	if (keyFileName == "") {
 		printErr << "no key file specified. aborting." << endl;
@@ -261,7 +257,7 @@ main(int    argc,
 		printErr << "cannot create amplitude file '" << ampFileName << "'. aborting." << endl;
 		exit(1);
 	}
-  
+
 	// read data from tree(s) and calculate decay amplitudes
 	TStopwatch timer;
 	timer.Reset();
@@ -269,7 +265,7 @@ main(int    argc,
 	vector<complex<double> > ampValues;
 	for (unsigned int i = 0; i < inTrees.size(); ++i) {
 		printInfo << "processing ";
-		if ((rootFileNames.size() > 0) and (i == 0)) 
+		if ((rootFileNames.size() > 0) and (i == 0))
 			cout << "chain of .root files";
 		else
 			cout << ".evt tree[" << ((rootFileNames.size() > 0) ? i : i + 1) << "]";
@@ -283,7 +279,7 @@ main(int    argc,
 	timer.Stop();
 	printInfo << "this job consumed: ";
 	timer.Print();
-  
+
 	// write amplitudes to output file
 	for (unsigned int i = 0; i < ampValues.size(); ++i) {
 #ifdef USE_STD_COMPLEX_TREE_LEAFS

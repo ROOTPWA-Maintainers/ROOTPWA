@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      general isobar decay amplitude in caninical formalism
@@ -44,7 +40,7 @@
 #include "dFunction.hpp"
 #include "isobarCanonicalAmplitude.h"
 
-  
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -188,7 +184,7 @@ isobarCanonicalAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& vert
 
 	// calculate decay amplitude
 	amp *= norm * ssClebsch * bf * bw;
-  
+
 	if (_debug)
 		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
 	return amp;

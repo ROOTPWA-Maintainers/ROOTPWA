@@ -19,15 +19,12 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      container class for particle properties
+//
 //      !NOTE! all potentially half-integer quantum numbers (I, I_z, J)
-//      are in units of hbar / 2 so that they are always integer
+//             are in units of hbar / 2 so that they are always integer
 //
 //
 // Author List:
@@ -43,6 +40,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <iostream>
 #include <sstream>
@@ -57,7 +55,25 @@ namespace rpwa {
 	class particleProperties {
 
 	public:
-		
+
+		// helper class that holds information about particle decay
+		struct decayMode {
+
+			decayMode(const std::multiset<std::string>& daughters = std::multiset<std::string>(),
+			          const int                         L         = -1,
+			          const int                         S         = -1);
+			virtual ~decayMode();
+
+			bool operator ==(const decayMode& rhsDecay) const;
+
+			virtual std::ostream& print(std::ostream& out) const;  ///< prints decay mode informayion in human-readable form
+
+			std::multiset<std::string> _daughters;  ///< names of daughter particles
+			int                        _L;          ///< L for two-body decay; -1 means undefined
+			int                        _S;          ///< total spin; -1 means undefined
+
+		};
+
 		particleProperties();
 		particleProperties(const particleProperties& partProp);
 		particleProperties(const std::string&        partName,
@@ -66,43 +82,42 @@ namespace rpwa {
 		                   const int                 J,
 		                   const int                 P,
 		                   const int                 C);
-    
+
 		virtual ~particleProperties();
 
 		particleProperties& operator =(const particleProperties& partProp);
 		// comparison operators that check equality of all fields
-		friend bool operator ==(const particleProperties& lhsProp,
-		                        const particleProperties& rhsProp);
-		friend bool operator !=(const particleProperties& lhsProp,
-		                        const particleProperties& rhsProp) { return not(lhsProp == rhsProp); }
+		bool operator ==(const particleProperties& rhsProp) const { return this->isEqualTo(rhsProp); }
+		bool operator !=(const particleProperties& rhsProp) const { return not (*this == rhsProp);   }
 		// comparison operators that check equality of fields selectable via string
 		friend bool operator ==(const particleProperties&                         lhsProp,
-		                        const std::pair<particleProperties, std::string>& rhsProp);
+		                        const std::pair<particleProperties, std::string>& rhsPropSel);
 		friend bool operator !=(const particleProperties&                         lhsProp,
-		                        const std::pair<particleProperties, std::string>& rhsProp)
-		{ return not (lhsProp == rhsProp); }
+		                        const std::pair<particleProperties, std::string>& rhsPropSel)
+		{ return not (lhsProp == rhsPropSel); }
 
-		std::string name            () const { return nameWithCharge(_name, _charge);          }  ///< returns particle name including charge
-		std::string bareName        () const { return _name;                                   }  ///< returns particle name w/o charge
-		std::string antiPartName    () const { return nameWithCharge(_antiPartName, -_charge); }  ///< returns antiparticle name including charge
-		std::string antiPartBareName() const { return _antiPartName;                           }  ///< returns antiparticle name w/o charge
-		int         charge          () const { return _charge;                                 }  ///< returns particle's charge
-		double      mass            () const { return _mass;                                   }  ///< returns particle mass
-		double      mass2           () const { return _mass2;                                  }  ///< returns particle mass squared
-		double      width           () const { return _width;                                  }  ///< returns particle width
-		int         baryonNmb       () const { return _baryonNmb;                              }  ///< returns particle's baryon number
-		int         isospin         () const { return _isospin;                                }  ///< returns particle's isospin [hbar/2]
-		int         isospinProj     () const { return 2 * _charge - (baryonNmb() + strangeness() + charm() + beauty()); }  ///< returns z-component of isospin using Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
-		int         strangeness     () const { return _strangeness;                            }  ///< returns particle's strangeness
-		int         charm           () const { return _charm;                                  }  ///< returns particle's charm
-		int         beauty          () const { return _beauty;                                 }  ///< returns particle's beauty
-		int         G               () const { return _G;                                      }  ///< returns particle's G-parity
-		int         J               () const { return _J;                                      }  ///< returns particle's spin [hbar/2]
-		int         P               () const { return _P;                                      }  ///< returns particle's parity
-		int         C               () const { return _C;                                      }  ///< returns particle's C-parity
+		std::string  name            () const { return nameWithCharge(_name, _charge);          }  ///< returns particle name including charge
+		std::string  bareName        () const { return _name;                                   }  ///< returns particle name w/o charge
+		std::string  antiPartName    () const { return nameWithCharge(_antiPartName, -_charge); }  ///< returns antiparticle name including charge
+		std::string  antiPartBareName() const { return _antiPartName;                           }  ///< returns antiparticle name w/o charge
+		int          charge          () const { return _charge;                                 }  ///< returns particle's charge
+		double       mass            () const { return _mass;                                   }  ///< returns particle mass
+		double       mass2           () const { return _mass2;                                  }  ///< returns particle mass squared
+		double       width           () const { return _width;                                  }  ///< returns particle width
+		int          baryonNmb       () const { return _baryonNmb;                              }  ///< returns particle's baryon number
+		int          isospin         () const { return _isospin;                                }  ///< returns particle's isospin [hbar/2]
+		int          isospinProj     () const { return 2 * _charge - (baryonNmb() + strangeness() + charm() + beauty()); }  ///< returns z-component of isospin using Gell-Mann-Nishijima formula (see PDG 2008 eq. 14.1)
+		int          strangeness     () const { return _strangeness;                            }  ///< returns particle's strangeness
+		int          charm           () const { return _charm;                                  }  ///< returns particle's charm
+		int          beauty          () const { return _beauty;                                 }  ///< returns particle's beauty
+		int          G               () const { return _G;                                      }  ///< returns particle's G-parity
+		int          J               () const { return _J;                                      }  ///< returns particle's spin [hbar/2]
+		int          P               () const { return _P;                                      }  ///< returns particle's parity
+		int          C               () const { return _C;                                      }  ///< returns particle's C-parity
+		unsigned int geantId         () const; ///< returns particle's Geant ID.
 
 		bool isXParticle() const;  ///< returns whether particle's name is either of "X{,-,0,+}"
-		
+
 		bool isMeson () const;  ///< returns whether particle is a meson
 		bool isBaryon() const;  ///< returns whether particle is a baryon
 		bool isLepton() const;  ///< returns whether particle is a lepton
@@ -112,8 +127,14 @@ namespace rpwa {
 
 		bool isSpinExotic() const;  ///< returns whether particle is spin-exotic
 
-		bool fillFromDataTable(const std::string& name, 
-		                       const bool         warnIfNotExistent = true);
+		const std::vector<decayMode>& decayModes() const { return _decayModes; }                 ///< returns decay modes defined for this particle
+		unsigned int nmbDecays       () const { return _decayModes.size(); }                     ///< returns number of decay modes defined for this particle
+		bool         hasDecay        (const decayMode& decay) const;                             ///< returns whether given decay mode is in list of decays
+		void         addDecayMode    (const decayMode& decay) { _decayModes.push_back(decay); }  ///< adds decay channel into list of allowed decay modes
+		void         deleteDecayModes()                       { _decayModes.clear();          }  ///< deletes all decay modes
+
+		bool fillFromDataTable(const std::string& name,
+		                       const bool         warnIfNotExistent = true);  ///< sets particle properties from entry in particle data table
 
 		void setName        (const std::string& name       );                                                ///< sets particle name and charge (if given in name)
 		void setAntiPartName(const std::string& name       ) { _antiPartName = stripChargeFromName(name); }  ///< sets antiparticle name (charge in name is ignored)
@@ -122,6 +143,7 @@ namespace rpwa {
 		void setWidth       (const double       width      ) { _width        = width;                     }  ///< sets particle width
 		void setBaryonNmb   (const int          baryonNmb  ) { _baryonNmb    = baryonNmb;                 }  ///< sets particle's baryon number
 		void setIsospin     (const int          isospin    ) { _isospin      = abs(isospin);              }  ///< sets particle's isospin [hbar/2]
+		void setIsospinProj (const int          isospinProj) { _charge       = (isospinProj + baryonNmb() + strangeness() + charm() + beauty()) / 2; }  ///< sets particle's z component of the isospin [hbar/2]
 		void setStrangeness (const int          strangeness) { _strangeness  = strangeness;               }  ///< sets particle's strangeness
 		void setCharm       (const int          charm      ) { _charm        = charm;                     }  ///< sets particle's charm
 		void setBeauty      (const int          beauty     ) { _beauty       = beauty;                    }  ///< sets particle's beauty
@@ -139,9 +161,13 @@ namespace rpwa {
 		              const int P,
 		              const int C);  ///< sets particle's isospin, G-parity, spin, parity, and C-parity
 
-		particleProperties antiPartProperties() const;  ///< constructs antiparticle properties from particle
+		particleProperties antiPartProperties(const bool convertDecaysModes = false) const;  ///< constructs antiparticle properties from particle
 
 		virtual std::string qnSummary() const;  ///< returns particle's quantum number summary in form name[IG(JPC)]
+
+		// std::string         nameLaTeX     () const;  ///< returns particle name including charge in LaTeX markup
+		std::string         bareNameLaTeX () const;  ///< returns particle name w/o charge in LaTeX markup
+		// virtual std::string qnSummaryLaTeX() const;  ///< returns particle's quantum number summary in form name[IG(JPC)] in LaTeX markup
 
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints particle data in human-readable form
 		virtual std::ostream& dump (std::ostream& out) const;  ///< dumps particle properties into one text line as in data file
@@ -157,6 +183,11 @@ namespace rpwa {
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+
+	protected:
+
+		virtual bool isEqualTo(const particleProperties& partProp) const;  ///< returns whether partProp is equal to this by checking equality of all member variables
 
 
 	private:
@@ -177,9 +208,20 @@ namespace rpwa {
 		int         _P;             ///< parity (0 = undefined)
 		int         _C;             ///< C-parity (0 = undefined)
 
+		std::vector<decayMode> _decayModes; ///< allowed decay modes
+
 		static bool _debug;  ///< if set to true, debug messages are printed
 
-	};
+	};  // particleProperties
+
+
+	inline
+	std::ostream&
+	operator <<(std::ostream&                        out,
+	            const particleProperties::decayMode& mode)
+	{
+		return mode.print(out);
+	}
 
 
 	inline
@@ -269,7 +311,7 @@ namespace rpwa {
 	inline
 	void
 	particleProperties::setMass(const double mass)
-	{ 
+	{
 		_mass  = mass;
 		_mass2 = mass * mass;
 	}
@@ -280,7 +322,7 @@ namespace rpwa {
 	operator <<(std::ostream&             out,
 	            const particleProperties& partProp)
 	{
-	 	return partProp.print(out);
+		return partProp.print(out);
 	}
 
 
@@ -308,6 +350,6 @@ namespace rpwa {
 
 
 } // namespace rpwa
-	
+
 
 #endif  // PARTICLEPROPERTIES_H

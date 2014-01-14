@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
 #//      cmake module for finding libconfig installation
@@ -53,41 +49,42 @@ set(Libconfig_LIBS)
 
 set(Libconfig_DIR $ENV{LIBCONFIG})
 if(NOT Libconfig_DIR)
-  set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Environment variable LIBCONFIG='${Libconfig_DIR}' is not set correctly.")
+	set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Environment variable LIBCONFIG='${Libconfig_DIR}' is not set correctly.")
 else()
 
 	set(Libconfig_FOUND TRUE)
 
-  set(Libconfig_INCLUDE_DIR "${Libconfig_DIR}/include")
-  if(NOT EXISTS "${Libconfig_INCLUDE_DIR}")
+	set(Libconfig_INCLUDE_DIR "${Libconfig_DIR}/include")
+	if(NOT EXISTS "${Libconfig_INCLUDE_DIR}")
 		set(Libconfig_FOUND FALSE)
-    set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Directory '${Libconfig_INCLUDE_DIR}' does not exist.")
-  endif()
-
-  set(Libconfig_LIBRARY_DIR "${Libconfig_DIR}/lib")
-  if(NOT EXISTS "${Libconfig_LIBRARY_DIR}")
-		set(Libconfig_FOUND FALSE)
-    set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Directory '${Libconfig_LIBRARY_DIR}' does not exist.")
-  endif()
-	
-  set(_Libconfig_LIB_NAMES "config++")
-  find_library(Libconfig_LIBS
-    NAMES ${_Libconfig_LIB_NAMES}
-    PATHS ${Libconfig_LIBRARY_DIR}
-    NO_DEFAULT_PATH)
-  if(NOT Libconfig_LIBS)
-		set(Libconfig_FOUND FALSE)
-    set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot find libconfig library '${_Libconfig_LIB_NAMES}' in '${Libconfig_LIBRARY_DIR}'.")
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Directory '${Libconfig_INCLUDE_DIR}' does not exist.")
 	endif()
 
-  set(_Libconfig_HEADER_FILE_NAME "libconfig.h++")
-  find_file(_Libconfig_HEADER_FILE
-    NAMES ${_Libconfig_HEADER_FILE_NAME}
-    PATHS ${Libconfig_INCLUDE_DIR}
-    NO_DEFAULT_PATH)
-  if(NOT _Libconfig_HEADER_FILE)
+	set(Libconfig_LIBRARY_DIR "${Libconfig_DIR}/lib")
+	if(NOT EXISTS "${Libconfig_LIBRARY_DIR}")
 		set(Libconfig_FOUND FALSE)
-    set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot find libconfig header file '${_Libconfig_HEADER_FILE_NAME}' in '${Libconfig_INCLUDE_DIR}'.")
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Directory '${Libconfig_LIBRARY_DIR}' does not exist.")
+	endif()
+	
+	set(_Libconfig_LIB_NAMES "config++")
+	find_library(Libconfig_LIBS
+		NAMES ${_Libconfig_LIB_NAMES}
+		PATHS ${Libconfig_LIBRARY_DIR}
+		NO_DEFAULT_PATH)
+	if(NOT Libconfig_LIBS)
+		set(Libconfig_FOUND FALSE)
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot find libconfig library '${_Libconfig_LIB_NAMES}' in '${Libconfig_LIBRARY_DIR}'.")
+	endif()
+	unset(_Libconfig_LIB_NAMES)
+
+	set(_Libconfig_HEADER_FILE_NAME "libconfig.h++")
+	find_file(_Libconfig_HEADER_FILE
+		NAMES ${_Libconfig_HEADER_FILE_NAME}
+		PATHS ${Libconfig_INCLUDE_DIR}
+		NO_DEFAULT_PATH)
+	if(NOT _Libconfig_HEADER_FILE)
+		set(Libconfig_FOUND FALSE)
+		set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Cannot find libconfig header file '${_Libconfig_HEADER_FILE_NAME}' in '${Libconfig_INCLUDE_DIR}'.")
 	else()
 		# parse version string
 		file(STRINGS ${_Libconfig_HEADER_FILE} _Libconfig_VERSIONS
@@ -107,46 +104,49 @@ else()
 				"[A-Za-z0-9_;# \t]*#define[ \t]+LIBCONFIGXX_VER_REVISION[ \t]+([0-9]+)[A-Za-z0-9_;# \t]*"
 				"\\1"	Libconfig_SUBMINOR_VERSION "${_Libconfig_VERSIONS}")
 		endif()
+		unset(_Libconfig_VERSIONS)
 		set(Libconfig_VERSION
 			"${Libconfig_MAJOR_VERSION}.${Libconfig_MINOR_VERSION}.${Libconfig_SUBMINOR_VERSION}")
 	endif()
+	unset(_Libconfig_HEADER_FILE_NAME)
+	unset(_Libconfig_HEADER_FILE)
 
-  # compare version
-  if(Libconfig_FIND_VERSION_EXACT)
-    if(NOT Libconfig_VERSION VERSION_EQUAL Libconfig_FIND_VERSION)
-      set(Libconfig_FOUND FALSE)
-      set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} does not match requested version ${Libconfig_FIND_VERSION}.")
-    endif()
-  else()
-    if(Libconfig_VERSION VERSION_LESS Libconfig_FIND_VERSION)
-      set(Libconfig_FOUND FALSE)
-      set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} is lower than requested version ${Libconfig_FIND_VERSION}.")
-    endif()
-  endif()
+	# compare version
+	if(Libconfig_FIND_VERSION_EXACT)
+		if(NOT Libconfig_VERSION VERSION_EQUAL Libconfig_FIND_VERSION)
+			set(Libconfig_FOUND FALSE)
+			set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} does not match requested version ${Libconfig_FIND_VERSION}.")
+		endif()
+	else()
+		if(Libconfig_VERSION VERSION_LESS Libconfig_FIND_VERSION)
+			set(Libconfig_FOUND FALSE)
+			set(Libconfig_ERROR_REASON "${Libconfig_ERROR_REASON} Libconfig version ${Libconfig_VERSION} is lower than requested version ${Libconfig_FIND_VERSION}.")
+		endif()
+	endif()
 
 endif()
 
 
 # make variables changeable
 mark_as_advanced(
-  Libconfig_INCLUDE_DIR
-  Libconfig_LIBRARY_DIR
-  Libconfig_LIBS
-  Libconfig_DEFINITIONS
+	Libconfig_INCLUDE_DIR
+	Libconfig_LIBRARY_DIR
+	Libconfig_LIBS
+	Libconfig_DEFINITIONS
 	)
 
 
 # report result
 if(Libconfig_FOUND)
-  message(STATUS "Found libconfig version ${Libconfig_VERSION} in '${Libconfig_DIR}'.")
-  message(STATUS "Using libconfig include dir '${Libconfig_INCLUDE_DIR}'.")
-  message(STATUS "Using libconfig library '${Libconfig_LIBS}'.")
+	message(STATUS "Found libconfig version ${Libconfig_VERSION} in '${Libconfig_DIR}'.")
+	message(STATUS "Using libconfig include directory '${Libconfig_INCLUDE_DIR}'.")
+	message(STATUS "Using libconfig library '${Libconfig_LIBS}'.")
 else()
-  if(Libconfig_FIND_REQUIRED)
+	if(Libconfig_FIND_REQUIRED)
 		message(FATAL_ERROR "Unable to find requested libconfig installation:${Libconfig_ERROR_REASON}")
-  else()
-    if(NOT Libconfig_FIND_QUIETLY)
-      message(STATUS "libconfig was not found.")
-    endif()
-  endif()
+	else()
+		if(NOT Libconfig_FIND_QUIETLY)
+			message(STATUS "libconfig version ${Libconfig_FIND_VERSION}+ was not found:${Libconfig_ERROR_REASON}")
+		endif()
+	endif()
 endif()

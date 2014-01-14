@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      singleton class that manages all particle data
@@ -42,6 +38,9 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
+
+#include <boost/bimap.hpp>
 
 #include "particleProperties.h"
 
@@ -59,21 +58,24 @@ namespace rpwa {
 
 		static const particleProperties* entry(const std::string& partName,
 		                                       const bool         warnIfNotExistent = true);  ///< access properties by particle name
+
 		static bool addEntry(const particleProperties& partProp);  ///< adds entry to particle data table
 
 		static std::vector<const particleProperties*>
-		entriesMatching(const particleProperties&       prototype,
-		                const std::string&              sel,
-		                const double                    minMass            = 0,
-		                const double                    minMassWidthFactor = 0,
-		                const std::vector<std::string>& whiteList          = std::vector<std::string>(),
-		                const std::vector<std::string>& blackList          = std::vector<std::string>());  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers are selected by sel string; if minIsobarMass > 0 isobar mass is limited
+		entriesMatching(const particleProperties&            prototype,
+		                const std::string&                   sel,
+		                const double                         minMass            = 0,
+		                const double                         minMassWidthFactor = 0,
+		                const std::vector<std::string>&      whiteList          = std::vector<std::string>(),
+		                const std::vector<std::string>&      blackList          = std::vector<std::string>(),
+		                const particleProperties::decayMode& decay              = particleProperties::decayMode(),
+		                const bool&                          forceDecayCheck    = true);  ///< returns entries that have the same quantum numbers as prototype property; quantum numbers to be compared are selected by sel string; if minMass > 0 the isobar mass is limited; checks for allowed decays if they are defined; decay checks can be forced, then particles which have no specified decays will be discarded
 
 		static unsigned int nmbEntries() { return _dataTable.size(); }  ///< returns number of entries in particle data table
 
-		typedef std::map<std::string, particleProperties>::const_iterator dataIterator;
-		static dataIterator begin() { return _dataTable.begin(); }  ///< returns iterator pointing at first entry of particle data table
-		static dataIterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
+		typedef std::map<std::string, particleProperties>::const_iterator iterator;
+		static iterator begin() { return _dataTable.begin(); }  ///< returns iterator pointing at first entry of particle data table
+		static iterator end()   { return _dataTable.end();   }  ///< returns iterator pointing after last entry of particle data table
 
 		static std::ostream& print(std::ostream& out);  ///< prints particle data in human-readable form
 		static std::ostream& dump (std::ostream& out);  ///< dumps particle properties in format of data file
@@ -81,11 +83,19 @@ namespace rpwa {
 		static bool readFile(const std::string& fileName = "./particleDataTable.txt");  ///< reads in particle data from file
 		static bool read(std::istream& in);  ///< reads whitespace separated properties from stream
 
+		static bool readDecayModeFile(const std::string& fileName);  ///< reads in decay modes for list of particles from file; requires particle properties
+
+		static std::string  particleNameFromGeantId(const int id);
+		static void         geantIdAndChargeFromParticleName(const std::string& name,
+		                                                    int&               id,
+		                                                    int&               charge);
+		static unsigned int geantIdFromParticleName(const std::string& name);
+
 		static void clear() { _dataTable.clear(); }  ///< deletes all entries in particle data table
 
 		static bool debug() { return _debug; }                             ///< returns debug flag
 		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-     
+
 
 	private:
 
@@ -97,11 +107,13 @@ namespace rpwa {
 		static particleDataTable                         _instance;   ///< singleton instance
 		static std::map<std::string, particleProperties> _dataTable;  ///< map with particle data
 
+		static boost::bimap<std::string, unsigned int> _nameGeantIdMap; ///< bimap with translation particle name <> GeantId
+
 		static bool _debug;  ///< if set to true, debug messages are printed
 
 	};
 
-  
+
 	inline
 	std::ostream&
 	operator <<(std::ostream&            out,
@@ -122,6 +134,6 @@ namespace rpwa {
 
 
 } // namespace rpwa
-	
+
 
 #endif  // PARTICLEDATATABLE_H

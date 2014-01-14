@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      tells rootcint for which classes to generate method interface stubs
@@ -63,7 +59,7 @@
 	code="{ newObj->rebuildSubAmpLabelMap(); }"
 #pragma link C++ class std::vector<rpwa::waveDescription>+;
 #pragma link C++ class rpwa::ampIntegralMatrix-;
-#endif 
+#endif
 
 
 #endif

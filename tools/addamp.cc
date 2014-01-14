@@ -116,6 +116,7 @@ int main(int argc, char** argv)
 
   // loop through all amplitudes in list
   unsigned int n=file1v.size();
+  cerr << n << " amplitudes in list" << endl;
   for(unsigned int i=0;i<n;++i){
 
     cout << endl;
@@ -150,8 +151,7 @@ int main(int argc, char** argv)
 
     complex<double> phase(1,0);
     double phi=phasev[i];
-    phase.real()=cos(phi);
-    phase.imag()=sin(phi);
+    phase=complex<double>(cos(phi),sin(phi));
   
     double R=branchv[i]; // branching ratio 
   

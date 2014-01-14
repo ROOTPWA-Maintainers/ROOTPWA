@@ -13,8 +13,8 @@ using namespace std;
 #define MAXPRECISION(val) setprecision(numeric_limits<double>::digits10 + 1) << val
 
 
-int particle::_particle_debug = 0;
-int decay::_decay_debug       = 0;
+int particle::_particle_debug    = 0;
+int pwa2000::decay::_decay_debug = 0;
 
 
 particle::particle()
@@ -42,14 +42,14 @@ particle::particle(const particle& p)
   _charge = p._charge;
   _p      = p._p;
   if (p._decay)
-    _decay = new decay(*(p._decay));
+    _decay = new pwa2000::decay(*(p._decay));
   else
     _decay = NULL;
   _index       = p._index;
   _helicities  = p._helicities;
   _inRestFrame = p._inRestFrame;
   if (p._massDep)
-	  _massDep = p._massDep->create();
+	  _massDep = p._massDep->clone();
   else
 	  _massDep = NULL;
 }
@@ -97,12 +97,12 @@ particle::operator = (const particle& p)
     _helicities  = p._helicities;
     delete _decay;
     if (p._decay)
-      _decay = new decay(*(p._decay));
+      _decay = new pwa2000::decay(*(p._decay));
     else
       _decay = NULL;
     delete _massDep;
     if (p._massDep) {
-      _massDep = p._massDep->create();
+      _massDep = p._massDep->clone();
     } else
       _massDep = NULL;
   }
@@ -163,11 +163,11 @@ particle::Index(const int i)
 
   
 particle&
-particle::setDecay(const decay& d)
+particle::setDecay(const pwa2000::decay& d)
 {
   if (_decay)
     delete _decay;
-  _decay = new decay(d);
+  _decay = new pwa2000::decay(d);
   return *this;
 }
 
@@ -417,7 +417,7 @@ particle::printFrames() const
 
 
 
-decay::decay()
+pwa2000::decay::decay()
   : _l(0),
     _s(0)
 {
@@ -425,7 +425,7 @@ decay::decay()
 
 
 void
-decay::_init(const list<particle>& children,
+pwa2000::decay::_init(const list<particle>& children,
              const int             l,
              const int             s,
              const double          mass)
@@ -437,47 +437,47 @@ decay::_init(const list<particle>& children,
 }
 
 
-decay::decay(const decay& d)
+pwa2000::decay::decay(const pwa2000::decay& d)
 {
 	if (_decay_debug)
-		cout << "in decay(" << this << ")::decay(const decay& d)" << endl;
+		cout << "in decay(" << this << ")::decay(const pwa2000::decay& d)" << endl;
 	_init(d._children, d._l, d._s, d._mass);
 }
 
 
-decay::~decay()
+pwa2000::decay::~decay()
 {
   if (_decay_debug)
     cout << "in decay(" << this << ")::~decay()" << endl;
 }
 
 
-decay&
-decay::addChild(const particle& p)
+pwa2000::decay&
+pwa2000::decay::addChild(const particle& p)
 {
   _children.push_back(p);
   return *this;
 }
 
 
-decay&
-decay::setL(const int l)
+pwa2000::decay&
+pwa2000::decay::setL(const int l)
 {
   _l = l;
   return *this;
 }
 
 
-decay&
-decay::setS(const int s)
+pwa2000::decay&
+pwa2000::decay::setS(const int s)
 {
   _s = s;
   return *this;
 }
 
 
-decay&
-decay::calculateS()
+pwa2000::decay&
+pwa2000::decay::calculateS()
 {
   list<particle>::const_iterator child = _children.begin();
   int spin       = 0;
@@ -499,18 +499,18 @@ decay::calculateS()
 }
 
 
-decay&
-decay::operator = (const decay& d)
+pwa2000::decay&
+pwa2000::decay::operator = (const pwa2000::decay& d)
 {
 	if (_decay_debug)
-		cout << "in decay(" << this << ")::operator=(const decay& d)" << endl;
+		cout << "in decay(" << this << ")::operator=(const pwa2000::decay& d)" << endl;
 	_init(d._children, d._l, d._s, d._mass);
   return *this;
 }
 
 
-decay&
-decay::operator *= (const lorentzTransform& L)
+pwa2000::decay&
+pwa2000::decay::operator *= (const lorentzTransform& L)
 {
   for (list<particle>::iterator i = _children.begin(); i != _children.end(); ++i)
     *i *= L;
@@ -519,7 +519,7 @@ decay::operator *= (const lorentzTransform& L)
 
 
 fourVec*
-decay::get4P(particle* part,
+pwa2000::decay::get4P(particle* part,
              const int debug)
 {
   if (debug)
@@ -542,7 +542,7 @@ decay::get4P(particle* part,
 
 
 fourVec
-decay::fill(const event& e,
+pwa2000::decay::fill(const event& e,
             const int    debug)
 {
   fourVec p;
@@ -569,8 +569,8 @@ decay::fill(const event& e,
 }
 
 
-decay&
-decay::setupFrames(const lorentzTransform& T,
+pwa2000::decay&
+pwa2000::decay::setupFrames(const lorentzTransform& T,
                    const int               debug)
 {
   // boost children into correct frame
@@ -611,7 +611,7 @@ decay::setupFrames(const lorentzTransform& T,
 
 
 complex<double>
-decay::expt_amp(const double b,
+pwa2000::decay::expt_amp(const double b,
                 const double t,
                 const int    debug)
 {
@@ -702,7 +702,7 @@ decay::expt_amp(const double b,
 
 
 complex<double>
-decay::amp(const int j,
+pwa2000::decay::amp(const int j,
            const int m,
            const int debug)
 {
@@ -881,7 +881,7 @@ decay::amp(const int j,
 
 
 void
-decay::print() const
+pwa2000::decay::print() const
 {
   ptab();
   cout << "children : {" << endl;
@@ -895,7 +895,7 @@ decay::print() const
 
 
 void
-decay::printFrames() const
+pwa2000::decay::printFrames() const
 {
 	ptab();
 	cout << "i have " << _childrenInFrames.size() << " children." << endl;

@@ -53,10 +53,13 @@ gROOT->SetStyle("Plain");
 
    TF1* acc=new TF1("acc","1-exp([0]*(1-x))",0,2000); // artificial acceptance function
    
-   TH1D* hMass=new TH1D("hmass","Mass",500,0,5);
+   TH1D* hMass=new TH1D("hmass","Mass",1000,0,20);
 
    TH1D* hGJ=new TH1D("hGJ","Cos GJ-Theta",20,-1,1);
    TH1D* hGJacc=new TH1D("hGJacc","acc Cos GJ-Theta",20,-1,1);
+
+   TH1D* hExcl=new TH1D("hExcl","Charged Exclusivity",100,0,200);
+   TH1D* hT=new TH1D("hT","Charged t",1000,0,2);
 
    TH1D* hMom=new TH1D("hMOM","events",50,0,50);
    TH1D* hMombad=new TH1D("hMOMbad","events",50,0,50);
@@ -76,24 +79,30 @@ gROOT->SetStyle("Plain");
 
      hMass->Fill(event.p().M());
 
-     if(0){
+     if(1){
+       TLorentzVector xcharged;
      // save momenta
      vector<TLorentzVector> momenta;
      bool accept=true;
      for(unsigned int ip=0;ip<event.nParticles();++ip){
-	     momenta.push_back(event.getParticle(ip).p());
-	      double mag=momenta[ip].Vect().Mag();
-	      hMom->Fill(mag);
-	     hP->Fill(momenta[ip].Vect().Theta(),
-		      momenta[ip].Vect().Mag());
-	     hPXY->Fill(momenta[ip].Vect().X()/mag,
-			   momenta[ip].Vect().Y()/mag);
-	     // cut away events with small momentum particles:
-	     double w=acc->Eval(mag);
-	     accept &= gRandom->Uniform()<w;
-	     
-	   } // end loop over particles
+       if(event.getParticle(ip).q()==0)continue; // only look at charged particles
+       momenta.push_back(event.getParticle(ip).p());
+       xcharged += momenta[ip];
+       double mag=momenta[ip].Vect().Mag();
+       hMom->Fill(mag);
+       hP->Fill(momenta[ip].Vect().Theta(),
+		momenta[ip].Vect().Mag());
+       hPXY->Fill(momenta[ip].Vect().X()/mag,
+		  momenta[ip].Vect().Y()/mag);
+       // cut away events with small momentum particles:
+       //double w=acc->Eval(mag);
+       //accept &= gRandom->Uniform()<w;
+       
+     } // end loop over particles
 
+     hExcl->Fill(xcharged.E());
+     
+     
      event.toGJ();
      
      // loop over all states that contain n-1 final state particles
@@ -102,6 +111,17 @@ gROOT->SetStyle("Plain");
      unsigned int nstates=event.nStates();
      for(unsigned int is=0;is<nstates;++is){
        const NParticleState& state=event.getState(is);
+       if(state.qabs()==5 && state.n()==5){
+	 double t=state.t();
+	 double m=state.p().M();
+	 double p2=state.beam().Vect()*state.beam().Vect();
+	 double term=m*m-0.019479835;
+	 double tmin=term*term*0.25/p2;
+	 //cout << "t="<<t<<"     tmin= " << tmin << endl;
+	 double tprime=t-tmin;
+	 hT->Fill(tprime);
+       }
+
        if(state.n()==npart){
 	 
 	 
@@ -139,7 +159,7 @@ gROOT->SetStyle("Plain");
 	 
        }
      }
-     }
+     } // end if(0)
      
      
    }// end loop over events
@@ -152,14 +172,9 @@ gROOT->SetStyle("Plain");
    TCanvas* c=new TCanvas("KineValidate"+massbin,"Events",10,10,1000,800);
    c->Divide(3,3);
    c->cd(1);
-   acc->Draw();
+   hExcl->Draw();
    c->cd(3);
-   hGJ->Draw();
-   hGJ->GetYaxis()->SetRangeUser(0,hGJ->GetMaximum()*1.5);
-   hGJacc->SetLineColor(kBlue);
-   hGJacc->SetFillColor(kBlue);
-   
-   hGJacc->Draw("same");
+   hT->Draw();
 	  
    c->cd(2);
    hP->Draw("colz");
@@ -170,7 +185,14 @@ gROOT->SetStyle("Plain");
    hMass->Draw();
 	  
    c->cd(5);
-   hPXYbad->Draw("surf2");
+hGJ->Draw();
+   hGJ->GetYaxis()->SetRangeUser(0,hGJ->GetMaximum()*1.5);
+   hGJacc->SetLineColor(kBlue);
+   hGJacc->SetFillColor(kBlue);
+   
+   hGJacc->Draw("same");
+
+   //hPXYbad->Draw("surf2");
 c->cd(6);
    hPXY->Draw("surf2");
 	  

@@ -34,7 +34,7 @@ printUsage(const char* prog)
 int main(int argc, char** argv)
 {
 
-  int    debug          = 0;
+	//int    debug          = 0;
   int    display_events = 0;
   int    maxevents      = 0;
   int    renorm         = 0;
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
   while ((c = getopt(argc, argv, "dm:r:a:i:h:w:q")) != -1)
     switch(c) {
     case 'd':
-      debug = 1;    
+	    //debug = 1;    
       break;
     case 'q':
       display_events = 1;

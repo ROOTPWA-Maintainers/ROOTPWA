@@ -142,7 +142,7 @@ integral::integrate()
 		hasWeight = true;
 	}
 
-	ifstream* ampfile = new ifstream [_nwaves];
+	ifstream* ampfile = new ifstream[_nwaves];
 	for (map<string, int>::const_iterator i = _index.begin(); i != _index.end(); ++i) {
 		const string fileName  = i->first;
 		const int    fileIndex = i->second;
@@ -157,7 +157,8 @@ integral::integrate()
 	int              nRead = 0;
 	int              eof   = 0;
 	accumulator_set<double,          stats<tag::sum(compensated)> > weightInt;
-	accumulator_set<complex<double>, stats<tag::sum(compensated)> > sums[_nwaves][_nwaves];
+	typedef accumulator_set<complex<double>, stats<tag::sum(compensated)> > complexAcc;
+	vector<vector<complexAcc> > sums(_nwaves, vector<complexAcc>(_nwaves));
 	while (!eof && ((_maxEvents) ? nRead < _maxEvents : true)) {
 		double w = 1;
 		if (hasWeight)

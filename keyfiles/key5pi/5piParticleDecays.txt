@@ -1,0 +1,311 @@
+//-------------------------------------------------------------------------
+//
+// Description:
+//      allowed decay modes for isobars in the pi-pi+pi-pi+pi- system
+//
+//      !NOTE! L and S have to be specified in units of hbar / 2 so
+//             that they are always integer
+//
+//
+// Author List:
+//      Sebastian Neubert    TUM            (original author)
+//
+//
+//-------------------------------------------------------------------------
+
+
+particleDecayList = (
+
+//-------------------------------------------------------------------------
+// two-pion decays
+	{ name = "sigma0";
+		decays = (
+			{products = ["pi-", "pi+"];},
+			{products = ["pi0", "pi0"];}
+		);
+	},
+	{ name = "rho(770)0";
+		decays = (
+			{products = ["pi-", "pi+"];}
+		);
+	},
+	{ name = "rho(770)-";
+		decays = (
+			{products = ["pi-", "pi0"];}
+		);
+	},
+	{ name = "rho(770)+";
+		decays = (
+			{products = ["pi+", "pi0"];}
+		);
+	},
+	{ name = "f0(980)0";
+		decays = (
+			{products = ["pi-", "pi+"  ];},
+			{products = ["pi0", "pi0"  ];},
+			{products = ["K-",  "K+"   ];},
+			{products = ["K0",  "Kbar0"];}
+		);
+	},
+	{ name = "f2(1270)0";
+		decays = (
+			{products = ["pi+", "pi-"];},
+			{products = ["pi0", "pi0"];}
+		);
+	},
+	{ name = "rho3(1690)0";
+		decays = (
+			{products = ["pi+", "pi-"];}
+		);
+	},
+
+
+//-------------------------------------------------------------------------
+// three-pion decays
+	{ name = "a1(1260)-";
+		decays = (
+			{products = ["pi-", "rho(770)0"];},
+			{products = ["pi-", "sigma0"   ];}
+		);
+	},
+	{ name = "a1(1260)+";
+		decays = (
+			{products = ["pi+", "rho(770)0"];},
+			{products = ["pi+", "sigma0"   ];}
+		);
+	},
+	{ name = "a1(1260)0";
+		decays = (
+			{products = ["pi-", "rho(770)+"];},
+			{products = ["pi+", "rho(770)-"];},
+			{products = ["pi0", "sigma0"   ];}
+		);
+	},
+	{ name = "pi(1300)-";
+		decays = (
+			{products = ["pi-", "rho(770)0"];},
+			{products = ["pi-", "sigma0"   ];}
+			);
+	},
+	{ name = "pi(1300)+";
+		decays = (
+			{products = ["pi+", "rho(770)0"];},
+			{products = ["pi+", "sigma0"   ];}
+		);
+	},
+	{ name = "pi(1300)0";
+		decays = (
+			{products = ["pi+", "rho(770)-"];},
+			{products = ["pi-", "rho(770)+"];},
+			{products = ["pi0", "sigma0"   ];}
+		);
+	},
+	{ name = "a2(1320)-";
+		decays = (
+			{products = ["pi-", "rho(770)0"];},
+			{products = ["pi0", "rho(770)-"];}
+		);
+	},
+	{ name = "a2(1320)+";
+		decays = (
+			{products = ["pi+", "rho(770)0"];},
+			{products = ["pi0", "rho(770)+"];}
+		);
+	},
+	{ name = "a2(1320)0";
+		decays = (
+			{products = ["pi-", "rho(770)+"];},
+			{products = ["pi+", "rho(770)-"];}
+		);
+	},
+	{ name = "pi1(1600)-";
+		decays = (
+			{products = ["pi-", "rho(770)0"];}
+		);
+	},
+	{ name = "pi1(1600)+";
+		decays = (
+			{products = ["pi+", "rho(770)0"];}
+		);
+	},
+	{ name = "pi1(1600)0";
+		decays = (
+			{products = ["pi+", "rho(770)-"];},
+			{products = ["pi-", "rho(770)+"];}
+		);
+	},
+	{name = "pi2(1670)-";
+		decays = (
+			{products = ["pi-", "rho(770)0"];},
+			{products = ["pi0", "rho(770)-"];},
+			{products = ["pi-", "sigma0"   ];},
+			{products = ["pi-", "f2(1270)0"];}
+		);
+	},
+	{ name = "pi2(1670)+";
+		decays = (
+			{products = ["pi+", "rho(770)0"];},
+			{products = ["pi0", "rho(770)+"];},
+			{products = ["pi+", "sigma0"   ];},
+			{products = ["pi+", "f2(1270)0"];}
+		);
+	},
+	{ name = "pi2(1670)0";
+		decays = (
+			{products = ["pi-", "rho(770)+"];},
+			{products = ["pi+", "rho(770)-"];},
+			{products = ["pi0", "sigma0"   ];},
+			{products = ["pi0", "f2(1270)0"];}
+		);
+	},
+	{ name = "pi(1800)-";
+		decays = (
+			{products = ["pi-", "f0(980)0"];},
+			{products = ["pi-", "sigma0"  ];}
+		);
+	},
+	{ name = "pi(1800)+";
+		decays = (
+			{products = ["pi+", "f0(980)0"];},
+			{products = ["pi+", "sigma0"  ];}
+		);
+	},
+	{ name = "pi(1800)0";
+		decays = (
+			{products = ["pi0", "f0(980)0"];},
+			{products = ["pi0", "sigma0"  ];}
+		);
+	},
+
+
+//-------------------------------------------------------------------------
+// four-pion decays
+//
+// all allowed decay modes for neutral 4-pion states up to D-wave:
+// (see S. U. Chung: "Possible Quantum Numbers for pi+pi-pi+pi-"; cmps2.tex)
+//
+// f0 0+0++: sigma[S]sigma; rho[S,D]rho, f2[S,D]f2, f2[D]sigma, a1[P]pi, pi*[S]pi, pi2[D]pi
+// f1 0+1++: rho[D]rho, f2[S,D]f2, f2[D]sigma, a1[P]pi, a2[P]pi, pi2[D]pi
+// f2 0+2++: sigma[D]sigma, rho[S,D]rho, f2[S,D]f2, f2[S,D]sigma, a1[P]pi, pi*[D]pi, a2[P]pi, pi2[S,D]pi
+//
+// eta  0+0-+: rho[P]rho, f2[P]f2, a2[D]pi
+// eta1 0+1-+: rho[P]rho, f2[P]f2, f2[P]sigma, a1[S,D]pi, pi*[P]pi, a2[D]pi, pi2[P]pi
+// eta2 0+2-+: rho[P]rho, f2[P]f2, f2[P]sigma, a1[D]pi, a2[S,D]pi, pi2[P]pi
+//
+// rho' 1+1--: rho[S,D]sigma, f2[S,D]rho, a1[S,D]pi, pi*[P]pi, a2[D]pi, pi2[P]pi
+// rho3 1+3--: rho[D]sigma, f2[S,D]rho, a1[D]pi, a2[D]pi, pi2[P]pi
+//
+// b1 1+1+-: rho[P]sigma, f2[P]rho, a1[P]pi, a2[P]pi, pi2[D]pi
+//
+
+	{ name = "b1(1235)0";
+		decays = (
+			{products = ["rho(770)0", "sigma0"];},
+			{products = ["a1(1260)+", "pi-"   ];},
+			{products = ["a1(1260)-", "pi+"   ];}
+		);
+	},
+	{ name = "f2(1270)0";
+		decays = (
+			{products = ["sigma0",    "sigma0"   ];},
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["a1(1260)+", "pi-"      ];}
+		);
+	},
+	{ name = "f1(1285)0";
+		decays = (
+			{products = ["a1(1260)+", "pi-"];},
+			{products = ["a1(1260)-", "pi+"];}
+		);
+	},
+	{ name = "f0(1370)0";
+		decays = (
+			{products = ["sigma0",    "sigma0"   ];},
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];}
+		);
+	},
+	{ name = "f1(1420)0";
+		decays = (
+			{products = ["a1(1260)+", "pi-"];},
+			{products = ["a1(1260)-", "pi+"];},
+			{products = ["a2(1320)+", "pi-"];},
+			{products = ["a2(1320)-", "pi+"];}
+		);
+	},
+	{ name = "f0(1500)0";
+		decays = (
+			{products = ["sigma0",    "sigma0"   ];},
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];}
+		);
+	},
+	{ name = "f2(1565)0";
+		decays = (
+			{products = ["sigma0",    "sigma0"   ];},
+			{products = ["rho(770)0", "rho(770)0"]; L = 0;},
+			{products = ["f2(1270)0", "sigma0"   ]; L = 0;},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];},
+			{products = ["a2(1320)+", "pi-"      ];},
+			{products = ["a2(1320)-", "pi+"      ];}
+		);
+	},
+	{ name = "eta1(1600)0";
+		decays = (
+			{products = ["rho(770)0", "rho(770)0"];},
+			{products = ["f2(1270)0", "sigma0"   ];},
+			{products = ["a1(1260)+", "pi-"      ]; L = 0;},
+			{products = ["a1(1260)-", "pi+"      ]; L = 0;},
+			{products = ["pi(1300)+", "pi-"      ];},
+			{products = ["pi(1300)-", "pi+"      ];}
+		);
+	},
+	{ name = "eta2(1645)0";
+		decays = (
+			{products = ["rho(770)0", "rho(770)0"];},
+			{products = ["f2(1270)0", "sigma0"   ];},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["a2(1320)+", "pi-"      ];},
+			{products = ["a2(1320)-", "pi+"      ];}
+		);
+	},
+	{ name = "rho3(1690)0";
+		decays = (
+			{products = ["rho(770)0", "sigma0"   ];},
+			{products = ["f2(1270)0", "rho(770)0"]; L = 0;},
+			{products = ["a1(1260)-", "pi+"      ];},
+			{products = ["a1(1260)+", "pi-"      ];},
+			{products = ["a2(1320)-", "pi+"      ];},
+			{products = ["a2(1320)+", "pi-"      ];}
+		);
+	},
+	{ name = "rhoPrime0";
+		decays = (
+			{products = ["rho(770)0", "sigma0"];},
+			{products = ["a1(1260)+", "pi-"   ]; L = 0;},
+			{products = ["a1(1260)-", "pi+"   ]; L = 0;},
+			{products = ["pi(1300)+", "pi-"   ];},
+			{products = ["pi(1300)-", "pi+"   ];}
+		);
+	},
+	{ name = "rho(1700)0";
+		decays = (
+			{products = ["a1(1260)+", "pi-"]; L = 4;},
+			{products = ["a1(1260)-", "pi+"]; L = 4;},
+			{products = ["a2(1320)+", "pi-"];},
+			{products = ["a2(1320)-", "pi+"];}
+		);
+	}
+
+);

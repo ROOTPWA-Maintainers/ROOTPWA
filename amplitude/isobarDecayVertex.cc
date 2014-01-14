@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      class that describes decay vertex of isobar into two particles
@@ -43,7 +39,7 @@
 #include "spinUtils.hpp"
 #include "isobarDecayVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -58,9 +54,9 @@ isobarDecayVertex::isobarDecayVertex(const particlePtr&       parent,
                                      const unsigned int       S,
                                      const massDependencePtr& massDep)
 	: interactionVertex(),
-	  _L                (L),
-	  _S                (S),
-	  _massDep          (massDep)
+	  _L               (L),
+	  _S               (S),
+	  _massDep         (massDep)
 {
 	if (not parent) {
 		printErr << "null pointer to parent particle. aborting." << endl;
@@ -109,7 +105,7 @@ isobarDecayVertex::operator =(const isobarDecayVertex& vert)
 	return *this;
 }
 
-    
+
 isobarDecayVertex*
 isobarDecayVertex::doClone(const bool cloneInParticles,
                            const bool cloneOutParticles) const
@@ -124,6 +120,22 @@ isobarDecayVertex::doClone(const bool cloneInParticles,
 		           << ((cloneInParticles ) ? "in" : "ex") << "cluding incoming particles, "
 		           << ((cloneOutParticles) ? "in" : "ex") << "cluding outgoing particles" << std::endl;
 	return vertexClone;
+}
+
+
+bool
+isobarDecayVertex::isEqualTo(const interactionVertex& vert) const
+{
+	const isobarDecayVertex* isoVert = dynamic_cast<const isobarDecayVertex*>(&vert);
+	if (not isoVert)
+		return false;
+	if (not interactionVertex::isEqualTo(vert))
+		return false;
+	if (   (L()                 != isoVert->L())
+	    or (S()                 != isoVert->S())
+	    or (*(massDependence()) != *(isoVert->massDependence())))
+		return false;
+	return true;
 }
 
 
@@ -228,7 +240,7 @@ isobarDecayVertex::checkAdditiveQn(const int     mQn,
 }
 
 
-bool 
+bool
 isobarDecayVertex::checkConsistency()
 {
 	bool vertexConsistent = true;

@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Data storage class for PWA fit result of one kinematic bin
@@ -95,7 +93,7 @@ namespace rpwa {
 	class fitResult : public TObject {
 
 	public:
-    
+
 		fitResult();
 		fitResult(const fitResult& result);
 		fitResult(const TFitBin&   fitBin);
@@ -104,6 +102,8 @@ namespace rpwa {
 		fitResult(const TFitResult& result);
 #endif
 		virtual ~fitResult();
+
+		fitResult* variedProdAmps();  ///< create a copy with production amplitudes varied according to covariance matrix
 
 		void reset();
 		void fill(const unsigned int                        nmbEvents,               // number of events in bin
@@ -114,7 +114,7 @@ namespace rpwa {
 		          const std::vector<std::complex<double> >& prodAmps,	               // production amplitudes
 		          const std::vector<std::string>&           prodAmpNames,	           // names of production amplitudes used in fit
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
-		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
+		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
 		          const TCMatrix&                           normIntegral,            // normalization integral matrix
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
@@ -131,26 +131,27 @@ namespace rpwa {
 		unsigned int nmbWaves     () const { return _waveNames.size();  }  ///< returns number of waves in fit
 		unsigned int nmbProdAmps  () const { return _prodAmps.size();   }  ///< returns number of production amplitudes
 
-		TString waveName      (const unsigned int waveIdx)    const { return _waveNames[waveIdx];                                }  ///< returns name of wave at index
-		TString waveNameEsc   (const unsigned int waveIdx)    const { return escapeRegExpSpecialChar(_waveNames[waveIdx]);       }  ///< returns name of wave at index with special regexp characters escaped
-		TString prodAmpName   (const unsigned int prodAmpIdx) const { return _prodAmpNames[prodAmpIdx];                          }  ///< returns name of production amplitude at index
-		TString prodAmpNameEsc(const unsigned int prodAmpIdx) const { return escapeRegExpSpecialChar(_prodAmpNames[prodAmpIdx]); }  ///< returns name of production amplitude at index with special regexp characters escaped
+		TString waveName      (const unsigned int waveIndex)    const { return _waveNames[waveIndex];                                }  ///< returns name of wave at index
+		TString waveNameEsc   (const unsigned int waveIndex)    const { return escapeRegExpSpecialChar(_waveNames[waveIndex]);       }  ///< returns name of wave at index with special regexp characters escaped
+		TString prodAmpName   (const unsigned int prodAmpIndex) const { return _prodAmpNames[prodAmpIndex];                          }  ///< returns name of production amplitude at index
+		TString prodAmpNameEsc(const unsigned int prodAmpIndex) const { return escapeRegExpSpecialChar(_prodAmpNames[prodAmpIndex]); }  ///< returns name of production amplitude at index with special regexp characters escaped
+		inline TString waveNameForProdAmp(const unsigned int prodAmpIndex) const;
 
 		int waveIndex   (const std::string& waveName   ) const;  ///< returns wave index corresponding to wave name
 		int prodAmpIndex(const std::string& prodAmpName) const;  ///< returns production amplitude index corresponding to production amplitude name
 
-		double      fitParameter   (const std::string& parName)   const;  ///< returns value of fit parameter with name
+		double      fitParameter   (const std::string& parName  ) const;  ///< returns value of fit parameter with name
 		/// returns covariance of fit parameters at index A and B
 		double      fitParameterCov(const unsigned int parIndexA,
 		                            const unsigned int parIndexB) const { return _fitParCovMatrix[parIndexA][parIndexB]; }
-		inline void fitParameters  (double*            parArray)  const;  ///< copies fit parameters into array
+		inline void fitParameters  (double*            parArray ) const;  ///< copies fit parameters into array
 
 		/// returns production amplitude value at index
-		std::complex<double>    prodAmp   (const unsigned int prodAmpIdx) const
-		{ return std::complex<double>(_prodAmps[prodAmpIdx].Re(), _prodAmps[prodAmpIdx].Im()); }
-		inline TMatrixT<double> prodAmpCov(const unsigned int prodAmpIdx) const;   ///< returns covariance matrix of production amplitude value at index
+		std::complex<double>    prodAmp   (const unsigned int prodAmpIndex) const
+		{ return std::complex<double>(_prodAmps[prodAmpIndex].Re(), _prodAmps[prodAmpIndex].Im()); }
+		inline TMatrixT<double> prodAmpCov(const unsigned int prodAmpIndex) const;   ///< returns covariance matrix of production amplitude value at index
 		///< returns covariance matrix for a set of production amplitudes given by index list
-		TMatrixT<double>        prodAmpCov(const std::vector<unsigned int>&                           prodAmpIndices)    const;
+		TMatrixT<double>        prodAmpCov(const std::vector<unsigned int>&                           prodAmpIndices   ) const;
 		///< returns covariance matrix for a set of production amplitudes given by a list of index pairs
 		inline TMatrixT<double> prodAmpCov(const std::vector<std::pair<unsigned int, unsigned int> >& prodAmpIndexPairs) const;
 		///< returns covariance matrix for a set of production amplitudes given by index lists A and B
@@ -162,8 +163,8 @@ namespace rpwa {
 		inline std::complex<double> normIntegral(const unsigned int waveIndexA,
 		                                         const unsigned int waveIndexB) const;
 		/// returns the sqrt(!) of the phase space integral for given wave
-		double phaseSpaceIntegral(const unsigned int waveIdx)  const { return _phaseSpaceIntegral[waveIdx];             }
-		double phaseSpaceIntegral(const std::string& waveName) const { return _phaseSpaceIntegral[waveIndex(waveName)]; }
+		double phaseSpaceIntegral(const unsigned int waveIndex) const { return _phaseSpaceIntegral[waveIndex];           }
+		double phaseSpaceIntegral(const std::string& waveName ) const { return _phaseSpaceIntegral[waveIndex(waveName)]; }
 
 		/// returns spin density matrix element for pair of waves at index A and B
 		std::complex<double> spinDensityMatrixElem   (const unsigned int waveIndexA,
@@ -173,9 +174,9 @@ namespace rpwa {
 		                                              const unsigned int waveIndexB) const;
 
 		/// returns intensity of single wave at index
-		double intensity   (const unsigned int waveIdx)         const { return spinDensityMatrixElem(waveIdx, waveIdx).real();         }
+		double intensity   (const unsigned int waveIndex)         const { return spinDensityMatrixElem(waveIndex, waveIndex).real();         }
 		/// returns error of intensity of single wave at index
-		double intensityErr(const unsigned int waveIdx)         const { return sqrt(spinDensityMatrixElemCov(waveIdx, waveIdx)[0][0]); }
+		double intensityErr(const unsigned int waveIndex)         const { return sqrt(spinDensityMatrixElemCov(waveIndex, waveIndex)[0][0]); }
 		double intensity   (const char*        waveNamePattern) const;                                ///< returns intensity of sum of waves matching name pattern
 		double intensityErr(const char*        waveNamePattern) const;                                ///< returns error of intensity of sum of waves matching name pattern
 		double intensity   ()                                   const { return intensity   (".*"); }  ///< returns total intensity
@@ -186,10 +187,10 @@ namespace rpwa {
 		double phaseErr    (const unsigned int waveIndexA,
 		                    const unsigned int waveIndexB) const;  ///< returns error of phase difference between two waves at index A and B
 		double phase       (const std::string waveNameA,
-		                    const std::string waveNameB) const 
+		                    const std::string waveNameB) const
 		{ return phase(waveIndex(waveNameA), waveIndex(waveNameB)); }
 		double phaseErr    (const std::string waveNameA,
-		                    const std::string waveNameB) const 
+		                    const std::string waveNameB) const
 		{ return phaseErr(waveIndex(waveNameA), waveIndex(waveNameB)); }
 
 		double coherence   (const unsigned int waveIndexA,
@@ -219,15 +220,15 @@ namespace rpwa {
 		virtual inline std::ostream& print(std::ostream& out = std::cout) const;
 		friend std::ostream& operator << (std::ostream&    out,
 		                                  const fitResult& result) { return result.print(out); }
-    
+
 	private:
 
-		UInt_t                                _nmbEvents;               ///< number of events in bin			 
-		UInt_t                                _normNmbEvents;           ///< number of events to normalize to		 
-		Double_t                              _massBinCenter;           ///< center value of mass bin			 
-		Double_t                              _logLikelihood;           ///< log(likelihood) at maximum		 
-		Int_t                                 _rank;                    ///< rank of fit				 
-		std::vector<TComplex>                 _prodAmps;                ///< production amplitudes			 
+		UInt_t                                _nmbEvents;               ///< number of events in bin
+		UInt_t                                _normNmbEvents;           ///< number of events to normalize to
+		Double_t                              _massBinCenter;           ///< center value of mass bin
+		Double_t                              _logLikelihood;           ///< log(likelihood) at maximum
+		Int_t                                 _rank;                    ///< rank of fit
+		std::vector<TComplex>                 _prodAmps;                ///< production amplitudes
 		std::vector<std::string>              _prodAmpNames;            ///< names of production amplitudes used in fit
 		std::vector<std::string>              _waveNames;               ///< names of waves used in fit
 		Bool_t                                _covMatrixValid;          ///< indicates whether bin has a valid covariance matrix
@@ -250,8 +251,8 @@ namespace rpwa {
 
 		inline std::vector<unsigned int> waveIndicesMatchingPattern   (const std::string& waveNamePattern   ) const;
 		inline std::vector<unsigned int> prodAmpIndicesMatchingPattern(const std::string& prodAmpNamePattern) const;
-		std::vector<unsigned int>        prodAmpIndicesForWave        (const unsigned int waveIdx           ) const
-		{ return prodAmpIndicesMatchingPattern(waveNameEsc(waveIdx).Data()); }  ///< returns indices of production amplitudes that belong to wave at index
+		std::vector<unsigned int>        prodAmpIndicesForWave        (const unsigned int waveIndex         ) const
+		{ return prodAmpIndicesMatchingPattern(waveNameEsc(waveIndex).Data()); }  ///< returns indices of production amplitudes that belong to wave at index
 		inline std::vector<std::pair<unsigned int, unsigned int> > prodAmpIndexPairsForWaves
 		(const unsigned int waveIndexA,
 		 const unsigned int waveIndexB) const;
@@ -260,22 +261,12 @@ namespace rpwa {
 		                              const unsigned int      waveIndexB,
 		                              const TMatrixT<double>& jacobian) const;
 
-		TString wavetitle(int i) const
-		{
-			const TString ampName = _prodAmpNames[i];
-			if (ampName.Contains("V_"))
-				return ampName(2, 1000);
-			else
-				return ampName(3, 1000);
-		}
-		void buildWaveMap();
-    
 	public:
-    
+
 		ClassDef(fitResult,4)
-    
+
 	};  // class fitResult
-  
+
 
 	/// copies fit parameters into array; assumes that array has sufficient size
 	inline
@@ -295,10 +286,10 @@ namespace rpwa {
 	/// returns covariance matrix for a single production amplitude
 	inline
 	TMatrixT<double>
-	fitResult::prodAmpCov(const unsigned int prodAmpIdx) const {
+	fitResult::prodAmpCov(const unsigned int prodAmpIndex) const {
 		// get parameter indices
-		const int i = _fitParCovMatrixIndices[prodAmpIdx].first;
-		const int j = _fitParCovMatrixIndices[prodAmpIdx].second;
+		const int i = _fitParCovMatrixIndices[prodAmpIndex].first;
+		const int j = _fitParCovMatrixIndices[prodAmpIndex].second;
 		TMatrixT<double> cov(2, 2);
 		cov[0][0] = _fitParCovMatrix[i][i];
 		if (j >= 0) {
@@ -359,7 +350,7 @@ namespace rpwa {
 		return std::complex<double>(norm.Re(), norm.Im());
 	}
 
-  
+
 	// prints all production amplitude names
 	inline
 	std::ostream&
@@ -418,10 +409,10 @@ namespace rpwa {
 	std::ostream&
 	fitResult::printAmpsGenPW(std::ostream& s) const {
 		for(unsigned int i=0;i<_waveNames.size();++i){
-			s << _waveNames[i] << " "  
+			s << _waveNames[i] << " "
 			  << prodAmp(i).real() << " "
 			  << prodAmp(i).imag() << std::endl;
-		} 
+		}
 		return s;
 	}
 
@@ -474,9 +465,9 @@ namespace rpwa {
 	/// extracts rank of production amplitude from its name
 	inline
 	int
-	fitResult::rankOfProdAmp(const unsigned int prodAmpIdx) const
+	fitResult::rankOfProdAmp(const unsigned int prodAmpIndex) const
 	{
-		const TString ampName = _prodAmpNames[prodAmpIdx];
+		const TString ampName = _prodAmpNames[prodAmpIndex];
 		if (ampName.Contains("flat"))
 			return -1;
 		else
@@ -495,10 +486,10 @@ namespace rpwa {
 		Pattern.ReplaceAll("+","\\+");
 		Pattern.ReplaceAll("\\\\+","\\+");
 		std::vector<unsigned int> waveIndices;
-		for (unsigned int waveIdx = 0; waveIdx < nmbWaves(); ++waveIdx){
-			//std::cout<<waveName(waveIdx)<<std::endl;
-			if (waveName(waveIdx).Contains(TRegexp(Pattern)))
-				waveIndices.push_back(waveIdx);
+		for (unsigned int waveIndex = 0; waveIndex < nmbWaves(); ++waveIndex){
+			//std::cout<<waveName(waveIndex)<<std::endl;
+			if (waveName(waveIndex).Contains(TRegexp(Pattern)))
+				waveIndices.push_back(waveIndex);
 		}
 		return waveIndices;
 	}
@@ -514,9 +505,9 @@ namespace rpwa {
 		Pattern.ReplaceAll("+","\\+");
 		Pattern.ReplaceAll("\\\\+","\\+");
 		std::vector<unsigned int> prodAmpIndices;
-		for (unsigned int prodAmpIdx = 0; prodAmpIdx < nmbProdAmps(); ++prodAmpIdx)
-			if (prodAmpName(prodAmpIdx).Contains(TRegexp(Pattern)))
-				prodAmpIndices.push_back(prodAmpIdx);
+		for (unsigned int prodAmpIndex = 0; prodAmpIndex < nmbProdAmps(); ++prodAmpIndex)
+			if (prodAmpName(prodAmpIndex).Contains(TRegexp(Pattern)))
+				prodAmpIndices.push_back(prodAmpIndex);
 		return prodAmpIndices;
 	}
 
@@ -563,7 +554,28 @@ namespace rpwa {
 		return cov[0][0];
 	}
 
-  
+
+	/// \brief returns wave name for given production amplitude
+	///
+	/// naming scheme for production amplitudes:
+	/// "V<rank>_<wave name>" with exception "V_flat" for flat wave
+	/// <rank> is assumed to be a single-digit number
+	inline
+	TString
+	fitResult::waveNameForProdAmp(const unsigned int prodAmpIndex) const
+	{
+		const TString prodAmpName = _prodAmpNames[prodAmpIndex];
+		if (prodAmpName == "V_flat")
+			return "flat";
+		if (not prodAmpName.BeginsWith('V') or (prodAmpName[2] != '_')) {
+			printErr << "production amplitude name '" << prodAmpName << "' does not follow the naming convention. "
+			         << "cannot deduce corresponding wave name." << std::endl;
+			return "";
+		}
+		return prodAmpName(3, prodAmpName.Length() - 3);
+	}
+
+
 }  // namespace rpwa
 
 

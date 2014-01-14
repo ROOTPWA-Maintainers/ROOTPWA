@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      class that generates set of isobar decay topologies from a
@@ -45,96 +41,99 @@
 #include "isobarDecayTopology.h"
 
 
-namespace rpwa {  
+namespace rpwa {
 
 
-  class waveSetGenerator {
-  
-  public:
+	class waveSetGenerator {
 
-	  // some typedefs for convenience
-	  typedef isobarDecayTopology::nodeDesc    nodeDesc;
-	  typedef isobarDecayTopology::adjIterator adjIterator;
+	public:
 
-      
-    waveSetGenerator();
-    virtual ~waveSetGenerator();
-
-	  bool setWaveSetParameters(const std::string& templateKeyFileName);  ///< constructs template topology and reads wave set parameters from key file
-
-	  // wave set parameter accessors
-	  // !note! isospin and angular momentum quantum numbers are in units of hbar / 2
-	  void setIsospinRange         (const int maxI = 2,
-	                                const int minI = 0) { _isospinRange = boost::tuples::make_tuple(minI, maxI); }
-	  void setJRange               (const int maxJ = 6,
-	                                const int minJ = 0) { _JRange       = boost::tuples::make_tuple(minJ, maxJ); }
-	  void setLRange               (const int maxL = 6,
-	                                const int minL = 0) { _LRange       = boost::tuples::make_tuple(minL, maxL); }
-	  void setSRange               (const int maxS = 6,
-	                                const int minS = 0) { _SRange       = boost::tuples::make_tuple(minS, maxS); }
-	  void setIsobarBlackList      (const std::vector<std::string>& isobarList)
-	  { _isobarBlackList = isobarList; }
-	  void setIsobarWhiteList      (const std::vector<std::string>& isobarList)
-	  { _isobarWhiteList = isobarList; }
-	  void setAllowSpinExotics     (const bool   flag     ) { _allowSpinExotics      = flag;  }
-	  void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
-	  void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
-
-	  std::size_t generateWaveSet();  ///< generates wave set from template topology
-	  
-	  std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }  ///< returns wave set
-	  const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }  ///< returns wave set
-
-	  bool writeKeyFiles(const std::string& dirName                  = "",
-	                     const bool         newKeyFileNameConvention = false);  ///< writes key files for wave set into given directory
-
-	  virtual void reset();  ///< resets parameters to default values and clears wave set
-	  
-	  virtual std::ostream& print(std::ostream& out) const;  ///< prints parameters
-	  
-	  static bool debug() { return _debug; }                             ///< returns debug flag
-	  static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
-	  
-
-  private:
-
-	  const isobarDecayTopologyPtr createNewDecayTopology(const isobarDecayTopology&  parentDecay,
-	                                                      const isobarDecayVertexPtr& parentVertex,
-	                                                      const int                   L,
-	                                                      const int                   S,
-	                                                      const particleProperties&   isobar,
-	                                                      const int                   parentCharge);
+		// some typedefs for convenience
+		typedef isobarDecayTopology::nodeDesc    nodeDesc;
+		typedef isobarDecayTopology::adjIterator adjIterator;
 
 
-	  boost::tuples::tuple<int, int> _isospinRange;           ///< range of allowed isobar isospins
-	  boost::tuples::tuple<int, int> _JRange;                 ///< range of allowed isobar spins
-	  boost::tuples::tuple<int, int> _spinProjRange;          ///< range of allowed isobar spin projections
-	  int                            _reflectivity;           ///< if _useReflectivity is set, 0 means that both reflectivities are generated
-	  bool                           _useReflectivity;        ///< en/disables generation of waves with reflectivity
-	  bool                           _allowSpinExotics;       ///< flag that allows/forbids spin-exotics to be generated
-	  boost::tuples::tuple<int, int> _LRange;                 ///< range of allowed orbital angular momenta in isobar decays
-	  boost::tuples::tuple<int, int> _SRange;                 ///< range of allowed total intrinsic spins in isobar decays
-	  std::vector<std::string>       _isobarBlackList;        ///< list of particles not to be used as isobars
-	  std::vector<std::string>       _isobarWhiteList;        ///< list of particles to be used as isobars
-	  bool                           _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
-	  double                         _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
+		waveSetGenerator();
+		virtual ~waveSetGenerator();
 
-	  isobarDecayTopologyPtr _templateTopo;  ///< template topology
+		bool setWaveSetParameters(const std::string& templateKeyFileName);  ///< constructs template topology and reads wave set parameters from key file
 
-	  std::vector<isobarDecayTopology> _waveSet;  ///< generated wave set
-	  
-    static bool _debug;  ///< if set to true, debug messages are printed
+		// wave set parameter accessors
+		// !note! isospin and angular momentum quantum numbers are in units of hbar / 2
+		void setIsospinRange         (const int maxI = 2,
+		                              const int minI = 0) { _isospinRange = boost::tuples::make_tuple(minI, maxI); }
+		void setJRange               (const int maxJ = 6,
+		                              const int minJ = 0) { _JRange       = boost::tuples::make_tuple(minJ, maxJ); }
+		void setLRange               (const int maxL = 6,
+		                              const int minL = 0) { _LRange       = boost::tuples::make_tuple(minL, maxL); }
+		void setSRange               (const int maxS = 6,
+		                              const int minS = 0) { _SRange       = boost::tuples::make_tuple(minS, maxS); }
+		void setIsobarBlackList      (const std::vector<std::string>& isobarList)
+		{ _isobarBlackList = isobarList; }
+		void setIsobarWhiteList      (const std::vector<std::string>& isobarList)
+		{ _isobarWhiteList = isobarList; }
+		void setAllowSpinExotics     (const bool   flag     ) { _allowSpinExotics      = flag;  }
+		void setRequireMinIsobarMass (const bool   flag     ) { _requireMinIsobarMass  = flag;  }
+		void setForceDecayCheck      (const bool   flag     ) { _forceDecayCheck       = flag;  }
+		void setIsobarMassWindowSigma(const double sigma = 1) { _isobarMassWindowSigma = sigma; }
 
-  };
-	
+		std::size_t generateWaveSet();  ///< generates wave set from template topology
 
-  inline
-  std::ostream&
-  operator <<(std::ostream&           out,
-              const waveSetGenerator& gen)
-  {
-    return gen.print(out);
-  }
+		std::vector<isobarDecayTopology>&       waveSet()       { return _waveSet; }  ///< returns wave set
+		const std::vector<isobarDecayTopology>& waveSet() const { return _waveSet; }  ///< returns wave set
+
+		bool writeKeyFiles(const std::string& dirName                  = "",
+		                   const bool         newKeyFileNameConvention = false);  ///< writes key files for wave set into given directory
+
+		virtual void reset();  ///< resets parameters to default values and clears wave set
+
+		virtual std::ostream& print(std::ostream& out) const;  ///< prints parameters
+
+		static bool debug() { return _debug; }                             ///< returns debug flag
+		static void setDebug(const bool debug = true) { _debug = debug; }  ///< sets debug flag
+
+
+	private:
+
+		const isobarDecayTopologyPtr createNewDecayTopology(const isobarDecayTopology&  parentDecay,
+		                                                    const isobarDecayVertexPtr& parentVertex,
+		                                                    const int                   L,
+		                                                    const int                   S,
+		                                                    const particleProperties&   isobar,
+		                                                    const int                   parentCharge);
+
+		std::set<std::size_t> findBoseSymDecays() const;  ///< finds decays wave set that are related by Bose symmetrization and returns indices of superfluous waves
+
+		boost::tuples::tuple<int, int> _isospinRange;           ///< range of allowed isobar isospins
+		boost::tuples::tuple<int, int> _JRange;                 ///< range of allowed isobar spins
+		boost::tuples::tuple<int, int> _spinProjRange;          ///< range of allowed isobar spin projections
+		int                            _reflectivity;           ///< if _useReflectivity is set, 0 means that both reflectivities are generated
+		bool                           _useReflectivity;        ///< en/disables generation of waves with reflectivity
+		bool                           _allowSpinExotics;       ///< flag that allows/forbids spin-exotics to be generated
+		boost::tuples::tuple<int, int> _LRange;                 ///< range of allowed orbital angular momenta in isobar decays
+		boost::tuples::tuple<int, int> _SRange;                 ///< range of allowed total intrinsic spins in isobar decays
+		std::vector<std::string>       _isobarBlackList;        ///< list of particles not to be used as isobars
+		std::vector<std::string>       _isobarWhiteList;        ///< list of particles to be used as isobars
+		bool                           _requireMinIsobarMass;   ///< flag that en/disables cut on isobar mass
+		double                         _isobarMassWindowSigma;  ///< defines width of isobar mass window in units of full widths of parent and daughter resonances
+		bool                           _forceDecayCheck;        ///< enables strict decay checking. Particles without defined decays will be discarded
+
+		isobarDecayTopologyPtr _templateTopo;  ///< template topology
+
+		std::vector<isobarDecayTopology> _waveSet;  ///< generated wave set
+
+		static bool _debug;  ///< if set to true, debug messages are printed
+
+	};
+
+
+	inline
+	std::ostream&
+	operator <<(std::ostream&           out,
+	            const waveSetGenerator& gen)
+	{
+		return gen.print(out);
+	}
 
 
 } // namespace rpwa

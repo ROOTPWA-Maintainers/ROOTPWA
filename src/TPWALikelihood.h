@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Likelihood function Object to use with ROOT minimizers
@@ -134,9 +132,9 @@ public:
 	unsigned int ncalls(const functionCallEnum func = FDF) const
 	{ return _funcCallInfo[func].nmbCalls; }
 	double Ltime(const functionCallEnum func = FDF) const
-	{ return sum(_funcCallInfo[func].funcTime); }
+	{ return boost::accumulators::sum(_funcCallInfo[func].funcTime); }
 	double Ntime(const functionCallEnum func = FDF) const
-	{ return sum(_funcCallInfo[func].normTime); }
+	{ return boost::accumulators::sum(_funcCallInfo[func].normTime); }
 	//const integral& normInt() const { return _normInt; }
 
 	// modifiers

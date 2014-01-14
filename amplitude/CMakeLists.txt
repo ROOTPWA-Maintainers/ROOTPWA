@@ -19,13 +19,9 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
-#//      build file for amplitude library 
+#//      build file for amplitude library
 #//
 #//
 #// Author List:
@@ -35,19 +31,21 @@
 #//-------------------------------------------------------------------------
 
 
-add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
+message(STATUS "")
+message(STATUS ">>> Setting up 'amplitude' directory.")
 
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
-  ${Boost_INCLUDE_DIRS}
-  ${Libconfig_INCLUDE_DIR}
-  ${ROOT_INCLUDE_DIR}
-  ${PWA2000_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+	${PYTHON_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${PWA2000_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
@@ -79,19 +77,23 @@ set(SOURCES
 
 # ROOT dictionary
 set(ROOTPWAAMP_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaAmpDict.cc)
+set(ROOTPWAAMP_DICT_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 root_generate_dictionary(
-  "${ROOTPWAAMP_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
+	"${ROOTPWAAMP_DICTIONARY}"
+	"${ROOTPWAAMP_DICT_INCLUDE_DIRS}"
 	"waveDescription.h;amplitudeTreeLeaf.h;ampIntegralMatrix.h"
-  "rootPwaAmpLinkDef.h"
-  )
+	"rootPwaAmpLinkDef.h"
+	)
 set(SOURCES ${SOURCES} ${ROOTPWAAMP_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwaAmp")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-	"${BOOST_LIBS}"
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
@@ -106,10 +108,6 @@ make_executable(ampDiff            ampDiff.cc            ${THIS_LIB})
 make_executable(createGraphDiagram createGraphDiagram.cc ${THIS_LIB})
 make_executable(generateWaveSet    generateWaveSet.cc    ${THIS_LIB})
 
-make_executable(testParticle         testParticle.cc         ${THIS_LIB})
-make_executable(testDecayTopology    testDecayTopology.cc    ${THIS_LIB})
-make_executable(testWaveDescription  testWaveDescription.cc  ${THIS_LIB})
-make_executable(testWaveSetGenerator testWaveSetGenerator.cc ${THIS_LIB})
-make_executable(testAmplitude        testAmplitude.cc        ${THIS_LIB})
-make_executable(testAmplitudeTree    testAmplitudeTree.cc    ${THIS_LIB})
-make_executable(testIntegral         testIntegral.cc         ${THIS_LIB})
+
+# build tests
+add_subdirectory(test)

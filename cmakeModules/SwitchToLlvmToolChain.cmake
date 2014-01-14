@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
 #//      switches to Clang/LLVM toolchain
@@ -38,7 +34,7 @@
 #//-------------------------------------------------------------------------
 
 
-set(LLVM_BIN_DIR "/opt/llvm/build/bin")
+set(LLVM_BIN_DIR       "/opt/llvm/build/bin"    )
 set(CMAKE_C_COMPILER   "${LLVM_BIN_DIR}/clang"  )
 set(CMAKE_CXX_COMPILER "${LLVM_BIN_DIR}/clang++")
 

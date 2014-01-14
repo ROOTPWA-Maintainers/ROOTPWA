@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //
@@ -46,7 +42,7 @@
 //        be divided by the correct power of (2) pi (the "S.U. Chung"
 //        already contains a factor (4 pi)^(n - 1) from (trivial)
 //        integration over all angles)
-// 
+//
 // based on:
 // GENBOD (CERNLIB W515), see F. James, "Monte Carlo Phase Space", CERN 68-15 (1968)
 // NUPHAZ, see M. M. Block, "Monte Carlo phase space evaluation", Comp. Phys. Commun. 69, 459 (1992)
@@ -111,14 +107,14 @@ namespace rpwa {
 
     nBodyPhaseSpaceGen();
     virtual ~nBodyPhaseSpaceGen();
-  
+
     //----------------------------------------------------------------------------
     // generator setup
     /// sets decay constants and prepares internal variables
-    bool setDecay(std::vector<double>& daughterMasses);  // daughter particle masses
+    bool setDecay(const std::vector<double>& daughterMasses);  // daughter particle masses
     bool setDecay(const unsigned int   nmbOfDaughters,   // number of daughter particles
 		  const double*        daughterMasses);  // array of daughter particle masses
-  
+
     void         setSeed(const unsigned int seed) { _rnd.setSeed(seed); }  ///< sets seed of random number generator
     unsigned int seed   ()                        { return _rnd.seed(); }  ///< returns seed of random number generator
     double       random ()                        { return _rnd.pick(); }  ///< returns number from internal random generator; intended for higher-level generators
@@ -146,7 +142,7 @@ namespace rpwa {
 
     /// randomly choses the (n - 1) polar and (n - 1) azimuthal angles in the respective (i + 1)-body RFs
     inline void pickAngles();
-		
+
     /// \brief calculates full event kinematics from the effective masses of the (i + 1)-body systems and the Lorentz vector of the decaying system
     /// uses the break-up momenta calculated by calcWeight() and angles from pickAngles()
     void calcEventKinematics(const TLorentzVector& nBody);  // Lorentz vector of n-body system in lab frame
@@ -165,9 +161,9 @@ namespace rpwa {
 			 NUPHAZ    = 2,   // weight used in nuphaz
 			 GENBOD    = 3,   // default weight used in genbod (gives wrong mass dependence)
 			 FLAT      = 4,   // uniform mass distribution; warning: produces distorted angular distribution
-			 IMPORTANCE = 5}; // like S_U_CHUNG but with importance sampling in (n-1) fs particle state (single breitwigner) 
+			 IMPORTANCE = 5}; // like S_U_CHUNG but with importance sampling in (n-1) fs particle state (single breitwigner)
     void           setWeightType(const weightTypeEnum weightType) { _weightType = weightType; }  ///< selects formula used for weight calculation
-  
+
     weightTypeEnum weightType   () const                          { return _weightType;       }  ///< returns formula used for weight calculation
 
 
@@ -243,21 +239,21 @@ namespace rpwa {
     // wrapper class for random number generator
     class rndGen {
 
-    
+
     public:
-    
+
       rndGen()                        { }
       rndGen(const unsigned int seed) { setSeed(seed); }
       virtual ~rndGen()               { }
-    
+
       unsigned int seed   ()                  { return _rndGen.GetSeed(); }
       void         setSeed(unsigned int seed) { _rndGen.SetSeed(seed);    }
       double       pick   ()                  { return _rndGen.Rndm();    }
-    
+
     private:
-    
+
       TRandom3 _rndGen;
-    
+
     };
 
     rndGen _rnd;  ///< random number generator instance
@@ -280,7 +276,7 @@ rpwa::nBodyPhaseSpaceGen::pickAngles()
 }
 
 
-inline 
+inline
 bool
 rpwa::nBodyPhaseSpaceGen::eventAccepted(const double maxWeight)  // if maxWeight > 0, given value is used as maximum weight, otherwise _maxWeight
 {

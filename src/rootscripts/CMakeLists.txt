@@ -19,13 +19,13 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 550                         $: revision of last commit
-#// $Author:: sneubert                 $: author of last commit
-#// $Date:: 2010-12-10 15:16:56 +0100 #$: date of last commit
 #//
 #// Description:
 #//      build file for RootPwaScripts library
+#//
+#// !!! BG: this is to some extend a misuse of these scripts. they
+#//         were never intended to be (re)used outside of the CINT
+#//         environment. this should be reworked.
 #//
 #//
 #// Author List:
@@ -36,19 +36,18 @@
 #//
 #//-------------------------------------------------------------------------
 
- # gSystem->Load("libRootPwa.so");
- # gSystem->AddIncludePath("-I$ROOTPWA/utilities");
- # gSystem->AddIncludePath("-I$ROOTPWA/src");
+
+message(STATUS "")
+message(STATUS ">>> Setting up 'rootscripts' directory.")
+
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-#  ${Boost_INCLUDE_DIRS}
-  ${ROOT_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
-# ${CUDA_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
+	${ROOT_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
@@ -62,9 +61,9 @@ set(SOURCES
 	plotAllIntensities.C
 	plotSpinTotals.C
 	# plot4.C
-)
+	)
 
-	    
+
 # ROOT dictionary
 #set(ROOTPWA_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaDict.cc)
 #root_generate_dictionary(
@@ -78,7 +77,9 @@ set(SOURCES
 
 # library
 set(THIS_LIB "RootPwaScripts")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOT_LIBS}"
-  "${ROOTPWA_LIBS}"
-)
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${ROOTPWA_LIBS}"
+	)

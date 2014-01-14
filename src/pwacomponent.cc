@@ -1,6 +1,4 @@
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Implementation of class pwacomponent
@@ -27,13 +25,34 @@
 
 using namespace std;
 
+
+
+rpwa::pwachannel::pwachannel(const rpwa::pwachannel& ch) /// cp ctor
+  : _C(ch._C),_ps(ch._ps){
+  //if(ch._sqrtps!=NULL)_sqrtps=(TGraph*)ch._sqrtps->Clone();
+  //else _sqrtps=NULL;
+}
+
+
+
+
 rpwa::pwacomponent::pwacomponent(const string& name,
 				 double m0, double gamma,
 				 const map<string,pwachannel >& channels)
   : _name(name), _m0(m0), _m02(m0*m0),_m0min(0),_m0max(5000),_gamma(gamma),_gammamin(0),_gammamax(1000),_fixm(false),_fixgamma(false), _constWidth(false),_channels(channels)
-{}
+{
+  // fill vector with channel for random access
+  map<string,pwachannel >::iterator it=_channels.begin();
+  while(it!=_channels.end()){
+    _vchannels.push_back(&(it->second)); // carefull this is dangerous
+    // refactor to vector only use as soon as possible!
+    _channelname.push_back(it->first);
+    ++it;
+  }
+}
 
 
+ 
 
 void
 rpwa::pwacomponent::setCouplings(const double* par){
@@ -157,8 +176,21 @@ rpwa::pwacompset::setPS(TF1* fPS){
   _numpar+=_freePSpar.size();
 }
 
+
+// performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
+void 
+ rpwa::pwacompset::doMapping(){
+  vector<string> wlist=wavelist();
+  for(unsigned int i=0; i<wlist.size();++i){
+    // check which components this waves belongs to and which channel they are
+    _compChannel.push_back(getCompChannel(wlist[i]));
+  }
+}
+
+
+
 double 
-rpwa::pwacompset::getFreePSPar(unsigned int i){
+rpwa::pwacompset::getFreePSPar(unsigned int i) const {
   if(i<_freePSpar.size())
     return _phasespace->GetParameter(_freePSpar[i]);
   else return 0;
@@ -166,7 +198,7 @@ rpwa::pwacompset::getFreePSPar(unsigned int i){
 
 
 void 
-rpwa::pwacompset::getFreePSLimits(unsigned int i, double& lower, double& upper){
+rpwa::pwacompset::getFreePSLimits(unsigned int i, double& lower, double& upper) const {
   if(i<_freePSpar.size()){
     _phasespace->GetParLimits(_freePSpar[i],lower,upper);
   }
@@ -268,10 +300,54 @@ rpwa::pwacompset::overlap(const std::string& wave1,
   return rho1*conj(rho2)*_phasespace->Eval(m);
 }
 
+std::complex<double>
+rpwa::pwacompset::overlap(unsigned int wave1,
+			  unsigned int wave2,
+			  double m){
+    // loop over all components and pick up those that contribute to this channels
+  complex<double> rho1(0,0);
+  complex<double> rho2(0,0);
+
+  // get entry from mapping
+  vector<pair<unsigned int, unsigned int> > cc1=_compChannel[wave1];
+  vector<pair<unsigned int, unsigned int> > cc2=_compChannel[wave2];
+  unsigned int nc1=cc1.size();
+  unsigned int nc2=cc2.size();
+
+  for(unsigned int ic1=0;ic1<nc1;++ic1){
+    unsigned int icomp=cc1[ic1].first;
+    unsigned int ichan=cc1[ic1].second;
+    rho1+=_comp[icomp]->val(m)*_comp[icomp]->getChannel(ichan).CsqrtPS(m);
+  }
+ for(unsigned int ic2=0;ic2<nc2;++ic2){
+    unsigned int icomp=cc2[ic2].first;
+    unsigned int ichan=cc2[ic2].second;
+    rho2+=_comp[icomp]->val(m)*_comp[icomp]->getChannel(ichan).CsqrtPS(m);
+  }
+  return rho1*conj(rho2)*_phasespace->Eval(m);
+}
+
+
+std::vector<std::pair<unsigned int,unsigned int> >
+rpwa::pwacompset::getCompChannel(const std::string& wave) const {
+  cerr << "Channel-mapping for wave " << wave << endl;
+  std::vector<std::pair<unsigned int,unsigned int> > result;
+  for(unsigned int ic=0;ic<n();++ic){
+    // loop over channels of component and see if wave is there
+    unsigned int nch=_comp[ic]->numChannels();
+    for(unsigned int ich=0;ich<nch;++ich){
+      if(_comp[ic]->getChannelName(ich)==wave){
+	result.push_back(pair<unsigned int,unsigned int>(ic,ich));
+	cerr << "     comp("<<ic<<"): " << _comp[ic]->name() << "  ch:"<<ich<<endl;
+      }
+    } // end loop over channels
+  } // end loop over components
+  return result;
+}
 
 std::ostream& rpwa::operator<< (std::ostream& o,const rpwa::pwacomponent& c){
   o << c.name() << endl
-    << "Mass= " << c.m0() << "   Width="<< c.gamma() << endl
+    << "Mass= " << c.m0() << "   Width="<< c.gamma() << "     ConstWidth="<< c. constWidth() << endl
     << "Decay modes: " << endl;
   std::map<std::string,pwachannel >::const_iterator it=c.channels().begin();
   while(it!=c.channels().end()){
@@ -281,6 +357,11 @@ std::ostream& rpwa::operator<< (std::ostream& o,const rpwa::pwacomponent& c){
 
   return o;
 }
+
+
+
+
+
 
 std::ostream& rpwa::operator<< (std::ostream& out,const rpwa::pwacompset& cs){
   for(unsigned int i=0;i<cs.n();++i){

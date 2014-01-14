@@ -170,7 +170,7 @@ F(const int    n,
     ret = sqrt( (12746.0 * pow(z,4.0))/( pow(z * z - 45.0 * z + 105.0,2.0) + 25.0 * z * pow(2.0 * z - 21.0,2.0)));
     break;
   case 5:
-    ret =  sqrt(z*z*z*z*z/(893025.0 +99225.0*z +6300.0*z*z +315.0*z*z*z +15.0*z*z*z*z +z*z*z*z*z));
+	  ret = sqrt((998881 * z*z*z*z*z)/(893025.0 +99225.0*z +6300.0*z*z +315.0*z*z*z +15.0*z*z*z*z +z*z*z*z*z));
     break;
   default:
     cerr << "Blatt-Weisskopf called for undefined L = " << n/2 << endl;
@@ -195,11 +195,11 @@ q(const double M,
   const double m1,
   const double m2)
 {
-  double lam = lambda(M * M, m1 * m1, m2 * m2);
-  complex<double> ret;
+  const double lam = lambda(M * M, m1 * m1, m2 * m2);
+  const double ret = sqrt(fabs(lam / (4 * M * M)));
   if (lam < 0)
-    return complex<double>(0.0, sqrt(fabs(lam / (4 * M * M))));
-  return complex<double>(sqrt(lam / (4 * M * M)), 0.0 );
+    return complex<double>(0.0, ret);
+  return complex<double>(ret, 0.0);
 }
 
 

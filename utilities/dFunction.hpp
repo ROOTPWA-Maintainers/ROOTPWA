@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      optimized Wigner d-function d^j_{m n}(theta) with caching
@@ -58,9 +54,9 @@ namespace rpwa {
 
 	template<typename T>
 	class dFunctionCached {
-	
+
 	public:
-			
+
 		struct cacheEntryType {
 
 			cacheEntryType()
@@ -92,15 +88,15 @@ namespace rpwa {
 			}
 			if ((j < 0) or (rpwa::abs(m) > j) or (rpwa::abs(n) > j)) {
 				printErr << "illegal argument for Wigner d^{J = " << 0.5 * j << "}"
-				         << "_{M = " << 0.5 * m << ", " << "M' = " << 0.5 * n << "}"
-				         << "(theta = " << theta << "). aborting." << std::endl;
+				         << "_{M = " << 0.5 * m << ", M' = " << 0.5 * n << "}"
+				         << "(theta = " << maxPrecision(theta) << "). aborting." << std::endl;
 				throw;
 			}
 
 			// trivial case
 			if (j == 0)
 				return 1;
-			
+
 			// swap spin projections for negative angle
 			int _m        = m;
 			int _n        = n;
@@ -138,7 +134,7 @@ namespace rpwa {
 				const T   constTerm = powMinusOne(jpm) * rpwa::sqrt(kk);
 				if (cacheEntry)
 					cacheEntry->constTerm = constTerm;
-				
+
 				T         sumTerm = 0;
 				const int mpn     = (_m + _n) / 2;
 				const int kMin    = std::max(0,   mpn);
@@ -185,7 +181,7 @@ namespace rpwa {
 					}
 			return size;
 		}
-    
+
 
 	private:
 
@@ -226,8 +222,8 @@ namespace rpwa {
 	{
 		const T dFuncVal = dFunctionCached<T>::instance()(j, m, n, theta);
 		if (debug)
-			printDebug << "Wigner d^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
-			           << "M' = " << 0.5 * n << "}" << "(theta = " << theta << ") = "
+			printDebug << "Wigner d^{J = " << 0.5 * j << "}_{M = " << 0.5 * m << ", "
+			           << "M' = " << 0.5 * n << "}(theta = " << maxPrecision(theta) << ") = "
 			           << maxPrecision(dFuncVal) << std::endl;
 		return dFuncVal;
 	}
@@ -249,12 +245,12 @@ namespace rpwa {
 			                    * rpwa::exp(complexT(0, ((T)m / 2) * phi)) * dFunction(l, m, 0, theta);
 	  if (debug)
 		  printDebug << "spherical harmonic Y_{l = " << 0.5 * l << "}^{m = " << 0.5 * m << "}"
-		             << "(phi = " << phi << ", theta = " << theta << ") = "
+		             << "(phi = " << maxPrecision(phi) << ", theta = " << maxPrecision(theta) << ") = "
 		             << maxPrecisionDouble(YVal) << std::endl;
     return YVal;
   }
-  
-  
+
+
 	template<typename complexT>
 	inline
 	complexT
@@ -270,13 +266,14 @@ namespace rpwa {
 		const T        arg      = ((T)m / 2) * alpha + ((T)n / 2) * gamma;
 		const complexT DFuncVal = rpwa::exp(complexT(0, -arg)) * dFunction(j, m, n, beta);
 		if (debug)
-			printDebug << "Wigner D^{J = " << 0.5 * j << "}" << "_{M = " << 0.5 * m << ", "
-			           << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
-			           << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+			printDebug << "Wigner D^{J = " << 0.5 * j << "}_{M = " << 0.5 * m << ", "
+			           << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha)
+			           << ", beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma)
+			           << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
 		return DFuncVal;
 	}
-	
-	
+
+
 	template<typename complexT>
 	inline
 	complexT
@@ -290,9 +287,10 @@ namespace rpwa {
 	{
 		const complexT DFuncVal = conj(DFunction<complexT>(j, m, n, alpha, beta, gamma, false));
 		if (debug)
-			printDebug << "Wigner D^{J = " << 0.5 * j << " *}" << "_{M = " << 0.5 * m << ", "
-			           << "M' = " << 0.5 * n << "}" << "(alpha = " << alpha << ", beta = " << beta << ", "
-			           << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+			printDebug << "Wigner D^{J = " << 0.5 * j << "}*_{M = " << 0.5 * m << ", "
+			           << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha)
+			           << ", beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma)
+			           << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
 		return DFuncVal;
 	}
 
@@ -317,7 +315,7 @@ namespace rpwa {
 	    if (reflFactor == +1) {
 		    DFuncVal = complexT(0);
 		    // printWarn << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-		    //           << "refl = " << sign(refl) << "}" << "_{M = " << 0.5 * m << ", "
+		    //           << "refl = " << sign(refl) << "}_{M = " << 0.5 * m << ", "
 		    //           << "M' = " << 0.5 * n << "}(alpha, beta, gamma) is always zero." << endl;
 	    } else
 		    DFuncVal = DFunction<complexT>(j, 0, n, alpha, beta, gamma, false);
@@ -328,13 +326,14 @@ namespace rpwa {
     }
     if (debug)
 	    printDebug << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-	               << "refl = " << sign(refl) << "}" << "_{M = " << 0.5 * m << ", "
-	               << "M' = " << 0.5 * n << "}(alpha = " << alpha << ", " << "beta = " << beta << ", "
-	               << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+	               << "refl = " << sign(refl) << "}_{M = " << 0.5 * m << ", "
+	               << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha) << ", "
+	               << "beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma)
+	               << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
     return DFuncVal;
   }
 
-  
+
 	template<typename complexT>
   inline
   complexT
@@ -352,13 +351,14 @@ namespace rpwa {
 	                                                         alpha, beta, gamma, false));
     if (debug)
 	    printDebug << "Wigner D^{J = " << 0.5 * j << ", P = " << sign(P) << ", "
-	               << "refl = " << sign(refl) << " *}" << "_{M = " << 0.5 * m << ", "
-	               << "M' = " << 0.5 * n << "}(alpha = " << alpha << ", " << "beta = " << beta << ", "
-	               << "gamma = " << gamma << ") = " << maxPrecisionDouble(DFuncVal) << std::endl;
+	               << "refl = " << sign(refl) << "}*_{M = " << 0.5 * m << ", "
+	               << "M' = " << 0.5 * n << "}(alpha = " << maxPrecision(alpha) << ", "
+	               << "beta = " << maxPrecision(beta) << ", gamma = " << maxPrecision(gamma) << ") = "
+	               << maxPrecisionDouble(DFuncVal) << std::endl;
     return DFuncVal;
   }
 
-  
+
 }  // namespace rpwa
 
 

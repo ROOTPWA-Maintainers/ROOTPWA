@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      checks validity of amplitude specified by key file by
@@ -52,6 +48,8 @@
 #include "particleDataTable.h"
 #include "evtTreeHelper.h"
 #include "waveDescription.h"
+#include "isobarHelicityAmplitude.h"
+#include "isobarCanonicalAmplitude.h"
 
 
 using namespace std;
@@ -143,7 +141,7 @@ bool testAmplitude(TTree*              inTree,
 		printWarn << "no amplitude were calculated" << endl;
 		return false;
 	}
-  
+
 	// calculate amplitudes for parity transformed decay daughters
 	vector<complex<double> > ampSpaceInvValues;
 	amplitude->enableSpaceInversion(true);
@@ -153,7 +151,7 @@ bool testAmplitude(TTree*              inTree,
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
-  
+
 	// calculate amplitudes for decay daughters reflected through production plane
 	vector<complex<double> > ampReflValues;
 	amplitude->enableSpaceInversion(false);
@@ -164,7 +162,7 @@ bool testAmplitude(TTree*              inTree,
 		printWarn << "problems reading tree" << endl;
 		return false;
 	}
-  
+
 	if (   (ampValues.size() != ampSpaceInvValues.size())
 	    or (ampValues.size() != ampReflValues.size    ())) {
 		printWarn << "different number of amplitudes for space inverted "
@@ -191,7 +189,7 @@ bool testAmplitude(TTree*              inTree,
 		s.precision(nmbDigits);
 		s.setf(ios_base::scientific, ios_base::floatfield);
 		if (debug) {
-			printDebug << "amplitude " << i << ": " << endl;
+			printDebug << "amplitude [" << i << "]: " << endl;
 			s << "        ampl.            = " << ampValues[i];
 			if (ampZero)
 				s << " <! zero amplitude";
@@ -207,9 +205,12 @@ bool testAmplitude(TTree*              inTree,
 			                  ampValues[i].real() / ampSpaceInvValues[i].real() : 0,
 			                  (ampSpaceInvValues[i].imag() != 0) ?
 			                  ampValues[i].imag() / ampSpaceInvValues[i].imag() : 0);
+		bool spaceInvAmpRatioOk = true;
 		if (   (fabs(spaceInvRatio.real()) - 1 > maxDelta)
-		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta))
+		    or (fabs(spaceInvRatio.imag()) - 1 > maxDelta)) {
+			spaceInvAmpRatioOk = false;
 			++countAmpRatioNotOk;
+		}
 		const int spaceInvEigenValue = decayTopo->spaceInvEigenValue();
 		bool      spaceInvEigenValOk = true;
 		if (   (    (spaceInvRatio.real() != 0)
@@ -221,9 +222,11 @@ bool testAmplitude(TTree*              inTree,
 		}
 		if (debug) {
 			s.str("");
-			s << "Re[ampl.] / Re[ampl.] space inv. = " << setw(23) << spaceInvRatio.real() << ", "
-			  << "Im[ampl.] / Im[ampl.] space inv. = " << setw(23) << spaceInvRatio.imag();
+			s << "Re[ampl.] / Re[ampl. space inv.] = " << setw(23) << spaceInvRatio.real() << ", "
+			  << "Im[ampl.] / Im[ampl. space inv.] = " << setw(23) << spaceInvRatio.imag();
 			cout << "        " << s.str();
+			if (not spaceInvAmpRatioOk)
+				cout << " <! larger than " << maxDelta;
 			if (not spaceInvEigenValOk)
 				cout << " <! eigenvalue != " << spaceInvEigenValue;
 			cout << endl;
@@ -235,9 +238,12 @@ bool testAmplitude(TTree*              inTree,
 			                  ampValues[i].real() / ampReflValues[i].real() : 0,
 			                  (ampReflValues[i].imag() != 0) ?
 			                  ampValues[i].imag() / ampReflValues[i].imag() : 0);
+		bool reflAmpRatioOk = true;
 		if (   (fabs(reflRatio.real()) - 1 > maxDelta)
-		    or (fabs(reflRatio.imag()) - 1 > maxDelta))
+	      or (fabs(reflRatio.imag()) - 1 > maxDelta)) {
+			reflAmpRatioOk = false;
 			++countAmpRatioNotOk;
+		}
 		const int reflEigenValue = decayTopo->reflectionEigenValue();
 		bool      reflEigenValOk = true;
 		if (   (    (reflRatio.real() != 0)
@@ -249,9 +255,11 @@ bool testAmplitude(TTree*              inTree,
 		}
 		if (debug) {
 			s.str("");
-			s << "Re[ampl.] / Re[ampl.] refl.      = " << setw(23) << reflRatio.real() << ", "
-			  << "Im[ampl.] / Im[ampl.] refl.      = " << setw(23) << reflRatio.imag();
+			s << "Re[ampl.] / Re[ampl. refl.]      = " << setw(23) << reflRatio.real() << ", "
+			  << "Im[ampl.] / Im[ampl. refl.]      = " << setw(23) << reflRatio.imag();
 			cout << "        " << s.str();
+			if (not reflAmpRatioOk)
+				cout << " <! larger than " << maxDelta;
 			if (not reflEigenValOk)
 				cout << " <! eigenvalue != " << reflEigenValue;
 			cout << endl;
@@ -268,7 +276,7 @@ bool testAmplitude(TTree*              inTree,
 		keyFileErrors.push_back(s.str());
 		success = false;
 	}
-	if (countSpaceInvEigenValNotOk > 0) { 
+	if (countSpaceInvEigenValNotOk > 0) {
 		keyFileErrors.push_back("wrong space inversion eigenvalue");
 		success = false;
 	}
@@ -286,7 +294,7 @@ main(int    argc,
 {
 	printCompilerInfo();
 	printLibraryInfo ();
-	printSvnVersion  ();
+	printGitHash     ();
 	cout << endl;
 
 	// parse command line options
@@ -333,7 +341,8 @@ main(int    argc,
 	if (debug) {
 		waveDescription::setDebug(true);
 		//particleProperties::setDebug(true);
-		//isobarHelicityAmplitude::setDebug(true);
+		isobarHelicityAmplitude::setDebug(true);
+		isobarCanonicalAmplitude::setDebug(true);
 		//massDependence::setDebug(true);
 	}
 
@@ -430,5 +439,5 @@ main(int    argc,
 		}
 	}
 	exit(1);
-  
+
 }

@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      container class for particle properties
@@ -36,15 +32,17 @@
 
 
 #include <cstdlib>
+#include <iterator>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "spinUtils.hpp"
 #include "conversionUtils.hpp"
 #include "particleDataTable.h"
 #include "particleProperties.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 using namespace boost;
@@ -52,7 +50,52 @@ using namespace boost;
 
 bool particleProperties::_debug = false;
 
-	
+
+particleProperties::decayMode::decayMode(const multiset<string>& daughters,
+                                         const int               L,
+                                         const int               S)
+	: _daughters(daughters),
+	  _L        (L),
+	  _S        (S)
+{ }
+
+
+particleProperties::decayMode::~decayMode()
+{ }
+
+
+bool
+particleProperties::decayMode::operator ==(const decayMode& rhsDecay) const
+{
+	if (_daughters != rhsDecay._daughters)
+		return false;
+	// compare L and S only if they are defined in left- and right-hand side
+	if ((_L != -1) and (rhsDecay._L != -1) and (_L != rhsDecay._L))
+		return false;
+	if ((_S != -1) and (rhsDecay._S != -1) and (_S != rhsDecay._S))
+		return false;
+	return true;
+}
+
+
+ostream&
+particleProperties::decayMode::print(ostream& out) const
+{
+	copy(_daughters.begin(), _daughters.end(), ostream_iterator<string>(out, "  "));
+	if (_L != -1)
+		out << "[L = " << spinQn(_L);
+	if (_S != -1) {
+		if (_L != -1)
+			out << ", ";
+		else
+			out << "[";
+		out << "S = " << spinQn(_S) << "]";
+	} else if (_L != -1)
+		out << "]";
+	return out;
+}
+
+
 particleProperties::particleProperties()
 	: _name        (""),
 	  _antiPartName(""),
@@ -68,7 +111,8 @@ particleProperties::particleProperties()
 	  _G           (0),
 	  _J           (0),
 	  _P           (0),
-	  _C           (0)
+	  _C           (0),
+	  _decayModes  ()
 { }
 
 
@@ -91,7 +135,8 @@ particleProperties::particleProperties(const std::string& partName,
 	  _baryonNmb   (0),
 	  _strangeness (0),
 	  _charm       (0),
-	  _beauty      (0)
+	  _beauty      (0),
+	  _decayModes  ()
 {
 	setName   (partName);
 	setIsospin(isospin);
@@ -125,61 +170,52 @@ particleProperties::operator =(const particleProperties& partProp)
 		_J            = partProp._J;
 		_P            = partProp._P;
 		_C            = partProp._C;
+		_decayModes   = partProp._decayModes;
 	}
 	return *this;
 }
 
 
-bool
-rpwa::operator ==(const particleProperties& lhsProp,
-                  const particleProperties& rhsProp)
-{
-	return (    (lhsProp.name()         == rhsProp.name()        )
-	        and (lhsProp.antiPartName() == rhsProp.antiPartName())
-	        and (lhsProp.charge()       == rhsProp.charge()      )
-	        and (lhsProp.mass()         == rhsProp.mass()        )
-	        and (lhsProp.width()        == rhsProp.width()       )
-	        and (lhsProp.baryonNmb()    == rhsProp.baryonNmb()   )
-	        and (lhsProp.isospin()      == rhsProp.isospin()     )
-	        and (lhsProp.strangeness()  == rhsProp.strangeness() )
-	        and (lhsProp.charm()        == rhsProp.charm()       )
-	        and (lhsProp.beauty()       == rhsProp.beauty()      )
-	        and (lhsProp.G()            == rhsProp.G()           )
-	        and (lhsProp.J()            == rhsProp.J()           )
-	        and (lhsProp.P()            == rhsProp.P()           )
-	        and (lhsProp.C()            == rhsProp.C()           ));
+namespace rpwa {
+
+	// selector string can contain any of the following:
+	// I, G, J, P, C, strangeness, charm, beauty, baryonNmb, or allQn
+	bool
+	operator ==(const particleProperties&               lhsProp,
+	            const pair<particleProperties, string>& rhsPropSel)
+	{
+		const particleProperties& rhsProp    = rhsPropSel.first;
+		const string&             selector   = rhsPropSel.second;
+		const bool                checkAllQn = (selector.find("allQn") != string::npos);
+		return (    (   ((selector.find("charge")      == string::npos) and not checkAllQn)
+		             or (lhsProp.charge()              == rhsProp.charge()))
+		        and (   ((selector.find("baryonNmb")   == string::npos) and not checkAllQn)
+		             or (lhsProp.baryonNmb()           == rhsProp.baryonNmb()))
+		        and (   ((selector.find("I")           == string::npos) and not checkAllQn)
+		             or (lhsProp.isospin()             == rhsProp.isospin()))
+		        and (   ((selector.find("strangeness") == string::npos) and not checkAllQn)
+		             or (lhsProp.strangeness()         == rhsProp.strangeness()))
+		        and (   ((selector.find("charm")       == string::npos) and not checkAllQn)
+		             or (lhsProp.charm()               == rhsProp.charm()))
+		        and (   ((selector.find("beauty")      == string::npos) and not checkAllQn)
+		             or (lhsProp.beauty()              == rhsProp.beauty()))
+		        and (   ((selector.find("G")           == string::npos) and not checkAllQn)
+		             or (lhsProp.G()                   == rhsProp.G()))
+		        and (   ((selector.find("J")           == string::npos) and not checkAllQn)
+		             or (lhsProp.J()                   == rhsProp.J()))
+		        and (   ((selector.find("P")           == string::npos) and not checkAllQn)
+		             or (lhsProp.P()                   == rhsProp.P()))
+		        and (   ((selector.find("C")           == string::npos) and not checkAllQn)
+		             or (lhsProp.C()                   == rhsProp.C())));
+	}
+
 }
 
 
-// selector string can contain any of the following:
-// I, G, J, P, C, strangeness, charm, beauty, baryonNmb, or allQn
-bool 
-rpwa::operator ==(const particleProperties&               lhsProp,
-                  const pair<particleProperties, string>& rhs)
+unsigned int
+particleProperties::geantId() const
 {
-	const particleProperties& rhsProp    = rhs.first;
-	const string&             selector   = rhs.second;
-	const bool                checkAllQn = (selector.find("allQn") != string::npos);
-	return (    (   ((selector.find("charge") == string::npos) and not checkAllQn)
-	             or (lhsProp.charge()         == rhsProp.charge()))
-          and (   ((selector.find("baryonNmb") == string::npos) and not checkAllQn)
-	             or (lhsProp.baryonNmb()         == rhsProp.baryonNmb()))
-	        and (   ((selector.find("I") == string::npos) and not checkAllQn)
-	             or (lhsProp.isospin()   == rhsProp.isospin()))
-	        and (   ((selector.find("strangeness") == string::npos) and not checkAllQn)
-	             or (lhsProp.strangeness()         == rhsProp.strangeness()))
-	        and (   ((selector.find("charm") == string::npos) and not checkAllQn)
-	             or (lhsProp.charm()         == rhsProp.charm()))
-	        and (   ((selector.find("beauty") == string::npos) and not checkAllQn)
-	             or (lhsProp.beauty()         == rhsProp.beauty()))
-	        and (   ((selector.find("G") == string::npos) and not checkAllQn)
-	             or (lhsProp.G()         == rhsProp.G()))
-	        and (   ((selector.find("J") == string::npos) and not checkAllQn)
-	             or (lhsProp.J()         == rhsProp.J()))
-	        and (   ((selector.find("P") == string::npos) and not checkAllQn)
-	             or (lhsProp.P()         == rhsProp.P()))
-	        and (   ((selector.find("C") == string::npos) and not checkAllQn)
-	             or (lhsProp.C()         == rhsProp.C())));
+	return particleDataTable::geantIdFromParticleName(this->name());
 }
 
 
@@ -187,6 +223,13 @@ bool
 particleProperties::isSpinExotic() const
 {
 	return (isMeson() and igjpIsExotic(isospin(), G(), J(), P()));
+}
+
+
+bool
+particleProperties::hasDecay(const decayMode& decay) const
+{
+  return find(_decayModes.begin(), _decayModes.end(), decay) != _decayModes.end();
 }
 
 
@@ -242,25 +285,92 @@ particleProperties::setIGJPC(const int isospin,
 
 
 particleProperties
-particleProperties::antiPartProperties() const
+particleProperties::antiPartProperties(const bool convertDecaysModes) const
 {
 	particleProperties antiPartProp;
-	antiPartProp.setName        (_antiPartName);
-	antiPartProp.setAntiPartName(_name        );
-	antiPartProp.setCharge      (-_charge     );
-	antiPartProp.setMass        (_mass        );
-	antiPartProp.setWidth       (_width       );
-	antiPartProp.setBaryonNmb   (-_baryonNmb  );
-	antiPartProp.setIsospin     (_isospin     );
-	antiPartProp.setStrangeness (-_strangeness);
-	antiPartProp.setCharm       (-_charm      );
-	antiPartProp.setBeauty      (-_beauty     );
-	antiPartProp.setG           (_G           );
-	antiPartProp.setJ           (_J           );
-	antiPartProp.setP           (_P           );
-	antiPartProp.setC           (_C           );
+	if (isItsOwnAntiPart()) {
+		if (convertDecaysModes)
+			return *this;
+		else {
+			antiPartProp = *this;
+			antiPartProp.deleteDecayModes();
+		}
+	} else {
+		antiPartProp.setName        (_antiPartName);
+		antiPartProp.setAntiPartName(_name        );
+		antiPartProp.setCharge      (-_charge     );
+		antiPartProp.setMass        (_mass        );
+		antiPartProp.setWidth       (_width       );
+		antiPartProp.setBaryonNmb   (-_baryonNmb  );
+		antiPartProp.setIsospin     (_isospin     );
+		antiPartProp.setStrangeness (-_strangeness);
+		antiPartProp.setCharm       (-_charm      );
+		antiPartProp.setBeauty      (-_beauty     );
+		antiPartProp.setG           (_G           );
+		antiPartProp.setJ           (_J           );
+		antiPartProp.setP           (_P           );
+		antiPartProp.setC           (_C           );
+		// convert decay modes to antiparticles
+		if (convertDecaysModes)
+			for (size_t i = 0 ; i < nmbDecays(); ++i) {
+				multiset<string> antiDaughters;
+				decayMode decay = _decayModes[i];
+				// !NOTE! for associative containers with value type == key type iterator is const_iterator
+				for (multiset<string>::const_iterator it = decay._daughters.begin();
+				     it != decay._daughters.end(); ++it) {
+					particleProperties daughterProp;
+					daughterProp.fillFromDataTable(*it);
+					antiDaughters.insert(daughterProp.antiPartName());
+				}
+				decay._daughters = antiDaughters;
+				antiPartProp.addDecayMode(decay);
+			}
+	}
 	return antiPartProp;
 }
+
+
+string
+particleProperties::bareNameLaTeX() const
+{
+	// split name into mass and symbol parts
+	// const string name = bareName();
+	// typename boost::iterator_range<std::string> startPos;
+	// find_first(name, "(");
+	// iterator_range<string> endPos   = find_last (name, ")");
+	// iterator_range<string> range    = make_iterator_range(startPos, endPos);
+	// const string mass = copy_range(range);
+	// printDebug << "!!!HERE " << name << ": " << mass << "; " << range << endl;
+	// // handle antiparticle
+	// if ()
+	// // handle * particles
+
+	// // setup particle-name dictionary
+	// map<string, string> partNameDict;
+	// isobars["gamma"  ] = "\\gamma";
+	// isobars["mu"     ] = "\\mu";
+	// isobars["pi"     ] = "\\pi";
+	// isobars["eta"    ] = "\\eta";
+	// isobars["sigma"  ] = "\\sigma";
+	// isobars["rho"    ] = "\\rho";
+	// isobars["omega"  ] = "\\omega";
+	// isobars["phi"    ] = "\\phi";
+	// isobars["kappa"  ] = "\\kappa";
+	// isobars["nucleon"] = "N";
+	// isobars["Delta"  ] = "\\Delta";
+	// isobars["Lambda" ] = "\\Lambda";
+
+
+	// vector<iterator_range<string::iterator> > foundPos;
+	// find_all(foundPos, name, "(");
+	// if (foundPos.size() > 1) {
+	// 	printErr << "particle name '" << name << "' contains more than one '('. "
+	// 	         << "cannot construct LaTeX name" << endl;
+	// 	return "";
+	// }
+	return "";
+}
+
 
 
 string
@@ -283,7 +393,7 @@ particleProperties::print(ostream& out) const
 	    << "I" << ((G() != 0) ? "^G" : "") << " J";
 	if (P() != 0)
 		out << "^P" << ((C() != 0) ? "C" : "") << " = ";
-  else
+	else
 		out << ((C() != 0) ? "^C" : "") << " = ";
 	out << spinQn(isospin());
 	if (G() != 0)
@@ -295,17 +405,28 @@ particleProperties::print(ostream& out) const
 		if (C() != 0)
 			out << "^" << sign(C());
 	out << ", "
-	    << "strangeness = "             << strangeness()     << ", "
-	    << "charm = "                   << charm()           << ", "
-	    << "beauty = "                  << beauty()          << ", "
-	    << "is meson = "                << yesNo(isMeson())  << ", ";
+	    << "strangeness = "             << strangeness()         << ", "
+	    << "charm = "                   << charm()               << ", "
+	    << "beauty = "                  << beauty()              << ", "
+	    << "is meson = "                << yesNo(isMeson())      << ", ";
 	if (isMeson())
-		out << "is spin-exotic = " << yesNo(isSpinExotic()) << ", ";
-	out << "is baryon = "               << yesNo(isBaryon()) << ", "
-	    << "is lepton = "               << yesNo(isLepton()) << ", "
-	    << "is photon = "               << yesNo(isPhoton()) << ", "
-	    << "antiparticle '"             << antiPartName()    << "', "
+		out << "is spin-exotic = "        << yesNo(isSpinExotic()) << ", ";
+	out << "is baryon = "               << yesNo(isBaryon())     << ", "
+	    << "is lepton = "               << yesNo(isLepton())     << ", "
+	    << "is photon = "               << yesNo(isPhoton())     << ", "
+	    << "antiparticle '"             << antiPartName()        << "', "
 	    << "is its own antiparticle = " << yesNo(isItsOwnAntiPart());
+	// decay products
+	const unsigned int nmbDecays = this->nmbDecays();
+	if (nmbDecays > 0) {
+		out << endl << "    decay modes:" << endl;
+		for (unsigned int i = 0; i < nmbDecays; ++i) {
+			out << "        -> " << _decayModes[i];
+			if (i < nmbDecays - 1)
+				out << endl;
+		}
+	}
+
 	return out;
 }
 
@@ -320,12 +441,12 @@ particleProperties::dump(ostream& out) const
 	    << width       () << "\t"
 	    << baryonNmb   () << "\t"
 	    << isospin     () << "\t"
-	    << strangeness () << "\t" 
-	    << charm       () << "\t" 
-	    << beauty      () << "\t" 
-	    << G           () << "\t" 
-	    << J           () << "\t" 
-	    << P           () << "\t" 
+	    << strangeness () << "\t"
+	    << charm       () << "\t"
+	    << beauty      () << "\t"
+	    << G           () << "\t"
+	    << J           () << "\t"
+	    << P           () << "\t"
 	    << C           ();
 	return out;
 }
@@ -438,4 +559,24 @@ particleProperties::stripChargeFromName(const string& partName)
 {
 	int dummy;
 	return chargeFromName(partName, dummy);
+}
+
+
+bool
+particleProperties::isEqualTo(const particleProperties& rhsProp) const
+{
+	return (    (name        () == rhsProp.name        ())
+	        and (antiPartName() == rhsProp.antiPartName())
+	        and (charge      () == rhsProp.charge      ())
+	        and (mass        () == rhsProp.mass        ())
+	        and (width       () == rhsProp.width       ())
+	        and (baryonNmb   () == rhsProp.baryonNmb   ())
+	        and (isospin     () == rhsProp.isospin     ())
+	        and (strangeness () == rhsProp.strangeness ())
+	        and (charm       () == rhsProp.charm       ())
+	        and (beauty      () == rhsProp.beauty      ())
+	        and (G           () == rhsProp.G           ())
+	        and (J           () == rhsProp.J           ())
+	        and (P           () == rhsProp.P           ())
+	        and (C           () == rhsProp.C           ()));
 }

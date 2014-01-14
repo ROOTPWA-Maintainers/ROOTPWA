@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev:: 266                         $: revision of last commit
-#// $Author:: promme                   $: author of last commit
-#// $Date:: 2010-06-17 10:35:01 +0200 #$: date of last commit
 #//
 #// Description:
 #//      build file for RootPwaGen
@@ -34,61 +30,65 @@
 #//
 #//-------------------------------------------------------------------------
 
-#set(THIS_INC "src")
+
+message(STATUS "")
+message(STATUS ">>> Setting up 'gui/src' directory.")
+
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${ROOT_INCLUDE_DIR}
-  ${Libconfig_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${ROOTPWA_DICTIONARY}
-  ${SCRIPTS_INCLUDE_DIR}
-#  ${PWA2000_INCLUDE_DIR}
-  ${ROOTPWA_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
-  ${GEN_INCLUDE_DIR}
-)
+	${Libconfig_INCLUDE_DIR}
+	${ROOT_INCLUDE_DIR}
+	${ROOTPWA_DICTIONARY}
+	${SCRIPTS_INCLUDE_DIR}
+	${ROOTPWA_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
+	${GEN_INCLUDE_DIR}
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
+
 
 # source files that are compiled into library
 set(SOURCES
-  TrpwaMainFrame.cc
-  TrpwaSessionManager.cc
-  TrpwaWaveSelectFrame.cc
-  TrpwaJobManager.cc
-  TrpwaEventTreeHandler.cc
-  TrpwaCommonTools.cc
-  TrpwaPlotAmpsFrame.cc
-  TrpwaFitOptionsFrame.cc
-) 
+	TrpwaMainFrame.cc
+	TrpwaSessionManager.cc
+	TrpwaWaveSelectFrame.cc
+	TrpwaJobManager.cc
+	TrpwaEventTreeHandler.cc
+	TrpwaCommonTools.cc
+	TrpwaPlotAmpsFrame.cc
+	TrpwaFitOptionsFrame.cc
+	) 
+
 
 # ROOT dictionary
 set(ROOTPWAGUI_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGuiDict.cc)
+set(ROOTPWAGUI_DICT_INCLUDE_DIRS
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 root_generate_dictionary(
-  "${ROOTPWAGUI_DICTIONARY}"
-  "${CMAKE_CURRENT_SOURCE_DIR}"
-  "TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h;TrpwaFitOptionsFrame.h"
-  "rootPwaGuiLinkDef.h"
-)
-# message(" using rootpwa_dictionary "${ROOTPWA_DICTIONARY})
-# setting roopwa dictionary does not work yet since I'm too dumb to use cmake
-set(SOURCES ${SOURCES} ${ROOTPWAGUI_DICTIONARY} ${ROOTPWA_DICTIONARY})
-
-# message(" my sources are "${SOURCES})  
+	"${ROOTPWAGUI_DICTIONARY}"
+	"${ROOTPWAGUI_DICT_INCLUDE_DIRS}"
+	"TrpwaMainFrame.h;TrpwaWaveSelectFrame.h;TrpwaPlotAmpsFrame.h;TrpwaFitOptionsFrame.h"
+	"rootPwaGuiLinkDef.h"
+	)
+set(SOURCES ${SOURCES} ${ROOTPWAGUI_DICTIONARY})
 
 
 # library
 set(THIS_LIB "RootPwaGui")
-make_shared_library("${THIS_LIB}" "${SOURCES}"
-  "${ROOT_LIBS}"
-   "${Libconfig_LIBS}"
-   "${ROOTPWASCRIPTS_LIBS}"
-#  "${PWA2000_LIBS}"
-   "${ROOTPWA_LIBS}"
-   "${ROOTPWAGEN_LIBS}"
-)
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	"${ROOT_LIBS}"
+	"${Libconfig_LIBS}"
+	"${ROOTPWASCRIPTS_LIBS}"
+	"${ROOTPWA_LIBS}"
+	"${ROOTPWAGEN_LIBS}"
+	)
 
 
 # executables
-make_executable(rootpwa_gui rootpwa_gui.cpp ${THIS_LIB})
+make_executable(rootpwa_gui                     rootpwa_gui.cpp                     ${THIS_LIB})
 make_executable(rootpwa_fitresult_inspector_gui rootpwa_fitresult_inspector_gui.cpp ${THIS_LIB})

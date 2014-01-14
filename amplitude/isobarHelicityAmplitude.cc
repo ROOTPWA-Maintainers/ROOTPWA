@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      general isobar decay amplitude in helicity formalism
@@ -44,7 +40,7 @@
 #include "dFunction.hpp"
 #include "isobarHelicityAmplitude.h"
 
-  
+
 using namespace std;
 using namespace boost;
 using namespace rpwa;
@@ -75,9 +71,8 @@ isobarHelicityAmplitude::hfTransform(const TLorentzVector& daughterLv)
 	const TVector3 yHfAxis = zAxisParent.Cross(daughter.Vect());  // y-axis of helicity frame
 	// rotate so that yHfAxis becomes parallel to y-axis and zHfAxis ends up in (x, z)-plane
 	TRotation rot1;
-	rot1.RotateZ(-yHfAxis.Phi());
-	rot1.RotateY(piHalf - yHfAxis.Theta());
-	rot1.RotateZ(piHalf);
+	rot1.RotateZ(piHalf - yHfAxis.Phi());
+	rot1.RotateX(yHfAxis.Theta() - piHalf);
 	daughter *= rot1;
 	// rotate about yHfAxis so that daughter momentum is along z-axis
 	TRotation rot2;
@@ -158,13 +153,6 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	const int    L         = vertex->L();
 	const int    S         = vertex->S();
 	const int    J         = parent->J();
-// 	cout << "\n\nparent mass mass = " << maxPrecision(parent->mass()) << " GeV\n\n" << endl;
-// 	cout << "\n\ndaughter1 mass mass = " << maxPrecision(daughter1->mass()) << " GeV\n\n" << endl;
-// 	cout << "\n\ndaughter2 mass mass = " << maxPrecision(daughter2->mass()) << " GeV\n\n" << endl;
-// 	cout << "\n\nparent mass lzvec= " << maxPrecision(parent->lzVec().M()) << " GeV\n\n" << endl;
-// 	cout << "\n\ndaughter1 mass lzvec= " << maxPrecision(daughter1->lzVec().M()) << " GeV\n\n" << endl;
-// 	cout << "\n\ndaughter2 mass lzvec= " << maxPrecision(daughter2->lzVec().M()) << " GeV\n\n" << endl;
-// 	cout << "\n\nq lzvec= " << maxPrecision(daughter1->lzVec().Vect().Mag()) << "\n" << endl;
 	const int    lambda1   = daughter1->spinProj();
 	const int    lambda2   = daughter2->spinProj();
 	const int    lambda    = lambda1 - lambda2;
@@ -204,7 +192,6 @@ isobarHelicityAmplitude::twoBodyDecayAmplitude(const isobarDecayVertexPtr& verte
 	// calculate decay amplitude
 	complex<double> amp = norm * DFunc * lsClebsch * ssClebsch * bf * bw;
 	
-  
 	if (_debug)
 		printDebug << "two-body decay amplitude = " << maxPrecisionDouble(amp) << endl;
 	return amp;

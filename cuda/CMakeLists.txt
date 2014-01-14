@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
 #//      build file for CUDA code
@@ -35,6 +31,10 @@
 #//-------------------------------------------------------------------------
 
 
+message(STATUS "")
+message(STATUS ">>> Setting up 'cuda' directory.")
+
+
 # -Wall reports warnings in system libraries; so we cannot use -Werror
 set(CMAKE_CXX_FLAGS "-Wall")
 message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS}' for CUDA host code")
@@ -43,14 +43,13 @@ message(STATUS "Using CUDA nvcc flags '${CUDA_NVCC_FLAGS}'")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${uprootedBoost_INCLUDE_DIRS}  # override some Boost libraries with local copies
-  ${Boost_INCLUDE_DIRS}
-  ${CUDA_SDK_ROOT_DIR}/common/inc
-  ${ROOT_INCLUDE_DIR}
-  ${UTILITIES_INCLUDE_DIR}
+	SYSTEM ${Boost_INCLUDE_DIRS}
+	${CUDA_SDK_ROOT_DIR}/common/inc
+	${ROOT_INCLUDE_DIR}
+	${UTILITIES_INCLUDE_DIR}
   ${AMPLITUDE_INCLUDE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  )
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
@@ -63,7 +62,7 @@ cuda_add_library(cupwa helampltestInterface.cu SHARED)
 make_executable(testLikelihoodMockup testLikelihoodMockup.cc)
 target_link_libraries(testLikelihoodMockup ${CUDA_CUTIL_LIBRARY} cuda ${ROOT_LIBS})
 
-Cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
+cuda_add_executable(testComplexMemoryBandwidth testComplexMemoryBandwidth.cu)
 target_link_libraries(testComplexMemoryBandwidth ${CUDA_CUTIL_LIBRARY})
 
 cuda_add_executable(benchmarkMemoryBandwidth benchmarkMemoryBandwidth.cu)

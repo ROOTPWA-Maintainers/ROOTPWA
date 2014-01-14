@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      some primitive standardized streams for reporting plus some
@@ -75,7 +71,7 @@ namespace rpwa {
 			: _func(func),
 			  _val (val )
 		{	}
-		
+
 		friend
 		std::ostream&
 		operator << (std::ostream& out,
@@ -83,10 +79,10 @@ namespace rpwa {
 		{	return manip._func(out, manip._val); }
 
 	private:
-		
+
 		funcPointer _func;
 		T           _val;
-	}; 
+	};
 
 
 	//////////////////////////////////////////////////////////////////////////////
@@ -142,7 +138,7 @@ namespace rpwa {
 #ifndef __CINT__
 	const bool isColorTerminal = terminalSupportsColor();
 #endif
-	
+
 	inline
 	bool
 	streamIsNotInteractive(const int fileDescriptor)
@@ -171,7 +167,7 @@ namespace rpwa {
 			and not streamIsNotInteractive(STDERR_FILENO);
 	}
 
-	
+
 	// VT100 escape sequences
 	enum vt100EscapeCodesEnum {
 		NORMAL     = 0,
@@ -196,7 +192,7 @@ namespace rpwa {
 		BG_CYAN    = 46,
 		BG_WHITE   = 47
 	};
-	
+
 	// ostream manipulator function that inserts VT100 escape sequence into stream
 	inline
 	std::ostream&
@@ -268,6 +264,9 @@ namespace rpwa {
 #ifndef CMAKE_HOST_SYSTEM_VERSION
 #define CMAKE_HOST_SYSTEM_VERSION "undefined"
 #endif
+#ifndef NMB_CPU_CORES
+#define NMB_CPU_CORES "undefined"
+#endif
 #ifndef HOSTNAME
 #define HOSTNAME "undefined"
 #endif
@@ -280,11 +279,8 @@ namespace rpwa {
 #ifndef CMAKE_BUILD_TYPE
 #define CMAKE_BUILD_TYPE "undefined"
 #endif
-#ifndef SVN_VERSION
-#define SVN_VERSION "undefined"
-#endif
-#ifndef ROOTSYS
-#define ROOTSYS "undefined"
+#ifndef GIT_HASH
+#define GIT_HASH "undefined"
 #endif
 #ifndef Boost_LIBRARY_VERSION
 #define Boost_LIBRARY_VERSION "undefined"
@@ -292,14 +288,14 @@ namespace rpwa {
 #ifndef Boost_INCLUDE_DIRS
 #define Boost_INCLUDE_DIRS "undefined"
 #endif
-#ifndef Boost_MPI_LIBRARY_DIR
-#define Boost_MPI_LIBRARY_DIR "undefined"
-#endif
 #ifndef Libconfig_VERSION
 #define Libconfig_VERSION "undefined"
 #endif
 #ifndef Libconfig_DIR
 #define Libconfig_DIR "undefined"
+#endif
+#ifndef ROOTSYS
+#define ROOTSYS "undefined"
 #endif
 #ifndef CUDA_VERSION
 #define CUDA_VERSION "undefined"
@@ -307,14 +303,20 @@ namespace rpwa {
 #ifndef CUDA_LIB_DIRS
 #define CUDA_LIB_DIRS "undefined"
 #endif
+#ifndef PYTHONLIBS_VERSION_STRING
+#define PYTHONLIBS_VERSION_STRING "undefined"
+#endif
+#ifndef PYTHON_INCLUDE_DIRS
+#define PYTHON_INCLUDE_DIRS "undefined"
+#endif
 
 
 	inline
 	void
-	printSvnVersion()
+	printGitHash()
 	{
-		printInfo << "subversion repository revision at compile time was "
-		          << "'" << SVN_VERSION << "'" << std::endl;
+		printInfo << "git repository hash at compile time was "
+		          << "'" << GIT_HASH << "'" << std::endl;
 	}
 
 
@@ -337,17 +339,18 @@ namespace rpwa {
 	void
 	printLibraryInfo()
 	{
-		printInfo << "this executable was linked against" << std::endl
-		          << "    ROOT version " << ROOT_RELEASE << " in '" << ROOTSYS << "'"  << std::endl
-		          << "    BOOST version " << Boost_LIBRARY_VERSION << " "
-		          << "in '" << Boost_INCLUDE_DIRS << "'"  << std::endl;
-#ifdef USE_MPI
-		std::cout << "    BOOST MPI in '" << Boost_MPI_LIBRARY_DIR << "'" << std::endl;
-#endif
-		std::cout << "    libConfig version " << Libconfig_VERSION << " in "
-		          << "'" << Libconfig_DIR << "'" << std::endl;
+		printInfo << "this project was linked against" << std::endl
+		          << "    Boost version " << Boost_LIBRARY_VERSION << " in '" << Boost_INCLUDE_DIRS << "'"  << std::endl
+		          << "    libConfig version " << Libconfig_VERSION << " in '" << Libconfig_DIR << "'" << std::endl
+		          << "    ROOT version " << ROOT_RELEASE << " in '" << ROOTSYS << "'"  << std::endl;
 #ifdef USE_CUDA
 		std::cout << "    CUDA version " << CUDA_VERSION << " in '" << CUDA_LIB_DIRS << "'" << std::endl;
+#endif
+#ifdef USE_MPI
+		std::cout << "    MPI libraries; using Boost.MPI" << std::endl;
+#endif
+#ifdef USE_PYTHON
+		std::cout << "    Python version " << PYTHONLIBS_VERSION_STRING << " in '" << PYTHON_INCLUDE_DIRS << "'; using Boost.Python" << std::endl;
 #endif
 	}
 
@@ -441,8 +444,8 @@ namespace rpwa {
 	{
 		return out << "(" << pair.first << ", " << pair.second << ")";
 	}
-	
-	
+
+
 	template<typename T>
 	inline
 	std::ostream&

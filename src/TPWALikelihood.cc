@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Implementation of class TPWALikelihood
@@ -128,9 +126,9 @@ TPWALikelihood<complexT>::FdF
 	// parts of the production amplitudes
 	// !NOTE! although stored as and constructed from complex values,
 	// the dL themselves are _not_ well defined complex numbers!
-	value_type                              derivativeFlat = 0;
-	array<typename ampsArrayType::index, 3> derivShape     = {{ _rank, 2, _nmbWavesReflMax }};
-	ampsArrayType                           derivatives(derivShape);
+	value_type                                     derivativeFlat = 0;
+	boost::array<typename ampsArrayType::index, 3> derivShape     = {{ _rank, 2, _nmbWavesReflMax }};
+	ampsArrayType                                  derivatives(derivShape);
 
 	// loop over events and calculate real-data term of log likelihood
 	// as well as derivatives with respect to parameters
@@ -407,9 +405,9 @@ TPWALikelihood<complexT>::Gradient
 	// parts of the production amplitudes
 	// !NOTE! although stored as and constructed from complex values,
 	// the dL themselves are _not_ well defined complex numbers!
-	value_type                              derivativeFlat = 0;
-	array<typename ampsArrayType::index, 3> derivShape     = {{ _rank, 2, _nmbWavesReflMax }};
-	ampsArrayType                           derivatives(derivShape);
+	value_type                                     derivativeFlat = 0;
+	boost::array<typename ampsArrayType::index, 3> derivShape     = {{ _rank, 2, _nmbWavesReflMax }};
+	ampsArrayType                                  derivatives(derivShape);
 
 	// loop over events and calculate derivatives with respect to parameters
 	TStopwatch timer;

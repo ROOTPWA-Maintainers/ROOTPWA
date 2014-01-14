@@ -9,6 +9,10 @@
 #include <particleData.h>
 
 #include "TGraph.h"
+#include "TAxis.h"
+#include "TGaxis.h"
+#include "TMath.h"
+#include "TStyle.h"
 #include "TCanvas.h"
 #include "TApplication.h"
 #include "TSystem.h"
@@ -17,6 +21,18 @@
 using namespace std;
 
 extern particleDataTable PDGtable;
+
+void dressGraph(TGraph *g, int font=132){
+  
+
+  g->GetXaxis()->SetLabelFont(font);
+  g->GetXaxis()->SetTitleFont(font);
+  g->GetYaxis()->SetLabelFont(font);
+  g->GetYaxis()->SetTitleFont(font);
+ 
+}
+
+
 
 int main(int argc, char** argv){
 	string opt = "BW";
@@ -27,7 +43,7 @@ int main(int argc, char** argv){
 	double width(0.6);
 
 	if (argc < 2){
-		cout << " usage: plotGampMassDep AMP|VES|KACH|LASS|BW [inv_mass(def 600MeV)] [width(def 600MeV)] [pi|K (def pi)] [pi|K (def pi)] [PDG name (mass and width will be ignored)]" << endl;
+		cout << " usage: plotGampMassDep AMP|VES|KACH|LASS|RPRIME|BW [inv_mass(def 600MeV)] [width(def 600MeV)] [pi|K (def pi)] [pi|K (def pi)] [PDG name (mass and width will be ignored)]" << endl;
 		//return 0;
 	} else {
 		//cout << argc << endl;
@@ -63,7 +79,7 @@ int main(int argc, char** argv){
 
  cout << " plotting " << opt << " with a mass of " << mass << " and width of " << width << " decaying into " << part1 << " " << part2 << endl;
 
-  decay mydec;
+ pwa2000::decay mydec;
   mydec.setL(0);
   mydec.setS(0);
   mydec.addChild(pi1);
@@ -79,6 +95,7 @@ int main(int argc, char** argv){
   else if(opt=="VES")dep=new AMP_ves();
   else if(opt=="KACH")dep=new AMP_kach();
   else if(opt=="LASS")dep=new AMP_LASS();
+  else if(opt=="RPRIME")dep=new rhoPrime();
   else if(opt=="BW")dep=new breitWigner();
   else dep=new breitWigner();
   dep->print();
@@ -89,6 +106,7 @@ int main(int argc, char** argv){
   unsigned int n=1000;
   TGraph* intens=new TGraph(n);
   TGraph* argand=new TGraph(n);
+  TGraph* phase=new TGraph(n);
   
   double mstart=0.1;
   double mend=2.5;
@@ -102,20 +120,49 @@ int main(int argc, char** argv){
     complex<double> amp=dep->val(myp);
     //cout << amp << endl;
     intens->SetPoint(i,mass,norm(amp));
+    double phaseval=arg(amp);
+    if(phaseval<0)phaseval+=2*TMath::Pi();
+    phase->SetPoint(i,mass,phaseval);
     double rho=2*myp.q()/mass;
     
     argand->SetPoint(i,rho*amp.real(),rho*amp.imag());
     
   }
+
+
+
+gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
+  gStyle->SetStripDecimals(1);
+  TGaxis::SetMaxDigits(3);
+
+  Int_t font=132;
+
+  gStyle->SetTextFont(font);
+  gStyle->SetLabelFont(font);
+
+  
+
   
   TCanvas* c=new TCanvas("c","Mass Dep",10,10,1200,600);
   c->Divide(2,1);
   c->cd(1);
   intens->SetTitle("Intensity");
   intens->Draw("APC");
+  dressGraph(intens);
+  intens->GetXaxis()->SetTitle("Mass of (#pi#pi) system (GeV/c^{2})");
+  intens->GetYaxis()->SetTitle("Intensity");
   c->cd(2);
+  phase->SetTitle("Phase");
+  phase->Draw("APC");
+  dressGraph(phase);
+  phase->GetXaxis()->SetTitle("Mass of (#pi#pi) system (GeV/c^{2})");
+    phase->GetYaxis()->SetTitle("Phase");
+  /*c->cd(3);
   argand->SetTitle("Argand plot");
   argand->Draw("APC");
+  argand->SetMarkerStyle(2);
+  */
   c->ForceUpdate();
   c->Flush();
   

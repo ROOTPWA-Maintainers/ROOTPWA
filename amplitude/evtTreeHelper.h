@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      helper functions that convert between standard ASCII PWA2000
@@ -56,15 +52,6 @@ namespace rpwa {
 
 	class isobarDecayTopology;
 	class isobarAmplitude;
-
-
-	std::string particleNameFromGeantId(const int id,
-	                                    const int charge);
-
-
-	void idAndChargeFromParticleName(const std::string& name,
-	                                 int&               id,
-	                                 int&               charge);
 
 
 	double getParticleMass(const std::string& name);

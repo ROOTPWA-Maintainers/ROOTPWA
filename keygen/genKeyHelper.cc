@@ -19,8 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      
@@ -109,11 +107,11 @@ rpwa::testKeyFile(const string& keyFileName,       // file name of key file unde
 	    << "       by P * P_intr. check that this is really the case!" << endl;
   unsigned int countAmpRatioNotOk    = 0;
   //unsigned int countAmpEigenValNotOk = 0;
-  int          reflEigenValue        = 0;
+  //int          reflEigenValue        = 0;
   //int          parityEigenValue      = 0;
-  if (refl != 0)
-    reflEigenValue = -1 / refl;  // reciprocal becomes important in case of baryons, where refl = +-i
-                                 // this case is not treated correctly yet
+  //if (refl != 0)
+  //  reflEigenValue = -1 / refl;  // reciprocal becomes important in case of baryons, where refl = +-i
+  //                               // this case is not treated correctly yet
   for (unsigned int i = 0; i < amps.size(); ++i) {
     cout << endl << "    event " << i << ": " << endl;
     const unsigned int nmbDigits = numeric_limits<double>::digits10 + 1;

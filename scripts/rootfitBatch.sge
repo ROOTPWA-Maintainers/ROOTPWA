@@ -22,7 +22,7 @@
 # Select queue
 #$ -l long=TRUE,h_vmem=200M
 # Divert output
-#$ -o /afs/e18/compass/analysis/sneubert/LOGS
+#$ -o /nfs/nas/user/sneubert/LOGS
 # Write error in same file
 #$ -j y
 
@@ -33,12 +33,16 @@
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/3Pi/fit8re
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/2008/fit1
-export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/LOWT/NEWACC/fit24
+#export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/LOWT/NEWACC/fit34RhoP2
 #export FITDIR=/afs/e18/compass/analysis/sneubert/PWAFITS/MODELS/Model4/fit2
-export MYBATCH=1840.1960 # will be used of no array job is started
+export FITDIR=/nfs/nas/user/sneubert/PWAFITS/FINAL/fitF64mp/
+#IsoBinEta1Peak2m100
+export MYBATCH=1780.1960 # will be used of no array job is started
 
 # batches for array job
 BATCHARRAY=( 0000.0000 1000.1360 1360.1600 1600.1840 1840.2080 2080.2320 2320.2560 2560.3040 3040.3520 3520.4000 )
+
+#BATCHARRAY=( 0000.0000 1960.2200 )
 
 #BATCHARRAY=( 0000.0000 500.820 820.1020 1020.1180 1180.1300 1300.1420 1420.1540 1540.1660 1660.1820 1820.2020 2020.2500 )
 
@@ -54,22 +58,23 @@ else
    export BATCH=$MYBATCH;
 fi
 
-#export BINS=/lustre/e18/user/sneubert/Q3PiData/BATCHES/$BATCH
-#export BINS=/afs/e18/compass/analysis/sneubert/5PiBatches/$BATCH
-#export BINS=/afs/e18/compass/analysis/sneubert/5PiMTBatches/$BATCH
-#export BINS=/afs/e18/compass/analysis/sneubert/5PiModels/M4cBatches/$BATCH
-export BINS=/afs/e18/compass/analysis/sneubert/5PiLTBatches3/$BATCH
-#export BINS=/lustre/e18/user/sneubert/2008/5PiBatches/$BATCH
-export OUTFILE=$BATCH.result.2.root
+echo "BATCH=$BATCH"
+
+export BINS=/nfs/hicran/project/compass/analysis/sneubert/5PiLTBatches3/$BATCH
+#export BINS=/nfs/nas/user/sneubert/2004/5PiLTData3/
+
+export OUTFILE=$BATCH.result.root
 export WLIST=wavelist
 export RANK=1
 export RENORM=-N
 export NORM=norm.int
 export ACC="-a accnorm.int"
-export ACCEVENTS="-A 50000"
+export ACCEVENTS="-A 100000"
 
-cd ~/scratch/COMPASS/rootpwa/trunk/
+cd /nfs/nas/user/sneubert/scratch/COMPASS/rootpwa/trunk/
 source setup.sh
 cd scripts/
+
+echo "BINS=$BINS"
 
 ./rootfitBatch.sh $BINS

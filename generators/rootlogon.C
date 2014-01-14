@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      ROOT logon script that sets up environment for ROOT macros
@@ -40,6 +36,7 @@
 	gSystem->AddIncludePath("-I$ROOTPWA/pwa2000/libpp");
 	gSystem->AddIncludePath("-I$ROOTPWA/utilities");
 	gSystem->AddIncludePath("-I$ROOTPWA/tools");
+	gSystem->AddIncludePath("-I$ROOTPWA/generators");
 
 	// load shared libraries
 	gSystem->Load("libRootPwaTools.so");

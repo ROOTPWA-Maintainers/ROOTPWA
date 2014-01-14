@@ -19,10 +19,6 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-// File and Version Information:
-// $Rev::                             $: revision of last commit
-// $Author::                          $: author of last commit
-// $Date::                            $: date of last commit
 //
 // Description:
 //      base class that desbribes general interaction vertex between particles
@@ -40,7 +36,7 @@
 #include "conversionUtils.hpp"
 #include "interactionVertex.h"
 
-	
+
 using namespace std;
 using namespace rpwa;
 
@@ -97,6 +93,22 @@ interactionVertex::clear()
 {
 	_inParticles.clear();
 	_outParticles.clear();
+}
+
+
+bool
+interactionVertex::isEqualTo(const interactionVertex& vert) const
+{
+	if (   (nmbInParticles () != vert.nmbInParticles ())
+	    or (nmbOutParticles() != vert.nmbOutParticles()))
+		return false;
+	for (unsigned int i = 0; i < nmbInParticles(); ++i)
+		if (*(inParticles()[i]) != *(vert.inParticles()[i]))
+			return false;
+	for (unsigned int i = 0; i < nmbOutParticles(); ++i)
+		if (*(outParticles()[i]) != *(vert.outParticles()[i]))
+			return false;
+	return true;
 }
 
 

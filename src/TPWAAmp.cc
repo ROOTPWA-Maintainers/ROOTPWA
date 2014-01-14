@@ -20,8 +20,6 @@
 ///////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------
-// File and Version Information:
-// $Id$
 //
 // Description:
 //      Implementation of class TPWAAmp
@@ -121,8 +119,7 @@ TPWAAmp::updateAmp() {
 
 complex<double> 
 TPWAAmp::setPar(double* par){
-  _amp.real()=par[0];
-  _amp.imag()=par[1];
+	_amp=complex<double>(par[0],par[1]);
   updateAmp();
   return amp();
 }

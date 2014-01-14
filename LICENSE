@@ -1,19 +1,22 @@
-The rootpwa package is distributed under 
-the GNU General Public License the terms of which are stated below.
+The ROOTPWA package is distributed under the GNU General Public
+License the terms of which are stated below.
 
-In the tradition of scientific courtesy the 
-users of rootpwa are asked to reference the 
-authors of rootpwa in every scientific publication
-which is making use even of parts of the software
-contained in the package.
+The code in the "pwa2000" directory was developed by John
+Cummings. See the README.markdown file in this directory for further
+information.
+In the tradition of scientific courtesy the users of ROOTPWA are asked
+to reference the authors of ROOTPWA in every scientific publication
+which is making use even of parts of the software contained in the
+package.
 
-As reference the web-address 
-http://rootpwa.ospdev.net should be used.
+As reference the web-address http://sourceforge.net/projects/rootpwa/ should
+be used.
 
-Please also notify the authors of 
-any publication which intends to use rootpwa.
+Please also notify the authors of any publication which intends to use
+ROOTPWA.
 
-Contact: sebastian.neubert@e18.physik.tu-muenchen.de
+Contacts: sebastian.neubert@cern.ch
+          bgrube@tum.de
 
 -----------------------------------------------------------------------------
 

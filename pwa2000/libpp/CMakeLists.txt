@@ -19,10 +19,6 @@
 #//
 #///////////////////////////////////////////////////////////////////////////
 #//-------------------------------------------------------------------------
-#// File and Version Information:
-#// $Rev::                             $: revision of last commit
-#// $Author::                          $: author of last commit
-#// $Date::                            $: date of last commit
 #//
 #// Description:
 #//      build file for pp library
@@ -35,30 +31,38 @@
 #//-------------------------------------------------------------------------
 
 
-set(CMAKE_CXX_FLAGS   "-O2 -Wall -Werror")
-set(CMAKE_LDCXX_FLAGS "-O2")
+message(STATUS "")
+message(STATUS ">>> Setting up 'libpp' directory.")
+
+
+set(CMAKE_CXX_FLAGS         "-O2 -Wall -Woverloaded-virtual -Werror")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -Woverloaded-virtual -Werror")
+set(CMAKE_LDCXX_FLAGS       "-O2")
 
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-  ${CMAKE_CURRENT_SOURCE_DIR}
-)
+	${CMAKE_CURRENT_SOURCE_DIR}
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # source files that are compiled into library
 set(SOURCES
-  event.cc
-  massDep.cc
-  particle.cc
-  pputil.cc
-  lorentz.cc
-  matrix.cc
-  particleData.cc
-  Vec.cc
-)
-	    
+	event.cc
+	massDep.cc
+	particle.cc
+	pputil.cc
+	lorentz.cc
+	matrix.cc
+	particleData.cc
+	Vec.cc
+	)
+
 
 # library
 set(THIS_LIB "pp")
-make_shared_library("${THIS_LIB}" "${SOURCES}")
+make_shared_library(
+	"${THIS_LIB}"
+	"${SOURCES}"
+	)
