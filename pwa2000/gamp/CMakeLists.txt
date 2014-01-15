@@ -35,9 +35,8 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'gamp' directory.")
 
 
-set(CMAKE_CXX_FLAGS         "-O2 -Wall -Wno-unused-variable -Wno-unneeded-internal-declaration -Werror")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -Wno-unused-variable -Wno-unneeded-internal-declaration -Werror")
-set(CMAKE_CXX_LDFLAGS       "-O2")
+set(CMAKE_CXX_FLAGS         "-O2 -Wall -Wno-unused-variable -Wno-unneeded-internal-declaration -Werror ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -Wno-unused-variable -Wno-unneeded-internal-declaration -Werror ${CMAKE_CXX_LDFLAGS}")
 
 
 # set include directories
