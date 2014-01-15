@@ -35,9 +35,8 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'libpp' directory.")
 
 
-set(CMAKE_CXX_FLAGS         "-O2 -Wall -Woverloaded-virtual -Werror ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -Woverloaded-virtual -Werror ${CMAKE_CXX_FLAGS_RELEASE}")
-set(CMAKE_LDCXX_FLAGS "-O2 ${CMAKE_CXX_LDFLAGS}")
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -O2 -Wall -Woverloaded-virtual -Werror")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2 -Wall -Woverloaded-virtual -Werror")
 
 
 # set include directories
