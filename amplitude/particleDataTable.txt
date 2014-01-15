@@ -23,6 +23,8 @@
 # Description:
 #      table with particle properties as listed in PDG summary table
 #
+#      all entries are taken from the Particle Data Book from 2012-07-01
+#
 #      each particle has to be explicitely defined for all the charge
 #      states in which it is going to be used in the analysis; this is
 #      dictated by the fact that in general the different charge
@@ -49,6 +51,10 @@
 #      !NOTE! for better performance it is recommended to comment out
 #      all particles that are not used as final-state particles or
 #      isobars in the analysis
+#
+#      !NOTE! this table might be updated with the latest values at
+#      any time. It is recommended that you use a private copy of this
+#      file to make sure that your analysis is internally consistent
 #
 #
 # Author List:
@@ -133,7 +139,7 @@ N(1520)+         Nbar(1520)-      1.52         0.115       +1           1    0  
 N(1440)          Nbar(1440)       1.44         0.3         +1           1    0    0    0     0     1    +1     0
 N(1440)+         Nbar(1440)-      1.44         0.3         +1           1    0    0    0     0     1    +1     0
 d+               dbar-            1.875612859  0           +2           0    0    0    0    +1     0    +1    +1
-nucleon          nucleonbar       0.9389187625 0           +1           1    0    0    0     0     1    +1     0
+nucleon          nucleonbar       0.9389187125 0           +1           1    0    0    0     0     1    +1     0
 n                nbar             0.939565379  0           +1           1    0    0    0     0     1    +1     0
 p+               pbar-            0.938272046  0           +1           1    0    0    0     0     1    +1     0
 #
@@ -215,7 +221,7 @@ eta1(1600)       eta1(1600)       1.66         0.3         0            0    0  
 pi1(1600)        pi1(1600)        1.662        0.241       0            2    0    0    0    -1     2    -1    +1
 pi1(1600)+       pi1(1600)-       1.662        0.241       0            2    0    0    0    -1     2    -1     0
 f2(1565)         f2(1565)         1.562        0.134       0            0    0    0    0    +1     4    +1    +1
-f2'(1525)        f2'(1525)        1.525        0.076       0            0    0    0    0    +1     4    +1    +1
+f2'(1525)        f2'(1525)        1.525        0.073       0            0    0    0    0    +1     4    +1    +1
 f1(1510)         f1(1510)         1.518        0.073       0            0    0    0    0    +1     2    +1    +1
 b1(1500)         b1(1500)         1.5          0.2         0            2    0    0    0    +1     2    +1    -1
 b1(1500)+        b1(1500)-        1.5          0.2         0            2    0    0    0    +1     2    +1     0
