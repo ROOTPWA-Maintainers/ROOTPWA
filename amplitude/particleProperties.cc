@@ -235,7 +235,7 @@ particleProperties::hasDecay(const decayMode& decay) const
 bool
 particleProperties::isStable() const
 {
-	return _name == "pi";
+	return ((fabs(_width) < 1e-10) or (_name == "eta"));
 }
 
 bool
