@@ -66,13 +66,13 @@ namespace rpwa {
 
 		bool _init;
 
-		const static int N_POINTS = 50;
-		const static int N_MC_EVENTS = 1000000;
-		const static int N_MC_EVENTS_FOR_M0 = 10000000;
-		const static int MC_SEED = 987654321;
-		const static double UPPER_BOUND = 4.5;
-		const static bool NEW_FILENAME_CONVENTION = false;
-		const static bool CALCULATE_ERRORS = true;
+		const static int N_POINTS;
+		const static int N_MC_EVENTS;
+		const static int N_MC_EVENTS_FOR_M0;
+		const static int MC_SEED;
+		const static double UPPER_BOUND;
+		const static bool NEW_FILENAME_CONVENTION;
+		const static bool CALCULATE_ERRORS;
 
 		const static std::string DIRECTORY;
 		const static std::string TREE_NAME;

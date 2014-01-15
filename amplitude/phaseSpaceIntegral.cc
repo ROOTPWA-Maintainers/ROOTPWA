@@ -108,6 +108,13 @@ namespace {
 
 const string integralTableContainer::TREE_NAME = "psint";
 const string integralTableContainer::DIRECTORY = "/home/kbicker/analysis/integralAmplitudesPwd";
+const int integralTableContainer::N_POINTS = 50;
+const int integralTableContainer::N_MC_EVENTS = 1000000;
+const int integralTableContainer::N_MC_EVENTS_FOR_M0 = 10000000;
+const int integralTableContainer::MC_SEED = 987654321;
+const double integralTableContainer::UPPER_BOUND = 4.5;
+const bool integralTableContainer::NEW_FILENAME_CONVENTION = false;
+const bool integralTableContainer::CALCULATE_ERRORS = true;
 
 
 string integralTableContainer::getSubWaveNameFromVertex(const isobarDecayVertex& vertex)
