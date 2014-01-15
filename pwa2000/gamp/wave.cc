@@ -103,7 +103,7 @@ wave::fill(const event& e,
     e.target().get4P().print();
   }
   _target = e.target().get4P();
-  decay* d = Decay();
+  pwa2000::decay* d = Decay();
   if (debug)
     cout << "Calling fill for wave: " << endl;
   fourVec p = d->fill(e, debug);
@@ -236,12 +236,12 @@ wave::decayAmp(const int debug)
   else if (_b != 0.0) {
     if (debug)
       cout << "calculate decay amplitude for expt wave b=" << _b << " t=" << _t << endl;
-    decay* d = Decay();
+    pwa2000::decay* d = Decay();
     a = d->expt_amp(_b, _t, debug);
   } else {
     if (debug)
       cout << "calculate decay amplitude for wave J=" << J() << " m=" << _m << endl;
-    decay* d = Decay();
+    pwa2000::decay* d = Decay();
     a = d->amp(J(), _m, debug);
   }
   return a;

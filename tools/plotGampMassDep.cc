@@ -79,7 +79,7 @@ int main(int argc, char** argv){
 
  cout << " plotting " << opt << " with a mass of " << mass << " and width of " << width << " decaying into " << part1 << " " << part2 << endl;
 
-  decay mydec;
+ pwa2000::decay mydec;
   mydec.setL(0);
   mydec.setS(0);
   mydec.addChild(pi1);

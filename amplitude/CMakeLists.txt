@@ -35,13 +35,10 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'amplitude' directory.")
 
 
-#add_definitions(-Wno-deprecated)  # suppress deprecated header warnings from boost libraries when using gcc 4.4
-
-
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${PYTHON_INCLUDE_DIRS}
-	${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}

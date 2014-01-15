@@ -21,7 +21,31 @@
 //-----------------------------------------------------------
 //
 // Description:
-//      Calculate weight of event list from amp files
+//      calculates weights (= intensities) from .amp files and writes
+//      them to output file
+//
+//      limitations:
+//
+//      * at the moment the event data files are used to define the
+//        looping over the events. in the case where the data are not
+//        copied to the output file this is unnecessary. instead the
+//        looping should be based on the amplitude files which are the
+//        sole input needed to calculate the weight(s). this change
+//        should be implemented along with the support for .root
+//        amplitude files. also the use of friend trees should be
+//        investigated in order to avoid copying of event data.
+//
+//      * the code reading the production amplitudes and calculating
+//        the weigt is correct only for rank-1
+//
+//      * the parsing of wave names to extract quantum numbers is not
+//        implemented in an error safe way
+//
+//      * a better handling of wave quantum numbers would allow to
+//        have a more flexible way of calculating weights for model
+//        components; at the moment the weights for individual waves
+//        and the weights for positive and negative reflectivity
+//        totals are hard-coded
 //
 //
 // Author List:
@@ -31,33 +55,21 @@
 //-----------------------------------------------------------
 
 
-#include <cstdlib>
-#include <complex>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <vector>
 #include <unistd.h>
+#include <vector>
 
 #include <boost/progress.hpp>
 
-#include "TClonesArray.h"
 #include "TFile.h"
-#include "TH1.h"
-#include "TH1D.h"
-#include "TLorentzVector.h"
-#include "TRandom3.h"
-#include "TStopwatch.h"
-#include "TString.h"
 #include "TTree.h"
+#include "TClonesArray.h"
+#include "TString.h"
+#include "TStopwatch.h"
 
 #include "ampIntegralMatrix.h"
 #include "fitResult.h"
-#include "event.h"
 #include "fileUtils.hpp"
-#include "../amplitude/particle.h"
 #include "evtTreeHelper.h"
-#include "particleDataTable.h"
 
 
 using namespace std;
@@ -69,23 +81,23 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-	cerr << "weight (phase space) events with fit result" << endl
+	cerr << "weights (phase space) events according to production amplitudes given by fit result" << endl
 	     << endl
 	     << "usage:" << endl
 	     << progName
-	     << " [-o output file -w fit result file -i integral file -d amplitude directory -n samples] -m mass [-b mass bin width] "
+	     << " [-o output file -e -s -w fit-result file -n # of samples -i integral file -d amplitude directory] -m mass [-b mass bin width] "
 	     << "-t tree name -l leaf names -v -h] "
 	     << "input data file(s) (.evt or .root format)" << endl
 	     << "    where:" << endl
 	     << "        -o file    ROOT output file (default: './genpw.root')"<< endl
-	     << "        -w file    file containing the TFitBin tree to be used as input (default: './fitresult.root')"<< endl
+	     << "        -e         do _not_ copy event data to output file"<< endl
+	     << "        -s         write out weights for each single wave (caution: this vastly increase the size of the output file)" << endl
+	     << "        -w file    fit-result file containing the fitResult tree to be used as input (default: './fitresult.root')"<< endl
+	     << "        -n #       if > 1, additional production amplitudes are generated according to covariances (default: 1)"<< endl
 	     << "        -i file    integral file (default: './norm.int')"<< endl
 	     << "        -d dir     path to directory with decay amplitude files (default: '.')" << endl
-	     << "        -n #       number of samples of model parameters (default: 1)"<< endl
-	     << "        -s         add weight of each single wave (caution: this vastly increase the size of the output file)" << endl
 	     << "        -m #       central mass of mass bin [MeV/c^2]"<< endl
 	     << "        -b #       width of mass bin [MeV/c^2] (default: 60 MeV/c^2)"<< endl
-	     << "        -p file    path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -t name    name of tree in ROOT data files (default: rootPwaEvtTree)" << endl
 	     << "        -l names   semicolon separated object/leaf names in input data" << endl
 	     << "                   (default: 'prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta')" << endl
@@ -93,27 +105,6 @@ usage(const string& progName,
 	     << "        -h         print help" << endl
 	     << endl;
 	exit(errCode);
-}
-
-
-int
-getReflectivity(const TString& waveName)
-{
-	int refl = 0;
-	unsigned int reflIndex = 6;  // position of reflectivity in wave
-	// check whether it is parameter or wave name
-	if(waveName[0] == 'V') {
-		reflIndex = 9;
-	}
-	if(waveName[reflIndex] == '-') {
-		refl = -1;
-	} else if(waveName[reflIndex] == '+') {
-		refl = +1;
-	} else {
-		printErr << "Cannot parse parameter/wave name '" << waveName << "'. Cannot not determine reflectivity. Aborting." << endl;
-		throw;
-	}
-	return refl;
 }
 
 
@@ -127,29 +118,34 @@ main(int    argc,
 	cout << endl;
 
 	// parse command line options
-	const string   progName       = argv[0];
-	string         outFileName    = "./genpw.root";
-	string         fitFileName    = "./fitresult.root";
-	string         intFileName    = "./norm.int";
-	string         ampDirName     = ".";
-	unsigned int   nmbSamples     = 1;
-	bool           singleWave     = false;
-	double         massBinCenter  = 0.;
-	double         massBinWidth   = 60.;
-	string         pdgFileName    = "./particleDataTable.txt";
-	string         inTreeName     = "rootPwaEvtTree";
-	string         leafNames      = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
-	bool           debug          = false;
-	const long int treeCacheSize  = 1000000;  // 1 MByte ROOT tree read cache size
+	const string   progName          = argv[0];
+	string         outFileName       = "./genpw.root";
+	bool           doCopyEventData   = true;
+	string         fitResultFileName = "./fitresult.root";
+	const string   fitResultTreeName = "pwa";
+	const string   fitResultLeafName = "fitResult_v2";
+	string         intFileName       = "./norm.int";
+	string         ampDirName        = ".";
+	unsigned int   nmbProdAmpSamples = 1;
+	bool           writeSingleWaveWeights        = false;
+	double         massBinCenter     = 0;   // [MeV/c^2]
+	double         massBinWidth      = 60;  // [MeV/c^2]
+	string         inTreeName        = "rootPwaEvtTree";
+	string         leafNames         = "prodKinParticles;prodKinMomenta;decayKinParticles;decayKinMomenta";
+	bool           debug             = false;
+	const long int treeCacheSize     = 1000000;  // 1 MByte ROOT tree read cache size
 
 	int c;
-	while ((c = getopt(argc, argv, "o:w:i:d:n:sm:b:p:t:l:vh")) != -1) {
+	while ((c = getopt(argc, argv, "o:yw:i:d:n:sm:b:p:t:l:vh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
 			break;
+		case 'e':
+			doCopyEventData = false;
+			break;
 		case 'w':
-			fitFileName = optarg;
+			fitResultFileName = optarg;
 			break;
 		case 'i':
 			intFileName = optarg;
@@ -158,10 +154,10 @@ main(int    argc,
 			ampDirName = optarg;
 			break;
 		case 'n':
-			nmbSamples = atoi(optarg);
+			nmbProdAmpSamples = atoi(optarg);
 			break;
 		case 's':
-			singleWave = true;
+			writeSingleWaveWeights = true;
 			break;
 		case 'm':
 			massBinCenter = atof(optarg);
@@ -169,9 +165,9 @@ main(int    argc,
 		case 'b':
 			massBinWidth = atof(optarg);
 			break;
-		case 'p':
-			pdgFileName = optarg;
-			break;
+		// case 'p':
+		// 	pdgFileName = optarg;
+		// 	break;
 		case 't':
 			inTreeName = optarg;
 			break;
@@ -181,7 +177,7 @@ main(int    argc,
 		case 'v':
 			debug = true;
 			break;
-			
+
 		case 'h':
 		default:
 			usage(progName);
@@ -190,8 +186,8 @@ main(int    argc,
 	}
 
 	// the mass bin has to be specified
-	if (massBinCenter == 0.) {
-		printErr << "central mass of mass bin to be processed has to be specified. aborting." << endl;
+	if (massBinCenter == 0) {
+		printErr << "central mass of mass bin to be processed has to be different from 0. aborting." << endl;
 		usage(progName, 1);
 	}
 
@@ -200,20 +196,20 @@ main(int    argc,
 		printErr << "you need to specify at least one data file to process. aborting." << endl;
 		usage(progName, 1);
 	}
-	vector<string> rootFileNames;
-	vector<string> evtFileNames;
+	vector<string> rootInFileNames;
+	vector<string> evtInFileNames;
 	while (optind < argc) {
 		const string fileName = argv[optind++];
 		const string fileExt  = extensionFromPath(fileName);
 		if (fileExt == "root")
-			rootFileNames.push_back(fileName);
+			rootInFileNames.push_back(fileName);
 		else if (fileExt == "evt")
-			evtFileNames.push_back(fileName);
+			evtInFileNames.push_back(fileName);
 		else
 			printWarn << "input file '" << fileName << "' is neither a .root nor a .evt file. "
 			          << "skipping." << endl;
 	}
-	if ((rootFileNames.size() == 0) and (evtFileNames.size() == 0)) {
+	if ((rootInFileNames.size() == 0) and (evtInFileNames.size() == 0)) {
 		printErr << "none of the specified input files is a .root or .evt file. aborting.";
 		usage(progName, 1);
 	}
@@ -229,341 +225,325 @@ main(int    argc,
 	TClonesArray*  prodKinPartNames  = 0;
 	TClonesArray*  decayKinPartNames = 0;
 	if (not openRootEvtFiles(inTrees, prodKinPartNames, decayKinPartNames,
-	                         rootFileNames, evtFileNames,
+	                         rootInFileNames, evtInFileNames,
 	                         inTreeName, prodKinPartNamesObjName, prodKinMomentaLeafName,
 	                         decayKinPartNamesObjName, decayKinMomentaLeafName, debug)) {
 		printErr << "problems opening input file(s). aborting." << endl;
 		exit(1);
 	}
 
-	// initialize particle data table
-	rpwa::particleDataTable::readFile(pdgFileName);
-
-	TFile* outfile = TFile::Open(outFileName.c_str(), "RECREATE");
-	TTree* outtree = new TTree(inTreeName.c_str(), inTreeName.c_str());
-	double weight;
-	double weightPosRef;
-	double weightNegRef;
-	double weightFlat;
-
-	outtree->Branch("weight", &weight, "weight/D");
-	outtree->Branch("weightPosRef", &weightPosRef, "weightPosRef/D");
-	outtree->Branch("weightNegRef", &weightNegRef, "weightNegRef/D");
-	outtree->Branch("weightFlat", &weightFlat, "weightFlat/D");
-
-	TBranch* outProdKinMomentaBr  = 0;
-	TBranch* outDecayKinMomentaBr = 0;
-
-	// load integrals ---------------------------------------------------
+	// load integrals
 	ampIntegralMatrix normInt;
-	if(!normInt.readAscii(intFileName)) {
-		printErr << "Cannot read from file '"
-		         << intFileName << "'. Exiting." << endl;
+	if (not normInt.readAscii(intFileName)) {
+		printErr << "cannot read normalization integral from file '"
+		         << intFileName << "'. aborting." << endl;
 		exit(1);
 	}
 
-	// load production amplitudes ------------------------------------------
-	// read TFitResult is used as input
-	TFile* fitresults = TFile::Open(fitFileName.c_str(), "READ");
-	fitResult* Bin = NULL;
-	if(!fitresults || fitresults->IsZombie()) {
-		cerr << "Cannot open start fit results file " << fitFileName << endl;
-		return 1;
-	}
-	// get tree with start values
-	vector<vector<complex<double> >*> prodAmps(nmbSamples); //production amplitudes
-	vector<string> waveNames;
-	vector<int> reflectivities;
-	vector<int> ranks;
-	int maxrank = 0;
-
-	TTree* tree;
-	fitresults->GetObject("pwa", tree);
-	if(!tree) {
-		cerr << "Cannot find fitbin tree '"<< "pwa" << "' "<< endl;
-		exit(1);
-	} else {
-		Bin = new fitResult();
-		tree->SetBranchAddress("fitResult_v2", &Bin);
-		// find entry which is closest to mass bin center
-		// and has the lowest likelihood
-		printInfo << "Searching for best fit in mass bin centered at " << massBinCenter << " MeV/c^2." << std::endl;
-		unsigned int iBest = 0;
-		double mBest = 0;
-		double loglike = std::numeric_limits<double>::max();
-		for(unsigned int i = 0; i < tree->GetEntries(); ++i) {
-			tree->GetEntry(i);
-			if (fabs(massBinCenter - Bin->massBinCenter()) < fabs(massBinCenter - mBest)) {
-				// this mass bin is closer to mass bin searched for
-				iBest = i;
-				mBest = Bin->massBinCenter();
-				loglike = Bin->logLikelihood();
-			} else if (fabs(massBinCenter - Bin->massBinCenter()) <= fabs(massBinCenter - mBest)) {
-				// this mass bin is close as before, also compare likelihood
-				if (Bin->logLikelihood() < loglike) {
-					iBest = i;
-					mBest = Bin->massBinCenter();
-					loglike = Bin->logLikelihood();
-				}
-			}
-		}  // end loop over TFitBins
-
-
-		if((mBest < (massBinCenter-massBinWidth / 2.)) || (mBest > (massBinCenter + massBinWidth / 2.))) {
-			cerr << "No fit found for Mass bin m=" << massBinCenter << " (mBest=" << mBest << ", massBinCenter=" << massBinCenter << ", massBinWidth=" << massBinWidth << ")" << endl;
-			Bin->reset();
+	// load production amplitudes and wave information
+	vector<vector<complex<double> > > prodAmps(nmbProdAmpSamples);  // production amplitudes [sample index][wave index]
+	vector<string>                    waveNames;                    // wave names [wave index]
+	vector<int>                       reflectivities;
+	vector<int>                       ranks;
+	int                               maxRank = 0;
+	{
+		// open fit-result file
+		TFile* fitResultFile = TFile::Open(fitResultFileName.c_str(), "READ");
+		if (not fitResultFile or fitResultFile->IsZombie()) {
+			printErr << "cannot open fit-result file '" << fitResultFileName << "'. aborting." << endl;
 			exit(1);
-		} else {
-			printInfo << "Found best matching mass bin to be centered at " << mBest << " MeV/c^2, index " << iBest << "." << endl;
-			tree->GetEntry(iBest);
 		}
-		// write wavelist files for generator
-		// string tmpname("genamps.txt");
-		// create slightly modified versions of the model according to covariances
-		for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
-			prodAmps[isamples] = new vector<complex<double> >();
-
-			fitResult* fit = NULL;
-			if(isamples == 0) {
-				fit = Bin;
-			} else {
-				fit = Bin->cloneVar();
-			}
-
-			for (unsigned int iwaves = 0; iwaves < fit->nmbWaves(); iwaves++) {
-				TString wavename = fit->waveName(iwaves);
-				const double RE = fit->prodAmp(iwaves).real();
-				const double IM = fit->prodAmp(iwaves).imag();
-
-				int rank = 0;
-				int refl = 0;
-
-				if(wavename.Length() < 2) {
-					continue;
-				}
-				if((RE == 0) && (IM == 0)) {
-					continue;
-				}
-				// check if there is rank information
-				if(wavename(0) == 'V') {
-					// we multiply rank by to to make space for refl+- production vectors
-					rank = 2 * atoi(wavename(1, 1).Data());
-					// check reflecitivity to sort into correct production vector
-					refl = wavename(9)=='+' ? 0 : 1;
-					//cerr << wavename(9) << endl;
-					wavename = wavename(3, wavename.Length());
-				} else if(wavename != "flat") {
-					refl = wavename(6)=='+' ? 0 : 1;
-					//cerr << wavename(6) << endl;
-				}
-
-				std::complex<double> amp(RE, IM);
-				prodAmps[isamples]->push_back(amp);
-				cerr << wavename << " " << amp << " r=" << rank/2
-				     << " eps=" << refl << endl;
-				// for first file store info on waves
-				if(isamples == 0) {
-					waveNames.push_back(wavename.Data());
-					reflectivities.push_back(refl);
-					ranks.push_back(rank);
-					if(maxrank < rank) {
-						maxrank = rank;
+		// find fit-result tree
+		TTree* fitResultTree;
+		fitResultFile->GetObject(fitResultTreeName.c_str(), fitResultTree);
+		if (not fitResultTree) {
+			printErr << "cannot find fit-result tree '" << fitResultTreeName << "' in file '"
+			         << fitResultFileName << "'. aborting." << endl;
+			exit(1);
+		}
+		// loop over fit results and the ones which are closest to the given mass-bin center
+		// if there are more than one such fit results, take the one which has the best likelihood
+		printInfo << "searching for the best fit result with mass-bin center closest to m = "
+		          << massBinCenter << " MeV/c^2." << endl;
+		fitResult* resultBest = 0;
+		{
+			unsigned int indexBest         = 0;
+			double       massBinCenterBest = 0;
+			double       logLikeBest       = 0;
+			fitResult*   result            = 0;
+			fitResultTree->SetBranchAddress(fitResultLeafName.c_str(), &result);
+			for (unsigned int iTree = 0; iTree < fitResultTree->GetEntries(); ++iTree) {
+				fitResultTree->GetEntry(iTree);
+				const double mass    = result->massBinCenter();
+				const double logLike = result->logLikelihood();  // its actually -ln L
+				if ((iTree == 0) or (fabs(massBinCenter - mass) < fabs(massBinCenter - massBinCenterBest))) {
+					// this fit result is closer to the given mass-bin center
+					indexBest         = iTree;
+					massBinCenterBest = mass;
+					logLikeBest       = logLike;
+				} else if (fabs(massBinCenter - mass) == fabs(massBinCenter - massBinCenterBest)) {
+					// this fit result is as close to the given mass-bin center as before
+					// so pick the one with better likelihood
+					if (logLike < logLikeBest) {  // smaller values are better
+						indexBest         = iTree;
+						massBinCenterBest = mass;
+						logLikeBest       = logLike;
 					}
 				}
+			}  // end loop over fit results
+
+			// check that mass-bin center of found fit result lies in given bin width
+			if (   (massBinCenterBest < (massBinCenter - massBinWidth / 2))
+			       or (massBinCenterBest > (massBinCenter + massBinWidth / 2))) {
+				printErr << "no fit found for mass region "  << massBinCenter << " +- "
+				         << massBinWidth / 2. << " MeV/c^2" << endl;
+				exit(1);
 			}
-
-			if (isamples != 0) {
-				delete fit;
-			}
-
-			cerr << "Rank of fit was:" << maxrank + 1 << endl;
-		} // end loop over model versions
-	}
-
-	unsigned int nmbWaves = waveNames.size();
-	// TODO reserve list of wheight branches!
-
-	vector<ifstream*> ampfiles;
-	// reserve vector beforehand because Branch
-	// will take a pointer onto the elements
-	//vector<double> weights((nmbWaves+1)*nmbWaves/2);
-	vector<double> weights(nmbWaves);
-
-	// if requested also save the weight of each individual wave
-	if (singleWave) {
-		for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-			TString weightname("Wintens_");
-			weightname += waveNames[iw];
-			outtree->Branch(weightname.Data(), &weights[iw], (weightname + "/D").Data());
+			printInfo << "found best matching fit result centered at m = " << massBinCenterBest
+			          << " MeV/c^2 at tree index [" << indexBest << "]." << endl;
+			fitResultTree->GetEntry(indexBest);
+			resultBest = result;
 		}
+
+		// read production amplitudes, wave names, reflectivities, and rank
+		// if nmbProdAmpSamples > 1 vary production amplitudes according to covariances
+		for (unsigned int iSample = 0; iSample < nmbProdAmpSamples; ++iSample) {
+
+			fitResult* result = 0;
+			if (iSample == 0) {
+				result = resultBest;
+			} else {
+				result = resultBest->variedProdAmps();
+			}
+
+			for (unsigned int iWave = 0; iWave < result->nmbWaves(); ++iWave) {
+				TString  waveName = result->waveName(iWave);
+				if (waveName.Length() < 2)
+					continue;
+				// extract rank and reflectivity from wave name
+				int rank = 0;
+				int refl = 0;
+				if (waveName(0) == 'V') {
+					// we multiply rank by to to make space for refl+- production vectors
+					rank     = 2 * atoi(waveName(1, 1).Data());
+					// check reflectivity to sort into correct production vector
+					refl     = ((waveName(9) == '+') ? 0 : 1);
+					waveName = waveName(3, waveName.Length());
+				} else if (waveName != "flat")
+					refl = ((waveName(6) == '+') ? 0 : 1);
+				// read production amplitude
+				const complex<double> prodAmp = result->prodAmp(iWave);
+				if (prodAmp == 0.)
+					continue;
+				prodAmps[iSample].push_back(prodAmp);
+				// for first fit result store wave info
+				if (iSample == 0) {
+					waveNames.push_back     (waveName.Data());
+					reflectivities.push_back(refl);
+					ranks.push_back         (rank);
+					if (maxRank < rank)
+						maxRank = rank;
+				}
+
+				printDebug << "read production amplitude [" << iWave << "] = " << prodAmp
+				           << " for wave '" << waveName << "'; rank = " << rank / 2
+				           << ", reflectivity = " << refl << endl;
+			}
+
+			if (iSample > 0)
+				delete result;
+
+			++maxRank;
+			printDebug << "rank of fit is " << maxRank << endl;
+		}  // end loop over variations of production amplitudes
 	}
 
-	// create branches for the weights of the different model variants
-	vector<double> modelweights(nmbSamples);
-	for(unsigned int isamples = 0; isamples < nmbSamples; ++isamples) {
-		TString weightname("W");
-		weightname += isamples;
-		outtree->Branch(weightname.Data(), &modelweights[isamples], (weightname + "/D").Data());
-	}
+	const unsigned int nmbWaves = waveNames.size();
 
-	// open decay amplitude files --------------------------------------------
-	for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-		if (waveNames[iw] == "flat") {
-			ampfiles.push_back(NULL);
+	// open decay amplitude files
+	vector<ifstream*> ampFiles(nmbWaves, 0);
+	for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+		if (waveNames[iWave] == "flat") {
+			ampFiles.push_back(0);
 			continue;
 		}
-		string ampFilePath = ampDirName + "/" + waveNames[iw];
-		printInfo << "loading amplitude data from '" << ampFilePath << "'" << endl;
-		ifstream* ampfile = new ifstream(ampFilePath.c_str());
-		if (!ampfile->good()) {
+		const string ampFilePath = ampDirName + "/" + waveNames[iWave];
+		printInfo << "opening amplitude file '" << ampFilePath << "'" << endl;
+		ifstream* ampFile = new ifstream(ampFilePath.c_str());
+		if (not ampFile->good()) {
 			printErr << "cannot open amplitude file '" << ampFilePath << "'. aborting." << endl;
 			exit(1);
 		}
-		ampfiles.push_back(ampfile);
+		ampFiles[iWave] = ampFile;
 	}
 
+	// create output file and tree
+	TFile* outFile = TFile::Open(outFileName.c_str(), "RECREATE");
+	TTree* outTree = new TTree(inTreeName.c_str(), inTreeName.c_str());
+	// leaf variables
+	double         weight;
+	double         weightPosRef;
+	double         weightNegRef;
+	double         weightFlat;
+	vector<double> weights(nmbWaves);                        // branches will take pointer to elements
+	vector<double> weightProdAmpSamples(nmbProdAmpSamples);  // branches will take pointer to elements
+	// book branches
+	outTree->Branch("weight",       &weight,       "weight/D");
+	outTree->Branch("weightPosRef", &weightPosRef, "weightPosRef/D");
+	outTree->Branch("weightNegRef", &weightNegRef, "weightNegRef/D");
+	outTree->Branch("weightFlat",   &weightFlat,   "weightFlat/D");
+	if (writeSingleWaveWeights) {
+		// create weight branches for each individual wave
+		for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+			TString weightName("Wintens_");
+			weightName += waveNames[iWave];
+			outTree->Branch(weightName.Data(), &weights[iWave], (weightName + "/D").Data());
+		}
+	}
+	// create branches for the weights calculated from the varied production amplitudes
+	// weightProdAmpSamples[0] == weight
+	for (unsigned int iSample = 0; iSample < nmbProdAmpSamples; ++iSample) {
+		TString weightName("W");
+		weightName += iSample;
+		outTree->Branch(weightName.Data(), &weightProdAmpSamples[iSample], (weightName + "/D").Data());
+	}
+	TBranch* outProdKinMomentaBr  = 0;
+	TBranch* outDecayKinMomentaBr = 0;
 
-	// read data from tree(s) and calculate weight
+	// read data from tree(s) and calculate weight for each event
 	TStopwatch timer;
 	timer.Reset();
 	timer.Start();
-	unsigned int counter = 0;
-	for (unsigned int i = 0; i < inTrees.size(); ++i) {
+	unsigned int eventCounter = 0;
+	for (unsigned int iTree = 0; iTree < inTrees.size(); ++iTree) {
 		printInfo << "processing ";
-		if ((rootFileNames.size() > 0) and (i == 0)) 
+		if ((rootInFileNames.size() > 0) and (iTree == 0))
 			cout << "chain of .root files";
 		else
-			cout << ".evt tree[" << ((rootFileNames.size() > 0) ? i : i + 1) << "]";
+			cout << ".evt tree[" << ((rootInFileNames.size() > 0) ? iTree : iTree + 1) << "]";
 		cout << endl;
 
-		// create branch pointers and leaf variables
-		TBranch*      prodKinMomentaBr  = 0;
-		TBranch*      decayKinMomentaBr = 0;
+		// create leaf variables and branch pointers
 		TClonesArray* prodKinMomenta    = 0;
 		TClonesArray* decayKinMomenta   = 0;
+		TBranch*      prodKinMomentaBr  = 0;
+		TBranch*      decayKinMomentaBr = 0;
 
-		// connect leaf variables to tree branches
-		inTrees[i]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
-		inTrees[i]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
-		inTrees[i]->SetCacheSize(treeCacheSize);
-		inTrees[i]->AddBranchToCache(prodKinMomentaLeafName.c_str(),  true);
-		inTrees[i]->AddBranchToCache(decayKinMomentaLeafName.c_str(), true);
-		inTrees[i]->StopCacheLearningPhase();
-
-		// connect TClonesArrays from input to output tree
-		if (outProdKinMomentaBr == NULL) {
+		if (doCopyEventData) {
+			// connect leaf variables to tree branches
+			inTrees[iTree]->SetBranchAddress(prodKinMomentaLeafName.c_str(),  &prodKinMomenta,  &prodKinMomentaBr );
+			inTrees[iTree]->SetBranchAddress(decayKinMomentaLeafName.c_str(), &decayKinMomenta, &decayKinMomentaBr);
+			inTrees[iTree]->SetCacheSize(treeCacheSize);
+			inTrees[iTree]->AddBranchToCache(prodKinMomentaLeafName.c_str(),  true);
+			inTrees[iTree]->AddBranchToCache(decayKinMomentaLeafName.c_str(), true);
+			inTrees[iTree]->StopCacheLearningPhase();
+			// connect TClonesArrays of input tree to those of output tree
 			const int splitLevel = 99;
 			const int bufSize    = 256000;
-			outProdKinMomentaBr  = outtree->Branch(prodKinMomentaLeafName.c_str(),  "TClonesArray", &prodKinMomenta,  bufSize, splitLevel);
-		} else {
-			outProdKinMomentaBr->SetAddress(&prodKinMomenta);
-		}
-		if (outDecayKinMomentaBr == NULL) {
-			const int splitLevel = 99;
-			const int bufSize    = 256000;
-			outDecayKinMomentaBr = outtree->Branch(decayKinMomentaLeafName.c_str(), "TClonesArray", &decayKinMomenta, bufSize, splitLevel);
-		} else {
-			outDecayKinMomentaBr->SetAddress(&decayKinMomenta);
+			if (not outProdKinMomentaBr)
+				outProdKinMomentaBr  = outTree->Branch(prodKinMomentaLeafName.c_str(),  "TClonesArray", &prodKinMomenta,  bufSize, splitLevel);
+			else
+				outProdKinMomentaBr->SetAddress(&prodKinMomenta);
+			if (not outDecayKinMomentaBr)
+				outDecayKinMomentaBr = outTree->Branch(decayKinMomentaLeafName.c_str(), "TClonesArray", &decayKinMomenta, bufSize, splitLevel);
+			else
+				outDecayKinMomentaBr->SetAddress(&decayKinMomenta);
 		}
 
-		const long int   nmbEventsTree = inTrees[i]->GetEntries();
+		// loop over data events and calculate weight
+		const long int   nmbEventsTree = inTrees[iTree]->GetEntries();
 		const long int   maxNmbEvents  = 0;
-		const long int   nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree)
-		                                  : nmbEventsTree);
+		const long int   nmbEvents     = ((maxNmbEvents > 0) ? min(maxNmbEvents, nmbEventsTree) : nmbEventsTree);
 		progress_display progressIndicator(nmbEvents, cout, "");
-		for (long int eventIndex = 0; eventIndex < nmbEvents; ++eventIndex) {
-			++counter;
+		for (long int iEvent = 0; iEvent < nmbEvents; ++iEvent) {
+			++eventCounter;
 			++progressIndicator;
 
-			if (inTrees[i]->LoadTree(eventIndex) < 0)
+			if (inTrees[iTree]->LoadTree(iEvent) < 0)
 				break;
-			// read only required branches
-			prodKinMomentaBr->GetEntry (eventIndex);
-			decayKinMomentaBr->GetEntry(eventIndex);
+			if (doCopyEventData) {
+				// read only required branches
+				prodKinMomentaBr->GetEntry (iEvent);
+				decayKinMomentaBr->GetEntry(iEvent);
+			}
 
-			// read decay amps for this event
-			vector<complex<double> > decayamps(nmbWaves);
-			for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-				if (ampfiles[iw] == NULL) { // e.g. flat wave
-					decayamps[iw] = complex<double>(0., 0.);
-				} else {
-					complex<double> decayamp;
-					ampfiles[iw]->read((char*) &decayamp, sizeof(complex<double> ));
-					decayamps[iw] = decayamp;
+			// read decay amplitudes for this event
+			vector<complex<double> > decayAmps(nmbWaves);
+			for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+				if (not ampFiles[iWave])  // e.g. flat wave
+					decayAmps[iWave] = complex<double>(0);
+				else {
+					complex<double> decayAmp;
+					ampFiles[iWave]->read((char*) &decayAmp, sizeof(complex<double>));
+					decayAmps[iWave] = decayAmp;
 				}
 			}
 
-			// weighting - do this for each model-sample
-			for(unsigned int isample=0; isample<nmbSamples; ++isample){
+			// calculate weight for each sample of production amplitudes
+			for (unsigned int iSample = 0; iSample < nmbProdAmpSamples; ++iSample) {
 
-				vector<complex<double> > posamps(maxrank + 1); // positive refl vector
-				vector<complex<double> > negamps(maxrank + 1); // negative refl vector
+				vector<complex<double> > posReflAmpSums(maxRank, 0);  // positive-reflectivity amplitude sums [rank]
+				vector<complex<double> > negReflAmpSums(maxRank, 0);  // negative-reflectivity amplitude sums [rank]
+				complex<double>          flatAmp = 0;
 
-				complex<double> flatamp;
-
-				for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-					complex<double> decayamp = decayamps[iw];
-					string w1 = waveNames[iw];
-					if(w1 == "flat"){
-						const double nrm = sqrt((double)normInt.nmbEvents());
-						flatamp = prodAmps[isample]->at(iw) / nrm;
-						continue;
+				for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+					const complex<double> decayAmp  = decayAmps        [iWave];
+					const complex<double> prodAmp   = prodAmps[iSample][iWave];
+					const string          waveName  = waveNames        [iWave];
+					const double          nmbEvents = normInt.nmbEvents();
+					if (waveName == "flat") {
+						flatAmp = prodAmp / sqrt(nmbEvents);
+						if (iSample == 0)  // set weights of individual waves
+							weights[iWave] = norm(flatAmp);
+					} else {
+						const complex<double> amp = decayAmp * prodAmp / sqrt(normInt.element(waveName, waveName).real() * nmbEvents);
+						if (iSample == 0)  // set weights of individual waves
+							weights[iWave] = norm(amp);
+						if (reflectivities[iWave] == 0)
+							posReflAmpSums[ranks[iWave]] += amp;
+						else if (reflectivities[iWave] == 1)
+							negReflAmpSums[ranks[iWave]] += amp;
 					}
-					//cerr << w1 << "  " << decayamp << endl;
-					const double nrm = sqrt(normInt.element(w1, w1).real() * (double)normInt.nmbEvents());
-					complex<double> amp = decayamp * prodAmps[isample]->at(iw) / nrm;
-					if(isample == 0) {// fill wheights of individual waves
-						weights[iw] = norm(amp);
-					}
+				}  // end loop over waves
 
-					if (reflectivities[iw] == 0) {
-						posamps[ranks[iw]] += amp;
-					} else if(reflectivities[iw] == 1) {
-						negamps[ranks[iw]] += amp;
-					}
-				}
-				// end loop over waves
-
-				// incoherent sum over rank and diffrerent reflectivities
+				// incoherent sum over rank and reflectivities
 				weightPosRef = 0;
 				weightNegRef = 0;
-				for(int ir = 0; ir < maxrank + 1; ++ir) {
-					weightPosRef += norm(posamps[ir]);
-					weightNegRef += norm(negamps[ir]);
+				for (int iRank = 0; iRank < maxRank; ++iRank) {
+					weightPosRef += norm(posReflAmpSums[iRank]);
+					weightNegRef += norm(negReflAmpSums[iRank]);
 				}
-				weightFlat = norm(flatamp);
-				// weight as incoherent sum of the two reflectivities and the flat wave
+				weightFlat = norm(flatAmp);
+				// weight is incoherent sum of the two reflectivities and the flat wave
 				weight = weightPosRef + weightNegRef + weightFlat;
 
-				modelweights[isample] = weight;
+				weightProdAmpSamples[iSample] = weight;
 
-			}// end loop over model samples
-			outtree->Fill();
+			}  // end loop over production-amplitude samples
+			outTree->Fill();
 		}
 
-		inTrees[i]->PrintCacheStats();
+		inTrees[iTree]->PrintCacheStats();
 	}
-	printSucc << "calculated weight for " << counter << " events" << endl;
+	printSucc << "calculated weight for " << eventCounter << " events" << endl;
 	timer.Stop();
 	printInfo << "this job consumed: ";
 	timer.Print();
 
-	outfile->cd();
+	outFile->cd();
 	prodKinPartNames ->Write(prodKinPartNamesObjName.c_str(),  TObject::kSingleKey);
 	decayKinPartNames->Write(decayKinPartNamesObjName.c_str(), TObject::kSingleKey);
-	outtree->Write();
-	outfile->Close();
+	outTree->Write();
+	outFile->Close();
 
-	for(unsigned int iw = 0; iw < nmbWaves; ++iw) {
-		if (ampfiles[iw] != NULL) {
-			ampfiles[iw]->close();
-			delete ampfiles[iw];
+	// cleanup
+	for (unsigned int iWave = 0; iWave < nmbWaves; ++iWave) {
+		if (ampFiles[iWave]) {
+			ampFiles[iWave]->close();
+			delete ampFiles[iWave];
 		}
 	}
-	ampfiles.clear();
-	for(unsigned int isamples=0; isamples < nmbSamples; ++isamples) {
-		delete prodAmps[isamples];
-	}
+	ampFiles.clear();
 	prodAmps.clear();
 
 	return 0;

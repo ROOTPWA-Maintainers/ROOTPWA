@@ -83,19 +83,19 @@ static const string step_batchnames[nbatches] = {
 };
 // define which batch send job commands are implemented
 // [steps][local,cern,gridka,mainz,munich]
-static const bool steps_batchimplemented[nsteps][nbatches] = {
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-//		{1,0,0,0,0},
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-		{1,0,0,0,0},
-};
+// static const bool steps_batchimplemented[nsteps][nbatches] = {
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// //		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// 		{1,0,0,0,0},
+// };
 
 // status of each step [0..1] (0% till 100% finished)
 static float step_status[nsteps] = {

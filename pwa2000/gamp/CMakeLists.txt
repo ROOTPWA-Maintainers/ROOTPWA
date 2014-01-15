@@ -35,14 +35,15 @@ message(STATUS "")
 message(STATUS ">>> Setting up 'gamp' directory.")
 
 
-set(CMAKE_CXX_FLAGS   "${CMAKE_CXX_FLAGS} -O2 -Wall -Werror")
-set(CMAKE_CXX_LDFLAGS "${CMAKE_CXX_LDFLAGS} -O2")
+set(CMAKE_CXX_FLAGS         "-O2 -Wall -Wno-unused-variable -Wno-unneeded-internal-declaration -Werror ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -Wall -Wno-unused-variable -Wno-unneeded-internal-declaration -Werror ${CMAKE_CXX_FLAGS_RELEASE}")
+set(CMAKE_CXX_LDFLAGS       "-O2 ${CMAKE_CXX_LDFLAGS}")
 
 
 # set include directories
 set(INCLUDE_DIRECTORIES
 	${UTILITIES_INCLUDE_DIR}
-	${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
 	${CMAKE_SOURCE_DIR}/pwa2000/libpp
 	${CMAKE_CURRENT_SOURCE_DIR}
 	)

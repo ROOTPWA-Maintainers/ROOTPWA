@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for amplitude library 
+#//      build file for amplitude library
 #//
 #//
 #// Author List:
@@ -37,7 +37,7 @@ message(STATUS ">>> Setting up 'relampl' directory.")
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	${Boost_INCLUDE_DIRS}
+	SYSTEM ${Boost_INCLUDE_DIRS}
 	${ROOT_INCLUDE_DIR}
 	${Libconfig_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}

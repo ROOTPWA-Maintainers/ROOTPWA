@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <assert.h>
 #include "wset.h"
+#include <unistd.h>
 
 
 void usage(const char* progname){
