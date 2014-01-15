@@ -90,15 +90,15 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-# common compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn")
-set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror ${CMAKE_CXX_FLAGS}")
-# flags for specific build types
-set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS}")
+# set common compiler flags
+# consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
+# set additional flags for specific build types
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+# -march=native switch was removed, because is caused trouble in heterogeneous environments
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
-# -march=native switch caused come trouble in heterogeneous environments
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # code should now compile with clang so forcing of gcc should not be necessary anymore
 # if(NOT CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
 # 	# use gcc instead of llvm compiler on MacOS 10.7 (Darwin 11.x.y)
@@ -133,13 +133,13 @@ set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
 foreach(_LANG "C" "CXX")
 	message(STATUS "${_LANG} compiler ID is '${CMAKE_${_LANG}_COMPILER_ID} V${CMAKE_${_LANG}_COMPILER_VERSION}'.")
 	message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'.")
-	message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'.")
+	message(STATUS "Using general ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'.")
 endforeach()
 unset(_LANG)
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'.")
-message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
+message(STATUS "Using additional CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
 	"for build type ${CMAKE_BUILD_TYPE}.")
-message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
+message(STATUS "Using additional linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
 	"for build type ${CMAKE_BUILD_TYPE}.")
 if(DEBUG_OUTPUT)
 	include(CMakePrintSystemInformation)
@@ -199,11 +199,6 @@ if(Boost_FOUND)
 	set(Boost_LIBRARY_VERSION "${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} include directories '${Boost_INCLUDE_DIRS}'.")
 	message(STATUS "Using Boost ${Boost_LIBRARY_VERSION} library directories '${Boost_LIBRARY_DIRS}'.")
-	# fix unused-local-typedefs warnings in Boost reported by gcc 4.8 and above
-	if(GCC_VERSION VERSION_GREATER "4.7" AND Boost_LIBRARY_VERSION VERSION_LESS "1.56.0")
-		set(CMAKE_CXX_FLAGS "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}")
-		set(CMAKE_CXX_FLAGS_RELEASE "-Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS_RELEASE}")
-	endif()
 else()
 	message(FATAL_ERROR "Could not find Boost installation. "
 		"Is environment variable BOOST_ROOT=${BOOST_ROOT} set correctly? Please read INSTALL.")
