@@ -59,6 +59,7 @@ include(CommonMacros)
 include(FeatureSummary)
 include(AddEnvCompilerDefs)
 include(ProcessorCount)
+include(CheckCXXSourceCompiles)
 
 
 # force out-of-source builds.
@@ -146,6 +147,15 @@ if(DEBUG_OUTPUT)
 endif()
 
 
+# detect some compiler/STL features
+# test whether std::complex provides real and imag accessors
+check_cxx_source_compiles("#include <complex>
+int main() { std::complex<double> a; a.real() = 0; }" COMPILER_PROVIDES_STD_COMPLEX_ACCESSORS)
+if(COMPILER_PROVIDES_STD_COMPLEX_ACCESSORS)
+	add_definitions(-DCOMPILER_PROVIDES_STD_COMPLEX_ACCESSORS)
+endif()
+
+
 # redirect output files
 message(STATUS "")
 message(STATUS ">>> Setting up output paths.")
@@ -153,6 +163,7 @@ set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'.")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
+
 
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations

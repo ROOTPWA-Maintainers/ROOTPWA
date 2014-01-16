@@ -36,7 +36,19 @@ message(STATUS ">>> Setting up 'gamp' directory.")
 
 
 # override compiler flags
-set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-variable -Wno-unneeded-internal-declaration -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+# make sure flags are supported by compiler
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-Wno-unneeded-internal-declaration COMPILER_HAS_FLAG_NO_UNNEEDED_INTERNAL_DECLARATION)
+if(COMPILER_HAS_FLAG_NO_UNNEEDED_INTERNAL_DECLARATION)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unneeded-internal-declaration")
+endif()
+unset(COMPILER_HAS_FLAG_NO_UNNEEDED_INTERNAL_DECLARATION)
+check_cxx_compiler_flag(-Wno-unused-variable COMPILER_HAS_FLAG_NO_UNUSED_VARIABLE)
+if(COMPILER_HAS_FLAG_NO_UNUSED_VARIABLE)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
+endif()
+unset(COMPILER_HAS_FLAG_NO_UNUSED_VARIABLE)
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
 

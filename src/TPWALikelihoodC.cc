@@ -526,8 +526,11 @@ TPWALikelihoodC::FdF(const double* x, double& f, double* df) const {
   _dLcache[outcount]=dLdflat+n2*_Vflat.amp().real();
   df[outcount]=dLdflat+n2*_Vflat.amp().real();
 
-
+#ifdef COMPILER_PROVIDES_STD_COMPLEX_ACCESSORS
+  N.real()+=std::norm(_Vflat.amp());
+#else
   N.real(N.real()+std::norm(_Vflat.amp()));
+#endif
 
   double t2=timer.RealTime();
   timer.Stop();
