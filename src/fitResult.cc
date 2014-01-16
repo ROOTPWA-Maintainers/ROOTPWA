@@ -33,6 +33,7 @@
 //-----------------------------------------------------------
 
 
+#include <assert.h>
 #include <algorithm>
 #include <set>
 
@@ -42,9 +43,6 @@
 #include "TMath.h"
 #include "TMatrixDSym.h"
 #include "TRandom3.h"
-
-// PWA2000 classes
-#include "integral.h"
 
 #include "fitResult.h"
 

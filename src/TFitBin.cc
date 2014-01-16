@@ -35,9 +35,6 @@
 
 #include <algorithm>
 
-// PWA2000 classes
-#include "integral.h"
-
 #include "reportingUtils.hpp"
 #include "TFitBin.h"
 
