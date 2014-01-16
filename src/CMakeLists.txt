@@ -52,7 +52,6 @@ include_directories(${INCLUDE_DIRECTORIES})
 # source files that are compiled into library
 set(SOURCES
 	TFitBin.cc
-	TFitResult.cc
 	fitResult.cc
 	TCMatrix.cc
 	TPWALikelihood.cc
@@ -79,7 +78,7 @@ set(ROOTPWA_DICT_INCLUDE_DIRS
 root_generate_dictionary(
 	"${ROOTPWA_DICTIONARY}"
 	"${ROOTPWA_DICT_INCLUDE_DIRS}"
-	"TFitBin.h;TFitResult.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
+	"TFitBin.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
 	"rootPwaLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})

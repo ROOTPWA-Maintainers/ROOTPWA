@@ -247,12 +247,6 @@ if(NOT ROOT_VERSION VERSION_LESS "5.27.06")
 	add_definitions(-DUSE_STD_COMPLEX_TREE_LEAFS)
 endif()
 add_feature_info(Complex_tree_leaf USE_STD_COMPLEX_TREE_LEAFS "The Complex_tree_leaf feature provides ROOT data formats for amplitudes and amplitude integrals.")
-# TFitResult produces a name clash for ROOT versions from 5.25.0 on
-if(ROOT_VERSION VERSION_LESS "5.25.00")
-	set(USE_TFITRESULT TRUE)
-	add_definitions(-DUSE_TFITRESULT)
-endif()
-add_feature_info(TFitResult USE_TFITRESULT "The TFitResult feature provides legacy fit result class.")
 
 
 # setup CUDA

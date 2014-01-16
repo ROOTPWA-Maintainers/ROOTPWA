@@ -55,9 +55,6 @@
 #include "TCMatrix.h"
 #include "TFitBin.h"
 
-// enable copying from TFitResult for older ROOT versions
-#include "TFitResult.h"
-
 
 namespace rpwa {
 
@@ -97,10 +94,6 @@ namespace rpwa {
 		fitResult();
 		fitResult(const fitResult& result);
 		fitResult(const TFitBin&   fitBin);
-		// enable copying from TFitResult for older ROOT versions
-#ifdef USE_TFITRESULT
-		fitResult(const TFitResult& result);
-#endif
 		virtual ~fitResult();
 
 		fitResult* variedProdAmps();  ///< create a copy with production amplitudes varied according to covariance matrix

@@ -34,9 +34,5 @@
 #pragma link C++ class TCovEllipse+;
 //#pragma link C++ class TMCMCMeta+;
 
-#ifdef USE_TFITRESULT
-#pragma link C++ class TFitResult+;
-#endif 
-
 
 #endif

@@ -118,26 +118,6 @@ fitResult::fitResult(const fitResult& result)
 { }
 
 
-// enable copying from TFitResult for older ROOT versions
-#ifdef USE_TFITRESULT
-fitResult::fitResult(const TFitResult& result)
-	: _nmbEvents             (result.nmbEvents()),
-	  _normNmbEvents         (result.normNmbEvents()),
-	  _massBinCenter         (result.massBinCenter()),
-	  _logLikelihood         (result.logLikelihood()),
-	  _rank                  (result.rank()),
-	  _prodAmps              (result.prodAmps()),
-	  _prodAmpNames          (result.prodAmpNames()),
-	  _waveNames             (result.waveNames()),
-	  _covMatrixValid        (result.covMatrixValid()),
-	  _fitParCovMatrix       (result.fitParCovMatrix()),
-	  _fitParCovMatrixIndices(result.fitParCovIndices()),
-	  _normIntegral          (result.normIntegralMatrix()),
-	  _normIntIndexMap       (result.normIntIndexMap())
-{ }
-#endif
-
-
 fitResult::~fitResult()
 { }
 
