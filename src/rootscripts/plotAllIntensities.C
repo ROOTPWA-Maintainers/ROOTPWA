@@ -37,20 +37,20 @@
 #include <algorithm>
 #include <cmath>
 
-#include "TCanvas.h"
-#include "TROOT.h"
-#include "TFile.h"
-#include "TGraph.h"
-#include "TMultiGraph.h"
-#include "TLatex.h"
-#include "TList.h"
-#include "TPostScript.h"
-#include "TSystem.h"
+#include <TCanvas.h>
+#include <TFile.h>
+#include <TGraph.h>
+#include <TLatex.h>
+#include <TList.h>
+#include <TMultiGraph.h>
+#include <TPostScript.h>
+#include <TROOT.h>
+#include <TSystem.h>
+#include <TTree.h>
 
 #include "fitResult.h"
-#include "plotIntensity.h"
-#include "plotAllIntensities.h"
 
+#include "plotIntensity.C"
 
 using namespace std;
 using namespace rpwa;
@@ -84,16 +84,17 @@ compareIntensities(const pair<string, double>& a,
 	return a.second > b.second;
 }
 
+
 vector<pair<string, TVirtualPad*> >
 plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult trees
-                   TTree**            trees,          // array of fitResult trees
-                   const bool         createPsFile,   // if true, plots are written to waves.ps
-                   const string&      outPath,        // path for output files
-                   const int*         graphColors,    // array of colors for graph line and marker
-                   const double*      graphScales,    // array of colors for graph line and marker
-                   const bool         drawLegend,     // if set legend is drawn
-                   const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
-                   const string&      branchName)
+		   TTree**            trees,                  // array of fitResult trees
+		   const bool         createPsFile  = false,  // if true, plots are written to waves.ps
+		   const string&      outPath       = "./",   // path for output files
+		   const int*         graphColors   = NULL,   // array of colors for graph line and marker
+		   const double*      graphScales   = NULL,   // array of scales for graph scaling (scales all graphs of one tree)
+		   const bool         drawLegend    = true,   // if set legend is drawn
+		   const double       yAxisRangeMax = 0,      // if != 0; range of y-axis is limited to this value
+		   const string&      branchName    = "fitResult_v2")
 {
 	const double intensityThr      = 0;            // threshold for total intensity in mass bin
 	const int    nmbPadsPerCanvMin = 4;            // minimum number of pads each canvas is subdivided into
@@ -250,7 +251,7 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
 	gROOT->cd();
 
 	if (createPsFile) {
-		const string psFileName = outPath + "waveIntensities.ps";
+		const string psFileName = outPath + "waveIntensities.pdf";
 		TCanvas      dummyCanv("dummy", "dummy");
 		dummyCanv.Print((psFileName + "[").c_str());
 		for (map<string, TCanvas*>::iterator i = canvases.begin(); i != canvases.end(); ++i) {
@@ -263,4 +264,30 @@ plotAllIntensities(const unsigned int nmbTrees,       // number of fitResult tre
 	}
 
 	return wavePads;
+}
+
+
+vector<pair<string, TVirtualPad*> >
+plotAllIntensities(TTree*             tree,                   // fitResult tree
+		   const bool         createPsFile  = false,          // if true, plots are written to waves.ps
+		   const string&      outPath       = "./",           // path for output files
+		   const double       yAxisRangeMax = 0,              // if != 0; range of y-axis is limited to this value
+		   const string&      branchName    = "fitResult_v2")
+{
+  return plotAllIntensities(1, &tree, createPsFile, outPath, NULL, NULL, false, yAxisRangeMax, branchName);
+}
+
+
+vector<pair<string, TVirtualPad*> >
+plotAllIntensities(vector<TTree*>&    trees,                                 // vector of fitResult trees
+		   const bool                 createPsFile  = false,                 // if true, plots are written to waves.ps
+		   const string&              outPath            = "./",             // path for output files
+		   const vector<int>&         graphColors        = vector<int>(),    // vector of colors for graph line and marker
+		   const vector<double>&      graphScales        = vector<double>(), // vector of scales for graphs
+		   const bool                 drawLegend       = true,               // if set legend is drawn
+		   const double               yAxisRangeMax    = 0,                  // if != 0; range of y-axis is limited to this value
+		   const string&              branchName       = "fitResult_v2")
+{
+  return plotAllIntensities(trees.size(), &(*(trees.begin())), createPsFile, outPath,
+			    &(*(graphColors.begin())), &(*(graphScales.begin())), drawLegend, yAxisRangeMax, branchName);
 }
