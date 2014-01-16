@@ -557,14 +557,6 @@ else()
 	set(CUDA_LIBS)
 endif()
 
-#!!! this should be removed
-set(SCRIPTS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/src/rootscripts
-	)
-set(ROOTPWASCRIPTS_LIBS
-	RootPwaScripts
-	)
-
 
 # build subprojects
 
@@ -589,10 +581,6 @@ add_subdirectory(amplitude)
 # RootPwa
 add_subdirectory(src)
 
-# compile rootscripts into a library since they are linked by the gui
-#!!! this should be removed
-add_subdirectory(src/rootscripts)
-
 # RootPwaTools
 add_subdirectory(tools)
 
@@ -607,9 +595,6 @@ add_subdirectory(keygen)
 
 # Relativic Amplitudes
 add_subdirectory(relampl)
-
-# gui
-add_subdirectory(gui/src)
 
 # massdep
 #add_subdirectory(massdep)
