@@ -45,12 +45,12 @@
 	//gROOT->ProcessLine(".L convertTFitResultTree.C+");
 
 	// basic plotting routines
-	//gROOT->ProcessLine(".L plotIntensity.C+");
+	gROOT->ProcessLine(".L plotIntensity.C+");
 	//gROOT->ProcessLine(".L plotPhase.C+");
 	//gROOT->ProcessLine(".L plotCoherence.C+");
 
 	// summary plots
-	//gROOT->ProcessLine(".L plotAllIntensities.C+");
+	gROOT->ProcessLine(".L plotAllIntensities.C+");
 	//gROOT->ProcessLine(".L plotSpinTotals.C+");
 	//gROOT->ProcessLine(".L plot4.C+");
 
