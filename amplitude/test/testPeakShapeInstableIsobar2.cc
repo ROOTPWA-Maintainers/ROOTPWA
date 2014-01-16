@@ -267,7 +267,7 @@ int main() {
 
 	TApplication app("", 0, 0);
 
-	const int N_HISTS = 1;
+	const unsigned int N_HISTS = 1;
 
 	TFile* outFile = TFile::Open("amplitudeTests.root", "RECREATE");
 
