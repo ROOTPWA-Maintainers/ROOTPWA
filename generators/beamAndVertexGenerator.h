@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include <boost/shared_ptr.hpp>
+
 #include <TVector3.h>
 #include <TLorentzVector.h>
 
@@ -18,6 +20,9 @@ namespace rpwa {
 
 	class generator;
 	struct Target;
+
+	class beamAndVertexGenerator;
+	typedef boost::shared_ptr<beamAndVertexGenerator> beamAndVertexGeneratorPtr;
 
 	class beamAndVertexGenerator {
 

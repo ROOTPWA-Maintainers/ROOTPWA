@@ -24,8 +24,8 @@ using namespace rpwa;
 bool generatorManager::_debug = false;
 
 generatorManager::generatorManager()
-	: _beamAndVertexGenerator(shared_ptr<beamAndVertexGenerator>(new beamAndVertexGenerator())),
-	  _pickerFunction(shared_ptr<massAndTPrimePicker>()),
+	: _beamAndVertexGenerator(beamAndVertexGeneratorPtr(new beamAndVertexGenerator())),
+	  _pickerFunction(massAndTPrimePickerPtr()),
 	  _beamFileName(""),
 	  _reactionFileRead(false),
 	  _generator(NULL) { };
@@ -249,16 +249,16 @@ bool generatorManager::readReactionFile(const string& fileName) {
 		string functionName;
 		configTAndMDependence->lookupValue("function", functionName);
 		if(functionName == "uniformMassExponentialT") {
-			_pickerFunction = shared_ptr<massAndTPrimePicker>(new uniformMassExponentialTPicker());
+			_pickerFunction = massAndTPrimePickerPtr(new uniformMassExponentialTPicker());
 		} else if(functionName == "polynomialMassAndTPrime") {
-			_pickerFunction = shared_ptr<massAndTPrimePicker>(new polynomialMassAndTPrimeSlopePicker());
+			_pickerFunction = massAndTPrimePickerPtr(new polynomialMassAndTPrimeSlopePicker());
 		} else {
 			printErr << "'function' name '" << functionName << "' unknown." << endl;
 			return false;
 		}
 		if(not _pickerFunction->init(settings)) {
 			printErr << "Could not initialize 'function' " << functionName << "." << endl;
-			_pickerFunction = shared_ptr<massAndTPrimePicker>();
+			_pickerFunction = massAndTPrimePickerPtr();
 			return false;
 		}
 		printSucc << "initialized t' and mass dependence '" << functionName << "'." << endl;

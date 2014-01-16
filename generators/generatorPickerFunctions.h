@@ -5,12 +5,17 @@
 #include<limits>
 #include<map>
 
+#include<boost/shared_ptr.hpp>
+
 #include<libconfig.h++>
 
 #include<TF1.h>
 
 
 namespace rpwa {
+
+	class massAndTPrimePicker;
+	typedef boost::shared_ptr<massAndTPrimePicker> massAndTPrimePickerPtr;
 
 	class massAndTPrimePicker {
 
