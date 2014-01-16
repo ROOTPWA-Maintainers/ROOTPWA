@@ -552,13 +552,6 @@ endif()
 
 # build subprojects
 
-# PWA2000
-option(USE_PWA2000 "En/Disables compilation of PWA2000 components" ON)
-add_feature_info(PWA2000 USE_PWA2000 "The PWA2000 feature provides legacy libraries.")
-if(USE_PWA2000)
-	add_subdirectory(pwa2000)
-endif()
-
 # Utilities
 add_subdirectory(utilities)
 

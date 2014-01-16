@@ -56,13 +56,3 @@ make_executable(testIsospinSym              testIsospinSym.cc              "${AM
 make_executable(testIntegral                testIntegral.cc                "${AMPLITUDE_LIBS}")
 make_executable(testPeakShapeInstableIsobar testPeakShapeInstableIsobar.cc "${AMPLITUDE_LIBS}" "${ROOTPWAGEN_LIBS}")
 make_executable(testPeakShapeInstableIsobar2 testPeakShapeInstableIsobar2.cc "${AMPLITUDE_LIBS}")
-if(USE_PWA2000)
-	if(Boost_TIMER_FOUND)
-		make_executable(testMassDependence testMassDependence.cc
-			"${AMPLITUDE_LIBS};${ROOTPWAGEN_LIBS};${Boost_TIMER_LIBRARY};${Boost_SYSTEM_LIBRARY}")
-	else()
-		message(STATUS "Cannot find Boost::timer shared library. Skipping build of testMassDependence.")
-	endif()
-else()
-	message(STATUS "PWA2000 disabled. Skipping build of testMassDependence.")
-endif()

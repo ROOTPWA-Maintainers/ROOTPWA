@@ -43,12 +43,6 @@
 #include "TH2.h"
 #include "TStopwatch.h"
 
-#ifdef USE_PWA2000
-#include "keyfile.h"
-#include "event.h"
-extern particleDataTable PDGtable;
-#endif
-
 #include "mathUtils.hpp"
 #include "fileUtils.hpp"
 #include "particleDataTable.h"
@@ -141,37 +135,6 @@ calcNewAmps(const string&             rootInFileName,
 		}
 	}
 	return nmbEvents;
-}
-
-
-long int
-calcPwa2kAmps(const string&             evtInFileName,
-              const string&             keyFileName,
-              vector<complex<double> >& amps,
-              const long int            maxNmbEvents)
-{
-#ifdef USE_PWA2000
-	ifstream eventData(evtInFileName.c_str());
-	keyfile  key;
-	event    ev;
-	key.open(keyFileName);
-	ev.setIOVersion(1);
-	long int       countEvent  = 0;
-	const long int logInterval = 1000;
-	while ((countEvent < maxNmbEvents) and (not (eventData >> ev).eof())) {
-		complex<double> amp;
-		key.run(ev, amp, true);
-		amps.push_back(amp);
-		key.rewind();
-		++countEvent;
-		if (countEvent % logInterval == 0)
-			cout << "    " << countEvent << endl;
-	}
-	return countEvent;
-#else
-	return 0;
-	printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
-#endif
 }
 
 
@@ -303,82 +266,4 @@ main(int argc, char** argv)
 	printInfo << "newAmps[0] = " << maxPrecisionDouble(newAmps[0]) << endl;
 	timer.Print();
 
-#ifdef USE_PWA2000
-	PDGtable.initialize("../../keyfiles/key5pi/pdgTable.txt");
-
-	timer.Reset();
-	timer.Start();
-	vector<complex<double> > pwa2kAmps;
-	{
-		vector<complex<double> > amps[2];
-		calcPwa2kAmps(evtInFileName, pwa2kKeyFileName[0], amps[0], maxNmbEvents);
-		calcPwa2kAmps(evtInFileName, pwa2kKeyFileName[1], amps[1], maxNmbEvents);
-		const unsigned int nmbAmps = amps[0].size();
-		assert(amps[1].size() == nmbAmps);
-		pwa2kAmps.resize(nmbAmps);
-		complex<double> phase(ratio * cos(phi), ratio * sin(phi));
-		printInfo << "PWA2000 term[0] = " << maxPrecisionDouble(amps[0][0])
-		          << ", term[1] = " << maxPrecisionDouble(amps[1][0])
-		          << ", phase = " << phase << endl;
-		for (unsigned int i = 0; i < nmbAmps; ++i)
-			pwa2kAmps[i] = (1 / sqrt(1 + ratio)) * (amps[0][i] + phase * amps[1][i]);
-	}
-	timer.Stop();
-	printSucc << "read " << pwa2kAmps.size() << " events from file(s) "
-	          << "'" << evtInFileName << "' and calculated amplitudes" << endl;
-	cout << "needed ";
-	timer.Print();
-	{
-		double relDiff[2] = {(pwa2kAmps[0].real() - newAmps[0].real()) / pwa2kAmps[0].real(),
-		                     (pwa2kAmps[0].imag() - newAmps[0].imag()) / pwa2kAmps[0].imag()};
-		for (unsigned int i = 0; i < 2; ++i) {
-			if (relDiff[i] < 1)
-				relDiff[i] += 2;
-			else if (relDiff[i] > 1)
-				relDiff[i] -= 2;
-		}
-		printInfo << "newAmps[0] = " << maxPrecisionDouble(newAmps[0]) << " vs. pwa2kAmps[0] = "
-		          << maxPrecisionDouble(pwa2kAmps[0]) << ", abs. delta = "
-		          << maxPrecisionDouble(newAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
-		          << "(" << maxPrecision(relDiff[0]) << ", " << maxPrecision(relDiff[1]) << ")" << endl;
-	}
-
-	if (1) {
-		const string outFileName = "testAmplitudeDiff.root";
-		printInfo << "writing comparison plots to " << outFileName << endl;
-		TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
-		TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    newAmps.size(),    -0.5, newAmps.size()    - 0.5);
-		TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    newAmps.size(),    -0.5, newAmps.size()    - 0.5);
-		TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-		TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-		TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -1e-7, 1e-7);
-		TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -1e-7, 1e-7);
-		TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-		TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-		for (unsigned int i = 0; i < newAmps.size(); ++i) {
-			double relDiff[2] = {(pwa2kAmps[i].real() - newAmps[i].real()) / pwa2kAmps[i].real(),
-			                     (pwa2kAmps[i].imag() - newAmps[i].imag()) / pwa2kAmps[i].imag()};
-			for (unsigned int j = 0; j < 2; ++j) {
-				if (relDiff[j] < 1)
-					relDiff[j] += 2;
-				else if (relDiff[j] > 1)
-					relDiff[j] -= 2;
-			}
-			hMyAmpsReal->SetBinContent   (i + 1, newAmps[i].real());
-			hMyAmpsImag->SetBinContent   (i + 1, newAmps[i].imag());
-			hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
-			hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
-			hDiffReal->Fill(relDiff[0]);
-			hDiffImag->Fill(relDiff[1]);
-			// hDiffReal->Fill(pwa2kAmps[i].real() - newAmps[i].real());
-			// hDiffImag->Fill(pwa2kAmps[i].imag() - newAmps[i].imag());
-			hCorrReal->Fill(newAmps[i].real(), pwa2kAmps[i].real());
-			hCorrImag->Fill(newAmps[i].imag(), pwa2kAmps[i].imag());
-		}
-		f->Write();
-		f->Close();
-	}
-#else
-		printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
-#endif
 }

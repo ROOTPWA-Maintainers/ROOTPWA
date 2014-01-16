@@ -45,16 +45,6 @@
 #include "TH2.h"
 #include "TSystem.h"
 
-#ifdef USE_PWA2000
-#include "Vec.h"
-#include "lorentz.h"
-#include "keyfile.h"
-#include "event.h"
-#include "wave.h"
-extern particleDataTable PDGtable;
-extern wave              gWave;
-#endif
-
 #include "mathUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "conversionUtils.hpp"
@@ -96,36 +86,6 @@ main(int argc, char** argv)
 	}
 
 	if (0) {
-#ifdef USE_PWA2000
-		{
-			fourVec  p(2, threeVec(0.5, 0.75, 1));
-			threeVec n = threeVec(0, 0, 1) / p.V();
-			cout << "before = " << n << "    " << p << endl;
-			rotation         R;
-			lorentzTransform L1;
-			L1.set(R.set(n.phi(), n.theta() - M_PI / 2, -M_PI / 2));
-			n *= R;
-			p *= L1;
-			cout << "L1 -> " << n << "    " << p << endl;
-			lorentzTransform L2;
-			L2.set(R.set(0, signof(p.x()) * p.theta(), 0));
-			p *= L2;
-			cout << "L2 -> " << p << endl;
-			lorentzTransform L3;
-			L3.set(p);
-			p *= L3;
-			cout << "L3 -> " << p << endl;
-
-			matrix<double> X(4, 4);
-			X = L3 * (L2 * L1);
-			lorentzTransform L(X);
-			p = fourVec(2, threeVec(0.5, 0.75, 1));
-			p *= L;
-			cout << "L -> " << p << endl;
-		}
-#else
-		printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
-#endif
 
 		{
 			TLorentzVector p(0.5, 0.75, 1, 2);
@@ -223,28 +183,6 @@ main(int argc, char** argv)
 		cout << topo;
 		complex<double>         decayAmp = amp.amplitude();
 		cout << "!!! decay amplitude = " << decayAmp << endl;
-
-		if (1) {  // compare to PWA2000
-#ifdef USE_PWA2000
-			PDGtable.initialize("../../keyfiles/key5pi/pdgTable.txt");
-			event    ev;
-			ifstream eventData("testEvents.evt");
-			ev.setIOVersion(1);
-			if (not (eventData >> ev).eof()) {
-				keyfile key;
-				key.open("testAmplitude.key");
-				complex<double> pwa2000amp;
-				key.run(ev, pwa2000amp, true);
-				key.rewind();
-				key.close();
-				cout << "!!! PWA2000 amplitude = " << pwa2000amp << endl;
-				cout << "!!! my amplitude = " << decayAmp << " vs. PWA2000 amplitude = " << pwa2000amp << ", "
-				     << "delta = " << decayAmp - pwa2000amp << endl;
-			}
-#else
-			printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
-#endif
-		}
 	}
 
 	if (0) {
@@ -443,71 +381,6 @@ main(int argc, char** argv)
 			printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << endl;
 			timer.Print();
 
-			if (1) {  // compare to PWA2000
-#ifdef USE_PWA2000
-				PDGtable.initialize("../../keyfiles/key5pi/pdgTable.txt");
-				ifstream eventData(evtInFileName.c_str());
-				keyfile  key;
-				event    ev;
-				key.open(oldKeyFileName);
-				ev.setIOVersion(1);
-				timer.Reset();
-				timer.Start();
-				long int                 countEvent = 0;
-				vector<complex<double> > pwa2kAmps;
-				const unsigned int       logInterval = 1000;
-				while ((countEvent < maxNmbEvents) and (not (eventData >> ev).eof())) {
-					complex<double> pwa2kamp;
-					key.run(ev, pwa2kamp, true);
-					pwa2kAmps.push_back(pwa2kamp);
-					key.rewind();
-					++countEvent;
-					if (countEvent % logInterval == 0)
-						cout << "    " << countEvent << endl;
-				}
-				timer.Stop();
-				printSucc << "read " << pwa2kAmps.size() << " events from file(s) "
-				          << "'" << evtInFileName << "' and calculated amplitudes" << endl;
-				cout << "needed ";
-				timer.Print();
-				printInfo << "myAmps[0] = " << maxPrecisionDouble(myAmps[0]) << " vs. pwa2kAmps[0] = "
-				          << maxPrecisionDouble(pwa2kAmps[0]) << ", abs. delta = "
-				          << maxPrecisionDouble(myAmps[0] - pwa2kAmps[0]) << ", rel. delta = "
-				          << "(" << maxPrecision((myAmps[0].real() - pwa2kAmps[0].real()) / myAmps[0].real())
-				          << ", " << maxPrecision((myAmps[0].imag() - pwa2kAmps[0].imag()) / myAmps[0].imag())
-				          << ")" << endl;
-
-				if (1) {
-					const string outFileName = "testAmplitudeDiff.root";
-					printInfo << "writing comparison plots to " << outFileName << endl;
-					TFile* f              = TFile::Open(outFileName.c_str(), "RECREATE");
-					TH1D*  hMyAmpsReal    = new TH1D("hMyAmpsReal",    "hMyAmpsReal;Event Number;#Rgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-					TH1D*  hMyAmpsImag    = new TH1D("hMyAmpsImag",    "hMyAmpsImag;Event Number;#Jgothic[Amplitude]",    myAmps.size(),    -0.5, myAmps.size()    - 0.5);
-					TH1D*  hPwa2kAmpsReal = new TH1D("hPwa2kAmpsReal", "hPwa2kAmpsReal;Event Number;#Rgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-					TH1D*  hPwa2kAmpsImag = new TH1D("hPwa2kAmpsImag", "hPwa2kAmpsImag;Event Number;#Jgothic[Amplitude]", pwa2kAmps.size(), -0.5, pwa2kAmps.size() - 0.5);
-					TH1D*  hDiffReal      = new TH1D("hDiffReal", "hDiffReal;#Rgothic[Amplitude] Difference;Count", 100000, -1e-7, 1e-7);
-					TH1D*  hDiffImag      = new TH1D("hDiffImag", "hDiffImag;#Jgothic[Amplitude] Difference;Count", 100000, -1e-7, 1e-7);
-					TH2D*  hCorrReal      = new TH2D("hCorrReal", "hCorrReal;#Rgothic[My Amp];#Rgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-					TH2D*  hCorrImag      = new TH2D("hCorrImag", "hCorrImag;#Jgothic[My Amp];#Jgothic[PWA2000 Amp]", 1000, -2, 2, 1000, -2, 2);
-					for (unsigned int i = 0; i < myAmps.size(); ++i) {
-						hMyAmpsReal->SetBinContent   (i + 1, myAmps[i].real());
-						hMyAmpsImag->SetBinContent   (i + 1, myAmps[i].imag());
-						hPwa2kAmpsReal->SetBinContent(i + 1, pwa2kAmps[i].real());
-						hPwa2kAmpsImag->SetBinContent(i + 1, pwa2kAmps[i].imag());
-						hDiffReal->Fill((pwa2kAmps[i].real() - myAmps[i].real()) / pwa2kAmps[i].real());
-						hDiffImag->Fill((pwa2kAmps[i].imag() - myAmps[i].imag()) / pwa2kAmps[i].imag());
-						// hDiffReal->Fill(pwa2kAmps[i].real() - myAmps[i].real());
-						// hDiffImag->Fill(pwa2kAmps[i].imag() - myAmps[i].imag());
-						hCorrReal->Fill(myAmps[i].real(), pwa2kAmps[i].real());
-						hCorrImag->Fill(myAmps[i].imag(), pwa2kAmps[i].imag());
-					}
-					f->Write();
-					f->Close();
-				}
-#else
-				printWarn << "code disabled, because compilation of PWA2000 is disabled" << endl;
-#endif
-			} // compare to PWA2000
 		}  // parsing of key file successful
 
 	}
