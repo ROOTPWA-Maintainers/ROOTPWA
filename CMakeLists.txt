@@ -49,12 +49,12 @@ message(STATUS ">>> Setting up project 'ROOTPWA'.")
 project(ROOTPWA)
 
 
-# load some common cmake macros
 # set path, where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 message(STATUS "")
 message(STATUS ">>> Setting up Cmake modules.")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
 message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
+# load cmake macros
 include(CommonMacros)
 include(FeatureSummary)
 include(AddEnvCompilerDefs)
@@ -95,7 +95,7 @@ endif()
 # consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
 # set additional flags for specific build types
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
 # -march=native switch was removed, because is caused trouble in heterogeneous environments
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
@@ -127,9 +127,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # 		set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 # 	endif()
 # endif()
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
-set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
-set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
 # report global build settings
 foreach(_LANG "C" "CXX")
 	message(STATUS "${_LANG} compiler ID is '${CMAKE_${_LANG}_COMPILER_ID} V${CMAKE_${_LANG}_COMPILER_VERSION}'.")
@@ -446,7 +444,7 @@ if(GIT_FOUND)
 		OUTPUT_VARIABLE GIT_HASH
 		RESULT_VARIABLE _GIT_LOG_RETURN
 		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
+		)
 	if(NOT _GIT_LOG_RETURN)
 		message(STATUS "Git repository hash is '${GIT_HASH}'.")
 	else()
