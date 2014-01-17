@@ -691,50 +691,6 @@ TPWALikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 // returns integral matrix reordered according to _waveNames array
 template<typename complexT>
 void
-TPWALikelihood<complexT>::reorderIntegralMatrix(integral&            integral,
-                                                normMatrixArrayType& reorderedMatrix) const
-{
-	// get original matrix and list of wave names
-	const matrix<complex<double> > intMatrix    = integral.mat();
-	list<string>                   intWaveNames = integral.files();
-  // "int" saves filenames with path, this must be treated here
-  for (list<string>::iterator it = intWaveNames.begin(); it != intWaveNames.end(); ++it) {
-	  // find the slash, if not available -> take the first position of the string
-	  const size_t slashPos = it->rfind('/');
-	  if (slashPos != string::npos)
-		  it->erase(0, slashPos + 1);
-  }
-	// build index lookup-table [reflectivity][wave index] to index in normalization integral
-	waveToIntMapType indexLookUp(extents[2][_nmbWavesReflMax]);
-	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave) {
-			if (find(intWaveNames.begin(), intWaveNames.end(), _waveNames[iRefl][iWave])
-			    == intWaveNames.end()) {
-				printErr << "wave " << _waveNames[iRefl][iWave] << " is not in integral. aborting." << endl;
-				throw;
-			}
-			indexLookUp[iRefl][iWave] = integral.index(_waveNames[iRefl][iWave]);
-			if (_debug)
-				printDebug << "    mapping wave [" << sign((int)iRefl * 2 - 1) << ", "
-				           << setw(3) << iWave << "] '" << _waveNames[iRefl][iWave] << "' "
-				           << "to index " << setw(3) << indexLookUp[iRefl][iWave] << " in integral." << endl;
-		}
-	// create reordered matrix
-	reorderedMatrix.resize(extents[2][_nmbWavesReflMax][2][_nmbWavesReflMax]);
-	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
-		for (unsigned int iWave = 0; iWave < _nmbWavesRefl[iRefl]; ++iWave)
-			for (unsigned int jRefl = 0; jRefl < 2; ++jRefl)
-				for (unsigned int jWave = 0; jWave < _nmbWavesRefl[jRefl]; ++jWave) {
-					const complex<double> val = intMatrix.element(indexLookUp[iRefl][iWave],
-					                                              indexLookUp[jRefl][jWave]);
-					reorderedMatrix[iRefl][iWave][jRefl][jWave] = complexT(val.real(), val.imag());
-				}
-}
-
-
-// returns integral matrix reordered according to _waveNames array
-template<typename complexT>
-void
 TPWALikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral,
                                                 normMatrixArrayType&     reorderedMatrix) const
 {
@@ -779,17 +735,10 @@ TPWALikelihood<complexT>::readIntegrals
 		intFile->Close();
 	} else
 #endif  // USE_STD_COMPLEX_TREE_LEAFS
-		if (normIntFileExt == "int") {
-		ifstream intFile(normIntFileName.c_str());
-		if (not intFile) {
-			printErr << "cannot open file '" << normIntFileName << "'. aborting." << endl;
-			throw;
-		}
-		integral integral;
-		// !!! integral.scan() performs no error checks!
-		integral.scan(intFile);
-		intFile.close();
-		reorderIntegralMatrix(integral, _normMatrix);
+		if(normIntFileExt == "int") {
+			ampIntegralMatrix integral;
+			integral.readAscii(normIntFileName);
+			reorderIntegralMatrix(integral, _normMatrix);
 	} else {
 		printErr << "unknown file type '" << normIntFileName << "'. "
 		         << "only .int and .root files are supported. aborting." << endl;
@@ -824,22 +773,16 @@ TPWALikelihood<complexT>::readIntegrals
 	} else
 #endif  // USE_STD_COMPLEX_TREE_LEAFS
 		if (accIntFileExt == "int") {
-		ifstream intFile(accIntFileName.c_str());
-		if (not intFile) {
-			printErr << "cannot open file '" << accIntFileName << "'. aborting." << endl;
-			throw;
-		}
-		integral integral;
-		// !!! integral.scan() performs no error checks!
-		integral.scan(intFile);
-		intFile.close();
-		if (_numbAccEvents != 0) {
-			_totAcc = ((double)integral.nevents()) / (double)_numbAccEvents;
-			printInfo << "total acceptance in this bin: " << _totAcc << endl;
-			integral.events(_numbAccEvents);
-		} else
-			_totAcc = 1;
-		reorderIntegralMatrix(integral, _accMatrix);
+			ampIntegralMatrix integral;
+			integral.readAscii(accIntFileName);
+			if (_numbAccEvents != 0) {
+				_totAcc = ((double)integral.nmbEvents()) / (double)_numbAccEvents;
+				printInfo << "total acceptance in this bin: " << _totAcc << endl;
+				integral.setNmbEvents(_numbAccEvents);
+			} else {
+				_totAcc = 1;
+			}
+			reorderIntegralMatrix(integral, _accMatrix);
 	} else {
 		printErr << "unknown file type '" << accIntFileName << "'. "
 		         << "only .int and .root files are supported. exiting." << endl;

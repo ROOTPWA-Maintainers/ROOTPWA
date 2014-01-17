@@ -47,10 +47,6 @@
 #include "TFile.h"
 #include "TH1.h"
 
-// PWA2000 classes
-#include "integral.h"
-#include "matrix.h"
-
 #include "sumAccumulators.hpp"
 #include "ampIntegralMatrix.h"
 
@@ -188,8 +184,6 @@ private:
 	void clear();
 	static int getReflectivity(const TString& waveName);
   
-	void reorderIntegralMatrix(integral&            integral,
-	                           normMatrixArrayType& reorderedMatrix) const;
 	void reorderIntegralMatrix(const rpwa::ampIntegralMatrix& integral,
 	                           normMatrixArrayType&           reorderedMatrix) const;
 

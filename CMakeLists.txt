@@ -572,9 +572,6 @@ add_subdirectory(tools)
 # RootPwaGen
 add_subdirectory(generators)
 
-# RootPwaKey
-add_subdirectory(keygen)
-
 # Fortran
 #add_subdirectory(fortran)
 

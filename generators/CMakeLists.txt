@@ -88,7 +88,6 @@ set(SOURCES
 	generatorManager.cc
 	productionAmp.cc
 	breitWignerProductionAmp.cc
-	partialWaveWeight.cc
 	diffractivePhaseSpace.cc
 	beamAndVertexGenerator.cc
 	generatorPickerFunctions.cc
