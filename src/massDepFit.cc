@@ -1096,8 +1096,6 @@ extern char* optarg;
   // get data
    fitResult* rho=0;
    tree->SetBranchAddress(valBranchName.c_str(),&rho);
-   vector<double> prevps(wl.size());
-   //double mprev=0;
    vector<double> prevphase(wl.size());
    double binwidth=MASSSCALE*30; // half binwidth
    //double w=2*30/10;
@@ -1106,13 +1104,8 @@ extern char* optarg;
      double m=rho->massBinCenter();
      double mScaled=m*MASSSCALE;
      //cout << "MASS: "<<m << endl;
-     double fsps=sqrt(fPS->Eval(rho->massBinCenter()));
      unsigned int c=0;
      for(unsigned int iw=0; iw<wl.size();++iw){
-
-       //cout << wl[iw] << endl;
-
-       double ps=rho->phaseSpaceIntegral(wl[iw].c_str())*fsps;
 
        datagraphs[iw]->SetPoint(i,mScaled,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
@@ -1290,9 +1283,6 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 
 	 c++;
        }// end inner loop over waves
-
-       prevps[iw]=ps;
-
 
      } // end loop over waves
      //cerr << "outer loop over waves finished" << endl;
