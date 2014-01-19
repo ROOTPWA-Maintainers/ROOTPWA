@@ -37,14 +37,13 @@ rpwa::massDepFitLikeli::NDataPoints() const {
 }
 
 void
-rpwa::massDepFitLikeli::init(TTree* sp, TF1* fsps, pwacompset* compset,
+rpwa::massDepFitLikeli::init(TTree* sp, pwacompset* compset,
 			     double mmin, double mmax, bool doCov){
   _mmin=mmin;
   _mmax=mmax;
   _doCov=doCov;
   _compset=compset;
   _tree=sp;
-  _finalStatePS=fsps;
   _rhom=NULL;//new fitResult();
   if(_tree->SetBranchAddress("fitResult_v2",&_rhom))cerr<<"Branch not found!"<<endl;
 
@@ -136,8 +135,7 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
     //if(mass>2000)continue;
     //cout << "Mass=" << mass << endl;
     // inpu values: measured spin density matrix
-    //double FSPS=_finalStatePS->Eval(mass);
-
+       
     // sum over the contributions to chi2 -> rho_ij
       for(unsigned int i=0; i<nwaves; ++i){
 	for(unsigned int j=i; j<nwaves; ++j){

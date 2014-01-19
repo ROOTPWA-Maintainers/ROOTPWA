@@ -520,7 +520,7 @@ extern char* optarg;
 
 
   massDepFitLikeli L;
-  L.init(tree,fPS,&compset,massBinMin,massBinMax,doCov);
+  L.init(tree,&compset,massBinMin,massBinMax,doCov);
 
    const unsigned int nmbPar  = L.NDim();
   // double par[nmbPar];
