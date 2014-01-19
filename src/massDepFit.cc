@@ -109,7 +109,7 @@ usage(const string& progName,
 //  function loops through fitResults and puts phasespace values into a graph for interpolation
 //  THIS CONTAINS NOW THE RIGHT VALUE NOT!!! THE SQRT!!!
 TGraph*
-getPhaseSpace(TTree* tree, TF1* fsps,const std::string& wave){
+getPhaseSpace(TTree* tree, const std::string& wave){
   unsigned int n=tree->GetEntries();
   TGraph* graph=new TGraph(n);
   fitResult* res=0;
@@ -118,8 +118,7 @@ getPhaseSpace(TTree* tree, TF1* fsps,const std::string& wave){
     tree->GetEntry(i);
     double m=res->massBinCenter();
     double ps=res->phaseSpaceIntegral(wave);
-    ps*=ps; // remember that phaseSpaceIntegral returns sqrt of integral!!!
-    //ps*=fsps->Eval(m);
+    ps*=ps; // remember that phaseSpaceIntegral returns sqrt of integral!!! 
     graph->SetPoint(i,m,ps);
   }
   return graph;
@@ -411,7 +410,7 @@ extern char* optarg;
 	check&=ch.lookupValue("coupling_Im",cIm);
 	complex<double> C(cRe,cIm);
 	cout << "   " << amp << "  " << C << endl;
-	channels[amp]=pwachannel(C,getPhaseSpace(tree,fPS,amp));
+	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
       }// end loop over channels
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -473,7 +472,7 @@ extern char* optarg;
       cout << "Decaychannel (coupling):" << endl;
       cout << "   " << amp << "  " << C << endl;
       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
-      channels[amp]=pwachannel(C,getPhaseSpace(tree,fPS,amp));
+      channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
 
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -887,7 +886,7 @@ extern char* optarg;
      fitgraphs[iw]->SetDrawOption("AP");
      //fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
-     graphs[iw]->Add(getPhaseSpace(tree,fPS,wl[iw]));
+     graphs[iw]->Add(getPhaseSpace(tree,wl[iw]));
 
      absphasegraphs.push_back(new TGraph(nbins));
      name="absphase_";name.append(wl[iw]);
