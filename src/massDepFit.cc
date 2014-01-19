@@ -1458,7 +1458,7 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
      TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(3);
       for(unsigned int ib=0;ib<nbins;++ib){
         double m,ps;g->GetPoint(ib,m,ps);
-        g->SetPoint(ib,m,ps*500.);
+        g->SetPoint(ib,m*MASSSCALE,ps*500.);
        }
 
      graphs[iw]->Write();
