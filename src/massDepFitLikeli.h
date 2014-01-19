@@ -54,7 +54,6 @@ typedef ublas::matrix<rmatrix> ccmatrix;
 
     // Modifiers -----------------------
     void init(TTree* fitresulttree,
-	      TF1* finalStatePhaseSpace,
 	      pwacompset* compset,
 	      double mmin=0, double mmax=5000,
 	      bool doCov=true);
@@ -72,7 +71,6 @@ typedef ublas::matrix<rmatrix> ccmatrix;
 
     // Private Data Members ------------
     TTree* _tree;
-    TF1* _finalStatePS;
     pwacompset* _compset;
     fitResult* _rhom; // measured spindensity matrix;
     //std::vector<fitResult> _vrhom; // memory resident data
