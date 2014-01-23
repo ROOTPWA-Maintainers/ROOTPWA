@@ -63,6 +63,7 @@ set(SOURCES
 	pwaPlotter.cc
 	pwacomponent.cc
 	massDepFitLikeli.cc
+	parameterSpace.cc
 	)
 
 
