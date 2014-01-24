@@ -117,3 +117,6 @@ make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${Libconfig_
 add_test(testPWALikeli    ${CMAKE_CURRENT_SOURCE_DIR}/testPWALikeli.sh)
 add_test(testPWAConstrain ${CMAKE_CURRENT_SOURCE_DIR}/testPWAConstraint.sh)
 # add_test(testPWAFit       ${CMAKE_CURRENT_SOURCE_DIR}/testPWAFit.sh)
+
+# build tests
+add_subdirectory(test)

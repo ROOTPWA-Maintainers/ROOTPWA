@@ -1,21 +1,70 @@
 #include "parameterSpace.h"
 
+#include <TMath.h>
+#include <TRandom3.h>
+
 #include "ampIntegralMatrix.h"
 #include "reportingUtils.hpp"
 
-#include <TMath.h>
 
+using namespace boost;
 using namespace std;
 using namespace rpwa;
 
 
-void parameterSpace::pickAngles() {
+parameterSpace::parameterSpace(const unsigned int& nEvents,
+                               const unsigned int& nDimensions,
+                               const ampIntegralMatrix& integralMatrix)
+	: _nEvents(nEvents),
+	  _nDimensions(nDimensions),
+	  _integralMatrix(integralMatrix),
+	  _phi((2 * _nDimensions) - 1, 0.),
+	  _cosPhi((2 * _nDimensions) - 1, 0.),
+	  _sinPhi((2 * _nDimensions) - 1, 0.),
+	  _sigma(2 * _nDimensions, 0.),
+	  _DRDPhi((2 * _nDimensions) - 1, 0.),
+	  _DSigmaDPhi(2 * _nDimensions, std::vector<double>((2 * _nDimensions) - 1, 0.)),
+	  _randomNumberGen(new TRandom3(123456789)) { }
 
-	printErr << "This method is not finished yet." << endl;
 
-	for(unsigned int i = 0; i < _nDimensions; ++i) {
-		_phi[i] = (3. / _nDimensions) * i;
-		_sigma[i] = calculateSigma(i);
+parameterSpace::~parameterSpace() {
+	delete _randomNumberGen;
+}
+
+
+void parameterSpace::pickUniformAngles() {
+
+	vector<double> x((2*_nDimensions), 0.);
+	vector<double> xSums(2*_nDimensions, 0.);
+
+	double r = 0.;
+	for(int i = (2*_nDimensions)-1; i >= 0; --i) {
+		unsigned int j = (unsigned int)i;
+		double xi = _randomNumberGen->Gaus();
+		x[j] = xi;
+		r += xi * xi;
+		xSums[j] = sqrt(r);
+	}
+	r = sqrt(r);
+
+	for(unsigned int i = 0; i < ((2*_nDimensions)-2); ++i) {
+		_cosPhi[i] = x[i] / xSums[i];
+		_sinPhi[i] = sqrt(1. - _cosPhi[i]*_cosPhi[i]);
+		_phi[i] = TMath::ACos(_cosPhi[i]);
+	}
+
+	unsigned int lastPhiIndex = (2*_nDimensions)-2;
+	_cosPhi[lastPhiIndex] = x[lastPhiIndex] / xSums[lastPhiIndex];
+	if(x[(2*_nDimensions) - 1] >= 0.) {
+		_phi[lastPhiIndex] = TMath::ACos(_cosPhi[lastPhiIndex]);
+		_sinPhi[lastPhiIndex] = sqrt(1. - _cosPhi[lastPhiIndex]*_cosPhi[lastPhiIndex]);
+	} else {
+		_phi[lastPhiIndex] = TMath::TwoPi() - TMath::ACos(_cosPhi[lastPhiIndex]);
+		_sinPhi[lastPhiIndex] = -sqrt(1. - _cosPhi[lastPhiIndex]*_cosPhi[lastPhiIndex]);
+	}
+
+	for(unsigned int i = 0; i < (2*_nDimensions); ++i) {
+		_sigma[i] = x[i] / r;
 	}
 
 	initialize();
@@ -33,6 +82,8 @@ void parameterSpace::setAngles(const std::vector<double>& phi) {
 	}
 	for(unsigned int i = 0; i < _phi.size(); ++i) {
 		_phi[i] = phi[i];
+		_cosPhi[i] = TMath::Cos(_phi[i]);
+		_sinPhi[i] = TMath::Sin(_phi[i]);
 		_sigma[i] = calculateSigma(i);
 	}
 
@@ -44,8 +95,10 @@ void parameterSpace::setAngles(const std::vector<double>& phi) {
 double parameterSpace::getDS(const unsigned int& phiIndex) const
 {
 	double dS = 0.;
+	const double R = getR();
+	const double dRDPhi = getDRDPhi(phiIndex);
 	for(unsigned int i = 0; i < (2*_nDimensions); ++i) {
-		double x = (getDRDPhi(phiIndex) * _sigma[i]) + (getR() * getDSigmaDPhi(i, phiIndex));
+		double x = (dRDPhi* _sigma[i]) + (R * getDSigmaDPhi(i, phiIndex));
 		dS += x * x;
 	}
 	return sqrt(dS);
@@ -62,6 +115,29 @@ double parameterSpace::getDA() const
 }
 
 
+double parameterSpace::getDAHat() const
+{
+	double dA = 1.;
+	for(unsigned int i = 0; i < ((2*_nDimensions)-1); ++i) {
+		dA *= getDSHat(i);
+	}
+	return dA;
+}
+
+
+double parameterSpace::getDASphereHat() const
+{
+	double dA = 1.;
+	const unsigned int pow = (2*_nDimensions) - 2;
+	for(unsigned int i = 0; i < pow; ++i) {
+		for(unsigned int j = 0; j < (pow-i); ++j) {
+			dA *= _sinPhi[i];
+		}
+	}
+	return dA;
+}
+
+
 void parameterSpace::calculateAllDRDPhi() {
 	for(unsigned int i = 0; i < ((2*_nDimensions)-1); ++i) {
 		_DRDPhi[i] = calculateDRDPhi(i);
@@ -72,35 +148,41 @@ void parameterSpace::calculateAllDRDPhi() {
 double parameterSpace::calculateDRDPhi(const unsigned int& phiIndex) const
 {
 	const double& rho = getRho();
-	return -(((double)_nEvents) / (2. * sqrt(rho) * rho * rho)) * calculateDRhoDPhi(phiIndex);
+	return -((sqrt(_nEvents * rho)) / (rho * rho)) * calculateDRhoDPhi(phiIndex);
 }
 
 
 void parameterSpace::calculateRho()
 {
 
-	complex<double> retval(0., 0.);
+	complex<double> complexFirstSum(0., 0.);
 
 	for(unsigned int alpha = 0; alpha < (2*_nDimensions); ++alpha) {
-		for(unsigned int beta = 0; beta < (2*_nDimensions); ++beta) {
-			const complex<double>& IAlphaBeta = _integralMatrix.matrix()[alpha][beta];
-			retval = _sigma[alpha] * _sigma[beta] * IAlphaBeta;
+		unsigned int betaLowerLimit = (alpha < _nDimensions) ? 0 : _nDimensions;
+		unsigned int betaUpperLimit = (betaLowerLimit == 0) ? _nDimensions : 2*_nDimensions;
+		for(unsigned int beta = betaLowerLimit; beta < betaUpperLimit; ++beta) {
+//			const complex<double>& IAlphaBeta = _integralMatrix.matrix()[alpha % _nDimensions][beta % _nDimensions];
+			const complex<double>& IAlphaBeta = _integralMatrix.element(alpha % _nDimensions, beta % _nDimensions);
+			complexFirstSum += _sigma[alpha] * _sigma[beta] * IAlphaBeta;
 		}
 	}
 
-	for(unsigned int alpha = _nDimensions; alpha < (2*_nDimensions); ++alpha) {
-		for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
-			double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
-			retval -= 2. * _sigma[alpha] * _sigma[beta] * lAlphaBeta;
-		}
-	}
-
-	if(fabs(retval.imag()) > 1e-15) {
-		printErr << "Calculated rho with finite imaginary part. Aborting..." << endl;
+	if(fabs(complexFirstSum.imag()) > 1e-10) {
+		printErr << "Calculated rho with finite imaginary part (" << complexFirstSum.imag() << "). Aborting..." << endl;
 		throw;
 	}
+	double firstSum = complexFirstSum.real();
 
-	_rho = retval.real();
+	double secondSum = 0.;
+	for(unsigned int alpha = 0; alpha < _nDimensions; ++alpha) {
+		for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
+//			double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
+			double lAlphaBeta = _integralMatrix.element(alpha, beta).imag();
+			secondSum += _sigma[alpha+_nDimensions] * _sigma[beta] * lAlphaBeta;
+		}
+	}
+
+	_rho = firstSum - 2. * secondSum;
 
 }
 
@@ -110,65 +192,30 @@ double parameterSpace::calculateDRhoDPhi(const unsigned int& phiIndex) const
 
 	double retval = 0.;
 
-	for(unsigned int beta = 0; beta < (2*_nDimensions); ++beta) {
-		for(unsigned int alpha = phiIndex + 1; alpha < (2*_nDimensions); ++alpha) {
-			const double& kAlphaBeta = _integralMatrix.matrix()[alpha][beta].real();
-			retval += (2 * kAlphaBeta * _sigma[alpha] * _sigma[beta]) / TMath::Tan(_phi[phiIndex]);
-		}
-	}
-
 	for(unsigned int alpha = 0; alpha < (2*_nDimensions); ++alpha) {
-		const double& kAlphaBeta = _integralMatrix.matrix()[alpha][phiIndex].real();
-		retval -= 2 * kAlphaBeta * _sigma[alpha] * _sigma[phiIndex] * TMath::Tan(_phi[phiIndex]);
+		unsigned int betaLowerLimit = (alpha < _nDimensions) ? 0 : _nDimensions;
+		unsigned int betaUpperLimit = (betaLowerLimit == 0) ? _nDimensions : 2*_nDimensions;
+		for(unsigned int beta = betaLowerLimit; beta < betaUpperLimit; ++beta) {
+			if(phiIndex > alpha) {
+				continue;
+			}
+//			const double& kAlphaBeta = _integralMatrix.matrix()[alpha % _nDimensions][beta % _nDimensions].real();
+			const double& kAlphaBeta = _integralMatrix.element(alpha % _nDimensions, beta % _nDimensions).real();
+			retval += kAlphaBeta * _sigma[beta] * getDSigmaDPhi(alpha, phiIndex);
+		}
 	}
+	retval *= 2.;
 
-	if(phiIndex < _nDimensions) {
-
-		for(unsigned int alpha = _nDimensions; alpha < (2*_nDimensions); ++alpha) {
-			for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
-				double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
-				double factor = 1.;
-				if(beta > phiIndex) {
-					factor = 2.;
-				}
-				retval -= (factor * 2. * _sigma[alpha] * _sigma[beta] * lAlphaBeta) / TMath::Tan(_phi[phiIndex]);
-			}
+	double dSigma2DPhi = 0.;
+	for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
+		for(unsigned int alpha = 0; alpha < _nDimensions; ++alpha) {
+//			double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
+			double lAlphaBeta = _integralMatrix.element(alpha, beta).imag();
+			dSigma2DPhi += lAlphaBeta * ((_sigma[beta] * getDSigmaDPhi(alpha+_nDimensions, phiIndex)) +
+			                              (_sigma[alpha+_nDimensions] * getDSigmaDPhi(beta, phiIndex)));
 		}
-
-		for(unsigned int alpha = _nDimensions; alpha < (2*_nDimensions); ++alpha) {
-			const double& lAlphaBeta = _integralMatrix.matrix()[alpha][phiIndex].imag();
-			retval += 2 * lAlphaBeta * _sigma[alpha] * _sigma[phiIndex] * TMath::Tan(_phi[phiIndex]);
-		}
-
-	} else if(phiIndex == _nDimensions) {
-
-		for(unsigned int alpha = _nDimensions; alpha < (2*_nDimensions); ++alpha) {
-			for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
-				double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
-				retval -= (2. * _sigma[alpha] * _sigma[beta] * lAlphaBeta) / TMath::Tan(_phi[phiIndex]);
-			}
-		}
-
-		for(unsigned int alpha = _nDimensions; alpha < (2*_nDimensions); ++alpha) {
-			const double& lAlphaBeta = _integralMatrix.matrix()[alpha][phiIndex].imag();
-			retval += 2 * lAlphaBeta * _sigma[alpha] * _sigma[phiIndex] * TMath::Tan(_phi[phiIndex]);
-		}
-
-	} else {
-
-		for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
-			for(unsigned int alpha = phiIndex+1; alpha < (2*_nDimensions); ++alpha) {
-				double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
-				retval -= (2. * _sigma[alpha] * _sigma[beta] * lAlphaBeta) / TMath::Tan(_phi[phiIndex]);
-			}
-		}
-
-		for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
-			const double& lAlphaBeta = _integralMatrix.matrix()[phiIndex][beta].imag();
-			retval += 2 * lAlphaBeta * _sigma[phiIndex] * _sigma[beta] * TMath::Tan(_phi[phiIndex]);
-		}
-
 	}
+	retval -= 2. * dSigma2DPhi;
 
 	return retval;
 
@@ -177,21 +224,42 @@ double parameterSpace::calculateDRhoDPhi(const unsigned int& phiIndex) const
 
 double parameterSpace::calculateSigma(const unsigned int& index) const
 {
-	double sigma = TMath::Cos(_phi[index]);
+	double sigma = (index == ((2*_nDimensions)-1)) ? 1. : _cosPhi[index];
 	for(unsigned int i = 0; i < index; ++i) {
-		sigma *= TMath::Sin(_phi[i]);
+		sigma *= _sinPhi[i];
 	}
 	return sigma;
 }
 
 
-double parameterSpace::getDSigmaDPhi(const unsigned int& sigmaIndex, const unsigned int& phiIndex) const
-{
-	if(phiIndex > sigmaIndex) {
-		return 0;
-	} else if(phiIndex == sigmaIndex) {
-		return (-TMath::Cos(_phi[phiIndex]) * _sigma[sigmaIndex]);
-	} else {
-		return (_sigma[sigmaIndex] / TMath::Cos(_phi[phiIndex]));
+void parameterSpace::calculateAllDSigmaDPhi() {
+	for(unsigned int sigmaIndex = 0; sigmaIndex < (2*_nDimensions); ++sigmaIndex) {
+		for(unsigned int phiIndex = 0; phiIndex < ((2*_nDimensions)-1); ++phiIndex) {
+			_DSigmaDPhi[sigmaIndex][phiIndex] = calculateDSigmaDPhi(sigmaIndex, phiIndex);
+		}
 	}
+}
+
+
+double parameterSpace::calculateDSigmaDPhi(const unsigned int& sigmaIndex, const unsigned int& phiIndex) const
+{
+	double retval = 0.;
+	if(phiIndex > sigmaIndex) {
+		retval = 0.;
+	} else if(phiIndex == sigmaIndex) {
+		retval = -1.;
+		for(unsigned int i = 0; i <= sigmaIndex; ++i) {
+			retval *= _sinPhi[i];
+		}
+	} else {
+		retval = (sigmaIndex == ((2*_nDimensions)-1)) ? 1. : _cosPhi[sigmaIndex];
+		for(unsigned int i = 0; i < sigmaIndex; ++i) {
+			if(i == phiIndex) {
+				retval *= _cosPhi[i];
+			} else {
+				retval *= _sinPhi[i];
+			}
+		}
+	}
+	return retval;
 }
