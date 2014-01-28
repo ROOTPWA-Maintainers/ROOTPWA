@@ -2,6 +2,7 @@
 #define EVIDENCECALCULATOR_H
 
 #include<cmath>
+#include<complex>
 #include<vector>
 
 
@@ -15,9 +16,7 @@ namespace rpwa {
 
 	  public:
 
-		parameterSpace(const unsigned int& nEvents,
-		               const unsigned int& nDimensions,
-		               const ampIntegralMatrix& integralMatrix);
+		parameterSpace(const ampIntegralMatrix& integralMatrix);
 
 		~parameterSpace();
 
@@ -35,7 +34,7 @@ namespace rpwa {
 		double getDARatio() const { return getDAHat() / getDASphereHat(); }
 
 
-//	  private:
+	  private:
 
 		void initialize() { calculateRho(); calculateAllDSigmaDPhi(); calculateAllDRDPhi(); }
 
@@ -50,13 +49,13 @@ namespace rpwa {
 		double calculateSigma(const unsigned int& index) const;
 		void calculateAllDSigmaDPhi();
 		double calculateDSigmaDPhi(const unsigned int& sigmaIndex, const unsigned int& phiIndex) const;
-		double getDSigmaDPhi(const unsigned int& sigmaIndex, const unsigned int& phiIndex) const {
+		inline double getDSigmaDPhi(const unsigned int& sigmaIndex, const unsigned int& phiIndex) const {
 			return _DSigmaDPhi[sigmaIndex][phiIndex];
 		}
 
 		const unsigned int _nEvents;
 		const unsigned int _nDimensions;
-		const ampIntegralMatrix& _integralMatrix;
+		std::vector<std::vector <std::complex<double> > > _integralMatrix;
 
 		std::vector<double> _phi;
 		std::vector<double> _cosPhi;

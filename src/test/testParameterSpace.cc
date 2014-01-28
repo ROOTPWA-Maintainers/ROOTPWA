@@ -27,7 +27,6 @@ double logSurSphere(double r, double n) {
 int main() {
 /*
 	const unsigned int N_DIMS = 30;
-	const unsigned int N_EVENTS = 10000;
 	ampIntegralMatrix integralMatrix;
 	integralMatrixType& matrix = integralMatrix.matrix();
 	matrix.resize(extents[N_DIMS][N_DIMS]);
@@ -41,16 +40,16 @@ int main() {
 			}
 		}
 	}
+	integralMatrix.setNmbEvents(1);
+	integralMatrix.setNmbWaves(N_DIMS);
 */
 	ampIntegralMatrix integralMatrix;
 	integralMatrix.readAscii("/home/kbicker/analysis/monteCarlo/run7/pwaBins7.2/2680.2710/ACCAMPS/norm.int");
-	const unsigned int N_DIMS = integralMatrix.nmbWaves();
-	const unsigned int N_EVENTS = integralMatrix.nmbEvents();
 
-	std::cout << "N_DIMS=" << N_DIMS << std::endl;
-	std::cout << "N_EVENTS=" << N_EVENTS << std::endl;
+	std::cout << "N_DIMS=" << integralMatrix.nmbWaves() << std::endl;
+	std::cout << "N_EVENTS=" << integralMatrix.nmbEvents() << std::endl;
 
-	parameterSpace paramSpace(N_EVENTS, N_DIMS, integralMatrix);
+	parameterSpace paramSpace(integralMatrix);
 
 	std::vector<double> dAs;
 	double integral = 0.;
@@ -69,7 +68,7 @@ int main() {
 	integral /= (double)NSAMPLES;
 	std::cout<<"integral="<<integral<<std::endl;
 //	double V_S = surSphere(sqrt((double)N_EVENTS), 2. * (double)N_DIMS);
-	double logV_S = logSurSphere(sqrt((double)N_EVENTS), 2. * (double)N_DIMS);
+	double logV_S = logSurSphere(sqrt((double)integralMatrix.nmbEvents()), 2. * (double)integralMatrix.nmbWaves());
 	std::cout<<"log(V_P)="<<log(integral) + logV_S<<std::endl;
 	std::cout<<"log(V_S)="<<logV_S<<std::endl;
 

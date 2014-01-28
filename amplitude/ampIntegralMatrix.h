@@ -100,6 +100,7 @@ namespace rpwa {
 		unsigned int  nmbWaves () const { return _nmbWaves;  }  ///< returns number of waves in integral
 		unsigned long nmbEvents() const { return _nmbEvents; }  ///< returns number of events in integral
 
+		void setNmbWaves (const unsigned int  nmbWaves)  { _nmbWaves  = nmbWaves;  }  ///< sets number of waves in integral
 		void setNmbEvents(const unsigned long nmbEvents) { _nmbEvents = nmbEvents; }  ///< sets number of events in integral
 		
 		bool               containsWave(const std::string& waveName ) const;  ///< returns whether wave is in integral matrix

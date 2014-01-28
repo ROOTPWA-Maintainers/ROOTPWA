@@ -12,19 +12,24 @@ using namespace std;
 using namespace rpwa;
 
 
-parameterSpace::parameterSpace(const unsigned int& nEvents,
-                               const unsigned int& nDimensions,
-                               const ampIntegralMatrix& integralMatrix)
-	: _nEvents(nEvents),
-	  _nDimensions(nDimensions),
-	  _integralMatrix(integralMatrix),
+parameterSpace::parameterSpace(const ampIntegralMatrix& integralMatrix)
+	: _nEvents(integralMatrix.nmbEvents()),
+	  _nDimensions(integralMatrix.nmbWaves()),
 	  _phi((2 * _nDimensions) - 1, 0.),
 	  _cosPhi((2 * _nDimensions) - 1, 0.),
 	  _sinPhi((2 * _nDimensions) - 1, 0.),
 	  _sigma(2 * _nDimensions, 0.),
 	  _DRDPhi((2 * _nDimensions) - 1, 0.),
-	  _DSigmaDPhi(2 * _nDimensions, std::vector<double>((2 * _nDimensions) - 1, 0.)),
-	  _randomNumberGen(new TRandom3(123456789)) { }
+	  _DSigmaDPhi(2 * _nDimensions, vector<double>((2 * _nDimensions) - 1, 0.)),
+	  _randomNumberGen(new TRandom3(123456789))
+{
+	_integralMatrix.resize(_nDimensions, vector<complex<double> >(_nDimensions, complex<double>(0., 0.)));
+	for(unsigned int i = 0; i < _nDimensions; ++i) {
+		for(unsigned int j = 0; j < _nDimensions; ++j) {
+			_integralMatrix[i][j] = integralMatrix.matrix()[i][j] / (double)_nEvents;
+		}
+	}
+}
 
 
 parameterSpace::~parameterSpace() {
@@ -72,7 +77,7 @@ void parameterSpace::pickUniformAngles() {
 }
 
 
-void parameterSpace::setAngles(const std::vector<double>& phi) {
+void parameterSpace::setAngles(const vector<double>& phi) {
 
 	if(phi.size() != _phi.size()) {
 		printErr << "Size mismatch between number of phis provided ("
@@ -161,8 +166,7 @@ void parameterSpace::calculateRho()
 		unsigned int betaLowerLimit = (alpha < _nDimensions) ? 0 : _nDimensions;
 		unsigned int betaUpperLimit = (betaLowerLimit == 0) ? _nDimensions : 2*_nDimensions;
 		for(unsigned int beta = betaLowerLimit; beta < betaUpperLimit; ++beta) {
-//			const complex<double>& IAlphaBeta = _integralMatrix.matrix()[alpha % _nDimensions][beta % _nDimensions];
-			const complex<double>& IAlphaBeta = _integralMatrix.element(alpha % _nDimensions, beta % _nDimensions);
+			const complex<double>& IAlphaBeta = _integralMatrix[alpha % _nDimensions][beta % _nDimensions];
 			complexFirstSum += _sigma[alpha] * _sigma[beta] * IAlphaBeta;
 		}
 	}
@@ -176,8 +180,7 @@ void parameterSpace::calculateRho()
 	double secondSum = 0.;
 	for(unsigned int alpha = 0; alpha < _nDimensions; ++alpha) {
 		for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
-//			double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
-			double lAlphaBeta = _integralMatrix.element(alpha, beta).imag();
+			const double& lAlphaBeta = _integralMatrix[alpha][beta].imag();
 			secondSum += _sigma[alpha+_nDimensions] * _sigma[beta] * lAlphaBeta;
 		}
 	}
@@ -192,15 +195,11 @@ double parameterSpace::calculateDRhoDPhi(const unsigned int& phiIndex) const
 
 	double retval = 0.;
 
-	for(unsigned int alpha = 0; alpha < (2*_nDimensions); ++alpha) {
+	for(unsigned int alpha = phiIndex; alpha < (2*_nDimensions); ++alpha) {
 		unsigned int betaLowerLimit = (alpha < _nDimensions) ? 0 : _nDimensions;
 		unsigned int betaUpperLimit = (betaLowerLimit == 0) ? _nDimensions : 2*_nDimensions;
 		for(unsigned int beta = betaLowerLimit; beta < betaUpperLimit; ++beta) {
-			if(phiIndex > alpha) {
-				continue;
-			}
-//			const double& kAlphaBeta = _integralMatrix.matrix()[alpha % _nDimensions][beta % _nDimensions].real();
-			const double& kAlphaBeta = _integralMatrix.element(alpha % _nDimensions, beta % _nDimensions).real();
+			const double& kAlphaBeta = _integralMatrix[alpha % _nDimensions][beta % _nDimensions].real();
 			retval += kAlphaBeta * _sigma[beta] * getDSigmaDPhi(alpha, phiIndex);
 		}
 	}
@@ -209,8 +208,7 @@ double parameterSpace::calculateDRhoDPhi(const unsigned int& phiIndex) const
 	double dSigma2DPhi = 0.;
 	for(unsigned int beta = 0; beta < _nDimensions; ++beta) {
 		for(unsigned int alpha = 0; alpha < _nDimensions; ++alpha) {
-//			double lAlphaBeta = _integralMatrix.matrix()[alpha][beta].imag();
-			double lAlphaBeta = _integralMatrix.element(alpha, beta).imag();
+			const double& lAlphaBeta = _integralMatrix[alpha][beta].imag();
 			dSigma2DPhi += lAlphaBeta * ((_sigma[beta] * getDSigmaDPhi(alpha+_nDimensions, phiIndex)) +
 			                              (_sigma[alpha+_nDimensions] * getDSigmaDPhi(beta, phiIndex)));
 		}
