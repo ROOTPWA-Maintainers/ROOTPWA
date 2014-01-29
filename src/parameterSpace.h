@@ -33,6 +33,8 @@ namespace rpwa {
 		double getDASphereHat() const;
 		double getDARatio() const { return getDAHat() / getDASphereHat(); }
 
+		// get the spherical coordinates in the form (r, phi_1, phi_2, ..., phi_(n-1))
+		static std::vector<double> convertToSphericalCoordinates(const std::vector<double> x);
 
 	  private:
 

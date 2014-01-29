@@ -12,6 +12,37 @@ using namespace std;
 using namespace rpwa;
 
 
+std::vector<double> parameterSpace::convertToSphericalCoordinates(std::vector<double> x)
+{
+
+	std::vector<double> sphericalCoords(x.size(), 0.);
+
+	double r = 0.;
+	vector<double> xSums(x.size(), 0.);
+	for(int i = x.size()-1; i >= 0; --i) {
+		unsigned int j = (unsigned int)i;
+		r += x[j] * x[j];
+		xSums[j] = sqrt(r);
+	}
+	r = sqrt(r);
+	sphericalCoords[0] = r;
+
+	for(unsigned int i = 1; i < (x.size()-1); ++i) {
+		sphericalCoords[i] = TMath::ACos(x[i-1] / xSums[i-1]);
+	}
+
+	const double lastCosPhi = x[x.size()-2] / xSums[x.size()-2];
+	if(x[x.size()-1] >= 0.) {
+		sphericalCoords[x.size()-1] = TMath::ACos(lastCosPhi);
+	} else {
+		sphericalCoords[x.size()-1] = TMath::TwoPi() - TMath::ACos(lastCosPhi);
+	}
+
+	return sphericalCoords;
+
+}
+
+
 parameterSpace::parameterSpace(const ampIntegralMatrix& integralMatrix)
 	: _nEvents(integralMatrix.nmbEvents()),
 	  _nDimensions(integralMatrix.nmbWaves()),
