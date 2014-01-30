@@ -55,11 +55,6 @@ set(SOURCES
 	fitResult.cc
 	TCMatrix.cc
 	TPWALikelihood.cc
-	TPWALikelihoodC.cc
-	TPWAAmp.cc
-	TPWAPhaseConstraint.cc
-	TLogMultiGaus.cc
-	TCovEllipse.cc
 	pwaPlotter.cc
 	pwacomponent.cc
 	massDepFitLikeli.cc
@@ -79,7 +74,7 @@ set(ROOTPWA_DICT_INCLUDE_DIRS
 root_generate_dictionary(
 	"${ROOTPWA_DICTIONARY}"
 	"${ROOTPWA_DICT_INCLUDE_DIRS}"
-	"TFitBin.h;fitResult.h;pwaPlotter.h;TCMatrix.h;TCovEllipse.h"
+	"TFitBin.h;fitResult.h;pwaPlotter.h;TCMatrix.h"
 	"rootPwaLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
@@ -100,23 +95,10 @@ make_shared_library(
 # executables
 make_executable(listwaves         listwaves.cc         ${THIS_LIB})
 make_executable(pwafit            pwafit.cc            ${THIS_LIB})
-make_executable(pwaConstraintFit  pwaConstraintFit.cc  ${THIS_LIB})
 make_executable(selector          selector.cc          ${THIS_LIB})
 make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})
 
-make_executable(testPWALikeli     testPWALikeli.cc     ${THIS_LIB})
-make_executable(testPWAConstraint testPWAConstraint.cc ${THIS_LIB})
-make_executable(testPWAAmp        testPWAAmp.cc        ${THIS_LIB})
-make_executable(testArray         testArray.cc         ${THIS_LIB})
-make_executable(testLikelihood    testLikelihood.cc    ${THIS_LIB})
 make_executable(pwaMassFit        massDepFit.cc        ${THIS_LIB} "${Libconfig_LIBS}")
-
-# test executables
-# add_test(testBuild        ${CMAKE_BUILD_TOOL})
-# add_test(testPWAAmp       ${EXECUTABLE_OUTPUT_PATH}/testPWAAmp)
-add_test(testPWALikeli    ${CMAKE_CURRENT_SOURCE_DIR}/testPWALikeli.sh)
-add_test(testPWAConstrain ${CMAKE_CURRENT_SOURCE_DIR}/testPWAConstraint.sh)
-# add_test(testPWAFit       ${CMAKE_CURRENT_SOURCE_DIR}/testPWAFit.sh)
 
 # build tests
 add_subdirectory(test)

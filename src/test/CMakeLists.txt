@@ -21,7 +21,7 @@
 #//-------------------------------------------------------------------------
 #//
 #// Description:
-#//      build file for amplitude library tests
+#//      build file for src library tests
 #//
 #//
 #// Author List:
@@ -33,16 +33,16 @@
 
 # set include directories
 set(INCLUDE_DIRECTORIES
-	SYSTEM ${Boost_INCLUDE_DIRS}
+SYSTEM ${Boost_INCLUDE_DIRS}
 	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
-	${GEN_INCLUDE_DIR}
 	${AMPLITUDE_INCLUDE_DIR}
 	${CMAKE_CURRENT_SOURCE_DIR}
-)
+	)
 include_directories(${INCLUDE_DIRECTORIES})
 
 
 # executables
 make_executable(testParameterSpace          testParameterSpace.cc       "${ROOTPWA_LIBS}")
+make_executable(testLikelihood              testLikelihood.cc           "${ROOTPWA_LIBS}")

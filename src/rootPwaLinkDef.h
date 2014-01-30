@@ -31,8 +31,6 @@
 #pragma link C++ class rpwa::pwaPlotter+;
 #pragma link C++ class rpwa::TPwaFitGraphErrors+;
 #pragma link C++ class TCMatrix+;
-#pragma link C++ class TCovEllipse+;
-//#pragma link C++ class TMCMCMeta+;
 
 
 #endif

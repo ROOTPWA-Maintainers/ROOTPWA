@@ -38,7 +38,7 @@ message(STATUS ">>> Setting up 'utilities' directory.")
 # set include directories
 set(INCLUDE_DIRECTORIES
 	SYSTEM ${Boost_INCLUDE_DIRS}
-  ${Libconfig_INCLUDE_DIR}
+	${Libconfig_INCLUDE_DIR}
 	${ROOT_INCLUDE_DIR}
 	${PWA2000_INCLUDE_DIR}
 	${UTILITIES_INCLUDE_DIR}
@@ -51,6 +51,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 make_executable(testSumAccumulators testSumAccumulators.cc "${UTILITIES_LIBS}")
 make_executable(testSpinUtils       testSpinUtils.cc       "${UTILITIES_LIBS}")
 make_executable(testFileUtils       testFileUtils.cc       "${UTILITIES_LIBS}")
+make_executable(testArray           testArray.cc           "${UTILITIES_LIBS}")
 if(USE_PWA2000)
 	make_executable(testLibppFunctions testLibppFunctions.cc "${UTILITIES_LIBS};${ROOT_LIBS};${PWA2000_LIBS}")
 else()
