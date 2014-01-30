@@ -12,10 +12,10 @@ using namespace std;
 using namespace rpwa;
 
 
-std::vector<double> parameterSpace::convertToSphericalCoordinates(std::vector<double> x)
+vector<double> parameterSpace::convertToSphericalCoordinates(vector<double> x)
 {
 
-	std::vector<double> sphericalCoords(x.size(), 0.);
+	vector<double> sphericalCoords(x.size(), 0.);
 
 	double r = 0.;
 	vector<double> xSums(x.size(), 0.);
@@ -63,6 +63,27 @@ std::vector<double> parameterSpace::convertToSphericalCoordinates(std::vector<do
 	}
 
 	return sphericalCoords;
+
+}
+
+
+vector<double> parameterSpace::convertToCartesianCoordinates(const vector<double> sphereX)
+{
+	vector<double> x(sphereX.size(), 0.);
+
+	for(unsigned int i = 0; i < (sphereX.size()-1); ++i) {
+		x[i] = sphereX[0];
+		for(unsigned int j = 1; j <= i; ++j) {
+			x[i] *= TMath::Sin(sphereX[j]);
+		}
+		x[i] *= TMath::Cos(sphereX[i+1]);
+	}
+	x[sphereX.size()-1] = sphereX[0];
+	for(unsigned int i = 1; i < sphereX.size(); ++i) {
+		x[sphereX.size()-1] *= TMath::Sin(sphereX[i]);
+	}
+
+	return x;
 
 }
 

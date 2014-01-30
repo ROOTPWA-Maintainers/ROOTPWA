@@ -35,6 +35,8 @@ namespace rpwa {
 
 		// get the spherical coordinates in the form (r, phi_1, phi_2, ..., phi_(n-1))
 		static std::vector<double> convertToSphericalCoordinates(const std::vector<double> x);
+		// the reverse transformation, the input vector should be in the same format as above
+		static std::vector<double> convertToCartesianCoordinates(const std::vector<double> sphereX);
 
 	  private:
 
