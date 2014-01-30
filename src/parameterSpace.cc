@@ -28,14 +28,38 @@ std::vector<double> parameterSpace::convertToSphericalCoordinates(std::vector<do
 	sphericalCoords[0] = r;
 
 	for(unsigned int i = 1; i < (x.size()-1); ++i) {
-		sphericalCoords[i] = TMath::ACos(x[i-1] / xSums[i-1]);
+		if(xSums[i-1] == 0.) {
+			sphericalCoords[i] = 0.;
+		} else if(fabs(x[i-1] - xSums[i-1]) < 1e-10) {
+			if(x[i-1] >= 0) {
+				sphericalCoords[i] = 0.;
+			} else {
+				sphericalCoords[i] = TMath::Pi();
+			}
+		} else {
+			sphericalCoords[i] = TMath::ACos(x[i-1] / xSums[i-1]);
+		}
 	}
 
 	const double lastCosPhi = x[x.size()-2] / xSums[x.size()-2];
-	if(x[x.size()-1] >= 0.) {
-		sphericalCoords[x.size()-1] = TMath::ACos(lastCosPhi);
+	if(xSums[x.size()-2] == 0.) {
+		sphericalCoords[x.size()-1] = 0.;
 	} else {
-		sphericalCoords[x.size()-1] = TMath::TwoPi() - TMath::ACos(lastCosPhi);
+		double lastACosPhi;
+		if(fabs(x[x.size()-2] - xSums[x.size()-2]) < 1e-10) {
+			if(x[x.size()-2] >= 0) {
+				lastACosPhi = 0.;
+			} else {
+				lastACosPhi = TMath::Pi();
+			}
+		} else {
+			lastACosPhi = TMath::ACos(lastCosPhi);
+		}
+		if(x[x.size()-1] >= 0.) {
+			sphericalCoords[x.size()-1] = lastACosPhi;
+		} else {
+			sphericalCoords[x.size()-1] = TMath::TwoPi() - lastACosPhi;
+		}
 	}
 
 	return sphericalCoords;
@@ -50,6 +74,7 @@ parameterSpace::parameterSpace(const ampIntegralMatrix& integralMatrix)
 	  _cosPhi((2 * _nDimensions) - 1, 0.),
 	  _sinPhi((2 * _nDimensions) - 1, 0.),
 	  _sigma(2 * _nDimensions, 0.),
+	  _rho(0.),
 	  _DRDPhi((2 * _nDimensions) - 1, 0.),
 	  _DSigmaDPhi(2 * _nDimensions, vector<double>((2 * _nDimensions) - 1, 0.)),
 	  _randomNumberGen(new TRandom3(123456789))
@@ -84,19 +109,55 @@ void parameterSpace::pickUniformAngles() {
 	r = sqrt(r);
 
 	for(unsigned int i = 0; i < ((2*_nDimensions)-2); ++i) {
-		_cosPhi[i] = x[i] / xSums[i];
-		_sinPhi[i] = sqrt(1. - _cosPhi[i]*_cosPhi[i]);
-		_phi[i] = TMath::ACos(_cosPhi[i]);
+		if(xSums[i] == 0.) {
+			_phi[i] = 0.;
+			_cosPhi[i] = 1.;
+			_sinPhi[i] = 0.;
+		} else {
+			if(fabs(x[i] - xSums[i]) < 1e-10) {
+				if(x[i] >= 0) {
+					_phi[i] = 0;
+					_cosPhi[i] = 1.;
+					_sinPhi[i] = 0.;
+				} else {
+					_phi[i] = TMath::Pi();
+					_cosPhi[i] = -1.;
+					_sinPhi[i] = 0.;
+				}
+			} else {
+				_cosPhi[i] = x[i] / xSums[i];
+				_sinPhi[i] = sqrt(1. - _cosPhi[i]*_cosPhi[i]);
+				_phi[i] = TMath::ACos(_cosPhi[i]);
+			}
+		}
 	}
 
 	unsigned int lastPhiIndex = (2*_nDimensions)-2;
-	_cosPhi[lastPhiIndex] = x[lastPhiIndex] / xSums[lastPhiIndex];
-	if(x[(2*_nDimensions) - 1] >= 0.) {
-		_phi[lastPhiIndex] = TMath::ACos(_cosPhi[lastPhiIndex]);
-		_sinPhi[lastPhiIndex] = sqrt(1. - _cosPhi[lastPhiIndex]*_cosPhi[lastPhiIndex]);
+	if(xSums[lastPhiIndex] == 0.) {
+		_phi[lastPhiIndex] = 0.;
+		_cosPhi[lastPhiIndex] = 1.;
+		_sinPhi[lastPhiIndex] = 0.;
 	} else {
-		_phi[lastPhiIndex] = TMath::TwoPi() - TMath::ACos(_cosPhi[lastPhiIndex]);
-		_sinPhi[lastPhiIndex] = -sqrt(1. - _cosPhi[lastPhiIndex]*_cosPhi[lastPhiIndex]);
+		double lastACosPhi;
+		if(fabs(x[lastPhiIndex] - xSums[lastPhiIndex]) < 1e-10) {
+			if(x[lastPhiIndex] >= 0.) {
+				lastACosPhi = 0.;
+				_cosPhi[lastPhiIndex] = 1.;
+			} else {
+				lastACosPhi = TMath::Pi();
+				_cosPhi[lastPhiIndex] = -1.;
+			}
+		} else {
+			_cosPhi[lastPhiIndex] = x[lastPhiIndex] / xSums[lastPhiIndex];
+			lastACosPhi = TMath::ACos(_cosPhi[lastPhiIndex]);
+		}
+		if(x[(2*_nDimensions) - 1] >= 0.) {
+			_phi[lastPhiIndex] = lastACosPhi;
+			_sinPhi[lastPhiIndex] = sqrt(1. - _cosPhi[lastPhiIndex]*_cosPhi[lastPhiIndex]);
+		} else {
+			_phi[lastPhiIndex] = TMath::TwoPi() - lastACosPhi;
+			_sinPhi[lastPhiIndex] = -sqrt(1. - _cosPhi[lastPhiIndex]*_cosPhi[lastPhiIndex]);
+		}
 	}
 
 	for(unsigned int i = 0; i < (2*_nDimensions); ++i) {
