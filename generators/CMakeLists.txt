@@ -86,8 +86,6 @@ make_shared_library(
 set(SOURCES
 	generator.cc
 	generatorManager.cc
-	productionAmp.cc
-	breitWignerProductionAmp.cc
 	diffractivePhaseSpace.cc
 	beamAndVertexGenerator.cc
 	generatorPickerFunctions.cc
@@ -110,7 +108,6 @@ make_shared_library(
 # executables
 make_executable(genpw       genpw.cc           ${THIS_LIB} "${Libconfig_LIBS}")
 make_executable(evtweight   evtweight.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}")
-make_executable(plotBWAmp   plotBWAmp.cc       ${THIS_LIB})
 make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})
 
 # build tests
