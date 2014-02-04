@@ -12,33 +12,33 @@ namespace {
 
 		massDependenceWrapper()
 			: rpwa::massDependence(),
-			  bp::wrapper<rpwa::massDependence>() { };
+			  bp::wrapper<rpwa::massDependence>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			return this->get_override("amp")(v);
-		};
+		}
 
 		std::complex<double> operator()(const rpwa::isobarDecayVertex& v) {
 			if(bp::override oper = this->get_override("__call__")) {
 				return oper(v);
 			}
 			return rpwa::massDependence::operator()(v);
-		};
+		}
 
 		std::complex<double> default___call__(rpwa::isobarDecayVertex& v) {
 			return rpwa::massDependence::operator()(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::massDependence::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::massDependence::name();
-		};
+		}
 
 	};
 
@@ -48,33 +48,33 @@ namespace {
 
 		flatMassDependenceWrapper()
 			: rpwa::flatMassDependence(),
-			  bp::wrapper<rpwa::flatMassDependence>() { };
+			  bp::wrapper<rpwa::flatMassDependence>() { }
 
 		flatMassDependenceWrapper(const rpwa::flatMassDependence& dep)
 			: rpwa::flatMassDependence(dep),
-			  bp::wrapper<rpwa::flatMassDependence>() { };
+			  bp::wrapper<rpwa::flatMassDependence>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::flatMassDependence::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::flatMassDependence::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::flatMassDependence::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::flatMassDependence::name();
-		};
+		}
 
 	};
 
@@ -84,33 +84,33 @@ namespace {
 
 		relativisticBreitWignerWrapper()
 			: rpwa::relativisticBreitWigner(),
-			  bp::wrapper<rpwa::relativisticBreitWigner>() { };
+			  bp::wrapper<rpwa::relativisticBreitWigner>() { }
 
 		relativisticBreitWignerWrapper(const rpwa::relativisticBreitWigner& dep)
 			: rpwa::relativisticBreitWigner(dep),
-			  bp::wrapper<rpwa::relativisticBreitWigner>() { };
+			  bp::wrapper<rpwa::relativisticBreitWigner>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::relativisticBreitWigner::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::relativisticBreitWigner::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::relativisticBreitWigner::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::relativisticBreitWigner::name();
-		};
+		}
 
 	};
 
@@ -120,33 +120,33 @@ namespace {
 
 		constWidthBreitWignerWrapper()
 			: rpwa::constWidthBreitWigner(),
-			  bp::wrapper<rpwa::constWidthBreitWigner>() { };
+			  bp::wrapper<rpwa::constWidthBreitWigner>() { }
 
 		constWidthBreitWignerWrapper(const rpwa::constWidthBreitWigner& dep)
 			: rpwa::constWidthBreitWigner(dep),
-			  bp::wrapper<rpwa::constWidthBreitWigner>() { };
+			  bp::wrapper<rpwa::constWidthBreitWigner>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::constWidthBreitWigner::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::constWidthBreitWigner::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::constWidthBreitWigner::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::constWidthBreitWigner::name();
-		};
+		}
 
 	};
 
@@ -156,33 +156,33 @@ namespace {
 
 		rhoBreitWignerWrapper()
 			: rpwa::rhoBreitWigner(),
-			  bp::wrapper<rpwa::rhoBreitWigner>() { };
+			  bp::wrapper<rpwa::rhoBreitWigner>() { }
 
 		rhoBreitWignerWrapper(const rpwa::rhoBreitWigner& dep)
 			: rpwa::rhoBreitWigner(dep),
-			  bp::wrapper<rpwa::rhoBreitWigner>() { };
+			  bp::wrapper<rpwa::rhoBreitWigner>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::rhoBreitWigner::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::rhoBreitWigner::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::rhoBreitWigner::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::rhoBreitWigner::name();
-		};
+		}
 
 	};
 
@@ -192,33 +192,33 @@ namespace {
 
 		f0980BreitWignerWrapper()
 			: rpwa::f0980BreitWigner(),
-			  bp::wrapper<rpwa::f0980BreitWigner>() { };
+			  bp::wrapper<rpwa::f0980BreitWigner>() { }
 
 		f0980BreitWignerWrapper(const rpwa::f0980BreitWigner& dep)
 			: rpwa::f0980BreitWigner(dep),
-			  bp::wrapper<rpwa::f0980BreitWigner>() { };
+			  bp::wrapper<rpwa::f0980BreitWigner>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::f0980BreitWigner::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::f0980BreitWigner::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::f0980BreitWigner::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::f0980BreitWigner::name();
-		};
+		}
 
 	};
 
@@ -228,33 +228,33 @@ namespace {
 
 		piPiSWaveAuMorganPenningtonMWrapper()
 			: rpwa::piPiSWaveAuMorganPenningtonM(),
-			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonM>() { };
+			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonM>() { }
 
 		piPiSWaveAuMorganPenningtonMWrapper(const rpwa::piPiSWaveAuMorganPenningtonM& dep)
 			: rpwa::piPiSWaveAuMorganPenningtonM(dep),
-			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonM>() { };
+			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonM>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::piPiSWaveAuMorganPenningtonM::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::piPiSWaveAuMorganPenningtonM::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::piPiSWaveAuMorganPenningtonM::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::piPiSWaveAuMorganPenningtonM::name();
-		};
+		}
 
 	};
 
@@ -264,33 +264,33 @@ namespace {
 
 		piPiSWaveAuMorganPenningtonVesWrapper()
 			: rpwa::piPiSWaveAuMorganPenningtonVes(),
-			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonVes>() { };
+			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonVes>() { }
 
 		piPiSWaveAuMorganPenningtonVesWrapper(const rpwa::piPiSWaveAuMorganPenningtonVes& dep)
 			: rpwa::piPiSWaveAuMorganPenningtonVes(dep),
-			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonVes>() { };
+			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonVes>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::piPiSWaveAuMorganPenningtonVes::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::piPiSWaveAuMorganPenningtonVes::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::piPiSWaveAuMorganPenningtonVes::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::piPiSWaveAuMorganPenningtonVes::name();
-		};
+		}
 
 	};
 
@@ -300,33 +300,33 @@ namespace {
 
 		piPiSWaveAuMorganPenningtonKachaevWrapper()
 			: rpwa::piPiSWaveAuMorganPenningtonKachaev(),
-			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonKachaev>() { };
+			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonKachaev>() { }
 
 		piPiSWaveAuMorganPenningtonKachaevWrapper(const rpwa::piPiSWaveAuMorganPenningtonKachaev& dep)
 			: rpwa::piPiSWaveAuMorganPenningtonKachaev(dep),
-			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonKachaev>() { };
+			  bp::wrapper<rpwa::piPiSWaveAuMorganPenningtonKachaev>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::piPiSWaveAuMorganPenningtonKachaev::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::piPiSWaveAuMorganPenningtonKachaev::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::piPiSWaveAuMorganPenningtonKachaev::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::piPiSWaveAuMorganPenningtonKachaev::name();
-		};
+		}
 
 	};
 
@@ -336,33 +336,33 @@ namespace {
 
 		rhoPrimeMassDepWrapper()
 			: rpwa::rhoPrimeMassDep(),
-			  bp::wrapper<rpwa::rhoPrimeMassDep>() { };
+			  bp::wrapper<rpwa::rhoPrimeMassDep>() { }
 
 		rhoPrimeMassDepWrapper(const rpwa::rhoPrimeMassDep& dep)
 			: rpwa::rhoPrimeMassDep(dep),
-			  bp::wrapper<rpwa::rhoPrimeMassDep>() { };
+			  bp::wrapper<rpwa::rhoPrimeMassDep>() { }
 
 		std::complex<double> amp(const rpwa::isobarDecayVertex& v) {
 			if(bp::override amp = this->get_override("amp")) {
 				return amp(v);
 			}
 			return rpwa::rhoPrimeMassDep::amp(v);
-		};
+		}
 
 		std::complex<double> default_amp(const rpwa::isobarDecayVertex& v) {
 			return rpwa::rhoPrimeMassDep::amp(v);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::rhoPrimeMassDep::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::rhoPrimeMassDep::name();
-		};
+		}
 
 	};
 
@@ -457,5 +457,4 @@ void rpwa::py::exportMassDependence() {
 	bp::register_ptr_to_python<rpwa::piPiSWaveAuMorganPenningtonKachaevPtr>();
 	bp::register_ptr_to_python<rpwa::rhoPrimeMassDepPtr>();
 
-};
-
+}

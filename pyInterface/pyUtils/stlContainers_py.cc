@@ -38,7 +38,7 @@ void rpwa::py::exportStlContainers() {
 	bp::class_<std::vector<unsigned int> >("__vector_unsigned_int")
 		.def(bp::vector_indexing_suite<std::vector<unsigned int> >());
 
-};
+}
 
 std::set<std::string> rpwa::py::convertBPObjectToStrSet(bp::object list) {
 
@@ -50,7 +50,7 @@ std::set<std::string> rpwa::py::convertBPObjectToStrSet(bp::object list) {
 			}
 			return set;
 
-};
+}
 
 std::multiset<std::string> rpwa::py::convertBPObjectToStrMultiSet(bp::object list) {
 
@@ -62,4 +62,4 @@ std::multiset<std::string> rpwa::py::convertBPObjectToStrMultiSet(bp::object lis
 			}
 			return set;
 
-};
+}

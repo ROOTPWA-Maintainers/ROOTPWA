@@ -12,7 +12,7 @@ namespace {
 
 		isobarDecayTopologyWrapper()
 			: rpwa::isobarDecayTopology(),
-			  bp::wrapper<rpwa::isobarDecayTopology>() { };
+			  bp::wrapper<rpwa::isobarDecayTopology>() { }
 
 		isobarDecayTopologyWrapper(const rpwa::productionVertexPtr& productionVertex,
 		                           const bp::object&                pyIsobarDecayVertices,
@@ -57,32 +57,32 @@ namespace {
 
 			printErr<<"Got invalid input when executing rpwa::isobarDecayTopology::isobarDecayTopology()."<<std::endl;
 
-		};
+		}
 
 		isobarDecayTopologyWrapper(const rpwa::isobarDecayTopology& topo)
 			: rpwa::isobarDecayTopology(topo),
-			  bp::wrapper<rpwa::isobarDecayTopology>() { };
+			  bp::wrapper<rpwa::isobarDecayTopology>() { }
 
 		isobarDecayTopologyWrapper(const rpwa::decayTopology& topo)
 			: rpwa::isobarDecayTopology(topo),
-			  bp::wrapper<rpwa::isobarDecayTopology>() { };
+			  bp::wrapper<rpwa::isobarDecayTopology>() { }
 
 		void clear() {
 			if(bp::override clear = this->get_override("clear")) {
 				clear();
 			}
 			rpwa::isobarDecayTopology::clear();
-		};
+		}
 
 		void default_clear() {
 			rpwa::isobarDecayTopology::clear();
-		};
+		}
 
 	};
 
 	bp::list isobarDecayTopology_isobarDecayVertices(const rpwa::isobarDecayTopology& self) {
 		return bp::list(self.isobarDecayVertices());
-	};
+	}
 
 	rpwa::isobarDecayTopology isobarDecayTopology_subDecay(rpwa::isobarDecayTopology& self,
 	                                                       const rpwa::isobarDecayVertexPtr& startVert,
@@ -95,21 +95,21 @@ namespace {
 	                                                                 const rpwa::isobarDecayTopology&  daughter2Decay)
 	{
 		return rpwa::isobarDecayTopology::joinDaughterDecays(parentVertex, daughter1Decay, daughter2Decay);
-	};
+	}
 
 	PyObject* isobarDecayTopology_calcIsobarLzVec(rpwa::isobarDecayTopology& self) {
 		return rpwa::py::convertToPy<TLorentzVector>(self.calcIsobarLzVec());
-	};
+	}
 
 	std::string isobarDecayTopology_writeGraphViz1(rpwa::isobarDecayTopology& self) {
 		std::stringstream sstr;
 		self.writeGraphViz(sstr);
 		return sstr.str();
-	};
+	}
 
 	bool isobarDecayTopology_writeGraphViz2(rpwa::isobarDecayTopology& self, const std::string& outFileName) {
 		return self.writeGraphViz(outFileName);
-	};
+	}
 
 	bp::list isobarDecayTopology_getIsospinSymmetrization(rpwa::isobarDecayTopology& self) {
 		std::vector<rpwa::symTermMap> symTermMap = self.getIsospinSymmetrization();
@@ -246,4 +246,4 @@ void rpwa::py::exportIsobarDecayTopology() {
 
 	bp::register_ptr_to_python<rpwa::isobarDecayTopologyPtr>();
 
-};
+}

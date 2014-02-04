@@ -11,15 +11,15 @@ namespace {
 
 	int amplitudeTreeLeaf_Write(const rpwa::amplitudeTreeLeaf& self, std::string name) {
 		return self.Write(name.c_str());
-	};
+	}
 
 	const std::complex<double>& amplitudeTreeLeaf_incohSubAmp1(const rpwa::amplitudeTreeLeaf& self, const unsigned int index = 0) {
 		return self.incohSubAmp(index);
-	};
+	}
 
 	const std::complex<double>& amplitudeTreeLeaf_incohSubAmp2(const rpwa::amplitudeTreeLeaf& self, const std::string& subAmpLabel) {
 		return self.incohSubAmp(subAmpLabel);
-	};
+	}
 
 	int amplitudeTreeLeaf_setBranchAddress(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string branchName) {
 		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
@@ -28,7 +28,7 @@ namespace {
 			return 0;
 		}
 		return tree->SetBranchAddress(branchName.c_str(), &self);
-	};
+	}
 
 	void amplitudeTreeLeaf_branch(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string name, int bufsize = 32000, int splitlevel = 99) {
 		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
@@ -115,5 +115,4 @@ void rpwa::py::exportAmplitudeTreeLeaf() {
 
 		.add_static_property("debugAmplitudeTreeLeaf", &rpwa::amplitudeTreeLeaf::debug, &rpwa::amplitudeTreeLeaf::setDebug);
 
-};
-
+}

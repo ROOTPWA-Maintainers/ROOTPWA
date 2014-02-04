@@ -17,66 +17,66 @@ namespace {
 		                             const rpwa::particlePtr& XParticle,
 		                             const rpwa::particlePtr& recoil = rpwa::particlePtr())
 			: rpwa::diffractiveDissVertex(beam, target, XParticle, recoil),
-			  bp::wrapper<rpwa::diffractiveDissVertex>() { };
+			  bp::wrapper<rpwa::diffractiveDissVertex>() { }
 
 		diffractiveDissVertexWrapper(const rpwa::diffractiveDissVertex& vert)
 			: rpwa::diffractiveDissVertex(vert),
-			  bp::wrapper<rpwa::diffractiveDissVertex>() { };
+			  bp::wrapper<rpwa::diffractiveDissVertex>() { }
 
 		bool addInParticle(const rpwa::particlePtr& part) {
 			if(bp::override addInParticle = this->get_override("addInParticle")) {
 				return addInParticle(part);
 			}
 			return rpwa::diffractiveDissVertex::addInParticle(part);
-		};
+		}
 
 		bool default_addInParticle(const rpwa::particlePtr& part) {
 			return rpwa::diffractiveDissVertex::addInParticle(part);
-		};
+		}
 
 		bool addOutParticle(const rpwa::particlePtr& part) {
 			if(bp::override addOutParticle = this->get_override("addOutParticle")) {
 				return addOutParticle(part);
 			}
 			return rpwa::diffractiveDissVertex::addOutParticle(part);
-		};
+		}
 
 		bool default_addOutParticle(const rpwa::particlePtr& part) {
 			return rpwa::diffractiveDissVertex::addOutParticle(part);
-		};
+		}
 
 		PyObject* referenceLzVec__() const {
 			if(bp::override referenceLzVec = this->get_override("referenceLzVec")) {
 				return rpwa::py::convertToPy<TLorentzVector>(referenceLzVec());
 			}
 			return rpwa::py::convertToPy<TLorentzVector>(rpwa::diffractiveDissVertex::referenceLzVec());
-		};
+		}
 
 		PyObject* default_referenceLzVec__() const {
 			return rpwa::py::convertToPy<TLorentzVector>(rpwa::diffractiveDissVertex::referenceLzVec());
-		};
+		}
 
 		const rpwa::particlePtr& XParticle() const {
 			if(bp::override XParticle = this->get_override("XParticle")) {
 				return XParticle();
 			}
 			return rpwa::diffractiveDissVertex::XParticle();
-		};
+		}
 
 		const rpwa::particlePtr& default_XParticle() const {
 			return rpwa::diffractiveDissVertex::XParticle();
-		};
+		}
 
 		void setXFlavorQN() {
 			if(bp::override setXFlavorQN = this->get_override("XFlavorQN")) {
 				setXFlavorQN();
 			}
 			rpwa::diffractiveDissVertex::setXFlavorQN();
-		};
+		}
 
 		void default_setXFlavorQN() {
 			rpwa::diffractiveDissVertex::setXFlavorQN();
-		};
+		}
 
 		bool initKinematicsData__(PyObject* pyProdKinPartNames) {
 			TClonesArray* prodKinPartNames = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
@@ -88,7 +88,7 @@ namespace {
 				return initKinematicsData(*prodKinPartNames);
 			}
 			return rpwa::diffractiveDissVertex::initKinematicsData(*prodKinPartNames);
-		};
+		}
 
 		bool default_initKinematicsData__(PyObject* pyProdKinPartNames) {
 			TClonesArray* prodKinPartNames = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
@@ -97,7 +97,7 @@ namespace {
 				return false;
 			}
 			return rpwa::diffractiveDissVertex::initKinematicsData(*prodKinPartNames);
-		};
+		}
 
 		bool readKinematicsData__(PyObject* pyProdKinPartNames) {
 			TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
@@ -109,7 +109,7 @@ namespace {
 				return readKinematicsData(*prodKinMomenta);
 			}
 			return rpwa::diffractiveDissVertex::readKinematicsData(*prodKinMomenta);
-		};
+		}
 
 		bool default_readKinematicsData__(PyObject* pyProdKinPartNames) {
 			TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
@@ -118,18 +118,18 @@ namespace {
 				return false;
 			}
 			return rpwa::diffractiveDissVertex::readKinematicsData(*prodKinMomenta);
-		};
+		}
 
 		bool revertMomenta() {
 			if(bp::override revertMomenta = this->get_override("revertMomenta")) {
 				return revertMomenta();
 			}
 			return rpwa::diffractiveDissVertex::revertMomenta();
-		};
+		}
 
 		bool default_revertMomenta() {
 			return rpwa::diffractiveDissVertex::revertMomenta();
-		};
+		}
 
 
 		std::string name() const {
@@ -137,17 +137,17 @@ namespace {
 				return name();
 			}
 			return rpwa::diffractiveDissVertex::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::diffractiveDissVertex::name();
-		};
+		}
 
 	};
 
 	PyObject* diffractiveDissVertex_referenceLzVec(const rpwa::diffractiveDissVertex& self) {
 		return rpwa::py::convertToPy<TLorentzVector>(self.referenceLzVec());
-	};
+	}
 
 	bool diffractiveDissVertex_initKinematicsData(rpwa::diffractiveDissVertex& self, PyObject* pyProdKinPartNames) {
 		TClonesArray* prodKinPartNames = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
@@ -156,7 +156,7 @@ namespace {
 			return false;
 		}
 		return self.initKinematicsData(*prodKinPartNames);
-	};
+	}
 
 	bool diffractiveDissVertex_readKinematicsData(rpwa::diffractiveDissVertex& self, PyObject* pyProdKinPartNames) {
 		TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinPartNames);
@@ -165,7 +165,7 @@ namespace {
 			return false;
 		}
 		return self.readKinematicsData(*prodKinMomenta);
-	};
+	}
 
 }
 
@@ -238,4 +238,4 @@ void rpwa::py::exportDiffractiveDissVertex() {
 
 	bp::register_ptr_to_python<rpwa::diffractiveDissVertexPtr>();
 
-};
+}

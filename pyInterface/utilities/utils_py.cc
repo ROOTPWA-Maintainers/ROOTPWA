@@ -8,4 +8,4 @@ void rpwa::py::exportUtils() {
 	bp::def("printCompilerInfo", &rpwa::printCompilerInfo);
 	bp::def("printLibraryInfo", &rpwa::printLibraryInfo);
 
-};
+}

@@ -19,22 +19,22 @@ namespace {
 		                         const unsigned int       S       = 0,
 		                         const rpwa::massDependencePtr& massDep = rpwa::massDependencePtr())
 			: rpwa::isobarDecayVertex(parent, daughter1, daughter2, L, S, massDep),
-			  bp::wrapper<rpwa::isobarDecayVertex>() { };
+			  bp::wrapper<rpwa::isobarDecayVertex>() { }
 
 		isobarDecayVertexWrapper(const isobarDecayVertex& vert)
 			: rpwa::isobarDecayVertex(vert),
-			  bp::wrapper<rpwa::isobarDecayVertex>() { };
+			  bp::wrapper<rpwa::isobarDecayVertex>() { }
 
 		bool addInParticle(const rpwa::particlePtr& part) {
 			if(bp::override addInParticle = this->get_override("addInParticle")) {
 				return addInParticle(part);
 			}
 			return rpwa::isobarDecayVertex::addInParticle(part);
-		};
+		}
 
 		bool default_addInParticle(const rpwa::particlePtr& part) {
 			return rpwa::isobarDecayVertex::addInParticle(part);
-		};
+		}
 
 
 		bool addOutParticle(const rpwa::particlePtr& part) {
@@ -42,40 +42,40 @@ namespace {
 				return addOutParticle(part);
 			}
 			return rpwa::isobarDecayVertex::addOutParticle(part);
-		};
+		}
 
 		bool default_addOutParticle(const rpwa::particlePtr& part) {
 			return rpwa::isobarDecayVertex::addOutParticle(part);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::isobarDecayVertex::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::isobarDecayVertex::name();
-		};
+		}
 
 	};
 
 	rpwa::particlePtr isobarDecayVertex_parent(rpwa::isobarDecayVertex& self) {
 		return self.parent();
-	};
+	}
 
 	rpwa::particlePtr isobarDecayVertex_daughter1(rpwa::isobarDecayVertex& self) {
 		return self.daughter1();
-	};
+	}
 
 	rpwa::particlePtr isobarDecayVertex_daughter2(rpwa::isobarDecayVertex& self) {
 		return self.daughter2();
-	};
+	}
 
 	PyObject* isobarDecayVertex_calcParentLzVec(rpwa::isobarDecayVertex& self) {
 		return rpwa::py::convertToPy<TLorentzVector>(self.calcParentLzVec());
-	};
+	}
 
 	const rpwa::massDependence& isobarDecayVertex_massDependence(const rpwa::isobarDecayVertex& self) {
 		return *(self.massDependence());
@@ -127,4 +127,4 @@ void rpwa::py::exportIsobarDecayVertex() {
 
 	bp::register_ptr_to_python<rpwa::isobarDecayVertexPtr>();
 
-};
+}

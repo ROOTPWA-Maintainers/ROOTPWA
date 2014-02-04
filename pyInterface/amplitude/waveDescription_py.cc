@@ -8,7 +8,7 @@ namespace {
 		std::stringstream sstr;
 		self.printKeyFileContent(sstr);
 		return sstr.str();
-	};
+	}
 
 	bp::tuple waveDescription_constructDecayTopology(const rpwa::waveDescription& self, bool fromTemplate = false) {
 		rpwa::isobarDecayTopologyPtr topo;
@@ -20,13 +20,13 @@ namespace {
 		rpwa::isobarAmplitudePtr amplitude;
 		bool result = self.constructAmplitude(amplitude);
 		return bp::make_tuple(result, amplitude);
-	};
+	}
 
 	bp::tuple waveDescription_constructAmplitude2(const rpwa::waveDescription& self, rpwa::isobarDecayTopologyPtr& topo) {
 		rpwa::isobarAmplitudePtr amplitude;
 		bool result = self.constructAmplitude(amplitude, topo);
 		return bp::make_tuple(result, amplitude);
-	};
+	}
 
 	bool waveDescription_writeKeyFile(const std::string& keyFileName,
 	                                    const bp::object   pyTopoOrAmp,
@@ -39,11 +39,11 @@ namespace {
 		}
 		rpwa::isobarAmplitude* topoOrAmp = bp::extract<rpwa::isobarAmplitude*>(pyTopoOrAmp);
 		return rpwa::waveDescription::writeKeyFile(keyFileName, *topoOrAmp, writeProdVert);
-	};
+	}
 
 	int waveDescription_Write(const rpwa::waveDescription& self, std::string name) {
 		return self.Write(name.c_str());
-	};
+	}
 
 }
 
@@ -97,5 +97,4 @@ void rpwa::py::exportWaveDescription() {
 
 		.add_static_property("debugWaveDescription", &rpwa::waveDescription::debug, &rpwa::waveDescription::setDebug);
 
-};
-
+}

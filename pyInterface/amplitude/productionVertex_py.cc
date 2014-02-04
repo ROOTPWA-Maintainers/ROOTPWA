@@ -12,53 +12,53 @@ namespace {
 
 		productionVertexWrapper()
 			: rpwa::productionVertex(),
-			  bp::wrapper<rpwa::productionVertex>() { };
+			  bp::wrapper<rpwa::productionVertex>() { }
 
 		const TLorentzVector& referenceLzVec() const {
 			return this->get_override("referenceLzVec")();
-		};
+		}
 
 		const rpwa::particlePtr& XParticle() const {
 			return this->get_override("XParticle")();
-		};
+		}
 
 		std::complex<double> productionAmp() const {
 			if(bp::override productionAmp = this->get_override("productionAmp")) {
 				return productionAmp();
 			}
 			return rpwa::productionVertex::productionAmp();
-		};
+		}
 
 		std::complex<double> default_productionAmp() const {
 			return rpwa::productionVertex::productionAmp();
-		};
+		}
 
 		void setXFlavorQN() {
 			this->get_override("setXFlavorQN")();
-		};
+		}
 
 		bool initKinematicsData(const TClonesArray& names) {
 			return this->get_override("initKinematicsData")(names);
-		};
+		}
 
 		bool readKinematicsData(const TClonesArray& momenta) {
 			return this->get_override("readKinematicsData")(momenta);
-		};
+		}
 
 		bool revertMomenta() {
 			return this->get_override("revertKinematicsData")();
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::productionVertex::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::productionVertex::name();
-		};
+		}
 
 	};
 
@@ -98,4 +98,4 @@ void rpwa::py::exportProductionVertex() {
 
 	bp::register_ptr_to_python<rpwa::productionVertexPtr>();
 
-};
+}

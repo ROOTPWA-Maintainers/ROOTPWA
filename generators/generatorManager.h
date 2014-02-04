@@ -5,6 +5,8 @@
 #include<string>
 
 #include "generatorParameters.hpp"
+#include "generatorPickerFunctions.h"
+#include "beamAndVertexGenerator.h"
 
 
 class TVector3;

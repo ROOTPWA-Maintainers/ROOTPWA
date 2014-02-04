@@ -11,22 +11,22 @@ namespace {
 	{
 		fsVertexWrapper(const rpwa::particlePtr& fsParticle)
 			: rpwa::fsVertex(fsParticle),
-			  bp::wrapper<rpwa::fsVertex>() { };
+			  bp::wrapper<rpwa::fsVertex>() { }
 
 		fsVertexWrapper(const rpwa::fsVertex& vert)
 			: rpwa::fsVertex(vert),
-			  bp::wrapper<rpwa::fsVertex>() { };
+			  bp::wrapper<rpwa::fsVertex>() { }
 
 		bool addInParticle(const rpwa::particlePtr& part) {
 			if(bp::override addInParticle = this->get_override("addInParticle")) {
 				return addInParticle(part);
 			}
 			return rpwa::fsVertex::addInParticle(part);
-		};
+		}
 
 		bool default_addInParticle(const rpwa::particlePtr& part) {
 			return rpwa::fsVertex::addInParticle(part);
-		};
+		}
 
 
 		bool addOutParticle(const rpwa::particlePtr& part) {
@@ -34,28 +34,28 @@ namespace {
 				return addOutParticle(part);
 			}
 			return rpwa::fsVertex::addOutParticle(part);
-		};
+		}
 
 		bool default_addOutParticle(const rpwa::particlePtr& part) {
 			return rpwa::fsVertex::addOutParticle(part);
-		};
+		}
 
 		std::string name() const {
 			if(bp::override name = this->get_override("name")) {
 				return name();
 			}
 			return rpwa::fsVertex::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::fsVertex::name();
-		};
+		}
 
 	};
 
 	rpwa::particlePtr fsVertex_fsParticle(const rpwa::fsVertex& self) {
 		return self.fsParticle();
-	};
+	}
 
 }
 
@@ -89,4 +89,4 @@ void rpwa::py::exportFsVertex() {
 
 	bp::register_ptr_to_python<rpwa::fsVertexPtr>();
 
-};
+}

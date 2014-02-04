@@ -13,14 +13,14 @@ template<typename T>
 PyObject* rpwa::py::convertToPy(const T& cxxObj) {
 	T* newCxxObj = new T(cxxObj);
 	return TPython::ObjectProxy_FromVoidPtr(newCxxObj, newCxxObj->ClassName(), true);
-};
+}
 
 template<typename T>
 T rpwa::py::convertFromPy(PyObject* pyObj) {
 	TObject* TObj = (TObject*)(TPython::ObjectProxy_AsVoidPtr(pyObj));
 	T cxxObj = dynamic_cast<T>(TObj);
 	return cxxObj;
-};
+}
 
 void rpwa::py::exportRootConverters() {
 

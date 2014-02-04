@@ -13,7 +13,7 @@ namespace {
 			return bp::object().ptr();
 		}
 		return rpwa::py::convertToPy<TLorentzRotation>(rpwa::isobarHelicityAmplitude::hfTransform(*daughterLv));
-	};
+	}
 
 }
 
@@ -34,5 +34,4 @@ void rpwa::py::exportIsobarHelicityAmplitude() {
 
 	bp::register_ptr_to_python<rpwa::isobarHelicityAmplitudePtr>();
 
-};
-
+}

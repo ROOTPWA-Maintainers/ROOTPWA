@@ -26,11 +26,11 @@ namespace {
 				return name();
 			}
 			return rpwa::isobarAmplitude::name();
-		};
+		}
 
 		std::string default_name() const {
 			return rpwa::isobarAmplitude::name();
-		};
+		}
 
 		std::string printParameters__() const {
 			std::stringstream sstr;
@@ -40,13 +40,13 @@ namespace {
 				rpwa::isobarAmplitude::printParameters(sstr);
 			}
 			return sstr.str();
-		};
+		}
 
 		std::string default_printParameters__() const {
 			std::stringstream sstr;
 			rpwa::isobarAmplitude::printParameters(sstr);
 			return sstr.str();
-		};
+		}
 
 	};
 
@@ -62,13 +62,13 @@ namespace {
 			return bp::object().ptr();
 		}
 		return rpwa::py::convertToPy<TLorentzRotation>(rpwa::isobarAmplitude::gjTransform(*beamLv, *XLv));
-	};
+	}
 
 	std::string isobarAmplitude_printParameters(const rpwa::isobarAmplitude& self) {
 		std::stringstream sstr;
 		self.printParameters(sstr);
 		return sstr.str();
-	};
+	}
 
 }
 
@@ -110,5 +110,4 @@ void rpwa::py::exportIsobarAmplitude() {
 
 	bp::register_ptr_to_python<rpwa::isobarAmplitudePtr>();
 
-};
-
+}

@@ -7,29 +7,29 @@ namespace {
 /*
 	const bp::list ampIntegralMatrix_waveDescriptions(const rpwa::ampIntegralMatrix& self) {
 		return bp::list(self());
-	};
+	}
 */
 	const rpwa::waveDescription& ampIntegralMatrix_waveDesc1(const rpwa::ampIntegralMatrix& self, const unsigned int waveIndex) {
 		return *(self.waveDesc(waveIndex));
-	};
+	}
 
 	const rpwa::waveDescription& ampIntegralMatrix_waveDesc2(const rpwa::ampIntegralMatrix& self, const std::string& waveName) {
 		return *(self.waveDesc(waveName));
-	};
+	}
 
 	std::complex<double> ampIntegralMatrix_element1(const rpwa::ampIntegralMatrix& self,
 	                                                const unsigned int waveIndexI,
 	                                                const unsigned int waveIndexJ)
 	{
 		return self.element(waveIndexI, waveIndexJ);
-	};
+	}
 
 	std::complex<double> ampIntegralMatrix_element2(const rpwa::ampIntegralMatrix& self,
 	                                                const std::string& waveNameI,
 	                                                const std::string& waveNameJ)
 	{
 		return self.element(waveNameI, waveNameJ);
-	};
+	}
 
 	bool ampIntegralMatrix_integrate(rpwa::ampIntegralMatrix& self,
 	                                 const bp::object& pyBinAmpFileNames,
@@ -48,19 +48,19 @@ namespace {
 			rootAmpFileNames[i] = bp::extract<std::string>(pyListRootAmpFileNames[i]);
 		}
 		return self.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
-	};
+	}
 
 	bool ampIntegralMatrix_writeAscii(const rpwa::ampIntegralMatrix& self, const std::string& outFileName) {
 		return self.writeAscii(outFileName);
-	};
+	}
 
 	bool ampIntegralMatrix_readAscii(rpwa::ampIntegralMatrix& self, const std::string& inFileName) {
 		return self.readAscii(inFileName);
-	};
+	}
 
 	int ampIntegralMatrix_Write(const rpwa::ampIntegralMatrix& self, std::string name) {
 		return self.Write(name.c_str());
-	};
+	}
 
 }
 
@@ -131,4 +131,4 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug);
 
-};
+}

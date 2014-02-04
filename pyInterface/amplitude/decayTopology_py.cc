@@ -16,7 +16,7 @@ namespace {
 
 		decayTopologyWrapper()
 			: rpwa::decayTopology(),
-			  bp::wrapper<rpwa::decayTopology>() { };
+			  bp::wrapper<rpwa::decayTopology>() { }
 
 		decayTopologyWrapper(const rpwa::productionVertexPtr& productionVertex,
 		                     const bp::object&                pyDecayVertices,
@@ -39,23 +39,23 @@ namespace {
 			}
 
 			rpwa::decayTopology::constructDecay(productionVertex, decayVertices, fsParticles);
-		};
+		}
 
 
 		decayTopologyWrapper(const rpwa::decayTopology& topo)
 			: rpwa::decayTopology(topo),
-			  bp::wrapper<rpwa::decayTopology>() { };
+			  bp::wrapper<rpwa::decayTopology>() { }
 
 		void clear() {
 			if(bp::override clear = this->get_override("clear")) {
 				clear();
 			}
 			rpwa::decayTopology::clear();
-		};
+		}
 
 		void default_clear() {
 			rpwa::decayTopology::clear();
-		};
+		}
 
 	};
 
@@ -78,15 +78,15 @@ namespace {
 			retval[it->first] = it->second;
 		}
 		return retval;
-	};
+	}
 
 	bp::list decayTopology_fsParticles(const rpwa::decayTopology& self) {
 		return bp::list(self.fsParticles());
-	};
+	}
 
 	bp::list decayTopology_decayVertices(const rpwa::decayTopology& self) {
 		return bp::list(self.decayVertices());
-	};
+	}
 
 	void decayTopology_transformFsParticles(rpwa::decayTopology& self, PyObject* pyL) {
 		TLorentzRotation* L = rpwa::py::convertFromPy<TLorentzRotation*>(pyL);
@@ -95,7 +95,7 @@ namespace {
 		} else {
 			self.transformFsParticles(*L);
 		}
-	};
+	}
 
 	bool decayTopology_initKinematicsData(rpwa::decayTopology& self, PyObject* pyProdKinParticles, PyObject* pyDecayKinParticles) {
 		TClonesArray* prodKinParticles = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinParticles);
@@ -105,7 +105,7 @@ namespace {
 			return false;
 		}
 		return self.initKinematicsData(*prodKinParticles, *decayKinParticles);
-	};
+	}
 
 	bool decayTopology_readKinematicsData(rpwa::decayTopology& self, PyObject* pyProdKinMomenta, PyObject* pyDecayKinMomenta) {
 		TClonesArray* prodKinMomenta = rpwa::py::convertFromPy<TClonesArray*>(pyProdKinMomenta);
@@ -115,11 +115,11 @@ namespace {
 			return false;
 		}
 		return self.readKinematicsData(*prodKinMomenta, *decayKinMomenta);
-	};
+	}
 
 	bool decayTopology_revertMomenta1(rpwa::decayTopology& self) {
 		return self.revertMomenta();
-	};
+	}
 
 	bool decayTopology_revertMomenta2(rpwa::decayTopology& self, PyObject* pyIndexMap) {
 		bp::list pyListIndexMap = bp::extract<bp::list>(pyIndexMap);
@@ -128,7 +128,7 @@ namespace {
 			indexMap[i] = bp::extract<unsigned int>(pyListIndexMap[i]);
 		}
 		return self.revertMomenta(indexMap);
-	};
+	}
 
 }
 
@@ -218,4 +218,4 @@ void rpwa::py::exportDecayTopology() {
 
 	bp::register_ptr_to_python<rpwa::decayTopologyPtr>();
 
-};
+}

@@ -11,11 +11,11 @@ namespace {
 	{
 		particlePropertiesWrapper()
 			: rpwa::particleProperties(),
-			  bp::wrapper<rpwa::particleProperties>() { };
+			  bp::wrapper<rpwa::particleProperties>() { }
 
 		particlePropertiesWrapper(const particleProperties& partProp)
 			: rpwa::particleProperties(partProp),
-			  bp::wrapper<rpwa::particleProperties>() { };
+			  bp::wrapper<rpwa::particleProperties>() { }
 
 		particlePropertiesWrapper(const std::string& partName,
 		                          const int isospin,
@@ -24,7 +24,7 @@ namespace {
 		                          const int P,
 		                          const int C)
 			: rpwa::particleProperties(partName, isospin, G, J, P, C),
-			  bp::wrapper<rpwa::particleProperties>() { };
+			  bp::wrapper<rpwa::particleProperties>() { }
 
 		std::string qnSummary() const {
 			if(bp::override qnSummary = this->get_override("qnSummary")) {
@@ -52,7 +52,7 @@ namespace {
 		rhsPair.first = rhsProp;
 		rhsPair.second = rhsString;
 		return (self == rhsPair);
-		}
+	}
 
 	bool particleProperties_nequal(const rpwa::particleProperties& self, const bp::object& rhsObj) {
 		return not (self == rhsObj);
@@ -161,5 +161,4 @@ void rpwa::py::exportParticleProperties()
 
 		.add_static_property("debugParticleProperties", &rpwa::particleProperties::debug, &rpwa::particleProperties::setDebug);
 
-};
-
+}

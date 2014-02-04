@@ -16,11 +16,11 @@ namespace {
 
 		particleWrapper()
 			: rpwa::particle(),
-			  bp::wrapper<rpwa::particle>() { };
+			  bp::wrapper<rpwa::particle>() { }
 
 		particleWrapper(const rpwa::particle& part)
 			: rpwa::particle(part),
-			  bp::wrapper<rpwa::particle>() { };
+			  bp::wrapper<rpwa::particle>() { }
 
 		particleWrapper(const rpwa::particleProperties& partProp,
 		                const int                       index    = -1,
@@ -33,7 +33,7 @@ namespace {
 			if(!(momentum.is_none())) {
 				rpwa::particle::setMomentum(*(rpwa::py::convertFromPy<TVector3*>(momentum.ptr())));
 			}
-		};
+		}
 
 		particleWrapper(const std::string&        partName,
 		                const bool                requirePartInTable = true,
@@ -47,7 +47,7 @@ namespace {
 			if(!(momentum.is_none())) {
 				rpwa::particle::setMomentum(*(rpwa::py::convertFromPy<TVector3*>(momentum.ptr())));
 			}
-		};
+		}
 
 		particleWrapper(const std::string&        partName,
 		                const int                 isospin,
@@ -59,7 +59,7 @@ namespace {
 		                const int                 refl  = 0,
 		                const int                 index = -1)
 			: rpwa::particle(partName, isospin, G, J, P, C, spinProj, refl, index),
-			  bp::wrapper<rpwa::particle>() { };
+			  bp::wrapper<rpwa::particle>() { }
 
 		std::string qnSummary() const {
 			if(bp::override qnSummary = this->get_override("qnSummary")) {
@@ -77,11 +77,11 @@ namespace {
 				return label();
 			}
 			return rpwa::particle::label();
-		};
+		}
 
 		std::string default_label() const {
 			return rpwa::particle::label();
-		};
+		}
 
 	};
 
@@ -107,11 +107,11 @@ namespace {
 		std::string strLine = bp::extract<std::string>(pyLine);
 		std::istringstream sstrLine(strLine, std::istringstream::in);
 		return self.read(sstrLine);
-	};
+	}
 
 	PyObject* particle_momentum(const rpwa::particle& self) {
 		return rpwa::py::convertToPy<TVector3>(self.momentum());
-	};
+	}
 
 	void particle_setMomentum(rpwa::particle& self, PyObject* pyMom) {
 		TVector3* newMom = rpwa::py::convertFromPy<TVector3*>(pyMom);
@@ -120,11 +120,11 @@ namespace {
 		} else {
 			self.setMomentum(*newMom);
 		}
-	};
+	}
 
 	PyObject* particle_lzVec(const rpwa::particle& self) {
 		return rpwa::py::convertToPy<TLorentzVector>(self.lzVec());
-	};
+	}
 
 	void particle_setLzVec(rpwa::particle& self, PyObject* pyLzVec) {
 		TLorentzVector* newLzVec = rpwa::py::convertFromPy<TLorentzVector*>(pyLzVec);
@@ -133,8 +133,7 @@ namespace {
 		} else {
 			self.setLzVec(*newLzVec);
 		}
-	};
-
+	}
 
 	PyObject* particle_transform(rpwa::particle& self, PyObject* pyTrafo) {
 		TVector3* trafoTV3 = rpwa::py::convertFromPy<TVector3*>(pyTrafo);
@@ -147,7 +146,7 @@ namespace {
 		}
 		printErr<<"Got invalid input when executing rpwa::particle::transform()."<<std::endl;
 		return NULL;
-	};
+	}
 
 }
 
@@ -189,5 +188,4 @@ void rpwa::py::exportParticle() {
 
 	bp::register_ptr_to_python< rpwa::particlePtr >();
 
-};
-
+}
