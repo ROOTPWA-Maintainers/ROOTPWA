@@ -16,7 +16,8 @@ namespace rpwa {
 		double DyDz;
 		double DyDzSigma;
 
-		std::ostream& print(std::ostream& out) {
+		std::ostream& print(std::ostream& out) const
+		{
 			out << "Beam parameters:" << std::endl;
 			out << "    Particle name .......... " << particle.name() << std::endl;
 			out << "    Momentum ............... " << momentum << std::endl;
@@ -30,6 +31,13 @@ namespace rpwa {
 
 	};
 
+
+	inline std::ostream& operator<< (std::ostream& out, const Beam& beam)
+	{
+		return beam.print(out);
+	}
+
+
 	struct Target {
 		rpwa::particle targetParticle;
 		rpwa::particle recoilParticle;
@@ -38,7 +46,8 @@ namespace rpwa {
 		double radius;
 		double interactionLength;
 
-		std::ostream& print(std::ostream& out) {
+		std::ostream& print(std::ostream& out) const
+		{
 			out << "Target parameters:" << std::endl;
 			out << "    Target particle name ... " << targetParticle.name() << std::endl;
 			out << "    Recoil particle name ... " << recoilParticle.name() << std::endl;
@@ -52,10 +61,18 @@ namespace rpwa {
 		}
 	};
 
+
+	inline std::ostream& operator<< (std::ostream& out, const Target& target)
+	{
+		return target.print(out);
+	}
+
+
 	struct FinalState {
 		std::vector<rpwa::particle> particles;
 
-		std::ostream& print(std::ostream& out) {
+		std::ostream& print(std::ostream& out) const
+		{
 			out << "Final state parameters:" << std::endl;
 			out << "    " << particles.size() << " Final State Particles:" << std::endl;
 			for(unsigned int i = 0; i < particles.size(); ++i) {
@@ -64,6 +81,13 @@ namespace rpwa {
 			return out;
 		}
 	};
+
+
+	inline std::ostream& operator<< (std::ostream& out, const FinalState& finalState)
+	{
+		return finalState.print(out);
+	}
+
 
 }
 
