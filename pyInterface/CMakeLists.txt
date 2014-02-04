@@ -84,6 +84,7 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${GENERATORS_SUBDIR}/randomNumberGenerator_py.cc
 	${GENERATORS_SUBDIR}/generatorParameters_py.cc
+	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 
