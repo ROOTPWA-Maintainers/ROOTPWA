@@ -308,7 +308,9 @@ ostream& uniformMassExponentialTPicker::print(ostream& out) {
 	out << "    maximum Mass ... " << _massRange.second << endl;
 	out << "    minimum t' ..... " << _tPrimeRange.first << endl;
 	out << "    maximum t' ..... " << _tPrimeRange.second << endl;
-	if(_tSlopesForMassBins.size() == 1) {
+	if(_tSlopesForMassBins.size() == 0) {
+		out << "    t' slope ....... []";
+	} else if(_tSlopesForMassBins.size() == 1) {
 		out << "    t' slope ....... ";
 		printSlice(out, _tSlopesForMassBins.begin()->second);
 		out << endl;
