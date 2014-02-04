@@ -15,7 +15,11 @@
 namespace rpwa {
 
 	class massAndTPrimePicker;
+	class uniformMassExponentialTPicker;
+	class polynomialMassAndTPrimeSlopePicker;
 	typedef boost::shared_ptr<massAndTPrimePicker> massAndTPrimePickerPtr;
+	typedef boost::shared_ptr<uniformMassExponentialTPicker> uniformMassExponentialTPickerPtr;
+	typedef boost::shared_ptr<polynomialMassAndTPrimeSlopePicker> polynomialMassAndTPrimeSlopePickerPtr;
 
 	class massAndTPrimePicker {
 
