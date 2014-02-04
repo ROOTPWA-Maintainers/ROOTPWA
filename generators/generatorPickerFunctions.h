@@ -36,11 +36,11 @@ namespace rpwa {
 		virtual bool init(const libconfig::Setting& setting) = 0;
 
 		virtual void overrideMassRange(double lowerLimit, double upperLimit);
-		virtual std::pair<double, double> massRange();
+		virtual const std::pair<double, double>& massRange() const;
 
 		virtual bool operator() (double& invariantMass, double& tPrime) = 0;
 
-		virtual std::ostream& print(std::ostream& out) = 0;
+		virtual std::ostream& print(std::ostream& out) const = 0;
 
 	  protected:
 
@@ -51,6 +51,11 @@ namespace rpwa {
 		bool _initialized;
 
 	};
+
+	inline std::ostream& operator<< (std::ostream& out, const massAndTPrimePicker& picker)
+	{
+		return picker.print(out);
+	}
 
 	class uniformMassExponentialTPicker : public massAndTPrimePicker {
 
@@ -64,11 +69,11 @@ namespace rpwa {
 
 		virtual bool operator() (double& invariantMass, double& tPrime);
 
-		virtual std::ostream& print(std::ostream& out);
+		virtual std::ostream& print(std::ostream& out) const;
 
 	  private:
 
-		virtual std::ostream& printSlice(std::ostream& out, const std::vector<double>& param);
+		virtual std::ostream& printSlice(std::ostream& out, const std::vector<double>& param) const;
 
 		std::map<double, std::vector<double> > _tSlopesForMassBins;
 		unsigned int _nExponential;
@@ -89,7 +94,7 @@ namespace rpwa {
 
 		virtual bool operator() (double& invariantMass, double& tPrime);
 
-		virtual std::ostream& print(std::ostream& out);
+		virtual std::ostream& print(std::ostream& out) const;
 
 	  private:
 

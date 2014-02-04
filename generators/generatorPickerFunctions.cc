@@ -26,7 +26,7 @@ void massAndTPrimePicker::overrideMassRange(double lowerLimit, double upperLimit
 }
 
 
-std::pair<double, double> massAndTPrimePicker::massRange() {
+const std::pair<double, double>& massAndTPrimePicker::massRange() const {
 	if(not _initialized) {
 		printErr << "cannot call massRange on uninitialized massAndTPrimePicker." << endl;
 		throw;
@@ -302,7 +302,7 @@ bool uniformMassExponentialTPicker::operator() (double& invariantMass, double& t
 }
 
 
-ostream& uniformMassExponentialTPicker::print(ostream& out) {
+ostream& uniformMassExponentialTPicker::print(ostream& out) const {
 	out << "'uniformMassExponentialT' weighter parameters:" << endl;
 	out << "    minimum Mass ... " << _massRange.first << endl;
 	out << "    maximum Mass ... " << _massRange.second << endl;
@@ -339,7 +339,7 @@ ostream& uniformMassExponentialTPicker::print(ostream& out) {
 }
 
 
-ostream& uniformMassExponentialTPicker::printSlice(ostream& out, const vector<double>& param) {
+ostream& uniformMassExponentialTPicker::printSlice(ostream& out, const vector<double>& param) const {
 	out << "[";
 	for(size_t i = 0; i < param.size(); ++i) {
 		if(i != 0) {
@@ -427,7 +427,7 @@ bool polynomialMassAndTPrimeSlopePicker::operator()(double& invariantMass, doubl
 }
 
 
-ostream& polynomialMassAndTPrimeSlopePicker::print(ostream& out) {
+ostream& polynomialMassAndTPrimeSlopePicker::print(ostream& out) const {
 	out << "'polynomialMassAndTPrime' weighter parameters:" << endl;
 	out << "    minimum Mass ........... " << _massRange.first << endl;
 	out << "    maximum Mass ........... " << _massRange.second << endl;
