@@ -16,7 +16,8 @@ namespace {
 
 		isobarDecayTopologyWrapper(const rpwa::productionVertexPtr& productionVertex,
 		                           const bp::object&                pyIsobarDecayVertices,
-		                           const bp::object&                pyFsParticles)
+		                           const bp::object&                pyFsParticles,
+		                           const bool                       performTopologyCheck = true)
 			: rpwa::isobarDecayTopology(),
 			  bp::wrapper<rpwa::isobarDecayTopology>()
 		{
@@ -31,7 +32,7 @@ namespace {
 			// Translate the isobarDecayVertices
 			bp::list pyListIsobarDecayVertices = bp::extract<bp::list>(pyIsobarDecayVertices);
 			if(bp::len(pyListIsobarDecayVertices) == 0) {
-				rpwa::isobarDecayTopology::constructDecay(productionVertex, std::vector<rpwa::isobarDecayVertexPtr>(), fsParticles);
+				rpwa::isobarDecayTopology::constructDecay(productionVertex, std::vector<rpwa::isobarDecayVertexPtr>(), fsParticles, performTopologyCheck);
 				return;
 			}
 
@@ -41,7 +42,7 @@ namespace {
 				for(int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
 					isobarDecayVerticesIDV[i] = bp::extract<rpwa::isobarDecayVertexPtr>(pyListIsobarDecayVertices[i]);
 				}
-				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIDV, fsParticles);
+				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIDV, fsParticles, performTopologyCheck);
 				return;
 			}
 
@@ -51,7 +52,7 @@ namespace {
 				for(int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
 					isobarDecayVerticesIV[i] = bp::extract<rpwa::interactionVertexPtr>(pyListIsobarDecayVertices[i]);
 				}
-				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIV, fsParticles);
+				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIV, fsParticles, performTopologyCheck);
 				return;
 			}
 
@@ -173,9 +174,9 @@ void rpwa::py::exportIsobarDecayTopology() {
 
 	bp::class_<isobarDecayTopologyWrapper, bp::bases<rpwa::decayTopology> >("isobarDecayTopology")
 
-		.def(bp::init<rpwa::productionVertexPtr, bp::object&, bp::object&>())
-		.def(bp::init<rpwa::isobarDecayTopology&>())
-		.def(bp::init<rpwa::decayTopology&>())
+		.def(bp::init<const rpwa::productionVertexPtr, const bp::object&, const bp::object&, bp::optional<bool> >())
+		.def(bp::init<const rpwa::isobarDecayTopology&>())
+		.def(bp::init<const rpwa::decayTopology&>())
 
 		.def(bp::self_ns::str(bp::self))
 

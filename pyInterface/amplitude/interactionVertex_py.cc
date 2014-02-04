@@ -95,7 +95,7 @@ void rpwa::py::exportInteractionVertex() {
 
 	bp::class_<interactionVertexWrapper>("interactionVertex")
 
-		.def(bp::init<interactionVertexWrapper&>())
+		.def(bp::init<const rpwa::interactionVertex&>())
 
 		.def(bp::self_ns::str(bp::self))
 

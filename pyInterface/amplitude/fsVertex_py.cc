@@ -64,7 +64,7 @@ void rpwa::py::exportFsVertex() {
 	bp::class_<fsVertexWrapper, bp::bases<interactionVertex> >("fsVertex", bp::no_init)
 
 		.def(bp::init<rpwa::particlePtr>())
-		.def(bp::init<rpwa::fsVertex&>())
+		.def(bp::init<const rpwa::fsVertex&>())
 
 		.def(bp::self_ns::str(bp::self))
 

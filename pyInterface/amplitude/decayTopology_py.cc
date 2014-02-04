@@ -136,8 +136,8 @@ void rpwa::py::exportDecayTopology() {
 
 	bp::class_<decayTopologyWrapper>("decayTopology")
 
-		.def(bp::init<rpwa::productionVertexPtr, bp::object&, bp::object&>())
-		.def(bp::init<rpwa::decayTopology>())
+		.def(bp::init<const rpwa::productionVertexPtr, const bp::object&, const bp::object&>())
+		.def(bp::init<const rpwa::decayTopology&>())
 
 		.def(bp::self_ns::str(bp::self))
 

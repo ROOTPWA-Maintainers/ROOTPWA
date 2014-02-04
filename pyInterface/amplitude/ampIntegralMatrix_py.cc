@@ -68,7 +68,7 @@ void rpwa::py::exportAmpIntegralMatrix() {
 
 	bp::class_<rpwa::ampIntegralMatrix>("ampIntegralMatrix")
 
-		.def(bp::init<rpwa::ampIntegralMatrix&>())
+		.def(bp::init<const rpwa::ampIntegralMatrix&>())
 
 		.def(bp::self_ns::str(bp::self))
 		.def(bp::self == bp::self)

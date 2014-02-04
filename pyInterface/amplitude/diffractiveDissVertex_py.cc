@@ -174,7 +174,7 @@ void rpwa::py::exportDiffractiveDissVertex() {
 	bp::class_<diffractiveDissVertexWrapper, bp::bases<rpwa::productionVertex> >("diffractiveDissVertex", bp::no_init)
 
 		.def(bp::init<rpwa::particlePtr, rpwa::particlePtr, rpwa::particlePtr, bp::optional<rpwa::particlePtr> >())
-		.def(bp::init<rpwa::diffractiveDissVertex&>())
+		.def(bp::init<const rpwa::diffractiveDissVertex&>())
 
 		.def(bp::self_ns::str(bp::self))
 
