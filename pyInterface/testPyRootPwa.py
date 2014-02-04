@@ -1146,6 +1146,113 @@ print
 
 # ---------------------------------------------------------
 #
+#	generatorParameters
+#
+# ---------------------------------------------------------
+
+def beamTestConst():
+	b = pyRootPwa.core.Beam()
+	return b
+beam = do_test(beamTestConst, "Testing Beam constructor")
+
+def beamTestParticle():
+	beam.particle = part
+	assert(part == beam.particle)
+do_test(beamTestParticle, "Testing Beam.particle data member")
+
+def beamTestMomentum():
+	beam.momentum = 123.5634
+	assert(beam.momentum == 123.5634)
+do_test(beamTestMomentum, "Testing Beam.momentum data member")
+
+def beamTestMomentumSigma():
+	beam.momentumSigma = 123.5634
+	assert(beam.momentumSigma == 123.5634)
+do_test(beamTestMomentumSigma, "Testing Beam.momentumSigma data member")
+
+def beamTestDxDz():
+	beam.DxDz = 123.5634
+	assert(beam.DxDz == 123.5634)
+do_test(beamTestDxDz, "Testing Beam.DxDz data member")
+
+def beamTestDxDzSigma():
+	beam.DxDzSigma = 123.5634
+	assert(beam.DxDzSigma == 123.5634)
+do_test(beamTestDxDzSigma, "Testing Beam.DxDzSigma data member")
+
+def beamTestDyDz():
+	beam.DyDz = 123.5634
+	assert(beam.DyDz == 123.5634)
+do_test(beamTestDyDz, "Testing Beam.DyDz data member")
+
+def beamTestDyDzSigma():
+	beam.DyDzSigma = 123.5634
+	assert(beam.DyDzSigma == 123.5634)
+do_test(beamTestDyDzSigma, "Testing Beam.DyDzSigma data member")
+
+def beamTestPrint():
+	print("\n")
+	print(beam)
+do_test(beamTestPrint, "Testing print(Beam)")
+
+def targetTestConst():
+	target = pyRootPwa.core.Target()
+	return target
+target = do_test(targetTestConst, "Testing Target constructor")
+
+def targetTestTPart():
+	target.targetParticle = part
+	assert(target.targetParticle == part)
+do_test(targetTestTPart, "Testing Target.targetParticle data member")
+
+def targetTestRPart():
+	target.recoilParticle = part
+	assert(target.recoilParticle == part)
+do_test(targetTestRPart, "Testing Target.recoilParticle data member")
+
+def targetTestPos():
+	vec = pyRootPwa.ROOT.TVector3(1., 2., 3.)
+	target.position = vec
+	assert(target.position == vec)
+do_test(targetTestPos, "Testing Target.position data member")
+
+def targetTestLength():
+	target.length = 1434.2313
+	assert(target.length == 1434.2313)
+do_test(targetTestLength, "Testing Target.length data member")
+
+def targetTestRadius():
+	target.radius = 1434.2313
+	assert(target.radius == 1434.2313)
+do_test(targetTestRadius, "Testing Target.radius data member")
+
+def targetTestIntLength():
+	target.interactionLength = 1434.2313
+	assert(target.interactionLength == 1434.2313)
+do_test(targetTestIntLength, "Testing Target.interactionLength data member")
+
+def targetTestPrint():
+	print("\n")
+	print(target)
+do_test(targetTestPrint, "Testing print(Target)")
+
+def finalStTestConst():
+	fs = pyRootPwa.core.FinalState()
+	return fs
+finalState = do_test(finalStTestConst, "Testing FinalState constructor")
+
+def finalStTestParts():
+	l = [part, part, part]
+	finalState.particles = l
+do_test(finalStTestParts, "Testing FinalState.particles data member")
+
+def finalStTestPrint():
+	print("\n")
+	print(finalState)
+do_test(finalStTestPrint, "Testing print(FinalState)")
+
+# ---------------------------------------------------------
+#
 #	Summary
 #
 # ---------------------------------------------------------

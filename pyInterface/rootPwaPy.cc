@@ -24,6 +24,7 @@
 #include "phaseSpaceIntegral_py.h"
 #include "nBodyPhaseSpaceGen_py.h"
 #include "randomNumberGenerator_py.h"
+#include "generatorParameters_py.h"
 #include "utils_py.h"
 
 namespace bp = boost::python;
@@ -51,6 +52,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportPhaseSpaceIntegral();
 	rpwa::py::exportNBodyPhaseSpaceGen();
 	rpwa::py::exportRandomNumberGenerator();
+	rpwa::py::exportGeneratorParameters();
 	rpwa::py::exportUtils();
 
 }

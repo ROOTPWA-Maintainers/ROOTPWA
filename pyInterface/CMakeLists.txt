@@ -83,6 +83,7 @@ set(SOURCES
 	${AMPLITUDE_SUBDIR}/phaseSpaceIntegral_py.cc
 	${GENERATORS_SUBDIR}/nBodyPhaseSpaceGen_py.cc
 	${GENERATORS_SUBDIR}/randomNumberGenerator_py.cc
+	${GENERATORS_SUBDIR}/generatorParameters_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 
