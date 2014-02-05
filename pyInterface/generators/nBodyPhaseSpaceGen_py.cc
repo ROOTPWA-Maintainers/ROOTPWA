@@ -24,9 +24,8 @@ namespace {
 		if(not nBody) {
 			printErr<<"Got invalid input when executing rpwa::nBodyPhaseSpace::generateDecay()."<<std::endl;
 			throw;
-		} else {
-			return self.generateDecay(*nBody);
 		}
+		return self.generateDecay(*nBody);
 	}
 
 	bool nBodyPhaseSpaceGen_generateDecayAccepted(rpwa::nBodyPhaseSpaceGen& self,
@@ -37,9 +36,8 @@ namespace {
 		if(not nBody) {
 			printErr<<"Got invalid input when executing rpwa::nBodyPhaseSpace::generateDecayAccepted()."<<std::endl;
 			throw;
-		} else {
-			return self.generateDecayAccepted(*nBody, maxWeight);
 		}
+		return self.generateDecayAccepted(*nBody, maxWeight);
 	}
 
 	void nBodyPhaseSpaceGen_calcEventKinematics(rpwa::nBodyPhaseSpaceGen& self, PyObject* PyNBody) {
@@ -47,9 +45,8 @@ namespace {
 		if(not nBody) {
 			printErr<<"Got invalid input when executing rpwa::nBodyPhaseSpace::calcEventKinematics()."<<std::endl;
 			throw;
-		} else {
-			self.calcEventKinematics(*nBody);
 		}
+		self.calcEventKinematics(*nBody);
 	}
 
 	PyObject* nBodyPhaseSpaceGen_daughter(const rpwa::nBodyPhaseSpaceGen& self, const int index) {
