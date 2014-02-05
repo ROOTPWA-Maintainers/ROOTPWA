@@ -117,7 +117,7 @@ void beamAndVertexGenerator::randomizeBeamfileStartingPosition() {
 }
 
 
-bool beamAndVertexGenerator::check() {
+bool beamAndVertexGenerator::check() const {
 	if(_beamTree or _simpleSimulation) {
 		return true;
 	} else {
@@ -195,7 +195,8 @@ double beamAndVertexGenerator::getVertexZ(const Target& target) const {
 }
 
 
-ostream& beamAndVertexGenerator::print(ostream& out) {
+ostream& beamAndVertexGenerator::print(ostream& out) const
+{
 
 	out << "Beam package information:" << endl;
 	out << "    Using beam file ................ ";

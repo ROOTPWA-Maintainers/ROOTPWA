@@ -20,6 +20,7 @@ namespace rpwa {
 
 	class generator;
 	struct Target;
+	struct Beam;
 
 	class beamAndVertexGenerator;
 	typedef boost::shared_ptr<beamAndVertexGenerator> beamAndVertexGeneratorPtr;
@@ -36,17 +37,17 @@ namespace rpwa {
 		virtual void setBeamfileSequentialReading(bool sequentialReading = true) { _readBeamfileSequentially = sequentialReading; }
 		virtual void randomizeBeamfileStartingPosition();
 
-		virtual bool check();
+		virtual bool check() const;
 
 		virtual bool event(const rpwa::Target& target, const rpwa::Beam& beam);
 
-		virtual const TVector3& getVertex() { return _vertex; }
+		virtual const TVector3& getVertex() const { return _vertex; }
 
-		virtual const TLorentzVector& getBeam() { return _beam; }
+		virtual const TLorentzVector& getBeam() const { return _beam; }
 
 		void setSigmaScalingFactor(const double& scalingFactor) { _sigmaScalingFactor = scalingFactor; }
 
-		std::ostream& print(std::ostream& out);
+		std::ostream& print(std::ostream& out) const;
 
 	  protected:
 
@@ -78,6 +79,11 @@ namespace rpwa {
 		double _sigmaScalingFactor;
 
 	};
+
+	inline std::ostream& operator<< (std::ostream& out, const beamAndVertexGenerator& beamAndVertGen)
+	{
+		return beamAndVertGen.print(out);
+	}
 
 }
 
