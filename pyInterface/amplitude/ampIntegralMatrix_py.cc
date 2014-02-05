@@ -1,5 +1,7 @@
 #include "ampIntegralMatrix_py.h"
 
+#include "stlContainers_py.h"
+
 namespace bp = boost::python;
 
 namespace {
@@ -9,11 +11,14 @@ namespace {
 		return bp::list(self());
 	}
 */
-	const rpwa::waveDescription& ampIntegralMatrix_waveDesc1(const rpwa::ampIntegralMatrix& self, const unsigned int waveIndex) {
+	const rpwa::waveDescription& ampIntegralMatrix_waveDesc1(const rpwa::ampIntegralMatrix& self,
+	                                                         const unsigned int waveIndex)
+	{
 		return *(self.waveDesc(waveIndex));
 	}
 
-	const rpwa::waveDescription& ampIntegralMatrix_waveDesc2(const rpwa::ampIntegralMatrix& self, const std::string& waveName) {
+	const rpwa::waveDescription& ampIntegralMatrix_waveDesc2(const rpwa::ampIntegralMatrix& self,
+	                                                         const std::string& waveName) {
 		return *(self.waveDesc(waveName));
 	}
 
@@ -37,15 +42,15 @@ namespace {
 	                                 const unsigned long maxNmbEvents,
 	                                 const std::string& weightFileName)
 	{
-		bp::list pyListBinAmpFileNames = bp::extract<bp::list>(pyBinAmpFileNames);
-		std::vector<std::string> binAmpFileNames(bp::len(pyListBinAmpFileNames), "");
-		for(int i = 0; i < bp::len(pyListBinAmpFileNames); ++i) {
-			binAmpFileNames[i] = bp::extract<std::string>(pyListBinAmpFileNames[i]);
+		std::vector<std::string> binAmpFileNames;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyBinAmpFileNames, binAmpFileNames)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for binAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
+			bp::throw_error_already_set();
 		}
-		bp::list pyListRootAmpFileNames = bp::extract<bp::list>(pyRootAmpFileNames);
-		std::vector<std::string> rootAmpFileNames(bp::len(pyListRootAmpFileNames), "");
-		for(int i = 0; i < bp::len(pyListRootAmpFileNames); ++i) {
-			rootAmpFileNames[i] = bp::extract<std::string>(pyListRootAmpFileNames[i]);
+		std::vector<std::string> rootAmpFileNames;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyRootAmpFileNames, rootAmpFileNames)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for rootAmpFileNames when executing rpwa::ampIntegralMatrix::integrate()");
+			bp::throw_error_already_set();
 		}
 		return self.integrate(binAmpFileNames, rootAmpFileNames, maxNmbEvents, weightFileName);
 	}

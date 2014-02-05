@@ -2,6 +2,8 @@
 
 #include<particleProperties.h>
 
+#include "stlContainers_py.h"
+
 namespace bp = boost::python;
 
 namespace {
@@ -21,22 +23,23 @@ namespace {
 	                                           const bp::object& pyDecayProducts = bp::object(),
 	                                           const bool& forceDecayCheck = true)
 	{
-		bp::list pyListWhiteList = bp::extract<bp::list>(pyWhiteList);
-		bp::list pyListBlackList = bp::extract<bp::list>(pyBlackList);
-		bp::list pyListDecayProducts = bp::extract<bp::list>(pyDecayProducts);
-		std::vector<std::string> whiteList(bp::len(pyListWhiteList), "");
-		std::vector<std::string> blackList(bp::len(pyListBlackList), "");
-		std::multiset<std::string> decayProducts;
 
-		for(int i = 0; i < bp::len(pyListWhiteList); ++i) {
-			whiteList[i] = bp::extract<std::string>(pyListWhiteList[i]);
+		std::vector<std::string> whiteList;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyWhiteList, whiteList)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for whiteList when executing rpwa::particleDataTable::entriesMatching()");
+			bp::throw_error_already_set();
 		}
-		for(int i = 0; i < bp::len(pyListBlackList); ++i) {
-			blackList[i] = bp::extract<std::string>(pyListBlackList[i]);
+		std::vector<std::string> blackList;
+		if(not rpwa::py::convertBPObjectToVector<std::string>(pyBlackList, blackList)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for blackList when executing rpwa::particleDataTable::entriesMatching()");
+			bp::throw_error_already_set();
 		}
-		for(int i = 0; i < bp::len(pyListDecayProducts); ++i) {
-			decayProducts.insert(bp::extract<std::string>(pyListDecayProducts[i]));
+		std::multiset<std::string> decayProducts;
+		if(not rpwa::py::convertBPObjectToMultiSet<std::string>(pyDecayProducts, decayProducts)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for decayProducts when executing rpwa::particleDataTable::entriesMatching()");
+			bp::throw_error_already_set();
 		}
+
 		std::vector<const rpwa::particleProperties*> retPtrVec = rpwa::particleDataTable::entriesMatching(prototype,
 		                                                                                                  sel,
 		                                                                                                  minMass,

@@ -39,27 +39,3 @@ void rpwa::py::exportStlContainers() {
 		.def(bp::vector_indexing_suite<std::vector<unsigned int> >());
 
 }
-
-std::set<std::string> rpwa::py::convertBPObjectToStrSet(bp::object list) {
-
-			bp::list pyList = bp::extract<bp::list>(list);
-			std::set<std::string> set;
-			for(int i = 0; i < bp::len(pyList); ++i) {
-				std::string entry = bp::extract<std::string>(pyList[i]);
-				set.insert(entry);
-			}
-			return set;
-
-}
-
-std::multiset<std::string> rpwa::py::convertBPObjectToStrMultiSet(bp::object list) {
-
-			bp::list pyList = bp::extract<bp::list>(list);
-			std::multiset<std::string> set;
-			for(int i = 0; i < bp::len(pyList); ++i) {
-				std::string entry = bp::extract<std::string>(pyList[i]);
-				set.insert(entry);
-			}
-			return set;
-
-}

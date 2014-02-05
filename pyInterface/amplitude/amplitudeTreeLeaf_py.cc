@@ -23,18 +23,18 @@ namespace {
 
 	int amplitudeTreeLeaf_setBranchAddress(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string branchName) {
 		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
-		if(tree == NULL) {
-			printErr<<"Got invalid input when executing rpwa::amplitudeTreeLeaf::setBranchAddress()."<<std::endl;
-			return 0;
+		if(not tree) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for tree when executing rpwa::amplitudeTreeLeaf::setBranchAddress()");
+			bp::throw_error_already_set();
 		}
 		return tree->SetBranchAddress(branchName.c_str(), &self);
 	}
 
 	void amplitudeTreeLeaf_branch(rpwa::amplitudeTreeLeaf& self, PyObject* pyTree, std::string name, int bufsize = 32000, int splitlevel = 99) {
 		TTree* tree = rpwa::py::convertFromPy<TTree*>(pyTree);
-		if(tree == NULL) {
-			printErr<<"Got invalid input when executing rpwa::amplitudeTreeLeaf::branch()."<<std::endl;
-			throw;
+		if(not tree) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for tree when executing rpwa::amplitudeTreeLeaf::branch()");
+			bp::throw_error_already_set();
 		}
 		tree->Branch(name.c_str(), &self, bufsize, splitlevel);
 	}

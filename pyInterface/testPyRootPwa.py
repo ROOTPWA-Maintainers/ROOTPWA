@@ -884,6 +884,7 @@ def tTTestFKD(): decTo.fillKinematicsDataCache
 do_test(tTTestFKD, "Testing decayTopology.fillKinematicsDataCache()")
 
 def tTTestRM():
+	print("\n")
 	assert(decTo.revertMomenta())
 	assert(not decTo.revertMomenta([1,3,2]))
 	try:
@@ -892,6 +893,7 @@ def tTTestRM():
 		pass
 	else:
 		raise Exception("That shouldn't work.")
+	print
 do_test(tTTestRM, "Testing decayTopology.revertMomenta{()/(list)/(UNSUPPORTED TYPE)}")
 
 def tTTestDebug():

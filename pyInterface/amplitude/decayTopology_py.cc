@@ -5,6 +5,7 @@
 #include<productionVertex.h>
 
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 namespace bp = boost::python;
 
@@ -24,20 +25,18 @@ namespace {
 			: rpwa::decayTopology(),
 			  bp::wrapper<rpwa::decayTopology>()
 		{
-			bp::list pyListDecayVertices = bp::extract<bp::list>(pyDecayVertices);
-			bp::list pyListFsParticles = bp::extract<bp::list>(pyFsParticles);
-
-			std::vector<rpwa::interactionVertexPtr> decayVertices(bp::len(pyListDecayVertices), rpwa::interactionVertexPtr());
-			std::vector<rpwa::particlePtr> fsParticles(bp::len(pyListFsParticles), rpwa::particlePtr());
-
-			for(int i = 0; i < bp::len(pyListDecayVertices); ++i) {
-				decayVertices[i] = bp::extract<rpwa::interactionVertexPtr>(pyListDecayVertices[i]);
+			std::vector<rpwa::interactionVertexPtr> decayVertices;
+			if(not rpwa::py::convertBPObjectToVector<rpwa::interactionVertexPtr>(pyDecayVertices, decayVertices)) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for decayVertices when executing rpwa::decayTopology::decayTopology()");
+				bp::throw_error_already_set();
 			}
-
-			for(int i = 0; i < bp::len(pyListFsParticles); ++i) {
-				fsParticles[i] = bp::extract<rpwa::particlePtr>(pyListFsParticles[i]);
+			std::vector<rpwa::particlePtr> fsParticles;
+			if(not rpwa::py::convertBPObjectToVector<rpwa::particlePtr>(pyFsParticles, fsParticles)) {
+				printErr<<"Got invalid input for fsParticles when executing "
+				        <<"rpwa::decayTopology::decayTopology(). Aborting..."<<std::endl;
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for fsParticles when executing rpwa::decayTopology::decayTopology()");
+				bp::throw_error_already_set();
 			}
-
 			rpwa::decayTopology::constructDecay(productionVertex, decayVertices, fsParticles);
 		}
 
@@ -121,11 +120,11 @@ namespace {
 		return self.revertMomenta();
 	}
 
-	bool decayTopology_revertMomenta2(rpwa::decayTopology& self, PyObject* pyIndexMap) {
-		bp::list pyListIndexMap = bp::extract<bp::list>(pyIndexMap);
-		std::vector<unsigned int> indexMap(bp::len(pyListIndexMap), 0);
-		for(int i = 0; i < bp::len(pyListIndexMap); ++i) {
-			indexMap[i] = bp::extract<unsigned int>(pyListIndexMap[i]);
+	bool decayTopology_revertMomenta2(rpwa::decayTopology& self, const bp::object& pyIndexMap) {
+		std::vector<unsigned int> indexMap;
+		if(not rpwa::py::convertBPObjectToVector<unsigned int>(pyIndexMap, indexMap)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for indexMap when executing rpwa::decayTopology::revertMomenta()");
+			bp::throw_error_already_set();
 		}
 		return self.revertMomenta(indexMap);
 	}

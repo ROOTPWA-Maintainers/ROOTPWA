@@ -59,14 +59,20 @@ namespace {
 	}
 
 	bool particleProperties_hasDecay(const rpwa::particleProperties& self, bp::object& pyDaughters) {
-		bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
-		std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
+		std::multiset<std::string> daughters;
+		if(not rpwa::py::convertBPObjectToMultiSet<std::string>(pyDaughters, daughters)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for daughters when executing rpwa::particleProperties::hasDecay()");
+			bp::throw_error_already_set();
+		}
 		return self.hasDecay(daughters);
 	}
 
 	void particleProperties_addDecayMode(rpwa::particleProperties& self, bp::object& pyDaughters) {
-		bp::list pyDaughtersList = bp::extract<bp::list>(pyDaughters);
-		std::multiset<std::string> daughters = rpwa::py::convertBPObjectToStrMultiSet(pyDaughters);
+		std::multiset<std::string> daughters;
+		if(not rpwa::py::convertBPObjectToMultiSet<std::string>(pyDaughters, daughters)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for daughters when executing rpwa::particleProperties::addDecayMode()");
+			bp::throw_error_already_set();
+		}
 		self.addDecayMode(daughters);
 	}
 
@@ -78,8 +84,8 @@ namespace {
 
 	bp::tuple particleProperties_chargeFromName(const std::string& name) {
 		int charge;
-		std::string new_name = rpwa::particleProperties::chargeFromName(name, charge);
-		return bp::make_tuple(new_name, charge);
+		std::string newName = rpwa::particleProperties::chargeFromName(name, charge);
+		return bp::make_tuple(newName, charge);
 	}
 
 }

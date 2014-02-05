@@ -4,17 +4,19 @@
 #include<TLorentzVector.h>
 
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 namespace bp = boost::python;
 
 namespace {
 
 	bool nBodyPhaseSpaceGen_setDecay(rpwa::nBodyPhaseSpaceGen& self,
-	                                  PyObject* pyDaughterMasses) {
-		bp::list pyListDaughterMasses = bp::extract<bp::list>(pyDaughterMasses);
-		std::vector<double> daughterMasses(bp::len(pyListDaughterMasses), 0.);
-		for(unsigned int i = 0; i < daughterMasses.size(); ++i) {
-			daughterMasses[i] = bp::extract<double>(pyListDaughterMasses[i]);
+	                                 const bp::object& pyDaughterMasses)
+	{
+		std::vector<double> daughterMasses;
+		if(not rpwa::py::convertBPObjectToVector<double>(pyDaughterMasses, daughterMasses)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for daughterMasses when executing rpwa::nBodyPhaseSpaceGen::setDecay()");
+			bp::throw_error_already_set();
 		}
 		return self.setDecay(daughterMasses);
 	}
@@ -22,8 +24,8 @@ namespace {
 	double nBodyPhaseSpaceGen_generateDecay(rpwa::nBodyPhaseSpaceGen& self, PyObject* PyNBody) {
 		TLorentzVector* nBody = rpwa::py::convertFromPy<TLorentzVector*>(PyNBody);
 		if(not nBody) {
-			printErr<<"Got invalid input when executing rpwa::nBodyPhaseSpace::generateDecay()."<<std::endl;
-			throw;
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for nBody when executing rpwa::nBodyPhaseSpace::generateDecay()");
+			bp::throw_error_already_set();
 		}
 		return self.generateDecay(*nBody);
 	}
@@ -34,8 +36,8 @@ namespace {
 	{
 		TLorentzVector* nBody = rpwa::py::convertFromPy<TLorentzVector*>(PyNBody);
 		if(not nBody) {
-			printErr<<"Got invalid input when executing rpwa::nBodyPhaseSpace::generateDecayAccepted()."<<std::endl;
-			throw;
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for nBody when executing rpwa::nBodyPhaseSpace::generateDecayAccepted()");
+			bp::throw_error_already_set();
 		}
 		return self.generateDecayAccepted(*nBody, maxWeight);
 	}
@@ -43,8 +45,8 @@ namespace {
 	void nBodyPhaseSpaceGen_calcEventKinematics(rpwa::nBodyPhaseSpaceGen& self, PyObject* PyNBody) {
 		TLorentzVector* nBody = rpwa::py::convertFromPy<TLorentzVector*>(PyNBody);
 		if(not nBody) {
-			printErr<<"Got invalid input when executing rpwa::nBodyPhaseSpace::calcEventKinematics()."<<std::endl;
-			throw;
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for nBody when executing rpwa::nBodyPhaseSpace::calcEventKinematics()");
+			bp::throw_error_already_set();
 		}
 		self.calcEventKinematics(*nBody);
 	}

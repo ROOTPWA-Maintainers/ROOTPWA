@@ -2,6 +2,7 @@
 #include "generatorParameters_py.h"
 
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 namespace bp = boost::python;
 
@@ -10,8 +11,8 @@ namespace {
 	void Target_setPosition(rpwa::Target& self, PyObject* pyPosition) {
 		TVector3* position = rpwa::py::convertFromPy<TVector3*>(pyPosition);
 		if(not position) {
-			printErr<<"Got invalid input when executing rpwa::Target::setPosition()."<<std::endl;
-			throw;
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for position when executing rpwa::Target::setPosition()");
+			bp::throw_error_already_set();
 		}
 		self.position = *position;
 	}
@@ -21,10 +22,10 @@ namespace {
 	}
 
 	void FinalState_setParticles(rpwa::FinalState& self, const bp::object& pyParticles) {
-		bp::list pyListParticles = bp::extract<bp::list>(pyParticles);
-		std::vector<rpwa::particle> particles(bp::len(pyListParticles));
-		for(int i = 0; i < bp::len(pyListParticles); ++i) {
-			particles[i] = bp::extract<rpwa::particle>(pyListParticles[i]);
+		std::vector<rpwa::particle> particles;
+		if(not rpwa::py::convertBPObjectToVector<rpwa::particle>(pyParticles, particles)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for particles when executing rpwa::FinalState::setParticles()");
+			bp::throw_error_already_set();
 		}
 		self.particles = particles;
 	}

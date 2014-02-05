@@ -1,6 +1,7 @@
 #include "isobarDecayTopology_py.h"
 
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 namespace bp = boost::python;
 
@@ -23,40 +24,26 @@ namespace {
 		{
 
 			// Translate the fsParticles
-			bp::list pyListFsParticles = bp::extract<bp::list>(pyFsParticles);
-			std::vector<rpwa::particlePtr> fsParticles(bp::len(pyListFsParticles), rpwa::particlePtr());
-			for(int i = 0; i < bp::len(pyListFsParticles); ++i) {
-				fsParticles[i] = bp::extract<rpwa::particlePtr>(pyListFsParticles[i]);
+			std::vector<rpwa::particlePtr> fsParticles;
+			if(not rpwa::py::convertBPObjectToVector<rpwa::particlePtr>(pyFsParticles, fsParticles)) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for fsParticles when executing rpwa::isobarDecayTopology::isobarDecayTopology()");
+				bp::throw_error_already_set();
 			}
 
-			// Translate the isobarDecayVertices
-			bp::list pyListIsobarDecayVertices = bp::extract<bp::list>(pyIsobarDecayVertices);
-			if(bp::len(pyListIsobarDecayVertices) == 0) {
-				rpwa::isobarDecayTopology::constructDecay(productionVertex, std::vector<rpwa::isobarDecayVertexPtr>(), fsParticles, performTopologyCheck);
-				return;
-			}
-
-			bp::extract<rpwa::isobarDecayVertexPtr> get_iDVP(pyListIsobarDecayVertices[0]);
-			if(get_iDVP.check()) {
-				std::vector<rpwa::isobarDecayVertexPtr> isobarDecayVerticesIDV(bp::len(pyListIsobarDecayVertices), rpwa::isobarDecayVertexPtr());
-				for(int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
-					isobarDecayVerticesIDV[i] = bp::extract<rpwa::isobarDecayVertexPtr>(pyListIsobarDecayVertices[i]);
-				}
+			std::vector<rpwa::isobarDecayVertexPtr> isobarDecayVerticesIDV;
+			if(rpwa::py::convertBPObjectToVector<rpwa::isobarDecayVertexPtr>(pyIsobarDecayVertices, isobarDecayVerticesIDV)) {
 				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIDV, fsParticles, performTopologyCheck);
 				return;
 			}
 
-			bp::extract<rpwa::interactionVertexPtr> get_iVP(pyListIsobarDecayVertices[0]);
-			if(get_iVP.check()) {
-				std::vector<rpwa::interactionVertexPtr> isobarDecayVerticesIV(bp::len(pyListIsobarDecayVertices), rpwa::isobarDecayVertexPtr());
-				for(int i = 0; i < bp::len(pyListIsobarDecayVertices); ++i) {
-					isobarDecayVerticesIV[i] = bp::extract<rpwa::interactionVertexPtr>(pyListIsobarDecayVertices[i]);
-				}
+			std::vector<rpwa::interactionVertexPtr> isobarDecayVerticesIV;
+			if(rpwa::py::convertBPObjectToVector<rpwa::interactionVertexPtr>(pyIsobarDecayVertices, isobarDecayVerticesIV)) {
 				rpwa::isobarDecayTopology::constructDecay(productionVertex, isobarDecayVerticesIV, fsParticles, performTopologyCheck);
 				return;
 			}
 
-			printErr<<"Got invalid input when executing rpwa::isobarDecayTopology::isobarDecayTopology()."<<std::endl;
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for decayVertices when executing rpwa::isobarDecayTopology::isobarDecayTopology()");
+			bp::throw_error_already_set();
 
 		}
 

@@ -2,6 +2,7 @@
 #include "generator_py.h"
 
 #include "rootConverters_py.h"
+#include "stlContainers_py.h"
 
 namespace bp = boost::python;
 
@@ -119,10 +120,10 @@ namespace {
 		}
 
 		void setDecayProducts__(bp::object& pyParticles) {
-			bp::list pyListParticles = bp::extract<bp::list>(pyParticles);
-			std::vector<rpwa::particle> particles(bp::len(pyListParticles));
-			for(int i = 0; i < bp::len(pyListParticles); ++i) {
-				particles[i] = bp::extract<rpwa::particle>(pyListParticles[i]);
+			std::vector<rpwa::particle> particles;
+			if(not rpwa::py::convertBPObjectToVector<rpwa::particle>(pyParticles, particles)) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for particles when executing rpwa::generator::setDecayProducts()");
+				bp::throw_error_already_set();
 			}
 			if(bp::override setDecayProducts = this->get_override("setDecayProducts")) {
 				setDecayProducts(particles);
@@ -132,10 +133,10 @@ namespace {
 		}
 
 		void default_setDecayProducts__(bp::object& pyParticles) {
-			bp::list pyListParticles = bp::extract<bp::list>(pyParticles);
-			std::vector<rpwa::particle> particles(bp::len(pyListParticles));
-			for(int i = 0; i < bp::len(pyListParticles); ++i) {
-				particles[i] = bp::extract<rpwa::particle>(pyListParticles[i]);
+			std::vector<rpwa::particle> particles;
+			if(not rpwa::py::convertBPObjectToVector<rpwa::particle>(pyParticles, particles)) {
+				PyErr_SetString(PyExc_TypeError, "Got invalid input for particles when executing rpwa::generator::setDecayProducts()");
+				bp::throw_error_already_set();
 			}
 			rpwa::generator::setDecayProducts(particles);
 		}
@@ -163,21 +164,21 @@ namespace {
 	}
 
 	void generator_setDecayProducts(rpwa::generator& self, bp::object& pyParticles) {
-		bp::list pyListParticles = bp::extract<bp::list>(pyParticles);
-		std::vector<rpwa::particle> particles(bp::len(pyListParticles));
-		for(int i = 0; i < bp::len(pyListParticles); ++i) {
-			particles[i] = bp::extract<rpwa::particle>(pyListParticles[i]);
+		std::vector<rpwa::particle> particles;
+		if(not rpwa::py::convertBPObjectToVector<rpwa::particle>(pyParticles, particles)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for particles when executing rpwa::generator::setDecayProducts()");
+			bp::throw_error_already_set();
 		}
 		self.setDecayProducts(particles);
 	}
 
 	bp::str generator_convertEventToAscii(const rpwa::particle& beam,
-	                                      PyObject* pyFinalState)
+	                                      const bp::object& pyFinalState)
 	{
-		bp::list pyListFinalState = bp::extract<bp::list>(pyFinalState);
-		std::vector<rpwa::particle> finalState(bp::len(pyListFinalState));
-		for(int i = 0; i < bp::len(pyListFinalState); ++i) {
-			finalState[i] = bp::extract<rpwa::particle>(pyListFinalState[i]);
+		std::vector<rpwa::particle> finalState;
+		if(not rpwa::py::convertBPObjectToVector<rpwa::particle>(pyFinalState, finalState)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for finalState when executing rpwa::generator::convertEventToAscii()");
+			bp::throw_error_already_set();
 		}
 		std::stringstream sstr;
 		rpwa::generator::convertEventToAscii(sstr, beam, finalState);
@@ -187,18 +188,18 @@ namespace {
 	bp::str generator_convertEventToComgeant(const rpwa::particle& beam,
 	                                         const rpwa::particle& recoil,
 	                                         PyObject* pyVertex,
-	                                         PyObject* pyFinalState,
+	                                         const bp::object& pyFinalState,
 	                                         bool writeBinary = false)
 	{
 		TVector3* vertex = rpwa::py::convertFromPy<TVector3*>(pyVertex);
 		if(not vertex) {
-			printErr<<"Got invalid input when executing rpwa::generator::convertEventToAscii()."<<std::endl;
-			throw;
+			PyErr_SetString(PyExc_TypeError, "Got invalid input when executing rpwa::generator::convertEventToAscii()");
+			bp::throw_error_already_set();
 		}
-		bp::list pyListFinalState = bp::extract<bp::list>(pyFinalState);
-		std::vector<rpwa::particle> finalState(bp::len(pyListFinalState));
-		for(int i = 0; i < bp::len(pyListFinalState); ++i) {
-			finalState[i] = bp::extract<rpwa::particle>(pyListFinalState[i]);
+		std::vector<rpwa::particle> finalState;
+		if(not rpwa::py::convertBPObjectToVector<rpwa::particle>(pyFinalState, finalState)) {
+			PyErr_SetString(PyExc_TypeError, "Got invalid input for finalState when executing rpwa::generator::convertEventToComgeant()");
+			bp::throw_error_already_set();
 		}
 		std::stringstream sstr;
 		rpwa::generator::convertEventToComgeant(sstr, beam, recoil, *vertex, finalState, writeBinary);
