@@ -150,25 +150,24 @@ diffractivePhaseSpace::event()
 		throw;
 	}
 
-	double tPrime;
-	double xMass;
-	do {
-		if(not (*_pickerFunction)(xMass, tPrime)) {
-			printErr << "could not generate X mass and t'. Aborting..." << endl;
-			throw;
-		}
-	} while(xMass + _target.recoilParticle.mass() > overallCm.M());
-	// t' should be negative (why?)
-	tPrime *= -1;
-
-	{
-		unsigned int i = 0;
-		for(; xMass > _maxXMassSlices[i]; ++i);
-		_phaseSpace.setMaxWeight(_maxWeightsForXMasses[i]);
-	}
-
 	bool done = false;
-	while(!done) {
+	do {
+		double tPrime;
+		double xMass;
+		do {
+			if(not (*_pickerFunction)(xMass, tPrime)) {
+				printErr << "could not generate X mass and t'. Aborting..." << endl;
+				throw;
+			}
+		} while(xMass + _target.recoilParticle.mass() > overallCm.M());
+		// t' should be negative (why?)
+		tPrime *= -1;
+
+		{
+			unsigned int i = 0;
+			for(; xMass > _maxXMassSlices[i]; ++i);
+			_phaseSpace.setMaxWeight(_maxWeightsForXMasses[i]);
+		}
 
 		// calculate t from t' in center-of-mass system of collision
 		const double s            = overallCm.Mag2();
@@ -212,9 +211,10 @@ diffractivePhaseSpace::event()
 		// calculate the recoil proton properties
 		_target.recoilParticle.setLzVec((beamLorentzVector + targetLab) - xSystemLab); // targetLab
 
-		// generate n-body phase space for X system
-		++attempts;
-		{
+		do {
+			// generate n-body phase space for X system
+			++attempts;
+
 			_phaseSpace.pickMasses(xMass);
 
 			// correct weight for phase space splitting
@@ -231,10 +231,10 @@ diffractivePhaseSpace::event()
 			}
 			_phaseSpace.pickAngles();
 			_phaseSpace.calcEventKinematics(xSystemLab);
-		}
 
-		done = true;
-	}
+			done = true;
+		} while(!done);
+	} while(!done);
 	// event was accepted
 
 	const std::vector<TLorentzVector>& daughters = _phaseSpace.daughters();

@@ -246,6 +246,10 @@ int main(int argc, char** argv)
 	for(; eventsGenerated < nEvents; ++eventsGenerated) {
 
 		attempts += generatorMgr.event();
+		if(maxAttempts && (attempts > maxAttempts)) {
+			printWarn << "reached maximum attempts. Aborting..." << endl;
+			break;
+		}
 		const generator& gen = generatorMgr.getGenerator();
 		rpwa::particle beam = gen.getGeneratedBeam();
 		std::vector<rpwa::particle> finalState = gen.getGeneratedFinalState();
@@ -254,10 +258,6 @@ int main(int argc, char** argv)
 			rpwa::particle recoil = gen.getGeneratedRecoil();
 			TVector3 vertex = gen.getGeneratedVertex();
 			generator::convertEventToComgeant(outputComgeantFile, beam, recoil, vertex, finalState, false);
-		}
-		if(maxAttempts && (attempts > maxAttempts)) {
-			printWarn << "reached maximum attempts. Aborting..." << endl;
-			break;
 		}
 		++(*progressIndicator);
 
