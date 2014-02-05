@@ -35,7 +35,7 @@ namespace rpwa {
 		void readBeamfileSequentially(bool readBeamfileSequentially = true);
 		void randomizeBeamfileStartingPosition();
 
-		std::ostream& print(std::ostream& out);
+		std::ostream& print(std::ostream& out) const;
 
 		static bool debug() { return _debug; }
 		static void setDebug(bool debug = true) { _debug = debug; }
@@ -59,6 +59,11 @@ namespace rpwa {
 		static bool _debug;
 
 	};
+
+	inline std::ostream& operator<< (std::ostream& out, const generatorManager& genManager)
+	{
+		return genManager.print(out);
+	}
 
 }
 

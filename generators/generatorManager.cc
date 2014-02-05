@@ -348,7 +348,7 @@ void generatorManager::randomizeBeamfileStartingPosition() {
 }
 
 
-ostream& generatorManager::print(ostream& out) {
+ostream& generatorManager::print(ostream& out) const {
 
 	out << "generatorManager parameter collection:" << endl;
 	_beam.print(out);
