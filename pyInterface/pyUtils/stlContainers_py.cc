@@ -22,6 +22,10 @@ void rpwa::py::exportStlContainers() {
 	bp::class_<std::vector<rpwa::particleProperties> >("__vector_particleProperties")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::particleProperties> >());
 
+	// std::vector<rpwa::particle>
+	bp::class_<std::vector<rpwa::particle> >("__vector_particle")
+		.def(bp::vector_indexing_suite<std::vector<rpwa::particle>, true>());
+
 	// std::vector<rpwa::particlePtr>
 	bp::class_<std::vector<rpwa::particlePtr> >("__vector_particlePtr")
 		.def(bp::vector_indexing_suite<std::vector<rpwa::particlePtr>, true>());

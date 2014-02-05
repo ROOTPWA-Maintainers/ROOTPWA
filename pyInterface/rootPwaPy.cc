@@ -24,6 +24,7 @@
 #include "phaseSpaceIntegral_py.h"
 #include "nBodyPhaseSpaceGen_py.h"
 #include "randomNumberGenerator_py.h"
+#include "generatorManager_py.h"
 #include "generator_py.h"
 #include "generatorParameters_py.h"
 #include "generatorPickerFunctions_py.h"
@@ -55,6 +56,7 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportPhaseSpaceIntegral();
 	rpwa::py::exportNBodyPhaseSpaceGen();
 	rpwa::py::exportRandomNumberGenerator();
+	rpwa::py::exportGeneratorManager();
 	rpwa::py::exportGenerator();
 	rpwa::py::exportGeneratorParameters();
 	rpwa::py::exportGeneratorPickerFunctions();
