@@ -63,8 +63,8 @@ namespace {
 		return self.readAscii(inFileName);
 	}
 
-	int ampIntegralMatrix_Write(const rpwa::ampIntegralMatrix& self, std::string name) {
-		return self.Write(name.c_str());
+	int ampIntegralMatrix_Write(const rpwa::ampIntegralMatrix& self, const char* name = 0) {
+		return self.Write(name);
 	}
 
 }
@@ -132,7 +132,7 @@ void rpwa::py::exportAmpIntegralMatrix() {
 		.def("writeAscii", &ampIntegralMatrix_writeAscii)
 		.def("readAscii", &ampIntegralMatrix_readAscii)
 
-		.def("Write", &ampIntegralMatrix_Write)
+		.def("Write", &ampIntegralMatrix_Write, bp::arg("name")=0)
 
 		.add_static_property("debugAmpIntegralMatrix", &rpwa::ampIntegralMatrix::debug, &rpwa::ampIntegralMatrix::setDebug);
 

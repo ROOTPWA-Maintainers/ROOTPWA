@@ -9,8 +9,8 @@ namespace bp = boost::python;
 
 namespace {
 
-	int amplitudeTreeLeaf_Write(const rpwa::amplitudeTreeLeaf& self, std::string name) {
-		return self.Write(name.c_str());
+	int amplitudeTreeLeaf_Write(const rpwa::amplitudeTreeLeaf& self, const char* name = 0) {
+		return self.Write(name);
 	}
 
 	const std::complex<double>& amplitudeTreeLeaf_incohSubAmp1(const rpwa::amplitudeTreeLeaf& self, const unsigned int index = 0) {
@@ -101,7 +101,7 @@ void rpwa::py::exportAmplitudeTreeLeaf() {
 		.def("setIncohSubAmp", &rpwa::amplitudeTreeLeaf::setIncohSubAmp)
 		.def("setAmp", &rpwa::amplitudeTreeLeaf::setAmp)
 
-		.def("Write", &amplitudeTreeLeaf_Write)
+		.def("Write", &amplitudeTreeLeaf_Write, bp::arg("name")=0)
 		.def("setBranchAddress", &amplitudeTreeLeaf_setBranchAddress)
 		.def(
 			"branch"

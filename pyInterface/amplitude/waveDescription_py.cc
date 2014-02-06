@@ -29,8 +29,8 @@ namespace {
 	}
 
 	bool waveDescription_writeKeyFile(const std::string& keyFileName,
-	                                    const bp::object   pyTopoOrAmp,
-							            const bool         writeProdVert = true)
+	                                  const bp::object   pyTopoOrAmp,
+							          const bool         writeProdVert = true)
 	{
 		bp::extract<rpwa::isobarDecayTopology> get_iDT(pyTopoOrAmp);
 		if(get_iDT.check()) {
@@ -41,8 +41,8 @@ namespace {
 		return rpwa::waveDescription::writeKeyFile(keyFileName, *topoOrAmp, writeProdVert);
 	}
 
-	int waveDescription_Write(const rpwa::waveDescription& self, std::string name) {
-		return self.Write(name.c_str());
+	int waveDescription_Write(const rpwa::waveDescription& self, const char* name = 0) {
+		return self.Write(name);
 	}
 
 }
@@ -93,7 +93,7 @@ void rpwa::py::exportWaveDescription() {
 		)
 		.staticmethod("waveLaTeXFromTopology")
 
-		.def("Write", &waveDescription_Write)
+		.def("Write", &waveDescription_Write, bp::arg("name")=0)
 
 		.add_static_property("debugWaveDescription", &rpwa::waveDescription::debug, &rpwa::waveDescription::setDebug);
 
