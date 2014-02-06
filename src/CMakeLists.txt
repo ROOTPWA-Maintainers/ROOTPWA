@@ -54,7 +54,7 @@ set(SOURCES
 	TFitBin.cc
 	fitResult.cc
 	complexMatrix.cc
-	TPWALikelihood.cc
+	pwaLikelihood.cc
 	pwaPlotter.cc
 	pwacomponent.cc
 	massDepFitLikeli.cc

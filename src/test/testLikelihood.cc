@@ -40,7 +40,7 @@
 #include "TTree.h"
 
 #include "reportingUtils.hpp"
-#include "TPWALikelihood.h"
+#include "pwaLikelihood.h"
 
 
 using namespace std;
@@ -161,7 +161,7 @@ main(int    argc,
 
 	// setup likelihood function
 	printInfo << "creating and setting up likelihood function" << endl;
-	TPWALikelihood<complex<double> > L;
+	pwaLikelihood<complex<double> > L;
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);

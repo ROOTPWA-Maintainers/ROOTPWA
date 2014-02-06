@@ -22,7 +22,7 @@
 //
 // Description:
 //      fitting program for rootpwa
-//      minimizes TPWALikelihood function
+//      minimizes pwaLikelihood function
 //
 //
 // Author List:
@@ -51,7 +51,7 @@
 #include "TStopwatch.h"
 
 #include "conversionUtils.hpp"
-#include "TPWALikelihood.h"
+#include "pwaLikelihood.h"
 #include "TFitBin.h"
 #include "fitResult.h"
 #ifdef USE_CUDA
@@ -310,7 +310,7 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
 	printInfo << "creating and setting up likelihood function" << endl;
-	TPWALikelihood<complex<double> > L;
+	pwaLikelihood<complex<double> > L;
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);

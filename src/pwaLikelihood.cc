@@ -21,8 +21,8 @@
 //-----------------------------------------------------------
 //
 // Description:
-//      Implementation of class TPWALikelihood
-//      see TPWALikelihood.h for details
+//      Implementation of class pwaLikelihood
+//      see pwaLikelihood.h for details
 //
 //
 // Author List:
@@ -53,7 +53,7 @@
 #include "likelihoodInterface.cuh"
 #endif
 #include "amplitudeTreeLeaf.h"
-#include "TPWALikelihood.h"
+#include "pwaLikelihood.h"
 
 
 // #define USE_FDF
@@ -65,11 +65,11 @@ using namespace boost;
 using namespace boost::accumulators;
 
 
-template<typename complexT> bool TPWALikelihood<complexT>::_debug = true;
+template<typename complexT> bool pwaLikelihood<complexT>::_debug = true;
 
 
 template<typename complexT>
-TPWALikelihood<complexT>::TPWALikelihood()
+pwaLikelihood<complexT>::pwaLikelihood()
 	: _nmbEvents        (0),
 	  _rank             (1),
 	  _nmbWaves         (0),
@@ -93,7 +93,7 @@ TPWALikelihood<complexT>::TPWALikelihood()
 
 
 template<typename complexT>
-TPWALikelihood<complexT>::~TPWALikelihood()
+pwaLikelihood<complexT>::~pwaLikelihood()
 {
 	clear();
 }
@@ -101,7 +101,7 @@ TPWALikelihood<complexT>::~TPWALikelihood()
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::FdF
+pwaLikelihood<complexT>::FdF
 (const double* par,             // parameter array; reduced by rank conditions
  double&       funcVal,         // function value
  double*       gradient) const  // array of derivatives
@@ -222,7 +222,7 @@ TPWALikelihood<complexT>::FdF
 
 template<typename complexT>
 double
-TPWALikelihood<complexT>::DoEval(const double* par) const
+pwaLikelihood<complexT>::DoEval(const double* par) const
 {
 	++(_funcCallInfo[DOEVAL].nmbCalls);
 	
@@ -325,7 +325,7 @@ TPWALikelihood<complexT>::DoEval(const double* par) const
 	
 template<typename complexT>
 double
-TPWALikelihood<complexT>::DoDerivative(const double* par,
+pwaLikelihood<complexT>::DoDerivative(const double* par,
                                        unsigned int  derivativeIndex) const
 {
 	++(_funcCallInfo[DODERIVATIVE].nmbCalls);
@@ -359,7 +359,7 @@ TPWALikelihood<complexT>::DoDerivative(const double* par,
 // calculate derivatives with respect to parameters
 template<typename complexT>
 void
-TPWALikelihood<complexT>::Gradient
+pwaLikelihood<complexT>::Gradient
 (const double* par,             // parameter array; reduced by rank conditions
  double*       gradient) const  // array of derivatives
 {
@@ -500,7 +500,7 @@ TPWALikelihood<complexT>::Gradient
 
 template<typename complexT>
 unsigned int
-TPWALikelihood<complexT>::nmbWaves(const int reflectivity) const
+pwaLikelihood<complexT>::nmbWaves(const int reflectivity) const
 {
 	if (reflectivity == 0)
 		return _nmbWaves;
@@ -514,18 +514,18 @@ TPWALikelihood<complexT>::nmbWaves(const int reflectivity) const
 template<typename complexT>
 void
 #ifdef USE_CUDA
-TPWALikelihood<complexT>::enableCuda(const bool enableCuda)
+pwaLikelihood<complexT>::enableCuda(const bool enableCuda)
 {
 	_cudaEnabled = enableCuda;
 }
 #else
-TPWALikelihood<complexT>::enableCuda(const bool) { }
+pwaLikelihood<complexT>::enableCuda(const bool) { }
 #endif
 
 
 template<typename complexT>
 bool
-TPWALikelihood<complexT>::cudaEnabled() const
+pwaLikelihood<complexT>::cudaEnabled() const
 {
 #ifdef USE_CUDA
 	return _cudaEnabled;
@@ -537,7 +537,7 @@ TPWALikelihood<complexT>::cudaEnabled() const
 
 template<typename complexT>
 void 
-TPWALikelihood<complexT>::init(const unsigned int rank,
+pwaLikelihood<complexT>::init(const unsigned int rank,
                                const std::string& waveListFileName,
                                const std::string& normIntFileName,
                                const std::string& accIntFileName,
@@ -561,7 +561,7 @@ TPWALikelihood<complexT>::init(const unsigned int rank,
 
 template<typename complexT>
 void 
-TPWALikelihood<complexT>::readWaveList(const string& waveListFileName)
+pwaLikelihood<complexT>::readWaveList(const string& waveListFileName)
 {
 	printInfo << "reading amplitude names and thresholds from wave list file "
 	          << "'" << waveListFileName << "'." << endl;
@@ -626,7 +626,7 @@ TPWALikelihood<complexT>::readWaveList(const string& waveListFileName)
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::buildParDataStruct(const unsigned int rank)
+pwaLikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 {
 	if ((_nmbWavesRefl[0] + _nmbWavesRefl[1] == 0) or (_waveThresholds.size() == 0)) {
 		printErr << "no wave info. was readWaveList() executed successfully? aborting.";
@@ -691,7 +691,7 @@ TPWALikelihood<complexT>::buildParDataStruct(const unsigned int rank)
 // returns integral matrix reordered according to _waveNames array
 template<typename complexT>
 void
-TPWALikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral,
+pwaLikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integral,
                                                 normMatrixArrayType&     reorderedMatrix) const
 {
 	// create reordered matrix
@@ -709,7 +709,7 @@ TPWALikelihood<complexT>::reorderIntegralMatrix(const ampIntegralMatrix& integra
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::readIntegrals
+pwaLikelihood<complexT>::readIntegrals
 (const string& normIntFileName,   // name of file with normalization integrals
  const string& accIntFileName,    // name of file with acceptance integrals
  const string& integralTKeyName)  // name of TKey which stores integral in .root file
@@ -793,7 +793,7 @@ TPWALikelihood<complexT>::readIntegrals
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
+pwaLikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
                                               const bool    useRootAmps,
                                               const string& ampLeafName)
 {
@@ -948,7 +948,7 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
+pwaLikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
                                               complexMatrix&  accMatrix,
                                               vector<double>& phaseSpaceIntegral) const
 {
@@ -983,7 +983,7 @@ TPWALikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
 // for both rank restrictions are taken into account
 template<typename complexT>
 void
-TPWALikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
+pwaLikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
                                              vector<complex<double> >& prodAmps,
                                              vector<pair<int, int> >&  parIndices,
                                              vector<string>&           prodAmpNames,
@@ -1025,7 +1025,7 @@ TPWALikelihood<complexT>::buildProdAmpArrays(const double*             inPar,
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::clear()
+pwaLikelihood<complexT>::clear()
 {
 	_decayAmps.resize(extents[0][0][0]);
 }
@@ -1035,7 +1035,7 @@ TPWALikelihood<complexT>::clear()
 // VR_IGJPCMEIso....
 template<typename complexT>
 int
-TPWALikelihood<complexT>::getReflectivity(const TString& waveName)
+pwaLikelihood<complexT>::getReflectivity(const TString& waveName)
 {
 	int refl = 0;
 	unsigned int reflIndex = 6;  // position of reflectivity in wave
@@ -1063,7 +1063,7 @@ TPWALikelihood<complexT>::getReflectivity(const TString& waveName)
 // taking into account rank restrictions
 template<typename complexT>
 void
-TPWALikelihood<complexT>::copyFromParArray
+pwaLikelihood<complexT>::copyFromParArray
 (const double*  inPar,             // input parameter array
  ampsArrayType& outVal,            // array of complex output values [rank][reflectivity][wave index]
  value_type&    outFlatVal) const  // output value corresponding to flat wave
@@ -1097,7 +1097,7 @@ TPWALikelihood<complexT>::copyFromParArray
 // parameters taking into account rank restrictions
 template<typename complexT>
 void
-TPWALikelihood<complexT>::copyToParArray
+pwaLikelihood<complexT>::copyToParArray
 (const ampsArrayType& inVal,         // values corresponding to production amplitudes
  const value_type     inFlatVal,     // value corresponding to flat wave
  double*              outPar) const  // output parameter array
@@ -1117,9 +1117,9 @@ TPWALikelihood<complexT>::copyToParArray
 
 template<typename complexT>
 ostream&
-TPWALikelihood<complexT>::print(ostream& out) const
+pwaLikelihood<complexT>::print(ostream& out) const
 {
-	out << "TPWALikelihood parameters:" << endl
+	out << "pwaLikelihood parameters:" << endl
 	    << "number of events ........................ " << _nmbEvents         << endl
 	    << "rank .................................... " << _rank              << endl
 	    << "number of waves ......................... " << _nmbWaves          << endl
@@ -1147,14 +1147,14 @@ TPWALikelihood<complexT>::print(ostream& out) const
 
 template<typename complexT>
 ostream&
-TPWALikelihood<complexT>::printFuncInfo(ostream& out) const
+pwaLikelihood<complexT>::printFuncInfo(ostream& out) const
 {
 	const string funcNames[NMB_FUNCTIONCALLENUM] = {"FdF", "Gradient", "DoEval", "DoDerivative"};
 	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i)
 		if (_funcCallInfo[i].nmbCalls > 0)
 			out << "    " << _funcCallInfo[i].nmbCalls
-			    << " calls to TPWALikelihood<complexT>::" << funcNames[i] << "()" << endl
-			    << "    time spent in TPWALikelihood<complexT>::" << funcNames[i] << "(): " << endl
+			    << " calls to pwaLikelihood<complexT>::" << funcNames[i] << "()" << endl
+			    << "    time spent in pwaLikelihood<complexT>::" << funcNames[i] << "(): " << endl
 			    << "        total time ................. " << sum(_funcCallInfo[i].totalTime) << " sec" << endl
 			    << "        return value calculation ... " << sum(_funcCallInfo[i].funcTime ) << " sec" << endl
 			    << "        normalization .............. " << sum(_funcCallInfo[i].normTime ) << " sec" << endl;
@@ -1164,7 +1164,7 @@ TPWALikelihood<complexT>::printFuncInfo(ostream& out) const
 
 template<typename complexT>
 vector<unsigned int>
-TPWALikelihood<complexT>::orderedParIndices() const
+pwaLikelihood<complexT>::orderedParIndices() const
 {
 	vector<unsigned int> orderedIndices;
 	for (unsigned int iRank = 0; iRank < _rank; ++iRank)
@@ -1198,7 +1198,7 @@ TPWALikelihood<complexT>::orderedParIndices() const
 
 template<typename complexT>
 vector<string>
-TPWALikelihood<complexT>::waveNames() const
+pwaLikelihood<complexT>::waveNames() const
 {
 	vector<string> names(_nmbWaves, "");
 	for (unsigned int iRefl = 0; iRefl < 2; ++iRefl)
@@ -1212,7 +1212,7 @@ TPWALikelihood<complexT>::waveNames() const
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::resetFuncCallInfo() const
+pwaLikelihood<complexT>::resetFuncCallInfo() const
 {
 	for (unsigned int i = 0; i < NMB_FUNCTIONCALLENUM; ++i) {
 		_funcCallInfo[i].nmbCalls  = 0;
@@ -1225,5 +1225,5 @@ TPWALikelihood<complexT>::resetFuncCallInfo() const
 
 
 // explicit specializations
-template class TPWALikelihood<complex<float > >;
-template class TPWALikelihood<complex<double> >;
+template class pwaLikelihood<complex<float > >;
+template class pwaLikelihood<complex<double> >;
