@@ -53,7 +53,7 @@ include_directories(${INCLUDE_DIRECTORIES})
 set(SOURCES
 	TFitBin.cc
 	fitResult.cc
-	TCMatrix.cc
+	complexMatrix.cc
 	TPWALikelihood.cc
 	pwaPlotter.cc
 	pwacomponent.cc
@@ -74,7 +74,7 @@ set(ROOTPWA_DICT_INCLUDE_DIRS
 root_generate_dictionary(
 	"${ROOTPWA_DICTIONARY}"
 	"${ROOTPWA_DICT_INCLUDE_DIRS}"
-	"TFitBin.h;fitResult.h;pwaPlotter.h;TCMatrix.h"
+	"TFitBin.h;fitResult.h;pwaPlotter.h;complexMatrix.h"
 	"rootPwaLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})

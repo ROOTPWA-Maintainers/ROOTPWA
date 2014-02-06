@@ -580,8 +580,8 @@ main(int    argc,
 					  // Note: SetErrorDef in ROOT does not work
 						fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
-				TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
-				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
+				complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
+				complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 				vector<double> phaseSpaceIntegral;
 				L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
 				const int normNmbEvents = (useNormalizedAmps) ? 1 : L.nmbEvents();  // number of events to normalize to
@@ -593,8 +593,8 @@ main(int    argc,
 				     << "    number of wave names ................... " << nmbWaves                      << endl
 				     << "    number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << endl
 				     << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
-				     << "    dimension of normalization matrix ...... " << normIntegral.nrows()       << " x " << normIntegral.ncols()       << endl
-				     << "    dimension of acceptance matrix ......... " << accIntegral.nrows()        << " x " << accIntegral.ncols()        << endl;
+				     << "    dimension of normalization matrix ...... " << normIntegral.nRows()       << " x " << normIntegral.nCols()       << endl
+				     << "    dimension of acceptance matrix ......... " << accIntegral.nRows()        << " x " << accIntegral.nCols()        << endl;
 				result->fill(L.nmbEvents(),
 				             normNmbEvents,
 				             massBinCenter,
@@ -642,8 +642,8 @@ main(int    argc,
 				// normalization integral and acceptance matrix
 				cout << " setting up integrals" << endl;
 				const unsigned int n = waveTitles.size();
-				TCMatrix           integralMatrix(n, n);
-				TCMatrix           accMatrix     (n, n);
+				complexMatrix      integralMatrix(n, n);
+				complexMatrix      accMatrix     (n, n);
 				vector<double>     phaseSpaceIntegral;
 				L.getIntegralMatrices(integralMatrix, accMatrix, phaseSpaceIntegral);
 				//integralMatrix.Print();
@@ -657,8 +657,8 @@ main(int    argc,
 				     << "    number of wave names (with rank) ... " << waveNames.size()       << endl
 				     << "    number of wave titles (w/o rank) ... " << waveTitles.size()      << endl
 				     << "    dimension of error matrix .......... " << errMatrix.GetNrows()   << endl
-				     << "    dimension of integral matrix ....... " << integralMatrix.nrows() << endl
-				     << "    dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
+				     << "    dimension of integral matrix ....... " << integralMatrix.nRows() << endl
+				     << "    dimension of acceptance matrix ..... " << accMatrix.nRows()      << endl;
 				fitBinResult->fill(prodAmplitudes,
 				                   indices,
 				                   waveNames,

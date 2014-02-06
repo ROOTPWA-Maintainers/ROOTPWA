@@ -52,7 +52,7 @@
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
-#include "TCMatrix.h"
+#include "complexMatrix.h"
 #include "TFitBin.h"
 
 
@@ -108,7 +108,7 @@ namespace rpwa {
 		          const std::vector<std::string>&           prodAmpNames,	           // names of production amplitudes used in fit
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
-		          const TCMatrix&                           normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix&                normIntegral,            // normalization integral matrix
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
 		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
@@ -202,7 +202,7 @@ namespace rpwa {
 		const std::vector<std::string>&              waveNames         () const { return _waveNames;              }
 		const TMatrixT<Double_t>&                    fitParCovMatrix   () const { return _fitParCovMatrix;        }
 		const std::vector<std::pair<Int_t, Int_t> >& fitParCovIndices  () const { return _fitParCovMatrixIndices; }
-		const TCMatrix&                              normIntegralMatrix() const { return _normIntegral;           }
+		const rpwa::complexMatrix&                   normIntegralMatrix() const { return _normIntegral;           }
 		const std::map<Int_t, Int_t>&                normIntIndexMap   () const { return _normIntIndexMap;        }
 
 		inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;  ///< prints all production amplitude names
@@ -228,7 +228,7 @@ namespace rpwa {
 		Bool_t                                _covMatrixValid;          ///< indicates whether bin has a valid covariance matrix
 		TMatrixT<Double_t>                    _fitParCovMatrix;         ///< covariance matrix of fit parameters
 		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;  ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
-		TCMatrix                              _normIntegral;            ///< normalization integral over full phase space without acceptance
+		rpwa::complexMatrix                   _normIntegral;            ///< normalization integral over full phase space without acceptance
 		std::map<Int_t, Int_t>                _normIntIndexMap;         ///< maps production amplitude indices to indices in normalization integral
 		std::vector<double>                   _phaseSpaceIntegral;      ///< diagonals of phase space integrals (without acceptance)
 		bool                                  _converged;               ///< indicates whether fit has converged (according to minimizer)

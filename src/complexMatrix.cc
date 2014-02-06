@@ -19,82 +19,69 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
-
-#include "TCMatrix.h"
-
+#include "complexMatrix.h"
 
 using namespace std;
+using namespace rpwa;
+
+ClassImp(complexMatrix)
 
 
-ClassImp(TCMatrix)
-
-
-TCMatrix::TCMatrix(const int i,
-		   const int j)
-: _re(i, j),
-  _im(i, j)
-{ }
-
-
-void
-TCMatrix::set(const int              i,
-	      const int              j,
-	      const complex<double>& c)
-{
-  _re[i][j] = c.real();
-  _im[i][j] = c.imag();
-}
-void
-TCMatrix::set(const int              i,
-	      const int              j,
-	      const TComplex& c)
-{
-  _re[i][j] = c.Re();
-  _im[i][j] = c.Im();
-}
-
-TCMatrix
-TCMatrix::t() const {
-  TMatrixD ReT(TMatrixD::kTransposed,_re);
-  TMatrixD ImT(TMatrixD::kTransposed,_im);
-  return TCMatrix(ReT,ImT);
-}
-
-TCMatrix
-TCMatrix::dagger() const {
-  TMatrixD ReT(TMatrixD::kTransposed,_re);
-  TMatrixD ImT(_im.GetNcols(),_im.GetNrows());
-  for(int i=0;i<_im.GetNrows();++i){
-    for(int j=0;j<_im.GetNcols();++j){
-      ImT[j][i]= -(_im[i][j]);
-    }
-  }
-  return TCMatrix(ReT,ImT);
+void complexMatrix::set(const int i, const int j, const complex<double>& c) {
+	_re[i][j] = c.real();
+	_im[i][j] = c.imag();
 }
 
 
-TCMatrix operator *(const TCMatrix& c1, const TCMatrix& c2){
-  TCMatrix result(c1.nrows(),c2.ncols());
-  for(int i=0;i<result.nrows();++i){
-    for(int j=0;j<result.ncols();++j){
-      TComplex elem(0,0);
-      for(int k=0;k<c1.ncols();++k){
-	elem+=(c1(i,k))*(c2(k,j));
-      }
-      result.set(i,j,elem);
-    }
-  }
-  return result;
+void complexMatrix::set(const int i, const int j, const TComplex& c) {
+	_re[i][j] = c.Re();
+	_im[i][j] = c.Im();
 }
 
-TCMatrix operator -(const TCMatrix& c1, const TCMatrix& c2){
-  TMatrixD Re(c1._re-c2._re);
-  TMatrixD Im(c1._im-c2._im);
-  return TCMatrix(Re,Im);
+
+complexMatrix complexMatrix::t() const {
+	TMatrixD ReT(TMatrixD::kTransposed, _re);
+	TMatrixD ImT(TMatrixD::kTransposed, _im);
+	return complexMatrix(ReT, ImT);
 }
 
-TCMatrix operator +(const TCMatrix& c1, const TCMatrix& c2){
-  TMatrixD Re(c1._re+c2._re);
-  TMatrixD Im(c1._im+c2._im);
-  return TCMatrix(Re,Im);
+
+complexMatrix complexMatrix::dagger() const {
+	TMatrixD ReT(TMatrixD::kTransposed, _re);
+	TMatrixD ImT(_im.GetNcols(), _im.GetNrows());
+	for(int i = 0; i < _im.GetNrows(); ++i) {
+		for(int j = 0; j < _im.GetNcols(); ++j) {
+			ImT[j][i] = -(_im[i][j]);
+		}
+	}
+	return complexMatrix(ReT, ImT);
+}
+
+
+complexMatrix rpwa::operator*(const complexMatrix& c1, const complexMatrix& c2) {
+	complexMatrix result(c1.nRows(), c2.nCols());
+	for(int i = 0; i < result.nRows(); ++i) {
+		for(int j = 0; j < result.nCols(); ++j) {
+			TComplex elem(0, 0);
+			for(int k = 0; k < c1.nCols(); ++k) {
+				elem += (c1(i, k)) * (c2(k, j));
+			}
+			result.set(i, j, elem);
+		}
+	}
+	return result;
+}
+
+
+complexMatrix rpwa::operator-(const complexMatrix& c1, const complexMatrix& c2) {
+	TMatrixD Re(c1._re - c2._re);
+	TMatrixD Im(c1._im - c2._im);
+	return complexMatrix(Re, Im);
+}
+
+
+complexMatrix rpwa::operator+(const complexMatrix& c1, const complexMatrix& c2) {
+	TMatrixD Re(c1._re + c2._re);
+	TMatrixD Im(c1._im + c2._im);
+	return complexMatrix(Re, Im);
 }

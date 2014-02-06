@@ -41,10 +41,10 @@
 
 #include "TString.h"
 #include "TSystem.h"
-#include "TCMatrix.h"
 #include "TStopwatch.h"
 #include "TTree.h"
 
+#include "complexMatrix.h"
 #include "reportingUtils.hpp"
 #include "conversionUtils.hpp"
 #include "fileUtils.hpp"
@@ -948,8 +948,8 @@ TPWALikelihood<complexT>::readDecayAmplitudes(const string& ampDirName,
 
 template<typename complexT>
 void
-TPWALikelihood<complexT>::getIntegralMatrices(TCMatrix&       normMatrix,
-                                              TCMatrix&       accMatrix,
+TPWALikelihood<complexT>::getIntegralMatrices(complexMatrix&  normMatrix,
+                                              complexMatrix&  accMatrix,
                                               vector<double>& phaseSpaceIntegral) const
 {
   phaseSpaceIntegral.clear();

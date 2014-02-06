@@ -20,9 +20,8 @@
 ///////////////////////////////////////////////////////////////////////////
 // a matrix with complex elements
 
-
-#ifndef TCMATRIX_HH
-#define TCMATRIX_HH
+#ifndef COMPLEXMATRIX_HH
+#define COMPLEXMATRIX_HH
 
 #include <complex>
 
@@ -30,64 +29,74 @@
 #include "TComplex.h"
 #include "TMatrixD.h"
 
+#include "reportingUtilsRoot.hpp"
 
-class TCMatrix : public TObject {
+namespace rpwa {
 
-public:
+	class complexMatrix : public TObject {
 
-  TCMatrix(){}
- TCMatrix(TMatrixD re, TMatrixD im):_re(re),_im(im){}
-  TCMatrix(const int i, const int j);
-  ~TCMatrix(){};
+	public:
 
-  void ResizeTo(const int i, const int j) { _re.ResizeTo(i,j); _im.ResizeTo(i,j); }
-  void set(const int i, const int j, const std::complex<double>& c);
-  void set(const int i, const int j, const TComplex& c);
-  TComplex get(const int i, const int j) const { return TComplex(_re[i][j], _im[i][j]); }
-  TComplex operator() (const int i, const int j) const { return this->get(i, j); }
-  int nrows() const { return _re.GetNrows(); }
-  int ncols() const { return _re.GetNcols(); }
-  virtual void Print(const Option_t* = "") const { _re.Print(); _im.Print(); }
+		complexMatrix() { }
 
-  TCMatrix t() const ; // return transpose matrix
-  TCMatrix dagger() const; // return adjoint matrix
+		complexMatrix(TMatrixD re, TMatrixD im) :
+				_re(re), _im(im) { }
 
-  friend TCMatrix operator*(const TCMatrix& c1, const TCMatrix& c2);
-  friend TCMatrix operator-(const TCMatrix& c1, const TCMatrix& c2);
-  friend TCMatrix operator+(const TCMatrix& c1, const TCMatrix& c2);
+		complexMatrix(const int i, const int j) :
+				_re(i, j), _im(i, j) { }
 
-private:
+		~complexMatrix() { }
 
-  TMatrixD _re;
-  TMatrixD _im;
+		void ResizeTo(const int i, const int j) { _re.ResizeTo(i, j); _im.ResizeTo(i, j); }
+		void set(const int i, const int j, const std::complex<double>& c);
+		void set(const int i, const int j, const TComplex& c);
+		TComplex get(const int i, const int j) const { return TComplex(_re[i][j], _im[i][j]); }
+		TComplex operator()(const int i, const int j) const { return this->get(i, j); }
+		int nRows() const { return _re.GetNrows(); }
+		int nCols() const { return _re.GetNcols(); }
+		virtual void Print(const Option_t* = "") const { _re.Print(); _im.Print(); }
 
+		complexMatrix t() const; // return transpose matrix
+		complexMatrix dagger() const; // return adjoint matrix
 
-public:
+		friend complexMatrix operator*(const complexMatrix& c1, const complexMatrix& c2);
+		friend complexMatrix operator-(const complexMatrix& c1, const complexMatrix& c2);
+		friend complexMatrix operator+(const complexMatrix& c1, const complexMatrix& c2);
 
-  ClassDef(TCMatrix,2);
+	private:
 
-};
+		TMatrixD _re;
+		TMatrixD _im;
 
+	public:
 
-inline
-std::ostream&
-operator << (std::ostream&   out,
-             const TCMatrix& A)
-{
-  for (int row = 0; row < A.nrows(); ++row) {
-    out << "row " << row << " = (";
-    for (int col = 0; col < A.ncols(); ++col) {
-      out << A(row, col);
-      if (col < A.ncols() - 1)
-        out << ", ";
-    }
-    if (row < A.nrows() - 1)
-      out << "), " << std::endl;
-    else
-      out << ")";
-  }
-  return out;
+		ClassDef(complexMatrix, 1);
+
+	};
+
+	complexMatrix operator*(const complexMatrix& c1, const complexMatrix& c2);
+	complexMatrix operator-(const complexMatrix& c1, const complexMatrix& c2);
+	complexMatrix operator+(const complexMatrix& c1, const complexMatrix& c2);
+
+	inline std::ostream&
+	operator <<(std::ostream& out, const complexMatrix& A) {
+		for(int row = 0; row < A.nRows(); ++row) {
+			out << "row " << row << " = (";
+			for(int col = 0; col < A.nCols(); ++col) {
+				out << A(row, col);
+				if(col < A.nCols() - 1) {
+					out << ", ";
+				}
+			}
+			if(row < A.nRows() - 1) {
+				out << "), " << std::endl;
+			} else {
+				out << ")";
+			}
+		}
+		return out;
+	}
+
 }
-
 
 #endif  // TCMATRIX_HH

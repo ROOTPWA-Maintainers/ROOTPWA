@@ -19,7 +19,7 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 #include "../TFitBin.h"
-#include "../TCMatrix.h"
+#include "../complexMatrix.h"
 #include "TMatrixD.h"
 #include "TString.h"
 #include <vector>
@@ -68,7 +68,7 @@ void testFitBin(){
   indices.push_back(pair<int,int>(2,3));
   indices.push_back(pair<int,int>(4,-1));
 
-  TCMatrix integr(1,1);
+  complexMatrix integr(1,1);
   integr.set(0,0,2);
   //integr.set(1,1,2);
  

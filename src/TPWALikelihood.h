@@ -52,7 +52,9 @@
 
 
 class TString;
-class TCMatrix;
+namespace rpwa {
+	class complexMatrix;
+}
 
 
 template<typename complexT>  // type of internal variables used for intermediate results
@@ -148,9 +150,9 @@ public:
 	          const unsigned int numbAccEvents = 0,
 	          const bool         useRootAmps   = false);  ///< prepares all internal data structures
 
-	void getIntegralMatrices(TCMatrix&            normMatrix,
-	                         TCMatrix&            accMatrix,
-	                         std::vector<double>& phaseSpaceIntegral) const;
+	void getIntegralMatrices(rpwa::complexMatrix&       normMatrix,
+	                         rpwa::complexMatrix&       accMatrix,
+	                         std::vector<double>&       phaseSpaceIntegral) const;
   
 	// note: amplitudes which do not exist in higher ranks are NOT built!
 	void buildProdAmpArrays(const double*                       inPar,

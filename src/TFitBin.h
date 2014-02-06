@@ -49,7 +49,7 @@
 #include "TMatrixT.h"
 #include "TString.h"
 
-#include "TCMatrix.h"
+#include "complexMatrix.h"
 
 
 /// \brief data storage class for PWA fit result of one kinematic bin
@@ -65,7 +65,7 @@ public:
 	    const int                                nevt,
 	    const unsigned int                       nmbEvents,
 	    const double                             massBinCenter,
-	    const TCMatrix&                          normIntegral,
+	    const rpwa::complexMatrix&               normIntegral,
 	    const TMatrixD&                          fitParCovMatrix,
 	    const double                             logLikelihood,
 	    const int                                rank);
@@ -107,14 +107,14 @@ public:
   const std::vector<TString>&              waveNames()        const { return _wavetitles; }
   const std::map<int,int>&                 prodAmpIndexMap()  const { return _wavemap;    }
 
-  int             normNmbEvents()        const { return _nevt;      }
-  unsigned int    nmbEvents()            const { return _rawevents; }
-  Double_t        massBinCenter()        const { return _mass;      }
-  const TCMatrix& normIntegral()         const { return _int;       }
-  const TMatrixD& fitParCovMatrix()      const { return _errm;      }
-  Double_t        logLikelihood()        const { return _logli;     }
-  Int_t           rank()                 const { return _rank;      }
-  Bool_t          fitParCovMatrixValid() const { return _hasErrors; }
+  int                        normNmbEvents()        const { return _nevt;      }
+  unsigned int               nmbEvents()            const { return _rawevents; }
+  Double_t                   massBinCenter()        const { return _mass;      }
+  const rpwa::complexMatrix& normIntegral()         const { return _int;       }
+  const TMatrixD&            fitParCovMatrix()      const { return _errm;      }
+  Double_t                   logLikelihood()        const { return _logli;     }
+  Int_t                      rank()                 const { return _rank;      }
+  Bool_t                     fitParCovMatrixValid() const { return _hasErrors; }
 
 private:
 
@@ -124,14 +124,14 @@ private:
   std::vector<TString>              _wavetitles;  ///< names of waves used in fit
   std::map<int,int>                 _wavemap;     ///< maps production amplitude indices to indices in normalization integral
   
-  int          _nevt;       ///< number of events normalized (?)
-  unsigned int _rawevents;  ///< number of events in bin
-  Double_t     _mass;       ///< center value of mass bin
-  TCMatrix     _int;        ///< normalization integral over full phase space without acceptance
-  TMatrixD     _errm;       ///< covariance matrix of fit parameters
-  Double_t     _logli;      ///< log(likelihood) at minimum
-  Int_t        _rank;       ///< rank of fit
-  Bool_t       _hasErrors;  ///< indicates whether bin has a valid covariance matrix
+  int                 _nevt;       ///< number of events normalized (?)
+  unsigned int        _rawevents;  ///< number of events in bin
+  Double_t            _mass;       ///< center value of mass bin
+  rpwa::complexMatrix _int;        ///< normalization integral over full phase space without acceptance
+  TMatrixD            _errm;       ///< covariance matrix of fit parameters
+  Double_t            _logli;      ///< log(likelihood) at minimum
+  Int_t               _rank;       ///< rank of fit
+  Bool_t              _hasErrors;  ///< indicates whether bin has a valid covariance matrix
   
 
   // Private Methods -----------------

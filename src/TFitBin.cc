@@ -40,6 +40,7 @@
 
 
 using namespace std;
+using namespace rpwa;
 
 
 ClassImp(TFitBin);
@@ -71,13 +72,13 @@ TFitBin::fill(const std::vector<TComplex>&             prodAmps,
 	      const int                                nevt,
 	      const unsigned int                       nmbEvents,
 	      const double                             massBinCenter,
-	      const TCMatrix&                          normIntegral,
+	      const complexMatrix&                     normIntegral,
 	      const TMatrixD&                          fitParCovMatrix,
 	      const double                             logLikelihood,
 	      const int                                rank)
 {
 // !!! add some consistency checks
-  _int.ResizeTo (normIntegral.nrows(),       normIntegral.ncols());
+  _int.ResizeTo (normIntegral.nRows(),       normIntegral.nCols());
   _errm.ResizeTo(fitParCovMatrix.GetNrows(), fitParCovMatrix.GetNcols());
   _amps      = prodAmps;
   _indices   = indices;
@@ -400,7 +401,7 @@ TFitBin::getCov(int i, int j, TMatrixD& C) const {
 void
 TFitBin::PrintParameters() const {
   for(unsigned int i=0;i<_amps.size();++i){
-    cout << _wavenames[i] << "  "  << _amps[i] << " +- (" 
+    cout << _wavenames[i] << "  "  << _amps[i] << " +- ("
 	 << sqrt( _errm[_indices[i].first][_indices[i].first]  )
 	 << "," ;
     if(_indices[i].second>=0){

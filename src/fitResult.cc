@@ -674,7 +674,7 @@ fitResult::fill
  const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
  const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
  const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
- const TCMatrix&                 normIntegral,            // normalization integral matrix
+ const complexMatrix&            normIntegral,            // normalization integral matrix
  const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
  const bool                      converged,
  const bool                      hasHessian)
@@ -698,7 +698,7 @@ fitResult::fill
 		_covMatrixValid = true;
 	else
 		_covMatrixValid = false;
-	_normIntegral.ResizeTo(normIntegral.nrows(), normIntegral.ncols());
+	_normIntegral.ResizeTo(normIntegral.nRows(), normIntegral.nCols());
 	_normIntegral       = normIntegral;
 	_phaseSpaceIntegral = phaseSpaceIntegral;
 
@@ -725,11 +725,11 @@ fitResult::fill
 		cout << "fitResult::fill(): warning: number of production amplitudes "
 		     << "(" << _prodAmps.size() << ") does not match number of "
 		     << "covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
-	if (   ((int)_waveNames.size() != _normIntegral.nrows())
-	    or ((int)_waveNames.size() != _normIntegral.ncols()))
+	if (   ((int)_waveNames.size() != _normIntegral.nRows())
+	    or ((int)_waveNames.size() != _normIntegral.nCols()))
 		cout << "fitResult::fill(): warning: number of waves (" << _waveNames.size()
 		     << ") does not match size of normalization integral "
-		     << "(" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
+		     << "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;
 
 	if (0) {
 		// print debug information that allows to check ordering of arrays

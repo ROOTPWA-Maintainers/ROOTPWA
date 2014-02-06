@@ -68,16 +68,6 @@ namespace rpwa {
 	}
 
 
-	inline
-	std::ostream&
-	operator << (std::ostream&   out,
-	             const TComplex& c)
-	{
-		out << "(" << c.Re() << ", " << c.Im() << ")";
-		return out;
-	}
-
-
 	template<typename T>
 	std::ostream&
 	operator << (std::ostream&      out,
