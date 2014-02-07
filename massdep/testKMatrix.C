@@ -5,7 +5,7 @@
 #include "TCanvas.h"
 #include "TMath.h"
 
-#include "TCMatrix.h"
+#include "complexMatrix.h"
 
 #include "matrix.hpp"
 #include "io.hpp"
@@ -56,7 +56,7 @@ complex<double> BW(double s, double f, double s0,
 
 ///////////////////////// T-Matrix a'la Novoseller ///////////////
 
-TCMatrix SMatrix(){
+complexMatrix SMatrix(){
 
   //TMatrixT<complex<double> > Sc(2,2);
   //Sc[0][0]=complex<double>(1,0);
@@ -75,9 +75,9 @@ TCMatrix SMatrix(){
 
 
  
-  TCMatrix S(2,2);
-  TCMatrix SB(2,2); // Background
-  TCMatrix SR(2,2); // Resonance
+  complexMatrix S(2,2);
+  complexMatrix SB(2,2); // Background
+  complexMatrix SR(2,2); // Resonance
 
   // parameterize Background:
   // SB=(1+iKb)(1-iKb)^-1
@@ -93,7 +93,7 @@ TCMatrix SMatrix(){
   SB.set(1,0,TComplex(5,2));
   SB.set(0,1,TComplex(-5,2));
 
-  TCMatrix SRT=SR.dagger();
+  complexMatrix SRT=SR.dagger();
   
   return SRT*SB*SR;
 

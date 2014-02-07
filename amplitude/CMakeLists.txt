@@ -60,6 +60,7 @@ set(SOURCES
 	productionVertex.cc
 	diffractiveDissVertex.cc
 	leptoProductionVertex.cc
+	nonInteractionVertex.cc
 	isobarDecayVertex.cc
 	isobarDecayTopology.cc
 	massDependence.cc
@@ -72,6 +73,7 @@ set(SOURCES
 	amplitudeTreeHelper.cc
 	ampIntegralMatrix.cc
 	waveSetGenerator.cc
+	phaseSpaceIntegral.cc
 	)
 
 
@@ -97,6 +99,7 @@ make_shared_library(
 	"${ROOT_LIBS}"
 	"${Libconfig_LIBS}"
 	"${PWA2000_LIBS}"
+	"${ROOTPWA_NBPSGEN_LIBS}"
 	)
 
 

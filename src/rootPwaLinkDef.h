@@ -26,17 +26,10 @@
 #pragma link off all functions;
 
 
-#pragma link C++ class TFitBin+;
 #pragma link C++ class rpwa::fitResult+;
 #pragma link C++ class rpwa::pwaPlotter+;
 #pragma link C++ class rpwa::TPwaFitGraphErrors+;
-#pragma link C++ class TCMatrix+;
-#pragma link C++ class TCovEllipse+;
-//#pragma link C++ class TMCMCMeta+;
-
-#ifdef USE_TFITRESULT
-#pragma link C++ class TFitResult+;
-#endif 
+#pragma link C++ class rpwa::complexMatrix+;
 
 
 #endif

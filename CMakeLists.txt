@@ -49,16 +49,17 @@ message(STATUS ">>> Setting up project 'ROOTPWA'.")
 project(ROOTPWA)
 
 
-# load some common cmake macros
 # set path, where to look first for cmake modules, before ${CMAKE_ROOT}/Modules/ is checked
 message(STATUS "")
 message(STATUS ">>> Setting up Cmake modules.")
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmakeModules")
 message(STATUS "Using cmake module path '${CMAKE_MODULE_PATH}'.")
+# load cmake macros
 include(CommonMacros)
 include(FeatureSummary)
 include(AddEnvCompilerDefs)
 include(ProcessorCount)
+include(CheckCXXSourceCompiles)
 
 
 # force out-of-source builds.
@@ -90,60 +91,66 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
 endif()
 
 
-# common compiler flags
-#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wextra -pedantic")
-#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn")
-#set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror -Wno-unused-local-typedefs ${CMAKE_CXX_FLAGS}" CACHE STRING "c++ compile flags" FORCE)
-set(CMAKE_CXX_FLAGS "-Wall -Woverloaded-virtual -Werror ${CMAKE_CXX_FLAGS}")
-# flags for specific build types
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-# march=native caused come trouble in heterogeneous environments
-#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native ${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 ${CMAKE_CXX_FLAGS}")
+# set common compiler flags
+# consider flags -Wextra -pedantic -Wsuggest-attribute=pure -Wsuggest-attribute=const -Wsuggest-attribute=noreturn
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Werror")
+# set additional flags for specific build types
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g")
+# -march=native switch was removed, because is caused trouble in heterogeneous environments
 # `gcc -march=native -Q --help=target` shows the relevant compiler switches
 # consider adding -DNODEBUG (disables all asserts) and -ffast-math
-if(NOT CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
-	# use gcc instead of llvm compiler on MacOS 10.7 (Darwin 11.x.y)
-	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "10.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "12.0.0")
-		message(STATUS "Detected MacOS 10.7: using gcc instead of llvm compiler.")
-		set(CMAKE_C_COMPILER gcc-4.2)
-		set(CMAKE_CXX_COMPILER g++-4.2)
-		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
-	endif()
-	# use gcc instead of llvm compiler on MacOS 10.8 (Darwin 12.x.y)
-	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "11.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "13.0.0")
-		message(STATUS "Detected MacOS 10.8: using gcc instead of llvm compiler.")
-		set(CMAKE_C_COMPILER gcc)
-		set(CMAKE_CXX_COMPILER g++)
-		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
-	endif()
-endif()
-if(CMAKE_COMPILER_IS_GNUCXX)
-	execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
-	# workaround for bug concerning -march=native switch in gcc 4.2.1 shipped with MacOS 10.7
-	# see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33144
-	if(GCC_VERSION VERSION_EQUAL "4.2.1")
-		message(STATUS "Detected gcc version 4.2.1; -march=native switch is disabled because of gcc bug.")
-		set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-	endif()
-endif()
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELEASE}")
-set(CMAKE_CXX_LDFLAGS_DEBUG "-g")
-set(CMAKE_CXX_LDFLAGS_RELWITHDEBINFO "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+# code should now compile with clang so forcing of gcc should not be necessary anymore
+# if(NOT CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Darwin")
+# 	# use gcc instead of llvm compiler on MacOS 10.7 (Darwin 11.x.y)
+# 	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "10.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "12.0.0")
+# 		message(STATUS "Detected MacOS 10.7: using gcc instead of llvm compiler.")
+# 		set(CMAKE_C_COMPILER gcc-4.2)
+# 		set(CMAKE_CXX_COMPILER g++-4.2)
+# 		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
+# 	endif()
+# 	# use gcc instead of llvm compiler on MacOS 10.8 (Darwin 12.x.y)
+# 	if(${CMAKE_HOST_SYSTEM_VERSION} VERSION_GREATER "11.999.999" AND ${CMAKE_HOST_SYSTEM_VERSION} VERSION_LESS "13.0.0")
+# 		message(STATUS "Detected MacOS 10.8: using gcc instead of llvm compiler.")
+# 		set(CMAKE_C_COMPILER gcc)
+# 		set(CMAKE_CXX_COMPILER g++)
+# 		set(CMAKE_COMPILER_IS_GNUCXX TRUE)
+# 	endif()
+# endif()
+# -march=native switch was disabled so no need anymore to handle the gcc 4.2.1 bug
+# if(CMAKE_COMPILER_IS_GNUCXX)
+# 	execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion OUTPUT_VARIABLE GCC_VERSION)
+# 	# workaround for bug concerning -march=native switch in gcc 4.2.1 shipped with MacOS 10.7
+# 	# see http://gcc.gnu.org/bugzilla/show_bug.cgi?id=33144
+# 	if(GCC_VERSION VERSION_EQUAL "4.2.1")
+# 		message(STATUS "Detected gcc version 4.2.1; -march=native switch is disabled because of gcc bug.")
+# 		set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+# 	endif()
+# endif()
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
 # report global build settings
 foreach(_LANG "C" "CXX")
 	message(STATUS "${_LANG} compiler ID is '${CMAKE_${_LANG}_COMPILER_ID} V${CMAKE_${_LANG}_COMPILER_VERSION}'.")
 	message(STATUS "Using ${_LANG} compiler '${CMAKE_${_LANG}_COMPILER}'.")
-	message(STATUS "Using ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'.")
+	message(STATUS "Using general ${_LANG} compiler flags '${CMAKE_${_LANG}_FLAGS}'.")
 endforeach()
 unset(_LANG)
 message(STATUS "Build type is '${CMAKE_BUILD_TYPE}'.")
-message(STATUS "Using CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
+message(STATUS "Using additional CXX compiler flags '${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}' "
 	"for build type ${CMAKE_BUILD_TYPE}.")
-message(STATUS "Using linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
+message(STATUS "Using additional linker flags '${CMAKE_CXX_LDFLAGS_${CMAKE_BUILD_TYPE}}' "
 	"for build type ${CMAKE_BUILD_TYPE}.")
 if(DEBUG_OUTPUT)
 	include(CMakePrintSystemInformation)
+endif()
+
+
+# detect some compiler/STL features
+# test whether std::complex provides real and imag accessors
+check_cxx_source_compiles("#include <complex>
+int main() { std::complex<double> a; a.real() = 0; }" COMPILER_PROVIDES_STD_COMPLEX_ACCESSORS)
+if(COMPILER_PROVIDES_STD_COMPLEX_ACCESSORS)
+	add_definitions(-DCOMPILER_PROVIDES_STD_COMPLEX_ACCESSORS)
 endif()
 
 
@@ -154,6 +161,7 @@ set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 message(STATUS "Using library output path '${LIBRARY_OUTPUT_PATH}'.")
 set(EXECUTABLE_OUTPUT_PATH "${CMAKE_BINARY_DIR}/bin")
 message(STATUS "Using executable output path '${EXECUTABLE_OUTPUT_PATH}'.")
+
 
 # setup Boost
 # environment variable $BOOST_ROOT is expected to point to non-standard locations
@@ -237,12 +245,6 @@ if(NOT ROOT_VERSION VERSION_LESS "5.27.06")
 	add_definitions(-DUSE_STD_COMPLEX_TREE_LEAFS)
 endif()
 add_feature_info(Complex_tree_leaf USE_STD_COMPLEX_TREE_LEAFS "The Complex_tree_leaf feature provides ROOT data formats for amplitudes and amplitude integrals.")
-# TFitResult produces a name clash for ROOT versions from 5.25.0 on
-if(ROOT_VERSION VERSION_LESS "5.25.00")
-	set(USE_TFITRESULT TRUE)
-	add_definitions(-DUSE_TFITRESULT)
-endif()
-add_feature_info(TFitResult USE_TFITRESULT "The TFitResult feature provides legacy fit result class.")
 
 
 # setup CUDA
@@ -442,7 +444,7 @@ if(GIT_FOUND)
 		OUTPUT_VARIABLE GIT_HASH
 		RESULT_VARIABLE _GIT_LOG_RETURN
 		OUTPUT_STRIP_TRAILING_WHITESPACE
-	)
+		)
 	if(NOT _GIT_LOG_RETURN)
 		message(STATUS "Git repository hash is '${GIT_HASH}'.")
 	else()
@@ -522,6 +524,9 @@ set(ROOTPWA_LIBS
 set(GEN_INCLUDE_DIR
 	${CMAKE_SOURCE_DIR}/generators
 	)
+set(ROOTPWA_NBPSGEN_LIBS
+	RootPwaNBPSGen
+	)
 set(ROOTPWAGEN_LIBS
 	RootPwaGen
 	)
@@ -544,23 +549,8 @@ else()
 	set(CUDA_LIBS)
 endif()
 
-#!!! this should be removed
-set(SCRIPTS_INCLUDE_DIR
-	${CMAKE_SOURCE_DIR}/src/rootscripts
-	)
-set(ROOTPWASCRIPTS_LIBS
-	RootPwaScripts
-	)
-
 
 # build subprojects
-
-# PWA2000
-option(USE_PWA2000 "En/Disables compilation of PWA2000 components" ON)
-add_feature_info(PWA2000 USE_PWA2000 "The PWA2000 feature provides legacy libraries.")
-if(USE_PWA2000)
-	add_subdirectory(pwa2000)
-endif()
 
 # Utilities
 add_subdirectory(utilities)
@@ -576,27 +566,17 @@ add_subdirectory(amplitude)
 # RootPwa
 add_subdirectory(src)
 
-# compile rootscripts into a library since they are linked by the gui
-#!!! this should be removed
-add_subdirectory(src/rootscripts)
-
 # RootPwaTools
 add_subdirectory(tools)
 
 # RootPwaGen
 add_subdirectory(generators)
 
-# RootPwaKey
-add_subdirectory(keygen)
-
 # Fortran
 #add_subdirectory(fortran)
 
 # Relativic Amplitudes
 add_subdirectory(relampl)
-
-# gui
-add_subdirectory(gui/src)
 
 # massdep
 #add_subdirectory(massdep)
@@ -634,4 +614,6 @@ feature_summary(WHAT DISABLED_FEATURES
 message(STATUS "")
 message(STATUS ">>> Done.")
 message(STATUS "Run 'make' to build the project.")
-message(STATUS "On this machine using 'make -j${NMB_CPU_CORES}' can speedup compilation considerably.")
+if(${NMB_CPU_CORES} GREATER 1)
+	message(STATUS "On this machine using 'make -j${NMB_CPU_CORES}' can speedup compilation considerably.")
+endif()

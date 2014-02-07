@@ -32,6 +32,7 @@
 //-------------------------------------------------------------------------
 
 #include "diffractiveDissVertex.h"
+#include "nonInteractionVertex.h"
 #include "isobarDecayTopology.h"
 #include "particleDataTable.h"
 #include "spinUtils.hpp"
@@ -414,6 +415,16 @@ isobarDecayTopology::subDecay(const nodeDesc& startNd,
 {
 	isobarDecayTopology subTopo(decayTopology::subDecay(startNd, linkToParentTopo));
 	subTopo.name() = "\"" + vertex(startNd)->inParticles()[0]->qnSummary() + "\"";
+	return subTopo;
+}
+
+
+isobarDecayTopology
+isobarDecayTopology::subDecayConsistent(const isobarDecayVertexPtr& startVertex)
+{
+	isobarDecayTopology subTopo = subDecay(startVertex);
+	nonInteractionVertexPtr prodVertex = createNonInteractionVertex(startVertex->parent());
+	subTopo.setProductionVertex(prodVertex);
 	return subTopo;
 }
 

@@ -179,6 +179,14 @@ void MyMainFrame::PrintSelected()
    gph->SetMarkerSize(0.5);
    gph->SetMarkerColor(colour);
    gph->SetLineColor(colour);
+
+   TGraphErrors* gphP1 = (TGraphErrors*)gph->Clone("gph+1");
+   TGraphErrors* gphM1 = (TGraphErrors*)gph->Clone("gph+1");
+   gphP1->SetMarkerColor(2);
+   gphP1->SetLineColor(2);
+   gphM1->SetMarkerColor(3);
+   gphM1->SetLineColor(3);
+
    TGraphErrors* gRe = new TGraphErrors(n);
    graphName.str("");
    graphName.clear();
@@ -281,17 +289,17 @@ void MyMainFrame::PrintSelected()
 		      pherr);
      
      // add point +- 360 degree
-     gph->SetPoint(i*3+1,
+     gphP1->SetPoint(i*3+1,
 		 result->massBinCenter()*0.001,
 		 ph+360);
-     gph->SetPointError(i*3+1,
+     gphP1->SetPointError(i*3+1,
 		      binwidth*0.5,
 		      pherr);
      
-     gph->SetPoint(i*3+2,
+     gphM1->SetPoint(i*3+2,
 		 result->massBinCenter()*0.001,
 		 ph-360);
-     gph->SetPointError(i*3+2,
+     gphM1->SetPointError(i*3+2,
 			binwidth*0.5,
 			pherr);
      
@@ -326,6 +334,10 @@ void MyMainFrame::PrintSelected()
    gph->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");
    gph->GetYaxis()->SetTitle("Phase difference");
    gph->GetYaxis()->SetRangeUser(-270,270);
+
+   gphP1->Draw("PSAME");
+   gphM1->Draw("PSAME");
+
    c->cd(3);
    g1->Draw("AP");
    g1->GetXaxis()->SetTitle("5#pi mass (GeV/c^2)");

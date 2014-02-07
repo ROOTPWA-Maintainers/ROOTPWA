@@ -36,6 +36,7 @@
 #include "physUtils.hpp"
 #include "isobarDecayVertex.h"
 #include "particleDataTable.h"
+#include "phaseSpaceIntegral.h"
 #include "massDependence.h"
 
 
@@ -91,25 +92,36 @@ complex<double>
 relativisticBreitWigner::amp(const isobarDecayVertex& v)
 {
 	const particlePtr& parent = v.parent();
+	const particlePtr& daughter1 = v.daughter1();
+	const particlePtr& daughter2 = v.daughter2();
 
-	// get Breit-Wigner parameters
-	const double       M      = parent->lzVec().M();         // parent mass
-	const double       m1     = v.daughter1()->lzVec().M();  // daughter 1 mass
-	const double       m2     = v.daughter2()->lzVec().M();  // daughter 2 mass
-	const double       q      = breakupMomentum(M,  m1, m2);
-	const double       M0     = parent->mass();              // resonance peak position
-	const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
-	// !NOTE! the following is incorrect but this is how it was done in PWA2000
-	const double       q0     = sqrt(fabs(q02));
-	const double       Gamma0 = parent->width();             // resonance peak width
-	const unsigned int L      = v.L();
+	complex<double> bw;
+	if(daughter1->isStable() and daughter2->isStable()) {
 
-	const complex<double> bw = breitWigner(M, M0, Gamma0, L, q, q0);
-	if (_debug)
-		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-		           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
-		           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
-		           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
+		// get Breit-Wigner parameters
+		const double       M      = parent->lzVec().M();         // parent mass
+		const double       m1     = daughter1->lzVec().M();  // daughter 1 mass
+		const double       m2     = daughter2->lzVec().M();  // daughter 2 mass
+		const double       q      = breakupMomentum(M,  m1, m2);
+		const double       M0     = parent->mass();              // resonance peak position
+		const double       q02    = breakupMomentumSquared(M0, m1, m2, true);
+		// !NOTE! the following is incorrect but this is how it was done in PWA2000
+		const double       q0     = sqrt(fabs(q02));
+		const double       Gamma0 = parent->width();             // resonance peak width
+		const unsigned int L      = v.L();
+
+		bw = breitWigner(M, M0, Gamma0, L, q, q0);
+		if (_debug)
+			printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
+			           << " GeV/c^2, Gamma_0 = " << maxPrecision(Gamma0) << " GeV/c^2, L = " << spinQn(L)
+			           << ", q = " << maxPrecision(q) << " GeV/c, q0 = "
+			           << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(bw) << endl;
+	} else {
+
+		bw = (*phaseSpaceIntegral::instance())(v);
+
+	}
+
 	return bw;
 }
 
@@ -383,43 +395,37 @@ piPiSWaveAuMorganPenningtonKachaev::piPiSWaveAuMorganPenningtonKachaev()
 complex<double>
 rhoPrimeMassDep::amp(const isobarDecayVertex& v)
 {
-	const particlePtr& parent = v.parent();
 
 	// get Breit-Wigner parameters
-	const double M   = parent->lzVec().M();                 // parent mass
-	const double m1  = v.daughter1()->lzVec().M();          // daughter 1 measured/assumed mass
-	const double m2  = v.daughter2()->lzVec().M();          // daughter 2 measured/assumed mass
-	const double q   = breakupMomentum(M, m1, m2);
-	// const double M0  = parent->mass();                      // resonance peak position
-	// const double q02 = breakupMomentumSquared(M0, m1, m2, true);
-	// const double q0  = sqrt(fabs(q02));  // !NOTE! this is incorrect but this is how it was done in PWA2000
-	const unsigned int L = v.L();
+	const double M   = v.parent()->lzVec().M();                 // parent mass
 
 	// rho' parameters
 	const double M01     = 1.465;  // rho(1450) mass [GeV/c^]
 	const double Gamma01 = 0.235;  // rho(1450) width [GeV/c^]
 	const double M02     = 1.700;  // rho(1700) mass [GeV/c^]
 	const double Gamma02 = 0.220;  // rho(1700) width [GeV/c^]
-	// const double M02     = 1.720;  // rho(1700) mass; PDG12 [GeV/c^]
-	// const double Gamma02 = 0.250;  // rho(1700) width; PDG12 [GeV/c^]
-	const double q102    = breakupMomentumSquared(M01, m1, m2, true);
-	const double q10     = sqrt(fabs(q102));
-	const double q202    = breakupMomentumSquared(M02, m1, m2, true);
-	const double q20     = sqrt(fabs(q202));
 
 	// const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q0);
 	// const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q0);
-	const complex<double> bw1 = breitWigner(M, M01, Gamma01, L, q, q10);
-	const complex<double> bw2 = breitWigner(M, M02, Gamma02, L, q, q20);
-	const complex<double> amp = (4 * bw1 - 3 * bw2) / 7;
+
+	// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
+	const double          A1  = M01 * Gamma01;
+	const double          B1  = M01 * M01 - M * M;
+	const complex<double> bw1 = (A1 / (B1 * B1 + A1 * A1)) * complex<double>(B1, A1);
+	// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+
+	// A / (B - iA) = (A / (B^2 + A^2)) * (B + iA)
+	const double          A2  = M02 * Gamma02;
+	const double          B2  = M02 * M02 - M * M;
+	const complex<double> bw2 = (A2 / (B2 * B2 + A2 * A2)) * complex<double>(B2, A2);
+	// const complex<double> bw = (M0 * Gamma0) / (M0 * M0 - M * M - imag * M0 * Gamma0);
+
+	const complex<double> bw = (4 * bw1 - 3 * bw2) / 7;
 
 	if (_debug)
-		// printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, m_0 = " << maxPrecision(M0)
-		//            << " GeV/c^2, L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
-		//            << "q_0 = " << maxPrecision(q0) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
 		printDebug << name() << "(m = " << maxPrecision(M) << " GeV/c^2, "
-		           << "L = " << spinQn(L) << ", q = " << maxPrecision(q) << " GeV/c, "
-		           << "q1_0 = " << maxPrecision(q10) << " GeV/c, "
-		           << "q2_0 = " << maxPrecision(q20) << " GeV/c) = " << maxPrecisionDouble(amp) << endl;
-	return amp;
+		           << "GeV/c) = " << maxPrecisionDouble(bw) << endl;
+
+	return bw;
+
 }

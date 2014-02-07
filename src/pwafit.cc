@@ -22,7 +22,7 @@
 //
 // Description:
 //      fitting program for rootpwa
-//      minimizes TPWALikelihood function
+//      minimizes pwaLikelihood function
 //
 //
 // Author List:
@@ -51,8 +51,7 @@
 #include "TStopwatch.h"
 
 #include "conversionUtils.hpp"
-#include "TPWALikelihood.h"
-#include "TFitBin.h"
+#include "pwaLikelihood.h"
 #include "fitResult.h"
 #ifdef USE_CUDA
 #include "complex.cuh"
@@ -310,7 +309,7 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// setup likelihood function
 	printInfo << "creating and setting up likelihood function" << endl;
-	TPWALikelihood<complex<double> > L;
+	pwaLikelihood<complex<double> > L;
 	if (quiet)
 		L.setQuiet();
 	L.useNormalizedAmps(useNormalizedAmps);
@@ -368,8 +367,6 @@ main(int    argc,
 				printWarn << "cannot find start value tree '"<< valTreeName << "' in file "
 				          << "'" << startValFileName << "'" << endl;
 			else {
-				//startBin = new TFitBin();
-				//tree->SetBranchAddress("fitbin", &startBin);
 				startFitResult = new fitResult();
 				tree->SetBranchAddress(valBranchName.c_str(), &startFitResult);
 				// find tree entry which is closest to mass bin center
@@ -550,17 +547,14 @@ main(int    argc,
 		else {
 			// check whether output tree already exists
 			TTree*     tree;
-			TFitBin*   fitBinResult = new TFitBin();
 			fitResult* result       = new fitResult();
 			outFile->GetObject(valTreeName.c_str(), tree);
 			if (not tree) {
 				printInfo << "file '" << outFileName << "' is empty. "
 				          << "creating new tree '" << valTreeName << "' for PWA result." << endl;
 				tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
-				tree->Branch("fitbin",              &fitBinResult);  // depricated legacy branch
 				tree->Branch(valBranchName.c_str(), &result);
 			} else {
-				tree->SetBranchAddress("fitbin",              &fitBinResult);
 				tree->SetBranchAddress(valBranchName.c_str(), &result);
 			}
 
@@ -580,8 +574,8 @@ main(int    argc,
 					  // Note: SetErrorDef in ROOT does not work
 						fitParCovMatrix[i][j] = 0.5* minimizer->CovMatrix(i, j);
 				const unsigned int nmbWaves = L.nmbWaves() + 1;  // flat wave is not included in L.nmbWaves()
-				TCMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
-				TCMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
+				complexMatrix normIntegral(nmbWaves, nmbWaves);  // normalization integral over full phase space without acceptance
+				complexMatrix accIntegral (nmbWaves, nmbWaves);  // normalization integral over full phase space with acceptance
 				vector<double> phaseSpaceIntegral;
 				L.getIntegralMatrices(normIntegral, accIntegral, phaseSpaceIntegral);
 				const int normNmbEvents = (useNormalizedAmps) ? 1 : L.nmbEvents();  // number of events to normalize to
@@ -593,8 +587,8 @@ main(int    argc,
 				     << "    number of wave names ................... " << nmbWaves                      << endl
 				     << "    number of cov. matrix indices .......... " << fitParCovMatrixIndices.size() << endl
 				     << "    dimension of covariance matrix ......... " << fitParCovMatrix.GetNrows() << " x " << fitParCovMatrix.GetNcols() << endl
-				     << "    dimension of normalization matrix ...... " << normIntegral.nrows()       << " x " << normIntegral.ncols()       << endl
-				     << "    dimension of acceptance matrix ......... " << accIntegral.nrows()        << " x " << accIntegral.ncols()        << endl;
+				     << "    dimension of normalization matrix ...... " << normIntegral.nRows()       << " x " << normIntegral.nCols()       << endl
+				     << "    dimension of acceptance matrix ......... " << accIntegral.nRows()        << " x " << accIntegral.nCols()        << endl;
 				result->fill(L.nmbEvents(),
 				             normNmbEvents,
 				             massBinCenter,
@@ -609,67 +603,6 @@ main(int    argc,
 				             converged,
 				             hasHesse);
 				//printDebug << *result;
-			}
-
-			if (1) {
-				// get data structures to construct TFitBin
-				vector<TComplex>       prodAmplitudes;  // production amplitudes
-				vector<pair<int,int> > indices;         // indices for error matrix access
-				vector<TString>        waveNames;       // contains rank information
-				{
-					vector<std::complex<double> > V;
-					vector<string>                names;
-					L.buildProdAmpArrays(minimizer->X(), V, indices, names, true);
-					// convert to TComplex;
-					for (unsigned int i = 0; i < V.size(); ++i)
-						prodAmplitudes.push_back(TComplex(V[i].real(), V[i].imag()));
-					assert(indices.size() == prodAmplitudes.size());
-					for(unsigned int i = 0; i < names.size(); ++i)
-						waveNames.push_back(TString(names[i].c_str()));
-				}
-				vector<TString> waveTitles;  // without rank
-				{
-					const vector<string>& titles = L.waveNames();
-					for(unsigned int i = 0; i < titles.size(); ++i)
-						waveTitles.push_back(TString(titles[i].c_str()));
-					waveTitles.push_back("flat");
-				}
-				// error matrix
-				TMatrixD errMatrix(nmbPar, nmbPar);
-				for(unsigned int i = 0; i < nmbPar; ++i)
-					for(unsigned int j = 0; j < nmbPar; ++j)
-						errMatrix[i][j] = minimizer->CovMatrix(i, j);
-				// normalization integral and acceptance matrix
-				cout << " setting up integrals" << endl;
-				const unsigned int n = waveTitles.size();
-				TCMatrix           integralMatrix(n, n);
-				TCMatrix           accMatrix     (n, n);
-				vector<double>     phaseSpaceIntegral;
-				L.getIntegralMatrices(integralMatrix, accMatrix, phaseSpaceIntegral);
-				//integralMatrix.Print();
-				// representation of number of events depends on whether normalization was done
-				const int nmbEvt = (useNormalizedAmps) ? 1 : L.nmbEvents();
-
-				cout << "filling TFitBin:" << endl
-				     << "    number of fit parameters ........... " << nmbPar                 << endl
-				     << "    number of production amplitudes .... " << prodAmplitudes.size()  << endl
-				     << "    number of indices .................. " << indices.size()         << endl
-				     << "    number of wave names (with rank) ... " << waveNames.size()       << endl
-				     << "    number of wave titles (w/o rank) ... " << waveTitles.size()      << endl
-				     << "    dimension of error matrix .......... " << errMatrix.GetNrows()   << endl
-				     << "    dimension of integral matrix ....... " << integralMatrix.nrows() << endl
-				     << "    dimension of acceptance matrix ..... " << accMatrix.nrows()      << endl;
-				fitBinResult->fill(prodAmplitudes,
-				                   indices,
-				                   waveNames,
-				                   nmbEvt,
-				                   L.nmbEvents(), // raw number of data events
-				                   massBinCenter,
-				                   integralMatrix,
-				                   errMatrix,
-				                   minimizer->MinValue(),
-				                   rank);
-				//fitBinResult->PrintParameters();
 			}
 
 			// write result to file

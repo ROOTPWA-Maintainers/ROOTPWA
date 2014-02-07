@@ -246,6 +246,37 @@ ROOTPWA comes with some example `setup*.sh` scripts that define set all the abov
     `sftp> exit`
 
 
+### Advanced Compilation Options ###
+
+
+#### 32bit Compilation ####
+
+The default behavior is that the build system determines, whether it runs on a 32 or 64bit system, and chooses the compilation options accordingly. However, sometimes it is required to compile in 32bit mode on a 64bit platform. This is easily achieved by only slightly modifying step 2 of the above build process
+
+    `> cd ${ROOTPWA}/build`
+
+    `> CXXFLAGS=-m32 cmake ..`
+
+    `> make`
+
+This injects the -m32 flag into all the necessary compiler invocations. Running in 32bit mode you have to make sure, that also _all_ other libraries ROOTPWA is linked against are compiled in 32bit mode. This is usually obtained by running
+
+    `> ./configure --host=i686-linux-gnu "CFLAGS=-m32" "CXXFLAGS=-m32" "LDFLAGS=-m32"`
+
+instead of the normal configure call.
+
+
+#### Using other Compilers ####
+
+Other compilers like LLVM Clang are supported as long as they understand gcc compiler flags. In order to switch the compiler suite you have to define the environment variables CC and CXX. For example, switching to LLVM Clang would be achieved by executing
+
+    `> export CC=$(which clang)`
+
+    `> export CXX=$(which clang++)`
+
+prior to initializing the build directory by calling cmake.
+
+
 ***
 
 

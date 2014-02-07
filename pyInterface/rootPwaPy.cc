@@ -21,6 +21,14 @@
 #include "waveDescription_py.h"
 #include "amplitudeTreeLeaf_py.h"
 #include "ampIntegralMatrix_py.h"
+#include "phaseSpaceIntegral_py.h"
+#include "nBodyPhaseSpaceGen_py.h"
+#include "randomNumberGenerator_py.h"
+#include "generatorManager_py.h"
+#include "generator_py.h"
+#include "generatorParameters_py.h"
+#include "generatorPickerFunctions_py.h"
+#include "beamAndVertexGenerator_py.h"
 #include "utils_py.h"
 
 namespace bp = boost::python;
@@ -45,6 +53,14 @@ BOOST_PYTHON_MODULE(libRootPwaPy){
 	rpwa::py::exportWaveDescription();
 	rpwa::py::exportAmplitudeTreeLeaf();
 	rpwa::py::exportAmpIntegralMatrix();
+	rpwa::py::exportPhaseSpaceIntegral();
+	rpwa::py::exportNBodyPhaseSpaceGen();
+	rpwa::py::exportRandomNumberGenerator();
+	rpwa::py::exportGeneratorManager();
+	rpwa::py::exportGenerator();
+	rpwa::py::exportGeneratorParameters();
+	rpwa::py::exportGeneratorPickerFunctions();
+	rpwa::py::exportBeamAndVertexGenerator();
 	rpwa::py::exportUtils();
 
 }

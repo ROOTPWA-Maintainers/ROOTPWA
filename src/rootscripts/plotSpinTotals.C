@@ -35,20 +35,20 @@
 #include <sstream>
 #include <vector>
 
-#include "TFile.h"
-#include "TStyle.h"
-#include "TString.h"
-#include "TCanvas.h"
-#include "TROOT.h"
-#include "TMultiGraph.h"
-#include "TGraphErrors.h"
-#include "TAxis.h"
-#include "TLine.h"
-#include "TLegend.h"
+#include <TAxis.h>
+#include <TCanvas.h>
+#include <TFile.h>
+#include <TGraphErrors.h>
+#include <TLine.h>
+#include <TLegend.h>
+#include <TMultiGraph.h>
+#include <TROOT.h>
+#include <TStyle.h>
+#include <TString.h>
+#include <TTree.h>
 
 #include "reportingUtils.hpp"
 #include "fitResult.h"
-#include "plotSpinTotals.h"
 
 
 using namespace std;
@@ -56,13 +56,13 @@ using namespace rpwa;
 
 
 vector<pair<string, TVirtualPad*> >
-plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
-               TTree**            trees,          // array of fitResult trees
-               const int*         colors,         // array of line and marker colors
-               const double       yAxisRangeMax,  // if != 0; range of y-axis is not allowed to be larger than this value
-               const bool         drawLegend,     // if set legend is drawn
-               const string&      outFileName,
-               const string&      branchName)
+plotSpinTotals(const unsigned int nmbTrees,              // number of fitResult trees
+	       TTree**            trees,                 // array of fitResult trees
+	       const int*         colors        = 0,     // array of line and marker colors
+	       const double       yAxisRangeMax = 0,     // if != 0; range of y-axis is limited to this value
+	       const bool         drawLegend    = true,  // if set legend is drawn
+	       const string&      outFileName   = "spinTotals.root",
+	       const string&      branchName    = "fitResult_v2")
 {
 	vector<pair<string, TVirtualPad*> > wavePads;
 
@@ -289,4 +289,29 @@ plotSpinTotals(const unsigned int nmbTrees,       // number of fitResult trees
 		outFile->Close();
   
 	return wavePads;
+}
+
+
+vector<pair<string, TVirtualPad*> >
+plotSpinTotals(vector<TTree*>&     trees,                 // array of fitResult trees
+               const vector<int>&      colors,                // array of line and marker colors
+               const double            yAxisRangeMax = 0,     // if != 0; range of y-axis is limited to this value
+               const bool              drawLegend    = true,  // if set legend is drawn
+               const string&           outFileName   = "spinTotals.root",
+               const string&           branchName    = "fitResult_v2")
+{
+  return plotSpinTotals(trees.size(), &(*(trees.begin())), &(*(colors.begin())),
+			yAxisRangeMax, drawLegend, outFileName, branchName);
+}
+
+
+vector<pair<string, TVirtualPad*> >
+plotSpinTotals(TTree*             tree,                    // fitResult tree
+               const int          color         = kBlack,      // color of line and marker
+               const double       yAxisRangeMax = 0,           // if != 0; range of y-axis is limited to this value
+               const bool         drawLegend    = true,        // if set legend is drawn
+               const string&      outFileName   = "spinTotals.root",
+               const string&      branchName    = "fitResult_v2")
+{
+  return plotSpinTotals(1, &tree, &color, yAxisRangeMax, drawLegend, outFileName, branchName);
 }

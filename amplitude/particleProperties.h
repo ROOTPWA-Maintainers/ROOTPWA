@@ -133,6 +133,8 @@ namespace rpwa {
 		void         addDecayMode    (const decayMode& decay) { _decayModes.push_back(decay); }  ///< adds decay channel into list of allowed decay modes
 		void         deleteDecayModes()                       { _decayModes.clear();          }  ///< deletes all decay modes
 
+		bool isStable() const; ///< returns true if the particle can be considered stable (only the case for pions at this point)
+
 		bool fillFromDataTable(const std::string& name,
 		                       const bool         warnIfNotExistent = true);  ///< sets particle properties from entry in particle data table
 

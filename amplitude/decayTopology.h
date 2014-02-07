@@ -140,6 +140,8 @@ namespace rpwa {
 		bool revertMomenta();  ///< resets momenta to the values of last event read
 		bool revertMomenta(const std::vector<unsigned int>& fsPartPermMap);  ///< resets momenta to the values of last event read, but reordering them according to index map
 
+		void saveDecayToVertices(const decayTopologyPtr decay);
+
 
 		virtual std::ostream& print(std::ostream& out) const;  ///< prints decay topology in human-readable form
 		virtual std::ostream& printProdKinParticles (std::ostream& out) const;  ///< prints production kinematics data in human-readable form

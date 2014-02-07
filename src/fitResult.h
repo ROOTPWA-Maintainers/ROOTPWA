@@ -52,11 +52,7 @@
 
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
-#include "TCMatrix.h"
-#include "TFitBin.h"
-
-// enable copying from TFitResult for older ROOT versions
-#include "TFitResult.h"
+#include "complexMatrix.h"
 
 
 namespace rpwa {
@@ -96,11 +92,6 @@ namespace rpwa {
 
 		fitResult();
 		fitResult(const fitResult& result);
-		fitResult(const TFitBin&   fitBin);
-		// enable copying from TFitResult for older ROOT versions
-#ifdef USE_TFITRESULT
-		fitResult(const TFitResult& result);
-#endif
 		virtual ~fitResult();
 
 		fitResult* variedProdAmps();  ///< create a copy with production amplitudes varied according to covariance matrix
@@ -115,7 +106,7 @@ namespace rpwa {
 		          const std::vector<std::string>&           prodAmpNames,	           // names of production amplitudes used in fit
 		          const TMatrixT<double>&                   fitParCovMatrix,         // covariance matrix of fit parameters
 		          const std::vector<std::pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix
-		          const TCMatrix&                           normIntegral,            // normalization integral matrix
+		          const rpwa::complexMatrix&                normIntegral,            // normalization integral matrix
 		          const std::vector<double>&                phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
 		          const bool                                converged,               // indicates whether fit has converged (according to minimizer)
 		          const bool                                hasHessian);             // indicates whether Hessian matrix has been calculated successfully
@@ -123,6 +114,7 @@ namespace rpwa {
 		double       massBinCenter() const { return _massBinCenter;     }  ///< returns center value of mass bin
 		double       logLikelihood() const { return _logLikelihood;     }  ///< returns log(likelihood) at maximum
 		double       evidence     () const;                                ///< returns the model evidence (OccamFactorMethod)
+		std::vector<double> evidenceComponents() const; //< returns a vector { maxLogL, ln(sqrt((2\pi)^m*cov)), -ln(V_A^k), \sum(S_\alpha) }, i.e. evidence = sum(evidenceComponents[i]) for i in {1,2,3,4}
 		bool         converged    () const { return _converged;         }  ///< returns whether fit has converged (according to minimizer)
 		bool         hasHessian   () const { return _hasHessian;        }  ///< returns whether Hessian matrix has been calculated successfully
 		unsigned int rank         () const { return _rank;              }  ///< returns rank of fit
@@ -208,7 +200,7 @@ namespace rpwa {
 		const std::vector<std::string>&              waveNames         () const { return _waveNames;              }
 		const TMatrixT<Double_t>&                    fitParCovMatrix   () const { return _fitParCovMatrix;        }
 		const std::vector<std::pair<Int_t, Int_t> >& fitParCovIndices  () const { return _fitParCovMatrixIndices; }
-		const TCMatrix&                              normIntegralMatrix() const { return _normIntegral;           }
+		const rpwa::complexMatrix&                   normIntegralMatrix() const { return _normIntegral;           }
 		const std::map<Int_t, Int_t>&                normIntIndexMap   () const { return _normIntIndexMap;        }
 
 		inline std::ostream& printProdAmpNames(std::ostream& out = std::cout) const;  ///< prints all production amplitude names
@@ -234,7 +226,7 @@ namespace rpwa {
 		Bool_t                                _covMatrixValid;          ///< indicates whether bin has a valid covariance matrix
 		TMatrixT<Double_t>                    _fitParCovMatrix;         ///< covariance matrix of fit parameters
 		std::vector<std::pair<Int_t, Int_t> > _fitParCovMatrixIndices;  ///< indices of fit parameters for real and imaginary part in covariance matrix matrix
-		TCMatrix                              _normIntegral;            ///< normalization integral over full phase space without acceptance
+		rpwa::complexMatrix                   _normIntegral;            ///< normalization integral over full phase space without acceptance
 		std::map<Int_t, Int_t>                _normIntIndexMap;         ///< maps production amplitude indices to indices in normalization integral
 		std::vector<double>                   _phaseSpaceIntegral;      ///< diagonals of phase space integrals (without acceptance)
 		bool                                  _converged;               ///< indicates whether fit has converged (according to minimizer)
@@ -263,7 +255,7 @@ namespace rpwa {
 
 	public:
 
-		ClassDef(fitResult,4)
+		ClassDef(fitResult, 4)
 
 	};  // class fitResult
 

@@ -80,11 +80,6 @@ make_shared_library(
 
 # executables
 make_executable(addamp          addamp.cc          ${THIS_LIB})
-make_executable(reflect         reflect.cc         ${THIS_LIB})
-make_executable(plotGampMassDep plotGampMassDep.cc ${THIS_LIB})
 make_executable(key2tex         key2tex.cc         ${THIS_LIB})
 make_executable(addisokey       addisokey.cc       ${THIS_LIB})
-make_executable(evt2tree        evt2tree.cc        ${THIS_LIB})
-make_executable(binevt          binevt.cc          ${THIS_LIB})
 make_executable(mutator         mutator.cc         ${THIS_LIB})
-make_executable(getThresholds   getThresholds.cc   ${THIS_LIB})

@@ -49,18 +49,10 @@ set(INCLUDE_DIRECTORIES
 	)
 include_directories(${INCLUDE_DIRECTORIES})
 
-
-# source files that are compiled into library
-set(SOURCES
+set(SOURCES_NBPSG
 	nBodyPhaseSpaceGen.cc
-	productionAmp.cc
-	breitWignerProductionAmp.cc
-	partialWaveWeight.cc
-	diffractivePhaseSpace.cc
-	primaryVertexGen.cc
-	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
+	randomNumberGenerator.cc
 	)
-
 
 # ROOT dictionary
 set(ROOTPWAGEN_DICTIONARY ${CMAKE_CURRENT_BINARY_DIR}/rootPwaGenDict.cc)
@@ -79,8 +71,26 @@ root_generate_dictionary(
 	"nBodyPhaseSpaceGen.h"
 	"rootPwaGenLinkDef.h"
 	)
-set(SOURCES ${SOURCES} ${ROOTPWAGEN_DICTIONARY})
+set(SOURCES_NBPSG ${SOURCES_NBPSG} ${ROOTPWAGEN_DICTIONARY})
 
+# library
+set(NBPSG_LIB "RootPwaNBPSGen")
+make_shared_library(
+	"${NBPSG_LIB}"
+	"${SOURCES_NBPSG}"
+	"${ROOT_LIBS}"
+	)
+
+
+# source files that are compiled into library
+set(SOURCES
+	generator.cc
+	generatorManager.cc
+	diffractivePhaseSpace.cc
+	beamAndVertexGenerator.cc
+	generatorPickerFunctions.cc
+	plotWeightedEvts.C  # this helper is included to the library to make it available to the gui
+	)
 
 # library
 set(THIS_LIB "RootPwaGen")
@@ -91,11 +101,14 @@ make_shared_library(
 	"${PWA2000_LIBS}"
 	"${ROOTPWA_LIBS}"
 	"${ROOTPWATOOLS_LIBS}"
+	"${NBPSG_LIB}"
 	)
 
 
 # executables
 make_executable(genpw       genpw.cc           ${THIS_LIB} "${Libconfig_LIBS}")
 make_executable(evtweight   evtweight.cc       ${THIS_LIB} "${AMPLITUDE_LIBS}")
-make_executable(plotBWAmp   plotBWAmp.cc       ${THIS_LIB})
 make_executable(doPlotWEvts plotWeightedEvts.C ${THIS_LIB})
+
+# build tests
+add_subdirectory(test)

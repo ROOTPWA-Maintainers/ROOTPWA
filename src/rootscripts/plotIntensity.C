@@ -34,35 +34,38 @@
 #include <iostream>
 #include <sstream>
 
-#include "TGraphErrors.h"
-#include "TAxis.h"
-#include "TLine.h"
-#include "TPad.h"
-#include "TLegend.h"
-#include "TList.h"
+#include <TAxis.h>
+#include <TGraphErrors.h>
+#include <TLegend.h>
+#include <TLine.h>
+#include <TList.h>
+#include <TMultiGraph.h>
+#include <TPad.h>
+#include <TTree.h>
 
+#include "fitResult.h"
 #include "reportingUtils.hpp"
-#include "plotIntensity.h"
 
 
 using namespace std;
 using namespace rpwa;
 
+
 // signature with wave name
 TMultiGraph*
-plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
-              TTree**            trees,          // array of fitResult trees
-              const std::string& waveName,       // wave index
-              const bool         saveEps,        // if set, EPS file with name wave ID
-              const int*         graphColors,    // array of colors for graph line and marker
-              const double*      graphScales,    // array of scales for graphgroups
-              const bool         drawLegend,     // if set legend is drawn
-              const string&      graphTitle,     // name and title of graph (default is wave IDs)
-              const char*        drawOption,     // draw option for graph
-              const double       normalization,  // scale factor for intensities
-              const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
-              const string&      selectExpr,     // TTree::Draw() selection expression
-              const string&      branchName)     // fitResult branch name
+plotIntensity(const unsigned int nmbTrees,                        // number of fitResult trees
+              TTree**            trees,                           // array of fitResult trees
+              const string&      waveName,                        // wave name
+              const bool         saveEps       = false,           // if set, EPS file with name wave ID is created
+              const int*         graphColors   = NULL,            // array of colors for graph line and marker
+              const double*      graphScales   = NULL,            // array of scales for graphgroups
+              const bool         drawLegend    = true,            // if set legend is drawn
+              const string&      graphTitle    = "",              // name and title of graph (default is wave ID)
+              const char*        drawOption    = "AP",            // draw option for graph
+              const double       normalization = 1,               // scale factor for intensities
+              const double       yAxisRangeMax = 0,               // if != 0; range of y-axis is limited to this value
+              const string&      selectExpr    = "",              // TTree::Draw() selection expression
+              const string&      branchName    = "fitResult_v2")  // fitResult branch name
 {
 
 	for (unsigned int i = 0; i < nmbTrees; ++i)
@@ -133,12 +136,18 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 		}
 
 		for (int j = 0; j < nmbBins; ++j) {
+//			if(trees[i]->GetV3()[j] * 0.001 <= 1.35) continue;
+//			if(trees[i]->GetV3()[j] * 0.001 >= 4.05) continue;
+
+//			if(trees[i]->GetV3()[j] * 0.001 <= 1.25) continue;
+//			if(trees[i]->GetV3()[j] * 0.001 >= 3.15) continue;
 			y	.push_back(trees[i]->GetV1()[j] * scale);  // scale intensities
 			// if (y[y.size()-1] == 0){ // remove 0 entries
 			// 	y.pop_back();
 			// 	continue;
 			// }
 			x	.push_back(trees[i]->GetV3()[j] * 0.001);  // convert mass to GeV
+//			xErr.push_back(0.015);
 			xErr.push_back(0);
 			yErr.push_back(trees[i]->GetV2()[j] * scale);  // scale intensity errors
 		}
@@ -177,6 +186,7 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 	// draw graph
 	graph->Draw(drawOption);
 	graph->GetXaxis()->SetTitle("Mass [GeV]");
+//	graph->GetXaxis()->SetRangeUser(1.3, 3.1);
 	graph->GetYaxis()->SetTitle("Intensity");
 	TLine line;
 	line.SetLineStyle(3);
@@ -204,20 +214,21 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 }
 
 // signature with wave index
+
 TMultiGraph*
-plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
-              TTree**            trees,          // array of fitResult trees
-              const int          waveIndex,      // wave index
-              const bool         saveEps,        // if set, EPS file with name wave ID
-              const int*         graphColors,    // array of colors for graph line and marker
-              const double*      graphScales,    // array of scales for graphgroups
-              const bool         drawLegend,     // if set legend is drawn
-              const string&      graphTitle,     // name and title of graph (default is wave IDs)
-              const char*        drawOption,     // draw option for graph
-              const double       normalization,  // scale factor for intensities
-              const double       yAxisRangeMax,  // if != 0; range of y-axis is limited to this value
-              const string&      selectExpr,     // TTree::Draw() selection expression
-              const string&      branchName)     // fitResult branch name
+plotIntensity(const unsigned int nmbTrees,                       // number of fitResult trees
+              TTree**            trees,                          // array of fitResult trees
+              const int          waveIndex,                      // wave index
+              const bool         saveEps       = false,          // if set, EPS file with name wave ID is created
+              const int*         graphColors   = NULL,           // array of colors for graph line and marker
+              const double*      graphScales   = NULL,           // array of scales for graphgroups
+              const bool         drawLegend    = true,           // if set legend is drawn
+              const string&      graphTitle    = "",             // name and title of graph (default is wave ID)
+              const char*        drawOption    = "AP",           // draw option for graph
+              const double       normalization = 1,              // scale factor for intensities
+              const double       yAxisRangeMax = 0,              // if != 0; range of y-axis is limited to this value
+              const string&      selectExpr    = "",             // TTree::Draw() selection expression
+              const string&      branchName    = "fitResult_v2") // fitResult branch name
 {
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
@@ -350,4 +361,80 @@ plotIntensity(const unsigned int nmbTrees,       // number of fitResult trees
 		gPad->SaveAs(((string)graph->GetName() + ".eps").c_str());
 
 	return graph;
+}
+
+
+TMultiGraph*
+plotIntensity(vector<TTree*>&             trees,                             // array of fitResult trees
+              const int                   waveIndex,                         // wave index
+              const bool                  saveEps       = false,             // if set, EPS file with name wave ID is created
+              const vector<int>&          graphColors   = vector<int>(),     // array of colors for graph line and marker
+              const vector<double>&       graphScales   = vector<double>(),  // array of scales for graphgroups
+              const bool                  drawLegend    = true,              // if set legend is drawn
+              const string&               graphTitle    = "",                // name and title of graph (default is wave ID)
+              const char*                 drawOption    = "AP",              // draw option for graph
+              const double                normalization = 1,                 // scale factor for intensities
+              const double                yAxisRangeMax = 0,                 // if != 0; range of y-axis is limited to this value
+              const string&               selectExpr    = "",                // TTree::Draw() selection expression
+              const string&               branchName    = "fitResult_v2")    // fitResult branch name
+{
+	return plotIntensity(trees.size(), &(*(trees.begin())), waveIndex, saveEps,
+	                     &(*(graphColors.begin())), &(*(graphScales.begin())), drawLegend, graphTitle, drawOption,
+	                     normalization, yAxisRangeMax, selectExpr, branchName);
+}
+
+
+TMultiGraph*
+plotIntensity(TTree*             tree,                            // fitResult tree
+              const int          waveIndex,                       // wave index
+              const bool         saveEps       = false,           // if set, EPS file with name wave ID is created
+              const int          graphColor    = kBlack,          // color of line and marker
+              const bool         drawLegend    = false,           // if set legend is drawn
+              const string&      graphTitle    = "",              // name and title of graph (default is wave ID)
+              const char*        drawOption    = "AP",            // draw option for graph
+              const double       normalization = 1,               // scale factor for intensities
+              const double       yAxisRangeMax = 0,               // if != 0; range of y-axis is limited to this value
+              const string&      selectExpr    = "",              // TTree::Draw() selection expression
+              const string&      branchName    = "fitResult_v2")  // fitResult branch name
+{
+	return plotIntensity(1, &tree, waveIndex, saveEps, &graphColor, NULL, drawLegend, graphTitle,
+	                     drawOption, normalization,  yAxisRangeMax, selectExpr, branchName);
+}
+
+
+TMultiGraph*
+plotIntensity(vector<TTree*>&            trees,                             // array of fitResult trees
+              const string&              waveName,                          // wave name
+              const bool                 saveEps       = false,             // if set, EPS file with name wave ID is created
+              const vector<int>&         graphColors   = vector<int>(),     // array of colors for graph line and marker
+              const vector<double>&      graphScales   = vector<double>(),  // array of scales for graphgroups
+              const bool                 drawLegend    = true,              // if set legend is drawn
+              const string&              graphTitle    = "",                // name and title of graph (default is wave ID)
+              const char*                drawOption    = "AP",              // draw option for graph
+              const double               normalization = 1,                 // scale factor for intensities
+              const double               yAxisRangeMax = 0,                 // if != 0; range of y-axis is limited to this value
+              const string&              selectExpr    = "",                // TTree::Draw() selection expression
+              const string&              branchName    = "fitResult_v2")    // fitResult branch name
+{
+	return plotIntensity(trees.size(), &(*(trees.begin())), waveName, saveEps,
+	                     &(*(graphColors.begin())), &(*(graphScales.begin())), drawLegend, graphTitle, drawOption,
+	                     normalization, yAxisRangeMax, selectExpr, branchName);
+}
+
+
+TMultiGraph*
+plotIntensity(TTree*             tree,                            // fitResult tree
+              const string&      waveName,                        // wave name
+              const bool         saveEps       = false,           // if set, EPS file with name wave ID is created
+              const int          graphColor    = kBlack,          // color of line and marker
+              const bool         drawLegend    = true,            // if set legend is drawn
+              const string&      graphTitle    = "",              // name and title of graph (default is wave ID)
+              const char*        drawOption    = "AP",            // draw option for graph
+              const double       normalization = 1,               // scale factor for intensities
+              const double       yAxisRangeMax = 0,               // if != 0; range of y-axis is limited to this value
+              const string&      selectExpr    = "",              // TTree::Draw() selection expression
+              const string&      branchName    = "fitResult_v2")  // fitResult branch name
+{
+	return plotIntensity(1, &tree, waveName, saveEps, &graphColor, NULL, drawLegend, graphTitle,
+	                     drawOption, normalization, yAxisRangeMax, selectExpr, branchName);
 }

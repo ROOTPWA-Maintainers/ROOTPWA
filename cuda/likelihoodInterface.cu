@@ -33,7 +33,7 @@
 
 #include <cutil_inline.h>
 
-#include "nDimArrayUtils.hpp"
+#include "arrayUtils.hpp"
 #include "reportingUtils.hpp"
 
 #include "conversionUtils.hpp"

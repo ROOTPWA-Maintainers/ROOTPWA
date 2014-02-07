@@ -91,6 +91,7 @@ isobarAmplitude::setDecayTopology(const isobarDecayTopologyPtr& decay)
 		throw;
 	}
 	_decay = decay;
+	_decay->saveDecayToVertices(_decay);
 }
 
 

@@ -34,15 +34,17 @@
 #include <iostream>
 #include <sstream>
 
-#include "TGraphErrors.h"
-#include "TAxis.h"
-#include "TPad.h"
-#include "TLine.h"
-#include "TLegend.h"
-#include "TList.h"
+#include <TAxis.h>
+#include <TGraphErrors.h>
+#include <TLegend.h>
+#include <TLine.h>
+#include <TList.h>
+#include <TMultiGraph.h>
+#include <TPad.h>
+#include <TTree.h>
 
+#include "fitResult.h"
 #include "reportingUtils.hpp"
-#include "plotCoherence.h"
 
 
 using namespace std;
@@ -51,17 +53,17 @@ using namespace rpwa;
 
 // signature with wave indices
 TMultiGraph*
-plotCoherence(const unsigned int nmbTrees,     // number of fitResult trees
-              TTree**            trees,        // array of fitResult trees
-              const int          waveIndexA,   // index of first wave
-              const int          waveIndexB,   // index of second wave
-              const bool         saveEps,      // if set, EPS file with name wave ID is created
-              const int*         graphColors,  // array of colors for graph line and marker
-              const bool         drawLegend,   // if set legend is drawn
-              const string&      graphTitle,   // name and title of graph (default is wave IDs)
-              const char*        drawOption,   // draw option for graph
-              const string&      selectExpr,   // TTree::Draw() selection expression
-              const string&      branchName)   // fitResult branch name
+plotCoherence(const unsigned int nmbTrees,             // number of fitResult trees
+              TTree**            trees,                // array of fitResult trees
+              const int          waveIndexA,           // index of first wave
+              const int          waveIndexB,           // index of second wave
+              const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
+              const int*         graphColors = NULL,   // array of colors for graph line and marker
+              const bool         drawLegend  = true,   // if set legend is drawn
+              const string&      graphTitle  = "",     // name and title of graph (default is wave IDs)
+              const char*        drawOption  = "AP",   // draw option for graph
+              const string&      selectExpr  = "",     // TTree::Draw() selection expression
+              const string&      branchName  = "fitResult_v2")
 {
 	for (unsigned int i = 0; i < nmbTrees; ++i)
 		if (!trees[i]) {
@@ -192,4 +194,71 @@ plotCoherence(const unsigned int nmbTrees,     // number of fitResult trees
 		gPad->SaveAs(((string)graph->GetName() + ".eps").c_str());
 
 	return graph;
+}
+
+
+TMultiGraph*
+plotCoherence(TTree*             tree,                 // fitResult tree
+              const int          waveIndexA,           // index of first wave
+              const int          waveIndexB,           // index of second wave
+              const bool         saveEps    = false,   // if set, EPS file with name waveId is created
+              const int          graphColor = kBlack,  // color of line and marker
+              const bool         drawLegend = false,   // if set legend is drawn
+              const string&      graphTitle = "",      // name and title of graph
+              const char*        drawOption = "AP",    // draw option for graph
+              const string&      selectExpr = "",      // TTree::Draw() selection expression
+              const string&      branchName = "fitResult_v2")
+{
+	return plotCoherence(1, &tree, waveIndexA, waveIndexB, saveEps, &graphColor,
+	                     drawLegend, graphTitle, drawOption, selectExpr, branchName);
+}
+
+
+// .............................................................................
+// signature with wave names
+TMultiGraph*
+plotCoherence(const unsigned int nmbTrees,             // number of fitResult trees
+              TTree**            trees,                // array of fitResult trees
+              const string&      waveNameA,            // name of first wave
+              const string&      waveNameB,            // name of second wave
+              const bool         saveEps     = false,  // if set, EPS file with name wave ID is created
+              const int*         graphColors = NULL,   // array of colors for graph line and marker
+              const bool         drawLegend  = true,   // if set legend is drawn
+              const string&      graphTitle  = "",     // name and title of graph (default is wave IDs)
+              const char*        drawOption  = "AP",   // draw option for graph
+              const string&      selectExpr  = "",     // TTree::Draw() selection expression
+              const string&      branchName  = "fitResult_v2")  // fitResult branch name
+{
+	if (!trees[0]) {
+		printErr << "null pointer to tree. exiting." << endl;
+		return 0;
+	}
+	// get wave indices (assumes same wave set in all trees)
+	rpwa::fitResult* massBin = new rpwa::fitResult();
+	trees[0]->SetBranchAddress(branchName.c_str(), &massBin);
+	trees[0]->GetEntry(0);
+	const int indexA = massBin->waveIndex(waveNameA);
+	const int indexB = massBin->waveIndex(waveNameB);
+	if ((indexA >= 0) && (indexB >= 0))
+		return plotCoherence(nmbTrees, trees, indexA, indexB, saveEps, graphColors, drawLegend,
+		                     graphTitle, drawOption, selectExpr, branchName);
+	printErr << "cannot find wave(s) in tree '" << trees[0]->GetName() << "'. exiting." << endl;
+	return 0;
+}
+
+
+TMultiGraph*
+plotCoherence(TTree*             tree,                 // fitResult tree
+              const string&      waveNameA,            // name of first wave
+              const string&      waveNameB,            // name of second wave
+              const bool         saveEps    = false,   // if set, EPS file with name waveId is created
+              const int          graphColor = kBlack,  // color of line and marker
+              const bool         drawLegend = false,   // if set legend is drawn
+              const string&      graphTitle = "",      // name and title of graph
+              const char*        drawOption = "AP",    // draw option for graph
+              const string&      selectExpr = "",      // TTree::Draw() selection expression
+              const string&      branchName = "fitResult_v2")
+{
+	return plotCoherence(1, &tree, waveNameA, waveNameB, saveEps, &graphColor,
+	                     drawLegend, graphTitle, drawOption, selectExpr, branchName);
 }

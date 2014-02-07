@@ -33,6 +33,7 @@
 //-----------------------------------------------------------
 
 
+#include <assert.h>
 #include <algorithm>
 #include <set>
 
@@ -42,9 +43,6 @@
 #include "TMath.h"
 #include "TMatrixDSym.h"
 #include "TRandom3.h"
-
-// PWA2000 classes
-#include "integral.h"
 
 #include "fitResult.h"
 
@@ -68,36 +66,6 @@ fitResult::fitResult()
 { }
 
 
-fitResult::fitResult(const TFitBin& fitBin)
-	: _nmbEvents             (fitBin.nmbEvents()),
-	  _normNmbEvents         (fitBin.normNmbEvents()),
-	  _massBinCenter         (fitBin.massBinCenter()),
-	  _logLikelihood         (fitBin.logLikelihood()),
-	  _rank                  (fitBin.rank()),
-	  _covMatrixValid        (fitBin.fitParCovMatrixValid()),
-	  _fitParCovMatrix       (fitBin.fitParCovMatrix()),
-	  _fitParCovMatrixIndices(fitBin.fitParCovIndices()),
-	  _normIntegral          (fitBin.normIntegral()),
-	  _normIntIndexMap       (fitBin.prodAmpIndexMap()),
-	  _converged             (true),
-	  _hasHessian            (false)
-{
-	_prodAmps = fitBin.prodAmps();
-	{
-		const unsigned int nmbAmpNames = fitBin.prodAmpNames().size();
-		_prodAmpNames.resize(nmbAmpNames, "");
-		for (unsigned int i = 0; i < nmbAmpNames; ++i)
-			_prodAmpNames[i] = fitBin.prodAmpNames()[i].Data();
-	}
-	{
-		const unsigned int nmbWaveNames = fitBin.waveNames().size();
-		_waveNames.resize(nmbWaveNames, "");
-		for (unsigned int i = 0; i < nmbWaveNames; ++i)
-			_waveNames[i] = fitBin.waveNames()[i].Data();
-	}
-}
-
-
 fitResult::fitResult(const fitResult& result)
 	: _nmbEvents             (result.nmbEvents()),
 	  _normNmbEvents         (result.normNmbEvents()),
@@ -116,26 +84,6 @@ fitResult::fitResult(const fitResult& result)
 	  _converged             (result._converged),
 	  _hasHessian            (result._hasHessian)
 { }
-
-
-// enable copying from TFitResult for older ROOT versions
-#ifdef USE_TFITRESULT
-fitResult::fitResult(const TFitResult& result)
-	: _nmbEvents             (result.nmbEvents()),
-	  _normNmbEvents         (result.normNmbEvents()),
-	  _massBinCenter         (result.massBinCenter()),
-	  _logLikelihood         (result.logLikelihood()),
-	  _rank                  (result.rank()),
-	  _prodAmps              (result.prodAmps()),
-	  _prodAmpNames          (result.prodAmpNames()),
-	  _waveNames             (result.waveNames()),
-	  _covMatrixValid        (result.covMatrixValid()),
-	  _fitParCovMatrix       (result.fitParCovMatrix()),
-	  _fitParCovMatrixIndices(result.fitParCovIndices()),
-	  _normIntegral          (result.normIntegralMatrix()),
-	  _normIntIndexMap       (result.normIntIndexMap())
-{ }
-#endif
 
 
 fitResult::~fitResult()
@@ -193,6 +141,17 @@ fitResult::variedProdAmps() {
 /// that no single wave can have more than the total intensity measured
 double
 fitResult::evidence() const
+{
+	double retval = 0.;
+	std::vector<double> summands = evidenceComponents();
+	for(unsigned int i = 0; i < summands.size(); ++i) {
+		retval += summands[i];
+	}
+	return retval;
+}
+
+std::vector<double>
+fitResult::evidenceComponents() const
 {
 	// find the thresholded production amplitudes, assume those are the
 	// ones with imaginary and real part equal to zero
@@ -283,7 +242,13 @@ fitResult::evidence() const
 		logprob += TMath::Log(prob);
 	}
 
-	return l + lvad - lva + logprob;
+	std::vector<double> retval;
+	retval.push_back(l);
+	retval.push_back(lvad);
+	retval.push_back(-lva);
+	retval.push_back(logprob);
+	return retval;
+
 }
 
 
@@ -679,7 +644,7 @@ fitResult::fill
  const vector<string>&           prodAmpNames,	          // names of production amplitudes used in fit
  const TMatrixT<double>&         fitParCovMatrix,         // covariance matrix of fit parameters
  const vector<pair<int, int> >&  fitParCovMatrixIndices,  // indices of fit parameters for real and imaginary part in covariance matrix matrix
- const TCMatrix&                 normIntegral,            // normalization integral matrix
+ const complexMatrix&            normIntegral,            // normalization integral matrix
  const vector<double>&           phaseSpaceIntegral,      // normalization integral over full phase space without acceptance
  const bool                      converged,
  const bool                      hasHessian)
@@ -703,7 +668,7 @@ fitResult::fill
 		_covMatrixValid = true;
 	else
 		_covMatrixValid = false;
-	_normIntegral.ResizeTo(normIntegral.nrows(), normIntegral.ncols());
+	_normIntegral.ResizeTo(normIntegral.nRows(), normIntegral.nCols());
 	_normIntegral       = normIntegral;
 	_phaseSpaceIntegral = phaseSpaceIntegral;
 
@@ -730,11 +695,11 @@ fitResult::fill
 		cout << "fitResult::fill(): warning: number of production amplitudes "
 		     << "(" << _prodAmps.size() << ") does not match number of "
 		     << "covariance matrix indices (" << _fitParCovMatrixIndices.size() << ")." << endl;
-	if (   ((int)_waveNames.size() != _normIntegral.nrows())
-	    or ((int)_waveNames.size() != _normIntegral.ncols()))
+	if (   ((int)_waveNames.size() != _normIntegral.nRows())
+	    or ((int)_waveNames.size() != _normIntegral.nCols()))
 		cout << "fitResult::fill(): warning: number of waves (" << _waveNames.size()
 		     << ") does not match size of normalization integral "
-		     << "(" << _normIntegral.nrows() << ", " << _normIntegral.ncols() << ")." << endl;
+		     << "(" << _normIntegral.nRows() << ", " << _normIntegral.nCols() << ")." << endl;
 
 	if (0) {
 		// print debug information that allows to check ordering of arrays

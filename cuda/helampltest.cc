@@ -34,5 +34,5 @@ int
 main(int argc, char** argv)
 {
   printCompilerInfo();
-  printSvnVersion();
+  printGitHash();
 }
