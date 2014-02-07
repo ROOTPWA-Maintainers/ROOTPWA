@@ -47,7 +47,7 @@ namespace rpwa {
 
 		~complexMatrix() { }
 
-		void ResizeTo(const int i, const int j) { _re.ResizeTo(i, j); _im.ResizeTo(i, j); }
+		void resizeTo(const int i, const int j) { _re.ResizeTo(i, j); _im.ResizeTo(i, j); }
 		void set(const int i, const int j, const std::complex<double>& c);
 		void set(const int i, const int j, const TComplex& c);
 		TComplex get(const int i, const int j) const { return TComplex(_re[i][j], _im[i][j]); }

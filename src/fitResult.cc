@@ -625,7 +625,7 @@ fitResult::reset()
 	_covMatrixValid = false;
 	_fitParCovMatrix.ResizeTo(0, 0);
 	_fitParCovMatrixIndices.clear();
-	_normIntegral.ResizeTo(0, 0);
+	_normIntegral.resizeTo(0, 0);
 	_normIntIndexMap.clear();
 	_phaseSpaceIntegral.clear();
 	_converged  = false;
@@ -668,7 +668,7 @@ fitResult::fill
 		_covMatrixValid = true;
 	else
 		_covMatrixValid = false;
-	_normIntegral.ResizeTo(normIntegral.nRows(), normIntegral.nCols());
+	_normIntegral.resizeTo(normIntegral.nRows(), normIntegral.nCols());
 	_normIntegral       = normIntegral;
 	_phaseSpaceIntegral = phaseSpaceIntegral;
 
