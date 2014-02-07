@@ -259,7 +259,7 @@ void rpwa::py::exportGenerator() {
 		)
 		.def("setPrimaryVertexGenerator", &rpwa::generator::setPrimaryVertexGenerator)
 		.def("setDecayProducts", &generatorWrapper::setDecayProducts__, &generatorWrapper::default_setDecayProducts__)
-		.def("setDecayProducts", &rpwa::generator::setDecayProducts)
+		.def("setDecayProducts", &generator_setDecayProducts)
 		.def("addDecayProduct", &generatorWrapper::addDecayProduct, &generatorWrapper::default_addDecayProduct)
 		.def("addDecayProduct", &rpwa::generator::addDecayProduct)
 		.def("convertEventToAscii", &generator_convertEventToAscii)
