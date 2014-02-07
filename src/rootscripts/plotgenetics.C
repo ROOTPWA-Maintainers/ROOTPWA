@@ -24,7 +24,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "../TFitBin.h"
 #include "TTree.h"
 #include "TCanvas.h"
 #include "TLatex.h"

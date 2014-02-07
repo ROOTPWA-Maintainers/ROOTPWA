@@ -53,7 +53,6 @@
 #include "reportingUtils.hpp"
 #include "reportingUtilsRoot.hpp"
 #include "complexMatrix.h"
-#include "TFitBin.h"
 
 
 namespace rpwa {
@@ -93,7 +92,6 @@ namespace rpwa {
 
 		fitResult();
 		fitResult(const fitResult& result);
-		fitResult(const TFitBin&   fitBin);
 		virtual ~fitResult();
 
 		fitResult* variedProdAmps();  ///< create a copy with production amplitudes varied according to covariance matrix

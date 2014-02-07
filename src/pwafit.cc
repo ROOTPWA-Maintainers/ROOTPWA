@@ -52,7 +52,6 @@
 
 #include "conversionUtils.hpp"
 #include "pwaLikelihood.h"
-#include "TFitBin.h"
 #include "fitResult.h"
 #ifdef USE_CUDA
 #include "complex.cuh"
@@ -368,8 +367,6 @@ main(int    argc,
 				printWarn << "cannot find start value tree '"<< valTreeName << "' in file "
 				          << "'" << startValFileName << "'" << endl;
 			else {
-				//startBin = new TFitBin();
-				//tree->SetBranchAddress("fitbin", &startBin);
 				startFitResult = new fitResult();
 				tree->SetBranchAddress(valBranchName.c_str(), &startFitResult);
 				// find tree entry which is closest to mass bin center
@@ -550,17 +547,14 @@ main(int    argc,
 		else {
 			// check whether output tree already exists
 			TTree*     tree;
-			TFitBin*   fitBinResult = new TFitBin();
 			fitResult* result       = new fitResult();
 			outFile->GetObject(valTreeName.c_str(), tree);
 			if (not tree) {
 				printInfo << "file '" << outFileName << "' is empty. "
 				          << "creating new tree '" << valTreeName << "' for PWA result." << endl;
 				tree = new TTree(valTreeName.c_str(), valTreeName.c_str());
-				tree->Branch("fitbin",              &fitBinResult);  // depricated legacy branch
 				tree->Branch(valBranchName.c_str(), &result);
 			} else {
-				tree->SetBranchAddress("fitbin",              &fitBinResult);
 				tree->SetBranchAddress(valBranchName.c_str(), &result);
 			}
 
@@ -609,67 +603,6 @@ main(int    argc,
 				             converged,
 				             hasHesse);
 				//printDebug << *result;
-			}
-
-			if (1) {
-				// get data structures to construct TFitBin
-				vector<TComplex>       prodAmplitudes;  // production amplitudes
-				vector<pair<int,int> > indices;         // indices for error matrix access
-				vector<TString>        waveNames;       // contains rank information
-				{
-					vector<std::complex<double> > V;
-					vector<string>                names;
-					L.buildProdAmpArrays(minimizer->X(), V, indices, names, true);
-					// convert to TComplex;
-					for (unsigned int i = 0; i < V.size(); ++i)
-						prodAmplitudes.push_back(TComplex(V[i].real(), V[i].imag()));
-					assert(indices.size() == prodAmplitudes.size());
-					for(unsigned int i = 0; i < names.size(); ++i)
-						waveNames.push_back(TString(names[i].c_str()));
-				}
-				vector<TString> waveTitles;  // without rank
-				{
-					const vector<string>& titles = L.waveNames();
-					for(unsigned int i = 0; i < titles.size(); ++i)
-						waveTitles.push_back(TString(titles[i].c_str()));
-					waveTitles.push_back("flat");
-				}
-				// error matrix
-				TMatrixD errMatrix(nmbPar, nmbPar);
-				for(unsigned int i = 0; i < nmbPar; ++i)
-					for(unsigned int j = 0; j < nmbPar; ++j)
-						errMatrix[i][j] = minimizer->CovMatrix(i, j);
-				// normalization integral and acceptance matrix
-				cout << " setting up integrals" << endl;
-				const unsigned int n = waveTitles.size();
-				complexMatrix      integralMatrix(n, n);
-				complexMatrix      accMatrix     (n, n);
-				vector<double>     phaseSpaceIntegral;
-				L.getIntegralMatrices(integralMatrix, accMatrix, phaseSpaceIntegral);
-				//integralMatrix.Print();
-				// representation of number of events depends on whether normalization was done
-				const int nmbEvt = (useNormalizedAmps) ? 1 : L.nmbEvents();
-
-				cout << "filling TFitBin:" << endl
-				     << "    number of fit parameters ........... " << nmbPar                 << endl
-				     << "    number of production amplitudes .... " << prodAmplitudes.size()  << endl
-				     << "    number of indices .................. " << indices.size()         << endl
-				     << "    number of wave names (with rank) ... " << waveNames.size()       << endl
-				     << "    number of wave titles (w/o rank) ... " << waveTitles.size()      << endl
-				     << "    dimension of error matrix .......... " << errMatrix.GetNrows()   << endl
-				     << "    dimension of integral matrix ....... " << integralMatrix.nRows() << endl
-				     << "    dimension of acceptance matrix ..... " << accMatrix.nRows()      << endl;
-				fitBinResult->fill(prodAmplitudes,
-				                   indices,
-				                   waveNames,
-				                   nmbEvt,
-				                   L.nmbEvents(), // raw number of data events
-				                   massBinCenter,
-				                   integralMatrix,
-				                   errMatrix,
-				                   minimizer->MinValue(),
-				                   rank);
-				//fitBinResult->PrintParameters();
 			}
 
 			// write result to file

@@ -51,7 +51,6 @@ include_directories(${INCLUDE_DIRECTORIES})
 
 # source files that are compiled into library
 set(SOURCES
-	TFitBin.cc
 	fitResult.cc
 	complexMatrix.cc
 	pwaLikelihood.cc
@@ -74,7 +73,7 @@ set(ROOTPWA_DICT_INCLUDE_DIRS
 root_generate_dictionary(
 	"${ROOTPWA_DICTIONARY}"
 	"${ROOTPWA_DICT_INCLUDE_DIRS}"
-	"TFitBin.h;fitResult.h;pwaPlotter.h;complexMatrix.h"
+	"fitResult.h;pwaPlotter.h;complexMatrix.h"
 	"rootPwaLinkDef.h"
 	)
 set(SOURCES ${SOURCES} ${ROOTPWA_DICTIONARY})
@@ -93,7 +92,6 @@ make_shared_library(
 
 
 # executables
-make_executable(listwaves         listwaves.cc         ${THIS_LIB})
 make_executable(pwafit            pwafit.cc            ${THIS_LIB})
 make_executable(selector          selector.cc          ${THIS_LIB})
 make_executable(pwaplot           pwaplots.cc          ${THIS_LIB})

@@ -66,36 +66,6 @@ fitResult::fitResult()
 { }
 
 
-fitResult::fitResult(const TFitBin& fitBin)
-	: _nmbEvents             (fitBin.nmbEvents()),
-	  _normNmbEvents         (fitBin.normNmbEvents()),
-	  _massBinCenter         (fitBin.massBinCenter()),
-	  _logLikelihood         (fitBin.logLikelihood()),
-	  _rank                  (fitBin.rank()),
-	  _covMatrixValid        (fitBin.fitParCovMatrixValid()),
-	  _fitParCovMatrix       (fitBin.fitParCovMatrix()),
-	  _fitParCovMatrixIndices(fitBin.fitParCovIndices()),
-	  _normIntegral          (fitBin.normIntegral()),
-	  _normIntIndexMap       (fitBin.prodAmpIndexMap()),
-	  _converged             (true),
-	  _hasHessian            (false)
-{
-	_prodAmps = fitBin.prodAmps();
-	{
-		const unsigned int nmbAmpNames = fitBin.prodAmpNames().size();
-		_prodAmpNames.resize(nmbAmpNames, "");
-		for (unsigned int i = 0; i < nmbAmpNames; ++i)
-			_prodAmpNames[i] = fitBin.prodAmpNames()[i].Data();
-	}
-	{
-		const unsigned int nmbWaveNames = fitBin.waveNames().size();
-		_waveNames.resize(nmbWaveNames, "");
-		for (unsigned int i = 0; i < nmbWaveNames; ++i)
-			_waveNames[i] = fitBin.waveNames()[i].Data();
-	}
-}
-
-
 fitResult::fitResult(const fitResult& result)
 	: _nmbEvents             (result.nmbEvents()),
 	  _normNmbEvents         (result.normNmbEvents()),

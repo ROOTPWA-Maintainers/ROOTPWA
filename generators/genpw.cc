@@ -55,7 +55,6 @@ void printUsage(char* prog, int errCode = 0)
 	     << "        -o <file>  ASCII output file (if not specified, generated automatically)" << endl
 	     << "        -p         path to particle data table file (default: ./particleDataTable.txt)" << endl
 	     << "        -w <file>  wavelist file (contains production amplitudes) FEATURE DISABLED" << endl
-	     << "        -w <file.root>  to use TFitBin tree as input FEATURE PERMANENTLY REMOVED" << endl
 	     << "        -c         if 1 a comgeant eventfile (.fort.26) is written with same naming as the root file (default 0)" << endl
 	     << "        -k <path>  path to keyfile directory (all keyfiles have to be there) FEATURE DISABLED" << endl
 	     << "        -i <file>  integral file FEATURE DISABLED" << endl
