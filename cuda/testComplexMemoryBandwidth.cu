@@ -41,7 +41,7 @@
 #include <cutil_inline.h>
 
 #include "reportingUtils.hpp"
-#include "nDimArrayUtils.hpp"
+#include "arrayUtils.hpp"
 #include "complexTest.cuh"
 #include "textureReader.cuh"
 

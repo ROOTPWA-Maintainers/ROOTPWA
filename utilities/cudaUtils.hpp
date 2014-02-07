@@ -50,7 +50,6 @@
 
 
 #ifdef __CUDACC__
-//#warning "info: generating CUDA device functions for nDimArray.hpp"
 #define HOST_DEVICE __host__ __device__
 #else
 #define HOST_DEVICE

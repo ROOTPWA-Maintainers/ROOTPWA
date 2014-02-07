@@ -31,8 +31,8 @@
 //-------------------------------------------------------------------------
 
 
-#ifndef NDIMARRAYUTILS_HPP
-#define NDIMARRAYUTILS_HPP
+#ifndef ARRAYUTILS_HPP
+#define ARRAYUTILS_HPP
 
 
 #include <vector>
@@ -294,4 +294,4 @@ namespace rpwa {
 }  // namespace rpwa
 
 
-#endif  // NDIMARRAYUTILS_HPP
+#endif  // ARRAYUTILS_HPP
