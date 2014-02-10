@@ -43,6 +43,8 @@
 #include <cassert>
 #include <time.h>
 
+#include <boost/assign/std/vector.hpp>
+
 #include "TTree.h"
 #include "TF1.h"
 #include "TFile.h"
@@ -62,6 +64,7 @@
 #include "massDepFitLikeli.h"
 #include "TStopwatch.h"
 #include "libconfig.h++"
+#include <libConfigUtils.hpp>
 
 #define MASSSCALE 0.001
 
@@ -70,6 +73,8 @@ using namespace std;
 using namespace libconfig;
 using namespace ROOT::Math;
 using namespace rpwa;
+using namespace boost;
+using namespace boost::assign;
 
 
 void
@@ -184,14 +189,14 @@ void releasePars(Minimizer* minimizer, const pwacompset& compset,
     } // end loop over channels
   }// end loop over components
   // set phase space
-  unsigned int nfreePS=compset.nFreePSPar();
-  for(unsigned int ifreePS=0;ifreePS<nfreePS;++ifreePS){
+  unsigned int nfreeFsmd=compset.nFreeFsmdPar();
+  for(unsigned int ifreeFsmd=0;ifreeFsmd<nfreeFsmd;++ifreeFsmd){
     double val,lower,upper;
     val=par[parcount];
-    compset.getFreePSLimits(ifreePS,lower,upper);
-    TString name("PSP_"); name+=+ifreePS;
-    minimizer->SetLimitedVariable(parcount,
-				  name.Data(),
+    compset.getFreeFsmdLimits(ifreeFsmd,lower,upper);
+    TString name("PSP_"); name+=+ifreeFsmd;
+    minimizer->SetLimitedVariable(parcount, 
+				  name.Data(), 
 				  val, 0.0001 ,lower,upper);
   }
 
@@ -202,8 +207,6 @@ void releasePars(Minimizer* minimizer, const pwacompset& compset,
 
 
 }
-
-
 
 int
 main(int    argc,
@@ -334,29 +337,93 @@ extern char* optarg;
   const Setting& root = Conf.getRoot();
   bool check=true;
 
-  // overall Phasespace
-  double gps=0;
-  double pslower=0;
-  double psupper=0;
-  if(Conf.exists("ps")){
-    const Setting &pss = root["ps"];
-    check&=pss.lookupValue("formfactor",gps);
-    check&=pss.lookupValue("lower",pslower);
-    check&=pss.lookupValue("upper",psupper);
+  // overall final-state mass dependence
+  TF1* fPS = NULL;
+  const Setting* configFsmd = findLibConfigGroup(root, "finalStateMassDependence", false);
+  if(configFsmd){
+    map<string, Setting::Type> mandatoryArguments;
+    insert(mandatoryArguments)
+        ("formula", Setting::TypeString)
+        ("val", Setting::TypeArray)
+        ("lower", Setting::TypeArray)
+        ("upper", Setting::TypeArray)
+        ("error", Setting::TypeArray)
+        ("fix", Setting::TypeArray);
+    if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
+      printErr << "'finalStateMassDependence' section in configuration file contains errors." << endl;
+      exit(1);
+    }
+    
+    string formula;
+    configFsmd->lookupValue("formula", formula);
 
+    fPS = new TF1("fps", formula.c_str(), 900, 3000);
+    const unsigned int nrPar = fPS->GetNpar();
+
+    const Setting& configFsmdValue = (*configFsmd)["val"];
+    if(configFsmdValue.getLength() != nrPar) {
+      printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+      return false;
+    }
+    if(not configFsmdValue[0].isNumber()) {
+      printErr << "'val' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+      return false;
+    }
+
+    const Setting& configFsmdLower = (*configFsmd)["lower"];
+    if(configFsmdLower.getLength() != nrPar) {
+      printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+      return false;
+    }
+    if(not configFsmdLower[0].isNumber()) {
+      printErr << "'lower' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+      return false;
+    }
+
+    const Setting& configFsmdUpper = (*configFsmd)["upper"];
+    if(configFsmdUpper.getLength() != nrPar) {
+      printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+      return false;
+    }
+    if(not configFsmdUpper[0].isNumber()) {
+      printErr << "'upper' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+      return false;
+    }
+
+    const Setting& configFsmdError = (*configFsmd)["error"];
+    if(configFsmdError.getLength() != nrPar) {
+      printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+      return false;
+    }
+    if(not configFsmdError[0].isNumber()) {
+      printErr << "'error' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+      return false;
+    }
+
+    const Setting& configFsmdFix = (*configFsmd)["fix"];
+    if(configFsmdFix.getLength() != nrPar) {
+      printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+      return false;
+    }
+    if(not configFsmdFix[0].isNumber()) {
+      printErr << "'fix' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+      return false;
+    }
+
+    for (unsigned int i=0; i<nrPar; ++i) {
+      fPS->SetParameter(i, configFsmdValue[i]);
+      fPS->SetParError(i, configFsmdError[i]);
+      fPS->SetParLimits(i, configFsmdLower[i], configFsmdUpper[i]);
+
+      if (((int)configFsmdFix[i]) != 0) {
+        fPS->FixParameter(i, configFsmdValue[i]);
+      }
+    }
+    printInfo << "using final-state mass dependence as defined in the configuration file." << endl;
+  } else {
+    printInfo << "not using final-state mass dependence." << endl;
   }
- // add overall phase space
- TF1* fPS=new TF1("fps","[1] * ((x-[0])/1000.)^5*(1.+((x-[0])/1000.)*[2])*exp(-[3]* ((x-[0])/1000.)^2)",900,3000);
-  fPS->SetParameter(0,698); //5pi threshold
-  fPS->SetParLimits(0,698,698);
-  fPS->SetParameter(1,308.7E-6); // normalization
-  fPS->SetParLimits(1,308.7E-6,308.7E-6); //
-  fPS->SetParameter(2,4.859); // correction
-  fPS->SetParLimits(2,4.859,4.859);
-  fPS->SetParameter(3,gps); // Damping
-  fPS->SetParLimits(3,pslower,psupper);
-  //fPS->SetParameter(3,10); // Normalization
-  //TF1* fPS=new TF1("fps","1.",900,4000);
+  compset.setFuncFsmd(fPS);
 
 
   // Resonances
@@ -489,7 +556,6 @@ extern char* optarg;
 
  cout << "---------------------------------------------------------------------" << endl << endl;
 
-   compset.setPS(fPS);
    compset.doMapping();
 
  cout << "---------------------------------------------------------------------" << endl << endl;
@@ -586,14 +652,14 @@ extern char* optarg;
     } // end loop over channels
   }// end loop over components
   // set phase space
-  unsigned int nfreePS=compset.nFreePSPar();
-  for(unsigned int ifreePS=0;ifreePS<nfreePS;++ifreePS){
+  unsigned int nfreeFsmd=compset.nFreeFsmdPar();
+  for(unsigned int ifreeFsmd=0;ifreeFsmd<nfreeFsmd;++ifreeFsmd){
     double val,lower,upper;
-    val=compset.getFreePSPar(ifreePS);
-    compset.getFreePSLimits(ifreePS,lower,upper);
-    TString name("PSP_"); name+=+ifreePS;
-    minimizer->SetLimitedVariable(parcount++,
-				  name.Data(),
+    val=compset.getFreeFsmdPar(ifreeFsmd);
+    compset.getFreeFsmdLimits(ifreeFsmd,lower,upper);
+    TString name("PSP_"); name+=+ifreeFsmd;
+    minimizer->SetLimitedVariable(parcount++, 
+				  name.Data(), 
 				  val, 0.0001 ,lower,upper);
   }
 
@@ -712,15 +778,26 @@ extern char* optarg;
  ndfS=(int)numDOF;
  Setting& redchi2S=fitqualS["redchi2"];
  redchi2S=redChi2;
- const Setting& psS= root["ps"];
- Setting& ffS=psS["formfactor"];
- ffS=(double)fPS->GetParameter(3);
 
- if(nfreePS>0){
-   Setting& ffeS=psS["error"];
-   ffeS=minimizer->Errors()[minimizer->VariableIndex("PSP_0")];
- }
+  if(configFsmd){
+    const Setting& configFsmdValue = (*configFsmd)["val"];
+    const Setting& configFsmdError = (*configFsmd)["error"];
+    const Setting& configFsmdFix = (*configFsmd)["fix"];
 
+    const unsigned int nrPar = fPS->GetNpar();
+    unsigned int iPar = 0;
+    for(unsigned int i=0; i<nrPar; ++i) {
+      if(((int)configFsmdFix[i]) == 0) {
+        ostringstream sName;
+        sName << "PSP_" << iPar;
+        configFsmdValue[i] = compset.getFreeFsmdPar(iPar);
+        configFsmdError[i] = minimizer->Errors()[minimizer->VariableIndex(sName.str())];
+        ++iPar;
+      }
+    }
+    assert(compset.nFreeFsmdPar() == iPar);
+  }
+ 
   // Setup Component Set (Resonances + Background)
   const Setting& bws= root["components"]["resonances"];
   const Setting& bkgs= root["components"]["background"];
@@ -1292,7 +1369,7 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 	 const pwacomponent* c=compset[ic];
 	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
 	 while(it!=c->channels().end()){
-	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*compset.ps(m);
+	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*compset.calcFsmd(m);
 	   compgraphs[compcount]->SetPoint(i,mScaled,I);
 	   ++compcount;
 	   ++it;
@@ -1432,7 +1509,9 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
      //phase2d[iw]->Write();
  } // end loop over waves
 
- fPS->Write("fPS");
+ if (fPS != NULL) {
+   fPS->Write("funcFinalStateMassDependence");
+ }
 
 outfile->Close();
 
