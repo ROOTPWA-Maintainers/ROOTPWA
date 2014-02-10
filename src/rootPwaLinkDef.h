@@ -32,4 +32,7 @@
 #pragma link C++ class rpwa::complexMatrix+;
 
 
+#pragma read sourceClass="TCMatrix" targetClass="rpwa::complexMatrix" version="[1-]";
+
+
 #endif
