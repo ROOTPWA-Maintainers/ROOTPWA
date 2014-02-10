@@ -141,11 +141,11 @@ namespace rpwa {
 
   class pwacompset {
   public:
-    pwacompset():_numpar(0){}
+    pwacompset():_numpar(0),_funcFsmd(NULL){}
     ~pwacompset(){}
 
     void add(pwacomponent* comp){_comp.push_back(comp);_numpar+=comp->numPar();}
-    void setPS(TF1* fPS);
+    void setFuncFsmd(TF1* funcFsmd);
     void doMapping(); // necessary for performance. to be called after all
                       // components have been added
 
@@ -156,10 +156,10 @@ namespace rpwa {
     std::vector<std::string> wavelist()const;
 
     void setPar(const double* par); // set parameters
-    void getPar(double* par);       // return parameters
-    unsigned int nFreePSPar() const {return _freePSpar.size();}
-    double getFreePSPar(unsigned int i) const;
-    void getFreePSLimits(unsigned int i, double& lower, double& upper) const;
+    void getPar(double* par);       // return parameters 
+    unsigned int nFreeFsmdPar() const {return _freeFsmdPar.size();}
+    double getFreeFsmdPar(unsigned int i) const;
+    void getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const;
 
 
     const pwacomponent* operator[](unsigned int i) const {return _comp[i];}
@@ -168,7 +168,7 @@ namespace rpwa {
 
 
     friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacompset& cs);
-    double ps(double m);
+    double calcFsmd(double m);
     double intensity(const std::string& wave, double m);
     double phase(const std::string& wave, double m);
     double phase(const std::string& wave1,
@@ -184,8 +184,8 @@ namespace rpwa {
   private:
     std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
-    TF1* _phasespace;
-    std::vector<unsigned int> _freePSpar; // parameters of phase space to keep floating
+    TF1* _funcFsmd;
+    std::vector<unsigned int> _freeFsmdPar; // parameters of phase space to keep floating
     // mapping for wave -> which components with which channel
     // wavelist in same order as given by wavelist
     std::vector<std::vector<std::pair<unsigned int,unsigned int> > > _compChannel;
@@ -200,8 +200,4 @@ namespace rpwa {
 
 
 
-#endif
-
-//--------------------------------------------------------------
-// $Log$
-//--------------------------------------------------------------
+#endif // PWACOMPONENT_HH

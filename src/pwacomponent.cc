@@ -157,23 +157,28 @@ rpwa::pwacompset::wavelist() const {
 
 
 void
-rpwa::pwacompset::setPS(TF1* fPS){
-  _phasespace=fPS;
+rpwa::pwacompset::setFuncFsmd(TF1* funcFsmd){
+  _funcFsmd=funcFsmd;
+  // clear list of free parameters
+  _freeFsmdPar.clear();
+
+  if (_funcFsmd == NULL)
+    return;
+
   // check if there are free parameters in the phase space that should be fitted
-  unsigned int nparPS=_phasespace->GetNpar();
+  unsigned int nparFsmd=_funcFsmd->GetNpar();
   // loop over parameters and check limits
   // remember which parameters to let float
-  _freePSpar.clear();
-  for(unsigned int i=0;i<nparPS;++i){
+  for(unsigned int i=0;i<nparFsmd;++i){
     double min,max;
-    _phasespace->GetParLimits(i,min,max);
+    _funcFsmd->GetParLimits(i,min,max);
     if(min!=max){
-      _freePSpar.push_back(i);
-      cout << "PS parameter "<< i << " floating in ["
+      _freeFsmdPar.push_back(i);
+      cout << "final-state mass dependence parameter "<< i << " floating in ["
 	   << min  << "," << max << "]" << endl;
     }
   }// end loop over parameters
-  _numpar+=_freePSpar.size();
+  _numpar+=_freeFsmdPar.size();
 }
 
 
@@ -189,18 +194,18 @@ void
 
 
 
-double
-rpwa::pwacompset::getFreePSPar(unsigned int i) const {
-  if(i<_freePSpar.size())
-    return _phasespace->GetParameter(_freePSpar[i]);
+double 
+rpwa::pwacompset::getFreeFsmdPar(unsigned int i) const {
+  if(i<_freeFsmdPar.size())
+    return _funcFsmd->GetParameter(_freeFsmdPar[i]);
   else return 0;
 }
 
 
-void
-rpwa::pwacompset::getFreePSLimits(unsigned int i, double& lower, double& upper) const {
-  if(i<_freePSpar.size()){
-    _phasespace->GetParLimits(_freePSpar[i],lower,upper);
+void 
+rpwa::pwacompset::getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const {
+  if(i<_freeFsmdPar.size()){
+    _funcFsmd->GetParLimits(_freeFsmdPar[i],lower,upper);
   }
 }
 
@@ -215,9 +220,9 @@ rpwa::pwacompset::setPar(const double* par){ // set parameters
     parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
   } // end loop over components
   // phase space
-  unsigned int nfreepar=_freePSpar.size();
+  unsigned int nfreepar=_freeFsmdPar.size();
   for(unsigned int ipar=0;ipar<nfreepar;++ipar){
-    _phasespace->SetParameter(_freePSpar[ipar],par[parcount]);
+    _funcFsmd->SetParameter(_freeFsmdPar[ipar],par[parcount]);
     ++parcount;
   }
 }
@@ -235,15 +240,21 @@ rpwa::pwacompset::getPar(double* par){       // return parameters
     parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
   }
  // phase space
-  unsigned int nfreepar=_freePSpar.size();
+  unsigned int nfreepar=_freeFsmdPar.size();
   for(unsigned int ipar=0;ipar<nfreepar;++ipar){
-    par[parcount]=_phasespace->GetParameter(_freePSpar[ipar]);
+    par[parcount]=_funcFsmd->GetParameter(_freeFsmdPar[ipar]);
     ++parcount;
   }
 }
 
-double
-rpwa::pwacompset::ps(double m){return _phasespace->Eval(m);}
+double 
+rpwa::pwacompset::calcFsmd(double m){
+  if (_funcFsmd == NULL) {
+    return 1.;
+  }
+  
+  return _funcFsmd->Eval(m);
+}
 
 double
 rpwa::pwacompset::intensity(const std::string& wave, double m){
@@ -256,7 +267,7 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
     }
 
   }
-  return norm(rho)*_phasespace->Eval(m);
+  return norm(rho)*calcFsmd(m);
 }
 
 double
@@ -297,7 +308,7 @@ rpwa::pwacompset::overlap(const std::string& wave1,
       rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C()*sqrt(_comp[ic]->channels().find(wave2)->second.ps(m));
     }
   }
-  return rho1*conj(rho2)*_phasespace->Eval(m);
+  return rho1*conj(rho2)*calcFsmd(m);
 }
 
 std::complex<double>
@@ -324,7 +335,7 @@ rpwa::pwacompset::overlap(unsigned int wave1,
     unsigned int ichan=cc2[ic2].second;
     rho2+=_comp[icomp]->val(m)*_comp[icomp]->getChannel(ichan).CsqrtPS(m);
   }
-  return rho1*conj(rho2)*_phasespace->Eval(m);
+  return rho1*conj(rho2)*calcFsmd(m);
 }
 
 
