@@ -59,6 +59,7 @@ void rpwa::py::exportRootConverters() {
 		, bp::return_internal_reference<1>()
 	);
 
+	bp::def("__RootConverters_convertToPy_TMatrixD", &rpwa::py::convertToPy<TMatrixT<double> >);
 	bp::def(
 		"__RootConverters_convertFromPy_TMatrixD", &rpwa::py::convertFromPy<TMatrixT<double>*>
 		, bp::return_internal_reference<1>()

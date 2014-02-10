@@ -93,6 +93,7 @@ set(SOURCES
 	${GENERATORS_SUBDIR}/generatorPickerFunctions_py.cc
 	${GENERATORS_SUBDIR}/beamAndVertexGenerator_py.cc
 	${SRC_SUBDIR}/complexMatrix_py.cc
+	${SRC_SUBDIR}/fitResult_py.cc
 	${UTILITIES_SUBDIR}/utils_py.cc
 	)
 
