@@ -66,19 +66,7 @@ namespace {
 	{
 		return std::string((const char*)self.waveNameForProdAmp(prodAmpIndex));
 	}
-/*
-	std::vector<double> fitResult_fitParameters(const rpwa::fitResult& self)
-	{
-		const unsigned int nmbProdAmps = self.nmbProdAmps();
-		double retArray[nmbProdAmps];
-		self.fitParameters(retArray);
-		std::vector<double> retval(nmbProdAmps, 0.);
-		for(unsigned int i = 0; i < retval.size(); ++i) {
-			retval[i] = retArray[i];
-		}
-		return retval;
-	}
-*/
+
 	PyObject* fitResult_prodAmpCov_1(const rpwa::fitResult& self, const unsigned int prodAmpIndex)
 	{
 		return rpwa::py::convertToPy<TMatrixT<double> >(self.prodAmpCov(prodAmpIndex));
@@ -292,7 +280,6 @@ void rpwa::py::exportFitResult() {
 		.def("prodAmpIndex", &rpwa::fitResult::prodAmpIndex)
 		.def("fitParameter", &rpwa::fitResult::fitParameter)
 		.def("fitParameterCov", &rpwa::fitResult::fitParameterCov)
-//		.def("fitParameters", &fitResult_fitParameters)
 		.def("prodAmp", &fitResult::prodAmp)
 		.def("prodAmpCov", &fitResult_prodAmpCov_1)
 		.def("prodAmpCov", &fitResult_prodAmpCov_2)
