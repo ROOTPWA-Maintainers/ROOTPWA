@@ -365,7 +365,7 @@ extern char* optarg;
       printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
       return false;
     }
-    if(not configFsmdValue[0].isNumber()) {
+    if(configFsmdValue.getLength() > 0 and not configFsmdValue[0].isNumber()) {
       printErr << "'val' in 'finalStateMassDependence' has to be made up of numbers." << endl;
       return false;
     }
@@ -375,7 +375,7 @@ extern char* optarg;
       printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
       return false;
     }
-    if(not configFsmdLower[0].isNumber()) {
+    if(configFsmdLower.getLength() > 0 and not configFsmdLower[0].isNumber()) {
       printErr << "'lower' in 'finalStateMassDependence' has to be made up of numbers." << endl;
       return false;
     }
@@ -385,7 +385,7 @@ extern char* optarg;
       printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
       return false;
     }
-    if(not configFsmdUpper[0].isNumber()) {
+    if(configFsmdUpper.getLength() > 0 and not configFsmdUpper[0].isNumber()) {
       printErr << "'upper' in 'finalStateMassDependence' has to be made up of numbers." << endl;
       return false;
     }
@@ -395,7 +395,7 @@ extern char* optarg;
       printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
       return false;
     }
-    if(not configFsmdError[0].isNumber()) {
+    if(configFsmdError.getLength() > 0 and not configFsmdError[0].isNumber()) {
       printErr << "'error' in 'finalStateMassDependence' has to be made up of numbers." << endl;
       return false;
     }
@@ -405,7 +405,7 @@ extern char* optarg;
       printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
       return false;
     }
-    if(not configFsmdFix[0].isNumber()) {
+    if(configFsmdFix.getLength() > 0 and not configFsmdFix[0].isNumber()) {
       printErr << "'fix' in 'finalStateMassDependence' has to be made up of numbers." << endl;
       return false;
     }
