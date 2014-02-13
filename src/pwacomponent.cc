@@ -21,6 +21,8 @@
 // Collaborating Class Headers --------
 #include "TF1.h"
 
+#include "reportingUtils.hpp"
+
 // Class Member definitions -----------
 
 using namespace std;
@@ -140,22 +142,6 @@ rpwa::pwabkg::val(double m) const {
 }
 
 
-vector<string>
-rpwa::pwacompset::wavelist() const {
-  vector<string> wl;
-  for(unsigned int i=0;i<n();++i){
-    const map<string,pwachannel >& channellist=_comp[i]->channels();
-    map<string,pwachannel >::const_iterator it=channellist.begin();
-    while(it!=channellist.end()){
-      if(find(wl.begin(),wl.end(),it->first)==wl.end())
-	 wl.push_back(it->first);
-      ++it;
-    }
-  }
-  return wl;
-}
-
-
 void
 rpwa::pwacompset::setFuncFsmd(TF1* funcFsmd){
   _funcFsmd=funcFsmd;
@@ -183,15 +169,43 @@ rpwa::pwacompset::setFuncFsmd(TF1* funcFsmd){
 
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
-void
- rpwa::pwacompset::doMapping(){
-  vector<string> wlist=wavelist();
-  for(unsigned int i=0; i<wlist.size();++i){
-    // check which components this waves belongs to and which channel they are
-    _compChannel.push_back(getCompChannel(wlist[i]));
-  }
-}
+bool
+rpwa::pwacompset::doMapping() {
+	// check that all waves used in a decay channel have been defined
+	for(unsigned int i=0; i<n(); ++i) {
+		for(map<string, pwachannel>::const_iterator itChan=_comp[i]->channels().begin(); itChan !=_comp[i]->channels().end(); ++itChan) {
+			if(find(_waveList.begin(), _waveList.end(), itChan->first) == _waveList.end()) {
+				printErr << "wave '" << itChan->first << "' not known in decay of '" << _comp[i]->name() << "'." << endl;
+				return false;
+			}
+		}
+	}
 
+	// check that all defined waves are also used
+	for(vector<string>::const_iterator itWave=_waveList.begin(); itWave!=_waveList.end(); ++itWave) {
+		bool found(false);
+		for(unsigned int i=0; i<n(); ++i) {
+			for(map<string, pwachannel>::const_iterator itChan=_comp[i]->channels().begin(); itChan !=_comp[i]->channels().end(); ++itChan) {
+				if(itChan->first == *itWave) {
+					found = true;
+					break;
+				}
+			}
+		}
+
+		if(not found) {
+			printErr << "wave '" << *itWave << "' defined but not used in any decay." << endl;
+			return false;
+		}
+	}
+
+	for(vector<string>::const_iterator itWave=_waveList.begin(); itWave!=_waveList.end(); ++itWave) {
+		// check which components this waves belongs to and which channel they are
+		_compChannel.push_back(getCompChannel(*itWave));
+	}
+
+	return true;
+}
 
 
 double 

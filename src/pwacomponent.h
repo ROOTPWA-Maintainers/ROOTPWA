@@ -144,17 +144,24 @@ namespace rpwa {
     pwacompset():_numpar(0),_funcFsmd(NULL){}
     ~pwacompset(){}
 
+		const std::vector<std::string>& getWaveList() const {
+			return _waveList;
+		}
+		void setWaveList(const std::vector<std::string>& waveList) {
+			_waveList = waveList;
+		}
+
+
+
     void add(pwacomponent* comp){_comp.push_back(comp);_numpar+=comp->numPar();}
     void setFuncFsmd(TF1* funcFsmd);
-    void doMapping(); // necessary for performance. to be called after all
-                      // components have been added
+		bool doMapping(); // necessary for performance. to be called after all
+		                  // components have been added
 
 
     unsigned int n() const {return _comp.size();}
     unsigned int numPar() const {return _numpar;}
-
-    std::vector<std::string> wavelist()const;
-
+    
     void setPar(const double* par); // set parameters
     void getPar(double* par);       // return parameters 
     unsigned int nFreeFsmdPar() const {return _freeFsmdPar.size();}
@@ -182,6 +189,7 @@ namespace rpwa {
 				 double m);
 
   private:
+		std::vector<std::string> _waveList;
     std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
     TF1* _funcFsmd;

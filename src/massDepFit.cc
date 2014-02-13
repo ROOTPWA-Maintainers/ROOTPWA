@@ -83,14 +83,13 @@ usage(const string& progName,
 {
   cerr << "usage:" << endl
        << progName
-       << " -c configfile -i inputfile [-o outfile -l # -u #"
-       << "  -M minimizer [-m algorithm] -t # -q -h -P -C] [-S fitResultFiles]" << endl
+       << " -c configfile -i inputfile [-o outfile"
+       << "  -M minimizer [-m algorithm] -t # -q -h -P -R -C] [-S fitResultFiles]" << endl
        << "    where:" << endl
        << "        -c file    path to config File" << endl
        << "        -i file    path to input file" << endl
        << "        -o file    path to output file (default: 'mDep.result.root')" << endl
     //       << "        -r #       rank of spin density matrix (default: 1)" << endl
-       << "        -l # -u #  lower and upper mass range used for fit" << endl
        << "        -M name    minimizer (default: Minuit2)" << endl
        << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
        << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
@@ -104,6 +103,7 @@ usage(const string& progName,
        << "        -q         run quietly (default: false)" << endl
        << "        -h         print help" << endl
        << "        -P         plotting only - no fit" << endl
+       << "        -R         plot in fit range only" << endl
        << "        -C         switch OFF covariances between real and imag part" << endl
        << "        -S files   Systematic error plotting. give list of files" << endl
 
@@ -223,6 +223,7 @@ main(int    argc,
   const bool         runHesse            = true;
   const bool         runMinos            = false;
   bool               onlyPlotting        = false;
+  bool               rangePlotting        = false;
   bool               sysPlotting         = false;
   bool               doCov               = true;
 
@@ -230,9 +231,7 @@ main(int    argc,
 //   int                startValSeed        = 1234567;
  // parse command line options
   const string progName           = argv[0];
-  double       massBinMin         = 0;                      // [MeV/c^2]
-  double       massBinMax         = 5000;                      // [MeV/c^2]
-
+  
   string       inFileName         = "fitresult.root";       // input filename
   string       outFileName        = "mDep.result.root";       // output filename
   //string       normIntFileName    = "";                     // file with normalization integrals
@@ -246,7 +245,7 @@ extern char* optarg;
  extern int optind;
   // extern int optind;
   int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:u:l:M:m:t:qhPCS")) != -1)
+  while ((ca = getopt(argc, argv, "c:i:o:M:m:t:qhPRCS")) != -1)
     switch (ca) {
     case 'c':
       configFile = optarg;
@@ -266,12 +265,6 @@ extern char* optarg;
     case 't':
       minimizerTolerance = atof(optarg);
       break;
-   case 'l':
-      massBinMin = atof(optarg);
-      break;
-   case 'u':
-      massBinMax = atof(optarg);
-      break;
     case 'q':
       quiet = true;
       break;
@@ -280,6 +273,9 @@ extern char* optarg;
       break;
     case 'P':
       onlyPlotting=true;
+      break;
+    case 'R':
+      rangePlotting=true;
       break;
     case 'C':
       doCov=false;
@@ -336,6 +332,71 @@ extern char* optarg;
   Conf.readFile(configFile.c_str());
   const Setting& root = Conf.getRoot();
   bool check=true;
+
+	// input section
+	const Setting* configInput = findLibConfigGroup(root, "input");
+	if(not configInput) {
+		printErr << "'input' section in configuration file does not exist." << endl;
+		exit(1);
+	}
+
+	// get information of waves to be used in the fit
+	const Setting* configInputWaves = findLibConfigList(*configInput, "waves");
+	if(not configInputWaves) {
+		printErr << "'waves' list does not exist in section 'input' in configuration file." << endl;
+		exit(1);
+	}
+
+	vector<string> waveNames;
+	vector<pair<double, double> > waveMassLimits;
+	{
+		const int nrWaves = configInputWaves->getLength();
+		printInfo << "going to read information of " << nrWaves << " waves to be used in the fit." << endl;
+
+		for(int idxWave=0; idxWave<nrWaves; ++idxWave) {
+			const Setting* configInputWave = &((*configInputWaves)[idxWave]);
+
+			map<string, Setting::Type> mandatoryArguments;
+			insert(mandatoryArguments)
+			    ("name", Setting::TypeString);
+			if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
+				printErr << "'waves' list in 'input' section in configuration file contains errors." << endl;
+				exit(1);
+			}
+
+			string name;
+			configInputWave->lookupValue("name", name);
+
+			double massLower;
+			if(not configInputWave->lookupValue("massLower", massLower)) {
+				massLower = -1.;
+			}
+			double massUpper;
+			if(not configInputWave->lookupValue("massUpper", massUpper)) {
+				massUpper = -1.;
+			}
+
+			// check that wave does not yet exist
+			if(find(waveNames.begin(), waveNames.end(), name) != waveNames.end()) {
+				printErr << "wave '" << name << "' defined twice." << endl;
+				exit(1);
+			}
+
+
+			waveNames.push_back(name);
+			waveMassLimits.push_back(make_pair(massLower, massUpper));
+
+			printInfo << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " MeV/c^2)" << endl;
+		}
+
+		if(waveNames.size()!= nrWaves || waveMassLimits.size()!= nrWaves) {
+			printErr << "detected a messed up internal array." << endl;
+			exit(1);
+		}
+
+		compset.setWaveList(waveNames);
+	}
+
 
   // overall final-state mass dependence
   TF1* fPS = NULL;
@@ -556,7 +617,10 @@ extern char* optarg;
 
  cout << "---------------------------------------------------------------------" << endl << endl;
 
-   compset.doMapping();
+	if(not compset.doMapping()) {
+		printErr << "error while mapping the waves to the decay channels and components." << endl;
+		exit(1);
+	}
 
  cout << "---------------------------------------------------------------------" << endl << endl;
 
@@ -586,7 +650,10 @@ extern char* optarg;
 
 
   massDepFitLikeli L;
-  L.init(tree,&compset,massBinMin,massBinMax,doCov);
+	if(not L.init(tree,&compset,waveNames,waveMassLimits,doCov)) {
+		printErr << "error while initializing likelihood function." << endl;
+		exit(1);
+	}
 
    const unsigned int nmbPar  = L.NDim();
   // double par[nmbPar];
@@ -903,7 +970,7 @@ extern char* optarg;
 
   int syscolor=kAzure-9;
 
-   std::vector<std::string> wl=compset.wavelist();
+   std::vector<std::string> wl=compset.getWaveList();
    std::map<std::string, unsigned int> wmap;
    unsigned int ndatabins=tree->GetEntries();
 
@@ -1183,6 +1250,11 @@ extern char* optarg;
      //cout << "MASS: "<<m << endl;
      unsigned int c=0;
      for(unsigned int iw=0; iw<wl.size();++iw){
+		// check that this mass bin should be taken into account for this
+		// combination of waves
+		if(rangePlotting && (i < L.getMassBinLimits()[iw][iw].first || i > L.getMassBinLimits()[iw][iw].second)) {
+			continue;
+		}
 
        datagraphs[iw]->SetPoint(i,mScaled,rho->intensity(wl[iw].c_str()));
        datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
@@ -1238,6 +1310,12 @@ extern char* optarg;
        unsigned int wi1=rho->waveIndex(wl[iw].c_str());
 
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
+			// check that this mass bin should be taken into account for this
+			// combination of waves
+			if(rangePlotting && (i < L.getMassBinLimits()[iw][iw2].first || i > L.getMassBinLimits()[iw][iw2].second)) {
+				continue;
+			}
+
 	 //double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str())*fsps;
 
 	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());

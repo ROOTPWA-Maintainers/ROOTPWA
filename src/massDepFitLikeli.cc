@@ -36,11 +36,13 @@ rpwa::massDepFitLikeli::NDataPoints() const {
   return nbinsInRange*_wlist.size()*_wlist.size();
 }
 
-void
-rpwa::massDepFitLikeli::init(TTree* sp, pwacompset* compset,
-			     double mmin, double mmax, bool doCov){
-  _mmin=mmin;
-  _mmax=mmax;
+bool
+rpwa::massDepFitLikeli::init(TTree* sp,
+                             pwacompset* compset,
+                             const vector<string>& waveNames,
+                             const vector<pair<double, double> >& waveMassLimits,
+                             bool doCov)
+{
   _doCov=doCov;
   _compset=compset;
   _tree=sp;
@@ -49,9 +51,27 @@ rpwa::massDepFitLikeli::init(TTree* sp, pwacompset* compset,
 
   _tree->GetEntry(0);
 
+	// check that the wavelists in compset and here are identically
+	// not that they should or could have changed, but better safe than sorry
+	_wlist = waveNames;
+
+	bool brokenWaveList = false;
+	if(_wlist.size() != compset->getWaveList().size()) {
+		            brokenWaveList = true;
+	} else {
+		for (size_t i=0; i<_wlist.size(); ++i) {
+			if (_wlist[i] != compset->getWaveList()[i]) {
+				brokenWaveList = true;
+				break;
+			}
+		}
+	}
+	if(brokenWaveList) {
+		printErr << "detected a messed up internal array." << endl;
+		return false;
+	}
+
   // build waveindex map;
-  _wlist.clear();
-  _wlist=_compset->wavelist();
   _index.clear();
 
   cerr << "Number of components: "<<_compset->n()<< endl;
@@ -93,11 +113,92 @@ rpwa::massDepFitLikeli::init(TTree* sp, pwacompset* compset,
    _cov.push_back(mycov);
  } // end loop over mass bins
 
+	// sort mass bins
+	sort(_mass.begin(), _mass.end());
 
+	printInfo << "found " << _mass.size() << " mass bins, center of first and last mass bins: " << _mass[0] << " and " << _mass[_mass.size() - 1] << " MeV/c^2." << endl;
 
+	const double massStep = (_mass[_mass.size() - 1] - _mass[0]) / (_mass.size() - 1);
+	for(size_t idxMass=1; idxMass<_mass.size(); ++idxMass) {
+		if(abs(_mass[idxMass]-_mass[idxMass-1] - massStep) > 1000.*numeric_limits<double>::epsilon()) {
+			printErr << "mass distance between bins " << idxMass-1 << " (" << _mass[idxMass-1] << " MeV/c^2) and "
+			         << idxMass << " (" << _mass[idxMass] << " MeV/c^2) does not agree with nominal distance "
+			         << massStep << " MeV/c^2" << endl;
+			return false;
+		}
+	}
+	printInfo << "distance between two mass bins is " << massStep << " MeV/c^2." << endl;
 
+	_mmin=_mass[0] - massStep / 2;
+	_mmax=_mass[_mass.size() - 1] + massStep / 2;
 
+	printInfo << "mass bins cover the mass range from " << _mmin << " to " << _mmax << " MeV/c^2." << std::endl;
 
+	// determine bins to be used in the fit
+	if(waveNames.size() != waveMassLimits.size()) {
+		printErr << "detected a messed up internal array." << endl;
+		return false;
+	}
+
+	std::vector<std::pair<size_t, size_t> > binLimits;
+	for(size_t idxWave=0; idxWave<waveNames.size(); ++idxWave) {
+		size_t binFirst = 0;
+		size_t binLast = _mass.size()-1;
+		for(size_t idxMass=0; idxMass<_mass.size(); ++idxMass) {
+			if(_mass[idxMass] < waveMassLimits[idxWave].first) {
+				binFirst = idxMass+1;
+			}
+			if(_mass[idxMass] == waveMassLimits[idxWave].first) {
+				binFirst = idxMass;
+			}
+			if(_mass[idxMass] <= waveMassLimits[idxWave].second) {
+				binLast = idxMass;
+			}
+		}
+		if(waveMassLimits[idxWave].first < 0) {
+			binFirst = 0;
+		}
+		if(waveMassLimits[idxWave].second < 0) {
+			binLast = _mass.size()-1;
+		}
+		binLimits.push_back(make_pair(binFirst, binLast));
+	}
+
+	_massBinLimits.clear();
+	_massBinLimits.resize(binLimits.size());
+	for(size_t idxWave=0; idxWave<binLimits.size(); ++idxWave) {
+		_massBinLimits[idxWave].resize(binLimits.size());
+		for(size_t jdxWave=0; jdxWave<binLimits.size(); ++jdxWave) {
+			_massBinLimits[idxWave][jdxWave] = make_pair(max(binLimits[idxWave].first,  binLimits[jdxWave].first),
+			                                             min(binLimits[idxWave].second, binLimits[jdxWave].second));
+		}
+	}
+
+	printInfo << "waves and mass limits:" << endl;
+	if(_massBinLimits.size() != _wlist.size()) {
+		printErr << "detected a messed up internal array." << endl;
+		return false;
+	}
+	for(size_t idxWave=0; idxWave<binLimits.size(); ++idxWave) {
+		if(_massBinLimits[idxWave].size() != _wlist.size()) {
+			printErr << "detected a messed up internal array." << endl;
+			return false;
+		}
+		ostringstream output;
+		for(size_t jdxWave=0; jdxWave<binLimits.size(); ++jdxWave) {
+			if(_massBinLimits[idxWave][jdxWave] != _massBinLimits[jdxWave][idxWave]) {
+				printErr << "detected a messed up internal array." << endl;
+				return false;
+			}
+			output << _massBinLimits[idxWave][jdxWave].first << "-" << _massBinLimits[idxWave][jdxWave].second << " ";
+		}
+		printInfo << _wlist[idxWave] << " " << binLimits[idxWave].first << "-" << binLimits[idxWave].second
+		          << " (" << (waveMassLimits[idxWave].first < 0 ? _mmin : waveMassLimits[idxWave].first)
+		          << "-" << (waveMassLimits[idxWave].second < 0 ? _mmax : waveMassLimits[idxWave].second)
+		          << "): " << output.str() << endl;
+	}
+
+	return true;
 }
 
 
@@ -139,6 +240,12 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
     // sum over the contributions to chi2 -> rho_ij
       for(unsigned int i=0; i<nwaves; ++i){
 	for(unsigned int j=i; j<nwaves; ++j){
+			// check that this mass bin should be taken into account for this
+			// combination of waves
+			if(im < _massBinLimits[i][j].first || im > _massBinLimits[i][j].second) {
+				continue;
+			}
+
 	  // calculate target spin density matrix element
 	  complex<double> rho;
 	  // loop over all waves
