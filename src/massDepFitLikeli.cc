@@ -46,11 +46,10 @@ rpwa::massDepFitLikeli::init(TTree* sp,
 {
   _doCov=doCov;
   _compset=compset;
-  _tree=sp;
-  _rhom=NULL;//new fitResult();
-  if(_tree->SetBranchAddress("fitResult_v2",&_rhom))cerr<<"Branch not found!"<<endl;
+  fitResult* _rhom=NULL;
+  if(sp->SetBranchAddress("fitResult_v2",&_rhom))cerr<<"Branch not found!"<<endl;
 
-  _tree->GetEntry(0);
+  sp->GetEntry(0);
 
 	// check that the wavelists in compset and here are identically
 	// not that they should or could have changed, but better safe than sorry
@@ -73,7 +72,7 @@ rpwa::massDepFitLikeli::init(TTree* sp,
 	}
 
   // build waveindex map;
-  _index.clear();
+  std::vector<unsigned int> _index; // wave indices in fitResult 
 
   cerr << "Number of components: "<<_compset->n()<< endl;
   cerr << (*_compset) << endl;
@@ -86,13 +85,13 @@ rpwa::massDepFitLikeli::init(TTree* sp,
  }
 
  // read data into memory
- unsigned int nbins=_tree->GetEntries();
+ unsigned int nbins=sp->GetEntries();
  unsigned int nwaves=_wlist.size();
  _spindens.clear();
  _cov.clear();
  _mass.clear();
  for(unsigned im=0;im<nbins;++im){
-   _tree->GetEntry(im);
+   sp->GetEntry(im);
    _mass.push_back(_rhom->massBinCenter());
 
    ccmatrix mycov(nwaves,nwaves);
@@ -130,10 +129,10 @@ rpwa::massDepFitLikeli::init(TTree* sp,
 	}
 	printInfo << "distance between two mass bins is " << massStep << " MeV/c^2." << endl;
 
-	_mmin=_mass[0] - massStep / 2;
-	_mmax=_mass[_mass.size() - 1] + massStep / 2;
+	const double massMin=_mass[0] - massStep / 2;
+	const double massMax=_mass[_mass.size() - 1] + massStep / 2;
 
-	printInfo << "mass bins cover the mass range from " << _mmin << " to " << _mmax << " MeV/c^2." << std::endl;
+	printInfo << "mass bins cover the mass range from " << massMin << " to " << massMax << " MeV/c^2." << std::endl;
 
 	// determine bins to be used in the fit
 	if(waveNames.size() != waveMassLimits.size()) {
@@ -194,8 +193,8 @@ rpwa::massDepFitLikeli::init(TTree* sp,
 			output << _massBinLimits[idxWave][jdxWave].first << "-" << _massBinLimits[idxWave][jdxWave].second << " ";
 		}
 		printInfo << _wlist[idxWave] << " " << binLimits[idxWave].first << "-" << binLimits[idxWave].second
-		          << " (" << (waveMassLimits[idxWave].first < 0 ? _mmin : waveMassLimits[idxWave].first)
-		          << "-" << (waveMassLimits[idxWave].second < 0 ? _mmax : waveMassLimits[idxWave].second)
+		          << " (" << (waveMassLimits[idxWave].first < 0 ? massMin : waveMassLimits[idxWave].first)
+		          << "-" << (waveMassLimits[idxWave].second < 0 ? massMax : waveMassLimits[idxWave].second)
 		          << "): " << output.str() << endl;
 	}
 
@@ -208,8 +207,8 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
   // rank==1 mass dependent fit
 
   // input values: m
-  unsigned int nwaves=_index.size();
-
+  unsigned int nwaves=_wlist.size();
+     
   // set parameters for resonances, background and phase space
   _compset->setPar(par);
 
@@ -219,21 +218,13 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 
   double chi2=0;
   unsigned int nbins=_mass.size();
-
-   TStopwatch dataW;dataW.Stop();dataW.Reset();
-  TStopwatch modelW;modelW.Stop();modelW.Reset();
-  TStopwatch calcW;calcW.Stop();calcW.Reset();
-
+ 
   // loop over mass-bins
   for(unsigned im=0;im<nbins;++im){
-    //_tree->GetEntry(im);
     const ccmatrix& mycov =_cov[im];
     const cmatrix& myrhom =_spindens[im];
 
-    //const fitResult* fitR=&_vrhom[im];
     double mass=_mass[im];
-    if(mass<_mmin)continue;
-    if(mass>_mmax)continue;
     //if(mass>2000)continue;
     //cout << "Mass=" << mass << endl;
     // inpu values: measured spin density matrix
@@ -255,19 +246,14 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	  const string w1=_wlist[i];
 	  const string w2=_wlist[j];
 	  // loop over components and look which contains these waves
-	  modelW.Start(0);
 	  rho=_compset->overlap(i,j,mass);
 	  //complex<double> rho2=_compset->overlap(w1,w2,mass);
 	  //if(norm(rho-rho2)>1E-4)cerr<< " ##### " << norm(rho-rho2) << endl;
-	  modelW.Stop();
 	  // compare to measured spin density matrix element
-	  dataW.Start(0);
-	  complex<double> rhom=rho-myrhom(i,j);//  fitR->spinDensityMatrixElem(_index[i],_index[j]);
+	  complex<double> rhom=rho-myrhom(i,j);
+	    
+	  const rmatrix& cov= mycov(i,j);
 
-	  const rmatrix& cov= mycov(i,j);//fitR->spinDensityMatrixElemCov(_index[i],_index[j]);
-	  dataW.Stop();
-
-	  calcW.Start(0);
 	   double dchi=norm(rhom);
 	  //cov.Print();
 	   if(i==j)dchi/=cov(0,0);
@@ -284,15 +270,9 @@ rpwa::massDepFitLikeli::DoEval(const double* par) const {
 	  //cerr << "sigma ="<< sigma << endl;
 	  //if(i==j)
 	  chi2+=dchi;
-	  calcW.Stop();
 	}
       }// end loop over i
   } // end loop over mass-bins
-
-  //cerr << "dataAccessTime: " << maxPrecisionAlign(dataW.CpuTime()) << " sec" << endl;
-  //cerr << "modelAccessTime: " << maxPrecisionAlign(modelW.CpuTime()) << " sec" << endl;
-  //cerr << "calcTime: " << maxPrecisionAlign(calcW.CpuTime()) << " sec" << endl;
-
-
+  
   return chi2;
 } // end DoEval

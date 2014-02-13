@@ -31,8 +31,6 @@ using namespace std;
 
 rpwa::pwachannel::pwachannel(const rpwa::pwachannel& ch) /// cp ctor
   : _C(ch._C),_ps(ch._ps){
-  //if(ch._sqrtps!=NULL)_sqrtps=(TGraph*)ch._sqrtps->Clone();
-  //else _sqrtps=NULL;
 }
 
 

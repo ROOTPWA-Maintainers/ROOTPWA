@@ -36,15 +36,7 @@ namespace rpwa {
 	       TGraph* phasespace)
       : _C(coupling), _ps(phasespace)
     {
-      //_sqrtps= new TGraph(_ps->GetN());
-      //for(int i=0;i<_ps->GetN();++i){
-      //	double m,val;
-      //	_ps->GetPoint(i,m,val);
-      //	_sqrtps->SetPoint(i,m,sqrt(val));
-      //}
     }
-
-    //~pwachannel(){if(_sqrtps!=NULL)delete _sqrtps;}
 
     pwachannel(const rpwa::pwachannel& ch); /// cp ctor
 
@@ -62,7 +54,6 @@ namespace rpwa {
   private:
     std::complex<double> _C;
     TGraph* _ps;
-	  //TGraph* _sqrtps;
   };
 
 

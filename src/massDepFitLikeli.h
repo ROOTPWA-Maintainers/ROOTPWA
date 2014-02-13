@@ -74,10 +74,7 @@ typedef ublas::matrix<rmatrix> ccmatrix;
   private:
 
     // Private Data Members ------------
-    TTree* _tree;
     pwacompset* _compset;
-    fitResult* _rhom; // measured spindensity matrix;
-    //std::vector<fitResult> _vrhom; // memory resident data
     std::vector<cmatrix> _spindens; // mremory resident spindensity
     std::vector<ccmatrix> _cov;
     std::vector<double> _mass;
@@ -85,8 +82,6 @@ typedef ublas::matrix<rmatrix> ccmatrix;
 		std::vector<std::vector<std::pair<size_t, size_t> > > _massBinLimits;
 
     std::vector<std::string> _wlist;
-    std::vector<unsigned int> _index; // wave indices in fitResult
-    double  _mmin, _mmax; // fitrange
     bool    _doCov; // take covariance between Real and Imag into account?
     // Private Methods -----------------
 
@@ -95,7 +90,3 @@ typedef ublas::matrix<rmatrix> ccmatrix;
 } // end namespace
 
 #endif
-
-//--------------------------------------------------------------
-// $Log$
-//--------------------------------------------------------------
