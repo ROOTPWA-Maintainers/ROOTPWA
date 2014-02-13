@@ -32,6 +32,10 @@ class rootPwaConfig:
 	outputFileFormat                      = ""
 	outputCacheSize                       = 0
 
+	# fit section
+	fitResultTreeName                     = ""
+	fitResultBranchName                   = ""
+
 
 	def __init__(self, configFileName):
 		self.config = ConfigParser.ConfigParser()
@@ -91,6 +95,9 @@ class rootPwaConfig:
 				self.keyfilePattern = rawKeyfilePattern.split(',')
 			else:
 				self.keyfilePattern = [rawKeyfilePattern]
+
+			self.fitResultTreeName = self.config.get('fit', 'treeName')
+			self.fitResultBranchName = self.config.get('fit', 'fitResultBranch')
 
 		except ConfigParser.Error:
 			pyRootPwa.utils.printErr("a required entry was missing from the config file. Aborting...")
