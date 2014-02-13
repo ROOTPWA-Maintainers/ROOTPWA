@@ -1445,13 +1445,17 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
      unsigned int compcount=0;
        for(unsigned int ic=0;ic<compset.n();++ic){
 	 const pwacomponent* c=compset[ic];
-	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
-	 while(it!=c->channels().end()){
-	   double I=norm(c->val(m)*it->second.C()*sqrt(it->second.ps(m))*compset.calcFsmd(m));
-	   compgraphs[compcount]->SetPoint(i,mScaled,I);
-	   ++compcount;
-	   ++it;
-	 } // end loop over channels
+			for(std::map<std::string, pwachannel>::const_iterator itChan=c->channels().begin(); itChan!=c->channels().end(); ++itChan, ++compcount) {
+				// check that this mass bin should be taken into account for this
+				// combination of waves
+				const size_t iw = wmap[itChan->first];
+				if(rangePlotting && (i < L.getMassBinLimits()[iw][iw].first || i > L.getMassBinLimits()[iw][iw].second)) {
+					continue;
+				}
+
+				const double I=norm(c->val(m)*itChan->second.C()*sqrt(itChan->second.ps(m))*compset.calcFsmd(m));
+				compgraphs[compcount]->SetPoint(i,mScaled,I);
+			} // end loop over channels
        }// end loop over components
 
        cerr << "Finished plotting mass-bin " << m << endl;
