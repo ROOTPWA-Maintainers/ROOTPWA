@@ -50,7 +50,7 @@ typedef ublas::matrix<rmatrix> ccmatrix;
 
     // Accessors -----------------------
     virtual unsigned int NDim() const;
-    unsigned int NDataPoints() const; /// number of data points in fit
+		unsigned int NDataPoints() const; /// number of data points in fit
 
 		const std::vector<std::vector<std::pair<size_t, size_t> > >& getMassBinLimits() const { return _massBinLimits; }
 
