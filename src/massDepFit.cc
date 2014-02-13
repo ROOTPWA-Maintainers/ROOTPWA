@@ -24,8 +24,6 @@
 //      fitting program for massdependent fit rootpwa
 //      minimizes massDepFitLikeli function
 //
-//      BE CAREFULL: Apart from the dynamic width the sqrts of the phase space factors are needed
-//                   So at most places in this code ps acctually is the sqrt!!!
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -59,6 +57,7 @@
 #include "Math/Factory.h"
 
 #include "reportingUtils.hpp"
+#include "reportingUtilsEnvironment.h"
 #include "fitResult.h"
 #include "pwacomponent.h"
 #include "massDepFitLikeli.h"
@@ -81,35 +80,35 @@ void
 usage(const string& progName,
       const int     errCode = 0)
 {
-  cerr << "usage:" << endl
-       << progName
-       << " -c configfile -i inputfile [-o outfile"
-       << "  -M minimizer [-m algorithm] -t # -q -h -P -R -C] [-S fitResultFiles]" << endl
-       << "    where:" << endl
-       << "        -c file    path to config File" << endl
-       << "        -i file    path to input file" << endl
-       << "        -o file    path to output file (default: 'mDep.result.root')" << endl
-    //       << "        -r #       rank of spin density matrix (default: 1)" << endl
-       << "        -M name    minimizer (default: Minuit2)" << endl
-       << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
-       << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
-       << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
-       << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
-       << "                                         GSLMultiFit: -" << endl
-       << "                                         GSLSimAn:    -" << endl
-       << "                                         Linear:      Robust" << endl
-       << "                                         Fumili:      -" << endl
-       << "        -t #       minimizer tolerance (default: 1e-10)" << endl
-       << "        -q         run quietly (default: false)" << endl
-       << "        -h         print help" << endl
-       << "        -P         plotting only - no fit" << endl
-       << "        -R         plot in fit range only" << endl
-       << "        -C         switch OFF covariances between real and imag part" << endl
-       << "        -S files   Systematic error plotting. give list of files" << endl
 
-       << endl;
-  exit(errCode);
+	cerr << "performs mass-dependent fit" << endl
+	     << endl
+	     << "usage:" << endl
+	     << progName
+	     << " [-o outfile -M minimizer -m algorithm -t # -P -R -C -d -q -h] config file" << endl
+	     << "    where:" << endl
+	     << "        -o file    path to output file (default: 'mDep.result.root')" << endl
+	     << "        -M name    minimizer (default: Minuit2)" << endl
+	     << "        -m name    minimization algorithm (optional, default: Migrad)" << endl
+	     << "                   available minimizers: Minuit:      Migrad, Simplex, Minimize, Migrad_imp" << endl
+	     << "                                         Minuit2:     Migrad, Simplex, Combined, Scan, Fumili" << endl
+	     << "                                         GSLMultiMin: ConjugateFR, ConjugatePR, BFGS, BFGS2, SteepestDescent" << endl
+	     << "                                         GSLMultiFit: -" << endl
+	     << "                                         GSLSimAn:    -" << endl
+	     << "                                         Linear:      Robust" << endl
+	     << "                                         Fumili:      -" << endl
+	     << "        -g #       minimizer strategy: 0 = low, 1 = medium, 2 = high effort  (default: 1)" << endl
+	     << "        -t #       minimizer tolerance (default: 1e-10)" << endl
+	     << "        -P         plotting only - no fit" << endl
+	     << "        -R         plot in fit range only" << endl
+	     << "        -C         switch OFF covariances between real and imag part" << endl
+	     << "        -d         additional debug output (default: false)" << endl
+	     << "        -q         run quietly (default: false)" << endl
+	     << "        -h         print help" << endl
+	     << endl;
+	exit(errCode);
 }
+
 
 //  function loops through fitResults and puts phasespace values into a graph for interpolation
 //  THIS CONTAINS NOW THE RIGHT VALUE NOT!!! THE SQRT!!!
@@ -212,114 +211,89 @@ int
 main(int    argc,
      char** argv)
 {
-  // --------------------------------------------------------------------------
-   // internal parameters
-  const string       valTreeName         = "pwa";
-  const string       valBranchName       = "fitResult_v2";
-  // double             defaultStartValue   = 0.01;
-//   bool               useFixedStartValues = false;
-//   double             startValStep        = 0.0005;
-  const unsigned int maxNmbOfIterations  = 20000;
-  const bool         runHesse            = true;
-  const bool         runMinos            = false;
-  bool               onlyPlotting        = false;
-  bool               rangePlotting        = false;
-  bool               sysPlotting         = false;
+	printCompilerInfo();
+	printLibraryInfo ();
+	printGitHash     ();
+	cout << endl;
+
+	// --------------------------------------------------------------------------
+	// internal parameters
+	const string       valTreeName           = "pwa";
+	const string       valBranchName         = "fitResult_v2";
+	const unsigned int maxNmbOfIterations    = 20000;
+	const bool         runHesse              = true;
+	const bool         runMinos              = false;
+
+	// ---------------------------------------------------------------------------
+	// parse command line options
+	const string progName           = argv[0];
   bool               doCov               = true;
 
-  //unsigned int maxParNameLength = 20;       // maximum length of parameter names
-//   int                startValSeed        = 1234567;
- // parse command line options
-  const string progName           = argv[0];
-  
-  string       inFileName         = "fitresult.root";       // input filename
   string       outFileName        = "mDep.result.root";       // output filename
-  //string       normIntFileName    = "";                     // file with normalization integrals
-  string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
-  double       minimizerTolerance = 1e-10;                  // minimizer tolerance
-  bool         quiet              = false;
+	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
+	int          minimizerStrategy  = 1;                      // minimizer strategy
+	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
+	bool         onlyPlotting       = false;
+	bool         rangePlotting      = false;
+	bool         debug              = false;
+	bool         quiet              = false;
+	extern char* optarg;
+	extern int   optind;
+	int c;
+	while ((c = getopt(argc, argv, "o:M:m:g:t:PRCdqh")) != -1)
+		switch (c) {
+		case 'o':
+			outFileName = optarg;
+			break;
+		case 'M':
+			minimizerType[0] = optarg;
+			break;
+		case 'm':
+			minimizerType[1] = optarg;
+			break;
+		case 'g':
+			minimizerStrategy = atoi(optarg);
+			break;
+		case 't':
+			minimizerTolerance = atof(optarg);
+			break;
+		case 'P':
+			onlyPlotting=true;
+			break;
+		case 'R':
+			rangePlotting=true;
+			break;
+		case 'C':
+			doCov=false;
+			break;
+		case 'd':
+			debug = true;
+			break;
+		case 'q':
+			quiet = true;
+			break;
+		case '?':
+		case 'h':
+			usage(progName, 1);
+			break;
+		}
 
-  string       configFile;        // configuration file
-
-extern char* optarg;
- extern int optind;
-  // extern int optind;
-  int ca;
-  while ((ca = getopt(argc, argv, "c:i:o:M:m:t:qhPRCS")) != -1)
-    switch (ca) {
-    case 'c':
-      configFile = optarg;
-      break;
-    case 'o':
-      outFileName = optarg;
-      break;
-     case 'i':
-      inFileName = optarg;
-      break;
-    case 'M':
-      minimizerType[0] = optarg;
-      break;
-    case 'm':
-      minimizerType[1] = optarg;
-      break;
-    case 't':
-      minimizerTolerance = atof(optarg);
-      break;
-    case 'q':
-      quiet = true;
-      break;
-    case 'h':
-      usage(progName);
-      break;
-    case 'P':
-      onlyPlotting=true;
-      break;
-    case 'R':
-      rangePlotting=true;
-      break;
-    case 'C':
-      doCov=false;
-      break;
-    case 'S':
-      sysPlotting=true;
-      break;
-    }
-
-
- // open input file and get results tree
-  TFile* infile=TFile::Open(inFileName.c_str());
-  if(infile==NULL){
-    cerr << "Input file " << inFileName <<" not found."<< endl;
-    return 1;
-  }
-  TTree* tree=(TTree*)infile->Get(valTreeName.c_str());
-  if(tree==NULL){
-    cerr << "Input tree " << valTreeName <<" not found."<< endl;
-    return 1;
-  }
+	// there must only be one remaining (unhandled) argument which is the
+	// configuration file
+	if(optind+1 != argc) {
+		printErr << "you need to specify exactly one configuration file." << endl;
+		usage(progName, 1);
+	}
+	const string configFileName = argv[optind];
 
 
-  vector<TTree*> sysTrees;
-  if(sysPlotting){
-    // add this fit
-    sysTrees.push_back(tree);
-    // open files with fits
-    for(int i=optind;i<argc;++i){
-      // open input file and get results tree
-      TFile* infile=TFile::Open(argv[i]);
-      if(infile==NULL){
-	cerr << "Systematics Input file " << inFileName <<" not found."<< endl;
-	return 1;
-      }
-      TTree* systree=(TTree*)infile->Get(valTreeName.c_str());
-      if(systree==NULL){
-	cerr << "Input tree " << valTreeName <<" not found."<< endl;
-	return 1;
-      }
-      sysTrees.push_back(systree);
-    }
-    printInfo << sysTrees.size() << " files for systematics found " << endl;
-  }// end if sysPlotting
+	Config configFile;
+	if(not parseLibConfigFile(configFileName, configFile, debug)) {
+		printErr << "could not read configuration file '" << configFileName << "'." << endl;
+		exit(1);
+	}
+
+	const Setting& configRoot = configFile.getRoot();
 
   printInfo << "creating and setting up likelihood function" << endl;
   printInfo << "doCovariances = " << doCov << endl;
@@ -328,19 +302,47 @@ extern char* optarg;
 
   // Setup Component Set (Resonances + Background)
   pwacompset compset;
-  Config Conf;
-  Conf.readFile(configFile.c_str());
-  const Setting& root = Conf.getRoot();
   bool check=true;
 
 	// input section
-	const Setting* configInput = findLibConfigGroup(root, "input");
+	const Setting* configInput = findLibConfigGroup(configRoot, "input");
 	if(not configInput) {
 		printErr << "'input' section in configuration file does not exist." << endl;
 		exit(1);
 	}
 
-	// get information of waves to be used in the fit
+	// get information about fit results from mass-independent
+	const Setting* configInputFitresults = findLibConfigList(*configInput, "fitresults");
+	if(not configInputFitresults) {
+		printErr << "'fitresults' list does not exist in section 'input' in configuration file." << endl;
+		exit(1);
+	}
+
+	string inFileName;
+	{
+		const int nrFitresults = configInputFitresults->getLength();
+		if(nrFitresults != 1) {
+			printErr << "handling of more than one entry in 'fitresults' not yet supported." << endl;
+			exit(1);
+		}
+
+		const Setting* configInputFitresult = &((*configInputFitresults)[0]);
+
+		map<string, Setting::Type> mandatoryArguments;
+		insert(mandatoryArguments)
+		    ("name", Setting::TypeString);
+		if(not checkIfAllVariablesAreThere(configInputFitresult, mandatoryArguments)) {
+			printErr << "'fitresults' list in 'input' section in configuration file contains errors." << endl;
+			exit(1);
+		}
+
+		configInputFitresult->lookupValue("name", inFileName);
+
+		printInfo << "reading fit results of mass-independent fit from '" << inFileName << "'." << endl;
+	}
+
+
+	// get information about waves to be used in the fit
 	const Setting* configInputWaves = findLibConfigList(*configInput, "waves");
 	if(not configInputWaves) {
 		printErr << "'waves' list does not exist in section 'input' in configuration file." << endl;
@@ -382,7 +384,6 @@ extern char* optarg;
 				exit(1);
 			}
 
-
 			waveNames.push_back(name);
 			waveMassLimits.push_back(make_pair(massLower, massUpper));
 
@@ -397,10 +398,69 @@ extern char* optarg;
 		compset.setWaveList(waveNames);
 	}
 
+	// get information for plotting of systematic error
+	bool sysPlotting = false;
+	vector<string> sysFileNames;
+	const Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
+	if(configInputSystematics) {
+		const int nrSystematics = configInputSystematics->getLength();
+		printInfo << "reading information for systematic errors from " << nrSystematics << " files." << endl;
+
+		if(nrSystematics > 0) {
+			sysPlotting = true;
+		}
+
+		if(nrSystematics > 0 && (*configInputSystematics)[0].getType() != Setting::TypeString) {
+			printErr << "contents of 'systematics' array in 'input' needs to be strings." << endl;
+			exit(1);
+		}
+
+		for(int idxSystematic=0; idxSystematic<nrSystematics; ++idxSystematic) {
+			const string fileName = (*configInputSystematics)[idxSystematic];
+			printInfo << "reading information for systematic errors from '" << fileName << "'." << endl;
+			sysFileNames.push_back(fileName);
+		}
+	}
+
+ // open input file and get results tree
+  TFile* infile=TFile::Open(inFileName.c_str());
+  if(infile==NULL){
+    cerr << "Input file " << inFileName <<" not found."<< endl;
+    return 1;
+  }
+  TTree* tree=(TTree*)infile->Get(valTreeName.c_str());
+  if(tree==NULL){
+    cerr << "Input tree " << valTreeName <<" not found."<< endl;
+    return 1;
+  }
+
+
+  vector<TTree*> sysTrees;
+  if(sysPlotting){
+    // add this fit
+    sysTrees.push_back(tree);
+    // open files with fits  
+    for(size_t i=0; i<sysFileNames.size(); ++i){
+      // open input file and get results tree
+      TFile* infile=TFile::Open(sysFileNames[i].c_str());
+      if(infile==NULL){
+	cerr << "Systematics Input file " << inFileName <<" not found."<< endl;
+	return 1;
+      }
+      TTree* systree=(TTree*)infile->Get(valTreeName.c_str());
+      if(systree==NULL){
+	cerr << "Input tree " << valTreeName <<" not found."<< endl;
+	return 1;
+      }
+      sysTrees.push_back(systree);
+    }
+    printInfo << sysTrees.size() << " files for systematics found " << endl;
+  }// end if sysPlotting
+
 
   // overall final-state mass dependence
   TF1* fPS = NULL;
-  const Setting* configFsmd = findLibConfigGroup(root, "finalStateMassDependence", false);
+  const Setting* configFsmd = findLibConfigGroup(configRoot, "finalStateMassDependence", false);
   if(configFsmd){
     map<string, Setting::Type> mandatoryArguments;
     insert(mandatoryArguments)
@@ -488,8 +548,8 @@ extern char* optarg;
 
 
   // Resonances
-  if(Conf.exists("components.resonances")){
-    const Setting &bws = root["components"]["resonances"];
+  if(configFile.exists("components.resonances")){
+    const Setting &bws = configRoot["components"]["resonances"];
     // loop through breitwigners
     int nbw=bws.getLength();
     printInfo << "found " << nbw << " Resonances in config" << endl;
@@ -555,8 +615,8 @@ extern char* optarg;
   }
   cout << endl;
   // Background components
-  if(Conf.exists("components.background")){
-    const Setting &bws = root["components"]["background"];
+  if(configFile.exists("components.background")){
+    const Setting &bws = configRoot["components"]["background"];
     // loop through breitwigners
     int nbw=bws.getLength();
     printInfo << "found " << nbw << " Background components in config" << endl;
@@ -627,8 +687,8 @@ extern char* optarg;
   // set anchorwave
   vector<string> anchorwave_channel;
   vector<string> anchorwave_reso;
-  if(Conf.exists("components.anchorwave")){
-    const Setting &anc = root["components"]["anchorwave"];
+  if(configFile.exists("components.anchorwave")){
+    const Setting &anc = configRoot["components"]["anchorwave"];
     // loop through breitwigners
     unsigned int nanc=anc.getLength();
     for(unsigned int ianc=0;ianc<nanc;++ianc){
@@ -838,7 +898,7 @@ extern char* optarg;
 
   // write out results
   // Likelihood and such
- const Setting& fitqualS= root["fitquality"];
+ const Setting& fitqualS= configRoot["fitquality"];
  Setting& chi2S=fitqualS["chi2"];
  chi2S=chi2;
  Setting& ndfS=fitqualS["ndf"];
@@ -866,8 +926,8 @@ extern char* optarg;
   }
  
   // Setup Component Set (Resonances + Background)
-  const Setting& bws= root["components"]["resonances"];
-  const Setting& bkgs= root["components"]["background"];
+  const Setting& bws= configRoot["components"]["resonances"];
+  const Setting& bkgs= configRoot["components"]["background"];
   unsigned int nbws=bws.getLength();
   unsigned int nbkgs=bkgs.getLength();
   // loop over components
@@ -964,7 +1024,7 @@ extern char* optarg;
   
   string outconfig(outFileName);
   outconfig.append(".conf");
-  Conf.writeFile(outconfig.c_str());
+  configFile.writeFile(outconfig.c_str());
 
   cerr << "Fitting finished... Start building graphs ... " << endl;
 
@@ -1086,8 +1146,8 @@ extern char* optarg;
    std::vector<TMultiGraph*> overlapImgraphs;
 
    std::vector<TGraph*> phasefitgraphs;
-   unsigned int c=0;
-
+   unsigned int count=0;
+  
 
   for(unsigned int iw=0; iw<wl.size();++iw){
      for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
@@ -1099,136 +1159,136 @@ extern char* optarg;
        overlapRegraphs.push_back(new TMultiGraph);
        string name("dPhi_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       phasegraphs[c]->SetName(name.c_str());
-       phasegraphs[c]->SetTitle(name.c_str());
+       phasegraphs[count]->SetName(name.c_str());
+       phasegraphs[count]->SetTitle(name.c_str());
        name="Re_";name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       overlapRegraphs[c]->SetName(name.c_str());
-       overlapRegraphs[c]->SetTitle(name.c_str());
+       overlapRegraphs[count]->SetName(name.c_str());
+       overlapRegraphs[count]->SetTitle(name.c_str());
        name="Im_";name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       overlapImgraphs[c]->SetName(name.c_str());
-       overlapImgraphs[c]->SetTitle(name.c_str());
+       overlapImgraphs[count]->SetName(name.c_str());
+       overlapImgraphs[count]->SetTitle(name.c_str());
 
        phasesysgraphs.push_back(new TGraphErrors(nbins));
        name=("dPhi_sys_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       phasesysgraphs[c]->SetName(name.c_str());
-       phasesysgraphs[c]->SetTitle(name.c_str());
-       phasesysgraphs[c]->SetLineColor(syscolor);
-       phasesysgraphs[c]->SetFillColor(syscolor);
-       phasesysgraphs[c]->SetDrawOption("2");
-       //phasesysgraphs[c]->SetLineWidth(1);
-       //phasesysgraphs[c]->SetFillStyle(1001);
-
-       phasegraphs[c]->Add(phasesysgraphs[c],"2");
+       phasesysgraphs[count]->SetName(name.c_str());
+       phasesysgraphs[count]->SetTitle(name.c_str());
+       phasesysgraphs[count]->SetLineColor(syscolor);
+       phasesysgraphs[count]->SetFillColor(syscolor);
+       phasesysgraphs[count]->SetDrawOption("2");
+       //phasesysgraphs[count]->SetLineWidth(1);
+       //phasesysgraphs[count]->SetFillStyle(1001);
+       
+       phasegraphs[count]->Add(phasesysgraphs[count],"2");
 
 
        phasedatagraphs.push_back(new TGraphErrors(nbins));
        name=("dPhi_data_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       phasedatagraphs[c]->SetName(name.c_str());
-       phasedatagraphs[c]->SetTitle(name.c_str());
-       phasegraphs[c]->Add(phasedatagraphs[c],"p");
+       phasedatagraphs[count]->SetName(name.c_str());
+       phasedatagraphs[count]->SetTitle(name.c_str());
+       phasegraphs[count]->Add(phasedatagraphs[count],"p");
 
 
        realsysgraphs.push_back(new TGraphErrors(nbins));
        name=("RE_sys_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       realsysgraphs[c]->SetName(name.c_str());
-       realsysgraphs[c]->SetTitle(name.c_str());
-       realsysgraphs[c]->SetLineColor(syscolor);
-       realsysgraphs[c]->SetFillColor(syscolor);
-       realsysgraphs[c]->SetDrawOption("2");
-       overlapRegraphs[c]->Add(realsysgraphs[c],"2");
+       realsysgraphs[count]->SetName(name.c_str());
+       realsysgraphs[count]->SetTitle(name.c_str());
+       realsysgraphs[count]->SetLineColor(syscolor);
+       realsysgraphs[count]->SetFillColor(syscolor);
+       realsysgraphs[count]->SetDrawOption("2");
+       overlapRegraphs[count]->Add(realsysgraphs[count],"2");
 
        imagsysgraphs.push_back(new TGraphErrors(nbins));
        name=("IM_sys_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       imagsysgraphs[c]->SetName(name.c_str());
-       imagsysgraphs[c]->SetTitle(name.c_str());
-       imagsysgraphs[c]->SetLineColor(syscolor);
-       imagsysgraphs[c]->SetFillColor(syscolor);
-       imagsysgraphs[c]->SetDrawOption("2");
-       overlapImgraphs[c]->Add(imagsysgraphs[c],"2");
+       imagsysgraphs[count]->SetName(name.c_str());
+       imagsysgraphs[count]->SetTitle(name.c_str());
+       imagsysgraphs[count]->SetLineColor(syscolor);
+       imagsysgraphs[count]->SetFillColor(syscolor);
+       imagsysgraphs[count]->SetDrawOption("2");
+       overlapImgraphs[count]->Add(imagsysgraphs[count],"2");
 
 
        realdatagraphs.push_back(new TGraphErrors(nbins));
        name=("RE_data_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       realdatagraphs[c]->SetName(name.c_str());
-       realdatagraphs[c]->SetTitle(name.c_str());
-       overlapRegraphs[c]->Add(realdatagraphs[c],"p");
+       realdatagraphs[count]->SetName(name.c_str());
+       realdatagraphs[count]->SetTitle(name.c_str());
+       overlapRegraphs[count]->Add(realdatagraphs[count],"p");
 
        imagdatagraphs.push_back(new TGraphErrors(nbins));
        name=("IM_data_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       imagdatagraphs[c]->SetName(name.c_str());
-       imagdatagraphs[c]->SetTitle(name.c_str());
-       //imagdatagraphs[c]->SetLineStyle(2);
-       overlapImgraphs[c]->Add(imagdatagraphs[c],"p");
+       imagdatagraphs[count]->SetName(name.c_str());
+       imagdatagraphs[count]->SetTitle(name.c_str());
+       //imagdatagraphs[count]->SetLineStyle(2);
+       overlapImgraphs[count]->Add(imagdatagraphs[count],"p");
 
-       ++c;
+       ++count;
      }
    }
 
-   c=0;
+   count=0;
    for(unsigned int iw=0; iw<wl.size();++iw){
      for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
        phasefitgraphs.push_back(new TGraph(nbins));
        string name("dPhi_fit_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       phasefitgraphs[c]->SetName(name.c_str());
-       phasefitgraphs[c]->SetTitle(name.c_str());
-       phasefitgraphs[c]->SetLineColor(kRed);
-       phasefitgraphs[c]->SetMarkerColor(kRed);
-       phasefitgraphs[c]->SetDrawOption("P");
-       phasefitgraphs[c]->SetMarkerStyle(24);
-       phasefitgraphs[c]->SetMarkerSize(0.2);
-       phasegraphs[c]->Add(phasefitgraphs[c],"cp");
+       phasefitgraphs[count]->SetName(name.c_str());
+       phasefitgraphs[count]->SetTitle(name.c_str());
+       phasefitgraphs[count]->SetLineColor(kRed);
+       phasefitgraphs[count]->SetMarkerColor(kRed);
+       phasefitgraphs[count]->SetDrawOption("P");
+       phasefitgraphs[count]->SetMarkerStyle(24);
+       phasefitgraphs[count]->SetMarkerSize(0.2);
+       phasegraphs[count]->Add(phasefitgraphs[count],"cp");
 
        realfitgraphs.push_back(new TGraph(nbins));
        name=("Re_fit_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       realfitgraphs[c]->SetName(name.c_str());
-       realfitgraphs[c]->SetTitle(name.c_str());
-       realfitgraphs[c]->SetLineColor(kRed);
-       realfitgraphs[c]->SetMarkerColor(kRed);
-       realfitgraphs[c]->SetDrawOption("AP");
-       realfitgraphs[c]->SetMarkerStyle(24);
-       realfitgraphs[c]->SetMarkerSize(0.2);
-       overlapRegraphs[c]->Add(realfitgraphs[c],"cp");
+       realfitgraphs[count]->SetName(name.c_str());
+       realfitgraphs[count]->SetTitle(name.c_str());
+       realfitgraphs[count]->SetLineColor(kRed);
+       realfitgraphs[count]->SetMarkerColor(kRed);
+       realfitgraphs[count]->SetDrawOption("AP");
+       realfitgraphs[count]->SetMarkerStyle(24);
+       realfitgraphs[count]->SetMarkerSize(0.2);
+       overlapRegraphs[count]->Add(realfitgraphs[count],"cp");
 
        imagfitgraphs.push_back(new TGraph(nbins));
        name=("Im_fit_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       imagfitgraphs[c]->SetName(name.c_str());
-       imagfitgraphs[c]->SetTitle(name.c_str());
-       imagfitgraphs[c]->SetLineColor(kRed);
-       //imagfitgraphs[c]->SetLineStyle(2);
-       imagfitgraphs[c]->SetMarkerColor(kRed);
-       imagfitgraphs[c]->SetDrawOption("AP");
-       imagfitgraphs[c]->SetMarkerStyle(24);
-       imagfitgraphs[c]->SetMarkerSize(0.2);
-       overlapImgraphs[c]->Add(imagfitgraphs[c],"cp");
+       imagfitgraphs[count]->SetName(name.c_str());
+       imagfitgraphs[count]->SetTitle(name.c_str());
+       imagfitgraphs[count]->SetLineColor(kRed);
+       //imagfitgraphs[count]->SetLineStyle(2);
+       imagfitgraphs[count]->SetMarkerColor(kRed);
+       imagfitgraphs[count]->SetDrawOption("AP");
+       imagfitgraphs[count]->SetMarkerStyle(24);
+       imagfitgraphs[count]->SetMarkerSize(0.2);
+       overlapImgraphs[count]->Add(imagfitgraphs[count],"cp");
 
-       ++c;
+       ++count;
      }
    }
 
    std::vector<TGraph2D*> phase2d;
-   c=0;
+   count=0;
    for(unsigned int iw=0; iw<wl.size();++iw){
      for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
        phase2d.push_back(new TGraph2D(nbins));
        string name("dPhi_2d_");name.append(wl[iw]);
        name.append("---");name.append(wl[iw2]);
-       phase2d[c]->SetName(name.c_str());
-       phase2d[c]->SetTitle(name.c_str());
-       phase2d[c]->SetLineColor(kRed);
-       phase2d[c]->SetMarkerColor(kRed);
-       //phasegraphs[c]->Add(phasefitgraphs[c],"cp");
-       ++c;
+       phase2d[count]->SetName(name.c_str());
+       phase2d[count]->SetTitle(name.c_str());
+       phase2d[count]->SetLineColor(kRed);
+       phase2d[count]->SetMarkerColor(kRed);
+       //phasegraphs[count]->Add(phasefitgraphs[count],"cp");
+       ++count;
      }
    }
 
@@ -1248,7 +1308,7 @@ extern char* optarg;
      double m=rho->massBinCenter();
      double mScaled=m*MASSSCALE;
      //cout << "MASS: "<<m << endl;
-     unsigned int c=0;
+     unsigned int count=0;
      for(unsigned int iw=0; iw<wl.size();++iw){
 		// check that this mass bin should be taken into account for this
 		// combination of waves
@@ -1322,30 +1382,30 @@ extern char* optarg;
 	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
 	 TMatrixT<double> rCov=rho->spinDensityMatrixElemCov(wi1,wi2);
 
-	 realdatagraphs[c]->SetPoint(i,
+	 realdatagraphs[count]->SetPoint(i,
 				     mScaled,
 				     r.real());
-	 realdatagraphs[c]->SetPointError(i,
+	 realdatagraphs[count]->SetPointError(i,
 			    binwidth,
 			    sqrt(rCov[0][0]));
-	 imagdatagraphs[c]->SetPoint(i,
+	 imagdatagraphs[count]->SetPoint(i,
 		       mScaled,
 		       r.imag());
-
-	 imagdatagraphs[c]->SetPointError(i,
+     
+	 imagdatagraphs[count]->SetPointError(i,
 			    binwidth,
 			    sqrt(rCov[1][1]));
 
 
 	 double dataphi=rho->phase(wl[iw].c_str(),wl[iw2].c_str());
 
-	 phasedatagraphs[c]->SetPoint(i,mScaled,dataphi);
-
+	 phasedatagraphs[count]->SetPoint(i,mScaled,dataphi);
+	   
 	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
 					     wl[iw2].c_str())/TMath::RadToDeg());
-	 phase2d[c]->SetPoint(i,v.X(),v.Y(),mScaled);
+	 phase2d[count]->SetPoint(i,v.X(),v.Y(),mScaled);
 
-	 phasedatagraphs[c]->SetPointError(i,binwidth,
+	 phasedatagraphs[count]->SetPointError(i,binwidth,
 					   rho->phaseErr(wl[iw].c_str(),
 							 wl[iw2].c_str()));
 	 double fitphase=compset.phase(wl[iw],wl[iw2],m)*TMath::RadToDeg();
@@ -1416,27 +1476,27 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 	   }// end loop over sys trees
 	   // cerr << "loop over systrees finished" << endl;
 
-	   phasesysgraphs[c]->SetPoint(i,mScaled,(maxPhase+minPhase)*0.5);
-	   phasesysgraphs[c]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
-
-	   realsysgraphs[c]->SetPoint(i,mScaled,(maxRe+minRe)*0.5);
-	   realsysgraphs[c]->SetPointError(i,binwidth,(maxRe-minRe)*0.5);
-	   imagsysgraphs[c]->SetPoint(i,mScaled,(maxIm+minIm)*0.5);
-	   imagsysgraphs[c]->SetPointError(i,binwidth,(maxIm-minIm)*0.5);
-
+	   phasesysgraphs[count]->SetPoint(i,mScaled,(maxPhase+minPhase)*0.5);
+	   phasesysgraphs[count]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
+	   
+	   realsysgraphs[count]->SetPoint(i,mScaled,(maxRe+minRe)*0.5);
+	   realsysgraphs[count]->SetPointError(i,binwidth,(maxRe-minRe)*0.5);
+	   imagsysgraphs[count]->SetPoint(i,mScaled,(maxIm+minIm)*0.5);
+	   imagsysgraphs[count]->SetPointError(i,binwidth,(maxIm-minIm)*0.5);
+	
 
 	 }// end if sysplotting
 	 //cerr << "sysplotting finished" << endl;
 
-	 phasefitgraphs[c]->SetPoint(i,mScaled,fitphase);
+	 phasefitgraphs[count]->SetPoint(i,mScaled,fitphase);
 
 	 complex<double> fitval=compset.overlap(wl[iw],wl[iw2],m);
 
-	 realfitgraphs[c]->SetPoint(i,mScaled,fitval.real());
-	 imagfitgraphs[c]->SetPoint(i,mScaled,fitval.imag());
+	 realfitgraphs[count]->SetPoint(i,mScaled,fitval.real());
+	 imagfitgraphs[count]->SetPoint(i,mScaled,fitval.imag());
 
 
-	 c++;
+	 count++;
        }// end inner loop over waves
 
      } // end loop over waves
