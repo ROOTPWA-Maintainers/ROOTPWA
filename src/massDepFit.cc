@@ -1447,7 +1447,7 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 	 const pwacomponent* c=compset[ic];
 	 std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
 	 while(it!=c->channels().end()){
-	   double I=norm(c->val(m)*it->second.C())*it->second.ps(m)*compset.calcFsmd(m);
+	   double I=norm(c->val(m)*it->second.C()*sqrt(it->second.ps(m))*compset.calcFsmd(m));
 	   compgraphs[compcount]->SetPoint(i,mScaled,I);
 	   ++compcount;
 	   ++it;
