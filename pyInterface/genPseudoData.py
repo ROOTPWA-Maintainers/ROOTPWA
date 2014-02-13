@@ -215,7 +215,6 @@ if __name__ == "__main__":
 				posReflAmpSum = 0
 				negReflAmpSum = 0
 
-				print("############## event " + str(eventsGenerated) + "##############")
 				for i in range(len(amplitudes)):
 					amplitude = amplitudes[i]
 					topo = amplitude.decayTopology()
@@ -224,23 +223,13 @@ if __name__ == "__main__":
 						pyRootPwa.utils.printErr('Could not read kinematics data. Aborting...')
 						sys.exit(1)
 
-					print("waveName = " + waveNames[i])
-					decayAmp = amplitude()
-					amp = (decayAmp * prodAmps[i]) / math.sqrt(integral.element(waveNames[i], waveNames[i]).real * nmbNormEvents)
-					print(str(amp) + " = " + str(decayAmp) + " * " + str(prodAmps[i]) + " / sqrt(" + str(integral.element(waveNames[i], waveNames[i]).real) + " * " + str(nmbNormEvents) + ")")
+					amp = (amplitude() * prodAmps[i]) / math.sqrt(integral.element(waveNames[i], waveNames[i]).real * nmbNormEvents)
 					if reflectivities[i] > 0:
 						posReflAmpSum += amp
 					else:
 						negReflAmpSum += amp
 
 				weight[0] = norm(posReflAmpSum) + norm(negReflAmpSum)
-				print("-------------")
-				print("posReflAmpSum=" + str(posReflAmpSum))
-				print("negReflAmpSum=" + str(negReflAmpSum))
-				print("-------------")
-				print(str(weight) + " = " + str(norm(posReflAmpSum)) + " + " + str(norm(negReflAmpSum)) + " + 0")
-				print("weight = " + str(weight))
-				print("########## end event " + str(eventsGenerated) + "##############")
 				outTree.Fill()
 
 				progressBar.update(eventsGenerated)
