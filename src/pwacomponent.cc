@@ -281,7 +281,7 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
     }
 
   }
-  return norm(rho)*calcFsmd(m);
+  return norm(rho*calcFsmd(m));
 }
 
 double
@@ -322,7 +322,7 @@ rpwa::pwacompset::overlap(const std::string& wave1,
       rho2+=_comp[ic]->val(m)*_comp[ic]->channels().find(wave2)->second.C()*sqrt(_comp[ic]->channels().find(wave2)->second.ps(m));
     }
   }
-  return rho1*conj(rho2)*calcFsmd(m);
+  return (rho1*calcFsmd(m))*conj(rho2*calcFsmd(m));
 }
 
 std::complex<double>
@@ -349,7 +349,7 @@ rpwa::pwacompset::overlap(unsigned int wave1,
     unsigned int ichan=cc2[ic2].second;
     rho2+=_comp[icomp]->val(m)*_comp[icomp]->getChannel(ichan).CsqrtPS(m);
   }
-  return rho1*conj(rho2)*calcFsmd(m);
+  return (rho1*calcFsmd(m))*conj(rho2*calcFsmd(m));
 }
 
 
