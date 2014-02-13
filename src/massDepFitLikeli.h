@@ -52,12 +52,16 @@ typedef ublas::matrix<rmatrix> ccmatrix;
     virtual unsigned int NDim() const;
     unsigned int NDataPoints() const; /// number of data points in fit
 
-    // Modifiers -----------------------
-    void init(TTree* fitresulttree,
-	      pwacompset* compset,
-	      double mmin=0, double mmax=5000,
-	      bool doCov=true);
+		const std::vector<std::vector<std::pair<size_t, size_t> > >& getMassBinLimits() const { return _massBinLimits; }
 
+
+		// Modifiers -----------------------
+		bool init(TTree* fitresulttree,
+		          pwacompset* compset,
+		          const std::vector<std::string>& waveNames,
+		          const std::vector<std::pair<double, double> >& waveMassLimits,
+		          bool doCov=true);
+    
 
 
     // Operations ----------------------
@@ -77,6 +81,8 @@ typedef ublas::matrix<rmatrix> ccmatrix;
     std::vector<cmatrix> _spindens; // mremory resident spindensity
     std::vector<ccmatrix> _cov;
     std::vector<double> _mass;
+
+		std::vector<std::vector<std::pair<size_t, size_t> > > _massBinLimits;
 
     std::vector<std::string> _wlist;
     std::vector<unsigned int> _index; // wave indices in fitResult
