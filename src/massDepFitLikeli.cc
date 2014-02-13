@@ -16,25 +16,26 @@ using namespace std;
 unsigned int
 rpwa::massDepFitLikeli::NDim() const {return _compset->numPar();}
 
+
 unsigned int
 rpwa::massDepFitLikeli::NDataPoints() const {
-  // loop through input data an check how many bins are in massrange
-  unsigned int nbins=_tree->GetEntries();
-  cout << nbins << " mass bins in input data." << endl;
-  unsigned int nbinsInRange=0;
-  // loop over mass-bins
-  for(unsigned im=0;im<nbins;++im){
-    _tree->GetEntry(im);
-    double mass=_rhom->massBinCenter();
-    if(mass>=_mmin && mass<=_mmax)++nbinsInRange;
-  }
-  cout << nbinsInRange << " mass bins in allowed mass range {"
-       << _mmin<<","<<_mmax<<"}"<< endl;
+	// calculate data points:
+	// * diagonal elements are real numbers
+	// * non-diagonal elements are complex numbers
+	// * remember (Re,Im) => factor 2
+	// * diagonal elements are only checked once, of diagonal elements with
+	//   the two different combinations (i,j) and (j,i)
+	unsigned int nrPts(0);
 
-  // calculate data points, remember (Re,Im)=> factor 2:
-  // a complex, symmetric matrix with real diagonal has n^2 elements:
-  return nbinsInRange*_wlist.size()*_wlist.size();
+	for(size_t idxWave=0; idxWave<_wlist.size(); ++idxWave) {
+		for(size_t jdxWave=0; jdxWave<_wlist.size(); ++jdxWave) {
+			nrPts += _massBinLimits[idxWave][jdxWave].second - _massBinLimits[idxWave][jdxWave].first + 1;
+		}
+	}
+  
+	return nrPts;
 }
+
 
 bool
 rpwa::massDepFitLikeli::init(TTree* sp,
