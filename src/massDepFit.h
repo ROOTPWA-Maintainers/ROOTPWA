@@ -48,6 +48,8 @@ namespace rpwa {
 		const std::vector<spinDensityMatrixType>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
 // FIXME: get rid
 		const std::vector<spinDensityCovarianceMatrixType>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
+// FIXME: get rid
+		const std::vector<std::vector<double> >& getInPhaseSpaceIntegrals() const { return _inPhaseSpaceIntegrals; }
 
 		static void setDebug(bool debug) { _debug = debug; }
 
@@ -67,6 +69,10 @@ namespace rpwa {
 		                           const std::vector<Long64_t>& mapping,
 		                           std::vector<spinDensityMatrixType>& spinDensityMatrices,
 		                           std::vector<spinDensityCovarianceMatrixType>& spinDensityCovarianceMatrices) const;
+		bool readFitResultIntegrals(TTree* tree,
+		                            rpwa::fitResult* fit,
+		                            const std::vector<Long64_t>& mapping,
+		                            std::vector<std::vector<double> >& phaseSpaceIntegrals) const;
 
 		std::string _inFileName;
 
@@ -87,6 +93,7 @@ namespace rpwa {
 
 		std::vector<spinDensityMatrixType> _inSpinDensityMatrices;
 		std::vector<spinDensityCovarianceMatrixType> _inSpinDensityCovarianceMatrices;
+		std::vector<std::vector<double> > _inPhaseSpaceIntegrals;
 
 		static bool _debug;
 

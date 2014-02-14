@@ -33,9 +33,11 @@ namespace rpwa {
   public:
     pwachannel() : _C(0,0),_ps(NULL){}
     pwachannel(std::complex<double> coupling,
-	       TGraph* phasespace)
-      : _C(coupling), _ps(phasespace)
+	       const std::vector<double>& massBinCenters,
+	       const std::vector<double>& phaseSpace)
+      : _C(coupling), _phaseSpace(phaseSpace)
     {
+        _ps = new TGraph(_phaseSpace.size(), &(massBinCenters[0]), &(_phaseSpace[0]));
     }
 
     pwachannel(const rpwa::pwachannel& ch); /// cp ctor
@@ -53,6 +55,7 @@ namespace rpwa {
 
   private:
     std::complex<double> _C;
+    std::vector<double> _phaseSpace;
     TGraph* _ps;
   };
 
