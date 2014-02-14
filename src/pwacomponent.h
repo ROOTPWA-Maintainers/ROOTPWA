@@ -177,7 +177,8 @@ namespace rpwa {
 		 double m);
     std::complex<double> overlap(unsigned int wave1,
 				 unsigned int wave2,
-				 double m);
+				 double m,
+                                 const size_t idxMass = std::numeric_limits<size_t>::max());
 
   private:
 		std::vector<std::string> _waveList;

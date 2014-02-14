@@ -48,6 +48,7 @@
 #include <TGraph.h>
 #include <TGraph2D.h>
 #include <TGraphErrors.h>
+#include <TMatrixD.h>
 #include <TMultiGraph.h>
 #include <TString.h>
 #include <TComplex.h>
@@ -300,9 +301,15 @@ massDepFit::readInFile(const std::string& valTreeName,
 		return false;
 	}
 
-	std::vector<size_t> inMapping;
+	std::vector<Long64_t> inMapping;
 	if(not checkFitResultMassBins(inTree, inFit, inMapping)) {
-		printErr << "could not extract mass bins from fit result tree in '" << _inFileName << "'." << endl;
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName << "'." << endl;
+		delete inFile;
+		return false;
+	}
+
+	if(not readFitResultMatrices(inTree, inFit, inMapping, _inSpinDensityMatrices, _inSpinDensityCovarianceMatrices)) {
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName << "'." << endl;
 		delete inFile;
 		return false;
 	}
@@ -315,7 +322,7 @@ massDepFit::readInFile(const std::string& valTreeName,
 bool
 massDepFit::checkFitResultMassBins(TTree* tree,
                                    rpwa::fitResult* fit,
-                                   std::vector<size_t>& mapping) const
+                                   std::vector<Long64_t>& mapping) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
@@ -357,6 +364,12 @@ massDepFit::checkFitResultMassBins(TTree* tree,
 
 		if(not found) {
 			printErr << "could not map mass bin centered at " << mass << " MeV/c^2 to a known mass bin." << endl;
+			return false;
+		}
+
+		if(mapping[idxMass] != numeric_limits<size_t>::max()) {
+			printErr << "cannat map tree entry " << idx << " to mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2)  "
+			         << "which is already mapped to tree entry " << mapping[idxMass] << "." << endl;
 			return false;
 		}
 
@@ -435,6 +448,98 @@ massDepFit::readFitResultMassBins(TTree* tree,
 
 	printInfo << "found " << _massBinCenters.size() << " mass bins, center of first and last mass bins: "
 	          << _massBinCenters[0] << " and " << _massBinCenters[_massBinCenters.size() - 1] << " MeV/c^2." << endl;
+
+	return true;
+}
+
+
+bool
+massDepFit::readFitResultMatrices(TTree* tree,
+                                  rpwa::fitResult* fit,
+                                  const std::vector<Long64_t>& mapping,
+                                  std::vector<spinDensityMatrixType>& spinDensityMatrices,
+                                  std::vector<spinDensityCovarianceMatrixType>& spinDensityCovarianceMatrices) const
+{
+	if(not tree or not fit) {
+		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	const size_t nrWaves = _waveNames.size();
+
+	if(_debug) {
+		printDebug << "reading spin-density matrices for " << nrWaves << " waves from fit result." << endl;
+	}
+
+	spinDensityMatrices.resize(mapping.size());
+	spinDensityCovarianceMatrices.resize(mapping.size());
+
+	for(size_t idxMass=0; idxMass<mapping.size(); ++idxMass) {
+		if(_debug) {
+			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
+		}
+		if(tree->GetEntry(mapping[idxMass]) == 0) {
+			printErr << "error while reading entry " << mapping[idxMass] << " from tree." << endl;
+			return false;
+		}
+
+		spinDensityMatrixType spinDensityMatrix(nrWaves, nrWaves);
+		spinDensityCovarianceMatrixType spinDensityCovarianceMatrix(nrWaves, nrWaves);
+
+		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+			for(size_t jdxWave=0; jdxWave<nrWaves; ++jdxWave) {
+				const int idx = fit->waveIndex(_waveNames[idxWave]);
+				if(idx == -1) {
+					printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << endl;
+					return false;
+				}
+				const int jdx = fit->waveIndex(_waveNames[jdxWave]);
+				if(jdx == -1) {
+					printErr << "wave '" << _waveNames[jdxWave] << "' not in fit result." << endl;
+					return false;
+				}
+
+				spinDensityMatrix(idxWave, jdxWave) = fit->spinDensityMatrixElem(idx, jdx);
+       
+				const TMatrixD covariance = fit->spinDensityMatrixElemCov(idx, jdx);
+				spinDensityCovarianceMatrix(idxWave, jdxWave).resize(2, 2);
+				spinDensityCovarianceMatrix(idxWave, jdxWave)(0, 0) = covariance(0, 0);
+				spinDensityCovarianceMatrix(idxWave, jdxWave)(0, 1) = covariance(0, 1);
+				spinDensityCovarianceMatrix(idxWave, jdxWave)(1, 0) = covariance(1, 0);
+				spinDensityCovarianceMatrix(idxWave, jdxWave)(1, 1) = covariance(1, 1);
+			}
+		}
+
+		if(_debug) {
+			ostringstream output;
+			ostringstream outputCovariance;
+
+			for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+				output << " (";
+				outputCovariance << " (";
+				for(size_t jdxWave=0; jdxWave<nrWaves; ++jdxWave) {
+					output << " " << spinDensityMatrix(idxWave, jdxWave);
+					outputCovariance << " (";
+					for(size_t idx=0; idx<2; ++idx) {
+						outputCovariance << " (";
+						for(size_t jdx=0; jdx<2; ++jdx) {
+							outputCovariance << " " << spinDensityCovarianceMatrix(idxWave, jdxWave)(idx, jdx);
+						}
+						outputCovariance << " )";
+					}
+					outputCovariance << " )";
+				}
+				output << " )";
+				outputCovariance << " )";
+			}
+
+			printDebug << "spin-density matrix: " << output.str() << endl;
+			printDebug << "spin-density covariance matrix: " << outputCovariance.str() << endl;
+		}
+
+		spinDensityMatrices[idxMass] = spinDensityMatrix;
+		spinDensityCovarianceMatrices[idxMass] = spinDensityCovarianceMatrix;
+	} // end loop over mass bins
 
 	return true;
 }
@@ -1062,11 +1167,13 @@ main(int    argc,
 
 
 
-  massDepFitLikeli L;
-	if(not L.init(tree,&compset,mdepFit.getWaveNames(),mdepFit.getWaveMassLimits(),doCov)) {
-		printErr << "error while initializing likelihood function." << endl;
-		exit(1);
-	}
+	massDepFitLikeli L;
+	L.init(&compset,
+	       mdepFit.getMassBinCenters(),
+	       mdepFit.getInSpinDensityMatrices(),
+	       mdepFit.getInSpinDensityCovarianceMatrices(),
+	       mdepFit.getWavePairMassBinLimits(),
+	       doCov);
 
    const unsigned int nmbPar  = L.NDim();
   // double par[nmbPar];
@@ -1667,7 +1774,7 @@ main(int    argc,
      for(unsigned int iw=0; iw<wl.size();++iw){
 		// check that this mass bin should be taken into account for this
 		// combination of waves
-		if(rangePlotting && (i < L.getMassBinLimits()[iw][iw].first || i > L.getMassBinLimits()[iw][iw].second)) {
+		if(rangePlotting && (i < mdepFit.getWavePairMassBinLimits()[iw][iw].first || i > mdepFit.getWavePairMassBinLimits()[iw][iw].second)) {
 			continue;
 		}
 
@@ -1727,7 +1834,7 @@ main(int    argc,
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
 			// check that this mass bin should be taken into account for this
 			// combination of waves
-			if(rangePlotting && (i < L.getMassBinLimits()[iw][iw2].first || i > L.getMassBinLimits()[iw][iw2].second)) {
+			if(rangePlotting && (i < mdepFit.getWavePairMassBinLimits()[iw][iw2].first || i > mdepFit.getWavePairMassBinLimits()[iw][iw2].second)) {
 				continue;
 			}
 
@@ -1864,7 +1971,7 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 				// check that this mass bin should be taken into account for this
 				// combination of waves
 				const size_t iw = wmap[itChan->first];
-				if(rangePlotting && (i < L.getMassBinLimits()[iw][iw].first || i > L.getMassBinLimits()[iw][iw].second)) {
+				if(rangePlotting && (i < mdepFit.getWavePairMassBinLimits()[iw][iw].first || i > mdepFit.getWavePairMassBinLimits()[iw][iw].second)) {
 					continue;
 				}
 

@@ -326,7 +326,8 @@ rpwa::pwacompset::overlap(const std::string& wave1,
 std::complex<double>
 rpwa::pwacompset::overlap(unsigned int wave1,
 			  unsigned int wave2,
-			  double m){
+			  double m,
+                          const size_t idxMass){
     // loop over all components and pick up those that contribute to this channels
   complex<double> rho1(0,0);
   complex<double> rho2(0,0);
