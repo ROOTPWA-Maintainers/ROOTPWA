@@ -310,7 +310,12 @@ massDepFit::readInFile(const std::string& valTreeName,
 	}
 
 	if(not readFitResultMatrices(inTree, inFit, inMapping, _inSpinDensityMatrices, _inSpinDensityCovarianceMatrices)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName << "'." << endl;
+		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName << "'." << endl;
+		delete inFile;
+		return false;
+	}
+	if(not readFitResultIntegrals(inTree, inFit, inMapping, _inPhaseSpaceIntegrals)) {
+		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName << "'." << endl;
 		delete inFile;
 		return false;
 	}
@@ -547,6 +552,58 @@ massDepFit::readFitResultMatrices(TTree* tree,
 
 
 bool
+massDepFit::readFitResultIntegrals(TTree* tree,
+                                   rpwa::fitResult* fit,
+                                   const std::vector<Long64_t>& mapping,
+                                   std::vector<std::vector<double> >& phaseSpaceIntegrals) const
+{
+	if(not tree or not fit) {
+		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	const size_t nrWaves = _waveNames.size();
+	const size_t nrMassBins = _massBinCenters.size();
+
+	phaseSpaceIntegrals.resize(nrWaves);
+	for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+		phaseSpaceIntegrals[idxWave].resize(nrMassBins);
+	}
+
+	if(_debug) {
+		printDebug << "reading phase-space integrals for " << nrWaves << " waves from fit result." << endl;
+	}
+
+	for(size_t idxMass=0; idxMass<nrMassBins; ++idxMass) {
+		if(_debug) {
+			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
+		}
+		if(tree->GetEntry(mapping[idxMass]) == 0) {
+			printErr << "error while reading entry " << mapping[idxMass] << " from tree." << endl;
+			return false;
+		}
+
+		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+			const double ps = fit->phaseSpaceIntegral(_waveNames[idxWave]);
+			phaseSpaceIntegrals[idxWave][idxMass] = ps*ps;
+		}
+	}
+
+	if(_debug) {
+		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+			ostringstream output;
+			for(size_t idxMass=0; idxMass<nrMassBins; ++idxMass) {
+				output << " " << phaseSpaceIntegrals[idxWave][idxMass];
+			}
+			printDebug << "phase-space integrals for wave '" << _waveNames[idxWave] << "' (" << idxWave << "):" << output.str() << endl;
+		}
+	}
+
+	return true;
+}
+
+
+bool
 massDepFit::prepareMassLimits()
 {
 	if(_debug) {
@@ -661,24 +718,6 @@ usage(const string& progName,
 	exit(errCode);
 }
 
-
-//  function loops through fitResults and puts phasespace values into a graph for interpolation
-//  THIS CONTAINS NOW THE RIGHT VALUE NOT!!! THE SQRT!!!
-TGraph*
-getPhaseSpace(TTree* tree, const std::string& wave){
-  unsigned int n=tree->GetEntries();
-  TGraph* graph=new TGraph(n);
-  fitResult* res=0;
-  tree->SetBranchAddress("fitResult_v2",&res);
-  for(unsigned int i=0; i<n; ++i){
-    tree->GetEntry(i);
-    double m=res->massBinCenter();
-    double ps=res->phaseSpaceIntegral(wave);
-    ps*=ps; // remember that phaseSpaceIntegral returns sqrt of integral!!! 
-    graph->SetPoint(i,m,ps);
-  }
-  return graph;
-}
 
 // changes status of variables (fixed/released)
 // fixed values from config remain fixed
@@ -1057,7 +1096,9 @@ main(int    argc,
 	check&=ch.lookupValue("coupling_Im",cIm);
 	complex<double> C(cRe,cIm);
 	cout << "   " << amp << "  " << C << endl;
-	channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+        map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
+        size_t idxWave = it->second;
+	channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),mdepFit.getInPhaseSpaceIntegrals()[idxWave]);
       }// end loop over channels
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -1119,7 +1160,9 @@ main(int    argc,
       cout << "Decaychannel (coupling):" << endl;
       cout << "   " << amp << "  " << C << endl;
       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
-      channels[amp]=pwachannel(C,getPhaseSpace(tree,amp));
+      map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
+      size_t idxWave = it->second;
+      channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),mdepFit.getInPhaseSpaceIntegrals()[idxWave]);
 
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -1553,7 +1596,7 @@ main(int    argc,
      fitgraphs[iw]->SetDrawOption("AP");
      //fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
-     graphs[iw]->Add(getPhaseSpace(tree,wl[iw]));
+     graphs[iw]->Add(new TGraph(mdepFit.getMassBinCenters().size(), &(mdepFit.getMassBinCenters()[0]), &(mdepFit.getInPhaseSpaceIntegrals()[iw][0])));
 
      absphasegraphs.push_back(new TGraph(nbins));
      name="absphase_";name.append(wl[iw]);
