@@ -32,38 +32,40 @@
 //-----------------------------------------------------------
 
 
-#include <iostream>
-#include <iomanip>
-#include <vector>
 #include <algorithm>
-#include <string>
-#include <complex>
 #include <cassert>
-#include <time.h>
+#include <complex>
+#include <iomanip>
+#include <iostream>
+#include <vector>
+#include <string>
 
 #include <boost/assign/std/vector.hpp>
 
-#include "TTree.h"
-#include "TF1.h"
-#include "TFile.h"
-#include "TGraph.h"
-#include "TGraph2D.h"
-#include "TGraphErrors.h"
-#include "TMultiGraph.h"
-#include "TString.h"
-#include "TComplex.h"
-#include "TRandom3.h"
-#include "Math/Minimizer.h"
-#include "Math/Factory.h"
+#include <TTree.h>
+#include <TF1.h>
+#include <TFile.h>
+#include <TGraph.h>
+#include <TGraph2D.h>
+#include <TGraphErrors.h>
+#include <TMultiGraph.h>
+#include <TString.h>
+#include <TComplex.h>
+#include <TRandom3.h>
+#include <TStopwatch.h>
+#include <Math/Minimizer.h>
+#include <Math/Factory.h>
 
+#include <libconfig.h++>
+
+#include "fitResult.h"
+#include "libConfigUtils.hpp"
+#include "massDepFit.h"
+#include "massDepFitLikeli.h"
+#include "pwacomponent.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
-#include "fitResult.h"
-#include "pwacomponent.h"
-#include "massDepFitLikeli.h"
-#include "TStopwatch.h"
-#include "libconfig.h++"
-#include <libConfigUtils.hpp>
+
 
 #define MASSSCALE 0.001
 
@@ -76,11 +78,455 @@ using namespace boost;
 using namespace boost::assign;
 
 
+bool massDepFit::_debug = false;
+
+
+massDepFit::massDepFit()
+	: _sysPlotting(false)
+{
+}
+
+
+bool
+massDepFit::readConfigInput(const Setting* configInput)
+{
+	if(not configInput) {
+		printErr << "'configInput' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	// get information about fit results from mass-independent
+	const Setting* configInputFitResults = findLibConfigList(*configInput, "fitresults");
+	if(not configInputFitResults) {
+		printErr << "'fitresults' list does not exist in section '" << configInput->getName() << "' in configuration file." << endl;
+		return false;
+	}
+	if(not readConfigInputFitResults(configInputFitResults)) {
+		printErr << "error while reading 'fitresults' in section '" << configInput->getName() << "' in configuration file." << endl;
+		return false;
+	}
+
+	// get information about waves to be used in the fit
+	const Setting* configInputWaves = findLibConfigList(*configInput, "waves");
+	if(not configInputWaves) {
+		printErr << "'waves' list does not exist in section '" << configInput->getName() << "' in configuration file." << endl;
+		return false;
+	}
+	if(not readConfigInputWaves(configInputWaves)) {
+		printErr << "error while reading 'waves' in section '" << configInput->getName() << "' in configuration file." << endl;
+		return false;
+	}
+
+	// get information for plotting of systematic error
+	const Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
+	if(not readConfigInputSystematics(configInputSystematics)) {
+		printErr << "error while reading 'waves' in section '" << configInput->getName() << "' in configuration file." << endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readConfigInputFitResults(const Setting* configInputFitResults)
+{
+	if(not configInputFitResults) {
+		printErr << "'configInputFitResults' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	const int nrFitResults = configInputFitResults->getLength();
+	if(nrFitResults != 1) {
+		printErr << "handling of more than one entry in 'fitresults' not yet supported." << endl;
+		return false;
+	}
+
+	const Setting* configInputFitResult = &((*configInputFitResults)[0]);
+
+	map<string, Setting::Type> mandatoryArguments;
+	insert(mandatoryArguments)
+	    ("name", Setting::TypeString);
+	if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
+		printErr << "'fitresults' list in 'input' section in configuration file contains errors." << endl;
+		return false;
+	}
+
+	configInputFitResult->lookupValue("name", _inFileName);
+
+	if(_debug) {
+		printDebug << "read file name of fit results of mass-independent fit: '" << _inFileName << "'." << endl;
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readConfigInputWaves(const Setting* configInputWaves)
+{
+	if(not configInputWaves) {
+		printErr << "'configInputWaves' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	const int nrWaves = configInputWaves->getLength();
+	if(_debug) {
+		printDebug << "going to read information of " << nrWaves << " waves to be used in the fit." << endl;
+	}
+
+	for(int idxWave=0; idxWave<nrWaves; ++idxWave) {
+		const Setting* configInputWave = &((*configInputWaves)[idxWave]);
+
+		map<string, Setting::Type> mandatoryArguments;
+		insert(mandatoryArguments)
+		    ("name", Setting::TypeString);
+		if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
+			printErr << "'waves' list in 'input' section in configuration file contains errors." << endl;
+			return false;
+		}
+
+		string name;
+		configInputWave->lookupValue("name", name);
+
+		double massLower;
+		if(not configInputWave->lookupValue("massLower", massLower)) {
+			massLower = -1.;
+		}
+		double massUpper;
+		if(not configInputWave->lookupValue("massUpper", massUpper)) {
+			massUpper = -1.;
+		}
+
+		// check that wave does not yet exist
+		if(find(_waveNames.begin(), _waveNames.end(), name) != _waveNames.end()) {
+			printErr << "wave '" << name << "' defined twice." << endl;
+			return false;
+		}
+
+		_waveNames.push_back(name);
+		_waveMassLimits.push_back(make_pair(massLower, massUpper));
+
+		if(_debug) {
+			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " MeV/c^2)" << endl;
+		}
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
+{
+	// configInputSystematics might actually be a NULL pointer, in this
+	// systematics is not plotted
+	if(not configInputSystematics) {
+		_sysPlotting = false;
+		return true;
+	}
+
+	const int nrSystematics = configInputSystematics->getLength();
+	if(_debug) {
+		printDebug << "going to read information for " << nrSystematics << " files containing information for systematic errors." << endl;
+	}
+
+	if(nrSystematics > 0) {
+		_sysPlotting = true;
+	}
+
+	if(nrSystematics > 0 && (*configInputSystematics)[0].getType() != Setting::TypeString) {
+		printErr << "contents of 'systematics' array in 'input' needs to be strings." << endl;
+		return false;
+	}
+
+	for(int idxSystematic=0; idxSystematic<nrSystematics; ++idxSystematic) {
+		const string fileName = (*configInputSystematics)[idxSystematic];
+		if(_debug) {
+			printDebug << "'" << fileName << "' will be read to get information for systematic errors." << endl;
+		}
+		_sysFileNames.push_back(fileName);
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readInFile(const std::string& valTreeName,
+                       const std::string& valBranchName)
+{
+	if(_debug) {
+		printDebug << "reading fit result from file '" << _inFileName << "'." << endl;
+	}
+
+	TFile* inFile = TFile::Open(_inFileName.c_str());
+	if(not inFile) {
+		printErr << "input file '" << _inFileName << "' not found."<< endl;
+		return false;
+	}
+	if(inFile->IsZombie()) {
+		printErr << "error while reading input file '" << _inFileName << "'."<< endl;
+		delete inFile;
+		return false;
+	}
+
+	if(_debug) {
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << _inFileName << "'." << endl;
+	}
+
+	TTree* inTree;
+	inFile->GetObject(valTreeName.c_str(), inTree);
+	if(not inTree) {
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << _inFileName << "'."<< endl;
+		delete inFile;
+		return false;
+	}
+
+	if(_debug) {
+		printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << endl;
+	}
+
+	fitResult* inFit = NULL;
+	if(inTree->SetBranchAddress(valBranchName.c_str(), &inFit)) {
+		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << endl;
+		delete inFile;
+		return false;
+	}
+
+	if(not readFitResultMassBins(inTree, inFit)) {
+		printErr << "could not extract mass bins from fit result tree in '" << _inFileName << "'." << endl;
+		delete inFile;
+		return false;
+	}
+
+	std::vector<size_t> inMapping;
+	if(not checkFitResultMassBins(inTree, inFit, inMapping)) {
+		printErr << "could not extract mass bins from fit result tree in '" << _inFileName << "'." << endl;
+		delete inFile;
+		return false;
+	}
+
+	delete inFile;
+	return true;
+}
+
+
+bool
+massDepFit::checkFitResultMassBins(TTree* tree,
+                                   rpwa::fitResult* fit,
+                                   std::vector<size_t>& mapping) const
+{
+	if(not tree or not fit) {
+		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	// reset mapping
+	mapping.assign(_massBinCenters.size(), numeric_limits<size_t>::max());
+
+	// extract data from tree
+	const Long64_t nrEntries = tree->GetEntries();
+
+	if(_debug) {
+		printDebug << "check that the centers of mass bins of " << nrEntries << " entries in tree are at a known place, "
+		           << "and map the " << _massBinCenters.size() << " mass bins to those entries." << endl;
+	}
+
+	for(Long64_t idx=0; idx<nrEntries; ++idx) {
+		if(tree->GetEntry(idx) == 0) {
+			printErr << "error while reading entry " << idx << " from tree." << endl;
+			return false;
+		}
+		//FIXME: this would also be the place to select the best fit in case one file contains more than one fit result per mass bin
+		const double mass = fit->massBinCenter();
+
+		if(_debug) {
+			printDebug << "entry " << idx << ": center of mass bin at " << mass << " MeV/c^2" << endl;
+		}
+
+		bool found = false;
+		size_t idxMass=0;
+		while(idxMass<_massBinCenters.size()) {
+			if(abs(_massBinCenters[idxMass]-mass) < 1000.*numeric_limits<double>::epsilon()) {
+				found = true;
+				break;
+			}
+			++idxMass;
+		}
+
+		if(not found) {
+			printErr << "could not map mass bin centered at " << mass << " MeV/c^2 to a known mass bin." << endl;
+			return false;
+		}
+
+		if(_debug) {
+			printDebug << "mapping mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) to tree entry " << idx << "." << endl;
+		}
+		mapping[idxMass] = idx;
+	} // end loop over entries in tree
+
+	// check that all mass bins are mapped
+	for(size_t idx=0; idx<mapping.size(); ++idx) {
+		if(mapping[idx] == numeric_limits<size_t>::max()) {
+			printErr << "mass bin " << idx << " (" << _massBinCenters[idx] << " MeV/c^2) not mapped." << endl;
+			return false;
+		}
+	}
+
+	if(_debug) {
+		ostringstream output;
+		for(size_t idx=0; idx<mapping.size(); ++idx) {
+			output << " " << idx << "->" << mapping[idx];
+		}
+		printDebug << "etablished mapping:" << output.str() << endl;
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readFitResultMassBins(TTree* tree,
+                                  rpwa::fitResult* fit)
+{
+	if(not tree or not fit) {
+		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	// extract data from tree
+	const Long64_t nrEntries = tree->GetEntries();
+	_massBinCenters.clear();
+
+	if(_debug) {
+		printDebug << "getting center of mass bins from " << nrEntries << " entries in tree." << endl;
+	}
+
+	for(Long64_t idx=0; idx<nrEntries; ++idx) {
+		if(tree->GetEntry(idx) == 0) {
+			printErr << "error while reading entry " << idx << " from tree." << endl;
+			return false;
+		}
+		const double newMass = fit->massBinCenter();
+
+		if(_debug) {
+			printDebug << "entry " << idx << ": center of mass bin at " << newMass << " MeV/c^2" << endl;
+		}
+
+		bool found = false;
+		for(size_t idxMass=0; idxMass<_massBinCenters.size(); ++idxMass) {
+			if(abs(_massBinCenters[idxMass]-newMass) < 1000.*numeric_limits<double>::epsilon()) {
+				found = true;
+				if(_debug) {
+					printDebug << "this center of mass bin already was encountered before." << endl;
+				}
+				break;
+			}
+		}
+
+		if(not found) {
+			_massBinCenters.push_back(fit->massBinCenter());
+		}
+	} // end loop over entries in tree
+
+	// sort mass bins
+	sort(_massBinCenters.begin(), _massBinCenters.end());
+
+	printInfo << "found " << _massBinCenters.size() << " mass bins, center of first and last mass bins: "
+	          << _massBinCenters[0] << " and " << _massBinCenters[_massBinCenters.size() - 1] << " MeV/c^2." << endl;
+
+	return true;
+}
+
+
+bool
+massDepFit::prepareMassLimits()
+{
+	if(_debug) {
+		printDebug << "determine which mass bins to use in the fit for " << _massBinCenters.size() << " mass bins, center of first and last mass bins: "
+		           << _massBinCenters[0] << " and " << _massBinCenters[_massBinCenters.size() - 1] << " MeV/c^2." << endl;
+	}
+
+	_massStep = (_massBinCenters[_massBinCenters.size() - 1] - _massBinCenters[0]) / (_massBinCenters.size() - 1);
+	for(size_t idxMass=1; idxMass<_massBinCenters.size(); ++idxMass) {
+		if(abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*numeric_limits<double>::epsilon()) {
+			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " MeV/c^2) and "
+			         << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) does not agree with nominal distance "
+			         << _massStep << " MeV/c^2" << endl;
+			return false;
+		}
+	}
+	if(_debug) {
+		printDebug << "distance between two mass bins is " << _massStep << " MeV/c^2." << endl;
+	}
+
+	_massMin=_massBinCenters[0] - _massStep / 2;
+	_massMax=_massBinCenters[_massBinCenters.size() - 1] + _massStep / 2;
+	if(_debug) {
+		printDebug << "mass bins cover the mass range from " << _massMin << " to " << _massMax << " MeV/c^2." << std::endl;
+	}
+
+	_waveMassBinLimits.clear();
+	for(size_t idxWave=0; idxWave<_waveMassLimits.size(); ++idxWave) {
+		size_t binFirst = 0;
+		size_t binLast = _massBinCenters.size()-1;
+		for(size_t idxMass=0; idxMass<_massBinCenters.size(); ++idxMass) {
+			if(_massBinCenters[idxMass] < _waveMassLimits[idxWave].first) {
+				binFirst = idxMass+1;
+			}
+			if(_massBinCenters[idxMass] == _waveMassLimits[idxWave].first) {
+				binFirst = idxMass;
+			}
+			if(_massBinCenters[idxMass] <= _waveMassLimits[idxWave].second) {
+				binLast = idxMass;
+			}
+		}
+		if(_waveMassLimits[idxWave].first < 0) {
+			binFirst = 0;
+		}
+		if(_waveMassLimits[idxWave].second < 0) {
+			binLast = _massBinCenters.size()-1;
+		}
+		if(_debug) {
+			printDebug << idxWave << ": " << _waveNames[idxWave] << ": "
+			           << "mass range: " << (_waveMassLimits[idxWave].first<0. ? _massMin : _waveMassLimits[idxWave].first)
+			           << "-" << (_waveMassLimits[idxWave].second<0. ? _massMax : _waveMassLimits[idxWave].second) << " MeV/c^2, "
+			           << "bin range " << binFirst << "-" << binLast << endl;
+		}
+		_waveMassBinLimits.push_back(make_pair(binFirst, binLast));
+	}
+
+	_wavePairMassBinLimits.clear();
+	_wavePairMassBinLimits.resize(_waveMassBinLimits.size());
+	for(size_t idxWave=0; idxWave<_waveMassBinLimits.size(); ++idxWave) {
+		_wavePairMassBinLimits[idxWave].resize(_waveMassBinLimits.size());
+		for(size_t jdxWave=0; jdxWave<_waveMassBinLimits.size(); ++jdxWave) {
+			_wavePairMassBinLimits[idxWave][jdxWave] = make_pair(max(_waveMassBinLimits[idxWave].first,  _waveMassBinLimits[jdxWave].first),
+			                                                     min(_waveMassBinLimits[idxWave].second, _waveMassBinLimits[jdxWave].second));
+		}
+	}
+
+	if(_debug) {
+		printDebug << "waves and mass limits:" << endl;
+		for(size_t idxWave=0; idxWave<_waveMassBinLimits.size(); ++idxWave) {
+			ostringstream output;
+			for(size_t jdxWave=0; jdxWave<_waveMassBinLimits.size(); ++jdxWave) {
+				output << _wavePairMassBinLimits[idxWave][jdxWave].first << "-" << _wavePairMassBinLimits[idxWave][jdxWave].second << " ";
+			}
+			printDebug << _waveNames[idxWave] << " " << _waveMassBinLimits[idxWave].first << "-" << _waveMassBinLimits[idxWave].second
+			           << ": " << output.str() << endl;
+		}
+	}
+
+	return true;
+}
+
+
 void
 usage(const string& progName,
       const int     errCode = 0)
 {
-
 	cerr << "performs mass-dependent fit" << endl
 	     << endl
 	     << "usage:" << endl
@@ -221,15 +667,15 @@ main(int    argc,
 	const string       valTreeName           = "pwa";
 	const string       valBranchName         = "fitResult_v2";
 	const unsigned int maxNmbOfIterations    = 20000;
+	const unsigned int maxNmbOfFunctionCalls = 40000;
 	const bool         runHesse              = true;
 	const bool         runMinos              = false;
 
 	// ---------------------------------------------------------------------------
 	// parse command line options
 	const string progName           = argv[0];
-  bool               doCov               = true;
-
-  string       outFileName        = "mDep.result.root";       // output filename
+	bool         doCov              = true;
+	string       outFileName        = "mDep.result.root";     // output filename
 	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	int          minimizerStrategy  = 1;                      // minimizer strategy
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
@@ -286,23 +732,15 @@ main(int    argc,
 	}
 	const string configFileName = argv[optind];
 
+	massDepFit mdepFit;
+	mdepFit.setDebug(debug);
 
 	Config configFile;
 	if(not parseLibConfigFile(configFileName, configFile, debug)) {
 		printErr << "could not read configuration file '" << configFileName << "'." << endl;
 		exit(1);
 	}
-
 	const Setting& configRoot = configFile.getRoot();
-
-  printInfo << "creating and setting up likelihood function" << endl;
-  printInfo << "doCovariances = " << doCov << endl;
-
-
-
-  // Setup Component Set (Resonances + Background)
-  pwacompset compset;
-  bool check=true;
 
 	// input section
 	const Setting* configInput = findLibConfigGroup(configRoot, "input");
@@ -310,122 +748,37 @@ main(int    argc,
 		printErr << "'input' section in configuration file does not exist." << endl;
 		exit(1);
 	}
-
-	// get information about fit results from mass-independent
-	const Setting* configInputFitresults = findLibConfigList(*configInput, "fitresults");
-	if(not configInputFitresults) {
-		printErr << "'fitresults' list does not exist in section 'input' in configuration file." << endl;
+	if(not mdepFit.readConfigInput(configInput)) {
+		printErr << "error while reading 'input' section from configuration file." << endl;
 		exit(1);
 	}
 
-	string inFileName;
-	{
-		const int nrFitresults = configInputFitresults->getLength();
-		if(nrFitresults != 1) {
-			printErr << "handling of more than one entry in 'fitresults' not yet supported." << endl;
-			exit(1);
-		}
-
-		const Setting* configInputFitresult = &((*configInputFitresults)[0]);
-
-		map<string, Setting::Type> mandatoryArguments;
-		insert(mandatoryArguments)
-		    ("name", Setting::TypeString);
-		if(not checkIfAllVariablesAreThere(configInputFitresult, mandatoryArguments)) {
-			printErr << "'fitresults' list in 'input' section in configuration file contains errors." << endl;
-			exit(1);
-		}
-
-		configInputFitresult->lookupValue("name", inFileName);
-
-		printInfo << "reading fit results of mass-independent fit from '" << inFileName << "'." << endl;
-	}
-
-
-	// get information about waves to be used in the fit
-	const Setting* configInputWaves = findLibConfigList(*configInput, "waves");
-	if(not configInputWaves) {
-		printErr << "'waves' list does not exist in section 'input' in configuration file." << endl;
+	// extract information from fit results
+	if(not mdepFit.readInFile(valTreeName, valBranchName)) {
+		printErr << "error while trying to read fit result." << endl;
 		exit(1);
 	}
 
-	vector<string> waveNames;
-	vector<pair<double, double> > waveMassLimits;
-	{
-		const int nrWaves = configInputWaves->getLength();
-		printInfo << "going to read information of " << nrWaves << " waves to be used in the fit." << endl;
-
-		for(int idxWave=0; idxWave<nrWaves; ++idxWave) {
-			const Setting* configInputWave = &((*configInputWaves)[idxWave]);
-
-			map<string, Setting::Type> mandatoryArguments;
-			insert(mandatoryArguments)
-			    ("name", Setting::TypeString);
-			if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
-				printErr << "'waves' list in 'input' section in configuration file contains errors." << endl;
-				exit(1);
-			}
-
-			string name;
-			configInputWave->lookupValue("name", name);
-
-			double massLower;
-			if(not configInputWave->lookupValue("massLower", massLower)) {
-				massLower = -1.;
-			}
-			double massUpper;
-			if(not configInputWave->lookupValue("massUpper", massUpper)) {
-				massUpper = -1.;
-			}
-
-			// check that wave does not yet exist
-			if(find(waveNames.begin(), waveNames.end(), name) != waveNames.end()) {
-				printErr << "wave '" << name << "' defined twice." << endl;
-				exit(1);
-			}
-
-			waveNames.push_back(name);
-			waveMassLimits.push_back(make_pair(massLower, massUpper));
-
-			printInfo << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " MeV/c^2)" << endl;
-		}
-
-		if(waveNames.size()!= nrWaves || waveMassLimits.size()!= nrWaves) {
-			printErr << "detected a messed up internal array." << endl;
-			exit(1);
-		}
-
-		compset.setWaveList(waveNames);
+	// prepare mass limits
+	if(not mdepFit.prepareMassLimits()) {
+		printErr << "error determine which bins to use in the fit." << endl;
+		exit(1);
 	}
 
-	// get information for plotting of systematic error
-	bool sysPlotting = false;
-	vector<string> sysFileNames;
-	const Setting* configInputSystematics = findLibConfigArray(*configInput, "systematics", false);
-	if(configInputSystematics) {
-		const int nrSystematics = configInputSystematics->getLength();
-		printInfo << "reading information for systematic errors from " << nrSystematics << " files." << endl;
+  printInfo << "creating and setting up likelihood function" << endl;
+  printInfo << "doCovariances = " << doCov << endl;
 
-		if(nrSystematics > 0) {
-			sysPlotting = true;
-		}
+  
+  // Setup Component Set (Resonances + Background)
+  pwacompset compset;
+  bool check=true;
 
-		if(nrSystematics > 0 && (*configInputSystematics)[0].getType() != Setting::TypeString) {
-			printErr << "contents of 'systematics' array in 'input' needs to be strings." << endl;
-			exit(1);
-		}
-
-		for(int idxSystematic=0; idxSystematic<nrSystematics; ++idxSystematic) {
-			const string fileName = (*configInputSystematics)[idxSystematic];
-			printInfo << "reading information for systematic errors from '" << fileName << "'." << endl;
-			sysFileNames.push_back(fileName);
-		}
-	}
+	compset.setWaveList(mdepFit.getWaveNames());
 
  // open input file and get results tree
-  TFile* infile=TFile::Open(inFileName.c_str());
+  TFile* infile=TFile::Open(mdepFit.getInFileName().c_str());
   if(infile==NULL){
-    cerr << "Input file " << inFileName <<" not found."<< endl;
+    cerr << "Input file " << mdepFit.getInFileName() <<" not found."<< endl;
     return 1;
   }
   TTree* tree=(TTree*)infile->Get(valTreeName.c_str());
@@ -436,15 +789,15 @@ main(int    argc,
 
 
   vector<TTree*> sysTrees;
-  if(sysPlotting){
+  if(mdepFit.getSysPlotting()){
     // add this fit
     sysTrees.push_back(tree);
     // open files with fits  
-    for(size_t i=0; i<sysFileNames.size(); ++i){
+    for(size_t i=0; i<mdepFit.getSysFileNames().size(); ++i){
       // open input file and get results tree
-      TFile* infile=TFile::Open(sysFileNames[i].c_str());
+      TFile* infile=TFile::Open(mdepFit.getSysFileNames()[i].c_str());
       if(infile==NULL){
-	cerr << "Systematics Input file " << inFileName <<" not found."<< endl;
+	cerr << "Systematics Input file " << mdepFit.getSysFileNames()[i] <<" not found."<< endl;
 	return 1;
       }
       TTree* systree=(TTree*)infile->Get(valTreeName.c_str());
@@ -710,7 +1063,7 @@ main(int    argc,
 
 
   massDepFitLikeli L;
-	if(not L.init(tree,&compset,waveNames,waveMassLimits,doCov)) {
+	if(not L.init(tree,&compset,mdepFit.getWaveNames(),mdepFit.getWaveMassLimits(),doCov)) {
 		printErr << "error while initializing likelihood function." << endl;
 		exit(1);
 	}
@@ -728,17 +1081,22 @@ main(int    argc,
   //printInfo << "TESTCALL TO LIKELIHOOD takes " <<  maxPrecisionAlign(watch.CpuTime()) << " s" << endl;
 
   printInfo << nmbPar << " Parameters in fit" << endl;
-
-  // ---------------------------------------------------------------------------
-  // setup minimizer
-  printInfo << "creating and setting up minimizer " << minimizerType[0] << " using algorithm " << minimizerType[1] << endl;
-  Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-  if (!minimizer) {
-    printErr << "could not create minimizer! exiting!" << endl;
-    throw;
-  }
-  minimizer->SetFunction(L);
-  minimizer->SetPrintLevel((quiet) ? 0 : 3);
+ 
+	// ---------------------------------------------------------------------------
+	// setup minimizer
+	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
+	          << "using algorithm '" << minimizerType[1] << "'" << endl;
+	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
+	if(not minimizer) { 
+		printErr << "could not create minimizer. exiting." << endl;
+		throw;
+	}
+	minimizer->SetFunction        (L);
+	minimizer->SetStrategy        (minimizerStrategy);
+	minimizer->SetTolerance       (minimizerTolerance);
+	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
+	minimizer->SetMaxIterations   (maxNmbOfIterations);
+	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
 
   // ---------------------------------------------------------------------------
 
@@ -801,10 +1159,7 @@ main(int    argc,
   if(onlyPlotting) printInfo << "Plotting mode, skipping minimzation!" << endl;
   else {
     printInfo << "performing minimization. MASSES AND WIDTHS FIXED" << endl;
-
-    minimizer->SetMaxIterations(maxNmbOfIterations);
-    minimizer->SetMaxFunctionCalls(maxNmbOfIterations*5);
-    minimizer->SetTolerance    (minimizerTolerance);
+    
     // only do couplings
     TStopwatch fitW;
     // releasePars(minimizer,compset,anchorwave_reso,anchorwave_channel,0);
@@ -1331,8 +1686,8 @@ main(int    argc,
 	}
       }
       prevphase[iw]=absphase;
-      absphasegraphs[iw]->SetPoint(i,mScaled,absphase);
-      if(sysPlotting){
+      absphasegraphs[iw]->SetPoint(i,mScaled,absphase);      
+      if(mdepFit.getSysPlotting()){
 	double maxIntens=-10000000;
 	double minIntens=10000000;
 	for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
@@ -1410,7 +1765,7 @@ main(int    argc,
 							 wl[iw2].c_str()));
 	 double fitphase=compset.phase(wl[iw],wl[iw2],m)*TMath::RadToDeg();
 
-	 if(sysPlotting){
+	 if(mdepFit.getSysPlotting()){
 	   //cerr << "start sysplotting" << endl;
 	   // loop over systematics files
 	   double maxPhase=-10000;
