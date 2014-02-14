@@ -206,10 +206,11 @@ massDepFit::readConfigInputWaves(const Setting* configInputWaves)
 		}
 
 		_waveNames.push_back(name);
+		_waveIndices[name] = _waveNames.size() - 1;
 		_waveMassLimits.push_back(make_pair(massLower, massUpper));
 
 		if(_debug) {
-			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " MeV/c^2)" << endl;
+			printDebug << idxWave << ": " << name << " (mass range: " << massLower << "-" << massUpper << " MeV/c^2, index: " << _waveIndices[name] << ")" << endl;
 		}
 	}
 
