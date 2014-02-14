@@ -13,80 +13,59 @@
 #ifndef MASSDEPFITLIKELI_HH
 #define MASSDEPFITLIKELI_HH
 
-// Base Class Headers ----------------
-#include "Math/IFunction.h"
-
-// Collaborating Class Headers -------
-#include <vector>
-#include <map>
-#include <string>
-#include "pwacomponent.h"
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/vector_proxy.hpp>
 #include <boost/numeric/ublas/matrix.hpp>
-#include "TMatrixD.h"
-// Collaborating Class Declarations --
-class TTree;
-class TF1;
+
+#include <Math/IFunction.h>
 
 namespace rpwa {
 
-  class fitResult;
 
-namespace ublas = boost::numeric::ublas;
-typedef std::complex<double> cnum;
-typedef ublas::matrix<cnum> cmatrix;
-typedef ublas::matrix<double> rmatrix;
-typedef ublas::matrix<rmatrix> ccmatrix;
+	typedef boost::numeric::ublas::matrix<std::complex<double> > spinDensityMatrixType;
+	typedef boost::numeric::ublas::matrix<double> complexCovarianceMatrixType;
+	typedef boost::numeric::ublas::matrix<complexCovarianceMatrixType> spinDensityCovarianceMatrixType;
 
 
-  class massDepFitLikeli : public ROOT::Math::IBaseFunctionMultiDim {
-  public:
-
-    // Constructors/Destructors ---------
-    massDepFitLikeli(){}
-    virtual ~massDepFitLikeli(){}
+	class pwacompset;
 
 
-    // Accessors -----------------------
-    virtual unsigned int NDim() const;
-		unsigned int NDataPoints() const; /// number of data points in fit
+	class massDepFitLikeli : public ROOT::Math::IBaseFunctionMultiDim {
 
-		const std::vector<std::vector<std::pair<size_t, size_t> > >& getMassBinLimits() const { return _massBinLimits; }
+	public:
+
+		massDepFitLikeli() {}
+		virtual ~massDepFitLikeli() {}
+
+		virtual massDepFitLikeli* Clone() const;
+
+		virtual unsigned int NDim() const;
+
+		virtual double DoEval(const double* par) const;
+
+		unsigned int NDataPoints() const;
+
+		void init(pwacompset* compset,
+		          const std::vector<double>& massBinCenters,
+		          const std::vector<spinDensityMatrixType>& spinDensityMatrices,
+		          const std::vector<spinDensityCovarianceMatrixType>& spinDensityCovarianceMatrices,
+		          const std::vector<std::vector<std::pair<size_t, size_t> > >& wavePairMassBinLimits,
+		          bool useCovariance);
+
+	private:
+
+		pwacompset* _compset;
+
+		std::vector<double> _massBinCenters;
+
+		std::vector<spinDensityMatrixType> _spinDensityMatrices;
+		std::vector<spinDensityCovarianceMatrixType> _spinDensityCovarianceMatrices;
+
+		std::vector<std::vector<std::pair<size_t, size_t> > > _wavePairMassBinLimits;
+
+		bool _useCovariance;
+
+	};
 
 
-		// Modifiers -----------------------
-		bool init(TTree* fitresulttree,
-		          pwacompset* compset,
-		          const std::vector<std::string>& waveNames,
-		          const std::vector<std::pair<double, double> >& waveMassLimits,
-		          bool doCov=true);
-    
-
-
-    // Operations ----------------------
-    virtual double DoEval  (const double* par) const;
-
-    virtual IBaseFunctionMultiDim* Clone()const {return new massDepFitLikeli(*this);}
-
-
-
-  private:
-
-    // Private Data Members ------------
-    pwacompset* _compset;
-    std::vector<cmatrix> _spindens; // mremory resident spindensity
-    std::vector<ccmatrix> _cov;
-    std::vector<double> _mass;
-
-		std::vector<std::vector<std::pair<size_t, size_t> > > _massBinLimits;
-
-    std::vector<std::string> _wlist;
-    bool    _doCov; // take covariance between Real and Imag into account?
-    // Private Methods -----------------
-
-  };
-
-} // end namespace
+} // end namespace rpwa
 
 #endif
