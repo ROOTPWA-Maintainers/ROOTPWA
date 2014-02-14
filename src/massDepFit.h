@@ -39,6 +39,8 @@ namespace rpwa {
 // FIXME: get rid
 		const std::vector<std::string>& getWaveNames() const { return _waveNames; }
 // FIXME: get rid
+		const std::map<std::string, size_t>& getWaveIndices() const { return _waveIndices; }
+// FIXME: get rid
 		const std::vector<std::pair<double, double> >& getWaveMassLimits() const { return _waveMassLimits; }
 // FIXME: get rid
 		const std::vector<std::vector<std::pair<size_t, size_t> > >& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
@@ -77,6 +79,7 @@ namespace rpwa {
 		std::vector<double> _massBinCenters;
 
 		std::vector<std::string> _waveNames;
+		std::map<std::string, size_t> _waveIndices;
 		std::vector<std::pair<double, double> > _waveMassLimits;
 		std::vector<std::pair<size_t, size_t> > _waveMassBinLimits;
 
