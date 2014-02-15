@@ -45,6 +45,10 @@ namespace rpwa {
 		const boost::multi_array<double, 5>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
 // FIXME: get rid
 		const boost::multi_array<double, 2>& getInPhaseSpaceIntegrals() const { return _inPhaseSpaceIntegrals; }
+// FIXME: get rid
+		const boost::multi_array<double, 3>& getInIntensities() const { return _inIntensities; }
+// FIXME: get rid
+		const boost::multi_array<double, 4>& getInPhases() const { return _inPhases; }
 
 		static void setDebug(bool debug) { _debug = debug; }
 
@@ -63,7 +67,9 @@ namespace rpwa {
 		                           rpwa::fitResult* fit,
 		                           const std::vector<Long64_t>& mapping,
 		                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-		                           boost::multi_array<double, 5>& spinDensityCovarianceMatrices) const;
+		                           boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
+		                           boost::multi_array<double, 3>& intensities,
+		                           boost::multi_array<double, 4>& phases) const;
 		bool readFitResultIntegrals(TTree* tree,
 		                            rpwa::fitResult* fit,
 		                            const std::vector<Long64_t>& mapping,
@@ -89,6 +95,9 @@ namespace rpwa {
 		boost::multi_array<std::complex<double>, 3> _inSpinDensityMatrices;
 		boost::multi_array<double, 5> _inSpinDensityCovarianceMatrices;
 		boost::multi_array<double, 2> _inPhaseSpaceIntegrals;
+
+		boost::multi_array<double, 3> _inIntensities;
+		boost::multi_array<double, 4> _inPhases;
 
 		static bool _debug;
 
