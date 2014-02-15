@@ -309,7 +309,8 @@ massDepFit::readInFile(const string& valTreeName,
 		return false;
 	}
 
-	if(not readFitResultMatrices(inTree, inFit, inMapping, _inSpinDensityMatrices, _inSpinDensityCovarianceMatrices)) {
+	if(not readFitResultMatrices(inTree, inFit, inMapping, _inSpinDensityMatrices, _inSpinDensityCovarianceMatrices,
+	                             _inIntensities, _inPhases)) {
 		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName << "'." << endl;
 		delete inFile;
 		return false;
@@ -464,7 +465,9 @@ massDepFit::readFitResultMatrices(TTree* tree,
                                   rpwa::fitResult* fit,
                                   const vector<Long64_t>& mapping,
                                   multi_array<complex<double>, 3>& spinDensityMatrices,
-                                  multi_array<double, 5>& spinDensityCovarianceMatrices) const
+                                  multi_array<double, 5>& spinDensityCovarianceMatrices,
+                                  multi_array<double, 3>& intensities,
+                                  multi_array<double, 4>& phases) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
@@ -481,6 +484,9 @@ massDepFit::readFitResultMatrices(TTree* tree,
 	spinDensityMatrices.resize(extents[nrMassBins][nrWaves][nrWaves]);
 	spinDensityCovarianceMatrices.resize(extents[nrMassBins][nrWaves][nrWaves][2][2]);
 
+	intensities.resize(extents[nrMassBins][nrWaves][2]);
+	phases.resize(extents[nrMassBins][nrWaves][nrWaves][2]);
+
 	for(size_t idxMass=0; idxMass<nrMassBins; ++idxMass) {
 		if(_debug) {
 			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
@@ -491,17 +497,24 @@ massDepFit::readFitResultMatrices(TTree* tree,
 		}
 
 		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+			const int idx = fit->waveIndex(_waveNames[idxWave]);
+			if(idx == -1) {
+				printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << endl;
+				return false;
+			}
+
+			intensities[idxMass][idxWave][0] = fit->intensity(idx);
+			intensities[idxMass][idxWave][1] = fit->intensityErr(idx);
+
 			for(size_t jdxWave=0; jdxWave<nrWaves; ++jdxWave) {
-				const int idx = fit->waveIndex(_waveNames[idxWave]);
-				if(idx == -1) {
-					printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << endl;
-					return false;
-				}
 				const int jdx = fit->waveIndex(_waveNames[jdxWave]);
 				if(jdx == -1) {
 					printErr << "wave '" << _waveNames[jdxWave] << "' not in fit result." << endl;
 					return false;
 				}
+
+				phases[idxMass][idxWave][jdxWave][0] = fit->phase(idx, jdx);
+				phases[idxMass][idxWave][jdxWave][1] = fit->phaseErr(idx, jdx);
 
 				spinDensityMatrices[idxMass][idxWave][jdxWave] = fit->spinDensityMatrixElem(idx, jdx);
        
@@ -1529,7 +1542,7 @@ main(int    argc,
 
    std::vector<std::string> wl=compset.getWaveList();
    std::map<std::string, unsigned int> wmap;
-   unsigned int ndatabins=tree->GetEntries();
+   const size_t nrMassBins=mdepFit.getMassBinCenters().size();
 
    std::vector<TGraphErrors*> datagraphs;
    std::vector<TGraphErrors*> intenssysgraphs;
@@ -1540,7 +1553,7 @@ main(int    argc,
      wmap[wl[iw]]=iw;
      graphs.push_back(new TMultiGraph);
 
-     intenssysgraphs.push_back(new TGraphErrors(ndatabins));
+     intenssysgraphs.push_back(new TGraphErrors(nrMassBins));
      string name=("sys_");name.append(wl[iw]);
      intenssysgraphs[iw]->SetName(name.c_str());
      intenssysgraphs[iw]->SetTitle(name.c_str());
@@ -1554,7 +1567,7 @@ main(int    argc,
      graphs[iw]->SetName(wl[iw].c_str());
      graphs[iw]->SetTitle(wl[iw].c_str());
      graphs[iw]->SetDrawOption("AP");
-     datagraphs.push_back(new TGraphErrors(ndatabins));
+     datagraphs.push_back(new TGraphErrors(nrMassBins));
      name="data_";name.append(wl[iw]);
      datagraphs[iw]->SetName(name.c_str());
      datagraphs[iw]->SetTitle(name.c_str());
@@ -1569,7 +1582,7 @@ main(int    argc,
 
 
      // build fitgraphs
-   unsigned int nbins=ndatabins;//200;
+   unsigned int nbins=nrMassBins;//200;
    //double mmin=1200.;
    //double md=10.;
    std::vector<TGraph*> fitgraphs;
@@ -1795,14 +1808,12 @@ main(int    argc,
 
 
   // get data
-   fitResult* rho=0;
-   tree->SetBranchAddress(valBranchName.c_str(),&rho);
    vector<double> prevphase(wl.size());
    double binwidth=MASSSCALE*30; // half binwidth
    //double w=2*30/10;
-   for(unsigned int i=0;i<ndatabins;++i){
+   for(unsigned int i=0;i<nrMassBins;++i){
      tree->GetEntry(i);
-     double m=rho->massBinCenter();
+     double m=mdepFit.getMassBinCenters()[i];
      double mScaled=m*MASSSCALE;
      //cout << "MASS: "<<m << endl;
      unsigned int count=0;
@@ -1813,9 +1824,9 @@ main(int    argc,
 			continue;
 		}
 
-       datagraphs[iw]->SetPoint(i,mScaled,rho->intensity(wl[iw].c_str()));
-       datagraphs[iw]->SetPointError(i,binwidth,rho->intensityErr(wl[iw].c_str()));
-      fitgraphs[iw]->SetPoint(i,mScaled,compset.intensity(wl[iw],m));
+       datagraphs[iw]->SetPoint(i,mScaled,mdepFit.getInIntensities()[i][iw][0]);
+       datagraphs[iw]->SetPointError(i,binwidth,mdepFit.getInIntensities()[i][iw][1]);
+      fitgraphs[iw]->SetPoint(i,mScaled,compset.intensity(wl[iw],m));      
       double absphase=compset.phase(wl[iw],m)*TMath::RadToDeg();
       if(i>0){
 	double absp=absphase+360;
@@ -1835,11 +1846,8 @@ main(int    argc,
 	for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
 	  // get data
 	  fitResult* rhoSys=0;
-	  if(iSys==0)rhoSys=rho;
-	  else {
 	    sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
 	    sysTrees[iSys]->GetEntry(i);
-	  }
 // rename one wave
 	  string mywave1=wl[iw];
 
@@ -1864,8 +1872,7 @@ main(int    argc,
       //cout << "getting phases" << endl;
 
        // second loop to get phase differences
-       unsigned int wi1=rho->waveIndex(wl[iw].c_str());
-
+       
        for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
 			// check that this mass bin should be taken into account for this
 			// combination of waves
@@ -1873,38 +1880,29 @@ main(int    argc,
 				continue;
 			}
 
-	 //double ps2=rho->phaseSpaceIntegral(wl[iw2].c_str())*fsps;
-
-	 unsigned int wi2=rho->waveIndex(wl[iw2].c_str());
-	 complex<double> r=rho->spinDensityMatrixElem(wi1,wi2);
-	 TMatrixT<double> rCov=rho->spinDensityMatrixElemCov(wi1,wi2);
-
 	 realdatagraphs[count]->SetPoint(i,
 				     mScaled,
-				     r.real());
+				     mdepFit.getInSpinDensityMatrices()[i][iw][iw2].real());
 	 realdatagraphs[count]->SetPointError(i,
 			    binwidth,
-			    sqrt(rCov[0][0]));
+			    sqrt(mdepFit.getInSpinDensityCovarianceMatrices()[i][iw][iw2][0][0]));
 	 imagdatagraphs[count]->SetPoint(i,
 		       mScaled,
-		       r.imag());
+		       mdepFit.getInSpinDensityMatrices()[i][iw][iw2].imag());
      
 	 imagdatagraphs[count]->SetPointError(i,
 			    binwidth,
-			    sqrt(rCov[1][1]));
+			    sqrt(mdepFit.getInSpinDensityCovarianceMatrices()[i][iw][iw2][1][1]));
 
 
-	 double dataphi=rho->phase(wl[iw].c_str(),wl[iw2].c_str());
+	 double dataphi=mdepFit.getInPhases()[i][iw][iw2][0];
 
 	 phasedatagraphs[count]->SetPoint(i,mScaled,dataphi);
 	   
-	 TVector2 v;v.SetMagPhi(1,rho->phase(wl[iw].c_str(),
-					     wl[iw2].c_str())/TMath::RadToDeg());
+	 TVector2 v;v.SetMagPhi(1,dataphi/TMath::RadToDeg());
 	 phase2d[count]->SetPoint(i,v.X(),v.Y(),mScaled);
 
-	 phasedatagraphs[count]->SetPointError(i,binwidth,
-					   rho->phaseErr(wl[iw].c_str(),
-							 wl[iw2].c_str()));
+	 phasedatagraphs[count]->SetPointError(i,binwidth,mdepFit.getInPhases()[i][iw][iw2][1]);
 	 double fitphase=compset.phase(wl[iw],wl[iw2],m)*TMath::RadToDeg();
 
 	 if(mdepFit.getSysPlotting()){
@@ -1921,15 +1919,12 @@ main(int    argc,
 	     //cerr << iSys;
 	   // get data
 	     fitResult* rhoSys=0;
-	     if(iSys==0)rhoSys=rho;
-	     else {
-	       sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
-	       if(i<sysTrees[iSys]->GetEntries()) sysTrees[iSys]->GetEntry(i);
+	     sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
+	     if(i<sysTrees[iSys]->GetEntries()) sysTrees[iSys]->GetEntry(i);
 	       else{
 		 delete rhoSys;
 		 continue;
 	       }
-	     }
 	     // rename one wave
 	     string mywave1=wl[iw];
 	     string mywave2=wl[iw2];
