@@ -1,14 +1,9 @@
 #ifndef MASSDEPFIT_HH
 #define MASSDEPFIT_HH
 
-#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/multi_array.hpp>
 
 namespace rpwa {
-
-
-	typedef boost::numeric::ublas::matrix<std::complex<double> > spinDensityMatrixType;
-	typedef boost::numeric::ublas::matrix<double> complexCovarianceMatrixType;
-	typedef boost::numeric::ublas::matrix<complexCovarianceMatrixType> spinDensityCovarianceMatrixType;
 
 
 	class massDepFit {
@@ -43,11 +38,11 @@ namespace rpwa {
 // FIXME: get rid
 		const std::vector<std::pair<double, double> >& getWaveMassLimits() const { return _waveMassLimits; }
 // FIXME: get rid
-		const std::vector<std::vector<std::pair<size_t, size_t> > >& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
+		const boost::multi_array<std::pair<size_t, size_t>, 2>& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
 // FIXME: get rid
-		const std::vector<spinDensityMatrixType>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
+		const boost::multi_array<std::complex<double>, 3>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
 // FIXME: get rid
-		const std::vector<spinDensityCovarianceMatrixType>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
+		const boost::multi_array<double, 5>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
 // FIXME: get rid
 		const std::vector<std::vector<double> >& getInPhaseSpaceIntegrals() const { return _inPhaseSpaceIntegrals; }
 
@@ -67,8 +62,8 @@ namespace rpwa {
 		bool readFitResultMatrices(TTree* tree,
 		                           rpwa::fitResult* fit,
 		                           const std::vector<Long64_t>& mapping,
-		                           std::vector<spinDensityMatrixType>& spinDensityMatrices,
-		                           std::vector<spinDensityCovarianceMatrixType>& spinDensityCovarianceMatrices) const;
+		                           boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+		                           boost::multi_array<double, 5>& spinDensityCovarianceMatrices) const;
 		bool readFitResultIntegrals(TTree* tree,
 		                            rpwa::fitResult* fit,
 		                            const std::vector<Long64_t>& mapping,
@@ -89,10 +84,10 @@ namespace rpwa {
 		std::vector<std::pair<double, double> > _waveMassLimits;
 		std::vector<std::pair<size_t, size_t> > _waveMassBinLimits;
 
-		std::vector<std::vector<std::pair<size_t, size_t> > > _wavePairMassBinLimits;
+		boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
 
-		std::vector<spinDensityMatrixType> _inSpinDensityMatrices;
-		std::vector<spinDensityCovarianceMatrixType> _inSpinDensityCovarianceMatrices;
+		boost::multi_array<std::complex<double>, 3> _inSpinDensityMatrices;
+		boost::multi_array<double, 5> _inSpinDensityCovarianceMatrices;
 		std::vector<std::vector<double> > _inPhaseSpaceIntegrals;
 
 		static bool _debug;
