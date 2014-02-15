@@ -42,43 +42,44 @@ massDepFitLikeli::NDataPoints() const {
 void
 massDepFitLikeli::init(pwacompset* compset,
                        const std::vector<double>& massBinCenters,
-                       const std::vector<spinDensityMatrixType>& spinDensityMatrices,
-                       const std::vector<spinDensityCovarianceMatrixType>& spinDensityCovarianceMatrices,
-                       const std::vector<std::vector<std::pair<size_t, size_t> > >& wavePairMassBinLimits,
+                       const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+                       const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
+                       const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
                        bool useCovariance)
 {
 	_compset = compset;
 
 	_massBinCenters = massBinCenters;
 
+	_spinDensityMatrices.resize(std::vector<size_t>(spinDensityMatrices.shape(), spinDensityMatrices.shape()+spinDensityMatrices.num_dimensions()));
 	_spinDensityMatrices = spinDensityMatrices;
+	_spinDensityCovarianceMatrices.resize(std::vector<size_t>(spinDensityCovarianceMatrices.shape(), spinDensityCovarianceMatrices.shape()+spinDensityCovarianceMatrices.num_dimensions()));
 	_spinDensityCovarianceMatrices = spinDensityCovarianceMatrices;
 
+	_wavePairMassBinLimits.resize(std::vector<size_t>(wavePairMassBinLimits.shape(), wavePairMassBinLimits.shape()+wavePairMassBinLimits.num_dimensions()));
 	_wavePairMassBinLimits = wavePairMassBinLimits;
 
 	_useCovariance = useCovariance;
+
+	_nrMassBins = _massBinCenters.size();
+	_nrWaves = _wavePairMassBinLimits.size();
 }
 
 
 double
 massDepFitLikeli::DoEval(const double* par) const {
-	const size_t nrWaves = _wavePairMassBinLimits.size();
-	const size_t nrMassBins = _massBinCenters.size();
-     
 	// set parameters for resonances, background and phase space
 	_compset->setPar(par);
 
 	double chi2=0;
  
 	// loop over mass-bins
-	for(unsigned idxMass=0; idxMass<nrMassBins; ++idxMass) {
+	for(unsigned idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		const double mass = _massBinCenters[idxMass];
-		const spinDensityMatrixType& spinDensityMatrix = _spinDensityMatrices[idxMass];
-		const spinDensityCovarianceMatrixType& spinDensityCovarianceMatrix = _spinDensityCovarianceMatrices[idxMass];
 
 		// sum over the contributions to chi2 -> rho_ij
-		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
-			for(size_t jdxWave=idxWave; jdxWave<nrWaves; ++jdxWave) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			for(size_t jdxWave=idxWave; jdxWave<_nrWaves; ++jdxWave) {
 				// check that this mass bin should be taken into account for this
 				// combination of waves
 				if(idxMass < _wavePairMassBinLimits[idxWave][jdxWave].first || idxMass > _wavePairMassBinLimits[idxWave][jdxWave].second) {
@@ -88,22 +89,23 @@ massDepFitLikeli::DoEval(const double* par) const {
 				// calculate target spin density matrix element
 				const complex<double> rhoFit = _compset->overlap(idxWave, jdxWave, mass, idxMass);
 
-				const complex<double> rhoDiff = rhoFit - spinDensityMatrix(idxWave, jdxWave);
-
-				const complexCovarianceMatrixType& covariance = spinDensityCovarianceMatrix(idxWave, jdxWave);
+				const complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxMass][idxWave][jdxWave];
 
 				double dchi;
 				if(idxWave==jdxWave) {
-					dchi = norm(rhoDiff) / covariance(0,0);
+					dchi = norm(rhoDiff) / _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][0];
 				} else {
 					if(_useCovariance) {
-						dchi  = rhoDiff.real()*rhoDiff.real() * covariance(1,1);
-						dchi -= rhoDiff.real()*rhoDiff.imag() * (covariance(0,1) + covariance(1,0));
-						dchi += rhoDiff.imag()*rhoDiff.imag() * covariance(0,0);
+						dchi  = rhoDiff.real()*rhoDiff.real() * _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][1][1];
+						dchi -= rhoDiff.real()*rhoDiff.imag() * _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][1];
+						dchi -= rhoDiff.real()*rhoDiff.imag() * _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][1][0];
+						dchi += rhoDiff.imag()*rhoDiff.imag() * _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][0];
 
-						dchi /= covariance(0,0)*covariance(1,1) - covariance(0,1)*covariance(1,0);
+						dchi /= _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][0]*_spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][1][1]
+						        - _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][1]*_spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][1][0];
 					} else {
-						dchi = rhoDiff.real()*rhoDiff.real()/covariance(0,0) + rhoDiff.imag()*rhoDiff.imag()/covariance(1,1);
+						dchi  = rhoDiff.real()*rhoDiff.real() / _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][0];
+						dchi += rhoDiff.imag()*rhoDiff.imag() / _spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][1][1];
 					}
 				}
 				chi2 += dchi;

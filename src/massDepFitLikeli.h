@@ -13,16 +13,11 @@
 #ifndef MASSDEPFITLIKELI_HH
 #define MASSDEPFITLIKELI_HH
 
-#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/multi_array.hpp>
 
 #include <Math/IFunction.h>
 
 namespace rpwa {
-
-
-	typedef boost::numeric::ublas::matrix<std::complex<double> > spinDensityMatrixType;
-	typedef boost::numeric::ublas::matrix<double> complexCovarianceMatrixType;
-	typedef boost::numeric::ublas::matrix<complexCovarianceMatrixType> spinDensityCovarianceMatrixType;
 
 
 	class pwacompset;
@@ -45,21 +40,24 @@ namespace rpwa {
 
 		void init(pwacompset* compset,
 		          const std::vector<double>& massBinCenters,
-		          const std::vector<spinDensityMatrixType>& spinDensityMatrices,
-		          const std::vector<spinDensityCovarianceMatrixType>& spinDensityCovarianceMatrices,
-		          const std::vector<std::vector<std::pair<size_t, size_t> > >& wavePairMassBinLimits,
+		          const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+		          const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
+		          const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
 		          bool useCovariance);
 
 	private:
 
 		pwacompset* _compset;
 
+		size_t _nrMassBins;
+		size_t _nrWaves;
+
 		std::vector<double> _massBinCenters;
 
-		std::vector<spinDensityMatrixType> _spinDensityMatrices;
-		std::vector<spinDensityCovarianceMatrixType> _spinDensityCovarianceMatrices;
+		boost::multi_array<std::complex<double>, 3> _spinDensityMatrices;
+		boost::multi_array<double, 5> _spinDensityCovarianceMatrices;
 
-		std::vector<std::vector<std::pair<size_t, size_t> > > _wavePairMassBinLimits;
+		boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
 
 		bool _useCovariance;
 
