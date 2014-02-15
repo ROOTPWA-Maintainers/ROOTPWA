@@ -549,7 +549,7 @@ bool
 massDepFit::readFitResultIntegrals(TTree* tree,
                                    rpwa::fitResult* fit,
                                    const vector<Long64_t>& mapping,
-                                   vector<vector<double> >& phaseSpaceIntegrals) const
+                                   multi_array<double, 2>& phaseSpaceIntegrals) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
@@ -559,10 +559,7 @@ massDepFit::readFitResultIntegrals(TTree* tree,
 	const size_t nrWaves = _waveNames.size();
 	const size_t nrMassBins = _massBinCenters.size();
 
-	phaseSpaceIntegrals.resize(nrWaves);
-	for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
-		phaseSpaceIntegrals[idxWave].resize(nrMassBins);
-	}
+	phaseSpaceIntegrals.resize(extents[nrMassBins][nrWaves]);
 
 	if(_debug) {
 		printDebug << "reading phase-space integrals for " << nrWaves << " waves from fit result." << endl;
@@ -579,7 +576,7 @@ massDepFit::readFitResultIntegrals(TTree* tree,
 
 		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
 			const double ps = fit->phaseSpaceIntegral(_waveNames[idxWave]);
-			phaseSpaceIntegrals[idxWave][idxMass] = ps*ps;
+			phaseSpaceIntegrals[idxMass][idxWave] = ps*ps;
 		}
 	}
 
@@ -587,7 +584,7 @@ massDepFit::readFitResultIntegrals(TTree* tree,
 		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
 			ostringstream output;
 			for(size_t idxMass=0; idxMass<nrMassBins; ++idxMass) {
-				output << " " << phaseSpaceIntegrals[idxWave][idxMass];
+				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
 			}
 			printDebug << "phase-space integrals for wave '" << _waveNames[idxWave] << "' (" << idxWave << "):" << output.str() << endl;
 		}
@@ -1089,8 +1086,9 @@ main(int    argc,
 	complex<double> C(cRe,cIm);
 	cout << "   " << amp << "  " << C << endl;
         map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
-        size_t idxWave = it->second;
-	channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),mdepFit.getInPhaseSpaceIntegrals()[idxWave]);
+        const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
+        multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][it->second]];
+	channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end()));
       }// end loop over channels
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
@@ -1153,8 +1151,9 @@ main(int    argc,
       cout << "   " << amp << "  " << C << endl;
       cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
       map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
-      size_t idxWave = it->second;
-      channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),mdepFit.getInPhaseSpaceIntegrals()[idxWave]);
+      const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
+      multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][it->second]];
+      channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end()));
 
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
