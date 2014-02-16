@@ -13,28 +13,23 @@
 #ifndef MASSDEPFITMODEL_HH
 #define MASSDEPFITMODEL_HH
 
-// Base Class Headers ----------------
-
-
-// Collaborating Class Headers -------
-#include <ostream>
-#include <string>
-#include <map>
-#include <vector>
 #include <complex>
-#include <TGraph.h>
+#include <vector>
 
-// Collaborating Class Declarations --
 class TF1;
 
 namespace rpwa {
 
-  class pwacomponent;
 
-  class pwacompset {
-  public:
-    pwacompset():_numpar(0),_funcFsmd(NULL){}
-    ~pwacompset(){}
+	class pwacomponent;
+
+
+	class massDepFitModel {
+
+	public:
+
+		massDepFitModel() : _numpar(0), _funcFsmd(NULL) {}
+		~massDepFitModel() {}
 
 		const std::vector<std::string>& getWaveList() const {
 			return _waveList;
@@ -66,7 +61,7 @@ namespace rpwa {
       getCompChannel(const std::string& wave) const;
 
 
-    friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacompset& cs);
+    friend std::ostream& operator<< (std::ostream& o,const massDepFitModel& cs);
     double calcFsmd(double m);
     double intensity(const std::string& wave, double m);
     double phase(const std::string& wave, double m);
@@ -81,7 +76,8 @@ namespace rpwa {
 				 double m,
                                  const size_t idxMass = std::numeric_limits<size_t>::max());
 
-  private:
+	private:
+
 		std::vector<std::string> _waveList;
     std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
@@ -91,14 +87,9 @@ namespace rpwa {
     // wavelist in same order as given by wavelist
     std::vector<std::vector<std::pair<unsigned int,unsigned int> > > _compChannel;    
 
-
-  };
-
+	};
 
 
-
-} //  end namespace
- 
-
+} // end namespace rpwa
 
 #endif // MASSDEPFITMODEL_HH

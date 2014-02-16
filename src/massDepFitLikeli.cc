@@ -41,7 +41,7 @@ massDepFitLikeli::NDataPoints() const {
 
 
 void
-massDepFitLikeli::init(pwacompset* compset,
+massDepFitLikeli::init(massDepFitModel* compset,
                        const std::vector<double>& massBinCenters,
                        const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
                        const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,

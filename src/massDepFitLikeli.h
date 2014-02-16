@@ -20,7 +20,7 @@
 namespace rpwa {
 
 
-	class pwacompset;
+	class massDepFitModel;
 
 
 	class massDepFitLikeli : public ROOT::Math::IBaseFunctionMultiDim {
@@ -38,7 +38,7 @@ namespace rpwa {
 
 		unsigned int NDataPoints() const;
 
-		void init(pwacompset* compset,
+		void init(massDepFitModel* compset,
 		          const std::vector<double>& massBinCenters,
 		          const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
 		          const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
@@ -47,7 +47,7 @@ namespace rpwa {
 
 	private:
 
-		pwacompset* _compset;
+		massDepFitModel* _compset;
 
 		size_t _nrMassBins;
 		size_t _nrWaves;
