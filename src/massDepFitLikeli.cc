@@ -1,5 +1,6 @@
-
 #include "massDepFitLikeli.h"
+
+#include "massDepFitModel.h"
 #include "pwacomponent.h"
 
 
