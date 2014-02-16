@@ -23,6 +23,10 @@ namespace rpwa {
 		bool readInFile(const std::string& valTreeName   = "pwa",
 		                const std::string& valBranchName = "fitResult_v2");
 
+// FIXME: make private
+		bool readSystematicsFiles(const std::string& valTreeName   = "pwa",
+		                          const std::string& valBranchName = "fitResult_v2");
+
 // FIXME: get rid
 		const std::string& getInFileName() const { return _inFileName; }
 // FIXME: get rid
@@ -49,6 +53,20 @@ namespace rpwa {
 		const boost::multi_array<double, 3>& getInIntensities() const { return _inIntensities; }
 // FIXME: get rid
 		const boost::multi_array<double, 4>& getInPhases() const { return _inPhases; }
+// FIXME: get rid
+		const boost::multi_array<std::complex<double>, 4>& getSysSpinDensityMatrices() const { return _sysSpinDensityMatrices; }
+// FIXME: get rid
+		const boost::multi_array<double, 6>& getSysSpinDensityCovarianceMatrices() const { return _sysSpinDensityCovarianceMatrices; }
+// FIXME: get rid
+		const boost::multi_array<double, 4>& getSysIntensities() const { return _sysIntensities; }
+// FIXME: get rid
+		const boost::multi_array<double, 5>& getSysPhases() const { return _sysPhases; }
+// FIXME: get rid?
+		const size_t getNrMassBins() const { return _nrMassBins; }
+// FIXME: get rid?
+		const size_t getNrSystematics() const { return _nrSystematics; }
+// FIXME: get rid?
+		const size_t getNrWaves() const { return _nrWaves; }
 
 		static void setDebug(bool debug) { _debug = debug; }
 
@@ -57,6 +75,10 @@ namespace rpwa {
 		bool readConfigInputFitResults(const libconfig::Setting* configInputFitResults);
 		bool readConfigInputWaves(const libconfig::Setting* configInputWaves);
 		bool readConfigInputSystematics(const libconfig::Setting* configInputSystematics);
+
+		bool readSystematicsFile(const size_t idxSystematics,
+		                         const std::string& valTreeName   = "pwa",
+		                         const std::string& valBranchName = "fitResult_v2");
 
 		bool checkFitResultMassBins(TTree* tree,
 		                            rpwa::fitResult* fit,
@@ -98,6 +120,12 @@ namespace rpwa {
 
 		boost::multi_array<double, 3> _inIntensities;
 		boost::multi_array<double, 4> _inPhases;
+
+		boost::multi_array<std::complex<double>, 4> _sysSpinDensityMatrices;
+		boost::multi_array<double, 6> _sysSpinDensityCovarianceMatrices;
+
+		boost::multi_array<double, 4> _sysIntensities;
+		boost::multi_array<double, 5> _sysPhases;
 
 		size_t _nrMassBins;
 		size_t _nrSystematics;
