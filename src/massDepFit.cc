@@ -83,7 +83,10 @@ bool massDepFit::_debug = false;
 
 
 massDepFit::massDepFit()
-	: _sysPlotting(false)
+	: _sysPlotting(false),
+	  _nrMassBins(0),
+	  _nrSystematics(0),
+	  _nrWaves(0)
 {
 }
 
@@ -214,6 +217,11 @@ massDepFit::readConfigInputWaves(const Setting* configInputWaves)
 		}
 	}
 
+	_nrWaves = _waveNames.size();
+	if(_debug) {
+		printDebug << "read " << _nrWaves << " in total." << endl;
+	}
+
 	return true;
 }
 
@@ -248,6 +256,11 @@ massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 			printDebug << "'" << fileName << "' will be read to get information for systematic errors." << endl;
 		}
 		_sysFileNames.push_back(fileName);
+	}
+
+	_nrSystematics = _sysFileNames.size();
+	if(_debug) {
+		printDebug << "in total " << _nrSystematics << " files to be read to get information for systematic errors." << endl;
 	}
 
 	return true;
@@ -337,14 +350,14 @@ massDepFit::checkFitResultMassBins(TTree* tree,
 	}
 
 	// reset mapping
-	mapping.assign(_massBinCenters.size(), numeric_limits<size_t>::max());
+	mapping.assign(_nrMassBins, numeric_limits<size_t>::max());
 
 	// extract data from tree
 	const Long64_t nrEntries = tree->GetEntries();
 
 	if(_debug) {
 		printDebug << "check that the centers of mass bins of " << nrEntries << " entries in tree are at a known place, "
-		           << "and map the " << _massBinCenters.size() << " mass bins to those entries." << endl;
+		           << "and map the " << _nrMassBins << " mass bins to those entries." << endl;
 	}
 
 	for(Long64_t idx=0; idx<nrEntries; ++idx) {
@@ -361,7 +374,7 @@ massDepFit::checkFitResultMassBins(TTree* tree,
 
 		bool found = false;
 		size_t idxMass=0;
-		while(idxMass<_massBinCenters.size()) {
+		while(idxMass<_nrMassBins) {
 			if(abs(_massBinCenters[idxMass]-mass) < 1000.*numeric_limits<double>::epsilon()) {
 				found = true;
 				break;
@@ -453,8 +466,10 @@ massDepFit::readFitResultMassBins(TTree* tree,
 	// sort mass bins
 	sort(_massBinCenters.begin(), _massBinCenters.end());
 
-	printInfo << "found " << _massBinCenters.size() << " mass bins, center of first and last mass bins: "
-	          << _massBinCenters[0] << " and " << _massBinCenters[_massBinCenters.size() - 1] << " MeV/c^2." << endl;
+	_nrMassBins = _massBinCenters.size();
+
+	printInfo << "found " << _nrMassBins << " mass bins, center of first and last mass bins: "
+	          << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " MeV/c^2." << endl;
 
 	return true;
 }
@@ -474,20 +489,17 @@ massDepFit::readFitResultMatrices(TTree* tree,
 		return false;
 	}
 
-	const size_t nrWaves = _waveNames.size();
-	const size_t nrMassBins = _massBinCenters.size();
-
 	if(_debug) {
-		printDebug << "reading spin-density matrices for " << nrWaves << " waves from fit result." << endl;
+		printDebug << "reading spin-density matrices for " << _nrWaves << " waves from fit result." << endl;
 	}
 
-	spinDensityMatrices.resize(extents[nrMassBins][nrWaves][nrWaves]);
-	spinDensityCovarianceMatrices.resize(extents[nrMassBins][nrWaves][nrWaves][2][2]);
+	spinDensityMatrices.resize(extents[_nrMassBins][_nrWaves][_nrWaves]);
+	spinDensityCovarianceMatrices.resize(extents[_nrMassBins][_nrWaves][_nrWaves][2][2]);
 
-	intensities.resize(extents[nrMassBins][nrWaves][2]);
-	phases.resize(extents[nrMassBins][nrWaves][nrWaves][2]);
+	intensities.resize(extents[_nrMassBins][_nrWaves][2]);
+	phases.resize(extents[_nrMassBins][_nrWaves][_nrWaves][2]);
 
-	for(size_t idxMass=0; idxMass<nrMassBins; ++idxMass) {
+	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		if(_debug) {
 			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
 		}
@@ -496,7 +508,7 @@ massDepFit::readFitResultMatrices(TTree* tree,
 			return false;
 		}
 
-		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			const int idx = fit->waveIndex(_waveNames[idxWave]);
 			if(idx == -1) {
 				printErr << "wave '" << _waveNames[idxWave] << "' not in fit result." << endl;
@@ -506,7 +518,7 @@ massDepFit::readFitResultMatrices(TTree* tree,
 			intensities[idxMass][idxWave][0] = fit->intensity(idx);
 			intensities[idxMass][idxWave][1] = fit->intensityErr(idx);
 
-			for(size_t jdxWave=0; jdxWave<nrWaves; ++jdxWave) {
+			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
 				const int jdx = fit->waveIndex(_waveNames[jdxWave]);
 				if(jdx == -1) {
 					printErr << "wave '" << _waveNames[jdxWave] << "' not in fit result." << endl;
@@ -530,10 +542,10 @@ massDepFit::readFitResultMatrices(TTree* tree,
 			ostringstream output;
 			ostringstream outputCovariance;
 
-			for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+			for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 				output << " (";
 				outputCovariance << " (";
-				for(size_t jdxWave=0; jdxWave<nrWaves; ++jdxWave) {
+				for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
 					output << " " << spinDensityMatrices[idxMass][idxWave][jdxWave];
 					outputCovariance << " (";
 					for(size_t idx=0; idx<2; ++idx) {
@@ -569,16 +581,13 @@ massDepFit::readFitResultIntegrals(TTree* tree,
 		return false;
 	}
 
-	const size_t nrWaves = _waveNames.size();
-	const size_t nrMassBins = _massBinCenters.size();
-
-	phaseSpaceIntegrals.resize(extents[nrMassBins][nrWaves]);
+	phaseSpaceIntegrals.resize(extents[_nrMassBins][_nrWaves]);
 
 	if(_debug) {
-		printDebug << "reading phase-space integrals for " << nrWaves << " waves from fit result." << endl;
+		printDebug << "reading phase-space integrals for " << _nrWaves << " waves from fit result." << endl;
 	}
 
-	for(size_t idxMass=0; idxMass<nrMassBins; ++idxMass) {
+	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		if(_debug) {
 			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
 		}
@@ -587,16 +596,16 @@ massDepFit::readFitResultIntegrals(TTree* tree,
 			return false;
 		}
 
-		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			const double ps = fit->phaseSpaceIntegral(_waveNames[idxWave]);
 			phaseSpaceIntegrals[idxMass][idxWave] = ps*ps;
 		}
 	}
 
 	if(_debug) {
-		for(size_t idxWave=0; idxWave<nrWaves; ++idxWave) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			ostringstream output;
-			for(size_t idxMass=0; idxMass<nrMassBins; ++idxMass) {
+			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
 			}
 			printDebug << "phase-space integrals for wave '" << _waveNames[idxWave] << "' (" << idxWave << "):" << output.str() << endl;
@@ -611,12 +620,12 @@ bool
 massDepFit::prepareMassLimits()
 {
 	if(_debug) {
-		printDebug << "determine which mass bins to use in the fit for " << _massBinCenters.size() << " mass bins, center of first and last mass bins: "
-		           << _massBinCenters[0] << " and " << _massBinCenters[_massBinCenters.size() - 1] << " MeV/c^2." << endl;
+		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins << " mass bins, center of first and last mass bins: "
+		           << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " MeV/c^2." << endl;
 	}
 
-	_massStep = (_massBinCenters[_massBinCenters.size() - 1] - _massBinCenters[0]) / (_massBinCenters.size() - 1);
-	for(size_t idxMass=1; idxMass<_massBinCenters.size(); ++idxMass) {
+	_massStep = (_massBinCenters[_nrMassBins - 1] - _massBinCenters[0]) / (_nrMassBins - 1);
+	for(size_t idxMass=1; idxMass<_nrMassBins; ++idxMass) {
 		if(abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*numeric_limits<double>::epsilon()) {
 			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " MeV/c^2) and "
 			         << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) does not agree with nominal distance "
@@ -629,16 +638,16 @@ massDepFit::prepareMassLimits()
 	}
 
 	_massMin=_massBinCenters[0] - _massStep / 2;
-	_massMax=_massBinCenters[_massBinCenters.size() - 1] + _massStep / 2;
+	_massMax=_massBinCenters[_nrMassBins - 1] + _massStep / 2;
 	if(_debug) {
 		printDebug << "mass bins cover the mass range from " << _massMin << " to " << _massMax << " MeV/c^2." << endl;
 	}
 
 	_waveMassBinLimits.clear();
-	for(size_t idxWave=0; idxWave<_waveMassLimits.size(); ++idxWave) {
+	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 		size_t binFirst = 0;
-		size_t binLast = _massBinCenters.size()-1;
-		for(size_t idxMass=0; idxMass<_massBinCenters.size(); ++idxMass) {
+		size_t binLast = _nrMassBins-1;
+		for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 			if(_massBinCenters[idxMass] < _waveMassLimits[idxWave].first) {
 				binFirst = idxMass+1;
 			}
@@ -653,7 +662,7 @@ massDepFit::prepareMassLimits()
 			binFirst = 0;
 		}
 		if(_waveMassLimits[idxWave].second < 0) {
-			binLast = _massBinCenters.size()-1;
+			binLast = _nrMassBins-1;
 		}
 		if(_debug) {
 			printDebug << idxWave << ": " << _waveNames[idxWave] << ": "
@@ -664,9 +673,9 @@ massDepFit::prepareMassLimits()
 		_waveMassBinLimits.push_back(make_pair(binFirst, binLast));
 	}
 
-	_wavePairMassBinLimits.resize(extents[_waveMassBinLimits.size()][_waveMassBinLimits.size()]);
-	for(size_t idxWave=0; idxWave<_waveMassBinLimits.size(); ++idxWave) {
-		for(size_t jdxWave=0; jdxWave<_waveMassBinLimits.size(); ++jdxWave) {
+	_wavePairMassBinLimits.resize(extents[_nrWaves][_nrWaves]);
+	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
 			_wavePairMassBinLimits[idxWave][jdxWave] = make_pair(max(_waveMassBinLimits[idxWave].first,  _waveMassBinLimits[jdxWave].first),
 			                                                     min(_waveMassBinLimits[idxWave].second, _waveMassBinLimits[jdxWave].second));
 		}
@@ -674,9 +683,9 @@ massDepFit::prepareMassLimits()
 
 	if(_debug) {
 		printDebug << "waves and mass limits:" << endl;
-		for(size_t idxWave=0; idxWave<_waveMassBinLimits.size(); ++idxWave) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			ostringstream output;
-			for(size_t jdxWave=0; jdxWave<_waveMassBinLimits.size(); ++jdxWave) {
+			for(size_t jdxWave=0; jdxWave<_nrWaves; ++jdxWave) {
 				output << _wavePairMassBinLimits[idxWave][jdxWave].first << "-" << _wavePairMassBinLimits[idxWave][jdxWave].second << " ";
 			}
 			printDebug << _waveNames[idxWave] << " " << _waveMassBinLimits[idxWave].first << "-" << _waveMassBinLimits[idxWave].second
