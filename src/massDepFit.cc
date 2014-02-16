@@ -839,7 +839,7 @@ usage(const string& progName,
 // 0 = release only couplings
 // 1 = release couplings and masses
 // 2 = release couplings, masses and widths
-void releasePars(Minimizer* minimizer, const pwacompset& compset,
+void releasePars(Minimizer* minimizer, const massDepFitModel& compset, 
 		 const vector<string>& anchorwave_reso,
 		 const vector<string>& anchorwave_channel,
 		 int level){
@@ -1034,7 +1034,7 @@ main(int    argc,
 
   
   // Setup Component Set (Resonances + Background)
-  pwacompset compset;
+  massDepFitModel compset;
   bool check=true;
 
 	compset.setWaveList(mdepFit.getWaveNames());

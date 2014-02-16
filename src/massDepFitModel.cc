@@ -30,7 +30,7 @@ using namespace std;
 
 
 void
-rpwa::pwacompset::add(rpwa::pwacomponent* comp)
+rpwa::massDepFitModel::add(rpwa::pwacomponent* comp)
 {
     _comp.push_back(comp);
     _numpar+=comp->numPar();
@@ -38,7 +38,7 @@ rpwa::pwacompset::add(rpwa::pwacomponent* comp)
 
 
 void
-rpwa::pwacompset::setFuncFsmd(TF1* funcFsmd){
+rpwa::massDepFitModel::setFuncFsmd(TF1* funcFsmd){
   _funcFsmd=funcFsmd;
   // clear list of free parameters
   _freeFsmdPar.clear();
@@ -65,7 +65,7 @@ rpwa::pwacompset::setFuncFsmd(TF1* funcFsmd){
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-rpwa::pwacompset::doMapping() {
+rpwa::massDepFitModel::doMapping() {
 	// check that all waves used in a decay channel have been defined
 	for(unsigned int i=0; i<n(); ++i) {
 		for(map<string, pwachannel>::const_iterator itChan=_comp[i]->channels().begin(); itChan !=_comp[i]->channels().end(); ++itChan) {
@@ -104,7 +104,7 @@ rpwa::pwacompset::doMapping() {
 
 
 double 
-rpwa::pwacompset::getFreeFsmdPar(unsigned int i) const {
+rpwa::massDepFitModel::getFreeFsmdPar(unsigned int i) const {
   if(i<_freeFsmdPar.size())
     return _funcFsmd->GetParameter(_freeFsmdPar[i]);
   else return 0;
@@ -112,14 +112,14 @@ rpwa::pwacompset::getFreeFsmdPar(unsigned int i) const {
 
 
 void 
-rpwa::pwacompset::getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const {
+rpwa::massDepFitModel::getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const {
   if(i<_freeFsmdPar.size()){
     _funcFsmd->GetParLimits(_freeFsmdPar[i],lower,upper);
   }
 }
 
 void
-rpwa::pwacompset::setPar(const double* par){ // set parameters
+rpwa::massDepFitModel::setPar(const double* par){ // set parameters
   unsigned int parcount=0;
   // components
   for(unsigned int i=0;i<n();++i){
@@ -138,7 +138,7 @@ rpwa::pwacompset::setPar(const double* par){ // set parameters
 
 
 void 
-rpwa::pwacompset::getPar(double* par){       // return parameters 
+rpwa::massDepFitModel::getPar(double* par){       // return parameters 
   unsigned int parcount=0;
   // components
   for(unsigned int i=0;i<n();++i){
@@ -157,7 +157,7 @@ rpwa::pwacompset::getPar(double* par){       // return parameters
 }
 
 double 
-rpwa::pwacompset::calcFsmd(double m){
+rpwa::massDepFitModel::calcFsmd(double m){
   if (_funcFsmd == NULL) {
     return 1.;
   }
@@ -166,7 +166,7 @@ rpwa::pwacompset::calcFsmd(double m){
 }
 
 double 
-rpwa::pwacompset::intensity(const std::string& wave, double m){
+rpwa::massDepFitModel::intensity(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
   complex<double> rho(0,0);
   for(unsigned int ic=0;ic<n();++ic){
@@ -180,7 +180,7 @@ rpwa::pwacompset::intensity(const std::string& wave, double m){
 }
 
 double 
-rpwa::pwacompset::phase(const std::string& wave, double m){
+rpwa::massDepFitModel::phase(const std::string& wave, double m){
   // loop over all components and pick up those that contribute to this channel
   complex<double> rho(0,0);
   for(unsigned int ic=0;ic<n();++ic){
@@ -195,14 +195,14 @@ rpwa::pwacompset::phase(const std::string& wave, double m){
 
 
 double 
-rpwa::pwacompset::phase(const std::string& wave1,
+rpwa::massDepFitModel::phase(const std::string& wave1,
 			const std::string& wave2,
 			double m){
   return arg(overlap(wave1,wave2,m));
 }
 
 std::complex<double>
-rpwa::pwacompset::overlap(const std::string& wave1,
+rpwa::massDepFitModel::overlap(const std::string& wave1,
 			  const std::string& wave2,
 			  double m){
     // loop over all components and pick up those that contribute to this channel
@@ -221,7 +221,7 @@ rpwa::pwacompset::overlap(const std::string& wave1,
 }
 
 std::complex<double>
-rpwa::pwacompset::overlap(unsigned int wave1,
+rpwa::massDepFitModel::overlap(unsigned int wave1,
 			  unsigned int wave2,
 			  double m,
                           const size_t idxMass){
@@ -250,7 +250,7 @@ rpwa::pwacompset::overlap(unsigned int wave1,
 
 
 std::vector<std::pair<unsigned int,unsigned int> >
-rpwa::pwacompset::getCompChannel(const std::string& wave) const {
+rpwa::massDepFitModel::getCompChannel(const std::string& wave) const {
   cerr << "Channel-mapping for wave " << wave << endl;
   std::vector<std::pair<unsigned int,unsigned int> > result;
   for(unsigned int ic=0;ic<n();++ic){
@@ -267,7 +267,7 @@ rpwa::pwacompset::getCompChannel(const std::string& wave) const {
 }
 
 
-std::ostream& rpwa::operator<< (std::ostream& out,const rpwa::pwacompset& cs){
+std::ostream& rpwa::operator<< (std::ostream& out,const rpwa::massDepFitModel& cs){
   for(unsigned int i=0;i<cs.n();++i){
     const rpwa::pwacomponent& c =*cs[i];
     out << c << endl;
