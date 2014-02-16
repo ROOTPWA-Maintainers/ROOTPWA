@@ -99,6 +99,10 @@ namespace rpwa {
 		boost::multi_array<double, 3> _inIntensities;
 		boost::multi_array<double, 4> _inPhases;
 
+		size_t _nrMassBins;
+		size_t _nrSystematics;
+		size_t _nrWaves;
+
 		static bool _debug;
 
 	};
