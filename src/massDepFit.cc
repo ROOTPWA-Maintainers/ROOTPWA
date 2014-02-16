@@ -258,7 +258,7 @@ massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 		_sysFileNames.push_back(fileName);
 	}
 
-	_nrSystematics = _sysFileNames.size();
+	_nrSystematics = _sysFileNames.size() + 1;
 	if(_debug) {
 		printDebug << "in total " << _nrSystematics << " files to be read to get information for systematic errors." << endl;
 	}
@@ -335,6 +335,106 @@ massDepFit::readInFile(const string& valTreeName,
 	}
 
 	delete inFile;
+	return true;
+}
+
+
+bool
+massDepFit::readSystematicsFiles(const string& valTreeName,
+                                 const string& valBranchName)
+{
+	if(not _sysPlotting) {
+		return true;
+	}
+
+	if(_debug) {
+		printDebug << "reading fit results for systematic errors from " << _nrSystematics << " files." << endl;
+	}
+
+	_sysSpinDensityMatrices.resize(extents[_nrSystematics][_nrMassBins][_nrWaves][_nrWaves]);
+	_sysSpinDensityCovarianceMatrices.resize(extents[_nrSystematics][_nrMassBins][_nrWaves][_nrWaves][2][2]);
+	_sysIntensities.resize(extents[_nrSystematics][_nrMassBins][_nrWaves][2]);
+	_sysPhases.resize(extents[_nrSystematics][_nrMassBins][_nrWaves][_nrWaves][2]);
+
+	_sysSpinDensityMatrices[0] = _inSpinDensityMatrices;
+	_sysSpinDensityCovarianceMatrices[0] = _inSpinDensityCovarianceMatrices;
+	_sysIntensities[0] = _inIntensities;
+	_sysPhases[0] = _inPhases;
+
+	for(size_t idxSystematics=1; idxSystematics<_nrSystematics; ++idxSystematics) {
+		readSystematicsFile(idxSystematics, valTreeName, valBranchName);
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readSystematicsFile(const size_t idxSystematics,
+                                const string& valTreeName,
+                                const string& valBranchName)
+{
+	if(_debug) {
+		printDebug << "reading fit result for systematics for index " << idxSystematics << " from file '" << _sysFileNames[idxSystematics-1] << "'." << endl;
+	}
+
+	TFile* sysFile = TFile::Open(_sysFileNames[idxSystematics-1].c_str());
+	if(not sysFile) {
+		printErr << "input file '" << _sysFileNames[idxSystematics-1] << "' not found."<< endl;
+		return false;
+	}
+	if(sysFile->IsZombie()) {
+		printErr << "error while reading input file '" << _sysFileNames[idxSystematics-1] << "'."<< endl;
+		delete sysFile;
+		return false;
+	}
+
+	if(_debug) {
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << _sysFileNames[idxSystematics-1] << "'." << endl;
+	}
+
+	TTree* sysTree;
+	sysFile->GetObject(valTreeName.c_str(), sysTree);
+	if(not sysTree) {
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << _sysFileNames[idxSystematics-1] << "'."<< endl;
+		delete sysFile;
+		return false;
+	}
+
+	if(_debug) {
+		printDebug << "searching for branch '" << valBranchName << "' in tree '" << valTreeName << "'." << endl;
+	}
+
+	fitResult* sysFit = NULL;
+	if(sysTree->SetBranchAddress(valBranchName.c_str(), &sysFit)) {
+		printErr << "branch '" << valBranchName << "' not found in input tree '" << valTreeName << "'." << endl;
+		delete sysFile;
+		return false;
+	}
+
+	vector<Long64_t> sysMapping;
+	if(not checkFitResultMassBins(sysTree, sysFit, sysMapping)) {
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << endl;
+		delete sysFile;
+		return false;
+	}
+
+	multi_array<complex<double>, 3> tempSpinDensityMatrices;
+	multi_array<double, 5> tempSpinDensityCovarianceMatrices;
+	boost::multi_array<double, 3> tempIntensities;
+	boost::multi_array<double, 4> tempPhases;
+	if(not readFitResultMatrices(sysTree, sysFit, sysMapping, tempSpinDensityMatrices, tempSpinDensityCovarianceMatrices,
+	                             tempIntensities, tempPhases)) {
+		printErr << "error while reading spin-density matrix from fit result tree in '" << _sysFileNames[idxSystematics-1] << "'." << endl;
+		delete sysFile;
+		return false;
+	}
+	_sysSpinDensityMatrices[idxSystematics] = tempSpinDensityMatrices;
+	_sysSpinDensityCovarianceMatrices[idxSystematics] = tempSpinDensityCovarianceMatrices;
+	_sysIntensities[idxSystematics] = tempIntensities;
+	_sysPhases[idxSystematics] = tempPhases;
+
+	delete sysFile;
 	return true;
 }
 
@@ -503,6 +603,7 @@ massDepFit::readFitResultMatrices(TTree* tree,
 		if(_debug) {
 			printDebug << "reading entry " << mapping[idxMass] << " for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from tree." << endl;
 		}
+		// FIXME: in case of reading the fit result for a systematic tree this might happen, so this should be allowed in certain cases
 		if(tree->GetEntry(mapping[idxMass]) == 0) {
 			printErr << "error while reading entry " << mapping[idxMass] << " from tree." << endl;
 			return false;
@@ -915,6 +1016,12 @@ main(int    argc,
 		exit(1);
 	}
 
+	// extract information for systematic errors
+	if(not mdepFit.readSystematicsFiles(valTreeName, valBranchName)) {
+		printErr << "error while trying to read fit results for systematic errors." << endl;
+		exit(1);
+	}
+
 	// prepare mass limits
 	if(not mdepFit.prepareMassLimits()) {
 		printErr << "error determine which bins to use in the fit." << endl;
@@ -930,42 +1037,6 @@ main(int    argc,
   bool check=true;
 
 	compset.setWaveList(mdepFit.getWaveNames());
-
- // open input file and get results tree
-  TFile* infile=TFile::Open(mdepFit.getInFileName().c_str());
-  if(infile==NULL){
-    cerr << "Input file " << mdepFit.getInFileName() <<" not found."<< endl;
-    return 1;
-  }
-  TTree* tree=(TTree*)infile->Get(valTreeName.c_str());
-  if(tree==NULL){
-    cerr << "Input tree " << valTreeName <<" not found."<< endl;
-    return 1;
-  }
-
-
-  vector<TTree*> sysTrees;
-  if(mdepFit.getSysPlotting()){
-    // add this fit
-    sysTrees.push_back(tree);
-    // open files with fits  
-    for(size_t i=0; i<mdepFit.getSysFileNames().size(); ++i){
-      // open input file and get results tree
-      TFile* infile=TFile::Open(mdepFit.getSysFileNames()[i].c_str());
-      if(infile==NULL){
-	cerr << "Systematics Input file " << mdepFit.getSysFileNames()[i] <<" not found."<< endl;
-	return 1;
-      }
-      TTree* systree=(TTree*)infile->Get(valTreeName.c_str());
-      if(systree==NULL){
-	cerr << "Input tree " << valTreeName <<" not found."<< endl;
-	return 1;
-      }
-      sysTrees.push_back(systree);
-    }
-    printInfo << sysTrees.size() << " files for systematics found " << endl;
-  }// end if sysPlotting
-
 
   // overall final-state mass dependence
   TF1* fPS = NULL;
@@ -1821,7 +1892,6 @@ main(int    argc,
    double binwidth=MASSSCALE*30; // half binwidth
    //double w=2*30/10;
    for(unsigned int i=0;i<nrMassBins;++i){
-     tree->GetEntry(i);
      double m=mdepFit.getMassBinCenters()[i];
      double mScaled=m*MASSSCALE;
      //cout << "MASS: "<<m << endl;
@@ -1852,11 +1922,8 @@ main(int    argc,
       if(mdepFit.getSysPlotting()){
 	double maxIntens=-10000000;
 	double minIntens=10000000;
-	for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
+	for(unsigned int iSys=0;iSys<mdepFit.getNrSystematics();++iSys){
 	  // get data
-	  fitResult* rhoSys=0;
-	    sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
-	    sysTrees[iSys]->GetEntry(i);
 // rename one wave
 	  string mywave1=wl[iw];
 
@@ -1864,14 +1931,10 @@ main(int    argc,
 	  if(mywave1=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave1="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
 
 	  // check if waves are in fit
-	  if(rhoSys->waveIndex(mywave1)==-1){
-	    delete rhoSys;
-	    continue;
-	  }
-	  double myI=rhoSys->intensity(mywave1.c_str());
+	  // FIXME: skip waves that are not in the fit
+	  double myI=mdepFit.getSysIntensities()[iSys][i][iw][0];
 	  if(maxIntens<myI)maxIntens=myI;
 	  if(minIntens>myI)minIntens=myI;
-	  if(iSys>0)delete rhoSys;
 	} // end loop over systematic trees
 
 	intenssysgraphs[iw]->SetPoint(i,mScaled,(maxIntens+minIntens)*0.5);
@@ -1923,17 +1986,10 @@ main(int    argc,
 	   double minRe=10000000;
 	   double maxIm=-10000000;
 	   double minIm=10000000;
-
-	   for(unsigned int iSys=0;iSys<sysTrees.size();++iSys){
+	  
+	   for(unsigned int iSys=0;iSys<mdepFit.getNrSystematics();++iSys){
 	     //cerr << iSys;
 	   // get data
-	     fitResult* rhoSys=0;
-	     sysTrees[iSys]->SetBranchAddress(valBranchName.c_str(),&rhoSys);
-	     if(i<sysTrees[iSys]->GetEntries()) sysTrees[iSys]->GetEntry(i);
-	       else{
-		 delete rhoSys;
-		 continue;
-	       }
 	     // rename one wave
 	     string mywave1=wl[iw];
 	     string mywave2=wl[iw2];
@@ -1942,15 +1998,9 @@ if(mywave1=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave2="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
 
 	     // check if waves are in fit
- if(rhoSys==NULL || rhoSys->waveIndex(mywave1.c_str())==-1 || rhoSys->waveIndex(mywave2.c_str()) ==-1){
-	       delete rhoSys;
-	       continue;
-	     }
-	     // get correct wave indices!!!
-	     unsigned int wi1Sys=rhoSys->waveIndex(mywave1.c_str());
-	     unsigned int wi2Sys=rhoSys->waveIndex(mywave2.c_str());
+	     // FIXME: skip pairs where at least one wave is not in the fit
 
-	     double myphi=rhoSys->phase(mywave1.c_str(),mywave2.c_str());
+	     double myphi=mdepFit.getSysPhases()[iSys][i][iw][iw2][0];
 	     double myphiplus=myphi+360;
 	     double myphiminus=myphi-360;
 	     // translate by 2pi to get closest solution to fit
@@ -1967,13 +2017,11 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 	     if(myphi<minPhase)minPhase=myphi;
 
 	     // real and imag part:
-	     complex<double> r=rhoSys->spinDensityMatrixElem(wi1Sys,wi2Sys);
+	     complex<double> r=mdepFit.getSysSpinDensityMatrices()[iSys][i][iw][iw2];
 	     if(maxRe<r.real())maxRe=r.real();
 	     if(minRe>r.real())minRe=r.real();
 	     if(maxIm<r.imag())maxIm=r.imag();
 	     if(minIm>r.imag())minIm=r.imag();
-	     if(iSys>0)delete rhoSys;
-	     rhoSys=0;
 	   }// end loop over sys trees
 	   // cerr << "loop over systrees finished" << endl;
 
