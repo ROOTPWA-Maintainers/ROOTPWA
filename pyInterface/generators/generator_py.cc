@@ -113,7 +113,7 @@ namespace {
 			if(bp::override getTPrimeAndMassPicker = this->get_override("getTPrimeAndMassPicker")) {
 				return getTPrimeAndMassPicker();
 			}
-			rpwa::generator::getTPrimeAndMassPicker();
+			return rpwa::generator::getTPrimeAndMassPicker();
 		}
 
 		const rpwa::massAndTPrimePickerPtr& default_getTPrimeAndMassPicker() {

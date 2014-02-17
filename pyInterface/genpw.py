@@ -17,7 +17,7 @@ if __name__ == "__main__":
 	parser.add_argument("-n", type=int, metavar="#", dest="nEvents", default=100, help="(max) number of events to generate (default: 100)")
 	parser.add_argument("-a", type=int, metavar="#", dest="maxAttempts", default=0, help="(max) number of attempts to do (default: infinity)")
 	parser.add_argument("-o", type=str, metavar="<outputFile>", dest="outputFileName", default="", help="ASCII output file (if not specified, generated automatically)")
-	parser.add_argument("-p", type=str, metavar="<particleDataTaple>", dest="particleDataTableFileName", default="./particleDataTable.txt", help="path to particle data table file (default: ./particleDataTable.txt)")
+	parser.add_argument("-p", type=str, metavar="<particleDataTable>", dest="particleDataTableFileName", default="./particleDataTable.txt", help="path to particle data table file (default: ./particleDataTable.txt)")
 	parser.add_argument("-c", action="store_true", dest="comgeantOutput", help="if present, a comgeant eventfile (.fort.26) is written with same naming as the root file")
 	parser.add_argument("-s", type=int, metavar="#", dest="seed", default=123456, help="random number generator seed (default: 123456)")
 	parser.add_argument("-M", type=float, metavar="#", dest="massLowerBinBoundary", help="lower boundary of mass range in MeV (overwrites values from reaction file)")
