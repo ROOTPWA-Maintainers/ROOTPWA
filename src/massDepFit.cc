@@ -1681,7 +1681,10 @@ main(int    argc,
      fitgraphs[iw]->SetDrawOption("AP");
      //fitgraphs[iw]->SetMarkerStyle(22);
      graphs[iw]->Add(fitgraphs[iw],"cp");
-     graphs[iw]->Add(new TGraph(mdepFit.getMassBinCenters().size(), &(mdepFit.getMassBinCenters()[0]), &(mdepFit.getInPhaseSpaceIntegrals()[iw][0])));
+     const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
+     multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][iw]];
+     const std::vector<double> ps(view.begin(), view.end());
+     graphs[iw]->Add(new TGraph(mdepFit.getMassBinCenters().size(), &(mdepFit.getMassBinCenters()[0]), &(ps[0])));
 
      absphasegraphs.push_back(new TGraph(nbins));
      name="absphase_";name.append(wl[iw]);
