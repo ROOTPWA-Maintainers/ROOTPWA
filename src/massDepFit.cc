@@ -1037,8 +1037,6 @@ main(int    argc,
   massDepFitModel compset;
   bool check=true;
 
-	compset.setWaveList(mdepFit.getWaveNames());
-
   // overall final-state mass dependence
   TF1* fPS = NULL;
   const Setting* configFsmd = findLibConfigGroup(configRoot, "finalStateMassDependence", false);
@@ -1125,7 +1123,7 @@ main(int    argc,
   } else {
     printInfo << "not using final-state mass dependence." << endl;
   }
-  compset.setFuncFsmd(fPS);
+  compset.setFsmdFunction(fPS);
 
 
   // Resonances
@@ -1264,8 +1262,8 @@ main(int    argc,
 
  cout << "---------------------------------------------------------------------" << endl << endl;
 
-	if(not compset.doMapping()) {
-		printErr << "error while mapping the waves to the decay channels and components." << endl;
+	if(not compset.init(mdepFit.getWaveNames(), mdepFit.getMassBinCenters())) {
+		printErr << "error while initializing the fit model." << endl;
 		exit(1);
 	}
 
@@ -1621,7 +1619,7 @@ main(int    argc,
 
   int syscolor=kAzure-9;
 
-   std::vector<std::string> wl=compset.getWaveList();
+   std::vector<std::string> wl=mdepFit.getWaveNames();
    std::map<std::string, unsigned int> wmap;
    const size_t nrMassBins=mdepFit.getMassBinCenters().size();
 
@@ -1909,8 +1907,8 @@ main(int    argc,
 
        datagraphs[iw]->SetPoint(i,mScaled,mdepFit.getInIntensities()[i][iw][0]);
        datagraphs[iw]->SetPointError(i,binwidth,mdepFit.getInIntensities()[i][iw][1]);
-      fitgraphs[iw]->SetPoint(i,mScaled,compset.intensity(wl[iw],m));      
-      double absphase=compset.phase(wl[iw],m)*TMath::RadToDeg();
+      fitgraphs[iw]->SetPoint(i,mScaled,compset.intensity(iw,m));      
+      double absphase=compset.phaseAbsolute(iw,m)*TMath::RadToDeg();
       if(i>0){
 	double absp=absphase+360;
 	double absm=absphase-360;
@@ -1979,7 +1977,7 @@ main(int    argc,
 	 phase2d[count]->SetPoint(i,v.X(),v.Y(),mScaled);
 
 	 phasedatagraphs[count]->SetPointError(i,binwidth,mdepFit.getInPhases()[i][iw][iw2][1]);
-	 double fitphase=compset.phase(wl[iw],wl[iw2],m)*TMath::RadToDeg();
+	 double fitphase=compset.phase(iw,iw2,m)*TMath::RadToDeg();
 
 	 if(mdepFit.getSysPlotting()){
 	   //cerr << "start sysplotting" << endl;
@@ -2043,7 +2041,7 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
 
 	 phasefitgraphs[count]->SetPoint(i,mScaled,fitphase);
 
-	 complex<double> fitval=compset.overlap(wl[iw],wl[iw2],m);
+	 complex<double> fitval=compset.spinDensityMatrix(iw,iw2,m);
 
 	 realfitgraphs[count]->SetPoint(i,mScaled,fitval.real());
 	 imagfitgraphs[count]->SetPoint(i,mScaled,fitval.imag());
