@@ -28,22 +28,18 @@ namespace rpwa {
 
 	public:
 
-		massDepFitModel() : _numpar(0), _funcFsmd(NULL) {}
+		massDepFitModel() : _numpar(0), _fsmdFunction(NULL), _fsmdFixed(false) {}
 		~massDepFitModel() {}
 
-		const std::vector<std::string>& getWaveList() const {
-			return _waveList;
-		}
-		void setWaveList(const std::vector<std::string>& waveList) {
-			_waveList = waveList;
-		}
+		void add(pwacomponent* comp);
+
+		void setFsmdFunction(TF1* fsmdFunction);
+
+		bool init(const std::vector<std::string>& waveNames,
+		          const std::vector<double>& massBinCenters);
 
 
 
-    void add(pwacomponent* comp);
-    void setFuncFsmd(TF1* funcFsmd);
-		bool doMapping(); // necessary for performance. to be called after all
-		                  // components have been added
 
 
     unsigned int n() const {return _comp.size();}
@@ -51,7 +47,7 @@ namespace rpwa {
     
     void setPar(const double* par); // set parameters
     void getPar(double* par);       // return parameters 
-    unsigned int nFreeFsmdPar() const {return _freeFsmdPar.size();}
+    unsigned int nFreeFsmdPar() const {return _fsmdFreeParameters.size();}
     double getFreeFsmdPar(unsigned int i) const;
     void getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const;
 
@@ -61,28 +57,44 @@ namespace rpwa {
       getCompChannel(const std::string& wave) const;
 
 
-    friend std::ostream& operator<< (std::ostream& o,const massDepFitModel& cs);
-    double calcFsmd(double m);
-    double intensity(const std::string& wave, double m);
-    double phase(const std::string& wave, double m);
-    double phase(const std::string& wave1,
-		 const std::string& wave2,
-		 double m);
-    std::complex<double> overlap(const std::string& wave1,
-		 const std::string& wave2,
-		 double m);
-    std::complex<double> overlap(unsigned int wave1,
-				 unsigned int wave2,
-				 double m,
-                                 const size_t idxMass = std::numeric_limits<size_t>::max());
+		std::complex<double> productionAmplitude(const size_t idxWave,
+		                                         const double mass,
+		                                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+		double intensity(const size_t idxWave,
+		                 const double mass,
+		                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+		double phaseAbsolute(const size_t idxWave,
+		                     const double mass,
+		                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+		std::complex<double> spinDensityMatrix(const size_t idxWave,
+		                                       const size_t jdxWave,
+		                                       const double mass,
+		                                       const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+		double phase(const size_t idxWave,
+		             const size_t jdxWave,
+		             const double mass,
+		             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+
+		double calcFsmd(const double mass,
+		                const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+
+		std::ostream& print(std::ostream& out) const;
 
 	private:
 
-		std::vector<std::string> _waveList;
+		bool initMapping();
+		bool initFsmd(const std::vector<double>& massBinCenters);
+
+		std::vector<std::string> _waveNames;
+
     std::vector<pwacomponent*> _comp;
     unsigned int _numpar;
-    TF1* _funcFsmd;
-    std::vector<unsigned int> _freeFsmdPar; // parameters of phase space to keep floating
+
+		TF1* _fsmdFunction;
+		bool _fsmdFixed;
+		std::vector<unsigned int> _fsmdFreeParameters;
+		std::vector<double> _fsmdValues;
+
     // mapping for wave -> which components with which channel
     // wavelist in same order as given by wavelist
     std::vector<std::vector<std::pair<unsigned int,unsigned int> > > _compChannel;    
@@ -91,5 +103,9 @@ namespace rpwa {
 
 
 } // end namespace rpwa
+
+inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFitModel& fitModel) {
+	return fitModel.print(out);
+}
 
 #endif // MASSDEPFITMODEL_HH

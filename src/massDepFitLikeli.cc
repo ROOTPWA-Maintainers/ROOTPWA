@@ -88,7 +88,7 @@ massDepFitLikeli::DoEval(const double* par) const {
 				}
 
 				// calculate target spin density matrix element
-				const complex<double> rhoFit = _compset->overlap(idxWave, jdxWave, mass, idxMass);
+				const complex<double> rhoFit = _compset->spinDensityMatrix(idxWave, jdxWave, mass, idxMass);
 
 				const complex<double> rhoDiff = rhoFit - _spinDensityMatrices[idxMass][idxWave][jdxWave];
 
