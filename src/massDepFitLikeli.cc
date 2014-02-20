@@ -1,7 +1,6 @@
 #include "massDepFitLikeli.h"
 
 #include "massDepFitModel.h"
-#include "pwacomponent.h"
 
 
 using namespace rpwa;
@@ -115,4 +114,4 @@ massDepFitLikeli::DoEval(const double* par) const {
 	} // end loop over mass-bins
   
 	return chi2;
-} // end DoEval
+}

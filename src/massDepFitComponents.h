@@ -10,8 +10,8 @@
 //
 //-----------------------------------------------------------
 
-#ifndef PWACOMPONENT_HH
-#define PWACOMPONENT_HH
+#ifndef MASSDEPFITCOMPONENTS_HH
+#define MASSDEPFITCOMPONENTS_HH
 
 // Base Class Headers ----------------
 
@@ -137,4 +137,4 @@ namespace rpwa {
 
 
 
-#endif // PWACOMPONENT_HH
+#endif // MASSDEPFITCOMPONENTS_HH
