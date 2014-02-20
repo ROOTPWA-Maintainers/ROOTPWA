@@ -96,8 +96,11 @@ namespace rpwa {
 		                            rpwa::fitResult* fit,
 		                            const std::vector<Long64_t>& mapping,
 		                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
+		bool readPhaseSpaceIntegralMatrices(const std::vector<std::string>& overwritePhaseSpace,
+		                                    boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
 		std::string _inFileName;
+		std::vector<std::string> _inOverwritePhaseSpace;
 
 		bool _sysPlotting;
 		std::vector<std::string> _sysFileNames;

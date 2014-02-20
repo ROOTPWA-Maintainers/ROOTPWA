@@ -59,6 +59,7 @@
 
 #include <libconfig.h++>
 
+#include "ampIntegralMatrix.h"
 #include "fitResult.h"
 #include "libConfigUtils.hpp"
 #include "massDepFit.h"
@@ -161,6 +162,36 @@ massDepFit::readConfigInputFitResults(const Setting* configInputFitResults)
 
 	if(_debug) {
 		printDebug << "read file name of fit results of mass-independent fit: '" << _inFileName << "'." << endl;
+	}
+
+	_inOverwritePhaseSpace.clear();
+
+	const Setting* overwritePhaseSpace = findLibConfigArray(*configInputFitResult, "overwritePhaseSpace", false);
+	if(overwritePhaseSpace) {
+		const int nrParts = overwritePhaseSpace->getLength();
+
+		if(nrParts > 0 && (*overwritePhaseSpace)[0].getType() != Setting::TypeString) {
+			printErr << "contents of 'overwritePhaseSpace' array in 'input' needs to be strings." << endl;
+			return false;
+		}
+
+		for(int idxPart=0; idxPart<nrParts; ++idxPart) {
+			const string fileName = (*overwritePhaseSpace)[idxPart];
+			_inOverwritePhaseSpace.push_back(fileName);
+		}
+
+		if(_debug) {
+			ostringstream output;
+			output << "[ '";
+			for(int idxPart=0; idxPart<_inOverwritePhaseSpace.size(); ++idxPart) {
+				if(idxPart > 0) {
+					output << "', '";
+				}
+				output << _inOverwritePhaseSpace[idxPart];
+			}
+			output << "' ]";
+			printDebug << "phase-space integrals will be overwritten with files from this pattern: " << output.str() << " (" << _inOverwritePhaseSpace.size() << " parts)" << endl;
+		}
 	}
 
 	return true;
@@ -333,6 +364,14 @@ massDepFit::readInFile(const string& valTreeName,
 		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName << "'." << endl;
 		delete inFile;
 		return false;
+	}
+
+	if(_inOverwritePhaseSpace.size() > 0) {
+		if(not readPhaseSpaceIntegralMatrices(_inOverwritePhaseSpace, _inPhaseSpaceIntegrals)) {
+			printErr << "error while reading phase-space integrals from integral matrices." << endl;
+			delete inFile;
+			return false;
+		}
 	}
 
 	delete inFile;
@@ -720,6 +759,55 @@ massDepFit::readFitResultIntegrals(TTree* tree,
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			const double ps = fit->phaseSpaceIntegral(_waveNames[idxWave]);
 			phaseSpaceIntegrals[idxMass][idxWave] = ps*ps;
+		}
+	}
+
+	if(_debug) {
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			ostringstream output;
+			for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+				output << " " << phaseSpaceIntegrals[idxMass][idxWave];
+			}
+			printDebug << "phase-space integrals for wave '" << _waveNames[idxWave] << "' (" << idxWave << "):" << output.str() << endl;
+		}
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readPhaseSpaceIntegralMatrices(const vector<string>& overwritePhaseSpace,
+                                           boost::multi_array<double, 2>& phaseSpaceIntegrals) const
+{
+	phaseSpaceIntegrals.resize(extents[_nrMassBins][_nrWaves]);
+
+	if(_debug) {
+		printDebug << "reading phase-space integrals for " << _nrWaves << " waves from integral matrices." << endl;
+	}
+
+	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+		ostringstream sFileName;
+		for(size_t idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
+			sFileName << overwritePhaseSpace[idxPart];
+			if(idxPart == 0) {
+				sFileName << _massMin + idxMass*_massStep;
+			} else if(idxPart == 1) {
+				sFileName << _massMin + (idxMass+1)*_massStep;
+			}
+		}
+		const string fileName = sFileName.str();
+
+		if(_debug) {
+			printDebug << "reading phase-space integrals for mass bin " << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) from file '" << fileName << "'." << endl;
+		}
+
+		ampIntegralMatrix intMatrix;
+		intMatrix.readAscii(fileName);
+
+		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+			const double ps = abs(intMatrix.element(_waveNames[idxWave], _waveNames[idxWave]));
+			phaseSpaceIntegrals[idxMass][idxWave] = ps;
 		}
 	}
 
