@@ -15,7 +15,7 @@
 
 #include <TF1.h>
 
-#include "pwacomponent.h"
+#include "massDepFitComponents.h"
 #include "reportingUtils.hpp"
 
 

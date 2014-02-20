@@ -63,9 +63,9 @@
 #include "fitResult.h"
 #include "libConfigUtils.hpp"
 #include "massDepFit.h"
+#include "massDepFitComponents.h"
 #include "massDepFitLikeli.h"
 #include "massDepFitModel.h"
-#include "pwacomponent.h"
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
 

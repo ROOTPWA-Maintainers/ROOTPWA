@@ -53,7 +53,7 @@ set(SOURCES
 	complexMatrix.cc
 	pwaLikelihood.cc
 	pwaPlotter.cc
-	pwacomponent.cc
+	massDepFitComponents.cc
 	massDepFitLikeli.cc
 	massDepFitModel.cc
 	parameterSpace.cc

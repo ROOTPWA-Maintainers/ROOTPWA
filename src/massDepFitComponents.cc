@@ -12,7 +12,7 @@
 //-----------------------------------------------------------
 
 // This Class' Header ------------------
-#include "pwacomponent.h"
+#include "massDepFitComponents.h"
 
 // C/C++ Headers ----------------------
 #include <algorithm>
