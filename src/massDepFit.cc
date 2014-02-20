@@ -572,6 +572,25 @@ massDepFit::readFitResultMassBins(TTree* tree,
 	printInfo << "found " << _nrMassBins << " mass bins, center of first and last mass bins: "
 	          << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " MeV/c^2." << endl;
 
+	_massStep = (_massBinCenters[_nrMassBins - 1] - _massBinCenters[0]) / (_nrMassBins - 1);
+	for(size_t idxMass=1; idxMass<_nrMassBins; ++idxMass) {
+		if(abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*numeric_limits<double>::epsilon()) {
+			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " MeV/c^2) and "
+			         << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) does not agree with nominal distance "
+			         << _massStep << " MeV/c^2" << endl;
+			return false;
+		}
+	}
+	if(_debug) {
+		printDebug << "distance between two mass bins is " << _massStep << " MeV/c^2." << endl;
+	}
+
+	_massMin=_massBinCenters[0] - _massStep / 2;
+	_massMax=_massBinCenters[_nrMassBins - 1] + _massStep / 2;
+	if(_debug) {
+		printDebug << "mass bins cover the mass range from " << _massMin << " to " << _massMax << " MeV/c^2." << endl;
+	}
+
 	return true;
 }
 
@@ -724,25 +743,6 @@ massDepFit::prepareMassLimits()
 	if(_debug) {
 		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins << " mass bins, center of first and last mass bins: "
 		           << _massBinCenters[0] << " and " << _massBinCenters[_nrMassBins - 1] << " MeV/c^2." << endl;
-	}
-
-	_massStep = (_massBinCenters[_nrMassBins - 1] - _massBinCenters[0]) / (_nrMassBins - 1);
-	for(size_t idxMass=1; idxMass<_nrMassBins; ++idxMass) {
-		if(abs(_massBinCenters[idxMass]-_massBinCenters[idxMass-1] - _massStep) > 1000.*numeric_limits<double>::epsilon()) {
-			printErr << "mass distance between bins " << idxMass-1 << " (" << _massBinCenters[idxMass-1] << " MeV/c^2) and "
-			         << idxMass << " (" << _massBinCenters[idxMass] << " MeV/c^2) does not agree with nominal distance "
-			         << _massStep << " MeV/c^2" << endl;
-			return false;
-		}
-	}
-	if(_debug) {
-		printDebug << "distance between two mass bins is " << _massStep << " MeV/c^2." << endl;
-	}
-
-	_massMin=_massBinCenters[0] - _massStep / 2;
-	_massMax=_massBinCenters[_nrMassBins - 1] + _massStep / 2;
-	if(_debug) {
-		printDebug << "mass bins cover the mass range from " << _massMin << " to " << _massMax << " MeV/c^2." << endl;
 	}
 
 	_waveMassBinLimits.clear();
