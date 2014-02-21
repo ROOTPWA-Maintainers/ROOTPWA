@@ -60,8 +60,10 @@ pwachannel::pwachannel(const pwachannel& ch) /// cp ctor
 /////////////////////////////
 
 
-massDepFitComponent::massDepFitComponent(const string& name)
-	: _name(name)
+massDepFitComponent::massDepFitComponent(const string& name,
+                                         const size_t nrParameters)
+	: _name(name),
+	  _nrParameters(nrParameters)
 {
 }
 
@@ -162,7 +164,7 @@ massDepFitComponent::print(ostream& out) const
 
 
 pwacomponent::pwacomponent(const string& name)
-	: massDepFitComponent(name)
+	: massDepFitComponent(name, 2)
 {
 }
 
@@ -177,7 +179,6 @@ pwacomponent::init(const libconfig::Setting* configComponent,
 		printDebug << "starting initialization of 'pwacomponent' for component '" << getName() << "'." << endl;
 	}
 
-	setNrParameters(2);
 	if(not massDepFitComponent::init(configComponent, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
 		printErr << "error while reading configuration of 'massDepFitComponent' class." << endl;
 		return false;
@@ -343,7 +344,7 @@ pwacomponent::print(ostream& out) const
 
 
 pwabkg::pwabkg(const string& name)
-	: massDepFitComponent(name)
+	: massDepFitComponent(name, 2)
 {
 }
 
@@ -358,7 +359,6 @@ pwabkg::init(const libconfig::Setting* configComponent,
 		printDebug << "starting initialization of 'pwabkg' for component '" << getName() << "'." << endl;
 	}
 
-	setNrParameters(2);
 	if(not massDepFitComponent::init(configComponent, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
 		printErr << "error while reading configuration of 'massDepFitComponent' class." << endl;
 		return false;

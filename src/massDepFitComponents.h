@@ -77,7 +77,8 @@ namespace rpwa {
 
 	public:
 
-		massDepFitComponent(const std::string& name);
+		massDepFitComponent(const std::string& name,
+		                    const size_t nrParameters);
 		virtual ~massDepFitComponent() {};
 
 		const std::string& getName() const { return _name; }
@@ -97,7 +98,6 @@ namespace rpwa {
 		void setCouplings(const double* par);
 
 		size_t getNrParameters() const { return _nrParameters; }
-		void setNrParameters(const size_t nrParameters) { _nrParameters = nrParameters; }
 		virtual void getParameters(double* par) const = 0;
 		virtual void setParameters(const double* par) = 0;
 
@@ -114,11 +114,11 @@ namespace rpwa {
 
 	private:
 
-		std::string _name;
+		const std::string _name;
 
 		std::vector<pwachannel> _channels;
 
-		size_t _nrParameters;
+		const size_t _nrParameters;
 
 	};
 
