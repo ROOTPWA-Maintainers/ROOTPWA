@@ -1314,8 +1314,8 @@ main(int    argc,
   bool check=true;
 
   // Resonances
-  if(configFile.exists("components.resonances")){
-    const Setting &bws = configRoot["components"]["resonances"];
+  if(configFile.exists("components.components")){
+    const Setting &bws = configRoot["components"]["components"];
     // loop through breitwigners
     int nbw=bws.getLength();
     printInfo << "found " << nbw << " Resonances in config" << endl;
@@ -1323,32 +1323,62 @@ main(int    argc,
       const Setting &bw = bws[ibw];
       string jpc;
       string name;
-      double mass=-1;double ml,mu;int mfix;
+      string type;
+      double mass=-1;double ml,mu;int mfix; 
       double width=-1;double wl,wu;int wfix;int wdyn;
-
+      double mIso1=0;
+      double mIso2=0;
+     
       check&=bw.lookupValue("name",     name);
-      check&=bw.lookupValue("jpc",       jpc);
-      const Setting &massSet = bw["mass"];
-      check&=massSet.lookupValue("val",        mass);
-      check&=massSet.lookupValue("lower",        ml);
-      check&=massSet.lookupValue("upper",        mu);
-      check&=massSet.lookupValue("fix",        mfix);
-      const Setting &widthSet = bw["width"];
-      check&=widthSet.lookupValue("val",       width);
-      check&=widthSet.lookupValue("lower",       wl);
-      check&=widthSet.lookupValue("upper",       wu);
-      check&=widthSet.lookupValue("fix",       wfix);
-      bool checkdyn=widthSet.lookupValue("dyn",       wdyn);
-      if(!checkdyn)wdyn=0;
+      if (not bw.lookupValue("type",     type))
+          type = "relativisticBreitWigner";
+      if (type == "relativisticBreitWigner") {
+          const Setting &massSet = bw["mass"];
+          check&=massSet.lookupValue("val",        mass);
+          check&=massSet.lookupValue("lower",        ml);
+          check&=massSet.lookupValue("upper",        mu);
+          check&=massSet.lookupValue("fix",        mfix);
+          const Setting &widthSet = bw["width"];
+          check&=widthSet.lookupValue("val",       width);
+          check&=widthSet.lookupValue("lower",       wl);
+          check&=widthSet.lookupValue("upper",       wu);
+          check&=widthSet.lookupValue("fix",       wfix);
+      } else if (type == "exponentialBackground") {
+          const Setting &massSet = bw["m0"];
+          check&=massSet.lookupValue("val",        mass);
+          check&=massSet.lookupValue("lower",        ml);
+          check&=massSet.lookupValue("upper",        mu);
+          check&=massSet.lookupValue("fix",        mfix);
+          const Setting &widthSet = bw["g"];
+          check&=widthSet.lookupValue("val",       width);
+          check&=widthSet.lookupValue("lower",       wl);
+          check&=widthSet.lookupValue("upper",       wu);
+          check&=widthSet.lookupValue("fix",       wfix);
+      } else throw;
+      if (type == "relativisticBreitWigner") {
+          check&=bw.lookupValue("jpc",       jpc);
+          const Setting &widthSet = bw["width"];
+          bool checkdyn=widthSet.lookupValue("dyn",       wdyn);
+          if(!checkdyn)wdyn=0;
+      }
+      if (type == "exponentialBackground") {
+          check&=bw.lookupValue("mIsobar1",mIso1);
+          check&=bw.lookupValue("mIsobar2",mIso2);
+      }
       cout << "---------------------------------------------------------------------" << endl;
-      cout << name << "    JPC = " << jpc << endl;
+      cout << name << "    (" << type << ")" << endl;
+      if (type == "relativisticBreitWigner") {
+          cout << "     JPC = " << jpc << endl;
+      }
       cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
       if(mfix==1)cout<<"  -- FIXED";
       cout<< endl;
       cout << "width(limits) = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
       if(wfix==1)cout<<"  -- FIXED";
-      if(wdyn!=0)cout<<"  -- DYNAMIC WIDTH";
-      else cout<<"  -- CONST WIDTH";
+      if (type == "relativisticBreitWigner") {
+          if(wdyn!=0)cout<<"  -- DYNAMIC WIDTH";
+          else cout<<"  -- CONST WIDTH";
+      }
       cout<< endl;
       const Setting &channelSet = bw["decaychannels"];
       unsigned int nCh=channelSet.getLength();
@@ -1373,7 +1403,12 @@ main(int    argc,
 	printErr << "Bad config value lookup! Check your config file!" << endl;
 	return 1;
       }
-      massDepFitComponent* comp1=new pwacomponent(name,channels,mass,width,wdyn==0? true : false);
+      massDepFitComponent* comp1 = NULL;
+      if (type == "relativisticBreitWigner") {
+          comp1=new pwacomponent(name,channels,mass,width,wdyn==0? true : false);
+      } else if (type == "exponentialBackground") {
+          comp1=new pwabkg(name,channels,mass, width, mIso1, mIso2);
+      }
       cerr << "created component" << endl;
       comp1->setParameterFixed(0, mfix);
       comp1->setParameterLimits(0, make_pair(ml,mu));
@@ -1384,69 +1419,6 @@ main(int    argc,
     }// end loop over resonances
   }
   cout << endl;
-  // Background components
-  if(configFile.exists("components.background")){
-    const Setting &bws = configRoot["components"]["background"];
-    // loop through breitwigners
-    int nbw=bws.getLength();
-    printInfo << "found " << nbw << " Background components in config" << endl;
-    for(int ibw = 0; ibw < nbw; ++ibw) {
-      const Setting &bw = bws[ibw];
-      string name;
-      double mass=-1;double ml,mu;int mfix;
-      double width=-1;double wl,wu;int wfix;
-
-      check&=bw.lookupValue("name",     name);
-      const Setting &massSet = bw["m0"];
-      check&=massSet.lookupValue("val",        mass);
-      check&=massSet.lookupValue("lower",        ml);
-      check&=massSet.lookupValue("upper",        mu);
-      check&=massSet.lookupValue("fix",        mfix);
-      const Setting &widthSet = bw["g"];
-      check&=widthSet.lookupValue("val",       width);
-      check&=widthSet.lookupValue("lower",       wl);
-      check&=widthSet.lookupValue("upper",       wu);
-      check&=widthSet.lookupValue("fix",       wfix);
-      cout << "---------------------------------------------------------------------" << endl;
-      cout << name << endl;
-      cout << "mass-offset(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
-      if(mfix==1)cout<<"  -- FIXED";
-      cout<< endl;
-      cout << "g(limits)            = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
-      if(wfix==1)cout<<"  -- FIXED";
-      cout<< endl;
-      std::vector<pwachannel > channels;
-      string amp;
-      double cRe=0;
-      double cIm=0;
-      double mIso1=0;
-      double mIso2=0;
-      check&=bw.lookupValue("amp",amp);
-      check&=bw.lookupValue("coupling_Re",cRe);
-      check&=bw.lookupValue("coupling_Im",cIm);
-      check&=bw.lookupValue("mIsobar1",mIso1);
-      check&=bw.lookupValue("mIsobar2",mIso2);
-      complex<double> C(cRe,cIm);
-      cout << "Decaychannel (coupling):" << endl;
-      cout << "   " << amp << "  " << C << endl;
-      cout << "   Isobar masses: " << mIso1<<"  "<< mIso2<< endl;
-      map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
-      const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
-      multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][it->second]];
-      channels.push_back(pwachannel(amp,C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end())));
-
-      if(!check){
-	printErr << "Bad config value lookup! Check your config file!" << endl;
-	return 1;
-      }
-      massDepFitComponent* bkg=new pwabkg(name,channels,mass, width, mIso1, mIso2);
-      bkg->setParameterFixed(0, mfix);
-      bkg->setParameterLimits(0, make_pair(ml, mu));
-      bkg->setParameterFixed(1, wfix);
-      bkg->setParameterLimits(1, make_pair(wl,wu));
-      compset.add(bkg);
-    }// end loop over background
-  }// endif
 
 
  cout << "---------------------------------------------------------------------" << endl << endl;
@@ -1691,10 +1663,8 @@ main(int    argc,
 
 
   // Setup Component Set (Resonances + Background)
-  const Setting& bws= configRoot["components"]["resonances"];
-  const Setting& bkgs= configRoot["components"]["background"];
+  const Setting& bws= configRoot["components"]["components"];
   unsigned int nbws=bws.getLength();
-  unsigned int nbkgs=bkgs.getLength();
   // loop over components
   unsigned int nc=compset.n();
   for(unsigned int ic=0;ic<nc;++ic){
@@ -1703,31 +1673,55 @@ main(int    argc,
     // search corresponding setting
 
     string sname;
+    string type;
     bool found=false;
     for(unsigned int is=0;is<nbws;++is){
       const Setting& bw = bws[is];
       bw.lookupValue("name",     sname);
+      if (not bw.lookupValue("type", type)) type = "relativisticBreitWigner";
       if(sname==name){
 	found=true;
-	// set values to this setting
-	Setting& sm = bw["mass"];
-	Setting& smval = sm["val"];
-	smval = comp->getParameter(0);
-	Setting& smerr = sm["error"];
-	TString merrname=name+"_M";
-	smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
+        if(type == "relativisticBreitWigner") {
+            // set values to this setting
+            Setting& sm = bw["mass"];
+            Setting& smval = sm["val"];
+            smval = comp->getParameter(0);
+            Setting& smerr = sm["error"];
+            TString merrname=name+"_M";
+            smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
+	
+            Setting& sw = bw["width"];
+            Setting& swval = sw["val"];
+            swval = comp->getParameter(1);
 
-	Setting& sw = bw["width"];
-	Setting& swval = sw["val"];
-	swval = comp->getParameter(1);
+            Setting& swerr = sw["error"];
+            TString werrname=name+"_Gamma";
+            swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
 
-	Setting& swerr = sw["error"];
-	TString werrname=name+"_Gamma";
-	swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
+            cout << name 
+                 << "   mass="<<double(smval)<<" +- "<<double(smerr)
+                 << "   width="<<double(swval)<<" +- "<<double(swerr)<< endl;
+        } else if(type == "exponentialBackground") {
+            // set values to this setting
+            Setting& sm = bw["m0"];
+            Setting& smval = sm["val"];
+            smval = comp->getParameter(0);
+            Setting& smerr = sm["error"];
+            TString merrname=name+"_M";
+            smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
+	
+            Setting& sw = bw["g"];
+            Setting& swval = sw["val"];
+            swval = comp->getParameter(1);
 
-	cout << name
-	     << "   mass="<<double(smval)<<" +- "<<double(smerr)
-	     << "   width="<<double(swval)<<" +- "<<double(swerr)<< endl;
+            Setting& swerr = sw["error"];
+            TString werrname=name+"_Gamma";
+            swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
+
+            cout << name 
+                 << "   mass="<<double(smval)<<" +- "<<double(smerr)
+                 << "   width="<<double(swval)<<" +- "<<double(swerr)<< endl;
+        }
 
 	// loop through channel and fix couplings
 	const Setting& sChn=bw["decaychannels"];
@@ -1755,34 +1749,6 @@ main(int    argc,
 	break;
       }
     }
-
-    // loop over background settings
-    if(!found){
-      for(unsigned int is=0;is<nbkgs;++is){
-	const Setting& bw = bkgs[is];
-	bw.lookupValue("name",     sname);
-	if(sname==name){
-	  Setting& sm = bw["m0"];
-	  Setting& smval = sm["val"];
-	  smval = comp->getParameter(0);
-	  Setting& sw = bw["g"];
-	  Setting& swval = sw["val"];
-	  swval = comp->getParameter(1);
-
-	  const pwachannel& ch=comp->getChannels().front();
-	  std::complex<double> c=ch.C();
-	  Setting& sRe=bw["coupling_Re"];
-	  sRe=c.real();
-	  Setting& sIm=bw["coupling_Im"];
-	  sIm=c.imag();
-	  break;
-	}
-      }
-    }
-
-
-
-
   }
 
 
