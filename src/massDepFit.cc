@@ -152,7 +152,7 @@ massDepFit::readConfigInputFitResults(const Setting* configInputFitResults)
 
 	map<string, Setting::Type> mandatoryArguments;
 	insert(mandatoryArguments)
-	    ("name", Setting::TypeString);
+	      ("name", Setting::TypeString);
 	if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
 		printErr << "'fitresults' list in 'input' section in configuration file contains errors." << endl;
 		return false;
@@ -216,7 +216,7 @@ massDepFit::readConfigInputWaves(const Setting* configInputWaves)
 
 		map<string, Setting::Type> mandatoryArguments;
 		insert(mandatoryArguments)
-		    ("name", Setting::TypeString);
+		      ("name", Setting::TypeString);
 		if(not checkIfAllVariablesAreThere(configInputWave, mandatoryArguments)) {
 			printErr << "'waves' list in 'input' section in configuration file contains errors." << endl;
 			return false;
@@ -301,10 +301,22 @@ massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 
 bool
 massDepFit::readConfigModel(const Setting* configRoot,
-                            massDepFitModel& fitModel)
+                            massDepFitModel& fitModel) const
 {
 	if(_debug) {
 		printDebug << "reading fit model from configuration file." << endl;
+	}
+
+	// read information for the individual components
+	const Setting* configComponentsSection = findLibConfigGroup(*configRoot, "components");
+	if(not configComponentsSection) {
+		printErr << "error while reading 'components' section in configuration file." << endl;
+		return false;
+	}
+	const Setting* configComponents = findLibConfigList(*configComponentsSection, "components");
+	if(not readConfigModelComponents(configComponents, fitModel)) {
+		printErr << "error while reading 'components' section in configuration file." << endl;
+		return false;
 	}
 
 	// get information for creating the final-state mass-dependence
@@ -319,8 +331,70 @@ massDepFit::readConfigModel(const Setting* configRoot,
 
 
 bool
+massDepFit::readConfigModelComponents(const Setting* configComponents,
+                                      massDepFitModel& fitModel) const
+{
+	if(not configComponents) {
+		printErr << "'configComponents' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	const int nrComponents = configComponents->getLength();
+
+	printInfo << "reading " << nrComponents << " components from configuration file." << endl;
+
+	for(int idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+		const Setting* configComponent = &((*configComponents)[idxComponent]);
+
+		map<string, Setting::Type> mandatoryArguments;
+		insert(mandatoryArguments)
+		      ("name", Setting::TypeString);
+		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+			printErr << "'components' list in 'components' section in configuration file contains errors." << endl;
+			return false;
+		}
+
+		string name;
+		configComponent->lookupValue("name", name);
+
+		string type;
+		if(not configComponent->lookupValue("type", type)) {
+			if(_debug) {
+				printDebug << "component '" << name << "' has no type, use 'relativisticBreitWigner'." << endl;
+			}
+			type = "relativisticBreitWigner";
+		}
+
+		if(_debug) {
+			printDebug << "found component '" << name << "' with type '" << type << "'." << endl;
+		}
+
+		massDepFitComponent* component = NULL;
+		if(type == "relativisticBreitWigner") {
+			component = new pwacomponent(name);
+		} else if(type == "exponentialBackground") {
+			component = new pwabkg(name);
+		} else {
+			printErr << "unknown type '" << type << "' for component '" << name << "'." << endl;
+			return false;
+		}
+
+		if(not component->init(configComponent, _massBinCenters, _waveIndices, _inPhaseSpaceIntegrals, _debug)) {
+			delete component;
+			printErr << "error while initializing component '" << name << "' of type '" << type << "'." << endl;
+			return false;
+		}
+
+		fitModel.add(component);
+	}
+
+	return true;
+}
+
+
+bool
 massDepFit::readConfigModelFsmd(const Setting* configFsmd,
-                                massDepFitModel& fitModel)
+                                massDepFitModel& fitModel) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -423,13 +497,25 @@ massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 bool
 massDepFit::updateConfigModel(const Setting* configRoot,
                               massDepFitModel& fitModel,
-                              Minimizer* minimizer)
+                              Minimizer* minimizer) const
 {
 	if(_debug) {
 		printDebug << "updating fit model in configuration file." << endl;
 	}
 
-	// get information for creating the final-state mass-dependence
+	// update information of the individual components
+	const Setting* configComponentsSection = findLibConfigGroup(*configRoot, "components");
+	if(not configComponentsSection) {
+		printErr << "error while updating 'components' section in configuration file." << endl;
+		return false;
+	}
+	const Setting* configComponents = findLibConfigList(*configComponentsSection, "components");
+	if(not updateConfigModelComponents(configComponents, fitModel, minimizer)) {
+		printErr << "error while updating 'components' section in configuration file." << endl;
+		return false;
+	}
+
+	// update information of the final-state mass-dependence
 	const Setting* configFsmd = findLibConfigGroup(*configRoot, "finalStateMassDependence", false);
 	if(not updateConfigModelFsmd(configFsmd, fitModel, minimizer)) {
 		printErr << "error while updating 'finalStateMassDependence' section in configuration file." << endl;
@@ -441,9 +527,23 @@ massDepFit::updateConfigModel(const Setting* configRoot,
 
 
 bool
+massDepFit::updateConfigModelComponents(const Setting* configComponents,
+                                        massDepFitModel& fitModel,
+                                        Minimizer* minimizer) const
+{
+	if(not configComponents) {
+		printErr << "'configComponents' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
 massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
                                   massDepFitModel& fitModel,
-                                  Minimizer* minimizer)
+                                  Minimizer* minimizer) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -1310,117 +1410,6 @@ main(int    argc,
   printInfo << "doCovariances = " << doCov << endl;
 
   
-  // Setup Component Set (Resonances + Background)
-  bool check=true;
-
-  // Resonances
-  if(configFile.exists("components.components")){
-    const Setting &bws = configRoot["components"]["components"];
-    // loop through breitwigners
-    int nbw=bws.getLength();
-    printInfo << "found " << nbw << " Resonances in config" << endl;
-    for(int ibw = 0; ibw < nbw; ++ibw) {
-      const Setting &bw = bws[ibw];
-      string jpc;
-      string name;
-      string type;
-      double mass=-1;double ml,mu;int mfix; 
-      double width=-1;double wl,wu;int wfix;int wdyn;
-      double mIso1=0;
-      double mIso2=0;
-     
-      check&=bw.lookupValue("name",     name);
-      if (not bw.lookupValue("type",     type))
-          type = "relativisticBreitWigner";
-      if (type == "relativisticBreitWigner") {
-          const Setting &massSet = bw["mass"];
-          check&=massSet.lookupValue("val",        mass);
-          check&=massSet.lookupValue("lower",        ml);
-          check&=massSet.lookupValue("upper",        mu);
-          check&=massSet.lookupValue("fix",        mfix);
-          const Setting &widthSet = bw["width"];
-          check&=widthSet.lookupValue("val",       width);
-          check&=widthSet.lookupValue("lower",       wl);
-          check&=widthSet.lookupValue("upper",       wu);
-          check&=widthSet.lookupValue("fix",       wfix);
-      } else if (type == "exponentialBackground") {
-          const Setting &massSet = bw["m0"];
-          check&=massSet.lookupValue("val",        mass);
-          check&=massSet.lookupValue("lower",        ml);
-          check&=massSet.lookupValue("upper",        mu);
-          check&=massSet.lookupValue("fix",        mfix);
-          const Setting &widthSet = bw["g"];
-          check&=widthSet.lookupValue("val",       width);
-          check&=widthSet.lookupValue("lower",       wl);
-          check&=widthSet.lookupValue("upper",       wu);
-          check&=widthSet.lookupValue("fix",       wfix);
-      } else throw;
-      if (type == "relativisticBreitWigner") {
-          check&=bw.lookupValue("jpc",       jpc);
-          const Setting &widthSet = bw["width"];
-          bool checkdyn=widthSet.lookupValue("dyn",       wdyn);
-          if(!checkdyn)wdyn=0;
-      }
-      if (type == "exponentialBackground") {
-          check&=bw.lookupValue("mIsobar1",mIso1);
-          check&=bw.lookupValue("mIsobar2",mIso2);
-      }
-      cout << "---------------------------------------------------------------------" << endl;
-      cout << name << "    (" << type << ")" << endl;
-      if (type == "relativisticBreitWigner") {
-          cout << "     JPC = " << jpc << endl;
-      }
-      cout << "mass(limits)  = " << mass <<" ("<<ml<<","<<mu<<") MeV/c^2";
-      if(mfix==1)cout<<"  -- FIXED";
-      cout<< endl;
-      cout << "width(limits) = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
-      if(wfix==1)cout<<"  -- FIXED";
-      if (type == "relativisticBreitWigner") {
-          if(wdyn!=0)cout<<"  -- DYNAMIC WIDTH";
-          else cout<<"  -- CONST WIDTH";
-      }
-      cout<< endl;
-      const Setting &channelSet = bw["decaychannels"];
-      unsigned int nCh=channelSet.getLength();
-      cout << "Decaychannels (coupling):" << endl;
-      std::vector<pwachannel> channels;
-      for(unsigned int iCh=0;iCh<nCh;++iCh){
-	const Setting &ch = channelSet[iCh];
-	string amp;
-	double cRe=0;
-	double cIm=0;
-	check&=ch.lookupValue("amp",amp);
-	check&=ch.lookupValue("coupling_Re",cRe);
-	check&=ch.lookupValue("coupling_Im",cIm);
-	complex<double> C(cRe,cIm);
-	cout << "   " << amp << "  " << C << endl;
-        map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
-        const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
-        multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][it->second]];
-	channels.push_back(pwachannel(amp,C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end())));
-      }// end loop over channels
-      if(!check){
-	printErr << "Bad config value lookup! Check your config file!" << endl;
-	return 1;
-      }
-      massDepFitComponent* comp1 = NULL;
-      if (type == "relativisticBreitWigner") {
-          comp1=new pwacomponent(name,channels,mass,width,wdyn==0? true : false);
-      } else if (type == "exponentialBackground") {
-          comp1=new pwabkg(name,channels,mass, width, mIso1, mIso2);
-      }
-      cerr << "created component" << endl;
-      comp1->setParameterFixed(0, mfix);
-      comp1->setParameterLimits(0, make_pair(ml,mu));
-      comp1->setParameterFixed(1, wfix);
-      comp1->setParameterLimits(1, make_pair(wl,wu));
-      compset.add(comp1);
-      cout << "CHECK val(m0)="<< comp1->val(mass) << endl;
-    }// end loop over resonances
-  }
-  cout << endl;
-
-
  cout << "---------------------------------------------------------------------" << endl << endl;
 
 	if(not compset.init(mdepFit.getWaveNames(), mdepFit.getMassBinCenters())) {

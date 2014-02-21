@@ -22,9 +22,15 @@
 #include <map>
 #include <vector>
 #include <complex>
+
+#include <boost/multi_array.hpp>
+
 #include <TGraph.h>
 
 // Collaborating Class Declarations --
+namespace libconfig {
+	class Setting;
+}
 class TF1;
 
 namespace rpwa {
@@ -71,22 +77,27 @@ namespace rpwa {
 
 	public:
 
-		massDepFitComponent(const std::string& name,
-		                    const size_t nrParameters,
-		                    const std::vector<pwachannel>& channels);
+		massDepFitComponent(const std::string& name);
 		virtual ~massDepFitComponent() {};
 
 		const std::string& getName() const { return _name; }
 
+		virtual bool init(const libconfig::Setting* configComponent,
+		                  const std::vector<double>& massBinCenters,
+		                  const std::map<std::string, size_t>& waveIndices,
+		                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+		                  const bool debug);
+
 		const size_t getNrChannels() const { return _channels.size(); }
 		const std::vector<pwachannel>& getChannels() const { return _channels; }
-		const pwachannel& getChannel(size_t i) const { return _channels[i]; } 
-		const std::string& getChannelWaveName(size_t i) const { return _channels[i].getWaveName(); }
+		const pwachannel& getChannel(const size_t i) const { return _channels[i]; } 
+		const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 
 		void getCouplings(double* par) const;
 		void setCouplings(const double* par);
 
 		size_t getNrParameters() const { return _nrParameters; }
+		void setNrParameters(const size_t nrParameters) { _nrParameters = nrParameters; }
 		virtual void getParameters(double* par) const = 0;
 		virtual void setParameters(const double* par) = 0;
 
@@ -116,12 +127,14 @@ namespace rpwa {
 
 	public:
 
-		pwacomponent(const std::string& name,
-		             const std::vector<pwachannel>& channels,
-		             const double m0,
-		             const double gamma,
-		             const bool constWidth);
+		pwacomponent(const std::string& name);
     
+		virtual bool init(const libconfig::Setting* configComponent,
+		                  const std::vector<double>& massBinCenters,
+		                  const std::map<std::string, size_t>& waveIndices,
+		                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+		                  const bool debug);
+
 		virtual void getParameters(double* par) const;
 		virtual void setParameters(const double* par);
 
@@ -158,13 +171,14 @@ namespace rpwa {
 
 	public:
 
-		pwabkg(const std::string& name,
-		       const std::vector<pwachannel>& channels,
-		       const double m0,
-		       const double gamma,
-		       const double m1,
-		       const double m2);
+		pwabkg(const std::string& name);
     
+		virtual bool init(const libconfig::Setting* configComponent,
+		                  const std::vector<double>& massBinCenters,
+		                  const std::map<std::string, size_t>& waveIndices,
+		                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+		                  const bool debug);
+
 		virtual void getParameters(double* par) const;
 		virtual void setParameters(const double* par);
 

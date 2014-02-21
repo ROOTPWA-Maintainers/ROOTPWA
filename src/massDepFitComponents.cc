@@ -18,9 +18,12 @@
 #include <algorithm>
 #include <iostream>
 
+#include <boost/assign/std/vector.hpp>
+
 // Collaborating Class Headers --------
 #include "TF1.h"
 
+#include "libConfigUtils.hpp"
 #include "reportingUtils.hpp"
 
 // Class Member definitions -----------
@@ -51,19 +54,78 @@ q(const double M,
   return complex<double>(sqrt(lam / (4 * M * M)), 0.0 );
 }
 
-rpwa::pwachannel::pwachannel(const rpwa::pwachannel& ch) /// cp ctor
+pwachannel::pwachannel(const pwachannel& ch) /// cp ctor
   : _waveName(ch._waveName), _C(ch._C), _phaseSpace(ch._phaseSpace), _ps(ch._ps) {
 }
 /////////////////////////////
 
 
-massDepFitComponent::massDepFitComponent(const string& name,
-                                         const size_t nrParameters,
-                                         const vector<pwachannel>& channels)
-	: _name(name),
-	  _channels(channels),
-	  _nrParameters(nrParameters)
+massDepFitComponent::massDepFitComponent(const string& name)
+	: _name(name)
 {
+}
+
+
+bool
+massDepFitComponent::init(const libconfig::Setting* configComponent,
+                          const vector<double>& massBinCenters,
+                          const map<string, size_t>& waveIndices,
+                          const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                          const bool debug) {
+	if(debug) {
+		printDebug << "starting initialization of 'massDepFitComponent' for component '" << getName() << "'." << endl;
+	}
+
+	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
+	if(not decayChannels) {
+		printErr << "component '" << getName() << "' has no decay channels." << endl;
+		return false;
+	}
+
+	const int nrDecayChannels = decayChannels->getLength();
+	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
+
+		map<string, libconfig::Setting::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("amp", libconfig::Setting::TypeString)
+		                     ("coupling_Re", libconfig::Setting::TypeFloat)
+		                     ("coupling_Im", libconfig::Setting::TypeFloat);
+		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << endl;
+			return false;
+		}
+
+		string waveName;
+		decayChannel->lookupValue("amp", waveName);
+
+		double couplingReal;
+		decayChannel->lookupValue("coupling_Re", couplingReal);
+
+		double couplingImag;
+		decayChannel->lookupValue("coupling_Im", couplingImag);
+
+		const std::complex<double> coupling(couplingReal, couplingImag);
+
+		const map<string, size_t>::const_iterator it = waveIndices.find(waveName);
+		if(it == waveIndices.end()) {
+			printErr << "wave '" << waveName << "' not in fit, but used as decay channel." << endl;
+			return false;
+		}
+
+		boost::multi_array<double, 2>::const_array_view<1>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 2>::index_range()][it->second]];
+		_channels.push_back(pwachannel(waveName, coupling, massBinCenters, std::vector<double>(view.begin(), view.end())));
+
+		if(debug) {
+			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << coupling << "." << endl;
+		}
+	}
+
+	if(debug) {
+		printDebug << "finished initialization of 'massDepFitComponent'." << endl;
+	}
+
+	return true;
 }
 
 
@@ -89,7 +151,7 @@ massDepFitComponent::setCouplings(const double* par)
 
 
 ostream&
-massDepFitComponent::print(std::ostream& out) const
+massDepFitComponent::print(ostream& out) const
 {
 	out << "Decay modes:" << endl;
 	for(vector<pwachannel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
@@ -99,26 +161,84 @@ massDepFitComponent::print(std::ostream& out) const
 }
 
 
-rpwa::pwacomponent::pwacomponent(const string& name,
-                                 const vector<pwachannel >& channels,
-                                 const double m0,
-                                 const double gamma,
-                                 const bool constWidth)
-	: massDepFitComponent(name, 2, channels),
-	  _m0(m0),
-	  _m02(m0*m0),
-	  _m0min(0),
-	  _m0max(5000),
-	  _fixm(false),
-	  _gamma(gamma),
-	  _gammamin(0),
-	  _gammamax(1000),
-	  _fixgamma(false), 
-	  _constWidth(constWidth)
+pwacomponent::pwacomponent(const string& name)
+	: massDepFitComponent(name)
 {
 }
 
-    
+
+bool
+pwacomponent::init(const libconfig::Setting* configComponent,
+                   const vector<double>& massBinCenters,
+                   const map<string, size_t>& waveIndices,
+                   const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                   const bool debug) {
+	if(debug) {
+		printDebug << "starting initialization of 'pwacomponent' for component '" << getName() << "'." << endl;
+	}
+
+	setNrParameters(2);
+	if(not massDepFitComponent::init(configComponent, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+		printErr << "error while reading configuration of 'massDepFitComponent' class." << endl;
+		return false;
+	}
+
+	map<string, libconfig::Setting::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("val", libconfig::Setting::TypeFloat)
+	                     ("lower", libconfig::Setting::TypeFloat)
+	                     ("upper", libconfig::Setting::TypeFloat)
+	                     ("fix", libconfig::Setting::TypeBoolean);
+
+	const libconfig::Setting* configMass = findLibConfigGroup(*configComponent, "mass");
+	if(not configMass) {
+		printErr << "component '" << getName() << "' has no section 'mass'." << endl;
+		return false;
+	}
+
+	if(not checkIfAllVariablesAreThere(configMass, mandatoryArguments)) {
+		printErr << "the 'mass' section of the component '" << getName() << "' does not contain all required fields." << endl;
+		return false;
+	}
+
+	configMass->lookupValue("val", _m0);
+	configMass->lookupValue("lower", _m0min);
+	configMass->lookupValue("upper", _m0max);
+	configMass->lookupValue("fix", _fixm);
+	_m02 = _m0*_m0;
+
+	const libconfig::Setting* configWidth = findLibConfigGroup(*configComponent, "width");
+	if(not configWidth) {
+		printErr << "component '" << getName() << "' has no section 'width'." << endl;
+		return false;
+	}
+
+	if(not checkIfAllVariablesAreThere(configWidth, mandatoryArguments)) {
+		printErr << "the 'width' section of the component '" << getName() << "' does not contain all required fields." << endl;
+		return false;
+	}
+
+	configWidth->lookupValue("val", _gamma);
+	configWidth->lookupValue("lower", _gammamin);
+	configWidth->lookupValue("upper", _gammamax);
+	configWidth->lookupValue("fix", _fixgamma);
+
+	if(not configWidth->lookupValue("dyn", _constWidth)) {
+		_constWidth = false;
+	}
+	_constWidth = !_constWidth;
+
+	printInfo << "component '" << getName() << "':" << endl
+	          << "mass: " << _m0 << " MeV/c^2, limits: " << _m0min << "-" << _m0max << " MeV/c^2 " << (_fixm ? "(FIXED)" : "") << endl
+	          << "width: " << _gamma << " MeV/c^2, limits: " << _gammamin << "-" << _gammamax << " MeV/c^2 " << (_fixgamma ? "(FIXED) " : "") << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
+
+	if(debug) {
+		printDebug << "finished initialization of 'pwacomponent'." << endl;
+	}
+	return true;
+}
+
+
 void
 pwacomponent::getParameters(double* par) const
 {
@@ -191,13 +311,13 @@ pwacomponent::setParameterLimits(const size_t idx, const pair<double, double>& l
 
 
 complex<double>
-rpwa::pwacomponent::val(const double m) const {
+pwacomponent::val(const double m) const {
 	// calculate dynamic width:
 	// loop over decay channels
 	double ps = 1.;
 	if(!_constWidth){
 		ps=0; // no not forget to reset phase space here!
-		for(std::vector<pwachannel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
+		for(vector<pwachannel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
 			double myps=1.;
 			if(itChan->ps() != NULL){
 				double ps0=itChan->ps(_m0);
@@ -213,8 +333,8 @@ rpwa::pwacomponent::val(const double m) const {
 }
 
 
-std::ostream&
-pwacomponent::print(std::ostream& out) const
+ostream&
+pwacomponent::print(ostream& out) const
 {
 	out << getName() << endl
 	    << "Mass=" << _m0 << "   Width=" << _gamma << "    ConstWidth=" << _constWidth << endl;
@@ -222,24 +342,89 @@ pwacomponent::print(std::ostream& out) const
 }
 
 
-pwabkg::pwabkg(const string& name,
-               const vector<pwachannel >& channels,
-               const double m0,
-               const double gamma,
-               const double m1,
-               const double m2)
-	: massDepFitComponent(name, 2, channels),
-	  _m0(m0),
-	  _m0min(0),
-	  _m0max(5000),
-	  _fixm(false),
-	  _gamma(gamma),
-	  _gammamin(0),
-	  _gammamax(1000),
-	  _fixgamma(false),
-	  _m1(m1),
-	  _m2(m2)
+pwabkg::pwabkg(const string& name)
+	: massDepFitComponent(name)
 {
+}
+
+
+bool
+pwabkg::init(const libconfig::Setting* configComponent,
+             const vector<double>& massBinCenters,
+             const map<string, size_t>& waveIndices,
+             const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+             const bool debug) {
+	if(debug) {
+		printDebug << "starting initialization of 'pwabkg' for component '" << getName() << "'." << endl;
+	}
+
+	setNrParameters(2);
+	if(not massDepFitComponent::init(configComponent, massBinCenters, waveIndices, phaseSpaceIntegrals, debug)) {
+		printErr << "error while reading configuration of 'massDepFitComponent' class." << endl;
+		return false;
+	}
+
+	map<string, libconfig::Setting::Type> mandatoryArguments;
+	boost::assign::insert(mandatoryArguments)
+	                     ("val", libconfig::Setting::TypeFloat)
+	                     ("lower", libconfig::Setting::TypeFloat)
+	                     ("upper", libconfig::Setting::TypeFloat)
+	                     ("fix", libconfig::Setting::TypeBoolean);
+
+	const libconfig::Setting* configMass = findLibConfigGroup(*configComponent, "m0");
+	if(not configMass) {
+		printErr << "component '" << getName() << "' has no section 'mass'." << endl;
+		return false;
+	}
+
+	if(not checkIfAllVariablesAreThere(configMass, mandatoryArguments)) {
+		printErr << "the 'mass' section of the component '" << getName() << "' does not contain all required fields." << endl;
+		return false;
+	}
+
+	configMass->lookupValue("val", _m0);
+	configMass->lookupValue("lower", _m0min);
+	configMass->lookupValue("upper", _m0max);
+	configMass->lookupValue("fix", _fixm);
+
+	const libconfig::Setting* configWidth = findLibConfigGroup(*configComponent, "g");
+	if(not configWidth) {
+		printErr << "component '" << getName() << "' has no section 'width'." << endl;
+		return false;
+	}
+
+	if(not checkIfAllVariablesAreThere(configWidth, mandatoryArguments)) {
+		printErr << "the 'width' section of the component '" << getName() << "' does not contain all required fields." << endl;
+		return false;
+	}
+
+	configWidth->lookupValue("val", _gamma);
+	configWidth->lookupValue("lower", _gammamin);
+	configWidth->lookupValue("upper", _gammamax);
+	configWidth->lookupValue("fix", _fixgamma);
+
+	map<string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
+	boost::assign::insert(mandatoryArgumentsIsobarMasses)
+	                     ("mIsobar1", libconfig::Setting::TypeFloat)
+	                     ("mIsobar2", libconfig::Setting::TypeFloat);
+	if(not checkIfAllVariablesAreThere(configComponent, mandatoryArgumentsIsobarMasses)) {
+		printErr << "not all required isobar masses are defined for the component '" << getName() << "'." << endl;
+		return false;
+	}
+
+	configComponent->lookupValue("mIsobar1", _m1);
+	configComponent->lookupValue("mIsobar2", _m2);
+
+	printInfo << "component '" << getName() << "':" << endl
+	          << "mass: " << _m0 << " MeV/c^2, limits: " << _m0min << "-" << _m0max << " MeV/c^2 " << (_fixm ? "(FIXED)" : "") << endl
+	          << "width: " << _gamma << " MeV/c^2, limits: " << _gammamin << "-" << _gammamax << " MeV/c^2 " << (_fixgamma ? "(FIXED) " : "") << endl
+	          << "mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
+
+	if(debug) {
+		printDebug << "finished initialization of 'pwabkg'." << endl;
+	}
+
+	return true;
 }
 
 
