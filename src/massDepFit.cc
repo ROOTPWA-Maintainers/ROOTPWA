@@ -300,6 +300,186 @@ massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 
 
 bool
+massDepFit::readConfigModel(const Setting* configRoot,
+                            massDepFitModel& fitModel)
+{
+	if(_debug) {
+		printDebug << "reading fit model from configuration file." << endl;
+	}
+
+	// get information for creating the final-state mass-dependence
+	const Setting* configFsmd = findLibConfigGroup(*configRoot, "finalStateMassDependence", false);
+	if(not readConfigModelFsmd(configFsmd, fitModel)) {
+		printErr << "error while reading 'finalStateMassDependence' section in configuration file." << endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readConfigModelFsmd(const Setting* configFsmd,
+                                massDepFitModel& fitModel)
+{
+	// configFsmd might actually be a NULL pointer, in this the final-state
+	// mass-dependence is not read
+	if(not configFsmd) {
+		printInfo << "not using final-state mass dependence." << endl;
+		return true;
+	}
+
+	if(_debug) {
+		printDebug << "reading final-state mass-dependence from configuration file." << endl;
+	}
+
+	map<string, Setting::Type> mandatoryArguments;
+	insert(mandatoryArguments)
+	      ("formula", Setting::TypeString)
+	      ("val", Setting::TypeArray)
+	      ("lower", Setting::TypeArray)
+	      ("upper", Setting::TypeArray)
+	      ("error", Setting::TypeArray)
+	      ("fix", Setting::TypeArray);
+	if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
+		printErr << "'finalStateMassDependence' section in configuration file contains errors." << endl;
+		return false;
+	}
+    
+	string formula;
+	configFsmd->lookupValue("formula", formula);
+
+	TF1* fsmdFunction = new TF1("finalStateMassDependence", formula.c_str(), _massMin, _massMax);
+	const unsigned int nrPar = fsmdFunction->GetNpar();
+
+	const Setting& configFsmdValue = (*configFsmd)["val"];
+	if(configFsmdValue.getLength() != nrPar) {
+		printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+		return false;
+	}
+	if(configFsmdValue.getLength() > 0 and not configFsmdValue[0].isNumber()) {
+		printErr << "'val' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+		return false;
+	}
+
+	const Setting& configFsmdLower = (*configFsmd)["lower"];
+	if(configFsmdLower.getLength() != nrPar) {
+		printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+		return false;
+	}
+	if(configFsmdLower.getLength() > 0 and not configFsmdLower[0].isNumber()) {
+		printErr << "'lower' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+		return false;
+	}
+
+	const Setting& configFsmdUpper = (*configFsmd)["upper"];
+	if(configFsmdUpper.getLength() != nrPar) {
+		printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+		return false;
+	}
+	if(configFsmdUpper.getLength() > 0 and not configFsmdUpper[0].isNumber()) {
+		printErr << "'upper' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+		return false;
+	}
+
+	const Setting& configFsmdError = (*configFsmd)["error"];
+	if(configFsmdError.getLength() != nrPar) {
+		printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+		return false;
+	}
+	if(configFsmdError.getLength() > 0 and not configFsmdError[0].isNumber()) {
+		printErr << "'error' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+		return false;
+	}
+
+	const Setting& configFsmdFix = (*configFsmd)["fix"];
+	if(configFsmdFix.getLength() != nrPar) {
+		printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
+		return false;
+	}
+	if(configFsmdFix.getLength() > 0 and not configFsmdFix[0].isNumber()) {
+		printErr << "'fix' in 'finalStateMassDependence' has to be made up of numbers." << endl;
+		return false;
+	}
+
+	for(unsigned int i=0; i<nrPar; ++i) {
+		fsmdFunction->SetParameter(i, configFsmdValue[i]);
+		fsmdFunction->SetParError(i, configFsmdError[i]);
+		fsmdFunction->SetParLimits(i, configFsmdLower[i], configFsmdUpper[i]);
+
+		if(((int)configFsmdFix[i]) != 0) {
+			fsmdFunction->FixParameter(i, configFsmdValue[i]);
+		}
+	}
+
+	fitModel.setFsmdFunction(fsmdFunction);
+
+	printInfo << "using final-state mass dependence as defined in the configuration file." << endl;
+
+	return true;
+}
+
+
+bool
+massDepFit::updateConfigModel(const Setting* configRoot,
+                              massDepFitModel& fitModel,
+                              Minimizer* minimizer)
+{
+	if(_debug) {
+		printDebug << "updating fit model in configuration file." << endl;
+	}
+
+	// get information for creating the final-state mass-dependence
+	const Setting* configFsmd = findLibConfigGroup(*configRoot, "finalStateMassDependence", false);
+	if(not updateConfigModelFsmd(configFsmd, fitModel, minimizer)) {
+		printErr << "error while updating 'finalStateMassDependence' section in configuration file." << endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
+                                  massDepFitModel& fitModel,
+                                  Minimizer* minimizer)
+{
+	// configFsmd might actually be a NULL pointer, in this the final-state
+	// mass-dependence is not read
+	if(not configFsmd) {
+		if(fitModel.getFsmdFunction()) {
+			printErr << "no section 'finalStateMassDependence' in configuration file, but final-state mass-dependence exists." << endl;
+			return false;
+		}
+		return true;
+	}
+
+	if(_debug) {
+		printDebug << "updating final-state mass-dependence in configuration file." << endl;
+	}
+
+	const Setting& configFsmdValue = (*configFsmd)["val"];
+	const Setting& configFsmdError = (*configFsmd)["error"];
+	const Setting& configFsmdFix = (*configFsmd)["fix"];
+
+	const unsigned int nrPar =fitModel.getFsmdFunction()->GetNpar();
+	unsigned int iPar = 0;
+	for(unsigned int i=0; i<nrPar; ++i) {
+		if(((int)configFsmdFix[i]) == 0) {
+			ostringstream sName;
+			sName << "PSP_" << iPar;
+			configFsmdValue[i] = fitModel.getFreeFsmdPar(iPar);
+			configFsmdError[i] = minimizer->Errors()[minimizer->VariableIndex(sName.str())];
+			++iPar;
+		}
+	}
+ 
+	return true;
+}
+
+
+bool
 massDepFit::readInFile(const string& valTreeName,
                        const string& valBranchName)
 {
@@ -1119,102 +1299,19 @@ main(int    argc,
 		exit(1);
 	}
 
+	// set-up fit model (resonances, background, final-state mass dependence
+	massDepFitModel compset;
+	if(not mdepFit.readConfigModel(&configRoot, compset)) {
+		printErr << "error while reading fit model from configuration file." << endl;
+		exit(1);
+	}
+
   printInfo << "creating and setting up likelihood function" << endl;
   printInfo << "doCovariances = " << doCov << endl;
 
   
   // Setup Component Set (Resonances + Background)
-  massDepFitModel compset;
   bool check=true;
-
-  // overall final-state mass dependence
-  TF1* fPS = NULL;
-  const Setting* configFsmd = findLibConfigGroup(configRoot, "finalStateMassDependence", false);
-  if(configFsmd){
-    map<string, Setting::Type> mandatoryArguments;
-    insert(mandatoryArguments)
-        ("formula", Setting::TypeString)
-        ("val", Setting::TypeArray)
-        ("lower", Setting::TypeArray)
-        ("upper", Setting::TypeArray)
-        ("error", Setting::TypeArray)
-        ("fix", Setting::TypeArray);
-    if(not checkIfAllVariablesAreThere(configFsmd, mandatoryArguments)) {
-      printErr << "'finalStateMassDependence' section in configuration file contains errors." << endl;
-      exit(1);
-    }
-    
-    string formula;
-    configFsmd->lookupValue("formula", formula);
-
-    fPS = new TF1("fps", formula.c_str(), 900, 3000);
-    const unsigned int nrPar = fPS->GetNpar();
-
-    const Setting& configFsmdValue = (*configFsmd)["val"];
-    if(configFsmdValue.getLength() != nrPar) {
-      printErr << "'val' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-      return false;
-    }
-    if(configFsmdValue.getLength() > 0 and not configFsmdValue[0].isNumber()) {
-      printErr << "'val' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-      return false;
-    }
-
-    const Setting& configFsmdLower = (*configFsmd)["lower"];
-    if(configFsmdLower.getLength() != nrPar) {
-      printErr << "'lower' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-      return false;
-    }
-    if(configFsmdLower.getLength() > 0 and not configFsmdLower[0].isNumber()) {
-      printErr << "'lower' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-      return false;
-    }
-
-    const Setting& configFsmdUpper = (*configFsmd)["upper"];
-    if(configFsmdUpper.getLength() != nrPar) {
-      printErr << "'upper' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-      return false;
-    }
-    if(configFsmdUpper.getLength() > 0 and not configFsmdUpper[0].isNumber()) {
-      printErr << "'upper' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-      return false;
-    }
-
-    const Setting& configFsmdError = (*configFsmd)["error"];
-    if(configFsmdError.getLength() != nrPar) {
-      printErr << "'error' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-      return false;
-    }
-    if(configFsmdError.getLength() > 0 and not configFsmdError[0].isNumber()) {
-      printErr << "'error' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-      return false;
-    }
-
-    const Setting& configFsmdFix = (*configFsmd)["fix"];
-    if(configFsmdFix.getLength() != nrPar) {
-      printErr << "'fix' in 'finalStateMassDependence' has to have a length of " << nrPar << "." << endl;
-      return false;
-    }
-    if(configFsmdFix.getLength() > 0 and not configFsmdFix[0].isNumber()) {
-      printErr << "'fix' in 'finalStateMassDependence' has to be made up of numbers." << endl;
-      return false;
-    }
-
-    for (unsigned int i=0; i<nrPar; ++i) {
-      fPS->SetParameter(i, configFsmdValue[i]);
-      fPS->SetParError(i, configFsmdError[i]);
-      fPS->SetParLimits(i, configFsmdLower[i], configFsmdUpper[i]);
-
-      if (((int)configFsmdFix[i]) != 0) {
-        fPS->FixParameter(i, configFsmdValue[i]);
-      }
-    }
-    printInfo << "using final-state mass dependence as defined in the configuration file." << endl;
-  } else {
-    printInfo << "not using final-state mass dependence." << endl;
-  }
-  compset.setFsmdFunction(fPS);
-
 
   // Resonances
   if(configFile.exists("components.resonances")){
@@ -1587,25 +1684,12 @@ main(int    argc,
  Setting& redchi2S=fitqualS["redchi2"];
  redchi2S=redChi2;
 
-  if(configFsmd){
-    const Setting& configFsmdValue = (*configFsmd)["val"];
-    const Setting& configFsmdError = (*configFsmd)["error"];
-    const Setting& configFsmdFix = (*configFsmd)["fix"];
+	if(not mdepFit.updateConfigModel(&configRoot, compset, minimizer)) {
+		printErr << "error while updating fit model in configuration file." << endl;
+		exit(1);
+	}
 
-    const unsigned int nrPar = fPS->GetNpar();
-    unsigned int iPar = 0;
-    for(unsigned int i=0; i<nrPar; ++i) {
-      if(((int)configFsmdFix[i]) == 0) {
-        ostringstream sName;
-        sName << "PSP_" << iPar;
-        configFsmdValue[i] = compset.getFreeFsmdPar(iPar);
-        configFsmdError[i] = minimizer->Errors()[minimizer->VariableIndex(sName.str())];
-        ++iPar;
-      }
-    }
-    assert(compset.nFreeFsmdPar() == iPar);
-  }
- 
+
   // Setup Component Set (Resonances + Background)
   const Setting& bws= configRoot["components"]["resonances"];
   const Setting& bkgs= configRoot["components"]["background"];
@@ -2294,8 +2378,8 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
      //phase2d[iw]->Write();
  } // end loop over waves
 
- if (fPS != NULL) {
-   fPS->Write("funcFinalStateMassDependence");
+ if (compset.getFsmdFunction() != NULL) {
+   compset.getFsmdFunction()->Write("funcFinalStateMassDependence");
  }
 
 outfile->Close();
