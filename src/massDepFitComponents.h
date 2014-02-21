@@ -29,13 +29,16 @@ class TF1;
 
 namespace rpwa {
 
-  class pwachannel {
-  public:
-    pwachannel() : _C(0,0),_ps(NULL){}
-    pwachannel(std::complex<double> coupling,
+
+	class pwachannel {
+
+	public:
+
+    pwachannel(const std::string& waveName,
+               std::complex<double> coupling,
 	       const std::vector<double>& massBinCenters,
 	       const std::vector<double>& phaseSpace)
-      : _C(coupling), _phaseSpace(phaseSpace)
+      : _waveName(waveName), _C(coupling), _phaseSpace(phaseSpace)
     {
         _ps = new TGraph(_phaseSpace.size(), &(massBinCenters[0]), &(_phaseSpace[0]));
     }
@@ -45,6 +48,8 @@ namespace rpwa {
     // accessors
     std::complex<double> C() const {return _C;}
     std::complex<double> CsqrtPS(double m) const {return _C*sqrt(_ps->Eval(m));}
+    
+		const std::string& getWaveName() const { return _waveName; }
 
     TGraph* ps() const {return _ps;}
     double ps(double m) const {return _ps->Eval(m);}
@@ -52,89 +57,148 @@ namespace rpwa {
     //modifiers
     void setCoupling(std::complex<double> c){_C=c;}
 
+	private:
 
-  private:
+		std::string _waveName;
     std::complex<double> _C;
     std::vector<double> _phaseSpace;
     TGraph* _ps;
-  };
+
+	};
 
 
-  class pwacomponent {
-  public:
-    pwacomponent(const std::string& name,
-		 double m0, double gamma,
-		 const std::map<std::string,pwachannel >& channels);
+	class massDepFitComponent {
 
-    virtual ~pwacomponent(){}
+	public:
 
-    std::string name() const {return _name;}
-    virtual std::complex<double> val(double m) const ;
-    virtual void setPar(double m0, double gamma){_m0=m0;_m02=m0*m0;_gamma=gamma;}
-    unsigned int numChannels() const {return _channels.size();}
-    const std::string& getChannelName(unsigned int i) const {return _channelname[i];}
-    const pwachannel& getChannel(unsigned int i) const {return *_vchannels[i];}
-    unsigned int numPar() const {return numChannels()*2+2;}
-    void setCouplings(const double* par);
-    void getCouplings(double* par);
-    void setLimits(double mmin, double mmax, double gmin, double gmax)
-    {_m0min=mmin;_m0max=mmax;_gammamin=gmin;_gammamax=gmax;}
-    void setFixed(bool mflag=true, bool gflag=true)
-    {_fixm=mflag;_fixgamma=gflag;}
-    void setConstWidth(bool flag=true){_constWidth=flag;}
-    void getLimits(double& mmin, double& mmax, double& gmin, double& gmax)const
-    {mmin=_m0min;mmax=_m0max;gmin=_gammamin;gmax=_gammamax;}
-    bool fixM() const {return _fixm;}
-    bool fixGamma() const {return _fixgamma;}
-    bool constWidth() const {return _constWidth;}
+		massDepFitComponent(const std::string& name,
+		                    const size_t nrParameters,
+		                    const std::vector<pwachannel>& channels);
+		virtual ~massDepFitComponent() {};
 
-    double m0() const {return _m0;}
-    double gamma() const {return _gamma;}
-    const std::map<std::string,pwachannel >& channels()const {return _channels;}
+		const std::string& getName() const { return _name; }
 
-    friend std::ostream& operator<< (std::ostream& o,const rpwa::pwacomponent& c);
+		const size_t getNrChannels() const { return _channels.size(); }
+		const std::vector<pwachannel>& getChannels() const { return _channels; }
+		const pwachannel& getChannel(size_t i) const { return _channels[i]; } 
+		const std::string& getChannelWaveName(size_t i) const { return _channels[i].getWaveName(); }
 
-  protected:
-    std::string _name;
-    double _m0;
-    double _m02;
-    double _m0min,_m0max;
-    double _gamma;
-    double _gammamin,_gammamax;
-    bool _fixm;
-    bool _fixgamma;
-    bool _constWidth;
-    std::map<std::string,pwachannel > _channels;
-    std::vector<pwachannel*> _vchannels; // vector of channels
-    std::vector<std::string> _channelname;
+		void getCouplings(double* par) const;
+		void setCouplings(const double* par);
 
-  };
+		size_t getNrParameters() const { return _nrParameters; }
+		virtual void getParameters(double* par) const = 0;
+		virtual void setParameters(const double* par) = 0;
+
+		virtual double getParameter(const size_t idx) const = 0;
+		virtual void setParameter(const size_t idx, const double value) = 0;
+		virtual bool getParameterFixed(const size_t idx) const = 0;
+		virtual void setParameterFixed(const size_t idx, const bool fixed) = 0;
+		virtual std::pair<double, double> getParameterLimits(const size_t idx) const = 0;
+		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits) = 0;
+
+		virtual std::complex<double> val(const double m) const = 0;
+
+		virtual std::ostream& print(std::ostream& out) const;
+
+	private:
+
+		std::string _name;
+
+		std::vector<pwachannel> _channels;
+
+		size_t _nrParameters;
+
+	};
 
 
-  class pwabkg : public pwacomponent{
-  public:
-    pwabkg(const std::string& name,
-	   double m0, double gamma,
-	   const std::map<std::string,pwachannel >& channels)
-      : pwacomponent(name,m0,gamma,channels){}
+	class pwacomponent : public massDepFitComponent {
 
-    virtual ~pwabkg(){}
+	public:
 
-    virtual std::complex<double> val(double m) const ;
+		pwacomponent(const std::string& name,
+		             const std::vector<pwachannel>& channels,
+		             const double m0,
+		             const double gamma,
+		             const bool constWidth);
+    
+		virtual void getParameters(double* par) const;
+		virtual void setParameters(const double* par);
 
-    void setIsobars(double m1,double m2){_m1=m1;_m2=m2;}
-    void getIsobars(double& m1, double& m2){m1=_m1;m2=_m2;}
+		virtual double getParameter(const size_t idx) const;
+		virtual void setParameter(const size_t idx, const double value);
+		virtual bool getParameterFixed(const size_t idx) const;
+		virtual void setParameterFixed(const size_t idx, const bool fixed);
+		virtual std::pair<double, double> getParameterLimits(const size_t idx) const ;
+		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits);
+
+		virtual std::complex<double> val(const double m) const;
+
+		std::ostream& print(std::ostream& out) const;
+
+	private:
+
+		double _m0;
+		double _m02;
+		double _m0min;
+		double _m0max;
+		bool _fixm;
+
+		double _gamma;
+		double _gammamin;
+		double _gammamax;
+		bool _fixgamma;
+
+		bool _constWidth;
+
+	};
+
+
+	class pwabkg : public massDepFitComponent {
+
+	public:
+
+		pwabkg(const std::string& name,
+		       const std::vector<pwachannel>& channels,
+		       const double m0,
+		       const double gamma,
+		       const double m1,
+		       const double m2);
+    
+		virtual void getParameters(double* par) const;
+		virtual void setParameters(const double* par);
+
+		virtual double getParameter(const size_t idx) const;
+		virtual void setParameter(const size_t idx, const double value);
+		virtual bool getParameterFixed(const size_t idx) const;
+		virtual void setParameterFixed(const size_t idx, const bool fixed);
+		virtual std::pair<double, double> getParameterLimits(const size_t idx) const;
+		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits);
+
+		virtual std::complex<double> val(const double m) const;
 
   private:
-    // isobar masses
-    double _m1;
-    double _m2;
 
-  };
+		double _m0;
+		double _m0min;
+		double _m0max;
+		bool _fixm;
+
+		double _gamma;
+		double _gammamin;
+		double _gammamax;
+		bool _fixgamma;
+
+		double _m1;
+		double _m2;
+    
+	};
 
 
-} //  end namespace
+} // end namespace rpwa
 
-
+inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFitComponent& component) {
+	return component.print(out);
+}
 
 #endif // MASSDEPFITCOMPONENTS_HH

@@ -3,8 +3,8 @@
 #include "massDepFitModel.h"
 
 
-using namespace rpwa;
 using namespace std;
+using namespace rpwa;
 
 
 massDepFitLikeli*
