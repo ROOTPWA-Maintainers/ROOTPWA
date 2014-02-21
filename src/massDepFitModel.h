@@ -33,6 +33,7 @@ namespace rpwa {
 
 		void add(massDepFitComponent* comp);
 
+		TF1* getFsmdFunction() const { return _fsmdFunction; }
 		void setFsmdFunction(TF1* fsmdFunction);
 
 		bool init(const std::vector<std::string>& waveNames,

@@ -3,7 +3,16 @@
 
 #include <boost/multi_array.hpp>
 
+namespace ROOT {
+	namespace Math {
+		class Minimizer;
+	}
+}
+
 namespace rpwa {
+
+
+	class massDepFitModel;
 
 
 	class massDepFit {
@@ -18,6 +27,14 @@ namespace rpwa {
 
 // FIXME: make private
 		bool readConfigInput(const libconfig::Setting* configInput);
+// FIXME: make private
+		bool readConfigModel(const libconfig::Setting* configRoot,
+		                     massDepFitModel& fitModel);
+
+// FIXME: make private
+		bool updateConfigModel(const libconfig::Setting* configRoot,
+		                       massDepFitModel& fitModel,
+		                       ROOT::Math::Minimizer* minimizer);
 
 // FIXME: make private
 		bool readInFile(const std::string& valTreeName   = "pwa",
@@ -75,6 +92,13 @@ namespace rpwa {
 		bool readConfigInputFitResults(const libconfig::Setting* configInputFitResults);
 		bool readConfigInputWaves(const libconfig::Setting* configInputWaves);
 		bool readConfigInputSystematics(const libconfig::Setting* configInputSystematics);
+
+		bool readConfigModelFsmd(const libconfig::Setting* configFsmd,
+		                         massDepFitModel& fitModel);
+
+		bool updateConfigModelFsmd(const libconfig::Setting* configFsmd,
+		                           massDepFitModel& fitModel,
+		                           ROOT::Math::Minimizer* minimizer);
 
 		bool readSystematicsFile(const size_t idxSystematics,
 		                         const std::string& valTreeName   = "pwa",
