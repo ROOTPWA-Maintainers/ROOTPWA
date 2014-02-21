@@ -939,11 +939,13 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
 
   unsigned int parcount=0;
   for(unsigned int ic=0;ic<compset.n();++ic){
-    const pwacomponent& comp=*compset[ic];
-    TString name(comp.name());
-    double mmin,mmax,gmin,gmax;
-    comp.getLimits(mmin,mmax,gmin,gmax);
-    if(comp.fixM() || level==0)minimizer->SetFixedVariable(parcount,
+    const massDepFitComponent* comp = compset[ic];
+    TString name(comp->getName());
+    const double mmin = comp->getParameterLimits(0).first;
+    const double mmax = comp->getParameterLimits(0).second;
+    const double gmin = comp->getParameterLimits(1).first;
+    const double gmax = comp->getParameterLimits(1).second;
+    if(comp->getParameterFixed(0) || level==0)minimizer->SetFixedVariable(parcount,
 					       (name+"_M").Data() ,
 					       par[parcount]);
     else minimizer->SetLimitedVariable(parcount,
@@ -951,10 +953,10 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
 				       par[parcount],
 				       5.0,
 				       mmin,mmax);
-    if(level==0 && !comp.fixM()) printInfo << minimizer->VariableName(parcount)
+    if(level==0 && !comp->getParameterFixed(0)) printInfo << minimizer->VariableName(parcount) 
 			   << " fixed to " << par[parcount] << endl;
     ++parcount;
-    if(comp.fixGamma() || level < 2)minimizer->SetFixedVariable(parcount,
+    if(comp->getParameterFixed(1) || level < 2)minimizer->SetFixedVariable(parcount,
 						   (name+"_Gamma").Data() ,
 						    par[parcount]);
     else minimizer->SetLimitedVariable(parcount,
@@ -962,19 +964,19 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
 				       par[parcount],
 				       5.0,
 				       gmin,gmax);
-    if(level<2 && !comp.fixGamma()) printInfo << minimizer->VariableName(parcount)
+    if(level<2 && !comp->getParameterFixed(1)) printInfo << minimizer->VariableName(parcount) 
 			  << " fixed to " << par[parcount] << endl;
     ++parcount;
 
-    std::map<std::string,pwachannel >::const_iterator it=comp.channels().begin();
-    while(it!=comp.channels().end()){
-      minimizer->SetVariable(parcount,(name + "_ReC" + it->first).Data() , par[parcount], 10.0);
+    std::vector<pwachannel >::const_iterator it=comp->getChannels().begin();
+    while(it!=comp->getChannels().end()){
+      minimizer->SetVariable(parcount,(name + "_ReC" + it->getWaveName()).Data() , par[parcount], 10.0);
       ++parcount;
       // fix one phase
-      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->first)!=anchorwave_channel.end()){
-	minimizer->SetFixedVariable(parcount,(name + "_ImC" + it->first).Data() , 0.0);
+      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->getWaveName())!=anchorwave_channel.end()){
+	minimizer->SetFixedVariable(parcount,(name + "_ImC" + it->getWaveName()).Data() , 0.0);
       }
-      else {minimizer->SetVariable(parcount,(name + "_ImC" + it->first).Data() , par[parcount], 0.10);}
+      else {minimizer->SetVariable(parcount,(name + "_ImC" + it->getWaveName()).Data() , par[parcount], 0.10);}
       ++parcount;
       ++it;
     } // end loop over channels
@@ -1254,7 +1256,7 @@ main(int    argc,
       const Setting &channelSet = bw["decaychannels"];
       unsigned int nCh=channelSet.getLength();
       cout << "Decaychannels (coupling):" << endl;
-      std::map<std::string,pwachannel > channels;
+      std::vector<pwachannel> channels;
       for(unsigned int iCh=0;iCh<nCh;++iCh){
 	const Setting &ch = channelSet[iCh];
 	string amp;
@@ -1268,17 +1270,18 @@ main(int    argc,
         map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
         const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
         multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][it->second]];
-	channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end()));
+	channels.push_back(pwachannel(amp,C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end())));
       }// end loop over channels
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
 	return 1;
       }
-      pwacomponent* comp1=new pwacomponent(name,mass,width,channels);
+      massDepFitComponent* comp1=new pwacomponent(name,channels,mass,width,wdyn==0? true : false);
       cerr << "created component" << endl;
-      comp1->setLimits(ml,mu,wl,wu);
-      comp1->setFixed(mfix,wfix);
-      if(wdyn==0)comp1->setConstWidth();
+      comp1->setParameterFixed(0, mfix);
+      comp1->setParameterLimits(0, make_pair(ml,mu));
+      comp1->setParameterFixed(1, wfix);
+      comp1->setParameterLimits(1, make_pair(wl,wu));
       compset.add(comp1);
       cout << "CHECK val(m0)="<< comp1->val(mass) << endl;
     }// end loop over resonances
@@ -1315,7 +1318,7 @@ main(int    argc,
       cout << "g(limits)            = " << width <<" ("<<wl<<","<<wu<<") MeV/c^2";
       if(wfix==1)cout<<"  -- FIXED";
       cout<< endl;
-      std::map<std::string,pwachannel > channels;
+      std::vector<pwachannel > channels;
       string amp;
       double cRe=0;
       double cIm=0;
@@ -1333,16 +1336,17 @@ main(int    argc,
       map<string, size_t>::const_iterator it=mdepFit.getWaveIndices().find(amp);
       const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
       multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][it->second]];
-      channels[amp]=pwachannel(C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end()));
+      channels.push_back(pwachannel(amp,C,mdepFit.getMassBinCenters(),std::vector<double>(view.begin(), view.end())));
 
       if(!check){
 	printErr << "Bad config value lookup! Check your config file!" << endl;
 	return 1;
       }
-      pwabkg* bkg=new pwabkg(name,mass,width,channels);
-      bkg->setIsobars(mIso1,mIso2);
-      bkg->setLimits(ml,mu,wl,wu);
-      bkg->setFixed(mfix,wfix);
+      massDepFitComponent* bkg=new pwabkg(name,channels,mass, width, mIso1, mIso2);
+      bkg->setParameterFixed(0, mfix);
+      bkg->setParameterLimits(0, make_pair(ml, mu));
+      bkg->setParameterFixed(1, wfix);
+      bkg->setParameterLimits(1, make_pair(wl,wu));
       compset.add(bkg);
     }// end loop over background
   }// endif
@@ -1379,9 +1383,7 @@ main(int    argc,
 
 
     cout << "---------------------------------------------------------------------" << endl << endl;
-
-
-
+ 
 	massDepFitLikeli L;
 	L.init(&compset,
 	       mdepFit.getMassBinCenters(),
@@ -1425,36 +1427,38 @@ main(int    argc,
   // Set startvalues
   unsigned int parcount=0;
   for(unsigned int ic=0;ic<compset.n();++ic){
-    const pwacomponent& comp=*compset[ic];
-    TString name(comp.name());
-    double mmin,mmax,gmin,gmax;
-    comp.getLimits(mmin,mmax,gmin,gmax);
-    if(comp.fixM())minimizer->SetFixedVariable(parcount++,
+    const massDepFitComponent* comp = compset[ic];
+    TString name(comp->getName());
+    const double mmin = comp->getParameterLimits(0).first;
+    const double mmax = comp->getParameterLimits(0).second;
+    const double gmin = comp->getParameterLimits(1).first;
+    const double gmax = comp->getParameterLimits(1).second;
+    if(comp->getParameterFixed(0))minimizer->SetFixedVariable(parcount++,
 					       (name+"_M").Data() ,
-					       comp.m0());
-    else minimizer->SetLimitedVariable(parcount++,
-				       (name+"_M").Data(),
-				       comp.m0(),
+					       comp->getParameter(0));
+    else minimizer->SetLimitedVariable(parcount++, 
+				       (name+"_M").Data(), 
+				       comp->getParameter(0), 
 				       0.10,
 				       mmin,mmax);
-    if(comp.fixGamma())minimizer->SetFixedVariable(parcount++,
+    if(comp->getParameterFixed(1))minimizer->SetFixedVariable(parcount++,
 						   (name+"_Gamma").Data() ,
-						   comp.gamma());
-    else minimizer->SetLimitedVariable(parcount++,
-				       (name+"_Gamma").Data(),
-				       comp.gamma(),
+						   comp->getParameter(1));
+    else minimizer->SetLimitedVariable(parcount++, 
+				       (name+"_Gamma").Data(), 
+				       comp->getParameter(1), 
 				       0.01,
 				       gmin,gmax);
-    std::map<std::string,pwachannel >::const_iterator it=comp.channels().begin();
-    while(it!=comp.channels().end()){
-      minimizer->SetVariable(parcount++,(name + "_ReC" + it->first).Data() , it->second.C().real(), 0.10);
-
+    std::vector<pwachannel >::const_iterator it=comp->getChannels().begin();
+    while(it!=comp->getChannels().end()){
+      minimizer->SetVariable(parcount++,(name + "_ReC" + it->getWaveName()).Data() , it->C().real(), 0.10);
+      
       // fix one phase
-      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->first)!=anchorwave_channel.end()){
-	minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->first).Data() , 0.0);
+      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->getWaveName())!=anchorwave_channel.end()){
+	minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , 0.0);
       }
-      else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->first).Data() , it->second.C().imag(), 0.10);}
-
+      else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , it->C().imag(), 0.10);}
+      
       ++it;
     } // end loop over channels
   }// end loop over components
@@ -1610,8 +1614,8 @@ main(int    argc,
   // loop over components
   unsigned int nc=compset.n();
   for(unsigned int ic=0;ic<nc;++ic){
-    const pwacomponent* comp=compset[ic];
-    string name=comp->name();
+    const massDepFitComponent* comp = compset[ic];
+    string name=comp->getName();
     // search corresponding setting
 
     string sname;
@@ -1624,14 +1628,14 @@ main(int    argc,
 	// set values to this setting
 	Setting& sm = bw["mass"];
 	Setting& smval = sm["val"];
-	smval = comp->m0();
+	smval = comp->getParameter(0);
 	Setting& smerr = sm["error"];
 	TString merrname=name+"_M";
 	smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
 
 	Setting& sw = bw["width"];
 	Setting& swval = sw["val"];
-	swval = comp->gamma();
+	swval = comp->getParameter(1);
 
 	Setting& swerr = sw["error"];
 	TString werrname=name+"_Gamma";
@@ -1644,11 +1648,11 @@ main(int    argc,
 	// loop through channel and fix couplings
 	const Setting& sChn=bw["decaychannels"];
 	unsigned int nCh=sChn.getLength();
-	const std::map<std::string,pwachannel >& ch=comp->channels();
-	std::map<std::string,pwachannel>::const_iterator it=ch.begin();
+	const std::vector<pwachannel >& ch=comp->getChannels();
+	std::vector<pwachannel>::const_iterator it=ch.begin();
 	for(;it!=ch.end();++it){
-	  std::complex<double> c= it->second.C();
-	  string ampname=it->first;
+	  std::complex<double> c= it->C();
+	  string ampname=it->getWaveName();
 	  // loop through channels in setting
 	  for(unsigned int isc=0;isc<nCh;++isc){
 	    Setting& sCh=sChn[isc];
@@ -1676,12 +1680,12 @@ main(int    argc,
 	if(sname==name){
 	  Setting& sm = bw["m0"];
 	  Setting& smval = sm["val"];
-	  smval = comp->m0();
+	  smval = comp->getParameter(0);
 	  Setting& sw = bw["g"];
 	  Setting& swval = sw["val"];
-	  swval = comp->gamma();
+	  swval = comp->getParameter(1);
 
-	  const pwachannel& ch=comp->channels().begin()->second;
+	  const pwachannel& ch=comp->getChannels().front();
 	  std::complex<double> c=ch.C();
 	  Setting& sRe=bw["coupling_Re"];
 	  sRe=c.real();
@@ -1788,11 +1792,11 @@ main(int    argc,
    std::vector<TGraph*> compgraphs; // individual components
    // loop over components and build graphs
      for(unsigned int ic=0;ic<compset.n();++ic){
-       const pwacomponent* c=compset[ic];
-       std::map<std::string,pwachannel >::const_iterator it=c->channels().begin();
-       while(it!=c->channels().end()){
-	 string name=c->name();name.append("__");
-	 name.append(it->first);
+       const massDepFitComponent* c = compset[ic];
+       std::vector<pwachannel >::const_iterator it=c->getChannels().begin();
+       while(it!=c->getChannels().end()){
+	 string name=c->getName();name.append("__");
+	 name.append(it->getWaveName());
 	 TGraph* gcomp=new TGraph(nbins);
 	 gcomp->SetName(name.c_str());
 	 gcomp->SetTitle(name.c_str());
@@ -1802,7 +1806,7 @@ main(int    argc,
 	 gcomp->SetMarkerColor(color);
 
 	 compgraphs.push_back(gcomp);
-	 graphs[wmap[it->first]]->Add(gcomp,"cp");
+	 graphs[wmap[it->getWaveName()]]->Add(gcomp,"cp");
 	 ++it;
        }// end loop over channels
 
@@ -2143,16 +2147,16 @@ if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)m
      // loop over components to fill individual graphs
      unsigned int compcount=0;
        for(unsigned int ic=0;ic<compset.n();++ic){
-	 const pwacomponent* c=compset[ic];
-			for(std::map<std::string, pwachannel>::const_iterator itChan=c->channels().begin(); itChan!=c->channels().end(); ++itChan, ++compcount) {
+	 const massDepFitComponent* c = compset[ic];
+			for(std::vector<pwachannel>::const_iterator itChan=c->getChannels().begin(); itChan!=c->getChannels().end(); ++itChan, ++compcount) {
 				// check that this mass bin should be taken into account for this
 				// combination of waves
-				const size_t iw = wmap[itChan->first];
+				const size_t iw = wmap[itChan->getWaveName()];
 				if(rangePlotting && (i < mdepFit.getWavePairMassBinLimits()[iw][iw].first || i > mdepFit.getWavePairMassBinLimits()[iw][iw].second)) {
 					continue;
 				}
 
-				const double I=norm(c->val(m)*itChan->second.C()*sqrt(itChan->second.ps(m))*compset.calcFsmd(m));
+				const double I=norm(c->val(m)*itChan->C()*sqrt(itChan->ps(m))*compset.calcFsmd(m));
 				compgraphs[compcount]->SetPoint(i,mScaled,I);
 			} // end loop over channels
        }// end loop over components

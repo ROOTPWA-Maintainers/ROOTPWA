@@ -44,10 +44,10 @@ massDepFitModel::init(const vector<string>& waveNames,
 
 
 void
-massDepFitModel::add(pwacomponent* comp)
+massDepFitModel::add(massDepFitComponent* comp)
 {
     _comp.push_back(comp);
-    _numpar+=comp->numPar();
+    _numpar+=comp->getNrParameters() + 2*comp->getNrChannels();
 }
 
 
@@ -87,9 +87,9 @@ massDepFitModel::initMapping()
 {
 	// check that all waves used in a decay channel have been defined
 	for(unsigned int i=0; i<n(); ++i) {
-		for(map<string, pwachannel>::const_iterator itChan=_comp[i]->channels().begin(); itChan !=_comp[i]->channels().end(); ++itChan) {
-			if(find(_waveNames.begin(), _waveNames.end(), itChan->first) == _waveNames.end()) {
-				printErr << "wave '" << itChan->first << "' not known in decay of '" << _comp[i]->name() << "'." << endl;
+		for(vector<pwachannel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
+			if(find(_waveNames.begin(), _waveNames.end(), itChan->getWaveName()) == _waveNames.end()) {
+				printErr << "wave '" << itChan->getWaveName() << "' not known in decay of '" << _comp[i]->getName() << "'." << endl;
 				return false;
 			}
 		}
@@ -99,8 +99,8 @@ massDepFitModel::initMapping()
 	for(vector<string>::const_iterator itWave=_waveNames.begin(); itWave!=_waveNames.end(); ++itWave) {
 		bool found(false);
 		for(unsigned int i=0; i<n(); ++i) {
-			for(map<string, pwachannel>::const_iterator itChan=_comp[i]->channels().begin(); itChan !=_comp[i]->channels().end(); ++itChan) {
-				if(itChan->first == *itWave) {
+			for(vector<pwachannel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
+				if(itChan->getWaveName() == *itWave) {
 					found = true;
 					break;
 				}
@@ -161,10 +161,10 @@ massDepFitModel::setPar(const double* par)
   unsigned int parcount=0;
   // components
   for(unsigned int i=0;i<n();++i){
-    _comp[i]->setPar(par[parcount],par[parcount+1]);
+    _comp[i]->setParameters(&par[parcount]);
     parcount+=2;
     _comp[i]->setCouplings(&par[parcount]);
-    parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
+    parcount+=_comp[i]->getNrChannels()*2; // RE and Im for each channel
   } // end loop over components
   // phase space
   unsigned int nfreepar=_fsmdFreeParameters.size();
@@ -181,11 +181,10 @@ massDepFitModel::getPar(double* par)
   unsigned int parcount=0;
   // components
   for(unsigned int i=0;i<n();++i){
-    par[parcount]=_comp[i]->m0();
-    par[parcount+1]=_comp[i]->gamma();
+    _comp[i]->getParameters(&par[parcount]);
     parcount+=2;
     _comp[i]->getCouplings(&par[parcount]);
-    parcount+=_comp[i]->numChannels()*2; // RE and Im for each channel
+    parcount+=_comp[i]->getNrChannels()*2; // RE and Im for each channel
   }
  // phase space
   unsigned int nfreepar=_fsmdFreeParameters.size();
@@ -288,11 +287,11 @@ massDepFitModel::getCompChannel(const string& wave) const
   vector<pair<unsigned int,unsigned int> > result;
   for(unsigned int ic=0;ic<n();++ic){
     // loop over channels of component and see if wave is there
-    unsigned int nch=_comp[ic]->numChannels();
+    unsigned int nch=_comp[ic]->getNrChannels();
     for(unsigned int ich=0;ich<nch;++ich){
-      if(_comp[ic]->getChannelName(ich)==wave){
+      if(_comp[ic]->getChannelWaveName(ich)==wave){
 	result.push_back(pair<unsigned int,unsigned int>(ic,ich));
-	cerr << "     comp("<<ic<<"): " << _comp[ic]->name() << "  ch:"<<ich<<endl;
+	cerr << "     comp("<<ic<<"): " << _comp[ic]->getName() << "  ch:"<<ich<<endl;
       }
     } // end loop over channels
   } // end loop over components
@@ -304,8 +303,8 @@ ostream&
 massDepFitModel::print(ostream& out) const
 {
 	for(unsigned int i=0;i<_comp.size();++i){
-		const pwacomponent& c =*_comp[i];
-		out << c << endl;
+		const massDepFitComponent& c = *_comp[i];
+		c.print(out);
 	}
 	return out;
 }
