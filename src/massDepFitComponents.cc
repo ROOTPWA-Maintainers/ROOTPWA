@@ -21,6 +21,7 @@
 #include <boost/assign/std/vector.hpp>
 
 // Collaborating Class Headers --------
+#include <Math/Minimizer.h>
 #include "TF1.h"
 
 #include "libConfigUtils.hpp"
@@ -105,7 +106,6 @@ massDepFitComponent::init(const libconfig::Setting* configComponent,
 			return false;
 		}
 
-
 		configParameter->lookupValue("val", _parameters[idxParameter]);
 		configParameter->lookupValue("lower", _parametersLimits[idxParameter].first);
 		configParameter->lookupValue("upper", _parametersLimits[idxParameter].second);
@@ -113,7 +113,6 @@ massDepFitComponent::init(const libconfig::Setting* configComponent,
 		configParameter->lookupValue("fix", fixed);
 		_parametersFixed[idxParameter] = fixed;
 	}
-
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
 	if(not decayChannels) {
@@ -168,6 +167,80 @@ massDepFitComponent::init(const libconfig::Setting* configComponent,
 }
 
 
+bool
+massDepFitComponent::update(const libconfig::Setting* configComponent,
+                            const ROOT::Math::Minimizer* minimizer,
+                            const bool debug) const
+{
+	if(debug) {
+		printDebug << "starting updating of 'massDepFitComponent' for component '" << getName() << "'." << endl;
+	}
+
+	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
+		if(debug) {
+			printDebug << "updating parameter '" << _parametersNames[idxParameter] << "'." << endl;
+		}
+
+		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersNames[idxParameter]);
+		if(not configParameter) {
+			printErr << "component '" << getName() << "' has no section '" << _parametersNames[idxParameter] << "'." << endl;
+			return false;
+		}
+
+		(*configParameter)["val"] = _parameters[idxParameter];
+		(*configParameter)["error"] = minimizer->Errors()[minimizer->VariableIndex((getName() + _parametersNames[idxParameter]).c_str())];
+	}
+
+	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
+	if(not decayChannels) {
+		printErr << "component '" << getName() << "' has no decay channels." << endl;
+		return false;
+	}
+
+	const int nrDecayChannels = decayChannels->getLength();
+	if(nrDecayChannels != getNrChannels()) {
+		printErr << "number of decay channels in configuration file and fit model does not match." << endl;
+		return false;
+	}
+
+	for(int idxDecayChannel=0; idxDecayChannel<nrDecayChannels; ++idxDecayChannel) {
+		const libconfig::Setting* decayChannel = &((*decayChannels)[idxDecayChannel]);
+
+		map<string, libconfig::Setting::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("amp", libconfig::Setting::TypeString);
+		if(not checkIfAllVariablesAreThere(decayChannel, mandatoryArguments)) {
+			printErr << "one of the decay channels of the component '" << getName() << "' does not contain all required fields." << endl;
+			return false;
+		}
+
+		string waveName;
+		decayChannel->lookupValue("amp", waveName);
+
+		const pwachannel* channel = NULL;
+		for(size_t idx=0; idx<nrDecayChannels; ++idx) {
+			if(getChannelWaveName(idx) == waveName) {
+				channel = &getChannel(idx);
+				break;
+			}
+		}
+		if(not channel) {
+			printErr << "could not find channel '" << waveName << "' for component '" << getName() << "'." << endl;
+			return false;
+		}
+
+		(*decayChannel)["coupling_Re"] = channel->C().real();
+		(*decayChannel)["coupling_Im"] = channel->C().imag();
+	}
+
+	if(debug) {
+		printDebug << "finished updating of 'massDepFitComponent'." << endl;
+	}
+
+	return true;
+}
+
+
 void
 massDepFitComponent::getCouplings(double* par) const
 {
@@ -214,24 +287,10 @@ massDepFitComponent::getParameter(const size_t idx) const
 }
 
 
-void
-massDepFitComponent::setParameter(const size_t idx, const double value)
-{
-	_parameters[idx] = value;
-}
-
-
 bool
 massDepFitComponent::getParameterFixed(const size_t idx) const
 {
 	return _parametersFixed[idx];
-}
-
-
-void
-massDepFitComponent::setParameterFixed(const size_t idx, const bool fixed)
-{
-	_parametersFixed[idx] = fixed;
 }
 
 
@@ -242,10 +301,10 @@ massDepFitComponent::getParameterLimits(const size_t idx) const
 }
 
 
-void
-massDepFitComponent::setParameterLimits(const size_t idx, const pair<double, double>& limits)
+const std::string&
+massDepFitComponent::getParameterName(const size_t idx) const
 {
-	_parametersLimits[idx] = limits;
+	return _parametersNames[idx];
 }
 
 
