@@ -98,15 +98,15 @@ namespace rpwa {
 		void setCouplings(const double* par);
 
 		size_t getNrParameters() const { return _nrParameters; }
-		virtual void getParameters(double* par) const = 0;
-		virtual void setParameters(const double* par) = 0;
+		virtual void getParameters(double* par) const;
+		virtual void setParameters(const double* par);
 
-		virtual double getParameter(const size_t idx) const = 0;
-		virtual void setParameter(const size_t idx, const double value) = 0;
-		virtual bool getParameterFixed(const size_t idx) const = 0;
-		virtual void setParameterFixed(const size_t idx, const bool fixed) = 0;
-		virtual std::pair<double, double> getParameterLimits(const size_t idx) const = 0;
-		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits) = 0;
+		virtual double getParameter(const size_t idx) const;
+		virtual void setParameter(const size_t idx, const double value);
+		virtual bool getParameterFixed(const size_t idx) const;
+		virtual void setParameterFixed(const size_t idx, const bool fixed);
+		virtual std::pair<double, double> getParameterLimits(const size_t idx) const;
+		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits);
 
 		virtual std::complex<double> val(const double m) const = 0;
 
@@ -119,6 +119,13 @@ namespace rpwa {
 		std::vector<pwachannel> _channels;
 
 		const size_t _nrParameters;
+
+	protected:
+
+		std::vector<double> _parameters;
+		std::vector<std::pair<double, double> > _parametersLimits;
+		std::vector<bool> _parametersFixed;
+		std::vector<std::string> _parametersNames;
 
 	};
 
@@ -135,32 +142,11 @@ namespace rpwa {
 		                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
 		                  const bool debug);
 
-		virtual void getParameters(double* par) const;
-		virtual void setParameters(const double* par);
-
-		virtual double getParameter(const size_t idx) const;
-		virtual void setParameter(const size_t idx, const double value);
-		virtual bool getParameterFixed(const size_t idx) const;
-		virtual void setParameterFixed(const size_t idx, const bool fixed);
-		virtual std::pair<double, double> getParameterLimits(const size_t idx) const ;
-		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits);
-
 		virtual std::complex<double> val(const double m) const;
 
 		std::ostream& print(std::ostream& out) const;
 
 	private:
-
-		double _m0;
-		double _m02;
-		double _m0min;
-		double _m0max;
-		bool _fixm;
-
-		double _gamma;
-		double _gammamin;
-		double _gammamax;
-		bool _fixgamma;
 
 		bool _constWidth;
 
@@ -179,29 +165,9 @@ namespace rpwa {
 		                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
 		                  const bool debug);
 
-		virtual void getParameters(double* par) const;
-		virtual void setParameters(const double* par);
-
-		virtual double getParameter(const size_t idx) const;
-		virtual void setParameter(const size_t idx, const double value);
-		virtual bool getParameterFixed(const size_t idx) const;
-		virtual void setParameterFixed(const size_t idx, const bool fixed);
-		virtual std::pair<double, double> getParameterLimits(const size_t idx) const;
-		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits);
-
 		virtual std::complex<double> val(const double m) const;
 
   private:
-
-		double _m0;
-		double _m0min;
-		double _m0max;
-		bool _fixm;
-
-		double _gamma;
-		double _gammamin;
-		double _gammamax;
-		bool _fixgamma;
 
 		double _m1;
 		double _m2;
