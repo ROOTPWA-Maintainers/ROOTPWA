@@ -63,7 +63,11 @@ pwachannel::pwachannel(const pwachannel& ch) /// cp ctor
 massDepFitComponent::massDepFitComponent(const string& name,
                                          const size_t nrParameters)
 	: _name(name),
-	  _nrParameters(nrParameters)
+	  _nrParameters(nrParameters),
+	  _parameters(nrParameters),
+	  _parametersLimits(nrParameters),
+	  _parametersFixed(nrParameters),
+	  _parametersNames(nrParameters)
 {
 }
 
@@ -77,6 +81,39 @@ massDepFitComponent::init(const libconfig::Setting* configComponent,
 	if(debug) {
 		printDebug << "starting initialization of 'massDepFitComponent' for component '" << getName() << "'." << endl;
 	}
+
+	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
+		if(debug) {
+			printDebug << "reading parameter '" << _parametersNames[idxParameter] << "'." << endl;
+		}
+
+		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersNames[idxParameter]);
+		if(not configParameter) {
+			printErr << "component '" << getName() << "' has no section '" << _parametersNames[idxParameter] << "'." << endl;
+			return false;
+		}
+
+		map<string, libconfig::Setting::Type> mandatoryArguments;
+		boost::assign::insert(mandatoryArguments)
+		                     ("val", libconfig::Setting::TypeFloat)
+		                     ("lower", libconfig::Setting::TypeFloat)
+		                     ("upper", libconfig::Setting::TypeFloat)
+		                     ("fix", libconfig::Setting::TypeBoolean);
+
+		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
+			printErr << "the '" << _parametersNames[idxParameter] << "' section of the component '" << getName() << "' does not contain all required fields." << endl;
+			return false;
+		}
+
+
+		configParameter->lookupValue("val", _parameters[idxParameter]);
+		configParameter->lookupValue("lower", _parametersLimits[idxParameter].first);
+		configParameter->lookupValue("upper", _parametersLimits[idxParameter].second);
+		bool fixed;
+		configParameter->lookupValue("fix", fixed);
+		_parametersFixed[idxParameter] = fixed;
+	}
+
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
 	if(not decayChannels) {
@@ -152,6 +189,66 @@ massDepFitComponent::setCouplings(const double* par)
 }
 
 
+void
+massDepFitComponent::getParameters(double* par) const
+{
+	for(size_t idx=0; idx<_nrParameters; ++idx) {
+		par[idx] = _parameters[idx];
+	}
+}
+
+
+void
+massDepFitComponent::setParameters(const double* par)
+{
+	for(size_t idx=0; idx<_nrParameters; ++idx) {
+		_parameters[idx] = par[idx];
+	}
+}
+
+
+double
+massDepFitComponent::getParameter(const size_t idx) const
+{
+	return _parameters[idx];
+}
+
+
+void
+massDepFitComponent::setParameter(const size_t idx, const double value)
+{
+	_parameters[idx] = value;
+}
+
+
+bool
+massDepFitComponent::getParameterFixed(const size_t idx) const
+{
+	return _parametersFixed[idx];
+}
+
+
+void
+massDepFitComponent::setParameterFixed(const size_t idx, const bool fixed)
+{
+	_parametersFixed[idx] = fixed;
+}
+
+
+pair<double, double>
+massDepFitComponent::getParameterLimits(const size_t idx) const
+{
+	return _parametersLimits[idx];
+}
+
+
+void
+massDepFitComponent::setParameterLimits(const size_t idx, const pair<double, double>& limits)
+{
+	_parametersLimits[idx] = limits;
+}
+
+
 ostream&
 massDepFitComponent::print(ostream& out) const
 {
@@ -166,6 +263,8 @@ massDepFitComponent::print(ostream& out) const
 pwacomponent::pwacomponent(const string& name)
 	: massDepFitComponent(name, 2)
 {
+	_parametersNames[0] = "mass";
+	_parametersNames[1] = "width";
 }
 
 
@@ -184,45 +283,11 @@ pwacomponent::init(const libconfig::Setting* configComponent,
 		return false;
 	}
 
-	map<string, libconfig::Setting::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("val", libconfig::Setting::TypeFloat)
-	                     ("lower", libconfig::Setting::TypeFloat)
-	                     ("upper", libconfig::Setting::TypeFloat)
-	                     ("fix", libconfig::Setting::TypeBoolean);
-
-	const libconfig::Setting* configMass = findLibConfigGroup(*configComponent, "mass");
-	if(not configMass) {
-		printErr << "component '" << getName() << "' has no section 'mass'." << endl;
-		return false;
-	}
-
-	if(not checkIfAllVariablesAreThere(configMass, mandatoryArguments)) {
-		printErr << "the 'mass' section of the component '" << getName() << "' does not contain all required fields." << endl;
-		return false;
-	}
-
-	configMass->lookupValue("val", _m0);
-	configMass->lookupValue("lower", _m0min);
-	configMass->lookupValue("upper", _m0max);
-	configMass->lookupValue("fix", _fixm);
-	_m02 = _m0*_m0;
-
 	const libconfig::Setting* configWidth = findLibConfigGroup(*configComponent, "width");
 	if(not configWidth) {
 		printErr << "component '" << getName() << "' has no section 'width'." << endl;
 		return false;
 	}
-
-	if(not checkIfAllVariablesAreThere(configWidth, mandatoryArguments)) {
-		printErr << "the 'width' section of the component '" << getName() << "' does not contain all required fields." << endl;
-		return false;
-	}
-
-	configWidth->lookupValue("val", _gamma);
-	configWidth->lookupValue("lower", _gammamin);
-	configWidth->lookupValue("upper", _gammamax);
-	configWidth->lookupValue("fix", _fixgamma);
 
 	if(not configWidth->lookupValue("dyn", _constWidth)) {
 		_constWidth = false;
@@ -230,8 +295,12 @@ pwacomponent::init(const libconfig::Setting* configComponent,
 	_constWidth = !_constWidth;
 
 	printInfo << "component '" << getName() << "':" << endl
-	          << "mass: " << _m0 << " MeV/c^2, limits: " << _m0min << "-" << _m0max << " MeV/c^2 " << (_fixm ? "(FIXED)" : "") << endl
-	          << "width: " << _gamma << " MeV/c^2, limits: " << _gammamin << "-" << _gammamax << " MeV/c^2 " << (_fixgamma ? "(FIXED) " : "") << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
+	          << "mass: " << _parameters[0] << " MeV/c^2, limits: "
+	                      << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
+	                      << (_parametersFixed[0] ? "(FIXED)" : "") << endl
+	          << "width: " << _parameters[1] << " MeV/c^2, limits: "
+	                       << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
+	                       << (_parametersFixed[1] ? "(FIXED) " : "") << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
 
 	if(debug) {
 		printDebug << "finished initialization of 'pwacomponent'." << endl;
@@ -240,79 +309,10 @@ pwacomponent::init(const libconfig::Setting* configComponent,
 }
 
 
-void
-pwacomponent::getParameters(double* par) const
-{
-	par[0]=_m0;
-	par[1]=_gamma;
-}
-
-
-void
-pwacomponent::setParameters(const double* par)
-{
-	_m0=par[0];
-	_m02=par[0] * par[0];
-	_gamma=par[1];
-}
-
-
-double
-pwacomponent::getParameter(const size_t idx) const
-{
-	if(idx == 0) return _m0;
-	if(idx == 1) return _gamma;
-	throw;
-}
-
-
-void
-pwacomponent::setParameter(const size_t idx, const double value)
-{
-	if(idx == 0) { _m0 = value; return; }
-	if(idx == 1) { _gamma = value; return; }
-	throw;
-}
-
-
-bool
-pwacomponent::getParameterFixed(const size_t idx) const
-{
-	if(idx == 0) return _fixm;
-	if(idx == 1) return _fixgamma;
-	throw;
-}
-
-
-void
-pwacomponent::setParameterFixed(const size_t idx, const bool fixed)
-{
-	if(idx == 0) { _fixm = fixed; return; }
-	if(idx == 1) { _fixgamma = fixed; return; }
-	throw;
-}
-
-
-pair<double, double>
-pwacomponent::getParameterLimits(const size_t idx) const
-{
-	if(idx == 0) return make_pair(_m0min, _m0max);
-	if(idx == 1) return make_pair(_gammamin, _gammamax);
-	throw;
-}
-
-
-void
-pwacomponent::setParameterLimits(const size_t idx, const pair<double, double>& limits)
-{
-	if(idx == 0) { _m0min = limits.first; _m0max = limits.second; return; }
-	if(idx == 1) { _gammamin = limits.first; _gammamax = limits.second; return; }
-	throw;
-}
-
-
 complex<double>
 pwacomponent::val(const double m) const {
+	const double& m0 = _parameters[0];
+	const double& gamma0 = _parameters[1];
 	// calculate dynamic width:
 	// loop over decay channels
 	double ps = 1.;
@@ -321,16 +321,16 @@ pwacomponent::val(const double m) const {
 		for(vector<pwachannel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
 			double myps=1.;
 			if(itChan->ps() != NULL){
-				double ps0=itChan->ps(_m0);
+				double ps0=itChan->ps(m0);
 				myps=(itChan->ps(m))/ps0;
 			}
 			ps+=myps;
 		}
 		ps /= getNrChannels();
 	}
-	const double gamma = _gamma*ps;
+	const double gamma = gamma0*ps;
   
-	return _gamma*_m0 / complex<double>(_m02-m*m, -gamma*_m0);
+	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma*m0);
 }
 
 
@@ -338,7 +338,7 @@ ostream&
 pwacomponent::print(ostream& out) const
 {
 	out << getName() << endl
-	    << "Mass=" << _m0 << "   Width=" << _gamma << "    ConstWidth=" << _constWidth << endl;
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    ConstWidth=" << _constWidth << endl;
 	return massDepFitComponent::print(out);
 }
 
@@ -346,6 +346,8 @@ pwacomponent::print(ostream& out) const
 pwabkg::pwabkg(const string& name)
 	: massDepFitComponent(name, 2)
 {
+	_parametersNames[0] = "m0";
+	_parametersNames[1] = "g";
 }
 
 
@@ -364,45 +366,6 @@ pwabkg::init(const libconfig::Setting* configComponent,
 		return false;
 	}
 
-	map<string, libconfig::Setting::Type> mandatoryArguments;
-	boost::assign::insert(mandatoryArguments)
-	                     ("val", libconfig::Setting::TypeFloat)
-	                     ("lower", libconfig::Setting::TypeFloat)
-	                     ("upper", libconfig::Setting::TypeFloat)
-	                     ("fix", libconfig::Setting::TypeBoolean);
-
-	const libconfig::Setting* configMass = findLibConfigGroup(*configComponent, "m0");
-	if(not configMass) {
-		printErr << "component '" << getName() << "' has no section 'mass'." << endl;
-		return false;
-	}
-
-	if(not checkIfAllVariablesAreThere(configMass, mandatoryArguments)) {
-		printErr << "the 'mass' section of the component '" << getName() << "' does not contain all required fields." << endl;
-		return false;
-	}
-
-	configMass->lookupValue("val", _m0);
-	configMass->lookupValue("lower", _m0min);
-	configMass->lookupValue("upper", _m0max);
-	configMass->lookupValue("fix", _fixm);
-
-	const libconfig::Setting* configWidth = findLibConfigGroup(*configComponent, "g");
-	if(not configWidth) {
-		printErr << "component '" << getName() << "' has no section 'width'." << endl;
-		return false;
-	}
-
-	if(not checkIfAllVariablesAreThere(configWidth, mandatoryArguments)) {
-		printErr << "the 'width' section of the component '" << getName() << "' does not contain all required fields." << endl;
-		return false;
-	}
-
-	configWidth->lookupValue("val", _gamma);
-	configWidth->lookupValue("lower", _gammamin);
-	configWidth->lookupValue("upper", _gammamax);
-	configWidth->lookupValue("fix", _fixgamma);
-
 	map<string, libconfig::Setting::Type> mandatoryArgumentsIsobarMasses;
 	boost::assign::insert(mandatoryArgumentsIsobarMasses)
 	                     ("mIsobar1", libconfig::Setting::TypeFloat)
@@ -416,8 +379,12 @@ pwabkg::init(const libconfig::Setting* configComponent,
 	configComponent->lookupValue("mIsobar2", _m2);
 
 	printInfo << "component '" << getName() << "':" << endl
-	          << "mass: " << _m0 << " MeV/c^2, limits: " << _m0min << "-" << _m0max << " MeV/c^2 " << (_fixm ? "(FIXED)" : "") << endl
-	          << "width: " << _gamma << " MeV/c^2, limits: " << _gammamin << "-" << _gammamax << " MeV/c^2 " << (_fixgamma ? "(FIXED) " : "") << endl
+	          << "mass: " << _parameters[0] << " MeV/c^2, limits: "
+	                      << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
+	                      << (_parametersFixed[0] ? "(FIXED)" : "") << endl
+	          << "width: " << _parameters[1] << " MeV/c^2, limits: "
+	                       << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
+	                       << (_parametersFixed[1] ? "(FIXED) " : "") << endl
 	          << "mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
 
 	if(debug) {
@@ -428,80 +395,10 @@ pwabkg::init(const libconfig::Setting* configComponent,
 }
 
 
-void
-pwabkg::getParameters(double* par) const
-{
-	par[0]=_m0;
-	par[1]=_gamma;
-}
-
-
-void
-pwabkg::setParameters(const double* par)
-{
-	_m0=par[0];
-	_gamma=par[1];
-}
-
-
-double
-pwabkg::getParameter(const size_t idx) const
-{
-	if(idx == 0) return _m0;
-	if(idx == 1) return _gamma;
-	throw;
-}
-
-
-void
-pwabkg::setParameter(const size_t idx, const double value)
-{
-	if(idx == 0) { _m0 = value; return; }
-	if(idx == 1) { _gamma = value; return; }
-	throw;
-}
-
-
-bool
-pwabkg::getParameterFixed(const size_t idx) const
-{
-	if(idx == 0) return _fixm;
-	if(idx == 1) return _fixgamma;
-	throw;
-}
-
-
-void
-pwabkg::setParameterFixed(const size_t idx, const bool fixed)
-{
-	if(idx == 0) { _fixm = fixed; return; }
-	if(idx == 1) { _fixgamma = fixed; return; }
-	throw;
-}
-
-
-pair<double, double>
-pwabkg::getParameterLimits(const size_t idx) const
-{
-	if(idx == 0) return make_pair(_m0min, _m0max);
-	if(idx == 1) return make_pair(_gammamin, _gammamax);
-	throw;
-}
-
-
-void
-pwabkg::setParameterLimits(const size_t idx, const pair<double, double>& limits)
-{
-	if(idx == 0) { _m0min = limits.first; _m0max = limits.second; return; }
-	if(idx == 1) { _gammamin = limits.first; _gammamax = limits.second; return; }
-	throw;
-}
-
-
 complex<double>
 pwabkg::val(const double m) const {
 	// shift baseline mass
-	const double mass = m-_m0;
+	const double mass = m - _parameters[0];
 
 	// calculate breakup momentum
 	if(mass < _m1+_m2) {
@@ -509,5 +406,5 @@ pwabkg::val(const double m) const {
 	}
 	const complex<double> p = q(mass,_m1,_m2);
 
-	return exp(-_gamma*p.real()*p.real());
+	return exp(-_parameters[1]*p.real()*p.real());
 }
