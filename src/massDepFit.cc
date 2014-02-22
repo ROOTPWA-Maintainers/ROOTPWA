@@ -354,6 +354,7 @@ massDepFit::readConfigModelComponents(const Setting* configComponents,
 			return false;
 		}
 
+		// FIXME: make sure only each name is used only once
 		string name;
 		configComponent->lookupValue("name", name);
 
@@ -496,8 +497,8 @@ massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 
 bool
 massDepFit::updateConfigModel(const Setting* configRoot,
-                              massDepFitModel& fitModel,
-                              Minimizer* minimizer) const
+                              const massDepFitModel& fitModel,
+                              const Minimizer* minimizer) const
 {
 	if(_debug) {
 		printDebug << "updating fit model in configuration file." << endl;
@@ -528,13 +529,54 @@ massDepFit::updateConfigModel(const Setting* configRoot,
 
 bool
 massDepFit::updateConfigModelComponents(const Setting* configComponents,
-                                        massDepFitModel& fitModel,
-                                        Minimizer* minimizer) const
+                                        const massDepFitModel& fitModel,
+                                        const Minimizer* minimizer) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << endl;
 		return false;
 	}
+
+	const int nrComponents = configComponents->getLength();
+	if(nrComponents != fitModel.n()) {
+		printErr << "number of components in configuration file and fit model does not match." << endl;
+		return false;
+	}
+
+	printInfo << "updating " << nrComponents << " components in configuration file." << endl;
+
+	for(int idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+		const Setting* configComponent = &((*configComponents)[idxComponent]);
+
+		map<string, Setting::Type> mandatoryArguments;
+		insert(mandatoryArguments)
+		      ("name", Setting::TypeString);
+		if(not checkIfAllVariablesAreThere(configComponent, mandatoryArguments)) {
+			printErr << "'components' list in 'components' section in configuration file contains errors." << endl;
+			return false;
+		}
+
+		string name;
+		configComponent->lookupValue("name", name);
+
+		const massDepFitComponent* component = NULL;
+		for(size_t idx=0; idx<nrComponents; ++idx) {
+			if(fitModel[idx]->getName() == name) {
+				component = fitModel[idx];
+				break;
+			}
+		}
+		if(not component) {
+			printErr << "could not find component '" << name << "' in fit model." << endl;
+			return false;
+		}
+
+		if(not component->update(configComponent, minimizer, _debug)) {
+			printErr << "error while updating component '" << name << "'." << endl;
+			return false;
+		}
+	}
+
 
 	return true;
 }
@@ -542,8 +584,8 @@ massDepFit::updateConfigModelComponents(const Setting* configComponents,
 
 bool
 massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
-                                  massDepFitModel& fitModel,
-                                  Minimizer* minimizer) const
+                                  const massDepFitModel& fitModel,
+                                  const Minimizer* minimizer) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -1226,22 +1268,22 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
     const double gmin = comp->getParameterLimits(1).first;
     const double gmax = comp->getParameterLimits(1).second;
     if(comp->getParameterFixed(0) || level==0)minimizer->SetFixedVariable(parcount,
-					       (name+"_M").Data() ,
+					       (name+comp->getParameterName(0)).Data() ,
 					       par[parcount]);
-    else minimizer->SetLimitedVariable(parcount,
-				       (name+"_M").Data(),
-				       par[parcount],
+    else minimizer->SetLimitedVariable(parcount, 
+				       (name+comp->getParameterName(0)).Data(), 
+				       par[parcount], 
 				       5.0,
 				       mmin,mmax);
     if(level==0 && !comp->getParameterFixed(0)) printInfo << minimizer->VariableName(parcount) 
 			   << " fixed to " << par[parcount] << endl;
     ++parcount;
     if(comp->getParameterFixed(1) || level < 2)minimizer->SetFixedVariable(parcount,
-						   (name+"_Gamma").Data() ,
+						   (name+comp->getParameterName(1)).Data() ,
 						    par[parcount]);
-    else minimizer->SetLimitedVariable(parcount,
-				       (name+"_Gamma").Data(),
-				       par[parcount],
+    else minimizer->SetLimitedVariable(parcount, 
+				       (name+comp->getParameterName(1)).Data(), 
+				       par[parcount], 
 				       5.0,
 				       gmin,gmax);
     if(level<2 && !comp->getParameterFixed(1)) printInfo << minimizer->VariableName(parcount) 
@@ -1492,18 +1534,18 @@ main(int    argc,
     const double gmin = comp->getParameterLimits(1).first;
     const double gmax = comp->getParameterLimits(1).second;
     if(comp->getParameterFixed(0))minimizer->SetFixedVariable(parcount++,
-					       (name+"_M").Data() ,
+					       (name+comp->getParameterName(0)).Data() ,
 					       comp->getParameter(0));
     else minimizer->SetLimitedVariable(parcount++, 
-				       (name+"_M").Data(), 
+				       (name+comp->getParameterName(0)).Data(), 
 				       comp->getParameter(0), 
 				       0.10,
 				       mmin,mmax);
     if(comp->getParameterFixed(1))minimizer->SetFixedVariable(parcount++,
-						   (name+"_Gamma").Data() ,
+						   (name+comp->getParameterName(1)).Data() ,
 						   comp->getParameter(1));
     else minimizer->SetLimitedVariable(parcount++, 
-				       (name+"_Gamma").Data(), 
+				       (name+comp->getParameterName(1)).Data(), 
 				       comp->getParameter(1), 
 				       0.01,
 				       gmin,gmax);
@@ -1649,97 +1691,6 @@ main(int    argc,
 		printErr << "error while updating fit model in configuration file." << endl;
 		exit(1);
 	}
-
-
-  // Setup Component Set (Resonances + Background)
-  const Setting& bws= configRoot["components"]["components"];
-  unsigned int nbws=bws.getLength();
-  // loop over components
-  unsigned int nc=compset.n();
-  for(unsigned int ic=0;ic<nc;++ic){
-    const massDepFitComponent* comp = compset[ic];
-    string name=comp->getName();
-    // search corresponding setting
-
-    string sname;
-    string type;
-    bool found=false;
-    for(unsigned int is=0;is<nbws;++is){
-      const Setting& bw = bws[is];
-      bw.lookupValue("name",     sname);
-      if (not bw.lookupValue("type", type)) type = "relativisticBreitWigner";
-      if(sname==name){
-	found=true;
-        if(type == "relativisticBreitWigner") {
-            // set values to this setting
-            Setting& sm = bw["mass"];
-            Setting& smval = sm["val"];
-            smval = comp->getParameter(0);
-            Setting& smerr = sm["error"];
-            TString merrname=name+"_M";
-            smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
-	
-            Setting& sw = bw["width"];
-            Setting& swval = sw["val"];
-            swval = comp->getParameter(1);
-
-            Setting& swerr = sw["error"];
-            TString werrname=name+"_Gamma";
-            swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
-
-            cout << name 
-                 << "   mass="<<double(smval)<<" +- "<<double(smerr)
-                 << "   width="<<double(swval)<<" +- "<<double(swerr)<< endl;
-        } else if(type == "exponentialBackground") {
-            // set values to this setting
-            Setting& sm = bw["m0"];
-            Setting& smval = sm["val"];
-            smval = comp->getParameter(0);
-            Setting& smerr = sm["error"];
-            TString merrname=name+"_M";
-            smerr=minimizer->Errors()[minimizer->VariableIndex(merrname.Data())];
-	
-            Setting& sw = bw["g"];
-            Setting& swval = sw["val"];
-            swval = comp->getParameter(1);
-
-            Setting& swerr = sw["error"];
-            TString werrname=name+"_Gamma";
-            swerr=minimizer->Errors()[minimizer->VariableIndex(werrname.Data())];
-
-            cout << name 
-                 << "   mass="<<double(smval)<<" +- "<<double(smerr)
-                 << "   width="<<double(swval)<<" +- "<<double(swerr)<< endl;
-        }
-
-	// loop through channel and fix couplings
-	const Setting& sChn=bw["decaychannels"];
-	unsigned int nCh=sChn.getLength();
-	const std::vector<pwachannel >& ch=comp->getChannels();
-	std::vector<pwachannel>::const_iterator it=ch.begin();
-	for(;it!=ch.end();++it){
-	  std::complex<double> c= it->C();
-	  string ampname=it->getWaveName();
-	  // loop through channels in setting
-	  for(unsigned int isc=0;isc<nCh;++isc){
-	    Setting& sCh=sChn[isc];
-	    string amp; sCh.lookupValue("amp",amp);
-	    if(amp==ampname){
-	      Setting& sRe=sCh["coupling_Re"];
-	      sRe=c.real();
-	      Setting& sIm=sCh["coupling_Im"];
-	       sIm=c.imag();
-	      break;
-	    } // endif
-	  } // end loop through cannels in setting
-
-	} // end loop through channels of component
-
-	break;
-      }
-    }
-  }
-
 
   
   string outconfig(outFileName);

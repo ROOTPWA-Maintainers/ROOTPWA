@@ -31,6 +31,11 @@
 namespace libconfig {
 	class Setting;
 }
+namespace ROOT {
+	namespace Math {
+		class Minimizer;
+	}
+}
 class TF1;
 
 namespace rpwa {
@@ -89,6 +94,10 @@ namespace rpwa {
 		                  const boost::multi_array<double, 2>& phaseSpaceIntegrals,
 		                  const bool debug);
 
+		virtual bool update(const libconfig::Setting* configComponent,
+		                    const ROOT::Math::Minimizer* minimizer,
+		                    const bool debug) const;
+
 		const size_t getNrChannels() const { return _channels.size(); }
 		const std::vector<pwachannel>& getChannels() const { return _channels; }
 		const pwachannel& getChannel(const size_t i) const { return _channels[i]; } 
@@ -102,11 +111,9 @@ namespace rpwa {
 		virtual void setParameters(const double* par);
 
 		virtual double getParameter(const size_t idx) const;
-		virtual void setParameter(const size_t idx, const double value);
 		virtual bool getParameterFixed(const size_t idx) const;
-		virtual void setParameterFixed(const size_t idx, const bool fixed);
 		virtual std::pair<double, double> getParameterLimits(const size_t idx) const;
-		virtual void setParameterLimits(const size_t idx, const std::pair<double, double>& limits);
+		virtual const std::string& getParameterName(const size_t idx) const;
 
 		virtual std::complex<double> val(const double m) const = 0;
 

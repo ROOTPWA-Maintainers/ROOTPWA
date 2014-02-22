@@ -33,8 +33,8 @@ namespace rpwa {
 
 // FIXME: make private
 		bool updateConfigModel(const libconfig::Setting* configRoot,
-		                       massDepFitModel& fitModel,
-		                       ROOT::Math::Minimizer* minimizer) const;
+		                       const massDepFitModel& fitModel,
+		                       const ROOT::Math::Minimizer* minimizer) const;
 
 // FIXME: make private
 		bool readInFile(const std::string& valTreeName   = "pwa",
@@ -99,11 +99,11 @@ namespace rpwa {
 		                         massDepFitModel& fitModel) const;
 
 		bool updateConfigModelComponents(const libconfig::Setting* configComponents,
-		                                 massDepFitModel& fitModel,
-		                                 ROOT::Math::Minimizer* minimizer) const;
+		                                 const massDepFitModel& fitModel,
+		                                 const ROOT::Math::Minimizer* minimizer) const;
 		bool updateConfigModelFsmd(const libconfig::Setting* configFsmd,
-		                           massDepFitModel& fitModel,
-		                           ROOT::Math::Minimizer* minimizer) const;
+		                           const massDepFitModel& fitModel,
+		                           const ROOT::Math::Minimizer* minimizer) const;
 
 		bool readSystematicsFile(const size_t idxSystematics,
 		                         const std::string& valTreeName   = "pwa",
