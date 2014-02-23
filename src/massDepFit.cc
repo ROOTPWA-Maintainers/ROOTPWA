@@ -357,9 +357,15 @@ massDepFit::readConfigModelComponents(const Setting* configComponents,
 			return false;
 		}
 
-		// FIXME: make sure only each name is used only once
 		string name;
 		configComponent->lookupValue("name", name);
+
+		for(int idx=0; idx<fitModel.n(); ++idx) {
+			if(fitModel[idx]->getName() == name) {
+				printErr << "component '" << name << "' defined twice." << endl;
+				return false;
+			}
+		}
 
 		string type;
 		if(not configComponent->lookupValue("type", type)) {
@@ -1780,7 +1786,7 @@ main(int    argc,
 	extern char* optarg;
 	extern int   optind;
 	int c;
-	while ((c = getopt(argc, argv, "o:M:m:g:t:PRCdqh")) != -1)
+	while ((c = getopt(argc, argv, "o:M:m:g:t:PRCdqh")) != -1) {
 		switch (c) {
 		case 'o':
 			outFileName = optarg;
@@ -1817,6 +1823,7 @@ main(int    argc,
 			usage(progName, 1);
 			break;
 		}
+	}
 
 	// there must only be one remaining (unhandled) argument which is the
 	// configuration file
@@ -1872,12 +1879,6 @@ main(int    argc,
 		return 1;
 	}
 
-  printInfo << "creating and setting up likelihood function" << endl;
-  printInfo << "doCovariances = " << doCov << endl;
-
-  
- cout << "---------------------------------------------------------------------" << endl << endl;
-
 	if(not compset.init(mdepFit.getWaveNames(), mdepFit.getMassBinCenters())) {
 		printErr << "error while initializing the fit model." << endl;
 		return 1;
@@ -1906,8 +1907,14 @@ main(int    argc,
   }
 
 
+  
     cout << "---------------------------------------------------------------------" << endl << endl;
  
+  printInfo << "creating and setting up likelihood function" << endl;
+  printInfo << "doCovariances = " << doCov << endl;
+
+
+
 	massDepFitLikeli L;
 	L.init(&compset,
 	       mdepFit.getMassBinCenters(),

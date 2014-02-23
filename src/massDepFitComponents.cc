@@ -137,6 +137,14 @@ massDepFitComponent::init(const libconfig::Setting* configComponent,
 		string waveName;
 		decayChannel->lookupValue("amp", waveName);
 
+		// check that a wave with this wave is not yet in the decay channels
+		for(size_t idx=0; idx<_channels.size(); ++idx) {
+			if(_channels[idx].getWaveName() == waveName) {
+				printErr << "wave '" << waveName << "' defined twice in the decay channels of '" << getName() << "'." << endl;
+				return false;
+			}
+		}
+
 		double couplingReal;
 		decayChannel->lookupValue("coupling_Re", couplingReal);
 
