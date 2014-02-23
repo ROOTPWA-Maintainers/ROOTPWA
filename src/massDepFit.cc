@@ -60,6 +60,7 @@
 #include <libconfig.h++>
 
 #include "ampIntegralMatrix.h"
+#include "fileUtils.hpp"
 #include "fitResult.h"
 #include "libConfigUtils.hpp"
 #include "massDepFit.h"
@@ -282,8 +283,8 @@ massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 		return false;
 	}
 
-	for(int idxSystematic=0; idxSystematic<nrSystematics; ++idxSystematic) {
-		const string fileName = (*configInputSystematics)[idxSystematic];
+	for(int idxSystematics=0; idxSystematics<nrSystematics; ++idxSystematics) {
+		const string fileName = (*configInputSystematics)[idxSystematics];
 		if(_debug) {
 			printDebug << "'" << fileName << "' will be read to get information for systematic errors." << endl;
 		}
@@ -1209,6 +1210,427 @@ massDepFit::prepareMassLimits()
 }
 
 
+bool
+massDepFit::createPlots(const massDepFitModel& fitModel,
+                        TFile* outFile,
+                        const bool rangePlotting) const
+{
+	if(_debug) {
+		printDebug << "start creating plots." << endl;
+	}
+
+	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		if(not createPlotsWave(fitModel, outFile, rangePlotting, idxWave)) {
+			printErr << "error while creating intensity plots for wave '" << _waveNames[idxWave] << "'." << endl;
+			return false;
+		}
+	}
+
+	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		for(size_t jdxWave=idxWave+1; jdxWave<_nrWaves; ++jdxWave) {
+			if(not createPlotsWavePair(fitModel, outFile, rangePlotting, idxWave, jdxWave)) {
+				printErr << "error while creating intensity plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "'." << endl;
+				return false;
+			}
+		}
+	}
+
+	if (fitModel.getFsmdFunction() != NULL) {
+		TF1* func = fitModel.getFsmdFunction();
+
+		TGraph graph;
+		graph.SetName("finalStateMassDependence");
+		graph.SetTitle("finalStateMassDependence");
+		graph.SetDrawOption("CP");
+
+		Int_t point = -1;
+		for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+			++point;
+			const double mass = _massBinCenters[idxMass] * MASSSCALE;
+
+			graph.SetPoint(point, mass, func->Eval(_massBinCenters[idxMass]));
+		}
+
+		graph.Write();
+	}
+
+	if(_debug) {
+		printDebug << "finished creating plots." << endl;
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::createPlotsWave(const massDepFitModel& fitModel,
+                            TFile* outFile,
+                            const bool rangePlotting,
+                            const size_t idxWave) const
+{
+	if(_debug) {
+		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "'." << endl;
+	}
+
+	TMultiGraph graphs;
+	graphs.SetName(_waveNames[idxWave].c_str());
+	graphs.SetTitle(_waveNames[idxWave].c_str());
+	graphs.SetDrawOption("AP");
+
+	TGraphErrors* systematics = NULL;
+	if(_sysPlotting) {
+		systematics = new TGraphErrors;
+		systematics->SetName((_waveNames[idxWave] + "__sys").c_str());
+		systematics->SetTitle((_waveNames[idxWave] + "__sys").c_str());
+		systematics->SetLineColor(kAzure-9);
+		systematics->SetFillColor(kAzure-9);
+		systematics->SetDrawOption("2");
+		graphs.Add(systematics, "2");
+	}
+
+	TGraphErrors* data = new TGraphErrors;
+	data->SetName((_waveNames[idxWave] + "__data").c_str());
+	data->SetTitle((_waveNames[idxWave] + "__data").c_str());
+	data->SetDrawOption("AP");
+	graphs.Add(data, "P");
+
+	TGraph* fit = new TGraph;
+	fit->SetName((_waveNames[idxWave] + "__fit").c_str());
+	fit->SetTitle((_waveNames[idxWave] + "__fit").c_str());
+	fit->SetLineColor(kRed);
+	fit->SetLineWidth(2);
+	fit->SetMarkerColor(kRed);
+	fit->SetDrawOption("AP");
+	graphs.Add(fit, "CP");
+
+	TGraph* phaseSpace = new TGraph;
+	phaseSpace->SetName((_waveNames[idxWave] + "__ps").c_str());
+	phaseSpace->SetTitle((_waveNames[idxWave] + "__ps").c_str());
+	graphs.Add(phaseSpace, "CP");
+
+	const std::vector<std::pair<unsigned int, unsigned int> >& compChannel = fitModel.getCompChannel(idxWave);
+	std::vector<TGraph*> components;
+	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
+		const size_t idxComponent = compChannel[idxComponents].first;
+		TGraph* component = new TGraph;
+		component->SetName((_waveNames[idxWave] + "__" + fitModel[idxComponent]->getName()).c_str());
+		component->SetTitle((_waveNames[idxWave] + "__" + fitModel[idxComponent]->getName()).c_str());
+
+		Color_t color = kBlue;
+		if(fitModel[idxComponent]->getName().find("bkg") != string::npos) {
+			color = kMagenta;
+		}
+		component->SetLineColor(color);
+		component->SetMarkerColor(color);
+
+		graphs.Add(component, "CP");
+		components.push_back(component);
+	}
+
+	double maxP = -numeric_limits<double>::max();
+	double maxIE = -numeric_limits<double>::max();
+	Int_t point = -1;
+	Int_t pointLimit = -1;
+	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+		++point;
+		const double mass = _massBinCenters[idxMass] * MASSSCALE;
+		const double halfBin = _massStep/2000.;
+
+		data->SetPoint(point, mass, _inIntensities[idxMass][idxWave][0]);
+		data->SetPointError(point, halfBin, _inIntensities[idxMass][idxWave][1]);
+		maxIE = max(maxIE, _inIntensities[idxMass][idxWave][0]+_inIntensities[idxMass][idxWave][1]);
+
+		if(_sysPlotting) {
+			double maxSI = -numeric_limits<double>::max();
+			double minSI = numeric_limits<double>::max();
+			for(size_t idxSystematics=0; idxSystematics<_nrSystematics; ++idxSystematics) {
+				maxSI = max(maxSI, _sysIntensities[idxSystematics][idxMass][idxWave][0]);
+				minSI = min(minSI, _sysIntensities[idxSystematics][idxMass][idxWave][0]);
+			}
+			systematics->SetPoint(point, mass, (maxSI+minSI)/2.);
+			systematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
+			maxIE = max(maxIE, maxSI);
+		}
+
+		phaseSpace->SetPoint(point, mass, _inPhaseSpaceIntegrals[idxMass][idxWave]);
+		maxP = max(maxP, _inPhaseSpaceIntegrals[idxMass][idxWave]);
+
+		// check that this mass bin should be taken into account for this
+		// combination of waves
+		if(rangePlotting && (idxMass < _wavePairMassBinLimits[idxWave][idxWave].first || idxMass > _wavePairMassBinLimits[idxWave][idxWave].second)) {
+			continue;
+		}
+		++pointLimit;
+
+		fit->SetPoint(pointLimit, mass, fitModel.intensity(idxWave, _massBinCenters[idxMass], idxMass));
+		maxIE = max(maxIE, fitModel.intensity(idxWave, _massBinCenters[idxMass], idxMass));
+
+		for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
+			const size_t idxComponent = compChannel[idxComponents].first;
+			const size_t idxChannel = compChannel[idxComponents].second;
+
+			complex<double> prodAmp = fitModel[idxComponent]->val(_massBinCenters[idxMass]);
+			prodAmp *= fitModel[idxComponent]->getChannel(idxChannel).CsqrtPS(_massBinCenters[idxMass]);
+			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
+
+			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
+			maxIE = max(maxIE, norm(prodAmp));
+		}
+	}
+
+	for(Int_t idx=0; idx<phaseSpace->GetN(); ++idx) {
+		double x, y;
+		phaseSpace->GetPoint(idx, x, y);
+		phaseSpace->SetPoint(idx, x, y * 0.5 * maxIE/maxP);
+	}
+
+	outFile->cd();
+	graphs.Write();
+
+	return true;
+}
+
+
+bool
+massDepFit::createPlotsWavePair(const massDepFitModel& fitModel,
+                                TFile* outFile,
+                                const bool rangePlotting,
+                                const size_t idxWave,
+                                const size_t jdxWave) const
+{
+	if(_debug) {
+		printDebug << "start creating plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "'." << endl;
+	}
+
+	const string phaseName = _waveNames[idxWave] + "__" + _waveNames[jdxWave] + "__phase";
+	const string realName = _waveNames[idxWave] + "__" + _waveNames[jdxWave] + "__real";
+	const string imagName = _waveNames[idxWave] + "__" + _waveNames[jdxWave] + "__imag";
+
+	TMultiGraph phase;
+	phase.SetName(phaseName.c_str());
+	phase.SetTitle(phaseName.c_str());
+	phase.SetDrawOption("AP");
+
+	TMultiGraph real;
+	real.SetName(realName.c_str());
+	real.SetTitle(realName.c_str());
+	real.SetDrawOption("AP");
+
+	TMultiGraph imag;
+	imag.SetName(imagName.c_str());
+	imag.SetTitle(imagName.c_str());
+	imag.SetDrawOption("AP");
+
+	TGraphErrors* phaseSystematics = NULL;
+	TGraphErrors* realSystematics = NULL;
+	TGraphErrors* imagSystematics = NULL;
+	if(_sysPlotting) {
+		phaseSystematics = new TGraphErrors;
+		phaseSystematics->SetName((phaseName + "__sys").c_str());
+		phaseSystematics->SetTitle((phaseName + "__sys").c_str());
+		phaseSystematics->SetLineColor(kAzure-9);
+		phaseSystematics->SetFillColor(kAzure-9);
+		phaseSystematics->SetDrawOption("2");
+		phase.Add(phaseSystematics, "2");
+
+		realSystematics = new TGraphErrors;
+		realSystematics->SetName((realName + "__sys").c_str());
+		realSystematics->SetTitle((realName + "__sys").c_str());
+		realSystematics->SetLineColor(kAzure-9);
+		realSystematics->SetFillColor(kAzure-9);
+		realSystematics->SetDrawOption("2");
+		real.Add(realSystematics, "2");
+
+		imagSystematics = new TGraphErrors;
+		imagSystematics->SetName((imagName + "__sys").c_str());
+		imagSystematics->SetTitle((imagName + "__sys").c_str());
+		imagSystematics->SetLineColor(kAzure-9);
+		imagSystematics->SetFillColor(kAzure-9);
+		imagSystematics->SetDrawOption("2");
+		imag.Add(imagSystematics, "2");
+	}
+
+	TGraphErrors* phaseData = new TGraphErrors;
+	phaseData->SetName((phaseName + "__data").c_str());
+	phaseData->SetTitle((phaseName + "__data").c_str());
+	phaseData->SetDrawOption("AP");
+	phase.Add(phaseData, "P");
+
+	TGraphErrors* realData = new TGraphErrors;
+	realData->SetName((realName + "__data").c_str());
+	realData->SetTitle((realName + "__data").c_str());
+	realData->SetDrawOption("AP");
+	real.Add(realData, "P");
+
+	TGraphErrors* imagData = new TGraphErrors;
+	imagData->SetName((imagName + "__data").c_str());
+	imagData->SetTitle((imagName + "__data").c_str());
+	imagData->SetDrawOption("AP");
+	imag.Add(imagData, "P");
+
+	TGraph* phaseFit = new TGraph;
+	phaseFit->SetName((phaseName + "__fit").c_str());
+	phaseFit->SetTitle((phaseName + "__fit").c_str());
+	phaseFit->SetLineColor(kRed);
+	phaseFit->SetLineWidth(2);
+	phaseFit->SetMarkerColor(kRed);
+	phaseFit->SetDrawOption("AP");
+	phase.Add(phaseFit, "CP");
+
+	TGraph* realFit = new TGraph;
+	realFit->SetName((realName + "__fit").c_str());
+	realFit->SetTitle((realName + "__fit").c_str());
+	realFit->SetLineColor(kRed);
+	realFit->SetLineWidth(2);
+	realFit->SetMarkerColor(kRed);
+	realFit->SetDrawOption("AP");
+	real.Add(realFit, "CP");
+
+	TGraph* imagFit = new TGraph;
+	imagFit->SetName((imagName + "__fit").c_str());
+	imagFit->SetTitle((imagName + "__fit").c_str());
+	imagFit->SetLineColor(kRed);
+	imagFit->SetLineWidth(2);
+	imagFit->SetMarkerColor(kRed);
+	imagFit->SetDrawOption("AP");
+	imag.Add(imagFit, "CP");
+
+	// keep track of phase over full mass range
+	TGraph phaseFitAll;
+
+	Int_t point = -1;
+	Int_t pointLimit = -1;
+	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+		++point;
+		const double mass = _massBinCenters[idxMass] * MASSSCALE;
+		const double halfBin = _massStep/2000.;
+
+		phaseData->SetPoint(point, mass, _inPhases[idxMass][idxWave][jdxWave][0]);
+		phaseData->SetPointError(point, halfBin, _inPhases[idxMass][idxWave][jdxWave][1]);
+
+		realData->SetPoint(point, mass, _inSpinDensityMatrices[idxMass][idxWave][jdxWave].real());
+		realData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][0]));
+
+		imagData->SetPoint(point, mass, _inSpinDensityMatrices[idxMass][idxWave][jdxWave].imag());
+		imagData->SetPointError(point, halfBin, sqrt(_inSpinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][1][1]));
+
+		if(_sysPlotting) {
+			const double dataP = _inPhases[idxMass][idxWave][jdxWave][0];
+			double maxSP = -numeric_limits<double>::max();
+			double minSP = numeric_limits<double>::max();
+
+			double maxSR = -numeric_limits<double>::max();
+			double minSR = numeric_limits<double>::max();
+
+			double maxSI = -numeric_limits<double>::max();
+			double minSI = numeric_limits<double>::max();
+
+			for(size_t idxSystematics=0; idxSystematics<_nrSystematics; ++idxSystematics) {
+				double sysP = _sysPhases[idxSystematics][idxMass][idxWave][jdxWave][0];
+				if(abs(sysP+360.-dataP) < abs(sysP-dataP)) {
+					sysP = sysP+360;
+				} else if(abs(sysP-360.-dataP) < abs(sysP-dataP)) {
+					sysP = sysP-360;
+				}
+				maxSP = max(maxSP, sysP);
+				minSP = min(minSP, sysP);
+
+				maxSR = max(maxSR, _sysSpinDensityMatrices[idxSystematics][idxMass][idxWave][jdxWave].real());
+				minSR = min(minSR, _sysSpinDensityMatrices[idxSystematics][idxMass][idxWave][jdxWave].real());
+
+				maxSI = max(maxSI, _sysSpinDensityMatrices[idxSystematics][idxMass][idxWave][jdxWave].imag());
+				minSI = min(minSI, _sysSpinDensityMatrices[idxSystematics][idxMass][idxWave][jdxWave].imag());
+			}
+			phaseSystematics->SetPoint(point, mass, (maxSP+minSP)/2.);
+			phaseSystematics->SetPointError(point, halfBin, (maxSP-minSP)/2.);
+
+			realSystematics->SetPoint(point, mass, (maxSR+minSR)/2.);
+			realSystematics->SetPointError(point, halfBin, (maxSR-minSR)/2.);
+
+			imagSystematics->SetPoint(point, mass, (maxSI+minSI)/2.);
+			imagSystematics->SetPointError(point, halfBin, (maxSI-minSI)/2.);
+		}
+
+		phaseFitAll.SetPoint(point, mass, fitModel.phase(idxWave, jdxWave, _massBinCenters[idxMass], idxMass) * TMath::RadToDeg());
+
+		// check that this mass bin should be taken into account for this
+		// combination of waves
+		if(rangePlotting && (idxMass < _wavePairMassBinLimits[idxWave][jdxWave].first || idxMass > _wavePairMassBinLimits[idxWave][jdxWave].second)) {
+			continue;
+		}
+		++pointLimit;
+
+		realFit->SetPoint(pointLimit, mass, fitModel.spinDensityMatrix(idxWave, jdxWave, _massBinCenters[idxMass], idxMass).real());
+
+		imagFit->SetPoint(pointLimit, mass, fitModel.spinDensityMatrix(idxWave, jdxWave, _massBinCenters[idxMass], idxMass).imag());
+        }
+
+	// rectify phase graphs
+	point = -1;
+	pointLimit = -1;
+	for(size_t idxMass=0; idxMass<_nrMassBins; ++idxMass) {
+		++point;
+		const double mass = _massBinCenters[idxMass] * MASSSCALE;
+
+		double valueFit=0;
+		if(point != 0) {
+			int bestOffs = 0;
+			double bestDiff = numeric_limits<double>::max();
+
+			double x, prev, curr;
+			phaseFitAll.GetPoint(point-1, x, prev);
+			phaseFitAll.GetPoint(point, x, curr);
+			for(int offs=-5; offs<6; ++offs) {
+				if(abs(curr + offs*360. - prev) < bestDiff) {
+					bestDiff = abs(curr + offs*360. - prev);
+					bestOffs = offs;
+				}
+			}
+
+			valueFit = curr + bestOffs*360.;
+			phaseFitAll.SetPoint(point, x, valueFit);
+		} else {
+			double x;
+			phaseFitAll.GetPoint(point, x, valueFit);
+		}
+
+		int bestOffs = 0;
+		double bestDiff = numeric_limits<double>::max();
+
+		double x, data;
+		phaseData->GetPoint(point, x, data);
+		for(int offs=-5; offs<6; ++offs) {
+			if(abs(data + offs*360. - valueFit) < bestDiff) {
+				bestDiff = abs(data + offs*360. - valueFit);
+				bestOffs = offs;
+			}
+		}
+
+		phaseData->SetPoint(point, x, data + bestOffs*360.);
+		if(_sysPlotting) {
+			phaseSystematics->GetPoint(point, x, data);
+			phaseSystematics->SetPoint(point, x, data + bestOffs*360.);
+		}
+
+		// check that this mass bin should be taken into account for this
+		// combination of waves
+		if(rangePlotting && (idxMass < _wavePairMassBinLimits[idxWave][jdxWave].first || idxMass > _wavePairMassBinLimits[idxWave][jdxWave].second)) {
+			continue;
+		}
+		++pointLimit;
+
+		phaseFit->SetPoint(pointLimit, mass, valueFit);
+	}
+
+	outFile->cd();
+	phase.Write();
+	real.Write();
+	imag.Write();
+
+	return true;
+}
+
+
 void
 usage(const string& progName,
       const int     errCode = 0)
@@ -1648,7 +2070,7 @@ main(int    argc,
       //	 << setw(maxParNameLength); //<< L.parName(i) << " = ";
     //if (parIsFixed[i])
     //  cout << minimizer->X()[i] << " (fixed)" << endl;
-    //else {
+    //else
       cout << setw(12) << maxPrecisionAlign(minimizer->X()[i]) << " +- "
 	   << setw(12) << maxPrecisionAlign(minimizer->Errors()[i]);
       //errormap[minimizer]=minimizer->Errors()[i];
@@ -1692,604 +2114,32 @@ main(int    argc,
 		exit(1);
 	}
 
-  
-  string outconfig(outFileName);
-  outconfig.append(".conf");
-  configFile.writeFile(outconfig.c_str());
-
-  cerr << "Fitting finished... Start building graphs ... " << endl;
-
-  int syscolor=kAzure-9;
-
-   std::vector<std::string> wl=mdepFit.getWaveNames();
-   std::map<std::string, unsigned int> wmap;
-   const size_t nrMassBins=mdepFit.getMassBinCenters().size();
-
-   std::vector<TGraphErrors*> datagraphs;
-   std::vector<TGraphErrors*> intenssysgraphs;
-
-   std::vector<TMultiGraph*> graphs;
-
-   for(unsigned int iw=0; iw<wl.size();++iw){
-     wmap[wl[iw]]=iw;
-     graphs.push_back(new TMultiGraph);
-
-     intenssysgraphs.push_back(new TGraphErrors(nrMassBins));
-     string name=("sys_");name.append(wl[iw]);
-     intenssysgraphs[iw]->SetName(name.c_str());
-     intenssysgraphs[iw]->SetTitle(name.c_str());
-     intenssysgraphs[iw]->SetLineColor(syscolor);
-     intenssysgraphs[iw]->SetFillColor(syscolor);
-     intenssysgraphs[iw]->SetDrawOption("2");
-     graphs[iw]->Add(intenssysgraphs[iw],"2");
-
-
-
-     graphs[iw]->SetName(wl[iw].c_str());
-     graphs[iw]->SetTitle(wl[iw].c_str());
-     graphs[iw]->SetDrawOption("AP");
-     datagraphs.push_back(new TGraphErrors(nrMassBins));
-     name="data_";name.append(wl[iw]);
-     datagraphs[iw]->SetName(name.c_str());
-     datagraphs[iw]->SetTitle(name.c_str());
-     datagraphs[iw]->SetDrawOption("AP");
-     //datagraphs[iw]->SetLineColor(kRed);
-     //datagraphs[iw]->SetMarkerColor(kRed);
-
-     graphs[iw]->Add(datagraphs[iw],"P");
-   }
-
-
-
-
-     // build fitgraphs
-   unsigned int nbins=nrMassBins;//200;
-   //double mmin=1200.;
-   //double md=10.;
-   std::vector<TGraph*> fitgraphs;
-   std::vector<TGraph*> absphasegraphs;
-
-
-   for(unsigned int iw=0; iw<wl.size();++iw){
-     fitgraphs.push_back(new TGraph(nbins));
-     string name("fit_");name.append(wl[iw]);
-     fitgraphs[iw]->SetName(name.c_str());
-     fitgraphs[iw]->SetTitle(name.c_str());
-     fitgraphs[iw]->SetLineColor(kRed);
-     fitgraphs[iw]->SetLineWidth(2);
-     fitgraphs[iw]->SetMarkerColor(kRed);
-     fitgraphs[iw]->SetDrawOption("AP");
-     //fitgraphs[iw]->SetMarkerStyle(22);
-     graphs[iw]->Add(fitgraphs[iw],"cp");
-     const multi_array<double, 2>& inPhaseSpaceIntegrals = mdepFit.getInPhaseSpaceIntegrals();
-     multi_array<double, 2>::const_array_view<1>::type view = inPhaseSpaceIntegrals[indices[multi_array<double, 2>::index_range()][iw]];
-     const std::vector<double> ps(view.begin(), view.end());
-     graphs[iw]->Add(new TGraph(mdepFit.getMassBinCenters().size(), &(mdepFit.getMassBinCenters()[0]), &(ps[0])));
-
-     absphasegraphs.push_back(new TGraph(nbins));
-     name="absphase_";name.append(wl[iw]);
-     absphasegraphs[iw]->SetName(name.c_str());
-     absphasegraphs[iw]->SetTitle(name.c_str());
-     absphasegraphs[iw]->SetLineColor(kRed);
-     absphasegraphs[iw]->SetLineWidth(2);
-     absphasegraphs[iw]->SetMarkerColor(kRed);
-     absphasegraphs[iw]->SetDrawOption("AP");
-
-
-
-   }
-
-   std::vector<TGraph*> compgraphs; // individual components
-   // loop over components and build graphs
-     for(unsigned int ic=0;ic<compset.n();++ic){
-       const massDepFitComponent* c = compset[ic];
-       std::vector<pwachannel >::const_iterator it=c->getChannels().begin();
-       while(it!=c->getChannels().end()){
-	 string name=c->getName();name.append("__");
-	 name.append(it->getWaveName());
-	 TGraph* gcomp=new TGraph(nbins);
-	 gcomp->SetName(name.c_str());
-	 gcomp->SetTitle(name.c_str());
-	 unsigned int color=kBlue;
-	 if(dynamic_cast<const pwabkg*>(c)!=NULL)color=kMagenta;
-	 gcomp->SetLineColor(color);
-	 gcomp->SetMarkerColor(color);
-
-	 compgraphs.push_back(gcomp);
-	 graphs[wmap[it->getWaveName()]]->Add(gcomp,"cp");
-	 ++it;
-       }// end loop over channels
-
-     }// end loop over components
-
-
-   std::vector<TGraphErrors*> phasedatagraphs;
-   std::vector<TGraphErrors*> phasesysgraphs;
-
-
-   std::vector<TGraphErrors*> realdatagraphs;
-   std::vector<TGraphErrors*> realsysgraphs;
-   std::vector<TGraphErrors*> imagdatagraphs;
-   std::vector<TGraphErrors*> imagsysgraphs;
-
-   std::vector<TGraph*> realfitgraphs;
-   std::vector<TGraph*> imagfitgraphs;
-
-    std::vector<TMultiGraph*> phasegraphs;
-   std::vector<TMultiGraph*> overlapRegraphs;
-   std::vector<TMultiGraph*> overlapImgraphs;
-
-   std::vector<TGraph*> phasefitgraphs;
-   unsigned int count=0;
-  
-
-  for(unsigned int iw=0; iw<wl.size();++iw){
-     for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-
-
-
-       phasegraphs.push_back(new TMultiGraph);
-       overlapImgraphs.push_back(new TMultiGraph);
-       overlapRegraphs.push_back(new TMultiGraph);
-       string name("dPhi_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       phasegraphs[count]->SetName(name.c_str());
-       phasegraphs[count]->SetTitle(name.c_str());
-       name="Re_";name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       overlapRegraphs[count]->SetName(name.c_str());
-       overlapRegraphs[count]->SetTitle(name.c_str());
-       name="Im_";name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       overlapImgraphs[count]->SetName(name.c_str());
-       overlapImgraphs[count]->SetTitle(name.c_str());
-
-       phasesysgraphs.push_back(new TGraphErrors(nbins));
-       name=("dPhi_sys_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       phasesysgraphs[count]->SetName(name.c_str());
-       phasesysgraphs[count]->SetTitle(name.c_str());
-       phasesysgraphs[count]->SetLineColor(syscolor);
-       phasesysgraphs[count]->SetFillColor(syscolor);
-       phasesysgraphs[count]->SetDrawOption("2");
-       //phasesysgraphs[count]->SetLineWidth(1);
-       //phasesysgraphs[count]->SetFillStyle(1001);
-       
-       phasegraphs[count]->Add(phasesysgraphs[count],"2");
-
-
-       phasedatagraphs.push_back(new TGraphErrors(nbins));
-       name=("dPhi_data_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       phasedatagraphs[count]->SetName(name.c_str());
-       phasedatagraphs[count]->SetTitle(name.c_str());
-       phasegraphs[count]->Add(phasedatagraphs[count],"p");
-
-
-       realsysgraphs.push_back(new TGraphErrors(nbins));
-       name=("RE_sys_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       realsysgraphs[count]->SetName(name.c_str());
-       realsysgraphs[count]->SetTitle(name.c_str());
-       realsysgraphs[count]->SetLineColor(syscolor);
-       realsysgraphs[count]->SetFillColor(syscolor);
-       realsysgraphs[count]->SetDrawOption("2");
-       overlapRegraphs[count]->Add(realsysgraphs[count],"2");
-
-       imagsysgraphs.push_back(new TGraphErrors(nbins));
-       name=("IM_sys_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       imagsysgraphs[count]->SetName(name.c_str());
-       imagsysgraphs[count]->SetTitle(name.c_str());
-       imagsysgraphs[count]->SetLineColor(syscolor);
-       imagsysgraphs[count]->SetFillColor(syscolor);
-       imagsysgraphs[count]->SetDrawOption("2");
-       overlapImgraphs[count]->Add(imagsysgraphs[count],"2");
-
-
-       realdatagraphs.push_back(new TGraphErrors(nbins));
-       name=("RE_data_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       realdatagraphs[count]->SetName(name.c_str());
-       realdatagraphs[count]->SetTitle(name.c_str());
-       overlapRegraphs[count]->Add(realdatagraphs[count],"p");
-
-       imagdatagraphs.push_back(new TGraphErrors(nbins));
-       name=("IM_data_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       imagdatagraphs[count]->SetName(name.c_str());
-       imagdatagraphs[count]->SetTitle(name.c_str());
-       //imagdatagraphs[count]->SetLineStyle(2);
-       overlapImgraphs[count]->Add(imagdatagraphs[count],"p");
-
-       ++count;
-     }
-   }
-
-   count=0;
-   for(unsigned int iw=0; iw<wl.size();++iw){
-     for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-       phasefitgraphs.push_back(new TGraph(nbins));
-       string name("dPhi_fit_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       phasefitgraphs[count]->SetName(name.c_str());
-       phasefitgraphs[count]->SetTitle(name.c_str());
-       phasefitgraphs[count]->SetLineColor(kRed);
-       phasefitgraphs[count]->SetMarkerColor(kRed);
-       phasefitgraphs[count]->SetDrawOption("P");
-       phasefitgraphs[count]->SetMarkerStyle(24);
-       phasefitgraphs[count]->SetMarkerSize(0.2);
-       phasegraphs[count]->Add(phasefitgraphs[count],"cp");
-
-       realfitgraphs.push_back(new TGraph(nbins));
-       name=("Re_fit_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       realfitgraphs[count]->SetName(name.c_str());
-       realfitgraphs[count]->SetTitle(name.c_str());
-       realfitgraphs[count]->SetLineColor(kRed);
-       realfitgraphs[count]->SetMarkerColor(kRed);
-       realfitgraphs[count]->SetDrawOption("AP");
-       realfitgraphs[count]->SetMarkerStyle(24);
-       realfitgraphs[count]->SetMarkerSize(0.2);
-       overlapRegraphs[count]->Add(realfitgraphs[count],"cp");
-
-       imagfitgraphs.push_back(new TGraph(nbins));
-       name=("Im_fit_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       imagfitgraphs[count]->SetName(name.c_str());
-       imagfitgraphs[count]->SetTitle(name.c_str());
-       imagfitgraphs[count]->SetLineColor(kRed);
-       //imagfitgraphs[count]->SetLineStyle(2);
-       imagfitgraphs[count]->SetMarkerColor(kRed);
-       imagfitgraphs[count]->SetDrawOption("AP");
-       imagfitgraphs[count]->SetMarkerStyle(24);
-       imagfitgraphs[count]->SetMarkerSize(0.2);
-       overlapImgraphs[count]->Add(imagfitgraphs[count],"cp");
-
-       ++count;
-     }
-   }
-
-   std::vector<TGraph2D*> phase2d;
-   count=0;
-   for(unsigned int iw=0; iw<wl.size();++iw){
-     for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-       phase2d.push_back(new TGraph2D(nbins));
-       string name("dPhi_2d_");name.append(wl[iw]);
-       name.append("---");name.append(wl[iw2]);
-       phase2d[count]->SetName(name.c_str());
-       phase2d[count]->SetTitle(name.c_str());
-       phase2d[count]->SetLineColor(kRed);
-       phase2d[count]->SetMarkerColor(kRed);
-       //phasegraphs[count]->Add(phasefitgraphs[count],"cp");
-       ++count;
-     }
-   }
-
-
-
-
-
-
-  // get data
-   vector<double> prevphase(wl.size());
-   double binwidth=MASSSCALE*30; // half binwidth
-   //double w=2*30/10;
-   for(unsigned int i=0;i<nrMassBins;++i){
-     double m=mdepFit.getMassBinCenters()[i];
-     double mScaled=m*MASSSCALE;
-     //cout << "MASS: "<<m << endl;
-     unsigned int count=0;
-     for(unsigned int iw=0; iw<wl.size();++iw){
-		// check that this mass bin should be taken into account for this
-		// combination of waves
-		if(rangePlotting && (i < mdepFit.getWavePairMassBinLimits()[iw][iw].first || i > mdepFit.getWavePairMassBinLimits()[iw][iw].second)) {
-			continue;
-		}
-
-       datagraphs[iw]->SetPoint(i,mScaled,mdepFit.getInIntensities()[i][iw][0]);
-       datagraphs[iw]->SetPointError(i,binwidth,mdepFit.getInIntensities()[i][iw][1]);
-      fitgraphs[iw]->SetPoint(i,mScaled,compset.intensity(iw,m));      
-      double absphase=compset.phaseAbsolute(iw,m)*TMath::RadToDeg();
-      if(i>0){
-	double absp=absphase+360;
-	double absm=absphase-360;
-	if(fabs(absphase-prevphase[iw])>fabs(absp-prevphase[iw])){
-	  absphase=absp;
+	string confFileName(outFileName);
+	if(extensionFromPath(confFileName) == "root") {
+		confFileName = changeFileExtension(confFileName, "conf");
+	} else {
+		confFileName += ".conf";
 	}
-	else if(fabs(absphase-prevphase[iw])>fabs(absm-prevphase[iw])){
-	  absphase=absm;
+
+	if(debug) {
+		printDebug << "name of output configuration file: '" << confFileName << "'." << endl;
 	}
-      }
-      prevphase[iw]=absphase;
-      absphasegraphs[iw]->SetPoint(i,mScaled,absphase);      
-      if(mdepFit.getSysPlotting()){
-	double maxIntens=-10000000;
-	double minIntens=10000000;
-	for(unsigned int iSys=0;iSys<mdepFit.getNrSystematics();++iSys){
-	  // get data
-// rename one wave
-	  string mywave1=wl[iw];
-
-
-	  if(mywave1=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave1="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
-
-	  // check if waves are in fit
-	  // FIXME: skip waves that are not in the fit
-	  double myI=mdepFit.getSysIntensities()[iSys][i][iw][0];
-	  if(maxIntens<myI)maxIntens=myI;
-	  if(minIntens>myI)minIntens=myI;
-	} // end loop over systematic trees
-
-	intenssysgraphs[iw]->SetPoint(i,mScaled,(maxIntens+minIntens)*0.5);
-	intenssysgraphs[iw]->SetPointError(i,binwidth,(maxIntens-minIntens)*0.5);
-      }
-
-      //cout << "getting phases" << endl;
-
-       // second loop to get phase differences
-       
-       for(unsigned int iw2=iw+1; iw2<wl.size();++iw2){
-			// check that this mass bin should be taken into account for this
-			// combination of waves
-			if(rangePlotting && (i < mdepFit.getWavePairMassBinLimits()[iw][iw2].first || i > mdepFit.getWavePairMassBinLimits()[iw][iw2].second)) {
-				continue;
-			}
-
-	 realdatagraphs[count]->SetPoint(i,
-				     mScaled,
-				     mdepFit.getInSpinDensityMatrices()[i][iw][iw2].real());
-	 realdatagraphs[count]->SetPointError(i,
-			    binwidth,
-			    sqrt(mdepFit.getInSpinDensityCovarianceMatrices()[i][iw][iw2][0][0]));
-	 imagdatagraphs[count]->SetPoint(i,
-		       mScaled,
-		       mdepFit.getInSpinDensityMatrices()[i][iw][iw2].imag());
-     
-	 imagdatagraphs[count]->SetPointError(i,
-			    binwidth,
-			    sqrt(mdepFit.getInSpinDensityCovarianceMatrices()[i][iw][iw2][1][1]));
-
-
-	 double dataphi=mdepFit.getInPhases()[i][iw][iw2][0];
-
-	 phasedatagraphs[count]->SetPoint(i,mScaled,dataphi);
-	   
-	 TVector2 v;v.SetMagPhi(1,dataphi/TMath::RadToDeg());
-	 phase2d[count]->SetPoint(i,v.X(),v.Y(),mScaled);
-
-	 phasedatagraphs[count]->SetPointError(i,binwidth,mdepFit.getInPhases()[i][iw][iw2][1]);
-	 double fitphase=compset.phase(iw,iw2,m)*TMath::RadToDeg();
-
-	 if(mdepFit.getSysPlotting()){
-	   //cerr << "start sysplotting" << endl;
-	   // loop over systematics files
-	   double maxPhase=-10000;
-	   double minPhase=10000;
-	   double maxRe=-10000000;
-	   double minRe=10000000;
-	   double maxIm=-10000000;
-	   double minIm=10000000;
-	  
-	   for(unsigned int iSys=0;iSys<mdepFit.getNrSystematics();++iSys){
-	     //cerr << iSys;
-	   // get data
-	     // rename one wave
-	     string mywave1=wl[iw];
-	     string mywave2=wl[iw2];
-
-if(mywave1=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave1="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
-if(mywave2=="1-1++0+pi-_01_rho1700=pi-+_10_pi1300=pi+-_00_sigma.amp" && iSys>0)mywave2="1-1++0+pi-_01_eta11600=pi-+_10_pi1300=pi+-_00_sigma.amp";
-
-	     // check if waves are in fit
-	     // FIXME: skip pairs where at least one wave is not in the fit
-
-	     double myphi=mdepFit.getSysPhases()[iSys][i][iw][iw2][0];
-	     double myphiplus=myphi+360;
-	     double myphiminus=myphi-360;
-	     // translate by 2pi to get closest solution to fit
-	     if(fabs(myphiplus-dataphi)<fabs(myphi-dataphi)){
-		 myphi=myphiplus;
-		 //cout << "myphiminus" << endl;
-	     }
-	     if(fabs(myphiminus-dataphi)<fabs(myphi-dataphi)){
-	       myphi=myphiminus;
-	       //cout << "myphiplus" << endl;
-	     }
-
-	     if(myphi>maxPhase)maxPhase=myphi;
-	     if(myphi<minPhase)minPhase=myphi;
-
-	     // real and imag part:
-	     complex<double> r=mdepFit.getSysSpinDensityMatrices()[iSys][i][iw][iw2];
-	     if(maxRe<r.real())maxRe=r.real();
-	     if(minRe>r.real())minRe=r.real();
-	     if(maxIm<r.imag())maxIm=r.imag();
-	     if(minIm>r.imag())minIm=r.imag();
-	   }// end loop over sys trees
-	   // cerr << "loop over systrees finished" << endl;
-
-	   phasesysgraphs[count]->SetPoint(i,mScaled,(maxPhase+minPhase)*0.5);
-	   phasesysgraphs[count]->SetPointError(i,binwidth,(maxPhase-minPhase)*0.5);
-	   
-	   realsysgraphs[count]->SetPoint(i,mScaled,(maxRe+minRe)*0.5);
-	   realsysgraphs[count]->SetPointError(i,binwidth,(maxRe-minRe)*0.5);
-	   imagsysgraphs[count]->SetPoint(i,mScaled,(maxIm+minIm)*0.5);
-	   imagsysgraphs[count]->SetPointError(i,binwidth,(maxIm-minIm)*0.5);
-	
-
-	 }// end if sysplotting
-	 //cerr << "sysplotting finished" << endl;
-
-	 phasefitgraphs[count]->SetPoint(i,mScaled,fitphase);
-
-	 complex<double> fitval=compset.spinDensityMatrix(iw,iw2,m);
-
-	 realfitgraphs[count]->SetPoint(i,mScaled,fitval.real());
-	 imagfitgraphs[count]->SetPoint(i,mScaled,fitval.imag());
-
-
-	 count++;
-       }// end inner loop over waves
-
-     } // end loop over waves
-     //cerr << "outer loop over waves finished" << endl;
-     // loop over components to fill individual graphs
-     unsigned int compcount=0;
-       for(unsigned int ic=0;ic<compset.n();++ic){
-	 const massDepFitComponent* c = compset[ic];
-			for(std::vector<pwachannel>::const_iterator itChan=c->getChannels().begin(); itChan!=c->getChannels().end(); ++itChan, ++compcount) {
-				// check that this mass bin should be taken into account for this
-				// combination of waves
-				const size_t iw = wmap[itChan->getWaveName()];
-				if(rangePlotting && (i < mdepFit.getWavePairMassBinLimits()[iw][iw].first || i > mdepFit.getWavePairMassBinLimits()[iw][iw].second)) {
-					continue;
-				}
-
-				const double I=norm(c->val(m)*itChan->C()*sqrt(itChan->ps(m))*compset.calcFsmd(m));
-				compgraphs[compcount]->SetPoint(i,mScaled,I);
-			} // end loop over channels
-       }// end loop over components
-
-       cerr << "Finished plotting mass-bin " << m << endl;
-       //mprev=m;
-   }
-   cerr << "Finished Loop Over DataBins" << endl;
-
-
-
-//    for(unsigned int im=0;im<nbins;++im){ // fine loop in masses -> fits
-
-//      double m=mmin+im*md;
-//      for(unsigned int iw=0; iw<wl.size();++iw){
-//        fitgraphs[iw]->SetPoint(im,m,compset.intensity(wl[iw],m));
-//      } // end loop over waves
-
-
-//    }// end loop over mass bins
-
-
-
-
-
-   TFile* outfile=TFile::Open(outFileName.c_str(),"RECREATE");
-   for(unsigned int iw=0; iw<wl.size();++iw){
-     TGraph* g=(TGraph*)graphs[iw]->GetListOfGraphs()->At(3);
-      for(unsigned int ib=0;ib<nbins;++ib){
-        double m,ps;g->GetPoint(ib,m,ps);
-        g->SetPoint(ib,m*MASSSCALE,ps*500.);
-       }
-
-     graphs[iw]->Write();
-     //absphasegraphs[iw]->Write();
-   }
-
-
- for(unsigned int iw=0; iw<phasegraphs.size();++iw){
-
-/// rectivfy phase graphs
-
-   unsigned int refbin=6;
-   double m;
-   double predph;
-   phasedatagraphs[iw]->GetPoint(refbin,m,predph);
-   double prefph;
-   phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
-   for(unsigned int ib=refbin+1;ib<nbins;++ib){
-     double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
-     double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
-     double dp,dm;dp=dph+360;dm=dph-360;
-     double fp,fm;fp=fph+360;fm=fph-360;
-     if(1){
-       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph))
-         phasefitgraphs[iw]->SetPoint(ib,m,fp);
-       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph))
-         phasefitgraphs[iw]->SetPoint(ib,m,fm);
-       phasefitgraphs[iw]->GetPoint(ib,m,prefph);
-
-       if(fabs(dp-prefph)<fabs(dph-prefph) && fabs(dp-prefph)<fabs(dm-prefph))
-         phasedatagraphs[iw]->SetPoint(ib,m,dp);
-       else if(fabs(dm-prefph)<fabs(dph-prefph) && fabs(dm-prefph)<fabs(dp-prefph))
-         phasedatagraphs[iw]->SetPoint(ib,m,dm);
-
-
-
-       phasedatagraphs[iw]->GetPoint(ib,m,predph);
-
-
-
-   // put systematic error closest to fit/data
-       double sph; phasesysgraphs[iw]->GetPoint(ib,m,sph);
-       double sp,sm;sp=sph+360;sm=sph-360;
-       if(fabs(sp-prefph)<fabs(sph-prefph) && fabs(sp-prefph)<fabs(sm-prefph))
-	 phasesysgraphs[iw]->SetPoint(ib,m,sp);
-       else if(fabs(sm-prefph)<fabs(sph-prefph) && fabs(sm-prefph)<fabs(sp-prefph))
-	 phasesysgraphs[iw]->SetPoint(ib,m,sm);
-
-
-     }
-   }
-   // backward:
-   phasedatagraphs[iw]->GetPoint(refbin,m,predph);
-   phasefitgraphs[iw]->GetPoint(refbin,m,prefph);
-   for(unsigned int i=0;i<refbin;++i){
-       unsigned int ib=refbin-i-1;
-       double dph; phasedatagraphs[iw]->GetPoint(ib,m,dph);
-     double fph; phasefitgraphs[iw]->GetPoint(ib,m,fph);
-     double dp,dm;dp=dph+360;dm=dph-360;
-     double fp,fm;fp=fph+360;fm=fph-360;
-     if(1){
-
-       if(fabs(fp-prefph)<fabs(fph-prefph) && fabs(fp-prefph)<fabs(fm-prefph)){
-         phasefitgraphs[iw]->SetPoint(ib,m,fp);
-
-       }
-       else if(fabs(fm-prefph)<fabs(fph-prefph) && fabs(fm-prefph)<fabs(fp-prefph)){
-         phasefitgraphs[iw]->SetPoint(ib,m,fm);
-
-       }
-
-       phasefitgraphs[iw]->GetPoint(ib,m,prefph);
-
-
-
-       if(fabs(dp-prefph)<fabs(dph-prefph) && fabs(dp-prefph)<fabs(dm-prefph)){
-         phasedatagraphs[iw]->SetPoint(ib,m,dp);
-       }
-
-       else if(fabs(dm-prefph)<fabs(dph-prefph) && fabs(dm-prefph)<fabs(dp-prefph)){
-         phasedatagraphs[iw]->SetPoint(ib,m,dm);
-       }
-
-       phasedatagraphs[iw]->GetPoint(ib,m,predph);
-
-
-       // put systematic error closest to fit
-       double sph; phasesysgraphs[iw]->GetPoint(ib,m,sph);
-       double sp,sm;sp=sph+360;sm=sph-360;
-       if(fabs(sp-predph)<fabs(sph-predph) && fabs(sp-predph)<fabs(sm-predph))
-	 phasesysgraphs[iw]->SetPoint(ib,m,sp);
-       else if(fabs(sm-predph)<fabs(sph-predph) && fabs(sm-predph)<fabs(sp-predph))
-	 phasesysgraphs[iw]->SetPoint(ib,m,sm);
-
-
-     }
-   }
-
-
-     phasegraphs[iw]->Write();
-     phasesysgraphs[iw]->Write();
-     overlapRegraphs[iw]->Write();
-     overlapImgraphs[iw]->Write();
-     //phase2d[iw]->Write();
- } // end loop over waves
-
- if (compset.getFsmdFunction() != NULL) {
-   compset.getFsmdFunction()->Write("funcFinalStateMassDependence");
- }
-
-outfile->Close();
-
-   return 0;
-
+	configFile.writeFile(confFileName.c_str());
+
+	string rootFileName(outFileName);
+	if(extensionFromPath(rootFileName) != "root") {
+		rootFileName += ".root";
+	}
+
+	if(debug) {
+		printDebug << "name of output ROOT file: '" << confFileName << "'." << endl;
+	}
+	TFile* outFile = TFile::Open(rootFileName.c_str(), "RECREATE");
+	if(not mdepFit.createPlots(compset, outFile, rangePlotting)) {
+		printErr << "error while creating plots." << endl;
+		exit(1);
+	}
+	outFile->Close();
+
+	return 0;
 }

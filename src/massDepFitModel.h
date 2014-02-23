@@ -54,6 +54,8 @@ namespace rpwa {
 
 
     const massDepFitComponent* operator[](unsigned int i) const {return _comp[i];}
+    const std::vector<std::pair<unsigned int,unsigned int> >&
+      getCompChannel(size_t idx) const { return _compChannel[idx]; }
     std::vector<std::pair<unsigned int,unsigned int> >
       getCompChannel(const std::string& wave) const;
 

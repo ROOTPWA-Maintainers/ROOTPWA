@@ -44,20 +44,17 @@ namespace rpwa {
 		bool readSystematicsFiles(const std::string& valTreeName   = "pwa",
 		                          const std::string& valBranchName = "fitResult_v2");
 
-// FIXME: get rid
-		const std::string& getInFileName() const { return _inFileName; }
-// FIXME: get rid
-		const std::vector<std::string>& getSysFileNames() const { return _sysFileNames; }
+// FIXME: make private
+		bool createPlots(const rpwa::massDepFitModel& fitModel,
+		                 TFile* outFile,
+		                 const bool rangePlotting) const;
+
 // FIXME: get rid
 		bool getSysPlotting() const { return _sysPlotting; }
 // FIXME: get rid
 		const std::vector<double>& getMassBinCenters() const { return _massBinCenters; }
 // FIXME: get rid
 		const std::vector<std::string>& getWaveNames() const { return _waveNames; }
-// FIXME: get rid
-		const std::map<std::string, size_t>& getWaveIndices() const { return _waveIndices; }
-// FIXME: get rid
-		const std::vector<std::pair<double, double> >& getWaveMassLimits() const { return _waveMassLimits; }
 // FIXME: get rid
 		const boost::multi_array<std::pair<size_t, size_t>, 2>& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
 // FIXME: get rid
@@ -127,6 +124,16 @@ namespace rpwa {
 		                            boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 		bool readPhaseSpaceIntegralMatrices(const std::vector<std::string>& overwritePhaseSpace,
 		                                    boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
+
+		bool createPlotsWave(const rpwa::massDepFitModel& fitModel,
+		                     TFile* outFile,
+		                     const bool rangePlotting,
+		                     const size_t idxWave) const;
+		bool createPlotsWavePair(const rpwa::massDepFitModel& fitModel,
+		                         TFile* outFile,
+		                         const bool rangePlotting,
+		                         const size_t idxWave,
+		                         const size_t jdxWave) const;
 
 		std::string _inFileName;
 		std::vector<std::string> _inOverwritePhaseSpace;
