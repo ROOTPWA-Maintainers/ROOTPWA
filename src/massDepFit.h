@@ -1,17 +1,27 @@
 #ifndef MASSDEPFIT_HH
 #define MASSDEPFIT_HH
 
+#include <map>
+
 #include <boost/multi_array.hpp>
 
+#include <Rtypes.h>
+
+namespace libconfig {
+	class Setting;
+}
 namespace ROOT {
 	namespace Math {
 		class Minimizer;
 	}
 }
+class TFile;
+class TTree;
 
 namespace rpwa {
 
 
+	class fitResult;
 	class massDepFitModel;
 
 
@@ -50,8 +60,6 @@ namespace rpwa {
 		                 const bool rangePlotting) const;
 
 // FIXME: get rid
-		bool getSysPlotting() const { return _sysPlotting; }
-// FIXME: get rid
 		const std::vector<double>& getMassBinCenters() const { return _massBinCenters; }
 // FIXME: get rid
 		const std::vector<std::string>& getWaveNames() const { return _waveNames; }
@@ -61,26 +69,6 @@ namespace rpwa {
 		const boost::multi_array<std::complex<double>, 3>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
 // FIXME: get rid
 		const boost::multi_array<double, 5>& getInSpinDensityCovarianceMatrices() const { return _inSpinDensityCovarianceMatrices; }
-// FIXME: get rid
-		const boost::multi_array<double, 2>& getInPhaseSpaceIntegrals() const { return _inPhaseSpaceIntegrals; }
-// FIXME: get rid
-		const boost::multi_array<double, 3>& getInIntensities() const { return _inIntensities; }
-// FIXME: get rid
-		const boost::multi_array<double, 4>& getInPhases() const { return _inPhases; }
-// FIXME: get rid
-		const boost::multi_array<std::complex<double>, 4>& getSysSpinDensityMatrices() const { return _sysSpinDensityMatrices; }
-// FIXME: get rid
-		const boost::multi_array<double, 6>& getSysSpinDensityCovarianceMatrices() const { return _sysSpinDensityCovarianceMatrices; }
-// FIXME: get rid
-		const boost::multi_array<double, 4>& getSysIntensities() const { return _sysIntensities; }
-// FIXME: get rid
-		const boost::multi_array<double, 5>& getSysPhases() const { return _sysPhases; }
-// FIXME: get rid?
-		const size_t getNrMassBins() const { return _nrMassBins; }
-// FIXME: get rid?
-		const size_t getNrSystematics() const { return _nrSystematics; }
-// FIXME: get rid?
-		const size_t getNrWaves() const { return _nrWaves; }
 
 		static void setDebug(bool debug) { _debug = debug; }
 

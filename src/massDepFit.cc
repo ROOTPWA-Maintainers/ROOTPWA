@@ -32,6 +32,9 @@
 //-----------------------------------------------------------
 
 
+#include "massDepFit.h"
+
+
 #include <algorithm>
 #include <cassert>
 #include <complex>
@@ -63,7 +66,6 @@
 #include "fileUtils.hpp"
 #include "fitResult.h"
 #include "libConfigUtils.hpp"
-#include "massDepFit.h"
 #include "massDepFitComponents.h"
 #include "massDepFitLikeli.h"
 #include "massDepFitModel.h"
@@ -1830,7 +1832,7 @@ main(int    argc,
 	Config configFile;
 	if(not parseLibConfigFile(configFileName, configFile, debug)) {
 		printErr << "could not read configuration file '" << configFileName << "'." << endl;
-		exit(1);
+		return 1;
 	}
 	const Setting& configRoot = configFile.getRoot();
 
@@ -1838,36 +1840,36 @@ main(int    argc,
 	const Setting* configInput = findLibConfigGroup(configRoot, "input");
 	if(not configInput) {
 		printErr << "'input' section in configuration file does not exist." << endl;
-		exit(1);
+		return 1;
 	}
 	if(not mdepFit.readConfigInput(configInput)) {
 		printErr << "error while reading 'input' section from configuration file." << endl;
-		exit(1);
+		return 1;
 	}
 
 	// extract information from fit results
 	if(not mdepFit.readInFile(valTreeName, valBranchName)) {
 		printErr << "error while trying to read fit result." << endl;
-		exit(1);
+		return 1;
 	}
 
 	// extract information for systematic errors
 	if(not mdepFit.readSystematicsFiles(valTreeName, valBranchName)) {
 		printErr << "error while trying to read fit results for systematic errors." << endl;
-		exit(1);
+		return 1;
 	}
 
 	// prepare mass limits
 	if(not mdepFit.prepareMassLimits()) {
 		printErr << "error determine which bins to use in the fit." << endl;
-		exit(1);
+		return 1;
 	}
 
 	// set-up fit model (resonances, background, final-state mass dependence
 	massDepFitModel compset;
 	if(not mdepFit.readConfigModel(&configRoot, compset)) {
 		printErr << "error while reading fit model from configuration file." << endl;
-		exit(1);
+		return 1;
 	}
 
   printInfo << "creating and setting up likelihood function" << endl;
@@ -1878,7 +1880,7 @@ main(int    argc,
 
 	if(not compset.init(mdepFit.getWaveNames(), mdepFit.getMassBinCenters())) {
 		printErr << "error while initializing the fit model." << endl;
-		exit(1);
+		return 1;
 	}
 
  cout << "---------------------------------------------------------------------" << endl << endl;
@@ -2111,7 +2113,7 @@ main(int    argc,
 
 	if(not mdepFit.updateConfigModel(&configRoot, compset, minimizer)) {
 		printErr << "error while updating fit model in configuration file." << endl;
-		exit(1);
+		return 1;
 	}
 
 	string confFileName(outFileName);
@@ -2137,7 +2139,7 @@ main(int    argc,
 	TFile* outFile = TFile::Open(rootFileName.c_str(), "RECREATE");
 	if(not mdepFit.createPlots(compset, outFile, rangePlotting)) {
 		printErr << "error while creating plots." << endl;
-		exit(1);
+		return 1;
 	}
 	outFile->Close();
 
