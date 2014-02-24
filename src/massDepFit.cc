@@ -257,6 +257,13 @@ massDepFit::readConfigInputWaves(const Setting* configInputWaves)
 		printDebug << "read " << _nrWaves << " in total." << endl;
 	}
 
+	ostringstream output;
+	for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
+		output << "    " << _waveNames[idxWave] << endl;
+	}
+	printInfo << _nrWaves << " waves to be used in fit:" << endl
+	          << output.str();
+
 	return true;
 }
 
@@ -344,7 +351,9 @@ massDepFit::readConfigModelComponents(const Setting* configComponents,
 
 	const int nrComponents = configComponents->getLength();
 
-	printInfo << "reading " << nrComponents << " components from configuration file." << endl;
+	if(_debug) {
+		printDebug << "reading " << nrComponents << " components from configuration file." << endl;
+	}
 
 	for(int idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 		const Setting* configComponent = &((*configComponents)[idxComponent]);
@@ -397,6 +406,13 @@ massDepFit::readConfigModelComponents(const Setting* configComponents,
 
 		fitModel.add(component);
 	}
+
+	ostringstream output;
+	for(size_t idx=0; idx<fitModel.n(); ++idx) {
+		output << "    " << fitModel[idx]->getName() << endl;
+	}
+	printInfo << "fitting " << fitModel.n() << " components to the data:" << endl
+	          << output.str();
 
 	return true;
 }
@@ -1316,7 +1332,7 @@ massDepFit::createPlotsWave(const massDepFitModel& fitModel,
 	phaseSpace->SetTitle((_waveNames[idxWave] + "__ps").c_str());
 	graphs.Add(phaseSpace, "CP");
 
-	const std::vector<std::pair<unsigned int, unsigned int> >& compChannel = fitModel.getCompChannel(idxWave);
+	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getCompChannel(idxWave);
 	std::vector<TGraph*> components;
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
@@ -1774,13 +1790,13 @@ main(int    argc,
 	// ---------------------------------------------------------------------------
 	// parse command line options
 	const string progName           = argv[0];
-	bool         doCov              = true;
 	string       outFileName        = "mDep.result.root";     // output filename
 	string       minimizerType[2]   = {"Minuit2", "Migrad"};  // minimizer, minimization algorithm
 	int          minimizerStrategy  = 1;                      // minimizer strategy
 	double       minimizerTolerance = 1e-10;                  // minimizer tolerance
 	bool         onlyPlotting       = false;
 	bool         rangePlotting      = false;
+	bool         doCov              = true;
 	bool         debug              = false;
 	bool         quiet              = false;
 	extern char* optarg;
@@ -1832,6 +1848,19 @@ main(int    argc,
 		usage(progName, 1);
 	}
 	const string configFileName = argv[optind];
+
+	// report parameters
+	printInfo << "running " << progName << " with the following parameters:" << endl
+	          << "    path to configuration file ..................... '" << configFileName << "'" << endl
+	          << "    path to output file ............................ '" << outFileName << "'" << endl
+	          << "    minimizer ...................................... "  << minimizerType[0] << ", " << minimizerType[1] << endl
+	          << "    minimizer strategy ............................. "  << minimizerStrategy  << endl
+	          << "    minimizer tolerance ............................ "  << minimizerTolerance << endl
+	          << "    only plotting .................................. "  << yesNo(onlyPlotting) << endl
+	          << "    plot in fit range only ......................... "  << yesNo(rangePlotting) << endl
+	          << "    take covariance into account ................... "  << yesNo(doCov) << endl
+	          << "    debug .......................................... "  << yesNo(debug) << endl
+	          << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
 	massDepFit mdepFit;
 	mdepFit.setDebug(debug);
@@ -1944,7 +1973,7 @@ main(int    argc,
 	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
 	if(not minimizer) { 
 		printErr << "could not create minimizer. exiting." << endl;
-		throw;
+		return 1;
 	}
 	minimizer->SetFunction        (L);
 	minimizer->SetStrategy        (minimizerStrategy);
@@ -2009,6 +2038,7 @@ main(int    argc,
 
   const unsigned int nfree=minimizer->NFree();
   printInfo <<  nfree  << " Free Parameters in fit" << endl;
+
 
 
   // find minimum of likelihood function

@@ -113,10 +113,39 @@ massDepFitModel::initMapping()
 		}
 	}
 
-	for(vector<string>::const_iterator itWave=_waveNames.begin(); itWave!=_waveNames.end(); ++itWave) {
+	_compChannel.resize(_waveNames.size());
+	const size_t nrComponents = n();
+	for(size_t idxWave=0; idxWave<_waveNames.size(); ++idxWave) {
 		// check which components this waves belongs to and which channel they are
-		_compChannel.push_back(getCompChannel(*itWave));
+		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+			// loop over channels of component and see if wave is there
+			const size_t nrChannels = _comp[idxComponent]->getNrChannels();
+			for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
+				if(_comp[idxComponent]->getChannelWaveName(idxChannel)==_waveNames[idxWave]) {
+					_compChannel[idxWave].push_back(pair<size_t, size_t>(idxComponent,idxChannel));
+				}
+			} // end loop over channels
+		} // end loop over components
 	}
+
+	ostringstream output;
+	for(size_t idxWave=0; idxWave<_waveNames.size(); idxWave++) {
+		output << "    wave '" << _waveNames[idxWave] << "' (index " << idxWave << ") used in" << endl;
+		for(size_t idxComponents=0; idxComponents<_compChannel[idxWave].size(); idxComponents++) {
+			const size_t idxComponent = _compChannel[idxWave][idxComponents].first;
+			output << "        component " << idxComponents << ": " << idxComponent << " '" << _comp[idxComponent]->getName() << "'" << endl;
+		}
+	}
+	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+		output << "    component '" << _comp[idxComponent]->getName() << "' (index " << idxComponent << ") used in" << endl;
+
+		const size_t nrChannels = _comp[idxComponent]->getNrChannels();
+		for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
+			output << "        channel " << idxChannel << ": " << _comp[idxComponent]->getChannelWaveName(idxChannel) << endl;
+		}
+	}
+	printInfo << _waveNames.size() << " waves and " << n() << " components in fit model:" << endl
+	          << output.str();
 
 	return true;
 }
@@ -158,11 +187,11 @@ massDepFitModel::getFreeFsmdLimits(unsigned int i, double& lower, double& upper)
 void
 massDepFitModel::setPar(const double* par)
 {
-  unsigned int parcount=0;
+  size_t parcount=0;
   // components
   for(unsigned int i=0;i<n();++i){
     _comp[i]->setParameters(&par[parcount]);
-    parcount+=2;
+    parcount+=_comp[i]->getNrParameters();
     _comp[i]->setCouplings(&par[parcount]);
     parcount+=_comp[i]->getNrChannels()*2; // RE and Im for each channel
   } // end loop over components
@@ -178,11 +207,11 @@ massDepFitModel::setPar(const double* par)
 void 
 massDepFitModel::getPar(double* par)
 {
-  unsigned int parcount=0;
+  size_t parcount=0;
   // components
   for(unsigned int i=0;i<n();++i){
     _comp[i]->getParameters(&par[parcount]);
-    parcount+=2;
+    parcount+=_comp[i]->getNrParameters();
     _comp[i]->getCouplings(&par[parcount]);
     parcount+=_comp[i]->getNrChannels()*2; // RE and Im for each channel
   }
@@ -220,7 +249,7 @@ massDepFitModel::productionAmplitude(const size_t idxWave,
 	complex<double> prodAmp(0., 0.);
 
 	// get entry from mapping
-	const vector<pair<unsigned int, unsigned int> >& components = _compChannel[idxWave];
+	const vector<pair<size_t, size_t> >& components = _compChannel[idxWave];
 	size_t nrComponents = components.size();
 
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
@@ -277,25 +306,6 @@ massDepFitModel::phase(const size_t idxWave,
                        const size_t idxMass) const
 {
 	return arg(spinDensityMatrix(idxWave, jdxWave, mass, idxMass));
-}
-
-
-vector<pair<unsigned int,unsigned int> >
-massDepFitModel::getCompChannel(const string& wave) const
-{
-  cerr << "Channel-mapping for wave " << wave << endl;
-  vector<pair<unsigned int,unsigned int> > result;
-  for(unsigned int ic=0;ic<n();++ic){
-    // loop over channels of component and see if wave is there
-    unsigned int nch=_comp[ic]->getNrChannels();
-    for(unsigned int ich=0;ich<nch;++ich){
-      if(_comp[ic]->getChannelWaveName(ich)==wave){
-	result.push_back(pair<unsigned int,unsigned int>(ic,ich));
-	cerr << "     comp("<<ic<<"): " << _comp[ic]->getName() << "  ch:"<<ich<<endl;
-      }
-    } // end loop over channels
-  } // end loop over components
-  return result;
 }
 
 
