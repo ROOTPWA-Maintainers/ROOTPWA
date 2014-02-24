@@ -311,30 +311,63 @@ massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 
 bool
 massDepFit::readConfigModel(const Setting* configRoot,
-                            massDepFitModel& fitModel) const
+                            massDepFitModel& fitModel)
 {
 	if(_debug) {
 		printDebug << "reading fit model from configuration file." << endl;
 	}
 
-	// read information for the individual components
-	const Setting* configComponentsSection = findLibConfigGroup(*configRoot, "components");
-	if(not configComponentsSection) {
-		printErr << "error while reading 'components' section in configuration file." << endl;
-		return false;
-	}
-	const Setting* configComponents = findLibConfigList(*configComponentsSection, "components");
-	if(not readConfigModelComponents(configComponents, fitModel)) {
+	// get components section of configuration file
+	const Setting* configModel = findLibConfigGroup(*configRoot, "model");
+	if(not configModel) {
 		printErr << "error while reading 'components' section in configuration file." << endl;
 		return false;
 	}
 
-	// get information for creating the final-state mass-dependence
-	const Setting* configFsmd = findLibConfigGroup(*configRoot, "finalStateMassDependence", false);
-	if(not readConfigModelFsmd(configFsmd, fitModel)) {
-		printErr << "error while reading 'finalStateMassDependence' section in configuration file." << endl;
+	// get information about anchor wave
+	const Setting* configAnchorWave = findLibConfigGroup(*configModel, "anchorwave");
+	if(not readConfigModelAnchorWave(configAnchorWave)) {
+		printErr << "error while reading 'anchorwave' in section '" << configModel->getName() << "' in configuration file." << endl;
 		return false;
 	}
+
+	// read information for the individual components
+	const Setting* configComponents = findLibConfigList(*configModel, "components");
+	if(not readConfigModelComponents(configComponents, fitModel)) {
+		printErr << "error while reading 'components' in section '" << configModel->getName() << "' in configuration file." << endl;
+		return false;
+	}
+
+	// get information for creating the final-state mass-dependence
+	const Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
+	if(not readConfigModelFsmd(configFsmd, fitModel)) {
+		printErr << "error while reading 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << endl;
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
+massDepFit::readConfigModelAnchorWave(const Setting* configAnchorWave)
+{
+	if(not configAnchorWave) {
+		printErr << "'configInputAnchorWave' is not a pointer to a valid object." << endl;
+		return false;
+	}
+
+	map<string, Setting::Type> mandatoryArguments;
+	insert(mandatoryArguments)
+	      ("name", Setting::TypeString)
+	      ("resonance", Setting::TypeString);
+	if(not checkIfAllVariablesAreThere(configAnchorWave, mandatoryArguments)) {
+		printErr << "'anchorwave' list in 'input' section in configuration file contains errors." << endl;
+		return false;
+	}
+
+	configAnchorWave->lookupValue("name", _anchorWaveName);
+	configAnchorWave->lookupValue("resonance", _anchorComponentName);
 
 	return true;
 }
@@ -529,22 +562,23 @@ massDepFit::updateConfigModel(const Setting* configRoot,
 		printDebug << "updating fit model in configuration file." << endl;
 	}
 
-	// update information of the individual components
-	const Setting* configComponentsSection = findLibConfigGroup(*configRoot, "components");
-	if(not configComponentsSection) {
-		printErr << "error while updating 'components' section in configuration file." << endl;
-		return false;
-	}
-	const Setting* configComponents = findLibConfigList(*configComponentsSection, "components");
-	if(not updateConfigModelComponents(configComponents, fitModel, minimizer)) {
+	const Setting* configModel = findLibConfigGroup(*configRoot, "model");
+	if(not configModel) {
 		printErr << "error while updating 'components' section in configuration file." << endl;
 		return false;
 	}
 
+	// update information of the individual components
+	const Setting* configComponents = findLibConfigList(*configModel, "components");
+	if(not updateConfigModelComponents(configComponents, fitModel, minimizer)) {
+		printErr << "error while updating 'components' in section '" << configModel->getName() << "' in configuration file." << endl;
+		return false;
+	}
+
 	// update information of the final-state mass-dependence
-	const Setting* configFsmd = findLibConfigGroup(*configRoot, "finalStateMassDependence", false);
+	const Setting* configFsmd = findLibConfigGroup(*configModel, "finalStateMassDependence", false);
 	if(not updateConfigModelFsmd(configFsmd, fitModel, minimizer)) {
-		printErr << "error while updating 'finalStateMassDependence' section in configuration file." << endl;
+		printErr << "error while updating 'finalStateMassDependence' in section '" << configModel->getName() << "' in configuration file." << endl;
 		return false;
 	}
 
@@ -1696,8 +1730,8 @@ usage(const string& progName,
 // 1 = release couplings and masses
 // 2 = release couplings, masses and widths
 void releasePars(Minimizer* minimizer, const massDepFitModel& compset, 
-		 const vector<string>& anchorwave_reso,
-		 const vector<string>& anchorwave_channel,
+                 const std::string& anchorWaveName,
+                 const std::string& anchorComponentName,
 		 int level){
   // copy state
   unsigned int npar=minimizer->NDim();
@@ -1741,7 +1775,7 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
       minimizer->SetVariable(parcount,(name + "_ReC" + it->getWaveName()).Data() , par[parcount], 10.0);
       ++parcount;
       // fix one phase
-      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->getWaveName())!=anchorwave_channel.end()){
+      if(name == anchorComponentName && it->getWaveName() == anchorWaveName){
 	minimizer->SetFixedVariable(parcount,(name + "_ImC" + it->getWaveName()).Data() , 0.0);
       }
       else {minimizer->SetVariable(parcount,(name + "_ImC" + it->getWaveName()).Data() , par[parcount], 0.10);}
@@ -1913,30 +1947,6 @@ main(int    argc,
 		return 1;
 	}
 
- cout << "---------------------------------------------------------------------" << endl << endl;
-
-  // set anchorwave
-  vector<string> anchorwave_channel;
-  vector<string> anchorwave_reso;
-  if(configFile.exists("components.anchorwave")){
-    const Setting &anc = configRoot["components"]["anchorwave"];
-    // loop through breitwigners
-    unsigned int nanc=anc.getLength();
-    for(unsigned int ianc=0;ianc<nanc;++ianc){
-      string ch,re;
-      const Setting &anco = anc[ianc];
-      anco.lookupValue("channel",ch);
-      anco.lookupValue("resonance",re);
-      cout << "Ancorwave: "<< endl;
-      cout << "    " << re << endl;
-      cout << "    " << ch << endl;
-      anchorwave_channel.push_back(ch);
-      anchorwave_reso.push_back(re);
-    }
-  }
-
-
-  
     cout << "---------------------------------------------------------------------" << endl << endl;
  
   printInfo << "creating and setting up likelihood function" << endl;
@@ -2014,7 +2024,7 @@ main(int    argc,
       minimizer->SetVariable(parcount++,(name + "_ReC" + it->getWaveName()).Data() , it->C().real(), 0.10);
       
       // fix one phase
-      if(find(anchorwave_reso.begin(),anchorwave_reso.end(),name)!=anchorwave_reso.end() && find(anchorwave_channel.begin(),anchorwave_channel.end(),it->getWaveName())!=anchorwave_channel.end()){
+      if(name == mdepFit.getAnchorComponentName() && it->getWaveName() == mdepFit.getAnchorWaveName()){
 	minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , 0.0);
       }
       else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , it->C().imag(), 0.10);}
@@ -2055,7 +2065,7 @@ main(int    argc,
     else printInfo << "minimization successful." << endl;
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
     //release masses
-    releasePars(minimizer,compset,anchorwave_reso,anchorwave_channel,1);
+    releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 1);
     printInfo << "performing minimization. MASSES RELEASED" << endl;
     fitW.Start();
     success &= minimizer->Minimize();
@@ -2063,7 +2073,7 @@ main(int    argc,
     else printInfo << "minimization successful." << endl;
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
     //release widths
-    releasePars(minimizer,compset,anchorwave_reso,anchorwave_channel,2);
+    releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 2);
     printInfo << "performing minimization. ALL RELEASED" << endl;
     fitW.Start();
     success &= minimizer->Minimize();

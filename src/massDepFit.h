@@ -39,7 +39,7 @@ namespace rpwa {
 		bool readConfigInput(const libconfig::Setting* configInput);
 // FIXME: make private
 		bool readConfigModel(const libconfig::Setting* configRoot,
-		                     massDepFitModel& fitModel) const;
+		                     massDepFitModel& fitModel);
 
 // FIXME: make private
 		bool updateConfigModel(const libconfig::Setting* configRoot,
@@ -64,6 +64,10 @@ namespace rpwa {
 // FIXME: get rid
 		const std::vector<std::string>& getWaveNames() const { return _waveNames; }
 // FIXME: get rid
+		const std::string& getAnchorWaveName() const { return _anchorWaveName; }
+// FIXME: get rid
+		const std::string& getAnchorComponentName() const { return _anchorComponentName; }
+// FIXME: get rid
 		const boost::multi_array<std::pair<size_t, size_t>, 2>& getWavePairMassBinLimits() const { return _wavePairMassBinLimits; }
 // FIXME: get rid
 		const boost::multi_array<std::complex<double>, 3>& getInSpinDensityMatrices() const { return _inSpinDensityMatrices; }
@@ -78,6 +82,7 @@ namespace rpwa {
 		bool readConfigInputWaves(const libconfig::Setting* configInputWaves);
 		bool readConfigInputSystematics(const libconfig::Setting* configInputSystematics);
 
+		bool readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave);
 		bool readConfigModelComponents(const libconfig::Setting* configComponents,
 		                               massDepFitModel& fitModel) const;
 		bool readConfigModelFsmd(const libconfig::Setting* configFsmd,
@@ -140,6 +145,9 @@ namespace rpwa {
 		std::vector<std::pair<size_t, size_t> > _waveMassBinLimits;
 
 		boost::multi_array<std::pair<size_t, size_t>, 2> _wavePairMassBinLimits;
+
+		std::string _anchorWaveName;
+		std::string _anchorComponentName;
 
 		boost::multi_array<std::complex<double>, 3> _inSpinDensityMatrices;
 		boost::multi_array<double, 5> _inSpinDensityCovarianceMatrices;
