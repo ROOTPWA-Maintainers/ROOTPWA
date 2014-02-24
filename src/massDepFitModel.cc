@@ -239,7 +239,7 @@ massDepFitModel::setPar(const double* par)
 
 
 void 
-massDepFitModel::getPar(double* par)
+massDepFitModel::getPar(double* par) const
 {
   size_t parcount=0;
   // components
