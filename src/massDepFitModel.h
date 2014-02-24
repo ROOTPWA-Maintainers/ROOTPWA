@@ -49,7 +49,7 @@ namespace rpwa {
     unsigned int numPar() const {return _numpar;}
     
     void setPar(const double* par); // set parameters
-    void getPar(double* par);       // return parameters 
+    void getPar(double* par) const;       // return parameters 
     unsigned int nFreeFsmdPar() const {return _fsmdFreeParameters.size();}
     double getFreeFsmdPar(unsigned int i) const;
     void getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const;
