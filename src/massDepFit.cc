@@ -1942,17 +1942,10 @@ main(int    argc,
 		return 1;
 	}
 
-	if(not compset.init(mdepFit.getWaveNames(), mdepFit.getMassBinCenters())) {
+	if(not compset.init(mdepFit.getWaveNames(), mdepFit.getMassBinCenters(), mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName())) {
 		printErr << "error while initializing the fit model." << endl;
 		return 1;
 	}
-
-    cout << "---------------------------------------------------------------------" << endl << endl;
- 
-  printInfo << "creating and setting up likelihood function" << endl;
-  printInfo << "doCovariances = " << doCov << endl;
-
-
 
 	massDepFitLikeli L;
 	L.init(&compset,
