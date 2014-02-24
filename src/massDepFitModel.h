@@ -28,7 +28,7 @@ namespace rpwa {
 
 	public:
 
-		massDepFitModel() : _numpar(0), _fsmdFunction(NULL), _fsmdFixed(false) {}
+		massDepFitModel();
 		~massDepFitModel() {}
 
 		void add(massDepFitComponent* comp);
@@ -37,7 +37,9 @@ namespace rpwa {
 		void setFsmdFunction(TF1* fsmdFunction);
 
 		bool init(const std::vector<std::string>& waveNames,
-		          const std::vector<double>& massBinCenters);
+		          const std::vector<double>& massBinCenters,
+		          const std::string& anchorWaveName,
+		          const std::string& anchorComponentName);
 
 
 
@@ -83,13 +85,18 @@ namespace rpwa {
 
 	private:
 
-		bool initMapping();
+		bool initMapping(const std::string& anchorWaveName,
+		                 const std::string& anchorComponentName);
 		bool initFsmd(const std::vector<double>& massBinCenters);
 
 		std::vector<std::string> _waveNames;
 
     std::vector<massDepFitComponent*> _comp;
     unsigned int _numpar;
+
+		size_t _idxAnchorWave;
+		size_t _idxAnchorComponent;
+		size_t _idxAnchorChannel;
 
 		TF1* _fsmdFunction;
 		bool _fsmdFixed;

@@ -23,13 +23,26 @@ using namespace std;
 using namespace rpwa;
 
 
+massDepFitModel::massDepFitModel()
+	: _numpar(0),
+	  _idxAnchorWave(numeric_limits<size_t>::max()),
+	  _idxAnchorComponent(numeric_limits<size_t>::max()),
+	  _idxAnchorChannel(numeric_limits<size_t>::max()),
+	  _fsmdFunction(NULL),
+	  _fsmdFixed(false)
+{
+}
+
+
 bool
 massDepFitModel::init(const vector<string>& waveNames,
-                      const vector<double>& massBinCenters)
+                      const vector<double>& massBinCenters,
+                      const std::string& anchorWaveName,
+                      const std::string& anchorComponentName)
 {
 	_waveNames = waveNames;
 
-	if(not initMapping()) {
+	if(not initMapping(anchorWaveName, anchorComponentName)) {
 		printErr << "error while mapping the waves to the decay channels and components." << endl;
 		return false;
 	}
@@ -83,7 +96,8 @@ massDepFitModel::setFsmdFunction(TF1* fsmdFunction)
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-massDepFitModel::initMapping()
+massDepFitModel::initMapping(const std::string& anchorWaveName,
+                             const std::string& anchorComponentName)
 {
 	// check that all waves used in a decay channel have been defined
 	for(unsigned int i=0; i<n(); ++i) {
@@ -121,11 +135,23 @@ massDepFitModel::initMapping()
 			// loop over channels of component and see if wave is there
 			const size_t nrChannels = _comp[idxComponent]->getNrChannels();
 			for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-				if(_comp[idxComponent]->getChannelWaveName(idxChannel)==_waveNames[idxWave]) {
+				if(_comp[idxComponent]->getChannelWaveName(idxChannel) == _waveNames[idxWave]) {
 					_compChannel[idxWave].push_back(pair<size_t, size_t>(idxComponent,idxChannel));
+
+					if(anchorWaveName == _waveNames[idxWave] && anchorComponentName == _comp[idxComponent]->getName()) {
+						_idxAnchorWave = idxWave;
+						_idxAnchorComponent = idxComponent;
+						_idxAnchorChannel = idxChannel;
+					}
 				}
 			} // end loop over channels
 		} // end loop over components
+	}
+
+	// test that anchor wave is present
+	if(_idxAnchorWave == numeric_limits<size_t>::max() || _idxAnchorComponent == numeric_limits<size_t>::max() || _idxAnchorChannel == numeric_limits<size_t>::max()) {
+		printErr << "anchor wave '" << anchorWaveName << "' in component '" << anchorComponentName << "' not found." << endl;
+		return false;
 	}
 
 	ostringstream output;
@@ -133,7 +159,11 @@ massDepFitModel::initMapping()
 		output << "    wave '" << _waveNames[idxWave] << "' (index " << idxWave << ") used in" << endl;
 		for(size_t idxComponents=0; idxComponents<_compChannel[idxWave].size(); idxComponents++) {
 			const size_t idxComponent = _compChannel[idxWave][idxComponents].first;
-			output << "        component " << idxComponents << ": " << idxComponent << " '" << _comp[idxComponent]->getName() << "'" << endl;
+			output << "        component " << idxComponents << ": " << idxComponent << " '" << _comp[idxComponent]->getName() << "'";
+			if(_idxAnchorWave == idxWave && _idxAnchorComponent == idxComponent) {
+				output << " (anchor)";
+			}
+			output << endl;
 		}
 	}
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
@@ -141,7 +171,11 @@ massDepFitModel::initMapping()
 
 		const size_t nrChannels = _comp[idxComponent]->getNrChannels();
 		for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-			output << "        channel " << idxChannel << ": " << _comp[idxComponent]->getChannelWaveName(idxChannel) << endl;
+			output << "        channel " << idxChannel << ": " << _comp[idxComponent]->getChannelWaveName(idxChannel);
+			if(_idxAnchorComponent == idxComponent && _idxAnchorChannel == idxChannel) {
+				output << " (anchor)";
+			}
+			output << endl;
 		}
 	}
 	printInfo << _waveNames.size() << " waves and " << n() << " components in fit model:" << endl
