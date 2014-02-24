@@ -1734,9 +1734,10 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
                  const std::string& anchorComponentName,
 		 int level){
   // copy state
-  unsigned int npar=minimizer->NDim();
+  unsigned int npar=compset.numPar();
   double par[npar];
-  for(unsigned int i=0;i<npar;++i)par[i]=minimizer->X()[i];
+  if(level == 0) compset.getPar(par);
+  else for(unsigned int i=0;i<npar;++i)par[i]=minimizer->X()[i];
   minimizer->Clear();
 
   unsigned int parcount=0;
@@ -1977,42 +1978,7 @@ main(int    argc,
   // ---------------------------------------------------------------------------
 
   // Set startvalues
-  unsigned int parcount=0;
-  for(unsigned int ic=0;ic<compset.n();++ic){
-    const massDepFitComponent* comp = compset[ic];
-    TString name(comp->getName());
-    minimizer->SetFixedVariable(parcount++,
-					       (name+comp->getParameterName(0)).Data() ,
-					       comp->getParameter(0));
-    minimizer->SetFixedVariable(parcount++,
-						   (name+comp->getParameterName(1)).Data() ,
-						   comp->getParameter(1));
-    std::vector<pwachannel >::const_iterator it=comp->getChannels().begin();
-    while(it!=comp->getChannels().end()){
-      minimizer->SetVariable(parcount++,(name + "_ReC" + it->getWaveName()).Data() , it->C().real(), 0.10);
-
-      // fix one phase
-      if(name == mdepFit.getAnchorComponentName() && it->getWaveName() == mdepFit.getAnchorWaveName()){
-	minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , 0.0);
-      }
-      else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , it->C().imag(), 0.10);}
-
-      ++it;
-    } // end loop over channels
-  }// end loop over components
-  // set phase space
-  unsigned int nfreeFsmd=compset.nFreeFsmdPar();
-  for(unsigned int ifreeFsmd=0;ifreeFsmd<nfreeFsmd;++ifreeFsmd){
-    double val,lower,upper;
-    val=compset.getFreeFsmdPar(ifreeFsmd);
-    compset.getFreeFsmdLimits(ifreeFsmd,lower,upper);
-    TString name("PSP_"); name+=+ifreeFsmd;
-    minimizer->SetLimitedVariable(parcount++, 
-				  name.Data(), 
-				  val, 0.0001 ,lower,upper);
-  }
-
-    //releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
+  releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
 
    const unsigned int nmbPar  = L.NDim();
   
@@ -2028,7 +1994,7 @@ main(int    argc,
     
     // only do couplings
     TStopwatch fitW;
-    //releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
+    releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
   nfree=minimizer->NFree();
   printInfo <<  nfree  << " Free Parameters in fit" << endl;
     bool success = minimizer->Minimize();
