@@ -43,7 +43,7 @@ namespace rpwa {
 
 
 
-    unsigned int n() const {return _comp.size();}
+    size_t n() const {return _comp.size();}
     unsigned int numPar() const {return _numpar;}
     
     void setPar(const double* par); // set parameters
@@ -53,11 +53,9 @@ namespace rpwa {
     void getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const;
 
 
-    const massDepFitComponent* operator[](unsigned int i) const {return _comp[i];}
-    const std::vector<std::pair<unsigned int,unsigned int> >&
+    const massDepFitComponent* operator[](size_t i) const {return _comp[i];}
+    const std::vector<std::pair<size_t, size_t> >&
       getCompChannel(size_t idx) const { return _compChannel[idx]; }
-    std::vector<std::pair<unsigned int,unsigned int> >
-      getCompChannel(const std::string& wave) const;
 
 
 		std::complex<double> productionAmplitude(const size_t idxWave,
@@ -100,7 +98,7 @@ namespace rpwa {
 
     // mapping for wave -> which components with which channel
     // wavelist in same order as given by wavelist
-    std::vector<std::vector<std::pair<unsigned int,unsigned int> > > _compChannel;    
+    std::vector<std::vector<std::pair<size_t, size_t> > > _compChannel;    
 
 	};
 

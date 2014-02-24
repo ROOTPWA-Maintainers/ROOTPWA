@@ -361,15 +361,15 @@ pwacomponent::init(const libconfig::Setting* configComponent,
 	}
 	_constWidth = !_constWidth;
 
-	printInfo << "component '" << getName() << "':" << endl
-	          << "mass: " << _parameters[0] << " MeV/c^2, limits: "
-	                      << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
-	                      << (_parametersFixed[0] ? "(FIXED)" : "") << endl
-	          << "width: " << _parameters[1] << " MeV/c^2, limits: "
-	                       << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
-	                       << (_parametersFixed[1] ? "(FIXED) " : "") << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
-
 	if(debug) {
+		printDebug << "component '" << getName() << "':" << endl
+		           << "    mass: " << _parameters[0] << " MeV/c^2, limits: "
+		                           << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
+		                           << (_parametersFixed[0] ? "(FIXED)" : "") << endl
+		           << "    width: " << _parameters[1] << " MeV/c^2, limits: "
+		                            << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
+		                            << (_parametersFixed[1] ? "(FIXED) " : "") << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
+
 		printDebug << "finished initialization of 'pwacomponent'." << endl;
 	}
 	return true;
@@ -445,16 +445,16 @@ pwabkg::init(const libconfig::Setting* configComponent,
 	configComponent->lookupValue("mIsobar1", _m1);
 	configComponent->lookupValue("mIsobar2", _m2);
 
-	printInfo << "component '" << getName() << "':" << endl
-	          << "mass: " << _parameters[0] << " MeV/c^2, limits: "
-	                      << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
-	                      << (_parametersFixed[0] ? "(FIXED)" : "") << endl
-	          << "width: " << _parameters[1] << " MeV/c^2, limits: "
-	                       << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
-	                       << (_parametersFixed[1] ? "(FIXED) " : "") << endl
-	          << "mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
-
 	if(debug) {
+		printDebug << "component '" << getName() << "':" << endl
+		           << "    mass: " << _parameters[0] << " MeV/c^2, limits: "
+		                           << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
+		                           << (_parametersFixed[0] ? "(FIXED)" : "") << endl
+		           << "    width: " << _parameters[1] << " MeV/c^2, limits: "
+		                            << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
+		                            << (_parametersFixed[1] ? "(FIXED) " : "") << endl
+		           << "    mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
+
 		printDebug << "finished initialization of 'pwabkg'." << endl;
 	}
 
