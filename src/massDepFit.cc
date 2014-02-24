@@ -45,6 +45,8 @@
 
 #include <boost/assign/std/vector.hpp>
 
+#include <Math/Minimizer.h>
+#include <Math/Factory.h>
 #include <TTree.h>
 #include <TF1.h>
 #include <TFile.h>
@@ -57,8 +59,6 @@
 #include <TComplex.h>
 #include <TRandom3.h>
 #include <TStopwatch.h>
-#include <Math/Minimizer.h>
-#include <Math/Factory.h>
 
 #include <libconfig.h++>
 
@@ -1753,7 +1753,7 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
     else minimizer->SetLimitedVariable(parcount, 
 				       (name+comp->getParameterName(0)).Data(), 
 				       par[parcount], 
-				       5.0,
+				       0.10,
 				       mmin,mmax);
     if(level==0 && !comp->getParameterFixed(0)) printInfo << minimizer->VariableName(parcount) 
 			   << " fixed to " << par[parcount] << endl;
@@ -1764,7 +1764,7 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
     else minimizer->SetLimitedVariable(parcount, 
 				       (name+comp->getParameterName(1)).Data(), 
 				       par[parcount], 
-				       5.0,
+				       0.01,
 				       gmin,gmax);
     if(level<2 && !comp->getParameterFixed(1)) printInfo << minimizer->VariableName(parcount) 
 			  << " fixed to " << par[parcount] << endl;
@@ -1772,7 +1772,7 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
 
     std::vector<pwachannel >::const_iterator it=comp->getChannels().begin();
     while(it!=comp->getChannels().end()){
-      minimizer->SetVariable(parcount,(name + "_ReC" + it->getWaveName()).Data() , par[parcount], 10.0);
+      minimizer->SetVariable(parcount,(name + "_ReC" + it->getWaveName()).Data() , par[parcount], 0.10);
       ++parcount;
       // fix one phase
       if(name == anchorComponentName && it->getWaveName() == anchorWaveName){
@@ -1947,43 +1947,32 @@ main(int    argc,
 		return 1;
 	}
 
-	massDepFitLikeli L;
-	L.init(&compset,
-	       mdepFit.getMassBinCenters(),
-	       mdepFit.getInSpinDensityMatrices(),
-	       mdepFit.getInSpinDensityCovarianceMatrices(),
-	       mdepFit.getWavePairMassBinLimits(),
-	       doCov);
+	if(onlyPlotting) {
+		printInfo << "plotting only mode, skipping minimzation." << endl;
+	} else {
+		// set-up likelihood
+		massDepFitLikeli L;
+		L.init(&compset,
+		       mdepFit.getMassBinCenters(),
+		       mdepFit.getInSpinDensityMatrices(),
+		       mdepFit.getInSpinDensityCovarianceMatrices(),
+		       mdepFit.getWavePairMassBinLimits(),
+		       doCov);
 
-   const unsigned int nmbPar  = L.NDim();
-  // double par[nmbPar];
-  // for(unsigned int ip=0;ip<nmbPar;++ip)par[ip]=1.4;
-
-
-  // TStopwatch watch;
-  // L.DoEval(par);
-  // watch.Stop();
-
-
-  //printInfo << "TESTCALL TO LIKELIHOOD takes " <<  maxPrecisionAlign(watch.CpuTime()) << " s" << endl;
-
-  printInfo << nmbPar << " Parameters in fit" << endl;
- 
-	// ---------------------------------------------------------------------------
-	// setup minimizer
-	printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
-	          << "using algorithm '" << minimizerType[1] << "'" << endl;
-	Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-	if(not minimizer) { 
-		printErr << "could not create minimizer. exiting." << endl;
-		return 1;
-	}
-	minimizer->SetFunction        (L);
-	minimizer->SetStrategy        (minimizerStrategy);
-	minimizer->SetTolerance       (minimizerTolerance);
-	minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
-	minimizer->SetMaxIterations   (maxNmbOfIterations);
-	minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
+		// setup minimizer
+		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
+		          << "using algorithm '" << minimizerType[1] << "'" << endl;
+		Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
+		if(not minimizer) { 
+			printErr << "could not create minimizer. exiting." << endl;
+			return 1;
+		}
+		minimizer->SetFunction        (L);
+		minimizer->SetStrategy        (minimizerStrategy);
+		minimizer->SetTolerance       (minimizerTolerance);
+		minimizer->SetPrintLevel      ((quiet) ? 0 : 3);
+		minimizer->SetMaxIterations   (maxNmbOfIterations);
+		minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
 
   // ---------------------------------------------------------------------------
 
@@ -1992,36 +1981,22 @@ main(int    argc,
   for(unsigned int ic=0;ic<compset.n();++ic){
     const massDepFitComponent* comp = compset[ic];
     TString name(comp->getName());
-    const double mmin = comp->getParameterLimits(0).first;
-    const double mmax = comp->getParameterLimits(0).second;
-    const double gmin = comp->getParameterLimits(1).first;
-    const double gmax = comp->getParameterLimits(1).second;
-    if(comp->getParameterFixed(0))minimizer->SetFixedVariable(parcount++,
+    minimizer->SetFixedVariable(parcount++,
 					       (name+comp->getParameterName(0)).Data() ,
 					       comp->getParameter(0));
-    else minimizer->SetLimitedVariable(parcount++, 
-				       (name+comp->getParameterName(0)).Data(), 
-				       comp->getParameter(0), 
-				       0.10,
-				       mmin,mmax);
-    if(comp->getParameterFixed(1))minimizer->SetFixedVariable(parcount++,
+    minimizer->SetFixedVariable(parcount++,
 						   (name+comp->getParameterName(1)).Data() ,
 						   comp->getParameter(1));
-    else minimizer->SetLimitedVariable(parcount++, 
-				       (name+comp->getParameterName(1)).Data(), 
-				       comp->getParameter(1), 
-				       0.01,
-				       gmin,gmax);
     std::vector<pwachannel >::const_iterator it=comp->getChannels().begin();
     while(it!=comp->getChannels().end()){
       minimizer->SetVariable(parcount++,(name + "_ReC" + it->getWaveName()).Data() , it->C().real(), 0.10);
-      
+
       // fix one phase
       if(name == mdepFit.getAnchorComponentName() && it->getWaveName() == mdepFit.getAnchorWaveName()){
 	minimizer->SetFixedVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , 0.0);
       }
       else {minimizer->SetVariable(parcount++,(name + "_ImC" + it->getWaveName()).Data() , it->C().imag(), 0.10);}
-      
+
       ++it;
     } // end loop over channels
   }// end loop over components
@@ -2037,28 +2012,33 @@ main(int    argc,
 				  val, 0.0001 ,lower,upper);
   }
 
+    //releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
 
-
-  const unsigned int nfree=minimizer->NFree();
+   const unsigned int nmbPar  = L.NDim();
+  
+  printInfo << nmbPar << " Parameters in fit" << endl;
+ 
+  unsigned int nfree=minimizer->NFree();
   printInfo <<  nfree  << " Free Parameters in fit" << endl;
-
 
 
   // find minimum of likelihood function
   double chi2=0;
-  if(onlyPlotting) printInfo << "Plotting mode, skipping minimzation!" << endl;
-  else {
     printInfo << "performing minimization. MASSES AND WIDTHS FIXED" << endl;
     
     // only do couplings
     TStopwatch fitW;
-    // releasePars(minimizer,compset,anchorwave_reso,anchorwave_channel,0);
+    //releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
+  nfree=minimizer->NFree();
+  printInfo <<  nfree  << " Free Parameters in fit" << endl;
     bool success = minimizer->Minimize();
     if(!success)printWarn << "minimization failed." << endl;
     else printInfo << "minimization successful." << endl;
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
     //release masses
     releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 1);
+  nfree=minimizer->NFree();
+  printInfo <<  nfree  << " Free Parameters in fit" << endl;
     printInfo << "performing minimization. MASSES RELEASED" << endl;
     fitW.Start();
     success &= minimizer->Minimize();
@@ -2067,6 +2047,8 @@ main(int    argc,
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
     //release widths
     releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 2);
+  nfree=minimizer->NFree();
+  printInfo <<  nfree  << " Free Parameters in fit" << endl;
     printInfo << "performing minimization. ALL RELEASED" << endl;
     fitW.Start();
     success &= minimizer->Minimize();
@@ -2087,7 +2069,7 @@ main(int    argc,
       if (!success)
 	printWarn << "calculation of Hessian matrix failed." << endl;
     }
-  }
+
   printInfo << "minimization stopped after " << minimizer->NCalls() << " function calls. minimizer status summary:" << endl
 	    << "    total number of parameters .......................... " << minimizer->NDim()             << endl
 	    << "    number of free parameters ........................... " << minimizer->NFree()            << endl
@@ -2151,9 +2133,10 @@ main(int    argc,
  Setting& redchi2S=fitqualS["redchi2"];
  redchi2S=redChi2;
 
-	if(not mdepFit.updateConfigModel(&configRoot, compset, minimizer)) {
-		printErr << "error while updating fit model in configuration file." << endl;
-		return 1;
+		if(not mdepFit.updateConfigModel(&configRoot, compset, minimizer)) {
+			printErr << "error while updating fit model in configuration file." << endl;
+			return 1;
+		}
 	}
 
 	string confFileName(outFileName);
