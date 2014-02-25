@@ -58,12 +58,14 @@ namespace rpwa {
 
     // accessors
     std::complex<double> C() const {return _C;}
-    std::complex<double> CsqrtPS(double m) const {return _C*sqrt(_ps->Eval(m));}
+		std::complex<double> CsqrtPS(const double mass,
+		                             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+		double ps(const double mass,
+		          const size_t idxMass = std::numeric_limits<size_t>::max()) const;
     
 		const std::string& getWaveName() const { return _waveName; }
 
     TGraph* ps() const {return _ps;}
-    double ps(double m) const {return _ps->Eval(m);}
 
     //modifiers
     void setCoupling(std::complex<double> c){_C=c;}
