@@ -61,6 +61,30 @@ pwachannel::pwachannel(const pwachannel& ch) /// cp ctor
 /////////////////////////////
 
 
+std::complex<double>
+pwachannel::CsqrtPS(const double mass,
+                    const size_t idxMass) const
+{
+	if(idxMass != numeric_limits<size_t>::max()) {
+		return _C * sqrt(_phaseSpace[idxMass]);
+	}
+  
+	return _C*sqrt(_ps->Eval(mass));
+}
+
+
+double
+pwachannel::ps(const double mass,
+               const size_t idxMass) const
+{
+	if(idxMass != numeric_limits<size_t>::max()) {
+		return _phaseSpace[idxMass];
+	}
+  
+	return _ps->Eval(mass);
+}
+
+
 massDepFitComponent::massDepFitComponent(const string& name,
                                          const size_t nrParameters)
 	: _name(name),
@@ -388,8 +412,8 @@ pwacomponent::val(const double m) const {
 		for(vector<pwachannel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
 			double myps=1.;
 			if(itChan->ps() != NULL){
-				double ps0=itChan->ps(m0);
-				myps=(itChan->ps(m))/ps0;
+				double ps0=itChan->ps(m0, std::numeric_limits<size_t>::max());
+				myps=(itChan->ps(m, std::numeric_limits<size_t>::max()))/ps0;
 			}
 			ps+=myps;
 		}

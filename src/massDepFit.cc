@@ -1428,7 +1428,7 @@ massDepFit::createPlotsWave(const massDepFitModel& fitModel,
 			const size_t idxChannel = compChannel[idxComponents].second;
 
 			complex<double> prodAmp = fitModel[idxComponent]->val(_massBinCenters[idxMass]);
-			prodAmp *= fitModel[idxComponent]->getChannel(idxChannel).CsqrtPS(_massBinCenters[idxMass]);
+			prodAmp *= fitModel[idxComponent]->getChannel(idxChannel).CsqrtPS(_massBinCenters[idxMass], idxMass);
 			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));

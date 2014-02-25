@@ -193,7 +193,7 @@ massDepFitModel::initFsmd(const vector<double>& massBinCenters)
 	_fsmdValues.resize(nrMassBins);
 
 	for(size_t idxMassBin=0; idxMassBin<nrMassBins; ++idxMassBin) {
-		_fsmdValues[idxMassBin] = calcFsmd(massBinCenters[idxMassBin]);
+		_fsmdValues[idxMassBin] = calcFsmd(massBinCenters[idxMassBin], numeric_limits<size_t>::max());
 	}
 
 	return true;
@@ -289,7 +289,7 @@ massDepFitModel::productionAmplitude(const size_t idxWave,
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
 		size_t idxComponent = components[idxComponents].first;
 		size_t idxChannel = components[idxComponents].second;
-		prodAmp += _comp[idxComponent]->val(mass) * _comp[idxComponent]->getChannel(idxChannel).CsqrtPS(mass);
+		prodAmp += _comp[idxComponent]->val(mass) * _comp[idxComponent]->getChannel(idxChannel).CsqrtPS(mass, idxMass);
 	}
 
 	prodAmp *= calcFsmd(mass, idxMass);
