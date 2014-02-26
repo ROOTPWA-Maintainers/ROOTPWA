@@ -314,62 +314,6 @@ rpwa::massDepFit::component::setParameters(const double* par)
 }
 
 
-double
-rpwa::massDepFit::component::getParameter(const size_t idx) const
-{
-	return _parameters[idx];
-}
-
-
-bool
-rpwa::massDepFit::component::getParameterFixed(const size_t idx) const
-{
-	return _parametersFixed[idx];
-}
-
-
-double
-rpwa::massDepFit::component::getParameterLimitLower(const size_t idx) const
-{
-	return _parametersLimitLower[idx];
-}
-
-
-bool
-rpwa::massDepFit::component::getParameterLimitedLower(const size_t idx) const
-{
-	return _parametersLimitedLower[idx];
-}
-
-
-double
-rpwa::massDepFit::component::getParameterLimitUpper(const size_t idx) const
-{
-	return _parametersLimitUpper[idx];
-}
-
-
-bool
-rpwa::massDepFit::component::getParameterLimitedUpper(const size_t idx) const
-{
-	return _parametersLimitedUpper[idx];
-}
-
-
-const std::string&
-rpwa::massDepFit::component::getParameterName(const size_t idx) const
-{
-	return _parametersName[idx];
-}
-
-
-double
-rpwa::massDepFit::component::getParameterStep(const size_t idx) const
-{
-	return _parametersStep[idx];
-}
-
-
 ostream&
 rpwa::massDepFit::component::print(ostream& out) const
 {
