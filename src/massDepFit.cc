@@ -1306,7 +1306,7 @@ rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitMode
 			++point;
 			const double mass = _massBinCenters[idxMass] * MASSSCALE;
 
-			graph.SetPoint(point, mass, func->Eval(_massBinCenters[idxMass]));
+			graph.SetPoint(point, mass, pow(func->Eval(_massBinCenters[idxMass]), 2.));
 		}
 
 		graph.Write();
