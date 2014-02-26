@@ -32,7 +32,7 @@ rpwa::massDepFit::likelihood::NDataPoints() const {
 			nrPts += _wavePairMassBinLimits[idxWave][jdxWave].second - _wavePairMassBinLimits[idxWave][jdxWave].first + 1;
 		}
 	}
-  
+
 	return nrPts;
 }
 
@@ -70,7 +70,7 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 	_compset->setParameters(par);
 
 	double chi2=0;
- 
+
 	// loop over mass-bins
 	for(unsigned idxMass=0; idxMass<_nrMassBins; ++idxMass) {
 		const double mass = _massBinCenters[idxMass];
@@ -110,6 +110,6 @@ rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 			} // end loop over jdxWave
 		} // end loop over idxWave
 	} // end loop over mass-bins
-  
+
 	return chi2;
 }

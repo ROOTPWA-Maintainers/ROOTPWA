@@ -201,21 +201,21 @@ rpwa::massDepFit::model::initFsmd(const vector<double>& massBinCenters)
 }
 
 
-double 
+double
 rpwa::massDepFit::model::getFsmdParameter(const size_t idx) const
 {
 	return _fsmdFunction->GetParameter(_fsmdFreeParameterIndices[idx]);
 }
 
 
-void 
+void
 rpwa::massDepFit::model::getFsmdParameterLimits(const size_t idx, double& lower, double& upper) const
 {
 	return _fsmdFunction->GetParLimits(_fsmdFreeParameterIndices[idx], lower, upper);
 }
 
 
-void 
+void
 rpwa::massDepFit::model::getParameters(double* par) const
 {
 	size_t parcount=0;
@@ -259,7 +259,7 @@ rpwa::massDepFit::model::setParameters(const double* par)
 }
 
 
-double 
+double
 rpwa::massDepFit::model::calcFsmd(const double mass,
                                   const size_t idxMass) const
 {
@@ -299,7 +299,7 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 }
 
 
-double 
+double
 rpwa::massDepFit::model::intensity(const size_t idxWave,
                                    const double mass,
                                    const size_t idxMass) const
@@ -310,7 +310,7 @@ rpwa::massDepFit::model::intensity(const size_t idxWave,
 }
 
 
-double 
+double
 rpwa::massDepFit::model::phaseAbsolute(const size_t idxWave,
                                        const double mass,
                                        const size_t idxMass) const
@@ -334,7 +334,7 @@ rpwa::massDepFit::model::spinDensityMatrix(const size_t idxWave,
 }
 
 
-double 
+double
 rpwa::massDepFit::model::phase(const size_t idxWave,
                                const size_t jdxWave,
                                const double mass,
