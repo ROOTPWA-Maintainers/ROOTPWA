@@ -90,9 +90,13 @@ massDepFitComponent::massDepFitComponent(const string& name,
 	: _name(name),
 	  _nrParameters(nrParameters),
 	  _parameters(nrParameters),
-	  _parametersLimits(nrParameters),
 	  _parametersFixed(nrParameters),
-	  _parametersNames(nrParameters)
+	  _parametersLimitLower(nrParameters),
+	  _parametersLimitedLower(nrParameters),
+	  _parametersLimitUpper(nrParameters),
+	  _parametersLimitedUpper(nrParameters),
+	  _parametersName(nrParameters),
+	  _parametersStep(nrParameters)
 {
 }
 
@@ -109,33 +113,37 @@ massDepFitComponent::init(const libconfig::Setting* configComponent,
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
-			printDebug << "reading parameter '" << _parametersNames[idxParameter] << "'." << endl;
+			printDebug << "reading parameter '" << _parametersName[idxParameter] << "'." << endl;
 		}
 
-		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersNames[idxParameter]);
+		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersName[idxParameter]);
 		if(not configParameter) {
-			printErr << "component '" << getName() << "' has no section '" << _parametersNames[idxParameter] << "'." << endl;
+			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << endl;
 			return false;
 		}
 
 		map<string, libconfig::Setting::Type> mandatoryArguments;
 		boost::assign::insert(mandatoryArguments)
 		                     ("val", libconfig::Setting::TypeFloat)
-		                     ("lower", libconfig::Setting::TypeFloat)
-		                     ("upper", libconfig::Setting::TypeFloat)
 		                     ("fix", libconfig::Setting::TypeBoolean);
 
 		if(not checkIfAllVariablesAreThere(configParameter, mandatoryArguments)) {
-			printErr << "the '" << _parametersNames[idxParameter] << "' section of the component '" << getName() << "' does not contain all required fields." << endl;
+			printErr << "the '" << _parametersName[idxParameter] << "' section of the component '" << getName() << "' does not contain all required fields." << endl;
 			return false;
 		}
 
 		configParameter->lookupValue("val", _parameters[idxParameter]);
-		configParameter->lookupValue("lower", _parametersLimits[idxParameter].first);
-		configParameter->lookupValue("upper", _parametersLimits[idxParameter].second);
 		bool fixed;
 		configParameter->lookupValue("fix", fixed);
 		_parametersFixed[idxParameter] = fixed;
+
+		_parametersLimitedLower[idxParameter] = configParameter->lookupValue("lower", _parametersLimitLower[idxParameter]);
+		_parametersLimitedUpper[idxParameter] = configParameter->lookupValue("upper", _parametersLimitUpper[idxParameter]);
+
+		double step;
+		if(configParameter->lookupValue("step", step)) {
+			_parametersStep[idxParameter] = step;
+		}
 	}
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
@@ -210,17 +218,17 @@ massDepFitComponent::update(const libconfig::Setting* configComponent,
 
 	for(size_t idxParameter=0; idxParameter<_nrParameters; ++idxParameter) {
 		if(debug) {
-			printDebug << "updating parameter '" << _parametersNames[idxParameter] << "'." << endl;
+			printDebug << "updating parameter '" << _parametersName[idxParameter] << "'." << endl;
 		}
 
-		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersNames[idxParameter]);
+		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersName[idxParameter]);
 		if(not configParameter) {
-			printErr << "component '" << getName() << "' has no section '" << _parametersNames[idxParameter] << "'." << endl;
+			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << endl;
 			return false;
 		}
 
 		(*configParameter)["val"] = _parameters[idxParameter];
-		(*configParameter)["error"] = minimizer->Errors()[minimizer->VariableIndex((getName() + _parametersNames[idxParameter]).c_str())];
+		(*configParameter)["error"] = minimizer->Errors()[minimizer->VariableIndex((getName() + _parametersName[idxParameter]).c_str())];
 	}
 
 	const libconfig::Setting* decayChannels = findLibConfigList(*configComponent, "decaychannels");
@@ -326,17 +334,45 @@ massDepFitComponent::getParameterFixed(const size_t idx) const
 }
 
 
-pair<double, double>
-massDepFitComponent::getParameterLimits(const size_t idx) const
+double
+massDepFitComponent::getParameterLimitLower(const size_t idx) const
 {
-	return _parametersLimits[idx];
+	return _parametersLimitLower[idx];
+}
+
+
+bool
+massDepFitComponent::getParameterLimitedLower(const size_t idx) const
+{
+	return _parametersLimitedLower[idx];
+}
+
+
+double
+massDepFitComponent::getParameterLimitUpper(const size_t idx) const
+{
+	return _parametersLimitUpper[idx];
+}
+
+
+bool
+massDepFitComponent::getParameterLimitedUpper(const size_t idx) const
+{
+	return _parametersLimitedUpper[idx];
 }
 
 
 const std::string&
 massDepFitComponent::getParameterName(const size_t idx) const
 {
-	return _parametersNames[idx];
+	return _parametersName[idx];
+}
+
+
+double
+massDepFitComponent::getParameterStep(const size_t idx) const
+{
+	return _parametersStep[idx];
 }
 
 
@@ -354,8 +390,11 @@ massDepFitComponent::print(ostream& out) const
 pwacomponent::pwacomponent(const string& name)
 	: massDepFitComponent(name, 2)
 {
-	_parametersNames[0] = "mass";
-	_parametersNames[1] = "width";
+	_parametersName[0] = "mass";
+	_parametersName[1] = "width";
+
+	_parametersStep[0] = 1.0;
+	_parametersStep[1] = 1.0;
 }
 
 
@@ -386,13 +425,33 @@ pwacomponent::init(const libconfig::Setting* configComponent,
 	_constWidth = !_constWidth;
 
 	if(debug) {
-		printDebug << "component '" << getName() << "':" << endl
-		           << "    mass: " << _parameters[0] << " MeV/c^2, limits: "
-		                           << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
-		                           << (_parametersFixed[0] ? "(FIXED)" : "") << endl
-		           << "    width: " << _parameters[1] << " MeV/c^2, limits: "
-		                            << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
-		                            << (_parametersFixed[1] ? "(FIXED) " : "") << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
+		ostringstream output;
+		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[0]) {
+			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[0]) {
+			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+
+		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[1]) {
+			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[1]) {
+			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[1] ? "(FIXED) " : "");
+		output << (_constWidth ? "-- constant width" : "-- dynamic width") << endl;
+
+		printDebug << "component '" << getName() << "':" << endl << output.str();
 
 		printDebug << "finished initialization of 'pwacomponent'." << endl;
 	}
@@ -437,8 +496,11 @@ pwacomponent::print(ostream& out) const
 pwabkg::pwabkg(const string& name)
 	: massDepFitComponent(name, 2)
 {
-	_parametersNames[0] = "m0";
-	_parametersNames[1] = "g";
+	_parametersName[0] = "m0";
+	_parametersName[1] = "g";
+
+	_parametersStep[0] = 1.0;
+	_parametersStep[1] = 1.0e-6;
 }
 
 
@@ -470,14 +532,34 @@ pwabkg::init(const libconfig::Setting* configComponent,
 	configComponent->lookupValue("mIsobar2", _m2);
 
 	if(debug) {
-		printDebug << "component '" << getName() << "':" << endl
-		           << "    mass: " << _parameters[0] << " MeV/c^2, limits: "
-		                           << _parametersLimits[0].first << "-" << _parametersLimits[0].second << " MeV/c^2 "
-		                           << (_parametersFixed[0] ? "(FIXED)" : "") << endl
-		           << "    width: " << _parameters[1] << " MeV/c^2, limits: "
-		                            << _parametersLimits[1].first << "-" << _parametersLimits[1].second << " MeV/c^2 "
-		                            << (_parametersFixed[1] ? "(FIXED) " : "") << endl
-		           << "    mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
+		ostringstream output;
+		output << "    mass: " << _parameters[0] << " MeV/c^2, ";
+		if(_parametersLimitedLower[0] && _parametersLimitedUpper[0]) {
+			output << "    limits: " << _parametersLimitLower[0] << "-" << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[0]) {
+			output << "    lower limit: " << _parametersLimitLower[0] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[0]) {
+			output << "    upper limit: " << _parametersLimitUpper[0] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[0] ? "(FIXED)" : "") << endl;
+
+		output << "    width: " << _parameters[1] << " MeV/c^2, ";
+		if(_parametersLimitedLower[1] && _parametersLimitedUpper[1]) {
+			output << "    limits: " << _parametersLimitLower[1] << "-" << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedLower[1]) {
+			output << "    lower limit: " << _parametersLimitLower[1] << " MeV/c^2 ";
+		} else if(_parametersLimitedUpper[1]) {
+			output << "    upper limit: " << _parametersLimitUpper[1] << " MeV/c^2 ";
+		} else {
+			output << "    unlimited ";
+		}
+		output << (_parametersFixed[1] ? "(FIXED) " : "") << endl;
+
+		output << "    mass of isobar 1: " << _m1 << " MeV/c^2, mass of isobar 2: " << _m2 << " MeV/c^2" << endl;
+
+		printDebug << "component '" << getName() << "':" << endl << output.str();
 
 		printDebug << "finished initialization of 'pwabkg'." << endl;
 	}

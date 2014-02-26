@@ -114,8 +114,12 @@ namespace rpwa {
 
 		virtual double getParameter(const size_t idx) const;
 		virtual bool getParameterFixed(const size_t idx) const;
-		virtual std::pair<double, double> getParameterLimits(const size_t idx) const;
+		virtual double getParameterLimitLower(const size_t idx) const;
+		virtual bool getParameterLimitedLower(const size_t idx) const;
+		virtual double getParameterLimitUpper(const size_t idx) const;
+		virtual bool getParameterLimitedUpper(const size_t idx) const;
 		virtual const std::string& getParameterName(const size_t idx) const;
+		virtual double getParameterStep(const size_t idx) const;
 
 		virtual std::complex<double> val(const double m) const = 0;
 
@@ -132,9 +136,13 @@ namespace rpwa {
 	protected:
 
 		std::vector<double> _parameters;
-		std::vector<std::pair<double, double> > _parametersLimits;
 		std::vector<bool> _parametersFixed;
-		std::vector<std::string> _parametersNames;
+		std::vector<double> _parametersLimitLower;
+		std::vector<bool> _parametersLimitedLower;
+		std::vector<double> _parametersLimitUpper;
+		std::vector<bool> _parametersLimitedUpper;
+		std::vector<std::string> _parametersName;
+		std::vector<double> _parametersStep;
 
 	};
 
