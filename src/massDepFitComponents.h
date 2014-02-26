@@ -146,7 +146,7 @@ namespace rpwa {
 
 			virtual std::complex<double> val(const double m) const;
 
-			std::ostream& print(std::ostream& out) const;
+			virtual std::ostream& print(std::ostream& out) const;
 
 		private:
 
@@ -167,6 +167,8 @@ namespace rpwa {
 			                  const bool debug);
 
 			virtual std::complex<double> val(const double m) const;
+
+			virtual std::ostream& print(std::ostream& out) const;
 
 		private:
 

@@ -493,3 +493,12 @@ rpwa::massDepFit::pwabkg::val(const double m) const {
 
 	return exp(-_parameters[1]*q2);
 }
+
+
+ostream&
+rpwa::massDepFit::pwabkg::print(ostream& out) const
+{
+	out << getName() << endl
+	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    Mass isobar 1=" << _m1 << "    Mass isobar 2=" << _m2 << endl;
+	return component::print(out);
+}
