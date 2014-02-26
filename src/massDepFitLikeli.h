@@ -21,7 +21,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
-		class massDepFitModel;
+		class model;
 
 		class likelihood : public ROOT::Math::IBaseFunctionMultiDim {
 
@@ -38,7 +38,7 @@ namespace rpwa {
 
 			unsigned int NDataPoints() const;
 
-			void init(massDepFitModel* compset,
+			void init(rpwa::massDepFit::model* compset,
 			          const std::vector<double>& massBinCenters,
 			          const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
 			          const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
@@ -47,7 +47,7 @@ namespace rpwa {
 
 		private:
 
-			massDepFitModel* _compset;
+			rpwa::massDepFit::model* _compset;
 
 			size_t _nrMassBins;
 			size_t _nrWaves;

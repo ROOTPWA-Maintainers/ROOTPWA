@@ -311,7 +311,7 @@ rpwa::massDepFit::massDepFit::readConfigInputSystematics(const Setting* configIn
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModel(const Setting* configRoot,
-                                              massDepFitModel& fitModel)
+                                              rpwa::massDepFit::model& fitModel)
 {
 	if(_debug) {
 		printDebug << "reading fit model from configuration file." << endl;
@@ -375,7 +375,7 @@ rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const Setting* configAnc
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configComponents,
-                                                        massDepFitModel& fitModel) const
+                                                        rpwa::massDepFit::model& fitModel) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << endl;
@@ -453,7 +453,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 
 bool
 rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
-                                                  massDepFitModel& fitModel) const
+                                                  rpwa::massDepFit::model& fitModel) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -555,7 +555,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 
 bool
 rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configRoot,
-                                                const massDepFitModel& fitModel,
+                                                const rpwa::massDepFit::model& fitModel,
                                                 const Minimizer* minimizer) const
 {
 	if(_debug) {
@@ -588,7 +588,7 @@ rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configRoot,
 
 bool
 rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configComponents,
-                                                          const massDepFitModel& fitModel,
+                                                          const rpwa::massDepFit::model& fitModel,
                                                           const Minimizer* minimizer) const
 {
 	if(not configComponents) {
@@ -643,7 +643,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 
 bool
 rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
-                                                    const massDepFitModel& fitModel,
+                                                    const rpwa::massDepFit::model& fitModel,
                                                     const Minimizer* minimizer) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
@@ -1269,7 +1269,7 @@ rpwa::massDepFit::massDepFit::prepareMassLimits()
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlots(const massDepFitModel& fitModel,
+rpwa::massDepFit::massDepFit::createPlots(const rpwa::massDepFit::model& fitModel,
                                           TFile* outFile,
                                           const bool rangePlotting) const
 {
@@ -1321,7 +1321,7 @@ rpwa::massDepFit::massDepFit::createPlots(const massDepFitModel& fitModel,
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWave(const massDepFitModel& fitModel,
+rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fitModel,
                                               TFile* outFile,
                                               const bool rangePlotting,
                                               const size_t idxWave) const
@@ -1450,7 +1450,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const massDepFitModel& fitModel,
 
 
 bool
-rpwa::massDepFit::massDepFit::createPlotsWavePair(const massDepFitModel& fitModel,
+rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
                                                   TFile* outFile,
                                                   const bool rangePlotting,
                                                   const size_t idxWave,
@@ -1731,7 +1731,7 @@ usage(const string& progName,
 // 2 = release couplings, masses and widths
 bool
 releasePars(Minimizer* minimizer,
-            const rpwa::massDepFit::massDepFitModel& compset, 
+            const rpwa::massDepFit::model& compset, 
             const std::string& anchorWaveName,
             const std::string& anchorComponentName,
             const int level)
@@ -1967,7 +1967,7 @@ main(int    argc,
 	}
 
 	// set-up fit model (resonances, background, final-state mass dependence
-	rpwa::massDepFit::massDepFitModel compset;
+	rpwa::massDepFit::model compset;
 	if(not mdepFit.readConfigModel(&configRoot, compset)) {
 		printErr << "error while reading fit model from configuration file." << endl;
 		return 1;

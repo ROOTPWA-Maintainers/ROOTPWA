@@ -39,12 +39,12 @@ rpwa::massDepFit::likelihood::NDataPoints() const {
 
 
 void
-rpwa::massDepFit::likelihood::init(massDepFitModel* compset,
-                                         const std::vector<double>& massBinCenters,
-                                         const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-                                         const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
-                                         const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
-                                         bool useCovariance)
+rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
+                                   const std::vector<double>& massBinCenters,
+                                   const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+                                   const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
+                                   const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
+                                   bool useCovariance)
 {
 	_compset = compset;
 

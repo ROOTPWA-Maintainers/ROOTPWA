@@ -24,12 +24,12 @@ namespace rpwa {
 
 		class massDepFitComponent;
 
-		class massDepFitModel {
+		class model {
 
 		public:
 
-			massDepFitModel();
-			~massDepFitModel() {}
+			model();
+			~model() {}
 
 			void add(massDepFitComponent* comp);
 
@@ -113,7 +113,7 @@ namespace rpwa {
 
 } // end namespace rpwa
 
-inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::massDepFitModel& fitModel) {
+inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel) {
 	return fitModel.print(out);
 }
 

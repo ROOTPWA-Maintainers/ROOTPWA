@@ -24,7 +24,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
-		class massDepFitModel;
+		class model;
 
 		class massDepFit {
 
@@ -40,11 +40,11 @@ namespace rpwa {
 			bool readConfigInput(const libconfig::Setting* configInput);
 // FIXME: make private
 			bool readConfigModel(const libconfig::Setting* configRoot,
-			                     massDepFitModel& fitModel);
+			                     rpwa::massDepFit::model& fitModel);
 
 // FIXME: make private
 			bool updateConfigModel(const libconfig::Setting* configRoot,
-			                       const massDepFitModel& fitModel,
+			                       const rpwa::massDepFit::model& fitModel,
 			                       const ROOT::Math::Minimizer* minimizer) const;
 
 // FIXME: make private
@@ -56,7 +56,7 @@ namespace rpwa {
 			                          const std::string& valBranchName = "fitResult_v2");
 
 // FIXME: make private
-			bool createPlots(const massDepFitModel& fitModel,
+			bool createPlots(const rpwa::massDepFit::model& fitModel,
 			                 TFile* outFile,
 			                 const bool rangePlotting) const;
 
@@ -85,15 +85,15 @@ namespace rpwa {
 
 			bool readConfigModelAnchorWave(const libconfig::Setting* configAnchorWave);
 			bool readConfigModelComponents(const libconfig::Setting* configComponents,
-			                               massDepFitModel& fitModel) const;
+			                               rpwa::massDepFit::model& fitModel) const;
 			bool readConfigModelFsmd(const libconfig::Setting* configFsmd,
-			                         massDepFitModel& fitModel) const;
+			                         rpwa::massDepFit::model& fitModel) const;
 
 			bool updateConfigModelComponents(const libconfig::Setting* configComponents,
-			                                 const massDepFitModel& fitModel,
+			                                 const rpwa::massDepFit::model& fitModel,
 			                                 const ROOT::Math::Minimizer* minimizer) const;
 			bool updateConfigModelFsmd(const libconfig::Setting* configFsmd,
-			                           const massDepFitModel& fitModel,
+			                           const rpwa::massDepFit::model& fitModel,
 			                           const ROOT::Math::Minimizer* minimizer) const;
 
 			bool readSystematicsFile(const size_t idxSystematics,
@@ -119,11 +119,11 @@ namespace rpwa {
 			bool readPhaseSpaceIntegralMatrices(const std::vector<std::string>& overwritePhaseSpace,
 			                                    boost::multi_array<double, 2>& phaseSpaceIntegrals) const;
 
-			bool createPlotsWave(const massDepFitModel& fitModel,
+			bool createPlotsWave(const rpwa::massDepFit::model& fitModel,
 			                     TFile* outFile,
 			                     const bool rangePlotting,
 			                     const size_t idxWave) const;
-			bool createPlotsWavePair(const massDepFitModel& fitModel,
+			bool createPlotsWavePair(const rpwa::massDepFit::model& fitModel,
 			                         TFile* outFile,
 			                         const bool rangePlotting,
 			                         const size_t idxWave,
