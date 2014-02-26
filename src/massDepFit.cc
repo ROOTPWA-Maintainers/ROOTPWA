@@ -72,9 +72,7 @@
 #include "reportingUtils.hpp"
 #include "reportingUtilsEnvironment.h"
 
-
 #define MASSSCALE 0.001
-
 
 using namespace std;
 using namespace libconfig;
@@ -1428,7 +1426,7 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			const size_t idxChannel = compChannel[idxComponents].second;
 
 			complex<double> prodAmp = fitModel[idxComponent]->val(_massBinCenters[idxMass]);
-			prodAmp *= fitModel[idxComponent]->getChannel(idxChannel).CsqrtPS(_massBinCenters[idxMass], idxMass);
+			prodAmp *= fitModel[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(_massBinCenters[idxMass], idxMass);
 			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));

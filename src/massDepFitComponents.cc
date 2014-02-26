@@ -11,23 +11,14 @@
 //
 //-----------------------------------------------------------
 
-// This Class' Header ------------------
 #include "massDepFitComponents.h"
-
-// C/C++ Headers ----------------------
-#include <algorithm>
-#include <iostream>
 
 #include <boost/assign/std/vector.hpp>
 
-// Collaborating Class Headers --------
 #include <Math/Minimizer.h>
-#include "TF1.h"
 
 #include "libConfigUtils.hpp"
 #include "reportingUtils.hpp"
-
-// Class Member definitions -----------
 
 using namespace std;
 
@@ -53,34 +44,34 @@ q(const double M,
     return complex<double>(0.0, 0.0);
   return complex<double>(sqrt(lam / (4 * M * M)), 0.0 );
 }
-
-rpwa::massDepFit::pwachannel::pwachannel(const rpwa::massDepFit::pwachannel& ch) /// cp ctor
-  : _waveName(ch._waveName), _C(ch._C), _phaseSpace(ch._phaseSpace), _ps(ch._ps) {
-}
 /////////////////////////////
 
 
-std::complex<double>
-rpwa::massDepFit::pwachannel::CsqrtPS(const double mass,
-                                      const size_t idxMass) const
+rpwa::massDepFit::pwachannel::pwachannel(const std::string& waveName,
+                                         std::complex<double> coupling,
+                                         const std::vector<double>& massBinCenters,
+                                         const std::vector<double>& phaseSpace)
+	: _waveName(waveName),
+	  _coupling(coupling),
+	  _massBinCenters(massBinCenters),
+	  _phaseSpace(phaseSpace)
 {
-	if(idxMass != numeric_limits<size_t>::max()) {
-		return _C * _phaseSpace[idxMass];
-	}
-  
-	return _C * _ps->Eval(mass);
+	_interpolator = new ROOT::Math::Interpolator(_massBinCenters, _phaseSpace, ROOT::Math::Interpolation::kLINEAR);
 }
 
 
-double
-rpwa::massDepFit::pwachannel::ps(const double mass,
-                                 const size_t idxMass) const
+rpwa::massDepFit::pwachannel::pwachannel(const rpwa::massDepFit::pwachannel& ch)
+	: _waveName(ch._waveName),
+	  _coupling(ch._coupling),
+	  _massBinCenters(ch._massBinCenters),
+	  _phaseSpace(ch._phaseSpace)
 {
-	if(idxMass != numeric_limits<size_t>::max()) {
-		return _phaseSpace[idxMass];
-	}
-  
-	return _ps->Eval(mass);
+	_interpolator = new ROOT::Math::Interpolator(_massBinCenters, _phaseSpace, ROOT::Math::Interpolation::kLINEAR);
+}
+
+
+rpwa::massDepFit::pwachannel::~pwachannel() {
+	delete _interpolator;
 }
 
 
@@ -272,8 +263,8 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 			return false;
 		}
 
-		(*decayChannel)["coupling_Re"] = channel->C().real();
-		(*decayChannel)["coupling_Im"] = channel->C().imag();
+		(*decayChannel)["coupling_Re"] = channel->getCoupling().real();
+		(*decayChannel)["coupling_Im"] = channel->getCoupling().imag();
 	}
 
 	if(debug) {
@@ -289,8 +280,8 @@ rpwa::massDepFit::component::getCouplings(double* par) const
 {
 	size_t counter=0;
 	for(vector<pwachannel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
-		par[counter] = it->C().real();
-		par[counter+1] = it->C().imag();
+		par[counter] = it->getCoupling().real();
+		par[counter+1] = it->getCoupling().imag();
 	}
 }
 
@@ -384,7 +375,7 @@ rpwa::massDepFit::component::print(ostream& out) const
 {
 	out << "Decay modes:" << endl;
 	for(vector<pwachannel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
-		out << it->getWaveName() << "    C=" << it->C() << endl;
+		out << it->getWaveName() << "    C=" << it->getCoupling() << endl;
 	}
 	return out;
 }
@@ -472,12 +463,9 @@ rpwa::massDepFit::pwacomponent::val(const double m) const {
 	if(!_constWidth){
 		ps=0; // no not forget to reset phase space here!
 		for(vector<pwachannel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
-			double myps=1.;
-			if(itChan->ps() != NULL){
-				double ps0=itChan->ps(m0, std::numeric_limits<size_t>::max());
-				myps=(itChan->ps(m, std::numeric_limits<size_t>::max()))/ps0;
-			}
-			ps+=myps*myps;
+			const double ps0 = itChan->getPhaseSpace(m0, std::numeric_limits<size_t>::max());
+			const double ratio = itChan->getPhaseSpace(m, std::numeric_limits<size_t>::max()) / ps0;
+			ps += ratio*ratio;
 		}
 		ps /= getNrChannels();
 	}

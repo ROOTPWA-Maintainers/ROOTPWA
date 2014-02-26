@@ -13,21 +13,12 @@
 #ifndef MASSDEPFITCOMPONENTS_HH
 #define MASSDEPFITCOMPONENTS_HH
 
-// Base Class Headers ----------------
-
-
-// Collaborating Class Headers -------
-#include <ostream>
-#include <string>
 #include <map>
-#include <vector>
-#include <complex>
 
 #include <boost/multi_array.hpp>
 
-#include <TGraph.h>
+#include <Math/Interpolator.h>
 
-// Collaborating Class Declarations --
 namespace libconfig {
 	class Setting;
 }
@@ -36,7 +27,6 @@ namespace ROOT {
 		class Minimizer;
 	}
 }
-class TF1;
 
 namespace rpwa {
 
@@ -46,37 +36,33 @@ namespace rpwa {
 
 		public:
 
-    pwachannel(const std::string& waveName,
-               std::complex<double> coupling,
-	       const std::vector<double>& massBinCenters,
-	       const std::vector<double>& phaseSpace)
-      : _waveName(waveName), _C(coupling), _phaseSpace(phaseSpace)
-    {
-        _ps = new TGraph(_phaseSpace.size(), &(massBinCenters[0]), &(_phaseSpace[0]));
-    }
-
-    pwachannel(const rpwa::massDepFit::pwachannel& ch); /// cp ctor
+			pwachannel(const std::string& waveName,
+			           std::complex<double> coupling,
+			           const std::vector<double>& massBinCenters,
+			           const std::vector<double>& phaseSpace);
+			pwachannel(const rpwa::massDepFit::pwachannel& ch);
+			~pwachannel();
     
-    // accessors
-    std::complex<double> C() const {return _C;}
-		std::complex<double> CsqrtPS(const double mass,
-		                             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-		double ps(const double mass,
-		          const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			const std::string& getWaveName() const { return _waveName; }
+
+			std::complex<double> getCoupling() const { return _coupling; }
+			void setCoupling(std::complex<double> coupling) { _coupling = coupling; }
+
+			double getPhaseSpace(const double mass,
+			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+
+			std::complex<double> getCouplingPhaseSpace(const double mass,
+			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
     
-		const std::string& getWaveName() const { return _waveName; }
-
-    TGraph* ps() const {return _ps;}
-
-    //modifiers
-    void setCoupling(std::complex<double> c){_C=c;}
-
 		private:
 
-		std::string _waveName;
-    std::complex<double> _C;
-    std::vector<double> _phaseSpace;
-    TGraph* _ps;
+			std::string _waveName;
+
+			std::complex<double> _coupling;
+
+			std::vector<double> _massBinCenters;
+			std::vector<double> _phaseSpace;
+			ROOT::Math::Interpolator* _interpolator;
 
 		};
 
@@ -85,7 +71,7 @@ namespace rpwa {
 		public:
 
 			component(const std::string& name,
-			                    const size_t nrParameters);
+			          const size_t nrParameters);
 			virtual ~component() {};
 
 			const std::string& getName() const { return _name; }
@@ -193,8 +179,35 @@ namespace rpwa {
 
 } // end namespace rpwa
 
-inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::component& component) {
+
+inline
+double
+rpwa::massDepFit::pwachannel::getPhaseSpace(const double mass,
+                                            const size_t idxMass) const
+{
+	if(idxMass != std::numeric_limits<size_t>::max()) {
+		return _phaseSpace[idxMass];
+	}
+  
+	return _interpolator->Eval(mass);
+}
+
+
+inline
+std::complex<double>
+rpwa::massDepFit::pwachannel::getCouplingPhaseSpace(const double mass,
+                                                    const size_t idxMass) const
+{
+	return _coupling * getPhaseSpace(mass, idxMass);
+}
+
+
+inline
+std::ostream&
+operator<< (std::ostream& out, const rpwa::massDepFit::component& component)
+{
 	return component.print(out);
 }
+
 
 #endif // MASSDEPFITCOMPONENTS_HH
