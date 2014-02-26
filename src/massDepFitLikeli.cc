@@ -13,7 +13,7 @@ rpwa::massDepFit::likelihood::Clone() const {
 
 unsigned int
 rpwa::massDepFit::likelihood::NDim() const {
-	return _compset->numPar();
+	return _compset->getNrParameters();
 }
 
 
@@ -67,7 +67,7 @@ rpwa::massDepFit::likelihood::init(rpwa::massDepFit::model* compset,
 double
 rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 	// set parameters for resonances, background and phase space
-	_compset->setPar(par);
+	_compset->setParameters(par);
 
 	double chi2=0;
  
