@@ -22,7 +22,7 @@ namespace rpwa {
 
 	namespace massDepFit {
 
-		class massDepFitComponent;
+		class component;
 
 		class model {
 
@@ -31,7 +31,7 @@ namespace rpwa {
 			model();
 			~model() {}
 
-			void add(massDepFitComponent* comp);
+			void add(rpwa::massDepFit::component* comp);
 
 			TF1* getFsmdFunction() const { return _fsmdFunction; }
 			void setFsmdFunction(TF1* fsmdFunction);
@@ -55,7 +55,7 @@ namespace rpwa {
     void getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const;
 
 
-    const massDepFitComponent* operator[](size_t i) const {return _comp[i];}
+    const rpwa::massDepFit::component* operator[](size_t i) const {return _comp[i];}
     const std::vector<std::pair<size_t, size_t> >&
       getCompChannel(size_t idx) const { return _compChannel[idx]; }
 
@@ -91,7 +91,7 @@ namespace rpwa {
 
 			std::vector<std::string> _waveNames;
 
-    std::vector<massDepFitComponent*> _comp;
+    std::vector<rpwa::massDepFit::component*> _comp;
     unsigned int _numpar;
 
 			size_t _idxAnchorWave;
