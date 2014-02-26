@@ -18,7 +18,6 @@
 #include "massDepFitComponents.h"
 #include "reportingUtils.hpp"
 
-
 using namespace std;
 using namespace rpwa;
 
@@ -289,7 +288,7 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
 		size_t idxComponent = components[idxComponents].first;
 		size_t idxChannel = components[idxComponents].second;
-		prodAmp += _comp[idxComponent]->val(mass) * _comp[idxComponent]->getChannel(idxChannel).CsqrtPS(mass, idxMass);
+		prodAmp += _comp[idxComponent]->val(mass) * _comp[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(mass, idxMass);
 	}
 
 	prodAmp *= calcFsmd(mass, idxMass);

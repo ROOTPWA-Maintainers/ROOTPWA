@@ -113,8 +113,12 @@ namespace rpwa {
 
 } // end namespace rpwa
 
-inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel) {
+
+inline
+std::ostream&
+operator<< (std::ostream& out, const rpwa::massDepFit::model& fitModel) {
 	return fitModel.print(out);
 }
+
 
 #endif // MASSDEPFITMODEL_HH

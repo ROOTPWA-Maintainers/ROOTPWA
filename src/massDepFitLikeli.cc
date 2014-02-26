@@ -2,7 +2,6 @@
 
 #include "massDepFitModel.h"
 
-
 using namespace std;
 
 
