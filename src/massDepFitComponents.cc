@@ -65,10 +65,10 @@ rpwa::massDepFit::pwachannel::CsqrtPS(const double mass,
                                       const size_t idxMass) const
 {
 	if(idxMass != numeric_limits<size_t>::max()) {
-		return _C * sqrt(_phaseSpace[idxMass]);
+		return _C * _phaseSpace[idxMass];
 	}
   
-	return _C*sqrt(_ps->Eval(mass));
+	return _C * _ps->Eval(mass);
 }
 
 
@@ -477,7 +477,7 @@ rpwa::massDepFit::pwacomponent::val(const double m) const {
 				double ps0=itChan->ps(m0, std::numeric_limits<size_t>::max());
 				myps=(itChan->ps(m, std::numeric_limits<size_t>::max()))/ps0;
 			}
-			ps+=myps;
+			ps+=myps*myps;
 		}
 		ps /= getNrChannels();
 	}
