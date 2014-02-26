@@ -98,14 +98,14 @@ namespace rpwa {
 			virtual void getParameters(double* par) const;
 			virtual void setParameters(const double* par);
 
-			virtual double getParameter(const size_t idx) const;
-			virtual bool getParameterFixed(const size_t idx) const;
-			virtual double getParameterLimitLower(const size_t idx) const;
-			virtual bool getParameterLimitedLower(const size_t idx) const;
-			virtual double getParameterLimitUpper(const size_t idx) const;
-			virtual bool getParameterLimitedUpper(const size_t idx) const;
-			virtual const std::string& getParameterName(const size_t idx) const;
-			virtual double getParameterStep(const size_t idx) const;
+			virtual double getParameter(const size_t idx) const { return _parameters[idx]; }
+			virtual bool getParameterFixed(const size_t idx) const { return _parametersFixed[idx]; }
+			virtual double getParameterLimitLower(const size_t idx) const { return _parametersLimitLower[idx]; }
+			virtual bool getParameterLimitedLower(const size_t idx) const { return _parametersLimitedLower[idx]; }
+			virtual double getParameterLimitUpper(const size_t idx) const { return _parametersLimitUpper[idx]; }
+			virtual bool getParameterLimitedUpper(const size_t idx) const { return _parametersLimitedUpper[idx]; }
+			virtual const std::string& getParameterName(const size_t idx) const { return _parametersName[idx]; }
+			virtual double getParameterStep(const size_t idx) const { return _parametersStep[idx]; }
 
 			virtual std::complex<double> val(const double m) const = 0;
 
