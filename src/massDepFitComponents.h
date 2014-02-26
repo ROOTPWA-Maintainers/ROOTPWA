@@ -80,13 +80,13 @@ namespace rpwa {
 
 		};
 
-		class massDepFitComponent {
+		class component {
 
 		public:
 
-			massDepFitComponent(const std::string& name,
+			component(const std::string& name,
 			                    const size_t nrParameters);
-			virtual ~massDepFitComponent() {};
+			virtual ~component() {};
 
 			const std::string& getName() const { return _name; }
 
@@ -146,7 +146,7 @@ namespace rpwa {
 
 		};
 
-		class pwacomponent : public massDepFitComponent {
+		class pwacomponent : public component {
 
 		public:
 
@@ -168,7 +168,7 @@ namespace rpwa {
 
 		};
 
-		class pwabkg : public massDepFitComponent {
+		class pwabkg : public component {
 
 		public:
 
@@ -193,7 +193,7 @@ namespace rpwa {
 
 } // end namespace rpwa
 
-inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::massDepFitComponent& component) {
+inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::component& component) {
 	return component.print(out);
 }
 

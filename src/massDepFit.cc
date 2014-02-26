@@ -421,7 +421,7 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 			printDebug << "found component '" << name << "' with type '" << type << "'." << endl;
 		}
 
-		massDepFitComponent* component = NULL;
+		rpwa::massDepFit::component* component = NULL;
 		if(type == "relativisticBreitWigner") {
 			component = new pwacomponent(name);
 		} else if(type == "exponentialBackground") {
@@ -618,7 +618,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 		string name;
 		configComponent->lookupValue("name", name);
 
-		const massDepFitComponent* component = NULL;
+		const rpwa::massDepFit::component* component = NULL;
 		for(size_t idx=0; idx<nrComponents; ++idx) {
 			if(fitModel[idx]->getName() == name) {
 				component = fitModel[idx];
@@ -1752,7 +1752,7 @@ releasePars(Minimizer* minimizer,
 
   unsigned int parcount=0;
   for(unsigned int ic=0;ic<compset.n();++ic){
-    const rpwa::massDepFit::massDepFitComponent* comp = compset[ic];
+    const rpwa::massDepFit::component* comp = compset[ic];
     TString name(comp->getName());
     for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
       bool fix = false;

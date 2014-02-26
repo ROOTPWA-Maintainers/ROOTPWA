@@ -57,7 +57,7 @@ rpwa::massDepFit::model::init(const vector<string>& waveNames,
 
 
 void
-rpwa::massDepFit::model::add(massDepFitComponent* comp)
+rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 {
     _comp.push_back(comp);
     _numpar+=comp->getNrParameters() + 2*comp->getNrChannels();
@@ -347,7 +347,7 @@ ostream&
 rpwa::massDepFit::model::print(ostream& out) const
 {
 	for(unsigned int i=0;i<_comp.size();++i){
-		const massDepFitComponent& c = *_comp[i];
+		const rpwa::massDepFit::component& c = *_comp[i];
 		c.print(out);
 	}
 	return out;
