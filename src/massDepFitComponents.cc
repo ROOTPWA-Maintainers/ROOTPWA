@@ -18,33 +18,10 @@
 #include <Math/Minimizer.h>
 
 #include "libConfigUtils.hpp"
+#include "physUtils.hpp"
 #include "reportingUtils.hpp"
 
 using namespace std;
-
-
-/////////////////////////////
-double
-lambda(const double a,
-       const double b,
-       const double c)
-{
-  return a * a + b * b + c * c - 2.0 * (a * b + b * c + c * a);
-}
-
-
-complex<double>
-q(const double M,
-  const double m1,
-  const double m2)
-{
-  double lam = lambda(M * M, m1 * m1, m2 * m2);
-  complex<double> ret;
-  if (lam < 0)
-    return complex<double>(0.0, 0.0);
-  return complex<double>(sqrt(lam / (4 * M * M)), 0.0 );
-}
-/////////////////////////////
 
 
 rpwa::massDepFit::channel::channel(const std::string& waveName,
@@ -512,7 +489,7 @@ rpwa::massDepFit::pwabkg::val(const double m) const {
 	if(mass < _m1+_m2) {
 		return complex<double>(1,0);
 	}
-	const complex<double> p = q(mass,_m1,_m2);
+	const double q2 = rpwa::breakupMomentumSquared(mass, _m1, _m2);
 
-	return exp(-_parameters[1]*p.real()*p.real());
+	return exp(-_parameters[1]*q2);
 }
