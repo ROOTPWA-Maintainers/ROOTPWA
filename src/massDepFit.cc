@@ -476,7 +476,7 @@ rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 		printErr << "'finalStateMassDependence' section in configuration file contains errors." << endl;
 		return false;
 	}
-    
+
 	string formula;
 	configFsmd->lookupValue("formula", formula);
 
@@ -673,7 +673,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 			++iPar;
 		}
 	}
- 
+
 	return true;
 }
 
@@ -1068,7 +1068,7 @@ rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
 				phases[idxMass][idxWave][jdxWave][1] = fit->phaseErr(idx, jdx);
 
 				spinDensityMatrices[idxMass][idxWave][jdxWave] = fit->spinDensityMatrixElem(idx, jdx);
-       
+
 				const TMatrixD covariance = fit->spinDensityMatrixElemCov(idx, jdx);
 				spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][0] = covariance(0, 0);
 				spinDensityCovarianceMatrices[idxMass][idxWave][jdxWave][0][1] = covariance(0, 1);
@@ -1619,7 +1619,7 @@ rpwa::massDepFit::massDepFit::createPlotsWavePair(const rpwa::massDepFit::model&
 		realFit->SetPoint(pointLimit, mass, fitModel.spinDensityMatrix(idxWave, jdxWave, _massBinCenters[idxMass], idxMass).real());
 
 		imagFit->SetPoint(pointLimit, mass, fitModel.spinDensityMatrix(idxWave, jdxWave, _massBinCenters[idxMass], idxMass).imag());
-        }
+	}
 
 	// rectify phase graphs
 	point = -1;
@@ -1729,7 +1729,7 @@ usage(const string& progName,
 // 2 = release couplings, masses and widths
 bool
 releasePars(Minimizer* minimizer,
-            const rpwa::massDepFit::model& compset, 
+            const rpwa::massDepFit::model& compset,
             const std::string& anchorWaveName,
             const std::string& anchorComponentName,
             const int level)
@@ -1748,86 +1748,102 @@ releasePars(Minimizer* minimizer,
 	// reset minimizer
 	minimizer->Clear();
 
-  unsigned int parcount=0;
-  for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent){
-    const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
-    TString name(comp->getName());
-    for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
-      bool fix = false;
-      if(comp->getParameterFixed(idxParameter)) fix = true;
-      if(level == 0) fix = true;
-      if(level == 1 && (comp->getParameterName(idxParameter)=="width"||comp->getParameterName(idxParameter)=="g")) fix = true;
+	size_t parcount=0;
+	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
+		// first add parameters of the components, i.e. mass and width
+		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
+		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
+			bool fix = false;
+			if(comp->getParameterFixed(idxParameter)) {
+				fix = true;
+			}
+			if(level == 0) {
+				fix = true;
+			}
+			if(level == 1 && (comp->getParameterName(idxParameter)=="width"
+			                  || comp->getParameterName(idxParameter)=="g")) {
+				fix = true;
+			}
 
 			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') fixed to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') fixed to " << par[parcount] << endl;
 				minimizer->SetFixedVariable(parcount,
-				                            (name+comp->getParameterName(idxParameter)).Data() ,
+				                            (comp->getName()+comp->getParameterName(idxParameter)).c_str() ,
 				                            par[parcount]);
 			} else if(comp->getParameterLimitedLower(idxParameter) && comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
 				          << " (limited between " << comp->getParameterLimitLower(idxParameter)
 				          << " and " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
-				minimizer->SetLimitedVariable(parcount, 
-				                              (name+comp->getParameterName(idxParameter)).Data(), 
-				                              par[parcount], 
+				minimizer->SetLimitedVariable(parcount,
+				                              (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                              par[parcount],
 				                              comp->getParameterStep(idxParameter),
 				                              comp->getParameterLimitLower(idxParameter),
 				                              comp->getParameterLimitUpper(idxParameter));
 			} else if(comp->getParameterLimitedLower(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
 				          << " (limited larger than " << comp->getParameterLimitLower(idxParameter) << ")" << endl;
-				minimizer->SetLowerLimitedVariable(parcount, 
-				                                   (name+comp->getParameterName(idxParameter)).Data(), 
-				                                   par[parcount], 
+				minimizer->SetLowerLimitedVariable(parcount,
+				                                   (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                                   par[parcount],
 				                                   comp->getParameterStep(idxParameter),
 				                                   comp->getParameterLimitLower(idxParameter));
 			} else if(comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
 				          << " (limited smaller than " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
-				minimizer->SetUpperLimitedVariable(parcount, 
-				                                   (name+comp->getParameterName(idxParameter)).Data(), 
-				                                   par[parcount], 
+				minimizer->SetUpperLimitedVariable(parcount,
+				                                   (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                                   par[parcount],
 				                                   comp->getParameterStep(idxParameter),
 				                                   comp->getParameterLimitUpper(idxParameter));
 			} else {
-				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount] << endl;
-				minimizer->SetVariable(parcount, 
-				                       (name+comp->getParameterName(idxParameter)).Data(), 
-				                       par[parcount], 
+				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount] << endl;
+				minimizer->SetVariable(parcount,
+				                       (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                       par[parcount],
 				                       comp->getParameterStep(idxParameter));
 			}
 			++parcount;
-    }
+		}
 
-    std::vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin();
-    while(it!=comp->getChannels().end()){
-      minimizer->SetVariable(parcount,(name + "_ReC" + it->getWaveName()).Data() , par[parcount], 0.10);
-      ++parcount;
-      // fix one phase
-      if(name == anchorComponentName && it->getWaveName() == anchorWaveName){
-	minimizer->SetFixedVariable(parcount,(name + "_ImC" + it->getWaveName()).Data() , 0.0);
-      }
-      else {minimizer->SetVariable(parcount,(name + "_ImC" + it->getWaveName()).Data() , par[parcount], 0.10);}
-      ++parcount;
-      ++it;
-    } // end loop over channels
-  }// end loop over components
-  // set phase space
-  unsigned int nfreeFsmd=compset.getFsmdNrParameters();
-  for(unsigned int ifreeFsmd=0;ifreeFsmd<nfreeFsmd;++ifreeFsmd){
-    double val,lower,upper;
-    val=par[parcount];
-    compset.getFsmdParameterLimits(ifreeFsmd,lower,upper);
-    TString name("PSP_"); name+=+ifreeFsmd;
-    minimizer->SetLimitedVariable(parcount, 
-				  name.Data(), 
-				  val, 0.0001 ,lower,upper);
-  }
+		// second add couplings
+		for(std::vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
+			minimizer->SetVariable(parcount,
+			                       (comp->getName() + "__" + it->getWaveName() + "__real").c_str(),
+			                       par[parcount],
+			                       0.1);
+			      ++parcount;
 
+			if(comp->getName() == anchorComponentName && it->getWaveName() == anchorWaveName){
+				minimizer->SetFixedVariable(parcount,
+				                            (comp->getName() + "__" + it->getWaveName() + "__imag").c_str(),
+				                            0.);
+			} else {
+				minimizer->SetVariable(parcount,
+				                       (comp->getName() + "__" + it->getWaveName() + "__imag").c_str(),
+				                       par[parcount],
+				                       0.1);
+			}
+			++parcount;
+		} // end loop over channels
+	}// end loop over components
 
-
-  const unsigned int nfree=minimizer->NFree();
-  printInfo <<  nfree  << " Free Parameters in fit" << endl;
+	// set phase space
+	const unsigned int nfreeFsmd=compset.getFsmdNrParameters();
+	for(unsigned int ifreeFsmd=0; ifreeFsmd<nfreeFsmd; ++ifreeFsmd) {
+		const double val = par[parcount];
+		double lower,upper;
+		compset.getFsmdParameterLimits(ifreeFsmd, lower, upper);
+		ostringstream name;
+		name << "PSP_" << ifreeFsmd;
+		minimizer->SetLimitedVariable(parcount,
+		                              name.str().c_str(),
+		                              val,
+		                              0.0001,
+		                              lower,
+		                              upper);
+		++parcount;
+	}
 
 	return true;
 }
@@ -1992,7 +2008,7 @@ main(int    argc,
 		printInfo << "creating and setting up minimizer '" << minimizerType[0] << "' "
 		          << "using algorithm '" << minimizerType[1] << "'" << endl;
 		Minimizer* minimizer = Factory::CreateMinimizer(minimizerType[0], minimizerType[1]);
-		if(not minimizer) { 
+		if(not minimizer) {
 			printErr << "could not create minimizer. exiting." << endl;
 			return 1;
 		}
@@ -2011,13 +2027,13 @@ main(int    argc,
 
 		const unsigned int nmbPar  = L.NDim();
 		printInfo << nmbPar << " parameters in fit." << endl;
- 
+
 		printInfo << "performing first minimization step: masses and widths fixed, couplings free (" << minimizer->NFree() << " free parameters)." << endl;
 
 
   // find minimum of likelihood function
   double chi2=0;
-    
+
     // only do couplings
     TStopwatch fitW;
     releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
