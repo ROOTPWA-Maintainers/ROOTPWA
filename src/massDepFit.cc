@@ -1729,47 +1729,77 @@ usage(const string& progName,
 // 0 = release only couplings
 // 1 = release couplings and masses
 // 2 = release couplings, masses and widths
-void releasePars(Minimizer* minimizer, const massDepFitModel& compset, 
-                 const std::string& anchorWaveName,
-                 const std::string& anchorComponentName,
-		 int level){
-  // copy state
-  unsigned int npar=compset.numPar();
-  double par[npar];
-  if(level == 0) compset.getPar(par);
-  else for(unsigned int i=0;i<npar;++i)par[i]=minimizer->X()[i];
-  minimizer->Clear();
+bool
+releasePars(Minimizer* minimizer,
+            const massDepFitModel& compset, 
+            const std::string& anchorWaveName,
+            const std::string& anchorComponentName,
+            const int level)
+{
+	// save current state
+	const unsigned int npar = compset.numPar();
+	double par[npar];
+	if(level == 0) {
+		compset.getPar(par);
+	} else {
+		for(unsigned int i=0;i<npar;++i) {
+			par[i]=minimizer->X()[i];
+		}
+	}
+
+	// reset minimizer
+	minimizer->Clear();
 
   unsigned int parcount=0;
   for(unsigned int ic=0;ic<compset.n();++ic){
     const massDepFitComponent* comp = compset[ic];
     TString name(comp->getName());
-    const double mmin = comp->getParameterLimitLower(0);
-    const double mmax = comp->getParameterLimitUpper(0);
-    const double gmin = comp->getParameterLimitLower(1);
-    const double gmax = comp->getParameterLimitUpper(1);
-    if(comp->getParameterFixed(0) || level==0)minimizer->SetFixedVariable(parcount,
-					       (name+comp->getParameterName(0)).Data() ,
-					       par[parcount]);
-    else minimizer->SetLimitedVariable(parcount, 
-				       (name+comp->getParameterName(0)).Data(), 
-				       par[parcount], 
-				       0.10,
-				       mmin,mmax);
-    if(level==0 && !comp->getParameterFixed(0)) printInfo << minimizer->VariableName(parcount) 
-			   << " fixed to " << par[parcount] << endl;
-    ++parcount;
-    if(comp->getParameterFixed(1) || level < 2)minimizer->SetFixedVariable(parcount,
-						   (name+comp->getParameterName(1)).Data() ,
-						    par[parcount]);
-    else minimizer->SetLimitedVariable(parcount, 
-				       (name+comp->getParameterName(1)).Data(), 
-				       par[parcount], 
-				       0.01,
-				       gmin,gmax);
-    if(level<2 && !comp->getParameterFixed(1)) printInfo << minimizer->VariableName(parcount) 
-			  << " fixed to " << par[parcount] << endl;
-    ++parcount;
+    for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
+      bool fix = false;
+      if(comp->getParameterFixed(idxParameter)) fix = true;
+      if(level == 0) fix = true;
+      if(level == 1 && (comp->getParameterName(idxParameter)=="width"||comp->getParameterName(idxParameter)=="g")) fix = true;
+
+			if(fix) {
+				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') fixed to " << par[parcount] << endl;
+				minimizer->SetFixedVariable(parcount,
+				                            (name+comp->getParameterName(idxParameter)).Data() ,
+				                            par[parcount]);
+			} else if(comp->getParameterLimitedLower(idxParameter) && comp->getParameterLimitedUpper(idxParameter)) {
+				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				          << " (limited between " << comp->getParameterLimitLower(idxParameter)
+				          << " and " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
+				minimizer->SetLimitedVariable(parcount, 
+				                              (name+comp->getParameterName(idxParameter)).Data(), 
+				                              par[parcount], 
+				                              comp->getParameterStep(idxParameter),
+				                              comp->getParameterLimitLower(idxParameter),
+				                              comp->getParameterLimitUpper(idxParameter));
+			} else if(comp->getParameterLimitedLower(idxParameter)) {
+				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				          << " (limited larger than " << comp->getParameterLimitLower(idxParameter) << ")" << endl;
+				minimizer->SetLowerLimitedVariable(parcount, 
+				                                   (name+comp->getParameterName(idxParameter)).Data(), 
+				                                   par[parcount], 
+				                                   comp->getParameterStep(idxParameter),
+				                                   comp->getParameterLimitLower(idxParameter));
+			} else if(comp->getParameterLimitedUpper(idxParameter)) {
+				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				          << " (limited smaller than " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
+				minimizer->SetUpperLimitedVariable(parcount, 
+				                                   (name+comp->getParameterName(idxParameter)).Data(), 
+				                                   par[parcount], 
+				                                   comp->getParameterStep(idxParameter),
+				                                   comp->getParameterLimitUpper(idxParameter));
+			} else {
+				printInfo << "parameter " << parcount << " ('" << (name+comp->getParameterName(idxParameter)) << "') set to " << par[parcount] << endl;
+				minimizer->SetVariable(parcount, 
+				                       (name+comp->getParameterName(idxParameter)).Data(), 
+				                       par[parcount], 
+				                       comp->getParameterStep(idxParameter));
+			}
+			++parcount;
+    }
 
     std::vector<pwachannel >::const_iterator it=comp->getChannels().begin();
     while(it!=comp->getChannels().end()){
@@ -1801,7 +1831,7 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
   const unsigned int nfree=minimizer->NFree();
   printInfo <<  nfree  << " Free Parameters in fit" << endl;
 
-
+	return true;
 }
 
 int
@@ -1975,37 +2005,31 @@ main(int    argc,
 		minimizer->SetMaxIterations   (maxNmbOfIterations);
 		minimizer->SetMaxFunctionCalls(maxNmbOfFunctionCalls);
 
-  // ---------------------------------------------------------------------------
+		// Set startvalues
+		if(not releasePars(minimizer, compset, mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0)) {
+			printErr << "error while setting start parameters." << endl;
+			return 1;
+		}
 
-  // Set startvalues
-  releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
-
-   const unsigned int nmbPar  = L.NDim();
-  
-  printInfo << nmbPar << " Parameters in fit" << endl;
+		const unsigned int nmbPar  = L.NDim();
+		printInfo << nmbPar << " parameters in fit." << endl;
  
-  unsigned int nfree=minimizer->NFree();
-  printInfo <<  nfree  << " Free Parameters in fit" << endl;
+		printInfo << "performing first minimization step: masses and widths fixed, couplings free (" << minimizer->NFree() << " free parameters)." << endl;
 
 
   // find minimum of likelihood function
   double chi2=0;
-    printInfo << "performing minimization. MASSES AND WIDTHS FIXED" << endl;
     
     // only do couplings
     TStopwatch fitW;
     releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 0);
-  nfree=minimizer->NFree();
-  printInfo <<  nfree  << " Free Parameters in fit" << endl;
     bool success = minimizer->Minimize();
     if(!success)printWarn << "minimization failed." << endl;
     else printInfo << "minimization successful." << endl;
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
     //release masses
     releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 1);
-  nfree=minimizer->NFree();
-  printInfo <<  nfree  << " Free Parameters in fit" << endl;
-    printInfo << "performing minimization. MASSES RELEASED" << endl;
+    printInfo << "performing second minimization step: widths fixed, masses and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
     fitW.Start();
     success &= minimizer->Minimize();
     if(!success)printWarn << "minimization failed." << endl;
@@ -2013,9 +2037,7 @@ main(int    argc,
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
     //release widths
     releasePars(minimizer,compset,mdepFit.getAnchorWaveName(), mdepFit.getAnchorComponentName(), 2);
-  nfree=minimizer->NFree();
-  printInfo <<  nfree  << " Free Parameters in fit" << endl;
-    printInfo << "performing minimization. ALL RELEASED" << endl;
+    printInfo << "performing third minimization step: masses, widths and couplings free (" << minimizer->NFree() << " free parameters)." << endl;
     fitW.Start();
     success &= minimizer->Minimize();
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
@@ -2080,9 +2102,10 @@ main(int    argc,
  // Reduced chi2
 
  printInfo << chi2 << " chi2" << endl;
- unsigned int numdata=L.NDataPoints();
+ const unsigned int numdata=L.NDataPoints();
+ const unsigned int nfree=minimizer->NFree();
  // numDOF
- unsigned int numDOF=numdata-nfree;
+ const unsigned int numDOF=numdata-nfree;
  printInfo << numDOF << " degrees of freedom" << endl;
  double redChi2 = chi2/(double)numDOF;
  printInfo << redChi2 << " chi2/nDF" << endl;
