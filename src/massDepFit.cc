@@ -1139,7 +1139,7 @@ rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
 			const double ps = fit->phaseSpaceIntegral(_waveNames[idxWave]);
-			phaseSpaceIntegrals[idxMass][idxWave] = ps*ps;
+			phaseSpaceIntegrals[idxMass][idxWave] = ps;
 		}
 	}
 
@@ -1187,7 +1187,7 @@ rpwa::massDepFit::massDepFit::readPhaseSpaceIntegralMatrices(const vector<string
 		intMatrix.readAscii(fileName);
 
 		for(size_t idxWave=0; idxWave<_nrWaves; ++idxWave) {
-			const double ps = abs(intMatrix.element(_waveNames[idxWave], _waveNames[idxWave]));
+			const double ps = sqrt(abs(intMatrix.element(_waveNames[idxWave], _waveNames[idxWave])));
 			phaseSpaceIntegrals[idxMass][idxWave] = ps;
 		}
 	}
@@ -1410,8 +1410,8 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			maxIE = max(maxIE, maxSI);
 		}
 
-		phaseSpace->SetPoint(point, mass, _inPhaseSpaceIntegrals[idxMass][idxWave]);
-		maxP = max(maxP, _inPhaseSpaceIntegrals[idxMass][idxWave]);
+		phaseSpace->SetPoint(point, mass, _inPhaseSpaceIntegrals[idxMass][idxWave] * _inPhaseSpaceIntegrals[idxMass][idxWave]);
+		maxP = max(maxP, _inPhaseSpaceIntegrals[idxMass][idxWave] * _inPhaseSpaceIntegrals[idxMass][idxWave]);
 
 		// check that this mass bin should be taken into account for this
 		// combination of waves
