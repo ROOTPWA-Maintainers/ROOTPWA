@@ -6,20 +6,20 @@
 using namespace std;
 
 
-rpwa::massDepFit::massDepFitLikeli*
-rpwa::massDepFit::massDepFitLikeli::Clone() const {
-	return new massDepFitLikeli(*this);
+rpwa::massDepFit::likelihood*
+rpwa::massDepFit::likelihood::Clone() const {
+	return new likelihood(*this);
 }
 
 
 unsigned int
-rpwa::massDepFit::massDepFitLikeli::NDim() const {
+rpwa::massDepFit::likelihood::NDim() const {
 	return _compset->numPar();
 }
 
 
 unsigned int
-rpwa::massDepFit::massDepFitLikeli::NDataPoints() const {
+rpwa::massDepFit::likelihood::NDataPoints() const {
 	// calculate data points:
 	// * diagonal elements are real numbers
 	// * non-diagonal elements are complex numbers
@@ -39,7 +39,7 @@ rpwa::massDepFit::massDepFitLikeli::NDataPoints() const {
 
 
 void
-rpwa::massDepFit::massDepFitLikeli::init(massDepFitModel* compset,
+rpwa::massDepFit::likelihood::init(massDepFitModel* compset,
                                          const std::vector<double>& massBinCenters,
                                          const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
                                          const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
@@ -66,7 +66,7 @@ rpwa::massDepFit::massDepFitLikeli::init(massDepFitModel* compset,
 
 
 double
-rpwa::massDepFit::massDepFitLikeli::DoEval(const double* par) const {
+rpwa::massDepFit::likelihood::DoEval(const double* par) const {
 	// set parameters for resonances, background and phase space
 	_compset->setPar(par);
 

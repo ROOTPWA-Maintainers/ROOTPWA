@@ -22,7 +22,7 @@
 //
 // Description:
 //      fitting program for massdependent fit rootpwa
-//      minimizes massDepFitLikeli function
+//      minimizes rpwa::massDepFit::likelihood function
 //
 //
 // Author List:
@@ -1982,7 +1982,7 @@ main(int    argc,
 		printInfo << "plotting only mode, skipping minimzation." << endl;
 	} else {
 		// set-up likelihood
-		rpwa::massDepFit::massDepFitLikeli L;
+		rpwa::massDepFit::likelihood L;
 		L.init(&compset,
 		       mdepFit.getMassBinCenters(),
 		       mdepFit.getInSpinDensityMatrices(),
