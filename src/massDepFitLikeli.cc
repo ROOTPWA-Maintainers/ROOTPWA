@@ -4,23 +4,22 @@
 
 
 using namespace std;
-using namespace rpwa;
 
 
-massDepFitLikeli*
-massDepFitLikeli::Clone() const {
+rpwa::massDepFit::massDepFitLikeli*
+rpwa::massDepFit::massDepFitLikeli::Clone() const {
 	return new massDepFitLikeli(*this);
 }
 
 
 unsigned int
-massDepFitLikeli::NDim() const {
+rpwa::massDepFit::massDepFitLikeli::NDim() const {
 	return _compset->numPar();
 }
 
 
 unsigned int
-massDepFitLikeli::NDataPoints() const {
+rpwa::massDepFit::massDepFitLikeli::NDataPoints() const {
 	// calculate data points:
 	// * diagonal elements are real numbers
 	// * non-diagonal elements are complex numbers
@@ -40,12 +39,12 @@ massDepFitLikeli::NDataPoints() const {
 
 
 void
-massDepFitLikeli::init(massDepFitModel* compset,
-                       const std::vector<double>& massBinCenters,
-                       const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
-                       const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
-                       const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
-                       bool useCovariance)
+rpwa::massDepFit::massDepFitLikeli::init(massDepFitModel* compset,
+                                         const std::vector<double>& massBinCenters,
+                                         const boost::multi_array<std::complex<double>, 3>& spinDensityMatrices,
+                                         const boost::multi_array<double, 5>& spinDensityCovarianceMatrices,
+                                         const boost::multi_array<std::pair<size_t, size_t>, 2>& wavePairMassBinLimits,
+                                         bool useCovariance)
 {
 	_compset = compset;
 
@@ -67,7 +66,7 @@ massDepFitLikeli::init(massDepFitModel* compset,
 
 
 double
-massDepFitLikeli::DoEval(const double* par) const {
+rpwa::massDepFit::massDepFitLikeli::DoEval(const double* par) const {
 	// set parameters for resonances, background and phase space
 	_compset->setPar(par);
 

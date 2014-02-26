@@ -20,26 +20,26 @@ class TF1;
 
 namespace rpwa {
 
+	namespace massDepFit {
 
-	class massDepFitComponent;
+		class massDepFitComponent;
 
+		class massDepFitModel {
 
-	class massDepFitModel {
+		public:
 
-	public:
+			massDepFitModel();
+			~massDepFitModel() {}
 
-		massDepFitModel();
-		~massDepFitModel() {}
+			void add(massDepFitComponent* comp);
 
-		void add(massDepFitComponent* comp);
+			TF1* getFsmdFunction() const { return _fsmdFunction; }
+			void setFsmdFunction(TF1* fsmdFunction);
 
-		TF1* getFsmdFunction() const { return _fsmdFunction; }
-		void setFsmdFunction(TF1* fsmdFunction);
-
-		bool init(const std::vector<std::string>& waveNames,
-		          const std::vector<double>& massBinCenters,
-		          const std::string& anchorWaveName,
-		          const std::string& anchorComponentName);
+			bool init(const std::vector<std::string>& waveNames,
+			          const std::vector<double>& massBinCenters,
+			          const std::string& anchorWaveName,
+			          const std::string& anchorComponentName);
 
 
 
@@ -60,59 +60,60 @@ namespace rpwa {
       getCompChannel(size_t idx) const { return _compChannel[idx]; }
 
 
-		std::complex<double> productionAmplitude(const size_t idxWave,
-		                                         const double mass,
-		                                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-		double intensity(const size_t idxWave,
-		                 const double mass,
-		                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-		double phaseAbsolute(const size_t idxWave,
-		                     const double mass,
-		                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-		std::complex<double> spinDensityMatrix(const size_t idxWave,
-		                                       const size_t jdxWave,
-		                                       const double mass,
-		                                       const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-		double phase(const size_t idxWave,
-		             const size_t jdxWave,
-		             const double mass,
-		             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			std::complex<double> productionAmplitude(const size_t idxWave,
+			                                         const double mass,
+			                                         const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			double intensity(const size_t idxWave,
+			                 const double mass,
+			                 const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			double phaseAbsolute(const size_t idxWave,
+			                     const double mass,
+			                     const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			std::complex<double> spinDensityMatrix(const size_t idxWave,
+			                                       const size_t jdxWave,
+			                                       const double mass,
+			                                       const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			double phase(const size_t idxWave,
+			             const size_t jdxWave,
+			             const double mass,
+			             const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-		double calcFsmd(const double mass,
-		                const size_t idxMass = std::numeric_limits<size_t>::max()) const;
+			double calcFsmd(const double mass,
+			                const size_t idxMass = std::numeric_limits<size_t>::max()) const;
 
-		std::ostream& print(std::ostream& out) const;
+			std::ostream& print(std::ostream& out) const;
 
-	private:
+		private:
 
-		bool initMapping(const std::string& anchorWaveName,
-		                 const std::string& anchorComponentName);
-		bool initFsmd(const std::vector<double>& massBinCenters);
+			bool initMapping(const std::string& anchorWaveName,
+			                 const std::string& anchorComponentName);
+			bool initFsmd(const std::vector<double>& massBinCenters);
 
-		std::vector<std::string> _waveNames;
+			std::vector<std::string> _waveNames;
 
     std::vector<massDepFitComponent*> _comp;
     unsigned int _numpar;
 
-		size_t _idxAnchorWave;
-		size_t _idxAnchorComponent;
-		size_t _idxAnchorChannel;
+			size_t _idxAnchorWave;
+			size_t _idxAnchorComponent;
+			size_t _idxAnchorChannel;
 
-		TF1* _fsmdFunction;
-		bool _fsmdFixed;
-		std::vector<unsigned int> _fsmdFreeParameters;
-		std::vector<double> _fsmdValues;
+			TF1* _fsmdFunction;
+			bool _fsmdFixed;
+			std::vector<unsigned int> _fsmdFreeParameters;
+			std::vector<double> _fsmdValues;
 
     // mapping for wave -> which components with which channel
     // wavelist in same order as given by wavelist
     std::vector<std::vector<std::pair<size_t, size_t> > > _compChannel;    
 
-	};
+		};
 
+	} // end namespace massDepFit
 
 } // end namespace rpwa
 
-inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFitModel& fitModel) {
+inline std::ostream& operator<< (std::ostream& out, const rpwa::massDepFit::massDepFitModel& fitModel) {
 	return fitModel.print(out);
 }
 
