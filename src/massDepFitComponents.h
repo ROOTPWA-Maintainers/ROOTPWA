@@ -42,7 +42,7 @@ namespace rpwa {
 			        const std::vector<double>& phaseSpace);
 			channel(const rpwa::massDepFit::channel& ch);
 			~channel();
-    
+
 			const std::string& getWaveName() const { return _waveName; }
 
 			std::complex<double> getCoupling() const { return _coupling; }
@@ -53,7 +53,7 @@ namespace rpwa {
 
 			std::complex<double> getCouplingPhaseSpace(const double mass,
 			                                           const size_t idxMass = std::numeric_limits<size_t>::max()) const;
-    
+
 		private:
 
 			std::string _waveName;
@@ -88,7 +88,7 @@ namespace rpwa {
 
 			const size_t getNrChannels() const { return _channels.size(); }
 			const std::vector<channel>& getChannels() const { return _channels; }
-			const channel& getChannel(const size_t i) const { return _channels[i]; } 
+			const channel& getChannel(const size_t i) const { return _channels[i]; }
 			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 
 			void getCouplings(double* par) const;
@@ -137,7 +137,7 @@ namespace rpwa {
 		public:
 
 			pwacomponent(const std::string& name);
-    
+
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -159,7 +159,7 @@ namespace rpwa {
 		public:
 
 			pwabkg(const std::string& name);
-    
+
 			virtual bool init(const libconfig::Setting* configComponent,
 			                  const std::vector<double>& massBinCenters,
 			                  const std::map<std::string, size_t>& waveIndices,
@@ -172,7 +172,7 @@ namespace rpwa {
 
 			double _m1;
 			double _m2;
-    
+
 		};
 
 	} // end namespace massDepFit
@@ -188,7 +188,7 @@ rpwa::massDepFit::channel::getPhaseSpace(const double mass,
 	if(idxMass != std::numeric_limits<size_t>::max()) {
 		return _phaseSpace[idxMass];
 	}
-  
+
 	return _interpolator->Eval(mass);
 }
 

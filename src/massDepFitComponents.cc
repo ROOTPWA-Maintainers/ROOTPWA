@@ -391,7 +391,7 @@ rpwa::massDepFit::pwacomponent::val(const double m) const {
 		ps /= getNrChannels();
 	}
 	const double gamma = gamma0*ps;
-  
+
 	return gamma0*m0 / complex<double>(m0*m0-m*m, -gamma*m0);
 }
 
