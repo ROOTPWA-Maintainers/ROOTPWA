@@ -30,7 +30,6 @@
 // Class Member definitions -----------
 
 using namespace std;
-using namespace rpwa;
 
 
 /////////////////////////////
@@ -55,15 +54,15 @@ q(const double M,
   return complex<double>(sqrt(lam / (4 * M * M)), 0.0 );
 }
 
-pwachannel::pwachannel(const pwachannel& ch) /// cp ctor
+rpwa::massDepFit::pwachannel::pwachannel(const rpwa::massDepFit::pwachannel& ch) /// cp ctor
   : _waveName(ch._waveName), _C(ch._C), _phaseSpace(ch._phaseSpace), _ps(ch._ps) {
 }
 /////////////////////////////
 
 
 std::complex<double>
-pwachannel::CsqrtPS(const double mass,
-                    const size_t idxMass) const
+rpwa::massDepFit::pwachannel::CsqrtPS(const double mass,
+                                      const size_t idxMass) const
 {
 	if(idxMass != numeric_limits<size_t>::max()) {
 		return _C * sqrt(_phaseSpace[idxMass]);
@@ -74,8 +73,8 @@ pwachannel::CsqrtPS(const double mass,
 
 
 double
-pwachannel::ps(const double mass,
-               const size_t idxMass) const
+rpwa::massDepFit::pwachannel::ps(const double mass,
+                                 const size_t idxMass) const
 {
 	if(idxMass != numeric_limits<size_t>::max()) {
 		return _phaseSpace[idxMass];
@@ -85,8 +84,8 @@ pwachannel::ps(const double mass,
 }
 
 
-massDepFitComponent::massDepFitComponent(const string& name,
-                                         const size_t nrParameters)
+rpwa::massDepFit::massDepFitComponent::massDepFitComponent(const string& name,
+                                                           const size_t nrParameters)
 	: _name(name),
 	  _nrParameters(nrParameters),
 	  _parameters(nrParameters),
@@ -102,11 +101,11 @@ massDepFitComponent::massDepFitComponent(const string& name,
 
 
 bool
-massDepFitComponent::init(const libconfig::Setting* configComponent,
-                          const vector<double>& massBinCenters,
-                          const map<string, size_t>& waveIndices,
-                          const boost::multi_array<double, 2>& phaseSpaceIntegrals,
-                          const bool debug) {
+rpwa::massDepFit::massDepFitComponent::init(const libconfig::Setting* configComponent,
+                                            const vector<double>& massBinCenters,
+                                            const map<string, size_t>& waveIndices,
+                                            const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                                            const bool debug) {
 	if(debug) {
 		printDebug << "starting initialization of 'massDepFitComponent' for component '" << getName() << "'." << endl;
 	}
@@ -208,9 +207,9 @@ massDepFitComponent::init(const libconfig::Setting* configComponent,
 
 
 bool
-massDepFitComponent::update(const libconfig::Setting* configComponent,
-                            const ROOT::Math::Minimizer* minimizer,
-                            const bool debug) const
+rpwa::massDepFit::massDepFitComponent::update(const libconfig::Setting* configComponent,
+                                              const ROOT::Math::Minimizer* minimizer,
+                                              const bool debug) const
 {
 	if(debug) {
 		printDebug << "starting updating of 'massDepFitComponent' for component '" << getName() << "'." << endl;
@@ -286,7 +285,7 @@ massDepFitComponent::update(const libconfig::Setting* configComponent,
 
 
 void
-massDepFitComponent::getCouplings(double* par) const
+rpwa::massDepFit::massDepFitComponent::getCouplings(double* par) const
 {
 	size_t counter=0;
 	for(vector<pwachannel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
@@ -297,7 +296,7 @@ massDepFitComponent::getCouplings(double* par) const
 
 
 void
-massDepFitComponent::setCouplings(const double* par)
+rpwa::massDepFit::massDepFitComponent::setCouplings(const double* par)
 {
 	size_t counter=0;
 	for(vector<pwachannel>::iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
@@ -307,7 +306,7 @@ massDepFitComponent::setCouplings(const double* par)
 
 
 void
-massDepFitComponent::getParameters(double* par) const
+rpwa::massDepFit::massDepFitComponent::getParameters(double* par) const
 {
 	for(size_t idx=0; idx<_nrParameters; ++idx) {
 		par[idx] = _parameters[idx];
@@ -316,7 +315,7 @@ massDepFitComponent::getParameters(double* par) const
 
 
 void
-massDepFitComponent::setParameters(const double* par)
+rpwa::massDepFit::massDepFitComponent::setParameters(const double* par)
 {
 	for(size_t idx=0; idx<_nrParameters; ++idx) {
 		_parameters[idx] = par[idx];
@@ -325,63 +324,63 @@ massDepFitComponent::setParameters(const double* par)
 
 
 double
-massDepFitComponent::getParameter(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameter(const size_t idx) const
 {
 	return _parameters[idx];
 }
 
 
 bool
-massDepFitComponent::getParameterFixed(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameterFixed(const size_t idx) const
 {
 	return _parametersFixed[idx];
 }
 
 
 double
-massDepFitComponent::getParameterLimitLower(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameterLimitLower(const size_t idx) const
 {
 	return _parametersLimitLower[idx];
 }
 
 
 bool
-massDepFitComponent::getParameterLimitedLower(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameterLimitedLower(const size_t idx) const
 {
 	return _parametersLimitedLower[idx];
 }
 
 
 double
-massDepFitComponent::getParameterLimitUpper(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameterLimitUpper(const size_t idx) const
 {
 	return _parametersLimitUpper[idx];
 }
 
 
 bool
-massDepFitComponent::getParameterLimitedUpper(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameterLimitedUpper(const size_t idx) const
 {
 	return _parametersLimitedUpper[idx];
 }
 
 
 const std::string&
-massDepFitComponent::getParameterName(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameterName(const size_t idx) const
 {
 	return _parametersName[idx];
 }
 
 
 double
-massDepFitComponent::getParameterStep(const size_t idx) const
+rpwa::massDepFit::massDepFitComponent::getParameterStep(const size_t idx) const
 {
 	return _parametersStep[idx];
 }
 
 
 ostream&
-massDepFitComponent::print(ostream& out) const
+rpwa::massDepFit::massDepFitComponent::print(ostream& out) const
 {
 	out << "Decay modes:" << endl;
 	for(vector<pwachannel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
@@ -391,7 +390,7 @@ massDepFitComponent::print(ostream& out) const
 }
 
 
-pwacomponent::pwacomponent(const string& name)
+rpwa::massDepFit::pwacomponent::pwacomponent(const string& name)
 	: massDepFitComponent(name, 2)
 {
 	_parametersName[0] = "mass";
@@ -403,11 +402,11 @@ pwacomponent::pwacomponent(const string& name)
 
 
 bool
-pwacomponent::init(const libconfig::Setting* configComponent,
-                   const vector<double>& massBinCenters,
-                   const map<string, size_t>& waveIndices,
-                   const boost::multi_array<double, 2>& phaseSpaceIntegrals,
-                   const bool debug) {
+rpwa::massDepFit::pwacomponent::init(const libconfig::Setting* configComponent,
+                                     const vector<double>& massBinCenters,
+                                     const map<string, size_t>& waveIndices,
+                                     const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                                     const bool debug) {
 	if(debug) {
 		printDebug << "starting initialization of 'pwacomponent' for component '" << getName() << "'." << endl;
 	}
@@ -464,7 +463,7 @@ pwacomponent::init(const libconfig::Setting* configComponent,
 
 
 complex<double>
-pwacomponent::val(const double m) const {
+rpwa::massDepFit::pwacomponent::val(const double m) const {
 	const double& m0 = _parameters[0];
 	const double& gamma0 = _parameters[1];
 	// calculate dynamic width:
@@ -489,7 +488,7 @@ pwacomponent::val(const double m) const {
 
 
 ostream&
-pwacomponent::print(ostream& out) const
+rpwa::massDepFit::pwacomponent::print(ostream& out) const
 {
 	out << getName() << endl
 	    << "Mass=" << _parameters[0] << "   Width=" << _parameters[1] << "    ConstWidth=" << _constWidth << endl;
@@ -497,7 +496,7 @@ pwacomponent::print(ostream& out) const
 }
 
 
-pwabkg::pwabkg(const string& name)
+rpwa::massDepFit::pwabkg::pwabkg(const string& name)
 	: massDepFitComponent(name, 2)
 {
 	_parametersName[0] = "m0";
@@ -509,11 +508,11 @@ pwabkg::pwabkg(const string& name)
 
 
 bool
-pwabkg::init(const libconfig::Setting* configComponent,
-             const vector<double>& massBinCenters,
-             const map<string, size_t>& waveIndices,
-             const boost::multi_array<double, 2>& phaseSpaceIntegrals,
-             const bool debug) {
+rpwa::massDepFit::pwabkg::init(const libconfig::Setting* configComponent,
+                               const vector<double>& massBinCenters,
+                               const map<string, size_t>& waveIndices,
+                               const boost::multi_array<double, 2>& phaseSpaceIntegrals,
+                               const bool debug) {
 	if(debug) {
 		printDebug << "starting initialization of 'pwabkg' for component '" << getName() << "'." << endl;
 	}
@@ -573,7 +572,7 @@ pwabkg::init(const libconfig::Setting* configComponent,
 
 
 complex<double>
-pwabkg::val(const double m) const {
+rpwa::massDepFit::pwabkg::val(const double m) const {
 	// shift baseline mass
 	const double mass = m - _parameters[0];
 

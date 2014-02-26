@@ -84,10 +84,10 @@ using namespace boost;
 using namespace boost::assign;
 
 
-bool massDepFit::_debug = false;
+bool rpwa::massDepFit::massDepFit::_debug = false;
 
 
-massDepFit::massDepFit()
+rpwa::massDepFit::massDepFit::massDepFit()
 	: _sysPlotting(false),
 	  _nrMassBins(0),
 	  _nrSystematics(0),
@@ -97,7 +97,7 @@ massDepFit::massDepFit()
 
 
 bool
-massDepFit::readConfigInput(const Setting* configInput)
+rpwa::massDepFit::massDepFit::readConfigInput(const Setting* configInput)
 {
 	if(not configInput) {
 		printErr << "'configInput' is not a pointer to a valid object." << endl;
@@ -138,7 +138,7 @@ massDepFit::readConfigInput(const Setting* configInput)
 
 
 bool
-massDepFit::readConfigInputFitResults(const Setting* configInputFitResults)
+rpwa::massDepFit::massDepFit::readConfigInputFitResults(const Setting* configInputFitResults)
 {
 	if(not configInputFitResults) {
 		printErr << "'configInputFitResults' is not a pointer to a valid object." << endl;
@@ -202,7 +202,7 @@ massDepFit::readConfigInputFitResults(const Setting* configInputFitResults)
 
 
 bool
-massDepFit::readConfigInputWaves(const Setting* configInputWaves)
+rpwa::massDepFit::massDepFit::readConfigInputWaves(const Setting* configInputWaves)
 {
 	if(not configInputWaves) {
 		printErr << "'configInputWaves' is not a pointer to a valid object." << endl;
@@ -269,7 +269,7 @@ massDepFit::readConfigInputWaves(const Setting* configInputWaves)
 
 
 bool
-massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
+rpwa::massDepFit::massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 {
 	// configInputSystematics might actually be a NULL pointer, in this
 	// systematics is not plotted
@@ -310,8 +310,8 @@ massDepFit::readConfigInputSystematics(const Setting* configInputSystematics)
 
 
 bool
-massDepFit::readConfigModel(const Setting* configRoot,
-                            massDepFitModel& fitModel)
+rpwa::massDepFit::massDepFit::readConfigModel(const Setting* configRoot,
+                                              massDepFitModel& fitModel)
 {
 	if(_debug) {
 		printDebug << "reading fit model from configuration file." << endl;
@@ -350,7 +350,7 @@ massDepFit::readConfigModel(const Setting* configRoot,
 
 
 bool
-massDepFit::readConfigModelAnchorWave(const Setting* configAnchorWave)
+rpwa::massDepFit::massDepFit::readConfigModelAnchorWave(const Setting* configAnchorWave)
 {
 	if(not configAnchorWave) {
 		printErr << "'configInputAnchorWave' is not a pointer to a valid object." << endl;
@@ -374,8 +374,8 @@ massDepFit::readConfigModelAnchorWave(const Setting* configAnchorWave)
 
 
 bool
-massDepFit::readConfigModelComponents(const Setting* configComponents,
-                                      massDepFitModel& fitModel) const
+rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configComponents,
+                                                        massDepFitModel& fitModel) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << endl;
@@ -452,8 +452,8 @@ massDepFit::readConfigModelComponents(const Setting* configComponents,
 
 
 bool
-massDepFit::readConfigModelFsmd(const Setting* configFsmd,
-                                massDepFitModel& fitModel) const
+rpwa::massDepFit::massDepFit::readConfigModelFsmd(const Setting* configFsmd,
+                                                  massDepFitModel& fitModel) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -554,9 +554,9 @@ massDepFit::readConfigModelFsmd(const Setting* configFsmd,
 
 
 bool
-massDepFit::updateConfigModel(const Setting* configRoot,
-                              const massDepFitModel& fitModel,
-                              const Minimizer* minimizer) const
+rpwa::massDepFit::massDepFit::updateConfigModel(const Setting* configRoot,
+                                                const massDepFitModel& fitModel,
+                                                const Minimizer* minimizer) const
 {
 	if(_debug) {
 		printDebug << "updating fit model in configuration file." << endl;
@@ -587,9 +587,9 @@ massDepFit::updateConfigModel(const Setting* configRoot,
 
 
 bool
-massDepFit::updateConfigModelComponents(const Setting* configComponents,
-                                        const massDepFitModel& fitModel,
-                                        const Minimizer* minimizer) const
+rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configComponents,
+                                                          const massDepFitModel& fitModel,
+                                                          const Minimizer* minimizer) const
 {
 	if(not configComponents) {
 		printErr << "'configComponents' is not a pointer to a valid object." << endl;
@@ -642,9 +642,9 @@ massDepFit::updateConfigModelComponents(const Setting* configComponents,
 
 
 bool
-massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
-                                  const massDepFitModel& fitModel,
-                                  const Minimizer* minimizer) const
+rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
+                                                    const massDepFitModel& fitModel,
+                                                    const Minimizer* minimizer) const
 {
 	// configFsmd might actually be a NULL pointer, in this the final-state
 	// mass-dependence is not read
@@ -681,8 +681,8 @@ massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 
 
 bool
-massDepFit::readInFile(const string& valTreeName,
-                       const string& valBranchName)
+rpwa::massDepFit::massDepFit::readInFile(const string& valTreeName,
+                                         const string& valBranchName)
 {
 	if(_debug) {
 		printDebug << "reading fit result from file '" << _inFileName << "'." << endl;
@@ -761,8 +761,8 @@ massDepFit::readInFile(const string& valTreeName,
 
 
 bool
-massDepFit::readSystematicsFiles(const string& valTreeName,
-                                 const string& valBranchName)
+rpwa::massDepFit::massDepFit::readSystematicsFiles(const string& valTreeName,
+                                                   const string& valBranchName)
 {
 	if(not _sysPlotting) {
 		return true;
@@ -791,9 +791,9 @@ massDepFit::readSystematicsFiles(const string& valTreeName,
 
 
 bool
-massDepFit::readSystematicsFile(const size_t idxSystematics,
-                                const string& valTreeName,
-                                const string& valBranchName)
+rpwa::massDepFit::massDepFit::readSystematicsFile(const size_t idxSystematics,
+                                                  const string& valTreeName,
+                                                  const string& valBranchName)
 {
 	if(_debug) {
 		printDebug << "reading fit result for systematics for index " << idxSystematics << " from file '" << _sysFileNames[idxSystematics-1] << "'." << endl;
@@ -861,9 +861,9 @@ massDepFit::readSystematicsFile(const size_t idxSystematics,
 
 
 bool
-massDepFit::checkFitResultMassBins(TTree* tree,
-                                   rpwa::fitResult* fit,
-                                   vector<Long64_t>& mapping) const
+rpwa::massDepFit::massDepFit::checkFitResultMassBins(TTree* tree,
+                                                     rpwa::fitResult* fit,
+                                                     vector<Long64_t>& mapping) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
@@ -941,8 +941,8 @@ massDepFit::checkFitResultMassBins(TTree* tree,
 
 
 bool
-massDepFit::readFitResultMassBins(TTree* tree,
-                                  rpwa::fitResult* fit)
+rpwa::massDepFit::massDepFit::readFitResultMassBins(TTree* tree,
+                                                    rpwa::fitResult* fit)
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
@@ -1016,13 +1016,13 @@ massDepFit::readFitResultMassBins(TTree* tree,
 
 
 bool
-massDepFit::readFitResultMatrices(TTree* tree,
-                                  rpwa::fitResult* fit,
-                                  const vector<Long64_t>& mapping,
-                                  multi_array<complex<double>, 3>& spinDensityMatrices,
-                                  multi_array<double, 5>& spinDensityCovarianceMatrices,
-                                  multi_array<double, 3>& intensities,
-                                  multi_array<double, 4>& phases) const
+rpwa::massDepFit::massDepFit::readFitResultMatrices(TTree* tree,
+                                                    rpwa::fitResult* fit,
+                                                    const vector<Long64_t>& mapping,
+                                                    multi_array<complex<double>, 3>& spinDensityMatrices,
+                                                    multi_array<double, 5>& spinDensityCovarianceMatrices,
+                                                    multi_array<double, 3>& intensities,
+                                                    multi_array<double, 4>& phases) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
@@ -1112,10 +1112,10 @@ massDepFit::readFitResultMatrices(TTree* tree,
 
 
 bool
-massDepFit::readFitResultIntegrals(TTree* tree,
-                                   rpwa::fitResult* fit,
-                                   const vector<Long64_t>& mapping,
-                                   multi_array<double, 2>& phaseSpaceIntegrals) const
+rpwa::massDepFit::massDepFit::readFitResultIntegrals(TTree* tree,
+                                                     rpwa::fitResult* fit,
+                                                     const vector<Long64_t>& mapping,
+                                                     multi_array<double, 2>& phaseSpaceIntegrals) const
 {
 	if(not tree or not fit) {
 		printErr << "'tree' or 'fit' is not a pointer to a valid object." << endl;
@@ -1158,8 +1158,8 @@ massDepFit::readFitResultIntegrals(TTree* tree,
 
 
 bool
-massDepFit::readPhaseSpaceIntegralMatrices(const vector<string>& overwritePhaseSpace,
-                                           boost::multi_array<double, 2>& phaseSpaceIntegrals) const
+rpwa::massDepFit::massDepFit::readPhaseSpaceIntegralMatrices(const vector<string>& overwritePhaseSpace,
+                                                             boost::multi_array<double, 2>& phaseSpaceIntegrals) const
 {
 	phaseSpaceIntegrals.resize(extents[_nrMassBins][_nrWaves]);
 
@@ -1207,7 +1207,7 @@ massDepFit::readPhaseSpaceIntegralMatrices(const vector<string>& overwritePhaseS
 
 
 bool
-massDepFit::prepareMassLimits()
+rpwa::massDepFit::massDepFit::prepareMassLimits()
 {
 	if(_debug) {
 		printDebug << "determine which mass bins to use in the fit for " << _nrMassBins << " mass bins, center of first and last mass bins: "
@@ -1269,9 +1269,9 @@ massDepFit::prepareMassLimits()
 
 
 bool
-massDepFit::createPlots(const massDepFitModel& fitModel,
-                        TFile* outFile,
-                        const bool rangePlotting) const
+rpwa::massDepFit::massDepFit::createPlots(const massDepFitModel& fitModel,
+                                          TFile* outFile,
+                                          const bool rangePlotting) const
 {
 	if(_debug) {
 		printDebug << "start creating plots." << endl;
@@ -1321,10 +1321,10 @@ massDepFit::createPlots(const massDepFitModel& fitModel,
 
 
 bool
-massDepFit::createPlotsWave(const massDepFitModel& fitModel,
-                            TFile* outFile,
-                            const bool rangePlotting,
-                            const size_t idxWave) const
+rpwa::massDepFit::massDepFit::createPlotsWave(const massDepFitModel& fitModel,
+                                              TFile* outFile,
+                                              const bool rangePlotting,
+                                              const size_t idxWave) const
 {
 	if(_debug) {
 		printDebug << "start creating plots for wave '" << _waveNames[idxWave] << "'." << endl;
@@ -1450,11 +1450,11 @@ massDepFit::createPlotsWave(const massDepFitModel& fitModel,
 
 
 bool
-massDepFit::createPlotsWavePair(const massDepFitModel& fitModel,
-                                TFile* outFile,
-                                const bool rangePlotting,
-                                const size_t idxWave,
-                                const size_t jdxWave) const
+rpwa::massDepFit::massDepFit::createPlotsWavePair(const massDepFitModel& fitModel,
+                                                  TFile* outFile,
+                                                  const bool rangePlotting,
+                                                  const size_t idxWave,
+                                                  const size_t jdxWave) const
 {
 	if(_debug) {
 		printDebug << "start creating plots for wave pair '" << _waveNames[idxWave] << "' and '" << _waveNames[jdxWave] << "'." << endl;
@@ -1731,7 +1731,7 @@ usage(const string& progName,
 // 2 = release couplings, masses and widths
 bool
 releasePars(Minimizer* minimizer,
-            const massDepFitModel& compset, 
+            const rpwa::massDepFit::massDepFitModel& compset, 
             const std::string& anchorWaveName,
             const std::string& anchorComponentName,
             const int level)
@@ -1752,7 +1752,7 @@ releasePars(Minimizer* minimizer,
 
   unsigned int parcount=0;
   for(unsigned int ic=0;ic<compset.n();++ic){
-    const massDepFitComponent* comp = compset[ic];
+    const rpwa::massDepFit::massDepFitComponent* comp = compset[ic];
     TString name(comp->getName());
     for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
       bool fix = false;
@@ -1801,7 +1801,7 @@ releasePars(Minimizer* minimizer,
 			++parcount;
     }
 
-    std::vector<pwachannel >::const_iterator it=comp->getChannels().begin();
+    std::vector<rpwa::massDepFit::pwachannel >::const_iterator it=comp->getChannels().begin();
     while(it!=comp->getChannels().end()){
       minimizer->SetVariable(parcount,(name + "_ReC" + it->getWaveName()).Data() , par[parcount], 0.10);
       ++parcount;
@@ -1927,7 +1927,7 @@ main(int    argc,
 	          << "    debug .......................................... "  << yesNo(debug) << endl
 	          << "    quiet .......................................... "  << yesNo(quiet) << endl;
 
-	massDepFit mdepFit;
+	rpwa::massDepFit::massDepFit mdepFit;
 	mdepFit.setDebug(debug);
 
 	Config configFile;
@@ -1967,7 +1967,7 @@ main(int    argc,
 	}
 
 	// set-up fit model (resonances, background, final-state mass dependence
-	massDepFitModel compset;
+	rpwa::massDepFit::massDepFitModel compset;
 	if(not mdepFit.readConfigModel(&configRoot, compset)) {
 		printErr << "error while reading fit model from configuration file." << endl;
 		return 1;
@@ -1982,7 +1982,7 @@ main(int    argc,
 		printInfo << "plotting only mode, skipping minimzation." << endl;
 	} else {
 		// set-up likelihood
-		massDepFitLikeli L;
+		rpwa::massDepFit::massDepFitLikeli L;
 		L.init(&compset,
 		       mdepFit.getMassBinCenters(),
 		       mdepFit.getInSpinDensityMatrices(),
