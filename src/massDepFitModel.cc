@@ -23,7 +23,7 @@ using namespace std;
 using namespace rpwa;
 
 
-rpwa::massDepFit::massDepFitModel::massDepFitModel()
+rpwa::massDepFit::model::model()
 	: _numpar(0),
 	  _idxAnchorWave(numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(numeric_limits<size_t>::max()),
@@ -35,10 +35,10 @@ rpwa::massDepFit::massDepFitModel::massDepFitModel()
 
 
 bool
-rpwa::massDepFit::massDepFitModel::init(const vector<string>& waveNames,
-                                        const vector<double>& massBinCenters,
-                                        const std::string& anchorWaveName,
-                                        const std::string& anchorComponentName)
+rpwa::massDepFit::model::init(const vector<string>& waveNames,
+                              const vector<double>& massBinCenters,
+                              const std::string& anchorWaveName,
+                              const std::string& anchorComponentName)
 {
 	_waveNames = waveNames;
 
@@ -57,7 +57,7 @@ rpwa::massDepFit::massDepFitModel::init(const vector<string>& waveNames,
 
 
 void
-rpwa::massDepFit::massDepFitModel::add(massDepFitComponent* comp)
+rpwa::massDepFit::model::add(massDepFitComponent* comp)
 {
     _comp.push_back(comp);
     _numpar+=comp->getNrParameters() + 2*comp->getNrChannels();
@@ -65,7 +65,7 @@ rpwa::massDepFit::massDepFitModel::add(massDepFitComponent* comp)
 
 
 void
-rpwa::massDepFit::massDepFitModel::setFsmdFunction(TF1* fsmdFunction)
+rpwa::massDepFit::model::setFsmdFunction(TF1* fsmdFunction)
 {
   _fsmdFunction=fsmdFunction;
   // clear list of free parameters
@@ -96,8 +96,8 @@ rpwa::massDepFit::massDepFitModel::setFsmdFunction(TF1* fsmdFunction)
 
 // performs mapping from the index of a wave in wavelist() to the components and channels that couple to this wave
 bool
-rpwa::massDepFit::massDepFitModel::initMapping(const std::string& anchorWaveName,
-                                               const std::string& anchorComponentName)
+rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
+                                     const std::string& anchorComponentName)
 {
 	// check that all waves used in a decay channel have been defined
 	for(unsigned int i=0; i<n(); ++i) {
@@ -186,7 +186,7 @@ rpwa::massDepFit::massDepFitModel::initMapping(const std::string& anchorWaveName
 
 
 bool
-rpwa::massDepFit::massDepFitModel::initFsmd(const vector<double>& massBinCenters)
+rpwa::massDepFit::model::initFsmd(const vector<double>& massBinCenters)
 {
 	const size_t nrMassBins = massBinCenters.size();
 
@@ -201,7 +201,7 @@ rpwa::massDepFit::massDepFitModel::initFsmd(const vector<double>& massBinCenters
 
 
 double 
-rpwa::massDepFit::massDepFitModel::getFreeFsmdPar(unsigned int i) const
+rpwa::massDepFit::model::getFreeFsmdPar(unsigned int i) const
 {
   if(i<_fsmdFreeParameters.size())
     return _fsmdFunction->GetParameter(_fsmdFreeParameters[i]);
@@ -210,7 +210,7 @@ rpwa::massDepFit::massDepFitModel::getFreeFsmdPar(unsigned int i) const
 
 
 void 
-rpwa::massDepFit::massDepFitModel::getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const
+rpwa::massDepFit::model::getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const
 {
   if(i<_fsmdFreeParameters.size()){
     _fsmdFunction->GetParLimits(_fsmdFreeParameters[i],lower,upper);
@@ -219,7 +219,7 @@ rpwa::massDepFit::massDepFitModel::getFreeFsmdLimits(unsigned int i, double& low
 
 
 void
-rpwa::massDepFit::massDepFitModel::setPar(const double* par)
+rpwa::massDepFit::model::setPar(const double* par)
 {
   size_t parcount=0;
   // components
@@ -239,7 +239,7 @@ rpwa::massDepFit::massDepFitModel::setPar(const double* par)
 
 
 void 
-rpwa::massDepFit::massDepFitModel::getPar(double* par) const
+rpwa::massDepFit::model::getPar(double* par) const
 {
   size_t parcount=0;
   // components
@@ -259,8 +259,8 @@ rpwa::massDepFit::massDepFitModel::getPar(double* par) const
 
 
 double 
-rpwa::massDepFit::massDepFitModel::calcFsmd(const double mass,
-                                                             const size_t idxMass) const
+rpwa::massDepFit::model::calcFsmd(const double mass,
+                                  const size_t idxMass) const
 {
 	if(_fsmdFixed && idxMass != numeric_limits<size_t>::max()) {
 		return _fsmdValues[idxMass];
@@ -275,9 +275,9 @@ rpwa::massDepFit::massDepFitModel::calcFsmd(const double mass,
 
 
 complex<double>
-rpwa::massDepFit::massDepFitModel::productionAmplitude(const size_t idxWave,
-                                                                        const double mass,
-                                                                        const size_t idxMass) const
+rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
+                                             const double mass,
+                                             const size_t idxMass) const
 {
 	// loop over all components and pick up those that contribute to this channels
 	complex<double> prodAmp(0., 0.);
@@ -299,9 +299,9 @@ rpwa::massDepFit::massDepFitModel::productionAmplitude(const size_t idxWave,
 
 
 double 
-rpwa::massDepFit::massDepFitModel::intensity(const size_t idxWave,
-                                                              const double mass,
-                                                              const size_t idxMass) const
+rpwa::massDepFit::model::intensity(const size_t idxWave,
+                                   const double mass,
+                                   const size_t idxMass) const
 {
 	const complex<double> prodAmp = productionAmplitude(idxWave, mass, idxMass);
 
@@ -310,9 +310,9 @@ rpwa::massDepFit::massDepFitModel::intensity(const size_t idxWave,
 
 
 double 
-rpwa::massDepFit::massDepFitModel::phaseAbsolute(const size_t idxWave,
-                                                                  const double mass,
-                                                                  const size_t idxMass) const
+rpwa::massDepFit::model::phaseAbsolute(const size_t idxWave,
+                                       const double mass,
+                                       const size_t idxMass) const
 {
 	const complex<double> prodAmp = productionAmplitude(idxWave, mass, idxMass);
 
@@ -321,10 +321,10 @@ rpwa::massDepFit::massDepFitModel::phaseAbsolute(const size_t idxWave,
 
 
 complex<double>
-rpwa::massDepFit::massDepFitModel::spinDensityMatrix(const size_t idxWave,
-                                                                      const size_t jdxWave,
-                                                                      const double mass,
-                                                                      const size_t idxMass) const
+rpwa::massDepFit::model::spinDensityMatrix(const size_t idxWave,
+                                           const size_t jdxWave,
+                                           const double mass,
+                                           const size_t idxMass) const
 {
 	const complex<double> prodAmpI = productionAmplitude(idxWave, mass, idxMass);
 	const complex<double> prodAmpJ = productionAmplitude(jdxWave, mass, idxMass);
@@ -334,17 +334,17 @@ rpwa::massDepFit::massDepFitModel::spinDensityMatrix(const size_t idxWave,
 
 
 double 
-rpwa::massDepFit::massDepFitModel::phase(const size_t idxWave,
-                                                          const size_t jdxWave,
-                                                          const double mass,
-                                                          const size_t idxMass) const
+rpwa::massDepFit::model::phase(const size_t idxWave,
+                               const size_t jdxWave,
+                               const double mass,
+                               const size_t idxMass) const
 {
 	return arg(spinDensityMatrix(idxWave, jdxWave, mass, idxMass));
 }
 
 
 ostream&
-rpwa::massDepFit::massDepFitModel::print(ostream& out) const
+rpwa::massDepFit::model::print(ostream& out) const
 {
 	for(unsigned int i=0;i<_comp.size();++i){
 		const massDepFitComponent& c = *_comp[i];
