@@ -47,10 +47,10 @@ q(const double M,
 /////////////////////////////
 
 
-rpwa::massDepFit::pwachannel::pwachannel(const std::string& waveName,
-                                         std::complex<double> coupling,
-                                         const std::vector<double>& massBinCenters,
-                                         const std::vector<double>& phaseSpace)
+rpwa::massDepFit::channel::channel(const std::string& waveName,
+                                   std::complex<double> coupling,
+                                   const std::vector<double>& massBinCenters,
+                                   const std::vector<double>& phaseSpace)
 	: _waveName(waveName),
 	  _coupling(coupling),
 	  _massBinCenters(massBinCenters),
@@ -60,7 +60,7 @@ rpwa::massDepFit::pwachannel::pwachannel(const std::string& waveName,
 }
 
 
-rpwa::massDepFit::pwachannel::pwachannel(const rpwa::massDepFit::pwachannel& ch)
+rpwa::massDepFit::channel::channel(const rpwa::massDepFit::channel& ch)
 	: _waveName(ch._waveName),
 	  _coupling(ch._coupling),
 	  _massBinCenters(ch._massBinCenters),
@@ -70,7 +70,7 @@ rpwa::massDepFit::pwachannel::pwachannel(const rpwa::massDepFit::pwachannel& ch)
 }
 
 
-rpwa::massDepFit::pwachannel::~pwachannel() {
+rpwa::massDepFit::channel::~channel() {
 	delete _interpolator;
 }
 
@@ -182,7 +182,7 @@ rpwa::massDepFit::component::init(const libconfig::Setting* configComponent,
 		}
 
 		boost::multi_array<double, 2>::const_array_view<1>::type view = phaseSpaceIntegrals[boost::indices[boost::multi_array<double, 2>::index_range()][it->second]];
-		_channels.push_back(pwachannel(waveName, coupling, massBinCenters, std::vector<double>(view.begin(), view.end())));
+		_channels.push_back(rpwa::massDepFit::channel(waveName, coupling, massBinCenters, std::vector<double>(view.begin(), view.end())));
 
 		if(debug) {
 			printDebug << "coupling to wave '" << waveName << "' (index " << it->second << ") with coupling " << coupling << "." << endl;
@@ -251,7 +251,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 		string waveName;
 		decayChannel->lookupValue("amp", waveName);
 
-		const pwachannel* channel = NULL;
+		const rpwa::massDepFit::channel* channel = NULL;
 		for(size_t idx=0; idx<nrDecayChannels; ++idx) {
 			if(getChannelWaveName(idx) == waveName) {
 				channel = &getChannel(idx);
@@ -279,7 +279,7 @@ void
 rpwa::massDepFit::component::getCouplings(double* par) const
 {
 	size_t counter=0;
-	for(vector<pwachannel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
+	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
 		par[counter] = it->getCoupling().real();
 		par[counter+1] = it->getCoupling().imag();
 	}
@@ -290,7 +290,7 @@ void
 rpwa::massDepFit::component::setCouplings(const double* par)
 {
 	size_t counter=0;
-	for(vector<pwachannel>::iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
+	for(vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
 		it->setCoupling(complex<double>(par[counter], par[counter+1]));
 	}
 }
@@ -374,7 +374,7 @@ ostream&
 rpwa::massDepFit::component::print(ostream& out) const
 {
 	out << "Decay modes:" << endl;
-	for(vector<pwachannel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
+	for(vector<rpwa::massDepFit::channel>::const_iterator it=_channels.begin(); it!=_channels.end(); ++it) {
 		out << it->getWaveName() << "    C=" << it->getCoupling() << endl;
 	}
 	return out;
@@ -462,7 +462,7 @@ rpwa::massDepFit::pwacomponent::val(const double m) const {
 	double ps = 1.;
 	if(!_constWidth){
 		ps=0; // no not forget to reset phase space here!
-		for(vector<pwachannel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
+		for(vector<rpwa::massDepFit::channel>::const_iterator itChan=getChannels().begin(); itChan!=getChannels().end(); ++itChan) {
 			const double ps0 = itChan->getPhaseSpace(m0, std::numeric_limits<size_t>::max());
 			const double ratio = itChan->getPhaseSpace(m, std::numeric_limits<size_t>::max()) / ps0;
 			ps += ratio*ratio;

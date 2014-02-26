@@ -32,16 +32,16 @@ namespace rpwa {
 
 	namespace massDepFit {
 
-		class pwachannel {
+		class channel {
 
 		public:
 
-			pwachannel(const std::string& waveName,
-			           std::complex<double> coupling,
-			           const std::vector<double>& massBinCenters,
-			           const std::vector<double>& phaseSpace);
-			pwachannel(const rpwa::massDepFit::pwachannel& ch);
-			~pwachannel();
+			channel(const std::string& waveName,
+			        std::complex<double> coupling,
+			        const std::vector<double>& massBinCenters,
+			        const std::vector<double>& phaseSpace);
+			channel(const rpwa::massDepFit::channel& ch);
+			~channel();
     
 			const std::string& getWaveName() const { return _waveName; }
 
@@ -87,8 +87,8 @@ namespace rpwa {
 			                    const bool debug) const;
 
 			const size_t getNrChannels() const { return _channels.size(); }
-			const std::vector<pwachannel>& getChannels() const { return _channels; }
-			const pwachannel& getChannel(const size_t i) const { return _channels[i]; } 
+			const std::vector<channel>& getChannels() const { return _channels; }
+			const channel& getChannel(const size_t i) const { return _channels[i]; } 
 			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 
 			void getCouplings(double* par) const;
@@ -115,7 +115,7 @@ namespace rpwa {
 
 			const std::string _name;
 
-			std::vector<pwachannel> _channels;
+			std::vector<channel> _channels;
 
 			const size_t _nrParameters;
 
@@ -182,8 +182,8 @@ namespace rpwa {
 
 inline
 double
-rpwa::massDepFit::pwachannel::getPhaseSpace(const double mass,
-                                            const size_t idxMass) const
+rpwa::massDepFit::channel::getPhaseSpace(const double mass,
+                                         const size_t idxMass) const
 {
 	if(idxMass != std::numeric_limits<size_t>::max()) {
 		return _phaseSpace[idxMass];
@@ -195,8 +195,8 @@ rpwa::massDepFit::pwachannel::getPhaseSpace(const double mass,
 
 inline
 std::complex<double>
-rpwa::massDepFit::pwachannel::getCouplingPhaseSpace(const double mass,
-                                                    const size_t idxMass) const
+rpwa::massDepFit::channel::getCouplingPhaseSpace(const double mass,
+                                                 const size_t idxMass) const
 {
 	return _coupling * getPhaseSpace(mass, idxMass);
 }

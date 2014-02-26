@@ -100,7 +100,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 {
 	// check that all waves used in a decay channel have been defined
 	for(unsigned int i=0; i<n(); ++i) {
-		for(vector<pwachannel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
+		for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
 			if(find(_waveNames.begin(), _waveNames.end(), itChan->getWaveName()) == _waveNames.end()) {
 				printErr << "wave '" << itChan->getWaveName() << "' not known in decay of '" << _comp[i]->getName() << "'." << endl;
 				return false;
@@ -112,7 +112,7 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 	for(vector<string>::const_iterator itWave=_waveNames.begin(); itWave!=_waveNames.end(); ++itWave) {
 		bool found(false);
 		for(unsigned int i=0; i<n(); ++i) {
-			for(vector<pwachannel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
+			for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
 				if(itChan->getWaveName() == *itWave) {
 					found = true;
 					break;

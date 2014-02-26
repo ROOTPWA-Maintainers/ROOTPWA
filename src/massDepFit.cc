@@ -1799,7 +1799,7 @@ releasePars(Minimizer* minimizer,
 			++parcount;
     }
 
-    std::vector<rpwa::massDepFit::pwachannel >::const_iterator it=comp->getChannels().begin();
+    std::vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin();
     while(it!=comp->getChannels().end()){
       minimizer->SetVariable(parcount,(name + "_ReC" + it->getWaveName()).Data() , par[parcount], 0.10);
       ++parcount;
