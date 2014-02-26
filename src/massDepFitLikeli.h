@@ -23,14 +23,14 @@ namespace rpwa {
 
 		class massDepFitModel;
 
-		class massDepFitLikeli : public ROOT::Math::IBaseFunctionMultiDim {
+		class likelihood : public ROOT::Math::IBaseFunctionMultiDim {
 
 		public:
 
-			massDepFitLikeli() {}
-			virtual ~massDepFitLikeli() {}
+			likelihood() {}
+			virtual ~likelihood() {}
 
-			virtual massDepFitLikeli* Clone() const;
+			virtual likelihood* Clone() const;
 
 			virtual unsigned int NDim() const;
 
