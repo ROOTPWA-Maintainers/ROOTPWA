@@ -1744,10 +1744,10 @@ void releasePars(Minimizer* minimizer, const massDepFitModel& compset,
   for(unsigned int ic=0;ic<compset.n();++ic){
     const massDepFitComponent* comp = compset[ic];
     TString name(comp->getName());
-    const double mmin = comp->getParameterLimits(0).first;
-    const double mmax = comp->getParameterLimits(0).second;
-    const double gmin = comp->getParameterLimits(1).first;
-    const double gmax = comp->getParameterLimits(1).second;
+    const double mmin = comp->getParameterLimitLower(0);
+    const double mmax = comp->getParameterLimitUpper(0);
+    const double gmin = comp->getParameterLimitLower(1);
+    const double gmax = comp->getParameterLimitUpper(1);
     if(comp->getParameterFixed(0) || level==0)minimizer->SetFixedVariable(parcount,
 					       (name+comp->getParameterName(0)).Data() ,
 					       par[parcount]);
