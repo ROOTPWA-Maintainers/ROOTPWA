@@ -221,13 +221,17 @@ massDepFitComponent::update(const libconfig::Setting* configComponent,
 			printDebug << "updating parameter '" << _parametersName[idxParameter] << "'." << endl;
 		}
 
-		const libconfig::Setting* configParameter = findLibConfigGroup(*configComponent, _parametersName[idxParameter]);
+		libconfig::Setting* configParameter = &((*configComponent)[_parametersName[idxParameter]]);
 		if(not configParameter) {
 			printErr << "component '" << getName() << "' has no section '" << _parametersName[idxParameter] << "'." << endl;
 			return false;
 		}
 
 		(*configParameter)["val"] = _parameters[idxParameter];
+
+		if(not configParameter->exists("error")) {
+			configParameter->add("error", libconfig::Setting::TypeFloat);
+		}
 		(*configParameter)["error"] = minimizer->Errors()[minimizer->VariableIndex((getName() + _parametersName[idxParameter]).c_str())];
 	}
 
