@@ -23,7 +23,7 @@ using namespace rpwa;
 
 
 rpwa::massDepFit::model::model()
-	: _numpar(0),
+	: _nrParameters(0),
 	  _idxAnchorWave(numeric_limits<size_t>::max()),
 	  _idxAnchorComponent(numeric_limits<size_t>::max()),
 	  _idxAnchorChannel(numeric_limits<size_t>::max()),
@@ -58,38 +58,40 @@ rpwa::massDepFit::model::init(const vector<string>& waveNames,
 void
 rpwa::massDepFit::model::add(rpwa::massDepFit::component* comp)
 {
-    _comp.push_back(comp);
-    _numpar+=comp->getNrParameters() + 2*comp->getNrChannels();
+	_components.push_back(comp);
+	_nrParameters += comp->getNrParameters() + 2*comp->getNrChannels();
 }
 
 
 void
 rpwa::massDepFit::model::setFsmdFunction(TF1* fsmdFunction)
 {
-  _fsmdFunction=fsmdFunction;
-  // clear list of free parameters
-  _fsmdFreeParameters.clear();
+	_fsmdFunction = fsmdFunction;
 
-  if (_fsmdFunction == NULL) {
-      _fsmdFixed = true;
-    return;
-  }
+	// clear list of free parameters
+	_fsmdFreeParameterIndices.clear();
 
-  // check if there are free parameters in the phase space that should be fitted
-  unsigned int nparFsmd=_fsmdFunction->GetNpar();
-  // loop over parameters and check limits
-  // remember which parameters to let float
-  for(unsigned int i=0;i<nparFsmd;++i){
-    double min,max;
-    _fsmdFunction->GetParLimits(i,min,max);
-    if(min!=max){
-      _fsmdFreeParameters.push_back(i);
-      cout << "final-state mass dependence parameter "<< i << " floating in ["
-	   << min  << "," << max << "]" << endl;
-    }
-  }// end loop over parameters
-  _numpar+=_fsmdFreeParameters.size();
-  if(_fsmdFreeParameters.size() == 0) _fsmdFixed = true;
+	if (_fsmdFunction == NULL) {
+		_fsmdFixed = true;
+		return;
+	}
+
+	// check if there are free parameters in the phase space that should be fitted
+	unsigned int nparFsmd = _fsmdFunction->GetNpar();
+	// loop over parameters and check limits
+	// remember which parameters to let float
+	for(unsigned int i=0;i<nparFsmd;++i) {
+		double min, max;
+		_fsmdFunction->GetParLimits(i,min,max);
+		if(min!=max) {
+			_fsmdFreeParameterIndices.push_back(i);
+		}
+	}// end loop over parameters
+
+	_nrParameters += _fsmdFreeParameterIndices.size();
+	if(_fsmdFreeParameterIndices.size() == 0) {
+		_fsmdFixed = true;
+	}
 }
 
 
@@ -99,10 +101,11 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
                                      const std::string& anchorComponentName)
 {
 	// check that all waves used in a decay channel have been defined
-	for(unsigned int i=0; i<n(); ++i) {
-		for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
+	const size_t nrComponents = _components.size();
+	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+		for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
 			if(find(_waveNames.begin(), _waveNames.end(), itChan->getWaveName()) == _waveNames.end()) {
-				printErr << "wave '" << itChan->getWaveName() << "' not known in decay of '" << _comp[i]->getName() << "'." << endl;
+				printErr << "wave '" << itChan->getWaveName() << "' not known in decay of '" << _components[idxComponent]->getName() << "'." << endl;
 				return false;
 			}
 		}
@@ -111,8 +114,8 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 	// check that all defined waves are also used
 	for(vector<string>::const_iterator itWave=_waveNames.begin(); itWave!=_waveNames.end(); ++itWave) {
 		bool found(false);
-		for(unsigned int i=0; i<n(); ++i) {
-			for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_comp[i]->getChannels().begin(); itChan !=_comp[i]->getChannels().end(); ++itChan) {
+		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
+			for(vector<rpwa::massDepFit::channel>::const_iterator itChan=_components[idxComponent]->getChannels().begin(); itChan !=_components[idxComponent]->getChannels().end(); ++itChan) {
 				if(itChan->getWaveName() == *itWave) {
 					found = true;
 					break;
@@ -126,18 +129,17 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		}
 	}
 
-	_compChannel.resize(_waveNames.size());
-	const size_t nrComponents = n();
+	_waveComponentChannel.resize(_waveNames.size());
 	for(size_t idxWave=0; idxWave<_waveNames.size(); ++idxWave) {
 		// check which components this waves belongs to and which channel they are
 		for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
 			// loop over channels of component and see if wave is there
-			const size_t nrChannels = _comp[idxComponent]->getNrChannels();
+			const size_t nrChannels = _components[idxComponent]->getNrChannels();
 			for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-				if(_comp[idxComponent]->getChannelWaveName(idxChannel) == _waveNames[idxWave]) {
-					_compChannel[idxWave].push_back(pair<size_t, size_t>(idxComponent,idxChannel));
+				if(_components[idxComponent]->getChannelWaveName(idxChannel) == _waveNames[idxWave]) {
+					_waveComponentChannel[idxWave].push_back(pair<size_t, size_t>(idxComponent,idxChannel));
 
-					if(anchorWaveName == _waveNames[idxWave] && anchorComponentName == _comp[idxComponent]->getName()) {
+					if(anchorWaveName == _waveNames[idxWave] && anchorComponentName == _components[idxComponent]->getName()) {
 						_idxAnchorWave = idxWave;
 						_idxAnchorComponent = idxComponent;
 						_idxAnchorChannel = idxChannel;
@@ -156,9 +158,9 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 	ostringstream output;
 	for(size_t idxWave=0; idxWave<_waveNames.size(); idxWave++) {
 		output << "    wave '" << _waveNames[idxWave] << "' (index " << idxWave << ") used in" << endl;
-		for(size_t idxComponents=0; idxComponents<_compChannel[idxWave].size(); idxComponents++) {
-			const size_t idxComponent = _compChannel[idxWave][idxComponents].first;
-			output << "        component " << idxComponents << ": " << idxComponent << " '" << _comp[idxComponent]->getName() << "'";
+		for(size_t idxComponents=0; idxComponents<_waveComponentChannel[idxWave].size(); idxComponents++) {
+			const size_t idxComponent = _waveComponentChannel[idxWave][idxComponents].first;
+			output << "        component " << idxComponents << ": " << idxComponent << " '" << _components[idxComponent]->getName() << "'";
 			if(_idxAnchorWave == idxWave && _idxAnchorComponent == idxComponent) {
 				output << " (anchor)";
 			}
@@ -166,18 +168,18 @@ rpwa::massDepFit::model::initMapping(const std::string& anchorWaveName,
 		}
 	}
 	for(size_t idxComponent=0; idxComponent<nrComponents; ++idxComponent) {
-		output << "    component '" << _comp[idxComponent]->getName() << "' (index " << idxComponent << ") used in" << endl;
+		output << "    component '" << _components[idxComponent]->getName() << "' (index " << idxComponent << ") used in" << endl;
 
-		const size_t nrChannels = _comp[idxComponent]->getNrChannels();
+		const size_t nrChannels = _components[idxComponent]->getNrChannels();
 		for(size_t idxChannel=0; idxChannel<nrChannels; ++idxChannel) {
-			output << "        channel " << idxChannel << ": " << _comp[idxComponent]->getChannelWaveName(idxChannel);
+			output << "        channel " << idxChannel << ": " << _components[idxComponent]->getChannelWaveName(idxChannel);
 			if(_idxAnchorComponent == idxComponent && _idxAnchorChannel == idxChannel) {
 				output << " (anchor)";
 			}
 			output << endl;
 		}
 	}
-	printInfo << _waveNames.size() << " waves and " << n() << " components in fit model:" << endl
+	printInfo << _waveNames.size() << " waves and " << _components.size() << " components in fit model:" << endl
 	          << output.str();
 
 	return true;
@@ -200,60 +202,60 @@ rpwa::massDepFit::model::initFsmd(const vector<double>& massBinCenters)
 
 
 double 
-rpwa::massDepFit::model::getFreeFsmdPar(unsigned int i) const
+rpwa::massDepFit::model::getFsmdParameter(const size_t idx) const
 {
-  if(i<_fsmdFreeParameters.size())
-    return _fsmdFunction->GetParameter(_fsmdFreeParameters[i]);
-  else return 0;
+	return _fsmdFunction->GetParameter(_fsmdFreeParameterIndices[idx]);
 }
 
 
 void 
-rpwa::massDepFit::model::getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const
+rpwa::massDepFit::model::getFsmdParameterLimits(const size_t idx, double& lower, double& upper) const
 {
-  if(i<_fsmdFreeParameters.size()){
-    _fsmdFunction->GetParLimits(_fsmdFreeParameters[i],lower,upper);
-  }
+	return _fsmdFunction->GetParLimits(_fsmdFreeParameterIndices[idx], lower, upper);
+}
+
+
+void 
+rpwa::massDepFit::model::getParameters(double* par) const
+{
+	size_t parcount=0;
+	// components
+	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent) {
+		_components[idxComponent]->getParameters(&par[parcount]);
+		parcount += _components[idxComponent]->getNrParameters();
+
+		_components[idxComponent]->getCouplings(&par[parcount]);
+		parcount += 2*_components[idxComponent]->getNrChannels();
+	}
+
+	// final-state mass dependence
+	unsigned int nfreepar=_fsmdFreeParameterIndices.size();
+	for(unsigned int ipar=0; ipar<nfreepar; ++ipar) {
+		par[parcount] = _fsmdFunction->GetParameter(_fsmdFreeParameterIndices[ipar]);
+		++parcount;
+	}
 }
 
 
 void
-rpwa::massDepFit::model::setPar(const double* par)
+rpwa::massDepFit::model::setParameters(const double* par)
 {
-  size_t parcount=0;
-  // components
-  for(unsigned int i=0;i<n();++i){
-    _comp[i]->setParameters(&par[parcount]);
-    parcount+=_comp[i]->getNrParameters();
-    _comp[i]->setCouplings(&par[parcount]);
-    parcount+=_comp[i]->getNrChannels()*2; // RE and Im for each channel
-  } // end loop over components
-  // phase space
-  unsigned int nfreepar=_fsmdFreeParameters.size();
-  for(unsigned int ipar=0;ipar<nfreepar;++ipar){
-    _fsmdFunction->SetParameter(_fsmdFreeParameters[ipar],par[parcount]);
-    ++parcount;
-  }
-}
+	size_t parcount=0;
+	// components
+	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
+		_components[idxComponent]->setParameters(&par[parcount]);
+		parcount += _components[idxComponent]->getNrParameters();
 
+		_components[idxComponent]->setCouplings(&par[parcount]);
+		parcount += 2*_components[idxComponent]->getNrChannels();
+	} // end loop over components
 
-void 
-rpwa::massDepFit::model::getPar(double* par) const
-{
-  size_t parcount=0;
-  // components
-  for(unsigned int i=0;i<n();++i){
-    _comp[i]->getParameters(&par[parcount]);
-    parcount+=_comp[i]->getNrParameters();
-    _comp[i]->getCouplings(&par[parcount]);
-    parcount+=_comp[i]->getNrChannels()*2; // RE and Im for each channel
-  }
- // phase space
-  unsigned int nfreepar=_fsmdFreeParameters.size();
-  for(unsigned int ipar=0;ipar<nfreepar;++ipar){
-    par[parcount]=_fsmdFunction->GetParameter(_fsmdFreeParameters[ipar]);
-    ++parcount;
-  }
+	// final-state mass-dependence
+	unsigned int nfreepar=_fsmdFreeParameterIndices.size();
+	for(unsigned int ipar=0;ipar<nfreepar;++ipar){
+		_fsmdFunction->SetParameter(_fsmdFreeParameterIndices[ipar], par[parcount]);
+		++parcount;
+	}
 }
 
 
@@ -264,11 +266,11 @@ rpwa::massDepFit::model::calcFsmd(const double mass,
 	if(_fsmdFixed && idxMass != numeric_limits<size_t>::max()) {
 		return _fsmdValues[idxMass];
 	}
-  
+
 	if(not _fsmdFunction) {
 		return 1.;
 	}
-  
+
 	return _fsmdFunction->Eval(mass);
 }
 
@@ -282,13 +284,13 @@ rpwa::massDepFit::model::productionAmplitude(const size_t idxWave,
 	complex<double> prodAmp(0., 0.);
 
 	// get entry from mapping
-	const vector<pair<size_t, size_t> >& components = _compChannel[idxWave];
+	const vector<pair<size_t, size_t> >& components = _waveComponentChannel[idxWave];
 	size_t nrComponents = components.size();
 
 	for(unsigned int idxComponents=0; idxComponents<nrComponents; ++idxComponents) {
 		size_t idxComponent = components[idxComponents].first;
 		size_t idxChannel = components[idxComponents].second;
-		prodAmp += _comp[idxComponent]->val(mass) * _comp[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(mass, idxMass);
+		prodAmp += _components[idxComponent]->val(mass) * _components[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(mass, idxMass);
 	}
 
 	prodAmp *= calcFsmd(mass, idxMass);
@@ -345,8 +347,8 @@ rpwa::massDepFit::model::phase(const size_t idxWave,
 ostream&
 rpwa::massDepFit::model::print(ostream& out) const
 {
-	for(unsigned int i=0;i<_comp.size();++i){
-		const rpwa::massDepFit::component& c = *_comp[i];
+	for(unsigned int i=0;i<_components.size();++i){
+		const rpwa::massDepFit::component& c = *_components[i];
 		c.print(out);
 	}
 	return out;

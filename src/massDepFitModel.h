@@ -2,7 +2,7 @@
 //
 // Description:
 //    (BW) Component of mass dependent fit
-//      
+//
 //
 // Author List:
 //      Sebastian Neubert    TUM            (original author)
@@ -41,24 +41,18 @@ namespace rpwa {
 			          const std::string& anchorWaveName,
 			          const std::string& anchorComponentName);
 
+			size_t getNrParameters() const { return _nrParameters; }
+			void getParameters(double* par) const;
+			void setParameters(const double* par);
 
+			size_t getNrComponents() const { return _components.size(); }
+			const rpwa::massDepFit::component* getComponent(size_t idx) const { return _components[idx]; }
 
+			unsigned int getFsmdNrParameters() const { return _fsmdFreeParameterIndices.size(); }
+			double getFsmdParameter(const size_t idx) const;
+			void getFsmdParameterLimits(const size_t idx, double& lower, double& upper) const;
 
-
-    size_t n() const {return _comp.size();}
-    unsigned int numPar() const {return _numpar;}
-    
-    void setPar(const double* par); // set parameters
-    void getPar(double* par) const;       // return parameters 
-    unsigned int nFreeFsmdPar() const {return _fsmdFreeParameters.size();}
-    double getFreeFsmdPar(unsigned int i) const;
-    void getFreeFsmdLimits(unsigned int i, double& lower, double& upper) const;
-
-
-    const rpwa::massDepFit::component* operator[](size_t i) const {return _comp[i];}
-    const std::vector<std::pair<size_t, size_t> >&
-      getCompChannel(size_t idx) const { return _compChannel[idx]; }
-
+			const std::vector<std::pair<size_t, size_t> >& getComponentChannel(size_t idx) const { return _waveComponentChannel[idx]; }
 
 			std::complex<double> productionAmplitude(const size_t idxWave,
 			                                         const double mass,
@@ -91,8 +85,9 @@ namespace rpwa {
 
 			std::vector<std::string> _waveNames;
 
-    std::vector<rpwa::massDepFit::component*> _comp;
-    unsigned int _numpar;
+			size_t _nrParameters;
+
+			std::vector<rpwa::massDepFit::component*> _components;
 
 			size_t _idxAnchorWave;
 			size_t _idxAnchorComponent;
@@ -100,12 +95,10 @@ namespace rpwa {
 
 			TF1* _fsmdFunction;
 			bool _fsmdFixed;
-			std::vector<unsigned int> _fsmdFreeParameters;
 			std::vector<double> _fsmdValues;
+			std::vector<size_t> _fsmdFreeParameterIndices;
 
-    // mapping for wave -> which components with which channel
-    // wavelist in same order as given by wavelist
-    std::vector<std::vector<std::pair<size_t, size_t> > > _compChannel;    
+			std::vector<std::vector<std::pair<size_t, size_t> > > _waveComponentChannel;
 
 		};
 

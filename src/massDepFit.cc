@@ -400,8 +400,8 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 		string name;
 		configComponent->lookupValue("name", name);
 
-		for(int idx=0; idx<fitModel.n(); ++idx) {
-			if(fitModel[idx]->getName() == name) {
+		for(int idx=0; idx<fitModel.getNrComponents(); ++idx) {
+			if(fitModel.getComponent(idx)->getName() == name) {
 				printErr << "component '" << name << "' defined twice." << endl;
 				return false;
 			}
@@ -439,10 +439,10 @@ rpwa::massDepFit::massDepFit::readConfigModelComponents(const Setting* configCom
 	}
 
 	ostringstream output;
-	for(size_t idx=0; idx<fitModel.n(); ++idx) {
-		output << "    " << fitModel[idx]->getName() << endl;
+	for(size_t idx=0; idx<fitModel.getNrComponents(); ++idx) {
+		output << "    " << fitModel.getComponent(idx)->getName() << endl;
 	}
-	printInfo << "fitting " << fitModel.n() << " components to the data:" << endl
+	printInfo << "fitting " << fitModel.getNrComponents() << " components to the data:" << endl
 	          << output.str();
 
 	return true;
@@ -595,7 +595,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 	}
 
 	const int nrComponents = configComponents->getLength();
-	if(nrComponents != fitModel.n()) {
+	if(nrComponents != fitModel.getNrComponents()) {
 		printErr << "number of components in configuration file and fit model does not match." << endl;
 		return false;
 	}
@@ -618,8 +618,8 @@ rpwa::massDepFit::massDepFit::updateConfigModelComponents(const Setting* configC
 
 		const rpwa::massDepFit::component* component = NULL;
 		for(size_t idx=0; idx<nrComponents; ++idx) {
-			if(fitModel[idx]->getName() == name) {
-				component = fitModel[idx];
+			if(fitModel.getComponent(idx)->getName() == name) {
+				component = fitModel.getComponent(idx);
 				break;
 			}
 		}
@@ -668,7 +668,7 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 		if(((int)configFsmdFix[i]) == 0) {
 			ostringstream sName;
 			sName << "PSP_" << iPar;
-			configFsmdValue[i] = fitModel.getFreeFsmdPar(iPar);
+			configFsmdValue[i] = fitModel.getFsmdParameter(iPar);
 			configFsmdError[i] = minimizer->Errors()[minimizer->VariableIndex(sName.str())];
 			++iPar;
 		}
@@ -1364,16 +1364,16 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 	phaseSpace->SetTitle((_waveNames[idxWave] + "__ps").c_str());
 	graphs.Add(phaseSpace, "CP");
 
-	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getCompChannel(idxWave);
+	const std::vector<std::pair<size_t, size_t> >& compChannel = fitModel.getComponentChannel(idxWave);
 	std::vector<TGraph*> components;
 	for(size_t idxComponents=0; idxComponents<compChannel.size(); ++idxComponents) {
 		const size_t idxComponent = compChannel[idxComponents].first;
 		TGraph* component = new TGraph;
-		component->SetName((_waveNames[idxWave] + "__" + fitModel[idxComponent]->getName()).c_str());
-		component->SetTitle((_waveNames[idxWave] + "__" + fitModel[idxComponent]->getName()).c_str());
+		component->SetName((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
+		component->SetTitle((_waveNames[idxWave] + "__" + fitModel.getComponent(idxComponent)->getName()).c_str());
 
 		Color_t color = kBlue;
-		if(fitModel[idxComponent]->getName().find("bkg") != string::npos) {
+		if(fitModel.getComponent(idxComponent)->getName().find("bkg") != string::npos) {
 			color = kMagenta;
 		}
 		component->SetLineColor(color);
@@ -1425,8 +1425,8 @@ rpwa::massDepFit::massDepFit::createPlotsWave(const rpwa::massDepFit::model& fit
 			const size_t idxComponent = compChannel[idxComponents].first;
 			const size_t idxChannel = compChannel[idxComponents].second;
 
-			complex<double> prodAmp = fitModel[idxComponent]->val(_massBinCenters[idxMass]);
-			prodAmp *= fitModel[idxComponent]->getChannel(idxChannel).getCouplingPhaseSpace(_massBinCenters[idxMass], idxMass);
+			complex<double> prodAmp = fitModel.getComponent(idxComponent)->val(_massBinCenters[idxMass]);
+			prodAmp *= fitModel.getComponent(idxComponent)->getChannel(idxChannel).getCouplingPhaseSpace(_massBinCenters[idxMass], idxMass);
 			prodAmp *= fitModel.calcFsmd(_massBinCenters[idxMass], idxMass);
 
 			components[idxComponents]->SetPoint(pointLimit, mass, norm(prodAmp));
@@ -1735,12 +1735,12 @@ releasePars(Minimizer* minimizer,
             const int level)
 {
 	// save current state
-	const unsigned int npar = compset.numPar();
+	const size_t npar = compset.getNrParameters();
 	double par[npar];
 	if(level == 0) {
-		compset.getPar(par);
+		compset.getParameters(par);
 	} else {
-		for(unsigned int i=0;i<npar;++i) {
+		for(size_t i=0; i<npar; ++i) {
 			par[i]=minimizer->X()[i];
 		}
 	}
@@ -1749,8 +1749,8 @@ releasePars(Minimizer* minimizer,
 	minimizer->Clear();
 
   unsigned int parcount=0;
-  for(unsigned int ic=0;ic<compset.n();++ic){
-    const rpwa::massDepFit::component* comp = compset[ic];
+  for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent){
+    const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
     TString name(comp->getName());
     for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
       bool fix = false;
@@ -1813,11 +1813,11 @@ releasePars(Minimizer* minimizer,
     } // end loop over channels
   }// end loop over components
   // set phase space
-  unsigned int nfreeFsmd=compset.nFreeFsmdPar();
+  unsigned int nfreeFsmd=compset.getFsmdNrParameters();
   for(unsigned int ifreeFsmd=0;ifreeFsmd<nfreeFsmd;++ifreeFsmd){
     double val,lower,upper;
     val=par[parcount];
-    compset.getFreeFsmdLimits(ifreeFsmd,lower,upper);
+    compset.getFsmdParameterLimits(ifreeFsmd,lower,upper);
     TString name("PSP_"); name+=+ifreeFsmd;
     minimizer->SetLimitedVariable(parcount, 
 				  name.Data(), 
@@ -2041,7 +2041,7 @@ main(int    argc,
     printInfo << "Minimization took " <<  maxPrecisionAlign(fitW.CpuTime()) << " s" << endl;
 
     const double* par=minimizer->X();
-    compset.setPar(par);
+    compset.setParameters(par);
     cerr << compset << endl;
     if (success){
       printInfo << "minimization finished successfully." << endl;
