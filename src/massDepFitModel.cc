@@ -218,10 +218,15 @@ void
 rpwa::massDepFit::model::getParameters(double* par) const
 {
 	size_t parcount=0;
-	// components
+
+	// couplings
+	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent) {
+		parcount += _components[idxComponent]->getCouplings(&par[parcount]);
+	}
+
+	// parameters
 	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent) {
 		parcount += _components[idxComponent]->getParameters(&par[parcount]);
-		parcount += _components[idxComponent]->getCouplings(&par[parcount]);
 	}
 
 	// final-state mass dependence
@@ -237,11 +242,16 @@ void
 rpwa::massDepFit::model::setParameters(const double* par)
 {
 	size_t parcount=0;
-	// components
+
+	// couplings
+	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
+		parcount += _components[idxComponent]->setCouplings(&par[parcount]);
+	}
+
+	// parameters
 	for(size_t idxComponent=0; idxComponent<_components.size(); ++idxComponent){
 		parcount += _components[idxComponent]->setParameters(&par[parcount]);
-		parcount += _components[idxComponent]->setCouplings(&par[parcount]);
-	} // end loop over components
+	}
 
 	// final-state mass-dependence
 	unsigned int nfreepar=_fsmdFreeParameterIndices.size();
