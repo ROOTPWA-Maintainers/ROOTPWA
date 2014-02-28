@@ -91,12 +91,12 @@ namespace rpwa {
 			const channel& getChannel(const size_t i) const { return _channels[i]; }
 			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 
-			void getCouplings(double* par) const;
-			void setCouplings(const double* par);
+			size_t getCouplings(double* par) const;
+			size_t setCouplings(const double* par);
 
 			size_t getNrParameters() const { return _nrParameters; }
-			virtual void getParameters(double* par) const;
-			virtual void setParameters(const double* par);
+			virtual size_t getParameters(double* par) const;
+			virtual size_t setParameters(const double* par);
 
 			virtual double getParameter(const size_t idx) const { return _parameters[idx]; }
 			virtual bool getParameterFixed(const size_t idx) const { return _parametersFixed[idx]; }

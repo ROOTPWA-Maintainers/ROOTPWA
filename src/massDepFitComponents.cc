@@ -252,7 +252,7 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 }
 
 
-void
+size_t
 rpwa::massDepFit::component::getCouplings(double* par) const
 {
 	size_t counter=0;
@@ -260,34 +260,42 @@ rpwa::massDepFit::component::getCouplings(double* par) const
 		par[counter] = it->getCoupling().real();
 		par[counter+1] = it->getCoupling().imag();
 	}
+
+	return counter;
 }
 
 
-void
+size_t
 rpwa::massDepFit::component::setCouplings(const double* par)
 {
 	size_t counter=0;
 	for(vector<rpwa::massDepFit::channel>::iterator it=_channels.begin(); it!=_channels.end(); ++it, counter+=2) {
 		it->setCoupling(complex<double>(par[counter], par[counter+1]));
 	}
+
+	return counter;
 }
 
 
-void
+size_t
 rpwa::massDepFit::component::getParameters(double* par) const
 {
 	for(size_t idx=0; idx<_nrParameters; ++idx) {
 		par[idx] = _parameters[idx];
 	}
+
+	return _nrParameters;
 }
 
 
-void
+size_t
 rpwa::massDepFit::component::setParameters(const double* par)
 {
 	for(size_t idx=0; idx<_nrParameters; ++idx) {
 		_parameters[idx] = par[idx];
 	}
+
+	return _nrParameters;
 }
 
 
