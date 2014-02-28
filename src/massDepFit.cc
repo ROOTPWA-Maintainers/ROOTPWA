@@ -1798,8 +1798,32 @@ releasePars(Minimizer* minimizer,
 	minimizer->Clear();
 
 	size_t parcount=0;
+	// first add all couplings
 	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
-		// first add parameters of the components, i.e. mass and width
+		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
+		for(std::vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
+			const string prefixName = "coupling__" + comp->getName() + "__" + it->getWaveName();
+
+			printInfo << "parameter " << parcount << " ('" << (prefixName + "__real") << "') set to " << par[parcount] << endl;
+			minimizer->SetVariable(parcount,
+			                       prefixName + "__real",
+			                       par[parcount],
+			                       0.1);
+			++parcount;
+
+			if(not it->isAnchor()) {
+				printInfo << "parameter " << parcount << " ('" << (prefixName + "__imag") << "') set to " << par[parcount] << endl;
+				minimizer->SetVariable(parcount,
+				                       prefixName + "__imag",
+				                       par[parcount],
+				                       0.1);
+				++parcount;
+			}
+		} // end loop over channels
+	} // end loop over components
+
+	// second add parameters of the components, i.e. mass and width
+	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
 		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
 			bool fix = false;
@@ -1854,26 +1878,7 @@ releasePars(Minimizer* minimizer,
 			}
 			++parcount;
 		}
-
-		// second add couplings
-		for(std::vector<rpwa::massDepFit::channel>::const_iterator it=comp->getChannels().begin(); it!=comp->getChannels().end(); ++it) {
-			printInfo << "parameter " << parcount << " ('" << (comp->getName() + "__" + it->getWaveName() + "__real") << "') set to " << par[parcount] << endl;
-			minimizer->SetVariable(parcount,
-			                       (comp->getName() + "__" + it->getWaveName() + "__real").c_str(),
-			                       par[parcount],
-			                       0.1);
-			++parcount;
-
-			if(not it->isAnchor()) {
-				printInfo << "parameter " << parcount << " ('" << (comp->getName() + "__" + it->getWaveName() + "__imag") << "') set to " << par[parcount] << endl;
-				minimizer->SetVariable(parcount,
-				                       (comp->getName() + "__" + it->getWaveName() + "__imag").c_str(),
-				                       par[parcount],
-				                       0.1);
-				++parcount;
-			}
-		} // end loop over channels
-	}// end loop over components
+	} // end loop over components
 
 	// set phase space
 	const unsigned int nfreeFsmd=compset.getFsmdNrParameters();
