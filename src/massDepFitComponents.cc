@@ -202,9 +202,10 @@ rpwa::massDepFit::component::update(const libconfig::Setting* configComponent,
 			configParameter->add("error", libconfig::Setting::TypeFloat);
 		}
 
-		const int varIndex = minimizer->VariableIndex(getName() + _parametersName[idxParameter]);
+		const string varName = getName() + "__" + _parametersName[idxParameter];
+		const int varIndex = minimizer->VariableIndex(varName);
 		if(varIndex == -1) {
-			printErr << "variable '" << (getName() + _parametersName[idxParameter]) << "' used to extract the error for the parameter '"
+			printErr << "variable '" << varName << "' used to extract the error for the parameter '"
 			         << _parametersName[idxParameter] << "' of '" << getName() << "' not known to the minimizer." << endl;
 			return false;
 		}
