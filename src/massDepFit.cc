@@ -709,10 +709,18 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 	unsigned int iPar = 0;
 	for(unsigned int i=0; i<nrPar; ++i) {
 		if(((int)configFsmdFix[i]) == 0) {
+			configFsmdValue[i] = fitModel.getFsmdParameter(iPar);
+
 			ostringstream sName;
 			sName << "PSP_" << iPar;
-			configFsmdValue[i] = fitModel.getFsmdParameter(iPar);
-			configFsmdError[i] = minimizer->Errors()[minimizer->VariableIndex(sName.str())];
+			const int varIndex = minimizer->VariableIndex(sName.str());
+			if(varIndex == -1) {
+				printErr << "variable '" << sName.str() << "' used to extract the error for one parameter "
+				         << "of the final-state mass-dependence  not known to the minimizer." << endl;
+				return false;
+			}
+			configFsmdError[i] = minimizer->Errors()[varIndex];
+
 			++iPar;
 		}
 	}
