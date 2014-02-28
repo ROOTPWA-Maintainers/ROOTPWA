@@ -1826,6 +1826,8 @@ releasePars(Minimizer* minimizer,
 	for(size_t idxComponent=0; idxComponent<compset.getNrComponents(); ++idxComponent) {
 		const rpwa::massDepFit::component* comp = compset.getComponent(idxComponent);
 		for(size_t idxParameter=0; idxParameter<comp->getNrParameters(); ++idxParameter) {
+			const string name = comp->getName() + "__" + comp->getParameterName(idxParameter);
+
 			bool fix = false;
 			if(comp->getParameterFixed(idxParameter)) {
 				fix = true;
@@ -1839,40 +1841,40 @@ releasePars(Minimizer* minimizer,
 			}
 
 			if(fix) {
-				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') fixed to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') fixed to " << par[parcount] << endl;
 				minimizer->SetFixedVariable(parcount,
-				                            (comp->getName()+comp->getParameterName(idxParameter)).c_str() ,
+				                            name,
 				                            par[parcount]);
 			} else if(comp->getParameterLimitedLower(idxParameter) && comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount]
 				          << " (limited between " << comp->getParameterLimitLower(idxParameter)
 				          << " and " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
 				minimizer->SetLimitedVariable(parcount,
-				                              (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                              name,
 				                              par[parcount],
 				                              comp->getParameterStep(idxParameter),
 				                              comp->getParameterLimitLower(idxParameter),
 				                              comp->getParameterLimitUpper(idxParameter));
 			} else if(comp->getParameterLimitedLower(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount]
 				          << " (limited larger than " << comp->getParameterLimitLower(idxParameter) << ")" << endl;
 				minimizer->SetLowerLimitedVariable(parcount,
-				                                   (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                                   name,
 				                                   par[parcount],
 				                                   comp->getParameterStep(idxParameter),
 				                                   comp->getParameterLimitLower(idxParameter));
 			} else if(comp->getParameterLimitedUpper(idxParameter)) {
-				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount]
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount]
 				          << " (limited smaller than " << comp->getParameterLimitUpper(idxParameter) << ")" << endl;
 				minimizer->SetUpperLimitedVariable(parcount,
-				                                   (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                                   name,
 				                                   par[parcount],
 				                                   comp->getParameterStep(idxParameter),
 				                                   comp->getParameterLimitUpper(idxParameter));
 			} else {
-				printInfo << "parameter " << parcount << " ('" << (comp->getName()+comp->getParameterName(idxParameter)) << "') set to " << par[parcount] << endl;
+				printInfo << "parameter " << parcount << " ('" << name << "') set to " << par[parcount] << endl;
 				minimizer->SetVariable(parcount,
-				                       (comp->getName()+comp->getParameterName(idxParameter)).c_str(),
+				                       name,
 				                       par[parcount],
 				                       comp->getParameterStep(idxParameter));
 			}
