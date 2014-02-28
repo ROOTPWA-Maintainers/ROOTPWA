@@ -143,57 +143,67 @@ rpwa::massDepFit::massDepFit::readConfigInputFitResults(const Setting* configInp
 		return false;
 	}
 
-	const int nrFitResults = configInputFitResults->getLength();
-	if(nrFitResults != 1) {
-		printErr << "handling of more than one entry in 'fitresults' not yet supported." << endl;
-		return false;
-	}
-
-	const Setting* configInputFitResult = &((*configInputFitResults)[0]);
-
-	map<string, Setting::Type> mandatoryArguments;
-	insert(mandatoryArguments)
-	      ("name", Setting::TypeString);
-	if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
-		printErr << "'fitresults' list in 'input' section in configuration file contains errors." << endl;
-		return false;
-	}
-
-	configInputFitResult->lookupValue("name", _inFileName);
-
-	if(_debug) {
-		printDebug << "read file name of fit results of mass-independent fit: '" << _inFileName << "'." << endl;
-	}
-
+	_inFileName.clear();
 	_inOverwritePhaseSpace.clear();
 
-	const Setting* overwritePhaseSpace = findLibConfigArray(*configInputFitResult, "overwritePhaseSpace", false);
-	if(overwritePhaseSpace) {
-		const int nrParts = overwritePhaseSpace->getLength();
+	const int nrFitResults = configInputFitResults->getLength();
+	for(int idxFitResult=0; idxFitResult<nrFitResults; ++idxFitResult) {
+		if(_debug) {
+			printDebug << "reading of entry " << idxFitResult << " in 'fitresults'." << endl;
+		}
 
-		if(nrParts > 0 && (*overwritePhaseSpace)[0].getType() != Setting::TypeString) {
-			printErr << "contents of 'overwritePhaseSpace' array in 'input' needs to be strings." << endl;
+		const Setting* configInputFitResult = &((*configInputFitResults)[idxFitResult]);
+
+		map<string, Setting::Type> mandatoryArguments;
+		insert(mandatoryArguments)
+		      ("name", Setting::TypeString);
+		if(not checkIfAllVariablesAreThere(configInputFitResult, mandatoryArguments)) {
+			printErr << "'fitresults' list in 'input' section in configuration file contains errors." << endl;
 			return false;
 		}
 
-		for(int idxPart=0; idxPart<nrParts; ++idxPart) {
-			const string fileName = (*overwritePhaseSpace)[idxPart];
-			_inOverwritePhaseSpace.push_back(fileName);
-		}
+		string fileName;
+		configInputFitResult->lookupValue("name", fileName);
+		_inFileName.push_back(fileName);
 
 		if(_debug) {
-			ostringstream output;
-			output << "[ '";
-			for(int idxPart=0; idxPart<_inOverwritePhaseSpace.size(); ++idxPart) {
-				if(idxPart > 0) {
-					output << "', '";
-				}
-				output << _inOverwritePhaseSpace[idxPart];
-			}
-			output << "' ]";
-			printDebug << "phase-space integrals will be overwritten with files from this pattern: " << output.str() << " (" << _inOverwritePhaseSpace.size() << " parts)" << endl;
+			printDebug << "read file name of fit results of mass-independent fit: '" << fileName << "'." << endl;
 		}
+
+		vector<string> overwritePhaseSpace;
+
+		const Setting* configOverwrite = findLibConfigArray(*configInputFitResult, "overwritePhaseSpace", false);
+		if(configOverwrite) {
+			const int nrParts = configOverwrite->getLength();
+
+			if(nrParts > 0 && (*configOverwrite)[0].getType() != Setting::TypeString) {
+				printErr << "contents of 'overwritePhaseSpace' array in 'input' needs to be strings." << endl;
+				return false;
+			}
+
+			for(int idxPart=0; idxPart<nrParts; ++idxPart) {
+				const string fileName = (*configOverwrite)[idxPart];
+				overwritePhaseSpace.push_back(fileName);
+			}
+
+			if(_debug) {
+				ostringstream output;
+				output << "[ '";
+				for(int idxPart=0; idxPart<overwritePhaseSpace.size(); ++idxPart) {
+					if(idxPart > 0) {
+						output << "', '";
+					}
+					output << overwritePhaseSpace[idxPart];
+				}
+				output << "' ]";
+				printDebug << "phase-space integrals will be overwritten with files from this pattern: " << output.str() << " (" << overwritePhaseSpace.size() << " parts)" << endl;
+			}
+		}
+
+		_inOverwritePhaseSpace.push_back(overwritePhaseSpace);
 	}
+
+	_nrBins = _inFileName.size();
 
 	return true;
 }
@@ -730,32 +740,54 @@ rpwa::massDepFit::massDepFit::updateConfigModelFsmd(const Setting* configFsmd,
 
 
 bool
-rpwa::massDepFit::massDepFit::readInFile(const string& valTreeName,
+rpwa::massDepFit::massDepFit::readInFiles(const string& valTreeName,
+                                          const string& valBranchName)
+{
+	if(_nrBins != 1) {
+		printErr << "handling of more than one entry in 'fitresults' not yet supported." << endl;
+		return false;
+	}
+
+	for(size_t idxBin=0; idxBin<_nrBins; ++idxBin) {
+		if(not readInFile(_inFileName[idxBin], _inOverwritePhaseSpace[idxBin], valTreeName, valBranchName)) {
+			printErr << "error while reading file entry " << idxBin << "." << endl;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+
+bool
+rpwa::massDepFit::massDepFit::readInFile(const string& fileName,
+                                         const vector<string>& overwritePhaseSpace,
+                                         const string& valTreeName,
                                          const string& valBranchName)
 {
 	if(_debug) {
-		printDebug << "reading fit result from file '" << _inFileName << "'." << endl;
+		printDebug << "reading fit result from file '" << fileName << "'." << endl;
 	}
 
-	TFile* inFile = TFile::Open(_inFileName.c_str());
+	TFile* inFile = TFile::Open(fileName.c_str());
 	if(not inFile) {
-		printErr << "input file '" << _inFileName << "' not found."<< endl;
+		printErr << "input file '" << fileName << "' not found."<< endl;
 		return false;
 	}
 	if(inFile->IsZombie()) {
-		printErr << "error while reading input file '" << _inFileName << "'."<< endl;
+		printErr << "error while reading input file '" << fileName << "'."<< endl;
 		delete inFile;
 		return false;
 	}
 
 	if(_debug) {
-		printDebug << "searching for tree '" << valTreeName << "' in file '" << _inFileName << "'." << endl;
+		printDebug << "searching for tree '" << valTreeName << "' in file '" << fileName << "'." << endl;
 	}
 
 	TTree* inTree;
 	inFile->GetObject(valTreeName.c_str(), inTree);
 	if(not inTree) {
-		printErr << "input tree '" << valTreeName << "' not found in input file '" << _inFileName << "'."<< endl;
+		printErr << "input tree '" << valTreeName << "' not found in input file '" << fileName << "'."<< endl;
 		delete inFile;
 		return false;
 	}
@@ -772,32 +804,32 @@ rpwa::massDepFit::massDepFit::readInFile(const string& valTreeName,
 	}
 
 	if(not readFitResultMassBins(inTree, inFit)) {
-		printErr << "could not extract mass bins from fit result tree in '" << _inFileName << "'." << endl;
+		printErr << "could not extract mass bins from fit result tree in '" << fileName << "'." << endl;
 		delete inFile;
 		return false;
 	}
 
 	vector<Long64_t> inMapping;
 	if(not checkFitResultMassBins(inTree, inFit, inMapping)) {
-		printErr << "error while checking and mapping mass bins from fit result tree in '" << _inFileName << "'." << endl;
+		printErr << "error while checking and mapping mass bins from fit result tree in '" << fileName << "'." << endl;
 		delete inFile;
 		return false;
 	}
 
 	if(not readFitResultMatrices(inTree, inFit, inMapping, _inSpinDensityMatrices, _inSpinDensityCovarianceMatrices,
 	                             _inIntensities, _inPhases)) {
-		printErr << "error while reading spin-density matrix from fit result tree in '" << _inFileName << "'." << endl;
+		printErr << "error while reading spin-density matrix from fit result tree in '" << fileName << "'." << endl;
 		delete inFile;
 		return false;
 	}
 	if(not readFitResultIntegrals(inTree, inFit, inMapping, _inPhaseSpaceIntegrals)) {
-		printErr << "error while reading phase-space integrals from fit result tree in '" << _inFileName << "'." << endl;
+		printErr << "error while reading phase-space integrals from fit result tree in '" << fileName << "'." << endl;
 		delete inFile;
 		return false;
 	}
 
-	if(_inOverwritePhaseSpace.size() > 0) {
-		if(not readPhaseSpaceIntegralMatrices(_inOverwritePhaseSpace, _inPhaseSpaceIntegrals)) {
+	if(overwritePhaseSpace.size() > 0) {
+		if(not readPhaseSpaceIntegralMatrices(overwritePhaseSpace, _inPhaseSpaceIntegrals)) {
 			printErr << "error while reading phase-space integrals from integral matrices." << endl;
 			delete inFile;
 			return false;
@@ -2018,7 +2050,7 @@ main(int    argc,
 	}
 
 	// extract information from fit results
-	if(not mdepFit.readInFile(valTreeName, valBranchName)) {
+	if(not mdepFit.readInFiles(valTreeName, valBranchName)) {
 		printErr << "error while trying to read fit result." << endl;
 		return 1;
 	}

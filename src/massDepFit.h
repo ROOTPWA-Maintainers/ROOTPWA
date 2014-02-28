@@ -51,8 +51,8 @@ namespace rpwa {
 			                  const double chi2red) const;
 
 // FIXME: make private
-			bool readInFile(const std::string& valTreeName   = "pwa",
-			                const std::string& valBranchName = "fitResult_v2");
+			bool readInFiles(const std::string& valTreeName   = "pwa",
+			                 const std::string& valBranchName = "fitResult_v2");
 
 // FIXME: make private
 			bool readSystematicsFiles(const std::string& valTreeName   = "pwa",
@@ -102,6 +102,11 @@ namespace rpwa {
 			                           const rpwa::massDepFit::model& fitModel,
 			                           const ROOT::Math::Minimizer* minimizer) const;
 
+			bool readInFile(const std::string& fileName,
+			                const std::vector<std::string>& overwritePhaseSpace,
+			                const std::string& valTreeName   = "pwa",
+			                const std::string& valBranchName = "fitResult_v2");
+
 			bool readSystematicsFile(const size_t idxSystematics,
 			                         const std::string& valTreeName   = "pwa",
 			                         const std::string& valBranchName = "fitResult_v2");
@@ -135,8 +140,8 @@ namespace rpwa {
 			                         const size_t idxWave,
 			                         const size_t jdxWave) const;
 
-			std::string _inFileName;
-			std::vector<std::string> _inOverwritePhaseSpace;
+			std::vector<std::string> _inFileName;
+			std::vector<std::vector<std::string> > _inOverwritePhaseSpace;
 
 			bool _sysPlotting;
 			std::vector<std::string> _sysFileNames;
@@ -169,6 +174,7 @@ namespace rpwa {
 			boost::multi_array<double, 4> _sysIntensities;
 			boost::multi_array<double, 5> _sysPhases;
 
+			size_t _nrBins;
 			size_t _nrMassBins;
 			size_t _nrSystematics;
 			size_t _nrWaves;
