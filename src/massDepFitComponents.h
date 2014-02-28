@@ -45,6 +45,9 @@ namespace rpwa {
 
 			const std::string& getWaveName() const { return _waveName; }
 
+			bool isAnchor() const { return _anchor; }
+			void setAnchor(const bool anchor) { _anchor = anchor; }
+
 			std::complex<double> getCoupling() const { return _coupling; }
 			void setCoupling(std::complex<double> coupling) { _coupling = coupling; }
 
@@ -58,6 +61,7 @@ namespace rpwa {
 
 			std::string _waveName;
 
+			bool _anchor;
 			std::complex<double> _coupling;
 
 			std::vector<double> _massBinCenters;
@@ -89,6 +93,7 @@ namespace rpwa {
 			const size_t getNrChannels() const { return _channels.size(); }
 			const std::vector<channel>& getChannels() const { return _channels; }
 			const channel& getChannel(const size_t i) const { return _channels[i]; }
+			void setChannelAnchor(const size_t i, const bool anchor) { _channels[i].setAnchor(anchor); }
 			const std::string& getChannelWaveName(const size_t i) const { return _channels[i].getWaveName(); }
 
 			size_t getCouplings(double* par) const;
